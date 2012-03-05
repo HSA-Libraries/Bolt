@@ -1,7 +1,7 @@
 #pragma once
 
-#define RESTRICT_AMP restrict(direct3d) 
-#define RESTRICT_AMP_CPU restrict(direct3d,cpu) 
+#define RESTRICT_AMP restrict(amp) 
+#define RESTRICT_AMP_CPU restrict(amp,cpu) 
 
 
 namespace bolt {

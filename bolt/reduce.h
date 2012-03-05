@@ -52,23 +52,22 @@ namespace bolt {
 			concurrency::array_view<T,1> A(end-begin, &*begin);
 
 			concurrency::extent<1> launchExt(resultCnt*waveSize);
-			concurrency::grid<1> launchGrid(launchExt);
-			int iterationsPerWg = A.grid.extent[0]/launchExt[0];
+			int iterationsPerWg = A.extent[0]/launchExt[0];
 
 			concurrency::array<T,1> results1(resultCnt, av);  // Output after reducing through LDS.
 
-			std::cout << "ArrayDim=" << A.grid.extent[0] << "  launchGrid.extent=" << launchGrid.extent[0] << "  iters=" << iterationsPerWg << std::endl;
+			std::cout << "ArrayDim=" << A.extent[0] << "  launchExt=" << launchExt[0] << "  iters=" << iterationsPerWg << std::endl;
 
 			// FIXME - support actual BARRIER operations.
 			// FIXME - support checks on local memory usage
 			// FIXME - reduce size of work for small problems.
-			concurrency::parallel_for_each(av,  launchGrid.tile<waveSize>(), [=,&results1](concurrency::tiled_index<waveSize> idx) mutable RESTRICT_AMP
+			concurrency::parallel_for_each(av,  launchExt.tile<waveSize>(), [=,&results1](concurrency::tiled_index<waveSize> idx) mutable RESTRICT_AMP
 			{
 				tile_static T results0[waveSize];  // Could cause a problem for non-POD types in LDS?
 
 				T sum = init; // FIXME - .  Don't use Init here, peel out first assignment.
 				// FIXME - need to unroll loop to expose a bit more compute density
-				for (int i=idx.global[0]; i<A.grid.extent[0]; i+=launchExt[0]) {
+				for (int i=idx.global[0]; i<A.extent[0]; i+=launchExt[0]) {
 					T val = A[i];
 					sum = binary_op(sum, val);
 				};
