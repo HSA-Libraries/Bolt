@@ -7,6 +7,47 @@
 #include <bolt/reduce.h>
 
 
+template<typename T>
+void printCheckMessage(bool err, std::string msg, T  stlResult, T boltResult)
+{
+	if (err) {
+		std::cout << "*ERROR ";
+	} else {
+		std::cout << "PASSED ";
+	}
+
+	std::cout << msg << "  STL=" << stlResult << " BOLT=" << boltResult << std::endl;
+};
+
+template<typename T>
+bool checkResult(std::string msg, T  stlResult, T boltResult)
+{
+	bool err =  (stlResult != boltResult);
+	printCheckMessage(err, msg, stlResult, boltResult);
+
+	return err;
+};
+
+
+// For comparing floating point values:
+template<typename T>
+bool checkResult(std::string msg, T  stlResult, T boltResult, double errorThresh)
+{
+	bool err;
+	if ((errorThresh != 0.0) && stlResult) {
+		double ratio = (double)(boltResult) / (double)(stlResult) - 1.0;
+		err = abs(ratio) > errorThresh;
+	} else {
+		// Avoid div-by-zero, check for exact match.
+		err = (stlResult != boltResult);
+	}
+
+	printCheckMessage(err, msg, stlResult, boltResult);
+	return err;
+};
+
+
+
 // Simple test case for bolt::reduce:
 // Sum together specified numbers, compare against STL::accumulate function.
 // Demonstrates:
@@ -47,36 +88,42 @@ void simpleReduce2()
 		//std::cout << A[i] << " ";
 	};
 
-	int stlReduce = std::accumulate(A, A+aSize, 0, [=] (int x, int y) {
+	std::string fName(__FUNCTION__ );   // return function name
+	fName += ":";  
+
+	//---
+	// Lambda version of 
+	int stlReduceLamda = std::accumulate(A, A+aSize, 0, [=] (int x, int y) {
 		return x>=y ? x:y;
 	});
 
-
-	// Lambda no worky in developer preview AMP:
-#if 0
-	int boltReduce = bolt::reduce(A, A+aSize, 0, [=] (int x, int y) RESTRICT_AMP {
+	int boltReduceLamda = bolt::reduce(A, A+aSize, 0, [=] (int x, int y) restrict(cpu,amp) {
 		return x>=y ? x:y;
 	});
-#endif
+	checkResult(fName + "LamdaMax", stlReduceLamda, boltReduceLamda);
+
+	//----
+	// Functor class:
 
 	struct reducer {
-		int _dummy ; // workaround dev preview bug that does not allow empty classes
-		int operator() (int x, int y) RESTRICT_AMP_CPU{
+		int operator() (int x, int y) restrict(cpu,amp) {
 			return y>x ? y:x; 
 		};
 	};
-
 	int stlReduce2 = std::accumulate(A, A+aSize, 0, reducer());
 
-	int boltReduce = bolt::reduce(A, A+aSize, 0, reducer());
+
+	int boltReduce1 = bolt::reduce(A, A+aSize, 0, reducer());
+	checkResult(fName + "maxFunctor", stlReduce2, boltReduce1);
+
 	int boltReduce2 = bolt::reduce(A, A+aSize, 0, bolt::maximum<int>());
+	checkResult(fName + "bolt::maximum", stlReduce2, boltReduce1);
 
 
-	printf ("Max: stl=%d, %d,  bolt=%d %d\n", stlReduce, stlReduce2, boltReduce, boltReduce2);
 
 	//int maxInt = std::numeric_limits<int>::max();
 	int maxInt = 32767;
-	printf ("Min: stl=%d,  bolt=%d\n", 
+	checkResult("Min",
 		std::accumulate(A, A+aSize, maxInt, bolt::minimum<int>()),  // use bolt::minimum here since std:: doesn't define minimum
 		bolt::reduce   (A, A+aSize, maxInt, bolt::minimum<int>()) );
 };
@@ -85,7 +132,7 @@ void simpleReduce2()
 // * Use of other types with reduction - ie float.
 // * Accepts template parameters to allow more test cases to be run through the code.
 template <typename T, typename BinaryFunction>
-void simpleReduce3(const char *name, BinaryFunction binary_function, int aSize)
+void simpleReduce3(const char *name, BinaryFunction binary_function, int aSize, double errorThresh=0.0)
 {
 	std::vector<T> A(aSize);
 
@@ -99,33 +146,47 @@ void simpleReduce3(const char *name, BinaryFunction binary_function, int aSize)
 	T stlRes  = std::accumulate(A.begin(), A.end(), init, binary_function);
 	T boltRes = bolt::reduce   (A.begin(), A.end(), init, binary_function);
 
-	std::cout <<  name << ":  stl =" << stlRes << "  bolt=" << boltRes << std::endl;
+
+	std::string fName(__FUNCTION__ );   // return function name
+	fName += ":";  
+
 
 	// Note - due to floating point ordering, we can get slightly different answers...
-	if (stlRes != boltRes) {
-		std::cout << "ERROR! STL != BOLT\n";
-	};
+	checkResult (fName+ name, stlRes, boltRes, errorThresh);
 };
 
-#if 0
+#if 1
 // Demonstrates:
 //   * Use of bolt::reduce with user-specified class object.
-// Crashes FXC
-void simpleReduce4()
-{
-	struct Complex {
-		// No constructors allowed in types used in tiled memory:
-		//Complex(const float x=0.0, const float y=0.0) RESTRICT_AMP_CPU : _x(x), _y(y)   {};	
 
-		void set(const float x=0.0, const float y=0.0) {
-			_x = x;
-			_y = y; 
-		};
 
-		float _x;
-		float _y;
+struct Complex {
+	// No constructors allowed in types used in tiled memory:
+	//Complex(const float x=0.0, const float y=0.0) RESTRICT_AMP_CPU : _x(x), _y(y)   {};	
+
+	void set(const float x=0.0, const float y=0.0) {
+		_x = x;
+		_y = y; 
 	};
 
+	bool operator!=(const Complex &c) {
+		return (c._x != _x) || (c._y != _y);
+	};
+
+	friend std::ostream& operator<< (std::ostream &out,  Complex &c);
+
+	float _x;
+	float _y;
+};
+
+std::ostream& operator<< (std::ostream &out,  Complex &c) {
+	out << "(" << c._x  << " , " << c._y << ")";
+	return out;
+};
+
+
+void simpleReduce4()
+{
 	static int const aSize = 1024;
 	Complex AA[aSize];
 	for (int i=0; i < aSize; i++) {
@@ -133,8 +194,7 @@ void simpleReduce4()
 	};
 
 	struct reducer {
-		int _dummy ; // workaround dev preview bug that does not allow empty classes
-		Complex operator() (const Complex &a, const Complex &b) RESTRICT_AMP_CPU{
+		Complex operator() (const Complex &a, const Complex &b) restrict(amp,cpu){
 			Complex t;
 			t._x = a._x + b._x;
 			t._y = a._y + b._y;
@@ -143,20 +203,23 @@ void simpleReduce4()
 	};
 
 	Complex init;  init.set(0.0,0.0);
-	Complex stlReduce  = std::accumulate(AA, AA+aSize, init, reducer());
-	Complex boltReduce = bolt::reduce   (AA, AA+aSize, init, reducer());
+	Complex stlReduce1  = std::accumulate(AA, AA+aSize, init, reducer());
+	Complex boltReduce1 = bolt::reduce   (AA, AA+aSize, init, reducer());
+
+	std::string fName(__FUNCTION__ );   // return function name
+	fName += ":";  
+	checkResult(fName+"ComplexWithFunctor", stlReduce1, boltReduce1);
 
 
-	// No lamda for C++AMP:
-#if 0
-	Complex stlReduce = std::accumulate(AA, AA+aSize, init, [=] (Complex a, Complex b) -> Complex {
+#if 1
+	Complex stlReduce2 = std::accumulate(AA, AA+aSize, init, [=] (Complex a, Complex b) -> Complex {
 		Complex t;
 		t._x = a._x + b._x;
 		t._y = a._y + b._y;
 		return t;
 	});
 
-	Complex boltReduce = bolt::reduce(AA, AA+aSize, init, [=]  (Complex a, Complex b) RESTRICT_AMP_CPU  -> Complex  {
+	Complex boltReduce2 = bolt::reduce(AA, AA+aSize, init, [=]  (Complex a, Complex b) restrict(cpu,amp)  -> Complex  {
 		Complex t;
 		t._x = a._x + b._x;
 		t._y = a._y + b._y;
@@ -164,8 +227,11 @@ void simpleReduce4()
 	});
 #endif
 
-	printf ("stlReduce=%f.%f,  boltReduce=%f.%f\n", stlReduce._x, stlReduce._y, boltReduce._x, boltReduce._y);
+	checkResult(fName+"ComplexWithLamda", stlReduce2, boltReduce2);
+	//printf ("stlReduce=%f.%f,  boltReduce=%f.%f\n", stlReduce._x, stlReduce._y, boltReduce._x, boltReduce._y);
 }
+
+
 #endif
 
 
@@ -176,9 +242,11 @@ void simpleReduce()
 	simpleReduce1(1024000);
 	simpleReduce2();
 
-	simpleReduce3<float> ("sum", bolt::plus<float>(), 1000000);
+	simpleReduce3<float> ("sum", bolt::plus<float>(), 1000000, .0001/*errorThresh*/);
 	simpleReduce3<float> ("min", bolt::minimum<float>(), 1000000);
 	simpleReduce3<float> ("max", bolt::maximum<float>(), 1000000);
+
+	simpleReduce4();
 };
 
 

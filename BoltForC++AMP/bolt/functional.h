@@ -1,7 +1,5 @@
 #pragma once
 
-#define RESTRICT_AMP restrict(amp) 
-#define RESTRICT_AMP_CPU restrict(amp,cpu) 
 
 
 namespace bolt {
@@ -25,27 +23,27 @@ namespace bolt {
 	template<typename T>
 	struct plus : public binary_function<T,T,T>  
 	{
-		T operator()(const T &lhs, const T &rhs) const RESTRICT_AMP_CPU {return lhs + rhs;}
+		T operator()(const T &lhs, const T &rhs) const restrict(cpu,amp) {return lhs + rhs;}
 	}; 
 
 
 	template<typename T>
 	struct maximum : public binary_function<T,T,T>  
 	{
-		T operator()(const T &lhs, const T &rhs) const RESTRICT_AMP_CPU {return rhs > lhs ? rhs:lhs;}
+		T operator()(const T &lhs, const T &rhs) const restrict(cpu,amp) {return rhs > lhs ? rhs:lhs;}
 	}; 
 
 	template<typename T>
 	struct minimum : public binary_function<T,T,T>  
 	{
-		T operator()(const T &lhs, const T &rhs) const RESTRICT_AMP_CPU {return rhs < lhs ? rhs:lhs;}
+		T operator()(const T &lhs, const T &rhs) const restrict(cpu,amp) {return rhs < lhs ? rhs:lhs;}
 	}; 
 
 
 	template <typename T>
 	struct square
 	{
-		T& operator() (const T& x)  const RESTRICT_AMP {
+		T& operator() (const T& x)  const restrict(amp) {
 			return x * x;
 		}
 	};
@@ -54,7 +52,7 @@ namespace bolt {
 	template<typename T>
 	struct negate : public unary_function<T,T>  
 	{
-		T operator()(const T &__x) const RESTRICT_AMP {return -__x;}
+		T operator()(const T &__x) const restrict(amp) {return -__x;}
 	}; 
 
 

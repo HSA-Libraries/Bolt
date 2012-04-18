@@ -24,7 +24,7 @@ namespace bolt {
 			concurrency::array_view<std::iterator_traits<InputIterator>::value_type,  1> inputV(sz, &*first);
 			concurrency::array_view<std::iterator_traits<OutputIterator>::value_type, 1> resultV(sz, &*result);
 
-			concurrency::parallel_for_each( inputV.extent, [=](concurrency::index<1> idx) mutable RESTRICT_AMP
+			concurrency::parallel_for_each( inputV.extent, [=](concurrency::index<1> idx) mutable restrict(amp)
 			{
                 resultV[idx[0]] = f(inputV[idx[0]]);
 			}
@@ -46,7 +46,7 @@ namespace bolt {
 			concurrency::array_view<iterator_traits<InputIterator>::value_type,  1> inputV(sz, &*first);
 			concurrency::array_view<iterator_traits<OutputIterator>::value_type, 1> resultV(sz, &*result);
 
-			concurrency::parallel_for_each(av, inputV.grid, [=](concurrency::index<1> idx) mutable RESTRICT_AMP
+			concurrency::parallel_for_each(av, inputV.grid, [=](concurrency::index<1> idx) mutable restrict(amp)
 			{
                 resultV[idx.x] = f(inputV[idx.x]);
 			}
@@ -75,7 +75,7 @@ namespace bolt {
 			concurrency::array_view<std::iterator_traits<InputIterator>::value_type,  1> inputV2(sz, &*first2);
 			concurrency::array_view<std::iterator_traits<OutputIterator>::value_type, 1> resultV(sz, &*result);
 
-			concurrency::parallel_for_each( inputV1.extent, [=](concurrency::index<1> idx) mutable RESTRICT_AMP
+			concurrency::parallel_for_each( inputV1.extent, [=](concurrency::index<1> idx) mutable restrict(amp)
 			{
                 resultV[idx[0]] = f(inputV1[idx[0]], inputV2[idx[0]]);
 			}

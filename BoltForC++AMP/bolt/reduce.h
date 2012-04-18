@@ -56,12 +56,12 @@ namespace bolt {
 
 			concurrency::array<T,1> results1(resultCnt, av);  // Output after reducing through LDS.
 
-			std::cout << "ArrayDim=" << A.extent[0] << "  launchExt=" << launchExt[0] << "  iters=" << iterationsPerWg << std::endl;
+			//std::cout << "ArrayDim=" << A.extent[0] << "  launchExt=" << launchExt[0] << "  iters=" << iterationsPerWg << std::endl;
 
 			// FIXME - support actual BARRIER operations.
 			// FIXME - support checks on local memory usage
 			// FIXME - reduce size of work for small problems.
-			concurrency::parallel_for_each(av,  launchExt.tile<waveSize>(), [=,&results1](concurrency::tiled_index<waveSize> idx) mutable RESTRICT_AMP
+			concurrency::parallel_for_each(av,  launchExt.tile<waveSize>(), [=,&results1](concurrency::tiled_index<waveSize> idx) mutable restrict(amp)
 			{
 				tile_static T results0[waveSize];  // Could cause a problem for non-POD types in LDS?
 
