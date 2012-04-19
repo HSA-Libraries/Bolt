@@ -17,16 +17,3 @@
 		T bb = B[gx];
 		Z[gx] = (*userFunctor)(aa, bb); 
 	};
-
-#if 0
-	//----
-	// The instantiation would be generated on the host, replacing T with the type of the 
-	template __attribute__((mangled_name(transformInstantiated))) 
-		kernel void transformTemplate(
-		global float* A, 
-		global float* B,
-		global float* Z,
-
-		const int length,
-		global SaxpyFunctor *userFunctor) ;
-#endif

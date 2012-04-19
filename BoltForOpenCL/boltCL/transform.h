@@ -3,17 +3,10 @@
 #include <boltCL/bolt.h>
 
 
-
-namespace bolt {
-	extern cl::Kernel compileFunctor(const std::string &captureStruct, const std::string kernelName);
-	extern std::string fileToString(const std::string &fileName);
-
-
-	const int transformThreshold = 4; // FIXME, threshold for using CPU or GPU
-
+namespace boltcl {
 
 	template<typename InputIterator, typename OutputIterator, typename BinaryFunction> 
-	void transform2(InputIterator first1, InputIterator last1, InputIterator first2, OutputIterator result, 
+	void transform(InputIterator first1, InputIterator last1, InputIterator first2, OutputIterator result, 
 		BinaryFunction f, std::string userCode, std::string functorTypeName="")  {
 
 			typedef std::iterator_traits<InputIterator>::value_type T;
@@ -27,13 +20,12 @@ namespace bolt {
 
 			cl::Buffer Z(CL_MEM_WRITE_ONLY|CL_MEM_USE_HOST_PTR, sizeof(T) * sz, &*result);
 
-			//FIXME - use host pointer
 			cl::Buffer userFunctor(CL_MEM_READ_ONLY|CL_MEM_USE_HOST_PTR, sizeof(f), &f );   // Create buffer wrapper so we can access host parameters.
 
 			cl::Kernel k;
 			const bool needCompile = true;
 			if (needCompile) {
-				std::string transformFunctionString = fileToString("../../boltCL/transform_shaders.cl");  //FIXME, when this becomes more stable move the shader code to a string in bolt.cpp
+				std::string transformFunctionString = boltcl::fileToString("../../boltCL/transform_shaders.cl");  //FIXME, when this becomes more stable move the shader code to a string in bolt.cpp
 
 
 				// Instantiate the template using the value and functorType strings:
@@ -60,10 +52,11 @@ namespace bolt {
 				if (1) {
 					std::cout << "ValueType  ='" << valueTypeName << "'" << std::endl;
 					std::cout << "FunctorType='" << functorTypeName << "'" << std::endl;
-					//std::cout << "code=" << std::endl << codeStr;
+					std::cout << "sizeof(Functor)=" << sizeof(f) << std::endl;
+					std::cout << "code=" << std::endl << codeStr;
 				}
 
-				k = compileFunctor(codeStr, "transformInstantiated");
+				k = boltcl::compileFunctor(codeStr, "transformInstantiated");
 			} // { else read k from cache and make a local copy so we can set the args.
 
 			k.setArg(0, A);

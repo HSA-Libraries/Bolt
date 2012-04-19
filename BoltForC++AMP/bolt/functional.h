@@ -8,7 +8,6 @@ namespace bolt {
 	struct unary_function
 		: public std::unary_function<Argument1, Result>
 	{
-        int _dummy;  // FIXME, workaround for beta C++AMP release.
 	};
 
 	template<typename Argument1,
@@ -17,7 +16,6 @@ namespace bolt {
 	struct binary_function
 		: public std::binary_function<Argument1, Argument2, Result>
 	{
-        int _dummy;  // FIXME, workaround for beta C++AMP release.
 	};
 
 	template<typename T>

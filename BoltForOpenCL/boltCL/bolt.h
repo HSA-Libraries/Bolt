@@ -7,7 +7,7 @@
 
 #include <string>
 
-namespace bolt {
+namespace boltcl {
 	extern std::string fileToString(const std::string &fileName);
 	extern cl::Kernel compileFunctor(const std::string &kernelCodeString, const std::string kernelName);
 };

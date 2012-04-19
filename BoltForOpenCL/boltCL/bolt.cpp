@@ -9,11 +9,7 @@
 #include <direct.h>  //windows CWD for error message
 
 
-namespace bolt {
-
-	const int reduceMultiCpuThreshold = 2; // FIXME, artificially low to force use of GPU
-	const int reduceGpuThreshold = 4;      // FIXME, artificially low to force use of GPU
-
+namespace boltcl {
 
 	std::string fileToString(const std::string &fileName)
 	{
@@ -45,7 +41,7 @@ namespace bolt {
 			mainProgram.build("-x clc++");
 
 		} catch(cl::Error e) {
-			std::cout << "Code         :\t" << kernelCodeString << std::endl;
+			std::cout << "Code         :\n" << kernelCodeString << std::endl;
 			std::cout << "Build Status: " << mainProgram.getBuildInfo<CL_PROGRAM_BUILD_STATUS>(cl::Device::getDefault()) << std::endl;
 			std::cout << "Build Options:\t" << mainProgram.getBuildInfo<CL_PROGRAM_BUILD_OPTIONS>(cl::Device::getDefault()) << std::endl;
 			std::cout << "Build Log:\t " << mainProgram.getBuildInfo<CL_PROGRAM_BUILD_LOG>(cl::Device::getDefault()) << std::endl;
