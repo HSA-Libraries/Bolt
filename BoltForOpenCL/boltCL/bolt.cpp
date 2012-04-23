@@ -1,5 +1,5 @@
 
-#include "stdafx.h"
+// #include "stdafx.h"  // not present in the BoltCL dir, but don't really need it 
 
 #include <boltCL/bolt.h>
 
