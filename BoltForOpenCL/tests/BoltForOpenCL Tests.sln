@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 11
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TransformTest", "TransformTest\TransformTest.vcxproj", "{D7D0B2EB-211C-048F-EE4C-84B306D34895}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TransformTest", "TransformTest\TransformTest.vcxproj", "{BF2C3EC7-C11B-DCC3-3ED8-D31E3A305614}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -9,12 +9,15 @@ Global
 		Release|Win32 = Release|Win32
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{D7D0B2EB-211C-048F-EE4C-84B306D34895}.Debug|Win32.ActiveCfg = Debug|Win32
-		{D7D0B2EB-211C-048F-EE4C-84B306D34895}.Debug|Win32.Build.0 = Debug|Win32
-		{D7D0B2EB-211C-048F-EE4C-84B306D34895}.Release|Win32.ActiveCfg = Release|Win32
-		{D7D0B2EB-211C-048F-EE4C-84B306D34895}.Release|Win32.Build.0 = Release|Win32
+		{BF2C3EC7-C11B-DCC3-3ED8-D31E3A305614}.Debug|Win32.ActiveCfg = Debug|Win32
+		{BF2C3EC7-C11B-DCC3-3ED8-D31E3A305614}.Debug|Win32.Build.0 = Debug|Win32
+		{BF2C3EC7-C11B-DCC3-3ED8-D31E3A305614}.Release|Win32.ActiveCfg = Release|Win32
+		{BF2C3EC7-C11B-DCC3-3ED8-D31E3A305614}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(Performance) = preSolution
+		HasPerformanceSessions = true
 	EndGlobalSection
 EndGlobal

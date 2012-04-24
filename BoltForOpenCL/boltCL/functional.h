@@ -9,12 +9,12 @@
 
 
 // macro for creating a host-side routine and an OCL string (in the bolcl::oclcode:: namespace).  Also defines the typename trait automatically.
-#define BOLT_FUNCTIONAL(NAME, F) namespace oclcode {std::string NAME=#F;}; F; CREATE_STD_TYPENAMES(NAME);
+#define CREATE_BOLT_FUNCTIONAL(NAME, F) namespace oclcode {std::string NAME=#F;}; F; CREATE_STD_TYPENAMES(NAME);
 
 
 namespace boltcl {
 
-	BOLT_FUNCTIONAL(plus, 
+	CREATE_BOLT_FUNCTIONAL(plus, 
 	template<typename T>
 	struct plus
 	{
@@ -22,7 +22,7 @@ namespace boltcl {
 	}; 
 	);
 
-	BOLT_FUNCTIONAL(minus, 
+	CREATE_BOLT_FUNCTIONAL(minus, 
 	template<typename T>
 	struct minus
 	{
@@ -30,8 +30,16 @@ namespace boltcl {
 	}; 
 	);
 
+	CREATE_BOLT_FUNCTIONAL(multiplies, 
+	template<typename T>
+	struct multiplies
+	{
+		T operator()(const T &lhs, const T &rhs) const {return lhs * rhs;}
+	}; 
+	);
 
-	BOLT_FUNCTIONAL(maximum, 
+
+	CREATE_BOLT_FUNCTIONAL(maximum, 
 	template<typename T>
 	struct maximum 
 	{
@@ -40,7 +48,7 @@ namespace boltcl {
 	);
 
 
-	BOLT_FUNCTIONAL(minimum,
+	CREATE_BOLT_FUNCTIONAL(minimum,
 	template<typename T>
 	struct minimum
 	{
@@ -49,7 +57,7 @@ namespace boltcl {
 	);
 
 
-	BOLT_FUNCTIONAL(square,
+	CREATE_BOLT_FUNCTIONAL(square,
 	template <typename T>
 	struct square
 	{
@@ -61,7 +69,7 @@ namespace boltcl {
 
 	//---
 	// Unary operations:
-	BOLT_FUNCTIONAL(negate,
+	CREATE_BOLT_FUNCTIONAL(negate,
 	template<typename T>
 	struct negate 
 	{

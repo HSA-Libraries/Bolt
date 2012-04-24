@@ -1,7 +1,11 @@
 
-// #include "stdafx.h"  // not present in the BoltCL dir, but don't really need it 
+
+//#include "stdafx.h"  // not present in the BoltCL dir, but don't really need it 
+
+
 
 #include <boltCL/bolt.h>
+
 
 #include <iostream>
 #include <fstream>
@@ -50,6 +54,28 @@ namespace boltcl {
 
 		return cl::Kernel(mainProgram, kernelName.c_str());
 	}
+
+
+
+	 void constructAndCompile(cl::Kernel *masterKernel, const std::string &apiName, const std::string instantiationString, std::string userCode, std::string valueTypeName,  std::string functorTypeName) {
+
+		//FIXME, when this becomes more stable move the kernel code to a string in bolt.cpp
+		// Note unfortunate dependency here on relative file path of run directory and location of boltcl dir.
+		std::string templateFunctionString = boltcl::fileToString("../../../../BoltForOpenCL/boltCL/" + apiName + "_kernels.cl"); 
+
+		std::string codeStr = userCode + "\n\n" + templateFunctionString +   instantiationString;
+
+		if (0) {
+			std::cout << "Compiling: '" << apiName << "'" << std::endl;
+			std::cout << "ValueType  ='" << valueTypeName << "'" << std::endl;
+			std::cout << "FunctorType='" << functorTypeName << "'" << std::endl;
+
+			std::cout << "code=" << std::endl << codeStr;
+		}
+
+		*masterKernel = boltcl::compileFunctor(codeStr, apiName + "Instantiated");
+	};
+
 
 
 };

@@ -10,6 +10,7 @@
 namespace boltcl {
 	extern std::string fileToString(const std::string &fileName);
 	extern cl::Kernel compileFunctor(const std::string &kernelCodeString, const std::string kernelName);
+	extern void constructAndCompile(cl::Kernel *masterKernel, const std::string &apiName, const std::string instantiationString, std::string userCode, std::string valueTypeName,  std::string functorTypeName);
 };
 
 
@@ -23,9 +24,12 @@ namespace boltcl {
 template <typename T>
 struct TypeName
 {
+	std::string msg_;
+
     static const char* get()
     {
-		return "unknown";
+		return "ERROR: Unknown typename; define missing TypeName<> missing";
+
         //return typeid(T).name();  // FIXME - try this on Windows.
     }
 };
@@ -35,3 +39,9 @@ struct TypeName
 // class MyClass {...};
 // CREATE_TYPENAME(MyClass);
 #define CREATE_TYPENAME(A) template<> struct TypeName<A> { static const char *get() { return #A; }};
+
+
+CREATE_TYPENAME(int);
+CREATE_TYPENAME(float);
+CREATE_TYPENAME(double);
+

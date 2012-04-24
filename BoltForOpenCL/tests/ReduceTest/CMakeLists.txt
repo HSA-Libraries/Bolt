@@ -2,10 +2,11 @@
 ##	Copyright (C) 2010 Advanced Micro Devices, Inc. All Rights Reserved.
 #############################################################################
 # List the names of common files to compile across all platforms
-set( clBolt.Transform.Source stdafx.cpp TransformTest.cpp ${PROJECT_SOURCE_DIR}/BoltForOpenCL/boltCL/bolt.cpp )
-set( clBolt.Transform.Headers stdafx.h targetver.h ${BOLTCL_DIR}/transform.h ${BOLTCL_DIR}/transform_kernels.cl)
 
-set( clBolt.Transform.Files ${clBolt.Transform.Source} ${clBolt.Transform.Headers} )
+set( clBolt.Reduce.Source stdafx.cpp ReduceTest.cpp ${BOLTCL_DIR}/bolt.cpp )
+set( clBolt.Reduce.Headers stdafx.h targetver.h ${BOLTCL_DIR}/reduce.h ${BOLTCL_DIR}/reduce_kernels.cl)
+
+set( clBolt.Reduce.Files ${clBolt.Reduce.Source} ${clBolt.Reduce.Headers} )
 
 # For a rainy day, add pre-compiled header support
 #if( MSVC )
@@ -35,14 +36,14 @@ set( clBolt.Transform.Files ${clBolt.Transform.Source} ${clBolt.Transform.Header
 # Include standard OpenCL headers
 include_directories( ${PROJECT_SOURCE_DIR}/BoltForOpenCL ${OPENCL_INCLUDE_DIRS} )
 
-add_executable( clBolt.Transform ${clBolt.Transform.Files} )
-target_link_libraries( clBolt.Transform ${OPENCL_LIBRARIES} )
+add_executable( clBolt.Reduce ${clBolt.Reduce.Files} )
+target_link_libraries( clBolt.Reduce ${OPENCL_LIBRARIES} )
 
-set_target_properties( clBolt.Transform PROPERTIES VERSION ${Bolt_VERSION} )
-set_target_properties( clBolt.Transform PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
+set_target_properties( clBolt.Reduce PROPERTIES VERSION ${Bolt_VERSION} )
+set_target_properties( clBolt.Reduce PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
 
 # CPack configuration; include the executable into the package
-install( TARGETS clBolt.Transform
+install( TARGETS clBolt.Reduce
 	RUNTIME DESTINATION ${BIN_DIR}
 	LIBRARY DESTINATION ${LIB_DIR}
 	ARCHIVE DESTINATION ${LIB_DIR}/import

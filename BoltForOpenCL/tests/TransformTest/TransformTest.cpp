@@ -8,15 +8,17 @@
 #include <iostream>
 #include <algorithm>  // for testing against STL functions.
 
+#include <thread>
 
 
 
-template<typename InputIterator>
-int checkResults(std::string msg, InputIterator first1 , InputIterator end1 , InputIterator first2)
+
+template<typename InputIterator1, typename InputIterator2>
+int checkResults(std::string msg, InputIterator1 first1 , InputIterator1 end1 , InputIterator2 first2)
 {
 	int errCnt = 0;
 	static const int maxErrCnt = 20;
-	int sz = end1-first1 ;
+	size_t sz = end1-first1 ;
 	for (int i=0; i<sz ; i++) {
 		if (first1 [i] != first2 [i]) {
 			errCnt++;
@@ -65,7 +67,6 @@ void simpleTransform1(int aSize)
 	fName += ":";
 
 	std::vector<float> A(aSize), B(aSize);
-
 	for (int i=0; i<aSize; i++) {
 		A[i] = float(i);
 		B[i] = 10000.0f + (float)i;
@@ -129,7 +130,6 @@ struct SaxpyFunctor
 // CREATE_TYPENAME is a bolt macro which adds a TypeName trait for the specified class
 // The Bolt code uses this typename in the contruction of the kernel code.
 CREATE_TYPENAME (SaxpyFunctor);
-CREATE_TYPENAME (float);
 
 
 void transformSaxpy(int aSize)
@@ -146,7 +146,7 @@ void transformSaxpy(int aSize)
 
 	SaxpyFunctor sb(10.0);
 
-	
+
 	std::transform(A.begin(), A.end(), B.begin(), Z0.begin(), sb);
 	boltcl::transform(A.begin(), A.end(), B.begin(), Z1.begin(), sb, boltCode );  
 
@@ -155,6 +155,90 @@ void transformSaxpy(int aSize)
 };
 
 
+void singleThreadReduction(const std::vector<float> &A, const std::vector<float> &B, std::vector<float> *Zbolt, int aSize) 
+{
+	boltcl::transform(A.begin(), A.end(), B.begin(), Zbolt->begin(), boltcl::multiplies<float>(), boltcl::oclcode::multiplies);
+};
+
+
+void multiThreadReductions(int aSize, int iters)
+{
+	std::string fName = __FUNCTION__ ;
+	fName += ":";
+
+	std::vector<float> A(aSize), B(aSize);
+	for (int i=0; i<aSize; i++) {
+		A[i] = float(i);
+		B[i] = 10000.0f + (float)i;
+	}
+
+
+	{
+		std::vector<float> Z0(aSize), Z1(aSize);
+		std::transform(A.begin(), A.end(), B.begin(), Z0.begin(), boltcl::minus<float>()); // golden answer:
+
+		// show we only compile it once:
+		for (int i=0; i<iters; i++) {
+			boltcl::transform(A.begin(), A.end(), B.begin(), Z1.begin(), boltcl::minus<float>(), boltcl::oclcode::minus);
+			checkResults(fName + "MultiIteration - boltcl::minus<float>", Z0.begin(), Z0.end(), Z1.begin());
+		};
+	}
+
+	// Now try multiple threads:
+	// FIXME - multi-thread doesn't work until we fix up the kernel to be per-thread.
+	if (0) {
+		static const int threadCount = 4;
+		std::vector<float> Z0(aSize);
+		std::transform(A.begin(), A.end(), B.begin(), Z0.begin(), boltcl::multiplies<float>()); // golden answer:
+
+		std::vector<float> ZBolt [threadCount];
+		for (int i=0; i< threadCount; i++){
+			ZBolt[i].resize(aSize);
+		};
+
+		std::thread t0(singleThreadReduction, A, B, &ZBolt[0], aSize);
+		std::thread t1(singleThreadReduction,  A, B, &ZBolt[1], aSize);
+		std::thread t2(singleThreadReduction,  A, B, &ZBolt[2], aSize);
+		std::thread t3(singleThreadReduction, A, B,  &ZBolt[3], aSize);
+
+
+		t0.join();
+		t1.join();
+		t2.join();
+		t3.join();
+
+		for (int i=0; i< threadCount; i++){
+			checkResults(fName + "MultiThread", Z0.begin(), Z0.end(), ZBolt[i].begin());
+		};
+	}
+};
+
+
+void oclTransform(int aSize)
+{
+	std::vector<float> A(aSize), B(aSize);
+	for (int i=0; i<aSize; i++) {
+		A[i] = float(i);
+		B[i] = 1000.0f + (float)i;
+	}
+	std::vector<float> Z0(aSize);
+	std::transform(A.begin(), A.end(), B.begin(), Z0.begin(), boltcl::plus<float>()); // golden answer:
+
+	int bufSize = aSize * sizeof(float);
+	cl::Buffer bufferA(CL_MEM_READ_ONLY|CL_MEM_USE_HOST_PTR, bufSize, A.data());
+	//cl::Buffer bufferA(begin(A), end(A), true);
+	cl::Buffer bufferB(CL_MEM_READ_ONLY|CL_MEM_USE_HOST_PTR, bufSize, B.data());
+	cl::Buffer bufferZ(CL_MEM_WRITE_ONLY, sizeof(float) * aSize);
+
+	boltcl::transform<float>(bufferA, bufferB, bufferZ, boltcl::plus<float>(), boltcl::oclcode::plus);
+
+	float * zMapped = static_cast<float*> (cl::CommandQueue::getDefault().enqueueMapBuffer(bufferZ, true, CL_MAP_READ | CL_MAP_WRITE, 0/*offset*/, bufSize));
+
+	std::string fName = __FUNCTION__ ;
+	fName += ":";
+
+	checkResults(fName + "oclBuffers", Z0.begin(), Z0.end(), zMapped);
+};
 
 
 
@@ -164,6 +248,10 @@ int _tmain(int argc, _TCHAR* argv[])
 
 	transformSaxpy(256);
 	transformSaxpy(1024);
+
+	multiThreadReductions(1024, 10);
+
+	oclTransform(1024);
 
 	return 0;
 }

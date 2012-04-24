@@ -24,6 +24,7 @@ set( Bolt_VERSION_PATCH 1 )
 set( Bolt_VERSION "${Bolt_VERSION_MAJOR}.${Bolt_VERSION_MINOR}.${Bolt_VERSION_PATCH}")
 	
 set( CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR} )
+set( BOLTCL_DIR "${PROJECT_SOURCE_DIR}/BoltForOpenCL/boltCL" )
 
 # On windows, it's convenient to change the default install prefix such that it does NOT point to 'program files'
 # Need to check out CMAKE_RUNTIME_OUTPUT_DIRECTORY variable, and see if that eliminates the need to modify install path
@@ -125,6 +126,7 @@ if( IS_DIRECTORY "${PROJECT_SOURCE_DIR}/BoltForOpenCL" )
 
 	if( OPENCL_FOUND )
 		add_subdirectory( BoltForOpenCL/tests/TransformTest )
+		add_subdirectory( BoltForOpenCL/tests/ReduceTest)
 	endif( )
 endif( )
 
