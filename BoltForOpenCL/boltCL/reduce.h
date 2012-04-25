@@ -18,8 +18,8 @@ namespace boltcl {
 				"global " + valueTypeName + "* A,\n"
 				"const int length,\n"
 				"const " + valueTypeName + " init,\n"
-				"global " + valueTypeName + "* result,\n"
 				"global " + functorTypeName + "* userFunctor,\n"
+				"global " + valueTypeName + "* result,\n"
 				"local " + valueTypeName + "* scratch\n"
 				");\n\n";
 
@@ -46,7 +46,8 @@ namespace boltcl {
 			int resultCnt = computeUnits * wgPerComputeUnit;
 			const int wgSize = 64; 
 
-			cl::Buffer userFunctor(CL_MEM_READ_ONLY|CL_MEM_USE_HOST_PTR, sizeof(binary_op), &binary_op );   // Create buffer wrapper so we can access host parameters.
+            // Create buffer wrappers so we can access the host functors, for read or writing in the kernel
+			cl::Buffer userFunctor(CL_MEM_USE_HOST_PTR, sizeof(binary_op), &binary_op );   // Create buffer wrapper so we can access host parameters.
 			//std::cout << "sizeof(Functor)=" << sizeof(binary_op) << std::endl;
 			cl::Buffer result(CL_MEM_WRITE_ONLY, sizeof(T) * resultCnt);
 
@@ -59,8 +60,8 @@ namespace boltcl {
 			k.setArg(0, A);
 			k.setArg(1, sz);
 			k.setArg(2, init);
-			k.setArg(3, result);
-			k.setArg(4, userFunctor);
+			k.setArg(3, userFunctor);
+			k.setArg(4, result);
 			cl::LocalSpaceArg loc;
             loc.size_ = wgSize*sizeof(T);
 			k.setArg(5, loc);
@@ -73,6 +74,7 @@ namespace boltcl {
 				cl::NDRange(resultCnt * wgSize), 
 				cl::NDRange(wgSize));
 
+			// FIXME - also need to provide a version of this code that does the summation on the GPU, when the buffer is already located there?
 			// FIXME - replace with map:
 			std::vector<T> outputArray(resultCnt);
             cl::enqueueReadBuffer(result, true, 0, sizeof(T)*resultCnt, outputArray.data());
@@ -102,3 +104,5 @@ namespace boltcl {
 
 	};
 };
+
+// FIXME -remove optional functorTypeName from call - provide only typedef mechanism since string doesn't have any new value?

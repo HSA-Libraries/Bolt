@@ -125,8 +125,9 @@ if( IS_DIRECTORY "${PROJECT_SOURCE_DIR}/BoltForOpenCL" )
 	find_package( OpenCL )
 
 	if( OPENCL_FOUND )
-		add_subdirectory( BoltForOpenCL/tests/TransformTest )
 		add_subdirectory( BoltForOpenCL/tests/ReduceTest)
+		add_subdirectory( BoltForOpenCL/tests/TransformTest )
+		add_subdirectory( BoltForOpenCL/tests/TransformReduceTest )
 	endif( )
 endif( )
 
