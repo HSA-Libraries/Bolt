@@ -15,7 +15,7 @@ namespace boltcl {
 
 			//FIXME, when this becomes more stable move the kernel code to a string in bolt.cpp
 			// Note unfortunate dependency here on relative file path of run directory and location of boltcl dir.
-			std::string transformFunctionString = boltcl::fileToString("../../../../BoltForOpenCL/boltCL/transform_kernels.cl"); 
+			std::string transformFunctionString = boltcl::fileToString( "transform_kernels.cl" ); 
 
 			std::string instantiationString = 
 				"// Host generates this instantiation string with user-specified value type and functor\n"

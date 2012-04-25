@@ -37,18 +37,6 @@ if( NOT MSVC_IDE AND NOT CMAKE_BUILD_TYPE )
   set( CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel." FORCE )
 endif()
 
-# Currently, linux has a problem outputing both narrow and wide characters,
-# which happens in our client because openCL only supports narrow characters
-if( WIN32 )
-	option( UNICODE "Build with Unicode Support" ON )
-	if( UNICODE )
-		message( STATUS "UNICODE build" )
-	endif( )
-else()
-	set( UNICODE OFF )
-	message( STATUS "UNICODE feature disabled on linux" )
-endif()
-
 if( MSVC_IDE )
 	set( Bolt_BUILD64 ${CMAKE_CL_64} )
 else()
@@ -65,6 +53,27 @@ else()
 	message( STATUS "32bit build - FIND_LIBRARY_USE_LIB64_PATHS FALSE" )
 endif()
 
+# Various options below on configuring the build, and how to generate the solution files
+if( IS_DIRECTORY "${PROJECT_SOURCE_DIR}/BoltForC++AMP" AND WIN32 )
+	option( BUILD_ampBolt "Create a solution that compiles Bolt for AMP" ON )
+endif( )
+ 
+if( IS_DIRECTORY "${PROJECT_SOURCE_DIR}/BoltForOpenCL" )
+	option( BUILD_clBolt "Create a solution that compiles Bolt for OpenCL" ON )
+endif( )
+
+# Currently, linux has a problem outputing both narrow and wide characters,
+# which happens in our client because openCL only supports narrow characters
+if( WIN32 )
+	option( BUILD_UNICODE "Create a solution that compiles Bolt with Unicode Support" ON )
+	if( BUILD_UNICODE )
+		message( STATUS "UNICODE build" )
+	endif( )
+else()
+	set( BUILD_UNICODE OFF )
+	message( STATUS "UNICODE disabled on linux" )
+endif()
+
 # FFLAGS depend on the compiler, grab the compiler name from the path
 get_filename_component( C_COMPILER_NAME ${CMAKE_C_COMPILER} NAME_WE )
 # message( "C_COMPILER_NAME: " ${C_COMPILER_NAME} )
@@ -74,9 +83,6 @@ get_filename_component( C_COMPILER_NAME ${CMAKE_C_COMPILER} NAME_WE )
 if( C_COMPILER_NAME STREQUAL "cl" )
 	# Following options for nMake
 	message( STATUS "Detected MSVS Ver: " ${MSVC_VERSION} )
-	if( MSVC_VERSION VERSION_LESS 1700 )
-		message( FATAL_ERROR "Visual Studio 11 or higher is required because bolt uses AMP C++ features" )
-	endif( )
 elseif( C_COMPILER_NAME STREQUAL "gcc" )
 	message( STATUS "Detected GNU fortran compiler." )
 	message( FATAL_ERROR "GCC compiler not currently supported, because of AMP C++ syntax" )
@@ -93,7 +99,7 @@ else( )
 endif( )
 
 # If UNICODE is defined, pass extra definitions into 
-if( UNICODE )
+if( BUILD_UNICODE )
 	add_definitions( "/DUNICODE /D_UNICODE" )
 endif( )
 
@@ -115,14 +121,18 @@ else( )
     set( LIB_DIR lib32 )
 endif( )
 			
-if( IS_DIRECTORY "${PROJECT_SOURCE_DIR}/BoltForC++AMP" AND WIN32 )
+if( BUILD_ampBolt )
+	if( MSVC_VERSION VERSION_LESS 1700 )
+		message( FATAL_ERROR "Visual Studio 11 or higher is required because Bolt uses AMP C++ features" )
+	endif( )
+	
 	add_subdirectory( BoltForC++AMP/tests/reduce )
 	add_subdirectory( BoltForC++AMP/tests/transform )	
 endif( )
 	
-if( IS_DIRECTORY "${PROJECT_SOURCE_DIR}/BoltForOpenCL" )
+if( BUILD_clBolt )
 	# This will define OPENCL_FOUND
-	find_package( OpenCL )
+	find_package( OpenCL REQUIRED )
 
 	if( OPENCL_FOUND )
 		add_subdirectory( BoltForOpenCL/tests/ReduceTest)

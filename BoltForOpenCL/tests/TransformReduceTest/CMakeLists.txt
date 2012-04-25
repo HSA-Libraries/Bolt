@@ -42,6 +42,16 @@ target_link_libraries( clBolt.TransformReduce ${OPENCL_LIBRARIES} )
 set_target_properties( clBolt.TransformReduce PROPERTIES VERSION ${Bolt_VERSION} )
 set_target_properties( clBolt.TransformReduce PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
 
+install( FILES	
+			${PROJECT_SOURCE_DIR}/BoltForOpenCL/boltCL/transform_reduce_kernels.cl
+		DESTINATION
+			${BIN_DIR} )
+
+install( FILES	
+			${PROJECT_SOURCE_DIR}/BoltForOpenCL/boltCL/transform_reduce_kernels.cl
+		DESTINATION
+			${PROJECT_BINARY_DIR}/staging/\${CMAKE_INSTALL_CONFIG_NAME} )
+
 # CPack configuration; include the executable into the package
 install( TARGETS clBolt.TransformReduce
 	RUNTIME DESTINATION ${BIN_DIR}

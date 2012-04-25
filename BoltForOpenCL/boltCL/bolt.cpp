@@ -11,24 +11,68 @@
 #include <fstream>
 #include <streambuf>
 #include <direct.h>  //windows CWD for error message
+#include <tchar.h>
 
+//	TODO:  Find an appropriate place for this to live
+//	Typedefs to support unicode and ansii compilation
+#if defined( _UNICODE )
+	typedef std::wstring		tstring;
+	typedef std::wstringstream	tstringstream;
+	typedef std::wifstream		tifstream;
+	typedef std::wofstream		tofstream;
+	typedef std::wfstream		tfstream;
+	static std::wostream&	tout	= std::wcout;
+	static std::wostream&	terr	= std::wcerr;
+#else
+	typedef std::string tstring;
+	typedef std::stringstream tstringstream;
+	typedef std::ifstream		tifstream;
+	typedef std::ofstream		tofstream;
+	typedef std::fstream		tfstream;
+	static std::ostream&	tout	= std::cout;
+	static std::ostream&	terr	= std::cerr;
+#endif 
 
 namespace boltcl {
 
 	std::string fileToString(const std::string &fileName)
 	{
-
-
 		std::ifstream infile (fileName);
 		if (infile.fail() ) {
-			char cCurrentPath[FILENAME_MAX];
+#if defined( _WIN32 )
+			TCHAR osPath[ MAX_PATH ];
 
-			if (_getcwd(cCurrentPath, sizeof(cCurrentPath) / sizeof(TCHAR))) {
-				std::cout <<  "CWD=" << cCurrentPath << std::endl;
-			};
-			std::cout << "error: failed to open file '" << fileName << std::endl;
-			throw;
-		} 
+			//	If loading the .cl file fails from the specified path, then make a last ditch attempt (purely for convenience) to find the .cl file right to the executable,
+			//	regardless of what the CWD is
+			//	::GetModuleFileName( ) returns TCHAR's (and we define _UNICODE for windows); but the fileName string is char's, 
+			//	so we needed to create an abstraction for string/wstring
+			if( ::GetModuleFileName( NULL, osPath, MAX_PATH ) )
+			{
+				tstring thisPath( osPath );
+				tstring::size_type pos = thisPath.find_last_of( _T( "\\" ) );
+
+				tstring newPath;
+				if( pos != tstring::npos )
+				{
+					tstring exePath	= thisPath.substr( 0, pos + 1 );	// include the \ character
+
+					//	Narrow to wide conversion should always work, but beware of wide to narrow!
+					tstring convName( fileName.begin( ), fileName.end( ) );
+					newPath = exePath + convName;
+				}
+
+				infile.open( newPath.c_str( ) );
+			}
+#endif
+			if (infile.fail() ) {
+				TCHAR cCurrentPath[FILENAME_MAX];
+				if (_tgetcwd(cCurrentPath, sizeof(cCurrentPath) / sizeof(TCHAR))) {
+					tout <<  _T( "CWD=" ) << cCurrentPath << std::endl;
+				};
+				std::cout << "error: failed to open file '" << fileName << std::endl;
+				throw;
+			} 
+		}
 
 		std::string str((std::istreambuf_iterator<char>(infile)),
 			std::istreambuf_iterator<char>());
@@ -61,7 +105,7 @@ namespace boltcl {
 
 		//FIXME, when this becomes more stable move the kernel code to a string in bolt.cpp
 		// Note unfortunate dependency here on relative file path of run directory and location of boltcl dir.
-		std::string templateFunctionString = boltcl::fileToString("../../../../BoltForOpenCL/boltCL/" + apiName + "_kernels.cl"); 
+		std::string templateFunctionString = boltcl::fileToString( apiName + "_kernels.cl"); 
 
 		std::string codeStr = userCode + "\n\n" + templateFunctionString +   instantiationString;
 
