@@ -18,11 +18,11 @@ namespace bolt {
 	const int reduceMultiCpuThreshold = 2; // FIXME, artificially low to force use of GPU
 	const int reduceGpuThreshold = 4; // FIXME, artificially low to force use of GPU
 
-	template<typename T, typename InputIterator, typename UnaryFunction, typename BinaryFunction> 
-	T transform_reduce(concurrency::accelerator_view av, 
+	template<typename outputT, typename InputIterator, typename UnaryFunction, typename BinaryFunction> 
+	outputT transform_reduce(concurrency::accelerator_view av, 
 		InputIterator begin, InputIterator end,  
 		UnaryFunction transform_op, 
-		T init,  BinaryFunction reduce_op)
+		outputT init,  BinaryFunction reduce_op)
 
 	{
 		int sz = (int)(end - begin);  // FIXME- size_t
@@ -51,13 +51,13 @@ namespace bolt {
 				static const int waveSize  = 64; // FIXME, read from device attributes.
 
 
-				typedef std::iterator_traits<InputIterator>::value_type T;
-				concurrency::array_view<T,1> A(sz, &*begin);
+				typedef std::iterator_traits<InputIterator>::value_type inputT;
+				concurrency::array_view<inputT,1> A(sz, &*begin);
 
 				concurrency::extent<1> launchExt(resultCnt*waveSize);
 				int iterationsPerWg = A.extent[0]/launchExt[0];
 
-				concurrency::array<T,1> results1(resultCnt, av);  // Output after reducing through LDS.
+				concurrency::array<outputT,1> results1(resultCnt, av);  // Output after reducing through LDS.
 
 				//std::cout << "ArrayDim=" << A.extent[0] << "  launchExt=" << launchExt[0] << "  iters=" << iterationsPerWg << std::endl;
 
@@ -66,19 +66,19 @@ namespace bolt {
 				// FIXME - reduce size of work for small problems.
 				concurrency::parallel_for_each(av,  launchExt.tile<waveSize>(), [=,&results1](concurrency::tiled_index<waveSize> idx) mutable restrict(amp)
 				{
-					tile_static T results0[waveSize];  // Could cause a problem for non-POD types in LDS?
+					tile_static outputT results0[waveSize];  // Could cause a problem for non-POD types in LDS?
 
-					T sum = init; // FIXME - .  Don't use Init here, peel out first assignment.
+					//T sum = init; // FIXME - .  Don't use Init here, peel out first assignment.
 					// FIXME - need to unroll loop to expose a bit more compute density
 					for (int i=idx.global[0]; i<A.extent[0]; i+=launchExt[0]) {
-						T val = transform_op(A[i]);
-						sum = reduce_op(sum, val);
+						outputT val = transform_op(A[i]);
+						init = reduce_op(init, val);
 					};
 
 
 					//---
 					// Reduce through LDS across wavefront:
-					results0[idx.local[0]] = sum; 
+					results0[idx.local[0]] = init; 
 					BARRIER(waveSize);
 
 					REDUCE_STEP(idx.local[0], 32);
@@ -100,7 +100,7 @@ namespace bolt {
 				//---
 				//Copy partial array back to host
 				// FIXME - we'd really like to use ZC memory for this final step 
-				std::vector<T> h_data(resultCnt);
+				std::vector<outputT> h_data(resultCnt);
 				h_data = results1; 
 
 #if 0
@@ -111,7 +111,7 @@ namespace bolt {
 				};
 #endif	
 
-				T finalReduction = init;
+				outputT finalReduction = init;
 				for (int i=0; i<results1.extent[0]; i++) {
 					finalReduction = reduce_op(finalReduction, h_data[i]);
 				};

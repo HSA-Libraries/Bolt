@@ -16,7 +16,7 @@ namespace bolt {
 	template<typename InputIterator, typename OutputIterator, typename UnaryFunction> 
 	void transform(InputIterator first, InputIterator last, OutputIterator result, UnaryFunction f)  {
 
-        size_t sz = last - first;
+        int sz = (int) (last - first);  //FIXME - size_t conversion.
 
         if (sz < transformThreshold) {
             // Run on CPU using serial implementation or concrt

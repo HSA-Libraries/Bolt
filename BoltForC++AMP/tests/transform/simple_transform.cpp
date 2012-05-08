@@ -22,6 +22,8 @@ static void printA(const char * msg, const int *a, int x_size)
 		std::wcout << a[i] << std::endl;
 };
 
+
+
 /*
 * Demonstrates:
    * Use of bolt::transform function
@@ -97,12 +99,49 @@ void simpleTransform2(const int sz)
 };
 
 
+// Show use of Saxpy Functor object.
+struct SaxpyFunctor
+{
+	float _a;
+	SaxpyFunctor(float a) : _a(a) {};
+
+	float operator() (const float &xx, const float &yy) restrict(cpu,amp)
+	{
+		return _a * xx + yy;
+	};
+	
+};
+
+
+void transformSaxpy(int aSize)
+{
+	std::string fName = __FUNCTION__ ;
+	fName += ":";
+
+	std::vector<float> A(aSize), B(aSize), Z1(aSize), Z0(aSize);
+
+	for (int i=0; i<aSize; i++) {
+		A[i] = float(i);
+		B[i] = 10000.0f + (float)i;
+	}
+
+	SaxpyFunctor sb(10.0);
+
+	std::transform(A.begin(), A.end(), B.begin(), Z0.begin(), sb);
+	bolt::transform(A.begin(), A.end(), B.begin(), Z1.begin(), sb);  
+
+	//checkResults(fName, Z0.begin(), Z0.end(), Z1.begin());
+
+};
+
 void simpleTransform()
 {
 	simpleTransform1();
 	simpleTransform2<int>(128);
 	simpleTransform2<float>(1000);
 	simpleTransform2<float>(100000);
+
+	transformSaxpy(256);
 };
 
 
