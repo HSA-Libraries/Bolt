@@ -25,7 +25,9 @@ namespace bolt {
 		T init,
 		BinaryFunction binary_op)  
 	{
-		int sz = end - begin;
+		//	NOTE: This subtraction of iterators implies that the memory is sequential, which implies a vector iterator
+		// int sz = end - begin;
+		auto sz = std::distance( begin, end );
 
 		if (sz < reduceMultiCpuThreshold) {
 			//serial CPU implementation
@@ -49,7 +51,7 @@ namespace bolt {
 
 
 			typedef std::iterator_traits<InputIterator>::value_type T;
-			concurrency::array_view<T,1> A(end-begin, &*begin);
+			concurrency::array_view<T,1> A( static_cast< int >( sz ), &*begin);
 
 			concurrency::extent<1> launchExt(resultCnt*waveSize);
 			int iterationsPerWg = A.extent[0]/launchExt[0];
@@ -117,7 +119,31 @@ namespace bolt {
 		};
 	};
 
+	/*
+	* This version of reduce2 disallows the use of bidirectional iterators
+	*/
+	template<typename InputIterator, typename T, typename BinaryFunction> 
+	typename std::iterator_traits<InputIterator>::value_type
+		reduce(InputIterator begin, InputIterator end, 
+		T init,
+		BinaryFunction binary_op, std::bidirectional_iterator_tag )  
+	{
 
+		return T( 0 );
+	};
+
+	/*
+	* This version of reduce2 allows the use of random access iterators
+	*/
+	template<typename InputIterator, typename T, typename BinaryFunction> 
+	typename std::iterator_traits<InputIterator>::value_type
+		reduce(InputIterator begin, InputIterator end, 
+		T init,
+		BinaryFunction binary_op, std::random_access_iterator_tag )  
+	{
+
+		return reduce (concurrency::accelerator().default_view, begin, end, init, binary_op);
+	};
 
 	/*
 	* This version of reduce uses default accelerator
@@ -129,7 +155,7 @@ namespace bolt {
 		BinaryFunction binary_op)  
 	{
 
-		return reduce (concurrency::accelerator().default_view, begin, end, init, binary_op);
+		return reduce ( begin, end, init, binary_op, std::_Iter_cat( begin ) );
 	};
 
 
@@ -142,7 +168,7 @@ namespace bolt {
 		T init)
 	{
 
-		return reduce (concurrency::accelerator().default_view, begin, end, init, bolt::plus<T>());
+		return reduce (begin, end, init, bolt::plus<T>(), std::_Iter_cat( begin ) );
 	};
 
 
@@ -155,7 +181,7 @@ namespace bolt {
 	{
 		typedef std::iterator_traits<InputIterator>::value_type T;
 
-		return reduce (concurrency::accelerator().default_view, begin, end, T(0), bolt::plus<T>());
+		return reduce (begin, end, T(0), bolt::plus<T>(), std::_Iter_cat( begin ) );
 	};
 
 

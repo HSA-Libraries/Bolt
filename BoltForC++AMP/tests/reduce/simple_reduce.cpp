@@ -6,6 +6,7 @@
 #include <bolt/functional.h>
 #include <bolt/reduce.h>
 
+#include <list>	// For debugging purposes, to prove that we can reject lists
 
 template<typename T>
 void printCheckMessage(bool err, std::string msg, T  stlResult, T boltResult)
@@ -57,17 +58,20 @@ bool checkResult(std::string msg, T  stlResult, T boltResult, double errorThresh
 void simpleReduce1(int aSize)
 {
 	std::vector<int> A(aSize);
+	std::list<int> L;
 
 	for (int i=0; i < aSize; i++) {
 		A[i] = i;
+		L.push_back( i );
 	};
 
 	int stlReduce = std::accumulate(A.begin(), A.end(), 0);
 
 	int boltReduce = bolt::reduce(A.begin(), A.end(), 0, bolt::plus<int>());
 	int boltReduce2 = bolt::reduce(A.begin(), A.end());  // same as above...
+	int boltReduceList = bolt::reduce(L.begin(), L.end());  // same as above...
 
-	printf ("Sum: stl=%d,  bolt=%d %d\n", stlReduce, boltReduce, boltReduce2);
+	printf ("Sum: stl=%d,  bolt=%d %d %d\n", stlReduce, boltReduce, boltReduce2, boltReduceList );
 };
 
 
