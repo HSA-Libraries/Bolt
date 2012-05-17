@@ -47,6 +47,30 @@ bool checkResult(std::string msg, T  stlResult, T boltResult, double errorThresh
 	return err;
 };
 
+// Simple test case for bolt::reduce:
+// Sum together specified numbers, compare against STL::accumulate function.
+// Demonstrates:
+//    * use of bolt with STL::array iterators
+//    * use of bolt with default plus 
+//    * use of bolt with explicit plus argument
+void simpleReduceArray( )
+{
+	const unsigned int arraySize = 4096;
+
+	std::array< int, arraySize > A;
+
+	for (int i=0; i < arraySize; i++) {
+		A[i] = i;
+	};
+
+	int stlReduce = std::accumulate(A.begin(), A.end(), 0);
+
+	int boltReduce = bolt::reduce(A.begin(), A.end(), 0, bolt::plus<int>());
+	int boltReduce2 = bolt::reduce(A.begin(), A.end());  // same as above...
+	int boltReduce3 = bolt::reduce(A.rbegin(), A.rend());  // reverse iterators should not be supported
+
+	printf ("Sum: stl=%d,  bolt=%d %d %d\n", stlReduce, boltReduce, boltReduce2, boltReduce3 );
+};
 
 
 // Simple test case for bolt::reduce:
@@ -55,23 +79,32 @@ bool checkResult(std::string msg, T  stlResult, T boltResult, double errorThresh
 //    * use of bolt with STL::vector iterators
 //    * use of bolt with default plus 
 //    * use of bolt with explicit plus argument
-void simpleReduce1(int aSize)
+void simpleReduce1(const int vSize)
 {
-	std::vector<int> A(aSize);
+	std::vector<int> V(vSize);
+	std::vector<bool> B(vSize);
 	std::list<int> L;
 
-	for (int i=0; i < aSize; i++) {
-		A[i] = i;
-		L.push_back( i );
+	for (int i=0; i < vSize; i++) {
+		V[i] = i;
+		B[i] = false;
 	};
 
-	int stlReduce = std::accumulate(A.begin(), A.end(), 0);
+	//	Don't need to test a big list, as it's slow to destroy itself in debug build and interface should reject anyway
+	L.push_back( 0 );
+	L.push_back( 1 );
+	L.push_back( 2 );
 
-	int boltReduce = bolt::reduce(A.begin(), A.end(), 0, bolt::plus<int>());
-	int boltReduce2 = bolt::reduce(A.begin(), A.end());  // same as above...
-	int boltReduceList = bolt::reduce(L.begin(), L.end());  // same as above...
 
-	printf ("Sum: stl=%d,  bolt=%d %d %d\n", stlReduce, boltReduce, boltReduce2, boltReduceList );
+	int stlReduce = std::accumulate(V.begin(), V.end(), 0);
+
+	int boltReduce = bolt::reduce(V.begin(), V.end(), 0, bolt::plus<int>());
+	int boltReduce2 = bolt::reduce(V.begin(), V.end());  // same as above...
+	int boltReduce3 = bolt::reduce(V.rbegin(), V.rend());  // reverse iterators should not be supported
+	int boltReduceList = bolt::reduce(L.begin(), L.end());  // bi-directional iterators should not be supported
+	int boltReduceBool = bolt::reduce(B.begin(), B.end());  // std::vector<bool> iterators should not be supported
+
+	printf ("Sum: stl=%d,  bolt=%d %d %d %d %d\n", stlReduce, boltReduce, boltReduce2, boltReduce3, boltReduceList, boltReduceBool );
 };
 
 
@@ -242,6 +275,7 @@ void simpleReduce4()
 // Test driver function
 void simpleReduce()
 {
+	simpleReduceArray( );
 	simpleReduce1(1024);
 	simpleReduce1(1024000);
 	simpleReduce2();

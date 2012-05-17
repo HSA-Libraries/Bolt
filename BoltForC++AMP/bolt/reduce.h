@@ -2,6 +2,7 @@
 
 #include <iostream>  // FIXME, remove as this is only here for debug output
 #include <vector>
+#include <array>
 #include <amp.h>
 #include <bolt/functional.h>
 
@@ -120,28 +121,110 @@ namespace bolt {
 	};
 
 	/*
-	* This version of reduce2 disallows the use of bidirectional iterators
+	* This version of reduce defaults to disallow the use of iterators, unless a specialization exists below
 	*/
 	template<typename InputIterator, typename T, typename BinaryFunction> 
 	typename std::iterator_traits<InputIterator>::value_type
 		reduce(InputIterator begin, InputIterator end, 
 		T init,
-		BinaryFunction binary_op, std::bidirectional_iterator_tag )  
+		BinaryFunction binary_op, std::input_iterator_tag )
 	{
-
-		return T( 0 );
+		return std::iterator_traits<InputIterator>::value_type( );
 	};
 
 	/*
-	* This version of reduce2 allows the use of random access iterators
+	* Partial specialization of reduce which allows the use of naked pointer types
 	*/
-	template<typename InputIterator, typename T, typename BinaryFunction> 
-	typename std::iterator_traits<InputIterator>::value_type
-		reduce(InputIterator begin, InputIterator end, 
+	template< typename T, typename BinaryFunction >
+	typename std::iterator_traits< T* >::value_type
+		reduce( T* begin, typename T* end, 
 		T init,
-		BinaryFunction binary_op, std::random_access_iterator_tag )  
+		BinaryFunction binary_op, std::random_access_iterator_tag )
 	{
+		return reduce( concurrency::accelerator().default_view, begin, end, init, binary_op);
+	};
 
+	/*
+	* Partial specialization of reduce which allows the use of constant naked pointer types
+	*/
+	template< typename T, typename BinaryFunction >
+	typename std::iterator_traits< const T* >::value_type
+		reduce( const T* begin, const T* end, 
+		T init,
+		BinaryFunction binary_op, std::random_access_iterator_tag )
+	{
+		return reduce( concurrency::accelerator().default_view, begin, end, init, binary_op);
+	};
+
+	/*
+	* Partial specialization of reduce which allows the use of std::vector< T >::iterator types
+	*/
+	template< typename T, typename BinaryFunction >
+	typename std::iterator_traits< typename std::vector< T >::iterator >::value_type
+		reduce(typename std::vector< T >::iterator begin, typename std::vector< T >::iterator end, 
+		T init,
+		BinaryFunction binary_op, std::random_access_iterator_tag )
+	{
+		return reduce (concurrency::accelerator().default_view, begin, end, init, binary_op);
+	};
+
+	/*
+	* Partial specialization of reduce which allows the use of std::vector< T >::const_iterator types
+	*/
+	template< typename T, typename BinaryFunction >
+	typename std::iterator_traits< typename std::vector< T >::const_iterator >::value_type
+		reduce(typename std::vector< T >::const_iterator begin, typename std::vector< T >::const_iterator end, 
+		T init,
+		BinaryFunction binary_op, std::random_access_iterator_tag )
+	{
+		return reduce (concurrency::accelerator().default_view, begin, end, init, binary_op);
+	};
+
+	/*
+	* Partial specialization of reduce which disallows the use of std::vector< bool >::iterator types
+	*/
+	template< typename BinaryFunction >
+	typename std::iterator_traits< typename std::vector< bool >::iterator >::value_type
+		reduce(typename std::vector< bool >::iterator begin, typename std::vector< bool >::iterator end, 
+		bool init,
+		BinaryFunction binary_op, std::random_access_iterator_tag )
+	{
+		return std::iterator_traits<typename std::vector< bool >::iterator >::value_type( );
+	};
+
+	/*
+	* Partial specialization of reduce which disallows the use of std::vector< bool >::const_iterator types
+	*/
+	template< typename BinaryFunction >
+	typename std::iterator_traits< typename std::vector< bool >::const_iterator >::value_type
+		reduce(typename std::vector< bool >::const_iterator begin, typename std::vector< bool >::const_iterator end, 
+		bool init,
+		BinaryFunction binary_op, std::random_access_iterator_tag )
+	{
+		return std::iterator_traits< typename std::vector< bool >::const_iterator >::value_type( );
+	};
+
+	/*
+	* Partial specialization of reduce which allows the use of std::array< T, N >::iterator types
+	*/
+	template< typename T, size_t N, typename BinaryFunction >
+	typename std::iterator_traits< typename std::_Array_iterator< T, N > >::value_type
+		reduce(typename std::_Array_iterator< T, N > begin, typename std::_Array_iterator< T, N > end, 
+		T init,
+		BinaryFunction binary_op, std::random_access_iterator_tag )
+	{
+		return reduce (concurrency::accelerator().default_view, begin, end, init, binary_op);
+	};
+
+	/*
+	* Partial specialization of reduce which allows the use of std::array< T, N >::const_iterator types
+	*/
+	template< typename T, size_t N, typename BinaryFunction >
+	typename std::iterator_traits< typename std::_Array_const_iterator< T, N > >::value_type
+		reduce(typename std::_Array_const_iterator< T, N > begin, typename std::_Array_const_iterator< T, N > end, 
+		T init,
+		BinaryFunction binary_op, std::random_access_iterator_tag )
+	{
 		return reduce (concurrency::accelerator().default_view, begin, end, init, binary_op);
 	};
 
@@ -155,7 +238,7 @@ namespace bolt {
 		BinaryFunction binary_op)  
 	{
 
-		return reduce ( begin, end, init, binary_op, std::_Iter_cat( begin ) );
+		return reduce ( begin, end, init, binary_op, std::iterator_traits< InputIterator >::iterator_category( ) );
 	};
 
 
@@ -168,7 +251,7 @@ namespace bolt {
 		T init)
 	{
 
-		return reduce (begin, end, init, bolt::plus<T>(), std::_Iter_cat( begin ) );
+		return reduce (begin, end, init, bolt::plus<T>(), std::iterator_traits< InputIterator >::iterator_category( ) );
 	};
 
 
@@ -181,7 +264,7 @@ namespace bolt {
 	{
 		typedef std::iterator_traits<InputIterator>::value_type T;
 
-		return reduce (begin, end, T(0), bolt::plus<T>(), std::_Iter_cat( begin ) );
+		return reduce (begin, end, T(0), bolt::plus<T>(), std::iterator_traits< InputIterator >::iterator_category( ) );
 	};
 
 
