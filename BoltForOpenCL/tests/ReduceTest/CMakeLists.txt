@@ -3,55 +3,20 @@
 #############################################################################
 # List the names of common files to compile across all platforms
 
-set( clBolt.Reduce.Source stdafx.cpp ReduceTest.cpp ${BOLTCL_DIR}/bolt.cpp )
-set( clBolt.Reduce.Headers stdafx.h targetver.h ${BOLTCL_DIR}/reduce.h ${BOLTCL_DIR}/reduce_kernels.cl)
+set( clBolt.Reduce.Source stdafx.cpp ReduceTest.cpp )
+set( clBolt.Reduce.Headers stdafx.h targetver.h ${BOLTCL_DIR}/reduce.h )
 
 set( clBolt.Reduce.Files ${clBolt.Reduce.Source} ${clBolt.Reduce.Headers} )
-
-# For a rainy day, add pre-compiled header support
-#if( MSVC )
-#	if (USE_MSVC_PCH)
-	
-#		set_source_files_properties(LungAnalysisPCH.cxx
-#			PROPERTIES
-#			COMPILE_FLAGS "/YcLungAnalysisPCH.h"
-#			)
-#		foreach( src_file ${UPMC_LA_SRCS} )
-#			set_source_files_properties(
-#				${src_file}
-#				PROPERTIES
-#				COMPILE_FLAGS "/YuLungAnalysisPCH.h"
-#				)
-#		endforeach( src_file ${UPMC_LA_SRCS} )
-		
-#		list(APPEND UPMC_LA_SRCS LungAnalysisPCH.cxx)
-#		list(APPEND UPMC_LA_HDRS LungAnalysisPCH.h)
-
-#	endif(USE_MSVC_PCH)
-#endif (MSVC)
-  
-#	add_definitions( ${Boost_LIB_DIAGNOSTIC_DEFINITIONS} )
-# add_definitions( "/DReduce_EXPORTS" )
 
 # Include standard OpenCL headers
 include_directories( ${PROJECT_SOURCE_DIR}/BoltForOpenCL ${OPENCL_INCLUDE_DIRS} )
 
 add_executable( clBolt.Reduce ${clBolt.Reduce.Files} )
-target_link_libraries( clBolt.Reduce ${OPENCL_LIBRARIES} )
+target_link_libraries( clBolt.Reduce ${OPENCL_LIBRARIES} clBolt.Runtime )
 
 set_target_properties( clBolt.Reduce PROPERTIES VERSION ${Bolt_VERSION} )
 set_target_properties( clBolt.Reduce PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
 		
-install( FILES	
-			${PROJECT_SOURCE_DIR}/BoltForOpenCL/boltCL/reduce_kernels.cl
-		DESTINATION
-			${BIN_DIR} )
-
-install( FILES	
-			${PROJECT_SOURCE_DIR}/BoltForOpenCL/boltCL/reduce_kernels.cl
-		DESTINATION
-			${PROJECT_BINARY_DIR}/staging/\${CMAKE_INSTALL_CONFIG_NAME} )
-
 # CPack configuration; include the executable into the package
 install( TARGETS clBolt.Reduce
 	RUNTIME DESTINATION ${BIN_DIR}

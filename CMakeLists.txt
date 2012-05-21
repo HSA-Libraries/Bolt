@@ -137,6 +137,7 @@ if( BUILD_clBolt )
 	find_package( OpenCL REQUIRED )
 
 	if( OPENCL_FOUND )
+		add_subdirectory( BoltForOpenCL/boltCL )
 		add_subdirectory( BoltForOpenCL/tests/ReduceTest)
 		add_subdirectory( BoltForOpenCL/tests/TransformTest )
 		add_subdirectory( BoltForOpenCL/tests/TransformReduceTest )

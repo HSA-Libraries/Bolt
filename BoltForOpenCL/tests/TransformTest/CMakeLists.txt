@@ -2,55 +2,20 @@
 ##	Copyright (C) 2010 Advanced Micro Devices, Inc. All Rights Reserved.
 #############################################################################
 # List the names of common files to compile across all platforms
-set( clBolt.Transform.Source stdafx.cpp TransformTest.cpp ${PROJECT_SOURCE_DIR}/BoltForOpenCL/boltCL/bolt.cpp )
-set( clBolt.Transform.Headers stdafx.h targetver.h ${BOLTCL_DIR}/transform.h ${BOLTCL_DIR}/transform_kernels.cl)
+set( clBolt.Transform.Source stdafx.cpp TransformTest.cpp )
+set( clBolt.Transform.Headers stdafx.h targetver.h ${BOLTCL_DIR}/transform.h )
 
 set( clBolt.Transform.Files ${clBolt.Transform.Source} ${clBolt.Transform.Headers} )
-
-# For a rainy day, add pre-compiled header support
-#if( MSVC )
-#	if (USE_MSVC_PCH)
-	
-#		set_source_files_properties(LungAnalysisPCH.cxx
-#			PROPERTIES
-#			COMPILE_FLAGS "/YcLungAnalysisPCH.h"
-#			)
-#		foreach( src_file ${UPMC_LA_SRCS} )
-#			set_source_files_properties(
-#				${src_file}
-#				PROPERTIES
-#				COMPILE_FLAGS "/YuLungAnalysisPCH.h"
-#				)
-#		endforeach( src_file ${UPMC_LA_SRCS} )
-		
-#		list(APPEND UPMC_LA_SRCS LungAnalysisPCH.cxx)
-#		list(APPEND UPMC_LA_HDRS LungAnalysisPCH.h)
-
-#	endif(USE_MSVC_PCH)
-#endif (MSVC)
-  
-#	add_definitions( ${Boost_LIB_DIAGNOSTIC_DEFINITIONS} )
-# add_definitions( "/DReduce_EXPORTS" )
 
 # Include standard OpenCL headers
 include_directories( ${PROJECT_SOURCE_DIR}/BoltForOpenCL ${OPENCL_INCLUDE_DIRS} )
 
 add_executable( clBolt.Transform ${clBolt.Transform.Files} )
-target_link_libraries( clBolt.Transform ${OPENCL_LIBRARIES} )
+target_link_libraries( clBolt.Transform ${OPENCL_LIBRARIES} clBolt.Runtime )
 
 set_target_properties( clBolt.Transform PROPERTIES VERSION ${Bolt_VERSION} )
 set_target_properties( clBolt.Transform PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
 		
-install( FILES	
-			${PROJECT_SOURCE_DIR}/BoltForOpenCL/boltCL/transform_kernels.cl
-		DESTINATION
-			${BIN_DIR} )
-
-install( FILES	
-			${PROJECT_SOURCE_DIR}/BoltForOpenCL/boltCL/transform_kernels.cl
-		DESTINATION
-			${PROJECT_BINARY_DIR}/staging/\${CMAKE_INSTALL_CONFIG_NAME} )
-			
 # CPack configuration; include the executable into the package
 install( TARGETS clBolt.Transform
 	RUNTIME DESTINATION ${BIN_DIR}
