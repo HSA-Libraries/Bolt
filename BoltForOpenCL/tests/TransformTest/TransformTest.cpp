@@ -224,7 +224,7 @@ void oclTransform(int aSize)
 	std::vector<float> Z0(aSize);
 	std::transform(A.begin(), A.end(), B.begin(), Z0.begin(), boltcl::plus<float>()); // golden answer:
 
-	int bufSize = aSize * sizeof(float);
+	size_t bufSize = aSize * sizeof(float);
 	cl::Buffer bufferA(CL_MEM_READ_ONLY|CL_MEM_USE_HOST_PTR, bufSize, A.data());
 	//cl::Buffer bufferA(begin(A), end(A), true);
 	cl::Buffer bufferB(CL_MEM_READ_ONLY|CL_MEM_USE_HOST_PTR, bufSize, B.data());
