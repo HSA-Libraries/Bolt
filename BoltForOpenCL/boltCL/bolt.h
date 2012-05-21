@@ -17,6 +17,8 @@ namespace boltcl {
 // Creates a string and a regular version of the functor - need both the host and the CL def for the class
 // The other way to create this is with header files that are included in both host and CL files.
 #define BOLT_FUNCTOR(F) #F ;  F
+#define BOLT_CODE(F) #F ;  F
+
 
 
 //---
@@ -28,7 +30,7 @@ struct TypeName
 
     static const char* get()
     {
-		return "ERROR: Unknown typename; define missing TypeName<> missing";
+		return "ERROR: Unknown typename; define missing TypeName<> ";
 
         //return typeid(T).name();  // FIXME - try this on Windows.
     }
