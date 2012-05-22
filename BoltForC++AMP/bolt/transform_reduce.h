@@ -18,7 +18,9 @@ namespace bolt {
 	static const int reduceMultiCpuThreshold = 2; // FIXME, artificially low to force use of GPU
 	static const int reduceGpuThreshold = 4; // FIXME, artificially low to force use of GPU
 	static const int computeUnits     = 10; // FIXME - determine from HSA Runtime
-	static const int wgPerComputeUnit =  6; // Set high enough to hide memory latency, but low enough so that most reduction is done within each WG rather than between WG.
+	static const int wgPerComputeUnit =  7; // Set high enough to hide memory latency, but low enough so that most reduction is done within each WG rather than between WG.
+	static const int localW = 8;
+	static const int localH = 8;
 	static const int waveSize  = 64; // FIXME, read from device attributes.
 
 
@@ -126,22 +128,29 @@ namespace bolt {
 	{
 		int resultCnt = computeUnits * wgPerComputeUnit;
 
-		concurrency::extent<1> launchExt(resultCnt*waveSize);
+		// FIXME: implement a more clever algorithm for setting the shape of the calculation.
+		int globalH = wgPerComputeUnit * localH;
+		int globalW = computeUnits * localW;
+		
+		globalH = (ext[0] < globalH) ? ext[0] : globalH;
+		globalW = (ext[1] < globalW) ? ext[1] : globalW;
 
-  e
+
+		concurrency::extent<2> launchExt(globalH, globalW);
+
 		concurrency::array<outputT,1> results1(resultCnt, av);  // Output after reducing through LDS.
 
 		// FIXME - support actual BARRIER operations.
 		// FIXME - support checks on local memory usage
 		// FIXME - reduce size of work for small problems.
-		concurrency::parallel_for_each(av,  launchExt.tile<waveSize>(), [=,&results1](concurrency::tiled_index<waveSize> idx) mutable restrict(amp)
+		concurrency::parallel_for_each(av,  launchExt.tile<localH, localW>(), [=,&results1](concurrency::tiled_index<localH, localW> idx) mutable restrict(amp)
 		{
 			tile_static outputT tiled_data[waveSize];
 
 			// FIXME - need to unroll loop to expose a bit more compute density
 			// FIXME-hardcoded for size 2 right now.
-			for (int y=origin[0]; y<origin[0]+ext[0]; y++) {
-				for (int x=origin[1]+idx.global[0]; x<origin[1]+ext[1]; x+=launchExt[0]) {
+			for (int y=origin[0]+idx.global[0]; y<origin[0]+ext[0]; y+=launchExt[0]) {
+				for (int x=origin[1]+idx.global[1]; x<origin[1]+ext[1]; x+=launchExt[1]) {
 					outputT val = transform_op(concurrency::index<Rank>(y,x));
 					init = reduce_op(init, val);
 				};
@@ -149,20 +158,21 @@ namespace bolt {
 
 			//---
 			// Reduce through LDS across wavefront:
-			tiled_data[idx.local[0]] = init; 
+			int lx = localW * idx.local[0] + idx.local[1];
+			tiled_data[lx] = init; 
 			BARRIER(waveSize);
 
-			REDUCE_STEP(idx.local[0], 32);
-			REDUCE_STEP(idx.local[0], 16);
-			REDUCE_STEP(idx.local[0], 8);
-			REDUCE_STEP(idx.local[0], 4);
-			REDUCE_STEP(idx.local[0], 2);
-			REDUCE_STEP(idx.local[0], 1);
+			REDUCE_STEP(lx, 32);
+			REDUCE_STEP(lx, 16);
+			REDUCE_STEP(lx, 8);
+			REDUCE_STEP(lx, 4);
+			REDUCE_STEP(lx, 2);
+			REDUCE_STEP(lx, 1);
 
 			//---
 			// Save result of this tile to global mem
-			if (idx.local[0] == 0) {
-				results1[idx.tile] = tiled_data[0];
+			if (lx== 0) {
+				results1[idx.tile[0]*computeUnits + idx.tile[1]] = tiled_data[0];
 			};
 
 		} );  //end parallel_for_each
