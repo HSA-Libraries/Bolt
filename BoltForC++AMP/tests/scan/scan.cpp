@@ -55,7 +55,7 @@ bool checkResult(std::string msg, T  stlResult, T boltResult, double errorThresh
 //    * use of bolt with explicit plus argument
 void simpleScanArray( )
 {
-	const unsigned int arraySize = 16;
+	const unsigned int arraySize = 64;
 
 	std::array< int, arraySize > stdA, boltA;
 	std::array< int, arraySize > stdB, boltB;
@@ -76,7 +76,7 @@ void simpleScanArray( )
 	bolt::inclusive_scan( boltB.begin( ), boltB.end( ), boltB.begin( ) );
 
 	// Binary operator
-	//bolt::inclusive_scan( boltA.begin( ), boltA.end(), bolt::plus<int>( ) );
+	//bolt::inclusive_scan( boltA.begin( ), boltA.end(), boltA.begin( ), bolt::plus<int>( ) );
 
 	// Invalid calls
 	//bolt::inclusive_scan( boltA.rbegin( ), boltA.rend( ) );  // reverse iterators should not be supported

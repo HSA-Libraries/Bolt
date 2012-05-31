@@ -15,39 +15,72 @@ namespace bolt {
 	OutputIterator inclusive_scan( concurrency::accelerator_view av, InputIterator first, InputIterator last, 
 		OutputIterator result, BinaryFunction binary_op )
 	{
-		auto sz = std::distance( first, last );
+		typedef std::iterator_traits< InputIterator >::value_type T;
 
-		if( sz < reduceMultiCpuThreshold )
+		auto numElements = std::distance( first, last );
+
+		if( numElements < reduceMultiCpuThreshold )
 		{
 			//	Serial CPU implementation
 			return std::partial_sum( first, last, result, binary_op);
 		} 
-		else if( sz < reduceGpuThreshold )
+		else if( numElements < reduceGpuThreshold )
 		{
-			//	Multi-core CPU implementation:
-			typedef std::iterator_traits< InputIterator >::value_type T;
-			concurrency::combinable< T > results1;
-
-			//	This is implemented in TBB as tbb::parallel_scan( range, body )
+			//	This should be implemented in TBB as tbb::parallel_scan( range, body )
 			//	Does not appear to have an implementation in PPL
+			//	TODO: Bring in the dependency to TBB and replace this STD call
+			return std::partial_sum( first, last, result, binary_op);
 
-			return result;
+			return result + numElements;
 		}
 		else
 		{
-			int computeUnits     = 10; // FIXME - determine from HSA Runtime
-
 			// FIXME - determine from HSA Runtime 
 			// - based on est of how many threads needed to hide memory latency.
-			int wgPerComputeUnit =  6; 
-			int resultCnt = computeUnits * wgPerComputeUnit;
 			static const int waveSize  = 64; // FIXME, read from device attributes.
 
+			int computeUnits		= 10; // FIXME - determine from HSA Runtime
+			int wgPerComputeUnit	=  6; 
+			int resultCnt			= computeUnits * wgPerComputeUnit;
 
-			typedef std::iterator_traits< InputIterator >::value_type T;
+			//	Wrap our input data in an array_view, and mark it const so data is not read back from device
+			concurrency::array_view< const T > avInput( static_cast< int >( numElements ), &first[ 0 ] );
 
-			return last;
+			//	Wrap our output data in an array_view, and discard input data so it is not transferred to device
+			concurrency::array_view< T > avOutput( static_cast< int >( numElements ), &result[ 0 ] );
+			avOutput.discard_data( );
+
+			//	This is a very basic, basic scan implementation (non-optimized).  There is no synchronization, it works if we have 
+			//	32 <= x <= 64 threads.  Don't know why less than 32 theads returns garbage.
+
+//			concurrency::parallel_for_each( av, avOutput.extent.tile< waveSize >(), [=](concurrency::tiled_index< waveSize > idx) restrict(amp)
+			concurrency::parallel_for_each( av, avOutput.extent, [=](concurrency::index< 1 > idx) restrict(amp)
+			{
+				tile_static T LDS[ waveSize + (waveSize / 2) ];
+
+//				int tId = idx.global[ 1 ];
+				int tId = idx[ 0 ];
+
+				LDS[ tId ] = 0;
+//				T* pLDS = LDS + (waveSize / 2) + tId;
+				T* pLDS = LDS + (waveSize / 2);
+
+				T val = avInput[ tId ];
+				pLDS[ tId ] = val;
+
+				T sum = val;
+				for( int offset = 1; offset < waveSize; offset *= 2 )
+				{
+					int y = pLDS[ tId - offset ];
+					sum += y;
+					pLDS[ tId ] = sum;
+				}
+
+				avOutput[ tId ] = sum;
+			} );
 		};
+
+			return result + numElements;
 	};
 
 	/*
