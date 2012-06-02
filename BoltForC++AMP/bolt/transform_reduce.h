@@ -6,19 +6,40 @@
 #include <bolt/functional.h>
 
 
+#ifdef BOLT_POOL_ALLOC
+
+// FIXME - hack for use in hessian project.
+// Buffer pool accelerates performance by reducing dynamic alloc/dealloc, and automatically uses a staging buffer.
+// Hack here since we hard-code the user of the HessianState type; we should do a generic pool based on the 
+// size of the object?  Or separate pools for each call?
+#include <bolt/pool_alloc.h>
+
+
+// Hacky global variable.
+extern bolt::ArrayPool<HessianState> arrayPool;
+
+
+// Remove me or move to boltControl structure - this is just to provide control for experimentation:
+extern int p_computeUnits;
+extern int p_wgPerComputeUnit;
+
+#endif
+
 
 namespace bolt {
 
+#define VW 1
 #define BARRIER(W)  // FIXME - placeholder for future barrier insertions
 
 #define REDUCE_STEP(_IDX, _W) \
 	if (_IDX < _W) tiled_data[_IDX] = reduce_op(tiled_data[_IDX], tiled_data[_IDX+_W]); \
 	BARRIER(_W)
 
+	// Optimal values for pitcairn are 32/8, TN are 6/12
 	static const int reduceMultiCpuThreshold = 2; // FIXME, artificially low to force use of GPU
 	static const int reduceGpuThreshold = 4; // FIXME, artificially low to force use of GPU
-	static const int computeUnits     = 10; // FIXME - determine from HSA Runtime
-	static const int wgPerComputeUnit =  7; // Set high enough to hide memory latency, but low enough so that most reduction is done within each WG rather than between WG.
+	//static const int computeUnits     = 32; // FIXME - determine from HSA Runtime
+	//static const int wgPerComputeUnit =  12; // Set high enough to hide memory latency, but low enough so that most reduction is done within each WG rather than between WG.
 	static const int localW = 8;
 	static const int localH = 8;
 	static const int waveSize  = 64; // FIXME, read from device attributes.
@@ -32,6 +53,8 @@ namespace bolt {
 		outputT init,  BinaryFunction reduce_op)
 
 	{
+		int computeUnits = 32;
+		int wgPerComputeUnit = 8;
 		int sz = (int)(end - begin);  // FIXME- size_t
 
 #if 0
@@ -49,7 +72,7 @@ namespace bolt {
 		} else 
 #endif
 
-			int resultCnt = computeUnits * wgPerComputeUnit;
+		int resultCnt = computeUnits * wgPerComputeUnit;
 		static const int waveSize  = 64; // FIXME, read from device attributes.
 
 		typedef std::iterator_traits<InputIterator>::value_type inputT;
@@ -121,24 +144,30 @@ namespace bolt {
 
 	// This version takes a start index and extent as the range to iterate.  The tranform_op is called with an index<> for each point in the range.  Useful for indexing over all points in an image or array
 	template<typename outputT, int Rank, typename UnaryFunction, typename BinaryFunction> 
-	outputT transform_reduce2(concurrency::accelerator_view av, 
+	outputT transform_reduce(concurrency::accelerator_view av, 
 		concurrency::index<Rank> origin, concurrency::extent<Rank> ext,
 		UnaryFunction transform_op, 
 		outputT init,  BinaryFunction reduce_op)
 	{
+		int wgPerComputeUnit = p_wgPerComputeUnit; // FIXME - remove me.
+		int computeUnits     = p_computeUnits;     // FIXME - remove me.
 		int resultCnt = computeUnits * wgPerComputeUnit;
 
 		// FIXME: implement a more clever algorithm for setting the shape of the calculation.
 		int globalH = wgPerComputeUnit * localH;
 		int globalW = computeUnits * localW;
-		
-		globalH = (ext[0] < globalH) ? ext[0] : globalH;
+
+		globalH = (ext[0] < globalH) ? ext[0] : globalH; //FIXME, this is not a multiple of localSize.
 		globalW = (ext[1] < globalW) ? ext[1] : globalW;
 
 
 		concurrency::extent<2> launchExt(globalH, globalW);
-
+#ifdef BOLT_POOL_ALLOC
+		bolt::ArrayPool<outputT>::PoolEntry &entry = arrayPool.alloc(av, resultCnt);
+		concurrency::array<outputT,1> &results1 = *(entry._dBuffer);
+#else
 		concurrency::array<outputT,1> results1(resultCnt, av);  // Output after reducing through LDS.
+#endif
 
 		// FIXME - support actual BARRIER operations.
 		// FIXME - support checks on local memory usage
@@ -150,9 +179,9 @@ namespace bolt {
 			// FIXME - need to unroll loop to expose a bit more compute density
 			// FIXME-hardcoded for size 2 right now.
 			for (int y=origin[0]+idx.global[0]; y<origin[0]+ext[0]; y+=launchExt[0]) {
-				for (int x=origin[1]+idx.global[1]; x<origin[1]+ext[1]; x+=launchExt[1]) {
-					outputT val = transform_op(concurrency::index<Rank>(y,x));
-					init = reduce_op(init, val);
+				for (int x=origin[1]+idx.global[1]*VW; x<origin[1]+ext[1]; x+=launchExt[1]*VW) {
+					init = reduce_op(init, transform_op(concurrency::index<Rank>(y,x)));
+					//init = reduce_op(init, transform_op(concurrency::index<Rank>(y,x+1)));
 				};
 			};
 
@@ -181,31 +210,47 @@ namespace bolt {
 		//---
 		//Copy partial array back to host
 		// FIXME - we'd really like to use ZC memory for this final step 
-		std::vector<outputT> h_data(resultCnt);
-		h_data = results1; 
-
+		//std::vector<outputT> h_data(resultCnt);
+		//h_data = results1; 
+		concurrency::copy(*entry._dBuffer, *entry._stagingBuffer);
+		
+	
 
 		outputT finalReduction = init;
 		for (int i=0; i<results1.extent[0]; i++) {
-			finalReduction = reduce_op(finalReduction, h_data[i]);
+			finalReduction = reduce_op(finalReduction, (*entry._stagingBuffer)[i]);
 		};
+
+#ifdef BOLT_POOL_ALLOC
+		arrayPool.free(entry);
+#endif
 
 		return finalReduction;
 
 	};
 
 
-template<typename T, typename InputIterator, typename UnaryFunction, typename BinaryFunction> 
-T transform_reduce(
-	InputIterator begin, InputIterator end,  
-	UnaryFunction transform_op, 
-	T init,  BinaryFunction reduce_op)
+	template<typename outputT, int Rank, typename UnaryFunction, typename BinaryFunction> 
+	outputT transform_reduce(
+		concurrency::index<Rank> origin, concurrency::extent<Rank> ext,
+		UnaryFunction transform_op, 
+		outputT init,  BinaryFunction reduce_op) 
+	{
+		return transform_reduce(concurrency::accelerator().default_view, origin, ext, transform_op, init, reduce_op);
+	};
 
-{
-	return transform_reduce(concurrency::accelerator().default_view, begin, end, transform_op, init, reduce_op);
-};
 
-// FIXME - still need more versions that take accelerator as first argument.
+	template<typename T, typename InputIterator, typename UnaryFunction, typename BinaryFunction> 
+	T transform_reduce(
+		InputIterator begin, InputIterator end,  
+		UnaryFunction transform_op, 
+		T init,  BinaryFunction reduce_op)
+
+	{
+		return transform_reduce(concurrency::accelerator().default_view, begin, end, transform_op, init, reduce_op);
+	};
+
+	// FIXME - still need more versions that take accelerator as first argument.
 
 
 }; // end namespace bolt
