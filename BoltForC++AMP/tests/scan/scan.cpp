@@ -8,44 +8,32 @@
 
 #include <list>	// For debugging purposes, to prove that we can reject lists
 
-template<typename T>
-void printCheckMessage(bool err, std::string msg, T  stlResult, T boltResult)
+template<typename InputIterator1, typename InputIterator2>
+int checkResults(std::string msg, InputIterator1 first1 , InputIterator1 end1 , InputIterator2 first2)
 {
-	if (err) {
-		std::cout << "*ERROR ";
+	int errCnt = 0;
+	static const int maxErrCnt = 20;
+	size_t sz = end1-first1 ;
+	for (int i=0; i<sz ; i++) {
+		if (first1 [i] != first2 [i]) {
+			errCnt++;
+			if (errCnt < maxErrCnt) {
+				std::cout << "MISMATCH " << msg << " STL= " << first1[i] << "  BOLT=" << first2[i] << std::endl;
+			} else if (errCnt == maxErrCnt) {
+				std::cout << "Max error count reached; no more mismatches will be printed...\n";
+			}
+		};
+	};
+
+	if (errCnt==0) {
+		std::cout << " PASSED  " << msg << " Correct on all " << sz << " elements." << std::endl;
 	} else {
-		std::cout << "PASSED ";
-	}
+		std::cout << "*FAILED  " << msg << "mismatch on " << errCnt << " / " << sz << " elements." << std::endl;
+	};
 
-	std::cout << msg << "  STL=" << stlResult << " BOLT=" << boltResult << std::endl;
+	return errCnt;
 };
 
-template<typename T>
-bool checkResult(std::string msg, T  stlResult, T boltResult)
-{
-	bool err =  (stlResult != boltResult);
-	printCheckMessage(err, msg, stlResult, boltResult);
-
-	return err;
-};
-
-
-// For comparing floating point values:
-template<typename T>
-bool checkResult(std::string msg, T  stlResult, T boltResult, double errorThresh)
-{
-	bool err;
-	if ((errorThresh != 0.0) && stlResult) {
-		double ratio = (double)(boltResult) / (double)(stlResult) - 1.0;
-		err = abs(ratio) > errorThresh;
-	} else {
-		// Avoid div-by-zero, check for exact match.
-		err = (stlResult != boltResult);
-	}
-
-	printCheckMessage(err, msg, stlResult, boltResult);
-	return err;
-};
 
 // Simple test case for bolt::inclusive_scan:
 // Sum together specified numbers, compare against STL::partial_sum function.
@@ -53,9 +41,11 @@ bool checkResult(std::string msg, T  stlResult, T boltResult, double errorThresh
 //    * use of bolt with STL::array iterators
 //    * use of bolt with default plus 
 //    * use of bolt with explicit plus argument
+template< size_t arraySize >
 void simpleScanArray( )
 {
-	const unsigned int arraySize = 64;
+	std::string fName = __FUNCTION__ ;
+	fName += ":";
 
 	std::array< int, arraySize > stdA, boltA;
 	std::array< int, arraySize > stdB, boltB;
@@ -70,10 +60,12 @@ void simpleScanArray( )
 	//Out-of-place
 	std::partial_sum( stdA.begin( ), stdA.end( ), stdB.begin( ) );
 	bolt::inclusive_scan( boltA.begin( ), boltA.end( ), boltB.begin( ) );
+	checkResults( fName + "Out-of-place", stdB.begin(), stdB.end(), boltB.begin() );
 
 	//In-place
 	std::partial_sum( stdB.begin( ), stdB.end( ), stdB.begin( ) );
 	bolt::inclusive_scan( boltB.begin( ), boltB.end( ), boltB.begin( ) );
+	checkResults( fName + "In-place", stdB.begin(), stdB.end(), boltB.begin() );
 
 	// Binary operator
 	//bolt::inclusive_scan( boltA.begin( ), boltA.end(), boltA.begin( ), bolt::plus<int>( ) );
@@ -287,10 +279,34 @@ void simpleScanArray( )
 // Test driver function
 void simpleScan()
 {
-	simpleScanArray( );
-	//simpleScan1(1024);
-	//simpleScan1(1024000);
-	//simpleScan2();
+	//	Tests within 1 wavefront
+	simpleScanArray< 64 >( );
+	simpleScanArray< 63 >( );
+	simpleScanArray< 32 >( );
+	simpleScanArray< 31 >( );
+	simpleScanArray< bolt::scanGpuThreshold - 1 >( );
+	simpleScanArray< bolt::scanMultiCpuThreshold - 1 >( );
+	simpleScanArray< 1 >( );
+
+	//	Tests with multi-wavefronts
+	simpleScanArray< 127 >( );
+	simpleScanArray< 128 >( );
+	simpleScanArray< 129 >( );
+	simpleScanArray< 1000 >( );
+	simpleScanArray< 1024 >( );
+	simpleScanArray< 4000 >( );
+
+	//	Huge Arrays
+//	simpleScanArray< 4097 >( );
+//	simpleScanArray< 65536 >( );
+//	simpleScanArray< 131072 >( );
+
+	//	Stack overflows
+	//simpleScanArray< 1048576 >( );
+	//simpleScanArray< 52428800 >( );
+
+	//	This results in a compile error; is this OK?
+//	simpleScanArray< 0 >( );
 
 	//simpleScan3<float> ("sum", bolt::plus<float>(), 1000000, .0001/*errorThresh*/);
 	//simpleScan3<float> ("min", bolt::minimum<float>(), 1000000);
