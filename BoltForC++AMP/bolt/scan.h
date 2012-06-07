@@ -10,6 +10,52 @@ namespace bolt {
 
 	const int scanMultiCpuThreshold	= 4; // FIXME, artificially low to force use of GPU
 	const int scanGpuThreshold		= 8; // FIXME, artificially low to force use of GPU
+	const int maxThreadsInTile		= 1024;
+	const int maxTilesPerDim		= 65535;
+	const int maxTilesPerPFE		= maxThreadsInTile*maxTilesPerDim;
+
+//	Creating a portable defintion of countof
+#if defined( _WIN32 )
+	#define countOf _countof
+#else
+	#define countOf( arr ) ( sizeof( arr ) / sizeof( arr[ 0 ] ) )
+#endif
+
+#if defined( _WIN32 )
+	#include <intrin.h>
+
+	#if defined( _WIN64 )
+		inline void BSF( unsigned long* index, size_t& mask )
+		{
+			_BitScanForward64( index, mask );
+		}
+
+		inline size_t AtomicAdd( volatile size_t* value, size_t op )
+		{
+			return _InterlockedExchangeAdd64( reinterpret_cast< volatile __int64* >( value ), op );
+		}
+	#else
+		inline void BSF( unsigned long* index, size_t& mask )
+		{
+			_BitScanForward( index, mask );
+		}
+
+		inline size_t AtomicAdd( volatile size_t* value, size_t op )
+		{
+			return _InterlockedExchangeAdd( reinterpret_cast< volatile long* >( value ), op );
+		}
+	#endif
+#elif defined( __GNUC__ )
+	inline void BSF( unsigned long * index, size_t & mask )
+	{
+		*index = __builtin_ctz( mask );
+	}
+
+	inline size_t AtomicAdd( volatile size_t* value, size_t op )
+	{
+		return __sync_fetch_and_add( value, op );
+	}
+#endif
 
 	//	Work routine for inclusive_scan that contains a compile time constant size
 	template< typename InputType, typename OutputType, size_t numElements, typename BinaryFunction > 
@@ -69,7 +115,8 @@ namespace bolt {
 			concurrency::array< OutputType > scanBuffer( sizeScanBuff, av );
 
 			//	Loop to calculate the inclusive scan of each individual tile, and output the block sums of every tile
-			concurrency::parallel_for_each( av, deviceOutput.extent.tile< waveSize >(), [&deviceOutput, &deviceInput, &scanBuffer, tileSize]( concurrency::tiled_index< waveSize > idx ) restrict(amp)
+			//	This loop is inherently parallel; every tile is independant with potentially many wavefronts
+			concurrency::parallel_for_each( av, deviceOutput.extent.tile< waveSize >(), [&deviceOutput, &deviceInput, &scanBuffer, tileSize, binary_op]( concurrency::tiled_index< waveSize > idx ) restrict(amp)
 			{
 				tile_static InputType LDS[ waveSize + ( waveSize / 2 ) ];
 
@@ -89,7 +136,7 @@ namespace bolt {
 				for( unsigned int offset = 1; offset < tileSize; offset *= 2 )
 				{
 					InputType y = pLDS[ localID - offset ];
-					sum += y;
+					sum = binary_op( sum, y );
 					pLDS[ localID ] = sum;
 				}
 
@@ -101,55 +148,77 @@ namespace bolt {
 				{
 					scanBuffer[ idx.tile[ 0 ] ] = pLDS[ localID ];
 				}
-
-				////TODO: global_memory_fence( barrier )
 			} );
 
 			std::vector< OutputType > scanData( sizeScanBuff );
 			scanData = scanBuffer;
+			concurrency::array< OutputType > exclusiveBuffer( sizeScanBuff, av );
 
-			//	Loop to calculate the exclusive scan of the block sums
+			//	Loop to calculate the exclusive scan of the block sums buffer
+			//	This loop is inherently serial; we need to calculate the exclusive scan of a single 'array'
+			//	This loop serves as a 'reduction' in spirit, and is calculated in a single wavefront
+			//	NOTE: TODO:  On an APU, it might be more efficient to calculate this on CPU
 			tileSize = static_cast< unsigned int >( std::min( numWorkGroups, waveSize ) );
-			concurrency::parallel_for_each( av, scanBuffer.extent.tile< waveSize >(), [&scanBuffer, tileSize]( concurrency::tiled_index< waveSize > idx ) restrict(amp)
+			unsigned int workPerThread = sizeScanBuff / waveSize;
+			concurrency::parallel_for_each( av, concurrency::extent<1>( waveSize ).tile< waveSize >(), [&scanBuffer, &exclusiveBuffer, tileSize, workPerThread, binary_op]( concurrency::tiled_index< waveSize > idx ) restrict(amp)
 			{
 				tile_static OutputType LDS[ waveSize + ( waveSize / 2 ) ];
 
 				int localID		= idx.local[ 0 ];
 				int globalID	= idx.global[ 0 ];
+				int mappedID	= globalID * workPerThread;
 
 				//	Initialize the padding to 0, for when the scan algorithm looks left.  
 				//	Then bump the LDS pointer past the extra padding.
 				LDS[ localID ] = 0;
 				OutputType* pLDS = LDS + ( waveSize / 2 );
 
-				OutputType val = scanBuffer[ globalID ];
-				pLDS[ localID ] = val;
+				//	Begin the loop reduction
+				OutputType workSum = 0;
+				for( unsigned int offset = 0; offset < workPerThread; offset += 1 )
+				{
+					OutputType y = scanBuffer[ mappedID + offset ];
+					workSum = binary_op( workSum, y );
+					exclusiveBuffer[ mappedID + offset ] = workSum;
+				}
+				pLDS[ localID ] = workSum;
 
 				//	This loop essentially computes an exclusive scan within a tile, writing 0 out for first element.
-				OutputType sum = val;
+				OutputType scanSum = workSum;
 				for( unsigned int offset = 1; offset < tileSize; offset *= 2 )
 				{
 					OutputType y = pLDS[ localID - offset ];
-					sum += y;
-					pLDS[ localID ] = sum;
+					scanSum = binary_op( scanSum, y );
+					pLDS[ localID ] = scanSum;
 				}
 
+				idx.barrier.wait( );
+
 				//	Write out the values of the per-tile scan
-				scanBuffer[ globalID ] = sum - val;
+				scanSum -= workSum;
+//				scanBuffer[ mappedID ] = scanSum;
+				for( unsigned int offset = 0; offset < workPerThread; offset += 1 )
+				{
+					OutputType y = exclusiveBuffer[ mappedID + offset ];
+					y = binary_op( y, scanSum );
+					y -= scanBuffer[ mappedID + offset ];
+					exclusiveBuffer[ mappedID + offset ] = y;
+				}
 			} );
-			scanData = scanBuffer;
+			scanData = exclusiveBuffer;
 
 			//	Loop through the entire output array and add the exclusive scan back into the output array
-			concurrency::parallel_for_each( av, deviceOutput.extent.tile< waveSize >(), [&deviceOutput, &scanBuffer]( concurrency::tiled_index< waveSize > idx ) restrict(amp)
+			concurrency::parallel_for_each( av, deviceOutput.extent.tile< waveSize >(), [&deviceOutput, &exclusiveBuffer, binary_op]( concurrency::tiled_index< waveSize > idx ) restrict(amp)
 			{
 				int globalID	= idx.global[ 0 ];
 				int tileID		= idx.tile[ 0 ];
 
 				//	Even though each wavefront threads access the same bank, it's the same location so there should not be bank conflicts
-				OutputType val = scanBuffer[ tileID ];
+				OutputType val = exclusiveBuffer[ tileID ];
 
 				//	Write out the values of the per-tile scan
-				deviceOutput[ globalID ] += val;
+				OutputType y = deviceOutput[ globalID ];
+				deviceOutput[ globalID ] = binary_op( y, val );
 			} );
 
 			concurrency::array_view< OutputType > hostOutput( static_cast< int >( numElements ), &result[ 0 ] );

@@ -293,15 +293,17 @@ void simpleScan()
 	simpleScanArray< 128 >( );
 	simpleScanArray< 129 >( );
 	simpleScanArray< 1000 >( );
-	simpleScanArray< 1024 >( );
-	simpleScanArray< 4000 >( );
+	simpleScanArray< 1053 >( );
 
 	//	Huge Arrays
-//	simpleScanArray< 4097 >( );
-//	simpleScanArray< 65536 >( );
-//	simpleScanArray< 131072 >( );
+	simpleScanArray< 4096 >( );
+	simpleScanArray< 4097 >( );
+	simpleScanArray< 65535 >( );
+	simpleScanArray< 65536 >( );
+	simpleScanArray< 131032 >( );
+	simpleScanArray< 262154 >( );
 
-	//	Stack overflows
+	////	Stack overflows
 	//simpleScanArray< 1048576 >( );
 	//simpleScanArray< 52428800 >( );
 
