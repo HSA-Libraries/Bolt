@@ -40,6 +40,7 @@ endif()
 
 if( MSVC_IDE )
 	set( Bolt_BUILD64 ${CMAKE_CL_64} )
+	set_property( GLOBAL PROPERTY USE_FOLDERS TRUE )
 else()
 	option( Bolt_BUILD64 "Build a 64-bit product" ON )
 endif()
@@ -61,6 +62,10 @@ endif( )
  
 if( IS_DIRECTORY "${PROJECT_SOURCE_DIR}/BoltForOpenCL" )
 	option( BUILD_clBolt "Create a solution that compiles Bolt for OpenCL" ON )
+endif( )
+
+if( IS_DIRECTORY "${PROJECT_SOURCE_DIR}/bench" )
+	option( BUILD_benchmarks "Add projects for benchmarking Bolt " OFF )
 endif( )
 
 # Currently, linux has a problem outputing both narrow and wide characters,
@@ -130,6 +135,7 @@ if( BUILD_ampBolt )
 	add_subdirectory( BoltForC++AMP/tests/scan )
 	add_subdirectory( BoltForC++AMP/tests/transform )	
 	add_subdirectory( BoltForC++AMP/tests/transform_reduce )
+	
 endif( )
 	
 if( BUILD_clBolt )
@@ -142,6 +148,10 @@ if( BUILD_clBolt )
 		add_subdirectory( BoltForOpenCL/tests/TransformTest )
 		add_subdirectory( BoltForOpenCL/tests/TransformReduceTest )
 	endif( )
+endif( )
+
+if( BUILD_benchmarks )
+	add_subdirectory( bench )
 endif( )
 
 # The following code is setting variables to control the behavior of CPack to generate our 

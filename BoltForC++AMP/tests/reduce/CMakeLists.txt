@@ -2,46 +2,23 @@
 ##	Copyright (C) 2010 Advanced Micro Devices, Inc. All Rights Reserved.
 #############################################################################
 # List the names of common files to compile across all platforms
-set( Bolt.Reduce.Source stdafx.cpp simple_reduce.cpp )
-set( Bolt.Reduce.Headers stdafx.h targetver.h )
+set( Bolt.Test.Reduce.Source stdafx.cpp simple_reduce.cpp )
+set( Bolt.Test.Reduce.Headers stdafx.h targetver.h ${BOLT_DIR}/reduce.h )
 
-set( Bolt.Reduce.Files ${Bolt.Reduce.Source} ${Bolt.Reduce.Headers} )
-
-# For a rainy day, add pre-compiled header support
-#if( MSVC )
-#	if (USE_MSVC_PCH)
-	
-#		set_source_files_properties(LungAnalysisPCH.cxx
-#			PROPERTIES
-#			COMPILE_FLAGS "/YcLungAnalysisPCH.h"
-#			)
-#		foreach( src_file ${UPMC_LA_SRCS} )
-#			set_source_files_properties(
-#				${src_file}
-#				PROPERTIES
-#				COMPILE_FLAGS "/YuLungAnalysisPCH.h"
-#				)
-#		endforeach( src_file ${UPMC_LA_SRCS} )
-		
-#		list(APPEND UPMC_LA_SRCS LungAnalysisPCH.cxx)
-#		list(APPEND UPMC_LA_HDRS LungAnalysisPCH.h)
-
-#	endif(USE_MSVC_PCH)
-#endif (MSVC)
-  
-#	add_definitions( ${Boost_LIB_DIAGNOSTIC_DEFINITIONS} )
-# add_definitions( "/DReduce_EXPORTS" )
+set( Bolt.Test.Reduce.Files ${Bolt.Test.Reduce.Source} ${Bolt.Test.Reduce.Headers} )
 
 # Include standard OpenCL headers
 include_directories( ${PROJECT_SOURCE_DIR}/BoltForC++AMP )
 
-add_executable( Bolt.Reduce ${Bolt.Reduce.Files} )
+add_executable( Bolt.Test.Reduce ${Bolt.Test.Reduce.Files} )
 
-set_target_properties( Bolt.Reduce PROPERTIES VERSION ${Bolt_VERSION} )
-set_target_properties( Bolt.Reduce PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
+set_target_properties( Bolt.Test.Reduce PROPERTIES VERSION ${Bolt_VERSION} )
+set_target_properties( Bolt.Test.Reduce PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
+
+set_property( TARGET Bolt.Test.Reduce PROPERTY FOLDER "Test/AMP")
 
 # CPack configuration; include the executable into the package
-install( TARGETS Bolt.Reduce
+install( TARGETS Bolt.Test.Reduce
 	RUNTIME DESTINATION ${BIN_DIR}
 	LIBRARY DESTINATION ${LIB_DIR}
 	ARCHIVE DESTINATION ${LIB_DIR}/import
