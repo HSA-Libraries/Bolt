@@ -4,12 +4,13 @@
 #include <numeric>
 #include <limits>
 #include <bolt/functional.h>
+#include <bolt/unicode.h>
 #include <bolt/scan.h>
 
 #include <list>	// For debugging purposes, to prove that we can reject lists
 
 template<typename InputIterator1, typename InputIterator2>
-int checkResults(std::string msg, InputIterator1 first1 , InputIterator1 end1 , InputIterator2 first2)
+int checkResults(tstring msg, InputIterator1 first1 , InputIterator1 end1 , InputIterator2 first2)
 {
 	int errCnt = 0;
 	static const int maxErrCnt = 20;
@@ -18,17 +19,17 @@ int checkResults(std::string msg, InputIterator1 first1 , InputIterator1 end1 , 
 		if (first1 [i] != first2 [i]) {
 			errCnt++;
 			if (errCnt < maxErrCnt) {
-				std::cout << "MISMATCH " << msg << " STL= " << first1[i] << "  BOLT=" << first2[i] << std::endl;
+				tout << "MISMATCH " << msg << " STL= " << first1[i] << "  BOLT=" << first2[i] << std::endl;
 			} else if (errCnt == maxErrCnt) {
-				std::cout << "Max error count reached; no more mismatches will be printed...\n";
+				tout << "Max error count reached; no more mismatches will be printed...\n";
 			}
 		};
 	};
 
 	if (errCnt==0) {
-		std::cout << " PASSED  " << msg << " Correct on all " << sz << " elements." << std::endl;
+		tout << " PASSED  " << msg << " Correct on all " << sz << " elements." << std::endl;
 	} else {
-		std::cout << "*FAILED  " << msg << "mismatch on " << errCnt << " / " << sz << " elements." << std::endl;
+		tout << "*FAILED  " << msg << "mismatch on " << errCnt << " / " << sz << " elements." << std::endl;
 	};
 
 	return errCnt;
@@ -44,8 +45,8 @@ int checkResults(std::string msg, InputIterator1 first1 , InputIterator1 end1 , 
 template< size_t arraySize >
 void simpleScanArray( )
 {
-	std::string fName = __FUNCTION__ ;
-	fName += ":";
+	tstring fName( _T( __FUNCTION__ ) );
+	fName += _T( ":" );
 
 	std::array< int, arraySize > stdA, boltA;
 	std::array< int, arraySize > stdB, boltB;
@@ -60,12 +61,12 @@ void simpleScanArray( )
 	//Out-of-place
 	std::partial_sum( stdA.begin( ), stdA.end( ), stdB.begin( ) );
 	bolt::inclusive_scan( boltA.begin( ), boltA.end( ), boltB.begin( ) );
-	checkResults( fName + "Out-of-place", stdB.begin(), stdB.end(), boltB.begin() );
+	checkResults( fName + _T( "Out-of-place" ), stdB.begin(), stdB.end(), boltB.begin() );
 
 	//In-place
 	std::partial_sum( stdB.begin( ), stdB.end( ), stdB.begin( ) );
 	bolt::inclusive_scan( boltB.begin( ), boltB.end( ), boltB.begin( ) );
-	checkResults( fName + "In-place", stdB.begin(), stdB.end(), boltB.begin() );
+	checkResults( fName + _T( "In-place" ), stdB.begin(), stdB.end(), boltB.begin() );
 
 	// Binary operator
 	//bolt::inclusive_scan( boltA.begin( ), boltA.end(), boltA.begin( ), bolt::plus<int>( ) );

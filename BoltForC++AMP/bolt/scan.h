@@ -1,6 +1,5 @@
 #pragma once
 
-#include <iostream>  // FIXME, remove as this is only here for debug output
 #include <vector>
 #include <array>
 #include <amp.h>
@@ -380,15 +379,14 @@ namespace bolt {
 	OutputIterator inclusive_scan( InputIterator begin, InputIterator end, OutputIterator result,
 		BinaryFunction binary_op, std::input_iterator_tag )
 	{
-		return std::iterator_traits< OutputIterator >::value_type( );
+		return result;
 	};
 
 	/*
 	* Partial specialization of inclusive_scan which allows the use of naked pointer types
 	*/
 	template< typename T, typename BinaryFunction >
-	T* inclusive_scan( T* begin, typename T* end, 
-		BinaryFunction binary_op, std::random_access_iterator_tag )
+	T* inclusive_scan( T* begin, T* end, T* result, BinaryFunction binary_op, std::random_access_iterator_tag )
 	{
 		return inclusive_scan( concurrency::accelerator().default_view, begin, end, binary_op);
 	};
@@ -397,7 +395,7 @@ namespace bolt {
 	* Partial specialization of inclusive_scan which allows the use of constant naked pointer types
 	*/
 	template< typename T, typename BinaryFunction >
-	const T* inclusive_scan( const T* begin, const T* end, 
+	const T* inclusive_scan( const T* begin, const T* end, T* result,
 		BinaryFunction binary_op, std::random_access_iterator_tag )
 	{
 		return inclusive_scan( concurrency::accelerator().default_view, begin, end, binary_op);
@@ -406,9 +404,9 @@ namespace bolt {
 	/*
 	* Partial specialization of inclusive_scan which allows the use of std::vector< T >::iterator types
 	*/
-	template< typename T, typename BinaryFunction >
-	typename std::vector< T >::iterator
-		inclusive_scan(typename std::vector< T >::iterator begin, typename std::vector< T >::iterator end, 
+	template< typename I, typename O, typename BinaryFunction >
+	typename std::vector< O >::iterator
+		inclusive_scan(typename std::vector< I >::iterator& begin, typename std::vector< I >::iterator& end, typename std::vector< O >::iterator& result,
 		BinaryFunction binary_op, std::random_access_iterator_tag )
 	{
 		return inclusive_scan( concurrency::accelerator().default_view, begin, end, binary_op );
@@ -417,9 +415,9 @@ namespace bolt {
 	/*
 	* Partial specialization of inclusive_scan which allows the use of std::vector< T >::const_iterator types
 	*/
-	template< typename T, typename BinaryFunction >
-	typename std::vector< T >::const_iterator
-		inclusive_scan(typename std::vector< T >::const_iterator begin, typename std::vector< T >::const_iterator end, 
+	template< typename I, typename O, typename BinaryFunction >
+	typename std::vector< O >::const_iterator
+		inclusive_scan(typename std::vector< I >::const_iterator begin, typename std::vector< I >::const_iterator end, typename std::vector< O >::iterator result,
 		BinaryFunction binary_op, std::random_access_iterator_tag )
 	{
 		return inclusive_scan( concurrency::accelerator().default_view, begin, end, binary_op );
@@ -430,7 +428,7 @@ namespace bolt {
 	*/
 	template< typename BinaryFunction >
 	typename std::vector< bool >::iterator
-		inclusive_scan(typename std::vector< bool >::iterator begin, typename std::vector< bool >::iterator end, 
+		inclusive_scan(typename std::vector< bool >::iterator begin, typename std::vector< bool >::iterator end, typename std::vector< bool >::iterator result,
 		BinaryFunction binary_op, std::random_access_iterator_tag )
 	{
 		return std::iterator_traits<typename std::vector< bool >::iterator >::value_type( );
@@ -442,7 +440,7 @@ namespace bolt {
 	template< typename BinaryFunction >
 	typename std::vector< bool >::const_iterator
 		inclusive_scan(typename std::vector< bool >::const_iterator begin, typename std::vector< bool >::const_iterator end, 
-		BinaryFunction binary_op, std::random_access_iterator_tag )
+		typename std::vector< bool >::const_iterator result, BinaryFunction binary_op, std::random_access_iterator_tag )
 	{
 		return std::iterator_traits< typename std::vector< bool >::const_iterator >::value_type( );
 	};
@@ -473,7 +471,7 @@ namespace bolt {
 	* This version of inclusive_scan uses default accelerator
 	*/
 	template< typename InputIterator, typename OutputIterator, typename BinaryFunction > 
-	OutputIterator inclusive_scan(InputIterator first, InputIterator last, OutputIterator result, BinaryFunction binary_op )
+	OutputIterator inclusive_scan(InputIterator& first, InputIterator& last, OutputIterator& result, BinaryFunction binary_op )
 	{
 
 		return inclusive_scan( first, last, result, binary_op, std::iterator_traits< InputIterator >::iterator_category( ) );
@@ -483,7 +481,7 @@ namespace bolt {
 	* This version of inclusive_scan uses a default init value of 0 and plus<> as default argument.
 	*/
 	template< typename InputIterator, typename OutputIterator >
-	OutputIterator inclusive_scan( const InputIterator& first, const InputIterator& last, OutputIterator& result )
+	OutputIterator inclusive_scan( InputIterator& first, InputIterator& last, OutputIterator& result )
 	{
 		typedef std::iterator_traits<InputIterator>::value_type T;
 

@@ -16,8 +16,8 @@ message( STATUS "Boost_Version: " ${Boost_Version} " ready to download" )
 ExternalProject_Add(
     Boost
 	PREFIX ${CMAKE_CURRENT_BINARY_DIR}/external/boost
-#    URL http://downloads.sourceforge.net/project/boost/boost/${Boost_Version}/boost_${Boost_Version_Underscore}.zip
-    URL H:/code/boost_${Boost_Version_Underscore}.zip
+    URL http://downloads.sourceforge.net/project/boost/boost/${Boost_Version}/boost_${Boost_Version_Underscore}.zip
+#    URL H:/code/boost_${Boost_Version_Underscore}.zip
 	URL_MD5 854dcbbff31b896c85c38247060b7713
     UPDATE_COMMAND "bootstrap.bat"
 #    PATCH_COMMAND ""

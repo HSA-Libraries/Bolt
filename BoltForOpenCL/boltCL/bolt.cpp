@@ -1,37 +1,14 @@
 
 
 //#include "stdafx.h"  // not present in the BoltCL dir, but don't really need it 
-
-
-
 #include <boltCL/bolt.h>
-
+#include <boltCL/unicode.h>
 
 #include <iostream>
 #include <fstream>
 #include <streambuf>
 #include <direct.h>  //windows CWD for error message
 #include <tchar.h>
-
-//	TODO:  Find an appropriate place for this to live
-//	Typedefs to support unicode and ansii compilation
-#if defined( _UNICODE )
-	typedef std::wstring		tstring;
-	typedef std::wstringstream	tstringstream;
-	typedef std::wifstream		tifstream;
-	typedef std::wofstream		tofstream;
-	typedef std::wfstream		tfstream;
-	static std::wostream&	tout	= std::wcout;
-	static std::wostream&	terr	= std::wcerr;
-#else
-	typedef std::string tstring;
-	typedef std::stringstream tstringstream;
-	typedef std::ifstream		tifstream;
-	typedef std::ofstream		tofstream;
-	typedef std::fstream		tfstream;
-	static std::ostream&	tout	= std::cout;
-	static std::ostream&	terr	= std::cerr;
-#endif 
 
 namespace boltcl {
 

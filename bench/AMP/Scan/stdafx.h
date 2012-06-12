@@ -8,9 +8,13 @@
 #define NOMINMAX
 #include "targetver.h"
 
-#include <stdio.h>
 #include <tchar.h>
+// #include <numeric>
+// #include <limits>
+#include <iomanip>
 
+#include <boost/program_options.hpp>
+namespace po = boost::program_options;
 
 
 // TODO: reference additional headers your program requires here
