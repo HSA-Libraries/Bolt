@@ -2,8 +2,8 @@
 //
 
 #include "stdafx.h"
-#include "boltCL/transform_reduce.h"
-#include "boltCL/functional.h"
+#include "clbolt/transform_reduce.h"
+#include "clbolt/functional.h"
 
 #include <iostream>
 #include <algorithm>  // for testing against STL functions.
@@ -53,7 +53,7 @@ bool checkResult(std::string msg, T  stlResult, T boltResult, double errorThresh
 
 
 
-// Simple test case for boltcl::transform_reduce:
+// Simple test case for clbolt::transform_reduce:
 // Perform a sum-of-squares
 // Demonstrates:
 //  * Use of transform_reduce function - takes two separate functors, one for transform and one for reduce.
@@ -62,14 +62,14 @@ bool checkResult(std::string msg, T  stlResult, T boltResult, double errorThresh
 //        After transform is applied, the result is immediately reduced without being written to memory.
 //        Note the STL version uses two function calls - transform followed by accumulate.
 //  * Operates directly on host buffers.
-std::string squareMeCode = BOLT_FUNCTOR(
+std::string squareMeCode = BOLT_CODE_STRING(
 	template<typename T>
 struct SquareMe {
 	T operator() (const T &x ) const { return x*x; } ;
 };
 );
-CREATE_TYPENAME(SquareMe<int>);
-CREATE_TYPENAME(SquareMe<float>);
+BOLT_CREATE_TYPENAME(SquareMe<int>);
+BOLT_CREATE_TYPENAME(SquareMe<float>);
 
 
 
@@ -87,8 +87,8 @@ void sumOfSquares(int aSize)
 	std::transform(A.begin(), A.end(), Z.begin(), SquareMe<T>());
 	int stlReduce = std::accumulate(Z.begin(), Z.end(), 0);
 
-	int boltReduce = boltcl::transform_reduce(A.begin(), A.end(), SquareMe<T>(), squareMeCode, 0, 
-                                              boltcl::plus<int>(), boltcl::oclcode::plus);
+	int boltReduce = clbolt::transform_reduce(A.begin(), A.end(), SquareMe<T>(), 0, 
+                                              clbolt::plus<int>(), squareMeCode);
 
 	checkResult(__FUNCTION__, stlReduce, boltReduce);
 };

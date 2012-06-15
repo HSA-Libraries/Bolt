@@ -1,8 +1,8 @@
 
 
-//#include "stdafx.h"  // not present in the BoltCL dir, but don't really need it 
-#include <boltCL/bolt.h>
-#include <boltCL/unicode.h>
+//#include "stdafx.h"  // not present in the clbolt dir, but don't really need it 
+#include <clbolt/bolt.h>
+#include <clbolt/unicode.h>
 
 #include <iostream>
 #include <fstream>
@@ -10,7 +10,7 @@
 #include <direct.h>  //windows CWD for error message
 #include <tchar.h>
 
-namespace boltcl {
+namespace clbolt {
 
 	std::string fileToString(const std::string &fileName)
 	{
@@ -81,8 +81,8 @@ namespace boltcl {
 	 void constructAndCompile(cl::Kernel *masterKernel, const std::string &apiName, const std::string instantiationString, std::string userCode, std::string valueTypeName,  std::string functorTypeName) {
 
 		//FIXME, when this becomes more stable move the kernel code to a string in bolt.cpp
-		// Note unfortunate dependency here on relative file path of run directory and location of boltcl dir.
-		std::string templateFunctionString = boltcl::fileToString( apiName + "_kernels.cl"); 
+		// Note unfortunate dependency here on relative file path of run directory and location of clbolt dir.
+		std::string templateFunctionString = clbolt::fileToString( apiName + "_kernels.cl"); 
 
 		std::string codeStr = userCode + "\n\n" + templateFunctionString +   instantiationString;
 
@@ -94,7 +94,7 @@ namespace boltcl {
 			std::cout << "code=" << std::endl << codeStr;
 		}
 
-		*masterKernel = boltcl::compileFunctor(codeStr, apiName + "Instantiated");
+		*masterKernel = clbolt::compileFunctor(codeStr, apiName + "Instantiated");
 	};
 
 

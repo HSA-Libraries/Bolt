@@ -2,15 +2,13 @@
 //
 
 #include "stdafx.h"
-#include "boltCL/transform.h"
-#include "boltCL/functional.h"
+#include "clbolt/transform.h"
+#include "clbolt/functional.h"
 
 #include <iostream>
 #include <algorithm>  // for testing against STL functions.
 
 #include <thread>
-
-
 
 
 template<typename InputIterator1, typename InputIterator2>
@@ -41,23 +39,20 @@ int checkResults(std::string msg, InputIterator1 first1 , InputIterator1 end1 , 
 
 
 
-std::string boltCode1 = BOLT_FUNCTOR(
-	float op_sum(float x, float y) { return x + y ; };
-);
-
-
 
 // Test of a body operator which is constructed with a template argument
-std::string myplusStr = BOLT_FUNCTOR(
+// Do this using the low-level macros that require manually creating the typename
+// We can't use the ClCode trait because that requires a fully instantiated type, and we want to pass the code for a templated myplus<T>.
+std::string myplusStr = BOLT_CODE_STRING(
 	template<typename T>
 struct myplus  
 {
 	T operator()(const T &lhs, const T &rhs) const {return lhs + rhs;}
 };
 );
-CREATE_TYPENAME(myplus<float>);
-CREATE_TYPENAME(myplus<int>);
-CREATE_TYPENAME(myplus<double>);
+BOLT_CREATE_TYPENAME(myplus<float>);
+BOLT_CREATE_TYPENAME(myplus<int>);
+BOLT_CREATE_TYPENAME(myplus<double>);
 
 
 
@@ -78,17 +73,17 @@ void simpleTransform1(int aSize)
 		std::vector<float> Z0(aSize), Z1(aSize);
 		std::transform(A.begin(), A.end(), B.begin(), Z0.begin(), myplus<float>());
 
-		boltcl::transform(A.begin(), A.end(), B.begin(), Z1.begin(), myplus<float>(), myplusStr);
+		clbolt::transform(A.begin(), A.end(), B.begin(), Z1.begin(), myplus<float>(), myplusStr);
 		checkResults(fName + "myplus<float>", Z0.begin(), Z0.end(), Z1.begin());
 	}
 
 	{
-		//Test2:  Use a  templatized function from the provided boltcl functional header.  "boltcl::plus<float>"
+		//Test2:  Use a  templatized function from the provided clbolt functional header.  "clbolt::plus<float>"
 		std::vector<float> Z0(aSize), Z1(aSize);
-		std::transform(A.begin(), A.end(), B.begin(), Z0.begin(), boltcl::plus<float>());
+		std::transform(A.begin(), A.end(), B.begin(), Z0.begin(), clbolt::plus<float>());
 
-		boltcl::transform(A.begin(), A.end(), B.begin(), Z1.begin(), boltcl::plus<float>(), boltcl::oclcode::plus);
-		checkResults(fName + "boltcl::plus<float>", Z0.begin(), Z0.end(), Z1.begin());
+		clbolt::transform(A.begin(), A.end(), B.begin(), Z1.begin(), clbolt::plus<float>());  
+		checkResults(fName + "clbolt::plus<float>", Z0.begin(), Z0.end(), Z1.begin());
 	}
 
 
@@ -99,7 +94,7 @@ void simpleTransform1(int aSize)
 		std::vector<float> Z0(aSize), Z1(aSize);
 		std::transform(A.begin(), A.end(), B.begin(), Z0.begin(), op_sum);
 
-		boltcl::transform(A.begin(), A.end(), B.begin(), Z1.begin(), op_sum, boltCode1, "op_sum");
+		clbolt::transform(A.begin(), A.end(), B.begin(), Z1.begin(), op_sum, boltCode1, "op_sum");
 		checkResults(fName + "Inline Binary Function", Z0.begin(), Z0.end(), Z1.begin());
 	}
 #endif
@@ -114,7 +109,7 @@ void simpleTransform1(int aSize)
 // SimpleTransform2 Demonstrates:
 // How to create a C++ functor object and use this to customize the transform library call.
 
-std::string boltCode = BOLT_FUNCTOR(
+BOLT_FUNCTOR(SaxpyFunctor,
 struct SaxpyFunctor
 {
 	float _a;
@@ -127,15 +122,13 @@ struct SaxpyFunctor
 };
 );  // end BOLT_FUNCTOR
 
-// CREATE_TYPENAME is a bolt macro which adds a TypeName trait for the specified class
-// The Bolt code uses this typename in the contruction of the kernel code.
-CREATE_TYPENAME (SaxpyFunctor);
 
 
 void transformSaxpy(int aSize)
 {
 	std::string fName = __FUNCTION__ ;
 	fName += ":";
+	std::cout << fName << "(" << aSize << ")" << std::endl;
 
 	std::vector<float> A(aSize), B(aSize), Z1(aSize), Z0(aSize);
 
@@ -148,7 +141,7 @@ void transformSaxpy(int aSize)
 
 
 	std::transform(A.begin(), A.end(), B.begin(), Z0.begin(), sb);
-	boltcl::transform(A.begin(), A.end(), B.begin(), Z1.begin(), sb, boltCode );  
+	clbolt::transform(A.begin(), A.end(), B.begin(), Z1.begin(), sb);  
 
 	checkResults(fName, Z0.begin(), Z0.end(), Z1.begin());
 
@@ -157,13 +150,13 @@ void transformSaxpy(int aSize)
 
 void singleThreadReduction(const std::vector<float> &A, const std::vector<float> &B, std::vector<float> *Zbolt, int aSize) 
 {
-	boltcl::transform(A.begin(), A.end(), B.begin(), Zbolt->begin(), boltcl::multiplies<float>(), boltcl::oclcode::multiplies);
+	clbolt::transform(A.begin(), A.end(), B.begin(), Zbolt->begin(), clbolt::multiplies<float>());
 };
 
 
 void multiThreadReductions(int aSize, int iters)
 {
-	std::string fName = __FUNCTION__ ;
+	std::string fName = __FUNCTION__  ;
 	fName += ":";
 
 	std::vector<float> A(aSize), B(aSize);
@@ -175,12 +168,12 @@ void multiThreadReductions(int aSize, int iters)
 
 	{
 		std::vector<float> Z0(aSize), Z1(aSize);
-		std::transform(A.begin(), A.end(), B.begin(), Z0.begin(), boltcl::minus<float>()); // golden answer:
+		std::transform(A.begin(), A.end(), B.begin(), Z0.begin(), clbolt::minus<float>()); // golden answer:
 
 		// show we only compile it once:
 		for (int i=0; i<iters; i++) {
-			boltcl::transform(A.begin(), A.end(), B.begin(), Z1.begin(), boltcl::minus<float>(), boltcl::oclcode::minus);
-			checkResults(fName + "MultiIteration - boltcl::minus<float>", Z0.begin(), Z0.end(), Z1.begin());
+			clbolt::transform(A.begin(), A.end(), B.begin(), Z1.begin(), clbolt::minus<float>());
+			checkResults(fName + "MultiIteration - clbolt::minus<float>", Z0.begin(), Z0.end(), Z1.begin());
 		};
 	}
 
@@ -189,7 +182,7 @@ void multiThreadReductions(int aSize, int iters)
 	if (0) {
 		static const int threadCount = 4;
 		std::vector<float> Z0(aSize);
-		std::transform(A.begin(), A.end(), B.begin(), Z0.begin(), boltcl::multiplies<float>()); // golden answer:
+		std::transform(A.begin(), A.end(), B.begin(), Z0.begin(), clbolt::multiplies<float>()); // golden answer:
 
 		std::vector<float> ZBolt [threadCount];
 		for (int i=0; i< threadCount; i++){
@@ -222,7 +215,7 @@ void oclTransform(int aSize)
 		B[i] = 1000.0f + (float)i;
 	}
 	std::vector<float> Z0(aSize);
-	std::transform(A.begin(), A.end(), B.begin(), Z0.begin(), boltcl::plus<float>()); // golden answer:
+	std::transform(A.begin(), A.end(), B.begin(), Z0.begin(), clbolt::plus<float>()); // golden answer:
 
 	size_t bufSize = aSize * sizeof(float);
 	cl::Buffer bufferA(CL_MEM_READ_ONLY|CL_MEM_USE_HOST_PTR, bufSize, A.data());
@@ -230,7 +223,7 @@ void oclTransform(int aSize)
 	cl::Buffer bufferB(CL_MEM_READ_ONLY|CL_MEM_USE_HOST_PTR, bufSize, B.data());
 	cl::Buffer bufferZ(CL_MEM_WRITE_ONLY, sizeof(float) * aSize);
 
-	boltcl::transform<float>(bufferA, bufferB, bufferZ, boltcl::plus<float>(), boltcl::oclcode::plus);
+	clbolt::transform<float>(bufferA, bufferB, bufferZ, clbolt::plus<float>());
 
 	float * zMapped = static_cast<float*> (cl::CommandQueue::getDefault().enqueueMapBuffer(bufferZ, true, CL_MAP_READ | CL_MAP_WRITE, 0/*offset*/, bufSize));
 
@@ -244,12 +237,12 @@ void oclTransform(int aSize)
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	simpleTransform1(256);
+	//simpleTransform1(256); //FIXME
 
 	transformSaxpy(256);
 	transformSaxpy(1024);
 
-	multiThreadReductions(1024, 10);
+	//multiThreadReductions(1024, 10);
 
 	oclTransform(1024);
 

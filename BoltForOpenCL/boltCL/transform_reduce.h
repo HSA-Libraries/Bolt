@@ -1,11 +1,11 @@
 #pragma once
 
-#include <boltCL/bolt.h>
+#include <clbolt/bolt.h>
 #include <mutex>
 #include <string>
 #include <iostream>
 
-namespace boltcl {
+namespace clbolt {
 
 	// FIXME - move to cpp file
 	struct CallCompiler_TransformReduce {
@@ -26,20 +26,22 @@ namespace boltcl {
 
             std::string functorNames = transformFunctorTypeName + " , " + reduceFunctorTypeName; // create for debug message
 
-			boltcl::constructAndCompile(masterKernel, "transform_reduce", instantiationString, userCode, valueTypeName, functorNames);
+			clbolt::constructAndCompile(masterKernel, "transform_reduce", instantiationString, userCode, valueTypeName, functorNames);
 
 		};
 	};
 
 
 	template<typename T, typename UnaryFunction, typename BinaryFunction> 
-	T transform_reduce(cl::Buffer A, UnaryFunction transform_op, const std::string &transform_op_str,
-             T init, BinaryFunction reduce_op, const std::string &reduce_op_str)
+	T transform_reduce(cl::Buffer A, UnaryFunction transform_op,
+             T init, BinaryFunction reduce_op, const std::string userCode="")
 	{
 			static std::once_flag initOnlyOnce;
 			static  cl::Kernel masterKernel;
 			// For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retreive the name here.
-			std::call_once(initOnlyOnce, CallCompiler_TransformReduce::constructAndCompile, &masterKernel, transform_op_str + reduce_op_str, TypeName<T>::get(), TypeName<UnaryFunction>::get(), TypeName<BinaryFunction>::get());
+			std::call_once(initOnlyOnce, CallCompiler_TransformReduce::constructAndCompile, &masterKernel, 
+				ClCode<UnaryFunction>::get() + ClCode<UnaryFunction>::get() + "\n//--user Code\n" + userCode, 
+				TypeName<T>::get(), TypeName<UnaryFunction>::get(), TypeName<BinaryFunction>::get());
 
 
 			// Set up shape of launch grid and buffers:
@@ -96,8 +98,8 @@ namespace boltcl {
     
 	template<typename T, typename InputIterator, typename UnaryFunction, typename BinaryFunction> 
 	T transform_reduce(InputIterator first1, InputIterator last1,  
-		UnaryFunction transform_op, const std::string transform_op_str,
-		T init,  BinaryFunction reduce_op, const std::string reduce_op_str)  
+		UnaryFunction transform_op, 
+		T init,  BinaryFunction reduce_op, const std::string userCode="" )  
 	{
 
 			typedef std::iterator_traits<InputIterator>::value_type T;
@@ -107,7 +109,7 @@ namespace boltcl {
 			cl::Buffer A(CL_MEM_READ_ONLY, sizeof(T) * sz);
 			cl::enqueueWriteBuffer(A, false, 0, sizeof(T) * sz, &*first1);
 
-			return  transform_reduce(A, transform_op, transform_op_str, init, reduce_op, reduce_op_str);
+			return  transform_reduce(A, transform_op, init, reduce_op, userCode);
 
 	};
 };

@@ -1,11 +1,11 @@
 #pragma once
 
-#include <boltCL/bolt.h>
+#include <clbolt/bolt.h>
 #include <mutex>
 #include <string>
 #include <iostream>
 
-namespace boltcl {
+namespace clbolt {
 
 	// FIXME - move to cpp file
 	struct CallCompiler{
@@ -14,8 +14,8 @@ namespace boltcl {
 
 
 			//FIXME, when this becomes more stable move the kernel code to a string in bolt.cpp
-			// Note unfortunate dependency here on relative file path of run directory and location of boltcl dir.
-			std::string transformFunctionString = boltcl::fileToString( "transform_kernels.cl" ); 
+			// Note unfortunate dependency here on relative file path of run directory and location of clbolt dir.
+			std::string transformFunctionString = clbolt::fileToString( "transform_kernels.cl" ); 
 
 			std::string instantiationString = 
 				"// Host generates this instantiation string with user-specified value type and functor\n"
@@ -37,14 +37,14 @@ namespace boltcl {
 				//std::cout << "code=" << std::endl << codeStr;
 			}
 
-			*masterKernel = boltcl::compileFunctor(codeStr, "transformInstantiated");
+			*masterKernel = clbolt::compileFunctor(codeStr, "transformInstantiated");
 		};
 	};
 
 
 	template<typename T, typename BinaryFunction> 
 	void transform(cl::Buffer A, cl::Buffer B, cl::Buffer Z, 
-		BinaryFunction f, std::string userCode, std::string functorTypeName="")  {
+		BinaryFunction f, std::string userCode="")  {
 
 
 			cl::Buffer userFunctor(CL_MEM_READ_ONLY|CL_MEM_USE_HOST_PTR, sizeof(f), &f );   // Create buffer wrapper so we can access host parameters.
@@ -53,7 +53,7 @@ namespace boltcl {
 			static std::once_flag initOnlyOnce;
 			static  cl::Kernel masterKernel;
 			// For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retreive the name here.
-			std::call_once(initOnlyOnce, CallCompiler::init_, &masterKernel, userCode, TypeName<T>::get(), functorTypeName.empty() ? TypeName<BinaryFunction>::get() : functorTypeName);
+			std::call_once(initOnlyOnce, CallCompiler::init_, &masterKernel, ClCode<BinaryFunction>::get() + "\n\n" + userCode, TypeName<T>::get(), TypeName<BinaryFunction>::get());
 			//std::call_once(initOnlyOnce, CallCompiler::init_, &masterKernel, TypeName<T>::get(), functorTypeName.empty() ? TypeName<BinaryFunction>::get() : functorTypeName);
 
 			cl::Kernel k = masterKernel;  // hopefully create a copy of the kernel.  FIXME, need to create-kernel from the program.
@@ -80,7 +80,7 @@ namespace boltcl {
 	// Function definition that accepts iterators and converts to buffers.
 	template<typename InputIterator, typename OutputIterator, typename BinaryFunction> 
 	void transform(InputIterator first1, InputIterator last1, InputIterator first2, OutputIterator result, 
-		BinaryFunction f, const std::string userCode, std::string functorTypeName="")  {
+		BinaryFunction f, const std::string userCode="")  {
 
 			typedef std::iterator_traits<InputIterator>::value_type T;
 			int sz = (int)(last1 - first1); // FIXME - use size_t
@@ -93,7 +93,7 @@ namespace boltcl {
 
 			cl::Buffer Z(CL_MEM_WRITE_ONLY|CL_MEM_USE_HOST_PTR, sizeof(T) * sz, &*result);
 
-			transform<T> (A, B, Z, f, userCode, functorTypeName);
+			transform<T> (A, B, Z, f, userCode);
 
 			// FIXME - mapBuffer returns pointer
 			cl::CommandQueue::getDefault().enqueueMapBuffer(Z, true, CL_MAP_READ | CL_MAP_WRITE, 0/*offset*/, sz);

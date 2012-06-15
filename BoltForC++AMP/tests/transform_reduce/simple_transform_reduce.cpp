@@ -47,7 +47,7 @@ bool checkResult(std::string msg, T  stlResult, T boltResult, double errorThresh
 
 
 
-// Simple test case for boltcl::transform_reduce:
+// Simple test case for clbolt::transform_reduce:
 // Perform a sum-of-squares
 // Demonstrates:
 //  * Use of transform_reduce function - takes two separate functors, one for transform and one for reduce.

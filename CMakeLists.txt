@@ -24,7 +24,7 @@ set( Bolt_VERSION_PATCH 1 )
 set( Bolt_VERSION "${Bolt_VERSION_MAJOR}.${Bolt_VERSION_MINOR}.${Bolt_VERSION_PATCH}")
 	
 set( CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR} )
-set( BOLTCL_DIR "${PROJECT_SOURCE_DIR}/BoltForOpenCL/boltCL" )
+set( CLBOLT_DIR "${PROJECT_SOURCE_DIR}/BoltForOpenCL/clbolt" )
 set( BOLT_DIR "${PROJECT_SOURCE_DIR}/BoltForC++AMP/bolt" )
 
 # On windows, it's convenient to change the default install prefix such that it does NOT point to 'program files'
@@ -143,7 +143,7 @@ if( BUILD_clBolt )
 	find_package( OpenCL REQUIRED )
 
 	if( OPENCL_FOUND )
-		add_subdirectory( BoltForOpenCL/boltCL )
+		add_subdirectory( BoltForOpenCL/clbolt )
 		add_subdirectory( BoltForOpenCL/tests/ReduceTest)
 		add_subdirectory( BoltForOpenCL/tests/TransformTest )
 		add_subdirectory( BoltForOpenCL/tests/TransformReduceTest )

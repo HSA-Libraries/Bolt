@@ -3,7 +3,7 @@
 #############################################################################
 # List the names of common files to compile across all platforms
 set( clBolt.Test.Transform.Source stdafx.cpp TransformTest.cpp )
-set( clBolt.Test.Transform.Headers stdafx.h targetver.h ${BOLTCL_DIR}/transform.h )
+set( clBolt.Test.Transform.Headers stdafx.h targetver.h ${CLBOLT_DIR}/transform.h )
 
 set( clBolt.Test.Transform.Files ${clBolt.Test.Transform.Source} ${clBolt.Test.Transform.Headers} )
 

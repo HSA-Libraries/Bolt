@@ -2,8 +2,8 @@
 //
 
 #include "stdafx.h"
-#include "boltCL/reduce.h"
-#include "boltCL/functional.h"
+#include "clbolt/reduce.h"
+#include "clbolt/functional.h"
 
 #include <iostream>
 #include <algorithm>  // for testing against STL functions.
@@ -69,8 +69,8 @@ void simpleReduce1(int aSize)
 
 	int stlReduce = std::accumulate(A.begin(), A.end(), 0);
 
-	int boltReduce = boltcl::reduce(A.begin(), A.end(), 0, boltcl::plus<int>(), boltcl::oclcode::plus);
-	//int boltReduce2 = boltcl::reduce(A.begin(), A.end());  // same as above...
+	int boltReduce = clbolt::reduce(A.begin(), A.end(), 0, clbolt::plus<int>());
+	//int boltReduce2 = clbolt::reduce(A.begin(), A.end());  // same as above...
 
 	checkResult("simpleReduce2", stlReduce, boltReduce);
 	//printf ("Sum: stl=%d,  bolt=%d %d\n", stlReduce, boltReduce, boltReduce2);

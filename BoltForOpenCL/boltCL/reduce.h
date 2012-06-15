@@ -1,11 +1,11 @@
 #pragma once
 
-#include <boltCL/bolt.h>
+#include <clbolt/bolt.h>
 #include <mutex>
 #include <string>
 #include <iostream>
 
-namespace boltcl {
+namespace clbolt {
 
 	// FIXME - move to cpp file
 	struct CallCompiler_Reduce {
@@ -23,7 +23,7 @@ namespace boltcl {
 				"local " + valueTypeName + "* scratch\n"
 				");\n\n";
 
-			boltcl::constructAndCompile(masterKernel, "reduce", instantiationString, userCode, valueTypeName, functorTypeName);
+			clbolt::constructAndCompile(masterKernel, "reduce", instantiationString, userCode, valueTypeName, functorTypeName);
 
 		};
 	};
@@ -31,12 +31,12 @@ namespace boltcl {
 
 	template<typename T, typename BinaryFunction> 
 	T reduce(cl::Buffer A, T init,
-		BinaryFunction binary_op, std::string userCode, std::string functorTypeName="")  
+		BinaryFunction binary_op, std::string userCode="")  
 	{
 			static std::once_flag initOnlyOnce;
 			static  cl::Kernel masterKernel;
 			// For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retreive the name here.
-			std::call_once(initOnlyOnce, CallCompiler_Reduce::constructAndCompile, &masterKernel, userCode, TypeName<T>::get(), functorTypeName.empty() ? TypeName<BinaryFunction>::get() : functorTypeName);
+			std::call_once(initOnlyOnce, CallCompiler_Reduce::constructAndCompile, &masterKernel, ClCode<BinaryFunction>::get() + "\n\n" + userCode, TypeName<T>::get(),  TypeName<BinaryFunction>::get());
 
 
 			// Set up shape of launch grid and buffers:
@@ -52,7 +52,6 @@ namespace boltcl {
 			cl::Buffer result(CL_MEM_WRITE_ONLY, sizeof(T) * resultCnt);
 
 
-		
 			cl::Kernel k = masterKernel;  // hopefully create a copy of the kernel. FIXME, doesn't work.
 
 			int sz = (int)A.getInfo<CL_MEM_SIZE>();  // FIXME - remove typecast.  Kernel only can handle 32-bit size...
@@ -90,7 +89,7 @@ namespace boltcl {
 	// Function definition that accepts iterators and converts to buffers.
 	template<typename T, typename InputIterator, typename BinaryFunction> 
 	T reduce(InputIterator first1, InputIterator last1,  T init,
-		BinaryFunction binary_op, const std::string userCode, std::string functorTypeName="")  
+		BinaryFunction binary_op, const std::string userCode="")  
 	{
 
 			typedef std::iterator_traits<InputIterator>::value_type T;
@@ -100,9 +99,8 @@ namespace boltcl {
 			cl::Buffer A(CL_MEM_READ_ONLY, sizeof(T) * sz);
 			cl::enqueueWriteBuffer(A, false, 0, sizeof(T) * sz, &*first1);
 
-			return  reduce(A, init, binary_op, userCode, functorTypeName);
+			return  reduce(A, init, binary_op, userCode);
 
 	};
 };
 
-// FIXME -remove optional functorTypeName from call - provide only typedef mechanism since string doesn't have any new value?
