@@ -47,7 +47,7 @@ namespace mymath {
 		//return *(long*)&f == 0x7fffffff;
 		return concurrency::fast_math::isnan(f);
 	};
-	inline bool isfNaN(float f) restrict(cpu) {
+	inline int isfNaN(float f) restrict(cpu) {
 		return *(long*)&f == 0x7fffffff;
 	};
 
