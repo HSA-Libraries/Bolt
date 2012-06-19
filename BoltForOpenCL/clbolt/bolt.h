@@ -7,10 +7,12 @@
 
 #include <string>
 
+#include <clbolt/control.h>
+
 namespace clbolt {
 	extern std::string fileToString(const std::string &fileName);
-	extern cl::Kernel compileFunctor(const std::string &kernelCodeString, const std::string kernelName);
-	extern void constructAndCompile(cl::Kernel *masterKernel, const std::string &apiName, const std::string instantiationString, std::string userCode, std::string valueTypeName,  std::string functorTypeName);
+	extern cl::Kernel compileFunctor(const std::string &kernelCodeString, const std::string kernelName, const std::string compileOptions="");
+	extern void constructAndCompile(cl::Kernel *masterKernel, const std::string &apiName, const std::string instantiationString, std::string userCode, std::string valueTypeName,  std::string functorTypeName, unsigned debugMode);
 };
 
 

@@ -9,7 +9,7 @@ namespace clbolt {
 
 	// FIXME - move to cpp file
 	struct CallCompiler_TransformReduce {
-		static void constructAndCompile(cl::Kernel *masterKernel,  std::string userCode, std::string valueTypeName,  std::string transformFunctorTypeName, std::string reduceFunctorTypeName) {
+		static void constructAndCompile(cl::Kernel *masterKernel,  std::string user_code, std::string valueTypeName,  std::string transformFunctorTypeName, std::string reduceFunctorTypeName) {
 
 			const std::string instantiationString = 
 				"// Host generates this instantiation string with user-specified value type and functor\n"
@@ -26,7 +26,8 @@ namespace clbolt {
 
             std::string functorNames = transformFunctorTypeName + " , " + reduceFunctorTypeName; // create for debug message
 
-			clbolt::constructAndCompile(masterKernel, "transform_reduce", instantiationString, userCode, valueTypeName, functorNames);
+			unsigned debugMode = 0; //FIXME
+			clbolt::constructAndCompile(masterKernel, "transform_reduce", instantiationString, user_code, valueTypeName, functorNames, debugMode);
 
 		};
 	};
@@ -34,13 +35,15 @@ namespace clbolt {
 
 	template<typename T, typename UnaryFunction, typename BinaryFunction> 
 	T transform_reduce(cl::Buffer A, UnaryFunction transform_op,
-             T init, BinaryFunction reduce_op, const std::string userCode="")
+             T init, BinaryFunction reduce_op, const std::string user_code="")
 	{
 			static std::once_flag initOnlyOnce;
 			static  cl::Kernel masterKernel;
+			unsigned debugMode = 0; //FIXME, use control
+
 			// For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retreive the name here.
 			std::call_once(initOnlyOnce, CallCompiler_TransformReduce::constructAndCompile, &masterKernel, 
-				ClCode<UnaryFunction>::get() + ClCode<UnaryFunction>::get() + "\n//--user Code\n" + userCode, 
+				"\n//--user Code\n" + user_code + "\n---\nFunctions\n" + ClCode<UnaryFunction>::get() + ClCode<BinaryFunction>::get() , 
 				TypeName<T>::get(), TypeName<UnaryFunction>::get(), TypeName<BinaryFunction>::get());
 
 
@@ -99,7 +102,7 @@ namespace clbolt {
 	template<typename T, typename InputIterator, typename UnaryFunction, typename BinaryFunction> 
 	T transform_reduce(InputIterator first1, InputIterator last1,  
 		UnaryFunction transform_op, 
-		T init,  BinaryFunction reduce_op, const std::string userCode="" )  
+		T init,  BinaryFunction reduce_op, const std::string user_code="" )  
 	{
 
 			typedef std::iterator_traits<InputIterator>::value_type T;
@@ -109,7 +112,7 @@ namespace clbolt {
 			cl::Buffer A(CL_MEM_READ_ONLY, sizeof(T) * sz);
 			cl::enqueueWriteBuffer(A, false, 0, sizeof(T) * sz, &*first1);
 
-			return  transform_reduce(A, transform_op, init, reduce_op, userCode);
+			return  transform_reduce(A, transform_op, init, reduce_op, user_code);
 
 	};
 };

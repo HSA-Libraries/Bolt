@@ -12,6 +12,10 @@
 
 namespace clbolt {
 
+	// Default control structure; this can be accessed by the clbolt::control::getDefault()
+	control control::_defaultControl(true);
+
+
 	std::string fileToString(const std::string &fileName)
 	{
 		std::ifstream infile (fileName);
@@ -58,7 +62,7 @@ namespace clbolt {
 
 
 
-	cl::Kernel compileFunctor(const std::string &kernelCodeString, const std::string kernelName)
+	cl::Kernel compileFunctor(const std::string &kernelCodeString, const std::string kernelName, const std::string compileOptions)
 	{
 		cl::Program mainProgram(kernelCodeString, false);
 		try
@@ -78,7 +82,7 @@ namespace clbolt {
 
 
 
-	 void constructAndCompile(cl::Kernel *masterKernel, const std::string &apiName, const std::string instantiationString, std::string userCode, std::string valueTypeName,  std::string functorTypeName) {
+	void constructAndCompile(cl::Kernel *masterKernel, const std::string &apiName, const std::string instantiationString, std::string userCode, std::string valueTypeName,  std::string functorTypeName, unsigned debugMode) {
 
 		//FIXME, when this becomes more stable move the kernel code to a string in bolt.cpp
 		// Note unfortunate dependency here on relative file path of run directory and location of clbolt dir.
@@ -86,16 +90,22 @@ namespace clbolt {
 
 		std::string codeStr = userCode + "\n\n" + templateFunctionString +   instantiationString;
 
-		if (0) {
-			std::cout << "Compiling: '" << apiName << "'" << std::endl;
-			std::cout << "ValueType  ='" << valueTypeName << "'" << std::endl;
-			std::cout << "FunctorType='" << functorTypeName << "'" << std::endl;
+		if (debugMode & control::debug::Compile) {
+			std::cout << "debug: compiling: '" << apiName << "'" << std::endl;
+			std::cout << "debug: valueType  ='" << valueTypeName << "'" << "functorType='" << functorTypeName << "'" << std::endl;
+			std::cout << "debug: code=" << std::endl << codeStr;
+		}
 
-			std::cout << "code=" << std::endl << codeStr;
+		std::string compileOptions = "";
+		if (debugMode & control::debug::SaveCompilerTemps) {
+			compileOptions += "-save-temps=BOLT";
 		}
 
 		*masterKernel = clbolt::compileFunctor(codeStr, apiName + "Instantiated");
 	};
+
+
+
 
 
 

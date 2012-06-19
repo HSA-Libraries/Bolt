@@ -3,8 +3,8 @@
 #############################################################################
 # List the names of common files to compile across all platforms
 
-set( clBolt.Test.Reduce.Source stdafx.cpp ReduceTest.cpp )
-set( clBolt.Test.Reduce.Headers stdafx.h targetver.h ${CLBOLT_DIR}/reduce.h )
+set( clBolt.Test.Reduce.Source stdafx.cpp ReduceTest.cpp myocl.cpp)
+set( clBolt.Test.Reduce.Headers stdafx.h myocl.h targetver.h ${CLBOLT_DIR}/reduce.h )
 
 set( clBolt.Test.Reduce.Files ${clBolt.Test.Reduce.Source} ${clBolt.Test.Reduce.Headers} )
 

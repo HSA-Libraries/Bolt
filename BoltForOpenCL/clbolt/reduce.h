@@ -1,6 +1,7 @@
 #pragma once
 
 #include <clbolt/bolt.h>
+#include <clbolt/functional.h>
 #include <mutex>
 #include <string>
 #include <iostream>
@@ -9,11 +10,12 @@ namespace clbolt {
 
 	// FIXME - move to cpp file
 	struct CallCompiler_Reduce {
-		static void constructAndCompile(cl::Kernel *masterKernel,  std::string userCode, std::string valueTypeName,  std::string functorTypeName) {
+		static void constructAndCompile(cl::Kernel *masterKernel,  std::string user_code, std::string valueTypeName,  std::string functorTypeName, unsigned debugMode) {
 
 			const std::string instantiationString = 
 				"// Host generates this instantiation string with user-specified value type and functor\n"
 				"template __attribute__((mangled_name(reduceInstantiated)))\n"
+				"__attribute__((reqd_work_group_size(64,1,1)))\n"
 				"kernel void reduceTemplate(\n"
 				"global " + valueTypeName + "* A,\n"
 				"const int length,\n"
@@ -23,84 +25,116 @@ namespace clbolt {
 				"local " + valueTypeName + "* scratch\n"
 				");\n\n";
 
-			clbolt::constructAndCompile(masterKernel, "reduce", instantiationString, userCode, valueTypeName, functorTypeName);
+			clbolt::constructAndCompile(masterKernel, "reduce", instantiationString, user_code, valueTypeName, functorTypeName, debugMode);
 
 		};
 	};
 
-
+	//----
+	// This is the base implementation of reduction that is called by all of the convenience wrappers below.
 	template<typename T, typename BinaryFunction> 
-	T reduce(cl::Buffer A, T init,
-		BinaryFunction binary_op, std::string userCode="")  
+	T reduce(const clbolt::control &c, cl::Buffer A, T init,
+		BinaryFunction binary_op, std::string user_code="")  
 	{
-			static std::once_flag initOnlyOnce;
-			static  cl::Kernel masterKernel;
-			// For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retreive the name here.
-			std::call_once(initOnlyOnce, CallCompiler_Reduce::constructAndCompile, &masterKernel, ClCode<BinaryFunction>::get() + "\n\n" + userCode, TypeName<T>::get(),  TypeName<BinaryFunction>::get());
+		static std::once_flag initOnlyOnce;
+		static  cl::Kernel masterKernel;
+		// For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retreive the name here.
+		std::call_once(initOnlyOnce, CallCompiler_Reduce::constructAndCompile, &masterKernel, user_code + ClCode<BinaryFunction>::get(), TypeName<T>::get(),  TypeName<BinaryFunction>::get(), c.debug());
 
 
-			// Set up shape of launch grid and buffers:
-			// FIXME, read from device attributes.
-			int computeUnits     = 20;  // round up if we don't know. 
-			int wgPerComputeUnit =  6; 
-			int resultCnt = computeUnits * wgPerComputeUnit;
-			const int wgSize = 64; 
+		// Set up shape of launch grid and buffers:
+		// FIXME, read from device attributes.
+		int computeUnits     = c.device().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
+		int wgPerComputeUnit =  c.wgPerComputeUnit(); 
+		int resultCnt = computeUnits * wgPerComputeUnit;
+		const int wgSize = 64; 
 
-            // Create buffer wrappers so we can access the host functors, for read or writing in the kernel
-			cl::Buffer userFunctor(CL_MEM_USE_HOST_PTR, sizeof(binary_op), &binary_op );   // Create buffer wrapper so we can access host parameters.
-			//std::cout << "sizeof(Functor)=" << sizeof(binary_op) << std::endl;
-			cl::Buffer result(CL_MEM_WRITE_ONLY, sizeof(T) * resultCnt);
+		// Create buffer wrappers so we can access the host functors, for read or writing in the kernel
+		cl::Buffer userFunctor(c.context(), CL_MEM_USE_HOST_PTR, sizeof(binary_op), &binary_op );   // Create buffer wrapper so we can access host parameters.
+		//std::cout << "sizeof(Functor)=" << sizeof(binary_op) << std::endl;
+		
+		cl::Buffer result(c.context(), CL_MEM_ALLOC_HOST_PTR|CL_MEM_WRITE_ONLY, sizeof(T) * resultCnt);
 
 
-			cl::Kernel k = masterKernel;  // hopefully create a copy of the kernel. FIXME, doesn't work.
+		cl::Kernel k = masterKernel;  // hopefully create a copy of the kernel. FIXME, doesn't work.
 
-			int sz = (int)A.getInfo<CL_MEM_SIZE>();  // FIXME - remove typecast.  Kernel only can handle 32-bit size...
+		int szElements = (int)A.getInfo<CL_MEM_SIZE>() / sizeof(T);  // FIXME - remove typecast.  Kernel only can handle 32-bit size...
 
-			k.setArg(0, A);
-			k.setArg(1, sz);
-			k.setArg(2, init);
-			k.setArg(3, userFunctor);
-			k.setArg(4, result);
-			cl::LocalSpaceArg loc;
-            loc.size_ = wgSize*sizeof(T);
-			k.setArg(5, loc);
+		k.setArg(0, A);
+		k.setArg(1, szElements);
+		k.setArg(2, init);
+		k.setArg(3, userFunctor);
+		k.setArg(4, result);
+		cl::LocalSpaceArg loc;
+		loc.size_ = wgSize*sizeof(T);
+		k.setArg(5, loc);
 
-			 // FIXME.  Need to ensure global size is a multiple of local WG size ,etc.
 
-			cl::CommandQueue::getDefault().enqueueNDRangeKernel(
-				k, 
-				cl::NullRange, 
-				cl::NDRange(resultCnt * wgSize), 
-				cl::NDRange(wgSize));
+		c.commandQueue().enqueueNDRangeKernel(
+			k, 
+			cl::NullRange, 
+			cl::NDRange(resultCnt * wgSize), 
+			cl::NDRange(wgSize));
 
-			// FIXME - also need to provide a version of this code that does the summation on the GPU, when the buffer is already located there?
-			// FIXME - replace with map:
-			std::vector<T> outputArray(resultCnt);
-            cl::enqueueReadBuffer(result, true, 0, sizeof(T)*resultCnt, outputArray.data());
-            T acc = init;            
-            for(int i = 0; i < resultCnt; ++i){
-                acc = binary_op(outputArray[i], acc);
-            }
-			return acc;
+		// FIXME - also need to provide a version of this code that does the summation on the GPU, when the buffer is already located there?
+
+		T *h_result = (T*)c.commandQueue().enqueueMapBuffer(result, true, CL_MAP_READ, 0, sizeof(T)*resultCnt);
+		T acc = init;            
+		for(int i = 0; i < resultCnt; ++i){
+			acc = binary_op(h_result[i], acc);
+		}
+		return acc;
+	};
+
+
+
+	// Function definition that accepts iterators and converts to buffers.
+	// Allows user to specify control structure as first argument.
+	template<typename T, typename InputIterator, typename BinaryFunction> 
+	T reduce(const clbolt::control &c, InputIterator first1, InputIterator last1,  T init,
+		BinaryFunction binary_op, const std::string user_code="")  
+	{
+		size_t szElements = (int)(last1 - first1); 
+
+		// FIXME - use host pointers and map/unmap for host pointers, since they are only written once.
+		cl::Buffer A(c.context(), CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, sizeof(T) * szElements, &*first1);
+
+		return reduce(c, A, init, binary_op, user_code);
 	};
 
 
 	//---
 	// Function definition that accepts iterators and converts to buffers.
+	// Uses default first argument.
 	template<typename T, typename InputIterator, typename BinaryFunction> 
 	T reduce(InputIterator first1, InputIterator last1,  T init,
-		BinaryFunction binary_op, const std::string userCode="")  
+		BinaryFunction binary_op, const std::string user_code="")  
 	{
+		return reduce(clbolt::control::getDefault(), first1, last1, init, binary_op, user_code);
+	};
 
-			typedef std::iterator_traits<InputIterator>::value_type T;
-			size_t sz = (int)(last1 - first1); 
 
-			// FIXME - use host pointers and map/unmap for host pointers, since they are only written once.
-			cl::Buffer A(CL_MEM_READ_ONLY, sizeof(T) * sz);
-			cl::enqueueWriteBuffer(A, false, 0, sizeof(T) * sz, &*first1);
+	//---
+	// Function definition that accepts iterators and converts to buffers.
+	// Uses default first argument.
+	// Uses default init=0 and clbolt::plus as the default operator.
+	template<typename T, typename InputIterator, typename BinaryFunction> 
+	T reduce(clbolt::control c, InputIterator first1, InputIterator last1,  T init=0,
+		const std::string user_code="")  
+	{
+		return reduce(c, first1, last1, init, clbolt::plus<T>, user_code);
+	};
 
-			return  reduce(A, init, binary_op, userCode);
 
+	// Default control, host iterator, default operator
+	template<typename InputIterator> 
+	typename std::iterator_traits<InputIterator>::value_type
+		reduce(InputIterator first1, InputIterator last1, 
+		const std::string user_code="")  
+	{
+		typedef typename std::iterator_traits<InputIterator>::value_type InputType;
+		return reduce(clbolt::control::getDefault(), first1, last1, InputType(0), clbolt::plus<InputType>(), user_code);
 	};
 };
 
+// FIXME - variations:  (specify control vs default control) * (std::vector vs cl::Buffer) * (specify {init, binary_op} vs default {0,"plus"})
