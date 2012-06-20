@@ -10,7 +10,7 @@ namespace clbolt {
 
 	// FIXME - move to cpp file
 	struct CallCompiler_Reduce {
-		static void constructAndCompile(cl::Kernel *masterKernel,  std::string user_code, std::string valueTypeName,  std::string functorTypeName, unsigned debugMode) {
+		static void constructAndCompile(cl::Kernel *masterKernel,  std::string user_code, std::string valueTypeName,  std::string functorTypeName, const control &c) {
 
 			const std::string instantiationString = 
 				"// Host generates this instantiation string with user-specified value type and functor\n"
@@ -25,7 +25,7 @@ namespace clbolt {
 				"local " + valueTypeName + "* scratch\n"
 				");\n\n";
 
-			clbolt::constructAndCompile(masterKernel, "reduce", instantiationString, user_code, valueTypeName, functorTypeName, debugMode);
+			clbolt::constructAndCompile(masterKernel, "reduce", instantiationString, user_code, valueTypeName, functorTypeName, c);
 
 		};
 	};
@@ -39,7 +39,7 @@ namespace clbolt {
 		static std::once_flag initOnlyOnce;
 		static  cl::Kernel masterKernel;
 		// For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retreive the name here.
-		std::call_once(initOnlyOnce, CallCompiler_Reduce::constructAndCompile, &masterKernel, user_code + ClCode<BinaryFunction>::get(), TypeName<T>::get(),  TypeName<BinaryFunction>::get(), c.debug());
+		std::call_once(initOnlyOnce, CallCompiler_Reduce::constructAndCompile, &masterKernel, user_code + ClCode<BinaryFunction>::get(), TypeName<T>::get(),  TypeName<BinaryFunction>::get(), c);
 
 
 		// Set up shape of launch grid and buffers:
@@ -94,10 +94,11 @@ namespace clbolt {
 	T reduce(const clbolt::control &c, InputIterator first1, InputIterator last1,  T init,
 		BinaryFunction binary_op, const std::string user_code="")  
 	{
+		typedef typename std::iterator_traits<InputIterator>::value_type InputType;
+
 		size_t szElements = (int)(last1 - first1); 
 
-		// FIXME - use host pointers and map/unmap for host pointers, since they are only written once.
-		cl::Buffer A(c.context(), CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, sizeof(T) * szElements, &*first1);
+		cl::Buffer A(c.context(), CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, sizeof(T) * szElements, const_cast<InputType*>(&*first1));
 
 		return reduce(c, A, init, binary_op, user_code);
 	};
@@ -118,11 +119,14 @@ namespace clbolt {
 	// Function definition that accepts iterators and converts to buffers.
 	// Uses default first argument.
 	// Uses default init=0 and clbolt::plus as the default operator.
-	template<typename T, typename InputIterator, typename BinaryFunction> 
-	T reduce(clbolt::control c, InputIterator first1, InputIterator last1,  T init=0,
+	template<typename InputIterator> 
+	typename std::iterator_traits<InputIterator>::value_type
+	reduce(const clbolt::control &c, InputIterator first1, InputIterator last1,  
+	    typename std::iterator_traits<InputIterator>::value_type init=0,
 		const std::string user_code="")  
 	{
-		return reduce(c, first1, last1, init, clbolt::plus<T>, user_code);
+		typedef typename std::iterator_traits<InputIterator>::value_type InputType;
+		return reduce(c, first1, last1, init, clbolt::plus<InputType>(), user_code);
 	};
 
 

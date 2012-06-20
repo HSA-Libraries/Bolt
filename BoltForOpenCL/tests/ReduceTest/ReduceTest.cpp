@@ -107,17 +107,19 @@ void simpleReduce_TestControl(int aSize, int numIters, int deviceIndex)
 		A[i] = i;
 	};
 
+	// Create an OCL context, device, queue.
 	MyOclContext ocl = initOcl(CL_DEVICE_TYPE_GPU, deviceIndex);
-	clbolt::control c(ocl._queue);
+	clbolt::control c(ocl._queue);  // construct control structure from the queue.
+	//printContext(c.context());
+
 	c.debug(clbolt::control::debug::Compile + clbolt::control::debug::SaveCompilerTemps);
 
 	int stlReduce = std::accumulate(A.begin(), A.end(), 0);
-
-	int boltReduce = clbolt::reduce(A.begin(), A.end());
+	int boltReduce = 0;
 
 	__int64 start = StartProfile();
 	for (int i=0; i<numIters; i++) {
-	  boltReduce = clbolt::reduce(A.begin(), A.end());
+		boltReduce = clbolt::reduce(c, A.begin(), A.end());
 	}
 	EndProfile(start, numIters, "TestControl");
 
@@ -127,6 +129,10 @@ void simpleReduce_TestControl(int aSize, int numIters, int deviceIndex)
 
 int _tmain(int argc, _TCHAR* argv[])
 {
+
+
+	simpleReduce_TestControl(100, 1, 0);
+
 	simpleReduce1(256);
 	simpleReduce1(1024);
 

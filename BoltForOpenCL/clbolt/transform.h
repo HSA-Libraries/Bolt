@@ -8,14 +8,9 @@
 namespace clbolt {
 
 	// FIXME - move to cpp file
-	struct CallCompiler{
-		//static void init_(cl::Kernel *masterKernel,  std::string userCode, std::string &valueTypeName, const std::string &functorTypeName) {
-		static void init_(cl::Kernel *masterKernel, std::string userCode, std::string valueTypeName,  std::string functorTypeName) {
-
-
-			//FIXME, when this becomes more stable move the kernel code to a string in bolt.cpp
-			// Note unfortunate dependency here on relative file path of run directory and location of clbolt dir.
-			std::string transformFunctionString = clbolt::fileToString( "transform_kernels.cl" ); 
+	struct CallCompiler_Transform {
+		//static void init_(cl::Kernel *masterKernel,  std::string user_code, std::string &valueTypeName, const std::string &functorTypeName) {
+		static void init_(cl::Kernel *masterKernel, std::string user_code, std::string valueTypeName,  std::string functorTypeName, const control &c) {
 
 			std::string instantiationString = 
 				"// Host generates this instantiation string with user-specified value type and functor\n"
@@ -27,33 +22,25 @@ namespace clbolt {
 				"const int length,\n"
 				"global " + functorTypeName + "* userFunctor);\n\n";
 
-			std::string codeStr = userCode + "\n\n" + transformFunctionString +   instantiationString;
 
-			if (1) {
-				std::cout << "Compiling...\n";
-				std::cout << "ValueType  ='" << valueTypeName << "'" << std::endl;
-				std::cout << "FunctorType='" << functorTypeName << "'" << std::endl;
+			clbolt::constructAndCompile(masterKernel, "transform", instantiationString, user_code, valueTypeName, functorTypeName, c);
 
-				//std::cout << "code=" << std::endl << codeStr;
-			}
-
-			*masterKernel = clbolt::compileFunctor(codeStr, "transformInstantiated");
 		};
 	};
 
 
 	template<typename T, typename BinaryFunction> 
-	void transform(cl::Buffer A, cl::Buffer B, cl::Buffer Z, 
-		BinaryFunction f, std::string userCode="")  {
+	void transform2(const control &c, cl::Buffer A, cl::Buffer B, cl::Buffer Z, 
+		BinaryFunction f, std::string user_code="")  {
 
 
-			cl::Buffer userFunctor(CL_MEM_READ_ONLY|CL_MEM_USE_HOST_PTR, sizeof(f), &f );   // Create buffer wrapper so we can access host parameters.
+			cl::Buffer userFunctor(c.context(), CL_MEM_READ_ONLY|CL_MEM_USE_HOST_PTR, sizeof(f), &f );   // Create buffer wrapper so we can access host parameters.
 			//std::cout << "sizeof(Functor)=" << sizeof(f) << std::endl;
 
 			static std::once_flag initOnlyOnce;
 			static  cl::Kernel masterKernel;
 			// For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retreive the name here.
-			std::call_once(initOnlyOnce, CallCompiler::init_, &masterKernel, ClCode<BinaryFunction>::get() + "\n\n" + userCode, TypeName<T>::get(), TypeName<BinaryFunction>::get());
+			std::call_once(initOnlyOnce, CallCompiler_Transform::init_, &masterKernel, user_code + ClCode<BinaryFunction>::get(), TypeName<T>::get(), TypeName<BinaryFunction>::get(), c);
 			//std::call_once(initOnlyOnce, CallCompiler::init_, &masterKernel, TypeName<T>::get(), functorTypeName.empty() ? TypeName<BinaryFunction>::get() : functorTypeName);
 
 			cl::Kernel k = masterKernel;  // hopefully create a copy of the kernel.  FIXME, need to create-kernel from the program.
@@ -67,35 +54,55 @@ namespace clbolt {
 
 			const int wgSize = 256; // FIXME.  Need to ensure global size is a multiple of this ,etc.
 
-			cl::CommandQueue::getDefault().enqueueNDRangeKernel(
+			c.commandQueue().enqueueNDRangeKernel(
 				k, 
 				cl::NullRange, 
 				cl::NDRange(sz), 
 				cl::NDRange(wgSize));
-
 	};
 
 
 	//---
 	// Function definition that accepts iterators and converts to buffers.
 	template<typename InputIterator, typename OutputIterator, typename BinaryFunction> 
-	void transform(InputIterator first1, InputIterator last1, InputIterator first2, OutputIterator result, 
-		BinaryFunction f, const std::string userCode="")  {
+	void transform(const control &c,  InputIterator first1, InputIterator last1, InputIterator first2, OutputIterator result, 
+		BinaryFunction f, const std::string user_code="")  {
 
 			typedef std::iterator_traits<InputIterator>::value_type T;
 			int sz = (int)(last1 - first1); // FIXME - use size_t
 
-			// FIXME - use host pointers and map/unmap for host pointers, since they are only written once.
-			cl::Buffer A(CL_MEM_READ_ONLY, sizeof(T) * sz);
-			cl::enqueueWriteBuffer(A, false, 0, sizeof(T) * sz, &*first1);
-			cl::Buffer B(CL_MEM_READ_ONLY, sizeof(T) * sz);
-			cl::enqueueWriteBuffer(B, false, 0, sizeof(T) * sz, &*first2);
+			// Use host pointers memory since these arrays are only read once - no benefit to copying.
+			cl::Buffer A(c.context(), CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY,  sizeof(T) * sz, const_cast<T*>(&*first1));
+			cl::Buffer B(c.context(), CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY,  sizeof(T) * sz, const_cast<T*>(&*first2));
+	
+			cl::Buffer Z(c.context(), CL_MEM_USE_HOST_PTR|CL_MEM_WRITE_ONLY, sizeof(T) * sz, &*result);
 
-			cl::Buffer Z(CL_MEM_WRITE_ONLY|CL_MEM_USE_HOST_PTR, sizeof(T) * sz, &*result);
+			transform2<T> (c, A, B, Z, f, user_code);
 
-			transform<T> (A, B, Z, f, userCode);
-
-			// FIXME - mapBuffer returns pointer
-			cl::CommandQueue::getDefault().enqueueMapBuffer(Z, true, CL_MAP_READ | CL_MAP_WRITE, 0/*offset*/, sz);
+			c.commandQueue().enqueueMapBuffer(Z, true, CL_MAP_READ | CL_MAP_WRITE, 0/*offset*/, sz);
 	};
+
+
+
+
+	//---
+	// convenience functions that accept control structure as first parameter:
+
+	// default control, two-input transform, buffer inputs
+	template<typename T, typename BinaryFunction> 
+	void transform(cl::Buffer A, cl::Buffer B, cl::Buffer Z, 
+		BinaryFunction f, std::string user_code="")  
+	{
+		transform2<T>(control::getDefault(), A, B, Z, f, user_code);
+	}
+
+
+	// default control, two-input transform, std:: iterator
+	template<typename InputIterator, typename OutputIterator, typename BinaryFunction> 
+	void transform( InputIterator first1, InputIterator last1, InputIterator first2, OutputIterator result, 
+		BinaryFunction f, const std::string user_code="")  
+	{
+		transform(control::getDefault(), first1, last1, first2, result, f, user_code);
+	};
+
 };

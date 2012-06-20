@@ -12,22 +12,25 @@ namespace clbolt {
 		struct debug {
 			static const unsigned None=0;
 			static const unsigned Compile = 0x1;
-			static const unsigned SaveCompilerTemps = 0x2;
-			static const unsigned AutoTune = 0x4;
+			static const unsigned ShowCode = 0x2;
+			static const unsigned SaveCompilerTemps = 0x4;
+			static const unsigned AutoTune = 0x8;
 		};
 	public:
 
-		// Construct a new control structure, copying from default control.
+		// Construct a new control structure, copying from default control for arguments which are not overridden.
 		control(
-			cl::CommandQueue commandQueue=_defaultControl.commandQueue(),
-			e_UseHostMode useHost=_defaultControl.useHost(),
-			unsigned debug=_defaultControl.debug()
+			cl::CommandQueue commandQueue=getDefault().commandQueue(),
+			e_UseHostMode useHost=getDefault().useHost(),
+			unsigned debug=getDefault().debug()
 			) :
-			_commandQueue(commandQueue),
+		    _commandQueue(commandQueue),
 			_useHost(useHost),
 			_debug(debug),
-			_autoTune(_defaultControl._autoTune),
-			_wgPerComputeUnit(_defaultControl._wgPerComputeUnit)
+			_autoTune(getDefault()._autoTune),
+			_wgPerComputeUnit(getDefault()._wgPerComputeUnit),
+			_compileOptions(getDefault()._compileOptions),
+			_compileForAllDevices(getDefault()._compileForAllDevices)
 		{};
 
 		// getters:
@@ -37,36 +40,45 @@ namespace clbolt {
 		e_UseHostMode useHost() const { return _useHost; };
 		unsigned debug() const { return _debug;};
 		int const wgPerComputeUnit() const { return _wgPerComputeUnit; };
+		const std::string compileOptions() const { return _compileOptions; };
+		bool compileForAllDevices() const { return _compileForAllDevices; };
 
 		//setters:
+		void commandQueue(cl::CommandQueue commandQueue) { _commandQueue = commandQueue; };
+		void useHost(e_UseHostMode useHost) { _useHost = useHost; };
 		void debug(unsigned debug) { _debug = debug; };
+		void wgPerComputeUnit(int wgPerComputeUnit) { _wgPerComputeUnit = wgPerComputeUnit; }; 
+		void compileOptions(std::string &compileOptions) { _compileOptions = compileOptions; };
 
-		static control &getDefault() {return _defaultControl; }; 
+		static control &getDefault() 
+		{
+			// Default control structure; this can be accessed by the clbolt::control::getDefault()
+		static control _defaultControl(true);
+		return _defaultControl; 
+		}; 
 	private:
 
 		// This constructor is only used to create the initial global default control structure.
-		control(bool createGlobal,
-			cl::CommandQueue commandQueue=cl::CommandQueue::getDefault(), 
-			e_UseHostMode useHost=UseHost,
-			unsigned debug=debug::None
-			) :
-			_commandQueue(commandQueue),
-			_useHost(useHost),
-			_debug(debug),
+		control(bool createGlobal) :
+			_commandQueue(cl::CommandQueue::getDefault()),
+			_useHost(UseHost),
+			_debug(debug::None),
 			_autoTune(AutoTuneAll),
-			_wgPerComputeUnit(8)
+			_wgPerComputeUnit(8),
+			_compileForAllDevices(true)
 		{};
 
 	private:
 		cl::CommandQueue    _commandQueue;
 		e_UseHostMode       _useHost;
 		e_AutoTuneMode      _autoTune;  /* auto-tune the choice of device CPU/GPU and  workgroup shape */
-		unsigned         _debug;
+		unsigned			_debug;
 
 		int                 _wgPerComputeUnit;
 
-		// This is the default for all bolt calls if no user-specified default is specified.  It uses the default constructor.
-		static control      _defaultControl;
+		std::string			_compileOptions;  // extra options to pass to OpenCL compiler.
+
+		bool				 _compileForAllDevices;  // compile for all devices in the context.  False means to only compile for specified device.
 	};
 
 
@@ -74,7 +86,12 @@ namespace clbolt {
 	//device->platform.  (CL_DEVICE_PLATFORM)
 };
 
-
+// Implementor note:
+// When adding a new field to this structure, don't forget to:
+//   * Add the new field, ie "int _foo.
+//   * Add setter function and getter function.
+//   * Add the field to the private constructor.  This is used to set the global "_defaultControl".
+//   * Add the field to the public constructor, copying from the _defaultControl.
 
 // Sample usage:
 // bolt::control c(myCmdQueue);

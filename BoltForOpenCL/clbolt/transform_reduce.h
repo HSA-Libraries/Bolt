@@ -26,15 +26,15 @@ namespace clbolt {
 
             std::string functorNames = transformFunctorTypeName + " , " + reduceFunctorTypeName; // create for debug message
 
-			unsigned debugMode = 0; //FIXME
-			clbolt::constructAndCompile(masterKernel, "transform_reduce", instantiationString, user_code, valueTypeName, functorNames, debugMode);
+			clbolt::control c = clbolt::control::getDefault();  // FIXME- this needs to be passed a parm but we have too many arguments for call_once
+			clbolt::constructAndCompile(masterKernel, "transform_reduce", instantiationString, user_code, valueTypeName, functorNames, c);
 
 		};
 	};
 
 
 	template<typename T, typename UnaryFunction, typename BinaryFunction> 
-	T transform_reduce(cl::Buffer A, UnaryFunction transform_op,
+	T transform_reduce(const control c, cl::Buffer A, UnaryFunction transform_op,
              T init, BinaryFunction reduce_op, const std::string user_code="")
 	{
 			static std::once_flag initOnlyOnce;
@@ -43,7 +43,7 @@ namespace clbolt {
 
 			// For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retreive the name here.
 			std::call_once(initOnlyOnce, CallCompiler_TransformReduce::constructAndCompile, &masterKernel, 
-				"\n//--user Code\n" + user_code + "\n---\nFunctions\n" + ClCode<UnaryFunction>::get() + ClCode<BinaryFunction>::get() , 
+				"\n//--user Code\n" + user_code + "\n//---Functions\n" + ClCode<UnaryFunction>::get() + ClCode<BinaryFunction>::get() , 
 				TypeName<T>::get(), TypeName<UnaryFunction>::get(), TypeName<BinaryFunction>::get());
 
 
@@ -55,12 +55,12 @@ namespace clbolt {
 			const int wgSize = 64; 
 
             // Create buffer wrappers so we can access the host functors, for read or writing in the kernel
-			cl::Buffer transformFunctor(CL_MEM_USE_HOST_PTR, sizeof(transform_op), &transform_op );   
-			cl::Buffer reduceFunctor(CL_MEM_USE_HOST_PTR, sizeof(reduce_op), &reduce_op );   // Create buffer wrapper so we can access host parameters.
+			cl::Buffer transformFunctor(c.context(), CL_MEM_USE_HOST_PTR, sizeof(transform_op), &transform_op );   
+			cl::Buffer reduceFunctor(c.context(), CL_MEM_USE_HOST_PTR, sizeof(reduce_op), &reduce_op );
 
 
 			//std::cout << "sizeof(reduce_op functor)=" << sizeof(reduce_op) << std::endl;
-			cl::Buffer result(CL_MEM_WRITE_ONLY, sizeof(T) * resultCnt);
+			cl::Buffer result(c.context(), CL_MEM_WRITE_ONLY, sizeof(T) * resultCnt);
 
 			cl::Kernel k = masterKernel;  // hopefully create a copy of the kernel. FIXME, doesn't work.
 
@@ -78,7 +78,7 @@ namespace clbolt {
 
 			 // FIXME.  Need to ensure global size is a multiple of local WG size ,etc.
 
-			cl::CommandQueue::getDefault().enqueueNDRangeKernel(
+			c.commandQueue().enqueueNDRangeKernel(
 				k, 
 				cl::NullRange, 
 				cl::NDRange(resultCnt * wgSize), 
@@ -87,7 +87,7 @@ namespace clbolt {
 			// FIXME - replace with map:
 			// FIXME: Note this depends on supplied functor having a version which can be compiled to run on the CPU
 			std::vector<T> outputArray(resultCnt);
-            cl::enqueueReadBuffer(result, true, 0, sizeof(T)*resultCnt, outputArray.data());
+            c.commandQueue().enqueueReadBuffer(result, true, 0, sizeof(T)*resultCnt, outputArray.data());
             T acc = init;            
             for(int i = 0; i < resultCnt; ++i){
                 acc = reduce_op(outputArray[i], acc);
@@ -100,7 +100,7 @@ namespace clbolt {
 	// Function definition that accepts iterators and converts to buffers.
     
 	template<typename T, typename InputIterator, typename UnaryFunction, typename BinaryFunction> 
-	T transform_reduce(InputIterator first1, InputIterator last1,  
+	T transform_reduce(const control &c, InputIterator first1, InputIterator last1,  
 		UnaryFunction transform_op, 
 		T init,  BinaryFunction reduce_op, const std::string user_code="" )  
 	{
@@ -109,11 +109,21 @@ namespace clbolt {
 			size_t sz = (int)(last1 - first1); 
 
 			// FIXME - use host pointers and map/unmap for host pointers, since they are only written once.
-			cl::Buffer A(CL_MEM_READ_ONLY, sizeof(T) * sz);
-			cl::enqueueWriteBuffer(A, false, 0, sizeof(T) * sz, &*first1);
+			cl::Buffer A(c.context(), CL_MEM_READ_ONLY, sizeof(T) * sz);
+			c.commandQueue().enqueueWriteBuffer(A, false, 0, sizeof(T) * sz, &*first1);
 
-			return  transform_reduce(A, transform_op, init, reduce_op, user_code);
+			return  transform_reduce(c, A, transform_op, init, reduce_op, user_code);
 
+	};
+
+
+	// Wrapper that uses default control class, iterator interface
+	template<typename T, typename InputIterator, typename UnaryFunction, typename BinaryFunction> 
+	T transform_reduce(InputIterator first1, InputIterator last1,  
+		UnaryFunction transform_op, 
+		T init,  BinaryFunction reduce_op, const std::string user_code="" )  
+	{
+		return transform_reduce(clbolt::control::getDefault(), first1, last1, transform_op, init, reduce_op, user_code);
 	};
 };
 

@@ -9,11 +9,11 @@
 #include <streambuf>
 #include <direct.h>  //windows CWD for error message
 #include <tchar.h>
+#include <algorithm>
 
 namespace clbolt {
 
-	// Default control structure; this can be accessed by the clbolt::control::getDefault()
-	control control::_defaultControl(true);
+
 
 
 	std::string fileToString(const std::string &fileName)
@@ -62,27 +62,63 @@ namespace clbolt {
 
 
 
-	cl::Kernel compileFunctor(const std::string &kernelCodeString, const std::string kernelName, const std::string compileOptions)
+	cl::Kernel compileFunctor(const std::string &kernelCodeString, const std::string kernelName,  std::string compileOptions, const control &c)
 	{
-		cl::Program mainProgram(kernelCodeString, false);
+
+		if (c.debug() & control::debug::ShowCode) {
+			std::cout << "debug: code=" << std::endl << kernelCodeString;
+		}
+
+		cl::Program mainProgram(c.context(), kernelCodeString, false);
 		try
 		{
-			mainProgram.build("-x clc++");
+			compileOptions += c.compileOptions();
+			compileOptions += " -x clc++";
+
+			if (c.compileForAllDevices()) {
+				std::vector<cl::Device> devices = c.context().getInfo<CL_CONTEXT_DEVICES>();
+
+				mainProgram.build(devices, compileOptions.c_str());
+			} else {
+				std::vector<cl::Device> devices;
+				devices.push_back(c.device());
+				mainProgram.build(devices, compileOptions.c_str());
+			};
+
+
+
 
 		} catch(cl::Error e) {
 			std::cout << "Code         :\n" << kernelCodeString << std::endl;
-			std::cout << "Build Status: " << mainProgram.getBuildInfo<CL_PROGRAM_BUILD_STATUS>(cl::Device::getDefault()) << std::endl;
-			std::cout << "Build Options:\t" << mainProgram.getBuildInfo<CL_PROGRAM_BUILD_OPTIONS>(cl::Device::getDefault()) << std::endl;
-			std::cout << "Build Log:\t " << mainProgram.getBuildInfo<CL_PROGRAM_BUILD_LOG>(cl::Device::getDefault()) << std::endl;
+
+			std::vector<cl::Device> devices = c.context().getInfo<CL_CONTEXT_DEVICES>();
+			std::for_each(devices.begin(), devices.end(), [&] (cl::Device &d) {
+				if (mainProgram.getBuildInfo<CL_PROGRAM_BUILD_STATUS>(d) != CL_SUCCESS) {
+					std::cout << "Build status for device: " << d.getInfo<CL_DEVICE_NAME>() << "_"<< d.getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>() << "CU_"<< d.getInfo<CL_DEVICE_MAX_CLOCK_FREQUENCY>() << "Mhz" << "\n";
+					std::cout << "    Build Status: " << mainProgram.getBuildInfo<CL_PROGRAM_BUILD_STATUS>(d) << std::endl;
+					std::cout << "    Build Options:\t" << mainProgram.getBuildInfo<CL_PROGRAM_BUILD_OPTIONS>(d) << std::endl;
+					std::cout << "    Build Log:\t " << mainProgram.getBuildInfo<CL_PROGRAM_BUILD_LOG>(d) << std::endl;
+				}
+			});
 			throw e;
 		}
+
+		if ( c.debug() & control::debug::Compile) {
+			std::vector<cl::Device> devices = c.context().getInfo<CL_CONTEXT_DEVICES>();
+			std::for_each(devices.begin(), devices.end(), [&] (cl::Device &d) {
+				std::cout << "debug: Build status for device: " << d.getInfo<CL_DEVICE_NAME>() << "_"<< d.getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>() << "CU_"<< d.getInfo<CL_DEVICE_MAX_CLOCK_FREQUENCY>() << "Mhz" << "\n";
+				std::cout << "debug:   Build Status: " << mainProgram.getBuildInfo<CL_PROGRAM_BUILD_STATUS>(d) << std::endl;
+				std::cout << "debug:   Build Options:\t" << mainProgram.getBuildInfo<CL_PROGRAM_BUILD_OPTIONS>(d) << std::endl;
+				std::cout << "debug:   Build Log:\n " << mainProgram.getBuildInfo<CL_PROGRAM_BUILD_LOG>(d) << std::endl;
+			}); 
+		};
 
 		return cl::Kernel(mainProgram, kernelName.c_str());
 	}
 
 
 
-	void constructAndCompile(cl::Kernel *masterKernel, const std::string &apiName, const std::string instantiationString, std::string userCode, std::string valueTypeName,  std::string functorTypeName, unsigned debugMode) {
+	void constructAndCompile(cl::Kernel *masterKernel, const std::string &apiName, const std::string instantiationString, std::string userCode, std::string valueTypeName,  std::string functorTypeName, const control &c) {
 
 		//FIXME, when this becomes more stable move the kernel code to a string in bolt.cpp
 		// Note unfortunate dependency here on relative file path of run directory and location of clbolt dir.
@@ -90,18 +126,20 @@ namespace clbolt {
 
 		std::string codeStr = userCode + "\n\n" + templateFunctionString +   instantiationString;
 
-		if (debugMode & control::debug::Compile) {
-			std::cout << "debug: compiling: '" << apiName << "'" << std::endl;
-			std::cout << "debug: valueType  ='" << valueTypeName << "'" << "functorType='" << functorTypeName << "'" << std::endl;
-			std::cout << "debug: code=" << std::endl << codeStr;
-		}
 
 		std::string compileOptions = "";
-		if (debugMode & control::debug::SaveCompilerTemps) {
+		if (c.debug() & control::debug::SaveCompilerTemps) {
 			compileOptions += "-save-temps=BOLT";
 		}
 
-		*masterKernel = clbolt::compileFunctor(codeStr, apiName + "Instantiated");
+		if (c.debug() & control::debug::Compile) {
+			std::cout << "debug: compiling algorithm: '" << apiName << "' with valueType='" << valueTypeName << "'" << " ;  functorType='" << functorTypeName << "'" << std::endl;
+		}
+
+
+
+
+		*masterKernel = clbolt::compileFunctor(codeStr, apiName + "Instantiated", compileOptions, c);
 	};
 
 

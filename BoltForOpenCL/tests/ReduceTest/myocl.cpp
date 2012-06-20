@@ -24,8 +24,29 @@ void printDevice(const cl::Device &d) {
 		<< "\n";
 };
 
+void printContext(const cl::Context &c) 
+{
+	cl_int numDevices = c.getInfo<CL_CONTEXT_NUM_DEVICES>();
 
-MyOclContext initOcl(cl_int clDeviceType, int deviceIndex) 
+	std::cout <<"Context: #devices=" << numDevices
+		//<< ", props=" << c.getInfo<CL_CONTEXT_PROPERTIES>() 
+		<< ", refCnt=" << c.getInfo<CL_CONTEXT_REFERENCE_COUNT>()
+		<< "\n";
+
+	std::vector<cl::Device> devices;
+	devices = c.getInfo<CL_CONTEXT_DEVICES>();
+
+	int deviceCnt = 0;
+	std::for_each(devices.begin(), devices.end(), [&] (cl::Device &d) {
+		std::cout << "#" << deviceCnt << "  ";
+		printDevice(d);
+		deviceCnt ++;
+	}); 
+};
+
+
+
+MyOclContext initOcl(cl_int clDeviceType, int deviceIndex, int verbose) 
 {
 	MyOclContext ocl;
 
@@ -33,12 +54,16 @@ MyOclContext initOcl(cl_int clDeviceType, int deviceIndex)
 	std::vector< cl::Platform > platformList;
 	cl::Platform::get(&platformList);
 	CHECK_OPENCL_ERROR(platformList.size()!=0 ? CL_SUCCESS : -1, "cl::Platform::get");
-	std::cerr << "info: Found: " << platformList.size() << " platforms." << std::endl;
+	if (verbose) {
+		std::cerr << "info: Found: " << platformList.size() << " platforms." << std::endl;
+	}
 
 	//FIXME - add support for multiple vendors here, right now just pick the first platform.
 	std::string platformVendor;
 	platformList[0].getInfo((cl_platform_info)CL_PLATFORM_VENDOR, &platformVendor);
-	std::cout << "info: platform is: " << platformVendor << "\n";
+	if (verbose) {
+		std::cout << "info: platform is: " << platformVendor << "\n";
+	}
 	cl_context_properties cprops[3] = 
 	{CL_CONTEXT_PLATFORM, (cl_context_properties)(platformList[0])(), 0};
 
@@ -69,7 +94,9 @@ MyOclContext initOcl(cl_int clDeviceType, int deviceIndex)
 		});
 	}
 
-	std::cout << "info: selected device #" << deviceIndex << "  ";
+	if (verbose) {
+		std::cout << "info: selected device #" << deviceIndex << "  ";
+	}
 	printDevice(devices[deviceIndex]);
 	ocl._device = devices[deviceIndex];
 
@@ -116,6 +143,7 @@ cl::Kernel compileKernelCpp(const MyOclContext &ocl, const char *kernelFile, con
 		std::cout << "Build Status: " << program.getBuildInfo<CL_PROGRAM_BUILD_STATUS>(ocl._device) << std::endl;
 		std::cout << "Build Options:\t" << program.getBuildInfo<CL_PROGRAM_BUILD_OPTIONS>(ocl._device) << std::endl;
 		std::cout << "Build Log:\t " << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(ocl._device) << std::endl;
+		return cl::Kernel();
 	}
 };
 
