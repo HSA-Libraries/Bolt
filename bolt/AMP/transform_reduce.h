@@ -3,7 +3,7 @@
 #include <iostream>  // FIXME, remove as this is only here for debug output
 #include <vector>
 #include <amp.h>
-#include <bolt/functional.h>
+#include <bolt/AMP/functional.h>
 
 
 #ifdef BOLT_POOL_ALLOC

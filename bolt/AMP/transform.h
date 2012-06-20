@@ -1,7 +1,7 @@
 #pragma once
 
 #include <amp.h>
-#include <bolt/functional.h>
+#include <bolt/AMP/functional.h>
 
 
 //#define RESTRICT_AMP restrict(direct3d) 

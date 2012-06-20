@@ -5,7 +5,7 @@
 #include <functional>
 #include <algorithm>
 
-#include <bolt/transform.h>
+#include <bolt/AMP/transform.h>
 
 template<typename Container>
 static void printA2(const char * msg, const Container &a, const Container &b, int x_size) 

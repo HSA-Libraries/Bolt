@@ -2,8 +2,8 @@
 //
 
 #include "stdafx.h"
-#include "clbolt/transform_reduce.h"
-#include "clbolt/functional.h"
+#include "bolt/CL/transform_reduce.h"
+#include "bolt/CL/functional.h"
 
 #include <iostream>
 #include <algorithm>  // for testing against STL functions.

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <clbolt/bolt.h>
+#include <bolt/CL/bolt.h>
 #include <mutex>
 #include <string>
 #include <iostream>

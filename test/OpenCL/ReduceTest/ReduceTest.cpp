@@ -2,9 +2,9 @@
 //
 
 #include "stdafx.h"
-#include "clbolt/reduce.h"
-#include "clbolt/functional.h"
-#include "clbolt/control.h"
+#include "bolt/CL/reduce.h"
+#include "bolt/CL/functional.h"
+#include "bolt/CL/control.h"
 
 #include <iostream>
 #include <algorithm>  // for testing against STL functions.

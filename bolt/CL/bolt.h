@@ -7,7 +7,7 @@
 
 #include <string>
 
-#include <clbolt/control.h>
+#include <bolt/CL/control.h>
 
 namespace clbolt {
 	extern std::string fileToString(const std::string &fileName);

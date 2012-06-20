@@ -3,8 +3,8 @@
 
 #include <numeric>
 #include <limits>
-#include <bolt/functional.h>
-#include <bolt/reduce.h>
+#include <bolt/AMP/functional.h>
+#include <bolt/AMP/reduce.h>
 
 #include <list>	// For debugging purposes, to prove that we can reject lists
 

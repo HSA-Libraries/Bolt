@@ -1,8 +1,8 @@
 
 
 //#include "stdafx.h"  // not present in the clbolt dir, but don't really need it 
-#include <clbolt/bolt.h>
-#include <clbolt/unicode.h>
+#include <bolt/CL/bolt.h>
+#include <bolt/unicode.h>
 
 #include <iostream>
 #include <fstream>

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <clbolt/bolt.h>
+#include <bolt/CL/bolt.h>
 
 #define CREATE_STD_TYPENAMES(OPERATOR,CODE_STRING) \
 	BOLT_CREATE_TYPENAME(OPERATOR<float>);  BOLT_CREATE_CLCODE(OPERATOR<float>, CODE_STRING); \

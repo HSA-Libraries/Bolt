@@ -3,8 +3,8 @@
 
 #include <numeric>
 #include <limits>
-#include <bolt/functional.h>
-#include <bolt/transform_reduce.h>
+#include <bolt/AMP/functional.h>
+#include <bolt/AMP/transform_reduce.h>
 
 template<typename T>
 void printCheckMessage(bool err, std::string msg, T  stlResult, T boltResult)

@@ -1,7 +1,7 @@
 #pragma once
 
-#include <clbolt/bolt.h>
-#include <clbolt/functional.h>
+#include <bolt/CL/bolt.h>
+#include <bolt/CL/functional.h>
 #include <mutex>
 #include <string>
 #include <iostream>

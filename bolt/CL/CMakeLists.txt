@@ -10,7 +10,7 @@ set( clBolt.Runtime.clFiles reduce_kernels.cl transform_kernels.cl transform_red
 set( clBolt.Runtime.Files ${clBolt.Runtime.Source} ${clBolt.Runtime.Headers} ${clBolt.Runtime.clFiles} )
 
 # Include standard OpenCL headers
-include_directories( ${PROJECT_SOURCE_DIR}/BoltForOpenCL ${OPENCL_INCLUDE_DIRS} )
+include_directories( ${PROJECT_SOURCE_DIR} ${OPENCL_INCLUDE_DIRS} )
 
 add_library( clBolt.Runtime STATIC ${clBolt.Runtime.Files} )
 target_link_libraries( clBolt.Runtime ${OPENCL_LIBRARIES} )

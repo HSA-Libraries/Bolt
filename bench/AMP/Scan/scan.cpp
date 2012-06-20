@@ -1,7 +1,7 @@
 #include "stdafx.h"
 
-#include <bolt/functional.h>
-#include <bolt/scan.h>
+#include <bolt/AMP/functional.h>
+#include <bolt/AMP/scan.h>
 #include <bolt/unicode.h>
 // #include <bolt/sequentialIterator.h>
 

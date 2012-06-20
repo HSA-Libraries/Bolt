@@ -1,5 +1,5 @@
 #############################################################################
-##	Copyright (C) 2010 Advanced Micro Devices, Inc. All Rights Reserved. 
+##	Copyright (C) 2012 Advanced Micro Devices, Inc. All Rights Reserved. 
 #############################################################################
 if( WIN32 )
 	# We require 2.8.3 for windows because of a bug in cmake that prevented vs2010 from generating
@@ -24,8 +24,8 @@ set( Bolt_VERSION_PATCH 1 )
 set( Bolt_VERSION "${Bolt_VERSION_MAJOR}.${Bolt_VERSION_MINOR}.${Bolt_VERSION_PATCH}")
 	
 set( CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR} )
-set( CLBOLT_DIR "${PROJECT_SOURCE_DIR}/BoltForOpenCL/clbolt" )
-set( BOLT_DIR "${PROJECT_SOURCE_DIR}/BoltForC++AMP/bolt" )
+set( CLBOLT_DIR "${PROJECT_SOURCE_DIR}/bolt/CL" )
+set( BOLT_DIR "${PROJECT_SOURCE_DIR}/bolt/AMP" )
 
 # On windows, it's convenient to change the default install prefix such that it does NOT point to 'program files'
 # Need to check out CMAKE_RUNTIME_OUTPUT_DIRECTORY variable, and see if that eliminates the need to modify install path
@@ -56,12 +56,16 @@ else()
 endif()
 
 # Various options below on configuring the build, and how to generate the solution files
-if( IS_DIRECTORY "${PROJECT_SOURCE_DIR}/BoltForC++AMP" AND WIN32 )
+if( IS_DIRECTORY "${BOLT_DIR}" AND WIN32 )
 	option( BUILD_ampBolt "Create a solution that compiles Bolt for AMP" ON )
 endif( )
  
-if( IS_DIRECTORY "${PROJECT_SOURCE_DIR}/BoltForOpenCL" )
+if( IS_DIRECTORY "${CLBOLT_DIR}" )
 	option( BUILD_clBolt "Create a solution that compiles Bolt for OpenCL" ON )
+endif( )
+
+if( IS_DIRECTORY "${PROJECT_SOURCE_DIR}/test" )
+	option( BUILD_tests "Add projects for testing Bolt " ON )
 endif( )
 
 if( IS_DIRECTORY "${PROJECT_SOURCE_DIR}/bench" )
@@ -125,31 +129,30 @@ else( )
     set( BIN_DIR bin32 )
     set( LIB_DIR lib32 )
 endif( )
-			
+
+# Build AMP library (only header files for now)
 if( BUILD_ampBolt )
 	if( MSVC_VERSION VERSION_LESS 1700 )
 		message( FATAL_ERROR "Visual Studio 11 or higher is required because Bolt uses AMP C++ features" )
 	endif( )
-	
-	add_subdirectory( BoltForC++AMP/tests/reduce )
-	add_subdirectory( BoltForC++AMP/tests/scan )
-	add_subdirectory( BoltForC++AMP/tests/transform )	
-	add_subdirectory( BoltForC++AMP/tests/transform_reduce )
-	
 endif( )
 	
+# Build OpenCL library
 if( BUILD_clBolt )
 	# This will define OPENCL_FOUND
 	find_package( OpenCL REQUIRED )
 
 	if( OPENCL_FOUND )
-		add_subdirectory( BoltForOpenCL/clbolt )
-		add_subdirectory( BoltForOpenCL/tests/ReduceTest)
-		add_subdirectory( BoltForOpenCL/tests/TransformTest )
-		add_subdirectory( BoltForOpenCL/tests/TransformReduceTest )
+		add_subdirectory( ${CLBOLT_DIR} )
 	endif( )
 endif( )
 
+# After libraries are built, built tests
+if( BUILD_tests )
+	add_subdirectory( test )
+endif( )	
+
+# After libraries are built, built benchmarks
 if( BUILD_benchmarks )
 	add_subdirectory( bench )
 endif( )
