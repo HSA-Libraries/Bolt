@@ -3,12 +3,9 @@
 #############################################################################
 # List the names of common files to compile across all platforms
 set( Bolt.Test.Reduce.Source stdafx.cpp simple_reduce.cpp )
-set( Bolt.Test.Reduce.Headers stdafx.h targetver.h ${BOLT_DIR}/reduce.h )
+set( Bolt.Test.Reduce.Headers stdafx.h targetver.h ${BOLT_INCLUDE_DIR}/bolt/amp/reduce.h )
 
 set( Bolt.Test.Reduce.Files ${Bolt.Test.Reduce.Source} ${Bolt.Test.Reduce.Headers} )
-
-# Include standard OpenCL headers
-include_directories( ${PROJECT_SOURCE_DIR}/BoltForC++AMP )
 
 add_executable( Bolt.Test.Reduce ${Bolt.Test.Reduce.Files} )
 

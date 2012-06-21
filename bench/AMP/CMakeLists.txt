@@ -4,7 +4,7 @@
 # List the names of common files to compile across all platforms
 message( STATUS "Setting up AMP specific benchmarking projects" )
 
-include_directories( ${PROJECT_SOURCE_DIR}/BoltForC++AMP )
+include_directories( ${BOLT_INCLUDE_DIR} )
 
 if( BUILD_ampBolt )
 	# Include standard OpenCL headers

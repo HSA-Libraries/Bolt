@@ -4,12 +4,12 @@
 # List the names of common files to compile across all platforms
 
 set( clBolt.Test.Reduce.Source stdafx.cpp ReduceTest.cpp myocl.cpp)
-set( clBolt.Test.Reduce.Headers stdafx.h myocl.h targetver.h ${CLBOLT_DIR}/reduce.h )
+set( clBolt.Test.Reduce.Headers stdafx.h myocl.h targetver.h ${BOLT_INCLUDE_DIR}/bolt/cl/reduce.h )
 
 set( clBolt.Test.Reduce.Files ${clBolt.Test.Reduce.Source} ${clBolt.Test.Reduce.Headers} )
 
 # Include standard OpenCL headers
-include_directories( ${PROJECT_SOURCE_DIR}/BoltForOpenCL ${OPENCL_INCLUDE_DIRS} )
+include_directories( ${OPENCL_INCLUDE_DIRS} )
 
 add_executable( clBolt.Test.Reduce ${clBolt.Test.Reduce.Files} )
 target_link_libraries( clBolt.Test.Reduce ${OPENCL_LIBRARIES} clBolt.Runtime )

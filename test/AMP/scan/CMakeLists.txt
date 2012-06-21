@@ -3,12 +3,9 @@
 #############################################################################
 # List the names of common files to compile across all platforms
 set( Bolt.Test.Scan.Source stdafx.cpp Scan.cpp )
-set( Bolt.Test.Scan.Headers stdafx.h targetver.h ${BOLT_DIR}/Scan.h )
+set( Bolt.Test.Scan.Headers stdafx.h targetver.h ${BOLT_INCLUDE_DIR}/bolt/amp/Scan.h )
 
 set( Bolt.Test.Scan.Files ${Bolt.Test.Scan.Source} ${Bolt.Test.Scan.Headers} )
-
-# Include standard OpenCL headers
-include_directories( ${PROJECT_SOURCE_DIR}/BoltForC++AMP )
 
 add_executable( Bolt.Test.Scan ${Bolt.Test.Scan.Files} )
 

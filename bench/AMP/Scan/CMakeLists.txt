@@ -3,7 +3,7 @@
 #############################################################################
 # List the names of common files to compile across all platforms
 set( Bolt.Bench.Scan.Source stdafx.cpp Scan.cpp )
-set( Bolt.Bench.Scan.Headers stdafx.h targetver.h ${BOLT_DIR}/Scan.h )
+set( Bolt.Bench.Scan.Headers stdafx.h targetver.h ${BOLT_INCLUDE_DIR}/bolt/amp/Scan.h )
 
 set( Bolt.Bench.Scan.Files ${Bolt.Bench.Scan.Source} ${Bolt.Bench.Scan.Headers} )
 

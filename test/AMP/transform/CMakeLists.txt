@@ -3,12 +3,9 @@
 #############################################################################
 # List the names of common files to compile across all platforms
 set( Bolt.Test.Transform.Source stdafx.cpp simple_transform.cpp )
-set( Bolt.Test.Transform.Headers stdafx.h targetver.h ${BOLT_DIR}/transform.h )
+set( Bolt.Test.Transform.Headers stdafx.h targetver.h ${BOLT_INCLUDE_DIR}/bolt/amp/transform.h )
 
 set( Bolt.Test.Transform.Files ${Bolt.Test.Transform.Source} ${Bolt.Test.Transform.Headers} )
-
-# Include standard OpenCL headers
-include_directories( ${PROJECT_SOURCE_DIR}/BoltForC++AMP )
 
 add_executable( Bolt.Test.Transform ${Bolt.Test.Transform.Files} )
 

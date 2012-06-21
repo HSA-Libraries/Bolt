@@ -26,6 +26,7 @@ set( Bolt_VERSION "${Bolt_VERSION_MAJOR}.${Bolt_VERSION_MINOR}.${Bolt_VERSION_PA
 set( CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR} )
 set( CLBOLT_DIR "${PROJECT_SOURCE_DIR}/bolt/CL" )
 set( BOLT_DIR "${PROJECT_SOURCE_DIR}/bolt/AMP" )
+set( BOLT_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/include" )
 
 # On windows, it's convenient to change the default install prefix such that it does NOT point to 'program files'
 # Need to check out CMAKE_RUNTIME_OUTPUT_DIRECTORY variable, and see if that eliminates the need to modify install path
