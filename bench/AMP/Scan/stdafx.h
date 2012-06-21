@@ -9,8 +9,7 @@
 #include "targetver.h"
 
 #include <tchar.h>
-// #include <numeric>
-// #include <limits>
+#include <algorithm>
 #include <iomanip>
 
 #include <boost/program_options.hpp>

@@ -4,7 +4,10 @@
 
 #include <string>
 #include <iostream>
+#include <sstream>
 
+namespace bolt
+{
 #if defined( _UNICODE )
 	typedef std::wstring		tstring;
 	typedef std::wstringstream	tstringstream;
@@ -22,5 +25,6 @@
 	static std::ostream&	tout	= std::cout;
 	static std::ostream&	terr	= std::cerr;
 #endif 
+}
 
 #endif

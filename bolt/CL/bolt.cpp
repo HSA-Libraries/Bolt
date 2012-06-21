@@ -29,16 +29,16 @@ namespace clbolt {
 			//	so we needed to create an abstraction for string/wstring
 			if( ::GetModuleFileName( NULL, osPath, MAX_PATH ) )
 			{
-				tstring thisPath( osPath );
-				tstring::size_type pos = thisPath.find_last_of( _T( "\\" ) );
+				bolt::tstring thisPath( osPath );
+				bolt::tstring::size_type pos = thisPath.find_last_of( _T( "\\" ) );
 
-				tstring newPath;
-				if( pos != tstring::npos )
+				bolt::tstring newPath;
+				if( pos != bolt::tstring::npos )
 				{
-					tstring exePath	= thisPath.substr( 0, pos + 1 );	// include the \ character
+					bolt::tstring exePath	= thisPath.substr( 0, pos + 1 );	// include the \ character
 
 					//	Narrow to wide conversion should always work, but beware of wide to narrow!
-					tstring convName( fileName.begin( ), fileName.end( ) );
+					bolt::tstring convName( fileName.begin( ), fileName.end( ) );
 					newPath = exePath + convName;
 				}
 
@@ -48,7 +48,7 @@ namespace clbolt {
 			if (infile.fail() ) {
 				TCHAR cCurrentPath[FILENAME_MAX];
 				if (_tgetcwd(cCurrentPath, sizeof(cCurrentPath) / sizeof(TCHAR))) {
-					tout <<  _T( "CWD=" ) << cCurrentPath << std::endl;
+					bolt::tout <<  _T( "CWD=" ) << cCurrentPath << std::endl;
 				};
 				std::cout << "error: failed to open file '" << fileName << std::endl;
 				throw;
