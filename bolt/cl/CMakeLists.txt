@@ -3,14 +3,24 @@
 #############################################################################
 # List the names of common files to compile across all platforms
 
+set( clBolt.clInclude.Dir ${BOLT_INCLUDE_DIR}/bolt/CL )
+
 set( clBolt.Runtime.Source bolt.cpp )
-set( clBolt.Runtime.Headers bolt.h functional.h reduce.h transform.h transform_reduce.h )
-set( clBolt.Runtime.clFiles reduce_kernels.cl transform_kernels.cl transform_reduce_kernels.cl )
+set( clBolt.Runtime.Headers 
+		${clBolt.clInclude.Dir}/bolt.h 
+		${clBolt.clInclude.Dir}/functional.h 
+		${clBolt.clInclude.Dir}/reduce.h 
+		${clBolt.clInclude.Dir}/transform.h 
+		${clBolt.clInclude.Dir}/transform_reduce.h )
+set( clBolt.Runtime.clFiles 
+		${clBolt.clInclude.Dir}/reduce_kernels.cl 
+		${clBolt.clInclude.Dir}/transform_kernels.cl 
+		${clBolt.clInclude.Dir}/transform_reduce_kernels.cl )
 
 set( clBolt.Runtime.Files ${clBolt.Runtime.Source} ${clBolt.Runtime.Headers} ${clBolt.Runtime.clFiles} )
 
 # Include standard OpenCL headers
-include_directories( ${PROJECT_SOURCE_DIR} ${OPENCL_INCLUDE_DIRS} )
+include_directories( ${BOLT_INCLUDE_DIR} ${OPENCL_INCLUDE_DIRS} )
 
 add_library( clBolt.Runtime STATIC ${clBolt.Runtime.Files} )
 target_link_libraries( clBolt.Runtime ${OPENCL_LIBRARIES} )

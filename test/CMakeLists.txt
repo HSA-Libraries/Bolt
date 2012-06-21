@@ -5,12 +5,12 @@
 message( STATUS "Setting up testing projects..." )
 
 # Include Bolt headers for all testing projects
-include_directories( ${PROJECT_SOURCE_DIR} )
+include_directories( ${BOLT_INCLUDE_DIR} )
 
 if( BUILD_ampBolt )
 	add_subdirectory( AMP )
 endif( )
 
 if( BUILD_clBolt )
-	add_subdirectory( OpenCL )
+	add_subdirectory( cl )
 endif( )

@@ -3,12 +3,12 @@
 #############################################################################
 # List the names of common files to compile across all platforms
 set( clBolt.Test.Transform.Source stdafx.cpp TransformTest.cpp )
-set( clBolt.Test.Transform.Headers stdafx.h targetver.h ${CLBOLT_DIR}/transform.h )
+set( clBolt.Test.Transform.Headers stdafx.h targetver.h ${BOLT_INCLUDE_DIR}/bolt/cl/transform.h )
 
 set( clBolt.Test.Transform.Files ${clBolt.Test.Transform.Source} ${clBolt.Test.Transform.Headers} )
 
 # Include standard OpenCL headers
-include_directories( ${PROJECT_SOURCE_DIR}/BoltForOpenCL ${OPENCL_INCLUDE_DIRS} )
+include_directories( ${OPENCL_INCLUDE_DIRS} )
 
 add_executable( clBolt.Test.Transform ${clBolt.Test.Transform.Files} )
 target_link_libraries( clBolt.Test.Transform ${OPENCL_LIBRARIES} clBolt.Runtime )

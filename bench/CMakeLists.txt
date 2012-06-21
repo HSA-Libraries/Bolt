@@ -5,7 +5,7 @@
 message( STATUS "Setting up benchmarking projects..." )
 include( ExternalBoost )
 
-include_directories( ${PROJECT_SOURCE_DIR} )
+include_directories( ${BOLT_INCLUDE_DIR} )
 
 if( BUILD_ampBolt )
 	add_subdirectory( AMP )

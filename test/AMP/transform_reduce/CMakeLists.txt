@@ -3,12 +3,9 @@
 #############################################################################
 # List the names of common files to compile across all platforms
 set( Bolt.Test.TransformReduce.Source stdafx.cpp simple_transform_reduce.cpp )
-set( Bolt.Test.TransformReduce.Headers stdafx.h targetver.h ${BOLT_DIR}/transform_reduce.h)
+set( Bolt.Test.TransformReduce.Headers stdafx.h targetver.h ${BOLT_INCLUDE_DIR}/bolt/amp/transform_reduce.h)
 
 set( Bolt.Test.TransformReduce.Files ${Bolt.Test.TransformReduce.Source} ${Bolt.Test.TransformReduce.Headers} )
-
-# Include standard OpenCL headers
-include_directories( ${PROJECT_SOURCE_DIR}/BoltForC++AMP )
 
 add_executable( Bolt.Test.TransformReduce ${Bolt.Test.TransformReduce.Files} )
 

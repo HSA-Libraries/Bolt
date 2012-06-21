@@ -5,12 +5,12 @@
 
 # set( testName clBolt.Test.TransformReduce )
 set( clBolt.Test.TransformReduce.Source stdafx.cpp TransformReduceTest.cpp )
-set( clBolt.Test.TransformReduce.Headers stdafx.h targetver.h ${CLBOLT_DIR}/transform_reduce.h )
+set( clBolt.Test.TransformReduce.Headers stdafx.h targetver.h ${BOLT_INCLUDE_DIR}/bolt/cl/transform_reduce.h )
 
 set( clBolt.Test.TransformReduce.Files ${clBolt.Test.TransformReduce.Source} ${clBolt.Test.TransformReduce.Headers} )
 
 # Include standard OpenCL headers
-include_directories( ${PROJECT_SOURCE_DIR}/BoltForOpenCL ${OPENCL_INCLUDE_DIRS} )
+include_directories( ${OPENCL_INCLUDE_DIRS} )
 
 add_executable( clBolt.Test.TransformReduce ${clBolt.Test.TransformReduce.Files} )
 target_link_libraries( clBolt.Test.TransformReduce ${OPENCL_LIBRARIES} clBolt.Runtime )
