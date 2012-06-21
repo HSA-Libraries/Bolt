@@ -57,14 +57,9 @@ else()
 endif()
 
 # Various options below on configuring the build, and how to generate the solution files
-if( IS_DIRECTORY "${BOLT_DIR}" AND WIN32 )
-	option( BUILD_ampBolt "Create a solution that compiles Bolt for AMP" ON )
-endif( )
+option( BUILD_ampBolt "Create a solution that compiles Bolt for AMP" ON )
+option( BUILD_clBolt "Create a solution that compiles Bolt for OpenCL" ON )
  
-if( IS_DIRECTORY "${CLBOLT_DIR}" )
-	option( BUILD_clBolt "Create a solution that compiles Bolt for OpenCL" ON )
-endif( )
-
 if( IS_DIRECTORY "${PROJECT_SOURCE_DIR}/test" )
 	option( BUILD_tests "Add projects for testing Bolt " ON )
 endif( )
@@ -136,6 +131,10 @@ if( BUILD_ampBolt )
 	if( MSVC_VERSION VERSION_LESS 1700 )
 		message( FATAL_ERROR "Visual Studio 11 or higher is required because Bolt uses AMP C++ features" )
 	endif( )
+
+	# We don't yet have an AMP library
+	# if( IS_DIRECTORY "${BOLT_DIR}" AND WIN32 )
+	# endif( )
 endif( )
 	
 # Build OpenCL library
@@ -143,7 +142,7 @@ if( BUILD_clBolt )
 	# This will define OPENCL_FOUND
 	find_package( OpenCL REQUIRED )
 
-	if( OPENCL_FOUND )
+	if( OPENCL_FOUND AND IS_DIRECTORY "${CLBOLT_DIR}" )
 		add_subdirectory( ${CLBOLT_DIR} )
 	endif( )
 endif( )

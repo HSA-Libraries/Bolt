@@ -29,16 +29,16 @@ set_target_properties( clBolt.Runtime PROPERTIES VERSION ${Bolt_VERSION} )
 set_target_properties( clBolt.Runtime PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
 		
 install( FILES	
-			reduce_kernels.cl
-			transform_kernels.cl
-			transform_reduce_kernels.cl
+			${clBolt.clInclude.Dir}/reduce_kernels.cl
+			${clBolt.clInclude.Dir}/transform_kernels.cl
+			${clBolt.clInclude.Dir}/transform_reduce_kernels.cl
 		DESTINATION
 			${BIN_DIR} )
 
 install( FILES	
-			reduce_kernels.cl
-			transform_kernels.cl
-			transform_reduce_kernels.cl
+			${clBolt.clInclude.Dir}/reduce_kernels.cl
+			${clBolt.clInclude.Dir}/transform_kernels.cl
+			${clBolt.clInclude.Dir}/transform_reduce_kernels.cl
 		DESTINATION
 			${PROJECT_BINARY_DIR}/staging/\${CMAKE_INSTALL_CONFIG_NAME} )
 
