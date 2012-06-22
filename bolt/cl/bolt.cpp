@@ -1,7 +1,7 @@
 
 
-//#include "stdafx.h"  // not present in the clbolt dir, but don't really need it 
-#include <bolt/CL/bolt.h>
+//#include "stdafx.h"  // not present in the bolt/cl dir, but don't really need it 
+#include <bolt/cl/bolt.h>
 #include <bolt/unicode.h>
 
 #include <iostream>
@@ -11,7 +11,8 @@
 #include <tchar.h>
 #include <algorithm>
 
-namespace clbolt {
+namespace bolt {
+	namespace cl {
 
 
 
@@ -62,25 +63,25 @@ namespace clbolt {
 
 
 
-	cl::Kernel compileFunctor(const std::string &kernelCodeString, const std::string kernelName,  std::string compileOptions, const control &c)
+	::cl::Kernel compileFunctor(const std::string &kernelCodeString, const std::string kernelName,  std::string compileOptions, const control &c)
 	{
 
 		if (c.debug() & control::debug::ShowCode) {
 			std::cout << "debug: code=" << std::endl << kernelCodeString;
 		}
 
-		cl::Program mainProgram(c.context(), kernelCodeString, false);
+		::cl::Program mainProgram(c.context(), kernelCodeString, false);
 		try
 		{
 			compileOptions += c.compileOptions();
 			compileOptions += " -x clc++";
 
 			if (c.compileForAllDevices()) {
-				std::vector<cl::Device> devices = c.context().getInfo<CL_CONTEXT_DEVICES>();
+				std::vector<::cl::Device> devices = c.context().getInfo<CL_CONTEXT_DEVICES>();
 
 				mainProgram.build(devices, compileOptions.c_str());
 			} else {
-				std::vector<cl::Device> devices;
+				std::vector<::cl::Device> devices;
 				devices.push_back(c.device());
 				mainProgram.build(devices, compileOptions.c_str());
 			};
@@ -88,11 +89,11 @@ namespace clbolt {
 
 
 
-		} catch(cl::Error e) {
+		} catch(::cl::Error e) {
 			std::cout << "Code         :\n" << kernelCodeString << std::endl;
 
-			std::vector<cl::Device> devices = c.context().getInfo<CL_CONTEXT_DEVICES>();
-			std::for_each(devices.begin(), devices.end(), [&] (cl::Device &d) {
+			std::vector<::cl::Device> devices = c.context().getInfo<CL_CONTEXT_DEVICES>();
+			std::for_each(devices.begin(), devices.end(), [&] (::cl::Device &d) {
 				if (mainProgram.getBuildInfo<CL_PROGRAM_BUILD_STATUS>(d) != CL_SUCCESS) {
 					std::cout << "Build status for device: " << d.getInfo<CL_DEVICE_NAME>() << "_"<< d.getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>() << "CU_"<< d.getInfo<CL_DEVICE_MAX_CLOCK_FREQUENCY>() << "Mhz" << "\n";
 					std::cout << "    Build Status: " << mainProgram.getBuildInfo<CL_PROGRAM_BUILD_STATUS>(d) << std::endl;
@@ -104,8 +105,8 @@ namespace clbolt {
 		}
 
 		if ( c.debug() & control::debug::Compile) {
-			std::vector<cl::Device> devices = c.context().getInfo<CL_CONTEXT_DEVICES>();
-			std::for_each(devices.begin(), devices.end(), [&] (cl::Device &d) {
+			std::vector<::cl::Device> devices = c.context().getInfo<CL_CONTEXT_DEVICES>();
+			std::for_each(devices.begin(), devices.end(), [&] (::cl::Device &d) {
 				std::cout << "debug: Build status for device: " << d.getInfo<CL_DEVICE_NAME>() << "_"<< d.getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>() << "CU_"<< d.getInfo<CL_DEVICE_MAX_CLOCK_FREQUENCY>() << "Mhz" << "\n";
 				std::cout << "debug:   Build Status: " << mainProgram.getBuildInfo<CL_PROGRAM_BUILD_STATUS>(d) << std::endl;
 				std::cout << "debug:   Build Options:\t" << mainProgram.getBuildInfo<CL_PROGRAM_BUILD_OPTIONS>(d) << std::endl;
@@ -113,16 +114,16 @@ namespace clbolt {
 			}); 
 		};
 
-		return cl::Kernel(mainProgram, kernelName.c_str());
+		return ::cl::Kernel(mainProgram, kernelName.c_str());
 	}
 
 
 
-	void constructAndCompile(cl::Kernel *masterKernel, const std::string &apiName, const std::string instantiationString, std::string userCode, std::string valueTypeName,  std::string functorTypeName, const control &c) {
+	void constructAndCompile(::cl::Kernel *masterKernel, const std::string &apiName, const std::string instantiationString, std::string userCode, std::string valueTypeName,  std::string functorTypeName, const control &c) {
 
 		//FIXME, when this becomes more stable move the kernel code to a string in bolt.cpp
-		// Note unfortunate dependency here on relative file path of run directory and location of clbolt dir.
-		std::string templateFunctionString = clbolt::fileToString( apiName + "_kernels.cl"); 
+		// Note unfortunate dependency here on relative file path of run directory and location of bolt::cl dir.
+		std::string templateFunctionString = bolt::cl::fileToString( apiName + "_kernels.cl"); 
 
 		std::string codeStr = userCode + "\n\n" + templateFunctionString +   instantiationString;
 
@@ -139,13 +140,13 @@ namespace clbolt {
 
 
 
-		*masterKernel = clbolt::compileFunctor(codeStr, apiName + "Instantiated", compileOptions, c);
+		*masterKernel = bolt::cl::compileFunctor(codeStr, apiName + "Instantiated", compileOptions, c);
 	};
 
 
 
 
 
-
+	};
 };
 

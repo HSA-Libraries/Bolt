@@ -1,0 +1,19 @@
+
+        /*!
+         * \mainpage
+         * \section intro_sec Introduction
+         * Bolt is a C++ Template Library which works with OpenCL.  Bolt provides high-performance library implementations for common operations that GPUs
+         * are good at, such as scan, reduce, transform, and sort.  C++ templates can be used to customize the library routines - for example to sort ints or floats
+         * or custom types defined by the user.  The interface resembles the C++ Standard Template Library (STL), so that developers who are already familiar with 
+         * STL will recognize many of the Bolt APIs and customization techniques.
+         *
+         * Additionally, the Bolt interfaces can directly interface with host memory structure such as std::vector 
+         * or host arrays.  On today's GPU systems the host memory will be automatically mapped or copied to the GPU.  
+         * On systems which support the Heterogeneous System Architecture, the GPU will directly access the host data structures. 
+         *
+         * \image html bolt.jpg
+         */
+
+    // FIXME - check that sort is included before mentioning here.
+    // FIXME - add description about CPU paths, when we have them.
+    // FIXME - add documentation on pipeline, when we have it.

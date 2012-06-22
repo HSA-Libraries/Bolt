@@ -1,18 +1,24 @@
 #pragma once
 
-#include <bolt/CL/bolt.h>
+#include <bolt/cl/bolt.h>
 
-#define CREATE_STD_TYPENAMES(OPERATOR,CODE_STRING) \
-	BOLT_CREATE_TYPENAME(OPERATOR<float>);  BOLT_CREATE_CLCODE(OPERATOR<float>, CODE_STRING); \
-	BOLT_CREATE_TYPENAME(OPERATOR<int>); BOLT_CREATE_CLCODE(OPERATOR<int>, CODE_STRING); \
-	BOLT_CREATE_TYPENAME(OPERATOR<double>); BOLT_CREATE_CLCODE(OPERATOR<double>, CODE_STRING);
+#define BOLT_CREATE_STD_TYPENAMES(OPERATOR) \
+	BOLT_CREATE_TYPENAME(OPERATOR<float>); \
+	BOLT_CREATE_TYPENAME(OPERATOR<double>); \
+	BOLT_CREATE_TYPENAME(OPERATOR<int>);
+
+#define BOLT_CREATE_STD_CLCODE(OPERATOR,CODE_STRING) \
+	BOLT_CREATE_CLCODE(OPERATOR<float>, CODE_STRING); \
+	BOLT_CREATE_CLCODE(OPERATOR<double>, CODE_STRING); \
+	BOLT_CREATE_CLCODE(OPERATOR<int>, CODE_STRING); 
 
 
 // macro for creating a host-side routine and an OCL string (in the bolcl::clcode:: namespace).  Also defines the typename trait automatically.
-#define CREATE_BOLT_FUNCTIONAL(OPERATOR, F)  F; CREATE_STD_TYPENAMES(OPERATOR, #F);
+#define CREATE_BOLT_FUNCTIONAL(OPERATOR, F)  F; BOLT_CREATE_STD_TYPENAMES(OPERATOR); BOLT_CREATE_STD_CLCODE(OPERATOR, #F);
 
 
-namespace clbolt {
+namespace bolt {
+    namespace cl {
 
 	CREATE_BOLT_FUNCTIONAL(plus, 
 	template<typename T>
@@ -77,5 +83,6 @@ namespace clbolt {
 	}; 
 	);
 
+};
 };
 
