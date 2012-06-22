@@ -4,7 +4,7 @@ include( ExternalProject )
 set( Boost_Version 1.49.0 )
 string( REPLACE "." "_" Boost_Version_Underscore ${Boost_Version} )
 
-message( STATUS "Boost_Version: " ${Boost_Version} " ready to download" )
+message( STATUS "Boost_Version: " ${Boost_Version} )
 
 # Purely for debugging the file downloading URLs
 # file( DOWNLOAD "http://downloads.sourceforge.net/project/boost/boost/1.49.0/boost_1_49_0.7z" 
@@ -16,13 +16,13 @@ message( STATUS "Boost_Version: " ${Boost_Version} " ready to download" )
 ExternalProject_Add(
     Boost
 	PREFIX ${CMAKE_CURRENT_BINARY_DIR}/external/boost
-    URL http://downloads.sourceforge.net/project/boost/boost/${Boost_Version}/boost_${Boost_Version_Underscore}.zip
-#    URL H:/code/boost_${Boost_Version_Underscore}.zip
+#    URL http://downloads.sourceforge.net/project/boost/boost/${Boost_Version}/boost_${Boost_Version_Underscore}.zip
+    URL http://see-srv/share/code/externals/boost/boost_${Boost_Version_Underscore}.zip
 	URL_MD5 854dcbbff31b896c85c38247060b7713
     UPDATE_COMMAND "bootstrap.bat"
 #    PATCH_COMMAND ""
 	CONFIGURE_COMMAND ""
-	BUILD_COMMAND bjam --with-program_options address-model=64 toolset=msvc-11.0 link=static stage
+	BUILD_COMMAND b2 --with-program_options address-model=64 toolset=msvc-11.0 link=static stage
 	BUILD_IN_SOURCE 1
     INSTALL_COMMAND ""
 )

@@ -8,7 +8,7 @@
 #include <amp.h>
 
 #include <bolt/AMP/functional.h>
-#include <bolt/AMP/sequentialTrait.h>
+// #include <bolt/AMP/sequentialTrait.h>
 
 namespace bolt {
 
