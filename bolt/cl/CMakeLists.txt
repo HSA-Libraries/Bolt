@@ -3,12 +3,15 @@
 #############################################################################
 # List the names of common files to compile across all platforms
 
-set( clBolt.clInclude.Dir ${BOLT_INCLUDE_DIR}/bolt/CL )
+set( clBolt.clInclude.Dir ${BOLT_INCLUDE_DIR}/bolt/cl )
 
 set( clBolt.Runtime.Source bolt.cpp )
 set( clBolt.Runtime.Headers 
 		${clBolt.clInclude.Dir}/bolt.h 
+		${clBolt.clInclude.Dir}/control.h 
+		${clBolt.clInclude.Dir}/count.h 
 		${clBolt.clInclude.Dir}/functional.h 
+		${clBolt.clInclude.Dir}/iterator_traits.h 
 		${clBolt.clInclude.Dir}/reduce.h 
 		${clBolt.clInclude.Dir}/transform.h 
 		${clBolt.clInclude.Dir}/transform_reduce.h )

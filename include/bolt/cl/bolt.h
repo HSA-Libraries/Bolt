@@ -7,12 +7,14 @@
 
 #include <string>
 
-#include <bolt/CL/control.h>
+#include <bolt/cl/control.h>
 
-namespace clbolt {
-	extern std::string fileToString(const std::string &fileName);
-	extern cl::Kernel compileFunctor(const std::string &kernelCodeString, const std::string kernelName, const std::string compileOptions, const control &c);
-	extern void constructAndCompile(cl::Kernel *masterKernel, const std::string &apiName, const std::string instantiationString, std::string userCode, std::string valueTypeName,  std::string functorTypeName, const control &c);
+namespace bolt {
+	namespace cl {
+		extern std::string fileToString(const std::string &fileName);
+		extern ::cl::Kernel compileFunctor(const std::string &kernelCodeString, const std::string kernelName, const std::string compileOptions, const control &c);
+		extern void constructAndCompile(::cl::Kernel *masterKernel, const std::string &apiName, const std::string instantiationString, std::string userCode, std::string valueTypeName,  std::string functorTypeName, const control &c);
+	};
 };
 
 
@@ -23,10 +25,10 @@ namespace clbolt {
 template <typename T>
 struct TypeName
 {
-    static std::string get()
-    {
+	static std::string get()
+	{
 		return std::string("ERROR (bolt): Unknown typename; define missing TypeName<") + typeid(T).name() + ">";  
-    }
+	}
 };
 
 
@@ -35,23 +37,26 @@ struct TypeName
 template <typename T>
 struct ClCode
 {
-    static std::string get()
-    {
+	static std::string get()
+	{
 		return "";
-    }
+	}
 };
 
 
 // Create a template trait to return a string version of the class name.  Usage:
 // class MyClass {...};
 // BOLT_CREATE_TYPENAME(MyClass);
-#define BOLT_CREATE_TYPENAME(T) template<> struct TypeName<T> { static std::string get() { return #T; }};
+#define BOLT_CREATE_TYPENAME(T) \
+	template<> struct TypeName<T> { static std::string get() { return #T; }};
+
 #define BOLT_CREATE_CLCODE(T,CODE_STRING) template<> struct ClCode<T> { static std::string get() { return CODE_STRING; }};
 
 
 BOLT_CREATE_TYPENAME(int);
 BOLT_CREATE_TYPENAME(float);
 BOLT_CREATE_TYPENAME(double);
+
 
 
 // Creates a string and a regular version of the functor F, and automatically sets up the ClCode trait to associate the code string with the specified class T 

@@ -2,9 +2,9 @@
 //
 
 #include "stdafx.h"
-#include "bolt/CL/reduce.h"
-#include "bolt/CL/functional.h"
-#include "bolt/CL/control.h"
+#include <bolt/cl/reduce.h>
+#include <bolt/cl/functional.h>
+#include <bolt/cl/control.h>
 
 #include <iostream>
 #include <algorithm>  // for testing against STL functions.
@@ -90,8 +90,8 @@ void simpleReduce1(int aSize)
 
 	int stlReduce = std::accumulate(A.begin(), A.end(), 0);
 
-	int boltReduce = clbolt::reduce(A.begin(), A.end(), 0, clbolt::plus<int>());
-	//int boltReduce2 = clbolt::reduce(A.begin(), A.end());  // same as above...
+	int boltReduce = bolt::cl::reduce(A.begin(), A.end(), 0, bolt::cl::plus<int>());
+	//int boltReduce2 = bolt::cl::reduce(A.begin(), A.end());  // same as above...
 
 	checkResult("simpleReduce1", stlReduce, boltReduce);
 	//printf ("Sum: stl=%d,  bolt=%d %d\n", stlReduce, boltReduce, boltReduce2);
@@ -109,21 +109,29 @@ void simpleReduce_TestControl(int aSize, int numIters, int deviceIndex)
 
 	// Create an OCL context, device, queue.
 	MyOclContext ocl = initOcl(CL_DEVICE_TYPE_GPU, deviceIndex);
-	clbolt::control c(ocl._queue);  // construct control structure from the queue.
+	bolt::cl::control c(ocl._queue);  // construct control structure from the queue.
 	//printContext(c.context());
 
-	c.debug(clbolt::control::debug::Compile + clbolt::control::debug::SaveCompilerTemps);
+	c.debug(bolt::cl::control::debug::Compile + bolt::cl::control::debug::SaveCompilerTemps);
 
 	int stlReduce = std::accumulate(A.begin(), A.end(), 0);
 	int boltReduce = 0;
 
 	__int64 start = StartProfile();
 	for (int i=0; i<numIters; i++) {
-		boltReduce = clbolt::reduce(c, A.begin(), A.end());
+		boltReduce = bolt::cl::reduce(c, A.begin(), A.end());
 	}
 	EndProfile(start, numIters, "TestControl");
 
 	checkResult("simpleReduce_TestControl", stlReduce, boltReduce);
+};
+
+void reduce_TestBuffer() {
+	
+	int a[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+	cl::Buffer A(CL_MEM_USE_HOST_PTR, sizeof(int) * 10, a); // create a buffer from a.
+
+	int sum = bolt::cl::reduce2<int>(A, 0, bolt::cl::plus<int>()); // note type of date in the buffer ("int") explicitly specified.
 };
 
 
@@ -139,7 +147,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	int numIters = 100;
 	simpleReduce_TestControl(100, 1, 0);
 	simpleReduce_TestControl(1024000, numIters, 0);
-	simpleReduce_TestControl(1024000, numIters, 1); // may fail on systems with only one GPU installed.
+	//simpleReduce_TestControl(1024000, numIters, 1); // may fail on systems with only one GPU installed.
 
 	return 0;
 }

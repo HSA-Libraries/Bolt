@@ -2,8 +2,8 @@
 //
 
 #include "stdafx.h"
-#include "bolt/CL/transform_reduce.h"
-#include "bolt/CL/functional.h"
+#include <bolt/cl/transform_reduce.h>
+#include <bolt/cl/functional.h>
 
 #include <iostream>
 #include <algorithm>  // for testing against STL functions.
@@ -53,7 +53,7 @@ bool checkResult(std::string msg, T  stlResult, T boltResult, double errorThresh
 
 
 
-// Simple test case for clbolt::transform_reduce:
+// Simple test case for bolt::cl::transform_reduce:
 // Perform a sum-of-squares
 // Demonstrates:
 //  * Use of transform_reduce function - takes two separate functors, one for transform and one for reduce.
@@ -87,8 +87,8 @@ void sumOfSquares(int aSize)
 	std::transform(A.begin(), A.end(), Z.begin(), SquareMe<T>());
 	int stlReduce = std::accumulate(Z.begin(), Z.end(), 0);
 
-	int boltReduce = clbolt::transform_reduce(A.begin(), A.end(), SquareMe<T>(), 0, 
-                                              clbolt::plus<int>(), squareMeCode);
+	int boltReduce = bolt::cl::transform_reduce(A.begin(), A.end(), SquareMe<T>(), 0, 
+                                              bolt::cl::plus<int>(), squareMeCode);
 
 	checkResult(__FUNCTION__, stlReduce, boltReduce);
 };
