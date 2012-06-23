@@ -24,8 +24,7 @@ set( Bolt_VERSION_PATCH 1 )
 set( Bolt_VERSION "${Bolt_VERSION_MAJOR}.${Bolt_VERSION_MINOR}.${Bolt_VERSION_PATCH}")
 	
 set( CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR} )
-set( CLBOLT_DIR "${PROJECT_SOURCE_DIR}/bolt/CL" )
-set( BOLT_DIR "${PROJECT_SOURCE_DIR}/bolt/AMP" )
+set( BOLT_LIBRARY_DIR "${PROJECT_SOURCE_DIR}/bolt" )
 set( BOLT_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/include" )
 
 # On windows, it's convenient to change the default install prefix such that it does NOT point to 'program files'
@@ -132,9 +131,9 @@ if( BUILD_ampBolt )
 		message( FATAL_ERROR "Visual Studio 11 or higher is required because Bolt uses AMP C++ features" )
 	endif( )
 
-	# We don't yet have an AMP library
-	# if( IS_DIRECTORY "${BOLT_DIR}" AND WIN32 )
-	# endif( )
+	if( IS_DIRECTORY "${BOLT_LIBRARY_DIR}/amp" AND WIN32 )
+		add_subdirectory( ${BOLT_LIBRARY_DIR}/amp )
+	endif( )
 endif( )
 	
 # Build OpenCL library
@@ -142,8 +141,8 @@ if( BUILD_clBolt )
 	# This will define OPENCL_FOUND
 	find_package( OpenCL REQUIRED )
 
-	if( OPENCL_FOUND AND IS_DIRECTORY "${CLBOLT_DIR}" )
-		add_subdirectory( ${CLBOLT_DIR} )
+	if( OPENCL_FOUND AND IS_DIRECTORY "${BOLT_LIBRARY_DIR}/cl" )
+		add_subdirectory( ${BOLT_LIBRARY_DIR}/cl )
 	endif( )
 endif( )
 

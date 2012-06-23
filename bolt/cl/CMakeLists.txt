@@ -5,7 +5,7 @@
 
 set( clBolt.clInclude.Dir ${BOLT_INCLUDE_DIR}/bolt/cl )
 
-set( clBolt.Runtime.Source bolt.cpp )
+set( clBolt.Runtime.Source bolt.cpp ${BOLT_LIBRARY_DIR}/statisticalTimer.cpp )
 set( clBolt.Runtime.Headers 
 		${clBolt.clInclude.Dir}/bolt.h 
 		${clBolt.clInclude.Dir}/control.h 

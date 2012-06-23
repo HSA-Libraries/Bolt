@@ -1,33 +1,34 @@
 #include "stdafx.h"
 
-#include <bolt/AMP/functional.h>
-#include <bolt/AMP/scan.h>
-//#include <bolt/AMP/systemQuery.h>
+#include <bolt/amp/functional.h>
+#include <bolt/amp/scan.h>
+//#include <bolt/amp/control.h>
 #include <bolt/unicode.h>
+#include <bolt/statisticalTimer.h>
+
+const std::streamsize colWidth = 26;
 
 void printAccelerator( unsigned int num, const concurrency::accelerator& dev )
 {
-	const std::streamsize width = 26;
-
 	std::wcout << std::left << std::boolalpha;
-	std::wcout << std::setw( width ) << _T( "Device: " ) << num << std::endl;
-	std::wcout << std::setw( width ) << _T( "Description: " ) << dev.get_description( ) << std::endl;
-	std::wcout << std::setw( width ) << _T( "Device Path: " ) << dev.get_device_path( ) << std::endl;
-	std::wcout << std::setw( width ) << _T( "Version: " ) << dev.get_version( ) << std::endl;
-	std::wcout << std::setw( width ) << _T( "Dedicated Memory: " ) << std::showpoint << dev.get_dedicated_memory( ) / 1024 << _T( " MB" ) << std::endl;
-	std::wcout << std::setw( width ) << _T( "Double support: " ) << dev.get_supports_double_precision( ) << std::endl;
-	std::wcout << std::setw( width ) << _T( "Limited Double Support: " ) << dev.get_supports_limited_double_precision( ) << std::endl;
-	std::wcout << std::setw( width ) << _T( "Emulated: " ) << dev.get_is_emulated( ) << std::endl;
-	std::wcout << std::setw( width ) << _T( "Debug: " ) << dev.get_is_debug( ) << std::endl;
-	std::wcout << std::setw( width ) << _T( "Display: " ) << dev.get_has_display( ) << std::endl;
+	std::wcout << std::setw( colWidth ) << _T( "Device: " ) << num << std::endl;
+	std::wcout << std::setw( colWidth ) << _T( "Description: " ) << dev.get_description( ) << std::endl;
+	std::wcout << std::setw( colWidth ) << _T( "Device Path: " ) << dev.get_device_path( ) << std::endl;
+	std::wcout << std::setw( colWidth ) << _T( "Version: " ) << dev.get_version( ) << std::endl;
+	std::wcout << std::setw( colWidth ) << _T( "Dedicated Memory: " ) << std::showpoint << dev.get_dedicated_memory( ) / 1024 << _T( " MB" ) << std::endl;
+	std::wcout << std::setw( colWidth ) << _T( "Double support: " ) << dev.get_supports_double_precision( ) << std::endl;
+	std::wcout << std::setw( colWidth ) << _T( "Limited Double Support: " ) << dev.get_supports_limited_double_precision( ) << std::endl;
+	std::wcout << std::setw( colWidth ) << _T( "Emulated: " ) << dev.get_is_emulated( ) << std::endl;
+	std::wcout << std::setw( colWidth ) << _T( "Debug: " ) << dev.get_is_debug( ) << std::endl;
+	std::wcout << std::setw( colWidth ) << _T( "Display: " ) << dev.get_has_display( ) << std::endl;
 
 	concurrency::accelerator_view av = dev.get_default_view( );
-	std::wcout << std::setw( width ) << _T( "Default accelerator view: " ) << std::endl;
-	std::wcout << std::setw( width ) << _T( "    Version: " ) << av.get_version( ) << std::endl;
-	std::wcout << std::setw( width ) << _T( "    Debug: " ) << av.get_is_debug( ) << std::endl;
+	std::wcout << std::setw( colWidth ) << _T( "Default accelerator view: " ) << std::endl;
+	std::wcout << std::setw( colWidth ) << _T( "    Version: " ) << av.get_version( ) << std::endl;
+	std::wcout << std::setw( colWidth ) << _T( "    Debug: " ) << av.get_is_debug( ) << std::endl;
 
 	concurrency::queuing_mode qm = av.get_queuing_mode( );
-	bolt::tout << std::setw( width ) << _T( "    Queueing mode: " );
+	bolt::tout << std::setw( colWidth ) << _T( "    Queueing mode: " );
 	switch( qm )
 	{
 		case concurrency::queuing_mode_immediate:
@@ -50,7 +51,8 @@ int _tmain( int argc, _TCHAR* argv[] )
 {
 	size_t length = 0;
 	size_t iDevice = 0;
-	bool choseDevice = false;
+	size_t numLoops = 0;
+	bool defaultDevice = true;
 
 	try
 	{
@@ -60,8 +62,9 @@ int _tmain( int argc, _TCHAR* argv[] )
 			( "help,h",			"produces this help message" )
 			( "version,v",		"Print queryable version information from the Bolt AMP library" )
 			( "ampInfo,i",		"Print queryable information of the AMP runtime" )
-			( "length,l",		po::value< size_t >( &length )->default_value( 4096 ), "Specify the length of scan array" )
 			( "device,d",		po::value< size_t >( &iDevice ), "Choose specific AMP device, otherwise system default (AMP choose)" )
+			( "length,l",		po::value< size_t >( &length )->default_value( 4096 ), "Specify the length of scan array" )
+			( "profile,p",		po::value< size_t >( &numLoops )->default_value( 1 ), "Time and report Scan speed GB/s (default: profiling off)" )
 			;
 
 		po::variables_map vm;
@@ -92,9 +95,13 @@ int _tmain( int argc, _TCHAR* argv[] )
 
 		if( vm.count( "ampInfo" ) )
 		{
-			std::vector< concurrency::accelerator > allDevices = concurrency::accelerator::get_all( );
+			concurrency::accelerator default_acc;
+			std::wcout << std::left;
+			std::wcout << std::setw( colWidth ) << _T( "Default device: " ) << default_acc.description << std::endl;
+			std::wcout << std::setw( colWidth ) << _T( "Default device path: " ) << default_acc.device_path << std::endl << std::endl;
 
 			//std::for_each( allDevices.begin( ), allDevices.end( ), printAccelerator );
+			std::vector< concurrency::accelerator > allDevices = concurrency::accelerator::get_all( );
 			for( unsigned int i = 0; i < allDevices.size( ); ++i )
 				printAccelerator( i, allDevices.at( i ) );
 
@@ -103,7 +110,7 @@ int _tmain( int argc, _TCHAR* argv[] )
 
 		if( vm.count( "device" ) )
 		{
-			choseDevice = true;
+			defaultDevice = false;
 		}
 
 	}
@@ -117,17 +124,46 @@ int _tmain( int argc, _TCHAR* argv[] )
 	std::vector< int > input( length, 1 );
 	std::vector< int > output( length );
 
-	if( choseDevice )
-	{
-		std::vector< concurrency::accelerator > allDevices = concurrency::accelerator::get_all( );
+	bolt::statTimer& myTimer = bolt::statTimer::getInstance( );
+	myTimer.Reserve( 1, numLoops );
 
-		bolt::inclusive_scan( allDevices.at( iDevice ).get_default_view( ), input.begin( ), input.end( ), 
-					output.begin( ), bolt::plus< int >( ) );
+	size_t scanId	= myTimer.getUniqueID( _T( "scan" ), 0 );
+
+	if( defaultDevice )
+	{
+		for( unsigned i = 0; i < numLoops; ++i )
+		{
+			myTimer.Start( scanId );
+			bolt::inclusive_scan( input.begin( ), input.end( ), output.begin( ) );
+			myTimer.Stop( scanId );
+		}
 	}
 	else
 	{
-		bolt::inclusive_scan( input.begin( ), input.end( ), output.begin( ) );
+		std::vector< concurrency::accelerator > allDevices = concurrency::accelerator::get_all( );
+		concurrency::accelerator_view av = allDevices.at( iDevice ).get_default_view( );
+
+		for( unsigned i = 0; i < numLoops; ++i )
+		{
+			myTimer.Start( scanId );
+			bolt::inclusive_scan( av, input.begin( ), input.end( ), output.begin( ), bolt::plus< int >( ) );
+			myTimer.Stop( scanId );
+		}
 	}
+
+	//	Remove all timings that are outside of 2 stddev (keep 65% of samples); we ignore outliers to get a more consistent result
+	size_t pruned = myTimer.pruneOutliers( 1.0 );
+	double scanTime = myTimer.getAverageTime( scanId );
+	double scanGB = ( output.size( ) * sizeof( int ) ) / (1024.0 * 1024.0 * 1024.0);
+
+	bolt::tout << std::left;
+	bolt::tout << std::setw( colWidth ) << _T( "Scan profile: " ) << _T( "[" ) << numLoops-pruned << _T( "] samples" ) << std::endl;
+	bolt::tout << std::setw( colWidth ) << _T( "    Size (GB): " ) << scanGB << std::endl;
+	bolt::tout << std::setw( colWidth ) << _T( "    Time (s): " ) << scanTime << std::endl;
+	bolt::tout << std::setw( colWidth ) << _T( "    Speed (GB/s): " ) << scanGB / scanTime << std::endl;
+	bolt::tout << std::endl;
+
+//	bolt::tout << myTimer;
 
 	return 0;
 }
