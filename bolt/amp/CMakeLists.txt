@@ -1,0 +1,39 @@
+#############################################################################
+##	Copyright (C) 2010 Advanced Micro Devices, Inc. All Rights Reserved.
+#############################################################################
+# List the names of common files to compile across all platforms
+
+set( Bolt.Include.Dir ${BOLT_INCLUDE_DIR}/bolt/amp )
+
+set( Bolt.Runtime.Source ${BOLT_LIBRARY_DIR}/statisticalTimer.cpp )
+set( Bolt.Runtime.Headers 
+		${Bolt.Include.Dir}/functional.h 
+		${Bolt.Include.Dir}/parallel_iteration.h 
+		${Bolt.Include.Dir}/pool_alloc.h 
+		${Bolt.Include.Dir}/reduce.h 
+		${Bolt.Include.Dir}/scan.h 
+		${Bolt.Include.Dir}/synchronized_view.h 
+		${Bolt.Include.Dir}/transform.h 
+		${Bolt.Include.Dir}/transform_reduce.h 
+		${Bolt.Include.Dir}/transform_reduce_range.h
+		${Bolt.Include.Dir}/../unicode.h )
+
+set( Bolt.Runtime.Files ${Bolt.Runtime.Source} ${Bolt.Runtime.Headers} )
+
+# Include standard OpenCL headers
+include_directories( ${PROJECT_SOURCE_DIR}/include )
+
+add_library( Bolt.Runtime STATIC ${Bolt.Runtime.Files} )
+
+set_target_properties( Bolt.Runtime PROPERTIES VERSION ${Bolt_VERSION} )
+set_target_properties( Bolt.Runtime PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
+		
+# CPack configuration; include the executable into the package
+install( TARGETS Bolt.Runtime
+	RUNTIME DESTINATION ${BIN_DIR}
+	LIBRARY DESTINATION ${LIB_DIR}
+	ARCHIVE DESTINATION ${LIB_DIR}/import
+	)
+
+	
+	

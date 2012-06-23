@@ -12,7 +12,7 @@ include_directories( ${Boost_INCLUDE_DIRS} )
 
 add_executable( Bolt.Bench.Scan ${Bolt.Bench.Scan.Files} )
 
-target_link_libraries( Bolt.Bench.Scan ${Boost_LIBRARIES} )
+target_link_libraries( Bolt.Bench.Scan ${Boost_LIBRARIES} Bolt.Runtime )
 
 add_dependencies( Bolt.Bench.Scan Boost )
 
