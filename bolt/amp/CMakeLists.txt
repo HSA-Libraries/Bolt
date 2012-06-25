@@ -23,13 +23,13 @@ set( Bolt.Runtime.Files ${Bolt.Runtime.Source} ${Bolt.Runtime.Headers} )
 # Include standard OpenCL headers
 include_directories( ${PROJECT_SOURCE_DIR}/include )
 
-add_library( Bolt.Runtime STATIC ${Bolt.Runtime.Files} )
+add_library( ampBolt.Runtime STATIC ${Bolt.Runtime.Files} )
 
-set_target_properties( Bolt.Runtime PROPERTIES VERSION ${Bolt_VERSION} )
-set_target_properties( Bolt.Runtime PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
+set_target_properties( ampBolt.Runtime PROPERTIES VERSION ${Bolt_VERSION} )
+set_target_properties( ampBolt.Runtime PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
 		
 # CPack configuration; include the executable into the package
-install( TARGETS Bolt.Runtime
+install( TARGETS ampBolt.Runtime
 	RUNTIME DESTINATION ${BIN_DIR}
 	LIBRARY DESTINATION ${LIB_DIR}
 	ARCHIVE DESTINATION ${LIB_DIR}/import
