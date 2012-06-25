@@ -60,11 +60,15 @@ option( BUILD_ampBolt "Create a solution that compiles Bolt for AMP" ON )
 option( BUILD_clBolt "Create a solution that compiles Bolt for OpenCL" ON )
  
 if( IS_DIRECTORY "${PROJECT_SOURCE_DIR}/test" )
-	option( BUILD_tests "Add projects for testing Bolt " ON )
+	option( BUILD_tests "Add projects for testing Bolt" ON )
 endif( )
 
 if( IS_DIRECTORY "${PROJECT_SOURCE_DIR}/bench" )
-	option( BUILD_benchmarks "Add projects for benchmarking Bolt " OFF )
+	option( BUILD_benchmarks "Add projects for benchmarking Bolt" OFF )
+endif( )
+
+if( IS_DIRECTORY "${PROJECT_SOURCE_DIR}/doxy" )
+	option( BUILD_documentation "Add project for generating Bolt documentation" OFF )
 endif( )
 
 # Currently, linux has a problem outputing both narrow and wide characters,
@@ -154,6 +158,11 @@ endif( )
 # After libraries are built, built benchmarks
 if( BUILD_benchmarks )
 	add_subdirectory( bench )
+endif( )
+
+# After libraries are built, built benchmarks
+if( BUILD_documentation )
+	add_subdirectory( doxy )
 endif( )
 
 # The following code is setting variables to control the behavior of CPack to generate our 
