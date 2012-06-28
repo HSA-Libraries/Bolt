@@ -11,10 +11,23 @@ from platform import system
 from datetime import datetime
 
 import errorHandler
-from fftPerformanceTesting import *
-from performanceUtility import timeout, log, generate235Radices
-from serverConfig import LOG_FILE_LOC, LOG_FILE_NAME, TIMOUT_VAL
+from performanceTesting import *
 
+LOG_FILE_NAME = {
+                'Bolt':{'ER':'boltExecuteRunsLog.txt',#execute runs
+                        'MP':'boltMeasurePerfLog.txt'} #measure performance
+                }
+
+LOG_FILE_LOC = {
+                'Bolt':'perflog'
+               }
+
+TIMOUT_VAL = 900  #In seconds
+
+def log(filename, txt):
+    with open(filename, 'a') as f:
+        f.write(datetime.now().ctime()+'# '+txt+'\n')
+        
 IAM = 'Bolt'
 
 precisionvalues = ['single', 'double']
