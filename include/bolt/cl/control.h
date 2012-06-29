@@ -5,13 +5,58 @@
 namespace bolt {
 	namespace cl {
 
-		/*! \addtogroup control
-		 * \{
+		/*! \addtogroup miscellaneous
 		*/
 
-		/*!
-		 \p control allows user to control the paramters of a specific API call, such as the command-queue where GPU kernels run, 
-		 enabling of debug information, controlling load-balancing with the host, etc.
+		/*! \addtogroup control
+		* \ingroup miscellaneous
+		* \{
+		*/
+
+		/*! The \p control class allows user to control the parameters of a specific Bolt algorithm call 
+		 such as the command-queue where GPU kernels run, debug information, load-balancing with the host, and more.  Each Bolt Algorithm call accepts the 
+		\p control class as an optional first argument.  Additionally, Bolt contains a global default \p control structure which
+		is used in cases where the \p control argument is not specified, and developers can also modify this structure.  Some examples:
+
+	 	* \code
+		* cl::CommandQueue myCommandQueue = ...
+		* bolt::cl::control myControl;
+		* myControl.commandQueue(myCommandQueue);
+		* int sum = bolt::cl::reduce(myControl, ...); 
+		* \endcode
+
+
+		* Developers can also inialize and save control structures to avoid the cost of copying the default on each function call.  An example:
+		* \code
+		* class MyClass {
+		*   MyClass(...) {
+		*      cl::CommandQueue myCommandQueue = ...
+		*      _boltControl.commandQueue(myCommandQueue);
+		*   };
+		*
+		*   void runIt() 
+		*   {
+		*     int sum = bolt::cl::reduce(_boltControl, ...); 
+		*   };
+		*
+		*   private:
+		*		bolt::cl::control _boltControl;
+		*   }
+		* \endcode
+
+
+		* It can sometimes be useful to set the global default \p control structure that is used by Bolt algorithms calls which do not explicitly specify
+		* a control parameter as the first argument.  For example, the application initialization routine may examine 
+		* all the available GPU devies and select the one which should be used for all subsequent bolt calls.  This can easily be 
+		* achieved by writing the global default \p control structure, ie:
+		* \code
+		* cl::CommandQueue myCommandQueue = ...
+		* bolt::cl::control::getDefault().commandQueue(myCommandQueue); 
+		* bolt::cl::control::getDefault().debug(bolt::cl::control::debug:SaveCompilerTemps);  
+		* ...
+		* \endcode
+		* 
+		 * \{
 		 */
 		class control {
 		public:
@@ -42,6 +87,37 @@ namespace bolt {
 				_compileForAllDevices(getDefault()._compileForAllDevices)
 			{};
 
+			//setters:
+			//! Set the OpenCL command queue (and associated device) which Bolt algorithms will use.  
+			//! Only one command-queue may be specified for each call - Bolt does not load-balance across
+			//! multiple command queues.  Bolt also uses the specified command queue to determine the OpenCL context and
+			//! device.
+			void commandQueue(::cl::CommandQueue commandQueue) { _commandQueue = commandQueue; };
+
+			//! If enabled, Bolt may use the host CPU to run parts of the Algorithm.  If false, Bolt will run the
+			//! entire algorithm using the device specified by the command-queue - this might be appropriate 
+			//! on a discrete GPU where the input data is located on the device memory.
+			void useHost(e_UseHostMode useHost) { _useHost = useHost; };
+
+			/*! Enable debug messages to be printed to stdout as the algorithm is compiled, run, and tuned.  See the #debug
+			* namespace for a list of possible values.  Multiple debug options can be combined with the + sign as in 
+			* following example - this technique should be used rather than separate calls to the debug() API 
+			* each call resets the debug level rather than merging with the existing debug() setting.
+			* \code
+			* bolt::cl::control myControl;
+			* // Show example of combining two debug options with '+' sign
+			* myControl.debug(bolt::cl::control::debug::Compile + bolt::cl::control:debug::SaveCompilerTemps);
+			* \endcode
+			*/
+			void debug(unsigned debug) { _debug = debug; };
+
+
+			void wgPerComputeUnit(int wgPerComputeUnit) { _wgPerComputeUnit = wgPerComputeUnit; }; 
+			
+			//! 
+			//! Specify the compile options which are passed to the OpenCL(TM) compiler
+			void compileOptions(std::string &compileOptions) { _compileOptions = compileOptions; }; 
+
 			// getters:
 			::cl::CommandQueue commandQueue() const { return _commandQueue; };
 			::cl::Context context() const { return _commandQueue.getInfo<CL_QUEUE_CONTEXT>();};
@@ -49,16 +125,26 @@ namespace bolt {
 			e_UseHostMode useHost() const { return _useHost; };
 			unsigned debug() const { return _debug;};
 			int const wgPerComputeUnit() const { return _wgPerComputeUnit; };
-			const std::string compileOptions() const { return _compileOptions; };
+			const std::string compileOptions() const { return _compileOptions; };  
+
 			bool compileForAllDevices() const { return _compileForAllDevices; };
 
-			//setters:
-			void commandQueue(::cl::CommandQueue commandQueue) { _commandQueue = commandQueue; };
-			void useHost(e_UseHostMode useHost) { _useHost = useHost; };
-			void debug(unsigned debug) { _debug = debug; };
-			void wgPerComputeUnit(int wgPerComputeUnit) { _wgPerComputeUnit = wgPerComputeUnit; }; 
-			void compileOptions(std::string &compileOptions) { _compileOptions = compileOptions; };
-
+			
+			/*!
+			  * Return default default \p control structure.  This structure is used for Bolt API calls where the user
+			  * does not explicitly specify a \p control structure.  Also, newly created \p control structures copy
+			  * the default structure for their initial values.  Note that changes to the default \p control structure
+			  * are not automatically copied to already-created control structures.  Typically the default \p control
+			  * structure is modified as part of the application initialiation, and then as other \p control structures
+			  * are created they will pick up the modified defaults.  Some examples:
+			  * \code
+			  * bolt::cl::control myControl = bolt::cl::getDefault();  // copy existing default control.
+			  * bolt::cl::control myControl;  // same as last line - the constructor also copies values from the default control
+			  *
+			  * // Modify a setting in the default \p control
+			  * bolt::cl::control::getDefault().compileOptions("-g"); A
+			  * \endcode
+			  */
 			static control &getDefault() 
 			{
 				// Default control structure; this can be accessed by the bolt::cl::control::getDefault()
@@ -67,7 +153,7 @@ namespace bolt {
 			}; 
 		private:
 
-			// This constructor is only used to create the initial global default control structure.
+			// This constructor is only used to create the initial default control structure.
 			control(bool createGlobal) :
 				_commandQueue(::cl::CommandQueue::getDefault()),
 				_useHost(UseHost),
@@ -100,7 +186,7 @@ namespace bolt {
 // When adding a new field to this structure, don't forget to:
 //   * Add the new field, ie "int _foo.
 //   * Add setter function and getter function.
-//   * Add the field to the private constructor.  This is used to set the global "_defaultControl".
+//   * Add the field to the private constructor.  This is used to set the global default "_defaultControl".
 //   * Add the field to the public constructor, copying from the _defaultControl.
 
 // Sample usage:

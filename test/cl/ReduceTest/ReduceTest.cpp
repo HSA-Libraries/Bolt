@@ -117,13 +117,15 @@ void simpleReduce_TestControl(int aSize, int numIters, int deviceIndex)
 	int stlReduce = std::accumulate(A.begin(), A.end(), 0);
 	int boltReduce = 0;
 
+	char testTag[2000];
+	sprintf_s(testTag, 2000, "simpleReduce_TestControl sz=%d iters=%d, device=%s", aSize, numIters, c.device().getInfo<CL_DEVICE_NAME>());
 	__int64 start = StartProfile();
 	for (int i=0; i<numIters; i++) {
 		boltReduce = bolt::cl::reduce(c, A.begin(), A.end());
 	}
-	EndProfile(start, numIters, "TestControl");
+	EndProfile(start, numIters, testTag);
 
-	checkResult("simpleReduce_TestControl", stlReduce, boltReduce);
+	checkResult(testTag, stlReduce, boltReduce);
 };
 
 void reduce_TestBuffer() {
@@ -137,16 +139,17 @@ void reduce_TestBuffer() {
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-
+	int numIters = 100;
+	simpleReduce_TestControl(1024000, numIters, 0);
 
 	simpleReduce_TestControl(100, 1, 0);
 
 	simpleReduce1(256);
 	simpleReduce1(1024);
 
-	int numIters = 100;
+	
 	simpleReduce_TestControl(100, 1, 0);
-	simpleReduce_TestControl(1024000, numIters, 0);
+	
 	//simpleReduce_TestControl(1024000, numIters, 1); // may fail on systems with only one GPU installed.
 
 	return 0;
