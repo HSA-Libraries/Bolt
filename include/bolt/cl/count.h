@@ -62,7 +62,7 @@ namespace bolt {
 		{
 			typedef typename std::iterator_traits<InputIterator>::value_type T;
 
-			return count_if(first, last, CountIfEqual<T>(value), cl_code);
+			return count_if(first, last, CountIfEqual<T>(value), bolt::cl::CountIfEqual_OclCode + cl_code);
 		};
 
 
@@ -87,7 +87,7 @@ namespace bolt {
             //typedef int CountType; // FIXME, need to create a bolt class that returns an ocl-supported typename.
 			return transform_reduce(bolt::cl::control::getDefault(), first, last, 
 				predicate,  // FIXME - need CountIfTransform here?
-				CountType(0), bolt::cl::plus<CountType>(), bolt::cl::CountIfEqual_OclCode + cl_code);
+				CountType(0), bolt::cl::plus<CountType>(), cl_code);
 		};
 
 
