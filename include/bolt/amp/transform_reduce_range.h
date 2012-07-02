@@ -10,6 +10,7 @@ bolt::ArrayPool<HessianState> arrayPool;
 #endif
 
 namespace bolt {
+	namespace amp {
 
 #define VW 1
 #define BARRIER(W)  // FIXME - placeholder for future barrier insertions
@@ -127,5 +128,7 @@ namespace bolt {
 	{
 		return transform_reduce_range(concurrency::accelerator().default_view, origin, ext, transform_op, init, reduce_op);
 	};
+
+	}; // end namespace amp
 
 }; // end namespace bolt

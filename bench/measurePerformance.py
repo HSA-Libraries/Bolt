@@ -31,7 +31,7 @@ def log(filename, txt):
 IAM = 'Bolt'
 
 precisionvalues = ['single', 'double']
-libraryvalues = ['scan','null']
+libraryvalues = ['scan','reduce','null']
 
 parser = argparse.ArgumentParser(description='Measure performance of a Bolt library')
 parser.add_argument('--device',

@@ -9,4 +9,5 @@ include_directories( ${BOLT_INCLUDE_DIR} )
 if( BUILD_ampBolt )
 	# Include standard OpenCL headers
 	add_subdirectory( Scan )
+	add_subdirectory( Reduce )
 endif( )
