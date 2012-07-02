@@ -61,9 +61,14 @@ def executable(library):
 
     if library == 'scan' or library == 'null':
         if sys.platform == 'win32':
-            exe = 'Bolt.Bench.Scan.exe'
+            exe = 'ampBolt.Bench.Scan.exe'
         elif sys.platform == 'linux2':
-            exe = 'Bolt.Bench.Scan'
+            exe = 'ampBolt.Bench.Scan'
+    elif library == 'reduce':
+        if sys.platform == 'win32':
+            exe = 'ampBolt.Bench.Reduce.exe'
+        elif sys.platform == 'linux2':
+            exe = 'ampBolt.Bench.Reduce'
     else:
         print 'ERROR: unknown library -- cannot determine executable name'
         quit()

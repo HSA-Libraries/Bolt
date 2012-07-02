@@ -8,6 +8,7 @@
 #include <amp.h>
 
 #include <bolt/AMP/functional.h>
+#include <bolt/countof.h>
 // #include <bolt/AMP/sequentialTrait.h>
 
 namespace bolt {
@@ -17,13 +18,6 @@ namespace bolt {
 	const int maxThreadsInTile		= 1024;
 	const int maxTilesPerDim		= 65535;
 	const int maxTilesPerPFE		= maxThreadsInTile*maxTilesPerDim;
-
-//	Creating a portable defintion of countof
-#if defined( _WIN32 )
-	#define countOf _countof
-#else
-	#define countOf( arr ) ( sizeof( arr ) / sizeof( arr[ 0 ] ) )
-#endif
 
 	//	Work routine for inclusive_scan that contains a compile time constant size
 	template< typename InputIterator, typename OutputIterator, typename BinaryFunction >

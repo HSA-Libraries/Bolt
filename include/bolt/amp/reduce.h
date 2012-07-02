@@ -4,6 +4,7 @@
 #include <vector>
 #include <array>
 #include <amp.h>
+#include <numeric>
 #include <bolt/AMP/functional.h>
 
 

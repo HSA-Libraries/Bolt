@@ -14,3 +14,19 @@ endif( )
 if( BUILD_clBolt )
 #	add_subdirectory( OpenCL )
 endif( )
+
+install( FILES	
+			errorHandler.py
+			measurePerformance.py
+			performanceTesting.py
+			plotPerformance.py
+		DESTINATION
+			${BIN_DIR} )
+
+install( FILES	
+			errorHandler.py
+			measurePerformance.py
+			performanceTesting.py
+			plotPerformance.py
+		DESTINATION
+			${PROJECT_BINARY_DIR}/staging/\${CMAKE_INSTALL_CONFIG_NAME} )

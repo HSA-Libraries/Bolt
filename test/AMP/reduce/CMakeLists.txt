@@ -2,20 +2,20 @@
 ##	Copyright (C) 2010 Advanced Micro Devices, Inc. All Rights Reserved.
 #############################################################################
 # List the names of common files to compile across all platforms
-set( Bolt.Test.Reduce.Source stdafx.cpp simple_reduce.cpp )
-set( Bolt.Test.Reduce.Headers stdafx.h targetver.h ${BOLT_INCLUDE_DIR}/bolt/amp/reduce.h )
+set( ampBolt.Test.Reduce.Source stdafx.cpp simple_reduce.cpp )
+set( ampBolt.Test.Reduce.Headers stdafx.h targetver.h ${BOLT_INCLUDE_DIR}/bolt/amp/reduce.h )
 
-set( Bolt.Test.Reduce.Files ${Bolt.Test.Reduce.Source} ${Bolt.Test.Reduce.Headers} )
+set( ampBolt.Test.Reduce.Files ${ampBolt.Test.Reduce.Source} ${ampBolt.Test.Reduce.Headers} )
 
-add_executable( Bolt.Test.Reduce ${Bolt.Test.Reduce.Files} )
+add_executable( ampBolt.Test.Reduce ${ampBolt.Test.Reduce.Files} )
 
-set_target_properties( Bolt.Test.Reduce PROPERTIES VERSION ${Bolt_VERSION} )
-set_target_properties( Bolt.Test.Reduce PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
+set_target_properties( ampBolt.Test.Reduce PROPERTIES VERSION ${Bolt_VERSION} )
+set_target_properties( ampBolt.Test.Reduce PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
 
-set_property( TARGET Bolt.Test.Reduce PROPERTY FOLDER "Test/AMP")
+set_property( TARGET ampBolt.Test.Reduce PROPERTY FOLDER "Test/AMP")
 
 # CPack configuration; include the executable into the package
-install( TARGETS Bolt.Test.Reduce
+install( TARGETS ampBolt.Test.Reduce
 	RUNTIME DESTINATION ${BIN_DIR}
 	LIBRARY DESTINATION ${LIB_DIR}
 	ARCHIVE DESTINATION ${LIB_DIR}/import
