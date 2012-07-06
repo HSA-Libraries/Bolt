@@ -3,15 +3,27 @@
 #############################################################################
 # List the names of common files to compile across all platforms
 message( STATUS "Setting up benchmarking projects..." )
-include( ExternalBoost )
 
-include_directories( ${BOLT_INCLUDE_DIR} )
+set( Boost_USE_MULTITHREADED ON )
+set( Boost_USE_STATIC_LIBS   ON )
+set( Boost_DETAILED_FAILURE_MSG   ON )
+set( Boost_DEBUG ON )
 
-if( BUILD_ampBolt )
+if( BOOST_ROOT )
+	# The root tree of BOOST was specified on the command line; use it to to find the specific Boost the user points too
+	find_package( Boost ${Boost.VERSION} COMPONENTS program_options REQUIRED )
+	# This will define Boost_FOUND
+	message( STATUS "Boost_PROGRAM_OPTIONS_LIBRARY: ${Boost_PROGRAM_OPTIONS_LIBRARY}" )
+else( )
+	include( ExternalBoost )
+	include_directories( ${BOLT_INCLUDE_DIR} )
+endif( )
+
+if( BUILD_ampBolt AND Boost_FOUND )
 	add_subdirectory( AMP )
 endif( )
 
-if( BUILD_clBolt )
+if( BUILD_clBolt AND Boost_FOUND )
 #	add_subdirectory( OpenCL )
 endif( )
 
