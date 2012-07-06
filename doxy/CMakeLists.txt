@@ -26,7 +26,7 @@ endif( )
 
 add_custom_target( 	Bolt.Documentation
 					COMMAND ${DOXYGEN_EXECUTABLE} bolt.doxy.cfg
-					WORKING_DIRECTORY ${CMAKE_BINARY_SOURCE_DIR}
+					WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 					DEPENDS ${Doxygen.Dependencies}
 					COMMENT "Generating Bolt API documentation with Doxygen" VERBATIM
 				)
