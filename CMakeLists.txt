@@ -92,6 +92,11 @@ get_filename_component( C_COMPILER_NAME ${CMAKE_C_COMPILER} NAME_WE )
 if( C_COMPILER_NAME STREQUAL "cl" )
 	# Following options for nMake
 	message( STATUS "Detected MSVS Ver: " ${MSVC_VERSION} )
+	
+	# CMake uses huge stack frames for windows, for some reason.  We remove.
+	string( REGEX REPLACE "/STACK:[0-9]+" "" CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}" )
+	string( REGEX REPLACE "/STACK:[0-9]+" "" CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}" )
+	string( REGEX REPLACE "/STACK:[0-9]+" "" CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS}" )	
 elseif( C_COMPILER_NAME STREQUAL "gcc" )
 	message( STATUS "Detected GNU fortran compiler." )
 	
@@ -103,7 +108,7 @@ elseif( C_COMPILER_NAME STREQUAL "gcc" )
 		set( CMAKE_C_FLAGS "-m32 ${CMAKE_C_FLAGS}" )
 	endif( )
 else( )
-	message( FATAL_ERROR "Compiler name not detected" )
+	message( AUTHOR_WARNING "Compiler not recognized.  Using default flags." )
 endif( )
 
 # If UNICODE is defined, pass extra definitions into 

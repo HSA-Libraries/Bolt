@@ -57,6 +57,7 @@ endif()
 option( BUILD_Boost "Install and Compile Boost as an external dependency" ON )
 option( BUILD_Doxygen "Install Doxygen as an external dependency" ON )
 option( BUILD_Bolt "Setup Bolt to use all the external dependencies" ON )
+option( BUILD_gTest "Install googleTest as an external dependency" ON )
 
 set( Bolt.Dependencies )
 set( Bolt.Cmake.Args )
@@ -79,6 +80,16 @@ if( BUILD_Doxygen )
 	message( STATUS "DOXYGEN_ROOT configured as: " ${DOXYGEN_ROOT} )
 	list( APPEND Bolt.Dependencies Doxygen )
 	list( APPEND Bolt.Cmake.Args -D BUILD_documentation=TRUE -D DOXYGEN_ROOT=${DOXYGEN_ROOT} )
+endif( )
+
+# If the user selects, download, uncompress, and setup googleTest
+if( BUILD_gTest )
+	message( STATUS "Setting up googleTest external..." )
+	include( ExternalGtest )
+#	set( GTEST_ROOT ${binary_dir} )
+	message( STATUS "GTEST_ROOT configured as: " ${GTEST_ROOT} )
+	list( APPEND Bolt.Dependencies gTestDebug gTestRelease )
+	list( APPEND Bolt.Cmake.Args -DBUILD_tests=TRUE -DGTEST_ROOT=${GTEST_ROOT} -DGTEST_MSVC_SEARCH=MT )
 endif( )
 
 # If the user selects, download, uncompress, and setup Doxygen
