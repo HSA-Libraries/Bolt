@@ -8,6 +8,7 @@ set( ampBolt.Test.Reduce.Headers stdafx.h targetver.h ${BOLT_INCLUDE_DIR}/bolt/a
 set( ampBolt.Test.Reduce.Files ${ampBolt.Test.Reduce.Source} ${ampBolt.Test.Reduce.Headers} )
 
 add_executable( ampBolt.Test.Reduce ${ampBolt.Test.Reduce.Files} )
+target_link_libraries( ampBolt.Test.Reduce ${GTEST_BOTH_LIBRARIES} ampBolt.Runtime )
 
 set_target_properties( ampBolt.Test.Reduce PROPERTIES VERSION ${Bolt_VERSION} )
 set_target_properties( ampBolt.Test.Reduce PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
