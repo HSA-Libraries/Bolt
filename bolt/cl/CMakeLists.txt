@@ -15,12 +15,14 @@ set( clBolt.Runtime.Headers
 		${clBolt.clInclude.Dir}/reduce.h 
 		${clBolt.clInclude.Dir}/transform.h 
 		${clBolt.clInclude.Dir}/transform_reduce.h )
+set( clBolt.Runtime.Headers.Detail 
+		${clBolt.clInclude.Dir}/detail/reduce.inl )
 set( clBolt.Runtime.clFiles 
 		${clBolt.clInclude.Dir}/reduce_kernels.cl 
 		${clBolt.clInclude.Dir}/transform_kernels.cl 
 		${clBolt.clInclude.Dir}/transform_reduce_kernels.cl )
 
-set( clBolt.Runtime.Files ${clBolt.Runtime.Source} ${clBolt.Runtime.Headers} ${clBolt.Runtime.clFiles} )
+set( clBolt.Runtime.Files ${clBolt.Runtime.Source} ${clBolt.Runtime.Headers} ${clBolt.Runtime.Headers.Detail} ${clBolt.Runtime.clFiles} )
 
 # Include standard OpenCL headers
 include_directories( ${BOLT_INCLUDE_DIR} ${OPENCL_INCLUDE_DIRS} )
