@@ -10,7 +10,7 @@ namespace bolt {
 
 		/*! \addtogroup control
 		* \ingroup miscellaneous
-		* \{
+        * \{
 		*/
 
 		/*! The \p control class allows user to control the parameters of a specific Bolt algorithm call 
@@ -60,8 +60,16 @@ namespace bolt {
 		 */
 		class control {
 		public:
-			enum e_UseHostMode {NoUseHost=0, UseHost=1};  /* Use host CPU for parts of the algorithm that likely run best on the CPU */
-			enum e_AutoTuneMode{NoAutoTune=0, AutoTuneDevice=0x1, AutoTuneWorkShape=0x2, AutoTuneAll=0x3};
+			enum e_UseHostMode {NoUseHost, UseHost};  
+            enum e_RunMode     {Automatic,
+                                SerialCpu,   
+                                MultiCoreCpu, 
+                                Gpu };
+
+			enum e_AutoTuneMode{NoAutoTune=0x0, 
+                                AutoTuneDevice=0x1, 
+                                AutoTuneWorkShape=0x2, 
+                                AutoTuneAll=0x3}; // FIXME, experimental
 			struct debug {
 				static const unsigned None=0;
 				static const unsigned Compile = 0x1;
@@ -80,6 +88,7 @@ namespace bolt {
 				) :
 			_commandQueue(commandQueue),
 				_useHost(useHost),
+                _forceRunMode(getDefault()._forceRunMode),
 				_debug(debug),
 				_autoTune(getDefault()._autoTune),
 				_wgPerComputeUnit(getDefault()._wgPerComputeUnit),
@@ -98,6 +107,13 @@ namespace bolt {
 			//! entire algorithm using the device specified by the command-queue - this might be appropriate 
 			//! on a discrete GPU where the input data is located on the device memory.
 			void useHost(e_UseHostMode useHost) { _useHost = useHost; };
+
+
+            //! Force the Bolt command to run on the specifed device.  Default is "Automatic", in which case the Bolt
+            //! runtime will select the device.  Forcing the mode to SerialCpu can be useful for debugging the algorithm.
+            //! Forcing the mode can also be useful for performance comparisons or when the programmer wants direct 
+            //! control over the run location (perhaps due to knowledge that the algorithm is best-suited for GPU).
+			void forceRunMode(e_RunMode forceRunMode) { _forceRunMode = forceRunMode; };
 
 			/*! Enable debug messages to be printed to stdout as the algorithm is compiled, run, and tuned.  See the #debug
 			* namespace for a list of possible values.  Multiple debug options can be combined with the + sign as in 
@@ -123,6 +139,7 @@ namespace bolt {
 			::cl::Context context() const { return _commandQueue.getInfo<CL_QUEUE_CONTEXT>();};
 			::cl::Device device() const { return _commandQueue.getInfo<CL_QUEUE_DEVICE>();};
 			e_UseHostMode useHost() const { return _useHost; };
+			e_RunMode forceRunMode() const { return _forceRunMode; };
 			unsigned debug() const { return _debug;};
 			int const wgPerComputeUnit() const { return _wgPerComputeUnit; };
 			const std::string compileOptions() const { return _compileOptions; };  
@@ -153,10 +170,11 @@ namespace bolt {
 			}; 
 		private:
 
-			// This constructor is only used to create the initial default control structure.
+			// This is the private constructor is only used to create the initial default control structure.
 			control(bool createGlobal) :
 				_commandQueue(::cl::CommandQueue::getDefault()),
 				_useHost(UseHost),
+                _forceRunMode(Automatic),
 				_debug(debug::None),
 				_autoTune(AutoTuneAll),
 				_wgPerComputeUnit(8),
@@ -166,6 +184,7 @@ namespace bolt {
 		private:
 			::cl::CommandQueue    _commandQueue;
 			e_UseHostMode       _useHost;
+            e_RunMode           _forceRunMode; 
 			e_AutoTuneMode      _autoTune;  /* auto-tune the choice of device CPU/GPU and  workgroup shape */
 			unsigned			_debug;
 
@@ -176,16 +195,13 @@ namespace bolt {
 			bool				 _compileForAllDevices;  // compile for all devices in the context.  False means to only compile for specified device.
 		};
 
-
-		// queue->device->
-		//device->platform.  (CL_DEVICE_PLATFORM)
 	};
 };
 
 // Implementor note:
 // When adding a new field to this structure, don't forget to:
 //   * Add the new field, ie "int _foo.
-//   * Add setter function and getter function.
+//   * Add setter function and getter function, ie "void foo(int fooValue)" and "int foo const { return _foo; }"
 //   * Add the field to the private constructor.  This is used to set the global default "_defaultControl".
 //   * Add the field to the public constructor, copying from the _defaultControl.
 

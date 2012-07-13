@@ -128,6 +128,32 @@ void simpleReduce_TestControl(int aSize, int numIters, int deviceIndex)
 	checkResult(testTag, stlReduce, boltReduce);
 };
 
+
+// Demonstrates use of bolt::control structure to control execution of routine.
+void simpleReduce_TestSerial(int aSize)
+{
+	std::vector<int> A(aSize);
+
+	for (int i=0; i < aSize; i++) {
+		A[i] = i;
+	};
+
+
+	bolt::cl::control c;  // construct control structure from the queue.
+	c.forceRunMode(bolt::cl::control::SerialCpu);
+
+	int stlReduce = std::accumulate(A.begin(), A.end(), 0);
+	int boltReduce = 0;
+
+	boltReduce = bolt::cl::reduce(c, A.begin(), A.end());
+
+
+	checkResult("TestSerial", stlReduce, boltReduce);
+};
+
+
+#if 0
+// Disable test since the buffer interface is moving to device_vector.
 void reduce_TestBuffer() {
 	
 	int a[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
@@ -135,6 +161,7 @@ void reduce_TestBuffer() {
 
 	int sum = bolt::cl::reduce2<int>(A, 0, bolt::cl::plus<int>()); // note type of date in the buffer ("int") explicitly specified.
 };
+#endif
 
 
 int _tmain(int argc, _TCHAR* argv[])
@@ -149,6 +176,8 @@ int _tmain(int argc, _TCHAR* argv[])
 
 	
 	simpleReduce_TestControl(100, 1, 0);
+
+	simpleReduce_TestSerial(1000);
 	
 	//simpleReduce_TestControl(1024000, numIters, 1); // may fail on systems with only one GPU installed.
 
