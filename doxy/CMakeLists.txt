@@ -18,10 +18,8 @@ if( DOXYGEN_ROOT )
 			bin
 	)
 else( )
-	include( ExternalDoxygen )
-	
-	list( APPEND Doxygen.Dependencies Doxygen )
-	
+	message( "Configure Bolt in <BOLT_ROOT>/bin to build the SuperBuild which will download Doxygen automatically" )	
+	message( SEND_ERROR "The Documentation project for Bolt requires DOXYGEN_ROOT to be defined" )	
 endif( )
 
 add_custom_target( 	Bolt.Documentation
