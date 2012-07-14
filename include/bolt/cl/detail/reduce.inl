@@ -1,6 +1,6 @@
 #include <algorithm>
 
-#include <bolt/tbb/reduce.h>
+// #include <bolt/tbb/reduce.h>
 
 namespace bolt {
 	namespace cl {
@@ -19,9 +19,9 @@ namespace bolt {
 			const bolt::cl::control::e_RunMode runMode = ctl.forceRunMode();  // could be dynamic choice some day.
 			if (runMode == bolt::cl::control::SerialCpu) {
 				return std::accumulate(first, last, init, binary_op);
-			} else if (runMode == bolt::cl::control::MultiCoreCpu) {
-				TbbReduceWrapper wrapper();
-				tbb::parallel_reduce(tbb:blocked_range<T>(first, last), wrapper);
+			//} else if (runMode == bolt::cl::control::MultiCoreCpu) {
+			//	TbbReduceWrapper wrapper();
+			//	tbb::parallel_reduce(tbb:blocked_range<T>(first, last), wrapper);
 			} else {
 
 				size_t szElements = (int)(last - first); 
