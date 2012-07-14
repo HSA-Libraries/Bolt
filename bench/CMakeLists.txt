@@ -15,8 +15,8 @@ if( BOOST_ROOT )
 	# This will define Boost_FOUND
 	message( STATUS "Boost_PROGRAM_OPTIONS_LIBRARY: ${Boost_PROGRAM_OPTIONS_LIBRARY}" )
 else( )
-	include( ExternalBoost )
-	include_directories( ${BOLT_INCLUDE_DIR} )
+	message( "Configure Bolt in <BOLT_ROOT>/bin to build the SuperBuild which will download and build Boost automatically" )	
+	message( SEND_ERROR "The Benchmarking projects for Bolt requires BOOST_ROOT to be defined" )
 endif( )
 
 if( BUILD_ampBolt AND Boost_FOUND )

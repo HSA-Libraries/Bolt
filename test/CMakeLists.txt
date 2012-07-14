@@ -9,7 +9,8 @@ if( GTEST_ROOT )
     find_package( GTest REQUIRED )
 	# This will define GTEST_FOUND
 else( )
-	include( ExternalGtest )
+	message( "Configure Bolt in <BOLT_ROOT>/bin to build the SuperBuild which will download and build GoogleTest automatically" )	
+	message( SEND_ERROR "The testing projects for Bolt requires GTEST_ROOT to be defined" )	
 endif( )
 
 # Include Bolt headers for all testing projects

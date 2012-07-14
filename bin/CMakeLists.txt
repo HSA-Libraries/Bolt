@@ -23,7 +23,7 @@ set( Bolt.SuperBuild_VERSION_MINOR 0 )
 set( Bolt.SuperBuild_VERSION_PATCH 1 )
 set( Bolt.SuperBuild_VERSION "${Bolt.SuperBuild_VERSION_MAJOR}.${Bolt.SuperBuild_VERSION_MINOR}.${Bolt.SuperBuild_VERSION_PATCH}")
 	
-list( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/.. )
+list( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR} )
 
 # On windows, it's convenient to change the default install prefix such that it does NOT point to 'program files'
 # Need to check out CMAKE_RUNTIME_OUTPUT_DIRECTORY variable, and see if that eliminates the need to modify install path
@@ -58,6 +58,8 @@ option( BUILD_Boost "Install and Compile Boost as an external dependency" ON )
 option( BUILD_Doxygen "Install Doxygen as an external dependency" ON )
 option( BUILD_Bolt "Setup Bolt to use all the external dependencies" ON )
 option( BUILD_gTest "Install googleTest as an external dependency" ON )
+option( BUILD_AMP "Generate projects that use the AMP backend" ON )
+option( BUILD_OpenCL "Generate projects that use the OpenCL backend" ON )
 
 set( Bolt.Dependencies )
 set( Bolt.Cmake.Args )
@@ -102,7 +104,7 @@ if( BUILD_Bolt )
 		DEPENDS ${Bolt.Dependencies}
 		SOURCE_DIR ${PROJECT_SOURCE_DIR}/..
 		BINARY_DIR Bolt.build
-		CMAKE_ARGS ${Bolt.Cmake.Args}
+		CMAKE_ARGS ${Bolt.Cmake.Args} -DBUILD_ampBolt=${BUILD_AMP} -DBUILD_clBolt=${BUILD_OpenCL}
 		INSTALL_COMMAND ""
 	)
 endif( )
