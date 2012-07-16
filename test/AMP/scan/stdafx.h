@@ -8,9 +8,13 @@
 #define NOMINMAX
 #include "targetver.h"
 
-#include <stdio.h>
 #include <tchar.h>
 
+#include <numeric>
+#include <limits>
+#include <tuple>
+#include <iterator>
+#include <list>	// For debugging purposes, to prove that we can reject lists
 
 
 // TODO: reference additional headers your program requires here
