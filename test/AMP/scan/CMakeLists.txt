@@ -8,7 +8,7 @@ set( ampBolt.Test.Scan.Headers stdafx.h targetver.h ${BOLT_INCLUDE_DIR}/bolt/amp
 set( ampBolt.Test.Scan.Files ${ampBolt.Test.Scan.Source} ${ampBolt.Test.Scan.Headers} )
 
 add_executable( ampBolt.Test.Scan ${ampBolt.Test.Scan.Files} )
-target_link_libraries( ampBolt.Test.Scan ${GTEST_BOTH_LIBRARIES} ampBolt.Runtime )
+target_link_libraries( ampBolt.Test.Scan ${GTEST_LIBRARIES} ampBolt.Runtime )
 
 set_target_properties( ampBolt.Test.Scan PROPERTIES VERSION ${Bolt_VERSION} )
 set_target_properties( ampBolt.Test.Scan PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
