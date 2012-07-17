@@ -6,6 +6,7 @@
 set( Bolt.Include.Dir ${BOLT_INCLUDE_DIR}/bolt/amp )
 
 set( Bolt.Runtime.Source ${BOLT_LIBRARY_DIR}/statisticalTimer.cpp )
+
 set( Bolt.Runtime.Headers 
 		${Bolt.Include.Dir}/functional.h 
 		${Bolt.Include.Dir}/parallel_iteration.h 
@@ -17,6 +18,12 @@ set( Bolt.Runtime.Headers
 		${Bolt.Include.Dir}/transform_reduce.h 
 		${Bolt.Include.Dir}/transform_reduce_range.h
 		${Bolt.Include.Dir}/../unicode.h )
+
+# The minidump tech is windows specific; I don't have a solution yet for linux, but google-breakpad looks promising
+if( WIN32 )
+	list( APPEND Bolt.Runtime.Source ${BOLT_LIBRARY_DIR}/miniDump.cpp )
+	list( APPEND Bolt.Runtime.Headers ${Bolt.Include.Dir}/../miniDump.h )
+endif( )
 
 set( Bolt.Runtime.Files ${Bolt.Runtime.Source} ${Bolt.Runtime.Headers} )
 

@@ -3,6 +3,7 @@
 #include <bolt/AMP/functional.h>
 #include <bolt/AMP/scan.h>
 #include <bolt/unicode.h>
+#include <bolt/miniDump.h>
 
 #include <gtest/gtest.h>
 
@@ -176,5 +177,35 @@ int _tmain(int argc, _TCHAR* argv[])
 {
 	::testing::InitGoogleTest( &argc, &argv[ 0 ] );
 
-	return RUN_ALL_TESTS();
+    //  Register our minidump generating logic
+    bolt::miniDumpSingleton::enableMiniDumps( );
+
+    int retVal = RUN_ALL_TESTS( );
+
+    //  Reflection code to inspect how many tests failed in gTest
+    ::testing::UnitTest& unitTest = *::testing::UnitTest::GetInstance( );
+
+    unsigned int failedTests = 0;
+    for( int i = 0; i < unitTest.total_test_case_count( ); ++i )
+    {
+        const ::testing::TestCase& testCase = *unitTest.GetTestCase( i );
+        for( int j = 0; j < testCase.total_test_count( ); ++j )
+        {
+            const ::testing::TestInfo& testInfo = *testCase.GetTestInfo( j );
+            if( testInfo.result( )->Failed( ) )
+                ++failedTests;
+        }
+    }
+
+    //  Print helpful message at termination if we detect errors, to help users figure out what to do next
+    if( failedTests )
+    {
+        bolt::tout << _T( "\nFailed tests detected in test pass; please run test again with:" ) << std::endl;
+        bolt::tout << _T( "\t--gtest_filter=<XXX> to select a specific failing test of interest" ) << std::endl;
+        bolt::tout << _T( "\t--gtest_catch_exceptions=0 to generate minidump of failing test, or" ) << std::endl;
+        bolt::tout << _T( "\t--gtest_break_on_failure to debug interactively with debugger" ) << std::endl;
+        bolt::tout << _T( "\t    (only on googletest assertion failures, not SEH exceptions)" ) << std::endl;
+    }
+
+	return retVal;
 }
