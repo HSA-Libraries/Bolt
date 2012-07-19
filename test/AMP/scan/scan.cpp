@@ -25,6 +25,60 @@
 	//printf ("Sum: stl=%d,  bolt=%d %d %d\n", stlScan, boltScan, boltScan2, boltScan3 );
 //};
 
+template< typename T, size_t N >
+::testing::AssertionResult cmpArrays( const T (&ref)[N], const T (&calc)[N] )
+{
+    for( size_t i = 0; i < N; ++i )
+    {
+        EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
+    }
+
+    return ::testing::AssertionSuccess( );
+}
+
+template< typename T, size_t N >
+::testing::AssertionResult cmpArrays( const std::array< T, N >& ref, const std::array< T, N >& calc )
+{
+    for( size_t i = 0; i < N; ++i )
+    {
+        EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
+    }
+
+    return ::testing::AssertionSuccess( );
+}
+
+//  The following cmpArrays verify the correctness of std::vectors's
+template< typename T >
+::testing::AssertionResult cmpArrays( const std::vector< T >& ref, const std::vector< T >& calc )
+{
+    for( size_t i = 0; i < ref.size( ); ++i )
+    {
+        EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
+    }
+
+    return ::testing::AssertionSuccess( );
+}
+
+::testing::AssertionResult cmpArrays( const std::vector< float >& ref, const std::vector< float >& calc )
+{
+    for( size_t i = 0; i < ref.size( ); ++i )
+    {
+        EXPECT_FLOAT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
+    }
+
+    return ::testing::AssertionSuccess( );
+}
+
+::testing::AssertionResult cmpArrays( const std::vector< double >& ref, const std::vector< double >& calc )
+{
+    for( size_t i = 0; i < ref.size( ); ++i )
+    {
+        EXPECT_DOUBLE_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
+    }
+
+    return ::testing::AssertionSuccess( );
+}
+
 //  This class creates a C++ 'TYPE' out of a size_t value
 template< size_t N >
 class TypeValue
@@ -37,7 +91,8 @@ public:
 template< size_t N >
 const size_t TypeValue< N >::value;
 
-//  Out test fixture class, used for the macro's below
+//  Test fixture class, used for the Type-parameterized tests
+//  Namely, the tests that use std::array and TYPED_TEST_P macros
 template< typename ArrayTuple >
 class ScanArrayTest: public ::testing::Test
 {
@@ -95,14 +150,7 @@ TYPED_TEST_P( ScanArrayTest, InPlace )
 
     //  Loop through the array and compare all the values with each other
     //  TODO:  How do we specialize the compare for int vs float types?  We may want to have more lenient compares for floats.
-    ArrayCont::iterator stdIter  = stdInput.begin( );
-    ArrayCont::iterator boltIter = boltInput.begin( );
-    while( stdIter != stdInput.end( ) )
-    {
-        EXPECT_EQ( *stdIter, *boltIter );
-        ++stdIter;
-        ++boltIter;
-    };
+    cmpArrays( stdInput, boltInput );
 
 }
 
@@ -129,14 +177,7 @@ TYPED_TEST_P( ScanArrayTest, OutofPlace )
 
     //  Loop through the array and compare all the values with each other
     //  TODO:  How do we specialize the compare for int vs float types?  We may want to have more lenient compares for floats.
-    ArrayCont::iterator stdIter  = stdResult.begin( );
-    ArrayCont::iterator boltIter = boltResult.begin( );
-    while( stdIter != stdResult.end( ) )
-    {
-        EXPECT_EQ( *stdIter, *boltIter );
-        ++stdIter;
-        ++boltIter;
-    };
+    cmpArrays( stdResult, boltResult );
 
 }
 
@@ -173,9 +214,45 @@ typedef ::testing::Types<
 INSTANTIATE_TYPED_TEST_CASE_P( Integer, ScanArrayTest, IntegerTests );
 INSTANTIATE_TYPED_TEST_CASE_P( Float, ScanArrayTest, FloatTests );
 
+
+class ScanIntegerVector: public ::testing::TestWithParam< int >
+{
+public:
+    //  Create an std and a bolt vector of requested size, and initialize all the elements to 1
+    ScanIntegerVector( ): stdInput( GetParam( ), 1 ), boltInput( GetParam( ), 1 )
+    {}
+
+protected:
+    std::vector< int > stdInput, boltInput;
+};
+
+TEST_P( ScanIntegerVector, InPlace )
+{
+    //  Calling the actual functions under test
+    std::vector< int >::iterator stdEnd  = std::partial_sum( stdInput.begin( ), stdInput.end( ), stdInput.begin( ) );
+    std::vector< int >::iterator boltEnd = bolt::inclusive_scan( boltInput.begin( ), boltInput.end( ), boltInput.begin( ) );
+
+    //  The returned iterator should be one past the 
+    EXPECT_EQ( stdInput.end( ), stdEnd );
+    EXPECT_EQ( boltInput.end( ), boltEnd );
+
+    std::vector< int >::iterator::difference_type stdNumElements = std::distance( stdInput.begin( ), stdEnd );
+    std::vector< int >::iterator::difference_type boltNumElements = std::distance( boltInput.begin( ), boltEnd );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+
+}
+
+INSTANTIATE_TEST_CASE_P( Inclusive, ScanIntegerVector, ::testing::Range( 0, 1024, 1 ) );
+//INSTANTIATE_TEST_CASE_P( valueTest, ScanVectorTest, ::testing::Range( 0, 134217728, 1 ) );
+
 int _tmain(int argc, _TCHAR* argv[])
 {
-	::testing::InitGoogleTest( &argc, &argv[ 0 ] );
+    ::testing::InitGoogleTest( &argc, &argv[ 0 ] );
 
     //  Register our minidump generating logic
     bolt::miniDumpSingleton::enableMiniDumps( );
