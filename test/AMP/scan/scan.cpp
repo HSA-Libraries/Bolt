@@ -25,6 +25,10 @@
 	//printf ("Sum: stl=%d,  bolt=%d %d %d\n", stlScan, boltScan, boltScan2, boltScan3 );
 //};
 
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+//  Below are helper routines to compare the results of two arrays for googletest
+//  They return an assertion object that googletest knows how to track
+
 template< typename T, size_t N >
 ::testing::AssertionResult cmpArrays( const T (&ref)[N], const T (&calc)[N] )
 {
@@ -36,16 +40,53 @@ template< typename T, size_t N >
     return ::testing::AssertionSuccess( );
 }
 
+//  Primary class template for std::array types
+//  The struct wrapper is necessary to partially specialize the member function
 template< typename T, size_t N >
-::testing::AssertionResult cmpArrays( const std::array< T, N >& ref, const std::array< T, N >& calc )
+struct cmpStdArray
 {
-    for( size_t i = 0; i < N; ++i )
+    static ::testing::AssertionResult cmpArrays( const std::array< T, N >& ref, const std::array< T, N >& calc )
     {
-        EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-    }
+        for( size_t i = 0; i < N; ++i )
+        {
+            EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
+        }
 
-    return ::testing::AssertionSuccess( );
-}
+        return ::testing::AssertionSuccess( );
+    }
+};
+
+//  Partial template specialization for float types
+//  Partial template specializations only works for objects, not functions
+template< size_t N >
+struct cmpStdArray< float, N >
+{
+    static ::testing::AssertionResult cmpArrays( const std::array< float, N >& ref, const std::array< float, N >& calc )
+    {
+        for( size_t i = 0; i < N; ++i )
+        {
+            EXPECT_FLOAT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
+        }
+
+        return ::testing::AssertionSuccess( );
+    }
+};
+
+//  Partial template specialization for float types
+//  Partial template specializations only works for objects, not functions
+template< size_t N >
+struct cmpStdArray< double, N >
+{
+    static ::testing::AssertionResult cmpArrays( const std::array< double, N >& ref, const std::array< double, N >& calc )
+    {
+        for( size_t i = 0; i < N; ++i )
+        {
+            EXPECT_DOUBLE_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
+        }
+
+        return ::testing::AssertionSuccess( );
+    }
+};
 
 //  The following cmpArrays verify the correctness of std::vectors's
 template< typename T >
@@ -78,6 +119,9 @@ template< typename T >
 
     return ::testing::AssertionSuccess( );
 }
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+//  Fixture classes are now defined to enable googletest to process type parameterized tests
 
 //  This class creates a C++ 'TYPE' out of a size_t value
 template< size_t N >
@@ -149,9 +193,51 @@ TYPED_TEST_P( ScanArrayTest, InPlace )
     EXPECT_EQ( stdNumElements, boltNumElements );
 
     //  Loop through the array and compare all the values with each other
-    //  TODO:  How do we specialize the compare for int vs float types?  We may want to have more lenient compares for floats.
-    cmpArrays( stdInput, boltInput );
+    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
+}
 
+TYPED_TEST_P( ScanArrayTest, InPlacePlusFunction )
+{
+    typedef std::array< ArrayType, ArraySize > ArrayCont;
+
+    //  Calling the actual functions under test
+    ArrayCont::iterator stdEnd  = std::partial_sum( stdInput.begin( ), stdInput.end( ), stdInput.begin( ), bolt::plus< ArrayType >( ) );
+    ArrayCont::iterator boltEnd = bolt::inclusive_scan( boltInput.begin( ), boltInput.end( ), boltInput.begin( ), bolt::plus< ArrayType >( ) );
+
+    //  The returned iterator should be one past the 
+    EXPECT_EQ( stdInput.end( ), stdEnd );
+    EXPECT_EQ( boltInput.end( ), boltEnd );
+
+    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdEnd );
+    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltEnd );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
+}
+
+TYPED_TEST_P( ScanArrayTest, InPlaceMaxFunction )
+{
+    typedef std::array< ArrayType, ArraySize > ArrayCont;
+
+    //  Calling the actual functions under test
+    ArrayCont::iterator stdEnd  = std::partial_sum( stdInput.begin( ), stdInput.end( ), stdInput.begin( ), bolt::maximum< ArrayType >( ) );
+    ArrayCont::iterator boltEnd = bolt::inclusive_scan( boltInput.begin( ), boltInput.end( ), boltInput.begin( ), bolt::maximum< ArrayType >( ) );
+
+    //  The returned iterator should be one past the 
+    EXPECT_EQ( stdInput.end( ), stdEnd );
+    EXPECT_EQ( boltInput.end( ), boltEnd );
+
+    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdEnd );
+    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltEnd );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
 }
 
 TYPED_TEST_P( ScanArrayTest, OutofPlace )
@@ -176,45 +262,15 @@ TYPED_TEST_P( ScanArrayTest, OutofPlace )
     EXPECT_EQ( stdNumElements, boltNumElements );
 
     //  Loop through the array and compare all the values with each other
-    //  TODO:  How do we specialize the compare for int vs float types?  We may want to have more lenient compares for floats.
-    cmpArrays( stdResult, boltResult );
-
+    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdResult, boltResult );
 }
 
-REGISTER_TYPED_TEST_CASE_P( ScanArrayTest, InPlace, OutofPlace );
+REGISTER_TYPED_TEST_CASE_P( ScanArrayTest, InPlace, InPlacePlusFunction, InPlaceMaxFunction, OutofPlace );
 
-typedef ::testing::Types< 
-    std::tuple< int, TypeValue< 1 > >,
-    std::tuple< int, TypeValue< bolt::scanMultiCpuThreshold - 1 > >,
-    std::tuple< int, TypeValue< bolt::scanGpuThreshold - 1 > >,
-    std::tuple< int, TypeValue< 31 > >,
-    std::tuple< int, TypeValue< 32 > >,
-    std::tuple< int, TypeValue< 63 > >,
-    std::tuple< int, TypeValue< 64 > >,
-    std::tuple< int, TypeValue< 127 > >,
-    std::tuple< int, TypeValue< 128 > >,
-    std::tuple< int, TypeValue< 129 > >,
-    std::tuple< int, TypeValue< 1000 > >,
-    std::tuple< int, TypeValue< 1053 > >,
-    std::tuple< int, TypeValue< 4096 > >,
-    std::tuple< int, TypeValue< 4097 > >,
-    std::tuple< int, TypeValue< 65535 > >,
-    std::tuple< int, TypeValue< 65536 > >,
-    std::tuple< int, TypeValue< 131032 > >,
-    std::tuple< int, TypeValue< 262154 > >
-> IntegerTests;
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+//  Fixture classes are now defined to enable googletest to process value parameterized tests
 
-typedef ::testing::Types< 
-    std::tuple< float, TypeValue< 1 > >,
-    std::tuple< float, TypeValue< 64 > >,
-    std::tuple< float, TypeValue< 128 > >
-> FloatTests;
-
-
-INSTANTIATE_TYPED_TEST_CASE_P( Integer, ScanArrayTest, IntegerTests );
-INSTANTIATE_TYPED_TEST_CASE_P( Float, ScanArrayTest, FloatTests );
-
-
+//  ::testing::TestWithParam< int > means that GetParam( ) returns int values, which i use for array size
 class ScanIntegerVector: public ::testing::TestWithParam< int >
 {
 public:
@@ -226,7 +282,31 @@ protected:
     std::vector< int > stdInput, boltInput;
 };
 
-TEST_P( ScanIntegerVector, InPlace )
+//  ::testing::TestWithParam< int > means that GetParam( ) returns int values, which i use for array size
+class ScanFloatVector: public ::testing::TestWithParam< int >
+{
+public:
+    //  Create an std and a bolt vector of requested size, and initialize all the elements to 1
+    ScanFloatVector( ): stdInput( GetParam( ), 1.0f ), boltInput( GetParam( ), 1.0f )
+    {}
+
+protected:
+    std::vector< float > stdInput, boltInput;
+};
+
+//  ::testing::TestWithParam< int > means that GetParam( ) returns int values, which i use for array size
+class ScanDoubleVector: public ::testing::TestWithParam< int >
+{
+public:
+    //  Create an std and a bolt vector of requested size, and initialize all the elements to 1
+    ScanDoubleVector( ): stdInput( GetParam( ), 1.0 ), boltInput( GetParam( ), 1.0 )
+    {}
+
+protected:
+    std::vector< double > stdInput, boltInput;
+};
+
+TEST_P( ScanIntegerVector, InclusiveInplace )
 {
     //  Calling the actual functions under test
     std::vector< int >::iterator stdEnd  = std::partial_sum( stdInput.begin( ), stdInput.end( ), stdInput.begin( ) );
@@ -244,11 +324,97 @@ TEST_P( ScanIntegerVector, InPlace )
 
     //  Loop through the array and compare all the values with each other
     cmpArrays( stdInput, boltInput );
-
 }
 
+TEST_P( ScanFloatVector, InclusiveInplace )
+{
+    //  Calling the actual functions under test
+    std::vector< float >::iterator stdEnd  = std::partial_sum( stdInput.begin( ), stdInput.end( ), stdInput.begin( ) );
+    std::vector< float >::iterator boltEnd = bolt::inclusive_scan( boltInput.begin( ), boltInput.end( ), boltInput.begin( ) );
+
+    //  The returned iterator should be one past the 
+    EXPECT_EQ( stdInput.end( ), stdEnd );
+    EXPECT_EQ( boltInput.end( ), boltEnd );
+
+    std::vector< float >::iterator::difference_type stdNumElements = std::distance( stdInput.begin( ), stdEnd );
+    std::vector< float >::iterator::difference_type boltNumElements = std::distance( boltInput.begin( ), boltEnd );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( ScanDoubleVector, InclusiveInplace )
+{
+    //  Calling the actual functions under test
+    std::vector< double >::iterator stdEnd  = std::partial_sum( stdInput.begin( ), stdInput.end( ), stdInput.begin( ) );
+    std::vector< double >::iterator boltEnd = bolt::inclusive_scan( boltInput.begin( ), boltInput.end( ), boltInput.begin( ) );
+
+    //  The returned iterator should be one past the 
+    EXPECT_EQ( stdInput.end( ), stdEnd );
+    EXPECT_EQ( boltInput.end( ), boltEnd );
+
+    std::vector< double >::iterator::difference_type stdNumElements = std::distance( stdInput.begin( ), stdEnd );
+    std::vector< double >::iterator::difference_type boltNumElements = std::distance( boltInput.begin( ), boltEnd );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+
+//  Test lots of consecutive numbers, but small range, suitable for integers because they overflow easier
 INSTANTIATE_TEST_CASE_P( Inclusive, ScanIntegerVector, ::testing::Range( 0, 1024, 1 ) );
-//INSTANTIATE_TEST_CASE_P( valueTest, ScanVectorTest, ::testing::Range( 0, 134217728, 1 ) );
+
+//  Test a huge range, suitable for floating point as they are less prone to overflow (but floating point loses granularity at large values)
+INSTANTIATE_TEST_CASE_P( Inclusive, ScanFloatVector, ::testing::Range( 0, 1048576, 4096 ) );
+INSTANTIATE_TEST_CASE_P( Inclusive, ScanDoubleVector, ::testing::Range( 0, 1048576, 4096 ) );
+
+typedef ::testing::Types< 
+    std::tuple< int, TypeValue< 1 > >,
+    std::tuple< int, TypeValue< bolt::scanMultiCpuThreshold - 1 > >,
+    std::tuple< int, TypeValue< bolt::scanGpuThreshold - 1 > >,
+    std::tuple< int, TypeValue< 31 > >,
+    std::tuple< int, TypeValue< 32 > >,
+    std::tuple< int, TypeValue< 63 > >,
+    std::tuple< int, TypeValue< 64 > >,
+    std::tuple< int, TypeValue< 127 > >,
+    std::tuple< int, TypeValue< 128 > >,
+    std::tuple< int, TypeValue< 129 > >,
+    std::tuple< int, TypeValue< 1000 > >,
+    std::tuple< int, TypeValue< 1053 > >,
+    std::tuple< int, TypeValue< 4096 > >,
+    std::tuple< int, TypeValue< 4097 > >,
+    std::tuple< int, TypeValue< 65535 > >,
+    //std::tuple< int, TypeValue< 131032 > >,       // uncomment these to generate failures; stack overflow
+    //std::tuple< int, TypeValue< 262154 > >,
+    std::tuple< int, TypeValue< 65536 > >
+> IntegerTests;
+
+typedef ::testing::Types< 
+    std::tuple< float, TypeValue< 1 > >,
+    std::tuple< float, TypeValue< bolt::scanMultiCpuThreshold - 1 > >,
+    std::tuple< float, TypeValue< bolt::scanGpuThreshold - 1 > >,
+    std::tuple< float, TypeValue< 31 > >,
+    std::tuple< float, TypeValue< 32 > >,
+    std::tuple< float, TypeValue< 63 > >,
+    std::tuple< float, TypeValue< 64 > >,
+    std::tuple< float, TypeValue< 127 > >,
+    std::tuple< float, TypeValue< 128 > >,
+    std::tuple< float, TypeValue< 129 > >,
+    std::tuple< float, TypeValue< 1000 > >,
+    std::tuple< float, TypeValue< 1053 > >,
+    std::tuple< float, TypeValue< 4096 > >,
+    std::tuple< float, TypeValue< 4097 > >,
+    std::tuple< float, TypeValue< 65535 > >,
+    std::tuple< float, TypeValue< 65536 > >
+> FloatTests;
+
+INSTANTIATE_TYPED_TEST_CASE_P( Integer, ScanArrayTest, IntegerTests );
+INSTANTIATE_TYPED_TEST_CASE_P( Float, ScanArrayTest, FloatTests );
 
 int _tmain(int argc, _TCHAR* argv[])
 {
