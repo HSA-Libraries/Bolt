@@ -3,25 +3,36 @@
 #############################################################################
 # List the names of common files to compile across all platforms
 
-set( clBolt.clInclude.Dir ${BOLT_INCLUDE_DIR}/bolt/cl )
+set( clBolt.Include.Dir ${BOLT_INCLUDE_DIR}/bolt/cl )
 
 set( clBolt.Runtime.Source bolt.cpp ${BOLT_LIBRARY_DIR}/statisticalTimer.cpp )
 set( clBolt.Runtime.Headers 
-		${clBolt.clInclude.Dir}/bolt.h 
-		${clBolt.clInclude.Dir}/control.h 
-		${clBolt.clInclude.Dir}/count.h 
-		${clBolt.clInclude.Dir}/functional.h 
-		${clBolt.clInclude.Dir}/iterator_traits.h 
-		${clBolt.clInclude.Dir}/reduce.h 
-		${clBolt.clInclude.Dir}/transform.h 
-		${clBolt.clInclude.Dir}/transform_reduce.h )
+		${clBolt.Include.Dir}/bolt.h 
+		${clBolt.Include.Dir}/control.h 
+		${clBolt.Include.Dir}/count.h 
+		${clBolt.Include.Dir}/functional.h 
+		${clBolt.Include.Dir}/iterator_traits.h 
+		${clBolt.Include.Dir}/reduce.h 
+		${clBolt.Include.Dir}/transform.h 
+		${clBolt.Include.Dir}/../countof.h
+		${clBolt.Include.Dir}/../unicode.h
+		${clBolt.Include.Dir}/../statisticalTimer.h
+		${clBolt.Include.Dir}/transform_reduce.h )
+		
 set( clBolt.Runtime.Headers.Detail 
-		${clBolt.clInclude.Dir}/detail/reduce.inl )
+		${clBolt.Include.Dir}/detail/reduce.inl )
+		
 set( clBolt.Runtime.clFiles 
-		${clBolt.clInclude.Dir}/reduce_kernels.cl 
-		${clBolt.clInclude.Dir}/transform_kernels.cl 
-		${clBolt.clInclude.Dir}/transform_reduce_kernels.cl )
+		${clBolt.Include.Dir}/reduce_kernels.cl 
+		${clBolt.Include.Dir}/transform_kernels.cl 
+		${clBolt.Include.Dir}/transform_reduce_kernels.cl )
 
+# The minidump tech is windows specific; I don't have a solution yet for linux, but google-breakpad looks promising
+if( WIN32 )
+	list( APPEND clBolt.Runtime.Source ${BOLT_LIBRARY_DIR}/miniDump.cpp )
+	list( APPEND clBolt.Runtime.Headers ${clBolt.Include.Dir}/../miniDump.h )
+endif( )
+		
 set( clBolt.Runtime.Files ${clBolt.Runtime.Source} ${clBolt.Runtime.Headers} ${clBolt.Runtime.Headers.Detail} ${clBolt.Runtime.clFiles} )
 
 # Include standard OpenCL headers
@@ -34,16 +45,16 @@ set_target_properties( clBolt.Runtime PROPERTIES VERSION ${Bolt_VERSION} )
 set_target_properties( clBolt.Runtime PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
 		
 install( FILES	
-			${clBolt.clInclude.Dir}/reduce_kernels.cl
-			${clBolt.clInclude.Dir}/transform_kernels.cl
-			${clBolt.clInclude.Dir}/transform_reduce_kernels.cl
+			${clBolt.Include.Dir}/reduce_kernels.cl
+			${clBolt.Include.Dir}/transform_kernels.cl
+			${clBolt.Include.Dir}/transform_reduce_kernels.cl
 		DESTINATION
 			${BIN_DIR} )
 
 install( FILES	
-			${clBolt.clInclude.Dir}/reduce_kernels.cl
-			${clBolt.clInclude.Dir}/transform_kernels.cl
-			${clBolt.clInclude.Dir}/transform_reduce_kernels.cl
+			${clBolt.Include.Dir}/reduce_kernels.cl
+			${clBolt.Include.Dir}/transform_kernels.cl
+			${clBolt.Include.Dir}/transform_reduce_kernels.cl
 		DESTINATION
 			${PROJECT_BINARY_DIR}/staging/\${CMAKE_INSTALL_CONFIG_NAME} )
 

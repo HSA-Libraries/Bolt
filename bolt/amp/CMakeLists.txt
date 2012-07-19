@@ -17,6 +17,8 @@ set( Bolt.Runtime.Headers
 		${Bolt.Include.Dir}/transform.h 
 		${Bolt.Include.Dir}/transform_reduce.h 
 		${Bolt.Include.Dir}/transform_reduce_range.h
+		${Bolt.Include.Dir}/../countof.h
+		${Bolt.Include.Dir}/../statisticalTimer.h
 		${Bolt.Include.Dir}/../unicode.h )
 
 # The minidump tech is windows specific; I don't have a solution yet for linux, but google-breakpad looks promising
