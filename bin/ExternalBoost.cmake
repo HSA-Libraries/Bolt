@@ -1,7 +1,7 @@
 message( STATUS "Setting up Boost SuperBuild... Shiny!" )
 include( ExternalProject )
 
-set( ext.Boost_VERSION "1.49.0" CACHE STRING "Boost version to download/use" )
+set( ext.Boost_VERSION "1.50.0" CACHE STRING "Boost version to download/use" )
 mark_as_advanced( ext.Boost_VERSION )
 string( REPLACE "." "_" ext.Boost_Version_Underscore ${ext.Boost_VERSION} )
 
@@ -40,7 +40,7 @@ ExternalProject_Add(
     Boost
 	PREFIX ${CMAKE_CURRENT_BINARY_DIR}/external/boost
     URL ${ext.Boost_URL}
-	URL_MD5 854dcbbff31b896c85c38247060b7713
+	URL_MD5 c32608561de9184d1c940c9977d04339
     UPDATE_COMMAND "bootstrap.bat"
 #    PATCH_COMMAND ""
 	CONFIGURE_COMMAND ""
@@ -54,7 +54,7 @@ set_property( TARGET Boost PROPERTY FOLDER "Externals")
 ExternalProject_Get_Property( Boost source_dir )
 ExternalProject_Get_Property( Boost binary_dir )
 set( Boost_INCLUDE_DIRS ${source_dir} )
-set( Boost_LIBRARIES debug;${binary_dir}/stage/lib/libboost_program_options-vc110-mt-gd-1_49.lib;optimized;${binary_dir}/stage/lib/libboost_program_options-vc110-mt-1_49.lib )
+set( Boost_LIBRARIES debug;${binary_dir}/stage/lib/libboost_program_options-vc110-mt-gd-1_50.lib;optimized;${binary_dir}/stage/lib/libboost_program_options-vc110-mt-1_50.lib )
 
 set( Boost_FOUND TRUE )
 
