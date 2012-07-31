@@ -2,13 +2,7 @@
 #if !defined( BOLT_DEVICE_VECTOR_H )
 #define BOLT_DEVICE_VECTOR_H
 
-#define __CL_ENABLE_EXCEPTIONS
-#define CL_USE_DEPRECATED_OPENCL_1_1_APIS
-#if defined(__APPLE__) || defined(__MACOSX)
-    #include <OpenCL/cl.hpp>
-#else
-    #include <CL/cl.hpp>
-#endif
+#include <bolt\cl\bolt.h>
 #include <iterator>
 #include <type_traits>
 #include <numeric>
@@ -60,14 +54,51 @@ namespace bolt
             typedef T* pointer;
             typedef const T* const_pointer;
 
-            typedef T& reference;
-            typedef const T& const_reference;
+            class reference
+            {
+                ::cl::Buffer m_devMemory;
+                ::cl::CommandQueue m_commQueue;
+                size_type m_index;
+
+                reference( const ::cl::Buffer& devMem, const CommandQueue& cq, size_type index ): m_devMemory( devMem ), m_commQueue( cq ), m_index( index )
+                {}
+
+            public:
+                //  Automatic type conversion operator to turn the reference object into a value_type
+                operator value_type( ) const
+                {
+                    cl_int l_Error = CL_SUCCESS;
+                    pointer result = m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ, m_index * sizeof( value_type ), sizeof( value_type ), NULL, NULL, &l_Error );
+                    V_BOLT( l_Error, "device_vector failed map device memory to host memory for operator[]" );
+
+                    value_type valTmp = *result;
+
+                    V_BOLT( m_commQueue.enqueueUnmapMemObject( m_devMemory, result ), "device_vector failed to unmap host memory back to device memory" );
+
+                    return valTmp;
+                }
+
+                reference& operator=( const value_type& rhs )
+                {
+                    cl_int l_Error = CL_SUCCESS;
+                    pointer result = m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_WRITE_INVALIDATE_REGION, m_index * sizeof( value_type ), sizeof( value_type ), NULL, NULL, &l_Error );
+                    V_BOLT( l_Error, "device_vector failed map device memory to host memory for operator[]" );
+
+                    *result = rhs;
+
+                    V_BOLT( m_commQueue.enqueueUnmapMemObject( m_devMemory, result ), "device_vector failed to unmap host memory back to device memory" );
+
+                    return *this;
+                }
+            };
+
+            typedef const T const_reference;
 
             /*! \brief A random access iterator in the classic sense
             *   \sa http://www.sgi.com/tech/stl/Iterators.html
             *   \sa http://www.sgi.com/tech/stl/RandomAccessIterator.html
             */
-            class iterator: public std::iterator< std::random_access_iterator_tag, T >
+            class iterator: public std::iterator< std::random_access_iterator_tag, value_type >
             {
             };
 
@@ -75,7 +106,7 @@ namespace bolt
             *   \sa http://www.sgi.com/tech/stl/Iterators.html
             *   \sa http://www.sgi.com/tech/stl/RandomAccessIterator.html
             */
-            class const_iterator: public std::iterator< std::random_access_iterator_tag, const T >
+            class const_iterator: public std::iterator< std::random_access_iterator_tag, const value_type >
             {
             };
 
@@ -96,8 +127,9 @@ namespace bolt
             };
 
             /*! \brief A default constructor that creates an empty device_vector
+            *   \param cq An OpenCL ::cl::CommandQueue used to perform copy operations; a default is used if not supplied by the user
             */
-            device_vector( ): m_Size( 0 )
+            device_vector( CommandQueue& cq = CommandQueue::getDefault( ) ): m_Size( 0 ), m_commQueue( cq )
             {
                 static_assert( std::is_pod< value_type >::value, "device_vector only supports POD (plain old data) types" );
             }
@@ -112,19 +144,25 @@ namespace bolt
             //}
 
             /*! \brief A constructor that will create a new device_vector with the specified number of elements, with a specified initial value
-            *   \param N The number of elements of the new device_vector
+            *   \param newSize The number of elements of the new device_vector
             *   \param value The value that new elements will be initialized with
-            *   \param cq An OpenCL ::cl::CommandQueue to use to perform a copy operation; a default is used if not supplied by the user
+            *   \param cq An OpenCL ::cl::CommandQueue used to perform copy operations; a default is used if not supplied by the user
             *   \warning The ::cl::CommandQueue is not a STD reserve( ) parameter
             *   \note This constructor relies on the ::cl::Buffer object to throw on error
             */
-            device_vector( size_type N, const value_type& value = value_type( ), CommandQueue& cq = CommandQueue::getDefault( ) ): m_Size( N ),
-                    m_devMemory( CL_MEM_READ_WRITE , N * sizeof( value_type ) )
+            device_vector( size_type newSize, const value_type& value = value_type( ), CommandQueue& cq = CommandQueue::getDefault( ) ): m_Size( newSize ), m_commQueue( cq )
             {
                 static_assert( std::is_pod< value_type >::value, "device_vector only supports POD (plain old data) types" );
 
+                //  We want to use the context from the passed in commandqueue to initialize our buffer
+                cl_int l_Error = CL_SUCCESS;
+                ::cl::Context l_Context = m_commQueue.getInfo< CL_QUEUE_CONTEXT >( &l_Error );
+                ::cl::detail::errHandler( l_Error, "device_vector failed to query for the context of the ::cl::CommandQueue object" );
+
+                m_devMemory = ::cl::Buffer( l_Context, CL_MEM_READ_WRITE, m_Size * sizeof( value_type ) );
+
                 std::vector< ::cl::Event > fillEvent( 1 );
-                cq.enqueueFillBuffer< value_type >( m_devMemory, value, 0, N * sizeof( value_type ), NULL, &fillEvent.front( ) );
+                cq.enqueueFillBuffer< value_type >( m_devMemory, value, 0, newSize * sizeof( value_type ), NULL, &fillEvent.front( ) );
 
                 //  Not allowed to return until the fill operation is finished
                 cq.enqueueWaitForEvents( fillEvent );
@@ -138,18 +176,52 @@ namespace bolt
             *   \note This constructor relies on the ::cl::Buffer object to throw on error
             */
             template< typename InputIterator >
-            device_vector( const InputIterator begin, const InputIterator end, bool readOnly = false, bool useHostPtr = true ): m_devMemory( begin, end, readOnly, useHostPtr, NULL )
+            device_vector( const InputIterator begin, const InputIterator end, bool readOnly = false, bool useHostPtr = true, CommandQueue& cq = CommandQueue::getDefault( ) ): m_commQueue( cq )
             {
                 static_assert( std::is_same< value_type, std::iterator_traits< InputIterator >::value_type >::value, "device_vector value_type does not match iterator value_type" );
                 static_assert( std::is_pod< value_type >::value, "device_vector only supports POD (plain old data) types" );
 
+                //  We want to use the context from the passed in commandqueue to initialize our buffer
+                cl_int l_Error = CL_SUCCESS;
+                ::cl::Context l_Context = m_commQueue.getInfo< CL_QUEUE_CONTEXT >( &l_Error );
+                V_BOLT( l_Error, "device_vector failed to query for the context of the ::cl::CommandQueue object" );
+
+                cl_mem_flags flags = 0;
+                if( readOnly )
+                {
+                    flags |= CL_MEM_READ_ONLY;
+                }
+                else
+                {
+                    flags |= CL_MEM_READ_WRITE;
+                }
+
+                if( useHostPtr )
+                {
+                    flags |= CL_MEM_USE_HOST_PTR;
+                }
+
                 m_Size = std::distance( begin, end );
+                m_devMemory = ::cl::Buffer( l_Context, flags, m_Size * sizeof( value_type ), reinterpret_cast< value_type* >( &*begin ) );
+
+                if( !useHostPtr )
+                {
+                    pointer ptrBuffer = reinterpret_cast< pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, CL_TRUE, CL_MAP_WRITE_INVALIDATE_REGION, 0 , m_Size * sizeof( value_type ), NULL, NULL, &l_Error ) );
+                    V_BOLT( l_Error, "device_vector failed to map device memory to host memory" );
+
+#if( _WIN32 )
+                    std::copy( begin, end, stdext::checked_array_iterator< pointer >( ptrBuffer, m_Size ) );
+#else
+                    std::copy( begin, end, ptrBuffer );
+#endif
+                    V_BOLT( m_commQueue.enqueueUnmapMemObject( m_devMemory, ptrBuffer ), "device_vector failed to unmap host memory back to device memory" );
+                }
             };
 
             /*! \brief A constructor that will create a new device_vector using a pre-initialized buffer supplied by the user
             *   \param rhs A pre-existing ::cl::Buffer supplied by the user
             */
-            device_vector( const ::cl::Buffer& rhs ): m_devMemory( rhs )
+            device_vector( const ::cl::Buffer& rhs, CommandQueue& cq = CommandQueue::getDefault( ) ): m_devMemory( rhs ), m_commQueue( cq )
             {
                 static_assert( std::is_pod< value_type >::value, "device_vector only supports POD (plain old data) types" );
 
@@ -170,13 +242,12 @@ namespace bolt
             *   size, the extra paddign will be initialized with the value specified by the user.
             *   \param reqSize The requested size of the device_vector in elements
             *   \param val All new elements will be initialized with this new value
-            *   \param cq An OpenCL ::cl::CommandQueue to use to perform a copy operation; a default is used if not supplied by the user
             *   \note capacity( ) may exceed n, but will not be less than n
             *   \warning If the device_vector has to reallocate, all previous iterators, references and pointers are invalidated
             *   \warning The ::cl::CommandQueue is not a STD reserve( ) parameter
             */
 
-            void resize( size_type reqSize, const value_type& val, CommandQueue& cq = CommandQueue::getDefault( ) )
+            void resize( size_type reqSize, const value_type& val )
             {
                 size_type cap = capacity( );
 
@@ -201,7 +272,7 @@ namespace bolt
                 ::cl::detail::errHandler( l_Error, "device_vector failed to request the size of the ::cl::Buffer object" );
 
                 std::vector< ::cl::Event > copyEvent( 1 );
-                l_Error = cq.enqueueCopyBuffer( m_devMemory, l_tmpBuffer, 0, 0, l_srcSize, NULL, &copyEvent.front( ) );
+                l_Error = m_commQueue.enqueueCopyBuffer( m_devMemory, l_tmpBuffer, 0, 0, l_srcSize, NULL, &copyEvent.front( ) );
                 ::cl::detail::errHandler( l_Error, "device_vector failed to copy data to the new ::cl::Buffer object" );
 
                 //  If the new buffer size is greater than the old, then the new elements need to be initialized to the value specified on the
@@ -209,17 +280,17 @@ namespace bolt
                 if( l_reqSize > l_srcSize )
                 {
                     std::vector< ::cl::Event > fillEvent( 1 );
-                    l_Error = cq.enqueueFillBuffer< value_type >( m_devMemory, val, l_srcSize, l_reqSize - l_srcSize, &copyEvent, &fillEvent.front( ) );
+                    l_Error = m_commQueue.enqueueFillBuffer< value_type >( m_devMemory, val, l_srcSize, l_reqSize - l_srcSize, &copyEvent, &fillEvent.front( ) );
                     ::cl::detail::errHandler( l_Error, "device_vector failed to fill the new data with the provided pattern" );
 
                     //  Not allowed to return until the copy operation is finished
-                    l_Error = cq.enqueueWaitForEvents( fillEvent );
+                    l_Error = m_commQueue.enqueueWaitForEvents( fillEvent );
                     ::cl::detail::errHandler( l_Error, "device_vector failed to wait for fill event" );
                 }
                 else
                 {
                     //  Not allowed to return until the copy operation is finished
-                    l_Error = cq.enqueueWaitForEvents( copyEvent );
+                    l_Error = m_commQueue.enqueueWaitForEvents( copyEvent );
                     ::cl::detail::errHandler( l_Error, "device_vector failed to wait for copy event" );
                 }
 
@@ -285,13 +356,12 @@ namespace bolt
             *   If reserve completes successfully, this device_vector object guarantees that the it can store the requested amount
             *   of elements without another reallocation, until the device_vector size exceeds n.
             *   \param n The requested size of the device_vector in elements
-            *   \param cq An OpenCL ::cl::CommandQueue to use to perform a copy operation; a default is used if not supplied by the user
             *   \note capacity( ) may exceed n, but will not be less than n
             *   \note Contents are preserved, and the size( ) of the vector is not affected
             *   \warning if the device_vector has to reallocate, all previous iterators, references and pointers are invalidated
             *   \warning The ::cl::CommandQueue is not a STD reserve( ) parameter
             */
-            void reserve( size_type reqSize, CommandQueue& cq = CommandQueue::getDefault( ) )
+            void reserve( size_type reqSize )
             {
                 if( m_Size == 0 )
                     throw ::cl::Error( CL_MEM_OBJECT_ALLOCATION_FAILURE , "No ::cl::Buffer object exists to query" );
@@ -326,10 +396,10 @@ namespace bolt
                     ::cl::detail::errHandler( l_Error, "device_vector failed to request the size of the ::cl::Buffer object" );
 
                     std::vector< ::cl::Event > copyEvent( 1 );
-                    cq.enqueueCopyBuffer( m_devMemory, l_tmpBuffer, 0, 0, l_srcSize, NULL, &copyEvent.front( ) );
+                    m_commQueue.enqueueCopyBuffer( m_devMemory, l_tmpBuffer, 0, 0, l_srcSize, NULL, &copyEvent.front( ) );
 
                     //  Not allowed to return until the copy operation is finished
-                    cq.enqueueWaitForEvents( copyEvent );
+                    m_commQueue.enqueueWaitForEvents( copyEvent );
                 //}
                 //else
                 //{
@@ -362,12 +432,11 @@ namespace bolt
 
             /*! \brief Shrink the capacity( ) of this device_vector to just fit its elements
             *   This makes the size( ) of the vector equal to its capacity( )
-            *   \param cq An OpenCL ::cl::CommandQueue to use to perform a copy operation; a default is used if not supplied by the user
             *   \note Contents are preserved
             *   \warning if the device_vector has to reallocate, all previous iterators, references and pointers are invalidated
             *   \warning The ::cl::CommandQueue is not a STD reserve( ) parameter
             */
-            void shrink_to_fit( CommandQueue& cq = CommandQueue::getDefault( ) )
+            void shrink_to_fit( )
             {
                 if( m_Size > capacity( ) )
                     throw ::cl::Error( CL_MEM_OBJECT_ALLOCATION_FAILURE , "device_vector size can not be greater than capacity( )" );
@@ -390,45 +459,41 @@ namespace bolt
                 ::cl::detail::errHandler( l_Error, "device_vector failed to request the size of the ::cl::Buffer object" );
 
                 std::vector< ::cl::Event > copyEvent( 1 );
-                l_Error = cq.enqueueCopyBuffer( m_devMemory, l_tmpBuffer, 0, 0, l_newSize, NULL, &copyEvent.front( ) );
+                l_Error = m_commQueue.enqueueCopyBuffer( m_devMemory, l_tmpBuffer, 0, 0, l_newSize, NULL, &copyEvent.front( ) );
                 ::cl::detail::errHandler( l_Error, "device_vector failed to copy data to the new ::cl::Buffer object" );
 
                 //  Not allowed to return until the copy operation is finished
-                l_Error = cq.enqueueWaitForEvents( copyEvent );
+                l_Error = m_commQueue.enqueueWaitForEvents( copyEvent );
                 ::cl::detail::errHandler( l_Error, "device_vector failed to wait for copy event" );
 
                 //  Operator= should call retain/release appropriately
                 m_devMemory = l_tmpBuffer;
             }
 
-            //  TODO:  The problem with operator[] is how do we pass the command queue to the operator?  I think that the device_vector
-            //  constructor will HAVE to take a commandqueue object.
+            /*! \brief Retrieves the value stored at index n
+            *   \return Returns a proxy reference object, to control when device memory gets mapped
+            */
             reference operator[]( size_type n )
             {
-                //cl_int l_Error = CL_SUCCESS;
-
-                //pointer result = cq.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ | CL_MAP_WRITE, n * sizeof( value_type), sizeof( value_type), NULL, NULL, &l_Error );
-                //::cl::detail::errHandler( l_Error, "device_vector failed map device memory to host memory for operator[]" );
-
-                //l_Error = cq.enqueueUnmapMemObject( m_devMemory, result );
-                //::cl::detail::errHandler( l_Error, "device_vector failed to unmap host memory back to device memory" );
-
-                //return *result;
+                return reference( m_devMemory, m_commQueue, n );
             }
 
-            //  TODO:  The problem with operator[] is how do we pass the command queue to the operator?  I think that the device_vector
-            //  constructor will HAVE to take a commandqueue object.
+            /*! \brief Retrieves a constant value stored at index n
+            *   \return Returns a const_reference, which is not a proxy object
+            */
             const_reference operator[]( size_type n ) const
             {
-                //cl_int l_Error = CL_SUCCESS;
+                cl_int l_Error = CL_SUCCESS;
 
-                //const_pointer result = cq.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ, n * sizeof( value_type), sizeof( value_type), NULL, NULL, &l_Error );
-                //::cl::detail::errHandler( l_Error, "device_vector failed map device memory to host memory for operator[]" );
+                const_pointer ptrBuff = reinterpret_cast< const_pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ, n * sizeof( value_type), sizeof( value_type), NULL, NULL, &l_Error ) );
+                ::cl::detail::errHandler( l_Error, "device_vector failed map device memory to host memory for operator[]" );
 
-                //l_Error = cq.enqueueUnmapMemObject( m_devMemory, result );
-                //::cl::detail::errHandler( l_Error, "device_vector failed to unmap host memory back to device memory" );
+                const_reference tmpRef = *ptrBuff;
 
-                //return *result;
+                l_Error = m_commQueue.enqueueUnmapMemObject( m_devMemory, ptrBuff );
+                ::cl::detail::errHandler( l_Error, "device_vector failed to unmap host memory back to device memory" );
+
+                return tmpRef;
             }
 
             iterator begin( void )
@@ -491,20 +556,56 @@ namespace bolt
                 return const_reverse_iterator( );
             }
 
+            /*! \brief Retrieves the value stored at index 0
+            *   \note This returns a proxy object, to control when device memory gets mapped
+            */
             reference front( void )
             {
+                return reference( m_devMemory, m_commQueue, 0 );
             }
 
+            /*! \brief Retrieves the value stored at index 0
+            *   \return Returns a const_reference, which is not a proxy object
+            */
             const_reference front( void ) const
             {
+                cl_int l_Error = CL_SUCCESS;
+
+                const_pointer ptrBuff = reinterpret_cast< const_pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ, 0, sizeof( value_type ), NULL, NULL, &l_Error ) );
+                ::cl::detail::errHandler( l_Error, "device_vector failed map device memory to host memory for operator[]" );
+
+                const_reference tmpRef = *ptrBuff;
+
+                l_Error = m_commQueue.enqueueUnmapMemObject( m_devMemory, ptrBuff );
+                ::cl::detail::errHandler( l_Error, "device_vector failed to unmap host memory back to device memory" );
+
+                return tmpRef;
             }
 
+            /*! \brief Retrieves the value stored at index size( ) - 1
+            *   \note This returns a proxy object, to control when device memory gets mapped
+            */
             reference back( void )
             {
+                return reference( m_devMemory, m_commQueue, m_Size - 1 );
             }
 
+            /*! \brief Retrieves the value stored at index size( ) - 1
+            *   \return Returns a const_reference, which is not a proxy object
+            */
             const_reference back( void ) const
             {
+                cl_int l_Error = CL_SUCCESS;
+
+                const_pointer ptrBuff = reinterpret_cast< const_pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ, (m_Size - 1) * sizeof( value_type ), sizeof( value_type ), NULL, NULL, &l_Error ) );
+                ::cl::detail::errHandler( l_Error, "device_vector failed map device memory to host memory for operator[]" );
+
+                const_reference tmpRef = *ptrBuff;
+
+                l_Error = m_commQueue.enqueueUnmapMemObject( m_devMemory, ptrBuff );
+                ::cl::detail::errHandler( l_Error, "device_vector failed to unmap host memory back to device memory" );
+
+                return tmpRef;
             }
 
             pointer data( void )
@@ -537,7 +638,7 @@ namespace bolt
             /*! \brief Appends a copy of the value
              *  \param value The element to append
             */
-            void push_back( const value_type& value, CommandQueue& cq = CommandQueue::getDefault( ) )
+            void push_back( const value_type& value )
             {
                 if( m_Size > capacity( ) )
                     throw ::cl::Error( CL_MEM_OBJECT_ALLOCATION_FAILURE , "device_vector size can not be greater than capacity( )" );
@@ -547,16 +648,16 @@ namespace bolt
                 //  right at first blush
                 if( m_Size == capacity( ) )
                 {
-                    reserve( m_Size + 10, cq );
+                    reserve( m_Size + 10, m_commQueue );
                 }
 
                 cl_int l_Error = CL_SUCCESS;
 
-                pointer result = cq.enqueueMapBuffer( m_devMemory, true, CL_MAP_WRITE, m_Size * sizeof( value_type), sizeof( value_type ), NULL, NULL, &l_Error );
+                pointer result = m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_WRITE, m_Size * sizeof( value_type), sizeof( value_type ), NULL, NULL, &l_Error );
                 ::cl::detail::errHandler( l_Error, "device_vector failed map device memory to host memory for push_back" );
                 *result = value;
 
-                l_Error = cq.enqueueUnmapMemObject( m_devMemory, result );
+                l_Error = m_commQueue.enqueueUnmapMemObject( m_devMemory, result );
                 ::cl::detail::errHandler( l_Error, "device_vector failed to unmap host memory back to device memory" );
 
                 ++m_Size;
@@ -617,54 +718,54 @@ namespace bolt
             /*! \brief Assigns newSize copies of element value
              *  \param newSize The new size of the device_vector
              *  \param value The value of the element that will be replicated newSize times
-            *   \param cq An OpenCL ::cl::CommandQueue to use to perform a copy operation; a default is used if not supplied by the user
             *   \warning All previous iterators, references and pointers are invalidated
             */
-            void assign( size_type newSize, const value_type& value, CommandQueue& cq = CommandQueue::getDefault( ) )
+            void assign( size_type newSize, const value_type& value )
             {
                 if( newSize > m_Size )
                 {
-                    reserve( newSize, cq );
+                    reserve( newSize, m_commQueue );
                 }
                 m_Size = newSize;
 
                 cl_int l_Error = CL_SUCCESS;
 
                 std::vector< ::cl::Event > fillEvent( 1 );
-                l_Error = cq.enqueueFillBuffer< value_type >( m_devMemory, value, 0, m_Size * sizeof( value_type ), NULL, &fillEvent.front( ) );
+                l_Error = m_commQueue.enqueueFillBuffer< value_type >( m_devMemory, value, 0, m_Size * sizeof( value_type ), NULL, &fillEvent.front( ) );
                 ::cl::detail::errHandler( l_Error, "device_vector failed to fill the new data with the provided pattern" );
 
                 //  Not allowed to return until the copy operation is finished
-                l_Error = cq.enqueueWaitForEvents( fillEvent );
+                l_Error = m_commQueue.enqueueWaitForEvents( fillEvent );
                 ::cl::detail::errHandler( l_Error, "device_vector failed to wait for fill event" );
             }
 
             /*! \brief Assigns a range of values to device_vector, replacing all previous elements
              *  \param begin The iterator position signifiying the beginning of the range
              *  \param end The iterator position signifying the end of the range (exclusive)
-            *   \param cq An OpenCL ::cl::CommandQueue to use to perform a copy operation; a default is used if not supplied by the user
             *   \warning All previous iterators, references and pointers are invalidated
             */
             template< typename InputIterator >
-            void assign( InputIterator begin, InputIterator end, CommandQueue& cq = CommandQueue::getDefault( ) )
+            void assign( InputIterator begin, InputIterator end )
             {
                 size_type l_Count = std::distance( begin, end );
 
                 if( l_Count > m_Size )
                 {
-                    reserve( l_Count, cq );
+                    reserve( l_Count );
                 }
                 m_Size = l_Count;
 
                 cl_int l_Error = CL_SUCCESS;
 
-                pointer ptrBuffer = reinterpret_cast< pointer >( cq.enqueueMapBuffer( m_devMemory, CL_TRUE, CL_MAP_WRITE_INVALIDATE_REGION, 0 , m_Size * sizeof( value_type ), NULL, NULL, &l_Error ) );
+                pointer ptrBuffer = reinterpret_cast< pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, CL_TRUE, CL_MAP_WRITE_INVALIDATE_REGION, 0 , m_Size * sizeof( value_type ), NULL, NULL, &l_Error ) );
                 ::cl::detail::errHandler( l_Error, "device_vector failed map device memory to host memory for push_back" );
 
-                //  TODO:  This gives a compiler warning in vs11; eliminate
+#if( _WIN32 )
+                std::copy( begin, end, stdext::checked_array_iterator< pointer >( ptrBuffer, m_Size ) );
+#else
                 std::copy( begin, end, ptrBuffer );
-
-                l_Error = cq.enqueueUnmapMemObject( m_devMemory, ptrBuffer );
+#endif
+                l_Error = m_commQueue.enqueueUnmapMemObject( m_devMemory, ptrBuffer );
                 ::cl::detail::errHandler( l_Error, "device_vector failed to unmap host memory back to device memory" );
             }
 
@@ -674,6 +775,7 @@ namespace bolt
 
         private:
             ::cl::Buffer m_devMemory;
+            ::cl::CommandQueue m_commQueue;
             size_type m_Size;
         };
 
