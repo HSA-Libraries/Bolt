@@ -2,11 +2,11 @@
 #if !defined( BOLT_DEVICE_VECTOR_H )
 #define BOLT_DEVICE_VECTOR_H
 
-#include <bolt\cl\bolt.h>
 #include <iterator>
 #include <type_traits>
 #include <numeric>
-// #include <boost/iterator/iterator_facade.hpp>
+#include <bolt/cl/bolt.h>
+#include <boost/iterator/iterator_facade.hpp>
 
 /*! \file device_vector.h
  * Public header file for the device_container class
@@ -69,11 +69,11 @@ namespace bolt
                 {
                     cl_int l_Error = CL_SUCCESS;
                     pointer result = m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ, m_index * sizeof( value_type ), sizeof( value_type ), NULL, NULL, &l_Error );
-                    V_BOLT( l_Error, "device_vector failed map device memory to host memory for operator[]" );
+                    V_OPENCL( l_Error, "device_vector failed map device memory to host memory for operator[]" );
 
                     value_type valTmp = *result;
 
-                    V_BOLT( m_commQueue.enqueueUnmapMemObject( m_devMemory, result ), "device_vector failed to unmap host memory back to device memory" );
+                    V_OPENCL( m_commQueue.enqueueUnmapMemObject( m_devMemory, result ), "device_vector failed to unmap host memory back to device memory" );
 
                     return valTmp;
                 }
@@ -82,11 +82,11 @@ namespace bolt
                 {
                     cl_int l_Error = CL_SUCCESS;
                     pointer result = m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_WRITE_INVALIDATE_REGION, m_index * sizeof( value_type ), sizeof( value_type ), NULL, NULL, &l_Error );
-                    V_BOLT( l_Error, "device_vector failed map device memory to host memory for operator[]" );
+                    V_OPENCL( l_Error, "device_vector failed map device memory to host memory for operator[]" );
 
                     *result = rhs;
 
-                    V_BOLT( m_commQueue.enqueueUnmapMemObject( m_devMemory, result ), "device_vector failed to unmap host memory back to device memory" );
+                    V_OPENCL( m_commQueue.enqueueUnmapMemObject( m_devMemory, result ), "device_vector failed to unmap host memory back to device memory" );
 
                     return *this;
                 }
@@ -98,8 +98,60 @@ namespace bolt
             *   \sa http://www.sgi.com/tech/stl/Iterators.html
             *   \sa http://www.sgi.com/tech/stl/RandomAccessIterator.html
             */
-            class iterator: public std::iterator< std::random_access_iterator_tag, value_type >
+            //class iterator: public std::iterator< std::random_access_iterator_tag, value_type >
+            class iterator: public boost::iterator_facade< iterator, value_type, std::random_access_iterator_tag >
             {
+            public:
+                //iterator( ) {}
+                //iterator( const iterator& rhs ) {}
+                //iterator& operator++( ) {}
+                //iterator operator++( int ) {}
+                //bool operator==( const iterator& rhs ) { return true; }
+                //bool operator!=( const iterator& rhs ) {}
+                //T& operator*( ) {}
+                //T& operator->( ) {}
+
+                iterator( device_vector< value_type >& rhs, size_type index ): myContainer( rhs ), m_index( index )
+                {}
+
+            private:
+                friend class boost::iterator_core_access;
+
+                void advance( difference_type n )
+                {
+                    m_index += n;
+                }
+
+                void increment( )
+                {
+                    advance( 1 );
+                }
+
+                void decrement( )
+                {
+                    advance( -1 );
+                }
+
+                difference_type distance_to( const iterator& rhs ) const
+                {
+                    return ( rhs.m_index - m_index );
+                }
+
+                bool equal( const iterator& rhs ) const
+                {
+                    //bool sameContainer = rhs.myContainer == myContainer;
+                    bool sameIndex = rhs.m_index == m_index;
+
+                    return ( sameIndex ); // && sameContainer );
+                }
+
+                reference dereference( ) const
+                {
+                    return myContainer[ m_index ];
+                }
+
+                device_vector< value_type >& myContainer;
+                size_type m_index;
             };
 
             /*! \brief A constant random access iterator in the classic sense
@@ -157,15 +209,16 @@ namespace bolt
                 //  We want to use the context from the passed in commandqueue to initialize our buffer
                 cl_int l_Error = CL_SUCCESS;
                 ::cl::Context l_Context = m_commQueue.getInfo< CL_QUEUE_CONTEXT >( &l_Error );
-                ::cl::detail::errHandler( l_Error, "device_vector failed to query for the context of the ::cl::CommandQueue object" );
+                V_OPENCL( l_Error, "device_vector failed to query for the context of the ::cl::CommandQueue object" );
 
                 m_devMemory = ::cl::Buffer( l_Context, CL_MEM_READ_WRITE, m_Size * sizeof( value_type ) );
 
                 std::vector< ::cl::Event > fillEvent( 1 );
-                cq.enqueueFillBuffer< value_type >( m_devMemory, value, 0, newSize * sizeof( value_type ), NULL, &fillEvent.front( ) );
+                V_OPENCL( cq.enqueueFillBuffer< value_type >( m_devMemory, value, 0, newSize * sizeof( value_type ), NULL, &fillEvent.front( ) ), 
+                    "device_vector failed to fill the internal buffer with the requested pattern");
 
                 //  Not allowed to return until the fill operation is finished
-                cq.enqueueWaitForEvents( fillEvent );
+                V_OPENCL( cq.enqueueWaitForEvents( fillEvent ), "device_vector failed to wait for an event" );
             }
 
             /*! \brief A constructor that will create a new device_vector using a range specified by the user
@@ -184,7 +237,7 @@ namespace bolt
                 //  We want to use the context from the passed in commandqueue to initialize our buffer
                 cl_int l_Error = CL_SUCCESS;
                 ::cl::Context l_Context = m_commQueue.getInfo< CL_QUEUE_CONTEXT >( &l_Error );
-                V_BOLT( l_Error, "device_vector failed to query for the context of the ::cl::CommandQueue object" );
+                V_OPENCL( l_Error, "device_vector failed to query for the context of the ::cl::CommandQueue object" );
 
                 cl_mem_flags flags = 0;
                 if( readOnly )
@@ -207,14 +260,14 @@ namespace bolt
                 if( !useHostPtr )
                 {
                     pointer ptrBuffer = reinterpret_cast< pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, CL_TRUE, CL_MAP_WRITE_INVALIDATE_REGION, 0 , m_Size * sizeof( value_type ), NULL, NULL, &l_Error ) );
-                    V_BOLT( l_Error, "device_vector failed to map device memory to host memory" );
+                    V_OPENCL( l_Error, "device_vector failed to map device memory to host memory" );
 
 #if( _WIN32 )
                     std::copy( begin, end, stdext::checked_array_iterator< pointer >( ptrBuffer, m_Size ) );
 #else
                     std::copy( begin, end, ptrBuffer );
 #endif
-                    V_BOLT( m_commQueue.enqueueUnmapMemObject( m_devMemory, ptrBuffer ), "device_vector failed to unmap host memory back to device memory" );
+                    V_OPENCL( m_commQueue.enqueueUnmapMemObject( m_devMemory, ptrBuffer ), "device_vector failed to unmap host memory back to device memory" );
                 }
             };
 
@@ -260,20 +313,20 @@ namespace bolt
                 cl_int l_Error = CL_SUCCESS;
 
                 ::cl::Context l_Context = m_devMemory.getInfo< CL_MEM_CONTEXT >( &l_Error );
-                ::cl::detail::errHandler( l_Error, "device_vector failed to query for the context of the ::cl::Buffer object" );
+                V_OPENCL( l_Error, "device_vector failed to query for the context of the ::cl::Buffer object" );
 
                 cl_mem_flags l_memFlags = m_devMemory.getInfo< CL_MEM_FLAGS >( &l_Error );
-                ::cl::detail::errHandler( l_Error, "device_vector failed to query for the flags of the memory buffer" );
+                V_OPENCL( l_Error, "device_vector failed to query for the flags of the memory buffer" );
 
                 size_type l_reqSize = reqSize * sizeof( value_type );
                 ::cl::Buffer l_tmpBuffer( l_Context, l_memFlags, l_reqSize, NULL, &l_Error );
 
                 size_type l_srcSize = m_devMemory.getInfo< CL_MEM_SIZE >( &l_Error );
-                ::cl::detail::errHandler( l_Error, "device_vector failed to request the size of the ::cl::Buffer object" );
+                V_OPENCL( l_Error, "device_vector failed to request the size of the ::cl::Buffer object" );
 
                 std::vector< ::cl::Event > copyEvent( 1 );
                 l_Error = m_commQueue.enqueueCopyBuffer( m_devMemory, l_tmpBuffer, 0, 0, l_srcSize, NULL, &copyEvent.front( ) );
-                ::cl::detail::errHandler( l_Error, "device_vector failed to copy data to the new ::cl::Buffer object" );
+                V_OPENCL( l_Error, "device_vector failed to copy data to the new ::cl::Buffer object" );
 
                 //  If the new buffer size is greater than the old, then the new elements need to be initialized to the value specified on the
                 //  function parameter
@@ -281,17 +334,17 @@ namespace bolt
                 {
                     std::vector< ::cl::Event > fillEvent( 1 );
                     l_Error = m_commQueue.enqueueFillBuffer< value_type >( m_devMemory, val, l_srcSize, l_reqSize - l_srcSize, &copyEvent, &fillEvent.front( ) );
-                    ::cl::detail::errHandler( l_Error, "device_vector failed to fill the new data with the provided pattern" );
+                    V_OPENCL( l_Error, "device_vector failed to fill the new data with the provided pattern" );
 
                     //  Not allowed to return until the copy operation is finished
                     l_Error = m_commQueue.enqueueWaitForEvents( fillEvent );
-                    ::cl::detail::errHandler( l_Error, "device_vector failed to wait for fill event" );
+                    V_OPENCL( l_Error, "device_vector failed to wait for fill event" );
                 }
                 else
                 {
                     //  Not allowed to return until the copy operation is finished
                     l_Error = m_commQueue.enqueueWaitForEvents( copyEvent );
-                    ::cl::detail::errHandler( l_Error, "device_vector failed to wait for copy event" );
+                    V_OPENCL( l_Error, "device_vector failed to wait for copy event" );
                 }
 
                 //  Remember the new size
@@ -323,29 +376,29 @@ namespace bolt
                     throw ::cl::Error( CL_MEM_OBJECT_ALLOCATION_FAILURE , "No ::cl::Buffer object exists to query" );
 
                 ::cl::Context l_Context = m_devMemory.getInfo< CL_MEM_CONTEXT >( &l_Error );
-                ::cl::detail::errHandler( l_Error, "device_vector failed to query for the context of the ::cl::Buffer object" );
+                V_OPENCL( l_Error, "device_vector failed to query for the context of the ::cl::Buffer object" );
 
                 std::vector< ::cl::Device > l_vDevices = l_Context.getInfo< CL_CONTEXT_DEVICES >( &l_Error );
-                ::cl::detail::errHandler( l_Error, "device_vector failed to query for the vector of devices from the context" );
+                V_OPENCL( l_Error, "device_vector failed to query for the vector of devices from the context" );
 
                 //  If multiple devices in this context, return the mimimum value of the set
                 //  Context has to have at least 1 device, so call to begin() is safe
                 size_type l_minMaxSize  = l_vDevices.begin( )->getInfo< CL_DEVICE_MAX_MEM_ALLOC_SIZE >( &l_Error );
-                ::cl::detail::errHandler( l_Error, "device_vector failed to query device for the maximum memory size" );
+                V_OPENCL( l_Error, "device_vector failed to query device for the maximum memory size" );
 
                 if( l_vDevices.size( ) > 1 )
                 {
                     for( std::vector< ::cl::Device >::size_type iDevice = 1; iDevice < l_vDevices.size( ); ++iDevice )
                     {
                         size_type ll_minMaxSize = l_vDevices[ iDevice ].getInfo< CL_DEVICE_MAX_MEM_ALLOC_SIZE >( &l_Error );
-                        ::cl::detail::errHandler( l_Error, "device_vector failed to query device for the maximum memory size" );
+                        V_OPENCL( l_Error, "device_vector failed to query device for the maximum memory size" );
                         
                         if( ll_minMaxSize < l_minMaxSize )
                         {
                             l_minMaxSize = ll_minMaxSize;
                         }
 
-                       ::cl::detail::errHandler( l_Error, "device_vector failed to query device for the maximum memory size" );
+                       V_OPENCL( l_Error, "device_vector failed to query device for the maximum memory size" );
                     }
                 }
 
@@ -375,31 +428,33 @@ namespace bolt
                 cl_int l_Error = CL_SUCCESS;
 
                 ::cl::Context l_Context = m_devMemory.getInfo< CL_MEM_CONTEXT >( &l_Error );
-                ::cl::detail::errHandler( l_Error, "device_vector failed to query for the context of the ::cl::Buffer object" );
+                V_OPENCL( l_Error, "device_vector failed to query for the context of the ::cl::Buffer object" );
 
                 cl_mem_flags l_memFlags = m_devMemory.getInfo< CL_MEM_FLAGS >( &l_Error );
-                ::cl::detail::errHandler( l_Error, "device_vector failed to query for the flags of the memory buffer" );
+                V_OPENCL( l_Error, "device_vector failed to query for the flags of the memory buffer" );
 
                 size_type l_size = reqSize * sizeof( value_type );
                 //  Can't user host_ptr because l_size is guranteed to be bigger
                 ::cl::Buffer l_tmpBuffer( l_Context, l_memFlags, l_size, NULL, &l_Error );
+                V_OPENCL( l_Error, "device_vector can not create an temporary internal OpenCL buffer" );
 
                 ////  Copy data
                 //std::vector< ::cl::Device > l_vDevices = l_Context.getInfo< CL_CONTEXT_DEVICES >( &l_Error );
-                //::cl::detail::errHandler( l_Error, "device_vector failed to query for the vector of devices from the context" );
+                //V_OPENCL( l_Error, "device_vector failed to query for the vector of devices from the context" );
                 //if( l_vDevices.size( ) == 1 )
                 //{
                 //    ::cl::CommandQueue l_cqueue( l_Context, l_vDevices.front( ), 0, &l_Error );
-                //    ::cl::detail::errHandler( l_Error, "failed to create a command_queue in device_vector" );
+                //    V_OPENCL( l_Error, "failed to create a command_queue in device_vector" );
 
                     size_type l_srcSize = m_devMemory.getInfo< CL_MEM_SIZE >( &l_Error );
-                    ::cl::detail::errHandler( l_Error, "device_vector failed to request the size of the ::cl::Buffer object" );
+                    V_OPENCL( l_Error, "device_vector failed to request the size of the ::cl::Buffer object" );
 
                     std::vector< ::cl::Event > copyEvent( 1 );
-                    m_commQueue.enqueueCopyBuffer( m_devMemory, l_tmpBuffer, 0, 0, l_srcSize, NULL, &copyEvent.front( ) );
+                    V_OPENCL( m_commQueue.enqueueCopyBuffer( m_devMemory, l_tmpBuffer, 0, 0, l_srcSize, NULL, &copyEvent.front( ) ), 
+                        "device_vector failed to copy from buffer to buffer " );
 
                     //  Not allowed to return until the copy operation is finished
-                    m_commQueue.enqueueWaitForEvents( copyEvent );
+                    V_OPENCL( m_commQueue.enqueueWaitForEvents( copyEvent ), "device_vector failed to wait on an event object" );
                 //}
                 //else
                 //{
@@ -425,7 +480,7 @@ namespace bolt
                     return m_Size;
 
                 l_memSize = m_devMemory.getInfo< CL_MEM_SIZE >( &l_Error );
-                ::cl::detail::errHandler( l_Error, "device_vector failed to request the size of the ::cl::Buffer object" );
+                V_OPENCL( l_Error, "device_vector failed to request the size of the ::cl::Buffer object" );
 
                 return l_memSize / sizeof( value_type );
             }
@@ -447,24 +502,25 @@ namespace bolt
                 cl_int l_Error = CL_SUCCESS;
 
                 ::cl::Context l_Context = m_devMemory.getInfo< CL_MEM_CONTEXT >( &l_Error );
-                ::cl::detail::errHandler( l_Error, "device_vector failed to query for the context of the ::cl::Buffer object" );
+                V_OPENCL( l_Error, "device_vector failed to query for the context of the ::cl::Buffer object" );
 
                 cl_mem_flags l_memFlags = m_devMemory.getInfo< CL_MEM_FLAGS >( &l_Error );
-                ::cl::detail::errHandler( l_Error, "device_vector failed to query for the flags of the memory buffer" );
+                V_OPENCL( l_Error, "device_vector failed to query for the flags of the memory buffer" );
 
                 size_type l_newSize = m_Size * sizeof( value_type );
                 ::cl::Buffer l_tmpBuffer( l_Context, l_memFlags, l_newSize, NULL, &l_Error );
+                V_OPENCL( l_Error, "device_vector can not create an temporary internal OpenCL buffer" );
 
                 size_type l_srcSize = m_devMemory.getInfo< CL_MEM_SIZE >( &l_Error );
-                ::cl::detail::errHandler( l_Error, "device_vector failed to request the size of the ::cl::Buffer object" );
+                V_OPENCL( l_Error, "device_vector failed to request the size of the ::cl::Buffer object" );
 
                 std::vector< ::cl::Event > copyEvent( 1 );
                 l_Error = m_commQueue.enqueueCopyBuffer( m_devMemory, l_tmpBuffer, 0, 0, l_newSize, NULL, &copyEvent.front( ) );
-                ::cl::detail::errHandler( l_Error, "device_vector failed to copy data to the new ::cl::Buffer object" );
+                V_OPENCL( l_Error, "device_vector failed to copy data to the new ::cl::Buffer object" );
 
                 //  Not allowed to return until the copy operation is finished
                 l_Error = m_commQueue.enqueueWaitForEvents( copyEvent );
-                ::cl::detail::errHandler( l_Error, "device_vector failed to wait for copy event" );
+                V_OPENCL( l_Error, "device_vector failed to wait for copy event" );
 
                 //  Operator= should call retain/release appropriately
                 m_devMemory = l_tmpBuffer;
@@ -486,19 +542,22 @@ namespace bolt
                 cl_int l_Error = CL_SUCCESS;
 
                 const_pointer ptrBuff = reinterpret_cast< const_pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ, n * sizeof( value_type), sizeof( value_type), NULL, NULL, &l_Error ) );
-                ::cl::detail::errHandler( l_Error, "device_vector failed map device memory to host memory for operator[]" );
+                V_OPENCL( l_Error, "device_vector failed map device memory to host memory for operator[]" );
 
                 const_reference tmpRef = *ptrBuff;
 
                 l_Error = m_commQueue.enqueueUnmapMemObject( m_devMemory, ptrBuff );
-                ::cl::detail::errHandler( l_Error, "device_vector failed to unmap host memory back to device memory" );
+                V_OPENCL( l_Error, "device_vector failed to unmap host memory back to device memory" );
 
                 return tmpRef;
             }
 
+            /*! \brief Retrieves an iterator for this device_vector that points at the beginning element
+            *   \return A device_vector< T >::iterator
+            */
             iterator begin( void )
             {
-                return iterator( );
+                return iterator( *this, 0 );
             }
 
             const_iterator begin( void ) const
@@ -526,9 +585,12 @@ namespace bolt
                 return const_reverse_iterator( );
             }
 
+            /*! \brief Retrieves an iterator for this device_vector that points at the end element
+            *   \return A device_vector< T >::iterator
+            */
             iterator end( void )
             {
-                return iterator( );
+                return iterator( *this, m_Size );
             }
 
             const_iterator end( void ) const
@@ -572,12 +634,12 @@ namespace bolt
                 cl_int l_Error = CL_SUCCESS;
 
                 const_pointer ptrBuff = reinterpret_cast< const_pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ, 0, sizeof( value_type ), NULL, NULL, &l_Error ) );
-                ::cl::detail::errHandler( l_Error, "device_vector failed map device memory to host memory for operator[]" );
+                V_OPENCL( l_Error, "device_vector failed map device memory to host memory for operator[]" );
 
                 const_reference tmpRef = *ptrBuff;
 
                 l_Error = m_commQueue.enqueueUnmapMemObject( m_devMemory, ptrBuff );
-                ::cl::detail::errHandler( l_Error, "device_vector failed to unmap host memory back to device memory" );
+                V_OPENCL( l_Error, "device_vector failed to unmap host memory back to device memory" );
 
                 return tmpRef;
             }
@@ -598,12 +660,12 @@ namespace bolt
                 cl_int l_Error = CL_SUCCESS;
 
                 const_pointer ptrBuff = reinterpret_cast< const_pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ, (m_Size - 1) * sizeof( value_type ), sizeof( value_type ), NULL, NULL, &l_Error ) );
-                ::cl::detail::errHandler( l_Error, "device_vector failed map device memory to host memory for operator[]" );
+                V_OPENCL( l_Error, "device_vector failed map device memory to host memory for operator[]" );
 
                 const_reference tmpRef = *ptrBuff;
 
                 l_Error = m_commQueue.enqueueUnmapMemObject( m_devMemory, ptrBuff );
-                ::cl::detail::errHandler( l_Error, "device_vector failed to unmap host memory back to device memory" );
+                V_OPENCL( l_Error, "device_vector failed to unmap host memory back to device memory" );
 
                 return tmpRef;
             }
@@ -622,7 +684,7 @@ namespace bolt
             void clear( void )
             {
                 cl_int l_Error = m_devMemory.release( );
-                ::cl::detail::errHandler( l_Error, "device_vector to release the reference count of the internal ::cl::Buffer" );
+                V_OPENCL( l_Error, "device_vector to release the reference count of the internal ::cl::Buffer" );
 
                 m_Size = 0;
             }
@@ -654,11 +716,11 @@ namespace bolt
                 cl_int l_Error = CL_SUCCESS;
 
                 pointer result = m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_WRITE, m_Size * sizeof( value_type), sizeof( value_type ), NULL, NULL, &l_Error );
-                ::cl::detail::errHandler( l_Error, "device_vector failed map device memory to host memory for push_back" );
+                V_OPENCL( l_Error, "device_vector failed map device memory to host memory for push_back" );
                 *result = value;
 
                 l_Error = m_commQueue.enqueueUnmapMemObject( m_devMemory, result );
-                ::cl::detail::errHandler( l_Error, "device_vector failed to unmap host memory back to device memory" );
+                V_OPENCL( l_Error, "device_vector failed to unmap host memory back to device memory" );
 
                 ++m_Size;
             }
@@ -732,11 +794,11 @@ namespace bolt
 
                 std::vector< ::cl::Event > fillEvent( 1 );
                 l_Error = m_commQueue.enqueueFillBuffer< value_type >( m_devMemory, value, 0, m_Size * sizeof( value_type ), NULL, &fillEvent.front( ) );
-                ::cl::detail::errHandler( l_Error, "device_vector failed to fill the new data with the provided pattern" );
+                V_OPENCL( l_Error, "device_vector failed to fill the new data with the provided pattern" );
 
                 //  Not allowed to return until the copy operation is finished
                 l_Error = m_commQueue.enqueueWaitForEvents( fillEvent );
-                ::cl::detail::errHandler( l_Error, "device_vector failed to wait for fill event" );
+                V_OPENCL( l_Error, "device_vector failed to wait for fill event" );
             }
 
             /*! \brief Assigns a range of values to device_vector, replacing all previous elements
@@ -758,7 +820,7 @@ namespace bolt
                 cl_int l_Error = CL_SUCCESS;
 
                 pointer ptrBuffer = reinterpret_cast< pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, CL_TRUE, CL_MAP_WRITE_INVALIDATE_REGION, 0 , m_Size * sizeof( value_type ), NULL, NULL, &l_Error ) );
-                ::cl::detail::errHandler( l_Error, "device_vector failed map device memory to host memory for push_back" );
+                V_OPENCL( l_Error, "device_vector failed map device memory to host memory for push_back" );
 
 #if( _WIN32 )
                 std::copy( begin, end, stdext::checked_array_iterator< pointer >( ptrBuffer, m_Size ) );
@@ -766,7 +828,7 @@ namespace bolt
                 std::copy( begin, end, ptrBuffer );
 #endif
                 l_Error = m_commQueue.enqueueUnmapMemObject( m_devMemory, ptrBuffer );
-                ::cl::detail::errHandler( l_Error, "device_vector failed to unmap host memory back to device memory" );
+                V_OPENCL( l_Error, "device_vector failed to unmap host memory back to device memory" );
             }
 
             //~device_vector( )

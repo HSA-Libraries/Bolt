@@ -14,7 +14,7 @@
 namespace bolt {
 	namespace cl {
 
-    std::string clErrorString( const cl_int& status )
+    std::string clErrorStringA( const cl_int& status )
     {
         switch( status )
         {
@@ -138,6 +138,134 @@ namespace bolt {
                 return "CL_SUCCESS";
             default:
                 return "Error code not defined";
+            break;
+        }
+    }
+
+    std::wstring clErrorStringW( const cl_int& status )
+    {
+        switch( status )
+        {
+            case CL_INVALID_DEVICE_PARTITION_COUNT:
+                return L"CL_INVALID_DEVICE_PARTITION_COUNT";
+            case CL_INVALID_LINKER_OPTIONS:
+                return L"CL_INVALID_LINKER_OPTIONS";
+            case CL_INVALID_COMPILER_OPTIONS:
+                return L"CL_INVALID_COMPILER_OPTIONS";
+            case CL_INVALID_IMAGE_DESCRIPTOR:
+                return L"CL_INVALID_IMAGE_DESCRIPTOR";
+            case CL_INVALID_PROPERTY:
+                return L"CL_INVALID_PROPERTY";
+            case CL_INVALID_GLOBAL_WORK_SIZE:
+                return L"CL_INVALID_GLOBAL_WORK_SIZE";
+            case CL_INVALID_MIP_LEVEL:
+                return L"CL_INVALID_MIP_LEVEL";
+            case CL_INVALID_BUFFER_SIZE:
+                return L"CL_INVALID_BUFFER_SIZE";
+            case CL_INVALID_GL_OBJECT:
+                return L"CL_INVALID_GL_OBJECT";
+            case CL_INVALID_OPERATION:
+                return L"CL_INVALID_OPERATION";
+            case CL_INVALID_EVENT:
+                return L"CL_INVALID_EVENT";
+            case CL_INVALID_EVENT_WAIT_LIST:
+                return L"CL_INVALID_EVENT_WAIT_LIST";
+            case CL_INVALID_GLOBAL_OFFSET:
+                return L"CL_INVALID_GLOBAL_OFFSET";
+            case CL_INVALID_WORK_ITEM_SIZE:
+                return L"CL_INVALID_WORK_ITEM_SIZE";
+            case CL_INVALID_WORK_GROUP_SIZE:
+                return L"CL_INVALID_WORK_GROUP_SIZE";
+            case CL_INVALID_WORK_DIMENSION:
+                return L"CL_INVALID_WORK_DIMENSION";
+            case CL_INVALID_KERNEL_ARGS:
+                return L"CL_INVALID_KERNEL_ARGS";
+            case CL_INVALID_ARG_SIZE:
+                return L"CL_INVALID_ARG_SIZE";
+            case CL_INVALID_ARG_VALUE:
+                return L"CL_INVALID_ARG_VALUE";
+            case CL_INVALID_ARG_INDEX:
+                return L"CL_INVALID_ARG_INDEX";
+            case CL_INVALID_KERNEL:
+                return L"CL_INVALID_KERNEL";
+            case CL_INVALID_KERNEL_DEFINITION:
+                return L"CL_INVALID_KERNEL_DEFINITION";
+            case CL_INVALID_KERNEL_NAME:
+                return L"CL_INVALID_KERNEL_NAME";
+            case CL_INVALID_PROGRAM_EXECUTABLE:
+                return L"CL_INVALID_PROGRAM_EXECUTABLE";
+            case CL_INVALID_PROGRAM:
+                return L"CL_INVALID_PROGRAM";
+            case CL_INVALID_BUILD_OPTIONS:
+                return L"CL_INVALID_BUILD_OPTIONS";
+            case CL_INVALID_BINARY:
+                return L"CL_INVALID_BINARY";
+            case CL_INVALID_SAMPLER:
+                return L"CL_INVALID_SAMPLER";
+            case CL_INVALID_IMAGE_SIZE:
+                return L"CL_INVALID_IMAGE_SIZE";
+            case CL_INVALID_IMAGE_FORMAT_DESCRIPTOR:
+                return L"CL_INVALID_IMAGE_FORMAT_DESCRIPTOR";
+            case CL_INVALID_MEM_OBJECT:
+                return L"CL_INVALID_MEM_OBJECT";
+            case CL_INVALID_HOST_PTR:
+                return L"CL_INVALID_HOST_PTR";
+            case CL_INVALID_COMMAND_QUEUE:
+                return L"CL_INVALID_COMMAND_QUEUE";
+            case CL_INVALID_QUEUE_PROPERTIES:
+                return L"CL_INVALID_QUEUE_PROPERTIES";
+            case CL_INVALID_CONTEXT:
+                return L"CL_INVALID_CONTEXT";
+            case CL_INVALID_DEVICE:
+                return L"CL_INVALID_DEVICE";
+            case CL_INVALID_PLATFORM:
+                return L"CL_INVALID_PLATFORM";
+            case CL_INVALID_DEVICE_TYPE:
+                return L"CL_INVALID_DEVICE_TYPE";
+            case CL_INVALID_VALUE:
+                return L"CL_INVALID_VALUE";
+            case CL_KERNEL_ARG_INFO_NOT_AVAILABLE:
+                return L"CL_KERNEL_ARG_INFO_NOT_AVAILABLE";
+            case CL_DEVICE_PARTITION_FAILED:
+                return L"CL_DEVICE_PARTITION_FAILED";
+            case CL_LINK_PROGRAM_FAILURE:
+                return L"CL_LINK_PROGRAM_FAILURE";
+            case CL_LINKER_NOT_AVAILABLE:
+                return L"CL_LINKER_NOT_AVAILABLE";
+            case CL_COMPILE_PROGRAM_FAILURE:
+                return L"CL_COMPILE_PROGRAM_FAILURE";
+            case CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST:
+                return L"CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST";
+            case CL_MISALIGNED_SUB_BUFFER_OFFSET:
+                return L"CL_MISALIGNED_SUB_BUFFER_OFFSET";
+            case CL_MAP_FAILURE:
+                return L"CL_MAP_FAILURE";
+            case CL_BUILD_PROGRAM_FAILURE:
+                return L"CL_BUILD_PROGRAM_FAILURE";
+            case CL_IMAGE_FORMAT_NOT_SUPPORTED:
+                return L"CL_IMAGE_FORMAT_NOT_SUPPORTED";
+            case CL_IMAGE_FORMAT_MISMATCH:
+                return L"CL_IMAGE_FORMAT_MISMATCH";
+            case CL_MEM_COPY_OVERLAP:
+                return L"CL_MEM_COPY_OVERLAP";
+            case CL_PROFILING_INFO_NOT_AVAILABLE:
+                return L"CL_PROFILING_INFO_NOT_AVAILABLE";
+            case CL_OUT_OF_HOST_MEMORY:
+                return L"CL_OUT_OF_HOST_MEMORY";
+            case CL_OUT_OF_RESOURCES:
+                return L"CL_OUT_OF_RESOURCES";
+            case CL_MEM_OBJECT_ALLOCATION_FAILURE:
+                return L"CL_MEM_OBJECT_ALLOCATION_FAILURE";
+            case CL_COMPILER_NOT_AVAILABLE:
+                return L"CL_COMPILER_NOT_AVAILABLE";
+            case CL_DEVICE_NOT_AVAILABLE:
+                return L"CL_DEVICE_NOT_AVAILABLE";
+            case CL_DEVICE_NOT_FOUND:
+                return L"CL_DEVICE_NOT_FOUND";
+            case CL_SUCCESS:
+                return L"CL_SUCCESS";
+            default:
+                return L"Error code not defined";
             break;
         }
     }

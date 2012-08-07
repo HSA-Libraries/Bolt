@@ -9,11 +9,8 @@ set( clBolt.Test.TransformReduce.Headers stdafx.h targetver.h ${BOLT_INCLUDE_DIR
 
 set( clBolt.Test.TransformReduce.Files ${clBolt.Test.TransformReduce.Source} ${clBolt.Test.TransformReduce.Headers} )
 
-# Include standard OpenCL headers
-include_directories( ${OPENCL_INCLUDE_DIRS} )
-
 add_executable( clBolt.Test.TransformReduce ${clBolt.Test.TransformReduce.Files} )
-target_link_libraries( clBolt.Test.TransformReduce ${OPENCL_LIBRARIES} clBolt.Runtime )
+target_link_libraries( clBolt.Test.TransformReduce clBolt.Runtime ${OPENCL_LIBRARIES} ${GTEST_LIBRARIES} )
 
 set_target_properties( clBolt.Test.TransformReduce PROPERTIES VERSION ${Bolt_VERSION} )
 set_target_properties( clBolt.Test.TransformReduce PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
