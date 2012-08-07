@@ -4,7 +4,7 @@
 #include "stdafx.h"
 #include <bolt/cl/transform.h>
 #include <bolt/cl/functional.h>
-#include <bolt/cl/device_vector.h>
+//#include <bolt/cl/device_vector.h>
 
 #include <iostream>
 #include <algorithm>  // for testing against STL functions.
@@ -238,8 +238,8 @@ void oclTransform(int aSize)
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	//simpleTransform1(256); //FIXME
-    bolt::cl::device_vector< int > dV;
+	simpleTransform1(256); //FIXME
+    //bolt::cl::device_vector< int > dV;
 
 	transformSaxpy(256);
 	transformSaxpy(1024);

@@ -25,14 +25,21 @@ namespace bolt {
         *  \param status The OpenCL error code
          * \return The error code stringized
         */
-        std::string clErrorString( const cl_int& status );
+        std::string clErrorStringA( const cl_int& status );
+
+        /*! \brief Translates an integer OpenCL error code to a std::wstring at runtime
+        *  \param status The OpenCL error code
+         * \return The error code stringized
+        */
+        std::wstring clErrorStringW( const cl_int& status );
 
         /*! \brief Helper print function to stringify OpenCL error codes
         *  \param res The OpenCL error code
         *  \param msg A relevant message to be printed out supplied by user
-        *  \param lineno Not currently used
+        *  \param lineno Source line number; not currently used
+        *  \note std::exception is built to only use narrow text
         */
-        inline cl_int V_Bolt( cl_int res, const std::string& msg, size_t lineno )
+        inline cl_int V_OpenCL( cl_int res, const std::string& msg, size_t lineno )
         { 
             switch( res )
             {
@@ -41,8 +48,8 @@ namespace bolt {
                 default:
                 {
                     std::string tmp;
-                    tmp.append( "V_Bolt< " );
-                    tmp.append( clErrorString( res ) );
+                    tmp.append( "V_OpenCL< " );
+                    tmp.append( clErrorStringA( res ) );
                     tmp.append( " >: " );
                     tmp.append( msg );
                     //std::cout << tmp << std::endl;
@@ -52,7 +59,7 @@ namespace bolt {
 
             return	res;
         }
-        #define V_BOLT( status, message ) V_Bolt( status, message, __LINE__ )
+        #define V_OPENCL( status, message ) V_OpenCL( status, message, __LINE__ )
 
 	};
 };

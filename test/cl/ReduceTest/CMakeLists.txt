@@ -8,11 +8,8 @@ set( clBolt.Test.Reduce.Headers stdafx.h myocl.h targetver.h ${BOLT_INCLUDE_DIR}
 
 set( clBolt.Test.Reduce.Files ${clBolt.Test.Reduce.Source} ${clBolt.Test.Reduce.Headers} )
 
-# Include standard OpenCL headers
-include_directories( ${OPENCL_INCLUDE_DIRS} )
-
 add_executable( clBolt.Test.Reduce ${clBolt.Test.Reduce.Files} )
-target_link_libraries( clBolt.Test.Reduce ${OPENCL_LIBRARIES} clBolt.Runtime )
+target_link_libraries( clBolt.Test.Reduce clBolt.Runtime ${OPENCL_LIBRARIES} ${GTEST_LIBRARIES} )
 
 set_target_properties( clBolt.Test.Reduce PROPERTIES VERSION ${Bolt_VERSION} )
 set_target_properties( clBolt.Test.Reduce PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
