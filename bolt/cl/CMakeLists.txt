@@ -32,6 +32,7 @@ set( clBolt.Runtime.Headers
 		${clBolt.Include.Dir}/functional.h 
 		${clBolt.Include.Dir}/iterator_traits.h 
 		${clBolt.Include.Dir}/reduce.h 
+		${clBolt.Include.Dir}/sort.h 
 		${clBolt.Include.Dir}/transform.h 
 		${clBolt.Include.Dir}/transform_reduce.h
 		${clBolt.Include.Dir}/../countof.h
@@ -39,12 +40,14 @@ set( clBolt.Runtime.Headers
 		${clBolt.Include.Dir}/../statisticalTimer.h )
 		
 set( clBolt.Runtime.Headers.Detail 
-		${clBolt.Include.Dir}/detail/reduce.inl )
+		${clBolt.Include.Dir}/detail/reduce.inl
+        ${clBolt.Include.Dir}/detail/sort.inl )
 		
 set( clBolt.Runtime.clFiles 
 		${clBolt.Include.Dir}/reduce_kernels.cl 
 		${clBolt.Include.Dir}/transform_kernels.cl 
-		${clBolt.Include.Dir}/transform_reduce_kernels.cl )
+		${clBolt.Include.Dir}/transform_reduce_kernels.cl
+        ${clBolt.Include.Dir}/sort_kernels.cl )
 
 # The minidump tech is windows specific; I don't have a solution yet for linux, but google-breakpad looks promising
 if( WIN32 )
