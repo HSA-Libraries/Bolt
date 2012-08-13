@@ -7,6 +7,7 @@
 #include <numeric>
 #include <bolt/cl/bolt.h>
 #include <boost/iterator/iterator_facade.hpp>
+#include <boost/iterator/reverse_iterator.hpp>
 
 /*! \file device_vector.h
  * Public header file for the device_container class
@@ -54,6 +55,13 @@ namespace bolt
             typedef T* pointer;
             typedef const T* const_pointer;
 
+            /*! \brief A writeable element of the container
+            *   The location of an element of the container may not actually reside in system memory, but rather device
+            *   memory which may be in a partitioned memory space.  Access of a reference of the container results in 
+            *   a mapping and unmapping operation of device memory
+            *   \note The container element reference is implemented as a proxy object
+            *   \warning This operation may be slow, depending on the location of the element
+            */
             class reference
             {
                 ::cl::Buffer m_devMemory;
@@ -92,30 +100,38 @@ namespace bolt
                 }
             };
 
-            typedef const T const_reference;
+            /*! \brief A non-writeable copy of an element of the container
+            *   Constant references are optimized to return only a value_type, because it can be guaranteed that
+            *   the value will not be modified, so no need for mapping operations
+            *   \note A const_reference actually returns a value, not a reference.
+            */
+            typedef const value_type const_reference;
 
-            /*! \brief A random access iterator in the classic sense
+            /*! \brief Base class provided to encapsulate all the common functionality for constant
+            *   and non-constant iterators
             *   \sa http://www.sgi.com/tech/stl/Iterators.html
             *   \sa http://www.sgi.com/tech/stl/RandomAccessIterator.html
             */
-            //class iterator: public std::iterator< std::random_access_iterator_tag, value_type >
-            class iterator: public boost::iterator_facade< iterator, value_type, std::random_access_iterator_tag >
+            template< typename Container >
+            class iterator_base: public boost::iterator_facade< iterator_base< Container >, value_type, std::random_access_iterator_tag >
             {
             public:
-                //iterator( ) {}
-                //iterator( const iterator& rhs ) {}
-                //iterator& operator++( ) {}
-                //iterator operator++( int ) {}
-                //bool operator==( const iterator& rhs ) { return true; }
-                //bool operator!=( const iterator& rhs ) {}
-                //T& operator*( ) {}
-                //T& operator->( ) {}
 
-                iterator( device_vector< value_type >& rhs, size_type index ): myContainer( rhs ), m_index( index )
+                //  Basic constructor requires a reference to the container and a positional element
+                iterator_base( Container& rhs, size_type index ): m_Container( rhs ), m_index( index )
+                {}
+
+                //  This copy constructor allows an iterator to convert into a const_iterator, but not vica versa
+                template< typename OtherContainer >
+                iterator_base( const iterator_base< OtherContainer >& rhs ): m_Container( rhs.m_Container ), m_index( rhs.m_index )
                 {}
 
             private:
+                //  Implementation detail of boost.iterator
                 friend class boost::iterator_core_access;
+
+                //  Used for templatized copy constructor and the templatized equal operator
+                template < typename > friend class iterator_base;
 
                 void advance( difference_type n )
                 {
@@ -132,41 +148,42 @@ namespace bolt
                     advance( -1 );
                 }
 
-                difference_type distance_to( const iterator& rhs ) const
+                difference_type distance_to( const iterator_base< Container >& rhs ) const
                 {
                     return ( rhs.m_index - m_index );
                 }
 
-                bool equal( const iterator& rhs ) const
+                template< typename OtherContainer >
+                bool equal( const iterator_base< OtherContainer >& rhs ) const
                 {
-                    //bool sameContainer = rhs.myContainer == myContainer;
                     bool sameIndex = rhs.m_index == m_index;
+                    bool sameContainer = (&m_Container == &rhs.m_Container );
 
-                    return ( sameIndex ); // && sameContainer );
+                    return ( sameIndex && sameContainer );
                 }
 
                 reference dereference( ) const
                 {
-                    return myContainer[ m_index ];
+                    return m_Container[ m_index ];
                 }
 
-                device_vector< value_type >& myContainer;
+                Container& m_Container;
                 size_type m_index;
             };
 
-            /*! \brief A constant random access iterator in the classic sense
-            *   \sa http://www.sgi.com/tech/stl/Iterators.html
-            *   \sa http://www.sgi.com/tech/stl/RandomAccessIterator.html
+            /*! \brief Typedef to create the non-constant iterator
             */
-            class const_iterator: public std::iterator< std::random_access_iterator_tag, const value_type >
-            {
-            };
+            typedef iterator_base< device_vector< value_type > > iterator;
+
+            /*! \brief Typedef to create the constant iterator
+            */
+            typedef iterator_base< const device_vector< value_type > > const_iterator;
 
             /*! \brief A reverse random access iterator in the classic sense
             *   \sa http://www.sgi.com/tech/stl/ReverseIterator.html
             *   \sa http://www.sgi.com/tech/stl/RandomAccessIterator.html
             */
-            class reverse_iterator: public std::reverse_iterator< iterator >
+            class reverse_iterator: public boost::reverse_iterator< iterator >
             {
             };
 
@@ -174,7 +191,7 @@ namespace bolt
             *   \sa http://www.sgi.com/tech/stl/ReverseIterator.html
             *   \sa http://www.sgi.com/tech/stl/RandomAccessIterator.html
             */
-            class const_reverse_iterator: public std::reverse_iterator< const_iterator >
+            class const_reverse_iterator: public boost::reverse_iterator< const_iterator >
             {
             };
 
@@ -552,22 +569,31 @@ namespace bolt
                 return tmpRef;
             }
 
-            /*! \brief Retrieves an iterator for this device_vector that points at the beginning element
-            *   \return A device_vector< T >::iterator
+            /*! \brief Retrieves an iterator for this container that points at the beginning element
+            *   \return A device_vector< value_type >::iterator
             */
             iterator begin( void )
             {
                 return iterator( *this, 0 );
             }
 
+            /*! \brief Retrieves an iterator for this container that points at the beginning constant element
+            *   No operation through this iterator may modify the contents of the referenced container
+            *   \return A device_vector< value_type >::const_iterator
+            */
             const_iterator begin( void ) const
             {
-                return const_iterator( );
+                return const_iterator( *this, 0 );
             }
 
+            /*! \brief Retrieves an iterator for this container that points at the beginning constant element
+            *   No operation through this iterator may modify the contents of the referenced container
+            *   \note This method may return a constant iterator from a non-constant container
+            *   \return A device_vector< value_type >::const_iterator
+            */
             const_iterator cbegin( void ) const
             {
-                return const_iterator( );
+                return const_iterator( *this, 0 );
             }
 
             reverse_iterator rbegin( void )
@@ -585,22 +611,31 @@ namespace bolt
                 return const_reverse_iterator( );
             }
 
-            /*! \brief Retrieves an iterator for this device_vector that points at the end element
-            *   \return A device_vector< T >::iterator
+            /*! \brief Retrieves an iterator for this container that points at the last element
+            *   \return A device_vector< value_type >::iterator
             */
             iterator end( void )
             {
                 return iterator( *this, m_Size );
             }
 
+            /*! \brief Retrieves an iterator for this container that points at the last constant element
+            *   No operation through this iterator may modify the contents of the referenced container
+            *   \return A device_vector< value_type >::const_iterator
+            */
             const_iterator end( void ) const
             {
-                return const_iterator( );
+                return const_iterator( *this, m_Size );
             }
 
+            /*! \brief Retrieves an iterator for this container that points at the last constant element
+            *   No operation through this iterator may modify the contents of the referenced container
+            *   \note This method may return a constant iterator from a non-constant container
+            *   \return A device_vector< value_type >::const_iterator
+            */
             const_iterator cend( void ) const
             {
-                return const_iterator( );
+                return const_iterator( *this, m_Size );
             }
 
             reverse_iterator rend( void )
