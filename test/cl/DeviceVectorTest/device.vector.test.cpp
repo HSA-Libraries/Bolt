@@ -286,7 +286,7 @@ typedef ::testing::Types<
 //INSTANTIATE_TYPED_TEST_CASE_P( Integer, ScanArrayTest, IntegerTests );
 //INSTANTIATE_TYPED_TEST_CASE_P( Float, ScanArrayTest, FloatTests );
 
-TEST( Constructor, Empty )
+TEST( Constructor, ContainerIteratorEmpty )
 {
     bolt::cl::device_vector< int > dV;
 
@@ -295,9 +295,89 @@ TEST( Constructor, Empty )
     bolt::cl::device_vector< int >::iterator itBegin = dV.begin( );
     bolt::cl::device_vector< int >::iterator itEnd = dV.end( );
 
-    //EXPECT_EQ( itBegin, itEnd );
     EXPECT_TRUE( itBegin == itEnd );
+}
 
+TEST( Constructor, ConstContainerConstIteratorEmpty )
+{
+    const bolt::cl::device_vector< int > dV;
+
+    EXPECT_EQ( 0, dV.size( ) );
+
+    bolt::cl::device_vector< int >::const_iterator itBegin = dV.begin( );
+    bolt::cl::device_vector< int >::const_iterator itEnd = dV.end( );
+
+    EXPECT_TRUE( itBegin == itEnd );
+}
+
+TEST( Constructor, ConstContainerConstIteratorCEmpty )
+{
+    const bolt::cl::device_vector< int > dV;
+
+    EXPECT_EQ( 0, dV.size( ) );
+
+    bolt::cl::device_vector< int >::const_iterator itBegin = dV.cbegin( );
+    bolt::cl::device_vector< int >::const_iterator itEnd = dV.cend( );
+
+    EXPECT_TRUE( itBegin == itEnd );
+}
+
+TEST( Constructor, ContainerConstIteratorCEmpty )
+{
+    bolt::cl::device_vector< int > dV;
+
+    EXPECT_EQ( 0, dV.size( ) );
+
+    bolt::cl::device_vector< int >::const_iterator itBegin = dV.cbegin( );
+    bolt::cl::device_vector< int >::const_iterator itEnd = dV.cend( );
+
+    EXPECT_TRUE( itBegin == itEnd );
+}
+
+TEST( Constructor, ContainerConstIteratorEmpty )
+{
+    bolt::cl::device_vector< int > dV;
+
+    EXPECT_EQ( 0, dV.size( ) );
+
+    bolt::cl::device_vector< int >::const_iterator itBegin = dV.begin( );
+    bolt::cl::device_vector< int >::const_iterator itEnd = dV.end( );
+
+    EXPECT_TRUE( itBegin == itEnd );
+}
+
+TEST( Iterator, Compatibility )
+{
+    bolt::cl::device_vector< int > dV;
+    EXPECT_EQ( 0, dV.size( ) );
+
+    bolt::cl::device_vector< int >::iterator Iter0( dV, 0 );
+    bolt::cl::device_vector< int >::const_iterator cIter0( dV, 0 );
+    EXPECT_TRUE( Iter0 == cIter0 );
+
+    bolt::cl::device_vector< int >::iterator Iter1( dV, 0 );
+    bolt::cl::device_vector< int >::const_iterator cIter1( dV, 1 );
+    EXPECT_TRUE( Iter1 != cIter1 );
+}
+
+TEST( Iterator, OperatorEqual )
+{
+    bolt::cl::device_vector< int > dV;
+    EXPECT_EQ( 0, dV.size( ) );
+
+    bolt::cl::device_vector< int >::iterator Iter0( dV, 0 );
+    bolt::cl::device_vector< int >::iterator cIter0( dV, 0 );
+    EXPECT_TRUE( Iter0 == cIter0 );
+
+    bolt::cl::device_vector< int >::const_iterator Iter1( dV, 0 );
+    bolt::cl::device_vector< int >::const_iterator cIter1( dV, 1 );
+    EXPECT_TRUE( Iter1 != cIter1 );
+
+    bolt::cl::device_vector< int > dV2;
+
+    bolt::cl::device_vector< int >::const_iterator Iter2( dV, 0 );
+    bolt::cl::device_vector< int >::const_iterator cIter2( dV2, 0 );
+    EXPECT_TRUE( Iter2 != cIter2 );
 }
 
 int _tmain(int argc, _TCHAR* argv[])
