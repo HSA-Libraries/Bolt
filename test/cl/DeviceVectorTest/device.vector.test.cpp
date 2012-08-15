@@ -380,6 +380,66 @@ TEST( Iterator, OperatorEqual )
     EXPECT_TRUE( Iter2 != cIter2 );
 }
 
+TEST( VectorReference, BasicAssignment )
+{
+    bolt::cl::device_vector< int > dV( 5, 1 );
+
+    EXPECT_EQ( 5, dV.size( ) );
+
+    dV[ 0 ] = 1;
+    dV[ 1 ] = 2;
+    dV[ 2 ] = 3;
+    dV[ 3 ] = 4;
+    dV[ 4 ] = 5;
+
+    std::vector< int > readBack( 5 );
+    readBack[ 0 ] = dV[ 0 ];
+    readBack[ 1 ] = dV[ 1 ];
+    readBack[ 2 ] = dV[ 2 ];
+    readBack[ 3 ] = dV[ 3 ];
+    readBack[ 4 ] = dV[ 4 ];
+
+    EXPECT_EQ( readBack[ 0 ], dV[ 0 ] );
+    EXPECT_EQ( readBack[ 1 ], dV[ 1 ] );
+    EXPECT_EQ( readBack[ 2 ], dV[ 2 ] );
+    EXPECT_EQ( readBack[ 3 ], dV[ 3 ] );
+    EXPECT_EQ( readBack[ 4 ], dV[ 4 ] );
+}
+
+TEST( VectorIterator, BasicAssignment )
+{
+    bolt::cl::device_vector< int > dV( 5, 1 );
+
+    EXPECT_EQ( 5, dV.size( ) );
+
+    bolt::cl::device_vector< int >::iterator myIter = dV.begin( );
+
+    *myIter = 1;
+    ++myIter;
+    *myIter = 2;
+    myIter++;
+    *myIter = 3;
+    myIter += 1;
+    *(myIter + 0) = 4;
+    *(myIter + 1) = 5;
+    myIter += 1;
+
+    std::vector< int > readBack( 5 );
+    bolt::cl::device_vector< int >::iterator myIterBase = myIter - 4;
+
+    readBack[ 0 ] = *(myIterBase + 0);
+    readBack[ 1 ] = *(myIterBase + 1);
+    readBack[ 2 ] = *(myIterBase + 2);
+    readBack[ 3 ] = *(myIterBase + 3);
+    readBack[ 4 ] = *(myIterBase + 4);
+
+    EXPECT_EQ( readBack[ 0 ], dV[ 0 ] );
+    EXPECT_EQ( readBack[ 1 ], dV[ 1 ] );
+    EXPECT_EQ( readBack[ 2 ], dV[ 2 ] );
+    EXPECT_EQ( readBack[ 3 ], dV[ 3 ] );
+    EXPECT_EQ( readBack[ 4 ], dV[ 4 ] );
+}
+
 int _tmain(int argc, _TCHAR* argv[])
 {
     ::testing::InitGoogleTest( &argc, &argv[ 0 ] );

@@ -68,15 +68,15 @@ namespace bolt
                 ::cl::CommandQueue m_commQueue;
                 size_type m_index;
 
+            public:
                 reference( const ::cl::Buffer& devMem, const CommandQueue& cq, size_type index ): m_devMemory( devMem ), m_commQueue( cq ), m_index( index )
                 {}
 
-            public:
                 //  Automatic type conversion operator to turn the reference object into a value_type
                 operator value_type( ) const
                 {
                     cl_int l_Error = CL_SUCCESS;
-                    pointer result = m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ, m_index * sizeof( value_type ), sizeof( value_type ), NULL, NULL, &l_Error );
+                    pointer result = reinterpret_cast< pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ, m_index * sizeof( value_type ), sizeof( value_type ), NULL, NULL, &l_Error ) );
                     V_OPENCL( l_Error, "device_vector failed map device memory to host memory for operator[]" );
 
                     value_type valTmp = *result;
@@ -89,7 +89,7 @@ namespace bolt
                 reference& operator=( const value_type& rhs )
                 {
                     cl_int l_Error = CL_SUCCESS;
-                    pointer result = m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_WRITE_INVALIDATE_REGION, m_index * sizeof( value_type ), sizeof( value_type ), NULL, NULL, &l_Error );
+                    pointer result = reinterpret_cast< pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_WRITE_INVALIDATE_REGION, m_index * sizeof( value_type ), sizeof( value_type ), NULL, NULL, &l_Error ) );
                     V_OPENCL( l_Error, "device_vector failed map device memory to host memory for operator[]" );
 
                     *result = rhs;
@@ -113,7 +113,7 @@ namespace bolt
             *   \sa http://www.sgi.com/tech/stl/RandomAccessIterator.html
             */
             template< typename Container >
-            class iterator_base: public boost::iterator_facade< iterator_base< Container >, value_type, std::random_access_iterator_tag >
+            class iterator_base: public boost::iterator_facade< iterator_base< Container >, value_type, std::random_access_iterator_tag, typename device_vector::reference >
             {
             public:
 
@@ -203,15 +203,6 @@ namespace bolt
                 static_assert( std::is_pod< value_type >::value, "device_vector only supports POD (plain old data) types" );
             }
 
-            ///*! \brief A copy constructor that initializes a new device_vector in a non-overlapping range
-            //*   \param rhs The device_vector to copy from
-            //*/
-            //  TODO: Commented out copy-constructor; do we need to implement? Error prone to maintain
-            //device_vector( const device_vector& rhs ): m_devMemory( rhs.m_devMemory ), m_Error( rhs.m_Error )
-            //{
-            //    static_assert( std::is_pod< T >::value, "device_vector only supports POD (plain old data) types" );
-            //}
-
             /*! \brief A constructor that will create a new device_vector with the specified number of elements, with a specified initial value
             *   \param newSize The number of elements of the new device_vector
             *   \param value The value that new elements will be initialized with
@@ -241,14 +232,15 @@ namespace bolt
             /*! \brief A constructor that will create a new device_vector using a range specified by the user
             *   \param begin An iterator pointing at the beginning of the range
             *   \param end An iterator pointing at the end of the range
-            *   \param readOnly An optional optimization supplied by the user specifying that this memory will only be read on the device
-            *   \param useHostPtr An optional optimization supplied by the user specifying that the device memory will be shadowed on the host
+            *   \param readOnly An optimization supplied by the user specifying that this memory will only be read on the device
+            *   \param useHostPtr An optional optimization supplied by the user specifying that device memory will be shadowed on the host
             *   \note This constructor relies on the ::cl::Buffer object to throw on error
             */
             template< typename InputIterator >
-            device_vector( const InputIterator begin, const InputIterator end, bool readOnly = false, bool useHostPtr = true, CommandQueue& cq = CommandQueue::getDefault( ) ): m_commQueue( cq )
+            device_vector( const InputIterator begin, const InputIterator end, bool readOnly, bool useHostPtr = false, CommandQueue& cq = CommandQueue::getDefault( ) ): m_commQueue( cq )
             {
                 static_assert( std::is_same< value_type, std::iterator_traits< InputIterator >::value_type >::value, "device_vector value_type does not match iterator value_type" );
+                static_assert( std::is_same< std::random_access_iterator_tag, std::iterator_traits< InputIterator >::iterator_category >::value, "InputIterator must be random access category" );
                 static_assert( std::is_pod< value_type >::value, "device_vector only supports POD (plain old data) types" );
 
                 //  We want to use the context from the passed in commandqueue to initialize our buffer
