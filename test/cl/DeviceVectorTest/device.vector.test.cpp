@@ -346,6 +346,18 @@ TEST( Constructor, ContainerConstIteratorEmpty )
     EXPECT_TRUE( itBegin == itEnd );
 }
 
+TEST( Constructor, Size5AndValue3OperatorValueType )
+{
+    bolt::cl::device_vector< int > dV( 5, 3 );
+    EXPECT_EQ( 5, dV.size( ) );
+
+    EXPECT_EQ( 3, dV[ 0 ] );
+    EXPECT_EQ( 3, dV[ 1 ] );
+    EXPECT_EQ( 3, dV[ 2 ] );
+    EXPECT_EQ( 3, dV[ 3 ] );
+    EXPECT_EQ( 3, dV[ 4 ] );
+}
+
 TEST( Iterator, Compatibility )
 {
     bolt::cl::device_vector< int > dV;
@@ -380,11 +392,26 @@ TEST( Iterator, OperatorEqual )
     EXPECT_TRUE( Iter2 != cIter2 );
 }
 
-TEST( VectorReference, BasicAssignment )
+TEST( VectorReference, OperatorEqual )
 {
-    bolt::cl::device_vector< int > dV( 5, 1 );
+    bolt::cl::device_vector< int > dV( 5 );
 
-    EXPECT_EQ( 5, dV.size( ) );
+    dV[ 0 ] = 1;
+    dV[ 1 ] = 2;
+    dV[ 2 ] = 3;
+    dV[ 3 ] = 4;
+    dV[ 4 ] = 5;
+
+    EXPECT_EQ( 1, dV[ 0 ] );
+    EXPECT_EQ( 2, dV[ 1 ] );
+    EXPECT_EQ( 3, dV[ 2 ] );
+    EXPECT_EQ( 4, dV[ 3 ] );
+    EXPECT_EQ( 5, dV[ 4 ] );
+}
+
+TEST( VectorReference, OperatorValueType )
+{
+    bolt::cl::device_vector< int > dV( 5 );
 
     dV[ 0 ] = 1;
     dV[ 1 ] = 2;
@@ -406,10 +433,39 @@ TEST( VectorReference, BasicAssignment )
     EXPECT_EQ( readBack[ 4 ], dV[ 4 ] );
 }
 
-TEST( VectorIterator, BasicAssignment )
-{
-    bolt::cl::device_vector< int > dV( 5, 1 );
+//TEST( VectorIterator, Size6AndValue7OperatorValueType )
+//{
+//    bolt::cl::device_vector< int > dV( 6, 7 );
+//    EXPECT_EQ( 6, dV.size( ) );
+//
+//    bolt::cl::device_vector< int >::iterator myIter = dV.begin( );
+//
+//    EXPECT_EQ( 7, myIter[ 0 ] );
+//    EXPECT_EQ( 7, myIter[ 1 ] );
+//    EXPECT_EQ( 7, myIter[ 2 ] );
+//    EXPECT_EQ( 7, myIter[ 3 ] );
+//    EXPECT_EQ( 7, myIter[ 4 ] );
+//    EXPECT_EQ( 7, myIter[ 5 ] );
+//}
 
+TEST( VectorIterator, Size6AndValue7Dereference )
+{
+    bolt::cl::device_vector< int > dV( 6, 7 );
+    EXPECT_EQ( 6, dV.size( ) );
+
+    bolt::cl::device_vector< int >::iterator myIter = dV.begin( );
+
+    EXPECT_EQ( 7, *(myIter + 0) );
+    EXPECT_EQ( 7, *(myIter + 1) );
+    EXPECT_EQ( 7, *(myIter + 2) );
+    EXPECT_EQ( 7, *(myIter + 3) );
+    EXPECT_EQ( 7, *(myIter + 4) );
+    EXPECT_EQ( 7, *(myIter + 5) );
+}
+
+TEST( VectorIterator, ArithmeticAndEqual )
+{
+    bolt::cl::device_vector< int > dV( 5 );
     EXPECT_EQ( 5, dV.size( ) );
 
     bolt::cl::device_vector< int >::iterator myIter = dV.begin( );
@@ -424,20 +480,106 @@ TEST( VectorIterator, BasicAssignment )
     *(myIter + 1) = 5;
     myIter += 1;
 
-    std::vector< int > readBack( 5 );
-    bolt::cl::device_vector< int >::iterator myIterBase = myIter - 4;
+    EXPECT_EQ( 1, dV[ 0 ] );
+    EXPECT_EQ( 2, dV[ 1 ] );
+    EXPECT_EQ( 3, dV[ 2 ] );
+    EXPECT_EQ( 4, dV[ 3 ] );
+    EXPECT_EQ( 5, dV[ 4 ] );
+}
 
-    readBack[ 0 ] = *(myIterBase + 0);
-    readBack[ 1 ] = *(myIterBase + 1);
-    readBack[ 2 ] = *(myIterBase + 2);
-    readBack[ 3 ] = *(myIterBase + 3);
-    readBack[ 4 ] = *(myIterBase + 4);
+TEST( Vector, Erase )
+{
+    bolt::cl::device_vector< int > dV( 5 );
+    EXPECT_EQ( 5, dV.size( ) );
 
-    EXPECT_EQ( readBack[ 0 ], dV[ 0 ] );
-    EXPECT_EQ( readBack[ 1 ], dV[ 1 ] );
-    EXPECT_EQ( readBack[ 2 ], dV[ 2 ] );
-    EXPECT_EQ( readBack[ 3 ], dV[ 3 ] );
-    EXPECT_EQ( readBack[ 4 ], dV[ 4 ] );
+    dV[ 0 ] = 1;
+    dV[ 1 ] = 2;
+    dV[ 2 ] = 3;
+    dV[ 3 ] = 4;
+    dV[ 4 ] = 5;
+
+    bolt::cl::device_vector< int >::iterator myIter = dV.begin( );
+    myIter += 2;
+
+    bolt::cl::device_vector< int >::iterator myResult = dV.erase( myIter );
+    EXPECT_EQ( 4, dV.size( ) );
+    EXPECT_EQ( 4, *myResult );
+
+    EXPECT_EQ( 1, dV[ 0 ] );
+    EXPECT_EQ( 2, dV[ 1 ] );
+    EXPECT_EQ( 4, dV[ 2 ] );
+    EXPECT_EQ( 5, dV[ 3 ] );
+}
+
+TEST( Vector, Clear )
+{
+    bolt::cl::device_vector< int > dV( 5, 3 );
+    EXPECT_EQ( 5, dV.size( ) );
+
+    dV.clear( );
+    EXPECT_EQ( 0, dV.size( ) );
+}
+
+TEST( Vector, EraseEntireRange )
+{
+    bolt::cl::device_vector< int > dV( 5 );
+    EXPECT_EQ( 5, dV.size( ) );
+
+    dV[ 0 ] = 1;
+    dV[ 1 ] = 2;
+    dV[ 2 ] = 3;
+    dV[ 3 ] = 4;
+    dV[ 4 ] = 5;
+
+    bolt::cl::device_vector< int >::iterator myBegin = dV.begin( );
+    bolt::cl::device_vector< int >::iterator myEnd = dV.end( );
+
+    bolt::cl::device_vector< int >::iterator myResult = dV.erase( myBegin, myEnd );
+    EXPECT_EQ( 0, dV.size( ) );
+}
+
+TEST( Vector, EraseSubRange )
+{
+    bolt::cl::device_vector< int > dV( 5 );
+    EXPECT_EQ( 5, dV.size( ) );
+
+    dV[ 0 ] = 1;
+    dV[ 1 ] = 2;
+    dV[ 2 ] = 3;
+    dV[ 3 ] = 4;
+    dV[ 4 ] = 5;
+
+    bolt::cl::device_vector< int >::iterator myBegin = dV.begin( );
+    bolt::cl::device_vector< int >::iterator myEnd = dV.end( );
+    myEnd -= 2;
+
+    bolt::cl::device_vector< int >::iterator myResult = dV.erase( myBegin, myEnd );
+    EXPECT_EQ( 2, dV.size( ) );
+}
+
+TEST( Vector, InsertBegin )
+{
+    bolt::cl::device_vector< int > dV( 5 );
+    EXPECT_EQ( 5, dV.size( ) );
+    dV[ 0 ] = 1;
+    dV[ 1 ] = 2;
+    dV[ 2 ] = 3;
+    dV[ 3 ] = 4;
+    dV[ 4 ] = 5;
+
+    bolt::cl::device_vector< int >::iterator myResult = dV.insert( dV.cbegin( ), 7 );
+    EXPECT_EQ( 7, *myResult );
+    EXPECT_EQ( 6, dV.size( ) );
+}
+
+TEST( Vector, InsertEnd )
+{
+    bolt::cl::device_vector< int > dV( 5, 3 );
+    EXPECT_EQ( 5, dV.size( ) );
+
+    bolt::cl::device_vector< int >::iterator myResult = dV.insert( dV.cend( ), 1 );
+    EXPECT_EQ( 1, *myResult );
+    EXPECT_EQ( 6, dV.size( ) );
 }
 
 int _tmain(int argc, _TCHAR* argv[])

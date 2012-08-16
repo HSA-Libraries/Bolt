@@ -130,6 +130,9 @@ namespace bolt
                 //  Implementation detail of boost.iterator
                 friend class boost::iterator_core_access;
 
+                //  Handy for the device_vector erase methods
+                friend class device_vector< value_type >;
+
                 //  Used for templatized copy constructor and the templatized equal operator
                 template < typename > friend class iterator_base;
 
@@ -240,13 +243,7 @@ namespace bolt
             device_vector( const InputIterator begin, const InputIterator end, bool readOnly, bool useHostPtr = false, CommandQueue& cq = CommandQueue::getDefault( ) ): m_commQueue( cq )
             {
                 static_assert( std::is_same< value_type, std::iterator_traits< InputIterator >::value_type >::value, "device_vector value_type does not match iterator value_type" );
-                static_assert( std::is_same< std::random_access_iterator_tag, std::iterator_traits< InputIterator >::iterator_category >::value, "InputIterator must be random access category" );
                 static_assert( std::is_pod< value_type >::value, "device_vector only supports POD (plain old data) types" );
-
-                //  We want to use the context from the passed in commandqueue to initialize our buffer
-                cl_int l_Error = CL_SUCCESS;
-                ::cl::Context l_Context = m_commQueue.getInfo< CL_QUEUE_CONTEXT >( &l_Error );
-                V_OPENCL( l_Error, "device_vector failed to query for the context of the ::cl::CommandQueue object" );
 
                 cl_mem_flags flags = 0;
                 if( readOnly )
@@ -262,6 +259,11 @@ namespace bolt
                 {
                     flags |= CL_MEM_USE_HOST_PTR;
                 }
+
+                //  We want to use the context from the passed in commandqueue to initialize our buffer
+                cl_int l_Error = CL_SUCCESS;
+                ::cl::Context l_Context = m_commQueue.getInfo< CL_QUEUE_CONTEXT >( &l_Error );
+                V_OPENCL( l_Error, "device_vector failed to query for the context of the ::cl::CommandQueue object" );
 
                 m_Size = std::distance( begin, end );
                 m_devMemory = ::cl::Buffer( l_Context, flags, m_Size * sizeof( value_type ), reinterpret_cast< value_type* >( &*begin ) );
@@ -289,13 +291,6 @@ namespace bolt
 
                 m_Size = capacity( );
             };
-
-            //  TODO: Commented out operator=; do we need to implement? Error prone to maintain
-            //device_vector& operator=( const device_vector& rhs)
-            //{
-            //    if( this == &rhs )
-            //        return *this;
-            //}
 
             //  Member functions
 
@@ -710,8 +705,13 @@ namespace bolt
             */
             void clear( void )
             {
-                cl_int l_Error = m_devMemory.release( );
-                V_OPENCL( l_Error, "device_vector to release the reference count of the internal ::cl::Buffer" );
+                //  Only way to release the Buffer resource is to explicitly call the destructor
+                //m_devMemory.~Buffer( );
+
+                //  TODO:  Allocate a temp empty buffer on the stack, because of a double release problem with explicitly
+                //  calling the Wrapper destructor with cl.hpp version 1.2
+                ::cl::Buffer tmp;
+                m_devMemory = tmp;
 
                 m_Size = 0;
             }
@@ -724,7 +724,7 @@ namespace bolt
                 return m_Size ? false: true;
             }
 
-            /*! \brief Appends a copy of the value
+            /*! \brief Appends a copy of the value to the container
              *  \param value The element to append
             */
             void push_back( const value_type& value )
@@ -737,12 +737,12 @@ namespace bolt
                 //  right at first blush
                 if( m_Size == capacity( ) )
                 {
-                    reserve( m_Size + 10, m_commQueue );
+                    reserve( m_Size + 10 );
                 }
 
                 cl_int l_Error = CL_SUCCESS;
 
-                pointer result = m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_WRITE, m_Size * sizeof( value_type), sizeof( value_type ), NULL, NULL, &l_Error );
+                pointer result = reinterpret_cast< pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_WRITE, m_Size * sizeof( value_type), sizeof( value_type ), NULL, NULL, &l_Error ) );
                 V_OPENCL( l_Error, "device_vector failed map device memory to host memory for push_back" );
                 *result = value;
 
@@ -780,8 +780,31 @@ namespace bolt
              *  \param index The iterator position in which to remove the element
             *   \return The iterator position after the deleted element
             */
-            iterator erase( iterator index )
+            iterator erase( const_iterator index )
             {
+                if( &index.m_Container != this )
+                    throw ::cl::Error( CL_INVALID_ARG_VALUE , "Iterator is not from this container" );
+
+                iterator l_End = end( );
+                if( index.m_index >= l_End.m_index )
+                    throw ::cl::Error( CL_INVALID_ARG_INDEX , "Iterator is pointing past the end of this container" );
+
+                size_type sizeRegion = l_End.m_index - index.m_index;
+
+                cl_int l_Error = CL_SUCCESS;
+                pointer ptrBuff = reinterpret_cast< pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ | CL_MAP_WRITE, 
+                        index.m_index * sizeof( value_type ), sizeRegion * sizeof( value_type ), NULL, NULL, &l_Error ) );
+                V_OPENCL( l_Error, "device_vector failed map device memory to host memory for operator[]" );
+
+                ::memmove( ptrBuff, ptrBuff + 1, (sizeRegion - 1)*sizeof( value_type ) );
+
+                l_Error = m_commQueue.enqueueUnmapMemObject( m_devMemory, ptrBuff );
+                V_OPENCL( l_Error, "device_vector failed to unmap host memory back to device memory" );
+
+                --m_Size;
+
+                size_type newIndex = (m_Size < index.m_index) ? m_Size : index.m_index;
+                return iterator( *this, newIndex );
             }
 
             /*! \brief Removes a range of elements
@@ -789,20 +812,95 @@ namespace bolt
              *  \param end The iterator position signifying the end of the range (exclusive)
             *   \return The iterator position after the deleted range
             */
-            iterator erase( iterator begin, iterator end )
+            iterator erase( const_iterator first, const_iterator last )
             {
+                if(( &first.m_Container != this ) && ( &last.m_Container != this ) )
+                    throw ::cl::Error( CL_INVALID_ARG_VALUE , "Iterator is not from this container" );
+
+                if( last.m_index > m_Size )
+                    throw ::cl::Error( CL_INVALID_ARG_INDEX , "Iterator is pointing past the end of this container" );
+
+                if( (first == begin( )) && (last == end( )) )
+                {
+                    clear( );
+                    return iterator( *this, m_Size );
+                }
+
+                iterator l_End = end( );
+                size_type sizeMap = l_End.m_index - first.m_index;
+
+                cl_int l_Error = CL_SUCCESS;
+                pointer ptrBuff = reinterpret_cast< pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ | CL_MAP_WRITE, 
+                        first.m_index * sizeof( value_type ), sizeMap * sizeof( value_type ), NULL, NULL, &l_Error ) );
+                V_OPENCL( l_Error, "device_vector failed map device memory to host memory for operator[]" );
+
+                size_type sizeErase = last.m_index - first.m_index;
+                ::memmove( ptrBuff, ptrBuff + sizeErase, (sizeMap - sizeErase)*sizeof( value_type ) );
+
+                l_Error = m_commQueue.enqueueUnmapMemObject( m_devMemory, ptrBuff );
+                V_OPENCL( l_Error, "device_vector failed to unmap host memory back to device memory" );
+
+                m_Size -= sizeErase;
+
+                size_type newIndex = (m_Size < last.m_index) ? m_Size : last.m_index;
+                return iterator( *this, newIndex );
             }
 
-            iterator insert( iterator index, const value_type& value )
+            /*! \brief Insert a new element into the container
+             *  \param index The iterator position to insert a copy of the element
+             *  \param value The element to insert
+            *   \return The position of the new element
+            *   \note Only iterators before the insertion point remain valid after the insertion.
+            *   \note If the container must grow to contain the new value, all iterators and references are invalidated
+            */
+            iterator insert( const_iterator index, const value_type& value )
             {
+                if( &index.m_Container != this )
+                    throw ::cl::Error( CL_INVALID_ARG_VALUE , "Iterator is not from this container" );
+
+                if( index.m_index > m_Size )
+                    throw ::cl::Error( CL_INVALID_ARG_INDEX , "Iterator is pointing past the end of this container" );
+
+                if( index.m_index == m_Size )
+                {
+                    push_back( value );
+                    return iterator( *this, index.m_index );
+                }
+
+                //  Need to grow the vector to insert a new value
+                //  TODO:  What is an appropriate growth strategy for GPU memory allocation?  Exponential growth does not seem 
+                //  right at first blush
+                if( m_Size == capacity( ) )
+                {
+                    reserve( m_Size + 10 );
+                }
+
+                size_type sizeRegion = m_Size - index.m_index;
+
+                cl_int l_Error = CL_SUCCESS;
+                pointer ptrBuff = reinterpret_cast< pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ | CL_MAP_WRITE, 
+                        index.m_index * sizeof( value_type ), sizeRegion * sizeof( value_type ), NULL, NULL, &l_Error ) );
+                V_OPENCL( l_Error, "device_vector failed map device memory to host memory for operator[]" );
+
+                //  Shuffle the old values 1 element down
+                ::memmove( ptrBuff + 1, ptrBuff, (sizeRegion - 1)*sizeof( value_type ) );
+                //  Write the new value in its place
+                *ptrBuff = value;
+
+                l_Error = m_commQueue.enqueueUnmapMemObject( m_devMemory, ptrBuff );
+                V_OPENCL( l_Error, "device_vector failed to unmap host memory back to device memory" );
+
+                ++m_Size;
+
+                return iterator( *this, index.m_index );
             }
 
-            void insert( iterator index, size_type N, const value_type& value )
+            void insert( const_iterator index, size_type N, const value_type& value )
             {
             }
 
             template< typename InputIterator >
-            void insert( iterator index, InputIterator begin, InputIterator end );
+            void insert( const_iterator index, InputIterator begin, InputIterator end );
 
             /*! \brief Assigns newSize copies of element value
              *  \param newSize The new size of the device_vector
@@ -813,7 +911,7 @@ namespace bolt
             {
                 if( newSize > m_Size )
                 {
-                    reserve( newSize, m_commQueue );
+                    reserve( newSize );
                 }
                 m_Size = newSize;
 
@@ -857,10 +955,6 @@ namespace bolt
                 l_Error = m_commQueue.enqueueUnmapMemObject( m_devMemory, ptrBuffer );
                 V_OPENCL( l_Error, "device_vector failed to unmap host memory back to device memory" );
             }
-
-            //~device_vector( )
-            //{
-            //};
 
         private:
             ::cl::Buffer m_devMemory;
