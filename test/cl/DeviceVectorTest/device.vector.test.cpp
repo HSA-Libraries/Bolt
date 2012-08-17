@@ -582,6 +582,76 @@ TEST( Vector, InsertEnd )
     EXPECT_EQ( 6, dV.size( ) );
 }
 
+TEST( Vector, InsertFloatRangeEmpty )
+{
+    bolt::cl::device_vector< float > dV;
+    EXPECT_EQ( 0, dV.size( ) );
+
+    dV.insert( dV.cbegin( ), 5, 7.0f );
+    EXPECT_EQ( 5, dV.size( ) );
+    EXPECT_FLOAT_EQ( 7.0f, dV[ 0 ] );
+    EXPECT_FLOAT_EQ( 7.0f, dV[ 1 ] );
+    EXPECT_FLOAT_EQ( 7.0f, dV[ 2 ] );
+    EXPECT_FLOAT_EQ( 7.0f, dV[ 3 ] );
+    EXPECT_FLOAT_EQ( 7.0f, dV[ 4 ] );
+}
+
+//TEST( Vector, InsertIntegerRangeEmpty )
+//{
+//    bolt::cl::device_vector< int > dV;
+//    EXPECT_EQ( 0, dV.size( ) );
+//
+//    dV.insert( dV.cbegin( ), 5, 7 );
+//    EXPECT_EQ( 5, dV.size( ) );
+//    EXPECT_EQ( 7, dV[ 0 ] );
+//    EXPECT_EQ( 7, dV[ 1 ] );
+//    EXPECT_EQ( 7, dV[ 2 ] );
+//    EXPECT_EQ( 7, dV[ 3 ] );
+//    EXPECT_EQ( 7, dV[ 4 ] );
+//}
+
+TEST( Vector, InsertFloatRangeIterator )
+{
+    bolt::cl::device_vector< float > dV;
+    EXPECT_EQ( 0, dV.size( ) );
+
+    std::vector< float > sV( 5 );
+    sV[ 0 ] = 1.0f;
+    sV[ 1 ] = 2.0f;
+    sV[ 2 ] = 3.0f;
+    sV[ 3 ] = 4.0f;
+    sV[ 4 ] = 5.0f;
+
+    dV.insert( dV.cbegin( ), sV.begin( ), sV.end( ) );
+    EXPECT_EQ( 5, dV.size( ) );
+    EXPECT_FLOAT_EQ( 1.0f, dV[ 0 ] );
+    EXPECT_FLOAT_EQ( 2.0f, dV[ 1 ] );
+    EXPECT_FLOAT_EQ( 3.0f, dV[ 2 ] );
+    EXPECT_FLOAT_EQ( 4.0f, dV[ 3 ] );
+    EXPECT_FLOAT_EQ( 5.0f, dV[ 4 ] );
+}
+
+TEST( Vector, InsertIntegerRangeIterator )
+{
+    bolt::cl::device_vector< float > dV;
+    EXPECT_EQ( 0, dV.size( ) );
+
+    std::vector< int > sV( 5 );
+    sV[ 0 ] = 1;
+    sV[ 1 ] = 2;
+    sV[ 2 ] = 3;
+    sV[ 3 ] = 4;
+    sV[ 4 ] = 5;
+
+    dV.insert( dV.cbegin( ), sV.begin( ), sV.end( ) );
+    EXPECT_EQ( 5, dV.size( ) );
+    EXPECT_FLOAT_EQ( 1.0f, dV[ 0 ] );
+    EXPECT_FLOAT_EQ( 2.0f, dV[ 1 ] );
+    EXPECT_FLOAT_EQ( 3.0f, dV[ 2 ] );
+    EXPECT_FLOAT_EQ( 4.0f, dV[ 3 ] );
+    EXPECT_FLOAT_EQ( 5.0f, dV[ 4 ] );
+}
+
 int _tmain(int argc, _TCHAR* argv[])
 {
     ::testing::InitGoogleTest( &argc, &argv[ 0 ] );

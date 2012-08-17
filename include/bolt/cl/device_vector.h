@@ -367,46 +367,20 @@ namespace bolt
                 return m_Size;
             }
 
-            /*! \brief Return the maximum number of elements possible to allocate
-            *   \note If the context associated with this buffer has multiple devices, this returns the minimum of the set of memory 
-            *   reported by each device
-            *   \return The maximum amount of memory possible to allocate in this device_vector for its context, counted in elements
+            /*! \brief Return the maximum number of elements possible to allocate on the associated device
+            *   \return The maximum amount of memory possible to allocate, counted in elements
             */
             size_type max_size( void ) const
             {
                 cl_int l_Error = CL_SUCCESS;
 
-                if( m_Size == 0 )
-                    throw ::cl::Error( CL_MEM_OBJECT_ALLOCATION_FAILURE , "No ::cl::Buffer object exists to query" );
+                ::cl::Device l_Device = m_commQueue.getInfo< CL_QUEUE_DEVICE >( &l_Error );
+                V_OPENCL( l_Error, "device_vector failed to query for the device of the command queue" );
 
-                ::cl::Context l_Context = m_devMemory.getInfo< CL_MEM_CONTEXT >( &l_Error );
-                V_OPENCL( l_Error, "device_vector failed to query for the context of the ::cl::Buffer object" );
-
-                std::vector< ::cl::Device > l_vDevices = l_Context.getInfo< CL_CONTEXT_DEVICES >( &l_Error );
-                V_OPENCL( l_Error, "device_vector failed to query for the vector of devices from the context" );
-
-                //  If multiple devices in this context, return the mimimum value of the set
-                //  Context has to have at least 1 device, so call to begin() is safe
-                size_type l_minMaxSize  = l_vDevices.begin( )->getInfo< CL_DEVICE_MAX_MEM_ALLOC_SIZE >( &l_Error );
+                size_type l_MaxSize  = l_Device.getInfo< CL_DEVICE_MAX_MEM_ALLOC_SIZE >( &l_Error );
                 V_OPENCL( l_Error, "device_vector failed to query device for the maximum memory size" );
 
-                if( l_vDevices.size( ) > 1 )
-                {
-                    for( std::vector< ::cl::Device >::size_type iDevice = 1; iDevice < l_vDevices.size( ); ++iDevice )
-                    {
-                        size_type ll_minMaxSize = l_vDevices[ iDevice ].getInfo< CL_DEVICE_MAX_MEM_ALLOC_SIZE >( &l_Error );
-                        V_OPENCL( l_Error, "device_vector failed to query device for the maximum memory size" );
-                        
-                        if( ll_minMaxSize < l_minMaxSize )
-                        {
-                            l_minMaxSize = ll_minMaxSize;
-                        }
-
-                       V_OPENCL( l_Error, "device_vector failed to query device for the maximum memory size" );
-                    }
-                }
-
-                return l_minMaxSize / sizeof( value_type );
+                return l_MaxSize / sizeof( value_type );
             }
 
             /*! \brief Request a change in the capacity of the device_vector
@@ -420,14 +394,18 @@ namespace bolt
             */
             void reserve( size_type reqSize )
             {
-                if( m_Size == 0 )
-                    throw ::cl::Error( CL_MEM_OBJECT_ALLOCATION_FAILURE , "No ::cl::Buffer object exists to query" );
-
                 if( reqSize <= capacity( ) )
                     return;
 
                 if( reqSize > max_size( ) )
                     throw ::cl::Error( CL_MEM_OBJECT_ALLOCATION_FAILURE , "The amount of memory requested exceeds what is available" );
+
+                if( m_Size == 0 )
+                {
+                    ::cl::Buffer l_tmpBuffer( CL_MEM_READ_WRITE, reqSize * sizeof( value_type ) );
+                    m_devMemory = l_tmpBuffer;
+                    return;
+                }
 
                 cl_int l_Error = CL_SUCCESS;
 
@@ -442,29 +420,15 @@ namespace bolt
                 ::cl::Buffer l_tmpBuffer( l_Context, l_memFlags, l_size, NULL, &l_Error );
                 V_OPENCL( l_Error, "device_vector can not create an temporary internal OpenCL buffer" );
 
-                ////  Copy data
-                //std::vector< ::cl::Device > l_vDevices = l_Context.getInfo< CL_CONTEXT_DEVICES >( &l_Error );
-                //V_OPENCL( l_Error, "device_vector failed to query for the vector of devices from the context" );
-                //if( l_vDevices.size( ) == 1 )
-                //{
-                //    ::cl::CommandQueue l_cqueue( l_Context, l_vDevices.front( ), 0, &l_Error );
-                //    V_OPENCL( l_Error, "failed to create a command_queue in device_vector" );
+                size_type l_srcSize = m_devMemory.getInfo< CL_MEM_SIZE >( &l_Error );
+                V_OPENCL( l_Error, "device_vector failed to request the size of the ::cl::Buffer object" );
 
-                    size_type l_srcSize = m_devMemory.getInfo< CL_MEM_SIZE >( &l_Error );
-                    V_OPENCL( l_Error, "device_vector failed to request the size of the ::cl::Buffer object" );
+                std::vector< ::cl::Event > copyEvent( 1 );
+                V_OPENCL( m_commQueue.enqueueCopyBuffer( m_devMemory, l_tmpBuffer, 0, 0, l_srcSize, NULL, &copyEvent.front( ) ), 
+                    "device_vector failed to copy from buffer to buffer " );
 
-                    std::vector< ::cl::Event > copyEvent( 1 );
-                    V_OPENCL( m_commQueue.enqueueCopyBuffer( m_devMemory, l_tmpBuffer, 0, 0, l_srcSize, NULL, &copyEvent.front( ) ), 
-                        "device_vector failed to copy from buffer to buffer " );
-
-                    //  Not allowed to return until the copy operation is finished
-                    V_OPENCL( m_commQueue.enqueueWaitForEvents( copyEvent ), "device_vector failed to wait on an event object" );
-                //}
-                //else
-                //{
-                //    throw ::cl::Error( CL_INVALID_COMMAND_QUEUE , "Which command queue ?" );
-                //}
-
+                //  Not allowed to return until the copy operation is finished
+                V_OPENCL( m_commQueue.enqueueWaitForEvents( copyEvent ), "device_vector failed to wait on an event object" );
 
                 //  Operator= should call retain/release appropriately
                 m_devMemory = l_tmpBuffer;
@@ -875,15 +839,16 @@ namespace bolt
                     reserve( m_Size + 10 );
                 }
 
-                size_type sizeRegion = m_Size - index.m_index;
+                size_type sizeMap = (m_Size - index.m_index) + 1;
 
                 cl_int l_Error = CL_SUCCESS;
                 pointer ptrBuff = reinterpret_cast< pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ | CL_MAP_WRITE, 
-                        index.m_index * sizeof( value_type ), sizeRegion * sizeof( value_type ), NULL, NULL, &l_Error ) );
+                        index.m_index * sizeof( value_type ), sizeMap * sizeof( value_type ), NULL, NULL, &l_Error ) );
                 V_OPENCL( l_Error, "device_vector failed map device memory to host memory for operator[]" );
 
                 //  Shuffle the old values 1 element down
-                ::memmove( ptrBuff + 1, ptrBuff, (sizeRegion - 1)*sizeof( value_type ) );
+                ::memmove( ptrBuff + 1, ptrBuff, (sizeMap - 1)*sizeof( value_type ) );
+
                 //  Write the new value in its place
                 *ptrBuff = value;
 
@@ -895,12 +860,89 @@ namespace bolt
                 return iterator( *this, index.m_index );
             }
 
-            void insert( const_iterator index, size_type N, const value_type& value )
+            /*! \brief Inserts n copies of the new element into the container
+             *  \param index The iterator position to insert n copies of the element
+             *  \param n The number of copies of element
+             *  \param value The element to insert
+             *   \note Only iterators before the insertion point remain valid after the insertion.
+             *   \note If the container must grow to contain the new value, all iterators and references are invalidated
+             */
+            void insert( const_iterator index, size_type n, const value_type& value )
             {
+                if( &index.m_Container != this )
+                    throw ::cl::Error( CL_INVALID_ARG_VALUE , "Iterator is not from this container" );
+
+                if( index.m_index > m_Size )
+                    throw ::cl::Error( CL_INVALID_ARG_INDEX , "Iterator is pointing past the end of this container" );
+
+                //  Need to grow the vector to insert a new value
+                //  TODO:  What is an appropriate growth strategy for GPU memory allocation?  Exponential growth does not seem 
+                //  right at first blush
+                if( ( m_Size + n ) > capacity( ) )
+                {
+                    reserve( m_Size + n );
+                }
+
+                size_type sizeMap = (m_Size - index.m_index) + n;
+
+                cl_int l_Error = CL_SUCCESS;
+                pointer ptrBuff = reinterpret_cast< pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ | CL_MAP_WRITE, 
+                        index.m_index * sizeof( value_type ), sizeMap * sizeof( value_type ), NULL, NULL, &l_Error ) );
+                V_OPENCL( l_Error, "device_vector failed map device memory to host memory for operator[]" );
+
+                //  Shuffle the old values n element down
+                ::memmove( ptrBuff + n, ptrBuff, (sizeMap - n)*sizeof( value_type ) );
+
+                //  Copy the new value n times in the buffer
+                for( size_type i = 0; i < n; ++i )
+                {
+                    ptrBuff[ i ] = value;
+                }
+
+                l_Error = m_commQueue.enqueueUnmapMemObject( m_devMemory, ptrBuff );
+                V_OPENCL( l_Error, "device_vector failed to unmap host memory back to device memory" );
+
+                m_Size += n;
             }
 
             template< typename InputIterator >
-            void insert( const_iterator index, InputIterator begin, InputIterator end );
+            void insert( const_iterator index, InputIterator begin, InputIterator end )
+            {
+                if( &index.m_Container != this )
+                    throw ::cl::Error( CL_INVALID_ARG_VALUE , "Iterator is not from this container" );
+
+                if( index.m_index > m_Size )
+                    throw ::cl::Error( CL_INVALID_ARG_INDEX , "Iterator is pointing past the end of this container" );
+
+                //  Need to grow the vector to insert a new value
+                //  TODO:  What is an appropriate growth strategy for GPU memory allocation?  Exponential growth does not seem 
+                //  right at first blush
+                size_type n = std::distance( begin, end );
+                if( ( m_Size + n ) > capacity( ) )
+                {
+                    reserve( m_Size + n );
+                }
+                size_type sizeMap = (m_Size - index.m_index) + n;
+
+                cl_int l_Error = CL_SUCCESS;
+                pointer ptrBuff = reinterpret_cast< pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ | CL_MAP_WRITE, 
+                        index.m_index * sizeof( value_type ), sizeMap * sizeof( value_type ), NULL, NULL, &l_Error ) );
+                V_OPENCL( l_Error, "device_vector failed map device memory to host memory for iterator insert" );
+
+                //  Shuffle the old values n element down
+                ::memmove( ptrBuff + n, ptrBuff, (sizeMap - n)*sizeof( value_type ) );
+
+#if( _WIN32 )
+                std::copy( begin, end, stdext::checked_array_iterator< pointer >( ptrBuff, n ) );
+#else
+                std::copy( begin, end, ptrBuff );
+#endif
+
+                l_Error = m_commQueue.enqueueUnmapMemObject( m_devMemory, ptrBuff );
+                V_OPENCL( l_Error, "device_vector failed to unmap host memory back to device memory" );
+
+                m_Size += n;
+            }
 
             /*! \brief Assigns newSize copies of element value
              *  \param newSize The new size of the device_vector
