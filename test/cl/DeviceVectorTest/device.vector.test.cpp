@@ -582,6 +582,44 @@ TEST( Vector, InsertEnd )
     EXPECT_EQ( 6, dV.size( ) );
 }
 
+TEST( Vector, DataRead )
+{
+    bolt::cl::device_vector< int > dV( 5, 3 );
+    EXPECT_EQ( 5, dV.size( ) );
+    dV[ 0 ] = 1;
+    dV[ 1 ] = 2;
+    dV[ 2 ] = 3;
+    dV[ 3 ] = 4;
+    dV[ 4 ] = 5;
+
+    bolt::cl::device_vector< int >::pointer mySP = dV.data( );
+
+    EXPECT_EQ( 1, mySP[ 0 ] );
+    EXPECT_EQ( 2, mySP[ 1 ] );
+    EXPECT_EQ( 3, mySP[ 2 ] );
+    EXPECT_EQ( 4, mySP[ 3 ] );
+    EXPECT_EQ( 5, mySP[ 4 ] );
+}
+
+TEST( Vector, DataWrite )
+{
+    bolt::cl::device_vector< int > dV( 5 );
+    EXPECT_EQ( 5, dV.size( ) );
+
+    bolt::cl::device_vector< int >::pointer mySP = dV.data( );
+    mySP[ 0 ] = 1;
+    mySP[ 1 ] = 2;
+    mySP[ 2 ] = 3;
+    mySP[ 3 ] = 4;
+    mySP[ 4 ] = 5;
+
+    EXPECT_EQ( 1, mySP[ 0 ] );
+    EXPECT_EQ( 2, mySP[ 1 ] );
+    EXPECT_EQ( 3, mySP[ 2 ] );
+    EXPECT_EQ( 4, mySP[ 3 ] );
+    EXPECT_EQ( 5, mySP[ 4 ] );
+}
+
 TEST( Vector, InsertFloatRangeEmpty )
 {
     bolt::cl::device_vector< float > dV;
@@ -621,27 +659,6 @@ TEST( Vector, InsertFloatRangeIterator )
     sV[ 2 ] = 3.0f;
     sV[ 3 ] = 4.0f;
     sV[ 4 ] = 5.0f;
-
-    dV.insert( dV.cbegin( ), sV.begin( ), sV.end( ) );
-    EXPECT_EQ( 5, dV.size( ) );
-    EXPECT_FLOAT_EQ( 1.0f, dV[ 0 ] );
-    EXPECT_FLOAT_EQ( 2.0f, dV[ 1 ] );
-    EXPECT_FLOAT_EQ( 3.0f, dV[ 2 ] );
-    EXPECT_FLOAT_EQ( 4.0f, dV[ 3 ] );
-    EXPECT_FLOAT_EQ( 5.0f, dV[ 4 ] );
-}
-
-TEST( Vector, InsertIntegerRangeIterator )
-{
-    bolt::cl::device_vector< float > dV;
-    EXPECT_EQ( 0, dV.size( ) );
-
-    std::vector< int > sV( 5 );
-    sV[ 0 ] = 1;
-    sV[ 1 ] = 2;
-    sV[ 2 ] = 3;
-    sV[ 3 ] = 4;
-    sV[ 4 ] = 5;
 
     dV.insert( dV.cbegin( ), sV.begin( ), sV.end( ) );
     EXPECT_EQ( 5, dV.size( ) );
