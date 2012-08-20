@@ -8,6 +8,7 @@
 #include <bolt/cl/bolt.h>
 #include <boost/iterator/iterator_facade.hpp>
 #include <boost/iterator/reverse_iterator.hpp>
+#include <boost/shared_array.hpp>
 
 /*! \file device_vector.h
  * Public header file for the device_container class
@@ -44,6 +45,30 @@ namespace bolt
         template< typename T >
         class device_vector
         {
+
+            /*! \brief Class used with shared_ptr<> as a custom deleter, to unmap a buffer that has been mapped with 
+            *   device_vector data() method
+            */
+            template< typename Container >
+            class UnMapBufferFunctor
+            {
+                Container& m_Container;
+
+            public:
+                //  Basic constructor requires a reference to the container and a positional element
+                UnMapBufferFunctor( Container& rhs ): m_Container( rhs )
+                {}
+
+                void operator( )( const void* pBuff )
+                {
+                    V_OPENCL( m_Container.m_commQueue.enqueueUnmapMemObject( m_Container.m_devMemory, const_cast< void* >( pBuff ) ),
+                            "shared_ptr failed to unmap host memory back to device memory" );
+                }
+            };
+
+            typedef T* naked_pointer;
+            typedef const T* const_naked_pointer;
+
         public:
 
             //  Useful typedefs specific to this container
@@ -52,8 +77,8 @@ namespace bolt
             typedef difference_type distance_type;
             typedef size_t size_type;
 
-            typedef T* pointer;
-            typedef const T* const_pointer;
+            typedef boost::shared_array< value_type > pointer;
+            typedef boost::shared_array< const value_type > const_pointer;
 
             /*! \brief A writeable element of the container
             *   The location of an element of the container may not actually reside in system memory, but rather device
@@ -76,7 +101,7 @@ namespace bolt
                 operator value_type( ) const
                 {
                     cl_int l_Error = CL_SUCCESS;
-                    pointer result = reinterpret_cast< pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ, m_index * sizeof( value_type ), sizeof( value_type ), NULL, NULL, &l_Error ) );
+                    naked_pointer result = reinterpret_cast< naked_pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ, m_index * sizeof( value_type ), sizeof( value_type ), NULL, NULL, &l_Error ) );
                     V_OPENCL( l_Error, "device_vector failed map device memory to host memory for operator[]" );
 
                     value_type valTmp = *result;
@@ -89,7 +114,7 @@ namespace bolt
                 reference& operator=( const value_type& rhs )
                 {
                     cl_int l_Error = CL_SUCCESS;
-                    pointer result = reinterpret_cast< pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_WRITE_INVALIDATE_REGION, m_index * sizeof( value_type ), sizeof( value_type ), NULL, NULL, &l_Error ) );
+                    naked_pointer result = reinterpret_cast< naked_pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_WRITE_INVALIDATE_REGION, m_index * sizeof( value_type ), sizeof( value_type ), NULL, NULL, &l_Error ) );
                     V_OPENCL( l_Error, "device_vector failed map device memory to host memory for operator[]" );
 
                     *result = rhs;
@@ -270,11 +295,11 @@ namespace bolt
 
                 if( !useHostPtr )
                 {
-                    pointer ptrBuffer = reinterpret_cast< pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, CL_TRUE, CL_MAP_WRITE_INVALIDATE_REGION, 0 , m_Size * sizeof( value_type ), NULL, NULL, &l_Error ) );
+                    naked_pointer ptrBuffer = reinterpret_cast< naked_pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, CL_TRUE, CL_MAP_WRITE_INVALIDATE_REGION, 0 , m_Size * sizeof( value_type ), NULL, NULL, &l_Error ) );
                     V_OPENCL( l_Error, "device_vector failed to map device memory to host memory" );
 
 #if( _WIN32 )
-                    std::copy( begin, end, stdext::checked_array_iterator< pointer >( ptrBuffer, m_Size ) );
+                    std::copy( begin, end, stdext::checked_array_iterator< naked_pointer >( ptrBuffer, m_Size ) );
 #else
                     std::copy( begin, end, ptrBuffer );
 #endif
@@ -509,7 +534,7 @@ namespace bolt
             {
                 cl_int l_Error = CL_SUCCESS;
 
-                const_pointer ptrBuff = reinterpret_cast< const_pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ, n * sizeof( value_type), sizeof( value_type), NULL, NULL, &l_Error ) );
+                const_naked_pointer ptrBuff = reinterpret_cast< const_naked_pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ, n * sizeof( value_type), sizeof( value_type), NULL, NULL, &l_Error ) );
                 V_OPENCL( l_Error, "device_vector failed map device memory to host memory for operator[]" );
 
                 const_reference tmpRef = *ptrBuff;
@@ -619,7 +644,7 @@ namespace bolt
             {
                 cl_int l_Error = CL_SUCCESS;
 
-                const_pointer ptrBuff = reinterpret_cast< const_pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ, 0, sizeof( value_type ), NULL, NULL, &l_Error ) );
+                const_naked_pointer ptrBuff = reinterpret_cast< const_naked_pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ, 0, sizeof( value_type ), NULL, NULL, &l_Error ) );
                 V_OPENCL( l_Error, "device_vector failed map device memory to host memory for operator[]" );
 
                 const_reference tmpRef = *ptrBuff;
@@ -645,7 +670,8 @@ namespace bolt
             {
                 cl_int l_Error = CL_SUCCESS;
 
-                const_pointer ptrBuff = reinterpret_cast< const_pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ, (m_Size - 1) * sizeof( value_type ), sizeof( value_type ), NULL, NULL, &l_Error ) );
+                const_naked_pointer ptrBuff = reinterpret_cast< const_naked_pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ, 
+                    (m_Size - 1) * sizeof( value_type ), sizeof( value_type ), NULL, NULL, &l_Error ) );
                 V_OPENCL( l_Error, "device_vector failed map device memory to host memory for operator[]" );
 
                 const_reference tmpRef = *ptrBuff;
@@ -658,10 +684,26 @@ namespace bolt
 
             pointer data( void )
             {
+                cl_int l_Error = CL_SUCCESS;
+
+                naked_pointer ptrBuff = reinterpret_cast< naked_pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ | CL_MAP_WRITE, 
+                    0, m_Size * sizeof( value_type ), NULL, NULL, &l_Error ) );
+                V_OPENCL( l_Error, "device_vector failed map device memory to host memory for operator[]" );
+
+                pointer sp( ptrBuff, UnMapBufferFunctor< device_vector< value_type > >( *this ) );
+                return sp;
             }
 
             const_pointer data( void ) const
             {
+                cl_int l_Error = CL_SUCCESS;
+
+                const_naked_pointer ptrBuff = reinterpret_cast< const_naked_pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ, 
+                    0, m_Size * sizeof( value_type ), NULL, NULL, &l_Error ) );
+                V_OPENCL( l_Error, "device_vector failed map device memory to host memory for operator[]" );
+
+                const_pointer sp( ptrBuff, UnMapBufferFunctor< const device_vector< value_type > >( *this ) );
+                return sp;
             }
 
             /*! \brief Removes all elements (makes the device_vector empty)
@@ -697,16 +739,16 @@ namespace bolt
                     throw ::cl::Error( CL_MEM_OBJECT_ALLOCATION_FAILURE , "device_vector size can not be greater than capacity( )" );
 
                 //  Need to grow the vector to push new value
-                //  TODO:  What is an appropriate growth strategy for GPU memory allocation?  Exponential growth does not seem 
-                //  right at first blush
+                //  Vectors will double their capacity on push_back if the array is not big enough
                 if( m_Size == capacity( ) )
                 {
-                    reserve( m_Size + 10 );
+                    reserve( m_Size * 2 );
                 }
 
                 cl_int l_Error = CL_SUCCESS;
 
-                pointer result = reinterpret_cast< pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_WRITE, m_Size * sizeof( value_type), sizeof( value_type ), NULL, NULL, &l_Error ) );
+                naked_pointer result = reinterpret_cast< naked_pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_WRITE_INVALIDATE_REGION, 
+                    m_Size * sizeof( value_type), sizeof( value_type ), NULL, NULL, &l_Error ) );
                 V_OPENCL( l_Error, "device_vector failed map device memory to host memory for push_back" );
                 *result = value;
 
@@ -756,7 +798,7 @@ namespace bolt
                 size_type sizeRegion = l_End.m_index - index.m_index;
 
                 cl_int l_Error = CL_SUCCESS;
-                pointer ptrBuff = reinterpret_cast< pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ | CL_MAP_WRITE, 
+                naked_pointer ptrBuff = reinterpret_cast< naked_pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ | CL_MAP_WRITE, 
                         index.m_index * sizeof( value_type ), sizeRegion * sizeof( value_type ), NULL, NULL, &l_Error ) );
                 V_OPENCL( l_Error, "device_vector failed map device memory to host memory for operator[]" );
 
@@ -794,7 +836,7 @@ namespace bolt
                 size_type sizeMap = l_End.m_index - first.m_index;
 
                 cl_int l_Error = CL_SUCCESS;
-                pointer ptrBuff = reinterpret_cast< pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ | CL_MAP_WRITE, 
+                naked_pointer ptrBuff = reinterpret_cast< naked_pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ | CL_MAP_WRITE, 
                         first.m_index * sizeof( value_type ), sizeMap * sizeof( value_type ), NULL, NULL, &l_Error ) );
                 V_OPENCL( l_Error, "device_vector failed map device memory to host memory for operator[]" );
 
@@ -842,7 +884,7 @@ namespace bolt
                 size_type sizeMap = (m_Size - index.m_index) + 1;
 
                 cl_int l_Error = CL_SUCCESS;
-                pointer ptrBuff = reinterpret_cast< pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ | CL_MAP_WRITE, 
+                naked_pointer ptrBuff = reinterpret_cast< naked_pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ | CL_MAP_WRITE, 
                         index.m_index * sizeof( value_type ), sizeMap * sizeof( value_type ), NULL, NULL, &l_Error ) );
                 V_OPENCL( l_Error, "device_vector failed map device memory to host memory for operator[]" );
 
@@ -886,7 +928,7 @@ namespace bolt
                 size_type sizeMap = (m_Size - index.m_index) + n;
 
                 cl_int l_Error = CL_SUCCESS;
-                pointer ptrBuff = reinterpret_cast< pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ | CL_MAP_WRITE, 
+                naked_pointer ptrBuff = reinterpret_cast< naked_pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ | CL_MAP_WRITE, 
                         index.m_index * sizeof( value_type ), sizeMap * sizeof( value_type ), NULL, NULL, &l_Error ) );
                 V_OPENCL( l_Error, "device_vector failed map device memory to host memory for operator[]" );
 
@@ -925,7 +967,7 @@ namespace bolt
                 size_type sizeMap = (m_Size - index.m_index) + n;
 
                 cl_int l_Error = CL_SUCCESS;
-                pointer ptrBuff = reinterpret_cast< pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ | CL_MAP_WRITE, 
+                naked_pointer ptrBuff = reinterpret_cast< naked_pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ | CL_MAP_WRITE, 
                         index.m_index * sizeof( value_type ), sizeMap * sizeof( value_type ), NULL, NULL, &l_Error ) );
                 V_OPENCL( l_Error, "device_vector failed map device memory to host memory for iterator insert" );
 
@@ -933,7 +975,7 @@ namespace bolt
                 ::memmove( ptrBuff + n, ptrBuff, (sizeMap - n)*sizeof( value_type ) );
 
 #if( _WIN32 )
-                std::copy( begin, end, stdext::checked_array_iterator< pointer >( ptrBuff, n ) );
+                std::copy( begin, end, stdext::checked_array_iterator< naked_pointer >( ptrBuff, n ) );
 #else
                 std::copy( begin, end, ptrBuff );
 #endif
@@ -986,11 +1028,11 @@ namespace bolt
 
                 cl_int l_Error = CL_SUCCESS;
 
-                pointer ptrBuffer = reinterpret_cast< pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, CL_TRUE, CL_MAP_WRITE_INVALIDATE_REGION, 0 , m_Size * sizeof( value_type ), NULL, NULL, &l_Error ) );
+                naked_pointer ptrBuffer = reinterpret_cast< naked_pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, CL_TRUE, CL_MAP_WRITE_INVALIDATE_REGION, 0 , m_Size * sizeof( value_type ), NULL, NULL, &l_Error ) );
                 V_OPENCL( l_Error, "device_vector failed map device memory to host memory for push_back" );
 
 #if( _WIN32 )
-                std::copy( begin, end, stdext::checked_array_iterator< pointer >( ptrBuffer, m_Size ) );
+                std::copy( begin, end, stdext::checked_array_iterator< naked_pointer >( ptrBuffer, m_Size ) );
 #else
                 std::copy( begin, end, ptrBuffer );
 #endif
