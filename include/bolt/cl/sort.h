@@ -26,8 +26,8 @@ namespace bolt {
 
 
 		/*! \p sort returns the sorted result of all the elements in the inputIterator between the the first and last elements using the specified binary_op.  
-		* You can arrange the elements in an ascending order, where the binary_op is the minimum operator.  By default, 
-		* the binary operator is "minimum<>()".  The version takes a bolt::cl::control structure as a first argument.
+		* You can arrange the elements in an ascending order, where the binary_op is the less<>() operator.  By default, 
+		* the binary operator is "less<>()".  The version takes a bolt::cl::control structure as a first argument.
 
 		*
 		* The \p sort operation is similar the std::sort function.  See http://www.sgi.com/tech/stl/sort.html
@@ -35,7 +35,7 @@ namespace bolt {
 		* \param ctl Control structure to control command-queue, debug, tuning, etc.  See control.
 		* \param first The first position in the sequence to be sorted.
 		* \param last  The last position in the sequence to be sorted.
-		* \param comp  The comparison operation used to compare two values.   By default, the compare operation is minimum<>(). i.e the elements are stored in ascending order. 
+		* \param comp  The comparison operation used to compare two values.   By default, the compare operation is less<>(). i.e the elements are stored in ascending order. 
 		* \param cl_code Optional OpenCL(TM) code to be passed to the OpenCL compiler. The cl_code is inserted first in the generated code, before the cl_code trait.
 		* \return The sorted data which is available in place.
 		*
@@ -50,8 +50,8 @@ namespace bolt {
 		*
 		* bolt::cl::control ctl(myCommandQueue); // specify an OpenCL(TM) command queue to use for executing the sort routine.
 		* ctl.debug(bolt::cl::control::debug::SaveCompilerTemps); // save IL and ISA files for generated kernel
-		* // for arranging th eelements in the descending order, you can use bolt::cl::maximum<int>()
-		* bolt::cl::sort(ctl, a, a+10, bolt::cl::maximum<int>());
+		* // for arranging th eelements in the descending order, you can use bolt::cl::greater<int>()
+		* bolt::cl::sort(ctl, a, a+10, bolt::cl::greater<int>());
 		* // a => {9, 8, 7, 6, 5, 4, 3, 3, 3, 2}
 		*  \endcode
 		*/
@@ -60,14 +60,13 @@ namespace bolt {
 		void sort(const bolt::cl::control &ctl,
 			RandomAccessIterator first, 
 			RandomAccessIterator last,  
-            Compare comp=bolt::cl::minimum<typename std::iterator_traits<RandomAccessIterator>::value_type>(), 
+            Compare comp=bolt::cl::less<typename std::iterator_traits<RandomAccessIterator>::value_type>(), 
 			const std::string cl_code="");
 
 
-
 		/*! \p sort returns the sorted result of all the elements in the inputIterator between the the first and last elements using the specified binary_op.  
-		* You can arrange the elements in an ascending order, where the binary_op is the minimum operator.  By default, 
-		* the binary operator is "minimum<>()".  The version takes a bolt::cl::control structure as a first argument.
+		* You can arrange the elements in an ascending order, where the binary_op is the less<>() operator.  By default, 
+		* the binary operator is "less<>()".  The version takes a bolt::cl::control structure as a first argument.
 
 		*
 		* The \p sort operation is similar the std::sort function.  See http://www.sgi.com/tech/stl/sort.html
@@ -90,7 +89,7 @@ namespace bolt {
 		*
 		* bolt::cl::control ctl(myCommandQueue); // specify an OpenCL(TM) command queue to use for executing the sort routine.
 		* ctl.debug(bolt::cl::control::debug::SaveCompilerTemps); // save IL and ISA files for generated kernel
-		* // for arranging th eelements in the descending order, you can use bolt::cl::maximum<int>()
+		* // for arranging th eelements in the descending order, you can use bolt::cl::greater<int>()
 		* bolt::cl::sort(ctl, a, a+10);
 		* // a => {2, 3, 3, 3, 4, 5, 6, 7, 8, 9}
 		*  \endcode
@@ -103,8 +102,8 @@ namespace bolt {
 
 
 		/*! \p sort returns the sorted result of all the elements in the inputIterator between the the first and last elements using the specified binary_op.  
-		* You can arrange the elements in an ascending order, where the binary_op is the minimum operator.  By default, 
-		* the binary operator is "minimum<>()".  The version takes a bolt::cl::control structure as a first argument.
+		* You can arrange the elements in an ascending order, where the binary_op is the less<>() operator.  By default, 
+		* the binary operator is "less<>()".  The version takes a bolt::cl::control structure as a first argument.
 
 		*
 		* The \p sort operation is similar the std::sort function.  See http://www.sgi.com/tech/stl/sort.html
@@ -122,7 +121,7 @@ namespace bolt {
 		*
 		* int a[10] = {2, 9, 3, 7, 5, 6, 3, 8, 3, 4};
 		*
-		* // for arranging th eelements in the descending order, you can use bolt::cl::maximum<int>()
+		* // for arranging the elements in the descending order, you can use bolt::cl::greater<int>()
 		* bolt::cl::sort(a, a+10);
 		* // a => {2, 3, 3, 3, 4, 5, 6, 7, 8, 9}
 		*  \endcode
@@ -131,13 +130,13 @@ namespace bolt {
         template<typename RandomAccessIterator, typename Compare> 
 		void sort(RandomAccessIterator first, 
 			RandomAccessIterator last,  
-            Compare comp=bolt::cl::minimum<typename std::iterator_traits<RandomAccessIterator>::value_type>(), 
+            Compare comp=bolt::cl::less<typename std::iterator_traits<RandomAccessIterator>::value_type>(), 
 			const std::string cl_code="");
 
 
 		/*! \p sort returns the sorted result of all the elements in the inputIterator between the the first and last elements using the specified binary_op.  
-		* You can arrange the elements in an ascending order, where the binary_op is the minimum operator.  By default, 
-		* the binary operator is "minimum<>()".  The version takes a bolt::cl::control structure as a first argument.
+		* You can arrange the elements in an ascending order, where the binary_op is the less operator.  By default, 
+		* the binary operator is "less<>()".  The version takes a bolt::cl::control structure as a first argument.
 
 		*
 		* The \p sort operation is similar the std::sort function.  See http://www.sgi.com/tech/stl/sort.html
@@ -155,7 +154,7 @@ namespace bolt {
 		*
 		* int a[10] = {2, 9, 3, 7, 5, 6, 3, 8, 3, 4};
 		*
-		* // for arranging the elements in the descending order, you can use bolt::cl::maximum<int>()
+		* // for arranging the elements in the descending order, you can use bolt::cl::greater<int>()
 		* bolt::cl::sort(a, a+10);
 		* // a => {2, 3, 3, 3, 4, 5, 6, 7, 8, 9}
 		*  \endcode
