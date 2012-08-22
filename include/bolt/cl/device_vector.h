@@ -742,7 +742,7 @@ namespace bolt
                 //  Vectors will double their capacity on push_back if the array is not big enough
                 if( m_Size == capacity( ) )
                 {
-                    reserve( m_Size * 2 );
+                    m_Size ? reserve( m_Size * 2 ) : reserve( 1 );
                 }
 
                 cl_int l_Error = CL_SUCCESS;

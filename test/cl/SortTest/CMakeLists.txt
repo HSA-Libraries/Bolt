@@ -4,7 +4,9 @@
 # List the names of common files to compile across all platforms
 
 set( clBolt.Test.Sort.Source SortTest.cpp myocl.cpp)
-set( clBolt.Test.Sort.Headers  ${BOLT_INCLUDE_DIR}/bolt/cl/sort.h myocl.h)
+set( clBolt.Test.Sort.Headers 	myocl.h
+								${BOLT_INCLUDE_DIR}/bolt/cl/sort.h
+								${BOLT_INCLUDE_DIR}/bolt/cl/detail/sort.inl )
 
 set( clBolt.Test.Sort.Files ${clBolt.Test.Sort.Source} ${clBolt.Test.Sort.Headers} )
 
