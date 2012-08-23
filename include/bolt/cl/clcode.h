@@ -1,4 +1,6 @@
 #pragma once
+#if !defined( CLCODE_H )
+#define CLCODE_H
 
 #include <string>
 
@@ -38,10 +40,10 @@
 template <typename T>
 struct TypeName
 {
-	static std::string get()
-	{
-		return std::string("ERROR (bolt): Unknown typename; define missing TypeName<") + typeid(T).name() + ">";  
-	}
+    static std::string get()
+    {
+        return std::string("ERROR (bolt): Unknown typename; define missing TypeName<") + typeid(T).name() + ">";  
+    }
 };
 
 
@@ -49,12 +51,11 @@ struct TypeName
 template <typename T>
 struct ClCode
 {
-	static std::string get()
-	{
-		return "";
-	}
+    static std::string get()
+    {
+        return "";
+    }
 };
-
 
 /*!
  * A convenience macro to create the TypeName trait for a specified class \p T.
@@ -72,12 +73,7 @@ struct ClCode
  * See TypeName for more information.
  */
 #define BOLT_CREATE_TYPENAME(T) \
-	template<> struct TypeName<T> { static std::string get() { return #T; }};
-
-
-
-
-
+    template<> struct TypeName<T> { static std::string get() { return #T; }};
 
 /*!
  * Creates the ClCode trait which associates the specified type \p T with the string \p CODE_STRING.
@@ -93,21 +89,26 @@ struct ClCode
  * Another approach is to define the code string in a file (so host and string are identical), and then
  * pass the string read from the file to BOLT_CREATE_CLCODE. (See \ref clCodeFromFile)
  */
-#define BOLT_CREATE_CLCODE(T,CODE_STRING) template<> struct ClCode<T> { static std::string get() { return CODE_STRING; }};
-
-
-
+#define BOLT_CREATE_CLCODE(T,CODE_STRING) \
+    template<> struct ClCode<T> { static std::string get() { return CODE_STRING; }};
 
 /*!
  * Creates a string and a regular version of the functor F, and automatically defines the ClCode trait to associate the code string with the specified class T. 
  * \param T : Class.
- * \param FUNCTION : Function definition.  The function definition must not contain any exposed "," or the macro will fail to compile.  See \ref ClCodeTraits
+ * \param FUNCTION : Function definition.  See \ref ClCodeTraits
  */
-#define BOLT_FUNCTOR(T, FUNCTION)  FUNCTION ; BOLT_CREATE_TYPENAME(T); BOLT_CREATE_CLCODE(T,#FUNCTION);
-
-
+#define BOLT_FUNCTOR( T, ... ) __VA_ARGS__; BOLT_CREATE_TYPENAME( T ); BOLT_CREATE_CLCODE( T, #__VA_ARGS__ );
 
 /*! 
  * Return a string with the specified function F, and also create code that is fed to the host compiler.
  */
-#define BOLT_CODE_STRING(F)  #F; F ; 
+#define BOLT_CODE_STRING( ... )  #__VA_ARGS__; __VA_ARGS__;
+
+/*! \brief Macro that wraps around arbitrary text, and creates a string out of it
+*   \detailed This macro is helpful to write inline OpenCL programs, as it avoids wrapping every line of OpenCL 
+*   line with "XXX"\n
+*   \return The contents of the macro wrapped in an ASCII string
+*/
+#define STRINGIFY_CODE( ... ) #__VA_ARGS__
+
+#endif

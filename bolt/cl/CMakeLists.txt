@@ -22,7 +22,10 @@ include_directories( ${Boost_INCLUDE_DIRS} )
 
 set( clBolt.Include.Dir ${BOLT_INCLUDE_DIR}/bolt/cl )
 
-set( clBolt.Runtime.Source bolt.cpp ${BOLT_LIBRARY_DIR}/statisticalTimer.cpp )
+set( clBolt.Runtime.Source 	
+		bolt.cpp 
+		${BOLT_LIBRARY_DIR}/statisticalTimer.cpp )
+
 set( clBolt.Runtime.Headers 
 		${clBolt.Include.Dir}/bolt.h 
 		${clBolt.Include.Dir}/clcode.h 
@@ -32,6 +35,7 @@ set( clBolt.Runtime.Headers
 		${clBolt.Include.Dir}/functional.h 
 		${clBolt.Include.Dir}/iterator_traits.h 
 		${clBolt.Include.Dir}/reduce.h 
+		${clBolt.Include.Dir}/scan.h 
 		${clBolt.Include.Dir}/sort.h 
 		${clBolt.Include.Dir}/transform.h 
 		${clBolt.Include.Dir}/transform_reduce.h
@@ -41,12 +45,14 @@ set( clBolt.Runtime.Headers
 		
 set( clBolt.Runtime.Headers.Detail 
 		${clBolt.Include.Dir}/detail/reduce.inl
+		${clBolt.Include.Dir}/detail/scan.inl
         ${clBolt.Include.Dir}/detail/sort.inl )
 		
 set( clBolt.Runtime.clFiles 
 		${clBolt.Include.Dir}/reduce_kernels.cl 
 		${clBolt.Include.Dir}/transform_kernels.cl 
 		${clBolt.Include.Dir}/transform_reduce_kernels.cl
+        ${clBolt.Include.Dir}/scan_kernels.cl
         ${clBolt.Include.Dir}/sort_kernels.cl )
 
 # The minidump tech is windows specific; I don't have a solution yet for linux, but google-breakpad looks promising
@@ -67,16 +73,12 @@ set_target_properties( clBolt.Runtime PROPERTIES VERSION ${Bolt_VERSION} )
 set_target_properties( clBolt.Runtime PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
 		
 install( FILES	
-			${clBolt.Include.Dir}/reduce_kernels.cl
-			${clBolt.Include.Dir}/transform_kernels.cl
-			${clBolt.Include.Dir}/transform_reduce_kernels.cl
+			${clBolt.Runtime.clFiles}
 		DESTINATION
 			${BIN_DIR} )
 
 install( FILES	
-			${clBolt.Include.Dir}/reduce_kernels.cl
-			${clBolt.Include.Dir}/transform_kernels.cl
-			${clBolt.Include.Dir}/transform_reduce_kernels.cl
+			${clBolt.Runtime.clFiles}
 		DESTINATION
 			${PROJECT_BINARY_DIR}/staging/\${CMAKE_INSTALL_CONFIG_NAME} )
 
