@@ -2,9 +2,7 @@
 
 #include <bolt/cl/bolt.h>
 #include <bolt/cl/functional.h>
-#include <mutex>
-#include <string>
-#include <iostream>
+#include <bolt/cl/device_vector.h>
 
 namespace bolt
 {

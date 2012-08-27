@@ -1,6 +1,5 @@
 #include "stdafx.h"
 
-#include <bolt/cl/functional.h>
 #include <bolt/cl/scan.h>
 #include <bolt/unicode.h>
 #include <bolt/miniDump.h>
@@ -9,24 +8,6 @@
 
 #include <vector>
 #include <array>
-
-// Simple test case for bolt::inclusive_scan:
-// Sum together specified numbers, compare against STL::partial_sum function.
-// Demonstrates:
-//    * use of bolt with STL::array iterators
-//    * use of bolt with default plus 
-//    * use of bolt with explicit plus argument
-//template< size_t arraySize >
-//void simpleScanArray( )
-//{
-	// Binary operator
-	//bolt::inclusive_scan( boltA.begin( ), boltA.end(), boltA.begin( ), bolt::plus<int>( ) );
-
-	// Invalid calls
-	//bolt::inclusive_scan( boltA.rbegin( ), boltA.rend( ) );  // reverse iterators should not be supported
-
-	//printf ("Sum: stl=%d,  bolt=%d %d %d\n", stlScan, boltScan, boltScan2, boltScan3 );
-//};
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Below are helper routines to compare the results of two arrays for googletest
@@ -204,7 +185,7 @@ TYPED_TEST_P( ScanArrayTest, InPlacePlusFunction )
     typedef std::array< ArrayType, ArraySize > ArrayCont;
 
     //  Calling the actual functions under test
-    ArrayCont::iterator stdEnd  = std::partial_sum( stdInput.begin( ), stdInput.end( ), stdInput.begin( ), bolt::cl::plus< ArrayType >( ) );
+    ArrayCont::iterator stdEnd  = std::partial_sum( stdInput.begin( ), stdInput.end( ), stdInput.begin( ), std::plus< ArrayType >( ) );
     ArrayCont::iterator boltEnd = bolt::cl::inclusive_scan( boltInput.begin( ), boltInput.end( ), boltInput.begin( ), bolt::cl::plus< ArrayType >( ) );
 
     //  The returned iterator should be one past the 
