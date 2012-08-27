@@ -10,9 +10,10 @@
 #include <direct.h>  //windows CWD for error message
 #include <tchar.h>
 #include <algorithm>
+#include <vector>
 
 namespace bolt {
-	namespace cl {
+    namespace cl {
 
     std::string clErrorStringA( const cl_int& status )
     {
@@ -270,136 +271,216 @@ namespace bolt {
         }
     }
 
-	std::string fileToString(const std::string &fileName)
-	{
-		std::ifstream infile (fileName);
-		if (infile.fail() ) {
+    std::string fileToString(const std::string &fileName)
+    {
+        std::ifstream infile (fileName);
+        if (infile.fail() ) {
 #if defined( _WIN32 )
-			TCHAR osPath[ MAX_PATH ];
+            TCHAR osPath[ MAX_PATH ];
 
-			//	If loading the .cl file fails from the specified path, then make a last ditch attempt (purely for convenience) to find the .cl file right to the executable,
-			//	regardless of what the CWD is
-			//	::GetModuleFileName( ) returns TCHAR's (and we define _UNICODE for windows); but the fileName string is char's, 
-			//	so we needed to create an abstraction for string/wstring
-			if( ::GetModuleFileName( NULL, osPath, MAX_PATH ) )
-			{
-				bolt::tstring thisPath( osPath );
-				bolt::tstring::size_type pos = thisPath.find_last_of( _T( "\\" ) );
+            //	If loading the .cl file fails from the specified path, then make a last ditch attempt (purely for convenience) to find the .cl file right to the executable,
+            //	regardless of what the CWD is
+            //	::GetModuleFileName( ) returns TCHAR's (and we define _UNICODE for windows); but the fileName string is char's, 
+            //	so we needed to create an abstraction for string/wstring
+            if( ::GetModuleFileName( NULL, osPath, MAX_PATH ) )
+            {
+                bolt::tstring thisPath( osPath );
+                bolt::tstring::size_type pos = thisPath.find_last_of( _T( "\\" ) );
 
-				bolt::tstring newPath;
-				if( pos != bolt::tstring::npos )
-				{
-					bolt::tstring exePath	= thisPath.substr( 0, pos + 1 );	// include the \ character
+                bolt::tstring newPath;
+                if( pos != bolt::tstring::npos )
+                {
+                    bolt::tstring exePath	= thisPath.substr( 0, pos + 1 );	// include the \ character
 
-					//	Narrow to wide conversion should always work, but beware of wide to narrow!
-					bolt::tstring convName( fileName.begin( ), fileName.end( ) );
-					newPath = exePath + convName;
-				}
+                    //	Narrow to wide conversion should always work, but beware of wide to narrow!
+                    bolt::tstring convName( fileName.begin( ), fileName.end( ) );
+                    newPath = exePath + convName;
+                }
 
-				infile.open( newPath.c_str( ) );
-			}
+                infile.open( newPath.c_str( ) );
+            }
 #endif
-			if (infile.fail() ) {
-				TCHAR cCurrentPath[FILENAME_MAX];
-				if (_tgetcwd(cCurrentPath, sizeof(cCurrentPath) / sizeof(TCHAR))) {
-					bolt::tout <<  _T( "CWD=" ) << cCurrentPath << std::endl;
-				};
-				std::cout << "error: failed to open file '" << fileName << std::endl;
-				throw;
-			} 
-		}
+            if (infile.fail() ) {
+                TCHAR cCurrentPath[FILENAME_MAX];
+                if (_tgetcwd(cCurrentPath, sizeof(cCurrentPath) / sizeof(TCHAR))) {
+                    bolt::tout <<  _T( "CWD=" ) << cCurrentPath << std::endl;
+                };
+                std::cout << "error: failed to open file '" << fileName << std::endl;
+                throw;
+            } 
+        }
 
-		std::string str((std::istreambuf_iterator<char>(infile)),
-			std::istreambuf_iterator<char>());
-		return str;
-	};
+        std::string str((std::istreambuf_iterator<char>(infile)),
+            std::istreambuf_iterator<char>());
+        return str;
+    };
 
+    ::cl::Kernel compileFunctor(const std::string &kernelCodeString, const std::string kernelName,  std::string compileOptions, const control &c)
+    {
 
+        if (c.debug() & control::debug::ShowCode) {
+            std::cout << "debug: code=" << std::endl << kernelCodeString;
+        }
 
-	::cl::Kernel compileFunctor(const std::string &kernelCodeString, const std::string kernelName,  std::string compileOptions, const control &c)
-	{
+        ::cl::Program mainProgram(c.context(), kernelCodeString, false);
+        try
+        {
+            compileOptions += c.compileOptions();
+            compileOptions += " -x clc++";
 
-		if (c.debug() & control::debug::ShowCode) {
-			std::cout << "debug: code=" << std::endl << kernelCodeString;
-		}
+            if (c.compileForAllDevices()) {
+                std::vector<::cl::Device> devices = c.context().getInfo<CL_CONTEXT_DEVICES>();
 
-		::cl::Program mainProgram(c.context(), kernelCodeString, false);
-		try
-		{
-			compileOptions += c.compileOptions();
-			compileOptions += " -x clc++";
+                mainProgram.build(devices, compileOptions.c_str());
+            } else {
+                std::vector<::cl::Device> devices;
+                devices.push_back(c.device());
+                mainProgram.build(devices, compileOptions.c_str());
+            };
 
-			if (c.compileForAllDevices()) {
-				std::vector<::cl::Device> devices = c.context().getInfo<CL_CONTEXT_DEVICES>();
+        } catch(::cl::Error e) {
+            std::cout << "Code         :\n" << kernelCodeString << std::endl;
 
-				mainProgram.build(devices, compileOptions.c_str());
-			} else {
-				std::vector<::cl::Device> devices;
-				devices.push_back(c.device());
-				mainProgram.build(devices, compileOptions.c_str());
-			};
+            std::vector<::cl::Device> devices = c.context().getInfo<CL_CONTEXT_DEVICES>();
+            std::for_each(devices.begin(), devices.end(), [&] (::cl::Device &d) {
+                if (mainProgram.getBuildInfo<CL_PROGRAM_BUILD_STATUS>(d) != CL_SUCCESS) {
+                    std::cout << "Build status for device: " << d.getInfo<CL_DEVICE_NAME>() << "_"<< d.getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>() << "CU_"<< d.getInfo<CL_DEVICE_MAX_CLOCK_FREQUENCY>() << "Mhz" << "\n";
+                    std::cout << "    Build Status: " << mainProgram.getBuildInfo<CL_PROGRAM_BUILD_STATUS>(d) << std::endl;
+                    std::cout << "    Build Options:\t" << mainProgram.getBuildInfo<CL_PROGRAM_BUILD_OPTIONS>(d) << std::endl;
+                    std::cout << "    Build Log:\n " << mainProgram.getBuildInfo<CL_PROGRAM_BUILD_LOG>(d) << std::endl;
+                }
+            });
+            throw;
+        }
 
+        if ( c.debug() & control::debug::Compile) {
+            std::vector<::cl::Device> devices = c.context().getInfo<CL_CONTEXT_DEVICES>();
+            std::for_each(devices.begin(), devices.end(), [&] (::cl::Device &d) {
+                std::cout << "debug: Build status for device: " << d.getInfo<CL_DEVICE_NAME>() << "_"<< d.getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>() << "CU_"<< d.getInfo<CL_DEVICE_MAX_CLOCK_FREQUENCY>() << "Mhz" << "\n";
+                std::cout << "debug:   Build Status: " << mainProgram.getBuildInfo<CL_PROGRAM_BUILD_STATUS>(d) << std::endl;
+                std::cout << "debug:   Build Options:\t" << mainProgram.getBuildInfo<CL_PROGRAM_BUILD_OPTIONS>(d) << std::endl;
+                std::cout << "debug:   Build Log:\n " << mainProgram.getBuildInfo<CL_PROGRAM_BUILD_LOG>(d) << std::endl;
+            }); 
+        };
 
+        return ::cl::Kernel(mainProgram, kernelName.c_str());
+    }
 
+    void constructAndCompile(::cl::Kernel *masterKernel, const std::string &apiName, const std::string instantiationString, std::string userCode, std::string valueTypeName,  std::string functorTypeName, const control &c) {
 
-		} catch(::cl::Error e) {
-			std::cout << "Code         :\n" << kernelCodeString << std::endl;
+        //FIXME, when this becomes more stable move the kernel code to a string in bolt.cpp
+        // Note unfortunate dependency here on relative file path of run directory and location of bolt::cl dir.
+        std::string templateFunctionString = bolt::cl::fileToString( apiName + "_kernels.cl"); 
 
-			std::vector<::cl::Device> devices = c.context().getInfo<CL_CONTEXT_DEVICES>();
-			std::for_each(devices.begin(), devices.end(), [&] (::cl::Device &d) {
-				if (mainProgram.getBuildInfo<CL_PROGRAM_BUILD_STATUS>(d) != CL_SUCCESS) {
-					std::cout << "Build status for device: " << d.getInfo<CL_DEVICE_NAME>() << "_"<< d.getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>() << "CU_"<< d.getInfo<CL_DEVICE_MAX_CLOCK_FREQUENCY>() << "Mhz" << "\n";
-					std::cout << "    Build Status: " << mainProgram.getBuildInfo<CL_PROGRAM_BUILD_STATUS>(d) << std::endl;
-					std::cout << "    Build Options:\t" << mainProgram.getBuildInfo<CL_PROGRAM_BUILD_OPTIONS>(d) << std::endl;
-					std::cout << "    Build Log:\t " << mainProgram.getBuildInfo<CL_PROGRAM_BUILD_LOG>(d) << std::endl;
-				}
-			});
-			throw e;
-		}
+        std::string codeStr = userCode + "\n\n" + templateFunctionString +   instantiationString;
 
-		if ( c.debug() & control::debug::Compile) {
-			std::vector<::cl::Device> devices = c.context().getInfo<CL_CONTEXT_DEVICES>();
-			std::for_each(devices.begin(), devices.end(), [&] (::cl::Device &d) {
-				std::cout << "debug: Build status for device: " << d.getInfo<CL_DEVICE_NAME>() << "_"<< d.getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>() << "CU_"<< d.getInfo<CL_DEVICE_MAX_CLOCK_FREQUENCY>() << "Mhz" << "\n";
-				std::cout << "debug:   Build Status: " << mainProgram.getBuildInfo<CL_PROGRAM_BUILD_STATUS>(d) << std::endl;
-				std::cout << "debug:   Build Options:\t" << mainProgram.getBuildInfo<CL_PROGRAM_BUILD_OPTIONS>(d) << std::endl;
-				std::cout << "debug:   Build Log:\n " << mainProgram.getBuildInfo<CL_PROGRAM_BUILD_LOG>(d) << std::endl;
-			}); 
-		};
+        std::string compileOptions = "";
+        if (c.debug() & control::debug::SaveCompilerTemps) {
+            compileOptions += "-save-temps=BOLT";
+        }
 
-		return ::cl::Kernel(mainProgram, kernelName.c_str());
-	}
+        if (c.debug() & control::debug::Compile) {
+            std::cout << "debug: compiling algorithm: '" << apiName << "' with valueType='" << valueTypeName << "'" << " ;  functorType='" << functorTypeName << "'" << std::endl;
+        }
 
+        *masterKernel = bolt::cl::compileFunctor(codeStr, apiName + "Instantiated", compileOptions, c);
+    };
 
+    ::cl::Program buildProgram( const std::string& kernelCodeString, std::string compileOptions, const control& ctl )
+    {
+        if( ctl.debug() & control::debug::ShowCode )
+        {
+            std::cout << "debug: code=" << std::endl << kernelCodeString;
+        }
 
-	void constructAndCompile(::cl::Kernel *masterKernel, const std::string &apiName, const std::string instantiationString, std::string userCode, std::string valueTypeName,  std::string functorTypeName, const control &c) {
+        ::cl::Program mainProgram( ctl.context( ), kernelCodeString, false );
+        try
+        {
+            compileOptions += ctl.compileOptions( );
+            compileOptions += " -x clc++";
 
-		//FIXME, when this becomes more stable move the kernel code to a string in bolt.cpp
-		// Note unfortunate dependency here on relative file path of run directory and location of bolt::cl dir.
-		std::string templateFunctionString = bolt::cl::fileToString( apiName + "_kernels.cl"); 
+            if( ctl.compileForAllDevices( ) )
+            {
+                std::vector<::cl::Device> devices = ctl.context( ).getInfo<CL_CONTEXT_DEVICES>( );
 
-		std::string codeStr = userCode + "\n\n" + templateFunctionString +   instantiationString;
+                mainProgram.build( devices, compileOptions.c_str( ) );
+            } 
+            else
+            {
+                std::vector<::cl::Device> devices;
+                devices.push_back( ctl.device( ) );
+                mainProgram.build( devices, compileOptions.c_str( ) );
+            };
+        } 
+        catch( const ::cl::Error& )
+        {
+            std::cout << "Code         :\n" << kernelCodeString << std::endl;
 
+            std::vector<::cl::Device> devices = ctl.context( ).getInfo<CL_CONTEXT_DEVICES>( );
+            std::for_each( devices.begin( ), devices.end( ), [&]( ::cl::Device &d )
+            {
+                if (mainProgram.getBuildInfo<CL_PROGRAM_BUILD_STATUS>(d) != CL_SUCCESS)
+                {
+                    std::cout << "Build status for device: " << d.getInfo<CL_DEVICE_NAME>() << "_"<< d.getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>() << "CU_"<< d.getInfo<CL_DEVICE_MAX_CLOCK_FREQUENCY>() << "Mhz" << "\n";
+                    std::cout << "    Build Status: " << mainProgram.getBuildInfo<CL_PROGRAM_BUILD_STATUS>(d) << std::endl;
+                    std::cout << "    Build Options:\t" << mainProgram.getBuildInfo<CL_PROGRAM_BUILD_OPTIONS>(d) << std::endl;
+                    std::cout << "    Build Log:\n " << mainProgram.getBuildInfo<CL_PROGRAM_BUILD_LOG>(d) << std::endl;
+                }
+            });
+            throw;
+        }
 
-		std::string compileOptions = "";
-		if (c.debug() & control::debug::SaveCompilerTemps) {
-			compileOptions += "-save-temps=BOLT";
-		}
+        if( ctl.debug( ) & control::debug::Compile )
+        {
+            std::vector<::cl::Device> devices = ctl.context( ).getInfo<CL_CONTEXT_DEVICES>( );
+            std::for_each(devices.begin(), devices.end(), [&] (::cl::Device &d )
+            {
+                std::cout << "debug: Build status for device: " << d.getInfo<CL_DEVICE_NAME>() << "_"<< d.getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>() << "CU_"<< d.getInfo<CL_DEVICE_MAX_CLOCK_FREQUENCY>() << "Mhz" << "\n";
+                std::cout << "debug:   Build Status: " << mainProgram.getBuildInfo<CL_PROGRAM_BUILD_STATUS>(d) << std::endl;
+                std::cout << "debug:   Build Options:\t" << mainProgram.getBuildInfo<CL_PROGRAM_BUILD_OPTIONS>(d) << std::endl;
+                std::cout << "debug:   Build Log:\n " << mainProgram.getBuildInfo<CL_PROGRAM_BUILD_LOG>(d) << std::endl;
+            }); 
+        };
 
-		if (c.debug() & control::debug::Compile) {
-			std::cout << "debug: compiling algorithm: '" << apiName << "' with valueType='" << valueTypeName << "'" << " ;  functorType='" << functorTypeName << "'" << std::endl;
-		}
+        return mainProgram;
+    }
 
+    void compileKernels( std::vector< ::cl::Kernel >& clKernels, 
+            const std::vector< const std::string >& kernelNames, 
+            const std::string& fileName,
+            const std::string& instantiationString,
+            const std::string& userCode,
+            const std::string& valueTypeName,
+            const std::string& functorTypeName,
+            const control& ctl )
+    {
 
+        //FIXME, when this becomes more stable move the kernel code to a string in bolt.cpp
+        // Note unfortunate dependency here on relative file path of run directory and location of bolt::cl dir.
+        std::string templateFunctionString = bolt::cl::fileToString( fileName + "_kernels.cl"); 
 
+        std::string codeStr = templateFunctionString + "\n\n" + userCode + "\n\n" + instantiationString;
 
-		*masterKernel = bolt::cl::compileFunctor(codeStr, apiName + "Instantiated", compileOptions, c);
-	};
+        std::string compileOptions = "";
+        if( ctl.debug() & control::debug::SaveCompilerTemps )
+        {
+            compileOptions += "-save-temps=BOLT";
+        }
 
+        if( ctl.debug() & control::debug::Compile )
+        {
+            std::cout << "debug: compiling algorithm: '" << fileName << "' with valueType='" << valueTypeName << "'" << " ;  functorType='" << functorTypeName << "'" << std::endl;
+        }
 
+        ::cl::Program clProgram = buildProgram( codeStr, compileOptions, ctl );
 
+        for( size_t k = 0; k < kernelNames.size( ); ++k )
+        {
+            std::string kernelName = kernelNames[ k ] + "Instantiated";
+            clKernels.push_back( ::cl::Kernel( clProgram, kernelName.c_str( ) ) );
+        }
+    };
 
-
-	};
+    };
 };
 

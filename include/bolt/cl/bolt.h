@@ -20,6 +20,15 @@ namespace bolt {
         extern std::string fileToString(const std::string &fileName);
         extern ::cl::Kernel compileFunctor(const std::string &kernelCodeString, const std::string kernelName, const std::string compileOptions, const control &c);
         extern void constructAndCompile(::cl::Kernel *masterKernel, const std::string &apiName, const std::string instantiationString, std::string userCode, std::string valueTypeName,  std::string functorTypeName, const control &c);
+        void compileKernels( std::vector< ::cl::Kernel >& clKernels, 
+                const std::vector< const std::string >& kernelNames, 
+                const std::string& fileName,
+                const std::string& instantiationString,
+                const std::string& userCode,
+                const std::string& valueTypeName,
+                const std::string& functorTypeName,
+                const control& ctl );
+
 
         /*! \brief Translates an integer OpenCL error code to a std::string at runtime
         *  \param status The OpenCL error code
