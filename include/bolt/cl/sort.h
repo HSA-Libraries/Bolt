@@ -94,7 +94,7 @@ namespace bolt {
 		* // a => {2, 3, 3, 3, 4, 5, 6, 7, 8, 9}
 		*  \endcode
 		*/
-		template<typename RandomAccessIterator> 
+        template<typename RandomAccessIterator> 
 		void sort(const bolt::cl::control &ctl,
 			RandomAccessIterator first, 
 			RandomAccessIterator last, 

@@ -1,6 +1,9 @@
 #pragma OPENCL EXTENSION cl_amd_printf : enable
 //#pragma OPENCL EXTENSION cl_khr_fp64 : enable 
 
+
+
+
 template <typename T,  typename Compare>
 kernel
 void sortTemplate(global T * theArray, 
@@ -49,6 +52,11 @@ void sortTemplate(global T * theArray,
 
 }
 
+template <typename T> 
+bool FUNCTION(T in1, T in2)
+{
+     return (in1 < in2);
+}
 
 template <typename T>
 kernel
@@ -60,13 +68,12 @@ void sortTemplateBasic(global T * theArray,
     uint threadId = get_global_id(0);
     uint pairDistance = 1 << (stage - passOfStage);
     uint blockWidth   = 2 * pairDistance;
-    uint temp; 
+    uint temp;
     uint leftId = (threadId % pairDistance) 
                    + (threadId / pairDistance) * blockWidth;
     bool compareResult;
 
     uint rightId = leftId + pairDistance;
-
 
     T element, greater, lesser;
     T leftElement = theArray[leftId];
@@ -81,8 +88,8 @@ void sortTemplateBasic(global T * theArray,
         leftId = temp;
     }
 
-    compareResult = (leftElement < rightElement);
-
+    compareResult = FUNCTION(leftElement, rightElement);
+    //compareResult = (leftElement < rightElement);
     if(compareResult)
     {
         greater = rightElement;

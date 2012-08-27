@@ -74,7 +74,7 @@ namespace bolt {
             const std::string cl_code)
         {
             typedef typename std::iterator_traits<RandomAccessIterator>::value_type T;
-            sort(bolt::cl::control::getDefault(), first, last/*, bolt::cl::less<T>()*/, cl_code);
+            sort(bolt::cl::control::getDefault(), first, last, cl_code);
         }
     }
 };
@@ -84,12 +84,13 @@ namespace bolt {
     namespace cl {
         namespace detail {
 
-
             struct CallCompiler_Sort {
                 static void constructAndCompileBasic(::cl::Kernel *masterKernel,  std::string cl_code, std::string valueTypeName,  const control &ctl) {
 
                     const std::string instantiationString = 
                         "// Host generates this instantiation string with user-specified value type and functor\n"
+                        "template __attribute__((mangled_name(FUNCTION)))\n"
+                        "bool FUNCTION(\n" + valueTypeName + " in1, " + valueTypeName + " in2);\n\n"
                         "template __attribute__((mangled_name(sortInstantiated)))\n"
                         "__attribute__((reqd_work_group_size(1,1,1)))\n"
                         "kernel void sortTemplateBasic(\n"
@@ -117,17 +118,17 @@ namespace bolt {
                         ");\n\n";
 
                     bolt::cl::constructAndCompile(masterKernel, "sort", instantiationString, cl_code, valueTypeName, functorTypeName, ctl);
-
                 }
 
-            };
+            }; //End of struct CallCompiler_Sort  
 
 
             template<typename T, typename Compare> 
             void sort(const bolt::cl::control &ctl, ::cl::Buffer A,
                 Compare comp, std::string cl_code="")  
             {
-                static std::once_flag initOnlyOnce;
+                //TODO:: This should be made static but removed to solve an issue. 
+                std::once_flag initOnlyOnce;
                 static  ::cl::Kernel masterKernel;
                 // For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retreive the name here.
                 std::call_once(initOnlyOnce, detail::CallCompiler_Sort::constructAndCompile, &masterKernel, cl_code + ClCode<Compare>::get(), TypeName<T>::get(), TypeName<Compare>::get(), ctl);
@@ -188,7 +189,8 @@ namespace bolt {
             void sort(const bolt::cl::control &ctl, ::cl::Buffer A,
                 std::string cl_code="")  
             {
-                static std::once_flag initOnlyOnce;
+                //TODO :: This should be compiled always. The static was removed here because there was a failure when we try to pass a different comparison options. 
+                std::once_flag initOnlyOnce;
                 static  ::cl::Kernel masterKernel;
                 // For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retreive the name here.
                 std::call_once(initOnlyOnce, detail::CallCompiler_Sort::constructAndCompileBasic, &masterKernel, cl_code + ClCode<T>::get(), TypeName<T>::get(), ctl);
@@ -207,7 +209,7 @@ namespace bolt {
 
                 ::cl::Kernel k = masterKernel;  // hopefully create a copy of the kernel. FIXME, doesn't work.
 
-                int szElements = (int)A.getInfo<CL_MEM_SIZE>() / sizeof(T);  // FIXME - remove typecast.  Kernel only can handle 32-bit size...
+                int szElements = (int)A.getInfo<CL_MEM_SIZE>() / sizeof(T);  
                 for(temp = szElements; temp > 1; temp >>= 1)
                     ++numStages;
                 k.setArg(0, A);
