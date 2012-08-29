@@ -58,13 +58,13 @@ namespace bolt {
             }
         }
 
-        template<typename RandomAccessIterator, typename BinaryFunction> 
+        template<typename RandomAccessIterator, typename Compare> 
         void sort(RandomAccessIterator first, 
             RandomAccessIterator last,  
-            BinaryFunction binary_op, 
+            Compare comp, 
             const std::string cl_code)  
         {
-            return sort(bolt::cl::control::getDefault(), first, last, binary_op, cl_code);
+            return sort(bolt::cl::control::getDefault(), first, last, comp, cl_code);
         }
 
 
@@ -103,7 +103,7 @@ namespace bolt {
                     bolt::cl::constructAndCompile(masterKernel, "sort", instantiationString, cl_code, valueTypeName, "", ctl);
                 }
 
-                static void constructAndCompile(::cl::Kernel *masterKernel,  std::string cl_code, std::string valueTypeName,  std::string functorTypeName, const control &ctl) {
+                static void constructAndCompile(::cl::Kernel *masterKernel,  std::string cl_code_dataType, std::string valueTypeName,  std::string compareTypeName, const control &ctl) {
 
                     const std::string instantiationString = 
                         "// Host generates this instantiation string with user-specified value type and functor\n"
@@ -113,38 +113,38 @@ namespace bolt {
                         "global " + valueTypeName + "* A,\n"
                         "const uint stage,\n"
                         "const uint passOfStage,\n"
-                        "global " + functorTypeName + "* userComp,\n"
+                        "global " + compareTypeName + " * userComp,\n"
                         "local " + valueTypeName + "* scratch\n"
                         ");\n\n";
 
-                    bolt::cl::constructAndCompile(masterKernel, "sort", instantiationString, cl_code, valueTypeName, functorTypeName, ctl);
+                    bolt::cl::constructAndCompile(masterKernel, "sort", instantiationString, cl_code_dataType, valueTypeName, "", ctl);
                 }
 
             }; //End of struct CallCompiler_Sort  
-
 
             template<typename T, typename Compare> 
             void sort(const bolt::cl::control &ctl, ::cl::Buffer A,
                 Compare comp, std::string cl_code="")  
             {
-                //TODO:: This should be made static but removed to solve an issue. 
-                std::once_flag initOnlyOnce;
+                static std::once_flag initOnlyOnce;
                 static  ::cl::Kernel masterKernel;
-                // For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retreive the name here.
-                std::call_once(initOnlyOnce, detail::CallCompiler_Sort::constructAndCompile, &masterKernel, cl_code + ClCode<Compare>::get(), TypeName<T>::get(), TypeName<Compare>::get(), ctl);
 
+                // For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retreive the name here.
+                // COME BACK
+                std::call_once(initOnlyOnce, detail::CallCompiler_Sort::constructAndCompile, &masterKernel, cl_code + ClCode<T>::get(), TypeName<T>::get(), TypeName<Compare>::get(), ctl);
 
                 // Set up shape of launch grid and buffers:
                 int computeUnits     = ctl.device().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
                 int wgPerComputeUnit =  ctl.wgPerComputeUnit(); 
                 int resultCnt = computeUnits * wgPerComputeUnit;
                 const int wgSize = 64; //TODO hard coded to the number of cores in the AMD SIMD engine.
-                                       //The instantiation string should also be changed.   
+                                       //The instantiation string should also be changed.
                 unsigned int temp,numStages,stage,passOfStage;
                 numStages = 0;
 
                 // Create buffer wrappers so we can access the host functors, for read or writing in the kernel
                 ::cl::Buffer userFunctor(ctl.context(), CL_MEM_USE_HOST_PTR, sizeof(comp), &comp );   // Create buffer wrapper so we can access host parameters.
+                //::cl::Buffer userFunctor(ctl.context(), CL_MEM_USE_HOST_PTR, sizeof(func), &func );   // Create buffer wrapper so we can access host parameters.
 
                 ::cl::Kernel k = masterKernel;  // hopefully create a copy of the kernel. FIXME, doesn't work.
 
@@ -190,7 +190,7 @@ namespace bolt {
                 std::string cl_code="")  
             {
                 //TODO :: This should be compiled always. The static was removed here because there was a failure when we try to pass a different comparison options. 
-                std::once_flag initOnlyOnce;
+                static  std::once_flag initOnlyOnce;
                 static  ::cl::Kernel masterKernel;
                 // For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retreive the name here.
                 std::call_once(initOnlyOnce, detail::CallCompiler_Sort::constructAndCompileBasic, &masterKernel, cl_code + ClCode<T>::get(), TypeName<T>::get(), ctl);
