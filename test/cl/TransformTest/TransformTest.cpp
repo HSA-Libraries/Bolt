@@ -52,6 +52,7 @@ struct myplus
 };
 );
 BOLT_CREATE_TYPENAME(myplus<float>);
+
 BOLT_CREATE_TYPENAME(myplus<int>);
 BOLT_CREATE_TYPENAME(myplus<double>);
 
@@ -103,12 +104,51 @@ void simpleTransform1(int aSize)
 
 };
 
-
-
-
 //---
 // SimpleTransform2 Demonstrates:
 // How to create a C++ functor object and use this to customize the transform library call.
+
+BOLT_FUNCTOR(UDD,
+struct UDD
+{
+	float _a;
+	UDD()
+	{
+		this->_a = 0;
+	}
+	UDD(float a) : _a(a) {};
+
+	//UDD(const UDD &x) : _a(x._a) { }
+	UDD operator + (const UDD& xx) const
+	{
+		UDD temp;
+		temp._a = this->_a + xx._a;
+		return temp;
+	};
+};
+);  // end BOLT_FUNCTOR
+
+BOLT_CREATE_TYPENAME(myplus<UDD>);
+
+void transformUDD(int aSize)
+{
+	std::string fName = __FUNCTION__;
+	fName += ":";
+	std::cout << fName << "(" << aSize << ")" << std::endl;
+
+	std::vector<UDD> A(aSize), B(aSize), Z1(aSize), Z0(aSize);
+
+	for (int i=0; i<aSize; i++) {
+		A[i]._a = float(i);
+		B[i]._a = 10000.0f + (float)i;
+	}
+
+	std::transform(A.begin(), A.end(), B.begin(), Z0.begin(), myplus<UDD>());
+	bolt::cl::transform(A.begin(), A.end(), B.begin(), Z1.begin(), myplus<UDD>(),myplusStr);  
+
+	//checkResults(fName, Z0.begin(), Z0.end(), Z1.begin());
+};
+
 
 BOLT_FUNCTOR(SaxpyFunctor,
 struct SaxpyFunctor
@@ -127,7 +167,7 @@ struct SaxpyFunctor
 
 void transformSaxpy(int aSize)
 {
-	std::string fName = __FUNCTION__ ;
+	std::string fName = __FUNCTION__;
 	fName += ":";
 	std::cout << fName << "(" << aSize << ")" << std::endl;
 
@@ -139,8 +179,6 @@ void transformSaxpy(int aSize)
 	}
 
 	SaxpyFunctor sb(10.0);
-
-
 	std::transform(A.begin(), A.end(), B.begin(), Z0.begin(), sb);
 	bolt::cl::transform(A.begin(), A.end(), B.begin(), Z1.begin(), sb);  
 
@@ -240,14 +278,13 @@ int _tmain(int argc, _TCHAR* argv[])
 {
 	simpleTransform1(256); //FIXME
     //bolt::cl::device_vector< int > dV;
-
 	transformSaxpy(256);
 	transformSaxpy(1024);
-
+	transformUDD(256);
 	//multiThreadReductions(1024, 10);
-
 	oclTransform(1024);
-
+	getchar();
 	return 0;
+
 }
 
