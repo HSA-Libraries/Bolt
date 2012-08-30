@@ -1,3 +1,7 @@
+#ifdef cl_amd_printf
+    #pragma OPENCL EXTENSION cl_amd_printf : enable
+#endif
+
 /*
  * ScanLargeArrays : Scan is done for each block and the sum of each
  * block is stored in separate array (sumBuffer). SumBuffer is scanned
@@ -15,170 +19,146 @@
 template< typename Type, typename BinaryFunction >
 kernel void perBlockAddition( 
                 global Type* output,
-                global Type* input,
+                global Type* postSumArray,
+                const uint vecSize,
                 global BinaryFunction* binaryOp
                 )
 {
-    int globalId = get_global_id( 0 );
-    int groupId = get_group_id( 0 );
-    int localId = get_local_id( 0 );
+    uint gloId = get_global_id( 0 );
+    uint groId = get_group_id( 0 );
+    uint locId = get_local_id( 0 );
 
-    Type value[ 1 ];
-    Type testOut = output[ globalId ];
+    //  Abort threads that are passed the end of the input vector
+    if( gloId >= vecSize )
+        return;
+        
+    Type scanResult = output[ gloId ];
 
-    /* Only 1 thread of a group will read from global buffer */
-    if( localId == 0 )
-    {
-        value[ 0 ] = input[ groupId ];
-    }
-    barrier( CLK_LOCAL_MEM_FENCE );
+    //  TODO:  verify; is there a memory conflict if all threads read from the same address?
+    Type postBlockSum = postSumArray[ groId ];
 
-    testOut = (*binaryOp)( testOut, value[ 0 ] );
-    output[ globalId ] = testOut;
+    // printf( "output[%d] = [%d]\n", gloId, scanResult );
+    // printf( "postSumArray[%d] = [%d]\n", groId, postBlockSum );
+    scanResult = (*binaryOp)( scanResult, postBlockSum );
+    output[ gloId ] = scanResult;
 }
 
-template< typename Type, typename BinaryFunction >
-kernel void intraBlockInclusiveScan( 
-                global Type* output, 
-                global Type* input, 
-                local Type* lds, 
-                const uint inputLength,
+template< typename iType, typename BinaryFunction >
+kernel void intraBlockExclusiveScan(
+                global iType* postSumArray,
+                global iType* preSumArray,
+                const uint vecSize,
+                local volatile iType* lds,
+                const uint workPerThread,
                 global BinaryFunction* binaryOp    // Functor operation to apply on each step
                 )
 {
-    int tid = get_local_id(0);
+    uint gloId = get_global_id( 0 );
+    uint groId = get_group_id( 0 );
+    uint locId = get_local_id( 0 );
+    uint wgSize = get_local_size( 0 );
+    uint mapId  = gloId * workPerThread;
 
-    int offset = 1;
+    //    Initialize the padding to 0, for when the scan algorithm looks left.
+    //    Then bump the LDS pointer past the padding
+    lds[ locId ] = 0;
+    local volatile iType* pLDS = lds + ( wgSize / 2 );
 
-    /* Cache the computational window in shared memory */
-    lds[2*tid]     = input[2*tid];
-    lds[2*tid + 1] = input[2*tid + 1];
+    //  Abort threads that are passed the end of the input vector
+    //  TODO:  I'm returning early for threads past the input vector size; not safe for barriers in kernel if wg != wavefront
+    // if( gloId >= vecSize )
+        // return;
 
-    /* build the sum in place up the tree */
-    for(int d = inputLength>>1; d > 0; d >>=1)
+    //	Begin the loop reduction
+    iType workSum = 0;
+    for( uint offset = 0; offset < workPerThread; offset += 1 )
     {
-        barrier(CLK_LOCAL_MEM_FENCE);
+        iType y = preSumArray[ mapId + offset ];
+        printf( "preSumArray[%d] = [%g]\n", mapId + offset, y );
+        workSum = (*binaryOp)( workSum, y );
+        postSumArray[ mapId + offset ] = workSum;
+    }
+    barrier( CLK_LOCAL_MEM_FENCE );
+    pLDS[ locId ] = workSum;
 
-        if(tid<d)
-        {
-            int ai = offset*(2*tid + 1) - 1;
-            int bi = offset*(2*tid + 2) - 1;
+    //	This loop essentially computes an exclusive scan within a tile, writing 0 out for first element.
+    iType scanSum = workSum;
+    for( uint offset = 1; offset < wgSize; offset *= 2 )
+    {
+        barrier( CLK_LOCAL_MEM_FENCE );
 
-            lds[bi] += lds[ai];
-        }
-        offset *= 2;
+        iType y = pLDS[ locId - offset ];
+        scanSum = (*binaryOp)( scanSum, y );
+        pLDS[ locId ] = scanSum;
     }
 
-    /* scan back down the tree */
-
-    /* clear the last element */
-    if(tid == 0)
+    //	Write out the values of the per-tile scan
+    scanSum -= workSum;
+    for( uint offset = 0; offset < workPerThread; offset += 1 )
     {
-        lds[inputLength - 1] = 0;
+        iType y = postSumArray[ mapId + offset ];
+        y = (*binaryOp)( y, scanSum );
+        y -= preSumArray[ mapId + offset ];
+        postSumArray[ mapId + offset ] = y;
+        //printf( "postSumArray[%d] = [%g]\n", mapId + offset, postSumArray[ mapId + offset ] );
     }
 
-    /* traverse down the tree building the scan in the place */
-    for(int d = 1; d < inputLength ; d *= 2)
-    {
-        offset >>=1;
-        barrier(CLK_LOCAL_MEM_FENCE);
-
-        if(tid < d)
-        {
-            int ai = offset*(2*tid + 1) - 1;
-            int bi = offset*(2*tid + 2) - 1;
-
-            Type t = lds[ai];
-            lds[ai] = lds[bi];
-            lds[bi] += t;
-        }
-    }
-
-    barrier(CLK_LOCAL_MEM_FENCE);
-
-    /*write the results back to global memory */
-    output[2*tid]     = lds[2*tid];
-    output[2*tid + 1] = lds[2*tid + 1];
 }
 
-template< typename Type, typename BinaryFunction >
+template< typename iType, typename BinaryFunction >
 kernel void perBlockInclusiveScan(
-                global Type* output,
-                global Type* input,
-                local  Type* lds,
-                const uint ldsSize,
+                global iType* output,
+                global iType* input,
+                const uint vecSize,
+                local volatile iType* lds,
                 global BinaryFunction* binaryOp,    // Functor operation to apply on each step
-                global Type* scanBuffer)            // Passed to 2nd kernel; the of each block
+                global iType* scanBuffer)            // Passed to 2nd kernel; the of each block
 {
-    int tid = get_local_id(0);
-    int gid = get_global_id(0);
-    int bid = get_group_id(0);
+    uint gloId = get_global_id( 0 );
+    uint groId = get_group_id( 0 );
+    uint locId = get_local_id( 0 );
+    uint wgSize = get_local_size( 0 );
 
-    int offset = 1;
+    //    Initialize the padding to 0, for when the scan algorithm looks left.
+    //    Then bump the LDS pointer past the padding
+    lds[ locId ] = 0;
+    local volatile iType* pLDS = lds + ( wgSize / 2 );
 
-    /* Cache the computational window in shared memory */
-    lds[2*tid]     = input[2*gid];
-    lds[2*tid + 1] = input[2*gid + 1];
+    //  Abort threads that are passed the end of the input vector
+    //  TODO:  I'm returning early for threads past the input vector size; not safe for barriers in kernel if wg != wavefront
+    if( gloId >= vecSize )
+        return;
 
-    /* build the sum in place up the tree */
-    for(int d = ldsSize>>1; d > 0; d >>=1)
+    iType val = input[ gloId ];
+    pLDS[ locId ] = val;
+
+    //  This loop essentially computes a scan within a workgroup
+    //  No communication between workgroups
+    iType sum = val;
+    for( unsigned int offset = 1; offset < wgSize; offset *= 2 )
     {
-        barrier(CLK_LOCAL_MEM_FENCE);
+        barrier( CLK_LOCAL_MEM_FENCE );
 
-        if(tid<d)
-        {
-            int ai = offset*(2*tid + 1) - 1;
-            int bi = offset*(2*tid + 2) - 1;
-
-            lds[bi] += lds[ai];
-        }
-        offset *= 2;
+        iType y = pLDS[ locId - offset ];
+        sum = (*binaryOp)( sum, y );
+        pLDS[ locId ] = sum;
     }
 
-    barrier(CLK_LOCAL_MEM_FENCE);
+    //  Each work item writes out its calculated scan result, relative to the beginning
+    //  of each work group
+    output[ gloId ] = sum;
+    // printf( "Output Array work-item[%d], sum[%g]\n", gloId, sum );
 
-    int group_id = get_group_id(0);
+    barrier( CLK_LOCAL_MEM_FENCE );
 
-    /* store the value in sum buffer before making it to 0 */
-    scanBuffer[bid] = lds[ldsSize - 1];
-
-    barrier(CLK_LOCAL_MEM_FENCE | CLK_GLOBAL_MEM_FENCE);
-
-    /* scan back down the tree */
-
-    /* clear the last element */
-    lds[ldsSize - 1] = 0;
-
-    /* traverse down the tree building the scan in the place */
-    for(int d = 1; d < ldsSize ; d *= 2)
-    {
-        offset >>=1;
-        barrier(CLK_LOCAL_MEM_FENCE);
-
-        if(tid < d)
-        {
-            int ai = offset*(2*tid + 1) - 1;
-            int bi = offset*(2*tid + 2) - 1;
-
-            Type t = lds[ai];
-            lds[ai] = lds[bi];
-            lds[bi] += t;
-        }
-    }
-
-    barrier(CLK_LOCAL_MEM_FENCE);
-
-    /*write the results back to global memory */
-
-    if(group_id == 0)
-    {
-        output[2*gid]     = lds[2*tid];
-        output[2*gid + 1] = lds[2*tid + 1];
-    }
-    else
-    {
-        output[2*gid]     = lds[2*tid];
-        output[2*gid + 1] = lds[2*tid + 1];
-    }
+    //  TODO:  verify; is there a memory conflict if all threads write to the same address?
+    scanBuffer[ groId ] = pLDS[ wgSize - 1 ];
+    // printf( "Block Sum Array work-item[%d], sum[%g]\n", gloId, pLDS[ wgSize - 1 ] );
+    
+    //	Take the very last thread in a tile, and save its value into a buffer for further processing
+    // if( locId == (wgSize-1) )
+    // {
+        // scanBuffer[ groId ] = pLDS[ locId ];
+    // }
 }
 
