@@ -4,6 +4,7 @@
 #include <mutex>
 #include <string>
 #include <iostream>
+#include <numeric>
 
 namespace bolt {
 	namespace cl {
