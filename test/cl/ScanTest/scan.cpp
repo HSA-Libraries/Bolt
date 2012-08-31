@@ -104,6 +104,19 @@ template< typename T >
     return ::testing::AssertionSuccess( );
 }
 
+//  A very generic template that takes two container, and compares their values assuming a vector interface
+template< typename S, typename B >
+::testing::AssertionResult cmpArrays( const S& ref, const B& calc )
+{
+    for( size_t i = 0; i < ref.size( ); ++i )
+    {
+        EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
+    }
+
+    return ::testing::AssertionSuccess( );
+}
+
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Fixture classes are now defined to enable googletest to process type parameterized tests
 
@@ -290,6 +303,19 @@ protected:
     std::vector< double > stdInput, boltInput;
 };
 
+//  ::testing::TestWithParam< int > means that GetParam( ) returns int values, which i use for array size
+class ScanIntegerDeviceVector: public ::testing::TestWithParam< int >
+{
+public:
+    //  Create an std and a bolt vector of requested size, and initialize all the elements to 1
+    ScanIntegerDeviceVector( ): stdInput( GetParam( ), 1 ), boltInput( static_cast<size_t>( GetParam( ) ), 1 )
+    {}
+
+protected:
+    std::vector< int > stdInput;
+    bolt::cl::device_vector< int > boltInput;
+};
+
 TEST_P( ScanIntegerVector, InclusiveInplace )
 {
     //  Calling the actual functions under test
@@ -350,12 +376,34 @@ TEST_P( ScanDoubleVector, InclusiveInplace )
     cmpArrays( stdInput, boltInput );
 }
 
+TEST_P( ScanIntegerDeviceVector, InclusiveInplace )
+{
+    //  Calling the actual functions under test
+    std::vector< int >::iterator stdEnd  = std::partial_sum( stdInput.begin( ), stdInput.end( ), stdInput.begin( ) );
+    bolt::cl::device_vector< int >::iterator boltEnd = bolt::cl::inclusive_scan( boltInput.begin( ), boltInput.end( ), boltInput.begin( ) );
+
+    //  The returned iterator should be one past the 
+    EXPECT_EQ( stdInput.end( ), stdEnd );
+    EXPECT_EQ( boltInput.end( ), boltEnd );
+
+    std::vector< int >::iterator::difference_type stdNumElements = std::distance( stdInput.begin( ), stdEnd );
+    std::vector< int >::iterator::difference_type boltNumElements = std::distance( boltInput.begin( ), boltEnd );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+
 //  Test lots of consecutive numbers, but small range, suitable for integers because they overflow easier
-// INSTANTIATE_TEST_CASE_P( Inclusive, ScanIntegerVector, ::testing::Range( 0, 1024, 1 ) );
+INSTANTIATE_TEST_CASE_P( Inclusive, ScanIntegerVector, ::testing::Range( 1537, 4096, 1 ) );
+//INSTANTIATE_TEST_CASE_P( Inclusive, ScanIntegerVector, ::testing::Range( 0, 1024, 1 ) );
+INSTANTIATE_TEST_CASE_P( Inclusive, ScanIntegerDeviceVector, ::testing::Range( 0, 1024, 1 ) );
 
 //  Test a huge range, suitable for floating point as they are less prone to overflow (but floating point loses granularity at large values)
-INSTANTIATE_TEST_CASE_P( Inclusive, ScanFloatVector, ::testing::Range( 4096, 1048576, 4096 ) );
-INSTANTIATE_TEST_CASE_P( Inclusive, ScanDoubleVector, ::testing::Range( 0, 1048576, 4096 ) );
+//INSTANTIATE_TEST_CASE_P( Inclusive, ScanFloatVector, ::testing::Range( 4096, 1048576, 4096 ) );
+//INSTANTIATE_TEST_CASE_P( Inclusive, ScanDoubleVector, ::testing::Range( 0, 1048576, 4096 ) );
 
 typedef ::testing::Types< 
     std::tuple< int, TypeValue< 1 > >,
