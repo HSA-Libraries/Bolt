@@ -1,13 +1,9 @@
 #############################################################################
 ##	Copyright (C) 2012 Advanced Micro Devices, Inc. All Rights Reserved. 
 #############################################################################
-if( WIN32 )
-	# We require 2.8.3 for windows because of a bug in cmake that prevented vs2010 from generating
-	# executables properly with multiple periods
-	cmake_minimum_required( VERSION 2.8.3 )
-else( )
-	cmake_minimum_required( VERSION 2.6 )
-endif( )
+# We require 2.8.3 for windows because of a bug in cmake that prevented vs2010 from generating
+# executables properly with multiple periods
+cmake_minimum_required( VERSION 2.8.3 )
 
 # uncomment these to debug nmake and borland makefiles
 #SET(CMAKE_START_TEMP_FILE "")
@@ -19,13 +15,15 @@ project( Bolt )
 
 # Define a version for the code
 set( Bolt_VERSION_MAJOR 0 )
-set( Bolt_VERSION_MINOR 0 )
-set( Bolt_VERSION_PATCH 1 )
+set( Bolt_VERSION_MINOR 2 )
+set( Bolt_VERSION_PATCH 0 )
 set( Bolt_VERSION "${Bolt_VERSION_MAJOR}.${Bolt_VERSION_MINOR}.${Bolt_VERSION_PATCH}")
 	
 list( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR} )
-set( BOLT_LIBRARY_DIR "${PROJECT_SOURCE_DIR}/bolt" )
-set( BOLT_INCLUDE_DIR "${PROJECT_SOURCE_DIR}/include" )
+set( BOLT_LIBRARY_DIR ${PROJECT_SOURCE_DIR}/bolt )
+
+# The binary directory is in the list of includes because files may be configured at build time, such as version.h
+set( BOLT_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include )
 
 # On windows, it's convenient to change the default install prefix such that it does NOT point to 'program files'
 # Need to check out CMAKE_RUNTIME_OUTPUT_DIRECTORY variable, and see if that eliminates the need to modify install path
@@ -126,10 +124,12 @@ message( STATUS "CMAKE_EXE_LINKER link flags: " ${CMAKE_EXE_LINKER_FLAGS} )
 # Depending on whether we are building for 64 or 32 bit, construct common paths and names that subdirectories can reference for their use
 if( Bolt_BUILD64 )
 	set( CPACK_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}-${Bolt_VERSION}-${CMAKE_HOST_SYSTEM_NAME}-x64")
+    set( INCLUDE_DIR include )
     set( BIN_DIR bin64 )
     set( LIB_DIR lib64 )
 else( )
 	set( CPACK_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}-${Bolt_VERSION}-${CMAKE_HOST_SYSTEM_NAME}-x32")
+    set( INCLUDE_DIR include )
     set( BIN_DIR bin32 )
     set( LIB_DIR lib32 )
 endif( )
@@ -169,6 +169,13 @@ endif( )
 if( BUILD_documentation )
 	add_subdirectory( doxy )
 endif( )
+
+# configure a header file to pass the CMake version settings to the source, and package the header files in the output archive
+configure_file( "${PROJECT_SOURCE_DIR}/include/bolt/BoltVersion.h.in" "${PROJECT_BINARY_DIR}/include/bolt/BoltVersion.h" )
+install( FILES 
+			"${PROJECT_BINARY_DIR}/include/bolt/BoltVersion.h" 
+		DESTINATION 
+			${INCLUDE_DIR}/bolt )
 
 # The following code is setting variables to control the behavior of CPack to generate our 
 if( WIN32 )

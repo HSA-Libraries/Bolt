@@ -15,6 +15,13 @@
 namespace bolt {
     namespace cl {
 
+    void getVersion( cl_uint* major, cl_uint* minor, cl_uint* patch )
+    {
+        *major	= BoltVersionMajor;
+        *minor	= BoltVersionMinor;
+        *patch	= BoltVersionPatch;
+    }
+
     std::string clErrorStringA( const cl_int& status )
     {
         switch( status )
