@@ -11,32 +11,10 @@
 
 #include <thread>
 
+#include "utils.h"
 
-template<typename InputIterator1, typename InputIterator2>
-int checkResults(std::string msg, InputIterator1 first1 , InputIterator1 end1 , InputIterator2 first2)
-{
-	int errCnt = 0;
-	static const int maxErrCnt = 20;
-	size_t sz = end1-first1 ;
-	for (int i=0; i<sz ; i++) {
-		if (first1 [i] != first2 [i]) {
-			errCnt++;
-			if (errCnt < maxErrCnt) {
-				std::cout << "MISMATCH " << msg << " STL= " << first1[i] << "  BOLT=" << first2[i] << std::endl;
-			} else if (errCnt == maxErrCnt) {
-				std::cout << "Max error count reached; no more mismatches will be printed...\n";
-			}
-		};
-	};
+extern void readFromFileTest();
 
-	if (errCnt==0) {
-		std::cout << " PASSED  " << msg << " Correct on all " << sz << " elements." << std::endl;
-	} else {
-		std::cout << "*FAILED  " << msg << "mismatch on " << errCnt << " / " << sz << " elements." << std::endl;
-	};
-
-	return errCnt;
-};
 
 
 
@@ -52,7 +30,6 @@ struct myplus
 };
 );
 BOLT_CREATE_TYPENAME(myplus<float>);
-
 BOLT_CREATE_TYPENAME(myplus<int>);
 BOLT_CREATE_TYPENAME(myplus<double>);
 
@@ -104,51 +81,12 @@ void simpleTransform1(int aSize)
 
 };
 
+
+
+
 //---
 // SimpleTransform2 Demonstrates:
 // How to create a C++ functor object and use this to customize the transform library call.
-
-BOLT_FUNCTOR(UDD,
-struct UDD
-{
-	float _a;
-	UDD()
-	{
-		this->_a = 0;
-	}
-	UDD(float a) : _a(a) {};
-
-	//UDD(const UDD &x) : _a(x._a) { }
-	UDD operator + (const UDD& xx) const
-	{
-		UDD temp;
-		temp._a = this->_a + xx._a;
-		return temp;
-	};
-};
-);  // end BOLT_FUNCTOR
-
-BOLT_CREATE_TYPENAME(myplus<UDD>);
-
-void transformUDD(int aSize)
-{
-	std::string fName = __FUNCTION__;
-	fName += ":";
-	std::cout << fName << "(" << aSize << ")" << std::endl;
-
-	std::vector<UDD> A(aSize), B(aSize), Z1(aSize), Z0(aSize);
-
-	for (int i=0; i<aSize; i++) {
-		A[i]._a = float(i);
-		B[i]._a = 10000.0f + (float)i;
-	}
-
-	std::transform(A.begin(), A.end(), B.begin(), Z0.begin(), myplus<UDD>());
-	bolt::cl::transform(A.begin(), A.end(), B.begin(), Z1.begin(), myplus<UDD>(),myplusStr);  
-
-	//checkResults(fName, Z0.begin(), Z0.end(), Z1.begin());
-};
-
 
 BOLT_FUNCTOR(SaxpyFunctor,
 struct SaxpyFunctor
@@ -167,7 +105,7 @@ struct SaxpyFunctor
 
 void transformSaxpy(int aSize)
 {
-	std::string fName = __FUNCTION__;
+	std::string fName = __FUNCTION__ ;
 	fName += ":";
 	std::cout << fName << "(" << aSize << ")" << std::endl;
 
@@ -179,12 +117,15 @@ void transformSaxpy(int aSize)
 	}
 
 	SaxpyFunctor sb(10.0);
+
+
 	std::transform(A.begin(), A.end(), B.begin(), Z0.begin(), sb);
 	bolt::cl::transform(A.begin(), A.end(), B.begin(), Z1.begin(), sb);  
 
 	checkResults(fName, Z0.begin(), Z0.end(), Z1.begin());
 
 };
+
 
 
 void singleThreadReduction(const std::vector<float> &A, const std::vector<float> &B, std::vector<float> *Zbolt, int aSize) 
@@ -276,15 +217,18 @@ void oclTransform(int aSize)
 
 int _tmain(int argc, _TCHAR* argv[])
 {
+	readFromFileTest();
+	
 	simpleTransform1(256); //FIXME
     //bolt::cl::device_vector< int > dV;
+
 	transformSaxpy(256);
 	transformSaxpy(1024);
-	transformUDD(256);
-	//multiThreadReductions(1024, 10);
-	oclTransform(1024);
-	getchar();
-	return 0;
 
+	//multiThreadReductions(1024, 10);
+
+	oclTransform(1024);
+
+	return 0;
 }
 

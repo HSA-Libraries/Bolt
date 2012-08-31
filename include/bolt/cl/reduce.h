@@ -44,19 +44,19 @@ namespace bolt {
 		*
 		* The following code example shows the use of \p reduce to find the max of 10 numbers, 
 		* specifying a specific command-queue and enabling debug messages.
-		* \code
-		* #include <bolt/cl/reduce.h>
-		*
-		* int a[10] = {2, 9, 3, 7, 5, 6, 3, 8, 3, 4};
-		*
-		* cl::CommandQueue myCommandQueue = ...
-		*
-		* bolt::cl::control ctl(myCommandQueue); // specify an OpenCL(TM) command queue to use for executing the reduce.
-		* ctl.debug(bolt::cl::control::debug::SaveCompilerTemps); // save IL and ISA files for generated kernel
-		*
-		* int max = bolt::cl::reduce(ctl, a, a+10, -1, bolt::cl:maximum<int>());
-		* // max = 9
-		*  \endcode
+\code
+#include <bolt/cl/reduce.h>
+		
+int a[10] = {2, 9, 3, 7, 5, 6, 3, 8, 3, 4};
+		
+cl::CommandQueue myCommandQueue = ...
+		
+bolt::cl::control ctl(myCommandQueue); // specify an OpenCL(TM) command queue to use for executing the reduce.
+ctl.debug(bolt::cl::control::debug::SaveCompilerTemps); // save IL and ISA files for generated kernel
+		
+int max = bolt::cl::reduce(ctl, a, a+10, -1, bolt::cl:maximum<int>());
+// max = 9
+\endcode
 		*/
 		template<typename InputIterator, typename T, typename BinaryFunction> 
 		T reduce(const bolt::cl::control &ctl,

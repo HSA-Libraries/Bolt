@@ -2,8 +2,8 @@
 ##	Copyright (C) 2010 Advanced Micro Devices, Inc. All Rights Reserved.
 #############################################################################
 # List the names of common files to compile across all platforms
-set( clBolt.Test.Transform.Source stdafx.cpp TransformTest.cpp )
-set( clBolt.Test.Transform.Headers stdafx.h targetver.h ${BOLT_INCLUDE_DIR}/bolt/cl/transform.h ${BOLT_INCLUDE_DIR}/bolt/cl/detail/transform.inl )
+set( clBolt.Test.Transform.Source stdafx.cpp TransformTest.cpp ReadFromFile.cpp)
+set( clBolt.Test.Transform.Headers stdafx.h targetver.h utils.h saxpy_functor.h ${BOLT_INCLUDE_DIR}/bolt/cl/transform.h ${BOLT_INCLUDE_DIR}/bolt/cl/detail/transform.inl )
 
 set( clBolt.Test.Transform.Files ${clBolt.Test.Transform.Source} ${clBolt.Test.Transform.Headers} )
 
@@ -21,4 +21,13 @@ install( TARGETS clBolt.Test.Transform
 	LIBRARY DESTINATION ${LIB_DIR}
 	ARCHIVE DESTINATION ${LIB_DIR}/import
 	)
+
+install( FILES       
+         saxpy_functor.h   DESTINATION ${BIN_DIR} 
+		 )
+
+install( FILES       
+         saxpy_functor.h DESTINATION ${PROJECT_BINARY_DIR}/staging/\${CMAKE_INSTALL_CONFIG_NAME} 
+		 )
+
 
