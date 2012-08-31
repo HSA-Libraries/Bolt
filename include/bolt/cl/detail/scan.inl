@@ -157,12 +157,12 @@ namespace bolt
             {
 
                 // Map the input iterator to a device_vector
-                device_vector< iType > dvInput( first, last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctl.commandQueue( ) );
+                device_vector< iType > dvInput( first, last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctl );
 
                 // TODO:  Create a device_vector constructor that takes an iterator and a size
                 unsigned int elemBytes = numElements * sizeof( oType );
                 ::cl::Buffer output( ctl.context( ), CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY, elemBytes, const_cast< oType* >( &*result ) );
-                device_vector< oType > dvOutput( output, ctl.commandQueue( ) );
+                device_vector< oType > dvOutput( output, ctl );
 
                 //Now call the actual cl algorithm
                 inclusive_scan_enqueue( ctl, dvInput.begin( ), dvInput.end( ), dvOutput.begin( ), binary_op );

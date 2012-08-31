@@ -14,10 +14,6 @@
  * Public header file for the device_container class
  */
 
-/*!  TODO:  I have to use this to get the device_vector methods to take a default commandqueue parameter.  Possible vs11 compiler bug?
-*/
-using ::cl::CommandQueue;
-
 /*! \brief Defining namespace for the Bolt project
     */
 namespace bolt
@@ -94,7 +90,7 @@ namespace bolt
                 size_type m_index;
 
             public:
-                reference( const ::cl::Buffer& devMem, const CommandQueue& cq, size_type index ): m_devMemory( devMem ), m_commQueue( cq ), m_index( index )
+                reference( const ::cl::Buffer& devMem, const ::cl::CommandQueue& cq, size_type index ): m_devMemory( devMem ), m_commQueue( cq ), m_index( index )
                 {}
 
                 //  Automatic type conversion operator to turn the reference object into a value_type
@@ -124,6 +120,12 @@ namespace bolt
                     return *this;
                 }
 
+            /*! \brief A get accessor function to return the encapsulated device buffer
+            *   This member function allows access to the Buffer object, which can be retrieved through a reference or an iterator.
+            *   This is necessary to allow library functions to set the encapsulated Buffer object as a kernel argument.  
+            *   \note This get function could be implemented in the iterator, but the reference object is usually a temporary rvalue so 
+            *   this location seems less intrusive to the design of the vector class.
+            */
                 ::cl::Buffer getBuffer( ) const
                 {
                     return m_devMemory;
@@ -229,9 +231,9 @@ namespace bolt
             };
 
             /*! \brief A default constructor that creates an empty device_vector
-            *   \param cq An OpenCL ::cl::CommandQueue used to perform copy operations; a default is used if not supplied by the user
+            *   \param ctl An Bolt control class used to perform copy operations; a default is used if not supplied by the user
             */
-            device_vector( /* cl_mem_flags flags = CL_MEM_READ_WRITE,*/ CommandQueue& cq = CommandQueue::getDefault( ) ): m_Size( 0 ), m_commQueue( cq ), m_Flags( CL_MEM_READ_WRITE )
+            device_vector( /* cl_mem_flags flags = CL_MEM_READ_WRITE,*/ const control& ctl = control::getDefault( ) ): m_Size( 0 ), m_commQueue( ctl.commandQueue( ) ), m_Flags( CL_MEM_READ_WRITE )
             {
                 static_assert( std::is_pod< value_type >::value, "device_vector only supports POD (plain old data) types" );
             }
@@ -239,11 +241,12 @@ namespace bolt
             /*! \brief A constructor that will create a new device_vector with the specified number of elements, with a specified initial value
             *   \param newSize The number of elements of the new device_vector
             *   \param value The value that new elements will be initialized with
-            *   \param cq An OpenCL ::cl::CommandQueue used to perform copy operations; a default is used if not supplied by the user
+            *   \param flags A bitfield that takes the OpenCL memory flags to help specify where the device_vector should allocate memory
+            *   \param ctl An Bolt control class used to perform copy operations; a default is used if not supplied by the user
             *   \warning The ::cl::CommandQueue is not a STD reserve( ) parameter
             *   \note This constructor relies on the ::cl::Buffer object to throw on error
             */
-            device_vector( size_type newSize, const value_type& value = value_type( ), cl_mem_flags flags = CL_MEM_READ_WRITE, CommandQueue& cq = CommandQueue::getDefault( ) ): m_Size( newSize ), m_commQueue( cq ), m_Flags( flags )
+            device_vector( size_type newSize, const value_type& value = value_type( ), cl_mem_flags flags = CL_MEM_READ_WRITE, const control& ctl = control::getDefault( ) ): m_Size( newSize ), m_commQueue( ctl.commandQueue( ) ), m_Flags( flags )
             {
                 static_assert( std::is_pod< value_type >::value, "device_vector only supports POD (plain old data) types" );
 
@@ -257,25 +260,27 @@ namespace bolt
                     m_devMemory = ::cl::Buffer( l_Context, CL_MEM_READ_WRITE, m_Size * sizeof( value_type ) );
 
                     std::vector< ::cl::Event > fillEvent( 1 );
-                    V_OPENCL( cq.enqueueFillBuffer< value_type >( m_devMemory, value, 0, newSize * sizeof( value_type ), NULL, &fillEvent.front( ) ), 
+                    V_OPENCL( m_commQueue.enqueueFillBuffer< value_type >( m_devMemory, value, 0, newSize * sizeof( value_type ), NULL, &fillEvent.front( ) ), 
                         "device_vector failed to fill the internal buffer with the requested pattern");
 
                     //  Not allowed to return until the fill operation is finished
-                    V_OPENCL( cq.enqueueWaitForEvents( fillEvent ), "device_vector failed to wait for an event" );
+                    V_OPENCL( m_commQueue.enqueueWaitForEvents( fillEvent ), "device_vector failed to wait for an event" );
                 }
             }
 
             /*! \brief A constructor that will create a new device_vector using a range specified by the user
             *   \param begin An iterator pointing at the beginning of the range
             *   \param end An iterator pointing at the end of the range
-            *   \param readOnly An optimization supplied by the user specifying that this memory will only be read on the device
-            *   \param useHostPtr An optional optimization supplied by the user specifying that device memory will be shadowed on the host
-            *   \note This constructor relies on the ::cl::Buffer object to throw on error
+            *   \param flags A bitfield that takes the OpenCL memory flags to help specify where the device_vector should allocate memory
+            *   \param ctl An Bolt control class used to perform copy operations; a default is used if not supplied by the user
+            *   \note This constructor relies on the ::cl::Buffer object to throw on error 
+            *   \note The last nameless parameter should be ignored; it helps distinguish this constructor from the size_type constructor for primitive types
             */
             template< typename InputIterator >
-            device_vector( const InputIterator begin, const InputIterator end, cl_mem_flags flags = CL_MEM_READ_WRITE, CommandQueue& cq = CommandQueue::getDefault( ) ): m_commQueue( cq ), m_Flags( flags )
+            device_vector( const InputIterator begin, const InputIterator end, cl_mem_flags flags = CL_MEM_READ_WRITE, const control& ctl = control::getDefault( ),
+                typename std::enable_if< std::is_class< InputIterator >::value >::type* = 0 ): m_commQueue( ctl.commandQueue( ) ), m_Flags( flags )
             {
-                static_assert( std::is_same< value_type, std::iterator_traits< InputIterator >::value_type >::value, "device_vector value_type does not match iterator value_type" );
+                static_assert( std::is_convertible< value_type, typename std::iterator_traits< InputIterator >::value_type >::value, "device_vector value_type does not match iterator value_type" );
                 static_assert( std::is_pod< value_type >::value, "device_vector only supports POD (plain old data) types" );
 
                 //  We want to use the context from the passed in commandqueue to initialize our buffer
@@ -286,7 +291,7 @@ namespace bolt
                 m_Size = std::distance( begin, end );
                 m_devMemory = ::cl::Buffer( l_Context, flags, m_Size * sizeof( value_type ), reinterpret_cast< value_type* >( &*begin ) );
 
-                if( m_Flags & CL_MEM_USE_HOST_PTR )
+                if( !(m_Flags & CL_MEM_USE_HOST_PTR) )
                 {
                     naked_pointer ptrBuffer = reinterpret_cast< naked_pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, CL_TRUE, CL_MAP_WRITE_INVALIDATE_REGION, 0 , m_Size * sizeof( value_type ), NULL, NULL, &l_Error ) );
                     V_OPENCL( l_Error, "device_vector failed to map device memory to host memory" );
@@ -302,8 +307,9 @@ namespace bolt
 
             /*! \brief A constructor that will create a new device_vector using a pre-initialized buffer supplied by the user
             *   \param rhs A pre-existing ::cl::Buffer supplied by the user
+            *   \param ctl An Bolt control class used to perform copy operations; a default is used if not supplied by the user
             */
-            device_vector( const ::cl::Buffer& rhs, CommandQueue& cq = CommandQueue::getDefault( ) ): m_devMemory( rhs ), m_commQueue( cq )
+            device_vector( const ::cl::Buffer& rhs, const control& ctl = control::getDefault( ) ): m_devMemory( rhs ), m_commQueue( ctl.commandQueue( ) )
             {
                 static_assert( std::is_pod< value_type >::value, "device_vector only supports POD (plain old data) types" );
 
