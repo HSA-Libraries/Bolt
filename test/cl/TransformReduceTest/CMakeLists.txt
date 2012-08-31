@@ -5,7 +5,7 @@
 
 # set( testName clBolt.Test.TransformReduce )
 set( clBolt.Test.TransformReduce.Source stdafx.cpp TransformReduceTest.cpp )
-set( clBolt.Test.TransformReduce.Headers stdafx.h targetver.h ${BOLT_INCLUDE_DIR}/bolt/cl/transform_reduce.h )
+set( clBolt.Test.TransformReduce.Headers stdafx.h targetver.h ${BOLT_INCLUDE_DIR}/bolt/cl/transform_reduce.h ${BOLT_INCLUDE_DIR}/bolt/cl/detail/transform_reduce.inl)
 
 set( clBolt.Test.TransformReduce.Files ${clBolt.Test.TransformReduce.Source} ${clBolt.Test.TransformReduce.Headers} )
 

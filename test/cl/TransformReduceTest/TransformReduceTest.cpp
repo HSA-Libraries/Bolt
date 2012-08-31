@@ -70,6 +70,7 @@ struct SquareMe {
 );
 BOLT_CREATE_TYPENAME(SquareMe<int>);
 BOLT_CREATE_TYPENAME(SquareMe<float>);
+BOLT_CREATE_TYPENAME(SquareMe<double>);
 
 
 
@@ -77,19 +78,17 @@ template<typename T>
 void sumOfSquares(int aSize)
 {
 	std::vector<T> A(aSize), Z(aSize);
-
+	T init(0);
 	for (int i=0; i < aSize; i++) {
-		A[i] = i+1;
+		A[i] = (T)(i+1);
 	};
-
 
 	// For STL, perform the operation in two steps - transform then reduction:
 	std::transform(A.begin(), A.end(), Z.begin(), SquareMe<T>());
-	int stlReduce = std::accumulate(Z.begin(), Z.end(), 0);
+	T stlReduce = std::accumulate(Z.begin(), Z.end(), init);
 
-	int boltReduce = bolt::cl::transform_reduce(A.begin(), A.end(), SquareMe<T>(), 0, 
-                                              bolt::cl::plus<int>(), squareMeCode);
-
+	T boltReduce = bolt::cl::transform_reduce(A.begin(), A.end(), SquareMe<T>(), init, 
+                                              bolt::cl::plus<T>(), squareMeCode);
 	checkResult(__FUNCTION__, stlReduce, boltReduce);
 };
 
@@ -99,7 +98,15 @@ void sumOfSquares(int aSize)
 int _tmain(int argc, _TCHAR* argv[])
 {
 	sumOfSquares<int>(256);
-
+	sumOfSquares<float>(256);
+	sumOfSquares<double>(256);
+	sumOfSquares<int>(4);
+	sumOfSquares<float>(4);
+	sumOfSquares<double>(4);
+	sumOfSquares<int>(2048);
+	sumOfSquares<float>(2048);
+	sumOfSquares<double>(2048);
+	getchar();
 	return 0;
 }
 
