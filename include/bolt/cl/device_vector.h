@@ -123,6 +123,11 @@ namespace bolt
 
                     return *this;
                 }
+
+                ::cl::Buffer getBuffer( ) const
+                {
+                    return m_devMemory;
+                }
             };
 
             /*! \brief A non-writeable copy of an element of the container
@@ -226,7 +231,7 @@ namespace bolt
             /*! \brief A default constructor that creates an empty device_vector
             *   \param cq An OpenCL ::cl::CommandQueue used to perform copy operations; a default is used if not supplied by the user
             */
-            device_vector( CommandQueue& cq = CommandQueue::getDefault( ) ): m_Size( 0 ), m_commQueue( cq )
+            device_vector( /* cl_mem_flags flags = CL_MEM_READ_WRITE,*/ CommandQueue& cq = CommandQueue::getDefault( ) ): m_Size( 0 ), m_commQueue( cq ), m_Flags( CL_MEM_READ_WRITE )
             {
                 static_assert( std::is_pod< value_type >::value, "device_vector only supports POD (plain old data) types" );
             }
@@ -238,7 +243,7 @@ namespace bolt
             *   \warning The ::cl::CommandQueue is not a STD reserve( ) parameter
             *   \note This constructor relies on the ::cl::Buffer object to throw on error
             */
-            device_vector( size_type newSize, const value_type& value = value_type( ), CommandQueue& cq = CommandQueue::getDefault( ) ): m_Size( newSize ), m_commQueue( cq )
+            device_vector( size_type newSize, const value_type& value = value_type( ), cl_mem_flags flags = CL_MEM_READ_WRITE, CommandQueue& cq = CommandQueue::getDefault( ) ): m_Size( newSize ), m_commQueue( cq ), m_Flags( flags )
             {
                 static_assert( std::is_pod< value_type >::value, "device_vector only supports POD (plain old data) types" );
 
@@ -247,14 +252,17 @@ namespace bolt
                 ::cl::Context l_Context = m_commQueue.getInfo< CL_QUEUE_CONTEXT >( &l_Error );
                 V_OPENCL( l_Error, "device_vector failed to query for the context of the ::cl::CommandQueue object" );
 
-                m_devMemory = ::cl::Buffer( l_Context, CL_MEM_READ_WRITE, m_Size * sizeof( value_type ) );
+                if( m_Size > 0 )
+                {
+                    m_devMemory = ::cl::Buffer( l_Context, CL_MEM_READ_WRITE, m_Size * sizeof( value_type ) );
 
-                std::vector< ::cl::Event > fillEvent( 1 );
-                V_OPENCL( cq.enqueueFillBuffer< value_type >( m_devMemory, value, 0, newSize * sizeof( value_type ), NULL, &fillEvent.front( ) ), 
-                    "device_vector failed to fill the internal buffer with the requested pattern");
+                    std::vector< ::cl::Event > fillEvent( 1 );
+                    V_OPENCL( cq.enqueueFillBuffer< value_type >( m_devMemory, value, 0, newSize * sizeof( value_type ), NULL, &fillEvent.front( ) ), 
+                        "device_vector failed to fill the internal buffer with the requested pattern");
 
-                //  Not allowed to return until the fill operation is finished
-                V_OPENCL( cq.enqueueWaitForEvents( fillEvent ), "device_vector failed to wait for an event" );
+                    //  Not allowed to return until the fill operation is finished
+                    V_OPENCL( cq.enqueueWaitForEvents( fillEvent ), "device_vector failed to wait for an event" );
+                }
             }
 
             /*! \brief A constructor that will create a new device_vector using a range specified by the user
@@ -265,25 +273,10 @@ namespace bolt
             *   \note This constructor relies on the ::cl::Buffer object to throw on error
             */
             template< typename InputIterator >
-            device_vector( const InputIterator begin, const InputIterator end, bool readOnly, bool useHostPtr = false, CommandQueue& cq = CommandQueue::getDefault( ) ): m_commQueue( cq )
+            device_vector( const InputIterator begin, const InputIterator end, cl_mem_flags flags = CL_MEM_READ_WRITE, CommandQueue& cq = CommandQueue::getDefault( ) ): m_commQueue( cq ), m_Flags( flags )
             {
                 static_assert( std::is_same< value_type, std::iterator_traits< InputIterator >::value_type >::value, "device_vector value_type does not match iterator value_type" );
                 static_assert( std::is_pod< value_type >::value, "device_vector only supports POD (plain old data) types" );
-
-                cl_mem_flags flags = 0;
-                if( readOnly )
-                {
-                    flags |= CL_MEM_READ_ONLY;
-                }
-                else
-                {
-                    flags |= CL_MEM_READ_WRITE;
-                }
-
-                if( useHostPtr )
-                {
-                    flags |= CL_MEM_USE_HOST_PTR;
-                }
 
                 //  We want to use the context from the passed in commandqueue to initialize our buffer
                 cl_int l_Error = CL_SUCCESS;
@@ -293,7 +286,7 @@ namespace bolt
                 m_Size = std::distance( begin, end );
                 m_devMemory = ::cl::Buffer( l_Context, flags, m_Size * sizeof( value_type ), reinterpret_cast< value_type* >( &*begin ) );
 
-                if( !useHostPtr )
+                if( m_Flags & CL_MEM_USE_HOST_PTR )
                 {
                     naked_pointer ptrBuffer = reinterpret_cast< naked_pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, CL_TRUE, CL_MAP_WRITE_INVALIDATE_REGION, 0 , m_Size * sizeof( value_type ), NULL, NULL, &l_Error ) );
                     V_OPENCL( l_Error, "device_vector failed to map device memory to host memory" );
@@ -315,6 +308,10 @@ namespace bolt
                 static_assert( std::is_pod< value_type >::value, "device_vector only supports POD (plain old data) types" );
 
                 m_Size = capacity( );
+
+                cl_int l_Error = CL_SUCCESS;
+                m_Flags = m_devMemory.getInfo< CL_MEM_FLAGS >( &l_Error );
+                V_OPENCL( l_Error, "device_vector failed to query for the memory flags of the ::cl::Buffer object" );
             };
 
             //  Member functions
@@ -534,7 +531,7 @@ namespace bolt
             {
                 cl_int l_Error = CL_SUCCESS;
 
-                const_naked_pointer ptrBuff = reinterpret_cast< const_naked_pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ, n * sizeof( value_type), sizeof( value_type), NULL, NULL, &l_Error ) );
+                naked_pointer ptrBuff = reinterpret_cast< naked_pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ, n * sizeof( value_type), sizeof( value_type), NULL, NULL, &l_Error ) );
                 V_OPENCL( l_Error, "device_vector failed map device memory to host memory for operator[]" );
 
                 const_reference tmpRef = *ptrBuff;
@@ -1044,6 +1041,7 @@ namespace bolt
             ::cl::Buffer m_devMemory;
             ::cl::CommandQueue m_commQueue;
             size_type m_Size;
+            cl_mem_flags m_Flags;
         };
 
     }

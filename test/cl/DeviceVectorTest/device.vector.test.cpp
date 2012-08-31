@@ -348,7 +348,7 @@ TEST( Constructor, ContainerConstIteratorEmpty )
 
 TEST( Constructor, Size5AndValue3OperatorValueType )
 {
-    bolt::cl::device_vector< int > dV( 5, 3 );
+    bolt::cl::device_vector< int > dV( static_cast<bolt::cl::device_vector< int >::size_type>( 5 ), 3 );
     EXPECT_EQ( 5, dV.size( ) );
 
     EXPECT_EQ( 3, dV[ 0 ] );
@@ -450,7 +450,7 @@ TEST( VectorReference, OperatorValueType )
 
 TEST( VectorIterator, Size6AndValue7Dereference )
 {
-    bolt::cl::device_vector< int > dV( 6, 7 );
+    bolt::cl::device_vector< int > dV( 6UL, 7 );
     EXPECT_EQ( 6, dV.size( ) );
 
     bolt::cl::device_vector< int >::iterator myIter = dV.begin( );
@@ -513,7 +513,7 @@ TEST( Vector, Erase )
 
 TEST( Vector, Clear )
 {
-    bolt::cl::device_vector< int > dV( 5, 3 );
+    bolt::cl::device_vector< int > dV( 5UL, 3 );
     EXPECT_EQ( 5, dV.size( ) );
 
     dV.clear( );
@@ -574,7 +574,7 @@ TEST( Vector, InsertBegin )
 
 TEST( Vector, InsertEnd )
 {
-    bolt::cl::device_vector< int > dV( 5, 3 );
+    bolt::cl::device_vector< int > dV( 5UL, 3 );
     EXPECT_EQ( 5, dV.size( ) );
 
     bolt::cl::device_vector< int >::iterator myResult = dV.insert( dV.cend( ), 1 );
@@ -584,7 +584,7 @@ TEST( Vector, InsertEnd )
 
 TEST( Vector, DataRead )
 {
-    bolt::cl::device_vector< int > dV( 5, 3 );
+    bolt::cl::device_vector< int > dV( 5UL, 3 );
     EXPECT_EQ( 5, dV.size( ) );
     dV[ 0 ] = 1;
     dV[ 1 ] = 2;

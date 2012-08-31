@@ -74,7 +74,7 @@ kernel void intraBlockExclusiveScan(
     for( uint offset = 0; offset < workPerThread; offset += 1 )
     {
         iType y = preSumArray[ mapId + offset ];
-        printf( "preSumArray[%d] = [%g]\n", mapId + offset, y );
+        // printf( "preSumArray[%d] = [%g]\n", mapId + offset, y );
         workSum = (*binaryOp)( workSum, y );
         postSumArray[ mapId + offset ] = workSum;
     }
@@ -147,7 +147,7 @@ kernel void perBlockInclusiveScan(
     //  Each work item writes out its calculated scan result, relative to the beginning
     //  of each work group
     output[ gloId ] = sum;
-    // printf( "Output Array work-item[%d], sum[%g]\n", gloId, sum );
+    // printf( "Output Array work-item[%d], sum[%d]\n", gloId, sum );
 
     barrier( CLK_LOCAL_MEM_FENCE );
 
