@@ -28,3 +28,8 @@ add_custom_target( 	Bolt.Documentation
 					DEPENDS ${Doxygen.Dependencies}
 					COMMENT "Generating Bolt API documentation with Doxygen" VERBATIM
 				)
+                
+install( DIRECTORY
+			doxy.out/html
+		DESTINATION
+			docs )

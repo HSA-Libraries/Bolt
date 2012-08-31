@@ -1,0 +1,11 @@
+#pragma once
+#if !defined( BOLT_VERSION_H )
+#define BOLT_VERSION_H
+
+/* the configured version for Bolt
+ */
+#define BoltVersionMajor @Bolt_VERSION_MAJOR@
+#define BoltVersionMinor @Bolt_VERSION_MINOR@
+#define BoltVersionPatch @Bolt_VERSION_PATCH@
+
+#endif

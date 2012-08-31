@@ -14,8 +14,7 @@ else( )
 endif( )
 
 # Include Bolt headers for all testing projects
-include_directories( ${BOLT_INCLUDE_DIR} )
-include_directories( ${GTEST_INCLUDE_DIRS} )
+include_directories( ${BOLT_INCLUDE_DIR} ${PROJECT_BINARY_DIR}/include ${GTEST_INCLUDE_DIRS})
 
 # Googletest requires this to be defined to 10 in order to compile on windows, because windows does not support variable length templates yet
 add_definitions( "-D_VARIADIC_MAX=10" )

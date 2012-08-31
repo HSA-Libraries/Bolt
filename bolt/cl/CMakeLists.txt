@@ -17,14 +17,12 @@ else( )
 	message( SEND_ERROR "The OpenCL Bolt library requires BOOST_ROOT to be defined" )
 endif( )
 
-# Include standard OpenCL headers
-include_directories( ${Boost_INCLUDE_DIRS} )
-
 set( clBolt.Include.Dir ${BOLT_INCLUDE_DIR}/bolt/cl )
 
 set( clBolt.Runtime.Source 	
 		bolt.cpp 
-		${BOLT_LIBRARY_DIR}/statisticalTimer.cpp )
+		${BOLT_LIBRARY_DIR}/statisticalTimer.cpp
+    )
 
 set( clBolt.Runtime.Headers 
 		${clBolt.Include.Dir}/bolt.h 
@@ -39,34 +37,40 @@ set( clBolt.Runtime.Headers
 		${clBolt.Include.Dir}/sort.h 
 		${clBolt.Include.Dir}/transform.h 
 		${clBolt.Include.Dir}/transform_reduce.h
+    )
+
+set( clBolt.Runtime.Headers.Misc
 		${clBolt.Include.Dir}/../countof.h
 		${clBolt.Include.Dir}/../unicode.h
-		${clBolt.Include.Dir}/../statisticalTimer.h )
-		
+		${clBolt.Include.Dir}/../statisticalTimer.h
+    )
+        
 set( clBolt.Runtime.Headers.Detail 
 		${clBolt.Include.Dir}/detail/reduce.inl
-		${clBolt.Include.Dir}/detail/transform.inl
-		${clBolt.Include.Dir}/detail/transform_reduce.inl
 		${clBolt.Include.Dir}/detail/scan.inl
-        ${clBolt.Include.Dir}/detail/sort.inl )
-		
+        ${clBolt.Include.Dir}/detail/sort.inl
+		${clBolt.Include.Dir}/detail/transform.inl
+        ${clBolt.Include.Dir}/detail/transform_reduce.inl
+    )
+
 set( clBolt.Runtime.clFiles 
 		${clBolt.Include.Dir}/reduce_kernels.cl 
 		${clBolt.Include.Dir}/transform_kernels.cl 
 		${clBolt.Include.Dir}/transform_reduce_kernels.cl
         ${clBolt.Include.Dir}/scan_kernels.cl
-        ${clBolt.Include.Dir}/sort_kernels.cl )
+        ${clBolt.Include.Dir}/sort_kernels.cl
+    )
 
 # The minidump tech is windows specific; I don't have a solution yet for linux, but google-breakpad looks promising
 if( WIN32 )
 	list( APPEND clBolt.Runtime.Source ${BOLT_LIBRARY_DIR}/miniDump.cpp )
-	list( APPEND clBolt.Runtime.Headers ${clBolt.Include.Dir}/../miniDump.h )
+	list( APPEND clBolt.Runtime.Headers.Misc ${clBolt.Include.Dir}/../miniDump.h )
 endif( )
 		
-set( clBolt.Runtime.Files ${clBolt.Runtime.Source} ${clBolt.Runtime.Headers} ${clBolt.Runtime.Headers.Detail} ${clBolt.Runtime.clFiles} )
+set( clBolt.Runtime.Files ${clBolt.Runtime.Source} ${clBolt.Runtime.Headers} ${clBolt.Runtime.Headers.Detail} ${clBolt.Runtime.Headers.Misc} ${clBolt.Runtime.clFiles} )
 
-# Include standard OpenCL headers
-include_directories( ${BOLT_INCLUDE_DIR} ${OPENCL_INCLUDE_DIRS} )
+# Include headers files
+include_directories( ${BOLT_INCLUDE_DIR} ${PROJECT_BINARY_DIR}/include ${OPENCL_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} )
 
 add_library( clBolt.Runtime STATIC ${clBolt.Runtime.Files} )
 target_link_libraries( clBolt.Runtime ${OPENCL_LIBRARIES} )
@@ -74,15 +78,30 @@ target_link_libraries( clBolt.Runtime ${OPENCL_LIBRARIES} )
 set_target_properties( clBolt.Runtime PROPERTIES VERSION ${Bolt_VERSION} )
 set_target_properties( clBolt.Runtime PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
 		
-install( FILES	
+install( FILES
 			${clBolt.Runtime.clFiles}
 		DESTINATION
 			${BIN_DIR} )
 
-install( FILES	
+install( FILES
 			${clBolt.Runtime.clFiles}
 		DESTINATION
 			${PROJECT_BINARY_DIR}/staging/\${CMAKE_INSTALL_CONFIG_NAME} )
+
+install( FILES
+			${clBolt.Runtime.Headers}
+		DESTINATION
+			${INCLUDE_DIR}/bolt/cl )
+
+install( FILES
+			${clBolt.Runtime.Headers.Detail}
+		DESTINATION
+			${INCLUDE_DIR}/bolt/cl/detail )
+
+install( FILES
+			${clBolt.Runtime.Headers.Misc}
+		DESTINATION
+			${INCLUDE_DIR}/bolt )
 
 # CPack configuration; include the executable into the package
 install( TARGETS clBolt.Runtime
