@@ -45,6 +45,8 @@ set( clBolt.Runtime.Headers
 		
 set( clBolt.Runtime.Headers.Detail 
 		${clBolt.Include.Dir}/detail/reduce.inl
+		${clBolt.Include.Dir}/detail/transform.inl
+		${clBolt.Include.Dir}/detail/transform_reduce.inl
 		${clBolt.Include.Dir}/detail/scan.inl
         ${clBolt.Include.Dir}/detail/sort.inl )
 		

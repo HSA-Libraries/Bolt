@@ -36,7 +36,7 @@ namespace bolt
 
         /*! \brief This defines the OpenCL version of a device_vector
         *   \ingroup Device
-        *   \details A device_vector is an abstract data type that provides random access to a flat, sequential region of memory that is performant for 
+        *   \details A device_vector is an abstract data type that provides random access to a flat, sequential region of memory that is performant 
         *   for the device in question to use.  This may imply different memories for diffferent devices.  For instance, discrete class graphics
         *   devices, this is most likely video memory, for APU devices this may imply zero-copy memory and for classic CPU devices this may imply
         *   standard host memory.

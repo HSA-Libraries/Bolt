@@ -28,7 +28,7 @@ namespace bolt {
 
 		using namespace concurrency;
 
-		parallel_for_each(grid<1>(ext), [=] (index<1> idx) mutable restrict(direct3d) {
+		parallel_for_each(extent<1>(ext), [=] (index<1> idx) mutable restrict(amp) {
 			IterType iter(Init);
 
 			bool keepGoing = true;
@@ -52,7 +52,7 @@ namespace bolt {
 		array<pair<index<1>, IterType> outQueue(maxQSz);
 		array<int,1>  qPtr(1);
 
-		parallel_for_each(grid<1>(ext), [=] (index<1> idx) mutable restrict(direct3d) {
+		parallel_for_each(extent<1>(ext), [=] (index<1> idx) mutable restrict(amp) {
 			IterType iter(Init);
 			int iterations = splitPoint;
 

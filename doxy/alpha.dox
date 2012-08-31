@@ -1,0 +1,18 @@
+
+/*!
+* \page BoltAlpha Bolt Alpha: Goals And Limitations
+* \tableofcontents
+* \section Alpha_Goals Goals
+* We are seeking early feedback on the Bolt library implementation, in particular
+* on the following items:
+* \li The infrastructure used to provide a single-source interface for defining functors.  
+* \li The device_vector implementation.
+* \li For your applicaiton, which API functions would be most useful to add in the future?
+
+* Other comments and feedback welcome as well!
+* \section Alpha_Limitations Known Limitations
+* This is an alpha release and we are aware of several known limitations:
+* \li GPU routines are not yet performance optimized.
+* \li No CPU implementations are provided.
+
+*/
