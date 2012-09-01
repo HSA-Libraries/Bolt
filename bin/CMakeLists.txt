@@ -1,13 +1,9 @@
 #############################################################################
 ##	Copyright (C) 2012 Advanced Micro Devices, Inc. All Rights Reserved. 
 #############################################################################
-if( WIN32 )
-	# We require 2.8.3 for windows because of a bug in cmake that prevented vs2010 from generating
-	# executables properly with multiple periods
-	cmake_minimum_required( VERSION 2.8.3 )
-else( )
-	cmake_minimum_required( VERSION 2.6 )
-endif( )
+# We require 2.8.3 for windows because of a bug in cmake that prevented vs2010 from generating
+# executables properly with multiple periods
+cmake_minimum_required( VERSION 2.8.3 )
 
 # uncomment these to debug nmake and borland makefiles
 #SET(CMAKE_START_TEMP_FILE "")
@@ -19,8 +15,8 @@ project( Bolt.SuperBuild )
 
 # Define a version for the code
 set( Bolt.SuperBuild_VERSION_MAJOR 0 )
-set( Bolt.SuperBuild_VERSION_MINOR 0 )
-set( Bolt.SuperBuild_VERSION_PATCH 1 )
+set( Bolt.SuperBuild_VERSION_MINOR 2 )
+set( Bolt.SuperBuild_VERSION_PATCH 0 )
 set( Bolt.SuperBuild_VERSION "${Bolt.SuperBuild_VERSION_MAJOR}.${Bolt.SuperBuild_VERSION_MINOR}.${Bolt.SuperBuild_VERSION_PATCH}")
 	
 list( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR} )
@@ -60,6 +56,7 @@ option( BUILD_Bolt "Setup Bolt to use all the external dependencies" ON )
 option( BUILD_gTest "Install googleTest as an external dependency" ON )
 option( BUILD_AMP "Generate projects that use the AMP backend" ON )
 option( BUILD_OpenCL "Generate projects that use the OpenCL backend" ON )
+option( BUILD_Examples "Generate example projects to demonstrate Bolt usage" OFF )
 
 set( Bolt.Dependencies )
 set( Bolt.Cmake.Args )
@@ -104,7 +101,7 @@ if( BUILD_Bolt )
 		DEPENDS ${Bolt.Dependencies}
 		SOURCE_DIR ${PROJECT_SOURCE_DIR}/..
 		BINARY_DIR Bolt.build
-		CMAKE_ARGS ${Bolt.Cmake.Args} -DBUILD_ampBolt=${BUILD_AMP} -DBUILD_clBolt=${BUILD_OpenCL}
+		CMAKE_ARGS ${Bolt.Cmake.Args} -DBUILD_ampBolt=${BUILD_AMP} -DBUILD_clBolt=${BUILD_OpenCL} -DBUILD_examples=${BUILD_Examples}
 		INSTALL_COMMAND ""
 	)
 endif( )

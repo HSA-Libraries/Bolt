@@ -3,10 +3,10 @@
 * \tableofcontents
 * \section General General
 * \subsection Q0 When should I use device_vector vs regular host memory?
-* The Bolt device_vector is used to manage device-local memory and may deliver higher 
+* bolt::cl::device_vector is used to manage device-local memory and may deliver higher 
 * performance on discrete GPU system.  However, the host memory interfaces
-* eliminate the need to create and manage the device_vectors. 
-* If the memory is re-used across multiple Bolt calls or is referenced by other
+* eliminate the need to create and manage device_vectors. 
+* If memory is re-used across multiple Bolt calls or is referenced by other
 * kernels, using device_vector will deliver higher performance.
 
 * \subsection Q1 How can I avoid including my source functor in my executable?
