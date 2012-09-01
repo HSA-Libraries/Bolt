@@ -103,9 +103,72 @@ install( FILES
 		DESTINATION
 			${INCLUDE_DIR}/bolt )
 
+# Install dependent Boost header files
+set( ROOT_EXTERNAL_BOOST ${PROJECT_BINARY_DIR}/../external/boost/src/Boost/boost )
+
+# smart_ptr library
+install( DIRECTORY 
+			${ROOT_EXTERNAL_BOOST}/smart_ptr
+			${ROOT_EXTERNAL_BOOST}/detail
+		DESTINATION
+			${INCLUDE_DIR}/boost )
+
+install( FILES
+			${ROOT_EXTERNAL_BOOST}/enable_shared_from_this.hpp
+			${ROOT_EXTERNAL_BOOST}/get_pointer.hpp
+			${ROOT_EXTERNAL_BOOST}/intrusive_ptr.hpp
+			${ROOT_EXTERNAL_BOOST}/make_shared.hpp
+			${ROOT_EXTERNAL_BOOST}/memory_order.hpp
+			${ROOT_EXTERNAL_BOOST}/pointer_cast.hpp
+			${ROOT_EXTERNAL_BOOST}/pointer_to_other.hpp
+			${ROOT_EXTERNAL_BOOST}/scoped_array.hpp
+			${ROOT_EXTERNAL_BOOST}/scoped_ptr.hpp
+			${ROOT_EXTERNAL_BOOST}/shared_array.hpp
+			${ROOT_EXTERNAL_BOOST}/shared_ptr.hpp
+			${ROOT_EXTERNAL_BOOST}/smart_ptr.hpp
+			${ROOT_EXTERNAL_BOOST}/weak_ptr.hpp
+		DESTINATION
+			${INCLUDE_DIR}/boost )
+
+# iterator library
+install( DIRECTORY 
+			${ROOT_EXTERNAL_BOOST}/iterator
+			${ROOT_EXTERNAL_BOOST}/pending
+			${ROOT_EXTERNAL_BOOST}/config
+			${ROOT_EXTERNAL_BOOST}/mpl
+			${ROOT_EXTERNAL_BOOST}/type_traits
+			${ROOT_EXTERNAL_BOOST}/preprocessor
+			${ROOT_EXTERNAL_BOOST}/utility
+			${ROOT_EXTERNAL_BOOST}/exception
+		DESTINATION
+			${INCLUDE_DIR}/boost )
+
+install( FILES
+			${ROOT_EXTERNAL_BOOST}/config.hpp
+			${ROOT_EXTERNAL_BOOST}/function_output_iterator.hpp
+			${ROOT_EXTERNAL_BOOST}/iterator.hpp
+			${ROOT_EXTERNAL_BOOST}/iterator_adaptors.hpp
+			${ROOT_EXTERNAL_BOOST}/pointee.hpp
+			${ROOT_EXTERNAL_BOOST}/shared_container_iterator.hpp
+			${ROOT_EXTERNAL_BOOST}/static_assert.hpp
+			${ROOT_EXTERNAL_BOOST}/utility.hpp
+			${ROOT_EXTERNAL_BOOST}/checked_delete.hpp
+			${ROOT_EXTERNAL_BOOST}/next_prior.hpp
+			${ROOT_EXTERNAL_BOOST}/noncopyable.hpp
+			${ROOT_EXTERNAL_BOOST}/assert.hpp
+			${ROOT_EXTERNAL_BOOST}/current_function.hpp
+			${ROOT_EXTERNAL_BOOST}/throw_exception.hpp
+		DESTINATION
+			${INCLUDE_DIR}/boost )
+
 # CPack configuration; include the executable into the package
 install( TARGETS clBolt.Runtime
+	EXPORT exportBOLT
 	RUNTIME DESTINATION ${BIN_DIR}
 	LIBRARY DESTINATION ${LIB_DIR}
 	ARCHIVE DESTINATION ${LIB_DIR}/import
 	)
+
+install( EXPORT exportBOLT
+		DESTINATION exportCmake
+		)

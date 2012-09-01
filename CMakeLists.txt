@@ -69,6 +69,10 @@ if( IS_DIRECTORY "${PROJECT_SOURCE_DIR}/doxy" )
 	option( BUILD_documentation "Add project for generating Bolt documentation" OFF )
 endif( )
 
+if( IS_DIRECTORY "${PROJECT_SOURCE_DIR}/examples" )
+	option( BUILD_examples "Generate example projects to demonstrate Bolt usage" OFF )
+endif( )
+
 # Currently, linux has a problem outputing both narrow and wide characters,
 # which happens in our client because openCL only supports narrow characters
 if( WIN32 )
@@ -130,8 +134,8 @@ if( Bolt_BUILD64 )
 else( )
 	set( CPACK_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}-${Bolt_VERSION}-${CMAKE_HOST_SYSTEM_NAME}-x32")
     set( INCLUDE_DIR include )
-    set( BIN_DIR bin32 )
-    set( LIB_DIR lib32 )
+    set( BIN_DIR bin )
+    set( LIB_DIR lib )
 endif( )
 
 # Build AMP library (only header files for now)
@@ -170,12 +174,24 @@ if( BUILD_documentation )
 	add_subdirectory( doxy )
 endif( )
 
+# After libraries are built, built benchmarks
+if( BUILD_examples )
+	add_subdirectory( examples EXCLUDE_FROM_ALL )
+endif( )
+
 # configure a header file to pass the CMake version settings to the source, and package the header files in the output archive
-configure_file( "${PROJECT_SOURCE_DIR}/include/bolt/BoltVersion.h.in" "${PROJECT_BINARY_DIR}/include/bolt/BoltVersion.h" )
+configure_file( "${PROJECT_SOURCE_DIR}/include/bolt/boltVersion.h.in" "${PROJECT_BINARY_DIR}/include/bolt/boltVersion.h" )
 install( FILES 
-			"${PROJECT_BINARY_DIR}/include/bolt/BoltVersion.h" 
+			"${PROJECT_BINARY_DIR}/include/bolt/boltVersion.h" 
 		DESTINATION 
 			${INCLUDE_DIR}/bolt )
+
+# Right now, always install the examples folder
+install( DIRECTORY 
+			examples
+		DESTINATION
+			.
+        PATTERN "Hessian" EXCLUDE )
 
 # The following code is setting variables to control the behavior of CPack to generate our 
 if( WIN32 )

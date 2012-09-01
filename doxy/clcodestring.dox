@@ -1,19 +1,19 @@
 
 /*!
-* \page OpenCLCodeStrings_Page Specifying OpenCL(TM) Code Strings : Overview
+* \page OpenCLCodeStrings_Page Specifying OpenCL&trade; Code Strings : Overview
 * \tableofcontents
 * \section SplitSource_Section Introduction and the Split-Source Model
-* OpenCL(TM) provides a split compilation model, meaning that the host and device code
-* are split into separate compilation units and compiled by different compilers.  In OpenCL(TM),
+* OpenCL&trade; provides a split compilation model, meaning that the host and device code
+* are split into separate compilation units and compiled by different compilers.  In OpenCL&trade;,
 * the device code (the kernels) are typically provided as strings which are 
-* passed through the OpenCL(TM) runtime APIs to compile for the target device.  Recall that
-* a Bolt algorithm can also be executed on the CPU, and Bolt may use non-OpenCL(TM)
+* passed through the OpenCL&trade; runtime APIs to compile for the target device.  Recall that
+* a Bolt algorithm can also be executed on the CPU, and Bolt may use non-OpenCL&trade;
 * paths for host execution such as a serial loop or a multi-core task-parallel runtime
 * such as Intel Threading Building Blocks.  Additionally, advanced use cases of Bolt 
 * use a functor which is initialized on the host CPU using the functor constructor, 
 * and then executed on the device using the body operator.  
 * This page describes how to create functors for Bolt APIs so that the code is available
-* to both the host C++ compiler and the OpenCL(TM) device compiler.
+* to both the host C++ compiler and the OpenCL&trade; device compiler.
 *
 *
 * \section Functors C++ Functors
@@ -62,7 +62,7 @@ void main() {
 *
 * \section OclSplitSource_Tools Bolt Tools for Split-Source
 * The bottom line is that Bolt requires that functor classes be defined both as strings
-* (for OpenCL(TM) compilation) and as regular host-side definitions.  Since we don't want
+* (for OpenCL&trade; compilation) and as regular host-side definitions.  Since we don't want
 * to have to create and maintain two copies of our source code, Bolt provides several 
 * mechanisms to construct the two representations from a single source definition. These are 
 * described below. 
@@ -117,7 +117,7 @@ void main() {
 *    \li \ref BOLT_FUNCTOR only works with non-templated classes.  To use a templated class with a Bolt algorithm call, 
 *        see the \ref clCode_Templates section 
 *       below on templated functors.
-*    \li \ref BOLT_FUNCTOR uses macro stringification to create the OpenCL(TM) code string.  As a result, the class definition has all line feeds 
+*    \li \ref BOLT_FUNCTOR uses macro stringification to create the OpenCL&trade; code string.  As a result, the class definition has all line feeds 
 *       removed and is "smushed" into a single line before being passed to the compiler.  This can make debugging harder, and for that reason
 *       you may choose to use one of the other techniqueus described below.
 *
@@ -273,16 +273,16 @@ void testCountIf(int aSize)
 *
 
 * \section functorLanguage Functor Language
-* The functor must be able to be compiled on both the host (C++) and device (OpenCL(TM) compilers - 
+* The functor must be able to be compiled on both the host (C++) and device (OpenCL&trade; compilers - 
 * so it must only use language constructs which are available in both of those languages.  
-* OpenCL(TM) is an "extended subset" of C99 - the extensions include new builtin functions 
+* OpenCL&trade; is an "extended subset" of C99 - the extensions include new builtin functions 
 * as well as new types (ie vector types such as float4).  In general, none of the OpenCL extensions
-* may be used in Bolt functor defintions.  However, developers can work around this restriction by
-* providing host-side functions with the same calling signature and functionality as OpenCL(TM) 
-* builtins.  Many of the OpenCL(TM) builtins already have equivalent host code definitions in <math.h> 
+* may be used in Bolt functor definitions.  However, developers can work around this restriction by
+* providing host-side functions with the same calling signature and functionality as OpenCL&trade; 
+* builtins.  Many of the OpenCL&trade; builtins already have equivalent host code definitions in <math.h> 
 * (ie sin, cos, exp, log, pow, ceil, fabs, etc).  
 * If host-side versions are provided, the host code will compile and link correctly using the host code definition,
-* while the OpenCL(TM) code will compile correcly using the OpenCL(TM) built-in.
+* while the OpenCL&trade; code will compile correcly using the OpenCL&trade; built-in.
 
 * For more information, see :
 *  \li The Khronos OpenCL Specification:   http://www.khronos.org/opencl/
@@ -316,5 +316,5 @@ to the OpenCL compiler.
 * This section also described how Bolt uses C++ traits, including the \ref BOLT_CREATE_TYPENAME and \ref BOLT_CREATE_CLCODE 
 * macros for low-level control - see \ref clCode_Traits section.
 * Finally, the cl_code parameter is the optional last argument for every Bolt function and can be used 
-* to pre-pend any code string to the code which is passed to the OpenCL(TM) compiler.
+* to pre-pend any code string to the code which is passed to the OpenCL&trade; compiler.
 */
