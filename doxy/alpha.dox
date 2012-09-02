@@ -14,5 +14,10 @@
 * This is an alpha release and we are aware of several known limitations:
 * \li GPU routines are not yet performance optimized.
 * \li No CPU implementations are provided.
-
+* \li No support for binary OpenCL programs.  All OpenCL code is compiled at runtime.
+* \li The device_vector< T > container has problems reading with the [] operator through device_vector< T >::iterators.  
+*        The current workaround is to use the [] operator directly on the container
+* \li Will not work on Nvidia hardware as their software stack does not support OpenCL&trade; C++ features
+* \li For Microsoft platforms, Bolt only supports the vs2012 compiler suite
+* \li No gcc support
 */

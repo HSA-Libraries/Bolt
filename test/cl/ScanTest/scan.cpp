@@ -5,6 +5,7 @@
 #include <bolt/miniDump.h>
 
 #include <gtest/gtest.h>
+#include <boost/shared_array.hpp>
 
 #include <vector>
 #include <array>
@@ -12,6 +13,17 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Below are helper routines to compare the results of two arrays for googletest
 //  They return an assertion object that googletest knows how to track
+
+template< typename T >
+::testing::AssertionResult cmpArrays( const T ref, const T calc, size_t N )
+{
+    for( size_t i = 0; i < N; ++i )
+    {
+        EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
+    }
+
+    return ::testing::AssertionSuccess( );
+}
 
 template< typename T, size_t N >
 ::testing::AssertionResult cmpArrays( const T (&ref)[N], const T (&calc)[N] )
@@ -128,10 +140,6 @@ public:
     static const size_t value = N;
 };
 
-//  Explicit initialization of the C++ static const
-template< size_t N >
-const size_t TypeValue< N >::value;
-
 //  Test fixture class, used for the Type-parameterized tests
 //  Namely, the tests that use std::array and TYPED_TEST_P macros
 template< typename ArrayTuple >
@@ -165,10 +173,6 @@ protected:
     int m_Errors;
 };
 
-//  Explicit initialization of the C++ static const
-template< typename ArrayTuple >
-const size_t ScanArrayTest< ArrayTuple >::ArraySize;
-
 TYPED_TEST_CASE_P( ScanArrayTest );
 
 TYPED_TEST_P( ScanArrayTest, InPlace )
@@ -179,7 +183,7 @@ TYPED_TEST_P( ScanArrayTest, InPlace )
     ArrayCont::iterator stdEnd  = std::partial_sum( stdInput.begin( ), stdInput.end( ), stdInput.begin( ) );
     ArrayCont::iterator boltEnd = bolt::cl::inclusive_scan( boltInput.begin( ), boltInput.end( ), boltInput.begin( ) );
 
-    //  The returned iterator should be one past the 
+    //  The returned iterator should be at the end of the result range
     EXPECT_EQ( stdInput.end( ), stdEnd );
     EXPECT_EQ( boltInput.end( ), boltEnd );
 
@@ -201,7 +205,7 @@ TYPED_TEST_P( ScanArrayTest, InPlacePlusFunction )
     ArrayCont::iterator stdEnd  = std::partial_sum( stdInput.begin( ), stdInput.end( ), stdInput.begin( ), std::plus< ArrayType >( ) );
     ArrayCont::iterator boltEnd = bolt::cl::inclusive_scan( boltInput.begin( ), boltInput.end( ), boltInput.begin( ), bolt::cl::plus< ArrayType >( ) );
 
-    //  The returned iterator should be one past the 
+    //  The returned iterator should be at the end of the result range
     EXPECT_EQ( stdInput.end( ), stdEnd );
     EXPECT_EQ( boltInput.end( ), boltEnd );
 
@@ -223,7 +227,7 @@ TYPED_TEST_P( ScanArrayTest, InPlaceMaxFunction )
     ArrayCont::iterator stdEnd  = std::partial_sum( stdInput.begin( ), stdInput.end( ), stdInput.begin( ), bolt::cl::maximum< ArrayType >( ) );
     ArrayCont::iterator boltEnd = bolt::cl::inclusive_scan( boltInput.begin( ), boltInput.end( ), boltInput.begin( ), bolt::cl::maximum< ArrayType >( ) );
 
-    //  The returned iterator should be one past the 
+    //  The returned iterator should be at the end of the result range
     EXPECT_EQ( stdInput.end( ), stdEnd );
     EXPECT_EQ( boltInput.end( ), boltEnd );
 
@@ -316,6 +320,37 @@ protected:
     bolt::cl::device_vector< int > boltInput;
 };
 
+//  ::testing::TestWithParam< int > means that GetParam( ) returns int values, which i use for array size
+class ScanIntegerNakedPointer: public ::testing::TestWithParam< int >
+{
+public:
+    //  Create an std and a bolt vector of requested size, and initialize all the elements to 1
+    ScanIntegerNakedPointer( ): stdInput( new int[ GetParam( ) ] ), boltInput( new int[ GetParam( ) ] )
+    {}
+
+    virtual void SetUp( )
+    {
+        size_t size = GetParam( );
+        for( int i=0; i < size; i++ )
+        {
+            stdInput[ i ] = 1;
+            boltInput[ i ] = 1;
+        }
+    };
+
+    virtual void TearDown( )
+    {
+        delete [] stdInput;
+        delete [] boltInput;
+    };
+
+protected:
+    //boost::shared_array< int > stdInput;
+    //boost::shared_array< int > boltInput;
+     int* stdInput;
+     int* boltInput;
+};
+
 TEST_P( ScanIntegerVector, InclusiveInplace )
 {
     //  Calling the actual functions under test
@@ -396,10 +431,38 @@ TEST_P( ScanIntegerDeviceVector, InclusiveInplace )
     cmpArrays( stdInput, boltInput );
 }
 
+TEST_P( ScanIntegerNakedPointer, InclusiveInplace )
+{
+    size_t endIndex = GetParam( );
+
+    //  Calling the actual functions under test
+    stdext::checked_array_iterator< int* > wrapStdInput( stdInput, endIndex );
+    stdext::checked_array_iterator< int* > stdEnd = std::partial_sum( wrapStdInput, wrapStdInput + endIndex, wrapStdInput );
+    //int* stdEnd = std::partial_sum( stdInput, stdInput + endIndex, stdInput );
+
+    stdext::checked_array_iterator< int* > wrapBoltInput( boltInput, endIndex );
+    stdext::checked_array_iterator< int* > boltEnd = bolt::cl::inclusive_scan( wrapBoltInput, wrapBoltInput + endIndex, wrapBoltInput );
+    //int* boltEnd = bolt::cl::inclusive_scan( boltInput, boltInput + endIndex, boltInput );
+
+    //  The returned iterator should be one past the 
+    EXPECT_EQ( wrapStdInput + endIndex, stdEnd );
+    EXPECT_EQ( wrapBoltInput + endIndex, boltEnd );
+
+    size_t stdNumElements = std::distance( wrapStdInput, stdEnd );
+    size_t boltNumElements = std::distance( wrapBoltInput, boltEnd );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput, endIndex );
+}
+
 //  Test lots of consecutive numbers, but small range, suitable for integers because they overflow easier
-INSTANTIATE_TEST_CASE_P( Inclusive, ScanIntegerVector, ::testing::Range( 1537, 4096, 1 ) );
-//INSTANTIATE_TEST_CASE_P( Inclusive, ScanIntegerVector, ::testing::Range( 0, 1024, 1 ) );
-INSTANTIATE_TEST_CASE_P( Inclusive, ScanIntegerDeviceVector, ::testing::Range( 0, 1024, 1 ) );
+//INSTANTIATE_TEST_CASE_P( Inclusive, ScanIntegerVector, ::testing::Range( 1537, 1540, 1 ) );
+//INSTANTIATE_TEST_CASE_P( Inclusive, ScanIntegerVector, ::testing::Range( 0, 1540, 1 ) );
+//INSTANTIATE_TEST_CASE_P( Inclusive, ScanIntegerDeviceVector, ::testing::Range( 0, 1024, 1 ) );
+INSTANTIATE_TEST_CASE_P( Inclusive, ScanIntegerNakedPointer, ::testing::Range( 0, 1024, 1 ) );
 
 //  Test a huge range, suitable for floating point as they are less prone to overflow (but floating point loses granularity at large values)
 //INSTANTIATE_TEST_CASE_P( Inclusive, ScanFloatVector, ::testing::Range( 4096, 1048576, 4096 ) );

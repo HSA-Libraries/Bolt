@@ -15,22 +15,22 @@
 template<typename T>
 void printCheckMessage(bool err, std::string msg, T  stlResult, T boltResult)
 {
-	if (err) {
-		std::cout << "*ERROR ";
-	} else {
-		std::cout << "PASSED ";
-	}
+    if (err) {
+        std::cout << "*ERROR ";
+    } else {
+        std::cout << "PASSED ";
+    }
 
-	std::cout << msg << "  STL=" << stlResult << " BOLT=" << boltResult << std::endl;
+    std::cout << msg << "  STL=" << stlResult << " BOLT=" << boltResult << std::endl;
 };
 
 template<typename T>
 bool checkResult(std::string msg, T  stlResult, T boltResult)
 {
-	bool err =  (stlResult != boltResult);
-	printCheckMessage(err, msg, stlResult, boltResult);
+    bool err =  (stlResult != boltResult);
+    printCheckMessage(err, msg, stlResult, boltResult);
 
-	return err;
+    return err;
 };
 
 
@@ -38,17 +38,17 @@ bool checkResult(std::string msg, T  stlResult, T boltResult)
 template<typename T>
 bool checkResult(std::string msg, T  stlResult, T boltResult, double errorThresh)
 {
-	bool err;
-	if ((errorThresh != 0.0) && stlResult) {
-		double ratio = (double)(boltResult) / (double)(stlResult) - 1.0;
-		err = abs(ratio) > errorThresh;
-	} else {
-		// Avoid div-by-zero, check for exact match.
-		err = (stlResult != boltResult);
-	}
+    bool err;
+    if ((errorThresh != 0.0) && stlResult) {
+        double ratio = (double)(boltResult) / (double)(stlResult) - 1.0;
+        err = abs(ratio) > errorThresh;
+    } else {
+        // Avoid div-by-zero, check for exact match.
+        err = (stlResult != boltResult);
+    }
 
-	printCheckMessage(err, msg, stlResult, boltResult);
-	return err;
+    printCheckMessage(err, msg, stlResult, boltResult);
+    return err;
 };
 
 
@@ -63,9 +63,9 @@ bool checkResult(std::string msg, T  stlResult, T boltResult, double errorThresh
 //        Note the STL version uses two function calls - transform followed by accumulate.
 //  * Operates directly on host buffers.
 std::string squareMeCode = BOLT_CODE_STRING(
-	template<typename T>
+    template<typename T>
 struct SquareMe {
-	T operator() (const T &x ) const { return x*x; } ;
+    T operator() (const T &x ) const { return x*x; } ;
 };
 );
 BOLT_CREATE_TYPENAME(SquareMe<int>);
@@ -77,36 +77,57 @@ BOLT_CREATE_TYPENAME(SquareMe<double>);
 template<typename T>
 void sumOfSquares(int aSize)
 {
-	std::vector<T> A(aSize), Z(aSize);
-	T init(0);
-	for (int i=0; i < aSize; i++) {
-		A[i] = (T)(i+1);
-	};
+    std::vector<T> A(aSize), Z(aSize);
+    T init(0);
+    for (int i=0; i < aSize; i++) {
+        A[i] = (T)(i+1);
+    };
 
-	// For STL, perform the operation in two steps - transform then reduction:
-	std::transform(A.begin(), A.end(), Z.begin(), SquareMe<T>());
-	T stlReduce = std::accumulate(Z.begin(), Z.end(), init);
+    // For STL, perform the operation in two steps - transform then reduction:
+    std::transform(A.begin(), A.end(), Z.begin(), SquareMe<T>());
+    T stlReduce = std::accumulate(Z.begin(), Z.end(), init);
 
-	T boltReduce = bolt::cl::transform_reduce(A.begin(), A.end(), SquareMe<T>(), init, 
+    T boltReduce = bolt::cl::transform_reduce(A.begin(), A.end(), SquareMe<T>(), init, 
                                               bolt::cl::plus<T>(), squareMeCode);
-	checkResult(__FUNCTION__, stlReduce, boltReduce);
+    checkResult(__FUNCTION__, stlReduce, boltReduce);
 };
 
+template<typename T>
+void sumOfSquaresDeviceVector( int aSize )
+{
+    std::vector<T> A( aSize ), Z( aSize );
+    bolt::cl::device_vector< T > dV( aSize );
+    
+    T init( 0 );
+    for( int i=0; i < aSize; i++ )
+    {
+        A[i] = (T)(i+1);
+        dV[i] = (T)(i+1);
+    };
+
+    // For STL, perform the operation in two steps - transform then reduction:
+    std::transform(A.begin(), A.end(), Z.begin(), SquareMe<T>());
+    T stlReduce = std::accumulate(Z.begin(), Z.end(), init);
+
+    T boltReduce = bolt::cl::transform_reduce( dV.begin( ), dV.end( ), SquareMe< T >( ), init, bolt::cl::plus< T >( ), squareMeCode );
+    checkResult( __FUNCTION__, stlReduce, boltReduce );
+};
 
 
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	sumOfSquares<int>(256);
-	sumOfSquares<float>(256);
-	sumOfSquares<double>(256);
-	sumOfSquares<int>(4);
-	sumOfSquares<float>(4);
-	sumOfSquares<double>(4);
-	sumOfSquares<int>(2048);
-	sumOfSquares<float>(2048);
-	sumOfSquares<double>(2048);
-	getchar();
-	return 0;
+    sumOfSquares<int>(256);
+    sumOfSquaresDeviceVector<int>( 256 );
+    sumOfSquares<float>(256);
+    sumOfSquares<double>(256);
+    sumOfSquares<int>(4);
+    sumOfSquares<float>(4);
+    sumOfSquares<double>(4);
+    sumOfSquares<int>(2048);
+    sumOfSquares<float>(2048);
+    sumOfSquares<double>(2048);
+    getchar();
+    return 0;
 }
 

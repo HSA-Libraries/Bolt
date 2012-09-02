@@ -1,28 +1,25 @@
 #pragma once
 
 #include <bolt/cl/bolt.h>
+#include <bolt/cl/device_vector.h>
+
 #include <mutex>
 #include <string>
 #include <iostream>
 
 namespace bolt {
-	namespace cl {
+    namespace cl {
 
-		// I think we are not providing the cl::Buffer interfaces
-		/*template<typename T, typename UnaryFunction, typename BinaryFunction> 
-		T transform_reduce(const control c, ::cl::Buffer A, UnaryFunction transform_op,
-			T init, BinaryFunction reduce_op, const std::string user_code="");*/
+        template<typename T, typename InputIterator, typename UnaryFunction, typename BinaryFunction> 
+        T transform_reduce(const control &c, InputIterator first1, InputIterator last1,  
+            UnaryFunction transform_op, 
+            T init,  BinaryFunction reduce_op, const std::string user_code="" );
 
-		template<typename T, typename InputIterator, typename UnaryFunction, typename BinaryFunction> 
-		T transform_reduce(const control &c, InputIterator first1, InputIterator last1,  
-			UnaryFunction transform_op, 
-			T init,  BinaryFunction reduce_op, const std::string user_code="" );
-
-		template<typename T, typename InputIterator, typename UnaryFunction, typename BinaryFunction> 
-		T transform_reduce(InputIterator first1, InputIterator last1,  
-			UnaryFunction transform_op, 
-			T init,  BinaryFunction reduce_op, const std::string user_code="" );
-	};
+        template<typename T, typename InputIterator, typename UnaryFunction, typename BinaryFunction> 
+        T transform_reduce(InputIterator first1, InputIterator last1,  
+            UnaryFunction transform_op, 
+            T init,  BinaryFunction reduce_op, const std::string user_code="" );
+    };
 };
 
 #include <bolt/cl/detail/transform_reduce.inl>

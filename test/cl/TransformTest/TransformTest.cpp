@@ -4,7 +4,6 @@
 #include "stdafx.h"
 #include <bolt/cl/transform.h>
 #include <bolt/cl/functional.h>
-//#include <bolt/cl/device_vector.h>
 
 #include <iostream>
 #include <algorithm>  // for testing against STL functions.
@@ -126,6 +125,30 @@ void transformSaxpy(int aSize)
 
 };
 
+void transformSaxpyDeviceVector(int aSize)
+{
+	std::string fName = __FUNCTION__ ;
+	fName += ":";
+	std::cout << fName << "(" << aSize << ")" << std::endl;
+
+	std::vector<float> A(aSize), B(aSize), Z0(aSize);
+    bolt::cl::device_vector< float > dvA(aSize), dvB(aSize), dvZ(aSize);
+
+	for (int i=0; i<aSize; i++) {
+		A[i] = float(i);
+		B[i] = 10000.0f + (float)i;
+		dvA[i] = float(i);
+		dvB[i] = 10000.0f + (float)i;
+	}
+
+	SaxpyFunctor sb(10.0);
+
+	std::transform(A.begin(), A.end(), B.begin(), Z0.begin(), sb);
+	bolt::cl::transform(dvA.begin(), dvA.end(), dvB.begin(), dvZ.begin(), sb);
+
+	checkResults(fName, Z0.begin(), Z0.end(), dvZ.begin());
+
+};
 
 
 void singleThreadReduction(const std::vector<float> &A, const std::vector<float> &B, std::vector<float> *Zbolt, int aSize) 
@@ -187,47 +210,48 @@ void multiThreadReductions(int aSize, int iters)
 };
 
 
-void oclTransform(int aSize)
-{
-	std::vector<float> A(aSize), B(aSize);
-	for (int i=0; i<aSize; i++) {
-		A[i] = float(i);
-		B[i] = 1000.0f + (float)i;
-	}
-	std::vector<float> Z0(aSize);
-	std::transform(A.begin(), A.end(), B.begin(), Z0.begin(), bolt::cl::plus<float>()); // golden answer:
-
-	size_t bufSize = aSize * sizeof(float);
-	cl::Buffer bufferA(CL_MEM_READ_ONLY|CL_MEM_USE_HOST_PTR, bufSize, A.data());
-	//cl::Buffer bufferA(begin(A), end(A), true);
-	cl::Buffer bufferB(CL_MEM_READ_ONLY|CL_MEM_USE_HOST_PTR, bufSize, B.data());
-	cl::Buffer bufferZ(CL_MEM_WRITE_ONLY, sizeof(float) * aSize);
-
-	bolt::cl::transform<float>(bufferA, bufferB, bufferZ, bolt::cl::plus<float>());
-
-	float * zMapped = static_cast<float*> (cl::CommandQueue::getDefault().enqueueMapBuffer(bufferZ, true, CL_MAP_READ | CL_MAP_WRITE, 0/*offset*/, bufSize));
-
-	std::string fName = __FUNCTION__ ;
-	fName += ":";
-
-	checkResults(fName + "oclBuffers", Z0.begin(), Z0.end(), zMapped);
-};
+//void oclTransform(int aSize)
+//{
+//	std::vector<float> A(aSize), B(aSize);
+//	for (int i=0; i<aSize; i++) {
+//		A[i] = float(i);
+//		B[i] = 1000.0f + (float)i;
+//	}
+//	std::vector<float> Z0(aSize);
+//	std::transform(A.begin(), A.end(), B.begin(), Z0.begin(), bolt::cl::plus<float>()); // golden answer:
+//
+//	size_t bufSize = aSize * sizeof(float);
+//	cl::Buffer bufferA(CL_MEM_READ_ONLY|CL_MEM_USE_HOST_PTR, bufSize, A.data());
+//	//cl::Buffer bufferA(begin(A), end(A), true);
+//	cl::Buffer bufferB(CL_MEM_READ_ONLY|CL_MEM_USE_HOST_PTR, bufSize, B.data());
+//	cl::Buffer bufferZ(CL_MEM_WRITE_ONLY, sizeof(float) * aSize);
+//
+//	bolt::cl::transform<float>(bufferA, bufferB, bufferZ, bolt::cl::plus<float>());
+//
+//	float * zMapped = static_cast<float*> (cl::CommandQueue::getDefault().enqueueMapBuffer(bufferZ, true, CL_MAP_READ | CL_MAP_WRITE, 0/*offset*/, bufSize));
+//
+//	std::string fName = __FUNCTION__ ;
+//	fName += ":";
+//
+//	checkResults(fName + "oclBuffers", Z0.begin(), Z0.end(), zMapped);
+//};
 
 
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	readFromFileTest();
+	//readFromFileTest();
 	
 	simpleTransform1(256); //FIXME
-    //bolt::cl::device_vector< int > dV;
 
 	transformSaxpy(256);
+	transformSaxpyDeviceVector(256);
 	transformSaxpy(1024);
+	transformSaxpyDeviceVector( 1024 );
 
 	//multiThreadReductions(1024, 10);
 
-	oclTransform(1024);
+	//oclTransform(1024);
 
 	return 0;
 }

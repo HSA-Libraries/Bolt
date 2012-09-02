@@ -257,7 +257,7 @@ namespace bolt
 
                 if( m_Size > 0 )
                 {
-                    m_devMemory = ::cl::Buffer( l_Context, CL_MEM_READ_WRITE, m_Size * sizeof( value_type ) );
+                    m_devMemory = ::cl::Buffer( l_Context, m_Flags, m_Size * sizeof( value_type ) );
 
                     std::vector< ::cl::Event > fillEvent( 1 );
                     V_OPENCL( m_commQueue.enqueueFillBuffer< value_type >( m_devMemory, value, 0, newSize * sizeof( value_type ), NULL, &fillEvent.front( ) ), 
@@ -278,7 +278,9 @@ namespace bolt
             */
             template< typename InputIterator >
             device_vector( const InputIterator begin, const InputIterator end, cl_mem_flags flags = CL_MEM_READ_WRITE, const control& ctl = control::getDefault( ),
-                typename std::enable_if< std::is_class< InputIterator >::value >::type* = 0 ): m_commQueue( ctl.commandQueue( ) ), m_Flags( flags )
+                typename std::enable_if< !std::is_integral< InputIterator >::value >::type* = 0 ): m_commQueue( ctl.commandQueue( ) ), m_Flags( flags )
+                //typename std::enable_if< std::is_class< InputIterator >::value >::type* = 0 ): m_commQueue( ctl.commandQueue( ) ), m_Flags( flags )
+                //typename std::enable_if< std::is_convertible< typename std::iterator_traits< InputIterator >::iterator_category, std::input_iterator_tag >::value >::type* = 0 ): m_commQueue( ctl.commandQueue( ) ), m_Flags( flags )
             {
                 static_assert( std::is_convertible< value_type, typename std::iterator_traits< InputIterator >::value_type >::value, "device_vector value_type does not match iterator value_type" );
                 static_assert( std::is_pod< value_type >::value, "device_vector only supports POD (plain old data) types" );
@@ -289,7 +291,7 @@ namespace bolt
                 V_OPENCL( l_Error, "device_vector failed to query for the context of the ::cl::CommandQueue object" );
 
                 m_Size = std::distance( begin, end );
-                m_devMemory = ::cl::Buffer( l_Context, flags, m_Size * sizeof( value_type ), reinterpret_cast< value_type* >( &*begin ) );
+                m_devMemory = ::cl::Buffer( l_Context, m_Flags, m_Size * sizeof( value_type ), reinterpret_cast< value_type* >( const_cast< value_type* >( &*begin ) ) );
 
                 if( !(m_Flags & CL_MEM_USE_HOST_PTR) )
                 {
@@ -347,11 +349,8 @@ namespace bolt
                 ::cl::Context l_Context = m_devMemory.getInfo< CL_MEM_CONTEXT >( &l_Error );
                 V_OPENCL( l_Error, "device_vector failed to query for the context of the ::cl::Buffer object" );
 
-                cl_mem_flags l_memFlags = m_devMemory.getInfo< CL_MEM_FLAGS >( &l_Error );
-                V_OPENCL( l_Error, "device_vector failed to query for the flags of the memory buffer" );
-
                 size_type l_reqSize = reqSize * sizeof( value_type );
-                ::cl::Buffer l_tmpBuffer( l_Context, l_memFlags, l_reqSize, NULL, &l_Error );
+                ::cl::Buffer l_tmpBuffer( l_Context, m_Flags, l_reqSize, NULL, &l_Error );
 
                 size_type l_srcSize = m_devMemory.getInfo< CL_MEM_SIZE >( &l_Error );
                 V_OPENCL( l_Error, "device_vector failed to request the size of the ::cl::Buffer object" );
@@ -430,7 +429,7 @@ namespace bolt
 
                 if( m_Size == 0 )
                 {
-                    ::cl::Buffer l_tmpBuffer( CL_MEM_READ_WRITE, reqSize * sizeof( value_type ) );
+                    ::cl::Buffer l_tmpBuffer( m_Flags, reqSize * sizeof( value_type ) );
                     m_devMemory = l_tmpBuffer;
                     return;
                 }
@@ -440,12 +439,9 @@ namespace bolt
                 ::cl::Context l_Context = m_devMemory.getInfo< CL_MEM_CONTEXT >( &l_Error );
                 V_OPENCL( l_Error, "device_vector failed to query for the context of the ::cl::Buffer object" );
 
-                cl_mem_flags l_memFlags = m_devMemory.getInfo< CL_MEM_FLAGS >( &l_Error );
-                V_OPENCL( l_Error, "device_vector failed to query for the flags of the memory buffer" );
-
                 size_type l_size = reqSize * sizeof( value_type );
                 //  Can't user host_ptr because l_size is guranteed to be bigger
-                ::cl::Buffer l_tmpBuffer( l_Context, l_memFlags, l_size, NULL, &l_Error );
+                ::cl::Buffer l_tmpBuffer( l_Context, m_Flags, l_size, NULL, &l_Error );
                 V_OPENCL( l_Error, "device_vector can not create an temporary internal OpenCL buffer" );
 
                 size_type l_srcSize = m_devMemory.getInfo< CL_MEM_SIZE >( &l_Error );
@@ -500,11 +496,8 @@ namespace bolt
                 ::cl::Context l_Context = m_devMemory.getInfo< CL_MEM_CONTEXT >( &l_Error );
                 V_OPENCL( l_Error, "device_vector failed to query for the context of the ::cl::Buffer object" );
 
-                cl_mem_flags l_memFlags = m_devMemory.getInfo< CL_MEM_FLAGS >( &l_Error );
-                V_OPENCL( l_Error, "device_vector failed to query for the flags of the memory buffer" );
-
                 size_type l_newSize = m_Size * sizeof( value_type );
-                ::cl::Buffer l_tmpBuffer( l_Context, l_memFlags, l_newSize, NULL, &l_Error );
+                ::cl::Buffer l_tmpBuffer( l_Context, m_Flags, l_newSize, NULL, &l_Error );
                 V_OPENCL( l_Error, "device_vector can not create an temporary internal OpenCL buffer" );
 
                 size_type l_srcSize = m_devMemory.getInfo< CL_MEM_SIZE >( &l_Error );
@@ -776,13 +769,24 @@ namespace bolt
             */
             void swap( device_vector& vec )
             {
-                ::cl::Buffer    swapTmp( m_devMemory );
+                if( this == &vec )
+                    return;
+
+                ::cl::Buffer    swapBuffer( m_devMemory );
                 m_devMemory = vec.m_devMemory;
-                vec.m_devMemory = swapTmp;
+                vec.m_devMemory = swapBuffer;
+
+                ::cl::CommandQueue    swapQueue( m_commQueue );
+                m_commQueue = vec.m_commQueue;
+                vec.m_commQueue = swapQueue;
 
                 size_type sizeTmp = m_Size;
                 m_Size = vec.m_Size;
                 vec.m_Size = sizeTmp;
+
+                cl_mem_flags flagsTmp = m_Flags;
+                m_Flags = vec.m_Flags;
+                vec.m_Flags = flagsTmp;
             }
 
             /*! \brief Removes an element
