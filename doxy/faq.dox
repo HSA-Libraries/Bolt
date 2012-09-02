@@ -11,6 +11,10 @@
 
 * \subsection Q1 How can I avoid including my source functor in my executable?
 * \subsection Q2 What profiling and debugging tools does Bolt provide?
-
+* \subsection Q3 I run my Bolt application, but it immediately crashes?
+* The most likely cause is that the Bolt runtime library (which statically links into your application) is looking for 
+* a *.cl file that contains the kernel for the function you are calling.  When it can't find the kernel, it throws an
+* exception because the library call can't continue.  Make sure the appropriate *.cl files are copied into the same
+* directory as your application.
 * 
 */

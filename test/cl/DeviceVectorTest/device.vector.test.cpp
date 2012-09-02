@@ -116,10 +116,6 @@ public:
     static const size_t value = N;
 };
 
-//  Explicit initialization of the C++ static const
-template< size_t N >
-const size_t TypeValue< N >::value;
-
 //  Test fixture class, used for the Type-parameterized tests
 //  Namely, the tests that use std::array and TYPED_TEST_P macros
 template< typename ArrayTuple >
@@ -152,10 +148,6 @@ protected:
     typename std::array< ArrayType, ArraySize > stdInput, boltInput;
     int m_Errors;
 };
-
-//  Explicit initialization of the C++ static const
-template< typename ArrayTuple >
-const size_t ScanArrayTest< ArrayTuple >::ArraySize;
 
 TYPED_TEST_CASE_P( ScanArrayTest );
 
@@ -348,7 +340,7 @@ TEST( Constructor, ContainerConstIteratorEmpty )
 
 TEST( Constructor, Size5AndValue3OperatorValueType )
 {
-    bolt::cl::device_vector< int > dV( 5u, 3 );
+    bolt::cl::device_vector< int > dV( 5, 3 );
     EXPECT_EQ( 5, dV.size( ) );
 
     EXPECT_EQ( 3, dV[ 0 ] );
@@ -450,7 +442,7 @@ TEST( VectorReference, OperatorValueType )
 
 TEST( VectorIterator, Size6AndValue7Dereference )
 {
-    bolt::cl::device_vector< int > dV( 6, 7 );
+    bolt::cl::device_vector< int > dV( 6ul, 7 );
     EXPECT_EQ( 6, dV.size( ) );
 
     bolt::cl::device_vector< int >::iterator myIter = dV.begin( );
@@ -513,7 +505,7 @@ TEST( Vector, Erase )
 
 TEST( Vector, Clear )
 {
-    bolt::cl::device_vector< int > dV( 5, 3 );
+    bolt::cl::device_vector< int > dV( 5ul, 3 );
     EXPECT_EQ( 5, dV.size( ) );
 
     dV.clear( );
@@ -574,7 +566,7 @@ TEST( Vector, InsertBegin )
 
 TEST( Vector, InsertEnd )
 {
-    bolt::cl::device_vector< int > dV( 5, 3 );
+    bolt::cl::device_vector< int > dV( 5ul, 3 );
     EXPECT_EQ( 5, dV.size( ) );
 
     bolt::cl::device_vector< int >::iterator myResult = dV.insert( dV.cend( ), 1 );
@@ -584,7 +576,7 @@ TEST( Vector, InsertEnd )
 
 TEST( Vector, DataRead )
 {
-    bolt::cl::device_vector< int > dV( 5, 3 );
+    bolt::cl::device_vector< int > dV( 5ul, 3 );
     EXPECT_EQ( 5, dV.size( ) );
     dV[ 0 ] = 1;
     dV[ 1 ] = 2;

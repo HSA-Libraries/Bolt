@@ -39,7 +39,7 @@ namespace bolt {
             *  \param[out] minor Minor functionality change
             *  \param[out] patch Bug fixes, documentation changes, no new features introduced
             */
-        void getVersion( cl_uint* major, cl_uint* minor, cl_uint* patch );
+        void getVersion( cl_uint& major, cl_uint& minor, cl_uint& patch );
 
         /*! \brief Translates an integer OpenCL error code to a std::string at runtime
         *  \param status The OpenCL error code

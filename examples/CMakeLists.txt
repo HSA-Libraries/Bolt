@@ -31,6 +31,7 @@ endif()
 
 if( MSVC_IDE )
 	set( Bolt_BUILD64 ${CMAKE_CL_64} )
+	set_property( GLOBAL PROPERTY USE_FOLDERS TRUE )
 else()
 	option( Bolt_BUILD64 "Build a 64-bit product" ON )
 endif()
@@ -119,6 +120,7 @@ find_package( Bolt REQUIRED )
 
 # add_subdirectory( Hessian )
 add_subdirectory( Scan )
+add_subdirectory( Version )
 
 # The following code is setting variables to control the behavior of CPack to generate our 
 if( WIN32 )
