@@ -1,28 +1,37 @@
 #pragma OPENCL EXTENSION cl_amd_printf : enable
 //#pragma OPENCL EXTENSION cl_khr_fp64 : enable 
 namespace bolt{
-    namespace cl{ 
-	template<typename T>
-	struct greater 
-	{
-		    bool operator()(const T &lhs, const T &rhs) const  {return lhs > rhs ? true: false;}
-		}; 
-		template<typename T>
-		struct less 
-		{
-		    bool operator()(const T &lhs, const T &rhs) const  {return lhs < rhs ? true: false;}
-		};
+    namespace cl{
+        template<typename T>
+        struct greater
+        {
+            bool operator()(const T &lhs, const T &rhs) const  {return (lhs > rhs);}
+        };
+        template<typename T>
+        struct less 
+        {
+            bool operator()(const T &lhs, const T &rhs) const  {return (lhs < rhs);}
+        };
 };
 };
-
+//FIXME - this was added to support POD with bolt::cl::greater data types
+template<typename T>
+struct greater
+{
+    bool operator()(const T &lhs, const T &rhs) const  {return (lhs > rhs);}
+};
+template<typename T>
+struct less 
+{
+    bool operator()(const T &lhs, const T &rhs) const  {return (lhs < rhs);}
+};
 
 template <typename T, typename Compare>
 kernel
 void sortTemplate(global T * theArray, 
                  const uint stage, 
                  const uint passOfStage,
-                 global Compare *userComp,
-                 local T *scratch)
+                 global Compare *userComp)
 {
     uint threadId = get_global_id(0);
     uint pairDistance = 1 << (stage - passOfStage);
@@ -34,7 +43,7 @@ void sortTemplate(global T * theArray,
     
     uint rightId = leftId + pairDistance;
     
-    T element, greater, lesser;
+    T greater, lesser;
     T leftElement = theArray[leftId];
     T rightElement = theArray[rightId];
     
@@ -64,18 +73,12 @@ void sortTemplate(global T * theArray,
 
 }
 
-template <typename T> 
-bool FUNCTION(T in1, T in2)
-{
-     return (in1 < in2);
-}
 
 template <typename T>
 kernel
 void sortTemplateBasic(global T * theArray, 
                  const uint stage, 
-                 const uint passOfStage,
-                 local T *scratch)
+                 const uint passOfStage)
 {
     uint threadId = get_global_id(0);
     uint pairDistance = 1 << (stage - passOfStage);
@@ -87,7 +90,7 @@ void sortTemplateBasic(global T * theArray,
 
     uint rightId = leftId + pairDistance;
 
-    T element, greater, lesser;
+    T greater, lesser;
     T leftElement = theArray[leftId];
     T rightElement = theArray[rightId];
     
@@ -100,8 +103,7 @@ void sortTemplateBasic(global T * theArray,
         leftId = temp;
     }
 
-    compareResult = FUNCTION(leftElement, rightElement);
-    //compareResult = (leftElement < rightElement);
+    compareResult = (leftElement < rightElement);
     if(compareResult)
     {
         greater = rightElement;
