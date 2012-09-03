@@ -143,6 +143,9 @@ namespace bolt
             *   and non-constant iterators
             *   \sa http://www.sgi.com/tech/stl/Iterators.html
             *   \sa http://www.sgi.com/tech/stl/RandomAccessIterator.html
+            *   \bug operator[] with device_vector iterators result in a compile time error when accessed for reading.
+            *   Writing with operator[] appears to be OK.  Workarounds: either use the operator[] on the device_vector
+            *   container, or use iterator arithmetic instead, such as *(iter + 5) for reading from the iterator.
             */
             template< typename Container >
             class iterator_base: public boost::iterator_facade< iterator_base< Container >, value_type, std::random_access_iterator_tag, typename device_vector::reference >
