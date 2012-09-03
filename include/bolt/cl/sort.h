@@ -15,7 +15,10 @@ namespace bolt {
 
 		/*! \addtogroup sorting
         *   \ingroup algorithms
-        *   The sorting Algorithm for sorting the given InputIterator.
+        *   An Algorithm for sorting the given InputIterator. 
+        *   It is capable of sorting the arithmetic data types, or the user define data types. For common code between the host
+        *   and device, one can take a look at the ClCode and TypeName implementations. Refer to Bolt Tools for Split-Source 
+        *   for a detailed description. 
         */ 
 
 		/*! \addtogroup sort
@@ -35,7 +38,7 @@ namespace bolt {
 		* \param ctl Control structure to control command-queue, debug, tuning, etc.  See control.
 		* \param first The first position in the sequence to be sorted.
 		* \param last  The last position in the sequence to be sorted.
-		* \param comp  The comparison operation used to compare two values.   By default, the compare operation is less<>(). i.e the elements are stored in ascending order. 
+		* \param comp  The comparison operation used to compare two values. 
 		* \param cl_code Optional OpenCL(TM) code to be passed to the OpenCL compiler. The cl_code is inserted first in the generated code, before the cl_code trait.
 		* \return The sorted data which is available in place.
 		*
@@ -47,20 +50,19 @@ namespace bolt {
 		* int a[10] = {2, 9, 3, 7, 5, 6, 3, 8, 3, 4};
 		*
 		* cl::CommandQueue myCommandQueue = ...
-		*
 		* bolt::cl::control ctl(myCommandQueue); // specify an OpenCL(TM) command queue to use for executing the sort routine.
 		* ctl.debug(bolt::cl::control::debug::SaveCompilerTemps); // save IL and ISA files for generated kernel
-		* // for arranging th eelements in the descending order, you can use bolt::cl::greater<int>()
+		* // for arranging the elements in descending order, you should use bolt::cl::greater<int>()
 		* bolt::cl::sort(ctl, a, a+10, bolt::cl::greater<int>());
-		* // a => {9, 8, 7, 6, 5, 4, 3, 3, 3, 2}
+		* 
 		*  \endcode
 		*/
 
-		template<typename RandomAccessIterator, typename Compare> 
+		template<typename RandomAccessIterator, typename StrictWeakOrdering> 
 		void sort(const bolt::cl::control &ctl,
 			RandomAccessIterator first, 
 			RandomAccessIterator last,  
-            Compare comp=bolt::cl::less<typename std::iterator_traits<RandomAccessIterator>::value_type>(), 
+            StrictWeakOrdering comp, 
 			const std::string cl_code="");
 
 
@@ -127,10 +129,10 @@ namespace bolt {
 		*  \endcode
 		*/
         
-        template<typename RandomAccessIterator, typename Compare> 
+        template<typename RandomAccessIterator, typename StrictWeakOrdering> 
 		void sort(RandomAccessIterator first, 
 			RandomAccessIterator last,  
-            Compare comp=bolt::cl::less<typename std::iterator_traits<RandomAccessIterator>::value_type>(), 
+            StrictWeakOrdering comp, 
 			const std::string cl_code="");
 
 
