@@ -10,12 +10,18 @@
 namespace bolt {
     namespace cl {
 
-        // Function definition that accepts iterators and converts to buffers.
+        /*! \brief transform applies a specific function object to each element pair in the specified input ranges, and writes the result
+        *   into the specified output range
+        * \bug Transform only works if the input buffer is a multiple of workgroup size, currently set to 256
+        */
         template<typename InputIterator, typename OutputIterator, typename BinaryFunction> 
         void transform(const bolt::cl::control &c,  InputIterator first1, InputIterator last1, InputIterator first2, OutputIterator result, 
             BinaryFunction f, const std::string user_code="");
 
-        // default control, two-input transform, std:: iterator
+        /*! \brief transform applies a specific function object to each element pair in the specified input ranges, and writes the result
+        *   into the specified output range
+        * \bug Transform only works if the input buffer is a multiple of workgroup size, currently set to 256
+        */
         template<typename InputIterator, typename OutputIterator, typename BinaryFunction> 
         void transform( InputIterator first1, InputIterator last1, InputIterator first2, OutputIterator result, 
             BinaryFunction f, const std::string user_code="");

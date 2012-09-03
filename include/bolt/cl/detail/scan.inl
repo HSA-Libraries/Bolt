@@ -1,6 +1,7 @@
 #if !defined( SCAN_INL )
 #define SCAN_INL
 
+#include <bolt/cl/transform.h>
 #include <algorithm>
 #include <mutex>
 #include <type_traits>
@@ -11,6 +12,8 @@ namespace bolt
 {
     namespace cl
     {
+        //  Inclusive scan overloads
+        //////////////////////////////////////////
         template< typename InputIterator, typename OutputIterator, typename BinaryFunction >
         OutputIterator inclusive_scan( const control &ctl, InputIterator first, InputIterator last, OutputIterator result,
             BinaryFunction binary_op, std::input_iterator_tag )
@@ -53,6 +56,52 @@ namespace bolt
             typedef std::iterator_traits<InputIterator>::value_type T;
 
             return inclusive_scan( control::getDefault( ), first, last, result, plus< T >( ), std::iterator_traits< InputIterator >::iterator_category( ) );
+        };
+
+        //  Exclusive scan overloads
+        //////////////////////////////////////////
+        template< typename InputIterator, typename OutputIterator, typename BinaryFunction >
+        OutputIterator exclusive_scan( const control &ctl, InputIterator first, InputIterator last, OutputIterator result,
+            BinaryFunction binary_op, std::input_iterator_tag )
+        {
+            //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data 
+            //  to a temporary buffer.  Should we?
+            throw ::cl::Error( CL_INVALID_OPERATION, "Scan currently only supports random access iterator types" );
+        };
+
+        template< typename InputIterator, typename OutputIterator, typename BinaryFunction >
+        OutputIterator exclusive_scan( const control &ctl, InputIterator first, InputIterator last, OutputIterator result,
+            BinaryFunction binary_op, std::random_access_iterator_tag )
+        {
+            return detail::exclusive_scan( ctl, first, last, result, binary_op );
+        };
+
+        template< typename InputIterator, typename OutputIterator, typename BinaryFunction > 
+        OutputIterator exclusive_scan( const control &ctl, InputIterator first, InputIterator last, OutputIterator result, BinaryFunction binary_op )
+        {
+            return exclusive_scan( ctl, first, last, result, binary_op, std::iterator_traits< InputIterator >::iterator_category( ) );
+        };
+
+        template< typename InputIterator, typename OutputIterator >
+        OutputIterator exclusive_scan( const control &ctl, InputIterator first, InputIterator last, OutputIterator result )
+        {
+            typedef std::iterator_traits<InputIterator>::value_type T;
+
+            return exclusive_scan( ctl, first, last, result, plus< T >( ), std::iterator_traits< InputIterator >::iterator_category( ) );
+        };
+
+        template< typename InputIterator, typename OutputIterator, typename BinaryFunction > 
+        OutputIterator exclusive_scan( InputIterator first, InputIterator last, OutputIterator result, BinaryFunction binary_op )
+        {
+            return exclusive_scan( control::getDefault( ), first, last, result, binary_op, std::iterator_traits< InputIterator >::iterator_category( ) );
+        };
+
+        template< typename InputIterator, typename OutputIterator >
+        OutputIterator exclusive_scan( InputIterator first, InputIterator last, OutputIterator result )
+        {
+            typedef std::iterator_traits<InputIterator>::value_type T;
+
+            return exclusive_scan( control::getDefault( ), first, last, result, plus< T >( ), std::iterator_traits< InputIterator >::iterator_category( ) );
         };
 
         namespace detail
@@ -206,6 +255,98 @@ namespace bolt
 
             //Now call the actual cl algorithm
             inclusive_scan_enqueue( ctl, first, last, result, binary_op );
+
+            return result + numElements;
+        }
+
+        //  Exclusive scan overloads
+        //////////////////////////////////////////
+
+        // This template is called by the non-detail versions of exclusive_scan, it already assumes random access iterators
+        // This is called strictly for any non-device_vector iterator
+        template< typename InputIterator, typename OutputIterator, typename BinaryFunction >
+        typename std::enable_if< !std::is_base_of<typename device_vector<typename std::iterator_traits<InputIterator>::value_type>::iterator,OutputIterator>::value, OutputIterator >::type
+            exclusive_scan( const control &ctl, InputIterator first, InputIterator last, OutputIterator result, BinaryFunction binary_op )
+        {
+            typedef typename std::iterator_traits< InputIterator >::value_type iType;
+            typedef typename std::iterator_traits< OutputIterator >::value_type oType;
+            static_assert( std::is_convertible< iType, oType >::value, "Input and Output iterators are incompatible" );
+
+            unsigned int numElements = static_cast< unsigned int >( std::distance( first, last ) );
+            if( numElements == 0 )
+                return result;
+
+            const bolt::cl::control::e_RunMode runMode = ctl.forceRunMode( );  // could be dynamic choice some day.
+            if( runMode == bolt::cl::control::SerialCpu )
+            {
+                std::partial_sum( first, last, result, binary_op );
+                return result;
+            }
+            else if( runMode == bolt::cl::control::MultiCoreCpu )
+            {
+                std::cout << "The MultiCoreCpu version of inclusive_scan is not implemented yet." << std ::endl;
+            }
+            else
+            {
+                // Map the input iterator to a device_vector
+                device_vector< iType > dvInput( first, last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctl );
+
+                // TODO:  Create a device_vector constructor that takes an iterator and a size
+                unsigned int elemBytes = numElements * sizeof( oType );
+                ::cl::Buffer output( ctl.context( ), CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, elemBytes, const_cast< oType* >( &*result ) );
+                device_vector< oType > dvOutput( output, ctl );
+
+                //Now call the actual cl algorithm
+                inclusive_scan_enqueue( ctl, dvInput.begin( ), dvInput.end( ), dvOutput.begin( ), binary_op );
+                dvInput.data( );
+
+                //  TODO:  This extra pass over the data is unnecessary; future optimization should fold this subtraction into the kernels
+                //  BUG:  This hack doesn't work if the inclusive_scan is inplace
+                transform( ctl, dvOutput.begin( ), dvOutput.end( ), dvInput.begin( ), dvOutput.begin( ), minus< oType >( ) );
+
+                // This should immediately map/unmap the buffer
+                dvOutput.data( );
+            }
+
+            return result + numElements;
+        }
+
+        // This template is called by the non-detail versions of exclusive_scan, it already assumes random access iterators
+        // This is called strictly for iterators that are derived from device_vector< T >::iterator
+        template< typename InputIterator, typename OutputIterator, typename BinaryFunction >
+        typename std::enable_if< std::is_base_of<typename device_vector<typename std::iterator_traits<InputIterator>::value_type>::iterator,OutputIterator>::value, OutputIterator >::type
+            exclusive_scan( const control &ctl, InputIterator first, InputIterator last, OutputIterator result, BinaryFunction binary_op )
+        {
+            typedef typename std::iterator_traits< InputIterator >::value_type iType;
+            typedef typename std::iterator_traits< OutputIterator >::value_type oType;
+            static_assert( std::is_convertible< iType, oType >::value, "Input and Output iterators are incompatible" );
+
+            unsigned int numElements = static_cast< unsigned int >( std::distance( first, last ) );
+            if( numElements == 0 )
+                return result;
+
+            const bolt::cl::control::e_RunMode runMode = ctl.forceRunMode( );  // could be dynamic choice some day.
+            if( runMode == bolt::cl::control::SerialCpu )
+            {
+                //  TODO:  Need access to the device_vector .data method to get a host pointer
+                throw ::cl::Error( CL_INVALID_DEVICE, "Scan device_vector CPU device not implemented" );
+
+                //std::partial_sum( first, last, result, binary_op );
+                return result;
+            }
+            else if( runMode == bolt::cl::control::MultiCoreCpu )
+            {
+                //  TODO:  Need access to the device_vector .data method to get a host pointer
+                throw ::cl::Error( CL_INVALID_DEVICE, "Scan device_vector CPU device not implemented" );
+                return result;
+            }
+
+            //Now call the actual cl algorithm
+            inclusive_scan_enqueue( ctl, first, last, result, binary_op );
+
+            //  TODO:  This extra pass over the data is unnecessary; future optimization should fold this subtraction into the kernels
+            //  BUG:  This hack doesn't work if the inclusive_scan is inplace
+            transform( ctl, dvOutput.begin( ), dvOutput.end( ), dvInput.begin( ), dvOutput.begin( ), minus< oType >( ) );
 
             return result + numElements;
         }

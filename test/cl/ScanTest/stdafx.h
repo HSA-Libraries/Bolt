@@ -14,6 +14,9 @@
 #include <limits>
 #include <tuple>
 #include <iterator>
+#include <algorithm>
+#include <vector>
+#include <array>
 #include <list>	// For debugging purposes, to prove that we can reject lists
 
 
