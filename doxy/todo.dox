@@ -1,7 +1,35 @@
 /*!
 * \page MyTodo
+
+* Tier1
+* \todo Document transform
+* \todo Review documentation for typos, clarity, etc.
+
+* Tier2
+* \todo Stringify kernels and embed in C++ file.
+
+* Tier3:
 * \todo Add richer set of API functions.
+
 * \todo Add CPU implementations.
 * \todo Add buffer pool for temporary memory allocated by Bolt calls.
-* \todo Specify that device 
+* \todo Remove requirement for VS2012 - make it work on older version of VS.
+* \todo Make Bolt calls thread-safe.  (Save cl:program rather than cl::kernel, and call clCreateKernel on each Bolt call)
+
+* \todo Optimize transform to eliminate range-check.
+* \todo Add unary operator version of transform
+* \todo Performance tuning
+* \todo Coding guideline for expanding tabs, max char width
+
+* \todo Refactoring:
+    * Move non-public versions of code into detail namespace.
+    * I started using the typename DVInputIterator for functions which require a device_vector iterator 
+    *    (rather than a general-purpose iterator)
+    * We need several levels of template function calls for each Bolt API, but they don't all have to have the same name.  :)
+        * Suggest: bolt::cl::reduce ->  
+                   bolt::cl::detail::reduce_detect_random_access ->  
+                   bolt::cl::detail::reduce_pick_iterator ->
+                   bolt::cl::detail::reduce_enqueue
+    * Reduce linewidth to 120 chars, expand tabs to 4 spaces.
+    * Can we convert the uses of "std::string" parameters to references, ie for cl_code ?
 */
