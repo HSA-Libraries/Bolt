@@ -31,13 +31,15 @@ namespace bolt
         };
 
         template< typename InputIterator, typename OutputIterator, typename BinaryFunction > 
-        OutputIterator inclusive_scan( const control &ctl, InputIterator first, InputIterator last, OutputIterator result, BinaryFunction binary_op )
+        OutputIterator inclusive_scan( const control &ctl, InputIterator first, InputIterator last, OutputIterator result, BinaryFunction binary_op, 
+            const std::string& user_code )
         {
             return inclusive_scan( ctl, first, last, result, binary_op, std::iterator_traits< InputIterator >::iterator_category( ) );
         };
 
         template< typename InputIterator, typename OutputIterator >
-        OutputIterator inclusive_scan( const control &ctl, InputIterator first, InputIterator last, OutputIterator result )
+        OutputIterator inclusive_scan( const control &ctl, InputIterator first, InputIterator last, OutputIterator result, 
+            const std::string& user_code )
         {
             typedef std::iterator_traits<InputIterator>::value_type T;
 
@@ -45,13 +47,14 @@ namespace bolt
         };
 
         template< typename InputIterator, typename OutputIterator, typename BinaryFunction > 
-        OutputIterator inclusive_scan( InputIterator first, InputIterator last, OutputIterator result, BinaryFunction binary_op )
+        OutputIterator inclusive_scan( InputIterator first, InputIterator last, OutputIterator result, BinaryFunction binary_op, 
+            const std::string& user_code )
         {
             return inclusive_scan( control::getDefault( ), first, last, result, binary_op, std::iterator_traits< InputIterator >::iterator_category( ) );
         };
 
         template< typename InputIterator, typename OutputIterator >
-        OutputIterator inclusive_scan( InputIterator first, InputIterator last, OutputIterator result )
+        OutputIterator inclusive_scan( InputIterator first, InputIterator last, OutputIterator result, const std::string& user_code )
         {
             typedef std::iterator_traits<InputIterator>::value_type T;
 
@@ -77,13 +80,15 @@ namespace bolt
         };
 
         template< typename InputIterator, typename OutputIterator, typename BinaryFunction > 
-        OutputIterator exclusive_scan( const control &ctl, InputIterator first, InputIterator last, OutputIterator result, BinaryFunction binary_op )
+        OutputIterator exclusive_scan( const control &ctl, InputIterator first, InputIterator last, OutputIterator result, BinaryFunction binary_op,
+            const std::string& user_code )
         {
             return exclusive_scan( ctl, first, last, result, binary_op, std::iterator_traits< InputIterator >::iterator_category( ) );
         };
 
         template< typename InputIterator, typename OutputIterator >
-        OutputIterator exclusive_scan( const control &ctl, InputIterator first, InputIterator last, OutputIterator result )
+        OutputIterator exclusive_scan( const control &ctl, InputIterator first, InputIterator last, OutputIterator result, 
+            const std::string& user_code )
         {
             typedef std::iterator_traits<InputIterator>::value_type T;
 
@@ -91,13 +96,14 @@ namespace bolt
         };
 
         template< typename InputIterator, typename OutputIterator, typename BinaryFunction > 
-        OutputIterator exclusive_scan( InputIterator first, InputIterator last, OutputIterator result, BinaryFunction binary_op )
+        OutputIterator exclusive_scan( InputIterator first, InputIterator last, OutputIterator result, BinaryFunction binary_op, 
+            const std::string& user_code )
         {
             return exclusive_scan( control::getDefault( ), first, last, result, binary_op, std::iterator_traits< InputIterator >::iterator_category( ) );
         };
 
         template< typename InputIterator, typename OutputIterator >
-        OutputIterator exclusive_scan( InputIterator first, InputIterator last, OutputIterator result )
+        OutputIterator exclusive_scan( InputIterator first, InputIterator last, OutputIterator result, const std::string& user_code )
         {
             typedef std::iterator_traits<InputIterator>::value_type T;
 

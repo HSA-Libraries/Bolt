@@ -169,6 +169,6 @@ install( TARGETS clBolt.Runtime
 	ARCHIVE DESTINATION ${LIB_DIR}/import
 	)
 
-install( EXPORT exportBOLT
-		DESTINATION exportCmake
-		)
+# install( EXPORT exportBOLT
+		# DESTINATION exportCmake
+		# )
