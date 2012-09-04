@@ -17,6 +17,7 @@
 * \li No support for binary OpenCL programs.  All OpenCL code is compiled at runtime.
 * \li The device_vector< T > container has problems reading with the [] operator through device_vector< T >::iterators.  
 *        The current workaround is to use the [] operator directly on the container
+* \li The bolt::cl::sort routine supports only power of 2 buffer size. viz. 64, 128, 256 ...
 * \li Will not work on Nvidia hardware as their software stack does not support OpenCL&trade; C++ features
 * \li For Microsoft platforms, Bolt only supports the vs2012 compiler suite
 * \li No gcc support

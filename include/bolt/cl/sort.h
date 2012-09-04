@@ -29,30 +29,36 @@ namespace bolt {
 
 
 		/*! \p sort returns the sorted result of all the elements in the inputIterator between the the first and last elements using the specified binary_op.  
-		* You can arrange the elements in an ascending order, where the binary_op is the less<>() operator.  By default, 
-		* the binary operator is "less<>()".  The version takes a bolt::cl::control structure as a first argument.
+		* You can arrange the elements in an ascending order, where the binary_op is the less<>() operator. 
+		* This version of \p sort takes a bolt::cl::control structure as a first argument and compares objects using \c functor object defined by \p StrictWeakOrdering.
 
 		*
-		* The \p sort operation is similar the std::sort function.  See http://www.sgi.com/tech/stl/sort.html
-		*
-		* \param ctl Control structure to control command-queue, debug, tuning, etc.  See control.
+		* The \p sort operation is analogus to the std::sort function.  See http://www.sgi.com/tech/stl/sort.html
+        *  \tparam RandomAccessIterator Is a model of http://www.sgi.com/tech/stl/RandomAccessIterator.html, \n
+        *          \p RandomAccessIterator is mutable, \n
+        *          \p RandomAccessIterator's \c value_type is convertible to \p StrictWeakOrdering's \n
+		*          \p RandomAccessIterator's \c value_type is \p LessThanComparable http://www.sgi.com/tech/stl/LessThanComparable.html i.e the value _type should provide operator < overloaded. \n
+        *  \tparam StrictWeakOrdering Is a model of http://www.sgi.com/tech/stl/StrictWeakOrdering.html. \n
+
+		* \param ctl Control structure to control command-queue, debug, tuning, etc.  See bolt::cl::control.
 		* \param first The first position in the sequence to be sorted.
 		* \param last  The last position in the sequence to be sorted.
 		* \param comp  The comparison operation used to compare two values. 
-		* \param cl_code Optional OpenCL(TM) code to be passed to the OpenCL compiler. The cl_code is inserted first in the generated code, before the cl_code trait.
+		* \param cl_code Optional OpenCL(TM) code to be passed to the OpenCL compiler. The cl_code is inserted first in the generated code, before the cl_code traits. 
+		*  This can be used for any extra cl code which is to be passed when compiling the OpenCl Kernel.
 		* \return The sorted data which is available in place.
 		*
 		* The following code example shows the use of \p sort to sort the elements in the descending order, 
-		* specifying a specific command-queue and enabling debug messages.
+		* specifying a specific command-queue.
 		* \code
 		* #include <bolt/cl/sort.h>
-		*
-		* int a[10] = {2, 9, 3, 7, 5, 6, 3, 8, 3, 4};
+		* #include <bolt/cl/functional.h>
+		* 
+		* int a[8] = {2, 9, 3, 7, 5, 6, 3, 8};
 		*
 		* cl::CommandQueue myCommandQueue = ...
-		* bolt::cl::control ctl(myCommandQueue); // specify an OpenCL(TM) command queue to use for executing the sort routine.
-		* ctl.debug(bolt::cl::control::debug::SaveCompilerTemps); // save IL and ISA files for generated kernel
-		* // for arranging the elements in descending order, you should use bolt::cl::greater<int>()
+		* bolt::cl::control ctl(myCommandQueue); // specify an OpenCL(TM) command queue.
+		* // for arranging the elements in descending order, use bolt::cl::greater<int>()
 		* bolt::cl::sort(ctl, a, a+10, bolt::cl::greater<int>());
 		* 
 		*  \endcode
@@ -66,34 +72,35 @@ namespace bolt {
 			const std::string cl_code="");
 
 
-		/*! \p sort returns the sorted result of all the elements in the inputIterator between the the first and last elements using the specified binary_op.  
-		* You can arrange the elements in an ascending order, where the binary_op is the less<>() operator.  By default, 
-		* the binary operator is "less<>()".  The version takes a bolt::cl::control structure as a first argument.
+		/*! \p This version of sort returns the sorted result of all the elements in the \p RandomAccessIterator between the the first and last elements.  
+		* The routine arranges the elements in an ascending order. \p RandomAccessIterator's value_type should provide operator < overload. 
 
 		*
-		* The \p sort operation is similar the std::sort function.  See http://www.sgi.com/tech/stl/sort.html
-		*
-		* \param ctl Control structure to control command-queue, debug, tuning, etc.  See control.
+		* The \p sort operation is analogus to the std::sort function.  See http://www.sgi.com/tech/stl/sort.html
+        *  \tparam RandomAccessIterator Is a model of http://www.sgi.com/tech/stl/RandomAccessIterator.html, \n
+        *          \p RandomAccessIterator is mutable, \n
+        *          \p RandomAccessIterator's \c value_type is convertible to \p StrictWeakOrdering's \n
+		*          \p RandomAccessIterator's \c value_type is \p LessThanComparable http://www.sgi.com/tech/stl/LessThanComparable.html i.e the value _type should provide operator < overloaded. \n
+
+		* \param ctl Control structure to control command-queue, debug, tuning, etc.  See bolt::cl::control.
 		* \param first The first position in the sequence to be sorted.
 		* \param last  The last position in the sequence to be sorted.
-		* \param cl_code Optional OpenCL(TM) code to be passed to the OpenCL compiler. The cl_code is inserted first in the generated code, before the cl_code trait.
-		* \return The sorted data which is available in place and is in ascending order.
+		* \param cl_code Optional OpenCL(TM) code to be passed to the OpenCL compiler. The cl_code is inserted first in the generated code, before the cl_code traits. 
+		*  This can be used for any extra cl code which is to be passed when compiling the OpenCl Kernel.
+		* \return The sorted data which is available in place.
 		*
-		* Here by default the function does an ascending order sort. 
-        * The following code example shows the use of \p sort to sort the elements in the ascending order, 
-		* specifying a specific command-queue and enabling debug messages.
+		* The following code example shows the use of \p sort to sort the elements in the ascending order, 
+		* specifying a specific command-queue.
 		* \code
 		* #include <bolt/cl/sort.h>
-		*
-		* int a[10] = {2, 9, 3, 7, 5, 6, 3, 8, 3, 4};
+		* 
+		* int a[8] = {2, 9, 3, 7, 5, 6, 3, 8};
 		*
 		* cl::CommandQueue myCommandQueue = ...
-		*
-		* bolt::cl::control ctl(myCommandQueue); // specify an OpenCL(TM) command queue to use for executing the sort routine.
-		* ctl.debug(bolt::cl::control::debug::SaveCompilerTemps); // save IL and ISA files for generated kernel
-		* // for arranging th eelements in the descending order, you can use bolt::cl::greater<int>()
+		* bolt::cl::control ctl(myCommandQueue); // specify an OpenCL(TM) command queue.
+		* // for arranging the elements in descending order, use bolt::cl::greater<int>()
 		* bolt::cl::sort(ctl, a, a+10);
-		* // a => {2, 3, 3, 3, 4, 5, 6, 7, 8, 9}
+		* 
 		*  \endcode
 		*/
         template<typename RandomAccessIterator> 
@@ -104,28 +111,35 @@ namespace bolt {
 
 
 		/*! \p sort returns the sorted result of all the elements in the inputIterator between the the first and last elements using the specified binary_op.  
-		* You can arrange the elements in an ascending order, where the binary_op is the less<>() operator.  By default, 
-		* the binary operator is "less<>()".  The version takes a bolt::cl::control structure as a first argument.
+		* You can arrange the elements in an ascending order, where the binary_op is the less<>() operator. 
+		* This version of \p sort does not take a bolt::cl::control structure. The Bolt library provides a default command Queue for a device. The 
+		* comparison object \c functor object is defined by \p StrictWeakOrdering.
 
 		*
-		* The \p sort operation is similar the std::sort function.  See http://www.sgi.com/tech/stl/sort.html
-		*
+		* The \p sort operation is analogus to the std::sort function.  See http://www.sgi.com/tech/stl/sort.html
+        *  \tparam RandomAccessIterator Is a model of http://www.sgi.com/tech/stl/RandomAccessIterator.html, \n
+        *          \p RandomAccessIterator is mutable, \n
+        *          \p RandomAccessIterator's \c value_type is convertible to \p StrictWeakOrdering's \n
+		*          \p RandomAccessIterator's \c value_type is \p LessThanComparable http://www.sgi.com/tech/stl/LessThanComparable.html i.e the value _type should provide operator < overloaded. \n
+        *  \tparam StrictWeakOrdering Is a model of http://www.sgi.com/tech/stl/StrictWeakOrdering.html. \n
+
 		* \param first The first position in the sequence to be sorted.
 		* \param last  The last position in the sequence to be sorted.
-		* \param cl_code Optional OpenCL(TM) code to be passed to the OpenCL compiler. The cl_code is inserted first in the generated code, before the cl_code trait.
-		* \return The sorted data which is available in place and is in ascending order.
+		* \param comp  The comparison operation used to compare two values. 
+		* \param cl_code Optional OpenCL(TM) code to be passed to the OpenCL compiler. The cl_code is inserted first in the generated code, before the cl_code traits. 
+		*  This can be used for any extra cl code which is to be passed when compiling the OpenCl Kernel.
+		* \return The sorted data which is available in place.
 		*
-		* Here also the elements are arranged in ascending order. The routine takes care of allocating the cl::CommandQueue an other data structures. 
-        * The following code example shows the use of \p sort to sort the elements in the ascending order, 
-		* specifying a specific command-queue and enabling debug messages.
+		* The following code example shows the use of \p sort to sort the elements in the descending order.
 		* \code
 		* #include <bolt/cl/sort.h>
+		* #include <bolt/cl/functional.h>
+		* 
+		* int a[8] = {2, 9, 3, 7, 5, 6, 3, 8};
 		*
-		* int a[10] = {2, 9, 3, 7, 5, 6, 3, 8, 3, 4};
-		*
-		* // for arranging the elements in the descending order, you can use bolt::cl::greater<int>()
-		* bolt::cl::sort(a, a+10);
-		* // a => {2, 3, 3, 3, 4, 5, 6, 7, 8, 9}
+		* // for arranging the elements in descending order, use bolt::cl::greater<int>()
+		* bolt::cl::sort(a, a+10, bolt::cl::greater<int>());
+		* 
 		*  \endcode
 		*/
         
@@ -136,29 +150,31 @@ namespace bolt {
 			const std::string cl_code="");
 
 
-		/*! \p sort returns the sorted result of all the elements in the inputIterator between the the first and last elements using the specified binary_op.  
-		* You can arrange the elements in an ascending order, where the binary_op is the less operator.  By default, 
-		* the binary operator is "less<>()".  The version takes a bolt::cl::control structure as a first argument.
+		/*! \p This version of sort returns the sorted result of all the elements in the \p RandomAccessIterator between the the first and last elements.  
+		* The routine arranges the elements in an ascending order. \p RandomAccessIterator's value_type should provide operator < overload. 
 
 		*
-		* The \p sort operation is similar the std::sort function.  See http://www.sgi.com/tech/stl/sort.html
-		*
+		* The \p sort operation is analogus to the std::sort function.  See http://www.sgi.com/tech/stl/sort.html
+        *  \tparam RandomAccessIterator Is a model of http://www.sgi.com/tech/stl/RandomAccessIterator.html, \n
+        *          \p RandomAccessIterator is mutable, \n
+        *          \p RandomAccessIterator's \c value_type is convertible to \p StrictWeakOrdering's \n
+		*          \p RandomAccessIterator's \c value_type is \p LessThanComparable http://www.sgi.com/tech/stl/LessThanComparable.html i.e the value _type should provide operator < overloaded. \n
+
 		* \param first The first position in the sequence to be sorted.
 		* \param last  The last position in the sequence to be sorted.
-		* \param cl_code Optional OpenCL(TM) code to be passed to the OpenCL compiler. The cl_code is inserted first in the generated code, before the cl_code trait.
-		* \return The sorted data which is available in place and is in ascending order.
+		* \param cl_code Optional OpenCL(TM) code to be passed to the OpenCL compiler. The cl_code is inserted first in the generated code, before the cl_code traits. 
+		*  This can be used for any extra cl code which is to be passed when compiling the OpenCl Kernel.
+		* \return The sorted data which is available in place.
 		*
-		* Here also the elements are arranged in ascending order. The routine takes care of allocating the cl::CommandQueue an other data structures. 
-        * The following code example shows the use of \p sort to sort the elements in the ascending order, 
-		* specifying a specific command-queue and enabling debug messages.
+		* The following code example shows the use of \p sort to sort the elements in the ascending order.
 		* \code
 		* #include <bolt/cl/sort.h>
-		*
-		* int a[10] = {2, 9, 3, 7, 5, 6, 3, 8, 3, 4};
-		*
-		* // for arranging the elements in the descending order, you can use bolt::cl::greater<int>()
-		* bolt::cl::sort(a, a+10);
-		* // a => {2, 3, 3, 3, 4, 5, 6, 7, 8, 9}
+		* 
+		* int a[8] = {2, 9, 3, 7, 5, 6, 3, 8};
+		* 
+		* // for arranging the elements in descending order, use bolt::cl::greater<int>()
+		* bolt::cl::sort(ctl, a, a+10);
+		* 
 		*  \endcode
 		*/
 		template<typename RandomAccessIterator> 

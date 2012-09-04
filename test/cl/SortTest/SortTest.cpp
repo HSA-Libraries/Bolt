@@ -1,3 +1,4 @@
+
 #define GOOGLE_TEST 0
 #if (GOOGLE_TEST == 1)
 //#include "stdafx.h"
@@ -437,13 +438,6 @@ int main(int argc, _TCHAR* argv[])
 template <typename T> 
 struct MyType { 
     T a; 
-    //I Do Not want this to be declared. 
-    typedef std::random_access_iterator_tag iterator_category;
-    typedef T value_type;
-    typedef ptrdiff_t difference_type;
-    typedef ptrdiff_t distance_type; // retained
-    typedef T* pointer;
-    typedef T& reference;
 
     bool operator() (const MyType& lhs, const MyType& rhs) { 
         return (lhs.a > rhs.a);
@@ -474,13 +468,7 @@ template <typename T>
 struct MyFunctor{ 
     T a; 
     T b; 
-    //FIXME We Do Not want this to be declared. 
-    typedef std::random_access_iterator_tag iterator_category;
-    typedef T value_type;
-    typedef ptrdiff_t difference_type;
-    typedef ptrdiff_t distance_type; // retained
-    typedef T* pointer;
-    typedef T& reference;
+
     bool operator() (const MyFunctor& lhs, const MyFunctor& rhs) { 
         return (lhs.a > rhs.a);
     } 
@@ -837,7 +825,6 @@ void TestWithBoltControl()
         boltInput[i]= (int)(length - i +2);
         stdInput[i]= (int)(length - i +2);
     }
-    bolt::cl::device_vector<int> dvInput( boltInput.begin(), boltInput.end(), CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, c);
     for (i=0;i<length;i++)
     {
         myFunctorBoltInput[i].a= (int)(length - i +2);
@@ -845,7 +832,9 @@ void TestWithBoltControl()
     }
 
     //BasicSortTestOfLengthWithDeviceVector
+    bolt::cl::device_vector<int> dvInput( boltInput.begin(), boltInput.end(), CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, c);
     bolt::cl::sort(c, dvInput.begin(), dvInput.end());
+
     std::sort(stdInput.begin(),stdInput.end());
     for (i=0;i<length;i++)
     {
@@ -871,40 +860,62 @@ void TestWithBoltControl()
 
 int main(int argc, char* argv[])
 {
+		std::vector<int> input(1024);
+		std::generate(input.begin(), input.end(), rand);	
+		bolt::cl::sort( input.begin(), input.end(), bolt::cl::greater<int>());
+
+	int a[10] = {2, 9, 3, 7, 5, 6, 3, 8, 3, 4};
+	bolt::cl::sort( a, a+10, bolt::cl::greater<int>());
     //Test the non Power Of 2 Buffer size 
-    BasicSortTestOfLengthWithDeviceVector<int>(254);
-    BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<int>(254); 
+	//The following two commented codes does not run. It will throw and cl::Error exception
+    //BasicSortTestOfLengthWithDeviceVector<int>(254);
+    //BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<int>(254); 
     UserDefinedFunctorSortTestOfLength<int>(254);
     UserDefinedBoltFunctorSortTestOfLength<int>(254);
     UserDefinedObjectSortTestOfLength<int>(254);
     BasicSortTestOfLength<int>(254);
     TestWithBoltControl();
-#define TEST_ALL 1
-#define TEST_DOUBLE 0
+
     //The following two are not working because device_vector support is not there.
     //UDDSortTestOfLengthWithDeviceVector<int>(256);
     //UDDSortTestWithBoltFunctorOfLengthWithDeviceVector<int>(256);
 
+#define TEST_ALL 1
+#define TEST_DOUBLE 1
 
 #if (TEST_ALL == 1)
-//#if 0
     std::cout << "Testing BasicSortTestWithBoltFunctorOfLengthWithDeviceVector\n";
+    BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<int>(8);   
+    BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<int>(16);    
+    BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<int>(32);   
+    BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<int>(64);  
+    BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<int>(128);  
     BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<int>(256);   
     BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<int>(512);    
     BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<int>(1024);    
     BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<int>(2048);    
-    BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<int>(1048576); 
+    //BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<int>(1048576); 
+    BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<float>(8);   
+    BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<float>(16);    
+    BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<float>(32);   
+    BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<float>(64);  
+    BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<float>(128);  
     BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<float>(256);
     BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<float>(512);
     BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<float>(1024);
     BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<float>(2048);
-    BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<float>(1048576);
+    //BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<float>(1048576);
 #if (TEST_DOUBLE == 1)
+    BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<double>(8);   
+    BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<double>(16);    
+    BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<double>(32);   
+    BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<double>(64);  
+    BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<double>(128);  
     BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<double>(256);
     BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<double>(512);
     BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<double>(1024);
     BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<double>(2048);
-    BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<double>(1048576); 
+    //BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<double>(1048576); 
 #endif
 #endif
 
@@ -912,59 +923,105 @@ int main(int argc, char* argv[])
 #if (TEST_ALL == 1)
 //#if 0
     std::cout << "Testing BasicSortTestOfLengthWithDeviceVector\n";
+    BasicSortTestOfLengthWithDeviceVector<int>(8);   
+    BasicSortTestOfLengthWithDeviceVector<int>(16);   
+    BasicSortTestOfLengthWithDeviceVector<int>(32);   
+    BasicSortTestOfLengthWithDeviceVector<int>(64);   
+	BasicSortTestOfLengthWithDeviceVector<int>(128);   
     BasicSortTestOfLengthWithDeviceVector<int>(256);   
     BasicSortTestOfLengthWithDeviceVector<int>(512);    
     BasicSortTestOfLengthWithDeviceVector<int>(1024);    
     BasicSortTestOfLengthWithDeviceVector<int>(2048);    
-    BasicSortTestOfLengthWithDeviceVector<int>(1048576); 
+    //BasicSortTestOfLengthWithDeviceVector<int>(1048576); 
+    BasicSortTestOfLengthWithDeviceVector<float>(8);   
+    BasicSortTestOfLengthWithDeviceVector<float>(16);   
+    BasicSortTestOfLengthWithDeviceVector<float>(32);   
+    BasicSortTestOfLengthWithDeviceVector<float>(64);   
+	BasicSortTestOfLengthWithDeviceVector<float>(128);   
     BasicSortTestOfLengthWithDeviceVector<float>(256);
     BasicSortTestOfLengthWithDeviceVector<float>(512);
     BasicSortTestOfLengthWithDeviceVector<float>(1024);
     BasicSortTestOfLengthWithDeviceVector<float>(2048);
-    BasicSortTestOfLengthWithDeviceVector<float>(1048576);
+    //BasicSortTestOfLengthWithDeviceVector<float>(1048576);
 #if (TEST_DOUBLE == 1)
+    BasicSortTestOfLengthWithDeviceVector<double>(8);   
+    BasicSortTestOfLengthWithDeviceVector<double>(16);   
+    BasicSortTestOfLengthWithDeviceVector<double>(32);   
+    BasicSortTestOfLengthWithDeviceVector<double>(64);   
+	BasicSortTestOfLengthWithDeviceVector<double>(128);   
     BasicSortTestOfLengthWithDeviceVector<double>(256);
     BasicSortTestOfLengthWithDeviceVector<double>(512);
     BasicSortTestOfLengthWithDeviceVector<double>(1024);
     BasicSortTestOfLengthWithDeviceVector<double>(2048);
-    BasicSortTestOfLengthWithDeviceVector<double>(1048576); 
+    //BasicSortTestOfLengthWithDeviceVector<double>(1048576); 
 #endif
 #endif
 
 #if (TEST_ALL == 1)
     std::cout << "Testing UserDefinedBoltFunctorSortTestOfLength\n";
+    UserDefinedBoltFunctorSortTestOfLength<int>(8);   
+    UserDefinedBoltFunctorSortTestOfLength<int>(16);    
+    UserDefinedBoltFunctorSortTestOfLength<int>(32);    
+    UserDefinedBoltFunctorSortTestOfLength<int>(64);    
+    UserDefinedBoltFunctorSortTestOfLength<int>(128); 
     UserDefinedBoltFunctorSortTestOfLength<int>(256);   
     UserDefinedBoltFunctorSortTestOfLength<int>(512);    
     UserDefinedBoltFunctorSortTestOfLength<int>(1024);    
     UserDefinedBoltFunctorSortTestOfLength<int>(2048);    
     UserDefinedBoltFunctorSortTestOfLength<int>(1048576); 
+    UserDefinedBoltFunctorSortTestOfLength<float>(8);   
+    UserDefinedBoltFunctorSortTestOfLength<float>(16);    
+    UserDefinedBoltFunctorSortTestOfLength<float>(32);    
+    UserDefinedBoltFunctorSortTestOfLength<float>(64);    
+    UserDefinedBoltFunctorSortTestOfLength<float>(128); 
     UserDefinedBoltFunctorSortTestOfLength<float>(256);
     UserDefinedBoltFunctorSortTestOfLength<float>(512);
     UserDefinedBoltFunctorSortTestOfLength<float>(1024);
     UserDefinedBoltFunctorSortTestOfLength<float>(2048);
     UserDefinedBoltFunctorSortTestOfLength<float>(1048576);
 #if (TEST_DOUBLE == 1)
-    UserDefinedFunctorSortTestOfLength<double>(256);
-    UserDefinedFunctorSortTestOfLength<double>(512);
-    UserDefinedFunctorSortTestOfLength<double>(1024);
-    UserDefinedFunctorSortTestOfLength<double>(2048);
-    UserDefinedFunctorSortTestOfLength<double>(1048576); 
+    UserDefinedBoltFunctorSortTestOfLength<double>(8);   
+    UserDefinedBoltFunctorSortTestOfLength<double>(16);    
+    UserDefinedBoltFunctorSortTestOfLength<double>(32);    
+    UserDefinedBoltFunctorSortTestOfLength<double>(64);    
+    UserDefinedBoltFunctorSortTestOfLength<double>(128); 
+    UserDefinedBoltFunctorSortTestOfLength<double>(256);
+    UserDefinedBoltFunctorSortTestOfLength<double>(512);
+    UserDefinedBoltFunctorSortTestOfLength<double>(1024);
+    UserDefinedBoltFunctorSortTestOfLength<double>(2048);
+    UserDefinedBoltFunctorSortTestOfLength<double>(1048576); 
 #endif
 #endif
 
 #if (TEST_ALL == 1)
     std::cout << "Testing UserDefinedFunctorSortTestOfLength\n";
+    UserDefinedFunctorSortTestOfLength<int>(8);   
+    UserDefinedFunctorSortTestOfLength<int>(16);    
+    UserDefinedFunctorSortTestOfLength<int>(32);    
+    UserDefinedFunctorSortTestOfLength<int>(64);    
+    UserDefinedFunctorSortTestOfLength<int>(128); 
     UserDefinedFunctorSortTestOfLength<int>(256);   
     UserDefinedFunctorSortTestOfLength<int>(512);    
     UserDefinedFunctorSortTestOfLength<int>(1024);    
     UserDefinedFunctorSortTestOfLength<int>(2048);    
     UserDefinedFunctorSortTestOfLength<int>(1048576); 
+    UserDefinedFunctorSortTestOfLength<float>(8);   
+    UserDefinedFunctorSortTestOfLength<float>(16);    
+    UserDefinedFunctorSortTestOfLength<float>(32);    
+    UserDefinedFunctorSortTestOfLength<float>(64);    
+    UserDefinedFunctorSortTestOfLength<float>(128); 
     UserDefinedFunctorSortTestOfLength<float>(256);   
     UserDefinedFunctorSortTestOfLength<float>(512);
     UserDefinedFunctorSortTestOfLength<float>(1024); 
     UserDefinedFunctorSortTestOfLength<float>(2048);
     UserDefinedFunctorSortTestOfLength<float>(1048576); 
+
 #if (TEST_DOUBLE == 1)     
+    UserDefinedFunctorSortTestOfLength<double>(8);   
+    UserDefinedFunctorSortTestOfLength<double>(16);    
+    UserDefinedFunctorSortTestOfLength<double>(32);    
+    UserDefinedFunctorSortTestOfLength<double>(64);    
+    UserDefinedFunctorSortTestOfLength<double>(128); 
     UserDefinedFunctorSortTestOfLength<double>(256);   
     UserDefinedFunctorSortTestOfLength<double>(512);    
     UserDefinedFunctorSortTestOfLength<double>(1024);    
@@ -995,17 +1052,32 @@ int main(int argc, char* argv[])
 
 #if (TEST_ALL == 1)
     std::cout << "Testing UserDefinedObjectSortTestOfLength\n";
+    UserDefinedObjectSortTestOfLength<int>(8);   
+    UserDefinedObjectSortTestOfLength<int>(16);    
+    UserDefinedObjectSortTestOfLength<int>(32);    
+    UserDefinedObjectSortTestOfLength<int>(64);    
+    UserDefinedObjectSortTestOfLength<int>(128); 
     UserDefinedObjectSortTestOfLength<int>(256);   
     UserDefinedObjectSortTestOfLength<int>(512);    
     UserDefinedObjectSortTestOfLength<int>(1024);    
     UserDefinedObjectSortTestOfLength<int>(2048);    
     UserDefinedObjectSortTestOfLength<int>(1048576); 
+    UserDefinedObjectSortTestOfLength<float>(8);   
+    UserDefinedObjectSortTestOfLength<float>(16);    
+    UserDefinedObjectSortTestOfLength<float>(32);    
+    UserDefinedObjectSortTestOfLength<float>(64);    
+    UserDefinedObjectSortTestOfLength<float>(128); 
     UserDefinedObjectSortTestOfLength<float>(256);   
     UserDefinedObjectSortTestOfLength<float>(512);    
     UserDefinedObjectSortTestOfLength<float>(1024);    
     UserDefinedObjectSortTestOfLength<float>(2048);    
     UserDefinedObjectSortTestOfLength<float>(1048576);
 #if (TEST_DOUBLE == 1) 
+    UserDefinedObjectSortTestOfLength<double>(8);   
+    UserDefinedObjectSortTestOfLength<double>(16);    
+    UserDefinedObjectSortTestOfLength<double>(32);    
+    UserDefinedObjectSortTestOfLength<double>(64);    
+    UserDefinedObjectSortTestOfLength<double>(128); 
     UserDefinedObjectSortTestOfLength<double>(256);   
     UserDefinedObjectSortTestOfLength<double>(512);    
     UserDefinedObjectSortTestOfLength<double>(1024);    

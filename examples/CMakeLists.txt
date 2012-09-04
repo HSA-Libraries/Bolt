@@ -120,6 +120,7 @@ find_package( Bolt REQUIRED )
 
 # add_subdirectory( Hessian )
 add_subdirectory( Scan )
+add_subdirectory( Sort )
 add_subdirectory( Version )
 
 # The following code is setting variables to control the behavior of CPack to generate our 
