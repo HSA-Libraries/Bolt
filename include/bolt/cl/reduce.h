@@ -2,6 +2,8 @@
 
 #include <bolt/cl/bolt.h>
 #include <bolt/cl/functional.h>
+#include <bolt/cl/device_vector.h>
+
 #include <mutex>
 #include <string>
 #include <iostream>
@@ -95,15 +97,16 @@ int max = bolt::cl::reduce(ctl, a, a+10, -1, bolt::cl:maximum<int>());
 		* bolt::cl::control ctl(myCommandQueue); // specify an OpenCL(TM) command queue to use for executing the reduce.
 		* ctl.debug(bolt::cl::control::debug::SaveCompilerTemps); // save IL and ISA files for generated kernel
 		*
-		* int sum = bolt::cl::reduce(ctl, a, a+10);
+		* int sum = bolt::cl::reduce(ctl, a, a+10, 0);
 		* // sum = 55
 		*  \endcode
 		*/
-		template<typename InputIterator> 
+		template<typename InputIterator, typename T> 
 		typename std::iterator_traits<InputIterator>::value_type
 			reduce(const bolt::cl::control &ctl,
 			InputIterator first, 
 			InputIterator last, 
+			T init,
 			const std::string cl_code="");
 
 
@@ -149,7 +152,7 @@ int max = bolt::cl::reduce(ctl, a, a+10, -1, bolt::cl:maximum<int>());
 		T reduce(InputIterator first, 
 			InputIterator last,  
 			T init,
-			BinaryFunction binary_op=bolt::cl::plus<T>(), 
+			BinaryFunction binary_op, 
 			const std::string cl_code="")  ;
 
 
@@ -173,15 +176,16 @@ int max = bolt::cl::reduce(ctl, a, a+10, -1, bolt::cl:maximum<int>());
 		*
 		* int a[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
 		*
-		* int sum = bolt::cl::reduce(a, a+10);
+		* int sum = bolt::cl::reduce(a, a+10, 0);
 		* // sum = 55
 		*  \endcode
 		*
 		*/
-		template<typename InputIterator> 
+		template<typename InputIterator, typename T> 
 		typename std::iterator_traits<InputIterator>::value_type
 			reduce(InputIterator first, 
 			InputIterator last, 
+			T init,
 			const std::string cl_code="");
 	};
 };
