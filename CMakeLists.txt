@@ -169,12 +169,12 @@ if( BUILD_benchmarks )
 	add_subdirectory( bench )
 endif( )
 
-# After libraries are built, built benchmarks
+# After libraries are built, built documentation
 if( BUILD_documentation )
 	add_subdirectory( doxy )
 endif( )
 
-# After libraries are built, built benchmarks
+# After libraries are built, built examples
 if( BUILD_examples )
 	add_subdirectory( examples EXCLUDE_FROM_ALL )
 endif( )

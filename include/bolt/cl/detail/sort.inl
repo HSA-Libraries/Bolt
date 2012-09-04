@@ -92,17 +92,15 @@ namespace bolt {
             sort(const control &ctl, RandomAccessIterator first, RandomAccessIterator last,
                 StrictWeakOrdering comp, std::string cl_code) 
             {
-                // Right now no supported code pat reaches here. device_vector does not support
-                // User defined Data types. Hence we have a static assert here.
+                // User defined Data types are not supported with device_vector. Hence we have a static assert here.
                 // The code here should be in compliant with the routine following this routine.
-                //static_assert(false, "Device Vector Implementation with compare is not supported");
                 typedef typename std::iterator_traits<RandomAccessIterator>::value_type T;
                 size_t temp,szElements = (size_t)(last - first); 
                 if (szElements == 0 )
                         return;
 
                 const bolt::cl::control::e_RunMode runMode = ctl.forceRunMode();  // could be dynamic choice some day.
-                if (runMode == bolt::cl::control::SerialCpu) {
+				if (runMode == bolt::cl::control::SerialCpu) {
                     //  TODO:  Need access to the device_vector .data method to get a host pointer
                     throw ::cl::Error( CL_INVALID_DEVICE, "Sort of device_vector CPU device not implemented" );
                     return;
@@ -115,13 +113,18 @@ namespace bolt {
                     int computeUnits     = ctl.device().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
                     int wgPerComputeUnit =  ctl.wgPerComputeUnit(); 
                     int resultCnt = computeUnits * wgPerComputeUnit;
-                    const int wgSize = WGSIZE; //TODO hard coded to the number of cores in the AMD SIMD engine.
-                                           //The instantiation string should also be changed.   
+                    int wgSize = WGSIZE; //TODO hard coded to the number of cores in the AMD SIMD engine.
+                                           //The instantiation string should also be changed. 
+					if((szElements/2) < wgSize)
+					{
+						wgSize = (int)szElements/2;
+					}
                     unsigned int numStages,stage,passOfStage;
                     if(((szElements-1) & (szElements)) != 0)
                     {
-                        std::cout << "The BOLT sort routine does not support non power of 2 buffer size." << std ::endl;
-                        return;
+                        std::cout << "The BOLT sort routine device_vector does not support non power of 2 buffer size." << std ::endl;
+	                    throw ::cl::Error( CL_INVALID_DEVICE, "The BOLT sort routine device_vector does not support non power of 2 buffer size." );
+						return;
                     }
 
                     ::cl::Buffer A = (*first).getBuffer( );
@@ -184,6 +187,8 @@ namespace bolt {
                     return;
                 } else if (runMode == bolt::cl::control::MultiCoreCpu) {
                     std::cout << "The MultiCoreCpu version of device_vector sort is not implemented yet." << std ::endl;
+	                throw ::cl::Error( CL_INVALID_DEVICE, "The BOLT sort routine device_vector does not support non power of 2 buffer size." );
+					return;
                 } else {
                     static  std::once_flag initOnlyOnce;
                     static  ::cl::Kernel masterKernel;
@@ -191,8 +196,12 @@ namespace bolt {
                     int computeUnits     = ctl.device().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
                     int wgPerComputeUnit =  ctl.wgPerComputeUnit(); 
                     int resultCnt = computeUnits * wgPerComputeUnit;
-                    const int wgSize = WGSIZE; //TODO hard coded to the number of cores in the AMD SIMD engine.
+                    int wgSize = WGSIZE; //TODO hard coded to the number of cores in the AMD SIMD engine.
                                            //The instantiation string should also be changed.   
+					if((szElements/2) < wgSize)
+					{
+						wgSize = (int)szElements/2;
+					}
                     unsigned int numStages,stage,passOfStage;
                     if(((szElements-1) & (szElements)) != 0)
                     {
@@ -253,7 +262,7 @@ namespace bolt {
                         return;
 
                 const bolt::cl::control::e_RunMode runMode = ctl.forceRunMode();  // could be dynamic choice some day.
-                if (runMode == bolt::cl::control::SerialCpu) {
+                if ((runMode == bolt::cl::control::SerialCpu) || (szElements < WGSIZE)) {
                     std::sort(first, last);
                     return;
                 } else if (runMode == bolt::cl::control::MultiCoreCpu) {
@@ -261,11 +270,13 @@ namespace bolt {
                 } else {
                     if(((szElements-1) & (szElements)) != 0)
                     {
-                        std::cout << "The BOLT sort routine does not support non power of 2 buffer size." << std ::endl;
+                        std::cout << "The BOLT sort routine does not support non power of 2 buffer size. Falling back to CPU std::sort" << std ::endl;
+						std::sort(first,last);
                         return;
                     }
                     ::cl::Buffer A(ctl.context(), CL_MEM_USE_HOST_PTR|CL_MEM_READ_WRITE, sizeof(T) * szElements, const_cast< T* >( &*first ));
                     //Now call the actual cl algorithm
+					//When device_vector is fully functional and performant then the below call shall be replaced by the device vector interface.
                     sort<T>(ctl,A,cl_code);
                     //Map the buffer back to the host
                     ctl.commandQueue().enqueueMapBuffer(A, true, CL_MAP_READ | CL_MAP_WRITE, 0/*offset*/, sizeof(T) * szElements);
@@ -287,7 +298,7 @@ namespace bolt {
                     return;
 
                 const bolt::cl::control::e_RunMode runMode = ctl.forceRunMode();  // could be dynamic choice some day.
-                if (runMode == bolt::cl::control::SerialCpu) {
+                if ((runMode == bolt::cl::control::SerialCpu) || (szElements < WGSIZE)) {
                     std::sort(first, last, comp);
                     return;
                 } else if (runMode == bolt::cl::control::MultiCoreCpu) {
@@ -295,12 +306,15 @@ namespace bolt {
                 } else {
                     if(((szElements-1) & (szElements)) != 0)
                     {
-                        std::cout << "The BOLT sort routine does not support non power of 2 buffer size." << std ::endl;
+                        std::cout << "The BOLT sort routine does not support non power of 2 buffer size. Falling back to CPU std::sort" << std ::endl;
+						std::sort(first,last,comp);
                         return;
                     }
                     ::cl::Buffer A(ctl.context(), CL_MEM_USE_HOST_PTR|CL_MEM_READ_WRITE, sizeof(T) * szElements, const_cast< T* >( &*first ));
+					// Create buffer wrappers so we can access the host functors, for read or writing in the kernel
+					::cl::Buffer userFunctor(ctl.context(), CL_MEM_USE_HOST_PTR, sizeof(comp), &comp );   // Create buffer wrapper so we can access host parameters.
                     //Now call the actual cl algorithm
-                    sort<T>(ctl,A,comp,cl_code);
+                    sort<T,StrictWeakOrdering>(ctl,A,userFunctor,cl_code);
                     //Map the buffer back to the host
                     ctl.commandQueue().enqueueMapBuffer(A, true, CL_MAP_READ | CL_MAP_WRITE, 0/*offset*/, sizeof(T) * szElements);
                     return;
@@ -311,7 +325,7 @@ namespace bolt {
 //For Now these are still kept. The function call to the cl buffer will be removed in the future. 
             template<typename T, typename StrictWeakOrdering> 
             void sort(const control &ctl, ::cl::Buffer A,
-                StrictWeakOrdering comp, std::string cl_code)  
+                ::cl::Buffer userFunctor, std::string cl_code)  
             {
                 static std::once_flag initOnlyOnce;
                 static  ::cl::Kernel masterKernel;
@@ -319,21 +333,24 @@ namespace bolt {
                 int computeUnits     = ctl.device().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
                 int wgPerComputeUnit =  ctl.wgPerComputeUnit(); 
                 int resultCnt = computeUnits * wgPerComputeUnit;
-                const int wgSize = WGSIZE; //TODO hard coded to the number of cores in the AMD SIMD engine.
+                int wgSize = WGSIZE; //TODO hard coded to the number of cores in the AMD SIMD engine.
                                        //The instantiation string should also be changed.
                 unsigned int temp,numStages,stage,passOfStage;
                 
                 //Calculate the number of stages.
                 numStages = 0;
                 int szElements = (int)A.getInfo<CL_MEM_SIZE>() / sizeof(T);  // FIXME - remove typecast.  Kernel only can handle 32-bit size...
+				if((szElements/2) < wgSize)
+				{
+					wgSize = (int)szElements/2;
+				}
+
                 for(temp = szElements; temp > 1; temp >>= 1)
                     ++numStages;
 
                 // For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retreive the name here.
                 std::call_once(initOnlyOnce, detail::CallCompiler_Sort::constructAndCompile, &masterKernel, cl_code + ClCode<T>::get(), TypeName<T>::get(), TypeName<StrictWeakOrdering>::get(), ctl);
                 ::cl::Kernel k = masterKernel;  // hopefully create a copy of the kernel. FIXME, doesn't work.
-                // Create buffer wrappers so we can access the host functors, for read or writing in the kernel
-                ::cl::Buffer userFunctor(ctl.context(), CL_MEM_USE_HOST_PTR, sizeof(comp), &comp );   // Create buffer wrapper so we can access host parameters.
 
                 k.setArg(0, A);
                 //1 and 2 we will add inside the loop.
@@ -374,13 +391,17 @@ namespace bolt {
                 int computeUnits     = ctl.device().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
                 int wgPerComputeUnit =  ctl.wgPerComputeUnit(); 
                 int resultCnt = computeUnits * wgPerComputeUnit;
-                const int wgSize = WGSIZE; //TODO hard coded to the number of cores in the AMD SIMD engine.
+                int wgSize = WGSIZE; //TODO hard coded to the number of cores in the AMD SIMD engine.
                                        //The instantiation string should also be changed.   
                 unsigned int temp,numStages,stage,passOfStage;
 
                 //Calculate the number of stages.
                 numStages = 0;
                 int szElements = (int)A.getInfo<CL_MEM_SIZE>() / sizeof(T);  
+				if((szElements/2) < wgSize)
+				{
+					wgSize = (int)szElements/2;
+				}
                 for(temp = szElements; temp > 1; temp >>= 1)
                     ++numStages;
 
