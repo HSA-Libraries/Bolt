@@ -122,7 +122,15 @@ namespace bolt {
                 k.setArg(3, sz);
                 k.setArg(4, userFunctor);
 
-                const int wgSize = 256; // FIXME.  Need to ensure global size is a multiple of this ,etc.
+                const int wgSize = 64; 
+                if(sz < wgSize)
+                {  
+                    sz = wgSize;
+                }
+                else if ((sz % wgSize) != 0)
+                {
+                    sz = sz + (wgSize - (sz % wgSize));
+                }
 
                 c.commandQueue().enqueueNDRangeKernel(
                     k, 
@@ -130,7 +138,6 @@ namespace bolt {
                     ::cl::NDRange(sz), 
                     ::cl::NDRange(wgSize));
             };
-
         }
     }
 }
