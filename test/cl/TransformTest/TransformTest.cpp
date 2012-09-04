@@ -242,8 +242,9 @@ int _tmain(int argc, _TCHAR* argv[])
 {
 	//readFromFileTest();
 	
-	simpleTransform1(256); //FIXME
-
+	simpleTransform1(256); 
+	simpleTransform1(254); 
+    simpleTransform1(23); 
 	transformSaxpy(256);
 	transformSaxpyDeviceVector(256);
 	transformSaxpy(1024);
@@ -252,7 +253,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	//multiThreadReductions(1024, 10);
 
 	//oclTransform(1024);
-
+    getchar();
 	return 0;
 }
 
