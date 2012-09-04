@@ -15,6 +15,8 @@
 #include "myocl.h"
 
 
+extern void testDeviceVector();
+
 // Super-easy windows profiling interface.
 // Move to timing infrastructure when that becomes available.
 __int64 StartProfile() {
@@ -121,7 +123,7 @@ void simpleReduce_TestControl(int aSize, int numIters, int deviceIndex)
 	sprintf_s(testTag, 2000, "simpleReduce_TestControl sz=%d iters=%d, device=%s", aSize, numIters, c.device().getInfo<CL_DEVICE_NAME>());
 	__int64 start = StartProfile();
 	for (int i=0; i<numIters; i++) {
-		boltReduce = bolt::cl::reduce(c, A.begin(), A.end());
+		boltReduce = bolt::cl::reduce(c, A.begin(), A.end(), 0);
 	}
 	EndProfile(start, numIters, testTag);
 
@@ -145,7 +147,7 @@ void simpleReduce_TestSerial(int aSize)
 	int stlReduce = std::accumulate(A.begin(), A.end(), 0);
 	int boltReduce = 0;
 
-	boltReduce = bolt::cl::reduce(c, A.begin(), A.end());
+	boltReduce = bolt::cl::reduce(c, A.begin(), A.end(), 0);
 
 
 	checkResult("TestSerial", stlReduce, boltReduce);
@@ -166,6 +168,8 @@ void reduce_TestBuffer() {
 
 int _tmain(int argc, _TCHAR* argv[])
 {
+	testDeviceVector();
+
 	int numIters = 100;
 	simpleReduce_TestControl(1024000, numIters, 0);
 
