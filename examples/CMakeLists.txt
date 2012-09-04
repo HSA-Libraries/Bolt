@@ -119,6 +119,7 @@ set( BOLT_ROOT "${PROJECT_SOURCE_DIR}/.." )
 find_package( Bolt REQUIRED )
 
 # add_subdirectory( Hessian )
+add_subdirectory( DeviceVector )
 add_subdirectory( Scan )
 add_subdirectory( Sort )
 add_subdirectory( Version )
