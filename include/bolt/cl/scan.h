@@ -42,11 +42,13 @@ namespace bolt
         * // a => {1, 3, 6, 10, 15, 21, 28, 36, 45}
         *  \endcode
         * \sa http://www.sgi.com/tech/stl/partial_sum.html
+        * \bug Failures have been observed with input buffers greater than 1536 elements
+        * \bug The user_code parameter is not used yet
         */
         template< typename InputIterator, typename OutputIterator, typename BinaryFunction >
         OutputIterator
             inclusive_scan( const control &ctl, InputIterator first, InputIterator last, 
-            OutputIterator result, BinaryFunction binary_op );
+            OutputIterator result, BinaryFunction binary_op, const std::string& user_code="" );
 
         /*! \brief inclusive_scan calculates a running sum over a range of values, inclusive of the current value.
         *   The result value at iterator position \p i is the running sum of all values less than \p i in the input range
@@ -67,11 +69,13 @@ namespace bolt
         * // a => {1, 3, 6, 10, 15, 21, 28, 36, 45}
         *  \endcode
         * \sa http://www.sgi.com/tech/stl/partial_sum.html
+        * \bug Failures have been observed with input buffers greater than 1536 elements
+        * \bug The user_code parameter is not used yet
         */
         template< typename InputIterator, typename OutputIterator, typename BinaryFunction >
         OutputIterator 
             inclusive_scan( const control &ctl, InputIterator first, InputIterator last, 
-            OutputIterator result );
+            OutputIterator result, const std::string& user_code="" );
 
         /*! \brief inclusive_scan calculates a running sum over a range of values, inclusive of the current value.
         *   The result value at iterator position \p i is the running sum of all values less than \p i in the input range
@@ -92,10 +96,13 @@ namespace bolt
         * // a => {1, 3, 6, 10, 15, 21, 28, 36, 45}
         *  \endcode
         * \sa http://www.sgi.com/tech/stl/partial_sum.html
+        * \bug Failures have been observed with input buffers greater than 1536 elements
+        * \bug The user_code parameter is not used yet
         */
         template< typename InputIterator, typename OutputIterator, typename BinaryFunction > 
         OutputIterator 
-            inclusive_scan( InputIterator first, InputIterator last, OutputIterator result, BinaryFunction binary_op );
+            inclusive_scan( InputIterator first, InputIterator last, OutputIterator result, BinaryFunction binary_op,
+                const std::string& user_code="" );
 
         /*! \brief inclusive_scan calculates a running sum over a range of values, inclusive of the current value.
         *   The result value at iterator position \p i is the running sum of all values less than \p i in the input range
@@ -115,10 +122,13 @@ namespace bolt
         * // a => {1, 3, 6, 10, 15, 21, 28, 36, 45}
         *  \endcode
         * \sa http://www.sgi.com/tech/stl/partial_sum.html
+        * \bug Failures have been observed with input buffers greater than 1536 elements
+        * \bug The user_code parameter is not used yet
         */
         template< typename InputIterator, typename OutputIterator >
         OutputIterator 
-            inclusive_scan( InputIterator first, InputIterator last, OutputIterator result );
+            inclusive_scan( InputIterator first, InputIterator last, OutputIterator result, 
+            const std::string& user_code="" );
 
         /*! \brief exclusive_scan calculates a running sum over a range of values, exclusive of the current value.
         *   The result value at iterator position \p i is the running sum of all values less than \p i in the input range
@@ -140,11 +150,13 @@ namespace bolt
         * // a => {0, 1, 3, 6, 10, 15, 21, 28, 36}
         *  \endcode
         * \sa http://www.sgi.com/tech/stl/partial_sum.html
+        * \bug Failures have been observed with input buffers greater than 1536 elements
+        * \bug The user_code parameter is not used yet
         */
         template< typename InputIterator, typename OutputIterator, typename BinaryFunction >
         OutputIterator
             exclusive_scan( const control &ctl, InputIterator first, InputIterator last, 
-            OutputIterator result, BinaryFunction binary_op );
+            OutputIterator result, BinaryFunction binary_op, const std::string& user_code="" );
 
         /*! \brief exclusive_scan calculates a running sum over a range of values, exclusive of the current value.
         *   The result value at iterator position \p i is the running sum of all values less than \p i in the input range
@@ -165,11 +177,13 @@ namespace bolt
         * // a => {0, 1, 3, 6, 10, 15, 21, 28, 36}
         *  \endcode
         * \sa http://www.sgi.com/tech/stl/partial_sum.html
+        * \bug Failures have been observed with input buffers greater than 1536 elements
+        * \bug The user_code parameter is not used yet
         */
         template< typename InputIterator, typename OutputIterator, typename BinaryFunction >
         OutputIterator 
             exclusive_scan( const control &ctl, InputIterator first, InputIterator last, 
-            OutputIterator result );
+            OutputIterator result, const std::string& user_code="" );
 
         /*! \brief exclusive_scan calculates a running sum over a range of values, exclusive of the current value.
         *   The result value at iterator position \p i is the running sum of all values less than \p i in the input range
@@ -190,10 +204,13 @@ namespace bolt
         * // a => {0, 1, 3, 6, 10, 15, 21, 28, 36}
         *  \endcode
         * \sa http://www.sgi.com/tech/stl/partial_sum.html
+        * \bug Failures have been observed with input buffers greater than 1536 elements
+        * \bug The user_code parameter is not used yet
         */
         template< typename InputIterator, typename OutputIterator, typename BinaryFunction > 
         OutputIterator 
-            exclusive_scan( InputIterator first, InputIterator last, OutputIterator result, BinaryFunction binary_op );
+            exclusive_scan( InputIterator first, InputIterator last, OutputIterator result, BinaryFunction binary_op,
+            const std::string& user_code="" );
 
         /*! \brief exclusive_scan calculates a running sum over a range of values, exclusive of the current value.
         *   The result value at iterator position \p i is the running sum of all values less than \p i in the input range
@@ -213,10 +230,13 @@ namespace bolt
         * // a => {0, 1, 3, 6, 10, 15, 21, 28, 36}
         *  \endcode
         * \sa http://www.sgi.com/tech/stl/partial_sum.html
+        * \bug Failures have been observed with input buffers greater than 1536 elements
+        * \bug The user_code parameter is not used yet
         */
         template< typename InputIterator, typename OutputIterator >
         OutputIterator 
-            exclusive_scan( InputIterator first, InputIterator last, OutputIterator result );
+            exclusive_scan( InputIterator first, InputIterator last, OutputIterator result,
+            const std::string& user_code="" );
 
         /*!   \}  */
 

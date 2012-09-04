@@ -1,0 +1,96 @@
+
+/*!
+* \page buildingExamples Building the Bolt example programs
+* \tableofcontents
+* \section CMake Bolt dynamically generated native build infrastructure
+* \subsection overview CMake Overview
+* Developers will notice that Bolt does not provide visual studio project files, makefiles or any other native 
+* build infrastructure for its examples.  Instead, the examples directory contains a file named CMakeLists.txt.  
+* Bolt uses CMake as a 'master' build system, and native build files such as visual studio projects, nmake makefiles, 
+* unix makefiles, or Mac xcode projects are GENERATED with CMake.  CMake is very similar to the autoconf tool
+* 'configure', except that it is cross-platform. <br><i><b>NOTE:</b> Remember that with CMAKE the native OS build files are 
+* GENERATED, so changes made to the native build files are overwritten the next time cmake runs.</i>
+
+* CMake is freely available for download on the web from:\n
+* <a class="external" href="http://www.cmake.org/">http://www.cmake.org/</a>
+
+* \subsection clDependencies OpenCL&tm; Dependencies
+* Bolt's OpenCL&tm; projects have a dependency on the AMD APP SDK and the AMD OpenCL runtime provided by the Catalyst drivers.  
+* While OpenCL is generally regarded as a cross platform, vender neutral API, AMD is using C++ kernel template
+* features found in our OpenCL implementation that are not found in other vendor implementations to date.  Cmake 
+* needs during its configuration an environment variable to find the root of the OpenCL installation.  The best way to 
+* provide this is to define the environment variable <b>AMDAPPSDKROOT</b> with the path to the root 
+* of the OpenCL SDK, typically <tt>'C:/Program Files (x86)/AMD APP'</tt> on Windows 64-bit machines.  This environment
+* variable is automatically defined by the catalyst installer, so in most circumstances no additional work is needed.  If
+* a more vendor neutral environment variable is desired, <b>OPENCL_ROOT</b> also works but is not defined by the 
+* catalyst installer.
+* \image html opencl_environment_variable.png "Environment variable setup screen"
+
+* Cmake ships with several interfaces to help a developer generate native build files.  For windows based systems, 
+* CMake has a GUI interface called CMake-gui that incorporates the traditional point-n-click conventions of buttons, 
+* list boxes and search boxes.  For CLI based sytems (including CMD from windows), cmake has a native command-line 
+* executable that can do everything (in fact, the GUI is just a wrapper around the command line).  The command line 
+* executable is useful even in windows for scripting purposes, such as might be used with automated and continuous 
+* build systems.
+
+* \section config CMake Bolt configuration
+* Once installed, the easiest interface to learn and generate build files is the cmake GUI program 'cmake-gui' for
+* windows or X-windows.  The terminal applications cmake.exe and ccmake.exe (based on curses library) are incredibly
+* easy to learn and pickup after everything is understood.  Cmake is designed to automate the creation of build
+* environments and do this in a cross-platform manner, generating native build files for each respective platform.
+* When launched, it inspects the host computer and searches for all tools, SDK's, libraries and code necessary to
+* build the project.  Once cmake-gui is launched, a configuration window with two text boxes on the top will appear.
+* \image html cmake.blank.png "Initial cmake-gui screen"
+
+* For purposes for this example, Bolt has been installed from from a zip file on the local machine at 
+* <tt>C:/code/bolt</tt>.  This location is henceforth referred to as <b>BOLT_ROOT</b>.
+* Either click the 'browse source...' button and navigate to the <b>BOLT_ROOT/examples</b> directory, or manually type 
+* the path into the textbox.  Notice that the path in the 'source code' text box contains the root level 
+* CMakeLists.txt file for the example projects.  The directory that we type select for <tt>'Where to build the binaries:'</tt>
+* can go anywhere on the hard drive, but should NOT be in a directory that contains source code.  
+* This makes it easy to cleanly rebuild projects; just delete the binaries directory.  Each target generator 
+* (picure below) should get its own binaries directory; visual studio 2010 binaries should not mix with visual 
+* studio 2012 binaries.  The advantage of out-of-source builds are numerous, and are documented in the 
+* <a class="external" href="http://www.cmake.org/Wiki/CMake_FAQ#Out-of-source_build_trees">CMAKE FAQ</a>.  For instance, 
+* for a debug configuration with an NMake generator, a directory such as <b>BOLT_ROOT/examples</b>/bin/nMakeDebug could
+* exist.  All generated build files and all the binary intermediate object files are built in this path.  Generated 
+* files are kept seperated from source in a similar concept to what autotools does for linux with configure scripts.  
+* After setting the build directory appropriately, click the 'Generate' button near the bottom of the main window.  
+* A new window will pop up to ask what type of generator to use.
+* \image html cmake.pick.generator.png "List of cmake generators"
+
+* In the example above, the 'Visual Studio 11 Win64' generator is selected.  Hopefully, the build directory picked
+* is descriptive of the generator used, otherwise its always easy to start over (delete the binaries directory).  
+* After selecting the desired generator, cmake examines the system, finding all project dependencies and properties 
+* will appear in the properties box in red.
+* \image html cmake.first.configure.png "Cmake system introspection"
+*
+* While cmake finishes configuring the projects, it prints messages in the output log visible in the bottom textbox 
+* within the GUI that states that cmake found the OpenCL and Bolt libraries.  If not, cmake prints in red text 
+* which libraries or header files are missing, which usually means that environment variables cmake uses to find 
+* dependencies are not properly set up (see \ref clDependencies ).
+*
+* \subsection startup Startup projects
+* After a successful configuration pass, the directory specified initially in the <tt>'Where to build the binaries:'</tt>
+* textbox will contain an 'Examples.sln' file, which can be opened up in the appropriate version of Visual Studio.
+* At this point, all the samples should build when 'Build Solution' menu item is selected.  By default, Visual
+* Studio will have the 'ALL_BUILD' project selected as the \c 'Startup' project.  If a particular sample should be run
+* under a debugger, make sure to mark it \c 'Startup' first by right clicking on the project and selecting 
+* <tt>'Set as Startup Project'</tt>.  Then, debugging should proceed as normal.
+*
+* \subsection clKernels Text .cl kernels and the 'INSTALL' project
+* The Bolt library currently loads internal OpenCL kernels from .cl files and looks for them in the 
+* <i>current working directory</i>.  Since Bolt is a statically linked library, this means the 
+* <i>current working directory</i> of the executing app.  If the Bolt library can not find the appropriate
+* .cl file, it throws an exception since the library function call can not proceed.  The .cl files are copied to the 
+* <b>BOLT_ROOT</b>/binXX folder in the Bolt SDK.  When building the samples, the .cl files will need to be copied to 
+* the location that the executables are built, by default in 
+* <tt><b>BOLT_ROOT</b>/examples/bin/<generator>/staging/<ReleaseConfiguration></tt> folder for the samples.  A project 
+* has been created in the solution to automate this copy step called \c 'INSTALL'.  This project is found underneath the 
+* \c 'CMakePredefinedTargets' folder, and when this project is built, it will copy the .cl files into the same directory 
+* that the samples are built.  This needs to happen at least once for the .cl files to be initially copied, but 
+* do not need to be copied again unless those kernel files are modified.
+
+* \subsection vs2012 Visual Studio 2012 dependency
+* Bolt currently has dependencies on Visual Studio 2012.  Additional compilers will be added in time.
+*/
