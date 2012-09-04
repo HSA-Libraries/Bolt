@@ -206,6 +206,7 @@ namespace bolt {
                     if(((szElements-1) & (szElements)) != 0)
                     {
                         std::cout << "The BOLT sort routine does not support non power of 2 buffer size." << std ::endl;
+                        throw ::cl::Error( CL_INVALID_DEVICE, "The BOLT sort routine device_vector does not support non power of 2 buffer size." );
                         return;
                     }
 

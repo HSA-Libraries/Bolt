@@ -62,6 +62,11 @@ namespace bolt {
 		* bolt::cl::sort(ctl, a, a+10, bolt::cl::greater<int>());
 		* 
 		*  \endcode
+        *  \bug The OpenCL sort routine works only for power of 2 buffer sizes. If the input is a non power of 2, 
+        *       then an exception is thrown if a device vector.
+        *  \bug If the input buffer is a bolt::cl::device_vector and if the runMode selected is bolt::cl::control::SerialCpu, then an OpenCL 
+        *       Exception thrown.
+        *  \bug Only Plain Old Data Types can be used with the device_vector. 
 		*/
 
 		template<typename RandomAccessIterator, typename StrictWeakOrdering> 
