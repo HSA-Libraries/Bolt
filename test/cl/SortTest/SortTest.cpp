@@ -1,19 +1,29 @@
 
 #define GOOGLE_TEST 0
 #if (GOOGLE_TEST == 1)
-//#include "stdafx.h"
-#include <bolt/cl/scan.h>
+#include "stdafx.h"
+
+#include <bolt/cl/sort.h>
 #include <bolt/unicode.h>
 #include <bolt/miniDump.h>
 
 #include <gtest/gtest.h>
-
-#include <vector>
-#include <array>
+#include <boost/shared_array.hpp>
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Below are helper routines to compare the results of two arrays for googletest
 //  They return an assertion object that googletest knows how to track
+
+template< typename T >
+::testing::AssertionResult cmpArrays( const T ref, const T calc, size_t N )
+{
+    for( size_t i = 0; i < N; ++i )
+    {
+        EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
+    }
+
+    return ::testing::AssertionSuccess( );
+}
 
 template< typename T, size_t N >
 ::testing::AssertionResult cmpArrays( const T (&ref)[N], const T (&calc)[N] )
@@ -106,6 +116,19 @@ template< typename T >
     return ::testing::AssertionSuccess( );
 }
 
+//  A very generic template that takes two container, and compares their values assuming a vector interface
+template< typename S, typename B >
+::testing::AssertionResult cmpArrays( const S& ref, const B& calc )
+{
+    for( size_t i = 0; i < ref.size( ); ++i )
+    {
+        EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
+    }
+
+    return ::testing::AssertionSuccess( );
+}
+
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Fixture classes are now defined to enable googletest to process type parameterized tests
 
@@ -116,10 +139,6 @@ class TypeValue
 public:
     static const size_t value = N;
 };
-
-//  Explicit initialization of the C++ static const
-template< size_t N >
-const size_t TypeValue< N >::value;
 
 //  Test fixture class, used for the Type-parameterized tests
 //  Namely, the tests that use std::array and TYPED_TEST_P macros
@@ -132,10 +151,11 @@ public:
 
     virtual void SetUp( )
     {
+		//FIXME - Generate Random inputs
         for( int i=0; i < ArraySize; i++ )
         {
-            stdInput[ i ] = 1;
-            boltInput[ i ] = 1;
+            stdInput[ i ] = ArraySize - i + 2;
+            boltInput[ i ] = ArraySize - i + 2;
         }
     };
 
@@ -154,10 +174,6 @@ protected:
     int m_Errors;
 };
 
-//  Explicit initialization of the C++ static const
-template< typename ArrayTuple >
-const size_t SortArrayTest< ArrayTuple >::ArraySize;
-
 TYPED_TEST_CASE_P( SortArrayTest );
 
 TYPED_TEST_P( SortArrayTest, InPlace )
@@ -166,32 +182,10 @@ TYPED_TEST_P( SortArrayTest, InPlace )
 
     //  Calling the actual functions under test
     std::sort( stdInput.begin( ), stdInput.end( ));
-    bolt::cl::sort( boltInput.begin( ), boltInput.end( ));
+    bolt::cl::sort( boltInput.begin( ), boltInput.end( ) );
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end( ) );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end( ) );
-
-    //  Both collections should have the same number of elements
-    EXPECT_EQ( stdNumElements, boltNumElements );
-
-    //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
-}
-
-TYPED_TEST_P( SortArrayTest, InPlaceLessFunction )
-{
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
-
-    //  Calling the actual functions under test
-    std::sort( stdInput.begin( ), stdInput.end( ), stdInput.begin( ), std::less< ArrayType >( ) );
-    bolt::cl::sort( boltInput.begin( ), boltInput.end( ), boltInput.begin( ), bolt::cl::less< ArrayType >( ) );
-
-    //  The returned iterator should be one past the 
-    EXPECT_EQ( stdInput.end( ), stdEnd );
-    EXPECT_EQ( boltInput.end( ), boltEnd );
-
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdEnd );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltEnd );
+    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
+    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
@@ -205,12 +199,26 @@ TYPED_TEST_P( SortArrayTest, InPlaceGreaterFunction )
     typedef std::array< ArrayType, ArraySize > ArrayCont;
 
     //  Calling the actual functions under test
-    std::sort( stdInput.begin( ), stdInput.end( ), stdInput.begin( ), std::greater< ArrayType >( ) );
-    bolt::cl::sort( boltInput.begin( ), boltInput.end( ), boltInput.begin( ), bolt::cl::greater< ArrayType >( ) );
+    std::sort( stdInput.begin( ), stdInput.end( ), std::greater< ArrayType >( ) );
+    bolt::cl::sort( boltInput.begin( ), boltInput.end( ), bolt::cl::greater< ArrayType >( ) );
 
-    //  The returned iterator should be one past the 
-    EXPECT_EQ( stdInput.end( ), stdEnd );
-    EXPECT_EQ( boltInput.end( ), boltEnd );
+    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
+    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
+}
+
+TYPED_TEST_P( SortArrayTest, InPlaceLessFunction )
+{
+    typedef std::array< ArrayType, ArraySize > ArrayCont;
+
+    //  Calling the actual functions under test
+    std::sort( stdInput.begin( ), stdInput.end( ), bolt::cl::less< ArrayType >( ) );
+    bolt::cl::sort( boltInput.begin( ), boltInput.end( ), std::less< ArrayType >( ) );
 
     ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdEnd );
     ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltEnd );
@@ -222,27 +230,20 @@ TYPED_TEST_P( SortArrayTest, InPlaceGreaterFunction )
     cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
 }
 
-
-REGISTER_TYPED_TEST_CASE_P( SortArrayTest, InPlace, InPlaceLessFunction, InPlaceGreaterFunction);
+REGISTER_TYPED_TEST_CASE_P( SortArrayTest, InPlace, InPlaceGreaterFunction, InPlacelessFunction );
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Fixture classes are now defined to enable googletest to process value parameterized tests
 
 //  ::testing::TestWithParam< int > means that GetParam( ) returns int values, which i use for array size
+
+//FIXME - SortIntegerVector, SortFloatVector, SortDoubleVector can be templatized. 
 class SortIntegerVector: public ::testing::TestWithParam< int >
 {
 public:
     //  Create an std and a bolt vector of requested size, and initialize all the elements to 1
-    SortIntegerVector( ): stdInput( GetParam( )), boltInput( GetParam( ))
-    {  
-        size_t i, length;
-        length = GetParam( );
-        for (i=0;i<length;i++)
-        {
-            stdInput[i] = (int)(length - i + 2);
-            boltInput[i] = (int)(length - i + 2);
-        }
-    }
+    SortIntegerVector( ): stdInput( GetParam( ), 1 ), boltInput( GetParam( ), 1 )
+    {}
 
 protected:
     std::vector< int > stdInput, boltInput;
@@ -272,18 +273,60 @@ protected:
     std::vector< double > stdInput, boltInput;
 };
 
-TEST_P( SortIntegerVector, InclusiveInplace )
+//FIXME - SortIntegerDeviceVector can be templatized along with SortFloatDeviceVector and SortDoubleDeviceVector which is not there.
+//  ::testing::TestWithParam< int > means that GetParam( ) returns int values, which i use for array size
+class SortIntegerDeviceVector: public ::testing::TestWithParam< int >
+{
+public:
+    //  Create an std and a bolt vector of requested size, and initialize all the elements to 1
+    SortIntegerDeviceVector( ): stdInput( GetParam( ), 1 ), boltInput( static_cast<size_t>( GetParam( ) ), 1 )
+    {}
+
+protected:
+    std::vector< int > stdInput;
+    bolt::cl::device_vector< int > boltInput;
+};
+
+//  ::testing::TestWithParam< int > means that GetParam( ) returns int values, which i use for array size
+class SortIntegerNakedPointer: public ::testing::TestWithParam< int >
+{
+public:
+    //  Create an std and a bolt vector of requested size, and initialize all the elements to 1
+    SortIntegerNakedPointer( ): stdInput( new int[ GetParam( ) ] ), boltInput( new int[ GetParam( ) ] )
+    {}
+
+    virtual void SetUp( )
+    {
+        size_t size = GetParam( );
+		//FIXME - Generate Random Numbers 
+        for( int i=0; i < size; i++ )
+        {
+            stdInput[ i ] = 1;
+            boltInput[ i ] = 1;
+        }
+    };
+
+    virtual void TearDown( )
+    {
+        delete [] stdInput;
+        delete [] boltInput;
+    };
+
+protected:
+    //boost::shared_array< int > stdInput;
+    //boost::shared_array< int > boltInput;
+     int* stdInput;
+     int* boltInput;
+};
+
+TEST_P( SortIntegerVector, Inplace )
 {
     //  Calling the actual functions under test
-    std::vector< int >::iterator stdEnd  = std::partial_sum( stdInput.begin( ), stdInput.end( ), stdInput.begin( ) );
-    std::vector< int >::iterator boltEnd = bolt::cl::inclusive_scan( boltInput.begin( ), boltInput.end( ), boltInput.begin( ) );
+    std::sort( stdInput.begin( ), stdInput.end( ) );
+    bolt::cl::sort( boltInput.begin( ), boltInput.end( ) );
 
-    //  The returned iterator should be one past the 
-    EXPECT_EQ( stdInput.end( ), stdEnd );
-    EXPECT_EQ( boltInput.end( ), boltEnd );
-
-    std::vector< int >::iterator::difference_type stdNumElements = std::distance( stdInput.begin( ), stdEnd );
-    std::vector< int >::iterator::difference_type boltNumElements = std::distance( boltInput.begin( ), boltEnd );
+    std::vector< int >::iterator::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end( ) );
+    std::vector< int >::iterator::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end( ) );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
@@ -291,8 +334,8 @@ TEST_P( SortIntegerVector, InclusiveInplace )
     //  Loop through the array and compare all the values with each other
     cmpArrays( stdInput, boltInput );
 }
-
-TEST_P( SortFloatVector, InclusiveInplace )
+// Come Back here
+TEST_P( ScanFloatVector, InclusiveInplace )
 {
     //  Calling the actual functions under test
     std::vector< float >::iterator stdEnd  = std::partial_sum( stdInput.begin( ), stdInput.end( ), stdInput.begin( ) );
@@ -312,7 +355,7 @@ TEST_P( SortFloatVector, InclusiveInplace )
     cmpArrays( stdInput, boltInput );
 }
 
-TEST_P( SortDoubleVector, InclusiveInplace )
+TEST_P( ScanDoubleVector, InclusiveInplace )
 {
     //  Calling the actual functions under test
     std::vector< double >::iterator stdEnd  = std::partial_sum( stdInput.begin( ), stdInput.end( ), stdInput.begin( ) );
@@ -332,12 +375,88 @@ TEST_P( SortDoubleVector, InclusiveInplace )
     cmpArrays( stdInput, boltInput );
 }
 
+TEST_P( ScanIntegerDeviceVector, InclusiveInplace )
+{
+    //  Calling the actual functions under test
+    std::vector< int >::iterator stdEnd  = std::partial_sum( stdInput.begin( ), stdInput.end( ), stdInput.begin( ) );
+    bolt::cl::device_vector< int >::iterator boltEnd = bolt::cl::inclusive_scan( boltInput.begin( ), boltInput.end( ), boltInput.begin( ) );
+
+    //  The returned iterator should be one past the 
+    EXPECT_EQ( stdInput.end( ), stdEnd );
+    EXPECT_EQ( boltInput.end( ), boltEnd );
+
+    std::vector< int >::iterator::difference_type stdNumElements = std::distance( stdInput.begin( ), stdEnd );
+    std::vector< int >::iterator::difference_type boltNumElements = std::distance( boltInput.begin( ), boltEnd );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( ScanIntegerNakedPointer, InclusiveInplace )
+{
+    size_t endIndex = GetParam( );
+
+    //  Calling the actual functions under test
+    stdext::checked_array_iterator< int* > wrapStdInput( stdInput, endIndex );
+    stdext::checked_array_iterator< int* > stdEnd = std::partial_sum( wrapStdInput, wrapStdInput + endIndex, wrapStdInput );
+    //int* stdEnd = std::partial_sum( stdInput, stdInput + endIndex, stdInput );
+
+    stdext::checked_array_iterator< int* > wrapBoltInput( boltInput, endIndex );
+    stdext::checked_array_iterator< int* > boltEnd = bolt::cl::inclusive_scan( wrapBoltInput, wrapBoltInput + endIndex, wrapBoltInput );
+    //int* boltEnd = bolt::cl::inclusive_scan( boltInput, boltInput + endIndex, boltInput );
+
+    //  The returned iterator should be one past the 
+    EXPECT_EQ( wrapStdInput + endIndex, stdEnd );
+    EXPECT_EQ( wrapBoltInput + endIndex, boltEnd );
+
+    size_t stdNumElements = std::distance( wrapStdInput, stdEnd );
+    size_t boltNumElements = std::distance( wrapBoltInput, boltEnd );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput, endIndex );
+}
+
+TEST_P( ScanIntegerVector, ExclusiveOutOfPlace )
+{
+    //  Declare temporary arrays to store results for out of place computation
+    std::vector< int > stdResult( GetParam( ) ), boltResult( GetParam( ) );
+
+    //  Calling the actual functions under test
+    std::vector< int >::iterator stdEnd  = std::partial_sum( stdInput.begin( ), stdInput.end( ), stdResult.begin( ) );
+    stdEnd = std::transform( stdResult.begin( ), stdResult.end( ), stdInput.begin( ), stdResult.begin( ), bolt::cl::minus< int >( ) );
+
+    std::vector< int >::iterator boltEnd = bolt::cl::exclusive_scan( boltInput.begin( ), boltInput.end( ), boltInput.begin( ) );
+
+    //  The returned iterator should be one past the 
+    EXPECT_EQ( stdInput.end( ), stdEnd );
+    EXPECT_EQ( boltInput.end( ), boltEnd );
+
+    std::vector< int >::iterator::difference_type stdNumElements = std::distance( stdInput.begin( ), stdEnd );
+    std::vector< int >::iterator::difference_type boltNumElements = std::distance( boltInput.begin( ), boltEnd );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+
 //  Test lots of consecutive numbers, but small range, suitable for integers because they overflow easier
-// INSTANTIATE_TEST_CASE_P( Inclusive, ScanIntegerVector, ::testing::Range( 0, 1024, 1 ) );
+//INSTANTIATE_TEST_CASE_P( Inclusive, ScanIntegerVector, ::testing::Range( 1537, 1540, 1 ) );
+//INSTANTIATE_TEST_CASE_P( Inclusive, ScanIntegerVector, ::testing::Range( 0, 1540, 1 ) );
+//INSTANTIATE_TEST_CASE_P( Inclusive, ScanIntegerDeviceVector, ::testing::Range( 0, 1024, 1 ) );
+//INSTANTIATE_TEST_CASE_P( Inclusive, ScanIntegerNakedPointer, ::testing::Range( 0, 1024, 1 ) );
+INSTANTIATE_TEST_CASE_P( Exclusive, ScanIntegerVector, ::testing::Range( 256, 1024, 1 ) );
 
 //  Test a huge range, suitable for floating point as they are less prone to overflow (but floating point loses granularity at large values)
-INSTANTIATE_TEST_CASE_P( Inclusive, SortFloatVector, ::testing::Range( 4096, 1048576, 4096 ) );
-INSTANTIATE_TEST_CASE_P( Inclusive, SortDoubleVector, ::testing::Range( 0, 1048576, 4096 ) );
+//INSTANTIATE_TEST_CASE_P( Inclusive, ScanFloatVector, ::testing::Range( 4096, 1048576, 4096 ) );
+//INSTANTIATE_TEST_CASE_P( Inclusive, ScanDoubleVector, ::testing::Range( 0, 1048576, 4096 ) );
 
 typedef ::testing::Types< 
     std::tuple< int, TypeValue< 1 > >,
@@ -382,7 +501,7 @@ typedef ::testing::Types<
 //INSTANTIATE_TYPED_TEST_CASE_P( Integer, ScanArrayTest, IntegerTests );
 //INSTANTIATE_TYPED_TEST_CASE_P( Float, ScanArrayTest, FloatTests );
 
-int main(int argc, _TCHAR* argv[])
+int _tmain(int argc, _TCHAR* argv[])
 {
     ::testing::InitGoogleTest( &argc, &argv[ 0 ] );
 
@@ -418,7 +537,6 @@ int main(int argc, _TCHAR* argv[])
 
 	return retVal;
 }
-
 #else
 //BOLT Header files
 #include <bolt/cl/clcode.h>
