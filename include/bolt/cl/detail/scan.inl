@@ -12,6 +12,22 @@ namespace bolt
 {
     namespace cl
     {
+        /*! \addtogroup algorithms
+         */
+
+        /*! \addtogroup PrefixSums Prefix Sums
+        *   \ingroup algorithms
+        *   The sorting Algorithm for sorting the given InputIterator.
+        */ 
+
+        /*! \addtogroup scan
+        *   \ingroup PrefixSums
+        *   \{
+        *   \todo The performance of the Sort routines should be proven using a benchmark program that can 
+        *   show decent results across a range of values (a graph)
+        */
+
+
         //  Inclusive scan overloads
         //////////////////////////////////////////
         template< typename InputIterator, typename OutputIterator, typename BinaryFunction >
@@ -110,8 +126,15 @@ namespace bolt
             return exclusive_scan( control::getDefault( ), first, last, result, plus< T >( ), std::iterator_traits< InputIterator >::iterator_category( ) );
         };
 
+        /*! \brief This namespace hides implementation details, and is not meant to be called by a library user
+         */
         namespace detail
         {
+            /*! \addtogroup detail
+            *   \ingroup scan
+            *   \{
+            */
+
             /*! \brief Class used with shared_ptr<> as a custom deleter, to unmap a buffer that has been mapped with 
             *   device_vector data() method
             */
@@ -184,8 +207,13 @@ namespace bolt
                 }
             };
 
-        // This template is called by the non-detail versions of inclusive_scan, it already assumes random access iterators
-        // This is called strictly for any non-device_vector iterator
+        /*! \brief This template function overload is used to seperate device_vector iterators from all other iterators
+            \detail This template is called by the non-detail versions of inclusive_scan, it already assumes random access
+         *  iterators.  This overload is called strictly for non-device_vector iterators
+         * \bug The std::is_base_of logic is combining testing the InputIterator & OutputIterator iterators to see 
+         *  if they derive from each other.  This should be broken into seperate tests, one for InputIterator and 1 for
+         *  OutputIterator and combined with &&.
+        */
         template< typename InputIterator, typename OutputIterator, typename BinaryFunction >
         typename std::enable_if< !std::is_base_of<typename device_vector<typename std::iterator_traits<InputIterator>::value_type>::iterator,OutputIterator>::value, OutputIterator >::type
             inclusive_scan( const control &ctl, InputIterator first, InputIterator last, OutputIterator result, BinaryFunction binary_op )
@@ -229,8 +257,9 @@ namespace bolt
             return result + numElements;
         }
 
-        // This template is called by the non-detail versions of inclusive_scan, it already assumes random access iterators
-        // This is called strictly for iterators that are derived from device_vector< T >::iterator
+        /*! \copydoc inclusive_scan(const control,InputIterator,InputIterator,OutputIterator,BinaryFunction)
+         * \detail This is called strictly for iterators that are derived from device_vector< T >::iterator
+        */
         template< typename InputIterator, typename OutputIterator, typename BinaryFunction >
         typename std::enable_if< std::is_base_of<typename device_vector<typename std::iterator_traits<InputIterator>::value_type>::iterator,OutputIterator>::value, OutputIterator >::type
             inclusive_scan( const control &ctl, InputIterator first, InputIterator last, OutputIterator result, BinaryFunction binary_op )
@@ -483,7 +512,13 @@ namespace bolt
                 //V_OPENCL( l_Error, "perBlockInclusiveScan failed to wait" );
 
             }   //end of inclusive_scan_enqueue( )
+
+            /*!   \}  */
+
         }   //namespace detail
+
+        /*!   \}  */
+
     }   //namespace cl
 }//namespace bolt
 

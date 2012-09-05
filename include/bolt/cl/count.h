@@ -51,8 +51,8 @@ namespace bolt {
         // countOf42 contains 4.
          * \endcode
              *
+		* \todo More documentation needed
          */
-		// FIXME, more documentation needed.
 		template<typename InputIterator, typename EqualityComparable> 
 		typename std::iterator_traits<InputIterator>::difference_type
 			count(InputIterator first, 
@@ -74,8 +74,9 @@ namespace bolt {
 		* \param predicate The predicate. The count is incremented for each element which returns true when passed to the predicate function.
         *
         * \returns: The number of elements for which \p predicate is true.
+		* \todo more documentation needed and a code sample needed
+		* \bug Failure for the test written for it
 		*/
-		// FIXME, more documentation needed.  Need a code sample.
 		template<typename InputIterator, typename Predicate> 
 		typename std::iterator_traits<InputIterator>::difference_type
 			count_if(InputIterator first, 
