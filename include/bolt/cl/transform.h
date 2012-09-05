@@ -24,6 +24,8 @@ namespace bolt {
 		/*! \addtogroup transform
         *   \ingroup transformations
         *   \{
+        *   \todo Missing the unary operator variants of tranform
+        *   \todo Optimize transform API's to eliminate range-check
         */
 
         /*! This version of \p transform applies a binary function to each pair

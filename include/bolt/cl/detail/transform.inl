@@ -59,8 +59,13 @@ namespace bolt {
                 };
             };
 
-            // This template is called by the non-detail versions of inclusive_scan, it already assumes random access iterators
-            // This is called strictly for any non-device_vector iterator
+            /*! \brief This template function overload is used to seperate device_vector iterators from all other iterators
+                \detail This template is called by the non-detail versions of inclusive_scan, it already assumes random access
+             *  iterators.  This overload is called strictly for non-device_vector iterators
+             * \bug The std::is_base_of logic is combining testing the InputIterator & OutputIterator iterators to see 
+             *  if they derive from each other.  This should be broken into seperate tests, one for InputIterator and 1 for
+             *  OutputIterator and combined with &&.
+            */
             template<typename InputIterator, typename OutputIterator, typename BinaryFunction> 
             typename std::enable_if< !std::is_base_of<typename device_vector<typename std::iterator_traits<InputIterator>::value_type>::iterator,OutputIterator>::value, void >::type
             transform(const bolt::cl::control &ctl,  InputIterator first1, InputIterator last1, InputIterator first2, OutputIterator result, 

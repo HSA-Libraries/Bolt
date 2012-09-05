@@ -20,6 +20,8 @@ namespace bolt
         /*! \addtogroup scan
         *   \ingroup PrefixSums
         *   \{
+        *   \todo The performance of the Sort routines should be proven using a benchmark program that can 
+        *   show decent results across a range of values (a graph)
         */
 
         /*! \brief inclusive_scan calculates a running sum over a range of values, inclusive of the current value.
@@ -30,6 +32,7 @@ namespace bolt
         * \param last  The last iterator in the input range to be scanned
         * \param result  The first iterator in the output range
         * \param binary_op A functor object specifying the operation between two elements in the input range
+        * \param user_code A client specified string that will be appended to the generated OpenCL kernel
         * \return An iterator pointing at the end of the result range
         *
         * \code
@@ -57,6 +60,7 @@ namespace bolt
         * \param first The first iterator in the input range to be scanned
         * \param last  The last iterator in the input range to be scanned
         * \param result  The first iterator in the output range
+        * \param user_code A client specified string that will be appended to the generated OpenCL kernel
         * \return An iterator pointing at the end of the result range
         *
         * \code
@@ -84,6 +88,7 @@ namespace bolt
         * \param last  The last iterator in the input range to be scanned
         * \param result  The first iterator in the output range
         * \param binary_op A functor object specifying the operation between two elements in the input range
+        * \param user_code A client specified string that will be appended to the generated OpenCL kernel
         * \return An iterator pointing at the end of the result range
         *
         * \code
@@ -110,6 +115,7 @@ namespace bolt
         * \param first The first iterator in the input range to be scanned
         * \param last  The last iterator in the input range to be scanned
         * \param result  The first iterator in the output range
+        * \param user_code A client specified string that will be appended to the generated OpenCL kernel
         * \return An iterator pointing at the end of the result range
         *
         * \code
@@ -138,6 +144,7 @@ namespace bolt
         * \param last  The last iterator in the input range to be scanned
         * \param result  The first iterator in the output range
         * \param binary_op A functor object specifying the operation between two elements in the input range
+        * \param user_code A client specified string that will be appended to the generated OpenCL kernel
         * \return An iterator pointing at the end of the result range
         *
         * \code
@@ -165,6 +172,7 @@ namespace bolt
         * \param first The first iterator in the input range to be scanned
         * \param last  The last iterator in the input range to be scanned
         * \param result  The first iterator in the output range
+        * \param user_code A client specified string that will be appended to the generated OpenCL kernel
         * \return An iterator pointing at the end of the result range
         *
         * \code
@@ -192,6 +200,7 @@ namespace bolt
         * \param last  The last iterator in the input range to be scanned
         * \param result  The first iterator in the output range
         * \param binary_op A functor object specifying the operation between two elements in the input range
+        * \param user_code A client specified string that will be appended to the generated OpenCL kernel
         * \return An iterator pointing at the end of the result range
         *
         * \code
@@ -218,6 +227,7 @@ namespace bolt
         * \param first The first iterator in the input range to be scanned
         * \param last  The last iterator in the input range to be scanned
         * \param result  The first iterator in the output range
+        * \param user_code A client specified string that will be appended to the generated OpenCL kernel
         * \return An iterator pointing at the end of the result range
         *
         * \code

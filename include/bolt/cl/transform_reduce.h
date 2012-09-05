@@ -10,11 +10,18 @@
 namespace bolt {
     namespace cl {
 
+
+        /*! \brief transform_reduce
+         *  \todo Document transform_reduce
+         */
         template<typename T, typename InputIterator, typename UnaryFunction, typename BinaryFunction> 
         T transform_reduce(const control &c, InputIterator first1, InputIterator last1,  
             UnaryFunction transform_op, 
             T init,  BinaryFunction reduce_op, const std::string user_code="" );
 
+        /*! \brief transform_reduce
+         *  \todo Document transform_reduce
+         */
         template<typename T, typename InputIterator, typename UnaryFunction, typename BinaryFunction> 
         T transform_reduce(InputIterator first1, InputIterator last1,  
             UnaryFunction transform_op, 

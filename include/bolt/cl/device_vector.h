@@ -37,6 +37,7 @@ namespace bolt
         *   devices, this is most likely video memory, for APU devices this may imply zero-copy memory and for classic CPU devices this may imply
         *   standard host memory.
         *   \sa http://www.sgi.com/tech/stl/Vector.html
+        *   \note Implement a constructor that takes a single iterator and a size_type
         */
         template< typename T >
         class device_vector
@@ -81,7 +82,8 @@ namespace bolt
             *   memory which may be in a partitioned memory space.  Access of a reference of the container results in 
             *   a mapping and unmapping operation of device memory
             *   \note The container element reference is implemented as a proxy object
-            *   \warning This operation may be slow, depending on the location of the element
+            *   \warning Use of this class may be slow, as each operation on it results in a map/unmap sequence
+            *   \todo Wrap a reference to the device_vector, instead of copying the cl objects, like the iterator class
             */
             class reference
             {
@@ -218,6 +220,7 @@ namespace bolt
             typedef iterator_base< const device_vector< value_type > > const_iterator;
 
             /*! \brief A reverse random access iterator in the classic sense
+            *   \todo Need to implement reverse_iterators
             *   \sa http://www.sgi.com/tech/stl/ReverseIterator.html
             *   \sa http://www.sgi.com/tech/stl/RandomAccessIterator.html
             */
@@ -226,6 +229,7 @@ namespace bolt
             };
 
             /*! \brief A constant random access iterator in the classic sense
+            *   \todo Need to implement const_reverse_iterator
             *   \sa http://www.sgi.com/tech/stl/ReverseIterator.html
             *   \sa http://www.sgi.com/tech/stl/RandomAccessIterator.html
             */
