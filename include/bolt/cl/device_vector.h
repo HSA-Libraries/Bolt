@@ -37,7 +37,6 @@ namespace bolt
         *   devices, this is most likely video memory, for APU devices this may imply zero-copy memory and for classic CPU devices this may imply
         *   standard host memory.
         *   \sa http://www.sgi.com/tech/stl/Vector.html
-        *   \note Implement a constructor that takes a single iterator and a size_type
         */
         template< typename T >
         class device_vector
@@ -83,63 +82,79 @@ namespace bolt
             *   a mapping and unmapping operation of device memory
             *   \note The container element reference is implemented as a proxy object
             *   \warning Use of this class may be slow, as each operation on it results in a map/unmap sequence
-            *   \todo Wrap a reference to the device_vector, instead of copying the cl objects, like the iterator class
             */
-            class reference
+            template< typename Container >
+            class reference_base
             {
-                ::cl::Buffer m_devMemory;
-                ::cl::CommandQueue m_commQueue;
-                size_type m_index;
-
             public:
-                reference( const ::cl::Buffer& devMem, const ::cl::CommandQueue& cq, size_type index ): m_devMemory( devMem ), m_commQueue( cq ), m_index( index )
+                reference_base( Container& rhs, size_type index ): m_Container( rhs ), m_index( index )
                 {}
 
                 //  Automatic type conversion operator to turn the reference object into a value_type
                 operator value_type( ) const
                 {
                     cl_int l_Error = CL_SUCCESS;
-                    naked_pointer result = reinterpret_cast< naked_pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ, m_index * sizeof( value_type ), sizeof( value_type ), NULL, NULL, &l_Error ) );
+                    naked_pointer result = reinterpret_cast< naked_pointer >( m_Container.m_commQueue.enqueueMapBuffer( 
+                        m_Container.m_devMemory, true, CL_MAP_READ, m_index * sizeof( value_type ), sizeof( value_type ), NULL, NULL, &l_Error ) );
                     V_OPENCL( l_Error, "device_vector failed map device memory to host memory for operator[]" );
 
                     value_type valTmp = *result;
 
-                    V_OPENCL( m_commQueue.enqueueUnmapMemObject( m_devMemory, result ), "device_vector failed to unmap host memory back to device memory" );
+                    V_OPENCL( m_Container.m_commQueue.enqueueUnmapMemObject( m_Container.m_devMemory, result ), "device_vector failed to unmap host memory back to device memory" );
 
                     return valTmp;
                 }
 
-                reference& operator=( const value_type& rhs )
+                reference_base< Container >& operator=( const value_type& rhs )
                 {
                     cl_int l_Error = CL_SUCCESS;
-                    naked_pointer result = reinterpret_cast< naked_pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_WRITE_INVALIDATE_REGION, m_index * sizeof( value_type ), sizeof( value_type ), NULL, NULL, &l_Error ) );
+                    naked_pointer result = reinterpret_cast< naked_pointer >( m_Container.m_commQueue.enqueueMapBuffer( 
+                        m_Container.m_devMemory, true, CL_MAP_WRITE_INVALIDATE_REGION, m_index * sizeof( value_type ), sizeof( value_type ), NULL, NULL, &l_Error ) );
                     V_OPENCL( l_Error, "device_vector failed map device memory to host memory for operator[]" );
 
                     *result = rhs;
 
-                    V_OPENCL( m_commQueue.enqueueUnmapMemObject( m_devMemory, result ), "device_vector failed to unmap host memory back to device memory" );
+                    V_OPENCL( m_Container.m_commQueue.enqueueUnmapMemObject( m_Container.m_devMemory, result ), "device_vector failed to unmap host memory back to device memory" );
 
                     return *this;
                 }
 
-            /*! \brief A get accessor function to return the encapsulated device buffer
-            *   This member function allows access to the Buffer object, which can be retrieved through a reference or an iterator.
-            *   This is necessary to allow library functions to set the encapsulated Buffer object as a kernel argument.  
-            *   \note This get function could be implemented in the iterator, but the reference object is usually a temporary rvalue so 
-            *   this location seems less intrusive to the design of the vector class.
-            */
+                /*! \brief A get accessor function to return the encapsulated device buffer
+                *   This member function allows access to the Buffer object, which can be retrieved through a reference or an iterator.
+                *   This is necessary to allow library functions to set the encapsulated Buffer object as a kernel argument.  
+                *   \note This get function could be implemented in the iterator, but the reference object is usually a temporary rvalue so 
+                *   this location seems less intrusive to the design of the vector class.
+                */
                 ::cl::Buffer getBuffer( ) const
                 {
-                    return m_devMemory;
+                    return m_Container.m_devMemory;
                 }
+
+                /*! \brief A get accessor function to return the encapsulated device_vector
+                */
+                Container& getContainer( ) const
+                {
+                    return m_Container;
+                }
+
+            private:
+                Container& m_Container;
+                size_type m_index;
             };
 
+            /*! \brief Typedef to create the non-constant reference
+            */
+            typedef reference_base< device_vector< value_type > > reference;
+
             /*! \brief A non-writeable copy of an element of the container
-            *   Constant references are optimized to return only a value_type, because it can be guaranteed that
-            *   the value will not be modified, so no need for mapping operations
+            *   Constant references are optimized to return a value_type, as it can be guaranteed that
+            *   the value will not be modified
             *   \note A const_reference actually returns a value, not a reference.
             */
             typedef const value_type const_reference;
+
+            //  Handy for the reference class to get at the wrapped ::cl objects
+            friend class reference;
 
             /*! \brief Base class provided to encapsulate all the common functionality for constant
             *   and non-constant iterators
@@ -252,6 +267,7 @@ namespace bolt
             *   \param ctl An Bolt control class used to perform copy operations; a default is used if not supplied by the user
             *   \warning The ::cl::CommandQueue is not a STD reserve( ) parameter
             *   \note This constructor relies on the ::cl::Buffer object to throw on error
+            *   \todo Find a way to construct a new device_vector, but not have to initialize it
             */
             device_vector( size_type newSize, const value_type& value = value_type( ), cl_mem_flags flags = CL_MEM_READ_WRITE, const control& ctl = control::getDefault( ) ): m_Size( newSize ), m_commQueue( ctl.commandQueue( ) ), m_Flags( flags )
             {
@@ -284,12 +300,45 @@ namespace bolt
             *   \note The last nameless parameter should be ignored; it helps distinguish this constructor from the size_type constructor for primitive types
             */
             template< typename InputIterator >
+            device_vector( const InputIterator begin, size_type newSize, cl_mem_flags flags = CL_MEM_READ_WRITE, const control& ctl = control::getDefault( ),
+                typename std::enable_if< !std::is_integral< InputIterator >::value >::type* = 0 ): m_Size( newSize ), m_commQueue( ctl.commandQueue( ) ), m_Flags( flags )
+            {
+                static_assert( std::is_convertible< value_type, typename std::iterator_traits< InputIterator >::value_type >::value, 
+                    "iterator value_type does not convert to device_vector value_type" );
+                static_assert( std::is_pod< value_type >::value, "device_vector only supports POD (plain old data) types" );
+
+                //  We want to use the context from the passed in commandqueue to initialize our buffer
+                cl_int l_Error = CL_SUCCESS;
+                ::cl::Context l_Context = m_commQueue.getInfo< CL_QUEUE_CONTEXT >( &l_Error );
+                V_OPENCL( l_Error, "device_vector failed to query for the context of the ::cl::CommandQueue object" );
+
+                if( m_Flags & CL_MEM_USE_HOST_PTR )
+                {
+                    m_devMemory = ::cl::Buffer( l_Context, m_Flags, m_Size * sizeof( value_type ), 
+                        reinterpret_cast< value_type* >( const_cast< value_type* >( &*begin ) ) );
+
+                    ::cl::copy( begin, begin+m_Size, m_devMemory );
+                }
+                else
+                {
+                    m_devMemory = ::cl::Buffer( l_Context, m_Flags, m_Size * sizeof( value_type ) );
+                }
+            };
+
+            /*! \brief A constructor that will create a new device_vector using a range specified by the user
+            *   \param begin An iterator pointing at the beginning of the range
+            *   \param end An iterator pointing at the end of the range
+            *   \param flags A bitfield that takes the OpenCL memory flags to help specify where the device_vector should allocate memory
+            *   \param ctl An Bolt control class used to perform copy operations; a default is used if not supplied by the user
+            *   \note This constructor relies on the ::cl::Buffer object to throw on error 
+            *   \note The last nameless parameter should be ignored; it helps distinguish this constructor from the size_type constructor for primitive types
+            */
+            template< typename InputIterator >
             device_vector( const InputIterator begin, const InputIterator end, cl_mem_flags flags = CL_MEM_READ_WRITE, const control& ctl = control::getDefault( ),
                 typename std::enable_if< !std::is_integral< InputIterator >::value >::type* = 0 ): m_commQueue( ctl.commandQueue( ) ), m_Flags( flags )
-                //typename std::enable_if< std::is_class< InputIterator >::value >::type* = 0 ): m_commQueue( ctl.commandQueue( ) ), m_Flags( flags )
-                //typename std::enable_if< std::is_convertible< typename std::iterator_traits< InputIterator >::iterator_category, std::input_iterator_tag >::value >::type* = 0 ): m_commQueue( ctl.commandQueue( ) ), m_Flags( flags )
             {
-                static_assert( std::is_convertible< value_type, typename std::iterator_traits< InputIterator >::value_type >::value, "device_vector value_type does not match iterator value_type" );
+                static_assert( std::is_convertible< value_type, typename std::iterator_traits< InputIterator >::value_type >::value,
+                    "iterator value_type does not convert to device_vector value_type" );
                 static_assert( std::is_pod< value_type >::value, "device_vector only supports POD (plain old data) types" );
 
                 //  We want to use the context from the passed in commandqueue to initialize our buffer
@@ -298,19 +347,17 @@ namespace bolt
                 V_OPENCL( l_Error, "device_vector failed to query for the context of the ::cl::CommandQueue object" );
 
                 m_Size = std::distance( begin, end );
-                m_devMemory = ::cl::Buffer( l_Context, m_Flags, m_Size * sizeof( value_type ), reinterpret_cast< value_type* >( const_cast< value_type* >( &*begin ) ) );
 
-                if( !(m_Flags & CL_MEM_USE_HOST_PTR) )
+                if( m_Flags & CL_MEM_USE_HOST_PTR )
                 {
-                    naked_pointer ptrBuffer = reinterpret_cast< naked_pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, CL_TRUE, CL_MAP_WRITE_INVALIDATE_REGION, 0 , m_Size * sizeof( value_type ), NULL, NULL, &l_Error ) );
-                    V_OPENCL( l_Error, "device_vector failed to map device memory to host memory" );
+                    m_devMemory = ::cl::Buffer( l_Context, m_Flags, m_Size * sizeof( value_type ), 
+                        reinterpret_cast< value_type* >( const_cast< value_type* >( &*begin ) ) );
 
-#if( _WIN32 )
-                    std::copy( begin, end, stdext::checked_array_iterator< naked_pointer >( ptrBuffer, m_Size ) );
-#else
-                    std::copy( begin, end, ptrBuffer );
-#endif
-                    V_OPENCL( m_commQueue.enqueueUnmapMemObject( m_devMemory, ptrBuffer ), "device_vector failed to unmap host memory back to device memory" );
+                    ::cl::copy( begin, end, m_devMemory );
+                }
+                else
+                {
+                    m_devMemory = ::cl::Buffer( l_Context, m_Flags, m_Size * sizeof( value_type ) );
                 }
             };
 
@@ -527,7 +574,7 @@ namespace bolt
             */
             reference operator[]( size_type n )
             {
-                return reference( m_devMemory, m_commQueue, n );
+                return reference( *this, n );
             }
 
             /*! \brief Retrieves a constant value stored at index n
