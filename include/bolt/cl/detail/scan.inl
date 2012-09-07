@@ -89,26 +89,6 @@ namespace bolt
             *   \{
             */
 
-            /*! \brief Class used with shared_ptr<> as a custom deleter, to unmap a buffer that has been mapped with 
-            *   device_vector data() method
-            */
-            class UnMapBufferFunctor
-            {
-                ::cl::CommandQueue& m_Queue;
-                ::cl::Buffer& m_Buffer;
-
-            public:
-                //  Basic constructor requires a reference to the container and a positional element
-                UnMapBufferFunctor( ::cl::Buffer& buffer, ::cl::CommandQueue& queue ): m_Buffer( buffer ), m_Queue( queue )
-                {}
-
-                void operator( )( const void* pBuff )
-                {
-                    V_OPENCL( m_Queue.enqueueUnmapMemObject( m_Buffer, const_cast< void* >( pBuff ) ),
-                            "shared_ptr failed to unmap host memory back to device memory" );
-                }
-            };
-
             // FIXME - move to cpp file
             struct CompileTemplate
             {
@@ -227,11 +207,7 @@ namespace bolt
 
                 // Map the input iterator to a device_vector
                 device_vector< iType > dvInput( first, last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctl );
-
-                // TODO:  Create a device_vector constructor that takes an iterator and a size
-                unsigned int elemBytes = numElements * sizeof( oType );
-                ::cl::Buffer output( ctl.context( ), CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY, elemBytes, const_cast< oType* >( &*result ) );
-                device_vector< oType > dvOutput( output, ctl );
+                device_vector< oType > dvOutput( result, numElements, CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY, ctl );
 
                 //Now call the actual cl algorithm
                 inclusive_scan_enqueue( ctl, dvInput.begin( ), dvInput.end( ), dvOutput.begin( ), binary_op );
@@ -318,15 +294,10 @@ namespace bolt
             {
                 // Map the input iterator to a device_vector
                 device_vector< iType > dvInput( first, last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctl );
-
-                // TODO:  Create a device_vector constructor that takes an iterator and a size
-                unsigned int elemBytes = numElements * sizeof( oType );
-                ::cl::Buffer output( ctl.context( ), CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, elemBytes, const_cast< oType* >( &*result ) );
-                device_vector< oType > dvOutput( output, ctl );
+                device_vector< oType > dvOutput( result, numElements, CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY, ctl );
 
                 //Now call the actual cl algorithm
                 inclusive_scan_enqueue( ctl, dvInput.begin( ), dvInput.end( ), dvOutput.begin( ), binary_op );
-                dvInput.data( );
 
                 //  TODO:  This extra pass over the data is unnecessary; future optimization should fold this subtraction into the kernels
                 //  BUG:  This hack doesn't work if the inclusive_scan is inplace
@@ -396,12 +367,15 @@ namespace bolt
                 // For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retreive the name here.
                 std::call_once( scanCompileFlag, detail::CompileTemplate::ScanSpecialization, &scanKernels, ClCode< BinaryFunction >::get( ), TypeName< iType >::get( ), TypeName< BinaryFunction >::get( ), ctl );
 
+                cl_int l_Error = CL_SUCCESS;
+
                 // Set up shape of launch grid and buffers:
                 int computeUnits     = ctl.device( ).getInfo< CL_DEVICE_MAX_COMPUTE_UNITS >( );
                 int wgPerComputeUnit =  ctl.wgPerComputeUnit( );
                 int resultCnt = computeUnits * wgPerComputeUnit;
-                static const cl_uint waveSize  = 64; // FIXME, read from device attributes.
-                static_assert( (waveSize & (waveSize-1)) == 0, "Scan depends on wavefronts being a power of 2" );
+                const size_t waveSize  = scanKernels.front( ).getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.device( ), &l_Error );
+                V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
+                assert( (waveSize & (waveSize-1)) == 0 ); // WorkGroup must be a power of 2 for Scan to work
 
                 //  Ceiling function to bump the size of input to the next whole wavefront size
                 cl_uint numElements = static_cast< cl_uint >( std::distance( first, last ) );
@@ -425,21 +399,23 @@ namespace bolt
                     sizeScanBuff += waveSize;
                 }
 
+                ////  Copy the user functor, to make sure that the data is properly aligned
+                ////  Note: you can not pass aligned data as a funtion parameter, so we have to make a copy here to a local
+                //__declspec( align( 4096 ) ) BinaryFunction tmpFunctor( binary_op );
+                //::cl::Buffer userFunctor( ctl.context( ), CL_MEM_USE_HOST_PTR, sizeof( tmpFunctor ), &tmpFunctor );
+
                 // Create buffer wrappers so we can access the host functors, for read or writing in the kernel
-                ::cl::Buffer userFunctor( ctl.context( ), CL_MEM_USE_HOST_PTR, sizeof( binary_op ), &binary_op );   // Create buffer wrapper so we can access host parameters.
-                //std::cout << "sizeof(Functor)=" << sizeof(binary_op) << std::endl;
+                ::cl::Buffer userFunctor( ctl.context( ), CL_MEM_USE_HOST_PTR, sizeof( binary_op ), &binary_op );
+                device_vector< iType > preSumArray( reinterpret_cast< iType* >( NULL ), sizeScanBuff, CL_MEM_READ_WRITE, ctl );
+                device_vector< iType > postSumArray( reinterpret_cast< iType* >( NULL ), sizeScanBuff, CL_MEM_READ_WRITE, ctl );
 
-                ::cl::Buffer preSumArray( ctl.context( ), CL_MEM_READ_WRITE, sizeScanBuff * sizeof( iType ) );
-                ::cl::Buffer postSumArray( ctl.context( ), CL_MEM_READ_WRITE, sizeScanBuff * sizeof( iType ) );
 
-                cl_int l_Error = CL_SUCCESS;
-
-                V_OPENCL( scanKernels[ 0 ].setArg( 0, (*result).getBuffer( ) ), "Error setting 0th argument for scanKernels[ 0 ]" );        // Output buffer
-                V_OPENCL( scanKernels[ 0 ].setArg( 1, (*first).getBuffer( ) ), "Error setting 1st argument for scanKernels[ 0 ]" );       // Input buffer
+                V_OPENCL( scanKernels[ 0 ].setArg( 0, result->getBuffer( ) ), "Error setting 0th argument for scanKernels[ 0 ]" );        // Output buffer
+                V_OPENCL( scanKernels[ 0 ].setArg( 1, first->getBuffer( ) ), "Error setting 1st argument for scanKernels[ 0 ]" );       // Input buffer
                 V_OPENCL( scanKernels[ 0 ].setArg( 2, numElements ), "Error setting 2nd argument for scanKernels[ 0 ]" );   // Size of scratch buffer
                 V_OPENCL( scanKernels[ 0 ].setArg( 3, waveSize + ( waveSize / 2 ), NULL ), "Error setting 3rd argument for scanKernels[ 0 ]" );    // Scratch buffer
                 V_OPENCL( scanKernels[ 0 ].setArg( 4, userFunctor ), "Error setting 4th argument for scanKernels[ 0 ]" );      // User provided functor class
-                V_OPENCL( scanKernels[ 0 ].setArg( 5, preSumArray ), "Error setting 5th argument for scanKernels[ 0 ]" );      // Output per block sum buffer
+                V_OPENCL( scanKernels[ 0 ].setArg( 5, preSumArray.begin( )->getBuffer( ) ), "Error setting 5th argument for scanKernels[ 0 ]" );      // Output per block sum buffer
 
                 std::vector< ::cl::Event > intraScanEvent( 1 );
 
@@ -452,17 +428,15 @@ namespace bolt
                     &intraScanEvent.front( ) );
                 V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for perBlockInclusiveScan kernel" );
 
-                ////Map the buffer back to the host
-                //boost::shared_array< iType > pPreSum( reinterpret_cast< value_type* >( ctl.commandQueue( ).enqueueMapBuffer( preSumArray, true, CL_MAP_READ, 0, sizeScanBuff * sizeof( value_type ) ) ), 
-                //    UnMapBufferFunctor( preSumArray, ctl.commandQueue( ) ) );
-                //boost::shared_array< iType > pB( reinterpret_cast< value_type* >( ctl.commandQueue( ).enqueueMapBuffer( B, true, CL_MAP_READ, 0, dvInput.size( ) * sizeof( value_type ) ) ), 
-                //    UnMapBufferFunctor( B, ctl.commandQueue( ) ) );
+                ////  Debug code
+                //{
+                //    // Enqueue the operation
+                //    V_OPENCL( ctl.commandQueue( ).finish( ), "Failed to call finish on the commandqueue" );
 
-                //pB.reset( );
-                //pPreSum.reset( );
-                //l_Error = ctl.commandQueue( ).enqueueWaitForEvents( intraScanEvent );
-                //V_OPENCL( l_Error, "intraScanEvent failed to wait" );
-                //return;
+                //    //  Look at the contents of those buffers
+                //    device_vector< oType >::pointer pB          = result->getContainer( ).data( );
+                //    device_vector< oType >::pointer pPreSum     = preSumArray[0].getContainer( ).data( );
+                //}
 
                 cl_uint workPerThread = static_cast< cl_uint >( sizeScanBuff / waveSize );
 
