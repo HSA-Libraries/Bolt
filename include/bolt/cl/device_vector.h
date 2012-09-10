@@ -316,12 +316,12 @@ namespace bolt
                 {
                     m_devMemory = ::cl::Buffer( l_Context, m_Flags, m_Size * sizeof( value_type ), 
                         reinterpret_cast< value_type* >( const_cast< value_type* >( &*begin ) ) );
-
-                    ::cl::copy( begin, begin+m_Size, m_devMemory );
                 }
                 else
                 {
                     m_devMemory = ::cl::Buffer( l_Context, m_Flags, m_Size * sizeof( value_type ) );
+
+                    ::cl::copy( begin, begin+m_Size, m_devMemory );
                 }
             };
 
@@ -352,12 +352,12 @@ namespace bolt
                 {
                     m_devMemory = ::cl::Buffer( l_Context, m_Flags, m_Size * sizeof( value_type ), 
                         reinterpret_cast< value_type* >( const_cast< value_type* >( &*begin ) ) );
-
-                    ::cl::copy( begin, end, m_devMemory );
                 }
                 else
                 {
                     m_devMemory = ::cl::Buffer( l_Context, m_Flags, m_Size * sizeof( value_type ) );
+
+                    ::cl::copy( begin, end, m_devMemory );
                 }
             };
 

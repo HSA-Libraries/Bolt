@@ -8,7 +8,7 @@
 #include <iostream>
 #include <algorithm>  // for testing against STL functions.
 
-#include <thread>
+#include <boost/thread.hpp>
 
 #include "utils.h"
 
@@ -192,10 +192,10 @@ void multiThreadReductions(int aSize, int iters)
 			ZBolt[i].resize(aSize);
 		};
 
-		std::thread t0(singleThreadReduction, A, B, &ZBolt[0], aSize);
-		std::thread t1(singleThreadReduction,  A, B, &ZBolt[1], aSize);
-		std::thread t2(singleThreadReduction,  A, B, &ZBolt[2], aSize);
-		std::thread t3(singleThreadReduction, A, B,  &ZBolt[3], aSize);
+		boost::thread t0(singleThreadReduction, A, B, &ZBolt[0], aSize);
+		boost::thread t1(singleThreadReduction,  A, B, &ZBolt[1], aSize);
+		boost::thread t2(singleThreadReduction,  A, B, &ZBolt[2], aSize);
+		boost::thread t3(singleThreadReduction, A, B,  &ZBolt[3], aSize);
 
 
 		t0.join();

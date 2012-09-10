@@ -3,10 +3,10 @@
 
 #include <bolt/cl/transform.h>
 #include <algorithm>
-#include <mutex>
 #include <type_traits>
 
-// #include <boost/thread/once.hpp>
+#include <boost/thread/once.hpp>
+#include <boost/bind.hpp>
 
 namespace bolt
 {
@@ -361,11 +361,12 @@ namespace bolt
                 typedef typename std::iterator_traits< InputIterator >::value_type iType;
                 typedef typename std::iterator_traits< OutputIterator >::value_type oType;
 
-                static std::once_flag scanCompileFlag;
+                static boost::once_flag scanCompileFlag;
                 static std::vector< ::cl::Kernel > scanKernels;
 
                 // For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retreive the name here.
-                std::call_once( scanCompileFlag, detail::CompileTemplate::ScanSpecialization, &scanKernels, ClCode< BinaryFunction >::get( ), TypeName< iType >::get( ), TypeName< BinaryFunction >::get( ), ctl );
+                //std::call_once( scanCompileFlag, detail::CompileTemplate::ScanSpecialization, &scanKernels, ClCode< BinaryFunction >::get( ), TypeName< iType >::get( ), TypeName< BinaryFunction >::get( ), ctl );
+                boost::call_once( scanCompileFlag, boost::bind( CompileTemplate::ScanSpecialization, &scanKernels, ClCode< BinaryFunction >::get( ), TypeName< iType >::get( ), TypeName< BinaryFunction >::get( ), ctl ) );
 
                 cl_int l_Error = CL_SUCCESS;
 
@@ -440,8 +441,8 @@ namespace bolt
 
                 cl_uint workPerThread = static_cast< cl_uint >( sizeScanBuff / waveSize );
 
-                V_OPENCL( scanKernels[ 1 ].setArg( 0, postSumArray ), "Error setting 0th argument for scanKernels[ 1 ]" );          // Output buffer
-                V_OPENCL( scanKernels[ 1 ].setArg( 1, preSumArray ), "Error setting 1st argument for scanKernels[ 1 ]" );            // Input buffer
+                V_OPENCL( scanKernels[ 1 ].setArg( 0, postSumArray.begin( )->getBuffer( ) ), "Error setting 0th argument for scanKernels[ 1 ]" );          // Output buffer
+                V_OPENCL( scanKernels[ 1 ].setArg( 1, preSumArray.begin( )->getBuffer( ) ), "Error setting 1st argument for scanKernels[ 1 ]" );            // Input buffer
                 V_OPENCL( scanKernels[ 1 ].setArg( 2, numWorkGroups ), "Error setting 2nd argument for scanKernels[ 1 ]" );            // Size of scratch buffer
                 V_OPENCL( scanKernels[ 1 ].setArg( 3, waveSize + ( waveSize / 2 ), NULL ), "Error setting 3rd argument for scanKernels[ 1 ]" );  // Scratch buffer
                 V_OPENCL( scanKernels[ 1 ].setArg( 4, workPerThread ), "Error setting 4th argument for scanKernels[ 1 ]" );           // User provided functor class
@@ -464,8 +465,8 @@ namespace bolt
 
                 std::vector< ::cl::Event > perBlockEvent( 1 );
 
-                V_OPENCL( scanKernels[ 2 ].setArg( 0, (*result).getBuffer( ) ), "Error setting 0th argument for scanKernels[ 2 ]" );          // Output buffer
-                V_OPENCL( scanKernels[ 2 ].setArg( 1, postSumArray ), "Error setting 1st argument for scanKernels[ 2 ]" );            // Input buffer
+                V_OPENCL( scanKernels[ 2 ].setArg( 0, result->getBuffer( ) ), "Error setting 0th argument for scanKernels[ 2 ]" );          // Output buffer
+                V_OPENCL( scanKernels[ 2 ].setArg( 1, postSumArray.begin( )->getBuffer( ) ), "Error setting 1st argument for scanKernels[ 2 ]" );            // Input buffer
                 V_OPENCL( scanKernels[ 2 ].setArg( 2, numElements ), "Error setting 2nd argument for scanKernels[ 2 ]" );   // Size of scratch buffer
                 V_OPENCL( scanKernels[ 2 ].setArg( 3, userFunctor ), "Error setting 3rd argument for scanKernels[ 2 ]" );           // User provided functor class
 

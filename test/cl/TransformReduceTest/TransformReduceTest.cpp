@@ -9,8 +9,6 @@
 #include <algorithm>  // for testing against STL functions.
 #include <numeric>
 
-#include <thread>
-
 
 template<typename T>
 void printCheckMessage(bool err, std::string msg, T  stlResult, T boltResult)
