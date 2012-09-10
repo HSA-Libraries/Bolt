@@ -3,7 +3,6 @@
 #include <bolt/cl/bolt.h>
 #include <bolt/cl/device_vector.h>
 
-#include <mutex>
 #include <string>
 #include <iostream>
 

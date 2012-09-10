@@ -10,7 +10,7 @@ set( Boost_DEBUG ON )
 
 if( BOOST_ROOT )
 	# The root tree of BOOST was specified on the command line; use it to to find the specific Boost the user points too
-	find_package( Boost ${Boost.VERSION} REQUIRED )
+	find_package( Boost ${Boost.VERSION} COMPONENTS thread system REQUIRED )
 	# This will define Boost_FOUND
 else( )
 	message( "Configure Bolt in <BOLT_ROOT>/bin to build the SuperBuild which will download and build Boost automatically" )	
@@ -73,7 +73,7 @@ set( clBolt.Runtime.Files ${clBolt.Runtime.Source} ${clBolt.Runtime.Headers} ${c
 include_directories( ${BOLT_INCLUDE_DIR} ${PROJECT_BINARY_DIR}/include ${OPENCL_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} )
 
 add_library( clBolt.Runtime STATIC ${clBolt.Runtime.Files} )
-target_link_libraries( clBolt.Runtime ${OPENCL_LIBRARIES} )
+target_link_libraries( clBolt.Runtime ${OPENCL_LIBRARIES} ${Boost_LIBRARIES} )
 
 set_target_properties( clBolt.Runtime PROPERTIES VERSION ${Bolt_VERSION} )
 set_target_properties( clBolt.Runtime PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )

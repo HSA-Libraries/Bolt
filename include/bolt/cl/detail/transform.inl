@@ -1,4 +1,9 @@
+#if !defined( TRANSFORM_INL )
+#define TRANSFORM_INL
+#pragma once
 
+#include <boost/thread/once.hpp>
+#include <boost/bind.hpp>
 
 namespace bolt {
     namespace cl {
@@ -112,22 +117,25 @@ namespace bolt {
                 ::cl::Buffer userFunctor(c.context(), CL_MEM_READ_ONLY|CL_MEM_USE_HOST_PTR, sizeof(f), &f );   // Create buffer wrapper so we can access host parameters.
                 //std::cout << "sizeof(Functor)=" << sizeof(f) << std::endl;
 
-                static std::once_flag initOnlyOnce;
+                static boost::once_flag initOnlyOnce;
                 static  ::cl::Kernel masterKernel;
                 // For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retreive the name here.
-                std::call_once(initOnlyOnce, CallCompiler_Transform::init_, &masterKernel, user_code + ClCode<T>::get() + ClCode<BinaryFunction>::get(), TypeName<T>::get(), TypeName<BinaryFunction>::get(), c);
-                //std::call_once(initOnlyOnce, CallCompiler::init_, &masterKernel, TypeName<T>::get(), functorTypeName.empty() ? TypeName<BinaryFunction>::get() : functorTypeName);
+                //std::call_once(initOnlyOnce, CallCompiler_Transform::init_, &masterKernel, user_code + ClCode<T>::get() + ClCode<BinaryFunction>::get(), TypeName<T>::get(), TypeName<BinaryFunction>::get(), c);
+                boost::call_once( initOnlyOnce, boost::bind( CallCompiler_Transform::init_, &masterKernel, user_code + ClCode<T>::get() + ClCode<BinaryFunction>::get(), TypeName< T >::get( ), TypeName< BinaryFunction >::get( ), c ) );
 
                 ::cl::Kernel k = masterKernel;  // hopefully create a copy of the kernel.  FIXME, need to create-kernel from the program.
-                cl_uint sz = static_cast< cl_uint >( std::distance( first1, last1 ) );
+                size_t sz = std::distance( first1, last1 );
 
-                k.setArg(0, (*first1).getBuffer( ) );
-                k.setArg(1, (*first2).getBuffer( ) );
-                k.setArg(2, (*result).getBuffer( ) );
-                k.setArg(3, sz);
+                k.setArg(0, first1->getBuffer( ) );
+                k.setArg(1, first2->getBuffer( ) );
+                k.setArg(2, result->getBuffer( ) );
+                k.setArg(3, static_cast< cl_uint >( sz ) );
                 k.setArg(4, userFunctor);
 
-                const int wgSize = 64; 
+                cl_int l_Error = CL_SUCCESS;
+                const size_t wgSize  = masterKernel.getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( c.device( ), &l_Error );
+                V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
+
                 if(sz < wgSize)
                 {  
                     sz = wgSize;
@@ -137,12 +145,15 @@ namespace bolt {
                     sz = sz + (wgSize - (sz % wgSize));
                 }
 
-                c.commandQueue().enqueueNDRangeKernel(
+                l_Error = c.commandQueue().enqueueNDRangeKernel(
                     k, 
                     ::cl::NullRange, 
                     ::cl::NDRange(sz), 
                     ::cl::NDRange(wgSize));
+                V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for transform() kernel" );
             };
         }
     }
 }
+
+#endif

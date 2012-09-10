@@ -10,8 +10,6 @@
 #include <algorithm>  // for testing against STL functions.
 #include <numeric>
 
-#include <thread>
-
 #include "myocl.h"
 
 

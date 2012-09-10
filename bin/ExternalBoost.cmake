@@ -1,7 +1,7 @@
 message( STATUS "Setting up Boost SuperBuild... Shiny!" )
 include( ExternalProject )
 
-set( ext.Boost_VERSION "1.50.0" CACHE STRING "Boost version to download/use" )
+set( ext.Boost_VERSION "1.51.0" CACHE STRING "Boost version to download/use" )
 mark_as_advanced( ext.Boost_VERSION )
 string( REPLACE "." "_" ext.Boost_Version_Underscore ${ext.Boost_VERSION} )
 
@@ -13,7 +13,7 @@ message( STATUS "ext.Boost_VERSION: " ${ext.Boost_VERSION} )
 # message( STATUS "status: " ${fileStatus} )
 # message( STATUS "log: " ${fileLog} )
 
-set( Boost.Command b2 --with-program_options )
+set( Boost.Command b2 --with-program_options --with-thread --with-system --with-date_time --with-chrono )
 
 if( Bolt_BUILD64 )
 	list( APPEND Boost.Command address-model=64 )
@@ -40,7 +40,7 @@ ExternalProject_Add(
     Boost
 	PREFIX ${CMAKE_CURRENT_BINARY_DIR}/external/boost
     URL ${ext.Boost_URL}
-	URL_MD5 c32608561de9184d1c940c9977d04339
+	URL_MD5 ee8112e48088b05c248d68329cd5d908
     UPDATE_COMMAND "bootstrap.bat"
 #    PATCH_COMMAND ""
 	CONFIGURE_COMMAND ""

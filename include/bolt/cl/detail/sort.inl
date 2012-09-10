@@ -1,7 +1,15 @@
+#if !defined( SORT_INL )
+#define SORT_INL
+#pragma once
+
 #include <algorithm>
 #include <type_traits>
 #include <bolt/cl/functional.h>
 #include <bolt/cl/device_vector.h>
+
+#include <boost/thread/once.hpp>
+#include <boost/bind.hpp>
+
 #define WGSIZE 64
 
 namespace bolt {
@@ -107,14 +115,24 @@ namespace bolt {
                 } else if (runMode == bolt::cl::control::MultiCoreCpu) {
                     std::cout << "The MultiCoreCpu version of device_vector sort is not implemented yet." << std ::endl;
                 } else {
-                    static  std::once_flag initOnlyOnce;
+                    static  boost::once_flag initOnlyOnce;
                     static  ::cl::Kernel masterKernel;
+
+                    // For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retreive the name here.
+                    //std::call_once(initOnlyOnce, detail::CallCompiler_Sort::constructAndCompile, &masterKernel, cl_code + ClCode<T>::get(), TypeName<T>::get(), ctl);
+                    //std::call_once(initOnlyOnce, detail::CallCompiler_Sort::constructAndCompile, &masterKernel, cl_code + ClCode<T>::get(), TypeName<T>::get(), TypeName<StrictWeakOrdering>::get(), ctl);
+                    boost::call_once( initOnlyOnce, boost::bind( CallCompiler_Sort::constructAndCompile, &masterKernel, cl_code + ClCode<T>::get(), TypeName<T>::get(), TypeName<StrictWeakOrdering>::get(), ctl) );
+
                     // Set up shape of launch grid and buffers:
                     int computeUnits     = ctl.device().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
                     int wgPerComputeUnit =  ctl.wgPerComputeUnit(); 
                     int resultCnt = computeUnits * wgPerComputeUnit;
-                    int wgSize = WGSIZE; //TODO hard coded to the number of cores in the AMD SIMD engine.
-                                           //The instantiation string should also be changed. 
+                    //int wgSize = WGSIZE; //TODO hard coded to the number of cores in the AMD SIMD engine.
+                    //                       //The instantiation string should also be changed. 
+                    cl_int l_Error = CL_SUCCESS;
+                    size_t wgSize  = masterKernel.getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.device( ), &l_Error );
+                    V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
+
 					if((szElements/2) < wgSize)
 					{
 						wgSize = (int)szElements/2;
@@ -130,40 +148,39 @@ namespace bolt {
                     ::cl::Buffer A = (*first).getBuffer( );
                     ::cl::Buffer userFunctor(ctl.context(), CL_MEM_USE_HOST_PTR, sizeof(comp), &comp );   // Create buffer wrapper so we can access host parameters.
     
-                    // For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retreive the name here.
-                    //std::call_once(initOnlyOnce, detail::CallCompiler_Sort::constructAndCompile, &masterKernel, cl_code + ClCode<T>::get(), TypeName<T>::get(), ctl);
-                    std::call_once(initOnlyOnce, detail::CallCompiler_Sort::constructAndCompile, &masterKernel, cl_code + ClCode<T>::get(), TypeName<T>::get(), TypeName<StrictWeakOrdering>::get(), ctl);
                     ::cl::Kernel k = masterKernel;  // hopefully create a copy of the kernel. FIXME, doesn't work.
                     numStages = 0;
                     for(temp = szElements; temp > 1; temp >>= 1)
                         ++numStages;
-                    k.setArg(0, A);
-                    k.setArg(3, userFunctor);
+                    V_OPENCL( k.setArg(0, A), "Error setting a kernel argument" );
+                    V_OPENCL( k.setArg(3, userFunctor), "Error setting a kernel argument" );
                     for(stage = 0; stage < numStages; ++stage) 
                     {
                         // stage of the algorithm
-                        k.setArg(1, stage);
+                        V_OPENCL( k.setArg(1, stage), "Error setting a kernel argument" );
                         // Every stage has stage + 1 passes
                         for(passOfStage = 0; passOfStage < stage + 1; ++passOfStage) {
                             // pass of the current stage
-                            k.setArg(2, passOfStage);
+                            V_OPENCL( k.setArg(2, passOfStage), "Error setting a kernel argument" );
                             /* 
                              * Enqueue a kernel run call.
                              * Each thread writes a sorted pair.
                              * So, the number of  threads (global) should be half the length of the input buffer.
                              */
-                            ctl.commandQueue().enqueueNDRangeKernel(
+                            l_Error = ctl.commandQueue().enqueueNDRangeKernel(
                                     k, 
                                     ::cl::NullRange,
                                     ::cl::NDRange(szElements/2),
                                     ::cl::NDRange(wgSize),
                                     NULL,
                                     NULL);
-                            ctl.commandQueue().finish();
+                            V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for sort() kernel" );
+                            V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
                         }//end of for passStage = 0:stage-1
                     }//end of for stage = 0:numStage-1
                     //Map the buffer back to the host
-                    ctl.commandQueue().enqueueMapBuffer(A, true, CL_MAP_READ | CL_MAP_WRITE, 0/*offset*/, sizeof(T) * szElements);
+                    ctl.commandQueue().enqueueMapBuffer(A, true, CL_MAP_READ | CL_MAP_WRITE, 0/*offset*/, sizeof(T) * szElements, NULL, NULL, &l_Error );
+                    V_OPENCL( l_Error, "Error calling map on the result buffer" );
                     return;
                 }
                 return;
@@ -190,15 +207,24 @@ namespace bolt {
 	                throw ::cl::Error( CL_INVALID_DEVICE, "The BOLT sort routine device_vector does not support non power of 2 buffer size." );
 					return;
                 } else {
-                    static  std::once_flag initOnlyOnce;
+                    static  boost::once_flag initOnlyOnce;
                     static  ::cl::Kernel masterKernel;
+
+                    // For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retreive the name here.
+                    //std::call_once(initOnlyOnce, detail::CallCompiler_Sort::constructAndCompileBasic, &masterKernel, cl_code + ClCode<T>::get(), TypeName<T>::get(), ctl);
+                    boost::call_once( initOnlyOnce, boost::bind( CallCompiler_Sort::constructAndCompileBasic, &masterKernel, cl_code + ClCode<T>::get(), TypeName<T>::get(), ctl) );
+
                     // Set up shape of launch grid and buffers:
                     int computeUnits     = ctl.device().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
                     int wgPerComputeUnit =  ctl.wgPerComputeUnit(); 
                     int resultCnt = computeUnits * wgPerComputeUnit;
-                    int wgSize = WGSIZE; //TODO hard coded to the number of cores in the AMD SIMD engine.
-                                           //The instantiation string should also be changed.   
-					if((szElements/2) < wgSize)
+                    //int wgSize = WGSIZE; //TODO hard coded to the number of cores in the AMD SIMD engine.
+                    //                       //The instantiation string should also be changed.   
+                    cl_int l_Error = CL_SUCCESS;
+                    size_t wgSize  = masterKernel.getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.device( ), &l_Error );
+                    V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
+
+                    if((szElements/2) < wgSize)
 					{
 						wgSize = (int)szElements/2;
 					}
@@ -210,40 +236,40 @@ namespace bolt {
                         return;
                     }
 
-                    ::cl::Buffer A = (*first).getBuffer( );
+                    ::cl::Buffer A = first->getBuffer( );
 
-                    // For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retreive the name here.
-                    std::call_once(initOnlyOnce, detail::CallCompiler_Sort::constructAndCompileBasic, &masterKernel, cl_code + ClCode<T>::get(), TypeName<T>::get(), ctl);
                     ::cl::Kernel k = masterKernel;  // hopefully create a copy of the kernel. FIXME, doesn't work.
                     numStages = 0;
                     for(temp = szElements; temp > 1; temp >>= 1)
                         ++numStages;
-                    k.setArg(0, A);
+                    V_OPENCL( k.setArg(0, A), "Error setting kernel argument" );
                     for(stage = 0; stage < numStages; ++stage) 
                     {
                         // stage of the algorithm
-                        k.setArg(1, stage);
+                        V_OPENCL( k.setArg(1, stage), "Error setting kernel argument" );
                         // Every stage has stage + 1 passes
                         for(passOfStage = 0; passOfStage < stage + 1; ++passOfStage) {
                             // pass of the current stage
-                            k.setArg(2, passOfStage);
+                            V_OPENCL( k.setArg(2, passOfStage), "Error setting kernel argument" );
                             /* 
                              * Enqueue a kernel run call.
                              * Each thread writes a sorted pair.
                              * So, the number of  threads (global) should be half the length of the input buffer.
                              */
-                            ctl.commandQueue().enqueueNDRangeKernel(
+                            l_Error = ctl.commandQueue().enqueueNDRangeKernel(
                                     k, 
                                     ::cl::NullRange,
                                     ::cl::NDRange(szElements/2),
                                     ::cl::NDRange(wgSize),
                                     NULL,
                                     NULL);
-                            ctl.commandQueue().finish();
+                            V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for sort() kernel" );
+                            V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
                         }//end of for passStage = 0:stage-1
                     }//end of for stage = 0:numStage-1
                     //Map the buffer back to the host
-                    ctl.commandQueue().enqueueMapBuffer(A, true, CL_MAP_READ | CL_MAP_WRITE, 0/*offset*/, sizeof(T) * szElements);
+                    ctl.commandQueue().enqueueMapBuffer(A, true, CL_MAP_READ | CL_MAP_WRITE, 0/*offset*/, sizeof(T) * szElements, NULL, NULL, &l_Error );
+                    V_OPENCL( l_Error, "Error calling map on the result buffer" );
                     return;
                 }
                 return;
@@ -328,14 +354,22 @@ namespace bolt {
             void sort(const control &ctl, ::cl::Buffer A,
                 ::cl::Buffer userFunctor, std::string cl_code)  
             {
-                static std::once_flag initOnlyOnce;
+                static boost::once_flag initOnlyOnce;
                 static  ::cl::Kernel masterKernel;
+
+                // For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retreive the name here.
+                //std::call_once(initOnlyOnce, detail::CallCompiler_Sort::constructAndCompile, &masterKernel, cl_code + ClCode<T>::get(), TypeName<T>::get(), TypeName<StrictWeakOrdering>::get(), ctl);
+                boost::call_once( initOnlyOnce, boost::bind( CallCompiler_Sort::constructAndCompile, &masterKernel, cl_code + ClCode<T>::get(), TypeName<T>::get(), TypeName<StrictWeakOrdering>::get(), ctl) );
 
                 int computeUnits     = ctl.device().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
                 int wgPerComputeUnit =  ctl.wgPerComputeUnit(); 
                 int resultCnt = computeUnits * wgPerComputeUnit;
-                int wgSize = WGSIZE; //TODO hard coded to the number of cores in the AMD SIMD engine.
-                                       //The instantiation string should also be changed.
+                //int wgSize = WGSIZE; //TODO hard coded to the number of cores in the AMD SIMD engine.
+                //                       //The instantiation string should also be changed.
+                cl_int l_Error = CL_SUCCESS;
+                size_t wgSize  = masterKernel.getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.device( ), &l_Error );
+                V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
+
                 unsigned int temp,numStages,stage,passOfStage;
                 
                 //Calculate the number of stages.
@@ -349,34 +383,33 @@ namespace bolt {
                 for(temp = szElements; temp > 1; temp >>= 1)
                     ++numStages;
 
-                // For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retreive the name here.
-                std::call_once(initOnlyOnce, detail::CallCompiler_Sort::constructAndCompile, &masterKernel, cl_code + ClCode<T>::get(), TypeName<T>::get(), TypeName<StrictWeakOrdering>::get(), ctl);
                 ::cl::Kernel k = masterKernel;  // hopefully create a copy of the kernel. FIXME, doesn't work.
 
-                k.setArg(0, A);
+                V_OPENCL( k.setArg(0, A), "Error setting kernel arguement" );
                 //1 and 2 we will add inside the loop.
-                k.setArg(3, userFunctor);
+                V_OPENCL( k.setArg(3, userFunctor), "Error setting kernel arguement" );
                 for(stage = 0; stage < numStages; ++stage) 
                 {
                     // stage of the algorithm
-                    k.setArg(1, stage);
+                    V_OPENCL( k.setArg(1, stage), "Error setting kernel arguement" );
                     // Every stage has stage + 1 passes
                     for(passOfStage = 0; passOfStage < stage + 1; ++passOfStage) {
                         // pass of the current stage
-                        k.setArg(2, passOfStage);
+                        V_OPENCL( k.setArg(2, passOfStage), "Error setting kernel arguement" );
                         /* 
                          * Enqueue a kernel run call.
                          * Each thread writes a sorted pair.
                          * So, the number of  threads (global) should be half the length of the input buffer.
                          */
-                        ctl.commandQueue().enqueueNDRangeKernel(
+                        l_Error = ctl.commandQueue().enqueueNDRangeKernel(
                                 k, 
                                 ::cl::NullRange,
                                 ::cl::NDRange(szElements/2),
                                 ::cl::NDRange(wgSize),
                                 NULL,
                                 NULL);
-                        ctl.commandQueue().finish();
+                        V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for sort() kernel" );
+                        V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
                     }//end of for passStage = 0:stage-1
                 }//end of for stage = 0:numStage-1
             }//end of sort()
@@ -386,54 +419,60 @@ namespace bolt {
                 std::string cl_code)  
             {
                 //TODO :: This should be compiled always. The static was removed here because there was a failure when we try to pass a different comparison options. 
-                static  std::once_flag initOnlyOnce;
+                static  boost::once_flag initOnlyOnce;
                 static  ::cl::Kernel masterKernel;
+
+                // For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retreive the name here.
+                boost::call_once( initOnlyOnce, boost::bind( CallCompiler_Sort::constructAndCompileBasic, &masterKernel, cl_code + ClCode<T>::get(), TypeName<T>::get(), ctl) );
 
                 int computeUnits     = ctl.device().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
                 int wgPerComputeUnit =  ctl.wgPerComputeUnit(); 
                 int resultCnt = computeUnits * wgPerComputeUnit;
-                int wgSize = WGSIZE; //TODO hard coded to the number of cores in the AMD SIMD engine.
-                                       //The instantiation string should also be changed.   
+                //int wgSize = WGSIZE; //TODO hard coded to the number of cores in the AMD SIMD engine.
+                //                       //The instantiation string should also be changed.   
+                cl_int l_Error = CL_SUCCESS;
+                size_t wgSize  = masterKernel.getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.device( ), &l_Error );
+                V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
+
                 unsigned int temp,numStages,stage,passOfStage;
 
                 //Calculate the number of stages.
                 numStages = 0;
                 int szElements = (int)A.getInfo<CL_MEM_SIZE>() / sizeof(T);  
-				if((szElements/2) < wgSize)
-				{
-					wgSize = (int)szElements/2;
-				}
+                if((szElements/2) < wgSize)
+                {
+                    wgSize = (int)szElements/2;
+                }
                 for(temp = szElements; temp > 1; temp >>= 1)
                     ++numStages;
 
-                // For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retreive the name here.
-                std::call_once(initOnlyOnce, detail::CallCompiler_Sort::constructAndCompileBasic, &masterKernel, cl_code + ClCode<T>::get(), TypeName<T>::get(), ctl);
                 ::cl::Kernel k = masterKernel;  // hopefully create a copy of the kernel. FIXME, doesn't work.
 
-                k.setArg(0, A);
+                V_OPENCL( k.setArg(0, A), "Error setting kernel argument" );
                 //1 and 2 we will add inside the loop.
                 
                 for(stage = 0; stage < numStages; ++stage) 
                 {
                     // stage of the algorithm
-                    k.setArg(1, stage);
+                    V_OPENCL( k.setArg(1, stage), "Error setting kernel argument" );
                     // Every stage has stage + 1 passes
                     for(passOfStage = 0; passOfStage < stage + 1; ++passOfStage) {
                         // pass of the current stage
-                        k.setArg(2, passOfStage);
+                        V_OPENCL( k.setArg(2, passOfStage), "Error setting kernel argument" );
                         /* 
                          * Enqueue a kernel run call.
                          * Each thread writes a sorted pair.
                          * So, the number of  threads (global) should be half the length of the input buffer.
                          */
-                        ctl.commandQueue().enqueueNDRangeKernel(
+                        l_Error = ctl.commandQueue().enqueueNDRangeKernel(
                                 k, 
                                 ::cl::NullRange,
                                 ::cl::NDRange(szElements/2),
                                 ::cl::NDRange(wgSize),
                                 NULL,
                                 NULL);
-                        ctl.commandQueue().finish();
+                        V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for sort() kernel" );
+                        V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
                     }//end of for passStage = 0:stage-1
                 }//end of for stage = 0:numStage-1
             }//end of sort()
@@ -441,3 +480,5 @@ namespace bolt {
         }//namespace bolt::cl::detail
     }//namespace bolt::cl
 }//namespace bolt
+
+#endif
