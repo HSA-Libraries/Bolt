@@ -1,3 +1,5 @@
+#if !defined( TRANSFORM_H )
+#define TRANSFORM_H
 #pragma once
 
 #include <bolt/cl/bolt.h>
@@ -9,18 +11,18 @@
 namespace bolt {
     namespace cl {
 
-		/*! \addtogroup algorithms
+        /*! \addtogroup algorithms
          */
 
-		/*! \addtogroup transformations
+        /*! \addtogroup transformations
         *   \ingroup algorithms
         *   \p transform applies a specific function object to each element pair in the specified input ranges, and writes the result
         *   into the specified output range. For common code between the host
         *   and device, one can take a look at the ClCode and TypeName implementations. Refer to Bolt Tools for Split-Source 
         *   for a detailed description. 
         */ 
-		
-		/*! \addtogroup transform
+        
+        /*! \addtogroup transform
         *   \ingroup transformations
         *   \{
         *   \todo Missing the unary operator variants of tranform
@@ -41,12 +43,12 @@ namespace bolt {
          *  \param op The tranformation operation.
          *  \return The end of the output sequence.
          *
-         *  \tparam InputIterator1 is a model of http://www.sgi.com/tech/stl/InputIterator.html
+         *  \tparam InputIterator1 is a model of InputIterator
          *                        and \c InputIterator1's \c value_type is convertible to \c BinaryFunction's \c first_argument_type.
-         *  \tparam InputIterator2 is a model of http://www.sgi.com/tech/stl/InputIterator.html
+         *  \tparam InputIterator2 is a model of InputIterator
          *                        and \c InputIterator2's \c value_type is convertible to \c BinaryFunction's \c second_argument_type.
-         *  \tparam OutputIterator is a model of http://www.sgi.com/tech/stl/OutputIterator.html
-         *  \tparam BinaryFunction is a model of http://www.sgi.com/tech/stl/BinaryFunction.html
+         *  \tparam OutputIterator is a model of OutputIterator
+         *  \tparam BinaryFunction is a model of BinaryFunction
          *                              and \c BinaryFunction's \c result_type is convertible to \c OutputIterator's \c value_type.
          *
          *  The following code snippet demonstrates how to use \p transform
@@ -59,19 +61,23 @@ namespace bolt {
          *  int input2[10] = { 3,  6, -2,  1,  2,  3, -5,  0,  2,  3};
          *  int output[10];
          * 
-		 *  cl::CommandQueue myCommandQueue = ...
-		 *  bolt::cl::control ctl(myCommandQueue); // specify an OpenCL(TM) command queue.
+         *  cl::CommandQueue myCommandQueue = ...
+         *  bolt::cl::control ctl(myCommandQueue); // specify an OpenCL(TM) command queue.
          *  bolt::cl::plus<int> op;
          *  bolt::cl::::transform(ctl, input1, input1 + 10, input2, output, op);
          *
          *  // output is now {-2,  6,  0,  4,  4,  7};
          *  \endcode
          *
-         *  \see http://www.sgi.com/tech/stl/transform.html
+         *  \sa http://www.sgi.com/tech/stl/transform.html
+         *  \sa http://www.sgi.com/tech/stl/InputIterator.html
+         *  \sa http://www.sgi.com/tech/stl/OutputIterator.html
+         *  \sa http://www.sgi.com/tech/stl/UnaryFunction.html
+         *  \sa http://www.sgi.com/tech/stl/BinaryFunction.html
          */
         template<typename InputIterator, typename OutputIterator, typename BinaryFunction> 
         void transform(const bolt::cl::control &ctl,  InputIterator first1, InputIterator last1, InputIterator first2, OutputIterator result, 
-            BinaryFunction f, const std::string user_code="");
+            BinaryFunction f, const std::string& user_code="");
 
        /*! This version of \p transform applies a binary function to each pair
          *  of elements from two input sequences and stores the result in the
@@ -86,12 +92,12 @@ namespace bolt {
          *  \param result The beginning of the output sequence.
          *  \return The end of the output sequence.
          *
-         *  \tparam InputIterator1 is a model of http://www.sgi.com/tech/stl/InputIterator.html
+         *  \tparam InputIterator1 is a model of InputIterator
          *                        and \c InputIterator1's \c value_type is convertible to \c BinaryFunction's \c first_argument_type.
-         *  \tparam InputIterator2 is a model of http://www.sgi.com/tech/stl/InputIterator.html
+         *  \tparam InputIterator2 is a model of InputIterator
          *                        and \c InputIterator2's \c value_type is convertible to \c BinaryFunction's \c second_argument_type.
-         *  \tparam OutputIterator is a model of http://www.sgi.com/tech/stl/OutputIterator.html
-         *  \tparam BinaryFunction is a model of http://www.sgi.com/tech/stl/BinaryFunction.html
+         *  \tparam OutputIterator is a model of OutputIterator
+         *  \tparam BinaryFunction is a model of BinaryFunction
          *                              and \c BinaryFunction's \c result_type is convertible to \c OutputIterator's \c value_type.
          *
          *  The following code snippet demonstrates how to use \p transform
@@ -110,12 +116,19 @@ namespace bolt {
          *  // output is now {-2,  6,  0,  4,  4,  7};
          *  \endcode
          *
-         *  \see http://www.sgi.com/tech/stl/transform.html
+         *  \sa http://www.sgi.com/tech/stl/transform.html
+         *  \sa http://www.sgi.com/tech/stl/InputIterator.html
+         *  \sa http://www.sgi.com/tech/stl/OutputIterator.html
+         *  \sa http://www.sgi.com/tech/stl/UnaryFunction.html
+         *  \sa http://www.sgi.com/tech/stl/BinaryFunction.html
          */
         template<typename InputIterator, typename OutputIterator, typename BinaryFunction> 
         void transform( InputIterator first1, InputIterator last1, InputIterator first2, OutputIterator result, 
-            BinaryFunction f, const std::string user_code="");
+            BinaryFunction f, const std::string& user_code="");
+
+        /*!   \}  */
     };
 };
 
 #include <bolt/cl/detail/transform.inl>
+#endif

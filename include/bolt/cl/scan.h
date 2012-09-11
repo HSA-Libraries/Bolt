@@ -1,3 +1,5 @@
+#if !defined( SCAN_H )
+#define SCAN_H
 #pragma once
 
 #include <bolt/cl/bolt.h>
@@ -258,3 +260,4 @@ namespace bolt
 
 #include <bolt/cl/detail/scan.inl>
 
+#endif

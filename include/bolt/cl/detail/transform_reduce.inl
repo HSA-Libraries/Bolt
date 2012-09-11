@@ -12,36 +12,15 @@
 
 namespace bolt {
     namespace cl {
-        //  The following two functions disallow non-random access functions
-
-        // Wrapper that uses default control class, iterator interface
-        template<typename T, typename InputIterator, typename UnaryFunction, typename BinaryFunction> 
-        T transform_reduce(const control &ctl, InputIterator first, InputIterator last,
-            UnaryFunction transform_op,
-            T init,  BinaryFunction reduce_op, const std::string user_code, std::input_iterator_tag )
-        {
-            //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data 
-            //  to a temporary buffer.  Should we?
-            throw ::cl::Error( CL_INVALID_OPERATION, "Transform_reduce currently only supports random access iterator types" );
-        };
-
-        // Wrapper that uses default control class, iterator interface
-        template<typename T, typename InputIterator, typename UnaryFunction, typename BinaryFunction> 
-        T transform_reduce(const control& ctl, InputIterator first, InputIterator last,
-            UnaryFunction transform_op,
-            T init,  BinaryFunction reduce_op, const std::string user_code, std::random_access_iterator_tag )
-        {
-            return detail::transform_reduce( ctl, first, last, transform_op, init, reduce_op, user_code);
-        };
 
         // The following two functions are visible in .h file
         // Wrapper that user passes a control class
         template<typename T, typename InputIterator, typename UnaryFunction, typename BinaryFunction> 
         T transform_reduce(const control& ctl, InputIterator first, InputIterator last,  
             UnaryFunction transform_op, 
-            T init,  BinaryFunction reduce_op, const std::string user_code )  
+            T init,  BinaryFunction reduce_op, const std::string& user_code )  
         {
-            return transform_reduce( ctl, first, last, transform_op, init, reduce_op, user_code, 
+            return detail::transform_reduce_detect_random_access( ctl, first, last, transform_op, init, reduce_op, user_code, 
                 std::iterator_traits< InputIterator >::iterator_category( ) );
         };
 
@@ -49,9 +28,9 @@ namespace bolt {
         template<typename T, typename InputIterator, typename UnaryFunction, typename BinaryFunction> 
         T transform_reduce(InputIterator first, InputIterator last,
             UnaryFunction transform_op,
-            T init,  BinaryFunction reduce_op, const std::string user_code )
+            T init,  BinaryFunction reduce_op, const std::string& user_code )
         {
-            return transform_reduce(control::getDefault(), first, last, transform_op, init, reduce_op, user_code, 
+            return detail::transform_reduce_detect_random_access( control::getDefault(), first, last, transform_op, init, reduce_op, user_code, 
                 std::iterator_traits< InputIterator >::iterator_category( ) );
         };
     };
@@ -85,12 +64,33 @@ namespace bolt {
                 };
             };
 
+        //  The following two functions disallow non-random access functions
+        // Wrapper that uses default control class, iterator interface
+        template<typename T, typename InputIterator, typename UnaryFunction, typename BinaryFunction> 
+        T transform_reduce_detect_random_access(const control &ctl, InputIterator first, InputIterator last,
+            UnaryFunction transform_op,
+            T init,  BinaryFunction reduce_op, const std::string& user_code, std::input_iterator_tag )
+        {
+            //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data 
+            //  to a temporary buffer.  Should we?
+            static_assert( false, "Bolt only supports random access iterator types" );
+        };
+
+        // Wrapper that uses default control class, iterator interface
+        template<typename T, typename InputIterator, typename UnaryFunction, typename BinaryFunction> 
+        T transform_reduce_detect_random_access(const control& ctl, InputIterator first, InputIterator last,
+            UnaryFunction transform_op,
+            T init,  BinaryFunction reduce_op, const std::string& user_code, std::random_access_iterator_tag )
+        {
+            return transform_reduce_pick_iterator( ctl, first, last, transform_op, init, reduce_op, user_code);
+        };
+
         // This template is called by the non-detail versions of transform_reduce, it already assumes random access iterators
         // This is called strictly for any non-device_vector iterator
         template<typename T, typename InputIterator, typename UnaryFunction, typename BinaryFunction> 
         typename std::enable_if< !std::is_base_of<typename device_vector<typename std::iterator_traits<InputIterator>::value_type>::iterator,InputIterator>::value, T >::type
-        transform_reduce(const control &c, InputIterator first, InputIterator last, UnaryFunction transform_op, 
-            T init,  BinaryFunction reduce_op, const std::string user_code )
+        transform_reduce_pick_iterator(const control &c, InputIterator first, InputIterator last, UnaryFunction transform_op, 
+            T init,  BinaryFunction reduce_op, const std::string& user_code )
         {
             typedef std::iterator_traits<InputIterator>::value_type T;
 
@@ -111,18 +111,18 @@ namespace bolt {
                 // Map the input iterator to a device_vector
                 device_vector< T > dvInput( first, last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, c );
 
-                return  detail::transform_reduce_enqueue( c, dvInput.begin( ), dvInput.end( ), transform_op, init, reduce_op, user_code );
+                return  transform_reduce_enqueue( c, dvInput.begin( ), dvInput.end( ), transform_op, init, reduce_op, user_code );
             }
         };
 
         // This template is called by the non-detail versions of transform_reduce, it already assumes random access iterators
         // This is called strictly for iterators that are derived from device_vector< T >::iterator
-        template<typename T, typename InputIterator, typename UnaryFunction, typename BinaryFunction> 
-        typename std::enable_if< std::is_base_of<typename device_vector<typename std::iterator_traits<InputIterator>::value_type>::iterator,InputIterator>::value, T >::type
-        transform_reduce(const control &c, InputIterator first, InputIterator last, UnaryFunction transform_op, 
-            T init,  BinaryFunction reduce_op, const std::string user_code )
+        template<typename T, typename DVInputIterator, typename UnaryFunction, typename BinaryFunction> 
+        typename std::enable_if< std::is_base_of<typename device_vector<typename std::iterator_traits<DVInputIterator>::value_type>::iterator,DVInputIterator>::value, T >::type
+        transform_reduce_pick_iterator(const control &c, DVInputIterator first, DVInputIterator last, UnaryFunction transform_op, 
+            T init,  BinaryFunction reduce_op, const std::string& user_code )
         {
-            typedef std::iterator_traits<InputIterator>::value_type T;
+            typedef std::iterator_traits<DVInputIterator>::value_type T;
 
             const bolt::cl::control::e_RunMode runMode = c.forceRunMode();  // could be dynamic choice some day.
             if (runMode == bolt::cl::control::SerialCpu)
@@ -147,12 +147,12 @@ namespace bolt {
                 return init;
             }
 
-            return  detail::transform_reduce_enqueue( c, first, last, transform_op, init, reduce_op, user_code );
+            return  transform_reduce_enqueue( c, first, last, transform_op, init, reduce_op, user_code );
         };
 
-            template<typename T, typename InputIterator, typename UnaryFunction, typename BinaryFunction> 
-            T transform_reduce_enqueue(const control& c, InputIterator first, InputIterator last, UnaryFunction transform_op,
-                T init, BinaryFunction reduce_op, const std::string user_code="")
+            template<typename T, typename DVInputIterator, typename UnaryFunction, typename BinaryFunction> 
+            T transform_reduce_enqueue(const control& c, DVInputIterator first, DVInputIterator last, UnaryFunction transform_op,
+                T init, BinaryFunction reduce_op, const std::string& user_code="")
             {
                 static boost::once_flag initOnlyOnce;
                 static  ::cl::Kernel masterKernel;
@@ -231,9 +231,5 @@ namespace bolt {
         }// end of namespace detail
     }// end of namespace cl
 }// end of namespace bolt
-
-// FIXME -review use of string vs const string.  Should TypeName<> return a std::string?
-// FIXME - add line numbers to pretty-print kernel log file.
-// FIXME - experiment with passing functors as objects rather than as parameters.  (Args can't return state to host, but OK?)
 
 #endif

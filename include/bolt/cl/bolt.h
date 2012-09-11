@@ -18,27 +18,21 @@
 
 /*! \file bolt.h
  *  \brief Main public header file defining global functions for Bolt
- *  \todo 1. Remove requirement for VS2012 - make it work on older version of VS
- *  \todo 2. Stringify cl kernel files and embed in Bolt library
- *  \todo 3. Develop googletest framework for Transform
- *  \todo 4. Develop googletest framework for Transform_reduce
- *  \todo 5. Develop googletest framework for count
- *  \todo 6. Develop googletest framework for reduce
- *  \todo 7. Follow the coding guideline for expanding tabs to spaces, max line char width of 120 chars
- *  \todo 8. Rename the template function calls for each Bolt API, so that they don't all have to have the same name\n
- *  \c bolt::cl::reduce ->\n
- *  \c bolt::cl::detail::reduce_detect_random_access ->\n
- *  \c bolt::cl::detail::reduce_pick_iterator ->\n
- *  \c bolt::cl::detail::reduce_enqueue\n
- *  \todo 9. Move non-public versions of code into the detail namespace, across all function families
- *  \todo 10. Review the the use of parameters to the Bolt API; everything should default to const reference unless there
- *  is a solid reason not to be
- *  \todo 11. Use the typename DVInputIterator for functions which require a device_vector iterator
- *  \todo 12. Add buffer pool for temporary memory allocated by Bolt calls
- *  \todo 13. Make Bolt calls thread-safe (Save cl:program rather than cl::kernel, and call clCreateKernel on each Bolt call)
- *  \todo 14. Review documentation for typos, clarity, etc
- *  \todo 15. Add CPU implementations, i.e. link in external library such as TBB or define our own CPU implementation
- *  \todo 16. Add richer set of API functions (can this be made more specific?)
+ *  \todo 1. Stringify cl kernel files and embed in Bolt library
+ *  \todo 2. Develop googletest framework for Transform
+ *  \todo 3. Develop googletest framework for Transform_reduce
+ *  \todo 4. Develop googletest framework for count
+ *  \todo 5. Develop googletest framework for reduce
+ *  \todo 6. Follow the coding guideline for expanding tabs to spaces, max line char width of 120 chars
+ *  \todo 7. Add support for vs2008
+ *  \todo 8 Add support for linux/mingw
+ *  \todo 9. Review the the use of parameters to the Bolt API; should parameters for chained functions past 
+ *  the public API be references?  Iterators and everything.
+ *  \todo 10. Add buffer pool for temporary memory allocated by Bolt calls
+ *  \todo 11. Make Bolt calls thread-safe (Save cl:program rather than cl::kernel, and call clCreateKernel on each Bolt call)
+ *  \todo 12. Review documentation for typos, clarity, etc
+ *  \todo 13. Add CPU implementations, i.e. link in external library such as TBB or define our own CPU implementation
+ *  \todo 14. Add richer set of API functions (can this be made more specific?)
 */
 
 namespace bolt {

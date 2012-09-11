@@ -223,15 +223,15 @@ namespace bolt
         * \brief This overload is called strictly for non-device_vector iterators
         * \details This template function overload is used to seperate device_vector iterators from all other iterators
         */
-        template< typename InputIterator, typename OutputIterator, typename BinaryFunction >
+        template< typename DVInputIterator, typename DVOutputIterator, typename BinaryFunction >
         typename std::enable_if< 
-                      (std::is_base_of<typename device_vector<typename std::iterator_traits<InputIterator>::value_type>::iterator,InputIterator>::value &&
-                       std::is_base_of<typename device_vector<typename std::iterator_traits<OutputIterator>::value_type>::iterator,OutputIterator>::value),
-                 OutputIterator >::type
-        inclusive_scan_pick_iterator( const control &ctl, InputIterator first, InputIterator last, OutputIterator result, BinaryFunction binary_op )
+                      (std::is_base_of<typename device_vector<typename std::iterator_traits<DVInputIterator>::value_type>::iterator,DVInputIterator>::value &&
+                       std::is_base_of<typename device_vector<typename std::iterator_traits<DVOutputIterator>::value_type>::iterator,DVOutputIterator>::value),
+                 DVOutputIterator >::type
+        inclusive_scan_pick_iterator( const control &ctl, DVInputIterator first, DVInputIterator last, DVOutputIterator result, BinaryFunction binary_op )
         {
-            typedef typename std::iterator_traits< InputIterator >::value_type iType;
-            typedef typename std::iterator_traits< OutputIterator >::value_type oType;
+            typedef typename std::iterator_traits< DVInputIterator >::value_type iType;
+            typedef typename std::iterator_traits< DVOutputIterator >::value_type oType;
             static_assert( std::is_convertible< iType, oType >::value, "Input and Output iterators are incompatible" );
 
             unsigned int numElements = static_cast< unsigned int >( std::distance( first, last ) );
@@ -312,15 +312,15 @@ namespace bolt
 
         // This template is called by the non-detail versions of exclusive_scan, it already assumes random access iterators
         // This is called strictly for iterators that are derived from device_vector< T >::iterator
-        template< typename InputIterator, typename OutputIterator, typename BinaryFunction >
+        template< typename DVInputIterator, typename DVOutputIterator, typename BinaryFunction >
         typename std::enable_if< 
-                      (std::is_base_of<typename device_vector<typename std::iterator_traits<InputIterator>::value_type>::iterator,InputIterator>::value &&
-                       std::is_base_of<typename device_vector<typename std::iterator_traits<OutputIterator>::value_type>::iterator,OutputIterator>::value),
-                 OutputIterator >::type
-        exclusive_scan_pick_iterator( const control &ctl, InputIterator first, InputIterator last, OutputIterator result, BinaryFunction binary_op )
+                      (std::is_base_of<typename device_vector<typename std::iterator_traits<DVInputIterator>::value_type>::iterator,DVInputIterator>::value &&
+                       std::is_base_of<typename device_vector<typename std::iterator_traits<DVOutputIterator>::value_type>::iterator,DVOutputIterator>::value),
+                 DVOutputIterator >::type
+        exclusive_scan_pick_iterator( const control &ctl, DVInputIterator first, DVInputIterator last, DVOutputIterator result, BinaryFunction binary_op )
         {
-            typedef typename std::iterator_traits< InputIterator >::value_type iType;
-            typedef typename std::iterator_traits< OutputIterator >::value_type oType;
+            typedef typename std::iterator_traits< DVInputIterator >::value_type iType;
+            typedef typename std::iterator_traits< DVOutputIterator >::value_type oType;
             static_assert( std::is_convertible< iType, oType >::value, "Input and Output iterators are incompatible" );
 
             unsigned int numElements = static_cast< unsigned int >( std::distance( first, last ) );
@@ -355,11 +355,11 @@ namespace bolt
 
         //  All calls to inclusive_scan end up here, unless an exception was thrown
         //  This is the function that sets up the kernels to compile (once only) and execute
-        template< typename InputIterator, typename OutputIterator, typename BinaryFunction >
-            void inclusive_scan_enqueue( const control &ctl, InputIterator first, InputIterator last, OutputIterator result, BinaryFunction binary_op )
+        template< typename DVInputIterator, typename DVOutputIterator, typename BinaryFunction >
+            void inclusive_scan_enqueue( const control &ctl, DVInputIterator first, DVInputIterator last, DVOutputIterator result, BinaryFunction binary_op )
             {
-                typedef typename std::iterator_traits< InputIterator >::value_type iType;
-                typedef typename std::iterator_traits< OutputIterator >::value_type oType;
+                typedef typename std::iterator_traits< DVInputIterator >::value_type iType;
+                typedef typename std::iterator_traits< DVOutputIterator >::value_type oType;
 
                 static boost::once_flag scanCompileFlag;
                 static std::vector< ::cl::Kernel > scanKernels;

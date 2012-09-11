@@ -7,37 +7,20 @@
 
 namespace bolt {
     namespace cl {
-        // Wrapper that uses default control class, iterator interface
-        template<typename InputIterator, typename OutputIterator, typename BinaryFunction> 
-        void transform( const bolt::cl::control& ctl, InputIterator first1, InputIterator last1, InputIterator first2, OutputIterator result, 
-            BinaryFunction f, const std::string user_code, std::input_iterator_tag )
-        {
-            //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data 
-            //  to a temporary buffer.  Should we?
-            throw ::cl::Error( CL_INVALID_OPERATION, "transform currently only supports random access iterator types" );
-        };
-
-        template<typename InputIterator, typename OutputIterator, typename BinaryFunction> 
-        void transform( const bolt::cl::control& ctl, InputIterator first1, InputIterator last1, InputIterator first2, OutputIterator result, 
-            BinaryFunction f, const std::string user_code, std::random_access_iterator_tag )
-        {
-            return detail::transform( ctl, first1, last1, first2, result, f, user_code );
-        };
-
         // default control, two-input transform, std:: iterator
         template<typename InputIterator, typename OutputIterator, typename BinaryFunction> 
         void transform( const bolt::cl::control& ctl, InputIterator first1, InputIterator last1, InputIterator first2, OutputIterator result, 
-            BinaryFunction f, const std::string user_code)  
+            BinaryFunction f, const std::string& user_code )
         {
-            transform( ctl, first1, last1, first2, result, f, user_code, std::iterator_traits< InputIterator >::iterator_category( ) );
+            detail::transform_detect_random_access( ctl, first1, last1, first2, result, f, user_code, std::iterator_traits< InputIterator >::iterator_category( ) );
         }
 
         // default control, two-input transform, std:: iterator
         template<typename InputIterator, typename OutputIterator, typename BinaryFunction> 
         void transform( InputIterator first1, InputIterator last1, InputIterator first2, OutputIterator result, 
-            BinaryFunction f, const std::string user_code)  
+            BinaryFunction f, const std::string& user_code )
         {
-            transform( control::getDefault(), first1, last1, first2, result, f, user_code, std::iterator_traits< InputIterator >::iterator_category( ) );
+            detail::transform_detect_random_access( control::getDefault(), first1, last1, first2, result, f, user_code, std::iterator_traits< InputIterator >::iterator_category( ) );
         }
     }//end of cl namespace
 };//end of bolt namespace
@@ -64,6 +47,23 @@ namespace bolt {
                 };
             };
 
+            // Wrapper that uses default control class, iterator interface
+            template<typename InputIterator, typename OutputIterator, typename BinaryFunction> 
+            void transform_detect_random_access( const bolt::cl::control& ctl, InputIterator first1, InputIterator last1, InputIterator first2, OutputIterator result, 
+                BinaryFunction f, const std::string& user_code, std::input_iterator_tag )
+            {
+                //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data 
+                //  to a temporary buffer.  Should we?
+                static_assert( false, "Bolt only supports random access iterator types" );
+            };
+
+            template<typename InputIterator, typename OutputIterator, typename BinaryFunction> 
+            void transform_detect_random_access( const bolt::cl::control& ctl, InputIterator first1, InputIterator last1, InputIterator first2, OutputIterator result, 
+                BinaryFunction f, const std::string& user_code, std::random_access_iterator_tag )
+            {
+                return transform_pick_iterator( ctl, first1, last1, first2, result, f, user_code );
+            };
+
             /*! \brief This template function overload is used to seperate device_vector iterators from all other iterators
                 \detail This template is called by the non-detail versions of inclusive_scan, it already assumes random access
              *  iterators.  This overload is called strictly for non-device_vector iterators
@@ -73,8 +73,8 @@ namespace bolt {
             */
             template<typename InputIterator, typename OutputIterator, typename BinaryFunction> 
             typename std::enable_if< !std::is_base_of<typename device_vector<typename std::iterator_traits<InputIterator>::value_type>::iterator,OutputIterator>::value, void >::type
-            transform(const bolt::cl::control &ctl,  InputIterator first1, InputIterator last1, InputIterator first2, OutputIterator result, 
-                BinaryFunction f, const std::string user_code)
+            transform_pick_iterator(const bolt::cl::control &ctl,  InputIterator first1, InputIterator last1, InputIterator first2, OutputIterator result, 
+                BinaryFunction f, const std::string& user_code)
             {
                 typedef std::iterator_traits<InputIterator>::value_type T;
                 size_t sz = (last1 - first1); 
@@ -83,14 +83,10 @@ namespace bolt {
 
                 // Map the input iterator to a device_vector
                 device_vector< T > dvInput( first1, last1, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctl );
+                device_vector< T > dvInput2( first2, sz, CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, ctl );
 
-                // TODO:  Create a device_vector constructor that takes an iterator and a size
-                ::cl::Buffer B(ctl.context(), CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY,  sizeof(T) * sz, const_cast<T*>(&*first2));
-                device_vector< T > dvInput2( B, ctl );
-
-                // Map the input iterator to a device_vector
-                ::cl::Buffer Z(ctl.context(), CL_MEM_USE_HOST_PTR|CL_MEM_WRITE_ONLY, sizeof(T) * sz, &*result);
-                device_vector< T > dvOutput( Z, ctl );
+                // Map the output iterator to a device_vector
+                device_vector< T > dvOutput( result, sz, CL_MEM_USE_HOST_PTR|CL_MEM_WRITE_ONLY, ctl );
 
                 transform_enqueue( ctl, dvInput.begin( ), dvInput.end( ), dvInput2.begin( ), dvOutput.begin( ), f, user_code );
 
@@ -100,19 +96,19 @@ namespace bolt {
 
             // This template is called by the non-detail versions of inclusive_scan, it already assumes random access iterators
             // This is called strictly for iterators that are derived from device_vector< T >::iterator
-            template<typename InputIterator, typename OutputIterator, typename BinaryFunction> 
-            typename std::enable_if< std::is_base_of<typename device_vector<typename std::iterator_traits<InputIterator>::value_type>::iterator,OutputIterator>::value, void >::type
-            transform(const bolt::cl::control &c,  InputIterator first1, InputIterator last1, InputIterator first2, OutputIterator result, 
-                BinaryFunction f, const std::string user_code)
+            template<typename DVInputIterator, typename DVOutputIterator, typename BinaryFunction> 
+            typename std::enable_if< std::is_base_of<typename device_vector<typename std::iterator_traits<DVInputIterator>::value_type>::iterator,DVOutputIterator>::value, void >::type
+            transform_pick_iterator(const bolt::cl::control &c,  DVInputIterator first1, DVInputIterator last1, DVInputIterator first2, DVOutputIterator result, 
+                BinaryFunction f, const std::string& user_code)
             {
                 transform_enqueue( c, first1, last1, first2, result, f, user_code );
             }
 
-            template< typename InputIterator, typename OutputIterator, typename BinaryFunction > 
-            void transform_enqueue(const bolt::cl::control &c,  InputIterator first1, InputIterator last1, InputIterator first2, OutputIterator result, 
-                BinaryFunction f, const std::string user_code)
+            template< typename DVInputIterator, typename DVOutputIterator, typename BinaryFunction > 
+            void transform_enqueue(const bolt::cl::control &c,  DVInputIterator first1, DVInputIterator last1, DVInputIterator first2, DVOutputIterator result, 
+                BinaryFunction f, const std::string& user_code)
             {
-                typedef std::iterator_traits<InputIterator>::value_type T;
+                typedef std::iterator_traits<DVInputIterator>::value_type T;
 
                 ::cl::Buffer userFunctor(c.context(), CL_MEM_READ_ONLY|CL_MEM_USE_HOST_PTR, sizeof(f), &f );   // Create buffer wrapper so we can access host parameters.
                 //std::cout << "sizeof(Functor)=" << sizeof(f) << std::endl;
