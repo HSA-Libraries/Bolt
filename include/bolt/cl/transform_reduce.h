@@ -1,3 +1,5 @@
+#if !defined( TRANSFORM_REDUCE_H )
+#define TRANSFORM_REDUCE_H
 #pragma once
 
 #include <bolt/cl/bolt.h>
@@ -9,27 +11,112 @@
 namespace bolt {
     namespace cl {
 
+        /*! \addtogroup algorithms
+         */
 
-        /*! \brief transform_reduce
-         *  \todo Document transform_reduce
+        /*! \addtogroup reductions
+        *   \ingroup algorithms
+        */ 
+        
+        /*! \addtogroup transform_reduce
+        *   \ingroup reductions
+        *   \{
+        *   \todo experiment with passing functors as objects rather than as parameters.  (Args can't return state to host, but OK?)
+        */
+
+        /*! \brief transform_reduce fuses transform and reduce operations together, increasing performance by reducing 
+         *  memory passes.
+         *  \details Logically, a transform operation is performed over the input sequence using the unary function and stored 
+         *  into a temporary sequence, and then a reduction operation is applied using the binary function
+         *  to return a single value.
+         * 
+         *  \param first The beginning of the input sequence.
+         *  \param last The end of the input sequence.
+         *  \param transform_op A unary tranformation operation.
+         *  \param init  The initial value for the accumulator.
+         *  \param reduce_op  The binary operation used to combine two values.   By default, the binary operation is plus<>().
+         *  \param user_code Optional OpenCL&tm; code to be passed to the OpenCL compiler. The cl_code is inserted first in the generated code, before the cl_code trait.
+         *  \return The result of the combined transform and reduction.
+         *
+         *  \tparam T The type of the result
+         *  \tparam InputIterator is a model of an InputIterator
+         *                        and \c InputIterator's \c value_type is convertible to \c BinaryFunction's \c first_argument_type.
+         *  \tparam UnaryFunction is a model of Unary Function
+         *                              and \c UnaryFunction's \c result_type is convertible to \c InputIterator's \c value_type.
+         *  \tparam BinaryFunction is a model of Binary Function
+         *                              and \c BinaryFunction's \c result_type is convertible to \c InputIterator's \c value_type.
+         *
+         *  \code
+         *  #include <bolt/cl/transform_reduce.h>
+         *  #include <thrust/functional.h>
+         *  
+         *  int input[10] = {-5,  0,  2,  3,  2,  4, -2,  1,  2,  3};
+         *  int output;
+         * 
+         *  bolt::cl::::transform_reduce( input, input + 10, bolt::cl::square<int>(), 0, bolt::cl::plus<int>() );
+         *
+         *  // output is 76
+         *  \endcode
+         *
+         *  \sa http://www.sgi.com/tech/stl/InputIterator.html
+         *  \sa http://www.sgi.com/tech/stl/OutputIterator.html
+         *  \sa http://www.sgi.com/tech/stl/UnaryFunction.html
+         *  \sa http://www.sgi.com/tech/stl/BinaryFunction.html
          */
         template<typename T, typename InputIterator, typename UnaryFunction, typename BinaryFunction> 
-        T transform_reduce(const control &c, InputIterator first1, InputIterator last1,  
+        T transform_reduce(InputIterator first, InputIterator last,  
             UnaryFunction transform_op, 
-            T init,  BinaryFunction reduce_op, const std::string user_code="" );
+            T init,  BinaryFunction reduce_op, const std::string& user_code="" );
 
-        /*! \brief transform_reduce
-         *  \todo Document transform_reduce
+        /*! \brief transform_reduce fuses transform and reduce operations together, increasing performance by reducing 
+         *  memory passes.
+         *  \details Logically, a transform operation is performed over the input sequence using the unary function and stored 
+         *  into a temporary sequence, and then a reduction operation is applied using the binary function
+         *  to return a single value.
+         * 
+         *  \param ctl Control structure to control command-queue, debug, tuning, etc.  See bolt::cl::control.
+         *  \param first The beginning of the input sequence.
+         *  \param last The end of the input sequence.
+         *  \param transform_op A unary tranformation operation.
+         *  \param init  The initial value for the accumulator.
+         *  \param reduce_op  The binary operation used to combine two values.   By default, the binary operation is plus<>().
+         *  \param user_code Optional OpenCL&tm; code to be passed to the OpenCL compiler. The cl_code is inserted first in the generated code, before the cl_code trait.
+         *  \return The result of the combined transform and reduction.
+         *
+         *  \tparam T The type of the result
+         *  \tparam InputIterator is a model of an InputIterator
+         *                        and \c InputIterator's \c value_type is convertible to \c BinaryFunction's \c first_argument_type.
+         *  \tparam UnaryFunction is a model of Unary Function
+         *                              and \c UnaryFunction's \c result_type is convertible to \c InputIterator's \c value_type.
+         *  \tparam BinaryFunction is a model of Binary Function
+         *                              and \c BinaryFunction's \c result_type is convertible to \c InputIterator's \c value_type.
+         *
+         *  \code
+         *  #include <bolt/cl/transform_reduce.h>
+         *  #include <thrust/functional.h>
+         *  
+         *  int input[10] = {-5,  0,  2,  3,  2,  4, -2,  1,  2,  3};
+         *  int output;
+         * 
+         *  bolt::cl::::transform_reduce( input, input + 10, bolt::cl::square<int>(), 0, bolt::cl::plus<int>() );
+         *
+         *  // output is 76
+         *  \endcode
+         *
+         *  \sa http://www.sgi.com/tech/stl/InputIterator.html
+         *  \sa http://www.sgi.com/tech/stl/OutputIterator.html
+         *  \sa http://www.sgi.com/tech/stl/UnaryFunction.html
+         *  \sa http://www.sgi.com/tech/stl/BinaryFunction.html
          */
         template<typename T, typename InputIterator, typename UnaryFunction, typename BinaryFunction> 
-        T transform_reduce(InputIterator first1, InputIterator last1,  
+        T transform_reduce(const control& ctl, InputIterator first1, InputIterator last1,  
             UnaryFunction transform_op, 
-            T init,  BinaryFunction reduce_op, const std::string user_code="" );
+            T init,  BinaryFunction reduce_op, const std::string& user_code="" );
+
+        /*!   \}  */
+
     };
 };
 
 #include <bolt/cl/detail/transform_reduce.inl>
-
-// FIXME -review use of string vs const string.  Should TypeName<> return a std::string?
-// FIXME - add line numbers to pretty-print kernel log file.
-// FIXME - experiment with passing functors as objects rather than as parameters.  (Args can't return state to host, but OK?)
+#endif
