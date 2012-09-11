@@ -16,7 +16,7 @@ project( Bolt )
 # Define a version for the code
 set( Bolt_VERSION_MAJOR 0 )
 set( Bolt_VERSION_MINOR 2 )
-set( Bolt_VERSION_PATCH 0 )
+set( Bolt_VERSION_PATCH 1 )
 set( Bolt_VERSION "${Bolt_VERSION_MAJOR}.${Bolt_VERSION_MINOR}.${Bolt_VERSION_PATCH}")
 	
 list( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR} )
@@ -154,7 +154,8 @@ if( BUILD_clBolt )
 	# This will define OPENCL_FOUND
 	find_package( OpenCL REQUIRED )
 
-	if( OPENCL_FOUND AND IS_DIRECTORY "${BOLT_LIBRARY_DIR}/cl" )
+	if( OPENCL_FOUND AND IS_DIRECTORY "${BOLT_LIBRARY_DIR}/cl" AND IS_DIRECTORY "${PROJECT_SOURCE_DIR}/tools" )
+        add_subdirectory( tools )
 		add_subdirectory( ${BOLT_LIBRARY_DIR}/cl )
 	endif( )
 endif( )
