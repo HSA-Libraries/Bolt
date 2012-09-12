@@ -1,7 +1,11 @@
-
-#define GOOGLE_TEST 0
+#define TEST_DOUBLE 0
+#define TEST_DEVICE_VECTOR 1
+#define TEST_CPU_DEVICE 1
+#define GOOGLE_TEST 1
 #if (GOOGLE_TEST == 1)
+
 #include "stdafx.h"
+#include "myocl.h"
 
 #include <bolt/cl/sort.h>
 #include <bolt/unicode.h>
@@ -13,7 +17,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Below are helper routines to compare the results of two arrays for googletest
 //  They return an assertion object that googletest knows how to track
-
+//This is a compare routine for naked pointers.
 template< typename T >
 ::testing::AssertionResult cmpArrays( const T ref, const T calc, size_t N )
 {
@@ -52,70 +56,6 @@ struct cmpStdArray
     }
 };
 
-//  Partial template specialization for float types
-//  Partial template specializations only works for objects, not functions
-template< size_t N >
-struct cmpStdArray< float, N >
-{
-    static ::testing::AssertionResult cmpArrays( const std::array< float, N >& ref, const std::array< float, N >& calc )
-    {
-        for( size_t i = 0; i < N; ++i )
-        {
-            EXPECT_FLOAT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-        }
-
-        return ::testing::AssertionSuccess( );
-    }
-};
-
-//  Partial template specialization for float types
-//  Partial template specializations only works for objects, not functions
-template< size_t N >
-struct cmpStdArray< double, N >
-{
-    static ::testing::AssertionResult cmpArrays( const std::array< double, N >& ref, const std::array< double, N >& calc )
-    {
-        for( size_t i = 0; i < N; ++i )
-        {
-            EXPECT_DOUBLE_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-        }
-
-        return ::testing::AssertionSuccess( );
-    }
-};
-
-//  The following cmpArrays verify the correctness of std::vectors's
-template< typename T >
-::testing::AssertionResult cmpArrays( const std::vector< T >& ref, const std::vector< T >& calc )
-{
-    for( size_t i = 0; i < ref.size( ); ++i )
-    {
-        EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-    }
-
-    return ::testing::AssertionSuccess( );
-}
-
-::testing::AssertionResult cmpArrays( const std::vector< float >& ref, const std::vector< float >& calc )
-{
-    for( size_t i = 0; i < ref.size( ); ++i )
-    {
-        EXPECT_FLOAT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-    }
-
-    return ::testing::AssertionSuccess( );
-}
-
-::testing::AssertionResult cmpArrays( const std::vector< double >& ref, const std::vector< double >& calc )
-{
-    for( size_t i = 0; i < ref.size( ); ++i )
-    {
-        EXPECT_DOUBLE_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-    }
-
-    return ::testing::AssertionSuccess( );
-}
-
 //  A very generic template that takes two container, and compares their values assuming a vector interface
 template< typename S, typename B >
 ::testing::AssertionResult cmpArrays( const S& ref, const B& calc )
@@ -151,12 +91,9 @@ public:
 
     virtual void SetUp( )
     {
-		//FIXME - Generate Random inputs
-        for( int i=0; i < ArraySize; i++ )
-        {
-            stdInput[ i ] = ArraySize - i + 2;
-            boltInput[ i ] = ArraySize - i + 2;
-        }
+        std::generate(stdInput.begin(), stdInput.end(), rand);
+        boltInput = stdInput;
+
     };
 
     virtual void TearDown( )
@@ -167,16 +104,14 @@ public:
 
 protected:
     typedef typename std::tuple_element< 0, ArrayTuple >::type ArrayType;
-    // typedef typename std::tuple_element< 0, ArrayTuple >::type::value ArraySize;
     static const size_t ArraySize = typename std::tuple_element< 1, ArrayTuple >::type::value;
-
     typename std::array< ArrayType, ArraySize > stdInput, boltInput;
     int m_Errors;
 };
 
 TYPED_TEST_CASE_P( SortArrayTest );
 
-TYPED_TEST_P( SortArrayTest, InPlace )
+TYPED_TEST_P( SortArrayTest, Normal )
 {
     typedef std::array< ArrayType, ArraySize > ArrayCont;
 
@@ -192,15 +127,18 @@ TYPED_TEST_P( SortArrayTest, InPlace )
 
     //  Loop through the array and compare all the values with each other
     cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
+    
 }
 
-TYPED_TEST_P( SortArrayTest, InPlaceGreaterFunction )
+TYPED_TEST_P( SortArrayTest, GPU_DeviceNormal )
 {
     typedef std::array< ArrayType, ArraySize > ArrayCont;
+    MyOclContext oclgpu = initOcl(CL_DEVICE_TYPE_GPU, 0);
+	bolt::cl::control c_gpu(oclgpu._queue);  // construct control structure from the queue.
 
     //  Calling the actual functions under test
-    std::sort( stdInput.begin( ), stdInput.end( ), std::greater< ArrayType >( ) );
-    bolt::cl::sort( boltInput.begin( ), boltInput.end( ), bolt::cl::greater< ArrayType >( ) );
+    std::sort( stdInput.begin( ), stdInput.end( ));
+    bolt::cl::sort( c_gpu, boltInput.begin( ), boltInput.end( ) );
 
     ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
     ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
@@ -210,40 +148,178 @@ TYPED_TEST_P( SortArrayTest, InPlaceGreaterFunction )
 
     //  Loop through the array and compare all the values with each other
     cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
+    // FIXME - releaseOcl(ocl);
 }
-
-TYPED_TEST_P( SortArrayTest, InPlaceLessFunction )
+#if (TEST_CPU_DEVICE == 1)
+TYPED_TEST_P( SortArrayTest, CPU_DeviceNormal )
 {
     typedef std::array< ArrayType, ArraySize > ArrayCont;
+    MyOclContext oclcpu = initOcl(CL_DEVICE_TYPE_CPU, 0);
+	bolt::cl::control c_cpu(oclcpu._queue);  // construct control structure from the queue.
 
     //  Calling the actual functions under test
-    std::sort( stdInput.begin( ), stdInput.end( ), bolt::cl::less< ArrayType >( ) );
-    bolt::cl::sort( boltInput.begin( ), boltInput.end( ), std::less< ArrayType >( ) );
+    std::sort( stdInput.begin( ), stdInput.end( ));
+    bolt::cl::sort( c_cpu, boltInput.begin( ), boltInput.end( ) );
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdEnd );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltEnd );
+    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
+    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
 
     //  Loop through the array and compare all the values with each other
     cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
+    // FIXME - releaseOcl(ocl);
+}
+#endif
+
+TYPED_TEST_P( SortArrayTest, GreaterFunction )
+{
+    typedef std::array< ArrayType, ArraySize > ArrayCont;
+
+    //  Calling the actual functions under test
+    std::sort( stdInput.begin( ), stdInput.end( ));
+    bolt::cl::sort( boltInput.begin( ), boltInput.end( ) );
+
+    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
+    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
+    
 }
 
-REGISTER_TYPED_TEST_CASE_P( SortArrayTest, InPlace, InPlaceGreaterFunction, InPlacelessFunction );
+TYPED_TEST_P( SortArrayTest, GPU_DeviceGreaterFunction )
+{
+    typedef std::array< ArrayType, ArraySize > ArrayCont;
+    MyOclContext oclgpu = initOcl(CL_DEVICE_TYPE_GPU, 0);
+	bolt::cl::control c_gpu(oclgpu._queue);  // construct control structure from the queue.
+
+    //  Calling the actual functions under test
+    std::sort( stdInput.begin( ), stdInput.end( ), std::greater< ArrayType >( ));
+    bolt::cl::sort( c_gpu, boltInput.begin( ), boltInput.end( ), bolt::cl::greater< ArrayType >( ) );
+
+    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
+    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
+    // FIXME - releaseOcl(ocl);
+}
+#if (TEST_CPU_DEVICE == 1)
+TYPED_TEST_P( SortArrayTest, CPU_DeviceGreaterFunction )
+{
+    typedef std::array< ArrayType, ArraySize > ArrayCont;
+    MyOclContext oclcpu = initOcl(CL_DEVICE_TYPE_CPU, 0);
+	bolt::cl::control c_cpu(oclcpu._queue);  // construct control structure from the queue.
+
+    //  Calling the actual functions under test
+    std::sort( stdInput.begin( ), stdInput.end( ), std::greater< ArrayType >( ));
+    bolt::cl::sort( c_cpu, boltInput.begin( ), boltInput.end( ), bolt::cl::greater< ArrayType >( ) );
+
+    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
+    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
+    // FIXME - releaseOcl(ocl);
+}
+#endif
+TYPED_TEST_P( SortArrayTest, LessFunction )
+{
+    typedef std::array< ArrayType, ArraySize > ArrayCont;
+
+    //  Calling the actual functions under test
+    std::sort( stdInput.begin( ), stdInput.end( ));
+    bolt::cl::sort( boltInput.begin( ), boltInput.end( ) );
+
+    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
+    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
+
+}
+
+TYPED_TEST_P( SortArrayTest, GPU_DeviceLessFunction )
+{
+    typedef std::array< ArrayType, ArraySize > ArrayCont;
+    MyOclContext oclgpu = initOcl(CL_DEVICE_TYPE_GPU, 0);
+	bolt::cl::control c_gpu(oclgpu._queue);  // construct control structure from the queue.
+
+    //  Calling the actual functions under test
+    std::sort( stdInput.begin( ), stdInput.end( ), std::greater< ArrayType >( ));
+    bolt::cl::sort( c_gpu, boltInput.begin( ), boltInput.end( ), bolt::cl::greater< ArrayType >( ) );
+
+    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
+    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
+    // FIXME - releaseOcl(ocl);
+}
+#if (TEST_CPU_DEVICE == 1)
+TYPED_TEST_P( SortArrayTest, CPU_DeviceLessFunction )
+{
+    typedef std::array< ArrayType, ArraySize > ArrayCont;
+    MyOclContext oclcpu = initOcl(CL_DEVICE_TYPE_CPU, 0);
+	bolt::cl::control c_cpu(oclcpu._queue);  // construct control structure from the queue.
+
+    //  Calling the actual functions under test
+    std::sort( stdInput.begin( ), stdInput.end( ), std::greater< ArrayType >( ));
+    bolt::cl::sort( c_cpu, boltInput.begin( ), boltInput.end( ), bolt::cl::greater< ArrayType >( ) );
+
+    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
+    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
+    // FIXME - releaseOcl(ocl);
+}
+#endif
+
+#if (TEST_CPU_DEVICE == 1)
+REGISTER_TYPED_TEST_CASE_P( SortArrayTest, Normal, GPU_DeviceNormal, 
+                                           GreaterFunction, GPU_DeviceGreaterFunction,
+                                           LessFunction, GPU_DeviceLessFunction, CPU_DeviceNormal, CPU_DeviceGreaterFunction, CPU_DeviceLessFunction);
+#else
+REGISTER_TYPED_TEST_CASE_P( SortArrayTest, Normal, GPU_DeviceNormal, 
+                                           GreaterFunction, GPU_DeviceGreaterFunction,
+                                           LessFunction, GPU_DeviceLessFunction );
+#endif
+
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Fixture classes are now defined to enable googletest to process value parameterized tests
-
 //  ::testing::TestWithParam< int > means that GetParam( ) returns int values, which i use for array size
 
-//FIXME - SortIntegerVector, SortFloatVector, SortDoubleVector can be templatized. 
 class SortIntegerVector: public ::testing::TestWithParam< int >
 {
 public:
-    //  Create an std and a bolt vector of requested size, and initialize all the elements to 1
-    SortIntegerVector( ): stdInput( GetParam( ), 1 ), boltInput( GetParam( ), 1 )
-    {}
+
+    SortIntegerVector( ): stdInput( GetParam( ) ), boltInput( GetParam( ) )
+    {
+        std::generate(stdInput.begin(), stdInput.end(), rand);
+        boltInput = stdInput;
+    }
 
 protected:
     std::vector< int > stdInput, boltInput;
@@ -253,39 +329,97 @@ protected:
 class SortFloatVector: public ::testing::TestWithParam< int >
 {
 public:
-    //  Create an std and a bolt vector of requested size, and initialize all the elements to 1
-    SortFloatVector( ): stdInput( GetParam( ), 1.0f ), boltInput( GetParam( ), 1.0f )
-    {}
+    SortFloatVector( ): stdInput( GetParam( ) ), boltInput( GetParam( ) )
+    {
+        std::generate(stdInput.begin(), stdInput.end(), rand);
+        boltInput = stdInput;    
+    }
 
 protected:
     std::vector< float > stdInput, boltInput;
 };
 
+#if (TEST_DOUBLE == 1)
 //  ::testing::TestWithParam< int > means that GetParam( ) returns int values, which i use for array size
 class SortDoubleVector: public ::testing::TestWithParam< int >
 {
 public:
-    //  Create an std and a bolt vector of requested size, and initialize all the elements to 1
-    SortDoubleVector( ): stdInput( GetParam( ), 1.0 ), boltInput( GetParam( ), 1.0 )
-    {}
+    SortDoubleVector( ): stdInput( GetParam( ) ), boltInput( GetParam( ) )
+    {
+        std::generate(stdInput.begin(), stdInput.end(), rand);
+        boltInput = stdInput;    
+    }
 
 protected:
     std::vector< double > stdInput, boltInput;
 };
+#endif
 
-//FIXME - SortIntegerDeviceVector can be templatized along with SortFloatDeviceVector and SortDoubleDeviceVector which is not there.
 //  ::testing::TestWithParam< int > means that GetParam( ) returns int values, which i use for array size
 class SortIntegerDeviceVector: public ::testing::TestWithParam< int >
 {
 public:
-    //  Create an std and a bolt vector of requested size, and initialize all the elements to 1
-    SortIntegerDeviceVector( ): stdInput( GetParam( ), 1 ), boltInput( static_cast<size_t>( GetParam( ) ), 1 )
-    {}
+    // Create an std and a bolt vector of requested size, and initialize all the elements to 1
+    SortIntegerDeviceVector( ): stdInput( GetParam( ) ), boltInput( static_cast<size_t>( GetParam( ) ) )
+    {
+        std::generate(stdInput.begin(), stdInput.end(), rand);
+        //boltInput = stdInput;      
+        //FIXME - The above should work but the below loop is used. 
+        for (int i=0; i< GetParam( ); i++)
+        {
+            boltInput[i] = stdInput[i];
+        }
+    }
 
 protected:
     std::vector< int > stdInput;
     bolt::cl::device_vector< int > boltInput;
 };
+
+//  ::testing::TestWithParam< int > means that GetParam( ) returns int values, which i use for array size
+class SortFloatDeviceVector: public ::testing::TestWithParam< int >
+{
+public:
+    // Create an std and a bolt vector of requested size, and initialize all the elements to 1
+    SortFloatDeviceVector( ): stdInput( GetParam( ) ), boltInput( static_cast<size_t>( GetParam( ) ) )
+    {
+        std::generate(stdInput.begin(), stdInput.end(), rand);
+        //boltInput = stdInput;      
+        //FIXME - The above should work but the below loop is used. 
+        for (int i=0; i< GetParam( ); i++)
+        {
+            boltInput[i] = stdInput[i];
+        }
+
+    }
+
+protected:
+    std::vector< float > stdInput;
+    bolt::cl::device_vector< float > boltInput;
+};
+
+#if (TEST_DOUBLE == 1)
+//  ::testing::TestWithParam< int > means that GetParam( ) returns int values, which i use for array size
+class SortDoubleDeviceVector: public ::testing::TestWithParam< int >
+{
+public:
+    // Create an std and a bolt vector of requested size, and initialize all the elements to 1
+    SortDoubleDeviceVector( ): stdInput( GetParam( ) ), boltInput( static_cast<size_t>( GetParam( ) ) )
+    {
+        std::generate(stdInput.begin(), stdInput.end(), rand);
+        //boltInput = stdInput;      
+        //FIXME - The above should work but the below loop is used. 
+        for (int i=0; i< GetParam( ); i++)
+        {
+            boltInput[i] = stdInput[i];
+        }
+    }
+
+protected:
+    std::vector< double > stdInput;
+    bolt::cl::device_vector< double > boltInput;
+};
+#endif
 
 //  ::testing::TestWithParam< int > means that GetParam( ) returns int values, which i use for array size
 class SortIntegerNakedPointer: public ::testing::TestWithParam< int >
@@ -298,11 +432,11 @@ public:
     virtual void SetUp( )
     {
         size_t size = GetParam( );
-		//FIXME - Generate Random Numbers 
-        for( int i=0; i < size; i++ )
+
+        std::generate(stdInput, stdInput + size, rand);
+        for (int i = 0; i<size; i++)
         {
-            stdInput[ i ] = 1;
-            boltInput[ i ] = 1;
+            boltInput[i] = stdInput[i];
         }
     };
 
@@ -313,13 +447,74 @@ public:
     };
 
 protected:
-    //boost::shared_array< int > stdInput;
-    //boost::shared_array< int > boltInput;
      int* stdInput;
      int* boltInput;
 };
 
-TEST_P( SortIntegerVector, Inplace )
+//  ::testing::TestWithParam< int > means that GetParam( ) returns int values, which i use for array size
+class SortFloatNakedPointer: public ::testing::TestWithParam< int >
+{
+public:
+    //  Create an std and a bolt vector of requested size, and initialize all the elements to 1
+    SortFloatNakedPointer( ): stdInput( new float[ GetParam( ) ] ), boltInput( new float[ GetParam( ) ] )
+    {}
+
+    virtual void SetUp( )
+    {
+        size_t size = GetParam( );
+
+        std::generate(stdInput, stdInput + size, rand);
+        for (int i = 0; i<size; i++)
+        {
+            boltInput[i] = stdInput[i];
+        }
+    };
+
+    virtual void TearDown( )
+    {
+        delete [] stdInput;
+        delete [] boltInput;
+    };
+
+protected:
+     float* stdInput;
+     float* boltInput;
+};
+
+#if (TEST_DOUBLE ==1 )
+//  ::testing::TestWithParam< int > means that GetParam( ) returns int values, which i use for array size
+class SortDoubleNakedPointer: public ::testing::TestWithParam< int >
+{
+public:
+    //  Create an std and a bolt vector of requested size, and initialize all the elements to 1
+    SortDoubleNakedPointer( ): stdInput( new double[ GetParam( ) ] ), boltInput( new double[ GetParam( ) ] )
+    {}
+
+    virtual void SetUp( )
+    {
+        size_t size = GetParam( );
+
+        std::generate(stdInput, stdInput + size, rand);
+
+        for( int i=0; i < size; i++ )
+        {
+            boltInput[ i ] = stdInput[ i ];
+        }
+    };
+
+    virtual void TearDown( )
+    {
+        delete [] stdInput;
+        delete [] boltInput;
+    };
+
+protected:
+     double* stdInput;
+     double* boltInput;
+};
+#endif
+
+TEST_P( SortIntegerVector, Normal )
 {
     //  Calling the actual functions under test
     std::sort( stdInput.begin( ), stdInput.end( ) );
@@ -334,19 +529,16 @@ TEST_P( SortIntegerVector, Inplace )
     //  Loop through the array and compare all the values with each other
     cmpArrays( stdInput, boltInput );
 }
+
 // Come Back here
-TEST_P( ScanFloatVector, InclusiveInplace )
+TEST_P( SortFloatVector, Normal )
 {
     //  Calling the actual functions under test
-    std::vector< float >::iterator stdEnd  = std::partial_sum( stdInput.begin( ), stdInput.end( ), stdInput.begin( ) );
-    std::vector< float >::iterator boltEnd = bolt::cl::inclusive_scan( boltInput.begin( ), boltInput.end( ), boltInput.begin( ) );
+    std::sort( stdInput.begin( ), stdInput.end( ) );
+    bolt::cl::sort( boltInput.begin( ), boltInput.end( ) );
 
-    //  The returned iterator should be one past the 
-    EXPECT_EQ( stdInput.end( ), stdEnd );
-    EXPECT_EQ( boltInput.end( ), boltEnd );
-
-    std::vector< float >::iterator::difference_type stdNumElements = std::distance( stdInput.begin( ), stdEnd );
-    std::vector< float >::iterator::difference_type boltNumElements = std::distance( boltInput.begin( ), boltEnd );
+    std::vector< float >::iterator::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end( ) );
+    std::vector< float >::iterator::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end( ) );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
@@ -354,19 +546,15 @@ TEST_P( ScanFloatVector, InclusiveInplace )
     //  Loop through the array and compare all the values with each other
     cmpArrays( stdInput, boltInput );
 }
-
-TEST_P( ScanDoubleVector, InclusiveInplace )
+#if (TEST_DOUBLE == 1)
+TEST_P( SortDoubleVector, Inplace )
 {
     //  Calling the actual functions under test
-    std::vector< double >::iterator stdEnd  = std::partial_sum( stdInput.begin( ), stdInput.end( ), stdInput.begin( ) );
-    std::vector< double >::iterator boltEnd = bolt::cl::inclusive_scan( boltInput.begin( ), boltInput.end( ), boltInput.begin( ) );
+    std::sort( stdInput.begin( ), stdInput.end( ) );
+    bolt::cl::sort( boltInput.begin( ), boltInput.end( ) );
 
-    //  The returned iterator should be one past the 
-    EXPECT_EQ( stdInput.end( ), stdEnd );
-    EXPECT_EQ( boltInput.end( ), boltEnd );
-
-    std::vector< double >::iterator::difference_type stdNumElements = std::distance( stdInput.begin( ), stdEnd );
-    std::vector< double >::iterator::difference_type boltNumElements = std::distance( boltInput.begin( ), boltEnd );
+    std::vector< double >::iterator::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end( ) );
+    std::vector< double >::iterator::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end( ) );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
@@ -374,19 +562,16 @@ TEST_P( ScanDoubleVector, InclusiveInplace )
     //  Loop through the array and compare all the values with each other
     cmpArrays( stdInput, boltInput );
 }
-
-TEST_P( ScanIntegerDeviceVector, InclusiveInplace )
+#endif
+#if (TEST_DEVICE_VECTOR == 1)
+TEST_P( SortIntegerDeviceVector, Inplace )
 {
     //  Calling the actual functions under test
-    std::vector< int >::iterator stdEnd  = std::partial_sum( stdInput.begin( ), stdInput.end( ), stdInput.begin( ) );
-    bolt::cl::device_vector< int >::iterator boltEnd = bolt::cl::inclusive_scan( boltInput.begin( ), boltInput.end( ), boltInput.begin( ) );
+    std::sort( stdInput.begin( ), stdInput.end( ) );
+    bolt::cl::sort( boltInput.begin( ), boltInput.end( ) );
 
-    //  The returned iterator should be one past the 
-    EXPECT_EQ( stdInput.end( ), stdEnd );
-    EXPECT_EQ( boltInput.end( ), boltEnd );
-
-    std::vector< int >::iterator::difference_type stdNumElements = std::distance( stdInput.begin( ), stdEnd );
-    std::vector< int >::iterator::difference_type boltNumElements = std::distance( boltInput.begin( ), boltEnd );
+    std::vector< int >::iterator::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end( ) );
+    std::vector< int >::iterator::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end( ) );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
@@ -394,74 +579,121 @@ TEST_P( ScanIntegerDeviceVector, InclusiveInplace )
     //  Loop through the array and compare all the values with each other
     cmpArrays( stdInput, boltInput );
 }
+TEST_P( SortFloatDeviceVector, Inplace )
+{
+    //  Calling the actual functions under test
+    std::sort( stdInput.begin( ), stdInput.end( ) );
+    bolt::cl::sort( boltInput.begin( ), boltInput.end( ) );
 
-TEST_P( ScanIntegerNakedPointer, InclusiveInplace )
+    std::vector< float >::iterator::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end( ) );
+    std::vector< float >::iterator::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end( ) );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+#if (TEST_DOUBLE == 1)
+TEST_P( SortDoubleDeviceVector, Inplace )
+{
+    //  Calling the actual functions under test
+    std::sort( stdInput.begin( ), stdInput.end( ) );
+    bolt::cl::sort( boltInput.begin( ), boltInput.end( ) );
+
+    std::vector< double >::iterator::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end( ) );
+    std::vector< double >::iterator::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end( ) );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+#endif
+#endif
+
+TEST_P( SortIntegerNakedPointer, Inplace )
 {
     size_t endIndex = GetParam( );
 
     //  Calling the actual functions under test
     stdext::checked_array_iterator< int* > wrapStdInput( stdInput, endIndex );
-    stdext::checked_array_iterator< int* > stdEnd = std::partial_sum( wrapStdInput, wrapStdInput + endIndex, wrapStdInput );
-    //int* stdEnd = std::partial_sum( stdInput, stdInput + endIndex, stdInput );
+    std::sort( wrapStdInput, wrapStdInput + endIndex );
+    //std::sort( stdInput, stdInput + endIndex );
 
     stdext::checked_array_iterator< int* > wrapBoltInput( boltInput, endIndex );
-    stdext::checked_array_iterator< int* > boltEnd = bolt::cl::inclusive_scan( wrapBoltInput, wrapBoltInput + endIndex, wrapBoltInput );
-    //int* boltEnd = bolt::cl::inclusive_scan( boltInput, boltInput + endIndex, boltInput );
-
-    //  The returned iterator should be one past the 
-    EXPECT_EQ( wrapStdInput + endIndex, stdEnd );
-    EXPECT_EQ( wrapBoltInput + endIndex, boltEnd );
-
-    size_t stdNumElements = std::distance( wrapStdInput, stdEnd );
-    size_t boltNumElements = std::distance( wrapBoltInput, boltEnd );
-
-    //  Both collections should have the same number of elements
-    EXPECT_EQ( stdNumElements, boltNumElements );
+    bolt::cl::sort( wrapBoltInput, wrapBoltInput + endIndex );
+    //bolt::cl::sort( boltInput, boltInput + endIndex );
 
     //  Loop through the array and compare all the values with each other
     cmpArrays( stdInput, boltInput, endIndex );
 }
 
-TEST_P( ScanIntegerVector, ExclusiveOutOfPlace )
+TEST_P( SortFloatNakedPointer, Inplace )
 {
-    //  Declare temporary arrays to store results for out of place computation
-    std::vector< int > stdResult( GetParam( ) ), boltResult( GetParam( ) );
+    size_t endIndex = GetParam( );
 
     //  Calling the actual functions under test
-    std::vector< int >::iterator stdEnd  = std::partial_sum( stdInput.begin( ), stdInput.end( ), stdResult.begin( ) );
-    stdEnd = std::transform( stdResult.begin( ), stdResult.end( ), stdInput.begin( ), stdResult.begin( ), bolt::cl::minus< int >( ) );
+    stdext::checked_array_iterator< float* > wrapStdInput( stdInput, endIndex );
+    std::sort( wrapStdInput, wrapStdInput + endIndex );
+    //std::sort( stdInput, stdInput + endIndex );
 
-    std::vector< int >::iterator boltEnd = bolt::cl::exclusive_scan( boltInput.begin( ), boltInput.end( ), boltInput.begin( ) );
-
-    //  The returned iterator should be one past the 
-    EXPECT_EQ( stdInput.end( ), stdEnd );
-    EXPECT_EQ( boltInput.end( ), boltEnd );
-
-    std::vector< int >::iterator::difference_type stdNumElements = std::distance( stdInput.begin( ), stdEnd );
-    std::vector< int >::iterator::difference_type boltNumElements = std::distance( boltInput.begin( ), boltEnd );
-
-    //  Both collections should have the same number of elements
-    EXPECT_EQ( stdNumElements, boltNumElements );
+    stdext::checked_array_iterator< float* > wrapBoltInput( boltInput, endIndex );
+    bolt::cl::sort( wrapBoltInput, wrapBoltInput + endIndex );
+    //bolt::cl::sort( boltInput, boltInput + endIndex );
 
     //  Loop through the array and compare all the values with each other
-    cmpArrays( stdInput, boltInput );
+    cmpArrays( stdInput, boltInput, endIndex );
 }
 
-//  Test lots of consecutive numbers, but small range, suitable for integers because they overflow easier
-//INSTANTIATE_TEST_CASE_P( Inclusive, ScanIntegerVector, ::testing::Range( 1537, 1540, 1 ) );
-//INSTANTIATE_TEST_CASE_P( Inclusive, ScanIntegerVector, ::testing::Range( 0, 1540, 1 ) );
-//INSTANTIATE_TEST_CASE_P( Inclusive, ScanIntegerDeviceVector, ::testing::Range( 0, 1024, 1 ) );
-//INSTANTIATE_TEST_CASE_P( Inclusive, ScanIntegerNakedPointer, ::testing::Range( 0, 1024, 1 ) );
-INSTANTIATE_TEST_CASE_P( Exclusive, ScanIntegerVector, ::testing::Range( 256, 1024, 1 ) );
+#if (TEST_DOUBLE == 1)
+TEST_P( SortDoubleNakedPointer, Inplace )
+{
+    size_t endIndex = GetParam( );
 
-//  Test a huge range, suitable for floating point as they are less prone to overflow (but floating point loses granularity at large values)
-//INSTANTIATE_TEST_CASE_P( Inclusive, ScanFloatVector, ::testing::Range( 4096, 1048576, 4096 ) );
-//INSTANTIATE_TEST_CASE_P( Inclusive, ScanDoubleVector, ::testing::Range( 0, 1048576, 4096 ) );
+    //  Calling the actual functions under test
+    stdext::checked_array_iterator< double* > wrapStdInput( stdInput, endIndex );
+    std::sort( wrapStdInput, wrapStdInput + endIndex );
+    //std::sort( stdInput, stdInput + endIndex );
+
+    stdext::checked_array_iterator< double* > wrapBoltInput( boltInput, endIndex );
+    bolt::cl::sort( wrapBoltInput, wrapBoltInput + endIndex );
+    //bolt::cl::sort( boltInput, boltInput + endIndex );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput, endIndex );
+}
+#endif
+std::array<int, 15> TestValues = {2,4,8,16,32,64,128,256,512,1024,2048,4096,8192,16384,32768};
+//Test lots of consecutive numbers, but small range, suitable for integers because they overflow easier
+//INSTANTIATE_TEST_CASE_P( Sort, SortIntegerVector, ::testing::Range( 0, 1024, 2 ) );
+INSTANTIATE_TEST_CASE_P( Sort, SortIntegerVector, ::testing::ValuesIn( TestValues.begin(), TestValues.end() ) );
+//INSTANTIATE_TEST_CASE_P( Sort, SortFloatVector, ::testing::Range( 0, 1024, 2 ) );
+INSTANTIATE_TEST_CASE_P( Sort, SortFloatVector, ::testing::ValuesIn( TestValues.begin(), TestValues.end() ) );
+#if (TEST_DOUBLE == 1)
+//INSTANTIATE_TEST_CASE_P( Sort, SortDoubleVector, ::testing::Range( 0, 1024, 2 ) );
+INSTANTIATE_TEST_CASE_P( Sort, SortDoubleVector, ::testing::ValuesIn( TestValues.begin(), TestValues.end() ) );
+#endif
+//INSTANTIATE_TEST_CASE_P( Sort, SortIntegerDeviceVector, ::testing::Range( 0, 1024, 2 ) );
+INSTANTIATE_TEST_CASE_P( Sort, SortIntegerDeviceVector, ::testing::ValuesIn( TestValues.begin(), TestValues.end() ) );
+//INSTANTIATE_TEST_CASE_P( Sort, SortFloatDeviceVector, ::testing::Range( 0, 1024, 2 ) );
+INSTANTIATE_TEST_CASE_P( Sort, SortFloatDeviceVector, ::testing::ValuesIn( TestValues.begin(), TestValues.end() ) );
+#if (TEST_DOUBLE == 1)
+//INSTANTIATE_TEST_CASE_P( Sort, SortDoubleDeviceVector, ::testing::Range( 0, 1024, 2 ) );
+INSTANTIATE_TEST_CASE_P( Sort, SortDoubleDeviceVector, ::testing::ValuesIn( TestValues.begin(), TestValues.end() ) );
+#endif
+//INSTANTIATE_TEST_CASE_P( Sort, SortIntegerNakedPointer, ::testing::Range( 0, 1024, 2) );
+INSTANTIATE_TEST_CASE_P( Sort, SortIntegerNakedPointer, ::testing::ValuesIn( TestValues.begin(), TestValues.end() ) );
+//INSTANTIATE_TEST_CASE_P( Sort, SortFloatNakedPointer, ::testing::Range( 0, 1024, 2) );
+INSTANTIATE_TEST_CASE_P( Sort, SortFloatNakedPointer, ::testing::ValuesIn( TestValues.begin(), TestValues.end() ) );
+#if (TEST_DOUBLE == 1)
+//INSTANTIATE_TEST_CASE_P( Sort, SortDoubleNakedPointer, ::testing::Range( 0, 1024, 2) );
+INSTANTIATE_TEST_CASE_P( Sort, SortDoubleNakedPointer, ::testing::ValuesIn( TestValues.begin(), TestValues.end() ) );
+#endif
 
 typedef ::testing::Types< 
     std::tuple< int, TypeValue< 1 > >,
-    //std::tuple< int, TypeValue< bolt::cl::scanMultiCpuThreshold - 1 > >,
-    //std::tuple< int, TypeValue< bolt::cl::scanGpuThreshold - 1 > >,
     std::tuple< int, TypeValue< 31 > >,
     std::tuple< int, TypeValue< 32 > >,
     std::tuple< int, TypeValue< 63 > >,
@@ -474,15 +706,11 @@ typedef ::testing::Types<
     std::tuple< int, TypeValue< 4096 > >,
     std::tuple< int, TypeValue< 4097 > >,
     std::tuple< int, TypeValue< 65535 > >,
-    //std::tuple< int, TypeValue< 131032 > >,       // uncomment these to generate failures; stack overflow
-    //std::tuple< int, TypeValue< 262154 > >,
     std::tuple< int, TypeValue< 65536 > >
 > IntegerTests;
 
 typedef ::testing::Types< 
     std::tuple< float, TypeValue< 1 > >,
-    //std::tuple< float, TypeValue< bolt::cl::scanMultiCpuThreshold - 1 > >,
-    //std::tuple< float, TypeValue< bolt::cl::scanGpuThreshold - 1 > >,
     std::tuple< float, TypeValue< 31 > >,
     std::tuple< float, TypeValue< 32 > >,
     std::tuple< float, TypeValue< 63 > >,
@@ -498,8 +726,73 @@ typedef ::testing::Types<
     std::tuple< float, TypeValue< 65536 > >
 > FloatTests;
 
-//INSTANTIATE_TYPED_TEST_CASE_P( Integer, ScanArrayTest, IntegerTests );
-//INSTANTIATE_TYPED_TEST_CASE_P( Float, ScanArrayTest, FloatTests );
+#if (TEST_DOUBLE == 1)
+typedef ::testing::Types< 
+    std::tuple< double, TypeValue< 1 > >,
+    std::tuple< double, TypeValue< 31 > >,
+    std::tuple< double, TypeValue< 32 > >,
+    std::tuple< double, TypeValue< 63 > >,
+    std::tuple< double, TypeValue< 64 > >,
+    std::tuple< double, TypeValue< 127 > >,
+    std::tuple< double, TypeValue< 128 > >,
+    std::tuple< double, TypeValue< 129 > >,
+    std::tuple< double, TypeValue< 1000 > >,
+    std::tuple< double, TypeValue< 1053 > >,
+    std::tuple< double, TypeValue< 4096 > >,
+    std::tuple< double, TypeValue< 4097 > >,
+    std::tuple< double, TypeValue< 65535 > >,
+    std::tuple< double, TypeValue< 65536 > >
+> DoubleTests;
+#endif 
+BOLT_FUNCTOR(UDD,
+struct UDD { 
+    int a; 
+    int b;
+
+    bool operator() (const UDD& lhs, const UDD& rhs) { 
+        return ((lhs.a+lhs.b) > (rhs.a+rhs.b));
+    } 
+    bool operator < (const UDD& other) const { 
+        return ((a+b) < (other.a+other.b));
+    }
+    bool operator > (const UDD& other) const { 
+        return ((a+b) > (other.a+other.b));
+    }
+    bool operator == (const UDD& other) const { 
+        return ((a+b) == (other.a+other.b));
+    }
+    UDD() 
+        : a(0),b(0) { } 
+    UDD(int _in) 
+        : a(_in), b(_in +1)  { } 
+}; 
+);
+BOLT_CREATE_TYPENAME(bolt::cl::less<UDD>);
+BOLT_CREATE_TYPENAME(bolt::cl::greater<UDD>);
+
+typedef ::testing::Types< 
+    std::tuple< UDD, TypeValue< 1 > >,
+    std::tuple< UDD, TypeValue< 31 > >,
+    std::tuple< UDD, TypeValue< 32 > >,
+    std::tuple< UDD, TypeValue< 63 > >,
+    std::tuple< UDD, TypeValue< 64 > >,
+    std::tuple< UDD, TypeValue< 127 > >,
+    std::tuple< UDD, TypeValue< 128 > >,
+    std::tuple< UDD, TypeValue< 129 > >,
+    std::tuple< UDD, TypeValue< 1000 > >,
+    std::tuple< UDD, TypeValue< 1053 > >,
+    std::tuple< UDD, TypeValue< 4096 > >,
+    std::tuple< UDD, TypeValue< 4097 > >,
+    std::tuple< UDD, TypeValue< 65535 > >,
+    std::tuple< UDD, TypeValue< 65536 > >
+> UDDTests;
+
+INSTANTIATE_TYPED_TEST_CASE_P( Integer, SortArrayTest, IntegerTests );
+INSTANTIATE_TYPED_TEST_CASE_P( Float, SortArrayTest, FloatTests );
+#if (TEST_DOUBLE == 1)
+INSTANTIATE_TYPED_TEST_CASE_P( Double, SortArrayTest, DoubleTests );
+#endif 
+INSTANTIATE_TYPED_TEST_CASE_P( UDDTest, SortArrayTest, UDDTests );
 
 int _tmain(int argc, _TCHAR* argv[])
 {
@@ -534,7 +827,8 @@ int _tmain(int argc, _TCHAR* argv[])
         bolt::tout << _T( "\t--gtest_break_on_failure to debug interactively with debugger" ) << std::endl;
         bolt::tout << _T( "\t    (only on googletest assertion failures, not SEH exceptions)" ) << std::endl;
     }
-
+    std::cout << "Test Completed. Press Enter to exit.\n .... ";
+    getchar();
 	return retVal;
 }
 #else
@@ -553,6 +847,7 @@ int _tmain(int argc, _TCHAR* argv[])
 #include "myocl.h"
 
 // A Data structure defining a less than operator
+
 template <typename T> 
 struct MyType { 
     T a; 
@@ -573,6 +868,7 @@ struct MyType {
     MyType(T& _in) 
         : a(_in) { } 
 }; 
+
 
 BOLT_CREATE_TYPENAME(MyType<int>);
 BOLT_CREATE_CLCODE(MyType<int>, "template <typename T> struct MyType { T a; \n\nbool operator() (const MyType& lhs, const MyType& rhs) { return (lhs.a > rhs.a); } \n\nbool operator < (const MyType& other) const { return (a < other.a); }\n\n bool operator > (const MyType& other) const { return (a > other.a);} \n\n };");
@@ -759,8 +1055,8 @@ void UserDefinedObjectSortTestOfLength(size_t length)
         stdInput[i].a  = (stdType)(i +2);
     }
     
-    bolt::cl::sort(boltInput.begin(), boltInput.end(),mytype());
-    std::sort(stdInput.begin(), stdInput.end(),mytype());
+    bolt::cl::sort(boltInput.begin(), boltInput.end(),bolt::cl::greater<mytype>());
+    std::sort(stdInput.begin(), stdInput.end(),bolt::cl::greater<mytype>());
     for (i=0; i<length; i++)
     {
         if(stdInput[i].a == boltInput[i].a)
@@ -921,13 +1217,12 @@ void UDDSortTestWithBoltFunctorOfLengthWithDeviceVector(size_t length)
         std::cout << "Test Failed i = " << i <<std::endl;
 }
 
-void TestWithBoltControl()
+void TestWithBoltControl(int length)
 {
 
-	MyOclContext ocl = initOcl(CL_DEVICE_TYPE_GPU, 0);
+	MyOclContext ocl = initOcl(CL_DEVICE_TYPE_CPU, 0);
 	bolt::cl::control c(ocl._queue);  // construct control structure from the queue.
     //c.debug(bolt::cl::control::debug::Compile + bolt::cl::control::debug::SaveCompilerTemps);
-    size_t length = 256;
     typedef MyFunctor<int> myfunctor;
     typedef MyType<int> mytype;
 
@@ -978,6 +1273,10 @@ void TestWithBoltControl()
 
 int main(int argc, char* argv[])
 {
+
+    UDDSortTestOfLengthWithDeviceVector<int>(256);
+
+#if 0
 		std::vector<int> input(1024);
 		std::generate(input.begin(), input.end(), rand);	
 		bolt::cl::sort( input.begin(), input.end(), bolt::cl::greater<int>());
@@ -993,13 +1292,13 @@ int main(int argc, char* argv[])
     UserDefinedObjectSortTestOfLength<int>(254);
     BasicSortTestOfLength<int>(254);
     TestWithBoltControl();
-
+#endif
     //The following two are not working because device_vector support is not there.
     //UDDSortTestOfLengthWithDeviceVector<int>(256);
     //UDDSortTestWithBoltFunctorOfLengthWithDeviceVector<int>(256);
 
-#define TEST_ALL 1
-#define TEST_DOUBLE 1
+#define TEST_ALL 0
+#define TEST_DOUBLE 0
 
 #if (TEST_ALL == 1)
     std::cout << "Testing BasicSortTestWithBoltFunctorOfLengthWithDeviceVector\n";
