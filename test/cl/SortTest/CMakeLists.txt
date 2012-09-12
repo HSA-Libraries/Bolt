@@ -14,7 +14,7 @@ set( clBolt.Test.Sort.Files ${clBolt.Test.Sort.Source} ${clBolt.Test.Sort.Header
 include_directories( ${OPENCL_INCLUDE_DIRS} )
 
 add_executable( clBolt.Test.Sort ${clBolt.Test.Sort.Files} )
-target_link_libraries( clBolt.Test.Sort ${OPENCL_LIBRARIES} clBolt.Runtime )
+target_link_libraries( clBolt.Test.Sort ${OPENCL_LIBRARIES} clBolt.Runtime ${GTEST_LIBRARIES}  )
 
 set_target_properties( clBolt.Test.Sort PROPERTIES VERSION ${Bolt_VERSION} )
 set_target_properties( clBolt.Test.Sort PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
