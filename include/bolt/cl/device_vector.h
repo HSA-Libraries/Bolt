@@ -254,10 +254,12 @@ namespace bolt
 
             /*! \brief A default constructor that creates an empty device_vector
             *   \param ctl An Bolt control class used to perform copy operations; a default is used if not supplied by the user
+            *   \todo Find a way to be able to unambiguously specify memory flags for this constructor, that is not 
+            *   confused with the size constructor below.
             */
             device_vector( /* cl_mem_flags flags = CL_MEM_READ_WRITE,*/ const control& ctl = control::getDefault( ) ): m_Size( 0 ), m_commQueue( ctl.commandQueue( ) ), m_Flags( CL_MEM_READ_WRITE )
             {
-                static_assert( std::is_pod< value_type >::value, "device_vector only supports POD (plain old data) types" );
+                static_assert( !std::is_polymorphic< value_type >::value, "AMD C++ template extensions do not support the virtual keyword yet" );
             }
 
             /*! \brief A constructor that will create a new device_vector with the specified number of elements, with a specified initial value
@@ -266,12 +268,10 @@ namespace bolt
             *   \param flags A bitfield that takes the OpenCL memory flags to help specify where the device_vector should allocate memory
             *   \param ctl An Bolt control class used to perform copy operations; a default is used if not supplied by the user
             *   \warning The ::cl::CommandQueue is not a STD reserve( ) parameter
-            *   \note This constructor relies on the ::cl::Buffer object to throw on error
-            *   \todo Find a way to construct a new device_vector, but not have to initialize it
             */
             device_vector( size_type newSize, const value_type& value = value_type( ), cl_mem_flags flags = CL_MEM_READ_WRITE, const control& ctl = control::getDefault( ) ): m_Size( newSize ), m_commQueue( ctl.commandQueue( ) ), m_Flags( flags )
             {
-                static_assert( std::is_pod< value_type >::value, "device_vector only supports POD (plain old data) types" );
+                static_assert( !std::is_polymorphic< value_type >::value, "AMD C++ template extensions do not support the virtual keyword yet" );
 
                 //  We want to use the context from the passed in commandqueue to initialize our buffer
                 cl_int l_Error = CL_SUCCESS;
@@ -296,8 +296,7 @@ namespace bolt
             *   \param end An iterator pointing at the end of the range
             *   \param flags A bitfield that takes the OpenCL memory flags to help specify where the device_vector should allocate memory
             *   \param ctl An Bolt control class used to perform copy operations; a default is used if not supplied by the user
-            *   \note This constructor relies on the ::cl::Buffer object to throw on error 
-            *   \note The last nameless parameter should be ignored; it helps distinguish this constructor from the size_type constructor for primitive types
+            *   \note The enable_if<> parameter should be ignored; it prevents this constructor from being called with integral types
             */
             template< typename InputIterator >
             device_vector( const InputIterator begin, size_type newSize, cl_mem_flags flags = CL_MEM_READ_WRITE, const control& ctl = control::getDefault( ),
@@ -305,7 +304,7 @@ namespace bolt
             {
                 static_assert( std::is_convertible< value_type, typename std::iterator_traits< InputIterator >::value_type >::value, 
                     "iterator value_type does not convert to device_vector value_type" );
-                static_assert( std::is_pod< value_type >::value, "device_vector only supports POD (plain old data) types" );
+                static_assert( !std::is_polymorphic< value_type >::value, "AMD C++ template extensions do not support the virtual keyword yet" );
 
                 //  We want to use the context from the passed in commandqueue to initialize our buffer
                 cl_int l_Error = CL_SUCCESS;
@@ -330,8 +329,7 @@ namespace bolt
             *   \param end An iterator pointing at the end of the range
             *   \param flags A bitfield that takes the OpenCL memory flags to help specify where the device_vector should allocate memory
             *   \param ctl An Bolt control class used to perform copy operations; a default is used if not supplied by the user
-            *   \note This constructor relies on the ::cl::Buffer object to throw on error 
-            *   \note The last nameless parameter should be ignored; it helps distinguish this constructor from the size_type constructor for primitive types
+            *   \note The enable_if<> parameter should be ignored; it prevents this constructor from being called with integral types
             */
             template< typename InputIterator >
             device_vector( const InputIterator begin, const InputIterator end, cl_mem_flags flags = CL_MEM_READ_WRITE, const control& ctl = control::getDefault( ),
@@ -339,7 +337,7 @@ namespace bolt
             {
                 static_assert( std::is_convertible< value_type, typename std::iterator_traits< InputIterator >::value_type >::value,
                     "iterator value_type does not convert to device_vector value_type" );
-                static_assert( std::is_pod< value_type >::value, "device_vector only supports POD (plain old data) types" );
+                static_assert( !std::is_polymorphic< value_type >::value, "AMD C++ template extensions do not support the virtual keyword yet" );
 
                 //  We want to use the context from the passed in commandqueue to initialize our buffer
                 cl_int l_Error = CL_SUCCESS;
@@ -367,7 +365,7 @@ namespace bolt
             */
             device_vector( const ::cl::Buffer& rhs, const control& ctl = control::getDefault( ) ): m_devMemory( rhs ), m_commQueue( ctl.commandQueue( ) )
             {
-                static_assert( std::is_pod< value_type >::value, "device_vector only supports POD (plain old data) types" );
+                static_assert( !std::is_polymorphic< value_type >::value, "AMD C++ template extensions do not support the virtual keyword yet" );
 
                 m_Size = capacity( );
 
@@ -764,7 +762,7 @@ namespace bolt
                 //  Only way to release the Buffer resource is to explicitly call the destructor
                 //m_devMemory.~Buffer( );
 
-                //  TODO:  Allocate a temp empty buffer on the stack, because of a double release problem with explicitly
+                //  Allocate a temp empty buffer on the stack, because of a double release problem with explicitly
                 //  calling the Wrapper destructor with cl.hpp version 1.2
                 ::cl::Buffer tmp;
                 m_devMemory = tmp;
