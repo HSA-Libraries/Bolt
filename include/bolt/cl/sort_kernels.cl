@@ -26,10 +26,123 @@ struct less
     bool operator()(const T &lhs, const T &rhs) const  {return (lhs < rhs);}
 };
 
+
+
+template <typename T, typename Compare>
+kernel
+void selectionSortLocalTemplate(global const T * in, 
+                           global T       * out, 
+                           global Compare * userComp, 
+                           local  T       * scratch, 
+                           const int        buffSize)
+{
+  int          i  = get_local_id(0); // index in workgroup
+  int numOfGroups = get_num_groups(0); // index in workgroup
+  int groupID     = get_group_id(0);
+  int         wg  = get_local_size(0); // workgroup size = block size
+  int n;
+  bool compareResult;
+  
+  int offset = groupID * wg;
+  int same=0;
+  in  += offset; 
+  out += offset;
+  n = (groupID == (numOfGroups-1))? (buffSize - wg*(numOfGroups-1)) : wg;
+  
+  if(i < n)
+  {
+      T iData = in[i];
+      scratch[i] = iData;
+      barrier(CLK_LOCAL_MEM_FENCE);
+  
+      int pos = 0;
+      for (int j=0;j<n;j++)
+      {
+          T jData = scratch[j];
+          if((*userComp)(jData, iData)) 
+              pos++;
+          else 
+          {
+              if((*userComp)(iData, jData))
+                  continue;
+              else 
+              {
+                  // iData and jData are same
+                  same++;
+              }
+          }
+      }
+      for (int j=0; j< same; j++)      
+         out[pos + j] = iData;
+  }
+  return;
+}
+
+template <typename T, typename Compare>
+kernel
+void selectionSortFinalTemplate(global const T * in, 
+                           global T       * out, 
+                           global Compare * userComp,
+                           local  T       * scratch, 
+                           const int        buffSize)
+{
+  int          i  = get_local_id(0); // index in workgroup
+  int numOfGroups = get_num_groups(0); // index in workgroup
+  int groupID     = get_group_id(0);
+  int         wg  = get_local_size(0); // workgroup size = block size
+  int pos = 0, same = 0;
+  int remainder;
+  int offset = get_group_id(0) * wg;
+
+  T iData = in[groupID*wg + i];
+  if((offset + i ) >= buffSize)
+      return;
+  
+  remainder = buffSize - wg*(numOfGroups-1);
+  
+  for(int j=0; j<numOfGroups-1; j++ )
+  {
+     for(int k=0; k<wg; k++)
+     {
+        T jData = in[j*wg + k];
+        if(((*userComp)(iData, jData)))
+           break;
+        else
+        {
+           //Increment only if the value is not the same. 
+           //Two elements are same if (*userComp)(jData, iData)  and (*userComp)(iData, jData) are both false
+           if( ((*userComp)(jData, iData)) )
+              pos++;
+           else 
+              same++;
+        }
+     }
+  }
+  
+  for(int k=0; k<remainder; k++)
+  {
+     T jData = in[(numOfGroups-1)*wg + k];
+        if(((*userComp)(iData, jData)))
+           break;
+        else
+        {
+           //Don't increment if the value is the same. 
+           //Two elements are same if (*userComp)(jData, iData)  and (*userComp)(iData, jData) are both false
+           if(((*userComp)(jData, iData)))
+              pos++;
+           else 
+              same++;
+        }
+  }  
+  for (int j=0; j< same; j++)      
+      out[pos + j] = iData;  
+}
+
+
 template <typename T, typename Compare>
 kernel
 void sortTemplate(global T * theArray, 
-                 const uint stage, 
+                 const uint stage,
                  const uint passOfStage,
                  global Compare *userComp)
 {
@@ -38,7 +151,7 @@ void sortTemplate(global T * theArray,
     uint blockWidth   = 2 * pairDistance;
     uint temp;
     uint leftId = (threadId % pairDistance) 
-                   + (threadId / pairDistance) * blockWidth;
+                       + (threadId / pairDistance) * blockWidth;
     bool compareResult;
     
     uint rightId = leftId + pairDistance;
@@ -73,48 +186,4 @@ void sortTemplate(global T * theArray,
 
 }
 
-
-template <typename T>
-kernel
-void sortTemplateBasic(global T * theArray, 
-                 const uint stage, 
-                 const uint passOfStage)
-{
-    uint threadId = get_global_id(0);
-    uint pairDistance = 1 << (stage - passOfStage);
-    uint blockWidth   = 2 * pairDistance;
-    uint temp;
-    uint leftId = (threadId % pairDistance) 
-                   + (threadId / pairDistance) * blockWidth;
-    bool compareResult;
-
-    uint rightId = leftId + pairDistance;
-
-    T greater, lesser;
-    T leftElement = theArray[leftId];
-    T rightElement = theArray[rightId];
-    
-    uint sameDirectionBlockWidth = 1 << stage;
-    
-    if((threadId/sameDirectionBlockWidth) % 2 == 1)
-    {
-        temp = rightId;
-        rightId = leftId;
-        leftId = temp;
-    }
-
-    compareResult = (leftElement < rightElement);
-    if(compareResult)
-    {
-        greater = rightElement;
-        lesser  = leftElement;
-    }
-    else
-    {
-        greater = leftElement;
-        lesser  = rightElement;
-    }
-    theArray[leftId]  = lesser;
-    theArray[rightId] = greater;
-}
 
