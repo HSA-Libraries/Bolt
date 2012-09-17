@@ -21,7 +21,7 @@ list( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR} )
 # On windows, it's convenient to change the default install prefix such that it does NOT point to 'program files'
 # Need to check out CMAKE_RUNTIME_OUTPUT_DIRECTORY variable, and see if that eliminates the need to modify install path
 if( CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT )
-	set( CMAKE_INSTALL_PREFIX "${PROJECT_BINARY_DIR}/package" CACHE PATH "Install path prefix, prepended onto install directories" FORCE )
+    set( CMAKE_INSTALL_PREFIX "${PROJECT_BINARY_DIR}/package" CACHE PATH "Install path prefix, prepended onto install directories" FORCE )
 endif( )
 
 # Set the default of CMAKE_BUILD_TYPE to be release, unless user specifies with -D.  MSVC_IDE does not use CMAKE_BUILD_TYPE
@@ -30,32 +30,32 @@ if( NOT MSVC_IDE AND NOT CMAKE_BUILD_TYPE )
 endif()
 
 if( MSVC_IDE )
-	set( Bolt_BUILD64 ${CMAKE_CL_64} )
-	set_property( GLOBAL PROPERTY USE_FOLDERS TRUE )
+    set( Bolt_BUILD64 ${CMAKE_CL_64} )
+    set_property( GLOBAL PROPERTY USE_FOLDERS TRUE )
 else()
-	option( Bolt_BUILD64 "Build a 64-bit product" ON )
+    option( Bolt_BUILD64 "Build a 64-bit product" ON )
 endif()
 
 # Modify the global find property to help us find libraries like Boost in the correct paths for 64-bit
 # Essentially, find_library calls will look for /lib64 instead of /lib; works for windows and linux
 if( Bolt_BUILD64 )
-	set_property( GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS TRUE )
-	message( STATUS "64bit build - FIND_LIBRARY_USE_LIB64_PATHS TRUE" )
+    set_property( GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS TRUE )
+    message( STATUS "64bit build - FIND_LIBRARY_USE_LIB64_PATHS TRUE" )
 else()
-	set_property( GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS FALSE )
-	message( STATUS "32bit build - FIND_LIBRARY_USE_LIB64_PATHS FALSE" )
+    set_property( GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS FALSE )
+    message( STATUS "32bit build - FIND_LIBRARY_USE_LIB64_PATHS FALSE" )
 endif()
 
 # Currently, linux has a problem outputing both narrow and wide characters,
 # which happens in our client because openCL only supports narrow characters
 if( WIN32 )
-	option( BUILD_UNICODE "Create a solution that compiles Bolt with Unicode Support" ON )
-	if( BUILD_UNICODE )
-		message( STATUS "UNICODE build" )
-	endif( )
+    option( BUILD_UNICODE "Create a solution that compiles Bolt with Unicode Support" ON )
+    if( BUILD_UNICODE )
+        message( STATUS "UNICODE build" )
+    endif( )
 else()
-	set( BUILD_UNICODE OFF )
-	message( STATUS "UNICODE disabled on linux" )
+    set( BUILD_UNICODE OFF )
+    message( STATUS "UNICODE disabled on linux" )
 endif()
 
 # FFLAGS depend on the compiler, grab the compiler name from the path
@@ -65,30 +65,30 @@ get_filename_component( C_COMPILER_NAME ${CMAKE_C_COMPILER} NAME_WE )
 
 # Set common compile and link options
 if( C_COMPILER_NAME STREQUAL "cl" )
-	# Following options for nMake
-	message( STATUS "Detected MSVS Ver: " ${MSVC_VERSION} )
-	
-	# CMake uses huge stack frames for windows, for some reason.  We remove.
-	string( REGEX REPLACE "/STACK:[0-9]+" "" CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}" )
-	string( REGEX REPLACE "/STACK:[0-9]+" "" CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}" )
-	string( REGEX REPLACE "/STACK:[0-9]+" "" CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS}" )	
+    # Following options for nMake
+    message( STATUS "Detected MSVS Ver: " ${MSVC_VERSION} )
+    
+    # CMake uses huge stack frames for windows, for some reason.  We remove.
+    string( REGEX REPLACE "/STACK:[0-9]+" "" CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}" )
+    string( REGEX REPLACE "/STACK:[0-9]+" "" CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}" )
+    string( REGEX REPLACE "/STACK:[0-9]+" "" CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS}" ) 
 elseif( C_COMPILER_NAME STREQUAL "gcc" )
-	message( STATUS "Detected GNU fortran compiler." )
-	
-	if( Bolt_BUILD64 )
-		set( CMAKE_CXX_FLAGS "-m64 ${CMAKE_CXX_FLAGS}" )
-		set( CMAKE_C_FLAGS "-m64 ${CMAKE_C_FLAGS}" )
-	else( )
-		set( CMAKE_CXX_FLAGS "-m32 ${CMAKE_CXX_FLAGS}" )
-		set( CMAKE_C_FLAGS "-m32 ${CMAKE_C_FLAGS}" )
-	endif( )
+    message( STATUS "Detected GNU fortran compiler." )
+    
+    if( Bolt_BUILD64 )
+        set( CMAKE_CXX_FLAGS "-m64 ${CMAKE_CXX_FLAGS}" )
+        set( CMAKE_C_FLAGS "-m64 ${CMAKE_C_FLAGS}" )
+    else( )
+        set( CMAKE_CXX_FLAGS "-m32 ${CMAKE_CXX_FLAGS}" )
+        set( CMAKE_C_FLAGS "-m32 ${CMAKE_C_FLAGS}" )
+    endif( )
 else( )
-	message( AUTHOR_WARNING "Compiler not recognized.  Using default flags." )
+    message( AUTHOR_WARNING "Compiler not recognized.  Using default flags." )
 endif( )
 
 # If UNICODE is defined, pass extra definitions into 
 if( BUILD_UNICODE )
-	add_definitions( "/DUNICODE /D_UNICODE" )
+    add_definitions( "/DUNICODE /D_UNICODE" )
 endif( )
 
 # Print out compiler flags for viewing/debug
@@ -100,12 +100,12 @@ message( STATUS "CMAKE_EXE_LINKER link flags: " ${CMAKE_EXE_LINKER_FLAGS} )
 
 # Depending on whether we are building for 64 or 32 bit, construct common paths and names that subdirectories can reference for their use
 if( Bolt_BUILD64 )
-	set( CPACK_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}-${Bolt_VERSION}-${CMAKE_HOST_SYSTEM_NAME}-x64")
+    set( CPACK_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}-${Bolt_VERSION}-${CMAKE_HOST_SYSTEM_NAME}-x64")
     set( INCLUDE_DIR include )
     set( BIN_DIR bin64 )
     set( LIB_DIR lib64 )
 else( )
-	set( CPACK_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}-${Bolt_VERSION}-${CMAKE_HOST_SYSTEM_NAME}-x32")
+    set( CPACK_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}-${Bolt_VERSION}-${CMAKE_HOST_SYSTEM_NAME}-x32")
     set( INCLUDE_DIR include )
     set( BIN_DIR bin )
     set( LIB_DIR lib )
@@ -122,15 +122,16 @@ find_package( Bolt REQUIRED )
 add_subdirectory( DeviceVector )
 add_subdirectory( Scan )
 add_subdirectory( Sort )
+add_subdirectory( Transform )
 add_subdirectory( Version )
 
 # The following code is setting variables to control the behavior of CPack to generate our 
 if( WIN32 )
-	set( CPACK_SOURCE_GENERATOR "ZIP" )
-	set( CPACK_GENERATOR "ZIP" )
+    set( CPACK_SOURCE_GENERATOR "ZIP" )
+    set( CPACK_GENERATOR "ZIP" )
 else( )
-	set( CPACK_SOURCE_GENERATOR "TGZ" )
-	set( CPACK_GENERATOR "TGZ" )
+    set( CPACK_SOURCE_GENERATOR "TGZ" )
+    set( CPACK_GENERATOR "TGZ" )
 endif( )
 
 set( CPACK_SOURCE_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}-${Examples_VERSION}-${CMAKE_HOST_SYSTEM_NAME}-Source")
