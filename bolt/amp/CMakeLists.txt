@@ -36,13 +36,18 @@ add_library( ampBolt.Runtime STATIC ${Bolt.Runtime.Files} )
 
 set_target_properties( ampBolt.Runtime PROPERTIES VERSION ${Bolt_VERSION} )
 set_target_properties( ampBolt.Runtime PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
-		
+
+if( MSVC_VERSION VERSION_LESS 1600 )
+    set_target_properties( ampBolt.Runtime PROPERTIES ARCHIVE_OUTPUT_NAME "ampBolt.Runtime.vc90" )
+elseif( MSVC_VERSION VERSION_LESS 1700 )
+    set_target_properties( ampBolt.Runtime PROPERTIES ARCHIVE_OUTPUT_NAME "ampBolt.Runtime.vc100" )
+elseif( MSVC_VERSION VERSION_LESS 1800 )
+    set_target_properties( ampBolt.Runtime PROPERTIES ARCHIVE_OUTPUT_NAME "ampBolt.Runtime.vc110" )
+endif( )
+
 # CPack configuration; include the executable into the package
 install( TARGETS ampBolt.Runtime
 	RUNTIME DESTINATION ${BIN_DIR}
 	LIBRARY DESTINATION ${LIB_DIR}
-	ARCHIVE DESTINATION ${LIB_DIR}/import
+	ARCHIVE DESTINATION ${LIB_DIR}
 	)
-
-	
-	

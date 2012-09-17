@@ -8,6 +8,8 @@
 #include <boost/thread/once.hpp>
 #include <boost/bind.hpp>
 
+#include "bolt/scan_kernels.hpp"
+
 namespace bolt
 {
     namespace cl
@@ -137,7 +139,7 @@ namespace bolt
                         "global " + functorTypeName + "* binaryOp\n"
                         ");\n\n";
 
-                    bolt::cl::compileKernels( *scanKernels, kernelNames, "scan", templateSpecializationString, cl_code, valueTypeName, functorTypeName, ctl );
+                    bolt::cl::compileKernelsString( *scanKernels, kernelNames, scan_kernels, templateSpecializationString, cl_code, valueTypeName, functorTypeName, ctl );
                 }
             };
 
@@ -207,7 +209,7 @@ namespace bolt
 
                 // Map the input iterator to a device_vector
                 device_vector< iType > dvInput( first, last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctl );
-                device_vector< oType > dvOutput( result, numElements, CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY, ctl );
+                device_vector< oType > dvOutput( result, numElements, CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY, false, ctl );
 
                 //Now call the actual cl algorithm
                 inclusive_scan_enqueue( ctl, dvInput.begin( ), dvInput.end( ), dvOutput.begin( ), binary_op );
@@ -294,7 +296,7 @@ namespace bolt
             {
                 // Map the input iterator to a device_vector
                 device_vector< iType > dvInput( first, last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctl );
-                device_vector< oType > dvOutput( result, numElements, CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY, ctl );
+                device_vector< oType > dvOutput( result, numElements, CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY, false, ctl );
 
                 //Now call the actual cl algorithm
                 inclusive_scan_enqueue( ctl, dvInput.begin( ), dvInput.end( ), dvOutput.begin( ), binary_op );
@@ -407,9 +409,8 @@ namespace bolt
 
                 // Create buffer wrappers so we can access the host functors, for read or writing in the kernel
                 ::cl::Buffer userFunctor( ctl.context( ), CL_MEM_USE_HOST_PTR, sizeof( binary_op ), &binary_op );
-                device_vector< iType > preSumArray( reinterpret_cast< iType* >( NULL ), sizeScanBuff, CL_MEM_READ_WRITE, ctl );
-                device_vector< iType > postSumArray( reinterpret_cast< iType* >( NULL ), sizeScanBuff, CL_MEM_READ_WRITE, ctl );
-
+                device_vector< iType > preSumArray( sizeScanBuff, 0, CL_MEM_READ_WRITE, false, ctl );
+                device_vector< iType > postSumArray( sizeScanBuff, 0, CL_MEM_READ_WRITE, false, ctl );
 
                 V_OPENCL( scanKernels[ 0 ].setArg( 0, result->getBuffer( ) ), "Error setting 0th argument for scanKernels[ 0 ]" );        // Output buffer
                 V_OPENCL( scanKernels[ 0 ].setArg( 1, first->getBuffer( ) ), "Error setting 1st argument for scanKernels[ 0 ]" );       // Input buffer

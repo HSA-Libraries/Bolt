@@ -109,6 +109,7 @@ struct ClCode
 *   line with "XXX"\n
 *   \return The contents of the macro wrapped in an ASCII string
 */
-#define STRINGIFY_CODE( ... ) #__VA_ARGS__
+#define STRINGIFY_CODE2( ... ) #__VA_ARGS__
+#define STRINGIFY_CODE( ... ) STRINGIFY_CODE2( __VA_ARGS__ )
 
 #endif

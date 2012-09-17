@@ -10,6 +10,8 @@
 #include <boost/thread/once.hpp>
 #include <boost/bind.hpp>
 
+#include "bolt/sort_kernels.hpp"
+
 #define WGSIZE 64
 
 namespace bolt {
@@ -83,7 +85,7 @@ namespace bolt {
                         "global " + compareTypeName + " * userComp\n"
                         ");\n\n";
 
-                    bolt::cl::constructAndCompile(masterKernel, "sort", instantiationString, cl_code_dataType, valueTypeName, "", ctl);
+                    bolt::cl::constructAndCompileString(masterKernel, "sort", sort_kernels, instantiationString, cl_code_dataType, valueTypeName, "", ctl);
                 }
                 static void constructAndCompileSelectionSort(std::vector< ::cl::Kernel >* sortKernels,  std::string cl_code_dataType, std::string valueTypeName,  std::string compareTypeName, const control &ctl) {
 
@@ -112,7 +114,9 @@ namespace bolt {
                         "local  " + valueTypeName + " * scratch,\n"
                         "const int buffSize\n"
                         ");\n\n";
-                    bolt::cl::compileKernels( *sortKernels, kernelNames, "sort", instantiationString, cl_code_dataType, valueTypeName, "", ctl );
+
+                    bolt::cl::compileKernelsString( *sortKernels, kernelNames, sort_kernels, instantiationString, cl_code_dataType, valueTypeName, "", ctl );
+                    // bolt::cl::compileKernels( *sortKernels, kernelNames, "sort", instantiationString, cl_code_dataType, valueTypeName, "", ctl );
                     //bolt::cl::constructAndCompile(masterKernel, "sort", instantiationString, cl_code_dataType, valueTypeName, "", ctl);
                 }
 

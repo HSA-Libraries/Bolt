@@ -5,6 +5,8 @@
 #include <boost/thread/once.hpp>
 #include <boost/bind.hpp>
 
+#include "bolt/transform_kernels.hpp"
+
 namespace bolt {
     namespace cl {
         // default control, two-input transform, std:: iterator
@@ -42,8 +44,8 @@ namespace bolt {
                         "const int length,\n"
                         "global " + functorTypeName + "* userFunctor);\n\n";
 
-
-                    bolt::cl::constructAndCompile(masterKernel, "transform", instantiationString, user_code, valueTypeName, functorTypeName, c);
+                    bolt::cl::constructAndCompileString( masterKernel, "transform", transform_kernels, instantiationString, user_code, valueTypeName, functorTypeName, c);
+                    // bolt::cl::constructAndCompile(masterKernel, "transform", instantiationString, user_code, valueTypeName, functorTypeName, c);
                 };
             };
 
@@ -83,10 +85,10 @@ namespace bolt {
 
                 // Map the input iterator to a device_vector
                 device_vector< T > dvInput( first1, last1, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctl );
-                device_vector< T > dvInput2( first2, sz, CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, ctl );
+                device_vector< T > dvInput2( first2, sz, CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, true, ctl );
 
                 // Map the output iterator to a device_vector
-                device_vector< T > dvOutput( result, sz, CL_MEM_USE_HOST_PTR|CL_MEM_WRITE_ONLY, ctl );
+                device_vector< T > dvOutput( result, sz, CL_MEM_USE_HOST_PTR|CL_MEM_WRITE_ONLY, false, ctl );
 
                 transform_enqueue( ctl, dvInput.begin( ), dvInput.end( ), dvInput2.begin( ), dvOutput.begin( ), f, user_code );
 

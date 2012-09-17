@@ -7,7 +7,7 @@ message( STATUS "Setting up OpenCL specific test projects..." )
 set( Boost_USE_MULTITHREADED ON )
 set( Boost_USE_STATIC_LIBS   ON )
 set( Boost_DETAILED_FAILURE_MSG   ON )
-set( Boost_DEBUG ON )
+# set( Boost_DEBUG ON )
 
 if( BOOST_ROOT )
 	# The root tree of BOOST was specified on the command line; use it to to find the specific Boost the user points too
