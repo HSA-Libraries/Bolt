@@ -266,10 +266,12 @@ namespace bolt
             *   \param newSize The number of elements of the new device_vector
             *   \param value The value that new elements will be initialized with
             *   \param flags A bitfield that takes the OpenCL memory flags to help specify where the device_vector should allocate memory
+            *   \param init Boolean value to indicate whether device memory should be initialized from host memory
             *   \param ctl An Bolt control class used to perform copy operations; a default is used if not supplied by the user
             *   \warning The ::cl::CommandQueue is not a STD reserve( ) parameter
             */
-            device_vector( size_type newSize, const value_type& value = value_type( ), cl_mem_flags flags = CL_MEM_READ_WRITE, const control& ctl = control::getDefault( ) ): m_Size( newSize ), m_commQueue( ctl.commandQueue( ) ), m_Flags( flags )
+            device_vector( size_type newSize, const value_type& value = value_type( ), cl_mem_flags flags = CL_MEM_READ_WRITE, 
+                bool init = true, const control& ctl = control::getDefault( ) ): m_Size( newSize ), m_commQueue( ctl.commandQueue( ) ), m_Flags( flags )
             {
                 static_assert( !std::is_polymorphic< value_type >::value, "AMD C++ template extensions do not support the virtual keyword yet" );
 
@@ -282,12 +284,15 @@ namespace bolt
                 {
                     m_devMemory = ::cl::Buffer( l_Context, m_Flags, m_Size * sizeof( value_type ) );
 
-                    std::vector< ::cl::Event > fillEvent( 1 );
-                    V_OPENCL( m_commQueue.enqueueFillBuffer< value_type >( m_devMemory, value, 0, newSize * sizeof( value_type ), NULL, &fillEvent.front( ) ), 
-                        "device_vector failed to fill the internal buffer with the requested pattern");
+                    if( init )
+                    {
+                        std::vector< ::cl::Event > fillEvent( 1 );
+                        V_OPENCL( m_commQueue.enqueueFillBuffer< value_type >( m_devMemory, value, 0, newSize * sizeof( value_type ), NULL, &fillEvent.front( ) ), 
+                            "device_vector failed to fill the internal buffer with the requested pattern");
 
-                    //  Not allowed to return until the fill operation is finished
-                    V_OPENCL( m_commQueue.enqueueWaitForEvents( fillEvent ), "device_vector failed to wait for an event" );
+                        //  Not allowed to return until the fill operation is finished
+                        V_OPENCL( m_commQueue.enqueueWaitForEvents( fillEvent ), "device_vector failed to wait for an event" );
+                    }
                 }
             }
 
@@ -295,11 +300,13 @@ namespace bolt
             *   \param begin An iterator pointing at the beginning of the range
             *   \param end An iterator pointing at the end of the range
             *   \param flags A bitfield that takes the OpenCL memory flags to help specify where the device_vector should allocate memory
+            *   \param init Boolean value to indicate whether device memory should be initialized from host memory
             *   \param ctl An Bolt control class used to perform copy operations; a default is used if not supplied by the user
             *   \note The enable_if<> parameter should be ignored; it prevents this constructor from being called with integral types
             */
             template< typename InputIterator >
-            device_vector( const InputIterator begin, size_type newSize, cl_mem_flags flags = CL_MEM_READ_WRITE, const control& ctl = control::getDefault( ),
+            device_vector( const InputIterator begin, size_type newSize, cl_mem_flags flags = CL_MEM_READ_WRITE, 
+                bool init = true, const control& ctl = control::getDefault( ),
                 typename std::enable_if< !std::is_integral< InputIterator >::value >::type* = 0 ): m_Size( newSize ), m_commQueue( ctl.commandQueue( ) ), m_Flags( flags )
             {
                 static_assert( std::is_convertible< value_type, typename std::iterator_traits< InputIterator >::value_type >::value, 
@@ -320,7 +327,10 @@ namespace bolt
                 {
                     m_devMemory = ::cl::Buffer( l_Context, m_Flags, m_Size * sizeof( value_type ) );
 
-                    ::cl::copy( begin, begin+m_Size, m_devMemory );
+                    if( init )
+                    {
+                        ::cl::copy( begin, begin+m_Size, m_devMemory );
+                    }
                 }
             };
 

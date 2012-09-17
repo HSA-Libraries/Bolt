@@ -18,7 +18,7 @@
 
 /*! \file bolt.h
  *  \brief Main public header file defining global functions for Bolt
- *  \todo 1. Stringify cl kernel files and embed in Bolt library
+ *  \todo 1. Kernel .hpp files are currently included in inl files; need to include kernel .hpp files in static library
  *  \todo 2. Develop googletest framework for Transform
  *  \todo 3. Develop googletest framework for Transform_reduce
  *  \todo 4. Develop googletest framework for count
@@ -37,6 +37,9 @@
 
 namespace bolt {
     namespace cl {
+
+        enum boltKernel {reduceKernel, scanKernel, sortKernel, transformKernel, transformReduceKernel, endKernels };
+
         extern std::string fileToString(const std::string &fileName);
 
         extern ::cl::Kernel compileFunctor(const std::string &kernelCodeString, const std::string kernelName, const std::string compileOptions, const control &c);
@@ -46,6 +49,26 @@ namespace bolt {
         void compileKernels( std::vector< ::cl::Kernel >& clKernels, 
                 const std::vector< const std::string >& kernelNames, 
                 const std::string& fileName,
+                const std::string& instantiationString,
+                const std::string& userCode,
+                const std::string& valueTypeName,
+                const std::string& functorTypeName,
+                const control& ctl );
+
+        void constructAndCompileString( ::cl::Kernel *masterKernel, 
+                const std::string& apiName, 
+//                const boltKernel& clKernel, 
+                const std::string& clKernel, 
+                const std::string& instantiationString, 
+                const std::string& userCode, 
+                const std::string& valueTypeName, 
+                const std::string& functorTypeName, 
+                const control& ctl );
+
+        void compileKernelsString( std::vector< ::cl::Kernel >& clKernels,
+                const std::vector< const std::string >& kernelNames,
+//                const boltKernel& clKernel,
+                const std::string& clKernel,
                 const std::string& instantiationString,
                 const std::string& userCode,
                 const std::string& valueTypeName,

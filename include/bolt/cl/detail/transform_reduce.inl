@@ -10,6 +10,8 @@
 #include <boost/thread/once.hpp>
 #include <boost/bind.hpp>
 
+#include "bolt/transform_reduce_kernels.hpp"
+
 namespace bolt {
     namespace cl {
 
@@ -59,7 +61,9 @@ namespace bolt {
                     std::string functorNames = transformFunctorTypeName + " , " + reduceFunctorTypeName; // create for debug message
 
                     bolt::cl::control c = bolt::cl::control::getDefault();  // FIXME- this needs to be passed a parm but we have too many arguments for call_once
-                    bolt::cl::constructAndCompile(masterKernel, "transform_reduce", instantiationString, user_code, valueTypeName, functorNames, c);
+
+                    bolt::cl::constructAndCompileString( masterKernel, "transform_reduce", transform_reduce_kernels, instantiationString, user_code, valueTypeName, functorNames, c);
+                    // bolt::cl::constructAndCompile(masterKernel, "transform_reduce", instantiationString, user_code, valueTypeName, functorNames, c);
 
                 };
             };

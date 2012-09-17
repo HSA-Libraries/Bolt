@@ -9,6 +9,8 @@
 
 // #include <bolt/tbb/reduce.h>
 
+#include "bolt/reduce_kernels.hpp"
+
 namespace bolt {
     namespace cl {
 
@@ -97,7 +99,7 @@ namespace bolt {
                         "local " + valueTypeName + "* scratch\n"
                         ");\n\n";
 
-                    bolt::cl::constructAndCompile(masterKernel, "reduce", instantiationString, cl_code, valueTypeName, functorTypeName, ctl);
+                    bolt::cl::constructAndCompileString( masterKernel, "reduce", reduce_kernels, instantiationString, cl_code, valueTypeName, functorTypeName, ctl);
 
                 };
             };

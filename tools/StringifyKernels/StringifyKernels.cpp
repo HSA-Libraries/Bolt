@@ -6,38 +6,147 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <vector>
+#include <algorithm>
 
-int main(int argc, char *argv[])
+#include <boost/bind.hpp>
+#include <boost/program_options.hpp>
+#include <boost/algorithm/string.hpp>
+
+namespace po = boost::program_options;
+
+//  This is used for debug; prints a string to stdout
+void printString( const std::string& stringRef )
 {
-    if(argc < 4)
+    std::cout << "String value: " << stringRef << std::endl;
+};
+
+//  This is the core logic of this program; it executes for each input file name
+//  Opens a file a .cl file for reading, reads the contents and writes an .hpp file to output.
+void writeHeaderFile( const std::string& inputFileName, const std::string& destDir )
+{
+    std::string headerPath;
+    std::string baseName;
+
+    std::string::size_type posPeriod = inputFileName.find_last_of( "." );
+    std::string::size_type posSlash = inputFileName.find_last_of( "/\\" );
+
+    if( posPeriod != std::string::npos )
     {
-       std::cout << "USAGE: StringifyKernels.exe <source-kernel-file> <destination-kernel-file> <kernel-string-name>\n";
-       return 1;
+        // std::string::npos == -1, so adding 1 makes it index 0
+        std::string::size_type strLength = posPeriod - (posSlash+1);
+        baseName = inputFileName.substr( posSlash + 1, strLength );
+
+        headerPath = destDir + baseName + ".hpp";
+    }
+    else
+    {
+        std::cerr << "Input filenames must have an extention defined; skipping file processing" << std::endl;
+        return;
     }
 
-    const char *kernelFileName   = argv[1];
-    const char *destFileName     = argv[2];
-    const char *kernelStringName = argv[3];
-    std::string line;
+    std::cout << "Input file: " << inputFileName << std::endl;
+    std::cout << "Output path: " << headerPath << std::endl;
 
     //Open the Kernel file
-    std::ifstream f_kernel(kernelFileName, (std::fstream::in));
-    std::ofstream f_dest(destFileName, (std::fstream::out));
-    if (f_kernel.is_open())
+    std::ifstream f_kernel( inputFileName, std::fstream::in );
+    std::ofstream f_dest( headerPath, std::fstream::out );
+
+    //if( f_kernel.is_open( ) )
+    //{
+    //    //  We use the STRINGIFY_CODE macro to encode the kernel into a string, as this avoids the need to preprocess
+    //    //  the string to escape special characters, like 
+    //    const std::string startLine = "#include <string>\n#include \"clcode.h\"\n\nstatic const std::string " + baseName + " = STRINGIFY_CODE(\n";
+    //    const std::string endLine = ");\n";
+
+    //    std::string fileContent( (std::istreambuf_iterator<char>( f_kernel ) ), std::istreambuf_iterator<char>( ) );
+
+    //    f_dest << startLine << fileContent << endLine;
+    //}
+
+    if( f_kernel.is_open( ) )
     {
-        const std::string startLine = "const char *" + std::string(kernelStringName) + " = \\\n";
-        f_dest.write(startLine.c_str(), startLine.length());
-        while (!f_kernel.eof())
+        //  We use the STRINGIFY_CODE macro to encode the kernel code into a string; this provides several benefits:
+        //  1) multi-line strings keeping syntax highlighting, with minimal per-line string mangling
+        //  2) properly handles single line c++ comments //
+        //  3) C macro preprocessor strips out all comments from the text
+        const std::string startLine = "#include <string>\n#include \"bolt/cl/clcode.h\"\n\nstatic const std::string " + baseName + " = STRINGIFY_CODE(";
+        f_dest << startLine << std::endl;
+
+        //  We have to emit the text files line by line, because the OpenCL compiler is dependent on newlines
+        std::string line;
+        while( getline( f_kernel, line ) )
         {
-            getline(f_kernel, line);
-            const std::string destLine = "\"" + line + "\\n\"\n";
-            const std::string tabSpaces = "    ";
-            f_dest.write(tabSpaces.c_str(), tabSpaces.length());
-            f_dest.write(destLine.c_str(), destLine.length());
+            //  Debug code to watch string substitution
+            //std::string substLine = boost::replace_all_copy( line, "\\", "\\\\" );
+            //std::string substLine = boost::replace_all_copy( line, "\"", "\\\"" );
+            //std::cout << line << std::endl;
+            //std::cout << substLine << std::endl << std::endl;
+
+            //  Escape the \ and " characters
+            boost::replace_all( line, "\\", "\\\\" );
+            boost::replace_all( line, "\"", "\\\"" );
+
+            //  For every line of code, we append a '\n' that will be preserved in the string passed into the ::clBuildProgram API
+            //  This makes debugging kernels in debuggers easier
+            f_dest << line << " \\n" << std::endl;
         }
-        const std::string endLine = "\"\";\n";
-        f_dest.write(endLine.c_str(), endLine.length());
+
+        const std::string endLine = ");";
+        f_dest << endLine;
+    }
+    else
+    {
+        std::cerr << "Failed to open the specified file " << inputFileName << std::endl;
+        return;
+    }
+};
+
+int main( int argc, char *argv[] )
+{
+    std::string destDir;
+    std::vector< std::string > kernelFiles;
+
+    try
+    {
+        // Declare supported options below, describe what they do
+        po::options_description desc( "StringifyKernels command line options" );
+        desc.add_options()
+            ( "help,h",			"produces this help message" )
+            ( "destinationDir,d", po::value< std::string >( &destDir ), "Destination directory to write output files" )
+            ( "kernelFiles,k", po::value< std::vector< std::string > >( &kernelFiles ), "Input .cl kernel files to be transformed; can specify multiple" )
+            ;
+
+        //  All positional options (un-named) should be interpreted as kernelFiles
+        po::positional_options_description p;
+        p.add("kernelFiles", -1);
+
+        po::variables_map vm;
+        po::store( po::command_line_parser( argc, argv ).options( desc ).positional( p ).run( ), vm );
+        po::notify( vm );
+
+        if( vm.count( "help" ) )
+        {
+            std::cout << desc << std::endl;
+            return 0;
+        }
+
+        if( vm.count( "kernelFiles" ) )
+        {
+            //std::for_each( kernelFiles.begin( ), kernelFiles.end( ), &printString );
+        }
+        else
+        {
+            std::cerr << "StringifyKernels requires files to process; use --help to browse command line options" << std::endl;
+            return 1;
+        }
+    }
+    catch( std::exception& e )
+    {
+        std::cout << "StringifyKernels parsing error reported:" << std::endl << e.what() << std::endl;
+        return 1;
     }
 
-    f_kernel.close();
+    //  Main loop of the program
+    std::for_each( kernelFiles.begin( ), kernelFiles.end( ), boost::bind( &writeHeaderFile, _1, destDir ) );
 }

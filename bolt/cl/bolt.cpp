@@ -12,6 +12,15 @@
 #include <algorithm>
 #include <vector>
 
+//  Generated file from scan_kernels.cl
+
+//  Need to build a map from enum value to kernel string index into kernels
+//#include "bolt/reduce_kernels.hpp"
+//#include "bolt/scan_kernels.hpp"
+//#include "bolt/sort_kernels.hpp"
+//#include "bolt/transform_kernels.hpp"
+//#include "bolt/transform_reduce_kernels.hpp"
+
 namespace bolt {
     namespace cl {
 
@@ -486,6 +495,63 @@ namespace bolt {
             std::string kernelName = kernelNames[ k ] + "Instantiated";
             clKernels.push_back( ::cl::Kernel( clProgram, kernelName.c_str( ) ) );
         }
+    };
+
+    void compileKernelsString( std::vector< ::cl::Kernel >& clKernels, 
+            const std::vector< const std::string >& kernelNames, 
+            //const boltKernel& clKernel,
+            const std::string& clKernel, 
+            const std::string& instantiationString,
+            const std::string& userCode,
+            const std::string& valueTypeName,
+            const std::string& functorTypeName,
+            const control& ctl )
+    {
+
+        std::string codeStr = clKernel + "\n\n" + userCode + "\n\n" + instantiationString;
+
+        std::string compileOptions = "";
+        if( ctl.debug() & control::debug::SaveCompilerTemps )
+        {
+            compileOptions += "-save-temps=BOLT";
+        }
+
+        if( ctl.debug() & control::debug::Compile )
+        {
+            std::cout << "debug: compiling" << " with valueType='" << valueTypeName << "'" << " ;  functorType='" << functorTypeName << "'" << std::endl;
+        }
+
+        ::cl::Program clProgram = buildProgram( codeStr, compileOptions, ctl );
+
+        for( size_t k = 0; k < kernelNames.size( ); ++k )
+        {
+            std::string kernelName = kernelNames[ k ] + "Instantiated";
+            clKernels.push_back( ::cl::Kernel( clProgram, kernelName.c_str( ) ) );
+        }
+    };
+
+    void constructAndCompileString( ::cl::Kernel *masterKernel, 
+            const std::string& kernelName, 
+            //const boltKernel& clKernel, 
+            const std::string& clKernel, 
+            const std::string& instantiationString, 
+            const std::string& userCode, 
+            const std::string& valueTypeName, 
+            const std::string& functorTypeName, 
+            const control &c )
+    {
+        std::string codeStr = userCode + "\n\n" + clKernel +   instantiationString;
+
+        std::string compileOptions = "";
+        if (c.debug() & control::debug::SaveCompilerTemps) {
+            compileOptions += "-save-temps=BOLT";
+        }
+
+        if (c.debug() & control::debug::Compile) {
+            std::cout << "debug: compiling algorithm: '" << kernelName << "' with valueType='" << valueTypeName << "'" << " ;  functorType='" << functorTypeName << "'" << std::endl;
+        }
+
+        *masterKernel = bolt::cl::compileFunctor(codeStr, kernelName + "Instantiated", compileOptions, c);
     };
 
     };
