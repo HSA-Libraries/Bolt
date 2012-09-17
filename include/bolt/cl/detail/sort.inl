@@ -85,6 +85,36 @@ namespace bolt {
 
                     bolt::cl::constructAndCompile(masterKernel, "sort", instantiationString, cl_code_dataType, valueTypeName, "", ctl);
                 }
+                static void constructAndCompileSelectionSort(std::vector< ::cl::Kernel >* sortKernels,  std::string cl_code_dataType, std::string valueTypeName,  std::string compareTypeName, const control &ctl) {
+
+                    std::vector< const std::string > kernelNames;
+                    kernelNames.push_back( "selectionSortLocal" );
+                    kernelNames.push_back( "selectionSortFinal" );
+
+
+                    const std::string instantiationString = 
+                        "\n// Host generates this instantiation string with user-specified value type and functor\n"
+                        "template __attribute__((mangled_name(" + kernelNames[0] + "Instantiated)))\n"
+                        "kernel void selectionSortLocalTemplate(\n"
+                        "global const " + valueTypeName + " * in,\n"
+                        "global " + valueTypeName + " * out,\n"
+                        "global " + compareTypeName + " * userComp,\n"
+                        "local  " + valueTypeName + " * scratch,\n"
+                        "const int buffSize\n"
+                        ");\n\n"
+
+                        "\n// Host generates this instantiation string with user-specified value type and functor\n"
+                        "template __attribute__((mangled_name(" + kernelNames[1] + "Instantiated)))\n"
+                        "kernel void selectionSortFinalTemplate(\n"
+                        "global const " + valueTypeName + " * in,\n"
+                        "global " + valueTypeName + " * out,\n"
+                        "global " + compareTypeName + " * userComp,\n"
+                        "local  " + valueTypeName + " * scratch,\n"
+                        "const int buffSize\n"
+                        ");\n\n";
+                    bolt::cl::compileKernels( *sortKernels, kernelNames, "sort", instantiationString, cl_code_dataType, valueTypeName, "", ctl );
+                    //bolt::cl::constructAndCompile(masterKernel, "sort", instantiationString, cl_code_dataType, valueTypeName, "", ctl);
+                }
 
             }; //End of struct CallCompiler_Sort  
 
@@ -151,12 +181,6 @@ namespace bolt {
                 } else if (runMode == bolt::cl::control::MultiCoreCpu) {
                     std::cout << "The MultiCoreCpu version of sort is not implemented yet." << std ::endl;
                 } else {
-                    if(((szElements-1) & (szElements)) != 0)
-                    {
-                        std::cout << "The BOLT sort routine does not support non power of 2 buffer size. Falling back to CPU std::sort" << std ::endl;
-                        std::sort(first,last,comp);
-                        return;
-                    }
                     device_vector< T > dvInputOutput( first, last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctl );
                     //Now call the actual cl algorithm
                     sort_enqueue(ctl,dvInputOutput.begin(),dvInputOutput.end(),comp,cl_code);
@@ -171,33 +195,35 @@ namespace bolt {
                 StrictWeakOrdering comp, const std::string& cl_code)  
             {
                     typedef typename std::iterator_traits< DVRandomAccessIterator >::value_type T;
+                    size_t szElements = (size_t)(last - first);
+                    if(((szElements-1) & (szElements)) != 0)
+                    {
+                        sort_enqueue_non_powerOf2(ctl,first,last,comp,cl_code);
+                        return;
+                    }
                     static  boost::once_flag initOnlyOnce;
                     static  ::cl::Kernel masterKernel;
-                    size_t szElements = (size_t)(last - first);
+
                     size_t temp;
-                    // For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retreive the name here.
-                    boost::call_once( initOnlyOnce, boost::bind( CallCompiler_Sort::constructAndCompile, &masterKernel, cl_code + ClCode<T>::get(), TypeName<T>::get(), TypeName<StrictWeakOrdering>::get(), ctl) );
 
                     // Set up shape of launch grid and buffers:
                     int computeUnits     = ctl.device().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
                     int wgPerComputeUnit =  ctl.wgPerComputeUnit(); 
                     int resultCnt = computeUnits * wgPerComputeUnit;
                     cl_int l_Error = CL_SUCCESS;
-                    size_t wgSize  = masterKernel.getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.device( ), &l_Error );
-                    std::cout << "wgsize = " << wgSize;
-                    V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
 
+
+                    //Power of 2 buffer size
+                    // For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retreive the name here.
+                    boost::call_once( initOnlyOnce, boost::bind( CallCompiler_Sort::constructAndCompile, &masterKernel, cl_code + ClCode<T>::get(), TypeName<T>::get(), TypeName<StrictWeakOrdering>::get(), ctl) );
+
+                    size_t wgSize  = masterKernel.getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.device( ), &l_Error );
+                    V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
                     if((szElements/2) < wgSize)
                     {
                         wgSize = (int)szElements/2;
                     }
                     unsigned int numStages,stage,passOfStage;
-                    if(((szElements-1) & (szElements)) != 0)
-                    {
-                        std::cout << "The BOLT sort routine device_vector does not support non power of 2 buffer size." << std ::endl;
-                        throw ::cl::Error( CL_INVALID_DEVICE, "The BOLT sort routine device_vector does not support non power of 2 buffer size." );
-                        return;
-                    }
 
                     ::cl::Buffer A = first->getBuffer( );
                     ::cl::Buffer userFunctor(ctl.context(), CL_MEM_USE_HOST_PTR, sizeof(comp), &comp );   // Create buffer wrapper so we can access host parameters.
@@ -236,7 +262,80 @@ namespace bolt {
                     ctl.commandQueue().enqueueMapBuffer(A, true, CL_MAP_READ | CL_MAP_WRITE, 0/*offset*/, sizeof(T) * szElements, NULL, NULL, &l_Error );
                     V_OPENCL( l_Error, "Error calling map on the result buffer" );
                     return;
-            }
+            }// END of sort_enqueue
+
+            template<typename DVRandomAccessIterator, typename StrictWeakOrdering> 
+            void sort_enqueue_non_powerOf2(const control &ctl, DVRandomAccessIterator first, DVRandomAccessIterator last,
+                StrictWeakOrdering comp, const std::string& cl_code)  
+            {
+                    //std::cout << "The BOLT sort routine does not support non power of 2 buffer size. Falling back to CPU std::sort" << std ::endl;
+                    typedef typename std::iterator_traits< DVRandomAccessIterator >::value_type T;
+                    static boost::once_flag initOnlyOnce;
+                    size_t szElements = (size_t)(last - first);
+
+                    // Set up shape of launch grid and buffers:
+                    int computeUnits     = ctl.device().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
+                    int wgPerComputeUnit =  ctl.wgPerComputeUnit(); 
+                    cl_int l_Error = CL_SUCCESS;
+
+                    //Power of 2 buffer size
+                    // For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retreive the name here.
+                    static std::vector< ::cl::Kernel > sortKernels;
+                    boost::call_once( initOnlyOnce, boost::bind( CallCompiler_Sort::constructAndCompileSelectionSort, &sortKernels, cl_code + ClCode<T>::get(), TypeName<T>::get(), TypeName<StrictWeakOrdering>::get(), ctl) );
+
+                    size_t wgSize  = sortKernels[0].getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.device( ), &l_Error );
+                    
+                    size_t totalWorkGroups = (szElements + wgSize)/wgSize;
+                    size_t globalSize = totalWorkGroups * wgSize;
+                    V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
+                    
+                    ::cl::Buffer in = first->getBuffer( );
+                    ::cl::Buffer out(ctl.context(), CL_MEM_READ_WRITE, sizeof(T)*szElements);
+                    ::cl::Buffer userFunctor(ctl.context(), CL_MEM_USE_HOST_PTR, sizeof(comp), &comp );   // Create buffer wrapper so we can access host parameters.
+                    ::cl::LocalSpaceArg loc;
+                    loc.size_ = wgSize*sizeof(T);
+    
+                    V_OPENCL( sortKernels[0].setArg(0, in), "Error setting a kernel argument in" );
+                    V_OPENCL( sortKernels[0].setArg(1, out), "Error setting a kernel argument out" );
+                    V_OPENCL( sortKernels[0].setArg(2, userFunctor), "Error setting a kernel argument userFunctor" );
+                    V_OPENCL( sortKernels[0].setArg(3, loc), "Error setting kernel argument loc" );
+                    V_OPENCL( sortKernels[0].setArg(4, static_cast<cl_uint> (szElements)), "Error setting kernel argument szElements" );
+                    {
+                            l_Error = ctl.commandQueue().enqueueNDRangeKernel(
+                                    sortKernels[0], 
+                                    ::cl::NullRange,
+                                    ::cl::NDRange(globalSize),
+                                    ::cl::NDRange(wgSize),
+                                    NULL,
+                                    NULL);
+                            V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for sort() kernel" );
+                            V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
+                    }
+
+                    wgSize  = sortKernels[1].getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.device( ), &l_Error );
+
+                    V_OPENCL( sortKernels[1].setArg(0, out), "Error setting a kernel argument in" );
+                    V_OPENCL( sortKernels[1].setArg(1, in), "Error setting a kernel argument out" );
+                    V_OPENCL( sortKernels[1].setArg(2, userFunctor), "Error setting a kernel argument userFunctor" );
+                    V_OPENCL( sortKernels[1].setArg(3, loc), "Error setting kernel argument loc" );
+                    V_OPENCL( sortKernels[1].setArg(4, static_cast<cl_uint> (szElements)), "Error setting kernel argument szElements" );
+                    {
+                            l_Error = ctl.commandQueue().enqueueNDRangeKernel(
+                                    sortKernels[1],
+                                    ::cl::NullRange,
+                                    ::cl::NDRange(globalSize),
+                                    ::cl::NDRange(wgSize),
+                                    NULL,
+                                    NULL);
+                            V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for sort() kernel" );
+                            V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
+                    }
+                    // Map the buffer back to the host
+                    ctl.commandQueue().enqueueMapBuffer(in, true, CL_MAP_READ | CL_MAP_WRITE, 0/*offset*/, sizeof(T) * szElements, NULL, NULL, &l_Error );
+                    V_OPENCL( l_Error, "Error calling map on the result buffer" );
+
+                    return;
+            }// END of sort_enqueue_non_powerOf2
 
         }//namespace bolt::cl::detail
     }//namespace bolt::cl
