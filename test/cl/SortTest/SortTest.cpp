@@ -1,6 +1,6 @@
 #define TEST_DOUBLE 0
 #define TEST_DEVICE_VECTOR 1
-#define TEST_CPU_DEVICE 1
+#define TEST_CPU_DEVICE 0
 #define GOOGLE_TEST 1
 #if (GOOGLE_TEST == 1)
 
@@ -150,6 +150,7 @@ TYPED_TEST_P( SortArrayTest, GPU_DeviceNormal )
     cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
     // FIXME - releaseOcl(ocl);
 }
+
 #if (TEST_CPU_DEVICE == 1)
 TYPED_TEST_P( SortArrayTest, CPU_DeviceNormal )
 {
@@ -375,6 +376,27 @@ protected:
     std::vector< int > stdInput;
     bolt::cl::device_vector< int > boltInput;
 };
+
+//  ::testing::TestWithParam< int > means that GetParam( ) returns int values, which i use for array size
+/*class SortUDDDeviceVector: public ::testing::TestWithParam< int >
+{
+public:
+    // Create an std and a bolt vector of requested size, and initialize all the elements to 1
+    SortUDDDeviceVector( ): stdInput( GetParam( ) ), boltInput( static_cast<size_t>( GetParam( ) ) )
+    {
+        std::generate(stdInput.begin(), stdInput.end(), rand);
+        //boltInput = stdInput;      
+        //FIXME - The above should work but the below loop is used. 
+        for (int i=0; i< GetParam( ); i++)
+        {
+            boltInput[i] = stdInput[i];
+        }
+    }
+
+protected:
+    std::vector< UDD > stdInput;
+    bolt::cl::device_vector< UDD > boltInput;
+};*/
 
 //  ::testing::TestWithParam< int > means that GetParam( ) returns int values, which i use for array size
 class SortFloatDeviceVector: public ::testing::TestWithParam< int >
@@ -667,28 +689,28 @@ TEST_P( SortDoubleNakedPointer, Inplace )
 #endif
 std::array<int, 15> TestValues = {2,4,8,16,32,64,128,256,512,1024,2048,4096,8192,16384,32768};
 //Test lots of consecutive numbers, but small range, suitable for integers because they overflow easier
-//INSTANTIATE_TEST_CASE_P( Sort, SortIntegerVector, ::testing::Range( 0, 1024, 2 ) );
-INSTANTIATE_TEST_CASE_P( Sort, SortIntegerVector, ::testing::ValuesIn( TestValues.begin(), TestValues.end() ) );
-//INSTANTIATE_TEST_CASE_P( Sort, SortFloatVector, ::testing::Range( 0, 1024, 2 ) );
-INSTANTIATE_TEST_CASE_P( Sort, SortFloatVector, ::testing::ValuesIn( TestValues.begin(), TestValues.end() ) );
+INSTANTIATE_TEST_CASE_P( SortRange, SortIntegerVector, ::testing::Range( 0, 1024, 7 ) );
+INSTANTIATE_TEST_CASE_P( SortValues, SortIntegerVector, ::testing::ValuesIn( TestValues.begin(), TestValues.end() ) );
+INSTANTIATE_TEST_CASE_P( SortRange, SortFloatVector, ::testing::Range( 0, 1024, 3 ) );
+INSTANTIATE_TEST_CASE_P( SortValues, SortFloatVector, ::testing::ValuesIn( TestValues.begin(), TestValues.end() ) );
 #if (TEST_DOUBLE == 1)
-//INSTANTIATE_TEST_CASE_P( Sort, SortDoubleVector, ::testing::Range( 0, 1024, 2 ) );
-INSTANTIATE_TEST_CASE_P( Sort, SortDoubleVector, ::testing::ValuesIn( TestValues.begin(), TestValues.end() ) );
+INSTANTIATE_TEST_CASE_P( SortRange, SortDoubleVector, ::testing::Range( 0, 1024, 21 ) );
+INSTANTIATE_TEST_CASE_P( SortValues, SortDoubleVector, ::testing::ValuesIn( TestValues.begin(), TestValues.end() ) );
 #endif
-//INSTANTIATE_TEST_CASE_P( Sort, SortIntegerDeviceVector, ::testing::Range( 0, 1024, 2 ) );
-INSTANTIATE_TEST_CASE_P( Sort, SortIntegerDeviceVector, ::testing::ValuesIn( TestValues.begin(), TestValues.end() ) );
-//INSTANTIATE_TEST_CASE_P( Sort, SortFloatDeviceVector, ::testing::Range( 0, 1024, 2 ) );
-INSTANTIATE_TEST_CASE_P( Sort, SortFloatDeviceVector, ::testing::ValuesIn( TestValues.begin(), TestValues.end() ) );
+INSTANTIATE_TEST_CASE_P( SortRange, SortIntegerDeviceVector, ::testing::Range( 0, 1024, 53 ) );
+INSTANTIATE_TEST_CASE_P( SortValues, SortIntegerDeviceVector, ::testing::ValuesIn( TestValues.begin(), TestValues.end() ) );
+INSTANTIATE_TEST_CASE_P( SortRange, SortFloatDeviceVector, ::testing::Range( 0, 1024, 53 ) );
+INSTANTIATE_TEST_CASE_P( SortValues, SortFloatDeviceVector, ::testing::ValuesIn( TestValues.begin(), TestValues.end() ) );
 #if (TEST_DOUBLE == 1)
-//INSTANTIATE_TEST_CASE_P( Sort, SortDoubleDeviceVector, ::testing::Range( 0, 1024, 2 ) );
-INSTANTIATE_TEST_CASE_P( Sort, SortDoubleDeviceVector, ::testing::ValuesIn( TestValues.begin(), TestValues.end() ) );
+INSTANTIATE_TEST_CASE_P( SortRange, SortDoubleDeviceVector, ::testing::Range( 0, 1024, 53 ) );
+INSTANTIATE_TEST_CASE_P( SortValues, SortDoubleDeviceVector, ::testing::ValuesIn( TestValues.begin(), TestValues.end() ) );
 #endif
-//INSTANTIATE_TEST_CASE_P( Sort, SortIntegerNakedPointer, ::testing::Range( 0, 1024, 2) );
-INSTANTIATE_TEST_CASE_P( Sort, SortIntegerNakedPointer, ::testing::ValuesIn( TestValues.begin(), TestValues.end() ) );
-//INSTANTIATE_TEST_CASE_P( Sort, SortFloatNakedPointer, ::testing::Range( 0, 1024, 2) );
-INSTANTIATE_TEST_CASE_P( Sort, SortFloatNakedPointer, ::testing::ValuesIn( TestValues.begin(), TestValues.end() ) );
+INSTANTIATE_TEST_CASE_P( SortRange, SortIntegerNakedPointer, ::testing::Range( 0, 1024, 13) );
+INSTANTIATE_TEST_CASE_P( SortValues, SortIntegerNakedPointer, ::testing::ValuesIn( TestValues.begin(), TestValues.end() ) );
+INSTANTIATE_TEST_CASE_P( SortRange, SortFloatNakedPointer, ::testing::Range( 0, 1024, 13) );
+INSTANTIATE_TEST_CASE_P( SortValues, SortFloatNakedPointer, ::testing::ValuesIn( TestValues.begin(), TestValues.end() ) );
 #if (TEST_DOUBLE == 1)
-//INSTANTIATE_TEST_CASE_P( Sort, SortDoubleNakedPointer, ::testing::Range( 0, 1024, 2) );
+INSTANTIATE_TEST_CASE_P( SortRange, SortDoubleNakedPointer, ::testing::Range( 0, 1024, 13) );
 INSTANTIATE_TEST_CASE_P( Sort, SortDoubleNakedPointer, ::testing::ValuesIn( TestValues.begin(), TestValues.end() ) );
 #endif
 
@@ -877,6 +899,7 @@ BOLT_CREATE_CLCODE(MyType<float>, "template <typename T> struct MyType { T a; \n
 BOLT_CREATE_TYPENAME(MyType<double>);
 BOLT_CREATE_CLCODE(MyType<double>, "template <typename T> struct MyType { T a; \n\nbool operator() (const MyType& lhs, const MyType& rhs) { return (lhs.a > rhs.a); } \n\nbool operator < (const MyType& other) const { return (a < other.a); }\n\n bool operator > (const MyType& other) const { return (a > other.a);} \n\n };");
 
+BOLT_CREATE_TYPENAME(bolt::cl::less< MyType<int> >);
 // A Data structure defining a Functor
 template <typename T>    
 struct MyFunctor{ 
@@ -1077,14 +1100,20 @@ void BasicSortTestOfLength(size_t length)
     std::vector<T> boltInput(length);
     
     size_t i;
-    for (i=0;i<length;i++)
+    for (i=0;i<length/2;i++)
     {
-        boltInput[i]= (T)(length - i +2);
-        stdInput[i]= (T)(length - i +2);
+        boltInput[2*i]= (T)(length - i +2);
+        boltInput[2*i + 1] = boltInput[2*i];
+        stdInput[2*i]= (T)(length - i +2);
+        stdInput[2*i + 1] = stdInput[2*i];
     }
     
     bolt::cl::sort(boltInput.begin(), boltInput.end());
     std::sort(stdInput.begin(), stdInput.end());
+    for (i=0; i<length; i++)
+    {
+        std::cout << i << " : " << stdInput[i] << " , " << boltInput[i] << std::endl;
+    }
     for (i=0; i<length; i++)
     {
         if(stdInput[i] == boltInput[i])
@@ -1274,8 +1303,12 @@ void TestWithBoltControl(int length)
 int main(int argc, char* argv[])
 {
 
-    UDDSortTestOfLengthWithDeviceVector<int>(256);
-
+    //UDDSortTestOfLengthWithDeviceVector<int>(256);
+    BasicSortTestOfLength<int>(68);
+    //BasicSortTestOfLength<int>(111);
+    //BasicSortTestOfLength<int>(65);
+    //BasicSortTestOfLength<int>(63);
+    //BasicSortTestOfLength<int>(31);
 #if 0
 		std::vector<int> input(1024);
 		std::generate(input.begin(), input.end(), rand);	
