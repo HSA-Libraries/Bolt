@@ -9,7 +9,7 @@
 
 // #include <bolt/tbb/reduce.h>
 
-#include "bolt/reduce_kernels.hpp"
+#include "bolt/cl/bolt.h"
 
 namespace bolt {
     namespace cl {

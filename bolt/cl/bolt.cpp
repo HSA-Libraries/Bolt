@@ -1,9 +1,4 @@
 
-
-//#include "stdafx.h"  // not present in the bolt/cl dir, but don't really need it 
-#include <bolt/cl/bolt.h>
-#include <bolt/unicode.h>
-
 #include <iostream>
 #include <fstream>
 #include <streambuf>
@@ -12,14 +7,15 @@
 #include <algorithm>
 #include <vector>
 
-//  Generated file from scan_kernels.cl
+#include "bolt/cl/bolt.h"
+#include "bolt/unicode.h"
 
-//  Need to build a map from enum value to kernel string index into kernels
-//#include "bolt/reduce_kernels.hpp"
-//#include "bolt/scan_kernels.hpp"
-//#include "bolt/sort_kernels.hpp"
-//#include "bolt/transform_kernels.hpp"
-//#include "bolt/transform_reduce_kernels.hpp"
+//  Include all kernel string objects 
+#include "bolt/reduce_kernels.hpp"
+#include "bolt/scan_kernels.hpp"
+#include "bolt/sort_kernels.hpp"
+#include "bolt/transform_kernels.hpp"
+#include "bolt/transform_reduce_kernels.hpp"
 
 namespace bolt {
     namespace cl {

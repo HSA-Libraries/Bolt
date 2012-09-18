@@ -91,6 +91,9 @@ if( BUILD_UNICODE )
     add_definitions( "/DUNICODE /D_UNICODE" )
 endif( )
 
+# Bolt statically links in the boost libraries, disable the example apps from trying to link in boost themselves
+# add_definitions( "/DBOOST_ALL_NO_LIB" )
+
 # Print out compiler flags for viewing/debug
 message( STATUS "CMAKE_CXX_COMPILER flags: " ${CMAKE_CXX_FLAGS} )
 message( STATUS "CMAKE_CXX_COMPILER debug flags: " ${CMAKE_CXX_FLAGS_DEBUG} )
@@ -114,14 +117,31 @@ endif( )
 # This will define OPENCL_FOUND
 find_package( OpenCL REQUIRED )
 
+# Use our packaged version of Boost if not specified by the user
+if( NOT BOOST_ROOT )
+    set( BOOST_ROOT "${PROJECT_SOURCE_DIR}/.." )
+endif( )
+
+set( Boost_USE_MULTITHREADED ON )
+set( Boost_USE_STATIC_LIBS   ON )
+set( Boost_DETAILED_FAILURE_MSG   ON )
+# set( Boost_DEBUG ON )
+
+# The root tree of BOOST was specified on the command line; use it to to find the specific Boost the user points too
+# This will define Boost_FOUND
+find_package( Boost 1.51 COMPONENTS thread system REQUIRED )
+
+if( NOT BOLT_ROOT )
+    set( BOLT_ROOT "${PROJECT_SOURCE_DIR}/.." )
+endif( )
+
 # This will define BOLT_FOUND
-set( BOLT_ROOT "${PROJECT_SOURCE_DIR}/.." )
 find_package( Bolt REQUIRED )
 
-# add_subdirectory( Hessian )
 add_subdirectory( DeviceVector )
 add_subdirectory( Scan )
 add_subdirectory( Sort )
+add_subdirectory( StdDev )
 add_subdirectory( Transform )
 add_subdirectory( Version )
 

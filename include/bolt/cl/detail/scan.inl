@@ -1,14 +1,14 @@
 #if !defined( SCAN_INL )
 #define SCAN_INL
 
-#include <bolt/cl/transform.h>
 #include <algorithm>
 #include <type_traits>
 
 #include <boost/thread/once.hpp>
 #include <boost/bind.hpp>
 
-#include "bolt/scan_kernels.hpp"
+#include "bolt/cl/transform.h"
+#include "bolt/cl/bolt.h"
 
 namespace bolt
 {

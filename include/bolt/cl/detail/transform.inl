@@ -5,7 +5,7 @@
 #include <boost/thread/once.hpp>
 #include <boost/bind.hpp>
 
-#include "bolt/transform_kernels.hpp"
+#include "bolt/cl/bolt.h"
 
 namespace bolt {
     namespace cl {

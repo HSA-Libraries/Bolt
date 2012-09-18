@@ -46,16 +46,18 @@ if( NOT BOLT_FIND_COMPONENTS )
 	set( BOLT_FIND_COMPONENTS CL )
 endif( )
 
+if( MSVC_VERSION VERSION_LESS 1600 )
+    set( myMSVCVer "vc90" )
+elseif( MSVC_VERSION VERSION_LESS 1700 )
+    set( myMSVCVer "vc100" )
+elseif( MSVC_VERSION VERSION_LESS 1800 )
+    set( myMSVCVer "vc110" )
+endif( )
+
 # Eventually, Bolt may support multiple backends, but for now it only supports CL
 list( FIND BOLT_FIND_COMPONENTS CL find_CL )
 if( NOT find_CL EQUAL -1 )
-	set( BOLT_LIBNAME_STATIC clBolt.Runtime.lib )
-endif( )
-
-if( LIB64 )
-	set( archPath "lib64" )
-else( )
-	set( archPath "lib" )
+	set( BOLT_LIBNAME_STATIC clBolt.Runtime.${myMSVCVer}.lib )
 endif( )
 
 if( NOT find_CL EQUAL -1 )
@@ -66,7 +68,7 @@ if( NOT find_CL EQUAL -1 )
 			${BOLT_ROOT}
 			ENV BOLT_ROOT
 		DOC "BOLT static library path"
-		PATH_SUFFIXES lib/import
+		PATH_SUFFIXES lib
 	)
 	mark_as_advanced( BOLT_LIBRARY_STATIC )
 
