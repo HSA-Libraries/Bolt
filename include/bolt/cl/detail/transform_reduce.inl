@@ -2,7 +2,6 @@
 #define TRANSFORM_REDUCE_INL
 #pragma once
 
-#include <bolt/cl/bolt.h>
 #include <string>
 #include <iostream>
 #include <numeric>
@@ -10,7 +9,7 @@
 #include <boost/thread/once.hpp>
 #include <boost/bind.hpp>
 
-#include "bolt/transform_reduce_kernels.hpp"
+#include "bolt/cl/bolt.h"
 
 namespace bolt {
     namespace cl {

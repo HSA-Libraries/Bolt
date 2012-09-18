@@ -12,33 +12,41 @@
 
 #include <string>
 
-#include <bolt/BoltVersion.h>
-#include <bolt/cl/control.h>
-#include <bolt/cl/clcode.h>
+#include "bolt/BoltVersion.h"
+#include "bolt/cl/control.h"
+#include "bolt/cl/clcode.h"
 
 /*! \file bolt.h
  *  \brief Main public header file defining global functions for Bolt
- *  \todo 1. Kernel .hpp files are currently included in inl files; need to include kernel .hpp files in static library
- *  \todo 2. Develop googletest framework for Transform
- *  \todo 3. Develop googletest framework for Transform_reduce
- *  \todo 4. Develop googletest framework for count
- *  \todo 5. Develop googletest framework for reduce
- *  \todo 6. Follow the coding guideline for expanding tabs to spaces, max line char width of 120 chars
- *  \todo 7. Add support for vs2008
- *  \todo 8 Add support for linux/mingw
- *  \todo 9. Review the the use of parameters to the Bolt API; should parameters for chained functions past 
+ *  \todo Develop googletest framework for Transform
+ *  \todo Develop googletest framework for Transform_reduce
+ *  \todo Develop googletest framework for count
+ *  \todo Develop googletest framework for reduce
+ *  \todo Follow the coding guideline for expanding tabs to spaces, max line char width of 120 chars
+ *  \todo Add support for vs2008
+ *  \todo Add support for linux/mingw
+ *  \todo Review the the use of parameters to the Bolt API; should parameters for chained functions past 
  *  the public API be references?  Iterators and everything.
- *  \todo 10. Add buffer pool for temporary memory allocated by Bolt calls
- *  \todo 11. Make Bolt calls thread-safe (Save cl:program rather than cl::kernel, and call clCreateKernel on each Bolt call)
- *  \todo 12. Review documentation for typos, clarity, etc
- *  \todo 13. Add CPU implementations, i.e. link in external library such as TBB or define our own CPU implementation
- *  \todo 14. Add richer set of API functions (can this be made more specific?)
+ *  \todo Add buffer pool for temporary memory allocated by Bolt calls
+ *  \todo Make Bolt calls thread-safe (Save cl:program rather than cl::kernel, and call clCreateKernel on each Bolt call)
+ *  \todo Review documentation for typos, clarity, etc
+ *  \todo Add CPU implementations, i.e. link in external library such as TBB or define our own CPU implementation
+ *  \todo Add richer set of API functions (can this be made more specific?)
 */
 
 namespace bolt {
     namespace cl {
 
-        enum boltKernel {reduceKernel, scanKernel, sortKernel, transformKernel, transformReduceKernel, endKernels };
+        extern const std::string reduce_kernels;
+        extern const std::string transform_kernels;
+        extern const std::string transform_reduce_kernels;
+        extern const std::string sort_kernels;
+        extern const std::string scan_kernels;
+        //extern const char* const reduce_kernels;
+        //extern const char* const transform_kernels;
+        //extern const char* const transform_reduce_kernels;
+        //extern const char* const sort_kernels;
+        //extern const char* const scan_kernels;
 
         extern std::string fileToString(const std::string &fileName);
 
@@ -57,7 +65,6 @@ namespace bolt {
 
         void constructAndCompileString( ::cl::Kernel *masterKernel, 
                 const std::string& apiName, 
-//                const boltKernel& clKernel, 
                 const std::string& clKernel, 
                 const std::string& instantiationString, 
                 const std::string& userCode, 
@@ -67,7 +74,6 @@ namespace bolt {
 
         void compileKernelsString( std::vector< ::cl::Kernel >& clKernels,
                 const std::vector< const std::string >& kernelNames,
-//                const boltKernel& clKernel,
                 const std::string& clKernel,
                 const std::string& instantiationString,
                 const std::string& userCode,

@@ -7,6 +7,7 @@ set( Boost_USE_MULTITHREADED ON )
 set( Boost_USE_STATIC_LIBS   ON )
 set( Boost_DETAILED_FAILURE_MSG   ON )
 # set( Boost_DEBUG ON )
+# set( BOOST_LIB_DIAGNOSTIC ON )
 
 if( BOOST_ROOT )
     # The root tree of BOOST was specified on the command line; use it to to find the specific Boost the user points too
@@ -132,16 +133,6 @@ elseif( MSVC_VERSION VERSION_LESS 1800 )
     set_target_properties( clBolt.Runtime PROPERTIES ARCHIVE_OUTPUT_NAME "clBolt.Runtime.vc110" )
 endif( )
 
-# install( FILES
-            # ${clBolt.Runtime.clFiles.FullPath}
-        # DESTINATION
-            # ${BIN_DIR} )
-
-# install( FILES
-            # ${clBolt.Runtime.clFiles.FullPath}
-        # DESTINATION
-            # ${PROJECT_BINARY_DIR}/staging/\${CMAKE_INSTALL_CONFIG_NAME} )
-
 install( FILES
             ${clBolt.Runtime.Headers}
         DESTINATION
@@ -212,6 +203,28 @@ install( FILES
             ${ROOT_EXTERNAL_BOOST}/assert.hpp
             ${ROOT_EXTERNAL_BOOST}/current_function.hpp
             ${ROOT_EXTERNAL_BOOST}/throw_exception.hpp
+        DESTINATION
+            ${INCLUDE_DIR}/boost )
+
+# thread library
+install( DIRECTORY 
+            ${ROOT_EXTERNAL_BOOST}/thread
+            ${ROOT_EXTERNAL_BOOST}/system
+            ${ROOT_EXTERNAL_BOOST}/bind
+        DESTINATION
+            ${INCLUDE_DIR}/boost )
+
+install( FILES
+            ${ROOT_EXTERNAL_BOOST}/version.hpp
+            ${ROOT_EXTERNAL_BOOST}/cstdint.hpp
+            ${ROOT_EXTERNAL_BOOST}/operators.hpp
+            ${ROOT_EXTERNAL_BOOST}/cerrno.hpp
+            ${ROOT_EXTERNAL_BOOST}/bind.hpp
+            ${ROOT_EXTERNAL_BOOST}/ref.hpp
+            ${ROOT_EXTERNAL_BOOST}/mem_fn.hpp
+            ${ROOT_EXTERNAL_BOOST}/type.hpp
+            ${ROOT_EXTERNAL_BOOST}/is_placeholder.hpp
+            ${ROOT_EXTERNAL_BOOST}/visit_each.hpp
         DESTINATION
             ${INCLUDE_DIR}/boost )
 

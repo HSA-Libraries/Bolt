@@ -52,17 +52,7 @@ void writeHeaderFile( const std::string& inputFileName, const std::string& destD
     std::ifstream f_kernel( inputFileName, std::fstream::in );
     std::ofstream f_dest( headerPath, std::fstream::out );
 
-    //if( f_kernel.is_open( ) )
-    //{
-    //    //  We use the STRINGIFY_CODE macro to encode the kernel into a string, as this avoids the need to preprocess
-    //    //  the string to escape special characters, like 
-    //    const std::string startLine = "#include <string>\n#include \"clcode.h\"\n\nstatic const std::string " + baseName + " = STRINGIFY_CODE(\n";
-    //    const std::string endLine = ");\n";
-
     //    std::string fileContent( (std::istreambuf_iterator<char>( f_kernel ) ), std::istreambuf_iterator<char>( ) );
-
-    //    f_dest << startLine << fileContent << endLine;
-    //}
 
     if( f_kernel.is_open( ) )
     {
@@ -70,7 +60,8 @@ void writeHeaderFile( const std::string& inputFileName, const std::string& destD
         //  1) multi-line strings keeping syntax highlighting, with minimal per-line string mangling
         //  2) properly handles single line c++ comments //
         //  3) C macro preprocessor strips out all comments from the text
-        const std::string startLine = "#include <string>\n#include \"bolt/cl/clcode.h\"\n\nstatic const std::string " + baseName + " = STRINGIFY_CODE(";
+        const std::string startLine = "#include <string>\n#include \"bolt/cl/clcode.h\"\n\n const std::string bolt::cl::" + baseName + " = STRINGIFY_CODE(";
+        //const std::string startLine = "#include <string>\n#include \"bolt/cl/clcode.h\"\n\n const char* const bolt::cl::" + baseName + " = STRINGIFY_CODE(";
         f_dest << startLine << std::endl;
 
         //  We have to emit the text files line by line, because the OpenCL compiler is dependent on newlines

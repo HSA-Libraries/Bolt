@@ -11,7 +11,7 @@ set( clBolt.Example.Transform.Files ${clBolt.Example.Transform.Source} ${clBolt.
 include_directories( ${BOLT_INCLUDE_DIRS} ${OPENCL_INCLUDE_DIRS} )
 
 add_executable( clBolt.Example.Transform ${clBolt.Example.Transform.Files} )
-target_link_libraries( clBolt.Example.Transform ${BOLT_LIBRARIES} ${OPENCL_LIBRARIES} )
+target_link_libraries( clBolt.Example.Transform ${BOLT_LIBRARIES} ${OPENCL_LIBRARIES} ${Boost_LIBRARIES} )
 
 set_target_properties( clBolt.Example.Transform PROPERTIES VERSION ${Examples_VERSION} )
 set_target_properties( clBolt.Example.Transform PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )

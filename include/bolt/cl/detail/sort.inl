@@ -4,13 +4,13 @@
 
 #include <algorithm>
 #include <type_traits>
-#include <bolt/cl/functional.h>
-#include <bolt/cl/device_vector.h>
 
 #include <boost/thread/once.hpp>
 #include <boost/bind.hpp>
 
-#include "bolt/sort_kernels.hpp"
+#include "bolt/cl/functional.h"
+#include "bolt/cl/device_vector.h"
+#include "bolt/cl/bolt.h"
 
 #define WGSIZE 64
 
