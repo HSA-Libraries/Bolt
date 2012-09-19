@@ -228,9 +228,18 @@ install( FILES
         DESTINATION
             ${INCLUDE_DIR}/boost )
 
+# Copy over our Boost static library dependencies
+install( FILES
+    ${Boost_SYSTEM_LIBRARY_DEBUG} 
+    ${Boost_SYSTEM_LIBRARY_RELEASE}
+    ${Boost_THREAD_LIBRARY_DEBUG} 
+    ${Boost_THREAD_LIBRARY_RELEASE}
+    DESTINATION ${LIB_DIR}
+    )
+
 # CPack configuration; include the executable into the package
 install( TARGETS clBolt.Runtime
-    EXPORT exportBOLT
+#    EXPORT exportBOLT
     RUNTIME DESTINATION ${BIN_DIR}
     LIBRARY DESTINATION ${LIB_DIR}
     ARCHIVE DESTINATION ${LIB_DIR}

@@ -34,7 +34,7 @@ int _tmain( int argc, _TCHAR* argv[ ] )
     cl_int boltMean = boltSum / vecSize;
 
     cl_uint boltVariance  = bolt::cl::transform_reduce( boltInput.begin( ), boltInput.end( ), Variance< int >( boltMean ), 0, bolt::cl::plus< cl_int >( ) );
-    cl_double boltStdDev = sqrt( boltVariance / vecSize );
+    cl_double boltStdDev = sqrt( static_cast< double >( boltVariance ) / vecSize );
 
     //  Calculate standard deviation with std algorithms (using device_vector!)
     cl_int stdSum = std::accumulate( boltInput.begin( ), boltInput.end( ), 0 );
@@ -42,7 +42,7 @@ int _tmain( int argc, _TCHAR* argv[ ] )
 
     std::transform( boltInput.begin( ), boltInput.end( ), boltInput.begin( ), Variance< int >( stdMean ) );
     cl_uint stdVariance = std::accumulate( boltInput.begin( ), boltInput.end( ), 0 );
-    cl_double stdStdDev = sqrt( stdVariance / vecSize );
+    cl_double stdStdDev = sqrt( static_cast< double >( stdVariance ) / vecSize );
 
     std::cout << std::setw( 20 ) << std::right << "Bolt StdDev: " << boltStdDev << std::endl;
     std::cout << std::setw( 20 ) << std::right << "Std StdDev: " << stdStdDev << std::endl;
