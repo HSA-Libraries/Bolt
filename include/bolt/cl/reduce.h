@@ -23,6 +23,7 @@ namespace bolt {
         /*! \addtogroup reduce
         *   \ingroup reductions
         *   \{
+        *   \todo Document wg-per-compute unit flags for reduce
         */
 
         /*! \brief reduce returns the result of combining all the elements in the specified range using the specified binary_op.  
