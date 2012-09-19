@@ -32,6 +32,14 @@
  *  \todo Review documentation for typos, clarity, etc
  *  \todo Add CPU implementations, i.e. link in external library such as TBB or define our own CPU implementation
  *  \todo Add richer set of API functions (can this be made more specific?)
+ *  \todo Statically link the Boost libraries into the Bolt library
+ *  \todo Explain the cl_code parameter better, with possible use cases
+ *  \todo Fix FAQ entry for device_vector; better explain when to use DV as opposed to host vectors
+ *  \todo More examples of using Bolt with regular pointers, for instance float*'s
+ *  \todo Develop auto-tuning framework for deciding to run on PU vs GPU.
+ *  \todo Specify limits on LDS usage?  How will a user know how much LDS space the functor code can allocate?  Discourage use.
+ *  \todo Test Bolt functions for 'unusual' limits, for instance very large types which exhausts LDS.
+ *  \todo Explore how asynchronous API's are implemented.  Load-balancing may drive desire to hae async APIs
 */
 
 namespace bolt {
