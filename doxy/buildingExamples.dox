@@ -91,6 +91,7 @@
 * that the samples are built.  This needs to happen at least once for the .cl files to be initially copied, but 
 * do not need to be copied again unless those kernel files are modified.
 
-* \subsection vs2012 Visual Studio 2012 dependency
-* Bolt currently has dependencies on Visual Studio 2012.  Additional compilers will be added in time.
+* \subsection compDependency Supported compilers
+* Bolt currently uses type traits introduced in vs2010.  Additional compilers will be added in time.  GCC/MinGW support
+* will be added in time.
 */
