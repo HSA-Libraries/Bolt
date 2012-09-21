@@ -85,18 +85,18 @@ namespace bolt {
             //! to detect AMD platforms and make sure we default to an AMD device first, then fall back to other
             //! platforms
             control(
-                ::cl::CommandQueue commandQueue=getDefault().commandQueue(),
+                const ::cl::CommandQueue& commandQueue = getDefault().commandQueue(),
                 e_UseHostMode useHost=getDefault().useHost(),
                 unsigned debug=getDefault().debug()
                 ) :
-            _commandQueue(commandQueue),
-                _useHost(useHost),
-                _forceRunMode(getDefault()._forceRunMode),
-                _debug(debug),
-                _autoTune(getDefault()._autoTune),
-                _wgPerComputeUnit(getDefault()._wgPerComputeUnit),
-                _compileOptions(getDefault()._compileOptions),
-                _compileForAllDevices(getDefault()._compileForAllDevices)
+            m_commandQueue(commandQueue),
+                m_useHost(useHost),
+                m_forceRunMode(getDefault().m_forceRunMode),
+                m_debug(debug),
+                m_autoTune(getDefault().m_autoTune),
+                m_wgPerComputeUnit(getDefault().m_wgPerComputeUnit),
+                m_compileOptions(getDefault().m_compileOptions),
+                m_compileForAllDevices(getDefault().m_compileForAllDevices)
             {};
 
             //setters:
@@ -104,19 +104,19 @@ namespace bolt {
             //! Only one command-queue may be specified for each call - Bolt does not load-balance across
             //! multiple command queues.  Bolt also uses the specified command queue to determine the OpenCL context and
             //! device.
-            void commandQueue(::cl::CommandQueue commandQueue) { _commandQueue = commandQueue; };
+            void commandQueue(::cl::CommandQueue commandQueue) { m_commandQueue = commandQueue; };
 
             //! If enabled, Bolt may use the host CPU to run parts of the Algorithm.  If false, Bolt will run the
             //! entire algorithm using the device specified by the command-queue - this might be appropriate 
             //! on a discrete GPU where the input data is located on the device memory.
-            void useHost(e_UseHostMode useHost) { _useHost = useHost; };
+            void useHost(e_UseHostMode useHost) { m_useHost = useHost; };
 
 
             //! Force the Bolt command to run on the specifed device.  Default is "Automatic", in which case the Bolt
             //! runtime will select the device.  Forcing the mode to SerialCpu can be useful for debugging the algorithm.
             //! Forcing the mode can also be useful for performance comparisons or when the programmer wants direct 
             //! control over the run location (perhaps due to knowledge that the algorithm is best-suited for GPU).
-            void forceRunMode(e_RunMode forceRunMode) { _forceRunMode = forceRunMode; };
+            void forceRunMode(e_RunMode forceRunMode) { m_forceRunMode = forceRunMode; };
 
             /*! Enable debug messages to be printed to stdout as the algorithm is compiled, run, and tuned.  See the #debug
             * namespace for a list of possible values.  Multiple debug options can be combined with the + sign as in 
@@ -128,28 +128,33 @@ namespace bolt {
             * myControl.debug(bolt::cl::control::debug::Compile + bolt::cl::control:debug::SaveCompilerTemps);
             * \endcode
             */
-            void debug(unsigned debug) { _debug = debug; };
+            void debug(unsigned debug) { m_debug = debug; };
 
 
-            void wgPerComputeUnit(int wgPerComputeUnit) { _wgPerComputeUnit = wgPerComputeUnit; }; 
+            void wgPerComputeUnit(int wgPerComputeUnit) { m_wgPerComputeUnit = wgPerComputeUnit; }; 
             
             //! 
             //! Specify the compile options which are passed to the OpenCL(TM) compiler
-            void compileOptions(std::string &compileOptions) { _compileOptions = compileOptions; }; 
+            void compileOptions(std::string &compileOptions) { m_compileOptions = compileOptions; }; 
 
             // getters:
-            ::cl::CommandQueue commandQueue() const { return _commandQueue; };
-            ::cl::Context context() const { return _commandQueue.getInfo<CL_QUEUE_CONTEXT>();};
-            ::cl::Device device() const { return _commandQueue.getInfo<CL_QUEUE_DEVICE>();};
-            e_UseHostMode useHost() const { return _useHost; };
-            e_RunMode forceRunMode() const { return _forceRunMode; };
-            unsigned debug() const { return _debug;};
-            int const wgPerComputeUnit() const { return _wgPerComputeUnit; };
-            const std::string compileOptions() const { return _compileOptions; };  
+            ::cl::CommandQueue commandQueue() const { return m_commandQueue; };
+            ::cl::Context context() const { return m_commandQueue.getInfo<CL_QUEUE_CONTEXT>();};
+            ::cl::Device device() const { return m_commandQueue.getInfo<CL_QUEUE_DEVICE>();};
+            e_UseHostMode useHost() const { return m_useHost; };
+            e_RunMode forceRunMode() const { return m_forceRunMode; };
+            unsigned debug() const { return m_debug;};
+            int const wgPerComputeUnit() const { return m_wgPerComputeUnit; };
+            const std::string compileOptions() const { return m_compileOptions; };  
 
-            bool compileForAllDevices() const { return _compileForAllDevices; };
+            bool compileForAllDevices() const { return m_compileForAllDevices; };
 
-            
+            // setters:
+            void setCommandQueue( const ::cl::CommandQueue& commQueue )
+            {
+                m_commandQueue = commQueue;
+            };
+
             /*!
               * Return default default \p control structure.  This structure is used for Bolt API calls where the user
               * does not explicitly specify a \p control structure.  Also, newly created \p control structures copy
@@ -168,34 +173,34 @@ namespace bolt {
             static control &getDefault() 
             {
                 // Default control structure; this can be accessed by the bolt::cl::control::getDefault()
-                static control _defaultControl(true);
+                static control _defaultControl( true );
                 return _defaultControl; 
-            }; 
+            };
+
         private:
 
             // This is the private constructor is only used to create the initial default control structure.
             control(bool createGlobal) :
-                _commandQueue(::cl::CommandQueue::getDefault()),
-                _useHost(UseHost),
-                _forceRunMode(Automatic),
-                _debug(debug::None),
-                _autoTune(AutoTuneAll),
-                _wgPerComputeUnit(8),
-                _compileForAllDevices(true)
+                m_commandQueue(::cl::CommandQueue::getDefault()),
+                m_useHost(UseHost),
+                m_forceRunMode(Automatic),
+                m_debug(debug::None),
+                m_autoTune(AutoTuneAll),
+                m_wgPerComputeUnit(8),
+                m_compileForAllDevices(true)
             {};
 
-        private:
-            ::cl::CommandQueue    _commandQueue;
-            e_UseHostMode       _useHost;
-            e_RunMode           _forceRunMode; 
-            e_AutoTuneMode      _autoTune;  /* auto-tune the choice of device CPU/GPU and  workgroup shape */
-            unsigned			_debug;
+            ::cl::CommandQueue    m_commandQueue;
+            e_UseHostMode       m_useHost;
+            e_RunMode           m_forceRunMode; 
+            e_AutoTuneMode      m_autoTune;  /* auto-tune the choice of device CPU/GPU and  workgroup shape */
+            unsigned			m_debug;
 
-            int                 _wgPerComputeUnit;
+            int                 m_wgPerComputeUnit;
 
-            std::string			_compileOptions;  // extra options to pass to OpenCL compiler.
+            std::string			m_compileOptions;  // extra options to pass to OpenCL compiler.
 
-            bool				 _compileForAllDevices;  // compile for all devices in the context.  False means to only compile for specified device.
+            bool				 m_compileForAllDevices;  // compile for all devices in the context.  False means to only compile for specified device.
         };
 
     };

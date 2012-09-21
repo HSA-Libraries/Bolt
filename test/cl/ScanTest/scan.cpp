@@ -1,8 +1,8 @@
 #include "stdafx.h"
 
-#include <bolt/cl/scan.h>
-#include <bolt/unicode.h>
-#include <bolt/miniDump.h>
+#include "bolt/cl/scan.h"
+#include "bolt/unicode.h"
+#include "bolt/miniDump.h"
 
 #include <gtest/gtest.h>
 #include <boost/shared_array.hpp>
@@ -350,6 +350,13 @@ protected:
 
 TEST_P( ScanIntegerVector, InclusiveInplace )
 {
+    //cl_int err = CL_SUCCESS;
+
+    //std::string strDeviceName = bolt::cl::control::getDefault( ).device( ).getInfo< CL_DEVICE_NAME >( &err );
+    //bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_NAME > failed" );
+
+    //std::cout << "Device under test : " << strDeviceName << std::endl;
+
     //  Calling the actual functions under test
     std::vector< int >::iterator stdEnd  = std::partial_sum( stdInput.begin( ), stdInput.end( ), stdInput.begin( ) );
     std::vector< int >::iterator boltEnd = bolt::cl::inclusive_scan( boltInput.begin( ), boltInput.end( ), boltInput.begin( ) );
@@ -534,12 +541,302 @@ typedef ::testing::Types<
 //INSTANTIATE_TYPED_TEST_CASE_P( Integer, ScanArrayTest, IntegerTests );
 //INSTANTIATE_TYPED_TEST_CASE_P( Float, ScanArrayTest, FloatTests );
 
+static const std::streamsize colWidth = 38;
+
+void printExtention( const std::string& str )
+{
+    std::cout << std::setw( colWidth ) << "" << str << std::endl;
+}
+
+class printDeviceFunctor
+{
+    cl_uint m_numDev;
+
+public:
+    printDeviceFunctor( cl_uint initNumDevice ): m_numDev( initNumDevice )
+    {}
+
+    void operator()( const cl::Device& dev )
+    {
+        cl_int err = CL_SUCCESS;
+
+        std::string strDeviceName = dev.getInfo< CL_DEVICE_NAME >( &err );
+        bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_NAME > failed" );
+
+        std::string strDeviceProfile = dev.getInfo< CL_DEVICE_PROFILE >( &err );
+        bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_PROFILE > failed" );
+
+        std::string strDeviceVersion = dev.getInfo< CL_DEVICE_VERSION >( &err );
+        bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_VERSION > failed" );
+
+        std::string strDriverVersion = dev.getInfo< CL_DRIVER_VERSION >( &err );
+        bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DRIVER_VERSION > failed" );
+
+        std::string strOpenCLVersion = dev.getInfo< CL_DEVICE_OPENCL_C_VERSION >( &err );
+        bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_OPENCL_C_VERSION > failed" );
+
+        cl_device_type ulDeviceType = dev.getInfo< CL_DEVICE_TYPE >( &err );
+        bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_TYPE > failed" );
+
+        cl_uint uiMaxClock = dev.getInfo< CL_DEVICE_MAX_CLOCK_FREQUENCY >( &err );
+        bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_MAX_CLOCK_FREQUENCY > failed" );
+
+        cl_uint uiMaxUnits = dev.getInfo< CL_DEVICE_MAX_COMPUTE_UNITS >( &err );
+        bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_MAX_COMPUTE_UNITS > failed" );
+
+        size_t stMaxWorkGroup = dev.getInfo< CL_DEVICE_MAX_WORK_GROUP_SIZE >( &err );
+        bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_MAX_WORK_GROUP_SIZE > failed" );
+
+        cl_uint uiMaxDim = dev.getInfo< CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS >( &err );
+        bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS > failed" );
+
+        std::vector< size_t > uiMaxDimSizes = dev.getInfo< CL_DEVICE_MAX_WORK_ITEM_SIZES >( &err );
+        bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_MAX_WORK_ITEM_SIZES > failed" );
+
+        std::string szDeviceExtensions = dev.getInfo< CL_DEVICE_EXTENSIONS >( &err );
+        bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_EXTENSIONS > failed" );
+
+        cl_uint uiMemBaseAddrAlign = dev.getInfo< CL_DEVICE_MEM_BASE_ADDR_ALIGN >( &err );
+        bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_MEM_BASE_ADDR_ALIGN > failed" );
+
+        cl_uint uiMinDataTypeAlignSize = dev.getInfo< CL_DEVICE_MIN_DATA_TYPE_ALIGN_SIZE >( &err );
+        bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_MIN_DATA_TYPE_ALIGN_SIZE > failed" );
+
+        cl_ulong ulGlobalMemSize = dev.getInfo< CL_DEVICE_GLOBAL_MEM_SIZE >( &err );
+        bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_GLOBAL_MEM_SIZE > failed" );
+
+        cl_ulong ulMaxMemAllocSize = dev.getInfo< CL_DEVICE_MAX_MEM_ALLOC_SIZE >( &err );
+        bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_MAX_MEM_ALLOC_SIZE > failed" );
+
+        cl_ulong ulLocalMemSize = dev.getInfo< CL_DEVICE_LOCAL_MEM_SIZE >( &err );
+        bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_LOCAL_MEM_SIZE > failed" );
+
+        cl_device_local_mem_type ulLocalMemType = dev.getInfo< CL_DEVICE_LOCAL_MEM_TYPE >( &err );
+        bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_LOCAL_MEM_TYPE > failed" );
+
+        cl_bool bHostUnifiedMem = dev.getInfo< CL_DEVICE_HOST_UNIFIED_MEMORY >( &err );
+        bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_HOST_UNIFIED_MEMORY > failed" );
+
+        //  Create a vector of extention strings, which we know are seperated by spaces
+        std::istringstream splitExtentions( szDeviceExtensions );
+        std::vector< std::string > extTokens;
+        std::copy( std::istream_iterator< std::string >( splitExtentions ), std::istream_iterator< std::string >( ),
+                   std::back_inserter< std::vector< std::string > >( extTokens ) );
+
+        //  Print logic
+        std::cout << "Device info [ " << m_numDev++ << " ]" << std::endl;
+        std::cout << std::setw( colWidth ) << "CL_DEVICE_NAME : " << strDeviceName << std::endl;
+        std::cout << std::setw( colWidth ) << "CL_DEVICE_TYPE : "
+            << (CL_DEVICE_TYPE_DEFAULT     & ulDeviceType ? "default"     : "")
+            << (CL_DEVICE_TYPE_CPU         & ulDeviceType ? "CPU"         : "")
+            << (CL_DEVICE_TYPE_GPU         & ulDeviceType ? "GPU"         : "")
+            << (CL_DEVICE_TYPE_ACCELERATOR & ulDeviceType ? "Accelerator" : "")
+            << std::endl;
+
+        std::cout << std::setw( colWidth ) << "CL_DEVICE_MAX_CLOCK_FREQUENCY : " << uiMaxClock << std::endl;
+        std::cout << std::setw( colWidth ) << "CL_DEVICE_MAX_COMPUTE_UNITS : " << uiMaxUnits << std::endl;
+        std::cout << std::setw( colWidth ) << "CL_DEVICE_MAX_WORK_GROUP_SIZE : " << stMaxWorkGroup << std::endl;
+        std::cout << std::setw( colWidth ) << "CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS : " << uiMaxDim << std::endl;
+        for( size_t wis = 0; wis < uiMaxDimSizes.size( ); ++wis )
+        {
+            std::stringstream dimString;
+            dimString << "Dimension[ " << wis << " ] : ";
+            std::cout << std::setw( colWidth ) << dimString.str( ) << uiMaxDimSizes[ wis ] << std::endl;
+        }
+        std::cout << std::setw( colWidth ) << "CL_DEVICE_GLOBAL_MEM_SIZE : " << ulGlobalMemSize / 1024 / 1024 << " MB" << std::endl;
+        std::cout << std::setw( colWidth ) << "CL_DEVICE_MAX_MEM_ALLOC_SIZE : " << ulMaxMemAllocSize / 1024 / 1024 << " MB" << std::endl;
+        std::cout << std::setw( colWidth ) << "CL_DEVICE_MEM_BASE_ADDR_ALIGN : " << uiMemBaseAddrAlign << std::endl;
+        std::cout << std::setw( colWidth ) << "CL_DEVICE_MIN_DATA_TYPE_ALIGN_SIZE : " << uiMinDataTypeAlignSize << std::endl;
+        std::cout << std::setw( colWidth ) << "CL_DEVICE_LOCAL_MEM_SIZE : " << ulLocalMemSize / 1024 << " KB" << std::endl;
+        std::cout << std::setw( colWidth ) << "CL_DEVICE_LOCAL_MEM_TYPE : "
+            << (CL_LOCAL     & ulLocalMemType ? "local"  : "")
+            << (CL_GLOBAL    & ulLocalMemType ? "global" : "")
+            << std::endl;
+        std::cout << std::setw( colWidth ) << "CL_DEVICE_HOST_UNIFIED_MEMORY : "
+            << (1 == bHostUnifiedMem ? "true"  : "")
+            << (0 == bHostUnifiedMem ? "false" : "")
+            << std::endl;
+
+        std::cout << std::setw( colWidth ) << "CL_DEVICE_PROFILE : " << strDeviceProfile << std::endl;
+        std::cout << std::setw( colWidth ) << "CL_DEVICE_OPENCL_C_VERSION : " << strOpenCLVersion << std::endl;
+        std::cout << std::setw( colWidth ) << "CL_DEVICE_VERSION : " << strDeviceVersion << std::endl;
+        std::cout << std::setw( colWidth ) << "CL_DRIVER_VERSION : " << strDriverVersion << std::endl;
+        std::cout << std::setw( colWidth ) << "CL_DEVICE_EXTENSIONS : " << std::endl;
+        std::for_each( extTokens.begin( ), extTokens.end( ), printExtention );
+        std::cout << std::endl;
+    }
+};
+
+class printPlatformFunctor
+{
+    cl_uint m_numPlat;
+
+public:
+    printPlatformFunctor( cl_uint initNumPlat ): m_numPlat( initNumPlat )
+    {}
+
+    void operator()( const cl::Platform& plat )
+    {
+        cl_int err = CL_SUCCESS;
+
+        std::string szPlatformProfile = plat.getInfo< CL_PLATFORM_PROFILE >( &err );
+        bolt::cl::V_OPENCL( err, "Platform::getInfo< CL_DEVICE_NAME > failed" );
+
+        std::string szPlatformVersion = plat.getInfo< CL_PLATFORM_VERSION >( &err );
+        bolt::cl::V_OPENCL( err, "Platform::getInfo< CL_DEVICE_NAME > failed" );
+
+        std::string szPlatformName = plat.getInfo< CL_PLATFORM_NAME >( &err );
+        bolt::cl::V_OPENCL( err, "Platform::getInfo< CL_DEVICE_NAME > failed" );
+
+        std::string szPlatformVendor = plat.getInfo< CL_PLATFORM_VENDOR >( &err );
+        bolt::cl::V_OPENCL( err, "Platform::getInfo< CL_DEVICE_NAME > failed" );
+
+        std::string szPlatformExtensions = plat.getInfo< CL_PLATFORM_EXTENSIONS >( &err );
+        bolt::cl::V_OPENCL( err, "Platform::getInfo< CL_DEVICE_NAME > failed" );
+
+        //  Create a vector of extention strings, which we know are seperated by spaces
+        std::istringstream splitExtentions( szPlatformExtensions );
+        std::vector< std::string > extTokens;
+        std::copy( std::istream_iterator< std::string >( splitExtentions ), std::istream_iterator< std::string >( ),
+                   std::back_inserter< std::vector< std::string > >( extTokens ) );
+        //std::copy( std::istream_iterator< std::string >( splitExtentions ), std::istream_iterator< std::string >( ),
+        //           std::ostream_iterator< std::string >( std::cout, "\n" ) );
+
+        std::cout << "Platform info [ " << m_numPlat++ << " ]" << std::endl;
+        std::cout << std::setw( colWidth ) << "CL_PLATFORM_PROFILE : " << szPlatformProfile << std::endl;
+        std::cout << std::setw( colWidth ) << "CL_PLATFORM_VERSION : " << szPlatformVersion << std::endl;
+        std::cout << std::setw( colWidth ) << "CL_PLATFORM_NAME : " << szPlatformName << std::endl;
+        std::cout << std::setw( colWidth ) << "CL_PLATFORM_VENDOR : " << szPlatformVendor<< std::endl;
+        std::cout << std::setw( colWidth ) << "CL_PLATFORM_EXTENSIONS : " << std::endl;
+        std::for_each( extTokens.begin( ), extTokens.end( ), printExtention );
+        std::cout << std::endl;
+
+        // For each device for this specific platform, print all the associated information
+        std::vector< cl::Device > devices;
+        bolt::cl::V_OPENCL( plat.getDevices( CL_DEVICE_TYPE_ALL, &devices ), "Platform::getDevices() failed" );
+
+        std::for_each( devices.begin( ), devices.end( ), printDeviceFunctor( 0 ) );
+
+    }
+};
+
 int _tmain(int argc, _TCHAR* argv[])
 {
-    ::testing::InitGoogleTest( &argc, &argv[ 0 ] );
-
     //  Register our minidump generating logic
     bolt::miniDumpSingleton::enableMiniDumps( );
+
+    //  Initialize googletest; this removes googletest specific flags from command line
+    ::testing::InitGoogleTest( &argc, &argv[ 0 ] );
+
+    bool print_clInfo = false;
+    cl_uint userPlatform = 0;
+    cl_uint userDevice = 0;
+    cl_device_type deviceType = CL_DEVICE_TYPE_DEFAULT;
+
+    try
+    {
+        // Declare supported options below, describe what they do
+        po::options_description desc( "Scan GoogleTest command line options" );
+        desc.add_options()
+            ( "help,h",         "produces this help message" )
+            ( "queryOpenCL,q",  "Print queryable platform and device info and return" )
+            ( "platform,p",     po::value< cl_uint >( &userPlatform )->default_value( 0 ),	"Specify the platform under test" )
+            ( "device,d",       po::value< cl_uint >( &userDevice )->default_value( 0 ),	"Specify the device under test" )
+            //( "gpu,g",         "Force instantiation of all OpenCL GPU device" )
+            //( "cpu,c",         "Force instantiation of all OpenCL CPU device" )
+            //( "all,a",         "Force instantiation of all OpenCL devices" )
+            ;
+
+        ////  All positional options (un-named) should be interpreted as kernelFiles
+        //po::positional_options_description p;
+        //p.add("kernelFiles", -1);
+
+        //po::variables_map vm;
+        //po::store( po::command_line_parser( argc, argv ).options( desc ).positional( p ).run( ), vm );
+        //po::notify( vm );
+
+        po::variables_map vm;
+        po::store( po::parse_command_line( argc, argv, desc ), vm );
+        po::notify( vm );
+
+        if( vm.count( "help" ) )
+        {
+            //	This needs to be 'cout' as program-options does not support wcout yet
+            std::cout << desc << std::endl;
+            return 0;
+        }
+
+        if( vm.count( "queryOpenCL" ) )
+        {
+            print_clInfo = true;
+        }
+
+        //  The following 3 options are not implemented yet; they are meant to be used with ::clCreateContextFromType()
+        if( vm.count( "gpu" ) )
+        {
+            deviceType	= CL_DEVICE_TYPE_GPU;
+        }
+        
+        if( vm.count( "cpu" ) )
+        {
+            deviceType	= CL_DEVICE_TYPE_CPU;
+        }
+
+        if( vm.count( "all" ) )
+        {
+            deviceType	= CL_DEVICE_TYPE_ALL;
+        }
+
+    }
+    catch( std::exception& e )
+    {
+        std::cout << _T( "Scan GoogleTest error condition reported:" ) << std::endl << e.what() << std::endl;
+        return 1;
+    }
+
+    //  Query OpenCL for available platforms
+    cl_int err = CL_SUCCESS;
+
+    // Platform vector contains all available platforms on system
+    std::vector< cl::Platform > platforms;
+    //std::cout << "HelloCL!\nGetting Platform Information\n";
+    bolt::cl::V_OPENCL( cl::Platform::get( &platforms ), "Platform::get() failed" );
+
+    if( print_clInfo )
+    {
+        std::for_each( platforms.begin( ), platforms.end( ), printPlatformFunctor( 0 ) );
+        return 0;
+    }
+
+    //  Do stuff with the platforms
+    std::vector<cl::Platform>::iterator i;
+    if(platforms.size() > 0)
+    {
+        for(i = platforms.begin(); i != platforms.end(); ++i)
+        {
+            if(!strcmp((*i).getInfo<CL_PLATFORM_VENDOR>(&err).c_str(), "Advanced Micro Devices, Inc."))
+            {
+                break;
+            }
+        }
+    }
+    bolt::cl::V_OPENCL( err, "Platform::getInfo() failed" );
+
+    // Device info
+    std::vector< cl::Device > devices;
+    bolt::cl::V_OPENCL( platforms.front( ).getDevices( CL_DEVICE_TYPE_ALL, &devices ), "Platform::getDevices() failed" );
+
+    cl::Context myContext( devices.at( userDevice ) );
+
+    cl::CommandQueue myQueue( myContext, devices.at( userDevice ) );
+    bolt::cl::control::getDefault( ).setCommandQueue( myQueue );
+
+    //bolt::cl::control myBoltControl( myQueue );
+
+    std::string strDeviceName = bolt::cl::control::getDefault( ).device( ).getInfo< CL_DEVICE_NAME >( &err );
+    bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_NAME > failed" );
+
+    std::cout << "Device under test : " << strDeviceName << std::endl;
 
     int retVal = RUN_ALL_TESTS( );
 
