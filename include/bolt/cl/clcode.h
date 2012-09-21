@@ -42,10 +42,9 @@ struct TypeName
 {
     static std::string get()
     {
-        return std::string("ERROR (bolt): Unknown typename; define missing TypeName<") + typeid(T).name() + ">";  
+        static_assert( false, "Bolt< error >: Unknown typename; define missing TypeName with Bolt provided macro's" );
     }
 };
-
 
 //---
 template <typename T>
@@ -54,6 +53,7 @@ struct ClCode
     static std::string get()
     {
         return "";
+        //static_assert( false, "Bolt< error >: No code is associated with this type.  Use BOLT_CREATE_CLCODE or BOLT_FUNCTOR" );
     }
 };
 
