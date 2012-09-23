@@ -376,6 +376,7 @@ namespace bolt
                 int computeUnits     = ctl.device( ).getInfo< CL_DEVICE_MAX_COMPUTE_UNITS >( );
                 int wgPerComputeUnit =  ctl.wgPerComputeUnit( );
                 int resultCnt = computeUnits * wgPerComputeUnit;
+
                 const size_t waveSize  = scanKernels.front( ).getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.device( ), &l_Error );
                 V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
                 assert( (waveSize & (waveSize-1)) == 0 ); // WorkGroup must be a power of 2 for Scan to work
@@ -412,10 +413,12 @@ namespace bolt
                 device_vector< iType > preSumArray( sizeScanBuff, 0, CL_MEM_READ_WRITE, false, ctl );
                 device_vector< iType > postSumArray( sizeScanBuff, 0, CL_MEM_READ_WRITE, false, ctl );
 
+                const cl_uint ldsSize  = static_cast< cl_uint >( ( waveSize + ( waveSize / 2 ) ) * sizeof( iType ) );
+
                 V_OPENCL( scanKernels[ 0 ].setArg( 0, result->getBuffer( ) ), "Error setting 0th argument for scanKernels[ 0 ]" );        // Output buffer
                 V_OPENCL( scanKernels[ 0 ].setArg( 1, first->getBuffer( ) ), "Error setting 1st argument for scanKernels[ 0 ]" );       // Input buffer
                 V_OPENCL( scanKernels[ 0 ].setArg( 2, numElements ), "Error setting 2nd argument for scanKernels[ 0 ]" );   // Size of scratch buffer
-                V_OPENCL( scanKernels[ 0 ].setArg( 3, waveSize + ( waveSize / 2 ), NULL ), "Error setting 3rd argument for scanKernels[ 0 ]" );    // Scratch buffer
+                V_OPENCL( scanKernels[ 0 ].setArg( 3, ldsSize, NULL ), "Error setting 3rd argument for scanKernels[ 0 ]" );    // Scratch buffer
                 V_OPENCL( scanKernels[ 0 ].setArg( 4, userFunctor ), "Error setting 4th argument for scanKernels[ 0 ]" );      // User provided functor class
                 V_OPENCL( scanKernels[ 0 ].setArg( 5, preSumArray.begin( )->getBuffer( ) ), "Error setting 5th argument for scanKernels[ 0 ]" );      // Output per block sum buffer
 
@@ -445,7 +448,7 @@ namespace bolt
                 V_OPENCL( scanKernels[ 1 ].setArg( 0, postSumArray.begin( )->getBuffer( ) ), "Error setting 0th argument for scanKernels[ 1 ]" );          // Output buffer
                 V_OPENCL( scanKernels[ 1 ].setArg( 1, preSumArray.begin( )->getBuffer( ) ), "Error setting 1st argument for scanKernels[ 1 ]" );            // Input buffer
                 V_OPENCL( scanKernels[ 1 ].setArg( 2, numWorkGroups ), "Error setting 2nd argument for scanKernels[ 1 ]" );            // Size of scratch buffer
-                V_OPENCL( scanKernels[ 1 ].setArg( 3, waveSize + ( waveSize / 2 ), NULL ), "Error setting 3rd argument for scanKernels[ 1 ]" );  // Scratch buffer
+                V_OPENCL( scanKernels[ 1 ].setArg( 3, ldsSize, NULL ), "Error setting 3rd argument for scanKernels[ 1 ]" );  // Scratch buffer
                 V_OPENCL( scanKernels[ 1 ].setArg( 4, workPerThread ), "Error setting 4th argument for scanKernels[ 1 ]" );           // User provided functor class
                 V_OPENCL( scanKernels[ 1 ].setArg( 5, userFunctor ), "Error setting 5th argument for scanKernels[ 1 ]" );           // User provided functor class
 

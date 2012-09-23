@@ -22,7 +22,6 @@ namespace bolt
         /*! \addtogroup scan
         *   \ingroup PrefixSums
         *   \{
-        *   \bug Failures have been observed in all overloads with input buffers greater than 1536 elements
         *   \todo The user_code parameter is not used yet
         *   \todo The versions of exclusive_scan that take a 'T init' parameter are missing
         *   \todo The performance of the Sort routines should be proven using a benchmark program that can 
