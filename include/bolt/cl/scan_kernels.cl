@@ -24,9 +24,9 @@ kernel void perBlockAddition(
                 global BinaryFunction* binaryOp
                 )
 {
-    uint gloId = get_global_id( 0 );
-    uint groId = get_group_id( 0 );
-    uint locId = get_local_id( 0 );
+    size_t gloId = get_global_id( 0 );
+    size_t groId = get_group_id( 0 );
+    size_t locId = get_local_id( 0 );
 
     //  Abort threads that are passed the end of the input vector
     if( gloId >= vecSize )
@@ -53,10 +53,10 @@ kernel void intraBlockExclusiveScan(
                 global BinaryFunction* binaryOp    // Functor operation to apply on each step
                 )
 {
-    uint gloId = get_global_id( 0 );
-    uint groId = get_group_id( 0 );
-    uint locId = get_local_id( 0 );
-    uint wgSize = get_local_size( 0 );
+    size_t gloId = get_global_id( 0 );
+    size_t groId = get_group_id( 0 );
+    size_t locId = get_local_id( 0 );
+    size_t wgSize = get_local_size( 0 );
     uint mapId  = gloId * workPerThread;
 
     //    Initialize the padding to 0, for when the scan algorithm looks left.
@@ -83,11 +83,14 @@ kernel void intraBlockExclusiveScan(
 
     //	This loop essentially computes an exclusive scan within a tile, writing 0 out for first element.
     iType scanSum = workSum;
-    for( uint offset = 1; offset < wgSize; offset *= 2 )
+    for( size_t offset = 1; offset < wgSize; offset *= 2 )
     {
         barrier( CLK_LOCAL_MEM_FENCE );
+        
+        //  Make sure that the index is a signed quantity, as we expect to generate negative indices
+        int index = locId - offset;
 
-        iType y = pLDS[ locId - offset ];
+        iType y = pLDS[ index ];
         scanSum = (*binaryOp)( scanSum, y );
         pLDS[ locId ] = scanSum;
     }
@@ -114,10 +117,10 @@ kernel void perBlockInclusiveScan(
                 global BinaryFunction* binaryOp,    // Functor operation to apply on each step
                 global iType* scanBuffer)            // Passed to 2nd kernel; the of each block
 {
-    uint gloId = get_global_id( 0 );
-    uint groId = get_group_id( 0 );
-    uint locId = get_local_id( 0 );
-    uint wgSize = get_local_size( 0 );
+    size_t gloId = get_global_id( 0 );
+    size_t groId = get_group_id( 0 );
+    size_t locId = get_local_id( 0 );
+    size_t wgSize = get_local_size( 0 );
 
     //    Initialize the padding to 0, for when the scan algorithm looks left.
     //    Then bump the LDS pointer past the padding
@@ -135,11 +138,14 @@ kernel void perBlockInclusiveScan(
     //  This loop essentially computes a scan within a workgroup
     //  No communication between workgroups
     iType sum = val;
-    for( unsigned int offset = 1; offset < wgSize; offset *= 2 )
+    for( size_t offset = 1; offset < wgSize; offset *= 2 )
     {
         barrier( CLK_LOCAL_MEM_FENCE );
+        
+        //  Make sure that the index is a signed quantity, as we expect to generate negative indices
+        int index = locId - offset;
 
-        iType y = pLDS[ locId - offset ];
+        iType y = pLDS[ index ];
         sum = (*binaryOp)( sum, y );
         pLDS[ locId ] = sum;
     }

@@ -471,14 +471,14 @@ TEST_P( ScanIntegerVector, ExclusiveOutOfPlace )
     std::vector< int >::iterator stdEnd  = std::partial_sum( stdInput.begin( ), stdInput.end( ), stdResult.begin( ) );
     stdEnd = std::transform( stdResult.begin( ), stdResult.end( ), stdInput.begin( ), stdResult.begin( ), bolt::cl::minus< int >( ) );
 
-    std::vector< int >::iterator boltEnd = bolt::cl::exclusive_scan( boltInput.begin( ), boltInput.end( ), boltInput.begin( ) );
+    std::vector< int >::iterator boltEnd = bolt::cl::exclusive_scan( boltInput.begin( ), boltInput.end( ), boltResult.begin( ) );
 
     //  The returned iterator should be one past the 
-    EXPECT_EQ( stdInput.end( ), stdEnd );
-    EXPECT_EQ( boltInput.end( ), boltEnd );
+    EXPECT_EQ( stdResult.end( ), stdEnd );
+    EXPECT_EQ( boltResult.end( ), boltEnd );
 
-    std::vector< int >::iterator::difference_type stdNumElements = std::distance( stdInput.begin( ), stdEnd );
-    std::vector< int >::iterator::difference_type boltNumElements = std::distance( boltInput.begin( ), boltEnd );
+    std::vector< int >::iterator::difference_type stdNumElements = std::distance( stdResult.begin( ), stdEnd );
+    std::vector< int >::iterator::difference_type boltNumElements = std::distance( boltResult.begin( ), boltEnd );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
@@ -488,15 +488,14 @@ TEST_P( ScanIntegerVector, ExclusiveOutOfPlace )
 }
 
 //  Test lots of consecutive numbers, but small range, suitable for integers because they overflow easier
-//INSTANTIATE_TEST_CASE_P( Inclusive, ScanIntegerVector, ::testing::Range( 1537, 1540, 1 ) );
-INSTANTIATE_TEST_CASE_P( Inclusive, ScanIntegerVector, ::testing::Range( 0, 1540, 1 ) );
+//INSTANTIATE_TEST_CASE_P( Inclusive, ScanIntegerVector, ::testing::Range( 0, 1024, 1 ) );
 //INSTANTIATE_TEST_CASE_P( Inclusive, ScanIntegerDeviceVector, ::testing::Range( 0, 1024, 1 ) );
 //INSTANTIATE_TEST_CASE_P( Inclusive, ScanIntegerNakedPointer, ::testing::Range( 0, 1024, 1 ) );
 //INSTANTIATE_TEST_CASE_P( Exclusive, ScanIntegerVector, ::testing::Range( 256, 1024, 1 ) );
 
 //  Test a huge range, suitable for floating point as they are less prone to overflow (but floating point loses granularity at large values)
-//INSTANTIATE_TEST_CASE_P( Inclusive, ScanFloatVector, ::testing::Range( 4096, 1048576, 4096 ) );
-//INSTANTIATE_TEST_CASE_P( Inclusive, ScanDoubleVector, ::testing::Range( 0, 1048576, 4096 ) );
+INSTANTIATE_TEST_CASE_P( Inclusive, ScanFloatVector, ::testing::Range( 28672, 32768, 1 ) );
+//INSTANTIATE_TEST_CASE_P( Inclusive, ScanDoubleVector, ::testing::Range( 4096, 1048576, 4096 ) );
 
 typedef ::testing::Types< 
     std::tuple< int, TypeValue< 1 > >,
