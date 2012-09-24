@@ -1,20 +1,6 @@
-#ifdef cl_amd_printf
-    #pragma OPENCL EXTENSION cl_amd_printf : enable
-#endif
-
-/*
- * ScanLargeArrays : Scan is done for each block and the sum of each
- * block is stored in separate array (sumBuffer). SumBuffer is scanned
- * and results are added to every value of next corresponding block to
- * compute the scan of a large array.(not limited to 2*MAX_GROUP_SIZE)
- * Scan uses a balanced tree algorithm. See Belloch, 1990 "Prefix Sums
- * and Their Applications"
- * @param output output data
- * @param input  input data
- * @param block  local memory used in the kernel
- * @param sumBuffer  sum of blocks
- * @param length length of the input data
- */
+// #ifdef cl_amd_printf
+    // #pragma OPENCL EXTENSION cl_amd_printf : enable
+// #endif
 
 template< typename Type, typename BinaryFunction >
 kernel void perBlockAddition( 
@@ -108,14 +94,15 @@ kernel void intraBlockExclusiveScan(
 
 }
 
-template< typename iType, typename BinaryFunction >
+template< typename iType, typename T, typename BinaryFunction >
 kernel void perBlockInclusiveScan(
                 global iType* output,
                 global iType* input,
+                const T init,
                 const uint vecSize,
                 local volatile iType* lds,
                 global BinaryFunction* binaryOp,    // Functor operation to apply on each step
-                global iType* scanBuffer)            // Passed to 2nd kernel; the of each block
+                global iType* scanBuffer )            // Passed to 2nd kernel; the of each block
 {
     size_t gloId = get_global_id( 0 );
     size_t groId = get_group_id( 0 );
@@ -132,7 +119,11 @@ kernel void perBlockInclusiveScan(
     if( gloId >= vecSize )
         return;
 
-    iType val = input[ gloId ];
+    // Initialize the scan with init only on the first thread
+    iType val = (gloId == 0) ? init: 0;
+    
+    val = val + input[ gloId ];
+    
     pLDS[ locId ] = val;
 
     //  This loop essentially computes a scan within a workgroup
