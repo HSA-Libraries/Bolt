@@ -149,12 +149,6 @@ namespace bolt {
 
             bool compileForAllDevices() const { return m_compileForAllDevices; };
 
-            // setters:
-            void setCommandQueue( const ::cl::CommandQueue& commQueue )
-            {
-                m_commandQueue = commQueue;
-            };
-
             /*!
               * Return default default \p control structure.  This structure is used for Bolt API calls where the user
               * does not explicitly specify a \p control structure.  Also, newly created \p control structures copy

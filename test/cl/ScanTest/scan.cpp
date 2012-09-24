@@ -466,12 +466,18 @@ TEST_P( ScanIntegerVector, ExclusiveOutOfPlace )
 {
     //  Declare temporary arrays to store results for out of place computation
     std::vector< int > stdResult( GetParam( ) ), boltResult( GetParam( ) );
+    int init = 3;
 
-    //  Calling the actual functions under test
+    //  Emulating a std exclusive scan
+    if( stdInput.size( ) )
+        stdInput[ 0 ] += init;
     std::vector< int >::iterator stdEnd  = std::partial_sum( stdInput.begin( ), stdInput.end( ), stdResult.begin( ) );
-    stdEnd = std::transform( stdResult.begin( ), stdResult.end( ), stdInput.begin( ), stdResult.begin( ), bolt::cl::minus< int >( ) );
+    if( stdInput.size( ) )
+        stdInput[ 0 ] -= init;
+    stdEnd = std::transform( stdResult.begin( ), stdResult.end( ), stdInput.begin( ), stdResult.begin( ), std::minus< int >( ) );
 
-    std::vector< int >::iterator boltEnd = bolt::cl::exclusive_scan( boltInput.begin( ), boltInput.end( ), boltResult.begin( ) );
+    //  Calling Bolt exclusive scan
+    std::vector< int >::iterator boltEnd = bolt::cl::exclusive_scan( boltInput.begin( ), boltInput.end( ), boltResult.begin( ), init );
 
     //  The returned iterator should be one past the 
     EXPECT_EQ( stdResult.end( ), stdEnd );
@@ -484,7 +490,7 @@ TEST_P( ScanIntegerVector, ExclusiveOutOfPlace )
     EXPECT_EQ( stdNumElements, boltNumElements );
 
     //  Loop through the array and compare all the values with each other
-    cmpArrays( stdInput, boltInput );
+    cmpArrays( stdResult, boltResult );
 }
 
 //  Test lots of consecutive numbers, but small range, suitable for integers because they overflow easier
@@ -827,7 +833,7 @@ int _tmain(int argc, _TCHAR* argv[])
     cl::Context myContext( devices.at( userDevice ) );
 
     cl::CommandQueue myQueue( myContext, devices.at( userDevice ) );
-    bolt::cl::control::getDefault( ).setCommandQueue( myQueue );
+    bolt::cl::control::getDefault( ).commandQueue( myQueue );
 
     //bolt::cl::control myBoltControl( myQueue );
 
