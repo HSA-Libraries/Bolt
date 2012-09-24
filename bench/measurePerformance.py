@@ -31,7 +31,7 @@ def log(filename, txt):
 IAM = 'Bolt'
 
 precisionvalues = ['single', 'double']
-libraryvalues = ['scan','reduce','null']
+libraryvalues = ['scan','sort','reduce','null']
 
 parser = argparse.ArgumentParser(description='Measure performance of a Bolt library')
 parser.add_argument('--device',
@@ -178,6 +178,9 @@ if not os.path.isfile(executable(args.library)):
     quit()
    
 #expand ranges
+#example inputs
+#16-65536:x2   for all powers of 2 
+#16-65536:16   for multiples of 16 
 class Range:
     def __init__(self, ranges, defaultStep='+1'):
         self.expanded = []
@@ -232,13 +235,13 @@ class Range:
     def _add(self):
         self.current = self.current + self._stepAmount
 
+
 args.lengthx = Range(args.lengthx, '4096').expanded
 
 #create final list of all transformations (with problem sizes and transform properties)
 test_combinations = itertools.product( args.lengthx, args.device, args.precision )
 test_combinations = list( itertools.islice(test_combinations, None) )
 test_combinations = [TestCombination( params[0], params[1], params[2], args.label) for params in test_combinations]
-
 
 #turn each test combination into a command, run the command, and then stash the gflops
 result = [] # this is where we'll store the results for the table
@@ -285,13 +288,13 @@ for params in test_combinations:
         arguments = [executable(args.library),
                      '-l', lengthx,
     #                     precision,
-                     '-p', '10']
+                     '-i', '10']
     else:
         arguments = [executable(args.library),
                      '-d', device,
                      '-l', lengthx,
     #                     precision,
-                     '-p', '10']
+                     '-i', '10']
 
     writeline = True
     try:

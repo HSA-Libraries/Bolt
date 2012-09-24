@@ -69,6 +69,11 @@ def executable(library):
             exe = 'ampBolt.Bench.Reduce.exe'
         elif sys.platform == 'linux2':
             exe = 'ampBolt.Bench.Reduce'
+    elif library == 'sort':
+        if sys.platform == 'win32':
+            exe = 'clBolt.Bench.Sort.exe'
+        elif sys.platform == 'linux2':
+            exe = 'clBolt.Bench.Sort'
     else:
         print 'ERROR: unknown library -- cannot determine executable name'
         quit()
