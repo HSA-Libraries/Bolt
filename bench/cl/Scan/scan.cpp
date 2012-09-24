@@ -27,7 +27,7 @@ int _tmain( int argc, _TCHAR* argv[] )
             ( "platform,p",     po::value< cl_uint >( &userPlatform )->default_value( 0 ),	"Specify the platform under test" )
             ( "device,d",       po::value< cl_uint >( &userDevice )->default_value( 0 ),	"Specify the device under test" )
             ( "length,l",		po::value< size_t >( &length )->default_value( 4096 ), "Specify the length of scan array" )
-            ( "profile,p",		po::value< size_t >( &numLoops )->default_value( 1 ), "Time and report Scan speed GB/s (default: profiling off)" )
+            ( "profile,i",		po::value< size_t >( &numLoops )->default_value( 1 ), "Time and report Scan speed GB/s (default: profiling off)" )
             ;
 
         po::variables_map vm;
