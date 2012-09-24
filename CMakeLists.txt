@@ -16,7 +16,7 @@ project( Bolt )
 # Define a version for the code
 set( Bolt_VERSION_MAJOR 0 )
 set( Bolt_VERSION_MINOR 2 )
-set( Bolt_VERSION_PATCH 1 )
+set( Bolt_VERSION_PATCH 2 )
 set( Bolt_VERSION "${Bolt_VERSION_MAJOR}.${Bolt_VERSION_MINOR}.${Bolt_VERSION_PATCH}")
 	
 list( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR} )
