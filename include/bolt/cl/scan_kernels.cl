@@ -66,10 +66,10 @@ kernel void intraBlockExclusiveScan(
 
     //  Abort threads that are passed the end of the input vector
     //  TODO:  I'm returning early for threads past the input vector size; not safe for barriers in kernel if wg != wavefront
-    // if( gloId >= vecSize )
-        // return;
+    if( gloId >= vecSize )
+        return;
 
-    //	Begin the loop reduction
+    //	A inclusive sequential scan, reducing values for very large arrays
     iType workSum = 0;
     for( uint offset = 0; offset < workPerThread; offset += 1 )
     {
