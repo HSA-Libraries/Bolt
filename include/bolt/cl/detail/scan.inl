@@ -439,8 +439,8 @@ namespace bolt
                 //    V_OPENCL( ctl.commandQueue( ).finish( ), "Failed to call finish on the commandqueue" );
 
                 //    //  Look at the contents of those buffers
-                //    device_vector< oType >::pointer pB          = result->getContainer( ).data( );
-                //    device_vector< oType >::pointer pPreSum     = preSumArray[0].getContainer( ).data( );
+                //    device_vector< oType >::pointer pResult     = result->getContainer( ).data( );
+                //    device_vector< oType >::pointer pPreSum     = preSumArray.data( );
                 //}
 
                 cl_uint workPerThread = static_cast< cl_uint >( sizeScanBuff / waveSize );
@@ -457,15 +457,21 @@ namespace bolt
                 l_Error = ctl.commandQueue( ).enqueueNDRangeKernel(
                     scanKernels[ 1 ],
                     ::cl::NullRange,
-                    ::cl::NDRange( sizeScanBuff ),
+                    ::cl::NDRange( waveSize ),
                     ::cl::NDRange( waveSize ),
                     &intraScanEvent,
                     &interScanEvent.front( ) );
                 V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for perBlockInclusiveScan kernel" );
 
-                //l_Error = ctl.commandQueue( ).enqueueWaitForEvents( interScanEvent );
-                //V_OPENCL( l_Error, "interScanEvent failed to wait" );
-                //return;
+                ////  Debug code
+                //{
+                //    // Enqueue the operation
+                //    V_OPENCL( ctl.commandQueue( ).finish( ), "Failed to call finish on the commandqueue" );
+
+                //    //  Look at the contents of those buffers
+                //    device_vector< oType >::pointer pPreSum      = preSumArray.data( );
+                //    device_vector< oType >::pointer pPostSum     = postSumArray.data( );
+                //}
 
                 std::vector< ::cl::Event > perBlockEvent( 1 );
 
@@ -483,8 +489,17 @@ namespace bolt
                     &perBlockEvent.front( ) );
                 V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for perBlockInclusiveScan kernel" );
 
-                //l_Error = ctl.commandQueue( ).enqueueWaitForEvents( perBlockEvent );
-                //V_OPENCL( l_Error, "perBlockInclusiveScan failed to wait" );
+                l_Error = perBlockEvent.front( ).wait( );
+                V_OPENCL( l_Error, "perBlockInclusiveScan failed to wait" );
+
+                ////  Debug code
+                //{
+                //    // Enqueue the operation
+                //    V_OPENCL( ctl.commandQueue( ).finish( ), "Failed to call finish on the commandqueue" );
+
+                //    //  Look at the contents of those buffers
+                //    device_vector< oType >::pointer pResult     = result->getContainer( ).data( );
+                //}
 
             }   //end of inclusive_scan_enqueue( )
 

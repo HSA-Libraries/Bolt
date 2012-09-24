@@ -488,14 +488,13 @@ TEST_P( ScanIntegerVector, ExclusiveOutOfPlace )
 }
 
 //  Test lots of consecutive numbers, but small range, suitable for integers because they overflow easier
-//INSTANTIATE_TEST_CASE_P( Inclusive, ScanIntegerVector, ::testing::Range( 0, 1024, 1 ) );
-//INSTANTIATE_TEST_CASE_P( Inclusive, ScanIntegerDeviceVector, ::testing::Range( 0, 1024, 1 ) );
-//INSTANTIATE_TEST_CASE_P( Inclusive, ScanIntegerNakedPointer, ::testing::Range( 0, 1024, 1 ) );
-//INSTANTIATE_TEST_CASE_P( Exclusive, ScanIntegerVector, ::testing::Range( 256, 1024, 1 ) );
+INSTANTIATE_TEST_CASE_P( Inclusive, ScanIntegerVector, ::testing::Range( 0, 1024, 1 ) );
+INSTANTIATE_TEST_CASE_P( Inclusive, ScanIntegerDeviceVector, ::testing::Range( 0, 1024, 1 ) );
+INSTANTIATE_TEST_CASE_P( Inclusive, ScanIntegerNakedPointer, ::testing::Range( 0, 1024, 1 ) );
 
 //  Test a huge range, suitable for floating point as they are less prone to overflow (but floating point loses granularity at large values)
-INSTANTIATE_TEST_CASE_P( Inclusive, ScanFloatVector, ::testing::Range( 28672, 32768, 1 ) );
-//INSTANTIATE_TEST_CASE_P( Inclusive, ScanDoubleVector, ::testing::Range( 4096, 1048576, 4096 ) );
+INSTANTIATE_TEST_CASE_P( Inclusive, ScanFloatVector, ::testing::Range( 4096, 1048576, 4096 ) );
+INSTANTIATE_TEST_CASE_P( Inclusive, ScanDoubleVector, ::testing::Range( 4096, 1048576, 4096 ) );
 
 typedef ::testing::Types< 
     std::tuple< int, TypeValue< 1 > >,
@@ -537,8 +536,8 @@ typedef ::testing::Types<
     std::tuple< float, TypeValue< 65536 > >
 > FloatTests;
 
-//INSTANTIATE_TYPED_TEST_CASE_P( Integer, ScanArrayTest, IntegerTests );
-//INSTANTIATE_TYPED_TEST_CASE_P( Float, ScanArrayTest, FloatTests );
+INSTANTIATE_TYPED_TEST_CASE_P( Integer, ScanArrayTest, IntegerTests );
+INSTANTIATE_TYPED_TEST_CASE_P( Float, ScanArrayTest, FloatTests );
 
 static const std::streamsize colWidth = 38;
 
