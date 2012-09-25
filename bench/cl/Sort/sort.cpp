@@ -5,7 +5,18 @@
 #include "bolt/countof.h"
 #include "bolt/cl/sort.h"
 
+
+#include <amp.h>
+#include <amp_short_vectors.h>
+
+#define cNTiles 64
+
 const std::streamsize colWidth = 26;
+using namespace concurrency;
+//This function is defined in sort_amp.cpp
+extern void Sort(array<unsigned int> &integers,
+          array<unsigned int> &tmpIntegers,
+          array<unsigned int> &tmpHistograms);
 
 int main( int argc, char* argv[] )
 {
@@ -13,7 +24,7 @@ int main( int argc, char* argv[] )
     cl_uint userDevice = 0;
     size_t numLoops = 0;
     size_t length = 0;
-    bool defaultDevice = true;
+    size_t algo = 1;
     bool print_clInfo = false;
 
     try
@@ -27,6 +38,7 @@ int main( int argc, char* argv[] )
             ( "device,d",       po::value< cl_uint >( &userDevice )->default_value( 0 ),	"Specify the device under test" )
             ( "length,l",		po::value< size_t >( &length )->default_value( 4194304 ), "Specify the length of sort array" )
             ( "profile,i",		po::value< size_t >( &numLoops )->default_value( 1 ), "Time and report Sort speed GB/s (default: profiling off)" )
+			( "algo,a",		    po::value< size_t >( &algo )->default_value( 1 ), "Algorithm used [1,2]  1:SORT_BOLT, 2:SORT_AMP_SHOC" )
             ;
 
         po::variables_map vm;
@@ -66,15 +78,25 @@ int main( int argc, char* argv[] )
     std::vector< int > input( length );
 	std::vector< int > backup( length );
 	std::generate(backup.begin(), backup.end(),rand);
+    
+	//AMP sort initializations
+	std::vector<unsigned int> integers(length);
+	std::generate(integers.begin(), integers.end(),rand);
+
+	// Copy vector to the device.
+    array<unsigned int> dIntegers(length, integers.begin());
+	array<unsigned int> dTmpIntegers(length);
+	array<unsigned int> dTmpHistograms(cNTiles * 16);
 
     bolt::statTimer& myTimer = bolt::statTimer::getInstance( );
     myTimer.Reserve( 1, numLoops );
 
     size_t sortId	= myTimer.getUniqueID( _T( "sort" ), 0 );
 
-    if( defaultDevice )
+    if( algo == 1 )
     {
-        for( unsigned i = 0; i < numLoops; ++i )
+		std::cout<<"Running CL_SORT\n";
+		for( unsigned i = 0; i < numLoops; ++i )
         {
 			input = backup;
             myTimer.Start( sortId );
@@ -82,16 +104,22 @@ int main( int argc, char* argv[] )
             myTimer.Stop( sortId );
         }
     }
-    else
+    else if( algo == 2 )
     {
-        for( unsigned i = 0; i < numLoops; ++i )
-        {
-			input = backup;
-            myTimer.Start( sortId );
-            bolt::cl::sort( input.begin( ), input.end( ), bolt::cl::greater< int >( ) );
-            myTimer.Stop( sortId );
-        }
+		std::cout<<"Running AMP_SORT\n";
+		// Allocate space for temporary integers and histograms.
+		for(int run = 0; run < numLoops; ++ run) 
+		{
+			// Execute and time the kernel.
+			myTimer.Start( sortId );			
+			Sort(dIntegers, dTmpIntegers, dTmpHistograms);
+			myTimer.Stop( sortId );
+		}
     }
+	else
+	{
+		std::cout <<"Invalid SORT algorithm specified\n";
+	}
 
     //	Remove all timings that are outside of 2 stddev (keep 65% of samples); we ignore outliers to get a more consistent result
     size_t pruned = myTimer.pruneOutliers( 1.0 );
