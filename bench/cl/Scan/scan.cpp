@@ -13,6 +13,7 @@ int _tmain( int argc, _TCHAR* argv[] )
     cl_uint userDevice = 0;
     size_t iterations = 0;
     size_t length = 0;
+    size_t algo = 1;
     cl_device_type deviceType = CL_DEVICE_TYPE_DEFAULT;
     bool defaultDevice = true;
     bool print_clInfo = false;
@@ -38,6 +39,7 @@ int _tmain( int argc, _TCHAR* argv[] )
                     "Index is relative with respect to -g, -c or -a flags" )
             ( "length,l",       po::value< size_t >( &length )->default_value( 1048576 ), "Specify the length of scan array" )
             ( "iterations,i",   po::value< size_t >( &iterations )->default_value( 1 ), "Number of samples in timing loop" )
+			( "algo,a",		    po::value< size_t >( &algo )->default_value( 1 ), "Algorithm used [1,2]  1:SCAN_BOLT, 2:XYZ" )//Not used in this file
             ;
 
         po::variables_map vm;
