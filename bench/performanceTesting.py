@@ -50,33 +50,45 @@ def transformDimension(x,y,z):
     elif int(x) != 1:
         return 1
 
-def executable(library):
+def executable(library, backend):
     if type(library) != str:
         print 'ERROR: expected library name to be a string'
+        quit()
+
+    if library == 'null':
+        print 'ERROR: --library must be specified with valid executable'
         quit()
 
     if sys.platform != 'win32' and sys.platform != 'linux2':
         print 'ERROR: unknown operating system'
         quit()
 
-    if library == 'scan' or library == 'null':
-        if sys.platform == 'win32':
-            exe = 'ampBolt.Bench.Scan.exe'
-        elif sys.platform == 'linux2':
+    if library == 'copy':
+        if backend == 'cl':
+            exe = 'clBolt.Bench.CopyBuffer'
+        else:
+            exe = 'ampBolt.Bench.CopyBuffer'
+    elif library == 'scan':
+        if backend == 'cl':
+            exe = 'clBolt.Bench.Scan'
+        else:
             exe = 'ampBolt.Bench.Scan'
     elif library == 'reduce':
-        if sys.platform == 'win32':
-            exe = 'ampBolt.Bench.Reduce.exe'
-        elif sys.platform == 'linux2':
+        if backend == 'cl':
+            exe = 'clBolt.Bench.Reduce'
+        else:
             exe = 'ampBolt.Bench.Reduce'
     elif library == 'sort':
-        if sys.platform == 'win32':
-            exe = 'clBolt.Bench.Sort.exe'
-        elif sys.platform == 'linux2':
+        if backend == 'cl':
             exe = 'clBolt.Bench.Sort'
+    else:
+            exe = 'ampBolt.Bench.Sort'
     else:
         print 'ERROR: unknown library -- cannot determine executable name'
         quit()
+
+    if sys.platform == 'win32':
+        exe = exe + '.exe'
 
     if not os.path.isfile(exe):
         error_message = 'ERROR: could not find client named ' + exe

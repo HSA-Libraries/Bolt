@@ -25,7 +25,7 @@ int _tmain( int argc, _TCHAR* argv[] )
     try
     {
         // Declare the supported options.
-        po::options_description desc( "OpenCL Scan command line options" );
+        po::options_description desc( "OpenCL CopyBuffer command line options" );
         desc.add_options()
             ( "help,h",			"produces this help message" )
             ( "version,v",		"Print queryable version information from the Bolt CL library" )
@@ -136,40 +136,58 @@ int _tmain( int argc, _TCHAR* argv[] )
     ******************************************************************************/
     bolt::statTimer& myTimer = bolt::statTimer::getInstance( );
     myTimer.Reserve( 1, iterations );
-    size_t scanId	= myTimer.getUniqueID( _T( "scan" ), 0 );
+    size_t scanId	= myTimer.getUniqueID( _T( "copybuffer" ), 0 );
 
-    if( systemMemory )
+    size_t pruned = 0;
+    double scanTime = std::numeric_limits< double >::max( );
+    double scanGB = ( length * sizeof( int ) ) / (1024.0 * 1024.0 * 1024.0);
+    ::cl::CommandQueue& boltQueue = bolt::cl::control::getDefault( ).commandQueue( );
+
+    //  ::cl::Buffer can not handle buffers of size 0
+    if( length > 0 )
     {
-        std::vector< int > input( length, 1 );
-        std::vector< int > output( length );
-
-        for( unsigned i = 0; i < iterations; ++i )
+        if( systemMemory )
         {
-            myTimer.Start( scanId );
-            bolt::cl::inclusive_scan( input.begin( ), input.end( ), output.begin( ) );
-            myTimer.Stop( scanId );
+            std::vector< int > input( length, 1 );
+            std::vector< int > output( length );
+            ::cl::Buffer inputBuffer( bolt::cl::control::getDefault( ).context( ), CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, length * sizeof( int ), input.data( ) );
+            ::cl::Buffer outputBuffer( bolt::cl::control::getDefault( ).context( ), CL_MEM_USE_HOST_PTR|CL_MEM_WRITE_ONLY, length * sizeof( int ), output.data( ) );
+
+            for( unsigned i = 0; i < iterations; ++i )
+            {
+                myTimer.Start( scanId );
+                boltQueue.enqueueCopyBuffer( inputBuffer, outputBuffer, 0, 0, length * sizeof( int ) );
+                void* tmpPtr = boltQueue.enqueueMapBuffer( outputBuffer, true, CL_MAP_READ, 0, length * sizeof( int ) );
+                boltQueue.enqueueUnmapMemObject( outputBuffer, tmpPtr );
+                boltQueue.finish( );
+                myTimer.Stop( scanId );
+            }
         }
+        else
+        {
+            ::cl::Buffer inputBuffer( bolt::cl::control::getDefault( ).context( ), CL_MEM_READ_ONLY, length * sizeof( int ) );
+            ::cl::Buffer outputBuffer( bolt::cl::control::getDefault( ).context( ), CL_MEM_WRITE_ONLY, length * sizeof( int ) );
+
+            for( unsigned i = 0; i < iterations; ++i )
+            {
+                myTimer.Start( scanId );
+                boltQueue.enqueueCopyBuffer( inputBuffer, outputBuffer, 0, 0, length * sizeof( int ) );
+                boltQueue.finish( );
+                myTimer.Stop( scanId );
+            }
+        }
+
+        //	Remove all timings that are outside of 2 stddev (keep 65% of samples); we ignore outliers to get a more consistent result
+        pruned = myTimer.pruneOutliers( 1.0 );
+        scanTime = myTimer.getAverageTime( scanId );
     }
     else
     {
-        bolt::cl::device_vector< int > input( length, 1 );
-        bolt::cl::device_vector< int > output( length );
-
-        for( unsigned i = 0; i < iterations; ++i )
-        {
-            myTimer.Start( scanId );
-            bolt::cl::inclusive_scan( input.begin( ), input.end( ), output.begin( ) );
-            myTimer.Stop( scanId );
-        }
+        iterations = 0;
     }
 
-    //	Remove all timings that are outside of 2 stddev (keep 65% of samples); we ignore outliers to get a more consistent result
-    size_t pruned = myTimer.pruneOutliers( 1.0 );
-    double scanTime = myTimer.getAverageTime( scanId );
-    double scanGB = ( length * sizeof( int ) ) / (1024.0 * 1024.0 * 1024.0);
-
     bolt::tout << std::left;
-    bolt::tout << std::setw( colWidth ) << _T( "Scan profile: " ) << _T( "[" ) << iterations-pruned << _T( "] samples" ) << std::endl;
+    bolt::tout << std::setw( colWidth ) << _T( "CopyBuffer profile: " ) << _T( "[" ) << iterations-pruned << _T( "] samples" ) << std::endl;
     bolt::tout << std::setw( colWidth ) << _T( "    Size (GB): " ) << scanGB << std::endl;
     bolt::tout << std::setw( colWidth ) << _T( "    Time (s): " ) << scanTime << std::endl;
     bolt::tout << std::setw( colWidth ) << _T( "    Speed (GB/s): " ) << scanGB / scanTime << std::endl;
