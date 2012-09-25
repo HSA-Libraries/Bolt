@@ -1,17 +1,14 @@
-import sys
 import argparse
 import subprocess
 import itertools
 import re#gex
 import os
-from threading import Timer, Thread
-import thread, time
-from platform import system
-
+from threading import Thread
 from datetime import datetime
 
+# Our own code import statements
 import errorHandler
-from performanceTesting import *
+from performanceTesting import executable, tableHeader, TestCombination
 
 LOG_FILE_NAME = {
                 'Bolt':{'ER':'boltExecuteRunsLog.txt',#execute runs
@@ -31,7 +28,8 @@ def log(filename, txt):
 IAM = 'Bolt'
 
 precisionvalues = ['single', 'double']
-libraryvalues = ['scan','sort','reduce','null']
+libraryvalues = ['copy','scan','sort','reduce','null']
+backEndValues = ['cl','amp']
 
 parser = argparse.ArgumentParser(description='Measure performance of a Bolt library')
 parser.add_argument('--device',
@@ -61,6 +59,9 @@ parser.add_argument('--tablefile',
 parser.add_argument('--algo',
     dest='algo', default=1,
     help='Algorithm used [1,2]  1:SORT_BOLT, 2:SORT_AMP_SHOC')
+parser.add_argument('--backend',
+    dest='backend', default='cl', choices=backEndValues,
+    help='Which Bolt backend to use')
 
 args = parser.parse_args()
 
@@ -82,7 +83,6 @@ printLog('Executing measure performance for label: '+str(lab))
 #Spawns a separate thread to execute the library command and wait for that thread to complete
 #This wait is of 900 seconds (15 minutes). If still the thread is alive then we kill the thread
 def checkTimeOutPut(args):
-    t = None
     global currCommandProcess
     global stde
     global stdo
@@ -176,7 +176,7 @@ for n in args.precision:
         printLog('ERROR: invalid value for precision')
         quit()
 
-if not os.path.isfile(executable(args.library)):
+if not os.path.isfile(executable(args.library, args.backend)):
     printLog("ERROR: Could not find client named {0}".format(executable(args.library)))
     quit()
    
@@ -289,18 +289,18 @@ for params in test_combinations:
 
     #set up arguments here
     if params.device == 'default':
-        arguments = [executable(args.library),
+        arguments = [executable(args.library, args.backend),
                      '-a', algo,        
                      '-l', lengthx,
     #                     precision,
-                     '-i', '10']
+                     '-i', '50']
     else:
-        arguments = [executable(args.library),
-                     '-a', algo,        
+        arguments = [executable(args.library, args.backend),
+                     '-a', # Enumerate all devices in system, so that we can benchmark any device on command line
                      '-d', device,
                      '-l', lengthx,
     #                     precision,
-                     '-i', '10']
+                     '-i', '50']
 
     writeline = True
     try:
@@ -355,11 +355,11 @@ for params in test_combinations:
             if output[0].find('nan') or output[0].find('inf'):
                 printLog( 'WARNING: output from client was funky for this run. skipping table row')
             else:
-                prinLog('ERROR: output from client makes no sense')
+                printLog('ERROR: output from client makes no sense')
                 printLog(str(output[0]))
                 printLog('IN ORIGINAL WE CALL QUIT HERE - 2\n')
         else:
-            prinLog('ERROR: output from client makes no sense')
+            printLog('ERROR: output from client makes no sense')
             #quit()
 printLog("=========================MEASURE PERFORMANCE ENDS===========================\n")
 #
