@@ -16,20 +16,9 @@ target_link_libraries( clBolt.Example.Sort ${BOLT_LIBRARIES} ${OPENCL_LIBRARIES}
 set_target_properties( clBolt.Example.Sort PROPERTIES VERSION ${Examples_VERSION} )
 set_target_properties( clBolt.Example.Sort PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
 
-# set_property( TARGET clBolt.Example.Sort PROPERTY FOLDER "Test/OpenCL")
-install( FILES
-            ${BOLT_INCLUDE_DIRS}/../${BIN_DIR}/sort_kernels.cl
-		DESTINATION
-			${BIN_DIR} )
-
-install( FILES
-            ${BOLT_INCLUDE_DIRS}/../${BIN_DIR}/sort_kernels.cl
-		DESTINATION
-			${PROJECT_BINARY_DIR}/staging/\${CMAKE_INSTALL_CONFIG_NAME} )
-
 # CPack configuration; include the executable into the package
 install( TARGETS clBolt.Example.Sort
 	RUNTIME DESTINATION ${BIN_DIR}
 	LIBRARY DESTINATION ${LIB_DIR}
-	ARCHIVE DESTINATION ${LIB_DIR}/import
+	ARCHIVE DESTINATION ${LIB_DIR}
 	)
