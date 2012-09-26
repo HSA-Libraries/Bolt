@@ -57,21 +57,34 @@ endif( )
 # Eventually, Bolt may support multiple backends, but for now it only supports CL
 list( FIND BOLT_FIND_COMPONENTS CL find_CL )
 if( NOT find_CL EQUAL -1 )
-	set( BOLT_LIBNAME_STATIC clBolt.Runtime.${myMSVCVer}.lib )
+	set( BOLT_LIBNAME_BASE clBolt.runtime.${myMSVCVer} )
 endif( )
 
 if( NOT find_CL EQUAL -1 )
 	# Find and set the location of main BOLT static lib file
-	find_library( BOLT_LIBRARY_STATIC
-		NAMES ${BOLT_LIBNAME_STATIC}
+	find_library( BOLT_LIBRARY_STATIC_RELEASE
+		NAMES ${BOLT_LIBNAME_BASE}.lib
 		HINTS
 			${BOLT_ROOT}
 			ENV BOLT_ROOT
 		DOC "BOLT static library path"
 		PATH_SUFFIXES lib
 	)
-	mark_as_advanced( BOLT_LIBRARY_STATIC )
+	mark_as_advanced( BOLT_LIBRARY_STATIC_RELEASE )
 
+	# Find and set the location of main BOLT static lib file
+	find_library( BOLT_LIBRARY_STATIC_DEBUG
+		NAMES ${BOLT_LIBNAME_BASE}.debug.lib
+		HINTS
+			${BOLT_ROOT}
+			ENV BOLT_ROOT
+		DOC "BOLT static library path"
+		PATH_SUFFIXES lib
+	)
+	mark_as_advanced( BOLT_LIBRARY_STATIC_DEBUG )
+    
+    set( BOLT_LIBRARY_STATIC optimized ${BOLT_LIBRARY_STATIC_RELEASE} debug ${BOLT_LIBRARY_STATIC_DEBUG} )
+    
     find_path( BOLT_INCLUDE_DIRS
         NAMES bolt/cl/bolt.h
         HINTS

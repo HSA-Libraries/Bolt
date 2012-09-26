@@ -22,5 +22,5 @@ set_target_properties( clBolt.Example.Device.Vector PROPERTIES RUNTIME_OUTPUT_DI
 install( TARGETS clBolt.Example.Device.Vector
 	RUNTIME DESTINATION ${BIN_DIR}
 	LIBRARY DESTINATION ${LIB_DIR}
-	ARCHIVE DESTINATION ${LIB_DIR}/import
+	ARCHIVE DESTINATION ${LIB_DIR}
 	)

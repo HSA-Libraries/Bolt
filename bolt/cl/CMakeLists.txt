@@ -122,16 +122,19 @@ add_custom_command(
 add_library( clBolt.Runtime STATIC ${clBolt.Runtime.Files} ${clBolt.Runtime.hppFiles.FullPath} )
 target_link_libraries( clBolt.Runtime ${OPENCL_LIBRARIES} ${Boost_LIBRARIES} )
 
-set_target_properties( clBolt.Runtime PROPERTIES VERSION ${Bolt_VERSION} )
-set_target_properties( clBolt.Runtime PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
-
+# Construct a meaningful name for this build of the library
+set( boltLibName "clBolt.runtime" )
 if( MSVC_VERSION VERSION_LESS 1600 )
-    set_target_properties( clBolt.Runtime PROPERTIES ARCHIVE_OUTPUT_NAME "clBolt.Runtime.vc90" )
+    set( boltLibName "${boltLibName}.vc90" )
 elseif( MSVC_VERSION VERSION_LESS 1700 )
-    set_target_properties( clBolt.Runtime PROPERTIES ARCHIVE_OUTPUT_NAME "clBolt.Runtime.vc100" )
+    set( boltLibName "${boltLibName}.vc100" )
 elseif( MSVC_VERSION VERSION_LESS 1800 )
-    set_target_properties( clBolt.Runtime PROPERTIES ARCHIVE_OUTPUT_NAME "clBolt.Runtime.vc110" )
+    set( boltLibName "${boltLibName}.vc110" )
 endif( )
+
+set_target_properties( clBolt.Runtime PROPERTIES VERSION ${Bolt_VERSION} SOVERSION ${Bolt_VERSION_MAJOR} )
+set_target_properties( clBolt.Runtime PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
+set_target_properties( clBolt.Runtime PROPERTIES OUTPUT_NAME ${boltLibName} IMPORT_SUFFIX ".import" DEBUG_POSTFIX ".debug" )
 
 install( FILES
             ${clBolt.Runtime.Headers}
