@@ -1,12 +1,13 @@
 #############################################################################
-##	Copyright (C) 2010 Advanced Micro Devices, Inc. All Rights Reserved.
+##  Copyright (C) 2010 Advanced Micro Devices, Inc. All Rights Reserved.
 #############################################################################
 # List the names of common files to compile across all platforms
-set( clBolt.Test.Scan.Source stdafx.cpp Scan.cpp )
-set( clBolt.Test.Scan.Headers 	stdafx.h 
-								targetver.h 
-								${BOLT_INCLUDE_DIR}/bolt/cl/scan.h 
-								${BOLT_INCLUDE_DIR}/bolt/cl/detail/scan.inl )
+set( clBolt.Test.Scan.Source ${BOLT_CL_TEST_DIR}/common/stdafx.cpp 
+                             Scan.cpp )
+set( clBolt.Test.Scan.Headers   ${BOLT_CL_TEST_DIR}/common/stdafx.h 
+                                ${BOLT_CL_TEST_DIR}/common/targetver.h 
+                                ${BOLT_INCLUDE_DIR}/bolt/cl/scan.h 
+                                ${BOLT_INCLUDE_DIR}/bolt/cl/detail/scan.inl )
 
 set( clBolt.Test.Scan.Files ${clBolt.Test.Scan.Source} ${clBolt.Test.Scan.Headers} )
 
@@ -20,7 +21,7 @@ set_property( TARGET clBolt.Test.Scan PROPERTY FOLDER "Test/OpenCL")
 
 # CPack configuration; include the executable into the package
 install( TARGETS clBolt.Test.Scan
-	RUNTIME DESTINATION ${BIN_DIR}
-	LIBRARY DESTINATION ${LIB_DIR}
-	ARCHIVE DESTINATION ${LIB_DIR}/import
-	)
+    RUNTIME DESTINATION ${BIN_DIR}
+    LIBRARY DESTINATION ${LIB_DIR}
+    ARCHIVE DESTINATION ${LIB_DIR}/import
+    )
