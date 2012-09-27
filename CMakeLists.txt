@@ -1,5 +1,5 @@
 #############################################################################
-##	Copyright (C) 2012 Advanced Micro Devices, Inc. All Rights Reserved. 
+##  Copyright (C) 2012 Advanced Micro Devices, Inc. All Rights Reserved. 
 #############################################################################
 # We require 2.8.3 for windows because of a bug in cmake that prevented vs2010 from generating
 # executables properly with multiple periods
@@ -18,17 +18,20 @@ set( Bolt_VERSION_MAJOR 0 )
 set( Bolt_VERSION_MINOR 2 )
 set( Bolt_VERSION_PATCH 2 )
 set( Bolt_VERSION "${Bolt_VERSION_MAJOR}.${Bolt_VERSION_MINOR}.${Bolt_VERSION_PATCH}")
-	
+    
 list( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR} )
 set( BOLT_LIBRARY_DIR ${PROJECT_SOURCE_DIR}/bolt )
 
 # The binary directory is in the list of includes because files may be configured at build time, such as version.h
 set( BOLT_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include )
 
+# Set the test folder directory. This is common to cl and amp. 
+set( BOLT_TEST_DIR ${PROJECT_SOURCE_DIR}/test )
+
 # On windows, it's convenient to change the default install prefix such that it does NOT point to 'program files'
 # Need to check out CMAKE_RUNTIME_OUTPUT_DIRECTORY variable, and see if that eliminates the need to modify install path
 if( CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT )
-	set( CMAKE_INSTALL_PREFIX "${PROJECT_BINARY_DIR}/package" CACHE PATH "Install path prefix, prepended onto install directories" FORCE )
+    set( CMAKE_INSTALL_PREFIX "${PROJECT_BINARY_DIR}/package" CACHE PATH "Install path prefix, prepended onto install directories" FORCE )
 endif( )
 
 # Set the default of CMAKE_BUILD_TYPE to be release, unless user specifies with -D.  MSVC_IDE does not use CMAKE_BUILD_TYPE
@@ -37,20 +40,20 @@ if( NOT MSVC_IDE AND NOT CMAKE_BUILD_TYPE )
 endif()
 
 if( MSVC_IDE )
-	set( Bolt_BUILD64 ${CMAKE_CL_64} )
-	set_property( GLOBAL PROPERTY USE_FOLDERS TRUE )
+    set( Bolt_BUILD64 ${CMAKE_CL_64} )
+    set_property( GLOBAL PROPERTY USE_FOLDERS TRUE )
 else()
-	option( Bolt_BUILD64 "Build a 64-bit product" ON )
+    option( Bolt_BUILD64 "Build a 64-bit product" ON )
 endif()
 
 # Modify the global find property to help us find libraries like Boost in the correct paths for 64-bit
 # Essentially, find_library calls will look for /lib64 instead of /lib; works for windows and linux
 if( Bolt_BUILD64 )
-	set_property( GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS TRUE )
-	message( STATUS "64bit build - FIND_LIBRARY_USE_LIB64_PATHS TRUE" )
+    set_property( GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS TRUE )
+    message( STATUS "64bit build - FIND_LIBRARY_USE_LIB64_PATHS TRUE" )
 else()
-	set_property( GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS FALSE )
-	message( STATUS "32bit build - FIND_LIBRARY_USE_LIB64_PATHS FALSE" )
+    set_property( GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS FALSE )
+    message( STATUS "32bit build - FIND_LIBRARY_USE_LIB64_PATHS FALSE" )
 endif()
 
 # Various options below on configuring the build, and how to generate the solution files
@@ -58,31 +61,31 @@ option( BUILD_ampBolt "Create a solution that compiles Bolt for AMP" ON )
 option( BUILD_clBolt "Create a solution that compiles Bolt for OpenCL" ON )
  
 if( IS_DIRECTORY "${PROJECT_SOURCE_DIR}/test" )
-	option( BUILD_tests "Add projects for testing Bolt" ON )
+    option( BUILD_tests "Add projects for testing Bolt" ON )
 endif( )
 
 if( IS_DIRECTORY "${PROJECT_SOURCE_DIR}/bench" )
-	option( BUILD_benchmarks "Add projects for benchmarking Bolt" OFF )
+    option( BUILD_benchmarks "Add projects for benchmarking Bolt" OFF )
 endif( )
 
 if( IS_DIRECTORY "${PROJECT_SOURCE_DIR}/doxy" )
-	option( BUILD_documentation "Add project for generating Bolt documentation" OFF )
+    option( BUILD_documentation "Add project for generating Bolt documentation" OFF )
 endif( )
 
 if( IS_DIRECTORY "${PROJECT_SOURCE_DIR}/examples" )
-	option( BUILD_examples "Generate example projects to demonstrate Bolt usage" OFF )
+    option( BUILD_examples "Generate example projects to demonstrate Bolt usage" OFF )
 endif( )
 
 # Currently, linux has a problem outputing both narrow and wide characters,
 # which happens in our client because openCL only supports narrow characters
 if( WIN32 )
-	option( BUILD_UNICODE "Create a solution that compiles Bolt with Unicode Support" ON )
-	if( BUILD_UNICODE )
-		message( STATUS "UNICODE build" )
-	endif( )
+    option( BUILD_UNICODE "Create a solution that compiles Bolt with Unicode Support" ON )
+    if( BUILD_UNICODE )
+        message( STATUS "UNICODE build" )
+    endif( )
 else()
-	set( BUILD_UNICODE OFF )
-	message( STATUS "UNICODE disabled on linux" )
+    set( BUILD_UNICODE OFF )
+    message( STATUS "UNICODE disabled on linux" )
 endif()
 
 # FFLAGS depend on the compiler, grab the compiler name from the path
@@ -92,30 +95,30 @@ get_filename_component( C_COMPILER_NAME ${CMAKE_C_COMPILER} NAME_WE )
 
 # Set common compile and link options
 if( C_COMPILER_NAME STREQUAL "cl" )
-	# Following options for nMake
-	message( STATUS "Detected MSVS Ver: " ${MSVC_VERSION} )
-	
-	# CMake uses huge stack frames for windows, for some reason.  We remove.
-	string( REGEX REPLACE "/STACK:[0-9]+" "" CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}" )
-	string( REGEX REPLACE "/STACK:[0-9]+" "" CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}" )
-	string( REGEX REPLACE "/STACK:[0-9]+" "" CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS}" )	
+    # Following options for nMake
+    message( STATUS "Detected MSVS Ver: " ${MSVC_VERSION} )
+    
+    # CMake uses huge stack frames for windows, for some reason.  We remove.
+    string( REGEX REPLACE "/STACK:[0-9]+" "" CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}" )
+    string( REGEX REPLACE "/STACK:[0-9]+" "" CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}" )
+    string( REGEX REPLACE "/STACK:[0-9]+" "" CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS}" ) 
 elseif( C_COMPILER_NAME STREQUAL "gcc" )
-	message( STATUS "Detected GNU fortran compiler." )
-	
-	if( Bolt_BUILD64 )
-		set( CMAKE_CXX_FLAGS "-m64 ${CMAKE_CXX_FLAGS}" )
-		set( CMAKE_C_FLAGS "-m64 ${CMAKE_C_FLAGS}" )
-	else( )
-		set( CMAKE_CXX_FLAGS "-m32 ${CMAKE_CXX_FLAGS}" )
-		set( CMAKE_C_FLAGS "-m32 ${CMAKE_C_FLAGS}" )
-	endif( )
+    message( STATUS "Detected GNU fortran compiler." )
+    
+    if( Bolt_BUILD64 )
+        set( CMAKE_CXX_FLAGS "-m64 ${CMAKE_CXX_FLAGS}" )
+        set( CMAKE_C_FLAGS "-m64 ${CMAKE_C_FLAGS}" )
+    else( )
+        set( CMAKE_CXX_FLAGS "-m32 ${CMAKE_CXX_FLAGS}" )
+        set( CMAKE_C_FLAGS "-m32 ${CMAKE_C_FLAGS}" )
+    endif( )
 else( )
-	message( AUTHOR_WARNING "Compiler not recognized.  Using default flags." )
+    message( AUTHOR_WARNING "Compiler not recognized.  Using default flags." )
 endif( )
 
 # If UNICODE is defined, pass extra definitions into 
 if( BUILD_UNICODE )
-	add_definitions( "/DUNICODE /D_UNICODE" )
+    add_definitions( "/DUNICODE /D_UNICODE" )
 endif( )
 
 # Print out compiler flags for viewing/debug
@@ -127,12 +130,12 @@ message( STATUS "CMAKE_EXE_LINKER link flags: " ${CMAKE_EXE_LINKER_FLAGS} )
 
 # Depending on whether we are building for 64 or 32 bit, construct common paths and names that subdirectories can reference for their use
 if( Bolt_BUILD64 )
-	set( CPACK_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}-${Bolt_VERSION}-${CMAKE_HOST_SYSTEM_NAME}-x64")
+    set( CPACK_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}-${Bolt_VERSION}-${CMAKE_HOST_SYSTEM_NAME}-x64")
     set( INCLUDE_DIR include )
     set( BIN_DIR bin64 )
     set( LIB_DIR lib64 )
 else( )
-	set( CPACK_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}-${Bolt_VERSION}-${CMAKE_HOST_SYSTEM_NAME}-x32")
+    set( CPACK_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}-${Bolt_VERSION}-${CMAKE_HOST_SYSTEM_NAME}-x32")
     set( INCLUDE_DIR include )
     set( BIN_DIR bin )
     set( LIB_DIR lib )
@@ -140,67 +143,67 @@ endif( )
 
 # Build AMP library (only header files for now)
 if( BUILD_ampBolt )
-	if( MSVC_VERSION VERSION_LESS 1700 )
-		message( FATAL_ERROR "Visual Studio 11 or higher is required because Bolt uses AMP C++ features" )
-	endif( )
+    if( MSVC_VERSION VERSION_LESS 1700 )
+        message( FATAL_ERROR "Visual Studio 11 or higher is required because Bolt uses AMP C++ features" )
+    endif( )
 
-	if( IS_DIRECTORY "${BOLT_LIBRARY_DIR}/amp" AND WIN32 )
-		add_subdirectory( ${BOLT_LIBRARY_DIR}/amp )
-	endif( )
+    if( IS_DIRECTORY "${BOLT_LIBRARY_DIR}/amp" AND WIN32 )
+        add_subdirectory( ${BOLT_LIBRARY_DIR}/amp )
+    endif( )
 endif( )
-	
+    
 # Build OpenCL library
 if( BUILD_clBolt )
-	# This will define OPENCL_FOUND
-	find_package( OpenCL REQUIRED )
+    # This will define OPENCL_FOUND
+    find_package( OpenCL REQUIRED )
 
-	if( OPENCL_FOUND AND IS_DIRECTORY "${BOLT_LIBRARY_DIR}/cl" AND IS_DIRECTORY "${PROJECT_SOURCE_DIR}/tools" )
+    if( OPENCL_FOUND AND IS_DIRECTORY "${BOLT_LIBRARY_DIR}/cl" AND IS_DIRECTORY "${PROJECT_SOURCE_DIR}/tools" )
         add_subdirectory( tools )
-		add_subdirectory( ${BOLT_LIBRARY_DIR}/cl )
-	endif( )
+        add_subdirectory( ${BOLT_LIBRARY_DIR}/cl )
+    endif( )
 endif( )
 
 # After libraries are built, built tests
 if( BUILD_tests )
-	add_subdirectory( test )
-endif( )	
+    add_subdirectory( test )
+endif( )    
 
 # After libraries are built, built benchmarks
 if( BUILD_benchmarks )
-	add_subdirectory( bench )
+    add_subdirectory( bench )
 endif( )
 
 # After libraries are built, built documentation
 if( BUILD_documentation )
-	add_subdirectory( doxy )
+    add_subdirectory( doxy )
 endif( )
 
 # After libraries are built, built examples
 if( BUILD_examples )
-	add_subdirectory( examples EXCLUDE_FROM_ALL )
+    add_subdirectory( examples EXCLUDE_FROM_ALL )
 endif( )
 
 # configure a header file to pass the CMake version settings to the source, and package the header files in the output archive
 configure_file( "${PROJECT_SOURCE_DIR}/include/bolt/boltVersion.h.in" "${PROJECT_BINARY_DIR}/include/bolt/boltVersion.h" )
 install( FILES 
-			"${PROJECT_BINARY_DIR}/include/bolt/boltVersion.h" 
-		DESTINATION 
-			${INCLUDE_DIR}/bolt )
+            "${PROJECT_BINARY_DIR}/include/bolt/boltVersion.h" 
+        DESTINATION 
+            ${INCLUDE_DIR}/bolt )
 
 # Right now, always install the examples folder
 install( DIRECTORY 
-			examples
-		DESTINATION
-			.
+            examples
+        DESTINATION
+            .
         PATTERN "Hessian" EXCLUDE )
 
 # The following code is setting variables to control the behavior of CPack to generate our 
 if( WIN32 )
-	set( CPACK_SOURCE_GENERATOR "ZIP" )
-	set( CPACK_GENERATOR "ZIP" )
+    set( CPACK_SOURCE_GENERATOR "ZIP" )
+    set( CPACK_GENERATOR "ZIP" )
 else( )
-	set( CPACK_SOURCE_GENERATOR "TGZ" )
-	set( CPACK_GENERATOR "TGZ" )
+    set( CPACK_SOURCE_GENERATOR "TGZ" )
+    set( CPACK_GENERATOR "TGZ" )
 endif( )
 
 set( CPACK_SOURCE_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}-${Bolt_VERSION}-${CMAKE_HOST_SYSTEM_NAME}-Source")
