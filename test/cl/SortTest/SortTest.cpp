@@ -4,16 +4,17 @@
 #define GOOGLE_TEST 1
 #if (GOOGLE_TEST == 1)
 
-#include "stdafx.h"
-#include "myocl.h"
+#include "common/stdafx.h"
+#include "common/myocl.h"
 
 #include <bolt/cl/sort.h>
-#include <bolt/unicode.h>
 #include <bolt/miniDump.h>
+#include <bolt/unicode.h>
 
 #include <gtest/gtest.h>
 #include <boost/shared_array.hpp>
-
+#include <array>
+#include <algorithm>
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Below are helper routines to compare the results of two arrays for googletest
 //  They return an assertion object that googletest knows how to track
@@ -179,8 +180,9 @@ TYPED_TEST_P( SortArrayTest, GreaterFunction )
     typedef std::array< ArrayType, ArraySize > ArrayCont;
 
     //  Calling the actual functions under test
-    std::sort( stdInput.begin( ), stdInput.end( ));
-    bolt::cl::sort( boltInput.begin( ), boltInput.end( ) );
+    std::sort( stdInput.begin( ), stdInput.end( ), std::greater< ArrayType >() );
+    
+    bolt::cl::sort( boltInput.begin( ), boltInput.end( ), bolt::cl::greater< ArrayType >( ) );
 
     ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
     ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
@@ -240,8 +242,8 @@ TYPED_TEST_P( SortArrayTest, LessFunction )
     typedef std::array< ArrayType, ArraySize > ArrayCont;
 
     //  Calling the actual functions under test
-    std::sort( stdInput.begin( ), stdInput.end( ));
-    bolt::cl::sort( boltInput.begin( ), boltInput.end( ) );
+    std::sort( stdInput.begin( ), stdInput.end( ), std::less<ArrayType>());
+    bolt::cl::sort( boltInput.begin( ), boltInput.end( ), bolt::cl::less<ArrayType>() );
 
     ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
     ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
@@ -261,8 +263,8 @@ TYPED_TEST_P( SortArrayTest, GPU_DeviceLessFunction )
 	bolt::cl::control c_gpu(oclgpu._queue);  // construct control structure from the queue.
 
     //  Calling the actual functions under test
-    std::sort( stdInput.begin( ), stdInput.end( ), std::greater< ArrayType >( ));
-    bolt::cl::sort( c_gpu, boltInput.begin( ), boltInput.end( ), bolt::cl::greater< ArrayType >( ) );
+    std::sort( stdInput.begin( ), stdInput.end( ), std::less< ArrayType >( ));
+    bolt::cl::sort( c_gpu, boltInput.begin( ), boltInput.end( ), bolt::cl::less< ArrayType >( ) );
 
     ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
     ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
@@ -282,8 +284,8 @@ TYPED_TEST_P( SortArrayTest, CPU_DeviceLessFunction )
 	bolt::cl::control c_cpu(oclcpu._queue);  // construct control structure from the queue.
 
     //  Calling the actual functions under test
-    std::sort( stdInput.begin( ), stdInput.end( ), std::greater< ArrayType >( ));
-    bolt::cl::sort( c_cpu, boltInput.begin( ), boltInput.end( ), bolt::cl::greater< ArrayType >( ) );
+    std::sort( stdInput.begin( ), stdInput.end( ), std::less< ArrayType >( ));
+    bolt::cl::sort( c_cpu, boltInput.begin( ), boltInput.end( ), bolt::cl::less< ArrayType >( ) );
 
     ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
     ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
@@ -816,7 +818,7 @@ INSTANTIATE_TYPED_TEST_CASE_P( Double, SortArrayTest, DoubleTests );
 #endif 
 INSTANTIATE_TYPED_TEST_CASE_P( UDDTest, SortArrayTest, UDDTests );
 
-int _tmain(int argc, _TCHAR* argv[])
+int main(int argc, char* argv[])
 {
     ::testing::InitGoogleTest( &argc, &argv[ 0 ] );
 
