@@ -96,11 +96,13 @@ namespace bolt {
             T init,  BinaryFunction reduce_op, const std::string& user_code )
         {
             typedef std::iterator_traits<InputIterator>::value_type T;
+            size_t szElements = (last - first); 
+            if (szElements == 0)
+                    return init;
 
             const bolt::cl::control::e_RunMode runMode = c.forceRunMode();  // could be dynamic choice some day.
             if (runMode == bolt::cl::control::SerialCpu)
             {
-                size_t szElements = last - first; 
                 //Create a temporary array to store the transform result;
                 std::vector<T> output(szElements);
 
@@ -126,6 +128,9 @@ namespace bolt {
             T init,  BinaryFunction reduce_op, const std::string& user_code )
         {
             typedef std::iterator_traits<DVInputIterator>::value_type T;
+            size_t szElements = (last - first); 
+            if (szElements == 0)
+                    return init;
 
             const bolt::cl::control::e_RunMode runMode = c.forceRunMode();  // could be dynamic choice some day.
             if (runMode == bolt::cl::control::SerialCpu)
@@ -133,7 +138,6 @@ namespace bolt {
                 //  TODO:  Need access to the device_vector .data method to get a host pointer
                 throw ::cl::Error( CL_INVALID_DEVICE, "transform_reduce device_vector CPU device not implemented" );
 
-                size_t szElements = last - first; 
                 //Create a temporary array to store the transform result;
                 std::vector<T> output(szElements);
 

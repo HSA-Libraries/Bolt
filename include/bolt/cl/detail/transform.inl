@@ -80,6 +80,8 @@ namespace bolt {
             {
                 typedef std::iterator_traits<InputIterator>::value_type T;
                 size_t sz = (last1 - first1); 
+                if (sz == 0)
+                    return;
 
                 // Use host pointers memory since these arrays are only read once - no benefit to copying.
 
@@ -111,7 +113,9 @@ namespace bolt {
                 BinaryFunction f, const std::string& user_code)
             {
                 typedef std::iterator_traits<DVInputIterator>::value_type T;
-
+                size_t sz = std::distance( first1, last1 );
+                if (sz == 0)
+                    return;
                 ::cl::Buffer userFunctor(c.context(), CL_MEM_READ_ONLY|CL_MEM_USE_HOST_PTR, sizeof(f), &f );   // Create buffer wrapper so we can access host parameters.
                 //std::cout << "sizeof(Functor)=" << sizeof(f) << std::endl;
 
@@ -122,7 +126,6 @@ namespace bolt {
                 boost::call_once( initOnlyOnce, boost::bind( CallCompiler_Transform::init_, &masterKernel, user_code + ClCode<T>::get() + ClCode<BinaryFunction>::get(), TypeName< T >::get( ), TypeName< BinaryFunction >::get( ), c ) );
 
                 ::cl::Kernel k = masterKernel;  // hopefully create a copy of the kernel.  FIXME, need to create-kernel from the program.
-                size_t sz = std::distance( first1, last1 );
 
                 k.setArg(0, first1->getBuffer( ) );
                 k.setArg(1, first2->getBuffer( ) );
