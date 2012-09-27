@@ -83,7 +83,7 @@ namespace bolt {
     template <typename T>
     struct square
     {
-        T& operator() (const T& x)  const{
+        T operator() (const T& x)  const {
             return x * x;
         }
     };
@@ -95,7 +95,7 @@ namespace bolt {
     template<typename T>
     struct negate 
     {
-        T operator()(const T &__x) const {return -__x;}
+        T operator()(const T& x) const {return -x;}
     }; 
     );
 
