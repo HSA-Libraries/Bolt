@@ -81,7 +81,7 @@ def executable(library, backend):
     elif library == 'sort':
         if backend == 'cl':
             exe = 'clBolt.Bench.Sort'
-    else:
+        else:
             exe = 'ampBolt.Bench.Sort'
     else:
         print 'ERROR: unknown library -- cannot determine executable name'

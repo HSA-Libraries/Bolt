@@ -1,4 +1,6 @@
-#include "stdafx.h"
+#include "common/stdafx.h"
+#include <vector>
+#include <array>
 
 #include "bolt/cl/scan.h"
 #include "bolt/unicode.h"
@@ -6,6 +8,9 @@
 
 #include <gtest/gtest.h>
 #include <boost/shared_array.hpp>
+
+#include <boost/program_options.hpp>
+namespace po = boost::program_options;
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Below are helper routines to compare the results of two arrays for googletest
