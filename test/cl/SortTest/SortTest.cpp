@@ -868,7 +868,7 @@ int main(int argc, char* argv[])
 #include <iostream>
 #include <algorithm>  // for testing against STL functions.
 #include <vector>
-#include "myocl.h"
+#include "common/myocl.h"
 
 // A Data structure defining a less than operator
 
