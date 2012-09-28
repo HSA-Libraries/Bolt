@@ -49,35 +49,35 @@ namespace bolt {
     namespace cl {
         namespace detail {
             struct CallCompiler_Transform {
-                static void init_(::cl::Kernel *masterKernel, std::string user_code, std::string valueTypeName,  std::string functorTypeName, const control &c) {
+                static void init_(::cl::Kernel *masterKernel, std::string user_code, std::string inValueTypeName, std::string outValueTypeName, std::string functorTypeName, const control &c) {
 
                     std::string instantiationString = 
                         "// Host generates this instantiation string with user-specified value type and functor\n"
                         "template __attribute__((mangled_name(transformInstantiated)))\n"
                         "kernel void transformTemplate(\n"
-                        "global " + valueTypeName + "* A,\n"
-                        "global " + valueTypeName + "* B,\n"
-                        "global " + valueTypeName + "* Z,\n"
+                        "global " + inValueTypeName + "* A,\n"
+                        "global " + inValueTypeName + "* B,\n"
+                        "global " + outValueTypeName + "* Z,\n"
                         "const int length,\n"
                         "global " + functorTypeName + "* userFunctor);\n\n";
 
-                    bolt::cl::constructAndCompileString( masterKernel, "transform", transform_kernels, instantiationString, user_code, valueTypeName, functorTypeName, c);
+                    bolt::cl::constructAndCompileString( masterKernel, "transform", transform_kernels, instantiationString, user_code, inValueTypeName,  functorTypeName, c);
                     // bolt::cl::constructAndCompile(masterKernel, "transform", instantiationString, user_code, valueTypeName, functorTypeName, c);
                 };
             };
             struct CallCompiler_UnaryTransform {
-                static void init_(::cl::Kernel *masterKernel, std::string user_code, std::string valueTypeName,  std::string functorTypeName, const control &c) {
+                static void init_(::cl::Kernel *masterKernel, std::string user_code, std::string inValueTypeName, std::string outValueTypeName, std::string functorTypeName, const control &c) {
 
                     std::string instantiationString = 
                         "// Host generates this instantiation string with user-specified value type and functor\n"
                         "template __attribute__((mangled_name(transformInstantiated)))\n"
                         "kernel void unaryTransformTemplate(\n"
-                        "global " + valueTypeName + "* A,\n"
-                        "global " + valueTypeName + "* Z,\n"
+                        "global " + inValueTypeName + "* A,\n"
+                        "global " + outValueTypeName + "* Z,\n"
                         "const int length,\n"
                         "global " + functorTypeName + "* userFunctor);\n\n";
 
-                    bolt::cl::constructAndCompileString( masterKernel, "transform", transform_kernels, instantiationString, user_code, valueTypeName, functorTypeName, c);
+                    bolt::cl::constructAndCompileString( masterKernel, "transform", transform_kernels, instantiationString, user_code, inValueTypeName, functorTypeName, c);
                 };
             };
 
@@ -127,7 +127,8 @@ namespace bolt {
             transform_pick_iterator(const bolt::cl::control &ctl,  InputIterator first1, InputIterator last1, InputIterator first2, OutputIterator result, 
                 BinaryFunction f, const std::string& user_code)
             {
-                typedef std::iterator_traits<InputIterator>::value_type T;
+                typedef std::iterator_traits<InputIterator>::value_type iType;
+                typedef std::iterator_traits<OutputIterator>::value_type oType;
                 size_t sz = (last1 - first1); 
                 if (sz == 0)
                     return;
@@ -135,11 +136,11 @@ namespace bolt {
                 // Use host pointers memory since these arrays are only read once - no benefit to copying.
 
                 // Map the input iterator to a device_vector
-                device_vector< T > dvInput( first1, last1, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctl );
-                device_vector< T > dvInput2( first2, sz, CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, true, ctl );
+                device_vector< iType > dvInput( first1, last1, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctl );
+                device_vector< iType > dvInput2( first2, sz, CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, true, ctl );
 
                 // Map the output iterator to a device_vector
-                device_vector< T > dvOutput( result, sz, CL_MEM_USE_HOST_PTR|CL_MEM_WRITE_ONLY, false, ctl );
+                device_vector< oType > dvOutput( result, sz, CL_MEM_USE_HOST_PTR|CL_MEM_WRITE_ONLY, false, ctl );
 
                 transform_enqueue( ctl, dvInput.begin( ), dvInput.end( ), dvInput2.begin( ), dvOutput.begin( ), f, user_code );
 
@@ -169,7 +170,8 @@ namespace bolt {
             transform_unary_pick_iterator(const bolt::cl::control &ctl,  InputIterator first, InputIterator last, OutputIterator result, 
                 UnaryFunction f, const std::string& user_code)
             {
-                typedef std::iterator_traits<InputIterator>::value_type T;
+                typedef std::iterator_traits<InputIterator>::value_type iType;
+                typedef std::iterator_traits<OutputIterator>::value_type oType;
                 size_t sz = (last - first); 
                 if (sz == 0)
                     return;
@@ -177,9 +179,9 @@ namespace bolt {
                 // Use host pointers memory since these arrays are only read once - no benefit to copying.
 
                 // Map the input iterator to a device_vector
-                device_vector< T > dvInput( first, last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctl );
+                device_vector< iType > dvInput( first, last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctl );
                 // Map the output iterator to a device_vector
-                device_vector< T > dvOutput( result, sz, CL_MEM_USE_HOST_PTR|CL_MEM_WRITE_ONLY, false, ctl );
+                device_vector< oType > dvOutput( result, sz, CL_MEM_USE_HOST_PTR|CL_MEM_WRITE_ONLY, false, ctl );
 
                 transform_unary_enqueue( ctl, dvInput.begin( ), dvInput.end( ), dvOutput.begin( ), f, user_code );
 
@@ -202,7 +204,8 @@ namespace bolt {
             void transform_enqueue(const bolt::cl::control &c,  DVInputIterator first1, DVInputIterator last1, DVInputIterator first2, DVOutputIterator result, 
                 BinaryFunction f, const std::string& user_code)
             {
-                typedef std::iterator_traits<DVInputIterator>::value_type T;
+                typedef std::iterator_traits<DVInputIterator>::value_type iType;
+                typedef std::iterator_traits<DVOutputIterator>::value_type oType;
                 size_t sz = std::distance( first1, last1 );
                 if (sz == 0)
                     return;
@@ -212,7 +215,7 @@ namespace bolt {
                 static boost::once_flag initOnlyOnce;
                 static  ::cl::Kernel masterKernel;
                 // For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retreive the name here.
-                boost::call_once( initOnlyOnce, boost::bind( CallCompiler_Transform::init_, &masterKernel, user_code + ClCode<T>::get() + ClCode<BinaryFunction>::get(), TypeName< T >::get( ), TypeName< BinaryFunction >::get( ), c ) );
+                boost::call_once( initOnlyOnce, boost::bind( CallCompiler_Transform::init_, &masterKernel, user_code + ClCode<iType>::get() + ClCode<oType>::get() + ClCode<BinaryFunction>::get(), TypeName< iType >::get( ), TypeName< oType >::get( ), TypeName< BinaryFunction >::get( ), c ) );
 
                 ::cl::Kernel k = masterKernel;  // hopefully create a copy of the kernel.  FIXME, need to create-kernel from the program.
 
@@ -247,16 +250,17 @@ namespace bolt {
             void transform_unary_enqueue(const bolt::cl::control &c,  DVInputIterator first, DVInputIterator last, DVOutputIterator result, 
                 UnaryFunction f, const std::string& user_code)
             {
-                typedef std::iterator_traits<DVInputIterator>::value_type T;
+                typedef std::iterator_traits<DVInputIterator>::value_type iType;
+                typedef std::iterator_traits<DVOutputIterator>::value_type oType;
                 size_t sz = std::distance( first, last );
                 if (sz == 0)
                     return;
                 ::cl::Buffer userFunctor(c.context(), CL_MEM_READ_ONLY|CL_MEM_USE_HOST_PTR, sizeof(f), &f );   // Create buffer wrapper so we can access host parameters.
-                std::cout << "transform_unary_enqueue \n";
+
                 static boost::once_flag initOnlyOnce;
                 static ::cl::Kernel masterKernel;
                 // For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retreive the name here.
-                boost::call_once( initOnlyOnce, boost::bind( CallCompiler_UnaryTransform::init_, &masterKernel, user_code + ClCode<T>::get() + ClCode<UnaryFunction>::get(), TypeName< T >::get( ), TypeName< UnaryFunction >::get( ), c ) );
+                boost::call_once( initOnlyOnce, boost::bind( CallCompiler_UnaryTransform::init_, &masterKernel, user_code + ClCode<iType>::get() + ClCode<oType>::get() + ClCode<UnaryFunction>::get(), TypeName< iType >::get( ), TypeName< oType >::get( ), TypeName< UnaryFunction >::get( ), c ) );
 
                 ::cl::Kernel k = masterKernel;  // hopefully create a copy of the kernel.  FIXME, need to create-kernel from the program.
 
