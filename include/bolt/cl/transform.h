@@ -126,6 +126,14 @@ namespace bolt {
         void transform( InputIterator first1, InputIterator last1, InputIterator first2, OutputIterator result, 
             BinaryFunction f, const std::string& user_code="");
 
+        template<typename InputIterator, typename OutputIterator, typename UnaryFunction> 
+        void transform(InputIterator first, InputIterator last, OutputIterator result, 
+            UnaryFunction f, const std::string& user_code="");
+
+        template<typename InputIterator, typename OutputIterator, typename UnaryFunction> 
+        void transform(const bolt::cl::control &ctl, InputIterator first, InputIterator last, OutputIterator result, 
+            UnaryFunction f, const std::string& user_code="");
+
         /*!   \}  */
     };
 };

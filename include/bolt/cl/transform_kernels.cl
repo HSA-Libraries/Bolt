@@ -17,3 +17,22 @@ void transformTemplate(global T* A,
 		Z[gx] = (*userFunctor)(aa, bb);
 	}
 }
+
+
+template <typename T,  typename unary_function>
+kernel
+void unaryTransformTemplate(global T* A,
+			global T* Z,
+			const int length,
+			global unary_function *userFunctor)
+{
+	int gx = get_global_id (0);
+
+	if (gx >= length)
+		return;
+	else
+	{
+		T aa = A[gx];
+		Z[gx] = (*userFunctor)(aa);
+	}
+}
