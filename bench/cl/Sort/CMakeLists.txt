@@ -2,10 +2,10 @@
 ##	Copyright (C) 2010 Advanced Micro Devices, Inc. All Rights Reserved.
 #############################################################################
 # List the names of common files to compile across all platforms
-set( clBolt.Bench.Sort.Source Sort.cpp sort_amp.cpp)
+set( clBolt.Bench.Sort.Source sort.cpp sort_amp.cpp )
 set( clBolt.Bench.Sort.Headers stdafx.h 
-                               ${BOLT_INCLUDE_DIR}/bolt/cl/Sort.h 
-                               ${BOLT_INCLUDE_DIR}/bolt/cl/detail/Sort.inl)
+                               ${BOLT_INCLUDE_DIR}/bolt/cl/sort.h 
+                               ${BOLT_INCLUDE_DIR}/bolt/cl/detail/sort.inl)
 
 set( clBolt.Bench.Sort.Files ${clBolt.Bench.Sort.Source} ${clBolt.Bench.Sort.Headers} )
 
