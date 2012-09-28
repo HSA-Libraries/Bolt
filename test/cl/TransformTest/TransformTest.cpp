@@ -1,4 +1,4 @@
-#define TEST_DOUBLE 1
+#define TEST_DOUBLE 0
 #define TEST_DEVICE_VECTOR 1
 #define TEST_CPU_DEVICE 1
 #define GOOGLE_TEST 1
@@ -102,6 +102,36 @@ public:
     {};
 
     virtual ~TransformArrayTest( )
+    {}
+
+protected:
+    typedef typename std::tuple_element< 0, ArrayTuple >::type ArrayType;
+    static const size_t ArraySize = typename std::tuple_element< 1, ArrayTuple >::type::value;
+    typename std::array< ArrayType, ArraySize > stdInput, boltInput, stdOutput, boltOutput;
+    int m_Errors;
+};
+
+//  Test fixture class, used for the Type-parameterized tests
+//  Namely, the tests that use std::array and TYPED_TEST_P macros
+template< typename ArrayTuple >
+class UnaryTransformArrayTest: public ::testing::Test
+{
+public:
+    UnaryTransformArrayTest( ): m_Errors( 0 )
+    {}
+
+    virtual void SetUp( )
+    {
+        std::generate(stdInput.begin(), stdInput.end(), rand);
+        boltInput = stdInput;
+        boltOutput = stdInput;
+        stdOutput = stdInput;
+    };
+
+    virtual void TearDown( )
+    {};
+
+    virtual ~UnaryTransformArrayTest( )
     {}
 
 protected:
@@ -299,12 +329,204 @@ TYPED_TEST_P( TransformArrayTest, CPU_DeviceMinusFunction )
 }
 #endif
 
+TYPED_TEST_CASE_P( UnaryTransformArrayTest );
+
+TYPED_TEST_P( UnaryTransformArrayTest, Normal )
+{
+    typedef std::array< ArrayType, ArraySize > ArrayCont;
+
+    //  Calling the actual functions under test
+    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), bolt::cl::negate<ArrayType>());
+    bolt::cl::transform( boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), bolt::cl::negate<ArrayType>());
+
+    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
+    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdOutput, boltOutput );
+}
+
+TYPED_TEST_P( UnaryTransformArrayTest, GPU_DeviceNormal )
+{
+    typedef std::array< ArrayType, ArraySize > ArrayCont;
+    MyOclContext oclgpu = initOcl(CL_DEVICE_TYPE_GPU, 0);
+	bolt::cl::control c_gpu(oclgpu._queue);  // construct control structure from the queue.
+
+    //  Calling the actual functions under test
+    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), bolt::cl::negate<ArrayType>());
+    bolt::cl::transform( c_gpu, boltInput.begin( ), boltInput.end( ),  boltOutput.begin( ), bolt::cl::negate<ArrayType>());
+
+    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
+    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdOutput, boltOutput );
+    // FIXME - releaseOcl(ocl);
+}
+
+#if (TEST_CPU_DEVICE == 1)
+TYPED_TEST_P( UnaryTransformArrayTest, CPU_DeviceNormal )
+{
+    typedef std::array< ArrayType, ArraySize > ArrayCont;
+    MyOclContext oclcpu = initOcl(CL_DEVICE_TYPE_CPU, 0);
+	bolt::cl::control c_cpu(oclcpu._queue);  // construct control structure from the queue.
+
+    //  Calling the actual functions under test
+    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), bolt::cl::negate<ArrayType>());
+    bolt::cl::transform( c_cpu, boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), bolt::cl::negate<ArrayType>());
+
+    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
+    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdOutput, boltOutput );
+    // FIXME - releaseOcl(ocl);
+}
+#endif
+
+TYPED_TEST_P( UnaryTransformArrayTest, MultipliesFunction )
+{
+    typedef std::array< ArrayType, ArraySize > ArrayCont;
+
+    //  Calling the actual functions under test
+    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), bolt::cl::square<ArrayType>());
+    bolt::cl::transform( boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), bolt::cl::square<ArrayType>());
+
+    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
+    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdOutput, boltOutput );
+}
+
+TYPED_TEST_P( UnaryTransformArrayTest, GPU_DeviceMultipliesFunction )
+{
+    typedef std::array< ArrayType, ArraySize > ArrayCont;
+    MyOclContext oclgpu = initOcl(CL_DEVICE_TYPE_GPU, 0);
+	bolt::cl::control c_gpu(oclgpu._queue);  // construct control structure from the queue.
+
+    //  Calling the actual functions under test
+    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), bolt::cl::square<ArrayType>());
+    bolt::cl::transform( c_gpu, boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), bolt::cl::square<ArrayType>());
+
+    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
+    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdOutput, boltOutput );
+    // FIXME - releaseOcl(ocl);
+}
+#if (TEST_CPU_DEVICE == 1)
+TYPED_TEST_P( UnaryTransformArrayTest, CPU_DeviceMultipliesFunction )
+{
+    typedef std::array< ArrayType, ArraySize > ArrayCont;
+    MyOclContext oclcpu = initOcl(CL_DEVICE_TYPE_CPU, 0);
+	bolt::cl::control c_cpu(oclcpu._queue);  // construct control structure from the queue.
+
+    //  Calling the actual functions under test
+    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), bolt::cl::square<ArrayType>());
+    bolt::cl::transform( c_cpu, boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), bolt::cl::square<ArrayType>());
+
+    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
+    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdOutput, boltOutput );
+    // FIXME - releaseOcl(ocl);
+}
+#endif
+TYPED_TEST_P( UnaryTransformArrayTest, MinusFunction )
+{
+    typedef std::array< ArrayType, ArraySize > ArrayCont;
+
+    //  Calling the actual functions under test
+    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), bolt::cl::square<ArrayType>());
+    bolt::cl::transform( boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), bolt::cl::square<ArrayType>());
+
+    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
+    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdOutput, boltOutput );
+
+}
+
+TYPED_TEST_P( UnaryTransformArrayTest, GPU_DeviceMinusFunction )
+{
+    typedef std::array< ArrayType, ArraySize > ArrayCont;
+    MyOclContext oclgpu = initOcl(CL_DEVICE_TYPE_GPU, 0);
+	bolt::cl::control c_gpu(oclgpu._queue);  // construct control structure from the queue.
+
+    //  Calling the actual functions under test
+    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), bolt::cl::square<ArrayType>());
+    bolt::cl::transform( c_gpu, boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), bolt::cl::square<ArrayType>());
+
+    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
+    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdOutput, boltOutput );
+    // FIXME - releaseOcl(ocl);
+}
+#if (TEST_CPU_DEVICE == 1)
+TYPED_TEST_P( UnaryTransformArrayTest, CPU_DeviceMinusFunction )
+{
+    typedef std::array< ArrayType, ArraySize > ArrayCont;
+    MyOclContext oclcpu = initOcl(CL_DEVICE_TYPE_CPU, 0);
+	bolt::cl::control c_cpu(oclcpu._queue);  // construct control structure from the queue.
+
+    //  Calling the actual functions under test
+    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), bolt::cl::square<ArrayType>());
+    bolt::cl::transform( c_cpu, boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), bolt::cl::square<ArrayType>());
+
+    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
+    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdOutput, boltOutput );
+    // FIXME - releaseOcl(ocl);
+}
+#endif
+
 #if (TEST_CPU_DEVICE == 1)
 REGISTER_TYPED_TEST_CASE_P( TransformArrayTest, Normal, GPU_DeviceNormal, 
                                            MultipliesFunction, GPU_DeviceMultipliesFunction,
                                            MinusFunction, GPU_DeviceMinusFunction, CPU_DeviceNormal, CPU_DeviceMultipliesFunction, CPU_DeviceMinusFunction);
+REGISTER_TYPED_TEST_CASE_P( UnaryTransformArrayTest, Normal, GPU_DeviceNormal, 
+                                           MultipliesFunction, GPU_DeviceMultipliesFunction,
+                                           MinusFunction, GPU_DeviceMinusFunction, CPU_DeviceNormal, CPU_DeviceMultipliesFunction, CPU_DeviceMinusFunction);
 #else
 REGISTER_TYPED_TEST_CASE_P( TransformArrayTest, Normal, GPU_DeviceNormal, 
+                                           MultipliesFunction, GPU_DeviceMultipliesFunction,
+                                           MinusFunction, GPU_DeviceMinusFunction );
+REGISTER_TYPED_TEST_CASE_P( UnaryTransformArrayTest, Normal, GPU_DeviceNormal, 
                                            MultipliesFunction, GPU_DeviceMultipliesFunction,
                                            MinusFunction, GPU_DeviceMinusFunction );
 #endif
@@ -571,6 +793,18 @@ TEST_P( TransformIntegerVector, Normal )
 
     //  Loop through the array and compare all the values with each other
     cmpArrays( stdOutput, boltOutput );
+
+    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), bolt::cl::negate<int>());
+    bolt::cl::transform( boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), bolt::cl::negate<int>());
+
+    stdNumElements = std::distance( stdInput.begin( ), stdInput.end( ) );
+    boltNumElements = std::distance( boltInput.begin( ), boltInput.end( ) );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdOutput, boltOutput );
 }
 
 TEST_P( TransformFloatVector, Normal )
@@ -587,6 +821,19 @@ TEST_P( TransformFloatVector, Normal )
 
     //  Loop through the array and compare all the values with each other
     cmpArrays( stdInput, boltInput );
+
+    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), bolt::cl::negate<float>());
+    bolt::cl::transform( boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), bolt::cl::negate<float>());
+
+    stdNumElements = std::distance( stdInput.begin( ), stdInput.end( ) );
+    boltNumElements = std::distance( boltInput.begin( ), boltInput.end( ) );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdOutput, boltOutput );
+
 }
 #if (TEST_DOUBLE == 1)
 TEST_P( TransformDoubleVector, Inplace )
@@ -603,6 +850,19 @@ TEST_P( TransformDoubleVector, Inplace )
 
     //  Loop through the array and compare all the values with each other
     cmpArrays( stdOutput, boltOutput );
+
+    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), bolt::cl::negate<double>());
+    bolt::cl::transform( boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), bolt::cl::negate<double>());
+
+    stdNumElements = std::distance( stdInput.begin( ), stdInput.end( ) );
+    boltNumElements = std::distance( boltInput.begin( ), boltInput.end( ) );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdOutput, boltOutput );
+
 }
 #endif
 #if (TEST_DEVICE_VECTOR == 1)
@@ -614,6 +874,20 @@ TEST_P( TransformIntegerDeviceVector, Inplace )
 
     std::vector< int >::iterator::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end( ) );
     std::vector< int >::iterator::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end( ) );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdOutput, boltOutput );
+
+    //UNARY TRANSFORM Test
+    //  Calling the actual functions under test
+    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), bolt::cl::negate<int>());
+    bolt::cl::transform( boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), bolt::cl::negate<int>());
+
+    stdNumElements = std::distance( stdInput.begin( ), stdInput.end( ) );
+    boltNumElements = std::distance( boltInput.begin( ), boltInput.end( ) );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
@@ -635,6 +909,20 @@ TEST_P( TransformFloatDeviceVector, Inplace )
 
     //  Loop through the array and compare all the values with each other
     cmpArrays( stdOutput, boltOutput );
+
+    //UNARY TRANSFORM Test
+    //  Calling the actual functions under test
+    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), bolt::cl::negate<float>());
+    bolt::cl::transform( boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), bolt::cl::negate<float>());
+
+    stdNumElements = std::distance( stdInput.begin( ), stdInput.end( ) );
+    boltNumElements = std::distance( boltInput.begin( ), boltInput.end( ) );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdOutput, boltOutput );
 }
 #if (TEST_DOUBLE == 1)
 TEST_P( TransformDoubleDeviceVector, Inplace )
@@ -645,6 +933,20 @@ TEST_P( TransformDoubleDeviceVector, Inplace )
 
     std::vector< double >::iterator::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end( ) );
     std::vector< double >::iterator::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end( ) );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdOutput, boltOutput );
+
+    //UNARY TRANSFORM Test
+    //  Calling the actual functions under test
+    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), bolt::cl::negate<double>());
+    bolt::cl::transform( boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), bolt::cl::negate<double>());
+
+    stdNumElements = std::distance( stdInput.begin( ), stdInput.end( ) );
+    boltNumElements = std::distance( boltInput.begin( ), boltInput.end( ) );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
@@ -670,6 +972,13 @@ TEST_P( TransformIntegerNakedPointer, Inplace )
 
     //  Loop through the array and compare all the values with each other
     cmpArrays( stdOutput, boltOutput, endIndex );
+    
+    //UNARY TRANSFORM Test
+    std::transform( wrapStdInput, wrapStdInput + endIndex, wrapStdOutput, bolt::cl::negate<int>());
+    bolt::cl::transform( wrapBoltInput, wrapBoltInput+endIndex, wrapBoltOutput, bolt::cl::negate<int>());
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdOutput, boltOutput, endIndex );
 }
 
 TEST_P( TransformFloatNakedPointer, Inplace )
@@ -684,6 +993,13 @@ TEST_P( TransformFloatNakedPointer, Inplace )
 
     std::transform( wrapStdInput, wrapStdInput + endIndex, wrapStdOutput, wrapStdOutput, bolt::cl::plus<float>());
     bolt::cl::transform( wrapBoltInput, wrapBoltInput+endIndex, wrapBoltOutput, wrapBoltOutput, bolt::cl::plus<float>());
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdOutput, boltOutput, endIndex );
+
+    //UNARY TRANSFORM Test
+    std::transform( wrapStdInput, wrapStdInput + endIndex, wrapStdOutput, bolt::cl::negate<float>());
+    bolt::cl::transform( wrapBoltInput, wrapBoltInput+endIndex, wrapBoltOutput, bolt::cl::negate<float>());
 
     //  Loop through the array and compare all the values with each other
     cmpArrays( stdOutput, boltOutput, endIndex );
@@ -702,6 +1018,13 @@ TEST_P( TransformDoubleNakedPointer, Inplace )
 
     std::transform( wrapStdInput, wrapStdInput + endIndex, wrapStdOutput, wrapStdOutput, bolt::cl::plus<double>());
     bolt::cl::transform( wrapBoltInput, wrapBoltInput+endIndex, wrapBoltOutput, wrapBoltOutput, bolt::cl::plus<double>());
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdOutput, boltOutput, endIndex );
+
+    //UNARY TRANSFORM Test
+    std::transform( wrapStdInput, wrapStdInput + endIndex, wrapStdOutput, bolt::cl::negate<double>());
+    bolt::cl::transform( wrapBoltInput, wrapBoltInput+endIndex, wrapBoltOutput, bolt::cl::negate<double>());
 
     //  Loop through the array and compare all the values with each other
     cmpArrays( stdOutput, boltOutput, endIndex );
@@ -834,6 +1157,13 @@ INSTANTIATE_TYPED_TEST_CASE_P( Integer, TransformArrayTest, IntegerTests );
 INSTANTIATE_TYPED_TEST_CASE_P( Float, TransformArrayTest, FloatTests );
 #if (TEST_DOUBLE == 1)
 INSTANTIATE_TYPED_TEST_CASE_P( Double, TransformArrayTest, DoubleTests );
+#endif 
+//INSTANTIATE_TYPED_TEST_CASE_P( UDDTest, SortArrayTest, UDDTests );
+
+INSTANTIATE_TYPED_TEST_CASE_P( Integer, UnaryTransformArrayTest, IntegerTests );
+INSTANTIATE_TYPED_TEST_CASE_P( Float, UnaryTransformArrayTest, FloatTests );
+#if (TEST_DOUBLE == 1)
+INSTANTIATE_TYPED_TEST_CASE_P( Double, UnaryTransformArrayTest, DoubleTests );
 #endif 
 //INSTANTIATE_TYPED_TEST_CASE_P( UDDTest, SortArrayTest, UDDTests );
 
