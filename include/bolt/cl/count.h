@@ -80,7 +80,7 @@ namespace bolt {
             Predicate predicate,
             const std::string cl_code="")
         {
-            typedef typename bolt::cl::iterator_traits<InputIterator>::difference_type CountType;
+            typedef typename bolt::cl::iterator_traits<InputIterator>::value_type CountType;
             //typedef int CountType; // FIXME, need to create a bolt class that returns an ocl-supported typename.
             return transform_reduce(bolt::cl::control::getDefault(), first, last, 
                 predicate,  // FIXME - need CountIfTransform here?
