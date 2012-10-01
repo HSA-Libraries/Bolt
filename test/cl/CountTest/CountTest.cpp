@@ -58,20 +58,46 @@ struct InRange {
 	T _high;
 };
 );
+
+BOLT_CREATE_TYPENAME(InRange<int>);
+BOLT_CREATE_CLCODE(InRange<int>, InRange_CodeString);
 BOLT_CREATE_TYPENAME(InRange<float>);
-//BOLT_CREATE_CLCODE(InRange<float>, InRange_CodeString);
+BOLT_CREATE_CLCODE(InRange<float>, InRange_CodeString);
+
+
+
+
 
 
 
 void testCountIf(int aSize) 
 {
 	std::vector<float> A(aSize);
+	std::vector<float> B(aSize);
 	for (int i=0; i < aSize; i++) {
 		A[i] = static_cast<float> (i+1);
+		B[i] = A[i];
 	};
 
 	std::cout << "STD Count7..15=" << std::count_if (A.begin(), A.end(), InRange<float>(7,15)) << std::endl;
-	std::cout << "BOLT Count7..15=" << bolt::cl::count_if (A.begin(), A.end(), InRange<float>(7,15), InRange_CodeString) << std::endl;
+	std::cout << "BOLT Count7..15=" << bolt::cl::count_if (B.begin(), B.end(), InRange<float>(7,15)) << std::endl;
+}
+
+void test_bug(int aSize) 
+{
+	//int aSize = 1024;
+	std::vector<int> A(aSize);
+	std::vector<int> B(aSize);
+	for (int i=0; i < aSize; i++) {
+		A[i] = rand() % 10 + 1;
+		B[i] = A[i];
+	}
+
+	int stdInRangeCount = std::count_if (A.begin(), A.end(), InRange<int>(1,10)) ;
+	int boltInRangeCount = bolt::cl::count_if (B.begin(), B.end(), InRange<int>(1, 10)) ;
+	std:: cout << stdInRangeCount << "   "   << boltInRangeCount << "\n";
+	//std::cout << "STD Count7..15=" << std::count_if (A.begin(), A.end(), InRange<float>(7,15)) << std::endl;
+	//std::cout << "BOLT Count7..15=" << bolt::cl::count_if (A.begin(), A.end(), InRange<float>(7,15), InRange_CodeString) << std::endl;
 }
 
 int _tmain(int argc, _TCHAR* argv[])
@@ -81,7 +107,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	testCount2();
 
 	testCountIf(1024);
-
+	test_bug(1024);
 	return 0;
 }
 
