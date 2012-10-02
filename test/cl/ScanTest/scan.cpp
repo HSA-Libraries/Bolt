@@ -498,6 +498,36 @@ TEST_P( ScanIntegerVector, ExclusiveOutOfPlace )
     cmpArrays( stdResult, boltResult );
 }
 
+//tring to call out-place scan
+TEST_P( ScanFloatVector, intSameValuesSerialOutPlace )
+{
+    bolt::cl::device_vector< float > boltInput( GetParam( ), 1.0f );
+    bolt::cl::device_vector< float > boltOutput( GetParam( ), 1.0f );
+    bolt::cl::device_vector< float >::iterator boltEnd = bolt::cl::exclusive_scan( boltInput.begin( ), boltInput.end( ), boltOutput.begin() );
+
+    std::vector< float > stdOutput( GetParam( ), 1.0f );
+    std::vector< float >::iterator stdEnd  = bolt::cl::exclusive_scan( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ) );
+    
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdOutput, boltOutput );
+}
+
+//tring to call in-place scan
+TEST_P( ScanFloatVector, intSameValuesSerialInPlace )
+{
+    bolt::cl::device_vector< float > dvBoltInput( GetParam( ), 1.0f );
+    bolt::cl::device_vector< float >::iterator boltEnd = bolt::cl::exclusive_scan( dvBoltInput.begin( ), dvBoltInput.end( ), dvBoltInput.begin() );
+    {
+        bolt::cl::device_vector< float >::pointer inPlaceData      = dvBoltInput.data( );
+    }
+
+    //std::vector< float > stdInput( 1024, 1 );
+    std::vector< float >::iterator stdEnd  = bolt::cl::exclusive_scan( stdInput.begin( ), stdInput.end( ), stdInput.begin( ) );
+    
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+
 //  Test lots of consecutive numbers, but small range, suitable for integers because they overflow easier
 INSTANTIATE_TEST_CASE_P( Inclusive, ScanIntegerVector, ::testing::Range( 0, 1024, 1 ) );
 INSTANTIATE_TEST_CASE_P( Inclusive, ScanIntegerDeviceVector, ::testing::Range( 0, 1024, 1 ) );

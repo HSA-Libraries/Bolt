@@ -320,7 +320,6 @@ namespace bolt
                 inclusive_scan_enqueue( ctl, dvInput.begin( ), dvInput.end( ), dvOutput.begin( ), init, binary_op );
 
                 //  TODO:  This extra pass over the data is unnecessary; future optimization should fold this subtraction into the kernels
-                //  BUG:  This hack doesn't work if the inclusive_scan is inplace
                 transform( ctl, dvOutput.begin( ), dvOutput.end( ), dvInput.begin( ), dvOutput.begin( ), minus< oType >( ) );
 
                 // This should immediately map/unmap the buffer
@@ -365,12 +364,30 @@ namespace bolt
 
             //Now call the actual cl algorithm
             inclusive_scan_enqueue( ctl, first, last, result, init, binary_op );
+            ////  Debug code
+            //{
+            //    // Enqueue the operation
+            //    V_OPENCL( ctl.commandQueue( ).finish( ), "Failed to call finish on the commandqueue" );
+
+            //    //  Look at the contents of those buffers
+            //    device_vector< oType >::pointer pResult     = result->getContainer( ).data( );
+            //}
+
+            DVOutputIterator resultEnd = result + numElements;
 
             //  TODO:  This extra pass over the data is unnecessary; future optimization should fold this subtraction into the kernels
             //  BUG:  This hack doesn't work if the inclusive_scan is inplace
-            transform( ctl, dvOutput.begin( ), dvOutput.end( ), dvInput.begin( ), dvOutput.begin( ), minus< oType >( ) );
+            transform( ctl, result, resultEnd, first, result, minus< oType >( ) );
+            ////  Debug code
+            //{
+            //    // Enqueue the operation
+            //    V_OPENCL( ctl.commandQueue( ).finish( ), "Failed to call finish on the commandqueue" );
 
-            return result + numElements;
+            //    //  Look at the contents of those buffers
+            //    device_vector< oType >::pointer pResult     = result->getContainer( ).data( );
+            //}
+
+            return resultEnd;
         }
 
         //  All calls to inclusive_scan end up here, unless an exception was thrown
