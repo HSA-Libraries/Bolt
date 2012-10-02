@@ -68,7 +68,7 @@ namespace bolt
         };
 
         template< typename InputIterator, typename OutputIterator, typename T, typename BinaryFunction > 
-        OutputIterator exclusive_scan( InputIterator first, InputIterator last, OutputIterator result, BinaryFunction binary_op, T init,
+        OutputIterator exclusive_scan( InputIterator first, InputIterator last, OutputIterator result, T init, BinaryFunction binary_op,
             const std::string& user_code )
         {
             return detail::exclusive_scan_detect_random_access( control::getDefault( ), first, last, result, init, binary_op, std::iterator_traits< InputIterator >::iterator_category( ) );
@@ -295,6 +295,7 @@ namespace bolt
             typedef typename std::iterator_traits< InputIterator >::value_type iType;
             typedef typename std::iterator_traits< OutputIterator >::value_type oType;
             static_assert( std::is_convertible< iType, oType >::value, "Input and Output iterators are incompatible" );
+            static_assert( std::is_convertible< T, oType >::value, "Type of init parameter must be convertible to OutputIterator::value_type" );
 
             unsigned int numElements = static_cast< unsigned int >( std::distance( first, last ) );
             if( numElements == 0 )
@@ -341,6 +342,7 @@ namespace bolt
             typedef typename std::iterator_traits< DVInputIterator >::value_type iType;
             typedef typename std::iterator_traits< DVOutputIterator >::value_type oType;
             static_assert( std::is_convertible< iType, oType >::value, "Input and Output iterators are incompatible" );
+            static_assert( std::is_convertible< T, oType >::value, "Type of init parameter must be convertible to OutputIterator::value_type" );
 
             unsigned int numElements = static_cast< unsigned int >( std::distance( first, last ) );
             if( numElements == 0 )
