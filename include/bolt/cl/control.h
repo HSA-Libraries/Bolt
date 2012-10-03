@@ -171,11 +171,17 @@ namespace bolt {
                 return _defaultControl; 
             };
 
+            static void printPlatforms( bool printDevices = true, cl_device_type deviceType = CL_DEVICE_TYPE_ALL );
+            static void printPlatformsRange( std::vector< ::cl::Platform >::iterator begin, std::vector< ::cl::Platform >::iterator end, 
+                                            bool printDevices = true, cl_device_type deviceType = CL_DEVICE_TYPE_ALL );
+
+            static ::cl::CommandQueue getDefaultCommandQueue( );
+
         private:
 
             // This is the private constructor is only used to create the initial default control structure.
             control(bool createGlobal) :
-                m_commandQueue(::cl::CommandQueue::getDefault()),
+                m_commandQueue( getDefaultCommandQueue( ) ),
                 m_useHost(UseHost),
                 m_forceRunMode(Automatic),
                 m_debug(debug::None),
@@ -184,17 +190,14 @@ namespace bolt {
                 m_compileForAllDevices(true)
             {};
 
-            ::cl::CommandQueue    m_commandQueue;
+            ::cl::CommandQueue  m_commandQueue;
             e_UseHostMode       m_useHost;
             e_RunMode           m_forceRunMode; 
             e_AutoTuneMode      m_autoTune;  /* auto-tune the choice of device CPU/GPU and  workgroup shape */
-            unsigned			m_debug;
-
+            unsigned            m_debug;
             int                 m_wgPerComputeUnit;
-
-            std::string			m_compileOptions;  // extra options to pass to OpenCL compiler.
-
-            bool				 m_compileForAllDevices;  // compile for all devices in the context.  False means to only compile for specified device.
+            std::string         m_compileOptions;  // extra options to pass to OpenCL compiler.
+            bool                m_compileForAllDevices;  // compile for all devices in the context.  False means to only compile for specified device.
         };
 
     };

@@ -45,6 +45,7 @@ set( clBolt.Include.Dir ${BOLT_INCLUDE_DIR}/bolt/cl )
 
 set( clBolt.Runtime.Source     
         bolt.cpp 
+        control.cpp
         ${BOLT_LIBRARY_DIR}/statisticalTimer.cpp
     )
 
