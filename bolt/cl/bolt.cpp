@@ -395,10 +395,8 @@ namespace bolt {
         return ::cl::Kernel(mainProgram, kernelName.c_str());
     }
 
-    void constructAndCompile(::cl::Kernel *masterKernel, const std::string &apiName, const std::string instantiationString, std::string userCode, std::string valueTypeName,  std::string functorTypeName, const control &c) {
-
-        //FIXME, when this becomes more stable move the kernel code to a string in bolt.cpp
-        // Note unfortunate dependency here on relative file path of run directory and location of bolt::cl dir.
+    void constructAndCompile(::cl::Kernel *masterKernel, const std::string &apiName, const std::string instantiationString, std::string userCode, std::string valueTypeName,  std::string functorTypeName, const control &c) 
+	{
         std::string templateFunctionString = bolt::cl::fileToString( apiName + "_kernels.cl"); 
 
         std::string codeStr = userCode + "\n\n" + templateFunctionString +   instantiationString;
@@ -443,7 +441,7 @@ namespace bolt {
         } 
         catch( const ::cl::Error& )
         {
-            std::cout << "Code         :\n" << kernelCodeString << std::endl;
+            std::cout << "Code:\n---\n" << kernelCodeString << "\n----\n";
 
             std::vector<::cl::Device> devices = ctl.context( ).getInfo<CL_CONTEXT_DEVICES>( );
             std::for_each( devices.begin( ), devices.end( ), [&]( ::cl::Device &d )
