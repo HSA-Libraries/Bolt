@@ -128,7 +128,7 @@ namespace bolt
             // FIXME - move to cpp file
             struct CompileTemplate
             {
-                static void ScanSpecialization( std::vector< ::cl::Kernel >* scanKernels, const std::string& cl_code, const std::string& valueTypeName, const std::string& functorTypeName, const control& ctl )
+                static void ScanSpecialization( std::vector< ::cl::Kernel >* scanKernels, const std::string& cl_code, const std::string& valueTypeName, const std::string& functorTypeName, const control* ctl )
                 {
                     // cl_code = template<typename T> struct plus { T operator()(const T &lhs, const T &rhs) const {return lhs + rhs;} };
                     // valueTypeName = int
@@ -174,7 +174,7 @@ namespace bolt
                         "global " + functorTypeName + "* binaryOp\n"
                         ");\n\n";
 
-                    bolt::cl::compileKernelsString( *scanKernels, kernelNames, scan_kernels, templateSpecializationString, cl_code, valueTypeName, functorTypeName, ctl );
+                    bolt::cl::compileKernelsString( *scanKernels, kernelNames, scan_kernels, templateSpecializationString, cl_code, valueTypeName, functorTypeName, *ctl );
                 }
             };
 
@@ -421,7 +421,7 @@ namespace bolt
                 static std::vector< ::cl::Kernel > scanKernels;
 
                 // For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retreive the name here.
-                boost::call_once( scanCompileFlag, boost::bind( CompileTemplate::ScanSpecialization, &scanKernels, ClCode< BinaryFunction >::get( ), TypeName< iType >::get( ), TypeName< BinaryFunction >::get( ), ctl ) );
+                boost::call_once( scanCompileFlag, boost::bind( CompileTemplate::ScanSpecialization, &scanKernels, ClCode< BinaryFunction >::get( ), TypeName< iType >::get( ), TypeName< BinaryFunction >::get( ), &ctl ) );
 
                 cl_int l_Error = CL_SUCCESS;
 
@@ -463,8 +463,10 @@ namespace bolt
 
                 // Create buffer wrappers so we can access the host functors, for read or writing in the kernel
                 ::cl::Buffer userFunctor( ctl.context( ), CL_MEM_USE_HOST_PTR, sizeof( binary_op ), &binary_op );
-                device_vector< iType > preSumArray( sizeScanBuff, 0, CL_MEM_READ_WRITE, false, ctl );
-                device_vector< iType > postSumArray( sizeScanBuff, 0, CL_MEM_READ_WRITE, false, ctl );
+                //device_vector< iType > preSumArray( sizeScanBuff, 0, CL_MEM_READ_WRITE, false, ctl );
+                //device_vector< iType > postSumArray( sizeScanBuff, 0, CL_MEM_READ_WRITE, false, ctl );
+                ::cl::Buffer preSumArray( ctl.context( ), CL_MEM_READ_WRITE, sizeScanBuff*sizeof(iType) );
+                ::cl::Buffer postSumArray( ctl.context( ), CL_MEM_READ_WRITE, sizeScanBuff*sizeof(iType) );
 
                 const cl_uint ldsSize  = static_cast< cl_uint >( ( waveSize + ( waveSize / 2 ) ) * sizeof( iType ) );
 
@@ -474,17 +476,13 @@ namespace bolt
                 V_OPENCL( scanKernels[ 0 ].setArg( 3, numElements ), "Error setting argument for scanKernels[ 0 ]" );   // Size of scratch buffer
                 V_OPENCL( scanKernels[ 0 ].setArg( 4, ldsSize, NULL ), "Error setting argument for scanKernels[ 0 ]" );    // Scratch buffer
                 V_OPENCL( scanKernels[ 0 ].setArg( 5, userFunctor ), "Error setting argument for scanKernels[ 0 ]" );      // User provided functor class
-                V_OPENCL( scanKernels[ 0 ].setArg( 6, preSumArray.begin( )->getBuffer( ) ), "Error setting argument for scanKernels[ 0 ]" );      // Output per block sum buffer
-
-                std::vector< ::cl::Event > intraScanEvent( 1 );
+                V_OPENCL( scanKernels[ 0 ].setArg( 6, preSumArray ), "Error setting argument for scanKernels[ 0 ]" );      // Output per block sum buffer
 
                 l_Error = ctl.commandQueue( ).enqueueNDRangeKernel(
                     scanKernels[ 0 ],
                     ::cl::NullRange,
                     ::cl::NDRange( sizeInputBuff ),
-                    ::cl::NDRange( waveSize ),
-                    NULL,
-                    &intraScanEvent.front( ) );
+                    ::cl::NDRange( waveSize ) );
                 V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for perBlockInclusiveScan kernel" );
 
                 ////  Debug code
@@ -499,22 +497,18 @@ namespace bolt
 
                 cl_uint workPerThread = static_cast< cl_uint >( sizeScanBuff / waveSize );
 
-                V_OPENCL( scanKernels[ 1 ].setArg( 0, postSumArray.begin( )->getBuffer( ) ), "Error setting 0th argument for scanKernels[ 1 ]" );          // Output buffer
-                V_OPENCL( scanKernels[ 1 ].setArg( 1, preSumArray.begin( )->getBuffer( ) ), "Error setting 1st argument for scanKernels[ 1 ]" );            // Input buffer
+                V_OPENCL( scanKernels[ 1 ].setArg( 0, postSumArray ), "Error setting 0th argument for scanKernels[ 1 ]" );          // Output buffer
+                V_OPENCL( scanKernels[ 1 ].setArg( 1, preSumArray ), "Error setting 1st argument for scanKernels[ 1 ]" );            // Input buffer
                 V_OPENCL( scanKernels[ 1 ].setArg( 2, numWorkGroups ), "Error setting 2nd argument for scanKernels[ 1 ]" );            // Size of scratch buffer
                 V_OPENCL( scanKernels[ 1 ].setArg( 3, ldsSize, NULL ), "Error setting 3rd argument for scanKernels[ 1 ]" );  // Scratch buffer
                 V_OPENCL( scanKernels[ 1 ].setArg( 4, workPerThread ), "Error setting 4th argument for scanKernels[ 1 ]" );           // User provided functor class
                 V_OPENCL( scanKernels[ 1 ].setArg( 5, userFunctor ), "Error setting 5th argument for scanKernels[ 1 ]" );           // User provided functor class
 
-                std::vector< ::cl::Event > interScanEvent( 1 );
-
                 l_Error = ctl.commandQueue( ).enqueueNDRangeKernel(
                     scanKernels[ 1 ],
                     ::cl::NullRange,
                     ::cl::NDRange( waveSize ),
-                    ::cl::NDRange( waveSize ),
-                    &intraScanEvent,
-                    &interScanEvent.front( ) );
+                    ::cl::NDRange( waveSize ) );
                 V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for perBlockInclusiveScan kernel" );
 
                 ////  Debug code
@@ -530,7 +524,7 @@ namespace bolt
                 std::vector< ::cl::Event > perBlockEvent( 1 );
 
                 V_OPENCL( scanKernels[ 2 ].setArg( 0, result->getBuffer( ) ), "Error setting 0th argument for scanKernels[ 2 ]" );          // Output buffer
-                V_OPENCL( scanKernels[ 2 ].setArg( 1, postSumArray.begin( )->getBuffer( ) ), "Error setting 1st argument for scanKernels[ 2 ]" );            // Input buffer
+                V_OPENCL( scanKernels[ 2 ].setArg( 1, postSumArray ), "Error setting 1st argument for scanKernels[ 2 ]" );            // Input buffer
                 V_OPENCL( scanKernels[ 2 ].setArg( 2, numElements ), "Error setting 2nd argument for scanKernels[ 2 ]" );   // Size of scratch buffer
                 V_OPENCL( scanKernels[ 2 ].setArg( 3, userFunctor ), "Error setting 3rd argument for scanKernels[ 2 ]" );           // User provided functor class
 
@@ -539,7 +533,7 @@ namespace bolt
                     ::cl::NullRange,
                     ::cl::NDRange( sizeInputBuff ),
                     ::cl::NDRange( waveSize ),
-                    &interScanEvent,
+                    NULL,
                     &perBlockEvent.front( ) );
                 V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for perBlockInclusiveScan kernel" );
 

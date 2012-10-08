@@ -136,13 +136,24 @@ namespace bolt
                     return *this;
                 }
 
-                /*! \brief A get accessor function to return the encapsulated device buffer
+                /*! \brief A get accessor function to return the encapsulated device buffer for const objects
                 *   This member function allows access to the Buffer object, which can be retrieved through a reference or an iterator.
                 *   This is necessary to allow library functions to set the encapsulated Buffer object as a kernel argument.  
                 *   \note This get function could be implemented in the iterator, but the reference object is usually a temporary rvalue so 
                 *   this location seems less intrusive to the design of the vector class.
                 */
-                ::cl::Buffer getBuffer( ) const
+                const ::cl::Buffer& getBuffer( ) const
+                {
+                    return m_Container.m_devMemory;
+                }
+
+                /*! \brief A get accessor function to return the encapsulated device buffer for non-const objects
+                *   This member function allows access to the Buffer object, which can be retrieved through a reference or an iterator.
+                *   This is necessary to allow library functions to set the encapsulated Buffer object as a kernel argument.  
+                *   \note This get function could be implemented in the iterator, but the reference object is usually a temporary rvalue so 
+                *   this location seems less intrusive to the design of the vector class.
+                */
+                ::cl::Buffer& getBuffer( )
                 {
                     return m_Container.m_devMemory;
                 }

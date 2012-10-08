@@ -155,7 +155,9 @@ namespace bolt {
             void compileOptions(std::string &compileOptions) { m_compileOptions = compileOptions; }; 
 
             // getters:
-            ::cl::CommandQueue commandQueue() const { return m_commandQueue; };
+            ::cl::CommandQueue& commandQueue( ) { return m_commandQueue; };
+            const ::cl::CommandQueue& commandQueue( ) const { return m_commandQueue; };
+
             ::cl::Context context() const { return m_commandQueue.getInfo<CL_QUEUE_CONTEXT>();};
             ::cl::Device device() const { return m_commandQueue.getInfo<CL_QUEUE_DEVICE>();};
             e_UseHostMode useHost() const { return m_useHost; };
