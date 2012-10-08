@@ -16,15 +16,23 @@
 ############################################################################                                                                                     
 
 # List the names of common files to compile across all platforms
-message( STATUS "Setting up CL specific benchmarking projects" )
+set( clBolt.Bench.Transform.Source stdafx.cpp Transform.cpp )
+set( clBolt.Bench.Transform.Headers stdafx.h targetver.h ${BOLT_INCLUDE_DIR}/bolt/cl/transform.h )
 
-# Include standard OpenCL headers
-include_directories( ${OPENCL_INCLUDE_DIRS} )
+set( clBolt.Bench.Transform.Files ${clBolt.Bench.Transform.Source} ${clBolt.Bench.Transform.Headers} )
 
-if( BUILD_clBolt )
-	# Include standard OpenCL headers
-	add_subdirectory( CopyBuffer )
-	add_subdirectory( Scan )
-	add_subdirectory( Sort )
-	add_subdirectory( Transform )
-endif( )
+add_executable( clBolt.Bench.Transform ${clBolt.Bench.Transform.Files} )
+
+target_link_libraries( clBolt.Bench.Transform ${Boost_LIBRARIES} clBolt.Runtime )
+
+set_target_properties( clBolt.Bench.Transform PROPERTIES VERSION ${Bolt_VERSION} )
+set_target_properties( clBolt.Bench.Transform PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
+
+set_property( TARGET clBolt.Bench.Transform PROPERTY FOLDER "Benchmark/OpenCL")
+
+# CPack configuration; include the executable into the package
+install( TARGETS clBolt.Bench.Transform
+	RUNTIME DESTINATION ${BIN_DIR}
+	LIBRARY DESTINATION ${LIB_DIR}
+	ARCHIVE DESTINATION ${LIB_DIR}
+	)
