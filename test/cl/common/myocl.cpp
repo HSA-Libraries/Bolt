@@ -113,8 +113,8 @@ MyOclContext initOcl(cl_int clDeviceType, int deviceIndex, int verbose)
 
 	if (verbose) {
 		std::cout << "info: selected device #" << deviceIndex << "  ";
+		printDevice(devices[deviceIndex]);
 	}
-	printDevice(devices[deviceIndex]);
 	ocl._device = devices[deviceIndex];
 
 	cl::CommandQueue q(ocl._context, ocl._device);
