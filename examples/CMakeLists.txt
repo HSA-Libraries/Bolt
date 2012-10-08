@@ -30,7 +30,7 @@ project( Examples )
 # Define a version for the code
 set( Examples_VERSION_MAJOR 0 )
 set( Examples_VERSION_MINOR 2 )
-set( Examples_VERSION_PATCH 2 )
+set( Examples_VERSION_PATCH 3 )
 set( Examples_VERSION "${Examples_VERSION_MAJOR}.${Examples_VERSION_MINOR}.${Examples_VERSION_PATCH}")
 
 list( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR} )
