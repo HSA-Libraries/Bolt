@@ -261,16 +261,18 @@ void bolt::cl::control::printPlatformsRange( std::vector< ::cl::Platform >::iter
     cl_uint maxMaxClock = 0;
     cl_uint maxMaxUnits = 0;
     ::cl::Device boltDevice;
+    std::vector< ::cl::Platform >::iterator amdPlatDevice;
+
     for( std::vector< ::cl::Platform >::iterator amdPlatIter = amdPlatforms.begin( ); amdPlatIter != amdPlatforms.end( ); ++amdPlatIter )
     {
         //  We don't want to pick an AMD CPU device over another vendors GPU device, so filter only GPU devices
         std::vector< ::cl::Device > amdDevices;
         bolt::cl::V_OPENCL( amdPlatIter->getDevices( CL_DEVICE_TYPE_GPU, &amdDevices ), "Platform::getDevices() failed" );
 
-        //  If there are no AMD GPU devices, revert to letting the OpenCL runtime pick the best device
+        //  If there are no AMD GPU devices, skip to next available platform
         if( amdDevices.empty( ) )
         {
-            return ::cl::CommandQueue::getDefault( );
+            continue;
         }
 
         for( std::vector< ::cl::Device >::iterator amdDevIter = amdDevices.begin( ); amdDevIter != amdDevices.end( ); ++amdDevIter )
@@ -294,6 +296,7 @@ void bolt::cl::control::printPlatformsRange( std::vector< ::cl::Platform >::iter
                 maxDeviceMemory = devDeviceMemory;
                 maxMaxClock = devMaxClock;
                 maxMaxUnits = devMaxUnits;
+                amdPlatDevice = amdPlatIter;
             }
             else if( devWorkPot == maxWorkPot )
             {
@@ -304,6 +307,7 @@ void bolt::cl::control::printPlatformsRange( std::vector< ::cl::Platform >::iter
                     maxDeviceMemory = devDeviceMemory;
                     maxMaxClock = devMaxClock;
                     maxMaxUnits = devMaxUnits;
+                    amdPlatDevice = amdPlatIter;
                 }
             }
         }
@@ -316,7 +320,11 @@ void bolt::cl::control::printPlatformsRange( std::vector< ::cl::Platform >::iter
     }
 
     //  Create a ::cl::CommandQueue for the device we chose
-    ::cl::Context boltContext( boltDevice );
+    //::cl::Context boltContext( boltDevice );
+
+    cl_context_properties cprops[3] = { CL_CONTEXT_PLATFORM, (cl_context_properties)(*amdPlatDevice)(), 0 };
+    ::cl::Context boltContext( CL_DEVICE_TYPE_GPU, cprops );
+
     ::cl::CommandQueue boltQueue( boltContext, boltDevice );
 
     return boltQueue;

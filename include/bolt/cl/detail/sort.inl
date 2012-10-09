@@ -90,7 +90,7 @@ namespace bolt {
         namespace detail {
 
             struct CallCompiler_Sort {
-                static void constructAndCompile(::cl::Kernel *masterKernel,  std::string cl_code_dataType, std::string valueTypeName,  std::string compareTypeName, const control &ctl) {
+                static void constructAndCompile(::cl::Kernel *masterKernel,  std::string cl_code_dataType, std::string valueTypeName,  std::string compareTypeName, const control *ctl) {
 
                     const std::string instantiationString = 
                         "// Host generates this instantiation string with user-specified value type and functor\n"
@@ -102,9 +102,9 @@ namespace bolt {
                         "global " + compareTypeName + " * userComp\n"
                         ");\n\n";
 
-                    bolt::cl::constructAndCompileString(masterKernel, "sort", sort_kernels, instantiationString, cl_code_dataType, valueTypeName, "", ctl);
+                    bolt::cl::constructAndCompileString(masterKernel, "sort", sort_kernels, instantiationString, cl_code_dataType, valueTypeName, "", *ctl);
                 }
-                static void constructAndCompileSelectionSort(std::vector< ::cl::Kernel >* sortKernels,  std::string cl_code_dataType, std::string valueTypeName,  std::string compareTypeName, const control &ctl) {
+                static void constructAndCompileSelectionSort(std::vector< ::cl::Kernel >* sortKernels,  std::string cl_code_dataType, std::string valueTypeName,  std::string compareTypeName, const control *ctl) {
 
                     std::vector< const std::string > kernelNames;
                     kernelNames.push_back( "selectionSortLocal" );
@@ -132,7 +132,7 @@ namespace bolt {
                         "const int buffSize\n"
                         ");\n\n";
 
-                    bolt::cl::compileKernelsString( *sortKernels, kernelNames, sort_kernels, instantiationString, cl_code_dataType, valueTypeName, "", ctl );
+                    bolt::cl::compileKernelsString( *sortKernels, kernelNames, sort_kernels, instantiationString, cl_code_dataType, valueTypeName, "", *ctl );
                     // bolt::cl::compileKernels( *sortKernels, kernelNames, "sort", instantiationString, cl_code_dataType, valueTypeName, "", ctl );
                     //bolt::cl::constructAndCompile(masterKernel, "sort", instantiationString, cl_code_dataType, valueTypeName, "", ctl);
                 }
@@ -236,7 +236,7 @@ namespace bolt {
 
                     //Power of 2 buffer size
                     // For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retreive the name here.
-                    boost::call_once( initOnlyOnce, boost::bind( CallCompiler_Sort::constructAndCompile, &masterKernel, cl_code + ClCode<T>::get(), TypeName<T>::get(), TypeName<StrictWeakOrdering>::get(), ctl) );
+                    boost::call_once( initOnlyOnce, boost::bind( CallCompiler_Sort::constructAndCompile, &masterKernel, cl_code + ClCode<T>::get(), TypeName<T>::get(), TypeName<StrictWeakOrdering>::get(), &ctl) );
 
                     size_t wgSize  = masterKernel.getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.device( ), &l_Error );
                     V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
@@ -302,7 +302,7 @@ namespace bolt {
                     //Power of 2 buffer size
                     // For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retreive the name here.
                     static std::vector< ::cl::Kernel > sortKernels;
-                    boost::call_once( initOnlyOnce, boost::bind( CallCompiler_Sort::constructAndCompileSelectionSort, &sortKernels, cl_code + ClCode<T>::get(), TypeName<T>::get(), TypeName<StrictWeakOrdering>::get(), ctl) );
+                    boost::call_once( initOnlyOnce, boost::bind( CallCompiler_Sort::constructAndCompileSelectionSort, &sortKernels, cl_code + ClCode<T>::get(), TypeName<T>::get(), TypeName<StrictWeakOrdering>::get(), &ctl) );
 
                     size_t wgSize  = sortKernels[0].getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.device( ), &l_Error );
                     

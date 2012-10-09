@@ -40,7 +40,6 @@ namespace bolt
         *   \ingroup PrefixSums
         *   \{
         *   \todo The user_code parameter is not used yet
-        *   \todo The versions of exclusive_scan that take a 'T init' parameter are missing
         *   \todo The performance of the Sort routines should be proven using a benchmark program that can 
         *   show decent results across a range of values (a graph)
         */

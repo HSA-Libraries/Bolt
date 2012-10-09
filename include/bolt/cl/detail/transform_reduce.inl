@@ -59,7 +59,8 @@ namespace bolt {
     namespace cl {
         namespace  detail {
             struct CallCompiler_TransformReduce {
-                static void constructAndCompile(::cl::Kernel *masterKernel,  std::string user_code, std::string valueTypeName,  std::string transformFunctorTypeName, std::string reduceFunctorTypeName) {
+                static void constructAndCompile(::cl::Kernel *masterKernel,  std::string user_code, std::string valueTypeName,
+                    std::string transformFunctorTypeName, std::string reduceFunctorTypeName, const control *ctl) {
 
                     const std::string instantiationString = 
                         "// Host generates this instantiation string with user-specified value type and functor\n"
@@ -76,11 +77,7 @@ namespace bolt {
 
                     std::string functorNames = transformFunctorTypeName + " , " + reduceFunctorTypeName; // create for debug message
 
-                    bolt::cl::control c = bolt::cl::control::getDefault();  // FIXME- this needs to be passed a parm but we have too many arguments for call_once
-
-                    bolt::cl::constructAndCompileString( masterKernel, "transform_reduce", transform_reduce_kernels, instantiationString, user_code, valueTypeName, functorNames, c);
-                    // bolt::cl::constructAndCompile(masterKernel, "transform_reduce", instantiationString, user_code, valueTypeName, functorNames, c);
-
+                    bolt::cl::constructAndCompileString( masterKernel, "transform_reduce", transform_reduce_kernels, instantiationString, user_code, valueTypeName, functorNames, *ctl);
                 };
             };
 
@@ -175,35 +172,31 @@ namespace bolt {
         };
 
             template<typename T, typename DVInputIterator, typename UnaryFunction, typename BinaryFunction> 
-            T transform_reduce_enqueue(const control& c, DVInputIterator first, DVInputIterator last, UnaryFunction transform_op,
+            T transform_reduce_enqueue(const control& ctl, DVInputIterator first, DVInputIterator last, UnaryFunction transform_op,
                 T init, BinaryFunction reduce_op, const std::string& user_code="")
             {
                 static boost::once_flag initOnlyOnce;
                 static  ::cl::Kernel masterKernel;
                 unsigned debugMode = 0; //FIXME, use control
 
-                //std::call_once(initOnlyOnce, CallCompiler_TransformReduce::constructAndCompile, &masterKernel, 
-                //    "\n//--user Code\n" + user_code + "\n//---Functions\n" + ClCode<UnaryFunction>::get() + ClCode<BinaryFunction>::get() , 
-                //    TypeName<T>::get(), TypeName<UnaryFunction>::get(), TypeName<BinaryFunction>::get());
                 boost::call_once( initOnlyOnce, boost::bind( CallCompiler_TransformReduce::constructAndCompile, &masterKernel, 
-                    "\n//--user Code\n" + user_code + "\n//---Functions\n" + ClCode<UnaryFunction>::get() + ClCode<BinaryFunction>::get() , 
-                    TypeName<T>::get(), TypeName<UnaryFunction>::get(), TypeName<BinaryFunction>::get() ) );
-
+                    "\n//--user Code\n" + user_code + "\n//---Functions\n" + ClCode<UnaryFunction>::get() + ClCode<BinaryFunction>::get(), 
+                    TypeName<T>::get(), TypeName<UnaryFunction>::get(), TypeName<BinaryFunction>::get(), &ctl ) );
 
                 // Set up shape of launch grid and buffers:
                 // FIXME, read from device attributes.
-                int computeUnits     = c.device().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();  // round up if we don't know. 
-                int wgPerComputeUnit =  c.wgPerComputeUnit(); 
+                int computeUnits     = ctl.device().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();  // round up if we don't know. 
+                int wgPerComputeUnit =  ctl.wgPerComputeUnit(); 
                 int resultCnt = computeUnits * wgPerComputeUnit;
 
                 cl_int l_Error = CL_SUCCESS;
-                const size_t wgSize  = masterKernel.getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( c.device( ), &l_Error );
+                const size_t wgSize  = masterKernel.getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.device( ), &l_Error );
                 V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
 
                 // Create Buffer wrappers so we can access the host functors, for read or writing in the kernel
-                ::cl::Buffer transformFunctor(c.context(), CL_MEM_USE_HOST_PTR, sizeof(transform_op), &transform_op );   
-                ::cl::Buffer reduceFunctor(c.context(), CL_MEM_USE_HOST_PTR, sizeof(reduce_op), &reduce_op );
-                ::cl::Buffer result(c.context(), CL_MEM_ALLOC_HOST_PTR|CL_MEM_WRITE_ONLY, sizeof(T) * resultCnt);
+                ::cl::Buffer transformFunctor(ctl.context(), CL_MEM_USE_HOST_PTR, sizeof(transform_op), &transform_op );   
+                ::cl::Buffer reduceFunctor(ctl.context(), CL_MEM_USE_HOST_PTR, sizeof(reduce_op), &reduce_op );
+                ::cl::Buffer result(ctl.context(), CL_MEM_ALLOC_HOST_PTR|CL_MEM_WRITE_ONLY, sizeof(T) * resultCnt);
 
                 ::cl::Kernel k = masterKernel;  // hopefully create a copy of the kernel. FIXME, doesn't work.
 
@@ -229,7 +222,7 @@ namespace bolt {
 
                 // FIXME.  Need to ensure global size is a multiple of local WG size ,etc.
                 // FIXME. Need to ensure that only required amount of work groups are spawned.
-                l_Error = c.commandQueue().enqueueNDRangeKernel( 
+                l_Error = ctl.commandQueue().enqueueNDRangeKernel( 
                     k, 
                     ::cl::NullRange, 
                     ::cl::NDRange(resultCnt * wgSize), 
@@ -238,12 +231,12 @@ namespace bolt {
                                 NULL);
                 V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for transform_reduce() kernel" );
 
-                V_OPENCL( c.commandQueue().finish(), "Error calling finish on the command queue" );
+                V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
                 // FIXME: replace with map:
                 // FIXME: Note this depends on supplied functor having a version which can be compiled to run on the CPU
                 std::vector<T> outputArray(resultCnt);
 
-                T *h_result = (T*)c.commandQueue().enqueueMapBuffer(result, true, CL_MAP_READ, 0, sizeof(T)*resultCnt, NULL, NULL, &l_Error );
+                T *h_result = (T*)ctl.commandQueue().enqueueMapBuffer(result, true, CL_MAP_READ, 0, sizeof(T)*resultCnt, NULL, NULL, &l_Error );
                 V_OPENCL( l_Error, "Error calling map on the result buffer" );
 
                 T acc = init;

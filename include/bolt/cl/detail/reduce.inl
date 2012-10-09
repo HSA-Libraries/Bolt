@@ -183,12 +183,13 @@ namespace bolt {
                 BinaryFunction binary_op, 
                 const std::string& cl_code )
             {
+                typedef typename std::iterator_traits< DVInputIterator >::value_type iType;
 
                 static boost::once_flag initOnlyOnce;
                 static  ::cl::Kernel masterKernel;
                 // For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retreive the name here.
                 //std::call_once(initOnlyOnce, detail::CallCompiler_Reduce::constructAndCompile, &masterKernel, cl_code + ClCode<BinaryFunction>::get(), TypeName<T>::get(),  TypeName<BinaryFunction>::get(), ctl);
-                boost::call_once( initOnlyOnce, boost::bind( CallCompiler_Reduce::constructAndCompile, &masterKernel, cl_code + ClCode<BinaryFunction>::get(), TypeName<T>::get(),  TypeName<BinaryFunction>::get(), &ctl) );
+                boost::call_once( initOnlyOnce, boost::bind( CallCompiler_Reduce::constructAndCompile, &masterKernel, cl_code + ClCode<BinaryFunction>::get(), TypeName<iType>::get(),  TypeName<BinaryFunction>::get(), &ctl) );
 
                 // Set up shape of launch grid and buffers:
                 int computeUnits     = ctl.device().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
@@ -203,8 +204,7 @@ namespace bolt {
                 ::cl::Buffer userFunctor(ctl.context(), CL_MEM_USE_HOST_PTR, sizeof(binary_op), &binary_op );   // Create buffer wrapper so we can access host parameters.
                 //std::cout << "sizeof(Functor)=" << sizeof(binary_op) << std::endl;
 
-                ::cl::Buffer result(ctl.context(), CL_MEM_ALLOC_HOST_PTR|CL_MEM_WRITE_ONLY, sizeof(T) * resultCnt);
-
+                ::cl::Buffer result(ctl.context(), CL_MEM_ALLOC_HOST_PTR|CL_MEM_WRITE_ONLY, sizeof( iType ) * resultCnt);
 
                 ::cl::Kernel k = masterKernel;  // hopefully create a copy of the kernel. FIXME, doesn't work.
 
@@ -217,7 +217,7 @@ namespace bolt {
                 V_OPENCL( k.setArg(4, result), "Error setting kernel argument" );
 
                 ::cl::LocalSpaceArg loc;
-                loc.size_ = wgSize*sizeof(T);
+                loc.size_ = wgSize*sizeof(iType);
                 V_OPENCL( k.setArg(5, loc), "Error setting kernel argument" );
 
 
@@ -230,12 +230,12 @@ namespace bolt {
 
                 // FIXME - also need to provide a version of this code that does the summation on the GPU, when the buffer is already located there?
 
-                T *h_result = (T*)ctl.commandQueue().enqueueMapBuffer(result, true, CL_MAP_READ, 0, sizeof(T)*resultCnt, NULL, NULL, &l_Error );
+                iType *h_result = (iType*)ctl.commandQueue().enqueueMapBuffer(result, true, CL_MAP_READ, 0, sizeof(iType)*resultCnt, NULL, NULL, &l_Error );
                 V_OPENCL( l_Error, "Error calling map on the result buffer" );
 
-                T acc = init;            
+                iType acc = static_cast< iType >( init );
                 for(int i = 0; i < resultCnt; ++i){
-                    acc = binary_op(h_result[i], acc);
+                    acc = binary_op(acc, h_result[i]);
                 }
                 return acc;
 
