@@ -69,14 +69,13 @@ namespace bolt {
              *
          */
         template<typename InputIterator, typename EqualityComparable> 
-        typename std::iterator_traits<InputIterator>::difference_type
+        typename bolt::cl::iterator_traits<InputIterator>::difference_type
             count(InputIterator first, 
             InputIterator last, 
             const EqualityComparable &value,
             const std::string cl_code="")
         {
             typedef typename std::iterator_traits<InputIterator>::value_type T;
-
             return count_if(first, last, CountIfEqual<T>(value), bolt::cl::CountIfEqual_OclCode + cl_code);
         };
 
@@ -91,17 +90,19 @@ namespace bolt {
         * \returns: The number of elements for which \p predicate is true.
         */
         template<typename InputIterator, typename Predicate> 
-        typename std::iterator_traits<InputIterator>::difference_type
+        typename bolt::cl::iterator_traits<InputIterator>::difference_type
             count_if(InputIterator first, 
             InputIterator last, 
             Predicate predicate,
             const std::string cl_code="")
         {
             typedef typename bolt::cl::iterator_traits<InputIterator>::value_type CountType;
-            //typedef int CountType; // FIXME, need to create a bolt class that returns an ocl-supported typename.
-            return transform_reduce(bolt::cl::control::getDefault(), first, last, 
-                predicate,  // FIXME - need CountIfTransform here?
-                CountType(0), bolt::cl::plus<CountType>(), cl_code);
+			typedef typename bolt::cl::iterator_traits<InputIterator>::difference_type ResultType;
+			ResultType result = static_cast<ResultType>(transform_reduce(bolt::cl::control::getDefault(), first, last, 
+                predicate, 
+                CountType(0), bolt::cl::plus<CountType>(), cl_code)); 
+
+            return result;
         };
     };
 };
