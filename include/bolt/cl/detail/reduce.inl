@@ -24,8 +24,6 @@
 #include <boost/thread/once.hpp>
 #include <boost/bind.hpp>
 
-// #include <bolt/tbb/reduce.h>
-
 #include "bolt/cl/bolt.h"
 
 namespace bolt {
@@ -49,8 +47,8 @@ namespace bolt {
             T init,
             const std::string& cl_code)
         {
-            typedef typename std::iterator_traits<InputIterator>::value_type T;
-            return reduce(bolt::cl::control::getDefault(), first, last, init, bolt::cl::plus<T>(), cl_code);
+            typedef typename std::iterator_traits<InputIterator>::value_type iType;
+            return reduce(bolt::cl::control::getDefault(), first, last, init, bolt::cl::plus<iType>(), cl_code);
         };
 
         template<typename InputIterator, typename T> 
@@ -61,8 +59,8 @@ namespace bolt {
             T init,
             const std::string& cl_code)
         {
-            typedef typename std::iterator_traits<InputIterator>::value_type T;
-            return reduce(ctl, first, last, init, bolt::cl::plus<T>(), cl_code);
+            typedef typename std::iterator_traits<InputIterator>::value_type iType;
+            return reduce(ctl, first, last, init, bolt::cl::plus< iType >( ), cl_code);
         };
 
         // This template is called by all other "convenience" version of reduce.
@@ -75,15 +73,10 @@ namespace bolt {
             BinaryFunction binary_op, 
             const std::string& cl_code)  
         {
-            typedef typename std::iterator_traits<InputIterator>::value_type T;
-
             const bolt::cl::control::e_RunMode runMode = ctl.forceRunMode();  // could be dynamic choice some day.
 
             if (runMode == bolt::cl::control::SerialCpu) {
                 return std::accumulate(first, last, init, binary_op);
-                //} else if (runMode == bolt::cl::control::MultiCoreCpu) {
-                //  TbbReduceWrapper wrapper();
-                //  tbb::parallel_reduce(tbb:blocked_range<T>(first, last), wrapper);
             } else {
                 return detail::reduce_detect_random_access(ctl, first, last, init, binary_op, cl_code,
                     std::iterator_traits< InputIterator >::iterator_category( ) );
@@ -101,7 +94,7 @@ namespace bolt {
 
             // FIXME - move to cpp file
             struct CallCompiler_Reduce {
-                static void constructAndCompile(::cl::Kernel *masterKernel,  std::string cl_code, std::string valueTypeName,  std::string functorTypeName, const control &ctl) {
+                static void constructAndCompile(::cl::Kernel *masterKernel,  std::string cl_code, std::string valueTypeName,  std::string functorTypeName, const control *ctl) {
 
                     const std::string instantiationString = 
                         "// Host generates this instantiation string with user-specified value type and functor\n"
@@ -116,7 +109,7 @@ namespace bolt {
                         "local " + valueTypeName + "* scratch\n"
                         ");\n\n";
 
-                    bolt::cl::constructAndCompileString( masterKernel, "reduce", reduce_kernels, instantiationString, cl_code, valueTypeName, functorTypeName, ctl);
+                    bolt::cl::constructAndCompileString( masterKernel, "reduce", reduce_kernels, instantiationString, cl_code, valueTypeName, functorTypeName, *ctl);
 
                 };
             };
@@ -159,7 +152,8 @@ namespace bolt {
                 BinaryFunction binary_op, 
                 const std::string& cl_code)
             {
-                device_vector< T > dvInput( first, last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, ctl );
+                typedef typename std::iterator_traits<InputIterator>::value_type iType;
+                device_vector< iType > dvInput( first, last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, ctl );
 
                 return reduce_enqueue( ctl, dvInput.begin(), dvInput.end(), init, binary_op, cl_code);
             };
@@ -194,8 +188,7 @@ namespace bolt {
                 static  ::cl::Kernel masterKernel;
                 // For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retreive the name here.
                 //std::call_once(initOnlyOnce, detail::CallCompiler_Reduce::constructAndCompile, &masterKernel, cl_code + ClCode<BinaryFunction>::get(), TypeName<T>::get(),  TypeName<BinaryFunction>::get(), ctl);
-                boost::call_once( initOnlyOnce, boost::bind( CallCompiler_Reduce::constructAndCompile, &masterKernel, cl_code + ClCode<BinaryFunction>::get(), TypeName<T>::get(),  TypeName<BinaryFunction>::get(), ctl) );
-
+                boost::call_once( initOnlyOnce, boost::bind( CallCompiler_Reduce::constructAndCompile, &masterKernel, cl_code + ClCode<BinaryFunction>::get(), TypeName<T>::get(),  TypeName<BinaryFunction>::get(), &ctl) );
 
                 // Set up shape of launch grid and buffers:
                 int computeUnits     = ctl.device().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();

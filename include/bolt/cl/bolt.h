@@ -35,8 +35,6 @@
 
 /*! \file bolt.h
  *  \brief Main public header file defining global functions for Bolt
- *  \todo Develop googletest framework for Transform
- *  \todo Develop googletest framework for Transform_reduce
  *  \todo Develop googletest framework for count
  *  \todo Develop googletest framework for reduce
  *  \todo Follow the coding guideline for expanding tabs to spaces, max line char width of 120 chars
@@ -48,15 +46,16 @@
  *  \todo Make Bolt calls thread-safe (Save cl:program rather than cl::kernel, and call clCreateKernel on each Bolt call)
  *  \todo Review documentation for typos, clarity, etc
  *  \todo Add CPU implementations, i.e. link in external library such as TBB or define our own CPU implementation
- *  \todo Add richer set of API functions (can this be made more specific?)
  *  \todo Statically link the Boost libraries into the Bolt library
  *  \todo Explain the cl_code parameter better, with possible use cases
  *  \todo Fix FAQ entry for device_vector; better explain when to use DV as opposed to host vectors
  *  \todo More examples of using Bolt with regular pointers, for instance float*'s
- *  \todo Develop auto-tuning framework for deciding to run on PU vs GPU.
+ *  \todo Develop auto-tuning framework for deciding to run on CPU vs GPU.
  *  \todo Specify limits on LDS usage?  How will a user know how much LDS space the functor code can allocate?  Discourage use.
  *  \todo Test Bolt functions for 'unusual' limits, for instance very large types which exhausts LDS.
- *  \todo Explore how asynchronous API's are implemented.  Load-balancing may drive desire to hae async APIs
+ *  \todo Explore how asynchronous API's are implemented.  Load-balancing may drive desire to have async APIs
+ *  \todo Move the *.cl files to the <bolt_root>/bolt subdirectory
+ *  \todo When moving our source to github, remove our build depenencies on internal servers
 */
 
 namespace bolt {
