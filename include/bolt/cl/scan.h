@@ -172,7 +172,7 @@ namespace bolt
         *
         * int a[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
         *
-        * // Calculate the inclusive scan of an input range, modifying the values in-place
+        * // Calculate the exclusive scan of an input range, modifying the values in-place
         * bolt::cl::exclusive_scan( a, a+10, a );
         * // a => {0, 1, 3, 6, 10, 15, 21, 28, 36, 45}
         *  \endcode
@@ -201,7 +201,7 @@ namespace bolt
         *
         * int a[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
         *
-        * // Calculate the inclusive scan of an input range, modifying the values in-place
+        * // Calculate the exclusive scan of an input range, modifying the values in-place
         * bolt::cl::exclusive_scan( a, a+10, a, 0 );
         * // a => {0, 1, 3, 6, 10, 15, 21, 28, 36, 45}
         *  \endcode
@@ -233,7 +233,7 @@ namespace bolt
         *
         * int a[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
         *
-        * // Calculate the inclusive scan of an input range, modifying the values in-place
+        * // Calculate the exclusive scan of an input range, modifying the values in-place
         * bolt::cl::exclusive_scan( a, a+10, a, 0, bolt::cl::plus< int >( ) );
         * // a => {0, 1, 3, 6, 10, 15, 21, 28, 36, 45}
         *  \endcode
@@ -261,7 +261,7 @@ namespace bolt
         *
         * int a[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
         *
-        * // Calculate the inclusive scan of an input range, modifying the values in-place
+        * // Calculate the exclusive scan of an input range, modifying the values in-place
         * bolt::cl::exclusive_scan( a, a+10, a );
         * // a => {0, 1, 3, 6, 10, 15, 21, 28, 36, 45}
         *  \endcode
@@ -291,7 +291,7 @@ namespace bolt
         *
         * int a[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
         *
-        * // Calculate the inclusive scan of an input range, modifying the values in-place
+        * // Calculate the exclusive scan of an input range, modifying the values in-place
         * bolt::cl::exclusive_scan( a, a+10, a, 0 );
         * // a => {0, 1, 3, 6, 10, 15, 21, 28, 36, 45}
         *  \endcode
@@ -323,7 +323,7 @@ namespace bolt
         *
         * int a[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
         *
-        * // Calculate the inclusive scan of an input range, modifying the values in-place
+        * // Calculate the exclusive scan of an input range, modifying the values in-place
         * bolt::cl::exclusive_scan( a, a+10, a, 0, bolt::cl::plus< int >( ) );
         * // a => {0, 1, 3, 6, 10, 15, 21, 28, 36, 45}
         *  \endcode
