@@ -126,23 +126,23 @@ void simpleReduce_TestControl(int aSize, int numIters, int deviceIndex)
 
     //  Tests need to be a bit more sophisticated before hardcoding which device to use in a system (my default is device 1); 
     //  this should be configurable on the command line
-    //// Create an OCL context, device, queue.
-    //MyOclContext ocl = initOcl(CL_DEVICE_TYPE_GPU, deviceIndex);
-    //bolt::cl::control c(ocl._queue);  // construct control structure from the queue.
-    ////printContext(c.context());
+    // Create an OCL context, device, queue.
+    MyOclContext ocl = initOcl(CL_DEVICE_TYPE_GPU, deviceIndex);
+    bolt::cl::control c(ocl._queue);  // construct control structure from the queue.
+    //printContext(c.context());
 
-    //c.debug(bolt::cl::control::debug::Compile + bolt::cl::control::debug::SaveCompilerTemps);
+    c.debug(bolt::cl::control::debug::Compile + bolt::cl::control::debug::SaveCompilerTemps);
 
     int stlReduce = std::accumulate(A.begin(), A.end(), 0);
     int boltReduce = 0;
 
     char testTag[2000];
     sprintf_s(testTag, 2000, "simpleReduce_TestControl sz=%d iters=%d, device=%s", aSize, numIters, 
-        bolt::cl::control::getDefault( ).device( ).getInfo<CL_DEVICE_NAME>( ).c_str( ) );
+        c.device( ).getInfo<CL_DEVICE_NAME>( ).c_str( ) );
 
     __int64 start = StartProfile();
     for (int i=0; i<numIters; i++) {
-        boltReduce = bolt::cl::reduce( A.begin(), A.end(), 0);
+        boltReduce = bolt::cl::reduce( c, A.begin(), A.end(), 0);
     }
     EndProfile(start, numIters, testTag);
 

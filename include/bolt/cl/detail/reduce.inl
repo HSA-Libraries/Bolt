@@ -103,7 +103,6 @@ namespace bolt {
                         "kernel void reduceTemplate(\n"
                         "global " + valueTypeName + "* A,\n"
                         "const int length,\n"
-                        "const " + valueTypeName + " init,\n"
                         "global " + functorTypeName + "* userFunctor,\n"
                         "global " + valueTypeName + "* result,\n"
                         "local " + valueTypeName + "* scratch\n"
@@ -186,15 +185,15 @@ namespace bolt {
                 typedef typename std::iterator_traits< DVInputIterator >::value_type iType;
 
                 static boost::once_flag initOnlyOnce;
-                static  ::cl::Kernel masterKernel;
+                static ::cl::Kernel masterKernel;
+
                 // For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retreive the name here.
-                //std::call_once(initOnlyOnce, detail::CallCompiler_Reduce::constructAndCompile, &masterKernel, cl_code + ClCode<BinaryFunction>::get(), TypeName<T>::get(),  TypeName<BinaryFunction>::get(), ctl);
                 boost::call_once( initOnlyOnce, boost::bind( CallCompiler_Reduce::constructAndCompile, &masterKernel, cl_code + ClCode<BinaryFunction>::get(), TypeName<iType>::get(),  TypeName<BinaryFunction>::get(), &ctl) );
 
                 // Set up shape of launch grid and buffers:
-                int computeUnits     = ctl.device().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
+                cl_uint computeUnits     = ctl.device().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
                 int wgPerComputeUnit =  ctl.wgPerComputeUnit(); 
-                int resultCnt = computeUnits * wgPerComputeUnit;
+                cl_uint numWG = computeUnits * wgPerComputeUnit;
 
                 cl_int l_Error = CL_SUCCESS;
                 const size_t wgSize  = masterKernel.getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.device( ), &l_Error );
@@ -204,41 +203,40 @@ namespace bolt {
                 ::cl::Buffer userFunctor(ctl.context(), CL_MEM_USE_HOST_PTR, sizeof(binary_op), &binary_op );   // Create buffer wrapper so we can access host parameters.
                 //std::cout << "sizeof(Functor)=" << sizeof(binary_op) << std::endl;
 
-                ::cl::Buffer result(ctl.context(), CL_MEM_ALLOC_HOST_PTR|CL_MEM_WRITE_ONLY, sizeof( iType ) * resultCnt);
-
-                ::cl::Kernel k = masterKernel;  // hopefully create a copy of the kernel. FIXME, doesn't work.
+                ::cl::Buffer result(ctl.context(), CL_MEM_ALLOC_HOST_PTR|CL_MEM_WRITE_ONLY, sizeof( iType ) * numWG);
 
                 cl_uint szElements = static_cast< cl_uint >( std::distance( first, last ) );
 
-                V_OPENCL( k.setArg(0, first->getBuffer( ) ), "Error setting kernel argument" );
-                V_OPENCL( k.setArg(1, szElements), "Error setting kernel argument" );
-                V_OPENCL( k.setArg(2, init), "Error setting kernel argument" );
-                V_OPENCL( k.setArg(3, userFunctor), "Error setting kernel argument" );
-                V_OPENCL( k.setArg(4, result), "Error setting kernel argument" );
+                V_OPENCL( masterKernel.setArg(0, first->getBuffer( ) ), "Error setting kernel argument" );
+                V_OPENCL( masterKernel.setArg(1, szElements), "Error setting kernel argument" );
+                V_OPENCL( masterKernel.setArg(2, userFunctor), "Error setting kernel argument" );
+                V_OPENCL( masterKernel.setArg(3, result), "Error setting kernel argument" );
 
                 ::cl::LocalSpaceArg loc;
                 loc.size_ = wgSize*sizeof(iType);
-                V_OPENCL( k.setArg(5, loc), "Error setting kernel argument" );
-
+                V_OPENCL( masterKernel.setArg(4, loc), "Error setting kernel argument" );
 
                 l_Error = ctl.commandQueue().enqueueNDRangeKernel(
-                    k, 
+                    masterKernel, 
                     ::cl::NullRange, 
-                    ::cl::NDRange(resultCnt * wgSize), 
+                    ::cl::NDRange(numWG * wgSize), 
                     ::cl::NDRange(wgSize));
                 V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for reduce() kernel" );
 
-                // FIXME - also need to provide a version of this code that does the summation on the GPU, when the buffer is already located there?
-
-                iType *h_result = (iType*)ctl.commandQueue().enqueueMapBuffer(result, true, CL_MAP_READ, 0, sizeof(iType)*resultCnt, NULL, NULL, &l_Error );
+                iType *h_result = (iType*)ctl.commandQueue().enqueueMapBuffer(result, true, CL_MAP_READ, 0, sizeof(iType)*numWG, NULL, NULL, &l_Error );
                 V_OPENCL( l_Error, "Error calling map on the result buffer" );
 
+                //  Finish the tail end of the reduction on host side; the compute device reduces within the workgroups, with one result per workgroup
+                size_t ceilNumWG = static_cast< size_t >( std::ceil( static_cast< float >( szElements ) / wgSize) );
+                size_t numTailReduce = min( ceilNumWG, numWG );
                 iType acc = static_cast< iType >( init );
-                for(int i = 0; i < resultCnt; ++i){
+                for(int i = 0; i < numTailReduce; ++i)
+                {
                     acc = binary_op(acc, h_result[i]);
                 }
-                return acc;
 
+                V_OPENCL( ctl.commandQueue().enqueueUnmapMemObject( result, h_result ), "Error unmapping the result buffer" );
+                return acc;
             };
         }
     }
