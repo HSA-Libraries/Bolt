@@ -672,16 +672,19 @@ namespace bolt
 
             reverse_iterator rbegin( void )
             {
+                static_assert( false, "Reverse iterators are not yet implemented" );
                 return reverse_iterator( );
             }
 
             const_reverse_iterator rbegin( void ) const
             {
+                static_assert( false, "Reverse iterators are not yet implemented" );
                 return const_reverse_iterator( );
             }
 
             const_reverse_iterator crbegin( void ) const
             {
+                static_assert( false, "Reverse iterators are not yet implemented" );
                 return const_reverse_iterator( );
             }
 
@@ -714,16 +717,19 @@ namespace bolt
 
             reverse_iterator rend( void )
             {
+                static_assert( false, "Reverse iterators are not yet implemented" );
                 return reverse_iterator( );
             }
 
             const_reverse_iterator rend( void ) const
             {
+                static_assert( false, "Reverse iterators are not yet implemented" );
                 return const_reverse_iterator( );
             }
 
             const_reverse_iterator crend( void ) const
             {
+                static_assert( false, "Reverse iterators are not yet implemented" );
                 return const_reverse_iterator( );
             }
 

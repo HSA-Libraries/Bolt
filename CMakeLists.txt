@@ -29,8 +29,8 @@ project( Bolt )
 
 # Define a version for the code
 set( Bolt_VERSION_MAJOR 0 )
-set( Bolt_VERSION_MINOR 2 )
-set( Bolt_VERSION_PATCH 5 )
+set( Bolt_VERSION_MINOR 4 )
+set( Bolt_VERSION_PATCH 0 )
 set( Bolt_VERSION "${Bolt_VERSION_MAJOR}.${Bolt_VERSION_MINOR}.${Bolt_VERSION_PATCH}")
     
 list( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR} )
@@ -210,6 +210,13 @@ install( DIRECTORY
         DESTINATION
             .
         PATTERN "Hessian" EXCLUDE )
+
+# Right now, always install the examples folder
+install( FILES 
+            README.html
+            LICENSE.txt
+        DESTINATION
+            . )
 
 # The following code is setting variables to control the behavior of CPack to generate our 
 if( WIN32 )

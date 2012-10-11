@@ -40,8 +40,10 @@ namespace bolt
         *   \ingroup PrefixSums
         *   \{
         *   \todo The user_code parameter is not used yet
-        *   \todo The performance of the Sort routines should be proven using a benchmark program that can 
-        *   show decent results across a range of values (a graph)
+        *   \bug An exclusive_scan of an in-place device_vector buffer can return a buffer of all 0's.  This is because the exclusive_scan
+        *   scan is implemented in two passes, an inclusive_scan pass and then a transform pass.  The transform pass will
+        *   0 out the buffer.  Solution is to refactor the scan code to eliminate the transform pass, which is also an
+        *   optimization
         */
 
         /*! \brief inclusive_scan calculates a running sum over a range of values, inclusive of the current value.
