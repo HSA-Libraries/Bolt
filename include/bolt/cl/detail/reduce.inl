@@ -25,6 +25,7 @@
 #include <boost/bind.hpp>
 
 #include "bolt/cl/bolt.h"
+#include "bolt/cl/functional.h"
 
 namespace bolt {
     namespace cl {
@@ -193,7 +194,7 @@ namespace bolt {
                 // Set up shape of launch grid and buffers:
                 cl_uint computeUnits     = ctl.device().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
                 int wgPerComputeUnit =  ctl.wgPerComputeUnit(); 
-                cl_uint numWG = computeUnits * wgPerComputeUnit;
+                size_t numWG = computeUnits * wgPerComputeUnit;
 
                 cl_int l_Error = CL_SUCCESS;
                 const size_t wgSize  = masterKernel.getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.device( ), &l_Error );
@@ -228,7 +229,9 @@ namespace bolt {
 
                 //  Finish the tail end of the reduction on host side; the compute device reduces within the workgroups, with one result per workgroup
                 size_t ceilNumWG = static_cast< size_t >( std::ceil( static_cast< float >( szElements ) / wgSize) );
-                size_t numTailReduce = min( ceilNumWG, numWG );
+				bolt::cl::minimum<size_t>  min_size_t;
+                size_t numTailReduce = min_size_t( ceilNumWG, numWG );
+
                 iType acc = static_cast< iType >( init );
                 for(int i = 0; i < numTailReduce; ++i)
                 {
