@@ -34,28 +34,30 @@ namespace bolt {
         /*! \addtogroup counting
         *  \ingroup reductions
         *  \{
-        *  \bug EPR# 362322 logged
         *  \bug Interfaces which accept a control structure need to be added
         *  \todo Better documentation and example code need to be added
         */
 
-        std::string CountIfEqual_OclCode = 
-        BOLT_CODE_STRING(
-        template <typename T> 
-        struct CountIfEqual {
-            CountIfEqual(const T &targetValue)  : _targetValue(targetValue)
-            { };
+        namespace detail
+        {
+            std::string CountIfEqual_OclCode = 
+            BOLT_CODE_STRING(
+            template <typename T> 
+            struct CountIfEqual {
+                CountIfEqual(const T &targetValue)  : _targetValue(targetValue)
+                { };
 
-            bool operator() (const T &x) {
-                return x == _targetValue;
+                bool operator() (const T &x) {
+                    return x == _targetValue;
+                };
+
+            private:
+                T _targetValue;
             };
+            );
 
-        private:
-            T _targetValue;
-        };
-        );
-
-        BOLT_CREATE_STD_TYPENAMES(CountIfEqual); 
+            BOLT_CREATE_STD_TYPENAMES(CountIfEqual); 
+        }
 
         /*!
          * \p count counts the number of elements in the specified range which compare equal to the specified \p value.
@@ -76,7 +78,7 @@ namespace bolt {
             const std::string cl_code="")
         {
             typedef typename std::iterator_traits<InputIterator>::value_type T;
-            return count_if(first, last, CountIfEqual<T>(value), bolt::cl::CountIfEqual_OclCode + cl_code);
+            return count_if(first, last, detail::CountIfEqual<T>(value), detail::CountIfEqual_OclCode + cl_code);
         };
 
 
