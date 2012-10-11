@@ -22,12 +22,12 @@
 * \subsection Q0 Does Bolt require linking to a library?
 * Yes, Bolt includes a small static library that must be linked into a user program to properly resolve
 * symbols.  Since Bolt is a template library, almost all functionality is written in header files, 
-* but OpenCL follows a online compilation model which makes sense to include in a library and not 
+* but OpenCL follows an online compilation model which makes sense to include in a library and not 
 * in header files
 * \subsection Q1 Does Bolt depend on any other libraries?
 * Yes, Bolt contains dependencies on Boost.  All dependent header files and pre-compiled libraries
 * are available in the Bolt SDK
-* \subsection Q2 What algorithms does Bolt currenlty support?
+* \subsection Q2 What algorithms does Bolt currently support?
 * Transform, reduce, transform_reduce, count, count_if, inclusive_scan, exclusive_scan, sort
 * \subsection Q3 What version of OpenCL does Bolt currently require?
 * Bolt uses features available in OpenCL v1.2
