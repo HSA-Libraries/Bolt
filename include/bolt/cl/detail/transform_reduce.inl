@@ -241,8 +241,11 @@ namespace bolt {
 
                 T acc = init;
                 for(int i = 0; i < resultCnt; ++i){
-                    acc = reduce_op(h_result[i], acc);
+                    acc = reduce_op( acc, h_result[i] );
                 }
+
+                V_OPENCL( ctl.commandQueue().enqueueUnmapMemObject( result, h_result ), "Error unmapping the result buffer" );
+
                 return acc;
             };
         }// end of namespace detail
