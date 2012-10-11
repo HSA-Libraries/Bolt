@@ -126,7 +126,7 @@ namespace bolt {
             void transform_detect_random_access( const bolt::cl::control& ctl, InputIterator first1, InputIterator last1, InputIterator first2, OutputIterator result, 
                 BinaryFunction f, const std::string& user_code, std::random_access_iterator_tag )
             {
-                return transform_pick_iterator( ctl, first1, last1, first2, result, f, user_code );
+                transform_pick_iterator( ctl, first1, last1, first2, result, f, user_code );
             };
 
             // Wrapper that uses default control class, iterator interface
@@ -143,18 +143,18 @@ namespace bolt {
             void transform_unary_detect_random_access(const bolt::cl::control& ctl, InputIterator first1, InputIterator last1, OutputIterator result, 
                 UnaryFunction f, const std::string& user_code, std::random_access_iterator_tag )
             {
-                return transform_unary_pick_iterator( ctl, first1, last1, result, f, user_code );
+                transform_unary_pick_iterator( ctl, first1, last1, result, f, user_code );
             };
 
             /*! \brief This template function overload is used to seperate device_vector iterators from all other iterators
                 \detail This template is called by the non-detail versions of inclusive_scan, it already assumes random access
              *  iterators.  This overload is called strictly for non-device_vector iterators
-             * \bug The std::is_base_of logic is combining testing the InputIterator & OutputIterator iterators to see 
-             *  if they derive from each other.  This should be broken into seperate tests, one for InputIterator and 1 for
-             *  OutputIterator and combined with &&.
             */
             template<typename InputIterator, typename OutputIterator, typename BinaryFunction> 
-            typename std::enable_if< !std::is_base_of<typename device_vector<typename std::iterator_traits<InputIterator>::value_type>::iterator,OutputIterator>::value, void >::type
+            typename std::enable_if< 
+                         !(std::is_base_of<typename device_vector<typename std::iterator_traits<InputIterator>::value_type>::iterator,InputIterator>::value &&
+                           std::is_base_of<typename device_vector<typename std::iterator_traits<OutputIterator>::value_type>::iterator,OutputIterator>::value),
+                     void >::type
             transform_pick_iterator(const bolt::cl::control &ctl,  InputIterator first1, InputIterator last1, InputIterator first2, OutputIterator result, 
                 BinaryFunction f, const std::string& user_code)
             {
@@ -182,7 +182,10 @@ namespace bolt {
             // This template is called by the non-detail versions of inclusive_scan, it already assumes random access iterators
             // This is called strictly for iterators that are derived from device_vector< T >::iterator
             template<typename DVInputIterator, typename DVOutputIterator, typename BinaryFunction> 
-            typename std::enable_if< std::is_base_of<typename device_vector<typename std::iterator_traits<DVInputIterator>::value_type>::iterator,DVOutputIterator>::value, void >::type
+            typename std::enable_if< 
+                          (std::is_base_of<typename device_vector<typename std::iterator_traits<DVInputIterator>::value_type>::iterator,DVInputIterator>::value &&
+                           std::is_base_of<typename device_vector<typename std::iterator_traits<DVOutputIterator>::value_type>::iterator,DVOutputIterator>::value),
+                     void >::type
             transform_pick_iterator(const bolt::cl::control &ctl,  DVInputIterator first1, DVInputIterator last1, DVInputIterator first2, DVOutputIterator result, 
                 BinaryFunction f, const std::string& user_code)
             {
@@ -192,12 +195,12 @@ namespace bolt {
             /*! \brief This template function overload is used to seperate device_vector iterators from all other iterators
                 \detail This template is called by the non-detail versions of inclusive_scan, it already assumes random access
              *  iterators.  This overload is called strictly for non-device_vector iterators
-             * \bug The std::is_base_of logic is combining testing the InputIterator & OutputIterator iterators to see 
-             *  if they derive from each other.  This should be broken into seperate tests, one for InputIterator and 1 for
-             *  OutputIterator and combined with &&.
             */
             template<typename InputIterator, typename OutputIterator, typename UnaryFunction> 
-            typename std::enable_if< !std::is_base_of<typename device_vector<typename std::iterator_traits<InputIterator>::value_type>::iterator,OutputIterator>::value, void >::type
+            typename std::enable_if< 
+                         !(std::is_base_of<typename device_vector<typename std::iterator_traits<InputIterator>::value_type>::iterator,InputIterator>::value &&
+                           std::is_base_of<typename device_vector<typename std::iterator_traits<OutputIterator>::value_type>::iterator,OutputIterator>::value),
+                     void >::type
             transform_unary_pick_iterator(const bolt::cl::control &ctl,  InputIterator first, InputIterator last, OutputIterator result, 
                 UnaryFunction f, const std::string& user_code)
             {
@@ -223,7 +226,10 @@ namespace bolt {
             // This template is called by the non-detail versions of inclusive_scan, it already assumes random access iterators
             // This is called strictly for iterators that are derived from device_vector< T >::iterator
             template<typename DVInputIterator, typename DVOutputIterator, typename UnaryFunction> 
-            typename std::enable_if< std::is_base_of<typename device_vector<typename std::iterator_traits<DVInputIterator>::value_type>::iterator,DVOutputIterator>::value, void >::type
+            typename std::enable_if< 
+                          (std::is_base_of<typename device_vector<typename std::iterator_traits<DVInputIterator>::value_type>::iterator,DVInputIterator>::value &&
+                           std::is_base_of<typename device_vector<typename std::iterator_traits<DVOutputIterator>::value_type>::iterator,DVOutputIterator>::value),
+                     void >::type
             transform_unary_pick_iterator(const bolt::cl::control &ctl,  DVInputIterator first, DVInputIterator last, DVOutputIterator result, 
                 UnaryFunction f, const std::string& user_code)
             {
@@ -246,18 +252,16 @@ namespace bolt {
                 static boost::once_flag initOnlyOnce;
                 static std::vector< ::cl::Kernel > binaryTransformKernels;
 
-
-
                 // For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retreive the name here.
                 if (std::is_same<iType, oType>::value)
                     boost::call_once( initOnlyOnce, boost::bind( CallCompiler_BinaryTransform::init_, &binaryTransformKernels, cl_code + ClCode<iType>::get() + ClCode<BinaryFunction>::get(), TypeName< iType >::get( ), TypeName< oType >::get( ), TypeName< BinaryFunction >::get( ), &ctl ) );
                 else
                     boost::call_once( initOnlyOnce, boost::bind( CallCompiler_BinaryTransform::init_, &binaryTransformKernels, cl_code + ClCode<iType>::get() + ClCode<oType>::get() + ClCode<BinaryFunction>::get(), TypeName< iType >::get( ), TypeName< oType >::get( ), TypeName< BinaryFunction >::get( ), &ctl ) );
                
-				::cl::Kernel kernelWithBoundsCheck = binaryTransformKernels[0];
-				::cl::Kernel kernelNoBoundsCheck   = binaryTransformKernels[1];
+                ::cl::Kernel kernelWithBoundsCheck = binaryTransformKernels[0];
+                ::cl::Kernel kernelNoBoundsCheck   = binaryTransformKernels[1];
 
-				::cl::Kernel k = kernelWithBoundsCheck;
+                ::cl::Kernel k = kernelWithBoundsCheck;
 
                 k.setArg(0, first1->getBuffer( ) );
                 k.setArg(1, first2->getBuffer( ) );
@@ -278,12 +282,18 @@ namespace bolt {
                     sz = sz + (wgSize - (sz % wgSize));
                 }
 
+                ::cl::Event transformEvent;
                 l_Error = ctl.commandQueue().enqueueNDRangeKernel(
                     k, 
                     ::cl::NullRange, 
                     ::cl::NDRange(sz), 
-                    ::cl::NDRange(wgSize));
+                    ::cl::NDRange(wgSize),
+                    NULL,
+                    &transformEvent );
                 V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for transform() kernel" );
+
+                l_Error = transformEvent.wait( );
+                V_OPENCL( l_Error, "perBlockInclusiveScan failed to wait" );
             };
 
             template< typename DVInputIterator, typename DVOutputIterator, typename UnaryFunction > 
@@ -322,12 +332,18 @@ namespace bolt {
                     sz = sz + (wgSize - (sz % wgSize));
                 }
 
+                ::cl::Event transformEvent;
                 l_Error = ctl.commandQueue().enqueueNDRangeKernel(
                     k, 
                     ::cl::NullRange, 
                     ::cl::NDRange(sz), 
-                    ::cl::NDRange(wgSize));
+                    ::cl::NDRange(wgSize),
+                    NULL,
+                    &transformEvent );
                 V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for transform() kernel" );
+
+                l_Error = transformEvent.wait( );
+                V_OPENCL( l_Error, "perBlockInclusiveScan failed to wait" );
             };
         }//End OF detail namespace
     }//End OF cl namespace

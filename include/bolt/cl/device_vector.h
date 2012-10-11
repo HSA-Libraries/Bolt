@@ -424,7 +424,7 @@ namespace bolt
             *   \warning The ::cl::CommandQueue is not a STD reserve( ) parameter
             */
 
-            void resize( size_type reqSize, const value_type& val )
+            void resize( size_type reqSize, const value_type& val = value_type( ) )
             {
                 size_type cap = capacity( );
 
@@ -436,36 +436,48 @@ namespace bolt
 
                 cl_int l_Error = CL_SUCCESS;
 
-                ::cl::Context l_Context = m_devMemory.getInfo< CL_MEM_CONTEXT >( &l_Error );
+                ::cl::Context l_Context = m_commQueue.getInfo< CL_QUEUE_CONTEXT >( &l_Error );
                 V_OPENCL( l_Error, "device_vector failed to query for the context of the ::cl::Buffer object" );
 
                 size_type l_reqSize = reqSize * sizeof( value_type );
                 ::cl::Buffer l_tmpBuffer( l_Context, m_Flags, l_reqSize, NULL, &l_Error );
 
-                size_type l_srcSize = m_devMemory.getInfo< CL_MEM_SIZE >( &l_Error );
-                V_OPENCL( l_Error, "device_vector failed to request the size of the ::cl::Buffer object" );
+                size_type l_srcSize = m_Size * sizeof( value_type );
 
-                std::vector< ::cl::Event > copyEvent( 1 );
-                l_Error = m_commQueue.enqueueCopyBuffer( m_devMemory, l_tmpBuffer, 0, 0, l_srcSize, NULL, &copyEvent.front( ) );
-                V_OPENCL( l_Error, "device_vector failed to copy data to the new ::cl::Buffer object" );
-
-                //  If the new buffer size is greater than the old, then the new elements need to be initialized to the value specified on the
-                //  function parameter
-                if( l_reqSize > l_srcSize )
+                if( l_srcSize > 0 )
                 {
-                    std::vector< ::cl::Event > fillEvent( 1 );
-                    l_Error = m_commQueue.enqueueFillBuffer< value_type >( m_devMemory, val, l_srcSize, l_reqSize - l_srcSize, &copyEvent, &fillEvent.front( ) );
-                    V_OPENCL( l_Error, "device_vector failed to fill the new data with the provided pattern" );
+                    std::vector< ::cl::Event > copyEvent( 1 );
+                    l_Error = m_commQueue.enqueueCopyBuffer( m_devMemory, l_tmpBuffer, 0, 0, l_srcSize, NULL, &copyEvent.front( ) );
+                    V_OPENCL( l_Error, "device_vector failed to copy data to the new ::cl::Buffer object" );
 
-                    //  Not allowed to return until the copy operation is finished
-                    l_Error = m_commQueue.enqueueWaitForEvents( fillEvent );
-                    V_OPENCL( l_Error, "device_vector failed to wait for fill event" );
+                    //  If the new buffer size is greater than the old, then the new elements need to be initialized to the value specified on the
+                    //  function parameter
+                    if( l_reqSize > l_srcSize )
+                    {
+                        ::cl::Event fillEvent;
+                        l_Error = m_commQueue.enqueueFillBuffer< value_type >( l_tmpBuffer, val, l_srcSize, l_reqSize - l_srcSize, &copyEvent, &fillEvent );
+                        V_OPENCL( l_Error, "device_vector failed to fill the new data with the provided pattern" );
+
+                        //  Not allowed to return until the copy operation is finished
+                        l_Error = fillEvent.wait( );
+                        V_OPENCL( l_Error, "device_vector failed to wait for fill event" );
+                    }
+                    else
+                    {
+                        //  Not allowed to return until the copy operation is finished
+                        l_Error = m_commQueue.enqueueWaitForEvents( copyEvent );
+                        V_OPENCL( l_Error, "device_vector failed to wait for copy event" );
+                    }
                 }
                 else
                 {
-                    //  Not allowed to return until the copy operation is finished
-                    l_Error = m_commQueue.enqueueWaitForEvents( copyEvent );
-                    V_OPENCL( l_Error, "device_vector failed to wait for copy event" );
+                    ::cl::Event fillEvent;
+                    l_Error = m_commQueue.enqueueFillBuffer< value_type >( l_tmpBuffer, val, 0, l_reqSize, NULL, &fillEvent );
+                    V_OPENCL( l_Error, "device_vector failed to fill the new data with the provided pattern" );
+
+                    //  Not allowed to return until the fill operation is finished
+                    l_Error = fillEvent.wait( );
+                    V_OPENCL( l_Error, "device_vector failed to wait for fill event" );
                 }
 
                 //  Remember the new size
