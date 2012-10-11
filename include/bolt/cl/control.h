@@ -192,8 +192,10 @@ namespace bolt {
                                             bool printDevices = true, cl_device_type deviceType = CL_DEVICE_TYPE_ALL );
 
                /*! \brief Convenience method to help users create and initialize an OpenCL CommandQueue
-                * \todo How should we create and initialize the context?  Should we provide more options and expose more
-                * intefaces to the user?
+                * \todo The default commandqueue is created with a context that contains all GPU devices in platform.  Since kernels
+                * are only compiled on first invocation, switching between GPU devices is fine but switching to a CPU 
+                * device afterwards causes an exception because the kernel was not compiled for CPU.  Should we provide 
+                * more options and expose more intefaces to the user?
                 */
             static ::cl::CommandQueue getDefaultCommandQueue( );
 

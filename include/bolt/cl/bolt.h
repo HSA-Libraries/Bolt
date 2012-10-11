@@ -43,9 +43,10 @@
  *  \todo Review the the use of parameters to the Bolt API; should parameters for chained functions past 
  *  the public API be references?  Iterators and everything.
  *  \todo Add buffer pool for temporary memory allocated by Bolt calls
- *  \todo Make Bolt calls thread-safe (Save cl:program rather than cl::kernel, and call clCreateKernel on each Bolt call)
+ *  \bug The calls to cl::kernel::setArg() are unprotected, and are documented to be not thread safe.  
+ *  Make cl::program static rather than cl::kernel, and call clCreateKernel on each Bolt call
  *  \todo Review documentation for typos, clarity, etc
- *  \todo Add CPU implementations, i.e. link in external library such as TBB or define our own CPU implementation
+ *  \todo Add CPU implementations, i.e. link an external library or define our own CPU implementation
  *  \todo Statically link the Boost libraries into the Bolt library
  *  \todo Explain the cl_code parameter better, with possible use cases
  *  \todo Fix FAQ entry for device_vector; better explain when to use DV as opposed to host vectors
