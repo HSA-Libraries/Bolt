@@ -95,19 +95,6 @@
 * under a debugger, make sure to mark it \c 'Startup' first by right clicking on the project and selecting 
 * <tt>'Set as Startup Project'</tt>.  Then, debugging should proceed as normal.
 *
-* \subsection clKernels Text .cl kernels and the 'INSTALL' project
-* The Bolt library currently loads internal OpenCL kernels from .cl files and looks for them in the 
-* <i>current working directory</i>.  Since Bolt is a statically linked library, this means the 
-* <i>current working directory</i> of the executing app.  If the Bolt library can not find the appropriate
-* .cl file, it throws an exception since the library function call can not proceed.  The .cl files are copied to the 
-* <b>BOLT_ROOT</b>/binXX folder in the Bolt SDK.  When building the samples, the .cl files will need to be copied to 
-* the location that the executables are built, by default in 
-* <tt><b>BOLT_ROOT</b>/examples/bin/<generator>/staging/<ReleaseConfiguration></tt> folder for the samples.  A project 
-* has been created in the solution to automate this copy step called \c 'INSTALL'.  This project is found underneath the 
-* \c 'CMakePredefinedTargets' folder, and when this project is built, it will copy the .cl files into the same directory 
-* that the samples are built.  This needs to happen at least once for the .cl files to be initially copied, but 
-* do not need to be copied again unless those kernel files are modified.
-
 * \subsection compDependency Supported compilers
 * Bolt currently uses type traits introduced in vs2010.  Additional compilers will be added in time.  GCC/MinGW support
 * will be added in time.
