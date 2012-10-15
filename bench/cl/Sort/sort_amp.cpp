@@ -14,7 +14,7 @@
 *   limitations under the License.                                                   
 
 ***************************************************************************/                                                                                     
-
+#if (_MSC_VER == 1700)
 #define NOMINMAX
 
 //#include "Common/Options.hpp"
@@ -357,3 +357,5 @@ int main(int argc,
 }
 
 */
+
+#endif
