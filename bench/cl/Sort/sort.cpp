@@ -21,19 +21,19 @@
 #include "bolt/statisticalTimer.h"
 #include "bolt/countof.h"
 #include "bolt/cl/sort.h"
-
-
-#include <amp.h>
-#include <amp_short_vectors.h>
-
 #define cNTiles 64
 
 const std::streamsize colWidth = 26;
+
+#if (_MSC_VER == 1700)
+#include <amp.h>
+#include <amp_short_vectors.h>
 using namespace concurrency;
 //This function is defined in sort_amp.cpp
 extern void Sort(array<unsigned int> &integers,
           array<unsigned int> &tmpIntegers,
           array<unsigned int> &tmpHistograms);
+#endif
 
 int main( int argc, char* argv[] )
 {
@@ -91,20 +91,22 @@ int main( int argc, char* argv[] )
         std::cout << _T( "Sort Benchmark error condition reported:" ) << std::endl << e.what() << std::endl;
         return 1;
     }
+	//CPU sort inits
+    std::vector< double > input( length );
+	std::vector< double > backup( length );
+	//BOLT sort inits
 
-    std::vector< int > input( length );
-	std::vector< int > backup( length );
-	std::generate(backup.begin(), backup.end(),rand);
-    
-	//AMP sort initializations
+	//AMP sort inits
 	std::vector<unsigned int> integers(length);
-	std::generate(integers.begin(), integers.end(),rand);
 
+	std::generate(backup.begin(), backup.end(),rand);
+	std::generate(integers.begin(), integers.end(),rand);
 	// Copy vector to the device.
+#if (_MSC_VER == 1700)
     array<unsigned int> dIntegers(length, integers.begin());
 	array<unsigned int> dTmpIntegers(length);
 	array<unsigned int> dTmpHistograms(cNTiles * 16);
-
+#endif
     bolt::statTimer& myTimer = bolt::statTimer::getInstance( );
     myTimer.Reserve( 1, numLoops );
 
@@ -115,14 +117,17 @@ int main( int argc, char* argv[] )
 		std::cout<<"Running CL_SORT\n";
 		for( unsigned i = 0; i < numLoops; ++i )
         {
-			input = backup;
+			//input = backup;
+			bolt::cl::device_vector< double > boltInput( backup.begin(), backup.end(), CL_MEM_USE_HOST_PTR);
             myTimer.Start( sortId );
-            bolt::cl::sort( input.begin( ), input.end( ));
+            bolt::cl::sort( boltInput.begin( ), boltInput.end( ));
+			//bolt::cl::sort( input.begin( ), input.end( ));
             myTimer.Stop( sortId );
         }
     }
     else if( algo == 2 )
     {
+#if (_MSC_VER == 1700)
 		std::cout<<"Running AMP_SORT\n";
 		// Allocate space for temporary integers and histograms.
 		for(int run = 0; run < numLoops; ++ run) 
@@ -132,6 +137,20 @@ int main( int argc, char* argv[] )
 			Sort(dIntegers, dTmpIntegers, dTmpHistograms);
 			myTimer.Stop( sortId );
 		}
+#else 
+		std::cout<<"Visual Studio 2010 does not support C++ AMP\n";
+#endif 
+    }
+    else if( algo == 3 )
+    {
+		std::cout<<"Running STD_SORT\n";
+		for( unsigned i = 0; i < numLoops; ++i )
+        {
+			input = backup;
+            myTimer.Start( sortId );
+            std::sort( input.begin( ), input.end( ));
+            myTimer.Stop( sortId );
+        }
     }
 	else
 	{
@@ -150,10 +169,5 @@ int main( int argc, char* argv[] )
     bolt::tout << std::setw( colWidth ) << _T( "    Speed (GB/s): " ) << sortGB / sortTime << std::endl;
     bolt::tout << std::endl;
 
-//	bolt::tout << myTimer;
-
     return 0;
-//	bolt::tout << myTimer;
-	getchar();
-	return 0;
 }
