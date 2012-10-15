@@ -310,7 +310,10 @@ namespace bolt {
                 static boost::once_flag initOnlyOnce;
                 static ::cl::Kernel masterKernel;
                 // For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retreive the name here.
-                boost::call_once( initOnlyOnce, boost::bind( CallCompiler_UnaryTransform::init_, &masterKernel, user_code + ClCode<iType>::get() + ClCode<oType>::get() + ClCode<UnaryFunction>::get(), TypeName< iType >::get( ), TypeName< oType >::get( ), TypeName< UnaryFunction >::get( ), &ctl ) );
+                if (std::is_same<iType, oType>::value)
+                    boost::call_once( initOnlyOnce, boost::bind( CallCompiler_UnaryTransform::init_, &masterKernel, user_code + ClCode<iType>::get() + ClCode<UnaryFunction>::get(), TypeName< iType >::get( ), TypeName< oType >::get( ), TypeName< UnaryFunction >::get( ), &ctl ) );
+                else
+                    boost::call_once( initOnlyOnce, boost::bind( CallCompiler_UnaryTransform::init_, &masterKernel, user_code + ClCode<iType>::get() + ClCode<oType>::get() + ClCode<UnaryFunction>::get(), TypeName< iType >::get( ), TypeName< oType >::get( ), TypeName< UnaryFunction >::get( ), &ctl ) );
 
                 ::cl::Kernel k = masterKernel;  // hopefully create a copy of the kernel.  FIXME, need to create-kernel from the program.
 
