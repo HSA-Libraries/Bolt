@@ -1,0 +1,184 @@
+############################################################################                                                                                     
+#   Copyright 2012 Advanced Micro Devices, Inc.                                     
+#                                                                                    
+#   Licensed under the Apache License, Version 2.0 (the "License");   
+#   you may not use this file except in compliance with the License.                 
+#   You may obtain a copy of the License at                                          
+#                                                                                    
+#       http://www.apache.org/licenses/LICENSE-2.0                      
+#                                                                                    
+#   Unless required by applicable law or agreed to in writing, software              
+#   distributed under the License is distributed on an "AS IS" BASIS,              
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.         
+#   See the License for the specific language governing permissions and              
+#   limitations under the License.                                                   
+
+############################################################################                                                                                     
+
+# We require 2.8.3 for windows because of a bug in cmake that prevented vs2010 from generating
+# executables properly with multiple periods
+cmake_minimum_required( VERSION 2.8.3 )
+
+# uncomment these to debug nmake and borland makefiles
+#SET(CMAKE_START_TEMP_FILE "")
+#SET(CMAKE_END_TEMP_FILE "")
+#SET(CMAKE_VERBOSE_MAKEFILE 1)
+
+# This becomes the name of the solution file
+project( Examples )
+
+# Define a version for the code
+set( Examples_VERSION_MAJOR 0 )
+set( Examples_VERSION_MINOR 4 )
+set( Examples_VERSION_PATCH 0 )
+set( Examples_VERSION "${Examples_VERSION_MAJOR}.${Examples_VERSION_MINOR}.${Examples_VERSION_PATCH}")
+
+list( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR} )
+
+# On windows, it's convenient to change the default install prefix such that it does NOT point to 'program files'
+# Need to check out CMAKE_RUNTIME_OUTPUT_DIRECTORY variable, and see if that eliminates the need to modify install path
+if( CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT )
+    set( CMAKE_INSTALL_PREFIX "${PROJECT_BINARY_DIR}/package" CACHE PATH "Install path prefix, prepended onto install directories" FORCE )
+endif( )
+
+# Set the default of CMAKE_BUILD_TYPE to be release, unless user specifies with -D.  MSVC_IDE does not use CMAKE_BUILD_TYPE
+if( NOT MSVC_IDE AND NOT CMAKE_BUILD_TYPE )
+  set( CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel." FORCE )
+endif()
+
+if( MSVC_IDE )
+    set( Bolt_BUILD64 ${CMAKE_CL_64} )
+    set_property( GLOBAL PROPERTY USE_FOLDERS TRUE )
+else()
+    option( Bolt_BUILD64 "Build a 64-bit product" ON )
+endif()
+
+# Modify the global find property to help us find libraries like Boost in the correct paths for 64-bit
+# Essentially, find_library calls will look for /lib64 instead of /lib; works for windows and linux
+if( Bolt_BUILD64 )
+    set_property( GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS TRUE )
+    message( STATUS "64bit build - FIND_LIBRARY_USE_LIB64_PATHS TRUE" )
+else()
+    set_property( GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS FALSE )
+    message( STATUS "32bit build - FIND_LIBRARY_USE_LIB64_PATHS FALSE" )
+endif()
+
+# Currently, linux has a problem outputing both narrow and wide characters,
+# which happens in our client because openCL only supports narrow characters
+if( WIN32 )
+    option( BUILD_UNICODE "Create a solution that compiles Bolt with Unicode Support" ON )
+    if( BUILD_UNICODE )
+        message( STATUS "UNICODE build" )
+    endif( )
+else()
+    set( BUILD_UNICODE OFF )
+    message( STATUS "UNICODE disabled on linux" )
+endif()
+
+# FFLAGS depend on the compiler, grab the compiler name from the path
+get_filename_component( C_COMPILER_NAME ${CMAKE_C_COMPILER} NAME_WE )
+# message( "C_COMPILER_NAME: " ${C_COMPILER_NAME} )
+# message( "CMAKE_C_COMPILER: " ${CMAKE_C_COMPILER} )
+
+# Set common compile and link options
+if( C_COMPILER_NAME STREQUAL "cl" )
+    # Following options for nMake
+    message( STATUS "Detected MSVS Ver: " ${MSVC_VERSION} )
+    
+    # CMake uses huge stack frames for windows, for some reason.  We remove.
+    string( REGEX REPLACE "/STACK:[0-9]+" "" CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}" )
+    string( REGEX REPLACE "/STACK:[0-9]+" "" CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}" )
+    string( REGEX REPLACE "/STACK:[0-9]+" "" CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS}" ) 
+elseif( C_COMPILER_NAME STREQUAL "gcc" )
+    message( STATUS "Detected GNU fortran compiler." )
+    
+    if( Bolt_BUILD64 )
+        set( CMAKE_CXX_FLAGS "-m64 ${CMAKE_CXX_FLAGS}" )
+        set( CMAKE_C_FLAGS "-m64 ${CMAKE_C_FLAGS}" )
+    else( )
+        set( CMAKE_CXX_FLAGS "-m32 ${CMAKE_CXX_FLAGS}" )
+        set( CMAKE_C_FLAGS "-m32 ${CMAKE_C_FLAGS}" )
+    endif( )
+else( )
+    message( AUTHOR_WARNING "Compiler not recognized.  Using default flags." )
+endif( )
+
+# If UNICODE is defined, pass extra definitions into 
+if( BUILD_UNICODE )
+    add_definitions( "/DUNICODE /D_UNICODE" )
+endif( )
+
+# Bolt statically links in the boost libraries, disable the example apps from trying to link in boost themselves
+# add_definitions( "/DBOOST_ALL_NO_LIB" )
+
+# Print out compiler flags for viewing/debug
+message( STATUS "CMAKE_CXX_COMPILER flags: " ${CMAKE_CXX_FLAGS} )
+message( STATUS "CMAKE_CXX_COMPILER debug flags: " ${CMAKE_CXX_FLAGS_DEBUG} )
+message( STATUS "CMAKE_CXX_COMPILER release flags: " ${CMAKE_CXX_FLAGS_RELEASE} )
+message( STATUS "CMAKE_CXX_COMPILER relwithdebinfo flags: " ${CMAKE_CXX_FLAGS_RELWITHDEBINFO} )
+message( STATUS "CMAKE_EXE_LINKER link flags: " ${CMAKE_EXE_LINKER_FLAGS} )
+
+# Depending on whether we are building for 64 or 32 bit, construct common paths and names that subdirectories can reference for their use
+if( Bolt_BUILD64 )
+    set( CPACK_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}-${Bolt_VERSION}-${CMAKE_HOST_SYSTEM_NAME}-x64")
+    set( INCLUDE_DIR include )
+    set( BIN_DIR bin64 )
+    set( LIB_DIR lib64 )
+else( )
+    set( CPACK_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}-${Bolt_VERSION}-${CMAKE_HOST_SYSTEM_NAME}-x32")
+    set( INCLUDE_DIR include )
+    set( BIN_DIR bin )
+    set( LIB_DIR lib )
+endif( )
+
+# This will define OPENCL_FOUND
+find_package( OpenCL REQUIRED )
+
+# Use our packaged version of Boost if not specified by the user
+if( NOT BOOST_ROOT )
+    set( BOOST_ROOT "${PROJECT_SOURCE_DIR}/.." )
+endif( )
+
+set( Boost_USE_MULTITHREADED ON )
+set( Boost_USE_STATIC_LIBS   ON )
+set( Boost_DETAILED_FAILURE_MSG   ON )
+# set( Boost_DEBUG ON )
+
+# The root tree of BOOST was specified on the command line; use it to to find the specific Boost the user points too
+# This will define Boost_FOUND
+find_package( Boost 1.51 COMPONENTS thread system REQUIRED )
+
+if( NOT BOLT_ROOT )
+    set( BOLT_ROOT "${PROJECT_SOURCE_DIR}/.." )
+endif( )
+
+# This will define BOLT_FOUND
+find_package( Bolt REQUIRED )
+
+add_subdirectory( DeviceVector )
+add_subdirectory( Scan )
+add_subdirectory( Sort )
+add_subdirectory( StdDev )
+add_subdirectory( Transform )
+add_subdirectory( Version )
+
+# The following code is setting variables to control the behavior of CPack to generate our 
+if( WIN32 )
+    set( CPACK_SOURCE_GENERATOR "ZIP" )
+    set( CPACK_GENERATOR "ZIP" )
+else( )
+    set( CPACK_SOURCE_GENERATOR "TGZ" )
+    set( CPACK_GENERATOR "TGZ" )
+endif( )
+
+set( CPACK_SOURCE_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}-${Examples_VERSION}-${CMAKE_HOST_SYSTEM_NAME}-Source")
+
+set( CPACK_PACKAGE_VERSION_MAJOR ${Examples_VERSION_MAJOR} )
+set( CPACK_PACKAGE_VERSION_MINOR ${Examples_VERSION_MINOR} )
+set( CPACK_PACKAGE_VERSION_PATCH ${Examples_VERSION_PATCH} )
+set( CPACK_PACKAGE_DESCRIPTION_SUMMARY "Bolt examples reference implementation")
+set( CPACK_PACKAGE_VENDOR "AMD")
+set( CPACK_SOURCE_IGNORE_FILES "/\\\\.hg/;/\\\\.svn/;" )
+
+# Define all variables that influence CPack before including CPack, such as install targets
+include( CPack )
