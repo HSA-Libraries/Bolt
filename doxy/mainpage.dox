@@ -41,7 +41,7 @@
  * for higher performance on discrete GPU systems.  Bolt APIs can accept either host memory or the device vector.
 
  * This document introduces the architecture of Bolt and also provides a reference for the Bolt APIs.  
- *
+ * GARBAGE SLDKJFSLDKFJLKJ SDL:JSDLKFJLK J:LKSDJF :LKJDSF
 
  * \section example_sec Examples
  * The simple example below shows how to use Bolt to sort a random array of 8192 integers.  
