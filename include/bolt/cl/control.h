@@ -18,6 +18,7 @@
 #pragma once
 
 #include <CL/cl.hpp>
+#include <string>
 
 namespace bolt {
     namespace cl {
@@ -95,6 +96,11 @@ namespace bolt {
                 static const unsigned DebugKernelRun = 0x8;
                 static const unsigned AutoTune = 0x10;
             };
+
+			enum e_WaitMode {BalancedWait,	// Balance of Busy and Nice: tries to use Busy for short-running kernels.  \todo: Balanced currently maps to nice.
+							 NiceWait,		// Use an OS semaphore to detect completion status.
+							 BusyWait,		// Busy a CPU core continuously monitoring results.  Lowest-latency, but requires a dedicated core.
+							 ClFinish};		
         public:
 
             // Construct a new control structure, copying from default control for arguments which are not overridden.
@@ -110,7 +116,8 @@ namespace bolt {
                 m_autoTune(getDefault().m_autoTune),
                 m_wgPerComputeUnit(getDefault().m_wgPerComputeUnit),
                 m_compileOptions(getDefault().m_compileOptions),
-                m_compileForAllDevices(getDefault().m_compileForAllDevices)
+                m_compileForAllDevices(getDefault().m_compileForAllDevices),
+				m_waitMode(getDefault().m_waitMode)
             {};
 
             //setters:
@@ -146,6 +153,8 @@ namespace bolt {
 
 
             void wgPerComputeUnit(int wgPerComputeUnit) { m_wgPerComputeUnit = wgPerComputeUnit; }; 
+
+			void waitMode(e_WaitMode waitMode) { m_waitMode = waitMode; };
             
             //! 
             //! Specify the compile options which are passed to the OpenCL(TM) compiler
@@ -161,7 +170,8 @@ namespace bolt {
             e_RunMode forceRunMode() const { return m_forceRunMode; };
             unsigned debug() const { return m_debug;};
             int const wgPerComputeUnit() const { return m_wgPerComputeUnit; };
-            const std::string compileOptions() const { return m_compileOptions; };  
+            const ::std::string compileOptions() const { return m_compileOptions; };  
+			e_WaitMode waitMode() const { return m_waitMode; };
 
             bool compileForAllDevices() const { return m_compileForAllDevices; };
 
@@ -209,7 +219,8 @@ namespace bolt {
                 m_debug(debug::None),
                 m_autoTune(AutoTuneAll),
                 m_wgPerComputeUnit(8),
-                m_compileForAllDevices(true)
+                m_compileForAllDevices(true),
+				m_waitMode(BalancedWait)
             {};
 
             ::cl::CommandQueue  m_commandQueue;
@@ -218,8 +229,9 @@ namespace bolt {
             e_AutoTuneMode      m_autoTune;  /* auto-tune the choice of device CPU/GPU and  workgroup shape */
             unsigned            m_debug;
             int                 m_wgPerComputeUnit;
-            std::string         m_compileOptions;  // extra options to pass to OpenCL compiler.
+            ::std::string       m_compileOptions;  // extra options to pass to OpenCL compiler.
             bool                m_compileForAllDevices;  // compile for all devices in the context.  False means to only compile for specified device.
+			e_WaitMode			m_waitMode;
         };
 
     };
