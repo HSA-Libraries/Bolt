@@ -154,6 +154,8 @@ namespace bolt {
         }
         #define V_OPENCL( status, message ) V_OpenCL( status, message, __LINE__ )
 
+
+		void wait(const bolt::cl::control &ctl, ::cl::Event &e) ;
 	};
 };
 
