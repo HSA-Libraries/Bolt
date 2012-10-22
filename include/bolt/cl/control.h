@@ -34,8 +34,8 @@ namespace bolt {
          such as the command-queue where GPU kernels run, debug information, load-balancing with 
 		 the host, and more.  Each Bolt Algorithm call accepts the 
         \p control class as an optional first argument.  Additionally, Bolt contains a global default
-		\p control structure that is used in cases where the \p control argument is not specified, and 
-		developers can also modify this structure.  Some examples:
+		\p control structure that is used in cases where the \p control argument is not specified; also, 
+		developers can modify this structure.  Some examples:
 
         * \code
         * cl::CommandQueue myCommandQueue = ...
@@ -45,7 +45,7 @@ namespace bolt {
         * \endcode
 
 
-        * Developers can also inialize and save control structures to avoid the cost of copying the default on each function call.  An example:
+        * Developers also can inialize and save control structures to avoid the cost of copying the default on each function call.  An example:
         * \code
         * class MyClass {
         *   MyClass(...) {
@@ -64,11 +64,11 @@ namespace bolt {
         * \endcode
 
 
-        * It can sometimes be useful to set the global default \p control structure that is used by Bolt algorithms 
+        * Sometimes, it can be useful to set the global default \p control structure used by Bolt algorithms 
 		* calls that do not explicitly specify
         * a control parameter as the first argument.  For example, the application initialization routine can examine 
-        * all the available GPU devies and select the one to be used for all subsequent Bolt calls.  This can easily be 
-        * achieved by writing the global default \p control structure, i.e.:
+        * all the available GPU devices and select the one to be used for all subsequent Bolt calls.  This can be 
+        * done by writing the global default \p control structure, i.e.:
         * \code
         * cl::CommandQueue myCommandQueue = ...
         * bolt::cl::control::getDefault().commandQueue(myCommandQueue); 
@@ -129,19 +129,19 @@ namespace bolt {
             void useHost(e_UseHostMode useHost) { m_useHost = useHost; };
 
 
-            //! Force the Bolt command to run on the specifed device.  Default is "Automatic", in which case the Bolt
+            //! Force the Bolt command to run on the specifed device.  Default is "Automatic," in which case the Bolt
             //! runtime selects the device.  Forcing the mode to SerialCpu can be useful for debugging the algorithm.
-            //! Forcing the mode can also be useful for performance comparisons or for direct 
+            //! Forcing the mode can also be useful for performance comparisons, or for direct 
             //! control over the run location (perhaps due to knowledge that the algorithm is best-suited for GPU).
             void forceRunMode(e_RunMode forceRunMode) { m_forceRunMode = forceRunMode; };
 
             /*! Enable debug messages to be printed to stdout as the algorithm is compiled, run, and tuned.  See the #debug
             * namespace for a list of values.  Multiple debug options can be combined with the + sign, as in 
             * following example.  Use this technique rather than separate calls to the debug() API; 
-            * each call resets the debug level rather than merging with the existing debug() setting.
+            * each call resets the debug level, rather than merging with the existing debug() setting.
             * \code
             * bolt::cl::control myControl;
-            * // Show example of combining two debug options with '+' sign
+            * // Show example of combining two debug options with the '+' sign.
             * myControl.debug(bolt::cl::control::debug::Compile + bolt::cl::control:debug::SaveCompilerTemps);
             * \endcode
             */
@@ -151,7 +151,7 @@ namespace bolt {
             void wgPerComputeUnit(int wgPerComputeUnit) { m_wgPerComputeUnit = wgPerComputeUnit; }; 
             
             //! 
-            //! Specify the compile options which are passed to the OpenCL(TM) compiler
+            //! Specify the compile options passed to the OpenCL(TM) compiler.
             void compileOptions(std::string &compileOptions) { m_compileOptions = compileOptions; }; 
 
             // getters:
@@ -169,7 +169,7 @@ namespace bolt {
             bool compileForAllDevices() const { return m_compileForAllDevices; };
 
             /*!
-              * Return default default \p control structure.  This structure is used for Bolt API calls when the user
+              * Return default default \p control structure.  This is used for Bolt API calls when the user
               * does not explicitly specify a \p control structure.  Also, newly created \p control structures copy
               * the default structure for their initial values.  Note that changes to the default \p control structure
               * are not automatically copied to already-created control structures.  Typically, the default \p control
@@ -194,7 +194,7 @@ namespace bolt {
             static void printPlatformsRange( std::vector< ::cl::Platform >::iterator begin, std::vector< ::cl::Platform >::iterator end, 
                                             bool printDevices = true, cl_device_type deviceType = CL_DEVICE_TYPE_ALL );
 
-               /*! \brief Convenience method to help users create and initialize an OpenCL CommandQueue
+               /*! \brief Convenience method to help users create and initialize an OpenCL CommandQueue.
                 * \todo The default commandqueue is created with a context that contains all GPU devices in platform.  Since kernels
                 * are only compiled on first invocation, switching between GPU devices is OK, but switching to a CPU 
                 * device afterwards causes an exception because the kernel was not compiled for CPU.  Should we provide 
