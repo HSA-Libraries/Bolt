@@ -27,7 +27,7 @@
 #include <string>
 #include "unicode.h"
 
-// Function prototype for dynamically discovering dbghelp.dll!MiniDumpWriteDump( )
+// Function prototype for dynamically discovering dbghelp.dll!MiniDumpWriteDump( ).
 typedef BOOL (WINAPI* FNMINIDUMPWRITEDUMP)(
     HANDLE hProcess,
     DWORD ProcessId,
@@ -40,14 +40,14 @@ typedef BOOL (WINAPI* FNMINIDUMPWRITEDUMP)(
 
 namespace bolt
 {
-    //	This class is not yet thread safe (static variable creation is not thread safe); 
-    //	it is the users responsability that the singleton in a thread safe manner.
+    //	This class is not yet thread-safe (static variable creation is not thread safe); 
+    //	the user must ensure that the singleton is used in a thread-safe manner.
     class miniDumpSingleton
     {
     public:
         enum minidumpVerbosity { noVerbose, Verbose };
 
-        //  This sets up the exception filter and enables the generation of minidumps
+        //  This sets up the exception filter and enables the generation of minidumps.
         static miniDumpSingleton& enableMiniDumps( minidumpVerbosity verbosity = noVerbose )
         {
             #if defined( _WIN32 )

@@ -31,14 +31,14 @@ namespace bolt {
 
 	Init is the initial state for the Iteration type for every index.
 
-	The user provides a functor which accepts two arguments:
-	index<> - location in the extent that should be processed.
+	The user provides a functor that accepts two arguments:
+	index<> - location in the extent to be processed.
 	IterType : User-supplied type that tracks the state of each iteration.
 	The functor is responsible for :
 	* Updating the state so that it points to the next 'iteration'.  The next "iteration" could be the next cascade stage 
-	in a face-detection algorithm, or the next iteration of a loop.  It is critical to update to the next state to avoid
+	in a face-detection algorithm, or the next iteration of a loop.  It is very important to update to the next state to avoid
 	an infinite loop.
-	* Return true if the runtime should schedule the next iteration, or false if this iteration has been processed.
+	* Returns true if the Bolt runtime is to schedule the next iteration, or false if the runtime is to exit.
 	*/
 	template<typename IterType, typename Function> 
 	void parallel_iteration(concurrency::extent<1> ext, IterType Init, Function f)  {
@@ -78,7 +78,7 @@ namespace bolt {
 				keepGoing = f(idx, iter);
 			};
 			if (keepGoing) {
-				// Enqueue for processing belowv - save idx and state.  
+				// Enqueue for processing below - save idx and state.  
 				//; Horrible performance due to contended atomic operations, need to combine enqueue operations.
 				int lPtr = atomic_fetch_add(&qPtr[0], 1);
 				// FIXME - bounds check

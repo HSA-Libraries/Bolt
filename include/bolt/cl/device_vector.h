@@ -50,8 +50,8 @@ namespace bolt
         /*! \brief This defines the OpenCL version of a device_vector
         *   \ingroup Device
         *   \details A device_vector is an abstract data type that provides random access to a flat, sequential region of memory that is performant 
-        *   for the device in question to use.  This may imply different memories for diffferent devices.  For instance, discrete class graphics
-        *   devices, this is most likely video memory, for APU devices this may imply zero-copy memory and for classic CPU devices this may imply
+        *   for the device.  This can imply different memories for diffferent devices.  For discrete class graphics,
+        *   devices, this is most likely video memory; for APU devices, this can imply zero-copy memory; for CPU devices, this can imply
         *   standard host memory.
         *   \sa http://www.sgi.com/tech/stl/Vector.html
         */
@@ -94,11 +94,11 @@ namespace bolt
             typedef boost::shared_array< const value_type > const_pointer;
 
             /*! \brief A writeable element of the container
-            *   The location of an element of the container may not actually reside in system memory, but rather device
-            *   memory which may be in a partitioned memory space.  Access of a reference of the container results in 
-            *   a mapping and unmapping operation of device memory
-            *   \note The container element reference is implemented as a proxy object
-            *   \warning Use of this class may be slow, as each operation on it results in a map/unmap sequence
+            *   The location of an element of the container may not actually reside in system memory, but rather in device
+            *   memory, which may be in a partitioned memory space.  Access to a reference of the container results in 
+            *   a mapping and unmapping operation of device memory.
+            *   \note The container element reference is implemented as a proxy object.
+            *   \warning Use of this class can be slow: each operation on it results in a map/unmap sequence.
             */
             template< typename Container >
             class reference_base
@@ -136,10 +136,10 @@ namespace bolt
                     return *this;
                 }
 
-                /*! \brief A get accessor function to return the encapsulated device buffer for const objects
+                /*! \brief A get accessor function to return the encapsulated device buffer for const objects.
                 *   This member function allows access to the Buffer object, which can be retrieved through a reference or an iterator.
-                *   This is necessary to allow library functions to set the encapsulated Buffer object as a kernel argument.  
-                *   \note This get function could be implemented in the iterator, but the reference object is usually a temporary rvalue so 
+                *   This is necessary to allow library functions to set the encapsulated buffer object as a kernel argument.  
+                *   \note This get function could be implemented in the iterator, but the reference object is usually a temporary rvalue, so 
                 *   this location seems less intrusive to the design of the vector class.
                 */
                 const ::cl::Buffer& getBuffer( ) const
@@ -147,10 +147,10 @@ namespace bolt
                     return m_Container.m_devMemory;
                 }
 
-                /*! \brief A get accessor function to return the encapsulated device buffer for non-const objects
+                /*! \brief A get accessor function to return the encapsulated device buffer for non-const objects.
                 *   This member function allows access to the Buffer object, which can be retrieved through a reference or an iterator.
-                *   This is necessary to allow library functions to set the encapsulated Buffer object as a kernel argument.  
-                *   \note This get function could be implemented in the iterator, but the reference object is usually a temporary rvalue so 
+                *   This is necessary to allow library functions to set the encapsulated buffer object as a kernel argument.  
+                *   \note This get function can be implemented in the iterator, but the reference object is usually a temporary rvalue, so 
                 *   this location seems less intrusive to the design of the vector class.
                 */
                 ::cl::Buffer& getBuffer( )
@@ -158,7 +158,7 @@ namespace bolt
                     return m_Container.m_devMemory;
                 }
 
-                /*! \brief A get accessor function to return the encapsulated device_vector
+                /*! \brief A get accessor function to return the encapsulated device_vector.
                 */
                 Container& getContainer( ) const
                 {
@@ -170,12 +170,12 @@ namespace bolt
                 size_type m_index;
             };
 
-            /*! \brief Typedef to create the non-constant reference
+            /*! \brief Typedef to create the non-constant reference.
             */
             typedef reference_base< device_vector< value_type > > reference;
 
-            /*! \brief A non-writeable copy of an element of the container
-            *   Constant references are optimized to return a value_type, as it can be guaranteed that
+            /*! \brief A non-writeable copy of an element of the container.
+            *   Constant references are optimized to return a value_type, since it is certain that
             *   the value will not be modified
             *   \note A const_reference actually returns a value, not a reference.
             */
@@ -185,10 +185,10 @@ namespace bolt
             friend class reference;
 
             /*! \brief Base class provided to encapsulate all the common functionality for constant
-            *   and non-constant iterators
+            *   and non-constant iterators.
             *   \sa http://www.sgi.com/tech/stl/Iterators.html
             *   \sa http://www.sgi.com/tech/stl/RandomAccessIterator.html
-            *   \bug operator[] with device_vector iterators result in a compile time error when accessed for reading.
+            *   \bug operator[] with device_vector iterators result in a compile-time error when accessed for reading.
             *   Writing with operator[] appears to be OK.  Workarounds: either use the operator[] on the device_vector
             *   container, or use iterator arithmetic instead, such as *(iter + 5) for reading from the iterator.
             */
@@ -290,13 +290,13 @@ namespace bolt
                 static_assert( !std::is_polymorphic< value_type >::value, "AMD C++ template extensions do not support the virtual keyword yet" );
             }
 
-            /*! \brief A constructor that will create a new device_vector with the specified number of elements, with a specified initial value
+            /*! \brief A constructor that creates a new device_vector with the specified number of elements, with a specified initial value.
             *   \param newSize The number of elements of the new device_vector
-            *   \param value The value that new elements will be initialized with
-            *   \param flags A bitfield that takes the OpenCL memory flags to help specify where the device_vector should allocate memory
-            *   \param init Boolean value to indicate whether device memory should be initialized from host memory
-            *   \param ctl An Bolt control class used to perform copy operations; a default is used if not supplied by the user
-            *   \warning The ::cl::CommandQueue is not a STD reserve( ) parameter
+            *   \param value The value with which to initialize new elements.
+            *   \param flags A bitfield that takes the OpenCL memory flags to help specify where the device_vector allocates memory.
+            *   \param init Boolean value to indicate whether to initialize device memory from host memory.
+            *   \param ctl A Bolt control class for copy operations; a default is used if not supplied by the user.
+            *   \warning The ::cl::CommandQueue is not an STD reserve( ) parameter.
             */
             device_vector( size_type newSize, const value_type& value = value_type( ), cl_mem_flags flags = CL_MEM_READ_WRITE, 
                 bool init = true, const control& ctl = control::getDefault( ) ): m_Size( newSize ), m_commQueue( ctl.commandQueue( ) ), m_Flags( flags )
@@ -324,13 +324,13 @@ namespace bolt
                 }
             }
 
-            /*! \brief A constructor that will create a new device_vector using a range specified by the user
-            *   \param begin An iterator pointing at the beginning of the range
-            *   \param end An iterator pointing at the end of the range
-            *   \param flags A bitfield that takes the OpenCL memory flags to help specify where the device_vector should allocate memory
-            *   \param init Boolean value to indicate whether device memory should be initialized from host memory
-            *   \param ctl An Bolt control class used to perform copy operations; a default is used if not supplied by the user
-            *   \note The enable_if<> parameter should be ignored; it prevents this constructor from being called with integral types
+            /*! \brief A constructor that creates a new device_vector using a range specified by the user.
+            *   \param begin An iterator pointing at the beginning of the range.
+            *   \param end An iterator pointing at the end of the range.
+            *   \param flags A bitfield that takes the OpenCL memory flags to help specify where the device_vector allocates memory.
+            *   \param init Boolean value to indicate whether to initialize device memory from host memory.
+            *   \param ctl A Bolt control class used to perform copy operations; a default is used if not supplied by the user.
+            *   \note Ignore the enable_if<> parameter; it prevents this constructor from being called with integral types.
             */
             template< typename InputIterator >
             device_vector( const InputIterator begin, size_type newSize, cl_mem_flags flags = CL_MEM_READ_WRITE, 
@@ -362,12 +362,12 @@ namespace bolt
                 }
             };
 
-            /*! \brief A constructor that will create a new device_vector using a range specified by the user
-            *   \param begin An iterator pointing at the beginning of the range
-            *   \param end An iterator pointing at the end of the range
-            *   \param flags A bitfield that takes the OpenCL memory flags to help specify where the device_vector should allocate memory
-            *   \param ctl An Bolt control class used to perform copy operations; a default is used if not supplied by the user
-            *   \note The enable_if<> parameter should be ignored; it prevents this constructor from being called with integral types
+            /*! \brief A constructor that creates a new device_vector using a range specified by the user.
+            *   \param begin An iterator pointing at the beginning of the range.
+            *   \param end An iterator pointing at the end of the range.
+            *   \param flags A bitfield that takes the OpenCL memory flags to help specify where the device_vector allocates memory.
+            *   \param ctl A Bolt control class for copy operations; a default is used if not supplied by the user.
+            *   \note Ignore the enable_if<> parameter; it prevents this constructor from being called with integral types.
             */
             template< typename InputIterator >
             device_vector( const InputIterator begin, const InputIterator end, cl_mem_flags flags = CL_MEM_READ_WRITE, const control& ctl = control::getDefault( ),
@@ -397,9 +397,9 @@ namespace bolt
                 }
             };
 
-            /*! \brief A constructor that will create a new device_vector using a pre-initialized buffer supplied by the user
-            *   \param rhs A pre-existing ::cl::Buffer supplied by the user
-            *   \param ctl An Bolt control class used to perform copy operations; a default is used if not supplied by the user
+            /*! \brief A constructor that creates a new device_vector using a pre-initialized buffer supplied by the user.
+            *   \param rhs A pre-existing ::cl::Buffer supplied by the user.
+            *   \param ctl A Bolt control class for copy operations; a default is used if not supplied by the user.
             */
             device_vector( const ::cl::Buffer& rhs, const control& ctl = control::getDefault( ) ): m_devMemory( rhs ), m_commQueue( ctl.commandQueue( ) )
             {
@@ -414,13 +414,14 @@ namespace bolt
 
             //  Member functions
 
-            /*! \brief Change the number of elements in device_vector to reqSize
-            *   If the new requested size is less than the original size, the data is truncated and lost.  If the new size is greater than the original
+            /*! \brief Change the number of elements in device_vector to reqSize.
+            *   If the new requested size is less than the original size, the data is truncated and lost.  If the 
+			*   new size is greater than the original
             *   size, the extra paddign will be initialized with the value specified by the user.
-            *   \param reqSize The requested size of the device_vector in elements
-            *   \param val All new elements will be initialized with this new value
-            *   \note capacity( ) may exceed n, but will not be less than n
-            *   \warning If the device_vector has to reallocate, all previous iterators, references and pointers are invalidated
+            *   \param reqSize The requested size of the device_vector in elements.
+            *   \param val All new elements are initialized with this new value.
+            *   \note capacity( ) may exceed n, but is not less than n.
+            *   \warning If the device_vector must reallocate, all previous iterators, references, and pointers are invalidated.
             *   \warning The ::cl::CommandQueue is not a STD reserve( ) parameter
             */
 
@@ -450,7 +451,7 @@ namespace bolt
                     l_Error = m_commQueue.enqueueCopyBuffer( m_devMemory, l_tmpBuffer, 0, 0, l_srcSize, NULL, &copyEvent.front( ) );
                     V_OPENCL( l_Error, "device_vector failed to copy data to the new ::cl::Buffer object" );
 
-                    //  If the new buffer size is greater than the old, then the new elements need to be initialized to the value specified on the
+                    //  If the new buffer size is greater than the old, the new elements must be initialized to the value specified on the
                     //  function parameter
                     if( l_reqSize > l_srcSize )
                     {
@@ -496,8 +497,8 @@ namespace bolt
                 return m_Size;
             }
 
-            /*! \brief Return the maximum number of elements possible to allocate on the associated device
-            *   \return The maximum amount of memory possible to allocate, counted in elements
+            /*! \brief Return the maximum number of elements possible to allocate on the associated device.
+            *   \return The maximum amount of memory possible to allocate, counted in elements.
             */
             size_type max_size( void ) const
             {
@@ -512,13 +513,13 @@ namespace bolt
                 return l_MaxSize / sizeof( value_type );
             }
 
-            /*! \brief Request a change in the capacity of the device_vector
+            /*! \brief Request a change in the capacity of the device_vector.
             *   If reserve completes successfully, this device_vector object guarantees that the it can store the requested amount
             *   of elements without another reallocation, until the device_vector size exceeds n.
             *   \param n The requested size of the device_vector in elements
-            *   \note capacity( ) may exceed n, but will not be less than n
-            *   \note Contents are preserved, and the size( ) of the vector is not affected
-            *   \warning if the device_vector has to reallocate, all previous iterators, references and pointers are invalidated
+            *   \note capacity( ) may exceed n, but will not be less than n.
+            *   \note Contents are preserved, and the size( ) of the vector is not affected.
+            *   \warning if the device_vector must reallocate, all previous iterators, references, and pointers are invalidated.
             *   \warning The ::cl::CommandQueue is not a STD reserve( ) parameter
             */
             void reserve( size_type reqSize )
@@ -560,10 +561,10 @@ namespace bolt
                 m_devMemory = l_tmpBuffer;
             }
 
-            /*! \brief Return the maximum possible number of elements without reallocation
+            /*! \brief Return the maximum possible number of elements without reallocation.
             *   \note Capacity() differs from size(), in that capacity() returns the number of elements that \b could be stored
             *   in the memory currently allocated.
-            *   \return The size of the memory held by device_vector, counted in elements
+            *   \return The size of the memory held by device_vector, counted in elements.
             */
             size_type capacity( void ) const
             {
@@ -579,11 +580,11 @@ namespace bolt
                 return l_memSize / sizeof( value_type );
             }
 
-            /*! \brief Shrink the capacity( ) of this device_vector to just fit its elements
-            *   This makes the size( ) of the vector equal to its capacity( )
-            *   \note Contents are preserved
-            *   \warning if the device_vector has to reallocate, all previous iterators, references and pointers are invalidated
-            *   \warning The ::cl::CommandQueue is not a STD reserve( ) parameter
+            /*! \brief Shrink the capacity( ) of this device_vector to just fit its elements.
+            *   This makes the size( ) of the vector equal to its capacity( ).
+            *   \note Contents are preserved.
+            *   \warning if the device_vector must reallocate, all previous iterators, references, and pointers are invalidated.
+            *   \warning The ::cl::CommandQueue is not a STD reserve( ) parameter.
             */
             void shrink_to_fit( )
             {
@@ -617,16 +618,16 @@ namespace bolt
                 m_devMemory = l_tmpBuffer;
             }
 
-            /*! \brief Retrieves the value stored at index n
-            *   \return Returns a proxy reference object, to control when device memory gets mapped
+            /*! \brief Retrieves the value stored at index n.
+            *   \return Returns a proxy reference object, to control when device memory gets mapped.
             */
             reference operator[]( size_type n )
             {
                 return reference( *this, n );
             }
 
-            /*! \brief Retrieves a constant value stored at index n
-            *   \return Returns a const_reference, which is not a proxy object
+            /*! \brief Retrieves a constant value stored at index n.
+            *   \return Returns a const_reference, which is not a proxy object.
             */
             const_reference operator[]( size_type n ) const
             {
@@ -643,16 +644,16 @@ namespace bolt
                 return tmpRef;
             }
 
-            /*! \brief Retrieves an iterator for this container that points at the beginning element
-            *   \return A device_vector< value_type >::iterator
+            /*! \brief Retrieves an iterator for this container that points at the beginning element.
+            *   \return A device_vector< value_type >::iterator.
             */
             iterator begin( void )
             {
                 return iterator( *this, 0 );
             }
 
-            /*! \brief Retrieves an iterator for this container that points at the beginning constant element
-            *   No operation through this iterator may modify the contents of the referenced container
+            /*! \brief Retrieves an iterator for this container that points at the beginning constant element.
+            *   No operation through this iterator may modify the contents of the referenced container.
             *   \return A device_vector< value_type >::const_iterator
             */
             const_iterator begin( void ) const
@@ -660,10 +661,10 @@ namespace bolt
                 return const_iterator( *this, 0 );
             }
 
-            /*! \brief Retrieves an iterator for this container that points at the beginning constant element
-            *   No operation through this iterator may modify the contents of the referenced container
-            *   \note This method may return a constant iterator from a non-constant container
-            *   \return A device_vector< value_type >::const_iterator
+            /*! \brief Retrieves an iterator for this container that points at the beginning constant element.
+            *   No operation through this iterator may modify the contents of the referenced container.
+            *   \note This method may return a constant iterator from a non-constant container.
+            *   \return A device_vector< value_type >::const_iterator.
             */
             const_iterator cbegin( void ) const
             {
@@ -688,27 +689,27 @@ namespace bolt
                 return const_reverse_iterator( );
             }
 
-            /*! \brief Retrieves an iterator for this container that points at the last element
-            *   \return A device_vector< value_type >::iterator
+            /*! \brief Retrieves an iterator for this container that points at the last element.
+            *   \return A device_vector< value_type >::iterator.
             */
             iterator end( void )
             {
                 return iterator( *this, m_Size );
             }
 
-            /*! \brief Retrieves an iterator for this container that points at the last constant element
-            *   No operation through this iterator may modify the contents of the referenced container
-            *   \return A device_vector< value_type >::const_iterator
+            /*! \brief Retrieves an iterator for this container that points at the last constant element.
+            *   No operation through this iterator may modify the contents of the referenced container.
+            *   \return A device_vector< value_type >::const_iterator.
             */
             const_iterator end( void ) const
             {
                 return const_iterator( *this, m_Size );
             }
 
-            /*! \brief Retrieves an iterator for this container that points at the last constant element
-            *   No operation through this iterator may modify the contents of the referenced container
-            *   \note This method may return a constant iterator from a non-constant container
-            *   \return A device_vector< value_type >::const_iterator
+            /*! \brief Retrieves an iterator for this container that points at the last constant element.
+            *   No operation through this iterator may modify the contents of the referenced container.
+            *   \note This method may return a constant iterator from a non-constant container.
+            *   \return A device_vector< value_type >::const_iterator.
             */
             const_iterator cend( void ) const
             {
@@ -733,16 +734,16 @@ namespace bolt
                 return const_reverse_iterator( );
             }
 
-            /*! \brief Retrieves the value stored at index 0
-            *   \note This returns a proxy object, to control when device memory gets mapped
+            /*! \brief Retrieves the value stored at index 0.
+            *   \note This returns a proxy object, to control when device memory gets mapped.
             */
             reference front( void )
             {
                 return reference( m_devMemory, m_commQueue, 0 );
             }
 
-            /*! \brief Retrieves the value stored at index 0
-            *   \return Returns a const_reference, which is not a proxy object
+            /*! \brief Retrieves the value stored at index 0.
+            *   \return Returns a const_reference, which is not a proxy object.
             */
             const_reference front( void ) const
             {
@@ -759,16 +760,16 @@ namespace bolt
                 return tmpRef;
             }
 
-            /*! \brief Retrieves the value stored at index size( ) - 1
-            *   \note This returns a proxy object, to control when device memory gets mapped
+            /*! \brief Retrieves the value stored at index size( ) - 1.
+            *   \note This returns a proxy object, to control when device memory gets mapped.
             */
             reference back( void )
             {
                 return reference( m_devMemory, m_commQueue, m_Size - 1 );
             }
 
-            /*! \brief Retrieves the value stored at index size( ) - 1
-            *   \return Returns a const_reference, which is not a proxy object
+            /*! \brief Retrieves the value stored at index size( ) - 1.
+            *   \return Returns a const_reference, which is not a proxy object.
             */
             const_reference back( void ) const
             {
@@ -810,16 +811,16 @@ namespace bolt
                 return sp;
             }
 
-            /*! \brief Removes all elements (makes the device_vector empty)
-            *   \note All previous iterators, references and pointers are invalidated
+            /*! \brief Removes all elements (makes the device_vector empty).
+            *   \note All previous iterators, references and pointers are invalidated.
             */
             void clear( void )
             {
                 //  Only way to release the Buffer resource is to explicitly call the destructor
-                //m_devMemory.~Buffer( );
+                // m_devMemory.~Buffer( );
 
                 //  Allocate a temp empty buffer on the stack, because of a double release problem with explicitly
-                //  calling the Wrapper destructor with cl.hpp version 1.2
+                //  calling the Wrapper destructor with cl.hpp version 1.2.
                 ::cl::Buffer tmp;
                 m_devMemory = tmp;
 
@@ -842,8 +843,8 @@ namespace bolt
                 if( m_Size > capacity( ) )
                     throw ::cl::Error( CL_MEM_OBJECT_ALLOCATION_FAILURE , "device_vector size can not be greater than capacity( )" );
 
-                //  Need to grow the vector to push new value
-                //  Vectors will double their capacity on push_back if the array is not big enough
+                //  Need to grow the vector to push new value.
+                //  Vectors double their capacity on push_back if the array is not big enough.
                 if( m_Size == capacity( ) )
                 {
                     m_Size ? reserve( m_Size * 2 ) : reserve( 1 );
@@ -862,7 +863,7 @@ namespace bolt
                 ++m_Size;
             }
 
-            /*! \brief Removes the last element, but does not return it
+            /*! \brief Removes the last element, but does not return it.
             */
             void pop_back( void )
             {
@@ -872,8 +873,8 @@ namespace bolt
                 }
             }
 
-            /*! \brief Swaps the contents of two device_vectors in an efficient manner
-             *  \param vec The device_vector to swap with
+            /*! \brief Swaps the contents of two device_vectors in an efficient manner.
+             *  \param vec The device_vector to swap with.
             */
             void swap( device_vector& vec )
             {
@@ -897,9 +898,9 @@ namespace bolt
                 vec.m_Flags = flagsTmp;
             }
 
-            /*! \brief Removes an element
-             *  \param index The iterator position in which to remove the element
-            *   \return The iterator position after the deleted element
+            /*! \brief Removes an element.
+             *  \param index The iterator position in which to remove the element.
+            *   \return The iterator position after the deleted element.
             */
             iterator erase( const_iterator index )
             {
@@ -928,10 +929,10 @@ namespace bolt
                 return iterator( *this, newIndex );
             }
 
-            /*! \brief Removes a range of elements
-             *  \param begin The iterator position signifiying the beginning of the range
-             *  \param end The iterator position signifying the end of the range (exclusive)
-            *   \return The iterator position after the deleted range
+            /*! \brief Removes a range of elements.
+             *  \param begin The iterator position signifiying the beginning of the range.
+             *  \param end The iterator position signifying the end of the range (exclusive).
+            *   \return The iterator position after the deleted range.
             */
             iterator erase( const_iterator first, const_iterator last )
             {
@@ -967,12 +968,12 @@ namespace bolt
                 return iterator( *this, newIndex );
             }
 
-            /*! \brief Insert a new element into the container
-             *  \param index The iterator position to insert a copy of the element
-             *  \param value The element to insert
-            *   \return The position of the new element
+            /*! \brief Insert a new element into the container.
+             *  \param index The iterator position to insert a copy of the element.
+             *  \param value The element to insert.
+            *   \return The position of the new element.
             *   \note Only iterators before the insertion point remain valid after the insertion.
-            *   \note If the container must grow to contain the new value, all iterators and references are invalidated
+            *   \note If the container must grow to contain the new value, all iterators and references are invalidated.
             */
             iterator insert( const_iterator index, const value_type& value )
             {
@@ -988,9 +989,9 @@ namespace bolt
                     return iterator( *this, index.m_index );
                 }
 
-                //  Need to grow the vector to insert a new value
+                //  Need to grow the vector to insert a new value.
                 //  TODO:  What is an appropriate growth strategy for GPU memory allocation?  Exponential growth does not seem 
-                //  right at first blush
+                //  right at first blush.
                 if( m_Size == capacity( ) )
                 {
                     reserve( m_Size + 10 );
@@ -1017,12 +1018,12 @@ namespace bolt
                 return iterator( *this, index.m_index );
             }
 
-            /*! \brief Inserts n copies of the new element into the container
-             *  \param index The iterator position to insert n copies of the element
-             *  \param n The number of copies of element
-             *  \param value The element to insert
+            /*! \brief Inserts n copies of the new element into the container.
+             *  \param index The iterator position to insert n copies of the element.
+             *  \param n The number of copies of element.
+             *  \param value The element to insert.
              *   \note Only iterators before the insertion point remain valid after the insertion.
-             *   \note If the container must grow to contain the new value, all iterators and references are invalidated
+             *   \note If the container must grow to contain the new value, all iterators and references are invalidated.
              */
             void insert( const_iterator index, size_type n, const value_type& value )
             {
@@ -1032,9 +1033,9 @@ namespace bolt
                 if( index.m_index > m_Size )
                     throw ::cl::Error( CL_INVALID_ARG_INDEX , "Iterator is pointing past the end of this container" );
 
-                //  Need to grow the vector to insert a new value
+                //  Need to grow the vector to insert a new value.
                 //  TODO:  What is an appropriate growth strategy for GPU memory allocation?  Exponential growth does not seem 
-                //  right at first blush
+                //  right at first blush.
                 if( ( m_Size + n ) > capacity( ) )
                 {
                     reserve( m_Size + n );
@@ -1047,10 +1048,10 @@ namespace bolt
                         index.m_index * sizeof( value_type ), sizeMap * sizeof( value_type ), NULL, NULL, &l_Error ) );
                 V_OPENCL( l_Error, "device_vector failed map device memory to host memory for operator[]" );
 
-                //  Shuffle the old values n element down
+                //  Shuffle the old values n element down.
                 ::memmove( ptrBuff + n, ptrBuff, (sizeMap - n)*sizeof( value_type ) );
 
-                //  Copy the new value n times in the buffer
+                //  Copy the new value n times in the buffer.
                 for( size_type i = 0; i < n; ++i )
                 {
                     ptrBuff[ i ] = value;
@@ -1071,9 +1072,9 @@ namespace bolt
                 if( index.m_index > m_Size )
                     throw ::cl::Error( CL_INVALID_ARG_INDEX , "Iterator is pointing past the end of this container" );
 
-                //  Need to grow the vector to insert a new value
+                //  Need to grow the vector to insert a new value.
                 //  TODO:  What is an appropriate growth strategy for GPU memory allocation?  Exponential growth does not seem 
-                //  right at first blush
+                //  right at first blush.
                 size_type n = std::distance( begin, end );
                 if( ( m_Size + n ) > capacity( ) )
                 {
@@ -1086,7 +1087,7 @@ namespace bolt
                         index.m_index * sizeof( value_type ), sizeMap * sizeof( value_type ), NULL, NULL, &l_Error ) );
                 V_OPENCL( l_Error, "device_vector failed map device memory to host memory for iterator insert" );
 
-                //  Shuffle the old values n element down
+                //  Shuffle the old values n element down.
                 ::memmove( ptrBuff + n, ptrBuff, (sizeMap - n)*sizeof( value_type ) );
 
 #if( _WIN32 )
@@ -1101,10 +1102,10 @@ namespace bolt
                 m_Size += n;
             }
 
-            /*! \brief Assigns newSize copies of element value
-             *  \param newSize The new size of the device_vector
-             *  \param value The value of the element that will be replicated newSize times
-            *   \warning All previous iterators, references and pointers are invalidated
+            /*! \brief Assigns newSize copies of element value.
+             *  \param newSize The new size of the device_vector.
+             *  \param value The value of the element that is replicated newSize times.
+            *   \warning All previous iterators, references, and pointers are invalidated.
             */
             void assign( size_type newSize, const value_type& value )
             {
@@ -1120,15 +1121,15 @@ namespace bolt
                 l_Error = m_commQueue.enqueueFillBuffer< value_type >( m_devMemory, value, 0, m_Size * sizeof( value_type ), NULL, &fillEvent.front( ) );
                 V_OPENCL( l_Error, "device_vector failed to fill the new data with the provided pattern" );
 
-                //  Not allowed to return until the copy operation is finished
+                //  Not allowed to return until the copy operation is finished.
                 l_Error = m_commQueue.enqueueWaitForEvents( fillEvent );
                 V_OPENCL( l_Error, "device_vector failed to wait for fill event" );
             }
 
-            /*! \brief Assigns a range of values to device_vector, replacing all previous elements
-             *  \param begin The iterator position signifiying the beginning of the range
-             *  \param end The iterator position signifying the end of the range (exclusive)
-            *   \warning All previous iterators, references and pointers are invalidated
+            /*! \brief Assigns a range of values to device_vector, replacing all previous elements.
+             *  \param begin The iterator position signifiying the beginning of the range.
+             *  \param end The iterator position signifying the end of the range (exclusive).
+            *   \warning All previous iterators, references, and pointers are invalidated.
             */
             template< typename InputIterator >
             void assign( InputIterator begin, InputIterator end )

@@ -22,31 +22,31 @@
 * \section SplitSource_Section Introduction and the Split-Source Model
 * OpenCL&trade; provides a split compilation model, meaning that the host and device code
 * are split into separate compilation units and compiled by different compilers.  In OpenCL&trade;,
-* the device code (the kernels) are typically provided as strings which are 
-* passed through the OpenCL&trade; runtime APIs to compile for the target device.  Recall that
-* a Bolt algorithm can also be executed on the CPU, and Bolt may use non-OpenCL&trade;
-* paths for host execution such as a serial loop or a multi-core task-parallel runtime
-* such as Intel Threading Building Blocks.  Additionally, advanced use cases of Bolt 
-* use a functor which is initialized on the host CPU using the functor constructor, 
-* and then executed on the device using the body operator.  
+* the device code (kernels) typically are provided as strings that are 
+* passed through the OpenCL&trade; runtime APIs to compile for the target device.  
+* A Bolt algorithm also can be executed on the CPU, and Bolt can use non-OpenCL&trade;
+* paths for host execution, such as a serial loop, or a multi-core task-parallel runtime,
+* such as Intel Threading Building Blocks.  Also, advanced use cases of Bolt 
+* use a functor that is initialized on the host CPU using the functor ("function object") constructor, 
+* then executed on the device using the body operator.  
 * This page describes how to create functors for Bolt APIs so that the code is available
 * to both the host C++ compiler and the OpenCL&trade; device compiler.
 *
 *
 * \section Functors C++ Functors
-* A functor ("function object") is a C++ construct that allows developers to construct a
-* class or struct which can be called like a regular function.  The surrounding 
-* class can capture additional values that can be used inside the function, 
+* A functor is a C++ construct that lets developers construct a
+* class or struct that can be called like a regular function.  The surrounding 
+* class can capture additional values, which can be used inside the function, 
 * since the function receives a pointer to the class as one of its arguments. 
-* Essentially the function gains access to additional state beyond just its input arguments,
-* and this is provided without changing the calling signature of the function.  
+* The function gains access to additional state beyond just its input arguments;
+* this is provided without changing the calling signature of the function.  
 * This feature is a critical point for the 
-* construction of generic libraries (such as Bolt algorithms), which can then contain
+* construction of generic libraries (such as Bolt algorithms), which then can contain
 * a call to the well-defined function interface.  
 
 
 * For example, consider the classic 
-* Saxpy code which uses a functor to pass the value "100" from the calling scope to the 
+* Saxpy code, which uses a functor to pass the value "100" from the calling scope to the 
 * \p transform algorithm:
 * \anchor saxpy_stl
 * \code
@@ -78,8 +78,8 @@ void main() {
 *
 *
 * \section OclSplitSource_Tools Bolt Tools for Split-Source
-* The bottom line is that Bolt requires that functor classes be defined both as strings
-* (for OpenCL&trade; compilation) and as regular host-side definitions.  Since we don't want
+* Bolt requires that functor classes be defined both as strings
+* (for OpenCL&trade; compilation) and as regular host-side definitions.  Since we do not want
 * to have to create and maintain two copies of our source code, Bolt provides several 
 * mechanisms to construct the two representations from a single source definition. These are 
 * described below. 
@@ -89,11 +89,13 @@ void main() {
 * \subsection boltfunctormacro BOLT_FUNCTOR macro
 *
 * The simplest technique is to use the \ref BOLT_FUNCTOR macro.  Given a class name and
-* a definition for that class, this macro will automatically:
-*    \li Create a string version of the class definition, and associate the string with the class.  (Bolt finds the string using a C++ trait called \p ClCode. This is described in more detail below.)
-*    \li Create a string version of the class name.  (Bolt finds the class name using the \p TypeName trait.  This is described in more detail below in the section \ref clCode_Traits.)
-*    \li The macro expansion als creates the class definition so it is visible to the host compiler.  This allows the 
-*        constructor to be called from the host compiler.
+* a definition for that class, this macro automatically:
+*    \li Creates a string version of the class definition, and associates the string with the class.  (Bolt 
+*    \li finds the string using a C++ trait called \p ClCode. This is described in more detail below.)
+*    \li Create a string version of the class name.  (Bolt finds the class name using the \p TypeName 
+*    \li trait.  This is described in more detail below in the section \ref clCode_Traits.)
+*    \li The macro expansion also creates the class definition, so it is visible to the host compiler.  This 
+*    \li lets the constructor be called from the host compiler.
 *
 * The example below shows how to use the \ref BOLT_FUNCTOR macro to implement the Saxpy function using Bolt:
 * \code
@@ -126,41 +128,43 @@ void main() {
 * \endcode
 *
 *
-* \ref BOLT_FUNCTOR requires only a small syntax change as compared to the original \ref saxpy_stl "Saxpy implementation" - only the \ref BOLT_FUNCTOR line
-* before the class definition, passing the name of the class as a parameter, then the unmodified functor, and a trailing ");" at the end
-* to close the macro.  This can be surprisingly useful, especially for the relatively common operation of creating simple functors 
-* for use with algorthms.  However, \ref BOLT_FUNCTOR is based on a standard C-style #define macro, and as a result does have several 
+* \ref BOLT_FUNCTOR requires only a small syntax change, compared to the original 
+* \ref saxpy_stl "Saxpy implementation" - only the \ref BOLT_FUNCTOR line
+* before the class definition, passing the name of the class as a parameter, then the 
+* unmodified functor, and a trailing ");" at the end to close the macro.  This can be 
+* useful for the relatively common operation of creating simple functors 
+* for use with algorthms.  However, \ref BOLT_FUNCTOR is based on a standard C-style #define macro; thus, it has 
 * important limitations:
 *    \li \ref BOLT_FUNCTOR only works with non-templated classes.  To use a templated class with a Bolt algorithm call, 
-*        see the \ref clCode_Templates section 
-*       below on templated functors.
-*    \li \ref BOLT_FUNCTOR uses macro stringification to create the OpenCL&trade; code string.  As a result, the class definition has all line feeds 
-*       removed and is "smushed" into a single line before being passed to the compiler.  This can make debugging harder, and for that reason
-*       you may choose to use one of the other techniqueus described below.
+*        see the \ref clCode_Templates section below on templated functors.
+*    \li \ref BOLT_FUNCTOR uses macro stringification to create the OpenCL&trade; code string.  As a result, 
+         the class definition has all line feeds removed and is compressed into a single line before being passed 
+		 to the compiler.  This can make debugging harder; thus,
+*        you may choose to use one of the other techniqueus described below.
 *
 * \subsection clCode_Traits TypeName and ClCode Traits
 
-* In order to create the OpenCL code string, the Bolt algorithm implementations need access to the following information:
-*   \li the name of the functor (ie "SaxpyFunctor" in the examples above) 
-*   \li the class definition (ie the code that defines the SaxpyFunctor class).
+* To create the OpenCL code string, the Bolt algorithm implementations must have access to the following information:
+*   \li The name of the functor (i.e., "SaxpyFunctor" in the examples above). 
+*   \li The class definition (i.e., the code that defines the SaxpyFunctor class).
 *
-* Bolt uses C++ traits to define both of these fields.  A trait is a C++ coding technique which uses template specialization
-* to allow the name (or code) to be associated with the class.   Bolt code expects the TypeName and ClCode traits to
-* be defined for any functor which is passed to a Bolt API call.
+* Bolt uses C++ traits to define both of these fields.  A trait is a C++ coding technique that uses template specialization
+* to allow the name (or code) to be associated with the class.  Bolt code expects the TypeName and ClCode traits to
+* be defined for any functor that is passed to a Bolt API call.
 
 * \subsubsection TypeName
-* Bolt defines a baseline TypeName trait which
-* returns an error message.  Each class which is to be used by Bolt must provide a template specialization for the TypeName
-* class which returns the string version of the class.   For example:
+* Bolt defines a baseline TypeName trait that
+* returns an error message.  Each class to be used by Bolt must provide a template specialization for the TypeName
+* class that returns the string version of the class.   For example:
 * \code
 * // Explicity create a TypeName trait for the example 'SaxpyFunctor' class
 * template<> struct TypeName<SaxpyFunctor> { static std::string get() { return "SaxpyFunctor"; }};
 *
-* // Use convenience function - this produces same result as above.
+* // Use convenience function - this produces the same result as above.
 * BOLT_CREATE_TYPENAME(SaxpyFunctor);
 * \endcode
 *
-* Because the template specialization syntax can be a bit verbose, Bolt provides the convenience macro BOLT_CREATE_TYPENAME
+* Because the template specialization syntax can be verbose, Bolt provides the convenience macro BOLT_CREATE_TYPENAME,
 * as shown in the example above.  Note that the class name used for BOLT_CREATE_TYPENAME (or the more verbose template specialization
 * equivalent) must be fully instantiated without any template parameters. So:
 * \li \p BOLT_CREATE_TYPENAME(myplus<T>) is illegal,
@@ -170,7 +174,7 @@ void main() {
 *
 * \subsubsection ClCode
 * Bolt uses a similar technique to associate the string representation of the class with the class definition. In this
-* case the C++ trait is called "ClCode", and the default value is the empty string.  Bolt defines a convenience function 
+* case, the C++ trait is called "ClCode", and the default value is the empty string.  Bolt defines a convenience function 
 * \ref BOLT_CREATE_CLCODE to assist in creating ClCode. An example:
 * \code
 * BOLT_CREATE_CLCODE(MyClass, "class MyClass { ... };");
@@ -183,11 +187,11 @@ void main() {
 *
 *
 * The \ref BOLT_FUNCTOR macro described in the previous section implicitly calls \ref BOLT_CREATE_TYPENAME and \ref BOLT_CREATE_CLCODE,
-* but you can also opt to explicitly call these.  One case where this is useful is for complex functors where the code 
+* but you can also decide to explicitly call these.  One case where this is useful is for complex functors where the code 
 * may be best organized in a separate file.  
 * The example below shows how to store the functor code in a file,
-* and then #include it (to create the host version) and use the Bolt calls to create the ClCode and TypeName traits that the Bolt 
-* algorithm implementations are looking for.
+* then #include it (to create the host version), and use the Bolt calls to create the ClCode and TypeName traits that the Bolt 
+* algorithm implementations look for.
 
 // This is the separate file "saxpy_functor.h":
 \code
@@ -204,7 +208,7 @@ struct SaxpyFunctor
 \endcode
 
 // This is the .cpp file which loads the saxpy_functor.h code
-// (Note that the header file needs to be available at run-time) :
+// (Note that the header file must be available at run-time) :
 \code
 #include <bolt/cl/bolt.h>
 #include <bolt/cl/transform.h>
@@ -219,7 +223,7 @@ std::string mycode = bolt::cl::fileToString("saxpy_functor.h");
 BOLT_CREATE_TYPENAME(SaxpyFunctor);
 BOLT_CREATE_CLCODE(SaxpyFunctor, mycode);
 
-// Instantiate the class and pass it to the Bolt function:
+// Instantiate the class, and pass it to the Bolt function:
 void main() {
    SaxpyFunctor s(100);
 
@@ -232,25 +236,25 @@ void main() {
 \endcode
 
 
-* \subsection clCode_Templates Templated classes
+* \subsection clCode_Templates Templated Classes
 *
-* As mentioned above, the BOLT_FUNCTOR, \ref BOLT_CREATE_TYPENAME, and \ref BOLT_CREATE_CLCODE macros use C++ traits 
-* and thus require fully instantiated classes as parameters.  However, Bolt does support templated functors using 
+* The BOLT_FUNCTOR, \ref BOLT_CREATE_TYPENAME, and \ref BOLT_CREATE_CLCODE macros use C++ traits; thus, 
+* they require fully instantiated classes as parameters.  Bolt, however, does support templated functors using 
 * techniques described in this section.
 
-* \ref BOLT_CODE_STRING is a macro which expands to create a host-side version 
-* of the functor and also returns a string which can later be manually associated with the class. 
+* \ref BOLT_CODE_STRING is a macro that expands to create a host-side version 
+* of the functor; it also returns a string that later can be manually associated with the class. 
 *
-* The last argument to every Bolt algorithm API call is an optional parameter \p cl_code which 
+* The last argument to every Bolt algorithm API call is an optional parameter \p cl_code, which 
 * contains a code string that is passed to the OpenCL compiler.  The cl_code string is pre-prended to the code 
-* generated by Bolt, so cl_code can define classes or symbols which are later referenced by the functor. 
+* generated by Bolt, so cl_code can define classes or symbols that later are referenced by the functor. 
 * As seen in the following example, cl_code parameter is also useful in the case of templated functors.
 *
 *\code
 // Example of defining a templated class that works with Bolt
 
 // Save the code string in the InRange_CodeString var, 
-// and also create host-visible class definition :
+// and create a host-visible class definition :
 std::string InRange_CodeString = 
 BOLT_CODE_STRING(
 template<typename T>
@@ -280,7 +284,7 @@ void testCountIf(int aSize)
     };
 
     // Count the number of elements from 7..15:
-    // Note the last parameter passed in is the InRange_CodeString that we defined above,
+    // Note the last parameter passed in is the InRange_CodeString we defined above,
     // InRange_CodeString contains the definition of the templated InRange class
     int count7to15 = bolt::cl::count_if (A.begin(), A.end(), InRange<float>(7.0,15.0), InRange_CodeString);
 
@@ -290,31 +294,31 @@ void testCountIf(int aSize)
 *
 
 * \section functorLanguage Functor Language
-* The functor must be able to be compiled on both the host (C++) and device (OpenCL&trade; compilers - 
-* so it must only use language constructs which are available in both of those languages.  
-* OpenCL&trade; is an "extended subset" of C99 - the extensions include new builtin functions 
-* as well as new types (ie vector types such as float4).  In general, none of the OpenCL extensions
-* may be used in Bolt functor definitions.  However, developers can work around this restriction by
+* The functor must be able to be compiled on both the host (C++) and device (OpenCL&trade; compilers. 
+* Thus, it must use only language constructs available in both of those languages.  
+* OpenCL&trade; is an "extended subset" of C99: the extensions include new built-in functions, 
+* as well as new types (i.e., vector types such as float4).  In general, none of the OpenCL extensions
+* can be used in Bolt functor definitions.  Developers can work around this restriction by
 * providing host-side functions with the same calling signature and functionality as OpenCL&trade; 
-* builtins.  Many of the OpenCL&trade; builtins already have equivalent host code definitions in <math.h> 
-* (ie sin, cos, exp, log, pow, ceil, fabs, etc).  
-* If host-side versions are provided, the host code will compile and link correctly using the host code definition,
-* while the OpenCL&trade; code will compile correcly using the OpenCL&trade; built-in.
+* built-ins.  Many of the OpenCL&trade; built-ins already have equivalent host code definitions in <math.h> 
+* (i.e., sin, cos, exp, log, pow, ceil, fabs, etc.).  
+* If host-side versions are provided, the host code compiles and links correctly using the host code definition,
+* while the OpenCL&trade; code compiles correcly using the OpenCL&trade; built-in.
 
 * For more information, see :
 *  \li The Khronos OpenCL Specification:   http://www.khronos.org/opencl/
 *  \li The OpenCL Static C++ Kernel Language Extenstion : http://developer.amd.com/Assets/CPP_kernel_language.pdf
 
-* \subsection different_code Different host and device code
-* In most cases developers will want to generate both host and device code versions from a single source code, 
+* \subsection different_code Different Host and Device Code
+* In most cases, developers want to generate both host and device code versions from a single source code, 
 * since this is easier to maintain and less prone to error.
 * However, in some cases (such as when using a built-in function or type which is only available in OpenCL, or
-* when providing device-specific optimization) developers may want to generate different code for the two compilers.
+* when providing device-specific optimization), developers may want to generate different code for the two compilers.
 
-* The memory layout of the functor must be the same between host and device.  So it is strongly recommended that the
+* The memory layout of the functor must be the same between host and device.  It is strongly recommended that the
 * functor header be defined in a single location, using the \ref boltfunctormacro or 
-* technique described in \ref clCode_ReadingFromFile section.  However, users may define separate implementations for
-* the functor operator() methods - one of which is made available to the host compiler, and one of which is visible
+* technique described in \ref clCode_ReadingFromFile section.  However, users can define separate implementations for
+* the functor operator() methods: one made available to the host compiler, and one 
 * to the OpenCL compiler using the \p cl_code parameter.
 
 
@@ -323,15 +327,15 @@ void testCountIf(int aSize)
 * Bolt requires that the functor definition be available to both the host compiler and the device compiler.  This page
 * described several macros and techniques to help bridge that gap.  We summarize and close with these recommendations:
 
-* \li When the functor is relatively small and is best expressed inline with other source, use the \ref boltfunctormacro
+* \li When the functor is relatively small and is best expressed inline with other sources, use the \ref boltfunctormacro
 *       The BOLT_FUNCTOR wraps the functor definition with only two lines of code, and automatically makes the code available 
 to the OpenCL compiler.
-* \li \ref When the functor is more complex and is best expressed in a separate file, or to improve debuggability by 
-*  eliminating "code smushing" into a single line, place the code in a separate file as described in \ref clCode_ReadingFromFile.
+* \li \ref When the functor is more complex and is best expressed in a separate file, or to improve the ability to debug by 
+*  eliminating code compression into a single line, place the code in a separate file, as described in \ref clCode_ReadingFromFile.
 * \li \ref For templated classes, use the technique described in \ref clCode_Templates.
 
 * This section also described how Bolt uses C++ traits, including the \ref BOLT_CREATE_TYPENAME and \ref BOLT_CREATE_CLCODE 
-* macros for low-level control - see \ref clCode_Traits section.
-* Finally, the cl_code parameter is the optional last argument for every Bolt function and can be used 
-* to pre-pend any code string to the code which is passed to the OpenCL&trade; compiler.
+* macros for low-level control (see \ref clCode_Traits section).
+* Finally, the cl_code parameter is the optional last argument for every Bolt function; it can be used 
+* to pre-pend any code string to the code that is passed to the OpenCL&trade; compiler.
 */

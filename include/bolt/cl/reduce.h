@@ -34,7 +34,7 @@ namespace bolt {
 
         /*! \addtogroup reductions
         *   \ingroup algorithms
-        *   Family of operations for reductions for boiling data down to a small set by summation, counting, finding min/max, and more.
+        *   Family of reduction operations for boiling data down to a small set by summation, counting, finding min/max, and more.
         */
 
         /*! \addtogroup reduce
@@ -44,19 +44,19 @@ namespace bolt {
         */
 
         /*! \brief reduce returns the result of combining all the elements in the specified range using the specified binary_op.  
-        * The classic example is a summation, where the binary_op is the plus operator.  By default, the initial value is "0" 
+        * The classic example is a summation, where the binary_op is the plus operator.  By default, the initial value is "0", 
         * and the binary operator is "plus<>()".
         *
         * \p reduce requires that the binary reduction op ("binary_op") is cummutative.  The order in which \p reduce applies the binary_op
         * is not deterministic.
         *
-        * The \p reduce operation is similar the std::accumulate function
+        * The \p reduce operation is similar the std::accumulate function.
         *
         * \param first The first position in the sequence to be reduced.
         * \param last  The last position in the sequence to be reduced.
         * \param cl_code Optional OpenCL(TM) code to be passed to the OpenCL compiler. The cl_code is inserted first in the generated code, before the cl_code trait.
-        * \tparam InputIterator An iterator that may be dereferenced for an object, and may be incremented to get to the next element in a sequence
-        * \tparam T The type of the result
+        * \tparam InputIterator An iterator that can be dereferenced for an object, and can be incremented to get to the next element in a sequence.
+        * \tparam T The type of the result.
         * \return The result of the reduction.
         * \sa http://www.sgi.com/tech/stl/accumulate.html
         *
@@ -82,19 +82,19 @@ namespace bolt {
         * The classic example is a summation, where the binary_op is the plus operator.  By default, 
         * the binary operator is "plus<>()".
         *
-        * \p reduce requires that the binary reduction op ("binary_op") is cummutative.  The order in which \p reduce applies the binary_op
+        * \p reduce Requires that the binary reduction op ("binary_op") is cummutative.  The order in which \p reduce applies the binary_op
         * is not deterministic.
         *
-        * The \p reduce operation is similar the std::accumulate function
+        * The \p reduce operation is similar the std::accumulate function.
         *
         * \param first The first position in the sequence to be reduced.
         * \param last  The last position in the sequence to be reduced.
         * \param init  The initial value for the accumulator.
         * \param binary_op  The binary operation used to combine two values.   By default, the binary operation is plus<>().
         * \param cl_code Optional OpenCL(TM) code to be passed to the OpenCL compiler. The cl_code is inserted first in the generated code, before the cl_code trait.
-        * \tparam InputIterator An iterator that may be dereferenced for an object, and may be incremented to get to the next element in a sequence
-        * \tparam T The type of the result
-        * \tparam BinaryFunction A function object defining an operation that will be applied to consecutive elements in the sequence
+        * \tparam InputIterator An iterator that can be dereferenced for an object, and can be incremented to get to the next element in a sequence.
+        * \tparam T The type of the result.
+        * \tparam BinaryFunction A function object defining an operation that is applied to consecutive elements in the sequence.
         * \return The result of the reduction.
         * \sa http://www.sgi.com/tech/stl/accumulate.html
         *
@@ -138,8 +138,8 @@ namespace bolt {
         * \param first The first position in the sequence to be reduced.
         * \param last  The last position in the sequence to be reduced.
         * \param cl_code Optional OpenCL(TM) code to be passed to the OpenCL compiler. The cl_code is inserted first in the generated code, before the cl_code trait.
-        * \tparam InputIterator An iterator that may be dereferenced for an object, and may be incremented to get to the next element in a sequence
-        * \tparam T The type of the result
+        * \tparam InputIterator An iterator that can be dereferenced for an object, and can be incremented to get to the next element in a sequence.
+        * \tparam T The type of the result.
         * \return The result of the reduction.
         * \sa http://www.sgi.com/tech/stl/accumulate.html
         *
@@ -173,7 +173,7 @@ namespace bolt {
         * \p reduce requires that the binary reduction op ("binary_op") is cummutative.  The order in which \p reduce applies the binary_op
         * is not deterministic.
         *
-        * The \p reduce operation is similar the std::accumulate function
+        * The \p reduce operation is similar the std::accumulate function.
         *
         * \param ctl Control structure to control command-queue, debug, tuning, etc.  See control.
         * \param first The first position in the sequence to be reduced.
@@ -181,8 +181,8 @@ namespace bolt {
         * \param init  The initial value for the accumulator.
         * \param binary_op  The binary operation used to combine two values.   By default, the binary operation is plus<>().
         * \param cl_code Optional OpenCL(TM) code to be passed to the OpenCL compiler. The cl_code is inserted first in the generated code, before the cl_code trait.
-        * \tparam InputIterator An iterator that may be dereferenced for an object, and may be incremented to get to the next element in a sequence
-        * \tparam BinaryFunction A function object defining an operation that will be applied to consecutive elements in the sequence
+        * \tparam InputIterator An iterator that can be dereferenced for an object, and can be incremented to get to the next element in a sequence.
+        * \tparam BinaryFunction A function object defining an operation that is applied to consecutive elements in the sequence.
         * \return The result of the reduction.
         * \sa http://www.sgi.com/tech/stl/accumulate.html
         *
@@ -196,7 +196,7 @@ namespace bolt {
         cl::CommandQueue myCommandQueue = ...
         
         bolt::cl::control ctl(myCommandQueue); // specify an OpenCL(TM) command queue to use for executing the reduce.
-        ctl.debug(bolt::cl::control::debug::SaveCompilerTemps); // save IL and ISA files for generated kernel
+        ctl.debug(bolt::cl::control::debug::SaveCompilerTemps); // save IL and ISA files for generated kernel.
         
         int max = bolt::cl::reduce(ctl, a, a+10, -1, bolt::cl:maximum<int>());
         // max = 9

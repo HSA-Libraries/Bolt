@@ -51,7 +51,7 @@ namespace bolt {
 
 
     /*! 
-	 * This version of transform accepts an accelerator_view as an argument
+	 * This version of transform accepts an accelerator_view as an argument.
      */
 	template<typename InputIterator, typename OutputIterator, typename UnaryFunction> 
 	void transform(concurrency::accelerator_view av, InputIterator first, InputIterator last, OutputIterator result, UnaryFunction f)  {
