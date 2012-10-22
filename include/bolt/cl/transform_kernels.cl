@@ -44,11 +44,16 @@ void transformNoBoundsCheckTemplate (global iType* A,
 			const int length,
 			global binary_function *userFunctor)
 {
-	int gx = get_global_id (0);
+	int gx = get_global_id (0);  // * _BOLT_UNROLL; 
 
-	iType aa = A[gx];
-	iType bb = B[gx];
-	Z[gx] = (*userFunctor)(aa, bb);
+	iType aa0 = A[gx+0];
+	//iType aa1 = A[gx+1];
+
+	iType bb0 = B[gx+0];
+	//iType bb1 = B[gx+1];
+
+	Z[gx+0] = (*userFunctor)(aa0, bb0);
+	//Z[gx+1] = (*userFunctor)(aa1, bb1);
 }
 
 
@@ -68,4 +73,23 @@ void unaryTransformTemplate(global iType* A,
 		iType aa = A[gx];
 		Z[gx] = (*userFunctor)(aa); 
 	}
+}
+
+template <typename iType, typename oType, typename unary_function>
+kernel
+void unaryTransformNoBoundsCheckTemplate(global iType* A,
+			global oType* Z,
+			const int length,
+			global unary_function *userFunctor)
+{
+	int gx = get_global_id (0);  //  *_BOLT_UNROLL;
+
+	iType aa0 = A[gx+0];
+	//iType aa1 = A[gx+1];
+
+	oType z0 = (*userFunctor)(aa0); 
+	//oType z1 = (*userFunctor)(aa1); 
+
+	Z[gx+0] = z0;
+	//Z[gx+1] = z1;
 }
