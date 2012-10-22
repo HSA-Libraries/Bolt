@@ -17,7 +17,7 @@
 
 #define TEST_DOUBLE 0
 #define TEST_DEVICE_VECTOR 1
-#define TEST_CPU_DEVICE 1
+#define TEST_CPU_DEVICE 0
 #define GOOGLE_TEST 1
 #if (GOOGLE_TEST == 1)
 

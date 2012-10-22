@@ -101,6 +101,7 @@ namespace bolt {
 							 NiceWait,		// Use an OS semaphore to detect completion status.
 							 BusyWait,		// Busy a CPU core continuously monitoring results.  Lowest-latency, but requires a dedicated core.
 							 ClFinish};		
+
         public:
 
             // Construct a new control structure, copying from default control for arguments which are not overridden.
@@ -117,7 +118,8 @@ namespace bolt {
                 m_wgPerComputeUnit(getDefault().m_wgPerComputeUnit),
                 m_compileOptions(getDefault().m_compileOptions),
                 m_compileForAllDevices(getDefault().m_compileForAllDevices),
-				m_waitMode(getDefault().m_waitMode)
+				m_waitMode(getDefault().m_waitMode),
+				m_unroll(getDefault().m_unroll)
             {};
 
             //setters:
@@ -151,10 +153,18 @@ namespace bolt {
             */
             void debug(unsigned debug) { m_debug = debug; };
 
-
+			/*! Set the work-groups-per-compute unit that will be used for reduction-style operations (reduce, transform_reduce).
+				Higher numbers can hide latency by improving the occupancy but will increase the amoutn of data that
+				has to be reduced in the final, less efficient step.  Experimentation may be required to find
+				the optimal point for a given algorithm and device; typically 8-12 will deliver good results */
             void wgPerComputeUnit(int wgPerComputeUnit) { m_wgPerComputeUnit = wgPerComputeUnit; }; 
 
+			/*! Set the method used to detect completion at the end of a Bolt routine. */
 			void waitMode(e_WaitMode waitMode) { m_waitMode = waitMode; };
+
+			void unroll(int unroll) { m_unroll = unroll; };
+
+
             
             //! 
             //! Specify the compile options which are passed to the OpenCL(TM) compiler
@@ -172,6 +182,7 @@ namespace bolt {
             int const wgPerComputeUnit() const { return m_wgPerComputeUnit; };
             const ::std::string compileOptions() const { return m_compileOptions; };  
 			e_WaitMode waitMode() const { return m_waitMode; };
+			int unroll() const { return m_unroll; };
 
             bool compileForAllDevices() const { return m_compileForAllDevices; };
 
@@ -220,7 +231,8 @@ namespace bolt {
                 m_autoTune(AutoTuneAll),
                 m_wgPerComputeUnit(8),
                 m_compileForAllDevices(true),
-				m_waitMode(BalancedWait)
+				m_waitMode(BalancedWait),
+				m_unroll(1)
             {};
 
             ::cl::CommandQueue  m_commandQueue;
@@ -232,6 +244,7 @@ namespace bolt {
             ::std::string       m_compileOptions;  // extra options to pass to OpenCL compiler.
             bool                m_compileForAllDevices;  // compile for all devices in the context.  False means to only compile for specified device.
 			e_WaitMode			m_waitMode;
+			int					m_unroll;
         };
 
     };
@@ -243,12 +256,4 @@ namespace bolt {
 //   * Add setter function and getter function, ie "void foo(int fooValue)" and "int foo const { return _foo; }"
 //   * Add the field to the private constructor.  This is used to set the global default "_defaultControl".
 //   * Add the field to the public constructor, copying from the _defaultControl.
-
-// Sample usage:
-// bolt::control c(myCmdQueue);
-// c.debug(bolt::control::ShowCompile);
-// bolt::cl::reduce(c, a.begin(), a.end(), std::plus<int>);
-// 
-//
-// reduce (bolt::control(myCmdQueue), 
 

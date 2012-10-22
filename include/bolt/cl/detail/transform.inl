@@ -23,6 +23,9 @@
 #include <boost/bind.hpp>
 #include <type_traits> 
 
+#define STATIC /*static*/  /* FIXME - hack to approximate buffer pool management of the functor containing the buffer */
+
+
 #include "bolt/cl/bolt.h"
 
 namespace bolt {
@@ -97,7 +100,12 @@ namespace bolt {
                 };
             };
             struct CallCompiler_UnaryTransform {
-                static void init_(::cl::Kernel *masterKernel, std::string user_code, std::string inValueTypeName, std::string outValueTypeName, std::string functorTypeName, const control *ctl) {
+                static void init_(std::vector< ::cl::Kernel >* kernels, std::string cl_code, std::string inValueTypeName, std::string outValueTypeName, std::string functorTypeName, const control *ctl) {
+
+					std::vector< const std::string > kernelNames;
+                    kernelNames.push_back( "transform" );
+                    kernelNames.push_back( "transformNoBoundsCheck" );
+
 
                     std::string instantiationString = 
                         "// Host generates this instantiation string with user-specified value type and functor\n"
@@ -106,10 +114,20 @@ namespace bolt {
                         "global " + inValueTypeName + "* A,\n"
                         "global " + outValueTypeName + "* Z,\n"
                         "const int length,\n"
-                        "global " + functorTypeName + "* userFunctor);\n\n";
+                        "global " + functorTypeName + "* userFunctor);\n\n"
 
-                    bolt::cl::constructAndCompileString( masterKernel, "transform", transform_kernels, instantiationString, user_code, inValueTypeName, functorTypeName, *ctl);
-                };
+						                        "// Host generates this instantiation string with user-specified value type and functor\n"
+                        "template __attribute__((mangled_name(transformNoBoundsCheckInstantiated)))\n"
+                        "kernel void unaryTransformNoBoundsCheckTemplate(\n"
+                        "global " + inValueTypeName + "* A,\n"
+                        "global " + outValueTypeName + "* Z,\n"
+                        "const int length,\n"
+                        "global " + functorTypeName + "* userFunctor);\n\n"
+						;
+
+
+					bolt::cl::compileKernelsString( *kernels, kernelNames, transform_kernels, instantiationString, cl_code, inValueTypeName,  functorTypeName, *ctl);
+				};
             };
 
             // Wrapper that uses default control class, iterator interface
@@ -253,15 +271,32 @@ namespace bolt {
                 static std::vector< ::cl::Kernel > binaryTransformKernels;
 
                 // For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retreive the name here.
-                if (std::is_same<iType, oType>::value)
+                if (std::is_same<iType, oType>::value) {
                     boost::call_once( initOnlyOnce, boost::bind( CallCompiler_BinaryTransform::init_, &binaryTransformKernels, cl_code + ClCode<iType>::get() + ClCode<BinaryFunction>::get(), TypeName< iType >::get( ), TypeName< oType >::get( ), TypeName< BinaryFunction >::get( ), &ctl ) );
-                else
+				} else {
                     boost::call_once( initOnlyOnce, boost::bind( CallCompiler_BinaryTransform::init_, &binaryTransformKernels, cl_code + ClCode<iType>::get() + ClCode<oType>::get() + ClCode<BinaryFunction>::get(), TypeName< iType >::get( ), TypeName< oType >::get( ), TypeName< BinaryFunction >::get( ), &ctl ) );
-               
-                ::cl::Kernel kernelWithBoundsCheck = binaryTransformKernels[0];
-                ::cl::Kernel kernelNoBoundsCheck   = binaryTransformKernels[1];
+				}
 
-                ::cl::Kernel k = kernelWithBoundsCheck;
+                const ::cl::Kernel kernelWithBoundsCheck = binaryTransformKernels[0];
+                const ::cl::Kernel kernelNoBoundsCheck   = binaryTransformKernels[1];
+
+
+                cl_int l_Error = CL_SUCCESS;
+                const size_t wgSize  = kernelNoBoundsCheck.getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.device( ), &l_Error );
+                V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
+
+				::cl::Kernel k;
+ 
+				if ((sz % wgSize) != 0)
+                {
+                    sz = sz + (wgSize - (sz % wgSize));
+					k = kernelWithBoundsCheck;
+                } else if(sz < wgSize) {
+                    sz = wgSize;
+					k = kernelWithBoundsCheck;
+                } else {
+					k = kernelNoBoundsCheck;
+				}
 
                 k.setArg(0, first1->getBuffer( ) );
                 k.setArg(1, first2->getBuffer( ) );
@@ -269,19 +304,6 @@ namespace bolt {
                 k.setArg(3, static_cast< cl_uint >( sz ) );
                 k.setArg(4, userFunctor);
 
-                cl_int l_Error = CL_SUCCESS;
-                const size_t wgSize  = k.getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.device( ), &l_Error );
-                V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
-
-                if(sz < wgSize)
-                {
-                    sz = wgSize;
-                }
-                else if ((sz % wgSize) != 0)
-                {
-                    sz = sz + (wgSize - (sz % wgSize));
-                }
-
                 ::cl::Event transformEvent;
                 l_Error = ctl.commandQueue().enqueueNDRangeKernel(
                     k, 
@@ -292,48 +314,56 @@ namespace bolt {
                     &transformEvent );
                 V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for transform() kernel" );
 
-                l_Error = transformEvent.wait( );
-                V_OPENCL( l_Error, "perBlockInclusiveScan failed to wait" );
+				bolt::cl::wait(ctl, transformEvent);
             };
 
             template< typename DVInputIterator, typename DVOutputIterator, typename UnaryFunction > 
             void transform_unary_enqueue(const bolt::cl::control &ctl, DVInputIterator first, DVInputIterator last, DVOutputIterator result, 
-                UnaryFunction f, const std::string& user_code)
+                UnaryFunction f, const std::string& cl_code)
             {
                 typedef std::iterator_traits<DVInputIterator>::value_type iType;
                 typedef std::iterator_traits<DVOutputIterator>::value_type oType;
                 size_t sz = std::distance( first, last );
                 if (sz == 0)
                     return;
-                ::cl::Buffer userFunctor(ctl.context(), CL_MEM_READ_ONLY|CL_MEM_USE_HOST_PTR, sizeof(f), &f );   // Create buffer wrapper so we can access host parameters.
+                STATIC ::cl::Buffer userFunctor(ctl.context(), CL_MEM_READ_ONLY|CL_MEM_USE_HOST_PTR, sizeof(f), &f );   // Create buffer wrapper so we can access host parameters.
 
                 static boost::once_flag initOnlyOnce;
-                static ::cl::Kernel masterKernel;
-                // For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retreive the name here.
-                if (std::is_same<iType, oType>::value)
-                    boost::call_once( initOnlyOnce, boost::bind( CallCompiler_UnaryTransform::init_, &masterKernel, user_code + ClCode<iType>::get() + ClCode<UnaryFunction>::get(), TypeName< iType >::get( ), TypeName< oType >::get( ), TypeName< UnaryFunction >::get( ), &ctl ) );
-                else
-                    boost::call_once( initOnlyOnce, boost::bind( CallCompiler_UnaryTransform::init_, &masterKernel, user_code + ClCode<iType>::get() + ClCode<oType>::get() + ClCode<UnaryFunction>::get(), TypeName< iType >::get( ), TypeName< oType >::get( ), TypeName< UnaryFunction >::get( ), &ctl ) );
+                static std::vector< ::cl::Kernel > unaryTransformKernels;
 
-                ::cl::Kernel k = masterKernel;  // hopefully create a copy of the kernel.  FIXME, need to create-kernel from the program.
+                // For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retreive the name here.
+                if (std::is_same<iType, oType>::value) {
+                    boost::call_once( initOnlyOnce, boost::bind( CallCompiler_UnaryTransform::init_, &unaryTransformKernels, cl_code + ClCode<iType>::get() + ClCode<UnaryFunction>::get(), TypeName< iType >::get( ), TypeName< oType >::get( ), TypeName< UnaryFunction >::get( ), &ctl ) );
+				} else {
+                    boost::call_once( initOnlyOnce, boost::bind( CallCompiler_UnaryTransform::init_, &unaryTransformKernels, cl_code + ClCode<iType>::get() + ClCode<oType>::get() + ClCode<UnaryFunction>::get(), TypeName< iType >::get( ), TypeName< oType >::get( ), TypeName< UnaryFunction >::get( ), &ctl ) );
+				}
+
+				::cl::Kernel &kernelWithBoundsCheck = unaryTransformKernels[0];
+                ::cl::Kernel &kernelNoBoundsCheck   = unaryTransformKernels[1];
+
+
+                cl_int l_Error = CL_SUCCESS;
+                const size_t wgSize  = kernelWithBoundsCheck.getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.device( ), &l_Error );
+                V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
+
+				::cl::Kernel k;
+
+				if ((sz % wgSize) != 0) {
+                    sz = sz + (wgSize - (sz % wgSize));
+					k = kernelWithBoundsCheck;
+				} else if(sz < wgSize) {  
+                    sz = wgSize;
+					k = kernelWithBoundsCheck; 
+                } else {
+					k = kernelNoBoundsCheck;
+				}
+
+				 
 
                 k.setArg(0, first->getBuffer( ) );
                 k.setArg(1, result->getBuffer( ) );
                 k.setArg(2, static_cast< cl_uint >( sz ) );
                 k.setArg(3, userFunctor);
-
-                cl_int l_Error = CL_SUCCESS;
-                const size_t wgSize  = k.getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.device( ), &l_Error );
-                V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
-
-                if(sz < wgSize)
-                {  
-                    sz = wgSize;
-                }
-                else if ((sz % wgSize) != 0)
-                {
-                    sz = sz + (wgSize - (sz % wgSize));
-                }
 
                 ::cl::Event transformEvent;
                 l_Error = ctl.commandQueue().enqueueNDRangeKernel(
@@ -345,8 +375,9 @@ namespace bolt {
                     &transformEvent );
                 V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for transform() kernel" );
 
-                l_Error = transformEvent.wait( );
-                V_OPENCL( l_Error, "perBlockInclusiveScan failed to wait" );
+				bolt::cl::wait(ctl, transformEvent);
+
+
             };
         }//End OF detail namespace
     }//End OF cl namespace
