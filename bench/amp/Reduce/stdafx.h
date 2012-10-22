@@ -16,8 +16,8 @@
 ***************************************************************************/                                                                                     
 
 // stdafx.h : include file for standard system include files,
-// or project specific include files that are used frequently, but
-// are changed infrequently
+// or project-specific include files used frequently, but
+// changed infrequently.
 //
 
 #pragma once
@@ -33,4 +33,4 @@
 namespace po = boost::program_options;
 
 
-// TODO: reference additional headers your program requires here
+// TODO: reference additional headers here that your program requires.

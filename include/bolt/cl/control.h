@@ -18,7 +18,6 @@
 #pragma once
 
 #include <CL/cl.hpp>
-#include <string>
 
 namespace bolt {
     namespace cl {
@@ -31,10 +30,12 @@ namespace bolt {
         * \{
         */
 
-        /*! The \p control class allows user to control the parameters of a specific Bolt algorithm call 
-         such as the command-queue where GPU kernels run, debug information, load-balancing with the host, and more.  Each Bolt Algorithm call accepts the 
-        \p control class as an optional first argument.  Additionally, Bolt contains a global default \p control structure which
-        is used in cases where the \p control argument is not specified, and developers can also modify this structure.  Some examples:
+        /*! The \p control class lets you control the parameters of a specific Bolt algorithm call, 
+         such as the command-queue where GPU kernels run, debug information, load-balancing with 
+		 the host, and more.  Each Bolt Algorithm call accepts the 
+        \p control class as an optional first argument.  Additionally, Bolt contains a global default
+		\p control structure that is used in cases where the \p control argument is not specified, and 
+		developers can also modify this structure.  Some examples:
 
         * \code
         * cl::CommandQueue myCommandQueue = ...
@@ -63,10 +64,11 @@ namespace bolt {
         * \endcode
 
 
-        * It can sometimes be useful to set the global default \p control structure that is used by Bolt algorithms calls which do not explicitly specify
-        * a control parameter as the first argument.  For example, the application initialization routine may examine 
-        * all the available GPU devies and select the one which should be used for all subsequent bolt calls.  This can easily be 
-        * achieved by writing the global default \p control structure, ie:
+        * It can sometimes be useful to set the global default \p control structure that is used by Bolt algorithms 
+		* calls that do not explicitly specify
+        * a control parameter as the first argument.  For example, the application initialization routine can examine 
+        * all the available GPU devies and select the one to be used for all subsequent Bolt calls.  This can easily be 
+        * achieved by writing the global default \p control structure, i.e.:
         * \code
         * cl::CommandQueue myCommandQueue = ...
         * bolt::cl::control::getDefault().commandQueue(myCommandQueue); 
@@ -96,15 +98,9 @@ namespace bolt {
                 static const unsigned DebugKernelRun = 0x8;
                 static const unsigned AutoTune = 0x10;
             };
-
-			enum e_WaitMode {BalancedWait,	// Balance of Busy and Nice: tries to use Busy for short-running kernels.  \todo: Balanced currently maps to nice.
-							 NiceWait,		// Use an OS semaphore to detect completion status.
-							 BusyWait,		// Busy a CPU core continuously monitoring results.  Lowest-latency, but requires a dedicated core.
-							 ClFinish};		
-
         public:
 
-            // Construct a new control structure, copying from default control for arguments which are not overridden.
+            // Construct a new control structure, copying from default control for arguments that are not overridden.
             control(
                 const ::cl::CommandQueue& commandQueue = getDefault().commandQueue(),
                 e_UseHostMode useHost=getDefault().useHost(),
@@ -117,33 +113,31 @@ namespace bolt {
                 m_autoTune(getDefault().m_autoTune),
                 m_wgPerComputeUnit(getDefault().m_wgPerComputeUnit),
                 m_compileOptions(getDefault().m_compileOptions),
-                m_compileForAllDevices(getDefault().m_compileForAllDevices),
-				m_waitMode(getDefault().m_waitMode),
-				m_unroll(getDefault().m_unroll)
+                m_compileForAllDevices(getDefault().m_compileForAllDevices)
             {};
 
             //setters:
-            //! Set the OpenCL command queue (and associated device) which Bolt algorithms will use.  
-            //! Only one command-queue may be specified for each call - Bolt does not load-balance across
+            //! Set the OpenCL command queue (and associated device) for Bolt algorithms to use.  
+            //! Only one command-queue can be specified for each call; Bolt does not load-balance across
             //! multiple command queues.  Bolt also uses the specified command queue to determine the OpenCL context and
             //! device.
             void commandQueue(::cl::CommandQueue commandQueue) { m_commandQueue = commandQueue; };
 
-            //! If enabled, Bolt may use the host CPU to run parts of the Algorithm.  If false, Bolt will run the
-            //! entire algorithm using the device specified by the command-queue - this might be appropriate 
-            //! on a discrete GPU where the input data is located on the device memory.
+            //! If enabled, Bolt can use the host CPU to run parts of the algorithm.  If false, Bolt runs the
+            //! entire algorithm using the device specified by the command-queue. This can be appropriate 
+            //! on a discrete GPU, where the input data is located on the device memory.
             void useHost(e_UseHostMode useHost) { m_useHost = useHost; };
 
 
             //! Force the Bolt command to run on the specifed device.  Default is "Automatic", in which case the Bolt
-            //! runtime will select the device.  Forcing the mode to SerialCpu can be useful for debugging the algorithm.
-            //! Forcing the mode can also be useful for performance comparisons or when the programmer wants direct 
+            //! runtime selects the device.  Forcing the mode to SerialCpu can be useful for debugging the algorithm.
+            //! Forcing the mode can also be useful for performance comparisons or for direct 
             //! control over the run location (perhaps due to knowledge that the algorithm is best-suited for GPU).
             void forceRunMode(e_RunMode forceRunMode) { m_forceRunMode = forceRunMode; };
 
             /*! Enable debug messages to be printed to stdout as the algorithm is compiled, run, and tuned.  See the #debug
-            * namespace for a list of possible values.  Multiple debug options can be combined with the + sign as in 
-            * following example - this technique should be used rather than separate calls to the debug() API 
+            * namespace for a list of values.  Multiple debug options can be combined with the + sign, as in 
+            * following example.  Use this technique rather than separate calls to the debug() API; 
             * each call resets the debug level rather than merging with the existing debug() setting.
             * \code
             * bolt::cl::control myControl;
@@ -153,18 +147,8 @@ namespace bolt {
             */
             void debug(unsigned debug) { m_debug = debug; };
 
-			/*! Set the work-groups-per-compute unit that will be used for reduction-style operations (reduce, transform_reduce).
-				Higher numbers can hide latency by improving the occupancy but will increase the amoutn of data that
-				has to be reduced in the final, less efficient step.  Experimentation may be required to find
-				the optimal point for a given algorithm and device; typically 8-12 will deliver good results */
+
             void wgPerComputeUnit(int wgPerComputeUnit) { m_wgPerComputeUnit = wgPerComputeUnit; }; 
-
-			/*! Set the method used to detect completion at the end of a Bolt routine. */
-			void waitMode(e_WaitMode waitMode) { m_waitMode = waitMode; };
-
-			void unroll(int unroll) { m_unroll = unroll; };
-
-
             
             //! 
             //! Specify the compile options which are passed to the OpenCL(TM) compiler
@@ -180,19 +164,17 @@ namespace bolt {
             e_RunMode forceRunMode() const { return m_forceRunMode; };
             unsigned debug() const { return m_debug;};
             int const wgPerComputeUnit() const { return m_wgPerComputeUnit; };
-            const ::std::string compileOptions() const { return m_compileOptions; };  
-			e_WaitMode waitMode() const { return m_waitMode; };
-			int unroll() const { return m_unroll; };
+            const std::string compileOptions() const { return m_compileOptions; };  
 
             bool compileForAllDevices() const { return m_compileForAllDevices; };
 
             /*!
-              * Return default default \p control structure.  This structure is used for Bolt API calls where the user
+              * Return default default \p control structure.  This structure is used for Bolt API calls when the user
               * does not explicitly specify a \p control structure.  Also, newly created \p control structures copy
               * the default structure for their initial values.  Note that changes to the default \p control structure
-              * are not automatically copied to already-created control structures.  Typically the default \p control
-              * structure is modified as part of the application initialiation, and then as other \p control structures
-              * are created they will pick up the modified defaults.  Some examples:
+              * are not automatically copied to already-created control structures.  Typically, the default \p control
+              * structure is modified as part of the application initialiation; then, as other \p control structures
+              * are created, they pick up the modified defaults.  Some examples:
               * \code
               * bolt::cl::control myControl = bolt::cl::getDefault();  // copy existing default control.
               * bolt::cl::control myControl;  // same as last line - the constructor also copies values from the default control
@@ -214,7 +196,7 @@ namespace bolt {
 
                /*! \brief Convenience method to help users create and initialize an OpenCL CommandQueue
                 * \todo The default commandqueue is created with a context that contains all GPU devices in platform.  Since kernels
-                * are only compiled on first invocation, switching between GPU devices is fine but switching to a CPU 
+                * are only compiled on first invocation, switching between GPU devices is OK, but switching to a CPU 
                 * device afterwards causes an exception because the kernel was not compiled for CPU.  Should we provide 
                 * more options and expose more intefaces to the user?
                 */
@@ -230,9 +212,7 @@ namespace bolt {
                 m_debug(debug::None),
                 m_autoTune(AutoTuneAll),
                 m_wgPerComputeUnit(8),
-                m_compileForAllDevices(true),
-				m_waitMode(BalancedWait),
-				m_unroll(1)
+                m_compileForAllDevices(true)
             {};
 
             ::cl::CommandQueue  m_commandQueue;
@@ -241,10 +221,8 @@ namespace bolt {
             e_AutoTuneMode      m_autoTune;  /* auto-tune the choice of device CPU/GPU and  workgroup shape */
             unsigned            m_debug;
             int                 m_wgPerComputeUnit;
-            ::std::string       m_compileOptions;  // extra options to pass to OpenCL compiler.
+            std::string         m_compileOptions;  // extra options to pass to OpenCL compiler.
             bool                m_compileForAllDevices;  // compile for all devices in the context.  False means to only compile for specified device.
-			e_WaitMode			m_waitMode;
-			int					m_unroll;
         };
 
     };
@@ -256,4 +234,12 @@ namespace bolt {
 //   * Add setter function and getter function, ie "void foo(int fooValue)" and "int foo const { return _foo; }"
 //   * Add the field to the private constructor.  This is used to set the global default "_defaultControl".
 //   * Add the field to the public constructor, copying from the _defaultControl.
+
+// Sample usage:
+// bolt::control c(myCmdQueue);
+// c.debug(bolt::control::ShowCompile);
+// bolt::cl::reduce(c, a.begin(), a.end(), std::plus<int>);
+// 
+//
+// reduce (bolt::control(myCmdQueue), 
 

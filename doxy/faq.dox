@@ -22,32 +22,32 @@
 * \subsection Q0 Does Bolt require linking to a library?
 * Yes, Bolt includes a small static library that must be linked into a user program to properly resolve
 * symbols.  Since Bolt is a template library, almost all functionality is written in header files, 
-* but OpenCL follows an online compilation model which makes sense to include in a library and not 
-* in header files
+* but OpenCL follows an online compilation model to be included in a library, not 
+* in header files.
 * \subsection Q1 Does Bolt depend on any other libraries?
 * Yes, Bolt contains dependencies on Boost.  All dependent header files and pre-compiled libraries
-* are available in the Bolt SDK
+* are available in the Bolt SDK.
 * \subsection Q2 What algorithms does Bolt currently support?
-* Transform, reduce, transform_reduce, count, count_if, inclusive_scan, exclusive_scan, sort
+* Transform, reduce, transform_reduce, count, count_if, inclusive_scan, exclusive_scan, and sort.
 * \subsection Q3 What version of OpenCL does Bolt currently require?
-* Bolt uses features available in OpenCL v1.2
+* Bolt uses features available in OpenCL v1.2.
 * \subsection Q4 Does Bolt require the AMD OpenCL runtime?
-* Yes, Bolt requires the use of templates in kernel code, and as of this time AMD is the only vendor
-* to provide this support
+* Yes, Bolt requires the use of templates in kernel code; currently, AMD is the only vendor
+* to provide this support.
 * \subsection Q5 Which Catalyst package should I use with Bolt?
-* Generally speaking, downloading and installing the latest Catalyst package would contain the most 
-* recent OpenCL runtime.  As of the time of this writing, the recommended Catalyst package is 12.10
+* Generally speaking, the latest Catalyst package contains the most 
+* recent OpenCL runtime.  As of this writing, the recommended Catalyst package is 12.10.
 * \subsection Q6 Will Bolt be provided as Open Source software?
-* Yes, Bolt is planned to go completely open source in the near future.  Most of the algorithm 
-* functionality is located in header files, so a majority of the source is already available
-* \subsection Q7 Which license is Bolt licensed under?
-* The <a href="http://opensource.org/licenses/apache2.0.php">Apache License, Version 2.0</a>
+* Bolt is planned to be completely open source in the near future.  Most of the algorithm 
+* functionality is located in header files, so a majority of the source is already available.
+* \subsection Q7 What is the applicable license for Bolt?
+* The <a href="http://opensource.org/licenses/apache2.0.php">Apache License, Version 2.0</a>.
 * \section Performance Performance
 * \subsection Q8 When should I use device_vector vs regular host memory?
-* bolt::cl::device_vector is used to manage device-local memory and may deliver higher 
-* performance on discrete GPU system.  However, the host memory interfaces
+* bolt::cl::device_vector manages device-local memory and can deliver higher 
+* performance on discrete GPU system; however, host memory interfaces
 * eliminate the need to create and manage device_vectors. 
-* If memory is re-used across multiple Bolt calls or is referenced by other
-* kernels, using device_vector will deliver higher performance
+* If memory is re-used across multiple Bolt calls, or is referenced by other
+* kernels, using device_vector delivers higher performance.
 * 
 */

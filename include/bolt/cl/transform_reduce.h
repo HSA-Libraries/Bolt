@@ -44,23 +44,23 @@ namespace bolt {
         /*! \brief transform_reduce fuses transform and reduce operations together, increasing performance by reducing 
          *  memory passes.
          *  \details Logically, a transform operation is performed over the input sequence using the unary function and stored 
-         *  into a temporary sequence, and then a reduction operation is applied using the binary function
+         *  into a temporary sequence; then, a reduction operation is applied using the binary function
          *  to return a single value.
          * 
          *  \param first The beginning of the input sequence.
          *  \param last The end of the input sequence.
          *  \param transform_op A unary tranformation operation.
          *  \param init  The initial value for the accumulator.
-         *  \param reduce_op  The binary operation used to combine two values.   By default, the binary operation is plus<>().
+         *  \param reduce_op  The binary operation used to combine two values.  By default, the binary operation is plus<>().
          *  \param user_code Optional OpenCL&tm; code to be passed to the OpenCL compiler. The cl_code is inserted first in the generated code, before the cl_code trait.
          *  \return The result of the combined transform and reduction.
          *
-         *  \tparam T The type of the result
-         *  \tparam InputIterator is a model of an InputIterator
+         *  \tparam T The type of the result.
+         *  \tparam InputIterator is a model of an InputIterator.
          *                        and \c InputIterator's \c value_type is convertible to \c BinaryFunction's \c first_argument_type.
-         *  \tparam UnaryFunction is a model of Unary Function
+         *  \tparam UnaryFunction is a model of Unary Function.
          *                              and \c UnaryFunction's \c result_type is convertible to \c InputIterator's \c value_type.
-         *  \tparam BinaryFunction is a model of Binary Function
+         *  \tparam BinaryFunction is a model of Binary Function.
          *                              and \c BinaryFunction's \c result_type is convertible to \c InputIterator's \c value_type.
          *
          *  \code
@@ -88,7 +88,7 @@ namespace bolt {
         /*! \brief transform_reduce fuses transform and reduce operations together, increasing performance by reducing 
          *  memory passes.
          *  \details Logically, a transform operation is performed over the input sequence using the unary function and stored 
-         *  into a temporary sequence, and then a reduction operation is applied using the binary function
+         *  into a temporary sequence; then, a reduction operation is applied using the binary function
          *  to return a single value.
          * 
          *  \param ctl Control structure to control command-queue, debug, tuning, etc.  See bolt::cl::control.
@@ -100,12 +100,12 @@ namespace bolt {
          *  \param user_code Optional OpenCL&tm; code to be passed to the OpenCL compiler. The cl_code is inserted first in the generated code, before the cl_code trait.
          *  \return The result of the combined transform and reduction.
          *
-         *  \tparam T The type of the result
-         *  \tparam InputIterator is a model of an InputIterator
+         *  \tparam T The type of the result.
+         *  \tparam InputIterator is a model of an InputIterator.
          *                        and \c InputIterator's \c value_type is convertible to \c BinaryFunction's \c first_argument_type.
-         *  \tparam UnaryFunction is a model of Unary Function
+         *  \tparam UnaryFunction is a model of Unary Function.
          *                              and \c UnaryFunction's \c result_type is convertible to \c InputIterator's \c value_type.
-         *  \tparam BinaryFunction is a model of Binary Function
+         *  \tparam BinaryFunction is a model of Binary Function.
          *                              and \c BinaryFunction's \c result_type is convertible to \c InputIterator's \c value_type.
          *
          *  \code

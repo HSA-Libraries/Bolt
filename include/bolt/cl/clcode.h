@@ -31,15 +31,15 @@
 
 /*!
  * Bolt uses the TypeName trait to determine the string name of function object parameters when 
- * generating OpenCL(TM) code that instantiates the required templates.   For example,
+ * generating OpenCL(TM) code that instantiates the required templates.  For example,
  * if the user calls the Bolt \p transpose library with a functor \p MyClass, Bolt
- * will instantiate the transform's template function with the class \p MyClass.
+ * instantiates the transform's template function with the class \p MyClass.
  *
  * This is the default implementation for the TypeName trait, which must be overriden with 
  * a class specialization to return a string name of the class.
- * The default TypeName returns an error string which will cause the OpenCL(TM) kernel compilation to fail.
+ * The default TypeName returns an error string that causes the OpenCL(TM) kernel compilation to fail.
  * 
- * The \ref BOLT_CREATE_TYPENAME is a convenience macro that helps to create a TypeName trait.  An example:
+ * The \ref BOLT_CREATE_TYPENAME is a convenience macro that helps create a TypeName trait.  An example:
  *
  * \code
  * class MyClass { ... };
@@ -47,7 +47,7 @@
  * // Create TypeName trait for "MyClass" manually:
  * template<> struct TypeName<MyClass> { static std::string get() { return "MyClass"; }};
  * 
- * // Same as above but using the BOLT_CREATE_TYPENAME convenience macro.
+ * // Same as above, but using the BOLT_CREATE_TYPENAME convenience macro.
  * BOLT_CREATE_TYPENAME(MyClass);
  * \endcode
  *
@@ -93,7 +93,7 @@ struct ClCode
     template<> struct TypeName<T> { static std::string get() { return #T; }};
 
 /*!
- * Creates the ClCode trait which associates the specified type \p T with the string \p CODE_STRING.
+ * Creates the ClCode trait that associates the specified type \p T with the string \p CODE_STRING.
  * \param T : Class. 
  * \param CODE_STRING : Code string to associate with T's ClCode trait.
  *
@@ -103,14 +103,15 @@ struct ClCode
  * BOLT_CREATE_CLCODE(IsOdd, "struct IsOdd { bool operator(int val) { return val & 0x1; }; };"
  * \endcode
  *
- * Another approach is to define the code string in a file (so host and string are identical), and then
+ * Another approach is to define the code string in a file (so host and string are identical), then
  * pass the string read from the file to BOLT_CREATE_CLCODE. (See \ref clCodeFromFile)
  */
 #define BOLT_CREATE_CLCODE(T,CODE_STRING) \
     template<> struct ClCode<T> { static std::string get() { return CODE_STRING; }};
 
 /*!
- * Creates a string and a regular version of the functor F, and automatically defines the ClCode trait to associate the code string with the specified class T. 
+ * Creates a string and a regular version of the functor F, and automatically defines the ClCode trait to associate 
+ * the code string with the specified class T. 
  * \param T : Class.
  * \param FUNCTION : Function definition.  See \ref ClCodeTraits
  */

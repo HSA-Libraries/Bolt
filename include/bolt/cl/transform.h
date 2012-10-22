@@ -35,7 +35,7 @@ namespace bolt {
         *   \ingroup algorithms
         *   \p transform applies a specific function object to each element pair in the specified input ranges, and writes the result
         *   into the specified output range. For common code between the host
-        *   and device, one can take a look at the ClCode and TypeName implementations. Refer to Bolt Tools for Split-Source 
+        *   and device, one can take a look at the ClCode and TypeName implementations. See Bolt Tools for Split-Source 
         *   for a detailed description. 
         */ 
         
@@ -47,7 +47,7 @@ namespace bolt {
         /*! This version of \p transform applies a binary function to each pair
          *  of elements from two input sequences and stores the result in the
          *  corresponding position in an output sequence.  
-         *  The input and output sequences may coincide, resulting in an 
+         *  The input and output sequences can coincide, resulting in an 
          *  in-place transformation.
          *    
          *  \param ctl Control structure to control command-queue, debug, tuning, etc.  See bolt::cl::control.
@@ -66,7 +66,7 @@ namespace bolt {
          *  \tparam BinaryFunction is a model of BinaryFunction
          *                              and \c BinaryFunction's \c result_type is convertible to \c OutputIterator's \c value_type.
          *
-         *  The following code snippet demonstrates how to use \p transform
+         *  The following code snippet demonstrates how to use \p transform.
          *
          *  \code
          *  #include <bolt/cl/transform.h>
@@ -97,7 +97,7 @@ namespace bolt {
        /*! This version of \p transform applies a binary function to each pair
          *  of elements from two input sequences and stores the result in the
          *  corresponding position in an output sequence.  
-         *  The input and output sequences may coincide, resulting in an 
+         *  The input and output sequences can coincide, resulting in an 
          *  in-place transformation.
          *    
 

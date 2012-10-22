@@ -39,9 +39,10 @@ namespace bolt {
 
 	//=======================
 	// This version takes a start index and extent as the range to iterate.  
-	// The tranform_op is called with topLeft, bottomRight, and stride for each section that should be processed by
+	// The tranform_op is called with topLeft, bottomRight, and stride for each section that to be processed by
 	// the function.  Function must do iteration over the specified range with specified stride, and also reduce results.
-	// May avoid copies on some compilers and deliver higher performance than the cleaner transform_reduce function, where transform op only takes a single index point.
+	// May avoid copies on some compilers and deliver higher performance than the cleaner transform_reduce function, 
+	// where transform op only takes a single index point.
 	// Useful for indexing over all points in an image or array
 	template<typename outputT, int Rank, typename UnaryFunction, typename BinaryFunction> 
 	outputT transform_reduce_range(concurrency::accelerator_view av, 

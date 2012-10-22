@@ -39,30 +39,30 @@ namespace bolt
         /*! \addtogroup scan
         *   \ingroup PrefixSums
         *   \{
-        *   \todo The user_code parameter is not used yet
+        *   \todo The user_code parameter is not used yet.
         *   \bug An exclusive_scan of an in-place device_vector buffer can return a buffer of all 0's.  This is because the exclusive_scan
-        *   scan is implemented in two passes, an inclusive_scan pass and then a transform pass.  The transform pass will
-        *   0 out the buffer.  Solution is to refactor the scan code to eliminate the transform pass, which is also an
-        *   optimization
+        *   scan is implemented in two passes: an inclusive_scan pass, and a transform pass.  The transform pass zeroes
+        *   out the buffer.  Solution is to refactor the scan code to eliminate the transform pass, which is also an
+        *   optimization.
         */
 
         /*! \brief inclusive_scan calculates a running sum over a range of values, inclusive of the current value.
-        *   The result value at iterator position \p i is the running sum of all values less than \p i in the input range
+        *   The result value at iterator position \p i is the running sum of all values less than \p i in the input range.
         *
-        * \param first The first iterator in the input range to be scanned
-        * \param last  The last iterator in the input range to be scanned
-        * \param result  The first iterator in the output range
-        * \param user_code A client specified string that will be appended to the generated OpenCL kernel
-        * \tparam InputIterator An iterater signifying the range is used as input
-        * \tparam OutputIterator An iterater signifying the range is used as output
-        * \return An iterator pointing at the end of the result range
+        * \param first The first iterator in the input range to be scanned.
+        * \param last  The last iterator in the input range to be scanned.
+        * \param result  The first iterator in the output range.
+        * \param user_code A client-specified string that is appended to the generated OpenCL kernel.
+        * \tparam InputIterator An iterator signifying the range is used as input.
+        * \tparam OutputIterator An iterator signifying the range is used as output.
+        * \return An iterator pointing at the end of the result range.
         *
         * \code
         * #include "bolt/cl/scan.h"
         *
         * int a[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
         *
-        * // Calculate the inclusive scan of an input range, modifying the values in-place
+        * // Calculate the inclusive scan of an input range, modifying the values in-place.
         * bolt::cl::inclusive_scan( a, a+10, a );
         * // a => {1, 3, 6, 10, 15, 21, 28, 36, 45, 55}
         *  \endcode
@@ -74,23 +74,23 @@ namespace bolt
             const std::string& user_code="" );
 
         /*! \brief inclusive_scan calculates a running sum over a range of values, inclusive of the current value.
-        *   The result value at iterator position \p i is the running sum of all values less than \p i in the input range
+        *   The result value at iterator position \p i is the running sum of all values less than \p i in the input range.
         *
-        * \param first The first iterator in the input range to be scanned
-        * \param last  The last iterator in the input range to be scanned
-        * \param result  The first iterator in the output range
-        * \param binary_op A functor object specifying the operation between two elements in the input range
-        * \param user_code A client specified string that will be appended to the generated OpenCL kernel
-        * \tparam InputIterator An iterater signifying the range is used as input
-        * \tparam OutputIterator An iterater signifying the range is used as output
-        * \return An iterator pointing at the end of the result range
+        * \param first The first iterator in the input range to be scanned.
+        * \param last  The last iterator in the input range to be scanned.
+        * \param result  The first iterator in the output range.
+        * \param binary_op A functor object specifying the operation between two elements in the input range.
+        * \param user_code A client-specified string that is appended to the generated OpenCL kernel.
+        * \tparam InputIterator An iterator signifying the range is used as input.
+        * \tparam OutputIterator An iterator signifying the range is used as output.
+        * \return An iterator pointing at the end of the result range.
         *
         * \code
         * #include "bolt/cl/scan.h"
         *
         * int a[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
         *
-        * // Calculate the inclusive scan of an input range, modifying the values in-place
+        * // Calculate the inclusive scan of an input range, modifying the values in-place.
         * bolt::cl::inclusive_scan( a, a+10, a );
         * // a => {1, 3, 6, 10, 15, 21, 28, 36, 45, 55}
         *  \endcode
@@ -102,23 +102,23 @@ namespace bolt
                 const std::string& user_code="" );
 
         /*! \brief inclusive_scan calculates a running sum over a range of values, inclusive of the current value.
-        *   The result value at iterator position \p i is the running sum of all values less than \p i in the input range
+        *   The result value at iterator position \p i is the running sum of all values less than \p i in the input range.
         *
-        * \param ctl A Bolt control object, to describe the environment the function should run under
-        * \param first The first iterator in the input range to be scanned
-        * \param last  The last iterator in the input range to be scanned
-        * \param result  The first iterator in the output range
-        * \param user_code A client specified string that will be appended to the generated OpenCL kernel
-        * \tparam InputIterator An iterater signifying the range is used as input
-        * \tparam OutputIterator An iterater signifying the range is used as output
-        * \return An iterator pointing at the end of the result range
+        * \param ctl A Bolt control object, to describe the environment under which the function runs.
+        * \param first The first iterator in the input range to be scanned.
+        * \param last  The last iterator in the input range to be scanned.
+        * \param result  The first iterator in the output range.
+        * \param user_code A client-specified string that is appended to the generated OpenCL kernel.
+        * \tparam InputIterator An iterator signifying the range is used as input.
+        * \tparam OutputIterator An iterator signifying the range is used as output.
+        * \return An iterator pointing at the end of the result range. 
         *
         * \code
         * #include "bolt/cl/scan.h"
         *
         * int a[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
         *
-        * // Calculate the inclusive scan of an input range, modifying the values in-place
+        * // Calculate the inclusive scan of an input range, modifying the values in-place.
         * bolt::cl::inclusive_scan( a, a+10, a );
         * // a => {1, 3, 6, 10, 15, 21, 28, 36, 45, 55}
         *  \endcode
@@ -130,24 +130,24 @@ namespace bolt
             OutputIterator result, const std::string& user_code="" );
 
         /*! \brief inclusive_scan calculates a running sum over a range of values, inclusive of the current value.
-        *   The result value at iterator position \p i is the running sum of all values less than \p i in the input range
+        *   The result value at iterator position \p i is the running sum of all values less than \p i in the input range.
         *
-        * \param ctl A Bolt control object, to describe the environment the function should run under
-        * \param first The first iterator in the input range to be scanned
-        * \param last  The last iterator in the input range to be scanned
-        * \param result  The first iterator in the output range
-        * \param binary_op A functor object specifying the operation between two elements in the input range
-        * \param user_code A client specified string that will be appended to the generated OpenCL kernel
-        * \tparam InputIterator An iterater signifying the range is used as input
-        * \tparam OutputIterator An iterater signifying the range is used as output
-        * \return An iterator pointing at the end of the result range
+        * \param ctl A Bolt control object, to describe the environment under which the function runs.
+        * \param first The first iterator in the input range to be scanned.
+        * \param last  The last iterator in the input range to be scanned.
+        * \param result  The first iterator in the output range.
+        * \param binary_op A functor object specifying the operation between two elements in the input range.
+        * \param user_code A client-specified string that is appended to the generated OpenCL kernel.
+        * \tparam InputIterator An iterator signifying the range is used as input.
+        * \tparam OutputIterator An iterator signifying the range is used as output.
+        * \return An iterator pointing at the end of the result range.
         *
         * \code
         * #include "bolt/cl/scan.h"
         *
         * int a[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
         *
-        * // Calculate the inclusive scan of an input range, modifying the values in-place
+        * // Calculate the inclusive scan of an input range, modifying the values in-place.
         * bolt::cl::inclusive_scan( a, a+10, a );
         * // a => {1, 3, 6, 10, 15, 21, 28, 36, 45, 55}
         *  \endcode
@@ -159,22 +159,22 @@ namespace bolt
             OutputIterator result, BinaryFunction binary_op, const std::string& user_code="" );
 
         /*! \brief exclusive_scan calculates a running sum over a range of values, exclusive of the current value.
-        *   The result value at iterator position \p i is the running sum of all values less than \p i in the input range
+        *   The result value at iterator position \p i is the running sum of all values less than \p i in the input range.
         *
-        * \param first The first iterator in the input range to be scanned
-        * \param last  The last iterator in the input range to be scanned
-        * \param result  The first iterator in the output range
-        * \param user_code A client specified string that will be appended to the generated OpenCL kernel
-        * \tparam InputIterator An iterater signifying the range is used as input
-        * \tparam OutputIterator An iterater signifying the range is used as output
-        * \return An iterator pointing at the end of the result range
+        * \param first The first iterator in the input range to be scanned.
+        * \param last  The last iterator in the input range to be scanned.
+        * \param result  The first iterator in the output range.
+        * \param user_code A client-specified string thatis appended to the generated OpenCL kernel.
+        * \tparam InputIterator An iterator signifying the range is used as input.
+        * \tparam OutputIterator An iterator signifying the range is used as output.
+        * \return An iterator pointing at the end of the result range.
         *
         * \code
         * #include "bolt/cl/scan.h"
         *
         * int a[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
         *
-        * // Calculate the exclusive scan of an input range, modifying the values in-place
+        * // Calculate the exclusive scan of an input range, modifying the values in-place.
         * bolt::cl::exclusive_scan( a, a+10, a );
         * // a => {0, 1, 3, 6, 10, 15, 21, 28, 36, 45}
         *  \endcode
@@ -186,24 +186,24 @@ namespace bolt
             const std::string& user_code="" );
 
         /*! \brief exclusive_scan calculates a running sum over a range of values, exclusive of the current value.
-        *   The result value at iterator position \p i is the running sum of all values less than \p i in the input range
+        *   The result value at iterator position \p i is the running sum of all values less than \p i in the input range.
         *
-        * \param first The first iterator in the input range to be scanned
-        * \param last  The last iterator in the input range to be scanned
-        * \param result  The first iterator in the output range
-        * \param init  The value used to initialize the output scan sequence
-        * \param user_code A client specified string that will be appended to the generated OpenCL kernel
-        * \tparam InputIterator implements an input iterator
-        * \tparam OutputIterator implements an output iterator
-        * \tparam T should be convertible to std::iterator_traits< OutputIterator >::value_type
-        * \return An iterator pointing at the end of the result range
+        * \param first The first iterator in the input range to be scanned.
+        * \param last  The last iterator in the input range to be scanned.
+        * \param result  The first iterator in the output range.
+        * \param init  The value used to initialize the output scan sequence.
+        * \param user_code A client-specified string that is appended to the generated OpenCL kernel.
+        * \tparam InputIterator implements an input iterator.
+        * \tparam OutputIterator implements an output iterator.
+        * \tparam T should is convertible to std::iterator_traits< OutputIterator >::value_type.
+        * \return An iterator pointing at the end of the result range.
         *
         * \code
         * #include "bolt/cl/scan.h"
         *
         * int a[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
         *
-        * // Calculate the exclusive scan of an input range, modifying the values in-place
+        * // Calculate the exclusive scan of an input range, modifying the values in-place.
         * bolt::cl::exclusive_scan( a, a+10, a, 0 );
         * // a => {0, 1, 3, 6, 10, 15, 21, 28, 36, 45}
         *  \endcode
@@ -215,27 +215,27 @@ namespace bolt
             const std::string& user_code="" );
 
         /*! \brief exclusive_scan calculates a running sum over a range of values, exclusive of the current value.
-        *   The result value at iterator position \p i is the running sum of all values less than \p i in the input range
+        *   The result value at iterator position \p i is the running sum of all values less than \p i in the input range.
         *
-        * \param first The first iterator in the input range to be scanned
-        * \param last  The last iterator in the input range to be scanned
-        * \param result  The first iterator in the output range
-        * \param init  The value used to initialize the output scan sequence
-        * \param binary_op A functor object specifying the operation between two elements in the input range
-        * \param user_code A client specified string that will be appended to the generated OpenCL kernel
-        * \tparam InputIterator An iterater signifying the range is used as input
-        * \tparam OutputIterator An iterater signifying the range is used as output
-        * \tparam T should be convertible to std::iterator_traits< OutputIterator >::value_type
-        * \tparam BinaryFunction implements a binary function and its result should be convertible to 
-        *   std::iterator_traits< OutputIterator >::value_type
-        * \return An iterator pointing at the end of the result range
+        * \param first The first iterator in the input range to be scanned.
+        * \param last  The last iterator in the input range to be scanned.
+        * \param result  The first iterator in the output range.
+        * \param init  The value used to initialize the output scan sequence.
+        * \param binary_op A functor object specifying the operation between two elements in the input range.
+        * \param user_code A client-specified string that is appended to the generated OpenCL kernel.
+        * \tparam InputIterator An iterator signifying the range is used as input.
+        * \tparam OutputIterator An iterator signifying the range is used as output.
+        * \tparam T is convertible to std::iterator_traits< OutputIterator >::value_type.
+        * \tparam BinaryFunction implements a binary function; its result is convertible to 
+        *   std::iterator_traits< OutputIterator >::value_type.
+        * \return An iterator pointing at the end of the result range.
         *
         * \code
         * #include "bolt/cl/scan.h"
         *
         * int a[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
         *
-        * // Calculate the exclusive scan of an input range, modifying the values in-place
+        * // Calculate the exclusive scan of an input range, modifying the values in-place.
         * bolt::cl::exclusive_scan( a, a+10, a, 0, bolt::cl::plus< int >( ) );
         * // a => {0, 1, 3, 6, 10, 15, 21, 28, 36, 45}
         *  \endcode
@@ -247,23 +247,23 @@ namespace bolt
             const std::string& user_code="" );
 
         /*! \brief exclusive_scan calculates a running sum over a range of values, exclusive of the current value.
-        *   The result value at iterator position \p i is the running sum of all values less than \p i in the input range
+        *   The result value at iterator position \p i is the running sum of all values less than \p i in the input range.
         *
-        * \param ctl A Bolt control object, to describe the environment the function should run under
-        * \param first The first iterator in the input range to be scanned
-        * \param last  The last iterator in the input range to be scanned
-        * \param result  The first iterator in the output range
-        * \param user_code A client specified string that will be appended to the generated OpenCL kernel
-        * \tparam InputIterator An iterater signifying the range is used as input
-        * \tparam OutputIterator An iterater signifying the range is used as output
-        * \return An iterator pointing at the end of the result range
+        * \param ctl A Bolt control object, to describe the environment under which the function runs.
+        * \param first The first iterator in the input range to be scanned.
+        * \param last  The last iterator in the input range to be scanned.
+        * \param result  The first iterator in the output range.
+        * \param user_code A client-specified string that is appended to the generated OpenCL kernel.
+        * \tparam InputIterator An iterator signifying the range is used as input.
+        * \tparam OutputIterator An iterator signifying the range is used as output.
+        * \return An iterator pointing at the end of the result range.
         *
         * \code
         * #include "bolt/cl/scan.h"
         *
         * int a[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
         *
-        * // Calculate the exclusive scan of an input range, modifying the values in-place
+        * // Calculate the exclusive scan of an input range, modifying the values in-place.
         * bolt::cl::exclusive_scan( a, a+10, a );
         * // a => {0, 1, 3, 6, 10, 15, 21, 28, 36, 45}
         *  \endcode
@@ -275,25 +275,25 @@ namespace bolt
             OutputIterator result, const std::string& user_code="" );
 
         /*! \brief exclusive_scan calculates a running sum over a range of values, exclusive of the current value.
-        *   The result value at iterator position \p i is the running sum of all values less than \p i in the input range
+        *   The result value at iterator position \p i is the running sum of all values less than \p i in the input range.
         *
-        * \param ctl A Bolt control object, to describe the environment the function should run under
-        * \param first The first iterator in the input range to be scanned
-        * \param last  The last iterator in the input range to be scanned
-        * \param result  The first iterator in the output range
-        * \param init  The value used to initialize the output scan sequence
-        * \param user_code A client specified string that will be appended to the generated OpenCL kernel
-        * \tparam InputIterator implements an input iterator
-        * \tparam OutputIterator implements an output iterator
-        * \tparam T should be convertible to std::iterator_traits< OutputIterator >::value_type
-        * \return An iterator pointing at the end of the result range
+        * \param ctl A Bolt control object, to describe the environment under which the function runs.
+        * \param first The first iterator in the input range to be scanned.
+        * \param last  The last iterator in the input range to be scanned.
+        * \param result  The first iterator in the output range.
+        * \param init  The value used to initialize the output scan sequence.
+        * \param user_code A client-specified string that is appended to the generated OpenCL kernel.
+        * \tparam InputIterator implements an input iterator.
+        * \tparam OutputIterator implements an output iterator.
+        * \tparam T is convertible to std::iterator_traits< OutputIterator >::value_type.
+        * \return An iterator pointing at the end of the result range.
         *
         * \code
         * #include "bolt/cl/scan.h"
         *
         * int a[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
         *
-        * // Calculate the exclusive scan of an input range, modifying the values in-place
+        * // Calculate the exclusive scan of an input range, modifying the values in-place.
         * bolt::cl::exclusive_scan( a, a+10, a, 0 );
         * // a => {0, 1, 3, 6, 10, 15, 21, 28, 36, 45}
         *  \endcode
@@ -305,20 +305,20 @@ namespace bolt
             const std::string& user_code="" );
 
         /*! \brief exclusive_scan calculates a running sum over a range of values, exclusive of the current value.
-        *   The result value at iterator position \p i is the running sum of all values less than \p i in the input range
+        *   The result value at iterator position \p i is the running sum of all values less than \p i in the input range.
         *
-        * \param ctl A Bolt control object, to describe the environment the function should run under
-        * \param first The first iterator in the input range to be scanned
-        * \param last  The last iterator in the input range to be scanned
-        * \param result  The first iterator in the output range
-        * \param binary_op A functor object specifying the operation between two elements in the input range
-        * \param user_code A client specified string that will be appended to the generated OpenCL kernel
-        * \tparam InputIterator An iterater signifying the range is used as input
-        * \tparam OutputIterator An iterater signifying the range is used as output
-        * \tparam T should be convertible to std::iterator_traits< OutputIterator >::value_type
-        * \tparam BinaryFunction implements a binary function and its result should be convertible to 
-        *   std::iterator_traits< OutputIterator >::value_type
-        * \return An iterator pointing at the end of the result range
+        * \param ctl A Bolt control object, to describe the environment under which the function runs.
+        * \param first The first iterator in the input range to be scanned.
+        * \param last  The last iterator in the input range to be scanned.
+        * \param result  The first iterator in the output range.
+        * \param binary_op A functor object specifying the operation between two elements in the input range.
+        * \param user_code A client-specified string that is appended to the generated OpenCL kernel.
+        * \tparam InputIterator An iterator signifying the range is used as input.
+        * \tparam OutputIterator An iterator signifying the range is used as output.
+        * \tparam T is convertible to std::iterator_traits< OutputIterator >::value_type.
+        * \tparam BinaryFunction implements a binary function; its result should be  {{** Is ? **}}convertible to 
+        *   std::iterator_traits< OutputIterator >::value_type.
+        * \return An iterator pointing at the end of the result range.
         *
         * \code
         * #include "bolt/cl/scan.h"

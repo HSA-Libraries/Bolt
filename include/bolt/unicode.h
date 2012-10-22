@@ -23,7 +23,7 @@
 #include <iostream>
 #include <sstream>
 
-//	These macros help linux cope with the conventions of windows tchar.h file
+//	These macros help linux cope with the conventions of windows tchar.h file.
 #if defined( _WIN32 )
 	#include <tchar.h>
 #else

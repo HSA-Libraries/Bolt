@@ -58,7 +58,7 @@ namespace bolt {
 		} 
 		else if( numElements < scanGpuThreshold )
 		{
-			//	This should be implemented in TBB as tbb::parallel_scan( range, body )
+			//	Implement this in TBB as tbb::parallel_scan( range, body )
 			//	Does not appear to have an implementation in PPL
 			//	TODO: Bring in the dependency to TBB and replace this STD call
 			return std::partial_sum( first, last, result, binary_op);
