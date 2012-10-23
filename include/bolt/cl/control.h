@@ -18,6 +18,7 @@
 #pragma once
 
 #include <CL/cl.hpp>
+#include <string>
 
 namespace bolt {
     namespace cl {
@@ -32,10 +33,10 @@ namespace bolt {
 
         /*! The \p control class lets you control the parameters of a specific Bolt algorithm call, 
          such as the command-queue where GPU kernels run, debug information, load-balancing with 
-		 the host, and more.  Each Bolt Algorithm call accepts the 
+         the host, and more.  Each Bolt Algorithm call accepts the 
         \p control class as an optional first argument.  Additionally, Bolt contains a global default
-		\p control structure that is used in cases where the \p control argument is not specified; also, 
-		developers can modify this structure.  Some examples:
+        \p control structure that is used in cases where the \p control argument is not specified; also, 
+        developers can modify this structure.  Some examples:
 
         * \code
         * cl::CommandQueue myCommandQueue = ...
@@ -65,7 +66,7 @@ namespace bolt {
 
 
         * Sometimes, it can be useful to set the global default \p control structure used by Bolt algorithms 
-		* calls that do not explicitly specify
+        * calls that do not explicitly specify
         * a control parameter as the first argument.  For example, the application initialization routine can examine 
         * all the available GPU devices and select the one to be used for all subsequent Bolt calls.  This can be 
         * done by writing the global default \p control structure, i.e.:
@@ -98,6 +99,12 @@ namespace bolt {
                 static const unsigned DebugKernelRun = 0x8;
                 static const unsigned AutoTune = 0x10;
             };
+
+            enum e_WaitMode {BalancedWait,	// Balance of Busy and Nice: tries to use Busy for short-running kernels.  \todo: Balanced currently maps to nice.
+                             NiceWait,		// Use an OS semaphore to detect completion status.
+                             BusyWait,		// Busy a CPU core continuously monitoring results.  Lowest-latency, but requires a dedicated core.
+                             ClFinish};		
+
         public:
 
             // Construct a new control structure, copying from default control for arguments that are not overridden.
@@ -113,7 +120,9 @@ namespace bolt {
                 m_autoTune(getDefault().m_autoTune),
                 m_wgPerComputeUnit(getDefault().m_wgPerComputeUnit),
                 m_compileOptions(getDefault().m_compileOptions),
-                m_compileForAllDevices(getDefault().m_compileForAllDevices)
+                m_compileForAllDevices(getDefault().m_compileForAllDevices),
+                m_waitMode(getDefault().m_waitMode),
+                m_unroll(getDefault().m_unroll)
             {};
 
             //setters:
@@ -147,8 +156,18 @@ namespace bolt {
             */
             void debug(unsigned debug) { m_debug = debug; };
 
-
+            /*! Set the work-groups-per-compute unit that will be used for reduction-style operations (reduce, transform_reduce).
+                Higher numbers can hide latency by improving the occupancy but will increase the amoutn of data that
+                has to be reduced in the final, less efficient step.  Experimentation may be required to find
+                the optimal point for a given algorithm and device; typically 8-12 will deliver good results */
             void wgPerComputeUnit(int wgPerComputeUnit) { m_wgPerComputeUnit = wgPerComputeUnit; }; 
+
+            /*! Set the method used to detect completion at the end of a Bolt routine. */
+            void waitMode(e_WaitMode waitMode) { m_waitMode = waitMode; };
+
+            void unroll(int unroll) { m_unroll = unroll; };
+
+
             
             //! 
             //! Specify the compile options passed to the OpenCL(TM) compiler.
@@ -164,7 +183,9 @@ namespace bolt {
             e_RunMode forceRunMode() const { return m_forceRunMode; };
             unsigned debug() const { return m_debug;};
             int const wgPerComputeUnit() const { return m_wgPerComputeUnit; };
-            const std::string compileOptions() const { return m_compileOptions; };  
+            const ::std::string compileOptions() const { return m_compileOptions; };  
+            e_WaitMode waitMode() const { return m_waitMode; };
+            int unroll() const { return m_unroll; };
 
             bool compileForAllDevices() const { return m_compileForAllDevices; };
 
@@ -212,7 +233,9 @@ namespace bolt {
                 m_debug(debug::None),
                 m_autoTune(AutoTuneAll),
                 m_wgPerComputeUnit(8),
-                m_compileForAllDevices(true)
+                m_compileForAllDevices(true),
+                m_waitMode(BalancedWait),
+                m_unroll(1)
             {};
 
             ::cl::CommandQueue  m_commandQueue;
@@ -221,8 +244,10 @@ namespace bolt {
             e_AutoTuneMode      m_autoTune;  /* auto-tune the choice of device CPU/GPU and  workgroup shape */
             unsigned            m_debug;
             int                 m_wgPerComputeUnit;
-            std::string         m_compileOptions;  // extra options to pass to OpenCL compiler.
+            ::std::string       m_compileOptions;  // extra options to pass to OpenCL compiler.
             bool                m_compileForAllDevices;  // compile for all devices in the context.  False means to only compile for specified device.
+            e_WaitMode			m_waitMode;
+            int					m_unroll;
         };
 
     };
