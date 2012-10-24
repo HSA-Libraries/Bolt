@@ -182,8 +182,18 @@ TYPED_TEST_P( TransformArrayTest, Normal )
 TYPED_TEST_P( TransformArrayTest, GPU_DeviceNormal )
 {
     typedef std::array< ArrayType, ArraySize > ArrayCont;
-    MyOclContext oclgpu = initOcl(CL_DEVICE_TYPE_GPU, 0);
-	bolt::cl::control c_gpu(oclgpu._queue);  // construct control structure from the queue.
+
+    //  The first time our routines get called, we compile the library kernels with a certain context
+    //  OpenCL does not allow the context to change without a recompile of the kernel
+    // MyOclContext oclgpu = initOcl(CL_DEVICE_TYPE_GPU, 0);
+    //bolt::cl::control c_gpu(oclgpu._queue);  // construct control structure from the queue.
+
+    //  Create a new command queue for a different device, but use the same context as was provided
+    //  by the default control device
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
+    std::vector< cl::Device > devices = myContext.getInfo< CL_CONTEXT_DEVICES >();
+    ::cl::CommandQueue myQueue( myContext, devices[ 0 ] );
+    bolt::cl::control c_gpu( myQueue );  // construct control structure from the queue.
 
     //  Calling the actual functions under test
     std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), stdOutput.begin( ), bolt::cl::plus<ArrayType>());
@@ -245,8 +255,18 @@ TYPED_TEST_P( TransformArrayTest, MultipliesFunction )
 TYPED_TEST_P( TransformArrayTest, GPU_DeviceMultipliesFunction )
 {
     typedef std::array< ArrayType, ArraySize > ArrayCont;
-    MyOclContext oclgpu = initOcl(CL_DEVICE_TYPE_GPU, 0);
-	bolt::cl::control c_gpu(oclgpu._queue);  // construct control structure from the queue.
+
+    //  The first time our routines get called, we compile the library kernels with a certain context
+    //  OpenCL does not allow the context to change without a recompile of the kernel
+    // MyOclContext oclgpu = initOcl(CL_DEVICE_TYPE_GPU, 0);
+    //bolt::cl::control c_gpu(oclgpu._queue);  // construct control structure from the queue.
+
+    //  Create a new command queue for a different device, but use the same context as was provided
+    //  by the default control device
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
+    std::vector< cl::Device > devices = myContext.getInfo< CL_CONTEXT_DEVICES >();
+    ::cl::CommandQueue myQueue( myContext, devices[ 0 ] );
+    bolt::cl::control c_gpu( myQueue );  // construct control structure from the queue.
 
     //  Calling the actual functions under test
     std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), stdOutput.begin( ), bolt::cl::multiplies<ArrayType>());
@@ -306,8 +326,18 @@ TYPED_TEST_P( TransformArrayTest, MinusFunction )
 TYPED_TEST_P( TransformArrayTest, GPU_DeviceMinusFunction )
 {
     typedef std::array< ArrayType, ArraySize > ArrayCont;
-    MyOclContext oclgpu = initOcl(CL_DEVICE_TYPE_GPU, 0);
-	bolt::cl::control c_gpu(oclgpu._queue);  // construct control structure from the queue.
+
+    //  The first time our routines get called, we compile the library kernels with a certain context
+    //  OpenCL does not allow the context to change without a recompile of the kernel
+    // MyOclContext oclgpu = initOcl(CL_DEVICE_TYPE_GPU, 0);
+    //bolt::cl::control c_gpu(oclgpu._queue);  // construct control structure from the queue.
+
+    //  Create a new command queue for a different device, but use the same context as was provided
+    //  by the default control device
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
+    std::vector< cl::Device > devices = myContext.getInfo< CL_CONTEXT_DEVICES >();
+    ::cl::CommandQueue myQueue( myContext, devices[ 0 ] );
+    bolt::cl::control c_gpu( myQueue );  // construct control structure from the queue.
 
     //  Calling the actual functions under test
     std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), stdOutput.begin( ), bolt::cl::minus<ArrayType>());
