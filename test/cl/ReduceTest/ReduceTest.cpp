@@ -17,6 +17,7 @@
 
 // TransformTest.cpp : Defines the entry point for the console application.
 //
+#define OCL_CONTEXT_BUG_WORKAROUND 1
 
 #include "stdafx.h"
 #include <bolt/cl/reduce.h>
@@ -27,7 +28,7 @@
 #include <algorithm>  // for testing against STL functions.
 #include <numeric>
 
-#include "myocl.h"
+#include "common/myocl.h"
 
 
 extern void testDeviceVector();
@@ -127,8 +128,18 @@ void simpleReduce_TestControl(int aSize, int numIters, int deviceIndex)
     //  Tests need to be a bit more sophisticated before hardcoding which device to use in a system (my default is device 1); 
     //  this should be configurable on the command line
     // Create an OCL context, device, queue.
-    MyOclContext ocl = initOcl(CL_DEVICE_TYPE_GPU, deviceIndex);
+
+
+	// FIXME - temporarily disable use of new control queue here:
+#if OCL_CONTEXT_BUG_WORKAROUND
+	::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
+    bolt::cl::control c( getQueueFromContext(myContext, CL_DEVICE_TYPE_GPU, 0 )); 
+#else
+	MyOclContext ocl = initOcl(CL_DEVICE_TYPE_GPU, deviceIndex);
     bolt::cl::control c(ocl._queue);  // construct control structure from the queue.
+#endif
+
+
     //printContext(c.context());
 
     c.debug(bolt::cl::control::debug::Compile + bolt::cl::control::debug::SaveCompilerTemps);

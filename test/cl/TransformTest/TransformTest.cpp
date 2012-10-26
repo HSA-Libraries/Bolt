@@ -1494,8 +1494,6 @@ void multiThreadReductions(int aSize, int iters)
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	//readFromFileTest();
-	
 	simpleTransform1(256); 
 	simpleTransform1(254); 
     simpleTransform1(23); 

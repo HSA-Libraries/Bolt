@@ -17,8 +17,10 @@
 
 #define TEST_DOUBLE 1
 #define TEST_DEVICE_VECTOR 1
-#define TEST_CPU_DEVICE 1
+#define TEST_CPU_DEVICE 0
 #define GOOGLE_TEST 1
+#define OCL_CONTEXT_BUG_WORKAROUND 1
+
 #if (GOOGLE_TEST == 1)
 
 #include "common/stdafx.h"
@@ -171,8 +173,13 @@ TYPED_TEST_P( TransformArrayTest, Normal )
 TYPED_TEST_P( TransformArrayTest, GPU_DeviceNormal )
 {
     typedef std::array< ArrayType, ArraySize > ArrayCont;
+#if OCL_CONTEXT_BUG_WORKAROUND
+	::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
+    bolt::cl::control c_gpu( getQueueFromContext(myContext, CL_DEVICE_TYPE_GPU, 0 ));  
+#else
     MyOclContext oclgpu = initOcl(CL_DEVICE_TYPE_GPU, 0);
     bolt::cl::control c_gpu(oclgpu._queue);  // construct control structure from the queue.
+#endif
 
     ArrayType init(0);
     //  Calling the actual functions under test
@@ -199,8 +206,14 @@ TYPED_TEST_P( TransformArrayTest, GPU_DeviceNormal )
 TYPED_TEST_P( TransformArrayTest, CPU_DeviceNormal )
 {
     typedef std::array< ArrayType, ArraySize > ArrayCont;
+
+#if OCL_CONTEXT_BUG_WORKAROUND
+	::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
+    bolt::cl::control c_cpu( getQueueFromContext(myContext, CL_DEVICE_TYPE_CPU, 0 ));  
+#else
     MyOclContext oclcpu = initOcl(CL_DEVICE_TYPE_CPU, 0);
     bolt::cl::control c_cpu(oclcpu._queue);  // construct control structure from the queue.
+#endif
 
     ArrayType init(0);
     //  Calling the actual functions under test
@@ -252,8 +265,14 @@ TYPED_TEST_P( TransformArrayTest, MultipliesFunction )
 TYPED_TEST_P( TransformArrayTest, GPU_DeviceMultipliesFunction )
 {
     typedef std::array< ArrayType, ArraySize > ArrayCont;
+#if OCL_CONTEXT_BUG_WORKAROUND
+	::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
+    bolt::cl::control c_gpu( getQueueFromContext(myContext, CL_DEVICE_TYPE_GPU, 0 ));  
+#else
     MyOclContext oclgpu = initOcl(CL_DEVICE_TYPE_GPU, 0);
     bolt::cl::control c_gpu(oclgpu._queue);  // construct control structure from the queue.
+#endif
+
 
     ArrayType init(0);
     //  Calling the actual functions under test
@@ -279,8 +298,13 @@ TYPED_TEST_P( TransformArrayTest, GPU_DeviceMultipliesFunction )
 TYPED_TEST_P( TransformArrayTest, CPU_DeviceMultipliesFunction )
 {
     typedef std::array< ArrayType, ArraySize > ArrayCont;
+#if OCL_CONTEXT_BUG_WORKAROUND
+	::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
+    bolt::cl::control c_cpu( getQueueFromContext(myContext, CL_DEVICE_TYPE_CPU, 0 ));  
+#else
     MyOclContext oclcpu = initOcl(CL_DEVICE_TYPE_CPU, 0);
     bolt::cl::control c_cpu(oclcpu._queue);  // construct control structure from the queue.
+#endif
 
     ArrayType init(0);
     //  Calling the actual functions under test

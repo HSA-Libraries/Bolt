@@ -31,5 +31,6 @@ struct MyOclContext {
 extern void printDevice(const cl::Device &d);
 extern void printContext(const cl::Context &c);
 extern MyOclContext initOcl(cl_int clDeviceType, int deviceIndex=0, int verbose=0) ;
+extern cl::CommandQueue getQueueFromContext(cl::Context context, cl_int clDeviceType, int deviceIndex) ;
 extern cl::Kernel compileKernelCpp(const MyOclContext &ocl, const char *kernelFile, const char *kernelName, std::string compileOpt);
 
