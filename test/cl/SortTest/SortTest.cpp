@@ -150,9 +150,19 @@ TYPED_TEST_P( SortArrayTest, Normal )
 
 TYPED_TEST_P( SortArrayTest, GPU_DeviceNormal )
 {
+    //  The first time our routines get called, we compile the library kernels with a certain context
+    //  OpenCL does not allow the context to change without a recompile of the kernel
+    // MyOclContext oclgpu = initOcl(CL_DEVICE_TYPE_GPU, 0);
+    //bolt::cl::control c_gpu(oclgpu._queue);  // construct control structure from the queue.
+
+    //  Create a new command queue for a different device, but use the same context as was provided
+    //  by the default control device
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
+    std::vector< cl::Device > devices = myContext.getInfo< CL_CONTEXT_DEVICES >();
+    ::cl::CommandQueue myQueue( myContext, devices[ 0 ] );
+    bolt::cl::control c_gpu( myQueue );  // construct control structure from the queue.
+
     typedef std::array< ArrayType, ArraySize > ArrayCont;
-    MyOclContext oclgpu = initOcl(CL_DEVICE_TYPE_GPU, 0);
-	bolt::cl::control c_gpu(oclgpu._queue);  // construct control structure from the queue.
 
     //  Calling the actual functions under test
     std::sort( stdInput.begin( ), stdInput.end( ));
@@ -173,6 +183,7 @@ TYPED_TEST_P( SortArrayTest, GPU_DeviceNormal )
 TYPED_TEST_P( SortArrayTest, CPU_DeviceNormal )
 {
     typedef std::array< ArrayType, ArraySize > ArrayCont;
+
     MyOclContext oclcpu = initOcl(CL_DEVICE_TYPE_CPU, 0);
 	bolt::cl::control c_cpu(oclcpu._queue);  // construct control structure from the queue.
 
@@ -215,8 +226,17 @@ TYPED_TEST_P( SortArrayTest, GreaterFunction )
 TYPED_TEST_P( SortArrayTest, GPU_DeviceGreaterFunction )
 {
     typedef std::array< ArrayType, ArraySize > ArrayCont;
-    MyOclContext oclgpu = initOcl(CL_DEVICE_TYPE_GPU, 0);
-	bolt::cl::control c_gpu(oclgpu._queue);  // construct control structure from the queue.
+    //  The first time our routines get called, we compile the library kernels with a certain context
+    //  OpenCL does not allow the context to change without a recompile of the kernel
+    // MyOclContext oclgpu = initOcl(CL_DEVICE_TYPE_GPU, 0);
+    //bolt::cl::control c_gpu(oclgpu._queue);  // construct control structure from the queue.
+
+    //  Create a new command queue for a different device, but use the same context as was provided
+    //  by the default control device
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
+    std::vector< cl::Device > devices = myContext.getInfo< CL_CONTEXT_DEVICES >();
+    ::cl::CommandQueue myQueue( myContext, devices[ 0 ] );
+    bolt::cl::control c_gpu( myQueue );  // construct control structure from the queue.
 
     //  Calling the actual functions under test
     std::sort( stdInput.begin( ), stdInput.end( ), std::greater< ArrayType >( ));
@@ -276,9 +296,17 @@ TYPED_TEST_P( SortArrayTest, LessFunction )
 TYPED_TEST_P( SortArrayTest, GPU_DeviceLessFunction )
 {
     typedef std::array< ArrayType, ArraySize > ArrayCont;
-    MyOclContext oclgpu = initOcl(CL_DEVICE_TYPE_GPU, 0);
-	bolt::cl::control c_gpu(oclgpu._queue);  // construct control structure from the queue.
+    //  The first time our routines get called, we compile the library kernels with a certain context
+    //  OpenCL does not allow the context to change without a recompile of the kernel
+    // MyOclContext oclgpu = initOcl(CL_DEVICE_TYPE_GPU, 0);
+    //bolt::cl::control c_gpu(oclgpu._queue);  // construct control structure from the queue.
 
+    //  Create a new command queue for a different device, but use the same context as was provided
+    //  by the default control device
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
+    std::vector< cl::Device > devices = myContext.getInfo< CL_CONTEXT_DEVICES >();
+    ::cl::CommandQueue myQueue( myContext, devices[ 0 ] ); 
+    bolt::cl::control c_gpu( myQueue );  // construct control structure from the queue.
     //  Calling the actual functions under test
     std::sort( stdInput.begin( ), stdInput.end( ), std::less< ArrayType >( ));
     bolt::cl::sort( c_gpu, boltInput.begin( ), boltInput.end( ), bolt::cl::less< ArrayType >( ) );
