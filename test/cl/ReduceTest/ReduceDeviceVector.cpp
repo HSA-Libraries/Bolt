@@ -19,7 +19,7 @@
 #include <bolt/cl/reduce.h>
 
 #include <numeric>
-#include "myocl.h"
+#include "common/myocl.h"
 
 void testDeviceVector()
 {

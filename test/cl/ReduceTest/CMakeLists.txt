@@ -17,8 +17,8 @@
 
 # List the names of common files to compile across all platforms
 
-set( clBolt.Test.Reduce.Source stdafx.cpp ReduceTest.cpp ReduceDeviceVector.cpp myocl.cpp)
-set( clBolt.Test.Reduce.Headers stdafx.h myocl.h targetver.h ${BOLT_INCLUDE_DIR}/bolt/cl/reduce.h )
+set( clBolt.Test.Reduce.Source stdafx.cpp ReduceTest.cpp ReduceDeviceVector.cpp ${BOLT_CL_TEST_DIR}/common/myocl.cpp) 
+set( clBolt.Test.Reduce.Headers stdafx.h ${BOLT_CL_TEST_DIR}/common/myocl.h targetver.h ${BOLT_INCLUDE_DIR}/bolt/cl/reduce.h )
 
 set( clBolt.Test.Reduce.Files ${clBolt.Test.Reduce.Source} ${clBolt.Test.Reduce.Headers} )
 

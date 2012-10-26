@@ -124,6 +124,22 @@ MyOclContext initOcl(cl_int clDeviceType, int deviceIndex, int verbose)
 };
 
 
+cl::CommandQueue getQueueFromContext(cl::Context context, cl_int clDeviceType, int deviceIndex) 
+{
+	std::vector< cl::Device > devices = context.getInfo< CL_CONTEXT_DEVICES >();
+	for (std::vector<cl::Device>::iterator iter=devices.begin(); iter != devices.end(); iter++) {
+		if (iter->getInfo<CL_DEVICE_TYPE>() == clDeviceType) {
+			if (--deviceIndex < 0) {
+				::cl::CommandQueue myQueue( context, *iter );
+				return myQueue;
+			}
+		}
+	}
+
+	throw;  // no suitable device found.
+}
+
+
 
 cl::Kernel compileKernelCpp(const MyOclContext &ocl, const char *kernelFile, const char *kernelName, std::string compileOpt)
 {

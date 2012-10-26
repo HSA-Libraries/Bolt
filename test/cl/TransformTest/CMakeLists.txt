@@ -18,15 +18,14 @@
 # List the names of common files to compile across all platforms
 set( clBolt.Test.Transform.Source ${BOLT_CL_TEST_DIR}/common/stdafx.cpp 
                                   ${BOLT_CL_TEST_DIR}/common/myocl.cpp
-                                  TransformTest.cpp 
-                                  ReadFromFile.cpp )
+                                  TransformTest.cpp )
 set( clBolt.Test.Transform.Headers ${BOLT_CL_TEST_DIR}/common/stdafx.h 
                                    ${BOLT_CL_TEST_DIR}/common/targetver.h 
                                    ${BOLT_CL_TEST_DIR}/common/myocl.h 
                                    ${BOLT_INCLUDE_DIR}/bolt/cl/transform.h 
                                    ${BOLT_INCLUDE_DIR}/bolt/cl/detail/transform.inl
                                    utils.h 
-                                   saxpy_functor.h )
+                                   )
 
 set( clBolt.Test.Transform.Files ${clBolt.Test.Transform.Source} ${clBolt.Test.Transform.Headers} )
 
@@ -55,11 +54,9 @@ install( TARGETS clBolt.Test.Transform
     )
 
 install( FILES       
-         saxpy_functor.h   DESTINATION ${BIN_DIR} 
          )
 
 install( FILES       
-         saxpy_functor.h DESTINATION ${PROJECT_BINARY_DIR}/staging/\${CMAKE_INSTALL_CONFIG_NAME} 
          )
 
 
