@@ -185,7 +185,7 @@ namespace bolt {
                 // Use host pointers memory since these arrays are only read once - no benefit to copying.
 
                 // Map the input iterator to a device_vector
-                device_vector< iType > dvInput( first1, last1, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctl );
+                device_vector< iType > dvInput( first1, last1, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, ctl );
                 device_vector< iType > dvInput2( first2, sz, CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, true, ctl );
 
                 // Map the output iterator to a device_vector
