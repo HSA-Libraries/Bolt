@@ -224,13 +224,18 @@ namespace bolt {
                     ::cl::NDRange(wgSize));
                 V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for reduce() kernel" );
 
-                iType *h_result = (iType*)ctl.commandQueue().enqueueMapBuffer(result, true, CL_MAP_READ, 0, sizeof(iType)*numWG, NULL, NULL, &l_Error );
+                ::cl::Event l_mapEvent;
+                iType *h_result = (iType*)ctl.commandQueue().enqueueMapBuffer(result, false, CL_MAP_READ, 0, sizeof(iType)*numWG, NULL, &l_mapEvent, &l_Error );
                 V_OPENCL( l_Error, "Error calling map on the result buffer" );
+
+
 
                 //  Finish the tail end of the reduction on host side; the compute device reduces within the workgroups, with one result per workgroup
                 size_t ceilNumWG = static_cast< size_t >( std::ceil( static_cast< float >( szElements ) / wgSize) );
 				bolt::cl::minimum<size_t>  min_size_t;
                 size_t numTailReduce = min_size_t( ceilNumWG, numWG );
+
+                bolt::cl::wait(ctl, l_mapEvent);
 
                 iType acc = static_cast< iType >( init );
                 for(int i = 0; i < numTailReduce; ++i)
@@ -238,7 +243,6 @@ namespace bolt {
                     acc = binary_op(acc, h_result[i]);
                 }
 
-                V_OPENCL( ctl.commandQueue().enqueueUnmapMemObject( result, h_result ), "Error unmapping the result buffer" );
                 return acc;
             };
         }

@@ -315,8 +315,7 @@ namespace bolt {
                     &transformEvent );
                 V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for transform() kernel" );
 
-                l_Error = transformEvent.wait( );
-                V_OPENCL( l_Error, "perBlockInclusiveScan failed to wait" );
+                bolt::cl::wait(ctl, transformEvent);
             };
 
             template< typename DVInputIterator, typename DVOutputIterator, typename UnaryFunction > 
@@ -383,8 +382,7 @@ namespace bolt {
                     &transformEvent );
                 V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for transform() kernel" );
 
-                l_Error = transformEvent.wait( );
-                V_OPENCL( l_Error, "perBlockInclusiveScan failed to wait" );
+                bolt::cl::wait(ctl, transformEvent);
             };
         }//End OF detail namespace
     }//End OF cl namespace

@@ -220,8 +220,6 @@ namespace bolt {
                 loc.size_ = wgSize*sizeof(T);
                 V_OPENCL( k.setArg(6, loc), "Error setting kernel argument" );
 
-                // FIXME.  Need to ensure global size is a multiple of local WG size ,etc.
-                // FIXME. Need to ensure that only required amount of work groups are spawned.
                 l_Error = ctl.commandQueue().enqueueNDRangeKernel( 
                     k, 
                     ::cl::NullRange, 
@@ -231,20 +229,18 @@ namespace bolt {
                                 NULL);
                 V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for transform_reduce() kernel" );
 
-                V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
-                // FIXME: replace with map:
-                // FIXME: Note this depends on supplied functor having a version which can be compiled to run on the CPU
                 std::vector<T> outputArray(resultCnt);
 
-                T *h_result = (T*)ctl.commandQueue().enqueueMapBuffer(result, true, CL_MAP_READ, 0, sizeof(T)*resultCnt, NULL, NULL, &l_Error );
+                ::cl::Event l_mapEvent;
+                T *h_result = (T*)ctl.commandQueue().enqueueMapBuffer(result, false, CL_MAP_READ, 0, sizeof(T)*resultCnt, NULL, &l_mapEvent, &l_Error );
                 V_OPENCL( l_Error, "Error calling map on the result buffer" );
+                bolt::cl::wait(ctl, l_mapEvent);
 
                 T acc = init;
                 for(int i = 0; i < resultCnt; ++i){
                     acc = reduce_op( acc, h_result[i] );
                 }
 
-                V_OPENCL( ctl.commandQueue().enqueueUnmapMemObject( result, h_result ), "Error unmapping the result buffer" );
 
                 return acc;
             };

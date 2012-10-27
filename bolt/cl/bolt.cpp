@@ -355,7 +355,7 @@ namespace bolt {
         try
         {
             compileOptions += c.compileOptions();
-            compileOptions += " -x clc++";
+            compileOptions += " -x clc++  -cl-std=CL1.2";
 
             if (c.compileForAllDevices()) {
                 std::vector<::cl::Device> devices = c.context().getInfo<CL_CONTEXT_DEVICES>();
