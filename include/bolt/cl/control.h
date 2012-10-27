@@ -103,7 +103,8 @@ namespace bolt {
             enum e_WaitMode {BalancedWait,	// Balance of Busy and Nice: tries to use Busy for short-running kernels.  \todo: Balanced currently maps to nice.
                              NiceWait,		// Use an OS semaphore to detect completion status.
                              BusyWait,		// Busy a CPU core continuously monitoring results.  Lowest-latency, but requires a dedicated core.
-                             ClFinish};		
+                             ClFinish,      // Call clFinish on the queue.
+            };		
 
         public:
 
@@ -234,7 +235,7 @@ namespace bolt {
                 m_autoTune(AutoTuneAll),
                 m_wgPerComputeUnit(8),
                 m_compileForAllDevices(true),
-                m_waitMode(BalancedWait),
+                m_waitMode(BusyWait),
                 m_unroll(1)
             {};
 
