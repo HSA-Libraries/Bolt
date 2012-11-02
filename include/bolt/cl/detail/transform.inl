@@ -83,7 +83,7 @@ namespace bolt {
                         "global " + inValueTypeName + "* A,\n"
                         "global " + inValueTypeName + "* B,\n"
                         "global " + outValueTypeName + "* Z,\n"
-                        "const int length,\n"
+                        "const uint length,\n"
                         "global " + functorTypeName + "* userFunctor);\n\n"
 
                  
@@ -93,7 +93,7 @@ namespace bolt {
                         "global " + inValueTypeName + "* A,\n"
                         "global " + inValueTypeName + "* B,\n"
                         "global " + outValueTypeName + "* Z,\n"
-                        "const int length,\n"
+                        "const uint length,\n"
                         "global " + functorTypeName + "* userFunctor);\n\n";
 
                     bolt::cl::compileKernelsString( *kernels, kernelNames, transform_kernels, instantiationString, cl_code, inValueTypeName,  functorTypeName, *ctl);
@@ -103,28 +103,26 @@ namespace bolt {
                 static void init_(std::vector< ::cl::Kernel >* kernels, std::string cl_code, std::string inValueTypeName, std::string outValueTypeName, std::string functorTypeName, const control *ctl) {
 
                     std::vector< const std::string > kernelNames;
-                    kernelNames.push_back( "transform" );
-                    kernelNames.push_back( "transformNoBoundsCheck" );
-
+                    kernelNames.push_back( "unaryTransform" );
+                    kernelNames.push_back( "unaryTransformNoBoundsCheck" );
 
                     std::string instantiationString = 
                         "// Host generates this instantiation string with user-specified value type and functor\n"
-                        "template __attribute__((mangled_name(transformInstantiated)))\n"
+                        "template __attribute__((mangled_name(unaryTransformInstantiated)))\n"
                         "kernel void unaryTransformTemplate(\n"
                         "global " + inValueTypeName + "* A,\n"
                         "global " + outValueTypeName + "* Z,\n"
-                        "const int length,\n"
+                        "const uint length,\n"
                         "global " + functorTypeName + "* userFunctor);\n\n"
 
                                                 "// Host generates this instantiation string with user-specified value type and functor\n"
-                        "template __attribute__((mangled_name(transformNoBoundsCheckInstantiated)))\n"
+                        "template __attribute__((mangled_name(unaryTransformNoBoundsCheckInstantiated)))\n"
                         "kernel void unaryTransformNoBoundsCheckTemplate(\n"
                         "global " + inValueTypeName + "* A,\n"
                         "global " + outValueTypeName + "* Z,\n"
-                        "const int length,\n"
+                        "const uint length,\n"
                         "global " + functorTypeName + "* userFunctor);\n\n"
                         ;
-
 
                     bolt::cl::compileKernelsString( *kernels, kernelNames, transform_kernels, instantiationString, cl_code, inValueTypeName,  functorTypeName, *ctl);
                 };
@@ -233,7 +231,7 @@ namespace bolt {
                 // Map the input iterator to a device_vector
                 device_vector< iType > dvInput( first, last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctl );
                 // Map the output iterator to a device_vector
-                device_vector< oType > dvOutput( result, sz, CL_MEM_USE_HOST_PTR|CL_MEM_WRITE_ONLY, false, ctl );
+                device_vector< oType > dvOutput( result, sz, CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY, false, ctl );
 
                 transform_unary_enqueue( ctl, dvInput.begin( ), dvInput.end( ), dvOutput.begin( ), f, user_code );
 
@@ -260,8 +258,9 @@ namespace bolt {
             {
                 typedef std::iterator_traits<DVInputIterator>::value_type iType;
                 typedef std::iterator_traits<DVOutputIterator>::value_type oType;
-                size_t sz = std::distance( first1, last1 );
-                if (sz == 0)
+
+                cl_uint distVec = static_cast< cl_uint >( std::distance( first1, last1 ) );
+                if( distVec == 0 )
                     return;
 
                 //typedef std::aligned_storage< sizeof( UnaryFunction ), 256 >::type alignedUnary;
@@ -279,37 +278,40 @@ namespace bolt {
                     boost::call_once( initOnlyOnce, boost::bind( CallCompiler_BinaryTransform::init_, &binaryTransformKernels, cl_code + ClCode<iType>::get() + ClCode<oType>::get() + ClCode<BinaryFunction>::get(), TypeName< iType >::get( ), TypeName< oType >::get( ), TypeName< BinaryFunction >::get( ), &ctl ) );
                 }
 
-                const ::cl::Kernel kernelWithBoundsCheck = binaryTransformKernels[0];
-                const ::cl::Kernel kernelNoBoundsCheck   = binaryTransformKernels[1];
+                const ::cl::Kernel& kernelWithBoundsCheck = binaryTransformKernels[0];
+                const ::cl::Kernel& kernelNoBoundsCheck   = binaryTransformKernels[1];
+                ::cl::Kernel k;
 
                 cl_int l_Error = CL_SUCCESS;
                 const size_t wgSize  = kernelNoBoundsCheck.getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.device( ), &l_Error );
                 V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
+                assert( (wgSize & (wgSize-1) ) == 0 ); // The bitwise &,~ logic below requires wgSize to be a power of 2
 
-                ::cl::Kernel k;
- 
-                if ((sz % wgSize) != 0)
+                size_t wgMultiple = distVec;
+                size_t lowerBits = ( distVec & (wgSize-1) );
+                if( lowerBits )
                 {
-                    sz = sz + (wgSize - (sz % wgSize));
+                    //  Bump the workitem count to the next multiple of wgSize
+                    wgMultiple &= ~lowerBits;
+                    wgMultiple += wgSize;
                     k = kernelWithBoundsCheck;
-                } else if(sz < wgSize) {
-                    sz = wgSize;
-                    k = kernelWithBoundsCheck;
-                } else {
+                }
+                else
+                {
                     k = kernelNoBoundsCheck;
                 }
 
                 k.setArg(0, first1->getBuffer( ) );
                 k.setArg(1, first2->getBuffer( ) );
                 k.setArg(2, result->getBuffer( ) );
-                k.setArg(3, static_cast< cl_uint >( sz ) );
+                k.setArg(3, distVec );
                 k.setArg(4, userFunctor);
 
                 ::cl::Event transformEvent;
                 l_Error = ctl.commandQueue().enqueueNDRangeKernel(
                     k, 
                     ::cl::NullRange, 
-                    ::cl::NDRange(sz), 
+                    ::cl::NDRange(wgMultiple),
                     ::cl::NDRange(wgSize),
                     NULL,
                     &transformEvent );
@@ -325,8 +327,8 @@ namespace bolt {
                 typedef std::iterator_traits<DVInputIterator>::value_type iType;
                 typedef std::iterator_traits<DVOutputIterator>::value_type oType;
 
-                size_t sz = std::distance( first, last );
-                if (sz == 0)
+                cl_uint distVec = static_cast< cl_uint >( std::distance( first, last ) );
+                if( distVec == 0 )
                     return;
 
                 //typedef std::aligned_storage< sizeof( UnaryFunction ), 256 >::type alignedUnary;
@@ -344,23 +346,26 @@ namespace bolt {
                     boost::call_once( initOnlyOnce, boost::bind( CallCompiler_UnaryTransform::init_, &unaryTransformKernels, cl_code + ClCode<iType>::get() + ClCode<oType>::get() + ClCode<UnaryFunction>::get(), TypeName< iType >::get( ), TypeName< oType >::get( ), TypeName< UnaryFunction >::get( ), &ctl ) );
                 }
 
-                ::cl::Kernel &kernelWithBoundsCheck = unaryTransformKernels[0];
-                ::cl::Kernel &kernelNoBoundsCheck   = unaryTransformKernels[1];
-
+                const ::cl::Kernel& kernelWithBoundsCheck = unaryTransformKernels[0];
+                const ::cl::Kernel& kernelNoBoundsCheck   = unaryTransformKernels[1];
+                ::cl::Kernel k;
 
                 cl_int l_Error = CL_SUCCESS;
                 const size_t wgSize  = kernelWithBoundsCheck.getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.device( ), &l_Error );
                 V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
+                assert( (wgSize & (wgSize-1) ) == 0 ); // The bitwise &,~ logic below requires wgSize to be a power of 2
 
-                ::cl::Kernel k;
-
-                if ((sz % wgSize) != 0) {
-                    sz = sz + (wgSize - (sz % wgSize));
+                size_t wgMultiple = distVec;
+                size_t lowerBits = ( distVec & (wgSize-1) );
+                if( lowerBits )
+                {
+                    //  Bump the workitem count to the next multiple of wgSize
+                    wgMultiple &= ~lowerBits;
+                    wgMultiple += wgSize;
                     k = kernelWithBoundsCheck;
-                } else if(sz < wgSize) {  
-                    sz = wgSize;
-                    k = kernelWithBoundsCheck; 
-                } else {
+                }
+                else
+                {
                     k = kernelNoBoundsCheck;
                 }
 
@@ -369,14 +374,14 @@ namespace bolt {
 
                 k.setArg(0, first->getBuffer( ) );
                 k.setArg(1, result->getBuffer( ) );
-                k.setArg(2, static_cast< cl_uint >( sz ) );
+                k.setArg(2, distVec );
                 k.setArg(3, userFunctor);
 
                 ::cl::Event transformEvent;
                 l_Error = ctl.commandQueue().enqueueNDRangeKernel(
                     k, 
                     ::cl::NullRange, 
-                    ::cl::NDRange(sz), 
+                    ::cl::NDRange(wgMultiple), 
                     ::cl::NDRange(wgSize),
                     NULL,
                     &transformEvent );

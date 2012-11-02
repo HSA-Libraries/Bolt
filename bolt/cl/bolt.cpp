@@ -396,7 +396,7 @@ namespace bolt {
     }
 
     void constructAndCompile(::cl::Kernel *masterKernel, const std::string &apiName, const std::string instantiationString, std::string userCode, std::string valueTypeName,  std::string functorTypeName, const control &c) 
-	{
+    {
         std::string templateFunctionString = bolt::cl::fileToString( apiName + "_kernels.cl"); 
 
         std::string codeStr = userCode + "\n\n" + templateFunctionString +   instantiationString;
@@ -532,17 +532,17 @@ namespace bolt {
             std::cout << "debug: compiling" << " with valueType='" << valueTypeName << "'" << " ;  functorType='" << functorTypeName << "'" << std::endl;
         }
 
-		try {
-			::cl::Program clProgram = buildProgram( codeStr, compileOptions, ctl );
+        try {
+            ::cl::Program clProgram = buildProgram( codeStr, compileOptions, ctl );
 
-			for( size_t k = 0; k < kernelNames.size( ); ++k )
-			{
-				std::string kernelName = kernelNames[ k ] + "Instantiated";
-				clKernels.push_back( ::cl::Kernel( clProgram, kernelName.c_str( ) ) );
-			} 
-		}  catch(::cl::Error e) {
-			std::cerr << "clBuildProgram failed in compileKernelsString.  Code=" << e.err() << "\n";
-		}
+            for( size_t k = 0; k < kernelNames.size( ); ++k )
+            {
+                std::string kernelName = kernelNames[ k ] + "Instantiated";
+                clKernels.push_back( ::cl::Kernel( clProgram, kernelName.c_str( ) ) );
+            } 
+        }  catch(::cl::Error e) {
+            std::cerr << "clBuildProgram failed in compileKernelsString.  Code=" << e.err() << "\n";
+        }
 
     };
 
@@ -571,23 +571,24 @@ namespace bolt {
     };
 
 
-	void wait(const bolt::cl::control &ctl, ::cl::Event &e) 
-	{
-		::cl::CommandQueue q = ctl.commandQueue();
-		const bolt::cl::control::e_WaitMode waitMode = ctl.waitMode();
-		if (waitMode == bolt::cl::control::BusyWait) {
-			q.flush();
-			while (e.getInfo<CL_EVENT_COMMAND_EXECUTION_STATUS>() != CL_COMPLETE) {
-				// spin here for fast completion detection...
-			};
-		} else if ((waitMode == bolt::cl::control::NiceWait) || (waitMode == bolt::cl::control::BalancedWait)) {
-			cl_int l_Error = e.wait();
-			V_OPENCL( l_Error, "wait call failed" );
-		} else if (waitMode == bolt::cl::control::ClFinish) {
-			cl_int l_Error = q.finish();
-			V_OPENCL( l_Error, "clFinish call failed" );
-		}
-	};
+    void wait(const bolt::cl::control &ctl, ::cl::Event &e) 
+    {
+        const bolt::cl::control::e_WaitMode waitMode = ctl.waitMode();
+        if (waitMode == bolt::cl::control::BusyWait) {
+            const ::cl::CommandQueue& q = ctl.commandQueue();
+            q.flush();
+            while (e.getInfo<CL_EVENT_COMMAND_EXECUTION_STATUS>() != CL_COMPLETE) {
+                // spin here for fast completion detection...
+            };
+        } else if ((waitMode == bolt::cl::control::NiceWait) || (waitMode == bolt::cl::control::BalancedWait)) {
+            cl_int l_Error = e.wait();
+            V_OPENCL( l_Error, "wait call failed" );
+        } else if (waitMode == bolt::cl::control::ClFinish) {
+            const ::cl::CommandQueue& q = ctl.commandQueue();
+            cl_int l_Error = q.finish();
+            V_OPENCL( l_Error, "clFinish call failed" );
+        }
+    };
 
     }; //namespace bolt::cl
 }; // namespace bolt
