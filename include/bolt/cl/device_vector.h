@@ -74,8 +74,11 @@ namespace bolt
 
                 void operator( )( const void* pBuff )
                 {
-                    V_OPENCL( m_Container.m_commQueue.enqueueUnmapMemObject( m_Container.m_devMemory, const_cast< void* >( pBuff ) ),
+                    ::cl::Event unmapEvent;
+
+                    V_OPENCL( m_Container.m_commQueue.enqueueUnmapMemObject( m_Container.m_devMemory, const_cast< void* >( pBuff ), NULL, &unmapEvent ),
                             "shared_ptr failed to unmap host memory back to device memory" );
+                    V_OPENCL( unmapEvent.wait( ), "failed to wait for unmap event" );
                 }
             };
 
@@ -117,7 +120,9 @@ namespace bolt
 
                     value_type valTmp = *result;
 
-                    V_OPENCL( m_Container.m_commQueue.enqueueUnmapMemObject( m_Container.m_devMemory, result ), "device_vector failed to unmap host memory back to device memory" );
+                    ::cl::Event unmapEvent;
+                    V_OPENCL( m_Container.m_commQueue.enqueueUnmapMemObject( m_Container.m_devMemory, result, NULL, &unmapEvent ), "device_vector failed to unmap host memory back to device memory" );
+                    V_OPENCL( unmapEvent.wait( ), "failed to wait for unmap event" );
 
                     return valTmp;
                 }
@@ -131,7 +136,9 @@ namespace bolt
 
                     *result = rhs;
 
-                    V_OPENCL( m_Container.m_commQueue.enqueueUnmapMemObject( m_Container.m_devMemory, result ), "device_vector failed to unmap host memory back to device memory" );
+                    ::cl::Event unmapEvent;
+                    V_OPENCL( m_Container.m_commQueue.enqueueUnmapMemObject( m_Container.m_devMemory, result, NULL, &unmapEvent ), "device_vector failed to unmap host memory back to device memory" );
+                    V_OPENCL( unmapEvent.wait( ), "failed to wait for unmap event" );
 
                     return *this;
                 }
@@ -638,8 +645,10 @@ namespace bolt
 
                 const_reference tmpRef = *ptrBuff;
 
-                l_Error = m_commQueue.enqueueUnmapMemObject( m_devMemory, ptrBuff );
+                ::cl::Event unmapEvent;
+                l_Error = m_commQueue.enqueueUnmapMemObject( m_devMemory, ptrBuff, NULL, &unmapEvent );
                 V_OPENCL( l_Error, "device_vector failed to unmap host memory back to device memory" );
+                V_OPENCL( unmapEvent.wait( ), "failed to wait for unmap event" );
 
                 return tmpRef;
             }
@@ -754,8 +763,10 @@ namespace bolt
 
                 const_reference tmpRef = *ptrBuff;
 
-                l_Error = m_commQueue.enqueueUnmapMemObject( m_devMemory, ptrBuff );
+                ::cl::Event unmapEvent;
+                l_Error = m_commQueue.enqueueUnmapMemObject( m_devMemory, ptrBuff, NULL, &unmapEvent );
                 V_OPENCL( l_Error, "device_vector failed to unmap host memory back to device memory" );
+                V_OPENCL( unmapEvent.wait( ), "failed to wait for unmap event" );
 
                 return tmpRef;
             }
@@ -781,8 +792,10 @@ namespace bolt
 
                 const_reference tmpRef = *ptrBuff;
 
-                l_Error = m_commQueue.enqueueUnmapMemObject( m_devMemory, ptrBuff );
+                ::cl::Event unmapEvent;
+                l_Error = m_commQueue.enqueueUnmapMemObject( m_devMemory, ptrBuff, NULL, &unmapEvent );
                 V_OPENCL( l_Error, "device_vector failed to unmap host memory back to device memory" );
+                V_OPENCL( unmapEvent.wait( ), "failed to wait for unmap event" );
 
                 return tmpRef;
             }
@@ -857,8 +870,10 @@ namespace bolt
                 V_OPENCL( l_Error, "device_vector failed map device memory to host memory for push_back" );
                 *result = value;
 
-                l_Error = m_commQueue.enqueueUnmapMemObject( m_devMemory, result );
+                ::cl::Event unmapEvent;
+                l_Error = m_commQueue.enqueueUnmapMemObject( m_devMemory, result, NULL, &unmapEvent );
                 V_OPENCL( l_Error, "device_vector failed to unmap host memory back to device memory" );
+                V_OPENCL( unmapEvent.wait( ), "failed to wait for unmap event" );
 
                 ++m_Size;
             }
@@ -920,8 +935,10 @@ namespace bolt
 
                 ::memmove( ptrBuff, ptrBuff + 1, (sizeRegion - 1)*sizeof( value_type ) );
 
-                l_Error = m_commQueue.enqueueUnmapMemObject( m_devMemory, ptrBuff );
+                ::cl::Event unmapEvent;
+                l_Error = m_commQueue.enqueueUnmapMemObject( m_devMemory, ptrBuff, NULL, &unmapEvent );
                 V_OPENCL( l_Error, "device_vector failed to unmap host memory back to device memory" );
+                V_OPENCL( unmapEvent.wait( ), "failed to wait for unmap event" );
 
                 --m_Size;
 
@@ -959,8 +976,10 @@ namespace bolt
                 size_type sizeErase = last.m_index - first.m_index;
                 ::memmove( ptrBuff, ptrBuff + sizeErase, (sizeMap - sizeErase)*sizeof( value_type ) );
 
-                l_Error = m_commQueue.enqueueUnmapMemObject( m_devMemory, ptrBuff );
+                ::cl::Event unmapEvent;
+                l_Error = m_commQueue.enqueueUnmapMemObject( m_devMemory, ptrBuff, NULL, &unmapEvent );
                 V_OPENCL( l_Error, "device_vector failed to unmap host memory back to device memory" );
+                V_OPENCL( unmapEvent.wait( ), "failed to wait for unmap event" );
 
                 m_Size -= sizeErase;
 
@@ -1010,8 +1029,10 @@ namespace bolt
                 //  Write the new value in its place
                 *ptrBuff = value;
 
-                l_Error = m_commQueue.enqueueUnmapMemObject( m_devMemory, ptrBuff );
+                ::cl::Event unmapEvent;
+                l_Error = m_commQueue.enqueueUnmapMemObject( m_devMemory, ptrBuff, NULL, &unmapEvent );
                 V_OPENCL( l_Error, "device_vector failed to unmap host memory back to device memory" );
+                V_OPENCL( unmapEvent.wait( ), "failed to wait for unmap event" );
 
                 ++m_Size;
 
@@ -1057,8 +1078,10 @@ namespace bolt
                     ptrBuff[ i ] = value;
                 }
 
-                l_Error = m_commQueue.enqueueUnmapMemObject( m_devMemory, ptrBuff );
+                ::cl::Event unmapEvent;
+                l_Error = m_commQueue.enqueueUnmapMemObject( m_devMemory, ptrBuff, NULL, &unmapEvent );
                 V_OPENCL( l_Error, "device_vector failed to unmap host memory back to device memory" );
+                V_OPENCL( unmapEvent.wait( ), "failed to wait for unmap event" );
 
                 m_Size += n;
             }
@@ -1096,8 +1119,10 @@ namespace bolt
                 std::copy( begin, end, ptrBuff );
 #endif
 
-                l_Error = m_commQueue.enqueueUnmapMemObject( m_devMemory, ptrBuff );
+                ::cl::Event unmapEvent;
+                l_Error = m_commQueue.enqueueUnmapMemObject( m_devMemory, ptrBuff, NULL, &unmapEvent );
                 V_OPENCL( l_Error, "device_vector failed to unmap host memory back to device memory" );
+                V_OPENCL( unmapEvent.wait( ), "failed to wait for unmap event" );
 
                 m_Size += n;
             }
@@ -1152,8 +1177,10 @@ namespace bolt
 #else
                 std::copy( begin, end, ptrBuffer );
 #endif
-                l_Error = m_commQueue.enqueueUnmapMemObject( m_devMemory, ptrBuffer );
+                ::cl::Event unmapEvent;
+                l_Error = m_commQueue.enqueueUnmapMemObject( m_devMemory, ptrBuff, NULL, &unmapEvent );
                 V_OPENCL( l_Error, "device_vector failed to unmap host memory back to device memory" );
+                V_OPENCL( unmapEvent.wait( ), "failed to wait for unmap event" );
             }
 
         private:

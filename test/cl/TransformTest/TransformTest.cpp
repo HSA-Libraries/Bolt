@@ -399,8 +399,18 @@ TYPED_TEST_P( UnaryTransformArrayTest, Normal )
 TYPED_TEST_P( UnaryTransformArrayTest, GPU_DeviceNormal )
 {
     typedef std::array< ArrayType, ArraySize > ArrayCont;
-    MyOclContext oclgpu = initOcl(CL_DEVICE_TYPE_GPU, 0);
-	bolt::cl::control c_gpu(oclgpu._queue);  // construct control structure from the queue.
+
+    //  The first time our routines get called, we compile the library kernels with a certain context
+    //  OpenCL does not allow the context to change without a recompile of the kernel
+    // MyOclContext oclgpu = initOcl(CL_DEVICE_TYPE_GPU, 0);
+    //bolt::cl::control c_gpu(oclgpu._queue);  // construct control structure from the queue.
+
+    //  Create a new command queue for a different device, but use the same context as was provided
+    //  by the default control device
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
+    std::vector< cl::Device > devices = myContext.getInfo< CL_CONTEXT_DEVICES >();
+    ::cl::CommandQueue myQueue( myContext, devices[ 0 ] );
+    bolt::cl::control c_gpu( myQueue );  // construct control structure from the queue.
 
     //  Calling the actual functions under test
     std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), bolt::cl::negate<ArrayType>());
@@ -461,8 +471,18 @@ TYPED_TEST_P( UnaryTransformArrayTest, MultipliesFunction )
 TYPED_TEST_P( UnaryTransformArrayTest, GPU_DeviceMultipliesFunction )
 {
     typedef std::array< ArrayType, ArraySize > ArrayCont;
-    MyOclContext oclgpu = initOcl(CL_DEVICE_TYPE_GPU, 0);
-	bolt::cl::control c_gpu(oclgpu._queue);  // construct control structure from the queue.
+
+    //  The first time our routines get called, we compile the library kernels with a certain context
+    //  OpenCL does not allow the context to change without a recompile of the kernel
+    // MyOclContext oclgpu = initOcl(CL_DEVICE_TYPE_GPU, 0);
+    //bolt::cl::control c_gpu(oclgpu._queue);  // construct control structure from the queue.
+
+    //  Create a new command queue for a different device, but use the same context as was provided
+    //  by the default control device
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
+    std::vector< cl::Device > devices = myContext.getInfo< CL_CONTEXT_DEVICES >();
+    ::cl::CommandQueue myQueue( myContext, devices[ 0 ] );
+    bolt::cl::control c_gpu( myQueue );  // construct control structure from the queue.
 
     //  Calling the actual functions under test
     std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), bolt::cl::square<ArrayType>());
@@ -522,8 +542,18 @@ TYPED_TEST_P( UnaryTransformArrayTest, MinusFunction )
 TYPED_TEST_P( UnaryTransformArrayTest, GPU_DeviceMinusFunction )
 {
     typedef std::array< ArrayType, ArraySize > ArrayCont;
-    MyOclContext oclgpu = initOcl(CL_DEVICE_TYPE_GPU, 0);
-	bolt::cl::control c_gpu(oclgpu._queue);  // construct control structure from the queue.
+
+    //  The first time our routines get called, we compile the library kernels with a certain context
+    //  OpenCL does not allow the context to change without a recompile of the kernel
+    // MyOclContext oclgpu = initOcl(CL_DEVICE_TYPE_GPU, 0);
+    //bolt::cl::control c_gpu(oclgpu._queue);  // construct control structure from the queue.
+
+    //  Create a new command queue for a different device, but use the same context as was provided
+    //  by the default control device
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
+    std::vector< cl::Device > devices = myContext.getInfo< CL_CONTEXT_DEVICES >();
+    ::cl::CommandQueue myQueue( myContext, devices[ 0 ] );
+    bolt::cl::control c_gpu( myQueue );  // construct control structure from the queue.
 
     //  Calling the actual functions under test
     std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), bolt::cl::square<ArrayType>());
@@ -591,6 +621,7 @@ public:
                                stdOutput( GetParam( ) ), boltOutput( GetParam( ) )
     {
         std::generate(stdInput.begin(), stdInput.end(), rand);
+
         boltInput = stdInput;
         stdOutput = stdInput;
         boltOutput = stdInput;
@@ -1216,10 +1247,46 @@ INSTANTIATE_TYPED_TEST_CASE_P( Double, UnaryTransformArrayTest, DoubleTests );
 
 int main(int argc, char* argv[])
 {
-    ::testing::InitGoogleTest( &argc, &argv[ 0 ] );
-
     //  Register our minidump generating logic
     bolt::miniDumpSingleton::enableMiniDumps( );
+
+    //	Define MEMORYREPORT on windows platfroms to enable debug memory heap checking
+#if defined( MEMORYREPORT ) && defined( _WIN32 )
+    TCHAR logPath[ MAX_PATH ];
+    ::GetCurrentDirectory( MAX_PATH, logPath );
+    ::_tcscat_s( logPath, _T( "\\MemoryReport.txt") );
+
+    //	We leak the handle to this file, on purpose, so that the ::_CrtSetReportFile() can output it's memory 
+    //	statistics on app shutdown
+    HANDLE hLogFile;
+    hLogFile = ::CreateFile( logPath, GENERIC_WRITE, 
+        FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL );
+
+    ::_CrtSetReportMode( _CRT_ASSERT, _CRTDBG_MODE_FILE | _CRTDBG_MODE_WNDW | _CRTDBG_MODE_DEBUG );
+    ::_CrtSetReportMode( _CRT_ERROR, _CRTDBG_MODE_FILE | _CRTDBG_MODE_WNDW | _CRTDBG_MODE_DEBUG );
+    ::_CrtSetReportMode( _CRT_WARN, _CRTDBG_MODE_FILE | _CRTDBG_MODE_DEBUG );
+
+    ::_CrtSetReportFile( _CRT_ASSERT, hLogFile );
+    ::_CrtSetReportFile( _CRT_ERROR, hLogFile );
+    ::_CrtSetReportFile( _CRT_WARN, hLogFile );
+
+    int tmp = ::_CrtSetDbgFlag( _CRTDBG_REPORT_FLAG );
+    tmp |= _CRTDBG_LEAK_CHECK_DF | _CRTDBG_ALLOC_MEM_DF | _CRTDBG_CHECK_ALWAYS_DF;
+    ::_CrtSetDbgFlag( tmp );
+
+    //	By looking at the memory leak report that is generated by this debug heap, there is a number with 
+    //	{} brackets that indicates the incremental allocation number of that block.  If you wish to set
+    //	a breakpoint on that allocation number, put it in the _CrtSetBreakAlloc() call below, and the heap
+    //	will issue a bp on the request, allowing you to look at the call stack
+    //	::_CrtSetBreakAlloc( 1833 );
+
+#endif /* MEMORYREPORT */
+
+    ::testing::InitGoogleTest( &argc, &argv[ 0 ] );
+
+    ////  Set the standard OpenCL wait behavior to help debugging
+    //bolt::cl::control& myControl = bolt::cl::control::getDefault( );
+    //myControl.waitMode( bolt::cl::control::NiceWait );
 
     int retVal = RUN_ALL_TESTS( );
 
@@ -1247,9 +1314,8 @@ int main(int argc, char* argv[])
         bolt::tout << _T( "\t--gtest_break_on_failure to debug interactively with debugger" ) << std::endl;
         bolt::tout << _T( "\t    (only on googletest assertion failures, not SEH exceptions)" ) << std::endl;
     }
-    std::cout << "Test Completed. Press Enter to exit.\n .... ";
-    getchar();
-	return retVal;
+
+    return retVal;
 }
 #else
 // TransformTest.cpp : Defines the entry point for the console application.

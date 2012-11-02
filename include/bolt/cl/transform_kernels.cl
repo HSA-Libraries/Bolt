@@ -20,19 +20,16 @@ kernel
 void transformTemplate (global iType* A,
 			global iType* B,
 			global oType* Z,
-			const int length,
+			const uint length,
 			global binary_function *userFunctor)
 {
 	int gx = get_global_id (0);
-
 	if (gx >= length)
 		return;
-	else
-	{
-		iType aa = A[gx];
-		iType bb = B[gx];
-		Z[gx] = (*userFunctor)(aa, bb);
-	}
+
+	iType aa = A[gx];
+	iType bb = B[gx];
+	Z[gx] = (*userFunctor)(aa, bb);
 }
 
 
@@ -41,7 +38,7 @@ kernel
 void transformNoBoundsCheckTemplate (global iType* A,
 			global iType* B,
 			global oType* Z,
-			const int length,
+			const uint length,
 			global binary_function *userFunctor)
 {
 	int gx = get_global_id (0);  // * _BOLT_UNROLL; 
@@ -61,25 +58,22 @@ template <typename iType, typename oType, typename unary_function>
 kernel
 void unaryTransformTemplate(global iType* A,
 			global oType* Z,
-			const int length,
+			const uint length,
 			global unary_function *userFunctor)
 {
 	int gx = get_global_id (0);
-
 	if (gx >= length)
 		return;
-	else
-	{ 
-		iType aa = A[gx];
-		Z[gx] = (*userFunctor)(aa); 
-	}
+
+	iType aa = A[gx];
+	Z[gx] = (*userFunctor)(aa); 
 }
 
 template <typename iType, typename oType, typename unary_function>
 kernel
 void unaryTransformNoBoundsCheckTemplate(global iType* A,
 			global oType* Z,
-			const int length,
+			const uint length,
 			global unary_function *userFunctor)
 {
 	int gx = get_global_id (0);  //  *_BOLT_UNROLL;
