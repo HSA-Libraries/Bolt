@@ -537,17 +537,17 @@ namespace bolt
                 if( reqSize > max_size( ) )
                     throw ::cl::Error( CL_MEM_OBJECT_ALLOCATION_FAILURE , "The amount of memory requested exceeds what is available" );
 
+                //  We want to use the context from the passed in commandqueue to initialize our buffer
+                cl_int l_Error = CL_SUCCESS;
+                ::cl::Context l_Context = m_commQueue.getInfo< CL_QUEUE_CONTEXT >( &l_Error );
+                V_OPENCL( l_Error, "device_vector failed to query for the context of the ::cl::CommandQueue object" );
+
                 if( m_Size == 0 )
                 {
-                    ::cl::Buffer l_tmpBuffer( m_Flags, reqSize * sizeof( value_type ) );
+                    ::cl::Buffer l_tmpBuffer( l_Context, m_Flags, reqSize * sizeof( value_type ) );
                     m_devMemory = l_tmpBuffer;
                     return;
                 }
-
-                cl_int l_Error = CL_SUCCESS;
-
-                ::cl::Context l_Context = m_devMemory.getInfo< CL_MEM_CONTEXT >( &l_Error );
-                V_OPENCL( l_Error, "device_vector failed to query for the context of the ::cl::Buffer object" );
 
                 size_type l_size = reqSize * sizeof( value_type );
                 //  Can't user host_ptr because l_size is guranteed to be bigger
@@ -557,12 +557,12 @@ namespace bolt
                 size_type l_srcSize = m_devMemory.getInfo< CL_MEM_SIZE >( &l_Error );
                 V_OPENCL( l_Error, "device_vector failed to request the size of the ::cl::Buffer object" );
 
-                std::vector< ::cl::Event > copyEvent( 1 );
-                V_OPENCL( m_commQueue.enqueueCopyBuffer( m_devMemory, l_tmpBuffer, 0, 0, l_srcSize, NULL, &copyEvent.front( ) ), 
+                ::cl::Event copyEvent;
+                V_OPENCL( m_commQueue.enqueueCopyBuffer( m_devMemory, l_tmpBuffer, 0, 0, l_srcSize, NULL, &copyEvent ), 
                     "device_vector failed to copy from buffer to buffer " );
 
                 //  Not allowed to return until the copy operation is finished
-                V_OPENCL( m_commQueue.enqueueWaitForEvents( copyEvent ), "device_vector failed to wait on an event object" );
+                V_OPENCL( copyEvent.wait( ), "device_vector failed to wait on an event object" );
 
                 //  Operator= should call retain/release appropriately
                 m_devMemory = l_tmpBuffer;
@@ -601,10 +601,10 @@ namespace bolt
                 if( m_Size == capacity( ) )
                     return;
 
+                //  We want to use the context from the passed in commandqueue to initialize our buffer
                 cl_int l_Error = CL_SUCCESS;
-
-                ::cl::Context l_Context = m_devMemory.getInfo< CL_MEM_CONTEXT >( &l_Error );
-                V_OPENCL( l_Error, "device_vector failed to query for the context of the ::cl::Buffer object" );
+                ::cl::Context l_Context = m_commQueue.getInfo< CL_QUEUE_CONTEXT >( &l_Error );
+                V_OPENCL( l_Error, "device_vector failed to query for the context of the ::cl::CommandQueue object" );
 
                 size_type l_newSize = m_Size * sizeof( value_type );
                 ::cl::Buffer l_tmpBuffer( l_Context, m_Flags, l_newSize, NULL, &l_Error );
@@ -1142,12 +1142,12 @@ namespace bolt
 
                 cl_int l_Error = CL_SUCCESS;
 
-                std::vector< ::cl::Event > fillEvent( 1 );
-                l_Error = m_commQueue.enqueueFillBuffer< value_type >( m_devMemory, value, 0, m_Size * sizeof( value_type ), NULL, &fillEvent.front( ) );
+                ::cl::Event fillEvent;
+                l_Error = m_commQueue.enqueueFillBuffer< value_type >( m_devMemory, value, 0, m_Size * sizeof( value_type ), NULL, &fillEvent );
                 V_OPENCL( l_Error, "device_vector failed to fill the new data with the provided pattern" );
 
                 //  Not allowed to return until the copy operation is finished.
-                l_Error = m_commQueue.enqueueWaitForEvents( fillEvent );
+                l_Error = fillEvent.wait( );
                 V_OPENCL( l_Error, "device_vector failed to wait for fill event" );
             }
 

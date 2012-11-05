@@ -629,6 +629,21 @@ TEST( Vector, DataWrite )
     EXPECT_EQ( 5, mySP[ 4 ] );
 }
 
+TEST( Vector, wdSpecifyingSize )
+{
+    size_t mySize = 10;
+    bolt::cl::device_vector<int> myIntDevVect;
+    int myIntArray[10] = {2, 3, 5, 6, 76, 5, 8, -10, 30, 34};
+
+    for (int i = 0; i < mySize; ++i){
+        myIntDevVect.push_back(myIntArray[i]);
+    }
+
+    size_t DevSize = myIntDevVect.size();
+    
+    EXPECT_EQ (mySize, DevSize);
+}
+
 TEST( Vector, InsertFloatRangeEmpty )
 {
     bolt::cl::device_vector< float > dV;
