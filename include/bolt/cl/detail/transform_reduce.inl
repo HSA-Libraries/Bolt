@@ -33,7 +33,7 @@ namespace bolt {
 
         // The following two functions are visible in .h file
         // Wrapper that user passes a control class
-        template<typename T, typename InputIterator, typename UnaryFunction, typename BinaryFunction> 
+        template<typename InputIterator, typename UnaryFunction, typename T, typename BinaryFunction> 
         T transform_reduce(const control& ctl, InputIterator first, InputIterator last,  
             UnaryFunction transform_op, 
             T init,  BinaryFunction reduce_op, const std::string& user_code )  
@@ -43,7 +43,7 @@ namespace bolt {
         };
 
         // Wrapper that generates default control class
-        template<typename T, typename InputIterator, typename UnaryFunction, typename BinaryFunction> 
+        template<typename InputIterator, typename UnaryFunction, typename T, typename BinaryFunction> 
         T transform_reduce(InputIterator first, InputIterator last,
             UnaryFunction transform_op,
             T init,  BinaryFunction reduce_op, const std::string& user_code )
@@ -65,6 +65,7 @@ namespace bolt {
                     const std::string instantiationString = 
                         "// Host generates this instantiation string with user-specified value type and functor\n"
                         "template __attribute__((mangled_name(transform_reduceInstantiated)))\n"
+                        "__attribute__((reqd_work_group_size(64,1,1)))\n"
                         "kernel void transform_reduceTemplate(\n"
                         "global " + valueTypeName + "* A,\n"
                         "const int length,\n"
@@ -83,7 +84,7 @@ namespace bolt {
 
         //  The following two functions disallow non-random access functions
         // Wrapper that uses default control class, iterator interface
-        template<typename T, typename InputIterator, typename UnaryFunction, typename BinaryFunction> 
+        template<typename InputIterator, typename UnaryFunction, typename T, typename BinaryFunction> 
         T transform_reduce_detect_random_access(const control &ctl, InputIterator first, InputIterator last,
             UnaryFunction transform_op,
             T init,  BinaryFunction reduce_op, const std::string& user_code, std::input_iterator_tag )
@@ -94,7 +95,7 @@ namespace bolt {
         };
 
         // Wrapper that uses default control class, iterator interface
-        template<typename T, typename InputIterator, typename UnaryFunction, typename BinaryFunction> 
+        template<typename InputIterator, typename UnaryFunction, typename T, typename BinaryFunction> 
         T transform_reduce_detect_random_access(const control& ctl, InputIterator first, InputIterator last,
             UnaryFunction transform_op,
             T init,  BinaryFunction reduce_op, const std::string& user_code, std::random_access_iterator_tag )
@@ -104,7 +105,7 @@ namespace bolt {
 
         // This template is called by the non-detail versions of transform_reduce, it already assumes random access iterators
         // This is called strictly for any non-device_vector iterator
-        template<typename T, typename InputIterator, typename UnaryFunction, typename BinaryFunction> 
+        template<typename InputIterator, typename UnaryFunction, typename T, typename BinaryFunction> 
         typename std::enable_if< !std::is_base_of<typename device_vector<typename std::iterator_traits<InputIterator>::value_type>::iterator,InputIterator>::value, T >::type
         transform_reduce_pick_iterator(const control &c, InputIterator first, InputIterator last, UnaryFunction transform_op, 
             T init,  BinaryFunction reduce_op, const std::string& user_code )
@@ -136,7 +137,7 @@ namespace bolt {
 
         // This template is called by the non-detail versions of transform_reduce, it already assumes random access iterators
         // This is called strictly for iterators that are derived from device_vector< T >::iterator
-        template<typename T, typename DVInputIterator, typename UnaryFunction, typename BinaryFunction> 
+        template<typename DVInputIterator, typename UnaryFunction, typename T, typename BinaryFunction> 
         typename std::enable_if< std::is_base_of<typename device_vector<typename std::iterator_traits<DVInputIterator>::value_type>::iterator,DVInputIterator>::value, T >::type
         transform_reduce_pick_iterator(const control &c, DVInputIterator first, DVInputIterator last, UnaryFunction transform_op, 
             T init,  BinaryFunction reduce_op, const std::string& user_code )
@@ -171,7 +172,7 @@ namespace bolt {
             return  transform_reduce_enqueue( c, first, last, transform_op, init, reduce_op, user_code );
         };
 
-            template<typename T, typename DVInputIterator, typename UnaryFunction, typename BinaryFunction> 
+            template<typename DVInputIterator, typename UnaryFunction, typename T, typename BinaryFunction> 
             T transform_reduce_enqueue(const control& ctl, DVInputIterator first, DVInputIterator last, UnaryFunction transform_op,
                 T init, BinaryFunction reduce_op, const std::string& user_code="")
             {
@@ -187,7 +188,7 @@ namespace bolt {
                 // FIXME, read from device attributes.
                 int computeUnits     = ctl.device().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();  // round up if we don't know. 
                 int wgPerComputeUnit =  ctl.wgPerComputeUnit(); 
-                int resultCnt = computeUnits * wgPerComputeUnit;
+                int numWG = computeUnits * wgPerComputeUnit;
 
                 cl_int l_Error = CL_SUCCESS;
                 const size_t wgSize  = masterKernel.getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.device( ), &l_Error );
@@ -196,17 +197,17 @@ namespace bolt {
                 // Create Buffer wrappers so we can access the host functors, for read or writing in the kernel
                 ::cl::Buffer transformFunctor(ctl.context(), CL_MEM_USE_HOST_PTR, sizeof(transform_op), &transform_op );   
                 ::cl::Buffer reduceFunctor(ctl.context(), CL_MEM_USE_HOST_PTR, sizeof(reduce_op), &reduce_op );
-                ::cl::Buffer result(ctl.context(), CL_MEM_ALLOC_HOST_PTR|CL_MEM_WRITE_ONLY, sizeof(T) * resultCnt);
+                ::cl::Buffer result(ctl.context(), CL_MEM_ALLOC_HOST_PTR|CL_MEM_WRITE_ONLY, sizeof(T) * numWG);
 
                 ::cl::Kernel k = masterKernel;  // hopefully create a copy of the kernel. FIXME, doesn't work.
 
                 cl_uint szElements = static_cast< cl_uint >( std::distance( first, last ) );
                 
                 /***** This is a temporaray fix *****/
-                /*What if  requiredWorkGroups > resultCnt? Do you want to loop or increase the work group size or increase the per item processing?*/
+                /*What if  requiredWorkGroups > numWG? Do you want to loop or increase the work group size or increase the per item processing?*/
                 int requiredWorkGroups = (int)ceil((float)szElements/wgSize); 
-                if (requiredWorkGroups < resultCnt)
-                    resultCnt = requiredWorkGroups;
+                if (requiredWorkGroups < numWG)
+                    numWG = requiredWorkGroups;
                 /**********************/
 
                 V_OPENCL( k.setArg(0, first->getBuffer( ) ), "Error setting kernel argument" );
@@ -223,24 +224,26 @@ namespace bolt {
                 l_Error = ctl.commandQueue().enqueueNDRangeKernel( 
                     k, 
                     ::cl::NullRange, 
-                    ::cl::NDRange(resultCnt * wgSize), 
-                    ::cl::NDRange(wgSize),
-                                NULL,
-                                NULL);
+                    ::cl::NDRange(numWG * wgSize), 
+                    ::cl::NDRange(wgSize) );
                 V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for transform_reduce() kernel" );
 
-                std::vector<T> outputArray(resultCnt);
-
                 ::cl::Event l_mapEvent;
-                T *h_result = (T*)ctl.commandQueue().enqueueMapBuffer(result, false, CL_MAP_READ, 0, sizeof(T)*resultCnt, NULL, &l_mapEvent, &l_Error );
+                T *h_result = (T*)ctl.commandQueue().enqueueMapBuffer(result, false, CL_MAP_READ, 0, sizeof(T)*numWG, NULL, &l_mapEvent, &l_Error );
                 V_OPENCL( l_Error, "Error calling map on the result buffer" );
+
+                //  Finish the tail end of the reduction on host side; the compute device reduces within the workgroups, with one result per workgroup
+                size_t ceilNumWG = static_cast< size_t >( std::ceil( static_cast< float >( szElements ) / wgSize) );
+                bolt::cl::minimum< size_t >  min_size_t;
+                size_t numTailReduce = min_size_t( ceilNumWG, numWG );
+
                 bolt::cl::wait(ctl, l_mapEvent);
 
-                T acc = init;
-                for(int i = 0; i < resultCnt; ++i){
-                    acc = reduce_op( acc, h_result[i] );
+                T acc = static_cast< T >( init );
+                for(int i = 0; i < numTailReduce; ++i)
+                {
+                    acc = reduce_op( acc, h_result[ i ] );
                 }
-
 
                 return acc;
             };
