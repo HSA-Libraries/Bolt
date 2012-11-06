@@ -91,24 +91,3 @@ void transform_reduceTemplate(
         result[get_group_id( 0 )] = scratch[ 0 ];
     }
 };
-
-// #define KernelAnalyzer
-#if defined( KernelAnalyzer )
-template <typename T> 
-struct square { T operator() (const T& x) const { return x * x; } };
-
-template<typename T> 
-struct plus { T operator()(const T &lhs, const T &rhs) const {return lhs + rhs;} };
-
-// Host generates this instantiation string with user-specified value type and functor
-template __attribute__((mangled_name(transform_reduceInstantiated)))
-kernel void transform_reduceTemplate(
-global int* A,
-const int length,
-global square<int>* transformFunctor,
-const int init,
-global plus<int>* reduceFunctor,
-global int* result,
-local int* scratch
-);
-#endif
