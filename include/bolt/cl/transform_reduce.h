@@ -80,7 +80,7 @@ namespace bolt {
          *  \sa http://www.sgi.com/tech/stl/UnaryFunction.html
          *  \sa http://www.sgi.com/tech/stl/BinaryFunction.html
          */
-        template<typename T, typename InputIterator, typename UnaryFunction, typename BinaryFunction> 
+        template<typename InputIterator, typename UnaryFunction, typename T, typename BinaryFunction> 
         T transform_reduce(InputIterator first, InputIterator last,  
             UnaryFunction transform_op, 
             T init,  BinaryFunction reduce_op, const std::string& user_code="" );
@@ -125,7 +125,7 @@ namespace bolt {
          *  \sa http://www.sgi.com/tech/stl/UnaryFunction.html
          *  \sa http://www.sgi.com/tech/stl/BinaryFunction.html
          */
-        template<typename T, typename InputIterator, typename UnaryFunction, typename BinaryFunction> 
+        template<typename InputIterator, typename UnaryFunction, typename T, typename BinaryFunction> 
         T transform_reduce(const control& ctl, InputIterator first1, InputIterator last1,  
             UnaryFunction transform_op, 
             T init,  BinaryFunction reduce_op, const std::string& user_code="" );

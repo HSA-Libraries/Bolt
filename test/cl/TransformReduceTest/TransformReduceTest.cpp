@@ -425,16 +425,16 @@ class TransformFloatDeviceVector: public ::testing::TestWithParam< int >
 public:
     // Create an std and a bolt vector of requested size, and initialize all the elements to 1
     TransformFloatDeviceVector( ): stdInput( GetParam( ) ), boltInput( static_cast<size_t>( GetParam( ) ) ),
-                                   stdOutput( GetParam( ) ), boltOutput( GetParam( ) )
+                                   boltOutput( GetParam( ) )
     {
         std::generate(stdInput.begin(), stdInput.end(), generateRandom<float>);
-        //boltInput = stdInput;      
+        stdOutput = stdInput;
+
         //FIXME - The above should work but the below loop is used. 
         for (int i=0; i< GetParam( ); i++)
         {
             boltInput[i] = stdInput[i];
             boltOutput[i] = stdInput[i];
-            stdOutput[i] = stdInput[i];
         }
     }
 
@@ -449,16 +449,16 @@ class TransformDoubleDeviceVector: public ::testing::TestWithParam< int >
 {
 public:
     // Create an std and a bolt vector of requested size, and initialize all the elements to 1
-    TransformDoubleDeviceVector( ): stdInput( GetParam( ) ), boltInput( static_cast<size_t>( GetParam( ) ) )
+    TransformDoubleDeviceVector( ): stdInput( GetParam( ) ), boltInput( static_cast<size_t>( GetParam( ) ) ), boltOutput( static_cast<size_t>( GetParam( ) ) )
     {
         std::generate(stdInput.begin(), stdInput.end(), generateRandom<double>);
-        //boltInput = stdInput;      
+        stdOutput = stdInput;
+
         //FIXME - The above should work but the below loop is used. 
         for (int i=0; i< GetParam( ); i++)
         {
             boltInput[i] = stdInput[i];
             boltOutput[i] = stdInput[i];
-            stdOutput[i] = stdInput[i];
         }
     }
 
@@ -542,6 +542,156 @@ protected:
      float* stdOutput;
      float* boltOutput;
 };
+
+class transformReduceStdVectWithInit :public ::testing::TestWithParam<int>{
+protected:
+    int mySize;
+public:	
+    transformReduceStdVectWithInit():mySize(GetParam()){
+    }
+};
+
+TEST_P( transformReduceStdVectWithInit, withIntWdInit)
+{
+    std::vector<int> stdInput( mySize );
+    std::vector<int> stdOutput( mySize );
+    std::vector<int> boltInput( mySize );
+
+    for (int i = 0; i < mySize; ++i)
+    {
+        stdInput[i] = i;
+        boltInput[i] = stdInput[i];
+    }
+    
+    //  Calling the actual functions under test
+    int init = 10;
+    std::transform(stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), bolt::cl::square<int>( ) );  //there is no std::square available
+    int stlTransformReduce = std::accumulate(stdOutput.begin( ), stdOutput.end( ), init, bolt::cl::plus<int>( ) );
+    int boltTransformReduce= bolt::cl::transform_reduce( boltInput.begin( ), boltInput.end( ), bolt::cl::square<int>( ), init, bolt::cl::plus<int>( ) );
+
+    EXPECT_EQ( stlTransformReduce, boltTransformReduce );
+}
+
+TEST_P( transformReduceStdVectWithInit, withIntWdInitWithStdPlus)
+{
+    //int mySize = 10;
+    int init = 10;
+
+    std::vector<int> stdInput (mySize);
+    std::vector<int> stdOutput (mySize);
+
+    std::vector<int> boltInput (mySize);
+    //std::vector<int> boltOutput (mySize);
+
+    for (int i = 0; i < mySize; ++i){
+        stdInput[i] = i;
+        boltInput[i] = stdInput[i];
+    }
+    
+    //  Calling the actual functions under test
+    std::transform(stdInput.begin(), stdInput.end(), stdOutput.begin(), bolt::cl::square<int>());
+    int stlTransformReduce = std::accumulate(stdOutput.begin(), stdOutput.end(), init, std::plus<int>());
+    int boltTransformReduce= bolt::cl::transform_reduce( boltInput.begin( ), boltInput.end( ), bolt::cl::square<int>(), init, bolt::cl::plus<int>());
+
+    EXPECT_EQ(stlTransformReduce, boltTransformReduce);
+}
+
+TEST_P( transformReduceStdVectWithInit, withIntWdInitWdAnyFunctor)
+{
+    //int mySize = 10;
+    int init = 10;
+
+    std::vector<int> stdInput (mySize);
+    std::vector<int> stdOutput (mySize);
+
+    std::vector<int> boltInput (mySize);
+    //std::vector<int> boltOutput (mySize);
+
+    for (int i = 0; i < mySize; ++i){
+        stdInput[i] = i;
+        boltInput[i] = stdInput[i];
+    }
+    
+    //  Calling the actual functions under test
+    std::transform(stdInput.begin(), stdInput.end(), stdOutput.begin(), bolt::cl::square<int>());
+    int stlTransformReduce = std::accumulate(stdOutput.begin(), stdOutput.end(), init);
+
+    int boltTransformReduce= bolt::cl::transform_reduce( boltInput.begin( ), boltInput.end( ), bolt::cl::square<int>(), init, bolt::cl::plus<int>());
+
+    EXPECT_EQ(stlTransformReduce, boltTransformReduce);
+}
+
+INSTANTIATE_TEST_CASE_P( withIntWithInitValue, transformReduceStdVectWithInit, ::testing::Range(1, 100, 1) );
+
+class transformReduceTestMultFloat: public ::testing::TestWithParam<int>{
+protected:
+    int arraySize;
+public:
+    transformReduceTestMultFloat( ):arraySize( GetParam( ) )
+    {}
+};
+
+TEST_P (transformReduceTestMultFloat, multiplyWithFloats)
+{
+    float* myArray = new float[ arraySize ];
+    float* myArray2 = new float[ arraySize ];
+    float* myBoltArray = new float[ arraySize ];
+
+    for( int i=0; i < arraySize; i++ )
+    {
+        myArray[i] = (float)i + 1.25f;
+        myBoltArray[i] = myArray[i];
+    }
+
+    std::transform( myArray, myArray + arraySize, myArray2, std::negate<float>( ) );
+    float stlTransformReduce = std::accumulate(myArray2, myArray2 + arraySize, 1.0f, std::multiplies<float>());
+    float boltTransformReduce = bolt::cl::transform_reduce(myBoltArray, myBoltArray + arraySize, bolt::cl::negate<float>(), 1.0f, bolt::cl::multiplies<float>());
+
+    EXPECT_FLOAT_EQ(stlTransformReduce , boltTransformReduce )<<"Values does not match\n";
+    std::cout<<"stl transform_reduce Result: "<<stlTransformReduce <<"\nBolt transform_reduce Result: "<<boltTransformReduce <<std::endl;
+
+    delete [] myArray;
+    delete [] myArray2;
+    delete [] myBoltArray;
+}
+
+INSTANTIATE_TEST_CASE_P(multiplyWithFloatPredicate, transformReduceTestMultFloat, ::testing::Range(1, 20, 1));
+//end of new 2
+
+class transformReduceTestMultDouble: public ::testing::TestWithParam<int>{
+protected:
+        int arraySize;
+public:
+    transformReduceTestMultDouble():arraySize(GetParam()){
+    }
+};
+
+TEST_P (transformReduceTestMultDouble, multiplyWithDouble)
+{
+    double* myArray = new double[ arraySize ];
+    double* myArray2 = new double[ arraySize ];
+    double* myBoltArray = new double[ arraySize ];
+    
+    for (int i=0; i < arraySize; i++)
+    {
+        myArray[i] = (double)i + 1.25;
+        myBoltArray[i] = myArray[i];
+    }
+
+    std::transform(myArray, myArray + arraySize, myArray2, std::negate<double>());
+    double stlTransformReduce = std::accumulate(myArray2, myArray2 + arraySize, 1.0, std::multiplies<double>());
+
+    double boltTransformReduce = bolt::cl::transform_reduce(myBoltArray, myBoltArray + arraySize, bolt::cl::negate<double>(), 1.0, bolt::cl::multiplies<double>());
+    
+    EXPECT_DOUBLE_EQ(stlTransformReduce , boltTransformReduce )<<"Values does not match\n";
+    std::cout<<"stl transform_reduce Result: "<<stlTransformReduce <<"\nBolt transform_reduce Result: "<<boltTransformReduce <<std::endl;
+
+    delete [] myArray;
+    delete [] myArray2;
+    delete [] myBoltArray;
+}
+
+INSTANTIATE_TEST_CASE_P( multiplyWithDoublePredicate, transformReduceTestMultDouble, ::testing::Range(1, 20, 1) );
 
 #if (TEST_DOUBLE ==1 )
 //  ::testing::TestWithParam< int > means that GetParam( ) returns int values, which i use for array size
@@ -956,8 +1106,7 @@ int main(int argc, char* argv[])
         bolt::tout << _T( "\t--gtest_break_on_failure to debug interactively with debugger" ) << std::endl;
         bolt::tout << _T( "\t    (only on googletest assertion failures, not SEH exceptions)" ) << std::endl;
     }
-    std::cout << "Test Completed. Press Enter to exit.\n .... ";
-    getchar();
+
     return retVal;
 }
 
