@@ -637,9 +637,11 @@ TEST_P (transformReduceTestMultFloat, multiplyWithFloats)
     float* myArray2 = new float[ arraySize ];
     float* myBoltArray = new float[ arraySize ];
 
-    for( int i=0; i < arraySize; i++ )
+    myArray[ 0 ] = 1.0f;
+    myBoltArray[ 0 ] = 1.0f;
+    for( int i=1; i < arraySize; i++ )
     {
-        myArray[i] = (float)i + 1.25f;
+        myArray[i] = myArray[i-1] + 0.0625f;
         myBoltArray[i] = myArray[i];
     }
 
@@ -648,13 +650,35 @@ TEST_P (transformReduceTestMultFloat, multiplyWithFloats)
     float boltTransformReduce = bolt::cl::transform_reduce(myBoltArray, myBoltArray + arraySize, bolt::cl::negate<float>(), 1.0f, bolt::cl::multiplies<float>());
 
     EXPECT_FLOAT_EQ(stlTransformReduce , boltTransformReduce )<<"Values does not match\n";
-    std::cout<<"stl transform_reduce Result: "<<stlTransformReduce <<"\nBolt transform_reduce Result: "<<boltTransformReduce <<std::endl;
 
     delete [] myArray;
     delete [] myArray2;
     delete [] myBoltArray;
 }
 
+TEST_P( transformReduceTestMultFloat, serialFloatValuesWdControl )
+{
+    std::vector<float> A( arraySize );
+    std::vector<float> B( arraySize );
+    std::vector<float> boltVect( arraySize );
+    
+    float myFloatValues = 9.0625f;
+
+    for( int i=0; i < arraySize; ++i )
+    {
+        A[i] = myFloatValues + float(i);
+        boltVect[i] = A[i];
+    }
+
+    std::transform(A.begin(), A.end(), B.begin(), std::negate<float>());
+    float stdTransformReduceValue = std::accumulate(B.begin(), B.end(), 0.0f, std::plus<float>());
+    float boltClTransformReduce = bolt::cl::transform_reduce(boltVect.begin(), boltVect.end(), bolt::cl::negate<float>(), 0.0f, bolt::cl::plus<float>());
+
+    //compare these results with each other
+    EXPECT_FLOAT_EQ( stdTransformReduceValue, boltClTransformReduce );
+}
+
+INSTANTIATE_TEST_CASE_P(serialValues, transformReduceTestMultFloat, ::testing::Range(1, 100, 10));
 INSTANTIATE_TEST_CASE_P(multiplyWithFloatPredicate, transformReduceTestMultFloat, ::testing::Range(1, 20, 1));
 //end of new 2
 
@@ -684,7 +708,6 @@ TEST_P (transformReduceTestMultDouble, multiplyWithDouble)
     double boltTransformReduce = bolt::cl::transform_reduce(myBoltArray, myBoltArray + arraySize, bolt::cl::negate<double>(), 1.0, bolt::cl::multiplies<double>());
     
     EXPECT_DOUBLE_EQ(stlTransformReduce , boltTransformReduce )<<"Values does not match\n";
-    std::cout<<"stl transform_reduce Result: "<<stlTransformReduce <<"\nBolt transform_reduce Result: "<<boltTransformReduce <<std::endl;
 
     delete [] myArray;
     delete [] myArray2;
