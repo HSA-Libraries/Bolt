@@ -21,7 +21,7 @@
 
 #include <vector>
 #include <numeric>
-
+BOLT_FUNCTOR(MyType<int>,
 template <typename T>
 struct MyType {
     T a;
@@ -35,52 +35,126 @@ struct MyType {
     bool operator > (const MyType& other) const {
         return (a > other.a);
     }
-    MyType(const MyType &other)
-        : a(other.a) { }
+    bool operator >= (const MyType& other) const {
+        return (a >= other.a);
+    }
     MyType()
         : a(0) { }
-    MyType(T& _in)
-        : a(_in) { }
 };
-
-BOLT_CREATE_TYPENAME(MyType<int>);
+);
 BOLT_CREATE_TYPENAME(bolt::cl::greater< MyType<int> >);
-BOLT_CREATE_CLCODE(MyType<int>, "template <typename T> struct MyType { T a; \n\nbool operator() (const MyType& lhs, const MyType& rhs) { return (lhs.a > rhs.a); } \n\nbool operator < (const MyType& other) const { return (a < other.a); }\n\n bool operator > (const MyType& other) const { return (a > other.a);} \n\n };");
-
+template <typename T>
+void CheckDescendingPtr(T *input, size_t length)
+{
+    size_t index;
+    for( index = 0; index < length -1; ++index )
+    {
+        if(input[index] >= input[index+1])
+            continue;
+        else
+            break;
+    }
+    if(index == (length-1))
+    {
+        std::cout << "PASSED....\n";
+    }
+    else
+    {
+        std::cout << "FAILED....\n";
+    }
+}
+template <typename T>
+void CheckDescending(T &input, size_t length)
+{
+    size_t index;
+    for( index = 0; index < input.size( ) -1; ++index )
+    {
+        if(input[index] >= input[index+1])
+            continue;
+        else
+            break;
+    }
+    if(index == (length-1))
+    {
+        std::cout << "PASSED....\n";
+    }
+    else
+    {
+        std::cout << "FAILED....\n";
+    }
+}
+template <typename T>
+void CheckAscending(T &input, size_t length)
+{
+    size_t index;
+    for( index = 0; index < input.size( ) -1; ++index )
+    {
+        if(input[index] <= input[index+1])
+            continue;
+        else
+            break;
+    }
+    if(index == (length-1))
+    {
+        std::cout << "PASSED....\n";
+    }
+    else
+    {
+        std::cout << "FAILED....\n";
+    }
+}
 
 int main()
 {
 	//Usage with basic vector implementation.
-	int length = 256;
-	std::vector<int> input(1024);
+	int length = 1024;
+	std::vector<int> input(length);
+    int a[8] = {2, 9, 3, 7, 5, 6, 3, 8};
 	std::generate(input.begin(), input.end(), rand);
+    std::cout << "\nSort EXAMPLE \n";
+    //Usage with std::vector types.
+    std::cout << "\nSorting std::vector of size " << length << " elements. ...\n";
 	bolt::cl::sort( input.begin(), input.end(), bolt::cl::greater<int>());
+    CheckDescending (input, length);
 
     //Usage with Array types.
-	int a[8] = {2, 9, 3, 7, 5, 6, 3, 8};
+    std::cout << "\nSorting Array of integers of size 8 elements ...\n";
 	bolt::cl::sort( a, a+8, bolt::cl::greater<int>());
+    CheckDescendingPtr (a, 8);
 
-
+    //Create Device Vector
 	std::vector<int> boltInput(length);
 	std::generate(boltInput.begin(), boltInput.end(), rand);
-	// sort using the bolt::cl::control and device_vector
+    //Sort using the bolt::cl::control and device_vector
 	MyOclContext ocl = initOcl(CL_DEVICE_TYPE_GPU, 0);
 	bolt::cl::control c(ocl._queue);  // construct control structure from the queue.
-    //Create a device_vector
-	bolt::cl::device_vector<int> dvInput( boltInput.begin(), boltInput.end(), CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, c);
-	bolt::cl::sort(c, dvInput.begin(), dvInput.end());
+    //device_vector created here
+    bolt::cl::device_vector<int> dvInput( boltInput.begin(), boltInput.end(), CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, c);
+	
 
-	// Usage with user defined data types.
+    std::cout << "\nSorting device_vector of integers of size " << length << " elements. ...\n";
+	bolt::cl::sort(c, dvInput.begin(), dvInput.end());
+    CheckAscending (dvInput, length);
+	
+    //Usage with user defined data types.
 	typedef MyType<int> mytype;
 	std::vector<mytype> myTypeBoltInput1(length);
 	std::vector<mytype> myTypeBoltInput2(length);
+
     for (int i=0;i<length;i++)
     {
         myTypeBoltInput1[i].a= (int)(i +2);
         myTypeBoltInput2[i].a= (int)(i +2);
     }
+    std::cout << "\nSorting user-defined data type of size " << length << " elements with bolt Functor. ...\n";
     bolt::cl::sort(c, myTypeBoltInput1.begin(), myTypeBoltInput1.end(),bolt::cl::greater<mytype>());
+    CheckDescending (myTypeBoltInput1, length);
+
     //OR
-    bolt::cl::sort(c, myTypeBoltInput1.begin(), myTypeBoltInput1.end(),mytype());
+    std::cout << "\nSorting user-defined data type of size " << length << " elements with User-defined functor. ...\n";
+    bolt::cl::sort(c, myTypeBoltInput2.begin(), myTypeBoltInput2.end(),mytype());
+    //We use descending here because the FUNCTOR does a greater than comparison.
+    CheckDescending (myTypeBoltInput1, length);
+    std::cout << "COMPLETED. ...\n";
 	return 0;
 }
