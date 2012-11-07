@@ -25,7 +25,7 @@ int _tmain( int argc, _TCHAR* argv[ ] )
     bolt::cl::device_vector< int > dV( vecSize );
 
     bolt::cl::device_vector< int >::iterator myIter = dV.begin( );
-
+    std::cout << "\nDevice vector EXAMPLE \n";
     //  Iterator arithmetic supported
     *myIter = 1;
     ++myIter;
@@ -57,6 +57,5 @@ int _tmain( int argc, _TCHAR* argv[ ] )
     {
         std::cout << dV[ i ] << ", ";
     }
-
     return 0;
 }
