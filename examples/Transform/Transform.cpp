@@ -44,17 +44,24 @@ void transform(int aSize)
 	Functor func(10.0);
 	std::transform(A.begin(), A.end(), B.begin(), Z0.begin(), func);
 	bolt::cl::transform(A.begin(), A.end(), B.begin(), Z1.begin(), func);
+    std::cout << "\t====Dumping Result ====\n";
 	for (int i=0; i<aSize; i++)
 	{
 		std::cout << "10.0 * " << A[i] << " + log(" << B[i] <<") + sqrt(" << A[i] <<")  =  " << Z1[i] << "\n";
 		std::cout << "10.0 * " << A[i] << " + log(" << B[i] <<") + sqrt(" << A[i] <<")  =  " << Z0[i] << "\n";
 	}
+    std::cout << "\t=======================\n";
     return;
 };
 
 int main()
 {
+    std::cout << "\nTransform EXAMPLE \n";
+    std::cout << "This example performs a transform on the input vector\n";
+    std::cout << "The transform operator is defined by a Functor class. \n";
+    std::cout << "It computes 10.0 * xx + log(yy) + sqrt(xx). \n";
+    std::cout << "Here yy and xx are the input vectors....\n\n";
 	transform(32);
-    getchar();
+    std::cout << "\nCOMPLETED. ...\n";
 	return 0;
 }
