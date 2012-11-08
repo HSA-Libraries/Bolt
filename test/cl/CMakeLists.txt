@@ -44,6 +44,7 @@ include_directories( ${OPENCL_INCLUDE_DIRS} ${BOLT_CL_TEST_DIR} )
 
 add_subdirectory( CountTest )
 add_subdirectory( DeviceVectorTest )
+add_subdirectory( GenerateTest )
 add_subdirectory( ReduceTest )
 add_subdirectory( ReadFromFileTest )   
 add_subdirectory( ScanTest )

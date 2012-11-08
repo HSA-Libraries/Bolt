@@ -23,9 +23,10 @@ include_directories( ${OPENCL_INCLUDE_DIRS} )
 
 if( BUILD_clBolt )
 	# Include standard OpenCL headers
+	add_subdirectory( Generate )
 	add_subdirectory( CopyBuffer )
+	add_subdirectory( Reduce )
 	add_subdirectory( Scan )
 	add_subdirectory( Sort )
-	add_subdirectory( Reduce )
 	add_subdirectory( Transform )
 endif( )

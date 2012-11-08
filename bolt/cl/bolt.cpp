@@ -27,7 +27,8 @@
 #include "bolt/cl/bolt.h"
 #include "bolt/unicode.h"
 
-//  Include all kernel string objects 
+//  Include all kernel string objects
+#include "bolt/generate_kernels.hpp"
 #include "bolt/reduce_kernels.hpp"
 #include "bolt/scan_kernels.hpp"
 #include "bolt/sort_kernels.hpp"
