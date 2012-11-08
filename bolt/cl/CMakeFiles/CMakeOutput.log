@@ -1,0 +1,266 @@
+The system is: CYGWIN - 1.7.15(0.260/5/3) - i686
+Compiling the C compiler identification source file "CMakeCCompilerId.c" succeeded.
+Compiler: /usr/bin/gcc.exe 
+Build flags: 
+Id flags: 
+
+The output was:
+0
+
+
+Compilation of the C compiler identification source "CMakeCCompilerId.c" produced "a.exe"
+
+The C compiler identification is GNU, found in "/cygdrive/c/GitRoot/Bolt/bolt/cl/CMakeFiles/CompilerIdC/a.exe"
+
+Compiling the CXX compiler identification source file "CMakeCXXCompilerId.cpp" succeeded.
+Compiler: /usr/bin/c++.exe 
+Build flags: 
+Id flags: 
+
+The output was:
+0
+
+
+Compilation of the CXX compiler identification source "CMakeCXXCompilerId.cpp" produced "a.exe"
+
+The CXX compiler identification is GNU, found in "/cygdrive/c/GitRoot/Bolt/bolt/cl/CMakeFiles/CompilerIdCXX/a.exe"
+
+Determining if the C compiler works passed with the following output:
+Change Dir: /cygdrive/c/GitRoot/Bolt/bolt/cl/CMakeFiles/CMakeTmp
+
+Run Build Command:/usr/bin/make.exe "cmTryCompileExec/fast"
+/usr/bin/make -f CMakeFiles/cmTryCompileExec.dir/build.make CMakeFiles/cmTryCompileExec.dir/build
+make[1]: Entering directory `/cygdrive/c/GitRoot/Bolt/bolt/cl/CMakeFiles/CMakeTmp'
+/usr/bin/cmake.exe -E cmake_progress_report /cygdrive/c/GitRoot/Bolt/bolt/cl/CMakeFiles/CMakeTmp/CMakeFiles 1
+Building C object CMakeFiles/cmTryCompileExec.dir/testCCompiler.c.o
+/usr/bin/gcc.exe    -o CMakeFiles/cmTryCompileExec.dir/testCCompiler.c.o   -c /cygdrive/c/GitRoot/Bolt/bolt/cl/CMakeFiles/CMakeTmp/testCCompiler.c
+Linking C executable cmTryCompileExec.exe
+/usr/bin/cmake.exe -E cmake_link_script CMakeFiles/cmTryCompileExec.dir/link.txt --verbose=1
+/usr/bin/gcc.exe       -Wl,--enable-auto-import  CMakeFiles/cmTryCompileExec.dir/testCCompiler.c.o  -o cmTryCompileExec.exe -Wl,--out-implib,libcmTryCompileExec.dll.a -Wl,--major-image-version,0,--minor-image-version,0  
+make[1]: Leaving directory `/cygdrive/c/GitRoot/Bolt/bolt/cl/CMakeFiles/CMakeTmp'
+
+
+Detecting C compiler ABI info compiled with the following output:
+Change Dir: /cygdrive/c/GitRoot/Bolt/bolt/cl/CMakeFiles/CMakeTmp
+
+Run Build Command:/usr/bin/make.exe "cmTryCompileExec/fast"
+/usr/bin/make -f CMakeFiles/cmTryCompileExec.dir/build.make CMakeFiles/cmTryCompileExec.dir/build
+make[1]: Entering directory `/cygdrive/c/GitRoot/Bolt/bolt/cl/CMakeFiles/CMakeTmp'
+/usr/bin/cmake.exe -E cmake_progress_report /cygdrive/c/GitRoot/Bolt/bolt/cl/CMakeFiles/CMakeTmp/CMakeFiles 1
+Building C object CMakeFiles/cmTryCompileExec.dir/CMakeCCompilerABI.c.o
+/usr/bin/gcc.exe    -o CMakeFiles/cmTryCompileExec.dir/CMakeCCompilerABI.c.o   -c /usr/share/cmake-2.8.7/Modules/CMakeCCompilerABI.c
+Linking C executable cmTryCompileExec.exe
+/usr/bin/cmake.exe -E cmake_link_script CMakeFiles/cmTryCompileExec.dir/link.txt --verbose=1
+/usr/bin/gcc.exe       -v CMakeFiles/cmTryCompileExec.dir/CMakeCCompilerABI.c.o  -o cmTryCompileExec.exe -Wl,--out-implib,libcmTryCompileExec.dll.a -Wl,--major-image-version,0,--minor-image-version,0   
+Using built-in specs.
+COLLECT_GCC=/usr/bin/gcc
+COLLECT_LTO_WRAPPER=/usr/lib/gcc/i686-pc-cygwin/4.5.3/lto-wrapper.exe
+Target: i686-pc-cygwin
+Configured with: /gnu/gcc/releases/respins/4.5.3-3/gcc4-4.5.3-3/src/gcc-4.5.3/configure --srcdir=/gnu/gcc/releases/respins/4.5.3-3/gcc4-4.5.3-3/src/gcc-4.5.3 --prefix=/usr --exec-prefix=/usr --bindir=/usr/bin --sbindir=/usr/sbin --libexecdir=/usr/lib --datadir=/usr/share --localstatedir=/var --sysconfdir=/etc --datarootdir=/usr/share --docdir=/usr/share/doc/gcc4 -C --datadir=/usr/share --infodir=/usr/share/info --mandir=/usr/share/man -v --with-gmp=/usr --with-mpfr=/usr --enable-bootstrap --enable-version-specific-runtime-libs --libexecdir=/usr/lib --enable-static --enable-shared --enable-shared-libgcc --disable-__cxa_atexit --with-gnu-ld --with-gnu-as --with-dwarf2 --disable-sjlj-exceptions --enable-languages=ada,c,c++,fortran,java,lto,objc,obj-c++ --enable-graphite --enable-lto --enable-java-awt=gtk --disable-symvers --enable-libjava --program-suffix=-4 --enable-libgomp --enable-libssp --enable-libada --enable-threads=posix --with-arch=i686 --with-tune=generic --enable-libgcj-sublibs CC=gcc-4 CXX=g++-4 CC_FOR_TARGET=gcc-4 CXX_FOR_TARGET=g++-4 GNATMAKE_FOR_TARGET=gnatmake GNATBIND_FOR_TARGET=gnatbind --with-ecj-jar=/usr/share/java/ecj.jar
+Thread model: posix
+gcc version 4.5.3 (GCC) 
+COMPILER_PATH=/usr/lib/gcc/i686-pc-cygwin/4.5.3/:/usr/lib/gcc/i686-pc-cygwin/4.5.3/:/usr/lib/gcc/i686-pc-cygwin/:/usr/lib/gcc/i686-pc-cygwin/4.5.3/:/usr/lib/gcc/i686-pc-cygwin/:/usr/lib/gcc/i686-pc-cygwin/4.5.3/../../../../i686-pc-cygwin/bin/
+LIBRARY_PATH=/usr/lib/gcc/i686-pc-cygwin/4.5.3/:/usr/lib/gcc/i686-pc-cygwin/4.5.3/../../../:/lib/:/usr/lib/
+COLLECT_GCC_OPTIONS='-v' '-o' 'cmTryCompileExec.exe' '-mtune=generic' '-march=i686'
+ /usr/lib/gcc/i686-pc-cygwin/4.5.3/collect2.exe --wrap _Znwj --wrap _Znaj --wrap _ZdlPv --wrap _ZdaPv --wrap _ZnwjRKSt9nothrow_t --wrap _ZnajRKSt9nothrow_t --wrap _ZdlPvRKSt9nothrow_t --wrap _ZdaPvRKSt9nothrow_t -Bdynamic --dll-search-prefix=cyg --large-address-aware --tsaware -o cmTryCompileExec.exe /usr/lib/gcc/i686-pc-cygwin/4.5.3/../../../crt0.o /usr/lib/gcc/i686-pc-cygwin/4.5.3/crtbegin.o -L/usr/lib/gcc/i686-pc-cygwin/4.5.3 -L/usr/lib/gcc/i686-pc-cygwin/4.5.3/../../.. CMakeFiles/cmTryCompileExec.dir/CMakeCCompilerABI.c.o --out-implib libcmTryCompileExec.dll.a --major-image-version 0 --minor-image-version 0 -lgcc -lgcc_eh -lcygwin -luser32 -lkernel32 -ladvapi32 -lshell32 -lgcc -lgcc_eh /usr/lib/gcc/i686-pc-cygwin/4.5.3/crtend.o
+make[1]: Leaving directory `/cygdrive/c/GitRoot/Bolt/bolt/cl/CMakeFiles/CMakeTmp'
+
+
+Parsed C implicit link information from above output:
+  link line regex: [^( *|.*[/\])(ld.exe|ld|collect2)[^/\]*( |$)]
+  ignore line: [Change Dir: /cygdrive/c/GitRoot/Bolt/bolt/cl/CMakeFiles/CMakeTmp]
+  ignore line: []
+  ignore line: [Run Build Command:/usr/bin/make.exe "cmTryCompileExec/fast"]
+  ignore line: [/usr/bin/make -f CMakeFiles/cmTryCompileExec.dir/build.make CMakeFiles/cmTryCompileExec.dir/build]
+  ignore line: [make[1]: Entering directory `/cygdrive/c/GitRoot/Bolt/bolt/cl/CMakeFiles/CMakeTmp']
+  ignore line: [/usr/bin/cmake.exe -E cmake_progress_report /cygdrive/c/GitRoot/Bolt/bolt/cl/CMakeFiles/CMakeTmp/CMakeFiles 1]
+  ignore line: [Building C object CMakeFiles/cmTryCompileExec.dir/CMakeCCompilerABI.c.o]
+  ignore line: [/usr/bin/gcc.exe    -o CMakeFiles/cmTryCompileExec.dir/CMakeCCompilerABI.c.o   -c /usr/share/cmake-2.8.7/Modules/CMakeCCompilerABI.c]
+  ignore line: [Linking C executable cmTryCompileExec.exe]
+  ignore line: [/usr/bin/cmake.exe -E cmake_link_script CMakeFiles/cmTryCompileExec.dir/link.txt --verbose=1]
+  ignore line: [/usr/bin/gcc.exe       -v CMakeFiles/cmTryCompileExec.dir/CMakeCCompilerABI.c.o  -o cmTryCompileExec.exe -Wl,--out-implib,libcmTryCompileExec.dll.a -Wl,--major-image-version,0,--minor-image-version,0   ]
+  ignore line: [Using built-in specs.]
+  ignore line: [COLLECT_GCC=/usr/bin/gcc]
+  ignore line: [COLLECT_LTO_WRAPPER=/usr/lib/gcc/i686-pc-cygwin/4.5.3/lto-wrapper.exe]
+  ignore line: [Target: i686-pc-cygwin]
+  ignore line: [Configured with: /gnu/gcc/releases/respins/4.5.3-3/gcc4-4.5.3-3/src/gcc-4.5.3/configure --srcdir=/gnu/gcc/releases/respins/4.5.3-3/gcc4-4.5.3-3/src/gcc-4.5.3 --prefix=/usr --exec-prefix=/usr --bindir=/usr/bin --sbindir=/usr/sbin --libexecdir=/usr/lib --datadir=/usr/share --localstatedir=/var --sysconfdir=/etc --datarootdir=/usr/share --docdir=/usr/share/doc/gcc4 -C --datadir=/usr/share --infodir=/usr/share/info --mandir=/usr/share/man -v --with-gmp=/usr --with-mpfr=/usr --enable-bootstrap --enable-version-specific-runtime-libs --libexecdir=/usr/lib --enable-static --enable-shared --enable-shared-libgcc --disable-__cxa_atexit --with-gnu-ld --with-gnu-as --with-dwarf2 --disable-sjlj-exceptions --enable-languages=ada,c,c++,fortran,java,lto,objc,obj-c++ --enable-graphite --enable-lto --enable-java-awt=gtk --disable-symvers --enable-libjava --program-suffix=-4 --enable-libgomp --enable-libssp --enable-libada --enable-threads=posix --with-arch=i686 --with-tune=generic --enable-libgcj-sublibs CC=gcc-4 CXX=g++-4 CC_FOR_TARGET=gcc-4 CXX_FOR_TARGET=g++-4 GNATMAKE_FOR_TARGET=gnatmake GNATBIND_FOR_TARGET=gnatbind --with-ecj-jar=/usr/share/java/ecj.jar]
+  ignore line: [Thread model: posix]
+  ignore line: [gcc version 4.5.3 (GCC) ]
+  ignore line: [COMPILER_PATH=/usr/lib/gcc/i686-pc-cygwin/4.5.3/:/usr/lib/gcc/i686-pc-cygwin/4.5.3/:/usr/lib/gcc/i686-pc-cygwin/:/usr/lib/gcc/i686-pc-cygwin/4.5.3/:/usr/lib/gcc/i686-pc-cygwin/:/usr/lib/gcc/i686-pc-cygwin/4.5.3/../../../../i686-pc-cygwin/bin/]
+  ignore line: [LIBRARY_PATH=/usr/lib/gcc/i686-pc-cygwin/4.5.3/:/usr/lib/gcc/i686-pc-cygwin/4.5.3/../../../:/lib/:/usr/lib/]
+  ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'cmTryCompileExec.exe' '-mtune=generic' '-march=i686']
+  link line: [ /usr/lib/gcc/i686-pc-cygwin/4.5.3/collect2.exe --wrap _Znwj --wrap _Znaj --wrap _ZdlPv --wrap _ZdaPv --wrap _ZnwjRKSt9nothrow_t --wrap _ZnajRKSt9nothrow_t --wrap _ZdlPvRKSt9nothrow_t --wrap _ZdaPvRKSt9nothrow_t -Bdynamic --dll-search-prefix=cyg --large-address-aware --tsaware -o cmTryCompileExec.exe /usr/lib/gcc/i686-pc-cygwin/4.5.3/../../../crt0.o /usr/lib/gcc/i686-pc-cygwin/4.5.3/crtbegin.o -L/usr/lib/gcc/i686-pc-cygwin/4.5.3 -L/usr/lib/gcc/i686-pc-cygwin/4.5.3/../../.. CMakeFiles/cmTryCompileExec.dir/CMakeCCompilerABI.c.o --out-implib libcmTryCompileExec.dll.a --major-image-version 0 --minor-image-version 0 -lgcc -lgcc_eh -lcygwin -luser32 -lkernel32 -ladvapi32 -lshell32 -lgcc -lgcc_eh /usr/lib/gcc/i686-pc-cygwin/4.5.3/crtend.o]
+    arg [/usr/lib/gcc/i686-pc-cygwin/4.5.3/collect2.exe] ==> ignore
+    arg [--wrap] ==> ignore
+    arg [_Znwj] ==> ignore
+    arg [--wrap] ==> ignore
+    arg [_Znaj] ==> ignore
+    arg [--wrap] ==> ignore
+    arg [_ZdlPv] ==> ignore
+    arg [--wrap] ==> ignore
+    arg [_ZdaPv] ==> ignore
+    arg [--wrap] ==> ignore
+    arg [_ZnwjRKSt9nothrow_t] ==> ignore
+    arg [--wrap] ==> ignore
+    arg [_ZnajRKSt9nothrow_t] ==> ignore
+    arg [--wrap] ==> ignore
+    arg [_ZdlPvRKSt9nothrow_t] ==> ignore
+    arg [--wrap] ==> ignore
+    arg [_ZdaPvRKSt9nothrow_t] ==> ignore
+    arg [-Bdynamic] ==> ignore
+    arg [--dll-search-prefix=cyg] ==> ignore
+    arg [--large-address-aware] ==> ignore
+    arg [--tsaware] ==> ignore
+    arg [-o] ==> ignore
+    arg [cmTryCompileExec.exe] ==> ignore
+    arg [/usr/lib/gcc/i686-pc-cygwin/4.5.3/../../../crt0.o] ==> ignore
+    arg [/usr/lib/gcc/i686-pc-cygwin/4.5.3/crtbegin.o] ==> ignore
+    arg [-L/usr/lib/gcc/i686-pc-cygwin/4.5.3] ==> dir [/usr/lib/gcc/i686-pc-cygwin/4.5.3]
+    arg [-L/usr/lib/gcc/i686-pc-cygwin/4.5.3/../../..] ==> dir [/usr/lib/gcc/i686-pc-cygwin/4.5.3/../../..]
+    arg [CMakeFiles/cmTryCompileExec.dir/CMakeCCompilerABI.c.o] ==> ignore
+    arg [--out-implib] ==> ignore
+    arg [libcmTryCompileExec.dll.a] ==> ignore
+    arg [--major-image-version] ==> ignore
+    arg [0] ==> ignore
+    arg [--minor-image-version] ==> ignore
+    arg [0] ==> ignore
+    arg [-lgcc] ==> lib [gcc]
+    arg [-lgcc_eh] ==> lib [gcc_eh]
+    arg [-lcygwin] ==> lib [cygwin]
+    arg [-luser32] ==> lib [user32]
+    arg [-lkernel32] ==> lib [kernel32]
+    arg [-ladvapi32] ==> lib [advapi32]
+    arg [-lshell32] ==> lib [shell32]
+    arg [-lgcc] ==> lib [gcc]
+    arg [-lgcc_eh] ==> lib [gcc_eh]
+    arg [/usr/lib/gcc/i686-pc-cygwin/4.5.3/crtend.o] ==> ignore
+  remove lib [gcc]
+  remove lib [gcc_eh]
+  remove lib [gcc]
+  remove lib [gcc_eh]
+  collapse dir [/usr/lib/gcc/i686-pc-cygwin/4.5.3] ==> [/usr/lib/gcc/i686-pc-cygwin/4.5.3]
+  collapse dir [/usr/lib/gcc/i686-pc-cygwin/4.5.3/../../..] ==> [/usr/lib]
+  implicit libs: [cygwin;user32;kernel32;advapi32;shell32]
+  implicit dirs: [/usr/lib/gcc/i686-pc-cygwin/4.5.3;/usr/lib]
+
+
+Determining if the CXX compiler works passed with the following output:
+Change Dir: /cygdrive/c/GitRoot/Bolt/bolt/cl/CMakeFiles/CMakeTmp
+
+Run Build Command:/usr/bin/make.exe "cmTryCompileExec/fast"
+/usr/bin/make -f CMakeFiles/cmTryCompileExec.dir/build.make CMakeFiles/cmTryCompileExec.dir/build
+make[1]: Entering directory `/cygdrive/c/GitRoot/Bolt/bolt/cl/CMakeFiles/CMakeTmp'
+/usr/bin/cmake.exe -E cmake_progress_report /cygdrive/c/GitRoot/Bolt/bolt/cl/CMakeFiles/CMakeTmp/CMakeFiles 1
+Building CXX object CMakeFiles/cmTryCompileExec.dir/testCXXCompiler.cxx.o
+/usr/bin/c++.exe     -o CMakeFiles/cmTryCompileExec.dir/testCXXCompiler.cxx.o -c /cygdrive/c/GitRoot/Bolt/bolt/cl/CMakeFiles/CMakeTmp/testCXXCompiler.cxx
+Linking CXX executable cmTryCompileExec.exe
+/usr/bin/cmake.exe -E cmake_link_script CMakeFiles/cmTryCompileExec.dir/link.txt --verbose=1
+/usr/bin/c++.exe       -Wl,--enable-auto-import  CMakeFiles/cmTryCompileExec.dir/testCXXCompiler.cxx.o  -o cmTryCompileExec.exe -Wl,--out-implib,libcmTryCompileExec.dll.a -Wl,--major-image-version,0,--minor-image-version,0  
+make[1]: Leaving directory `/cygdrive/c/GitRoot/Bolt/bolt/cl/CMakeFiles/CMakeTmp'
+
+
+Detecting CXX compiler ABI info compiled with the following output:
+Change Dir: /cygdrive/c/GitRoot/Bolt/bolt/cl/CMakeFiles/CMakeTmp
+
+Run Build Command:/usr/bin/make.exe "cmTryCompileExec/fast"
+/usr/bin/make -f CMakeFiles/cmTryCompileExec.dir/build.make CMakeFiles/cmTryCompileExec.dir/build
+make[1]: Entering directory `/cygdrive/c/GitRoot/Bolt/bolt/cl/CMakeFiles/CMakeTmp'
+/usr/bin/cmake.exe -E cmake_progress_report /cygdrive/c/GitRoot/Bolt/bolt/cl/CMakeFiles/CMakeTmp/CMakeFiles 1
+Building CXX object CMakeFiles/cmTryCompileExec.dir/CMakeCXXCompilerABI.cpp.o
+/usr/bin/c++.exe     -o CMakeFiles/cmTryCompileExec.dir/CMakeCXXCompilerABI.cpp.o -c /usr/share/cmake-2.8.7/Modules/CMakeCXXCompilerABI.cpp
+Linking CXX executable cmTryCompileExec.exe
+/usr/bin/cmake.exe -E cmake_link_script CMakeFiles/cmTryCompileExec.dir/link.txt --verbose=1
+/usr/bin/c++.exe       -v CMakeFiles/cmTryCompileExec.dir/CMakeCXXCompilerABI.cpp.o  -o cmTryCompileExec.exe -Wl,--out-implib,libcmTryCompileExec.dll.a -Wl,--major-image-version,0,--minor-image-version,0   
+Using built-in specs.
+COLLECT_GCC=/usr/bin/c++
+COLLECT_LTO_WRAPPER=/usr/lib/gcc/i686-pc-cygwin/4.5.3/lto-wrapper.exe
+Target: i686-pc-cygwin
+Configured with: /gnu/gcc/releases/respins/4.5.3-3/gcc4-4.5.3-3/src/gcc-4.5.3/configure --srcdir=/gnu/gcc/releases/respins/4.5.3-3/gcc4-4.5.3-3/src/gcc-4.5.3 --prefix=/usr --exec-prefix=/usr --bindir=/usr/bin --sbindir=/usr/sbin --libexecdir=/usr/lib --datadir=/usr/share --localstatedir=/var --sysconfdir=/etc --datarootdir=/usr/share --docdir=/usr/share/doc/gcc4 -C --datadir=/usr/share --infodir=/usr/share/info --mandir=/usr/share/man -v --with-gmp=/usr --with-mpfr=/usr --enable-bootstrap --enable-version-specific-runtime-libs --libexecdir=/usr/lib --enable-static --enable-shared --enable-shared-libgcc --disable-__cxa_atexit --with-gnu-ld --with-gnu-as --with-dwarf2 --disable-sjlj-exceptions --enable-languages=ada,c,c++,fortran,java,lto,objc,obj-c++ --enable-graphite --enable-lto --enable-java-awt=gtk --disable-symvers --enable-libjava --program-suffix=-4 --enable-libgomp --enable-libssp --enable-libada --enable-threads=posix --with-arch=i686 --with-tune=generic --enable-libgcj-sublibs CC=gcc-4 CXX=g++-4 CC_FOR_TARGET=gcc-4 CXX_FOR_TARGET=g++-4 GNATMAKE_FOR_TARGET=gnatmake GNATBIND_FOR_TARGET=gnatbind --with-ecj-jar=/usr/share/java/ecj.jar
+Thread model: posix
+gcc version 4.5.3 (GCC) 
+COMPILER_PATH=/usr/lib/gcc/i686-pc-cygwin/4.5.3/:/usr/lib/gcc/i686-pc-cygwin/4.5.3/:/usr/lib/gcc/i686-pc-cygwin/:/usr/lib/gcc/i686-pc-cygwin/4.5.3/:/usr/lib/gcc/i686-pc-cygwin/:/usr/lib/gcc/i686-pc-cygwin/4.5.3/../../../../i686-pc-cygwin/bin/
+LIBRARY_PATH=/usr/lib/gcc/i686-pc-cygwin/4.5.3/:/usr/lib/gcc/i686-pc-cygwin/4.5.3/../../../:/lib/:/usr/lib/
+COLLECT_GCC_OPTIONS='-v' '-o' 'cmTryCompileExec.exe' '-shared-libgcc' '-mtune=generic' '-march=i686'
+ /usr/lib/gcc/i686-pc-cygwin/4.5.3/collect2.exe --wrap _Znwj --wrap _Znaj --wrap _ZdlPv --wrap _ZdaPv --wrap _ZnwjRKSt9nothrow_t --wrap _ZnajRKSt9nothrow_t --wrap _ZdlPvRKSt9nothrow_t --wrap _ZdaPvRKSt9nothrow_t -Bdynamic --dll-search-prefix=cyg --large-address-aware --tsaware -o cmTryCompileExec.exe /usr/lib/gcc/i686-pc-cygwin/4.5.3/../../../crt0.o /usr/lib/gcc/i686-pc-cygwin/4.5.3/crtbegin.o -L/usr/lib/gcc/i686-pc-cygwin/4.5.3 -L/usr/lib/gcc/i686-pc-cygwin/4.5.3/../../.. CMakeFiles/cmTryCompileExec.dir/CMakeCXXCompilerABI.cpp.o --out-implib libcmTryCompileExec.dll.a --major-image-version 0 --minor-image-version 0 -lstdc++ -lgcc_s -lgcc -lcygwin -luser32 -lkernel32 -ladvapi32 -lshell32 -lgcc_s -lgcc /usr/lib/gcc/i686-pc-cygwin/4.5.3/crtend.o
+make[1]: Leaving directory `/cygdrive/c/GitRoot/Bolt/bolt/cl/CMakeFiles/CMakeTmp'
+
+
+Parsed CXX implicit link information from above output:
+  link line regex: [^( *|.*[/\])(ld.exe|ld|collect2)[^/\]*( |$)]
+  ignore line: [Change Dir: /cygdrive/c/GitRoot/Bolt/bolt/cl/CMakeFiles/CMakeTmp]
+  ignore line: []
+  ignore line: [Run Build Command:/usr/bin/make.exe "cmTryCompileExec/fast"]
+  ignore line: [/usr/bin/make -f CMakeFiles/cmTryCompileExec.dir/build.make CMakeFiles/cmTryCompileExec.dir/build]
+  ignore line: [make[1]: Entering directory `/cygdrive/c/GitRoot/Bolt/bolt/cl/CMakeFiles/CMakeTmp']
+  ignore line: [/usr/bin/cmake.exe -E cmake_progress_report /cygdrive/c/GitRoot/Bolt/bolt/cl/CMakeFiles/CMakeTmp/CMakeFiles 1]
+  ignore line: [Building CXX object CMakeFiles/cmTryCompileExec.dir/CMakeCXXCompilerABI.cpp.o]
+  ignore line: [/usr/bin/c++.exe     -o CMakeFiles/cmTryCompileExec.dir/CMakeCXXCompilerABI.cpp.o -c /usr/share/cmake-2.8.7/Modules/CMakeCXXCompilerABI.cpp]
+  ignore line: [Linking CXX executable cmTryCompileExec.exe]
+  ignore line: [/usr/bin/cmake.exe -E cmake_link_script CMakeFiles/cmTryCompileExec.dir/link.txt --verbose=1]
+  ignore line: [/usr/bin/c++.exe       -v CMakeFiles/cmTryCompileExec.dir/CMakeCXXCompilerABI.cpp.o  -o cmTryCompileExec.exe -Wl,--out-implib,libcmTryCompileExec.dll.a -Wl,--major-image-version,0,--minor-image-version,0   ]
+  ignore line: [Using built-in specs.]
+  ignore line: [COLLECT_GCC=/usr/bin/c++]
+  ignore line: [COLLECT_LTO_WRAPPER=/usr/lib/gcc/i686-pc-cygwin/4.5.3/lto-wrapper.exe]
+  ignore line: [Target: i686-pc-cygwin]
+  ignore line: [Configured with: /gnu/gcc/releases/respins/4.5.3-3/gcc4-4.5.3-3/src/gcc-4.5.3/configure --srcdir=/gnu/gcc/releases/respins/4.5.3-3/gcc4-4.5.3-3/src/gcc-4.5.3 --prefix=/usr --exec-prefix=/usr --bindir=/usr/bin --sbindir=/usr/sbin --libexecdir=/usr/lib --datadir=/usr/share --localstatedir=/var --sysconfdir=/etc --datarootdir=/usr/share --docdir=/usr/share/doc/gcc4 -C --datadir=/usr/share --infodir=/usr/share/info --mandir=/usr/share/man -v --with-gmp=/usr --with-mpfr=/usr --enable-bootstrap --enable-version-specific-runtime-libs --libexecdir=/usr/lib --enable-static --enable-shared --enable-shared-libgcc --disable-__cxa_atexit --with-gnu-ld --with-gnu-as --with-dwarf2 --disable-sjlj-exceptions --enable-languages=ada,c,c++,fortran,java,lto,objc,obj-c++ --enable-graphite --enable-lto --enable-java-awt=gtk --disable-symvers --enable-libjava --program-suffix=-4 --enable-libgomp --enable-libssp --enable-libada --enable-threads=posix --with-arch=i686 --with-tune=generic --enable-libgcj-sublibs CC=gcc-4 CXX=g++-4 CC_FOR_TARGET=gcc-4 CXX_FOR_TARGET=g++-4 GNATMAKE_FOR_TARGET=gnatmake GNATBIND_FOR_TARGET=gnatbind --with-ecj-jar=/usr/share/java/ecj.jar]
+  ignore line: [Thread model: posix]
+  ignore line: [gcc version 4.5.3 (GCC) ]
+  ignore line: [COMPILER_PATH=/usr/lib/gcc/i686-pc-cygwin/4.5.3/:/usr/lib/gcc/i686-pc-cygwin/4.5.3/:/usr/lib/gcc/i686-pc-cygwin/:/usr/lib/gcc/i686-pc-cygwin/4.5.3/:/usr/lib/gcc/i686-pc-cygwin/:/usr/lib/gcc/i686-pc-cygwin/4.5.3/../../../../i686-pc-cygwin/bin/]
+  ignore line: [LIBRARY_PATH=/usr/lib/gcc/i686-pc-cygwin/4.5.3/:/usr/lib/gcc/i686-pc-cygwin/4.5.3/../../../:/lib/:/usr/lib/]
+  ignore line: [COLLECT_GCC_OPTIONS='-v' '-o' 'cmTryCompileExec.exe' '-shared-libgcc' '-mtune=generic' '-march=i686']
+  link line: [ /usr/lib/gcc/i686-pc-cygwin/4.5.3/collect2.exe --wrap _Znwj --wrap _Znaj --wrap _ZdlPv --wrap _ZdaPv --wrap _ZnwjRKSt9nothrow_t --wrap _ZnajRKSt9nothrow_t --wrap _ZdlPvRKSt9nothrow_t --wrap _ZdaPvRKSt9nothrow_t -Bdynamic --dll-search-prefix=cyg --large-address-aware --tsaware -o cmTryCompileExec.exe /usr/lib/gcc/i686-pc-cygwin/4.5.3/../../../crt0.o /usr/lib/gcc/i686-pc-cygwin/4.5.3/crtbegin.o -L/usr/lib/gcc/i686-pc-cygwin/4.5.3 -L/usr/lib/gcc/i686-pc-cygwin/4.5.3/../../.. CMakeFiles/cmTryCompileExec.dir/CMakeCXXCompilerABI.cpp.o --out-implib libcmTryCompileExec.dll.a --major-image-version 0 --minor-image-version 0 -lstdc++ -lgcc_s -lgcc -lcygwin -luser32 -lkernel32 -ladvapi32 -lshell32 -lgcc_s -lgcc /usr/lib/gcc/i686-pc-cygwin/4.5.3/crtend.o]
+    arg [/usr/lib/gcc/i686-pc-cygwin/4.5.3/collect2.exe] ==> ignore
+    arg [--wrap] ==> ignore
+    arg [_Znwj] ==> ignore
+    arg [--wrap] ==> ignore
+    arg [_Znaj] ==> ignore
+    arg [--wrap] ==> ignore
+    arg [_ZdlPv] ==> ignore
+    arg [--wrap] ==> ignore
+    arg [_ZdaPv] ==> ignore
+    arg [--wrap] ==> ignore
+    arg [_ZnwjRKSt9nothrow_t] ==> ignore
+    arg [--wrap] ==> ignore
+    arg [_ZnajRKSt9nothrow_t] ==> ignore
+    arg [--wrap] ==> ignore
+    arg [_ZdlPvRKSt9nothrow_t] ==> ignore
+    arg [--wrap] ==> ignore
+    arg [_ZdaPvRKSt9nothrow_t] ==> ignore
+    arg [-Bdynamic] ==> ignore
+    arg [--dll-search-prefix=cyg] ==> ignore
+    arg [--large-address-aware] ==> ignore
+    arg [--tsaware] ==> ignore
+    arg [-o] ==> ignore
+    arg [cmTryCompileExec.exe] ==> ignore
+    arg [/usr/lib/gcc/i686-pc-cygwin/4.5.3/../../../crt0.o] ==> ignore
+    arg [/usr/lib/gcc/i686-pc-cygwin/4.5.3/crtbegin.o] ==> ignore
+    arg [-L/usr/lib/gcc/i686-pc-cygwin/4.5.3] ==> dir [/usr/lib/gcc/i686-pc-cygwin/4.5.3]
+    arg [-L/usr/lib/gcc/i686-pc-cygwin/4.5.3/../../..] ==> dir [/usr/lib/gcc/i686-pc-cygwin/4.5.3/../../..]
+    arg [CMakeFiles/cmTryCompileExec.dir/CMakeCXXCompilerABI.cpp.o] ==> ignore
+    arg [--out-implib] ==> ignore
+    arg [libcmTryCompileExec.dll.a] ==> ignore
+    arg [--major-image-version] ==> ignore
+    arg [0] ==> ignore
+    arg [--minor-image-version] ==> ignore
+    arg [0] ==> ignore
+    arg [-lstdc++] ==> lib [stdc++]
+    arg [-lgcc_s] ==> lib [gcc_s]
+    arg [-lgcc] ==> lib [gcc]
+    arg [-lcygwin] ==> lib [cygwin]
+    arg [-luser32] ==> lib [user32]
+    arg [-lkernel32] ==> lib [kernel32]
+    arg [-ladvapi32] ==> lib [advapi32]
+    arg [-lshell32] ==> lib [shell32]
+    arg [-lgcc_s] ==> lib [gcc_s]
+    arg [-lgcc] ==> lib [gcc]
+    arg [/usr/lib/gcc/i686-pc-cygwin/4.5.3/crtend.o] ==> ignore
+  remove lib [gcc_s]
+  remove lib [gcc]
+  remove lib [gcc_s]
+  remove lib [gcc]
+  collapse dir [/usr/lib/gcc/i686-pc-cygwin/4.5.3] ==> [/usr/lib/gcc/i686-pc-cygwin/4.5.3]
+  collapse dir [/usr/lib/gcc/i686-pc-cygwin/4.5.3/../../..] ==> [/usr/lib]
+  implicit libs: [stdc++;cygwin;user32;kernel32;advapi32;shell32]
+  implicit dirs: [/usr/lib/gcc/i686-pc-cygwin/4.5.3;/usr/lib]
+
+
