@@ -62,11 +62,14 @@
 namespace bolt {
     namespace cl {
 
+        extern const std::string generate_kernels;
         extern const std::string reduce_kernels;
+        extern const std::string scan_kernels;
+        extern const std::string sort_kernels;
         extern const std::string transform_kernels;
         extern const std::string transform_reduce_kernels;
-        extern const std::string sort_kernels;
-        extern const std::string scan_kernels;
+        
+        
         //extern const char* const reduce_kernels;
         //extern const char* const transform_kernels;
         //extern const char* const transform_reduce_kernels;

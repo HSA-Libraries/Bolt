@@ -70,6 +70,7 @@ set( clBolt.Runtime.Headers
         ${clBolt.Include.Dir}/count.h 
         ${clBolt.Include.Dir}/device_vector.h 
         ${clBolt.Include.Dir}/functional.h 
+        ${clBolt.Include.Dir}/generate.h 
         ${clBolt.Include.Dir}/iterator_traits.h 
         ${clBolt.Include.Dir}/reduce.h 
         ${clBolt.Include.Dir}/scan.h 
@@ -85,6 +86,7 @@ set( clBolt.Runtime.Headers.Misc
     )
         
 set( clBolt.Runtime.Headers.Detail 
+        ${clBolt.Include.Dir}/detail/generate.inl
         ${clBolt.Include.Dir}/detail/reduce.inl
         ${clBolt.Include.Dir}/detail/scan.inl
         ${clBolt.Include.Dir}/detail/sort.inl
@@ -93,6 +95,7 @@ set( clBolt.Runtime.Headers.Detail
     )
 
 set( clBolt.Runtime.clFiles 
+        generate_kernels.cl 
         reduce_kernels.cl 
         transform_kernels.cl 
         transform_reduce_kernels.cl

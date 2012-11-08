@@ -50,7 +50,7 @@ namespace bolt
         /*! \brief This defines the OpenCL version of a device_vector
         *   \ingroup Device
         *   \details A device_vector is an abstract data type that provides random access to a flat, sequential region of memory that is performant 
-        *   for the device.  This can imply different memories for diffferent devices.  For discrete class graphics,
+        *   for the device.  This can imply different memories for different devices.  For discrete class graphics,
         *   devices, this is most likely video memory; for APU devices, this can imply zero-copy memory; for CPU devices, this can imply
         *   standard host memory.
         *   \sa http://www.sgi.com/tech/stl/Vector.html
@@ -348,6 +348,7 @@ namespace bolt
 
                 if( m_Flags & CL_MEM_USE_HOST_PTR )
                 {
+                    printf("device_vector %i bytes\n", m_Size*sizeof( value_type ));
                     m_devMemory = ::cl::Buffer( l_Context, m_Flags, m_Size * sizeof( value_type ), 
                         reinterpret_cast< value_type* >( const_cast< value_type* >( &*begin ) ) );
                 }
