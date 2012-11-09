@@ -1178,7 +1178,7 @@ namespace bolt
                 std::copy( begin, end, ptrBuffer );
 #endif
                 ::cl::Event unmapEvent;
-                l_Error = m_commQueue.enqueueUnmapMemObject( m_devMemory, ptrBuff, NULL, &unmapEvent );
+                l_Error = m_commQueue.enqueueUnmapMemObject( m_devMemory, ptrBuffer, NULL, &unmapEvent );
                 V_OPENCL( l_Error, "device_vector failed to unmap host memory back to device memory" );
                 V_OPENCL( unmapEvent.wait( ), "failed to wait for unmap event" );
             }

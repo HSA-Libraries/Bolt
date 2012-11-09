@@ -492,7 +492,15 @@ namespace bolt
 
                 //    //  Look at the contents of those buffers
                 //    device_vector< oType >::pointer pResult     = result->getContainer( ).data( );
-                //    device_vector< oType >::pointer pPreSum     = preSumArray.data( );
+                //    //device_vector< oType >::pointer pPreSum     = preSumArray.data( );
+
+                //    iType* pPreSumArray = (iType*)ctl.commandQueue().enqueueMapBuffer( preSumArray, true, CL_MAP_READ, 0, sizeScanBuff*sizeof(iType), NULL, NULL, &l_Error );
+                //    V_OPENCL( l_Error, "Error calling map on the result buffer" );
+
+                //    ::cl::Event unmapEvent;
+                //    V_OPENCL( ctl.commandQueue().enqueueUnmapMemObject( preSumArray, static_cast< void* >( pPreSumArray ), NULL, &unmapEvent ),
+                //            "shared_ptr failed to unmap host memory back to device memory" );
+                //    V_OPENCL( unmapEvent.wait( ), "failed to wait for unmap event" );
                 //}
 
                 cl_uint workPerThread = static_cast< cl_uint >( sizeScanBuff / waveSize );
@@ -517,8 +525,24 @@ namespace bolt
                 //    V_OPENCL( ctl.commandQueue( ).finish( ), "Failed to call finish on the commandqueue" );
 
                 //    //  Look at the contents of those buffers
-                //    device_vector< oType >::pointer pPreSum      = preSumArray.data( );
-                //    device_vector< oType >::pointer pPostSum     = postSumArray.data( );
+                //    //device_vector< oType >::pointer pPreSum      = preSumArray.data( );
+                //    //device_vector< oType >::pointer pPostSum     = postSumArray.data( );
+
+                //    iType* pPreSumArray = (iType*)ctl.commandQueue().enqueueMapBuffer( preSumArray, true, CL_MAP_READ, 0, sizeScanBuff*sizeof(iType), NULL, NULL, &l_Error );
+                //    V_OPENCL( l_Error, "Error calling map on the result buffer" );
+
+                //    iType* pPostSumArray = (iType*)ctl.commandQueue().enqueueMapBuffer( postSumArray, true, CL_MAP_READ, 0, sizeScanBuff*sizeof(iType), NULL, NULL, &l_Error );
+                //    V_OPENCL( l_Error, "Error calling map on the result buffer" );
+
+                //    ::cl::Event unmapPreEvent;
+                //    V_OPENCL( ctl.commandQueue().enqueueUnmapMemObject( preSumArray, static_cast< void* >( pPreSumArray ), NULL, &unmapPreEvent ),
+                //            "shared_ptr failed to unmap host memory back to device memory" );
+                //    V_OPENCL( unmapPreEvent.wait( ), "failed to wait for unmap event" );
+
+                //    ::cl::Event unmapPostEvent;
+                //    V_OPENCL( ctl.commandQueue().enqueueUnmapMemObject( postSumArray, static_cast< void* >( pPostSumArray ), NULL, &unmapPostEvent ),
+                //            "shared_ptr failed to unmap host memory back to device memory" );
+                //    V_OPENCL( unmapPostEvent.wait( ), "failed to wait for unmap event" );
                 //}
 
                 std::vector< ::cl::Event > perBlockEvent( 1 );

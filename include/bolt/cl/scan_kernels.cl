@@ -1,4 +1,4 @@
-/***************************************************************************                                                                                     
+/***************************************************************************
 *   Copyright 2012 Advanced Micro Devices, Inc.                                     
 *                                                                                    
 *   Licensed under the Apache License, Version 2.0 (the "License");   
@@ -13,11 +13,8 @@
 *   See the License for the specific language governing permissions and              
 *   limitations under the License.                                                   
 
-***************************************************************************/                                                                                     
-
-// #ifdef cl_amd_printf
-    // #pragma OPENCL EXTENSION cl_amd_printf : enable
-// #endif
+***************************************************************************/
+// #pragma OPENCL EXTENSION cl_amd_printf : enable
 
 template< typename Type, typename BinaryFunction >
 kernel void perBlockAddition( 
@@ -69,14 +66,14 @@ kernel void intraBlockExclusiveScan(
 
     //  Abort threads that are passed the end of the input vector
     //  TODO:  I'm returning early for threads past the input vector size; not safe for barriers in kernel if wg != wavefront
-    if( gloId >= vecSize )
+    if( mapId >= vecSize )
         return;
 
-    //	A inclusive sequential scan, reducing values for very large arrays
+    //  Reducing workPerThread values per workitem into just 1 value per workitem; one wavefront execution
     iType workSum = 0;
     for( uint offset = 0; offset < workPerThread; offset += 1 )
     {
-        iType y = preSumArray[ mapId + offset ];
+        iType y = ((mapId + offset) < vecSize) ? preSumArray[ mapId + offset ] : 0;
         // printf( "preSumArray[%d] = [%g]\n", mapId + offset, y );
         workSum = (*binaryOp)( workSum, y );
         postSumArray[ mapId + offset ] = workSum;
@@ -84,7 +81,7 @@ kernel void intraBlockExclusiveScan(
     barrier( CLK_LOCAL_MEM_FENCE );
     pLDS[ locId ] = workSum;
 
-    //	This loop essentially computes an exclusive scan within a tile, writing 0 out for first element.
+    //	This loop computes the inclusive scan of the reduced block sum array
     iType scanSum = workSum;
     for( size_t offset = 1; offset < wgSize; offset *= 2 )
     {
@@ -98,15 +95,19 @@ kernel void intraBlockExclusiveScan(
         pLDS[ locId ] = scanSum;
     }
 
-    //	Write out the values of the per-tile scan
+    //	This subtraction converts the inclusive scan to the exclusive scan
     scanSum -= workSum;
+    
+    //  This adjusts the 1 value per workitem back into workPerThread values per workitem
     for( uint offset = 0; offset < workPerThread; offset += 1 )
     {
+        barrier( CLK_GLOBAL_MEM_FENCE );
+
         iType y = postSumArray[ mapId + offset ];
         y = (*binaryOp)( y, scanSum );
         y -= preSumArray[ mapId + offset ];
         postSumArray[ mapId + offset ] = y;
-        //printf( "postSumArray[%d] = [%g]\n", mapId + offset, postSumArray[ mapId + offset ] );
+        // printf( "postSumArray[%d] = [%g]\n", mapId + offset, postSumArray[ mapId + offset ] );
     }
 
 }
@@ -164,15 +165,17 @@ kernel void perBlockInclusiveScan(
     // printf( "Output Array work-item[%d], sum[%d]\n", gloId, sum );
 
     barrier( CLK_LOCAL_MEM_FENCE );
-
-    //  TODO:  verify; is there a memory conflict if all threads write to the same address?
-    scanBuffer[ groId ] = pLDS[ wgSize - 1 ];
-    // printf( "Block Sum Array work-item[%d], sum[%g]\n", gloId, pLDS[ wgSize - 1 ] );
     
-    //	Take the very last thread in a tile, and save its value into a buffer for further processing
-    // if( locId == (wgSize-1) )
-    // {
-        // scanBuffer[ groId ] = pLDS[ locId ];
-    // }
+    //	Take a single thread, and save the last valid value in a workgroup to the block sum array
+    //if( locId == 0 )
+    //{
+    //    uint lastValidWorkItem = min( wgSize, vecSize - ( get_group_id( 0 ) * wgSize ) );        
+    //    scanBuffer[ groId ] = pLDS[ lastValidWorkItem-1 ];
+    //    printf( "scanBuffer[%d] = pLDS[%d] = %g\n", gloId, lastValidWorkItem - 1, pLDS[ lastValidWorkItem - 1 ] );
+    //}
+    
+    //  Verify; is it still performant to have every work item write to the same output array index?
+    size_t lastValidWorkItem = min( wgSize, vecSize - ( groId * wgSize ) );        
+    scanBuffer[ groId ] = pLDS[ lastValidWorkItem-1 ];
 }
 

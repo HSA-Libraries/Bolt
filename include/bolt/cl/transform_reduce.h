@@ -115,7 +115,7 @@ namespace bolt {
          *  int input[10] = {-5,  0,  2,  3,  2,  4, -2,  1,  2,  3};
          *  int output;
          * 
-         *  bolt::cl::::transform_reduce( input, input + 10, bolt::cl::square<int>(), 0, bolt::cl::plus<int>() );
+         *  bolt::cl::transform_reduce( input, input + 10, bolt::cl::square<int>(), 0, bolt::cl::plus<int>() );
          *
          *  // output is 76
          *  \endcode
