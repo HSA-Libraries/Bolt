@@ -79,7 +79,7 @@ namespace bolt {
          *  cl::CommandQueue myCommandQueue = ...
          *  bolt::cl::control ctl(myCommandQueue); // specify an OpenCL(TM) command queue.
          *  bolt::cl::plus<int> op;
-         *  bolt::cl::::transform(ctl, input1, input1 + 10, input2, output, op);
+         *  bolt::cl::transform(ctl, input1, input1 + 10, input2, output, op);
          *
          *  // output is now {-2,  6,  0,  4,  4,  7};
          *  \endcode
@@ -126,7 +126,7 @@ namespace bolt {
          *  int output[10];
          * 
          *
-         *  bolt::cl::::transform(input1, input1 + 10, input2, output, op);
+         *  bolt::cl::transform(input1, input1 + 10, input2, output, op);
          *
          *  // output is now {-2,  6,  0,  4,  4,  7};
          *  \endcode
