@@ -213,6 +213,33 @@ namespace bolt
                 iterator_base( const iterator_base< OtherContainer >& rhs ): m_Container( rhs.m_Container ), m_index( rhs.m_index )
                 {}
 
+                //  This copy constructor allows an iterator to convert into a const_iterator, but not vica versa
+                //template< typename Container >
+                iterator_base< Container >& operator= ( const iterator_base< Container >& rhs )
+                {
+                    m_Container = rhs.m_Container;
+                    m_index = rhs.m_index;
+                    return *this;
+                }
+                
+                iterator_base< Container >& operator+= ( const difference_type & n )
+                {
+                    advance( n );
+                    return *this;
+                }
+                
+                const iterator_base< Container > operator+ ( const difference_type & n ) const
+                {
+                    iterator_base< Container > result(*this);
+                    result.advance(n);
+                    return result;
+                }
+
+                int getIndex() const
+                {
+                    return m_index;
+                }
+
             private:
                 //  Implementation detail of boost.iterator
                 friend class boost::iterator_core_access;
@@ -355,7 +382,6 @@ namespace bolt
 
                 if( m_Flags & CL_MEM_USE_HOST_PTR )
                 {
-                    printf("device_vector %i bytes\n", m_Size*sizeof( value_type ));
                     m_devMemory = ::cl::Buffer( l_Context, m_Flags, m_Size * sizeof( value_type ), 
                         reinterpret_cast< value_type* >( const_cast< value_type* >( &*begin ) ) );
                 }
@@ -807,9 +833,11 @@ namespace bolt
 
                 naked_pointer ptrBuff = reinterpret_cast< naked_pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ | CL_MAP_WRITE, 
                     0, m_Size * sizeof( value_type ), NULL, NULL, &l_Error ) );
+
                 V_OPENCL( l_Error, "device_vector failed map device memory to host memory for operator[]" );
 
                 pointer sp( ptrBuff, UnMapBufferFunctor< device_vector< value_type > >( *this ) );
+
                 return sp;
             }
 
