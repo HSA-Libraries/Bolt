@@ -370,6 +370,71 @@ protected:
      int* boltInput;
 };
 
+class scanStdVectorWithIters:public ::testing::TestWithParam<int>
+{
+protected:
+    int myStdVectSize;
+public:
+    scanStdVectorWithIters():myStdVectSize(GetParam()){
+    }
+};
+
+TEST_P (scanStdVectorWithIters, intDefiniteValues){
+    std::vector<int> stdInput( myStdVectSize);
+    std::vector<int> boltInput( myStdVectSize);
+
+    for (int i = 0; i < myStdVectSize; ++i){
+        boltInput[i] = i + 1;
+    }
+        
+    for (int i = 0; i < myStdVectSize; ++i){
+        stdInput[i] = i + 1;
+    }
+
+    std::vector<int>::iterator boltEnd = bolt::cl::inclusive_scan( boltInput.begin( ), boltInput.end( ), boltInput.begin( ) );
+    std::vector<int>::iterator stdEnd  = std::partial_sum( stdInput.begin( ), stdInput.end( ), stdInput.begin( ) );
+    
+    EXPECT_EQ((*(boltEnd-1)), (*(stdEnd-1)))<<std::endl;
+}
+
+
+TEST_P (scanStdVectorWithIters, floatDefiniteValues){
+    
+    std::vector<float> boltInput( myStdVectSize);
+    std::vector<float> stdInput( myStdVectSize);
+
+    for (int i = 0; i < myStdVectSize; ++i){
+        //stdInput[i] = 1.0f + ( static_cast<float>( rand( ) ) / RAND_MAX );
+        stdInput[i] = 1.5f;
+        boltInput[i] = stdInput[i];
+    }
+
+    std::vector<float>::iterator boltEnd = bolt::cl::inclusive_scan( boltInput.begin( ), boltInput.end( ), boltInput.begin( ) );
+    std::vector<float>::iterator stdEnd  = std::partial_sum( stdInput.begin( ), stdInput.end( ), stdInput.begin( ) );
+    
+    EXPECT_FLOAT_EQ((*(boltEnd-1)), (*(stdEnd-1)))<<std::endl;
+}
+
+TEST_P (scanStdVectorWithIters, doubleDefiniteValues){
+    
+    std::vector<double> boltInput( myStdVectSize);
+    std::vector<double> stdInput( myStdVectSize);
+    
+    for (int i = 0; i < myStdVectSize; ++i){
+        //stdInput[i] = 1.0f + ( static_cast<double>( rand( ) ) / RAND_MAX );
+        stdInput[i] = 1.5f;
+        boltInput[i] = stdInput[i];
+    }
+
+    std::vector<double>::iterator boltEnd = bolt::cl::inclusive_scan( boltInput.begin( ), boltInput.end( ), boltInput.begin( ) );
+    std::vector<double>::iterator stdEnd  = std::partial_sum( stdInput.begin( ), stdInput.end( ), stdInput.begin( ) );
+    
+    EXPECT_DOUBLE_EQ((*(boltEnd-1)), (*(stdEnd-1)))<<std::endl;
+}
+//INSTANTIATE_TEST_CASE_P(inclusiveScanIter, scanStdVectorWithIters, ::testing::Range(1, 1025, 1)); 
+INSTANTIATE_TEST_CASE_P(inclusiveScanIterIntLimit, scanStdVectorWithIters, ::testing::Range(1025, 65535, 1000)); 
+
+
 TEST_P( ScanIntegerVector, InclusiveInplace )
 {
     //cl_int err = CL_SUCCESS;
