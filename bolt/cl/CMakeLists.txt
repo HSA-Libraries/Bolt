@@ -67,6 +67,7 @@ set( clBolt.Runtime.Headers
         ${clBolt.Include.Dir}/bolt.h 
         ${clBolt.Include.Dir}/clcode.h 
         ${clBolt.Include.Dir}/control.h 
+        ${clBolt.Include.Dir}/copy.h 
         ${clBolt.Include.Dir}/count.h 
         ${clBolt.Include.Dir}/device_vector.h 
         ${clBolt.Include.Dir}/functional.h 
@@ -86,6 +87,7 @@ set( clBolt.Runtime.Headers.Misc
     )
         
 set( clBolt.Runtime.Headers.Detail 
+        ${clBolt.Include.Dir}/detail/copy.inl
         ${clBolt.Include.Dir}/detail/generate.inl
         ${clBolt.Include.Dir}/detail/reduce.inl
         ${clBolt.Include.Dir}/detail/scan.inl

@@ -172,6 +172,11 @@ namespace bolt
                     return m_Container;
                 }
 
+                size_type getIndex() const
+                {
+                    return m_index;
+                }
+
             private:
                 Container& m_Container;
                 size_type m_index;
@@ -605,6 +610,7 @@ namespace bolt
                 size_type l_memSize  = 0;
                 cl_int l_Error = CL_SUCCESS;
 
+                // this seems like bug; what if i popped everything?
                 if( m_Size == 0 )
                     return m_Size;
 

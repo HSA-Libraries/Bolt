@@ -16,39 +16,23 @@
 ############################################################################                                                                                     
 
 # List the names of common files to compile across all platforms
-message( STATUS "Setting up OpenCL specific test projects..." )
+set( clBolt.Bench.Copy.Source CopyBench.cpp )
+set( clBolt.Bench.Copy.Headers ${BOLT_INCLUDE_DIR}/bolt/cl/copy.h )
 
-set( Boost_USE_MULTITHREADED ON )
-set( Boost_USE_STATIC_LIBS   ON )
-set( Boost_DETAILED_FAILURE_MSG   ON )
+set( clBolt.Bench.Copy.Files ${clBolt.Bench.Copy.Source} ${clBolt.Bench.Copy.Headers} )
 
-# Set the test folder directory. This is common to cl and amp. 
-set( BOLT_CL_TEST_DIR ${BOLT_TEST_DIR}/cl )
+add_executable( clBolt.Bench.Copy ${clBolt.Bench.Copy.Files} )
 
-# set( Boost_DEBUG ON )
+target_link_libraries( clBolt.Bench.Copy ${Boost_LIBRARIES} clBolt.Runtime )
 
-if( BOOST_ROOT )
-    # The root tree of BOOST was specified on the command line; use it to to find the specific Boost the user points too
-    find_package( Boost ${Boost.VERSION} COMPONENTS thread date_time chrono program_options REQUIRED )
-    # This will define Boost_FOUND
-else( )
-    message( "Configure Bolt in <BOLT_ROOT>/bin to build the SuperBuild which will download and build Boost automatically" )    
-    message( SEND_ERROR "The OpenCL Bolt library requires BOOST_ROOT to be defined" )
-endif( )
+set_target_properties( clBolt.Bench.Copy PROPERTIES VERSION ${Bolt_VERSION} )
+set_target_properties( clBolt.Bench.Copy PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
 
-# Include standard Boost headers
-include_directories( ${Boost_INCLUDE_DIRS} )
+set_property( TARGET clBolt.Bench.Copy PROPERTY FOLDER "Benchmark/OpenCL")
 
-# Include standard OpenCL headers
-include_directories( ${OPENCL_INCLUDE_DIRS} ${BOLT_CL_TEST_DIR} ) 
-
-add_subdirectory( CopyTest )
-add_subdirectory( CountTest )
-add_subdirectory( DeviceVectorTest )
-add_subdirectory( GenerateTest )
-add_subdirectory( ReduceTest )
-add_subdirectory( ReadFromFileTest )   
-add_subdirectory( ScanTest )
-add_subdirectory( SortTest )
-add_subdirectory( TransformTest )   
-add_subdirectory( TransformReduceTest )
+# CPack configuration; include the executable into the package
+install( TARGETS clBolt.Bench.Copy
+	RUNTIME DESTINATION ${BIN_DIR}
+	LIBRARY DESTINATION ${LIB_DIR}
+	ARCHIVE DESTINATION ${LIB_DIR}
+	)
