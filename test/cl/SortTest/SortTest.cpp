@@ -1150,7 +1150,7 @@ void BasicSortTestOfLength(size_t length)
     size_t i;
     for (i=0;i<length;i++)
     {
-        boltInput[i]= (T)(stdInput[i]) & 0xFFFFU;
+        boltInput[i]= (T)((stdInput[i]) & 0xFFFFU)* 0x178F;
 		//printf("%x ",boltInput[i]);
 		stdInput[i] = boltInput[i];
     }
