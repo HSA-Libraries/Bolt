@@ -66,10 +66,11 @@ namespace bolt {
         extern const std::string reduce_kernels;
         extern const std::string scan_kernels;
         extern const std::string sort_kernels;
+		extern const std::string sort_uint_kernels;
         extern const std::string transform_kernels;
         extern const std::string transform_reduce_kernels;
-        
-        
+
+
         //extern const char* const reduce_kernels;
         //extern const char* const transform_kernels;
         //extern const char* const transform_reduce_kernels;
@@ -81,6 +82,8 @@ namespace bolt {
         extern ::cl::Kernel compileFunctor(const std::string &kernelCodeString, const std::string kernelName, const std::string compileOptions, const control &c);
 
         extern void constructAndCompile(::cl::Kernel *masterKernel, const std::string &apiName, const std::string instantiationString, std::string userCode, std::string valueTypeName,  std::string functorTypeName, const control &c);
+
+		::cl::Program buildProgram( const std::string& kernelCodeString, std::string compileOptions, const control& ctl );
 
         void compileKernels( std::vector< ::cl::Kernel >& clKernels, 
                 const std::vector< const std::string >& kernelNames, 
@@ -97,6 +100,11 @@ namespace bolt {
                 const std::string& instantiationString, 
                 const std::string& userCode, 
                 const std::string& valueTypeName, 
+                const std::string& functorTypeName, 
+                const control& ctl );
+        
+		void constructAndCompileProgram( ::cl::Program *masterProgram, 
+                const std::string& userCode, 
                 const std::string& functorTypeName, 
                 const control& ctl );
 
@@ -165,5 +173,5 @@ namespace bolt {
 BOLT_CREATE_TYPENAME(int);
 BOLT_CREATE_TYPENAME(float);
 BOLT_CREATE_TYPENAME(double);
-
+BOLT_CREATE_TYPENAME(unsigned);
 #endif

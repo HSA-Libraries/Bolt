@@ -18,7 +18,7 @@
 #define TEST_DOUBLE 0
 #define TEST_DEVICE_VECTOR 1
 #define TEST_CPU_DEVICE 0
-#define GOOGLE_TEST 1
+#define GOOGLE_TEST 0
 #if (GOOGLE_TEST == 1)
 
 #include "common/stdafx.h"
@@ -1146,21 +1146,22 @@ void BasicSortTestOfLength(size_t length)
     std::vector<T> stdInput(length);
     std::vector<T> boltInput(length);
     
+	std::generate (stdInput.begin(), stdInput.end(),rand);
     size_t i;
-    for (i=0;i<length/2;i++)
+    for (i=0;i<length;i++)
     {
-        boltInput[2*i]= (T)(length - i +2);
-        boltInput[2*i + 1] = boltInput[2*i];
-        stdInput[2*i]= (T)(length - i +2);
-        stdInput[2*i + 1] = stdInput[2*i];
+        boltInput[i]= (T)(stdInput[i]) & 0xFFFFU;
+		//printf("%x ",boltInput[i]);
+		stdInput[i] = boltInput[i];
     }
+	//printf("\n");
     
     bolt::cl::sort(boltInput.begin(), boltInput.end());
     std::sort(stdInput.begin(), stdInput.end());
-    for (i=0; i<length; i++)
+    /*for (i=0; i<length; i++)
     {
         std::cout << i << " : " << stdInput[i] << " , " << boltInput[i] << std::endl;
-    }
+    }*/
     for (i=0; i<length; i++)
     {
         if(stdInput[i] == boltInput[i])
@@ -1292,7 +1293,7 @@ void UDDSortTestWithBoltFunctorOfLengthWithDeviceVector(size_t length)
     else 
         std::cout << "Test Failed i = " << i <<std::endl;
 }
-
+/*
 void TestWithBoltControl(int length)
 {
 
@@ -1346,20 +1347,22 @@ void TestWithBoltControl(int length)
     bolt::cl::sort(c, myTypeBoltInput.begin(), myTypeBoltInput.end(),bolt::cl::greater<mytype>());
     return;
 }
-
+*/
 int main(int argc, char* argv[])
 {
 
     //UDDSortTestOfLengthWithDeviceVector<int>(256);
-    BasicSortTestOfLength<int>(68);
+    BasicSortTestOfLength<unsigned int>(atoi(argv[1]));
+	//BasicSortTestOfLength<unsigned int>(4096);
+    BasicSortTestOfLength<int>(512);
     //BasicSortTestOfLength<int>(111);
     //BasicSortTestOfLength<int>(65);
     //BasicSortTestOfLength<int>(63);
     //BasicSortTestOfLength<int>(31);
 #if 0
-		std::vector<int> input(1024);
-		std::generate(input.begin(), input.end(), rand);	
-		bolt::cl::sort( input.begin(), input.end(), bolt::cl::greater<int>());
+	std::vector<int> input(1024);
+	std::generate(input.begin(), input.end(), rand);
+	bolt::cl::sort( input.begin(), input.end(), bolt::cl::greater<int>());
 
 	int a[10] = {2, 9, 3, 7, 5, 6, 3, 8, 3, 4};
 	bolt::cl::sort( a, a+10, bolt::cl::greater<int>());
@@ -1371,7 +1374,7 @@ int main(int argc, char* argv[])
     UserDefinedBoltFunctorSortTestOfLength<int>(254);
     UserDefinedObjectSortTestOfLength<int>(254);
     BasicSortTestOfLength<int>(254);
-    TestWithBoltControl();
+
 #endif
     //The following two are not working because device_vector support is not there.
     //UDDSortTestOfLengthWithDeviceVector<int>(256);
@@ -1606,6 +1609,7 @@ int main(int argc, char* argv[])
 #endif 
 
     std::cout << "Test Completed" << std::endl; 
+	return 0;
     getchar();
 	return 0;
 }

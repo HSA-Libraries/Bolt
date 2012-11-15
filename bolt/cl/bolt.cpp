@@ -32,6 +32,7 @@
 #include "bolt/reduce_kernels.hpp"
 #include "bolt/scan_kernels.hpp"
 #include "bolt/sort_kernels.hpp"
+#include "bolt/sort_uint_kernels.hpp"
 #include "bolt/transform_kernels.hpp"
 #include "bolt/transform_reduce_kernels.hpp"
 
@@ -40,9 +41,9 @@ namespace bolt {
 
     void getVersion( cl_uint& major, cl_uint& minor, cl_uint& patch )
     {
-        major	= BoltVersionMajor;
-        minor	= BoltVersionMinor;
-        patch	= BoltVersionPatch;
+        major	= 0;//BoltVersionMajor;
+        minor	= 0;//BoltVersionMinor;
+        patch	= 0;//BoltVersionPatch;
     }
 
     std::string clErrorStringA( const cl_int& status )

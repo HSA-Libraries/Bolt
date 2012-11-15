@@ -53,8 +53,8 @@ int main( int argc, char* argv[] )
             ( "version,v",		"Print queryable version information from the Bolt AMP library" )
             ( "platform,p",     po::value< cl_uint >( &userPlatform )->default_value( 0 ),	"Specify the platform under test" )
             ( "device,d",       po::value< cl_uint >( &userDevice )->default_value( 0 ),	"Specify the device under test" )
-            ( "length,l",		po::value< size_t >( &length )->default_value( 4194304 ), "Specify the length of sort array" )
-            ( "profile,i",		po::value< size_t >( &numLoops )->default_value( 1 ), "Time and report Sort speed GB/s (default: profiling off)" )
+            ( "length,l",		po::value< size_t >( &length )->default_value( 65536 ), "Specify the length of sort array" )
+            ( "profile,i",		po::value< size_t >( &numLoops )->default_value( 3 ), "Time and report Sort speed GB/s (default: profiling off)" )
 			( "algo,a",		    po::value< size_t >( &algo )->default_value( 1 ), "Algorithm used [1,2]  1:SORT_BOLT, 2:SORT_AMP_SHOC" )
             ;
 
@@ -92,8 +92,8 @@ int main( int argc, char* argv[] )
         return 1;
     }
 	//CPU sort inits
-    std::vector< double > input( length );
-	std::vector< double > backup( length );
+    std::vector< unsigned int > input( length );
+	std::vector< unsigned int > backup( length );
 	//BOLT sort inits
 
 	//AMP sort inits
@@ -118,7 +118,8 @@ int main( int argc, char* argv[] )
 		for( unsigned i = 0; i < numLoops; ++i )
         {
 			//input = backup;
-			bolt::cl::device_vector< double > boltInput( backup.begin(), backup.end(), CL_MEM_USE_HOST_PTR);
+			bolt::cl::device_vector< unsigned int > boltInput( backup.begin(), backup.end(), CL_MEM_USE_HOST_PTR);
+			//std::vector<unsigned int> boltInput = backup;
             myTimer.Start( sortId );
             bolt::cl::sort( boltInput.begin( ), boltInput.end( ));
 			//bolt::cl::sort( input.begin( ), input.end( ));
@@ -133,7 +134,7 @@ int main( int argc, char* argv[] )
 		for(int run = 0; run < numLoops; ++ run) 
 		{
 			// Execute and time the kernel.
-			myTimer.Start( sortId );			
+			myTimer.Start( sortId );
 			Sort(dIntegers, dTmpIntegers, dTmpHistograms);
 			myTimer.Stop( sortId );
 		}

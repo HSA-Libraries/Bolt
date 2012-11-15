@@ -103,6 +103,7 @@ set( clBolt.Runtime.clFiles
         transform_reduce_kernels.cl
         scan_kernels.cl
         sort_kernels.cl
+        sort_uint_kernels.cl
     )
 
 # Create a list of .cl files that we would like to be a part of the IDE

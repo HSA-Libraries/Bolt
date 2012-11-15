@@ -22,12 +22,14 @@
 #define BOLT_CREATE_STD_TYPENAMES(OPERATOR) \
     BOLT_CREATE_TYPENAME(OPERATOR<float>); \
     BOLT_CREATE_TYPENAME(OPERATOR<double>); \
-    BOLT_CREATE_TYPENAME(OPERATOR<int>);
+    BOLT_CREATE_TYPENAME(OPERATOR<int>); \
+	BOLT_CREATE_TYPENAME(OPERATOR<unsigned>); 
 
 #define BOLT_CREATE_STD_CLCODE(OPERATOR,CODE_STRING) \
     BOLT_CREATE_CLCODE(OPERATOR<float>, CODE_STRING); \
     BOLT_CREATE_CLCODE(OPERATOR<double>, CODE_STRING); \
-    BOLT_CREATE_CLCODE(OPERATOR<int>, CODE_STRING); 
+    BOLT_CREATE_CLCODE(OPERATOR<int>, CODE_STRING); \
+	BOLT_CREATE_CLCODE(OPERATOR<unsigned>, CODE_STRING); 
 
 
 // macro for creating a host-side routine and an OCL string (in the bolcl::clcode:: namespace).  Also defines the typename trait automatically.
