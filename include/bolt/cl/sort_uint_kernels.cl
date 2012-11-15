@@ -50,7 +50,7 @@ void histogramInstantiated(__global uint* unsortedData,
 
 }
 __kernel 
-void scanGlobalInstantiated(__global uint* buckets,
+void scanLocalInstantiated(__global uint* buckets,
                   __global uint* histScanBuckets,
                   __local uint* localScanArray)
 {
