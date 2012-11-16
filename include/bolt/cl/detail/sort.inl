@@ -141,8 +141,8 @@ namespace bolt {
 
             // Wrapper that uses default control class, iterator interface
             template<typename RandomAccessIterator, typename StrictWeakOrdering> 
-            void sort_detect_random_access( const control &ctl, RandomAccessIterator first, RandomAccessIterator last,
-                StrictWeakOrdering comp, const std::string& cl_code, std::input_iterator_tag )
+            void sort_detect_random_access( const control &ctl, const RandomAccessIterator& first, const RandomAccessIterator& last,
+                const StrictWeakOrdering& comp, const std::string& cl_code, std::input_iterator_tag )
             {
                 //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data 
                 //  to a temporary buffer.  Should we?
@@ -150,8 +150,8 @@ namespace bolt {
             };
 
             template<typename RandomAccessIterator, typename StrictWeakOrdering> 
-            void sort_detect_random_access( const control &ctl, RandomAccessIterator first, RandomAccessIterator last,
-                StrictWeakOrdering comp, const std::string& cl_code, std::random_access_iterator_tag )
+            void sort_detect_random_access( const control &ctl, const RandomAccessIterator& first, const RandomAccessIterator& last,
+                const StrictWeakOrdering& comp, const std::string& cl_code, std::random_access_iterator_tag )
             {
                 return sort_pick_iterator(ctl, first, last, comp, cl_code);
             };
@@ -159,8 +159,8 @@ namespace bolt {
             //Device Vector specialization
             template<typename DVRandomAccessIterator, typename StrictWeakOrdering> 
             typename std::enable_if< std::is_base_of<typename device_vector<typename std::iterator_traits<DVRandomAccessIterator>::value_type>::iterator,DVRandomAccessIterator>::value >::type
-            sort_pick_iterator(const control &ctl, DVRandomAccessIterator first, DVRandomAccessIterator last,
-                StrictWeakOrdering comp, const std::string& cl_code) 
+            sort_pick_iterator(const control &ctl, const DVRandomAccessIterator& first, const DVRandomAccessIterator& last,
+                const StrictWeakOrdering& comp, const std::string& cl_code) 
             {
                 // User defined Data types are not supported with device_vector. Hence we have a static assert here.
                 // The code here should be in compliant with the routine following this routine.
@@ -187,8 +187,8 @@ namespace bolt {
             //In the future, Each input buffer should be mapped to the device_vector and the specialization specific to device_vector should be called. 
             template<typename RandomAccessIterator, typename StrictWeakOrdering> 
             typename std::enable_if< !std::is_base_of<typename device_vector<typename std::iterator_traits<RandomAccessIterator>::value_type>::iterator,RandomAccessIterator>::value >::type
-            sort_pick_iterator(const control &ctl, RandomAccessIterator first, RandomAccessIterator last,
-                StrictWeakOrdering comp, const std::string& cl_code)  
+            sort_pick_iterator(const control &ctl, const RandomAccessIterator& first, const RandomAccessIterator& last,
+                const StrictWeakOrdering& comp, const std::string& cl_code)  
             {
                 typedef typename std::iterator_traits<RandomAccessIterator>::value_type T;
                 size_t szElements = (size_t)(last - first); 
@@ -212,8 +212,8 @@ namespace bolt {
             }
 
             template<typename DVRandomAccessIterator, typename StrictWeakOrdering> 
-            void sort_enqueue(const control &ctl, DVRandomAccessIterator first, DVRandomAccessIterator last,
-                StrictWeakOrdering comp, const std::string& cl_code)  
+            void sort_enqueue(const control &ctl, const DVRandomAccessIterator& first, const DVRandomAccessIterator& last,
+                const StrictWeakOrdering& comp, const std::string& cl_code)  
             {
                     typedef typename std::iterator_traits< DVRandomAccessIterator >::value_type T;
                     size_t szElements = (size_t)(last - first);
@@ -287,8 +287,8 @@ namespace bolt {
             }// END of sort_enqueue
 
             template<typename DVRandomAccessIterator, typename StrictWeakOrdering> 
-            void sort_enqueue_non_powerOf2(const control &ctl, DVRandomAccessIterator first, DVRandomAccessIterator last,
-                StrictWeakOrdering comp, const std::string& cl_code)  
+            void sort_enqueue_non_powerOf2(const control &ctl, const DVRandomAccessIterator& first, const DVRandomAccessIterator& last,
+                const StrictWeakOrdering& comp, const std::string& cl_code)  
             {
                     //std::cout << "The BOLT sort routine does not support non power of 2 buffer size. Falling back to CPU std::sort" << std ::endl;
                     typedef typename std::iterator_traits< DVRandomAccessIterator >::value_type T;

@@ -117,10 +117,10 @@ namespace bolt {
 
             template<typename T, typename DVInputIterator, typename BinaryFunction> 
             T reduce_detect_random_access(const bolt::cl::control &ctl, 
-                DVInputIterator first,
-                DVInputIterator last, 
-                T init,
-                BinaryFunction binary_op, 
+                const DVInputIterator& first,
+                const DVInputIterator& last, 
+                const T& init,
+                const BinaryFunction& binary_op, 
                 const std::string& cl_code, 
                 std::input_iterator_tag)  
             {
@@ -131,10 +131,10 @@ namespace bolt {
 
             template<typename T, typename DVInputIterator, typename BinaryFunction> 
             T reduce_detect_random_access(const bolt::cl::control &ctl, 
-                DVInputIterator first,
-                DVInputIterator last, 
-                T init,
-                BinaryFunction binary_op, 
+                const DVInputIterator& first,
+                const DVInputIterator& last, 
+                const T& init,
+                const BinaryFunction& binary_op, 
                 const std::string& cl_code, 
                 std::random_access_iterator_tag)  
             {
@@ -146,10 +146,10 @@ namespace bolt {
             template<typename T, typename InputIterator, typename BinaryFunction> 
             typename std::enable_if< !std::is_base_of<typename device_vector<typename std::iterator_traits<InputIterator>::value_type>::iterator,InputIterator>::value, T >::type
                 reduce_pick_iterator(const bolt::cl::control &ctl, 
-                InputIterator first,
-                InputIterator last, 
-                T init,
-                BinaryFunction binary_op, 
+                const InputIterator& first,
+                const InputIterator& last, 
+                const T& init,
+                const BinaryFunction& binary_op, 
                 const std::string& cl_code)
             {
                 typedef typename std::iterator_traits<InputIterator>::value_type iType;
@@ -163,10 +163,10 @@ namespace bolt {
             template<typename T, typename DVInputIterator, typename BinaryFunction> 
             typename std::enable_if< std::is_base_of<typename device_vector<typename std::iterator_traits<DVInputIterator>::value_type>::iterator,DVInputIterator>::value, T >::type
                 reduce_pick_iterator(const bolt::cl::control &ctl, 
-                DVInputIterator first,
-                DVInputIterator last, 
-                T init,
-                BinaryFunction binary_op, 
+                const DVInputIterator& first,
+                const DVInputIterator& last, 
+                const T& init,
+                const BinaryFunction& binary_op, 
                 const std::string& cl_code)
             {
                 return reduce_enqueue( ctl, first, last, init, binary_op, cl_code);
@@ -177,10 +177,10 @@ namespace bolt {
             // first and last must be iterators from a DeviceVector
             template<typename T, typename DVInputIterator, typename BinaryFunction> 
             T reduce_enqueue(const bolt::cl::control &ctl, 
-                DVInputIterator first,
-                DVInputIterator last, 
-                T init,
-                BinaryFunction binary_op, 
+                const DVInputIterator& first,
+                const DVInputIterator& last, 
+                const T& init,
+                const BinaryFunction& binary_op, 
                 const std::string& cl_code )
             {
                 typedef typename std::iterator_traits< DVInputIterator >::value_type iType;

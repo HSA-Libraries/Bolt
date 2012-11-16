@@ -179,8 +179,8 @@ namespace bolt
             };
 
         template< typename InputIterator, typename OutputIterator, typename BinaryFunction >
-        OutputIterator inclusive_scan_detect_random_access( const control &ctl, InputIterator first, InputIterator last, OutputIterator result,
-            BinaryFunction binary_op, std::input_iterator_tag )
+        OutputIterator inclusive_scan_detect_random_access( const control &ctl, const InputIterator& first, const InputIterator& last, const OutputIterator& result,
+            const BinaryFunction& binary_op, std::input_iterator_tag )
         {
             //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data 
             //  to a temporary buffer.  Should we?
@@ -188,15 +188,15 @@ namespace bolt
         };
 
         template< typename InputIterator, typename OutputIterator, typename BinaryFunction >
-        OutputIterator inclusive_scan_detect_random_access( const control &ctl, InputIterator first, InputIterator last, OutputIterator result,
-            BinaryFunction binary_op, std::random_access_iterator_tag )
+        OutputIterator inclusive_scan_detect_random_access( const control &ctl, const InputIterator& first, const InputIterator& last, const OutputIterator& result,
+            const BinaryFunction& binary_op, std::random_access_iterator_tag )
         {
             return detail::inclusive_scan_pick_iterator( ctl, first, last, result, binary_op );
         };
 
         template< typename InputIterator, typename OutputIterator, typename T, typename BinaryFunction >
-        OutputIterator exclusive_scan_detect_random_access( const control &ctl, InputIterator first, InputIterator last, OutputIterator result, T init,
-            BinaryFunction binary_op, std::input_iterator_tag )
+        OutputIterator exclusive_scan_detect_random_access( const control &ctl, const InputIterator& first, const InputIterator& last, const OutputIterator& result, const T& init,
+            const BinaryFunction& binary_op, std::input_iterator_tag )
         {
             //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data 
             //  to a temporary buffer.  Should we?
@@ -204,8 +204,8 @@ namespace bolt
         };
 
         template< typename InputIterator, typename OutputIterator, typename T, typename BinaryFunction >
-        OutputIterator exclusive_scan_detect_random_access( const control &ctl, InputIterator first, InputIterator last, OutputIterator result, T init,
-            BinaryFunction binary_op, std::random_access_iterator_tag )
+        OutputIterator exclusive_scan_detect_random_access( const control &ctl, const InputIterator& first, const InputIterator& last, const OutputIterator& result, const T& init,
+            const BinaryFunction& binary_op, std::random_access_iterator_tag )
         {
             return detail::exclusive_scan_pick_iterator( ctl, first, last, result, init, binary_op );
         };
@@ -219,7 +219,7 @@ namespace bolt
                      !(std::is_base_of<typename device_vector<typename std::iterator_traits<InputIterator>::value_type>::iterator,InputIterator>::value &&
                        std::is_base_of<typename device_vector<typename std::iterator_traits<OutputIterator>::value_type>::iterator,OutputIterator>::value),
                  OutputIterator >::type
-        inclusive_scan_pick_iterator( const control &ctl, InputIterator first, InputIterator last, OutputIterator result, BinaryFunction binary_op )
+        inclusive_scan_pick_iterator( const control &ctl, const InputIterator& first, const InputIterator& last, const OutputIterator& result, const BinaryFunction& binary_op )
         {
             typedef typename std::iterator_traits< InputIterator >::value_type iType;
             typedef typename std::iterator_traits< OutputIterator >::value_type oType;
@@ -265,7 +265,7 @@ namespace bolt
                       (std::is_base_of<typename device_vector<typename std::iterator_traits<DVInputIterator>::value_type>::iterator,DVInputIterator>::value &&
                        std::is_base_of<typename device_vector<typename std::iterator_traits<DVOutputIterator>::value_type>::iterator,DVOutputIterator>::value),
                  DVOutputIterator >::type
-        inclusive_scan_pick_iterator( const control &ctl, DVInputIterator first, DVInputIterator last, DVOutputIterator result, BinaryFunction binary_op )
+        inclusive_scan_pick_iterator( const control &ctl, const DVInputIterator& first, const DVInputIterator& last, const DVOutputIterator& result, const BinaryFunction& binary_op )
         {
             typedef typename std::iterator_traits< DVInputIterator >::value_type iType;
             typedef typename std::iterator_traits< DVOutputIterator >::value_type oType;
@@ -307,7 +307,8 @@ namespace bolt
                      !(std::is_base_of<typename device_vector<typename std::iterator_traits<InputIterator>::value_type>::iterator,InputIterator>::value &&
                        std::is_base_of<typename device_vector<typename std::iterator_traits<OutputIterator>::value_type>::iterator,OutputIterator>::value),
                  OutputIterator >::type
-        exclusive_scan_pick_iterator( const control &ctl, InputIterator first, InputIterator last, OutputIterator result, T init, BinaryFunction binary_op )
+        exclusive_scan_pick_iterator( const control &ctl, const InputIterator& first, const InputIterator& last, 
+                    const OutputIterator& result, const T& init, const BinaryFunction& binary_op )
         {
             typedef typename std::iterator_traits< InputIterator >::value_type iType;
             typedef typename std::iterator_traits< OutputIterator >::value_type oType;
@@ -354,7 +355,8 @@ namespace bolt
                       (std::is_base_of<typename device_vector<typename std::iterator_traits<DVInputIterator>::value_type>::iterator,DVInputIterator>::value &&
                        std::is_base_of<typename device_vector<typename std::iterator_traits<DVOutputIterator>::value_type>::iterator,DVOutputIterator>::value),
                  DVOutputIterator >::type
-        exclusive_scan_pick_iterator( const control &ctl, DVInputIterator first, DVInputIterator last, DVOutputIterator result, T init, BinaryFunction binary_op )
+        exclusive_scan_pick_iterator( const control &ctl, const DVInputIterator& first, const DVInputIterator& last, 
+                        const DVOutputIterator& result, const T& init, const BinaryFunction& binary_op )
         {
             typedef typename std::iterator_traits< DVInputIterator >::value_type iType;
             typedef typename std::iterator_traits< DVOutputIterator >::value_type oType;
@@ -412,7 +414,8 @@ namespace bolt
         //  All calls to inclusive_scan end up here, unless an exception was thrown
         //  This is the function that sets up the kernels to compile (once only) and execute
         template< typename DVInputIterator, typename DVOutputIterator, typename T, typename BinaryFunction >
-            void inclusive_scan_enqueue( const control &ctl, DVInputIterator first, DVInputIterator last, DVOutputIterator result, T init, BinaryFunction binary_op )
+            void inclusive_scan_enqueue( const control &ctl, const DVInputIterator& first, const DVInputIterator& last, 
+                            const DVOutputIterator& result, const T& init, const BinaryFunction& binary_op )
             {
                 typedef typename std::iterator_traits< DVInputIterator >::value_type iType;
                 typedef typename std::iterator_traits< DVOutputIterator >::value_type oType;
