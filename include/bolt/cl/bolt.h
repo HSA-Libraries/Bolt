@@ -162,6 +162,12 @@ namespace bolt {
 	};
 };
 
+#if defined( _WIN32 )
+#define ALIGNED( bound ) __declspec( align( bound ) )
+#else
+#define ALIGNED( bound ) __attribute__ ( (aligned( bound ) ) ) 
+#endif
+
 BOLT_CREATE_TYPENAME(int);
 BOLT_CREATE_TYPENAME(float);
 BOLT_CREATE_TYPENAME(double);

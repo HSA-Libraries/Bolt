@@ -183,7 +183,7 @@ namespace bolt {
                     return;
 
                 // copy generatory to device
-                __declspec( align( 256 ) ) Generator aligned_generator( gen );
+                ALIGNED( 256 ) Generator aligned_generator( gen );
                 ::cl::Buffer userGenerator(ctl.context(), CL_MEM_READ_ONLY|CL_MEM_USE_HOST_PTR, sizeof( aligned_generator ), const_cast< Generator* >( &aligned_generator ) );   // Create buffer wrapper so we can access host parameters.
 
                 // compile kernels

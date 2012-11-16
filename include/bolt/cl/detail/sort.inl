@@ -247,7 +247,8 @@ namespace bolt {
                     unsigned int numStages,stage,passOfStage;
 
                     ::cl::Buffer A = first->getBuffer( );
-                    ::cl::Buffer userFunctor(ctl.context(), CL_MEM_USE_HOST_PTR, sizeof(comp), &comp );   // Create buffer wrapper so we can access host parameters.
+                    ALIGNED( 256 ) StrictWeakOrdering aligned_comp( comp );
+                    ::cl::Buffer userFunctor(ctl.context(), CL_MEM_USE_HOST_PTR, sizeof( aligned_comp ), &aligned_comp );   // Create buffer wrapper so we can access host parameters.
     
                     ::cl::Kernel k = masterKernel;  // hopefully create a copy of the kernel. FIXME, doesn't work.
                     numStages = 0;
@@ -312,7 +313,9 @@ namespace bolt {
                     
                     ::cl::Buffer in = first->getBuffer( );
                     ::cl::Buffer out(ctl.context(), CL_MEM_READ_WRITE, sizeof(T)*szElements);
-                    ::cl::Buffer userFunctor(ctl.context(), CL_MEM_USE_HOST_PTR, sizeof(comp), &comp );   // Create buffer wrapper so we can access host parameters.
+
+                    ALIGNED( 256 ) StrictWeakOrdering aligned_comp( comp );
+                    ::cl::Buffer userFunctor(ctl.context(), CL_MEM_USE_HOST_PTR, sizeof( aligned_comp ), &aligned_comp );   // Create buffer wrapper so we can access host parameters.
                     ::cl::LocalSpaceArg loc;
                     loc.size_ = wgSize*sizeof(T);
     

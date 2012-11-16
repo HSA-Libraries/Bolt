@@ -462,7 +462,9 @@ namespace bolt
                 //::cl::Buffer userFunctor( ctl.context( ), CL_MEM_USE_HOST_PTR, sizeof( tmpFunctor ), &tmpFunctor );
 
                 // Create buffer wrappers so we can access the host functors, for read or writing in the kernel
-                ::cl::Buffer userFunctor( ctl.context( ), CL_MEM_USE_HOST_PTR, sizeof( binary_op ), &binary_op );
+                ALIGNED( 256 ) BinaryFunction aligned_binary( binary_op );
+                ::cl::Buffer userFunctor( ctl.context( ), CL_MEM_USE_HOST_PTR, sizeof( aligned_binary ), &aligned_binary );
+
                 //device_vector< iType > preSumArray( sizeScanBuff, 0, CL_MEM_READ_WRITE, false, ctl );
                 //device_vector< iType > postSumArray( sizeScanBuff, 0, CL_MEM_READ_WRITE, false, ctl );
                 ::cl::Buffer preSumArray( ctl.context( ), CL_MEM_READ_WRITE, sizeScanBuff*sizeof(iType) );
