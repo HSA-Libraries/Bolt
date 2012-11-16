@@ -57,7 +57,7 @@
 * environments in a cross-platform manner, generating native build files for each respective platform.
 * When launched, it inspects the host computer and searches for all tools, SDKs, libraries, and code necessary to
 * build the project.  Once cmake-gui is launched, a configuration window appears with two text boxes on the top.
-* \image html cmake.blank.png "Initial cmake-gui screen"
+* \image html cmake.examples.blank.png "Initial cmake-gui screen"
 
 * For this example, Bolt has been installed from from a .zip file on the local machine at 
 * <tt>C:/code/bolt</tt>.  In this document, it is called <b>BOLT_ROOT</b>.
@@ -80,7 +80,7 @@
 * descriptive of the generator used; otherwise, it is easy to start over (delete the binaries directory).  
 * After selecting the generator, cmake examines the system, finding all project dependencies and properties, 
 * which appear red in the properties box.
-* \image html cmake.first.configure.png "Cmake system introspection"
+* \image html cmake.examples.first.configure.png "Cmake system introspection"
 *
 * While cmake finishes configuring the projects, it prints messages in the output log visible in the bottom textbox 
 * within the GUI; this states that cmake found the OpenCL and Bolt libraries.  If not, cmake prints in red text 
