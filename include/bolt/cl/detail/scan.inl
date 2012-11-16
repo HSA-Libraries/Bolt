@@ -13,7 +13,10 @@
 *   See the License for the specific language governing permissions and              
 *   limitations under the License.                                                   
 
-***************************************************************************/                                                                                     
+***************************************************************************/                                                
+#define KERNEL0WAVES 4
+#define KERNEL1WAVES 1
+#define KERNEL2WAVES 4
 
 #if !defined( SCAN_INL )
 #define SCAN_INL
@@ -53,6 +56,7 @@ namespace bolt
         OutputIterator inclusive_scan( const control &ctl, InputIterator first, InputIterator last, OutputIterator result, 
             const std::string& user_code )
         {
+            //printf("Inclusive Scan w/ Control\n");
             typedef std::iterator_traits<InputIterator>::value_type iType;
 
             return detail::inclusive_scan_detect_random_access( ctl, first, last, result, plus< iType >( ), std::iterator_traits< InputIterator >::iterator_category( ) );
@@ -62,6 +66,7 @@ namespace bolt
         OutputIterator inclusive_scan( const control &ctl, InputIterator first, InputIterator last, OutputIterator result, BinaryFunction binary_op, 
             const std::string& user_code )
         {
+            //printf("Inclusive Scan w/ Control BinOp\n");
             return detail::inclusive_scan_detect_random_access( ctl, first, last, result, binary_op, std::iterator_traits< InputIterator >::iterator_category( ) );
         };
 
@@ -137,11 +142,18 @@ namespace bolt
                     kernelNames.push_back( "perBlockInclusiveScan" );
                     kernelNames.push_back( "intraBlockExclusiveScan" );
                     kernelNames.push_back( "perBlockAddition" );
+                    char k0WgSz[16];
+                    sprintf_s(k0WgSz,"%i",(KERNEL0WAVES*64));
+                    char k1WgSz[16];
+                    sprintf_s(k1WgSz,"%i",(KERNEL1WAVES*64));
+                    char k2WgSz[16];
+                    sprintf_s(k2WgSz,"%i",(KERNEL2WAVES*64));
+                    ::std::cout << "Kernel Sizes " << k0WgSz << ", " << k1WgSz << ", " << k2WgSz << ::std::endl;
 
                     const std::string templateSpecializationString = 
                         "// Dynamic specialization of generic template definition, using user supplied types\n"
                         "template __attribute__((mangled_name(" + kernelNames[ 0 ] + "Instantiated)))\n"
-                        "__attribute__((reqd_work_group_size(64,1,1)))\n"
+                        "__attribute__((reqd_work_group_size("+k0WgSz+",1,1)))\n"
                         "kernel void " + kernelNames[ 0 ] + "(\n"
                         "global " + valueTypeName + "* output,\n"
                         "global " + valueTypeName + "* input,\n"
@@ -154,7 +166,7 @@ namespace bolt
 
                         "// Dynamic specialization of generic template definition, using user supplied types\n"
                         "template __attribute__((mangled_name(" + kernelNames[ 1 ] + "Instantiated)))\n"
-                        "__attribute__((reqd_work_group_size(64,1,1)))\n"
+                        "__attribute__((reqd_work_group_size("+k1WgSz+",1,1)))\n"
                         "kernel void " + kernelNames[ 1 ] + "(\n"
                         "global " + valueTypeName + "* postSumArray,\n"
                         "global " + valueTypeName + "* preSumArray,\n"
@@ -166,7 +178,7 @@ namespace bolt
 
                         "// Dynamic specialization of generic template definition, using user supplied types\n"
                         "template __attribute__((mangled_name(" + kernelNames[ 2 ] + "Instantiated)))\n"
-                        "__attribute__((reqd_work_group_size(64,1,1)))\n"
+                        "__attribute__((reqd_work_group_size("+k2WgSz+",1,1)))\n"
                         "kernel void " + kernelNames[ 2 ] + "(\n"
                         "global " + valueTypeName + "* output,\n"
                         "global " + valueTypeName + "* postSumArray,\n"
@@ -191,6 +203,7 @@ namespace bolt
         OutputIterator inclusive_scan_detect_random_access( const control &ctl, InputIterator first, InputIterator last, OutputIterator result,
             BinaryFunction binary_op, std::random_access_iterator_tag )
         {
+            //printf("Inclusive Scan DetRanAcc\n");
             return detail::inclusive_scan_pick_iterator( ctl, first, last, result, binary_op );
         };
 
@@ -230,8 +243,10 @@ namespace bolt
                 return result;
 
             const bolt::cl::control::e_RunMode runMode = ctl.forceRunMode( );  // could be dynamic choice some day.
+            //printf("Inclusive Scan PicIter RunMode=%i\n", runMode);
             if( runMode == bolt::cl::control::SerialCpu )
             {
+                //printf("Performing Serial Scan\n");
                 std::partial_sum( first, last, result, binary_op );
                 return result;
             }
@@ -424,6 +439,8 @@ namespace bolt
                 boost::call_once( scanCompileFlag, boost::bind( CompileTemplate::ScanSpecialization, &scanKernels, ClCode< BinaryFunction >::get( ), TypeName< iType >::get( ), TypeName< BinaryFunction >::get( ), &ctl ) );
 
                 cl_int l_Error = CL_SUCCESS;
+                // for profiling
+                ::cl::Event kernel0Event, kernel1Event, kernel2Event;
 
                 // Set up shape of launch grid and buffers:
                 int computeUnits     = ctl.device( ).getInfo< CL_DEVICE_MAX_COMPUTE_UNITS >( );
@@ -433,27 +450,31 @@ namespace bolt
                 const size_t waveSize  = scanKernels.front( ).getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.device( ), &l_Error );
                 V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
                 assert( (waveSize & (waveSize-1)) == 0 ); // WorkGroup must be a power of 2 for Scan to work
+                const size_t maxWgSize = 4*waveSize;
+                const size_t kernel0_WgSize = waveSize*KERNEL0WAVES;
+                const size_t kernel1_WgSize = waveSize*KERNEL1WAVES;
+                const size_t kernel2_WgSize = waveSize*KERNEL2WAVES;
 
                 //  Ceiling function to bump the size of input to the next whole wavefront size
                 cl_uint numElements = static_cast< cl_uint >( std::distance( first, last ) );
 
                 device_vector< iType >::size_type sizeInputBuff = numElements;
-                size_t modWaveFront = (sizeInputBuff & (waveSize-1));
-                if( modWaveFront )
+                size_t modWgSize = (sizeInputBuff & (maxWgSize-1));
+                if( modWgSize )
                 {
-                    sizeInputBuff &= ~modWaveFront;
-                    sizeInputBuff += waveSize;
+                    sizeInputBuff &= ~modWgSize;
+                    sizeInputBuff += maxWgSize;
                 }
 
-                cl_uint numWorkGroups = static_cast< cl_uint >( sizeInputBuff / waveSize );
+                cl_uint numWorkGroupsK0 = static_cast< cl_uint >( sizeInputBuff / kernel0_WgSize );
 
                 //  Ceiling function to bump the size of the sum array to the next whole wavefront size
-                device_vector< iType >::size_type sizeScanBuff = numWorkGroups;
-                modWaveFront = (sizeScanBuff & (waveSize-1));
-                if( modWaveFront )
+                device_vector< iType >::size_type sizeScanBuff = numWorkGroupsK0;
+                modWgSize = (sizeScanBuff & (maxWgSize-1));
+                if( modWgSize )
                 {
-                    sizeScanBuff &= ~modWaveFront;
-                    sizeScanBuff += waveSize;
+                    sizeScanBuff &= ~modWgSize;
+                    sizeScanBuff += kernel0_WgSize;
                 }
 
                 ////  Copy the user functor, to make sure that the data is properly aligned
@@ -465,11 +486,13 @@ namespace bolt
                 ::cl::Buffer userFunctor( ctl.context( ), CL_MEM_USE_HOST_PTR, sizeof( binary_op ), &binary_op );
                 //device_vector< iType > preSumArray( sizeScanBuff, 0, CL_MEM_READ_WRITE, false, ctl );
                 //device_vector< iType > postSumArray( sizeScanBuff, 0, CL_MEM_READ_WRITE, false, ctl );
+
+                /**********************************************************************************
+                 *  Kernel 0
+                 *********************************************************************************/
                 ::cl::Buffer preSumArray( ctl.context( ), CL_MEM_READ_WRITE, sizeScanBuff*sizeof(iType) );
                 ::cl::Buffer postSumArray( ctl.context( ), CL_MEM_READ_WRITE, sizeScanBuff*sizeof(iType) );
-
-                const cl_uint ldsSize  = static_cast< cl_uint >( ( waveSize + ( waveSize / 2 ) ) * sizeof( iType ) );
-
+                const cl_uint ldsSize  = static_cast< cl_uint >( ( kernel0_WgSize + ( kernel0_WgSize / 2 ) ) * sizeof( iType ) );
                 V_OPENCL( scanKernels[ 0 ].setArg( 0, result->getBuffer( ) ), "Error setting argument for scanKernels[ 0 ]" );        // Output buffer
                 V_OPENCL( scanKernels[ 0 ].setArg( 1, first->getBuffer( ) ), "Error setting argument for scanKernels[ 0 ]" );       // Input buffer
                 V_OPENCL( scanKernels[ 0 ].setArg( 2, init ), "Error setting argument for scanKernels[ 0 ]" );   // Initial value used for exclusive scan
@@ -482,32 +505,36 @@ namespace bolt
                     scanKernels[ 0 ],
                     ::cl::NullRange,
                     ::cl::NDRange( sizeInputBuff ),
-                    ::cl::NDRange( waveSize ) );
+                    ::cl::NDRange( kernel0_WgSize ),
+                    NULL,
+                    &kernel0Event);
                 V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for perBlockInclusiveScan kernel" );
 
-                ////  Debug code
-                //{
-                //    // Enqueue the operation
-                //    V_OPENCL( ctl.commandQueue( ).finish( ), "Failed to call finish on the commandqueue" );
+                //  Debug code
+                if (0) {
+                    // Enqueue the operation
+                    V_OPENCL( ctl.commandQueue( ).finish( ), "Failed to call finish on the commandqueue" );
 
-                //    //  Look at the contents of those buffers
-                //    device_vector< oType >::pointer pResult     = result->getContainer( ).data( );
-                //    //device_vector< oType >::pointer pPreSum     = preSumArray.data( );
+                    //  Look at the contents of those buffers
+                    device_vector< oType >::pointer pResult     = result->getContainer( ).data( );
+                    //device_vector< oType >::pointer pPreSum     = preSumArray.data( );
 
-                //    iType* pPreSumArray = (iType*)ctl.commandQueue().enqueueMapBuffer( preSumArray, true, CL_MAP_READ, 0, sizeScanBuff*sizeof(iType), NULL, NULL, &l_Error );
-                //    V_OPENCL( l_Error, "Error calling map on the result buffer" );
+                    iType* pPreSumArray = (iType*)ctl.commandQueue().enqueueMapBuffer( preSumArray, true, CL_MAP_READ, 0, sizeScanBuff*sizeof(iType), NULL, NULL, &l_Error );
+                    V_OPENCL( l_Error, "Error calling map on the result buffer" );
 
-                //    ::cl::Event unmapEvent;
-                //    V_OPENCL( ctl.commandQueue().enqueueUnmapMemObject( preSumArray, static_cast< void* >( pPreSumArray ), NULL, &unmapEvent ),
-                //            "shared_ptr failed to unmap host memory back to device memory" );
-                //    V_OPENCL( unmapEvent.wait( ), "failed to wait for unmap event" );
-                //}
+                    ::cl::Event unmapEvent;
+                    V_OPENCL( ctl.commandQueue().enqueueUnmapMemObject( preSumArray, static_cast< void* >( pPreSumArray ), NULL, &unmapEvent ),
+                            "shared_ptr failed to unmap host memory back to device memory" );
+                    V_OPENCL( unmapEvent.wait( ), "failed to wait for unmap event" );
+                }
 
-                cl_uint workPerThread = static_cast< cl_uint >( sizeScanBuff / waveSize );
-
+                /**********************************************************************************
+                 *  Kernel 1
+                 *********************************************************************************/
+                cl_uint workPerThread = static_cast< cl_uint >( sizeScanBuff / kernel1_WgSize );
                 V_OPENCL( scanKernels[ 1 ].setArg( 0, postSumArray ), "Error setting 0th argument for scanKernels[ 1 ]" );          // Output buffer
                 V_OPENCL( scanKernels[ 1 ].setArg( 1, preSumArray ), "Error setting 1st argument for scanKernels[ 1 ]" );            // Input buffer
-                V_OPENCL( scanKernels[ 1 ].setArg( 2, numWorkGroups ), "Error setting 2nd argument for scanKernels[ 1 ]" );            // Size of scratch buffer
+                V_OPENCL( scanKernels[ 1 ].setArg( 2, numWorkGroupsK0 ), "Error setting 2nd argument for scanKernels[ 1 ]" );            // Size of scratch buffer
                 V_OPENCL( scanKernels[ 1 ].setArg( 3, ldsSize, NULL ), "Error setting 3rd argument for scanKernels[ 1 ]" );  // Scratch buffer
                 V_OPENCL( scanKernels[ 1 ].setArg( 4, workPerThread ), "Error setting 4th argument for scanKernels[ 1 ]" );           // User provided functor class
                 V_OPENCL( scanKernels[ 1 ].setArg( 5, userFunctor ), "Error setting 5th argument for scanKernels[ 1 ]" );           // User provided functor class
@@ -515,55 +542,106 @@ namespace bolt
                 l_Error = ctl.commandQueue( ).enqueueNDRangeKernel(
                     scanKernels[ 1 ],
                     ::cl::NullRange,
-                    ::cl::NDRange( waveSize ),
-                    ::cl::NDRange( waveSize ) );
+                    ::cl::NDRange( kernel1_WgSize ),
+                    ::cl::NDRange( kernel1_WgSize ),
+                    NULL,
+                    &kernel1Event);
                 V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for perBlockInclusiveScan kernel" );
 
-                ////  Debug code
-                //{
-                //    // Enqueue the operation
-                //    V_OPENCL( ctl.commandQueue( ).finish( ), "Failed to call finish on the commandqueue" );
+                //  Debug code
+                if (0) {
+                    // Enqueue the operation
+                    V_OPENCL( ctl.commandQueue( ).finish( ), "Failed to call finish on the commandqueue" );
 
-                //    //  Look at the contents of those buffers
-                //    //device_vector< oType >::pointer pPreSum      = preSumArray.data( );
-                //    //device_vector< oType >::pointer pPostSum     = postSumArray.data( );
+                    //  Look at the contents of those buffers
+                    //device_vector< oType >::pointer pPreSum      = preSumArray.data( );
+                    //device_vector< oType >::pointer pPostSum     = postSumArray.data( );
 
-                //    iType* pPreSumArray = (iType*)ctl.commandQueue().enqueueMapBuffer( preSumArray, true, CL_MAP_READ, 0, sizeScanBuff*sizeof(iType), NULL, NULL, &l_Error );
-                //    V_OPENCL( l_Error, "Error calling map on the result buffer" );
+                    iType* pPreSumArray = (iType*)ctl.commandQueue().enqueueMapBuffer( preSumArray, true, CL_MAP_READ, 0, sizeScanBuff*sizeof(iType), NULL, NULL, &l_Error );
+                    V_OPENCL( l_Error, "Error calling map on the result buffer" );
 
-                //    iType* pPostSumArray = (iType*)ctl.commandQueue().enqueueMapBuffer( postSumArray, true, CL_MAP_READ, 0, sizeScanBuff*sizeof(iType), NULL, NULL, &l_Error );
-                //    V_OPENCL( l_Error, "Error calling map on the result buffer" );
+                    iType* pPostSumArray = (iType*)ctl.commandQueue().enqueueMapBuffer( postSumArray, true, CL_MAP_READ, 0, sizeScanBuff*sizeof(iType), NULL, NULL, &l_Error );
+                    V_OPENCL( l_Error, "Error calling map on the result buffer" );
 
-                //    ::cl::Event unmapPreEvent;
-                //    V_OPENCL( ctl.commandQueue().enqueueUnmapMemObject( preSumArray, static_cast< void* >( pPreSumArray ), NULL, &unmapPreEvent ),
-                //            "shared_ptr failed to unmap host memory back to device memory" );
-                //    V_OPENCL( unmapPreEvent.wait( ), "failed to wait for unmap event" );
+                    ::cl::Event unmapPreEvent;
+                    V_OPENCL( ctl.commandQueue().enqueueUnmapMemObject( preSumArray, static_cast< void* >( pPreSumArray ), NULL, &unmapPreEvent ),
+                            "shared_ptr failed to unmap host memory back to device memory" );
+                    V_OPENCL( unmapPreEvent.wait( ), "failed to wait for unmap event" );
 
-                //    ::cl::Event unmapPostEvent;
-                //    V_OPENCL( ctl.commandQueue().enqueueUnmapMemObject( postSumArray, static_cast< void* >( pPostSumArray ), NULL, &unmapPostEvent ),
-                //            "shared_ptr failed to unmap host memory back to device memory" );
-                //    V_OPENCL( unmapPostEvent.wait( ), "failed to wait for unmap event" );
-                //}
+                    ::cl::Event unmapPostEvent;
+                    V_OPENCL( ctl.commandQueue().enqueueUnmapMemObject( postSumArray, static_cast< void* >( pPostSumArray ), NULL, &unmapPostEvent ),
+                            "shared_ptr failed to unmap host memory back to device memory" );
+                    V_OPENCL( unmapPostEvent.wait( ), "failed to wait for unmap event" );
+                }
 
-                std::vector< ::cl::Event > perBlockEvent( 1 );
-
+                /**********************************************************************************
+                 *  Kernel 2
+                 *********************************************************************************/
+                //std::vector< ::cl::Event > perBlockEvent( 1 );
                 V_OPENCL( scanKernels[ 2 ].setArg( 0, result->getBuffer( ) ), "Error setting 0th argument for scanKernels[ 2 ]" );          // Output buffer
                 V_OPENCL( scanKernels[ 2 ].setArg( 1, postSumArray ), "Error setting 1st argument for scanKernels[ 2 ]" );            // Input buffer
                 V_OPENCL( scanKernels[ 2 ].setArg( 2, numElements ), "Error setting 2nd argument for scanKernels[ 2 ]" );   // Size of scratch buffer
                 V_OPENCL( scanKernels[ 2 ].setArg( 3, userFunctor ), "Error setting 3rd argument for scanKernels[ 2 ]" );           // User provided functor class
-
-                l_Error = ctl.commandQueue( ).enqueueNDRangeKernel(
+                printf("Kernel3 %i sizeInputBuff, %i wgSize\n", sizeInputBuff, kernel2_WgSize);
+                try
+                {
+                l_Error = ctl.co_mmandQueue( ).enqueueNDRangeKernel(
                     scanKernels[ 2 ],
                     ::cl::NullRange,
                     ::cl::NDRange( sizeInputBuff ),
-                    ::cl::NDRange( waveSize ),
+                    ::cl::NDRange( kernel2_WgSize ),
                     NULL,
-                    &perBlockEvent.front( ) );
+                    &kernel2Event );
                 V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for perBlockInclusiveScan kernel" );
-
-                l_Error = perBlockEvent.front( ).wait( );
+                }
+                catch ( ::cl::Error& e )
+                {
+                    std::cout << ( "Kernel 3 enqueueNDRangeKernel error condition reported:" ) << std::endl << e.what() << std::endl;
+                    return;
+                }
+                l_Error = kernel2Event.wait( );
                 V_OPENCL( l_Error, "perBlockInclusiveScan failed to wait" );
 
+                /**********************************************************************************
+                 *  Profiling
+                 *********************************************************************************/
+                try
+                {
+                    //cl_ulong k0_start = perBlockEvent.front( ).getProfilingInfo<CL_PROFILING_COMMAND_START>(&l_Error);
+                    cl_ulong k0_start, k0_end, k1_start, k1_end, k2_start, k2_end;
+
+                    l_Error = kernel0Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_START, &k0_start);
+                    V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_START>()");
+                    l_Error = kernel0Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END, &k0_end);
+                    V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_START>()");
+                    
+                    l_Error = kernel1Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_START, &k1_start);
+                    V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_START>()");
+                    l_Error = kernel1Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END, &k1_end);
+                    V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_START>()");
+                    
+                    l_Error = kernel2Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_START, &k2_start);
+                    V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_START>()");
+                    l_Error = kernel2Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END, &k2_end);
+                    V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_START>()");
+
+                    double k0_sec = (k0_end-k0_start)/1000000000.0;
+                    double k1_sec = (k1_end-k1_start)/1000000000.0;
+                    double k2_sec = (k2_end-k2_start)/1000000000.0;
+
+                    double k0_ms = k0_sec*1000.0;
+                    double k1_ms = k1_sec*1000.0;
+                    double k2_ms = k2_sec*1000.0;
+                    //l_Error = perBlockEvent.front( ).getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_START, &k0_start);
+                    //V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_START>()");
+
+                    printf("Kernel Time (ms): %7.3f, %7.3f, %7.3f\n", k0_ms, k1_ms, k2_ms);
+                }
+                catch( ::cl::Error& e )
+                {
+                    std::cout << ( "Scan Benchmark error condition reported:" ) << std::endl << e.what() << std::endl;
+                    return;
+                }
                 ////  Debug code
                 //{
                 //    // Enqueue the operation

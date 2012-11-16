@@ -29,6 +29,8 @@
 #include <boost/program_options.hpp>
 namespace po = boost::program_options;
 
+#define TEST_DOUBLE 0
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Below are helper routines to compare the results of two arrays for googletest
 //  They return an assertion object that googletest knows how to track
@@ -87,6 +89,7 @@ struct cmpStdArray< float, N >
     }
 };
 
+#if TEST_DOUBLE
 //  Partial template specialization for float types
 //  Partial template specializations only works for objects, not functions
 template< size_t N >
@@ -102,6 +105,7 @@ struct cmpStdArray< double, N >
         return ::testing::AssertionSuccess( );
     }
 };
+#endif
 
 //  The following cmpArrays verify the correctness of std::vectors's
 template< typename T >
@@ -125,6 +129,7 @@ template< typename T >
     return ::testing::AssertionSuccess( );
 }
 
+#if TEST_DOUBLE
 ::testing::AssertionResult cmpArrays( const std::vector< double >& ref, const std::vector< double >& calc )
 {
     for( size_t i = 0; i < ref.size( ); ++i )
@@ -134,6 +139,7 @@ template< typename T >
 
     return ::testing::AssertionSuccess( );
 }
+#endif
 
 //  A very generic template that takes two container, and compares their values assuming a vector interface
 template< typename S, typename B >
@@ -314,6 +320,7 @@ protected:
     std::vector< float > stdInput, boltInput;
 };
 
+#if TEST_DOUBLE
 //  ::testing::TestWithParam< int > means that GetParam( ) returns int values, which i use for array size
 class ScanDoubleVector: public ::testing::TestWithParam< int >
 {
@@ -325,6 +332,7 @@ public:
 protected:
     std::vector< double > stdInput, boltInput;
 };
+#endif
 
 //  ::testing::TestWithParam< int > means that GetParam( ) returns int values, which i use for array size
 class ScanIntegerDeviceVector: public ::testing::TestWithParam< int >
@@ -415,6 +423,7 @@ TEST_P (scanStdVectorWithIters, floatDefiniteValues){
     EXPECT_FLOAT_EQ((*(boltEnd-1)), (*(stdEnd-1)))<<std::endl;
 }
 
+#if TEST_DOUBLE
 TEST_P (scanStdVectorWithIters, doubleDefiniteValues){
     
     std::vector<double> boltInput( myStdVectSize);
@@ -431,6 +440,8 @@ TEST_P (scanStdVectorWithIters, doubleDefiniteValues){
     
     EXPECT_DOUBLE_EQ((*(boltEnd-1)), (*(stdEnd-1)))<<std::endl;
 }
+#endif
+
 //INSTANTIATE_TEST_CASE_P(inclusiveScanIter, scanStdVectorWithIters, ::testing::Range(1, 1025, 1)); 
 INSTANTIATE_TEST_CASE_P(inclusiveScanIterIntLimit, scanStdVectorWithIters, ::testing::Range(1025, 65535, 1000)); 
 
@@ -482,6 +493,7 @@ TEST_P( ScanFloatVector, InclusiveInplace )
     cmpArrays( stdInput, boltInput );
 }
 
+#if TEST_DOUBLE
 TEST_P( ScanDoubleVector, InclusiveInplace )
 {
     //  Calling the actual functions under test
@@ -501,6 +513,7 @@ TEST_P( ScanDoubleVector, InclusiveInplace )
     //  Loop through the array and compare all the values with each other
     cmpArrays( stdInput, boltInput );
 }
+#endif
 
 TEST_P( ScanIntegerDeviceVector, InclusiveInplace )
 {
@@ -617,7 +630,10 @@ INSTANTIATE_TEST_CASE_P( Inclusive, ScanIntegerNakedPointer, ::testing::Range( 0
 
 //  Test a huge range, suitable for floating point as they are less prone to overflow (but floating point loses granularity at large values)
 INSTANTIATE_TEST_CASE_P( Inclusive, ScanFloatVector, ::testing::Range( 4096, 1048576, 4096 ) );
+
+#if TEST_DOUBLE
 INSTANTIATE_TEST_CASE_P( Inclusive, ScanDoubleVector, ::testing::Range( 4096, 1048576, 4096 ) );
+#endif
 
 typedef ::testing::Types< 
     std::tuple< int, TypeValue< 1 > >,

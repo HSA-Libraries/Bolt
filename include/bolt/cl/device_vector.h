@@ -29,6 +29,7 @@
 
 /*! \file device_vector.h
  * Public header file for the device_container class
+ * \bug iterator::getBuffer() returns "pointer" to beginning of array, instead of where the iterator has incremented to; may need to map a subBuffer or something simmilar
  */
 
 /*! \brief Defining namespace for the Bolt project

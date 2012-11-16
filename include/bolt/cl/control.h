@@ -126,6 +126,33 @@ namespace bolt {
                 m_unroll(getDefault().m_unroll)
             {};
 
+            /*
+                m_commandQueue( getDefaultCommandQueue( ) ),
+                m_useHost(UseHost),
+                m_forceRunMode(Automatic),
+                m_debug(debug::None),
+                m_autoTune(AutoTuneAll),
+                m_wgPerComputeUnit(8),
+                m_compileForAllDevices(true),
+                m_waitMode(BusyWait),
+                m_unroll(1)
+            */
+
+            control( const control& ref) :
+                m_commandQueue(ref.m_commandQueue),
+                m_useHost(ref.m_useHost),
+                m_forceRunMode(ref.m_forceRunMode),
+                m_debug(ref.m_debug),
+                m_autoTune(ref.m_autoTune),
+                m_wgPerComputeUnit(ref.m_wgPerComputeUnit),
+                m_compileOptions(ref.m_compileOptions),
+                m_compileForAllDevices(ref.m_compileForAllDevices),
+                m_waitMode(ref.m_waitMode),
+                m_unroll(ref.m_unroll)
+            {
+                //printf("control::copy construcor\n");
+            };
+
             //setters:
             //! Set the OpenCL command queue (and associated device) for Bolt algorithms to use.  
             //! Only one command-queue can be specified for each call; Bolt does not load-balance across

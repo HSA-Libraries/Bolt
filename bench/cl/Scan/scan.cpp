@@ -13,7 +13,16 @@
 *   See the License for the specific language governing permissions and              
 *   limitations under the License.                                                   
 
-***************************************************************************/                                                                                     
+***************************************************************************/                      
+/******************************************************************************
+ *  Scan Benchmark
+ *****************************************************************************/
+
+#if 0
+const bolt::cl::control::e_RunMode runMode = ctl.forceRunMode( );  // could be dynamic choice some day.
+            if( runMode == bolt::cl::control::SerialCpu )
+#endif
+
 
 #include "stdafx.h"
 
@@ -35,6 +44,8 @@ int _tmain( int argc, _TCHAR* argv[] )
     bool defaultDevice = true;
     bool print_clInfo = false;
     bool systemMemory = false;
+    bool serial = false;
+    bolt::cl::control ctrl = bolt::cl::control::getDefault();
 
     /******************************************************************************
     * Parameter parsing                                                           *
@@ -50,12 +61,13 @@ int _tmain( int argc, _TCHAR* argv[] )
             ( "gpu,g",          "Report only OpenCL GPU devices" )
             ( "cpu,c",          "Report only OpenCL CPU devices" )
             ( "all,a",          "Report all OpenCL devices" )
+            ( "reference-serial,r", "Run reference serial algorithm (std::scan)." )
             ( "systemMemory,s", "Allocate vectors in system memory, otherwise device memory" )
             ( "platform,p",     po::value< cl_uint >( &userPlatform )->default_value( 0 ), "Specify the platform under test using the index reported by -q flag" )
             ( "device,d",       po::value< cl_uint >( &userDevice )->default_value( 0 ), "Specify the device under test using the index reported by the -q flag.  "
                     "Index is relative with respect to -g, -c or -a flags" )
-            ( "length,l",       po::value< size_t >( &length )->default_value( 1048576 ), "Specify the length of scan array" )
-            ( "iterations,i",   po::value< size_t >( &iterations )->default_value( 50 ), "Number of samples in timing loop" )
+            ( "length,l",       po::value< size_t >( &length )->default_value( (1<<18) ), "Specify the length of scan array" )
+            ( "iterations,i",   po::value< size_t >( &iterations )->default_value( 3 ), "Number of samples in timing loop" )
 			//( "algo,a",		    po::value< size_t >( &algo )->default_value( 1 ), "Algorithm used [1,2]  1:SCAN_BOLT, 2:XYZ" )//Not used in this file
             ;
 
@@ -107,6 +119,13 @@ int _tmain( int argc, _TCHAR* argv[] )
             systemMemory = true;
         }
 
+        if( vm.count( "reference-serial" ) )
+        {
+            serial = true;
+            systemMemory = true;
+            //printf("User Chose Serial Scan\n");
+        }
+
     }
     catch( std::exception& e )
     {
@@ -121,9 +140,15 @@ int _tmain( int argc, _TCHAR* argv[] )
     //  Query OpenCL for available platforms
     cl_int err = CL_SUCCESS;
 
+    if ( serial )
+    {
+        ctrl.forceRunMode( bolt::cl::control::SerialCpu );  // choose serial std::scan
+        //printf("Set RunMode to SerialCPU %i=%i\n", ctrl.forceRunMode(), bolt::cl::control::SerialCpu);
+    }
+
     // Platform vector contains all available platforms on system
-    std::vector< cl::Platform > platforms;
-    bolt::cl::V_OPENCL( cl::Platform::get( &platforms ), "Platform::get() failed" );
+    std::vector< ::cl::Platform > platforms;
+    bolt::cl::V_OPENCL( ::cl::Platform::get( &platforms ), "Platform::get() failed" );
 
     if( print_clInfo )
     {
@@ -133,17 +158,25 @@ int _tmain( int argc, _TCHAR* argv[] )
     }
 
     // Device info
-    std::vector< cl::Device > devices;
-    bolt::cl::V_OPENCL( platforms.at( userPlatform ).getDevices( deviceType, &devices ), "Platform::getDevices() failed" );
+    //std::vector< ::cl::Device > devices;
+    //bolt::cl::V_OPENCL( platforms.at( userPlatform ).getDevices( deviceType, &devices ), "Platform::getDevices() failed" );
 
-    cl::Context myContext( devices.at( userDevice ) );
-    cl::CommandQueue myQueue( myContext, devices.at( userDevice ) );
+    // ::cl::Context myContext( devices.at( userDevice ) );
+    ::cl::Context& myContext = bolt::cl::control::getDefault( ).context( );
+    std::vector< cl::Device > devices = myContext.getInfo< CL_CONTEXT_DEVICES >();
+
+    ::cl::CommandQueue myQueue( myContext, devices.at( userDevice ) , CL_QUEUE_PROFILING_ENABLE);
 
     //  Now that the device we want is selected and we have created our own cl::CommandQueue, set it as the
     //  default cl::CommandQueue for the Bolt API
-    bolt::cl::control::getDefault( ).commandQueue( myQueue );
+    
+    //bolt::cl::control::getDefault( ).commandQueue( myQueue );
+    bolt::cl::control& myCtrl = bolt::cl::control::getDefault();
+    ctrl.commandQueue( myQueue );
 
-    std::string strDeviceName = bolt::cl::control::getDefault( ).device( ).getInfo< CL_DEVICE_NAME >( &err );
+
+    //std::string strDeviceName = bolt::cl::control::getDefault( ).device( ).getInfo< CL_DEVICE_NAME >( &err );
+    std::string strDeviceName = ctrl.device( ).getInfo< CL_DEVICE_NAME >( &err );
     bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_NAME > failed" );
 
     std::cout << "Device under test : " << strDeviceName << std::endl;
@@ -152,9 +185,15 @@ int _tmain( int argc, _TCHAR* argv[] )
     * Benchmark logic                                                             *
     ******************************************************************************/
     bolt::statTimer& myTimer = bolt::statTimer::getInstance( );
-    myTimer.Reserve( 1, iterations );
-    size_t scanId	= myTimer.getUniqueID( _T( "scan" ), 0 );
-
+    bolt::statTimer& stdTimer = bolt::statTimer::getInstance( );
+    myTimer.Reserve( 2, iterations );
+    size_t scanId	= myTimer.getUniqueID( _T( "boltScan" ), 0 );
+    size_t stdScanId	= myTimer.getUniqueID( _T( "stdScan" ), 1 );
+    int reportLength = 30;
+    //for (int i = 0; i < reportLength; i++) printf("_");
+    //printf("\n");
+    float reportFrequency = 1.f*iterations/reportLength;
+    float nextReport = 0.f;
     if( systemMemory )
     {
         std::vector< int > input( length, 1 );
@@ -163,33 +202,77 @@ int _tmain( int argc, _TCHAR* argv[] )
         for( unsigned i = 0; i < iterations; ++i )
         {
             myTimer.Start( scanId );
-            bolt::cl::inclusive_scan( input.begin( ), input.end( ), output.begin( ) );
+            bolt::cl::inclusive_scan( ctrl, input.begin( ), input.end( ), output.begin( ) );
             myTimer.Stop( scanId );
         }
     }
     else
     {
-        bolt::cl::device_vector< int > input( length, 1 );
+
+#if 0
+        bolt::cl::device_vector< int > input( length, 1);
         bolt::cl::device_vector< int > output( length );
+#else
+        bolt::cl::device_vector< int > input( length, 1, CL_MEM_READ_WRITE, true, ctrl );
+        bolt::cl::device_vector< int > output( length, 0, CL_MEM_READ_WRITE, false, ctrl );
+#endif
 
         for( unsigned i = 0; i < iterations; ++i )
         {
+            if (i>nextReport)
+            {
+                //printf("#");fflush(stdout);
+                //nextReport += reportFrequency;
+            }
             myTimer.Start( scanId );
-            bolt::cl::inclusive_scan( input.begin( ), input.end( ), output.begin( ) );
+            bolt::cl::inclusive_scan( ctrl, input.begin( ), input.end( ), output.begin( ) );
             myTimer.Stop( scanId );
         }
+        ::std::vector< int > refInput(length, 1);
+        ::std::vector< int > refOutput( length, 0);
+
+        myTimer.Start( stdScanId );
+        ::std::partial_sum(refInput.begin(), refInput.end(), refOutput.begin());
+        myTimer.Stop( stdScanId );
+
+        //bolt::cl::device_vector< int >::pointer pData = output.data( );
+        //output.data();
+        int maxPrint = 10;
+        int errorCount = 0;
+        for (size_t j = 0; j < length; j++)
+        {
+            if (output[j] != refOutput[j])
+            {
+                errorCount++;
+                if (errorCount < maxPrint)
+                {
+                    int s = (int)(j)+1;
+                    printf("Input[%i] = %i; Bolt = %i; StdRef = %i\n",
+                        (int)j,
+                        (int)input[j],
+                        (int)output[j],
+                        (int)refOutput[j]);
+                }// end error count
+            }// if error
+        } // for all elements
     }
 
     //	Remove all timings that are outside of 2 stddev (keep 65% of samples); we ignore outliers to get a more consistent result
     size_t pruned = myTimer.pruneOutliers( 1.0 );
     double scanTime = myTimer.getAverageTime( scanId );
-    double scanGB = ( length * sizeof( int ) ) / (1024.0 * 1024.0 * 1024.0);
+    double scanMB = ( length * sizeof( int ) ) / (1024.0 * 1024.0);
+    double scanGB = scanMB / 1024.0;
+
+    double stdScanTime = myTimer.getAverageTime( stdScanId );
+    double speedup = stdScanTime / scanTime;
 
     bolt::tout << std::left;
-    bolt::tout << std::setw( colWidth ) << _T( "Scan profile: " ) << _T( "[" ) << iterations-pruned << _T( "] samples" ) << std::endl;
-    bolt::tout << std::setw( colWidth ) << _T( "    Size (GB): " ) << scanGB << std::endl;
-    bolt::tout << std::setw( colWidth ) << _T( "    Time (s): " ) << scanTime << std::endl;
+    bolt::tout << std::setw( colWidth ) << _T( "    Scan profile: " ) << _T( "[" ) << iterations-pruned << _T( "] samples" ) << std::endl;
+    bolt::tout << std::setw( colWidth ) << _T( "       Size (MB): " ) << scanMB << std::endl;
+    bolt::tout << std::setw( colWidth ) << _T( "        Time (s): " ) << scanTime << std::endl;
     bolt::tout << std::setw( colWidth ) << _T( "    Speed (GB/s): " ) << scanGB / scanTime << std::endl;
+    bolt::tout << std::setw( colWidth ) << _T( "    Ref Time (s): " ) << stdScanTime << std::endl;
+    bolt::tout << std::setw( colWidth ) << _T( "         Speedup: " ) << speedup << std::endl;
     bolt::tout << std::endl;
 
 //	bolt::tout << myTimer;
