@@ -32,7 +32,7 @@ if( BOOST_ROOT )
     find_package( Boost ${Boost.VERSION} COMPONENTS thread date_time chrono program_options REQUIRED )
     # This will define Boost_FOUND
 else( )
-    message( "Configure Bolt in <BOLT_ROOT>/bin to build the SuperBuild which will download and build Boost automatically" )    
+    message( "Configure Bolt in <BOLT_ROOT>/superbuild to build the SuperBuild which will download and build Boost automatically" )    
     message( SEND_ERROR "The OpenCL Bolt library requires BOOST_ROOT to be defined" )
 endif( )
 
@@ -42,6 +42,7 @@ include_directories( ${Boost_INCLUDE_DIRS} )
 # Include standard OpenCL headers
 include_directories( ${OPENCL_INCLUDE_DIRS} ${BOLT_CL_TEST_DIR} ) 
 
+add_subdirectory( ControlTest )
 add_subdirectory( CopyTest )
 add_subdirectory( CountTest )
 add_subdirectory( DeviceVectorTest )
