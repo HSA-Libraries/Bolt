@@ -23,9 +23,6 @@
 #include <boost/bind.hpp>
 #include <type_traits> 
 
-#define STATIC /*static*/  /* FIXME - hack to approximate buffer pool management of the functor containing the buffer */
-
-
 #include "bolt/cl/bolt.h"
 
 namespace bolt {

@@ -85,9 +85,9 @@ namespace bolt {
         //  The following two functions disallow non-random access functions
         // Wrapper that uses default control class, iterator interface
         template<typename InputIterator, typename UnaryFunction, typename T, typename BinaryFunction> 
-        T transform_reduce_detect_random_access(const control &ctl, InputIterator first, InputIterator last,
-            UnaryFunction transform_op,
-            T init,  BinaryFunction reduce_op, const std::string& user_code, std::input_iterator_tag )
+        T transform_reduce_detect_random_access(const control &ctl, const InputIterator& first, const InputIterator& last,
+            const UnaryFunction& transform_op,
+            const T& init, const BinaryFunction& reduce_op, const std::string& user_code, std::input_iterator_tag )
         {
             //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data 
             //  to a temporary buffer.  Should we?
@@ -96,9 +96,9 @@ namespace bolt {
 
         // Wrapper that uses default control class, iterator interface
         template<typename InputIterator, typename UnaryFunction, typename T, typename BinaryFunction> 
-        T transform_reduce_detect_random_access(const control& ctl, InputIterator first, InputIterator last,
-            UnaryFunction transform_op,
-            T init,  BinaryFunction reduce_op, const std::string& user_code, std::random_access_iterator_tag )
+        T transform_reduce_detect_random_access(const control& ctl, const InputIterator& first, const InputIterator& last,
+            const UnaryFunction& transform_op,
+            const T& init, const BinaryFunction& reduce_op, const std::string& user_code, std::random_access_iterator_tag )
         {
             return transform_reduce_pick_iterator( ctl, first, last, transform_op, init, reduce_op, user_code);
         };
@@ -107,8 +107,8 @@ namespace bolt {
         // This is called strictly for any non-device_vector iterator
         template<typename InputIterator, typename UnaryFunction, typename T, typename BinaryFunction> 
         typename std::enable_if< !std::is_base_of<typename device_vector<typename std::iterator_traits<InputIterator>::value_type>::iterator,InputIterator>::value, T >::type
-        transform_reduce_pick_iterator(const control &c, InputIterator first, InputIterator last, UnaryFunction transform_op, 
-            T init,  BinaryFunction reduce_op, const std::string& user_code )
+        transform_reduce_pick_iterator(const control &c, const InputIterator& first, const InputIterator& last, const UnaryFunction& transform_op, 
+            const T& init, const BinaryFunction& reduce_op, const std::string& user_code )
         {
             typedef std::iterator_traits<InputIterator>::value_type T;
             size_t szElements = (last - first); 
@@ -139,8 +139,8 @@ namespace bolt {
         // This is called strictly for iterators that are derived from device_vector< T >::iterator
         template<typename DVInputIterator, typename UnaryFunction, typename T, typename BinaryFunction> 
         typename std::enable_if< std::is_base_of<typename device_vector<typename std::iterator_traits<DVInputIterator>::value_type>::iterator,DVInputIterator>::value, T >::type
-        transform_reduce_pick_iterator(const control &c, DVInputIterator first, DVInputIterator last, UnaryFunction transform_op, 
-            T init,  BinaryFunction reduce_op, const std::string& user_code )
+        transform_reduce_pick_iterator(const control &c, const DVInputIterator& first, const DVInputIterator& last, const UnaryFunction& transform_op, 
+            const T& init, const BinaryFunction& reduce_op, const std::string& user_code )
         {
             typedef std::iterator_traits<DVInputIterator>::value_type T;
             size_t szElements = (last - first); 
@@ -173,8 +173,8 @@ namespace bolt {
         };
 
             template<typename DVInputIterator, typename UnaryFunction, typename T, typename BinaryFunction> 
-            T transform_reduce_enqueue(const control& ctl, DVInputIterator first, DVInputIterator last, UnaryFunction transform_op,
-                T init, BinaryFunction reduce_op, const std::string& user_code="")
+            T transform_reduce_enqueue(const control& ctl, const DVInputIterator& first, const DVInputIterator& last, const UnaryFunction& transform_op,
+                const T& init, const BinaryFunction& reduce_op, const std::string& user_code="")
             {
                 static boost::once_flag initOnlyOnce;
                 static  ::cl::Kernel masterKernel;
@@ -195,8 +195,11 @@ namespace bolt {
                 V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
 
                 // Create Buffer wrappers so we can access the host functors, for read or writing in the kernel
-                ::cl::Buffer transformFunctor(ctl.context(), CL_MEM_USE_HOST_PTR, sizeof(transform_op), &transform_op );   
-                ::cl::Buffer reduceFunctor(ctl.context(), CL_MEM_USE_HOST_PTR, sizeof(reduce_op), &reduce_op );
+                ALIGNED( 256 ) UnaryFunction aligned_unary( transform_op );
+                ALIGNED( 256 ) BinaryFunction aligned_binary( reduce_op );
+
+                ::cl::Buffer transformFunctor(ctl.context(), CL_MEM_USE_HOST_PTR, sizeof(aligned_unary), &aligned_unary );   
+                ::cl::Buffer reduceFunctor(ctl.context(), CL_MEM_USE_HOST_PTR, sizeof(aligned_binary), &aligned_binary );
                 ::cl::Buffer result(ctl.context(), CL_MEM_ALLOC_HOST_PTR|CL_MEM_WRITE_ONLY, sizeof(T) * numWG);
 
                 ::cl::Kernel k = masterKernel;  // hopefully create a copy of the kernel. FIXME, doesn't work.

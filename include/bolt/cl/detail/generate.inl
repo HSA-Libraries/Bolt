@@ -110,14 +110,16 @@ namespace bolt {
 
             // generate, not random-access
             template<typename ForwardIterator, typename Generator>
-            void generate_detect_random_access( const bolt::cl::control &ctl, ForwardIterator first, ForwardIterator last, Generator gen, const std::string &cl_code, std::forward_iterator_tag )
+            void generate_detect_random_access( const bolt::cl::control &ctl, const ForwardIterator& first, const ForwardIterator& last, 
+                        const Generator& gen, const std::string &cl_code, std::forward_iterator_tag )
             {
                 static_assert( false, "Bolt only supports random access iterator types" );
             }
 
             // generate, yes random-access
             template<typename ForwardIterator, typename Generator>
-            void generate_detect_random_access( const bolt::cl::control &ctl, ForwardIterator first, ForwardIterator last, Generator gen, const std::string &cl_code, std::random_access_iterator_tag )
+            void generate_detect_random_access( const bolt::cl::control &ctl, const ForwardIterator& first, const ForwardIterator& last, 
+                        const Generator& gen, const std::string &cl_code, std::random_access_iterator_tag )
             {
                 generate_pick_iterator(ctl, first, last, gen, cl_code);
             }
@@ -183,7 +185,7 @@ namespace bolt {
                     return;
 
                 // copy generatory to device
-                __declspec( align( 256 ) ) Generator aligned_generator( gen );
+                ALIGNED( 256 ) Generator aligned_generator( gen );
                 ::cl::Buffer userGenerator(ctl.context(), CL_MEM_READ_ONLY|CL_MEM_USE_HOST_PTR, sizeof( aligned_generator ), const_cast< Generator* >( &aligned_generator ) );   // Create buffer wrapper so we can access host parameters.
 
                 // compile kernels
@@ -219,8 +221,6 @@ namespace bolt {
                 {
                     k = kernelNoBoundaryCheck;
                 }
-
-
 
 #if 0
                 if ((sz % wgSize) != 0) {

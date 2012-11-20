@@ -332,8 +332,7 @@ namespace bolt {
                     return;
 
                 //typedef std::aligned_storage< sizeof( UnaryFunction ), 256 >::type alignedUnary;
-                //alignedUnary aligned_functor( f );
-                __declspec( align( 256 ) ) UnaryFunction aligned_functor( f );
+                ALIGNED( 256 ) UnaryFunction aligned_functor( f );
                 STATIC ::cl::Buffer userFunctor(ctl.context(), CL_MEM_READ_ONLY|CL_MEM_USE_HOST_PTR, sizeof( aligned_functor ), const_cast< UnaryFunction* >( &aligned_functor ) );   // Create buffer wrapper so we can access host parameters.
 
                 static boost::once_flag initOnlyOnce;
