@@ -1352,7 +1352,7 @@ int main(int argc, char* argv[])
 {
 
     //UDDSortTestOfLengthWithDeviceVector<int>(256);
-    BasicSortTestOfLength<unsigned int>(atoi(argv[1]));
+    BasicSortTestOfLength<unsigned int>(65536/*atoi(argv[1])*/);
 	//BasicSortTestOfLength<unsigned int>(4096);
     BasicSortTestOfLength<int>(512);
     //BasicSortTestOfLength<int>(111);

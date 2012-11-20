@@ -54,7 +54,7 @@ int main( int argc, char* argv[] )
             ( "platform,p",     po::value< cl_uint >( &userPlatform )->default_value( 0 ),	"Specify the platform under test" )
             ( "device,d",       po::value< cl_uint >( &userDevice )->default_value( 0 ),	"Specify the device under test" )
             ( "length,l",		po::value< size_t >( &length )->default_value( 65536 ), "Specify the length of sort array" )
-            ( "profile,i",		po::value< size_t >( &numLoops )->default_value( 3 ), "Time and report Sort speed GB/s (default: profiling off)" )
+            ( "profile,i",		po::value< size_t >( &numLoops )->default_value( 5 ), "Time and report Sort speed GB/s (default: profiling off)" )
 			( "algo,a",		    po::value< size_t >( &algo )->default_value( 1 ), "Algorithm used [1,2]  1:SORT_BOLT, 2:SORT_AMP_SHOC" )
             ;
 

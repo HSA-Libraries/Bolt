@@ -288,9 +288,9 @@ namespace bolt {
 					T *histScanBuffer = (T*)calloc(1, numGroups* RADICES * sizeof(T));
                     
 					
-					device_vector< T > dvSwapInputData( swapBuffer, swapBuffer + szElements, CL_MEM_USE_HOST_PTR|CL_MEM_READ_WRITE);
-					device_vector< T > dvHistogramBins( histBuffer, histBuffer+numGroups* groupSize * RADICES, CL_MEM_USE_HOST_PTR|CL_MEM_READ_WRITE);
-					device_vector< T > dvHistogramScanBuffer( histScanBuffer, histScanBuffer + numGroups* RADICES, CL_MEM_USE_HOST_PTR|CL_MEM_READ_WRITE);
+					device_vector< T > dvSwapInputData( swapBuffer, swapBuffer + szElements, CL_MEM_HOST_NO_ACCESS|CL_MEM_READ_WRITE, ctl);
+					device_vector< T > dvHistogramBins( histBuffer, histBuffer+numGroups* groupSize * RADICES, CL_MEM_USE_HOST_PTR|CL_MEM_READ_WRITE, ctl);
+					device_vector< T > dvHistogramScanBuffer( histScanBuffer, histScanBuffer + numGroups* RADICES, CL_MEM_USE_HOST_PTR|CL_MEM_READ_WRITE, ctl);
                     
                     ::cl::Buffer clInputData = first->getBuffer( );
 					::cl::Buffer userFunctor(ctl.context(), CL_MEM_USE_HOST_PTR, sizeof(comp), &comp );
@@ -298,7 +298,7 @@ namespace bolt {
 					::cl::Buffer clHistData = dvHistogramBins.begin( )->getBuffer( );
 					::cl::Buffer clHistScanData = dvHistogramScanBuffer.begin( )->getBuffer( );
 					
-                    ::cl::Kernel histKernel = radixSortUintKernels[0];     
+                    ::cl::Kernel histKernel = radixSortUintKernels[0];
                     ::cl::Kernel scanLocalKernel = radixSortUintKernels[1];  
 					::cl::Kernel permuteKernel = radixSortUintKernels[2];  
 
@@ -309,7 +309,6 @@ namespace bolt {
 
 					for(int bits = 0; bits < sizeof(T) * 8/*bits*/; bits += RADIX)
 					{
-
                         //Do a histogram pass locally
 						if(bits==0 || bits==8 || bits==16 || bits==24)
 							V_OPENCL( histKernel.setArg(0, clInputData), "Error setting a kernel argument" );
@@ -406,7 +405,6 @@ namespace bolt {
 							V_OPENCL( permuteKernel.setArg(0, clInputData), "Error setting kernel argument" );
 						else
 							V_OPENCL( permuteKernel.setArg(0, clSwapData), "Error setting kernel argument" );
-
 						V_OPENCL( permuteKernel.setArg(1, clHistData), "Error setting a kernel argument" );
 						V_OPENCL( permuteKernel.setArg(2, bits), "Error setting a kernel argument" );
 						V_OPENCL( permuteKernel.setArg(3, loc), "Error setting kernel argument" );
