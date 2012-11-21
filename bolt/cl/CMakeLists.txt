@@ -71,6 +71,7 @@ set( clBolt.Runtime.Headers
         ${clBolt.Include.Dir}/count.h 
         ${clBolt.Include.Dir}/device_vector.h 
         ${clBolt.Include.Dir}/functional.h 
+        ${clBolt.Include.Dir}/fill.h 
         ${clBolt.Include.Dir}/generate.h 
         ${clBolt.Include.Dir}/iterator_traits.h 
         ${clBolt.Include.Dir}/reduce.h 
@@ -88,6 +89,7 @@ set( clBolt.Runtime.Headers.Misc
         
 set( clBolt.Runtime.Headers.Detail 
         ${clBolt.Include.Dir}/detail/copy.inl
+        ${clBolt.Include.Dir}/detail/fill.inl
         ${clBolt.Include.Dir}/detail/generate.inl
         ${clBolt.Include.Dir}/detail/reduce.inl
         ${clBolt.Include.Dir}/detail/scan.inl
