@@ -22,6 +22,8 @@
 #include <map>
 
 #include <boost/thread/mutex.hpp>
+// #include <boost/interprocess/detail/atomic.hpp>
+// #include <boost/detail/interlocked.hpp>
 #include <boost/shared_ptr.hpp>
 
 namespace bolt {
@@ -231,8 +233,8 @@ namespace bolt {
             typedef boost::shared_ptr< ::cl::Buffer > buffPointer;
 
             size_t privateMemorySize( );
-            buffPointer acquireBuffer( size_t reqSize, cl_mem_flags flags = CL_MEM_READ_WRITE );
-            void releaseBuffer( ::cl::Buffer& buff );
+            buffPointer acquireBuffer( size_t reqSize, cl_mem_flags flags = CL_MEM_READ_WRITE, void* host_ptr = NULL );
+            // void releaseBuffer( ::cl::Buffer& buff );
             void freePrivateMemory( );
 
         private:
@@ -312,23 +314,26 @@ namespace bolt {
              * directly on the smart_ptr<>.  In order for this class to work, the iterator that we store
              * MUST NOT BE INVALIDATED BY INSERTIONS OR DELETIONS INTO THE UNDERLYING CONTAINER
             */
-            template< typename Container >
             class UnlockBuffer
             {
                 mapBufferType::iterator m_iter;
+                control& m_control;
 
             public:
                 //  Basic constructor requires a reference to the container and a positional element
-                UnlockBuffer( mapBufferType::iterator it ): m_iter( it )
+                UnlockBuffer( control& p_control, mapBufferType::iterator it ): m_iter( it ), m_control( p_control )
                 {}
 
                 void operator( )( const void* pBuff )
                 {
-                    //  TODO: I think we need to lock the container before we modify the iterator
+                    //  TODO: I think a general mutex is overkill here; we should try to use an interlocked instruction to modify the 
+                    //  inUse flag
+                    boost::lock_guard< boost::mutex > lock( m_control.mapGuard );
                     m_iter->second.inUse = false;
                 }
             };
 
+            friend class UnlockBuffer;
             mapBufferType mapBuffer;
             boost::mutex mapGuard;
         };

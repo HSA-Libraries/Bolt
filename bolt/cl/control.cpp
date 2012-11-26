@@ -19,6 +19,7 @@
 #include <iomanip>
 #include <sstream>
 #include <algorithm>
+// #include <atomic>
 
 #include "bolt/cl/bolt.h"
 #include "bolt/cl/control.h"
@@ -348,7 +349,7 @@ namespace cl
         return totalSize;
     };
 
-    control::buffPointer control::acquireBuffer( size_t reqSize, cl_mem_flags flags )
+    control::buffPointer control::acquireBuffer( size_t reqSize, cl_mem_flags flags, void* host_ptr )
     {
         ::cl::Context myContext = m_commandQueue.getInfo< CL_QUEUE_CONTEXT >( );
 
@@ -359,25 +360,52 @@ namespace cl
             //  std::multimap is not thread-safe; lock the map when inserting elements
             boost::lock_guard< boost::mutex > lock( mapGuard );
 
-            ::cl::Buffer tmp( myContext, flags, reqSize );
+            ::cl::Buffer tmp( myContext, flags, reqSize, host_ptr );
             descBufferValue myValue = { reqSize, true, tmp };
             mapBufferType::iterator itInserted = mapBuffer.insert( std::make_pair( myDesc, myValue ) );
 
-            buffPointer buffPtr( &(itInserted->second.buffBuff), UnlockBuffer< int >( itInserted ) );
+            buffPointer buffPtr( &(itInserted->second.buffBuff), UnlockBuffer( *this, itInserted ) );
             return buffPtr;
         }
 
+        //  TODO:  we lock because we modify the inUse variable.
+        //  It could probably be compared and set with a good interlocked instruction like
+        //  InterlockedComparExchange, but need a good cross platform solution should be found
+        boost::lock_guard< boost::mutex > lock( mapGuard );
+
         for( ; itLowerBound != mapBuffer.upper_bound( myDesc ); ++itLowerBound )
         {
+            //  If the current buffer is already being used, keep searching
+            if( itLowerBound->second.inUse == true )
+                continue;
+
+            if( itLowerBound->second.buffSize >= reqSize )
+            {
+                itLowerBound->second.inUse = true;
+                buffPointer buffPtr( &(itLowerBound->second.buffBuff), UnlockBuffer( *this, itLowerBound ) );
+                return buffPtr;
+            }
+
+            //  If here, we found a buffer with the appropriate flags, but not big enough.  Delete the old 
+            //  buffer and then create a bigger one to take it's place.
+
+            mapBuffer.erase( itLowerBound );
+            break;
         }
 
-        buffPointer buffPtr( &(itLowerBound->second.buffBuff) );
+        //  If here, either all available buffers are currently in use, or we need to replace an existing buffer
+        // create a new buffer and add it to the map
+        ::cl::Buffer tmp( myContext, flags, reqSize, host_ptr );
+        descBufferValue myValue = { reqSize, true, tmp };
+
+        mapBufferType::iterator itInserted = mapBuffer.insert( std::make_pair( myDesc, myValue ) );
+        buffPointer buffPtr( &(itInserted->second.buffBuff), UnlockBuffer( *this, itInserted ) );
         return buffPtr;
     };
 
-    void control::releaseBuffer( ::cl::Buffer& buff )
-    {
-    }
+    //void control::releaseBuffer( ::cl::Buffer& buff )
+    //{
+    //}
 
     void control::freePrivateMemory( )
     {

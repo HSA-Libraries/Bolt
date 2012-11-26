@@ -124,191 +124,50 @@ template< typename T >
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
-//  Fixture classes are now defined to enable googletest to process type parameterized tests
+//  Fixture classes are now defined to enable googletest to process value parameterized tests
 
-//  This class creates a C++ 'TYPE' out of a size_t value
-template< size_t N >
-class TypeValue
+//  ::testing::TestWithParam< int > means that GetParam( ) returns int values, which i use for array size
+class ControlTest: public testing::Test 
 {
 public:
-    static const size_t value = N;
-};
-
-//  Test fixture class, used for the Type-parameterized tests
-//  Namely, the tests that use std::array and TYPED_TEST_P macros
-template< typename ArrayTuple >
-class ScanArrayTest: public ::testing::Test
-{
-public:
-    ScanArrayTest( ): m_Errors( 0 )
+    //  Create an std and a bolt vector of requested size, and initialize all the elements to 1
+    ControlTest( ): myControl( bolt::cl::control::getDefault( ) )
     {}
 
     virtual void SetUp( )
     {
-        for( int i=0; i < ArraySize; i++ )
-        {
-            stdInput[ i ] = 1;
-            boltInput[ i ] = 1;
-        }
     };
 
     virtual void TearDown( )
-    {};
-
-    virtual ~ScanArrayTest( )
-    {}
-
-protected:
-    typedef typename std::tuple_element< 0, ArrayTuple >::type ArrayType;
-    // typedef typename std::tuple_element< 0, ArrayTuple >::type::value ArraySize;
-    static const size_t ArraySize = typename std::tuple_element< 1, ArrayTuple >::type::value;
-
-    typename std::array< ArrayType, ArraySize > stdInput, boltInput;
-    int m_Errors;
-};
-
-TYPED_TEST_CASE_P( ScanArrayTest );
-
-TYPED_TEST_P( ScanArrayTest, InPlace )
-{
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
-
-}
-
-TYPED_TEST_P( ScanArrayTest, InPlacePlusFunction )
-{
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
-
-}
-
-TYPED_TEST_P( ScanArrayTest, InPlaceMaxFunction )
-{
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
-
-}
-
-TYPED_TEST_P( ScanArrayTest, OutofPlace )
-{
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
-
-}
-
-REGISTER_TYPED_TEST_CASE_P( ScanArrayTest, InPlace, InPlacePlusFunction, InPlaceMaxFunction, OutofPlace );
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////
-//  Fixture classes are now defined to enable googletest to process value parameterized tests
-
-//  ::testing::TestWithParam< int > means that GetParam( ) returns int values, which i use for array size
-class ScanIntegerVector: public ::testing::TestWithParam< int >
-{
-public:
-    //  Create an std and a bolt vector of requested size, and initialize all the elements to 1
-    ScanIntegerVector( ): stdInput( GetParam( ), 1 ), boltInput( GetParam( ), 1 )
-    {}
+    {
+        myControl.freePrivateMemory( );
+    };
 
 protected:
-    std::vector< int > stdInput, boltInput;
+    bolt::cl::control& myControl;
 };
 
-//  ::testing::TestWithParam< int > means that GetParam( ) returns int values, which i use for array size
-class ScanFloatVector: public ::testing::TestWithParam< int >
+TEST_F( ControlTest, init )
 {
-public:
-    //  Create an std and a bolt vector of requested size, and initialize all the elements to 1
-    ScanFloatVector( ): stdInput( GetParam( ), 1.0f ), boltInput( GetParam( ), 1.0f )
-    {}
-
-protected:
-    std::vector< float > stdInput, boltInput;
-};
-
-//  ::testing::TestWithParam< int > means that GetParam( ) returns int values, which i use for array size
-class ScanDoubleVector: public ::testing::TestWithParam< int >
-{
-public:
-    //  Create an std and a bolt vector of requested size, and initialize all the elements to 1
-    ScanDoubleVector( ): stdInput( GetParam( ), 1.0 ), boltInput( GetParam( ), 1.0 )
-    {}
-
-protected:
-    std::vector< double > stdInput, boltInput;
-};
-
-TEST_P( ScanIntegerVector, InclusiveInplace )
-{
-}
-
-TEST_P( ScanFloatVector, InclusiveInplace )
-{
-}
-
-TEST_P( ScanDoubleVector, InclusiveInplace )
-{
-}
-
-////  Test lots of consecutive numbers, but small range, suitable for integers because they overflow easier
-//INSTANTIATE_TEST_CASE_P( Inclusive, ScanIntegerVector, ::testing::Range( 0, 1024, 1 ) );
-//
-////  Test a huge range, suitable for floating point as they are less prone to overflow (but floating point loses granularity at large values)
-//INSTANTIATE_TEST_CASE_P( Inclusive, ScanFloatVector, ::testing::Range( 0, 1048576, 4096 ) );
-//INSTANTIATE_TEST_CASE_P( Inclusive, ScanDoubleVector, ::testing::Range( 0, 1048576, 4096 ) );
-
-typedef ::testing::Types< 
-    std::tuple< int, TypeValue< 1 > >,
-    //std::tuple< int, TypeValue< bolt::scanMultiCpuThreshold - 1 > >,
-    //std::tuple< int, TypeValue< bolt::scanGpuThreshold - 1 > >,
-    std::tuple< int, TypeValue< 31 > >,
-    std::tuple< int, TypeValue< 32 > >,
-    std::tuple< int, TypeValue< 63 > >,
-    std::tuple< int, TypeValue< 64 > >,
-    std::tuple< int, TypeValue< 127 > >,
-    std::tuple< int, TypeValue< 128 > >,
-    std::tuple< int, TypeValue< 129 > >,
-    std::tuple< int, TypeValue< 1000 > >,
-    std::tuple< int, TypeValue< 1053 > >,
-    std::tuple< int, TypeValue< 4096 > >,
-    std::tuple< int, TypeValue< 4097 > >,
-    std::tuple< int, TypeValue< 65535 > >,
-    //std::tuple< int, TypeValue< 131032 > >,       // uncomment these to generate failures; stack overflow
-    //std::tuple< int, TypeValue< 262154 > >,
-    std::tuple< int, TypeValue< 65536 > >
-> IntegerTests;
-
-typedef ::testing::Types< 
-    std::tuple< float, TypeValue< 1 > >,
-    //std::tuple< float, TypeValue< bolt::scanMultiCpuThreshold - 1 > >,
-    //std::tuple< float, TypeValue< bolt::scanGpuThreshold - 1 > >,
-    std::tuple< float, TypeValue< 31 > >,
-    std::tuple< float, TypeValue< 32 > >,
-    std::tuple< float, TypeValue< 63 > >,
-    std::tuple< float, TypeValue< 64 > >,
-    std::tuple< float, TypeValue< 127 > >,
-    std::tuple< float, TypeValue< 128 > >,
-    std::tuple< float, TypeValue< 129 > >,
-    std::tuple< float, TypeValue< 1000 > >,
-    std::tuple< float, TypeValue< 1053 > >,
-    std::tuple< float, TypeValue< 4096 > >,
-    std::tuple< float, TypeValue< 4097 > >,
-    std::tuple< float, TypeValue< 65535 > >,
-    std::tuple< float, TypeValue< 65536 > >
-> FloatTests;
-
-//INSTANTIATE_TYPED_TEST_CASE_P( Integer, ScanArrayTest, IntegerTests );
-//INSTANTIATE_TYPED_TEST_CASE_P( Float, ScanArrayTest, FloatTests );
-
-TEST( privateMemorySize, zeroMemory )
-{
-    bolt::cl::control& myControl = bolt::cl::control::getDefault( );
-
     size_t internalBuffSize = myControl.privateMemorySize( );
 
     EXPECT_EQ( 0, internalBuffSize );
 }
 
-TEST( acquireBuffer, acquire1Buffer )
+TEST_F( ControlTest, zeroMemory )
 {
-    bolt::cl::control& myControl = bolt::cl::control::getDefault( );
+    myControl.acquireBuffer( 100 * sizeof( int ) );
 
+    size_t internalBuffSize = myControl.privateMemorySize( );
+    EXPECT_EQ( 400, internalBuffSize );
+
+    myControl.freePrivateMemory( );
+    internalBuffSize = myControl.privateMemorySize( );
+    EXPECT_EQ( 0, internalBuffSize );
+}
+
+TEST_F( ControlTest, acquire1Buffer )
+{
     bolt::cl::control::buffPointer myBuff = myControl.acquireBuffer( 100 * sizeof( int ) );
     cl_uint myRefCount = myBuff->getInfo< CL_MEM_REFERENCE_COUNT >( );
     EXPECT_EQ( 1, myRefCount );
@@ -317,379 +176,92 @@ TEST( acquireBuffer, acquire1Buffer )
     EXPECT_EQ( 400, internalBuffSize );
 }
 
-//TEST( Constructor, ConstContainerConstIteratorCEmpty )
-//{
-//    const bolt::cl::device_vector< int > dV;
-//
-//    EXPECT_EQ( 0, dV.size( ) );
-//
-//    bolt::cl::device_vector< int >::const_iterator itBegin = dV.cbegin( );
-//    bolt::cl::device_vector< int >::const_iterator itEnd = dV.cend( );
-//
-//    EXPECT_TRUE( itBegin == itEnd );
-//}
-//
-//TEST( Constructor, ContainerConstIteratorCEmpty )
-//{
-//    bolt::cl::device_vector< int > dV;
-//
-//    EXPECT_EQ( 0, dV.size( ) );
-//
-//    bolt::cl::device_vector< int >::const_iterator itBegin = dV.cbegin( );
-//    bolt::cl::device_vector< int >::const_iterator itEnd = dV.cend( );
-//
-//    EXPECT_TRUE( itBegin == itEnd );
-//}
-//
-//TEST( Constructor, ContainerConstIteratorEmpty )
-//{
-//    bolt::cl::device_vector< int > dV;
-//
-//    EXPECT_EQ( 0, dV.size( ) );
-//
-//    bolt::cl::device_vector< int >::const_iterator itBegin = dV.begin( );
-//    bolt::cl::device_vector< int >::const_iterator itEnd = dV.end( );
-//
-//    EXPECT_TRUE( itBegin == itEnd );
-//}
-//
-//TEST( Constructor, Size5AndValue3OperatorValueType )
-//{
-//    bolt::cl::device_vector< int > dV( 5, 3 );
-//    EXPECT_EQ( 5, dV.size( ) );
-//
-//    EXPECT_EQ( 3, dV[ 0 ] );
-//    EXPECT_EQ( 3, dV[ 1 ] );
-//    EXPECT_EQ( 3, dV[ 2 ] );
-//    EXPECT_EQ( 3, dV[ 3 ] );
-//    EXPECT_EQ( 3, dV[ 4 ] );
-//}
-//
-//TEST( Iterator, Compatibility )
-//{
-//    bolt::cl::device_vector< int > dV;
-//    EXPECT_EQ( 0, dV.size( ) );
-//
-//    bolt::cl::device_vector< int >::iterator Iter0( dV, 0 );
-//    bolt::cl::device_vector< int >::const_iterator cIter0( dV, 0 );
-//    EXPECT_TRUE( Iter0 == cIter0 );
-//
-//    bolt::cl::device_vector< int >::iterator Iter1( dV, 0 );
-//    bolt::cl::device_vector< int >::const_iterator cIter1( dV, 1 );
-//    EXPECT_TRUE( Iter1 != cIter1 );
-//}
-//
-//TEST( Iterator, OperatorEqual )
-//{
-//    bolt::cl::device_vector< int > dV;
-//    EXPECT_EQ( 0, dV.size( ) );
-//
-//    bolt::cl::device_vector< int >::iterator Iter0( dV, 0 );
-//    bolt::cl::device_vector< int >::iterator cIter0( dV, 0 );
-//    EXPECT_TRUE( Iter0 == cIter0 );
-//
-//    bolt::cl::device_vector< int >::const_iterator Iter1( dV, 0 );
-//    bolt::cl::device_vector< int >::const_iterator cIter1( dV, 1 );
-//    EXPECT_TRUE( Iter1 != cIter1 );
-//
-//    bolt::cl::device_vector< int > dV2;
-//
-//    bolt::cl::device_vector< int >::const_iterator Iter2( dV, 0 );
-//    bolt::cl::device_vector< int >::const_iterator cIter2( dV2, 0 );
-//    EXPECT_TRUE( Iter2 != cIter2 );
-//}
-//
-//TEST( VectorReference, OperatorEqual )
-//{
-//    bolt::cl::device_vector< int > dV( 5 );
-//
-//    dV[ 0 ] = 1;
-//    dV[ 1 ] = 2;
-//    dV[ 2 ] = 3;
-//    dV[ 3 ] = 4;
-//    dV[ 4 ] = 5;
-//
-//    EXPECT_EQ( 1, dV[ 0 ] );
-//    EXPECT_EQ( 2, dV[ 1 ] );
-//    EXPECT_EQ( 3, dV[ 2 ] );
-//    EXPECT_EQ( 4, dV[ 3 ] );
-//    EXPECT_EQ( 5, dV[ 4 ] );
-//}
-//
-//TEST( VectorReference, OperatorValueType )
-//{
-//    bolt::cl::device_vector< int > dV( 5 );
-//
-//    dV[ 0 ] = 1;
-//    dV[ 1 ] = 2;
-//    dV[ 2 ] = 3;
-//    dV[ 3 ] = 4;
-//    dV[ 4 ] = 5;
-//
-//    std::vector< int > readBack( 5 );
-//    readBack[ 0 ] = dV[ 0 ];
-//    readBack[ 1 ] = dV[ 1 ];
-//    readBack[ 2 ] = dV[ 2 ];
-//    readBack[ 3 ] = dV[ 3 ];
-//    readBack[ 4 ] = dV[ 4 ];
-//
-//    EXPECT_EQ( readBack[ 0 ], dV[ 0 ] );
-//    EXPECT_EQ( readBack[ 1 ], dV[ 1 ] );
-//    EXPECT_EQ( readBack[ 2 ], dV[ 2 ] );
-//    EXPECT_EQ( readBack[ 3 ], dV[ 3 ] );
-//    EXPECT_EQ( readBack[ 4 ], dV[ 4 ] );
-//}
-//
-////TEST( VectorIterator, Size6AndValue7OperatorValueType )
-////{
-////    bolt::cl::device_vector< int > dV( 6, 7 );
-////    EXPECT_EQ( 6, dV.size( ) );
-////
-////    bolt::cl::device_vector< int >::iterator myIter = dV.begin( );
-////
-////    EXPECT_EQ( 7, myIter[ 0 ] );
-////    EXPECT_EQ( 7, myIter[ 1 ] );
-////    EXPECT_EQ( 7, myIter[ 2 ] );
-////    EXPECT_EQ( 7, myIter[ 3 ] );
-////    EXPECT_EQ( 7, myIter[ 4 ] );
-////    EXPECT_EQ( 7, myIter[ 5 ] );
-////}
-//
-//TEST( VectorIterator, Size6AndValue7Dereference )
-//{
-//    bolt::cl::device_vector< int > dV( 6ul, 7 );
-//    EXPECT_EQ( 6, dV.size( ) );
-//
-//    bolt::cl::device_vector< int >::iterator myIter = dV.begin( );
-//
-//    EXPECT_EQ( 7, *(myIter + 0) );
-//    EXPECT_EQ( 7, *(myIter + 1) );
-//    EXPECT_EQ( 7, *(myIter + 2) );
-//    EXPECT_EQ( 7, *(myIter + 3) );
-//    EXPECT_EQ( 7, *(myIter + 4) );
-//    EXPECT_EQ( 7, *(myIter + 5) );
-//}
-//
-//TEST( VectorIterator, ArithmeticAndEqual )
-//{
-//    bolt::cl::device_vector< int > dV( 5 );
-//    EXPECT_EQ( 5, dV.size( ) );
-//
-//    bolt::cl::device_vector< int >::iterator myIter = dV.begin( );
-//
-//    *myIter = 1;
-//    ++myIter;
-//    *myIter = 2;
-//    myIter++;
-//    *myIter = 3;
-//    myIter += 1;
-//    *(myIter + 0) = 4;
-//    *(myIter + 1) = 5;
-//    myIter += 1;
-//
-//    EXPECT_EQ( 1, dV[ 0 ] );
-//    EXPECT_EQ( 2, dV[ 1 ] );
-//    EXPECT_EQ( 3, dV[ 2 ] );
-//    EXPECT_EQ( 4, dV[ 3 ] );
-//    EXPECT_EQ( 5, dV[ 4 ] );
-//}
-//
-//TEST( Vector, Erase )
-//{
-//    bolt::cl::device_vector< int > dV( 5 );
-//    EXPECT_EQ( 5, dV.size( ) );
-//
-//    dV[ 0 ] = 1;
-//    dV[ 1 ] = 2;
-//    dV[ 2 ] = 3;
-//    dV[ 3 ] = 4;
-//    dV[ 4 ] = 5;
-//
-//    bolt::cl::device_vector< int >::iterator myIter = dV.begin( );
-//    myIter += 2;
-//
-//    bolt::cl::device_vector< int >::iterator myResult = dV.erase( myIter );
-//    EXPECT_EQ( 4, dV.size( ) );
-//    EXPECT_EQ( 4, *myResult );
-//
-//    EXPECT_EQ( 1, dV[ 0 ] );
-//    EXPECT_EQ( 2, dV[ 1 ] );
-//    EXPECT_EQ( 4, dV[ 2 ] );
-//    EXPECT_EQ( 5, dV[ 3 ] );
-//}
-//
-//TEST( Vector, Clear )
-//{
-//    bolt::cl::device_vector< int > dV( 5ul, 3 );
-//    EXPECT_EQ( 5, dV.size( ) );
-//
-//    dV.clear( );
-//    EXPECT_EQ( 0, dV.size( ) );
-//}
-//
-//TEST( Vector, EraseEntireRange )
-//{
-//    bolt::cl::device_vector< int > dV( 5 );
-//    EXPECT_EQ( 5, dV.size( ) );
-//
-//    dV[ 0 ] = 1;
-//    dV[ 1 ] = 2;
-//    dV[ 2 ] = 3;
-//    dV[ 3 ] = 4;
-//    dV[ 4 ] = 5;
-//
-//    bolt::cl::device_vector< int >::iterator myBegin = dV.begin( );
-//    bolt::cl::device_vector< int >::iterator myEnd = dV.end( );
-//
-//    bolt::cl::device_vector< int >::iterator myResult = dV.erase( myBegin, myEnd );
-//    EXPECT_EQ( 0, dV.size( ) );
-//}
-//
-//TEST( Vector, EraseSubRange )
-//{
-//    bolt::cl::device_vector< int > dV( 5 );
-//    EXPECT_EQ( 5, dV.size( ) );
-//
-//    dV[ 0 ] = 1;
-//    dV[ 1 ] = 2;
-//    dV[ 2 ] = 3;
-//    dV[ 3 ] = 4;
-//    dV[ 4 ] = 5;
-//
-//    bolt::cl::device_vector< int >::iterator myBegin = dV.begin( );
-//    bolt::cl::device_vector< int >::iterator myEnd = dV.end( );
-//    myEnd -= 2;
-//
-//    bolt::cl::device_vector< int >::iterator myResult = dV.erase( myBegin, myEnd );
-//    EXPECT_EQ( 2, dV.size( ) );
-//}
-//
-//TEST( Vector, InsertBegin )
-//{
-//    bolt::cl::device_vector< int > dV( 5 );
-//    EXPECT_EQ( 5, dV.size( ) );
-//    dV[ 0 ] = 1;
-//    dV[ 1 ] = 2;
-//    dV[ 2 ] = 3;
-//    dV[ 3 ] = 4;
-//    dV[ 4 ] = 5;
-//
-//    bolt::cl::device_vector< int >::iterator myResult = dV.insert( dV.cbegin( ), 7 );
-//    EXPECT_EQ( 7, *myResult );
-//    EXPECT_EQ( 6, dV.size( ) );
-//}
-//
-//TEST( Vector, InsertEnd )
-//{
-//    bolt::cl::device_vector< int > dV( 5ul, 3 );
-//    EXPECT_EQ( 5, dV.size( ) );
-//
-//    bolt::cl::device_vector< int >::iterator myResult = dV.insert( dV.cend( ), 1 );
-//    EXPECT_EQ( 1, *myResult );
-//    EXPECT_EQ( 6, dV.size( ) );
-//}
-//
-//TEST( Vector, DataRead )
-//{
-//    bolt::cl::device_vector< int > dV( 5ul, 3 );
-//    EXPECT_EQ( 5, dV.size( ) );
-//    dV[ 0 ] = 1;
-//    dV[ 1 ] = 2;
-//    dV[ 2 ] = 3;
-//    dV[ 3 ] = 4;
-//    dV[ 4 ] = 5;
-//
-//    bolt::cl::device_vector< int >::pointer mySP = dV.data( );
-//
-//    EXPECT_EQ( 1, mySP[ 0 ] );
-//    EXPECT_EQ( 2, mySP[ 1 ] );
-//    EXPECT_EQ( 3, mySP[ 2 ] );
-//    EXPECT_EQ( 4, mySP[ 3 ] );
-//    EXPECT_EQ( 5, mySP[ 4 ] );
-//}
-//
-//TEST( Vector, DataWrite )
-//{
-//    bolt::cl::device_vector< int > dV( 5 );
-//    EXPECT_EQ( 5, dV.size( ) );
-//
-//    bolt::cl::device_vector< int >::pointer mySP = dV.data( );
-//    mySP[ 0 ] = 1;
-//    mySP[ 1 ] = 2;
-//    mySP[ 2 ] = 3;
-//    mySP[ 3 ] = 4;
-//    mySP[ 4 ] = 5;
-//
-//    EXPECT_EQ( 1, mySP[ 0 ] );
-//    EXPECT_EQ( 2, mySP[ 1 ] );
-//    EXPECT_EQ( 3, mySP[ 2 ] );
-//    EXPECT_EQ( 4, mySP[ 3 ] );
-//    EXPECT_EQ( 5, mySP[ 4 ] );
-//}
-//
-//TEST( Vector, wdSpecifyingSize )
-//{
-//    size_t mySize = 10;
-//    bolt::cl::device_vector<int> myIntDevVect;
-//    int myIntArray[10] = {2, 3, 5, 6, 76, 5, 8, -10, 30, 34};
-//
-//    for (int i = 0; i < mySize; ++i){
-//        myIntDevVect.push_back(myIntArray[i]);
-//    }
-//
-//    size_t DevSize = myIntDevVect.size();
-//    
-//    EXPECT_EQ (mySize, DevSize);
-//}
-//
-//TEST( Vector, InsertFloatRangeEmpty )
-//{
-//    bolt::cl::device_vector< float > dV;
-//    EXPECT_EQ( 0, dV.size( ) );
-//
-//    dV.insert( dV.cbegin( ), 5, 7.0f );
-//    EXPECT_EQ( 5, dV.size( ) );
-//    EXPECT_FLOAT_EQ( 7.0f, dV[ 0 ] );
-//    EXPECT_FLOAT_EQ( 7.0f, dV[ 1 ] );
-//    EXPECT_FLOAT_EQ( 7.0f, dV[ 2 ] );
-//    EXPECT_FLOAT_EQ( 7.0f, dV[ 3 ] );
-//    EXPECT_FLOAT_EQ( 7.0f, dV[ 4 ] );
-//}
-//
-////TEST( Vector, InsertIntegerRangeEmpty )
-////{
-////    bolt::cl::device_vector< int > dV;
-////    EXPECT_EQ( 0, dV.size( ) );
-////
-////    dV.insert( dV.cbegin( ), 5, 7 );
-////    EXPECT_EQ( 5, dV.size( ) );
-////    EXPECT_EQ( 7, dV[ 0 ] );
-////    EXPECT_EQ( 7, dV[ 1 ] );
-////    EXPECT_EQ( 7, dV[ 2 ] );
-////    EXPECT_EQ( 7, dV[ 3 ] );
-////    EXPECT_EQ( 7, dV[ 4 ] );
-////}
-//
-//TEST( Vector, InsertFloatRangeIterator )
-//{
-//    bolt::cl::device_vector< float > dV;
-//    EXPECT_EQ( 0, dV.size( ) );
-//
-//    std::vector< float > sV( 5 );
-//    sV[ 0 ] = 1.0f;
-//    sV[ 1 ] = 2.0f;
-//    sV[ 2 ] = 3.0f;
-//    sV[ 3 ] = 4.0f;
-//    sV[ 4 ] = 5.0f;
-//
-//    dV.insert( dV.cbegin( ), sV.begin( ), sV.end( ) );
-//    EXPECT_EQ( 5, dV.size( ) );
-//    EXPECT_FLOAT_EQ( 1.0f, dV[ 0 ] );
-//    EXPECT_FLOAT_EQ( 2.0f, dV[ 1 ] );
-//    EXPECT_FLOAT_EQ( 3.0f, dV[ 2 ] );
-//    EXPECT_FLOAT_EQ( 4.0f, dV[ 3 ] );
-//    EXPECT_FLOAT_EQ( 5.0f, dV[ 4 ] );
-//}
+TEST_F( ControlTest, acquire1BufferReleaseAcquireSame )
+{
+    bolt::cl::control::buffPointer myBuff = myControl.acquireBuffer( 100 * sizeof( int ) );
+    cl_uint myRefCount = myBuff->getInfo< CL_MEM_REFERENCE_COUNT >( );
+    EXPECT_EQ( 1, myRefCount );
+    myBuff.reset( );
+
+    myBuff = myControl.acquireBuffer( 100 * sizeof( int ) );
+    myRefCount = myBuff->getInfo< CL_MEM_REFERENCE_COUNT >( );
+    EXPECT_EQ( 1, myRefCount );
+
+    size_t internalBuffSize = myControl.privateMemorySize( );
+    EXPECT_EQ( 400, internalBuffSize );
+}
+
+TEST_F( ControlTest, acquire1BufferReleaseAcquireSmaller )
+{
+    bolt::cl::control::buffPointer myBuff = myControl.acquireBuffer( 100 * sizeof( int ) );
+    cl_uint myRefCount = myBuff->getInfo< CL_MEM_REFERENCE_COUNT >( );
+    EXPECT_EQ( 1, myRefCount );
+    myBuff.reset( );
+
+    myBuff = myControl.acquireBuffer( 99 * sizeof( int ) );
+    myRefCount = myBuff->getInfo< CL_MEM_REFERENCE_COUNT >( );
+    EXPECT_EQ( 1, myRefCount );
+
+    size_t internalBuffSize = myControl.privateMemorySize( );
+    EXPECT_EQ( 400, internalBuffSize );
+}
+
+TEST_F( ControlTest, acquire1BufferReleaseAcquireBigger )
+{
+    bolt::cl::control::buffPointer myBuff = myControl.acquireBuffer( 100 * sizeof( int ) );
+    cl_uint myRefCount = myBuff->getInfo< CL_MEM_REFERENCE_COUNT >( );
+    EXPECT_EQ( 1, myRefCount );
+    myBuff.reset( );
+
+    myBuff = myControl.acquireBuffer( 101 * sizeof( int ) );
+    myRefCount = myBuff->getInfo< CL_MEM_REFERENCE_COUNT >( );
+    EXPECT_EQ( 1, myRefCount );
+
+    size_t internalBuffSize = myControl.privateMemorySize( );
+    EXPECT_EQ( 404, internalBuffSize );
+}
+
+TEST_F( ControlTest, acquire2BufferEqual )
+{
+    bolt::cl::control::buffPointer myBuff1 = myControl.acquireBuffer( 100 * sizeof( int ) );
+    cl_uint myRefCount1 = myBuff1->getInfo< CL_MEM_REFERENCE_COUNT >( );
+    EXPECT_EQ( 1, myRefCount1 );
+
+    bolt::cl::control::buffPointer myBuff2 = myControl.acquireBuffer( 100 * sizeof( int ) );
+    cl_uint myRefCount2 = myBuff2->getInfo< CL_MEM_REFERENCE_COUNT >( );
+    EXPECT_EQ( 1, myRefCount2 );
+
+    size_t internalBuffSize = myControl.privateMemorySize( );
+    EXPECT_EQ( 800, internalBuffSize );
+}
+
+TEST_F( ControlTest, acquire2BufferBigger )
+{
+    bolt::cl::control::buffPointer myBuff1 = myControl.acquireBuffer( 100 * sizeof( int ) );
+    cl_uint myRefCount1 = myBuff1->getInfo< CL_MEM_REFERENCE_COUNT >( );
+    EXPECT_EQ( 1, myRefCount1 );
+
+    bolt::cl::control::buffPointer myBuff2 = myControl.acquireBuffer( 101 * sizeof( int ) );
+    cl_uint myRefCount2 = myBuff2->getInfo< CL_MEM_REFERENCE_COUNT >( );
+    EXPECT_EQ( 1, myRefCount2 );
+
+    size_t internalBuffSize = myControl.privateMemorySize( );
+    EXPECT_EQ( 804, internalBuffSize );
+}
+
+TEST_F( ControlTest, acquire2BufferSmaller )
+{
+    bolt::cl::control::buffPointer myBuff1 = myControl.acquireBuffer( 100 * sizeof( int ) );
+    cl_uint myRefCount1 = myBuff1->getInfo< CL_MEM_REFERENCE_COUNT >( );
+    EXPECT_EQ( 1, myRefCount1 );
+
+    bolt::cl::control::buffPointer myBuff2 = myControl.acquireBuffer( 99 * sizeof( int ) );
+    cl_uint myRefCount2 = myBuff2->getInfo< CL_MEM_REFERENCE_COUNT >( );
+    EXPECT_EQ( 1, myRefCount2 );
+
+    size_t internalBuffSize = myControl.privateMemorySize( );
+    EXPECT_EQ( 796, internalBuffSize );
+}
 
 int _tmain(int argc, _TCHAR* argv[])
 {
