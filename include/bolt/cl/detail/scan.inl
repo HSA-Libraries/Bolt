@@ -466,12 +466,15 @@ namespace bolt
 
                 // Create buffer wrappers so we can access the host functors, for read or writing in the kernel
                 ALIGNED( 256 ) BinaryFunction aligned_binary( binary_op );
-                ::cl::Buffer userFunctor( ctl.context( ), CL_MEM_USE_HOST_PTR, sizeof( aligned_binary ), &aligned_binary );
+                //::cl::Buffer userFunctor( ctl.context( ), CL_MEM_USE_HOST_PTR, sizeof( aligned_binary ), &aligned_binary );
+                control::buffPointer userFunctor = const_cast< control& >(ctl).acquireBuffer( sizeof( aligned_binary ), CL_MEM_USE_HOST_PTR, &aligned_binary );
 
                 //device_vector< iType > preSumArray( sizeScanBuff, 0, CL_MEM_READ_WRITE, false, ctl );
                 //device_vector< iType > postSumArray( sizeScanBuff, 0, CL_MEM_READ_WRITE, false, ctl );
-                ::cl::Buffer preSumArray( ctl.context( ), CL_MEM_READ_WRITE, sizeScanBuff*sizeof(iType) );
-                ::cl::Buffer postSumArray( ctl.context( ), CL_MEM_READ_WRITE, sizeScanBuff*sizeof(iType) );
+                //::cl::Buffer preSumArray( ctl.context( ), CL_MEM_READ_WRITE, sizeScanBuff*sizeof(iType) );
+                //::cl::Buffer postSumArray( ctl.context( ), CL_MEM_READ_WRITE, sizeScanBuff*sizeof(iType) );
+                control::buffPointer preSumArray = const_cast< control& >(ctl).acquireBuffer( sizeScanBuff*sizeof( iType ) );
+                control::buffPointer postSumArray = const_cast< control& >(ctl).acquireBuffer( sizeScanBuff*sizeof( iType ) );
 
                 const cl_uint ldsSize  = static_cast< cl_uint >( ( waveSize + ( waveSize / 2 ) ) * sizeof( iType ) );
 
@@ -480,8 +483,8 @@ namespace bolt
                 V_OPENCL( scanKernels[ 0 ].setArg( 2, init ), "Error setting argument for scanKernels[ 0 ]" );   // Initial value used for exclusive scan
                 V_OPENCL( scanKernels[ 0 ].setArg( 3, numElements ), "Error setting argument for scanKernels[ 0 ]" );   // Size of scratch buffer
                 V_OPENCL( scanKernels[ 0 ].setArg( 4, ldsSize, NULL ), "Error setting argument for scanKernels[ 0 ]" );    // Scratch buffer
-                V_OPENCL( scanKernels[ 0 ].setArg( 5, userFunctor ), "Error setting argument for scanKernels[ 0 ]" );      // User provided functor class
-                V_OPENCL( scanKernels[ 0 ].setArg( 6, preSumArray ), "Error setting argument for scanKernels[ 0 ]" );      // Output per block sum buffer
+                V_OPENCL( scanKernels[ 0 ].setArg( 5, *userFunctor ), "Error setting argument for scanKernels[ 0 ]" );      // User provided functor class
+                V_OPENCL( scanKernels[ 0 ].setArg( 6, *preSumArray ), "Error setting argument for scanKernels[ 0 ]" );      // Output per block sum buffer
 
                 l_Error = ctl.commandQueue( ).enqueueNDRangeKernel(
                     scanKernels[ 0 ],
@@ -510,12 +513,12 @@ namespace bolt
 
                 cl_uint workPerThread = static_cast< cl_uint >( sizeScanBuff / waveSize );
 
-                V_OPENCL( scanKernels[ 1 ].setArg( 0, postSumArray ), "Error setting 0th argument for scanKernels[ 1 ]" );          // Output buffer
-                V_OPENCL( scanKernels[ 1 ].setArg( 1, preSumArray ), "Error setting 1st argument for scanKernels[ 1 ]" );            // Input buffer
+                V_OPENCL( scanKernels[ 1 ].setArg( 0, *postSumArray ), "Error setting 0th argument for scanKernels[ 1 ]" );          // Output buffer
+                V_OPENCL( scanKernels[ 1 ].setArg( 1, *preSumArray ), "Error setting 1st argument for scanKernels[ 1 ]" );            // Input buffer
                 V_OPENCL( scanKernels[ 1 ].setArg( 2, numWorkGroups ), "Error setting 2nd argument for scanKernels[ 1 ]" );            // Size of scratch buffer
                 V_OPENCL( scanKernels[ 1 ].setArg( 3, ldsSize, NULL ), "Error setting 3rd argument for scanKernels[ 1 ]" );  // Scratch buffer
                 V_OPENCL( scanKernels[ 1 ].setArg( 4, workPerThread ), "Error setting 4th argument for scanKernels[ 1 ]" );           // User provided functor class
-                V_OPENCL( scanKernels[ 1 ].setArg( 5, userFunctor ), "Error setting 5th argument for scanKernels[ 1 ]" );           // User provided functor class
+                V_OPENCL( scanKernels[ 1 ].setArg( 5, *userFunctor ), "Error setting 5th argument for scanKernels[ 1 ]" );           // User provided functor class
 
                 l_Error = ctl.commandQueue( ).enqueueNDRangeKernel(
                     scanKernels[ 1 ],
@@ -553,9 +556,9 @@ namespace bolt
                 std::vector< ::cl::Event > perBlockEvent( 1 );
 
                 V_OPENCL( scanKernels[ 2 ].setArg( 0, result->getBuffer( ) ), "Error setting 0th argument for scanKernels[ 2 ]" );          // Output buffer
-                V_OPENCL( scanKernels[ 2 ].setArg( 1, postSumArray ), "Error setting 1st argument for scanKernels[ 2 ]" );            // Input buffer
+                V_OPENCL( scanKernels[ 2 ].setArg( 1, *postSumArray ), "Error setting 1st argument for scanKernels[ 2 ]" );            // Input buffer
                 V_OPENCL( scanKernels[ 2 ].setArg( 2, numElements ), "Error setting 2nd argument for scanKernels[ 2 ]" );   // Size of scratch buffer
-                V_OPENCL( scanKernels[ 2 ].setArg( 3, userFunctor ), "Error setting 3rd argument for scanKernels[ 2 ]" );           // User provided functor class
+                V_OPENCL( scanKernels[ 2 ].setArg( 3, *userFunctor ), "Error setting 3rd argument for scanKernels[ 2 ]" );           // User provided functor class
 
                 l_Error = ctl.commandQueue( ).enqueueNDRangeKernel(
                     scanKernels[ 2 ],

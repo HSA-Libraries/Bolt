@@ -127,8 +127,7 @@ int _tmain( int argc, _TCHAR* argv[] )
 
     if( print_clInfo )
     {
-        //  /todo: port the printing code from test/scan to control class
-        //std::for_each( platforms.begin( ), platforms.end( ), printPlatformFunctor( 0 ) );
+        bolt::cl::control::getDefault( ).printPlatforms( );
         return 0;
     }
 

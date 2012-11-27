@@ -337,7 +337,7 @@ namespace cl
 
     }
 
-    size_t control::privateMemorySize( )
+    size_t control::totalBufferSize( )
     {
         size_t totalSize = 0;
 
@@ -353,7 +353,7 @@ namespace cl
     {
         ::cl::Context myContext = m_commandQueue.getInfo< CL_QUEUE_CONTEXT >( );
 
-        descBufferKey myDesc = { myContext, flags };
+        descBufferKey myDesc = { myContext, flags , host_ptr };
         mapBufferType::iterator itLowerBound = mapBuffer.find( myDesc );
         if( itLowerBound == mapBuffer.end( ) )
         {
@@ -368,8 +368,8 @@ namespace cl
             return buffPtr;
         }
 
-        //  TODO:  we lock because we modify the inUse variable.
-        //  It could probably be compared and set with a good interlocked instruction like
+        //  Lock because we read and modify the inUse variable.
+        //  TODO: It could probably be compared and set with a good interlocked instruction like
         //  InterlockedComparExchange, but need a good cross platform solution should be found
         boost::lock_guard< boost::mutex > lock( mapGuard );
 
@@ -403,11 +403,7 @@ namespace cl
         return buffPtr;
     };
 
-    //void control::releaseBuffer( ::cl::Buffer& buff )
-    //{
-    //}
-
-    void control::freePrivateMemory( )
+    void control::freeBuffers( )
     {
         //  std::multimap is not thread-safe; lock the map when clearing it out
         boost::lock_guard< boost::mutex > lock( mapGuard );

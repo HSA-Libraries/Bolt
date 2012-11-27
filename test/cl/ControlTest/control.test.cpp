@@ -20,11 +20,13 @@
 #include <vector>
 #include <array>
 
-#include <bolt/cl/control.h>
-#include <bolt/cl/functional.h>
-#include <bolt/cl/device_vector.h>
-#include <bolt/unicode.h>
-#include <bolt/miniDump.h>
+#include "bolt/cl/control.h"
+#include "bolt/cl/functional.h"
+#include "bolt/cl/device_vector.h"
+#include "bolt/cl/scan.h"
+
+#include "bolt/unicode.h"
+#include "bolt/miniDump.h"
 
 #include <gtest/gtest.h>
 
@@ -123,15 +125,26 @@ template< typename T >
     return ::testing::AssertionSuccess( );
 }
 
+//  A very generic template that takes two container, and compares their values assuming a vector interface
+template< typename S, typename B >
+::testing::AssertionResult cmpArrays( const S& ref, const B& calc )
+{
+    for( size_t i = 0; i < ref.size( ); ++i )
+    {
+        EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
+    }
+
+    return ::testing::AssertionSuccess( );
+}
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Fixture classes are now defined to enable googletest to process value parameterized tests
 
-//  ::testing::TestWithParam< int > means that GetParam( ) returns int values, which i use for array size
-class ControlTest: public testing::Test 
+class ReferenceControlTest: public testing::Test 
 {
 public:
     //  Create an std and a bolt vector of requested size, and initialize all the elements to 1
-    ControlTest( ): myControl( bolt::cl::control::getDefault( ) )
+    ReferenceControlTest( ): myControl( bolt::cl::control::getDefault( ) )
     {}
 
     virtual void SetUp( )
@@ -140,43 +153,62 @@ public:
 
     virtual void TearDown( )
     {
-        myControl.freePrivateMemory( );
+        myControl.freeBuffers( );
     };
 
 protected:
     bolt::cl::control& myControl;
 };
 
-TEST_F( ControlTest, init )
+class CopyControlTest: public testing::Test
 {
-    size_t internalBuffSize = myControl.privateMemorySize( );
+public:
+    //  Create an std and a bolt vector of requested size, and initialize all the elements to 1
+    CopyControlTest( ): myControl( bolt::cl::control::getDefault( ) )
+    {}
+
+    virtual void SetUp( )
+    {
+    };
+
+    virtual void TearDown( )
+    {
+    };
+
+protected:
+    bolt::cl::control myControl;
+};
+
+TEST_F( ReferenceControlTest, init )
+{
+    size_t internalBuffSize = myControl.totalBufferSize( );
 
     EXPECT_EQ( 0, internalBuffSize );
 }
 
-TEST_F( ControlTest, zeroMemory )
+TEST_F( ReferenceControlTest, zeroMemory )
 {
     myControl.acquireBuffer( 100 * sizeof( int ) );
 
-    size_t internalBuffSize = myControl.privateMemorySize( );
+    size_t internalBuffSize = myControl.totalBufferSize( );
     EXPECT_EQ( 400, internalBuffSize );
 
-    myControl.freePrivateMemory( );
-    internalBuffSize = myControl.privateMemorySize( );
+    myControl.freeBuffers( );
+    internalBuffSize = myControl.totalBufferSize( );
     EXPECT_EQ( 0, internalBuffSize );
 }
 
-TEST_F( ControlTest, acquire1Buffer )
+TEST_F( ReferenceControlTest, acquire1Buffer )
 {
     bolt::cl::control::buffPointer myBuff = myControl.acquireBuffer( 100 * sizeof( int ) );
     cl_uint myRefCount = myBuff->getInfo< CL_MEM_REFERENCE_COUNT >( );
     EXPECT_EQ( 1, myRefCount );
 
-    size_t internalBuffSize = myControl.privateMemorySize( );
+    size_t internalBuffSize = myControl.totalBufferSize( );
     EXPECT_EQ( 400, internalBuffSize );
 }
 
-TEST_F( ControlTest, acquire1BufferReleaseAcquireSame )
+TEST_F( ReferenceControlTest, acquire1BufferReleaseAcquireSame )
 {
     bolt::cl::control::buffPointer myBuff = myControl.acquireBuffer( 100 * sizeof( int ) );
     cl_uint myRefCount = myBuff->getInfo< CL_MEM_REFERENCE_COUNT >( );
@@ -187,11 +219,11 @@ TEST_F( ControlTest, acquire1BufferReleaseAcquireSame )
     myRefCount = myBuff->getInfo< CL_MEM_REFERENCE_COUNT >( );
     EXPECT_EQ( 1, myRefCount );
 
-    size_t internalBuffSize = myControl.privateMemorySize( );
+    size_t internalBuffSize = myControl.totalBufferSize( );
     EXPECT_EQ( 400, internalBuffSize );
 }
 
-TEST_F( ControlTest, acquire1BufferReleaseAcquireSmaller )
+TEST_F( ReferenceControlTest, acquire1BufferReleaseAcquireSmaller )
 {
     bolt::cl::control::buffPointer myBuff = myControl.acquireBuffer( 100 * sizeof( int ) );
     cl_uint myRefCount = myBuff->getInfo< CL_MEM_REFERENCE_COUNT >( );
@@ -202,11 +234,11 @@ TEST_F( ControlTest, acquire1BufferReleaseAcquireSmaller )
     myRefCount = myBuff->getInfo< CL_MEM_REFERENCE_COUNT >( );
     EXPECT_EQ( 1, myRefCount );
 
-    size_t internalBuffSize = myControl.privateMemorySize( );
+    size_t internalBuffSize = myControl.totalBufferSize( );
     EXPECT_EQ( 400, internalBuffSize );
 }
 
-TEST_F( ControlTest, acquire1BufferReleaseAcquireBigger )
+TEST_F( ReferenceControlTest, acquire1BufferReleaseAcquireBigger )
 {
     bolt::cl::control::buffPointer myBuff = myControl.acquireBuffer( 100 * sizeof( int ) );
     cl_uint myRefCount = myBuff->getInfo< CL_MEM_REFERENCE_COUNT >( );
@@ -217,11 +249,11 @@ TEST_F( ControlTest, acquire1BufferReleaseAcquireBigger )
     myRefCount = myBuff->getInfo< CL_MEM_REFERENCE_COUNT >( );
     EXPECT_EQ( 1, myRefCount );
 
-    size_t internalBuffSize = myControl.privateMemorySize( );
+    size_t internalBuffSize = myControl.totalBufferSize( );
     EXPECT_EQ( 404, internalBuffSize );
 }
 
-TEST_F( ControlTest, acquire2BufferEqual )
+TEST_F( ReferenceControlTest, acquire2BufferEqual )
 {
     bolt::cl::control::buffPointer myBuff1 = myControl.acquireBuffer( 100 * sizeof( int ) );
     cl_uint myRefCount1 = myBuff1->getInfo< CL_MEM_REFERENCE_COUNT >( );
@@ -231,11 +263,11 @@ TEST_F( ControlTest, acquire2BufferEqual )
     cl_uint myRefCount2 = myBuff2->getInfo< CL_MEM_REFERENCE_COUNT >( );
     EXPECT_EQ( 1, myRefCount2 );
 
-    size_t internalBuffSize = myControl.privateMemorySize( );
+    size_t internalBuffSize = myControl.totalBufferSize( );
     EXPECT_EQ( 800, internalBuffSize );
 }
 
-TEST_F( ControlTest, acquire2BufferBigger )
+TEST_F( ReferenceControlTest, acquire2BufferBigger )
 {
     bolt::cl::control::buffPointer myBuff1 = myControl.acquireBuffer( 100 * sizeof( int ) );
     cl_uint myRefCount1 = myBuff1->getInfo< CL_MEM_REFERENCE_COUNT >( );
@@ -245,11 +277,11 @@ TEST_F( ControlTest, acquire2BufferBigger )
     cl_uint myRefCount2 = myBuff2->getInfo< CL_MEM_REFERENCE_COUNT >( );
     EXPECT_EQ( 1, myRefCount2 );
 
-    size_t internalBuffSize = myControl.privateMemorySize( );
+    size_t internalBuffSize = myControl.totalBufferSize( );
     EXPECT_EQ( 804, internalBuffSize );
 }
 
-TEST_F( ControlTest, acquire2BufferSmaller )
+TEST_F( ReferenceControlTest, acquire2BufferSmaller )
 {
     bolt::cl::control::buffPointer myBuff1 = myControl.acquireBuffer( 100 * sizeof( int ) );
     cl_uint myRefCount1 = myBuff1->getInfo< CL_MEM_REFERENCE_COUNT >( );
@@ -259,8 +291,142 @@ TEST_F( ControlTest, acquire2BufferSmaller )
     cl_uint myRefCount2 = myBuff2->getInfo< CL_MEM_REFERENCE_COUNT >( );
     EXPECT_EQ( 1, myRefCount2 );
 
-    size_t internalBuffSize = myControl.privateMemorySize( );
+    size_t internalBuffSize = myControl.totalBufferSize( );
     EXPECT_EQ( 796, internalBuffSize );
+}
+
+TEST_F( CopyControlTest, init )
+{
+    size_t internalBuffSize = myControl.totalBufferSize( );
+
+    EXPECT_EQ( 0, internalBuffSize );
+}
+
+TEST_F( CopyControlTest, zeroMemory )
+{
+    myControl.acquireBuffer( 100 * sizeof( int ) );
+
+    size_t internalBuffSize = myControl.totalBufferSize( );
+    EXPECT_EQ( 400, internalBuffSize );
+
+    myControl.freeBuffers( );
+    internalBuffSize = myControl.totalBufferSize( );
+    EXPECT_EQ( 0, internalBuffSize );
+}
+
+TEST_F( CopyControlTest, acquire1Buffer )
+{
+    bolt::cl::control::buffPointer myBuff = myControl.acquireBuffer( 100 * sizeof( int ) );
+    cl_uint myRefCount = myBuff->getInfo< CL_MEM_REFERENCE_COUNT >( );
+    EXPECT_EQ( 1, myRefCount );
+
+    size_t internalBuffSize = myControl.totalBufferSize( );
+    EXPECT_EQ( 400, internalBuffSize );
+}
+
+TEST_F( CopyControlTest, acquire1BufferReleaseAcquireSame )
+{
+    bolt::cl::control::buffPointer myBuff = myControl.acquireBuffer( 100 * sizeof( int ) );
+    cl_uint myRefCount = myBuff->getInfo< CL_MEM_REFERENCE_COUNT >( );
+    EXPECT_EQ( 1, myRefCount );
+    myBuff.reset( );
+
+    myBuff = myControl.acquireBuffer( 100 * sizeof( int ) );
+    myRefCount = myBuff->getInfo< CL_MEM_REFERENCE_COUNT >( );
+    EXPECT_EQ( 1, myRefCount );
+
+    size_t internalBuffSize = myControl.totalBufferSize( );
+    EXPECT_EQ( 400, internalBuffSize );
+}
+
+TEST_F( CopyControlTest, acquire1BufferReleaseAcquireSmaller )
+{
+    bolt::cl::control::buffPointer myBuff = myControl.acquireBuffer( 100 * sizeof( int ) );
+    cl_uint myRefCount = myBuff->getInfo< CL_MEM_REFERENCE_COUNT >( );
+    EXPECT_EQ( 1, myRefCount );
+    myBuff.reset( );
+
+    myBuff = myControl.acquireBuffer( 99 * sizeof( int ) );
+    myRefCount = myBuff->getInfo< CL_MEM_REFERENCE_COUNT >( );
+    EXPECT_EQ( 1, myRefCount );
+
+    size_t internalBuffSize = myControl.totalBufferSize( );
+    EXPECT_EQ( 400, internalBuffSize );
+}
+
+TEST_F( CopyControlTest, acquire1BufferReleaseAcquireBigger )
+{
+    bolt::cl::control::buffPointer myBuff = myControl.acquireBuffer( 100 * sizeof( int ) );
+    cl_uint myRefCount = myBuff->getInfo< CL_MEM_REFERENCE_COUNT >( );
+    EXPECT_EQ( 1, myRefCount );
+    myBuff.reset( );
+
+    myBuff = myControl.acquireBuffer( 101 * sizeof( int ) );
+    myRefCount = myBuff->getInfo< CL_MEM_REFERENCE_COUNT >( );
+    EXPECT_EQ( 1, myRefCount );
+
+    size_t internalBuffSize = myControl.totalBufferSize( );
+    EXPECT_EQ( 404, internalBuffSize );
+}
+
+TEST_F( CopyControlTest, acquire2BufferEqual )
+{
+    bolt::cl::control::buffPointer myBuff1 = myControl.acquireBuffer( 100 * sizeof( int ) );
+    cl_uint myRefCount1 = myBuff1->getInfo< CL_MEM_REFERENCE_COUNT >( );
+    EXPECT_EQ( 1, myRefCount1 );
+
+    bolt::cl::control::buffPointer myBuff2 = myControl.acquireBuffer( 100 * sizeof( int ) );
+    cl_uint myRefCount2 = myBuff2->getInfo< CL_MEM_REFERENCE_COUNT >( );
+    EXPECT_EQ( 1, myRefCount2 );
+
+    size_t internalBuffSize = myControl.totalBufferSize( );
+    EXPECT_EQ( 800, internalBuffSize );
+}
+
+TEST_F( CopyControlTest, acquire2BufferBigger )
+{
+    bolt::cl::control::buffPointer myBuff1 = myControl.acquireBuffer( 100 * sizeof( int ) );
+    cl_uint myRefCount1 = myBuff1->getInfo< CL_MEM_REFERENCE_COUNT >( );
+    EXPECT_EQ( 1, myRefCount1 );
+
+    bolt::cl::control::buffPointer myBuff2 = myControl.acquireBuffer( 101 * sizeof( int ) );
+    cl_uint myRefCount2 = myBuff2->getInfo< CL_MEM_REFERENCE_COUNT >( );
+    EXPECT_EQ( 1, myRefCount2 );
+
+    size_t internalBuffSize = myControl.totalBufferSize( );
+    EXPECT_EQ( 804, internalBuffSize );
+}
+
+TEST_F( CopyControlTest, acquire2BufferSmaller )
+{
+    bolt::cl::control::buffPointer myBuff1 = myControl.acquireBuffer( 100 * sizeof( int ) );
+    cl_uint myRefCount1 = myBuff1->getInfo< CL_MEM_REFERENCE_COUNT >( );
+    EXPECT_EQ( 1, myRefCount1 );
+
+    bolt::cl::control::buffPointer myBuff2 = myControl.acquireBuffer( 99 * sizeof( int ) );
+    cl_uint myRefCount2 = myBuff2->getInfo< CL_MEM_REFERENCE_COUNT >( );
+    EXPECT_EQ( 1, myRefCount2 );
+
+    size_t internalBuffSize = myControl.totalBufferSize( );
+    EXPECT_EQ( 796, internalBuffSize );
+}
+
+TEST_F( CopyControlTest, ScanIntegerVector )
+{
+    bolt::cl::device_vector< int > boltInput1( 1024, 1 );
+    bolt::cl::device_vector< int > boltInput2( 1024, 1 );
+    std::vector< int > stdInput( 1024, 1 );
+
+    std::partial_sum( stdInput.begin( ), stdInput.end( ), stdInput.begin( ) );
+
+    bolt::cl::inclusive_scan( myControl, boltInput1.begin( ), boltInput1.end( ), boltInput1.begin( ) );
+    cmpArrays( stdInput, boltInput1 );
+
+    bolt::cl::inclusive_scan( myControl, boltInput2.begin( ), boltInput2.end( ), boltInput2.begin( ) );
+    cmpArrays( stdInput, boltInput2 );
+
+    size_t internalBuffSize = myControl.totalBufferSize( );
+    EXPECT_EQ( 512, internalBuffSize );
 }
 
 int _tmain(int argc, _TCHAR* argv[])
