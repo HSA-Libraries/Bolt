@@ -50,7 +50,7 @@ namespace bolt
         };
 
         template< typename InputIterator, typename OutputIterator >
-        OutputIterator inclusive_scan( const control &ctl, InputIterator first, InputIterator last, OutputIterator result, 
+        OutputIterator inclusive_scan( control &ctl, InputIterator first, InputIterator last, OutputIterator result, 
             const std::string& user_code )
         {
             typedef std::iterator_traits<InputIterator>::value_type iType;
@@ -59,7 +59,7 @@ namespace bolt
         };
 
         template< typename InputIterator, typename OutputIterator, typename BinaryFunction > 
-        OutputIterator inclusive_scan( const control &ctl, InputIterator first, InputIterator last, OutputIterator result, BinaryFunction binary_op, 
+        OutputIterator inclusive_scan( control &ctl, InputIterator first, InputIterator last, OutputIterator result, BinaryFunction binary_op, 
             const std::string& user_code )
         {
             return detail::inclusive_scan_detect_random_access( ctl, first, last, result, binary_op, std::iterator_traits< InputIterator >::iterator_category( ) );
@@ -92,7 +92,7 @@ namespace bolt
         };
 
         template< typename InputIterator, typename OutputIterator >
-        OutputIterator exclusive_scan( const control &ctl, InputIterator first, InputIterator last, OutputIterator result, 
+        OutputIterator exclusive_scan( control &ctl, InputIterator first, InputIterator last, OutputIterator result, 
             const std::string& user_code )
         {
             typedef std::iterator_traits<InputIterator>::value_type iType;
@@ -101,7 +101,7 @@ namespace bolt
         };
 
         template< typename InputIterator, typename OutputIterator, typename T >
-        OutputIterator exclusive_scan( const control &ctl, InputIterator first, InputIterator last, OutputIterator result, T init, 
+        OutputIterator exclusive_scan( control &ctl, InputIterator first, InputIterator last, OutputIterator result, T init, 
             const std::string& user_code )
         {
             typedef std::iterator_traits<InputIterator>::value_type iType;
@@ -110,7 +110,7 @@ namespace bolt
         };
 
         template< typename InputIterator, typename OutputIterator, typename T, typename BinaryFunction > 
-        OutputIterator exclusive_scan( const control &ctl, InputIterator first, InputIterator last, OutputIterator result, T init, BinaryFunction binary_op,
+        OutputIterator exclusive_scan( control &ctl, InputIterator first, InputIterator last, OutputIterator result, T init, BinaryFunction binary_op,
             const std::string& user_code )
         {
             return detail::exclusive_scan_detect_random_access( ctl, first, last, result, init, binary_op, std::iterator_traits< InputIterator >::iterator_category( ) );
@@ -179,7 +179,7 @@ namespace bolt
             };
 
         template< typename InputIterator, typename OutputIterator, typename BinaryFunction >
-        OutputIterator inclusive_scan_detect_random_access( const control &ctl, const InputIterator& first, const InputIterator& last, const OutputIterator& result,
+        OutputIterator inclusive_scan_detect_random_access( control &ctl, const InputIterator& first, const InputIterator& last, const OutputIterator& result,
             const BinaryFunction& binary_op, std::input_iterator_tag )
         {
             //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data 
@@ -188,14 +188,14 @@ namespace bolt
         };
 
         template< typename InputIterator, typename OutputIterator, typename BinaryFunction >
-        OutputIterator inclusive_scan_detect_random_access( const control &ctl, const InputIterator& first, const InputIterator& last, const OutputIterator& result,
+        OutputIterator inclusive_scan_detect_random_access( control &ctl, const InputIterator& first, const InputIterator& last, const OutputIterator& result,
             const BinaryFunction& binary_op, std::random_access_iterator_tag )
         {
             return detail::inclusive_scan_pick_iterator( ctl, first, last, result, binary_op );
         };
 
         template< typename InputIterator, typename OutputIterator, typename T, typename BinaryFunction >
-        OutputIterator exclusive_scan_detect_random_access( const control &ctl, const InputIterator& first, const InputIterator& last, const OutputIterator& result, const T& init,
+        OutputIterator exclusive_scan_detect_random_access( control &ctl, const InputIterator& first, const InputIterator& last, const OutputIterator& result, const T& init,
             const BinaryFunction& binary_op, std::input_iterator_tag )
         {
             //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data 
@@ -204,7 +204,7 @@ namespace bolt
         };
 
         template< typename InputIterator, typename OutputIterator, typename T, typename BinaryFunction >
-        OutputIterator exclusive_scan_detect_random_access( const control &ctl, const InputIterator& first, const InputIterator& last, const OutputIterator& result, const T& init,
+        OutputIterator exclusive_scan_detect_random_access( control &ctl, const InputIterator& first, const InputIterator& last, const OutputIterator& result, const T& init,
             const BinaryFunction& binary_op, std::random_access_iterator_tag )
         {
             return detail::exclusive_scan_pick_iterator( ctl, first, last, result, init, binary_op );
@@ -219,7 +219,7 @@ namespace bolt
                      !(std::is_base_of<typename device_vector<typename std::iterator_traits<InputIterator>::value_type>::iterator,InputIterator>::value &&
                        std::is_base_of<typename device_vector<typename std::iterator_traits<OutputIterator>::value_type>::iterator,OutputIterator>::value),
                  OutputIterator >::type
-        inclusive_scan_pick_iterator( const control &ctl, const InputIterator& first, const InputIterator& last, const OutputIterator& result, const BinaryFunction& binary_op )
+        inclusive_scan_pick_iterator( control &ctl, const InputIterator& first, const InputIterator& last, const OutputIterator& result, const BinaryFunction& binary_op )
         {
             typedef typename std::iterator_traits< InputIterator >::value_type iType;
             typedef typename std::iterator_traits< OutputIterator >::value_type oType;
@@ -265,7 +265,7 @@ namespace bolt
                       (std::is_base_of<typename device_vector<typename std::iterator_traits<DVInputIterator>::value_type>::iterator,DVInputIterator>::value &&
                        std::is_base_of<typename device_vector<typename std::iterator_traits<DVOutputIterator>::value_type>::iterator,DVOutputIterator>::value),
                  DVOutputIterator >::type
-        inclusive_scan_pick_iterator( const control &ctl, const DVInputIterator& first, const DVInputIterator& last, const DVOutputIterator& result, const BinaryFunction& binary_op )
+        inclusive_scan_pick_iterator( control &ctl, const DVInputIterator& first, const DVInputIterator& last, const DVOutputIterator& result, const BinaryFunction& binary_op )
         {
             typedef typename std::iterator_traits< DVInputIterator >::value_type iType;
             typedef typename std::iterator_traits< DVOutputIterator >::value_type oType;
@@ -307,7 +307,7 @@ namespace bolt
                      !(std::is_base_of<typename device_vector<typename std::iterator_traits<InputIterator>::value_type>::iterator,InputIterator>::value &&
                        std::is_base_of<typename device_vector<typename std::iterator_traits<OutputIterator>::value_type>::iterator,OutputIterator>::value),
                  OutputIterator >::type
-        exclusive_scan_pick_iterator( const control &ctl, const InputIterator& first, const InputIterator& last, 
+        exclusive_scan_pick_iterator( control &ctl, const InputIterator& first, const InputIterator& last, 
                     const OutputIterator& result, const T& init, const BinaryFunction& binary_op )
         {
             typedef typename std::iterator_traits< InputIterator >::value_type iType;
@@ -355,7 +355,7 @@ namespace bolt
                       (std::is_base_of<typename device_vector<typename std::iterator_traits<DVInputIterator>::value_type>::iterator,DVInputIterator>::value &&
                        std::is_base_of<typename device_vector<typename std::iterator_traits<DVOutputIterator>::value_type>::iterator,DVOutputIterator>::value),
                  DVOutputIterator >::type
-        exclusive_scan_pick_iterator( const control &ctl, const DVInputIterator& first, const DVInputIterator& last, 
+        exclusive_scan_pick_iterator( control &ctl, const DVInputIterator& first, const DVInputIterator& last, 
                         const DVOutputIterator& result, const T& init, const BinaryFunction& binary_op )
         {
             typedef typename std::iterator_traits< DVInputIterator >::value_type iType;
@@ -414,7 +414,7 @@ namespace bolt
         //  All calls to inclusive_scan end up here, unless an exception was thrown
         //  This is the function that sets up the kernels to compile (once only) and execute
         template< typename DVInputIterator, typename DVOutputIterator, typename T, typename BinaryFunction >
-            void inclusive_scan_enqueue( const control &ctl, const DVInputIterator& first, const DVInputIterator& last, 
+            void inclusive_scan_enqueue( control &ctl, const DVInputIterator& first, const DVInputIterator& last, 
                             const DVOutputIterator& result, const T& init, const BinaryFunction& binary_op )
             {
                 typedef typename std::iterator_traits< DVInputIterator >::value_type iType;
@@ -466,15 +466,15 @@ namespace bolt
 
                 // Create buffer wrappers so we can access the host functors, for read or writing in the kernel
                 ALIGNED( 256 ) BinaryFunction aligned_binary( binary_op );
-                //::cl::Buffer userFunctor( ctl.context( ), CL_MEM_USE_HOST_PTR, sizeof( aligned_binary ), &aligned_binary );
-                control::buffPointer userFunctor = const_cast< control& >(ctl).acquireBuffer( sizeof( aligned_binary ), CL_MEM_USE_HOST_PTR, &aligned_binary );
+                //::cl::Buffer userFunctor( ctl.context( ), CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, sizeof( aligned_binary ), &aligned_binary );
+                control::buffPointer userFunctor = ctl.acquireBuffer( sizeof( aligned_binary ), CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_binary );
 
                 //device_vector< iType > preSumArray( sizeScanBuff, 0, CL_MEM_READ_WRITE, false, ctl );
                 //device_vector< iType > postSumArray( sizeScanBuff, 0, CL_MEM_READ_WRITE, false, ctl );
                 //::cl::Buffer preSumArray( ctl.context( ), CL_MEM_READ_WRITE, sizeScanBuff*sizeof(iType) );
                 //::cl::Buffer postSumArray( ctl.context( ), CL_MEM_READ_WRITE, sizeScanBuff*sizeof(iType) );
-                control::buffPointer preSumArray = const_cast< control& >(ctl).acquireBuffer( sizeScanBuff*sizeof( iType ) );
-                control::buffPointer postSumArray = const_cast< control& >(ctl).acquireBuffer( sizeScanBuff*sizeof( iType ) );
+                control::buffPointer preSumArray = ctl.acquireBuffer( sizeScanBuff*sizeof( iType ) );
+                control::buffPointer postSumArray = ctl.acquireBuffer( sizeScanBuff*sizeof( iType ) );
 
                 const cl_uint ldsSize  = static_cast< cl_uint >( ( waveSize + ( waveSize / 2 ) ) * sizeof( iType ) );
 

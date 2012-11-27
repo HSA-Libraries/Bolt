@@ -74,7 +74,7 @@ namespace bolt {
         void generate( ForwardIterator first, ForwardIterator last, Generator gen, const std::string& cl_code="");
 
         template<typename ForwardIterator, typename Generator> 
-        void generate( const bolt::cl::control &ctl, ForwardIterator first, ForwardIterator last, Generator gen, const std::string& cl_code="");
+        void generate( bolt::cl::control &ctl, ForwardIterator first, ForwardIterator last, Generator gen, const std::string& cl_code="");
 
 
         /*! generate_n assigns the result of invoking gen, a function object that takes no arguments, to each element in the range [first,first+n).
@@ -112,7 +112,7 @@ namespace bolt {
         OutputIterator generate_n( OutputIterator first, Size n, Generator gen, const std::string& cl_code="");
 
         template<typename OutputIterator, typename Size, typename Generator> 
-        OutputIterator generate_n( const bolt::cl::control &ctl, OutputIterator first, Size n, Generator gen, const std::string& cl_code="");
+        OutputIterator generate_n( bolt::cl::control &ctl, OutputIterator first, Size n, Generator gen, const std::string& cl_code="");
 
 
         /*!   \}  */
