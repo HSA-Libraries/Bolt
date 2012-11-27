@@ -288,9 +288,9 @@ namespace bolt {
 					T *histScanBuffer = (T*)calloc(1, numGroups* RADICES * sizeof(T));
                     
 					
-					device_vector< T > dvSwapInputData( swapBuffer, swapBuffer + szElements, CL_MEM_HOST_NO_ACCESS|CL_MEM_READ_WRITE, ctl);
-					device_vector< T > dvHistogramBins( histBuffer, histBuffer+numGroups* groupSize * RADICES, CL_MEM_USE_HOST_PTR|CL_MEM_READ_WRITE, ctl);
-					device_vector< T > dvHistogramScanBuffer( histScanBuffer, histScanBuffer + numGroups* RADICES, CL_MEM_USE_HOST_PTR|CL_MEM_READ_WRITE, ctl);
+					device_vector< T > dvSwapInputData( sizeof(T)*szElements, 0);
+					device_vector< T > dvHistogramBins( sizeof(T)*(numGroups* groupSize * RADICES), 0);
+					device_vector< T > dvHistogramScanBuffer( sizeof(T)*(numGroups* RADICES), 0);
                     
                     ::cl::Buffer clInputData = first->getBuffer( );
 					::cl::Buffer userFunctor(ctl.context(), CL_MEM_USE_HOST_PTR, sizeof(comp), &comp );
@@ -326,7 +326,7 @@ namespace bolt {
 											::cl::NDRange(groupSize),
 											NULL,
 											NULL);
-						V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
+						//V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
 
 #if (DEBUG==1)
         //This map is required since the data is not available to the host when scanning.
@@ -350,7 +350,8 @@ namespace bolt {
 #endif
 
                         //Perform a global scan 
-                        bolt::cl::inclusive_scan(ctl, dvHistogramScanBuffer.begin(),dvHistogramScanBuffer.end(),dvHistogramScanBuffer.begin());
+                        //bolt::cl::inclusive_scan(ctl, dvHistogramScanBuffer.begin(),dvHistogramScanBuffer.end(),dvHistogramScanBuffer.begin());
+                        detail::inclusive_scan_enqueue(ctl, dvHistogramScanBuffer.begin(),dvHistogramScanBuffer.end(),dvHistogramScanBuffer.begin(), 0, plus< T >( ));
 #if (DEBUG==1)
         ::cl::Event l_histScanBufferEvent;
         ctl.commandQueue().enqueueMapBuffer(clHistScanData, false, CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(T) * numGroups * RADICES, NULL, &l_histScanBufferEvent, &l_Error );
@@ -377,7 +378,7 @@ namespace bolt {
 											::cl::NDRange(groupSize),
 											NULL,
 											NULL);
-                        V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
+                        //V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
 
 #if (DEBUG==1)
         //This map is required since the data is not available to the host when scanning.
@@ -421,7 +422,7 @@ namespace bolt {
 											::cl::NDRange(groupSize),
 											NULL,
 											NULL);
-						V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
+						//V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
 
 #if (DEBUG==1)
 if(bits==0 || bits==8 || bits==16 || bits==24)
@@ -443,11 +444,6 @@ if(bits==0 || bits==8 || bits==16 || bits==24)
                     free(swapBuffer);
                     free(histBuffer);
                     free(histScanBuffer);
-
-                    ::cl::Event l_mapEvent;
-                    ctl.commandQueue().enqueueMapBuffer(clInputData, false, CL_MAP_READ, 0, sizeof(T) * szElements, NULL, &l_mapEvent, &l_Error );
-                    V_OPENCL( l_Error, "Error calling map on the result buffer" );
-					bolt::cl::wait(ctl, l_mapEvent);
                     return;
 			}
 #else
