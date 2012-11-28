@@ -15,7 +15,7 @@
 
 ############################################################################                                                                                     
 
-message( STATUS "Setting up gTest SuperBuild... Shiny!" )
+message( STATUS "Configuring gTest SuperBuild..." )
 include( ExternalProject )
 
 set( ext.gTest_Version "1.6.0" CACHE STRING "gTest version to download/use" )
@@ -46,8 +46,7 @@ set( gTest.Cmake.Args 	-Dgtest_force_shared_crt=ON
 						-DCMAKE_ARCHIVE_OUTPUT_DIRECTORY:PATH=${LIB_DIR}	# present to support minsizerel and relwithdebinfo
 						)
 
-#set( ext.gTest_URL "http://code.google.com/p/googletest/downloads/detail?name=gtest-1.6.0.zip" CACHE STRING "URL to download gTest from" )
-set( ext.gTest_URL "http://see-srv/share/code/externals/gtest/gtest-${ext.gTest_Version}.zip" CACHE STRING "URL to download gTest from" )
+set( ext.gTest_URL "https://googletest.googlecode.com/files/gtest-${ext.gTest_Version}.zip" CACHE STRING "URL to download gTest from" )
 mark_as_advanced( ext.gTest_URL )
 
 # FindGTest.cmake assumes that debug gtest libraries end with a 'd' postfix.  The official gtest cmakelist files do not add this postfix, 
