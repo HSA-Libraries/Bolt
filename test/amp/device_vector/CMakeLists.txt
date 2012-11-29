@@ -16,34 +16,22 @@
 ############################################################################                                                                                     
 
 # List the names of common files to compile across all platforms
-message( STATUS "Setting up AMP specific test projects..." )
+set( ampBolt.Test.Device.Vector.Source stdafx.cpp device_vector.cpp )
+set( ampBolt.Test.Device.Vector.Headers stdafx.h targetver.h ${BOLT_INCLUDE_DIR}/bolt/amp/device_vector.h )
 
-set( Boost_USE_MULTITHREADED ON )
-set( Boost_USE_STATIC_LIBS   ON )
-set( Boost_DETAILED_FAILURE_MSG   ON )
+set( ampBolt.Test.Device.Vector.Files ${ampBolt.Test.Device.Vector.Source} ${ampBolt.Test.Device.Vector.Headers} )
 
-# Set the test folder directory. This is common to cl and amp. 
-set( BOLT_CL_TEST_DIR ${BOLT_TEST_DIR}/amp )
+add_executable( ampBolt.Test.Device.Vector ${ampBolt.Test.Device.Vector.Files} )
+target_link_libraries( ampBolt.Test.Device.Vector ampBolt.Runtime ${GTEST_LIBRARIES} )
 
-# set( Boost_DEBUG ON )
+set_target_properties( ampBolt.Test.Device.Vector PROPERTIES VERSION ${Bolt_VERSION} )
+set_target_properties( ampBolt.Test.Device.Vector PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
 
-if( BOOST_ROOT )
-    # The root tree of BOOST was specified on the command line; use it to to find the specific Boost the user points too
-    find_package( Boost ${Boost.VERSION} COMPONENTS thread date_time chrono program_options REQUIRED )
-    # This will define Boost_FOUND
-else( )
-    message( "Configure Bolt in <BOLT_ROOT>/bin to build the SuperBuild which will download and build Boost automatically" )    
-    message( SEND_ERROR "The OpenCL Bolt library requires BOOST_ROOT to be defined" )
-endif( )
+set_property( TARGET ampBolt.Test.Device.Vector PROPERTY FOLDER "Test/AMP")
 
-# Include standard Boost headers
-include_directories( ${Boost_INCLUDE_DIRS} )
-
-# Include standard OpenCL headers
-include_directories( ${OPENCL_INCLUDE_DIRS} ${BOLT_CL_TEST_DIR} ) 
-
-add_subdirectory( reduce )
-add_subdirectory( scan )
-add_subdirectory( transform )	
-add_subdirectory( transform_reduce )
-add_subdirectory( device_vector )
+# CPack configuration; include the executable into the package
+install( TARGETS ampBolt.Test.Device.Vector
+	RUNTIME DESTINATION ${BIN_DIR}
+	LIBRARY DESTINATION ${LIB_DIR}
+	ARCHIVE DESTINATION ${LIB_DIR}/import
+	)
