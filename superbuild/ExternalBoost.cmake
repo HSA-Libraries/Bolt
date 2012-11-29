@@ -15,10 +15,10 @@
 
 ############################################################################                                                                                     
 
-message( STATUS "Setting up Boost SuperBuild... Shiny!" )
+message( STATUS "Configuring Boost SuperBuild..." )
 include( ExternalProject )
 
-set( ext.Boost_VERSION "1.51.0" CACHE STRING "Boost version to download/use" )
+set( ext.Boost_VERSION "1.52.0" CACHE STRING "Boost version to download/use" )
 mark_as_advanced( ext.Boost_VERSION )
 string( REPLACE "." "_" ext.Boost_Version_Underscore ${ext.Boost_VERSION} )
 
@@ -48,8 +48,7 @@ endif( )
 
 list( APPEND Boost.Command link=static stage )
 
-#set( ext.Boost_URL "http://downloads.sourceforge.net/project/boost/boost/${ext.Boost_VERSION}/boost_${ext.Boost_Version_Underscore}.zip" CACHE STRING "URL to download Boost from" )
-set( ext.Boost_URL "http://see-srv/share/code/externals/boost/boost_${ext.Boost_Version_Underscore}.zip" CACHE STRING "URL to download Boost from" )
+set( ext.Boost_URL "http://sourceforge.net/projects/boost/files/boost/${ext.Boost_VERSION}/boost_${ext.Boost_Version_Underscore}.zip/download" CACHE STRING "URL to download Boost from" )
 mark_as_advanced( ext.Boost_URL )
 
 # Below is a fancy CMake command to download, build and install Boost on the users computer
@@ -57,7 +56,7 @@ ExternalProject_Add(
     Boost
 	PREFIX ${CMAKE_CURRENT_BINARY_DIR}/external/boost
     URL ${ext.Boost_URL}
-	URL_MD5 ee8112e48088b05c248d68329cd5d908
+	URL_MD5 f310a8198318c10e5e4932a07c755a6a
     UPDATE_COMMAND "bootstrap.bat"
 #    PATCH_COMMAND ""
 	CONFIGURE_COMMAND ""

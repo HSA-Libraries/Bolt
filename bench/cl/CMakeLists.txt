@@ -25,6 +25,7 @@ if( BUILD_clBolt )
 	# Include standard OpenCL headers
 	add_subdirectory( CopyBench )
 	add_subdirectory( CopyBuffer )
+	add_subdirectory( Fill ) 
 	add_subdirectory( Generate )
 	add_subdirectory( Reduce )
 	add_subdirectory( Scan )

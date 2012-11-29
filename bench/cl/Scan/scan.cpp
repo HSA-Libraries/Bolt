@@ -212,9 +212,7 @@ int _tmain( int argc, _TCHAR* argv[] )
 
     if( print_clInfo )
     {
-        //  /todo: port the printing code from test/scan to control class
-        return 0;
-    }
+        return 0;    }
 
     // Device info
     ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );

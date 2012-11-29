@@ -149,7 +149,7 @@ namespace bolt {
         *  \endcode
         */
         template<typename RandomAccessIterator> 
-        void sort(const bolt::cl::control &ctl,
+        void sort(bolt::cl::control &ctl,
             RandomAccessIterator first, 
             RandomAccessIterator last, 
             const std::string& cl_code="");
@@ -191,7 +191,7 @@ namespace bolt {
         */
 
         template<typename RandomAccessIterator, typename StrictWeakOrdering> 
-        void sort(const bolt::cl::control &ctl,
+        void sort(bolt::cl::control &ctl,
             RandomAccessIterator first, 
             RandomAccessIterator last,  
             StrictWeakOrdering comp, 

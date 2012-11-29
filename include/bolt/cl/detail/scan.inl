@@ -55,7 +55,7 @@ namespace bolt
         };
 
         template< typename InputIterator, typename OutputIterator >
-        OutputIterator inclusive_scan( const control &ctl, InputIterator first, InputIterator last, OutputIterator result, 
+        OutputIterator inclusive_scan( control &ctl, InputIterator first, InputIterator last, OutputIterator result, 
             const std::string& user_code )
         {
             typedef std::iterator_traits<InputIterator>::value_type iType;
@@ -64,7 +64,7 @@ namespace bolt
         };
 
         template< typename InputIterator, typename OutputIterator, typename BinaryFunction > 
-        OutputIterator inclusive_scan( const control &ctl, InputIterator first, InputIterator last, OutputIterator result, BinaryFunction binary_op, 
+        OutputIterator inclusive_scan( control &ctl, InputIterator first, InputIterator last, OutputIterator result, BinaryFunction binary_op, 
             const std::string& user_code )
         {
             typedef std::iterator_traits<InputIterator>::value_type iType;
@@ -107,7 +107,7 @@ namespace bolt
         };
 
         template< typename InputIterator, typename OutputIterator, typename T >
-        OutputIterator exclusive_scan( const control &ctl, InputIterator first, InputIterator last, OutputIterator result, T init, 
+        OutputIterator exclusive_scan( control &ctl, InputIterator first, InputIterator last, OutputIterator result, T init, 
             const std::string& user_code )
         {
             typedef std::iterator_traits<InputIterator>::value_type iType;
@@ -115,7 +115,7 @@ namespace bolt
         };
 
         template< typename InputIterator, typename OutputIterator, typename T, typename BinaryFunction > 
-        OutputIterator exclusive_scan( const control &ctl, InputIterator first, InputIterator last, OutputIterator result, T init, BinaryFunction binary_op,
+        OutputIterator exclusive_scan( control &ctl, InputIterator first, InputIterator last, OutputIterator result, T init, BinaryFunction binary_op,
             const std::string& user_code )
         {
             return detail::scan_detect_random_access( ctl, first, last, result, init, false, binary_op, std::iterator_traits< InputIterator >::iterator_category( ) );
@@ -213,7 +213,7 @@ namespace bolt
             };
 
         template< typename InputIterator, typename OutputIterator, typename T, typename BinaryFunction >
-        OutputIterator scan_detect_random_access( const control &ctl, InputIterator first, InputIterator last, OutputIterator result, T init, bool inclusive,
+        OutputIterator scan_detect_random_access( control &ctl, const InputIterator& first, const InputIterator& last, const OutputIterator& result, const T& init, const bool& inclusive,
             BinaryFunction binary_op, std::input_iterator_tag )
         {
             //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data 
@@ -222,8 +222,8 @@ namespace bolt
         };
 
         template< typename InputIterator, typename OutputIterator, typename T, typename BinaryFunction >
-        OutputIterator scan_detect_random_access( const control &ctl, InputIterator first, InputIterator last, OutputIterator result,  T init, bool inclusive,
-            BinaryFunction binary_op, std::random_access_iterator_tag )
+        OutputIterator scan_detect_random_access( control &ctl, const InputIterator& first, const InputIterator& last, const OutputIterator& result,  const T& init, const bool& inclusive,
+            const BinaryFunction& binary_op, std::random_access_iterator_tag )
         {
             return detail::scan_pick_iterator( ctl, first, last, result, init, inclusive, binary_op );
         };
@@ -237,7 +237,7 @@ namespace bolt
                      !(std::is_base_of<typename device_vector<typename std::iterator_traits<InputIterator>::value_type>::iterator,InputIterator>::value &&
                        std::is_base_of<typename device_vector<typename std::iterator_traits<OutputIterator>::value_type>::iterator,OutputIterator>::value),
                  OutputIterator >::type
-        scan_pick_iterator( const control &ctl, InputIterator first, InputIterator last, OutputIterator result, T init, bool inclusive, BinaryFunction binary_op )
+        scan_pick_iterator( control &ctl, const InputIterator& first, const InputIterator& last, const OutputIterator& result, const T& init, const bool& inclusive, const BinaryFunction& binary_op )
         {
             typedef typename std::iterator_traits< InputIterator >::value_type iType;
             typedef typename std::iterator_traits< OutputIterator >::value_type oType;
@@ -283,7 +283,8 @@ namespace bolt
                       (std::is_base_of<typename device_vector<typename std::iterator_traits<DVInputIterator>::value_type>::iterator,DVInputIterator>::value &&
                        std::is_base_of<typename device_vector<typename std::iterator_traits<DVOutputIterator>::value_type>::iterator,DVOutputIterator>::value),
                  DVOutputIterator >::type
-        scan_pick_iterator( const control &ctl, DVInputIterator first, DVInputIterator last, DVOutputIterator result, T init, bool inclusive, BinaryFunction binary_op )
+
+        scan_pick_iterator( control &ctl, const DVInputIterator& first, const DVInputIterator& last, const DVOutputIterator& result, const T& init, const bool& inclusive, const BinaryFunction& binary_op )
         {
             typedef typename std::iterator_traits< DVInputIterator >::value_type iType;
             typedef typename std::iterator_traits< DVOutputIterator >::value_type oType;
@@ -313,10 +314,11 @@ namespace bolt
             return result + numElements;
         }
 
+
         //  All calls to inclusive_scan end up here, unless an exception was thrown
         //  This is the function that sets up the kernels to compile (once only) and execute
         template< typename DVInputIterator, typename DVOutputIterator, typename T, typename BinaryFunction >
-            void scan_enqueue( const control &ctl, DVInputIterator first, DVInputIterator last, DVOutputIterator result, T init_T, BinaryFunction binary_op, bool inclusive = true )
+            void scan_enqueue( control &ctl, const DVInputIterator& first, const DVInputIterator& last, const DVOutputIterator& result, const T& init_T, const BinaryFunction& binary_op, const bool& inclusive = true )
             {
                 typedef std::iterator_traits< DVInputIterator >::value_type iType;
                 typedef std::iterator_traits< DVOutputIterator >::value_type oType;
@@ -370,9 +372,13 @@ namespace bolt
                 }
 
                 // Create buffer wrappers so we can access the host functors, for read or writing in the kernel
-                ::cl::Buffer userFunctor( ctl.context( ), CL_MEM_USE_HOST_PTR, sizeof( binary_op ), &binary_op );
-                ::cl::Buffer preSumArray( ctl.context( ), CL_MEM_READ_WRITE, sizeScanBuff*sizeof(iType) );
-                ::cl::Buffer postSumArray( ctl.context( ), CL_MEM_READ_WRITE, sizeScanBuff*sizeof(iType) );
+                ALIGNED( 256 ) BinaryFunction aligned_binary( binary_op );
+                control::buffPointer userFunctor = ctl.acquireBuffer( sizeof( aligned_binary ), CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_binary );
+                control::buffPointer preSumArray = ctl.acquireBuffer( sizeScanBuff*sizeof( iType ) );
+                control::buffPointer postSumArray = ctl.acquireBuffer( sizeScanBuff*sizeof( iType ) );
+                //::cl::Buffer userFunctor( ctl.context( ), CL_MEM_USE_HOST_PTR, sizeof( binary_op ), &binary_op );
+                //::cl::Buffer preSumArray( ctl.context( ), CL_MEM_READ_WRITE, sizeScanBuff*sizeof(iType) );
+                //::cl::Buffer postSumArray( ctl.context( ), CL_MEM_READ_WRITE, sizeScanBuff*sizeof(iType) );
                 cl_uint ldsSize;
 
 
@@ -385,8 +391,8 @@ namespace bolt
                 V_OPENCL( scanKernels[ 0 ].setArg( 2, init_T ),                 "Error setting argument for scanKernels[ 0 ]" ); // Initial value used for exclusive scan
                 V_OPENCL( scanKernels[ 0 ].setArg( 3, numElements ),            "Error setting argument for scanKernels[ 0 ]" ); // Size of scratch buffer
                 V_OPENCL( scanKernels[ 0 ].setArg( 4, ldsSize, NULL ),          "Error setting argument for scanKernels[ 0 ]" ); // Scratch buffer
-                V_OPENCL( scanKernels[ 0 ].setArg( 5, userFunctor ),            "Error setting argument for scanKernels[ 0 ]" ); // User provided functor class
-                V_OPENCL( scanKernels[ 0 ].setArg( 6, preSumArray ),            "Error setting argument for scanKernels[ 0 ]" ); // Output per block sum buffer
+                V_OPENCL( scanKernels[ 0 ].setArg( 5, *userFunctor ),            "Error setting argument for scanKernels[ 0 ]" ); // User provided functor class
+                V_OPENCL( scanKernels[ 0 ].setArg( 6, *preSumArray ),            "Error setting argument for scanKernels[ 0 ]" ); // Output per block sum buffer
                 V_OPENCL( scanKernels[ 0 ].setArg( 7, doExclusiveScan ),        "Error setting argument for scanKernels[ 0 ]" ); // Exclusive scan?
 
                 l_Error = ctl.commandQueue( ).enqueueNDRangeKernel(
@@ -399,7 +405,7 @@ namespace bolt
                 V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for perBlockInclusiveScan kernel" );
 
                 //  Debug code
-                if (0) {
+#if 0
                     // Enqueue the operation
                     V_OPENCL( ctl.commandQueue( ).finish( ), "Failed to call finish on the commandqueue" );
 
@@ -414,19 +420,19 @@ namespace bolt
                     V_OPENCL( ctl.commandQueue().enqueueUnmapMemObject( preSumArray, static_cast< void* >( pPreSumArray ), NULL, &unmapEvent ),
                             "shared_ptr failed to unmap host memory back to device memory" );
                     V_OPENCL( unmapEvent.wait( ), "failed to wait for unmap event" );
-                }
+#endif
 
                 /**********************************************************************************
                  *  Kernel 1
                  *********************************************************************************/
                 cl_uint workPerThread = static_cast< cl_uint >( sizeScanBuff / kernel1_WgSize );
-                V_OPENCL( scanKernels[ 1 ].setArg( 0, postSumArray ), "Error setting 0th argument for scanKernels[ 1 ]" );          // Output buffer
-                V_OPENCL( scanKernels[ 1 ].setArg( 1, preSumArray ), "Error setting 1st argument for scanKernels[ 1 ]" );            // Input buffer
+                V_OPENCL( scanKernels[ 1 ].setArg( 0, *postSumArray ), "Error setting 0th argument for scanKernels[ 1 ]" );          // Output buffer
+                V_OPENCL( scanKernels[ 1 ].setArg( 1, *preSumArray ), "Error setting 1st argument for scanKernels[ 1 ]" );            // Input buffer
                 V_OPENCL( scanKernels[ 1 ].setArg( 2, init_T ), "Error setting argument for scanKernels[ 1 ]" );   // Initial value used for exclusive scan
                 V_OPENCL( scanKernels[ 1 ].setArg( 3, numWorkGroupsK0 ), "Error setting 2nd argument for scanKernels[ 1 ]" );            // Size of scratch buffer
                 V_OPENCL( scanKernels[ 1 ].setArg( 4, ldsSize, NULL ), "Error setting 3rd argument for scanKernels[ 1 ]" );  // Scratch buffer
                 V_OPENCL( scanKernels[ 1 ].setArg( 5, workPerThread ), "Error setting 4th argument for scanKernels[ 1 ]" );           // User provided functor class
-                V_OPENCL( scanKernels[ 1 ].setArg( 6, userFunctor ), "Error setting 5th argument for scanKernels[ 1 ]" );           // User provided functor class
+                V_OPENCL( scanKernels[ 1 ].setArg( 6, *userFunctor ), "Error setting 5th argument for scanKernels[ 1 ]" );           // User provided functor class
 
                 l_Error = ctl.commandQueue( ).enqueueNDRangeKernel(
                     scanKernels[ 1 ],
@@ -438,7 +444,7 @@ namespace bolt
                 V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for perBlockInclusiveScan kernel" );
 
                 //  Debug code
-                if (0) {
+#if 0
                     // Enqueue the operation
                     V_OPENCL( ctl.commandQueue( ).finish( ), "Failed to call finish on the commandqueue" );
 
@@ -461,16 +467,16 @@ namespace bolt
                     V_OPENCL( ctl.commandQueue().enqueueUnmapMemObject( postSumArray, static_cast< void* >( pPostSumArray ), NULL, &unmapPostEvent ),
                             "shared_ptr failed to unmap host memory back to device memory" );
                     V_OPENCL( unmapPostEvent.wait( ), "failed to wait for unmap event" );
-                }
+#endif
 
                 /**********************************************************************************
                  *  Kernel 2
                  *********************************************************************************/
                 //std::vector< ::cl::Event > perBlockEvent( 1 );
                 V_OPENCL( scanKernels[ 2 ].setArg( 0, result->getBuffer( ) ), "Error setting 0th argument for scanKernels[ 2 ]" );          // Output buffer
-                V_OPENCL( scanKernels[ 2 ].setArg( 1, postSumArray ), "Error setting 1st argument for scanKernels[ 2 ]" );            // Input buffer
+                V_OPENCL( scanKernels[ 2 ].setArg( 1, *postSumArray ), "Error setting 1st argument for scanKernels[ 2 ]" );            // Input buffer
                 V_OPENCL( scanKernels[ 2 ].setArg( 2, numElements ), "Error setting 2nd argument for scanKernels[ 2 ]" );   // Size of scratch buffer
-                V_OPENCL( scanKernels[ 2 ].setArg( 3, userFunctor ), "Error setting 3rd argument for scanKernels[ 2 ]" );           // User provided functor class
+                V_OPENCL( scanKernels[ 2 ].setArg( 3, *userFunctor ), "Error setting 3rd argument for scanKernels[ 2 ]" );           // User provided functor class
                 //printf("Kernel3 %i sizeInputBuff, %i wgSize\n", sizeInputBuff, kernel2_WgSize);
                 try
                 {

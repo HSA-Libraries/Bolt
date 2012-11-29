@@ -76,6 +76,8 @@ namespace bolt {
         //extern const char* const sort_kernels;
         //extern const char* const scan_kernels;
 
+        class control;
+
         extern std::string fileToString(const std::string &fileName);
 
         extern ::cl::Kernel compileFunctor(const std::string &kernelCodeString, const std::string kernelName, const std::string compileOptions, const control &c);
@@ -161,6 +163,12 @@ namespace bolt {
 		void wait(const bolt::cl::control &ctl, ::cl::Event &e) ;
 	};
 };
+
+#if defined( _WIN32 )
+#define ALIGNED( bound ) __declspec( align( bound ) )
+#else
+#define ALIGNED( bound ) __attribute__ ( (aligned( bound ) ) ) 
+#endif
 
 BOLT_CREATE_TYPENAME(int);
 BOLT_CREATE_TYPENAME(float);

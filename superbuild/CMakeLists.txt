@@ -29,7 +29,7 @@ project( Bolt.SuperBuild )
 
 # Define a version for the code
 set( Bolt.SuperBuild_VERSION_MAJOR 0 )
-set( Bolt.SuperBuild_VERSION_MINOR 2 )
+set( Bolt.SuperBuild_VERSION_MINOR 5 )
 set( Bolt.SuperBuild_VERSION_PATCH 0 )
 set( Bolt.SuperBuild_VERSION "${Bolt.SuperBuild_VERSION_MAJOR}.${Bolt.SuperBuild_VERSION_MINOR}.${Bolt.SuperBuild_VERSION_PATCH}")
 	
@@ -114,7 +114,7 @@ if( BUILD_Bolt )
 		Bolt
 		DEPENDS ${Bolt.Dependencies}
 		SOURCE_DIR ${PROJECT_SOURCE_DIR}/..
-		BINARY_DIR Bolt.build
+		BINARY_DIR Bolt-build
 		CMAKE_ARGS ${Bolt.Cmake.Args} -DBUILD_ampBolt=${BUILD_AMP} -DBUILD_clBolt=${BUILD_OpenCL} -DBUILD_examples=${BUILD_Examples}
 		INSTALL_COMMAND ""
 	)

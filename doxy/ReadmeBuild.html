@@ -40,21 +40,19 @@ h1:hover a.wiki-anchor, h2:hover a.wiki-anchor, h3:hover a.wiki-anchor { display
 	<p>Once installed, the easiest interface to learn and generate build files is the cmake GUI program 'cmake-gui' for windows or X-windows.  The terminal applications cmake.exe and ccmake.exe (based on curses library) are incredibly easy to learn 
 	and pickup after everything is understood.  Cmake is designed to automate the creation of build environments and do this in a cross-platform manner, generating native build files for each respective platform.  When launched, it inspects the host 
 	computer and searches for all tools, SDK's, libraries and code necessary to build the project.  Once cmake-gui is launched, a configuration window with two text boxes on the top will appear. </p>
-	<img src="cmake.blank.png" alt="Just opening cmake-gui" style="float:middle"/>
+	<img src="img\cmake.build.blank.png" alt="Need to replace with dest directory not as a subdirectory of source" style="float:middle"/>
 	
 	<p>For purposes for this example, let us assume that the user checked out Bolt from perforce on their local machine at h:/perforce/Bolt.  We will henceforth refer to this location as <b>BOLT_ROOT</b>.
-	Either click the 'browse source...' button and navigate to the <b>BOOST_ROOT</b>/bin directory, or manually type the path yourself into the textbox.  Notice that the path that we have in the 'source code' text box is the /bin directoy.
-	This directory contains the root level CMake file for our CMake superbuild.  There is no source in the /bin directory except for cmake related build files.  The directory that we type select for where to 'build the binaries' is a sub-directory
-	of the /bin directory.  Each platform you plan to build for should get it's own build directory; the advantage of out-of-source builds are numerous, and are documented in the 
-	<a class="external" href="http://www.cmake.org/Wiki/CMake_FAQ#Out-of-source_build_trees">CMAKE FAQ</a>.  It is also trivially easy to start fresh with a build and wipe all the existing binaries.  For instance, for a debug configuration for an 
-	NMake generator, a directory such as &lt;BOLT_ROOT&gt;/bin/nMakeDebug could exist.  All the generated build files, all the native binary intermediate object files are built in this path.  Generated files are kept seperate from source and is 
+	Either click the 'browse source...' button and navigate to the <b>BOOST_ROOT</b>/superbuild directory.  This directory contains the root level CMake file for our CMake superbuild.  When CMake generates the native build files, it writes the new files into the directory that we select for where to 'build the binaries'.  You may choose anywhere you want on your system; a common choice is as a sister directory of where the code resides.  Try not to choose a sub-directory of the code directory, as this pollutes the code tree with generated files and makes it easy to accidentally check in a generated file into your source control repository.  Each platform you plan to build for should get it's own build directory.  The advantage of out-of-source builds are numerous, and are documented in the 
+	<a class="external" href="http://www.cmake.org/Wiki/CMake_FAQ#Out-of-source_build_trees">CMAKE FAQ</a>.  It is trivially easy to start fresh with a build and wipe all the existing binaries.  For instance, for a debug configuration for an 
+	NMake generator, a directory such as &lt;USER_HOME_DIR&gt;/bolt/bin/nMakeDebug could exist.  All the generated build files, all the native binary intermediate object files are built in this path.  Generated files are kept seperate from source and is 
 	very similar in concept to what autotools does for linux with configure scripts.  After setting the build directory appropriately, hit the 'Configure' button near the bottom of the window.  A new window will pop up to ask you what type of generator 
 	you wish to use.</p>
-	<img src="cmake.pick.generator.png" alt="List of cmake generators" style="float:middle"/>
+	<img src="img\cmake.pick.generator.png" alt="List of cmake generators" style="float:middle"/>
 	
 	<p>In my example above, I use the 'Visual Studio 11 Win64' generator.  Hopefully, the build directory that you picked is descriptive of the generator you used, otherwise you could always start over again later if you need to.  After selecting the 
 	desired generator, cmake chugs along and examines the system, trying to find all project dependencies and properties appear in the properties box in red.</p>
-	<img src="cmake.first.configure.png" alt="New properties highlighted in red" style="float:middle"/>
+	<img src="img\cmake.build.first.configure.png" alt="New properties highlighted in red" style="float:middle"/>
 		
 	<p>Red is not bad, or an error.  The red coloring means that the values have changed.  Since this is the first time 'configure' is clicked, everything is red because everything was just initialized.  If there were any errors during this configure
 	round, they would be printed in the bottom text box.  The picture above shows an example when everything configured correclty.  There are two checkboxes near the top of the GUI that I like to enable, 'Grouped' and 'Advanced'.  
@@ -81,12 +79,12 @@ h1:hover a.wiki-anchor, h2:hover a.wiki-anchor, h3:hover a.wiki-anchor { display
 	such that those Bolt projects that depend on Boost will now compile.  If the user deselects <i>BUILD_Boost</i>, cmake automatically disables all projects that depend on Boost and everything still compiles.
 	</p>
 	
-	<img src="cmake.first.generate.png" alt="All properties now white.  Native files generated" style="float:middle"/>
+	<img src="img\cmake.build.first.generate.png" alt="All properties now white.  Native files generated" style="float:middle"/>
 	<p>After reviewing the options in the properties box, and/or making changes, click the configure button again.  Most likely, all the properties will turn white, which means that no further action is required.  Every now and then, the properties
 	can be written in such a way, that changing one property will inadvertently affect the value of a different property.  If any other property changes value, it will turn up red again and the user should verify that this was in intended behavior.  
 	Keep clicking the configure button until no more properties are red.  At this point, your cmake properties have hit a stable state and clicking the generate button will now generate native build files, reflecting your options.
 	</p>
-	<img src="explorer.superbuild.png" alt="The generated superbuild" style="float:middle"/>
+	<img src="img\explorer.bolt.superbuild.png" alt="The generated superbuild" style="float:middle"/>
 
 	<p>In your binaries directory, you will find either a solution for a visual solution generator, or a makefile of some variety for a command line build.  In my example, I am assuming a visual studio project.  Double click the generated Bolt.SuperBuild.sln
 	file to open the solution.  Once its open, build the entire solution.  The visual studio solution will start outputting progress into the 'Output' window for all of the Bolt dependencies that it is building.  You can see the status of downloading the 
@@ -94,13 +92,13 @@ h1:hover a.wiki-anchor, h2:hover a.wiki-anchor, h3:hover a.wiki-anchor { display
 	that as a develop, you want to work with every day.  The superbuild is <strong>ONLY</strong> for compiling all the dependencies of Bolt, and as such you only want to compile it once!  If you 'Rebuild' the superproject, the solution file will re-download
 	and re-compile all the dependencies, which is inefficient as the dependencies don't change very often.  However, the true solution/makefile for Bolt is created in the Bolt.build directory that assumes all the Bolt dependencies exist.
 	</p>
-	<img src="explorer.Bolt.png" alt="The generated Bolt solution" style="float:middle"/>
+	<img src="img\explorer.bolt.png" alt="The generated Bolt solution" style="float:middle"/>
 	<p>
 	This solution contains only the Bolt projects and files that are valid, given the dependencies that you chose to use during the cmake configuration.  This is the everyday solution that you will use for Bolt.  When you select 'Rebuild' from the IDE,
 	only the bolt files will rebuild, the dependent projects stay the same.
 	</p>
 	<h2 id="Bolt Projects">Bolt projects</h3>
-	<img src="Bolt.visual.studio.projects.png" alt="The projects generated inside of the visual studio solution" style="float:middle"/>
+	<img src="img\bolt.visual.studio.projects.png" alt="The projects generated inside of the visual studio solution" style="float:middle"/>
 	<h4 id="GUI Bolt">GUI projects (Visual Studio)</h3>
 	<p>The generated Bolt project has a folder structure, and a few projects that may not be familiar to somebody new to CMake:
 	</p>
@@ -134,7 +132,7 @@ h1:hover a.wiki-anchor, h2:hover a.wiki-anchor, h3:hover a.wiki-anchor { display
 	attach to it.
 	</i></h4></p>
 
-	<img src="explorer.Bolt.staging.png" alt="Placement of generated Bolt executables" style="float:middle"/>
+	<img src="img\explorer.bolt.staging.png" alt="Placement of generated Bolt executables" style="float:middle"/>
 	<p>When the Bolt solution is built, all generated binary files are built into a staging directory underneath the Bolt.build directory.  These are binaries that are a work in progress, and all files are copied here that are needed to run 
 	and debug them.  The OpenCL binaries may require a few .cl files to operate, and the benchmark projects need python scripts to automate, which will automatically be copied into the staging directory when the 'INSTALL' project is built by
 	the user

@@ -16,18 +16,20 @@
 ############################################################################                                                                                     
 
 # List the names of common files to compile across all platforms
+set( clBolt.Test.Fill.Source ${BOLT_CL_TEST_DIR}/common/stdafx.cpp 
+                                  ${BOLT_CL_TEST_DIR}/common/myocl.cpp
+                                  FillTest.cpp )
+set( clBolt.Test.Fill.Headers ${BOLT_CL_TEST_DIR}/common/stdafx.h 
+                                   ${BOLT_CL_TEST_DIR}/common/targetver.h 
+                                   ${BOLT_CL_TEST_DIR}/common/myocl.h 
+                                   ${BOLT_INCLUDE_DIR}/bolt/cl/transform.h 
+                                   ${BOLT_INCLUDE_DIR}/bolt/cl/detail/transform.inl
+                                   )
 
-# set( testName clBolt.Test.TransformReduce )
-set( clBolt.Test.TransformReduce.Source ${BOLT_CL_TEST_DIR}/common/stdafx.cpp 
-                                        ${BOLT_CL_TEST_DIR}/common/myocl.cpp 
-                                        TransformReduceTest.cpp )
-set( clBolt.Test.TransformReduce.Headers ${BOLT_CL_TEST_DIR}/common/stdafx.h
-                                         ${BOLT_CL_TEST_DIR}/common/targetver.h 
-                                         ${BOLT_CL_TEST_DIR}/common/myocl.h 
-                                         ${BOLT_INCLUDE_DIR}/bolt/cl/transform_reduce.h 
-                                         ${BOLT_INCLUDE_DIR}/bolt/cl/detail/transform_reduce.inl)
+set( clBolt.Test.Fill.Files ${clBolt.Test.Fill.Source} ${clBolt.Test.Fill.Headers} )
 
-set( clBolt.Test.TransformReduce.Files ${clBolt.Test.TransformReduce.Source} ${clBolt.Test.TransformReduce.Headers} )
+# Include standard OpenCL headers
+include_directories( ${OPENCL_INCLUDE_DIRS} )
 
 # Set project specific compile and link options
 if( MSVC )
@@ -35,17 +37,25 @@ if( MSVC )
     set( CMAKE_C_FLAGS "-bigobj ${CMAKE_C_FLAGS}" )
 endif()
 
-add_executable( clBolt.Test.TransformReduce ${clBolt.Test.TransformReduce.Files} )
-target_link_libraries( clBolt.Test.TransformReduce clBolt.Runtime ${OPENCL_LIBRARIES} ${GTEST_LIBRARIES} ${Boost_LIBRARIES} )
+add_executable( clBolt.Test.Fill ${clBolt.Test.Fill.Files} )
+target_link_libraries( clBolt.Test.Fill clBolt.Runtime ${OPENCL_LIBRARIES} ${GTEST_LIBRARIES} ${Boost_LIBRARIES} )
 
-set_target_properties( clBolt.Test.TransformReduce PROPERTIES VERSION ${Bolt_VERSION} )
-set_target_properties( clBolt.Test.TransformReduce PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
+set_target_properties( clBolt.Test.Fill PROPERTIES VERSION ${Bolt_VERSION} )
+set_target_properties( clBolt.Test.Fill PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
 
-set_property( TARGET clBolt.Test.TransformReduce PROPERTY FOLDER "Test/OpenCL")
-
+set_property( TARGET clBolt.Test.Fill PROPERTY FOLDER "Test/OpenCL")
+        
 # CPack configuration; include the executable into the package
-install( TARGETS clBolt.Test.TransformReduce
+install( TARGETS clBolt.Test.Fill
     RUNTIME DESTINATION ${BIN_DIR}
     LIBRARY DESTINATION ${LIB_DIR}
     ARCHIVE DESTINATION ${LIB_DIR}/import
     )
+
+install( FILES       
+         )
+
+install( FILES       
+         )
+
+

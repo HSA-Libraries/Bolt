@@ -15,10 +15,10 @@
 
 ############################################################################                                                                                     
 
-message( STATUS "Setting up Doxygen SuperBuild... Shiny!" )
+message( STATUS "Configuring Doxygen SuperBuild..." )
 include( ExternalProject )
 
-set( Doxygen_Version 1.8.1.1 )
+set( Doxygen_Version 1.8.2 )
 
 message( STATUS "Doxygen_Version: " ${Doxygen_Version} )
 
@@ -28,13 +28,16 @@ message( STATUS "Doxygen_Version: " ${Doxygen_Version} )
 # message( STATUS "status: " ${fileStatus} )
 # message( STATUS "log: " ${fileLog} )
 
+set( ext.Doxygen_URL "http://ftp.stack.nl/pub/users/dimitri/doxygen-${Doxygen_Version}.windows.bin.zip" CACHE STRING "URL to download Doxygen from" )
+
+mark_as_advanced( ext.Doxygen_URL )
+
 # Below is a fancy CMake command to download, build and install Doxygen on the users computer
 ExternalProject_Add(
     Doxygen
 	PREFIX ${CMAKE_CURRENT_BINARY_DIR}/external/Doxygen
-#    URL http://ftp.stack.nl/pub/users/dimitri/doxygen-${Doxygen_Version}.windows.bin.zip
-    URL http://see-srv/share/code/externals/doxygen/doxygen-${Doxygen_Version}.windows.bin.zip
-	URL_MD5 20c22209c85d3e8cc1d7d59f7c0bf351
+    URL ${ext.Doxygen_URL}
+	URL_MD5 9821af32aafd8193aec7dd407215fb45
     UPDATE_COMMAND ""
 #    PATCH_COMMAND ""
 	CONFIGURE_COMMAND ""

@@ -22,7 +22,7 @@ set( clBolt.Test.Device.Vector.Headers stdafx.h targetver.h ${BOLT_INCLUDE_DIR}/
 set( clBolt.Test.Device.Vector.Files ${clBolt.Test.Device.Vector.Source} ${clBolt.Test.Device.Vector.Headers} )
 
 add_executable( clBolt.Test.Device.Vector ${clBolt.Test.Device.Vector.Files} )
-target_link_libraries( clBolt.Test.Device.Vector clBolt.Runtime ${GTEST_LIBRARIES} )
+target_link_libraries( clBolt.Test.Device.Vector clBolt.Runtime ${GTEST_LIBRARIES} ${Boost_LIBRARIES} )
 
 set_target_properties( clBolt.Test.Device.Vector PROPERTIES VERSION ${Bolt_VERSION} )
 set_target_properties( clBolt.Test.Device.Vector PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )

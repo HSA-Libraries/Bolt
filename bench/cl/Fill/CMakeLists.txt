@@ -16,23 +16,23 @@
 ############################################################################                                                                                     
 
 # List the names of common files to compile across all platforms
+set( clBolt.Bench.Fill.Source stdafx.cpp Fill.cpp )
+set( clBolt.Bench.Fill.Headers stdafx.h targetver.h ${BOLT_INCLUDE_DIR}/bolt/cl/fill.h )
 
-set( clBolt.Test.Count.Source stdafx.cpp CountTest.cpp )
-set( clBolt.Test.Count.Headers stdafx.h targetver.h ${BOLT_INCLUDE_DIR}/bolt/cl/count.h )
+set( clBolt.Bench.Fill.Files ${clBolt.Bench.Fill.Source} ${clBolt.Bench.Fill.Headers} )
 
-set( clBolt.Test.Count.Files ${clBolt.Test.Count.Source} ${clBolt.Test.Count.Headers} )
+add_executable( clBolt.Bench.Fill ${clBolt.Bench.Fill.Files} )
 
-add_executable( clBolt.Test.Count ${clBolt.Test.Count.Files} )
-target_link_libraries( clBolt.Test.Count clBolt.Runtime ${OPENCL_LIBRARIES} ${GTEST_LIBRARIES} ${Boost_LIBRARIES} )
+target_link_libraries( clBolt.Bench.Fill ${Boost_LIBRARIES} clBolt.Runtime )
 
-set_target_properties( clBolt.Test.Count PROPERTIES VERSION ${Bolt_VERSION} )
-set_target_properties( clBolt.Test.Count PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
+set_target_properties( clBolt.Bench.Fill PROPERTIES VERSION ${Bolt_VERSION} )
+set_target_properties( clBolt.Bench.Fill PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
 
-set_property( TARGET clBolt.Test.Count PROPERTY FOLDER "Test/OpenCL")
-		
+set_property( TARGET clBolt.Bench.Fill PROPERTY FOLDER "Benchmark/OpenCL")
+
 # CPack configuration; include the executable into the package
-install( TARGETS clBolt.Test.Count
+install( TARGETS clBolt.Bench.Fill
 	RUNTIME DESTINATION ${BIN_DIR}
 	LIBRARY DESTINATION ${LIB_DIR}
-	ARCHIVE DESTINATION ${LIB_DIR}/import
+	ARCHIVE DESTINATION ${LIB_DIR}
 	)
