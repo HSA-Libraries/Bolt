@@ -54,8 +54,18 @@
  * Note that the TypeName trait must be defined exactly once for each functor class used
  * in a Bolt API.
  */
-template <typename T>
+template< typename TypeNameType >
 struct TypeName
+{
+    static std::string get()
+    {
+        static_assert( false, "Bolt< error >: Unknown typename; define missing TypeName with Bolt provided macro's" );
+    }
+};
+
+
+template< template< class > class Container, class TemplateTypeValue >
+struct template_TypeName
 {
     static std::string get()
     {
@@ -68,6 +78,16 @@ template <typename T>
 struct ClCode
 {
     static std::string get()
+    {
+        return "";
+        //static_assert( false, "Bolt< error >: No code is associated with this type.  Use BOLT_CREATE_CLCODE or BOLT_FUNCTOR" );
+    }
+};
+
+template< template< class > class Container, class TemplateTypeValue >
+struct template_ClCode
+{
+    static std::string get( )
     {
         return "";
         //static_assert( false, "Bolt< error >: No code is associated with this type.  Use BOLT_CREATE_CLCODE or BOLT_FUNCTOR" );
@@ -92,6 +112,9 @@ struct ClCode
 #define BOLT_CREATE_TYPENAME(T) \
     template<> struct TypeName<T> { static std::string get() { return #T; }};
 
+#define BOLT_CREATE_TEMPLATE_TYPENAME( container, value_type ) \
+    template<> struct template_TypeName< container, value_type > { static std::string get() { return #container "<" #value_type ">"; }};
+
 /*!
  * Creates the ClCode trait that associates the specified type \p T with the string \p CODE_STRING.
  * \param T : Class. 
@@ -109,6 +132,9 @@ struct ClCode
 #define BOLT_CREATE_CLCODE(T,CODE_STRING) \
     template<> struct ClCode<T> { static std::string get() { return CODE_STRING; }};
 
+#define BOLT_CREATE_TEMPLATE_CLCODE( container, value_type, CODE_STRING) \
+    template<> struct template_ClCode< container, value_type > { static std::string get() { return CODE_STRING; }};
+
 /*!
  * Creates a string and a regular version of the functor F, and automatically defines the ClCode trait to associate 
  * the code string with the specified class T. 
@@ -116,6 +142,24 @@ struct ClCode
  * \param FUNCTION : Function definition.  See \ref ClCodeTraits
  */
 #define BOLT_FUNCTOR( T, ... ) __VA_ARGS__; BOLT_CREATE_TYPENAME( T ); BOLT_CREATE_CLCODE( T, #__VA_ARGS__ );
+
+#define BOLT_TEMPLATE_FUNCTOR1( CONTAINER, TYPE1, ... ) __VA_ARGS__; \
+                            BOLT_CREATE_TEMPLATE_TYPENAME( CONTAINER, TYPE1 ); \
+                            BOLT_CREATE_TEMPLATE_CLCODE( CONTAINER, TYPE1, #__VA_ARGS__ );
+
+#define BOLT_TEMPLATE_FUNCTOR2( CONTAINER, TYPE1, TYPE2, ... ) __VA_ARGS__; \
+                            BOLT_CREATE_TEMPLATE_TYPENAME( CONTAINER, TYPE1 ); \
+                            BOLT_CREATE_TEMPLATE_TYPENAME( CONTAINER, TYPE2 ); \
+                            BOLT_CREATE_TEMPLATE_CLCODE( CONTAINER, TYPE1, #__VA_ARGS__ ); \
+                            BOLT_CREATE_TEMPLATE_CLCODE( CONTAINER, TYPE1, #__VA_ARGS__ );
+
+#define BOLT_TEMPLATE_FUNCTOR3( CONTAINER, TYPE1, TYPE2, TYPE3, ... ) __VA_ARGS__; \
+                            BOLT_CREATE_TEMPLATE_TYPENAME( CONTAINER, TYPE1 ); \
+                            BOLT_CREATE_TEMPLATE_TYPENAME( CONTAINER, TYPE2 ); \
+                            BOLT_CREATE_TEMPLATE_TYPENAME( CONTAINER, TYPE3 ); \
+                            BOLT_CREATE_TEMPLATE_CLCODE( CONTAINER, TYPE1, #__VA_ARGS__ ); \
+                            BOLT_CREATE_TEMPLATE_CLCODE( CONTAINER, TYPE2, #__VA_ARGS__ ); \
+                            BOLT_CREATE_TEMPLATE_CLCODE( CONTAINER, TYPE3, #__VA_ARGS__ );
 
 /*! 
  * Return a string with the specified function F, and also create code that is fed to the host compiler.

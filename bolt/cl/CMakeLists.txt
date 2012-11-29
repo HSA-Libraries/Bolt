@@ -79,6 +79,7 @@ set( clBolt.Runtime.Headers
         ${clBolt.Include.Dir}/sort.h 
         ${clBolt.Include.Dir}/transform.h 
         ${clBolt.Include.Dir}/transform_reduce.h
+        ${clBolt.Include.Dir}/iterator/constant_iterator.h
     )
 
 set( clBolt.Runtime.Headers.Misc
