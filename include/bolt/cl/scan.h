@@ -126,7 +126,7 @@ namespace bolt
         */
         template< typename InputIterator, typename OutputIterator >
         OutputIterator 
-            inclusive_scan( const control &ctl, InputIterator first, InputIterator last, 
+            inclusive_scan( control &ctl, InputIterator first, InputIterator last, 
             OutputIterator result, const std::string& user_code="" );
 
         /*! \brief inclusive_scan calculates a running sum over a range of values, inclusive of the current value.
@@ -155,7 +155,7 @@ namespace bolt
         */
         template< typename InputIterator, typename OutputIterator, typename BinaryFunction >
         OutputIterator
-            inclusive_scan( const control &ctl, InputIterator first, InputIterator last, 
+            inclusive_scan( control &ctl, InputIterator first, InputIterator last, 
             OutputIterator result, BinaryFunction binary_op, const std::string& user_code="" );
 
         /*! \brief exclusive_scan calculates a running sum over a range of values, exclusive of the current value.
@@ -271,7 +271,7 @@ namespace bolt
         */
         template< typename InputIterator, typename OutputIterator >
         OutputIterator 
-            exclusive_scan( const control& ctl, InputIterator first, InputIterator last, 
+            exclusive_scan( control& ctl, InputIterator first, InputIterator last, 
             OutputIterator result, const std::string& user_code="" );
 
         /*! \brief exclusive_scan calculates a running sum over a range of values, exclusive of the current value.
@@ -301,7 +301,7 @@ namespace bolt
         */
         template< typename InputIterator, typename OutputIterator, typename T >
         OutputIterator 
-            exclusive_scan( const control& ctl, InputIterator first, InputIterator last, OutputIterator result, T init,
+            exclusive_scan( control& ctl, InputIterator first, InputIterator last, OutputIterator result, T init,
             const std::string& user_code="" );
 
         /*! \brief exclusive_scan calculates a running sum over a range of values, exclusive of the current value.
@@ -333,7 +333,7 @@ namespace bolt
         */
         template< typename InputIterator, typename OutputIterator, typename T, typename BinaryFunction >
         OutputIterator
-            exclusive_scan( const control &ctl, InputIterator first, InputIterator last, 
+            exclusive_scan( control &ctl, InputIterator first, InputIterator last, 
             OutputIterator result, T init, BinaryFunction binary_op, const std::string& user_code="" );
 
         /*!   \}  */

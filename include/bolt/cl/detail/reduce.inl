@@ -54,7 +54,7 @@ namespace bolt {
 
         template<typename InputIterator, typename T> 
         typename std::iterator_traits<InputIterator>::value_type
-            reduce(const bolt::cl::control &ctl,
+            reduce(bolt::cl::control &ctl,
             InputIterator first, 
             InputIterator last, 
             T init,
@@ -67,7 +67,7 @@ namespace bolt {
         // This template is called by all other "convenience" version of reduce.
         // It also implements the CPU-side mappings of the algorithm for SerialCpu and MultiCoreCpu
         template<typename InputIterator, typename T, typename BinaryFunction> 
-        T reduce(const bolt::cl::control &ctl,
+        T reduce(bolt::cl::control &ctl,
             InputIterator first, 
             InputIterator last,  
             T init,
@@ -116,7 +116,7 @@ namespace bolt {
 
 
             template<typename T, typename DVInputIterator, typename BinaryFunction> 
-            T reduce_detect_random_access(const bolt::cl::control &ctl, 
+            T reduce_detect_random_access(bolt::cl::control &ctl, 
                 const DVInputIterator& first,
                 const DVInputIterator& last, 
                 const T& init,
@@ -130,7 +130,7 @@ namespace bolt {
             }
 
             template<typename T, typename DVInputIterator, typename BinaryFunction> 
-            T reduce_detect_random_access(const bolt::cl::control &ctl, 
+            T reduce_detect_random_access(bolt::cl::control &ctl, 
                 const DVInputIterator& first,
                 const DVInputIterator& last, 
                 const T& init,
@@ -145,7 +145,7 @@ namespace bolt {
             // This is called strictly for any non-device_vector iterator
             template<typename T, typename InputIterator, typename BinaryFunction> 
             typename std::enable_if< !std::is_base_of<typename device_vector<typename std::iterator_traits<InputIterator>::value_type>::iterator,InputIterator>::value, T >::type
-                reduce_pick_iterator(const bolt::cl::control &ctl, 
+                reduce_pick_iterator(bolt::cl::control &ctl, 
                 const InputIterator& first,
                 const InputIterator& last, 
                 const T& init,
@@ -162,7 +162,7 @@ namespace bolt {
             // This is called strictly for iterators that are derived from device_vector< T >::iterator
             template<typename T, typename DVInputIterator, typename BinaryFunction> 
             typename std::enable_if< std::is_base_of<typename device_vector<typename std::iterator_traits<DVInputIterator>::value_type>::iterator,DVInputIterator>::value, T >::type
-                reduce_pick_iterator(const bolt::cl::control &ctl, 
+                reduce_pick_iterator(bolt::cl::control &ctl, 
                 const DVInputIterator& first,
                 const DVInputIterator& last, 
                 const T& init,
@@ -176,7 +176,7 @@ namespace bolt {
             // This is the base implementation of reduction that is called by all of the convenience wrappers below.
             // first and last must be iterators from a DeviceVector
             template<typename T, typename DVInputIterator, typename BinaryFunction> 
-            T reduce_enqueue(const bolt::cl::control &ctl, 
+            T reduce_enqueue(bolt::cl::control &ctl, 
                 const DVInputIterator& first,
                 const DVInputIterator& last, 
                 const T& init,
@@ -202,17 +202,18 @@ namespace bolt {
 
                 // Create buffer wrappers so we can access the host functors, for read or writing in the kernel
                 ALIGNED( 256 ) BinaryFunction aligned_reduce( binary_op );
-                ::cl::Buffer userFunctor(ctl.context(), CL_MEM_USE_HOST_PTR, sizeof( aligned_reduce ), &aligned_reduce );   // Create buffer wrapper so we can access host parameters.
-                //std::cout << "sizeof(Functor)=" << sizeof(binary_op) << std::endl;
+                //::cl::Buffer userFunctor(ctl.context(), CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, sizeof( aligned_reduce ), &aligned_reduce );   // Create buffer wrapper so we can access host parameters.
+                control::buffPointer userFunctor = ctl.acquireBuffer( sizeof( aligned_reduce ), CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_reduce );
 
-                ::cl::Buffer result(ctl.context(), CL_MEM_ALLOC_HOST_PTR|CL_MEM_WRITE_ONLY, sizeof( iType ) * numWG);
+                // ::cl::Buffer result(ctl.context(), CL_MEM_ALLOC_HOST_PTR|CL_MEM_WRITE_ONLY, sizeof( iType ) * numWG);
+                control::buffPointer result = ctl.acquireBuffer( sizeof( iType ) * numWG, CL_MEM_ALLOC_HOST_PTR|CL_MEM_WRITE_ONLY );
 
                 cl_uint szElements = static_cast< cl_uint >( std::distance( first, last ) );
 
                 V_OPENCL( masterKernel.setArg(0, first->getBuffer( ) ), "Error setting kernel argument" );
                 V_OPENCL( masterKernel.setArg(1, szElements), "Error setting kernel argument" );
-                V_OPENCL( masterKernel.setArg(2, userFunctor), "Error setting kernel argument" );
-                V_OPENCL( masterKernel.setArg(3, result), "Error setting kernel argument" );
+                V_OPENCL( masterKernel.setArg(2, *userFunctor), "Error setting kernel argument" );
+                V_OPENCL( masterKernel.setArg(3, *result), "Error setting kernel argument" );
 
                 ::cl::LocalSpaceArg loc;
                 loc.size_ = wgSize*sizeof(iType);
@@ -226,14 +227,12 @@ namespace bolt {
                 V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for reduce() kernel" );
 
                 ::cl::Event l_mapEvent;
-                iType *h_result = (iType*)ctl.commandQueue().enqueueMapBuffer(result, false, CL_MAP_READ, 0, sizeof(iType)*numWG, NULL, &l_mapEvent, &l_Error );
+                iType *h_result = (iType*)ctl.commandQueue().enqueueMapBuffer(*result, false, CL_MAP_READ, 0, sizeof(iType)*numWG, NULL, &l_mapEvent, &l_Error );
                 V_OPENCL( l_Error, "Error calling map on the result buffer" );
-
-
 
                 //  Finish the tail end of the reduction on host side; the compute device reduces within the workgroups, with one result per workgroup
                 size_t ceilNumWG = static_cast< size_t >( std::ceil( static_cast< float >( szElements ) / wgSize) );
-				bolt::cl::minimum<size_t>  min_size_t;
+                bolt::cl::minimum<size_t>  min_size_t;
                 size_t numTailReduce = min_size_t( ceilNumWG, numWG );
 
                 bolt::cl::wait(ctl, l_mapEvent);

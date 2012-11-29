@@ -91,7 +91,7 @@ namespace bolt {
          *  \sa http://www.sgi.com/tech/stl/BinaryFunction.html
          */
         template<typename InputIterator, typename OutputIterator, typename BinaryFunction> 
-        void transform(const bolt::cl::control &ctl,  InputIterator first1, InputIterator last1, InputIterator first2, OutputIterator result, 
+        void transform( bolt::cl::control &ctl,  InputIterator first1, InputIterator last1, InputIterator first2, OutputIterator result, 
             BinaryFunction f, const std::string& user_code="");
 
        /*! This version of \p transform applies a binary function to each pair
@@ -146,7 +146,7 @@ namespace bolt {
             UnaryFunction f, const std::string& user_code="");
 
         template<typename InputIterator, typename OutputIterator, typename UnaryFunction> 
-        void transform(const bolt::cl::control &ctl, InputIterator first, InputIterator last, OutputIterator result, 
+        void transform( bolt::cl::control &ctl, InputIterator first, InputIterator last, OutputIterator result, 
             UnaryFunction f, const std::string& user_code="");
 
         /*!   \}  */

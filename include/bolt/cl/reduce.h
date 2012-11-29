@@ -160,7 +160,7 @@ namespace bolt {
         */
         template<typename InputIterator, typename T> 
         typename std::iterator_traits<InputIterator>::value_type
-            reduce(const bolt::cl::control &ctl,
+            reduce(bolt::cl::control &ctl,
             InputIterator first, 
             InputIterator last, 
             T init,
@@ -203,7 +203,7 @@ namespace bolt {
         \endcode
         */
         template<typename InputIterator, typename T, typename BinaryFunction> 
-        T reduce(const bolt::cl::control &ctl,
+        T reduce(bolt::cl::control &ctl,
             InputIterator first, 
             InputIterator last,  
             T init,

@@ -17,8 +17,14 @@
 
 #pragma once
 
-#include <CL/cl.hpp>
+#include <bolt/cl/bolt.h>
 #include <string>
+#include <map>
+
+#include <boost/thread/mutex.hpp>
+// #include <boost/interprocess/detail/atomic.hpp>
+// #include <boost/detail/interlocked.hpp>
+#include <boost/shared_ptr.hpp>
 
 namespace bolt {
     namespace cl {
@@ -126,6 +132,23 @@ namespace bolt {
                 m_unroll(getDefault().m_unroll)
             {};
 
+            // Copy constructor for control structure
+            // Restrictions:
+            //  1.  Must not copy the internal mutex object
+            //  2.  Must not copy the multi-map structure that contains scratch buffers
+            control( const control& rhs ):
+            m_commandQueue(rhs.m_commandQueue),
+                m_useHost(rhs.m_useHost),
+                m_forceRunMode(rhs.m_forceRunMode),
+                m_debug(rhs.m_debug),
+                m_autoTune(rhs.m_autoTune),
+                m_wgPerComputeUnit(rhs.m_wgPerComputeUnit),
+                m_compileOptions(rhs.m_compileOptions),
+                m_compileForAllDevices(rhs.m_compileForAllDevices),
+                m_waitMode(rhs.m_waitMode),
+                m_unroll(rhs.m_unroll)
+            {};
+
             //setters:
             //! Set the OpenCL command queue (and associated device) for Bolt algorithms to use.  
             //! Only one command-queue can be specified for each call; Bolt does not load-balance across
@@ -168,8 +191,6 @@ namespace bolt {
 
             void unroll(int unroll) { m_unroll = unroll; };
 
-
-            
             //! 
             //! Specify the compile options passed to the OpenCL(TM) compiler.
             void compileOptions(std::string &compileOptions) { m_compileOptions = compileOptions; }; 
@@ -224,6 +245,14 @@ namespace bolt {
                 */
             static ::cl::CommandQueue getDefaultCommandQueue( );
 
+            /*! \brief Buffer pool support functiosn
+             */
+            typedef boost::shared_ptr< ::cl::Buffer > buffPointer;
+
+            size_t totalBufferSize( );
+            buffPointer acquireBuffer( size_t reqSize, cl_mem_flags flags = CL_MEM_READ_WRITE, void* host_ptr = NULL );
+            void freeBuffers( );
+
         private:
 
             // This is the private constructor is only used to create the initial default control structure.
@@ -247,8 +276,92 @@ namespace bolt {
             int                 m_wgPerComputeUnit;
             ::std::string       m_compileOptions;  // extra options to pass to OpenCL compiler.
             bool                m_compileForAllDevices;  // compile for all devices in the context.  False means to only compile for specified device.
-            e_WaitMode			m_waitMode;
-            int					m_unroll;
+            e_WaitMode          m_waitMode;
+            int                 m_unroll;
+
+            struct descBufferKey
+            {
+                ::cl::Context buffContext;
+                cl_mem_flags memFlags;
+                void* host_ptr;
+            };
+
+            struct descBufferValue
+            {
+                size_t buffSize;
+                bool inUse;
+                ::cl::Buffer buffBuff;
+            };
+
+            struct descBufferComp
+            {
+                bool operator( )( const descBufferKey& lhs, const descBufferKey& rhs ) const
+                {
+                    if( lhs.memFlags < rhs.memFlags )
+                    {
+                        return true;
+                    }
+                    else if( lhs.memFlags == rhs.memFlags )
+                    {
+                        if( lhs.buffContext( ) < rhs.buffContext( ) )
+                        {
+                            return true;
+                        }
+                        else if( lhs.buffContext( ) == rhs.buffContext( ) )
+                        {
+                            if( lhs.host_ptr < rhs.host_ptr )
+                            {
+                                return true;
+                            }
+                            else
+                            {
+                                return false;
+                            }
+                        }
+                        else
+                        {
+                            return false;
+                        }
+                    }
+                    else
+                    {
+                        return false;
+                    }
+                }
+            };
+
+            typedef std::multimap< descBufferKey, descBufferValue, descBufferComp > mapBufferType;
+
+            /*! \brief Class used with shared_ptr<> as a custom deleter, to signal to the context object when
+             * a buffer is finished being used by a client.  We want to remove the ability to destroy the buffer
+             * from the caller; only the context object shall control the lifetime of these scratch
+             * buffers.  This most likely will happen in the default destructor
+             * generated by the smart_ptr<> class, however, a client also has the option of calling reset()
+             * directly on the smart_ptr<>.  In order for this class to work, the iterator that we store
+             * MUST NOT BE INVALIDATED BY INSERTIONS OR DELETIONS INTO THE UNDERLYING CONTAINER
+            */
+            class UnlockBuffer
+            {
+                mapBufferType::iterator m_iter;
+                control& m_control;
+
+            public:
+                //  Basic constructor requires a reference to the container and a positional element
+                UnlockBuffer( control& p_control, mapBufferType::iterator it ): m_iter( it ), m_control( p_control )
+                {}
+
+                void operator( )( const void* pBuff )
+                {
+                    //  TODO: I think a general mutex is overkill here; we should try to use an interlocked instruction to modify the 
+                    //  inUse flag
+                    boost::lock_guard< boost::mutex > lock( m_control.mapGuard );
+                    m_iter->second.inUse = false;
+                }
+            };
+
+            friend class UnlockBuffer;
+            mapBufferType mapBuffer;
+            boost::mutex mapGuard;
         };
 
     };
