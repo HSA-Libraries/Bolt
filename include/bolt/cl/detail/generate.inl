@@ -147,8 +147,6 @@ namespace bolt {
 
                 generate_enqueue( ctl, range.begin( ), range.end( ), gen, user_code );
 
-                //printf("I'm here @ std::vector.\n"); fflush(stdout);
-                //Sleep(3000);
                 // This should immediately map/unmap the buffer
                 range.data( );
             }
@@ -160,10 +158,6 @@ namespace bolt {
             generate_pick_iterator(const bolt::cl::control &ctl,  const DVForwardIterator &first, const DVForwardIterator &last, const Generator &gen, const std::string& user_code)
             {
                 generate_enqueue( ctl, first, last, gen, user_code );
-                /*for (DVForwardIterator iter = first; iter != last; iter++)
-                {
-                    printf("Val=%f\n", *iter);
-                }*/
             }
 
 
@@ -219,20 +213,6 @@ namespace bolt {
                 {
                     k = kernelNoBoundaryCheck;
                 }
-
-
-
-#if 0
-                if ((sz % wgSize) != 0) {
-                    sz = sz + (wgSize - (sz % wgSize));
-                    k = kernelYesBoundaryCheck;
-                } else if(sz < wgSize) {  
-                    sz = wgSize;
-                    k = kernelYesBoundaryCheck; 
-                } else {
-                    k = kernelNoBoundaryCheck;
-                }
-#endif
 
                 // set kernel arguments
                 k.setArg(0, first->getBuffer() );

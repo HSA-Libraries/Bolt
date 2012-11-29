@@ -158,6 +158,7 @@ namespace bolt
             inclusive_scan( const control &ctl, InputIterator first, InputIterator last, 
             OutputIterator result, BinaryFunction binary_op, const std::string& user_code="" );
 
+#if 1
         /*! \brief exclusive_scan calculates a running sum over a range of values, exclusive of the current value.
         *   The result value at iterator position \p i is the running sum of all values less than \p i in the input range.
         *
@@ -184,6 +185,7 @@ namespace bolt
         OutputIterator 
             exclusive_scan( InputIterator first, InputIterator last, OutputIterator result,
             const std::string& user_code="" );
+#endif
 
         /*! \brief exclusive_scan calculates a running sum over a range of values, exclusive of the current value.
         *   The result value at iterator position \p i is the running sum of all values less than \p i in the input range.
