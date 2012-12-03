@@ -60,29 +60,6 @@ namespace bolt
         class device_vector
         {
 
-            /*! \brief Class used with shared_ptr<> as a custom deleter, to unmap a buffer that has been mapped with
-            *   device_vector data() method
-            */
-            /*template< typename Container >
-            class UnMapBufferFunctor
-            {
-                Container& m_Container;
-
-            public:
-                //  Basic constructor requires a reference to the container and a positional element
-                UnMapBufferFunctor( Container& rhs ): m_Container( rhs )
-                {}
-
-                void operator( )( const void* pBuff )
-                {
-                    ::cl::Event unmapEvent;
-
-                    V_OPENCL( m_Container.m_commQueue.enqueueUnmapMemObject( m_Container.m_devMemory, const_cast< void* >( pBuff ), NULL, &unmapEvent ),
-                            "shared_ptr failed to unmap host memory back to device memory" );
-                    V_OPENCL( unmapEvent.wait( ), "failed to wait for unmap event" );
-                }
-            };*/
-
             typedef T* naked_pointer;
             typedef const T* const_naked_pointer;
 
@@ -116,19 +93,24 @@ namespace bolt
                 //  Automatic type conversion operator to turn the reference object into a value_type
                 operator value_type( ) const
                 {
-                    value_type &result =  m_Container.m_devMemory[(int)m_index];
+                    //Create Array View around the C++ AMP array. This routine is not restricted by amp 
+                    Concurrency::array_view<T,1> av(*(m_Container.m_devMemory));
+                    value_type &result =  av[(int)m_index];
                     return result;
                 }
 
                 reference_base< Container >& operator=( const value_type& rhs )
                 {
-                    m_Container.m_devMemory[(int)m_index] = rhs;
+                    //Create Array View around the C++ AMP array. This routine is not restricted by amp 
+                    Concurrency::array_view<T,1> av(*(m_Container.m_devMemory));
+                    av[(int)m_index] = rhs;
                     return *this;
                 }
 
                 /*! \brief A get accessor function to return the encapsulated device buffer for const objects.
                 *   This member function allows access to the Buffer object, which can be retrieved through a reference or an iterator.
-                *   This is necessary to allow library functions to set the encapsulated buffer object as a kernel argument.
+                *   This is necessary to allow library functions to get the encapsulated C++ AMP array object as a pass by reference argument 
+                *   to the C++ AMP parallel_for_each constructs.
                 *   \note This get function could be implemented in the iterator, but the reference object is usually a temporary rvalue, so
                 *   this location seems less intrusive to the design of the vector class.
                 */
@@ -139,7 +121,8 @@ namespace bolt
 
                 /*! \brief A get accessor function to return the encapsulated device buffer for non-const objects.
                 *   This member function allows access to the Buffer object, which can be retrieved through a reference or an iterator.
-                *   This is necessary to allow library functions to set the encapsulated buffer object as a kernel argument.
+                *   This is necessary to allow library functions to get the encapsulated C++ AMP array object as a pass by reference argument 
+                *   to the C++ AMP parallel_for_each constructs.
                 *   \note This get function can be implemented in the iterator, but the reference object is usually a temporary rvalue, so
                 *   this location seems less intrusive to the design of the vector class.
                 */
@@ -155,6 +138,8 @@ namespace bolt
                     return m_Container;
                 }
 
+                /*! \brief A get index function to return the index of the reference object within the AMP device_vector.
+                */
                 size_type getIndex() const
                 {
                     return m_index;
@@ -308,8 +293,7 @@ namespace bolt
             *   \todo Find a way to be able to unambiguously specify memory flags for this constructor, that is not
             *   confused with the size constructor below.
             */
-
-            device_vector( ): m_Size( 0 ), m_devMemory(0)
+            device_vector( ): m_Size( 0 ), m_devMemory(NULL)
             {
                 static_assert( !std::is_polymorphic< value_type >::value, "AMD C++ template extensions do not support the virtual keyword yet" );
             }
@@ -324,23 +308,19 @@ namespace bolt
             */
 
             device_vector( size_type newSize, const value_type& value = value_type( ),
-                bool init = true ): m_Size( newSize ), m_devMemory((int)m_Size)
+                bool init = true ): m_Size( newSize )
             {
                 static_assert( !std::is_polymorphic< value_type >::value, "AMD C++ template extensions do not support the virtual keyword yet" );
-
-                //  We want to use the context from the passed in commandqueue to initialize our buffer
-                //cl_int l_Error = CL_SUCCESS;
-                //::cl::Context l_Context = m_commQueue.getInfo< CL_QUEUE_CONTEXT >( &l_Error );
-                //V_OPENCL( l_Error, "device_vector failed to query for the context of the ::cl::CommandQueue object" );
+                m_devMemory = new Concurrency::array<T,1>((int)m_Size);
 
                 if( m_Size > 0 )
                 {
                     if( init )
                     {
-                        Concurrency::extent<1> ext(m_devMemory.get_extent());
-                        Concurrency::array_view<T> m_devMemoryAV = m_devMemory.section(ext);
+                        Concurrency::extent<1> ext(m_devMemory->get_extent());
+                        Concurrency::array_view<T> m_devMemoryAV = m_devMemory->section(ext);
                         Concurrency::parallel_for_each(m_devMemoryAV.extent, 
-                        [=,&m_devMemoryAV](Concurrency::index<1> idx) restrict(amp)
+                        [=](Concurrency::index<1> idx) restrict(amp)
                         {
                             m_devMemoryAV[idx] = value;
                         }
@@ -348,7 +328,7 @@ namespace bolt
                     }
                 }
             }
-#if 0
+#if 1
             /*! \brief A constructor that creates a new device_vector using a range specified by the user.
             *   \param begin An iterator pointing at the beginning of the range.
             *   \param end An iterator pointing at the end of the range.
@@ -540,10 +520,11 @@ namespace bolt
             *   \note Contents are preserved, and the size( ) of the vector is not affected.
             *   \warning if the device_vector must reallocate, all previous iterators, references, and pointers are invalidated.
             *   \warning The ::cl::CommandQueue is not a STD reserve( ) parameter
+            *   \TODO what if reqSize < the size of the original buffer
             */
             void reserve( size_type reqSize )
             {
-#if 0
+
                 if( reqSize <= capacity( ) )
                     return;
 
@@ -551,35 +532,38 @@ namespace bolt
                     throw ::cl::Error( CL_MEM_OBJECT_ALLOCATION_FAILURE , "The amount of memory requested exceeds what is available" );
                 */
                 //  We want to use the context from the passed in commandqueue to initialize our buffer
-                cl_int l_Error = CL_SUCCESS;
+                /*cl_int l_Error = CL_SUCCESS;
                 ::cl::Context l_Context = m_commQueue.getInfo< CL_QUEUE_CONTEXT >( &l_Error );
-                V_OPENCL( l_Error, "device_vector failed to query for the context of the ::cl::CommandQueue object" );
+                V_OPENCL( l_Error, "device_vector failed to query for the context of the ::cl::CommandQueue object" );*/
 
                 if( m_Size == 0 )
                 {
-                    ::cl::Buffer l_tmpBuffer( l_Context, m_Flags, reqSize * sizeof( value_type ) );
-                    m_devMemory = l_tmpBuffer;
+                    //::cl::Buffer l_tmpBuffer( l_Context, m_Flags, reqSize * sizeof( value_type ) );
+                    m_devMemory = new Concurrency::array<T,1>((int)reqSize);
+                    //m_devMemory = l_tmpBuffer;
                     return;
                 }
 
-                size_type l_size = reqSize * sizeof( value_type );
+                //size_type l_size = reqSize * sizeof( value_type );
                 //  Can't user host_ptr because l_size is guranteed to be bigger
-                ::cl::Buffer l_tmpBuffer( l_Context, m_Flags, l_size, NULL, &l_Error );
-                V_OPENCL( l_Error, "device_vector can not create an temporary internal OpenCL buffer" );
+                //::cl::Buffer l_tmpBuffer( l_Context, m_Flags, l_size, NULL, &l_Error );
+                Concurrency::array<T,1> *l_tmpBuffer = new Concurrency::array<T,1>((int)reqSize);
+                //V_OPENCL( l_Error, "device_vector can not create an temporary internal OpenCL buffer" );
 
-                size_type l_srcSize = m_devMemory.getInfo< CL_MEM_SIZE >( &l_Error );
-                V_OPENCL( l_Error, "device_vector failed to request the size of the ::cl::Buffer object" );
+                //size_type l_srcSize = m_devMemory.getInfo< CL_MEM_SIZE >( &l_Error );
+                size_type l_srcSize = m_devMemory->get_extent()[0];
+                //V_OPENCL( l_Error, "device_vector failed to request the size of the ::cl::Buffer object" );
 
-                ::cl::Event copyEvent;
-                V_OPENCL( m_commQueue.enqueueCopyBuffer( m_devMemory, l_tmpBuffer, 0, 0, l_srcSize, NULL, &copyEvent ),
-                    "device_vector failed to copy from buffer to buffer " );
-
+                //::cl::Event copyEvent;
+               // V_OPENCL( m_commQueue.enqueueCopyBuffer( m_devMemory, l_tmpBuffer, 0, 0, l_srcSize, NULL, &copyEvent ),
+                //    "device_vector failed to copy from buffer to buffer " );
+                m_devMemory->copy_to(*l_tmpBuffer);
                 //  Not allowed to return until the copy operation is finished
-                V_OPENCL( copyEvent.wait( ), "device_vector failed to wait on an event object" );
+                //V_OPENCL( copyEvent.wait( ), "device_vector failed to wait on an event object" );
 
                 //  Operator= should call retain/release appropriately
+                delete(m_devMemory);
                 m_devMemory = l_tmpBuffer;
-#endif
             }
 
             /*! \brief Return the maximum possible number of elements without reallocation.
@@ -589,8 +573,12 @@ namespace bolt
             */
             size_type capacity( void ) const
             {
-                Concurrency::extent<1> ext = m_devMemory.get_extent();
-                return ext.size();
+                if(m_devMemory != NULL)
+                {
+                    Concurrency::extent<1> ext = m_devMemory->get_extent();
+                    return ext.size();
+                }
+                return 0;
             }
 
             /*! \brief Shrink the capacity( ) of this device_vector to just fit its elements.
@@ -638,7 +626,10 @@ namespace bolt
             */
             reference operator[]( size_type n )
             {
-                return reference( *this, n );
+                
+                reference tmpRef(*this, n);
+                
+                return tmpRef;
             }
 
             /*! \brief Retrieves a constant value stored at index n.
@@ -651,7 +642,7 @@ namespace bolt
                 //naked_pointer ptrBuff = reinterpret_cast< naked_pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ, n * sizeof( value_type), sizeof( value_type), NULL, NULL, &l_Error ) );
                 //V_OPENCL( l_Error, "device_vector failed map device memory to host memory for operator[]" );
 
-                const_reference tmpRef = m_devMemory[n];
+                const_reference tmpRef = *m_devMemory[n];
 
                 /*::cl::Event unmapEvent;
                 l_Error = m_commQueue.enqueueUnmapMemObject( m_devMemory, ptrBuff, NULL, &unmapEvent );
@@ -756,7 +747,7 @@ namespace bolt
             */
             reference front( void )
             {
-                return reference( m_devMemory, 0 );
+                return reference( *m_devMemory, 0 );
             }
 
             /*! \brief Retrieves the value stored at index 0.
@@ -765,7 +756,7 @@ namespace bolt
             const_reference front( void ) const
             {
 
-                const_reference tmpRef = m_devMemory[0];
+                const_reference tmpRef = *m_devMemory[0];
 
                 /*::cl::Event unmapEvent;
                 l_Error = m_commQueue.enqueueUnmapMemObject( m_devMemory, ptrBuff, NULL, &unmapEvent );
@@ -780,7 +771,7 @@ namespace bolt
             */
             reference back( void )
             {
-                return reference( m_devMemory, m_Size - 1 );
+                return reference( *m_devMemory, m_Size - 1 );
             }
 
             /*! \brief Retrieves the value stored at index size( ) - 1.
@@ -795,7 +786,7 @@ namespace bolt
                 V_OPENCL( l_Error, "device_vector failed map device memory to host memory for operator[]" );
 
                 const_reference tmpRef = *ptrBuff;*/
-                const_reference tmpRef = m_devMemory[m_Size - 1];
+                const_reference tmpRef = *m_devMemory[m_Size - 1];
                 /*::cl::Event unmapEvent;
                 l_Error = m_commQueue.enqueueUnmapMemObject( m_devMemory, ptrBuff, NULL, &unmapEvent );
                 V_OPENCL( l_Error, "device_vector failed to unmap host memory back to device memory" );
@@ -816,7 +807,8 @@ namespace bolt
 
                 pointer sp( ptrBuff, UnMapBufferFunctor< device_vector< value_type > >( *this ) );
                 */
-                pointer sp( m_devMemory.data( ) );
+                Concurrency::array_view<T,1> av(*m_devMemory);
+                pointer sp( av.data() );
                 return  sp;
             }
 
@@ -830,7 +822,9 @@ namespace bolt
 
                 const_pointer sp( ptrBuff, UnMapBufferFunctor< const device_vector< value_type > >( *this ) );
                 return sp;*/
-                return m_devMemory.data();
+                Concurrency::array_view<T,1> av(*m_devMemory);
+                pointer sp( av.data() );
+                return  sp;
             }
 
             /*! \brief Removes all elements (makes the device_vector empty).
@@ -843,8 +837,9 @@ namespace bolt
 
                 //  Allocate a temp empty buffer on the stack, because of a double release problem with explicitly
                 //  calling the Wrapper destructor with cl.hpp version 1.2.
-                Concurrency::array<T,1> tmp(0);
-                m_devMemory = tmp;
+                //Concurrency::array<T,1> tmp(0);
+                delete(m_devMemory);
+                m_devMemory = NULL;
                 m_Size = 0;
             }
 
@@ -870,8 +865,8 @@ namespace bolt
                 {
                     m_Size ? reserve( m_Size * 2 ) : reserve( 1 );
                 }
-
-                m_devMemory[(int)m_Size] = value;
+                Concurrency::array_view<T,1> av(*m_devMemory);
+                av[(int)m_Size] = value;
                 ++m_Size;
             }
 
@@ -893,8 +888,8 @@ namespace bolt
                 if( this == &vec )
                     return;
 
-                Concurreny::array<T,1>  &swapBuffer( m_devMemory );
-                m_devMemory = vec.m_devMemory;
+                Concurreny::array<T,1>  &swapBuffer( *m_devMemory );
+                *m_devMemory = vec.m_devMemory;
                 vec.m_devMemory = swapBuffer;
 
                 /*::cl::CommandQueue    swapQueue( m_commQueue );
@@ -929,8 +924,9 @@ namespace bolt
                 naked_pointer ptrBuff = reinterpret_cast< naked_pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ | CL_MAP_WRITE,
                         index.m_index * sizeof( value_type ), sizeRegion * sizeof( value_type ), NULL, NULL, &l_Error ) );
                 V_OPENCL( l_Error, "device_vector failed map device memory to host memory for operator[]" );*/
-                naked_pointer ptrBuff = m_devMemory.data();
-                 naked_pointer ptrBuffTemp = ptrBuff + index.m_index;
+                Concurrency::array_view<T,1> av(*m_devMemory);
+                naked_pointer ptrBuff = av.data();
+                naked_pointer ptrBuffTemp = ptrBuff + index.m_index;
                 ::memmove( ptrBuffTemp, ptrBuffTemp + 1, (sizeRegion - 1)*sizeof( value_type ) );
 
                 /*::cl::Event unmapEvent;
@@ -970,8 +966,8 @@ namespace bolt
                 /*naked_pointer ptrBuff = reinterpret_cast< naked_pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ | CL_MAP_WRITE,
                         first.m_index * sizeof( value_type ), sizeMap * sizeof( value_type ), NULL, NULL, &l_Error ) );
                 V_OPENCL( l_Error, "device_vector failed map device memory to host memory for operator[]" );*/
-
-                naked_pointer ptrBuff = m_devMemory.data();
+                Concurrency::array_view<T,1> av(*m_devMemory);
+                naked_pointer ptrBuff = av.data();
                 ptrBuff = ptrBuff + first.m_index;
                 size_type sizeErase = last.m_index - first.m_index;
                 ::memmove( ptrBuff, ptrBuff + sizeErase, (sizeMap - sizeErase)*sizeof( value_type ) );
@@ -1022,7 +1018,8 @@ namespace bolt
                 naked_pointer ptrBuff = reinterpret_cast< naked_pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ | CL_MAP_WRITE,
                         index.m_index * sizeof( value_type ), sizeMap * sizeof( value_type ), NULL, NULL, &l_Error ) );
                 V_OPENCL( l_Error, "device_vector failed map device memory to host memory for operator[]" );*/
-                naked_pointer ptrBuff = m_devMemory.data();
+                Concurrency::array_view<T,1> av(*m_devMemory);
+                naked_pointer ptrBuff = av.data();
                 ptrBuff = ptrBuff + index.m_index;
                 //  Shuffle the old values 1 element down
                 ::memmove( ptrBuff + 1, ptrBuff, (sizeMap - 1)*sizeof( value_type ) );
@@ -1069,7 +1066,8 @@ namespace bolt
                 naked_pointer ptrBuff = reinterpret_cast< naked_pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ | CL_MAP_WRITE,
                         index.m_index * sizeof( value_type ), sizeMap * sizeof( value_type ), NULL, NULL, &l_Error ) );
                 V_OPENCL( l_Error, "device_vector failed map device memory to host memory for operator[]" );*/
-                naked_pointer ptrBuff = m_devMemory.data();
+                Concurrency::array_view<T,1> av(*m_devMemory);
+                naked_pointer ptrBuff = av.data();
                 ptrBuff = ptrBuff + index.m_index;
                 //  Shuffle the old values n element down.
                 ::memmove( ptrBuff + n, ptrBuff, (sizeMap - n)*sizeof( value_type ) );
@@ -1111,7 +1109,8 @@ namespace bolt
                 naked_pointer ptrBuff = reinterpret_cast< naked_pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ | CL_MAP_WRITE,
                         index.m_index * sizeof( value_type ), sizeMap * sizeof( value_type ), NULL, NULL, &l_Error ) );
                 V_OPENCL( l_Error, "device_vector failed map device memory to host memory for iterator insert" );*/
-                naked_pointer ptrBuff = m_devMemory.data() + index.m_index;
+                Concurrency::array_view<T,1> av(*m_devMemory);
+                naked_pointer ptrBuff = av.data() + index.m_index;
                 //  Shuffle the old values n element down.
                 ::memmove( ptrBuff + n, ptrBuff, (sizeMap - n)*sizeof( value_type ) );
 
@@ -1186,8 +1185,9 @@ namespace bolt
             }
 #endif
         private:
-            Concurrency::array<T,1> m_devMemory;
             size_type m_Size;
+            Concurrency::array<T,1> *m_devMemory;
+
         };
 
     }

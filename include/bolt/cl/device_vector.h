@@ -91,7 +91,7 @@ namespace bolt
             typedef T value_type;
             typedef ptrdiff_t difference_type;
             typedef difference_type distance_type;
-            typedef size_t size_type;
+            typedef int size_type;
 
             typedef boost::shared_array< value_type > pointer;
             typedef boost::shared_array< const value_type > const_pointer;
