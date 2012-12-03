@@ -132,22 +132,32 @@ namespace bolt {
                 m_unroll(getDefault().m_unroll)
             {};
 
-            // Copy constructor for control structure
-            // Restrictions:
-            //  1.  Must not copy the internal mutex object
-            //  2.  Must not copy the multi-map structure that contains scratch buffers
-            control( const control& rhs ):
-            m_commandQueue(rhs.m_commandQueue),
-                m_useHost(rhs.m_useHost),
-                m_forceRunMode(rhs.m_forceRunMode),
-                m_debug(rhs.m_debug),
-                m_autoTune(rhs.m_autoTune),
-                m_wgPerComputeUnit(rhs.m_wgPerComputeUnit),
-                m_compileOptions(rhs.m_compileOptions),
-                m_compileForAllDevices(rhs.m_compileForAllDevices),
-                m_waitMode(rhs.m_waitMode),
-                m_unroll(rhs.m_unroll)
-            {};
+            /*
+                m_commandQueue( getDefaultCommandQueue( ) ),
+                m_useHost(UseHost),
+                m_forceRunMode(Automatic),
+                m_debug(debug::None),
+                m_autoTune(AutoTuneAll),
+                m_wgPerComputeUnit(8),
+                m_compileForAllDevices(true),
+                m_waitMode(BusyWait),
+                m_unroll(1)
+            */
+
+            control( const control& ref) :
+                m_commandQueue(ref.m_commandQueue),
+                m_useHost(ref.m_useHost),
+                m_forceRunMode(ref.m_forceRunMode),
+                m_debug(ref.m_debug),
+                m_autoTune(ref.m_autoTune),
+                m_wgPerComputeUnit(ref.m_wgPerComputeUnit),
+                m_compileOptions(ref.m_compileOptions),
+                m_compileForAllDevices(ref.m_compileForAllDevices),
+                m_waitMode(ref.m_waitMode),
+                m_unroll(ref.m_unroll)
+            {
+                //printf("control::copy construcor\n");
+            };
 
             //setters:
             //! Set the OpenCL command queue (and associated device) for Bolt algorithms to use.  

@@ -29,6 +29,7 @@
 
 /*! \file device_vector.h
  * Public header file for the device_container class
+ * \bug iterator::getBuffer() returns "pointer" to beginning of array, instead of where the iterator has incremented to; may need to map a subBuffer or something simmilar
  */
 
 /*! \brief Defining namespace for the Bolt project
@@ -342,6 +343,13 @@ namespace bolt
             {
                 static_assert( !std::is_polymorphic< value_type >::value, "AMD C++ template extensions do not support the virtual keyword yet" );
 
+                //printf("Element: %f,%f,%f,%f (Bolt constructor)\n",
+                //  (float) value.a,
+                //  (float) value.b,
+                //  (float) value.c,
+                //  (float) value.d
+                //   );
+
                 //  We want to use the context from the passed in commandqueue to initialize our buffer
                 cl_int l_Error = CL_SUCCESS;
                 ::cl::Context l_Context = m_commQueue.getInfo< CL_QUEUE_CONTEXT >( &l_Error );
@@ -354,11 +362,35 @@ namespace bolt
                     if( init )
                     {
                         std::vector< ::cl::Event > fillEvent( 1 );
+                        //printf("Filling buffer of size %ix%i\n", newSize, sizeof(value_type));
+                        try
+                        {
                         V_OPENCL( m_commQueue.enqueueFillBuffer< value_type >( m_devMemory, value, 0, newSize * sizeof( value_type ), NULL, &fillEvent.front( ) ), 
                             "device_vector failed to fill the internal buffer with the requested pattern");
+                        }
+                        catch( std::exception& e )
+                        {
+                            std::cout << "device_vector enqueueFillBuffer error condition reported:" << std::endl << e.what() << std::endl;
+                            //return 1;
+                        }
 
+                        try
+                        {
                         //  Not allowed to return until the fill operation is finished
                         V_OPENCL( m_commQueue.enqueueWaitForEvents( fillEvent ), "device_vector failed to wait for an event" );
+                        }
+                        catch( std::exception& e )
+                        {
+                            std::cout << "device_vector enqueueFillBuffer enqueueWaitForEvents error condition reported:" << std::endl << e.what() << std::endl;
+                            //return 1;
+                        }
+                        //printf("Filling buffer of size %ix%i - DONE\n", newSize, sizeof(value_type));
+                 //       printf("Element: %f,%f,%f,%f (Bolt constructor)\n",
+                 // (float) value.a,
+                 // (float) value.b,
+                 // (float) value.c,
+                 // (float) value.d
+                 //  );
                     }
                 }
             }
