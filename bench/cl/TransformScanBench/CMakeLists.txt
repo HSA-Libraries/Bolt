@@ -16,20 +16,23 @@
 ############################################################################                                                                                     
 
 # List the names of common files to compile across all platforms
-message( STATUS "Setting up CL specific benchmarking projects" )
+set( clBolt.Bench.TransformScan.Source stdafx.cpp BenchTransformScan.cpp )
+set( clBolt.Bench.TransformScan.Headers stdafx.h targetver.h ${BOLT_INCLUDE_DIR}/bolt/cl/transform_scan.h )
 
-# Include standard OpenCL headers
-include_directories( ${OPENCL_INCLUDE_DIRS} )
+set( clBolt.Bench.TransformScan.Files ${clBolt.Bench.TransformScan.Source} ${clBolt.Bench.TransformScan.Headers} )
 
-if( BUILD_clBolt )
-	# Include standard OpenCL headers
-	add_subdirectory( CopyBench )
-	add_subdirectory( CopyBuffer )
-	add_subdirectory( Fill ) 
-	add_subdirectory( Generate )
-	add_subdirectory( Reduce )
-	add_subdirectory( Scan )
-	add_subdirectory( Sort )
-	add_subdirectory( Transform )
-  add_subdirectory( TransformScanBench )
-endif( )
+add_executable( clBolt.Bench.TransformScan ${clBolt.Bench.TransformScan.Files} )
+
+target_link_libraries( clBolt.Bench.TransformScan ${Boost_LIBRARIES} clBolt.Runtime )
+
+set_target_properties( clBolt.Bench.TransformScan PROPERTIES VERSION ${Bolt_VERSION} )
+set_target_properties( clBolt.Bench.TransformScan PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
+
+set_property( TARGET clBolt.Bench.TransformScan PROPERTY FOLDER "Benchmark/OpenCL")
+
+# CPack configuration; include the executable into the package
+install( TARGETS clBolt.Bench.TransformScan
+	RUNTIME DESTINATION ${BIN_DIR}
+	LIBRARY DESTINATION ${LIB_DIR}
+	ARCHIVE DESTINATION ${LIB_DIR}
+	)

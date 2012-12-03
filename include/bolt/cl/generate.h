@@ -34,7 +34,7 @@ namespace bolt {
         /*! \addtogroup transformations
         *   \ingroup algorithms
         *   \p generate fills a range with values generated from a Generator,
-        *   a function of no arguments, such as rand().
+        *   a function of no arguments.
         */ 
         
         /*! \addtogroup transform
@@ -42,7 +42,7 @@ namespace bolt {
         *   \{
         */
 
-        /*! generate assigns the result of invoking gen, a function object that takes no arguments, to each element in the range [first,last).
+        /*! generate assigns gen(), to each element in the range [first,last).
          *  
          *  \param ctl      Optional control structure to control command-queue, debug, tuning, etc.  See bolt::cl::control.
          *  \param first    The first element in the range of interest.

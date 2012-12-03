@@ -79,6 +79,7 @@ set( clBolt.Runtime.Headers
         ${clBolt.Include.Dir}/sort.h 
         ${clBolt.Include.Dir}/transform.h 
         ${clBolt.Include.Dir}/transform_reduce.h
+        ${clBolt.Include.Dir}/transform_scan.h
     )
 
 set( clBolt.Runtime.Headers.Misc
@@ -96,6 +97,7 @@ set( clBolt.Runtime.Headers.Detail
         ${clBolt.Include.Dir}/detail/sort.inl
         ${clBolt.Include.Dir}/detail/transform.inl
         ${clBolt.Include.Dir}/detail/transform_reduce.inl
+        ${clBolt.Include.Dir}/detail/transform_scan.inl
     )
 
 set( clBolt.Runtime.clFiles 
@@ -103,6 +105,7 @@ set( clBolt.Runtime.clFiles
         reduce_kernels.cl 
         transform_kernels.cl 
         transform_reduce_kernels.cl
+        transform_scan_kernels.cl
         scan_kernels.cl
         sort_kernels.cl
     )

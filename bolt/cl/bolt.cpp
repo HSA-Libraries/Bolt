@@ -34,6 +34,7 @@
 #include "bolt/sort_kernels.hpp"
 #include "bolt/transform_kernels.hpp"
 #include "bolt/transform_reduce_kernels.hpp"
+#include "bolt/transform_scan_kernels.hpp"
 
 namespace bolt {
     namespace cl {
