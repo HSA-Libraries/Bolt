@@ -692,6 +692,8 @@ TEST( Vector, InsertFloatRangeIterator )
     EXPECT_FLOAT_EQ( 4.0f, dV[ 3 ] );
     EXPECT_FLOAT_EQ( 5.0f, dV[ 4 ] );
 }
+//TODO - add test case for all the device_vector constructors. 
+//
 
 int _tmain(int argc, _TCHAR* argv[])
 {

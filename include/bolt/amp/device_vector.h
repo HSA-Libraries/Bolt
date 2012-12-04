@@ -23,6 +23,7 @@
 #include <type_traits>
 #include <numeric>
 #include <amp.h>
+#include <bolt/amp/control.h>
 #include <exception> // For exception class
 #include <boost/iterator/iterator_facade.hpp>
 #include <boost/iterator/reverse_iterator.hpp>
@@ -116,7 +117,7 @@ namespace bolt
                 */
                 const Concurrency::array<T,1> getBuffer( ) const
                 {
-                    return m_Container.m_devMemory;
+                    return *(m_Container.m_devMemory);
                 }
 
                 /*! \brief A get accessor function to return the encapsulated device buffer for non-const objects.
@@ -128,7 +129,7 @@ namespace bolt
                 */
                 Concurrency::array<T,1>& getBuffer( )
                 {
-                    return m_Container.m_devMemory;
+                    return *(m_Container.m_devMemory);
                 }
 
                 /*! \brief A get accessor function to return the encapsulated device_vector.
@@ -293,7 +294,7 @@ namespace bolt
             *   \todo Find a way to be able to unambiguously specify memory flags for this constructor, that is not
             *   confused with the size constructor below.
             */
-            device_vector( ): m_Size( 0 ), m_devMemory(NULL)
+            device_vector( const control& ctl = control::getDefault( ) ): m_Size( 0 ), m_devMemory(NULL)
             {
                 static_assert( !std::is_polymorphic< value_type >::value, "AMD C++ template extensions do not support the virtual keyword yet" );
             }
@@ -308,17 +309,16 @@ namespace bolt
             */
 
             device_vector( size_type newSize, const value_type& value = value_type( ),
-                bool init = true ): m_Size( newSize )
+                bool init = true, const control& ctl = control::getDefault( ) ): m_Size( newSize )
             {
                 static_assert( !std::is_polymorphic< value_type >::value, "AMD C++ template extensions do not support the virtual keyword yet" );
-                m_devMemory = new Concurrency::array<T,1>((int)m_Size);
+                m_devMemory = new Concurrency::array<T,1>( (int)m_Size/*, ctl.getAccelerator().default_view()*/);
 
                 if( m_Size > 0 )
                 {
                     if( init )
                     {
-                        Concurrency::extent<1> ext(m_devMemory->get_extent());
-                        Concurrency::array_view<T> m_devMemoryAV = m_devMemory->section(ext);
+                        Concurrency::array_view<T> m_devMemoryAV(*m_devMemory);
                         Concurrency::parallel_for_each(m_devMemoryAV.extent, 
                         [=](Concurrency::index<1> idx) restrict(amp)
                         {
@@ -328,7 +328,7 @@ namespace bolt
                     }
                 }
             }
-#if 1
+
             /*! \brief A constructor that creates a new device_vector using a range specified by the user.
             *   \param begin An iterator pointing at the beginning of the range.
             *   \param end An iterator pointing at the end of the range.
@@ -338,33 +338,18 @@ namespace bolt
             *   \note Ignore the enable_if<> parameter; it prevents this constructor from being called with integral types.
             */
             template< typename InputIterator >
-            device_vector( const InputIterator begin, size_type newSize, cl_mem_flags flags = CL_MEM_READ_WRITE,
+            device_vector( const InputIterator begin, size_type newSize,
                 bool init = true, const control& ctl = control::getDefault( ),
-                typename std::enable_if< !std::is_integral< InputIterator >::value >::type* = 0 ): m_Size( newSize ), m_commQueue( ctl.commandQueue( ) ), m_Flags( flags )
+                typename std::enable_if< !std::is_integral< InputIterator >::value >::type* = 0 )
             {
                 static_assert( std::is_convertible< value_type, typename std::iterator_traits< InputIterator >::value_type >::value,
                     "iterator value_type does not convert to device_vector value_type" );
-                static_assert( !std::is_polymorphic< value_type >::value, "AMD C++ template extensions do not support the virtual keyword yet" );
-
-                //  We want to use the context from the passed in commandqueue to initialize our buffer
-                cl_int l_Error = CL_SUCCESS;
-                ::cl::Context l_Context = m_commQueue.getInfo< CL_QUEUE_CONTEXT >( &l_Error );
-                V_OPENCL( l_Error, "device_vector failed to query for the context of the ::cl::CommandQueue object" );
-
-                if( m_Flags & CL_MEM_USE_HOST_PTR )
-                {
-                    m_devMemory = ::cl::Buffer( l_Context, m_Flags, m_Size * sizeof( value_type ),
-                        reinterpret_cast< value_type* >( const_cast< value_type* >( &*begin ) ) );
-                }
-                else
-                {
-                    m_devMemory = ::cl::Buffer( l_Context, m_Flags, m_Size * sizeof( value_type ) );
-
-                    if( init )
-                    {
-                        ::cl::copy( begin, begin+m_Size, m_devMemory );
-                    }
-                }
+                //static_assert( !std::is_polymorphic< value_type >::value, "AMD C++ template extensions do not support the virtual keyword yet" );
+                
+                Concurrency::extent<1> ext(newSize);
+                m_devMemory = new Concurrency::array<T,1>(ext, begin, ctl.getAccelerator().default_view);
+                m_Size = newSize;
+                //No need to copy the data. AMP specification says that it will copy the InputIterator also.
             };
 
             /*! \brief A constructor that creates a new device_vector using a range specified by the user.
@@ -375,46 +360,30 @@ namespace bolt
             *   \note Ignore the enable_if<> parameter; it prevents this constructor from being called with integral types.
             */
             template< typename InputIterator >
-            device_vector( const InputIterator begin, const InputIterator end, cl_mem_flags flags = CL_MEM_READ_WRITE, const control& ctl = control::getDefault( ),
-                typename std::enable_if< !std::is_integral< InputIterator >::value >::type* = 0 ): m_commQueue( ctl.commandQueue( ) ), m_Flags( flags )
+            device_vector( const InputIterator begin, const InputIterator end, const control& ctl = control::getDefault( ),
+                typename std::enable_if< !std::is_integral< InputIterator >::value >::type* = 0 ): 
             {
                 static_assert( std::is_convertible< value_type, typename std::iterator_traits< InputIterator >::value_type >::value,
                     "iterator value_type does not convert to device_vector value_type" );
-                static_assert( !std::is_polymorphic< value_type >::value, "AMD C++ template extensions do not support the virtual keyword yet" );
+                //static_assert( !std::is_polymorphic< value_type >::value, "AMD C++ template extensions do not support the virtual keyword yet" );
 
-                //  We want to use the context from the passed in commandqueue to initialize our buffer
-                cl_int l_Error = CL_SUCCESS;
-                ::cl::Context l_Context = m_commQueue.getInfo< CL_QUEUE_CONTEXT >( &l_Error );
-                V_OPENCL( l_Error, "device_vector failed to query for the context of the ::cl::CommandQueue object" );
-
-                m_Size = std::distance( begin, end );
-
-                if( m_Flags & CL_MEM_USE_HOST_PTR )
-                {
-                    m_devMemory = ::cl::Buffer( l_Context, m_Flags, m_Size * sizeof( value_type ),
-                        reinterpret_cast< value_type* >( const_cast< value_type* >( &*begin ) ) );
-                }
-                else
-                {
-                    m_devMemory = ::cl::Buffer( l_Context, m_Flags, m_Size * sizeof( value_type ) );
-
-                    ::cl::copy( begin, end, m_devMemory );
-                }
+                int newSize = std::distance(begin, end);
+                Concurrency::extent<1> ext(newSize);
+                m_devMemory = new Concurrency::array<T,1>(ext, begin, end, ctl.getAccelerator().default_view);
+                m_Size = newSize;
+                //No need to copy the data. AMP specification says that it will copy the InputIterator also.
             };
 
             /*! \brief A constructor that creates a new device_vector using a pre-initialized buffer supplied by the user.
             *   \param rhs A pre-existing ::cl::Buffer supplied by the user.
             *   \param ctl A Bolt control class for copy operations; a default is used if not supplied by the user.
             */
-            device_vector( const ::cl::Buffer& rhs, const control& ctl = control::getDefault( ) ): m_devMemory( rhs ), m_commQueue( ctl.commandQueue( ) )
+
+            device_vector( Concurrency::array<T, 1>& rhs, const control& ctl = control::getDefault( ) ): m_devMemory( rhs )
             {
                 static_assert( !std::is_polymorphic< value_type >::value, "AMD C++ template extensions do not support the virtual keyword yet" );
 
                 m_Size = capacity( );
-
-                cl_int l_Error = CL_SUCCESS;
-                m_Flags = m_devMemory.getInfo< CL_MEM_FLAGS >( &l_Error );
-                V_OPENCL( l_Error, "device_vector failed to query for the memory flags of the ::cl::Buffer object" );
             };
 
             //  Member functions
@@ -429,7 +398,7 @@ namespace bolt
             *   \warning If the device_vector must reallocate, all previous iterators, references, and pointers are invalidated.
             *   \warning The ::cl::CommandQueue is not a STD reserve( ) parameter
             */
-#endif
+
             void resize( size_type reqSize, const value_type& val = value_type( ) )
             {
                 size_type cap = capacity( );
