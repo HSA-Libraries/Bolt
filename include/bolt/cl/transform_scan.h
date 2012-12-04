@@ -23,47 +23,62 @@
 #include <bolt/cl/functional.h>
 #include <bolt/cl/device_vector.h>
 
+/*! \file transform_scan.h
+*/
+
 namespace bolt
 {
     namespace cl
     {
-      // TODO documentation needs to be updated
-
+      
         /*! \addtogroup algorithms
          */
 
         /*! \addtogroup PrefixSums Prefix Sums
         *   \ingroup algorithms
-        *   The sorting Algorithm for sorting the given InputIterator.
         */ 
 
-        /*! \addtogroup transform_scan
+        /*! \addtogroup TransformedPrefixSums Transformed Prefix Sums
         *   \ingroup PrefixSums
         *   \{
-        *   \todo The user_code parameter is not used yet.
         */
 
-        /*! \brief transform_inclusive_scan calculates a running sum over a range of values, inclusive of the current value.
-        *   The result value at iterator position \p i is the running sum of all values less than \p i in the input range.
+        /*! \brief transform_inclusive_scan performs, on a sequence, the transformation defined by a unary operator, then the inclusive scan defined by a binary operator.
         *
-        * \param first The first iterator in the input range to be scanned.
-        * \param last  The last iterator in the input range to be scanned.
-        * \param result  The first iterator in the output range.
-        * \param user_code A client-specified string that is appended to the generated OpenCL kernel.
-        * \tparam InputIterator An iterator signifying the range is used as input.
-        * \tparam OutputIterator An iterator signifying the range is used as output.
-        * \return An iterator pointing at the end of the result range.
+        * \param first The first element of the input sequence.
+        * \param last  The last element of the input sequence.
+        * \param result  The first element of the output sequence.
+        * \param unary_op Unary operator for transformation.
+        * \param binary_op Binary operator for scanning transformed elements.
+        * \param user_code A user-specified string that is preppended to the generated OpenCL kernel.
+        *
+        * \tparam InputIterator is a model of Input Iterator.
+        * \tparam OutputIterator is a model of Output Iterator.
+        * \tparam UnaryFunction is a model of Unary Function which takes as input \c InputIterator's \c value_type and whose return type is convertable to \c BinaryFunction's \c input types.
+        * \tparam BinaryFunction is a model of Binary Function which takes as input two values convertable from \c UnaryFunction's \c return type and whose return type is convertable to \c OutputIterator's \c value_type.
+        * \return result+(last-first).
         *
         * \code
         * #include "bolt/cl/scan.h"
+        * ...
         *
-        * int a[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+        * bolt::cl::square<int> sqInt;
+        * bolt::cl::plut<int> plInt;
         *
-        * // Calculate the inclusive scan of an input range, modifying the values in-place.
-        * bolt::cl::inclusive_scan( a, a+10, a );
-        * // a => {1, 3, 6, 10, 15, 21, 28, 36, 45, 55}
+        * int a[10] = {1, -2, 3, -4, 5, -6, 7, -8, 9, -10};
+        *
+        * bolt::cl::transform_inclusive_scan( a, a+10, a, sqInt, plInt );
+        * // a => {1, 5, 14, 30, 55, 91, 140, 204, 285, 385}
         *  \endcode
+        *
+        * \sa transform
+        * \sa inclusive_scan
+        * \sa http://www.sgi.com/tech/stl/transform.html
         * \sa http://www.sgi.com/tech/stl/partial_sum.html
+        * \sa http://www.sgi.com/tech/stl/InputIterator.html
+        * \sa http://www.sgi.com/tech/stl/OutputIterator.html
+        * \sa http://www.sgi.com/tech/stl/UnaryFunction.html
+        * \sa http://www.sgi.com/tech/stl/BinaryFunction.html
         */
         template<
             typename InputIterator,
@@ -79,6 +94,46 @@ namespace bolt
             BinaryFunction binary_op,
             const std::string& user_code="" );
 
+        /*! \brief transform_inclusive_scan performs, on a sequence, the transformation defined by a unary operator, then the inclusive scan defined by a binary operator.
+        *
+        * \param ctl   Optional control structure to control command-queue, debug, tuning, etc.  See bolt::cl::control.
+        * \param first The first element of the input sequence.
+        * \param last  The last element of the input sequence.
+        * \param result  The first element of the output sequence.
+        * \param unary_op Unary operator for transformation.
+        * \param binary_op Binary operator for scanning transformed elements.
+        * \param user_code A user-specified string that is preppended to the generated OpenCL kernel.
+        *
+        * \tparam InputIterator is a model of Input Iterator.
+        * \tparam OutputIterator is a model of Output Iterator.
+        * \tparam UnaryFunction is a model of Unary Function which takes as input \c InputIterator's \c value_type and whose return type is convertable to \c BinaryFunction's \c input types.
+        * \tparam BinaryFunction is a model of Binary Function which takes as input two values convertable from \c UnaryFunction's \c return type and whose return type is convertable to \c OutputIterator's \c value_type.
+        * \return result+(last-first).
+        *
+        * \code
+        * #include "bolt/cl/scan.h"
+        * ...
+        *
+        * bolt::cl::square<int> sqInt;
+        * bolt::cl::plut<int> plInt;
+        * bolt::cl::control ctrl = control::getDefault();
+        * ...
+        *
+        * int a[10] = {1, -2, 3, -4, 5, -6, 7, -8, 9, -10};
+        *
+        * bolt::cl::transform_inclusive_scan( ctrl, a, a+10, a, sqInt, plInt );
+        * // a => {1, 5, 14, 30, 55, 91, 140, 204, 285, 385}
+        *  \endcode
+        *
+        * \sa transform
+        * \sa inclusive_scan
+        * \sa http://www.sgi.com/tech/stl/transform.html
+        * \sa http://www.sgi.com/tech/stl/partial_sum.html
+        * \sa http://www.sgi.com/tech/stl/InputIterator.html
+        * \sa http://www.sgi.com/tech/stl/OutputIterator.html
+        * \sa http://www.sgi.com/tech/stl/UnaryFunction.html
+        * \sa http://www.sgi.com/tech/stl/BinaryFunction.html
+        */
         template<
             typename InputIterator,
             typename OutputIterator,
@@ -94,6 +149,45 @@ namespace bolt
             BinaryFunction binary_op,
             const std::string& user_code="" );
 
+        /*! \brief transform_exclusive_scan performs, on a sequence, the transformation defined by a unary operator, then the exclusive scan defined by a binary operator.
+        *
+        * \param first The first element of the input sequence.
+        * \param last  The last element of the input sequence.
+        * \param result  The first element of the output sequence.
+        * \param unary_op Unary operator for transformation.
+        * \param init  The value used to initialize the output scan sequence.
+        * \param binary_op Binary operator for scanning transformed elements.
+        * \param user_code A user-specified string that is preppended to the generated OpenCL kernel.
+        *
+        * \tparam InputIterator is a model of Input Iterator.
+        * \tparam OutputIterator is a model of Output Iterator.
+        * \tparam UnaryFunction is a model of Unary Function which takes as input \c InputIterator's \c value_type and whose return type is convertable to \c BinaryFunction's \c input types.
+        * \tparam T is convertible to \c OutputIterator's value_type.
+        * \tparam BinaryFunction is a model of Binary Function which takes as input two values convertable from \c UnaryFunction's \c return type and whose return type is convertable to \c OutputIterator's \c value_type.
+        * \return result+(last-first).
+        *
+        * \code
+        * #include "bolt/cl/scan.h"
+        * ...
+        *
+        * bolt::cl::square<int> sqInt;
+        * bolt::cl::plut<int> plInt;
+        *
+        * int a[10] = {1, -2, 3, -4, 5, -6, 7, -8, 9, -10};
+        *
+        * bolt::cl::transform_exclusive_scan( a, a+10, a, sqInt, 0, plInt );
+        * // a => { 0, 1, 5, 14, 30, 55, 91, 140, 204, 285}
+        *  \endcode
+        *
+        * \sa transform
+        * \sa exclusive_scan
+        * \sa http://www.sgi.com/tech/stl/transform.html
+        * \sa http://www.sgi.com/tech/stl/partial_sum.html
+        * \sa http://www.sgi.com/tech/stl/InputIterator.html
+        * \sa http://www.sgi.com/tech/stl/OutputIterator.html
+        * \sa http://www.sgi.com/tech/stl/UnaryFunction.html
+        * \sa http://www.sgi.com/tech/stl/BinaryFunction.html
+        */
         template<
             typename InputIterator,
             typename OutputIterator,
@@ -110,6 +204,48 @@ namespace bolt
             BinaryFunction binary_op,
             const std::string& user_code="" );
 
+        /*! \brief transform_exclusive_scan performs, on a sequence, the transformation defined by a unary operator, then the exclusive scan defined by a binary operator.
+        *
+        * \param ctl   Optional control structure to control command-queue, debug, tuning, etc.  See bolt::cl::control.
+        * \param first The first element of the input sequence.
+        * \param last  The last element of the input sequence.
+        * \param result  The first element of the output sequence.
+        * \param unary_op Unary operator for transformation.
+        * \param init  The value used to initialize the output scan sequence.
+        * \param binary_op Binary operator for scanning transformed elements.
+        * \param user_code A user-specified string that is preppended to the generated OpenCL kernel.
+        *
+        * \tparam InputIterator is a model of Input Iterator.
+        * \tparam OutputIterator is a model of Output Iterator.
+        * \tparam UnaryFunction is a model of Unary Function which takes as input \c InputIterator's \c value_type and whose return type is convertable to \c BinaryFunction's \c input types.
+        * \tparam T is convertible to \c OutputIterator's value_type.
+        * \tparam BinaryFunction is a model of Binary Function which takes as input two values convertable from \c UnaryFunction's \c return type and whose return type is convertable to \c OutputIterator's \c value_type.
+        * \return result+(last-first).
+        *
+        * \code
+        * #include "bolt/cl/scan.h"
+        * ...
+        *
+        * bolt::cl::square<int> sqInt;
+        * bolt::cl::plut<int> plInt;
+        * bolt::cl::control ctrl = control::getDefault();
+        * ...
+        *
+        * int a[10] = {1, -2, 3, -4, 5, -6, 7, -8, 9, -10};
+        *
+        * bolt::cl::transform_exclusive_scan( ctrl, a, a+10, a, sqInt, 0, plInt );
+        * // a => { 0, 1, 5, 14, 30, 55, 91, 140, 204, 285}
+        *  \endcode
+        *
+        * \sa transform
+        * \sa exclusive_scan
+        * \sa http://www.sgi.com/tech/stl/transform.html
+        * \sa http://www.sgi.com/tech/stl/partial_sum.html
+        * \sa http://www.sgi.com/tech/stl/InputIterator.html
+        * \sa http://www.sgi.com/tech/stl/OutputIterator.html
+        * \sa http://www.sgi.com/tech/stl/UnaryFunction.html
+        * \sa http://www.sgi.com/tech/stl/BinaryFunction.html
+        */
         template<
             typename InputIterator,
             typename OutputIterator,
