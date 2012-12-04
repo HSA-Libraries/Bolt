@@ -23,7 +23,7 @@ set( Boost_USE_STATIC_LIBS   ON )
 set( Boost_DETAILED_FAILURE_MSG   ON )
 
 # Set the test folder directory. This is common to cl and amp. 
-set( BOLT_CL_TEST_DIR ${BOLT_TEST_DIR}/amp )
+set( BOLT_AMP_TEST_DIR ${BOLT_TEST_DIR}/amp )
 
 # set( Boost_DEBUG ON )
 

@@ -15,8 +15,7 @@
 
 ***************************************************************************/                                                                                     
 
-#include "stdafx.h"
-
+#include "common/stdafx.h"
 #include <vector>
 #include <array>
 

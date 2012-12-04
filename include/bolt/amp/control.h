@@ -144,15 +144,15 @@ namespace bolt {
             * following example.  Use this technique rather than separate calls to the debug() API; 
             * each call resets the debug level, rather than merging with the existing debug() setting.
             * \code
-            * bolt::cl::control myControl;
+            * bolt::amp::control myControl;
             * // Show example of combining two debug options with the '+' sign.
-            * myControl.debug(bolt::cl::control::debug::Compile + bolt::cl::control:debug::SaveCompilerTemps);
+            * myControl.debug(bolt::amp::control::debug::Compile + bolt::amp::control:debug::SaveCompilerTemps);
             * \endcode
             */
             void setDebug(unsigned debug) { m_debug = debug; };
 
             /*! Set the work-groups-per-compute unit that will be used for reduction-style operations (reduce, transform_reduce).
-                Higher numbers can hide latency by improving the occupancy but will increase the amoutn of data that
+                Higher numbers can hide latency by improving the occupancy but will increase the amount of data that
                 has to be reduced in the final, less efficient step.  Experimentation may be required to find
                 the optimal point for a given algorithm and device; typically 8-12 will deliver good results */
             void setWGPerComputeUnit(int wgPerComputeUnit) { m_wgPerComputeUnit = wgPerComputeUnit; }; 
@@ -179,11 +179,11 @@ namespace bolt {
               * structure is modified as part of the application initialiation; then, as other \p control structures
               * are created, they pick up the modified defaults.  Some examples:
               * \code
-              * bolt::cl::control myControl = bolt::cl::getDefault();  // copy existing default control.
-              * bolt::cl::control myControl;  // same as last line - the constructor also copies values from the default control
+              * bolt::amp::control myControl = bolt::cl::getDefault();  // copy existing default control.
+              * bolt::amp::control myControl;  // same as last line - the constructor also copies values from the default control
               *
               * // Modify a setting in the default \p control
-              * bolt::cl::control::getDefault().compileOptions("-g"); A
+              * bolt::amp::control::getDefault().compileOptions("-g"); 
               * \endcode
               */
             static control &getDefault() 
@@ -193,17 +193,10 @@ namespace bolt {
                 return _defaultControl; 
             };
 
-            static void printPlatforms( bool printDevices = true, cl_device_type deviceType = CL_DEVICE_TYPE_ALL );
+            //TODO - implement the below function in control.cpp
+            /*static void printPlatforms( bool printDevices = true, cl_device_type deviceType = CL_DEVICE_TYPE_ALL );
             static void printPlatformsRange( std::vector< ::cl::Platform >::iterator begin, std::vector< ::cl::Platform >::iterator end, 
-                                            bool printDevices = true, cl_device_type deviceType = CL_DEVICE_TYPE_ALL );
-
-               /*! \brief Convenience method to help users create and initialize an OpenCL CommandQueue.
-                * \todo The default commandqueue is created with a context that contains all GPU devices in platform.  Since kernels
-                * are only compiled on first invocation, switching between GPU devices is OK, but switching to a CPU 
-                * device afterwards causes an exception because the kernel was not compiled for CPU.  Should we provide 
-                * more options and expose more intefaces to the user?
-                */
-            //static ::cl::CommandQueue getDefaultCommandQueue( );
+                                            bool printDevices = true, cl_device_type deviceType = CL_DEVICE_TYPE_ALL );*/
 
         private:
 
@@ -228,7 +221,6 @@ namespace bolt {
             int                 m_wgPerComputeUnit;
             e_WaitMode          m_waitMode;
             int                 m_unroll;
-
         };
     };
 };
@@ -241,10 +233,9 @@ namespace bolt {
 //   * Add the field to the public constructor, copying from the _defaultControl.
 
 // Sample usage:
-// bolt::control c(myCmdQueue);
-// c.debug(bolt::control::ShowCompile);
-// bolt::cl::reduce(c, a.begin(), a.end(), std::plus<int>);
-// 
-//
-// reduce (bolt::control(myCmdQueue), 
+// Concurrency::accelerator::default_accelerator 
+// bolt::amp::control ctl(Concurrency::accelerator::default_accelerator);
+// c.debug(bolt::amp::control::ShowCompile);
+// bolt::amp::reduce(ctl, a.begin(), a.end(), std::plus<int>);
+
 
