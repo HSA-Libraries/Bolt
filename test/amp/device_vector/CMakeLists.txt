@@ -16,8 +16,11 @@
 ############################################################################                                                                                     
 
 # List the names of common files to compile across all platforms
-set( ampBolt.Test.Device.Vector.Source ${BOLT_AMP_TEST_DIR}/common/stdafx.cpp device_vector.cpp )
-set( ampBolt.Test.Device.Vector.Headers stdafx.h targetver.h ${BOLT_INCLUDE_DIR}/bolt/amp/device_vector.h )
+set( ampBolt.Test.Device.Vector.Source ${BOLT_AMP_TEST_DIR}/common/stdafx.cpp 
+                                        device_vector.cpp )
+set( ampBolt.Test.Device.Vector.Headers ${BOLT_AMP_TEST_DIR}/common/stdafx.h 
+                                        ${BOLT_AMP_TEST_DIR}/common/targetver.h 
+                                        ${BOLT_INCLUDE_DIR}/bolt/amp/device_vector.h )
 
 set( ampBolt.Test.Device.Vector.Files ${ampBolt.Test.Device.Vector.Source} ${ampBolt.Test.Device.Vector.Headers} )
 

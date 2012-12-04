@@ -40,7 +40,7 @@ endif( )
 include_directories( ${Boost_INCLUDE_DIRS} )
 
 # Include standard OpenCL headers
-include_directories( ${OPENCL_INCLUDE_DIRS} ${BOLT_CL_TEST_DIR} ) 
+include_directories( ${OPENCL_INCLUDE_DIRS} ${BOLT_AMP_TEST_DIR} ) 
 
 add_subdirectory( reduce )
 add_subdirectory( scan )
