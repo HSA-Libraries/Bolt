@@ -61,6 +61,26 @@ namespace bolt
         class device_vector
         {
 
+            /*! \brief Class used with shared_ptr<> as a custom deleter, to unmap a buffer that has been mapped with 
+            *   device_vector data() method
+            */
+            template< typename Container >
+            class UnMapBufferFunctor
+            {
+                Container& m_Container;
+
+            public:
+                //  Basic constructor requires a reference to the container and a positional element
+                UnMapBufferFunctor( Container& rhs ): m_Container( rhs )
+                {}
+
+                void operator( )( const void* pBuff )
+                {
+                    // TODO - I don't know how it worked. but adding this worked
+                    std::cout << "UnmapBufferFunctor called\n";
+                }
+            };
+
             typedef T* naked_pointer;
             typedef const T* const_naked_pointer;
 
@@ -385,6 +405,15 @@ namespace bolt
 
                 m_Size = capacity( );
             };
+
+            //destructor for device_vector
+            ~device_vector()
+            {
+                if (m_devMemory != NULL)
+                {
+                    delete(m_devMemory);
+                }
+            }
 
             //  Member functions
 
@@ -764,35 +793,23 @@ namespace bolt
                 return tmpRef;
             }
 
-            //Do I need the boost::shared_array
+            //Yes you need the shared_array object. 
+            //Ask kent for a better solution. 
             pointer data( void )
             {
-                /*cl_int l_Error = CL_SUCCESS;
-
-                naked_pointer ptrBuff = reinterpret_cast< naked_pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ | CL_MAP_WRITE,
-                    0, m_Size * sizeof( value_type ), NULL, NULL, &l_Error ) );
-
-                V_OPENCL( l_Error, "device_vector failed map device memory to host memory for operator[]" );
-
-                pointer sp( ptrBuff, UnMapBufferFunctor< device_vector< value_type > >( *this ) );
-                */
+                // TODO need to understand what Array_view.data is returning. Who should free the pointer? 
+                // below av.data(). It should anyway be freed in the UnMapBufferFunctor Functor
                 Concurrency::array_view<T,1> av(*m_devMemory);
-                pointer sp( av.data() );
+                pointer sp( av.data(),  UnMapBufferFunctor< device_vector< value_type > >( *this ) );
                 return  sp;
             }
 
             const_pointer data( void ) const
             {
-                /*cl_int l_Error = CL_SUCCESS;
-
-                const_naked_pointer ptrBuff = reinterpret_cast< const_naked_pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ,
-                    0, m_Size * sizeof( value_type ), NULL, NULL, &l_Error ) );
-                V_OPENCL( l_Error, "device_vector failed map device memory to host memory for operator[]" );
-
-                const_pointer sp( ptrBuff, UnMapBufferFunctor< const device_vector< value_type > >( *this ) );
-                return sp;*/
+                // TODO need to understand what Array_view.data is returning. Who should free the pointer? 
+                // below av.data(). It should anyway be freed in the UnMapBufferFunctor Functor
                 Concurrency::array_view<T,1> av(*m_devMemory);
-                pointer sp( av.data() );
+                pointer sp( av.data(),  UnMapBufferFunctor< device_vector< value_type > >( *this )  );
                 return  sp;
             }
 

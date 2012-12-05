@@ -33,14 +33,14 @@ if( BOOST_ROOT )
     # This will define Boost_FOUND
 else( )
     message( "Configure Bolt in <BOLT_ROOT>/bin to build the SuperBuild which will download and build Boost automatically" )    
-    message( SEND_ERROR "The OpenCL Bolt library requires BOOST_ROOT to be defined" )
+    message( SEND_ERROR "The AMP Bolt library requires BOOST_ROOT to be defined" )
 endif( )
 
 # Include standard Boost headers
 include_directories( ${Boost_INCLUDE_DIRS} )
 
 # Include standard OpenCL headers
-include_directories( ${OPENCL_INCLUDE_DIRS} ${BOLT_AMP_TEST_DIR} ) 
+include_directories( ${BOLT_AMP_TEST_DIR} ) 
 
 add_subdirectory( reduce )
 add_subdirectory( scan )
