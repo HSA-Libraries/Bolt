@@ -215,6 +215,23 @@ BOLT_FUNCTOR(SquareI2,
 );
 SquareI2 sI2;
 
+/******************************************************************************
+ *  Heterogeneous Unary Operator
+ *****************************************************************************/
+BOLT_FUNCTOR(squareD4I2,
+    struct squareD4I2
+    {
+        uddtI2 operator()(const uddtD4& rhs) const
+        {
+            uddtI2 ret;
+            ret.a = (int) (rhs.a*rhs.b);
+            ret.b = (int) (rhs.c*rhs.d);
+            return ret;
+        }
+    }; 
+);
+squareD4I2 sD4I2;
+
 
 /******************************************************************************
  *  Mixed float and int
@@ -307,10 +324,6 @@ BOLT_FUNCTOR(SquareM3,
 SquareM3 sM3;
 
 
-
-// Define two unary operators
-
-// square
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -544,6 +557,28 @@ TEST(NegateScanUserDefined, ExclMixedM3)
     ::std::transform(   refInput.begin(), refInput.end(),  refInput.begin(), nM3);
     refInput[0] = identityMixM3;
     ::std::partial_sum( refInput.begin(), refInput.end(), refOutput.begin(), mM3);
+
+    // compare results
+    cmpArrays(refOutput, output);
+}
+
+TEST(Mixed, IncAddInt2)
+{
+    //setup containers
+    int length = (1<<16)+23;
+//    bolt::cl::negate< uddtI2 > nI2;
+    uddtD4 initialD4 = {1.234, 2.345, 3.456, 4.567};
+    bolt::cl::device_vector< uddtD4 > input(  length, initialD4,  CL_MEM_READ_WRITE, true  );
+    bolt::cl::device_vector< uddtI2 > output( length, identityAddI2, CL_MEM_READ_WRITE, false );
+    std::vector< uddtD4 > refInput( length, initialD4 );
+    std::vector< uddtI2 > refIntermediate( length, identityAddI2 );
+    std::vector< uddtI2 > refOutput( length, identityAddI2 );
+
+    // call transform_scan
+    AddI2 aI2;
+    bolt::cl::transform_inclusive_scan( input.begin(), input.end(), output.begin(), sD4I2, aI2 );
+    ::std::transform(   refInput.begin(), refInput.end(),  refIntermediate.begin(), sD4I2); // transform in-place
+    ::std::partial_sum( refIntermediate.begin(), refIntermediate.end(), refOutput.begin(), aI2); // out-of-place scan
 
     // compare results
     cmpArrays(refOutput, output);

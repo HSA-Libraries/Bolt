@@ -51,8 +51,8 @@ namespace bolt
             BinaryFunction binary_op,
             const std::string& user_code )
         {
-            typedef std::iterator_traits<InputIterator>::value_type iType;
-            iType init; memset(&init, 0, sizeof(iType) );
+            typedef std::iterator_traits<OutputIterator>::value_type oType;
+            oType init; memset(&init, 0, sizeof(oType) );
             return detail::transform_scan_detect_random_access(
                 control::getDefault( ),
                 first,
@@ -80,8 +80,8 @@ namespace bolt
             BinaryFunction binary_op,
             const std::string& user_code )
         {
-            typedef std::iterator_traits<InputIterator>::value_type iType;
-            iType init; memset(&init, 0, sizeof(iType) );
+            typedef std::iterator_traits<OutputIterator>::value_type oType;
+            oType init; memset(&init, 0, sizeof(oType) );
             return detail::transform_scan_detect_random_access(
                 ctl,
                 first,
@@ -171,7 +171,8 @@ namespace bolt
                 static void TransformScanSpecialization(
                     std::vector< ::cl::Kernel >* scanKernels,
                     const std::string& cl_code,
-                    const std::string& valueTypeName,
+                    const std::string& iTypeName,
+                    const std::string& oTypeName,
                     const std::string& unaryTypeName,
                     const std::string& binaryTypeName,
                     const control* ctl )
@@ -193,14 +194,14 @@ namespace bolt
                         "template __attribute__((mangled_name(" + kernelNames[ 0 ] + "Instantiated)))\n"
                         "__attribute__((reqd_work_group_size("+k0WgSz+",1,1)))\n"
                         "kernel void " + kernelNames[ 0 ] + "(\n"
-                        "global " + valueTypeName + "* output,\n"
-                        "global " + valueTypeName + "* input,\n"
-                        "" + valueTypeName + " identity,\n"
+                        "global " + oTypeName + "* output,\n"
+                        "global " + iTypeName + "* input,\n"
+                        ""        + oTypeName + " identity,\n"
                         "const uint vecSize,\n"
-                        "local " + valueTypeName + "* lds,\n"
+                        "local "  + oTypeName + "* lds,\n"
                         "global " + unaryTypeName + "* unaryOp,\n"
                         "global " + binaryTypeName + "* binaryOp,\n"
-                        "global " + valueTypeName + "* scanBuffer,\n"
+                        "global " + oTypeName + "* scanBuffer,\n"
                         "int exclusive\n"
                         ");\n\n"
 
@@ -208,11 +209,11 @@ namespace bolt
                         "template __attribute__((mangled_name(" + kernelNames[ 1 ] + "Instantiated)))\n"
                         "__attribute__((reqd_work_group_size("+k1WgSz+",1,1)))\n"
                         "kernel void " + kernelNames[ 1 ] + "(\n"
-                        "global " + valueTypeName + "* postSumArray,\n"
-                        "global " + valueTypeName + "* preSumArray,\n"
-                        ""+valueTypeName+" identity,\n"
+                        "global " + oTypeName + "* postSumArray,\n"
+                        "global " + oTypeName + "* preSumArray,\n"
+                        ""        + oTypeName + " identity,\n"
                         "const uint vecSize,\n"
-                        "local " + valueTypeName + "* lds,\n"
+                        "local "  + oTypeName + "* lds,\n"
                         "const uint workPerThread,\n"
                         "global " + binaryTypeName + "* binaryOp\n"
                         ");\n\n"
@@ -221,31 +222,41 @@ namespace bolt
                         "template __attribute__((mangled_name(" + kernelNames[ 2 ] + "Instantiated)))\n"
                         "__attribute__((reqd_work_group_size("+k2WgSz+",1,1)))\n"
                         "kernel void " + kernelNames[ 2 ] + "(\n"
-                        "global " + valueTypeName + "* output,\n"
-                        "global " + valueTypeName + "* postSumArray,\n"
+                        "global " + oTypeName + "* output,\n"
+                        "global " + oTypeName + "* postSumArray,\n"
                         "const uint vecSize,\n"
                         "global " + binaryTypeName + "* binaryOp\n"
                         ");\n\n";
                     if (0)
                     {
                         printf("\n\n\n################################################################################");
-                        printf("COMPILE_ARG_1 (Kernel Names)\n");
+                        printf("COMPILE_ARG (Kernel Names)\n");
                         for (int i = 0; i < kernelNames.size(); i++)
                             printf("%s\n", kernelNames[i].c_str());
                         printf("\n\n\n################################################################################");
-                        printf("COMPILE_ARG_2 (Kernel String)\n%s\n\n", scan_kernels.c_str());
+                        printf("COMPILE_ARG (Kernel String)\n%s\n\n", scan_kernels.c_str());
                         printf("\n\n\n################################################################################");
-                        printf("COMPILE_ARG_3 (Template Specialization String)\n%s\n", templateSpecializationString.c_str());
+                        printf("COMPILE_ARG (Template Specialization String)\n%s\n", templateSpecializationString.c_str());
                         printf("\n\n\n################################################################################");
-                        printf("COMPILE_ARG_4 (User CL_Code String)\n%s\n", cl_code.c_str());
+                        printf("COMPILE_ARG (User CL_Code String)\n%s\n", cl_code.c_str());
                         printf("\n\n\n################################################################################");
-                        printf("COMPILE_ARG_5 (Value TypeName String)\n%s\n", valueTypeName.c_str());
+                        printf("COMPILE_ARG (Value iTypeName String)\n%s\n", iTypeName.c_str());
+                         printf("\n\n\n################################################################################");
+                        printf("COMPILE_ARG (Value oTypeName String)\n%s\n", oTypeName.c_str());
                         printf("\n\n\n################################################################################");
-                        printf("COMPILE_ARG_6 (Functor TypeName String)\n%s\n", binaryTypeName.c_str());
+                        printf("COMPILE_ARG (Functor TypeName String)\n%s\n", binaryTypeName.c_str());
                         printf("\n\n\n################################################################################");
                     }
                     
-                    bolt::cl::compileKernelsString( *scanKernels, kernelNames, transform_scan_kernels, templateSpecializationString, cl_code, valueTypeName,  unaryTypeName+"; "+binaryTypeName, *ctl );
+                    bolt::cl::compileKernelsString(
+                        *scanKernels,
+                        kernelNames,
+                        transform_scan_kernels,
+                        templateSpecializationString,
+                        cl_code,
+                        iTypeName +", "+oTypeName,
+                        unaryTypeName+"; "+binaryTypeName,
+                        *ctl );
                 }
             };
 
@@ -384,7 +395,7 @@ namespace bolt
         {
             typedef typename std::iterator_traits< DVInputIterator >::value_type iType;
             typedef typename std::iterator_traits< DVOutputIterator >::value_type oType;
-            static_assert( std::is_convertible< iType, oType >::value, "Input and Output iterators are incompatible" );
+            //static_assert( std::is_convertible< iType, oType >::value, "Input and Output iterators are incompatible" );
 
             unsigned int numElements = static_cast< unsigned int >( std::distance( first, last ) );
             if( numElements < 1 )
@@ -438,15 +449,25 @@ namespace bolt
 
                 static boost::once_flag transformScanCompileFlag;
                 static std::vector< ::cl::Kernel > transformScanKernels;
-
+                
+                std::string typeDefs = ClCode< iType >::get();
+                if (TypeName< iType >::get() != TypeName< oType >::get())
+                {
+                    typeDefs += ClCode< oType >::get();
+                }
                 // For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retreive the name here.
+
+                 /**********************************************************************************
+                 *  Compile Kernels
+                 *********************************************************************************/
                 boost::call_once(
                     transformScanCompileFlag,
                     boost::bind(
                         CompileTemplate::TransformScanSpecialization,
                         &transformScanKernels,
-                        ClCode<iType>::get()+ClCode< UnaryFunction >::get( )+ClCode< BinaryFunction >::get( ),
+                        typeDefs+ClCode< UnaryFunction >::get( )+ClCode< BinaryFunction >::get( ),
                         TypeName< iType >::get( ),
+                        TypeName< oType >::get( ),
                         TypeName< UnaryFunction >::get( ),
                         TypeName< BinaryFunction >::get( ),
                         &ctl
@@ -500,8 +521,8 @@ namespace bolt
                 control::buffPointer binaryBuffer = ctl.acquireBuffer( sizeof( aligned_binary_op ),
                     CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_binary_op );
 
-                control::buffPointer preSumArray = ctl.acquireBuffer( sizeScanBuff*sizeof( iType ) );
-                control::buffPointer postSumArray = ctl.acquireBuffer( sizeScanBuff*sizeof( iType ) );
+                control::buffPointer preSumArray = ctl.acquireBuffer( sizeScanBuff*sizeof( oType ) );
+                control::buffPointer postSumArray = ctl.acquireBuffer( sizeScanBuff*sizeof( oType ) );
                 //::cl::Buffer userFunctor( ctl.context( ), CL_MEM_USE_HOST_PTR, sizeof( binary_op ), &binary_op );
                 //::cl::Buffer preSumArray( ctl.context( ), CL_MEM_READ_WRITE, sizeScanBuff*sizeof(iType) );
                 //::cl::Buffer postSumArray( ctl.context( ), CL_MEM_READ_WRITE, sizeScanBuff*sizeof(iType) );
@@ -512,6 +533,7 @@ namespace bolt
                  *  Kernel 0
                  *********************************************************************************/
                 ldsSize  = static_cast< cl_uint >( ( kernel0_WgSize + ( kernel0_WgSize / 2 ) ) * sizeof( iType ) );
+                int argNum = 0;
                 V_OPENCL( transformScanKernels[ 0 ].setArg( 0, result->getBuffer( ) ),   "Error setting argument for kernels[ 0 ]" ); // Output buffer
                 V_OPENCL( transformScanKernels[ 0 ].setArg( 1, first->getBuffer( ) ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
                 V_OPENCL( transformScanKernels[ 0 ].setArg( 2, init_T ),                 "Error setting argument for kernels[ 0 ]" ); // Initial value used for exclusive scan
@@ -521,7 +543,7 @@ namespace bolt
                 V_OPENCL( transformScanKernels[ 0 ].setArg( 6, *binaryBuffer ),          "Error setting argument for kernels[ 0 ]" ); // User provided functor class
                 V_OPENCL( transformScanKernels[ 0 ].setArg( 7, *preSumArray ),           "Error setting argument for kernels[ 0 ]" ); // Output per block sum buffer
                 V_OPENCL( transformScanKernels[ 0 ].setArg( 8, doExclusiveScan ),        "Error setting argument for kernels[ 0 ]" ); // Exclusive scan?
-
+                
                 l_Error = ctl.commandQueue( ).enqueueNDRangeKernel(
                     transformScanKernels[ 0 ],
                     ::cl::NullRange,
