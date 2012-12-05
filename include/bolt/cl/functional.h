@@ -103,6 +103,8 @@ namespace bolt {
     }; 
     );
 
+    //---
+    // Unary operations:
 
     CREATE_BOLT_FUNCTIONAL(square,
     template <typename T>
@@ -114,8 +116,7 @@ namespace bolt {
     };
     );
 
-    //---
-    // Unary operations:
+    
     CREATE_BOLT_FUNCTIONAL(negate,
     template<typename T>
     struct negate 

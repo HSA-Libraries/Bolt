@@ -16,20 +16,26 @@
 ############################################################################                                                                                     
 
 # List the names of common files to compile across all platforms
-message( STATUS "Setting up CL specific benchmarking projects" )
+set( clBolt.Test.TransformScan.Source ${BOLT_CL_TEST_DIR}/common/stdafx.cpp 
+                             TransformScanTest.cpp )
+set( clBolt.Test.TransformScan.Headers   ${BOLT_CL_TEST_DIR}/common/stdafx.h 
+                                ${BOLT_CL_TEST_DIR}/common/targetver.h 
+                                ${BOLT_INCLUDE_DIR}/bolt/cl/transform_scan.h 
+                                ${BOLT_INCLUDE_DIR}/bolt/cl/detail/transform_scan.inl )
 
-# Include standard OpenCL headers
-include_directories( ${OPENCL_INCLUDE_DIRS} )
+set( clBolt.Test.TransformScan.Files ${clBolt.Test.TransformScan.Source} ${clBolt.Test.TransformScan.Headers} )
 
-if( BUILD_clBolt )
-	# Include standard OpenCL headers
-	add_subdirectory( CopyBench )
-	add_subdirectory( CopyBuffer )
-	add_subdirectory( Fill ) 
-	add_subdirectory( Generate )
-	add_subdirectory( Reduce )
-	add_subdirectory( Scan )
-	add_subdirectory( Sort )
-	add_subdirectory( Transform )
-  add_subdirectory( TransformScanBench )
-endif( )
+add_executable( clBolt.Test.TransformScan ${clBolt.Test.TransformScan.Files} )
+target_link_libraries( clBolt.Test.TransformScan clBolt.Runtime ${GTEST_LIBRARIES} ${Boost_LIBRARIES} )
+
+set_target_properties( clBolt.Test.TransformScan PROPERTIES VERSION ${Bolt_VERSION} )
+set_target_properties( clBolt.Test.TransformScan PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
+
+set_property( TARGET clBolt.Test.TransformScan PROPERTY FOLDER "Test/OpenCL")
+
+# CPack configuration; include the executable into the package
+install( TARGETS clBolt.Test.TransformScan
+    RUNTIME DESTINATION ${BIN_DIR}
+    LIBRARY DESTINATION ${LIB_DIR}
+    ARCHIVE DESTINATION ${LIB_DIR}/import
+    )
