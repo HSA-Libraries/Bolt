@@ -48,7 +48,7 @@ endif( )
 
 list( APPEND Boost.Command link=static stage )
 
-set( ext.Boost_URL "D:/Softwares/boltDownloads/boost_${ext.Boost_Version_Underscore}.zip" CACHE STRING "URL to download Boost from" )
+set( ext.Boost_URL "http://sourceforge.net/projects/boost/files/boost/${ext.Boost_VERSION}/boost_${ext.Boost_Version_Underscore}.zip/download" CACHE STRING "URL to download Boost from" )
 mark_as_advanced( ext.Boost_URL )
 
 # Below is a fancy CMake command to download, build and install Boost on the users computer
