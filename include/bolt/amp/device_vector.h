@@ -435,53 +435,43 @@ namespace bolt
                 if( reqSize == cap )
                     return;
 
-                Concurrency::array<T,1> l_tmpBuffer(reqSize);
+                //TODO - Add if statement for max size allowed in array class
+                Concurrency::array<T,1> *l_tmpBuffer = new Concurrency::array<T,1>((int)reqSize);
                 if( m_Size > 0 )
                 {
                     //1622 Arrays are logically considered to be value types in that when an array is copied to another array,
                     //a deep copy is performed. Two arrays never point to the same data.
                     //m_Size data elements are copied
-                    //Concurrency::array_view<T,1> tmpAV(m_devMemory);
-
-					m_devMemory.copy_to(l_tmpBuffer);
 
                     if( reqSize > m_Size )
                     {
-						extent<1> copyRange(reqSize - m_Size);
-						index<1>  startPoint(m_Size);
-						Concurrency::array_view<T,1> l_tmpBufferSection = l_tmpBuffer.section(startPoint, copyRange);
-                        parallel_for_each(l_tmpBufferSection.extents, [&](index<1> idx)
+                        m_devMemory->copy_to(*l_tmpBuffer);
+						Concurrency::array_view<T,1> l_tmpBufferSectionAV = l_tmpBuffer->section((int)m_Size, (int)(reqSize - m_Size));
+                        Concurrency::parallel_for_each(l_tmpBufferSectionAV.extent, [=](Concurrency::index<1> idx) restrict(amp)
                         {
-                            l_tmpBufferSection[idx] = val;
+                            l_tmpBufferSectionAV[idx] = val;
                         });
-						/*Ask kalyan for setting data to 0 */
-                        //::cl::Event fillEvent;
-                        //l_Error = m_commQueue.enqueueFillBuffer< value_type >( l_tmpBuffer, val, l_srcSize, l_reqSize - l_srcSize, &copyEvent, &fillEvent );
-                        //V_OPENCL( l_Error, "device_vector failed to fill the new data with the provided pattern" );
-
-                        //  Not allowed to return until the copy operation is finished
-                        //l_Error = fillEvent.wait( );
-                        //V_OPENCL( l_Error, "device_vector failed to wait for fill event" );
                     }
                     else
                     {
-                        ;//  Not allowed to return until the copy operation is finished
-                        //l_Error = m_commQueue.enqueueWaitForEvents( copyEvent );
-                        //V_OPENCL( l_Error, "device_vector failed to wait for copy event" );
+                        Concurrency::array_view<T,1> l_devMemoryAV = m_devMemory->section(0, (int)reqSize);
+                        Concurrency::array_view<T,1> l_tmpBufferAV = l_tmpBuffer->section(0, (int)reqSize);
+                        l_devMemoryAV.copy_to(l_tmpBufferAV);
                     }
                 }
                 else
                 {
-					parallel_for_each(l_tmpBuffer.extents, [&](index<1> idx)
+                    Concurrency::array_view<T,1> l_tmpBufferAV(*l_tmpBuffer);
+					Concurrency::parallel_for_each(l_tmpBufferAV.extent, [=](Concurrency::index<1> idx) restrict(amp)
 					{
-						l_tmpBufferSection[idx] = val;
+						l_tmpBufferAV[idx] = val;
 					});
                 }
 
                 //  Remember the new size
                 m_Size = reqSize;
-
-                //  Operator= should call retain/release appropriately
+                //  delete the old buffer 
+                delete(m_devMemory);
                 m_devMemory = l_tmpBuffer;
             }
 

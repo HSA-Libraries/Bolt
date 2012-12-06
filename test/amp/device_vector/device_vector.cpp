@@ -694,6 +694,39 @@ TEST( Vector, InsertFloatRangeIterator )
 //TODO - add test case for all the device_vector constructors. 
 //
 
+TEST( Vector, Resize )
+{
+    bolt::amp::device_vector< float > dV;
+    EXPECT_EQ( 0, dV.size( ) );
+
+    std::vector< float > sV( 10 );
+    for(int i=0; i<10; i++)
+    {
+        sV[i] = (float)i;
+    }
+
+    dV.insert( dV.cbegin( ), sV.begin( ), sV.end( ) );
+    EXPECT_EQ( 10, dV.size( ) );
+    dV.resize(7);
+    EXPECT_EQ( 7, dV.size( ) );
+    for(int i=0; i<7; i++)
+    {
+        EXPECT_FLOAT_EQ( (float)i, dV[ i ] );
+    }
+    dV.resize(15, 7);
+    EXPECT_EQ( 15, dV.size( ) );
+    for(int i=0; i<15; i++)
+    {
+        if(i<7)
+            EXPECT_FLOAT_EQ( (float)i, dV[ i ] );
+        else
+            EXPECT_FLOAT_EQ( 7.0f, dV[ i ] );
+    }
+}
+
+//TODO - add a test case for shrink_to_fit
+
+
 int _tmain(int argc, _TCHAR* argv[])
 {
     ::testing::InitGoogleTest( &argc, &argv[ 0 ] );
