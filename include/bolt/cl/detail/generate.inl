@@ -23,8 +23,6 @@
 #include <boost/bind.hpp>
 #include <type_traits> 
 
-#define STATIC /*static*/  /* FIXME - hack to approximate buffer pool management of the functor containing the buffer */
-
 #include "bolt/cl/bolt.h"
 
 namespace bolt {
@@ -39,7 +37,7 @@ namespace bolt {
 
         // user specified control, start->stop
         template<typename ForwardIterator, typename Generator> 
-        void generate( const bolt::cl::control &ctl, ForwardIterator first, ForwardIterator last, Generator gen, const std::string& cl_code)
+        void generate( bolt::cl::control &ctl, ForwardIterator first, ForwardIterator last, Generator gen, const std::string& cl_code)
         {
             detail::generate_detect_random_access( ctl, first, last, gen, cl_code, std::iterator_traits< ForwardIterator >::iterator_category( ) );
         }
@@ -54,7 +52,7 @@ namespace bolt {
 
         // user specified control, start-> +n
         template<typename OutputIterator, typename Size, typename Generator> 
-        OutputIterator generate_n( const bolt::cl::control &ctl, OutputIterator first, Size n, Generator gen, const std::string& cl_code)
+        OutputIterator generate_n( bolt::cl::control &ctl, OutputIterator first, Size n, Generator gen, const std::string& cl_code)
         {
             detail::generate_detect_random_access( ctl, first, n, gen, cl_code, std::iterator_traits< OutputIterator >::iterator_category( ) );
             return (first+n);
@@ -110,7 +108,7 @@ namespace bolt {
 
             // generate, not random-access
             template<typename ForwardIterator, typename Generator>
-            void generate_detect_random_access( const bolt::cl::control &ctl, const ForwardIterator& first, const ForwardIterator& last, 
+            void generate_detect_random_access( bolt::cl::control &ctl, const ForwardIterator& first, const ForwardIterator& last, 
                         const Generator& gen, const std::string &cl_code, std::forward_iterator_tag )
             {
                 static_assert( false, "Bolt only supports random access iterator types" );
@@ -118,7 +116,7 @@ namespace bolt {
 
             // generate, yes random-access
             template<typename ForwardIterator, typename Generator>
-            void generate_detect_random_access( const bolt::cl::control &ctl, const ForwardIterator& first, const ForwardIterator& last, 
+            void generate_detect_random_access( bolt::cl::control &ctl, const ForwardIterator& first, const ForwardIterator& last, 
                         const Generator& gen, const std::string &cl_code, std::random_access_iterator_tag )
             {
                 generate_pick_iterator(ctl, first, last, gen, cl_code);
@@ -135,7 +133,7 @@ namespace bolt {
             */
             template<typename ForwardIterator, typename Generator> 
             typename std::enable_if< !(std::is_base_of<typename device_vector<typename std::iterator_traits<ForwardIterator>::value_type>::iterator, ForwardIterator>::value), void >::type
-            generate_pick_iterator(const bolt::cl::control &ctl,  const ForwardIterator &first, const ForwardIterator &last, const Generator &gen, const std::string &user_code)
+            generate_pick_iterator(bolt::cl::control &ctl,  const ForwardIterator &first, const ForwardIterator &last, const Generator &gen, const std::string &user_code)
             {
                 typedef std::iterator_traits<ForwardIterator>::value_type Type;
 
@@ -149,8 +147,6 @@ namespace bolt {
 
                 generate_enqueue( ctl, range.begin( ), range.end( ), gen, user_code );
 
-                //printf("I'm here @ std::vector.\n"); fflush(stdout);
-                //Sleep(3000);
                 // This should immediately map/unmap the buffer
                 range.data( );
             }
@@ -159,13 +155,9 @@ namespace bolt {
             // This is called strictly for iterators that are derived from device_vector< T >::iterator
             template<typename DVForwardIterator, typename Generator> 
             typename std::enable_if< (std::is_base_of<typename device_vector<typename std::iterator_traits<DVForwardIterator>::value_type>::iterator,DVForwardIterator>::value), void >::type
-            generate_pick_iterator(const bolt::cl::control &ctl,  const DVForwardIterator &first, const DVForwardIterator &last, const Generator &gen, const std::string& user_code)
+            generate_pick_iterator(bolt::cl::control &ctl,  const DVForwardIterator &first, const DVForwardIterator &last, const Generator &gen, const std::string& user_code)
             {
                 generate_enqueue( ctl, first, last, gen, user_code );
-                /*for (DVForwardIterator iter = first; iter != last; iter++)
-                {
-                    printf("Val=%f\n", *iter);
-                }*/
             }
 
 
@@ -174,7 +166,7 @@ namespace bolt {
              ****************************************************************************/
 
             template< typename DVForwardIterator, typename Generator > 
-            void generate_enqueue(const bolt::cl::control &ctl, const DVForwardIterator &first, const DVForwardIterator &last, const Generator &gen, const std::string& cl_code)
+            void generate_enqueue( bolt::cl::control &ctl, const DVForwardIterator &first, const DVForwardIterator &last, const Generator &gen, const std::string& cl_code)
             {
                 typedef std::iterator_traits<DVForwardIterator>::value_type Type;
 
@@ -186,7 +178,8 @@ namespace bolt {
 
                 // copy generatory to device
                 ALIGNED( 256 ) Generator aligned_generator( gen );
-                ::cl::Buffer userGenerator(ctl.context(), CL_MEM_READ_ONLY|CL_MEM_USE_HOST_PTR, sizeof( aligned_generator ), const_cast< Generator* >( &aligned_generator ) );   // Create buffer wrapper so we can access host parameters.
+                // ::cl::Buffer userGenerator(ctl.context(), CL_MEM_READ_ONLY|CL_MEM_USE_HOST_PTR, sizeof( aligned_generator ), const_cast< Generator* >( &aligned_generator ) );   // Create buffer wrapper so we can access host parameters.
+                control::buffPointer userGenerator = ctl.acquireBuffer( sizeof( aligned_generator ), CL_MEM_READ_ONLY|CL_MEM_USE_HOST_PTR, &aligned_generator );
 
                 // compile kernels
                 static std::vector< ::cl::Kernel > generateKernels;
@@ -222,22 +215,10 @@ namespace bolt {
                     k = kernelNoBoundaryCheck;
                 }
 
-#if 0
-                if ((sz % wgSize) != 0) {
-                    sz = sz + (wgSize - (sz % wgSize));
-                    k = kernelYesBoundaryCheck;
-                } else if(sz < wgSize) {  
-                    sz = wgSize;
-                    k = kernelYesBoundaryCheck; 
-                } else {
-                    k = kernelNoBoundaryCheck;
-                }
-#endif
-
                 // set kernel arguments
                 k.setArg(0, first->getBuffer() );
                 k.setArg(1, sz );
-                k.setArg(2, userGenerator);
+                k.setArg(2, *userGenerator);
 
                 // enqueue kernel
                 ::cl::Event generateEvent;

@@ -40,10 +40,6 @@ namespace bolt
         *   \ingroup PrefixSums
         *   \{
         *   \todo The user_code parameter is not used yet.
-        *   \bug An exclusive_scan of an in-place device_vector buffer can return a buffer of all 0's.  This is because the exclusive_scan
-        *   scan is implemented in two passes: an inclusive_scan pass, and a transform pass.  The transform pass zeroes
-        *   out the buffer.  Solution is to refactor the scan code to eliminate the transform pass, which is also an
-        *   optimization.
         */
 
         /*! \brief inclusive_scan calculates a running sum over a range of values, inclusive of the current value.
@@ -55,7 +51,7 @@ namespace bolt
         * \param user_code A client-specified string that is appended to the generated OpenCL kernel.
         * \tparam InputIterator An iterator signifying the range is used as input.
         * \tparam OutputIterator An iterator signifying the range is used as output.
-        * \return An iterator pointing at the end of the result range.
+        * \return Iterator at the end of result sequence.
         *
         * \code
         * #include "bolt/cl/scan.h"
@@ -83,7 +79,7 @@ namespace bolt
         * \param user_code A client-specified string that is appended to the generated OpenCL kernel.
         * \tparam InputIterator An iterator signifying the range is used as input.
         * \tparam OutputIterator An iterator signifying the range is used as output.
-        * \return An iterator pointing at the end of the result range.
+        * \return Iterator at the end of result sequence.
         *
         * \code
         * #include "bolt/cl/scan.h"
@@ -111,7 +107,7 @@ namespace bolt
         * \param user_code A client-specified string that is appended to the generated OpenCL kernel.
         * \tparam InputIterator An iterator signifying the range is used as input.
         * \tparam OutputIterator An iterator signifying the range is used as output.
-        * \return An iterator pointing at the end of the result range. 
+        * \return Iterator at the end of result sequence.
         *
         * \code
         * #include "bolt/cl/scan.h"
@@ -126,7 +122,7 @@ namespace bolt
         */
         template< typename InputIterator, typename OutputIterator >
         OutputIterator 
-            inclusive_scan( const control &ctl, InputIterator first, InputIterator last, 
+            inclusive_scan( control &ctl, InputIterator first, InputIterator last, 
             OutputIterator result, const std::string& user_code="" );
 
         /*! \brief inclusive_scan calculates a running sum over a range of values, inclusive of the current value.
@@ -140,7 +136,7 @@ namespace bolt
         * \param user_code A client-specified string that is appended to the generated OpenCL kernel.
         * \tparam InputIterator An iterator signifying the range is used as input.
         * \tparam OutputIterator An iterator signifying the range is used as output.
-        * \return An iterator pointing at the end of the result range.
+        * \return Iterator at the end of result sequence.
         *
         * \code
         * #include "bolt/cl/scan.h"
@@ -155,8 +151,9 @@ namespace bolt
         */
         template< typename InputIterator, typename OutputIterator, typename BinaryFunction >
         OutputIterator
-            inclusive_scan( const control &ctl, InputIterator first, InputIterator last, 
+            inclusive_scan( control &ctl, InputIterator first, InputIterator last, 
             OutputIterator result, BinaryFunction binary_op, const std::string& user_code="" );
+
 
         /*! \brief exclusive_scan calculates a running sum over a range of values, exclusive of the current value.
         *   The result value at iterator position \p i is the running sum of all values less than \p i in the input range.
@@ -184,6 +181,7 @@ namespace bolt
         OutputIterator 
             exclusive_scan( InputIterator first, InputIterator last, OutputIterator result,
             const std::string& user_code="" );
+
 
         /*! \brief exclusive_scan calculates a running sum over a range of values, exclusive of the current value.
         *   The result value at iterator position \p i is the running sum of all values less than \p i in the input range.
@@ -271,7 +269,7 @@ namespace bolt
         */
         template< typename InputIterator, typename OutputIterator >
         OutputIterator 
-            exclusive_scan( const control& ctl, InputIterator first, InputIterator last, 
+            exclusive_scan( control& ctl, InputIterator first, InputIterator last, 
             OutputIterator result, const std::string& user_code="" );
 
         /*! \brief exclusive_scan calculates a running sum over a range of values, exclusive of the current value.
@@ -301,7 +299,7 @@ namespace bolt
         */
         template< typename InputIterator, typename OutputIterator, typename T >
         OutputIterator 
-            exclusive_scan( const control& ctl, InputIterator first, InputIterator last, OutputIterator result, T init,
+            exclusive_scan( control& ctl, InputIterator first, InputIterator last, OutputIterator result, T init,
             const std::string& user_code="" );
 
         /*! \brief exclusive_scan calculates a running sum over a range of values, exclusive of the current value.
@@ -333,7 +331,7 @@ namespace bolt
         */
         template< typename InputIterator, typename OutputIterator, typename T, typename BinaryFunction >
         OutputIterator
-            exclusive_scan( const control &ctl, InputIterator first, InputIterator last, 
+            exclusive_scan( control &ctl, InputIterator first, InputIterator last, 
             OutputIterator result, T init, BinaryFunction binary_op, const std::string& user_code="" );
 
         /*!   \}  */

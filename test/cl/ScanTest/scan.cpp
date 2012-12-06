@@ -29,9 +29,142 @@
 #include <boost/program_options.hpp>
 namespace po = boost::program_options;
 
+#define TEST_DOUBLE 0
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Below are helper routines to compare the results of two arrays for googletest
 //  They return an assertion object that googletest knows how to track
+#if 1
+/******************************************************************************
+ *  Double x4
+ *****************************************************************************/
+BOLT_FUNCTOR(uddtD4,
+struct uddtD4
+{
+    double a;
+    double b;
+    double c;
+    double d;
+
+    bool operator==(const uddtD4& rhs) const
+    {
+        bool equal = true;
+        double th = 0.0000000001;
+        if (rhs.a < th && rhs.a > -th)
+            equal = ( (1.0*a - rhs.a) < th && (1.0*a - rhs.a) > -th) ? equal : false;
+        else
+            equal = ( (1.0*a - rhs.a)/rhs.a < th && (1.0*a - rhs.a)/rhs.a > -th) ? equal : false;
+        if (rhs.b < th && rhs.b > -th)
+            equal = ( (1.0*b - rhs.b) < th && (1.0*b - rhs.b) > -th) ? equal : false;
+        else
+            equal = ( (1.0*b - rhs.b)/rhs.b < th && (1.0*b - rhs.b)/rhs.b > -th) ? equal : false;
+        if (rhs.c < th && rhs.c > -th)
+            equal = ( (1.0*c - rhs.c) < th && (1.0*c - rhs.c) > -th) ? equal : false;
+        else
+            equal = ( (1.0*c - rhs.c)/rhs.c < th && (1.0*c - rhs.c)/rhs.c > -th) ? equal : false;
+        if (rhs.d < th && rhs.d > -th)
+            equal = ( (1.0*d - rhs.d) < th && (1.0*d - rhs.d) > -th) ? equal : false;
+        else
+            equal = ( (1.0*d - rhs.d)/rhs.d < th && (1.0*d - rhs.d)/rhs.d > -th) ? equal : false;
+        return equal;
+    }
+};
+);
+BOLT_FUNCTOR(MultD4,
+struct MultD4
+{
+    uddtD4 operator()(const uddtD4 &lhs, const uddtD4 &rhs) const
+    {
+        uddtD4 _result;
+        _result.a = lhs.a*rhs.a;
+        _result.b = lhs.b*rhs.b;
+        _result.c = lhs.c*rhs.c;
+        _result.d = lhs.d*rhs.d;
+        return _result;
+    };
+}; 
+);
+uddtD4 identityMultD4 = { 1.0, 1.0, 1.0, 1.0 };
+uddtD4 initialMultD4  = { 1.00001, 1.000003, 1.0000005, 1.00000007 };
+
+/******************************************************************************
+ *  Integer x2
+ *****************************************************************************/
+BOLT_FUNCTOR(uddtI2,
+struct uddtI2
+{
+    int a;
+    int b;
+
+    bool operator==(const uddtI2& rhs) const
+    {
+        bool equal = true;
+        equal = ( a == rhs.a ) ? equal : false;
+        equal = ( b == rhs.b ) ? equal : false;
+        return equal;
+    }
+};
+);
+BOLT_FUNCTOR(AddI2,
+struct AddI2
+{
+    uddtI2 operator()(const uddtI2 &lhs, const uddtI2 &rhs) const
+    {
+        uddtI2 _result;
+        _result.a = lhs.a+rhs.a;
+        _result.b = lhs.b+rhs.b;
+        return _result;
+    };
+}; 
+);
+uddtI2 identityAddI2 = {  0, 0 };
+uddtI2 initialAddI2  = { -1, 2 };
+
+/******************************************************************************
+ *  Mixed float and int
+ *****************************************************************************/
+BOLT_FUNCTOR(uddtM3,
+struct uddtM3
+{
+    unsigned int a;
+    float        b;
+    double       c;
+
+    bool operator==(const uddtM3& rhs) const
+    {
+        bool equal = true;
+        double ths = 0.00001;
+        double thd = 0.0000000001;
+        equal = ( a == rhs.a ) ? equal : false;
+        if (rhs.b < ths && rhs.b > -ths)
+            equal = ( (1.0*b - rhs.b) < ths && (1.0*b - rhs.b) > -ths) ? equal : false;
+        else
+            equal = ( (1.0*b - rhs.b)/rhs.b < ths && (1.0*b - rhs.b)/rhs.b > -ths) ? equal : false;
+        if (rhs.c < thd && rhs.c > -thd)
+            equal = ( (1.0*c - rhs.c) < thd && (1.0*c - rhs.c) > -thd) ? equal : false;
+        else
+            equal = ( (1.0*c - rhs.c)/rhs.c < thd && (1.0*c - rhs.c)/rhs.c > -thd) ? equal : false;
+        return equal;
+    }
+};
+);
+BOLT_FUNCTOR(MixM3,
+struct MixM3
+{
+    uddtM3 operator()(const uddtM3 &lhs, const uddtM3 &rhs) const
+    {
+        uddtM3 _result;
+        _result.a = lhs.a^rhs.a;
+        _result.b = lhs.b+rhs.b;
+        _result.c = lhs.c*rhs.c;
+        return _result;
+    };
+}; 
+);
+uddtM3 identityMixM3 = { 0, 0.f, 1.0 };
+uddtM3 initialMixM3  = { 1, 1, 1.000001 };
+#endif
+
 
 template< typename T >
 ::testing::AssertionResult cmpArrays( const T ref, const T calc, size_t N )
@@ -87,6 +220,7 @@ struct cmpStdArray< float, N >
     }
 };
 
+#if TEST_DOUBLE
 //  Partial template specialization for float types
 //  Partial template specializations only works for objects, not functions
 template< size_t N >
@@ -102,6 +236,7 @@ struct cmpStdArray< double, N >
         return ::testing::AssertionSuccess( );
     }
 };
+#endif
 
 //  The following cmpArrays verify the correctness of std::vectors's
 template< typename T >
@@ -125,6 +260,7 @@ template< typename T >
     return ::testing::AssertionSuccess( );
 }
 
+#if TEST_DOUBLE
 ::testing::AssertionResult cmpArrays( const std::vector< double >& ref, const std::vector< double >& calc )
 {
     for( size_t i = 0; i < ref.size( ); ++i )
@@ -134,6 +270,7 @@ template< typename T >
 
     return ::testing::AssertionSuccess( );
 }
+#endif
 
 //  A very generic template that takes two container, and compares their values assuming a vector interface
 template< typename S, typename B >
@@ -145,6 +282,122 @@ template< typename S, typename B >
     }
 
     return ::testing::AssertionSuccess( );
+}
+
+/******************************************************************************
+ *  Scan with User Defined Data Types and Operators
+ *****************************************************************************/
+
+TEST(ScanUserDefined, IncAddInt2)
+{
+    //setup containers
+    int length = (1<<16)+23;
+    bolt::cl::device_vector< uddtI2 > input(  length, initialAddI2,  CL_MEM_READ_WRITE, true  );
+    bolt::cl::device_vector< uddtI2 > output( length, identityAddI2, CL_MEM_READ_WRITE, false );
+    std::vector< uddtI2 > refInput( length, initialAddI2 );
+    std::vector< uddtI2 > refOutput( length );
+
+    // call scan
+    AddI2 ai2;
+    bolt::cl::inclusive_scan(  input.begin(),    input.end(),    output.begin(), ai2 );
+    ::std::partial_sum(     refInput.begin(), refInput.end(), refOutput.begin(), ai2);
+
+    // compare results
+    cmpArrays(refOutput, output);
+}
+
+TEST(ScanUserDefined, IncMultiplyDouble4)
+{
+    //setup containers
+    int length = (1<<16)+11;
+    bolt::cl::device_vector< uddtD4 > input(  length, initialMultD4,  CL_MEM_READ_WRITE, true  );
+    bolt::cl::device_vector< uddtD4 > output( length, identityMultD4, CL_MEM_READ_WRITE, false );
+    std::vector< uddtD4 > refInput( length, initialMultD4 );
+    std::vector< uddtD4 > refOutput( length );
+
+    // call scan
+    MultD4 md4;
+    bolt::cl::inclusive_scan(  input.begin(),    input.end(),    output.begin(), md4 );
+    ::std::partial_sum(     refInput.begin(), refInput.end(), refOutput.begin(), md4);
+
+    // compare results
+    cmpArrays(refOutput, output);
+}
+
+TEST(ScanUserDefined, IncMixedM3)
+{
+    //setup containers
+    int length = (1<<16)+57;
+    bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3,  CL_MEM_READ_WRITE, true  );
+    bolt::cl::device_vector< uddtM3 > output( length, identityMixM3, CL_MEM_READ_WRITE, false );
+    std::vector< uddtM3 > refInput( length, initialMixM3 );
+    std::vector< uddtM3 > refOutput( length );
+
+    // call scan
+    MixM3 mm3;
+    bolt::cl::inclusive_scan(  input.begin(),    input.end(),    output.begin(), mm3 );
+    ::std::partial_sum(     refInput.begin(), refInput.end(), refOutput.begin(), mm3);
+
+    // compare results
+    cmpArrays(refOutput, output);
+}
+
+
+/////////////////////////////////////////////////  Exclusive  ///////////////////////////
+
+TEST(ScanUserDefined, ExclAddInt2)
+{
+    //setup containers
+    int length = (1<<16)+23;
+    bolt::cl::device_vector< uddtI2 > input(  length, initialAddI2,  CL_MEM_READ_WRITE, true  );
+    bolt::cl::device_vector< uddtI2 > output( length, identityAddI2, CL_MEM_READ_WRITE, false );
+    std::vector< uddtI2 > refInput( length, initialAddI2 ); refInput[0] = identityAddI2;
+    std::vector< uddtI2 > refOutput( length );
+
+    // call scan
+    AddI2 ai2;
+    bolt::cl::exclusive_scan(  input.begin(),    input.end(),    output.begin(), identityAddI2, ai2 );
+    ::std::partial_sum(     refInput.begin(), refInput.end(), refOutput.begin(), ai2);
+
+    // compare results
+    cmpArrays(refOutput, output);
+}
+
+TEST(ScanUserDefined, ExclMultiplyDouble4)
+{
+    //setup containers
+    int length = (1<<16)+11;
+    bolt::cl::device_vector< uddtD4 > input(  length, initialMultD4,  CL_MEM_READ_WRITE, true  );
+    bolt::cl::device_vector< uddtD4 > output( length, identityMultD4, CL_MEM_READ_WRITE, false );
+    std::vector< uddtD4 > refInput( length, initialMultD4 ); refInput[0] = identityMultD4;
+    std::vector< uddtD4 > refOutput( length );
+
+    // call scan
+    MultD4 md4;
+    bolt::cl::exclusive_scan(  input.begin(),    input.end(),    output.begin(), identityMultD4, md4 );
+    ::std::partial_sum(     refInput.begin(), refInput.end(), refOutput.begin(), md4);
+
+    // compare results
+    cmpArrays(refOutput, output);
+}
+
+
+TEST(ScanUserDefined, ExclMixedM3)
+{
+    //setup containers
+    int length = (1<<16)+57;
+    bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3,  CL_MEM_READ_WRITE, true  );
+    bolt::cl::device_vector< uddtM3 > output( length, identityMixM3, CL_MEM_READ_WRITE, false );
+    std::vector< uddtM3 > refInput( length, initialMixM3 ); refInput[0] = identityMixM3;
+    std::vector< uddtM3 > refOutput( length );
+
+    // call scan
+    MixM3 mm3;
+    bolt::cl::exclusive_scan(  input.begin(),    input.end(),    output.begin(), identityMixM3, mm3 );
+    ::std::partial_sum(     refInput.begin(), refInput.end(), refOutput.begin(), mm3);
+
+    // compare results
+    cmpArrays(refOutput, output);
 }
 
 
@@ -314,17 +567,19 @@ protected:
     std::vector< float > stdInput, boltInput;
 };
 
+#if TEST_DOUBLE
 //  ::testing::TestWithParam< int > means that GetParam( ) returns int values, which i use for array size
 class ScanDoubleVector: public ::testing::TestWithParam< int >
 {
 public:
     //  Create an std and a bolt vector of requested size, and initialize all the elements to 1
-    ScanDoubleVector( ): stdInput( GetParam( ), 1.0 ), boltInput( GetParam( ), 1.0 )
+    ScanDoubleVector( ): stdInput( GetParam( ), 0.0 ), boltInput( GetParam( ), 0.0 )
     {}
 
 protected:
     std::vector< double > stdInput, boltInput;
 };
+#endif
 
 //  ::testing::TestWithParam< int > means that GetParam( ) returns int values, which i use for array size
 class ScanIntegerDeviceVector: public ::testing::TestWithParam< int >
@@ -415,6 +670,7 @@ TEST_P (scanStdVectorWithIters, floatDefiniteValues){
     EXPECT_FLOAT_EQ((*(boltEnd-1)), (*(stdEnd-1)))<<std::endl;
 }
 
+#if TEST_DOUBLE
 TEST_P (scanStdVectorWithIters, doubleDefiniteValues){
     
     std::vector<double> boltInput( myStdVectSize);
@@ -431,6 +687,8 @@ TEST_P (scanStdVectorWithIters, doubleDefiniteValues){
     
     EXPECT_DOUBLE_EQ((*(boltEnd-1)), (*(stdEnd-1)))<<std::endl;
 }
+#endif
+
 //INSTANTIATE_TEST_CASE_P(inclusiveScanIter, scanStdVectorWithIters, ::testing::Range(1, 1025, 1)); 
 INSTANTIATE_TEST_CASE_P(inclusiveScanIterIntLimit, scanStdVectorWithIters, ::testing::Range(1025, 65535, 1000)); 
 
@@ -482,6 +740,7 @@ TEST_P( ScanFloatVector, InclusiveInplace )
     cmpArrays( stdInput, boltInput );
 }
 
+#if TEST_DOUBLE
 TEST_P( ScanDoubleVector, InclusiveInplace )
 {
     //  Calling the actual functions under test
@@ -501,6 +760,7 @@ TEST_P( ScanDoubleVector, InclusiveInplace )
     //  Loop through the array and compare all the values with each other
     cmpArrays( stdInput, boltInput );
 }
+#endif
 
 TEST_P( ScanIntegerDeviceVector, InclusiveInplace )
 {
@@ -616,8 +876,12 @@ INSTANTIATE_TEST_CASE_P( Inclusive, ScanIntegerDeviceVector, ::testing::Range( 0
 INSTANTIATE_TEST_CASE_P( Inclusive, ScanIntegerNakedPointer, ::testing::Range( 0, 1024, 1 ) );
 
 //  Test a huge range, suitable for floating point as they are less prone to overflow (but floating point loses granularity at large values)
-INSTANTIATE_TEST_CASE_P( Inclusive, ScanFloatVector, ::testing::Range( 4096, 1048576, 4096 ) );
+//INSTANTIATE_TEST_CASE_P( Inclusive, ScanFloatVector, ::testing::Range( 4096, 1048576, 4096 ) );
+// above test takes a long time; >2hrs - DT
+
+#if TEST_DOUBLE
 INSTANTIATE_TEST_CASE_P( Inclusive, ScanDoubleVector, ::testing::Range( 4096, 1048576, 4096 ) );
+#endif
 
 typedef ::testing::Types< 
     std::tuple< int, TypeValue< 1 > >,
@@ -661,6 +925,7 @@ typedef ::testing::Types<
 
 INSTANTIATE_TYPED_TEST_CASE_P( Integer, ScanArrayTest, IntegerTests );
 INSTANTIATE_TYPED_TEST_CASE_P( Float, ScanArrayTest, FloatTests );
+//here
 
 int _tmain(int argc, _TCHAR* argv[])
 {

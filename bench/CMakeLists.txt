@@ -25,7 +25,7 @@ set( Boost_DETAILED_FAILURE_MSG   ON )
 
 if( BOOST_ROOT )
 	# The root tree of BOOST was specified on the command line; use it to to find the specific Boost the user points too
-	find_package( Boost ${Boost.VERSION} COMPONENTS program_options REQUIRED )
+	find_package( Boost ${Boost.VERSION} COMPONENTS program_options date_time chrono REQUIRED )
 	# This will define Boost_FOUND
 	message( STATUS "Boost_PROGRAM_OPTIONS_LIBRARY: ${Boost_PROGRAM_OPTIONS_LIBRARY}" )
 else( )

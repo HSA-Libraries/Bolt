@@ -25,6 +25,9 @@
 #include <string>
 #include <iostream>
 
+/*! \file copy.h
+*/
+
 namespace bolt {
     namespace cl {
 
@@ -33,43 +36,44 @@ namespace bolt {
 
         /*! \addtogroup copying
         *   \ingroup algorithms
-        *   \p copy copies elements from the range [first, last) to the range [result, result + (last - first)). 
+        *   \p copy copies each element from the sequence [first, last) to [result, result + (last - first)). 
         */ 
         
         /*! \addtogroup copy
-        *   \ingroup copyations
+        *   \ingroup copying
         *   \{
         */
 
-        /*! copy copies elements from the range [first, last) to the range [result, result + (last - first)).
-         *  That is, it performs the assignments *result = *first, *(result + 1) = *(first + 1), and so on.
-         *  Generally, for every integer n from 0 to last - first, copy performs the assignment *(result + n) = *(first + n).
-         *  Unlike std::copy, copy offers no guarantee on order of operation.
-         *  As a result, calling copy with overlapping source and destination ranges has undefined behavior.
+        /*! copy copies each element from the sequence [first, last) to [result, result + (last - first)), i.e.,
+         *  it assigns *result = *first, then *(result + 1) = *(first + 1), and so on.
+         *  
+         *  Calling copy with overlapping source and destination ranges has undefined behavior, as the order
+         *  of copying on the GPU is not guaranteed.
          *    
          *  \param ctl Control structure to control command-queue, debug, tuning, etc.  See bolt::cl::control.
-         *  \param first The beginning of the sequence to copy.
-         *  \param last  The end of the sequence to copy.
-         *  \param result The destination sequence.
+         *  \param first Beginning of the source copy sequence.
+         *  \param last  End of the source copy sequence.
+         *  \param result Beginning of the destination sequence.
          *  \return result + (last - first).
          *
          *  \tparam InputIterator is a model of InputIterator
-         *                        and \c InputIterator1's \c value_type must be convertible to \c OutputIterator's \c value_type.
+         *  and \c InputIterator's \c value_type must be convertible to \c OutputIterator's \c value_type.
          *  \tparam OutputIterator is a model of OutputIterator
          *
-         *  The following code snippet demonstrates how to use \p copy to copy from one range to another.
+         *  The following demonstrates how to use \p copy.
          *
          *  \code
          *  #include <bolt/cl/copy.h>
          *  ...
          *
-         *  std::vector<int> vec0(100);
-         *  std::vector<int> vec1(100);
+         *  std::vector<float> vecSrc(128);
+         *  std::vector<float> vecDest(128);
+         *  bolt::cl::control ctrl = control::getDefault();
          *  ...
          *
-         *  bolt::cl::copy(vec0.begin(), vec0.end(), vec1.begin());
+         *  bolt::cl::copy(ctrl, vecSrc.begin(), vecSrc.end(), vecDest.begin());
          *
-         *  // vec1 is now a copy of vec0
+         *  // vecDest is now a copy of vecSrc
          *  \endcode
          *
          *  \sa http://www.sgi.com/tech/stl/copy.html
@@ -77,19 +81,139 @@ namespace bolt {
          *  \sa http://www.sgi.com/tech/stl/OutputIterator.html
          */
         template<typename InputIterator, typename OutputIterator> 
-        OutputIterator copy(const bolt::cl::control &ctl,  InputIterator first, InputIterator last, OutputIterator result, 
+        OutputIterator copy(
+            const bolt::cl::control &ctl,
+            InputIterator first,
+            InputIterator last,
+            OutputIterator result, 
             const std::string& user_code="");
 
+        /*! copy copies each element from the sequence [first, last) to [result, result + (last - first)), i.e.,
+         *  it assigns *result = *first, then *(result + 1) = *(first + 1), and so on.
+         *  
+         *  Calling copy with overlapping source and destination ranges has undefined behavior, as the order
+         *  of copying on the GPU is not guaranteed.
+         *    
+         *  \param first Beginning of the source copy sequence.
+         *  \param last  End of the source copy sequence.
+         *  \param result Beginning of the destination sequence.
+         *  \return result + (last - first).
+         *
+         *  \tparam InputIterator is a model of InputIterator
+         *  and \c InputIterator's \c value_type must be convertible to \c OutputIterator's \c value_type.
+         *  \tparam OutputIterator is a model of OutputIterator
+         *
+         *  The following demonstrates how to use \p copy.
+         *
+         *  \code
+         *  #include <bolt/cl/copy.h>
+         *  ...
+         *
+         *  std::vector<float> vecSrc(128);
+         *  std::vector<float> vecDest(128);
+         *  ...
+         *
+         *  bolt::cl::copy(vecSrc.begin(), vecSrc.end(), vecDest.begin());
+         *
+         *  // vecDest is now a copy of vecSrc
+         *  \endcode
+         *
+         *  \sa http://www.sgi.com/tech/stl/copy.html
+         *  \sa http://www.sgi.com/tech/stl/InputIterator.html
+         *  \sa http://www.sgi.com/tech/stl/OutputIterator.html
+         */
         template<typename InputIterator, typename OutputIterator> 
-        OutputIterator copy( InputIterator first, InputIterator last, OutputIterator result, 
+        OutputIterator copy(
+            InputIterator first,
+            InputIterator last,
+            OutputIterator result, 
             const std::string& user_code="");
 
+        /*! copy_n copies each element from the sequence [first, first+n) to [result, result + n), i.e.,
+         *  it assigns *result = *first, then *(result + 1) = *(first + 1), and so on.
+         *  
+         *  Calling copy_n with overlapping source and destination ranges has undefined behavior, as the order
+         *  of copying on the GPU is not guaranteed.
+         *  
+         *  \param first Beginning of the source copy sequence.
+         *  \param n  Number of elements to copy.
+         *  \param result Beginning of the destination sequence.
+         *  \return result + n.
+         *
+         *  \tparam InputIterator is a model of InputIterator
+         *  and \c InputIterator's \c value_type must be convertible to \c OutputIterator's \c value_type.
+         *  \tparam Size is an integral type.
+         *  \tparam OutputIterator is a model of OutputIterator
+         *
+         *  The following demonstrates how to use \p copy.
+         *
+         *  \code
+         *  #include <bolt/cl/copy.h>
+         *  ...
+         *
+         *  std::vector<float> vecSrc(128);
+         *  std::vector<float> vecDest(128);
+         *  ...
+         *
+         *  bolt::cl::copy_n(vecSrc.begin(), 128, vecDest.begin());
+         *
+         *  // vecDest is now a copy of vecSrc
+         *  \endcode
+         *
+         *  \sa http://www.sgi.com/tech/stl/copy_n.html
+         *  \sa http://www.sgi.com/tech/stl/InputIterator.html
+         *  \sa http://www.sgi.com/tech/stl/OutputIterator.html
+         */
         template<typename InputIterator, typename Size, typename OutputIterator> 
-        OutputIterator copy_n(InputIterator first, Size n, OutputIterator result, 
+        OutputIterator copy_n(
+            InputIterator first,
+            Size n,
+            OutputIterator result, 
             const std::string& user_code="");
 
+        /*! copy_n copies each element from the sequence [first, first+n) to [result, result + n), i.e.,
+         *  it assigns *result = *first, then *(result + 1) = *(first + 1), and so on.
+         *  
+         *  Calling copy_n with overlapping source and destination ranges has undefined behavior, as the order
+         *  of copying on the GPU is not guaranteed.
+         *    
+         *  \param ctl Control structure to control command-queue, debug, tuning, etc.  See bolt::cl::control.
+         *  \param first Beginning of the source copy sequence.
+         *  \param n  Number of elements to copy.
+         *  \param result Beginning of the destination sequence.
+         *  \return result + n.
+         *
+         *  \tparam InputIterator is a model of InputIterator
+         *  and \c InputIterator's \c value_type must be convertible to \c OutputIterator's \c value_type.
+         *  \tparam Size is an integral type.
+         *  \tparam OutputIterator is a model of OutputIterator
+         *
+         *  The following demonstrates how to use \p copy.
+         *
+         *  \code
+         *  #include <bolt/cl/copy.h>
+         *  ...
+         *
+         *  std::vector<float> vecSrc(128);
+         *  std::vector<float> vecDest(128);
+         *  bolt::cl::control ctrl = control::getDefault();
+         *  ...
+         *
+         *  bolt::cl::copy_n(ctrl, vecSrc.begin(), 128, vecDest.begin());
+         *
+         *  // vecDest is now a copy of vecSrc
+         *  \endcode
+         *
+         *  \sa http://www.sgi.com/tech/stl/copy_n.html
+         *  \sa http://www.sgi.com/tech/stl/InputIterator.html
+         *  \sa http://www.sgi.com/tech/stl/OutputIterator.html
+         */
         template<typename InputIterator, typename Size, typename OutputIterator> 
-        OutputIterator copy_n(const bolt::cl::control &ctl, InputIterator first, Size n, OutputIterator result, 
+        OutputIterator copy_n(
+            const bolt::cl::control &ctl,
+            InputIterator first,
+            Size n,
+            OutputIterator result, 
             const std::string& user_code="");
 
         /*!   \}  */

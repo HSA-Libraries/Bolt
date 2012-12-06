@@ -31,9 +31,17 @@
     BOLT_CREATE_CLCODE(OPERATOR<int>, CODE_STRING); \
 	BOLT_CREATE_CLCODE(OPERATOR<unsigned>, CODE_STRING); 
 
+#define BOLT_CREATE_TYPE_TYPENAMES(OPERATOR, TYPE) \
+    BOLT_CREATE_TYPENAME(OPERATOR<TYPE>);
+
+#define BOLT_CREATE_TYPE_CLCODE(OPERATOR, TYPE, CODE_STRING) \
+    BOLT_CREATE_CLCODE(OPERATOR<TYPE>, CODE_STRING);
+
 
 // macro for creating a host-side routine and an OCL string (in the bolcl::clcode:: namespace).  Also defines the typename trait automatically.
 #define CREATE_BOLT_FUNCTIONAL(OPERATOR, ... )  __VA_ARGS__; BOLT_CREATE_STD_TYPENAMES(OPERATOR); BOLT_CREATE_STD_CLCODE(OPERATOR, #__VA_ARGS__);
+
+#define CREATE_BOLT_TYPE_FUNCTIONAL(OPERATOR, TYPE, ... )  __VA_ARGS__; BOLT_CREATE_TYPE_TYPENAMES(OPERATOR, TYPE); BOLT_CREATE_TYPE_CLCODE(OPERATOR, TYPE, #__VA_ARGS__);
 
 
 namespace bolt {
@@ -97,6 +105,8 @@ namespace bolt {
     }; 
     );
 
+    //---
+    // Unary operations:
 
     CREATE_BOLT_FUNCTIONAL(square,
     template <typename T>
@@ -108,8 +118,7 @@ namespace bolt {
     };
     );
 
-    //---
-    // Unary operations:
+    
     CREATE_BOLT_FUNCTIONAL(negate,
     template<typename T>
     struct negate 

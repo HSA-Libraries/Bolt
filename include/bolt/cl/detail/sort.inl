@@ -59,7 +59,7 @@ namespace bolt {
         }
 
         template<typename RandomAccessIterator> 
-        void sort(const control &ctl,
+        void sort(control &ctl,
             RandomAccessIterator first, 
             RandomAccessIterator last, 
             const std::string& cl_code)
@@ -72,7 +72,7 @@ namespace bolt {
         }
 
         template<typename RandomAccessIterator, typename StrictWeakOrdering> 
-        void sort(const control &ctl,
+        void sort(control &ctl,
             RandomAccessIterator first, 
             RandomAccessIterator last,  
             StrictWeakOrdering comp, 
@@ -156,7 +156,7 @@ namespace bolt {
 
             // Wrapper that uses default control class, iterator interface
             template<typename RandomAccessIterator, typename StrictWeakOrdering> 
-            void sort_detect_random_access( const control &ctl, const RandomAccessIterator& first, const RandomAccessIterator& last,
+            void sort_detect_random_access( control &ctl, const RandomAccessIterator& first, const RandomAccessIterator& last,
                 const StrictWeakOrdering& comp, const std::string& cl_code, std::input_iterator_tag )
             {
                 //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data 
@@ -165,7 +165,7 @@ namespace bolt {
             };
 
             template<typename RandomAccessIterator, typename StrictWeakOrdering> 
-            void sort_detect_random_access( const control &ctl, const RandomAccessIterator& first, const RandomAccessIterator& last,
+            void sort_detect_random_access( control &ctl, const RandomAccessIterator& first, const RandomAccessIterator& last,
                 const StrictWeakOrdering& comp, const std::string& cl_code, std::random_access_iterator_tag )
             {
                 return sort_pick_iterator(ctl, first, last, comp, cl_code);
@@ -174,7 +174,7 @@ namespace bolt {
             //Device Vector specialization
             template<typename DVRandomAccessIterator, typename StrictWeakOrdering> 
             typename std::enable_if< std::is_base_of<typename device_vector<typename std::iterator_traits<DVRandomAccessIterator>::value_type>::iterator,DVRandomAccessIterator>::value >::type
-            sort_pick_iterator(const control &ctl, const DVRandomAccessIterator& first, const DVRandomAccessIterator& last,
+            sort_pick_iterator(control &ctl, const DVRandomAccessIterator& first, const DVRandomAccessIterator& last,
                 const StrictWeakOrdering& comp, const std::string& cl_code) 
             {
                 // User defined Data types are not supported with device_vector. Hence we have a static assert here.
@@ -202,7 +202,7 @@ namespace bolt {
             //In the future, Each input buffer should be mapped to the device_vector and the specialization specific to device_vector should be called. 
             template<typename RandomAccessIterator, typename StrictWeakOrdering> 
             typename std::enable_if< !std::is_base_of<typename device_vector<typename std::iterator_traits<RandomAccessIterator>::value_type>::iterator,RandomAccessIterator>::value >::type
-            sort_pick_iterator(const control &ctl, const RandomAccessIterator& first, const RandomAccessIterator& last,
+            sort_pick_iterator(control &ctl, const RandomAccessIterator& first, const RandomAccessIterator& last,
                 const StrictWeakOrdering& comp, const std::string& cl_code)  
             {
                 typedef typename std::iterator_traits<RandomAccessIterator>::value_type T;
@@ -241,8 +241,9 @@ namespace bolt {
 #define DEBUG 0
 #if (ENABLE_INCLUSIVE_SCAN == 1)
             template<typename DVRandomAccessIterator, typename StrictWeakOrdering> 
+
 			typename std::enable_if< std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type, unsigned int >::value >::type
-	        sort_enqueue(const control &ctl, DVRandomAccessIterator first, DVRandomAccessIterator last,
+	        sort_enqueue(control &ctl, DVRandomAccessIterator first, DVRandomAccessIterator last,
                 StrictWeakOrdering comp, const std::string& cl_code)
             {
                     typedef typename std::iterator_traits< DVRandomAccessIterator >::value_type T;
@@ -351,7 +352,7 @@ namespace bolt {
 
                         //Perform a global scan 
                         //bolt::cl::inclusive_scan(ctl, dvHistogramScanBuffer.begin(),dvHistogramScanBuffer.end(),dvHistogramScanBuffer.begin());
-                        detail::inclusive_scan_enqueue(ctl, dvHistogramScanBuffer.begin(),dvHistogramScanBuffer.end(),dvHistogramScanBuffer.begin(), 0, plus< T >( ));
+                        detail::scan_enqueue(ctl, dvHistogramScanBuffer.begin(),dvHistogramScanBuffer.end(),dvHistogramScanBuffer.begin(), 0, plus< T >( ));
 #if (DEBUG==1)
         ::cl::Event l_histScanBufferEvent;
         ctl.commandQueue().enqueueMapBuffer(clHistScanData, false, CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(T) * numGroups * RADICES, NULL, &l_histScanBufferEvent, &l_Error );
@@ -628,8 +629,9 @@ if(bits==0 || bits==8 || bits==16 || bits==24)
 
             template<typename DVRandomAccessIterator, typename StrictWeakOrdering> 
 			typename std::enable_if< !std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type, unsigned int >::value >::type
-            sort_enqueue(const control &ctl, DVRandomAccessIterator first, DVRandomAccessIterator last,
-                StrictWeakOrdering comp, const std::string& cl_code)  
+            sort_enqueue(control &ctl, const DVRandomAccessIterator& first, const DVRandomAccessIterator& last,
+                const StrictWeakOrdering& comp, const std::string& cl_code)  
+
             {
                     typedef typename std::iterator_traits< DVRandomAccessIterator >::value_type T;
                     size_t szElements = (size_t)(last - first);
@@ -663,14 +665,15 @@ if(bits==0 || bits==8 || bits==16 || bits==24)
 
                     ::cl::Buffer A = first->getBuffer( );
                     ALIGNED( 256 ) StrictWeakOrdering aligned_comp( comp );
-                    ::cl::Buffer userFunctor(ctl.context(), CL_MEM_USE_HOST_PTR, sizeof( aligned_comp ), &aligned_comp );   // Create buffer wrapper so we can access host parameters.
-    
+                    // ::cl::Buffer userFunctor(ctl.context(), CL_MEM_USE_HOST_PTR, sizeof( aligned_comp ), &aligned_comp );   // Create buffer wrapper so we can access host parameters.
+                    control::buffPointer userFunctor = ctl.acquireBuffer( sizeof( aligned_comp ), CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_comp );
+
                     ::cl::Kernel k = masterKernel;  // hopefully create a copy of the kernel. FIXME, doesn't work.
                     numStages = 0;
                     for(temp = szElements; temp > 1; temp >>= 1)
                         ++numStages;
                     V_OPENCL( k.setArg(0, A), "Error setting a kernel argument" );
-                    V_OPENCL( k.setArg(3, userFunctor), "Error setting a kernel argument" );
+                    V_OPENCL( k.setArg(3, *userFunctor), "Error setting a kernel argument" );
                     for(stage = 0; stage < numStages; ++stage) 
                     {
                         // stage of the algorithm
@@ -702,7 +705,7 @@ if(bits==0 || bits==8 || bits==16 || bits==24)
             }// END of sort_enqueue
 
             template<typename DVRandomAccessIterator, typename StrictWeakOrdering> 
-            void sort_enqueue_non_powerOf2(const control &ctl, const DVRandomAccessIterator& first, const DVRandomAccessIterator& last,
+            void sort_enqueue_non_powerOf2(control &ctl, const DVRandomAccessIterator& first, const DVRandomAccessIterator& last,
                 const StrictWeakOrdering& comp, const std::string& cl_code)  
             {
                     //std::cout << "The BOLT sort routine does not support non power of 2 buffer size. Falling back to CPU std::sort" << std ::endl;
@@ -726,17 +729,20 @@ if(bits==0 || bits==8 || bits==16 || bits==24)
                     size_t globalSize = totalWorkGroups * wgSize;
                     V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
                     
-                    ::cl::Buffer in = first->getBuffer( );
-                    ::cl::Buffer out(ctl.context(), CL_MEM_READ_WRITE, sizeof(T)*szElements);
+                    ::cl::Buffer& in = first->getBuffer( );
+                    // ::cl::Buffer out(ctl.context(), CL_MEM_READ_WRITE, sizeof(T)*szElements);
+                    control::buffPointer out = ctl.acquireBuffer( sizeof(T)*szElements );
 
                     ALIGNED( 256 ) StrictWeakOrdering aligned_comp( comp );
-                    ::cl::Buffer userFunctor(ctl.context(), CL_MEM_USE_HOST_PTR, sizeof( aligned_comp ), &aligned_comp );   // Create buffer wrapper so we can access host parameters.
+                    // ::cl::Buffer userFunctor(ctl.context(), CL_MEM_USE_HOST_PTR, sizeof( aligned_comp ), &aligned_comp );   // Create buffer wrapper so we can access host parameters.
+                    control::buffPointer userFunctor = ctl.acquireBuffer( sizeof( aligned_comp ), CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_comp );
+
                     ::cl::LocalSpaceArg loc;
                     loc.size_ = wgSize*sizeof(T);
     
                     V_OPENCL( sortKernels[0].setArg(0, in), "Error setting a kernel argument in" );
-                    V_OPENCL( sortKernels[0].setArg(1, out), "Error setting a kernel argument out" );
-                    V_OPENCL( sortKernels[0].setArg(2, userFunctor), "Error setting a kernel argument userFunctor" );
+                    V_OPENCL( sortKernels[0].setArg(1, *out), "Error setting a kernel argument out" );
+                    V_OPENCL( sortKernels[0].setArg(2, *userFunctor), "Error setting a kernel argument userFunctor" );
                     V_OPENCL( sortKernels[0].setArg(3, loc), "Error setting kernel argument loc" );
                     V_OPENCL( sortKernels[0].setArg(4, static_cast<cl_uint> (szElements)), "Error setting kernel argument szElements" );
                     {
@@ -753,9 +759,9 @@ if(bits==0 || bits==8 || bits==16 || bits==24)
 
                     wgSize  = sortKernels[1].getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.device( ), &l_Error );
 
-                    V_OPENCL( sortKernels[1].setArg(0, out), "Error setting a kernel argument in" );
+                    V_OPENCL( sortKernels[1].setArg(0, *out), "Error setting a kernel argument in" );
                     V_OPENCL( sortKernels[1].setArg(1, in), "Error setting a kernel argument out" );
-                    V_OPENCL( sortKernels[1].setArg(2, userFunctor), "Error setting a kernel argument userFunctor" );
+                    V_OPENCL( sortKernels[1].setArg(2, *userFunctor), "Error setting a kernel argument userFunctor" );
                     V_OPENCL( sortKernels[1].setArg(3, loc), "Error setting kernel argument loc" );
                     V_OPENCL( sortKernels[1].setArg(4, static_cast<cl_uint> (szElements)), "Error setting kernel argument szElements" );
                     {

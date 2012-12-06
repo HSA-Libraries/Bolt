@@ -14,8 +14,12 @@
 *   limitations under the License.                                                   
 
 ***************************************************************************/
-// #pragma OPENCL EXTENSION cl_amd_printf : enable
+//#pragma OPENCL EXTENSION cl_amd_printf : enable
 
+
+/******************************************************************************
+ *  Kernel 2
+ *****************************************************************************/
 template< typename Type, typename BinaryFunction >
 kernel void perBlockAddition( 
                 global Type* output,
@@ -34,148 +38,172 @@ kernel void perBlockAddition(
         
     Type scanResult = output[ gloId ];
 
-    //  TODO:  verify; is there a memory conflict if all threads read from the same address?
-    Type postBlockSum = postSumArray[ groId ];
-
-    // printf( "output[%d] = [%d]\n", gloId, scanResult );
-    // printf( "postSumArray[%d] = [%d]\n", groId, postBlockSum );
-    scanResult = (*binaryOp)( scanResult, postBlockSum );
-    output[ gloId ] = scanResult;
+    // accumulate prefix
+    if (groId > 0)
+    {
+        Type postBlockSum = postSumArray[ groId-1 ];
+        Type newResult = (*binaryOp)( scanResult, postBlockSum );
+        output[ gloId ] = newResult;
+    }
 }
 
+
+/******************************************************************************
+ *  Kernel 1
+ *****************************************************************************/
 template< typename iType, typename BinaryFunction >
-kernel void intraBlockExclusiveScan(
+kernel void intraBlockInclusiveScan(
                 global iType* postSumArray,
-                global iType* preSumArray,
+                global iType* preSumArray, 
+                iType identity,
                 const uint vecSize,
-                local volatile iType* lds,
+                local iType* lds,
                 const uint workPerThread,
-                global BinaryFunction* binaryOp    // Functor operation to apply on each step
+                global BinaryFunction* binaryOp
                 )
 {
     size_t gloId = get_global_id( 0 );
-    size_t groId = get_group_id( 0 );
     size_t locId = get_local_id( 0 );
     size_t wgSize = get_local_size( 0 );
     uint mapId  = gloId * workPerThread;
 
-    //    Initialize the padding to 0, for when the scan algorithm looks left.
-    //    Then bump the LDS pointer past the padding
-    lds[ locId ] = 0;
-    local volatile iType* pLDS = lds + ( wgSize / 2 );
-
-    //  Abort threads that are passed the end of the input vector
-    //  TODO:  I'm returning early for threads past the input vector size; not safe for barriers in kernel if wg != wavefront
-    if( mapId >= vecSize )
-        return;
-
-    //  Reducing workPerThread values per workitem into just 1 value per workitem; one wavefront execution
-    iType workSum = 0;
-    for( uint offset = 0; offset < workPerThread; offset += 1 )
+    // do offset of zero manually
+    uint offset;
+    iType workSum;
+    if (mapId < vecSize)
     {
-        iType y = ((mapId + offset) < vecSize) ? preSumArray[ mapId + offset ] : 0;
-        // printf( "preSumArray[%d] = [%g]\n", mapId + offset, y );
-        workSum = (*binaryOp)( workSum, y );
+        // accumulate zeroth value manually
+        offset = 0;
+        workSum = preSumArray[mapId+offset];
         postSumArray[ mapId + offset ] = workSum;
+
+        //  Serial accumulation
+        for( offset = offset+1; offset < workPerThread; offset += 1 )
+        {
+            if (mapId+offset<vecSize)
+            {
+                iType y = preSumArray[mapId+offset];
+                workSum = (*binaryOp)( workSum, y );
+                postSumArray[ mapId + offset ] = workSum;
+            }
+        }
     }
     barrier( CLK_LOCAL_MEM_FENCE );
-    pLDS[ locId ] = workSum;
-
-    //	This loop computes the inclusive scan of the reduced block sum array
-    iType scanSum = workSum;
-    for( size_t offset = 1; offset < wgSize; offset *= 2 )
+    iType scanSum;
+    offset = 1;
+    // load LDS with register sums
+    if (mapId < vecSize)
+    {
+        lds[ locId ] = workSum;
+        barrier( CLK_LOCAL_MEM_FENCE );
+    
+        if (locId >= offset)
+        { // thread > 0
+            iType y = lds[ locId - offset ];
+            iType y2 = lds[ locId ];
+            scanSum = (*binaryOp)( y2, y );
+            lds[ locId ] = scanSum;
+        } else { // thread 0
+            scanSum = workSum;
+        }  
+    }
+    // scan in lds
+    for( offset = offset*2; offset < wgSize; offset *= 2 )
     {
         barrier( CLK_LOCAL_MEM_FENCE );
-        
-        //  Make sure that the index is a signed quantity, as we expect to generate negative indices
-        int index = locId - offset;
-
-        iType y = pLDS[ index ];
-        scanSum = (*binaryOp)( scanSum, y );
-        pLDS[ locId ] = scanSum;
-    }
-
-    //	This subtraction converts the inclusive scan to the exclusive scan
-    scanSum -= workSum;
+        if (mapId < vecSize)
+        {
+            if (locId >= offset)
+            {
+                iType y = lds[ locId - offset ];
+                scanSum = (*binaryOp)( scanSum, y );
+                lds[ locId ] = scanSum;
+            }
+        }
+    } // for offset
+    barrier( CLK_LOCAL_MEM_FENCE );
     
-    //  This adjusts the 1 value per workitem back into workPerThread values per workitem
-    for( uint offset = 0; offset < workPerThread; offset += 1 )
+    // write final scan from pre-scan and lds scan
+    for( offset = 0; offset < workPerThread; offset += 1 )
     {
         barrier( CLK_GLOBAL_MEM_FENCE );
 
-        iType y = postSumArray[ mapId + offset ];
-        y = (*binaryOp)( y, scanSum );
-        y -= preSumArray[ mapId + offset ];
-        postSumArray[ mapId + offset ] = y;
-        // printf( "postSumArray[%d] = [%g]\n", mapId + offset, postSumArray[ mapId + offset ] );
-    }
+        if (mapId < vecSize && locId > 0)
+        {
+            iType y = postSumArray[ mapId + offset ];
+            iType y2 = lds[locId-1];
+            y = (*binaryOp)( y, y2 );
+            postSumArray[ mapId + offset ] = y;
+        } // thread in bounds
+    } // for 
+} // end kernel
 
-}
 
-template< typename iType, typename T, typename BinaryFunction >
+/******************************************************************************
+ *  Kernel 0
+ *****************************************************************************/
+template< typename iType, typename BinaryFunction >
 kernel void perBlockInclusiveScan(
                 global iType* output,
                 global iType* input,
-                const T init,
+                iType identity,
                 const uint vecSize,
-                local volatile iType* lds,
-                global BinaryFunction* binaryOp,    // Functor operation to apply on each step
-                global iType* scanBuffer )            // Passed to 2nd kernel; the of each block
+                local iType* lds,
+                global BinaryFunction* binaryOp,
+                global iType* scanBuffer,
+                int exclusive) // do exclusive scan ?
 {
     size_t gloId = get_global_id( 0 );
     size_t groId = get_group_id( 0 );
     size_t locId = get_local_id( 0 );
     size_t wgSize = get_local_size( 0 );
 
-    //    Initialize the padding to 0, for when the scan algorithm looks left.
-    //    Then bump the LDS pointer past the padding
-    lds[ locId ] = 0;
-    local volatile iType* pLDS = lds + ( wgSize / 2 );
-
     //  Abort threads that are passed the end of the input vector
-    //  TODO:  I'm returning early for threads past the input vector size; not safe for barriers in kernel if wg != wavefront
-    if( gloId >= vecSize )
-        return;
+    if (gloId >= vecSize) return; // on SI this doesn't mess-up barriers
 
-    // Initialize the scan with init only on the first thread
-    iType val = (gloId == 0) ? init: 0;
-    
-    val = val + input[ gloId ];
-    
-    pLDS[ locId ] = val;
+    // if exclusive, load gloId=0 w/ identity, and all others shifted-1
+    iType val;
+    if (exclusive)
+    {
+        if (gloId > 0)
+        { // thread>0
+            val = input[gloId-1];
+            lds[ locId ] = val;
+        }
+        else
+        { // thread=0
+            val = identity;
+            lds[ locId ] = val;
+        }
+    }
+    else
+    {
+        val = input[gloId];
+        lds[ locId ] = val;
+    }
 
-    //  This loop essentially computes a scan within a workgroup
-    //  No communication between workgroups
+    //  Computes a scan within a workgroup
     iType sum = val;
     for( size_t offset = 1; offset < wgSize; offset *= 2 )
     {
         barrier( CLK_LOCAL_MEM_FENCE );
-        
-        //  Make sure that the index is a signed quantity, as we expect to generate negative indices
-        int index = locId - offset;
-
-        iType y = pLDS[ index ];
-        sum = (*binaryOp)( sum, y );
-        pLDS[ locId ] = sum;
+        if (locId >= offset)
+        {
+            iType y = lds[ locId - offset ];
+            sum = (*binaryOp)( sum, y );
+        }
+        barrier( CLK_LOCAL_MEM_FENCE );
+        lds[ locId ] = sum;
     }
 
     //  Each work item writes out its calculated scan result, relative to the beginning
     //  of each work group
     output[ gloId ] = sum;
-    // printf( "Output Array work-item[%d], sum[%d]\n", gloId, sum );
-
-    barrier( CLK_LOCAL_MEM_FENCE );
-    
-    //	Take a single thread, and save the last valid value in a workgroup to the block sum array
-    //if( locId == 0 )
-    //{
-    //    uint lastValidWorkItem = min( wgSize, vecSize - ( get_group_id( 0 ) * wgSize ) );        
-    //    scanBuffer[ groId ] = pLDS[ lastValidWorkItem-1 ];
-    //    printf( "scanBuffer[%d] = pLDS[%d] = %g\n", gloId, lastValidWorkItem - 1, pLDS[ lastValidWorkItem - 1 ] );
-    //}
-    
-    //  Verify; is it still performant to have every work item write to the same output array index?
-    size_t lastValidWorkItem = min( wgSize, vecSize - ( groId * wgSize ) );        
-    scanBuffer[ groId ] = pLDS[ lastValidWorkItem-1 ];
+    barrier( CLK_LOCAL_MEM_FENCE ); // needed for large data types
+    if (locId == 0)
+    {
+        // last work-group can be wrong b/c ignored
+        scanBuffer[ groId ] = lds[ wgSize-1 ];
+    }
 }
 

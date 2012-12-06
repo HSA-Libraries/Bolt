@@ -69,13 +69,10 @@ namespace bolt {
 		extern const std::string sort_uint_kernels;
         extern const std::string transform_kernels;
         extern const std::string transform_reduce_kernels;
+        extern const std::string transform_scan_kernels;
+        
 
-
-        //extern const char* const reduce_kernels;
-        //extern const char* const transform_kernels;
-        //extern const char* const transform_reduce_kernels;
-        //extern const char* const sort_kernels;
-        //extern const char* const scan_kernels;
+        class control;
 
         extern std::string fileToString(const std::string &fileName);
 

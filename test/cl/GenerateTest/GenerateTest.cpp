@@ -22,62 +22,114 @@
 #include <bolt/cl/generate.h>
 //#include <bolt/miniDump.h>
 
-//#include <gtest/gtest.h>
+#include <gtest/gtest.h>
 //#include <boost/shared_array.hpp>
-//#include <array>
+#include <array>
+#include "bolt/cl/scan.h"
 
-/******************************************************************************
- * checkResults
- *      compare std:: and bolt::cl:: results
- *      returns number of errors
- *****************************************************************************/
-template<typename InputIterator1, typename InputIterator2>
-int checkResults(std::string &msg, InputIterator1 first1 , InputIterator1 end1 , InputIterator2 first2)
+template< typename T >
+::testing::AssertionResult cmpArrays( const T ref, const T calc, size_t N )
 {
-	int errCnt = 0;
-	static const int maxErrCnt = 10;
-	size_t sz = end1-first1 ;
-	for (int i=0; i<sz ; i++) {
-		if (first1 [i] != *(first2 + i) ) {
-			errCnt++;
-			if (errCnt < maxErrCnt) {
-				std::cout << "\tMISMATCH[" << i << "] " << msg << " STL= " << first1[i] << "  BOLT=" << *(first2 + i) << std::endl;
-			} else if (errCnt == maxErrCnt) {
-				std::cout << "\tMax error count reached; no more mismatches will be printed...\n";
-			}
-		};
-	};
+    for( size_t i = 0; i < N; ++i )
+    {
+        EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
+    }
 
-    if ( errCnt == 0 ) {
-		//std::cout << " PASSED  " << msg << " Correct on all " << sz << " elements." << std::endl;
-        printf(" PASSED %20s Correct for all %6i elements.\n", msg.c_str(), sz);
-	} else {
-		//std::cout << "*FAILED  " << msg << " Mismatch on " << errCnt << " / " << sz << " elements." << std::endl;
-        printf("*FAILED %20s Mismatch for %6i /%6i elements.\n", msg.c_str(), sz);
-	};
-    fflush(stdout);
+    return ::testing::AssertionSuccess( );
+}
+template< typename T, size_t N >
+::testing::AssertionResult cmpArrays( const T (&ref)[N], const T (&calc)[N] )
+{
+    for( size_t i = 0; i < N; ++i )
+    {
+        EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
+    }
 
-	return errCnt;
+    return ::testing::AssertionSuccess( );
+}
+template< typename T, size_t N >
+struct cmpStdArray
+{
+    static ::testing::AssertionResult cmpArrays( const std::array< T, N >& ref, const std::array< T, N >& calc )
+    {
+        for( size_t i = 0; i < N; ++i )
+        {
+            EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
+        }
+
+        return ::testing::AssertionSuccess( );
+    }
 };
-
-/******************************************************************************
- * Pause Program to see Results
- *****************************************************************************/
-void waitForEnter()
+template< size_t N >
+struct cmpStdArray< float, N >
 {
-    std::cout << "Press <ENTER> to continue." << std::endl;
-    std::cin.clear();
-    std::cin.ignore(/*std::numeric_limits<std::streamsize>::max()*/1, '\n');
+    static ::testing::AssertionResult cmpArrays( const std::array< float, N >& ref, const std::array< float, N >& calc )
+    {
+        for( size_t i = 0; i < N; ++i )
+        {
+            EXPECT_FLOAT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
+        }
+
+        return ::testing::AssertionSuccess( );
+    }
+};
+template< size_t N >
+struct cmpStdArray< double, N >
+{
+    static ::testing::AssertionResult cmpArrays( const std::array< double, N >& ref, const std::array< double, N >& calc )
+    {
+        for( size_t i = 0; i < N; ++i )
+        {
+            EXPECT_DOUBLE_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
+        }
+
+        return ::testing::AssertionSuccess( );
+    }
+};
+template< typename T >
+::testing::AssertionResult cmpArrays( const std::vector< T >& ref, const std::vector< T >& calc )
+{
+    for( size_t i = 0; i < ref.size( ); ++i )
+    {
+        EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
+    }
+
+    return ::testing::AssertionSuccess( );
+}
+::testing::AssertionResult cmpArrays( const std::vector< float >& ref, const std::vector< float >& calc )
+{
+    for( size_t i = 0; i < ref.size( ); ++i )
+    {
+        EXPECT_FLOAT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
+    }
+
+    return ::testing::AssertionSuccess( );
+}
+::testing::AssertionResult cmpArrays( const std::vector< double >& ref, const std::vector< double >& calc )
+{
+    for( size_t i = 0; i < ref.size( ); ++i )
+    {
+        EXPECT_DOUBLE_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
+    }
+
+    return ::testing::AssertionSuccess( );
+}
+template< typename S, typename B >
+::testing::AssertionResult cmpArrays( const S& ref, const B& calc )
+{
+    for( size_t i = 0; i < ref.size( ); ++i )
+    {
+        EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
+    }
+
+    return ::testing::AssertionSuccess( );
 }
 
-/******************************************************************************
- * Generator Gen1: return constant float
- *****************************************************************************/
-BOLT_FUNCTOR(Gen1,
-struct Gen1
+BOLT_FUNCTOR(GenDbl,
+struct GenDbl
 {
     const float _a;
-    Gen1( float a ) : _a(a) {};
+    GenDbl( float a ) : _a(a) {};
 
 	float operator() ()
 	{
@@ -90,11 +142,11 @@ struct Gen1
 /******************************************************************************
  * Generator Gen2: return incrementing int, begining at base value
  *****************************************************************************/
-BOLT_FUNCTOR(Gen2,
-struct Gen2
+BOLT_FUNCTOR(GenInt,
+struct GenInt
 {
 	const int _a;
-	Gen2( int a ) : _a(a) {};
+	GenInt( int a ) : _a(a) {};
 
 	int operator() ()
 	{
@@ -104,414 +156,227 @@ struct Gen2
 );  // end BOLT_FUNCTOR
 
 /******************************************************************************
- * Tests
+ * Generator GenConst: return constant
  *****************************************************************************/
-int testGen1DevVec( int length );
-int testGen2DevVec( int length );
-int testGenN1DevVec( int length );
-int testGenN2DevVec( int length );
-int testGenN12DevVec( int length, int cycle );
-int testGen1HostVec( int length );
-int testGen2HostVec( int length );
-int testGenN1HostVec( int length );
-int testGenN2HostVec( int length );
-int testGenN12HostVec( int length, int cycle );
-                                 
-/******************************************************************************
- * Main
- *****************************************************************************/                                                 
-int main(int argc, char* argv[])
+CREATE_BOLT_FUNCTIONAL(GenConst,
+template< typename T >
+struct GenConst
 {
-#if 0
-    // the below code demonstrates the short-comming of the device_vector::iterator at pointing to the middle of a buffer
-    int length = 10;
-    std::vector<int> gold(length);
-    bolt::cl::device_vector<int> dv(length);
-    // generator
-    Gen2 genA(1);
-    Gen2 genB(2);
+    // return value
+	T _a;
+
+    // constructor
+	GenConst( T a ) : _a(a) {};
+
+    // functor
+	T operator() () { return _a; };
+};
+);  // end BOLT_FUNCTOR
+
+class HostIntVector: public ::testing::TestWithParam< int >
+{
+public:
+    //  Create an std and a bolt vector of requested size, and initialize all the elements to -1
+    HostIntVector( ): stdInput( GetParam( ), -1 ), boltInput( GetParam( ), -1 )
+    {}
+
+protected:
+    std::vector< int > stdInput, boltInput;
+};
+
+class DevIntVector: public ::testing::TestWithParam< int >
+{
+public:
+    //  Create an std and a bolt vector of requested size, and initialize all the elements to -1
+    DevIntVector( ): stdInput( GetParam( ), -1 ), boltInput( GetParam( ), -1 )
+    {}
+
+protected:
+    std::vector< int > stdInput;
+    bolt::cl::device_vector< int > boltInput;
+};
+
+class HostDblVector: public ::testing::TestWithParam< int >
+{
+public:
+    //  Create an std and a bolt vector of requested size, and initialize all the elements to -1
+    HostDblVector( ): stdInput( GetParam( ), -1.0 ), boltInput( GetParam( ), -1.0 )
+    {}
+
+protected:
+    std::vector< double > stdInput, boltInput;
+};
+
+class DevDblVector: public ::testing::TestWithParam< int >
+{
+public:
+    //  Create an std and a bolt vector of requested size, and initialize all the elements to -1
+    DevDblVector( ): stdInput( GetParam( ), -1.0 ), boltInput( GetParam( ), -1.0 )
+    {}
+
+protected:
+    std::vector< double > stdInput;
+    bolt::cl::device_vector< double > boltInput;
+};
+
+TEST_P( HostIntVector, Generate )
+{
+    // create generator
+    GenConst<int> gen(1234);
+
+    //  Calling the actual functions under test
+         std::generate(  stdInput.begin( ),  stdInput.end( ), gen );
+    bolt::cl::generate( boltInput.begin( ), boltInput.end( ), gen );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( HostDblVector, Generate )
+{
+    // create generator
+    GenConst<double> gen(1.234);
+    //  Calling the actual functions under test
+
+         std::generate(  stdInput.begin( ),  stdInput.end( ), gen );
+    bolt::cl::generate( boltInput.begin( ), boltInput.end( ), gen );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( DevIntVector, Generate )
+{
+    // create generator
+    GenConst<int> gen(2345);
+
+    //  Calling the actual functions under test
+         std::generate(  stdInput.begin( ),  stdInput.end( ), gen );
+    bolt::cl::generate( boltInput.begin( ), boltInput.end( ), gen );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( DevDblVector, Generate )
+{
+    // create generator
+    GenConst<double> gen(2.345);
+
+    //  Calling the actual functions under test
+         std::generate(  stdInput.begin( ),  stdInput.end( ), gen );
+    bolt::cl::generate( boltInput.begin( ), boltInput.end( ), gen );
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+TEST_P( HostIntVector, GenerateN )
+{
+    int size = GetParam();
+    // create generator
+    GenConst<int> gen(3456);
+
+    //  Calling the actual functions under test
+    std::vector< int >::iterator  stdEnd  =       std::generate_n(  stdInput.begin( ), size, gen );
+    std::vector< int >::iterator boltEnd  =  bolt::cl::generate_n( boltInput.begin( ), size, gen );
+
+    //  The returned iterator should be at the end
+    EXPECT_EQ( stdInput.end( ), stdEnd );
+    EXPECT_EQ( boltInput.end( ), boltEnd );
     
-    std::vector<int>::iterator goldIter = gold.begin();
-    bolt::cl::device_vector<int>::iterator boltIter = dv.begin();
-    printf("Bolt Iter Index %i\n", boltIter.getIndex());
+    //  Both collections should have the same number of elements
+    std::vector< int >::iterator::difference_type  stdNumElements = std::distance(  stdInput.begin( ),  stdEnd );
+    std::vector< int >::iterator::difference_type boltNumElements = std::distance( boltInput.begin( ), boltEnd );
+    EXPECT_EQ( stdNumElements, boltNumElements );
 
-    ////////////////////////////////////////////////////////////////////////////////
-    printf("Vectors Before Generating\n");
-    std::vector<int>::iterator tmpGoldIter = gold.begin();
-    bolt::cl::device_vector<int>::iterator tmpBoltIter = dv.begin();
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( HostDblVector, GenerateN )
+{
+    int size = GetParam();
+    // create generator
+    GenConst<double> gen(3.456);
+
+    //  Calling the actual functions under test
+    std::vector< double >::iterator  stdEnd  =      std::generate_n(  stdInput.begin( ), size, gen );
+    std::vector< double >::iterator boltEnd  = bolt::cl::generate_n( boltInput.begin( ), size, gen );
     
-    for ( int i = 0; tmpGoldIter != gold.end(); tmpGoldIter++, tmpBoltIter++, i++ )
-    {
-        printf("Elem[%02i]: Std=%i, Bolt=%i\n", i, (int)(*tmpGoldIter), (int)(*tmpBoltIter));
-    }
-
-    goldIter += 3;
-    boltIter += 3;
-    printf("Bolt Iter Index %i\n", boltIter.getIndex());
-
-    goldIter = std::generate_n(goldIter, 3, genA);
-    boltIter = bolt::cl::generate_n(boltIter, 3, genA);
-    printf("Bolt Iter Index %i\n", boltIter.getIndex());
-
-    ////////////////////////////////////////////////////////////////////////////////////
-    printf("Vectors After Generating 3,4,5\n");
-    tmpGoldIter = gold.begin();
-    tmpBoltIter = dv.begin();
-    for ( int i = 0; tmpGoldIter != gold.end(); tmpGoldIter++, tmpBoltIter++, i++ )
-    {
-        printf("Elem[%02i]: Std=%i, Bolt=%i\n", i, (int)(*tmpGoldIter), (int)(*tmpBoltIter));
-    }
-
-    goldIter = std::generate_n(goldIter, 3, genB);
-    boltIter = bolt::cl::generate_n(boltIter, 3, genB);
-    printf("Bolt Iter Index %i\n", boltIter.getIndex());
-
-    ////////////////////////////////////////////////////////////////////////////////////////
-    printf("Vectors After Generating 6,7,8\n");
-    tmpGoldIter = gold.begin();
-    tmpBoltIter = dv.begin();
-    for ( int i = 0; tmpGoldIter != gold.end(); tmpGoldIter++, tmpBoltIter++, i++ )
-    {
-        printf("Elem[%02i]: Std=%i, Bolt=%i\n", i, (int)(*tmpGoldIter), (int)(*tmpBoltIter));
-    }
-#endif
-   
-
-    // Test several vector lengths
-    std::vector<int> lengths;
-    lengths.push_back(0);
-    lengths.push_back(1);
-    lengths.push_back(63);
-    lengths.push_back(64);
-    lengths.push_back(65);
-    lengths.push_back(1023);
-    lengths.push_back(1024);
-    lengths.push_back(1025);
-    lengths.push_back(16384+1);
-
-    int testsPassed = 0;
-    int testsFailed = 0;
-
-    // for each test length
-    for (int iter = 0; iter < lengths.size(); iter++)
-    {
-        int i = iter % lengths.size();
-        // Generator 1
-        int errorCount = 0;
-
-        /***********************************************************
-         * Test Device Vectors
-         **********************************************************/
-
-        errorCount = testGen1DevVec(lengths[i]);
-        if ( errorCount == 0 )
-            testsPassed++;
-        else
-            testsFailed++;
-
-        // Generator 2
-        errorCount = testGen2DevVec(lengths[i]);
-        if ( errorCount == 0 )
-            testsPassed++;
-        else
-            testsFailed++;
-
-        // Generator N 1
-        errorCount = testGenN1DevVec(lengths[i]);
-        if ( errorCount == 0 )
-            testsPassed++;
-        else
-            testsFailed++;
-
-        // Generator N 2
-        errorCount = testGenN2DevVec(lengths[i]);
-        if ( errorCount == 0 )
-            testsPassed++;
-        else
-            testsFailed++;
-
-#if 0
-        // Generator N 1,2
-        // This test doesn't pass because of short-commings
-        // in the device_vector::iterator at returning a cl::Buffer
-        // which points to the middle of the raw buffer
-        // the generate_n call is most likely correct, but can only be tested
-        // after the device_vector::iterator is fixed. -DT
-        errorCount = testGenN12DevVec(lengths[i], 3);
-        if ( errorCount == 0 )
-            testsPassed++;
-        else
-            testsFailed++;
-#endif
-
-        /***********************************************************
-         * Test Host Vectors
-         **********************************************************/
-
-        // Generator 1
-        errorCount = 0;
-        errorCount = testGen1HostVec(lengths[i]);
-        if ( errorCount == 0 )
-            testsPassed++;
-        else
-            testsFailed++;
-
-        // Generator 2
-        errorCount = testGen2HostVec(lengths[i]);
-        if ( errorCount == 0 )
-            testsPassed++;
-        else
-            testsFailed++;
-
-        // Generator N 1
-        errorCount = testGenN1HostVec(lengths[i]);
-        if ( errorCount == 0 )
-            testsPassed++;
-        else
-            testsFailed++;
-
-        // Generator N 2
-        errorCount = testGenN2HostVec(lengths[i]);
-        if ( errorCount == 0 )
-            testsPassed++;
-        else
-            testsFailed++;
-
-        // Generator N 1,2
-        errorCount = testGenN12HostVec(lengths[i], 11);
-        if ( errorCount == 0 )
-            testsPassed++;
-        else
-            testsFailed++;
-    }
-
-    // Print final results
-    printf("Final Results:\n");
-    printf("%9i Tests Passed\n", testsPassed);
-    printf("%9i Tests Failed\n", testsFailed);
-
-    // Wait to exit
-    waitForEnter();
-    return 1;
-}
-
-/***********************************************************
- * Device Vector Tests
- **********************************************************/
-
-// Generator Gen1, device_vector
-int testGen1DevVec( int length )
-{
-    // function name for reporting
-    std::string fName = __FUNCTION__;
-    // containers
-    std::vector<float> gold(length);
-    bolt::cl::device_vector<float> dv(length);
-    // generator
-    Gen1 genGold(3.14159f);
-    Gen1 genBolt(3.14159f);
-    // generate
-    std::generate(gold.begin(), gold.end(), genGold);
-    bolt::cl::generate(dv.begin(), dv.end(), genBolt);
-    //check results
-    return checkResults(fName, gold.begin(), gold.end(), dv.begin());
-}
-
-// Generator Gen2, device_vector
-int testGen2DevVec( int length )
-{
-    // function name for reporting
-    std::string fName = __FUNCTION__;
-    // containers
-    std::vector<float> gold(length);
-    bolt::cl::device_vector<float> dv(length);
-    // generator
-    Gen2 genGold(0);
-    Gen2 genBolt(0);
-    // generate
-    std::generate(gold.begin(), gold.end(), genGold);
-    bolt::cl::generate(dv.begin(), dv.end(), genBolt);
-    //check results
-    return checkResults(fName, gold.begin(), gold.end(), dv.begin());
-}
-
-// Generator N Gen1, device_vector
-int testGenN1DevVec( int length )
-{
-    // function name for reporting
-    std::string fName = __FUNCTION__;
-    // containers
-    std::vector<float> gold(length);
-    bolt::cl::device_vector<float> dv(length);
-    // generator
-    Gen1 genGold(3.14159f);
-    Gen1 genBolt(3.14159f);
-    // generate
-    std::generate_n(gold.begin(), length, genGold);
-    bolt::cl::generate_n(dv.begin(), length, genBolt);
-    //check results
-    return checkResults(fName, gold.begin(), gold.end(), dv.begin());
-}
-
-// Generator N Gen2, device_vector
-int testGenN2DevVec( int length )
-{
-    // function name for reporting
-    std::string fName = __FUNCTION__;
-    // containers
-    std::vector<float> gold(length);
-    bolt::cl::device_vector<float> dv(length);
-    // generator
-    Gen2 genGold(0);
-    Gen2 genBolt(0);
-    // generate
-    std::generate_n(gold.begin(), length, genGold);
-    bolt::cl::generate_n(dv.begin(), length, genBolt);
-    //check results
-    return checkResults(fName, gold.begin(), gold.end(), dv.begin());
-}
-
-// Generator Gen2, device_vector
-int testGenN12DevVec( int length , int cycle)
-{
-    // function name for reporting
-    std::string fName = __FUNCTION__;
-
-    // containers
-    std::vector<float> gold(length);
-    bolt::cl::device_vector<float> dv(length);
-    // generator
-    Gen1 genAGold(1.23f);
-    Gen1 genABolt(1.23f);
-    Gen1 genBGold(2.34f);
-    Gen1 genBBolt(2.34f);
+    //  The returned iterator should be at the end
+    EXPECT_EQ( stdInput.end( ), stdEnd );
+    EXPECT_EQ( boltInput.end( ), boltEnd );
     
-    // generate
-    int numCycles = length / cycle;
-    if (numCycles*cycle < length) numCycles++;
+    //  Both collections should have the same number of elements
+    std::vector< double >::iterator::difference_type  stdNumElements = std::distance(  stdInput.begin( ),  stdEnd );
+    std::vector< double >::iterator::difference_type boltNumElements = std::distance( boltInput.begin( ), boltEnd );
+    EXPECT_EQ( stdNumElements, boltNumElements );
 
-    std::vector<float>::iterator goldIter = gold.begin();
-    bolt::cl::device_vector<float>::iterator boltIter = dv.begin();
-    //OutputIterator boltIter = dv.begin();
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
 
-    for (int c = 0; c < numCycles; c++)
-    {
-        if (c == numCycles-1)
-            cycle = length%cycle;
-        goldIter =      std::generate_n(goldIter, cycle, (c%2) ? genAGold : genBGold);
-        boltIter = bolt::cl::generate_n(boltIter, cycle, (c%2) ? genABolt : genBBolt);
-    }
+TEST_P( DevIntVector, GenerateN )
+{
+    int size = GetParam();
+    // create generator
+    GenConst<int> gen(4567);
+
+    //  Calling the actual functions under test
+    std::vector< int >::iterator              stdEnd =      std::generate_n(  stdInput.begin( ), size, gen );
+    bolt::cl::device_vector< int >::iterator boltEnd = bolt::cl::generate_n( boltInput.begin( ), size, gen );
+
+    //  The returned iterator should be at the end
+    EXPECT_EQ( stdInput.end( ), stdEnd );
+    EXPECT_EQ( boltInput.end( ), boltEnd );
     
-    //check results
-    return checkResults(fName, gold.begin(), gold.end(), dv.begin());
+    //  Both collections should have the same number of elements
+    std::vector< int >::iterator::difference_type  stdNumElements = std::distance(  stdInput.begin( ),  stdEnd );
+    std::vector< int >::iterator::difference_type boltNumElements = std::distance( boltInput.begin( ), boltEnd );
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
 }
 
-/***********************************************************
- * Host Vector Tests
- **********************************************************/
-
-// Generator Gen1, host_vector
-int testGen1HostVec( int length )
+TEST_P( DevDblVector, GenerateN )
 {
-    // function name for reporting
-    std::string fName = __FUNCTION__;
-    // containers
-    std::vector<float> gold(length);
-    std::vector<float> dv(length);
-    // generator
-    Gen1 genGold(3.14159f);
-    Gen1 genBolt(3.14159f);
-    // generate
-    std::generate(gold.begin(), gold.end(), genGold);
-    bolt::cl::generate(dv.begin(), dv.end(), genBolt);
-    //check results
-    return checkResults(fName, gold.begin(), gold.end(), dv.begin());
-}
+    int size = GetParam();
+    // create generator
+    GenConst<double> gen(4.567);
 
-// Generator Gen2, host_vector
-int testGen2HostVec( int length )
-{
-    // function name for reporting
-    std::string fName = __FUNCTION__;
-    // containers
-    std::vector<float> gold(length);
-    std::vector<float> dv(length);
-    // generator
-    Gen2 genGold(0);
-    Gen2 genBolt(0);
-    // generate
-    std::generate(gold.begin(), gold.end(), genGold);
-    bolt::cl::generate(dv.begin(), dv.end(), genBolt);
-    //check results
-    return checkResults(fName, gold.begin(), gold.end(), dv.begin());
-}
-
-// Generator N Gen1, host_vector
-int testGenN1HostVec( int length )
-{
-    // function name for reporting
-    std::string fName = __FUNCTION__;
-    // containers
-    std::vector<float> gold(length);
-    std::vector<float> dv(length);
-    // generator
-    Gen1 genGold(3.14159f);
-    Gen1 genBolt(3.14159f);
-    // generate
-    std::generate_n(gold.begin(), length, genGold);
-    bolt::cl::generate_n(dv.begin(), length, genBolt);
-    //check results
-    return checkResults(fName, gold.begin(), gold.end(), dv.begin());
-}
-
-// Generator N Gen2, host_vector
-int testGenN2HostVec( int length )
-{
-    // function name for reporting
-    std::string fName = __FUNCTION__;
-    // containers
-    std::vector<float> gold(length);
-    std::vector<float> dv(length);
-    // generator
-    Gen2 genGold(0);
-    Gen2 genBolt(0);
-    // generate
-    std::generate_n(gold.begin(), length, genGold);
-    bolt::cl::generate_n(dv.begin(), length, genBolt);
-    //check results
-    return checkResults(fName, gold.begin(), gold.end(), dv.begin());
-}
-
-// Generator Gen2, host_vector
-int testGenN12HostVec( int length , int cycle)
-{
-    // function name for reporting
-    std::string fName = __FUNCTION__;
-    // containers
-    std::vector<float> gold(length);
-    std::vector<float> dv(length);
-    // generator
-    Gen1 genAGold(1.23f);
-    Gen1 genABolt(1.23f);
-    Gen1 genBGold(2.34f);
-    Gen1 genBBolt(2.34f);
+    //  Calling the actual functions under test
+    std::vector< double >::iterator                 stdEnd =      std::generate_n(  stdInput.begin( ), size, gen );
+    bolt::cl::device_vector< double >::iterator boltEnd = bolt::cl::generate_n( boltInput.begin( ), size, gen );
     
-    // generate
-    int numCycles = length / cycle;
-    if (numCycles*cycle < length) numCycles++;
-
-    std::vector<float>::iterator goldIter = gold.begin();
-    std::vector<float>::iterator boltIter = dv.begin();
-
-    for (int c = 0; c < numCycles; c++)
-    {
-        if (c == numCycles-1)
-            cycle = length%cycle;
-        goldIter =      std::generate_n(goldIter, cycle, (c%2) ? genAGold : genBGold);
-        boltIter = bolt::cl::generate_n(boltIter, cycle, (c%2) ? genABolt : genBBolt);
-    }
+    //  The returned iterator should be at the end
+    EXPECT_EQ( stdInput.end( ), stdEnd );
+    EXPECT_EQ( boltInput.end( ), boltEnd );
     
-    //check results
-    return checkResults(fName, gold.begin(), gold.end(), dv.begin());
+    //  Both collections should have the same number of elements
+    std::vector< double >::iterator::difference_type  stdNumElements = std::distance(  stdInput.begin( ),  stdEnd );
+    std::vector< double >::iterator::difference_type boltNumElements = std::distance( boltInput.begin( ), boltEnd );
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+
+INSTANTIATE_TEST_CASE_P( GenSmall, HostIntVector, ::testing::Range( 1, 256, 3 ) );
+INSTANTIATE_TEST_CASE_P( GenLarge, HostIntVector, ::testing::Range( 1023, 1050000, 350001 ) );
+INSTANTIATE_TEST_CASE_P( GenSmall, DevIntVector,  ::testing::Range( 2, 256, 3 ) );
+INSTANTIATE_TEST_CASE_P( GenLarge, DevIntVector,  ::testing::Range( 1024, 1050000, 350003 ) );
+INSTANTIATE_TEST_CASE_P( GenSmall, HostDblVector, ::testing::Range( 3, 256, 3 ) );
+INSTANTIATE_TEST_CASE_P( GenLarge, HostDblVector, ::testing::Range( 1025, 1050000, 350007 ) );
+INSTANTIATE_TEST_CASE_P( GenSmall, DevDblVector,  ::testing::Range( 4, 256, 3 ) );
+INSTANTIATE_TEST_CASE_P( GenLarge, DevDblVector,  ::testing::Range( 1026, 1050000, 350011 ) );
+
+
+int main(int argc, char **argv)
+{
+    ::testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
 }
 

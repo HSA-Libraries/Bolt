@@ -29,6 +29,7 @@
 
 /*! \file device_vector.h
  * Public header file for the device_container class
+ * \bug iterator::getBuffer() returns "pointer" to beginning of array, instead of where the iterator has incremented to; may need to map a subBuffer or something simmilar
  */
 
 /*! \brief Defining namespace for the Bolt project
@@ -342,6 +343,13 @@ namespace bolt
             {
                 static_assert( !std::is_polymorphic< value_type >::value, "AMD C++ template extensions do not support the virtual keyword yet" );
 
+                //printf("Element: %f,%f,%f,%f (Bolt constructor)\n",
+                //  (float) value.a,
+                //  (float) value.b,
+                //  (float) value.c,
+                //  (float) value.d
+                //   );
+
                 //  We want to use the context from the passed in commandqueue to initialize our buffer
                 cl_int l_Error = CL_SUCCESS;
                 ::cl::Context l_Context = m_commQueue.getInfo< CL_QUEUE_CONTEXT >( &l_Error );
@@ -354,11 +362,35 @@ namespace bolt
                     if( init )
                     {
                         std::vector< ::cl::Event > fillEvent( 1 );
+                        //printf("Filling buffer of size %ix%i\n", newSize, sizeof(value_type));
+                        try
+                        {
                         V_OPENCL( m_commQueue.enqueueFillBuffer< value_type >( m_devMemory, value, 0, newSize * sizeof( value_type ), NULL, &fillEvent.front( ) ), 
                             "device_vector failed to fill the internal buffer with the requested pattern");
+                        }
+                        catch( std::exception& e )
+                        {
+                            std::cout << "device_vector enqueueFillBuffer error condition reported:" << std::endl << e.what() << std::endl;
+                            //return 1;
+                        }
 
+                        try
+                        {
                         //  Not allowed to return until the fill operation is finished
                         V_OPENCL( m_commQueue.enqueueWaitForEvents( fillEvent ), "device_vector failed to wait for an event" );
+                        }
+                        catch( std::exception& e )
+                        {
+                            std::cout << "device_vector enqueueFillBuffer enqueueWaitForEvents error condition reported:" << std::endl << e.what() << std::endl;
+                            //return 1;
+                        }
+                        //printf("Filling buffer of size %ix%i - DONE\n", newSize, sizeof(value_type));
+                 //       printf("Element: %f,%f,%f,%f (Bolt constructor)\n",
+                 // (float) value.a,
+                 // (float) value.b,
+                 // (float) value.c,
+                 // (float) value.d
+                 //  );
                     }
                 }
             }
@@ -486,24 +518,25 @@ namespace bolt
 
                 if( l_srcSize > 0 )
                 {
-                    std::vector< ::cl::Event > copyEvent( 1 );
-                    l_Error = m_commQueue.enqueueCopyBuffer( m_devMemory, l_tmpBuffer, 0, 0, l_srcSize, NULL, &copyEvent.front( ) );
-                    V_OPENCL( l_Error, "device_vector failed to copy data to the new ::cl::Buffer object" );
-
                     //  If the new buffer size is greater than the old, the new elements must be initialized to the value specified on the
                     //  function parameter
                     if( l_reqSize > l_srcSize )
                     {
+                        std::vector< ::cl::Event > copyEvent( 1 );
+                        l_Error = m_commQueue.enqueueCopyBuffer( m_devMemory, l_tmpBuffer, 0, 0, l_srcSize, NULL, &copyEvent.front( ) );
+                        V_OPENCL( l_Error, "device_vector failed to copy data to the new ::cl::Buffer object" );
                         ::cl::Event fillEvent;
                         l_Error = m_commQueue.enqueueFillBuffer< value_type >( l_tmpBuffer, val, l_srcSize, l_reqSize - l_srcSize, &copyEvent, &fillEvent );
                         V_OPENCL( l_Error, "device_vector failed to fill the new data with the provided pattern" );
-
                         //  Not allowed to return until the copy operation is finished
                         l_Error = fillEvent.wait( );
                         V_OPENCL( l_Error, "device_vector failed to wait for fill event" );
                     }
                     else
                     {
+                        std::vector< ::cl::Event > copyEvent( 1 );
+                        l_Error = m_commQueue.enqueueCopyBuffer( m_devMemory, l_tmpBuffer, 0, 0, l_reqSize, NULL, &copyEvent.front( ) );
+                        V_OPENCL( l_Error, "device_vector failed to copy data to the new ::cl::Buffer object" );
                         //  Not allowed to return until the copy operation is finished
                         l_Error = m_commQueue.enqueueWaitForEvents( copyEvent );
                         V_OPENCL( l_Error, "device_vector failed to wait for copy event" );
@@ -604,7 +637,7 @@ namespace bolt
             *   \note Capacity() differs from size(), in that capacity() returns the number of elements that \b could be stored
             *   in the memory currently allocated.
             *   \return The size of the memory held by device_vector, counted in elements.
-            */
+            */ 
             size_type capacity( void ) const
             {
                 size_type l_memSize  = 0;
@@ -643,6 +676,7 @@ namespace bolt
                 ::cl::Buffer l_tmpBuffer( l_Context, m_Flags, l_newSize, NULL, &l_Error );
                 V_OPENCL( l_Error, "device_vector can not create an temporary internal OpenCL buffer" );
 
+                //TODO - this is equal to the capacity()
                 size_type l_srcSize = m_devMemory.getInfo< CL_MEM_SIZE >( &l_Error );
                 V_OPENCL( l_Error, "device_vector failed to request the size of the ::cl::Buffer object" );
 
