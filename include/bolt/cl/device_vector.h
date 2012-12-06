@@ -518,24 +518,25 @@ namespace bolt
 
                 if( l_srcSize > 0 )
                 {
-                    std::vector< ::cl::Event > copyEvent( 1 );
-                    l_Error = m_commQueue.enqueueCopyBuffer( m_devMemory, l_tmpBuffer, 0, 0, l_srcSize, NULL, &copyEvent.front( ) );
-                    V_OPENCL( l_Error, "device_vector failed to copy data to the new ::cl::Buffer object" );
-
                     //  If the new buffer size is greater than the old, the new elements must be initialized to the value specified on the
                     //  function parameter
                     if( l_reqSize > l_srcSize )
                     {
+                        std::vector< ::cl::Event > copyEvent( 1 );
+                        l_Error = m_commQueue.enqueueCopyBuffer( m_devMemory, l_tmpBuffer, 0, 0, l_srcSize, NULL, &copyEvent.front( ) );
+                        V_OPENCL( l_Error, "device_vector failed to copy data to the new ::cl::Buffer object" );
                         ::cl::Event fillEvent;
                         l_Error = m_commQueue.enqueueFillBuffer< value_type >( l_tmpBuffer, val, l_srcSize, l_reqSize - l_srcSize, &copyEvent, &fillEvent );
                         V_OPENCL( l_Error, "device_vector failed to fill the new data with the provided pattern" );
-
                         //  Not allowed to return until the copy operation is finished
                         l_Error = fillEvent.wait( );
                         V_OPENCL( l_Error, "device_vector failed to wait for fill event" );
                     }
                     else
                     {
+                        std::vector< ::cl::Event > copyEvent( 1 );
+                        l_Error = m_commQueue.enqueueCopyBuffer( m_devMemory, l_tmpBuffer, 0, 0, l_reqSize, NULL, &copyEvent.front( ) );
+                        V_OPENCL( l_Error, "device_vector failed to copy data to the new ::cl::Buffer object" );
                         //  Not allowed to return until the copy operation is finished
                         l_Error = m_commQueue.enqueueWaitForEvents( copyEvent );
                         V_OPENCL( l_Error, "device_vector failed to wait for copy event" );
@@ -636,7 +637,7 @@ namespace bolt
             *   \note Capacity() differs from size(), in that capacity() returns the number of elements that \b could be stored
             *   in the memory currently allocated.
             *   \return The size of the memory held by device_vector, counted in elements.
-            */
+            */ 
             size_type capacity( void ) const
             {
                 size_type l_memSize  = 0;
@@ -675,6 +676,7 @@ namespace bolt
                 ::cl::Buffer l_tmpBuffer( l_Context, m_Flags, l_newSize, NULL, &l_Error );
                 V_OPENCL( l_Error, "device_vector can not create an temporary internal OpenCL buffer" );
 
+                //TODO - this is equal to the capacity()
                 size_type l_srcSize = m_devMemory.getInfo< CL_MEM_SIZE >( &l_Error );
                 V_OPENCL( l_Error, "device_vector failed to request the size of the ::cl::Buffer object" );
 
