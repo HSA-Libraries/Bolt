@@ -23,10 +23,11 @@
 #include "common/stdafx.h"
 #include "common/myocl.h"
 
-#include <bolt/cl/count.h>
-#include <bolt/cl/functional.h>
-#include <bolt/miniDump.h>
-#include <bolt/unicode.h>
+#include "bolt/cl/count.h"
+#include "bolt/cl/functional.h"
+#include "bolt/miniDump.h"
+#include "bolt/unicode.h"
+#include "bolt/cl/device_vector.h"
 
 #include <gtest/gtest.h>
 #include <boost/shared_array.hpp>
@@ -68,12 +69,14 @@ BOLT_CREATE_TYPENAME(InRange<float>);
 BOLT_CREATE_CLCODE(InRange<float>, InRange_CodeString);
 BOLT_CREATE_TYPENAME(InRange<double>);
 BOLT_CREATE_CLCODE(InRange<double>, InRange_CodeString);
+BOLT_CREATE_TYPENAME(InRange<__int64>);
+BOLT_CREATE_CLCODE(InRange<__int64>, InRange_CodeString);
 
 
 TEST_P (testCountIfFloatWithStdVector, countFloatValueInRange)
 {
-	std::vector<float> A(aSize);
-	std::vector<float> B(aSize);
+	bolt::cl::device_vector<float> A(aSize);
+	bolt::cl::device_vector<float> B(aSize);
 
 	for (int i=0; i < aSize; i++) {
 		A[i] = static_cast<float> (i+1);
@@ -89,8 +92,8 @@ TEST_P (testCountIfFloatWithStdVector, countFloatValueInRange)
 
 TEST_P (testCountIfFloatWithStdVector, countFloatValueInRange2)
 {
-	std::vector<float> A(aSize);
-	std::vector<float> B(aSize);
+	bolt::cl::device_vector<float> A(aSize);
+	bolt::cl::device_vector<float> B(aSize);
 
 	for (int i=0; i < aSize; i++) {
 		A[i] = static_cast<float> (i+1);
@@ -115,8 +118,8 @@ public:
 };
 
 TEST_P(countFloatValueOccuranceStdVect, floatVectSearchWithSameValue){
-	std::vector<float> stdVect(stdVectSize);
-	std::vector<float> boltVect(stdVectSize);
+	bolt::cl::device_vector<float> stdVect(stdVectSize);
+	bolt::cl::device_vector<float> boltVect(stdVectSize);
 	
 	float myFloatValue = 1.23f;
 
@@ -133,8 +136,8 @@ TEST_P(countFloatValueOccuranceStdVect, floatVectSearchWithSameValue){
 }
 
 TEST_P(countFloatValueOccuranceStdVect, floatVectSearchWithSameValue2){
-	std::vector<float> stdVect(stdVectSize);
-	std::vector<float> boltVect(stdVectSize);
+	bolt::cl::device_vector<float> stdVect(stdVectSize);
+	bolt::cl::device_vector<float> boltVect(stdVectSize);
 	
 	float myFloatValue2 = 9.87f;
 
@@ -163,8 +166,8 @@ public:
 
 
 TEST_P(countDoubleValueUsedASKeyInStdVect, doubleVectSearchWithSameValue){
-	std::vector<double> stdVect(stdVectSize);
-	std::vector<double> boltVect(stdVectSize);
+	bolt::cl::device_vector<double> stdVect(stdVectSize);
+	bolt::cl::device_vector<double> boltVect(stdVectSize);
 	
 	double myDoubleValueAsKeyValue = 1.23456789l;
 
@@ -181,8 +184,8 @@ TEST_P(countDoubleValueUsedASKeyInStdVect, doubleVectSearchWithSameValue){
 }
 
 TEST_P(countDoubleValueUsedASKeyInStdVect, doubleVectSearchWithSameValue2){
-	std::vector<double> stdVect(stdVectSize);
-	std::vector<double> boltVect(stdVectSize);
+	bolt::cl::device_vector<double> stdVect(stdVectSize);
+	bolt::cl::device_vector<double> boltVect(stdVectSize);
 	
 	double myDoubleValueAsKeyValue2 = 9.876543210123456789l;
 
@@ -202,14 +205,14 @@ TEST_P(countDoubleValueUsedASKeyInStdVect, doubleVectSearchWithSameValue2){
 TEST (testCountIf, intBtwRange) 
 {
 	int aSize = 1024;
-	std::vector<int> A(aSize);
+	bolt::cl::device_vector<int> A(aSize);
 	
 	for (int i=0; i < aSize; i++) {
 		A[i] = rand() % 10 + 1;
 	}
 
-	std::iterator_traits<std::vector<int>::iterator>::difference_type stdInRangeCount = std::count_if (A.begin(), A.end(), InRange<int>(1,10)) ;
-	std::iterator_traits<std::vector<int>::iterator>::difference_type boltInRangeCount = bolt::cl::count_if (A.begin(), A.end(), InRange<int>(1, 10)) ;
+	std::iterator_traits<bolt::cl::device_vector<int>::iterator>::difference_type stdInRangeCount = std::count_if (A.begin(), A.end(), InRange<int>(1,10)) ;
+	std::iterator_traits<bolt::cl::device_vector<int>::iterator>::difference_type boltInRangeCount = bolt::cl::count_if (A.begin(), A.end(), InRange<int>(1, 10)) ;
 
 	EXPECT_EQ(stdInRangeCount, boltInRangeCount);
 }
@@ -270,7 +273,7 @@ int main(int argc, char* argv[])
 //Count with a vector input
 void testCount1(int aSize)
 {
-	std::vector<int> A(aSize);
+	bolt::cl::device_vector<int> A(aSize);
 	for (int i=0; i < aSize; i++) {
 		A[i] = i+1;
 	};
@@ -332,8 +335,8 @@ BOLT_CREATE_CLCODE(InRange<float>, InRange_CodeString);
 
 void testCountIf(int aSize) 
 {
-	std::vector<float> A(aSize);
-	std::vector<float> B(aSize);
+	bolt::cl::device_vector<float> A(aSize);
+	bolt::cl::device_vector<float> B(aSize);
 	for (int i=0; i < aSize; i++) {
 		A[i] = static_cast<float> (i+1);
 		B[i] = A[i];
@@ -346,8 +349,8 @@ void testCountIf(int aSize)
 void test_bug(int aSize) 
 {
 	//int aSize = 1024;
-	std::vector<int> A(aSize);
-	std::vector<int> B(aSize);
+	bolt::cl::device_vector<int> A(aSize);
+	bolt::cl::device_vector<int> B(aSize);
 	for (int i=0; i < aSize; i++) {
 		A[i] = rand() % 10 + 1;
 		B[i] = A[i];

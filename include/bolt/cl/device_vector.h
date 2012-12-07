@@ -22,7 +22,9 @@
 #include <iterator>
 #include <type_traits>
 #include <numeric>
-#include <bolt/cl/bolt.h>
+#include "bolt/cl/bolt.h"
+#include "bolt/cl/iterator_traits.h"
+
 #include <boost/iterator/iterator_facade.hpp>
 #include <boost/iterator/reverse_iterator.hpp>
 #include <boost/shared_array.hpp>
@@ -206,7 +208,7 @@ namespace bolt
             *   container, or use iterator arithmetic instead, such as *(iter + 5) for reading from the iterator.
             */
             template< typename Container >
-            class iterator_base: public boost::iterator_facade< iterator_base< Container >, value_type, std::random_access_iterator_tag, typename device_vector::reference >
+            class iterator_base: public boost::iterator_facade< iterator_base< Container >, value_type, std::random_access_iterator_tag, typename device_vector::reference, bolt::cl::ptrdiff_t >
             {
             public:
 
@@ -273,7 +275,7 @@ namespace bolt
 
                 difference_type distance_to( const iterator_base< Container >& rhs ) const
                 {
-                    return ( rhs.m_index - m_index );
+                    return static_cast< difference_type >( rhs.m_index - m_index );
                 }
 
                 template< typename OtherContainer >
@@ -518,24 +520,25 @@ namespace bolt
 
                 if( l_srcSize > 0 )
                 {
-                    std::vector< ::cl::Event > copyEvent( 1 );
-                    l_Error = m_commQueue.enqueueCopyBuffer( m_devMemory, l_tmpBuffer, 0, 0, l_srcSize, NULL, &copyEvent.front( ) );
-                    V_OPENCL( l_Error, "device_vector failed to copy data to the new ::cl::Buffer object" );
-
                     //  If the new buffer size is greater than the old, the new elements must be initialized to the value specified on the
                     //  function parameter
                     if( l_reqSize > l_srcSize )
                     {
+                        std::vector< ::cl::Event > copyEvent( 1 );
+                        l_Error = m_commQueue.enqueueCopyBuffer( m_devMemory, l_tmpBuffer, 0, 0, l_srcSize, NULL, &copyEvent.front( ) );
+                        V_OPENCL( l_Error, "device_vector failed to copy data to the new ::cl::Buffer object" );
                         ::cl::Event fillEvent;
                         l_Error = m_commQueue.enqueueFillBuffer< value_type >( l_tmpBuffer, val, l_srcSize, l_reqSize - l_srcSize, &copyEvent, &fillEvent );
                         V_OPENCL( l_Error, "device_vector failed to fill the new data with the provided pattern" );
-
                         //  Not allowed to return until the copy operation is finished
                         l_Error = fillEvent.wait( );
                         V_OPENCL( l_Error, "device_vector failed to wait for fill event" );
                     }
                     else
                     {
+                        std::vector< ::cl::Event > copyEvent( 1 );
+                        l_Error = m_commQueue.enqueueCopyBuffer( m_devMemory, l_tmpBuffer, 0, 0, l_reqSize, NULL, &copyEvent.front( ) );
+                        V_OPENCL( l_Error, "device_vector failed to copy data to the new ::cl::Buffer object" );
                         //  Not allowed to return until the copy operation is finished
                         l_Error = m_commQueue.enqueueWaitForEvents( copyEvent );
                         V_OPENCL( l_Error, "device_vector failed to wait for copy event" );
@@ -578,10 +581,10 @@ namespace bolt
                 ::cl::Device l_Device = m_commQueue.getInfo< CL_QUEUE_DEVICE >( &l_Error );
                 V_OPENCL( l_Error, "device_vector failed to query for the device of the command queue" );
 
-                size_type l_MaxSize  = l_Device.getInfo< CL_DEVICE_MAX_MEM_ALLOC_SIZE >( &l_Error );
+                cl_ulong l_MaxSize  = l_Device.getInfo< CL_DEVICE_MAX_MEM_ALLOC_SIZE >( &l_Error );
                 V_OPENCL( l_Error, "device_vector failed to query device for the maximum memory size" );
 
-                return l_MaxSize / sizeof( value_type );
+                return static_cast< size_type >( l_MaxSize / sizeof( value_type ) );
             }
 
             /*! \brief Request a change in the capacity of the device_vector.
@@ -636,10 +639,10 @@ namespace bolt
             *   \note Capacity() differs from size(), in that capacity() returns the number of elements that \b could be stored
             *   in the memory currently allocated.
             *   \return The size of the memory held by device_vector, counted in elements.
-            */
+            */ 
             size_type capacity( void ) const
             {
-                size_type l_memSize  = 0;
+                size_t l_memSize  = 0;
                 cl_int l_Error = CL_SUCCESS;
 
                 // this seems like bug; what if i popped everything?
@@ -649,7 +652,7 @@ namespace bolt
                 l_memSize = m_devMemory.getInfo< CL_MEM_SIZE >( &l_Error );
                 V_OPENCL( l_Error, "device_vector failed to request the size of the ::cl::Buffer object" );
 
-                return l_memSize / sizeof( value_type );
+                return static_cast< size_type >( l_memSize / sizeof( value_type ) );
             }
 
             /*! \brief Shrink the capacity( ) of this device_vector to just fit its elements.
@@ -675,6 +678,7 @@ namespace bolt
                 ::cl::Buffer l_tmpBuffer( l_Context, m_Flags, l_newSize, NULL, &l_Error );
                 V_OPENCL( l_Error, "device_vector can not create an temporary internal OpenCL buffer" );
 
+                //TODO - this is equal to the capacity()
                 size_type l_srcSize = m_devMemory.getInfo< CL_MEM_SIZE >( &l_Error );
                 V_OPENCL( l_Error, "device_vector failed to request the size of the ::cl::Buffer object" );
 

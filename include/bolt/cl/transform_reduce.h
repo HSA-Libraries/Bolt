@@ -65,7 +65,7 @@ namespace bolt {
          *
          *  \code
          *  #include <bolt/cl/transform_reduce.h>
-         *  #include <thrust/functional.h>
+         *  #include <bolt/cl/functional.h>
          *  
          *  int input[10] = {-5,  0,  2,  3,  2,  4, -2,  1,  2,  3};
          *  int output;
@@ -81,9 +81,13 @@ namespace bolt {
          *  \sa http://www.sgi.com/tech/stl/BinaryFunction.html
          */
         template<typename InputIterator, typename UnaryFunction, typename T, typename BinaryFunction> 
-        T transform_reduce(InputIterator first, InputIterator last,  
+        T transform_reduce(
+            InputIterator first,
+            InputIterator last,  
             UnaryFunction transform_op, 
-            T init,  BinaryFunction reduce_op, const std::string& user_code="" );
+            T init,
+            BinaryFunction reduce_op,
+            const std::string& user_code="" );
 
         /*! \brief transform_reduce fuses transform and reduce operations together, increasing performance by reducing 
          *  memory passes.
@@ -110,7 +114,7 @@ namespace bolt {
          *
          *  \code
          *  #include <bolt/cl/transform_reduce.h>
-         *  #include <thrust/functional.h>
+         *  #include <bolt/cl/functional.h>
          *  
          *  int input[10] = {-5,  0,  2,  3,  2,  4, -2,  1,  2,  3};
          *  int output;
@@ -126,9 +130,14 @@ namespace bolt {
          *  \sa http://www.sgi.com/tech/stl/BinaryFunction.html
          */
         template<typename InputIterator, typename UnaryFunction, typename T, typename BinaryFunction> 
-        T transform_reduce( control& ctl, InputIterator first1, InputIterator last1,  
+        T transform_reduce(
+            control& ctl,
+            InputIterator first1,
+            InputIterator last1,  
             UnaryFunction transform_op, 
-            T init,  BinaryFunction reduce_op, const std::string& user_code="" );
+            T init,
+            BinaryFunction reduce_op,
+            const std::string& user_code="" );
 
         /*!   \}  */
 

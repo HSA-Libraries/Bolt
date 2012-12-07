@@ -241,6 +241,10 @@ install( DIRECTORY
             ${ROOT_EXTERNAL_BOOST}/thread
             ${ROOT_EXTERNAL_BOOST}/system
             ${ROOT_EXTERNAL_BOOST}/bind
+            ${ROOT_EXTERNAL_BOOST}/date_time
+            ${ROOT_EXTERNAL_BOOST}/chrono
+            ${ROOT_EXTERNAL_BOOST}/ratio
+            ${ROOT_EXTERNAL_BOOST}/move
         DESTINATION
             ${INCLUDE_DIR}/boost )
 
@@ -255,6 +259,8 @@ install( FILES
             ${ROOT_EXTERNAL_BOOST}/type.hpp
             ${ROOT_EXTERNAL_BOOST}/is_placeholder.hpp
             ${ROOT_EXTERNAL_BOOST}/visit_each.hpp
+            ${ROOT_EXTERNAL_BOOST}/limits.hpp
+            ${ROOT_EXTERNAL_BOOST}/integer_traits.hpp
         DESTINATION
             ${INCLUDE_DIR}/boost )
 
@@ -264,6 +270,10 @@ install( FILES
     ${Boost_SYSTEM_LIBRARY_RELEASE}
     ${Boost_THREAD_LIBRARY_DEBUG} 
     ${Boost_THREAD_LIBRARY_RELEASE}
+    ${Boost_DATE_TIME_LIBRARY_DEBUG} 
+    ${Boost_DATE_TIME_LIBRARY_RELEASE}
+    ${Boost_CHRONO_LIBRARY_DEBUG} 
+    ${Boost_CHRONO_LIBRARY_RELEASE}
     DESTINATION ${LIB_DIR}
     )
 
