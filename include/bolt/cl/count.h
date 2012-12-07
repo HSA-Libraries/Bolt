@@ -100,9 +100,9 @@ namespace bolt {
         {
             typedef typename bolt::cl::iterator_traits<InputIterator>::value_type CountType;
 			typedef typename bolt::cl::iterator_traits<InputIterator>::difference_type ResultType;
-			ResultType result = static_cast<ResultType>(transform_reduce(bolt::cl::control::getDefault(), first, last, 
-                predicate, 
-                CountType(0), bolt::cl::plus<CountType>(), cl_code)); 
+
+            ResultType result = static_cast< ResultType >( transform_reduce( first, last, 
+                predicate, static_cast< ResultType >( 0 ), bolt::cl::plus< ResultType >( ), cl_code ) );
 
             return result;
         };

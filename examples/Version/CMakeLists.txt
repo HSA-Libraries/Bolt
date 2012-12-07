@@ -28,7 +28,7 @@ set( clBolt.Example.Version.Files ${clBolt.Example.Version.Source} ${clBolt.Exam
 include_directories( ${BOLT_INCLUDE_DIRS} ${OPENCL_INCLUDE_DIRS} )
 
 add_executable( clBolt.Example.Version ${clBolt.Example.Version.Files} )
-target_link_libraries( clBolt.Example.Version ${BOLT_LIBRARIES} ${OPENCL_LIBRARIES} )
+target_link_libraries( clBolt.Example.Version ${BOLT_LIBRARIES} ${OPENCL_LIBRARIES} ${Boost_LIBRARIES} )
 
 set_target_properties( clBolt.Example.Version PROPERTIES VERSION ${Examples_VERSION} )
 set_target_properties( clBolt.Example.Version PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )

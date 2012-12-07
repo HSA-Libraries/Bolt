@@ -92,7 +92,7 @@ namespace bolt
             typedef T value_type;
             typedef ptrdiff_t difference_type;
             typedef difference_type distance_type;
-            typedef size_t size_type;
+            typedef ptrdiff_t size_type;
 
             typedef boost::shared_array< value_type > pointer;
             typedef boost::shared_array< const value_type > const_pointer;
@@ -206,7 +206,7 @@ namespace bolt
             *   container, or use iterator arithmetic instead, such as *(iter + 5) for reading from the iterator.
             */
             template< typename Container >
-            class iterator_base: public boost::iterator_facade< iterator_base< Container >, value_type, std::random_access_iterator_tag, typename device_vector::reference >
+            class iterator_base: public boost::iterator_facade< iterator_base< Container >, value_type, std::random_access_iterator_tag, typename device_vector::reference, bolt::cl::ptrdiff_t >
             {
             public:
 
@@ -579,10 +579,10 @@ namespace bolt
                 ::cl::Device l_Device = m_commQueue.getInfo< CL_QUEUE_DEVICE >( &l_Error );
                 V_OPENCL( l_Error, "device_vector failed to query for the device of the command queue" );
 
-                size_type l_MaxSize  = l_Device.getInfo< CL_DEVICE_MAX_MEM_ALLOC_SIZE >( &l_Error );
+                cl_ulong l_MaxSize  = l_Device.getInfo< CL_DEVICE_MAX_MEM_ALLOC_SIZE >( &l_Error );
                 V_OPENCL( l_Error, "device_vector failed to query device for the maximum memory size" );
 
-                return l_MaxSize / sizeof( value_type );
+                return static_cast< size_type >( l_MaxSize / sizeof( value_type ) );
             }
 
             /*! \brief Request a change in the capacity of the device_vector.
@@ -640,7 +640,7 @@ namespace bolt
             */ 
             size_type capacity( void ) const
             {
-                size_type l_memSize  = 0;
+                size_t l_memSize  = 0;
                 cl_int l_Error = CL_SUCCESS;
 
                 // this seems like bug; what if i popped everything?
@@ -650,7 +650,7 @@ namespace bolt
                 l_memSize = m_devMemory.getInfo< CL_MEM_SIZE >( &l_Error );
                 V_OPENCL( l_Error, "device_vector failed to request the size of the ::cl::Buffer object" );
 
-                return l_memSize / sizeof( value_type );
+                return static_cast< size_type >( l_memSize / sizeof( value_type ) );
             }
 
             /*! \brief Shrink the capacity( ) of this device_vector to just fit its elements.
