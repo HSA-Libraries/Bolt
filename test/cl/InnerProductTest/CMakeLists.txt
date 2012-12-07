@@ -16,21 +16,23 @@
 ############################################################################                                                                                     
 
 # List the names of common files to compile across all platforms
-message( STATUS "Setting up CL specific benchmarking projects" )
 
-# Include standard OpenCL headers
-include_directories( ${OPENCL_INCLUDE_DIRS} )
+set( clBolt.Test.InnerProduct.Source stdafx.cpp InnerProductTest.cpp InnerProductDeviceVector.cpp ${BOLT_CL_TEST_DIR}/common/myocl.cpp) 
+set( clBolt.Test.InnerProduct.Headers stdafx.h ${BOLT_CL_TEST_DIR}/common/myocl.h targetver.h ${BOLT_INCLUDE_DIR}/bolt/cl/inner_product.h )
 
-if( BUILD_clBolt )
-	# Include standard OpenCL headers
-	add_subdirectory( CopyBench )
-	add_subdirectory( CopyBuffer )
-	add_subdirectory( Fill ) 
-	add_subdirectory( Generate )
-	add_subdirectory( InnerProduct )
-	add_subdirectory( Reduce )
-	add_subdirectory( Scan )
-	add_subdirectory( Sort )
-	add_subdirectory( Transform )
-  add_subdirectory( TransformScanBench )
-endif( )
+set( clBolt.Test.InnerProduct.Files ${clBolt.Test.InnerProduct.Source} ${clBolt.Test.InnerProduct.Headers} )
+
+add_executable( clBolt.Test.InnerProduct ${clBolt.Test.InnerProduct.Files} )
+target_link_libraries( clBolt.Test.InnerProduct clBolt.Runtime ${OPENCL_LIBRARIES} ${GTEST_LIBRARIES} )
+
+set_target_properties( clBolt.Test.InnerProduct PROPERTIES VERSION ${Bolt_VERSION} )
+set_target_properties( clBolt.Test.InnerProduct PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
+
+set_property( TARGET clBolt.Test.InnerProduct PROPERTY FOLDER "Test/OpenCL")
+		
+# CPack configuration; include the executable into the package
+install( TARGETS clBolt.Test.InnerProduct
+	RUNTIME DESTINATION ${BIN_DIR}
+	LIBRARY DESTINATION ${LIB_DIR}
+	ARCHIVE DESTINATION ${LIB_DIR}/import
+	)
