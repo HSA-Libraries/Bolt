@@ -22,7 +22,9 @@
 #include <iterator>
 #include <type_traits>
 #include <numeric>
-#include <bolt/cl/bolt.h>
+#include "bolt/cl/bolt.h"
+#include "bolt/cl/iterator_traits.h"
+
 #include <boost/iterator/iterator_facade.hpp>
 #include <boost/iterator/reverse_iterator.hpp>
 #include <boost/shared_array.hpp>
@@ -92,7 +94,7 @@ namespace bolt
             typedef T value_type;
             typedef ptrdiff_t difference_type;
             typedef difference_type distance_type;
-            typedef ptrdiff_t size_type;
+            typedef size_t size_type;
 
             typedef boost::shared_array< value_type > pointer;
             typedef boost::shared_array< const value_type > const_pointer;
@@ -273,7 +275,7 @@ namespace bolt
 
                 difference_type distance_to( const iterator_base< Container >& rhs ) const
                 {
-                    return ( rhs.m_index - m_index );
+                    return static_cast< difference_type >( rhs.m_index - m_index );
                 }
 
                 template< typename OtherContainer >
