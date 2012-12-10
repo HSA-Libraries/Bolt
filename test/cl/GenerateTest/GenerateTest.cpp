@@ -272,6 +272,7 @@ TEST_P( DevDblVector, Generate )
 
 ///////////////////////////////////////////////////////////////////////////////
 
+#if( MSVC_VER > 1600 )
 TEST_P( HostIntVector, GenerateN )
 {
     int size = GetParam();
@@ -279,6 +280,7 @@ TEST_P( HostIntVector, GenerateN )
     GenConst<int> gen(3456);
 
     //  Calling the actual functions under test
+    std::vector< int >::iterator  stdEnd  =       std::generate_n(  stdInput.begin( ), size, gen );
     std::vector< int >::iterator  stdEnd  =       std::generate_n(  stdInput.begin( ), size, gen );
     std::vector< int >::iterator boltEnd  =  bolt::cl::generate_n( boltInput.begin( ), size, gen );
 
@@ -363,6 +365,7 @@ TEST_P( DevDblVector, GenerateN )
     //  Loop through the array and compare all the values with each other
     cmpArrays( stdInput, boltInput );
 }
+#endif
 
 INSTANTIATE_TEST_CASE_P( GenSmall, HostIntVector, ::testing::Range( 1, 256, 3 ) );
 INSTANTIATE_TEST_CASE_P( GenLarge, HostIntVector, ::testing::Range( 1023, 1050000, 350001 ) );

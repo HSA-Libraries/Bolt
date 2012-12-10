@@ -332,7 +332,7 @@ namespace bolt
         {
             typedef typename std::iterator_traits< InputIterator >::value_type iType;
             typedef typename std::iterator_traits< OutputIterator >::value_type oType;
-            static_assert( std::is_convertible< iType, oType >::value, "Input and Output iterators are incompatible" );
+            //static_assert( std::is_convertible< iType, oType >::value, "Input and Output iterators are incompatible" );
 
             unsigned int numElements = static_cast< unsigned int >( std::distance( first, last ) );
             if( numElements == 0 )
@@ -441,7 +441,7 @@ namespace bolt
             const BinaryFunction& binary_op,
             const bool& inclusive = true )
             {
-                typedef std::iterator_traits< DVInputIterator >::value_type iType;
+                typedef std::iterator_traits< DVInputIterator  >::value_type iType;
                 typedef std::iterator_traits< DVOutputIterator >::value_type oType;
                 //cl_uint numElements = static_cast< cl_uint >( std::distance( first, last ) );
                 //iType identity = (iType)( init_T ); // identity of binary operator
