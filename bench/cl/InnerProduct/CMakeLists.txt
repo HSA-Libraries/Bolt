@@ -16,21 +16,23 @@
 ############################################################################                                                                                     
 
 # List the names of common files to compile across all platforms
-message( STATUS "Setting up CL specific benchmarking projects" )
+set( clBolt.Bench.InnerProduct.Source stdafx.cpp InnerProduct.cpp )
+set( clBolt.Bench.InnerProduct.Headers stdafx.h targetver.h ${BOLT_INCLUDE_DIR}/bolt/cl/inner_product.h )
 
-# Include standard OpenCL headers
-include_directories( ${OPENCL_INCLUDE_DIRS} )
+set( clBolt.Bench.InnerProduct.Files ${clBolt.Bench.InnerProduct.Source} ${clBolt.Bench.InnerProduct.Headers} )
 
-if( BUILD_clBolt )
-	# Include standard OpenCL headers
-	add_subdirectory( CopyBench )
-	add_subdirectory( CopyBuffer )
-	add_subdirectory( Fill ) 
-	add_subdirectory( Generate )
-	add_subdirectory( InnerProduct )
-	add_subdirectory( Reduce )
-	add_subdirectory( Scan )
-	add_subdirectory( Sort )
-	add_subdirectory( Transform )
-  add_subdirectory( TransformScanBench )
-endif( )
+add_executable( clBolt.Bench.InnerProduct ${clBolt.Bench.InnerProduct.Files} )
+
+target_link_libraries( clBolt.Bench.InnerProduct ${Boost_LIBRARIES} clBolt.Runtime )
+
+set_target_properties( clBolt.Bench.InnerProduct PROPERTIES VERSION ${Bolt_VERSION} )
+set_target_properties( clBolt.Bench.InnerProduct PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
+
+set_property( TARGET clBolt.Bench.InnerProduct PROPERTY FOLDER "Benchmark/OpenCL")
+
+# CPack configuration; include the executable into the package
+install( TARGETS clBolt.Bench.InnerProduct
+	RUNTIME DESTINATION ${BIN_DIR}
+	LIBRARY DESTINATION ${LIB_DIR}
+	ARCHIVE DESTINATION ${LIB_DIR}
+	)

@@ -937,7 +937,9 @@ TEST_P( TransformFloatNakedPointer, Inplace )
     EXPECT_EQ( stlReduce, boltReduce );
 
     //  Loop through the array and compare all the values with each other
-    cmpArrays( stdInput, boltInput, endIndex );}
+    cmpArrays( stdInput, boltInput, endIndex );
+}
+
 
 #if (TEST_DOUBLE == 1)
 TEST_P( TransformDoubleNakedPointer, Inplace )
@@ -1066,6 +1068,52 @@ struct UDD {
         : a(_in), b(_in +1)  { } 
 }; 
 );
+
+BOLT_FUNCTOR(DivUDD,
+struct DivUDD
+{
+    float operator()(const UDD &rhs) const
+    {
+        float _result = (1.f*rhs.a) / (1.f*rhs.a+rhs.b); //  a/(a+b)
+        return _result;
+    };
+}; 
+);
+
+/**********************************************************
+ * mixed unary operator - dtanner
+ *********************************************************/
+TEST( MixedTransform, OutOfPlace )
+{
+    //size_t length = GetParam( );
+
+    //setup containers
+    int length = (1<<16)+23;
+//    bolt::cl::negate< uddtI2 > nI2;
+    UDD initial(2);
+    //UDD identity();
+    bolt::cl::device_vector< UDD >    input( length, initial, CL_MEM_READ_WRITE, true  );
+    bolt::cl::device_vector< float > output( length,     0.f, CL_MEM_READ_WRITE, false );
+    std::vector< UDD > refInput( length, initial );
+    std::vector< float > refIntermediate( length, 0.f );
+    std::vector< float > refOutput(       length, 0.f );
+
+    //    T stlReduce = std::accumulate(Z.begin(), Z.end(), init);
+
+    //T boltReduce = bolt::cl::transform_reduce(A.begin(), A.end(), SquareMe<T>(), init, 
+    //                                          bolt::cl::plus<T>(), squareMeCode);
+
+    // call transform_reduce
+    DivUDD ddd;
+    bolt::cl::plus<float> add;
+    float boldReduce = bolt::cl::transform_reduce( input.begin(), input.end(),  ddd, 0.f, add );
+    ::std::transform(   refInput.begin(), refInput.end(),  refIntermediate.begin(), ddd); // transform in-place
+    float stdReduce = ::std::accumulate( refIntermediate.begin(), refIntermediate.end(), 0.f); // out-of-place scan
+
+    // compare results
+    cmpArrays(refOutput, output);
+}
+
 BOLT_CREATE_TYPENAME(bolt::cl::less<UDD>);
 BOLT_CREATE_TYPENAME(bolt::cl::greater<UDD>);
 BOLT_CREATE_TYPENAME(bolt::cl::plus<UDD>);
