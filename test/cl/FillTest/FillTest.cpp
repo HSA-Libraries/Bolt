@@ -268,7 +268,7 @@ int testFillN2DevVec( int length )
     std::vector<float> gold(length);
     bolt::cl::device_vector<float> dv(length);
 	//Call Fill_N
-  	std::fill_n(gold.begin(), length, 0.f);
+    std::fill_n(gold.begin(), length, 0.f);
     bolt::cl::fill_n(dv.begin(), length, 0.f);
     //check results
     return checkResults(fName, gold.begin(), gold.end(), dv.begin());

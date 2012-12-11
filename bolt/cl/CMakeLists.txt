@@ -73,10 +73,12 @@ set( clBolt.Runtime.Headers
         ${clBolt.Include.Dir}/functional.h 
         ${clBolt.Include.Dir}/fill.h 
         ${clBolt.Include.Dir}/generate.h 
+		${clBolt.Include.Dir}/inner_product.h 
         ${clBolt.Include.Dir}/iterator_traits.h 
         ${clBolt.Include.Dir}/reduce.h 
         ${clBolt.Include.Dir}/scan.h 
         ${clBolt.Include.Dir}/sort.h 
+        ${clBolt.Include.Dir}/sort_by_key.h 
         ${clBolt.Include.Dir}/transform.h 
         ${clBolt.Include.Dir}/transform_reduce.h
         ${clBolt.Include.Dir}/transform_scan.h
@@ -92,9 +94,11 @@ set( clBolt.Runtime.Headers.Detail
         ${clBolt.Include.Dir}/detail/copy.inl
         ${clBolt.Include.Dir}/detail/fill.inl
         ${clBolt.Include.Dir}/detail/generate.inl
+		${clBolt.Include.Dir}/detail/inner_product.inl
         ${clBolt.Include.Dir}/detail/reduce.inl
         ${clBolt.Include.Dir}/detail/scan.inl
         ${clBolt.Include.Dir}/detail/sort.inl
+        ${clBolt.Include.Dir}/detail/sort_by_key.inl
         ${clBolt.Include.Dir}/detail/transform.inl
         ${clBolt.Include.Dir}/detail/transform_reduce.inl
         ${clBolt.Include.Dir}/detail/transform_scan.inl
@@ -108,6 +112,7 @@ set( clBolt.Runtime.clFiles
         transform_scan_kernels.cl
         scan_kernels.cl
         sort_kernels.cl
+        sort_by_key_kernels.cl        
     )
 
 # Create a list of .cl files that we would like to be a part of the IDE
@@ -239,6 +244,10 @@ install( DIRECTORY
             ${ROOT_EXTERNAL_BOOST}/thread
             ${ROOT_EXTERNAL_BOOST}/system
             ${ROOT_EXTERNAL_BOOST}/bind
+            ${ROOT_EXTERNAL_BOOST}/date_time
+            ${ROOT_EXTERNAL_BOOST}/chrono
+            ${ROOT_EXTERNAL_BOOST}/ratio
+            ${ROOT_EXTERNAL_BOOST}/move
         DESTINATION
             ${INCLUDE_DIR}/boost )
 
@@ -253,6 +262,8 @@ install( FILES
             ${ROOT_EXTERNAL_BOOST}/type.hpp
             ${ROOT_EXTERNAL_BOOST}/is_placeholder.hpp
             ${ROOT_EXTERNAL_BOOST}/visit_each.hpp
+            ${ROOT_EXTERNAL_BOOST}/limits.hpp
+            ${ROOT_EXTERNAL_BOOST}/integer_traits.hpp
         DESTINATION
             ${INCLUDE_DIR}/boost )
 
@@ -262,6 +273,10 @@ install( FILES
     ${Boost_SYSTEM_LIBRARY_RELEASE}
     ${Boost_THREAD_LIBRARY_DEBUG} 
     ${Boost_THREAD_LIBRARY_RELEASE}
+    ${Boost_DATE_TIME_LIBRARY_DEBUG} 
+    ${Boost_DATE_TIME_LIBRARY_RELEASE}
+    ${Boost_CHRONO_LIBRARY_DEBUG} 
+    ${Boost_CHRONO_LIBRARY_RELEASE}
     DESTINATION ${LIB_DIR}
     )
 

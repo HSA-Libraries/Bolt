@@ -14,9 +14,8 @@
 *   limitations under the License.                                                   
 
 ***************************************************************************/                                                
-#define KERNEL0WAVES 4
+#define KERNEL02WAVES 4
 #define KERNEL1WAVES 4
-#define KERNEL2WAVES 4
 #define WAVESIZE 64
 
 #if !defined( SCAN_INL )
@@ -434,9 +433,9 @@ transform_scan_enqueue(
      *********************************************************************************/
     bool cpuDevice = ctl.device().getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_CPU;
     //std::cout << "Device is CPU: " << (cpuDevice?"TRUE":"FALSE") << std::endl;
-    const size_t kernel0_WgSize = (cpuDevice) ? 1 : WAVESIZE*KERNEL0WAVES;
+    const size_t kernel0_WgSize = (cpuDevice) ? 1 : WAVESIZE*KERNEL02WAVES;
     const size_t kernel1_WgSize = (cpuDevice) ? 1 : WAVESIZE*KERNEL1WAVES;
-    const size_t kernel2_WgSize = (cpuDevice) ? 1 : WAVESIZE*KERNEL2WAVES;
+    const size_t kernel2_WgSize = (cpuDevice) ? 1 : WAVESIZE*KERNEL02WAVES;
     std::string compileOptions;
     std::ostringstream oss;
     oss << " -DKERNEL0WORKGROUPSIZE=" << kernel0_WgSize;
@@ -468,18 +467,17 @@ transform_scan_enqueue(
     //  Ceiling function to bump the size of input to the next whole wavefront size
     cl_uint numElements = static_cast< cl_uint >( std::distance( first, last ) );
     device_vector< iType >::size_type sizeInputBuff = numElements;
-    const size_t maxWgSize = std::max( std::max(kernel0_WgSize,kernel1_WgSize), kernel2_WgSize);
-    size_t modWgSize = (sizeInputBuff & (maxWgSize-1));
+    size_t modWgSize = (sizeInputBuff & (kernel0_WgSize-1));
     if( modWgSize )
     {
         sizeInputBuff &= ~modWgSize;
-        sizeInputBuff += maxWgSize;
+        sizeInputBuff += kernel0_WgSize;
     }
     cl_uint numWorkGroupsK0 = static_cast< cl_uint >( sizeInputBuff / kernel0_WgSize );
 
     //  Ceiling function to bump the size of the sum array to the next whole wavefront size
     device_vector< iType >::size_type sizeScanBuff = numWorkGroupsK0;
-    modWgSize = (sizeScanBuff & (maxWgSize-1));
+    modWgSize = (sizeScanBuff & (kernel0_WgSize-1));
     if( modWgSize )
     {
         sizeScanBuff &= ~modWgSize;
