@@ -133,8 +133,6 @@ namespace bolt {
                         ");\n\n";
 
                     bolt::cl::compileKernelsString( *sortKernels, kernelNames, sort_kernels, instantiationString, cl_code_dataType, valueTypeName, "", *ctl );
-                    // bolt::cl::compileKernels( *sortKernels, kernelNames, "sort", instantiationString, cl_code_dataType, valueTypeName, "", ctl );
-                    //bolt::cl::constructAndCompile(masterKernel, "sort", instantiationString, cl_code_dataType, valueTypeName, "", ctl);
                 }
 
             }; //End of struct CallCompiler_Sort  

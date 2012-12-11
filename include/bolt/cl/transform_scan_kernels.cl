@@ -12,38 +12,79 @@
 *   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.         
 *   See the License for the specific language governing permissions and              
 *   limitations under the License.                                                   
-
 ***************************************************************************/
-//#pragma OPENCL EXTENSION cl_amd_printf : enable
-
+#pragma OPENCL EXTENSION cl_amd_printf : enable
 
 /******************************************************************************
- *  Kernel 2
+ *  Kernel 0
  *****************************************************************************/
-template< typename Type, typename BinaryFunction >
-kernel void perBlockAddition( 
-                global Type* output,
-                global Type* postSumArray,
+//__attribute__((reqd_work_group_size(KERNEL0WORKGROUPSIZE,1,1)))
+template< typename iType, typename oType, typename UnaryFunction, typename BinaryFunction >
+__kernel void perBlockTransformScan(
+                global oType* output,
+                global iType* input,
+                oType identity,
                 const uint vecSize,
-                global BinaryFunction* binaryOp
-                )
+                local oType* lds,
+                global UnaryFunction* unaryOp,
+                global BinaryFunction* binaryOp,
+                global oType* scanBuffer,
+                int exclusive) // do exclusive scan ?
 {
     size_t gloId = get_global_id( 0 );
     size_t groId = get_group_id( 0 );
     size_t locId = get_local_id( 0 );
+    size_t wgSize = get_local_size( 0 );
+    //printf("gid=%i, lTid=%i, gTid=%i\n", groId, locId, gloId);
 
     //  Abort threads that are passed the end of the input vector
-    if( gloId >= vecSize )
-        return;
-        
-    Type scanResult = output[ gloId ];
+    if (gloId >= vecSize) return; // on SI this doesn't mess-up barriers
 
-    // accumulate prefix
-    if (groId > 0)
+    // if exclusive, load gloId=0 w/ identity, and all others shifted-1
+    oType val;
+    if (exclusive)
     {
-        Type postBlockSum = postSumArray[ groId-1 ];
-        Type newResult = (*binaryOp)( scanResult, postBlockSum );
-        output[ gloId ] = newResult;
+        if (gloId > 0)
+        { // thread>0
+            iType inVal = input[gloId-1];
+            val = (oType) (*unaryOp)(inVal);
+            lds[ locId ] = val;
+        }
+        else
+        { // thread=0
+            val = identity;
+            lds[ locId ] = val;
+        }
+    }
+    else
+    {
+        iType inVal = input[gloId];
+        val = (oType) (*unaryOp)(inVal);
+        lds[ locId ] = val;
+    }
+
+    //  Computes a scan within a workgroup
+    oType sum = val;
+    for( size_t offset = 1; offset < wgSize; offset *= 2 )
+    {
+        barrier( CLK_LOCAL_MEM_FENCE );
+        if (locId >= offset)
+        {
+            oType y = lds[ locId - offset ];
+            sum = (*binaryOp)( sum, y );
+        }
+        barrier( CLK_LOCAL_MEM_FENCE );
+        lds[ locId ] = sum;
+    }
+
+    //  Each work item writes out its calculated scan result, relative to the beginning
+    //  of each work group
+    output[ gloId ] = sum;
+    barrier( CLK_LOCAL_MEM_FENCE ); // needed for large data types
+    if (locId == 0)
+    {
+        // last work-group can be wrong b/c ignored
+        scanBuffer[ groId ] = lds[ wgSize-1 ];
     }
 }
 
@@ -51,8 +92,9 @@ kernel void perBlockAddition(
 /******************************************************************************
  *  Kernel 1
  *****************************************************************************/
+//__attribute__((reqd_work_group_size(KERNEL1WORKGROUPSIZE,1,1)))
 template< typename Type, typename BinaryFunction >
-kernel void intraBlockInclusiveScan(
+__kernel void intraBlockInclusiveScan(
                 global Type* postSumArray,
                 global Type* preSumArray, 
                 Type identity,
@@ -62,6 +104,7 @@ kernel void intraBlockInclusiveScan(
                 global BinaryFunction* binaryOp
                 )
 {
+    size_t groId = get_group_id( 0 );
     size_t gloId = get_global_id( 0 );
     size_t locId = get_local_id( 0 );
     size_t wgSize = get_local_size( 0 );
@@ -140,73 +183,32 @@ kernel void intraBlockInclusiveScan(
 
 
 /******************************************************************************
- *  Kernel 0
+ *  Kernel 2
  *****************************************************************************/
-template< typename iType, typename oType, typename UnaryFunction, typename BinaryFunction >
-kernel void perBlockTransformScan(
-                global oType* output,
-                global iType* input,
-                oType identity,
+//__attribute__((reqd_work_group_size(KERNEL2WORKGROUPSIZE,1,1)))
+template< typename Type, typename BinaryFunction >
+__kernel void perBlockAddition( 
+                global Type* output,
+                global Type* postSumArray,
                 const uint vecSize,
-                local oType* lds,
-                global UnaryFunction* unaryOp,
-                global BinaryFunction* binaryOp,
-                global oType* scanBuffer,
-                int exclusive) // do exclusive scan ?
+                global BinaryFunction* binaryOp
+                )
 {
     size_t gloId = get_global_id( 0 );
     size_t groId = get_group_id( 0 );
     size_t locId = get_local_id( 0 );
-    size_t wgSize = get_local_size( 0 );
 
     //  Abort threads that are passed the end of the input vector
-    if (gloId >= vecSize) return; // on SI this doesn't mess-up barriers
+    if( gloId >= vecSize )
+        return;
+        
+    Type scanResult = output[ gloId ];
 
-    // if exclusive, load gloId=0 w/ identity, and all others shifted-1
-    oType val;
-    if (exclusive)
+    // accumulate prefix
+    if (groId > 0)
     {
-        if (gloId > 0)
-        { // thread>0
-            iType inVal = input[gloId-1];
-            val = (oType) (*unaryOp)(inVal);
-            lds[ locId ] = val;
-        }
-        else
-        { // thread=0
-            val = identity;
-            lds[ locId ] = val;
-        }
-    }
-    else
-    {
-        iType inVal = input[gloId];
-        val = (oType) (*unaryOp)(inVal);
-        lds[ locId ] = val;
-    }
-
-    //  Computes a scan within a workgroup
-    oType sum = val;
-    for( size_t offset = 1; offset < wgSize; offset *= 2 )
-    {
-        barrier( CLK_LOCAL_MEM_FENCE );
-        if (locId >= offset)
-        {
-            oType y = lds[ locId - offset ];
-            sum = (*binaryOp)( sum, y );
-        }
-        barrier( CLK_LOCAL_MEM_FENCE );
-        lds[ locId ] = sum;
-    }
-
-    //  Each work item writes out its calculated scan result, relative to the beginning
-    //  of each work group
-    output[ gloId ] = sum;
-    barrier( CLK_LOCAL_MEM_FENCE ); // needed for large data types
-    if (locId == 0)
-    {
-        // last work-group can be wrong b/c ignored
-        scanBuffer[ groId ] = lds[ wgSize-1 ];
+        Type postBlockSum = postSumArray[ groId-1 ];
+        Type newResult = (*binaryOp)( scanResult, postBlockSum );
+        output[ gloId ] = newResult;
     }
 }
-
