@@ -238,8 +238,8 @@ int testFill2DevVec( int length )
     std::vector<float> gold(length);
     bolt::cl::device_vector<float> dv(length);
 	//Call Fill
-    std::fill(gold.begin(), gold.end(), 0.0f);
-    bolt::cl::fill(dv.begin(), dv.end(), 0.0f);
+    std::fill(gold.begin(), gold.end(), 0.f);
+    bolt::cl::fill(dv.begin(), dv.end(), 0.f);
     //check results
     return checkResults(fName, gold.begin(), gold.end(), dv.begin());
 }
@@ -268,8 +268,8 @@ int testFillN2DevVec( int length )
     std::vector<float> gold(length);
     bolt::cl::device_vector<float> dv(length);
 	//Call Fill_N
-  	std::fill_n(gold.begin(), length, 0.0f);
-    bolt::cl::fill_n(dv.begin(), length, 0.0f);
+    std::fill_n(gold.begin(), length, 0.f);
+    bolt::cl::fill_n(dv.begin(), length, 0.f);
     //check results
     return checkResults(fName, gold.begin(), gold.end(), dv.begin());
 }
@@ -304,8 +304,8 @@ int testFill2HostVec( int length )
     std::vector<float> gold(length);
     std::vector<float> dv(length);
 
-    std::fill(gold.begin(), gold.end(), 0.0f);
-    bolt::cl::fill(dv.begin(), dv.end(), 0.0f);
+    std::fill(gold.begin(), gold.end(), 0.f);
+    bolt::cl::fill(dv.begin(), dv.end(), 0.f);
     //check results
     return checkResults(fName, gold.begin(), gold.end(), dv.begin());
 }
@@ -334,8 +334,8 @@ int testFillN2HostVec( int length )
     std::vector<float> gold(length);
     std::vector<float> dv(length);
 
-    std::fill_n(gold.begin(), length, 0.0f);
-    bolt::cl::fill_n(dv.begin(), length, 0.0f);
+    std::fill_n(gold.begin(), length, 0.f);
+    bolt::cl::fill_n(dv.begin(), length, 0.f);
     //check results
     return checkResults(fName, gold.begin(), gold.end(), dv.begin());
 }

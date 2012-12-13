@@ -894,17 +894,27 @@ TYPED_TEST_P( SortUDDArrayTest, Normal )
 {
     typedef std::array< ArrayType, ArraySize > ArrayCont;
     //  Calling the actual functions under test
-    std::sort( stdInput.begin( ), stdInput.end( ), sortBy_UDD_a() );
-    bolt::cl::sort( boltInput.begin( ), boltInput.end( ), sortBy_UDD_a() );
+
+    std::sort( stdInput.begin( ), stdInput.end( ), UDD() );
+    bolt::cl::sort( boltInput.begin( ), boltInput.end( ), UDD() );
 
     ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
     ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
-
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
-
     //  Loop through the array and compare all the values with each other
     cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
+
+    std::sort( stdInput.begin( ), stdInput.end( ), sortBy_UDD_a() );
+    bolt::cl::sort( boltInput.begin( ), boltInput.end( ), sortBy_UDD_a() );
+
+    stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
+    boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+    //  Loop through the array and compare all the values with each other
+    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
+
 }
 
 

@@ -206,20 +206,18 @@ namespace bolt {
             void compileOptions(std::string &compileOptions) { m_compileOptions = compileOptions; }; 
 
             // getters:
-            ::cl::CommandQueue& commandQueue( ) { return m_commandQueue; };
-            const ::cl::CommandQueue& commandQueue( ) const { return m_commandQueue; };
-
-            ::cl::Context context() const { return m_commandQueue.getInfo<CL_QUEUE_CONTEXT>();};
-            ::cl::Device device() const { return m_commandQueue.getInfo<CL_QUEUE_DEVICE>();};
-            e_UseHostMode useHost() const { return m_useHost; };
-            e_RunMode forceRunMode() const { return m_forceRunMode; };
-            unsigned debug() const { return m_debug;};
-            int const wgPerComputeUnit() const { return m_wgPerComputeUnit; };
-            const ::std::string compileOptions() const { return m_compileOptions; };  
-            e_WaitMode waitMode() const { return m_waitMode; };
-            int unroll() const { return m_unroll; };
-
-            bool compileForAllDevices() const { return m_compileForAllDevices; };
+            ::cl::CommandQueue&         commandQueue( ) { return m_commandQueue; };
+            const ::cl::CommandQueue&   commandQueue( ) const { return m_commandQueue; };
+            ::cl::Context               context() const { return m_commandQueue.getInfo<CL_QUEUE_CONTEXT>();};
+            ::cl::Device                device() const { return m_commandQueue.getInfo<CL_QUEUE_DEVICE>();};
+            e_UseHostMode               useHost() const { return m_useHost; };
+            e_RunMode                   forceRunMode() const { return m_forceRunMode; };
+            unsigned                    debug() const { return m_debug;};
+            int const                   wgPerComputeUnit() const { return m_wgPerComputeUnit; };
+            const ::std::string         compileOptions() const { return m_compileOptions; };  
+            e_WaitMode                  waitMode() const { return m_waitMode; };
+            int                         unroll() const { return m_unroll; };
+            bool                        compileForAllDevices() const { return m_compileForAllDevices; };
 
             /*!
               * Return default default \p control structure.  This is used for Bolt API calls when the user
@@ -255,7 +253,7 @@ namespace bolt {
                 */
             static ::cl::CommandQueue getDefaultCommandQueue( );
 
-            /*! \brief Buffer pool support functiosn
+            /*! \brief Buffer pool support functions
              */
             typedef boost::shared_ptr< ::cl::Buffer > buffPointer;
 
@@ -341,6 +339,7 @@ namespace bolt {
             };
 
             typedef std::multimap< descBufferKey, descBufferValue, descBufferComp > mapBufferType;
+            
 
             /*! \brief Class used with shared_ptr<> as a custom deleter, to signal to the context object when
              * a buffer is finished being used by a client.  We want to remove the ability to destroy the buffer
@@ -372,10 +371,12 @@ namespace bolt {
             friend class UnlockBuffer;
             mapBufferType mapBuffer;
             boost::mutex mapGuard;
-        };
+
+        }; // end class control
 
     };
 };
+
 
 // Implementor note:
 // When adding a new field to this structure, don't forget to:

@@ -645,7 +645,7 @@ TEST_P (transformReduceTestMultFloat, multiplyWithFloats)
         myBoltArray[i] = myArray[i];
     }
 
-    std::transform( myArray, myArray + arraySize, myArray2, std::negate<float>( ) );
+    std::transform( myArray, (float *)(myArray + arraySize), myArray2, std::negate<float>( ) );
     float stlTransformReduce = std::accumulate(myArray2, myArray2 + arraySize, 1.0f, std::multiplies<float>());
     float boltTransformReduce = bolt::cl::transform_reduce(myBoltArray, myBoltArray + arraySize, bolt::cl::negate<float>(), 1.0f, bolt::cl::multiplies<float>());
 

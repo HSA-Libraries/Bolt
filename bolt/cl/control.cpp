@@ -357,6 +357,7 @@ namespace cl
         mapBufferType::iterator itLowerBound = mapBuffer.find( myDesc );
         if( itLowerBound == mapBuffer.end( ) )
         {
+            // TODO move me to top of routine
             //  std::multimap is not thread-safe; lock the map when inserting elements
             boost::lock_guard< boost::mutex > lock( mapGuard );
 

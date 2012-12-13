@@ -148,8 +148,6 @@ namespace bolt {
                         ");\n\n";
 
                     bolt::cl::compileKernelsString( *sortKernels, kernelNames, sort_kernels, instantiationString, cl_code_dataType, valueTypeName, "", *ctl );
-                    // bolt::cl::compileKernels( *sortKernels, kernelNames, "sort", instantiationString, cl_code_dataType, valueTypeName, "", ctl );
-                    //bolt::cl::constructAndCompile(masterKernel, "sort", instantiationString, cl_code_dataType, valueTypeName, "", ctl);
                 }
 
             }; //End of struct CallCompiler_Sort  
@@ -651,7 +649,18 @@ if(bits==0 || bits==8 || bits==16 || bits==24)
 
                     //Power of 2 buffer size
                     // For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retreive the name here.
-                    boost::call_once( initOnlyOnce, boost::bind( CallCompiler_Sort::constructAndCompile, &masterKernel, cl_code + ClCode<T>::get() + ClCode<StrictWeakOrdering>::get(), TypeName<T>::get(), TypeName<StrictWeakOrdering>::get(), &ctl) );
+
+                    if (boost::is_same<T, StrictWeakOrdering>::value) 
+                        boost::call_once( initOnlyOnce, boost::bind( CallCompiler_Sort::constructAndCompile, &masterKernel, 
+                                      "\n//--User Code\n" + cl_code + 
+                                      "\n//--typedef T Code\n" + ClCode<T>::get(),
+                                      TypeName<T>::get(), TypeName<StrictWeakOrdering>::get(), &ctl) );
+                    else
+                        boost::call_once( initOnlyOnce, boost::bind( CallCompiler_Sort::constructAndCompile, &masterKernel, 
+                                      "\n//--User Code\n" + cl_code + 
+                                      "\n//--typedef T Code\n" + ClCode<T>::get() + 
+                                      "\n//--typedef StrictWeakOrdering Code\n" + ClCode<StrictWeakOrdering>::get(), 
+                                      TypeName<T>::get(), TypeName<StrictWeakOrdering>::get(), &ctl) );
 
                     size_t wgSize  = masterKernel.getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.device( ), &l_Error );
                     V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
@@ -719,7 +728,20 @@ if(bits==0 || bits==8 || bits==16 || bits==24)
                     //Power of 2 buffer size
                     // For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retreive the name here.
                     static std::vector< ::cl::Kernel > sortKernels;
-                    boost::call_once( initOnlyOnce, boost::bind( CallCompiler_Sort::constructAndCompileSelectionSort, &sortKernels, cl_code + ClCode<T>::get() + ClCode<StrictWeakOrdering>::get(), TypeName<T>::get(), TypeName<StrictWeakOrdering>::get(), &ctl) );
+
+                    if (boost::is_same<T, StrictWeakOrdering>::value) 
+                        boost::call_once( initOnlyOnce, boost::bind( CallCompiler_Sort::constructAndCompileSelectionSort, &sortKernels, 
+                                      "\n//--User Code\n" + cl_code + 
+                                      "\n//--typedef T Code\n" + ClCode<T>::get(), 
+                                      TypeName<T>::get(), 
+                                      TypeName<StrictWeakOrdering>::get(), &ctl) );
+                    else
+                        boost::call_once( initOnlyOnce, boost::bind( CallCompiler_Sort::constructAndCompileSelectionSort, &sortKernels, 
+                                      "\n//--User Code\n" + cl_code + 
+                                      "\n//--typedef T Code\n" + ClCode<T>::get() + 
+                                      "\n//--typedef StrictWeakOrdering Code\n" + ClCode<StrictWeakOrdering>::get(), 
+                                      TypeName<T>::get(), 
+                                      TypeName<StrictWeakOrdering>::get(), &ctl) );
 
                     size_t wgSize  = sortKernels[0].getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.device( ), &l_Error );
                     

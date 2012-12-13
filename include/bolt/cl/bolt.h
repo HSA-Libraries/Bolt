@@ -28,7 +28,8 @@
 #endif
 
 #include <string>
-
+#include <map>
+#include <boost/thread/mutex.hpp>
 #include "bolt/BoltVersion.h"
 #include "bolt/cl/control.h"
 #include "bolt/cl/clcode.h"
@@ -71,15 +72,46 @@ namespace bolt {
         extern const std::string transform_kernels;
         extern const std::string transform_reduce_kernels;
         extern const std::string transform_scan_kernels;
+
+        // transform_scan kernel names
+        //static std::string transform_scan_kernel_names_array[] = { "perBlockTransformScan", "intraBlockInclusiveScan", "perBlockAddition" };
+        //const std::vector<std::string> transformScanKernelNames(transform_scan_kernel_names_array, transform_scan_kernel_names_array+3);
         
+        /******************************************************************
+         * Kernel Template Specialization
+         *****************************************************************/
+        class KernelTemplateSpecializer
+        {
+            public:
+                // kernel template specializer functor
+                virtual const ::std::string operator() (const ::std::vector<::std::string>& typeNames) const
+                { return "Error; virtual function not overloaded"; }
+
+                // add a kernel name
+                void addKernelName( const std::string& kernelName) { kernelNames.push_back(kernelName); }
+
+                // get the name of a particular kernel
+                const ::std::string name( int kernelIndex ) const { return kernelNames[ kernelIndex ]; }
+
+                // return number of kernels
+                size_t numKernels() const { return kernelNames.size(); }
+
+                // kernel vector
+                const ::std::vector<::std::string> getKernelNames() const { return kernelNames; }
+
+            public:
+                ::std::vector<std::string> kernelNames;
+        };
 
         class control;
+        //class KernelTemplateSpecializer;
 
         extern std::string fileToString(const std::string &fileName);
 
+        // used in constructAndCompileString
         extern ::cl::Kernel compileFunctor(const std::string &kernelCodeString, const std::string kernelName, const std::string compileOptions, const control &c);
 
-        extern void constructAndCompile(::cl::Kernel *masterKernel, const std::string &apiName, const std::string instantiationString, std::string userCode, std::string valueTypeName,  std::string functorTypeName, const control &c);
+        //extern void constructAndCompile(::cl::Kernel *masterKernel, const std::string &apiName, const std::string instantiationString, std::string userCode, std::string valueTypeName,  std::string functorTypeName, const control &c);
 
 		::cl::Program buildProgram( const std::string& kernelCodeString, std::string compileOptions, const control& ctl );
 
@@ -92,7 +124,8 @@ namespace bolt {
                 const std::string& functorTypeName,
                 const control& ctl );
 
-        void constructAndCompileString( ::cl::Kernel *masterKernel, 
+        void constructAndCompileString( // used from structs - to be eliminated
+                ::cl::Kernel *masterKernel, 
                 const std::string& apiName, 
                 const std::string& clKernel, 
                 const std::string& instantiationString, 
@@ -106,7 +139,8 @@ namespace bolt {
                 const std::string& functorTypeName, 
                 const control& ctl );
 
-        void compileKernelsString( std::vector< ::cl::Kernel >& clKernels,
+        void compileKernelsString( // used from structs - to be eliminated
+                std::vector< ::cl::Kernel >& clKernels,
                 const std::vector< const std::string >& kernelNames,
                 const std::string& clKernel,
                 const std::string& instantiationString,
@@ -114,6 +148,32 @@ namespace bolt {
                 const std::string& valueTypeName,
                 const std::string& functorTypeName,
                 const control& ctl );
+
+        // dtanner
+        ::std::vector<::cl::Kernel> getKernels(
+            const control&      ctl,
+            const ::std::vector<::std::string>& typeNames,
+            const KernelTemplateSpecializer * const kts,
+            const ::std::vector<::std::string>& typeDefinitions,
+            const std::string&  baseKernelString,
+            const std::string&  compileOptions = ""
+                 );
+        
+        // dtanner
+        ::cl::Program acquireProgram(
+            const ::cl::Context& context,
+            const ::cl::Device&  device,
+            const ::std::string& compileOptions,
+            const ::std::string& completeKernelSource
+            );
+
+        // dtanner
+        ::cl::Program compileProgram(
+            const ::cl::Context& context,
+            const ::cl::Device&  device,
+            const ::std::string& compileOptions,
+            const ::std::string& completeKernelSource,
+            cl_int * err = NULL);
 
         /*! \brief Query the Bolt library for version information
             *  \details Return the major, minor and patch version numbers associated with the Bolt library
@@ -165,6 +225,107 @@ namespace bolt {
 
 
 		void wait(const bolt::cl::control &ctl, ::cl::Event &e) ;
+
+
+        
+
+
+        /******************************************************************
+         * Program Map - so each kernel is only compiled once
+         *****************************************************************/
+        struct ProgramMapKey
+        {
+            ::cl::Context context;
+            ::std::string device;
+            ::std::string compileOptions;
+            ::std::string kernelSource;
+        };
+
+        struct ProgramMapValue
+        {
+            ::cl::Program program;
+        };
+
+        struct ProgramMapKeyComp
+        {
+            bool operator( )( const ProgramMapKey& lhs, const ProgramMapKey& rhs ) const
+            {
+                int comparison;
+                // context
+                // Do I really need to compare the context? Yes, required by OpenCL. -DT
+                if( lhs.context() < rhs.context() )
+                    return true;
+                else if( lhs.context() > rhs.context() )
+                    return false;
+                // else equal; compare using next element of key
+
+                // device
+                //std::string lhsDeviceStr = lhs.device.getInfo< CL_DEVICE_NAME >( );
+                //lhsDeviceStr += "; " + lhs.device.getInfo< CL_DEVICE_VERSION >( );
+                //lhsDeviceStr += "; " + lhs.device.getInfo< CL_DEVICE_VENDOR >( );
+
+                //std::string rhsDeviceStr = rhs.device.getInfo< CL_DEVICE_NAME >( );
+                //rhsDeviceStr += "; " + rhs.device.getInfo< CL_DEVICE_VERSION >( );
+                //rhsDeviceStr += "; " + rhs.device.getInfo< CL_DEVICE_VENDOR >( );
+#if 1
+                comparison = lhs.device.compare(rhs.device);
+                //std::cout << "Compare Device: " << comparison << std::endl;
+                if( comparison < 0 )
+                {
+                    return true;
+                }
+                else if( comparison > 0 )
+                {
+                    return false;
+                }
+                //else
+                //    std::cout << "<" << lhs.device << "> == <" << rhs.device << ">" << std::endl;
+#else
+                if( lhs.device() < rhs.device() )
+                    return true;
+                else if( lhs.device() > rhs.device() )
+                    return false;
+#endif
+                // else equal; compare using next element of key
+
+                // compileOptions
+                comparison = lhs.compileOptions.compare(rhs.compileOptions);
+                //std::cout << "Compare Options: " << comparison << std::endl;
+                if( comparison < 0 )
+                {
+                    return true;
+                }
+                else if( comparison > 0 )
+                {
+                    return false;
+                }
+                //else
+                //    std::cout << "<" << lhs.compileOptions << "> == <" << rhs.compileOptions << ">" << std::endl;
+                // else equal; compare using next element of key
+
+                // kernelSource
+                comparison = lhs.kernelSource.compare(rhs.kernelSource);
+                //std::cout << "Compare Source: " << comparison << std::endl;
+                if( comparison < 0 )
+                    return true;
+                else if( comparison > 0 )
+                    return false;
+                //else
+                //    std::cout << "<lhs.kernelSource> == <rhs.kernelSource>" << std::endl;
+                // else equal; compare using next element of key
+
+                // all elements equal
+                return false;
+            }
+        };
+
+        typedef ::std::map< ProgramMapKey, ProgramMapValue, ProgramMapKeyComp > ProgramMap;
+        //typedef ::std::map< ::std::string, ProgramMapValue> ProgramMap;
+
+        // declared in bolt.cpp
+        extern boost::mutex programMapMutex;
+        extern ProgramMap programMap;
+
 	};
 };
 
