@@ -241,7 +241,6 @@ namespace bolt {
 #define DEBUG 0
 #if (ENABLE_INCLUSIVE_SCAN == 1)
             template<typename DVRandomAccessIterator, typename StrictWeakOrdering> 
-
 			typename std::enable_if< std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type, unsigned int >::value >::type
 	        sort_enqueue(control &ctl, DVRandomAccessIterator first, DVRandomAccessIterator last,
                 StrictWeakOrdering comp, const std::string& cl_code)
@@ -265,7 +264,7 @@ namespace bolt {
 					boost::call_once( initOnlyOnce, boost::bind( CallCompiler_Sort::constructAndCompileRadixSortUint, &radixSortUintKernels, cl_code +ClCode<T>::get(), "", TypeName<StrictWeakOrdering>::get(), &ctl) );
                     size_t groupSize  = radixSortUintKernels[0].getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.device( ), &l_Error );
 					V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
-					groupSize = 16;
+					groupSize = 64;
 					size_t num_of_elems_per_group = RADICES  * groupSize;
 
 					int i = 0;
@@ -308,7 +307,7 @@ namespace bolt {
 					loc.size_ = groupSize*RADICES* sizeof(cl_uint);
 					localScanArray.size_ = 2*RADICES* sizeof(cl_uint);
 
-					for(int bits = 0; bits < sizeof(T) * 8/*bits*/; bits += RADIX)
+					for(int bits = 0; bits < sizeof(T) * 8/*Bits per Byte*/; bits += RADIX)
 					{
                         //Do a histogram pass locally
 						if(bits==0 || bits==8 || bits==16 || bits==24)
@@ -351,7 +350,6 @@ namespace bolt {
 #endif
 
                         //Perform a global scan 
-                        //bolt::cl::inclusive_scan(ctl, dvHistogramScanBuffer.begin(),dvHistogramScanBuffer.end(),dvHistogramScanBuffer.begin());
                         detail::scan_enqueue(ctl, dvHistogramScanBuffer.begin(),dvHistogramScanBuffer.end(),dvHistogramScanBuffer.begin(), 0, plus< T >( ));
 #if (DEBUG==1)
         ::cl::Event l_histScanBufferEvent;
@@ -449,7 +447,7 @@ if(bits==0 || bits==8 || bits==16 || bits==24)
 			}
 #else
 #define INCLUSIVE_SCAN 0
-
+            /*The below code does not use inclusive scan and the scan is computed on the CPU*/
 			template<typename DVRandomAccessIterator, typename StrictWeakOrdering> 
 			typename std::enable_if< std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type, unsigned int >::value >::type
 	        sort_enqueue(const control &ctl, DVRandomAccessIterator first, DVRandomAccessIterator last,
@@ -653,7 +651,7 @@ if(bits==0 || bits==8 || bits==16 || bits==24)
 
                     //Power of 2 buffer size
                     // For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retreive the name here.
-                    boost::call_once( initOnlyOnce, boost::bind( CallCompiler_Sort::constructAndCompile, &masterKernel, cl_code + ClCode<T>::get(), TypeName<T>::get(), TypeName<StrictWeakOrdering>::get(), &ctl) );
+                    boost::call_once( initOnlyOnce, boost::bind( CallCompiler_Sort::constructAndCompile, &masterKernel, cl_code + ClCode<T>::get() + ClCode<StrictWeakOrdering>::get(), TypeName<T>::get(), TypeName<StrictWeakOrdering>::get(), &ctl) );
 
                     size_t wgSize  = masterKernel.getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.device( ), &l_Error );
                     V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
@@ -721,7 +719,7 @@ if(bits==0 || bits==8 || bits==16 || bits==24)
                     //Power of 2 buffer size
                     // For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retreive the name here.
                     static std::vector< ::cl::Kernel > sortKernels;
-                    boost::call_once( initOnlyOnce, boost::bind( CallCompiler_Sort::constructAndCompileSelectionSort, &sortKernels, cl_code + ClCode<T>::get(), TypeName<T>::get(), TypeName<StrictWeakOrdering>::get(), &ctl) );
+                    boost::call_once( initOnlyOnce, boost::bind( CallCompiler_Sort::constructAndCompileSelectionSort, &sortKernels, cl_code + ClCode<T>::get() + ClCode<StrictWeakOrdering>::get(), TypeName<T>::get(), TypeName<StrictWeakOrdering>::get(), &ctl) );
 
                     size_t wgSize  = sortKernels[0].getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.device( ), &l_Error );
                     

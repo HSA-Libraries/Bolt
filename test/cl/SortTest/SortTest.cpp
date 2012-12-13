@@ -18,7 +18,7 @@
 #define TEST_DOUBLE 0
 #define TEST_DEVICE_VECTOR 1
 #define TEST_CPU_DEVICE 0
-#define GOOGLE_TEST 0
+#define GOOGLE_TEST 1
 #if (GOOGLE_TEST == 1)
 
 #include "common/stdafx.h"
@@ -98,6 +98,9 @@ public:
     static const size_t value = N;
 };
 
+
+
+
 //  Test fixture class, used for the Type-parameterized tests
 //  Namely, the tests that use std::array and TYPED_TEST_P macros
 template< typename ArrayTuple >
@@ -111,7 +114,6 @@ public:
     {
         std::generate(stdInput.begin(), stdInput.end(), rand);
         boltInput = stdInput;
-
     };
 
     virtual void TearDown( )
@@ -813,6 +815,8 @@ typedef ::testing::Types<
     std::tuple< double, TypeValue< 65536 > >
 > DoubleTests;
 #endif 
+
+/********* Test case to reproduce SuiCHi bugs ******************/
 BOLT_FUNCTOR(UDD,
 struct UDD { 
     int a; 
@@ -836,8 +840,73 @@ struct UDD {
         : a(_in), b(_in +1)  { } 
 }; 
 );
+
+BOLT_FUNCTOR(sortBy_UDD_a,
+    struct sortBy_UDD_a {
+        bool operator() (UDD& a, UDD& b) 
+        { 
+            return (a.a>b.a); 
+        };
+    };
+);
+
+BOLT_FUNCTOR(sortBy_UDD_b,
+    struct sortBy_UDD_b {
+        bool operator() (UDD& a, UDD& b) 
+        { 
+            return (a.b>b.b); 
+        };
+    };
+);
+
 BOLT_CREATE_TYPENAME(bolt::cl::less<UDD>);
 BOLT_CREATE_TYPENAME(bolt::cl::greater<UDD>);
+
+template< typename ArrayTuple >
+class SortUDDArrayTest: public ::testing::Test
+{
+public:
+    SortUDDArrayTest( ): m_Errors( 0 )
+    {}
+
+    virtual void SetUp( )
+    {
+        std::generate(stdInput.begin(), stdInput.end(), rand);
+        boltInput = stdInput;
+    };
+
+    virtual void TearDown( )
+    {};
+
+    virtual ~SortUDDArrayTest( )
+    {}
+
+protected:
+    typedef typename std::tuple_element< 0, ArrayTuple >::type ArrayType;
+    static const size_t ArraySize = typename std::tuple_element< 1, ArrayTuple >::type::value;
+    typename std::array< ArrayType, ArraySize > stdInput, boltInput;
+    int m_Errors;
+};
+
+TYPED_TEST_CASE_P( SortUDDArrayTest );
+
+TYPED_TEST_P( SortUDDArrayTest, Normal )
+{
+    typedef std::array< ArrayType, ArraySize > ArrayCont;
+    //  Calling the actual functions under test
+    std::sort( stdInput.begin( ), stdInput.end( ), sortBy_UDD_a() );
+    bolt::cl::sort( boltInput.begin( ), boltInput.end( ), sortBy_UDD_a() );
+
+    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
+    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
+}
+
 
 typedef ::testing::Types< 
     std::tuple< UDD, TypeValue< 1 > >,
@@ -856,12 +925,18 @@ typedef ::testing::Types<
     std::tuple< UDD, TypeValue< 65536 > >
 > UDDTests;
 
+
+
 INSTANTIATE_TYPED_TEST_CASE_P( Integer, SortArrayTest, IntegerTests );
 INSTANTIATE_TYPED_TEST_CASE_P( Float, SortArrayTest, FloatTests );
 #if (TEST_DOUBLE == 1)
 INSTANTIATE_TYPED_TEST_CASE_P( Double, SortArrayTest, DoubleTests );
 #endif 
-INSTANTIATE_TYPED_TEST_CASE_P( UDDTest, SortArrayTest, UDDTests );
+
+
+
+REGISTER_TYPED_TEST_CASE_P( SortUDDArrayTest,  Normal);
+INSTANTIATE_TYPED_TEST_CASE_P( UDDTest, SortUDDArrayTest, UDDTests );
 
 int main(int argc, char* argv[])
 {
@@ -1352,7 +1427,7 @@ int main(int argc, char* argv[])
 {
 
     //UDDSortTestOfLengthWithDeviceVector<int>(256);
-    BasicSortTestOfLength<unsigned int>(65536/*atoi(argv[1])*/);
+    BasicSortTestOfLength<unsigned int>(atoi(argv[1]));
 	//BasicSortTestOfLength<unsigned int>(4096);
     BasicSortTestOfLength<int>(512);
     //BasicSortTestOfLength<int>(111);
