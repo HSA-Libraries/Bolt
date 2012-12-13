@@ -17,32 +17,6 @@
 
 #pragma OPENCL EXTENSION cl_amd_printf : enable
 //#pragma OPENCL EXTENSION cl_khr_fp64 : enable 
-namespace bolt{
-    namespace cl{
-        template<typename T>
-        struct greater
-        {
-            bool operator()(const T &lhs, const T &rhs) const  {return (lhs > rhs);}
-        };
-        template<typename T>
-        struct less 
-        {
-            bool operator()(const T &lhs, const T &rhs) const  {return (lhs < rhs);}
-        };
-};
-};
-//FIXME - this was added to support POD with bolt::cl::greater data types
-template<typename T>
-struct greater
-{
-    bool operator()(const T &lhs, const T &rhs) const  {return (lhs > rhs);}
-};
-template<typename T>
-struct less 
-{
-    bool operator()(const T &lhs, const T &rhs) const  {return (lhs < rhs);}
-};
-
 
 
 template <typename T, typename Compare>
