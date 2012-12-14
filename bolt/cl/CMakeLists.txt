@@ -77,6 +77,7 @@ set( clBolt.Runtime.Headers
         ${clBolt.Include.Dir}/iterator_traits.h 
         ${clBolt.Include.Dir}/reduce.h 
         ${clBolt.Include.Dir}/scan.h 
+        ${clBolt.Include.Dir}/scan_by_key.h 
         ${clBolt.Include.Dir}/sort.h 
         ${clBolt.Include.Dir}/sort_by_key.h 
         ${clBolt.Include.Dir}/transform.h 
@@ -97,6 +98,7 @@ set( clBolt.Runtime.Headers.Detail
 		${clBolt.Include.Dir}/detail/inner_product.inl
         ${clBolt.Include.Dir}/detail/reduce.inl
         ${clBolt.Include.Dir}/detail/scan.inl
+        ${clBolt.Include.Dir}/detail/scan_by_key.inl
         ${clBolt.Include.Dir}/detail/sort.inl
         ${clBolt.Include.Dir}/detail/sort_by_key.inl
         ${clBolt.Include.Dir}/detail/transform.inl
@@ -111,6 +113,7 @@ set( clBolt.Runtime.clFiles
         transform_reduce_kernels.cl
         transform_scan_kernels.cl
         scan_kernels.cl
+        scan_by_key_kernels.cl
         sort_kernels.cl
         sort_by_key_kernels.cl        
     )

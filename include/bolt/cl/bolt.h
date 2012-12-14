@@ -108,9 +108,11 @@ namespace bolt {
         extern std::string fileToString(const std::string &fileName);
 
         // used in constructAndCompileString
-        extern ::cl::Kernel compileFunctor(const std::string &kernelCodeString, const std::string kernelName, const std::string compileOptions, const control &c);
-
-        //extern void constructAndCompile(::cl::Kernel *masterKernel, const std::string &apiName, const std::string instantiationString, std::string userCode, std::string valueTypeName,  std::string functorTypeName, const control &c);
+        extern ::cl::Kernel compileFunctor(
+                const std::string &kernelCodeString,
+                const std::string kernelName,
+                const std::string compileOptions,
+                const control &c);
 
 
         void constructAndCompileString( // used from structs - to be eliminated
@@ -244,14 +246,6 @@ namespace bolt {
                 // else equal; compare using next element of key
 
                 // device
-                //std::string lhsDeviceStr = lhs.device.getInfo< CL_DEVICE_NAME >( );
-                //lhsDeviceStr += "; " + lhs.device.getInfo< CL_DEVICE_VERSION >( );
-                //lhsDeviceStr += "; " + lhs.device.getInfo< CL_DEVICE_VENDOR >( );
-
-                //std::string rhsDeviceStr = rhs.device.getInfo< CL_DEVICE_NAME >( );
-                //rhsDeviceStr += "; " + rhs.device.getInfo< CL_DEVICE_VERSION >( );
-                //rhsDeviceStr += "; " + rhs.device.getInfo< CL_DEVICE_VENDOR >( );
-#if 1
                 comparison = lhs.device.compare(rhs.device);
                 //std::cout << "Compare Device: " << comparison << std::endl;
                 if( comparison < 0 )
@@ -262,14 +256,6 @@ namespace bolt {
                 {
                     return false;
                 }
-                //else
-                //    std::cout << "<" << lhs.device << "> == <" << rhs.device << ">" << std::endl;
-#else
-                if( lhs.device() < rhs.device() )
-                    return true;
-                else if( lhs.device() > rhs.device() )
-                    return false;
-#endif
                 // else equal; compare using next element of key
 
                 // compileOptions

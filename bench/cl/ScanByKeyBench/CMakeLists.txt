@@ -16,22 +16,23 @@
 ############################################################################                                                                                     
 
 # List the names of common files to compile across all platforms
-message( STATUS "Setting up CL specific benchmarking projects" )
+set( clBolt.Bench.ScanByKey.Source BenchScanByKey.cpp )
+set( clBolt.Bench.ScanByKey.Headers ${BOLT_INCLUDE_DIR}/bolt/cl/scan_by_key.h )
 
-# Include standard OpenCL headers
-include_directories( ${OPENCL_INCLUDE_DIRS} )
+set( clBolt.Bench.ScanByKey.Files ${clBolt.Bench.ScanByKey.Source} ${clBolt.Bench.ScanByKey.Headers} )
 
-if( BUILD_clBolt )
-	# Include standard OpenCL headers
-	add_subdirectory( CopyBench )
-	add_subdirectory( CopyBuffer )
-	add_subdirectory( Fill ) 
-	add_subdirectory( Generate )
-	add_subdirectory( InnerProduct )
-	add_subdirectory( Reduce )
-	add_subdirectory( Scan )
-  add_subdirectory( ScanByKeyBench )
-	add_subdirectory( Sort )
-	add_subdirectory( Transform )
-  add_subdirectory( TransformScanBench )
-endif( )
+add_executable( clBolt.Bench.ScanByKey ${clBolt.Bench.ScanByKey.Files} )
+
+target_link_libraries( clBolt.Bench.ScanByKey ${Boost_LIBRARIES} clBolt.Runtime )
+
+set_target_properties( clBolt.Bench.ScanByKey PROPERTIES VERSION ${Bolt_VERSION} )
+set_target_properties( clBolt.Bench.ScanByKey PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
+
+set_property( TARGET clBolt.Bench.ScanByKey PROPERTY FOLDER "Benchmark/OpenCL")
+
+# CPack configuration; include the executable into the package
+install( TARGETS clBolt.Bench.ScanByKey
+	RUNTIME DESTINATION ${BIN_DIR}
+	LIBRARY DESTINATION ${LIB_DIR}
+	ARCHIVE DESTINATION ${LIB_DIR}
+	)
