@@ -262,7 +262,7 @@ namespace bolt {
 					boost::call_once( initOnlyOnce, boost::bind( CallCompiler_Sort::constructAndCompileRadixSortUint, &radixSortUintKernels, cl_code +ClCode<T>::get(), "", TypeName<StrictWeakOrdering>::get(), &ctl) );
                     size_t groupSize  = radixSortUintKernels[0].getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.device( ), &l_Error );
 					V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
-					groupSize = 64;
+					groupSize = 16;
 					size_t num_of_elems_per_group = RADICES  * groupSize;
 
 					int i = 0;
