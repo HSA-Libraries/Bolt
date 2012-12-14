@@ -59,26 +59,32 @@ namespace bolt {
     namespace cl {
         namespace  detail {
             struct CallCompiler_TransformReduce {
-                static void constructAndCompile(::cl::Kernel *masterKernel,  std::string user_code, std::string valueTypeName,
-                    std::string transformFunctorTypeName, std::string reduceFunctorTypeName, const control *ctl) {
+                static void constructAndCompile(
+                    ::cl::Kernel *masterKernel,
+                    std::string user_code,
+                    std::string iValueTypeName,
+                    std::string oValueTypeName,
+                    std::string transformFunctorTypeName,
+                    std::string reduceFunctorTypeName,
+                    const control *ctl) {
 
                     const std::string instantiationString = 
                         "// Host generates this instantiation string with user-specified value type and functor\n"
                         "template __attribute__((mangled_name(transform_reduceInstantiated)))\n"
                         "__attribute__((reqd_work_group_size(64,1,1)))\n"
                         "kernel void transform_reduceTemplate(\n"
-                        "global " + valueTypeName + "* A,\n"
+                        "global " + iValueTypeName + "* A,\n"
                         "const int length,\n"
                         "global " + transformFunctorTypeName + "* transformFunctor,\n"
-                        "const " + valueTypeName + " init,\n"
+                        "const " + oValueTypeName + " init,\n"
                         "global " + reduceFunctorTypeName + "* reduceFunctor,\n"
-                        "global " + valueTypeName + "* result,\n"
-                        "local " + valueTypeName + "* scratch\n"
+                        "global " + oValueTypeName + "* result,\n"
+                        "local " + oValueTypeName + "* scratch\n"
                         ");\n\n";
 
                     std::string functorNames = transformFunctorTypeName + " , " + reduceFunctorTypeName; // create for debug message
 
-                    bolt::cl::constructAndCompileString( masterKernel, "transform_reduce", transform_reduce_kernels, instantiationString, user_code, valueTypeName, functorNames, *ctl);
+                    bolt::cl::constructAndCompileString( masterKernel, "transform_reduce", transform_reduce_kernels, instantiationString, user_code, oValueTypeName, functorNames, *ctl);
                 };
             };
 
@@ -105,12 +111,18 @@ namespace bolt {
 
         // This template is called by the non-detail versions of transform_reduce, it already assumes random access iterators
         // This is called strictly for any non-device_vector iterator
-        template<typename InputIterator, typename UnaryFunction, typename T, typename BinaryFunction> 
-        typename std::enable_if< !std::is_base_of<typename device_vector<typename std::iterator_traits<InputIterator>::value_type>::iterator,InputIterator>::value, T >::type
-        transform_reduce_pick_iterator( control &c, const InputIterator& first, const InputIterator& last, const UnaryFunction& transform_op, 
-            const T& init, const BinaryFunction& reduce_op, const std::string& user_code )
+        template<typename InputIterator, typename UnaryFunction, typename oType, typename BinaryFunction> 
+        typename std::enable_if< !std::is_base_of<typename device_vector<typename std::iterator_traits<InputIterator>::value_type>::iterator,InputIterator>::value, oType >::type
+        transform_reduce_pick_iterator(
+            control &c,
+            const InputIterator& first,
+            const InputIterator& last,
+            const UnaryFunction& transform_op, 
+            const oType& init,
+            const BinaryFunction& reduce_op,
+            const std::string& user_code )
         {
-            typedef std::iterator_traits<InputIterator>::value_type T;
+            typedef std::iterator_traits<InputIterator>::value_type iType;
             size_t szElements = (last - first); 
             if (szElements == 0)
                     return init;
@@ -119,7 +131,7 @@ namespace bolt {
             if (runMode == bolt::cl::control::SerialCpu)
             {
                 //Create a temporary array to store the transform result;
-                std::vector<T> output(szElements);
+                std::vector<oType> output(szElements);
 
                 std::transform(first, last, output.begin(),transform_op);
                 return std::accumulate(output.begin(), output.end(), init);
@@ -129,7 +141,7 @@ namespace bolt {
                 return init;
             } else {
                 // Map the input iterator to a device_vector
-                device_vector< T > dvInput( first, last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, c );
+                device_vector< iType > dvInput( first, last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, c );
 
                 return  transform_reduce_enqueue( c, dvInput.begin( ), dvInput.end( ), transform_op, init, reduce_op, user_code );
             }
@@ -137,12 +149,18 @@ namespace bolt {
 
         // This template is called by the non-detail versions of transform_reduce, it already assumes random access iterators
         // This is called strictly for iterators that are derived from device_vector< T >::iterator
-        template<typename DVInputIterator, typename UnaryFunction, typename T, typename BinaryFunction> 
-        typename std::enable_if< std::is_base_of<typename device_vector<typename std::iterator_traits<DVInputIterator>::value_type>::iterator,DVInputIterator>::value, T >::type
-        transform_reduce_pick_iterator( control &c, const DVInputIterator& first, const DVInputIterator& last, const UnaryFunction& transform_op, 
-            const T& init, const BinaryFunction& reduce_op, const std::string& user_code )
+        template<typename DVInputIterator, typename UnaryFunction, typename oType, typename BinaryFunction> 
+        typename std::enable_if< std::is_base_of<typename device_vector<typename std::iterator_traits<DVInputIterator>::value_type>::iterator,DVInputIterator>::value, oType >::type
+        transform_reduce_pick_iterator(
+            control &c,
+            const DVInputIterator& first,
+            const DVInputIterator& last,
+            const UnaryFunction& transform_op, 
+            const oType& init,
+            const BinaryFunction& reduce_op,
+            const std::string& user_code )
         {
-            typedef std::iterator_traits<DVInputIterator>::value_type T;
+            typedef std::iterator_traits<DVInputIterator>::value_type iType;
             size_t szElements = (last - first); 
             if (szElements == 0)
                     return init;
@@ -154,7 +172,7 @@ namespace bolt {
                 throw ::cl::Error( CL_INVALID_DEVICE, "transform_reduce device_vector CPU device not implemented" );
 
                 //Create a temporary array to store the transform result;
-                std::vector<T> output(szElements);
+                std::vector<oType> output(szElements);
 
                 std::transform(first, last, output.begin(),transform_op);
                 return std::accumulate(output.begin(), output.end(), init);
@@ -172,17 +190,42 @@ namespace bolt {
             return  transform_reduce_enqueue( c, first, last, transform_op, init, reduce_op, user_code );
         };
 
-            template<typename DVInputIterator, typename UnaryFunction, typename T, typename BinaryFunction> 
-            T transform_reduce_enqueue( control& ctl, const DVInputIterator& first, const DVInputIterator& last, const UnaryFunction& transform_op,
-                const T& init, const BinaryFunction& reduce_op, const std::string& user_code="")
+            template<typename DVInputIterator, typename UnaryFunction, typename oType, typename BinaryFunction> 
+            oType transform_reduce_enqueue(
+                control& ctl,
+                const DVInputIterator& first,
+                const DVInputIterator& last,
+                const UnaryFunction& transform_op,
+                const oType& init,
+                const BinaryFunction& reduce_op,
+                const std::string& user_code="")
             {
                 static boost::once_flag initOnlyOnce;
                 static  ::cl::Kernel masterKernel;
                 unsigned debugMode = 0; //FIXME, use control
 
-                boost::call_once( initOnlyOnce, boost::bind( CallCompiler_TransformReduce::constructAndCompile, &masterKernel, 
-                    "\n//--user Code\n" + user_code + "\n//---Functions\n" + ClCode<UnaryFunction>::get() + ClCode<BinaryFunction>::get(), 
-                    TypeName<T>::get(), TypeName<UnaryFunction>::get(), TypeName<BinaryFunction>::get(), &ctl ) );
+                typedef std::iterator_traits< DVInputIterator  >::value_type iType;
+                //typedef std::iterator_traits< DVOutputIterator >::value_type oType;
+                
+                std::string typeDefs = ClCode< iType >::get();
+                if (TypeName< iType >::get() != TypeName< oType >::get())
+                {
+                    typeDefs += ClCode< oType >::get();
+                }
+
+                boost::call_once(
+                    initOnlyOnce,
+                    boost::bind(
+                        CallCompiler_TransformReduce::constructAndCompile,
+                        &masterKernel, 
+                        "\n//--type definitions\n" + typeDefs + "\n//--user Code\n" + user_code + "\n//---Functions\n" + ClCode<UnaryFunction>::get() + ClCode<BinaryFunction>::get(), 
+                        TypeName<iType>::get(),
+                        TypeName<oType>::get(),
+                        TypeName<UnaryFunction>::get(),
+                        TypeName<BinaryFunction>::get(),
+                        &ctl
+                    )
+                );
 
                 // Set up shape of launch grid and buffers:
                 // FIXME, read from device attributes.
@@ -204,7 +247,7 @@ namespace bolt {
                 control::buffPointer reduceFunctor = ctl.acquireBuffer( sizeof( aligned_binary ), CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_binary );
 
                 // ::cl::Buffer result(ctl.context(), CL_MEM_ALLOC_HOST_PTR|CL_MEM_WRITE_ONLY, sizeof(T) * numWG);
-                control::buffPointer result = ctl.acquireBuffer( sizeof( T ) * numWG, CL_MEM_ALLOC_HOST_PTR|CL_MEM_WRITE_ONLY );
+                control::buffPointer result = ctl.acquireBuffer( sizeof( oType ) * numWG, CL_MEM_ALLOC_HOST_PTR|CL_MEM_WRITE_ONLY );
 
                 ::cl::Kernel k = masterKernel;  // hopefully create a copy of the kernel. FIXME, doesn't work.
 
@@ -225,7 +268,7 @@ namespace bolt {
                 V_OPENCL( k.setArg(5, *result), "Error setting kernel argument" );
 
                 ::cl::LocalSpaceArg loc;
-                loc.size_ = wgSize*sizeof(T);
+                loc.size_ = wgSize*sizeof(oType);
                 V_OPENCL( k.setArg(6, loc), "Error setting kernel argument" );
 
                 l_Error = ctl.commandQueue().enqueueNDRangeKernel( 
@@ -236,7 +279,7 @@ namespace bolt {
                 V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for transform_reduce() kernel" );
 
                 ::cl::Event l_mapEvent;
-                T *h_result = (T*)ctl.commandQueue().enqueueMapBuffer(*result, false, CL_MAP_READ, 0, sizeof(T)*numWG, NULL, &l_mapEvent, &l_Error );
+                oType *h_result = (oType*)ctl.commandQueue().enqueueMapBuffer(*result, false, CL_MAP_READ, 0, sizeof(oType)*numWG, NULL, &l_mapEvent, &l_Error );
                 V_OPENCL( l_Error, "Error calling map on the result buffer" );
 
                 //  Finish the tail end of the reduction on host side; the compute device reduces within the workgroups, with one result per workgroup
@@ -246,7 +289,7 @@ namespace bolt {
 
                 bolt::cl::wait(ctl, l_mapEvent);
 
-                T acc = static_cast< T >( init );
+                oType acc = static_cast< oType >( init );
                 for(int i = 0; i < numTailReduce; ++i)
                 {
                     acc = reduce_op( acc, h_result[ i ] );

@@ -25,6 +25,9 @@
 #include <string>
 #include <iostream>
 
+/*! \file generate.h
+*/
+
 namespace bolt {
     namespace cl {
 
@@ -33,86 +36,213 @@ namespace bolt {
 
         /*! \addtogroup transformations
         *   \ingroup algorithms
-        *   \p generate fills a range with values generated from a Generator,
-        *   a function of no arguments, such as rand().
+        *   \p generate assigns to each element of a sequence the value returned by a generator.
         */ 
         
-        /*! \addtogroup transform
+        /*! \addtogroup filling
         *   \ingroup transformations
         *   \{
         */
 
-        /*! generate assigns the result of invoking gen, a function object that takes no arguments, to each element in the range [first,last).
+         /*! \brief \p generate assigns to each element of a sequence [first,last) the value returned by gen.
          *  
          *  \param ctl      Optional control structure to control command-queue, debug, tuning, etc.  See bolt::cl::control.
-         *  \param first    The first element in the range of interest.
-         *  \param last     The last element in the range of interest.
-         *  \param gen      A function argument, taking no parameters, used to generate values to assign to elements in the range [first,last).
+         *  \param first    The first element of the sequence.
+         *  \param last     The last element of the sequence.
+         *  \param gen      A generator, functor taking no parameters.
          *  \param cl_code  Optional OpenCL(TM) code to be prepended to any OpenCL kernels used by this function.
          *
-         *  \tparam ForwardIterator is a model of Forward Iterator, and \c InputIterator \c is mutable.
+         *  \tparam ForwardIterator is a model of Forward Iterator, and \c ForwardIterator \c is mutable.
          *  \tparam Generator is a model of Generator, and \c Generator's \c result_type is convertible to \c ForwardIterator's \c value_type.
-
          *
-         *  The following code snippet demonstrates how to fill a device_vector with random numbers, using the standard C library function rand.
+         *  The following code snippet demonstrates how to fill a vector with a constant number.
          *
          *  \code
          *  #include <bolt/cl/generate.h>
          *  #include <bolt/device_vector.h>
          *  #include <stdlib.h>
          *  ...
-         *  bolt::device_vector<int> v(10);
-         *  srand(101082);
-         *  bolt::cl::generate(v.begin(), v.end(), rand);
          *
-         *  // the elements of v are now pseudo-random numbers
+         *  BOLT_FUNCTOR(ConstFunctor,
+         *  struct ConstFunctor
+         *  {
+	     *      int val;
+	     *      ConstFunctor(int a) : val(a) {};
+         *
+	     *      int operator() () 
+	     *      {
+		 *          return val;
+	     *      };
+         *  };
+         *  );
+         *  ...
+         *
+         *  ConstFunctor cf(1);
+         *  bolt::cl::control ctrl = control::getDefault();
+         *  std::vector<int> vec(1024);
+         *  bolt::cl::generate(ctrl, vec.begin(), vec.end(), cf);
+         *
+         *  // vec is now filled with 1
          *  \endcode
          *
          *  \sa http://www.sgi.com/tech/stl/generate.html
          */
         template<typename ForwardIterator, typename Generator> 
-        void generate( ForwardIterator first, ForwardIterator last, Generator gen, const std::string& cl_code="");
+        void generate(
+            bolt::cl::control &ctl,
+            ForwardIterator first,
+            ForwardIterator last,
+            Generator gen,
+            const std::string& cl_code="");
 
+        /*! \brief \p generate assigns to each element of a sequence [first,last) the value returned by gen.
+         *  
+         *  \param first    The first element of the sequence.
+         *  \param last     The last element of the sequence.
+         *  \param gen      A generator, functor taking no parameters.
+         *  \param cl_code  Optional OpenCL(TM) code to be prepended to any OpenCL kernels used by this function.
+         *
+         *  \tparam ForwardIterator is a model of Forward Iterator, and \c ForwardIterator \c is mutable.
+         *  \tparam Generator is a model of Generator, and \c Generator's \c result_type is convertible to \c ForwardIterator's \c value_type.
+         *
+         *  The following code snippet demonstrates how to fill a vector with a constant number.
+         *
+         *  \code
+         *  #include <bolt/cl/generate.h>
+         *  #include <bolt/device_vector.h>
+         *  #include <stdlib.h>
+         *  ...
+         *
+         *  BOLT_FUNCTOR(ConstFunctor,
+         *  struct ConstFunctor
+         *  {
+	     *      int val;
+	     *      ConstFunctor(int a) : val(a) {};
+         *
+	     *      int operator() () 
+	     *      {
+		 *          return val;
+	     *      };
+         *  };
+         *  );
+         *  ...
+         *
+         *  ConstFunctor cf(1);
+         *  std::vector<int> vec(1024);
+         *  bolt::cl::generate(vec.begin(), vec.end(), cf);
+         *
+         *  // vec is now filled with 1
+         *  \endcode
+         *
+         *  \sa http://www.sgi.com/tech/stl/generate.html
+         */
         template<typename ForwardIterator, typename Generator> 
-        void generate( bolt::cl::control &ctl, ForwardIterator first, ForwardIterator last, Generator gen, const std::string& cl_code="");
+        void generate(
+            ForwardIterator first,
+            ForwardIterator last,
+            Generator gen,
+            const std::string& cl_code="");
 
+        /*! \brief \p generate_n assigns to each element of a sequence [first,first+n) the value returned by gen.
+         *
+         *  \param first    The first element of the sequence.
+         *  \param n        The number of sequence elements to generate.
+         *  \param gen      A generator, functor taking no parameters.
+         *  \param cl_code  Optional OpenCL(TM) code to be prepended to any OpenCL kernels used by this function.
+         *
+         *  \tparam OutputIterator is a model of Output Iterator.
+         *  \tparam Size is an integral type.
+         *  \tparam Generator is a model of Generator, and \c Generator's \c result_type is convertible to \c OutputIterator's \c value_type.
+         *
+         *  The following code snippet demonstrates how to fill a vector with a constant number.
+         *
+         *  \code
+         *  #include <bolt/cl/generate.h>
+         *  #include <bolt/device_vector.h>
+         *  #include <stdlib.h>
+         *  ...
+         *
+         *  BOLT_FUNCTOR(ConstFunctor,
+         *  struct ConstFunctor
+         *  {
+	     *      int val;
+	     *      ConstFunctor(int a) : val(a) {};
+         *
+	     *      int operator() () 
+	     *      {
+		 *          return val;
+	     *      };
+         *  };
+         *  );
+         *  ...
+         *
+         *  ConstFunctor cf(1);
+         *  std::vector<int> vec(1024);
+         *  bolt::cl::generate_n(vec.begin(), n, cf);
+         *
+         *  // vec is now filled with 1
+         *  \endcode
+         *
+         *  \sa http://www.sgi.com/tech/stl/generate_n.html
+         */
+        template<typename OutputIterator, typename Size, typename Generator> 
+        OutputIterator generate_n(
+            OutputIterator first,
+            Size n,
+            Generator gen,
+            const std::string& cl_code="");
 
-        /*! generate_n assigns the result of invoking gen, a function object that takes no arguments, to each element in the range [first,first+n).
-         *  The return value is first + n.
+        /*! \brief \p generate_n assigns to each element of a sequence [first,first+n) the value returned by gen.
          *  
          *  \param ctl      Optional control structure to control command-queue, debug, tuning, etc.  See bolt::cl::control.
-         *  \param first The first element in the range of interest.
-         *  \param n     The size of the range of interest.
-         *  \param gen   A function argument, taking no parameters, used to generate values to assign to elements in the range [first,first+n).
-         *  \param cl_code Optional OpenCL(TM) code to be prepended to any OpenCL kernels used by this function.
+         *  \param first    The first element of the sequence.
+         *  \param n        The number of sequence elements to generate.
+         *  \param gen      A generator, functor taking no parameters.
+         *  \param cl_code  Optional OpenCL(TM) code to be prepended to any OpenCL kernels used by this function.
          *
-         *  \tparam OutputIterator	is a model of Output Iterator
-         *  \tparam Size            is an integral type (either signed or unsigned).
-         *  \tparam Generator       is a model of Generator, and Generator's result_type is convertible to a type in OutputIterator's set of value_types.
+         *  \tparam OutputIterator is a model of Output Iterator.
+         *  \tparam Size is an integral type.
+         *  \tparam Generator is a model of Generator, and \c Generator's \c result_type is convertible to \c OutputIterator's \c value_type.
          *
-         *  \return first+n.
-         *
-         *  The following code snippet demonstrates how to fill a device_vector with random numbers, using the standard C library function rand.
+         *  The following code snippet demonstrates how to fill a vector with a constant number.
          *
          *  \code
          *  #include <bolt/cl/generate.h>
          *  #include <bolt/device_vector.h>
          *  #include <stdlib.h>
          *  ...
-         *  bolt::device_vector<int> v(10);
-         *  srand(101082);
-         *  bolt::cl::generate_n(v.begin(), 10, rand);
          *
-         *  // the elements of v are now pseudo-random numbers
+         *  BOLT_FUNCTOR(ConstFunctor,
+         *  struct ConstFunctor
+         *  {
+	     *      int val;
+	     *      ConstFunctor(int a) : val(a) {};
+         *
+	     *      int operator() () 
+	     *      {
+		 *          return val;
+	     *      };
+         *  };
+         *  );
+         *  ...
+         *
+         *  ConstFunctor cf(1);
+         *  bolt::cl::control ctrl = control::getDefault();
+         *  std::vector<int> vec(1024);
+         *  bolt::cl::generate_n(ctrl, vec.begin(), n, cf);
+         *
+         *  // vec is now filled with 1
          *  \endcode
          *
-         *  \sa http://www.sgi.com/tech/stl/generate.html
+         *  \sa http://www.sgi.com/tech/stl/generate_n.html
          */
         template<typename OutputIterator, typename Size, typename Generator> 
-        OutputIterator generate_n( OutputIterator first, Size n, Generator gen, const std::string& cl_code="");
-
-        template<typename OutputIterator, typename Size, typename Generator> 
-        OutputIterator generate_n( bolt::cl::control &ctl, OutputIterator first, Size n, Generator gen, const std::string& cl_code="");
+        OutputIterator generate_n(
+            bolt::cl::control &ctl,
+            OutputIterator first,
+            Size n,
+            Generator gen,
+            const std::string& cl_code="");
 
 
         /*!   \}  */

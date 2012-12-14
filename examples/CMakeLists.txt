@@ -146,7 +146,7 @@ set( Boost_DETAILED_FAILURE_MSG   ON )
 
 # The root tree of BOOST was specified on the command line; use it to to find the specific Boost the user points too
 # This will define Boost_FOUND
-find_package( Boost 1.51 COMPONENTS thread system REQUIRED )
+find_package( Boost 1.51 COMPONENTS thread system date_time chrono REQUIRED )
 
 if( NOT BOLT_ROOT )
     set( BOLT_ROOT "${PROJECT_SOURCE_DIR}/.." )

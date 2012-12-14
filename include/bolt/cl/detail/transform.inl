@@ -67,7 +67,13 @@ namespace bolt {
     namespace cl {
         namespace detail {
             struct CallCompiler_BinaryTransform {
-                static void init_(std::vector< ::cl::Kernel >* kernels, std::string cl_code, std::string inValueTypeName, std::string outValueTypeName, std::string functorTypeName,  const control *ctl) {
+                static void init_(
+                    std::vector< ::cl::Kernel >* kernels,
+                    std::string cl_code,
+                    std::string inValueTypeName,
+                    std::string outValueTypeName,
+                    std::string functorTypeName,
+                    const control *ctl) {
 
                     std::vector< const std::string > kernelNames;
                     kernelNames.push_back( "transform" );

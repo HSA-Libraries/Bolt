@@ -17,22 +17,22 @@
 
 #define _REDUCE_STEP(_LENGTH, _IDX, _W) \
     if ((_IDX < _W) && ((_IDX + _W) < _LENGTH)) {\
-      T mine = scratch[_IDX];\
-      T other = scratch[_IDX + _W];\
+      oType mine = scratch[_IDX];\
+      oType other = scratch[_IDX + _W];\
       scratch[_IDX] = (*reduceFunctor)(mine, other); \
     }\
     barrier(CLK_LOCAL_MEM_FENCE);
 
-template <typename T,  typename unary_function, typename binary_function>
+template <typename iType, typename oType, typename unary_function, typename binary_function>
 kernel
 void transform_reduceTemplate(
-    global T* input, 
+    global iType* input, 
     const int length,
     global unary_function *transformFunctor,
-	const T init,
+	const oType init,
     global binary_function *reduceFunctor,
-    global T* result,
-    local T *scratch
+    global oType* result,
+    local oType *scratch
 )
 {
     int gx = get_global_id( 0 );
@@ -43,18 +43,18 @@ void transform_reduceTemplate(
     
     //  Initialize the accumulator private variable with data from the input array
     //  This essentially unrolls the loop below at least once
-    T accumulator = input[gx];
-    accumulator = (*transformFunctor)( accumulator );
+    iType inputReg = input[gx];
+    oType accumulator = (*transformFunctor)( inputReg );
     gx += get_global_size( 0 );
 
     // Loop sequentially over chunks of input vector, reducing an arbitrary size input
     // length into a length related to the number of workgroups
     while( gx < length )
     {
-        T element = input[gx];
-        element = (*transformFunctor)( element );
+        iType element = input[gx];
+        oType transformedElement = (*transformFunctor)( element );
 
-        accumulator = (*reduceFunctor)( accumulator, element );
+        accumulator = (*reduceFunctor)( accumulator, transformedElement );
         gx += get_global_size(0);
     }
 

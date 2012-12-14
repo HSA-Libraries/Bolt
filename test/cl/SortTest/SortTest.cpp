@@ -98,6 +98,9 @@ public:
     static const size_t value = N;
 };
 
+
+
+
 //  Test fixture class, used for the Type-parameterized tests
 //  Namely, the tests that use std::array and TYPED_TEST_P macros
 template< typename ArrayTuple >
@@ -111,7 +114,6 @@ public:
     {
         std::generate(stdInput.begin(), stdInput.end(), rand);
         boltInput = stdInput;
-
     };
 
     virtual void TearDown( )
@@ -813,6 +815,8 @@ typedef ::testing::Types<
     std::tuple< double, TypeValue< 65536 > >
 > DoubleTests;
 #endif 
+
+/********* Test case to reproduce SuiCHi bugs ******************/
 BOLT_FUNCTOR(UDD,
 struct UDD { 
     int a; 
@@ -836,8 +840,82 @@ struct UDD {
         : a(_in), b(_in +1)  { } 
 }; 
 );
+
+BOLT_FUNCTOR(sortBy_UDD_a,
+    struct sortBy_UDD_a {
+        bool operator() (UDD& a, UDD& b) 
+        { 
+            return (a.a>b.a); 
+        };
+    };
+);
+
+BOLT_FUNCTOR(sortBy_UDD_b,
+    struct sortBy_UDD_b {
+        bool operator() (UDD& a, UDD& b) 
+        { 
+            return (a.b>b.b); 
+        };
+    };
+);
+
 BOLT_CREATE_TYPENAME(bolt::cl::less<UDD>);
 BOLT_CREATE_TYPENAME(bolt::cl::greater<UDD>);
+
+template< typename ArrayTuple >
+class SortUDDArrayTest: public ::testing::Test
+{
+public:
+    SortUDDArrayTest( ): m_Errors( 0 )
+    {}
+
+    virtual void SetUp( )
+    {
+        std::generate(stdInput.begin(), stdInput.end(), rand);
+        boltInput = stdInput;
+    };
+
+    virtual void TearDown( )
+    {};
+
+    virtual ~SortUDDArrayTest( )
+    {}
+
+protected:
+    typedef typename std::tuple_element< 0, ArrayTuple >::type ArrayType;
+    static const size_t ArraySize = typename std::tuple_element< 1, ArrayTuple >::type::value;
+    typename std::array< ArrayType, ArraySize > stdInput, boltInput;
+    int m_Errors;
+};
+
+TYPED_TEST_CASE_P( SortUDDArrayTest );
+
+TYPED_TEST_P( SortUDDArrayTest, Normal )
+{
+    typedef std::array< ArrayType, ArraySize > ArrayCont;
+    //  Calling the actual functions under test
+    std::sort( stdInput.begin( ), stdInput.end( ), UDD() );
+    bolt::cl::sort( boltInput.begin( ), boltInput.end( ), UDD() );
+
+    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
+    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+    //  Loop through the array and compare all the values with each other
+    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
+
+    std::sort( stdInput.begin( ), stdInput.end( ), sortBy_UDD_a() );
+    bolt::cl::sort( boltInput.begin( ), boltInput.end( ), sortBy_UDD_a() );
+
+    stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
+    boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+    //  Loop through the array and compare all the values with each other
+    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
+
+}
+
 
 typedef ::testing::Types< 
     std::tuple< UDD, TypeValue< 1 > >,
@@ -856,12 +934,18 @@ typedef ::testing::Types<
     std::tuple< UDD, TypeValue< 65536 > >
 > UDDTests;
 
+
+
 INSTANTIATE_TYPED_TEST_CASE_P( Integer, SortArrayTest, IntegerTests );
 INSTANTIATE_TYPED_TEST_CASE_P( Float, SortArrayTest, FloatTests );
 #if (TEST_DOUBLE == 1)
 INSTANTIATE_TYPED_TEST_CASE_P( Double, SortArrayTest, DoubleTests );
 #endif 
-INSTANTIATE_TYPED_TEST_CASE_P( UDDTest, SortArrayTest, UDDTests );
+
+
+
+REGISTER_TYPED_TEST_CASE_P( SortUDDArrayTest,  Normal);
+INSTANTIATE_TYPED_TEST_CASE_P( UDDTest, SortUDDArrayTest, UDDTests );
 
 int main(int argc, char* argv[])
 {
@@ -1146,21 +1230,22 @@ void BasicSortTestOfLength(size_t length)
     std::vector<T> stdInput(length);
     std::vector<T> boltInput(length);
     
+	std::generate (stdInput.begin(), stdInput.end(),rand);
     size_t i;
-    for (i=0;i<length/2;i++)
+    for (i=0;i<length;i++)
     {
-        boltInput[2*i]= (T)(length - i +2);
-        boltInput[2*i + 1] = boltInput[2*i];
-        stdInput[2*i]= (T)(length - i +2);
-        stdInput[2*i + 1] = stdInput[2*i];
+        boltInput[i]= (T)((stdInput[i]) & 0xFFFFU)* 0x178F;
+		//printf("%x ",boltInput[i]);
+		stdInput[i] = boltInput[i];
     }
+	//printf("\n");
     
     bolt::cl::sort(boltInput.begin(), boltInput.end());
     std::sort(stdInput.begin(), stdInput.end());
-    for (i=0; i<length; i++)
+    /*for (i=0; i<length; i++)
     {
         std::cout << i << " : " << stdInput[i] << " , " << boltInput[i] << std::endl;
-    }
+    }*/
     for (i=0; i<length; i++)
     {
         if(stdInput[i] == boltInput[i])
@@ -1292,7 +1377,7 @@ void UDDSortTestWithBoltFunctorOfLengthWithDeviceVector(size_t length)
     else 
         std::cout << "Test Failed i = " << i <<std::endl;
 }
-
+/*
 void TestWithBoltControl(int length)
 {
 
@@ -1346,20 +1431,22 @@ void TestWithBoltControl(int length)
     bolt::cl::sort(c, myTypeBoltInput.begin(), myTypeBoltInput.end(),bolt::cl::greater<mytype>());
     return;
 }
-
+*/
 int main(int argc, char* argv[])
 {
 
     //UDDSortTestOfLengthWithDeviceVector<int>(256);
-    BasicSortTestOfLength<int>(68);
+    BasicSortTestOfLength<unsigned int>(atoi(argv[1]));
+	//BasicSortTestOfLength<unsigned int>(4096);
+    BasicSortTestOfLength<int>(512);
     //BasicSortTestOfLength<int>(111);
     //BasicSortTestOfLength<int>(65);
     //BasicSortTestOfLength<int>(63);
     //BasicSortTestOfLength<int>(31);
 #if 0
-		std::vector<int> input(1024);
-		std::generate(input.begin(), input.end(), rand);	
-		bolt::cl::sort( input.begin(), input.end(), bolt::cl::greater<int>());
+	std::vector<int> input(1024);
+	std::generate(input.begin(), input.end(), rand);
+	bolt::cl::sort( input.begin(), input.end(), bolt::cl::greater<int>());
 
 	int a[10] = {2, 9, 3, 7, 5, 6, 3, 8, 3, 4};
 	bolt::cl::sort( a, a+10, bolt::cl::greater<int>());
@@ -1371,7 +1458,7 @@ int main(int argc, char* argv[])
     UserDefinedBoltFunctorSortTestOfLength<int>(254);
     UserDefinedObjectSortTestOfLength<int>(254);
     BasicSortTestOfLength<int>(254);
-    TestWithBoltControl();
+
 #endif
     //The following two are not working because device_vector support is not there.
     //UDDSortTestOfLengthWithDeviceVector<int>(256);
@@ -1606,6 +1693,7 @@ int main(int argc, char* argv[])
 #endif 
 
     std::cout << "Test Completed" << std::endl; 
+	return 0;
     getchar();
 	return 0;
 }

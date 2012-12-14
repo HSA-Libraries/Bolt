@@ -27,7 +27,7 @@ set( clBolt.Example.Device.Vector.Files ${clBolt.Example.Device.Vector.Source} $
 include_directories( ${BOLT_INCLUDE_DIRS} ${OPENCL_INCLUDE_DIRS} )
 
 add_executable( clBolt.Example.Device.Vector ${clBolt.Example.Device.Vector.Files} )
-target_link_libraries( clBolt.Example.Device.Vector ${BOLT_LIBRARIES} ${OPENCL_LIBRARIES} )
+target_link_libraries( clBolt.Example.Device.Vector ${BOLT_LIBRARIES} ${OPENCL_LIBRARIES} ${Boost_LIBRARIES} )
 
 set_target_properties( clBolt.Example.Device.Vector PROPERTIES VERSION ${Examples_VERSION} )
 set_target_properties( clBolt.Example.Device.Vector PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
