@@ -70,7 +70,7 @@ namespace bolt {
          *
          *  \code
          *  #include <bolt/cl/transform.h>
-         *  #include <thrust/functional.h>
+         *  #include <bolt/cl/functional.h>
          *  
          *  int input1[10] = {-5,  0,  2,  3,  2,  4, -2,  1,  2,  3};
          *  int input2[10] = { 3,  6, -2,  1,  2,  3, -5,  0,  2,  3};
@@ -119,7 +119,7 @@ namespace bolt {
          *
          *  \code
          *  #include <bolt/cl/transform.h>
-         *  #include <thrust/functional.h>
+         *  #include <bolt/cl/functional.h>
          *  
          *  int input1[10] = {-5,  0,  2,  3,  2,  4, -2,  1,  2,  3};
          *  int input2[10] = { 3,  6, -2,  1,  2,  3, -5,  0,  2,  3};
