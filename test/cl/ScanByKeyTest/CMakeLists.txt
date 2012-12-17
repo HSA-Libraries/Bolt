@@ -16,22 +16,26 @@
 ############################################################################                                                                                     
 
 # List the names of common files to compile across all platforms
-message( STATUS "Setting up CL specific benchmarking projects" )
+set( clBolt.Test.ScanByKey.Source ${BOLT_CL_TEST_DIR}/common/stdafx.cpp 
+                             ScanByKeyTest.cpp )
+set( clBolt.Test.ScanByKey.Headers   ${BOLT_CL_TEST_DIR}/common/stdafx.h 
+                                ${BOLT_CL_TEST_DIR}/common/targetver.h 
+                                ${BOLT_INCLUDE_DIR}/bolt/cl/transform_scan.h 
+                                ${BOLT_INCLUDE_DIR}/bolt/cl/detail/scan_by_key.inl )
 
-# Include standard OpenCL headers
-include_directories( ${OPENCL_INCLUDE_DIRS} )
+set( clBolt.Test.ScanByKey.Files ${clBolt.Test.ScanByKey.Source} ${clBolt.Test.ScanByKey.Headers} )
 
-if( BUILD_clBolt )
-	# Include standard OpenCL headers
-	add_subdirectory( CopyBench )
-	add_subdirectory( CopyBuffer )
-	add_subdirectory( Fill ) 
-	add_subdirectory( Generate )
-	add_subdirectory( InnerProduct )
-	add_subdirectory( Reduce )
-	add_subdirectory( Scan )
-  add_subdirectory( ScanByKeyBench )
-	add_subdirectory( Sort )
-	add_subdirectory( Transform )
-  add_subdirectory( TransformScanBench )
-endif( )
+add_executable( clBolt.Test.ScanByKey ${clBolt.Test.ScanByKey.Files} )
+target_link_libraries( clBolt.Test.ScanByKey clBolt.Runtime ${GTEST_LIBRARIES} ${Boost_LIBRARIES} )
+
+set_target_properties( clBolt.Test.ScanByKey PROPERTIES VERSION ${Bolt_VERSION} )
+set_target_properties( clBolt.Test.ScanByKey PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
+
+set_property( TARGET clBolt.Test.ScanByKey PROPERTY FOLDER "Test/OpenCL")
+
+# CPack configuration; include the executable into the package
+install( TARGETS clBolt.Test.ScanByKey
+    RUNTIME DESTINATION ${BIN_DIR}
+    LIBRARY DESTINATION ${LIB_DIR}
+    ARCHIVE DESTINATION ${LIB_DIR}/import
+    )

@@ -18,8 +18,8 @@
 #define KERNEL1WAVES 4
 #define WAVESIZE 64
 
-#if !defined( SCAN_INL )
-#define SCAN_INL
+#if !defined( TRANSFORM_SCAN_INL )
+#define TRANSFORM_SCAN_INL
 
 #include <algorithm>
 #include <type_traits>
