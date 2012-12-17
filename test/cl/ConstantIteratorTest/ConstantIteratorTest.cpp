@@ -171,16 +171,16 @@ TEST( ConstantIterator, Dereference )
     bolt::cl::constant_iterator< int > cIter( 3 );
 
     std::cout << template_TypeName< bolt::cl::constant_iterator, int >::get( ) << std::endl;
-    std::cout << template_ClCode< bolt::cl::constant_iterator, int >::get( ) << std::endl << std::endl;
+    std::cout << template_clCode< bolt::cl::constant_iterator, int >::get( ) << std::endl << std::endl;
 
     std::cout << template_TypeName< bolt::cl::constant_iterator, float >::get( ) << std::endl;
-    std::cout << template_ClCode< bolt::cl::constant_iterator, float >::get( ) << std::endl << std::endl;
+    std::cout << template_clCode< bolt::cl::constant_iterator, float >::get( ) << std::endl << std::endl;
 
     std::cout << template_TypeName< bolt::cl::constant_iterator, double >::get( ) << std::endl;
-    std::cout << template_ClCode< bolt::cl::constant_iterator, double >::get( ) << std::endl << std::endl;
+    std::cout << template_clCode< bolt::cl::constant_iterator, double >::get( ) << std::endl << std::endl;
 
     std::cout << template_TypeName< bolt::cl::constant_iterator, char >::get( ) << std::endl;
-    std::cout << template_ClCode< bolt::cl::constant_iterator, char >::get( ) << std::endl << std::endl;
+    std::cout << template_clCode< bolt::cl::constant_iterator, char >::get( ) << std::endl << std::endl;
 
     EXPECT_EQ( 3, *cIter );
     EXPECT_EQ( 3, cIter[ 0 ] );

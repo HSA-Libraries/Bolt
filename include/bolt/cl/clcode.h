@@ -85,7 +85,7 @@ struct ClCode
 };
 
 template< template< class > class Container, class TemplateTypeValue >
-struct template_ClCode
+struct template_clCode
 {
     static std::string get( )
     {
@@ -113,7 +113,16 @@ struct template_ClCode
     template<> struct TypeName<T> { static std::string get() { return #T; }};
 
 #define BOLT_CREATE_TEMPLATE_TYPENAME( container, value_type ) \
-    template<> struct template_TypeName< container, value_type > { static std::string get() { return #container "<" #value_type ">"; }};
+    template<> struct template_TypeName< container, value_type > \
+    { \
+        static std::string get() \
+        { \
+            if( std::is_same< void, value_type >::value ) \
+                return #container; \
+            else \
+                return #container "<" #value_type ">"; \
+        } \
+    }; 
 
 /*!
  * Creates the ClCode trait that associates the specified type \p T with the string \p CODE_STRING.
@@ -133,7 +142,7 @@ struct template_ClCode
     template<> struct ClCode<T> { static std::string get() { return CODE_STRING; }};
 
 #define BOLT_CREATE_TEMPLATE_CLCODE( container, value_type, CODE_STRING) \
-    template<> struct template_ClCode< container, value_type > { static std::string get() { return CODE_STRING; }};
+    template<> struct template_clCode< container, value_type > { static std::string get() { return CODE_STRING; }};
 
 /*!
  * Creates a string and a regular version of the functor F, and automatically defines the ClCode trait to associate 

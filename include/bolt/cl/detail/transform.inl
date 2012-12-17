@@ -28,19 +28,21 @@
 namespace bolt {
     namespace cl {
         // default control, two-input transform, std:: iterator
-        template<typename InputIterator, typename OutputIterator, typename BinaryFunction> 
-        void transform( bolt::cl::control& ctl, InputIterator first1, InputIterator last1, InputIterator first2, OutputIterator result, 
+        template< typename InputIterator1, typename InputIterator2, typename OutputIterator, typename BinaryFunction > 
+        void transform( bolt::cl::control& ctl, InputIterator1 first1, InputIterator1 last1, InputIterator2 first2, OutputIterator result, 
             BinaryFunction f, const std::string& user_code )
         {
-            detail::transform_detect_random_access( ctl, first1, last1, first2, result, f, user_code, std::iterator_traits< InputIterator >::iterator_category( ) );
+            detail::transform_detect_random_access( ctl, first1, last1, first2, result, f, user_code, 
+                std::iterator_traits< InputIterator1 >::iterator_category( ), std::iterator_traits< InputIterator2 >::iterator_category( ) );
         }
 
         // default control, two-input transform, std:: iterator
-        template<typename InputIterator, typename OutputIterator, typename BinaryFunction> 
-        void transform( InputIterator first1, InputIterator last1, InputIterator first2, OutputIterator result, 
+        template< typename InputIterator1, typename InputIterator2, typename OutputIterator, typename BinaryFunction > 
+        void transform( InputIterator1 first1, InputIterator1 last1, InputIterator2 first2, OutputIterator result, 
             BinaryFunction f, const std::string& user_code )
         {
-            detail::transform_detect_random_access( control::getDefault(), first1, last1, first2, result, f, user_code, std::iterator_traits< InputIterator >::iterator_category( ) );
+            detail::transform_detect_random_access( control::getDefault(), first1, last1, first2, result, f, user_code,
+                std::iterator_traits< InputIterator1 >::iterator_category( ), std::iterator_traits< InputIterator2 >::iterator_category( ) );
         }
 
         // default control, two-input transform, std:: iterator
@@ -132,18 +134,18 @@ namespace bolt {
             };
 
             // Wrapper that uses default control class, iterator interface
-            template<typename InputIterator, typename OutputIterator, typename BinaryFunction> 
-            void transform_detect_random_access( bolt::cl::control& ctl, const InputIterator& first1, const InputIterator& last1, const InputIterator& first2, 
-                const OutputIterator& result, const BinaryFunction& f, const std::string& user_code, std::input_iterator_tag )
+        template< typename InputIterator1, typename InputIterator2, typename OutputIterator, typename BinaryFunction > 
+            void transform_detect_random_access( bolt::cl::control& ctl, const InputIterator1& first1, const InputIterator1& last1, const InputIterator2& first2, 
+                const OutputIterator& result, const BinaryFunction& f, const std::string& user_code, std::input_iterator_tag, std::input_iterator_tag )
             {
                 //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data 
                 //  to a temporary buffer.  Should we?
                 static_assert( false, "Bolt only supports random access iterator types" );
             };
 
-            template<typename InputIterator, typename OutputIterator, typename BinaryFunction> 
-            void transform_detect_random_access( bolt::cl::control& ctl, const InputIterator& first1, const InputIterator& last1, const InputIterator& first2, 
-                const OutputIterator& result, const BinaryFunction& f, const std::string& user_code, std::random_access_iterator_tag )
+        template< typename InputIterator1, typename InputIterator2, typename OutputIterator, typename BinaryFunction > 
+            void transform_detect_random_access( bolt::cl::control& ctl, const InputIterator1& first1, const InputIterator1& last1, const InputIterator2& first2, 
+                const OutputIterator& result, const BinaryFunction& f, const std::string& user_code, std::random_access_iterator_tag, std::random_access_iterator_tag )
             {
                 transform_pick_iterator( ctl, first1, last1, first2, result, f, user_code );
             };
@@ -169,15 +171,17 @@ namespace bolt {
                 \detail This template is called by the non-detail versions of inclusive_scan, it already assumes random access
              *  iterators.  This overload is called strictly for non-device_vector iterators
             */
-            template<typename InputIterator, typename OutputIterator, typename BinaryFunction> 
+            template< typename InputIterator1, typename InputIterator2, typename OutputIterator, typename BinaryFunction > 
             typename std::enable_if< 
-                         !(std::is_base_of<typename device_vector<typename std::iterator_traits<InputIterator>::value_type>::iterator,InputIterator>::value &&
+                         !(std::is_base_of<typename device_vector<typename std::iterator_traits<InputIterator1>::value_type>::iterator,InputIterator1>::value &&
+                           std::is_base_of<typename device_vector<typename std::iterator_traits<InputIterator2>::value_type>::iterator,InputIterator2>::value &&
                            std::is_base_of<typename device_vector<typename std::iterator_traits<OutputIterator>::value_type>::iterator,OutputIterator>::value),
                      void >::type
-            transform_pick_iterator( bolt::cl::control &ctl,  const InputIterator& first1, const InputIterator& last1, const InputIterator& first2, 
+            transform_pick_iterator( bolt::cl::control &ctl,  const InputIterator1& first1, const InputIterator1& last1, const InputIterator2& first2, 
                     const OutputIterator& result, const BinaryFunction& f, const std::string& user_code)
             {
-                typedef std::iterator_traits<InputIterator>::value_type iType;
+                typedef std::iterator_traits<InputIterator1>::value_type iType1;
+                typedef std::iterator_traits<InputIterator2>::value_type iType2;
                 typedef std::iterator_traits<OutputIterator>::value_type oType;
                 size_t sz = (last1 - first1); 
                 if (sz == 0)
@@ -186,8 +190,8 @@ namespace bolt {
                 // Use host pointers memory since these arrays are only read once - no benefit to copying.
 
                 // Map the input iterator to a device_vector
-                device_vector< iType > dvInput( first1, last1, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, ctl );
-                device_vector< iType > dvInput2( first2, sz, CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, true, ctl );
+                device_vector< iType1 > dvInput( first1, last1, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, ctl );
+                device_vector< iType2 > dvInput2( first2, sz, CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, true, ctl );
 
                 // Map the output iterator to a device_vector
                 device_vector< oType > dvOutput( result, sz, CL_MEM_USE_HOST_PTR|CL_MEM_WRITE_ONLY, false, ctl );
@@ -200,12 +204,13 @@ namespace bolt {
 
             // This template is called by the non-detail versions of inclusive_scan, it already assumes random access iterators
             // This is called strictly for iterators that are derived from device_vector< T >::iterator
-            template<typename DVInputIterator, typename DVOutputIterator, typename BinaryFunction> 
+            template<typename DVInputIterator1, typename DVInputIterator2, typename DVOutputIterator, typename BinaryFunction> 
             typename std::enable_if< 
-                          (std::is_base_of<typename device_vector<typename std::iterator_traits<DVInputIterator>::value_type>::iterator,DVInputIterator>::value &&
+                          (std::is_base_of<typename device_vector<typename std::iterator_traits<DVInputIterator1>::value_type>::iterator,DVInputIterator1>::value &&
+                           std::is_base_of<typename device_vector<typename std::iterator_traits<DVInputIterator2>::value_type>::iterator,DVInputIterator2>::value &&
                            std::is_base_of<typename device_vector<typename std::iterator_traits<DVOutputIterator>::value_type>::iterator,DVOutputIterator>::value),
                      void >::type
-            transform_pick_iterator( bolt::cl::control &ctl,  const DVInputIterator& first1, const DVInputIterator& last1, const DVInputIterator& first2, 
+            transform_pick_iterator( bolt::cl::control &ctl,  const DVInputIterator1& first1, const DVInputIterator1& last1, const DVInputIterator2& first2, 
             const DVOutputIterator& result, const BinaryFunction& f, const std::string& user_code)
             {
                 transform_enqueue( ctl, first1, last1, first2, result, f, user_code );
@@ -255,11 +260,12 @@ namespace bolt {
                 transform_unary_enqueue( ctl, first, last, result, f, user_code );
             }
 
-            template< typename DVInputIterator, typename DVOutputIterator, typename BinaryFunction > 
-            void transform_enqueue( bolt::cl::control &ctl, const DVInputIterator& first1, const DVInputIterator& last1, const DVInputIterator& first2, 
+            template<typename DVInputIterator1, typename DVInputIterator2, typename DVOutputIterator, typename BinaryFunction> 
+            void transform_enqueue( bolt::cl::control &ctl, const DVInputIterator1& first1, const DVInputIterator1& last1, const DVInputIterator2& first2, 
                 const DVOutputIterator& result, const BinaryFunction& f, const std::string& cl_code)
             {
-                typedef std::iterator_traits<DVInputIterator>::value_type iType;
+                typedef std::iterator_traits<DVInputIterator1>::value_type iType1;
+                typedef std::iterator_traits<DVInputIterator2>::value_type iType2;
                 typedef std::iterator_traits<DVOutputIterator>::value_type oType;
 
                 cl_uint distVec = static_cast< cl_uint >( std::distance( first1, last1 ) );
@@ -274,11 +280,12 @@ namespace bolt {
                 static boost::once_flag initOnlyOnce;
                 static std::vector< ::cl::Kernel > binaryTransformKernels;
 
-                // For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retreive the name here.
-                if (boost::is_same<iType, oType>::value) {
-                    boost::call_once( initOnlyOnce, boost::bind( CallCompiler_BinaryTransform::init_, &binaryTransformKernels, cl_code + ClCode<iType>::get() + ClCode<BinaryFunction>::get(), TypeName< iType >::get( ), TypeName< oType >::get( ), TypeName< BinaryFunction >::get( ), &ctl ) );
+                // For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retrieve the name here.
+                //  TODO: I think this check needs some work now that we added an iType2
+                if (boost::is_same<iType1, oType>::value) {
+                    boost::call_once( initOnlyOnce, boost::bind( CallCompiler_BinaryTransform::init_, &binaryTransformKernels, cl_code + ClCode<iType1>::get() + ClCode<iType2>::get() + ClCode<BinaryFunction>::get(), TypeName< iType1 >::get( ), TypeName< oType >::get( ), TypeName< BinaryFunction >::get( ), &ctl ) );
                 } else {
-                    boost::call_once( initOnlyOnce, boost::bind( CallCompiler_BinaryTransform::init_, &binaryTransformKernels, cl_code + ClCode<iType>::get() + ClCode<oType>::get() + ClCode<BinaryFunction>::get(), TypeName< iType >::get( ), TypeName< oType >::get( ), TypeName< BinaryFunction >::get( ), &ctl ) );
+                    boost::call_once( initOnlyOnce, boost::bind( CallCompiler_BinaryTransform::init_, &binaryTransformKernels, cl_code + ClCode<iType1>::get() + ClCode<iType2>::get() + ClCode<oType>::get() + ClCode<BinaryFunction>::get(), TypeName< iType1 >::get( ), TypeName< oType >::get( ), TypeName< BinaryFunction >::get( ), &ctl ) );
                 }
 
                 const ::cl::Kernel& kernelWithBoundsCheck = binaryTransformKernels[0];

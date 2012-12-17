@@ -18,6 +18,7 @@
 #if !defined( CONSTANT_ITERATOR_H )
 #define CONSTANT_ITERATOR_H
 #include "bolt/cl/bolt.h"
+#include "bolt/cl/iterator_traits.h"
 
 namespace bolt
 {
@@ -27,6 +28,7 @@ namespace bolt
             template< typename T >
             class constant_iterator
             {
+            public:
                 typedef size_t difference_type;
                 typedef size_t size_type;
                 typedef T value_type;
@@ -34,29 +36,29 @@ namespace bolt
                 typedef T& reference;
                 typedef std::random_access_iterator_tag iterator_category;
 
-                value_type  constValue;
-
-            public:
                 constant_iterator( value_type init ): constValue( init )
                 {};
 
-                value_type operator[]( size_type )
+                value_type operator[]( size_type ) const
                 {
                     return constValue;
                 }
 
-                value_type operator*( )
+                value_type operator*( ) const
                 {
                     return constValue;
                 }
 
+            private:
+                value_type  constValue;
             };
         )
 
         template< typename Type >
         constant_iterator< Type > make_constant_iterator( Type constValue )
         {
-            return constant_iterator< Type > tmp( constValue );
+            constant_iterator< Type > tmp( constValue );
+            return tmp;
         }
     }
 }
