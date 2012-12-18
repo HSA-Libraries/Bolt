@@ -15,6 +15,7 @@ set BOLT_BUILD_OS_VER=7
 set BOLT_BUILD_COMP=VS
 set BOLT_BUILD_COMP_VER=11
 set BOLT_BUILD_BIT=64
+set BOLT_BUILD_USE_AMP=ON
 
 
 REM ################################################################################################
@@ -60,17 +61,15 @@ GOTO Loop
 
 REM ################################################################################################
 REM # Construct Build Parameters
-if "%BOLT_BUILD_BIT%" == "64" (
-  set BOLT_BUILD_MSBUILD_PLATFORM=x64
-) else (
-  set BOLT_BUILD_MSBUILD_PLATFORM=x86
-)
 set BOLT_BUILD_MSBUILD_PLATFORM_TOOLSET=v%BOLT_BUILD_COMP_VER%0
 set BOLT_BUILD_CMAKE_GEN=Visual Studio %BOLT_BUILD_COMP_VER%
 if "%BOLT_BUILD_BIT%" == "64" (
+  set BOLT_BUILD_MSBUILD_PLATFORM=x64
   set BOLT_BUILD_CMAKE_GEN="%BOLT_BUILD_CMAKE_GEN% %BOLT_BUILD_OS%%BOLT_BUILD_BIT%"
 ) else (
+  set BOLT_BUILD_MSBUILD_PLATFORM=x86
   set BOLT_BUILD_CMAKE_GEN="%BOLT_BUILD_CMAKE_GEN%"
+  set BOLT_BUILD_USE_AMP=OFF
 )
 
 REM ################################################################################################
@@ -107,11 +106,11 @@ if "%BOLT_BUILD_COMP_VER%" == "10" (
 REM ### maybe move this call to a different script which the user can call once
 REM ### this call permanently lengthens PATH, which eventually causes an error
 if "%BOLT_BUILD_BIT%" == "64" ( 
-  echo Info: vcvarsall.bat = %VCVARSALL% x86_amd64
+  echo Info: vcvarsall.bat: %VCVARSALL% x86_amd64
   call %VCVARSALL% x86_amd64
 )
 if "%BOLT_BUILD_BIT%" == "32" (
-  echo Info: vcvarsall.bat = %VCVARSALL% x86
+  echo Info: vcvarsall.bat: %VCVARSALL% x86
   call %VCVARSALL% x86
 )
 echo Info: Done setting up compiler environment variables.
@@ -127,13 +126,15 @@ REM ############################################################################
 
 REM ################################################################################################
 REM # Cmake
-if not exist Bolt.SuperBuild.sln (
+REM if not exist Bolt.SuperBuild.sln (
 echo.
 echo %HR%
 echo Info: Running CMake to generate build files.
 %CMAKE% ^
   -G %BOLT_BUILD_CMAKE_GEN% ^
   -D CMAKE_BOLT_BUILD_TYPE=Release ^
+  -D BUILD_AMP=%BOLT_BUILD_USE_AMP% ^
+  -D BUILD_Examples=ON ^
   %BOLT_BUILD_SOURCE_PATH%\superbuild
 if errorlevel 1 (
   echo Info: CMake failed.
@@ -141,9 +142,9 @@ if errorlevel 1 (
   popd
   goto :Done
 )
-) else (
-  echo Info: Bolt.SuperBuild.sln already build.
-)
+REM ) else (
+REM   echo Info: Bolt.SuperBuild.sln already built.
+REM )
 
 
 REM ################################################################################################
@@ -185,7 +186,7 @@ MSBuild.exe ^
   /flp2:logfile=warnings.log;warningsonly ^
   /flp3:logfile=build.log ^
   /p:Configuration=Release ^
-  /p:Platform=%BOLT_BUILD_MSBUILD_PLATFORM% ^
+  /p:PlatformTarget=%BOLT_BUILD_MSBUILD_PLATFORM% ^
   /p:PlatformToolset=%BOLT_BUILD_MSBUILD_PLATFORM_TOOLSET% ^
   /t:build
 if errorlevel 1 (
