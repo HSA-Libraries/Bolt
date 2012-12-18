@@ -110,7 +110,7 @@ if "%BOLT_BUILD_BIT%" == "64" (
   echo Info: vcvarsall.bat = %VCVARSALL% x86_amd64
   call %VCVARSALL% x86_amd64
 )
-if "%BOLT_BUILD_PLATFORM%" == "32" (
+if "%BOLT_BUILD_BIT%" == "32" (
   echo Info: vcvarsall.bat = %VCVARSALL% x86
   call %VCVARSALL% x86
 )
@@ -162,7 +162,7 @@ MSBuild.exe ^
   /p:Platform=%BOLT_BUILD_MSBUILD_PLATFORM% ^
   /p:PlatformToolset=%BOLT_BUILD_MSBUILD_PLATFORM_TOOLSET% ^
   /t:build ^
-  /v:d
+  /v:n
 if errorlevel 1 (
   echo Info: MSBuild failed for SuperBuild.
   del /Q /F %BOLT_BUILD_INSTALL_PATH%\success
@@ -188,7 +188,7 @@ MSBuild.exe ^
   /p:Platform=%BOLT_BUILD_MSBUILD_PLATFORM% ^
   /p:PlatformToolset=%BOLT_BUILD_MSBUILD_PLATFORM_TOOLSET% ^
   /t:build ^
-  /v:d
+  /v:n
 if errorlevel 1 (
   echo Info: MSBuild failed for Bolt-build.
   del /Q /F %BOLT_BUILD_INSTALL_PATH%\success
