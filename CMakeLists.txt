@@ -28,9 +28,9 @@ cmake_minimum_required( VERSION 2.8.3 )
 project( Bolt )
 
 # Define a version for the code
-set( Bolt_VERSION_MAJOR 0 )
-set( Bolt_VERSION_MINOR 5 )
-set( Bolt_VERSION_PATCH 0 )
+option( Bolt_VERSION_MAJOR 0 )
+option( Bolt_VERSION_MINOR 5 )
+option( Bolt_VERSION_PATCH 0 )
 set( Bolt_VERSION "${Bolt_VERSION_MAJOR}.${Bolt_VERSION_MINOR}.${Bolt_VERSION_PATCH}")
     
 list( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR} )
