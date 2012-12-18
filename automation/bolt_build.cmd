@@ -210,7 +210,7 @@ MSBuild.exe ^
   /flp2:logfile=warnings.log;warningsonly ^
   /flp3:logfile=build.log ^
   /p:Configuration=Release ^
-  /p:Platform=%BOLT_BUILD_MSBUILD_PLATFORM% ^
+  /p:PlatformTarget=%BOLT_BUILD_MSBUILD_PLATFORM% ^
   /p:PlatformToolset=%BOLT_BUILD_MSBUILD_PLATFORM_TOOLSET% ^
   /t:build
 if errorlevel 1 (
