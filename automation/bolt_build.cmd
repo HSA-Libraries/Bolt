@@ -113,6 +113,9 @@ echo Info: Compiler:  %BOLT_BUILD_COMP%%BOLT_BUILD_COMP_VER% %BOLT_BUILD_BIT%bit
 echo Info: CMake Gen: %BOLT_BUILD_CMAKE_GEN%
 echo Info: Platform:  %BOLT_BUILD_MSBUILD_PLATFORM%
 echo Info: Toolset:   %BOLT_BUILD_MSBUILD_PLATFORM_TOOLSET%
+echo Info: Major:     %BOLT_BUILD_FLAG_MAJOR%
+echo Info: Minor:     %BOLT_BUILD_FLAG_MINOR%
+echo Info: Patch:     %BOLT_BUILD_FLAG_PATCH%
 
 
 REM ################################################################################################

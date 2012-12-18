@@ -28,9 +28,18 @@ cmake_minimum_required( VERSION 2.8.3 )
 project( Bolt.SuperBuild )
 
 # Define a version for the code
-option( Bolt.SuperBuild_VERSION_MAJOR 0 )
-option( Bolt.SuperBuild_VERSION_MINOR 5 )
-option( Bolt.SuperBuild_VERSION_PATCH 0 )
+if( NOT DEFINED Bolt.SuperBuild_VERSION_MAJOR )
+	set( Bolt.SuperBuild_VERSION_MAJOR 0 )
+endif( )
+
+if( NOT DEFINED Bolt.SuperBuild_VERSION_MINOR )
+	set( Bolt.SuperBuild_VERSION_MINOR 5 )
+endif( )
+
+if( NOT DEFINED Bolt.SuperBuild_VERSION_PATCH )
+	set( Bolt.SuperBuild_VERSION_PATCH 0 )
+endif( )
+
 set( Bolt.SuperBuild_VERSION "${Bolt.SuperBuild_VERSION_MAJOR}.${Bolt.SuperBuild_VERSION_MINOR}.${Bolt.SuperBuild_VERSION_PATCH}")
 
 
