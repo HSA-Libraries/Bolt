@@ -24,18 +24,18 @@ template<
     typename oType,
     typename BinaryPredicate,
     typename BinaryFunction >
-__kernel void perBlockTransformScan(
-    global kType* keys,
-    global vType* vals,
-    global oType* output, // input
+__kernel void perBlockScanByKey(
+    global kType *keys,
+    global vType *vals,
+    global oType *output, // input
     oType init,
     const uint vecSize,
-    local oType* ldsKeys,
-    local oType* ldsVals,
-    global UnaryFunction* binaryPred,
-    global BinaryFunction* binaryFunct,
-    global kType* keyBuffer,
-    global oType* valBuffer,
+    local kType *ldsKeys,
+    local oType *ldsVals,
+    global BinaryPredicate *binaryPred,
+    global BinaryFunction *binaryFunct,
+    global kType *keyBuffer,
+    global oType *valBuffer,
     int exclusive) // do exclusive scan ?
 {
     size_t gloId = get_global_id( 0 );
@@ -111,13 +111,13 @@ template<
     typename oType,
     typename BinaryPredicate,
     typename BinaryFunction >
-__kernel void intraBlockInclusiveScan(
-    global kType* keySumArray,
-    global oType* preSumArray,
-    global oType* postSumArray,
+__kernel void intraBlockInclusiveScanByKey(
+    global kType *keySumArray,
+    global oType *preSumArray,
+    global oType *postSumArray,
     const uint vecSize,
-    local Type* ldsKeys,
-    local Type* ldsVals,
+    local kType *ldsKeys,
+    local oType *ldsVals,
     const uint workPerThread,
     global BinaryPredicate* binaryPred,
     global BinaryFunction* binaryFunct )
@@ -130,7 +130,7 @@ __kernel void intraBlockInclusiveScan(
 
     // do offset of zero manually
     uint offset;
-    Type workSum;
+    oType workSum;
     if (mapId < vecSize)
     {
         // accumulate zeroth value manually
@@ -143,14 +143,14 @@ __kernel void intraBlockInclusiveScan(
         {
             if (mapId+offset<vecSize)
             {
-                Type y = preSumArray[mapId+offset];
+                oType y = preSumArray[mapId+offset];
                 workSum = (*binaryFunct)( workSum, y );
                 postSumArray[ mapId + offset ] = workSum;
             }
         }
     }
     barrier( CLK_LOCAL_MEM_FENCE );
-    Type scanSum;
+    oType scanSum;
     offset = 1;
     // load LDS with register sums
     if (mapId < vecSize)
@@ -160,8 +160,8 @@ __kernel void intraBlockInclusiveScan(
     
         if (locId >= offset)
         { // thread > 0
-            Type y = ldsVals[ locId - offset ];
-            Type y2 = ldsVals[ locId ];
+            oType y = ldsVals[ locId - offset ];
+            oType y2 = ldsVals[ locId ];
             scanSum = (*binaryFunct)( y2, y );
             ldsVals[ locId ] = scanSum;
         } else { // thread 0
@@ -176,7 +176,7 @@ __kernel void intraBlockInclusiveScan(
         {
             if (locId >= offset)
             {
-                Type y = ldsVals[ locId - offset ];
+                oType y = ldsVals[ locId - offset ];
                 scanSum = (*binaryFunct)( scanSum, y );
                 ldsVals[ locId ] = scanSum;
             }
@@ -191,8 +191,8 @@ __kernel void intraBlockInclusiveScan(
 
         if (mapId < vecSize && locId > 0)
         {
-            Type y = postSumArray[ mapId + offset ];
-            Type y2 = ldsVals[locId-1];
+            oType y = postSumArray[ mapId + offset ];
+            oType y2 = ldsVals[locId-1];
             y = (*binaryFunct)( y, y2 );
             postSumArray[ mapId + offset ] = y;
         } // thread in bounds
@@ -208,7 +208,7 @@ template<
     typename oType,
     typename BinaryPredicate,
     typename BinaryFunction >
-__kernel void perBlockAddition(
+__kernel void perBlockAdditionByKey(
     global kType *keySumArray,
     global oType *postSumArray,
     global kType *keys,

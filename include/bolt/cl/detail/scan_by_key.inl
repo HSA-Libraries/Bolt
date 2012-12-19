@@ -17,21 +17,25 @@
 #define KERNEL02WAVES 4
 #define KERNEL1WAVES 4
 #define WAVESIZE 64
+#define PUSH_BACK_UNIQUE(CONTAINER, ELEMENT) \
+    if (std::find(CONTAINER.begin(), CONTAINER.end(), ELEMENT) == CONTAINER.end()) \
+        CONTAINER.push_back(ELEMENT);
 
 #if !defined( SCAN_BY_KEY_INL )
 #define SCAN_BY_KEY_INL
 
-#include <algorithm>
-#include <type_traits>
+//#include <algorithm>
+//#include <type_traits>
 
 //#include <boost/bind.hpp>
 
-#include "bolt/cl/scan_by_key.h"
-#include "bolt/cl/functional.h"
-#include "bolt/cl/bolt.h"
+//#include "bolt/cl/scan_by_key.h"
+//#include "bolt/cl/functional.h"
+//#include "bolt/cl/bolt.h"
 
 namespace bolt
 {
+
 namespace cl
 {
 
@@ -524,6 +528,7 @@ namespace detail
 *   \ingroup scan
 *   \{
 */
+    enum typeName {e_kType, e_vType, e_oType, e_BinaryPredicate, e_BinaryFunction};
 
 /***********************************************************************************************************************
  * Kernel Template Specializer
@@ -535,8 +540,8 @@ class ScanByKey_KernelTemplateSpecializer : public KernelTemplateSpecializer
     ScanByKey_KernelTemplateSpecializer() : KernelTemplateSpecializer()
     {
         addKernelName("perBlockScanByKey");
-        addKernelName("intraBlockInclusiveScan");
-        addKernelName("perBlockAddition");
+        addKernelName("intraBlockInclusiveScanByKey");
+        addKernelName("perBlockAdditionByKey");
     }
     
     const ::std::string operator() ( const ::std::vector<::std::string>& typeNames ) const
@@ -546,38 +551,48 @@ class ScanByKey_KernelTemplateSpecializer : public KernelTemplateSpecializer
             "template __attribute__((mangled_name(" + name(0) + "Instantiated)))\n"
             "__attribute__((reqd_work_group_size(KERNEL0WORKGROUPSIZE,1,1)))\n"
             "__kernel void " + name(0) + "(\n"
-            "global " + typeNames[1] + "* output,\n"
-            "global " + typeNames[0] + "* input,\n"
-            ""        + typeNames[1] + " identity,\n"
+            "global " + typeNames[e_kType] + "* keys,\n"
+            "global " + typeNames[e_vType] + "* vals,\n"
+            "global " + typeNames[e_oType] + "* output,\n"
+            ""        + typeNames[e_oType] + " init,\n"
             "const uint vecSize,\n"
-            "local "  + typeNames[1] + "* lds,\n"
-            "global " + typeNames[2] + "* unaryOp,\n"
-            "global " + typeNames[3] + "* binaryOp,\n"
-            "global " + typeNames[1] + "* scanBuffer,\n"
+            "local "  + typeNames[e_kType] + "* ldsKeys,\n"
+            "local "  + typeNames[e_oType] + "* ldsVals,\n"
+            "global " + typeNames[e_BinaryPredicate] + "* binaryPred,\n"
+            "global " + typeNames[e_BinaryFunction]  + "* binaryFunct,\n"
+            "global " + typeNames[e_kType] + "* keyBuffer,\n"
+            "global " + typeNames[e_oType] + "* valBuffer,\n"
             "int exclusive\n"
             ");\n\n"
-    
+
+
             "// Dynamic specialization of generic template definition, using user supplied types\n"
             "template __attribute__((mangled_name(" + name(1) + "Instantiated)))\n"
             "__attribute__((reqd_work_group_size(KERNEL1WORKGROUPSIZE,1,1)))\n"
             "__kernel void " + name(1) + "(\n"
-            "global " + typeNames[1] + "* postSumArray,\n"
-            "global " + typeNames[1] + "* preSumArray,\n"
-            ""        + typeNames[1] + " identity,\n"
+            "global " + typeNames[e_kType] + "* keySumArray,\n"
+            "global " + typeNames[e_oType] + "* preSumArray,\n"
+            "global " + typeNames[e_oType] + "* postSumArray,\n"
             "const uint vecSize,\n"
-            "local "  + typeNames[1] + "* lds,\n"
+            "local "  + typeNames[e_kType] + "* ldsKeys,\n"
+            "local "  + typeNames[e_oType] + "* ldsVals,\n"
             "const uint workPerThread,\n"
-            "global " + typeNames[3] + "* binaryOp\n"
+            "global " + typeNames[e_BinaryPredicate] + "* binaryPred,\n"
+            "global " + typeNames[e_BinaryFunction] + "* binaryFunct\n"
             ");\n\n"
     
+
             "// Dynamic specialization of generic template definition, using user supplied types\n"
             "template __attribute__((mangled_name(" + name(2) + "Instantiated)))\n"
             "__attribute__((reqd_work_group_size(KERNEL2WORKGROUPSIZE,1,1)))\n"
             "__kernel void " + name(2) + "(\n"
-            "global " + typeNames[1] + "* output,\n"
-            "global " + typeNames[1] + "* postSumArray,\n"
+            "global " + typeNames[e_kType] + "* keySumArray,\n"
+            "global " + typeNames[e_oType] + "* postSumArray,\n"
+            "global " + typeNames[e_kType] + "* keys,\n"
+            "global " + typeNames[e_oType] + "* output,\n"
             "const uint vecSize,\n"
-            "global " + typeNames[3] + "* binaryOp\n"
+            "global " + typeNames[e_BinaryPredicate] + "* binaryPred,\n"
+            "global " + typeNames[e_BinaryFunction] + "* binaryFunct\n"
             ");\n\n";
     
         return templateSpecializationString;
@@ -587,7 +602,6 @@ class ScanByKey_KernelTemplateSpecializer : public KernelTemplateSpecializer
 /***********************************************************************************************************************
  * Detect Random Access
  **********************************************************************************************************************/
-
 
 template<
     typename InputIterator1,
@@ -606,8 +620,8 @@ scan_by_key_detect_random_access(
     const T& init,
     const BinaryPredicate& binary_pred,
     const BinaryFunction& binary_funct,
-    const bool& inclusive,
     const std::string& user_code,
+    const bool& inclusive,
     std::input_iterator_tag )
 {
     //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data 
@@ -632,13 +646,13 @@ scan_by_key_detect_random_access(
     const T& init,
     const BinaryPredicate& binary_pred,
     const BinaryFunction& binary_funct,
-    const bool& inclusive,
     const std::string& user_code,
+    const bool& inclusive,
     std::random_access_iterator_tag )
 {
     return detail::scan_by_key_pick_iterator( ctl, firstKey, lastKey, firstValue, result, init,
-        binary_pred, binary_funct, inclusive, user_code );
-
+        binary_pred, binary_funct, user_code, inclusive );
+}
 
 /*! 
 * \brief This overload is called strictly for non-device_vector iterators
@@ -668,8 +682,8 @@ scan_by_key_pick_iterator(
     const T& init,
     const BinaryPredicate& binary_pred,
     const BinaryFunction& binary_funct,
-    const bool& inclusive,
-    const std::string& user_code )
+    const std::string& user_code,
+    const bool& inclusive )
 {
     typedef typename std::iterator_traits< InputIterator1 >::value_type kType;
     typedef typename std::iterator_traits< InputIterator2 >::value_type vType;
@@ -686,12 +700,12 @@ scan_by_key_pick_iterator(
 
         // Map the input iterator to a device_vector
         device_vector< kType > dvKeys( firstKey, lastKey, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctl );
-        device_vector< vType > dvValues( firstValue, numElements, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctl );
+        device_vector< vType > dvValues( firstValue, numElements, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, true, ctl );
         device_vector< oType > dvOutput( result, numElements, CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY, false, ctl );
 
         //Now call the actual cl algorithm
         scan_by_key_enqueue( ctl, dvKeys.begin( ), dvKeys.end( ), dvValues.begin(), dvOutput.begin( ),
-            init, binary_pred, binary_funct, inclusive, user_code );
+            init, binary_pred, binary_funct, user_code, inclusive );
 
         // This should immediately map/unmap the buffer
         dvOutput.data( );
@@ -729,8 +743,8 @@ scan_by_key_pick_iterator(
     const T& init,
     const BinaryPredicate& binary_pred,
     const BinaryFunction& binary_funct,
-    const bool& inclusive,
-    const std::string& user_code)
+    const std::string& user_code,
+    const bool& inclusive )
 {
     typedef typename std::iterator_traits< InputIterator1 >::value_type kType;
     typedef typename std::iterator_traits< InputIterator2 >::value_type vType;
@@ -757,7 +771,7 @@ scan_by_key_pick_iterator(
 
     //Now call the actual cl algorithm
     scan_by_key_enqueue( ctl, firstKey, lastKey, firstValue, result,
-            init, binary_pred, binary_funct, inclusive, user_code );
+            init, binary_pred, binary_funct, user_code, inclusive );
 
     return result + numElements;
 }
@@ -782,40 +796,46 @@ scan_by_key_enqueue(
     const T& init,
     const BinaryPredicate& binary_pred,
     const BinaryFunction& binary_funct,
-    const bool& inclusive,
-    const std::string& user_code)
+    const std::string& user_code,
+    const bool& inclusive )
 {
     cl_int l_Error;
 
     /**********************************************************************************
      * Type Names - used in KernelTemplateSpecializer
      *********************************************************************************/
-    typedef typename std::iterator_traits< InputIterator1 >::value_type kType;
-    typedef typename std::iterator_traits< InputIterator2 >::value_type vType;
-    typedef typename std::iterator_traits< OutputIterator >::value_type oType;
-    std::vector<std::string> typeNames;
-    typeNames.push_back(TypeName< kType >::get( ));
-    typeNames.push_back(TypeName< vType >::get( ));
-    typeNames.push_back(TypeName< oType >::get( ));
-    typeNames.push_back(TypeName< BinaryPredicate >::get());
-    typeNames.push_back(TypeName< BinaryFunction >::get());
+    typedef typename std::iterator_traits< DVInputIterator1 >::value_type kType;
+    typedef typename std::iterator_traits< DVInputIterator2 >::value_type vType;
+    typedef typename std::iterator_traits< DVOutputIterator >::value_type oType;
+    std::vector<std::string> typeNames(5);
+    typeNames[e_kType] = TypeName< kType >::get( );
+    typeNames[e_vType] = TypeName< vType >::get( );
+    typeNames[e_oType] = TypeName< oType >::get( );
+    typeNames[e_BinaryPredicate] = TypeName< BinaryPredicate >::get( );
+    typeNames[e_BinaryFunction]  = TypeName< BinaryFunction >::get( );
     
     /**********************************************************************************
      * Type Definitions - directly concatenated into kernel string
      *********************************************************************************/
-    std::vector<std::string> typeDefinitions; // try substituting a map
-    typeDefinitions.push_back( ClCode< kType >::get() );
+    /*std::vector<std::string> typeDefs; // try substituting a map
+    typeDefs.push_back( ClCode< kType >::get() );
     if (TypeName< vType >::get() != TypeName< kType >::get())
     {
-        typeDefinitions.push_back( ClCode< vType >::get() );
+        typeDefs.push_back( ClCode< vType >::get() );
     }
     if (TypeName< oType >::get() != TypeName< kType >::get() &&
         TypeName< oType >::get() != TypeName< vType >::get())
     {
-        typeDefinitions.push_back( ClCode< oType >::get() );
+        typeDefs.push_back( ClCode< oType >::get() );
     }
-    typeDefinitions.push_back( ClCode< BinaryPredicate >::get() );
-    typeDefinitions.push_back( ClCode< BinaryFunction >::get() );
+    typeDefs.push_back( ClCode< BinaryPredicate >::get() );
+    typeDefs.push_back( ClCode< BinaryFunction >::get() );*/
+    std::vector<std::string> typeDefs; // typeDefs must be unique and order does matter
+    PUSH_BACK_UNIQUE( typeDefs, ClCode< kType >::get() )
+    PUSH_BACK_UNIQUE( typeDefs, ClCode< vType >::get() )
+    PUSH_BACK_UNIQUE( typeDefs, ClCode< oType >::get() )
+    PUSH_BACK_UNIQUE( typeDefs, ClCode< BinaryPredicate >::get() )
+    PUSH_BACK_UNIQUE( typeDefs, ClCode< BinaryFunction  >::get() )
 
     /**********************************************************************************
      * Compile Options
@@ -840,7 +860,7 @@ scan_by_key_enqueue(
         ctl,
         typeNames,
         &ts_kts,
-        typeDefinitions,
+        typeDefs,
         scan_by_key_kernels,
         compileOptions);
     // kernels returned in same order as added in KernelTemplaceSpecializer constructor
@@ -854,8 +874,8 @@ scan_by_key_enqueue(
     int resultCnt = computeUnits * wgPerComputeUnit;
 
     //  Ceiling function to bump the size of input to the next whole wavefront size
-    cl_uint numElements = static_cast< cl_uint >( std::distance( first, last ) );
-    device_vector< iType >::size_type sizeInputBuff = numElements;
+    cl_uint numElements = static_cast< cl_uint >( std::distance( firstKey, lastKey ) );
+    device_vector< kType >::size_type sizeInputBuff = numElements;
     size_t modWgSize = (sizeInputBuff & (kernel0_WgSize-1));
     if( modWgSize )
     {
@@ -865,7 +885,7 @@ scan_by_key_enqueue(
     cl_uint numWorkGroupsK0 = static_cast< cl_uint >( sizeInputBuff / kernel0_WgSize );
 
     //  Ceiling function to bump the size of the sum array to the next whole wavefront size
-    device_vector< iType >::size_type sizeScanBuff = numWorkGroupsK0;
+    device_vector< kType >::size_type sizeScanBuff = numWorkGroupsK0;
     modWgSize = (sizeScanBuff & (kernel0_WgSize-1));
     if( modWgSize )
     {
@@ -875,10 +895,10 @@ scan_by_key_enqueue(
 
     // Create buffer wrappers so we can access the host functors, for read or writing in the kernel
     
-    ALIGNED( 256 ) BinaryFunction aligned_binary_pred( binary_pred );
+    ALIGNED( 256 ) BinaryPredicate aligned_binary_pred( binary_pred );
     control::buffPointer binaryPredicateBuffer = ctl.acquireBuffer( sizeof( aligned_binary_pred ),
         CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_binary_pred );
-     ALIGNED( 256 ) BinaryFunction aligned_binary_pred( binary_funct );
+     ALIGNED( 256 ) BinaryFunction aligned_binary_funct( binary_funct );
     control::buffPointer binaryFunctionBuffer = ctl.acquireBuffer( sizeof( aligned_binary_funct ),
         CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_binary_funct );
 
@@ -898,7 +918,7 @@ scan_by_key_enqueue(
     V_OPENCL( kernels[0].setArg( 0, firstKey->getBuffer()), "Error setArg kernels[ 0 ]" ); // Input keys
     V_OPENCL( kernels[0].setArg( 1, firstValue->getBuffer()),"Error setArg kernels[ 0 ]" ); // Input buffer
     V_OPENCL( kernels[0].setArg( 2, result->getBuffer( ) ), "Error setArg kernels[ 0 ]" ); // Output buffer
-    V_OPENCL( kernels[0].setArg( 3, init_T ),               "Error setArg kernels[ 0 ]" ); // Initial value exclusive
+    V_OPENCL( kernels[0].setArg( 3, init ),                 "Error setArg kernels[ 0 ]" ); // Initial value exclusive
     V_OPENCL( kernels[0].setArg( 4, numElements ),          "Error setArg kernels[ 0 ]" ); // Size of scratch buffer
     V_OPENCL( kernels[0].setArg( 5, ldsKeySize, NULL ),     "Error setArg kernels[ 0 ]" ); // Scratch buffer
     V_OPENCL( kernels[0].setArg( 6, ldsValueSize, NULL ),   "Error setArg kernels[ 0 ]" ); // Scratch buffer

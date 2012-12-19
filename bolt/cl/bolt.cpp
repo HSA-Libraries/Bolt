@@ -23,6 +23,7 @@
 #include <tchar.h>
 #include <algorithm>
 #include <vector>
+#include <set>
 
 #include "bolt/cl/bolt.h"
 #include "bolt/unicode.h"
@@ -31,6 +32,7 @@
 #include "bolt/generate_kernels.hpp"
 #include "bolt/reduce_kernels.hpp"
 #include "bolt/scan_kernels.hpp"
+#include "bolt/scan_by_key_kernels.hpp"
 #include "bolt/sort_kernels.hpp"
 #include "bolt/sort_by_key_kernels.hpp"
 #include "bolt/transform_kernels.hpp"
@@ -581,7 +583,7 @@ namespace bolt {
         const control&      ctl,
         const std::vector<std::string>& typeNames,
         const KernelTemplateSpecializer * const kts,
-        const std::vector<std::string>& typeDefinitions,
+        const std::vector<std::string>& typeDefs,
         const std::string&  kernelString,
         const std::string&  options )
     {
@@ -592,10 +594,24 @@ namespace bolt {
 
         // (2) type definitions
         completeKernelString += "\n// Type Definitions\n";
-        for (int i = 0; i < typeDefinitions.size(); i++)
+        for (int i = 0; i < typeDefs.size(); i++)
         {
-            completeKernelString += "\n" + typeDefinitions[i] + "\n";
+            completeKernelString += "\n" + typeDefs[i] + "\n";
         }
+        //for ( std::set<std::string>::iterator iter = typeDefs.begin(); iter != typeDefs.end(); iter++ )
+        //{
+        //    std::cout << "concat " << *iter << std::endl;
+        //    completeKernelString += "\n" + *iter + "\n";
+        //}
+
+        //std::for_each( typeDefs.begin( ), typeDefs.end( ), [&]( const std::string &typeDef )
+        //{
+        //    completeKernelString += "\n" + typeDef+ "\n";
+        //});
+
+
+
+
 
         // (3) template specialization
         std::string templateSpecialization = (*kts)(typeNames);

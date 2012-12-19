@@ -15,12 +15,13 @@
 
 ***************************************************************************/                                                                                     
 
-#include "common/stdafx.h"
+//#include "common/stdafx.h"
 #include <vector>
 //#include <array>
 #include "bolt/cl/bolt.h"
 //#include "bolt/cl/scan.h"
-//#include "bolt/cl/scan_by_key.h"
+#include "bolt/cl/functional.h"
+#include "bolt/cl/scan_by_key.h"
 #include "bolt/unicode.h"
 #include "bolt/miniDump.h"
 
@@ -28,10 +29,9 @@
 //#include <boost/shared_array.hpp>
 
 #include <boost/program_options.hpp>
-namespace po = boost::program_options;
 
 
-#if 0
+#if 1
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -216,6 +216,7 @@ struct MixM3
 );
 uddtM3 identityMixM3 = { 0, 0.f, 1.0 };
 uddtM3 initialMixM3  = { 2, 3, 1.000001 };
+
 BOLT_FUNCTOR(uddtM2,
 struct uddtM2
 {
@@ -255,6 +256,15 @@ struct uddtM2
 };
 );
 uddtM2 identityMixM2 = { 0, 3.141596f };
+BOLT_FUNCTOR(uddtM2_equal_to,
+struct uddtM2_equal_to
+{
+    bool operator()(const uddtM2& lhs, const uddtM2& rhs) const
+    {
+        return lhs == rhs;
+    }
+};
+);
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -388,7 +398,8 @@ TEST(InclusiveScanByKey, IncMixedM3)
 
     // call scan
     MixM3 mM3;
-    bolt::cl::inclusive_scan_by_key( keys.begin(), keys.end(), input.begin(), output.begin(), mM3 );
+    uddtM2_equal_to eq;
+    bolt::cl::inclusive_scan_by_key( keys.begin(), keys.end(), input.begin(), output.begin(), eq, mM3);
     gold_scan_by_key(keys.begin(), keys.end(), refInput.begin(), refOutput.begin(), mM3);
 
     // print Bolt scan_by_key
@@ -434,18 +445,18 @@ int _tmain(int argc, _TCHAR* argv[])
     try
     {
         // Declare supported options below, describe what they do
-        po::options_description desc( "Scan GoogleTest command line options" );
+        boost::program_options::options_description desc( "Scan GoogleTest command line options" );
         desc.add_options()
             ( "help,h",         "produces this help message" )
             ( "queryOpenCL,q",  "Print queryable platform and device info and return" )
-            ( "platform,p",     po::value< cl_uint >( &userPlatform )->default_value( 0 ),	"Specify the platform under test" )
-            ( "device,d",       po::value< cl_uint >( &userDevice )->default_value( 0 ),	"Specify the device under test" )
+            ( "platform,p",     boost::program_options::value< cl_uint >( &userPlatform )->default_value( 0 ),	"Specify the platform under test" )
+            ( "device,d",       boost::program_options::value< cl_uint >( &userDevice )->default_value( 0 ),	"Specify the device under test" )
             ;
 
 
-        po::variables_map vm;
-        po::store( po::parse_command_line( argc, argv, desc ), vm );
-        po::notify( vm );
+        boost::program_options::variables_map vm;
+        boost::program_options::store( boost::program_options::parse_command_line( argc, argv, desc ), vm );
+        boost::program_options::notify( vm );
 
         if( vm.count( "help" ) )
         {
