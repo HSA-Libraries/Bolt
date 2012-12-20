@@ -27,6 +27,10 @@
 #include "bolt/cl/bolt.h"
 #include "bolt/cl/functional.h"
 
+//TBB Includes
+#include "tbb/parallel_reduce.h"
+#include "tbb/blocked_range.h"
+
 namespace bolt {
     namespace cl {
 
@@ -114,6 +118,36 @@ namespace bolt {
                 };
             };
 
+            /*For documentation on the reduce object see below link
+             *http://threadingbuildingblocks.org/docs/help/reference/algorithms/parallel_reduce_func.htm
+             *The imperative form of parallel_reduce is used. 
+             *
+            */
+            template <typename T, typename BinaryFunction>
+            struct Reduce {
+                T value;
+                BinaryFunction op;
+                //TODO - Decide on how many threads to spawn? Usually it should be equal to th enumber of cores
+                //You might need to look at the tbb::split and there there cousin's 
+                //
+                Reduce(const BinaryFunction &_op) : op(_op), value(0) {}
+                Reduce(const BinaryFunction &_op, const T &init) : op(_op), value(init) {}
+                Reduce() : value(0) {}
+                Reduce( Reduce& s, tbb::split ) : value(0) {}
+                void operator()( const tbb::blocked_range<T*>& r ) {
+                    T temp = value;
+                    for( T* a=r.begin(); a!=r.end(); ++a ) {
+                        temp = op(temp,*a);
+                    }
+                    value = temp;
+                }
+                //Join is called by the parent thread after the child finishes to execute.
+                void join( Reduce& rhs ) 
+                {
+                    value = op(value,rhs.value);
+                }
+            };
+
 
             template<typename T, typename DVInputIterator, typename BinaryFunction> 
             T reduce_detect_random_access(bolt::cl::control &ctl, 
@@ -152,10 +186,30 @@ namespace bolt {
                 const BinaryFunction& binary_op, 
                 const std::string& cl_code)
             {
+                /*************/
                 typedef typename std::iterator_traits<InputIterator>::value_type iType;
-                device_vector< iType > dvInput( first, last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, ctl );
-
-                return reduce_enqueue( ctl, dvInput.begin(), dvInput.end(), init, binary_op, cl_code);
+                size_t szElements = (size_t)(last - first); 
+                if (szElements == 0)
+                    return init;
+                /*TODO - probably the forceRunMode should be replaced by getRunMode and setRunMode*/
+                // Its a dynamic choice. See the reduce Test Code
+                // What should we do if the run mode is automatic. Currently it goes to the last else statement
+                //How many threads we should spawn? 
+                //Need to look at how to control the number of threads spawned.
+                const bolt::cl::control::e_RunMode runMode = ctl.forceRunMode();  
+                if (runMode == bolt::cl::control::SerialCpu) {
+                    std::cout << "The SerialCpu version of reduce is not implemented yet." << std ::endl;
+                    throw ::cl::Error( CL_INVALID_OPERATION, "The SerialCpu version of reduce is not implemented yet." );
+                    return init;
+                } else if (runMode == bolt::cl::control::MultiCoreCpu) {
+                    std::cout << "The MultiCoreCpu version of reduce uses TBB." << std ::endl;
+                    Reduce<iType, BinaryFunction> reduce_op(binary_op, init);
+                    tbb::parallel_reduce( tbb::blocked_range<iType*>( &*first, (iType*)&*(last-1) + 1), reduce_op );
+                    return reduce_op.value;
+                } else {
+                    device_vector< iType > dvInput( first, last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, ctl );
+                    return reduce_enqueue( ctl, dvInput.begin(), dvInput.end(), init, binary_op, cl_code);
+                }
             };
 
             // This template is called after we detect random access iterators
@@ -169,7 +223,23 @@ namespace bolt {
                 const BinaryFunction& binary_op, 
                 const std::string& cl_code)
             {
-                return reduce_enqueue( ctl, first, last, init, binary_op, cl_code);
+                size_t szElements = (size_t)(last - first); 
+                if (szElements == 0)
+                    return init;
+
+                const bolt::cl::control::e_RunMode runMode = ctl.forceRunMode();  
+                if (runMode == bolt::cl::control::SerialCpu) {
+                    std::cout << "The SerialCpu version of reduce is not implemented yet." << std ::endl;
+                    throw ::cl::Error( CL_INVALID_OPERATION, "The SerialCpu version of reduce is not implemented yet." );
+                    return init;
+                } else if (runMode == bolt::cl::control::MultiCoreCpu) {
+                    /*TODO - ASK  - should we copy the device_vector to host memory, process the result and then store back the result into the device_vector.*/
+                    std::cout << "The MultiCoreCpu version of reduce on device_vector is not supported." << std ::endl;
+                    throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of reduce on device_vector is not supported." );
+                    return init;
+                } else {
+                    return reduce_enqueue( ctl, first, last, init, binary_op, cl_code);
+                }
             }
 
             //----

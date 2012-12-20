@@ -32,7 +32,7 @@
 
 
 extern void testDeviceVector();
-
+extern void testTBB();
 // Super-easy windows profiling interface.
 // Move to timing infrastructure when that becomes available.
 __int64 StartProfile() {
@@ -198,6 +198,7 @@ void reduce_TestBuffer() {
 
 int _tmain(int argc, _TCHAR* argv[])
 {
+    testTBB();
     testDeviceVector();
 
     int numIters = 100;
