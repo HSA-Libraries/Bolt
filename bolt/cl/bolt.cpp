@@ -50,8 +50,8 @@ namespace bolt {
     }
 
     // for printing errors
-    std::string hr = "###############################################################################";
-    std::string es = "ERROR: ";
+    const std::string hr = "###############################################################################";
+    const std::string es = "ERROR: ";
 
     std::string clErrorStringA( const cl_int& status )
     {

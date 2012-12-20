@@ -939,7 +939,7 @@ scan_by_key_enqueue(
     }
     catch( const ::cl::Error& e)
     {
-        std::cerr << "::cl::enqueueNDRangeKernel() in bolt::cl::scan_by_key_enqueue()" << std::endl;
+        std::cerr << "::cl::enqueueNDRangeKernel( 0 ) in bolt::cl::scan_by_key_enqueue()" << std::endl;
         std::cerr << "Error Code:   " << clErrorStringA(e.err()) << " (" << e.err() << ")" << std::endl;
         std::cerr << "File:         " << __FILE__ << ", line " << __LINE__ << std::endl;
         std::cerr << "Error String: " << e.what() << std::endl;
@@ -959,6 +959,8 @@ scan_by_key_enqueue(
     V_OPENCL( kernels[1].setArg( 7, *binaryPredicateBuffer ),"Error setArg kernels[ 1 ]" ); // User provided functor
     V_OPENCL( kernels[1].setArg( 8, *binaryFunctionBuffer ),"Error setArg kernels[ 1 ]" ); // User provided functor
 
+    try
+    {
     l_Error = ctl.commandQueue( ).enqueueNDRangeKernel(
         kernels[1],
         ::cl::NullRange,
@@ -967,7 +969,14 @@ scan_by_key_enqueue(
         NULL,
         &kernel1Event);
     V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for kernel[1]" );
-
+    }
+    catch( const ::cl::Error& e)
+    {
+        std::cerr << "::cl::enqueueNDRangeKernel( 1 ) in bolt::cl::scan_by_key_enqueue()" << std::endl;
+        std::cerr << "Error Code:   " << clErrorStringA(e.err()) << " (" << e.err() << ")" << std::endl;
+        std::cerr << "File:         " << __FILE__ << ", line " << __LINE__ << std::endl;
+        std::cerr << "Error String: " << e.what() << std::endl;
+    }
 
     /**********************************************************************************
      *  Kernel 2
@@ -977,9 +986,11 @@ scan_by_key_enqueue(
     V_OPENCL( kernels[2].setArg( 2, firstKey->getBuffer()), "Error setArg kernels[ 2 ]" ); // Output buffer
     V_OPENCL( kernels[2].setArg( 3, result->getBuffer()),   "Error setArg kernels[ 2 ]" ); // Output buffer
     V_OPENCL( kernels[2].setArg( 4, numElements ),          "Error setArg kernels[ 2 ]" ); // Size of scratch buffer
-    V_OPENCL( kernels[2].setArg( 3, *binaryPredicateBuffer ),"Error setArg kernels[ 2 ]" ); // User provided functor
-    V_OPENCL( kernels[2].setArg( 3, *binaryFunctionBuffer ),"Error setArg kernels[ 2 ]" ); // User provided functor
+    V_OPENCL( kernels[2].setArg( 5, *binaryPredicateBuffer ),"Error setArg kernels[ 2 ]" ); // User provided functor
+    V_OPENCL( kernels[2].setArg( 6, *binaryFunctionBuffer ),"Error setArg kernels[ 2 ]" ); // User provided functor
 
+    try
+    {
     l_Error = ctl.commandQueue( ).enqueueNDRangeKernel(
         kernels[2],
         ::cl::NullRange,
@@ -988,6 +999,14 @@ scan_by_key_enqueue(
         NULL,
         &kernel2Event );
     V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for kernel[2]" );
+    }
+    catch( const ::cl::Error& e)
+    {
+        std::cerr << "::cl::enqueueNDRangeKernel( 2 ) in bolt::cl::scan_by_key_enqueue()" << std::endl;
+        std::cerr << "Error Code:   " << clErrorStringA(e.err()) << " (" << e.err() << ")" << std::endl;
+        std::cerr << "File:         " << __FILE__ << ", line " << __LINE__ << std::endl;
+        std::cerr << "Error String: " << e.what() << std::endl;
+    }
 
     // wait for results
     l_Error = kernel2Event.wait( );

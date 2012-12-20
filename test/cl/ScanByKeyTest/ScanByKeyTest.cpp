@@ -215,7 +215,7 @@ struct MixM3
 }; 
 );
 uddtM3 identityMixM3 = { 0, 0.f, 1.0 };
-uddtM3 initialMixM3  = { 2, 3, 1.000001 };
+uddtM3 initialMixM3  = { 2, 3, 1.0001 };
 
 BOLT_FUNCTOR(uddtM2,
 struct uddtM2
@@ -353,13 +353,13 @@ gold_scan_by_key(
         // within segment
         if (currentKey == previousKey)
         {
-            std::cout << "continuing segment" << std::endl;
+            //std::cout << "continuing segment" << std::endl;
             oType r = binary_op( previousValue, currentValue);
             *result = r;
         }
         else // new segment
         {
-            std::cout << "new segment" << std::endl;
+            //std::cout << "new segment" << std::endl;
             *result = currentValue;
         }
     }
@@ -370,7 +370,7 @@ gold_scan_by_key(
 TEST(InclusiveScanByKey, IncMixedM3)
 {
     //setup keys
-    int length = (1<<4);
+    int length = (1<<24);
     std::vector< uddtM2 > keys( length, identityMixM2);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
@@ -402,22 +402,23 @@ TEST(InclusiveScanByKey, IncMixedM3)
     bolt::cl::inclusive_scan_by_key( keys.begin(), keys.end(), input.begin(), output.begin(), eq, mM3);
     gold_scan_by_key(keys.begin(), keys.end(), refInput.begin(), refOutput.begin(), mM3);
 
+#if 0
     // print Bolt scan_by_key
     for (int i = 0; i < length; i++)
     {
-        std::cout << "i=" << i << ", ";
+        if ( !(output[i] == refOutput[i]) ) {
+        std::cout << "BOLT: i=" << i << ", ";
         std::cout << "key={" << keys[i].a << ", " << keys[i].b << "}; ";
         std::cout << "val={" << input[i].a << ", " << input[i].b << ", " << input[i].c << "}; ";
         std::cout << "out={" << output[i].a << ", " << output[i].b << ", " << output[i].c << "};" << std::endl;
-    }
-    // print gold reference
-    for (int i = 0; i < length; i++)
-    {
-        std::cout << "i=" << i << ", ";
+    
+        std::cout << "GOLD: i=" << i << ", ";
         std::cout << "key={" << keys[i].a << ", " << keys[i].b << "}; ";
         std::cout << "val={" << refInput[i].a << ", " << refInput[i].b << ", " << refInput[i].c << "}; ";
         std::cout << "out={" << refOutput[i].a << ", " << refOutput[i].b << ", " << refOutput[i].c << "};" << std::endl;
+        }
     }
+#endif
 
     // compare results
     cmpArrays(refOutput, output);

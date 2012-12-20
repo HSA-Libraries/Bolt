@@ -54,11 +54,10 @@ __kernel void perBlockScanByKey(
     {
         if (gloId > 0)
         { // thread>0
-            //vType inVal = vals[gloId-1];
-            //val = (oType) (*unaryOp)(inVal);
-            ldsVals[ locId ] = vals[gloId-1];
-            key = keys[gloId-1];
+            key = keys[ gloId-1 ];
+            val = vals[ gloId-1 ];
             ldsKeys[ locId ] = key;
+            ldsVals[ locId ] = val;
         }
         else
         { // thread=0
@@ -67,21 +66,27 @@ __kernel void perBlockScanByKey(
             // key stays null, this thread should never try to compare it's key
             // nor should any thread compare it's key to ldsKey[ 0 ]
             // I could put another key into lds just for whatevs
+            // for now ignore this
         }
     }
     else
     {
         //vType inVal = vals[gloId];
         //val = (oType) (*unaryOp)(inVal);
-        ldsVals[ locId ] = vals[gloId];
+        key = keys[ gloId ];
+        val = vals[ gloId ];
+        ldsKeys[ locId ] = key;
+        ldsVals[ locId ] = val;
     }
 
-    //  Computes a scan within a workgroup
+    // Computes a scan within a workgroup
+    // updates vals in lds but not keys
     oType sum = val;
     for( size_t offset = 1; offset < wgSize; offset *= 2 )
     {
         barrier( CLK_LOCAL_MEM_FENCE );
-        if (locId >= offset)
+        kType key2 = ldsKeys[ locId - offset];
+        if (locId >= offset && (*binaryPred)( key, key2 )  )
         {
             oType y = ldsVals[ locId - offset ];
             sum = (*binaryFunct)( sum, y );
@@ -90,13 +95,12 @@ __kernel void perBlockScanByKey(
         ldsVals[ locId ] = sum;
     }
 
-    //  Each work item writes out its calculated scan result, relative to the beginning
-    //  of each work group
+    // Each work item writes out its calculated scan result, relative to the beginning
+    // of each work group
     output[ gloId ] = sum;
     barrier( CLK_LOCAL_MEM_FENCE ); // needed for large data types
     if (locId == 0)
     {
-        // last work-group can be wrong b/c ignored
         keyBuffer[ groId ] = ldsKeys[ wgSize-1 ];
         valBuffer[ groId ] = ldsVals[ wgSize-1 ];
     }
@@ -119,8 +123,8 @@ __kernel void intraBlockInclusiveScanByKey(
     local kType *ldsKeys,
     local oType *ldsVals,
     const uint workPerThread,
-    global BinaryPredicate* binaryPred,
-    global BinaryFunction* binaryFunct )
+    global BinaryPredicate *binaryPred,
+    global BinaryFunction  *binaryFunct )
 {
     size_t groId = get_group_id( 0 );
     size_t gloId = get_global_id( 0 );
@@ -130,22 +134,35 @@ __kernel void intraBlockInclusiveScanByKey(
 
     // do offset of zero manually
     uint offset;
+    kType key;
     oType workSum;
     if (mapId < vecSize)
     {
+        kType prevKey;
+
         // accumulate zeroth value manually
         offset = 0;
-        workSum = preSumArray[mapId+offset];
-        postSumArray[ mapId + offset ] = workSum;
+        key = keySumArray[ mapId+offset ];
+        workSum = preSumArray[ mapId+offset ];
+        postSumArray[ mapId+offset ] = workSum;
 
         //  Serial accumulation
         for( offset = offset+1; offset < workPerThread; offset += 1 )
         {
-            if (mapId+offset<vecSize)
+            prevKey = key;
+            key = keySumArray[ mapId+offset ];
+            if (mapId+offset<vecSize )
             {
-                oType y = preSumArray[mapId+offset];
-                workSum = (*binaryFunct)( workSum, y );
-                postSumArray[ mapId + offset ] = workSum;
+                oType y = preSumArray[ mapId+offset ];
+                if ( (*binaryPred)(key, prevKey ) )
+                {
+                    workSum = (*binaryFunct)( workSum, y );
+                }
+                else
+                {
+                    workSum = y;
+                }
+                postSumArray[ mapId+offset ] = workSum;
             }
         }
     }
@@ -156,13 +173,23 @@ __kernel void intraBlockInclusiveScanByKey(
     if (mapId < vecSize)
     {
         ldsVals[ locId ] = workSum;
+        ldsKeys[ locId ] = key;
         barrier( CLK_LOCAL_MEM_FENCE );
     
-        if (locId >= offset)
+        kType key1 = ldsKeys[ locId ];
+        kType key2 = ldsKeys[ locId-offset ];
+        if (locId >= offset )
         { // thread > 0
-            oType y = ldsVals[ locId - offset ];
-            oType y2 = ldsVals[ locId ];
-            scanSum = (*binaryFunct)( y2, y );
+            oType y1 = ldsVals[ locId ];
+            if ( (*binaryPred)( key1, key2 ) )
+            {
+                oType y2 = ldsVals[ locId-offset ];
+                scanSum = (*binaryFunct)( y1, y2 );
+            }
+            else
+            {
+                scanSum = y1;
+            }
             ldsVals[ locId ] = scanSum;
         } else { // thread 0
             scanSum = workSum;
@@ -174,10 +201,15 @@ __kernel void intraBlockInclusiveScanByKey(
         barrier( CLK_LOCAL_MEM_FENCE );
         if (mapId < vecSize)
         {
-            if (locId >= offset)
+            if (locId >= offset  )
             {
                 oType y = ldsVals[ locId - offset ];
-                scanSum = (*binaryFunct)( scanSum, y );
+                kType key1 = ldsKeys[ locId ];
+                kType key2 = ldsKeys[ locId-offset ];
+                if ( (*binaryPred)( key1, key2 ) )
+                {
+                    scanSum = (*binaryFunct)( scanSum, y );
+                }
                 ldsVals[ locId ] = scanSum;
             }
         }
@@ -191,10 +223,15 @@ __kernel void intraBlockInclusiveScanByKey(
 
         if (mapId < vecSize && locId > 0)
         {
-            oType y = postSumArray[ mapId + offset ];
-            oType y2 = ldsVals[locId-1];
-            y = (*binaryFunct)( y, y2 );
-            postSumArray[ mapId + offset ] = y;
+            oType y = postSumArray[ mapId+offset ];
+            kType key1 = keySumArray[ mapId+offset ]; // change me
+            kType key2 = ldsKeys[ locId-1 ];
+            if ( (*binaryPred)( key1, key2 ) )
+            {
+                oType y2 = ldsVals[locId-1];
+                y = (*binaryFunct)( y, y2 );
+            }
+            postSumArray[ mapId+offset ] = y;
         } // thread in bounds
     } // for 
 } // end kernel
@@ -228,7 +265,9 @@ __kernel void perBlockAdditionByKey(
     oType scanResult = output[ gloId ];
 
     // accumulate prefix
-    if (groId > 0)
+    kType key1 = keySumArray[ groId-1 ];
+    kType key2 = keys[ gloId ];
+    if (groId > 0 && (*binaryPred)( key1, key2 ) )
     {
         oType postBlockSum = postSumArray[ groId-1 ];
         oType newResult = (*binaryFunct)( scanResult, postBlockSum );
