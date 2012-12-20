@@ -1255,9 +1255,9 @@ void BasicSortTestOfLength(size_t length)
             break;
     }
     if (i==length)
-        std::cout << "Test Passed" <<std::endl;
+        std::cout << "\nTest Passed" <<std::endl;
     else 
-        std::cout << "Test Failed i = " << i <<std::endl;
+        std::cout << "\nTest Failed i = " << i <<std::endl;
 }
 
 template <typename T>
@@ -1437,7 +1437,7 @@ int main(int argc, char* argv[])
 {
 
     //UDDSortTestOfLengthWithDeviceVector<int>(256);
-    BasicSortTestOfLength<unsigned int>(atoi(argv[1]));
+    BasicSortTestOfLength<unsigned int>(131072/*16777216/*atoi(argv[1])*/);
 	//BasicSortTestOfLength<unsigned int>(4096);
     BasicSortTestOfLength<int>(512);
     //BasicSortTestOfLength<int>(111);

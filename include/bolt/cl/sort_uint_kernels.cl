@@ -1,10 +1,10 @@
 
 #pragma OPENCL EXTENSION cl_khr_byte_addressable_store : enable 
 
-#define RADIX 4
+#define RADIX 8
 #define RADICES (1 << RADIX)
-#define NUM_OF_ELEMENTS_PER_WORK_ITEM 16
-#define MASK 0x0FU
+#define NUM_OF_ELEMENTS_PER_WORK_ITEM 256
+#define MASK 0xFFU
 __kernel
 void histogramInstantiated(__global uint* unsortedData,
                __global uint* buckets,
@@ -17,38 +17,44 @@ void histogramInstantiated(__global uint* unsortedData,
     size_t groupId = get_group_id(0);
     size_t groupSize = get_local_size(0);
 	size_t numOfGroups = get_num_groups(0);
-
+    uint bucketPos = groupId * RADICES * groupSize;
     for(int i = 0; i < RADICES; ++i)
-        sharedArray[localId * RADICES + i] = 0;
+    {
+        //sharedArray[localId * RADICES + i] = 0;
+        buckets[bucketPos + localId * RADICES + i] = 0;
+    }
 
     barrier(CLK_LOCAL_MEM_FENCE);
     
     /* Calculate thread-histograms */
+
     for(int i = 0; i < NUM_OF_ELEMENTS_PER_WORK_ITEM; ++i)
     {
         uint value = unsortedData[globalId * NUM_OF_ELEMENTS_PER_WORK_ITEM + i];
         value = (value >> shiftCount) & MASK;
-        sharedArray[localId * RADICES + value]++;
+        //sharedArray[localId * RADICES + value]++;
+        buckets[bucketPos + localId * RADICES + value]++;
     }
     
     barrier(CLK_LOCAL_MEM_FENCE);
     
     /* Copy calculated histogram bin to global memory */
     /*Can use async copy*/
-    for(int i = 0; i < RADICES; ++i)
+    /*for(int i = 0; i < RADICES; ++i)
     {
         uint bucketPos = groupId * RADICES * groupSize + localId * RADICES + i;
         buckets[bucketPos] = sharedArray[localId * RADICES + i];
-    }
+    }*/
 
     //Start First step to scan
 	int sum =0;
     for(int i = 0; i < groupSize; i++)
     {
-		sum = sum + sharedArray[localId + groupSize*i];
+		//sum = sum + sharedArray[localId + groupSize*i];
+        sum = sum + buckets[bucketPos + localId + groupSize*i];
 	}
     // We do + 1 for an exclusive scan result
-    histScanBuckets[localId*numOfGroups + groupId + 1] = sum; 
+    histScanBuckets[localId*numOfGroups + groupId + 1] = sum;
 
 }
 __kernel 
@@ -87,13 +93,13 @@ void permuteInstantiated(__global uint* unsortedData,
     size_t globalId = get_global_id(0);
     size_t groupSize = get_local_size(0);
     
-    
+    uint bucketPos = groupId * RADICES * groupSize;
     /* Copy prescaned thread histograms to corresponding thread shared block */
-    for(int i = 0; i < RADICES; ++i)
-    {
-        uint bucketPos = groupId * RADICES * groupSize + localId * RADICES + i;
-        sharedBuckets[localId * RADICES + i] = scanedBuckets[bucketPos];
-    }
+    //for(int i = 0; i < RADICES; ++i)
+    //{
+        //uint bucketPos = groupId * RADICES * groupSize + localId * RADICES + i;
+        //sharedBuckets[localId * RADICES + i] = scanedBuckets[localId * RADICES + i];
+    //}
 
     barrier(CLK_LOCAL_MEM_FENCE);
     
@@ -101,10 +107,12 @@ void permuteInstantiated(__global uint* unsortedData,
     for(int i = 0; i < RADICES; ++i)
     {
         uint value = unsortedData[globalId * RADICES + i];
+
         value = (value >> shiftCount) & MASK;
-        uint index = sharedBuckets[localId * RADICES + value];
+        uint index = scanedBuckets[bucketPos+localId * RADICES + value];
         sortedData[index] = unsortedData[globalId * RADICES + i];
-        sharedBuckets[localId * RADICES + value] = index + 1;
+        barrier(CLK_LOCAL_MEM_FENCE);
+        scanedBuckets[bucketPos+localId * RADICES + value] = index + 1;
 		barrier(CLK_LOCAL_MEM_FENCE);
     }
 }
