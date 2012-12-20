@@ -283,6 +283,103 @@ namespace bolt
                 size_type m_index;
             };
 
+
+            /*! \brief A reverse random access iterator in the classic sense
+            *   \todo Need to implement base() which returns the base iterator
+            *   \sa http://www.sgi.com/tech/stl/ReverseIterator.html
+            *   \sa http://www.sgi.com/tech/stl/RandomAccessIterator.html
+            */
+            template< typename Container >
+            class reverse_iterator_base: public boost::iterator_facade< reverse_iterator_base< Container >, value_type, std::random_access_iterator_tag, typename device_vector::reference >
+            {
+            public:
+
+                //  Basic constructor requires a reference to the container and a positional element
+                reverse_iterator_base( Container& lhs, size_type index ): m_Container( lhs ), m_index( index-1 )
+                {}
+
+                //  This copy constructor allows an iterator to convert into a const_iterator, but not vica versa
+                template< typename OtherContainer >
+                reverse_iterator_base( const reverse_iterator_base< OtherContainer >& lhs ): m_Container( lhs.m_Container ), m_index( lhs.m_index-1 )
+                {}
+
+                //  This copy constructor allows an iterator to convert into a const_iterator, but not vica versa
+                //template< typename Container >
+                reverse_iterator_base< Container >& operator= ( const reverse_iterator_base< Container >& lhs )
+                {
+                    m_Container = lhs.m_Container;
+                    m_index = lhs.m_index;
+                    return *this;
+                }
+                
+                reverse_iterator_base< Container >& operator+= ( const difference_type & n )
+                {
+                    advance( -n );
+                    return *this;
+                }
+                
+                const reverse_iterator_base< Container > operator+ ( const difference_type & n ) const
+                {
+                    reverse_iterator_base< Container > result(*this);
+                    result.advance(-n);
+                    return result;
+                }
+
+                int getIndex() const
+                {
+                    return m_index;
+                }
+
+            private:
+                //  Implementation detail of boost.iterator
+                friend class boost::iterator_core_access;
+
+                //  Handy for the device_vector erase methods
+                friend class device_vector< value_type >;
+
+                //  Used for templatized copy constructor and the templatized equal operator
+                template < typename > friend class reverse_iterator_base;
+
+                void advance( difference_type n )
+                {
+                    m_index += n;
+                }
+
+                void increment( )
+                {
+                    advance( -1 );
+                }
+
+                void decrement( )
+                {
+                    advance( 1 );
+                }
+
+                difference_type distance_to( const reverse_iterator_base< Container >& lhs ) const
+                {
+                    return static_cast< difference_type >( m_index - lhs.m_index );
+                }
+
+                template< typename OtherContainer >
+                bool equal( const reverse_iterator_base< OtherContainer >& lhs ) const
+                {
+                    bool sameIndex = lhs.m_index == m_index;
+                    bool sameContainer = (&m_Container == &lhs.m_Container );
+
+                    return ( sameIndex && sameContainer );
+                }
+
+                reference dereference( ) const
+                {
+                    return m_Container[ m_index ];
+                }
+
+                Container& m_Container;
+                size_type m_index;
+
+            };
+
+
             /*! \brief Typedef to create the non-constant iterator
             */
             typedef iterator_base< device_vector< value_type > > iterator;
@@ -291,23 +388,14 @@ namespace bolt
             */
             typedef iterator_base< const device_vector< value_type > > const_iterator;
 
-            /*! \brief A reverse random access iterator in the classic sense
-            *   \todo Need to implement reverse_iterators
-            *   \sa http://www.sgi.com/tech/stl/ReverseIterator.html
-            *   \sa http://www.sgi.com/tech/stl/RandomAccessIterator.html
+            /*! \brief Typedef to create the non-constant reverse iterator
             */
-            class reverse_iterator: public boost::reverse_iterator< iterator >
-            {
-            };
+            typedef reverse_iterator_base< device_vector< value_type > > reverse_iterator;
 
-            /*! \brief A constant random access iterator in the classic sense
-            *   \todo Need to implement const_reverse_iterator
-            *   \sa http://www.sgi.com/tech/stl/ReverseIterator.html
-            *   \sa http://www.sgi.com/tech/stl/RandomAccessIterator.html
+            /*! \brief Typedef to create the constant reverse iterator
             */
-            class const_reverse_iterator: public boost::reverse_iterator< const_iterator >
-            {
-            };
+            typedef reverse_iterator_base< const device_vector< value_type > > const_reverse_iterator;
+
 
             /*! \brief A default constructor that creates an empty device_vector
             *   \param ctl An Bolt control class used to perform copy operations; a default is used if not supplied by the user
@@ -515,41 +603,16 @@ namespace bolt
 
                 if( reqSize <= capacity( ) )
                     return;
-
-                /*if( reqSize > max_size( ) )
-                    throw ::cl::Error( CL_MEM_OBJECT_ALLOCATION_FAILURE , "The amount of memory requested exceeds what is available" );
-                */
-                //  We want to use the context from the passed in commandqueue to initialize our buffer
-                /*cl_int l_Error = CL_SUCCESS;
-                ::cl::Context l_Context = m_commQueue.getInfo< CL_QUEUE_CONTEXT >( &l_Error );
-                V_OPENCL( l_Error, "device_vector failed to query for the context of the ::cl::CommandQueue object" );*/
-
                 if( m_Size == 0 )
                 {
-                    //::cl::Buffer l_tmpBuffer( l_Context, m_Flags, reqSize * sizeof( value_type ) );
                     m_devMemory = new Concurrency::array<T,1>((int)reqSize);
-                    //m_devMemory = l_tmpBuffer;
                     return;
                 }
 
-                //size_type l_size = reqSize * sizeof( value_type );
-                //  Can't user host_ptr because l_size is guranteed to be bigger
-                //::cl::Buffer l_tmpBuffer( l_Context, m_Flags, l_size, NULL, &l_Error );
                 Concurrency::array<T,1> *l_tmpBuffer = new Concurrency::array<T,1>((int)reqSize);
-                //V_OPENCL( l_Error, "device_vector can not create an temporary internal OpenCL buffer" );
 
-                //size_type l_srcSize = m_devMemory.getInfo< CL_MEM_SIZE >( &l_Error );
-                size_type l_srcSize = m_devMemory->get_extent()[0];
-                //V_OPENCL( l_Error, "device_vector failed to request the size of the ::cl::Buffer object" );
-
-                //::cl::Event copyEvent;
-               // V_OPENCL( m_commQueue.enqueueCopyBuffer( m_devMemory, l_tmpBuffer, 0, 0, l_srcSize, NULL, &copyEvent ),
-                //    "device_vector failed to copy from buffer to buffer " );
+				//size_type l_srcSize = m_devMemory->get_extent()[0];
                 m_devMemory->copy_to(*l_tmpBuffer);
-                //  Not allowed to return until the copy operation is finished
-                //V_OPENCL( copyEvent.wait( ), "device_vector failed to wait on an event object" );
-
-                //  Operator= should call retain/release appropriately
                 delete(m_devMemory);
                 m_devMemory = l_tmpBuffer;
             }
@@ -573,40 +636,18 @@ namespace bolt
             *   This makes the size( ) of the vector equal to its capacity( ).
             *   \note Contents are preserved.
             *   \warning if the device_vector must reallocate, all previous iterators, references, and pointers are invalidated.
-            *   \warning The ::cl::CommandQueue is not a STD reserve( ) parameter.
             */
             void shrink_to_fit( )
             {
-#if 0
-                if( m_Size > capacity( ) )
-                    throw ::cl::Error( CL_MEM_OBJECT_ALLOCATION_FAILURE , "device_vector size can not be greater than capacity( )" );
 
-                if( m_Size == capacity( ) )
-                    return;
-
-                //  We want to use the context from the passed in commandqueue to initialize our buffer
-                cl_int l_Error = CL_SUCCESS;
-                ::cl::Context l_Context = m_commQueue.getInfo< CL_QUEUE_CONTEXT >( &l_Error );
-                V_OPENCL( l_Error, "device_vector failed to query for the context of the ::cl::CommandQueue object" );
-
-                size_type l_newSize = m_Size * sizeof( value_type );
-                ::cl::Buffer l_tmpBuffer( l_Context, m_Flags, l_newSize, NULL, &l_Error );
-                V_OPENCL( l_Error, "device_vector can not create an temporary internal OpenCL buffer" );
-
-                size_type l_srcSize = m_devMemory.getInfo< CL_MEM_SIZE >( &l_Error );
-                V_OPENCL( l_Error, "device_vector failed to request the size of the ::cl::Buffer object" );
-
-                std::vector< ::cl::Event > copyEvent( 1 );
-                l_Error = m_commQueue.enqueueCopyBuffer( m_devMemory, l_tmpBuffer, 0, 0, l_newSize, NULL, &copyEvent.front( ) );
-                V_OPENCL( l_Error, "device_vector failed to copy data to the new ::cl::Buffer object" );
-
-                //  Not allowed to return until the copy operation is finished
-                l_Error = m_commQueue.enqueueWaitForEvents( copyEvent );
-                V_OPENCL( l_Error, "device_vector failed to wait for copy event" );
-
-                //  Operator= should call retain/release appropriately
-                m_devMemory = l_tmpBuffer;
-#endif
+				if( m_Size == capacity( ) )
+				     return;
+				Concurrency::array<T,1> *l_tmpBuffer = new Concurrency::array<T,1>((int)size());
+				Concurrency::array_view<T,1> l_devMemoryAV = m_devMemory->section(0,(int)size());
+				Concurrency::array_view<T,1> l_tmpBufferAV = l_tmpBuffer->section(0,(int)size());
+				l_devMemoryAV.copy_to(l_tmpBufferAV);
+				delete(m_devMemory);
+				m_devMemory = l_tmpBuffer;
             }
 
             /*! \brief Retrieves the value stored at index n.
@@ -667,22 +708,37 @@ namespace bolt
                 return const_iterator( *this, 0 );
             }
 
+            /*! \brief Retrieves a reverse_iterator for this container that points at the last element.
+            *   \return A device_vector< value_type >::reverse_iterator.
+            */
+
             reverse_iterator rbegin( void )
             {
-                static_assert( false, "Reverse iterators are not yet implemented" );
-                return reverse_iterator( );
+                //static_assert( false, "Reverse iterators are not yet implemented" );
+                return reverse_iterator(*this,m_Size);
             }
+
+            /*! \brief Retrieves a reverse_iterator for this container that points at the last constant element.
+            *   No operation through this iterator may modify the contents of the referenced container.
+            *   \return A device_vector< value_type >::const_reverse_iterator
+            */
 
             const_reverse_iterator rbegin( void ) const
             {
-                static_assert( false, "Reverse iterators are not yet implemented" );
-                return const_reverse_iterator( );
+                //static_assert( false, "Reverse iterators are not yet implemented" );
+                return const_reverse_iterator(*this,m_Size);
             }
+
+            /*! \brief Retrieves an iterator for this container that points at the last constant element.
+            *   No operation through this iterator may modify the contents of the referenced container.
+            *   \note This method may return a constant iterator from a non-constant container.
+            *   \return A device_vector< value_type >::const_reverse_iterator.
+            */
 
             const_reverse_iterator crbegin( void ) const
             {
-                static_assert( false, "Reverse iterators are not yet implemented" );
-                return const_reverse_iterator( );
+                //static_assert( false, "Reverse iterators are not yet implemented" );
+                return const_reverse_iterator(*this,m_Size);
             }
 
             /*! \brief Retrieves an iterator for this container that points at the last element.
@@ -712,22 +768,34 @@ namespace bolt
                 return const_iterator( *this, m_Size );
             }
 
+            /*! \brief Retrieves a reverse_iterator for this container that points at the beginning element.
+            *   \return A device_vector< value_type >::reverse_iterator.
+            */
+
             reverse_iterator rend( void )
             {
-                static_assert( false, "Reverse iterators are not yet implemented" );
-                return reverse_iterator( );
+                return reverse_iterator( *this, 0  );
             }
+
+            /*! \brief Retrieves a reverse_iterator for this container that points at the beginning constant element.
+            *   No operation through this iterator may modify the contents of the referenced container.
+            *   \return A device_vector< value_type >::const_reverse_iterator.
+            */
 
             const_reverse_iterator rend( void ) const
             {
-                static_assert( false, "Reverse iterators are not yet implemented" );
-                return const_reverse_iterator( );
+                return const_reverse_iterator( *this, 0  );
             }
+
+            /*! \brief Retrieves a reverse_iterator for this container that points at the beginning constant element.
+            *   No operation through this iterator may modify the contents of the referenced container.
+            *   \note This method may return a constant iterator from a non-constant container.
+            *   \return A device_vector< value_type >::const_reverse_iterator.
+            */
 
             const_reverse_iterator crend( void ) const
             {
-                static_assert( false, "Reverse iterators are not yet implemented" );
-                return const_reverse_iterator( );
+                return const_reverse_iterator( *this, 0  );
             }
 
             /*! \brief Retrieves the value stored at index 0.
@@ -767,18 +835,8 @@ namespace bolt
             */
             const_reference back( void ) const
             {
-                /*cl_int l_Error = CL_SUCCESS;
 
-                const_naked_pointer ptrBuff = reinterpret_cast< const_naked_pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ,
-                    (m_Size - 1) * sizeof( value_type ), sizeof( value_type ), NULL, NULL, &l_Error ) );
-                V_OPENCL( l_Error, "device_vector failed map device memory to host memory for operator[]" );
-
-                const_reference tmpRef = *ptrBuff;*/
                 const_reference tmpRef = *m_devMemory[m_Size - 1];
-                /*::cl::Event unmapEvent;
-                l_Error = m_commQueue.enqueueUnmapMemObject( m_devMemory, ptrBuff, NULL, &unmapEvent );
-                V_OPENCL( l_Error, "device_vector failed to unmap host memory back to device memory" );
-                V_OPENCL( unmapEvent.wait( ), "failed to wait for unmap event" );*/
 
                 return tmpRef;
             }
@@ -868,17 +926,9 @@ namespace bolt
                 *m_devMemory = vec.m_devMemory;
                 vec.m_devMemory = swapBuffer;
 
-                /*::cl::CommandQueue    swapQueue( m_commQueue );
-                m_commQueue = vec.m_commQueue;
-                vec.m_commQueue = swapQueue;*/
-
                 size_type sizeTmp = m_Size;
                 m_Size = vec.m_Size;
                 vec.m_Size = sizeTmp;
-
-                /*cl_mem_flags flagsTmp = m_Flags;
-                m_Flags = vec.m_Flags;
-                vec.m_Flags = flagsTmp;*/
             }
 
             /*! \brief Removes an element.
@@ -896,19 +946,10 @@ namespace bolt
 
                 size_type sizeRegion = l_End.m_index - index.m_index;
 
-                /*cl_int l_Error = CL_SUCCESS;
-                naked_pointer ptrBuff = reinterpret_cast< naked_pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ | CL_MAP_WRITE,
-                        index.m_index * sizeof( value_type ), sizeRegion * sizeof( value_type ), NULL, NULL, &l_Error ) );
-                V_OPENCL( l_Error, "device_vector failed map device memory to host memory for operator[]" );*/
                 Concurrency::array_view<T,1> av(*m_devMemory);
                 naked_pointer ptrBuff = av.data();
                 naked_pointer ptrBuffTemp = ptrBuff + index.m_index;
                 ::memmove( ptrBuffTemp, ptrBuffTemp + 1, (sizeRegion - 1)*sizeof( value_type ) );
-
-                /*::cl::Event unmapEvent;
-                l_Error = m_commQueue.enqueueUnmapMemObject( m_devMemory, ptrBuff, NULL, &unmapEvent );
-                V_OPENCL( l_Error, "device_vector failed to unmap host memory back to device memory" );
-                V_OPENCL( unmapEvent.wait( ), "failed to wait for unmap event" );*/
 
                 --m_Size;
 
@@ -938,20 +979,11 @@ namespace bolt
                 iterator l_End = end( );
                 size_type sizeMap = l_End.m_index - first.m_index;
 
-                //cl_int l_Error = CL_SUCCESS;
-                /*naked_pointer ptrBuff = reinterpret_cast< naked_pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ | CL_MAP_WRITE,
-                        first.m_index * sizeof( value_type ), sizeMap * sizeof( value_type ), NULL, NULL, &l_Error ) );
-                V_OPENCL( l_Error, "device_vector failed map device memory to host memory for operator[]" );*/
                 Concurrency::array_view<T,1> av(*m_devMemory);
                 naked_pointer ptrBuff = av.data();
                 ptrBuff = ptrBuff + first.m_index;
                 size_type sizeErase = last.m_index - first.m_index;
                 ::memmove( ptrBuff, ptrBuff + sizeErase, (sizeMap - sizeErase)*sizeof( value_type ) );
-
-                /*::cl::Event unmapEvent;
-                l_Error = m_commQueue.enqueueUnmapMemObject( m_devMemory, ptrBuff, NULL, &unmapEvent );
-                V_OPENCL( l_Error, "device_vector failed to unmap host memory back to device memory" );
-                V_OPENCL( unmapEvent.wait( ), "failed to wait for unmap event" );*/
 
                 m_Size -= sizeErase;
 
@@ -990,10 +1022,6 @@ namespace bolt
 
                 size_type sizeMap = (m_Size - index.m_index) + 1;
 
-                /*cl_int l_Error = CL_SUCCESS;
-                naked_pointer ptrBuff = reinterpret_cast< naked_pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ | CL_MAP_WRITE,
-                        index.m_index * sizeof( value_type ), sizeMap * sizeof( value_type ), NULL, NULL, &l_Error ) );
-                V_OPENCL( l_Error, "device_vector failed map device memory to host memory for operator[]" );*/
                 Concurrency::array_view<T,1> av(*m_devMemory);
                 naked_pointer ptrBuff = av.data();
                 ptrBuff = ptrBuff + index.m_index;
@@ -1002,11 +1030,6 @@ namespace bolt
 
                 //  Write the new value in its place
                 *ptrBuff = value;
-
-                /*::cl::Event unmapEvent;
-                l_Error = m_commQueue.enqueueUnmapMemObject( m_devMemory, ptrBuff, NULL, &unmapEvent );
-                V_OPENCL( l_Error, "device_vector failed to unmap host memory back to device memory" );
-                V_OPENCL( unmapEvent.wait( ), "failed to wait for unmap event" );*/
 
                 ++m_Size;
 
@@ -1038,10 +1061,6 @@ namespace bolt
 
                 size_type sizeMap = (m_Size - index.m_index) + n;
 
-                /*cl_int l_Error = CL_SUCCESS;
-                naked_pointer ptrBuff = reinterpret_cast< naked_pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ | CL_MAP_WRITE,
-                        index.m_index * sizeof( value_type ), sizeMap * sizeof( value_type ), NULL, NULL, &l_Error ) );
-                V_OPENCL( l_Error, "device_vector failed map device memory to host memory for operator[]" );*/
                 Concurrency::array_view<T,1> av(*m_devMemory);
                 naked_pointer ptrBuff = av.data();
                 ptrBuff = ptrBuff + index.m_index;
@@ -1053,11 +1072,6 @@ namespace bolt
                 {
                     ptrBuff[ i ] = value;
                 }
-
-                /*::cl::Event unmapEvent;
-                l_Error = m_commQueue.enqueueUnmapMemObject( m_devMemory, ptrBuff, NULL, &unmapEvent );
-                V_OPENCL( l_Error, "device_vector failed to unmap host memory back to device memory" );
-                V_OPENCL( unmapEvent.wait( ), "failed to wait for unmap event" );*/
 
                 m_Size += n;
             }
@@ -1081,10 +1095,6 @@ namespace bolt
                 }
                 size_type sizeMap = (m_Size - index.m_index) + n;
 
-                /*cl_int l_Error = CL_SUCCESS;
-                naked_pointer ptrBuff = reinterpret_cast< naked_pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ | CL_MAP_WRITE,
-                        index.m_index * sizeof( value_type ), sizeMap * sizeof( value_type ), NULL, NULL, &l_Error ) );
-                V_OPENCL( l_Error, "device_vector failed map device memory to host memory for iterator insert" );*/
                 Concurrency::array_view<T,1> av(*m_devMemory);
                 naked_pointer ptrBuff = av.data() + index.m_index;
                 //  Shuffle the old values n element down.
@@ -1095,11 +1105,6 @@ namespace bolt
 #else
                 std::copy( begin, end, ptrBuff );
 #endif
-
-                /*::cl::Event unmapEvent;
-                l_Error = m_commQueue.enqueueUnmapMemObject( m_devMemory, ptrBuff, NULL, &unmapEvent );
-                V_OPENCL( l_Error, "device_vector failed to unmap host memory back to device memory" );
-                V_OPENCL( unmapEvent.wait( ), "failed to wait for unmap event" );*/
 
                 m_Size += n;
             }
