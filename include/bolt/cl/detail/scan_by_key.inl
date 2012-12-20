@@ -17,9 +17,7 @@
 #define KERNEL02WAVES 4
 #define KERNEL1WAVES 4
 #define WAVESIZE 64
-#define PUSH_BACK_UNIQUE(CONTAINER, ELEMENT) \
-    if (std::find(CONTAINER.begin(), CONTAINER.end(), ELEMENT) == CONTAINER.end()) \
-        CONTAINER.push_back(ELEMENT);
+
 
 #if !defined( SCAN_BY_KEY_INL )
 #define SCAN_BY_KEY_INL
