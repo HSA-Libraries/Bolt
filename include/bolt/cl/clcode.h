@@ -70,7 +70,9 @@ struct ClCode
     static std::string get()
     {
         return "";
-        //static_assert( false, "Bolt< error >: No code is associated with this type.  Use BOLT_CREATE_CLCODE or BOLT_FUNCTOR" );
+        // static_assert( false, "Bolt< error >:
+        // No code is associated with this type.
+        // Use BOLT_CREATE_CLCODE or BOLT_FUNCTOR" );
     }
 };
 

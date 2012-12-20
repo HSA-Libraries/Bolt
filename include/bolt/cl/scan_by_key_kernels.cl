@@ -18,18 +18,25 @@
 /******************************************************************************
  *  Kernel 0
  *****************************************************************************/
-//__attribute__((reqd_work_group_size(KERNEL0WORKGROUPSIZE,1,1)))
-template< typename iType, typename oType, typename UnaryFunction, typename BinaryFunction >
+template<
+    typename kType,
+    typename vType,
+    typename oType,
+    typename BinaryPredicate,
+    typename BinaryFunction >
 __kernel void perBlockTransformScan(
-                global oType* output,
-                global iType* input,
-                oType identity,
-                const uint vecSize,
-                local oType* lds,
-                global UnaryFunction* unaryOp,
-                global BinaryFunction* binaryOp,
-                global oType* scanBuffer,
-                int exclusive) // do exclusive scan ?
+    global kType* keys,
+    global vType* vals,
+    global oType* output, // input
+    oType init,
+    const uint vecSize,
+    local oType* ldsKeys,
+    local oType* ldsVals,
+    global UnaryFunction* binaryPred,
+    global BinaryFunction* binaryFunct,
+    global kType* keyBuffer,
+    global oType* valBuffer,
+    int exclusive) // do exclusive scan ?
 {
     size_t gloId = get_global_id( 0 );
     size_t groId = get_group_id( 0 );
@@ -40,27 +47,33 @@ __kernel void perBlockTransformScan(
     //  Abort threads that are passed the end of the input vector
     if (gloId >= vecSize) return; // on SI this doesn't mess-up barriers
 
-    // if exclusive, load gloId=0 w/ identity, and all others shifted-1
+    // if exclusive, load gloId=0 w/ init, and all others shifted-1
+    kType key;
     oType val;
     if (exclusive)
     {
         if (gloId > 0)
         { // thread>0
-            iType inVal = input[gloId-1];
-            val = (oType) (*unaryOp)(inVal);
-            lds[ locId ] = val;
+            //vType inVal = vals[gloId-1];
+            //val = (oType) (*unaryOp)(inVal);
+            ldsVals[ locId ] = vals[gloId-1];
+            key = keys[gloId-1];
+            ldsKeys[ locId ] = key;
         }
         else
         { // thread=0
-            val = identity;
-            lds[ locId ] = val;
+            val = init;
+            ldsVals[ locId ] = val;
+            // key stays null, this thread should never try to compare it's key
+            // nor should any thread compare it's key to ldsKey[ 0 ]
+            // I could put another key into lds just for whatevs
         }
     }
     else
     {
-        iType inVal = input[gloId];
-        val = (oType) (*unaryOp)(inVal);
-        lds[ locId ] = val;
+        //vType inVal = vals[gloId];
+        //val = (oType) (*unaryOp)(inVal);
+        ldsVals[ locId ] = vals[gloId];
     }
 
     //  Computes a scan within a workgroup
@@ -70,11 +83,11 @@ __kernel void perBlockTransformScan(
         barrier( CLK_LOCAL_MEM_FENCE );
         if (locId >= offset)
         {
-            oType y = lds[ locId - offset ];
-            sum = (*binaryOp)( sum, y );
+            oType y = ldsVals[ locId - offset ];
+            sum = (*binaryFunct)( sum, y );
         }
         barrier( CLK_LOCAL_MEM_FENCE );
-        lds[ locId ] = sum;
+        ldsVals[ locId ] = sum;
     }
 
     //  Each work item writes out its calculated scan result, relative to the beginning
@@ -84,7 +97,8 @@ __kernel void perBlockTransformScan(
     if (locId == 0)
     {
         // last work-group can be wrong b/c ignored
-        scanBuffer[ groId ] = lds[ wgSize-1 ];
+        keyBuffer[ groId ] = ldsKeys[ wgSize-1 ];
+        valBuffer[ groId ] = ldsVals[ wgSize-1 ];
     }
 }
 
@@ -92,17 +106,21 @@ __kernel void perBlockTransformScan(
 /******************************************************************************
  *  Kernel 1
  *****************************************************************************/
-//__attribute__((reqd_work_group_size(KERNEL1WORKGROUPSIZE,1,1)))
-template< typename Type, typename BinaryFunction >
+template<
+    typename kType,
+    typename oType,
+    typename BinaryPredicate,
+    typename BinaryFunction >
 __kernel void intraBlockInclusiveScan(
-                global Type* postSumArray,
-                global Type* preSumArray, 
-                Type identity,
-                const uint vecSize,
-                local Type* lds,
-                const uint workPerThread,
-                global BinaryFunction* binaryOp
-                )
+    global kType* keySumArray,
+    global oType* preSumArray,
+    global oType* postSumArray,
+    const uint vecSize,
+    local Type* ldsKeys,
+    local Type* ldsVals,
+    const uint workPerThread,
+    global BinaryPredicate* binaryPred,
+    global BinaryFunction* binaryFunct )
 {
     size_t groId = get_group_id( 0 );
     size_t gloId = get_global_id( 0 );
@@ -126,7 +144,7 @@ __kernel void intraBlockInclusiveScan(
             if (mapId+offset<vecSize)
             {
                 Type y = preSumArray[mapId+offset];
-                workSum = (*binaryOp)( workSum, y );
+                workSum = (*binaryFunct)( workSum, y );
                 postSumArray[ mapId + offset ] = workSum;
             }
         }
@@ -137,15 +155,15 @@ __kernel void intraBlockInclusiveScan(
     // load LDS with register sums
     if (mapId < vecSize)
     {
-        lds[ locId ] = workSum;
+        ldsVals[ locId ] = workSum;
         barrier( CLK_LOCAL_MEM_FENCE );
     
         if (locId >= offset)
         { // thread > 0
-            Type y = lds[ locId - offset ];
-            Type y2 = lds[ locId ];
-            scanSum = (*binaryOp)( y2, y );
-            lds[ locId ] = scanSum;
+            Type y = ldsVals[ locId - offset ];
+            Type y2 = ldsVals[ locId ];
+            scanSum = (*binaryFunct)( y2, y );
+            ldsVals[ locId ] = scanSum;
         } else { // thread 0
             scanSum = workSum;
         }  
@@ -158,9 +176,9 @@ __kernel void intraBlockInclusiveScan(
         {
             if (locId >= offset)
             {
-                Type y = lds[ locId - offset ];
-                scanSum = (*binaryOp)( scanSum, y );
-                lds[ locId ] = scanSum;
+                Type y = ldsVals[ locId - offset ];
+                scanSum = (*binaryFunct)( scanSum, y );
+                ldsVals[ locId ] = scanSum;
             }
         }
     } // for offset
@@ -174,8 +192,8 @@ __kernel void intraBlockInclusiveScan(
         if (mapId < vecSize && locId > 0)
         {
             Type y = postSumArray[ mapId + offset ];
-            Type y2 = lds[locId-1];
-            y = (*binaryOp)( y, y2 );
+            Type y2 = ldsVals[locId-1];
+            y = (*binaryFunct)( y, y2 );
             postSumArray[ mapId + offset ] = y;
         } // thread in bounds
     } // for 
@@ -185,14 +203,19 @@ __kernel void intraBlockInclusiveScan(
 /******************************************************************************
  *  Kernel 2
  *****************************************************************************/
-//__attribute__((reqd_work_group_size(KERNEL2WORKGROUPSIZE,1,1)))
-template< typename Type, typename BinaryFunction >
-__kernel void perBlockAddition( 
-                global Type* output,
-                global Type* postSumArray,
-                const uint vecSize,
-                global BinaryFunction* binaryOp
-                )
+template<
+    typename kType,
+    typename oType,
+    typename BinaryPredicate,
+    typename BinaryFunction >
+__kernel void perBlockAddition(
+    global kType *keySumArray,
+    global oType *postSumArray,
+    global kType *keys,
+    global oType *output,
+    const uint vecSize,
+    global BinaryPredicate *binaryPred,
+    global BinaryFunction *binaryFunct)
 {
     size_t gloId = get_global_id( 0 );
     size_t groId = get_group_id( 0 );
@@ -202,13 +225,13 @@ __kernel void perBlockAddition(
     if( gloId >= vecSize )
         return;
         
-    Type scanResult = output[ gloId ];
+    oType scanResult = output[ gloId ];
 
     // accumulate prefix
     if (groId > 0)
     {
-        Type postBlockSum = postSumArray[ groId-1 ];
-        Type newResult = (*binaryOp)( scanResult, postBlockSum );
+        oType postBlockSum = postSumArray[ groId-1 ];
+        oType newResult = (*binaryFunct)( scanResult, postBlockSum );
         output[ gloId ] = newResult;
     }
 }

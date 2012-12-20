@@ -54,12 +54,12 @@ namespace bolt
         *
         * \tparam InputIterator is a model of Input Iterator.
         * \tparam OutputIterator is a model of Output Iterator.
-        * \tparam UnaryFunction is a model of Unary Function which takes as input \c InputIterator's \c value_type and whose return type is convertable to \c BinaryFunction's \c input types.
-        * \tparam BinaryFunction is a model of Binary Function which takes as input two values convertable from \c UnaryFunction's \c return type and whose return type is convertable to \c OutputIterator's \c value_type.
+        * \tparam UnaryFunction is a model of Unary Function which takes as input \c InputIterator's \c value_type and whose return type is convertible to \c BinaryFunction's \c input types.
+        * \tparam BinaryFunction is a model of Binary Function which takes as input two values convertible from \c UnaryFunction's \c return type and whose return type is convertible to \c OutputIterator's \c value_type.
         * \return result+(last-first).
         *
         * \code
-        * #include "bolt/cl/scan.h"
+        * #include "bolt/cl/transform_scan.h"
         * ...
         *
         * bolt::cl::square<int> sqInt;
@@ -85,7 +85,7 @@ namespace bolt
             typename OutputIterator,
             typename UnaryFunction,
             typename BinaryFunction>
-            OutputIterator
+        OutputIterator
         transform_inclusive_scan(
             InputIterator first,
             InputIterator last,
@@ -106,12 +106,12 @@ namespace bolt
         *
         * \tparam InputIterator is a model of Input Iterator.
         * \tparam OutputIterator is a model of Output Iterator.
-        * \tparam UnaryFunction is a model of Unary Function which takes as input \c InputIterator's \c value_type and whose return type is convertable to \c BinaryFunction's \c input types.
-        * \tparam BinaryFunction is a model of Binary Function which takes as input two values convertable from \c UnaryFunction's \c return type and whose return type is convertable to \c OutputIterator's \c value_type.
+        * \tparam UnaryFunction is a model of Unary Function which takes as input \c InputIterator's \c value_type and whose return type is convertible to \c BinaryFunction's \c input types.
+        * \tparam BinaryFunction is a model of Binary Function which takes as input two values convertible from \c UnaryFunction's \c return type and whose return type is convertible to \c OutputIterator's \c value_type.
         * \return result+(last-first).
         *
         * \code
-        * #include "bolt/cl/scan.h"
+        * #include "bolt/cl/transform_scan.h"
         * ...
         *
         * bolt::cl::square<int> sqInt;
@@ -139,7 +139,7 @@ namespace bolt
             typename OutputIterator,
             typename UnaryFunction,
             typename BinaryFunction>
-            OutputIterator
+        OutputIterator
         transform_inclusive_scan(
             bolt::cl::control &ctl,
             InputIterator first,
@@ -161,13 +161,13 @@ namespace bolt
         *
         * \tparam InputIterator is a model of Input Iterator.
         * \tparam OutputIterator is a model of Output Iterator.
-        * \tparam UnaryFunction is a model of Unary Function which takes as input \c InputIterator's \c value_type and whose return type is convertable to \c BinaryFunction's \c input types.
+        * \tparam UnaryFunction is a model of Unary Function which takes as input \c InputIterator's \c value_type and whose return type is convertible to \c BinaryFunction's \c input types.
         * \tparam T is convertible to \c OutputIterator's value_type.
-        * \tparam BinaryFunction is a model of Binary Function which takes as input two values convertable from \c UnaryFunction's \c return type and whose return type is convertable to \c OutputIterator's \c value_type.
+        * \tparam BinaryFunction is a model of Binary Function which takes as input two values convertible from \c UnaryFunction's \c return type and whose return type is convertible to \c OutputIterator's \c value_type.
         * \return result+(last-first).
         *
         * \code
-        * #include "bolt/cl/scan.h"
+        * #include "bolt/cl/transform_scan.h"
         * ...
         *
         * bolt::cl::square<int> sqInt;
@@ -194,7 +194,7 @@ namespace bolt
             typename UnaryFunction,
             typename T,
             typename BinaryFunction>
-            OutputIterator
+        OutputIterator
         transform_exclusive_scan(
             InputIterator first,
             InputIterator last,
@@ -217,13 +217,13 @@ namespace bolt
         *
         * \tparam InputIterator is a model of Input Iterator.
         * \tparam OutputIterator is a model of Output Iterator.
-        * \tparam UnaryFunction is a model of Unary Function which takes as input \c InputIterator's \c value_type and whose return type is convertable to \c BinaryFunction's \c input types.
+        * \tparam UnaryFunction is a model of Unary Function which takes as input \c InputIterator's \c value_type and whose return type is convertible to \c BinaryFunction's \c input types.
         * \tparam T is convertible to \c OutputIterator's value_type.
-        * \tparam BinaryFunction is a model of Binary Function which takes as input two values convertable from \c UnaryFunction's \c return type and whose return type is convertable to \c OutputIterator's \c value_type.
+        * \tparam BinaryFunction is a model of Binary Function which takes as input two values convertible from \c UnaryFunction's \c return type and whose return type is convertible to \c OutputIterator's \c value_type.
         * \return result+(last-first).
         *
         * \code
-        * #include "bolt/cl/scan.h"
+        * #include "bolt/cl/transform_scan.h"
         * ...
         *
         * bolt::cl::square<int> sqInt;
@@ -252,7 +252,7 @@ namespace bolt
             typename UnaryFunction,
             typename T,
             typename BinaryFunction>
-            OutputIterator
+        OutputIterator
         transform_exclusive_scan(
             bolt::cl::control &ctl,
             InputIterator first,

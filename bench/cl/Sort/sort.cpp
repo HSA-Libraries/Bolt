@@ -40,7 +40,7 @@ int main( int argc, char* argv[] )
     cl_uint userPlatform = 0;
     cl_uint userDevice = 0;
     size_t numLoops = 0;
-    size_t length = 0;
+    unsigned int length = 0;
     size_t algo = 1;
     bool print_clInfo = false;
 
@@ -53,7 +53,7 @@ int main( int argc, char* argv[] )
             ( "version,v",		"Print queryable version information from the Bolt AMP library" )
             ( "platform,p",     po::value< cl_uint >( &userPlatform )->default_value( 0 ),	"Specify the platform under test" )
             ( "device,d",       po::value< cl_uint >( &userDevice )->default_value( 0 ),	"Specify the device under test" )
-            ( "length,l",		po::value< size_t >( &length )->default_value( 4194304 ), "Specify the length of sort array" )
+            ( "length,l",		po::value< unsigned int >( &length )->default_value( 4194304 ), "Specify the length of sort array" )
             ( "profile,i",		po::value< size_t >( &numLoops )->default_value( 1 ), "Time and report Sort speed GB/s (default: profiling off)" )
 			( "algo,a",		    po::value< size_t >( &algo )->default_value( 1 ), "Algorithm used [1,2]  1:SORT_BOLT, 2:SORT_AMP_SHOC" )
             ;

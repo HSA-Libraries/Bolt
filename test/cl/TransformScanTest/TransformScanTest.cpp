@@ -584,6 +584,96 @@ TEST(Mixed, IncAddInt2)
     cmpArrays(refOutput, output);
 }
 
+TEST(SwitchDevices, IncAddInt2)
+{
+    //bolt::cl::control ctrl = bolt::cl::control::getDefault();
+    // print device 1
+    cl_int err;
+    std::string strDeviceName;
+    
+    //setup initial values
+    AddI2 aI2;
+    int length = (1<<16)+23;
+    uddtD4 initialD4 = {1.234, 2.345, 3.456, 4.567};
+    std::vector< uddtD4 > refInput( length, initialD4 );
+    std::vector< uddtI2 > refIntermediate( length, identityAddI2 );
+    std::vector< uddtI2 > refOutput( length, identityAddI2 );
+    ::std::transform(   refInput.begin(), refInput.end(),  refIntermediate.begin(), sD4I2); // transform in-place
+    ::std::partial_sum( refIntermediate.begin(), refIntermediate.end(), refOutput.begin(), aI2); // out-of-place scan
+
+    // for each device
+    ::cl::Context context(CL_DEVICE_TYPE_ALL);//bolt::cl::control::getDefault( ).context( ); // get context
+    std::vector< cl::Device > devices = context.getInfo< CL_CONTEXT_DEVICES >(); // get devices
+    for (int iter = 0; iter < 3; iter++)
+    for (int i = 0; i < devices.size(); i++) {
+        
+        // setup device/queue
+        ::cl::CommandQueue queue( context, devices.at( i ), CL_QUEUE_PROFILING_ENABLE); // select device; make queue
+        bolt::cl::control ctrl(queue);
+        //bolt::cl::control::getDefault().commandQueue(queue);
+        strDeviceName = ctrl.device( ).getInfo< CL_DEVICE_NAME >( &err );
+        bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_NAME > failed" );
+        std::cout << "Testing Device[" << i << "]: " << strDeviceName << std::endl;
+
+
+        // initialize device vectors
+        bolt::cl::device_vector< uddtD4 > input(  length, initialD4,     CL_MEM_READ_WRITE, true,  ctrl );
+        bolt::cl::device_vector< uddtI2 > output( length, identityAddI2, CL_MEM_READ_WRITE, false, ctrl );
+
+        // compute on device
+        bolt::cl::transform_inclusive_scan( ctrl, input.begin(), input.end(), output.begin(), sD4I2, aI2 );
+    
+        // compare results
+        cmpArrays(refOutput, output);
+    }
+
+}
+
+TEST(MultiCoreCPU, NegPlusInt)
+{
+    //bolt::cl::control ctrl = bolt::cl::control::getDefault();
+    // print device 1
+    cl_int err;
+    int deviceNum = 1;
+    std::string strDeviceName = bolt::cl::control::getDefault( ).device( ).getInfo< CL_DEVICE_NAME >( &err );
+    bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_NAME > failed" );
+    
+    //setup initial values
+    bolt::cl::negate<int> unary_op;
+    bolt::cl::plus<int> binary_op;
+    int length = (1<<16);
+    int init = -1;
+    int identity = 0;
+
+    // reference data
+    std::vector< int > refInput( length, init );
+    std::vector< int > refIntermediate( length, identity );
+    std::vector< int > refOutput( length, identity );
+
+    // perform reference CPU calculation
+    ::std::transform(   refInput.begin(), refInput.end(),  refIntermediate.begin(), unary_op); // transform in-place
+    ::std::partial_sum( refIntermediate.begin(), refIntermediate.end(), refOutput.begin(), binary_op); // out-of-place scan
+
+    // device data
+    std::vector< int > input( length, init);
+    std::vector< int > output( length, identity);
+    
+    // calculate on device
+    ::cl::Context context(CL_DEVICE_TYPE_ALL);//bolt::cl::control::getDefault( ).context( ); // get context
+    std::vector< cl::Device > devices = context.getInfo< CL_CONTEXT_DEVICES >(); // get devices
+    // setup device/queue
+    ::cl::CommandQueue queue( context, devices.at( deviceNum ), CL_QUEUE_PROFILING_ENABLE); // select device; make queue
+    bolt::cl::control ctrl(queue);
+    //bolt::cl::control::getDefault().commandQueue(queue);
+    strDeviceName = ctrl.device( ).getInfo< CL_DEVICE_NAME >( &err );
+    bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_NAME > failed" );
+    std::cout << "Testing Device[" << deviceNum << "]: " << strDeviceName << std::endl;
+    bolt::cl::transform_inclusive_scan( ctrl, input.begin(), input.end(), output.begin(), unary_op, binary_op );
+    
+
+    // compare results
+    cmpArrays(refOutput, output);
+}
 
 int _tmain(int argc, _TCHAR* argv[])
 {

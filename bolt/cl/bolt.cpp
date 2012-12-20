@@ -47,6 +47,10 @@ namespace bolt {
         patch	= BoltVersionPatch;
     }
 
+    // for printing errors
+    std::string hr = "###############################################################################";
+    std::string es = "ERROR: ";
+
     std::string clErrorStringA( const cl_int& status )
     {
         switch( status )
@@ -398,24 +402,6 @@ namespace bolt {
         return ::cl::Kernel(mainProgram, kernelName.c_str());
     }
 
-    void constructAndCompile(::cl::Kernel *masterKernel, const std::string &apiName, const std::string instantiationString, std::string userCode, std::string valueTypeName,  std::string functorTypeName, const control &c) 
-    {
-        std::string templateFunctionString = bolt::cl::fileToString( apiName + "_kernels.cl"); 
-
-        std::string codeStr = userCode + "\n\n" + templateFunctionString +   instantiationString;
-
-        std::string compileOptions = "";
-        if (c.debug() & control::debug::SaveCompilerTemps) {
-            compileOptions += "-save-temps=BOLT";
-        }
-
-        if (c.debug() & control::debug::Compile) {
-            std::cout << "debug: compiling algorithm: '" << apiName << "' with valueType='" << valueTypeName << "'" << " ;  functorType='" << functorTypeName << "'" << std::endl;
-        }
-
-        *masterKernel = bolt::cl::compileFunctor(codeStr, apiName + "Instantiated", compileOptions, c);
-    };
-
     ::cl::Program buildProgram( const std::string& kernelCodeString, std::string compileOptions, const control& ctl )
     {
         if( ctl.debug() & control::debug::ShowCode )
@@ -475,43 +461,9 @@ namespace bolt {
         return mainProgram;
     }
 
-    void compileKernels( std::vector< ::cl::Kernel >& clKernels, 
-            const std::vector< const std::string >& kernelNames, 
-            const std::string& fileName,
-            const std::string& instantiationString,
-            const std::string& userCode,
-            const std::string& valueTypeName,
-            const std::string& functorTypeName,
-            const control& ctl )
-    {
-
-        //FIXME, when this becomes more stable move the kernel code to a string in bolt.cpp
-        // Note unfortunate dependency here on relative file path of run directory and location of bolt::cl dir.
-        std::string templateFunctionString = bolt::cl::fileToString( fileName + "_kernels.cl"); 
-
-        std::string codeStr = templateFunctionString + "\n\n" + userCode + "\n\n" + instantiationString;
-
-        std::string compileOptions = "";
-        if( ctl.debug() & control::debug::SaveCompilerTemps )
-        {
-            compileOptions += "-save-temps=BOLT";
-        }
-
-        if( ctl.debug() & control::debug::Compile )
-        {
-            std::cout << "debug: compiling algorithm: '" << fileName << "' with valueType='" << valueTypeName << "'" << " ;  functorType='" << functorTypeName << "'" << std::endl;
-        }
-
-        ::cl::Program clProgram = buildProgram( codeStr, compileOptions, ctl );
-
-        for( size_t k = 0; k < kernelNames.size( ); ++k )
-        {
-            std::string kernelName = kernelNames[ k ] + "Instantiated";
-            clKernels.push_back( ::cl::Kernel( clProgram, kernelName.c_str( ) ) );
-        }
-    };
-
-    void compileKernelsString( std::vector< ::cl::Kernel >& clKernels, 
+    // deprecated
+    void compileKernelsString(
+            std::vector< ::cl::Kernel >& clKernels, 
             const std::vector< const std::string >& kernelNames, 
             //const boltKernel& clKernel,
             const std::string& clKernel, 
@@ -549,6 +501,7 @@ namespace bolt {
 
     };
 
+    // deprecated
     void constructAndCompileString( ::cl::Kernel *masterKernel, 
             const std::string& kernelName, 
             //const boltKernel& clKernel, 
@@ -593,6 +546,201 @@ namespace bolt {
         }
     };
 
+    /**************************************************************************
+     * Compile Kernel from primitive information
+     *************************************************************************/
+    void printKernels(
+        const ::std::vector<::std::string>& kernelNames,
+        const ::std::string& completeKernelString,
+        const ::std::string& compileOptions)
+    {
+        std::cout << hr << std::endl;
+        std::cout << "Kernel Names:" << std::endl;
+        std::cout << hr << std::endl;
+        std::for_each(kernelNames.begin(), kernelNames.end(), [&](const std::string& name) {
+            std::cout << name << std::endl;
+        });
+        std::cout << hr << std::endl;
+        std::cout << "Kernel String:" << std::endl;
+        std::cout << hr << std::endl;
+        std::cout << completeKernelString << std::endl;
+        std::cout << hr << std::endl;
+        std::cout << "Kernel Compile Options:" << std::endl;
+        std::cout << hr << std::endl;
+        std::cout << compileOptions << std::endl;
+        std::cout << hr << std::endl;
+    }
+
+    /**************************************************************************
+    * getKernels
+    * - concatenates input strings into complete kernel string to be compiled
+    * - takes into account control
+    * - requests program/kernel from ProgramMap
+    **************************************************************************/
+    ::std::vector<::cl::Kernel> getKernels(
+        const control&      ctl,
+        const std::vector<std::string>& typeNames,
+        const KernelTemplateSpecializer * const kts,
+        const std::vector<std::string>& typeDefinitions,
+        const std::string&  kernelString,
+        const std::string&  options )
+    {
+        std::string completeKernelString;
+
+        // (1) raw kernel
+        completeKernelString += "\n// Raw Kernel\n\n" + kernelString;
+
+        // (2) type definitions
+        completeKernelString += "\n// Type Definitions\n";
+        for (int i = 0; i < typeDefinitions.size(); i++)
+        {
+            completeKernelString += "\n" + typeDefinitions[i] + "\n";
+        }
+
+        // (3) template specialization
+        std::string templateSpecialization = (*kts)(typeNames);
+        completeKernelString += "\n// Kernel Template Specialization\n" + templateSpecialization;
+
+        // compile options
+        std::string compileOptions = options;
+        compileOptions += ctl.compileOptions( );
+        compileOptions += " -x clc++ ";
+        if (ctl.debug() & control::debug::SaveCompilerTemps) {
+            compileOptions += " -save-temps=BOLT ";
+        }
+        if (ctl.debug() & control::debug::Compile) {
+            printKernels(kts->getKernelNames(), completeKernelString, compileOptions);
+        }
+
+        // request program from program cache (ProgramMap)
+        ::cl::Program program = acquireProgram(
+            ctl.context(),
+            ctl.device(),
+            compileOptions,
+            completeKernelString);
+
+        
+        // retrieve kernels from program
+        //std::cout << "Getting " << kts->numKernels() << " from program." << std::endl;
+        ::std::vector<::cl::Kernel> kernels;
+        for (int i = 0; i < kts->numKernels() ; i++)
+        {
+            ::std::string name = kts->name(i);
+            name += "Instantiated";
+            try
+            {
+                cl_int l_err;
+                ::cl::Kernel kernel(
+                    program,
+                    name.c_str(),
+                    &l_err);
+                V_OPENCL( l_err, "Kernel::constructor() failed" );
+                kernels.push_back(kernel);
+            }
+            catch( const ::cl::Error& e)
+            {
+                std::cerr << hr << std::endl;
+                std::cerr << es << "::cl::Kernel() in bolt::cl::acquireKernels()" << std::endl;
+                std::cerr << es << "Error Code:   " << clErrorStringA(e.err()) << " (" << e.err() << ")" << std::endl;
+                std::cerr << es << "File:         " << __FILE__ << ", line " << __LINE__ << std::endl;
+                std::cerr << es << "Error String: " << e.what() << std::endl;
+                std::cerr << hr << std::endl;
+            }
+        }
+            
+        return kernels;
+    }
+
+    /**************************************************************************
+     * aquireKernels
+     * - returns kernels from ProgramMap if exist
+     * - otherwise compiles program/kernels, adds to map, then returns
+     *************************************************************************/
+    ::cl::Program acquireProgram(
+        const ::cl::Context& context,
+        const ::cl::Device&  device,
+        const ::std::string& options,
+        const ::std::string& source)
+    {
+        // only one threads get to seach and retrieve-or-compile at a time
+        boost::lock_guard< boost::mutex > lock( ::bolt::cl::programMapMutex ); // unlocks upon return
+        cl_int l_err;
+
+        // Does Program already exist?
+        std::string deviceStr = device.getInfo< CL_DEVICE_NAME >( );
+        deviceStr += "; " + device.getInfo< CL_DEVICE_VERSION >( );
+        deviceStr += "; " + device.getInfo< CL_DEVICE_VENDOR >( );
+        ProgramMapKey key = {context, deviceStr, options, source};
+        ProgramMap::iterator iter = programMap.find( key );
+        ::cl::Program program;
+
+        // map does not yet contain desired program
+        if( iter == programMap.end( ) ) 
+        {
+            program = ::bolt::cl::compileProgram(context, device, options, source, &l_err);
+            V_OPENCL( l_err, "bolt::cl::compileProgram() failed" );
+            ProgramMapValue value = { program };
+            programMap.insert( std::make_pair( key, value ) );
+        }
+        else // map already contains desired kernel
+        {
+            program = iter->second.program;
+        }
+        return program;
+    } // aquireProgram
+
+    /**************************************************************************
+    * compileProgram
+    * - compiles OpenCL kernel string and returns Program object
+    **************************************************************************/
+    ::cl::Program compileProgram(
+        const ::cl::Context& context,
+        const ::cl::Device&  device,
+        const ::std::string& options,
+        const ::std::string& source,
+        cl_int * err )
+    {
+        cl_int l_err;
+        ::cl::Program program(context, source, false, &l_err);
+        V_OPENCL( l_err, "Program::constructor() failed" );
+        if (err != NULL) *err = l_err;
+        try
+        {
+            std::vector<::cl::Device> devices;
+            devices.push_back(device);
+            l_err = program.build(devices, options.c_str());
+            V_OPENCL( l_err, "Program::build() failed" );
+            if (err != NULL) *err = l_err;
+        } catch(::cl::Error e) {
+            std::cerr << hr << std::endl;
+            std::cerr << es << "::cl::Program::build() in bolt::cl::compileProgram() failed." << std::endl;
+            std::cerr << es << "Error Code:   " << clErrorStringA(e.err()) << "(" << e.err() << ")" << std::endl;
+            std::cerr << es << "File:         " << __FILE__ << ", line " << __LINE__ << std::endl;
+            std::cerr << es << "Error String: " << e.what() << std::endl;
+            std::cerr << es << "Device:       " << device.getInfo<CL_DEVICE_NAME>() << "_"
+                << device.getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>() << "cu_"
+                << device.getInfo<CL_DEVICE_MAX_CLOCK_FREQUENCY>() << "MHz" << std::endl;
+            std::cerr << es << "Status:       " << program.getBuildInfo<CL_PROGRAM_BUILD_STATUS>(device) << std::endl;
+            std::cerr << es << "Options:      " << program.getBuildInfo<CL_PROGRAM_BUILD_OPTIONS>(device) << std::endl;
+            std::cerr << es << "Compile Log:"   << std::endl;
+            std::cerr << program.getBuildInfo<CL_PROGRAM_BUILD_LOG>(device) << std::endl;
+            std::cerr << "[END COMPILE LOG]" << std::endl;
+            std::cerr << hr << std::endl;
+            std::cerr << es << "Kernel String:" << std::endl;
+            std::cerr << source << std::endl;
+            std::cerr << "[END KERNEL STRING]" << std::endl;
+            std::cerr << hr << std::endl;
+            if (err != NULL) *err = l_err;
+            //throw;
+        } // catch
+        return program;
+    } // compileProgram
+
+
+        // externed in bolt.h
+        boost::mutex programMapMutex;
+        ProgramMap programMap;
+        
+
     }; //namespace bolt::cl
 }; // namespace bolt
-
