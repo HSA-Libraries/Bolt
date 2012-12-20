@@ -17,7 +17,7 @@
 
 #include <bolt/cl/device_vector.h>
 #include <bolt/cl/reduce.h>
-
+#include <bolt/cl/control.h>
 #include <numeric>
 #include "common/myocl.h"
 
@@ -33,6 +33,31 @@ void testDeviceVector()
     };
 
     int hSum = std::accumulate(hA.begin(), hA.end(), 0);
-
     int sum = bolt::cl::reduce(dA.begin(), dA.end(), 0);
+    
+};
+
+
+void testTBB()
+{
+    const int aSize = 1000;
+    std::vector<int> stdInput(aSize);
+    std::vector<int> tbbInput(aSize);
+
+
+    for(int i=0; i<aSize; i++) {
+        stdInput[i] = i;
+        tbbInput[i] = i;
+    };
+
+    int hSum = std::accumulate(stdInput.begin(), stdInput.end(), 0);
+    bolt::cl::control ctl = bolt::cl::control::getDefault();
+    ctl.forceRunMode(bolt::cl::control::MultiCoreCpu);
+    int sum = bolt::cl::reduce(ctl, tbbInput.begin(), tbbInput.end(), 0);
+    if(hSum == sum)
+        printf ("\nTBB Test case PASSED\n");
+    else
+        printf ("\nTBB Test case FALIED\n");
+
+
 };

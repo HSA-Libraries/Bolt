@@ -23,7 +23,7 @@ set( clBolt.Test.Reduce.Headers stdafx.h ${BOLT_CL_TEST_DIR}/common/myocl.h targ
 set( clBolt.Test.Reduce.Files ${clBolt.Test.Reduce.Source} ${clBolt.Test.Reduce.Headers} )
 
 add_executable( clBolt.Test.Reduce ${clBolt.Test.Reduce.Files} )
-target_link_libraries( clBolt.Test.Reduce clBolt.Runtime ${OPENCL_LIBRARIES} ${GTEST_LIBRARIES} ${Boost_LIBRARIES} )
+target_link_libraries( clBolt.Test.Reduce clBolt.Runtime ${OPENCL_LIBRARIES} ${GTEST_LIBRARIES} ${Boost_LIBRARIES} $(TBBROOT)/lib/intel64/vc11/tbb_debug.lib )
 
 set_target_properties( clBolt.Test.Reduce PROPERTIES VERSION ${Bolt_VERSION} )
 set_target_properties( clBolt.Test.Reduce PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
