@@ -24,6 +24,7 @@ set( Boost_DETAILED_FAILURE_MSG   ON )
 
 # Set the test folder directory. This is common to cl and amp. 
 set( BOLT_AMP_TEST_DIR ${BOLT_TEST_DIR}/amp )
+set( BOLT_CL_TEST_DIR ${BOLT_TEST_DIR}/cl )
 
 # set( Boost_DEBUG ON )
 
@@ -41,8 +42,10 @@ include_directories( ${Boost_INCLUDE_DIRS} )
 
 # Include standard OpenCL headers
 include_directories( ${BOLT_AMP_TEST_DIR} ) 
+include_directories( ${BOLT_CL_TEST_DIR} )
 
 add_subdirectory( reduce )
 add_subdirectory( scan )
 add_subdirectory( transform )	
 add_subdirectory( transform_reduce )
+add_subdirectory( device_vector )
