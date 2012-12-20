@@ -164,19 +164,20 @@ BOLT_FUNCTOR(uddtM3,
 struct uddtM3
 {
     int a;
-    float        b;
+    int        b;
     double       c;
 
     bool operator==(const uddtM3& rhs) const
     {
         bool equal = true;
-        double ths = 0.00001;
-        double thd = 0.0000000001;
+        double ths = 0.0001;
+        double thd = 0.000000001;
         equal = ( a == rhs.a ) ? equal : false;
-        if (rhs.b < ths && rhs.b > -ths)
-            equal = ( (1.0*b - rhs.b) < ths && (1.0*b - rhs.b) > -ths) ? equal : false;
-        else
-            equal = ( (1.0*b - rhs.b)/rhs.b < ths && (1.0*b - rhs.b)/rhs.b > -ths) ? equal : false;
+        equal = ( b == rhs.b ) ? equal : false;
+        //if (rhs.b < ths && rhs.b > -ths)
+        //    equal = ( (1.0*b - rhs.b) < ths && (1.0*b - rhs.b) > -ths) ? equal : false;
+        //else
+        //    equal = ( (1.0*b - rhs.b)/rhs.b < ths && (1.0*b - rhs.b)/rhs.b > -ths) ? equal : false;
         if (rhs.c < thd && rhs.c > -thd)
             equal = ( (1.0*c - rhs.c) < thd && (1.0*c - rhs.c) > -thd) ? equal : false;
         else
@@ -214,8 +215,8 @@ struct MixM3
     };
 }; 
 );
-uddtM3 identityMixM3 = { 0, 0.f, 1.0 };
-uddtM3 initialMixM3  = { 2, 3, 1.0001 };
+uddtM3 identityMixM3 = { 0, 0, 1.0 };
+uddtM3 initialMixM3  = { 2, 1, 1.000001 };
 
 BOLT_FUNCTOR(uddtM2,
 struct uddtM2
@@ -367,7 +368,7 @@ gold_scan_by_key(
     return result;
 }
 
-TEST(InclusiveScanByKey, IncMixedM3)
+TEST(InclusiveScanByKey, IncMixedM3increment)
 {
     //setup keys
     int length = (1<<24);
@@ -388,6 +389,102 @@ TEST(InclusiveScanByKey, IncMixedM3)
         
         keys[i] = key;
         segmentIndex++;
+    }
+
+    // input and output vectors for device and reference
+    std::vector< uddtM3 > input(  length, initialMixM3 );
+    std::vector< uddtM3 > output( length, identityMixM3 );
+    std::vector< uddtM3 > refInput( length, initialMixM3 );
+    std::vector< uddtM3 > refOutput( length );
+
+    // call scan
+    MixM3 mM3;
+    uddtM2_equal_to eq;
+    bolt::cl::inclusive_scan_by_key( keys.begin(), keys.end(), input.begin(), output.begin(), eq, mM3);
+    gold_scan_by_key(keys.begin(), keys.end(), refInput.begin(), refOutput.begin(), mM3);
+
+#if 0
+    // print Bolt scan_by_key
+    for (int i = 0; i < length; i++)
+    {
+        if ( !(output[i] == refOutput[i]) ) {
+        std::cout << "BOLT: i=" << i << ", ";
+        std::cout << "key={" << keys[i].a << ", " << keys[i].b << "}; ";
+        std::cout << "val={" << input[i].a << ", " << input[i].b << ", " << input[i].c << "}; ";
+        std::cout << "out={" << output[i].a << ", " << output[i].b << ", " << output[i].c << "};" << std::endl;
+    
+        std::cout << "GOLD: i=" << i << ", ";
+        std::cout << "key={" << keys[i].a << ", " << keys[i].b << "}; ";
+        std::cout << "val={" << refInput[i].a << ", " << refInput[i].b << ", " << refInput[i].c << "}; ";
+        std::cout << "out={" << refOutput[i].a << ", " << refOutput[i].b << ", " << refOutput[i].c << "};" << std::endl;
+        }
+    }
+#endif
+
+    // compare results
+    cmpArrays(refOutput, output);
+}
+
+TEST(InclusiveScanByKey, IncMixedM3same)
+{
+    //setup keys
+    int length = (1<<24);
+    uddtM2 key = {1, 2.3f};
+    std::vector< uddtM2 > keys( length, key);
+
+    // input and output vectors for device and reference
+    std::vector< uddtM3 > input(  length, initialMixM3 );
+    std::vector< uddtM3 > output( length, identityMixM3 );
+    std::vector< uddtM3 > refInput( length, initialMixM3 );
+    std::vector< uddtM3 > refOutput( length );
+
+    // call scan
+    MixM3 mM3;
+    uddtM2_equal_to eq;
+    bolt::cl::inclusive_scan_by_key( keys.begin(), keys.end(), input.begin(), output.begin(), eq, mM3);
+    gold_scan_by_key(keys.begin(), keys.end(), refInput.begin(), refOutput.begin(), mM3);
+
+#if 0
+    std::cout.setf(std::ios_base::scientific);
+    std::cout.precision(15);
+    // print Bolt scan_by_key
+    for (int i = 0; i < length; i++)
+    {
+        if ( !(output[i] == refOutput[i]) ) {
+        std::cout.precision(3);
+        std::cout << "BOLT: i=" << i << ", ";
+        std::cout << "key={" << keys[i].a << ", " << keys[i].b << "}; ";
+        std::cout << "val={" << input[i].a << ", " << input[i].b << ", " << input[i].c << "}; ";
+        std::cout.precision(15);
+        std::cout << "out={" << output[i].a << ", " << output[i].b << ", " << output[i].c << "};" << std::endl;
+    
+        std::cout << "GOLD: i=" << i << ", ";
+        std::cout.precision(3);
+        std::cout << "key={" << keys[i].a << ", " << keys[i].b << "}; ";
+        std::cout << "val={" << refInput[i].a << ", " << refInput[i].b << ", " << refInput[i].c << "}; ";
+        std::cout.precision(15);
+        std::cout << "out={" << refOutput[i].a << ", " << refOutput[i].b << ", " << refOutput[i].c << "};" << std::endl;
+        }
+    }
+#endif
+
+    // compare results
+    cmpArrays(refOutput, output);
+}
+
+TEST(InclusiveScanByKey, IncMixedM3each)
+{
+    //setup keys
+    int length = (1<<24);
+    std::vector< uddtM2 > keys( length, identityMixM2);
+    // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
+    int segmentLength = 0;
+    int segmentIndex = 0;
+    uddtM2 key = identityMixM2;
+    for (int i = 0; i < length; i++)
+    {
+        ++key;
+        keys[i] = key;
     }
 
     // input and output vectors for device and reference
