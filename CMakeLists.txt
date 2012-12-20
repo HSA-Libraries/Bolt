@@ -28,10 +28,23 @@ cmake_minimum_required( VERSION 2.8.3 )
 project( Bolt )
 
 # Define a version for the code
-set( Bolt_VERSION_MAJOR 0 )
-set( Bolt_VERSION_MINOR 5 )
-set( Bolt_VERSION_PATCH 0 )
+if( NOT DEFINED Bolt_VERSION_MAJOR )
+	set( Bolt_VERSION_MAJOR 0 )
+endif( )
+
+if( NOT DEFINED Bolt_VERSION_MINOR )
+	set( Bolt_VERSION_MINOR 5 )
+endif( )
+
+if( NOT DEFINED Bolt_VERSION_PATCH )
+	set( Bolt_VERSION_PATCH 0 )
+endif( )
+
 set( Bolt_VERSION "${Bolt_VERSION_MAJOR}.${Bolt_VERSION_MINOR}.${Bolt_VERSION_PATCH}")
+
+message( STATUS "Bolt_VERSION_MAJOR=${Bolt_VERSION_MAJOR}" )
+message( STATUS "Bolt_VERSION_MINOR=${Bolt_VERSION_MINOR}" )
+message( STATUS "Bolt_VERSION_PATCH=${Bolt_VERSION_PATCH}" )
     
 list( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR} )
 set( BOLT_LIBRARY_DIR ${PROJECT_SOURCE_DIR}/bolt )
