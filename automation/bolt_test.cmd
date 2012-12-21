@@ -1,135 +1,92 @@
 @echo off
+REM ################################################################################################
+REM # Master Bolt Build Script
+REM ################################################################################################
+set HR=###############################################################################
+set testStartTime=%time%
 
-rem ################################################################################################
-REM	# Master Bolt Build Script
-rem ################################################################################################
+REM ################################################################################################
+REM # File Paths
+set BOLT_BUILD_INSTALL_PATH=C:\GitRoot\BoltBuilds\VS11Win64.SuperBuild
+set BOLT_TEST_BIN_PATH=%BOLT_BUILD_INSTALL_PATH%\Bolt-build\Staging\Debug
+set BOLT_TEST_RESULTS_PATH=C:\GitRoot\BoltBuilds\VS11Win64.Test
+set BOLT_TEST_BATCH_NAME=Bolt.Test
 
-set BUILD_NAME="Build.Win64.VS11.123456789"
 
-rem ################################################################################################
-rem Set the ROOT directory if not already set
-if "%DEVROOT%"=="" set DEVROOT=%CD%
-echo Info: DEVROOT=%DEVROOT%
-echo Info: BUILD_NAME=%BUILD_NAME%
-echo Info: Computer Name: %COMPUTERNAME%
+REM ################################################################################################
+REM # Default test parameters
+set BOLT_TEST_FILE_FILTER_STRING=*.Test.*.exe
 
-rem ################################################################################################
-rem Read command line parameters
-set BUILD_PLATFORM=x64
-set BUILD_TOOLS=vs11
-set BUILD_ACML=OFF
+REM ################################################################################################
+REM # Read command line parameters
+:Loop
+  IF [%1]==[] GOTO Continue
 
-for %%A in (%*) do (
-	if /i "%%A"=="-vs10" (
-		set BUILD_TOOLS=vs10
-	)
-	if /i "%%A"=="-h" (
-		goto :print_help
-	)
-	if /i "%%A"=="-help" (
-		goto :print_help
-	)
-	if /i "%%A"=="--help" (
-		goto :print_help
-	)
+  if /i "%1"=="-h" (
+    goto :print_help
+  )
+  if /i "%1"=="--bin-path" (
+    set BOLT_TEST_BIN_PATH=%2
+    SHIFT
+  )
+  if /i "%1"=="--results-path" (
+    set BOLT_TEST_RESULTS_PATH=%2
+    SHIFT
+  )
+  if /i "%1"=="--test-name" (
+    set BOLT_TEST_BATCH_NAME=%2
+    SHIFT
+  )
+  if /i "%1"=="--files" (
+    set BOLT_TEST_FILE_FILTER_STRING=%2
+    SHIFT
+  )
+SHIFT
+GOTO Loop
+:Continue
+
+
+REM ################################################################################################
+REM # Move to Bin Directory and Run Tests
+REM ################################################################################################
+pushd %BOLT_TEST_BIN_PATH%
+
+for %%f in (%BOLT_TEST_FILE_FILTER_STRING%) do (
+  set TestFile=%%~nxf
+  echo.
+  echo %HR%
+  echo Testing: %TestFile%
+  REM set COMMAND_STRING="%%f --gtest_output="xml:%BOLT_TEST_RESULTS_PATH%\%BOLT_TEST_BATCH_NAME%_%TestFile%_.xml"
+  REM echo %COMMAND_STRING%
+  call %%f --gtest_output="xml:%BOLT_TEST_RESULTS_PATH%\%BOLT_TEST_BATCH_NAME%_%TestFile%_.xml" > %BOLT_TEST_RESULTS_PATH%\%BOLT_TEST_BATCH_NAME%_%TestFile%_.log 2>&1
 )
 
-rem ################################################################################################
-rem Load compiler environment; we prefer VS2012 and then VS2010
-if "%BUILD_TOOLS%" == "vs10" ( 
-	if not "%VS100COMNTOOLS%" == "" (
-		set VCVARSALL="%VS100COMNTOOLS%..\..\VC\vcvarsall.bat"
-	) else (
-		goto :error_no_VSCOMNTOOLS
-	)
-) else (
-	if "%BUILD_TOOLS%" == "vs11" ( 
-		if not "%VS110COMNTOOLS%" == "" ( 
-			set VCVARSALL="%VS110COMNTOOLS%..\..\VC\vcvarsall.bat"
-		) else (
-			goto :error_no_VSCOMNTOOLS
-		)
-	)
-)
 
-rem ### this call permanently lengthens PATH, which eventually causes an error
-if "%BUILD_PLATFORM%" == "x64" ( 
-	echo Info: vcvarsall.bat = %VCVARSALL% x86_amd64
-	call %VCVARSALL% x86_amd64
-) else (
-	echo Info: vcvarsall.bat = %VCVARSALL% x86
-	call %VCVARSALL% x86
-)
-echo Info: Done setting up Visual Studio environment variables.
+REM ################################################################################################
+REM # End
+REM ################################################################################################
+goto :Done
 
-rem Echo a blank line into a file called success; the existence of success determines whether we built successfully
-echo. > %DevRoot%\success
 
-rem ################################################################################################
-rem # Start of build logic here
-rem ################################################################################################
-
-rem Generate the build environment for vs11
-if "%BUILD_TOOLS%" == "vs11" (
-
-rem ################################################################################################
-rem Make Directory
-mkdir %BUILD_NAME%
-pushd %BUILD_NAME%
-	
-rem ################################################################################################
-rem Cmake
-"C:\Program Files (x86)\CMake 2.8\bin\cmake.exe" -G "Visual Studio 11 Win64" -D CMAKE_BUILD_TYPE=Release ../Bolt/superbuild
-	if errorlevel 1 (
-		echo Cmake failed to generate release build files for "Visual Studio 11 Win64"
-		del /Q /F %DevRoot%\success
-	  popd
-		goto :eof
-	)
-
-rem ################################################################################################
-rem SuperBuild
-	MSBuild.exe ALL_BUILD.vcxproj /m /fl /flp1:logfile=errors.log;errorsonly /flp2:logfile=warnings.log;warningsonly /flp3:logfile=build.log /p:Configuration=Release /p:PlatformToolset=v110 /p:Platform="x64" /t:rebuild	
-	if errorlevel 1 (
-		echo Release SuperBuild of vs11 "Release|x64" failed
-		del /Q /F %DevRoot%\success
-	  popd
-		goto :eof
-	)
-
-rem ################################################################################################
-rem BoltBuild
-pushd Bolt-build
-	MSBuild.exe ALL_BUILD.vcxproj /m /fl /flp1:logfile=errors.log;errorsonly /flp2:logfile=warnings.log;warningsonly /flp3:logfile=build.log /p:Configuration=Release /p:PlatformToolset=v110 /p:Platform="x64" /t:rebuild	
-	if errorlevel 1 (
-		echo Release BoltBuild of vs11 "Release|x64" failed
-		del /Q /F %DevRoot%\success
-	popd
-		goto :eof
-	)
-
-	popd
-	popd
-)
-
-goto :eof
-rem ################################################################################################
-rem # End
-rem ################################################################################################
-
-rem ################################################################################################
-:error_no_VSCOMNTOOLS
-echo ERROR: Cannot determine the location of the VS Common Tools folder. (%VS100COMNTOOLS% or %VS110COMNTOOLS%)
-if exist %DevRoot%\success del /Q /F %DevRoot%\success
-goto :eof
-
-rem ################################################################################################
+REM ################################################################################################
+REM Print Help
 :print_help
-echo Build script for Amd.clFFT project
+echo Build script for Bolt
 echo Command line options: 
+echo -h     ) Print help
 echo -debug ) Create and package a debug build of Amd.clFFT with debug files
-echo -win32 ) Build a 32bit version of Amd.clFFT (default: 64bit)
-echo -vs9 ) Build Amd.clFFT with vs9 even if vs10 is available
-echo -help,h ) Print out this documentation
-if exist %DevRoot%\success del /Q /F %DevRoot%\success
+echo -Win32 ) Build a 32bit (default: 64bit)
+echo -VS10  ) Build with VS10 (default: VS11)
+if exist %BOLT_BUILD_PATH%\success del /Q /F %BOLT_BUILD_PATH%\success
+goto :Done
+
+
+REM ################################################################################################
+REM Done, Clean up
+:Done
+popd
+echo.
+echo %HR%
+echo "Done. StartTime={%testStartTime%} StopTime={%time%}"
+echo %HR%
 goto :eof
