@@ -255,7 +255,7 @@ template<
     typename BinaryFunction>
 OutputIterator
 inclusive_scan_by_key(
-    bolt::cl::control &ctl,
+    control &ctl,
     InputIterator1  first1,
     InputIterator1  last1,
     InputIterator2  first2,
@@ -312,7 +312,7 @@ template<
     typename BinaryPredicate>
 OutputIterator
 inclusive_scan_by_key(
-    bolt::cl::control &ctl,
+    control &ctl,
     InputIterator1  first1,
     InputIterator1  last1,
     InputIterator2  first2,
@@ -364,7 +364,7 @@ template<
     typename OutputIterator>
 OutputIterator
 inclusive_scan_by_key(
-    bolt::cl::control &ctl,
+    control &ctl,
     InputIterator1  first1,
     InputIterator1  last1,
     InputIterator2  first2,
@@ -651,7 +651,7 @@ template<
     typename BinaryFunction>
 OutputIterator
 exclusive_scan_by_key(
-    bolt::cl::control &ctl,
+    control &ctl,
     InputIterator1  first1,
     InputIterator1  last1,
     InputIterator2  first2,
@@ -712,7 +712,7 @@ template<
     typename BinaryPredicate>
 OutputIterator
 exclusive_scan_by_key(
-    bolt::cl::control &ctl,
+    control &ctl,
     InputIterator1  first1,
     InputIterator1  last1,
     InputIterator2  first2,
@@ -768,7 +768,7 @@ template<
     typename T>
 OutputIterator
 exclusive_scan_by_key(
-    bolt::cl::control &ctl,
+    control &ctl,
     InputIterator1  first1,
     InputIterator1  last1,
     InputIterator2  first2,
@@ -820,7 +820,7 @@ template<
     typename OutputIterator>
 OutputIterator
 exclusive_scan_by_key(
-    bolt::cl::control &ctl,
+    control &ctl,
     InputIterator1  first1,
     InputIterator1  last1,
     InputIterator2  first2,

@@ -25,6 +25,7 @@
 #include <bolt/cl/copy.h>
 #include <bolt/cl/functional.h>
 #include <bolt/miniDump.h>
+#include <bolt/cl/device_vector.h>
 
 #include <gtest/gtest.h>
 #include <boost/shared_array.hpp>
@@ -324,6 +325,82 @@ TEST(CopyN, StdStruct)
         cmpArrays(source, destination, length);
     }
 }
+
+TEST (copyArrWithDiffTypes, IntAndFloats){
+   	int arraySize = 100;
+   		
+   	int* sourceArr1; 
+   	float *sourceFloatArr1;
+   	double *sourceDoubleArr1;
+   	
+   	int* destArr1; 
+   	float *destFloatArr1;
+   	double *destDoubleArr1;
+   	
+   	sourceArr1 = (int *) malloc (arraySize* sizeof (int));
+   	destArr1= (int *) malloc (arraySize * sizeof (int));
+   
+   	sourceFloatArr1 = (float*) malloc (arraySize* sizeof (float));
+   	destFloatArr1	= (float *) malloc (arraySize * sizeof(float));
+   
+   	sourceDoubleArr1 = (double *) malloc (arraySize * sizeof(double));
+   	destDoubleArr1 = (double *) malloc (arraySize * sizeof(double));
+   
+   
+   	for (int i = 0; i < arraySize; i++){
+   		sourceArr1[i] = 56535 - i;
+   	}
+   
+   	for (int i = 0; i < arraySize ; i++){
+   		sourceFloatArr1[i] = ( float )i  + 0.125f;
+   	}
+   	for (int i = 0; i < arraySize ; i++){
+   		sourceDoubleArr1[i] = ( double )i  + 0.0009765625;
+   	}
+   
+   	//using bolt::cl::control
+   
+   	bolt::cl::control useThisControl = bolt::cl::control::getDefault();
+   	
+   	//copying int array as a whole to all there types of arrays :)
+   	bolt::cl::copy(useThisControl, sourceArr1, sourceArr1 + arraySize, destArr1);                   //no prob
+    //cmpArrays(sourceArr1, destArr1, arraySize);
+   	bolt::cl::copy(useThisControl, sourceArr1, sourceArr1 + arraySize, destFloatArr1);				//no prob
+    //cmpArrays(sourceArr1, destFloatArr1, arraySize);
+   	bolt::cl::copy(useThisControl, sourceArr1, sourceArr1 + arraySize, destDoubleArr1);				//no prob
+    //cmpArrays(sourceArr1, destDoubleArr1, arraySize);
+   
+   	//copying float array as a whole to all there types of arrays :)
+   	bolt::cl::copy(useThisControl, sourceFloatArr1, sourceFloatArr1 + arraySize, destArr1);			//data loss
+   	bolt::cl::copy(useThisControl, sourceFloatArr1, sourceFloatArr1 + arraySize, destFloatArr1);    //no prob
+   	bolt::cl::copy(useThisControl, sourceFloatArr1, sourceFloatArr1 + arraySize, destDoubleArr1);   //no prob
+   
+   	//copying double array as a whole to all there types of arrays :)
+   	bolt::cl::copy(useThisControl, sourceDoubleArr1, sourceDoubleArr1 + arraySize, destArr1);		 //data loss
+   	bolt::cl::copy(useThisControl, sourceDoubleArr1, sourceDoubleArr1 + arraySize, destFloatArr1);   //data loss
+   	bolt::cl::copy(useThisControl, sourceDoubleArr1, sourceDoubleArr1 + arraySize, destDoubleArr1);  //no prob
+   }
+
+TEST (copyIntBoltCLDevVect, withIntAsWhole){ 
+    int devVectSize = 10;
+    bolt::cl::control& ctrl = bolt::cl::control::getDefault();
+    
+    bolt::cl::device_vector<int> sourceIntDevVect(10);//, 0, CL_MEM_READ_WRITE, false, ctrl );
+    bolt::cl::device_vector<int>   destIntDevVect(10);//, 0, CL_MEM_READ_WRITE, false, ctrl ); 
+    
+    
+    for (int i = 0; i < devVectSize; i++){ 
+        sourceIntDevVect[i]	= 56535 - i; 
+    } 
+    
+    //bolt::cl::control& ctrl = bolt::cl::control::getDefault(); 
+    
+    bolt::cl::copy (ctrl, sourceIntDevVect.begin(), sourceIntDevVect.end(), destIntDevVect.begin()); 
+    
+    for (int i = 0; i < devVectSize; ++i){ 
+        EXPECT_EQ(sourceIntDevVect[i], destIntDevVect[i]);
+    }
+} 
 
 int main(int argc, char **argv)
 {
