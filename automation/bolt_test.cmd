@@ -1,4 +1,5 @@
 @echo off
+REM SetLocal EnableDelayedExpansion
 REM ################################################################################################
 REM # Master Bolt Build Script
 REM ################################################################################################
@@ -15,7 +16,7 @@ set BOLT_TEST_BATCH_NAME=Bolt.Test
 
 REM ################################################################################################
 REM # Default test parameters
-set BOLT_TEST_FILE_FILTER_STRING=*.Test.*.exe
+set BOLT_TEST_FILE_FILTER_STRING=clBolt.Test.*.exe
 
 REM ################################################################################################
 REM # Read command line parameters
@@ -38,6 +39,7 @@ REM # Read command line parameters
     SHIFT
   )
   if /i "%1"=="--files" (
+    echo %2
     set BOLT_TEST_FILE_FILTER_STRING=%2
     SHIFT
   )
@@ -47,18 +49,31 @@ GOTO Loop
 
 
 REM ################################################################################################
+REM # Print Info
+REM ################################################################################################
+echo Bin Path:      %BOLT_TEST_BIN_PATH%
+echo Results Path:  %BOLT_TEST_RESULTS_PATH%
+echo Batch Name:    %BOLT_TEST_BATCH_NAME%
+echo Filter String: %BOLT_TEST_FILTER_STRING%
+
+
+REM ################################################################################################
 REM # Move to Bin Directory and Run Tests
 REM ################################################################################################
+echo Moving into %BOLT_TEST_BIN_PATH%
 pushd %BOLT_TEST_BIN_PATH%
+echo Now in %CD%
+dir
 
 for %%f in (%BOLT_TEST_FILE_FILTER_STRING%) do (
-  set TestFile=%%~nxf
   echo.
   echo %HR%
-  echo Testing: %TestFile%
+  echo %%f
+  REM set TestFile=%%~nxf
+  echo Testing: %%f
   REM set COMMAND_STRING="%%f --gtest_output="xml:%BOLT_TEST_RESULTS_PATH%\%BOLT_TEST_BATCH_NAME%_%TestFile%_.xml"
   REM echo %COMMAND_STRING%
-  call %%f --gtest_output="xml:%BOLT_TEST_RESULTS_PATH%\%BOLT_TEST_BATCH_NAME%_%TestFile%_.xml" > %BOLT_TEST_RESULTS_PATH%\%BOLT_TEST_BATCH_NAME%_%TestFile%_.log 2>&1
+  call %%f --gtest_output="xml:%BOLT_TEST_RESULTS_PATH%\%BOLT_TEST_BATCH_NAME%_%%f_.xml" > %BOLT_TEST_RESULTS_PATH%\%BOLT_TEST_BATCH_NAME%_%%f_.log 2>&1
 )
 
 
