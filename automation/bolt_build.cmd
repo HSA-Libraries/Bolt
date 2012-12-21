@@ -8,18 +8,43 @@ REM save and restore PATH else infinitely lengthened by vcvarsall
 set OLD_SYSTEM_PATH=%PATH%
 set CMAKE="C:\Program Files (x86)\CMake 2.8\bin\cmake.exe"
 
+REM ################################################################################################
+REM # File Paths
 set BOLT_BUILD_SOURCE_PATH=C:\Jenkins_FS_Root\workspace\bolt_GitHub_repository_clone
 set BOLT_BUILD_INSTALL_PATH=%CD%
 
+REM ################################################################################################
+REM # Build Version
+set BOLT_BUILD_VERSION_MAJOR_FILE=%BOLT_BUILD_SOURCE_PATH%\automation\bolt.version.major
+set BOLT_BUILD_VERSION_MINOR_FILE=%BOLT_BUILD_SOURCE_PATH%\automation\bolt.version.minor
+set BOLT_BUILD_VERSION_PATCH_FILE=%BOLT_BUILD_SOURCE_PATH%\automation\bolt.version.patch
+set BOLT_BUILD_VERSION_MAJOR=
+set BOLT_BUILD_VERSION_MINOR=
+set BOLT_BUILD_VERSION_PATCH=
+if exist %BOLT_BUILD_VERSION_MAJOR_FILE% (
+  set /p BOLT_BUILD_VERSION_MAJOR=<%BOLT_BUILD_VERSION_MAJOR_FILE%
+) else (
+echo %BOLT_BUILD_VERSION_MAJOR_FILE% not found.
+)
+if exist %BOLT_BUILD_VERSION_MINOR_FILE% (
+  set /p BOLT_BUILD_VERSION_MINOR=<%BOLT_BUILD_VERSION_MINOR_FILE%
+) else (
+echo %BOLT_BUILD_VERSION_MINOR_FILE% not found.
+)
+if exist %BOLT_BUILD_VERSION_PATCH_FILE% (
+  set /p BOLT_BUILD_VERSION_PATCH=<%BOLT_BUILD_VERSION_PATCH_FILE%
+) else (
+echo %BOLT_BUILD_VERSION_PATCH_FILE% not found.
+)
+
+REM ################################################################################################
+REM # Default build parameters
 set BOLT_BUILD_OS=Win
 set BOLT_BUILD_OS_VER=7
 set BOLT_BUILD_COMP=VS
 set BOLT_BUILD_COMP_VER=11
 set BOLT_BUILD_BIT=64
 set BOLT_BUILD_USE_AMP=ON
-set BOLT_BUILD_VERSION_MAJOR=
-set BOLT_BUILD_VERSION_MINOR=
-set BOLT_BUILD_VERSION_PATCH=
 
 
 REM ################################################################################################
