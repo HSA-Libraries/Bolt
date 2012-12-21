@@ -129,7 +129,7 @@ CREATE_BOLT_FUNCTIONAL(maximum,
 template<typename T>
 struct maximum 
 {
-    T operator()(const T &lhs, const T &rhs) const  {return rhs > lhs ? rhs:lhs;}
+    T operator()(const T &lhs, const T &rhs) const  {return (lhs > rhs) ? lhs:rhs;}
 }; 
 );
 
@@ -137,7 +137,7 @@ CREATE_BOLT_FUNCTIONAL(minimum,
 template<typename T>
 struct minimum
 {
-    T operator()(const T &lhs, const T &rhs) const  {return rhs < lhs ? rhs:lhs;}
+    T operator()(const T &lhs, const T &rhs) const  {return (lhs < rhs) ? lhs:rhs;}
 }; 
 );
 
@@ -145,7 +145,7 @@ CREATE_BOLT_FUNCTIONAL(bit_and,
 template<typename T>
 struct bit_and
 {
-    T operator()(const T &lhs, const T &rhs) const  {return rhs & lhs;}
+    T operator()(const T &lhs, const T &rhs) const  {return lhs & rhs;}
 }; 
 );
 
@@ -153,7 +153,7 @@ CREATE_BOLT_FUNCTIONAL(bit_or,
 template<typename T>
 struct bit_or
 {
-    T operator()(const T &lhs, const T &rhs) const  {return rhs | lhs;}
+    T operator()(const T &lhs, const T &rhs) const  {return lhs | rhs;}
 }; 
 );
 
@@ -161,7 +161,7 @@ CREATE_BOLT_FUNCTIONAL(bit_xor,
 template<typename T>
 struct bit_xor
 {
-    T operator()(const T &lhs, const T &rhs) const  {return rhs ^ lhs;}
+    T operator()(const T &lhs, const T &rhs) const  {return lhs ^ rhs;}
 }; 
 );
 
@@ -187,7 +187,7 @@ CREATE_BOLT_FUNCTIONAL(equal_to,
 template<typename T>
 struct equal_to
 {
-    bool operator()(const T &lhs, const T &rhs) const  {return rhs == lhs;}
+    bool operator()(const T &lhs, const T &rhs) const  {return lhs == rhs;}
 }; 
 );
 
@@ -195,7 +195,7 @@ CREATE_BOLT_FUNCTIONAL(not_equal_to,
 template<typename T>
 struct not_equal_to
 {
-    bool operator()(const T &lhs, const T &rhs) const  {return rhs != lhs;}
+    bool operator()(const T &lhs, const T &rhs) const  {return lhs != rhs;}
 }; 
 );
 
@@ -203,7 +203,7 @@ CREATE_BOLT_FUNCTIONAL(greater,
 template<typename T>
 struct greater
 {
-    bool operator()(const T &lhs, const T &rhs) const  {return rhs > lhs;}
+    bool operator()(const T &lhs, const T &rhs) const  {return lhs > rhs;}
 }; 
 );
 
@@ -211,7 +211,7 @@ CREATE_BOLT_FUNCTIONAL(less,
 template<typename T>
 struct less
 {
-    bool operator()(const T &lhs, const T &rhs) const  {return rhs < lhs;}
+    bool operator()(const T &lhs, const T &rhs) const  {return lhs < rhs;}
 }; 
 );
 
@@ -219,7 +219,7 @@ CREATE_BOLT_FUNCTIONAL(greater_equal,
 template<typename T>
 struct greater_equal
 {
-    bool operator()(const T &lhs, const T &rhs) const  {return rhs >= lhs;}
+    bool operator()(const T &lhs, const T &rhs) const  {return lhs >= rhs;}
 }; 
 );
 
@@ -227,7 +227,7 @@ CREATE_BOLT_FUNCTIONAL(less_equal,
 template<typename T>
 struct less_equal
 {
-    bool operator()(const T &lhs, const T &rhs) const  {return rhs <= lhs;}
+    bool operator()(const T &lhs, const T &rhs) const  {return lhs <= rhs;}
 }; 
 );
 
@@ -235,7 +235,7 @@ CREATE_BOLT_FUNCTIONAL(logical_and,
 template<typename T>
 struct logical_and
 {
-    bool operator()(const T &lhs, const T &rhs) const  {return rhs && lhs;}
+    bool operator()(const T &lhs, const T &rhs) const  {return lhs && rhs;}
 }; 
 );
 
@@ -243,7 +243,7 @@ CREATE_BOLT_FUNCTIONAL(logical_or,
 template<typename T>
 struct logical_or
 {
-    bool operator()(const T &lhs, const T &rhs) const  {return rhs || lhs;}
+    bool operator()(const T &lhs, const T &rhs) const  {return lhs || rhs;}
 }; 
 );
 
