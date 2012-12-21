@@ -15,16 +15,15 @@
 
 ***************************************************************************/                                                                                     
 
-#include "stdafx.h"
+#include "common/stdafx.h"
 #include <vector>
 #include <array>
+
+#include <bolt/amp/functional.h>
+#include <bolt/amp/device_vector.h>
 #include <bolt/unicode.h>
 #include <bolt/miniDump.h>
 #include <gtest/gtest.h>
-///////////////////////////////////////////////////////////////////////////////////////
-//CL and AMP device_vector tests are integrated.To use AMP tests change AMP_TESTS to 1
-///////////////////////////////////////////////////////////////////////////////////////
-//#define AMP_TESTS 1
 
 #if AMP_TESTS
     #include <bolt/amp/functional.h>
@@ -39,7 +38,6 @@
     #define BCKND cl
 
 #endif
-
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Below are helper routines to compare the results of two arrays for googletest
 //  They return an assertion object that googletest knows how to track
@@ -310,67 +308,67 @@ typedef ::testing::Types<
 
 TEST( Constructor, ContainerIteratorEmpty )
 {
-    bolt::BCKND::device_vector< int > dV;
+    bolt::amp::device_vector< int > dV;
 
     EXPECT_EQ( 0, dV.size( ) );
 
-    bolt::BCKND::device_vector< int >::iterator itBegin = dV.begin( );
-    bolt::BCKND::device_vector< int >::iterator itEnd = dV.end( );
+    bolt::amp::device_vector< int >::iterator itBegin = dV.begin( );
+    bolt::amp::device_vector< int >::iterator itEnd = dV.end( );
 
     EXPECT_TRUE( itBegin == itEnd );
 }
 
 TEST( Constructor, ConstContainerConstIteratorEmpty )
 {
-    const bolt::BCKND::device_vector< int > dV;
+    const bolt::amp::device_vector< int > dV;
 
     EXPECT_EQ( 0, dV.size( ) );
 
-    bolt::BCKND::device_vector< int >::const_iterator itBegin = dV.begin( );
-    bolt::BCKND::device_vector< int >::const_iterator itEnd = dV.end( );
+    bolt::amp::device_vector< int >::const_iterator itBegin = dV.begin( );
+    bolt::amp::device_vector< int >::const_iterator itEnd = dV.end( );
 
     EXPECT_TRUE( itBegin == itEnd );
 }
 
 TEST( Constructor, ConstContainerConstIteratorCEmpty )
 {
-    const bolt::BCKND::device_vector< int > dV;
+    const bolt::amp::device_vector< int > dV;
 
     EXPECT_EQ( 0, dV.size( ) );
 
-    bolt::BCKND::device_vector< int >::const_iterator itBegin = dV.cbegin( );
-    bolt::BCKND::device_vector< int >::const_iterator itEnd = dV.cend( );
+    bolt::amp::device_vector< int >::const_iterator itBegin = dV.cbegin( );
+    bolt::amp::device_vector< int >::const_iterator itEnd = dV.cend( );
 
     EXPECT_TRUE( itBegin == itEnd );
 }
 
 TEST( Constructor, ContainerConstIteratorCEmpty )
 {
-    bolt::BCKND::device_vector< int > dV;
+    bolt::amp::device_vector< int > dV;
 
     EXPECT_EQ( 0, dV.size( ) );
 
-    bolt::BCKND::device_vector< int >::const_iterator itBegin = dV.cbegin( );
-    bolt::BCKND::device_vector< int >::const_iterator itEnd = dV.cend( );
+    bolt::amp::device_vector< int >::const_iterator itBegin = dV.cbegin( );
+    bolt::amp::device_vector< int >::const_iterator itEnd = dV.cend( );
 
     EXPECT_TRUE( itBegin == itEnd );
 }
 
 TEST( Constructor, ContainerConstIteratorEmpty )
 {
-    bolt::BCKND::device_vector< int > dV;
+    bolt::amp::device_vector< int > dV;
 
     EXPECT_EQ( 0, dV.size( ) );
 
-    bolt::BCKND::device_vector< int >::const_iterator itBegin = dV.begin( );
-    bolt::BCKND::device_vector< int >::const_iterator itEnd = dV.end( );
+    bolt::amp::device_vector< int >::const_iterator itBegin = dV.begin( );
+    bolt::amp::device_vector< int >::const_iterator itEnd = dV.end( );
 
     EXPECT_TRUE( itBegin == itEnd );
 }
 
 TEST( Constructor, Size5AndValue3OperatorValueType )
 {
-    bolt::BCKND::device_vector< int > dV( 5, 3 );
+    bolt::amp::device_vector< int > dV( 5, 3 );
     EXPECT_EQ( 5, dV.size( ) );
 
     EXPECT_EQ( 3, dV[ 0 ] );
@@ -382,197 +380,41 @@ TEST( Constructor, Size5AndValue3OperatorValueType )
 
 TEST( Iterator, Compatibility )
 {
-    bolt::BCKND::device_vector< int > dV;
+    bolt::amp::device_vector< int > dV;
     EXPECT_EQ( 0, dV.size( ) );
 
-    bolt::BCKND::device_vector< int >::iterator Iter0( dV, 0 );
-    bolt::BCKND::device_vector< int >::const_iterator cIter0( dV, 0 );
+    bolt::amp::device_vector< int >::iterator Iter0( dV, 0 );
+    bolt::amp::device_vector< int >::const_iterator cIter0( dV, 0 );
     EXPECT_TRUE( Iter0 == cIter0 );
 
-    bolt::BCKND::device_vector< int >::iterator Iter1( dV, 0 );
-    bolt::BCKND::device_vector< int >::const_iterator cIter1( dV, 1 );
+    bolt::amp::device_vector< int >::iterator Iter1( dV, 0 );
+    bolt::amp::device_vector< int >::const_iterator cIter1( dV, 1 );
     EXPECT_TRUE( Iter1 != cIter1 );
 }
 
 TEST( Iterator, OperatorEqual )
 {
-    bolt::BCKND::device_vector< int > dV;
+    bolt::amp::device_vector< int > dV;
     EXPECT_EQ( 0, dV.size( ) );
 
-    bolt::BCKND::device_vector< int >::iterator Iter0( dV, 0 );
-    bolt::BCKND::device_vector< int >::iterator cIter0( dV, 0 );
+    bolt::amp::device_vector< int >::iterator Iter0( dV, 0 );
+    bolt::amp::device_vector< int >::iterator cIter0( dV, 0 );
     EXPECT_TRUE( Iter0 == cIter0 );
 
-    bolt::BCKND::device_vector< int >::const_iterator Iter1( dV, 0 );
-    bolt::BCKND::device_vector< int >::const_iterator cIter1( dV, 1 );
+    bolt::amp::device_vector< int >::const_iterator Iter1( dV, 0 );
+    bolt::amp::device_vector< int >::const_iterator cIter1( dV, 1 );
     EXPECT_TRUE( Iter1 != cIter1 );
 
-    bolt::BCKND::device_vector< int > dV2;
+    bolt::amp::device_vector< int > dV2;
 
-    bolt::BCKND::device_vector< int >::const_iterator Iter2( dV, 0 );
-    bolt::BCKND::device_vector< int >::const_iterator cIter2( dV2, 0 );
+    bolt::amp::device_vector< int >::const_iterator Iter2( dV, 0 );
+    bolt::amp::device_vector< int >::const_iterator cIter2( dV2, 0 );
     EXPECT_TRUE( Iter2 != cIter2 );
 }
-
-//TODO Add all test cases for Reverse and Const Reverse Iterator
-// insert/erase using base(), self, and constructing a base iterator
-
-TEST( Constructor, ContainerReverseIteratorEmpty )
-{
-    bolt::BCKND::device_vector< int > dV;
-
-    EXPECT_EQ( 0, dV.size( ) );
-
-    bolt::BCKND::device_vector< int >::reverse_iterator itBegin = dV.rbegin( );
-    bolt::BCKND::device_vector< int >::reverse_iterator itEnd = dV.rend( );
-
-    EXPECT_TRUE( itBegin == itEnd );    
-}
-
-TEST( Constructor, ConstContainerConstReverseIteratorEmpty )
-{
-    const bolt::BCKND::device_vector< int > dV;
-
-    EXPECT_EQ( 0, dV.size( ) );
-
-    bolt::BCKND::device_vector< int >::const_reverse_iterator itBegin = dV.rbegin( );
-    bolt::BCKND::device_vector< int >::const_reverse_iterator itEnd = dV.rend( );
-
-    EXPECT_TRUE( itBegin == itEnd );
-    
-}
-
-TEST( Constructor, ConstContainerConstReverseIteratorCEmpty )
-{
-    const bolt::BCKND::device_vector< int > dV;
-
-    EXPECT_EQ( 0, dV.size( ) );
-
-    bolt::BCKND::device_vector< int >::const_reverse_iterator itBegin = dV.crbegin( );
-    bolt::BCKND::device_vector< int >::const_reverse_iterator itEnd = dV.crend( );
-
-    EXPECT_TRUE( itBegin == itEnd );
-}
-
-TEST( Constructor, ContainerConstReverseIteratorCEmpty )
-{
-    bolt::BCKND::device_vector< int > dV;
-
-    EXPECT_EQ( 0, dV.size( ) );
-
-    bolt::BCKND::device_vector< int >::const_reverse_iterator itBegin = dV.crbegin( );
-    bolt::BCKND::device_vector< int >::const_reverse_iterator itEnd = dV.crend( );
-
-    EXPECT_TRUE( itBegin == itEnd );
-}
-
-TEST( Constructor, ContainerConstReverseIteratorEmpty )
-{
-    bolt::BCKND::device_vector< int > dV;
-
-    EXPECT_EQ( 0, dV.size( ) );
-
-    bolt::BCKND::device_vector< int >::const_reverse_iterator itBegin = dV.rbegin( );
-    bolt::BCKND::device_vector< int >::const_reverse_iterator itEnd = dV.rend( );
-
-    EXPECT_TRUE( itBegin == itEnd );
-}
-
-
-TEST( ReverseIterator, CompatibilityReverse )
-{
-    bolt::BCKND::device_vector< int > dV;
-    EXPECT_EQ( 0, dV.size( ) );
-
-    bolt::BCKND::device_vector< int >::reverse_iterator Iter0( dV, 0 );
-    bolt::BCKND::device_vector< int >::const_reverse_iterator cIter0( dV, 0 );
-    EXPECT_TRUE( Iter0 == cIter0 );
-
-    bolt::BCKND::device_vector< int >::reverse_iterator Iter1( dV, 0 );
-    bolt::BCKND::device_vector< int >::const_reverse_iterator cIter1( dV, 1 );
-    EXPECT_TRUE( Iter1 != cIter1 );
-}
-
-TEST( ReverseIterator, OperatorEqualReverse )
-{
-    bolt::BCKND::device_vector< int > dV;
-    EXPECT_EQ( 0, dV.size( ) );
-
-    bolt::BCKND::device_vector< int >::reverse_iterator Iter0( dV, 0 );
-    bolt::BCKND::device_vector< int >::reverse_iterator cIter0( dV, 0 );
-    EXPECT_TRUE( Iter0 == cIter0 );
-
-    bolt::BCKND::device_vector< int >::const_reverse_iterator Iter1( dV, 0 );
-    bolt::BCKND::device_vector< int >::const_reverse_iterator cIter1( dV, 1 );
-    EXPECT_TRUE( Iter1 != cIter1 );
-
-    bolt::BCKND::device_vector< int > dV2;
-
-    bolt::BCKND::device_vector< int >::const_reverse_iterator Iter2( dV, 0 );
-    bolt::BCKND::device_vector< int >::const_reverse_iterator cIter2( dV2, 0 );
-    EXPECT_TRUE( Iter2 != cIter2 );
-}
-
-TEST( VectorReverseIterator, Size6AndValue7Dereference )
-{
-    bolt::BCKND::device_vector< int > dV( 6ul, 7 );
-    EXPECT_EQ( 6, dV.size( ) );
-
-    bolt::BCKND::device_vector< int >::reverse_iterator myIter = dV.rbegin( );
-    EXPECT_EQ( 7, *(myIter + 0) );
-    EXPECT_EQ( 7, *(myIter + 1) );
-    EXPECT_EQ( 7, *(myIter + 2) );
-    EXPECT_EQ( 7, *(myIter + 3) );
-    EXPECT_EQ( 7, *(myIter + 4) );
-    EXPECT_EQ( 7, *(myIter + 5) );
-}
-
-//
-//TEST( VectorReverseIterator, Size6AndValue7OperatorValueType )
-//{
-//    bolt::BCKND::device_vector< int > dV( 6, 7 );
-//    EXPECT_EQ( 6, dV.size( ) );
-//
-//    bolt::BCKND::device_vector< int >::reverse_iterator myIter = dV.rbegin( );
-//
-//    EXPECT_EQ(  myIter[ 0 ],7 );
-//    EXPECT_EQ(  myIter[ 1 ],7 );
-//    EXPECT_EQ(  myIter[ 2 ],7 );
-//    EXPECT_EQ(  myIter[ 3 ],7 );
-//    EXPECT_EQ(  myIter[ 4 ],7 );
-//    EXPECT_EQ(  myIter[ 5 ],7 );
-//}
-
-TEST( VectorReverseIterator, ArithmeticAndEqual )
-{
-    bolt::BCKND::device_vector< int > dV( 5 );
-    EXPECT_EQ( 5, dV.size( ) );
-
-    bolt::BCKND::device_vector< int >::reverse_iterator myIter = dV.rbegin( );
-    *myIter = 1;
-    ++myIter;
-    *myIter = 2;
-    myIter++;
-    *myIter = 3;
-    myIter += 1;
-    *(myIter + 0) = 4;
-    *(myIter + 1) = 5;
-    myIter += 1;
-
-    EXPECT_EQ( 1, dV[ 4 ] );
-    EXPECT_EQ( 2, dV[ 3 ] );
-    EXPECT_EQ( 3, dV[ 2 ] );
-    EXPECT_EQ( 4, dV[ 1 ] );
-    EXPECT_EQ( 5, dV[ 0 ] );
-}
-
-
-
-//Reverse Iterator test cases end
 
 TEST( VectorReference, OperatorEqual )
 {
-    bolt::BCKND::device_vector< int > dV( 5 );
+    bolt::amp::device_vector< int > dV( 5 );
 
     dV[ 0 ] = 1;
     dV[ 1 ] = 2;
@@ -589,7 +431,7 @@ TEST( VectorReference, OperatorEqual )
 
 TEST( VectorReference, OperatorValueType )
 {
-    bolt::BCKND::device_vector< int > dV( 5 );
+    bolt::amp::device_vector< int > dV( 5 );
 
     dV[ 0 ] = 1;
     dV[ 1 ] = 2;
@@ -613,25 +455,25 @@ TEST( VectorReference, OperatorValueType )
 
 //TEST( VectorIterator, Size6AndValue7OperatorValueType )
 //{
-//    bolt::BCKND::device_vector< int > dV( 6, 7 );
+//    bolt::cl::device_vector< int > dV( 6, 7 );
 //    EXPECT_EQ( 6, dV.size( ) );
 //
-//    bolt::BCKND::device_vector< int >::iterator myIter = dV.begin( );
+//    bolt::cl::device_vector< int >::iterator myIter = dV.begin( );
 //
-//    EXPECT_EQ(  myIter[ 0 ],7 );
-//    EXPECT_EQ(  myIter[ 1 ],7 );
-//    EXPECT_EQ(  myIter[ 2 ],7 );
-//    EXPECT_EQ(  myIter[ 3 ],7 );
-//    EXPECT_EQ(  myIter[ 4 ],7 );
-//    EXPECT_EQ(  myIter[ 5 ],7 );
+//    EXPECT_EQ( 7, myIter[ 0 ] );
+//    EXPECT_EQ( 7, myIter[ 1 ] );
+//    EXPECT_EQ( 7, myIter[ 2 ] );
+//    EXPECT_EQ( 7, myIter[ 3 ] );
+//    EXPECT_EQ( 7, myIter[ 4 ] );
+//    EXPECT_EQ( 7, myIter[ 5 ] );
 //}
 
 TEST( VectorIterator, Size6AndValue7Dereference )
 {
-    bolt::BCKND::device_vector< int > dV( 6ul, 7 );
+    bolt::amp::device_vector< int > dV( 6ul, 7 );
     EXPECT_EQ( 6, dV.size( ) );
 
-    bolt::BCKND::device_vector< int >::iterator myIter = dV.begin( );
+    bolt::amp::device_vector< int >::iterator myIter = dV.begin( );
 
     EXPECT_EQ( 7, *(myIter + 0) );
     EXPECT_EQ( 7, *(myIter + 1) );
@@ -643,10 +485,10 @@ TEST( VectorIterator, Size6AndValue7Dereference )
 
 TEST( VectorIterator, ArithmeticAndEqual )
 {
-    bolt::BCKND::device_vector< int > dV( 5 );
+    bolt::amp::device_vector< int > dV( 5 );
     EXPECT_EQ( 5, dV.size( ) );
 
-    bolt::BCKND::device_vector< int >::iterator myIter = dV.begin( );
+    bolt::amp::device_vector< int >::iterator myIter = dV.begin( );
 
     *myIter = 1;
     ++myIter;
@@ -667,7 +509,7 @@ TEST( VectorIterator, ArithmeticAndEqual )
 
 TEST( Vector, Erase )
 {
-    bolt::BCKND::device_vector< int > dV( 5 );
+    bolt::amp::device_vector< int > dV( 5 );
     EXPECT_EQ( 5, dV.size( ) );
 
     dV[ 0 ] = 1;
@@ -676,10 +518,10 @@ TEST( Vector, Erase )
     dV[ 3 ] = 4;
     dV[ 4 ] = 5;
 
-    bolt::BCKND::device_vector< int >::iterator myIter = dV.begin( );
+    bolt::amp::device_vector< int >::iterator myIter = dV.begin( );
     myIter += 2;
 
-    bolt::BCKND::device_vector< int >::iterator myResult = dV.erase( myIter );
+    bolt::amp::device_vector< int >::iterator myResult = dV.erase( myIter );
     EXPECT_EQ( 4, dV.size( ) );
     EXPECT_EQ( 4, *myResult );
 
@@ -691,7 +533,7 @@ TEST( Vector, Erase )
 
 TEST( Vector, Clear )
 {
-    bolt::BCKND::device_vector< int > dV( 5ul, 3 );
+    bolt::amp::device_vector< int > dV( 5ul, 3 );
     EXPECT_EQ( 5, dV.size( ) );
 
     dV.clear( );
@@ -700,7 +542,7 @@ TEST( Vector, Clear )
 
 TEST( Vector, EraseEntireRange )
 {
-    bolt::BCKND::device_vector< int > dV( 5 );
+    bolt::amp::device_vector< int > dV( 5 );
     EXPECT_EQ( 5, dV.size( ) );
 
     dV[ 0 ] = 1;
@@ -709,16 +551,16 @@ TEST( Vector, EraseEntireRange )
     dV[ 3 ] = 4;
     dV[ 4 ] = 5;
 
-    bolt::BCKND::device_vector< int >::iterator myBegin = dV.begin( );
-    bolt::BCKND::device_vector< int >::iterator myEnd = dV.end( );
+    bolt::amp::device_vector< int >::iterator myBegin = dV.begin( );
+    bolt::amp::device_vector< int >::iterator myEnd = dV.end( );
 
-    bolt::BCKND::device_vector< int >::iterator myResult = dV.erase( myBegin, myEnd );
+    bolt::amp::device_vector< int >::iterator myResult = dV.erase( myBegin, myEnd );
     EXPECT_EQ( 0, dV.size( ) );
 }
 
 TEST( Vector, EraseSubRange )
 {
-    bolt::BCKND::device_vector< int > dV( 5 );
+    bolt::amp::device_vector< int > dV( 5 );
     EXPECT_EQ( 5, dV.size( ) );
 
     dV[ 0 ] = 1;
@@ -727,17 +569,17 @@ TEST( Vector, EraseSubRange )
     dV[ 3 ] = 4;
     dV[ 4 ] = 5;
 
-    bolt::BCKND::device_vector< int >::iterator myBegin = dV.begin( );
-    bolt::BCKND::device_vector< int >::iterator myEnd = dV.end( );
+    bolt::amp::device_vector< int >::iterator myBegin = dV.begin( );
+    bolt::amp::device_vector< int >::iterator myEnd = dV.end( );
     myEnd -= 2;
 
-    bolt::BCKND::device_vector< int >::iterator myResult = dV.erase( myBegin, myEnd );
+    bolt::amp::device_vector< int >::iterator myResult = dV.erase( myBegin, myEnd );
     EXPECT_EQ( 2, dV.size( ) );
 }
 
 TEST( Vector, InsertBegin )
 {
-    bolt::BCKND::device_vector< int > dV( 5 );
+    bolt::amp::device_vector< int > dV( 5 );
     EXPECT_EQ( 5, dV.size( ) );
     dV[ 0 ] = 1;
     dV[ 1 ] = 2;
@@ -745,24 +587,24 @@ TEST( Vector, InsertBegin )
     dV[ 3 ] = 4;
     dV[ 4 ] = 5;
 
-    bolt::BCKND::device_vector< int >::iterator myResult = dV.insert( dV.cbegin( ), 7 );
+    bolt::amp::device_vector< int >::iterator myResult = dV.insert( dV.cbegin( ), 7 );
     EXPECT_EQ( 7, *myResult );
     EXPECT_EQ( 6, dV.size( ) );
 }
 
 TEST( Vector, InsertEnd )
 {
-    bolt::BCKND::device_vector< int > dV( 5ul, 3 );
+    bolt::amp::device_vector< int > dV( 5ul, 3 );
     EXPECT_EQ( 5, dV.size( ) );
 
-    bolt::BCKND::device_vector< int >::iterator myResult = dV.insert( dV.cend( ), 1 );
+    bolt::amp::device_vector< int >::iterator myResult = dV.insert( dV.cend( ), 1 );
     EXPECT_EQ( 1, *myResult );
     EXPECT_EQ( 6, dV.size( ) );
 }
 
 TEST( Vector, DataRead )
 {
-    bolt::BCKND::device_vector< int > dV( 5ul, 3 );
+    bolt::amp::device_vector< int > dV( 5ul, 3 );
     EXPECT_EQ( 5, dV.size( ) );
     dV[ 0 ] = 1;
     dV[ 1 ] = 2;
@@ -770,7 +612,7 @@ TEST( Vector, DataRead )
     dV[ 3 ] = 4;
     dV[ 4 ] = 5;
 
-    bolt::BCKND::device_vector< int >::pointer mySP = dV.data( );
+    bolt::amp::device_vector< int >::pointer mySP = dV.data( );
 
     EXPECT_EQ( 1, mySP[ 0 ] );
     EXPECT_EQ( 2, mySP[ 1 ] );
@@ -781,10 +623,10 @@ TEST( Vector, DataRead )
 
 TEST( Vector, DataWrite )
 {
-    bolt::BCKND::device_vector< int > dV( 5 );
+    bolt::amp::device_vector< int > dV( 5 );
     EXPECT_EQ( 5, dV.size( ) );
 
-    bolt::BCKND::device_vector< int >::pointer mySP = dV.data( );
+    bolt::amp::device_vector< int >::pointer mySP = dV.data( );
     mySP[ 0 ] = 1;
     mySP[ 1 ] = 2;
     mySP[ 2 ] = 3;
@@ -801,7 +643,7 @@ TEST( Vector, DataWrite )
 TEST( Vector, wdSpecifyingSize )
 {
     size_t mySize = 10;
-    bolt::BCKND::device_vector<int> myIntDevVect;
+    bolt::amp::device_vector<int> myIntDevVect;
     int myIntArray[10] = {2, 3, 5, 6, 76, 5, 8, -10, 30, 34};
 
     for (int i = 0; i < mySize; ++i){
@@ -815,7 +657,7 @@ TEST( Vector, wdSpecifyingSize )
 
 TEST( Vector, InsertFloatRangeEmpty )
 {
-    bolt::BCKND::device_vector< float > dV;
+    bolt::amp::device_vector< float > dV;
     EXPECT_EQ( 0, dV.size( ) );
 
     dV.insert( dV.cbegin( ), 5, 7.0f );
@@ -829,7 +671,7 @@ TEST( Vector, InsertFloatRangeEmpty )
 
 //TEST( Vector, InsertIntegerRangeEmpty )
 //{
-//    bolt::BCKND::device_vector< int > dV;
+//    bolt::cl::device_vector< int > dV;
 //    EXPECT_EQ( 0, dV.size( ) );
 //
 //    dV.insert( dV.cbegin( ), 5, 7 );
@@ -843,7 +685,7 @@ TEST( Vector, InsertFloatRangeEmpty )
 
 TEST( Vector, InsertFloatRangeIterator )
 {
-    bolt::BCKND::device_vector< float > dV;
+    bolt::amp::device_vector< float > dV;
     EXPECT_EQ( 0, dV.size( ) );
 
     std::vector< float > sV( 5 );
@@ -861,10 +703,12 @@ TEST( Vector, InsertFloatRangeIterator )
     EXPECT_FLOAT_EQ( 4.0f, dV[ 3 ] );
     EXPECT_FLOAT_EQ( 5.0f, dV[ 4 ] );
 }
+//TODO - add test case for all the device_vector constructors. 
+//
 
 TEST( Vector, Resize )
 {
-    bolt::BCKND::device_vector< float > dV;
+    bolt::amp::device_vector< float > dV;
     EXPECT_EQ( 0, dV.size( ) );
 
     std::vector< float > sV( 10 );
@@ -892,31 +736,13 @@ TEST( Vector, Resize )
     }
 }
 
-TEST( Vector, ShrinkToFit)
-{
-	bolt::BCKND::device_vector< int > dV(100);
-	EXPECT_EQ(dV.size(),dV.capacity());
-	dV.reserve(200);
-	EXPECT_EQ(200,dV.capacity());
-	dV.shrink_to_fit();
-	EXPECT_EQ(dV.size(),dV.capacity());
-#if 0
-	//Just like that.
-	for(int i=0; i<(2<<21);i+=(2<<3)){
-		dV.reserve(i);
-		dV.shrink_to_fit();
-		EXPECT_EQ(dV.size(),dV.capacity());
-	}
-
-#endif
-}
-
+//TODO - add a test case for shrink_to_fit
 
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	::testing::InitGoogleTest( &argc, &argv[ 0 ] );
-    
+    ::testing::InitGoogleTest( &argc, &argv[ 0 ] );
+
     //  Register our minidump generating logic
     bolt::miniDumpSingleton::enableMiniDumps( );
 
