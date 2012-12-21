@@ -16,6 +16,7 @@
 ############################################################################                                                                                     
 
 # List the names of common files to compile across all platforms
+# We want to use the same test files for both the CL and AMP backends  
 set( ampBolt.Test.Device.Vector.Source ${BOLT_AMP_TEST_DIR}/common/stdafx.cpp 
                                         ${BOLT_CL_TEST_DIR}/DeviceVectorTest/device.vector.test.cpp )
 set( ampBolt.Test.Device.Vector.Headers ${BOLT_CL_TEST_DIR}/common/stdafx.h 
@@ -26,6 +27,7 @@ set( ampBolt.Test.Device.Vector.Files ${ampBolt.Test.Device.Vector.Source} ${amp
 
 
 # Set project specific compile and link options
+# For amp namespace code use AMP_TESTS=1
 if( MSVC )
 set( CMAKE_CXX_FLAGS "-DAMP_TESTS=1 ${CMAKE_CXX_FLAGS}" )
                 set( CMAKE_C_FLAGS "-DAMP_TESTS=1 ${CMAKE_C_FLAGS}" )
