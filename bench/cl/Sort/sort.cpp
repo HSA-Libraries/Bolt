@@ -53,9 +53,9 @@ int main( int argc, char* argv[] )
             ( "version,v",		"Print queryable version information from the Bolt AMP library" )
             ( "platform,p",     po::value< cl_uint >( &userPlatform )->default_value( 0 ),	"Specify the platform under test" )
             ( "device,d",       po::value< cl_uint >( &userDevice )->default_value( 0 ),	"Specify the device under test" )
-            ( "length,l",		po::value< int >( &length )->default_value( 16777216 ), "Specify the length of sort array" )
+            ( "length,l",		po::value< int >( &length )->default_value( 2097152 ), "Specify the length of sort array" )
             ( "profile,i",		po::value< size_t >( &numLoops )->default_value( 5 ), "Time and report Sort speed GB/s (default: profiling off)" )
-			( "algo,a",		    po::value< size_t >( &algo )->default_value( 1 ), "Algorithm used [1,2]  1:SORT_BOLT, 2:SORT_AMP_SHOC" )
+			( "algo,a",		    po::value< size_t >( &algo )->default_value( 1 ), "Algorithm used [1,2,3,4]  1:SORT_BOLT UINT, 2:SORT_BOLT INT, 3:SORT_AMP_SHOC, 4:STD SORT" )
             ;
 
         po::variables_map vm;

@@ -1235,7 +1235,7 @@ void BasicSortTestOfLength(size_t length)
     size_t i;
     for (i=0;i<length;i++)
     {
-        boltInput[i]= (T)((stdInput[i]) & 0xFFFFU)* 0x178F;
+        boltInput[i]= (T)((stdInput[i] & 0xFFFFU) * 8787);
 		//printf("%x ",boltInput[i]);
 		stdInput[i] = boltInput[i];
     }
@@ -1255,9 +1255,20 @@ void BasicSortTestOfLength(size_t length)
             break;
     }
     if (i==length)
+    {
         std::cout << "\nTest Passed" <<std::endl;
+    }
     else 
+    {
         std::cout << "\nTest Failed i = " << i <<std::endl;
+        for (int j=-10;j<10;j++)
+        {
+            if((i+j)<0 || (i+j)>length)
+                std::cout << "Out of Index\n";
+            else
+                std::cout << std::hex << (i+j) << "  -- " <<stdInput[i+j] << "  -- " << boltInput[i+j] << "\n";
+        }
+    }
 }
 
 template <typename T>
@@ -1437,7 +1448,7 @@ int main(int argc, char* argv[])
 {
 
     //UDDSortTestOfLengthWithDeviceVector<int>(256);
-    BasicSortTestOfLength<unsigned int>(131072/*16777216/*atoi(argv[1])*/);
+    BasicSortTestOfLength<unsigned int>(16777216/*atoi(argv[1])*/);
 	//BasicSortTestOfLength<unsigned int>(4096);
     BasicSortTestOfLength<int>(512);
     //BasicSortTestOfLength<int>(111);
