@@ -107,6 +107,7 @@ set( clBolt.Runtime.Headers.Detail
     )
 
 set( clBolt.Runtime.clFiles 
+        copy_kernels.cl 
         generate_kernels.cl 
         reduce_kernels.cl 
         transform_kernels.cl 

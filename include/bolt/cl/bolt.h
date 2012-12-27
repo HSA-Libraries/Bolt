@@ -34,6 +34,10 @@
 #include "bolt/cl/control.h"
 #include "bolt/cl/clcode.h"
 
+#define PUSH_BACK_UNIQUE(CONTAINER, ELEMENT) \
+    if (std::find(CONTAINER.begin(), CONTAINER.end(), ELEMENT) == CONTAINER.end()) \
+        CONTAINER.push_back(ELEMENT);
+
 /*! \file bolt.h
  *  \brief Main public header file defining global functions for Bolt
  *  \todo Develop googletest framework for count
@@ -63,9 +67,11 @@
 namespace bolt {
     namespace cl {
 
+        extern const std::string copy_kernels;
         extern const std::string generate_kernels;
         extern const std::string reduce_kernels;
         extern const std::string scan_kernels;
+        extern const std::string scan_by_key_kernels;
         extern const std::string sort_kernels;
 		extern const std::string sort_uint_kernels;
         extern const std::string sort_by_key_kernels;
