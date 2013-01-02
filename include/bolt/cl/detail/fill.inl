@@ -130,28 +130,41 @@ namespace bolt {
              ****************************************************************************/
 
             template< typename DVForwardIterator, typename T >
-            void fill_enqueue(const bolt::cl::control &ctl, const DVForwardIterator &first, const DVForwardIterator &last, const T & value, const std::string& cl_code)
+            void fill_enqueue(const bolt::cl::control &ctl, const DVForwardIterator &first, const DVForwardIterator &last, const T & val, const std::string& cl_code)
             {
                 typedef std::iterator_traits<DVForwardIterator>::value_type Type;
                 // how many elements to fill
                 cl_uint sz = static_cast< cl_uint >( std::distance( first, last ) );
                 if (sz < 1)
                     return;
-               
 				cl_int l_Error= CL_SUCCESS;
-				::cl::Event fillEvent;				
-				ctl.commandQueue().enqueueFillBuffer(first->getBuffer(),value,0,sz*sizeof(T),NULL,&fillEvent);
-				/*enqueueFillBuffer API:
-				cl_int enqueueFillBuffer(const Buffer& buffer,
-				PatternType pattern,
-				::size_t offset,
-				::size_t size,
-				const VECTOR_CLASS<Event>* events = NULL,
-				Event* event = NULL) const
-				*/
-				V_OPENCL( l_Error, "clEnqueueFillBuffer() failed" );
+				::cl::Event fillEvent;	
+
+                //Type comparison
+                if(std::is_same<T,Type>::value)
+                {
+			        
+				    ctl.commandQueue().enqueueFillBuffer(first->getBuffer(),val,0,sz*sizeof(T),NULL,&fillEvent);
+				    /*enqueueFillBuffer API:
+				    cl_int enqueueFillBuffer(const Buffer& buffer,
+				    PatternType pattern,
+				    ::size_t offset,
+				    ::size_t size,
+				    const VECTOR_CLASS<Event>* events = NULL,
+				    Event* event = NULL) const
+				    */
+				    V_OPENCL( l_Error, "clEnqueueFillBuffer() failed" );
 				               
-                bolt::cl::wait(ctl, fillEvent);
+                    bolt::cl::wait(ctl, fillEvent);
+                }
+                else
+                {
+                    //If iterator and fill element are of different types then do a cast
+                    const Type newval = static_cast<const Type>(val);
+                    ctl.commandQueue().enqueueFillBuffer(first->getBuffer(),newval,0,sz*sizeof(Type),NULL,&fillEvent);
+      				V_OPENCL( l_Error, "clEnqueueFillBuffer() failed" );
+                    bolt::cl::wait(ctl, fillEvent);
+                }
             }; // end fill_enqueue
 
         }//End OF detail namespace
