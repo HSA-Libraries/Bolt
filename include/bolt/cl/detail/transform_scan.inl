@@ -21,6 +21,13 @@
 #if !defined( TRANSFORM_SCAN_INL )
 #define TRANSFORM_SCAN_INL
 
+#define BOLT_ENABLE_PROFILING
+
+#ifdef BOLT_ENABLE_PROFILING
+#include "bolt/AsyncProfiler.h"
+AsyncProfiler transform_scan_ap("transform_scan");
+#endif
+
 #include <algorithm>
 #include <type_traits>
 
@@ -403,6 +410,13 @@ transform_scan_enqueue(
     const BinaryFunction& binary_op,
     const bool& inclusive = true )
 {
+#ifdef BOLT_ENABLE_PROFILING
+transform_scan_ap.startTrial();
+transform_scan_ap.setStepName("Setup");
+transform_scan_ap.set(AsyncProfiler::device, control::SerialCpu);
+
+size_t k0_stepNum, k1_stepNum, k2_stepNum;
+#endif
     cl_int l_Error;
 
     /**********************************************************************************
@@ -500,8 +514,17 @@ transform_scan_enqueue(
     /**********************************************************************************
      *  Kernel 0
      *********************************************************************************/
+
+
     try
     {
+
+#ifdef BOLT_ENABLE_PROFILING
+transform_scan_ap.nextStep();
+transform_scan_ap.setStepName("Setup Kernel 0");
+transform_scan_ap.set(AsyncProfiler::device, control::SerialCpu);
+#endif
+
     ldsSize  = static_cast< cl_uint >( kernel0_WgSize * sizeof( iType ) );
     V_OPENCL( kernels[0].setArg( 0, result->getBuffer( ) ), "Error setArg kernels[ 0 ]" ); // Output buffer
     V_OPENCL( kernels[0].setArg( 1, first->getBuffer( ) ),  "Error setArg kernels[ 0 ]" ); // Input buffer
@@ -513,6 +536,15 @@ transform_scan_enqueue(
     V_OPENCL( kernels[0].setArg( 7, *preSumArray ),         "Error setArg kernels[ 0 ]" ); // Output per block sum
     V_OPENCL( kernels[0].setArg( 8, doExclusiveScan ),      "Error setArg kernels[ 0 ]" ); // Exclusive scan?
     
+#ifdef BOLT_ENABLE_PROFILING
+transform_scan_ap.nextStep();
+k0_stepNum = transform_scan_ap.getStepNum();
+transform_scan_ap.setStepName("Kernel 0");
+transform_scan_ap.set(AsyncProfiler::device, ctl.forceRunMode());
+transform_scan_ap.set(AsyncProfiler::flops, 2*numElements);
+transform_scan_ap.set(AsyncProfiler::memory, 2*numElements*sizeof(iType) + 1*sizeScanBuff*sizeof(oType));
+#endif
+
     l_Error = ctl.commandQueue( ).enqueueNDRangeKernel(
         kernels[0],
         ::cl::NullRange,
@@ -533,6 +565,13 @@ transform_scan_enqueue(
     /**********************************************************************************
      *  Kernel 1
      *********************************************************************************/
+
+#ifdef BOLT_ENABLE_PROFILING
+transform_scan_ap.nextStep();
+transform_scan_ap.setStepName("Setup Kernel 1");
+transform_scan_ap.set(AsyncProfiler::device, control::SerialCpu);
+#endif
+
     cl_uint workPerThread = static_cast< cl_uint >( sizeScanBuff / kernel1_WgSize );
     V_OPENCL( kernels[1].setArg( 0, *postSumArray ),        "Error setArg kernels[ 1 ]" ); // Output buffer
     V_OPENCL( kernels[1].setArg( 1, *preSumArray ),         "Error setArg kernels[ 1 ]" ); // Input buffer
@@ -541,6 +580,15 @@ transform_scan_enqueue(
     V_OPENCL( kernels[1].setArg( 4, ldsSize, NULL ),        "Error setArg kernels[ 1 ]" ); // Scratch buffer
     V_OPENCL( kernels[1].setArg( 5, workPerThread ),        "Error setArg kernels[ 1 ]" ); // User provided functor
     V_OPENCL( kernels[1].setArg( 6, *binaryBuffer ),        "Error setArg kernels[ 1 ]" ); // User provided functor
+
+#ifdef BOLT_ENABLE_PROFILING
+transform_scan_ap.nextStep();
+k1_stepNum = transform_scan_ap.getStepNum();
+transform_scan_ap.setStepName("Kernel 1");
+transform_scan_ap.set(AsyncProfiler::device, ctl.forceRunMode());
+transform_scan_ap.set(AsyncProfiler::flops, 2*sizeScanBuff);
+transform_scan_ap.set(AsyncProfiler::memory, 4*sizeScanBuff*sizeof(oType));
+#endif
 
     l_Error = ctl.commandQueue( ).enqueueNDRangeKernel(
         kernels[1],
@@ -555,10 +603,26 @@ transform_scan_enqueue(
     /**********************************************************************************
      *  Kernel 2
      *********************************************************************************/
+
+#ifdef BOLT_ENABLE_PROFILING
+transform_scan_ap.nextStep();
+transform_scan_ap.setStepName("Setup Kernel 2");
+transform_scan_ap.set(AsyncProfiler::device, control::SerialCpu);
+#endif
+
     V_OPENCL( kernels[2].setArg( 0, result->getBuffer()),   "Error setArg kernels[ 2 ]" ); // Output buffer
     V_OPENCL( kernels[2].setArg( 1, *postSumArray ),        "Error setArg kernels[ 2 ]" ); // Input buffer
     V_OPENCL( kernels[2].setArg( 2, numElements ),          "Error setArg kernels[ 2 ]" ); // Size of scratch buffer
     V_OPENCL( kernels[2].setArg( 3, *binaryBuffer ),        "Error setArg kernels[ 2 ]" ); // User provided functor
+
+#ifdef BOLT_ENABLE_PROFILING
+transform_scan_ap.nextStep();
+k2_stepNum = transform_scan_ap.getStepNum();
+transform_scan_ap.setStepName("Kernel 2");
+transform_scan_ap.set(AsyncProfiler::device, ctl.forceRunMode());
+transform_scan_ap.set(AsyncProfiler::flops, numElements);
+transform_scan_ap.set(AsyncProfiler::memory, 2*numElements*sizeof(oType) + 1*sizeScanBuff*sizeof(oType));
+#endif
 
     l_Error = ctl.commandQueue( ).enqueueNDRangeKernel(
         kernels[2],
@@ -576,28 +640,60 @@ transform_scan_enqueue(
     /**********************************************************************************
      *  Print Kernel times
      *********************************************************************************/
-#if 0
+
+#ifdef BOLT_ENABLE_PROFILING
+transform_scan_ap.nextStep();
+transform_scan_ap.setStepName("Querying Kernel Times");
+transform_scan_ap.set(AsyncProfiler::device, control::SerialCpu);
+
     try
     {
-        double k0_globalMemory = 2.0*sizeInputBuff*sizeof(iType) + 1*sizeScanBuff*sizeof(iType);
-        double k1_globalMemory = 4.0*sizeScanBuff*sizeof(iType);
-        double k2_globalMemory = 2.0*sizeInputBuff*sizeof(iType) + 1*sizeScanBuff*sizeof(iType);
-        cl_ulong k0_start, k0_end, k1_start, k1_end, k2_start, k2_end;
-
+        cl_ulong k0_start, k0_stop, k1_stop, k2_stop;
+        
         l_Error = kernel0Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_START, &k0_start);
-        V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_START>()");
-        l_Error = kernel0Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END, &k0_end);
-        V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_START>()");
+        V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_QUEUED>()");
+        l_Error = kernel0Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END, &k0_stop);
+        V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_END>()");
         
-        l_Error = kernel1Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_START, &k1_start);
-        V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_START>()");
-        l_Error = kernel1Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END, &k1_end);
-        V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_START>()");
+        //l_Error = kernel1Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_START, &k1_start);
+        //V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_START>()");
+        l_Error = kernel1Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END, &k1_stop);
+        V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_END>()");
         
-        l_Error = kernel2Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_START, &k2_start);
-        V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_START>()");
-        l_Error = kernel2Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END, &k2_end);
-        V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_START>()");
+        //l_Error = kernel2Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_START, &k2_start);
+        //V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_START>()");
+        l_Error = kernel2Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END, &k2_stop);
+        V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_END>()");
+
+        size_t k0_start_cpu = transform_scan_ap.get(k0_stepNum, AsyncProfiler::startTime);
+        size_t shift = k0_start - k0_start_cpu;
+        //size_t shift = k0_start_cpu - k0_start;
+
+        //std::cout << "setting step " << k0_stepNum << " attribute " << AsyncProfiler::stopTime << " to " << k0_stop-shift << std::endl;
+        transform_scan_ap.set(k0_stepNum, AsyncProfiler::stopTime, k0_stop-shift);
+
+        transform_scan_ap.set(k1_stepNum, AsyncProfiler::startTime, k0_stop-shift);
+        transform_scan_ap.set(k1_stepNum, AsyncProfiler::stopTime, k1_stop-shift);
+
+        transform_scan_ap.set(k2_stepNum, AsyncProfiler::startTime, k1_stop-shift);
+        transform_scan_ap.set(k2_stepNum, AsyncProfiler::stopTime, k2_stop-shift);
+/*
+        // print kernel 1 time raw
+        double k0_ms = (k0_stop-k0_start) / 1000000.0;
+
+
+        // print kernel 1 time ap
+        double k0_ms_ap = (transform_scan_ap.get(k0_stepNum, AsyncProfiler::stopTime)
+                        - transform_scan_ap.get(k0_stepNum, AsyncProfiler::startTime))
+                        / 1000000.0;
+
+        std::cout << "k0_raw = " << k0_ms    << " ms."
+            << " stop:" << transform_scan_ap.get(k0_stepNum, AsyncProfiler::stopTime) << " -"
+            << " start: " << transform_scan_ap.get(k0_stepNum, AsyncProfiler::startTime) << std::endl;
+        std::cout << "k0_ap  = " << k0_ms_ap << " ms." << std::endl;
+
+
+
 
         double k0_sec = (k0_end-k0_start)/1000000000.0;
         double k1_sec = (k1_end-k1_start)/1000000000.0;
@@ -616,6 +712,7 @@ transform_scan_enqueue(
             k0_GBs, k0_globalMemory/1024/1024, k0_ms,
             k1_GBs, k1_globalMemory/1024/1024, k1_ms,
             k2_GBs, k2_globalMemory/1024/1024, k2_ms);
+*/
 
     }
     catch( ::cl::Error& e )
@@ -623,6 +720,9 @@ transform_scan_enqueue(
         std::cout << ( "Scan Benchmark error condition reported:" ) << std::endl << e.what() << std::endl;
         return;
     }
+
+transform_scan_ap.stopTrial();
+
 #endif
 
 }   //end of transform_scan_enqueue( )

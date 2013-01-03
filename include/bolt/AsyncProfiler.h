@@ -9,130 +9,136 @@
 class AsyncProfiler
 {
 private:
-  LARGE_INTEGER constructionTimeStamp;
-  double timerFrequency;
-  unsigned int getTime();
+    LARGE_INTEGER constructionTimeStamp;
+    size_t timerPeriodNs;
+    
 
 public:
 
-  static enum attributeTypes {
-    /*native*/  id, startTime, stopTime, memory, device, flops,
-    /*derived*/ time, bandwidth, flops_s,
-    /*total*/   NUM_ATTRIBUTES};
-  static char *attributeNames[];// = {"ID", "StartTime", "StopTime", "Memory", "Device", "Flops"};
-
-  /******************************************************************************
-   * Class Step 
-   *****************************************************************************/
-  class Step
-  {
-  private:
-    unsigned int serial;
-    ::std::string stepName;
-    unsigned int attributeValues[NUM_ATTRIBUTES];
-
-  public:
+    static enum attributeTypes {
+        /*native*/  id, device, time, memory, bandwidth, flops, flops_s, startTime, stopTime, 
+        /*total*/   NUM_ATTRIBUTES};
+    static char *attributeNames[];// = {"ID", "StartTime", "StopTime", "Memory", "Device", "Flops"};
+    static char *trialAttributeNames[];
     /******************************************************************************
-     * Constructors
+     * Class Step 
      *****************************************************************************/
-    Step( );
-    ~Step(void);
+    class Step
+    {
+    private:
+        //size_t serial;
+        ::std::string stepName;
+        size_t attributeValues[NUM_ATTRIBUTES];
 
-    /******************************************************************************
-     * Member Functions
-     *****************************************************************************/
-    void setSerial( unsigned int s );
-    void set( unsigned int index, unsigned int value);
-    unsigned int get( unsigned int index ) const;
-    void setName( const ::std::string& name );
-    void computeDerived();
-    ::std::ostream& writeLog( ::std::ostream& s ) const;
-  
-  }; // class Step
+    public:
+        
+        size_t stdDev[NUM_ATTRIBUTES];
+        /******************************************************************************
+         * Constructors
+         *****************************************************************************/
+        Step( );
+        ~Step(void);
 
+        /******************************************************************************
+         * Member Functions
+         *****************************************************************************/
+        //void setSerial( size_t s );
+        void set( size_t index, size_t value);
+        size_t get( size_t index ) const;
+        void setName( const ::std::string& name );
+        std::string getName( ) const;
+        void computeDerived();
+        ::std::ostream& writeLog( ::std::ostream& s ) const;
+    
+    }; // class Step
 
-  /******************************************************************************
-   * Class Trial
-   *****************************************************************************/
-  class Trial
-  {
-  private:
-    unsigned int serial;
-    std::vector<Step> steps;
-    unsigned int currentStepIndex;
-
-  public:
-    /******************************************************************************
-     * Constructors
-     *****************************************************************************/
-    Trial(void);
-    Trial( size_t n );
-    ~Trial(void);
 
     /******************************************************************************
-     * Member Functions
+     * Class Trial
      *****************************************************************************/
-    void setSerial( unsigned int s );
-    unsigned int size() const;
-    unsigned int get( unsigned int attributeIndex) const;
-    unsigned int get( unsigned int stepIndex, unsigned int attributeIndex) const;
-    void set( unsigned int attributeIndex, unsigned int attributeValue);
-    void set( unsigned int stepIndex, unsigned int attributeIndex, unsigned int attributeValue);
-    void startStep();
-    unsigned int nextStep();
-    unsigned int getStepNum() const;
-    ::std::ostream& writeLog( ::std::ostream& s ) const;
-    void setStepName( const ::std::string& name);
-  }; // class Trial
+    class Trial
+    {
+    private:
+        size_t serial;
+        std::vector<Step> steps;
+        size_t currentStepIndex;
+        
+    public:
+        size_t attributeValues[NUM_ATTRIBUTES];
+        size_t stdDev[NUM_ATTRIBUTES];
+        /******************************************************************************
+         * Constructors
+         *****************************************************************************/
+        Trial(void);
+        Trial( size_t n );
+        ~Trial(void);
+
+        /******************************************************************************
+         * Member Functions
+         *****************************************************************************/
+        void setSerial( size_t s );
+        size_t size() const;
+        void resize( size_t n );
+        size_t get( size_t attributeIndex) const;
+        size_t get( size_t stepIndex, size_t attributeIndex) const;
+        void set( size_t attributeIndex, size_t attributeValue);
+        void set( size_t stepIndex, size_t attributeIndex, size_t attributeValue);
+        void startStep();
+        size_t nextStep();
+        void computeStepsDerived();
+        void computeAttributes();
+        size_t getStepNum() const;
+        ::std::ostream& writeLog( ::std::ostream& s ) const;
+        void setStepName( const ::std::string& name);
+        void setStepName( size_t stepNum, const ::std::string& name);
+        std::string getStepName( ) const;
+        std::string getStepName( size_t stepNum ) const;
+        Step& operator[](size_t idx);
+    }; // class Trial
 
 
 /******************************************************************************
  * Resume Class AsyncProfiler
  *****************************************************************************/
 private:
-  unsigned int currentTrialIndex;
-  std::vector<Trial> trials;
+    size_t currentTrialIndex;
+    std::vector<Trial> trials;
+    std::string name;
+    Trial average;
 
 public:
-  /******************************************************************************
-   * Constructors
-   *****************************************************************************/
-  AsyncProfiler(void);
-  ~AsyncProfiler(void);
+    /******************************************************************************
+     * Constructors
+     *****************************************************************************/
+    AsyncProfiler(void);
+    AsyncProfiler(std::string name);
+    ~AsyncProfiler(void);
 
-  /******************************************************************************
-   * Member Functions
-   *****************************************************************************/
-  void startTrial();
-  void stopTrial();
-  void nextTrial();
+    /******************************************************************************
+     * Member Functions
+     *****************************************************************************/
+    size_t getTime();
+    void startTrial();
+    void stopTrial();
+    void nextTrial();
+    void nextStep();
+    void set( size_t attributeIndex, size_t attributeValue);
+    void set( size_t stepIndex, size_t attributeIndex, size_t attributeValue);
+    void set( size_t trialIndex, size_t stepIndex, size_t attributeIndex, size_t attributeValue);
+    size_t get( size_t attributeIndex) const;
+    size_t get( size_t stepIndex, size_t attributeIndex) const;
+    size_t get( size_t trialIndex, size_t stepIndex, size_t attributeIndex) const;
+    void setStepName( const ::std::string& name);
+    size_t getNumTrials() const;
+    size_t getNumSteps() const;
+    size_t getTrialNum() const;
+    size_t getStepNum() const;
 
-  void nextStep();
-
-  void set( unsigned int attributeIndex, unsigned int attributeValue);
-
-  void set( unsigned int stepIndex, unsigned int attributeIndex, unsigned int attributeValue);
-  
-  void set( unsigned int trialIndex, unsigned int stepIndex, unsigned int attributeIndex, unsigned int attributeValue);
-
-  unsigned int get( unsigned int attributeIndex) const;
-
-  unsigned int get( unsigned int stepIndex, unsigned int attributeIndex) const;
-  
-  unsigned int get( unsigned int trialIndex, unsigned int stepIndex, unsigned int attributeIndex) const;
-  
-  void setStepName( const ::std::string& name);
-
-  unsigned int getNumTrials() const;
-
-  unsigned int getNumSteps() const;
-
-  unsigned int getTrialNum() const;
-
-  unsigned int getStepNum() const;
-
-  ::std::ostream& writeLog( ::std::ostream& s ) const;
-  ::std::ostream& write( ::std::ostream& s ) const;
+    void end();
+    void calculateAverage();
+    ::std::ostream& writeLog( ::std::ostream& s ) const;
+    ::std::ostream& writeSum( ::std::ostream& s ) const;
+    ::std::ostream& write( ::std::ostream& s ) const;
 
 }; // class AsyncProfiler
 

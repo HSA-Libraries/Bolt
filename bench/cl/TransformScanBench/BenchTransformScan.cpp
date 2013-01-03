@@ -29,6 +29,9 @@
 #include "bolt/statisticalTimer.h"
 #include "bolt/countof.h"
 #include "bolt/cl/transform_scan.h"
+#include "bolt/AsyncProfiler.h"
+
+#define BOLT_ENABLE_PROFILING
 
 const std::streamsize colWidth = 26;
 
@@ -119,6 +122,7 @@ vecNsquare vNs;
 
 int _tmain( int argc, _TCHAR* argv[] )
 {
+
     cl_uint userPlatform = 0;
     cl_uint userDevice = 0;
     size_t iterations = 0;
@@ -475,6 +479,12 @@ int _tmain( int argc, _TCHAR* argv[] )
     bolt::tout << std::endl;
 
 //	bolt::tout << myTimer;
+
+
+#ifdef BOLT_ENABLE_PROFILING
+    transform_scan_ap.end();
+    transform_scan_ap.writeSum(std::cout);
+#endif
 
     return 0;
 }
