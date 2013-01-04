@@ -112,7 +112,14 @@ void AsyncProfiler::Step::computeDerived()
 
     // flops / sec
     if (attributeValues[flops_s] == 0)
+    {
     attributeValues[flops_s] = static_cast<size_t>(1000000000.0 * attributeValues[flops] / attributeValues[time]);
+    //std::cout << "Flops/s: " << attributeValues[flops_s] << " now" << std::endl;
+    }
+    else
+    {
+        //std::cout << "Flops/s: " << attributeValues[flops_s] << " already" << std::endl;
+    }
 
     // bandwidth [bytes / sec]
     if (attributeValues[bandwidth] == 0)
@@ -305,6 +312,7 @@ AsyncProfiler::AsyncProfiler(void) : currentTrialIndex( 0 )
     //std::cout << "FreqSec=" << freq.QuadPart << ", FreqNs=" << timerFrequency;
     //std::cout << "Timer Resolution = " << timerPeriodNs << " ns / click\n";
     //std::cout << "AsyncProfiler constructed" << std::endl;
+    architecture="";
 }
 
 AsyncProfiler::AsyncProfiler(std::string profName) : currentTrialIndex( 0 ), name(profName)
@@ -318,11 +326,12 @@ AsyncProfiler::AsyncProfiler(std::string profName) : currentTrialIndex( 0 ), nam
     //std::cout << "FreqSec=" << freq.QuadPart << ", FreqNs=" << timerFrequency;
     //std::cout << "Timer Resolution = " << timerPeriodNs << " ns / click\n";
     //std::cout << "AsyncProfiler constructed" << std::endl;
+    architecture="";
 }
 
 AsyncProfiler::~AsyncProfiler(void)
 {
-    std::cout << "AsyncProfiler destructed" << std::endl;
+    //std::cout << "AsyncProfiler destructed" << std::endl;
 }
 
 
@@ -433,9 +442,15 @@ void AsyncProfiler::setStepName( const ::std::string& name)
     trials[currentTrialIndex].setStepName( name );
 }
 
+void AsyncProfiler::setDataSize( size_t d )
+{
+    dataSize = d;
+}
 
-
-
+void AsyncProfiler::setArchitecture( std::string a )
+{
+    architecture = a;
+}
 
 
 
@@ -464,8 +479,8 @@ void AsyncProfiler::end()
 
 void AsyncProfiler::calculateAverage()
 {
-    std::cout << "########################################################################" << std::endl;
-    std::cout << "Calculating Average" << std::endl;
+    //std::cout << "########################################################################" << std::endl;
+    //std::cout << "Calculating Average" << std::endl;
     size_t numSteps = getNumSteps();
     average.resize(numSteps);
     average.setSerial(0);
@@ -510,10 +525,10 @@ void AsyncProfiler::calculateAverage()
     average.attributeValues[memory] = totalMemory / trialsAveraged;
     average.attributeValues[flops_s] = static_cast<size_t>(1000000000.0 * totalFlops / totalTime);
     average.attributeValues[bandwidth] = static_cast<size_t>(1000000000.0 * totalMemory / totalTime);
-    std::cout
-        << "bandwidth:" << average.attributeValues[bandwidth] << " = "
-        << "memory:" << totalMemory << " / "
-        << "time:" << totalTime << " x1000000000" << std::endl;
+    //std::cout
+    //    << "bandwidth:" << average.attributeValues[bandwidth] << " = "
+    //    << "memory:" << totalMemory << " / "
+    //    << "time:" << totalTime << " x1000000000" << std::endl;
 
     // assign average step attributes
     for (size_t s = 0; s < total.size(); s++)
@@ -529,8 +544,8 @@ void AsyncProfiler::calculateAverage()
             }
         }
     }
-    std::cout << "########################################################################" << std::endl;
-    std::cout << "Calculating Derived" << std::endl;
+    //std::cout << "########################################################################" << std::endl;
+    //std::cout << "Calculating Derived" << std::endl;
     average.computeStepsDerived();
 
     // accumulate for standard deviation
@@ -574,16 +589,16 @@ void AsyncProfiler::calculateAverage()
     average.stdDev[flops_s] = static_cast<size_t>(sqrt(average.stdDev[flops_s]/(trialsAveraged-1) ));
     // bandwidth
     average.stdDev[bandwidth] = static_cast<size_t>(sqrt(average.stdDev[bandwidth]/(trialsAveraged-1) ));
-
+    //std::cout << "Size of Average Trials: " << average.size() << std::endl;
     // final divide for steps stddev
     for (size_t s = 0; s < average.size(); s++)
     {
         // time
         average[s].stdDev[time] = static_cast<size_t>(sqrt(average[s].stdDev[time]/(count.get(s,time)-1) ));
         // flops_s
-        average[s].stdDev[flops_s] = static_cast<size_t>(sqrt(average[s].stdDev[flops_s]/(count.get(s,flops_s)-1) ));
+        average[s].stdDev[flops_s] = static_cast<size_t>(sqrt(average[s].stdDev[flops_s]/(count.get(s,flops)-1) ));
         // bandwidth
-        average[s].stdDev[bandwidth] = static_cast<size_t>(sqrt(average[s].stdDev[bandwidth]/(count.get(s,bandwidth)-1) ));
+        average[s].stdDev[bandwidth] = static_cast<size_t>(sqrt(average[s].stdDev[bandwidth]/(count.get(s,memory)-1) ));
     }
 
 }
@@ -592,34 +607,45 @@ void AsyncProfiler::calculateAverage()
 
 ::std::ostream& AsyncProfiler::writeSum( ::std::ostream& os ) const
 {
-    
-    //average.computeTrialDerived();
-
-    os << "<PROFILE name=\"" << name.c_str() << "\" type=\"average\" >";
+    os << "<PROFILE";
+    os << " name=\"" << name.c_str() << "\"";
+    os << " type=\"average\"";
+    os << " trials=\"" << ((trials.size()>1) ? trials.size()-1 : 1) << "\"";
+    os << " data[bytes]=\"" << dataSize << "\"";
+    os << " timerResolution=\"" << timerPeriodNs << "\"";
+    os << " architecture=\"" << architecture.c_str() << "\"";
+    os << " >";
     os << std::endl;
     average.writeLog(os);
-    os << "<PROFILE>";
+    os << "</PROFILE>";
     os << std::endl;
     return os;
 }
 
 
-::std::ostream& AsyncProfiler::writeLog( ::std::ostream& s ) const
+::std::ostream& AsyncProfiler::writeLog( ::std::ostream& os ) const
 {
-    s << "<PROFILE name=\"" << name.c_str() << "\" type=\"Log\" >";
-    s << std::endl;
-    for (size_t t = 0; t < trials.size(); t++) // last trial always incomplete
+    os << "<PROFILE";
+    os << " name=\"" << name.c_str() << "\"";
+    os << " type=\"Log\"";
+    os << " trials=\"" << ((trials.size()>1) ? trials.size()-1 : 1) << "\"";
+    os << " data[bytes]=\"" << dataSize << "\"";
+    os << " timerResolution[ns]=\"" << timerPeriodNs << "\"";
+    os << " architecture=\"" << architecture.c_str() << "\"";
+    os << " >";
+    os << std::endl;
+    for (size_t t = 0; t < trials.size(); t++)
     {
-      trials[t].writeLog(s);
+      trials[t].writeLog(os);
     }
-    s << "</PROFILE>";
-    s << std::endl;
-    return s;
+    os << "</PROFILE>";
+    os << std::endl;
+    return os;
 }
 
-::std::ostream& AsyncProfiler::write( ::std::ostream& s ) const
+::std::ostream& AsyncProfiler::write( ::std::ostream& os ) const
 {
-    writeLog(s);
-    writeSum(s);
-    return s;
+    writeLog(os);
+    writeSum(os);
+    return os;
 }

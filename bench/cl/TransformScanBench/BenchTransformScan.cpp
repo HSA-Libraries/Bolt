@@ -23,6 +23,8 @@
 // operator vecNplus
 // use the preprocessor commands of USE_VECN or EXCLUSIVE scan below
 
+#define BOLT_ENABLE_PROFILING
+
 #include "stdafx.h"
 
 #include "bolt/unicode.h"
@@ -31,7 +33,6 @@
 #include "bolt/cl/transform_scan.h"
 #include "bolt/AsyncProfiler.h"
 
-#define BOLT_ENABLE_PROFILING
 
 const std::streamsize colWidth = 26;
 

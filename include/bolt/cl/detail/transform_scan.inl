@@ -21,7 +21,7 @@
 #if !defined( TRANSFORM_SCAN_INL )
 #define TRANSFORM_SCAN_INL
 
-#define BOLT_ENABLE_PROFILING
+//#define BOLT_ENABLE_PROFILING
 
 #ifdef BOLT_ENABLE_PROFILING
 #include "bolt/AsyncProfiler.h"
@@ -489,6 +489,7 @@ size_t k0_stepNum, k1_stepNum, k2_stepNum;
     }
     cl_uint numWorkGroupsK0 = static_cast< cl_uint >( sizeInputBuff / kernel0_WgSize );
 
+
     //  Ceiling function to bump the size of the sum array to the next whole wavefront size
     device_vector< iType >::size_type sizeScanBuff = numWorkGroupsK0;
     modWgSize = (sizeScanBuff & (kernel0_WgSize-1));
@@ -645,6 +646,11 @@ transform_scan_ap.set(AsyncProfiler::memory, 2*numElements*sizeof(oType) + 1*siz
 transform_scan_ap.nextStep();
 transform_scan_ap.setStepName("Querying Kernel Times");
 transform_scan_ap.set(AsyncProfiler::device, control::SerialCpu);
+
+transform_scan_ap.setDataSize(numElements*sizeof(iType));
+std::string strDeviceName = ctl.device().getInfo< CL_DEVICE_NAME >( &l_Error );
+bolt::cl::V_OPENCL( l_Error, "Device::getInfo< CL_DEVICE_NAME > failed" );
+transform_scan_ap.setArchitecture(strDeviceName);
 
     try
     {

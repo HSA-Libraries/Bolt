@@ -105,6 +105,8 @@ private:
     std::vector<Trial> trials;
     std::string name;
     Trial average;
+    size_t dataSize;
+    std::string architecture;
 
 public:
     /******************************************************************************
@@ -133,6 +135,8 @@ public:
     size_t getNumSteps() const;
     size_t getTrialNum() const;
     size_t getStepNum() const;
+    void setDataSize( size_t d );
+    void setArchitecture( std::string a );
 
     void end();
     void calculateAverage();
