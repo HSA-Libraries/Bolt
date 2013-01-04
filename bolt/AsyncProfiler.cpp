@@ -479,6 +479,7 @@ void AsyncProfiler::end()
 
 void AsyncProfiler::calculateAverage()
 {
+    if (trials.size() == 0) return;
     //std::cout << "########################################################################" << std::endl;
     //std::cout << "Calculating Average" << std::endl;
     size_t numSteps = getNumSteps();

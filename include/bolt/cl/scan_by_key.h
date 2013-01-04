@@ -15,8 +15,8 @@
 
 ***************************************************************************/                                                                                     
 
-#if !defined( TRANSFORM_SCAN_H )
-#define TRANSFORM_SCAN_H
+#if !defined( SCAN_BY_KEY_H )
+#define SCAN_BY_KEY_H
 #pragma once
 
 #include <bolt/cl/bolt.h>

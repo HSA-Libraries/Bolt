@@ -135,8 +135,14 @@ namespace bolt
             // FIXME - move to cpp file
             struct CompileTemplate
             {
-                static void ScanSpecialization( std::vector< ::cl::Kernel >* scanKernels, const std::string& cl_code, const std::string& valueTypeName, const std::string& functorTypeName, const control* ctl )
+                static void ScanSpecialization(
+                    std::vector< ::cl::Kernel >* scanKernels,
+                    const std::string& cl_code,
+                    const std::string& valueTypeName,
+                    const std::string& functorTypeName,
+                    const control* ctl )
                 {
+                    //std::cout << "Scan Specialization cl_code=" << cl_code.c_str() << std::endl;
                     // cl_code = template<typename T> struct plus { T operator()(const T &lhs, const T &rhs) const {return lhs + rhs;} };
                     // valueTypeName = int
                     // functorTypeName = plus<int>
@@ -329,8 +335,19 @@ namespace bolt
                 static boost::once_flag scanCompileFlag;
                 static std::vector< ::cl::Kernel > scanKernels;
 
+                //std::cout << "enqueue cl_code=" << ClCode<iType>::get().c_str() << std::endl;
+
                 // For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retreive the name here.
-                boost::call_once( scanCompileFlag, boost::bind( CompileTemplate::ScanSpecialization, &scanKernels, ClCode<iType>::get()+ClCode< BinaryFunction >::get( ), TypeName< iType >::get( ), TypeName< BinaryFunction >::get( ), &ctl ) );
+                boost::call_once(
+                    scanCompileFlag,
+                    boost::bind(
+                        CompileTemplate::ScanSpecialization,
+                        &scanKernels,
+                        ClCode<iType>::get()+ClCode< BinaryFunction >::get( ),
+                        TypeName< iType >::get( ),
+                        TypeName< BinaryFunction >::get( ),
+                        &ctl )
+                    );
 
                 cl_int l_Error = CL_SUCCESS;
                 // for profiling

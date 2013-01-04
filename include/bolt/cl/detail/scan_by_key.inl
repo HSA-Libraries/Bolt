@@ -744,9 +744,9 @@ scan_by_key_pick_iterator(
     const std::string& user_code,
     const bool& inclusive )
 {
-    typedef typename std::iterator_traits< InputIterator1 >::value_type kType;
-    typedef typename std::iterator_traits< InputIterator2 >::value_type vType;
-    typedef typename std::iterator_traits< OutputIterator >::value_type oType;
+    typedef typename std::iterator_traits< DVInputIterator1 >::value_type kType;
+    typedef typename std::iterator_traits< DVInputIterator2 >::value_type vType;
+    typedef typename std::iterator_traits< DVOutputIterator >::value_type oType;
     static_assert( std::is_convertible< vType, oType >::value, "InputValue and Output iterators are incompatible" );
 
     unsigned int numElements = static_cast< unsigned int >( std::distance( firstKey, lastKey ) );
