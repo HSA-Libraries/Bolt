@@ -24,7 +24,6 @@
 // use the preprocessor commands of USE_VECN or EXCLUSIVE scan below
 
 #define BOLT_ENABLE_PROFILING
-
 #include "stdafx.h"
 
 #include "bolt/unicode.h"
@@ -33,6 +32,7 @@
 #include "bolt/cl/transform_scan.h"
 #include "bolt/AsyncProfiler.h"
 
+AsyncProfiler aProfiler;
 
 const std::streamsize colWidth = 26;
 
@@ -483,8 +483,8 @@ int _tmain( int argc, _TCHAR* argv[] )
 
 
 #ifdef BOLT_ENABLE_PROFILING
-    transform_scan_ap.end();
-    transform_scan_ap.writeSum(std::cout);
+    aProfiler.end();
+    aProfiler.writeSum(std::cout);
 #endif
 
     return 0;
