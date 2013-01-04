@@ -208,7 +208,7 @@ namespace bolt
             *   container, or use iterator arithmetic instead, such as *(iter + 5) for reading from the iterator.
             */
             template< typename Container >
-            class iterator_base: public boost::iterator_facade< iterator_base< Container >, value_type, std::random_access_iterator_tag, typename device_vector::reference, bolt::cl::ptrdiff_t >
+            class iterator_base: public boost::iterator_facade< iterator_base< Container >, value_type, std::random_access_iterator_tag, typename device_vector::reference, int >
             {
             public:
 

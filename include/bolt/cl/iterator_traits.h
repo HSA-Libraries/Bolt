@@ -16,39 +16,52 @@
 ***************************************************************************/                                                                                     
 
 #pragma once
+#if !defined( ITERATOR_TRAITS_H )
+#define ITERATOR_TRAITS_H
 
+/*! \file iterator_traits.h
+    \brief Defines new iterator_traits structures used by the Bolt runtime to make runtime decisions on how to 
+    dispatch calls to various supported backends
+*/
+
+// #include <iterator>
 
 namespace bolt {
-	namespace cl {
+namespace cl {
 
-		typedef int ptrdiff_t; // Map all pointer differences to 32-bit integers for OCL benefit.
+    template< typename Iterator >
+    struct iterator_traits
+    {
+        typedef typename Iterator::iterator_category iterator_category;
+        typedef typename Iterator::value_type value_type;
+        typedef typename Iterator::difference_type difference_type;
+        typedef typename Iterator::pointer pointer;
+        typedef typename Iterator::reference reference;
+    };
 
-		template <class Iterator> struct iterator_traits {
-			typedef typename Iterator::difference_type difference_type;
-			//typedef int difference_type;  // FIXME, this should call down to the lower-level iterators.
-			typedef typename Iterator::value_type value_type;
-			typedef typename Iterator::pointer pointer;
-			typedef typename Iterator::reference reference;
-			typedef typename Iterator::iterator_category iterator_category;
-		};
+    template< class T >
+    struct iterator_traits< T* >
+    {
+        typedef std::random_access_iterator_tag iterator_category;
+        typedef T value_type;
+        //  difference_type set to int for OpenCL backend
+        typedef int difference_type;
+        typedef T* pointer;
+        typedef T& reference;
+    };
 
+    template< class T >
+    struct iterator_traits< const T* >
+    {
+        typedef std::random_access_iterator_tag iterator_category;
+        typedef T value_type;
+        //  difference_type set to int for OpenCL backend
+        typedef int difference_type;
+        typedef const T* pointer;
+        typedef const T& reference;
+    };
 
-		template <class T> struct iterator_traits<T*> {
-			typedef ptrdiff_t difference_type;
-			typedef T value_type;
-			typedef T* pointer;
-			typedef T& reference;
-			typedef std::random_access_iterator_tag iterator_category;
-		};
-
-		template <class T> struct iterator_traits<const T*> {
-			typedef ptrdiff_t difference_type;
-			typedef T value_type;
-			typedef const T* pointer;
-			typedef const T& reference;
-			typedef std::random_access_iterator_tag iterator_category;
-		};
-
-
-	}
+}
 };
+
+#endif

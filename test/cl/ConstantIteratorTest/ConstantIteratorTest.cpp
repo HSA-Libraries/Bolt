@@ -163,24 +163,24 @@ public:
 protected:
 };
 
-BOLT_CREATE_TEMPLATE_TYPENAME( bolt::cl::constant_iterator, char);
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::constant_iterator, int, char );
 
 //TEST_P( ConstantIterator, Dereference )
 TEST( ConstantIterator, Dereference )
 {
     bolt::cl::constant_iterator< int > cIter( 3 );
 
-    std::cout << template_TypeName< bolt::cl::constant_iterator, int >::get( ) << std::endl;
-    std::cout << template_clCode< bolt::cl::constant_iterator, int >::get( ) << std::endl << std::endl;
+    std::cout << TypeName< bolt::cl::constant_iterator< int > >::get( ) << std::endl;
+    std::cout << ClCode< bolt::cl::constant_iterator< int > >::get( ) << std::endl << std::endl;
 
-    std::cout << template_TypeName< bolt::cl::constant_iterator, float >::get( ) << std::endl;
-    std::cout << template_clCode< bolt::cl::constant_iterator, float >::get( ) << std::endl << std::endl;
+    std::cout << TypeName< bolt::cl::constant_iterator< float > >::get( ) << std::endl;
+    std::cout << ClCode< bolt::cl::constant_iterator< float > >::get( ) << std::endl << std::endl;
 
-    std::cout << template_TypeName< bolt::cl::constant_iterator, double >::get( ) << std::endl;
-    std::cout << template_clCode< bolt::cl::constant_iterator, double >::get( ) << std::endl << std::endl;
+    std::cout << TypeName< bolt::cl::constant_iterator< double > >::get( ) << std::endl;
+    std::cout << ClCode< bolt::cl::constant_iterator< double > >::get( ) << std::endl << std::endl;
 
-    std::cout << template_TypeName< bolt::cl::constant_iterator, char >::get( ) << std::endl;
-    std::cout << template_clCode< bolt::cl::constant_iterator, char >::get( ) << std::endl << std::endl;
+    std::cout << TypeName< bolt::cl::constant_iterator< char > >::get( ) << std::endl;
+    std::cout << ClCode< bolt::cl::constant_iterator< char > >::get( ) << std::endl << std::endl;
 
     EXPECT_EQ( 3, *cIter );
     EXPECT_EQ( 3, cIter[ 0 ] );
@@ -197,9 +197,9 @@ TEST_P( ConstantIterator, TransformVector )
     data[ 2 ] = 100;
     data[ 3 ] = 1000;
 
-    //// add 10 to all values in data
-    //bolt::cl::transform( data.begin( ), data.end( ), bolt::cl::make_constant_iterator( 50 ),
-    //                  data.begin( ), bolt::cl::plus< int >( ) );
+    // add 10 to all values in data
+    bolt::cl::transform( data.begin( ), data.end( ), bolt::cl::make_constant_iterator( 50 ),
+                      data.begin( ), bolt::cl::plus< int >( ) );
 
     //EXPECT_EQ( 51, data[ 0 ] );
     //EXPECT_EQ( 60, data[ 1 ] );
