@@ -16,17 +16,12 @@
 ############################################################################                                                                                     
 
 # List the names of common files to compile across all platforms
-set( clBolt.Bench.Benchmark.Source BenchTransformScan.cpp )
+set( clBolt.Bench.Benchmark.Source Benchmark.cpp )
 set( clBolt.Bench.Benchmark.Headers )
-set( clBolt.Bench.Benchmark.Inlines 
-  Bench_TransformScan.inl
-  Bench_Scan.inl
-  )
 
 set( clBolt.Bench.Benchmark.Files
   ${clBolt.Bench.Benchmark.Source}
   ${clBolt.Bench.Benchmark.Headers}
-  ${clBolt.Bench.Benchmark.Inlines}
   )
 
 add_executable( clBolt.Bench.Benchmark ${clBolt.Bench.Benchmark.Files} )

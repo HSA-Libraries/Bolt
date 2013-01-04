@@ -29,6 +29,7 @@
 #include "bolt/cl/functional.h"
 #include "bolt/cl/device_vector.h"
 
+#include <fstream>
 #include <vector>
 #include <tchar.h>
 #include <algorithm>
@@ -369,28 +370,28 @@ void executeFunctionType(
     size_t iterations
     )
 {
-    for (size_t iter = 0; iter < iterations; iter++)
+    for (size_t iter = 0; iter < iterations+1; iter++)
     {
         switch(function) // same order as
         {
 
         case f_scan: // scan
-            std::cerr << "(" << iter << ") scan" << std::endl;
+            //std::cerr << "(" << iter << ") scan" << std::endl;
             bolt::cl::inclusive_scan(
                 ctrl, input1.begin(), input1.end(), output.begin(), binaryFunct );
             break;
         case f_transform_scan: // transform_scan
-            std::cerr << "(" << iter << ") transform_scan" << std::endl;
+            //std::cerr << "(" << iter << ") transform_scan" << std::endl;
             bolt::cl::transform_inclusive_scan(
                 ctrl, input1.begin(), input1.end(), output.begin(), unaryFunct, binaryFunct );
             break;
         case f_scan_by_key: // scan_by_key
-            std::cerr << "(" << iter << ") scan_by_key" << std::endl;
+            //std::cerr << "(" << iter << ") scan_by_key" << std::endl;
             bolt::cl::inclusive_scan_by_key(
                 ctrl, input1.begin(), input1.end(), input2.begin(), output.begin(), binaryPredEq, binaryFunct );
             break;
         default:
-            std::cerr << "Unsupported function=" << function << std::endl;
+            //std::cerr << "Unsupported function=" << function << std::endl;
             iter = iterations; // skip to end
             break;
         } // switch
@@ -542,6 +543,7 @@ int _tmain( int argc, _TCHAR* argv[] )
     size_t vecType          = 0;
     size_t runMode          = 0;
     size_t routine          = 0;
+    std::string filename;
     cl_device_type deviceType = CL_DEVICE_TYPE_DEFAULT;
     bool defaultDevice = true;
     bool print_clInfo = false;
@@ -576,6 +578,8 @@ int _tmain( int argc, _TCHAR* argv[] )
             ( "runMode,m",      po::value< size_t >( &runMode )->default_value( 0 ),
                 "Run Mode: 0-Auto, 1-SerialCPU, 2-MultiCoreCPU, 3-GPU" )
             ( "routine,r",      po::value< size_t >( &routine )->default_value( 0 ),
+                "Number of samples in timing loop" )
+            ( "filename,f",     po::value< std::string >( &filename )->default_value( "bench.xml" ),
                 "Number of samples in timing loop" )
             ;
 
@@ -670,7 +674,7 @@ int _tmain( int argc, _TCHAR* argv[] )
         std::string strDeviceName = ctrl.device( ).getInfo< CL_DEVICE_NAME >( &err );
         bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_NAME > failed" );
     }
-    std::cout << "Device under test : " << strDeviceName << std::endl;
+    // std::cout << "Device under test : " << strDeviceName << std::endl;
 
     /******************************************************************************
      * Select Function
@@ -689,7 +693,8 @@ int _tmain( int argc, _TCHAR* argv[] )
      ******************************************************************************/
 
     transform_scan_ap.end();
-    transform_scan_ap.writeSum(std::cout);
-
+    std::ofstream outFile( filename.c_str() );
+    transform_scan_ap.writeSum( outFile );
+    outFile.close();
     return 0;
 }
