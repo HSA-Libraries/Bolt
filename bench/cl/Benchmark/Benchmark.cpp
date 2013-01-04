@@ -23,6 +23,15 @@
 #define BOLT_BENCH_DEVICE_VECTOR_FLAGS CL_MEM_READ_WRITE
 
 #include "bolt/AsyncProfiler.h"
+AsyncProfiler aProfiler("default");
+
+static char *routineNames[] = {
+    "Scan",
+    "TransformScan",
+    "ScanByKey"
+};
+
+
 #include "bolt/cl/scan.h"
 #include "bolt/cl/transform_scan.h"
 #include "bolt/cl/scan_by_key.h"
@@ -525,9 +534,6 @@ void executeFunction(
 }
 
 
-
-
-
 /******************************************************************************
  *
  *  Main
@@ -679,6 +685,7 @@ int _tmain( int argc, _TCHAR* argv[] )
     /******************************************************************************
      * Select Function
      ******************************************************************************/
+    
     executeFunction(
         ctrl,
         vecType,
@@ -692,9 +699,9 @@ int _tmain( int argc, _TCHAR* argv[] )
      * Print Results
      ******************************************************************************/
 
-    transform_scan_ap.end();
+    aProfiler.end();
     std::ofstream outFile( filename.c_str() );
-    transform_scan_ap.writeSum( outFile );
+    aProfiler.writeSum( outFile );
     outFile.close();
     return 0;
 }

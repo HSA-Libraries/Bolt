@@ -135,6 +135,7 @@ public:
     size_t getNumSteps() const;
     size_t getTrialNum() const;
     size_t getStepNum() const;
+    void setName( std::string n);
     void setDataSize( size_t d );
     void setArchitecture( std::string a );
 

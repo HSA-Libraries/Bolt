@@ -451,6 +451,10 @@ void AsyncProfiler::setArchitecture( std::string a )
 {
     architecture = a;
 }
+void AsyncProfiler::setName( std::string n )
+{
+    name = n;
+}
 
 
 
