@@ -205,7 +205,8 @@ size_t AsyncProfiler::Trial::nextStep()
 {
     //steps[currentStepIndex].computeDerived();
     currentStepIndex++;
-    steps.emplace_back();
+    Step tmp;
+    steps.push_back( tmp );
     //steps[currentStepIndex].set( id, currentStepIndex );
     return currentStepIndex;
 }
@@ -361,7 +362,8 @@ void AsyncProfiler::stopTrial()
 }
 void AsyncProfiler::startTrial()
 {
-    trials.emplace_back();
+    Trial tmp;
+    trials.push_back( tmp );
     trials[currentTrialIndex].setSerial( currentTrialIndex );
     trials[currentTrialIndex].startStep();
     set( startTime, getTime() );
