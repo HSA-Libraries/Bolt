@@ -15,9 +15,8 @@
 
 ############################################################################                                                                                     
 
-# We require 2.8.3 for windows because of a bug in cmake that prevented vs2010 from generating
-# executables properly with multiple periods
-cmake_minimum_required( VERSION 2.8.3 )
+# We require 2.8.10 because of the added support to download from https URL's
+cmake_minimum_required( VERSION 2.8.10 )
 
 # uncomment these to debug nmake and borland makefiles
 #SET(CMAKE_START_TEMP_FILE "")
@@ -226,7 +225,7 @@ install( DIRECTORY
 
 # Right now, always install the examples folder
 install( FILES 
-            README.html
+            doxy/README.html
             LICENSE.txt
         DESTINATION
             . )
