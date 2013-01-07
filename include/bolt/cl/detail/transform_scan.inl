@@ -673,13 +673,13 @@ aProfiler.setArchitecture(strDeviceName);
         //size_t shift = k0_start_cpu - k0_start;
 
         //std::cout << "setting step " << k0_stepNum << " attribute " << AsyncProfiler::stopTime << " to " << k0_stop-shift << std::endl;
-        aProfiler.set(k0_stepNum, AsyncProfiler::stopTime, k0_stop-shift);
+        aProfiler.set(k0_stepNum, AsyncProfiler::stopTime,  static_cast<size_t>(k0_stop-shift) );
 
-        aProfiler.set(k1_stepNum, AsyncProfiler::startTime, k0_stop-shift);
-        aProfiler.set(k1_stepNum, AsyncProfiler::stopTime, k1_stop-shift);
+        aProfiler.set(k1_stepNum, AsyncProfiler::startTime, static_cast<size_t>(k0_stop-shift) );
+        aProfiler.set(k1_stepNum, AsyncProfiler::stopTime,  static_cast<size_t>(k1_stop-shift) );
 
-        aProfiler.set(k2_stepNum, AsyncProfiler::startTime, k1_stop-shift);
-        aProfiler.set(k2_stepNum, AsyncProfiler::stopTime, k2_stop-shift);
+        aProfiler.set(k2_stepNum, AsyncProfiler::startTime, static_cast<size_t>(k1_stop-shift) );
+        aProfiler.set(k2_stepNum, AsyncProfiler::stopTime,  static_cast<size_t>(k2_stop-shift) );
 
     }
     catch( ::cl::Error& e )

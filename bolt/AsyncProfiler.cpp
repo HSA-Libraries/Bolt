@@ -589,21 +589,21 @@ void AsyncProfiler::calculateAverage()
 
     // final divide for trial stddev
     // time
-    average.stdDev[time] = static_cast<size_t>(sqrt(average.stdDev[time]/(trialsAveraged-1) ));
+    average.stdDev[time] = static_cast<size_t>(sqrt(average.stdDev[time]/(trialsAveraged-1.0) ));
     // flops_s
-    average.stdDev[flops_s] = static_cast<size_t>(sqrt(average.stdDev[flops_s]/(trialsAveraged-1) ));
+    average.stdDev[flops_s] = static_cast<size_t>(sqrt(average.stdDev[flops_s]/(trialsAveraged-1.0) ));
     // bandwidth
-    average.stdDev[bandwidth] = static_cast<size_t>(sqrt(average.stdDev[bandwidth]/(trialsAveraged-1) ));
+    average.stdDev[bandwidth] = static_cast<size_t>(sqrt(average.stdDev[bandwidth]/(trialsAveraged-1.0) ));
     //std::cout << "Size of Average Trials: " << average.size() << std::endl;
     // final divide for steps stddev
     for (size_t s = 0; s < average.size(); s++)
     {
         // time
-        average[s].stdDev[time] = static_cast<size_t>(sqrt(average[s].stdDev[time]/(count.get(s,time)-1) ));
+        average[s].stdDev[time] = static_cast<size_t>(sqrt(average[s].stdDev[time]/(count.get(s,time)-1.0) ));
         // flops_s
-        average[s].stdDev[flops_s] = static_cast<size_t>(sqrt(average[s].stdDev[flops_s]/(count.get(s,flops)-1) ));
+        average[s].stdDev[flops_s] = static_cast<size_t>(sqrt(average[s].stdDev[flops_s]/(count.get(s,flops)-1.0) ));
         // bandwidth
-        average[s].stdDev[bandwidth] = static_cast<size_t>(sqrt(average[s].stdDev[bandwidth]/(count.get(s,memory)-1) ));
+        average[s].stdDev[bandwidth] = static_cast<size_t>(sqrt(average[s].stdDev[bandwidth]/(count.get(s,memory)-1.0) ));
     }
 
 }
