@@ -201,12 +201,16 @@ TEST_P( ConstantIterator, TransformVector )
     bolt::cl::transform( data.begin( ), data.end( ), bolt::cl::make_constant_iterator( 50 ),
                       data.begin( ), bolt::cl::plus< int >( ) );
 
-    //EXPECT_EQ( 51, data[ 0 ] );
-    //EXPECT_EQ( 60, data[ 1 ] );
-    //EXPECT_EQ( 150, data[ 2 ] );
-    //EXPECT_EQ( 1050, data[ 3 ] );
+    EXPECT_EQ( 51, data[ 0 ] );
+    EXPECT_EQ( 60, data[ 1 ] );
+    EXPECT_EQ( 150, data[ 2 ] );
+    EXPECT_EQ( 1050, data[ 3 ] );
 }
 
+/* /brief List of possible tests
+ * Two input transform with first input a constant iterator
+ * One input transform with a constant iterator
+*/
 int _tmain(int argc, _TCHAR* argv[])
 {
     //  Register our minidump generating logic

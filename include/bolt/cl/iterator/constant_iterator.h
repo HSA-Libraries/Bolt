@@ -20,47 +20,52 @@
 #include "bolt/cl/bolt.h"
 #include "bolt/cl/iterator_traits.h"
 
-namespace bolt
-{
-    namespace cl
-    {
-        BOLT_TEMPLATE_FUNCTOR3( constant_iterator, int, float, double,
-            template< typename T >
-            class constant_iterator
-            {
-            public:
-                typedef size_t difference_type;
-                typedef size_t size_type;
-                typedef T value_type;
-                typedef T* pointer;
-                typedef T& reference;
-                typedef std::random_access_iterator_tag iterator_category;
+namespace bolt {
+namespace cl {
 
-                constant_iterator( value_type init ): constValue( init )
-                {};
+    struct constant_iterator_tag
+        : public fancy_iterator_tag
+        {   // identifying tag for random-access iterators
+        };
 
-                value_type operator[]( size_type ) const
-                {
-                    return constValue;
-                }
-
-                value_type operator*( ) const
-                {
-                    return constValue;
-                }
-
-            private:
-                value_type  constValue;
-            };
-        )
-
-        template< typename Type >
-        constant_iterator< Type > make_constant_iterator( Type constValue )
+    BOLT_TEMPLATE_FUNCTOR3( constant_iterator, int, float, double,
+        template< typename T >
+        class constant_iterator
         {
-            constant_iterator< Type > tmp( constValue );
-            return tmp;
-        }
+        public:
+            typedef constant_iterator_tag iterator_category;
+            typedef T value_type;
+            typedef size_t difference_type;
+            typedef size_t size_type;
+            typedef T* pointer;
+            typedef T& reference;
+
+            constant_iterator( value_type init ): constValue( init )
+            {};
+
+            value_type operator[]( size_type ) const
+            {
+                return constValue;
+            }
+
+            value_type operator*( ) const
+            {
+                return constValue;
+            }
+
+        private:
+            value_type  constValue;
+        };
+    )
+
+    template< typename Type >
+    constant_iterator< Type > make_constant_iterator( Type constValue )
+    {
+        constant_iterator< Type > tmp( constValue );
+        return tmp;
     }
+
+}
 }
 
 #endif

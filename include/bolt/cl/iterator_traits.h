@@ -29,6 +29,11 @@
 namespace bolt {
 namespace cl {
 
+    struct fancy_iterator_tag
+        : public std::random_access_iterator_tag
+        {   // identifying tag for random-access iterators
+        };
+
     template< typename Iterator >
     struct iterator_traits
     {
