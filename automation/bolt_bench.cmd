@@ -15,7 +15,7 @@ set HOSTMEMORY=0
 
 :Loop
   IF [%1]==[] GOTO Continue
-	if /i "%1"=="--bin" (
+	if /i "%1"=="--bin-path" (
     echo %2
 		set BOLT_BIN_PATH=%2
     SHIFT
