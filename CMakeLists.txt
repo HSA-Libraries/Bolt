@@ -102,6 +102,7 @@ endif( )
 #if( IS_DIRECTORY "${PROJECT_SOURCE_DIR}/examples" )
 #    option( BUILD_examples "Generate example projects to demonstrate Bolt usage" OFF )
 #endif( )
+set( BUILD_examples OFF )
 
 # Currently, linux has a problem outputing both narrow and wide characters,
 # which happens in our client because openCL only supports narrow characters
@@ -206,9 +207,9 @@ if( BUILD_documentation )
 endif( )
 
 # After libraries are built, built examples
-# if( BUILD_examples )
-    # add_subdirectory( examples EXCLUDE_FROM_ALL )
-# endif( )
+if( BUILD_examples )
+    add_subdirectory( examples EXCLUDE_FROM_ALL )
+endif( )
 
 # configure a header file to pass the CMake version settings to the source, and package the header files in the output archive
 configure_file( "${PROJECT_SOURCE_DIR}/include/bolt/boltVersion.h.in" "${PROJECT_BINARY_DIR}/include/bolt/boltVersion.h" )
@@ -217,14 +218,22 @@ install( FILES
         DESTINATION 
             ${INCLUDE_DIR}/bolt )
 
+configure_file( "${PROJECT_SOURCE_DIR}/examples/CMakeLists.txt.in" "${PROJECT_BINARY_DIR}/examples/CMakeLists.txt" )
+
 # Right now, always install the examples folder
 install( DIRECTORY 
             examples
         DESTINATION
             .
-        PATTERN "Hessian" EXCLUDE )
+        PATTERN "Hessian" EXCLUDE
+        PATTERN "*.in" EXCLUDE )
+        
+install( FILES 
+            "${PROJECT_BINARY_DIR}/examples/CMakeLists.txt" 
+        DESTINATION 
+            examples )
 
-# Right now, always install the examples folder
+# Copy over the documentation related files
 install( FILES 
             doxy/README.html
             LICENSE.txt

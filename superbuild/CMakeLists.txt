@@ -80,10 +80,13 @@ option( BUILD_Bolt "Setup Bolt to use all the external dependencies" ON )
 option( BUILD_gTest "Install googleTest as an external dependency" ON )
 option( BUILD_AMP "Generate projects that use the AMP backend" ON )
 option( BUILD_OpenCL "Generate projects that use the OpenCL backend" ON )
-option( BUILD_Examples "Generate example projects to demonstrate Bolt usage" OFF )
+
+# Comment this out because this does not work yet
+# option( BUILD_Examples "Generate example projects to demonstrate Bolt usage" OFF )
 
 set( Bolt.Dependencies )
 set( Bolt.Cmake.Args )
+set( BUILD_Examples OFF )
 
 # If the user selects, download, uncompress, and setup Boost
 if( BUILD_Boost )
