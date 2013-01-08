@@ -14,12 +14,18 @@
 *   limitations under the License.                                                   
 
 ***************************************************************************/                                                
+
+/******************************************************************************
+ * OpenCL Scan
+ *****************************************************************************/
+
 #define KERNEL02WAVES 4
 #define KERNEL1WAVES 4
 #define WAVESIZE 64
 
-#if !defined( SCAN_INL )
-#define SCAN_INL
+#if !defined( OCL_SCAN_INL )
+#define OCL_SCAN_INL
+#pragma once
 
 #ifdef BOLT_ENABLE_PROFILING
 #include "bolt/AsyncProfiler.h"
@@ -28,9 +34,6 @@
 
 #include <algorithm>
 #include <type_traits>
-#include <boost/thread/once.hpp>
-#include <boost/bind.hpp>
-#include "bolt/cl/transform.h"
 #include "bolt/cl/bolt.h"
 
 namespace bolt
@@ -672,4 +675,4 @@ aProfiler.stopTrial();
 }   //namespace cl
 }//namespace bolt
 
-#endif
+#endif // OCL_SCAN_INL

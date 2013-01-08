@@ -17,36 +17,55 @@
 
 # List the names of common files to compile across all platforms
 
-set( Bolt.Include.Dir ${BOLT_INCLUDE_DIR}/bolt/amp )
+set( ampBolt.Include.Dir ${BOLT_INCLUDE_DIR}/bolt/amp )
 
-set( Bolt.Runtime.Source ${BOLT_LIBRARY_DIR}/statisticalTimer.cpp )
+set( ampBolt.Runtime.Source
+  bolt.cpp
+  control.cpp
+  ${BOLT_LIBRARY_DIR}/statisticalTimer.cpp )
 
-set( Bolt.Runtime.Headers 
-		${Bolt.Include.Dir}/functional.h 
-		${Bolt.Include.Dir}/parallel_iteration.h 
-		${Bolt.Include.Dir}/pool_alloc.h 
-		${Bolt.Include.Dir}/reduce.h 
-		${Bolt.Include.Dir}/scan.h 
-		${Bolt.Include.Dir}/synchronized_view.h 
-		${Bolt.Include.Dir}/transform.h 
-		${Bolt.Include.Dir}/transform_reduce.h 
-		${Bolt.Include.Dir}/transform_reduce_range.h
-		${Bolt.Include.Dir}/../countof.h
-		${Bolt.Include.Dir}/../statisticalTimer.h
-		${Bolt.Include.Dir}/../unicode.h )
+set( ampBolt.Runtime.Headers 
+		${ampBolt.Include.Dir}/bolt.h 
+		${ampBolt.Include.Dir}/control.h 
+		${ampBolt.Include.Dir}/functional.h 
+		${ampBolt.Include.Dir}/parallel_iteration.h 
+		${ampBolt.Include.Dir}/pool_alloc.h 
+		${ampBolt.Include.Dir}/reduce.h 
+		${ampBolt.Include.Dir}/scan.h 
+		${ampBolt.Include.Dir}/synchronized_view.h 
+		${ampBolt.Include.Dir}/transform.h 
+		${ampBolt.Include.Dir}/transform_reduce.h 
+		${ampBolt.Include.Dir}/transform_reduce_range.h
+		${ampBolt.Include.Dir}/../countof.h
+		${ampBolt.Include.Dir}/../statisticalTimer.h
+		${ampBolt.Include.Dir}/../unicode.h
+    )
+
+  set( ampBolt.Runtime.Headers.Detail
+		${ampBolt.Include.Dir}/detail/scan.inl
+		${ampBolt.Include.Dir}/detail/scan_by_key.inl
+		${ampBolt.Include.Dir}/detail/transform_scan.inl
+    )
+
 
 # The minidump tech is windows specific; I don't have a solution yet for linux, but google-breakpad looks promising
 if( WIN32 )
-	list( APPEND Bolt.Runtime.Source ${BOLT_LIBRARY_DIR}/miniDump.cpp )
-	list( APPEND Bolt.Runtime.Headers ${Bolt.Include.Dir}/../miniDump.h )
+	list( APPEND ampBolt.Runtime.Source ${BOLT_LIBRARY_DIR}/miniDump.cpp )
+	list( APPEND ampBolt.Runtime.Headers ${ampBolt.Include.Dir}/../miniDump.h )
 endif( )
 
-set( Bolt.Runtime.Files ${Bolt.Runtime.Source} ${Bolt.Runtime.Headers} )
+source_group( "Inline Files" REGULAR_EXPRESSION .*inl$ )
+
+set( ampBolt.Runtime.Files
+  ${ampBolt.Runtime.Source}
+  ${ampBolt.Runtime.Headers}
+  ${ampBolt.Runtime.Headers.Detail}
+  )
 
 # Include standard OpenCL headers
 include_directories( ${PROJECT_SOURCE_DIR}/include )
 
-add_library( ampBolt.Runtime STATIC ${Bolt.Runtime.Files} )
+add_library( ampBolt.Runtime STATIC ${ampBolt.Runtime.Files} )
 
 set_target_properties( ampBolt.Runtime PROPERTIES VERSION ${Bolt_VERSION} )
 set_target_properties( ampBolt.Runtime PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )

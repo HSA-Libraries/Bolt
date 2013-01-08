@@ -16,8 +16,8 @@
 ***************************************************************************/                                                                                     
 
 #pragma once
-#if !defined( BOLT_H )
-#define BOLT_H
+#if !defined( OCL_BOLT_H )
+#define OCL_BOLT_H
 
 #define __CL_ENABLE_EXCEPTIONS
 #define CL_USE_DEPRECATED_OPENCL_1_1_APIS
