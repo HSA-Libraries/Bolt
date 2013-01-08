@@ -36,7 +36,7 @@ else( )
     message( SEND_ERROR "The Documentation project for Bolt requires DOXYGEN_ROOT to be defined" )	
 endif( )
 
-configure_file( "${PROJECT_SOURCE_DIR}/doxy/bolt.doxy.cfg.in" "${PROJECT_BINARY_DIR}/doxy/bolt.doxy.cfg" )
+configure_file( "${PROJECT_SOURCE_DIR}/doxy/bolt.doxy.cfg.in" "${PROJECT_BINARY_DIR}/doxy/bolt.doxy.cfg" @ONLY )
 
 add_custom_target( 	Bolt.Documentation
                     COMMAND ${DOXYGEN_EXECUTABLE} bolt.doxy.cfg

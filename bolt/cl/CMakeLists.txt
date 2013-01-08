@@ -25,7 +25,7 @@ set( Boost_DETAILED_FAILURE_MSG   ON )
 
 if( BOOST_ROOT )
     # The root tree of BOOST was specified on the command line; use it to to find the specific Boost the user points too
-    find_package( Boost ${Boost.VERSION} COMPONENTS thread system REQUIRED )
+    find_package( Boost ${Boost.VERSION} COMPONENTS thread system date_time chrono REQUIRED )
     # This will define Boost_FOUND
 else( )
     message( "Configure Bolt in <BOLT_ROOT>/bin to build the SuperBuild which will download and build Boost automatically" )    

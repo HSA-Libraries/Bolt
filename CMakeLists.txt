@@ -44,7 +44,7 @@ set( Bolt_VERSION "${Bolt_VERSION_MAJOR}.${Bolt_VERSION_MINOR}.${Bolt_VERSION_PA
 message( STATUS "Bolt_VERSION_MAJOR=${Bolt_VERSION_MAJOR}" )
 message( STATUS "Bolt_VERSION_MINOR=${Bolt_VERSION_MINOR}" )
 message( STATUS "Bolt_VERSION_PATCH=${Bolt_VERSION_PATCH}" )
-    
+
 list( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR} )
 set( BOLT_LIBRARY_DIR ${PROJECT_SOURCE_DIR}/bolt )
 
@@ -85,6 +85,7 @@ endif()
 # Various options below on configuring the build, and how to generate the solution files
 option( BUILD_ampBolt "Create a solution that compiles Bolt for AMP" ON )
 option( BUILD_clBolt "Create a solution that compiles Bolt for OpenCL" ON )
+option( BUILD_StripSymbols "When making debug builds, remove symbols and program database files" OFF )
  
 if( IS_DIRECTORY "${PROJECT_SOURCE_DIR}/test" )
     option( BUILD_tests "Add projects for testing Bolt" ON )
@@ -130,6 +131,10 @@ if( C_COMPILER_NAME STREQUAL "cl" )
     string( REGEX REPLACE "/STACK:[0-9]+" "" CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}" )
     string( REGEX REPLACE "/STACK:[0-9]+" "" CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}" )
     string( REGEX REPLACE "/STACK:[0-9]+" "" CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS}" ) 
+    
+    if( BUILD_StripSymbols )
+        string( REGEX REPLACE "/Zi" "" CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}" )
+    endif()
 elseif( C_COMPILER_NAME STREQUAL "gcc" )
     message( STATUS "Detected GNU fortran compiler." )
     
@@ -212,13 +217,13 @@ if( BUILD_examples )
 endif( )
 
 # configure a header file to pass the CMake version settings to the source, and package the header files in the output archive
-configure_file( "${PROJECT_SOURCE_DIR}/include/bolt/boltVersion.h.in" "${PROJECT_BINARY_DIR}/include/bolt/boltVersion.h" )
+configure_file( "${PROJECT_SOURCE_DIR}/include/bolt/boltVersion.h.in" "${PROJECT_BINARY_DIR}/include/bolt/boltVersion.h" @ONLY )
 install( FILES 
             "${PROJECT_BINARY_DIR}/include/bolt/boltVersion.h" 
         DESTINATION 
             ${INCLUDE_DIR}/bolt )
 
-configure_file( "${PROJECT_SOURCE_DIR}/examples/CMakeLists.txt.in" "${PROJECT_BINARY_DIR}/examples/CMakeLists.txt" )
+configure_file( "${PROJECT_SOURCE_DIR}/examples/CMakeLists.txt.in" "${PROJECT_BINARY_DIR}/examples/CMakeLists.txt" @ONLY )
 
 # Right now, always install the examples folder
 install( DIRECTORY 
