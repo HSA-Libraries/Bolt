@@ -70,7 +70,10 @@ namespace cl
  */
 template< typename InputIterator, typename OutputIterator >
 OutputIterator 
-    inclusive_scan( InputIterator first, InputIterator last, OutputIterator result, 
+inclusive_scan(
+    InputIterator first,
+    InputIterator last,
+    OutputIterator result, 
     const std::string& user_code="" );
 
 /*! \brief inclusive_scan calculates a running sum over a range of values, inclusive of the current value.
@@ -98,8 +101,12 @@ OutputIterator
  */
 template< typename InputIterator, typename OutputIterator, typename BinaryFunction > 
 OutputIterator 
-    inclusive_scan( InputIterator first, InputIterator last, OutputIterator result, BinaryFunction binary_op,
-        const std::string& user_code="" );
+inclusive_scan(
+    InputIterator first,
+    InputIterator last,
+    OutputIterator result,
+    BinaryFunction binary_op,
+    const std::string& user_code="" );
 
 /*! \brief inclusive_scan calculates a running sum over a range of values, inclusive of the current value.
  *   The result value at iterator position \p i is the running sum of all values less than \p i in the input range.

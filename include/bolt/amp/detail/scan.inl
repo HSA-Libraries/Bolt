@@ -34,6 +34,7 @@
 #include <algorithm>
 #include <type_traits>
 #include "bolt/amp/bolt.h"
+#include "bolt/amp/device_vector.h"
 
 namespace bolt
 {
@@ -198,7 +199,7 @@ namespace detail
 {
 
 enum scanTypes {scan_iType, scan_oType, scan_BinaryFunction};
-
+/*
 class Scan_KernelTemplateSpecializer : public KernelTemplateSpecializer
 {
 public:
@@ -252,7 +253,7 @@ public:
         return templateSpecializationString;
     }
 };
-
+*/
 
 template< typename InputIterator, typename OutputIterator, typename T, typename BinaryFunction >
 OutputIterator scan_detect_random_access(
@@ -312,13 +313,13 @@ scan_pick_iterator(
     if( numElements == 0 )
         return result;
 
-    const bolt::cl::control::e_RunMode runMode = ctl.forceRunMode( );  // could be dynamic choice some day.
-    if( runMode == bolt::cl::control::SerialCpu )
+    const bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode( );  // could be dynamic choice some day.
+    if( runMode == bolt::amp::control::SerialCpu )
     {
         std::partial_sum( first, last, result, binary_op );
         return result;
     }
-    else if( runMode == bolt::cl::control::MultiCoreCpu )
+    else if( runMode == bolt::amp::control::MultiCoreCpu )
     {
         std::cout << "The MultiCoreCpu version of inclusive_scan is not implemented yet." << std ::endl;
     }
@@ -365,14 +366,14 @@ scan_pick_iterator(
     if( numElements == 0 )
         return result;
 
-    const bolt::cl::control::e_RunMode runMode = ctl.forceRunMode( );  // could be dynamic choice some day.
-    if( runMode == bolt::cl::control::SerialCpu )
+    const bolt::amp::control::e_RunMode runMode = ctl.forceRunMode( );  // could be dynamic choice some day.
+    if( runMode == bolt::amp::control::SerialCpu )
     {
         //  TODO:  Need access to the device_vector .data method to get a host pointer
         throw ::cl::Error( CL_INVALID_DEVICE, "Scan device_vector CPU device not implemented" );
         return result;
     }
-    else if( runMode == bolt::cl::control::MultiCoreCpu )
+    else if( runMode == bolt::amp::control::MultiCoreCpu )
     {
         //  TODO:  Need access to the device_vector .data method to get a host pointer
         throw ::cl::Error( CL_INVALID_DEVICE, "Scan device_vector CPU device not implemented" );
@@ -457,7 +458,7 @@ size_t k0_stepNum, k1_stepNum, k2_stepNum;
     // kernels returned in same order as added in KernelTemplaceSpecializer constructor
 
 
-    cl_uint doExclusiveScan = inclusive ? 0 : 1;    
+    int exclusive = inclusive ? 0 : 1;    
     // for profiling
     ::cl::Event kernel0Event, kernel1Event, kernel2Event, kernelAEvent;
 
@@ -507,7 +508,97 @@ aProfiler.nextStep();
 aProfiler.setStepName("Setup Kernel 0");
 aProfiler.set(AsyncProfiler::device, control::SerialCpu);
 #endif
+    concurrency::array_view< const iType > hostInput( static_cast< int >( numElements ), &first[ 0 ] );
 
+	//	Wrap our output data in an array_view, and discard input data so it is not transferred to device
+	concurrency::array< iType > input( sizeDeviceBuff, av );
+	hostInput.copy_to( deviceInput.section( concurrency::extent< 1 >( numElements ) ) );
+
+	concurrency::array< oType > output( sizeDeviceBuff, av );
+	concurrency::array< oType > scanBuffer( sizeScanBuff, av );
+
+	//	Loop to calculate the inclusive scan of each individual tile, and output the block sums of every tile
+	//	This loop is inherently parallel; every tile is independant with potentially many wavefronts
+#ifdef BOLT_ENABLE_PROFILING
+aProfiler.nextStep();
+k0_stepNum = aProfiler.getStepNum();
+aProfiler.setStepName("Kernel 0");
+aProfiler.set(AsyncProfiler::device, ctl.forceRunMode());
+aProfiler.set(AsyncProfiler::flops, 2*numElements);
+aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(iType) + 1*sizeScanBuff*sizeof(oType));
+#endif
+
+	concurrency::parallel_for_each(
+        av, output.extent.tile< waveSize >(), [
+            &output,
+            &input,
+            init_T,
+            numElements,
+            &scanBuffer,
+            binary_op,
+            exclusive
+        ] ( concurrency::tiled_index< kernel0_WgSize > t_idx ) restrict(amp)
+	{
+        size_t gloId = t_idx.global[ 0 ];
+        size_t groId = t_idx.tile[ 0 ];
+        size_t locId = t_idx.local[ 0 ];
+        size_t wgSize = descriptions[ 0 ];
+
+        tile_static iType lds[ wgSize ];
+
+        //  Abort threads that are passed the end of the input vector
+        if (gloId >= numElements) return; // on SI this doesn't mess-up barriers
+
+        // if exclusive, load gloId=0 w/ identity, and all others shifted-1
+        iType val;
+        if (exclusive)
+        {
+            if (gloId > 0)
+            { // thread>0
+                val = input[gloId-1];
+                lds[ locId ] = val;
+            }
+            else
+            { // thread=0
+                val = identity;
+                lds[ locId ] = val;
+            }
+        }
+        else
+        {
+            val = input[gloId];
+            lds[ locId ] = val;
+        }
+
+        //  Computes a scan within a workgroup
+        iType sum = val;
+        for( size_t offset = 1; offset < wgSize; offset *= 2 )
+        {
+            concurrency::tile_barrier::wait();
+            if (locId >= offset)
+            {
+                iType y = lds[ locId - offset ];
+                sum = (*binaryOp)( sum, y );
+            }
+            concurrency::tile_barrier::wait();
+            lds[ locId ] = sum;
+        }
+
+        //  Each work item writes out its calculated scan result, relative to the beginning
+        //  of each work group
+        output[ gloId ] = sum;
+        concurrency::tile_barrier::wait();
+        if (locId == 0)
+        {
+            // last work-group can be wrong b/c ignored
+            scanBuffer[ groId ] = lds[ wgSize-1 ];
+        }
+
+	} );
+
+
+
+/*
     ldsSize  = static_cast< cl_uint >( ( kernel0_WgSize + ( kernel0_WgSize / 2 ) ) * sizeof( iType ) );
     V_OPENCL( kernels[ 0 ].setArg( 0, result->getBuffer( ) ),   "Error setting argument for kernels[ 0 ]" ); // Output buffer
     V_OPENCL( kernels[ 0 ].setArg( 1, first->getBuffer( ) ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
@@ -518,14 +609,7 @@ aProfiler.set(AsyncProfiler::device, control::SerialCpu);
     V_OPENCL( kernels[ 0 ].setArg( 6, *preSumArray ),           "Error setting argument for kernels[ 0 ]" ); // Output per block sum buffer
     V_OPENCL( kernels[ 0 ].setArg( 7, doExclusiveScan ),        "Error setting argument for scanKernels[ 0 ]" ); // Exclusive scan?
 
-#ifdef BOLT_ENABLE_PROFILING
-aProfiler.nextStep();
-k0_stepNum = aProfiler.getStepNum();
-aProfiler.setStepName("Kernel 0");
-aProfiler.set(AsyncProfiler::device, ctl.forceRunMode());
-aProfiler.set(AsyncProfiler::flops, 2*numElements);
-aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(iType) + 1*sizeScanBuff*sizeof(oType));
-#endif
+
 
     l_Error = ctl.commandQueue( ).enqueueNDRangeKernel(
         kernels[ 0 ],
@@ -535,6 +619,9 @@ aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(iType) + 1*sizeScanBuf
         NULL,
         &kernel0Event);
     V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for perBlockInclusiveScan kernel" );
+    */
+
+#if 0
 
     /**********************************************************************************
      *  Kernel 1
@@ -663,7 +750,7 @@ aProfiler.setArchitecture(strDeviceName);
         std::cout << ( "Scan Benchmark error condition reported:" ) << std::endl << e.what() << std::endl;
         return;
     }
-
+#endif
 aProfiler.stopTrial();
 
 #endif
@@ -798,6 +885,12 @@ namespace bolt {
 			//	Wrap our input data in an array_view, and mark it const so data is not read back from device
 			typedef std::iterator_traits< InputIterator >::value_type iType;
 			typedef std::iterator_traits< OutputIterator >::value_type oType;
+
+
+
+
+
+
 			concurrency::array_view< const iType > hostInput( static_cast< int >( numElements ), &first[ 0 ] );
 
 			//	Wrap our output data in an array_view, and discard input data so it is not transferred to device
@@ -842,6 +935,18 @@ namespace bolt {
 					scanBuffer[ idx.tile[ 0 ] ] = pLDS[ localID ];
 				}
 			} );
+
+
+
+
+
+
+
+
+
+
+
+
 
 			std::vector< oType > scanData( sizeScanBuff );
 			scanData = scanBuffer;
@@ -898,6 +1003,25 @@ namespace bolt {
 					exclusiveBuffer[ mappedID + offset ] = y;
 				}
 			} );
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 			scanData = exclusiveBuffer;
 
 			//	Loop through the entire output array and add the exclusive scan back into the output array

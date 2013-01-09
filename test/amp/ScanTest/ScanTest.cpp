@@ -15,13 +15,10 @@
 
 ***************************************************************************/                                                                                     
 
-#include "stdafx.h"
-
-#include <bolt/AMP/functional.h>
-#include <bolt/AMP/scan.h>
+#include "common/stdafx.h"
+#include <bolt/amp/scan.h>
 #include <bolt/unicode.h>
 #include <bolt/miniDump.h>
-
 #include <gtest/gtest.h>
 
 // Simple test case for bolt::inclusive_scan:
@@ -197,7 +194,7 @@ TYPED_TEST_P( ScanArrayTest, InPlace )
 
     //  Calling the actual functions under test
     ArrayCont::iterator stdEnd  = std::partial_sum( stdInput.begin( ), stdInput.end( ), stdInput.begin( ) );
-    ArrayCont::iterator boltEnd = bolt::inclusive_scan( boltInput.begin( ), boltInput.end( ), boltInput.begin( ) );
+    ArrayCont::iterator boltEnd = bolt::amp::inclusive_scan( boltInput.begin( ), boltInput.end( ), boltInput.begin( ) );
 
     //  The returned iterator should be one past the 
     EXPECT_EQ( stdInput.end( ), stdEnd );
@@ -219,7 +216,7 @@ TYPED_TEST_P( ScanArrayTest, InPlacePlusFunction )
 
     //  Calling the actual functions under test
     ArrayCont::iterator stdEnd  = std::partial_sum( stdInput.begin( ), stdInput.end( ), stdInput.begin( ), bolt::plus< ArrayType >( ) );
-    ArrayCont::iterator boltEnd = bolt::inclusive_scan( boltInput.begin( ), boltInput.end( ), boltInput.begin( ), bolt::plus< ArrayType >( ) );
+    ArrayCont::iterator boltEnd = bolt::amp::inclusive_scan( boltInput.begin( ), boltInput.end( ), boltInput.begin( ), bolt::plus< ArrayType >( ) );
 
     //  The returned iterator should be one past the 
     EXPECT_EQ( stdInput.end( ), stdEnd );
@@ -241,7 +238,7 @@ TYPED_TEST_P( ScanArrayTest, InPlaceMaxFunction )
 
     //  Calling the actual functions under test
     ArrayCont::iterator stdEnd  = std::partial_sum( stdInput.begin( ), stdInput.end( ), stdInput.begin( ), bolt::maximum< ArrayType >( ) );
-    ArrayCont::iterator boltEnd = bolt::inclusive_scan( boltInput.begin( ), boltInput.end( ), boltInput.begin( ), bolt::maximum< ArrayType >( ) );
+    ArrayCont::iterator boltEnd = bolt::amp::inclusive_scan( boltInput.begin( ), boltInput.end( ), boltInput.begin( ), bolt::maximum< ArrayType >( ) );
 
     //  The returned iterator should be one past the 
     EXPECT_EQ( stdInput.end( ), stdEnd );
@@ -266,7 +263,7 @@ TYPED_TEST_P( ScanArrayTest, OutofPlace )
 
     //  Calling the actual functions under test, out of place semantics
     ArrayCont::iterator stdEnd  = std::partial_sum( stdInput.begin( ), stdInput.end( ), stdResult.begin( ) );
-    ArrayCont::iterator boltEnd = bolt::inclusive_scan( boltInput.begin( ), boltInput.end( ), boltResult.begin( ) );
+    ArrayCont::iterator boltEnd = bolt::amp::inclusive_scan( boltInput.begin( ), boltInput.end( ), boltResult.begin( ) );
 
     //  The returned iterator should be one past the end of the result array
     EXPECT_EQ( stdResult.end( ), stdEnd );
@@ -327,7 +324,7 @@ TEST_P( ScanIntegerVector, InclusiveInplace )
 {
     //  Calling the actual functions under test
     std::vector< int >::iterator stdEnd  = std::partial_sum( stdInput.begin( ), stdInput.end( ), stdInput.begin( ) );
-    std::vector< int >::iterator boltEnd = bolt::inclusive_scan( boltInput.begin( ), boltInput.end( ), boltInput.begin( ) );
+    std::vector< int >::iterator boltEnd = bolt::amp::inclusive_scan( boltInput.begin( ), boltInput.end( ), boltInput.begin( ) );
 
     //  The returned iterator should be one past the 
     EXPECT_EQ( stdInput.end( ), stdEnd );
@@ -347,7 +344,7 @@ TEST_P( ScanFloatVector, InclusiveInplace )
 {
     //  Calling the actual functions under test
     std::vector< float >::iterator stdEnd  = std::partial_sum( stdInput.begin( ), stdInput.end( ), stdInput.begin( ) );
-    std::vector< float >::iterator boltEnd = bolt::inclusive_scan( boltInput.begin( ), boltInput.end( ), boltInput.begin( ) );
+    std::vector< float >::iterator boltEnd = bolt::amp::inclusive_scan( boltInput.begin( ), boltInput.end( ), boltInput.begin( ) );
 
     //  The returned iterator should be one past the 
     EXPECT_EQ( stdInput.end( ), stdEnd );
@@ -367,7 +364,7 @@ TEST_P( ScanDoubleVector, InclusiveInplace )
 {
     //  Calling the actual functions under test
     std::vector< double >::iterator stdEnd  = std::partial_sum( stdInput.begin( ), stdInput.end( ), stdInput.begin( ) );
-    std::vector< double >::iterator boltEnd = bolt::inclusive_scan( boltInput.begin( ), boltInput.end( ), boltInput.begin( ) );
+    std::vector< double >::iterator boltEnd = bolt::amp::inclusive_scan( boltInput.begin( ), boltInput.end( ), boltInput.begin( ) );
 
     //  The returned iterator should be one past the 
     EXPECT_EQ( stdInput.end( ), stdEnd );
@@ -392,8 +389,6 @@ INSTANTIATE_TEST_CASE_P( Inclusive, ScanDoubleVector, ::testing::Range( 0, 10485
 
 typedef ::testing::Types< 
     std::tuple< int, TypeValue< 1 > >,
-    std::tuple< int, TypeValue< bolt::scanMultiCpuThreshold - 1 > >,
-    std::tuple< int, TypeValue< bolt::scanGpuThreshold - 1 > >,
     std::tuple< int, TypeValue< 31 > >,
     std::tuple< int, TypeValue< 32 > >,
     std::tuple< int, TypeValue< 63 > >,
@@ -406,15 +401,11 @@ typedef ::testing::Types<
     std::tuple< int, TypeValue< 4096 > >,
     std::tuple< int, TypeValue< 4097 > >,
     std::tuple< int, TypeValue< 65535 > >,
-    //std::tuple< int, TypeValue< 131032 > >,       // uncomment these to generate failures; stack overflow
-    //std::tuple< int, TypeValue< 262154 > >,
     std::tuple< int, TypeValue< 65536 > >
 > IntegerTests;
 
 typedef ::testing::Types< 
     std::tuple< float, TypeValue< 1 > >,
-    std::tuple< float, TypeValue< bolt::scanMultiCpuThreshold - 1 > >,
-    std::tuple< float, TypeValue< bolt::scanGpuThreshold - 1 > >,
     std::tuple< float, TypeValue< 31 > >,
     std::tuple< float, TypeValue< 32 > >,
     std::tuple< float, TypeValue< 63 > >,
