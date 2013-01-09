@@ -63,7 +63,11 @@ set( ampBolt.Runtime.Files
   )
 
 # Include standard OpenCL headers
-include_directories( ${PROJECT_SOURCE_DIR}/include )
+include_directories(
+    ${BOLT_INCLUDE_DIR}
+    ${PROJECT_BINARY_DIR}/include
+    ${OPENCL_INCLUDE_DIRS}
+    ${Boost_INCLUDE_DIRS} )
 
 add_library( ampBolt.Runtime STATIC ${ampBolt.Runtime.Files} )
 

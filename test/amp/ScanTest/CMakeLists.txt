@@ -16,8 +16,8 @@
 ############################################################################                                                                                     
 
 # List the names of common files to compile across all platforms
-set( ampBolt.Test.Scan.Source stdafx.cpp Scan.cpp )
-set( ampBolt.Test.Scan.Headers stdafx.h targetver.h ${BOLT_INCLUDE_DIR}/bolt/amp/Scan.h )
+set( ampBolt.Test.Scan.Source ScanTest.cpp )
+set( ampBolt.Test.Scan.Headers ${BOLT_INCLUDE_DIR}/bolt/amp/scan.h )
 
 set( ampBolt.Test.Scan.Files ${ampBolt.Test.Scan.Source} ${ampBolt.Test.Scan.Headers} )
 

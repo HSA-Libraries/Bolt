@@ -22,6 +22,8 @@
 #define AMP_SCAN_H
 #pragma once
 
+#include <bolt/amp/bolt.h>
+
 namespace bolt
 {
 namespace amp
@@ -65,7 +67,10 @@ namespace amp
  */
 template< typename InputIterator, typename OutputIterator >
 OutputIterator 
-    inclusive_scan( InputIterator first, InputIterator last, OutputIterator result, 
+inclusive_scan(
+    InputIterator first,
+    InputIterator last,
+    OutputIterator result, 
     const std::string& user_code="" );
 
 /*! \brief inclusive_scan calculates a running sum over a range of values, inclusive of the current value.
@@ -93,8 +98,12 @@ OutputIterator
  */
 template< typename InputIterator, typename OutputIterator, typename BinaryFunction > 
 OutputIterator 
-    inclusive_scan( InputIterator first, InputIterator last, OutputIterator result, BinaryFunction binary_op,
-        const std::string& user_code="" );
+inclusive_scan(
+    InputIterator first,
+    InputIterator last,
+    OutputIterator result,
+    BinaryFunction binary_op,
+    const std::string& user_code="" );
 
 /*! \brief inclusive_scan calculates a running sum over a range of values, inclusive of the current value.
  *   The result value at iterator position \p i is the running sum of all values less than \p i in the input range.
@@ -121,8 +130,12 @@ OutputIterator
  */
 template< typename InputIterator, typename OutputIterator >
 OutputIterator 
-    inclusive_scan( control &ctl, InputIterator first, InputIterator last, 
-    OutputIterator result, const std::string& user_code="" );
+inclusive_scan(
+    control &ctl,
+    InputIterator first,
+    InputIterator last, 
+    OutputIterator result,
+    const std::string& user_code="" );
 
 /*! \brief inclusive_scan calculates a running sum over a range of values, inclusive of the current value.
  *   The result value at iterator position \p i is the running sum of all values less than \p i in the input range.
@@ -150,8 +163,13 @@ OutputIterator
  */
 template< typename InputIterator, typename OutputIterator, typename BinaryFunction >
 OutputIterator
-    inclusive_scan( control &ctl, InputIterator first, InputIterator last, 
-    OutputIterator result, BinaryFunction binary_op, const std::string& user_code="" );
+inclusive_scan(
+    control &ctl,
+    InputIterator first,
+    InputIterator last, 
+    OutputIterator result,
+    BinaryFunction binary_op,
+    const std::string& user_code="" );
 
 
 /*! \brief exclusive_scan calculates a running sum over a range of values, exclusive of the current value.
@@ -178,7 +196,10 @@ OutputIterator
  */
 template< typename InputIterator, typename OutputIterator >
 OutputIterator 
-    exclusive_scan( InputIterator first, InputIterator last, OutputIterator result,
+exclusive_scan(
+    InputIterator first,
+    InputIterator last,
+    OutputIterator result,
     const std::string& user_code="" );
 
 
@@ -208,7 +229,11 @@ OutputIterator
  */
 template< typename InputIterator, typename OutputIterator, typename T >
 OutputIterator 
-    exclusive_scan( InputIterator first, InputIterator last, OutputIterator result, T init,
+exclusive_scan(
+    InputIterator first,
+    InputIterator last,
+    OutputIterator result,
+    T init,
     const std::string& user_code="" );
 
 /*! \brief exclusive_scan calculates a running sum over a range of values, exclusive of the current value.
@@ -240,7 +265,12 @@ OutputIterator
  */
 template< typename InputIterator, typename OutputIterator, typename T, typename BinaryFunction > 
 OutputIterator 
-    exclusive_scan( InputIterator first, InputIterator last, OutputIterator result, T init, BinaryFunction binary_op,
+exclusive_scan(
+    InputIterator first,
+    InputIterator last,
+    OutputIterator result,
+    T init,
+    BinaryFunction binary_op,
     const std::string& user_code="" );
 
 /*! \brief exclusive_scan calculates a running sum over a range of values, exclusive of the current value.
@@ -268,8 +298,12 @@ OutputIterator
  */
 template< typename InputIterator, typename OutputIterator >
 OutputIterator 
-    exclusive_scan( control& ctl, InputIterator first, InputIterator last, 
-    OutputIterator result, const std::string& user_code="" );
+exclusive_scan(
+    control& ctl,
+    InputIterator first,
+    InputIterator last, 
+    OutputIterator result,
+    const std::string& user_code="" );
 
 /*! \brief exclusive_scan calculates a running sum over a range of values, exclusive of the current value.
  *   The result value at iterator position \p i is the running sum of all values less than \p i in the input range.
@@ -298,7 +332,12 @@ OutputIterator
  */
 template< typename InputIterator, typename OutputIterator, typename T >
 OutputIterator 
-    exclusive_scan( control& ctl, InputIterator first, InputIterator last, OutputIterator result, T init,
+exclusive_scan(
+    control& ctl,
+    InputIterator first,
+    InputIterator last,
+    OutputIterator result,
+    T init,
     const std::string& user_code="" );
 
 /*! \brief exclusive_scan calculates a running sum over a range of values, exclusive of the current value.
@@ -330,14 +369,19 @@ OutputIterator
  */
 template< typename InputIterator, typename OutputIterator, typename T, typename BinaryFunction >
 OutputIterator
-    exclusive_scan( control &ctl, InputIterator first, InputIterator last, 
-    OutputIterator result, T init, BinaryFunction binary_op, const std::string& user_code="" );
+exclusive_scan(
+    control &ctl,
+    InputIterator first,
+    InputIterator last, 
+    OutputIterator result,
+    T init,
+    BinaryFunction binary_op,
+    const std::string& user_code="" );
 
 /*!   \}  */
 }// end of bolt::amp namespace
 }// end of bolt namespace
 
 #include <bolt/amp/detail/scan.inl>
-
 
 #endif // AMP_SCAN_H

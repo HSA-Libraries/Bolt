@@ -19,19 +19,15 @@
 #if !defined( AMP_BOLT_H )
 #define AMP_BOLT_H
 
-#define __CL_ENABLE_EXCEPTIONS
-#define CL_USE_DEPRECATED_OPENCL_1_1_APIS
 #if defined(__APPLE__) || defined(__MACOSX)
-    #include <OpenCL/cl.hpp>
 #else
-    #include <CL/cl.hpp>
+    #include <amp.h>
 #endif
 
 #include <string>
 #include <map>
-#include "bolt/BoltVersion.h"
+#include "bolt/boltVersion.h"
 #include "bolt/amp/control.h"
-//#include "bolt/cl/clcode.h"
 
 #define PUSH_BACK_UNIQUE(CONTAINER, ELEMENT) \
     if (std::find(CONTAINER.begin(), CONTAINER.end(), ELEMENT) == CONTAINER.end()) \
@@ -153,9 +149,5 @@ namespace bolt {
 #else
 #define ALIGNED( bound ) __attribute__ ( (aligned( bound ) ) ) 
 #endif
-
-BOLT_CREATE_TYPENAME(int);
-BOLT_CREATE_TYPENAME(float);
-BOLT_CREATE_TYPENAME(double);
 
 #endif

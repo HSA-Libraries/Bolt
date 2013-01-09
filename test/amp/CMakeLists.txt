@@ -45,7 +45,7 @@ include_directories( ${BOLT_AMP_TEST_DIR} )
 include_directories( ${BOLT_CL_TEST_DIR} )
 
 add_subdirectory( reduce )
-add_subdirectory( scan )
+add_subdirectory( ScanTest )
 add_subdirectory( transform )	
 add_subdirectory( transform_reduce )
 add_subdirectory( device_vector )

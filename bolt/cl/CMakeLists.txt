@@ -135,10 +135,19 @@ endif( )
 source_group( "Inline Files" REGULAR_EXPRESSION .*inl$ )
 source_group( "Kernel Files" REGULAR_EXPRESSION .*cl$ )
 
-set( clBolt.Runtime.Files ${clBolt.Runtime.Source} ${clBolt.Runtime.Headers} ${clBolt.Runtime.Headers.Detail} ${clBolt.Runtime.Headers.Misc} ${clBolt.Runtime.clFiles.FullPath} )
+set( clBolt.Runtime.Files
+  ${clBolt.Runtime.Source}
+  ${clBolt.Runtime.Headers}
+  ${clBolt.Runtime.Headers.Detail}
+  ${clBolt.Runtime.Headers.Misc}
+  ${clBolt.Runtime.clFiles.FullPath} )
 
 # Include headers files
-include_directories( ${BOLT_INCLUDE_DIR} ${PROJECT_BINARY_DIR}/include ${OPENCL_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} )
+include_directories(
+    ${BOLT_INCLUDE_DIR}
+    ${PROJECT_BINARY_DIR}/include
+    ${OPENCL_INCLUDE_DIRS}
+    ${Boost_INCLUDE_DIRS} )
 
 # Create a list of files that we expect to generate from the kernel files
 substList( ".cl" ".hpp" clBolt.Runtime.hppFiles clBolt.Runtime.clFiles )

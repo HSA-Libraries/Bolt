@@ -16,8 +16,9 @@
 ############################################################################                                                                                     
 
 # List the names of common files to compile across all platforms
-set( clBolt.Test.Scan.Source ${BOLT_CL_TEST_DIR}/common/stdafx.cpp 
-                             Scan.cpp )
+set( clBolt.Test.Scan.Source
+    ${BOLT_CL_TEST_DIR}/common/stdafx.cpp 
+    ScanTest.cpp )
 set( clBolt.Test.Scan.Headers   ${BOLT_CL_TEST_DIR}/common/stdafx.h 
                                 ${BOLT_CL_TEST_DIR}/common/targetver.h 
                                 ${BOLT_INCLUDE_DIR}/bolt/cl/scan.h 
