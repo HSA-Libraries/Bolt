@@ -469,7 +469,7 @@ namespace bolt
             */
             template< typename InputIterator >
             device_vector( const InputIterator begin, const InputIterator end, const control& ctl = control::getDefault( ),
-                typename std::enable_if< !std::is_integral< InputIterator >::value >::type* = 0 ): 
+                typename std::enable_if< !std::is_integral< InputIterator >::value >::type* = 0 ) 
             {
                 static_assert( std::is_convertible< value_type, typename std::iterator_traits< InputIterator >::value_type >::value,
                     "iterator value_type does not convert to device_vector value_type" );

@@ -327,8 +327,8 @@ scan_pick_iterator(
     {
 
         // Map the input iterator to a device_vector
-        device_vector< iType > dvInput( first, last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctl );
-        device_vector< oType > dvOutput( result, numElements, CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY, false, ctl );
+        device_vector< iType > dvInput( first, last, ctl );
+        device_vector< oType > dvOutput( result, numElements, false, ctl );
 
         //Now call the actual cl algorithm
         scan_enqueue( ctl, dvInput.begin( ), dvInput.end( ), dvOutput.begin( ), init, binary_op, inclusive );
@@ -407,7 +407,7 @@ aProfiler.set(AsyncProfiler::device, control::SerialCpu);
 
 size_t k0_stepNum, k1_stepNum, k2_stepNum;
 #endif
-    cl_int l_Error = CL_SUCCESS;
+    //cl_int l_Error = CL_SUCCESS;
 
 
     /**********************************************************************************

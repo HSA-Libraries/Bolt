@@ -569,7 +569,7 @@ int _tmain( int argc, _TCHAR* argv[] )
             ( "gpu,g",          "Report only OpenCL GPU devices" )
             ( "cpu,c",          "Report only OpenCL CPU devices" )
             ( "all,a",          "Report all OpenCL devices" )
-            ( "hostMemory,h", "Allocate vectors in host memory, otherwise device memory" )
+            ( "hostMemory", "Allocate vectors in host memory, otherwise device memory" )
             ( "platform,p",     po::value< cl_uint >( &userPlatform )->default_value( 0 ),
                 "Specify the platform under test using the index reported by -q flag" )
             ( "device,d",       po::value< cl_uint >( &userDevice )->default_value( 0 ),
@@ -586,7 +586,7 @@ int _tmain( int argc, _TCHAR* argv[] )
             ( "routine,r",      po::value< size_t >( &routine )->default_value( 0 ),
                 "Number of samples in timing loop" )
             ( "filename,f",     po::value< std::string >( &filename )->default_value( "bench.xml" ),
-                "Number of samples in timing loop" )
+                "Name of output file" )
             ;
 
         po::variables_map vm;

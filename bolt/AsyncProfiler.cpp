@@ -16,27 +16,26 @@ size_t AsyncProfiler::getTime()
  *****************************************************************************/
 
 char *AsyncProfiler::attributeNames[] = {
-    "ID",
-    "Device",
-    "Time[ns]",
-    "Bytes",
-    "Bytes/s",
-    "Flops",
-    "Flops/s",
-    "Start[ns]",
-    "Stop[ns]"};
+    "id",
+    "device",
+    "time",
+    "bytes",
+    "bytes_s",
+    "flops",
+    "flops_s",
+    "start",
+    "stop"};
 
 char *AsyncProfiler::trialAttributeNames[] = {
-    "ID",
-    "Device",
-    "Tot Time[ns]",
-    "Tot Bytes",
-    "Agg Bytes/s",
-    "Tot Flops",
-    "Agg Flops/s",
-    "Start[ns]",
-    "Stop[ns]",
-
+    "id",
+    "device",
+    "time",
+    "bytes",
+    "bytes_s",
+    "flops",
+    "flops_s",
+    "start",
+    "stop"
 };
 
 AsyncProfiler::Step::Step( )
@@ -87,8 +86,7 @@ std::string AsyncProfiler::Step::getName( ) const
     {
         if (attributeValues[i] > 0 || i==device)
         {
-            s << "\t\t\t<ATTR";
-            s << " name=\"" << AsyncProfiler::attributeNames[i] << "\"";
+            s << "\t\t\t<" << AsyncProfiler::attributeNames[i];
             s << " value=\"" << attributeValues[i] << "\"";
             if ( stdDev[i] > 0)
             {
@@ -251,8 +249,7 @@ void AsyncProfiler::Trial::computeAttributes()
     {
         if (attributeValues[i] > 0 )
         {
-            s << "\t\t<ATTR";
-            s << " name=\"" << AsyncProfiler::trialAttributeNames[i] << "\"";
+            s << "\t\t<" << AsyncProfiler::trialAttributeNames[i];
             s << " value=\"" << attributeValues[i] << "\"";
             if ( stdDev[i] > 0)
             {
@@ -618,7 +615,7 @@ void AsyncProfiler::calculateAverage()
     os << " name=\"" << name.c_str() << "\"";
     os << " type=\"average\"";
     os << " trials=\"" << ((trials.size()>1) ? trials.size()-1 : 1) << "\"";
-    os << " data[bytes]=\"" << dataSize << "\"";
+    os << " bytes=\"" << dataSize << "\"";
     os << " timerResolution=\"" << timerPeriodNs << "\"";
     os << " architecture=\"" << architecture.c_str() << "\"";
     os << " >";
@@ -636,8 +633,8 @@ void AsyncProfiler::calculateAverage()
     os << " name=\"" << name.c_str() << "\"";
     os << " type=\"Log\"";
     os << " trials=\"" << ((trials.size()>1) ? trials.size()-1 : 1) << "\"";
-    os << " data[bytes]=\"" << dataSize << "\"";
-    os << " timerResolution[ns]=\"" << timerPeriodNs << "\"";
+    os << " bytes=\"" << dataSize << "\"";
+    os << " timerResolution=\"" << timerPeriodNs << "\"";
     os << " architecture=\"" << architecture.c_str() << "\"";
     os << " >";
     os << std::endl;

@@ -21,6 +21,8 @@
 #include <bolt/miniDump.h>
 #include <gtest/gtest.h>
 
+#if 0
+
 // Simple test case for bolt::inclusive_scan:
 // Sum together specified numbers, compare against STL::partial_sum function.
 // Demonstrates:
@@ -423,6 +425,8 @@ typedef ::testing::Types<
 
 INSTANTIATE_TYPED_TEST_CASE_P( Integer, ScanArrayTest, IntegerTests );
 INSTANTIATE_TYPED_TEST_CASE_P( Float, ScanArrayTest, FloatTests );
+
+#endif
 
 int _tmain(int argc, _TCHAR* argv[])
 {
