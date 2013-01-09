@@ -191,10 +191,10 @@ echo Info: Running CMake to generate build files.
   -G %BOLT_BUILD_CMAKE_GEN% ^
   -D CMAKE_BOLT_BUILD_TYPE=Release ^
   -D BUILD_AMP=%BOLT_BUILD_USE_AMP% ^
-  -D BUILD_Examples=ON ^
-  %BOLT_BUILD_FLAG_MAJOR% ^
-  %BOLT_BUILD_FLAG_MINOR% ^
-  %BOLT_BUILD_FLAG_PATCH% ^
+  -D BUILD_StripSymbols=ON ^
+  -D Bolt.SuperBuild_VERSION_MAJOR=%BOLT_BUILD_FLAG_MAJOR% ^
+  -D Bolt.SuperBuild_VERSION_MINOR=%BOLT_BUILD_FLAG_MINOR% ^
+  -D Bolt.SuperBuild_VERSION_PATCH=%BOLT_BUILD_FLAG_PATCH% ^
   %BOLT_BUILD_SOURCE_PATH%\superbuild
 if errorlevel 1 (
   echo Info: CMake failed.

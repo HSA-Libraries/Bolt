@@ -41,8 +41,6 @@ endif( )
 
 set( Bolt.SuperBuild_VERSION "${Bolt.SuperBuild_VERSION_MAJOR}.${Bolt.SuperBuild_VERSION_MINOR}.${Bolt.SuperBuild_VERSION_PATCH}")
 
-
-	
 list( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR} )
 
 # On windows, it's convenient to change the default install prefix such that it does NOT point to 'program files'
@@ -80,10 +78,14 @@ option( BUILD_Bolt "Setup Bolt to use all the external dependencies" ON )
 option( BUILD_gTest "Install googleTest as an external dependency" ON )
 option( BUILD_AMP "Generate projects that use the AMP backend" ON )
 option( BUILD_OpenCL "Generate projects that use the OpenCL backend" ON )
-option( BUILD_Examples "Generate example projects to demonstrate Bolt usage" OFF )
+option( BUILD_StripSymbols "When making debug builds, remove symbols and program database files" OFF )
+
+# Comment this out because this does not work yet
+# option( BUILD_Examples "Generate example projects to demonstrate Bolt usage" OFF )
 
 set( Bolt.Dependencies )
 set( Bolt.Cmake.Args )
+set( BUILD_Examples OFF )
 
 # If the user selects, download, uncompress, and setup Boost
 if( BUILD_Boost )
@@ -125,7 +127,7 @@ if( BUILD_Bolt )
 		DEPENDS ${Bolt.Dependencies}
 		SOURCE_DIR ${PROJECT_SOURCE_DIR}/..
 		BINARY_DIR Bolt-build
-		CMAKE_ARGS ${Bolt.Cmake.Args} -DBUILD_ampBolt=${BUILD_AMP} -DBUILD_clBolt=${BUILD_OpenCL} -DBUILD_examples=${BUILD_Examples} -DBolt_VERSION_MAJOR=${Bolt.SuperBuild_VERSION_MAJOR} -DBolt_VERSION_MINOR=${Bolt.SuperBuild_VERSION_MINOR} -DBolt_VERSION_PATCH=${Bolt.SuperBuild_VERSION_PATCH} 
+		CMAKE_ARGS ${Bolt.Cmake.Args} -DBUILD_ampBolt=${BUILD_AMP} -DBUILD_clBolt=${BUILD_OpenCL} -DBUILD_examples=${BUILD_Examples} -DBUILD_StripSymbols=${BUILD_StripSymbols} -DBolt_VERSION_MAJOR=${Bolt.SuperBuild_VERSION_MAJOR} -DBolt_VERSION_MINOR=${Bolt.SuperBuild_VERSION_MINOR} -DBolt_VERSION_PATCH=${Bolt.SuperBuild_VERSION_PATCH} 
 		INSTALL_COMMAND ""
 	)
 endif( )

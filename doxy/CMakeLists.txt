@@ -21,29 +21,38 @@ message( STATUS "Setting up documentation project..." )
 set( Doxygen.Dependencies )
 
 if( DOXYGEN_ROOT )
-	# Kind of sad that the findDoxygen module has not concept of DOXYGEN_ROOT
-	find_program( DOXYGEN_EXECUTABLE
-		NAMES doxygen
-		HINTS
-	  		${DOXYGEN_ROOT}
-		PATHS
-			"[HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\doxygen_is1;Inno Setup: App Path]/bin"
-		PATH_SUFFIXES
-			bin
-	)
+    # Kind of sad that the findDoxygen module has not concept of DOXYGEN_ROOT
+    find_program( DOXYGEN_EXECUTABLE
+        NAMES doxygen
+        HINTS
+              ${DOXYGEN_ROOT}
+        PATHS
+            "[HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\doxygen_is1;Inno Setup: App Path]/bin"
+        PATH_SUFFIXES
+            bin
+    )
 else( )
-	message( "Configure Bolt in <BOLT_ROOT>/bin to build the SuperBuild which will download Doxygen automatically" )	
-	message( SEND_ERROR "The Documentation project for Bolt requires DOXYGEN_ROOT to be defined" )	
+    message( "Configure Bolt in <BOLT_ROOT>/bin to build the SuperBuild which will download Doxygen automatically" )	
+    message( SEND_ERROR "The Documentation project for Bolt requires DOXYGEN_ROOT to be defined" )	
 endif( )
 
+configure_file( "${PROJECT_SOURCE_DIR}/doxy/bolt.doxy.cfg.in" "${PROJECT_BINARY_DIR}/doxy/bolt.doxy.cfg" @ONLY )
+
 add_custom_target( 	Bolt.Documentation
-					COMMAND ${DOXYGEN_EXECUTABLE} bolt.doxy.cfg
-					WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-					DEPENDS ${Doxygen.Dependencies}
-					COMMENT "Generating Bolt API documentation with Doxygen" VERBATIM
-				)
-                
+                    COMMAND ${DOXYGEN_EXECUTABLE} bolt.doxy.cfg
+                    DEPENDS ${Doxygen.Dependencies}
+                    COMMENT "Generating Bolt API documentation with Doxygen" VERBATIM
+                )
+
+# Copy over the generated html documentation into the install location
 install( DIRECTORY
-			doxy.out/html
-		DESTINATION
-			docs )
+            ${CMAKE_CURRENT_BINARY_DIR}/doxy.out/html
+        DESTINATION
+            docs
+        PATTERN "*.chm" EXCLUDE )
+
+# Copy over the generated chm documentation into the install location
+install( FILES 
+            ${CMAKE_CURRENT_BINARY_DIR}/doxy.out/html/bolt.chm
+        DESTINATION 
+            docs/chm )
