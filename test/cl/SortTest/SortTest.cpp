@@ -18,7 +18,7 @@
 #define TEST_DOUBLE 0
 #define TEST_DEVICE_VECTOR 1
 #define TEST_CPU_DEVICE 0
-#define GOOGLE_TEST 0
+#define GOOGLE_TEST 1
 #if (GOOGLE_TEST == 1)
 
 #include "common/stdafx.h"
@@ -781,6 +781,23 @@ typedef ::testing::Types<
 > IntegerTests;
 
 typedef ::testing::Types< 
+    std::tuple< unsigned int, TypeValue< 1 > >,
+    std::tuple< unsigned int, TypeValue< 31 > >,
+    std::tuple< unsigned int, TypeValue< 32 > >,
+    std::tuple< unsigned int, TypeValue< 63 > >,
+    std::tuple< unsigned int, TypeValue< 64 > >,
+    std::tuple< unsigned int, TypeValue< 127 > >,
+    std::tuple< unsigned int, TypeValue< 128 > >,
+    std::tuple< unsigned int, TypeValue< 129 > >,
+    std::tuple< unsigned int, TypeValue< 1000 > >,
+    std::tuple< unsigned int, TypeValue< 1053 > >,
+    std::tuple< unsigned int, TypeValue< 4096 > >,
+    std::tuple< unsigned int, TypeValue< 4097 > >,
+    std::tuple< unsigned int, TypeValue< 65535 > >,
+    std::tuple< unsigned int, TypeValue< 65536 > >
+> UnsignedIntegerTests;
+
+typedef ::testing::Types< 
     std::tuple< float, TypeValue< 1 > >,
     std::tuple< float, TypeValue< 31 > >,
     std::tuple< float, TypeValue< 32 > >,
@@ -938,6 +955,7 @@ typedef ::testing::Types<
 
 
 INSTANTIATE_TYPED_TEST_CASE_P( Integer, SortArrayTest, IntegerTests );
+INSTANTIATE_TYPED_TEST_CASE_P( UnsignedInteger, SortArrayTest, UnsignedIntegerTests );
 INSTANTIATE_TYPED_TEST_CASE_P( Float, SortArrayTest, FloatTests );
 #if (TEST_DOUBLE == 1)
 INSTANTIATE_TYPED_TEST_CASE_P( Double, SortArrayTest, DoubleTests );
@@ -1228,11 +1246,15 @@ void UserDefinedObjectSortTestOfLength(size_t length)
 template <typename T>
 void BasicSortTestOfLength(size_t length)
 {
+
     std::vector<T> stdInput(length);
     std::vector<T> boltInput(length);
-    
+    std::vector<T> stdBackup(length);
 	std::generate (stdInput.begin(), stdInput.end(),rand);
+    stdBackup = stdInput;
+    //Ascending Sort 
     size_t i;
+#if 1
     for (i=0;i<length;i++)
     {
         boltInput[i]= (T)((stdInput[i] & 0xFFFFU) * 8787);
@@ -1241,8 +1263,8 @@ void BasicSortTestOfLength(size_t length)
     }
 	//printf("\n");
     
-    bolt::cl::sort(boltInput.begin(), boltInput.end());
-    std::sort(stdInput.begin(), stdInput.end());
+    bolt::cl::sort(boltInput.begin(), boltInput.end()/*, bolt::cl::greater<T>()*/);
+    std::sort(stdInput.begin(), stdInput.end()/*, bolt::cl::greater<T>()*/);
     /*for (i=0; i<length; i++)
     {
         std::cout << i << " : " << stdInput[i] << " , " << boltInput[i] << std::endl;
@@ -1256,11 +1278,11 @@ void BasicSortTestOfLength(size_t length)
     }
     if (i==length)
     {
-        std::cout << "\nTest Passed" <<std::endl;
+        std::cout << "\nTest Passed - Ascending" <<std::endl;
     }
     else 
     {
-        std::cout << "\nTest Failed i = " << i <<std::endl;
+        std::cout << "\nTest Failed  - Ascending i = " << i <<std::endl;
         for (int j=-10;j<10;j++)
         {
             if((i+j)<0 || (i+j)>length)
@@ -1269,6 +1291,47 @@ void BasicSortTestOfLength(size_t length)
                 std::cout << std::hex << (i+j) << "  -- " <<stdInput[i+j] << "  -- " << boltInput[i+j] << "\n";
         }
     }
+#endif
+    //Descending Sort 
+    stdInput = stdBackup;
+    for (i=0;i<length;i++)
+    {
+        boltInput[i]= (T)((stdInput[i] & 0xFFFFU) * 8787);
+		//printf("%x ",boltInput[i]);
+		stdInput[i] = boltInput[i];
+    }
+	//printf("\n");
+
+    bolt::cl::sort(boltInput.begin(), boltInput.end(), bolt::cl::greater<T>());
+    std::sort(stdInput.begin(), stdInput.end(), bolt::cl::greater<T>());
+    /*for (i=0; i<length; i++)
+    {
+        std::cout << i << " : " << stdInput[i] << " , " << boltInput[i] << std::endl;
+    }*/
+    for (i=0; i<length; i++)
+    {
+        if(stdInput[i] == boltInput[i])
+            continue;
+        else
+            break;
+    }
+    if (i==length)
+    {
+        std::cout << "\nTest Passed - Descending" <<std::endl;
+    }
+    else 
+    {
+        std::cout << "\nTest Failed - Descending i = " << i <<std::endl;
+        for (int j=-10;j<10;j++)
+        {
+            if((i+j)<0 || (i+j)>length)
+                std::cout << "Out of Index\n";
+            else
+                std::cout << std::hex << (i+j) << "  -- " <<stdInput[i+j] << "  -- " << boltInput[i+j] << "\n";
+        }
+    }
+
+
 }
 
 template <typename T>
@@ -1448,9 +1511,9 @@ int main(int argc, char* argv[])
 {
 
     //UDDSortTestOfLengthWithDeviceVector<int>(256);
-    BasicSortTestOfLength<unsigned int>(16777216/*atoi(argv[1])*/);
+    BasicSortTestOfLength<unsigned int>(2097159/*131072/*65536/*33554432/*16777216/*atoi(argv[1])*/);
 	//BasicSortTestOfLength<unsigned int>(4096);
-    BasicSortTestOfLength<int>(512);
+    //BasicSortTestOfLength<int>(512);
     //BasicSortTestOfLength<int>(111);
     //BasicSortTestOfLength<int>(65);
     //BasicSortTestOfLength<int>(63);
