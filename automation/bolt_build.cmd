@@ -45,6 +45,7 @@ set BOLT_BUILD_COMP=VS
 set BOLT_BUILD_COMP_VER=11
 set BOLT_BUILD_BIT=64
 set BOLT_BUILD_USE_AMP=ON
+set BOLT_CONFIGURATION=Release
 
 
 REM ################################################################################################
@@ -81,6 +82,10 @@ REM # Read command line parameters
   )
   if /i "%1"=="--bit" (
     set BOLT_BUILD_BIT=%2
+    SHIFT
+  )
+  if /i "%1"=="--config" (
+    set BOLT_CONFIGURATION=%2
     SHIFT
   )
   if /i "%1"=="--version-major" (
@@ -136,6 +141,7 @@ echo Info: Install:   %BOLT_BUILD_INSTALL_PATH%
 echo Info: OS:        %BOLT_BUILD_OS%%BOLT_BUILD_OS_VER%
 echo Info: Compiler:  %BOLT_BUILD_COMP%%BOLT_BUILD_COMP_VER% %BOLT_BUILD_BIT%bit
 echo Info: CMake Gen: %BOLT_BUILD_CMAKE_GEN%
+echo Info: CMake Config: %BOLT_CONFIGURATION%
 echo Info: Platform:  %BOLT_BUILD_MSBUILD_PLATFORM%
 echo Info: Toolset:   %BOLT_BUILD_MSBUILD_PLATFORM_TOOLSET%
 echo Info: Major:     %BOLT_BUILD_FLAG_MAJOR%
@@ -181,7 +187,6 @@ REM ############################################################################
 REM # Start of build logic here
 REM ################################################################################################
 
-
 REM ################################################################################################
 REM # Cmake
 echo.
@@ -189,12 +194,9 @@ echo %HR%
 echo Info: Running CMake to generate build files.
 %CMAKE% ^
   -G %BOLT_BUILD_CMAKE_GEN% ^
-  -D CMAKE_BOLT_BUILD_TYPE=Release ^
   -D BUILD_AMP=%BOLT_BUILD_USE_AMP% ^
   -D BUILD_StripSymbols=ON ^
-  -D Bolt.SuperBuild_VERSION_MAJOR=%BOLT_BUILD_FLAG_MAJOR% ^
-  -D Bolt.SuperBuild_VERSION_MINOR=%BOLT_BUILD_FLAG_MINOR% ^
-  -D Bolt.SuperBuild_VERSION_PATCH=%BOLT_BUILD_FLAG_PATCH% ^
+  -D Bolt.SuperBuild_VERSION_PATCH=%BOLT_BUILD_VERSION_PATCH% ^
   %BOLT_BUILD_SOURCE_PATH%\superbuild
 if errorlevel 1 (
   echo Info: CMake failed.
@@ -202,8 +204,6 @@ if errorlevel 1 (
   popd
   goto :Done
 )
-
-
 
 REM ################################################################################################
 REM # Super Build
@@ -217,7 +217,7 @@ MSBuild.exe ^
   /flp1:logfile=errors.log;errorsonly ^
   /flp2:logfile=warnings.log;warningsonly ^
   /flp3:logfile=build.log ^
-  /p:Configuration=Release ^
+  /p:Configuration=%BOLT_CONFIGURATION% ^
   /p:PlatformTarget=%BOLT_BUILD_MSBUILD_PLATFORM% ^
   /p:PlatformToolset=%BOLT_BUILD_MSBUILD_PLATFORM_TOOLSET% ^
   /t:build
@@ -227,7 +227,6 @@ if errorlevel 1 (
   popd
   goto :Done
 )
-
 
 REM ################################################################################################
 REM # Build Documentation
@@ -243,7 +242,7 @@ MSBuild.exe ^
   /flp1:logfile=errors.log;errorsonly ^
   /flp2:logfile=warnings.log;warningsonly ^
   /flp3:logfile=build.log ^
-  /p:Configuration=Release ^
+  /p:Configuration=%BOLT_CONFIGURATION% ^
   /p:PlatformTarget=%BOLT_BUILD_MSBUILD_PLATFORM% ^
   /p:PlatformToolset=%BOLT_BUILD_MSBUILD_PLATFORM_TOOLSET% ^
   /t:build
@@ -267,7 +266,7 @@ MSBuild.exe ^
   /flp1:logfile=errors.log;errorsonly ^
   /flp2:logfile=warnings.log;warningsonly ^
   /flp3:logfile=build.log ^
-  /p:Configuration=Release ^
+  /p:Configuration=%BOLT_CONFIGURATION% ^
   /p:PlatformTarget=%BOLT_BUILD_MSBUILD_PLATFORM% ^
   /p:PlatformToolset=%BOLT_BUILD_MSBUILD_PLATFORM_TOOLSET% ^
   /t:build
