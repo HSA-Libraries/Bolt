@@ -3,6 +3,7 @@
  *****************************************************************************/
 #include "bolt/AsyncProfiler.h"
 #include <iostream>
+#include <sstream>
 
 size_t AsyncProfiler::getTime()
 {
@@ -191,9 +192,9 @@ void AsyncProfiler::Trial::set( size_t stepIndex, size_t attributeIndex, size_t 
         ::std::cerr << "Out-Of-Bounds: stepIndex " << stepIndex << " not in [" << 0 << ", " << steps.size() << "]; Line: " << __LINE__ << " of File: " << __FILE__ << std::endl;
     }
 }
-void AsyncProfiler::Trial::setSerial( size_t s )
+void AsyncProfiler::Trial::setName( std::string& name)
 {
-    serial = s;
+    trialName = name;
 }
 void AsyncProfiler::Trial::startStep()
 {
@@ -241,9 +242,12 @@ void AsyncProfiler::Trial::computeAttributes()
 ::std::ostream& AsyncProfiler::Trial::writeLog( ::std::ostream& s ) const
 {
     s << "\t<TRIAL";
-    s << " serial=\"" << serial << "\"";
+    s << " name=\"" << trialName.c_str() << "\"";
     s << ">";
     s << std::endl;
+#if 1
+    aggregateStep.writeLog(s);
+#else
     s << "\t\t<STEP name=\"aggregate\" >" << std::endl;
     for (size_t i = 0; i < NUM_ATTRIBUTES; i++)
     {
@@ -260,7 +264,7 @@ void AsyncProfiler::Trial::computeAttributes()
         }
     }
     s << "\t\t</STEP>" << std::endl;
-
+#endif
     for (size_t i = 0; i < steps.size(); i++)
     {
         steps[i].writeLog(s);
@@ -361,7 +365,9 @@ void AsyncProfiler::startTrial()
 {
     Trial tmp;
     trials.push_back( tmp );
-    trials[currentTrialIndex].setSerial( currentTrialIndex );
+    std::ostringstream ss;
+    ss << currentTrialIndex;
+    trials[currentTrialIndex].setName( ss.str() );
     trials[currentTrialIndex].startStep();
     set( startTime, getTime() );
 }
@@ -487,7 +493,8 @@ void AsyncProfiler::calculateAverage()
     //std::cout << "Calculating Average" << std::endl;
     size_t numSteps = getNumSteps();
     average.resize(numSteps);
-    average.setSerial(0);
+    average.trialName = "average";
+    average.aggregateStep.setName("aggregate");
     Trial total(numSteps), count(numSteps);
 
     // sum step attributes
@@ -524,11 +531,11 @@ void AsyncProfiler::calculateAverage()
     }
 
     // assign average trial attributes
-    average.attributeValues[time] = totalTime / trialsAveraged;
-    average.attributeValues[flops] = totalFlops / trialsAveraged;
-    average.attributeValues[memory] = totalMemory / trialsAveraged;
-    average.attributeValues[flops_s] = static_cast<size_t>(1000000000.0 * totalFlops / totalTime);
-    average.attributeValues[bandwidth] = static_cast<size_t>(1000000000.0 * totalMemory / totalTime);
+    average.aggregateStep.set(time, totalTime / trialsAveraged);
+    average.aggregateStep.set(flops, totalFlops / trialsAveraged);
+    average.aggregateStep.set(memory, totalMemory / trialsAveraged);
+    average.aggregateStep.set(flops_s, static_cast<size_t>(1000000000.0 * totalFlops / totalTime) );
+    average.aggregateStep.set(bandwidth, static_cast<size_t>(1000000000.0 * totalMemory / totalTime) );
     //std::cout
     //    << "bandwidth:" << average.attributeValues[bandwidth] << " = "
     //    << "memory:" << totalMemory << " / "
@@ -556,12 +563,12 @@ void AsyncProfiler::calculateAverage()
     for (size_t t = (trials.size()>1) ? 1 : 0; t < trials.size()-1; t++)
     {
         // accumulate for trial
-        size_t dTime = trials[t].attributeValues[time] - average.attributeValues[time];
-        average.stdDev[time] += dTime * dTime;
-        size_t dBandwidth = trials[t].attributeValues[bandwidth] - average.attributeValues[bandwidth];
-        average.stdDev[bandwidth] += dBandwidth * dBandwidth;
-        size_t dFlops_s = trials[t].attributeValues[flops_s] - average.attributeValues[flops_s];
-        average.stdDev[flops_s] += dFlops_s * dFlops_s;
+        size_t dTime = trials[t].attributeValues[time] - average.aggregateStep.get(time);
+        average.aggregateStep.stdDev[time] += dTime * dTime;
+        size_t dBandwidth = trials[t].attributeValues[bandwidth] - average.aggregateStep.get(bandwidth);
+        average.aggregateStep.stdDev[bandwidth] += dBandwidth * dBandwidth;
+        size_t dFlops_s = trials[t].attributeValues[flops_s] - average.aggregateStep.get(flops_s);
+        average.aggregateStep.stdDev[flops_s] += dFlops_s * dFlops_s;
 
         // accumulate for steps
         for (size_t s = 0; s < trials[t].size(); s++)
@@ -588,11 +595,11 @@ void AsyncProfiler::calculateAverage()
 
     // final divide for trial stddev
     // time
-    average.stdDev[time] = static_cast<size_t>(sqrt(average.stdDev[time]/(trialsAveraged-1.0) ));
+    average.aggregateStep.stdDev[time] = static_cast<size_t>(sqrt(average.aggregateStep.stdDev[time]/(trialsAveraged-1.0) ));
     // flops_s
-    average.stdDev[flops_s] = static_cast<size_t>(sqrt(average.stdDev[flops_s]/(trialsAveraged-1.0) ));
+    average.aggregateStep.stdDev[flops_s] = static_cast<size_t>(sqrt(average.aggregateStep.stdDev[flops_s]/(trialsAveraged-1.0) ));
     // bandwidth
-    average.stdDev[bandwidth] = static_cast<size_t>(sqrt(average.stdDev[bandwidth]/(trialsAveraged-1.0) ));
+    average.aggregateStep.stdDev[bandwidth] = static_cast<size_t>(sqrt(average.aggregateStep.stdDev[bandwidth]/(trialsAveraged-1.0) ));
     //std::cout << "Size of Average Trials: " << average.size() << std::endl;
     // final divide for steps stddev
     for (size_t s = 0; s < average.size(); s++)
@@ -616,8 +623,8 @@ void AsyncProfiler::calculateAverage()
     os << " type=\"average\"";
     os << " trials=\"" << ((trials.size()>1) ? trials.size()-1 : 1) << "\"";
     os << " bytes=\"" << dataSize << "\"";
-    os << " timerResolution=\"" << timerPeriodNs << "\"";
-    os << " architecture=\"" << architecture.c_str() << "\"";
+    os << " timerRes=\"" << timerPeriodNs << "\"";
+    os << " arch=\"" << architecture.c_str() << "\"";
     os << " >";
     os << std::endl;
     average.writeLog(os);

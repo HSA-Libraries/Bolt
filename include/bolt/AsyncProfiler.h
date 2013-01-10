@@ -59,11 +59,12 @@ public:
     class Trial
     {
     private:
-        size_t serial;
         std::vector<Step> steps;
         size_t currentStepIndex;
         
     public:
+        Step aggregateStep;
+        std::string trialName;
         size_t attributeValues[NUM_ATTRIBUTES];
         size_t stdDev[NUM_ATTRIBUTES];
         /******************************************************************************
@@ -76,7 +77,7 @@ public:
         /******************************************************************************
          * Member Functions
          *****************************************************************************/
-        void setSerial( size_t s );
+        void setName( std::string& name );
         size_t size() const;
         void resize( size_t n );
         size_t get( size_t attributeIndex) const;
