@@ -402,7 +402,7 @@ namespace bolt
             *   \todo Find a way to be able to unambiguously specify memory flags for this constructor, that is not
             *   confused with the size constructor below.
             */
-            device_vector( const control& ctl = control::getDefault( ) ): m_Size( 0 ), m_devMemory(NULL)
+            device_vector( control& ctl = control::getDefault( ) ): m_Size( 0 ), m_devMemory(NULL)
             {
                 static_assert( !std::is_polymorphic< value_type >::value, "AMD C++ template extensions do not support the virtual keyword yet" );
             }
@@ -417,7 +417,7 @@ namespace bolt
             */
 
             device_vector( size_type newSize, const value_type& value = value_type( ),
-                bool init = true, const control& ctl = control::getDefault( ) ): m_Size( newSize )
+                bool init = true, control& ctl = control::getDefault( ) ): m_Size( newSize )
             {
                 static_assert( !std::is_polymorphic< value_type >::value, "AMD C++ template extensions do not support the virtual keyword yet" );
                 m_devMemory = new Concurrency::array<T,1>( (int)m_Size/*, ctl.getAccelerator().default_view()*/);
@@ -447,7 +447,7 @@ namespace bolt
             */
             template< typename InputIterator >
             device_vector( const InputIterator begin, size_type newSize,
-                bool init = true, const control& ctl = control::getDefault( ),
+                bool init = true, control& ctl = control::getDefault( ),
                 typename std::enable_if< !std::is_integral< InputIterator >::value >::type* = 0 )
             {
                 static_assert( std::is_convertible< value_type, typename std::iterator_traits< InputIterator >::value_type >::value,
@@ -468,7 +468,7 @@ namespace bolt
             *   \note Ignore the enable_if<> parameter; it prevents this constructor from being called with integral types.
             */
             template< typename InputIterator >
-            device_vector( const InputIterator begin, const InputIterator end, const control& ctl = control::getDefault( ),
+            device_vector( const InputIterator begin, const InputIterator end, control& ctl = control::getDefault( ),
                 typename std::enable_if< !std::is_integral< InputIterator >::value >::type* = 0 ) 
             {
                 static_assert( std::is_convertible< value_type, typename std::iterator_traits< InputIterator >::value_type >::value,
@@ -487,7 +487,7 @@ namespace bolt
             *   \param ctl A Bolt control class for copy operations; a default is used if not supplied by the user.
             */
 
-            device_vector( Concurrency::array<T, 1>& rhs, const control& ctl = control::getDefault( ) ): m_devMemory( rhs )
+            device_vector( Concurrency::array<T, 1>& rhs, control& ctl = control::getDefault( ) ): m_devMemory( rhs )
             {
                 static_assert( !std::is_polymorphic< value_type >::value, "AMD C++ template extensions do not support the virtual keyword yet" );
 

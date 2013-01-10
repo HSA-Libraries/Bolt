@@ -16,12 +16,16 @@
 ############################################################################                                                                                     
 
 # List the names of common files to compile across all platforms
-set( clBolt.Test.ScanByKey.Source ${BOLT_CL_TEST_DIR}/common/stdafx.cpp 
-                             ScanByKeyTest.cpp )
-set( clBolt.Test.ScanByKey.Headers   ${BOLT_CL_TEST_DIR}/common/stdafx.h 
-                                ${BOLT_CL_TEST_DIR}/common/targetver.h 
-                                ${BOLT_INCLUDE_DIR}/bolt/cl/transform_scan.h 
-                                ${BOLT_INCLUDE_DIR}/bolt/cl/detail/scan_by_key.inl )
+set( clBolt.Test.ScanByKey.Source
+    ${BOLT_CL_TEST_DIR}/common/stdafx.cpp 
+    ScanByKeyTest.cpp )
+
+set( clBolt.Test.ScanByKey.Headers
+    ${BOLT_CL_TEST_DIR}/common/stdafx.h 
+    ${BOLT_CL_TEST_DIR}/common/targetver.h
+    ${BOLT_CL_TEST_DIR}/common/test_common.h 
+    ${BOLT_INCLUDE_DIR}/bolt/cl/transform_scan.h 
+    ${BOLT_INCLUDE_DIR}/bolt/cl/detail/scan_by_key.inl )
 
 set( clBolt.Test.ScanByKey.Files ${clBolt.Test.ScanByKey.Source} ${clBolt.Test.ScanByKey.Headers} )
 

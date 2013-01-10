@@ -27,7 +27,6 @@
 
 #include <gtest/gtest.h>
 //#include <boost/shared_array.hpp>
-
 #include <boost/program_options.hpp>
 
 
@@ -267,45 +266,8 @@ struct uddtM2_equal_to
 };
 );
 
-///////////////////////////////////////////////////////////////////////////////
 
-template< typename T >
-::testing::AssertionResult cmpArrays( const T ref, const T calc, size_t N )
-{
-    for( size_t i = 0; i < N; ++i )
-    {
-        EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-    }
-
-    return ::testing::AssertionSuccess( );
-};
-
-template< typename T, size_t N >
-::testing::AssertionResult cmpArrays( const T (&ref)[N], const T (&calc)[N] )
-{
-    for( size_t i = 0; i < N; ++i )
-    {
-        EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-    }
-
-    return ::testing::AssertionSuccess( );
-};
-
-//  Primary class template for std::array types
-//  The struct wrapper is necessary to partially specialize the member function
-
-//  A very generic template that takes two container, and compares their values assuming a vector interface
-template< typename S, typename B >
-::testing::AssertionResult cmpArrays( const S& ref, const B& calc )
-{
-    for( size_t i = 0; i < ref.size( ); ++i )
-    {
-        EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-    }
-
-    return ::testing::AssertionSuccess( );
-}
-
+#include "test_common.h"
 
 
 /******************************************************************************
