@@ -244,12 +244,12 @@ void AsyncProfiler::Trial::computeAttributes()
     s << " serial=\"" << serial << "\"";
     s << ">";
     s << std::endl;
-
+    s << "\t\t<STEP name=\"aggregate\" >" << std::endl;
     for (size_t i = 0; i < NUM_ATTRIBUTES; i++)
     {
         if (attributeValues[i] > 0 )
         {
-            s << "\t\t<" << AsyncProfiler::trialAttributeNames[i];
+            s << "\t\t\t<" << AsyncProfiler::trialAttributeNames[i];
             s << " value=\"" << attributeValues[i] << "\"";
             if ( stdDev[i] > 0)
             {
@@ -259,7 +259,7 @@ void AsyncProfiler::Trial::computeAttributes()
             s << std::endl;
         }
     }
-
+    s << "\t\t</STEP>" << std::endl;
 
     for (size_t i = 0; i < steps.size(); i++)
     {
