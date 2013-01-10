@@ -263,6 +263,8 @@ class ScanByKey_KernelTemplateSpecializer : public KernelTemplateSpecializer
     ScanByKey_KernelTemplateSpecializer() : KernelTemplateSpecializer()
     {
         addKernelName("perBlockScanByKey");
+        addKernelName("intraBlockInclusiveScanByKey");
+        addKernelName("perBlockAdditionByKey");
     }
     
     const ::std::string operator() ( const ::std::vector<::std::string>& typeNames ) const
@@ -276,13 +278,43 @@ class ScanByKey_KernelTemplateSpecializer : public KernelTemplateSpecializer
             "global " + typeNames[e_vType] + "* vals,\n"
             "global " + typeNames[e_koType] + "* koutput,\n"
             "global " + typeNames[e_voType] + "* voutput,\n"
+            "const uint vecSize,\n"
             "local "  + typeNames[e_kType] + "* ldsKeys,\n"
             "local "  + typeNames[e_voType] + "* ldsVals,\n"
             "global " + typeNames[e_BinaryPredicate] + "* binaryPred,\n"
             "global " + typeNames[e_BinaryFunction]  + "* binaryFunct,\n"
             "global " + typeNames[e_kType] + "* keyBuffer,\n"
             "global " + typeNames[e_voType] + "* valBuffer\n"
-            ");\n\n";
+            ");\n\n"
+            
+            "// Dynamic specialization of generic template definition, using user supplied types\n"
+            "template __attribute__((mangled_name(" + name(1) + "Instantiated)))\n"
+            "__attribute__((reqd_work_group_size(KERNEL1WORKGROUPSIZE,1,1)))\n"
+            "__kernel void " + name(1) + "(\n"
+            "global " + typeNames[e_kType] + "* keySumArray,\n"
+            "global " + typeNames[e_voType] + "* preSumArray,\n"
+            "global " + typeNames[e_voType] + "* postSumArray,\n"
+            "const uint vecSize,\n"
+            "local "  + typeNames[e_kType] + "* ldsKeys,\n"
+            "local "  + typeNames[e_voType] + "* ldsVals,\n"
+            "const uint workPerThread,\n"
+            "global " + typeNames[e_BinaryPredicate] + "* binaryPred,\n"
+            "global " + typeNames[e_BinaryFunction] + "* binaryFunct\n"
+            ");\n\n"
+    
+
+            "// Dynamic specialization of generic template definition, using user supplied types\n"
+            "template __attribute__((mangled_name(" + name(2) + "Instantiated)))\n"
+            "__attribute__((reqd_work_group_size(KERNEL2WORKGROUPSIZE,1,1)))\n"
+            "__kernel void " + name(2) + "(\n"
+            "global " + typeNames[e_kType] + "* keySumArray,\n"
+            "global " + typeNames[e_voType] + "* postSumArray,\n"
+            "global " + typeNames[e_kType] + "* keys,\n"
+            "global " + typeNames[e_voType] + "* output,\n"
+            "const uint vecSize,\n"
+            "global " + typeNames[e_BinaryPredicate] + "* binaryPred,\n"
+            "global " + typeNames[e_BinaryFunction] + "* binaryFunct\n"
+            ");\n\n";            
     
         return templateSpecializationString;
     }
@@ -599,6 +631,7 @@ reduce_by_key_enqueue(
     control::buffPointer keySumArray  = ctl.acquireBuffer( sizeScanBuff*sizeof( kType ) );
     control::buffPointer preSumArray  = ctl.acquireBuffer( sizeScanBuff*sizeof( voType ) );
     control::buffPointer postSumArray = ctl.acquireBuffer( sizeScanBuff*sizeof( voType ) );
+    //control::buffPointer offsetArray  = ctl.acquireBuffer( numElements *sizeof( kType ) );
     cl_uint ldsKeySize, ldsValueSize;
 
 
@@ -613,12 +646,13 @@ reduce_by_key_enqueue(
     V_OPENCL( kernels[0].setArg( 1, values_first->getBuffer()),"Error setArg kernels[ 0 ]" ); // Input buffer
     V_OPENCL( kernels[0].setArg( 2, values_output->getBuffer( ) ), "Error setArg kernels[ 0 ]" ); // Output buffer
     V_OPENCL( kernels[0].setArg( 3, keys_output->getBuffer( ) ), "Error setArg kernels[ 0 ]" ); // Output buffer
-    V_OPENCL( kernels[0].setArg( 4, ldsKeySize, NULL ),     "Error setArg kernels[ 0 ]" ); // Scratch buffer
-    V_OPENCL( kernels[0].setArg( 5, ldsValueSize, NULL ),   "Error setArg kernels[ 0 ]" ); // Scratch buffer
-    V_OPENCL( kernels[0].setArg( 6, *binaryPredicateBuffer),"Error setArg kernels[ 0 ]" ); // User provided functor
-    V_OPENCL( kernels[0].setArg( 7, *binaryFunctionBuffer ),"Error setArg kernels[ 0 ]" ); // User provided functor
-    V_OPENCL( kernels[0].setArg( 8, *keySumArray ),         "Error setArg kernels[ 0 ]" ); // Output per block sum
-    V_OPENCL( kernels[0].setArg( 9, *preSumArray ),         "Error setArg kernels[ 0 ]" ); // Output per block sum
+    V_OPENCL( kernels[0].setArg( 4, numElements ), "Error setArg kernels[ 0 ]" ); // vecSize
+    V_OPENCL( kernels[0].setArg( 5, ldsKeySize, NULL ),     "Error setArg kernels[ 0 ]" ); // Scratch buffer
+    V_OPENCL( kernels[0].setArg( 6, ldsValueSize, NULL ),   "Error setArg kernels[ 0 ]" ); // Scratch buffer
+    V_OPENCL( kernels[0].setArg( 7, *binaryPredicateBuffer),"Error setArg kernels[ 0 ]" ); // User provided functor
+    V_OPENCL( kernels[0].setArg( 8, *binaryFunctionBuffer ),"Error setArg kernels[ 0 ]" ); // User provided functor
+    V_OPENCL( kernels[0].setArg( 9, *keySumArray ),         "Error setArg kernels[ 0 ]" ); // Output per block sum
+    V_OPENCL( kernels[0].setArg( 10, *preSumArray ),         "Error setArg kernels[ 0 ]" ); // Output per block sum
     
     l_Error = ctl.commandQueue( ).enqueueNDRangeKernel(
         kernels[0],
@@ -636,6 +670,94 @@ reduce_by_key_enqueue(
         std::cerr << "File:         " << __FILE__ << ", line " << __LINE__ << std::endl;
         std::cerr << "Error String: " << e.what() << std::endl;
     }
+
+    /**********************************************************************************
+     *  Kernel 1
+     *********************************************************************************/
+    cl_uint workPerThread = static_cast< cl_uint >( sizeScanBuff / kernel1_WgSize );
+    V_OPENCL( kernels[1].setArg( 0, *keySumArray ),         "Error setArg kernels[ 1 ]" ); // Input keys
+    V_OPENCL( kernels[1].setArg( 1, *preSumArray ),         "Error setArg kernels[ 1 ]" ); // Input buffer
+    V_OPENCL( kernels[1].setArg( 2, *postSumArray ),        "Error setArg kernels[ 1 ]" ); // Output buffer
+    V_OPENCL( kernels[1].setArg( 3, numWorkGroupsK0 ),      "Error setArg kernels[ 1 ]" ); // Size of scratch buffer
+    V_OPENCL( kernels[1].setArg( 4, ldsKeySize, NULL ),     "Error setArg kernels[ 1 ]" ); // Scratch buffer
+    V_OPENCL( kernels[1].setArg( 5, ldsValueSize, NULL ),   "Error setArg kernels[ 1 ]" ); // Scratch buffer
+    V_OPENCL( kernels[1].setArg( 6, workPerThread ),        "Error setArg kernels[ 1 ]" ); // User provided functor
+    V_OPENCL( kernels[1].setArg( 7, *binaryPredicateBuffer ),"Error setArg kernels[ 1 ]" ); // User provided functor
+    V_OPENCL( kernels[1].setArg( 8, *binaryFunctionBuffer ),"Error setArg kernels[ 1 ]" ); // User provided functor
+
+    try
+    {
+    l_Error = ctl.commandQueue( ).enqueueNDRangeKernel(
+        kernels[1],
+        ::cl::NullRange,
+        ::cl::NDRange( kernel1_WgSize ), // only 1 work-group
+        ::cl::NDRange( kernel1_WgSize ),
+        NULL,
+        &kernel1Event);
+    V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for kernel[1]" );
+    }
+    catch( const ::cl::Error& e)
+    {
+        std::cerr << "::cl::enqueueNDRangeKernel( 1 ) in bolt::cl::scan_by_key_enqueue()" << std::endl;
+        std::cerr << "Error Code:   " << clErrorStringA(e.err()) << " (" << e.err() << ")" << std::endl;
+        std::cerr << "File:         " << __FILE__ << ", line " << __LINE__ << std::endl;
+        std::cerr << "Error String: " << e.what() << std::endl;
+    }
+
+    /**********************************************************************************
+     *  Kernel 2
+     *********************************************************************************/
+    V_OPENCL( kernels[2].setArg( 0, *keySumArray ),         "Error setArg kernels[ 2 ]" ); // Input buffer
+    V_OPENCL( kernels[2].setArg( 1, *postSumArray ),        "Error setArg kernels[ 2 ]" ); // Input buffer
+    V_OPENCL( kernels[2].setArg( 2, keys_first->getBuffer()), "Error setArg kernels[ 2 ]" ); // Output buffer
+    V_OPENCL( kernels[2].setArg( 3, values_output->getBuffer()),   "Error setArg kernels[ 2 ]" ); // Output buffer
+    V_OPENCL( kernels[2].setArg( 4, numElements ),          "Error setArg kernels[ 2 ]" ); // Size of scratch buffer
+    V_OPENCL( kernels[2].setArg( 5, *binaryPredicateBuffer ),"Error setArg kernels[ 2 ]" ); // User provided functor
+    V_OPENCL( kernels[2].setArg( 6, *binaryFunctionBuffer ),"Error setArg kernels[ 2 ]" ); // User provided functor
+
+    try
+    {
+    l_Error = ctl.commandQueue( ).enqueueNDRangeKernel(
+        kernels[2],
+        ::cl::NullRange,
+        ::cl::NDRange( sizeInputBuff ),
+        ::cl::NDRange( kernel2_WgSize ),
+        NULL,
+        &kernel2Event );
+    V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for kernel[2]" );
+    }
+    catch( const ::cl::Error& e)
+    {
+        std::cerr << "::cl::enqueueNDRangeKernel( 2 ) in bolt::cl::scan_by_key_enqueue()" << std::endl;
+        std::cerr << "Error Code:   " << clErrorStringA(e.err()) << " (" << e.err() << ")" << std::endl;
+        std::cerr << "File:         " << __FILE__ << ", line " << __LINE__ << std::endl;
+        std::cerr << "Error String: " << e.what() << std::endl;
+    }
+
+    // wait for results
+    l_Error = kernel2Event.wait( );
+    V_OPENCL( l_Error, "post-kernel[2] failed wait" );
+
+    ::cl::Event l_mapEvent;
+    voType *h_result = (voType*)ctl.commandQueue().enqueueMapBuffer(keys_output->getBuffer(), false, CL_MAP_READ, 0, sizeof(voType)*numElements, NULL, &l_mapEvent, &l_Error );
+    V_OPENCL( l_Error, "Error calling map on the result buffer" );
+    
+    
+    bolt::cl::wait(ctl, l_mapEvent);
+
+
+
+    //Doing this serially; Performance killer!!
+    unsigned int count_number_of_sections = 1;
+    for(unsigned int i = 1; i < numElements; i++)
+    {        
+        if(h_result[i])
+        {
+            count_number_of_sections++;
+            h_result[i] = count_number_of_sections;
+        }
+    }
+
 
 #if 0
     try

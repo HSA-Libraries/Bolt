@@ -751,16 +751,18 @@ int _tmain(int argc, _TCHAR* argv[])
     int segmentIndex = 0;
     int key = 1;
     std::vector< int > refInput( length );
+    std::vector< int > input( length );
     for (int i = 0; i < length; i++)
     {
         if(std::rand()%3 == 1) key++;
         keys[i] = key;
         refInput[i] = std::rand()%4;
+        input[i] = refInput[i];
         //std::cout<<keys[i]<<" vals="<<refInput[i]<<std::endl;
     }
 
     // input and output vectors for device and reference
-    std::vector< int > input(  length );
+    
     std::vector< int > koutput( length ); 
     std::vector< int > voutput( length ); 
     //std::vector< int > refInput( length );
@@ -776,9 +778,9 @@ int _tmain(int argc, _TCHAR* argv[])
     bolt::cl::plus<int> binary_operator;
 
     bolt::cl::reduce_by_key( keys.begin(), keys.end(), input.begin(), koutput.begin(), voutput.begin(), binary_predictor, binary_operator);
-    for(unsigned int i = 0; i < 8 ; i++)
+    for(unsigned int i = 0; i < 256 ; i++)
     {
-        std::cout<<koutput[i]<<" Values "<<voutput[i]<<std::endl;
+        std::cout<<"Input key "<<keys[i]<<" Input Values "<<input[i]<<" -> Keys(not ready) "<<koutput[i]<<" Values "<<voutput[i]<<std::endl;
     }
     gold_reduce_by_key( keys.begin(), keys.end(), refInput.begin(), krefOutput.begin(), vrefOutput.begin(),std::plus<int>());
 
