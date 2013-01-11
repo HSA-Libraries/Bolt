@@ -30,7 +30,7 @@ namespace cl
 {
 
 /***********************************************************************************************************************
- * 
+ * REDUCE BY KEY
  **********************************************************************************************************************/
 template<
     typename InputIterator1,
@@ -265,6 +265,7 @@ class ScanByKey_KernelTemplateSpecializer : public KernelTemplateSpecializer
         addKernelName("perBlockScanByKey");
         addKernelName("intraBlockInclusiveScanByKey");
         addKernelName("perBlockAdditionByKey");
+        addKernelName("keyValueMapping");
     }
     
     const ::std::string operator() ( const ::std::vector<::std::string>& typeNames ) const
@@ -314,6 +315,16 @@ class ScanByKey_KernelTemplateSpecializer : public KernelTemplateSpecializer
             "const uint vecSize,\n"
             "global " + typeNames[e_BinaryPredicate] + "* binaryPred,\n"
             "global " + typeNames[e_BinaryFunction] + "* binaryFunct\n"
+            ");\n\n"
+
+            "// Dynamic specialization of generic template definition, using user supplied types\n"
+            "template __attribute__((mangled_name(" + name(3) + "Instantiated)))\n"
+            "__attribute__((reqd_work_group_size(KERNEL0WORKGROUPSIZE,1,1)))\n"
+            "__kernel void " + name(3) + "(\n"
+	        "global " + typeNames[e_kType] + "*keys,\n"
+	        "global " + typeNames[e_koType] + "*keys_output,\n"
+            "global " + typeNames[e_voType] + "*vals_output,\n"
+	        "const uint vecSize\n"
             ");\n\n";            
     
         return templateSpecializationString;
@@ -592,7 +603,7 @@ reduce_by_key_enqueue(
     // kernels returned in same order as added in KernelTemplaceSpecializer constructor
 
     // for profiling
-    ::cl::Event kernel0Event, kernel1Event, kernel2Event, kernelAEvent;
+    ::cl::Event kernel0Event, kernel1Event, kernel2Event, kernelAEvent, kernel3Event;
     //cl_uint doExclusiveScan = inclusive ? 0 : 1;
     // Set up shape of launch grid and buffers:
     int computeUnits     = ctl.device( ).getInfo< CL_DEVICE_MAX_COMPUTE_UNITS >( );
@@ -643,9 +654,9 @@ reduce_by_key_enqueue(
     ldsKeySize   = static_cast< cl_uint >( kernel0_WgSize * sizeof( kType ) );
     ldsValueSize = static_cast< cl_uint >( kernel0_WgSize * sizeof( voType ) );
     V_OPENCL( kernels[0].setArg( 0, keys_first->getBuffer()), "Error setArg kernels[ 0 ]" ); // Input keys
-    V_OPENCL( kernels[0].setArg( 1, values_first->getBuffer()),"Error setArg kernels[ 0 ]" ); // Input buffer
-    V_OPENCL( kernels[0].setArg( 2, values_output->getBuffer( ) ), "Error setArg kernels[ 0 ]" ); // Output buffer
-    V_OPENCL( kernels[0].setArg( 3, keys_output->getBuffer( ) ), "Error setArg kernels[ 0 ]" ); // Output buffer
+    V_OPENCL( kernels[0].setArg( 1, values_first->getBuffer()),"Error setArg kernels[ 0 ]" ); // Input values
+    V_OPENCL( kernels[0].setArg( 2, values_output->getBuffer( ) ), "Error setArg kernels[ 0 ]" ); // Output values
+    V_OPENCL( kernels[0].setArg( 3, keys_output->getBuffer( ) ), "Error setArg kernels[ 0 ]" ); // Output keys
     V_OPENCL( kernels[0].setArg( 4, numElements ), "Error setArg kernels[ 0 ]" ); // vecSize
     V_OPENCL( kernels[0].setArg( 5, ldsKeySize, NULL ),     "Error setArg kernels[ 0 ]" ); // Scratch buffer
     V_OPENCL( kernels[0].setArg( 6, ldsValueSize, NULL ),   "Error setArg kernels[ 0 ]" ); // Scratch buffer
@@ -681,7 +692,7 @@ reduce_by_key_enqueue(
     V_OPENCL( kernels[1].setArg( 3, numWorkGroupsK0 ),      "Error setArg kernels[ 1 ]" ); // Size of scratch buffer
     V_OPENCL( kernels[1].setArg( 4, ldsKeySize, NULL ),     "Error setArg kernels[ 1 ]" ); // Scratch buffer
     V_OPENCL( kernels[1].setArg( 5, ldsValueSize, NULL ),   "Error setArg kernels[ 1 ]" ); // Scratch buffer
-    V_OPENCL( kernels[1].setArg( 6, workPerThread ),        "Error setArg kernels[ 1 ]" ); // User provided functor
+    V_OPENCL( kernels[1].setArg( 6, workPerThread ),        "Error setArg kernels[ 1 ]" ); // Work Per Thread
     V_OPENCL( kernels[1].setArg( 7, *binaryPredicateBuffer ),"Error setArg kernels[ 1 ]" ); // User provided functor
     V_OPENCL( kernels[1].setArg( 8, *binaryFunctionBuffer ),"Error setArg kernels[ 1 ]" ); // User provided functor
 
@@ -738,16 +749,21 @@ reduce_by_key_enqueue(
     l_Error = kernel2Event.wait( );
     V_OPENCL( l_Error, "post-kernel[2] failed wait" );
 
+    //
+    // Now take the output keys and increment each non-zero value from previous value.
+    // This is done serially. It doesn't look GPU friendly.
+    //
+
     ::cl::Event l_mapEvent;
-    voType *h_result = (voType*)ctl.commandQueue().enqueueMapBuffer(keys_output->getBuffer(), false, CL_MAP_READ, 0, sizeof(voType)*numElements, NULL, &l_mapEvent, &l_Error );
+    voType *h_result = (voType*)ctl.commandQueue().enqueueMapBuffer(keys_output->getBuffer(),
+                                                                    false, CL_MAP_WRITE | CL_MAP_READ,
+                                                                    0, sizeof(voType)*numElements,
+                                                                    NULL, &l_mapEvent, &l_Error );
     V_OPENCL( l_Error, "Error calling map on the result buffer" );
-    
     
     bolt::cl::wait(ctl, l_mapEvent);
 
-
-
-    //Doing this serially; Performance killer!!
+    // Doing this serially; Performance killer!!
     unsigned int count_number_of_sections = 1;
     for(unsigned int i = 1; i < numElements; i++)
     {        
@@ -757,6 +773,54 @@ reduce_by_key_enqueue(
             h_result[i] = count_number_of_sections;
         }
     }
+
+    //for(unsigned int i = 0; i < 256 ; i++)
+    //{
+    //    std::cout<<h_result[i]<<std::endl;
+    //}
+
+    //
+    // Now unmap it. We map the indices back to keys_output using "keys_output"
+    //
+
+    ::cl::Event l_unmapEvent;
+    cl_int l_unmapError = CL_SUCCESS;
+    l_Error = ctl.commandQueue().enqueueUnmapMemObject( keys_output->getBuffer(), h_result, NULL, &l_unmapEvent );
+    V_OPENCL( l_unmapError, "device_vector failed to unmap host memory back to device memory" );
+    V_OPENCL( l_unmapEvent.wait( ), "failed to wait for unmap event" );
+
+
+
+    /**********************************************************************************
+     *  Kernel 3
+     *********************************************************************************/
+    V_OPENCL( kernels[3].setArg( 0, keys_first->getBuffer()),    "Error setArg kernels[ 3 ]" ); // Input buffer
+    V_OPENCL( kernels[3].setArg( 1, keys_output->getBuffer() ),  "Error setArg kernels[ 3 ]" ); // Input buffer
+    V_OPENCL( kernels[3].setArg( 2, values_output->getBuffer()), "Error setArg kernels[ 3 ]" ); // Output buffer
+    V_OPENCL( kernels[3].setArg( 3, numElements ),               "Error setArg kernels[ 3 ]" ); // Size of scratch buffer
+
+    try
+    {
+    l_Error = ctl.commandQueue( ).enqueueNDRangeKernel(
+        kernels[3],
+        ::cl::NullRange,
+        ::cl::NDRange( sizeInputBuff ),
+        ::cl::NDRange( kernel0_WgSize ),
+        NULL,
+        &kernel3Event );
+    V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for kernel[3]" );
+    }
+    catch( const ::cl::Error& e)
+    {
+        std::cerr << "::cl::enqueueNDRangeKernel( 3 ) in bolt::cl::scan_by_key_enqueue()" << std::endl;
+        std::cerr << "Error Code:   " << clErrorStringA(e.err()) << " (" << e.err() << ")" << std::endl;
+        std::cerr << "File:         " << __FILE__ << ", line " << __LINE__ << std::endl;
+        std::cerr << "Error String: " << e.what() << std::endl;
+    }
+    // wait for results
+    l_Error = kernel3Event.wait( );
+    V_OPENCL( l_Error, "post-kernel[3] failed wait" );
+
 
 
 #if 0
@@ -803,12 +867,12 @@ reduce_by_key_enqueue(
     }
     catch( ::cl::Error& e )
     {
-        std::cout << ( "Scan Benchmark error condition reported:" ) << std::endl << e.what() << std::endl;
+        std::cout << ( "Reduce By Key Benchmark error condition reported:" ) << std::endl << e.what() << std::endl;
         return;
     }
 #endif
 
-}   //end of scan_by_key_enqueue( )
+}   //end of reduce_by_key_enqueue( )
 
     /*!   \}  */
 } //namespace detail

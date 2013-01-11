@@ -261,3 +261,31 @@ __kernel void perBlockAdditionByKey(
         output[ gloId ] = newResult;
     }
 }
+
+/******************************************************************************
+ *  Kernel 3
+ *****************************************************************************/
+ template<
+	typename kType,
+	typename koType,
+	typename voType >
+__kernel void keyValueMapping(
+	global kType *keys,
+	global koType *keys_output,
+	global voType *vals_output,
+	const uint vecSize)
+{
+	
+    size_t gloId = get_global_id( 0 );
+
+    //  Abort threads that are passed the end of the input vector
+    if( gloId >= vecSize )
+        return;
+	
+	if(keys_output[ gloId ] != (koType) 0)
+	{
+		keys_output[ keys_output [ gloId ] ] = keys[ gloId ];
+		vals_output[ keys_output [ gloId ] ] = vals_output [ gloId ];
+	}
+
+}
