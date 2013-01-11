@@ -189,7 +189,7 @@ TEST( ConstantIterator, Dereference )
 }
 
 //TEST_P( ConstantIterator, Transform )
-TEST_P( ConstantIterator, TransformVector )
+TEST( ConstantIterator, TransformVector )
 {
     std::vector< int > data( 4 );
     data[ 0 ] = 1;

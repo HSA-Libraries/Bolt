@@ -28,7 +28,8 @@ namespace cl {
         {   // identifying tag for random-access iterators
         };
 
-    BOLT_TEMPLATE_FUNCTOR3( constant_iterator, int, float, double,
+    //  This represents the host side definition of the constant_iterator template
+    //BOLT_TEMPLATE_FUNCTOR3( constant_iterator, int, float, double,
         template< typename T >
         class constant_iterator
         {
@@ -56,7 +57,44 @@ namespace cl {
         private:
             value_type  constValue;
         };
-    )
+    //)
+
+    //  This string represents the device side definition of the constant_iterator template
+    std::string deviceConstantIterator = STRINGIFY_CODE( 
+        template< typename T >
+        class constant_iterator
+        {
+        public:
+            typedef int iterator_category;      // Device side does not understand std:: tags
+            typedef T value_type;
+            typedef size_t difference_type;
+            typedef size_t size_type;
+            typedef T* pointer;
+            typedef T& reference;
+
+            constant_iterator( value_type init ): constValue( init )
+            {};
+
+            value_type operator[]( size_type ) const
+            {
+                return constValue;
+            }
+
+            value_type operator*( ) const
+            {
+                return constValue;
+            }
+
+        private:
+            value_type  constValue;
+        };
+    );
+
+    BOLT_CREATE_TYPENAME( constant_iterator<int> );
+    BOLT_CREATE_CLCODE( constant_iterator<int>, deviceConstantIterator );
+
+    BOLT_TEMPLATE_REGISTER_NEW_TYPE( constant_iterator, int, float );
+    BOLT_TEMPLATE_REGISTER_NEW_TYPE( constant_iterator, int, double );
 
     template< typename Type >
     constant_iterator< Type > make_constant_iterator( Type constValue )

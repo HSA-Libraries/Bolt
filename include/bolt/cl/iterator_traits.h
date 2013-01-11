@@ -29,25 +29,64 @@
 namespace bolt {
 namespace cl {
 
-    struct fancy_iterator_tag
-        : public std::random_access_iterator_tag
-        {   // identifying tag for random-access iterators
-        };
+    struct input_iterator_tag
+    {
+        operator std::input_iterator_tag ( ) const
+        {
+        }
+    };
 
-    template< typename Iterator >
+    struct output_iterator_tag
+    {
+        operator std::output_iterator_tag ( ) const
+        {
+        }
+    };
+
+    struct forward_iterator_tag: public input_iterator_tag, output_iterator_tag
+    {
+        operator std::forward_iterator_tag ( ) const
+        {
+        }
+    };
+
+    struct bidirectional_iterator_tag: public forward_iterator_tag
+    {
+        operator std::bidirectional_iterator_tag ( ) const
+        {
+        }
+    };
+
+    struct random_access_iterator_tag: public bidirectional_iterator_tag
+    {
+        operator std::random_access_iterator_tag ( ) const
+        {
+        }
+
+        random_access_iterator_tag& operator=( const std::random_access_iterator_tag& )
+        {
+            return *this;
+        }
+    };
+
+    struct fancy_iterator_tag: public std::random_access_iterator_tag
+    {
+    };
+
+    template< typename iterator >
     struct iterator_traits
     {
-        typedef typename Iterator::iterator_category iterator_category;
-        typedef typename Iterator::value_type value_type;
-        typedef typename Iterator::difference_type difference_type;
-        typedef typename Iterator::pointer pointer;
-        typedef typename Iterator::reference reference;
+        typedef typename iterator::iterator_category iterator_category;
+        typedef typename iterator::value_type value_type;
+        typedef typename iterator::difference_type difference_type;
+        typedef typename iterator::pointer pointer;
+        typedef typename iterator::reference reference;
     };
 
     template< class T >
     struct iterator_traits< T* >
     {
-        typedef std::random_access_iterator_tag iterator_category;
+        typedef typename std::random_access_iterator_tag iterator_category;
         typedef T value_type;
         //  difference_type set to int for OpenCL backend
         typedef int difference_type;
@@ -58,13 +97,33 @@ namespace cl {
     template< class T >
     struct iterator_traits< const T* >
     {
-        typedef std::random_access_iterator_tag iterator_category;
+        typedef typename std::random_access_iterator_tag iterator_category;
         typedef T value_type;
         //  difference_type set to int for OpenCL backend
         typedef int difference_type;
         typedef const T* pointer;
         typedef const T& reference;
     };
+
+    template< typename newTag, typename InputIterator >
+    InputIterator retag( InputIterator )
+    {
+        switch( iterator_traits< InputIterator >::iterator_category( ) )
+        {
+            case std::input_iterator_tag:
+                return input_iterator_tag( );
+            case std::output_iterator_tag:
+                return output_iterator_tag( );
+            case std::forward_iterator_tag:
+                return forward_iterator_tag( );
+            case std::bidirectional_iterator_tag:
+                return bidirectional_iterator_tag( );
+            case std::random_access_iterator_tag:
+                return random_access_iterator_tag( );
+        }
+
+        return iter;
+    }
 
 }
 };
