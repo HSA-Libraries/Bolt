@@ -27,6 +27,7 @@ set( ampBolt.Runtime.Source
 set( ampBolt.Runtime.Headers 
 		${ampBolt.Include.Dir}/bolt.h 
 		${ampBolt.Include.Dir}/control.h 
+		${ampBolt.Include.Dir}/device_vector.h 
 		${ampBolt.Include.Dir}/functional.h 
 		${ampBolt.Include.Dir}/parallel_iteration.h 
 		${ampBolt.Include.Dir}/pool_alloc.h 
