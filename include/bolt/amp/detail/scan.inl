@@ -23,6 +23,24 @@
 #define KERNEL1WAVES 4
 #define WAVESIZE 64
 
+#if 0
+#define NUM_PEEK 128
+#define PEEK_AT( ... ) \
+    { \
+        unsigned int numPeek = NUM_PEEK; \
+        numPeek = (__VA_ARGS__.get_extent().size() < numPeek) ? __VA_ARGS__.get_extent().size() : numPeek; \
+        std::vector< oType > hostMem( numPeek ); \
+        concurrency::array_view< oType > peekOutput( static_cast< int >( numPeek ), (oType *)&hostMem.begin()[ 0 ] ); \
+        __VA_ARGS__.section( Concurrency::extent< 1 >( numPeek ) ).copy_to( peekOutput ); \
+        for ( unsigned int i = 0; i < numPeek; i++) \
+        { \
+            std::cout << #__VA_ARGS__ << "[ " << i << " ] = " << peekOutput[ i ] << std::endl; \
+        } \
+    }
+#else
+#define PEEK_AT( ... )
+#endif
+
 #if !defined( AMP_SCAN_INL )
 #define AMP_SCAN_INL
 
@@ -35,6 +53,14 @@
 #include <type_traits>
 #include "bolt/amp/bolt.h"
 #include "bolt/amp/device_vector.h"
+#include <amp.h>
+
+//#include <vector>
+//#include <stdexcept>
+//#include <numeric>
+
+//#include <bolt/countof.h>
+
 
 namespace bolt
 {
@@ -198,63 +224,6 @@ OutputIterator exclusive_scan(
 namespace detail
 {
 
-enum scanTypes {scan_iType, scan_oType, scan_BinaryFunction};
-/*
-class Scan_KernelTemplateSpecializer : public KernelTemplateSpecializer
-{
-public:
-    Scan_KernelTemplateSpecializer() : KernelTemplateSpecializer()
-    {
-        addKernelName("perBlockInclusiveScan");
-        addKernelName("intraBlockInclusiveScan");
-        addKernelName("perBlockAddition");
-    }
-    
-    const ::std::string operator() ( const ::std::vector<::std::string>& typeNames ) const
-    {
-        const std::string templateSpecializationString = 
-            "// Dynamic specialization of generic template definition, using user supplied types\n"
-            "template __attribute__((mangled_name(" + name(0) + "Instantiated)))\n"
-            "__attribute__((reqd_work_group_size(KERNEL0WORKGROUPSIZE,1,1)))\n"
-            "kernel void " + name(0) + "(\n"
-            "global " + typeNames[scan_oType] + "* output,\n"
-            "global " + typeNames[scan_iType] + "* input,\n"
-            "" + typeNames[1] + " identity,\n"
-            "const uint vecSize,\n"
-            "local " + typeNames[scan_oType] + "* lds,\n"
-            "global " + typeNames[scan_BinaryFunction] + "* binaryOp,\n"
-            "global " + typeNames[scan_oType] + "* scanBuffer,\n"
-            "int exclusive\n"
-            ");\n\n"
-
-            "// Dynamic specialization of generic template definition, using user supplied types\n"
-            "template __attribute__((mangled_name(" + name(1) + "Instantiated)))\n"
-            "__attribute__((reqd_work_group_size(KERNEL1WORKGROUPSIZE,1,1)))\n"
-            "kernel void " + name(1) + "(\n"
-            "global " + typeNames[scan_oType] + "* postSumArray,\n"
-            "global " + typeNames[scan_oType] + "* preSumArray,\n"
-            "" + typeNames[scan_oType]+" identity,\n"
-            "const uint vecSize,\n"
-            "local " + typeNames[scan_oType] + "* lds,\n"
-            "const uint workPerThread,\n"
-            "global " + typeNames[scan_BinaryFunction] + "* binaryOp\n"
-            ");\n\n"
-
-            "// Dynamic specialization of generic template definition, using user supplied types\n"
-            "template __attribute__((mangled_name(" + name(2) + "Instantiated)))\n"
-            "__attribute__((reqd_work_group_size(KERNEL2WORKGROUPSIZE,1,1)))\n"
-            "kernel void " + name(2) + "(\n"
-            "global " + typeNames[scan_oType] + "* output,\n"
-            "global " + typeNames[scan_oType] + "* postSumArray,\n"
-            "const uint vecSize,\n"
-            "global " + typeNames[scan_BinaryFunction] + "* binaryOp\n"
-            ");\n\n";
-
-        return templateSpecializationString;
-    }
-};
-*/
-
 template< typename InputIterator, typename OutputIterator, typename T, typename BinaryFunction >
 OutputIterator scan_detect_random_access(
     control &ctl,
@@ -305,12 +274,13 @@ scan_pick_iterator(
     const bool& inclusive,
     const BinaryFunction& binary_op )
 {
+    std::cout << "Host Iterator detected." << std::endl;
     typedef typename std::iterator_traits< InputIterator >::value_type iType;
     typedef typename std::iterator_traits< OutputIterator >::value_type oType;
     static_assert( std::is_convertible< iType, oType >::value, "Input and Output iterators are incompatible" );
 
     unsigned int numElements = static_cast< unsigned int >( std::distance( first, last ) );
-    if( numElements == 0 )
+    if( numElements < 1 )
         return result;
 
     const bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode( );  // could be dynamic choice some day.
@@ -332,7 +302,8 @@ scan_pick_iterator(
 
         //Now call the actual cl algorithm
         scan_enqueue( ctl, dvInput.begin( ), dvInput.end( ), dvOutput.begin( ), init, binary_op, inclusive );
-
+        std::cout << "Peeking in pick_iterator after scan_enqueue completed." << std::endl;
+        PEEK_AT( dvOutput.begin()->getBuffer())
         // This should immediately map/unmap the buffer
         dvOutput.data( );
     }
@@ -358,12 +329,13 @@ scan_pick_iterator(
     const bool& inclusive,
     const BinaryFunction& binary_op )
 {
+    std::cout << "Device Iterator detected." << std::endl;
     typedef typename std::iterator_traits< DVInputIterator >::value_type iType;
     typedef typename std::iterator_traits< DVOutputIterator >::value_type oType;
     static_assert( std::is_convertible< iType, oType >::value, "Input and Output iterators are incompatible" );
 
     unsigned int numElements = static_cast< unsigned int >( std::distance( first, last ) );
-    if( numElements == 0 )
+    if( numElements < 1 )
         return result;
 
     const bolt::amp::control::e_RunMode runMode = ctl.forceRunMode( );  // could be dynamic choice some day.
@@ -382,6 +354,8 @@ scan_pick_iterator(
 
     //Now call the actual cl algorithm
     scan_enqueue( ctl, first, last, result, init, binary_op, inclusive );
+    std::cout << "Peeking in pick_iterator after scan_enqueue completed." << std::endl;
+    PEEK_AT( result->getBuffer())
 
     return result + numElements;
 }
@@ -395,7 +369,7 @@ void scan_enqueue(
     const DVInputIterator& first,
     const DVInputIterator& last,
     const DVOutputIterator& result,
-    const T& init_T,
+    const T& init,
     const BinaryFunction& binary_op,
     const bool& inclusive = true )
 {
@@ -408,80 +382,38 @@ aProfiler.set(AsyncProfiler::device, control::SerialCpu);
 size_t k0_stepNum, k1_stepNum, k2_stepNum;
 #endif
     //cl_int l_Error = CL_SUCCESS;
-
+    concurrency::accelerator_view av = ctl.getAccelerator().default_view;
 
     /**********************************************************************************
      * Type Names - used in KernelTemplateSpecializer
      *********************************************************************************/
     typedef std::iterator_traits< DVInputIterator >::value_type iType;
     typedef std::iterator_traits< DVOutputIterator >::value_type oType;
-    std::vector<std::string> typeNames(3);
-    typeNames[scan_iType] = TypeName< iType >::get( );
-    typeNames[scan_oType] = TypeName< oType >::get( );
-    typeNames[scan_BinaryFunction] = TypeName< BinaryFunction >::get();
 
-    /**********************************************************************************
-     * Type Definitions - directly concatenated into kernel string
-     *********************************************************************************/
-    std::vector<std::string> typeDefinitions;
-    PUSH_BACK_UNIQUE( typeDefinitions, ClCode< iType >::get() )
-    PUSH_BACK_UNIQUE( typeDefinitions, ClCode< oType >::get() )
-    PUSH_BACK_UNIQUE( typeDefinitions, ClCode< BinaryFunction  >::get() )
-
-
-    /**********************************************************************************
-     * Compile Options
-     *********************************************************************************/
-    bool cpuDevice = ctl.device().getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_CPU;
-    //std::cout << "Device is CPU: " << (cpuDevice?"TRUE":"FALSE") << std::endl;
-    const size_t kernel0_WgSize = (cpuDevice) ? 1 : WAVESIZE*KERNEL02WAVES;
-    const size_t kernel1_WgSize = (cpuDevice) ? 1 : WAVESIZE*KERNEL1WAVES;
-    const size_t kernel2_WgSize = (cpuDevice) ? 1 : WAVESIZE*KERNEL02WAVES;
-    std::string compileOptions;
-    std::ostringstream oss;
-    oss << " -DKERNEL0WORKGROUPSIZE=" << kernel0_WgSize;
-    oss << " -DKERNEL1WORKGROUPSIZE=" << kernel1_WgSize;
-    oss << " -DKERNEL2WORKGROUPSIZE=" << kernel2_WgSize;
-    compileOptions = oss.str();
-
-    /**********************************************************************************
-     * Request Compiled Kernels
-     *********************************************************************************/
-    Scan_KernelTemplateSpecializer ts_kts;
-    std::vector< ::cl::Kernel > kernels = bolt::cl::getKernels(
-        ctl,
-        typeNames,
-        &ts_kts,
-        typeDefinitions,
-        scan_kernels,
-        compileOptions);
-    // kernels returned in same order as added in KernelTemplaceSpecializer constructor
-
+    
 
     int exclusive = inclusive ? 0 : 1;    
-    // for profiling
-    ::cl::Event kernel0Event, kernel1Event, kernel2Event, kernelAEvent;
 
-    // Set up shape of launch grid and buffers:
-    int computeUnits     = ctl.device( ).getInfo< CL_DEVICE_MAX_COMPUTE_UNITS >( );
-    int wgPerComputeUnit =  ctl.wgPerComputeUnit( );
-    int resultCnt = computeUnits * wgPerComputeUnit;
+    unsigned int numElements = static_cast< unsigned int >( std::distance( first, last ) );
+    const unsigned int kernel0_WgSize = WAVESIZE*KERNEL02WAVES;
+    const unsigned int kernel1_WgSize = WAVESIZE*KERNEL1WAVES ;
+    const unsigned int kernel2_WgSize = WAVESIZE*KERNEL02WAVES;
+
+    //const unsigned int kernel0_tileSize = std::min( numElements, kernel0_WgSize);
+    //const unsigned int kernel1_tileSize = std::min( numElements, kernel1_WgSize);
+    //const unsigned int kernel2_tileSize = std::min( numElements, kernel2_WgSize);
 
     //  Ceiling function to bump the size of input to the next whole wavefront size
-    cl_uint numElements = static_cast< cl_uint >( std::distance( first, last ) );
-
-    device_vector< iType >::size_type sizeInputBuff = numElements;
+    unsigned int sizeInputBuff = numElements;
     size_t modWgSize = (sizeInputBuff & (kernel0_WgSize-1));
     if( modWgSize )
     {
         sizeInputBuff &= ~modWgSize;
         sizeInputBuff += kernel0_WgSize;
     }
-
-    cl_uint numWorkGroupsK0 = static_cast< cl_uint >( sizeInputBuff / kernel0_WgSize );
-
+    unsigned int numWorkGroupsK0 = static_cast< unsigned int >( sizeInputBuff / kernel0_WgSize );
     //  Ceiling function to bump the size of the sum array to the next whole wavefront size
-    device_vector< iType >::size_type sizeScanBuff = numWorkGroupsK0;
+    unsigned int sizeScanBuff = numWorkGroupsK0;
     modWgSize = (sizeScanBuff & (kernel0_WgSize-1));
     if( modWgSize )
     {
@@ -489,33 +421,40 @@ size_t k0_stepNum, k1_stepNum, k2_stepNum;
         sizeScanBuff += kernel0_WgSize;
     }
 
+    
+
     // Create buffer wrappers so we can access the host functors, for read or writing in the kernel
-    ALIGNED( 256 ) BinaryFunction aligned_binary( binary_op );
-    control::buffPointer userFunctor = ctl.acquireBuffer( sizeof( aligned_binary ), CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_binary );
-    control::buffPointer preSumArray = ctl.acquireBuffer( sizeScanBuff*sizeof( iType ) );
-    control::buffPointer postSumArray = ctl.acquireBuffer( sizeScanBuff*sizeof( iType ) );
+    //ALIGNED( 256 ) BinaryFunction aligned_binary( binary_op );
+    //control::buffPointer userFunctor = ctl.acquireBuffer( sizeof( aligned_binary ), CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_binary );
+    //control::buffPointer preSumArray = ctl.acquireBuffer( sizeScanBuff*sizeof( iType ) );
+    //control::buffPointer postSumArray = ctl.acquireBuffer( sizeScanBuff*sizeof( iType ) );
     //::cl::Buffer userFunctor( ctl.context( ), CL_MEM_USE_HOST_PTR, sizeof( binary_op ), &binary_op );
     //::cl::Buffer preSumArray( ctl.context( ), CL_MEM_READ_WRITE, sizeScanBuff*sizeof(iType) );
     //::cl::Buffer postSumArray( ctl.context( ), CL_MEM_READ_WRITE, sizeScanBuff*sizeof(iType) );
-    cl_uint ldsSize;
+
+    concurrency::array< oType >  preSumArray( numWorkGroupsK0, av );
+    concurrency::array< oType > postSumArray( numWorkGroupsK0, av );
 
 
     /**********************************************************************************
      *  Kernel 0
      *********************************************************************************/
 #ifdef BOLT_ENABLE_PROFILING
-aProfiler.nextStep();
-aProfiler.setStepName("Setup Kernel 0");
-aProfiler.set(AsyncProfiler::device, control::SerialCpu);
+//aProfiler.nextStep();
+//aProfiler.setStepName("Setup Kernel 0");
+//aProfiler.set(AsyncProfiler::device, control::SerialCpu);
 #endif
-    concurrency::array_view< const iType > hostInput( static_cast< int >( numElements ), &first[ 0 ] );
+    //iType *inputPtr = (iType *)&first[0];
+    //oType *outputPtr = (oType *)&result[0];
+    //concurrency::array_view< const iType >  hostInput( numElements, (iType *)&first[0] );
+    //concurrency::array_view< const oType > hostOutput( numElements, (oType *)&result[0] );
 
 	//	Wrap our output data in an array_view, and discard input data so it is not transferred to device
-	concurrency::array< iType > input( sizeDeviceBuff, av );
-	hostInput.copy_to( deviceInput.section( concurrency::extent< 1 >( numElements ) ) );
+	concurrency::array< iType >&  input = first->getBuffer(); //( numElements, av );
+    concurrency::array< oType >& output = result->getBuffer(); //( sizeInputBuff, av );
+    input.get_extent().size();
+	//hostInput.copy_to( input.section( concurrency::extent< 1 >( numElements ) ) );
 
-	concurrency::array< oType > output( sizeDeviceBuff, av );
-	concurrency::array< oType > scanBuffer( sizeScanBuff, av );
 
 	//	Loop to calculate the inclusive scan of each individual tile, and output the block sums of every tile
 	//	This loop is inherently parallel; every tile is independant with potentially many wavefronts
@@ -528,75 +467,82 @@ aProfiler.set(AsyncProfiler::flops, 2*numElements);
 aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(iType) + 1*sizeScanBuff*sizeof(oType));
 #endif
 
-	concurrency::parallel_for_each(
-        av, output.extent.tile< waveSize >(), [
+    concurrency::extent< 1 > globalSizeK0( sizeInputBuff );
+    concurrency::tiled_extent< kernel0_WgSize > tileK0 = globalSizeK0.tile< kernel0_WgSize >();
+    std::cout << "Kernel 0 Launching w/ " << sizeInputBuff << " threads for " << numElements << " elements. " << std::endl;
+	concurrency::parallel_for_each( av, tileK0, //output.extent.tile< kernel0_WgSize >(),
+        [
             &output,
             &input,
-            init_T,
+            init,
             numElements,
-            &scanBuffer,
+            &preSumArray,
             binary_op,
-            exclusive
+            exclusive,
+            kernel0_WgSize
         ] ( concurrency::tiled_index< kernel0_WgSize > t_idx ) restrict(amp)
 	{
-        size_t gloId = t_idx.global[ 0 ];
-        size_t groId = t_idx.tile[ 0 ];
-        size_t locId = t_idx.local[ 0 ];
-        size_t wgSize = descriptions[ 0 ];
+        unsigned int gloId = t_idx.global[ 0 ];
+        unsigned int groId = t_idx.tile[ 0 ];
+        unsigned int locId = t_idx.local[ 0 ];
+        unsigned int wgSize = kernel0_WgSize;
 
-        tile_static iType lds[ wgSize ];
-
-        //  Abort threads that are passed the end of the input vector
-        if (gloId >= numElements) return; // on SI this doesn't mess-up barriers
+        tile_static oType lds[ WAVESIZE*KERNEL02WAVES ];
 
         // if exclusive, load gloId=0 w/ identity, and all others shifted-1
-        iType val;
-        if (exclusive)
+        oType val;
+        if (gloId < numElements)
         {
-            if (gloId > 0)
-            { // thread>0
-                val = input[gloId-1];
-                lds[ locId ] = val;
+            if (exclusive)
+            {
+                if (gloId > 0)
+                { // thread>0
+                    val = input[gloId-1];
+                    lds[ locId ] = val;
+                }
+                else
+                { // thread=0
+                    val = init;
+                    lds[ locId ] = val;
+                }
             }
             else
-            { // thread=0
-                val = identity;
+            {
+                val = input[gloId];
                 lds[ locId ] = val;
             }
-        }
-        else
-        {
-            val = input[gloId];
-            lds[ locId ] = val;
         }
 
         //  Computes a scan within a workgroup
-        iType sum = val;
-        for( size_t offset = 1; offset < wgSize; offset *= 2 )
+        oType sum = val;
+        for( unsigned int offset = 1; offset < wgSize; offset *= 2 )
         {
-            concurrency::tile_barrier::wait();
-            if (locId >= offset)
+            t_idx.barrier.wait();
+            if (locId >= offset && gloId < numElements)
             {
                 iType y = lds[ locId - offset ];
-                sum = (*binaryOp)( sum, y );
+                sum = binary_op( sum, y );
             }
-            concurrency::tile_barrier::wait();
+            t_idx.barrier.wait();
             lds[ locId ] = sum;
         }
 
         //  Each work item writes out its calculated scan result, relative to the beginning
         //  of each work group
-        output[ gloId ] = sum;
-        concurrency::tile_barrier::wait();
-        if (locId == 0)
+        if (gloId < numElements)
+        {
+            output[ gloId ] = sum;
+        }
+        t_idx.barrier.wait();
+        if (locId == 0 && gloId < numElements)
         {
             // last work-group can be wrong b/c ignored
-            scanBuffer[ groId ] = lds[ wgSize-1 ];
+            preSumArray[ groId ] = lds[ wgSize-1 ];
         }
 
 	} );
-
-
+    std::cout << "Kernel 0 Done" << std::endl;
+    PEEK_AT( output )
 
 /*
     ldsSize  = static_cast< cl_uint >( ( kernel0_WgSize + ( kernel0_WgSize / 2 ) ) * sizeof( iType ) );
@@ -621,18 +567,18 @@ aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(iType) + 1*sizeScanBuf
     V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for perBlockInclusiveScan kernel" );
     */
 
-#if 0
 
     /**********************************************************************************
      *  Kernel 1
      *********************************************************************************/
 #ifdef BOLT_ENABLE_PROFILING
-aProfiler.nextStep();
-aProfiler.setStepName("Setup Kernel 1");
-aProfiler.set(AsyncProfiler::device, control::SerialCpu);
+//aProfiler.nextStep();
+//aProfiler.setStepName("Setup Kernel 1");
+//aProfiler.set(AsyncProfiler::device, control::SerialCpu);
 #endif
 
-    cl_uint workPerThread = static_cast< cl_uint >( sizeScanBuff / kernel1_WgSize );
+    unsigned int workPerThread = static_cast< unsigned int >( sizeScanBuff / kernel1_WgSize );
+/*
     V_OPENCL( kernels[ 1 ].setArg( 0, *postSumArray ),  "Error setting 0th argument for kernels[ 1 ]" );          // Output buffer
     V_OPENCL( kernels[ 1 ].setArg( 1, *preSumArray ),   "Error setting 1st argument for kernels[ 1 ]" );            // Input buffer
     V_OPENCL( kernels[ 1 ].setArg( 2, init_T ),         "Error setting     argument for kernels[ 1 ]" );   // Initial value used for exclusive scan
@@ -640,7 +586,7 @@ aProfiler.set(AsyncProfiler::device, control::SerialCpu);
     V_OPENCL( kernels[ 1 ].setArg( 4, ldsSize, NULL ),  "Error setting 3rd argument for kernels[ 1 ]" );  // Scratch buffer
     V_OPENCL( kernels[ 1 ].setArg( 5, workPerThread ),  "Error setting 4th argument for kernels[ 1 ]" );           // User provided functor class
     V_OPENCL( kernels[ 1 ].setArg( 6, *userFunctor ),   "Error setting 5th argument for kernels[ 1 ]" );           // User provided functor class
-
+*/
 #ifdef BOLT_ENABLE_PROFILING
 aProfiler.nextStep();
 k1_stepNum = aProfiler.getStepNum();
@@ -650,6 +596,7 @@ aProfiler.set(AsyncProfiler::flops, 2*sizeScanBuff);
 aProfiler.set(AsyncProfiler::memory, 4*sizeScanBuff*sizeof(oType));
 #endif
 
+/*
     l_Error = ctl.commandQueue( ).enqueueNDRangeKernel(
         kernels[ 1 ],
         ::cl::NullRange,
@@ -658,23 +605,121 @@ aProfiler.set(AsyncProfiler::memory, 4*sizeScanBuff*sizeof(oType));
         NULL,
         &kernel1Event);
     V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for perBlockInclusiveScan kernel" );
+*/
+    concurrency::extent< 1 > globalSizeK1( sizeScanBuff );
+    concurrency::tiled_extent< kernel1_WgSize > tileK1 = globalSizeK1.tile< kernel1_WgSize >();
+    std::cout << "Kernel 1 Launching w/" << sizeScanBuff << " threads for " << numWorkGroupsK0 << " elements. " << std::endl;
+	concurrency::parallel_for_each( av, tileK1,
+        [
+            &postSumArray,
+            &preSumArray,
+            numWorkGroupsK0,
+            workPerThread,
+            binary_op,
+            kernel1_WgSize
+        ] ( concurrency::tiled_index< kernel1_WgSize > t_idx ) restrict(amp)
+	{
+        unsigned int gloId = t_idx.global[ 0 ];
+        unsigned int groId = t_idx.tile[ 0 ];
+        unsigned int locId = t_idx.local[ 0 ];
+        unsigned int wgSize = kernel1_WgSize;
+        unsigned int mapId  = gloId * workPerThread;
 
+        tile_static oType lds[ WAVESIZE*KERNEL1WAVES ];
+
+        // do offset of zero manually
+        unsigned int offset;
+        oType workSum;
+        if (mapId < numWorkGroupsK0)
+        {
+            // accumulate zeroth value manually
+            offset = 0;
+            workSum = preSumArray[mapId+offset];
+            postSumArray[ mapId + offset ] = workSum;
+
+            //  Serial accumulation
+            for( offset = offset+1; offset < workPerThread; offset += 1 )
+            {
+                if (mapId+offset<numWorkGroupsK0)
+                {
+                    oType y = preSumArray[mapId+offset];
+                    workSum = binary_op( workSum, y );
+                    postSumArray[ mapId + offset ] = workSum;
+                }
+            }
+        }
+        t_idx.barrier.wait();
+        oType scanSum;
+        offset = 1;
+        // load LDS with register sums
+        if (mapId < numWorkGroupsK0)
+        {
+            lds[ locId ] = workSum;
+        }
+
+        t_idx.barrier.wait();
+
+        if (mapId < numWorkGroupsK0)
+        {
+            if (locId >= offset)
+            { // thread > 0
+                oType y = lds[ locId - offset ];
+                oType y2 = lds[ locId ];
+                scanSum = binary_op( y2, y );
+                lds[ locId ] = scanSum;
+            } else { // thread 0
+                scanSum = workSum;
+            }  
+        }
+        // scan in lds
+        for( offset = offset*2; offset < wgSize; offset *= 2 )
+        {
+            t_idx.barrier.wait();
+            if (mapId < numWorkGroupsK0)
+            {
+                if (locId >= offset)
+                {
+                    oType y = lds[ locId - offset ];
+                    scanSum = binary_op( scanSum, y );
+                    lds[ locId ] = scanSum;
+                }
+            }
+        } // for offset
+        t_idx.barrier.wait();
+        
+        // write final scan from pre-scan and lds scan
+        for( offset = 0; offset < workPerThread; offset += 1 )
+        {
+            t_idx.barrier.wait();
+
+            if (mapId < numWorkGroupsK0 && locId > 0)
+            {
+                oType y = postSumArray[ mapId + offset ];
+                oType y2 = lds[locId-1];
+                y = binary_op( y, y2 );
+                postSumArray[ mapId + offset ] = y;
+            } // thread in bounds
+        } // for 
+
+    } );
+    std::cout << "Kernel 1 Done" << std::endl;
+    PEEK_AT( postSumArray )
 
     /**********************************************************************************
      *  Kernel 2
      *********************************************************************************/
 #ifdef BOLT_ENABLE_PROFILING
-aProfiler.nextStep();
-aProfiler.setStepName("Setup Kernel 2");
-aProfiler.set(AsyncProfiler::device, control::SerialCpu);
+//aProfiler.nextStep();
+//aProfiler.setStepName("Setup Kernel 2");
+//aProfiler.set(AsyncProfiler::device, control::SerialCpu);
 #endif
 
-
+/*
     V_OPENCL( kernels[ 2 ].setArg( 0, result->getBuffer( ) ), "Error setting 0th argument for scanKernels[ 2 ]" );          // Output buffer
     V_OPENCL( kernels[ 2 ].setArg( 1, *postSumArray ), "Error setting 1st argument for scanKernels[ 2 ]" );            // Input buffer
     V_OPENCL( kernels[ 2 ].setArg( 2, numElements ), "Error setting 2nd argument for scanKernels[ 2 ]" );   // Size of scratch buffer
     V_OPENCL( kernels[ 2 ].setArg( 3, *userFunctor ), "Error setting 3rd argument for scanKernels[ 2 ]" );           // User provided functor class
-
+*/
 #ifdef BOLT_ENABLE_PROFILING
 aProfiler.nextStep();
 k2_stepNum = aProfiler.getStepNum();
@@ -683,6 +728,7 @@ aProfiler.set(AsyncProfiler::device, ctl.forceRunMode());
 aProfiler.set(AsyncProfiler::flops, numElements);
 aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(oType) + 1*sizeScanBuff*sizeof(oType));
 #endif
+/*
     try
     {
     l_Error = ctl.commandQueue( ).enqueueNDRangeKernel(
@@ -701,58 +747,56 @@ aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(oType) + 1*sizeScanBuf
     }
     l_Error = kernel2Event.wait( );
     V_OPENCL( l_Error, "perBlockInclusiveScan failed to wait" );
+*/
+    concurrency::extent< 1 > globalSizeK2( sizeInputBuff );
+    concurrency::tiled_extent< kernel2_WgSize > tileK2 = globalSizeK2.tile< kernel2_WgSize >();
+    std::cout << "Kernel 2 Launching w/ " << sizeInputBuff << " threads for " << numElements << " elements. " << std::endl;
+    concurrency::parallel_for_each( av, tileK2,
+        [
+            &output,
+            &postSumArray,
+            numElements,
+            binary_op,
+            kernel2_WgSize
+        ] ( concurrency::tiled_index< kernel2_WgSize > t_idx ) restrict(amp)
+	{
+        unsigned int gloId = t_idx.global[ 0 ];
+        unsigned int groId = t_idx.tile[ 0 ];
+        unsigned int locId = t_idx.local[ 0 ];
+        unsigned int wgSize = kernel2_WgSize;
+
+        if (groId > 0 && gloId < numElements )
+        {
+            oType scanResult = output[ gloId ];
+            oType postBlockSum = postSumArray[ groId-1 ];
+            oType newResult = binary_op( scanResult, postBlockSum );
+            output[ gloId ] = newResult;
+        }
+
+    } );
+    std::cout << "Kernel 2 Done" << std::endl;
+    PEEK_AT( output )
+
+#ifdef BOLT_ENABLE_PROFILING
+aProfiler.nextStep();
+aProfiler.setStepName("Copy Results Back");
+aProfiler.set(AsyncProfiler::device, control::SerialCpu);
+aProfiler.setDataSize(numElements*sizeof(oType));
+#endif
+
+    // concurrency::array_view< oType > hostOutput( static_cast< int >( numElements ), (oType *)&result[ 0 ] );
+	// hostOutput.discard_data( );
+    // output.section( Concurrency::extent< 1 >( numElements ) ).copy_to( hostOutput );
+    // output.copy_to( hostOutput.section( concurrency::extent< 1 >( numElements ) ) );
 
 #ifdef BOLT_ENABLE_PROFILING
 aProfiler.nextStep();
 aProfiler.setStepName("Querying Kernel Times");
 aProfiler.set(AsyncProfiler::device, control::SerialCpu);
-
 aProfiler.setDataSize(numElements*sizeof(iType));
-std::string strDeviceName = ctl.device().getInfo< CL_DEVICE_NAME >( &l_Error );
-bolt::cl::V_OPENCL( l_Error, "Device::getInfo< CL_DEVICE_NAME > failed" );
-aProfiler.setArchitecture(strDeviceName);
-
-    try
-    {
-        cl_ulong k0_start, k0_stop, k1_stop, k2_stop;
-        
-        l_Error = kernel0Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_START, &k0_start);
-        V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_QUEUED>()");
-        l_Error = kernel0Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END, &k0_stop);
-        V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_END>()");
-        
-        //l_Error = kernel1Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_START, &k1_start);
-        //V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_START>()");
-        l_Error = kernel1Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END, &k1_stop);
-        V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_END>()");
-        
-        //l_Error = kernel2Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_START, &k2_start);
-        //V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_START>()");
-        l_Error = kernel2Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END, &k2_stop);
-        V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_END>()");
-
-        size_t k0_start_cpu = aProfiler.get(k0_stepNum, AsyncProfiler::startTime);
-        size_t shift = k0_start - k0_start_cpu;
-        //size_t shift = k0_start_cpu - k0_start;
-
-        //std::cout << "setting step " << k0_stepNum << " attribute " << AsyncProfiler::stopTime << " to " << k0_stop-shift << std::endl;
-        aProfiler.set(k0_stepNum, AsyncProfiler::stopTime,  static_cast<size_t>(k0_stop-shift) );
-
-        aProfiler.set(k1_stepNum, AsyncProfiler::startTime, static_cast<size_t>(k0_stop-shift) );
-        aProfiler.set(k1_stepNum, AsyncProfiler::stopTime,  static_cast<size_t>(k1_stop-shift) );
-
-        aProfiler.set(k2_stepNum, AsyncProfiler::startTime, static_cast<size_t>(k1_stop-shift) );
-        aProfiler.set(k2_stepNum, AsyncProfiler::stopTime,  static_cast<size_t>(k2_stop-shift) );
-
-    }
-    catch( ::cl::Error& e )
-    {
-        std::cout << ( "Scan Benchmark error condition reported:" ) << std::endl << e.what() << std::endl;
-        return;
-    }
-#endif
+//std::string strDeviceName = ctl.device().getInfo< CL_DEVICE_NAME >( &l_Error );
+//aProfiler.setArchitecture(strDeviceName);
 aProfiler.stopTrial();
-
 #endif
 
 }   //end of inclusive_scan_enqueue( )
@@ -767,39 +811,7 @@ aProfiler.stopTrial();
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+#if 0
 
 
 
@@ -814,7 +826,6 @@ aProfiler.stopTrial();
 
 #include <amp.h>
 
-#include <bolt/AMP/functional.h>
 #include <bolt/countof.h>
 // #include <bolt/AMP/sequentialTrait.h>
 
@@ -1005,23 +1016,6 @@ namespace bolt {
 			} );
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 			scanData = exclusiveBuffer;
 
 			//	Loop through the entire output array and add the exclusive scan back into the output array
@@ -1084,3 +1078,4 @@ namespace bolt {
 
 
 }; // end namespace bolt
+#endif

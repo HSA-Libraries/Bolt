@@ -198,7 +198,7 @@ OutputIterator exclusive_scan(
 namespace detail
 {
 
-enum scanTypes {scan_iType, scan_oType, scan_BinaryFunction};
+enum scanTypes {scan_iType, scan_oType, scan_initType, scan_BinaryFunction};
 
 class Scan_KernelTemplateSpecializer : public KernelTemplateSpecializer
 {
@@ -219,9 +219,9 @@ public:
             "kernel void " + name(0) + "(\n"
             "global " + typeNames[scan_oType] + "* output,\n"
             "global " + typeNames[scan_iType] + "* input,\n"
-            "" + typeNames[1] + " identity,\n"
+            ""        + typeNames[scan_initType] + " identity,\n"
             "const uint vecSize,\n"
-            "local " + typeNames[scan_oType] + "* lds,\n"
+            "local "  + typeNames[scan_oType] + "* lds,\n"
             "global " + typeNames[scan_BinaryFunction] + "* binaryOp,\n"
             "global " + typeNames[scan_oType] + "* scanBuffer,\n"
             "int exclusive\n"
@@ -415,9 +415,10 @@ size_t k0_stepNum, k1_stepNum, k2_stepNum;
      *********************************************************************************/
     typedef std::iterator_traits< DVInputIterator >::value_type iType;
     typedef std::iterator_traits< DVOutputIterator >::value_type oType;
-    std::vector<std::string> typeNames(3);
+    std::vector<std::string> typeNames(4);
     typeNames[scan_iType] = TypeName< iType >::get( );
     typeNames[scan_oType] = TypeName< oType >::get( );
+    typeNames[scan_initType] = TypeName< T >::get( );
     typeNames[scan_BinaryFunction] = TypeName< BinaryFunction >::get();
 
     /**********************************************************************************
@@ -426,6 +427,7 @@ size_t k0_stepNum, k1_stepNum, k2_stepNum;
     std::vector<std::string> typeDefinitions;
     PUSH_BACK_UNIQUE( typeDefinitions, ClCode< iType >::get() )
     PUSH_BACK_UNIQUE( typeDefinitions, ClCode< oType >::get() )
+    PUSH_BACK_UNIQUE( typeDefinitions, ClCode< T >::get() )
     PUSH_BACK_UNIQUE( typeDefinitions, ClCode< BinaryFunction  >::get() )
 
 
@@ -481,7 +483,7 @@ size_t k0_stepNum, k1_stepNum, k2_stepNum;
     cl_uint numWorkGroupsK0 = static_cast< cl_uint >( sizeInputBuff / kernel0_WgSize );
 
     //  Ceiling function to bump the size of the sum array to the next whole wavefront size
-    device_vector< iType >::size_type sizeScanBuff = numWorkGroupsK0;
+    device_vector< oType >::size_type sizeScanBuff = numWorkGroupsK0;
     modWgSize = (sizeScanBuff & (kernel0_WgSize-1));
     if( modWgSize )
     {
@@ -492,8 +494,8 @@ size_t k0_stepNum, k1_stepNum, k2_stepNum;
     // Create buffer wrappers so we can access the host functors, for read or writing in the kernel
     ALIGNED( 256 ) BinaryFunction aligned_binary( binary_op );
     control::buffPointer userFunctor = ctl.acquireBuffer( sizeof( aligned_binary ), CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_binary );
-    control::buffPointer preSumArray = ctl.acquireBuffer( sizeScanBuff*sizeof( iType ) );
-    control::buffPointer postSumArray = ctl.acquireBuffer( sizeScanBuff*sizeof( iType ) );
+    control::buffPointer preSumArray = ctl.acquireBuffer( sizeScanBuff*sizeof( oType ) );
+    control::buffPointer postSumArray = ctl.acquireBuffer( sizeScanBuff*sizeof( oType ) );
     //::cl::Buffer userFunctor( ctl.context( ), CL_MEM_USE_HOST_PTR, sizeof( binary_op ), &binary_op );
     //::cl::Buffer preSumArray( ctl.context( ), CL_MEM_READ_WRITE, sizeScanBuff*sizeof(iType) );
     //::cl::Buffer postSumArray( ctl.context( ), CL_MEM_READ_WRITE, sizeScanBuff*sizeof(iType) );

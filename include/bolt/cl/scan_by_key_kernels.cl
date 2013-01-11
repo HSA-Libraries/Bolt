@@ -22,13 +22,14 @@ template<
     typename kType,
     typename vType,
     typename oType,
+    typename initType,
     typename BinaryPredicate,
     typename BinaryFunction >
 __kernel void perBlockScanByKey(
     global kType *keys,
     global vType *vals,
     global oType *output, // input
-    oType init,
+    initType init,
     const uint vecSize,
     local kType *ldsKeys,
     local oType *ldsVals,

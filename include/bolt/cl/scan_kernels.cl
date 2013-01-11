@@ -51,13 +51,13 @@ kernel void perBlockAddition(
 /******************************************************************************
  *  Kernel 1
  *****************************************************************************/
-template< typename iType, typename BinaryFunction >
+template< typename Type, typename BinaryFunction >
 kernel void intraBlockInclusiveScan(
-                global iType* postSumArray,
-                global iType* preSumArray, 
-                iType identity,
+                global Type* postSumArray,
+                global Type* preSumArray, 
+                Type identity,
                 const uint vecSize,
-                local iType* lds,
+                local Type* lds,
                 const uint workPerThread,
                 global BinaryFunction* binaryOp
                 )
@@ -69,7 +69,7 @@ kernel void intraBlockInclusiveScan(
 
     // do offset of zero manually
     uint offset;
-    iType workSum;
+    Type workSum;
     if (mapId < vecSize)
     {
         // accumulate zeroth value manually
@@ -82,14 +82,14 @@ kernel void intraBlockInclusiveScan(
         {
             if (mapId+offset<vecSize)
             {
-                iType y = preSumArray[mapId+offset];
+                Type y = preSumArray[mapId+offset];
                 workSum = (*binaryOp)( workSum, y );
                 postSumArray[ mapId + offset ] = workSum;
             }
         }
     }
     barrier( CLK_LOCAL_MEM_FENCE );
-    iType scanSum;
+    Type scanSum;
     offset = 1;
     // load LDS with register sums
     if (mapId < vecSize)
@@ -99,8 +99,8 @@ kernel void intraBlockInclusiveScan(
     
         if (locId >= offset)
         { // thread > 0
-            iType y = lds[ locId - offset ];
-            iType y2 = lds[ locId ];
+            Type y = lds[ locId - offset ];
+            Type y2 = lds[ locId ];
             scanSum = (*binaryOp)( y2, y );
             lds[ locId ] = scanSum;
         } else { // thread 0
@@ -115,7 +115,7 @@ kernel void intraBlockInclusiveScan(
         {
             if (locId >= offset)
             {
-                iType y = lds[ locId - offset ];
+                Type y = lds[ locId - offset ];
                 scanSum = (*binaryOp)( scanSum, y );
                 lds[ locId ] = scanSum;
             }
@@ -130,8 +130,8 @@ kernel void intraBlockInclusiveScan(
 
         if (mapId < vecSize && locId > 0)
         {
-            iType y = postSumArray[ mapId + offset ];
-            iType y2 = lds[locId-1];
+            Type y = postSumArray[ mapId + offset ];
+            Type y2 = lds[locId-1];
             y = (*binaryOp)( y, y2 );
             postSumArray[ mapId + offset ] = y;
         } // thread in bounds
@@ -142,15 +142,15 @@ kernel void intraBlockInclusiveScan(
 /******************************************************************************
  *  Kernel 0
  *****************************************************************************/
-template< typename iType, typename BinaryFunction >
+template< typename iType, typename oType, typename initType, typename BinaryFunction >
 kernel void perBlockInclusiveScan(
-                global iType* output,
+                global oType* output,
                 global iType* input,
-                iType identity,
+                initType identity,
                 const uint vecSize,
-                local iType* lds,
+                local oType* lds,
                 global BinaryFunction* binaryOp,
-                global iType* scanBuffer,
+                global oType* scanBuffer,
                 int exclusive) // do exclusive scan ?
 {
     size_t gloId = get_global_id( 0 );
@@ -162,7 +162,7 @@ kernel void perBlockInclusiveScan(
     if (gloId >= vecSize) return; // on SI this doesn't mess-up barriers
 
     // if exclusive, load gloId=0 w/ identity, and all others shifted-1
-    iType val;
+    oType val;
     if (exclusive)
     {
         if (gloId > 0)
@@ -183,13 +183,13 @@ kernel void perBlockInclusiveScan(
     }
 
     //  Computes a scan within a workgroup
-    iType sum = val;
+    oType sum = val;
     for( size_t offset = 1; offset < wgSize; offset *= 2 )
     {
         barrier( CLK_LOCAL_MEM_FENCE );
         if (locId >= offset)
         {
-            iType y = lds[ locId - offset ];
+            oType y = lds[ locId - offset ];
             sum = (*binaryOp)( sum, y );
         }
         barrier( CLK_LOCAL_MEM_FENCE );

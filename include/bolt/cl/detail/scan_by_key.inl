@@ -30,7 +30,6 @@
 
 namespace bolt
 {
-
 namespace cl
 {
 
@@ -523,7 +522,7 @@ namespace detail
 *   \ingroup scan
 *   \{
 */
-    enum  {scanByKey_kType, scanByKey_vType, scanByKey_oType, scanByKey_BinaryPredicate, scanByKey_BinaryFunction};
+    enum  {scanByKey_kType, scanByKey_vType, scanByKey_oType, scanByKey_initType, scanByKey_BinaryPredicate, scanByKey_BinaryFunction};
 
 /***********************************************************************************************************************
  * Kernel Template Specializer
@@ -549,7 +548,7 @@ class ScanByKey_KernelTemplateSpecializer : public KernelTemplateSpecializer
             "global " + typeNames[scanByKey_kType] + "* keys,\n"
             "global " + typeNames[scanByKey_vType] + "* vals,\n"
             "global " + typeNames[scanByKey_oType] + "* output,\n"
-            ""        + typeNames[scanByKey_oType] + " init,\n"
+            ""        + typeNames[scanByKey_initType] + " init,\n"
             "const uint vecSize,\n"
             "local "  + typeNames[scanByKey_kType] + "* ldsKeys,\n"
             "local "  + typeNames[scanByKey_oType] + "* ldsVals,\n"
@@ -810,10 +809,11 @@ size_t k0_stepNum, k1_stepNum, k2_stepNum;
     typedef typename std::iterator_traits< DVInputIterator1 >::value_type kType;
     typedef typename std::iterator_traits< DVInputIterator2 >::value_type vType;
     typedef typename std::iterator_traits< DVOutputIterator >::value_type oType;
-    std::vector<std::string> typeNames(5);
+    std::vector<std::string> typeNames(6);
     typeNames[scanByKey_kType] = TypeName< kType >::get( );
     typeNames[scanByKey_vType] = TypeName< vType >::get( );
     typeNames[scanByKey_oType] = TypeName< oType >::get( );
+    typeNames[scanByKey_initType] = TypeName< T >::get( );
     typeNames[scanByKey_BinaryPredicate] = TypeName< BinaryPredicate >::get( );
     typeNames[scanByKey_BinaryFunction]  = TypeName< BinaryFunction >::get( );
     
@@ -824,6 +824,7 @@ size_t k0_stepNum, k1_stepNum, k2_stepNum;
     PUSH_BACK_UNIQUE( typeDefs, ClCode< kType >::get() )
     PUSH_BACK_UNIQUE( typeDefs, ClCode< vType >::get() )
     PUSH_BACK_UNIQUE( typeDefs, ClCode< oType >::get() )
+    PUSH_BACK_UNIQUE( typeDefs, ClCode< T >::get() )
     PUSH_BACK_UNIQUE( typeDefs, ClCode< BinaryPredicate >::get() )
     PUSH_BACK_UNIQUE( typeDefs, ClCode< BinaryFunction  >::get() )
 

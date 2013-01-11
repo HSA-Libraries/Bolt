@@ -20,6 +20,8 @@
 #include <bolt/unicode.h>
 #include <bolt/miniDump.h>
 #include <gtest/gtest.h>
+#include <array>
+#include <bolt/AMP/functional.h>
 
 #if 1
 
@@ -44,7 +46,8 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Below are helper routines to compare the results of two arrays for googletest
 //  They return an assertion object that googletest knows how to track
-
+#include "test_common.h"
+#if 0
 template< typename T, size_t N >
 ::testing::AssertionResult cmpArrays( const T (&ref)[N], const T (&calc)[N] )
 {
@@ -135,7 +138,7 @@ template< typename T >
 
     return ::testing::AssertionSuccess( );
 }
-
+#endif
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Fixture classes are now defined to enable googletest to process type parameterized tests
 
@@ -430,6 +433,17 @@ INSTANTIATE_TYPED_TEST_CASE_P( Float, ScanArrayTest, FloatTests );
 
 int _tmain(int argc, _TCHAR* argv[])
 {
+    std::cout << "#######################################################################################" << std::endl;
+    std::cout << "#######################################################################################" << std::endl;
+    std::cout << "#######################################################################################" << std::endl;
+    std::cout << "#######################################################################################" << std::endl;
+    std::cout << "#######################################################################################" << std::endl;
+    std::cout << "#######################################################################################" << std::endl;
+    std::cout << "#######################################################################################" << std::endl;
+    std::cout << "#######################################################################################" << std::endl;
+    std::cout << "#######################################################################################" << std::endl;
+    std::cout << "#######################################################################################" << std::endl;
+
     ::testing::InitGoogleTest( &argc, &argv[ 0 ] );
 
     //  Register our minidump generating logic

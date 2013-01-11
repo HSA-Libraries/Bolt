@@ -172,7 +172,7 @@ namespace detail
 *   \ingroup scan
 *   \{
 */
-    enum transformScanTypes {transformScan_iType, transformScan_oType, transformScan_UnaryFunction, transformScan_BinaryFunction};
+    enum transformScanTypes {transformScan_iType, transformScan_oType, transformScan_initType, transformScan_UnaryFunction, transformScan_BinaryFunction};
 
 class TransformScan_KernelTemplateSpecializer : public KernelTemplateSpecializer
 {
@@ -193,7 +193,7 @@ public:
             "__kernel void " + name(0) + "(\n"
             "global " + typeNames[transformScan_oType] + "* output,\n"
             "global " + typeNames[transformScan_iType] + "* input,\n"
-            ""        + typeNames[transformScan_oType] + " identity,\n"
+            ""        + typeNames[transformScan_initType] + " init,\n"
             "const uint vecSize,\n"
             "local "  + typeNames[transformScan_oType] + "* lds,\n"
             "global " + typeNames[transformScan_UnaryFunction] + "* unaryOp,\n"
@@ -208,7 +208,6 @@ public:
             "__kernel void " + name(1) + "(\n"
             "global " + typeNames[transformScan_oType] + "* postSumArray,\n"
             "global " + typeNames[transformScan_oType] + "* preSumArray,\n"
-            ""        + typeNames[transformScan_oType] + " identity,\n"
             "const uint vecSize,\n"
             "local "  + typeNames[transformScan_oType] + "* lds,\n"
             "const uint workPerThread,\n"
@@ -426,11 +425,12 @@ size_t k0_stepNum, k1_stepNum, k2_stepNum;
      *********************************************************************************/
     typedef std::iterator_traits< DVInputIterator  >::value_type iType;
     typedef std::iterator_traits< DVOutputIterator >::value_type oType;
-    std::vector<std::string> typeNames;
-    typeNames.push_back(TypeName< iType >::get( ));
-    typeNames.push_back(TypeName< oType >::get( ));
-    typeNames.push_back(TypeName< UnaryFunction >::get());
-    typeNames.push_back(TypeName< BinaryFunction >::get());
+    std::vector<std::string> typeNames( 5 );
+    typeNames[ transformScan_iType ] = TypeName< iType >::get( );
+    typeNames[ transformScan_oType ] = TypeName< oType >::get( ));
+    typeNames[ transformScan_initType ] = TypeName< T >::get( ));
+    typeNames[ transformScan_UnaryFunction ] = TypeName< UnaryFunction >::get());
+    typeNames[ transformScan_BinaryFunction ] = TypeName< BinaryFunction >::get());
     
     /**********************************************************************************
      * Type Definitions - directly concatenated into kernel string
@@ -438,6 +438,7 @@ size_t k0_stepNum, k1_stepNum, k2_stepNum;
     std::vector<std::string> typeDefinitions;
     PUSH_BACK_UNIQUE( typeDefinitions, ClCode< iType >::get() )
     PUSH_BACK_UNIQUE( typeDefinitions, ClCode< oType >::get() )
+    PUSH_BACK_UNIQUE( typeDefinitions, ClCode< T >::get() )
     PUSH_BACK_UNIQUE( typeDefinitions, ClCode< UnaryFunction >::get() )
     PUSH_BACK_UNIQUE( typeDefinitions, ClCode< BinaryFunction >::get() )
 
@@ -490,7 +491,7 @@ size_t k0_stepNum, k1_stepNum, k2_stepNum;
 
 
     //  Ceiling function to bump the size of the sum array to the next whole wavefront size
-    device_vector< iType >::size_type sizeScanBuff = numWorkGroupsK0;
+    device_vector< oType >::size_type sizeScanBuff = numWorkGroupsK0;
     modWgSize = (sizeScanBuff & (kernel0_WgSize-1));
     if( modWgSize )
     {
@@ -523,7 +524,7 @@ aProfiler.setStepName("Setup Kernel 0");
 aProfiler.set(AsyncProfiler::device, control::SerialCpu);
 #endif
 
-    ldsSize  = static_cast< cl_uint >( kernel0_WgSize * sizeof( iType ) );
+    ldsSize  = static_cast< cl_uint >( kernel0_WgSize * sizeof( oType ) );
     V_OPENCL( kernels[0].setArg( 0, result->getBuffer( ) ), "Error setArg kernels[ 0 ]" ); // Output buffer
     V_OPENCL( kernels[0].setArg( 1, first->getBuffer( ) ),  "Error setArg kernels[ 0 ]" ); // Input buffer
     V_OPENCL( kernels[0].setArg( 2, init_T ),               "Error setArg kernels[ 0 ]" ); // Initial value exclusive
@@ -573,11 +574,10 @@ aProfiler.set(AsyncProfiler::device, control::SerialCpu);
     cl_uint workPerThread = static_cast< cl_uint >( sizeScanBuff / kernel1_WgSize );
     V_OPENCL( kernels[1].setArg( 0, *postSumArray ),        "Error setArg kernels[ 1 ]" ); // Output buffer
     V_OPENCL( kernels[1].setArg( 1, *preSumArray ),         "Error setArg kernels[ 1 ]" ); // Input buffer
-    V_OPENCL( kernels[1].setArg( 2, init_T ),               "Error setArg kernels[ 1 ]" ); // Initial value exclusive
-    V_OPENCL( kernels[1].setArg( 3, numWorkGroupsK0 ),      "Error setArg kernels[ 1 ]" ); // Size of scratch buffer
-    V_OPENCL( kernels[1].setArg( 4, ldsSize, NULL ),        "Error setArg kernels[ 1 ]" ); // Scratch buffer
-    V_OPENCL( kernels[1].setArg( 5, workPerThread ),        "Error setArg kernels[ 1 ]" ); // User provided functor
-    V_OPENCL( kernels[1].setArg( 6, *binaryBuffer ),        "Error setArg kernels[ 1 ]" ); // User provided functor
+    V_OPENCL( kernels[1].setArg( 2, numWorkGroupsK0 ),      "Error setArg kernels[ 1 ]" ); // Size of scratch buffer
+    V_OPENCL( kernels[1].setArg( 3, ldsSize, NULL ),        "Error setArg kernels[ 1 ]" ); // Scratch buffer
+    V_OPENCL( kernels[1].setArg( 4, workPerThread ),        "Error setArg kernels[ 1 ]" ); // User provided functor
+    V_OPENCL( kernels[1].setArg( 5, *binaryBuffer ),        "Error setArg kernels[ 1 ]" ); // User provided functor
 
 #ifdef BOLT_ENABLE_PROFILING
 aProfiler.nextStep();
