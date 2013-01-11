@@ -113,15 +113,21 @@ namespace bolt {
 
         extern std::string fileToString(const std::string &fileName);
 
-        // used in constructAndCompileString
+        /**********************************************************************
+         * DEPRECATED
+         * used in constructAndCompileString
+         **********************************************************************/
         extern ::cl::Kernel compileFunctor(
                 const std::string &kernelCodeString,
                 const std::string kernelName,
                 const std::string compileOptions,
                 const control &c);
 
-
-        void constructAndCompileString( // used from structs - to be eliminated
+        /**********************************************************************
+         * DEPRECATED
+         * used in structs
+         **********************************************************************/
+        void constructAndCompileString(
                 ::cl::Kernel *masterKernel, 
                 const std::string& apiName, 
                 const std::string& clKernel, 
@@ -131,7 +137,11 @@ namespace bolt {
                 const std::string& functorTypeName, 
                 const control& ctl );
 
-        void compileKernelsString( // used from structs - to be eliminated
+        /**********************************************************************
+         * DEPRECATED
+         * used in structs
+         **********************************************************************/
+        void compileKernelsString(
                 std::vector< ::cl::Kernel >& clKernels,
                 const std::vector< const std::string >& kernelNames,
                 const std::string& clKernel,
@@ -141,7 +151,13 @@ namespace bolt {
                 const std::string& functorTypeName,
                 const control& ctl );
 
-        // dtanner
+        /**********************************************************************
+         * getKernels
+         * returns vector of cl::Kernel objects either by constructing
+         * and compiling the kernels, or by returning the kernels if
+         * previously compiled.
+         * see bolt/cl/detail/scan.inl for example usage
+         **********************************************************************/
         ::std::vector<::cl::Kernel> getKernels(
             const control&      ctl,
             const ::std::vector<::std::string>& typeNames,
@@ -151,7 +167,14 @@ namespace bolt {
             const std::string&  compileOptions = ""
                  );
         
-        // dtanner
+        /**********************************************************************
+         * acquireProgram
+         * returns cl::Program object by constructing
+         * and compiling the program, or by returning the Program if
+         * previously compiled.
+         * Called from getKernels.
+         * see bolt/cl/detail/scan.inl for example usage
+         **********************************************************************/
         ::cl::Program acquireProgram(
             const ::cl::Context& context,
             const ::cl::Device&  device,
@@ -159,7 +182,13 @@ namespace bolt {
             const ::std::string& completeKernelSource
             );
 
-        // dtanner
+        /**********************************************************************
+         * compileProgram
+         * returns cl::Program object by constructing
+         * and compiling the program.
+         * Called from acquireProgram.
+         * see bolt/cl/detail/scan.inl for example usage
+         **********************************************************************/
         ::cl::Program compileProgram(
             const ::cl::Context& context,
             const ::cl::Device&  device,

@@ -21,7 +21,7 @@
 #include <bolt/miniDump.h>
 #include <gtest/gtest.h>
 
-#if 0
+#if 1
 
 // Simple test case for bolt::inclusive_scan:
 // Sum together specified numbers, compare against STL::partial_sum function.
