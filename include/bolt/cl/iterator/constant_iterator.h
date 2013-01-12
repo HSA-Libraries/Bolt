@@ -18,7 +18,7 @@
 #if !defined( CONSTANT_ITERATOR_H )
 #define CONSTANT_ITERATOR_H
 #include "bolt/cl/bolt.h"
-#include "bolt/cl/iterator_traits.h"
+#include "bolt/cl/iterator/iterator_traits.h"
 
 namespace bolt {
 namespace cl {

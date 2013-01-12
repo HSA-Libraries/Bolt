@@ -23,7 +23,7 @@
 #include <type_traits>
 #include <numeric>
 #include "bolt/cl/bolt.h"
-#include "bolt/cl/iterator_traits.h"
+#include "bolt/cl/iterator/iterator_traits.h"
 
 #include <boost/iterator/iterator_facade.hpp>
 #include <boost/iterator/reverse_iterator.hpp>

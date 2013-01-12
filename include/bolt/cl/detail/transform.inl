@@ -25,7 +25,7 @@
 
 #include "bolt/cl/bolt.h"
 #include "bolt/cl/device_vector.h"
-#include "bolt/cl/iterator_traits.h"
+#include "bolt/cl/iterator/iterator_traits.h"
 
 namespace bolt {
 namespace cl {
