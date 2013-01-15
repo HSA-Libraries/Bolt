@@ -73,14 +73,14 @@ set( clBolt.Runtime.Headers
         ${clBolt.Include.Dir}/functional.h 
         ${clBolt.Include.Dir}/fill.h 
         ${clBolt.Include.Dir}/generate.h 
-		${clBolt.Include.Dir}/inner_product.h 
-        ${clBolt.Include.Dir}/iterator_traits.h 
+        ${clBolt.Include.Dir}/inner_product.h 
         ${clBolt.Include.Dir}/reduce.h 
         ${clBolt.Include.Dir}/scan.h 
         ${clBolt.Include.Dir}/sort.h 
         ${clBolt.Include.Dir}/sort_by_key.h 
         ${clBolt.Include.Dir}/transform.h 
         ${clBolt.Include.Dir}/transform_reduce.h
+        ${clBolt.Include.Dir}/iterator/iterator_traits.h 
         ${clBolt.Include.Dir}/iterator/constant_iterator.h
         ${clBolt.Include.Dir}/transform_scan.h
     )

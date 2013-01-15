@@ -72,9 +72,12 @@ namespace detail {
         static void init_(
             std::vector< ::cl::Kernel >* kernels,
             std::string cl_code,
-            std::string inValueType1Name,
-            std::string inValueType2Name,
-            std::string outValueTypeName,
+            std::string inValueType1Ptr,
+            std::string inValueType1Iter,
+            std::string inValueType2Ptr,
+            std::string inValueType2Iter,
+            std::string outValueTypePtr,
+            std::string outValueTypeIter,
             std::string functorTypeName,
             const control *ctl) {
 
@@ -86,24 +89,29 @@ namespace detail {
                 "// Host generates this instantiation string with user-specified value type and functor\n"
                 "template __attribute__((mangled_name(transformInstantiated)))\n"
                 "kernel void transformTemplate(\n"
-                "global " + inValueType1Name + "* A,\n"
-                "global " + inValueType2Name + "* B,\n"
-                "global " + outValueTypeName + "* Z,\n"
+                "global " + inValueType1Ptr + "* A_ptr,\n"
+                 + inValueType1Iter + " A_iter,\n"
+                "global " + inValueType2Ptr + "* B_ptr,\n"
+                 + inValueType2Iter + " B_iter,\n"
+                "global " + outValueTypePtr + "* Z_ptr,\n"
+                 + outValueTypeIter + " Z_iter,\n"
                 "const uint length,\n"
                 "global " + functorTypeName + "* userFunctor);\n\n"
 
-                 
                 "// Host generates this instantiation string with user-specified value type and functor\n"
                 "template __attribute__((mangled_name(transformNoBoundsCheckInstantiated)))\n"
                 "kernel void transformNoBoundsCheckTemplate(\n"
-                "global " + inValueType1Name + "* A,\n"
-                "global " + inValueType2Name + "* B,\n"
-                "global " + outValueTypeName + "* Z,\n"
+                "global " + inValueType1Ptr + "* A_ptr,\n"
+                 + inValueType1Iter + " A_iter,\n"
+                "global " + inValueType2Ptr + "* B_ptr,\n"
+                 + inValueType2Iter + " B_iter,\n"
+                "global " + outValueTypePtr + "* Z_ptr,\n"
+                 + outValueTypeIter + " Z_iter,\n"
                 "const uint length,\n"
                 "global " + functorTypeName + "* userFunctor);\n\n";
 
             bolt::cl::compileKernelsString( *kernels, kernelNames, transform_kernels, instantiationString, 
-                cl_code, inValueType1Name+ inValueType2Name, functorTypeName, *ctl);
+                cl_code, inValueType1Ptr + inValueType2Ptr, functorTypeName, *ctl);
         };
     };
 
@@ -281,6 +289,16 @@ template< typename InputIterator1, typename InputIterator2, typename OutputItera
         transform_enqueue( ctl, first1, last1, first2, result, f, user_code );
     }
 
+    // This template is called by the non-detail versions of inclusive_scan, it already assumes random access iterators
+    // This is called strictly for iterators that are derived from device_vector< T >::iterator
+    template<typename DVInputIterator1, typename DVInputIterator2, typename DVOutputIterator, typename BinaryFunction> 
+    void transform_pick_iterator( bolt::cl::control &ctl,  const DVInputIterator1& first1, const DVInputIterator1& last1, 
+        const DVInputIterator2& fancyIter, const DVOutputIterator& result, const BinaryFunction& f, 
+        const std::string& user_code, bolt::cl::device_vector_tag, bolt::cl::fancy_iterator_tag )
+    {
+        transform_enqueue( ctl, first1, last1, fancyIter, result, f, user_code );
+    }
+
     /*! \brief This template function overload is used to seperate device_vector iterators from all other iterators
         \detail This template is called by the non-detail versions of inclusive_scan, it already assumes random access
         *  iterators.  This overload is called strictly for non-device_vector iterators
@@ -346,15 +364,20 @@ template< typename InputIterator1, typename InputIterator2, typename OutputItera
         if (boost::is_same<iType1, oType>::value)
         {
             boost::call_once( initOnlyOnce, boost::bind( CallCompiler_BinaryTransform::init_, &binaryTransformKernels, 
-                cl_code + ClCode<iType1>::get() + ClCode<iType2>::get() + ClCode<BinaryFunction>::get(), 
-                TypeName< iType1 >::get( ), TypeName< iType2 >::get( ), TypeName< oType >::get( ), 
+                cl_code + ClCode<DVInputIterator1>::get() + ClCode<DVInputIterator2>::get() + ClCode<BinaryFunction>::get(), 
+                TypeName< iType1 >::get( ), TypeName< DVInputIterator1 >::get( ), 
+                TypeName< iType2 >::get( ), TypeName< DVInputIterator2 >::get( ), 
+                TypeName< oType >::get( ), TypeName< DVOutputIterator >::get( ), 
                 TypeName< BinaryFunction >::get( ), &ctl ) );
         } 
         else
         {
             boost::call_once( initOnlyOnce, boost::bind( CallCompiler_BinaryTransform::init_, &binaryTransformKernels, 
-                cl_code + ClCode<iType1>::get() + ClCode<iType2>::get() + ClCode<oType>::get() + ClCode<BinaryFunction>::get(), 
-                TypeName< iType1 >::get( ), TypeName< iType2 >::get( ), TypeName< oType >::get( ), 
+                cl_code + ClCode<DVInputIterator1>::get() + ClCode<DVInputIterator2>::get() + 
+                ClCode<oType>::get() + ClCode<BinaryFunction>::get(), 
+                TypeName< iType1 >::get( ), TypeName< DVInputIterator1 >::get( ), 
+                TypeName< iType2 >::get( ), TypeName< DVInputIterator2 >::get( ), 
+                TypeName< oType >::get( ), TypeName< DVOutputIterator >::get( ), 
                 TypeName< BinaryFunction >::get( ), &ctl ) );
         }
 
@@ -382,10 +405,13 @@ template< typename InputIterator1, typename InputIterator2, typename OutputItera
         }
 
         k.setArg(0, first1->getBuffer( ) );
-        k.setArg(1, first2->getBuffer( ) );
-        k.setArg(2, result->getBuffer( ) );
-        k.setArg(3, distVec );
-        k.setArg(4, *userFunctor);
+        k.setArg(1, first1.m_Index );
+        k.setArg(2, first2->getBuffer( ) );
+        k.setArg(3, first2.m_Index );
+        k.setArg(4, result->getBuffer( ) );
+        k.setArg(5, result.m_Index );
+        k.setArg(6, distVec );
+        k.setArg(7, *userFunctor);
 
         ::cl::Event transformEvent;
         l_Error = ctl.commandQueue().enqueueNDRangeKernel(

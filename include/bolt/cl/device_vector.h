@@ -214,17 +214,18 @@ namespace cl
         *   container, or use iterator arithmetic instead, such as *(iter + 5) for reading from the iterator.
         */
         template< typename Container >
-        class iterator_base: public boost::iterator_facade< iterator_base< Container >, value_type, device_vector_tag, typename device_vector::reference, int >
+        class iterator_base: public boost::iterator_facade< iterator_base< Container >, value_type, device_vector_tag, 
+            typename device_vector::reference, int >
         {
         public:
 
             //  Basic constructor requires a reference to the container and a positional element
-            iterator_base( Container& rhs, size_type index ): m_Container( rhs ), m_index( index )
+            iterator_base( Container& rhs, size_type index ): m_Container( rhs ), m_Index( index )
             {}
 
             //  This copy constructor allows an iterator to convert into a const_iterator, but not vica versa
             template< typename OtherContainer >
-            iterator_base( const iterator_base< OtherContainer >& rhs ): m_Container( rhs.m_Container ), m_index( rhs.m_index )
+            iterator_base( const iterator_base< OtherContainer >& rhs ): m_Container( rhs.m_Container ), m_Index( rhs.m_Index )
             {}
 
             //  This copy constructor allows an iterator to convert into a const_iterator, but not vica versa
@@ -232,7 +233,7 @@ namespace cl
             iterator_base< Container >& operator= ( const iterator_base< Container >& rhs )
             {
                 m_Container = rhs.m_Container;
-                m_index = rhs.m_index;
+                m_index = rhs.m_Index;
                 return *this;
             }
                 
@@ -249,10 +250,7 @@ namespace cl
                 return result;
             }
 
-            int getIndex() const
-            {
-                return m_index;
-            }
+            size_type m_Index;
 
         private:
             //  Implementation detail of boost.iterator
@@ -266,7 +264,7 @@ namespace cl
 
             void advance( difference_type n )
             {
-                m_index += n;
+                m_Index += n;
             }
 
             void increment( )
@@ -281,13 +279,13 @@ namespace cl
 
             difference_type distance_to( const iterator_base< Container >& rhs ) const
             {
-                return static_cast< difference_type >( rhs.m_index - m_index );
+                return static_cast< difference_type >( rhs.m_Index - m_Index );
             }
 
             template< typename OtherContainer >
             bool equal( const iterator_base< OtherContainer >& rhs ) const
             {
-                bool sameIndex = rhs.m_index == m_index;
+                bool sameIndex = rhs.m_Index == m_Index;
                 bool sameContainer = (&m_Container == &rhs.m_Container );
 
                 return ( sameIndex && sameContainer );
@@ -295,11 +293,10 @@ namespace cl
 
             reference dereference( ) const
             {
-                return m_Container[ m_index ];
+                return m_Container[ m_Index ];
             }
 
             Container& m_Container;
-            size_type m_index;
         };
 
         /*! \brief Typedef to create the non-constant iterator
@@ -1266,6 +1263,49 @@ namespace cl
         size_type m_Size;
         cl_mem_flags m_Flags;
     };
+
+    //  This string represents the device side definition of the constant_iterator template
+    static std::string deviceVectorIterator = STRINGIFY_CODE( 
+        template< typename T >
+        class device_vector::iterator
+        {
+        public:
+            typedef int iterator_category;      // device code does not understand std:: tags
+            typedef T value_type;
+            typedef size_t difference_type;
+            typedef size_t size_type;
+            typedef T* pointer;
+            typedef T& reference;
+
+            device_vector_iterator( value_type init ): constValue( init )
+            {};
+
+            value_type operator[]( size_type ) const
+            {
+                return constValue;
+            }
+
+            value_type operator*( ) const
+            {
+                return constValue;
+            }
+
+            size_type m_Index;
+            value_type  constValue;
+        };
+    );
+
+    BOLT_CREATE_TYPENAME( device_vector< int >::iterator );
+    BOLT_CREATE_CLCODE( device_vector< int >::iterator, deviceVectorIterator );
+
+    BOLT_CREATE_TYPENAME( device_vector< float >::iterator );
+    BOLT_CREATE_CLCODE( device_vector< float >::iterator, deviceVectorIterator );
+
+    BOLT_CREATE_TYPENAME( device_vector< double >::iterator );
+    BOLT_CREATE_CLCODE( device_vector< double >::iterator, deviceVectorIterator );
+
+    //BOLT_TEMPLATE_REGISTER_NEW_TYPE( device_vector::iterator, int, float );
+    //BOLT_TEMPLATE_REGISTER_NEW_TYPE( device_vector::iterator, int, double );
 
 }
 }

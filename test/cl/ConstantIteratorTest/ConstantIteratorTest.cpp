@@ -189,13 +189,40 @@ TEST( ConstantIterator, Dereference )
 }
 
 //TEST_P( ConstantIterator, Transform )
-TEST( ConstantIterator, TransformVector )
+TEST( ConstantIterator, StdTransformVector )
 {
     std::vector< int > data( 4 );
     data[ 0 ] = 1;
     data[ 1 ] = 10;
     data[ 2 ] = 100;
     data[ 3 ] = 1000;
+
+    // add 10 to all values in data
+    bolt::cl::transform( data.begin( ), data.end( ), bolt::cl::make_constant_iterator( 50 ),
+                      data.begin( ), bolt::cl::plus< int >( ) );
+
+    EXPECT_EQ( 51, data[ 0 ] );
+    EXPECT_EQ( 60, data[ 1 ] );
+    EXPECT_EQ( 150, data[ 2 ] );
+    EXPECT_EQ( 1050, data[ 3 ] );
+}
+
+TEST( ConstantIterator, DeviceTransformVector )
+{
+    bolt::cl::device_vector< int > data( 4 );
+    data[ 0 ] = 1;
+    data[ 1 ] = 10;
+    data[ 2 ] = 100;
+    data[ 3 ] = 1000;
+
+    std::cout << TypeName< bolt::cl::device_vector< int >::iterator >::get( ) << std::endl;
+    std::cout << ClCode< bolt::cl::device_vector< int >::iterator >::get( ) << std::endl << std::endl;
+
+    std::cout << TypeName< bolt::cl::device_vector< float >::iterator >::get( ) << std::endl;
+    std::cout << ClCode< bolt::cl::device_vector< float >::iterator >::get( ) << std::endl << std::endl;
+
+    std::cout << TypeName< bolt::cl::device_vector< double >::iterator >::get( ) << std::endl;
+    std::cout << ClCode< bolt::cl::device_vector< double >::iterator >::get( ) << std::endl << std::endl;
 
     // add 10 to all values in data
     bolt::cl::transform( data.begin( ), data.end( ), bolt::cl::make_constant_iterator( 50 ),

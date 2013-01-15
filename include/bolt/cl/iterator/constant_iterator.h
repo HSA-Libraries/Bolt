@@ -41,52 +41,53 @@ namespace cl {
             typedef T* pointer;
             typedef T& reference;
 
-            constant_iterator( value_type init ): constValue( init )
+            constant_iterator( value_type init ): m_constValue( init )
             {};
 
             value_type operator[]( size_type ) const
             {
-                return constValue;
+                return m_constValue;
             }
 
             value_type operator*( ) const
             {
-                return constValue;
+                return m_constValue;
             }
 
-        private:
-            value_type  constValue;
+            //  Implementation 
+            value_type m_constValue;
+            static const size_t m_Index = 0;
         };
     //)
 
     //  This string represents the device side definition of the constant_iterator template
-    std::string deviceConstantIterator = STRINGIFY_CODE( 
+    static std::string deviceConstantIterator = STRINGIFY_CODE( 
         template< typename T >
         class constant_iterator
         {
         public:
-            typedef int iterator_category;      // Device side does not understand std:: tags
+            typedef int iterator_category;      // device code does not understand std:: tags
             typedef T value_type;
             typedef size_t difference_type;
             typedef size_t size_type;
             typedef T* pointer;
             typedef T& reference;
 
-            constant_iterator( value_type init ): constValue( init )
+            constant_iterator( value_type init ): m_constValue( init )
             {};
 
             value_type operator[]( size_type ) const
             {
-                return constValue;
+                return m_constValue;
             }
 
             value_type operator*( ) const
             {
-                return constValue;
+                return m_constValue;
             }
 
-        private:
-            value_type  constValue;
+            value_type  m_constValue;
+            static const size_t m_Index = 0;
         };
     );
 
