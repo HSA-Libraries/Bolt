@@ -67,7 +67,6 @@ namespace cl
     template< typename T >
     class device_vector
     {
-
         /*! \brief Class used with shared_ptr<> as a custom deleter, to unmap a buffer that has been mapped with 
         *   device_vector data() method
         */
@@ -116,7 +115,7 @@ namespace cl
         class reference_base
         {
         public:
-            reference_base( Container& rhs, size_type index ): m_Container( rhs ), m_index( index )
+            reference_base( Container& rhs, size_type index ): m_Container( rhs ), m_Index( index )
             {}
 
             //  Automatic type conversion operator to turn the reference object into a value_type
@@ -124,7 +123,7 @@ namespace cl
             {
                 cl_int l_Error = CL_SUCCESS;
                 naked_pointer result = reinterpret_cast< naked_pointer >( m_Container.m_commQueue.enqueueMapBuffer( 
-                    m_Container.m_devMemory, true, CL_MAP_READ, m_index * sizeof( value_type ), sizeof( value_type ), NULL, NULL, &l_Error ) );
+                    m_Container.m_devMemory, true, CL_MAP_READ, m_Index * sizeof( value_type ), sizeof( value_type ), NULL, NULL, &l_Error ) );
                 V_OPENCL( l_Error, "device_vector failed map device memory to host memory for operator[]" );
 
                 value_type valTmp = *result;
@@ -140,7 +139,7 @@ namespace cl
             {
                 cl_int l_Error = CL_SUCCESS;
                 naked_pointer result = reinterpret_cast< naked_pointer >( m_Container.m_commQueue.enqueueMapBuffer( 
-                    m_Container.m_devMemory, true, CL_MAP_WRITE_INVALIDATE_REGION, m_index * sizeof( value_type ), sizeof( value_type ), NULL, NULL, &l_Error ) );
+                    m_Container.m_devMemory, true, CL_MAP_WRITE_INVALIDATE_REGION, m_Index * sizeof( value_type ), sizeof( value_type ), NULL, NULL, &l_Error ) );
                 V_OPENCL( l_Error, "device_vector failed map device memory to host memory for operator[]" );
 
                 *result = rhs;
@@ -152,28 +151,6 @@ namespace cl
                 return *this;
             }
 
-            /*! \brief A get accessor function to return the encapsulated device buffer for const objects.
-            *   This member function allows access to the Buffer object, which can be retrieved through a reference or an iterator.
-            *   This is necessary to allow library functions to set the encapsulated buffer object as a kernel argument.  
-            *   \note This get function could be implemented in the iterator, but the reference object is usually a temporary rvalue, so 
-            *   this location seems less intrusive to the design of the vector class.
-            */
-            const ::cl::Buffer& getBuffer( ) const
-            {
-                return m_Container.m_devMemory;
-            }
-
-            /*! \brief A get accessor function to return the encapsulated device buffer for non-const objects.
-            *   This member function allows access to the Buffer object, which can be retrieved through a reference or an iterator.
-            *   This is necessary to allow library functions to set the encapsulated buffer object as a kernel argument.  
-            *   \note This get function can be implemented in the iterator, but the reference object is usually a temporary rvalue, so 
-            *   this location seems less intrusive to the design of the vector class.
-            */
-            ::cl::Buffer& getBuffer( )
-            {
-                return m_Container.m_devMemory;
-            }
-
             /*! \brief A get accessor function to return the encapsulated device_vector.
             */
             Container& getContainer( ) const
@@ -183,12 +160,12 @@ namespace cl
 
             size_type getIndex() const
             {
-                return m_index;
+                return m_Index;
             }
 
         private:
             Container& m_Container;
-            size_type m_index;
+            size_type m_Index;
         };
 
         /*! \brief Typedef to create the non-constant reference.
@@ -220,7 +197,7 @@ namespace cl
         public:
 
             //  Basic constructor requires a reference to the container and a positional element
-            iterator_base( Container& rhs, size_type index ): m_Container( rhs ), m_Index( index )
+            iterator_base( Container& rhs, typename iterator_facade::difference_type index ): m_Container( rhs ), m_Index( index )
             {}
 
             //  This copy constructor allows an iterator to convert into a const_iterator, but not vica versa
@@ -237,20 +214,42 @@ namespace cl
                 return *this;
             }
                 
-            iterator_base< Container >& operator+= ( const difference_type & n )
+            iterator_base< Container >& operator+= ( const typename iterator_facade::difference_type & n )
             {
                 advance( n );
                 return *this;
             }
                 
-            const iterator_base< Container > operator+ ( const difference_type & n ) const
+            const iterator_base< Container > operator+ ( const typename iterator_facade::difference_type & n ) const
             {
                 iterator_base< Container > result(*this);
                 result.advance(n);
                 return result;
             }
 
-            size_type m_Index;
+            /*! \brief A get accessor function to return the encapsulated device buffer for const objects.
+            *   This member function allows access to the Buffer object, which can be retrieved through a reference or an iterator.
+            *   This is necessary to allow library functions to set the encapsulated buffer object as a kernel argument.  
+            *   \note This get function could be implemented in the iterator, but the reference object is usually a temporary rvalue, so 
+            *   this location seems less intrusive to the design of the vector class.
+            */
+            const ::cl::Buffer& getBuffer( ) const
+            {
+                return m_Container.m_devMemory;
+            }
+
+            /*! \brief A get accessor function to return the encapsulated device buffer for non-const objects.
+            *   This member function allows access to the Buffer object, which can be retrieved through a reference or an iterator.
+            *   This is necessary to allow library functions to set the encapsulated buffer object as a kernel argument.  
+            *   \note This get function can be implemented in the iterator, but the reference object is usually a temporary rvalue, so 
+            *   this location seems less intrusive to the design of the vector class.
+            */
+            ::cl::Buffer& getBuffer( )
+            {
+                return m_Container.m_devMemory;
+            }
+
+            typename iterator_facade::difference_type m_Index;
 
         private:
             //  Implementation detail of boost.iterator
@@ -262,7 +261,7 @@ namespace cl
             //  Used for templatized copy constructor and the templatized equal operator
             template < typename > friend class iterator_base;
 
-            void advance( difference_type n )
+            void advance( typename iterator_facade::difference_type n )
             {
                 m_Index += n;
             }
@@ -279,7 +278,7 @@ namespace cl
 
             difference_type distance_to( const iterator_base< Container >& rhs ) const
             {
-                return static_cast< difference_type >( rhs.m_Index - m_Index );
+                return static_cast< typename iterator_facade::difference_type >( rhs.m_Index - m_Index );
             }
 
             template< typename OtherContainer >
@@ -997,14 +996,14 @@ namespace cl
                 throw ::cl::Error( CL_INVALID_ARG_VALUE , "Iterator is not from this container" );
 
             iterator l_End = end( );
-            if( index.m_index >= l_End.m_index )
+            if( index.m_Index >= l_End.m_Index )
                 throw ::cl::Error( CL_INVALID_ARG_INDEX , "Iterator is pointing past the end of this container" );
 
-            size_type sizeRegion = l_End.m_index - index.m_index;
+            size_type sizeRegion = l_End.m_Index - index.m_Index;
 
             cl_int l_Error = CL_SUCCESS;
             naked_pointer ptrBuff = reinterpret_cast< naked_pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ | CL_MAP_WRITE, 
-                    index.m_index * sizeof( value_type ), sizeRegion * sizeof( value_type ), NULL, NULL, &l_Error ) );
+                    index.m_Index * sizeof( value_type ), sizeRegion * sizeof( value_type ), NULL, NULL, &l_Error ) );
             V_OPENCL( l_Error, "device_vector failed map device memory to host memory for operator[]" );
 
             ::memmove( ptrBuff, ptrBuff + 1, (sizeRegion - 1)*sizeof( value_type ) );
@@ -1016,7 +1015,7 @@ namespace cl
 
             --m_Size;
 
-            size_type newIndex = (m_Size < index.m_index) ? m_Size : index.m_index;
+            size_type newIndex = (m_Size < index.m_Index) ? m_Size : index.m_Index;
             return iterator( *this, newIndex );
         }
 
@@ -1030,7 +1029,7 @@ namespace cl
             if(( &first.m_Container != this ) && ( &last.m_Container != this ) )
                 throw ::cl::Error( CL_INVALID_ARG_VALUE , "Iterator is not from this container" );
 
-            if( last.m_index > m_Size )
+            if( last.m_Index > m_Size )
                 throw ::cl::Error( CL_INVALID_ARG_INDEX , "Iterator is pointing past the end of this container" );
 
             if( (first == begin( )) && (last == end( )) )
@@ -1040,14 +1039,14 @@ namespace cl
             }
 
             iterator l_End = end( );
-            size_type sizeMap = l_End.m_index - first.m_index;
+            size_type sizeMap = l_End.m_Index - first.m_Index;
 
             cl_int l_Error = CL_SUCCESS;
             naked_pointer ptrBuff = reinterpret_cast< naked_pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ | CL_MAP_WRITE, 
-                    first.m_index * sizeof( value_type ), sizeMap * sizeof( value_type ), NULL, NULL, &l_Error ) );
+                    first.m_Index * sizeof( value_type ), sizeMap * sizeof( value_type ), NULL, NULL, &l_Error ) );
             V_OPENCL( l_Error, "device_vector failed map device memory to host memory for operator[]" );
 
-            size_type sizeErase = last.m_index - first.m_index;
+            size_type sizeErase = last.m_Index - first.m_Index;
             ::memmove( ptrBuff, ptrBuff + sizeErase, (sizeMap - sizeErase)*sizeof( value_type ) );
 
             ::cl::Event unmapEvent;
@@ -1057,7 +1056,7 @@ namespace cl
 
             m_Size -= sizeErase;
 
-            size_type newIndex = (m_Size < last.m_index) ? m_Size : last.m_index;
+            size_type newIndex = (m_Size < last.m_Index) ? m_Size : last.m_Index;
             return iterator( *this, newIndex );
         }
 
@@ -1073,13 +1072,13 @@ namespace cl
             if( &index.m_Container != this )
                 throw ::cl::Error( CL_INVALID_ARG_VALUE , "Iterator is not from this container" );
 
-            if( index.m_index > m_Size )
+            if( index.m_Index > m_Size )
                 throw ::cl::Error( CL_INVALID_ARG_INDEX , "Iterator is pointing past the end of this container" );
 
-            if( index.m_index == m_Size )
+            if( index.m_Index == m_Size )
             {
                 push_back( value );
-                return iterator( *this, index.m_index );
+                return iterator( *this, index.m_Index );
             }
 
             //  Need to grow the vector to insert a new value.
@@ -1090,11 +1089,11 @@ namespace cl
                 reserve( m_Size + 10 );
             }
 
-            size_type sizeMap = (m_Size - index.m_index) + 1;
+            size_type sizeMap = (m_Size - index.m_Index) + 1;
 
             cl_int l_Error = CL_SUCCESS;
             naked_pointer ptrBuff = reinterpret_cast< naked_pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ | CL_MAP_WRITE, 
-                    index.m_index * sizeof( value_type ), sizeMap * sizeof( value_type ), NULL, NULL, &l_Error ) );
+                    index.m_Index * sizeof( value_type ), sizeMap * sizeof( value_type ), NULL, NULL, &l_Error ) );
             V_OPENCL( l_Error, "device_vector failed map device memory to host memory for operator[]" );
 
             //  Shuffle the old values 1 element down
@@ -1110,7 +1109,7 @@ namespace cl
 
             ++m_Size;
 
-            return iterator( *this, index.m_index );
+            return iterator( *this, index.m_Index );
         }
 
         /*! \brief Inserts n copies of the new element into the container.
@@ -1125,7 +1124,7 @@ namespace cl
             if( &index.m_Container != this )
                 throw ::cl::Error( CL_INVALID_ARG_VALUE , "Iterator is not from this container" );
 
-            if( index.m_index > m_Size )
+            if( index.m_Index > m_Size )
                 throw ::cl::Error( CL_INVALID_ARG_INDEX , "Iterator is pointing past the end of this container" );
 
             //  Need to grow the vector to insert a new value.
@@ -1136,11 +1135,11 @@ namespace cl
                 reserve( m_Size + n );
             }
 
-            size_type sizeMap = (m_Size - index.m_index) + n;
+            size_type sizeMap = (m_Size - index.m_Index) + n;
 
             cl_int l_Error = CL_SUCCESS;
             naked_pointer ptrBuff = reinterpret_cast< naked_pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ | CL_MAP_WRITE, 
-                    index.m_index * sizeof( value_type ), sizeMap * sizeof( value_type ), NULL, NULL, &l_Error ) );
+                    index.m_Index * sizeof( value_type ), sizeMap * sizeof( value_type ), NULL, NULL, &l_Error ) );
             V_OPENCL( l_Error, "device_vector failed map device memory to host memory for operator[]" );
 
             //  Shuffle the old values n element down.
@@ -1166,7 +1165,7 @@ namespace cl
             if( &index.m_Container != this )
                 throw ::cl::Error( CL_INVALID_ARG_VALUE , "Iterator is not from this container" );
 
-            if( index.m_index > m_Size )
+            if( index.m_Index > m_Size )
                 throw ::cl::Error( CL_INVALID_ARG_INDEX , "Iterator is pointing past the end of this container" );
 
             //  Need to grow the vector to insert a new value.
@@ -1177,11 +1176,11 @@ namespace cl
             {
                 reserve( m_Size + n );
             }
-            size_type sizeMap = (m_Size - index.m_index) + n;
+            size_type sizeMap = (m_Size - index.m_Index) + n;
 
             cl_int l_Error = CL_SUCCESS;
             naked_pointer ptrBuff = reinterpret_cast< naked_pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ | CL_MAP_WRITE, 
-                    index.m_index * sizeof( value_type ), sizeMap * sizeof( value_type ), NULL, NULL, &l_Error ) );
+                    index.m_Index * sizeof( value_type ), sizeMap * sizeof( value_type ), NULL, NULL, &l_Error ) );
             V_OPENCL( l_Error, "device_vector failed map device memory to host memory for iterator insert" );
 
             //  Shuffle the old values n element down.
@@ -1266,33 +1265,36 @@ namespace cl
 
     //  This string represents the device side definition of the constant_iterator template
     static std::string deviceVectorIterator = STRINGIFY_CODE( 
-        template< typename T >
-        class device_vector::iterator
-        {
-        public:
-            typedef int iterator_category;      // device code does not understand std:: tags
-            typedef T value_type;
-            typedef size_t difference_type;
-            typedef size_t size_type;
-            typedef T* pointer;
-            typedef T& reference;
+        template< typename T > \n
+        class device_vector \n
+        { \n
+        public: \n
+            class iterator \n
+            { \n
+            public:
+                typedef int iterator_category;      // device code does not understand std:: tags  \n
+                typedef T value_type; \n
+                typedef size_t difference_type; \n
+                typedef size_t size_type; \n
+                typedef T* pointer; \n
+                typedef T& reference; \n
 
-            device_vector_iterator( value_type init ): constValue( init )
-            {};
+                iterator( value_type init ): m_Index( init ) \n
+                {}; \n
 
-            value_type operator[]( size_type ) const
-            {
-                return constValue;
-            }
+                size_type operator[]( size_type threadID ) const \n
+                { \n
+                    return m_Index + threadID; \n
+                } \n
 
-            value_type operator*( ) const
-            {
-                return constValue;
-            }
+                size_type operator*( ) const \n
+                { \n
+                    return m_Index; \n
+                } \n
 
-            size_type m_Index;
-            value_type  constValue;
-        };
+                size_type m_Index; \n
+            }; \n
+        }; \n
     );
 
     BOLT_CREATE_TYPENAME( device_vector< int >::iterator );

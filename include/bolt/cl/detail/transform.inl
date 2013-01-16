@@ -68,17 +68,31 @@ namespace cl {
     }
 
 namespace detail {
+    struct kernelParams
+    {
+        const std::string inValueType1Ptr;
+        const std::string inValueType1Iter;
+        const std::string inValueType2Ptr;
+        const std::string inValueType2Iter;
+        const std::string outValueTypePtr;
+        const std::string outValueTypeIter;
+        const std::string functorTypeName;
+
+        kernelParams( const std::string& iType1Ptr, const std::string& iType1Iter, const std::string& iType2Ptr, 
+            const std::string& iType2Iter, const std::string& oTypePtr, const std::string& oTypeIter, 
+            const std::string& funcType ): 
+        inValueType1Ptr( iType1Ptr ), inValueType1Iter( iType1Iter ), 
+        inValueType2Ptr( iType2Ptr ), inValueType2Iter( iType2Iter ), 
+        outValueTypePtr( oTypePtr ), outValueTypeIter( oTypeIter ), 
+        functorTypeName( funcType )
+        {}
+    };
+
     struct CallCompiler_BinaryTransform {
         static void init_(
             std::vector< ::cl::Kernel >* kernels,
             std::string cl_code,
-            std::string inValueType1Ptr,
-            std::string inValueType1Iter,
-            std::string inValueType2Ptr,
-            std::string inValueType2Iter,
-            std::string outValueTypePtr,
-            std::string outValueTypeIter,
-            std::string functorTypeName,
+            kernelParams* kp,
             const control *ctl) {
 
             std::vector< const std::string > kernelNames;
@@ -89,74 +103,38 @@ namespace detail {
                 "// Host generates this instantiation string with user-specified value type and functor\n"
                 "template __attribute__((mangled_name(transformInstantiated)))\n"
                 "kernel void transformTemplate(\n"
-                "global " + inValueType1Ptr + "* A_ptr,\n"
-                 + inValueType1Iter + " A_iter,\n"
-                "global " + inValueType2Ptr + "* B_ptr,\n"
-                 + inValueType2Iter + " B_iter,\n"
-                "global " + outValueTypePtr + "* Z_ptr,\n"
-                 + outValueTypeIter + " Z_iter,\n"
+                "global " + kp->inValueType1Ptr + "* A_ptr,\n"
+                 + kp->inValueType1Iter + " A_iter,\n"
+                "global " + kp->inValueType2Ptr + "* B_ptr,\n"
+                 + kp->inValueType2Iter + " B_iter,\n"
+                "global " + kp->outValueTypePtr + "* Z_ptr,\n"
+                 + kp->outValueTypeIter + " Z_iter,\n"
                 "const uint length,\n"
-                "global " + functorTypeName + "* userFunctor);\n\n"
+                "global " + kp->functorTypeName + "* userFunctor);\n\n"
 
                 "// Host generates this instantiation string with user-specified value type and functor\n"
                 "template __attribute__((mangled_name(transformNoBoundsCheckInstantiated)))\n"
                 "kernel void transformNoBoundsCheckTemplate(\n"
-                "global " + inValueType1Ptr + "* A_ptr,\n"
-                 + inValueType1Iter + " A_iter,\n"
-                "global " + inValueType2Ptr + "* B_ptr,\n"
-                 + inValueType2Iter + " B_iter,\n"
-                "global " + outValueTypePtr + "* Z_ptr,\n"
-                 + outValueTypeIter + " Z_iter,\n"
+                "global " + kp->inValueType1Ptr + "* A_ptr,\n"
+                 + kp->inValueType1Iter + " A_iter,\n"
+                "global " + kp->inValueType2Ptr + "* B_ptr,\n"
+                 + kp->inValueType2Iter + " B_iter,\n"
+                "global " + kp->outValueTypePtr + "* Z_ptr,\n"
+                 + kp->outValueTypeIter + " Z_iter,\n"
                 "const uint length,\n"
-                "global " + functorTypeName + "* userFunctor);\n\n";
+                "global " + kp->functorTypeName + "* userFunctor);\n\n";
 
             bolt::cl::compileKernelsString( *kernels, kernelNames, transform_kernels, instantiationString, 
-                cl_code, inValueType1Ptr + inValueType2Ptr, functorTypeName, *ctl);
-        };
-    };
-
-    struct CallCompiler_BinaryTransformFancy {
-        static void init_(
-            std::vector< ::cl::Kernel >* kernels,
-            std::string cl_code,
-            std::string inValueType1Name,
-            std::string inValueType2Name,
-            std::string outValueTypeName,
-            std::string functorTypeName,
-            const control *ctl) {
-
-            std::vector< const std::string > kernelNames;
-            kernelNames.push_back( "transformFancy" );
-            kernelNames.push_back( "transformNoBoundsCheckFancy" );
-
-            std::string instantiationString = 
-                "// Host generates this instantiation string with user-specified value type and functor\n"
-                "template __attribute__((mangled_name(transformFancyInstantiated)))\n"
-                "kernel void transformFancyTemplate(\n"
-                "global " + inValueType1Name + "* A,\n"
-                    + inValueType2Name + " B,\n"
-                "global " + outValueTypeName + "* Z,\n"
-                "const uint length,\n"
-                "global " + functorTypeName + "* userFunctor);\n\n"
-
-                 
-                "// Host generates this instantiation string with user-specified value type and functor\n"
-                "template __attribute__((mangled_name(transformNoBoundsCheckFancyInstantiated)))\n"
-                "kernel void transformNoBoundsCheckFancyTemplate(\n"
-                "global " + inValueType1Name + "* A,\n"
-                    + inValueType2Name + " B,\n"
-                "global " + outValueTypeName + "* Z,\n"
-                "const uint length,\n"
-                "global " + functorTypeName + "* userFunctor);\n\n";
-
-            bolt::cl::compileKernelsString( *kernels, kernelNames, transform_kernels, instantiationString, 
-                cl_code, inValueType1Name + inValueType2Name, functorTypeName, *ctl);
+                cl_code, kp->inValueType1Ptr + kp->inValueType2Ptr, kp->functorTypeName, *ctl);
         };
     };
 
     struct CallCompiler_UnaryTransform {
-        static void init_(std::vector< ::cl::Kernel >* kernels, std::string cl_code, std::string inValueTypeName, 
-            std::string outValueTypeName, std::string functorTypeName, const control *ctl) {
+        static void init_(
+            std::vector< ::cl::Kernel >* kernels,
+            std::string cl_code,
+            kernelParams* kp,
+            const control *ctl) {
 
             std::vector< const std::string > kernelNames;
             kernelNames.push_back( "unaryTransform" );
@@ -166,22 +144,26 @@ namespace detail {
                 "// Host generates this instantiation string with user-specified value type and functor\n"
                 "template __attribute__((mangled_name(unaryTransformInstantiated)))\n"
                 "kernel void unaryTransformTemplate(\n"
-                "global " + inValueTypeName + "* A,\n"
-                "global " + outValueTypeName + "* Z,\n"
+                "global " + kp->inValueType1Ptr + "* A,\n"
+                 + kp->inValueType1Iter + " A_iter,\n"
+                "global " + kp->outValueTypePtr + "* Z,\n"
+                 + kp->outValueTypeIter + " Z_iter,\n"
                 "const uint length,\n"
-                "global " + functorTypeName + "* userFunctor);\n\n"
+                "global " + kp->functorTypeName + "* userFunctor);\n\n"
 
                 "// Host generates this instantiation string with user-specified value type and functor\n"
                 "template __attribute__((mangled_name(unaryTransformNoBoundsCheckInstantiated)))\n"
                 "kernel void unaryTransformNoBoundsCheckTemplate(\n"
-                "global " + inValueTypeName + "* A,\n"
-                "global " + outValueTypeName + "* Z,\n"
+                "global " + kp->inValueType1Ptr + "* A,\n"
+                 + kp->inValueType1Iter + " A_iter,\n"
+                "global " + kp->outValueTypePtr + "* Z,\n"
+                 + kp->outValueTypeIter + " Z_iter,\n"
                 "const uint length,\n"
-                "global " + functorTypeName + "* userFunctor);\n\n"
+                "global " + kp->functorTypeName + "* userFunctor);\n\n"
                 ;
 
             bolt::cl::compileKernelsString( *kernels, kernelNames, transform_kernels, instantiationString, 
-                cl_code, inValueTypeName,  functorTypeName, *ctl);
+                cl_code, kp->inValueType1Ptr, kp->functorTypeName, *ctl);
         };
     };
 
@@ -273,7 +255,7 @@ template< typename InputIterator1, typename InputIterator2, typename OutputItera
         // Map the output iterator to a device_vector
         device_vector< oType > dvOutput( result, sz, CL_MEM_USE_HOST_PTR|CL_MEM_WRITE_ONLY, false, ctl );
 
-        transform_enqueue_fancy( ctl, dvInput.begin( ), dvInput.end( ), fancyIter, dvOutput.begin( ), f, user_code );
+        transform_enqueue( ctl, dvInput.begin( ), dvInput.end( ), fancyIter, dvOutput.begin( ), f, user_code );
 
         // This should immediately map/unmap the buffer
         dvOutput.data( );
@@ -340,8 +322,8 @@ template< typename InputIterator1, typename InputIterator2, typename OutputItera
     }
 
     template<typename DVInputIterator1, typename DVInputIterator2, typename DVOutputIterator, typename BinaryFunction> 
-    void transform_enqueue( bolt::cl::control &ctl, const DVInputIterator1& first1, const DVInputIterator1& last1, const DVInputIterator2& first2, 
-        const DVOutputIterator& result, const BinaryFunction& f, const std::string& cl_code)
+    void transform_enqueue( bolt::cl::control &ctl, const DVInputIterator1& first1, const DVInputIterator1& last1, 
+        const DVInputIterator2& first2, const DVOutputIterator& result, const BinaryFunction& f, const std::string& cl_code)
     {
         typedef std::iterator_traits<DVInputIterator1>::value_type iType1;
         typedef std::iterator_traits<DVInputIterator2>::value_type iType2;
@@ -359,27 +341,32 @@ template< typename InputIterator1, typename InputIterator2, typename OutputItera
         static boost::once_flag initOnlyOnce;
         static std::vector< ::cl::Kernel > binaryTransformKernels;
 
+        kernelParams args( TypeName< iType1 >::get( ), TypeName< DVInputIterator1 >::get( ), TypeName< iType2 >::get( ), 
+            TypeName< DVInputIterator2 >::get( ), TypeName< oType >::get( ), TypeName< DVOutputIterator >::get( ), 
+            TypeName< BinaryFunction >::get( ) );
+
         // For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retrieve the name here.
-        //  TODO: I think this check needs some work now that we added an iType2
-        if (boost::is_same<iType1, oType>::value)
+        std::string typeDefinitions = cl_code + ClCode< BinaryFunction >::get( ) + ClCode< iType1 >::get( );
+        if( !boost::is_same< iType1, iType2 >::value )
         {
-            boost::call_once( initOnlyOnce, boost::bind( CallCompiler_BinaryTransform::init_, &binaryTransformKernels, 
-                cl_code + ClCode<DVInputIterator1>::get() + ClCode<DVInputIterator2>::get() + ClCode<BinaryFunction>::get(), 
-                TypeName< iType1 >::get( ), TypeName< DVInputIterator1 >::get( ), 
-                TypeName< iType2 >::get( ), TypeName< DVInputIterator2 >::get( ), 
-                TypeName< oType >::get( ), TypeName< DVOutputIterator >::get( ), 
-                TypeName< BinaryFunction >::get( ), &ctl ) );
-        } 
-        else
-        {
-            boost::call_once( initOnlyOnce, boost::bind( CallCompiler_BinaryTransform::init_, &binaryTransformKernels, 
-                cl_code + ClCode<DVInputIterator1>::get() + ClCode<DVInputIterator2>::get() + 
-                ClCode<oType>::get() + ClCode<BinaryFunction>::get(), 
-                TypeName< iType1 >::get( ), TypeName< DVInputIterator1 >::get( ), 
-                TypeName< iType2 >::get( ), TypeName< DVInputIterator2 >::get( ), 
-                TypeName< oType >::get( ), TypeName< DVOutputIterator >::get( ), 
-                TypeName< BinaryFunction >::get( ), &ctl ) );
+            typeDefinitions += ClCode< iType2 >::get( );
         }
+        if( !boost::is_same< iType1, oType >::value )
+        {
+            typeDefinitions += ClCode< oType >::get( );
+        }
+        typeDefinitions += ClCode< DVInputIterator1 >::get( );
+        if( !boost::is_same< DVInputIterator1, DVInputIterator2 >::value )
+        {
+            typeDefinitions += ClCode< DVInputIterator2 >::get( );
+        }
+        if( !boost::is_same< DVInputIterator1, DVOutputIterator >::value )
+        {
+            typeDefinitions += ClCode< DVOutputIterator >::get( );
+        }
+
+        boost::call_once( initOnlyOnce, boost::bind( CallCompiler_BinaryTransform::init_, &binaryTransformKernels, 
+            typeDefinitions, &args, &ctl ) );
 
         const ::cl::Kernel& kernelWithBoundsCheck = binaryTransformKernels[0];
         const ::cl::Kernel& kernelNoBoundsCheck   = binaryTransformKernels[1];
@@ -404,96 +391,14 @@ template< typename InputIterator1, typename InputIterator2, typename OutputItera
             k = kernelNoBoundsCheck;
         }
 
-        k.setArg(0, first1->getBuffer( ) );
+        k.setArg(0, first1.getBuffer( ) );
         k.setArg(1, first1.m_Index );
-        k.setArg(2, first2->getBuffer( ) );
+        k.setArg(2, first2.getBuffer( ) );
         k.setArg(3, first2.m_Index );
-        k.setArg(4, result->getBuffer( ) );
+        k.setArg(4, result.getBuffer( ) );
         k.setArg(5, result.m_Index );
         k.setArg(6, distVec );
         k.setArg(7, *userFunctor);
-
-        ::cl::Event transformEvent;
-        l_Error = ctl.commandQueue().enqueueNDRangeKernel(
-            k, 
-            ::cl::NullRange, 
-            ::cl::NDRange(wgMultiple),
-            ::cl::NDRange(wgSize),
-            NULL,
-            &transformEvent );
-        V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for transform() kernel" );
-
-        bolt::cl::wait(ctl, transformEvent);
-    };
-
-    template<typename DVInputIterator1, typename FancyIterator, typename DVOutputIterator, typename BinaryFunction> 
-    void transform_enqueue_fancy( bolt::cl::control &ctl, const DVInputIterator1& first1, const DVInputIterator1& last1, const FancyIterator& first2, 
-        const DVOutputIterator& result, const BinaryFunction& f, const std::string& cl_code)
-    {
-        typedef std::iterator_traits<DVInputIterator1>::value_type iType1;
-        typedef std::iterator_traits<FancyIterator>::value_type iType2;
-        typedef std::iterator_traits<DVOutputIterator>::value_type oType;
-
-        cl_uint distVec = static_cast< cl_uint >( std::distance( first1, last1 ) );
-        if( distVec == 0 )
-            return;
-
-        //typedef std::aligned_storage< sizeof( UnaryFunction ), 256 >::type alignedUnary;
-        __declspec( align( 256 ) ) BinaryFunction aligned_functor( f );
-        // ::cl::Buffer userFunctor(ctl.context(), CL_MEM_READ_ONLY|CL_MEM_USE_HOST_PTR, sizeof( aligned_functor ), const_cast< BinaryFunction* >( &aligned_functor ) );   // Create buffer wrapper so we can access host parameters.
-        control::buffPointer userFunctor = ctl.acquireBuffer( sizeof( aligned_functor ), CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_functor );
-
-        static boost::once_flag initOnlyOnce;
-        static std::vector< ::cl::Kernel > binaryTransformKernels;
-
-        // For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retrieve the name here.
-        //  TODO: I think this check needs some work now that we added an iType2
-        if (boost::is_same<iType1, oType>::value)
-        {
-            boost::call_once( initOnlyOnce, boost::bind( CallCompiler_BinaryTransformFancy::init_, &binaryTransformKernels, 
-                cl_code + ClCode<iType1>::get() + ClCode< FancyIterator >::get() + ClCode<BinaryFunction>::get(), 
-                TypeName< iType1 >::get( ), TypeName< FancyIterator >::get( ), TypeName< oType >::get( ), 
-                TypeName< BinaryFunction >::get( ), &ctl ) );
-        } 
-        else
-        {
-            boost::call_once( initOnlyOnce, boost::bind( CallCompiler_BinaryTransformFancy::init_, &binaryTransformKernels, 
-                cl_code + ClCode<iType1>::get() + ClCode< FancyIterator >::get() + ClCode<oType>::get() + ClCode<BinaryFunction>::get(), 
-                TypeName< iType1 >::get( ), TypeName< FancyIterator >::get( ), TypeName< oType >::get( ), 
-                TypeName< BinaryFunction >::get( ), &ctl ) );
-        }
-
-        const ::cl::Kernel& kernelWithBoundsCheck = binaryTransformKernels[0];
-        const ::cl::Kernel& kernelNoBoundsCheck   = binaryTransformKernels[1];
-        ::cl::Kernel k;
-
-        cl_int l_Error = CL_SUCCESS;
-        const size_t wgSize  = kernelNoBoundsCheck.getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.device( ), &l_Error );
-        V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
-        assert( (wgSize & (wgSize-1) ) == 0 ); // The bitwise &,~ logic below requires wgSize to be a power of 2
-
-        size_t wgMultiple = distVec;
-        size_t lowerBits = ( distVec & (wgSize-1) );
-        if( lowerBits )
-        {
-            //  Bump the workitem count to the next multiple of wgSize
-            wgMultiple &= ~lowerBits;
-            wgMultiple += wgSize;
-            k = kernelWithBoundsCheck;
-        }
-        else
-        {
-            k = kernelNoBoundsCheck;
-        }
-
-        //control::buffPointer constIterBuff = ctl.acquireBuffer( sizeof( iType2 ), CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &first2 );
-        iType2 constValue = *first2;
-
-        k.setArg(0, first1->getBuffer( ) );
-        k.setArg(1, constValue );
-        k.setArg(2, result->getBuffer( ) );
-        k.setArg(3, distVec );
-        k.setArg(4, *userFunctor);
 
         ::cl::Event transformEvent;
         l_Error = ctl.commandQueue().enqueueNDRangeKernel(
@@ -527,12 +432,23 @@ template< typename InputIterator1, typename InputIterator2, typename OutputItera
         static boost::once_flag initOnlyOnce;
         static std::vector< ::cl::Kernel > unaryTransformKernels;
 
-        // For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retreive the name here.
-        if (boost::is_same<iType, oType>::value) {
-            boost::call_once( initOnlyOnce, boost::bind( CallCompiler_UnaryTransform::init_, &unaryTransformKernels, cl_code + ClCode<iType>::get() + ClCode<UnaryFunction>::get(), TypeName< iType >::get( ), TypeName< oType >::get( ), TypeName< UnaryFunction >::get( ), &ctl ) );
-        } else {
-            boost::call_once( initOnlyOnce, boost::bind( CallCompiler_UnaryTransform::init_, &unaryTransformKernels, cl_code + ClCode<iType>::get() + ClCode<oType>::get() + ClCode<UnaryFunction>::get(), TypeName< iType >::get( ), TypeName< oType >::get( ), TypeName< UnaryFunction >::get( ), &ctl ) );
+        kernelParams args( TypeName< iType >::get( ), TypeName< DVInputIterator >::get( ), "", 
+            "", TypeName< oType >::get( ), TypeName< DVOutputIterator >::get( ), 
+            TypeName< UnaryFunction >::get( ) );
+
+        std::string typeDefinitions = cl_code + ClCode< UnaryFunction >::get( ) + ClCode< iType >::get( );
+        if( !boost::is_same<iType, oType>::value )
+        {
+            typeDefinitions += ClCode<oType>::get( );
         }
+        typeDefinitions += ClCode< DVInputIterator >::get( );
+        if( !boost::is_same<DVInputIterator, DVOutputIterator>::value )
+        {
+            typeDefinitions += ClCode< DVOutputIterator >::get( );
+        }
+
+        boost::call_once( initOnlyOnce, boost::bind( CallCompiler_UnaryTransform::init_, &unaryTransformKernels, 
+            typeDefinitions, &args, &ctl ) );
 
         const ::cl::Kernel& kernelWithBoundsCheck = unaryTransformKernels[0];
         const ::cl::Kernel& kernelNoBoundsCheck   = unaryTransformKernels[1];
@@ -560,10 +476,12 @@ template< typename InputIterator1, typename InputIterator2, typename OutputItera
         //void* h_result = (void*)ctl.commandQueue().enqueueMapBuffer( userFunctor, true, CL_MAP_READ, 0, sizeof(aligned_functor), NULL, NULL, &l_Error );
         //V_OPENCL( l_Error, "Error calling map on the result buffer" );
 
-        k.setArg(0, first->getBuffer( ) );
-        k.setArg(1, result->getBuffer( ) );
-        k.setArg(2, distVec );
-        k.setArg(3, *userFunctor);
+        k.setArg(0, first.getBuffer( ) );
+        k.setArg(1, first.m_Index );
+        k.setArg(2, result.getBuffer( ) );
+        k.setArg(3, result.m_Index );
+        k.setArg(4, distVec );
+        k.setArg(5, *userFunctor);
 
         ::cl::Event transformEvent;
         l_Error = ctl.commandQueue().enqueueNDRangeKernel(

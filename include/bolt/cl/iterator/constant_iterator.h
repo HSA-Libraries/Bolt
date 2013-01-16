@@ -20,6 +20,8 @@
 #include "bolt/cl/bolt.h"
 #include "bolt/cl/iterator/iterator_traits.h"
 
+#include <boost/iterator/iterator_facade.hpp>
+
 namespace bolt {
 namespace cl {
 
@@ -30,65 +32,131 @@ namespace cl {
 
     //  This represents the host side definition of the constant_iterator template
     //BOLT_TEMPLATE_FUNCTOR3( constant_iterator, int, float, double,
-        template< typename T >
-        class constant_iterator
+        template< typename value_type >
+        class constant_iterator: public boost::iterator_facade< constant_iterator< value_type >, value_type, 
+            constant_iterator_tag, value_type, int >
         {
         public:
-            typedef constant_iterator_tag iterator_category;
-            typedef T value_type;
-            typedef size_t difference_type;
-            typedef size_t size_type;
-            typedef T* pointer;
-            typedef T& reference;
 
-            constant_iterator( value_type init ): m_constValue( init )
-            {};
+            //  Basic constructor requires a reference to the container and a positional element
+            constant_iterator( value_type init, const control& ctl = control::getDefault( ) ): m_constValue( init )
+            {
+                const ::cl::CommandQueue& m_commQueue = ctl.commandQueue( );
 
-            value_type operator[]( size_type ) const
+                //  We want to use the context from the passed in commandqueue to initialize our buffer
+                cl_int l_Error = CL_SUCCESS;
+                ::cl::Context l_Context = m_commQueue.getInfo< CL_QUEUE_CONTEXT >( &l_Error );
+                V_OPENCL( l_Error, "device_vector failed to query for the context of the ::cl::CommandQueue object" );
+
+                m_devMemory = ::cl::Buffer( l_Context, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR | CL_MEM_COPY_HOST_PTR,
+                    1 * sizeof( value_type ), &m_constValue );
+            }
+
+            //  This copy constructor allows an iterator to convert into a const_iterator, but not vica versa
+            template< typename OtherType >
+            constant_iterator( const constant_iterator< OtherType >& rhs ): m_Index( rhs.m_Index )
+            {}
+
+            //  This copy constructor allows an iterator to convert into a const_iterator, but not vica versa
+            constant_iterator< value_type >& operator= ( const constant_iterator< value_type >& rhs )
+            {
+                m_constValue = rhs.m_constValue;
+                return *this;
+            }
+                
+            constant_iterator< value_type >& operator+= ( const typename iterator_facade::difference_type & n )
+            {
+                advance( n );
+                return *this;
+            }
+                
+            const constant_iterator< value_type > operator+ ( const typename iterator_facade::difference_type & n ) const
+            {
+                constant_iterator< value_type > result( *this );
+                result.advance( n );
+                return result;
+            }
+
+            const ::cl::Buffer& getBuffer( ) const
+            {
+                return m_devMemory;
+            }
+
+            static const typename iterator_facade::difference_type m_Index = 0;
+
+        private:
+            //  Implementation detail of boost.iterator
+            friend class boost::iterator_core_access;
+
+            //  Used for templatized copy constructor and the templatized equal operator
+            template < typename > friend class constant_iterator;
+
+            //  For a constant_iterator, do nothing on an advance
+            void advance( typename iterator_facade::difference_type )
+            {
+            }
+
+            void increment( )
+            {
+                advance( 1 );
+            }
+
+            void decrement( )
+            {
+                advance( -1 );
+            }
+
+            difference_type distance_to( const constant_iterator< value_type >& rhs ) const
+            {
+                return static_cast< typename iterator_facade::difference_type >( 1 );
+            }
+
+            template< typename OtherType >
+            bool equal( const constant_iterator< OtherType >& rhs ) const
+            {
+                bool sameIndex = rhs.m_constValue == m_constValue;
+
+                return sameIndex;
+            }
+
+            reference dereference( ) const
             {
                 return m_constValue;
             }
 
-            value_type operator*( ) const
-            {
-                return m_constValue;
-            }
-
-            //  Implementation 
+            ::cl::Buffer m_devMemory;
             value_type m_constValue;
-            static const size_t m_Index = 0;
         };
     //)
 
     //  This string represents the device side definition of the constant_iterator template
     static std::string deviceConstantIterator = STRINGIFY_CODE( 
-        template< typename T >
-        class constant_iterator
-        {
-        public:
-            typedef int iterator_category;      // device code does not understand std:: tags
-            typedef T value_type;
-            typedef size_t difference_type;
-            typedef size_t size_type;
-            typedef T* pointer;
-            typedef T& reference;
+        template< typename T > \n
+        class constant_iterator \n
+        { \n
+        public: \n
+            typedef int iterator_category;      // device code does not understand std:: tags \n
+            typedef T value_type; \n
+            typedef size_t difference_type; \n
+            typedef size_t size_type; \n
+            typedef T* pointer; \n
+            typedef T& reference; \n
 
-            constant_iterator( value_type init ): m_constValue( init )
-            {};
+            constant_iterator( value_type init ): m_constValue( init ) \n
+            {}; \n
 
-            value_type operator[]( size_type ) const
-            {
-                return m_constValue;
-            }
+            size_type operator[]( size_type threadID ) const \n
+            { \n
+                return 0; \n
+            } \n
 
-            value_type operator*( ) const
-            {
-                return m_constValue;
-            }
+            size_type operator*( ) const \n
+            { \n
+                return 0; \n
+            } \n
 
-            value_type  m_constValue;
-            static const size_t m_Index = 0;
-        };
+            value_type  m_constValue; \n
+        }; \n
     );
 
     BOLT_CREATE_TYPENAME( constant_iterator<int> );

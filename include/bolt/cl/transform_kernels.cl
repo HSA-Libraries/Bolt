@@ -1,122 +1,93 @@
-/***************************************************************************                                                                                     
-*   Copyright 2012 Advanced Micro Devices, Inc.                                     
-*                                                                                    
-*   Licensed under the Apache License, Version 2.0 (the "License");   
-*   you may not use this file except in compliance with the License.                 
-*   You may obtain a copy of the License at                                          
-*                                                                                    
-*       http://www.apache.org/licenses/LICENSE-2.0                      
-*                                                                                    
-*   Unless required by applicable law or agreed to in writing, software              
-*   distributed under the License is distributed on an "AS IS" BASIS,              
-*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.         
-*   See the License for the specific language governing permissions and              
-*   limitations under the License.                                                   
+/***************************************************************************
+*   Copyright 2012 Advanced Micro Devices, Inc.
+*
+*   Licensed under the Apache License, Version 2.0 (the "License");
+*   you may not use this file except in compliance with the License.
+*   You may obtain a copy of the License at
+*
+*       http://www.apache.org/licenses/LICENSE-2.0
+*
+*   Unless required by applicable law or agreed to in writing, software
+*   distributed under the License is distributed on an "AS IS" BASIS,
+*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+*   See the License for the specific language governing permissions and
+*   limitations under the License.
 
-***************************************************************************/                                                                                     
+***************************************************************************/
 
-template <typename iType, typename oType, typename binary_function>
+template< typename iNakedType1, typename iIterType1, typename iNakedType2, typename iIterType2, typename oNakedType, 
+    typename oIterType, typename binary_function >
 kernel
-void transformTemplate (global iType* A,
-			global iType* B,
-			global oType* Z,
-			const uint length,
-			global binary_function *userFunctor)
+void transformTemplate (
+            global iNakedType1* A_ptr,
+            iIterType1 A_iter,
+            global iNakedType2* B_ptr,
+            iIterType2 B_iter,
+            global oNakedType* Z_ptr,
+            oIterType Z_iter,
+            const uint length,
+            global binary_function* userFunctor )
 {
-	int gx = get_global_id (0);
-	if (gx >= length)
-		return;
-
-	iType aa = A[gx];
-	iType bb = B[gx];
-	Z[gx] = (*userFunctor)(aa, bb);
-}
-
-template <typename iType, typename oType, typename binary_function>
-kernel
-void transformNoBoundsCheckTemplate (global iType* A,
-			global iType* B,
-			global oType* Z,
-			const uint length,
-			global binary_function *userFunctor)
-{
-	int gx = get_global_id (0);  // * _BOLT_UNROLL; 
-
-	iType aa0 = A[gx+0];
-	//iType aa1 = A[gx+1];
-
-	iType bb0 = B[gx+0];
-	//iType bb1 = B[gx+1];
-
-	Z[gx+0] = (*userFunctor)(aa0, bb0);
-	//Z[gx+1] = (*userFunctor)(aa1, bb1);
-}
-
-template <typename iType, typename FancyType, typename oType, typename binary_function>
-kernel
-void transformFancyTemplate( 
-    global iType* A,
-    FancyType B,
-    global oType* Z,
-    const uint length,
-    global binary_function *userFunctor)
-{
-    int gx = get_global_id (0);
+    int gx = get_global_id( 0 );
     if (gx >= length)
         return;
 
-    iType aa = A[gx];
-    iType bb = B[gx];
-    Z[gx] = (*userFunctor)(aa, bb);
+    iNakedType1 aa = *(A_ptr + A_iter[ gx ]);
+    iNakedType2 bb = *(B_ptr + B_iter[ gx ]);
+    *(Z_ptr + Z_iter[ gx ]) = (*userFunctor)( aa, bb );
 }
 
-template <typename iType, typename FancyType, typename oType, typename binary_function>
+template< typename iNakedType1, typename iIterType1, typename iNakedType2, typename iIterType2, typename oNakedType, 
+    typename oIterType, typename binary_function >
 kernel
-void transformNoBoundsCheckFancyTemplate(
-    global iType* A,
-    FancyType B,
-    global oType* Z,
-    const uint length,
-    global binary_function *userFunctor)
+void transformNoBoundsCheckTemplate (
+            global iNakedType1* A_ptr,
+            iIterType1 A_iter,
+            global iNakedType2* B_ptr,
+            iIterType2 B_iter,
+            global oNakedType* Z_ptr,
+            oIterType Z_iter,
+            const uint length,
+            global binary_function* userFunctor)
 {
-    int gx = get_global_id (0);  // * _BOLT_UNROLL; 
+    int gx = get_global_id( 0 );
 
-    iType aa0 = A[gx+0];
-    iType bb0 = B[gx+0];
+    iNakedType1 aa = *(A_ptr + A_iter[ gx ]);
+    iNakedType2 bb = *(B_ptr + B_iter[ gx ]);
 
-    Z[gx+0] = (*userFunctor)(aa0, bb0);
+    *(Z_ptr + Z_iter[ gx ]) = (*userFunctor)( aa, bb );
 }
 
-template <typename iType, typename oType, typename unary_function>
+template <typename iNakedType, typename iIterType, typename oNakedType, typename oIterType, typename unary_function >
 kernel
-void unaryTransformTemplate(global iType* A,
-			global oType* Z,
-			const uint length,
-			global unary_function *userFunctor)
+void unaryTransformTemplate(
+            global iNakedType* A_ptr,
+            iIterType A_iter,
+            global oNakedType* Z_ptr,
+            oIterType Z_iter,
+            const uint length,
+            global unary_function* userFunctor)
 {
-	int gx = get_global_id (0);
-	if (gx >= length)
-		return;
+    int gx = get_global_id( 0 );
+    if (gx >= length)
+        return;
 
-	iType aa = A[gx];
-	Z[gx] = (*userFunctor)(aa); 
+    iNakedType aa = *(A_ptr + A_iter[ gx ]);
+    *(Z_ptr + Z_iter[ gx ]) = (*userFunctor)( aa );
 }
 
-template <typename iType, typename oType, typename unary_function>
+template <typename iNakedType, typename iIterType, typename oNakedType, typename oIterType, typename unary_function >
 kernel
-void unaryTransformNoBoundsCheckTemplate(global iType* A,
-			global oType* Z,
-			const uint length,
-			global unary_function *userFunctor)
+void unaryTransformNoBoundsCheckTemplate(
+            global iNakedType* A_ptr,
+            iIterType A_iter,
+            global oNakedType* Z_ptr,
+            oIterType Z_iter,
+            const uint length,
+            global unary_function* userFunctor)
 {
-	int gx = get_global_id (0);  //  *_BOLT_UNROLL;
+    int gx = get_global_id( 0 );
 
-	iType aa0 = A[gx+0];
-	//iType aa1 = A[gx+1];
-
-	oType z0 = (*userFunctor)(aa0); 
-	//oType z1 = (*userFunctor)(aa1); 
-
-	Z[gx+0] = z0;
-	//Z[gx+1] = z1;
+    iNakedType aa = *(A_ptr + A_iter[ gx ]);
+    *(Z_ptr + Z_iter[ gx ]) = (*userFunctor)( aa );
 }
