@@ -18,7 +18,7 @@
 #define TEST_DOUBLE 0
 #define TEST_DEVICE_VECTOR 1
 #define TEST_CPU_DEVICE 0
-#define GOOGLE_TEST 1
+#define GOOGLE_TEST 0
 #if (GOOGLE_TEST == 1)
 
 #include "common/stdafx.h"
@@ -1251,16 +1251,19 @@ void BasicSortTestOfLength(size_t length)
     std::vector<T> boltInput(length);
     std::vector<T> stdBackup(length);
 	std::generate (stdInput.begin(), stdInput.end(),rand);
-    stdBackup = stdInput;
+    
     //Ascending Sort 
     size_t i;
 #if 1
     for (i=0;i<length;i++)
     {
-        boltInput[i]= (T)((stdInput[i] & 0xFFFFU) * 8787);
-		//printf("%x ",boltInput[i]);
-		stdInput[i] = boltInput[i];
+        boltInput[i]= (T)(stdInput[i]) * (0xFFFF);
+        if(i%2)
+            boltInput[i] = - boltInput[i];
+        stdInput[i] = boltInput[i];
+        //printf ("\n%d",stdInput[i]);
     }
+    stdBackup = stdInput;
 	//printf("\n");
     
     bolt::cl::sort(boltInput.begin(), boltInput.end()/*, bolt::cl::greater<T>()*/);
@@ -1296,9 +1299,7 @@ void BasicSortTestOfLength(size_t length)
     stdInput = stdBackup;
     for (i=0;i<length;i++)
     {
-        boltInput[i]= (T)((stdInput[i] & 0xFFFFU) * 8787);
-		//printf("%x ",boltInput[i]);
-		stdInput[i] = boltInput[i];
+        boltInput[i]= (T)(stdInput[i]);
     }
 	//printf("\n");
 
@@ -1511,9 +1512,9 @@ int main(int argc, char* argv[])
 {
 
     //UDDSortTestOfLengthWithDeviceVector<int>(256);
-    BasicSortTestOfLength<unsigned int>(2097159/*131072/*65536/*33554432/*16777216/*atoi(argv[1])*/);
+    BasicSortTestOfLength<unsigned int>(16777216/*256/*65536/*2097152/*131072/*33554432/*atoi(argv[1])*/);
 	//BasicSortTestOfLength<unsigned int>(4096);
-    //BasicSortTestOfLength<int>(512);
+    //BasicSortTestOfLength<int>(2097159);
     //BasicSortTestOfLength<int>(111);
     //BasicSortTestOfLength<int>(65);
     //BasicSortTestOfLength<int>(63);
