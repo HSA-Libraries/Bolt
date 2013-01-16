@@ -117,7 +117,7 @@ namespace bolt {
 
                 };
             };
-
+#ifdef ENABLE_TBB
             /*For documentation on the reduce object see below link
              *http://threadingbuildingblocks.org/docs/help/reference/algorithms/parallel_reduce_func.htm
              *The imperative form of parallel_reduce is used. 
@@ -147,7 +147,7 @@ namespace bolt {
                     value = op(value,rhs.value);
                 }
             };
-
+#endif
 
             template<typename T, typename DVInputIterator, typename BinaryFunction> 
             T reduce_detect_random_access(bolt::cl::control &ctl, 
@@ -202,10 +202,16 @@ namespace bolt {
                     throw ::cl::Error( CL_INVALID_OPERATION, "The SerialCpu version of reduce is not implemented yet." );
                     return init;
                 } else if (runMode == bolt::cl::control::MultiCoreCpu) {
+#ifdef ENABLE_TBB
                     std::cout << "The MultiCoreCpu version of reduce uses TBB." << std ::endl;
                     Reduce<iType, BinaryFunction> reduce_op(binary_op, init);
                     tbb::parallel_reduce( tbb::blocked_range<iType*>( &*first, (iType*)&*(last-1) + 1), reduce_op );
                     return reduce_op.value;
+#else
+                    std::cout << "The MultiCoreCpu version of reduce is not enabled. " << std ::endl;
+                    throw ::cl::Error( CL_INVALID_OPERATION, "The SerialCpu version of reduce is not implemented yet." );
+                    return init;
+#endif
                 } else {
                     device_vector< iType > dvInput( first, last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, ctl );
                     return reduce_enqueue( ctl, dvInput.begin(), dvInput.end(), init, binary_op, cl_code);

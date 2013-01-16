@@ -40,7 +40,7 @@ endif( )
 include_directories( ${Boost_INCLUDE_DIRS} )
 
 # Include standard OpenCL headers
-include_directories( ${OPENCL_INCLUDE_DIRS} ${BOLT_CL_TEST_DIR} $(TBBROOT)/include) 
+include_directories( ${OPENCL_INCLUDE_DIRS} ${BOLT_CL_TEST_DIR} ) 
 
 add_subdirectory( ControlTest )
 add_subdirectory( CopyTest )
