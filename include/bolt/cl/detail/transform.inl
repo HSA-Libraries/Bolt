@@ -391,14 +391,14 @@ template< typename InputIterator1, typename InputIterator2, typename OutputItera
             k = kernelNoBoundsCheck;
         }
 
-        k.setArg(0, first1.getBuffer( ) );
-        k.setArg(1, first1.m_Index );
-        k.setArg(2, first2.getBuffer( ) );
-        k.setArg(3, first2.m_Index );
-        k.setArg(4, result.getBuffer( ) );
-        k.setArg(5, result.m_Index );
-        k.setArg(6, distVec );
-        k.setArg(7, *userFunctor);
+        k.setArg( 0, first1.getBuffer( ) );
+        k.setArg( 1, first1.gpuPayloadSize( ), &first1.gpuPayload( ) );
+        k.setArg( 2, first2.getBuffer( ) );
+        k.setArg( 3, first2.gpuPayloadSize( ), &first2.gpuPayload( ) );
+        k.setArg( 4, result.getBuffer( ) );
+        k.setArg( 5, result.gpuPayloadSize( ), &result.gpuPayload( ) );
+        k.setArg( 6, distVec );
+        k.setArg( 7, *userFunctor);
 
         ::cl::Event transformEvent;
         l_Error = ctl.commandQueue().enqueueNDRangeKernel(
@@ -476,10 +476,19 @@ template< typename InputIterator1, typename InputIterator2, typename OutputItera
         //void* h_result = (void*)ctl.commandQueue().enqueueMapBuffer( userFunctor, true, CL_MAP_READ, 0, sizeof(aligned_functor), NULL, NULL, &l_Error );
         //V_OPENCL( l_Error, "Error calling map on the result buffer" );
 
+        struct iterContainer
+        {
+            int m_Index;
+            int m_Ptr;
+        };
+
+        iterContainer inPar = { first.m_Index, 0 };
+        iterContainer resPar = { result.m_Index, 0 };
+
         k.setArg(0, first.getBuffer( ) );
-        k.setArg(1, first.m_Index );
+        k.setArg(1, sizeof( iterContainer ), &inPar );
         k.setArg(2, result.getBuffer( ) );
-        k.setArg(3, result.m_Index );
+        k.setArg(3, sizeof( iterContainer ), &resPar );
         k.setArg(4, distVec );
         k.setArg(5, *userFunctor);
 

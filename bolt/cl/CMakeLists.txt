@@ -82,6 +82,7 @@ set( clBolt.Runtime.Headers
         ${clBolt.Include.Dir}/transform_reduce.h
         ${clBolt.Include.Dir}/iterator/iterator_traits.h 
         ${clBolt.Include.Dir}/iterator/constant_iterator.h
+        ${clBolt.Include.Dir}/iterator/counting_iterator.h
         ${clBolt.Include.Dir}/transform_scan.h
     )
 

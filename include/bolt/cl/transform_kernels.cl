@@ -32,9 +32,14 @@ void transformTemplate (
     if (gx >= length)
         return;
 
-    iNakedType1 aa = *(A_ptr + A_iter[ gx ]);
-    iNakedType2 bb = *(B_ptr + B_iter[ gx ]);
-    *(Z_ptr + Z_iter[ gx ]) = (*userFunctor)( aa, bb );
+    A_iter.init( A_ptr );
+    B_iter.init( B_ptr );
+    Z_iter.init( Z_ptr );
+    
+    iNakedType1 aa = A_iter[ gx ];
+    iNakedType2 bb = B_iter[ gx ];
+    
+    Z_iter[ gx ] = (*userFunctor)( aa, bb );
 }
 
 template< typename iNakedType1, typename iIterType1, typename iNakedType2, typename iIterType2, typename oNakedType, 
@@ -51,11 +56,14 @@ void transformNoBoundsCheckTemplate (
             global binary_function* userFunctor)
 {
     int gx = get_global_id( 0 );
+    A_iter.init( A_ptr );
+    B_iter.init( B_ptr );
+    Z_iter.init( Z_ptr );
 
-    iNakedType1 aa = *(A_ptr + A_iter[ gx ]);
-    iNakedType2 bb = *(B_ptr + B_iter[ gx ]);
-
-    *(Z_ptr + Z_iter[ gx ]) = (*userFunctor)( aa, bb );
+    iNakedType1 aa = A_iter[ gx ];
+    iNakedType2 bb = B_iter[ gx ];
+    
+    Z_iter[ gx ] = (*userFunctor)( aa, bb );
 }
 
 template <typename iNakedType, typename iIterType, typename oNakedType, typename oIterType, typename unary_function >
@@ -72,8 +80,11 @@ void unaryTransformTemplate(
     if (gx >= length)
         return;
 
-    iNakedType aa = *(A_ptr + A_iter[ gx ]);
-    *(Z_ptr + Z_iter[ gx ]) = (*userFunctor)( aa );
+    A_iter.init( A_ptr );
+    Z_iter.init( Z_ptr );
+
+    iNakedType aa = A_iter[ gx ];
+    Z_iter[ gx ] = (*userFunctor)( aa );
 }
 
 template <typename iNakedType, typename iIterType, typename oNakedType, typename oIterType, typename unary_function >
@@ -88,6 +99,9 @@ void unaryTransformNoBoundsCheckTemplate(
 {
     int gx = get_global_id( 0 );
 
-    iNakedType aa = *(A_ptr + A_iter[ gx ]);
-    *(Z_ptr + Z_iter[ gx ]) = (*userFunctor)( aa );
+    A_iter.init( A_ptr );
+    Z_iter.init( Z_ptr );
+
+    iNakedType aa = A_iter[ gx ];
+    Z_iter[ gx ] = (*userFunctor)( aa );
 }

@@ -20,7 +20,9 @@
 #include <array>
 
 #include "bolt/cl/iterator/constant_iterator.h"
+#include "bolt/cl/iterator/counting_iterator.h"
 #include "bolt/cl/transform.h"
+#include "bolt/cl/reduce.h"
 #include "bolt/cl/functional.h"
 #include "bolt/miniDump.h"
 #include "bolt/unicode.h"
@@ -152,8 +154,13 @@ template< typename S, typename B >
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Fixture classes are now defined to enable googletest to process value parameterized tests
 
+//  Can't get tests to stop warning on floating point
+// typedef ::testing::Types< int, float, double > StdTypes;
+typedef ::testing::Types< int > StdTypes;
+
 //  ::testing::TestWithParam< int > means that GetParam( ) returns int values, which i use for array size
-class ConstantIterator: public ::testing::TestWithParam< int >
+template< typename Type >
+class ConstantIterator: public ::testing::Test
 {
 public:
     //  Create an std and a bolt vector of requested size, and initialize all the elements to 1
@@ -162,25 +169,41 @@ public:
 
 protected:
 };
+TYPED_TEST_CASE_P( ConstantIterator );
 
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::constant_iterator, int, char );
-
-//TEST_P( ConstantIterator, Dereference )
-TEST( ConstantIterator, Dereference )
+//  ::testing::TestWithParam< int > means that GetParam( ) returns int values, which i use for array size
+template< typename Type >
+class CountingIterator: public ::testing::Test
 {
-    bolt::cl::constant_iterator< int > cIter( 3 );
+public:
+    //  Create an std and a bolt vector of requested size, and initialize all the elements to 1
+    CountingIterator( )
+    {}
 
-    //std::cout << TypeName< bolt::cl::constant_iterator< int > >::get( ) << std::endl;
-    //std::cout << ClCode< bolt::cl::constant_iterator< int > >::get( ) << std::endl << std::endl;
+protected:
+};
+TYPED_TEST_CASE_P( CountingIterator );
 
-    //std::cout << TypeName< bolt::cl::constant_iterator< float > >::get( ) << std::endl;
-    //std::cout << ClCode< bolt::cl::constant_iterator< float > >::get( ) << std::endl << std::endl;
+//BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::constant_iterator, int, char );
+//
+//TEST( ConstantIterator, PrintClCode )
+//{
+//    std::cout << TypeName< bolt::cl::constant_iterator< int > >::get( ) << std::endl;
+//    std::cout << ClCode< bolt::cl::constant_iterator< int > >::get( ) << std::endl << std::endl;
+//
+//    std::cout << TypeName< bolt::cl::constant_iterator< float > >::get( ) << std::endl;
+//    std::cout << ClCode< bolt::cl::constant_iterator< float > >::get( ) << std::endl << std::endl;
+//
+//    std::cout << TypeName< bolt::cl::constant_iterator< double > >::get( ) << std::endl;
+//    std::cout << ClCode< bolt::cl::constant_iterator< double > >::get( ) << std::endl << std::endl;
+//
+//    std::cout << TypeName< bolt::cl::constant_iterator< char > >::get( ) << std::endl;
+//    std::cout << ClCode< bolt::cl::constant_iterator< char > >::get( ) << std::endl << std::endl;
+//}
 
-    //std::cout << TypeName< bolt::cl::constant_iterator< double > >::get( ) << std::endl;
-    //std::cout << ClCode< bolt::cl::constant_iterator< double > >::get( ) << std::endl << std::endl;
-
-    //std::cout << TypeName< bolt::cl::constant_iterator< char > >::get( ) << std::endl;
-    //std::cout << ClCode< bolt::cl::constant_iterator< char > >::get( ) << std::endl << std::endl;
+TYPED_TEST_P( ConstantIterator, HostSideNaive )
+{
+    bolt::cl::constant_iterator< TypeParam > cIter( 3 );
 
     EXPECT_EQ( 3, *cIter );
     EXPECT_EQ( 3, cIter[ 0 ] );
@@ -188,51 +211,82 @@ TEST( ConstantIterator, Dereference )
     EXPECT_EQ( 3, cIter[ 100 ] );
 }
 
-//TEST_P( ConstantIterator, Transform )
-TEST( ConstantIterator, StdTransformVector )
+TYPED_TEST_P( ConstantIterator, StdTransformVector )
 {
-    std::vector< int > data( 4 );
-    data[ 0 ] = 1;
-    data[ 1 ] = 10;
-    data[ 2 ] = 100;
-    data[ 3 ] = 1000;
+    std::vector< TypeParam > stdVec( 4 );
+    stdVec[ 0 ] = 1;
+    stdVec[ 1 ] = 10;
+    stdVec[ 2 ] = 100;
+    stdVec[ 3 ] = 1000;
 
-    // add 10 to all values in data
-    bolt::cl::transform( data.begin( ), data.end( ), bolt::cl::make_constant_iterator( 50 ),
-                      data.begin( ), bolt::cl::plus< int >( ) );
+    // Transform the array, adding 42 to the entire vector
+    bolt::cl::transform( stdVec.begin( ), stdVec.end( ), bolt::cl::make_constant_iterator( 42 ),
+                      stdVec.begin( ), bolt::cl::plus< TypeParam >( ) );
 
-    EXPECT_EQ( 51, data[ 0 ] );
-    EXPECT_EQ( 60, data[ 1 ] );
-    EXPECT_EQ( 150, data[ 2 ] );
-    EXPECT_EQ( 1050, data[ 3 ] );
+    EXPECT_EQ( 43, stdVec[ 0 ] );
+    EXPECT_EQ( 52, stdVec[ 1 ] );
+    EXPECT_EQ( 142, stdVec[ 2 ] );
+    EXPECT_EQ( 1042, stdVec[ 3 ] );
 }
 
-TEST( ConstantIterator, DeviceTransformVector )
+TYPED_TEST_P( ConstantIterator, DeviceTransformVector )
 {
-    bolt::cl::device_vector< int > data( 4 );
-    data[ 0 ] = 1;
-    data[ 1 ] = 10;
-    data[ 2 ] = 100;
-    data[ 3 ] = 1000;
+    bolt::cl::device_vector< TypeParam > devVec( 4 );
+    devVec[ 0 ] = 1;
+    devVec[ 1 ] = 10;
+    devVec[ 2 ] = 100;
+    devVec[ 3 ] = 1000;
 
-    //std::cout << TypeName< bolt::cl::device_vector< int >::iterator >::get( ) << std::endl;
-    //std::cout << ClCode< bolt::cl::device_vector< int >::iterator >::get( ) << std::endl << std::endl;
+    // Transform the array, adding 42 to the entire vector
+    bolt::cl::transform( devVec.begin( ), devVec.end( ), bolt::cl::make_constant_iterator( 42 ),
+                      devVec.begin( ), bolt::cl::plus< TypeParam >( ) );
 
-    //std::cout << TypeName< bolt::cl::device_vector< float >::iterator >::get( ) << std::endl;
-    //std::cout << ClCode< bolt::cl::device_vector< float >::iterator >::get( ) << std::endl << std::endl;
-
-    //std::cout << TypeName< bolt::cl::device_vector< double >::iterator >::get( ) << std::endl;
-    //std::cout << ClCode< bolt::cl::device_vector< double >::iterator >::get( ) << std::endl << std::endl;
-
-    // add 10 to all values in data
-    bolt::cl::transform( data.begin( ), data.end( ), bolt::cl::make_constant_iterator( 50 ),
-                      data.begin( ), bolt::cl::plus< int >( ) );
-
-    EXPECT_EQ( 51, data[ 0 ] );
-    EXPECT_EQ( 60, data[ 1 ] );
-    EXPECT_EQ( 150, data[ 2 ] );
-    EXPECT_EQ( 1050, data[ 3 ] );
+    EXPECT_EQ( 43, devVec[ 0 ] );
+    EXPECT_EQ( 52, devVec[ 1 ] );
+    EXPECT_EQ( 142, devVec[ 2 ] );
+    EXPECT_EQ( 1042, devVec[ 3 ] );
 }
+
+REGISTER_TYPED_TEST_CASE_P( ConstantIterator, HostSideNaive, StdTransformVector, DeviceTransformVector );
+
+INSTANTIATE_TYPED_TEST_CASE_P( TypedTests, ConstantIterator, StdTypes );
+
+TYPED_TEST_P( CountingIterator, HostSideNaive )
+{
+    bolt::cl::counting_iterator< TypeParam > iter( 42 );
+
+    EXPECT_EQ( 42, iter[ 0 ] );
+    EXPECT_EQ( 45, iter[ 3 ] );
+    EXPECT_EQ( 142, iter[ 100 ] );
+}
+
+TYPED_TEST_P( CountingIterator, StdTransformVector )
+{
+    // initialize the data vector to be sequential numbers
+    std::vector< TypeParam > stdVec( 3 );
+    bolt::cl::transform( stdVec.begin( ), stdVec.end( ), bolt::cl::make_counting_iterator( 42 ), stdVec.begin( ),
+        bolt::cl::plus< TypeParam >( ) );
+
+    EXPECT_EQ( 42, stdVec[ 0 ] );
+    EXPECT_EQ( 43, stdVec[ 1 ] );
+    EXPECT_EQ( 44, stdVec[ 2 ] );
+}
+
+TYPED_TEST_P( CountingIterator, DeviceTransformVector )
+{
+    // initialize the data vector to be sequential numbers
+    std::vector< TypeParam > devVec( 3 );
+    bolt::cl::transform( devVec.begin( ), devVec.end( ), bolt::cl::make_counting_iterator( 42 ), devVec.begin( ),
+        bolt::cl::plus< TypeParam >( ) );
+
+    EXPECT_EQ( 42, devVec[ 0 ] );
+    EXPECT_EQ( 43, devVec[ 1 ] );
+    EXPECT_EQ( 44, devVec[ 2 ] );
+}
+
+REGISTER_TYPED_TEST_CASE_P( CountingIterator, HostSideNaive, StdTransformVector, DeviceTransformVector );
+
+INSTANTIATE_TYPED_TEST_CASE_P( TypedTests, CountingIterator, StdTypes );
 
 /* /brief List of possible tests
  * Two input transform with first input a constant iterator

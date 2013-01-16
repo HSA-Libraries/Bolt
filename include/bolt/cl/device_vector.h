@@ -189,12 +189,19 @@ namespace cl
         *   \bug operator[] with device_vector iterators result in a compile-time error when accessed for reading.
         *   Writing with operator[] appears to be OK.  Workarounds: either use the operator[] on the device_vector
         *   container, or use iterator arithmetic instead, such as *(iter + 5) for reading from the iterator.
+        *   \note The difference_type for this iterator has been explicitely set to a 32-bit int, because m_Index 
+        *   is used in clSetKernelArg(), which does not accept size_t parameters
         */
         template< typename Container >
         class iterator_base: public boost::iterator_facade< iterator_base< Container >, value_type, device_vector_tag, 
             typename device_vector::reference, int >
         {
         public:
+            struct Payload
+            {
+                typename iterator_facade::difference_type m_Index;
+                typename iterator_facade::difference_type m_Ptr;        // This is a pseudo 32bit pointer stub
+            };
 
             //  Basic constructor requires a reference to the container and a positional element
             iterator_base( Container& rhs, typename iterator_facade::difference_type index ): m_Container( rhs ), m_Index( index )
@@ -247,6 +254,17 @@ namespace cl
             ::cl::Buffer& getBuffer( )
             {
                 return m_Container.m_devMemory;
+            }
+
+            Payload gpuPayload( ) const
+            {
+                Payload payload = { m_Index, 0 };
+                return payload;
+            }
+
+            const typename iterator_facade::difference_type gpuPayloadSize( ) const
+            {
+                return sizeof( Payload );
             }
 
             typename iterator_facade::difference_type m_Index;
@@ -774,7 +792,7 @@ namespace cl
         */
         iterator end( void )
         {
-            return iterator( *this, m_Size );
+            return iterator( *this, static_cast< typename iterator::difference_type >( m_Size ) );
         }
 
         /*! \brief Retrieves an iterator for this container that points at the last constant element.
@@ -783,7 +801,7 @@ namespace cl
         */
         const_iterator end( void ) const
         {
-            return const_iterator( *this, m_Size );
+            return const_iterator( *this, static_cast< typename iterator::difference_type >( m_Size ) );
         }
 
         /*! \brief Retrieves an iterator for this container that points at the last constant element.
@@ -793,7 +811,7 @@ namespace cl
         */
         const_iterator cend( void ) const
         {
-            return const_iterator( *this, m_Size );
+            return const_iterator( *this, static_cast< typename iterator::difference_type >( m_Size ) );
         }
 
         reverse_iterator rend( void )
@@ -1279,20 +1297,26 @@ namespace cl
                 typedef T* pointer; \n
                 typedef T& reference; \n
 
-                iterator( value_type init ): m_Index( init ) \n
+                iterator( value_type init ): m_StartIndex( init ), m_Ptr( 0 ) \n
                 {}; \n
 
-                size_type operator[]( size_type threadID ) const \n
+                void init( global value_type* ptr )\n
                 { \n
-                    return m_Index + threadID; \n
+                    m_Ptr = ptr; \n
+                }; \n
+
+                global value_type& operator[]( size_type threadID ) const \n
+                { \n
+                    return m_Ptr[ m_StartIndex + threadID ]; \n
                 } \n
 
-                size_type operator*( ) const \n
+                value_type operator*( ) const \n
                 { \n
-                    return m_Index; \n
+                    return m_Ptr[ m_StartIndex + threadID ]; \n
                 } \n
 
-                size_type m_Index; \n
+                size_type m_StartIndex; \n
+                global value_type* m_Ptr; \n
             }; \n
         }; \n
     );
