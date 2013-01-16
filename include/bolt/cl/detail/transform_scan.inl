@@ -427,10 +427,10 @@ size_t k0_stepNum, k1_stepNum, k2_stepNum;
     typedef std::iterator_traits< DVOutputIterator >::value_type oType;
     std::vector<std::string> typeNames( 5 );
     typeNames[ transformScan_iType ] = TypeName< iType >::get( );
-    typeNames[ transformScan_oType ] = TypeName< oType >::get( ));
-    typeNames[ transformScan_initType ] = TypeName< T >::get( ));
-    typeNames[ transformScan_UnaryFunction ] = TypeName< UnaryFunction >::get());
-    typeNames[ transformScan_BinaryFunction ] = TypeName< BinaryFunction >::get());
+    typeNames[ transformScan_oType ] = TypeName< oType >::get( );
+    typeNames[ transformScan_initType ] = TypeName< T >::get( );
+    typeNames[ transformScan_UnaryFunction ] = TypeName< UnaryFunction >::get();
+    typeNames[ transformScan_BinaryFunction ] = TypeName< BinaryFunction >::get();
     
     /**********************************************************************************
      * Type Definitions - directly concatenated into kernel string

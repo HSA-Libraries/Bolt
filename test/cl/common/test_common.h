@@ -15,13 +15,17 @@
 ***************************************************************************/                                                                                     
 #include <array>
 
-#define BOLT_TEST_MAX_FAILURES 100
+#define BOLT_TEST_MAX_FAILURES 512
 
 #define BOLT_TEST_RESET_FAILURES \
     size_t numFailures = 0;
 
 #define BOLT_TEST_INCREMENT_FAILURES \
-    if ( !(ref[ i ] == calc[ i ]) ) numFailures++; \
+    if ( !(ref[ i ] == calc[ i ]) ) { \
+        numFailures++; \
+        /* std::cout << "i=" << i << ": " << ref[i] << " != " << calc[i] << std::endl;*/ \
+        printf("i=%i: %i != %i\n", i, ref[i], calc[i]); \
+    } \
     if ( numFailures > BOLT_TEST_MAX_FAILURES ) { \
         break; \
     }

@@ -165,7 +165,7 @@ uddtM3 identityMixM3 = { 0, 0.f, 1.0 };
 uddtM3 initialMixM3  = { 1, 1, 1.000001 };
 #endif
 
-
+#if 0
 template< typename T >
 ::testing::AssertionResult cmpArrays( const T ref, const T calc, size_t N )
 {
@@ -283,6 +283,10 @@ template< typename S, typename B >
 
     return ::testing::AssertionSuccess( );
 }
+#endif
+
+#include "test_common.h"
+
 
 /******************************************************************************
  *  Scan with User Defined Data Types and Operators

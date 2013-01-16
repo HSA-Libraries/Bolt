@@ -579,7 +579,7 @@ int _tmain( int argc, _TCHAR* argv[] )
                 "Length of scan array" )
             ( "iterations,i",   po::value< size_t >( &iterations )->default_value( 10 ),
                 "Number of samples in timing loop" )
-            ( "vecType,t",      po::value< size_t >( &vecType )->default_value( 2 ),
+            ( "vecType,t",      po::value< size_t >( &vecType )->default_value( 1 ),
                 "Data Type to use: 1-int, 2-int2, 4-int4, 8-int8" )
             ( "runMode,m",      po::value< size_t >( &runMode )->default_value( 0 ),
                 "Run Mode: 0-Auto, 1-SerialCPU, 2-MultiCoreCPU, 3-GPU" )

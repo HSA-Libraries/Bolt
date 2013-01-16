@@ -23,7 +23,7 @@
 #include <bolt/cl/functional.h>
 #include <bolt/cl/device_vector.h>
 
-/*! \file transform_scan.h
+/*! \file scan_by_scan.h
 */
 
 namespace bolt

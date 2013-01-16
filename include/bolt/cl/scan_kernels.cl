@@ -16,18 +16,21 @@
 ***************************************************************************/
 //#pragma OPENCL EXTENSION cl_amd_printf : enable
 
-
+#define NUM_ITER 16
+#define MIN(X,Y) X<Y?X:Y;
+#define MAX(X,Y) X>Y?X:Y;
 /******************************************************************************
  *  Kernel 2
  *****************************************************************************/
 template< typename Type, typename BinaryFunction >
 kernel void perBlockAddition( 
-                global Type* output,
-                global Type* postSumArray,
-                const uint vecSize,
-                global BinaryFunction* binaryOp
-                )
+    global Type* output,
+    global Type* postSumArray,
+    const uint vecSize,
+    global BinaryFunction* binaryOp )
 {
+// 1 thread per element
+#if 1
     size_t gloId = get_global_id( 0 );
     size_t groId = get_group_id( 0 );
     size_t locId = get_local_id( 0 );
@@ -45,6 +48,101 @@ kernel void perBlockAddition(
         Type newResult = (*binaryOp)( scanResult, postBlockSum );
         output[ gloId ] = newResult;
     }
+#endif
+
+// section increments
+#if 0
+    size_t wgSize  = get_local_size( 0 );
+    size_t wgIdx   = get_group_id( 0 );
+    size_t locId   = get_local_id( 0 );
+    size_t secSize = wgSize / NUM_ITER; // threads per section (256 element)
+    
+    size_t secIdx  = NUM_ITER*wgIdx+locId/secSize;
+    size_t elemIdx = secIdx*wgSize+locId%secSize;
+    Type postBlockSum;
+    if (secIdx==0) return;
+    postBlockSum = postSumArray[ secIdx-1 ];
+    
+    size_t maxElemIdx = MIN( vecSize, elemIdx+secSize*NUM_ITER );
+    for ( ; elemIdx<maxElemIdx; elemIdx+=secSize)
+    {
+        Type scanResult   = output[ elemIdx ];
+        Type newResult    = (*binaryOp)( scanResult, postBlockSum );
+        output[ elemIdx ] = newResult;
+    }
+
+#endif
+
+// work-group increments
+#if 0
+    size_t wgSize  = get_local_size( 0 );
+    size_t wgIdx   = get_group_id( 0 );
+    size_t locId   = get_local_id( 0 );
+    size_t secSize = wgSize;
+    
+    size_t secIdx  = NUM_ITER*wgIdx; // to be incremented
+    size_t elemIdx = secIdx*secSize+locId;
+    //Type postBlockSum;
+    //if (secIdx==0) return;
+    
+    size_t maxSecIdx = secIdx+NUM_ITER;
+    size_t maxElemIdx = MIN( vecSize, elemIdx+secSize*NUM_ITER);
+    // secIdx = MAX( 1, secIdx);
+    if (wgIdx==0) // skip
+    {
+        secIdx++;
+        elemIdx+=secSize;
+    }
+    for ( ; elemIdx<maxElemIdx; secIdx++, elemIdx+=secSize)
+    {
+        Type postBlockSum = postSumArray[ secIdx-1 ];
+        Type scanResult   = output[ elemIdx ];
+        Type newResult    = (*binaryOp)( scanResult, postBlockSum );
+        output[ elemIdx ] = newResult;
+    }
+#endif
+
+// threads increment
+#if 0
+
+    size_t wgSize  = get_local_size( 0 );
+    size_t wgIdx   = get_group_id( 0 );
+    size_t locId   = get_local_id( 0 );
+    size_t threadsPerSect = wgSize / NUM_ITER;
+    
+    size_t secIdx  = NUM_ITER*wgIdx;
+    size_t elemIdx = secIdx*wgSize+locId*NUM_ITER;
+
+    if (elemIdx < vecSize && secIdx > 0)
+    {
+        Type scanResult   = output[ elemIdx ];
+        Type postBlockSum = postSumArray[ secIdx-1 ];
+        Type newResult    = (*binaryOp)( scanResult, postBlockSum );
+        output[ elemIdx ] = newResult;
+    }
+    //secIdx++;
+    elemIdx++; //=wgSize;
+
+    for (size_t i = 1; i < NUM_ITER-1; i++)
+    {
+      Type scanResult   = output[ elemIdx ];
+      Type postBlockSum = postSumArray[ secIdx-1 ];
+      Type newResult    = (*binaryOp)( scanResult, postBlockSum );
+      output[ elemIdx ] = newResult;
+      
+      // secIdx++;
+      elemIdx++; //=wgSize;
+    }
+
+    if (elemIdx < vecSize /*&& groId > 0*/)
+    {
+        Type scanResult = output[ elemIdx ];
+        Type postBlockSum = postSumArray[ secIdx-1 ];
+        Type newResult = (*binaryOp)( scanResult, postBlockSum );
+        output[ elemIdx ] = newResult;
+    }
+
+#endif
 }
 
 
