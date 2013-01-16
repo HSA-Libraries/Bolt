@@ -28,15 +28,15 @@ project( Bolt )
 
 # Define a version for the code
 if( NOT DEFINED Bolt_VERSION_MAJOR )
-	set( Bolt_VERSION_MAJOR 0 )
+   set( Bolt_VERSION_MAJOR 0 )
 endif( )
 
 if( NOT DEFINED Bolt_VERSION_MINOR )
-	set( Bolt_VERSION_MINOR 5 )
+   set( Bolt_VERSION_MINOR 5 )
 endif( )
 
 if( NOT DEFINED Bolt_VERSION_PATCH )
-	set( Bolt_VERSION_PATCH 0 )
+   set( Bolt_VERSION_PATCH 0 )
 endif( )
 
 set( Bolt_VERSION "${Bolt_VERSION_MAJOR}.${Bolt_VERSION_MINOR}.${Bolt_VERSION_PATCH}")
@@ -195,6 +195,25 @@ if( BUILD_clBolt )
         add_subdirectory( ${BOLT_LIBRARY_DIR}/cl )
     endif( )
 endif( )
+
+# Build TBB library
+if( BUILD_TBB )
+    # This will define TBB_FOUND
+    message ("Setting up TBB paths")
+    find_package( TBB REQUIRED )
+    if ( TBB_FOUND )
+        message("TBB is found installed in the path:" ${TBB_INSTALL_DIR} )
+        #list( APPEND Bolt.Dependencies TBB )
+    else ( ) 
+        message( FATAL_ERROR "TBB not found. Install TBB and set TBB_INSTALL_DIR env variable" )
+        #message( STATUS "Setting up TBB external..." )
+        #include( ExternalTBB )
+        #message( STATUS "TBB_ROOT configured as: " ${TBB_INSTALL_DIR} )
+        #list( APPEND Bolt.Dependencies TBB )
+        #list( APPEND Bolt.Cmake.Args -DBUILD_TBB=TRUE )
+    endif( )
+endif( )
+
 
 # After libraries are built, built tests
 if( BUILD_tests )
