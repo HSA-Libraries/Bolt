@@ -15,15 +15,29 @@
 
 ############################################################################                                                                                     
 
-
 # List the names of common files to compile across all platforms
-message( STATUS "Setting up AMP specific benchmarking projects" )
+set( ampBolt.Bench.Transform.Source stdafx.cpp transform.cpp )
+set( ampBolt.Bench.Transform.Headers stdafx.h targetver.h ${BOLT_INCLUDE_DIR}/bolt/amp/transform.h )
 
-include_directories( ${BOLT_INCLUDE_DIR} )
+set( ampBolt.Bench.Transform.Files ${ampBolt.Bench.Transform.Source} ${ampBolt.Bench.Transform.Headers} )
 
-if( BUILD_ampBolt )
-	# Include standard OpenCL headers
-	add_subdirectory( Scan )
-	add_subdirectory( Reduce )
-	add_subdirectory( Transform )
-endif( )
+# Include standard OpenCL headers
+include_directories( ${Boost_INCLUDE_DIRS} )
+
+add_executable( ampBolt.Bench.Transform ${ampBolt.Bench.Transform.Files} )
+
+target_link_libraries( ampBolt.Bench.Transform ${Boost_LIBRARIES} ampBolt.Runtime )
+
+add_dependencies( ampBolt.Bench.Transform Boost )
+
+set_target_properties( ampBolt.Bench.Transform PROPERTIES VERSION ${Bolt_VERSION} )
+set_target_properties( ampBolt.Bench.Transform PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
+
+set_property( TARGET ampBolt.Bench.Transform PROPERTY FOLDER "Benchmark/AMP")
+
+# CPack configuration; include the executable into the package
+install( TARGETS ampBolt.Bench.Transform
+	RUNTIME DESTINATION ${BIN_DIR}
+	LIBRARY DESTINATION ${LIB_DIR}
+	ARCHIVE DESTINATION ${LIB_DIR}/import
+	)
