@@ -26,11 +26,12 @@
 
 #include "bolt/cl/bolt.h"
 #include "bolt/cl/functional.h"
-
+#ifdef ENABLE_TBB
 //TBB Includes
 #include "tbb/parallel_reduce.h"
 #include "tbb/blocked_range.h"
-
+#include "tbb/task_scheduler_init.h"
+#endif
 namespace bolt {
     namespace cl {
 
@@ -136,6 +137,7 @@ namespace bolt {
                 Reduce( Reduce& s, tbb::split ) : value(0) {}
                 void operator()( const tbb::blocked_range<T*>& r ) {
                     T temp = value;
+					//printf("r.size() = %d\n", r.size());
                     for( T* a=r.begin(); a!=r.end(); ++a ) {
                         temp = op(temp,*a);
                     }
@@ -204,12 +206,13 @@ namespace bolt {
                 } else if (runMode == bolt::cl::control::MultiCoreCpu) {
 #ifdef ENABLE_TBB
                     std::cout << "The MultiCoreCpu version of reduce uses TBB." << std ::endl;
+					tbb::task_scheduler_init initialize(4);
                     Reduce<iType, BinaryFunction> reduce_op(binary_op, init);
                     tbb::parallel_reduce( tbb::blocked_range<iType*>( &*first, (iType*)&*(last-1) + 1), reduce_op );
                     return reduce_op.value;
 #else
                     std::cout << "The MultiCoreCpu version of reduce is not enabled. " << std ::endl;
-                    throw ::cl::Error( CL_INVALID_OPERATION, "The SerialCpu version of reduce is not implemented yet." );
+                    throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of reduce is not enabled to be built." );
                     return init;
 #endif
                 } else {
