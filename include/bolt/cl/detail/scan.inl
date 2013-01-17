@@ -15,12 +15,24 @@
 
 ***************************************************************************/                                                
 
+//#ifndef USE_AMD_HSA
+#define USE_AMD_HSA 0
+//#endif
+
+#if USE_AMD_HSA
+#define HSA_STAT_INIT 0 // device hasn't done pre-scan
+#define HSA_STAT_DEVP1COMPLETE 1 // device has done pre-scan
+#define HSA_STAT_CPUP2COMPLETE 2 // cpu has done intermediate scan
+#define HSA_STAT_DEVP3COMPLETE 3 // gpu has done post scan
+#endif
+
 /******************************************************************************
  * OpenCL Scan
  *****************************************************************************/
 
 #define KERNEL02WAVES 4
 #define KERNEL1WAVES 4
+#define HSAWAVES 4
 #define WAVESIZE 64
 
 #if !defined( OCL_SCAN_INL )
@@ -74,7 +86,7 @@ OutputIterator inclusive_scan(
 
 template< typename InputIterator, typename OutputIterator >
 OutputIterator inclusive_scan(
-    control &ctl,
+    control &ctrl,
     InputIterator first,
     InputIterator last,
     OutputIterator result, 
@@ -83,13 +95,13 @@ OutputIterator inclusive_scan(
     typedef std::iterator_traits<InputIterator>::value_type iType;
     iType init; memset(&init, 0, sizeof(iType) );
     return detail::scan_detect_random_access(
-        ctl, first, last, result, init, true, plus< iType >( ),
+        ctrl, first, last, result, init, true, plus< iType >( ),
         std::iterator_traits< InputIterator >::iterator_category( ) );
 };
 
 template< typename InputIterator, typename OutputIterator, typename BinaryFunction > 
 OutputIterator inclusive_scan(
-    control &ctl,
+    control &ctrl,
     InputIterator first,
     InputIterator last,
     OutputIterator result,
@@ -99,7 +111,7 @@ OutputIterator inclusive_scan(
     typedef std::iterator_traits<InputIterator>::value_type iType;
     iType init; memset(&init, 0, sizeof(iType) );
     return detail::scan_detect_random_access(
-        ctl, first, last, result, init, true, binary_op,
+        ctrl, first, last, result, init, true, binary_op,
         std::iterator_traits< InputIterator >::iterator_category( ) );
 };
 
@@ -150,7 +162,7 @@ OutputIterator exclusive_scan(
 
 template< typename InputIterator, typename OutputIterator >
 OutputIterator exclusive_scan(
-    const control &ctl,
+    const control &ctrl,
     InputIterator first,
     InputIterator last,
     OutputIterator result, 
@@ -159,13 +171,13 @@ OutputIterator exclusive_scan(
     typedef std::iterator_traits<InputIterator>::value_type iType;
     iType init = static_cast< iType >( 0 );
     return detail::scan_detect_random_access(
-        ctl, first, last, result, init, false, plus< iType >( ),
+        ctrl, first, last, result, init, false, plus< iType >( ),
         std::iterator_traits< InputIterator >::iterator_category( ) );
 };
 
 template< typename InputIterator, typename OutputIterator, typename T >
 OutputIterator exclusive_scan(
-    control &ctl,
+    control &ctrl,
     InputIterator first,
     InputIterator last,
     OutputIterator result,
@@ -174,13 +186,13 @@ OutputIterator exclusive_scan(
 {
     typedef std::iterator_traits<InputIterator>::value_type iType;
     return detail::scan_detect_random_access(
-        ctl, first, last, result, init, false, plus< iType >( ),
+        ctrl, first, last, result, init, false, plus< iType >( ),
         std::iterator_traits< InputIterator >::iterator_category( ) );
 };
 
 template< typename InputIterator, typename OutputIterator, typename T, typename BinaryFunction > 
 OutputIterator exclusive_scan(
-    control &ctl,
+    control &ctrl,
     InputIterator first,
     InputIterator last,
     OutputIterator result,
@@ -189,7 +201,7 @@ OutputIterator exclusive_scan(
     const std::string& user_code )
 {
     return detail::scan_detect_random_access(
-        ctl, first, last, result, init, false, binary_op,
+        ctrl, first, last, result, init, false, binary_op,
         std::iterator_traits< InputIterator >::iterator_category( ) );
 };
 
@@ -205,13 +217,35 @@ class Scan_KernelTemplateSpecializer : public KernelTemplateSpecializer
 public:
     Scan_KernelTemplateSpecializer() : KernelTemplateSpecializer()
     {
+#if USE_AMD_HSA
+        addKernelName("HSA_Scan");
+#else
         addKernelName("perBlockInclusiveScan");
         addKernelName("intraBlockInclusiveScan");
         addKernelName("perBlockAddition");
+#endif
     }
     
     const ::std::string operator() ( const ::std::vector<::std::string>& typeNames ) const
     {
+#if USE_AMD_HSA
+        const std::string templateSpecializationString = 
+            "// Dynamic specialization of generic template definition, using user supplied types\n"
+            "template __attribute__((mangled_name(" + name(0) + "Instantiated)))\n"
+            "__attribute__((reqd_work_group_size(KERNEL0WORKGROUPSIZE,1,1)))\n"
+            "kernel void " + name(0) + "(\n"
+            "global " + typeNames[scan_oType] + " *output,\n"
+            "global " + typeNames[scan_iType] + " *input,\n"
+            ""        + typeNames[scan_initType] + " init,\n"
+            "const uint numElements,\n"
+            "const uint numIterations,\n"
+            "local "  + typeNames[scan_oType] + " *lds,\n"
+            "global " + typeNames[scan_BinaryFunction] + " *binaryOp,\n"
+            "global " + typeNames[scan_oType] + " *intermediateScanArray,\n"
+            "global int *intermediateScanStatus,\n"
+            "int exclusive\n"
+            ");\n\n";
+#else
         const std::string templateSpecializationString = 
             "// Dynamic specialization of generic template definition, using user supplied types\n"
             "template __attribute__((mangled_name(" + name(0) + "Instantiated)))\n"
@@ -249,7 +283,7 @@ public:
             "const uint vecSize,\n"
             "global " + typeNames[scan_BinaryFunction] + "* binaryOp\n"
             ");\n\n";
-
+#endif
         return templateSpecializationString;
     }
 };
@@ -257,7 +291,7 @@ public:
 
 template< typename InputIterator, typename OutputIterator, typename T, typename BinaryFunction >
 OutputIterator scan_detect_random_access(
-    control &ctl,
+    control &ctrl,
     const InputIterator& first,
     const InputIterator& last,
     const OutputIterator& result,
@@ -273,7 +307,7 @@ OutputIterator scan_detect_random_access(
 
 template< typename InputIterator, typename OutputIterator, typename T, typename BinaryFunction >
 OutputIterator scan_detect_random_access(
-    control &ctl,
+    control &ctrl,
     const InputIterator& first,
     const InputIterator& last,
     const OutputIterator& result,
@@ -282,11 +316,11 @@ OutputIterator scan_detect_random_access(
     const BinaryFunction& binary_op,
     std::random_access_iterator_tag )
 {
-    return detail::scan_pick_iterator( ctl, first, last, result, init, inclusive, binary_op );
+    return detail::scan_pick_iterator( ctrl, first, last, result, init, inclusive, binary_op );
 };
 
 /*! 
-* \brief This overload is called strictly for non-device_vector iterators
+* \brief This overload is called strictrly for non-device_vector iterators
 * \details This template function overload is used to seperate device_vector iterators from all other iterators
 */
 template< typename InputIterator, typename OutputIterator, typename T, typename BinaryFunction >
@@ -297,7 +331,7 @@ typename std::enable_if<
            std::iterator_traits<OutputIterator>::value_type>::iterator,OutputIterator>::value),
 OutputIterator >::type
 scan_pick_iterator(
-    control &ctl,
+    control &ctrl,
     const InputIterator& first,
     const InputIterator& last,
     const OutputIterator& result,
@@ -313,10 +347,23 @@ scan_pick_iterator(
     if( numElements == 0 )
         return result;
 
-    const bolt::cl::control::e_RunMode runMode = ctl.forceRunMode( );  // could be dynamic choice some day.
+    const bolt::cl::control::e_RunMode runMode = ctrl.forceRunMode( );  // could be dynamic choice some day.
     if( runMode == bolt::cl::control::SerialCpu )
     {
+#ifdef BOLT_ENABLE_PROFILING
+aProfiler.setName("scan");
+aProfiler.startTrial();
+aProfiler.setStepName("serial");
+aProfiler.set(AsyncProfiler::device, control::SerialCpu);
+#endif
+
         std::partial_sum( first, last, result, binary_op );
+
+#ifdef BOLT_ENABLE_PROFILING
+aProfiler.setDataSize(numElements*sizeof(iType));
+aProfiler.stopTrial();
+#endif
+
         return result;
     }
     else if( runMode == bolt::cl::control::MultiCoreCpu )
@@ -327,11 +374,11 @@ scan_pick_iterator(
     {
 
         // Map the input iterator to a device_vector
-        device_vector< iType > dvInput( first, last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctl );
-        device_vector< oType > dvOutput( result, numElements, CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY, false, ctl );
+        device_vector< iType > dvInput( first, last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctrl );
+        device_vector< oType > dvOutput( result, numElements, CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY, false, ctrl );
 
         //Now call the actual cl algorithm
-        scan_enqueue( ctl, dvInput.begin( ), dvInput.end( ), dvOutput.begin( ), init, binary_op, inclusive );
+        scan_enqueue( ctrl, dvInput.begin( ), dvInput.end( ), dvOutput.begin( ), init, binary_op, inclusive );
 
         // This should immediately map/unmap the buffer
         dvOutput.data( );
@@ -341,7 +388,7 @@ scan_pick_iterator(
 }
 
 /*! 
-* \brief This overload is called strictly for non-device_vector iterators
+* \brief This overload is called strictrly for non-device_vector iterators
 * \details This template function overload is used to seperate device_vector iterators from all other iterators
 */
 template< typename DVInputIterator, typename DVOutputIterator, typename T, typename BinaryFunction >
@@ -350,7 +397,7 @@ typename std::enable_if<
      std::is_base_of<typename device_vector<typename std::iterator_traits<DVOutputIterator>::value_type>::iterator,DVOutputIterator>::value),
 DVOutputIterator >::type
 scan_pick_iterator(
-    control &ctl,
+    control &ctrl,
     const DVInputIterator& first,
     const DVInputIterator& last,
     const DVOutputIterator& result,
@@ -366,7 +413,7 @@ scan_pick_iterator(
     if( numElements == 0 )
         return result;
 
-    const bolt::cl::control::e_RunMode runMode = ctl.forceRunMode( );  // could be dynamic choice some day.
+    const bolt::cl::control::e_RunMode runMode = ctrl.forceRunMode( );  // could be dynamic choice some day.
     if( runMode == bolt::cl::control::SerialCpu )
     {
         //  TODO:  Need access to the device_vector .data method to get a host pointer
@@ -381,7 +428,7 @@ scan_pick_iterator(
     }
 
     //Now call the actual cl algorithm
-    scan_enqueue( ctl, first, last, result, init, binary_op, inclusive );
+    scan_enqueue( ctrl, first, last, result, init, binary_op, inclusive );
 
     return result + numElements;
 }
@@ -391,7 +438,7 @@ scan_pick_iterator(
 //  This is the function that sets up the kernels to compile (once only) and execute
 template< typename DVInputIterator, typename DVOutputIterator, typename T, typename BinaryFunction >
 void scan_enqueue(
-    control &ctl,
+    control &ctrl,
     const DVInputIterator& first,
     const DVInputIterator& last,
     const DVOutputIterator& result,
@@ -404,11 +451,12 @@ aProfiler.setName("scan");
 aProfiler.startTrial();
 aProfiler.setStepName("Setup");
 aProfiler.set(AsyncProfiler::device, control::SerialCpu);
-
-size_t k0_stepNum, k1_stepNum, k2_stepNum;
 #endif
     cl_int l_Error = CL_SUCCESS;
-
+    cl_uint doExclusiveScan = inclusive ? 0 : 1; 
+    const size_t numComputeUnits = ctrl.device( ).getInfo< CL_DEVICE_MAX_COMPUTE_UNITS >( );
+    const size_t numWorkGroupsPerComputeUnit = ctrl.wgPerComputeUnit( );
+    const size_t workGroupSize = HSAWAVES*WAVESIZE;
 
     /**********************************************************************************
      * Type Names - used in KernelTemplateSpecializer
@@ -422,7 +470,7 @@ size_t k0_stepNum, k1_stepNum, k2_stepNum;
     typeNames[scan_BinaryFunction] = TypeName< BinaryFunction >::get();
 
     /**********************************************************************************
-     * Type Definitions - directly concatenated into kernel string
+     * Type Definitions - directrly concatenated into kernel string
      *********************************************************************************/
     std::vector<std::string> typeDefinitions;
     PUSH_BACK_UNIQUE( typeDefinitions, ClCode< iType >::get() )
@@ -434,7 +482,7 @@ size_t k0_stepNum, k1_stepNum, k2_stepNum;
     /**********************************************************************************
      * Compile Options
      *********************************************************************************/
-    bool cpuDevice = ctl.device().getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_CPU;
+    bool cpuDevice = ctrl.device().getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_CPU;
     //std::cout << "Device is CPU: " << (cpuDevice?"TRUE":"FALSE") << std::endl;
     const size_t kernel0_WgSize = (cpuDevice) ? 1 : WAVESIZE*KERNEL02WAVES;
     const size_t kernel1_WgSize = (cpuDevice) ? 1 : WAVESIZE*KERNEL1WAVES;
@@ -444,6 +492,8 @@ size_t k0_stepNum, k1_stepNum, k2_stepNum;
     oss << " -DKERNEL0WORKGROUPSIZE=" << kernel0_WgSize;
     oss << " -DKERNEL1WORKGROUPSIZE=" << kernel1_WgSize;
     oss << " -DKERNEL2WORKGROUPSIZE=" << kernel2_WgSize;
+
+    oss << " -DUSE_AMD_HSA=" << USE_AMD_HSA;
     compileOptions = oss.str();
 
     /**********************************************************************************
@@ -451,7 +501,7 @@ size_t k0_stepNum, k1_stepNum, k2_stepNum;
      *********************************************************************************/
     Scan_KernelTemplateSpecializer ts_kts;
     std::vector< ::cl::Kernel > kernels = bolt::cl::getKernels(
-        ctl,
+        ctrl,
         typeNames,
         &ts_kts,
         typeDefinitions,
@@ -459,29 +509,177 @@ size_t k0_stepNum, k1_stepNum, k2_stepNum;
         compileOptions);
     // kernels returned in same order as added in KernelTemplaceSpecializer constructor
 
-
-    cl_uint doExclusiveScan = inclusive ? 0 : 1;    
-    // for profiling
-    ::cl::Event kernel0Event, kernel1Event, kernel2Event, kernelAEvent;
-
-    // Set up shape of launch grid and buffers:
-    int computeUnits     = ctl.device( ).getInfo< CL_DEVICE_MAX_COMPUTE_UNITS >( );
-    int wgPerComputeUnit =  ctl.wgPerComputeUnit( );
-    int resultCnt = computeUnits * wgPerComputeUnit;
-
+    /**********************************************************************************
+     * Round Up Number of Elements
+     *********************************************************************************/
     //  Ceiling function to bump the size of input to the next whole wavefront size
     cl_uint numElements = static_cast< cl_uint >( std::distance( first, last ) );
 
-    device_vector< iType >::size_type sizeInputBuff = numElements;
-    size_t modWgSize = (sizeInputBuff & (kernel0_WgSize-1));
+    size_t numElementsRUP = numElements;
+    size_t modWgSize = (numElementsRUP & (kernel0_WgSize-1));
     if( modWgSize )
     {
-        sizeInputBuff &= ~modWgSize;
-        sizeInputBuff += kernel0_WgSize;
+        numElementsRUP &= ~modWgSize;
+        numElementsRUP += kernel0_WgSize;
     }
 
-    cl_uint numWorkGroupsK0 = static_cast< cl_uint >( sizeInputBuff / kernel0_WgSize );
+    cl_uint numWorkGroupsK0 = static_cast< cl_uint >( numElementsRUP / kernel0_WgSize );
 
+
+    // Create buffer wrappers so we can access the host functors, for read or writing in the kernel
+    ALIGNED( 256 ) BinaryFunction aligned_binary( binary_op );
+    control::buffPointer userFunctor = ctrl.acquireBuffer( sizeof( aligned_binary ),
+        CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_binary );
+    cl_uint ldsSize;
+
+
+    /**********************************************************************************
+     *
+     *  HSA Implementation
+     *
+     *********************************************************************************/
+#if USE_AMD_HSA
+#ifdef BOLT_ENABLE_PROFILING
+aProfiler.nextStep();
+aProfiler.setStepName("Setup HSA Kernel");
+aProfiler.set(AsyncProfiler::device, control::SerialCpu);
+#endif
+
+    ::cl::Event kernel0Event;
+    size_t numWorkGroups = numComputeUnits * numWorkGroupsPerComputeUnit;
+    if (numWorkGroupsK0 < numWorkGroups)
+        numWorkGroups = numWorkGroupsK0; // nWG is lesser of elements vs compute units
+    ldsSize = static_cast< cl_uint >( ( kernel0_WgSize ) * sizeof( oType ) );
+    
+    // allocate and initialize gpu -> cpu array
+    control::buffPointer dev2hostD = ctrl.acquireBuffer( numWorkGroups*sizeof( int ),
+        CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR );
+    ctrl.commandQueue().enqueueFillBuffer( *dev2hostD, HSA_STAT_INIT, 0, numWorkGroups*sizeof(int) );
+    int *dev2hostH = (int *) ctrl.commandQueue().enqueueMapBuffer( *dev2hostD, CL_TRUE, CL_MAP_READ, 0,
+        numWorkGroups*sizeof(int), NULL, NULL, &l_Error);
+    V_OPENCL( l_Error, "Error: Mapping Device->Host Buffer." );
+
+    // allocate and initialize cpu -> gpu array
+    control::buffPointer dev2hostD = ctrl.acquireBuffer( numWorkGroups*sizeof( int ),
+        CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR );
+
+    /*int *dev2hostH = clEnqueueMapBuffer(
+        ctrl.commandQueue(),
+        dev2hostD,
+        CL_TRUE,
+        CL_MAP_READ,
+        0,
+        numWorkGroups*sizeof(int),
+        0, NULL, NULL, &l_Error);*/
+
+    int *intermediateScanStatusHost = new int[ numWorkGroups ];
+    memset( intermediateScanStatusHost, HSA_STAT_INIT, numWorkGroups*sizeof( int ) );
+    oType *intermediateScanArrayHost = new oType[ numWorkGroups ];
+    memset( intermediateScanArrayHost, init_T, numWorkGroups*sizeof( oType ) ); // TODO remove me b/c wrong and superfluous
+    control::buffPointer intermediateScanArray  = ctrl.acquireBuffer( numWorkGroups*sizeof( oType ),
+        CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, intermediateScanArrayHost );
+    control::buffPointer intermediateScanStatus = ctrl.acquireBuffer( numWorkGroups*sizeof( int ),
+        CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR, intermediateScanStatusHost );
+    // how many iterations
+    cl_uint numIterations = static_cast< cl_uint >( numElementsRUP / (numWorkGroups*workGroupSize) );
+    if (numWorkGroups*workGroupSize*numIterations < numElementsRUP) numIterations++;
+
+    for (size_t i = 0; i < numWorkGroups; i++ )
+    {
+        std::cout << "preScanStat[" << i << "]=" << intermediateScanArrayHost[i] << " ( " << dev2hostH[i] << " )"<< std::endl;
+    }
+
+    /**********************************************************************************
+     * Set Kernel Arguments
+     *********************************************************************************/
+    V_OPENCL( kernels[ 0 ].setArg( 0, result->getBuffer( ) ),   "Error: Output Buffer" );
+    V_OPENCL( kernels[ 0 ].setArg( 1, first->getBuffer( ) ),    "Error: Input Buffer" );
+    V_OPENCL( kernels[ 0 ].setArg( 2, init_T ),                 "Error: Initial Value" );
+    V_OPENCL( kernels[ 0 ].setArg( 3, numElements ),            "Error: Number of Elements" );
+    V_OPENCL( kernels[ 0 ].setArg( 4, numIterations ),          "Error: Number of Iterations" );
+    V_OPENCL( kernels[ 0 ].setArg( 5, ldsSize, NULL ),          "Error: Local Memory" );
+    V_OPENCL( kernels[ 0 ].setArg( 6, *userFunctor ),           "Error: Binary Function" );
+    V_OPENCL( kernels[ 0 ].setArg( 7, *intermediateScanArray ), "Error: Intermediate Scan Array" );
+    V_OPENCL( kernels[ 0 ].setArg( 8, *dev2hostD ),             "Error: Intermediate Scan Status" );
+    V_OPENCL( kernels[ 0 ].setArg( 9, doExclusiveScan ),        "Error: Do Exclusive Scan" );
+
+#ifdef BOLT_ENABLE_PROFILING
+aProfiler.nextStep();
+aProfiler.setStepName("HSA Kernel");
+aProfiler.set(AsyncProfiler::device, ctrl.forceRunMode());
+aProfiler.set(AsyncProfiler::flops, 2*numElements);
+aProfiler.set(AsyncProfiler::memory,
+    1*numElements*sizeof(iType) + // read input
+    3*numElements*sizeof(oType) + // write,read,write output
+    1*numWorkGroups*sizeof(binary_op) + // in case the functor has state
+    2*numWorkGroups*sizeof(oType)+ // write,read intermediate array
+    2*numWorkGroups*sizeof(int)); // write,read intermediate array status (perhaps multiple times)
+std::string strDeviceName = ctrl.device().getInfo< CL_DEVICE_NAME >( &l_Error );
+bolt::cl::V_OPENCL( l_Error, "Device::getInfo< CL_DEVICE_NAME > failed" );
+aProfiler.setArchitecture(strDeviceName);
+#endif
+    /**********************************************************************************
+     * Launch Kernel
+     *********************************************************************************/
+    l_Error = ctrl.commandQueue( ).enqueueNDRangeKernel(
+        kernels[ 0 ],
+        ::cl::NullRange,
+        ::cl::NDRange( numElementsRUP ),
+        ::cl::NDRange( workGroupSize ),
+        NULL,
+        &kernel0Event);
+    ctrl.commandQueue().flush(); // needed
+
+    bool printAgain = true;
+    while (printAgain)
+    {
+        printAgain = false;
+        for (size_t i = 0; i < numWorkGroups; i++ )
+        {
+            std::cout << "interScan[" << i << "]=" << intermediateScanArrayHost[i] << " ( " << dev2hostH[i] << " )"<< std::endl;
+            if (dev2hostH[i] != HSA_STAT_DEVP1COMPLETE)
+                printAgain = true;
+        }
+        std::cout << std::endl;
+    }
+
+    V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for HSA Kernel." );
+    l_Error = kernel0Event.wait( );
+    V_OPENCL( l_Error, "HSA Kernel failed to wait" );
+
+
+    for (size_t i = 0; i < numWorkGroups; i++ )
+    {
+        std::cout << "inter2can[" << i << "]=" << intermediateScanArrayHost[i] << " ( " << dev2hostH[i] << " )"<< std::endl;
+    }
+
+
+
+
+
+
+
+
+#ifdef BOLT_ENABLE_PROFILING
+aProfiler.stopTrial();
+#endif
+
+
+
+
+
+
+
+
+    /**********************************************************************************
+     *
+     *  Discrete GPU implementation
+     *
+     *********************************************************************************/
+#else // regular
+    // for profiling
+    ::cl::Event kernel0Event, kernel1Event, kernel2Event, kernelAEvent;
+    
     //  Ceiling function to bump the size of the sum array to the next whole wavefront size
     device_vector< oType >::size_type sizeScanBuff = numWorkGroupsK0;
     modWgSize = (sizeScanBuff & (kernel0_WgSize-1));
@@ -490,22 +688,20 @@ size_t k0_stepNum, k1_stepNum, k2_stepNum;
         sizeScanBuff &= ~modWgSize;
         sizeScanBuff += kernel0_WgSize;
     }
-
-    // Create buffer wrappers so we can access the host functors, for read or writing in the kernel
-    ALIGNED( 256 ) BinaryFunction aligned_binary( binary_op );
-    control::buffPointer userFunctor = ctl.acquireBuffer( sizeof( aligned_binary ), CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_binary );
-    control::buffPointer preSumArray = ctl.acquireBuffer( sizeScanBuff*sizeof( oType ) );
-    control::buffPointer postSumArray = ctl.acquireBuffer( sizeScanBuff*sizeof( oType ) );
-    //::cl::Buffer userFunctor( ctl.context( ), CL_MEM_USE_HOST_PTR, sizeof( binary_op ), &binary_op );
-    //::cl::Buffer preSumArray( ctl.context( ), CL_MEM_READ_WRITE, sizeScanBuff*sizeof(iType) );
-    //::cl::Buffer postSumArray( ctl.context( ), CL_MEM_READ_WRITE, sizeScanBuff*sizeof(iType) );
-    cl_uint ldsSize;
+    
+    control::buffPointer preSumArray = ctrl.acquireBuffer( sizeScanBuff*sizeof( oType ) );
+    control::buffPointer postSumArray = ctrl.acquireBuffer( sizeScanBuff*sizeof( oType ) );
+    //::cl::Buffer userFunctor( ctrl.context( ), CL_MEM_USE_HOST_PTR, sizeof( binary_op ), &binary_op );
+    //::cl::Buffer preSumArray( ctrl.context( ), CL_MEM_READ_WRITE, sizeScanBuff*sizeof(iType) );
+    //::cl::Buffer postSumArray( ctrl.context( ), CL_MEM_READ_WRITE, sizeScanBuff*sizeof(iType) );
 
 
     /**********************************************************************************
      *  Kernel 0
      *********************************************************************************/
 #ifdef BOLT_ENABLE_PROFILING
+    
+size_t k0_stepNum, k1_stepNum, k2_stepNum;
 aProfiler.nextStep();
 aProfiler.setStepName("Setup Kernel 0");
 aProfiler.set(AsyncProfiler::device, control::SerialCpu);
@@ -525,15 +721,15 @@ aProfiler.set(AsyncProfiler::device, control::SerialCpu);
 aProfiler.nextStep();
 k0_stepNum = aProfiler.getStepNum();
 aProfiler.setStepName("Kernel 0");
-aProfiler.set(AsyncProfiler::device, ctl.forceRunMode());
+aProfiler.set(AsyncProfiler::device, ctrl.forceRunMode());
 aProfiler.set(AsyncProfiler::flops, 2*numElements);
 aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(iType) + 1*sizeScanBuff*sizeof(oType));
 #endif
 
-    l_Error = ctl.commandQueue( ).enqueueNDRangeKernel(
+    l_Error = ctrl.commandQueue( ).enqueueNDRangeKernel(
         kernels[ 0 ],
         ::cl::NullRange,
-        ::cl::NDRange( sizeInputBuff ),
+        ::cl::NDRange( numElementsRUP ),
         ::cl::NDRange( kernel0_WgSize ),
         NULL,
         &kernel0Event);
@@ -561,12 +757,12 @@ aProfiler.set(AsyncProfiler::device, control::SerialCpu);
 aProfiler.nextStep();
 k1_stepNum = aProfiler.getStepNum();
 aProfiler.setStepName("Kernel 1");
-aProfiler.set(AsyncProfiler::device, ctl.forceRunMode());
+aProfiler.set(AsyncProfiler::device, ctrl.forceRunMode());
 aProfiler.set(AsyncProfiler::flops, 2*sizeScanBuff);
 aProfiler.set(AsyncProfiler::memory, 4*sizeScanBuff*sizeof(oType));
 #endif
 
-    l_Error = ctl.commandQueue( ).enqueueNDRangeKernel(
+    l_Error = ctrl.commandQueue( ).enqueueNDRangeKernel(
         kernels[ 1 ],
         ::cl::NullRange,
         ::cl::NDRange( kernel1_WgSize ),
@@ -595,16 +791,16 @@ aProfiler.set(AsyncProfiler::device, control::SerialCpu);
 aProfiler.nextStep();
 k2_stepNum = aProfiler.getStepNum();
 aProfiler.setStepName("Kernel 2");
-aProfiler.set(AsyncProfiler::device, ctl.forceRunMode());
+aProfiler.set(AsyncProfiler::device, ctrl.forceRunMode());
 aProfiler.set(AsyncProfiler::flops, numElements);
 aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(oType) + 1*sizeScanBuff*sizeof(oType));
 #endif
     try
     {
-    l_Error = ctl.commandQueue( ).enqueueNDRangeKernel(
+    l_Error = ctrl.commandQueue( ).enqueueNDRangeKernel(
         kernels[ 2 ],
         ::cl::NullRange,
-        ::cl::NDRange( sizeInputBuff/1 ), // remove /2 to return to 1 element per thread
+        ::cl::NDRange( numElementsRUP/1 ), // remove /2 to return to 1 element per thread
         ::cl::NDRange( kernel2_WgSize ),
         NULL,
         &kernel2Event );
@@ -624,7 +820,7 @@ aProfiler.setStepName("Querying Kernel Times");
 aProfiler.set(AsyncProfiler::device, control::SerialCpu);
 
 aProfiler.setDataSize(numElements*sizeof(iType));
-std::string strDeviceName = ctl.device().getInfo< CL_DEVICE_NAME >( &l_Error );
+std::string strDeviceName = ctrl.device().getInfo< CL_DEVICE_NAME >( &l_Error );
 bolt::cl::V_OPENCL( l_Error, "Device::getInfo< CL_DEVICE_NAME > failed" );
 aProfiler.setArchitecture(strDeviceName);
 
@@ -669,6 +865,7 @@ aProfiler.setArchitecture(strDeviceName);
     }
 
 aProfiler.stopTrial();
+#endif // ENABLE_PROFILING
 
 #endif
 

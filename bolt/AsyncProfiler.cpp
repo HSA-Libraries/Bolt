@@ -356,6 +356,7 @@ size_t AsyncProfiler::getNumSteps() const
 
 void AsyncProfiler::stopTrial()
 {
+    //std::cout << "Stoping Trial " << currentTrialIndex << std::endl;
     set( stopTime, getTime() ); // prev step stops
     //trials[currentTrialIndex].computeStepsDerived();
     //trials[currentTrialIndex].computeTrialDerived();
@@ -363,6 +364,7 @@ void AsyncProfiler::stopTrial()
 }
 void AsyncProfiler::startTrial()
 {
+    //std::cout << "Starting Trial " << currentTrialIndex << std::endl;
     Trial tmp;
     trials.push_back( tmp );
     std::ostringstream ss;
@@ -498,11 +500,12 @@ void AsyncProfiler::calculateAverage()
     Trial total(numSteps), count(numSteps);
 
     // sum step attributes
-    size_t trialsAveraged = 0;
+    trialsAveraged = 0;
+    size_t firstTrial = (trials.size()>numThrowAwayTrials) ? numThrowAwayTrials : 0;
     size_t totalTime = 0;
     size_t totalMemory = 0;
     size_t totalFlops = 0;
-    for (size_t t = (trials.size()>1) ? 1 : 0; t < trials.size(); t++)
+    for (size_t t = firstTrial; t < trials.size(); t++)
     {
         trialsAveraged++;
         for (size_t s = 0; s < trials[t].size(); s++)
@@ -560,7 +563,7 @@ void AsyncProfiler::calculateAverage()
     average.computeStepsDerived();
 
     // accumulate for standard deviation
-    for (size_t t = (trials.size()>1) ? 1 : 0; t < trials.size()-1; t++)
+    for (size_t t = firstTrial; t < trials.size(); t++)
     {
         // accumulate for trial
         size_t dTime = trials[t].attributeValues[time] - average.aggregateStep.get(time);
@@ -615,13 +618,18 @@ void AsyncProfiler::calculateAverage()
 }
 
 
+void AsyncProfiler::throwAway( size_t n)
+{
+    numThrowAwayTrials = n;
+}
+
 
 ::std::ostream& AsyncProfiler::writeSum( ::std::ostream& os ) const
 {
     os << "<PROFILE";
     os << " name=\"" << name.c_str() << "\"";
     os << " type=\"average\"";
-    os << " trials=\"" << ((trials.size()>1) ? trials.size()-1 : 1) << "\"";
+    os << " trials=\"" << trialsAveraged << "\"";
     os << " bytes=\"" << dataSize << "\"";
     os << " timerRes=\"" << timerPeriodNs << "\"";
     os << " arch=\"" << architecture.c_str() << "\"";
@@ -639,7 +647,7 @@ void AsyncProfiler::calculateAverage()
     os << "<PROFILE";
     os << " name=\"" << name.c_str() << "\"";
     os << " type=\"Log\"";
-    os << " trials=\"" << ((trials.size()>1) ? trials.size()-1 : 1) << "\"";
+    os << " trials=\"" << trials.size() << "\"";
     os << " bytes=\"" << dataSize << "\"";
     os << " timerResolution=\"" << timerPeriodNs << "\"";
     os << " architecture=\"" << architecture.c_str() << "\"";

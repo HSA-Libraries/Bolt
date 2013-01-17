@@ -15,6 +15,46 @@
 
 ***************************************************************************/
 //#pragma OPENCL EXTENSION cl_amd_printf : enable
+//#define USE_AMD_HSA 1
+
+#if USE_AMD_HSA
+
+/******************************************************************************
+ *  HSA Kernel
+ *****************************************************************************/
+template< typename iType, typename oType, typename initType, typename BinaryFunction >
+kernel void HSA_Scan(
+    global oType    *output,
+    global iType    *input,
+    initType        init,
+    const uint      numElements,
+    const uint      numIterations,
+    local oType     *lds,
+    global BinaryFunction* binaryOp,
+    global oType    *intermediateScanArray,
+    global int      *intermediateScanStatus,
+    int             exclusive)
+{
+    size_t gloId = get_global_id( 0 );
+    size_t groId = get_group_id( 0 );
+    size_t locId = get_local_id( 0 );
+    size_t wgSize = get_local_size( 0 );
+
+    intermediateScanArray[ groId ] = input[ groId ];
+    intermediateScanStatus[ groId ] = 1;
+
+    mem_fence(CLK_GLOBAL_MEM_FENCE);
+}
+
+
+
+
+
+
+/******************************************************************************
+ *  Not Using HSA
+ *****************************************************************************/
+#else
 
 #define NUM_ITER 16
 #define MIN(X,Y) X<Y?X:Y;
@@ -305,3 +345,5 @@ kernel void perBlockInclusiveScan(
     }
 }
 
+// not using HSA
+#endif

@@ -11,7 +11,7 @@ class AsyncProfiler
 private:
     LARGE_INTEGER constructionTimeStamp;
     size_t timerPeriodNs;
-    
+    size_t numThrowAwayTrials;
 
 public:
 
@@ -108,6 +108,7 @@ private:
     Trial average;
     size_t dataSize;
     std::string architecture;
+    size_t trialsAveraged;
 
 public:
     /******************************************************************************
@@ -139,6 +140,7 @@ public:
     void setName( std::string n);
     void setDataSize( size_t d );
     void setArchitecture( std::string a );
+    void throwAway( size_t n);
 
     void end();
     void calculateAverage();

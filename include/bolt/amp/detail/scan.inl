@@ -286,7 +286,19 @@ scan_pick_iterator(
     const bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode( );  // could be dynamic choice some day.
     if( runMode == bolt::amp::control::SerialCpu )
     {
+#ifdef BOLT_ENABLE_PROFILING
+aProfiler.setName("scan");
+aProfiler.startTrial();
+aProfiler.setStepName("serial");
+aProfiler.set(AsyncProfiler::device, control::SerialCpu);
+
+size_t k0_stepNum, k1_stepNum, k2_stepNum;
+#endif
         std::partial_sum( first, last, result, binary_op );
+#ifdef BOLT_ENABLE_PROFILING
+aProfiler.setDataSize(numElements*sizeof(iType));
+aProfiler.stopTrial();
+#endif
         return result;
     }
     else if( runMode == bolt::amp::control::MultiCoreCpu )
