@@ -40,7 +40,7 @@ void testDeviceVector()
 
 void testTBB()
 {
-    const int aSize = 1000;
+    const int aSize = 1024;
     std::vector<int> stdInput(aSize);
     std::vector<int> tbbInput(aSize);
 
@@ -57,7 +57,7 @@ void testTBB()
     if(hSum == sum)
         printf ("\nTBB Test case PASSED\n");
     else
-        printf ("\nTBB Test case FALIED\n");
+        printf ("\nTBB Test case FAILED\n");
 
 
 };
