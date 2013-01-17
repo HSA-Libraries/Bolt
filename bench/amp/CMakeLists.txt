@@ -25,4 +25,5 @@ if( BUILD_ampBolt )
 	# Include standard OpenCL headers
 	add_subdirectory( Scan )
 	add_subdirectory( Reduce )
+	add_subdirectory( Transform )
 endif( )

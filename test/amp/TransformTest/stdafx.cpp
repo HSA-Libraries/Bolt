@@ -15,18 +15,11 @@
 
 ***************************************************************************/                                                                                     
 
-// stdafx.h : include file for standard system include files,
-// or project-specific include files used frequently, but
-// changed infrequently.
-//
+// stdafx.cpp : source file that includes just the standard includes
+// transform.pch will be the pre-compiled header
+// stdafx.obj will contain the pre-compiled type information
 
-#pragma once
+#include "stdafx.h"
 
-#include "targetver.h"
-
-#include <stdio.h>
-#include <tchar.h>
-
-
-
-// TODO: reference additional headers here that your program requires.
+// TODO: reference any additional headers you need in STDAFX.H
+// and not in this file

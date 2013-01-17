@@ -16,20 +16,27 @@
 ############################################################################                                                                                     
 
 # List the names of common files to compile across all platforms
-set( ampBolt.Test.Transform.Source stdafx.cpp simple_transform.cpp )
-set( ampBolt.Test.Transform.Headers stdafx.h targetver.h ${BOLT_INCLUDE_DIR}/bolt/amp/transform.h )
+set( ampBolt.Bench.Transform.Source stdafx.cpp transform.cpp )
+set( ampBolt.Bench.Transform.Headers stdafx.h targetver.h ${BOLT_INCLUDE_DIR}/bolt/amp/transform.h )
 
-set( ampBolt.Test.Transform.Files ${ampBolt.Test.Transform.Source} ${ampBolt.Test.Transform.Headers} )
+set( ampBolt.Bench.Transform.Files ${ampBolt.Bench.Transform.Source} ${ampBolt.Bench.Transform.Headers} )
 
-add_executable( ampBolt.Test.Transform ${ampBolt.Test.Transform.Files} )
+# Include standard OpenCL headers
+include_directories( ${Boost_INCLUDE_DIRS} )
 
-set_target_properties( ampBolt.Test.Transform PROPERTIES VERSION ${Bolt_VERSION} )
-set_target_properties( ampBolt.Test.Transform PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
+add_executable( ampBolt.Bench.Transform ${ampBolt.Bench.Transform.Files} )
 
-set_property( TARGET ampBolt.Test.Transform PROPERTY FOLDER "Test/AMP")
+target_link_libraries( ampBolt.Bench.Transform ${Boost_LIBRARIES} ampBolt.Runtime )
+
+add_dependencies( ampBolt.Bench.Transform Boost )
+
+set_target_properties( ampBolt.Bench.Transform PROPERTIES VERSION ${Bolt_VERSION} )
+set_target_properties( ampBolt.Bench.Transform PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
+
+set_property( TARGET ampBolt.Bench.Transform PROPERTY FOLDER "Benchmark/AMP")
 
 # CPack configuration; include the executable into the package
-install( TARGETS ampBolt.Test.Transform
+install( TARGETS ampBolt.Bench.Transform
 	RUNTIME DESTINATION ${BIN_DIR}
 	LIBRARY DESTINATION ${LIB_DIR}
 	ARCHIVE DESTINATION ${LIB_DIR}/import
