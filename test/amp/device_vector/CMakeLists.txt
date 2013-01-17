@@ -36,7 +36,10 @@ set( CMAKE_CXX_FLAGS "-DAMP_TESTS=1 ${CMAKE_CXX_FLAGS}" )
 endif()
 
 add_executable( ampBolt.Test.Device.Vector ${ampBolt.Test.Device.Vector.Files} )
-target_link_libraries( ampBolt.Test.Device.Vector ampBolt.Runtime ${GTEST_LIBRARIES} )
+target_link_libraries( ampBolt.Test.Device.Vector
+  ampBolt.Runtime
+  ${GTEST_LIBRARIES}
+  ${Boost_LIBRARIES} )
 
 set_target_properties( ampBolt.Test.Device.Vector PROPERTIES VERSION ${Bolt_VERSION} )
 set_target_properties( ampBolt.Test.Device.Vector PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )

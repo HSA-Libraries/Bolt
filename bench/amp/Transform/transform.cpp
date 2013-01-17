@@ -96,7 +96,7 @@ int _tmain( int argc, _TCHAR* argv[] )
 			libMinor = 0;
 			libPatch = 1;
 
-			const int indent = countOf( "Bolt version: " );
+			const int indent = 16; //countOf( "Bolt version: " );
 			bolt::tout << std::left << std::setw( indent ) << _T( "Bolt version: " )
 				<< libMajor << _T( "." )
 				<< libMinor << _T( "." )
@@ -151,7 +151,7 @@ int _tmain( int argc, _TCHAR* argv[] )
 		for( unsigned i = 0; i < numLoops; ++i )
 		{
 			myTimer.Start( scanId );
-			bolt::inclusive_scan( input.begin( ), input.end( ), output.begin( ) );
+			bolt::amp::inclusive_scan( input.begin( ), input.end( ), output.begin( ) );
 			myTimer.Stop( scanId );
 		}
 	}
@@ -163,7 +163,8 @@ int _tmain( int argc, _TCHAR* argv[] )
 		for( unsigned i = 0; i < numLoops; ++i )
 		{
 			myTimer.Start( scanId );
-			bolt::inclusive_scan( av, input.begin( ), input.end( ), output.begin( ), bolt::plus< int >( ) );
+            // api changed, use ctrl instead of accelerator_view
+			//bolt::amp::inclusive_scan( av, input.begin( ), input.end( ), output.begin( ), bolt::plus< int >( ) );
 			myTimer.Stop( scanId );
 		}
 	}
