@@ -25,7 +25,7 @@ set( Boost_DETAILED_FAILURE_MSG   ON )
 
 if( BOOST_ROOT )
     # The root tree of BOOST was specified on the command line; use it to to find the specific Boost the user points too
-    find_package( Boost ${Boost.VERSION} COMPONENTS thread system REQUIRED )
+    find_package( Boost ${Boost.VERSION} COMPONENTS thread system date_time chrono REQUIRED )
     # This will define Boost_FOUND
 else( )
     message( "Configure Bolt in <BOLT_ROOT>/bin to build the SuperBuild which will download and build Boost automatically" )    
@@ -61,6 +61,7 @@ set( clBolt.Runtime.Source
         bolt.cpp 
         control.cpp
         ${BOLT_LIBRARY_DIR}/statisticalTimer.cpp
+        ${BOLT_LIBRARY_DIR}/AsyncProfiler.cpp
     )
 
 set( clBolt.Runtime.Headers 
@@ -73,7 +74,7 @@ set( clBolt.Runtime.Headers
         ${clBolt.Include.Dir}/functional.h 
         ${clBolt.Include.Dir}/fill.h 
         ${clBolt.Include.Dir}/generate.h 
-		${clBolt.Include.Dir}/inner_product.h 
+        ${clBolt.Include.Dir}/inner_product.h 
         ${clBolt.Include.Dir}/iterator_traits.h 
         ${clBolt.Include.Dir}/reduce.h 
         ${clBolt.Include.Dir}/scan.h 
@@ -89,13 +90,14 @@ set( clBolt.Runtime.Headers.Misc
         ${clBolt.Include.Dir}/../countof.h
         ${clBolt.Include.Dir}/../unicode.h
         ${clBolt.Include.Dir}/../statisticalTimer.h
+        ${clBolt.Include.Dir}/../AsyncProfiler.h
     )
         
 set( clBolt.Runtime.Headers.Detail 
         ${clBolt.Include.Dir}/detail/copy.inl
         ${clBolt.Include.Dir}/detail/fill.inl
         ${clBolt.Include.Dir}/detail/generate.inl
-		${clBolt.Include.Dir}/detail/inner_product.inl
+        ${clBolt.Include.Dir}/detail/inner_product.inl
         ${clBolt.Include.Dir}/detail/reduce.inl
         ${clBolt.Include.Dir}/detail/scan.inl
         ${clBolt.Include.Dir}/detail/scan_by_key.inl
@@ -107,6 +109,7 @@ set( clBolt.Runtime.Headers.Detail
     )
 
 set( clBolt.Runtime.clFiles 
+        copy_kernels.cl 
         generate_kernels.cl 
         reduce_kernels.cl 
         transform_kernels.cl 
@@ -132,10 +135,19 @@ endif( )
 source_group( "Inline Files" REGULAR_EXPRESSION .*inl$ )
 source_group( "Kernel Files" REGULAR_EXPRESSION .*cl$ )
 
-set( clBolt.Runtime.Files ${clBolt.Runtime.Source} ${clBolt.Runtime.Headers} ${clBolt.Runtime.Headers.Detail} ${clBolt.Runtime.Headers.Misc} ${clBolt.Runtime.clFiles.FullPath} )
+set( clBolt.Runtime.Files
+  ${clBolt.Runtime.Source}
+  ${clBolt.Runtime.Headers}
+  ${clBolt.Runtime.Headers.Detail}
+  ${clBolt.Runtime.Headers.Misc}
+  ${clBolt.Runtime.clFiles.FullPath} )
 
 # Include headers files
-include_directories( ${BOLT_INCLUDE_DIR} ${PROJECT_BINARY_DIR}/include ${OPENCL_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS} )
+include_directories(
+    ${BOLT_INCLUDE_DIR}
+    ${PROJECT_BINARY_DIR}/include
+    ${OPENCL_INCLUDE_DIRS}
+    ${Boost_INCLUDE_DIRS} )
 
 # Create a list of files that we expect to generate from the kernel files
 substList( ".cl" ".hpp" clBolt.Runtime.hppFiles clBolt.Runtime.clFiles )

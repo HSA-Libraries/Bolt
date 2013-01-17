@@ -15,23 +15,22 @@
 
 ***************************************************************************/                                                                                     
 
-#include "common/stdafx.h"
+//#include "common/stdafx.h"
 #include <vector>
 //#include <array>
 #include "bolt/cl/bolt.h"
 //#include "bolt/cl/scan.h"
-//#include "bolt/cl/scan_by_key.h"
+#include "bolt/cl/functional.h"
+#include "bolt/cl/scan_by_key.h"
 #include "bolt/unicode.h"
 #include "bolt/miniDump.h"
 
 #include <gtest/gtest.h>
 //#include <boost/shared_array.hpp>
-
 #include <boost/program_options.hpp>
-namespace po = boost::program_options;
 
 
-#if 0
+#if 1
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -164,19 +163,20 @@ BOLT_FUNCTOR(uddtM3,
 struct uddtM3
 {
     int a;
-    float        b;
+    int        b;
     double       c;
 
     bool operator==(const uddtM3& rhs) const
     {
         bool equal = true;
-        double ths = 0.00001;
-        double thd = 0.0000000001;
+        double ths = 0.0001;
+        double thd = 0.000000001;
         equal = ( a == rhs.a ) ? equal : false;
-        if (rhs.b < ths && rhs.b > -ths)
-            equal = ( (1.0*b - rhs.b) < ths && (1.0*b - rhs.b) > -ths) ? equal : false;
-        else
-            equal = ( (1.0*b - rhs.b)/rhs.b < ths && (1.0*b - rhs.b)/rhs.b > -ths) ? equal : false;
+        equal = ( b == rhs.b ) ? equal : false;
+        //if (rhs.b < ths && rhs.b > -ths)
+        //    equal = ( (1.0*b - rhs.b) < ths && (1.0*b - rhs.b) > -ths) ? equal : false;
+        //else
+        //    equal = ( (1.0*b - rhs.b)/rhs.b < ths && (1.0*b - rhs.b)/rhs.b > -ths) ? equal : false;
         if (rhs.c < thd && rhs.c > -thd)
             equal = ( (1.0*c - rhs.c) < thd && (1.0*c - rhs.c) > -thd) ? equal : false;
         else
@@ -214,8 +214,9 @@ struct MixM3
     };
 }; 
 );
-uddtM3 identityMixM3 = { 0, 0.f, 1.0 };
-uddtM3 initialMixM3  = { 2, 3, 1.000001 };
+uddtM3 identityMixM3 = { 0, 0, 1.0 };
+uddtM3 initialMixM3  = { 2, 1, 1.000001 };
+
 BOLT_FUNCTOR(uddtM2,
 struct uddtM2
 {
@@ -255,46 +256,18 @@ struct uddtM2
 };
 );
 uddtM2 identityMixM2 = { 0, 3.141596f };
-
-///////////////////////////////////////////////////////////////////////////////
-
-template< typename T >
-::testing::AssertionResult cmpArrays( const T ref, const T calc, size_t N )
+BOLT_FUNCTOR(uddtM2_equal_to,
+struct uddtM2_equal_to
 {
-    for( size_t i = 0; i < N; ++i )
+    bool operator()(const uddtM2& lhs, const uddtM2& rhs) const
     {
-        EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
+        return lhs == rhs;
     }
-
-    return ::testing::AssertionSuccess( );
 };
+);
 
-template< typename T, size_t N >
-::testing::AssertionResult cmpArrays( const T (&ref)[N], const T (&calc)[N] )
-{
-    for( size_t i = 0; i < N; ++i )
-    {
-        EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-    }
 
-    return ::testing::AssertionSuccess( );
-};
-
-//  Primary class template for std::array types
-//  The struct wrapper is necessary to partially specialize the member function
-
-//  A very generic template that takes two container, and compares their values assuming a vector interface
-template< typename S, typename B >
-::testing::AssertionResult cmpArrays( const S& ref, const B& calc )
-{
-    for( size_t i = 0; i < ref.size( ); ++i )
-    {
-        EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-    }
-
-    return ::testing::AssertionSuccess( );
-}
-
+#include "test_common.h"
 
 
 /******************************************************************************
@@ -343,13 +316,13 @@ gold_scan_by_key(
         // within segment
         if (currentKey == previousKey)
         {
-            std::cout << "continuing segment" << std::endl;
+            //std::cout << "continuing segment" << std::endl;
             oType r = binary_op( previousValue, currentValue);
             *result = r;
         }
         else // new segment
         {
-            std::cout << "new segment" << std::endl;
+            //std::cout << "new segment" << std::endl;
             *result = currentValue;
         }
     }
@@ -357,10 +330,10 @@ gold_scan_by_key(
     return result;
 }
 
-TEST(InclusiveScanByKey, IncMixedM3)
+TEST(InclusiveScanByKey, IncMixedM3increment)
 {
     //setup keys
-    int length = (1<<4);
+    int length = (1<<24);
     std::vector< uddtM2 > keys( length, identityMixM2);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
@@ -388,25 +361,123 @@ TEST(InclusiveScanByKey, IncMixedM3)
 
     // call scan
     MixM3 mM3;
-    bolt::cl::inclusive_scan_by_key( keys.begin(), keys.end(), input.begin(), output.begin(), mM3 );
+    uddtM2_equal_to eq;
+    bolt::cl::inclusive_scan_by_key( keys.begin(), keys.end(), input.begin(), output.begin(), eq, mM3);
     gold_scan_by_key(keys.begin(), keys.end(), refInput.begin(), refOutput.begin(), mM3);
 
+#if 0
     // print Bolt scan_by_key
     for (int i = 0; i < length; i++)
     {
-        std::cout << "i=" << i << ", ";
+        if ( !(output[i] == refOutput[i]) ) {
+        std::cout << "BOLT: i=" << i << ", ";
         std::cout << "key={" << keys[i].a << ", " << keys[i].b << "}; ";
         std::cout << "val={" << input[i].a << ", " << input[i].b << ", " << input[i].c << "}; ";
         std::cout << "out={" << output[i].a << ", " << output[i].b << ", " << output[i].c << "};" << std::endl;
-    }
-    // print gold reference
-    for (int i = 0; i < length; i++)
-    {
-        std::cout << "i=" << i << ", ";
+    
+        std::cout << "GOLD: i=" << i << ", ";
         std::cout << "key={" << keys[i].a << ", " << keys[i].b << "}; ";
         std::cout << "val={" << refInput[i].a << ", " << refInput[i].b << ", " << refInput[i].c << "}; ";
         std::cout << "out={" << refOutput[i].a << ", " << refOutput[i].b << ", " << refOutput[i].c << "};" << std::endl;
+        }
     }
+#endif
+
+    // compare results
+    cmpArrays(refOutput, output);
+}
+
+TEST(InclusiveScanByKey, IncMixedM3same)
+{
+    //setup keys
+    int length = (1<<24);
+    uddtM2 key = {1, 2.3f};
+    std::vector< uddtM2 > keys( length, key);
+
+    // input and output vectors for device and reference
+    std::vector< uddtM3 > input(  length, initialMixM3 );
+    std::vector< uddtM3 > output( length, identityMixM3 );
+    std::vector< uddtM3 > refInput( length, initialMixM3 );
+    std::vector< uddtM3 > refOutput( length );
+
+    // call scan
+    MixM3 mM3;
+    uddtM2_equal_to eq;
+    bolt::cl::inclusive_scan_by_key( keys.begin(), keys.end(), input.begin(), output.begin(), eq, mM3);
+    gold_scan_by_key(keys.begin(), keys.end(), refInput.begin(), refOutput.begin(), mM3);
+
+#if 0
+    std::cout.setf(std::ios_base::scientific);
+    std::cout.precision(15);
+    // print Bolt scan_by_key
+    for (int i = 0; i < length; i++)
+    {
+        if ( !(output[i] == refOutput[i]) ) {
+        std::cout.precision(3);
+        std::cout << "BOLT: i=" << i << ", ";
+        std::cout << "key={" << keys[i].a << ", " << keys[i].b << "}; ";
+        std::cout << "val={" << input[i].a << ", " << input[i].b << ", " << input[i].c << "}; ";
+        std::cout.precision(15);
+        std::cout << "out={" << output[i].a << ", " << output[i].b << ", " << output[i].c << "};" << std::endl;
+    
+        std::cout << "GOLD: i=" << i << ", ";
+        std::cout.precision(3);
+        std::cout << "key={" << keys[i].a << ", " << keys[i].b << "}; ";
+        std::cout << "val={" << refInput[i].a << ", " << refInput[i].b << ", " << refInput[i].c << "}; ";
+        std::cout.precision(15);
+        std::cout << "out={" << refOutput[i].a << ", " << refOutput[i].b << ", " << refOutput[i].c << "};" << std::endl;
+        }
+    }
+#endif
+
+    // compare results
+    cmpArrays(refOutput, output);
+}
+
+TEST(InclusiveScanByKey, IncMixedM3each)
+{
+    //setup keys
+    int length = (1<<24);
+    std::vector< uddtM2 > keys( length, identityMixM2);
+    // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
+    int segmentLength = 0;
+    int segmentIndex = 0;
+    uddtM2 key = identityMixM2;
+    for (int i = 0; i < length; i++)
+    {
+        ++key;
+        keys[i] = key;
+    }
+
+    // input and output vectors for device and reference
+    std::vector< uddtM3 > input(  length, initialMixM3 );
+    std::vector< uddtM3 > output( length, identityMixM3 );
+    std::vector< uddtM3 > refInput( length, initialMixM3 );
+    std::vector< uddtM3 > refOutput( length );
+
+    // call scan
+    MixM3 mM3;
+    uddtM2_equal_to eq;
+    bolt::cl::inclusive_scan_by_key( keys.begin(), keys.end(), input.begin(), output.begin(), eq, mM3);
+    gold_scan_by_key(keys.begin(), keys.end(), refInput.begin(), refOutput.begin(), mM3);
+
+#if 0
+    // print Bolt scan_by_key
+    for (int i = 0; i < length; i++)
+    {
+        if ( !(output[i] == refOutput[i]) ) {
+        std::cout << "BOLT: i=" << i << ", ";
+        std::cout << "key={" << keys[i].a << ", " << keys[i].b << "}; ";
+        std::cout << "val={" << input[i].a << ", " << input[i].b << ", " << input[i].c << "}; ";
+        std::cout << "out={" << output[i].a << ", " << output[i].b << ", " << output[i].c << "};" << std::endl;
+    
+        std::cout << "GOLD: i=" << i << ", ";
+        std::cout << "key={" << keys[i].a << ", " << keys[i].b << "}; ";
+        std::cout << "val={" << refInput[i].a << ", " << refInput[i].b << ", " << refInput[i].c << "}; ";
+        std::cout << "out={" << refOutput[i].a << ", " << refOutput[i].b << ", " << refOutput[i].c << "};" << std::endl;
+        }
+    }
+#endif
 
     // compare results
     cmpArrays(refOutput, output);
@@ -434,18 +505,18 @@ int _tmain(int argc, _TCHAR* argv[])
     try
     {
         // Declare supported options below, describe what they do
-        po::options_description desc( "Scan GoogleTest command line options" );
+        boost::program_options::options_description desc( "Scan GoogleTest command line options" );
         desc.add_options()
             ( "help,h",         "produces this help message" )
             ( "queryOpenCL,q",  "Print queryable platform and device info and return" )
-            ( "platform,p",     po::value< cl_uint >( &userPlatform )->default_value( 0 ),	"Specify the platform under test" )
-            ( "device,d",       po::value< cl_uint >( &userDevice )->default_value( 0 ),	"Specify the device under test" )
+            ( "platform,p",     boost::program_options::value< cl_uint >( &userPlatform )->default_value( 0 ),	"Specify the platform under test" )
+            ( "device,d",       boost::program_options::value< cl_uint >( &userDevice )->default_value( 0 ),	"Specify the device under test" )
             ;
 
 
-        po::variables_map vm;
-        po::store( po::parse_command_line( argc, argv, desc ), vm );
-        po::notify( vm );
+        boost::program_options::variables_map vm;
+        boost::program_options::store( boost::program_options::parse_command_line( argc, argv, desc ), vm );
+        boost::program_options::notify( vm );
 
         if( vm.count( "help" ) )
         {

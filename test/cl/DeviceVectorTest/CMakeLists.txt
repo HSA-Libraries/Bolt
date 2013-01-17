@@ -17,12 +17,21 @@
 
 # List the names of common files to compile across all platforms
 set( clBolt.Test.Device.Vector.Source stdafx.cpp device.vector.test.cpp )
-set( clBolt.Test.Device.Vector.Headers stdafx.h targetver.h ${BOLT_INCLUDE_DIR}/bolt/cl/device_vector.h )
+set( clBolt.Test.Device.Vector.Headers stdafx.h targetver.h ${BOLT_INCLUDE_DIR}/bolt/cl/device_vector.h ${BOLT_INCLUDE_DIR}/bolt/amp/device_vector.h)
 
 set( clBolt.Test.Device.Vector.Files ${clBolt.Test.Device.Vector.Source} ${clBolt.Test.Device.Vector.Headers} )
 
+# Set project specific compile and link options
+if( MSVC )
+set( CMAKE_CXX_FLAGS "-DAMP_TESTS=0 ${CMAKE_CXX_FLAGS}" )
+                set( CMAKE_C_FLAGS "-DAMP_TESTS=0 ${CMAKE_C_FLAGS}" )
+endif()
+
 add_executable( clBolt.Test.Device.Vector ${clBolt.Test.Device.Vector.Files} )
-target_link_libraries( clBolt.Test.Device.Vector clBolt.Runtime ${GTEST_LIBRARIES} ${Boost_LIBRARIES} )
+target_link_libraries( clBolt.Test.Device.Vector
+  clBolt.Runtime
+  ${GTEST_LIBRARIES}
+  ${Boost_LIBRARIES} )
 
 set_target_properties( clBolt.Test.Device.Vector PROPERTIES VERSION ${Bolt_VERSION} )
 set_target_properties( clBolt.Test.Device.Vector PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )

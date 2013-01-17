@@ -21,6 +21,13 @@
 #if !defined( TRANSFORM_SCAN_INL )
 #define TRANSFORM_SCAN_INL
 
+//#define BOLT_ENABLE_PROFILING
+
+#ifdef BOLT_ENABLE_PROFILING
+#include "bolt/AsyncProfiler.h"
+//AsyncProfiler aProfiler("transform_scan");
+#endif
+
 #include <algorithm>
 #include <type_traits>
 
@@ -165,6 +172,7 @@ namespace detail
 *   \ingroup scan
 *   \{
 */
+    enum transformScanTypes {transformScan_iType, transformScan_oType, transformScan_initType, transformScan_UnaryFunction, transformScan_BinaryFunction};
 
 class TransformScan_KernelTemplateSpecializer : public KernelTemplateSpecializer
 {
@@ -183,14 +191,14 @@ public:
             "template __attribute__((mangled_name(" + name(0) + "Instantiated)))\n"
             "__attribute__((reqd_work_group_size(KERNEL0WORKGROUPSIZE,1,1)))\n"
             "__kernel void " + name(0) + "(\n"
-            "global " + typeNames[1] + "* output,\n"
-            "global " + typeNames[0] + "* input,\n"
-            ""        + typeNames[1] + " identity,\n"
+            "global " + typeNames[transformScan_oType] + "* output,\n"
+            "global " + typeNames[transformScan_iType] + "* input,\n"
+            ""        + typeNames[transformScan_initType] + " init,\n"
             "const uint vecSize,\n"
-            "local "  + typeNames[1] + "* lds,\n"
-            "global " + typeNames[2] + "* unaryOp,\n"
-            "global " + typeNames[3] + "* binaryOp,\n"
-            "global " + typeNames[1] + "* scanBuffer,\n"
+            "local "  + typeNames[transformScan_oType] + "* lds,\n"
+            "global " + typeNames[transformScan_UnaryFunction] + "* unaryOp,\n"
+            "global " + typeNames[transformScan_BinaryFunction] + "* binaryOp,\n"
+            "global " + typeNames[transformScan_oType] + "* scanBuffer,\n"
             "int exclusive\n"
             ");\n\n"
     
@@ -198,23 +206,22 @@ public:
             "template __attribute__((mangled_name(" + name(1) + "Instantiated)))\n"
             "__attribute__((reqd_work_group_size(KERNEL1WORKGROUPSIZE,1,1)))\n"
             "__kernel void " + name(1) + "(\n"
-            "global " + typeNames[1] + "* postSumArray,\n"
-            "global " + typeNames[1] + "* preSumArray,\n"
-            ""        + typeNames[1] + " identity,\n"
+            "global " + typeNames[transformScan_oType] + "* postSumArray,\n"
+            "global " + typeNames[transformScan_oType] + "* preSumArray,\n"
             "const uint vecSize,\n"
-            "local "  + typeNames[1] + "* lds,\n"
+            "local "  + typeNames[transformScan_oType] + "* lds,\n"
             "const uint workPerThread,\n"
-            "global " + typeNames[3] + "* binaryOp\n"
+            "global " + typeNames[transformScan_BinaryFunction] + "* binaryOp\n"
             ");\n\n"
     
             "// Dynamic specialization of generic template definition, using user supplied types\n"
             "template __attribute__((mangled_name(" + name(2) + "Instantiated)))\n"
             "__attribute__((reqd_work_group_size(KERNEL2WORKGROUPSIZE,1,1)))\n"
             "__kernel void " + name(2) + "(\n"
-            "global " + typeNames[1] + "* output,\n"
-            "global " + typeNames[1] + "* postSumArray,\n"
+            "global " + typeNames[transformScan_oType] + "* output,\n"
+            "global " + typeNames[transformScan_oType] + "* postSumArray,\n"
             "const uint vecSize,\n"
-            "global " + typeNames[3] + "* binaryOp\n"
+            "global " + typeNames[transformScan_BinaryFunction] + "* binaryOp\n"
             ");\n\n";
     
         return templateSpecializationString;
@@ -403,6 +410,14 @@ transform_scan_enqueue(
     const BinaryFunction& binary_op,
     const bool& inclusive = true )
 {
+#ifdef BOLT_ENABLE_PROFILING
+aProfiler.setName("transform_scan");
+aProfiler.startTrial();
+aProfiler.setStepName("Setup");
+aProfiler.set(AsyncProfiler::device, control::SerialCpu);
+
+size_t k0_stepNum, k1_stepNum, k2_stepNum;
+#endif
     cl_int l_Error;
 
     /**********************************************************************************
@@ -410,23 +425,22 @@ transform_scan_enqueue(
      *********************************************************************************/
     typedef std::iterator_traits< DVInputIterator  >::value_type iType;
     typedef std::iterator_traits< DVOutputIterator >::value_type oType;
-    std::vector<std::string> typeNames;
-    typeNames.push_back(TypeName< iType >::get( ));
-    typeNames.push_back(TypeName< oType >::get( ));
-    typeNames.push_back(TypeName< UnaryFunction >::get());
-    typeNames.push_back(TypeName< BinaryFunction >::get());
+    std::vector<std::string> typeNames( 5 );
+    typeNames[ transformScan_iType ] = TypeName< iType >::get( );
+    typeNames[ transformScan_oType ] = TypeName< oType >::get( );
+    typeNames[ transformScan_initType ] = TypeName< T >::get( );
+    typeNames[ transformScan_UnaryFunction ] = TypeName< UnaryFunction >::get();
+    typeNames[ transformScan_BinaryFunction ] = TypeName< BinaryFunction >::get();
     
     /**********************************************************************************
      * Type Definitions - directly concatenated into kernel string
      *********************************************************************************/
     std::vector<std::string> typeDefinitions;
-    typeDefinitions.push_back( ClCode< iType >::get() );
-    if (TypeName< iType >::get() != TypeName< oType >::get())
-    {
-        typeDefinitions.push_back( ClCode< oType >::get() );
-    }
-    typeDefinitions.push_back( ClCode< UnaryFunction >::get() );
-    typeDefinitions.push_back( ClCode< BinaryFunction >::get() );
+    PUSH_BACK_UNIQUE( typeDefinitions, ClCode< iType >::get() )
+    PUSH_BACK_UNIQUE( typeDefinitions, ClCode< oType >::get() )
+    PUSH_BACK_UNIQUE( typeDefinitions, ClCode< T >::get() )
+    PUSH_BACK_UNIQUE( typeDefinitions, ClCode< UnaryFunction >::get() )
+    PUSH_BACK_UNIQUE( typeDefinitions, ClCode< BinaryFunction >::get() )
 
     /**********************************************************************************
      * Compile Options
@@ -475,8 +489,9 @@ transform_scan_enqueue(
     }
     cl_uint numWorkGroupsK0 = static_cast< cl_uint >( sizeInputBuff / kernel0_WgSize );
 
+
     //  Ceiling function to bump the size of the sum array to the next whole wavefront size
-    device_vector< iType >::size_type sizeScanBuff = numWorkGroupsK0;
+    device_vector< oType >::size_type sizeScanBuff = numWorkGroupsK0;
     modWgSize = (sizeScanBuff & (kernel0_WgSize-1));
     if( modWgSize )
     {
@@ -502,7 +517,14 @@ transform_scan_enqueue(
      *********************************************************************************/
     try
     {
-    ldsSize  = static_cast< cl_uint >( kernel0_WgSize * sizeof( iType ) );
+
+#ifdef BOLT_ENABLE_PROFILING
+aProfiler.nextStep();
+aProfiler.setStepName("Setup Kernel 0");
+aProfiler.set(AsyncProfiler::device, control::SerialCpu);
+#endif
+
+    ldsSize  = static_cast< cl_uint >( kernel0_WgSize * sizeof( oType ) );
     V_OPENCL( kernels[0].setArg( 0, result->getBuffer( ) ), "Error setArg kernels[ 0 ]" ); // Output buffer
     V_OPENCL( kernels[0].setArg( 1, first->getBuffer( ) ),  "Error setArg kernels[ 0 ]" ); // Input buffer
     V_OPENCL( kernels[0].setArg( 2, init_T ),               "Error setArg kernels[ 0 ]" ); // Initial value exclusive
@@ -513,6 +535,15 @@ transform_scan_enqueue(
     V_OPENCL( kernels[0].setArg( 7, *preSumArray ),         "Error setArg kernels[ 0 ]" ); // Output per block sum
     V_OPENCL( kernels[0].setArg( 8, doExclusiveScan ),      "Error setArg kernels[ 0 ]" ); // Exclusive scan?
     
+#ifdef BOLT_ENABLE_PROFILING
+aProfiler.nextStep();
+k0_stepNum = aProfiler.getStepNum();
+aProfiler.setStepName("Kernel 0");
+aProfiler.set(AsyncProfiler::device, ctl.forceRunMode());
+aProfiler.set(AsyncProfiler::flops, 2*numElements);
+aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(iType) + 1*sizeScanBuff*sizeof(oType));
+#endif
+
     l_Error = ctl.commandQueue( ).enqueueNDRangeKernel(
         kernels[0],
         ::cl::NullRange,
@@ -533,14 +564,29 @@ transform_scan_enqueue(
     /**********************************************************************************
      *  Kernel 1
      *********************************************************************************/
+
+#ifdef BOLT_ENABLE_PROFILING
+aProfiler.nextStep();
+aProfiler.setStepName("Setup Kernel 1");
+aProfiler.set(AsyncProfiler::device, control::SerialCpu);
+#endif
+
     cl_uint workPerThread = static_cast< cl_uint >( sizeScanBuff / kernel1_WgSize );
     V_OPENCL( kernels[1].setArg( 0, *postSumArray ),        "Error setArg kernels[ 1 ]" ); // Output buffer
     V_OPENCL( kernels[1].setArg( 1, *preSumArray ),         "Error setArg kernels[ 1 ]" ); // Input buffer
-    V_OPENCL( kernels[1].setArg( 2, init_T ),               "Error setArg kernels[ 1 ]" ); // Initial value exclusive
-    V_OPENCL( kernels[1].setArg( 3, numWorkGroupsK0 ),      "Error setArg kernels[ 1 ]" ); // Size of scratch buffer
-    V_OPENCL( kernels[1].setArg( 4, ldsSize, NULL ),        "Error setArg kernels[ 1 ]" ); // Scratch buffer
-    V_OPENCL( kernels[1].setArg( 5, workPerThread ),        "Error setArg kernels[ 1 ]" ); // User provided functor
-    V_OPENCL( kernels[1].setArg( 6, *binaryBuffer ),        "Error setArg kernels[ 1 ]" ); // User provided functor
+    V_OPENCL( kernels[1].setArg( 2, numWorkGroupsK0 ),      "Error setArg kernels[ 1 ]" ); // Size of scratch buffer
+    V_OPENCL( kernels[1].setArg( 3, ldsSize, NULL ),        "Error setArg kernels[ 1 ]" ); // Scratch buffer
+    V_OPENCL( kernels[1].setArg( 4, workPerThread ),        "Error setArg kernels[ 1 ]" ); // User provided functor
+    V_OPENCL( kernels[1].setArg( 5, *binaryBuffer ),        "Error setArg kernels[ 1 ]" ); // User provided functor
+
+#ifdef BOLT_ENABLE_PROFILING
+aProfiler.nextStep();
+k1_stepNum = aProfiler.getStepNum();
+aProfiler.setStepName("Kernel 1");
+aProfiler.set(AsyncProfiler::device, ctl.forceRunMode());
+aProfiler.set(AsyncProfiler::flops, 2*sizeScanBuff);
+aProfiler.set(AsyncProfiler::memory, 4*sizeScanBuff*sizeof(oType));
+#endif
 
     l_Error = ctl.commandQueue( ).enqueueNDRangeKernel(
         kernels[1],
@@ -555,10 +601,26 @@ transform_scan_enqueue(
     /**********************************************************************************
      *  Kernel 2
      *********************************************************************************/
+
+#ifdef BOLT_ENABLE_PROFILING
+aProfiler.nextStep();
+aProfiler.setStepName("Setup Kernel 2");
+aProfiler.set(AsyncProfiler::device, control::SerialCpu);
+#endif
+
     V_OPENCL( kernels[2].setArg( 0, result->getBuffer()),   "Error setArg kernels[ 2 ]" ); // Output buffer
     V_OPENCL( kernels[2].setArg( 1, *postSumArray ),        "Error setArg kernels[ 2 ]" ); // Input buffer
     V_OPENCL( kernels[2].setArg( 2, numElements ),          "Error setArg kernels[ 2 ]" ); // Size of scratch buffer
     V_OPENCL( kernels[2].setArg( 3, *binaryBuffer ),        "Error setArg kernels[ 2 ]" ); // User provided functor
+
+#ifdef BOLT_ENABLE_PROFILING
+aProfiler.nextStep();
+k2_stepNum = aProfiler.getStepNum();
+aProfiler.setStepName("Kernel 2");
+aProfiler.set(AsyncProfiler::device, ctl.forceRunMode());
+aProfiler.set(AsyncProfiler::flops, numElements);
+aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(oType) + 1*sizeScanBuff*sizeof(oType));
+#endif
 
     l_Error = ctl.commandQueue( ).enqueueNDRangeKernel(
         kernels[2],
@@ -576,46 +638,48 @@ transform_scan_enqueue(
     /**********************************************************************************
      *  Print Kernel times
      *********************************************************************************/
-#if 0
+
+#ifdef BOLT_ENABLE_PROFILING
+aProfiler.nextStep();
+aProfiler.setStepName("Querying Kernel Times");
+aProfiler.set(AsyncProfiler::device, control::SerialCpu);
+
+aProfiler.setDataSize(numElements*sizeof(iType));
+std::string strDeviceName = ctl.device().getInfo< CL_DEVICE_NAME >( &l_Error );
+bolt::cl::V_OPENCL( l_Error, "Device::getInfo< CL_DEVICE_NAME > failed" );
+aProfiler.setArchitecture(strDeviceName);
+
     try
     {
-        double k0_globalMemory = 2.0*sizeInputBuff*sizeof(iType) + 1*sizeScanBuff*sizeof(iType);
-        double k1_globalMemory = 4.0*sizeScanBuff*sizeof(iType);
-        double k2_globalMemory = 2.0*sizeInputBuff*sizeof(iType) + 1*sizeScanBuff*sizeof(iType);
-        cl_ulong k0_start, k0_end, k1_start, k1_end, k2_start, k2_end;
-
+        cl_ulong k0_start, k0_stop, k1_stop, k2_stop;
+        
         l_Error = kernel0Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_START, &k0_start);
-        V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_START>()");
-        l_Error = kernel0Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END, &k0_end);
-        V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_START>()");
+        V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_QUEUED>()");
+        l_Error = kernel0Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END, &k0_stop);
+        V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_END>()");
         
-        l_Error = kernel1Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_START, &k1_start);
-        V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_START>()");
-        l_Error = kernel1Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END, &k1_end);
-        V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_START>()");
+        //l_Error = kernel1Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_START, &k1_start);
+        //V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_START>()");
+        l_Error = kernel1Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END, &k1_stop);
+        V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_END>()");
         
-        l_Error = kernel2Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_START, &k2_start);
-        V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_START>()");
-        l_Error = kernel2Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END, &k2_end);
-        V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_START>()");
+        //l_Error = kernel2Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_START, &k2_start);
+        //V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_START>()");
+        l_Error = kernel2Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END, &k2_stop);
+        V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_END>()");
 
-        double k0_sec = (k0_end-k0_start)/1000000000.0;
-        double k1_sec = (k1_end-k1_start)/1000000000.0;
-        double k2_sec = (k2_end-k2_start)/1000000000.0;
+        size_t k0_start_cpu = aProfiler.get(k0_stepNum, AsyncProfiler::startTime);
+        size_t shift = k0_start - k0_start_cpu;
+        //size_t shift = k0_start_cpu - k0_start;
 
-        double k0_GBs = k0_globalMemory/(1024*1024*1024*k0_sec);
-        double k1_GBs = k1_globalMemory/(1024*1024*1024*k1_sec);
-        double k2_GBs = k2_globalMemory/(1024*1024*1024*k2_sec);
+        //std::cout << "setting step " << k0_stepNum << " attribute " << AsyncProfiler::stopTime << " to " << k0_stop-shift << std::endl;
+        aProfiler.set(k0_stepNum, AsyncProfiler::stopTime,  static_cast<size_t>(k0_stop-shift) );
 
-        double k0_ms = k0_sec*1000.0;
-        double k1_ms = k1_sec*1000.0;
-        double k2_ms = k2_sec*1000.0;
+        aProfiler.set(k1_stepNum, AsyncProfiler::startTime, static_cast<size_t>(k0_stop-shift) );
+        aProfiler.set(k1_stepNum, AsyncProfiler::stopTime,  static_cast<size_t>(k1_stop-shift) );
 
-        printf("Kernel Profile:\n\t%7.3f GB/s  (%4.0f MB in %6.3f ms)\n\t%7.3f GB/s"
-            "  (%4.0f MB in %6.3f ms)\n\t%7.3f GB/s  (%4.0f MB in %6.3f ms)\n",
-            k0_GBs, k0_globalMemory/1024/1024, k0_ms,
-            k1_GBs, k1_globalMemory/1024/1024, k1_ms,
-            k2_GBs, k2_globalMemory/1024/1024, k2_ms);
+        aProfiler.set(k2_stepNum, AsyncProfiler::startTime, static_cast<size_t>(k1_stop-shift) );
+        aProfiler.set(k2_stepNum, AsyncProfiler::stopTime,  static_cast<size_t>(k2_stop-shift) );
 
     }
     catch( ::cl::Error& e )
@@ -623,6 +687,9 @@ transform_scan_enqueue(
         std::cout << ( "Scan Benchmark error condition reported:" ) << std::endl << e.what() << std::endl;
         return;
     }
+
+aProfiler.stopTrial();
+
 #endif
 
 }   //end of transform_scan_enqueue( )

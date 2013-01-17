@@ -15,15 +15,15 @@
 
 ***************************************************************************/                                                                                     
 
-#if !defined( TRANSFORM_SCAN_H )
-#define TRANSFORM_SCAN_H
+#if !defined( SCAN_BY_KEY_H )
+#define SCAN_BY_KEY_H
 #pragma once
 
 #include <bolt/cl/bolt.h>
 #include <bolt/cl/functional.h>
 #include <bolt/cl/device_vector.h>
 
-/*! \file transform_scan.h
+/*! \file scan_by_scan.h
 */
 
 namespace bolt
@@ -255,7 +255,7 @@ template<
     typename BinaryFunction>
 OutputIterator
 inclusive_scan_by_key(
-    bolt::cl::control &ctl,
+    control &ctl,
     InputIterator1  first1,
     InputIterator1  last1,
     InputIterator2  first2,
@@ -312,7 +312,7 @@ template<
     typename BinaryPredicate>
 OutputIterator
 inclusive_scan_by_key(
-    bolt::cl::control &ctl,
+    control &ctl,
     InputIterator1  first1,
     InputIterator1  last1,
     InputIterator2  first2,
@@ -364,7 +364,7 @@ template<
     typename OutputIterator>
 OutputIterator
 inclusive_scan_by_key(
-    bolt::cl::control &ctl,
+    control &ctl,
     InputIterator1  first1,
     InputIterator1  last1,
     InputIterator2  first2,
@@ -651,7 +651,7 @@ template<
     typename BinaryFunction>
 OutputIterator
 exclusive_scan_by_key(
-    bolt::cl::control &ctl,
+    control &ctl,
     InputIterator1  first1,
     InputIterator1  last1,
     InputIterator2  first2,
@@ -712,7 +712,7 @@ template<
     typename BinaryPredicate>
 OutputIterator
 exclusive_scan_by_key(
-    bolt::cl::control &ctl,
+    control &ctl,
     InputIterator1  first1,
     InputIterator1  last1,
     InputIterator2  first2,
@@ -768,7 +768,7 @@ template<
     typename T>
 OutputIterator
 exclusive_scan_by_key(
-    bolt::cl::control &ctl,
+    control &ctl,
     InputIterator1  first1,
     InputIterator1  last1,
     InputIterator2  first2,
@@ -820,7 +820,7 @@ template<
     typename OutputIterator>
 OutputIterator
 exclusive_scan_by_key(
-    bolt::cl::control &ctl,
+    control &ctl,
     InputIterator1  first1,
     InputIterator1  last1,
     InputIterator2  first2,

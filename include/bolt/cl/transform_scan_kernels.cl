@@ -19,11 +19,11 @@
  *  Kernel 0
  *****************************************************************************/
 //__attribute__((reqd_work_group_size(KERNEL0WORKGROUPSIZE,1,1)))
-template< typename iType, typename oType, typename UnaryFunction, typename BinaryFunction >
+template< typename iType, typename oType, typename initType, typename UnaryFunction, typename BinaryFunction >
 __kernel void perBlockTransformScan(
                 global oType* output,
                 global iType* input,
-                oType identity,
+                initType init,
                 const uint vecSize,
                 local oType* lds,
                 global UnaryFunction* unaryOp,
@@ -52,7 +52,7 @@ __kernel void perBlockTransformScan(
         }
         else
         { // thread=0
-            val = identity;
+            val = init;
             lds[ locId ] = val;
         }
     }
@@ -96,8 +96,7 @@ __kernel void perBlockTransformScan(
 template< typename Type, typename BinaryFunction >
 __kernel void intraBlockInclusiveScan(
                 global Type* postSumArray,
-                global Type* preSumArray, 
-                Type identity,
+                global Type* preSumArray,
                 const uint vecSize,
                 local Type* lds,
                 const uint workPerThread,

@@ -28,9 +28,9 @@ cmake_minimum_required( VERSION 2.8.3 )
 project( Examples )
 
 # Define a version for the code
-set( Examples_VERSION_MAJOR 0 )
-set( Examples_VERSION_MINOR 5 )
-set( Examples_VERSION_PATCH 0 )
+set( Examples_VERSION_MAJOR @Bolt_VERSION_MAJOR@ )
+set( Examples_VERSION_MINOR @Bolt_VERSION_MINOR@ )
+set( Examples_VERSION_PATCH @Bolt_VERSION_PATCH@ )
 set( Examples_VERSION "${Examples_VERSION_MAJOR}.${Examples_VERSION_MINOR}.${Examples_VERSION_PATCH}")
 
 list( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR} )
