@@ -324,6 +324,8 @@ class ScanByKey_KernelTemplateSpecializer : public KernelTemplateSpecializer
 	        "global " + typeNames[e_kType] + "*keys,\n"
 	        "global " + typeNames[e_koType] + "*keys_output,\n"
             "global " + typeNames[e_voType] + "*vals_output,\n"
+            "global " + typeNames[e_koType] + "*offsetArray,\n"
+            "global " + typeNames[e_voType] + "*offsetValArray,\n"
 	        "const uint vecSize\n"
             ");\n\n";            
     
@@ -642,7 +644,8 @@ reduce_by_key_enqueue(
     control::buffPointer keySumArray  = ctl.acquireBuffer( sizeScanBuff*sizeof( kType ) );
     control::buffPointer preSumArray  = ctl.acquireBuffer( sizeScanBuff*sizeof( voType ) );
     control::buffPointer postSumArray = ctl.acquireBuffer( sizeScanBuff*sizeof( voType ) );
-    //control::buffPointer offsetArray  = ctl.acquireBuffer( numElements *sizeof( kType ) );
+    control::buffPointer offsetArray  = ctl.acquireBuffer( numElements *sizeof( koType ) );
+    control::buffPointer offsetValArray  = ctl.acquireBuffer( numElements *sizeof( voType ) );
     cl_uint ldsKeySize, ldsValueSize;
 
 
@@ -655,8 +658,8 @@ reduce_by_key_enqueue(
     ldsValueSize = static_cast< cl_uint >( kernel0_WgSize * sizeof( voType ) );
     V_OPENCL( kernels[0].setArg( 0, keys_first->getBuffer()), "Error setArg kernels[ 0 ]" ); // Input keys
     V_OPENCL( kernels[0].setArg( 1, values_first->getBuffer()),"Error setArg kernels[ 0 ]" ); // Input values
-    V_OPENCL( kernels[0].setArg( 2, values_output->getBuffer( ) ), "Error setArg kernels[ 0 ]" ); // Output values
-    V_OPENCL( kernels[0].setArg( 3, keys_output->getBuffer( ) ), "Error setArg kernels[ 0 ]" ); // Output keys
+    V_OPENCL( kernels[0].setArg( 2, *offsetValArray ), "Error setArg kernels[ 0 ]" ); // Output values
+    V_OPENCL( kernels[0].setArg( 3, *offsetArray  ), "Error setArg kernels[ 0 ]" ); // Output keys
     V_OPENCL( kernels[0].setArg( 4, numElements ), "Error setArg kernels[ 0 ]" ); // vecSize
     V_OPENCL( kernels[0].setArg( 5, ldsKeySize, NULL ),     "Error setArg kernels[ 0 ]" ); // Scratch buffer
     V_OPENCL( kernels[0].setArg( 6, ldsValueSize, NULL ),   "Error setArg kernels[ 0 ]" ); // Scratch buffer
@@ -721,7 +724,7 @@ reduce_by_key_enqueue(
     V_OPENCL( kernels[2].setArg( 0, *keySumArray ),         "Error setArg kernels[ 2 ]" ); // Input buffer
     V_OPENCL( kernels[2].setArg( 1, *postSumArray ),        "Error setArg kernels[ 2 ]" ); // Input buffer
     V_OPENCL( kernels[2].setArg( 2, keys_first->getBuffer()), "Error setArg kernels[ 2 ]" ); // Output buffer
-    V_OPENCL( kernels[2].setArg( 3, values_output->getBuffer()),   "Error setArg kernels[ 2 ]" ); // Output buffer
+    V_OPENCL( kernels[2].setArg( 3, *offsetValArray),   "Error setArg kernels[ 2 ]" ); // Output buffer
     V_OPENCL( kernels[2].setArg( 4, numElements ),          "Error setArg kernels[ 2 ]" ); // Size of scratch buffer
     V_OPENCL( kernels[2].setArg( 5, *binaryPredicateBuffer ),"Error setArg kernels[ 2 ]" ); // User provided functor
     V_OPENCL( kernels[2].setArg( 6, *binaryFunctionBuffer ),"Error setArg kernels[ 2 ]" ); // User provided functor
@@ -755,17 +758,21 @@ reduce_by_key_enqueue(
     //
 
     ::cl::Event l_mapEvent;
-    voType *h_result = (voType*)ctl.commandQueue().enqueueMapBuffer(keys_output->getBuffer(),
-                                                                    false, CL_MAP_WRITE | CL_MAP_READ,
-                                                                    0, sizeof(voType)*numElements,
-                                                                    NULL, &l_mapEvent, &l_Error );
+    koType *h_result = (koType*)ctl.commandQueue().enqueueMapBuffer( *offsetArray,
+                                                                    false,
+                                                                    CL_MAP_READ | CL_MAP_WRITE,
+                                                                    0,
+                                                                    sizeof(koType)*numElements,
+                                                                    NULL,
+                                                                    &l_mapEvent,
+                                                                    &l_Error );
     V_OPENCL( l_Error, "Error calling map on the result buffer" );
     
     bolt::cl::wait(ctl, l_mapEvent);
 
     // Doing this serially; Performance killer!!
-    unsigned int count_number_of_sections = 1;
-    for(unsigned int i = 1; i < numElements; i++)
+    unsigned int count_number_of_sections = 0;
+    for(unsigned int i = 0; i < numElements; i++)
     {        
         if(h_result[i])
         {
@@ -774,10 +781,10 @@ reduce_by_key_enqueue(
         }
     }
 
-    //for(unsigned int i = 0; i < 256 ; i++)
-    //{
-    //    std::cout<<h_result[i]<<std::endl;
-    //}
+    for(unsigned int i = 0; i < 256 ; i++)
+    {
+        std::cout<<h_result[i]<<std::endl;
+    }
 
     //
     // Now unmap it. We map the indices back to keys_output using "keys_output"
@@ -785,19 +792,22 @@ reduce_by_key_enqueue(
 
     ::cl::Event l_unmapEvent;
     cl_int l_unmapError = CL_SUCCESS;
-    l_Error = ctl.commandQueue().enqueueUnmapMemObject( keys_output->getBuffer(), h_result, NULL, &l_unmapEvent );
+    l_unmapError = ctl.commandQueue().enqueueUnmapMemObject( *offsetArray , h_result, NULL, &l_unmapEvent );
     V_OPENCL( l_unmapError, "device_vector failed to unmap host memory back to device memory" );
-    V_OPENCL( l_unmapEvent.wait( ), "failed to wait for unmap event" );
+    //V_OPENCL( l_unmapEvent.wait( ), "failed to wait for unmap event" );
 
-
+    bolt::cl::wait(ctl, l_unmapEvent);
 
     /**********************************************************************************
      *  Kernel 3
      *********************************************************************************/
     V_OPENCL( kernels[3].setArg( 0, keys_first->getBuffer()),    "Error setArg kernels[ 3 ]" ); // Input buffer
-    V_OPENCL( kernels[3].setArg( 1, keys_output->getBuffer() ),  "Error setArg kernels[ 3 ]" ); // Input buffer
+    V_OPENCL( kernels[3].setArg( 1, keys_output->getBuffer() ),  "Error setArg kernels[ 3 ]" ); // Output buffer
     V_OPENCL( kernels[3].setArg( 2, values_output->getBuffer()), "Error setArg kernels[ 3 ]" ); // Output buffer
-    V_OPENCL( kernels[3].setArg( 3, numElements ),               "Error setArg kernels[ 3 ]" ); // Size of scratch buffer
+    V_OPENCL( kernels[3].setArg( 3, *offsetArray),                "Error setArg kernels[ 3 ]" ); // Input buffer
+    V_OPENCL( kernels[3].setArg( 4, *offsetValArray),             "Error setArg kernels[ 3 ]"  );
+    V_OPENCL( kernels[3].setArg( 5, numElements ),               "Error setArg kernels[ 3 ]" ); // Size of scratch buffer
+
 
     try
     {

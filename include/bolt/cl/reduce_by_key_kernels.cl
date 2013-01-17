@@ -273,6 +273,8 @@ __kernel void keyValueMapping(
 	global kType *keys,
 	global koType *keys_output,
 	global voType *vals_output,
+	global koType *offsetArray,
+	global koType *offsetValArray,
 	const uint vecSize)
 {
 	
@@ -282,10 +284,10 @@ __kernel void keyValueMapping(
     if( gloId >= vecSize )
         return;
 	
-	if(keys_output[ gloId ] != (koType) 0)
+	if(offsetArray[ gloId ] != (koType) 0)
 	{
-		keys_output[ keys_output [ gloId ] ] = keys[ gloId ];
-		vals_output[ keys_output [ gloId ] ] = vals_output [ gloId ];
+		keys_output[ offsetArray [ gloId ] ] = keys[ gloId ];
+		vals_output[ offsetArray [ gloId ] ] = offsetValArray [ gloId ];
 	}
 
 }
