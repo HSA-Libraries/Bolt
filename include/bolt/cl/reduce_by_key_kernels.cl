@@ -284,10 +284,17 @@ __kernel void keyValueMapping(
     if( gloId >= vecSize )
         return;
 	
+
 	if(offsetArray[ gloId ] != (koType) 0)
 	{
-		keys_output[ offsetArray [ gloId ] ] = keys[ gloId ];
-		vals_output[ offsetArray [ gloId ] ] = offsetValArray [ gloId ];
+		keys_output[ offsetArray [ gloId ] ] = keys[ gloId-1 ];
+		vals_output[ offsetArray [ gloId ] ] = offsetValArray [ gloId-1 ];
 	}
+
+	//if(vecSize == (gloId-1))
+	//{
+	//	keys_output[ gloId ] = ;
+	//	vals_output[ gloId ] = 
+	//}
 
 }

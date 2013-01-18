@@ -767,8 +767,30 @@ reduce_by_key_enqueue(
                                                                     &l_mapEvent,
                                                                     &l_Error );
     V_OPENCL( l_Error, "Error calling map on the result buffer" );
-    
+
     bolt::cl::wait(ctl, l_mapEvent);
+    
+    //delete this code -start
+    ::cl::Event l_mapEvent2;
+    voType *v_result = (voType*)ctl.commandQueue().enqueueMapBuffer( *offsetValArray,
+                                                                    false,
+                                                                    CL_MAP_READ,
+                                                                    0,
+                                                                    sizeof(voType)*numElements,
+                                                                    NULL,
+                                                                    &l_mapEvent2,
+                                                                    &l_Error );
+    V_OPENCL( l_Error, "Error calling map on the result buffer" );
+    std::cout<<"Myval-------------------------starts"<<std::endl;
+    for(unsigned int i = 0; i < 256 ; i++)
+    {
+        std::cout<<v_result[i]<<std::endl;
+    }
+    std::cout<<"Myval-------------------------ends"<<std::endl;
+    bolt::cl::wait(ctl, l_mapEvent2); 
+    //delete this code -end
+
+
 
     // Doing this serially; Performance killer!!
     unsigned int count_number_of_sections = 0;
@@ -776,8 +798,8 @@ reduce_by_key_enqueue(
     {        
         if(h_result[i])
         {
-            count_number_of_sections++;
             h_result[i] = count_number_of_sections;
+            count_number_of_sections++;
         }
     }
 
@@ -830,6 +852,26 @@ reduce_by_key_enqueue(
     // wait for results
     l_Error = kernel3Event.wait( );
     V_OPENCL( l_Error, "post-kernel[3] failed wait" );
+
+    //delete this code -start
+    ::cl::Event l_mapEvent3;
+    voType *v_result2 = (voType*)ctl.commandQueue().enqueueMapBuffer( *offsetValArray,
+                                                                    false,
+                                                                    CL_MAP_READ,
+                                                                    0,
+                                                                    sizeof(voType)*numElements,
+                                                                    NULL,
+                                                                    &l_mapEvent3,
+                                                                    &l_Error );
+    V_OPENCL( l_Error, "Error calling map on the result buffer" );
+    std::cout<<"Myval-------------------------starts"<<std::endl;
+    for(unsigned int i = 0; i < 256 ; i++)
+    {
+        std::cout<<v_result2[i]<<std::endl;
+    }
+    std::cout<<"Myval-------------------------ends"<<std::endl;
+    bolt::cl::wait(ctl, l_mapEvent3); 
+    //delete this code -end
 
 
 
