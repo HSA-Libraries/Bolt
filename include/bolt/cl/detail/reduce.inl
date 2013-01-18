@@ -206,7 +206,7 @@ namespace bolt {
                 } else if (runMode == bolt::cl::control::MultiCoreCpu) {
 #ifdef ENABLE_TBB
                     std::cout << "The MultiCoreCpu version of reduce uses TBB." << std ::endl;
-					tbb::task_scheduler_init initialize(4);
+					tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
                     Reduce<iType, BinaryFunction> reduce_op(binary_op, init);
                     tbb::parallel_reduce( tbb::blocked_range<iType*>( &*first, (iType*)&*(last-1) + 1), reduce_op );
                     return reduce_op.value;

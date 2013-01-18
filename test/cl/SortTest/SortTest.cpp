@@ -150,6 +150,27 @@ TYPED_TEST_P( SortArrayTest, Normal )
     
 }
 
+TYPED_TEST_P( SortArrayTest, MultiCoreNormal )
+{
+    typedef std::array< ArrayType, ArraySize > ArrayCont;
+	::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
+	bolt::cl::control ctl = bolt::cl::control::getDefault( );
+	ctl.forceRunMode(bolt::cl::control::MultiCoreCpu);
+    //  Calling the actual functions under test
+    std::sort( stdInput.begin( ), stdInput.end( ));
+    bolt::cl::sort( ctl, boltInput.begin( ), boltInput.end( ) );
+
+    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
+    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
+}
+
+
 TYPED_TEST_P( SortArrayTest, GPU_DeviceNormal )
 {
     //  The first time our routines get called, we compile the library kernels with a certain context
@@ -347,11 +368,11 @@ TYPED_TEST_P( SortArrayTest, CPU_DeviceLessFunction )
 #endif
 
 #if (TEST_CPU_DEVICE == 1)
-REGISTER_TYPED_TEST_CASE_P( SortArrayTest, Normal, GPU_DeviceNormal, 
+REGISTER_TYPED_TEST_CASE_P( SortArrayTest, Normal, MultiCoreNormal, GPU_DeviceNormal, 
                                            GreaterFunction, GPU_DeviceGreaterFunction,
                                            LessFunction, GPU_DeviceLessFunction, CPU_DeviceNormal, CPU_DeviceGreaterFunction, CPU_DeviceLessFunction);
 #else
-REGISTER_TYPED_TEST_CASE_P( SortArrayTest, Normal, GPU_DeviceNormal, 
+REGISTER_TYPED_TEST_CASE_P( SortArrayTest, Normal, MultiCoreNormal, GPU_DeviceNormal, 
                                            GreaterFunction, GPU_DeviceGreaterFunction,
                                            LessFunction, GPU_DeviceLessFunction );
 #endif
@@ -839,7 +860,7 @@ struct UDD {
     int a; 
     int b;
 
-    bool operator() (const UDD& lhs, const UDD& rhs) { 
+    bool operator() (const UDD& lhs, const UDD& rhs) const{ 
         return ((lhs.a+lhs.b) > (rhs.a+rhs.b));
     } 
     bool operator < (const UDD& other) const { 
@@ -860,7 +881,7 @@ struct UDD {
 
 BOLT_FUNCTOR(sortBy_UDD_a,
     struct sortBy_UDD_a {
-        bool operator() (UDD& a, UDD& b) 
+        bool operator() (const UDD& a, const UDD& b) const
         { 
             return (a.a>b.a); 
         };

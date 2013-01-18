@@ -30,6 +30,10 @@
 #include "bolt/cl/scan.h"
 #include "bolt/cl/functional.h"
 #include "bolt/cl/device_vector.h"
+#ifdef ENABLE_TBB
+#include "tbb/parallel_sort.h"
+#include "tbb/task_scheduler_init.h"
+#endif
 
 #define BOLT_UINT_MAX 0xFFFFFFFFU
 #define BOLT_UINT_MIN 0x0U
@@ -258,8 +262,8 @@ namespace bolt {
                     throw ::cl::Error( CL_INVALID_DEVICE, "Sort of device_vector CPU device not implemented" );
                     return;
                 } else if (runMode == bolt::cl::control::MultiCoreCpu) {
-                    std::cout << "The MultiCoreCpu version of device_vector sort is not implemented yet." << std ::endl;
-                    throw ::cl::Error( CL_INVALID_DEVICE, "The BOLT sort routine device_vector does not support non power of 2 buffer size." );
+                    std::cout << "The MultiCoreCpu version of sort on device_vector is not supported." << std ::endl;
+                    throw ::cl::Error( CL_INVALID_DEVICE, "The MultiCoreCpu version of reduce on device_vector is not supported." );
                     return;
                 } else {
                     sort_enqueue(ctl,first,last,comp,cl_code);
@@ -285,7 +289,15 @@ namespace bolt {
                     std::sort(first, last, comp);
                     return;
                 } else if (runMode == bolt::cl::control::MultiCoreCpu) {
-                    std::cout << "The MultiCoreCpu version of sort is not implemented yet." << std ::endl;
+#ifdef ENABLE_TBB
+					std::cout << "The MultiCoreCpu version of sort is enabled with TBB. " << std ::endl;
+					tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
+					tbb::parallel_sort(first,last, comp);
+#else
+                    std::cout << "The MultiCoreCpu version of sort is not enabled. " << std ::endl;
+                    throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of sort is not enabled to be built." );
+                    return;
+#endif
                 } else {
                     device_vector< T > dvInputOutput( first, last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctl );
                     //Now call the actual cl algorithm
