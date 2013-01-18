@@ -28,7 +28,10 @@
 #include "bolt/cl/functional.h"
 #include "bolt/cl/device_vector.h"
 #include "bolt/cl/bolt.h"
-
+#ifdef ENABLE_TBB
+#include "tbb/parallel_sort.h"
+#include "tbb/task_scheduler_init.h"
+#endif
 #define WGSIZE 64
 
 namespace bolt {
@@ -198,7 +201,15 @@ namespace bolt {
                     std::sort(first, last, comp);
                     return;
                 } else if (runMode == bolt::cl::control::MultiCoreCpu) {
-                    std::cout << "The MultiCoreCpu version of sort is not implemented yet." << std ::endl;
+#ifdef ENABLE_TBB
+					std::cout << "The MultiCoreCpu version of sort is enabled with TBB. " << std ::endl;
+					tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
+					tbb::parallel_sort(first,last, comp);
+#else
+                    std::cout << "The MultiCoreCpu version of sort is not enabled. " << std ::endl;
+                    throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of sort is not enabled to be built." );
+                    return;
+#endif
                 } else {
                     device_vector< T > dvInputOutput( first, last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctl );
                     //Now call the actual cl algorithm
