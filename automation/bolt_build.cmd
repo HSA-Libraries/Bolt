@@ -15,27 +15,9 @@ set BOLT_BUILD_INSTALL_PATH=%CD%
 
 REM ################################################################################################
 REM # Build Version
-set BOLT_BUILD_VERSION_MAJOR_FILE=%BOLT_BUILD_SOURCE_PATH%\automation\bolt.version.major
-set BOLT_BUILD_VERSION_MINOR_FILE=%BOLT_BUILD_SOURCE_PATH%\automation\bolt.version.minor
-set BOLT_BUILD_VERSION_PATCH_FILE=%BOLT_BUILD_SOURCE_PATH%\automation\bolt.version.patch
-set BOLT_BUILD_VERSION_MAJOR=
-set BOLT_BUILD_VERSION_MINOR=
-set BOLT_BUILD_VERSION_PATCH=
-if exist %BOLT_BUILD_VERSION_MAJOR_FILE% (
-  set /p BOLT_BUILD_VERSION_MAJOR=<%BOLT_BUILD_VERSION_MAJOR_FILE%
-) else (
-echo %BOLT_BUILD_VERSION_MAJOR_FILE% not found.
-)
-if exist %BOLT_BUILD_VERSION_MINOR_FILE% (
-  set /p BOLT_BUILD_VERSION_MINOR=<%BOLT_BUILD_VERSION_MINOR_FILE%
-) else (
-echo %BOLT_BUILD_VERSION_MINOR_FILE% not found.
-)
-if exist %BOLT_BUILD_VERSION_PATCH_FILE% (
-  set /p BOLT_BUILD_VERSION_PATCH=<%BOLT_BUILD_VERSION_PATCH_FILE%
-) else (
-echo %BOLT_BUILD_VERSION_PATCH_FILE% not found.
-)
+set BOLT_BUILD_VERSION_MAJOR=0
+set BOLT_BUILD_VERSION_MINOR=5
+set BOLT_BUILD_VERSION_PATCH=%BUILD_NUMBER%
 
 REM ################################################################################################
 REM # Default build parameters
@@ -216,7 +198,7 @@ REM ############################################################################
 REM # Super Build -- Debug
 echo.
 echo %HR%
-echo Info: Running MSBuild for SuperBuild.
+echo Info: Running MSBuild for Debug SuperBuild
 MSBuild.exe ^
   ALL_BUILD.vcxproj ^
   /m ^
@@ -228,33 +210,34 @@ MSBuild.exe ^
   /p:PlatformTarget=%BOLT_BUILD_MSBUILD_PLATFORM% ^
   /p:PlatformToolset=%BOLT_BUILD_MSBUILD_PLATFORM_TOOLSET% ^
   /t:build
-if errorlevel 1 (
-  echo Info: MSBuild failed for SuperBuild.
-  del /Q /F %BOLT_BUILD_INSTALL_PATH%\success
-  goto :Done
-)
+REM if errorlevel 1 (
+  REM echo Info: MSBuild failed for SuperBuild.
+  REM del /Q /F %BOLT_BUILD_INSTALL_PATH%\success
+  REM goto :Done
+REM )
 
 REM ################################################################################################
 REM # Super Build -- Release
 echo.
 echo %HR%
-echo Info: Running MSBuild for SuperBuild.
+echo Info: Running MSBuild for Release SuperBuild.
 MSBuild.exe ^
-  ALL_BUILD.vcxproj ^
+  Bolt.vcxproj ^
   /m ^
   /fl ^
   /flp1:logfile=ReleaseErrors.log;errorsonly ^
   /flp2:logfile=ReleaseWarnings.log;warningsonly ^
   /flp3:logfile=ReleaseBuild.log ^
   /p:Configuration=Release ^
+  /p:BuildProjectReferences=false
   /p:PlatformTarget=%BOLT_BUILD_MSBUILD_PLATFORM% ^
   /p:PlatformToolset=%BOLT_BUILD_MSBUILD_PLATFORM_TOOLSET% ^
   /t:build
-if errorlevel 1 (
-  echo Info: MSBuild failed for SuperBuild.
-  del /Q /F %BOLT_BUILD_INSTALL_PATH%\success
-  goto :Done
-)
+REM if errorlevel 1 (
+  REM echo Info: MSBuild failed for SuperBuild.
+  REM del /Q /F %BOLT_BUILD_INSTALL_PATH%\success
+  REM goto :Done
+REM )
 
 REM ################################################################################################
 REM # Build Documentation - Independent of configuration
@@ -287,7 +270,7 @@ REM ############################################################################
 REM # Zip Package - Debug
 echo.
 echo %HR%
-echo Info: Running MSBuild for Bolt-build.
+echo Info: Running MSBuild for packaging
 MSBuild.exe ^
   PACKAGE.vcxproj ^
   /m ^
@@ -307,6 +290,7 @@ if errorlevel 1 (
 
 REM Rename the package that we just built
 REM I do this here because I can not figure out how to get cpack to append the configuration string
+echo move Bolt-%BOLT_VERSION%-Windows-x%BOLT_BUILD_BIT%.zip Bolt-%BOLT_VERSION%-Windows-x%BOLT_BUILD_BIT%-debug.zip 
 move Bolt-%BOLT_VERSION%-Windows-x%BOLT_BUILD_BIT%.zip Bolt-%BOLT_VERSION%-Windows-x%BOLT_BUILD_BIT%-debug.zip 
 
 REM ################################################################################################
@@ -333,6 +317,7 @@ if errorlevel 1 (
 
 REM Rename the package that we just built
 REM I do this here because I can not figure out how to get cpack to append the configuration string
+echo move Bolt-%BOLT_VERSION%-Windows-x%BOLT_BUILD_BIT%.zip Bolt-%BOLT_VERSION%-Windows-x%BOLT_BUILD_BIT%-release.zip 
 move Bolt-%BOLT_VERSION%-Windows-x%BOLT_BUILD_BIT%.zip Bolt-%BOLT_VERSION%-Windows-x%BOLT_BUILD_BIT%-release.zip 
 popd
 
