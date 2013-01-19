@@ -288,14 +288,21 @@ install( FILES
 # Copy over our Boost static library dependencies
 install( FILES
     ${Boost_SYSTEM_LIBRARY_DEBUG} 
-    ${Boost_SYSTEM_LIBRARY_RELEASE}
     ${Boost_THREAD_LIBRARY_DEBUG} 
-    ${Boost_THREAD_LIBRARY_RELEASE}
     ${Boost_DATE_TIME_LIBRARY_DEBUG} 
-    ${Boost_DATE_TIME_LIBRARY_RELEASE}
     ${Boost_CHRONO_LIBRARY_DEBUG} 
+    DESTINATION ${LIB_DIR}
+    CONFIGURATIONS Debug
+    )
+
+# Copy over our Boost static library dependencies
+install( FILES
+    ${Boost_SYSTEM_LIBRARY_RELEASE}
+    ${Boost_THREAD_LIBRARY_RELEASE}
+    ${Boost_DATE_TIME_LIBRARY_RELEASE}
     ${Boost_CHRONO_LIBRARY_RELEASE}
     DESTINATION ${LIB_DIR}
+    CONFIGURATIONS Release
     )
 
 # CPack configuration; include the executable into the package
