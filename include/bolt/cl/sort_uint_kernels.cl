@@ -1,35 +1,38 @@
 
 #pragma OPENCL EXTENSION cl_khr_byte_addressable_store : enable 
 
-#define RADIX 4
-#define RADICES (1 << RADIX)
-#define NUM_OF_ELEMENTS_PER_WORK_ITEM RADICES
-#define MASK (1 << RADIX) - 1 
-__kernel
-void histogramAscendingInstantiated(__global uint* unsortedData,
+
+template <int N>
+kernel
+void histogramAscendingRadixNTemplate(__global uint* unsortedData,
                __global uint* buckets,
                __global uint* histScanBuckets,
                uint shiftCount)
 {
+    const int RADIX_T     = N;
+    const int RADICES_T   = (1 << RADIX_T);
+    const int NUM_OF_ELEMENTS_PER_WORK_ITEM_T = RADICES_T; 
+    const int MASK_T      = (1<<RADIX_T)  -1;
+
     size_t localId     = get_local_id(0);
     size_t globalId    = get_global_id(0);
     size_t groupId     = get_group_id(0);
     size_t groupSize   = get_local_size(0);
     size_t numOfGroups = get_num_groups(0);
-    uint   bucketPos   = groupId * RADICES * groupSize;
+    uint   bucketPos   = groupId * RADICES_T * groupSize;
 
-    for(int i = 0; i < RADICES; ++i)
+    for(int i = 0; i < RADICES_T; ++i)
     {
-        buckets[bucketPos + localId * RADICES + i] = 0;
+        buckets[bucketPos + localId * RADICES_T + i] = 0;
     }
     barrier(CLK_GLOBAL_MEM_FENCE);
 
     /* Calculate thread-histograms */
-    for(int i = 0; i < NUM_OF_ELEMENTS_PER_WORK_ITEM; ++i)
+    for(int i = 0; i < NUM_OF_ELEMENTS_PER_WORK_ITEM_T; ++i)
     {
-        uint value = unsortedData[globalId * NUM_OF_ELEMENTS_PER_WORK_ITEM + i];
-        value = (value >> shiftCount) & MASK;
-        buckets[bucketPos + localId * RADICES + value]++;
+        uint value = unsortedData[globalId * NUM_OF_ELEMENTS_PER_WORK_ITEM_T + i];
+        value = (value >> shiftCount) & MASK_T;
+        buckets[bucketPos + localId * RADICES_T + value]++;
     }
 
     barrier(CLK_GLOBAL_MEM_FENCE);
@@ -41,34 +44,38 @@ void histogramAscendingInstantiated(__global uint* unsortedData,
         sum = sum + buckets[bucketPos + localId + groupSize*i];
     }
     histScanBuckets[localId*numOfGroups + groupId + 1] = sum;
-
 }
 
-__kernel
-void histogramDescendingInstantiated(__global uint* unsortedData,
+template <int N>
+kernel
+void histogramDescendingRadixNTemplate(__global uint* unsortedData,
                __global uint* buckets,
                __global uint* histScanBuckets,
                uint shiftCount)
 {
+    const int RADIX_T     = N;
+    const int RADICES_T   = (1 << RADIX_T);
+    const int NUM_OF_ELEMENTS_PER_WORK_ITEM_T = RADICES_T; 
+    const int MASK_T      = (1<<RADIX_T)  -1;
     size_t localId     = get_local_id(0);
     size_t globalId    = get_global_id(0);
     size_t groupId     = get_group_id(0);
     size_t groupSize   = get_local_size(0);
     size_t numOfGroups = get_num_groups(0);
-    uint   bucketPos   = groupId * RADICES * groupSize;
+    uint   bucketPos   = groupId * RADICES_T * groupSize;
 
-    for(int i = 0; i < RADICES; ++i)
+    for(int i = 0; i < RADICES_T; ++i)
     {
-        buckets[bucketPos + localId * RADICES + i] = 0;
+        buckets[bucketPos + localId * RADICES_T + i] = 0;
     }
     barrier(CLK_GLOBAL_MEM_FENCE);
 
     /* Calculate thread-histograms */
-    for(int i = 0; i < NUM_OF_ELEMENTS_PER_WORK_ITEM; ++i)
+    for(int i = 0; i < NUM_OF_ELEMENTS_PER_WORK_ITEM_T; ++i)
     {
-        uint value = unsortedData[globalId * NUM_OF_ELEMENTS_PER_WORK_ITEM + i];
-        value = (value >> shiftCount) & MASK;
-        buckets[bucketPos + localId * RADICES + (RADICES - value -1)]++;
+        uint value = unsortedData[globalId * NUM_OF_ELEMENTS_PER_WORK_ITEM_T + i];
+        value = (value >> shiftCount) & MASK_T;
+        buckets[bucketPos + localId * RADICES_T + (RADICES_T - value -1)]++;
     }
 
     barrier(CLK_GLOBAL_MEM_FENCE);
@@ -80,73 +87,263 @@ void histogramDescendingInstantiated(__global uint* unsortedData,
 }
 
 /*scanLocal is used for both ascending and descending*/
-__kernel 
-void scanLocalInstantiated(__global uint* buckets,
+template <int N>
+kernel 
+void scanLocalTemplate(__global uint* buckets,
                   __global uint* histScanBuckets,
                   __local uint* localScanArray)
 {
+    const int RADIX_T     = N;
+    const int RADICES_T   = (1 << RADIX_T);
+
     size_t localId     = get_local_id(0); 
     size_t numOfGroups = get_num_groups(0);
     size_t groupId     = get_group_id(0);
     size_t groupSize   = get_local_size(0);
 
     localScanArray[localId] = histScanBuckets[localId*numOfGroups + groupId];
-    localScanArray[RADICES+localId] = 0;
+    localScanArray[RADICES_T+localId] = 0;
 
     barrier(CLK_LOCAL_MEM_FENCE);
-    for(int i = 0; i < RADICES; ++i)
+    for(int i = 0; i < RADICES_T; ++i)
     {
-        uint bucketPos = groupId * RADICES * groupSize + i * RADICES + localId;
+        uint bucketPos = groupId * RADICES_T * groupSize + i * RADICES_T + localId;
         uint temp = buckets[bucketPos];
-        buckets[bucketPos] = localScanArray[RADICES+localId] + localScanArray[localId];
-        localScanArray[RADICES+localId] += temp;
+        buckets[bucketPos] = localScanArray[RADICES_T+localId] + localScanArray[localId];
+        localScanArray[RADICES_T+localId] += temp;
     }
 }
 
-__kernel
-void permuteAscendingInstantiated(__global uint* unsortedData,
+template <int N>
+kernel
+void permuteAscendingRadixNTemplate(__global uint* unsortedData,
              __global uint* scanedBuckets,
              uint shiftCount,
              __global uint* sortedData)
 {
+    const int RADIX_T     = N;
+    const int RADICES_T   = (1 << RADIX_T);
+    //const int NUM_OF_ELEMENTS_PER_WORK_ITEM_T = RADICES_T; 
+    const int MASK_T      = (1<<RADIX_T)  -1;
     size_t groupId   = get_group_id(0);
     size_t localId   = get_local_id(0);
     size_t globalId  = get_global_id(0);
     size_t groupSize = get_local_size(0);
-    uint bucketPos   = groupId * RADICES * groupSize;
+    uint bucketPos   = groupId * RADICES_T * groupSize;
 
     /* Premute elements to appropriate location */
-    for(int i = 0; i < RADICES; ++i)
+    for(int i = 0; i < RADICES_T; ++i)
     {
-        uint value = unsortedData[globalId * RADICES + i];
-        value = (value >> shiftCount) & MASK;
-        uint index = scanedBuckets[bucketPos+localId * RADICES + value];
-        sortedData[index] = unsortedData[globalId * RADICES + i];
-        scanedBuckets[bucketPos+localId * RADICES + value] = index + 1;
+        uint value = unsortedData[globalId * RADICES_T + i];
+        value = (value >> shiftCount) & MASK_T;
+        uint index = scanedBuckets[bucketPos+localId * RADICES_T + value];
+        sortedData[index] = unsortedData[globalId * RADICES_T + i];
+        scanedBuckets[bucketPos+localId * RADICES_T + value] = index + 1;
         barrier(CLK_LOCAL_MEM_FENCE);
     }
 }
 
-__kernel
-void permuteDescendingInstantiated(__global uint* unsortedData,
+template <int N>
+kernel
+void permuteDescendingRadixNTemplate(__global uint* unsortedData,
              __global uint* scanedBuckets,
              uint shiftCount,
              __global uint* sortedData)
 {
+    const int RADIX_T     = N;
+    const int RADICES_T   = (1 << RADIX_T);
+    const int MASK_T      = (1<<RADIX_T)  -1;
+
     size_t groupId   = get_group_id(0);
     size_t localId   = get_local_id(0);
     size_t globalId  = get_global_id(0);
     size_t groupSize = get_local_size(0);
-    uint bucketPos   = groupId * RADICES * groupSize;
+    uint bucketPos   = groupId * RADICES_T * groupSize;
 
     /* Premute elements to appropriate location */
-    for(int i = 0; i < RADICES; ++i)
+    for(int i = 0; i < RADICES_T; ++i)
     {
-        uint value = unsortedData[globalId * RADICES + i];
-        value = (value >> shiftCount) & MASK;
-        uint index = scanedBuckets[bucketPos+localId * RADICES + (RADICES -value-1)];
-        sortedData[index] = unsortedData[globalId * RADICES + i];
-        scanedBuckets[bucketPos+localId * RADICES + (RADICES -value-1)] = index + 1;
+        uint value = unsortedData[globalId * RADICES_T + i];
+        value = (value >> shiftCount) & MASK_T;
+        uint index = scanedBuckets[bucketPos+localId * RADICES_T + (RADICES_T -value-1)];
+        sortedData[index] = unsortedData[globalId * RADICES_T + i];
+        scanedBuckets[bucketPos+localId * RADICES_T + (RADICES_T -value-1)] = index + 1;
         barrier(CLK_LOCAL_MEM_FENCE);
     }
 }
+
+
+
+
+//////////////////////////////////////////////////////////////////////
+
+kernel
+void histogramAscendingRadixNInstantiated(uint radix, uint mask, __global uint* unsortedData,
+               __global uint* buckets,
+               __global uint* histScanBuckets,
+               uint shiftCount)
+{
+    const int RADIX_T     = radix;
+    const int RADICES_T   = (1 << RADIX_T);
+    const int NUM_OF_ELEMENTS_PER_WORK_ITEM_T = RADICES_T; 
+    const int MASK_T      = mask;
+
+    size_t localId     = get_local_id(0);
+    size_t globalId    = get_global_id(0);
+    size_t groupId     = get_group_id(0);
+    size_t groupSize   = get_local_size(0);
+    size_t numOfGroups = get_num_groups(0);
+    uint   bucketPos   = groupId * RADICES_T * groupSize;
+
+    for(int i = 0; i < RADICES_T; ++i)
+    {
+        buckets[bucketPos + localId * RADICES_T + i] = 0;
+    }
+    barrier(CLK_GLOBAL_MEM_FENCE);
+
+    /* Calculate thread-histograms */
+    for(int i = 0; i < NUM_OF_ELEMENTS_PER_WORK_ITEM_T; ++i)
+    {
+        uint value = unsortedData[globalId * NUM_OF_ELEMENTS_PER_WORK_ITEM_T + i];
+        value = (value >> shiftCount) & MASK_T;
+        //printf("value = %x",value);
+        buckets[bucketPos + localId * RADICES_T + value]++;
+    }
+
+    barrier(CLK_GLOBAL_MEM_FENCE);
+
+    //Start First step to scan
+    int sum =0;
+    for(int i = 0; i < groupSize; i++)
+    {
+        sum = sum + buckets[bucketPos + localId + groupSize*i];
+    }
+    histScanBuckets[localId*numOfGroups + groupId + 1] = sum;
+}
+
+
+kernel
+void histogramDescendingRadixNInstantiated(uint radix, uint mask, __global uint* unsortedData,
+               __global uint* buckets,
+               __global uint* histScanBuckets,
+               uint shiftCount)
+{
+    const int RADIX_T     = radix;
+    const int RADICES_T   = (1 << RADIX_T);
+    const int NUM_OF_ELEMENTS_PER_WORK_ITEM_T = RADICES_T; 
+    const int MASK_T      = mask;
+    size_t localId     = get_local_id(0);
+    size_t globalId    = get_global_id(0);
+    size_t groupId     = get_group_id(0);
+    size_t groupSize   = get_local_size(0);
+    size_t numOfGroups = get_num_groups(0);
+    uint   bucketPos   = groupId * RADICES_T * groupSize;
+
+    for(int i = 0; i < RADICES_T; ++i)
+    {
+        buckets[bucketPos + localId * RADICES_T + i] = 0;
+    }
+    barrier(CLK_GLOBAL_MEM_FENCE);
+
+    /* Calculate thread-histograms */
+    for(int i = 0; i < NUM_OF_ELEMENTS_PER_WORK_ITEM_T; ++i)
+    {
+        uint value = unsortedData[globalId * NUM_OF_ELEMENTS_PER_WORK_ITEM_T + i];
+        value = (value >> shiftCount) & MASK_T;
+        buckets[bucketPos + localId * RADICES_T + (RADICES_T - value -1)]++;
+    }
+
+    barrier(CLK_GLOBAL_MEM_FENCE);
+    //Start First step to scan
+    int sum =0;
+    for(int i = 0; i < groupSize; i++)
+        sum = sum + buckets[bucketPos + localId + groupSize*i];
+    histScanBuckets[localId*numOfGroups + groupId + 1] = sum;
+}
+
+/*scanLocal is used for both ascending and descending*/
+
+kernel 
+void scanLocalRadixNInstantiated(uint radix, __global uint* buckets,
+                  __global uint* histScanBuckets,
+                  __local uint* localScanArray)
+{
+    const int RADIX_T     = radix;
+    const int RADICES_T   = (1 << RADIX_T);
+
+    size_t localId     = get_local_id(0); 
+    size_t numOfGroups = get_num_groups(0);
+    size_t groupId     = get_group_id(0);
+    size_t groupSize   = get_local_size(0);
+
+    localScanArray[localId] = histScanBuckets[localId*numOfGroups + groupId];
+    localScanArray[RADICES_T+localId] = 0;
+
+    barrier(CLK_LOCAL_MEM_FENCE);
+    for(int i = 0; i < RADICES_T; ++i)
+    {
+        uint bucketPos = groupId * RADICES_T * groupSize + i * RADICES_T + localId;
+        uint temp = buckets[bucketPos];
+        buckets[bucketPos] = localScanArray[RADICES_T+localId] + localScanArray[localId];
+        localScanArray[RADICES_T+localId] += temp;
+    }
+}
+
+
+kernel
+void permuteAscendingRadixNInstantiated(uint radix, uint mask, __global uint* unsortedData,
+             __global uint* scanedBuckets,
+             uint shiftCount,
+             __global uint* sortedData)
+{
+    const int RADIX_T     = radix;
+    const int RADICES_T   = (1 << RADIX_T);
+    //const int NUM_OF_ELEMENTS_PER_WORK_ITEM_T = RADICES_T; 
+    const int MASK_T      = mask;
+    size_t groupId   = get_group_id(0);
+    size_t localId   = get_local_id(0);
+    size_t globalId  = get_global_id(0);
+    size_t groupSize = get_local_size(0);
+    uint bucketPos   = groupId * RADICES_T * groupSize;
+
+    /* Premute elements to appropriate location */
+    for(int i = 0; i < RADICES_T; ++i)
+    {
+        uint value = unsortedData[globalId * RADICES_T + i];
+        value = (value >> shiftCount) & MASK_T;
+        uint index = scanedBuckets[bucketPos+localId * RADICES_T + value];
+        sortedData[index] = unsortedData[globalId * RADICES_T + i];
+        scanedBuckets[bucketPos+localId * RADICES_T + value] = index + 1;
+        barrier(CLK_LOCAL_MEM_FENCE);
+    }
+}
+
+
+kernel
+void permuteDescendingRadixNInstantiated(uint radix, uint mask, __global uint* unsortedData,
+             __global uint* scanedBuckets,
+             uint shiftCount,
+             __global uint* sortedData)
+{
+    const int RADIX_T     = radix;
+    const int RADICES_T   = (1 << RADIX_T);
+    const int MASK_T      = mask;
+
+    size_t groupId   = get_group_id(0);
+    size_t localId   = get_local_id(0);
+    size_t globalId  = get_global_id(0);
+    size_t groupSize = get_local_size(0);
+    uint bucketPos   = groupId * RADICES_T * groupSize;
+
+    /* Premute elements to appropriate location */
+    for(int i = 0; i < RADICES_T; ++i)
+    {
+        uint value = unsortedData[globalId * RADICES_T + i];
+        value = (value >> shiftCount) & MASK_T;
+        uint index = scanedBuckets[bucketPos+localId * RADICES_T + (RADICES_T -value-1)];
+        sortedData[index] = unsortedData[globalId * RADICES_T + i];
+        scanedBuckets[bucketPos+localId * RADICES_T + (RADICES_T -value-1)] = index + 1;
+        barrier(CLK_LOCAL_MEM_FENCE);
+    }
+}
+
