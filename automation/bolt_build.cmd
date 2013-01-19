@@ -184,7 +184,9 @@ REM Echo a blank line into a file called success; the existence of success deter
 echo. > %BOLT_BUILD_INSTALL_PATH%\success
 
 REM Specify the location of a local image of boost, to help speed up the build process
-set BOOST_URL=//see-srv/share/code/externals/boost/boost_1_52_0.zip
+set BOOST_URL=http://see-srv/share/code/externals/boost/boost_1_52_0.zip
+set DOXYGEN_URL=http://see-srv/share/code/externals/doxygen/doxygen-1.8.3.windows.bin.zip
+set GTEST_URL=http://see-srv/share/code/externals/gtest/gtest-1.6.0.zip
 
 REM ################################################################################################
 REM # Start of build logic here
