@@ -18,7 +18,7 @@
 message( STATUS "Configuring Doxygen SuperBuild..." )
 include( ExternalProject )
 
-set( Doxygen_Version 1.8.2 )
+set( Doxygen_Version 1.8.3 )
 
 message( STATUS "Doxygen_Version: " ${Doxygen_Version} )
 
@@ -28,7 +28,11 @@ message( STATUS "Doxygen_Version: " ${Doxygen_Version} )
 # message( STATUS "status: " ${fileStatus} )
 # message( STATUS "log: " ${fileLog} )
 
-set( ext.Doxygen_URL "http://ftp.stack.nl/pub/users/dimitri/doxygen-${Doxygen_Version}.windows.bin.zip" CACHE STRING "URL to download Doxygen from" )
+if( DEFINED ENV{DOXYGEN_URL} )
+    set( ext.Doxygen_URL "$ENV{DOXYGEN_URL}" CACHE STRING "URL to download Doxygen from" )
+else( )
+    set( ext.Doxygen_URL "http://ftp.stack.nl/pub/users/dimitri/doxygen-${Doxygen_Version}.windows.bin.zip" CACHE STRING "URL to download Doxygen from" )
+endif( )
 
 mark_as_advanced( ext.Doxygen_URL )
 
@@ -37,7 +41,7 @@ ExternalProject_Add(
     Doxygen
 	PREFIX ${CMAKE_CURRENT_BINARY_DIR}/external/Doxygen
     URL ${ext.Doxygen_URL}
-	URL_MD5 9821af32aafd8193aec7dd407215fb45
+	URL_MD5 6cad0f8af783eb92b64aae3da8a7be35
     UPDATE_COMMAND ""
 #    PATCH_COMMAND ""
 	CONFIGURE_COMMAND ""

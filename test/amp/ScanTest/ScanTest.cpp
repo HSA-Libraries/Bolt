@@ -15,14 +15,15 @@
 
 ***************************************************************************/                                                                                     
 
-#include "stdafx.h"
-
-#include <bolt/AMP/functional.h>
-#include <bolt/AMP/scan.h>
+#include "common/stdafx.h"
+#include <bolt/amp/scan.h>
 #include <bolt/unicode.h>
 #include <bolt/miniDump.h>
-
 #include <gtest/gtest.h>
+#include <array>
+#include <bolt/AMP/functional.h>
+
+#if 1
 
 // Simple test case for bolt::inclusive_scan:
 // Sum together specified numbers, compare against STL::partial_sum function.
@@ -45,97 +46,7 @@
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Below are helper routines to compare the results of two arrays for googletest
 //  They return an assertion object that googletest knows how to track
-
-template< typename T, size_t N >
-::testing::AssertionResult cmpArrays( const T (&ref)[N], const T (&calc)[N] )
-{
-    for( size_t i = 0; i < N; ++i )
-    {
-        EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-    }
-
-    return ::testing::AssertionSuccess( );
-}
-
-//  Primary class template for std::array types
-//  The struct wrapper is necessary to partially specialize the member function
-template< typename T, size_t N >
-struct cmpStdArray
-{
-    static ::testing::AssertionResult cmpArrays( const std::array< T, N >& ref, const std::array< T, N >& calc )
-    {
-        for( size_t i = 0; i < N; ++i )
-        {
-            EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-        }
-
-        return ::testing::AssertionSuccess( );
-    }
-};
-
-//  Partial template specialization for float types
-//  Partial template specializations only works for objects, not functions
-template< size_t N >
-struct cmpStdArray< float, N >
-{
-    static ::testing::AssertionResult cmpArrays( const std::array< float, N >& ref, const std::array< float, N >& calc )
-    {
-        for( size_t i = 0; i < N; ++i )
-        {
-            EXPECT_FLOAT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-        }
-
-        return ::testing::AssertionSuccess( );
-    }
-};
-
-//  Partial template specialization for float types
-//  Partial template specializations only works for objects, not functions
-template< size_t N >
-struct cmpStdArray< double, N >
-{
-    static ::testing::AssertionResult cmpArrays( const std::array< double, N >& ref, const std::array< double, N >& calc )
-    {
-        for( size_t i = 0; i < N; ++i )
-        {
-            EXPECT_DOUBLE_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-        }
-
-        return ::testing::AssertionSuccess( );
-    }
-};
-
-//  The following cmpArrays verify the correctness of std::vectors's
-template< typename T >
-::testing::AssertionResult cmpArrays( const std::vector< T >& ref, const std::vector< T >& calc )
-{
-    for( size_t i = 0; i < ref.size( ); ++i )
-    {
-        EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-    }
-
-    return ::testing::AssertionSuccess( );
-}
-
-::testing::AssertionResult cmpArrays( const std::vector< float >& ref, const std::vector< float >& calc )
-{
-    for( size_t i = 0; i < ref.size( ); ++i )
-    {
-        EXPECT_FLOAT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-    }
-
-    return ::testing::AssertionSuccess( );
-}
-
-::testing::AssertionResult cmpArrays( const std::vector< double >& ref, const std::vector< double >& calc )
-{
-    for( size_t i = 0; i < ref.size( ); ++i )
-    {
-        EXPECT_DOUBLE_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-    }
-
-    return ::testing::AssertionSuccess( );
-}
+#include "test_common.h"
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Fixture classes are now defined to enable googletest to process type parameterized tests
@@ -197,7 +108,7 @@ TYPED_TEST_P( ScanArrayTest, InPlace )
 
     //  Calling the actual functions under test
     ArrayCont::iterator stdEnd  = std::partial_sum( stdInput.begin( ), stdInput.end( ), stdInput.begin( ) );
-    ArrayCont::iterator boltEnd = bolt::inclusive_scan( boltInput.begin( ), boltInput.end( ), boltInput.begin( ) );
+    ArrayCont::iterator boltEnd = bolt::amp::inclusive_scan( boltInput.begin( ), boltInput.end( ), boltInput.begin( ) );
 
     //  The returned iterator should be one past the 
     EXPECT_EQ( stdInput.end( ), stdEnd );
@@ -219,7 +130,7 @@ TYPED_TEST_P( ScanArrayTest, InPlacePlusFunction )
 
     //  Calling the actual functions under test
     ArrayCont::iterator stdEnd  = std::partial_sum( stdInput.begin( ), stdInput.end( ), stdInput.begin( ), bolt::plus< ArrayType >( ) );
-    ArrayCont::iterator boltEnd = bolt::inclusive_scan( boltInput.begin( ), boltInput.end( ), boltInput.begin( ), bolt::plus< ArrayType >( ) );
+    ArrayCont::iterator boltEnd = bolt::amp::inclusive_scan( boltInput.begin( ), boltInput.end( ), boltInput.begin( ), bolt::plus< ArrayType >( ) );
 
     //  The returned iterator should be one past the 
     EXPECT_EQ( stdInput.end( ), stdEnd );
@@ -241,7 +152,7 @@ TYPED_TEST_P( ScanArrayTest, InPlaceMaxFunction )
 
     //  Calling the actual functions under test
     ArrayCont::iterator stdEnd  = std::partial_sum( stdInput.begin( ), stdInput.end( ), stdInput.begin( ), bolt::maximum< ArrayType >( ) );
-    ArrayCont::iterator boltEnd = bolt::inclusive_scan( boltInput.begin( ), boltInput.end( ), boltInput.begin( ), bolt::maximum< ArrayType >( ) );
+    ArrayCont::iterator boltEnd = bolt::amp::inclusive_scan( boltInput.begin( ), boltInput.end( ), boltInput.begin( ), bolt::maximum< ArrayType >( ) );
 
     //  The returned iterator should be one past the 
     EXPECT_EQ( stdInput.end( ), stdEnd );
@@ -266,7 +177,7 @@ TYPED_TEST_P( ScanArrayTest, OutofPlace )
 
     //  Calling the actual functions under test, out of place semantics
     ArrayCont::iterator stdEnd  = std::partial_sum( stdInput.begin( ), stdInput.end( ), stdResult.begin( ) );
-    ArrayCont::iterator boltEnd = bolt::inclusive_scan( boltInput.begin( ), boltInput.end( ), boltResult.begin( ) );
+    ArrayCont::iterator boltEnd = bolt::amp::inclusive_scan( boltInput.begin( ), boltInput.end( ), boltResult.begin( ) );
 
     //  The returned iterator should be one past the end of the result array
     EXPECT_EQ( stdResult.end( ), stdEnd );
@@ -327,7 +238,7 @@ TEST_P( ScanIntegerVector, InclusiveInplace )
 {
     //  Calling the actual functions under test
     std::vector< int >::iterator stdEnd  = std::partial_sum( stdInput.begin( ), stdInput.end( ), stdInput.begin( ) );
-    std::vector< int >::iterator boltEnd = bolt::inclusive_scan( boltInput.begin( ), boltInput.end( ), boltInput.begin( ) );
+    std::vector< int >::iterator boltEnd = bolt::amp::inclusive_scan( boltInput.begin( ), boltInput.end( ), boltInput.begin( ) );
 
     //  The returned iterator should be one past the 
     EXPECT_EQ( stdInput.end( ), stdEnd );
@@ -347,7 +258,7 @@ TEST_P( ScanFloatVector, InclusiveInplace )
 {
     //  Calling the actual functions under test
     std::vector< float >::iterator stdEnd  = std::partial_sum( stdInput.begin( ), stdInput.end( ), stdInput.begin( ) );
-    std::vector< float >::iterator boltEnd = bolt::inclusive_scan( boltInput.begin( ), boltInput.end( ), boltInput.begin( ) );
+    std::vector< float >::iterator boltEnd = bolt::amp::inclusive_scan( boltInput.begin( ), boltInput.end( ), boltInput.begin( ) );
 
     //  The returned iterator should be one past the 
     EXPECT_EQ( stdInput.end( ), stdEnd );
@@ -367,7 +278,7 @@ TEST_P( ScanDoubleVector, InclusiveInplace )
 {
     //  Calling the actual functions under test
     std::vector< double >::iterator stdEnd  = std::partial_sum( stdInput.begin( ), stdInput.end( ), stdInput.begin( ) );
-    std::vector< double >::iterator boltEnd = bolt::inclusive_scan( boltInput.begin( ), boltInput.end( ), boltInput.begin( ) );
+    std::vector< double >::iterator boltEnd = bolt::amp::inclusive_scan( boltInput.begin( ), boltInput.end( ), boltInput.begin( ) );
 
     //  The returned iterator should be one past the 
     EXPECT_EQ( stdInput.end( ), stdEnd );
@@ -392,8 +303,6 @@ INSTANTIATE_TEST_CASE_P( Inclusive, ScanDoubleVector, ::testing::Range( 0, 10485
 
 typedef ::testing::Types< 
     std::tuple< int, TypeValue< 1 > >,
-    std::tuple< int, TypeValue< bolt::scanMultiCpuThreshold - 1 > >,
-    std::tuple< int, TypeValue< bolt::scanGpuThreshold - 1 > >,
     std::tuple< int, TypeValue< 31 > >,
     std::tuple< int, TypeValue< 32 > >,
     std::tuple< int, TypeValue< 63 > >,
@@ -406,15 +315,11 @@ typedef ::testing::Types<
     std::tuple< int, TypeValue< 4096 > >,
     std::tuple< int, TypeValue< 4097 > >,
     std::tuple< int, TypeValue< 65535 > >,
-    //std::tuple< int, TypeValue< 131032 > >,       // uncomment these to generate failures; stack overflow
-    //std::tuple< int, TypeValue< 262154 > >,
     std::tuple< int, TypeValue< 65536 > >
 > IntegerTests;
 
 typedef ::testing::Types< 
     std::tuple< float, TypeValue< 1 > >,
-    std::tuple< float, TypeValue< bolt::scanMultiCpuThreshold - 1 > >,
-    std::tuple< float, TypeValue< bolt::scanGpuThreshold - 1 > >,
     std::tuple< float, TypeValue< 31 > >,
     std::tuple< float, TypeValue< 32 > >,
     std::tuple< float, TypeValue< 63 > >,
@@ -433,8 +338,21 @@ typedef ::testing::Types<
 INSTANTIATE_TYPED_TEST_CASE_P( Integer, ScanArrayTest, IntegerTests );
 INSTANTIATE_TYPED_TEST_CASE_P( Float, ScanArrayTest, FloatTests );
 
+#endif
+
 int _tmain(int argc, _TCHAR* argv[])
 {
+    std::cout << "#######################################################################################" << std::endl;
+    std::cout << "#######################################################################################" << std::endl;
+    std::cout << "#######################################################################################" << std::endl;
+    std::cout << "#######################################################################################" << std::endl;
+    std::cout << "#######################################################################################" << std::endl;
+    std::cout << "#######################################################################################" << std::endl;
+    std::cout << "#######################################################################################" << std::endl;
+    std::cout << "#######################################################################################" << std::endl;
+    std::cout << "#######################################################################################" << std::endl;
+    std::cout << "#######################################################################################" << std::endl;
+
     ::testing::InitGoogleTest( &argc, &argv[ 0 ] );
 
     //  Register our minidump generating logic

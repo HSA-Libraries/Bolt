@@ -17,11 +17,13 @@
 
 # List the names of common files to compile across all platforms
 # We want to use the same test files for both the CL and AMP backends  
-set( ampBolt.Test.Device.Vector.Source ${BOLT_AMP_TEST_DIR}/common/stdafx.cpp 
-                                        ${BOLT_CL_TEST_DIR}/DeviceVectorTest/device.vector.test.cpp )
-set( ampBolt.Test.Device.Vector.Headers ${BOLT_CL_TEST_DIR}/common/stdafx.h 
-                                        ${BOLT_CL_TEST_DIR}/common/targetver.h 
-                                        ${BOLT_INCLUDE_DIR}/bolt/amp/device_vector.h )
+set( ampBolt.Test.Device.Vector.Source
+    ${BOLT_AMP_TEST_DIR}/common/stdafx.cpp 
+    ${BOLT_CL_TEST_DIR}/DeviceVectorTest/device.vector.test.cpp )
+set( ampBolt.Test.Device.Vector.Headers
+    ${BOLT_CL_TEST_DIR}/common/stdafx.h 
+    ${BOLT_CL_TEST_DIR}/common/targetver.h 
+    ${BOLT_INCLUDE_DIR}/bolt/amp/device_vector.h )
 
 set( ampBolt.Test.Device.Vector.Files ${ampBolt.Test.Device.Vector.Source} ${ampBolt.Test.Device.Vector.Headers} )
 
@@ -34,7 +36,10 @@ set( CMAKE_CXX_FLAGS "-DAMP_TESTS=1 ${CMAKE_CXX_FLAGS}" )
 endif()
 
 add_executable( ampBolt.Test.Device.Vector ${ampBolt.Test.Device.Vector.Files} )
-target_link_libraries( ampBolt.Test.Device.Vector ampBolt.Runtime ${GTEST_LIBRARIES} )
+target_link_libraries( ampBolt.Test.Device.Vector
+  ampBolt.Runtime
+  ${GTEST_LIBRARIES}
+  ${Boost_LIBRARIES} )
 
 set_target_properties( ampBolt.Test.Device.Vector PROPERTIES VERSION ${Bolt_VERSION} )
 set_target_properties( ampBolt.Test.Device.Vector PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )

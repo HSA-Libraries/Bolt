@@ -10,7 +10,7 @@ REM ############################################################################
 REM # File Paths
 set BOLT_BUILD_INSTALL_PATH=C:\GitRoot\BoltBuilds\VS11Win64.SuperBuild
 set BOLT_TEST_BIN_PATH=%BOLT_BUILD_INSTALL_PATH%\Bolt-build\Staging\Debug
-set BOLT_TEST_RESULTS_PATH=C:\GitRoot\BoltBuilds\VS11Win64.Test
+set BOLT_TEST_RESULTS_PATH=%CD%
 set BOLT_TEST_BATCH_NAME=Bolt.Test
 
 

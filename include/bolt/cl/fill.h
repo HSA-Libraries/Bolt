@@ -97,7 +97,7 @@ namespace bolt {
          *  #include <bolt/device_vector.h>
          *  #include <stdlib.h>
          *  ...
-         *  bolt::device_vector<float> v(10);
+         *  bolt::cl::device_vector<float> v(10);
          *  float x=25.0f;
          *  bolt::cl::fill_n(v.begin(), 10, x);
          *

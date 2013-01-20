@@ -100,7 +100,18 @@ if( NOT find_CL EQUAL -1 )
 	)
 	mark_as_advanced( BOLT_LIBRARY_STATIC_DEBUG )
     
-    set( BOLT_LIBRARY_STATIC optimized ${BOLT_LIBRARY_STATIC_RELEASE} debug ${BOLT_LIBRARY_STATIC_DEBUG} )
+    if( BOLT_LIBRARY_STATIC_RELEASE )
+        set( BOLT_LIBRARY_STATIC optimized ${BOLT_LIBRARY_STATIC_RELEASE} )
+    else( )
+        set( BOLT_LIBRARY_STATIC "" )
+        message( "${BOLT_LIBNAME_BASE}.lib: Release static bolt library not found" )
+    endif( )
+
+    if( BOLT_LIBRARY_STATIC_DEBUG )
+        set( BOLT_LIBRARY_STATIC ${BOLT_LIBRARY_STATIC} debug ${BOLT_LIBRARY_STATIC_DEBUG} )
+    else( )
+        message( "${BOLT_LIBNAME_BASE}.debug.lib: Debug static bolt library not found" )
+    endif( )
     
     find_path( BOLT_INCLUDE_DIRS
         NAMES bolt/cl/bolt.h

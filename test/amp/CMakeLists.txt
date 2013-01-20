@@ -41,11 +41,14 @@ endif( )
 include_directories( ${Boost_INCLUDE_DIRS} )
 
 # Include standard OpenCL headers
-include_directories( ${BOLT_AMP_TEST_DIR} ) 
-include_directories( ${BOLT_CL_TEST_DIR} )
+include_directories(
+    ${BOLT_AMP_TEST_DIR}
+    ${BOLT_AMP_TEST_DIR}/common
+    ${OPENCL_INCLUDE_DIRS}) 
+# include_directories( ${BOLT_CL_TEST_DIR} )
 
 add_subdirectory( reduce )
-add_subdirectory( scan )
-add_subdirectory( transform )	
+add_subdirectory( ScanTest )
+add_subdirectory( TransformTest )	
 add_subdirectory( transform_reduce )
 add_subdirectory( device_vector )

@@ -15,15 +15,15 @@
 
 ***************************************************************************/                                                                                     
 
-#if !defined( TRANSFORM_SCAN_H )
-#define TRANSFORM_SCAN_H
+#if !defined( SCAN_BY_KEY_H )
+#define SCAN_BY_KEY_H
 #pragma once
 
 #include <bolt/cl/bolt.h>
 #include <bolt/cl/functional.h>
 #include <bolt/cl/device_vector.h>
 
-/*! \file transform_scan.h
+/*! \file scan_by_scan.h
 */
 
 namespace bolt

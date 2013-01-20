@@ -16,22 +16,25 @@
 ############################################################################                                                                                     
 
 # List the names of common files to compile across all platforms
-set( ampBolt.Test.Scan.Source stdafx.cpp Scan.cpp )
-set( ampBolt.Test.Scan.Headers stdafx.h targetver.h ${BOLT_INCLUDE_DIR}/bolt/amp/Scan.h )
+set( clBolt.Test.ReduceByKey.Source ${BOLT_CL_TEST_DIR}/common/stdafx.cpp 
+                             ReduceByKeyTest.cpp )
+set( clBolt.Test.ReduceByKey.Headers   ${BOLT_CL_TEST_DIR}/common/stdafx.h 
+                                ${BOLT_CL_TEST_DIR}/common/targetver.h                                 
+                                ${BOLT_INCLUDE_DIR}/bolt/cl/detail/reduce_by_key.inl )
 
-set( ampBolt.Test.Scan.Files ${ampBolt.Test.Scan.Source} ${ampBolt.Test.Scan.Headers} )
+set( clBolt.Test.ReduceByKey.Files ${clBolt.Test.ReduceByKey.Source} ${clBolt.Test.ReduceByKey.Headers} )
 
-add_executable( ampBolt.Test.Scan ${ampBolt.Test.Scan.Files} )
-target_link_libraries( ampBolt.Test.Scan ${GTEST_LIBRARIES} ampBolt.Runtime )
+add_executable( clBolt.Test.ReduceByKey ${clBolt.Test.ReduceByKey.Files} )
+target_link_libraries( clBolt.Test.ReduceByKey clBolt.Runtime ${GTEST_LIBRARIES} ${Boost_LIBRARIES} )
 
-set_target_properties( ampBolt.Test.Scan PROPERTIES VERSION ${Bolt_VERSION} )
-set_target_properties( ampBolt.Test.Scan PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
+set_target_properties( clBolt.Test.ReduceByKey PROPERTIES VERSION ${Bolt_VERSION} )
+set_target_properties( clBolt.Test.ReduceByKey PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
 
-set_property( TARGET ampBolt.Test.Scan PROPERTY FOLDER "Test/AMP")
+set_property( TARGET clBolt.Test.ReduceByKey PROPERTY FOLDER "Test/OpenCL")
 
 # CPack configuration; include the executable into the package
-install( TARGETS ampBolt.Test.Scan
-	RUNTIME DESTINATION ${BIN_DIR}
-	LIBRARY DESTINATION ${LIB_DIR}
-	ARCHIVE DESTINATION ${LIB_DIR}/import
-	)
+install( TARGETS clBolt.Test.ReduceByKey
+    RUNTIME DESTINATION ${BIN_DIR}
+    LIBRARY DESTINATION ${LIB_DIR}
+    ARCHIVE DESTINATION ${LIB_DIR}/import
+    )

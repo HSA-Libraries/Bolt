@@ -16,21 +16,26 @@
 ############################################################################                                                                                     
 
 # List the names of common files to compile across all platforms
-set( ampBolt.Test.Transform.Source stdafx.cpp simple_transform.cpp )
-set( ampBolt.Test.Transform.Headers stdafx.h targetver.h ${BOLT_INCLUDE_DIR}/bolt/amp/transform.h )
+set( clBolt.Bench.Benchmark.Source Benchmark.cpp )
+set( clBolt.Bench.Benchmark.Headers )
 
-set( ampBolt.Test.Transform.Files ${ampBolt.Test.Transform.Source} ${ampBolt.Test.Transform.Headers} )
+set( clBolt.Bench.Benchmark.Files
+  ${clBolt.Bench.Benchmark.Source}
+  ${clBolt.Bench.Benchmark.Headers}
+  )
 
-add_executable( ampBolt.Test.Transform ${ampBolt.Test.Transform.Files} )
+add_executable( clBolt.Bench.Benchmark ${clBolt.Bench.Benchmark.Files} )
 
-set_target_properties( ampBolt.Test.Transform PROPERTIES VERSION ${Bolt_VERSION} )
-set_target_properties( ampBolt.Test.Transform PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
+target_link_libraries( clBolt.Bench.Benchmark ${Boost_LIBRARIES} clBolt.Runtime )
 
-set_property( TARGET ampBolt.Test.Transform PROPERTY FOLDER "Test/AMP")
+set_target_properties( clBolt.Bench.Benchmark PROPERTIES VERSION ${Bolt_VERSION} )
+set_target_properties( clBolt.Bench.Benchmark PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
+
+set_property( TARGET clBolt.Bench.Benchmark PROPERTY FOLDER "Benchmark/OpenCL")
 
 # CPack configuration; include the executable into the package
-install( TARGETS ampBolt.Test.Transform
+install( TARGETS clBolt.Bench.Benchmark
 	RUNTIME DESTINATION ${BIN_DIR}
 	LIBRARY DESTINATION ${LIB_DIR}
-	ARCHIVE DESTINATION ${LIB_DIR}/import
+	ARCHIVE DESTINATION ${LIB_DIR}
 	)

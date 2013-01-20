@@ -15,9 +15,8 @@
 
 ############################################################################                                                                                     
 
-# We require 2.8.3 for windows because of a bug in cmake that prevented vs2010 from generating
-# executables properly with multiple periods
-cmake_minimum_required( VERSION 2.8.3 )
+# We require 2.8.10 because of the added support to download from https URL's
+cmake_minimum_required( VERSION 2.8.10 )
 
 # uncomment these to debug nmake and borland makefiles
 #SET(CMAKE_START_TEMP_FILE "")
@@ -45,7 +44,7 @@ set( Bolt_VERSION "${Bolt_VERSION_MAJOR}.${Bolt_VERSION_MINOR}.${Bolt_VERSION_PA
 message( STATUS "Bolt_VERSION_MAJOR=${Bolt_VERSION_MAJOR}" )
 message( STATUS "Bolt_VERSION_MINOR=${Bolt_VERSION_MINOR}" )
 message( STATUS "Bolt_VERSION_PATCH=${Bolt_VERSION_PATCH}" )
-    
+
 list( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR} )
 set( BOLT_LIBRARY_DIR ${PROJECT_SOURCE_DIR}/bolt )
 
@@ -86,6 +85,7 @@ endif()
 # Various options below on configuring the build, and how to generate the solution files
 option( BUILD_ampBolt "Create a solution that compiles Bolt for AMP" ON )
 option( BUILD_clBolt "Create a solution that compiles Bolt for OpenCL" ON )
+option( BUILD_StripSymbols "When making debug builds, remove symbols and program database files" OFF )
  
 if( IS_DIRECTORY "${PROJECT_SOURCE_DIR}/test" )
     option( BUILD_tests "Add projects for testing Bolt" ON )
@@ -99,9 +99,11 @@ if( IS_DIRECTORY "${PROJECT_SOURCE_DIR}/doxy" )
     option( BUILD_documentation "Add project for generating Bolt documentation" OFF )
 endif( )
 
-if( IS_DIRECTORY "${PROJECT_SOURCE_DIR}/examples" )
-    option( BUILD_examples "Generate example projects to demonstrate Bolt usage" OFF )
-endif( )
+# Building the examples from the main Bolt project does not work yet
+#if( IS_DIRECTORY "${PROJECT_SOURCE_DIR}/examples" )
+#    option( BUILD_examples "Generate example projects to demonstrate Bolt usage" OFF )
+#endif( )
+set( BUILD_examples OFF )
 
 # Currently, linux has a problem outputing both narrow and wide characters,
 # which happens in our client because openCL only supports narrow characters
@@ -129,6 +131,10 @@ if( C_COMPILER_NAME STREQUAL "cl" )
     string( REGEX REPLACE "/STACK:[0-9]+" "" CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}" )
     string( REGEX REPLACE "/STACK:[0-9]+" "" CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}" )
     string( REGEX REPLACE "/STACK:[0-9]+" "" CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS}" ) 
+    
+    if( BUILD_StripSymbols )
+        string( REGEX REPLACE "/Zi" "" CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}" )
+    endif()
 elseif( C_COMPILER_NAME STREQUAL "gcc" )
     message( STATUS "Detected GNU fortran compiler." )
     
@@ -157,12 +163,12 @@ message( STATUS "CMAKE_EXE_LINKER link flags: " ${CMAKE_EXE_LINKER_FLAGS} )
 
 # Depending on whether we are building for 64 or 32 bit, construct common paths and names that subdirectories can reference for their use
 if( Bolt_BUILD64 )
-    set( CPACK_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}-${Bolt_VERSION}-${CMAKE_HOST_SYSTEM_NAME}-x64")
+    set( CPACK_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}-${Bolt_VERSION}-${CMAKE_HOST_SYSTEM_NAME}-x64" )
     set( INCLUDE_DIR include )
     set( BIN_DIR bin64 )
     set( LIB_DIR lib64 )
 else( )
-    set( CPACK_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}-${Bolt_VERSION}-${CMAKE_HOST_SYSTEM_NAME}-x32")
+    set( CPACK_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}-${Bolt_VERSION}-${CMAKE_HOST_SYSTEM_NAME}-x32" )
     set( INCLUDE_DIR include )
     set( BIN_DIR bin )
     set( LIB_DIR lib )
@@ -211,22 +217,30 @@ if( BUILD_examples )
 endif( )
 
 # configure a header file to pass the CMake version settings to the source, and package the header files in the output archive
-configure_file( "${PROJECT_SOURCE_DIR}/include/bolt/boltVersion.h.in" "${PROJECT_BINARY_DIR}/include/bolt/boltVersion.h" )
+configure_file( "${PROJECT_SOURCE_DIR}/include/bolt/boltVersion.h.in" "${PROJECT_BINARY_DIR}/include/bolt/boltVersion.h" @ONLY )
 install( FILES 
             "${PROJECT_BINARY_DIR}/include/bolt/boltVersion.h" 
         DESTINATION 
             ${INCLUDE_DIR}/bolt )
+
+configure_file( "${PROJECT_SOURCE_DIR}/examples/CMakeLists.txt.in" "${PROJECT_BINARY_DIR}/examples/CMakeLists.txt" @ONLY )
 
 # Right now, always install the examples folder
 install( DIRECTORY 
             examples
         DESTINATION
             .
-        PATTERN "Hessian" EXCLUDE )
-
-# Right now, always install the examples folder
+        PATTERN "Hessian" EXCLUDE
+        PATTERN "*.in" EXCLUDE )
+        
 install( FILES 
-            README.html
+            "${PROJECT_BINARY_DIR}/examples/CMakeLists.txt" 
+        DESTINATION 
+            examples )
+
+# Copy over the documentation related files
+install( FILES 
+            doxy/README.html
             LICENSE.txt
         DESTINATION
             . )
@@ -241,11 +255,12 @@ else( )
 endif( )
 
 set( CPACK_SOURCE_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}-${Bolt_VERSION}-${CMAKE_HOST_SYSTEM_NAME}-Source")
-
+set( CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/ReadMeBuild.html")
+set( CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.txt")
 set( CPACK_PACKAGE_VERSION_MAJOR ${Bolt_VERSION_MAJOR} )
 set( CPACK_PACKAGE_VERSION_MINOR ${Bolt_VERSION_MINOR} )
 set( CPACK_PACKAGE_VERSION_PATCH ${Bolt_VERSION_PATCH} )
-set( CPACK_PACKAGE_DESCRIPTION_SUMMARY "Bolt reference implementation")
+set( CPACK_PACKAGE_DESCRIPTION_SUMMARY "Bolt library SDK package")
 set( CPACK_PACKAGE_VENDOR "AMD")
 set( CPACK_SOURCE_IGNORE_FILES "/\\\\.hg/;/\\\\.svn/;" )
 
