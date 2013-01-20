@@ -30,7 +30,7 @@ message( STATUS "ext.Boost_VERSION: " ${ext.Boost_VERSION} )
 # message( STATUS "status: " ${fileStatus} )
 # message( STATUS "log: " ${fileLog} )
 
-set( Boost.Command b2 --with-program_options --with-thread --with-system --with-date_time --with-chrono )
+set( Boost.Command b2 -j 4 --with-program_options --with-thread --with-system --with-date_time --with-chrono )
 
 if( Bolt_BUILD64 )
 	list( APPEND Boost.Command address-model=64 )

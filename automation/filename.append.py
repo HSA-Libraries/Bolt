@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 
 import sys, os
 from glob import glob
@@ -21,5 +22,5 @@ for oldName in glob( globMask ):
         continue
     
     newName = basename + configuration + extention
-    print oldName, " -> ", newName
+    print( oldName, " -> ", newName )
     os.rename( oldName, newName )
