@@ -126,17 +126,6 @@ namespace bolt {
                 const control &c);
 
 
-		/*::cl::Program buildProgram( const std::string& kernelCodeString, std::string compileOptions, const control& ctl );
-
-        void compileKernels( std::vector< ::cl::Kernel >& clKernels, 
-                const std::vector< const std::string >& kernelNames, 
-                const std::string& fileName,
-                const std::string& instantiationString,
-                const std::string& userCode,
-                const std::string& valueTypeName,
-                const std::string& functorTypeName,
-                const control& ctl );*/
-
         /**********************************************************************
          * DEPRECATED
          * used in structs

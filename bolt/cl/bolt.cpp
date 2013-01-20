@@ -47,9 +47,9 @@ namespace bolt {
 
     void getVersion( cl_uint& major, cl_uint& minor, cl_uint& patch )
     {
-        major	= 0;//BoltVersionMajor;
-        minor	= 0;//BoltVersionMinor;
-        patch	= 0;//BoltVersionPatch;
+        major	= BoltVersionMajor;
+        minor	= BoltVersionMinor;
+        patch	= BoltVersionPatch;
     }
 
     // for printing errors
