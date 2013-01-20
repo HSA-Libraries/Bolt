@@ -6,11 +6,11 @@ set HR=#########################################################################
 set buildStartTime=%time%
 REM save and restore PATH else infinitely lengthened by vcvarsall
 set OLD_SYSTEM_PATH=%PATH%
-set CMAKE="C:\Utils\CMake 2.8\bin\cmake.exe"
+set CMAKE="C:\Program Files (x86)\CMake 2.8\bin\cmake.exe"
 
 REM ################################################################################################
 REM # File Paths
-set BOLT_BUILD_SOURCE_PATH=C:\code\GitHub\Bolt
+set BOLT_BUILD_SOURCE_PATH=C:\Jenkins_FS_Root\workspace\bolt_GitHub_repository_clone
 set BOLT_BUILD_INSTALL_PATH=%CD%
 
 REM ################################################################################################
@@ -20,7 +20,7 @@ set BOLT_BUILD_VERSION_MINOR_FILE=%BOLT_BUILD_SOURCE_PATH%\automation\bolt.versi
 set BOLT_BUILD_VERSION_PATCH_FILE=%BOLT_BUILD_SOURCE_PATH%\automation\bolt.version.patch
 set BOLT_BUILD_VERSION_MAJOR=
 set BOLT_BUILD_VERSION_MINOR=
-set BOLT_BUILD_VERSION_PATCH=11
+set BOLT_BUILD_VERSION_PATCH=
 if exist %BOLT_BUILD_VERSION_MAJOR_FILE% (
   set /p BOLT_BUILD_VERSION_MAJOR=<%BOLT_BUILD_VERSION_MAJOR_FILE%
 ) else (
