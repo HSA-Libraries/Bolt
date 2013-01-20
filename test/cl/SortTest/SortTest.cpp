@@ -1295,6 +1295,8 @@ void BasicSortTestOfLength(size_t length)
         }
     }
 #endif
+
+#if 0
     //Descending Sort 
     stdInput = stdBackup;
     for (i=0;i<length;i++)
@@ -1331,7 +1333,7 @@ void BasicSortTestOfLength(size_t length)
                 printf("%5x -- %8x -- %8x\n",(i+j),stdInput[i+j],boltInput[i+j]);
         }
     }
-
+#endif
 
 }
 
@@ -1512,13 +1514,21 @@ int main(int argc, char* argv[])
 {
 
     //UDDSortTestOfLengthWithDeviceVector<int>(256);
-    BasicSortTestOfLength<int>(256/*2097152/*131072/*16777216/*33554432/*atoi(argv[1])*/);
-	//BasicSortTestOfLength<unsigned int>(4096);
-    //BasicSortTestOfLength<int>(2097159);
-    //BasicSortTestOfLength<int>(111);
-    //BasicSortTestOfLength<int>(65);
-    //BasicSortTestOfLength<int>(63);
-    //BasicSortTestOfLength<int>(31);
+    BasicSortTestOfLength<int>(257/*2097152/*131072/*16777216/*33554432/*atoi(argv[1])*/);
+	BasicSortTestOfLength<int>(4096);
+    BasicSortTestOfLength<int>(2097159);
+    BasicSortTestOfLength<int>(111);
+    BasicSortTestOfLength<int>(64);
+    BasicSortTestOfLength<int>(63);
+    BasicSortTestOfLength<int>(31);
+
+    BasicSortTestOfLength<unsigned int>(257/*2097152/*131072/*16777216/*33554432/*atoi(argv[1])*/);
+	BasicSortTestOfLength<unsigned int>(4096);
+    BasicSortTestOfLength<unsigned int>(2097159);
+    BasicSortTestOfLength<unsigned int>(111);
+    BasicSortTestOfLength<unsigned int>(65);
+    BasicSortTestOfLength<unsigned int>(63);
+    BasicSortTestOfLength<unsigned int>(31);
 #if 0
 	std::vector<int> input(1024);
 	std::generate(input.begin(), input.end(), rand);
@@ -1541,7 +1551,7 @@ int main(int argc, char* argv[])
     //UDDSortTestWithBoltFunctorOfLengthWithDeviceVector<int>(256);
 
 #define TEST_ALL 0
-#define TEST_DOUBLE 0
+//#define TEST_DOUBLE 1
 
 #if (TEST_ALL == 1)
     std::cout << "Testing BasicSortTestWithBoltFunctorOfLengthWithDeviceVector\n";
@@ -1753,11 +1763,11 @@ int main(int argc, char* argv[])
     BasicSortTestOfLength<int>(1024);
     BasicSortTestOfLength<int>(2048);
     BasicSortTestOfLength<int>(1048576);
-    BasicSortTestOfLength<float>(256);
-    BasicSortTestOfLength<float>(512);
-    BasicSortTestOfLength<float>(1024);
-    BasicSortTestOfLength<float>(2048);
-    BasicSortTestOfLength<float>(1048576);
+    //BasicSortTestOfLength<float>(256);
+    //BasicSortTestOfLength<float>(512);
+    //BasicSortTestOfLength<float>(1024);
+    //BasicSortTestOfLength<float>(2048);
+    //BasicSortTestOfLength<float>(1048576);
 
 #if (TEST_DOUBLE == 1) 
     BasicSortTestOfLength<double>(256);
