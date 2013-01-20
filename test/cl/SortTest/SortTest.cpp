@@ -1296,7 +1296,7 @@ void BasicSortTestOfLength(size_t length)
     }
 #endif
 
-#if 0
+#if 1
     //Descending Sort 
     stdInput = stdBackup;
     for (i=0;i<length;i++)
