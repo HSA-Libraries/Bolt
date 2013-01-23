@@ -21,6 +21,7 @@
 #include "bolt/statisticalTimer.h"
 #include "bolt/countof.h"
 #include "bolt/cl/transform.h"
+#include "bolt/cl/functional.h"
 
 const std::streamsize colWidth = 26;
 
@@ -70,7 +71,7 @@ int _tmain( int argc, _TCHAR* argv[] )
             ( "platform,p",     po::value< cl_uint >( &userPlatform )->default_value( 0 ), "Specify the platform under test using the index reported by -q flag" )
             ( "device,d",       po::value< cl_uint >( &userDevice )->default_value( 0 ), "Specify the device under test using the index reported by the -q flag.  "
                     "Index is relative with respect to -g, -c or -a flags" )
-            ( "length,l",       po::value< size_t >( &length )->default_value( 1048576 ), "Specify the length of scan array" )
+            ( "length,l",       po::value< size_t >( &length )->default_value( 28*1<<19 ), "Specify the length of scan array" )
             ( "iterations,i",   po::value< size_t >( &iterations )->default_value( 50 ), "Number of samples in timing loop" )
 			//( "algo,a",		    po::value< size_t >( &algo )->default_value( 1 ), "Algorithm used [1,2]  1:SCAN_BOLT, 2:XYZ" )//Not used in this file
             ;
@@ -153,7 +154,7 @@ int _tmain( int argc, _TCHAR* argv[] )
     bolt::cl::V_OPENCL( platforms.at( userPlatform ).getDevices( deviceType, &devices ), "Platform::getDevices() failed" );
 
     cl::Context myContext( devices.at( userDevice ) );
-    cl::CommandQueue myQueue( myContext, devices.at( userDevice ) );
+    cl::CommandQueue myQueue( myContext, devices.at( userDevice ), CL_QUEUE_PROFILING_ENABLE );
 
     //  Now that the device we want is selected and we have created our own cl::CommandQueue, set it as the
     //  default cl::CommandQueue for the Bolt API
@@ -189,13 +190,13 @@ int _tmain( int argc, _TCHAR* argv[] )
     else
     {
         bolt::cl::device_vector< int > input1( length, 1 );
-		bolt::cl::device_vector< int > input2( length, 1 );
+		//bolt::cl::device_vector< int > input2( length, 1 );
         bolt::cl::device_vector< int > output( length );
 
         for( unsigned i = 0; i < iterations; ++i )
         {
             myTimer.Start( scanId );
-			bolt::cl::transform( input1.begin(), input1.end(), input2.begin(), output.begin(), s);
+			bolt::cl::transform( input1.begin(), input1.end(), output.begin(), bolt::cl::square<int>());
             myTimer.Stop( scanId );
         }
     }

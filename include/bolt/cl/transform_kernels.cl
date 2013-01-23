@@ -87,3 +87,45 @@ void unaryTransformNoBoundsCheckTemplate(global iType* A,
 	Z[gx+0] = z0;
 	//Z[gx+1] = z1;
 }
+
+#define BURST_SIZE 16
+
+template <typename iType, typename oType, typename unary_function>
+kernel
+void unaryTransformA (
+    global iType* input,
+    global oType* output,
+    const uint numElements,
+    const uint numElementsPerThread,
+    global unary_function *userFunctor )
+{
+	// global pointers
+    // __global const iType  *inputBase =  &input[get_global_id(0)*numElementsPerThread];
+    // __global oType *const outputBase = &output[get_global_id(0)*numElementsPerThread];
+
+    __private iType  inReg[BURST_SIZE];
+    //__private oType outReg[BURST_SIZE];
+    //__private unary_function f = *userFunctor;
+
+    // for each burst
+    for (int offset = 0; offset < numElementsPerThread; offset+=BURST_SIZE)
+    {
+        // load burst
+        for( int i = 0; i < BURST_SIZE; i++)
+        {
+            inReg[i]=input[get_global_id(0)*numElementsPerThread+offset+i];
+        }
+        // compute burst
+        //for( int j = 0; j < BURST_SIZE; j++)
+        //{
+        //    inReg[j]=(*userFunctor)(inReg[j]);
+        //}
+        // write burst
+        for( int k = 0; k < BURST_SIZE; k++)
+        {
+            output[get_global_id(0)*numElementsPerThread+offset+k]=inReg[k];
+        }
+
+    }
+    // output[get_global_id(0)] = inReg[BURST_SIZE-1];
+}

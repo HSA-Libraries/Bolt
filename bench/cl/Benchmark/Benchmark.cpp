@@ -19,24 +19,59 @@
  *****************************************************************************/
 
 
-#define BOLT_ENABLE_PROFILING
+#define BOLT_PROFILER_ENABLED
 #define BOLT_BENCH_DEVICE_VECTOR_FLAGS CL_MEM_READ_WRITE
 
 #include "bolt/AsyncProfiler.h"
 AsyncProfiler aProfiler("default");
 
-static char *routineNames[] = {
+/******************************************************************************
+ *  Functions Enumerated
+ *****************************************************************************/
+enum functionType {
+    f_generate,
+    f_copy,
+    f_unary_transform,
+    f_binary_transform,
+    f_scan,
+    f_transform_scan,
+    f_scan_by_key
+};
+static char *functionNames[] = {
+    "Generate",
+    "Copy",
+    "UnaryTransform",
+    "BinaryTransform",
     "Scan",
     "TransformScan",
     "ScanByKey"
 };
 
+/******************************************************************************
+ *  Data Types Enumerated
+ *****************************************************************************/
+enum dataType {
+    t_int,
+    t_vec2,
+    t_vec4,
+    t_vec8
+};
+static char *dataTypeNames[] = {
+    "int1",
+    "vec2",
+    "vec4",
+    "vec8"
+};
 
+
+#include "bolt/cl/functional.h"
+#include "bolt/cl/device_vector.h"
+#include "bolt/cl/generate.h"
+#include "bolt/cl/copy.h"
+#include "bolt/cl/transform.h"
 #include "bolt/cl/scan.h"
 #include "bolt/cl/transform_scan.h"
 #include "bolt/cl/scan_by_key.h"
-#include "bolt/cl/functional.h"
-#include "bolt/cl/device_vector.h"
 
 #include <fstream>
 #include <vector>
@@ -350,7 +385,6 @@ vec8 v8init = { 1, 1, 1, 1, 1, 1, 1, 1 };
 vec8 v8iden = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
 
-enum { f_scan, f_transform_scan, f_scan_by_key };
 
 /******************************************************************************
  *
@@ -363,7 +397,7 @@ template<
     typename UnaryFunction,
     typename BinaryFunction,
     typename BinaryPredEq,
-    typename BinaryPredLt>
+    typename BinaryPredLt >
 void executeFunctionType(
     bolt::cl::control& ctrl,
     VectorType input1,
@@ -381,24 +415,51 @@ void executeFunctionType(
 {
     for (size_t iter = 0; iter < iterations+1; iter++)
     {
-        switch(function) // same order as
+        switch(function)
         {
+            
+        case f_generate: // generate
+            std::cerr << "(" << iter << ") " << functionNames[f_generate] << std::endl;
+            bolt::cl::generate(
+                ctrl, input1.begin(), input1.end(), generator );
+            break;
+
+        case f_copy: // copy
+            std::cerr << "(" << iter << ") " << functionNames[f_copy] << std::endl;
+            bolt::cl::copy(
+                ctrl, input1.begin(), input1.end(), output.begin() );
+            break;
+
+        case f_unary_transform: // unary transform
+            std::cerr << "(" << iter << ") " << functionNames[f_unary_transform] << std::endl;
+            bolt::cl::transform(
+                ctrl, input1.begin(), input1.end(), output.begin(), unaryFunct );
+            break;
+
+        case f_binary_transform: // binary transform
+            std::cerr << "(" << iter << ") " << functionNames[f_binary_transform] << std::endl;
+            bolt::cl::transform(
+                ctrl, input1.begin(), input1.end(), input2.begin(), output.begin(), binaryFunct );
+            break;
 
         case f_scan: // scan
-            //std::cerr << "(" << iter << ") scan" << std::endl;
+            std::cerr << "(" << iter << ") " << functionNames[f_scan] << std::endl;
             bolt::cl::inclusive_scan(
                 ctrl, input1.begin(), input1.end(), output.begin(), binaryFunct );
             break;
+
         case f_transform_scan: // transform_scan
-            //std::cerr << "(" << iter << ") transform_scan" << std::endl;
+            std::cerr << "(" << iter << ") " << functionNames[f_transform_scan] << std::endl;
             bolt::cl::transform_inclusive_scan(
                 ctrl, input1.begin(), input1.end(), output.begin(), unaryFunct, binaryFunct );
             break;
+
         case f_scan_by_key: // scan_by_key
-            //std::cerr << "(" << iter << ") scan_by_key" << std::endl;
+            std::cerr << "(" << iter << ") " << functionNames[f_scan_by_key] << std::endl;
             bolt::cl::inclusive_scan_by_key(
                 ctrl, input1.begin(), input1.end(), input2.begin(), output.begin(), binaryPredEq, binaryFunct );
             break;
+        
         default:
             //std::cerr << "Unsupported function=" << function << std::endl;
             iter = iterations; // skip to end
@@ -421,8 +482,7 @@ void executeFunction(
     size_t routine,
     size_t iterations )
 {
-
-    if (vecType == 1)
+    if (vecType == t_int)
     {
         intgen                  generator;
         bolt::cl::square<int>   unaryFunct;
@@ -448,7 +508,7 @@ void executeFunction(
                 generator, unaryFunct, binaryFunct, binaryPredEq, binaryPredLt, routine, iterations);
         }
     }
-    else if (vecType == 2)
+    else if (vecType == t_vec2)
     {
         vec2gen     generator;
         vec2square  unaryFunct;
@@ -474,7 +534,7 @@ void executeFunction(
                 generator, unaryFunct, binaryFunct, binaryPredEq, binaryPredLt, routine, iterations);
         }
     }
-    else if (vecType == 4)
+    else if (vecType == t_vec4)
     {
         vec4gen     generator;
         vec4square  unaryFunct;
@@ -500,7 +560,7 @@ void executeFunction(
                 generator, unaryFunct, binaryFunct, binaryPredEq, binaryPredLt, routine, iterations);
         }
     }
-    else if (vecType == 8)
+    else if (vecType == t_vec8)
     {
         vec8gen     generator;
         vec8square  unaryFunct;
@@ -544,20 +604,21 @@ int _tmain( int argc, _TCHAR* argv[] )
     cl_int err = CL_SUCCESS;
     cl_uint userPlatform    = 0;
     cl_uint userDevice      = 0;
-    size_t iterations       = 0;
-    size_t length           = 0;
-    size_t vecType          = 0;
+    size_t iterations       = 10;
+    size_t length           = 1<<26;
+    size_t vecType          = 1;
     size_t runMode          = 0;
-    size_t routine          = 0;
-    std::string filename;
+    size_t routine          = f_scan;
+    size_t numThrowAway     = 10;
+    std::string filename    = "bench.xml";
     cl_device_type deviceType = CL_DEVICE_TYPE_DEFAULT;
-    bool defaultDevice = true;
-    bool print_clInfo = false;
-    bool hostMemory = false;
+    bool defaultDevice      = true;
+    bool print_clInfo       = false;
+    bool hostMemory         = true;
 
     /******************************************************************************
-    * Parameter parsing                                                           *
-    ******************************************************************************/
+     * Parse Command-line Parameters
+     ******************************************************************************/
     try
     {
         // Declare the supported options.
@@ -569,24 +630,26 @@ int _tmain( int argc, _TCHAR* argv[] )
             ( "gpu,g",          "Report only OpenCL GPU devices" )
             ( "cpu,c",          "Report only OpenCL CPU devices" )
             ( "all,a",          "Report all OpenCL devices" )
-            ( "hostMemory", "Allocate vectors in host memory, otherwise device memory" )
-            ( "platform,p",     po::value< cl_uint >( &userPlatform )->default_value( 0 ),
+            ( "deviceMemory",   "Allocate vectors in device memory; default is host memory" )
+            ( "platform,p",     po::value< cl_uint >( &userPlatform )->default_value( userPlatform ),
                 "Specify the platform under test using the index reported by -q flag" )
-            ( "device,d",       po::value< cl_uint >( &userDevice )->default_value( 0 ),
+            ( "device,d",       po::value< cl_uint >( &userDevice )->default_value( userDevice ),
                 "Specify the device under test using the index reported by the -q flag.  "
                 "Index is relative with respect to -g, -c or -a flags" )
-            ( "length,l",       po::value< size_t >( &length )->default_value( 1<<26 ),
+            ( "length,l",       po::value< size_t >( &length )->default_value( length ),
                 "Length of scan array" )
-            ( "iterations,i",   po::value< size_t >( &iterations )->default_value( 10 ),
+            ( "iterations,i",   po::value< size_t >( &iterations )->default_value( iterations ),
                 "Number of samples in timing loop" )
-            ( "vecType,t",      po::value< size_t >( &vecType )->default_value( 1 ),
+            ( "vecType,t",      po::value< size_t >( &vecType )->default_value( vecType ),
                 "Data Type to use: 1-int, 2-int2, 4-int4, 8-int8" )
-            ( "runMode,m",      po::value< size_t >( &runMode )->default_value( 0 ),
+            ( "runMode,m",      po::value< size_t >( &runMode )->default_value( runMode ),
                 "Run Mode: 0-Auto, 1-SerialCPU, 2-MultiCoreCPU, 3-GPU" )
-            ( "routine,r",      po::value< size_t >( &routine )->default_value( 0 ),
+            ( "function",      po::value< size_t >( &routine )->default_value( routine ),
                 "Number of samples in timing loop" )
-            ( "filename,f",     po::value< std::string >( &filename )->default_value( "bench.xml" ),
+            ( "filename",     po::value< std::string >( &filename )->default_value( filename ),
                 "Name of output file" )
+            ( "throw-away",   po::value< size_t >( &numThrowAway )->default_value( numThrowAway ),
+                "Number of trials to skip averaging" )
             ;
 
         po::variables_map vm;
@@ -632,12 +695,10 @@ int _tmain( int argc, _TCHAR* argv[] )
             deviceType	= CL_DEVICE_TYPE_ALL;
         }
 
-        if( vm.count( "hostMemory" ) )
+        if( vm.count( "deviceMemory" ) )
         {
-            hostMemory = true;
+            hostMemory = false;
         }
-
-
     }
     catch( std::exception& e )
     {
@@ -648,6 +709,7 @@ int _tmain( int argc, _TCHAR* argv[] )
     /******************************************************************************
      * Initialize platforms and devices
      ******************************************************************************/
+    aProfiler.throwAway( numThrowAway );
     bolt::cl::control ctrl = bolt::cl::control::getDefault();
     
     std::string strDeviceName;
@@ -677,28 +739,26 @@ int _tmain( int argc, _TCHAR* argv[] )
         //  default cl::CommandQueue for the Bolt API
         ctrl.commandQueue( myQueue );
 
-        std::string strDeviceName = ctrl.device( ).getInfo< CL_DEVICE_NAME >( &err );
+        strDeviceName = ctrl.device( ).getInfo< CL_DEVICE_NAME >( &err );
         bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_NAME > failed" );
     }
-    // std::cout << "Device under test : " << strDeviceName << std::endl;
+    std::cout << "Device: " << strDeviceName << std::endl;
 
     /******************************************************************************
-     * Select Function
+     * Select then Execute Function
      ******************************************************************************/
-    
     executeFunction(
         ctrl,
         vecType,
         hostMemory,
         length,
         routine,
-        iterations
+        iterations+numThrowAway
         );
 
     /******************************************************************************
      * Print Results
      ******************************************************************************/
-
     aProfiler.end();
     std::ofstream outFile( filename.c_str() );
     aProfiler.writeSum( outFile );

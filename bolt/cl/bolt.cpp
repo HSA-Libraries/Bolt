@@ -636,7 +636,6 @@ namespace bolt {
             compileOptions,
             completeKernelString);
 
-        
         // retrieve kernels from program
         //std::cout << "Getting " << kts->numKernels() << " from program." << std::endl;
         ::std::vector<::cl::Kernel> kernels;

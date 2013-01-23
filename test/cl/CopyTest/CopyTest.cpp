@@ -15,7 +15,7 @@
 
 ***************************************************************************/                                                                                     
 
-#define TEST_DOUBLE 1
+#define TEST_DOUBLE 0
 #define TEST_DEVICE_VECTOR 1
 #define TEST_CPU_DEVICE 1
 
@@ -39,14 +39,14 @@ struct UserStruct
     char b;
     int c;
     float d;
-    double e;
+    //double e;
 
     UserStruct() :
         a(true),
         b('b'),
         c(3),
-        d(4.f),
-        e(5.0)
+        d(4.f)//,
+        //e(5.0)
     { }
 
     bool operator==(const UserStruct& rhs) const
@@ -55,8 +55,8 @@ struct UserStruct
             (a == rhs.a) &&
             (b == rhs.b) &&
             (c == rhs.c) &&
-            (d == rhs.d) &&
-            (e == rhs.e)
+            (d == rhs.d) //&&
+            //(e == rhs.e)
             ;
     }
 
@@ -233,7 +233,7 @@ TEST(Copy, DevStruct)
             us.b = (char) (rand()%128);
             us.c = (int)  (rand());
             us.d = (float) (1.f*rand());
-            us.e = (double) (1.0*rand()/rand());
+            //us.e = (double) (1.0*rand()/rand());
             source.push_back(us);
         }
         // destination vector
@@ -260,7 +260,7 @@ TEST(CopyN, DevStruct)
             us.b = (char) (rand()%128);
             us.c = (int)  (rand());
             us.d = (float) (1.f*rand());
-            us.e = (double) (1.0*rand()/rand());
+            //us.e = (double) (1.0*rand()/rand());
             source.push_back(us);
         }
         // destination vector
@@ -287,7 +287,7 @@ TEST(Copy, StdStruct)
             us.b = (char) (rand()%128);
             us.c = (int)  (rand());
             us.d = (float) (1.f*rand());
-            us.e = (double) (1.0*rand()/rand());
+            //us.e = (double) (1.0*rand()/rand());
             source.push_back(us);
         }
         // destination vector
@@ -314,7 +314,7 @@ TEST(CopyN, StdStruct)
             us.b = (char) (rand()%128);
             us.c = (int)  (rand());
             us.d = (float) (1.f*rand());
-            us.e = (double) (1.0*rand()/rand());
+            //us.e = (double) (1.0*rand()/rand());
             source.push_back(us);
         }
         // destination vector
@@ -326,26 +326,29 @@ TEST(CopyN, StdStruct)
     }
 }
 
+
 TEST (copyArrWithDiffTypes, IntAndFloats){
    	int arraySize = 100;
    		
    	int* sourceArr1; 
    	float *sourceFloatArr1;
+#if TEST_DOUBLE
    	double *sourceDoubleArr1;
-   	
+#endif
    	int* destArr1; 
    	float *destFloatArr1;
+#if TEST_DOUBLE
    	double *destDoubleArr1;
-   	
+#endif
    	sourceArr1 = (int *) malloc (arraySize* sizeof (int));
    	destArr1= (int *) malloc (arraySize * sizeof (int));
    
    	sourceFloatArr1 = (float*) malloc (arraySize* sizeof (float));
    	destFloatArr1	= (float *) malloc (arraySize * sizeof(float));
-   
+#if TEST_DOUBLE
    	sourceDoubleArr1 = (double *) malloc (arraySize * sizeof(double));
    	destDoubleArr1 = (double *) malloc (arraySize * sizeof(double));
-   
+#endif
    
    	for (int i = 0; i < arraySize; i++){
    		sourceArr1[i] = 56535 - i;
@@ -354,10 +357,11 @@ TEST (copyArrWithDiffTypes, IntAndFloats){
    	for (int i = 0; i < arraySize ; i++){
    		sourceFloatArr1[i] = ( float )i  + 0.125f;
    	}
+#if TEST_DOUBLE
    	for (int i = 0; i < arraySize ; i++){
    		sourceDoubleArr1[i] = ( double )i  + 0.0009765625;
    	}
-   
+#endif
    	//using bolt::cl::control
    
    	bolt::cl::control useThisControl = bolt::cl::control::getDefault();
@@ -367,18 +371,24 @@ TEST (copyArrWithDiffTypes, IntAndFloats){
     //cmpArrays(sourceArr1, destArr1, arraySize);
    	bolt::cl::copy(useThisControl, sourceArr1, sourceArr1 + arraySize, destFloatArr1);				//no prob
     //cmpArrays(sourceArr1, destFloatArr1, arraySize);
+#if TEST_DOUBLE
    	bolt::cl::copy(useThisControl, sourceArr1, sourceArr1 + arraySize, destDoubleArr1);				//no prob
+#endif
     //cmpArrays(sourceArr1, destDoubleArr1, arraySize);
    
    	//copying float array as a whole to all there types of arrays :)
    	bolt::cl::copy(useThisControl, sourceFloatArr1, sourceFloatArr1 + arraySize, destArr1);			//data loss
    	bolt::cl::copy(useThisControl, sourceFloatArr1, sourceFloatArr1 + arraySize, destFloatArr1);    //no prob
+#if TEST_DOUBLE
    	bolt::cl::copy(useThisControl, sourceFloatArr1, sourceFloatArr1 + arraySize, destDoubleArr1);   //no prob
+#endif
    
    	//copying double array as a whole to all there types of arrays :)
+#if TEST_DOUBLE
    	bolt::cl::copy(useThisControl, sourceDoubleArr1, sourceDoubleArr1 + arraySize, destArr1);		 //data loss
    	bolt::cl::copy(useThisControl, sourceDoubleArr1, sourceDoubleArr1 + arraySize, destFloatArr1);   //data loss
    	bolt::cl::copy(useThisControl, sourceDoubleArr1, sourceDoubleArr1 + arraySize, destDoubleArr1);  //no prob
+#endif
    }
 
 TEST (copyIntBoltCLDevVect, withIntAsWhole){ 

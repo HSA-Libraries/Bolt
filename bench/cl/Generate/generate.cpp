@@ -30,8 +30,9 @@ BOLT_FUNCTOR(floatN,
 struct floatN
 {
     float a;
-    float    b, c, d;
-    float e, f, g, h;
+    float b;
+    float c, d;
+    //float e, f, g, h;
     //float i, j, k, l;
     //float m, n, o, p;
 };
@@ -45,7 +46,7 @@ struct ConstFunctor
 	floatN _a;
 	ConstFunctor(floatN a) : _a(a) {};
 
-	floatN operator() () 
+	floatN operator() () const
 	{
 		return _a;
 	};
@@ -165,7 +166,7 @@ int _tmain( int argc, _TCHAR* argv[] )
     bolt::cl::V_OPENCL( platforms.at( userPlatform ).getDevices( deviceType, &devices ), "Platform::getDevices() failed" );
 
     cl::Context myContext( devices.at( userDevice ) );
-    cl::CommandQueue myQueue( myContext, devices.at( userDevice ) );
+    cl::CommandQueue myQueue( myContext, devices.at( userDevice ), CL_QUEUE_PROFILING_ENABLE );
 
     //  Now that the device we want is selected and we have created our own cl::CommandQueue, set it as the
     //  default cl::CommandQueue for the Bolt API
@@ -183,7 +184,7 @@ int _tmain( int argc, _TCHAR* argv[] )
     myTimer.Reserve( 1, iterations );
     size_t GenerateId	= myTimer.getUniqueID( _T( "Generate" ), 0 );
 
-	ConstFunctor s(init_floatN);
+    ConstFunctor s(init_floatN);
 
     if( systemMemory )
     {
@@ -203,7 +204,7 @@ int _tmain( int argc, _TCHAR* argv[] )
         for( unsigned i = 0; i < iterations; ++i )
         {
             myTimer.Start( GenerateId );
-			bolt::cl::generate( vec.begin(), vec.end(), s);
+            bolt::cl::generate( vec.begin(), vec.end(), s);
             myTimer.Stop( GenerateId );
         }
     }
@@ -212,7 +213,7 @@ int _tmain( int argc, _TCHAR* argv[] )
     size_t pruned = myTimer.pruneOutliers( 1.0 );
     double testTime = myTimer.getAverageTime( GenerateId );
     double testMB = ( length * sizeof( floatN ) ) / ( 1024.0 * 1024.0);
-	double testGB = testMB/ 1024.0;
+    double testGB = testMB/ 1024.0;
 
     bolt::tout << std::left;
     bolt::tout << std::setw( colWidth ) << _T( "Generate profile: " ) << _T( "[" ) << iterations-pruned << _T( "] samples" ) << std::endl;

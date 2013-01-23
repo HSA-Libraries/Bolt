@@ -40,14 +40,37 @@ BOLT_FUNCTOR(floatN,
 struct floatN
 {
     float a;
-    //float    b, c, d;
+    float    b, c, d;
+};
+);
+
+//BOLT_FUNCTOR(float4,
+struct float4
+{
+    float a;
+    float    b, c, d;
     //float e, f, g, h;
     //float i, j, k, l;
     //float m, n, o, p;
 };
-);
+//);
+//BOLT_CREATE_TYPENAME( T );
+template<>
+struct TypeName<float4> {
+  static std::string get() { return "float4"; }
+};
 
-floatN init_floatN;
+template<>
+struct ClCode<float4> {
+  static std::string get() { return ""; }
+};
+
+//BOLT_CREATE_CLCODE( T, #__VA_ARGS__ );
+//BOLT_CREATE_TYPENAME( cl_float4 );
+//typedef cl_float4 float4;
+
+
+float4 init_float4;
 
 int _tmain( int argc, _TCHAR* argv[] )
 {
@@ -79,8 +102,8 @@ int _tmain( int argc, _TCHAR* argv[] )
             ( "platform,p",     po::value< cl_uint >( &userPlatform )->default_value( 0 ), "Specify the platform under test using the index reported by -q flag" )
             ( "device,d",       po::value< cl_uint >( &userDevice )->default_value( 0 ), "Specify the device under test using the index reported by the -q flag.  "
                     "Index is relative with respect to -g, -c or -a flags" )
-            ( "length,l",       po::value< size_t >( &length )->default_value( 2<<23 ), "Specify the length of Copy array" )
-            ( "iterations,i",   po::value< size_t >( &iterations )->default_value( 100 ), "Number of samples in timing loop" )
+            ( "length,l",       po::value< size_t >( &length )->default_value( 1<<25 ), "Specify the length of Copy array" )
+            ( "iterations,i",   po::value< size_t >( &iterations )->default_value( 128 ), "Number of samples in timing loop" )
 			//( "algo,a",		    po::value< size_t >( &algo )->default_value( 1 ), "Algorithm used [1,2]  1:SCAN_BOLT, 2:XYZ" )//Not used in this file
             ;
 
@@ -162,8 +185,7 @@ int _tmain( int argc, _TCHAR* argv[] )
     bolt::cl::V_OPENCL( platforms.at( userPlatform ).getDevices( deviceType, &devices ), "Platform::getDevices() failed" );
 
     ::cl::Context myContext( devices.at( userDevice ) );
-    ::cl::CommandQueue myQueue( myContext, devices.at( userDevice ) );
-
+    ::cl::CommandQueue myQueue( myContext, devices.at( userDevice ), CL_QUEUE_PROFILING_ENABLE );
     //  Now that the device we want is selected and we have created our own cl::CommandQueue, set it as the
     //  default cl::CommandQueue for the Bolt API
     bolt::cl::control::getDefault( ).commandQueue( myQueue );
@@ -182,8 +204,8 @@ int _tmain( int argc, _TCHAR* argv[] )
 
     if( systemMemory )
     {
-        std::vector< floatN > source( length );
-        std::vector< floatN > destination( length );
+        std::vector< float4 > source( length );
+        std::vector< float4 > destination( length );
 
         for( unsigned i = 0; i < iterations; ++i )
         {
@@ -194,13 +216,16 @@ int _tmain( int argc, _TCHAR* argv[] )
     }
     else
     {
-        bolt::cl::device_vector< floatN > source( length );
-        bolt::cl::device_vector< floatN > destination( length );
+         bolt::cl::control::getDefault( ).debug(bolt::cl::control::debug::SaveCompilerTemps);
+        float4 init={ 1.2f, 2.3f, 3.4f, 4.5f };
+        //floatN init={ 1.2f, 2.3f, 3.4f, 4.5f };
+        bolt::cl::device_vector< float4 > source( length, init );
+        bolt::cl::device_vector< float4 > destination( length );
 
-        for( unsigned i = 0; i < iterations; ++i )
+        for( unsigned int i = 0; i < iterations; ++i )
         {
             myTimer.Start( CopyId );
-			bolt::cl::copy( source.begin(), source.end(), destination.begin());
+			      bolt::cl::copy( source.begin(), source.end(), destination.begin());
             myTimer.Stop( CopyId );
         }
     }
@@ -208,8 +233,8 @@ int _tmain( int argc, _TCHAR* argv[] )
     //	Remove all timings that are outside of 2 stddev (keep 65% of samples); we ignore outliers to get a more consistent result
     size_t pruned = myTimer.pruneOutliers( 1.0 );
     double testTime = myTimer.getAverageTime( CopyId );
-    double testMB = ( length * sizeof( floatN ) ) / ( 1024.0 * 1024.0);
-	double testGB = testMB/ 1024.0;
+    double testMB = ( length * sizeof( float4 ) ) / ( 1024.0 * 1024.0);
+	  double testGB = testMB/ 1024.0;
 
     bolt::tout << std::left;
     bolt::tout << std::setw( colWidth ) << _T( "Copy profile: " ) << _T( "[" ) << iterations-pruned << _T( "] samples" ) << std::endl;

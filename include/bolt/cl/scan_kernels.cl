@@ -14,7 +14,7 @@
 *   limitations under the License.                                                   
 
 ***************************************************************************/
-//#pragma OPENCL EXTENSION cl_amd_printf : enable
+#pragma OPENCL EXTENSION cl_amd_printf : enable
 //#define USE_AMD_HSA 1
 
 #if USE_AMD_HSA
@@ -32,7 +32,8 @@ kernel void HSA_Scan(
     local oType     *lds,
     global BinaryFunction* binaryOp,
     global oType    *intermediateScanArray,
-    global int      *intermediateScanStatus,
+    global int      *dev2host,
+    global int      *host2dev,
     int             exclusive)
 {
     size_t gloId = get_global_id( 0 );
@@ -40,10 +41,24 @@ kernel void HSA_Scan(
     size_t locId = get_local_id( 0 );
     size_t wgSize = get_local_size( 0 );
 
+    // report P1 completion
     intermediateScanArray[ groId ] = input[ groId ];
-    intermediateScanStatus[ groId ] = 1;
+    dev2host[ groId ] = 1;
 
-    mem_fence(CLK_GLOBAL_MEM_FENCE);
+   
+
+    // wait for P2 completion
+    for (size_t i = 0; i < 10000; i++ )
+    {
+        mem_fence(CLK_GLOBAL_MEM_FENCE);
+        //printf("DEV: interScan[%i]=%i ( %i, %i )", groId, intermediateScanArray[groId], dev2host[groId], host2dev[groId]);
+        if ( host2dev[ groId] == 2 )
+        { // host reported P2 completion
+            // report P3 completion
+            dev2host[ groId ] = 3;
+            break;
+        }
+    }
 }
 
 
@@ -69,6 +84,7 @@ kernel void perBlockAddition(
     const uint vecSize,
     global BinaryFunction* binaryOp )
 {
+    BinaryFunction bf = *binaryOp;
 // 1 thread per element
 #if 1
     size_t gloId = get_global_id( 0 );
@@ -85,7 +101,7 @@ kernel void perBlockAddition(
     if (groId > 0)
     {
         Type postBlockSum = postSumArray[ groId-1 ];
-        Type newResult = (*binaryOp)( scanResult, postBlockSum );
+        Type newResult = bf( scanResult, postBlockSum );
         output[ gloId ] = newResult;
     }
 #endif
@@ -200,6 +216,7 @@ kernel void intraBlockInclusiveScan(
                 global BinaryFunction* binaryOp
                 )
 {
+    BinaryFunction bf = *binaryOp;
     size_t gloId = get_global_id( 0 );
     size_t locId = get_local_id( 0 );
     size_t wgSize = get_local_size( 0 );
@@ -221,7 +238,7 @@ kernel void intraBlockInclusiveScan(
             if (mapId+offset<vecSize)
             {
                 Type y = preSumArray[mapId+offset];
-                workSum = (*binaryOp)( workSum, y );
+                workSum = bf( workSum, y );
                 postSumArray[ mapId + offset ] = workSum;
             }
         }
@@ -239,7 +256,7 @@ kernel void intraBlockInclusiveScan(
         { // thread > 0
             Type y = lds[ locId - offset ];
             Type y2 = lds[ locId ];
-            scanSum = (*binaryOp)( y2, y );
+            scanSum = bf( y2, y );
             lds[ locId ] = scanSum;
         } else { // thread 0
             scanSum = workSum;
@@ -254,7 +271,7 @@ kernel void intraBlockInclusiveScan(
             if (locId >= offset)
             {
                 Type y = lds[ locId - offset ];
-                scanSum = (*binaryOp)( scanSum, y );
+                scanSum = bf( scanSum, y );
                 lds[ locId ] = scanSum;
             }
         }
@@ -270,7 +287,7 @@ kernel void intraBlockInclusiveScan(
         {
             Type y = postSumArray[ mapId + offset ];
             Type y2 = lds[locId-1];
-            y = (*binaryOp)( y, y2 );
+            y = bf( y, y2 );
             postSumArray[ mapId + offset ] = y;
         } // thread in bounds
     } // for 
@@ -291,6 +308,7 @@ kernel void perBlockInclusiveScan(
                 global oType* scanBuffer,
                 int exclusive) // do exclusive scan ?
 {
+    BinaryFunction bf = *binaryOp;
     size_t gloId = get_global_id( 0 );
     size_t groId = get_group_id( 0 );
     size_t locId = get_local_id( 0 );
@@ -328,7 +346,7 @@ kernel void perBlockInclusiveScan(
         if (locId >= offset)
         {
             oType y = lds[ locId - offset ];
-            sum = (*binaryOp)( sum, y );
+            sum = bf( sum, y );
         }
         barrier( CLK_LOCAL_MEM_FENCE );
         lds[ locId ] = sum;

@@ -108,6 +108,7 @@ namespace bolt {
                     std::vector< const std::string > kernelNames;
                     kernelNames.push_back( "unaryTransform" );
                     kernelNames.push_back( "unaryTransformNoBoundsCheck" );
+                    kernelNames.push_back( "unaryTransformA" );
 
                     std::string instantiationString = 
                         "// Host generates this instantiation string with user-specified value type and functor\n"
@@ -118,12 +119,22 @@ namespace bolt {
                         "const uint length,\n"
                         "global " + functorTypeName + "* userFunctor);\n\n"
 
-                                                "// Host generates this instantiation string with user-specified value type and functor\n"
+                        "// Host generates this instantiation string with user-specified value type and functor\n"
                         "template __attribute__((mangled_name(unaryTransformNoBoundsCheckInstantiated)))\n"
                         "kernel void unaryTransformNoBoundsCheckTemplate(\n"
                         "global " + inValueTypeName + "* A,\n"
                         "global " + outValueTypeName + "* Z,\n"
                         "const uint length,\n"
+                        "global " + functorTypeName + "* userFunctor);\n\n"
+
+                        "// Host generates this instantiation string with user-specified value type and functor\n"
+                        "template __attribute__((mangled_name(unaryTransformAInstantiated)))\n"
+                        "__attribute__((reqd_work_group_size(256,1,1)))\n"
+                        "kernel void unaryTransformA(\n"
+                        "global " + inValueTypeName  + " *input,\n"
+                        "global " + outValueTypeName + " *output,\n"
+                        "const uint numElements,\n"
+                        "const uint numElementsPerThread,\n"
                         "global " + functorTypeName + "* userFunctor);\n\n"
                         ;
 
@@ -266,6 +277,15 @@ namespace bolt {
                 if( distVec == 0 )
                     return;
 
+                const size_t numComputeUnits = ctl.device( ).getInfo< CL_DEVICE_MAX_COMPUTE_UNITS >( );
+                const size_t numWorkGroupsPerComputeUnit = ctl.wgPerComputeUnit( );
+                size_t numWorkGroups = numComputeUnits * numWorkGroupsPerComputeUnit;
+                
+
+
+
+
+
                 //typedef std::aligned_storage< sizeof( UnaryFunction ), 256 >::type alignedUnary;
                 __declspec( align( 256 ) ) BinaryFunction aligned_functor( f );
                 // ::cl::Buffer userFunctor(ctl.context(), CL_MEM_READ_ONLY|CL_MEM_USE_HOST_PTR, sizeof( aligned_functor ), const_cast< BinaryFunction* >( &aligned_functor ) );   // Create buffer wrapper so we can access host parameters.
@@ -303,6 +323,12 @@ namespace bolt {
                 {
                     k = kernelNoBoundsCheck;
                 }
+                if (wgMultiple/wgSize < numWorkGroups)
+                    numWorkGroups = wgMultiple/wgSize;
+                //std::cout
+                //    <<"numCU="<<numComputeUnits
+                //    <<", numWg/CU="<<numWorkGroupsPerComputeUnit
+                //    <<", numWg="<<numWorkGroups<<std::endl;
 
                 k.setArg(0, first1->getBuffer( ) );
                 k.setArg(1, first2->getBuffer( ) );
@@ -314,13 +340,24 @@ namespace bolt {
                 l_Error = ctl.commandQueue().enqueueNDRangeKernel(
                     k, 
                     ::cl::NullRange, 
-                    ::cl::NDRange(wgMultiple),
+                    ::cl::NDRange(numWorkGroups*wgSize), // wgMultiple
                     ::cl::NDRange(wgSize),
                     NULL,
                     &transformEvent );
                 V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for transform() kernel" );
 
                 bolt::cl::wait(ctl, transformEvent);
+
+                if (1) {
+                    cl_ulong start_time, stop_time;
+                    
+                    l_Error = transformEvent.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_START, &start_time);
+                    V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_QUEUED>()");
+                    l_Error = transformEvent.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END, &stop_time);
+                    V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_END>()");
+                    size_t time = stop_time - start_time;
+                    std::cout << "Global Memory Bandwidth: " << ( (distVec*(2.0*sizeof(iType)+sizeof(oType))) / time) << std::endl;
+                }
             };
 
             template< typename DVInputIterator, typename DVOutputIterator, typename UnaryFunction > 
@@ -333,6 +370,12 @@ namespace bolt {
                 cl_uint distVec = static_cast< cl_uint >( std::distance( first, last ) );
                 if( distVec == 0 )
                     return;
+
+                const size_t numComputeUnits = ctl.device( ).getInfo< CL_DEVICE_MAX_COMPUTE_UNITS >( );
+                const size_t numWorkGroupsPerComputeUnit = ctl.wgPerComputeUnit( );
+                const size_t numWorkGroups = numComputeUnits * numWorkGroupsPerComputeUnit;
+                const size_t wgSize  = 256; //kernelWithBoundsCheck.getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.device( ), &l_Error );
+                const cl_uint numThreads = static_cast<cl_uint>(numWorkGroups * wgSize);
 
                 //typedef std::aligned_storage< sizeof( UnaryFunction ), 256 >::type alignedUnary;
                 ALIGNED( 256 ) UnaryFunction aligned_functor( f );
@@ -354,7 +397,7 @@ namespace bolt {
                 ::cl::Kernel k;
 
                 cl_int l_Error = CL_SUCCESS;
-                const size_t wgSize  = kernelWithBoundsCheck.getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.device( ), &l_Error );
+                
                 V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
                 assert( (wgSize & (wgSize-1) ) == 0 ); // The bitwise &,~ logic below requires wgSize to be a power of 2
 
@@ -369,8 +412,12 @@ namespace bolt {
                 }
                 else
                 {
-                    k = kernelNoBoundsCheck;
+                    //k = kernelNoBoundsCheck;
+                    k = unaryTransformKernels[2];
                 }
+                
+                cl_uint numElementsPerThread = static_cast<cl_uint>(wgMultiple / numThreads);
+                std::cout << "nE="<<distVec<<", nT="<<numThreads<<", nEpT="<<numElementsPerThread<<std::endl;
 
                 //void* h_result = (void*)ctl.commandQueue().enqueueMapBuffer( userFunctor, true, CL_MAP_READ, 0, sizeof(aligned_functor), NULL, NULL, &l_Error );
                 //V_OPENCL( l_Error, "Error calling map on the result buffer" );
@@ -378,19 +425,31 @@ namespace bolt {
                 k.setArg(0, first->getBuffer( ) );
                 k.setArg(1, result->getBuffer( ) );
                 k.setArg(2, distVec );
-                k.setArg(3, *userFunctor);
+                k.setArg(3, numElementsPerThread );
+                k.setArg(4, *userFunctor);
 
                 ::cl::Event transformEvent;
                 l_Error = ctl.commandQueue().enqueueNDRangeKernel(
                     k, 
                     ::cl::NullRange, 
-                    ::cl::NDRange(wgMultiple), 
+                    ::cl::NDRange(numThreads), 
                     ::cl::NDRange(wgSize),
                     NULL,
                     &transformEvent );
                 V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for transform() kernel" );
 
                 bolt::cl::wait(ctl, transformEvent);
+
+                if (1) {
+                    cl_ulong start_time, stop_time;
+                    
+                    l_Error = transformEvent.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_START, &start_time);
+                    V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_QUEUED>()");
+                    l_Error = transformEvent.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END, &stop_time);
+                    V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_END>()");
+                    size_t time = stop_time - start_time;
+                    std::cout << "Global Memory Bandwidth: " << ( (distVec*(1.0*sizeof(iType)+sizeof(oType))) / time) << std::endl;
+                }
             };
         }//End OF detail namespace
     }//End OF cl namespace

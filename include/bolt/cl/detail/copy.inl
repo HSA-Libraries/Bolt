@@ -19,11 +19,57 @@
 #define COPY_INL
 #pragma once
 
+#ifndef BURST
+#define BURST 4
+#endif
+
 #include <boost/thread/once.hpp>
 #include <boost/bind.hpp>
 #include <type_traits> 
 
 #include "bolt/cl/bolt.h"
+
+// bumps dividend up (if needed) to be evenly divisible by divisor
+// returns whether dividend changed
+// makeDivisible(9,4) -> 12,true
+// makeDivisible(9,3) -> 9, false
+template< typename Type1, typename Type2 >
+bool makeDivisible( Type1& dividend, Type2 divisor)
+{
+    size_t lowerBits = static_cast<size_t>( dividend & (divisor-1) );
+    if( lowerBits )
+    { // bump it up
+        dividend &= ~lowerBits;
+        dividend += divisor;
+        return true;
+    }
+    else
+    { // already evenly divisible
+      return false;
+    }
+}
+
+// bumps dividend up (if needed) to be evenly divisible by divisor
+// returns whether dividend changed
+// roundUpDivide(9,4,?)  -> 12,4,3,true
+// roundUpDivide(10,2,?) -> 10,2,5,false
+template< typename Type1, typename Type2, typename Type3 >
+bool roundUpDivide( Type1& dividend, Type2 divisor, Type3& quotient)
+{
+    size_t lowerBits = static_cast<size_t>( dividend & (divisor-1) );
+    if( lowerBits )
+    { // bump it up
+        dividend &= ~lowerBits;
+        dividend += divisor;
+        quotient = dividend / divisor;
+        return true;
+    }
+    else
+    { // already evenly divisible
+      quotient = dividend / divisor;
+      return false;
+    }
+}
 
 namespace bolt {
     namespace cl {
@@ -71,7 +117,7 @@ namespace bolt {
 namespace cl {
 namespace detail {
 
-        enum typeName { e_iType, e_oType };
+        enum copyTypeName { copy_iType, copy_oType };
 
 /***********************************************************************************************************************
  * Kernel Template Specializer
@@ -82,8 +128,12 @@ class Copy_KernelTemplateSpecializer : public KernelTemplateSpecializer
 
     Copy_KernelTemplateSpecializer() : KernelTemplateSpecializer()
     {
-        addKernelName("copyBoundsCheck");
-        addKernelName("copyNoBoundsCheck");
+        addKernelName( "copyBoundsCheck"   );
+        addKernelName( "copyNoBoundsCheck" );
+        addKernelName( "copyA"             );
+        addKernelName( "copyB"             );
+        addKernelName( "copyC"             );
+        addKernelName( "copyD"             );
     }
     
     const ::std::string operator() ( const ::std::vector<::std::string>& typeNames ) const
@@ -93,8 +143,8 @@ class Copy_KernelTemplateSpecializer : public KernelTemplateSpecializer
             "template __attribute__((mangled_name(" + name(0) + "Instantiated)))\n"
             "__attribute__((reqd_work_group_size(256,1,1)))\n"
             "__kernel void " + name(0) + "(\n"
-            "global " + typeNames[e_iType] + " *src,\n"
-            "global " + typeNames[e_oType] + " *dst,\n"
+            "global " + typeNames[copy_iType] + " *src,\n"
+            "global " + typeNames[copy_oType] + " *dst,\n"
             "const uint length\n"
             ");\n\n"
 
@@ -103,9 +153,36 @@ class Copy_KernelTemplateSpecializer : public KernelTemplateSpecializer
             "template __attribute__((mangled_name(" + name(1) + "Instantiated)))\n"
             "__attribute__((reqd_work_group_size(256,1,1)))\n"
             "__kernel void " + name(1) + "(\n"
-            "global " + typeNames[e_iType] + " *src,\n"
-            "global " + typeNames[e_oType] + " *dst,\n"
+            "global " + typeNames[copy_iType] + " *src,\n"
+            "global " + typeNames[copy_oType] + " *dst,\n"
             "const uint length\n"
+            ");\n\n"
+
+            "// Dynamic specialization of generic template definition, using user supplied types\n"
+            "template __attribute__((mangled_name(" + name(2) + "Instantiated)))\n"
+            "__attribute__((reqd_work_group_size(256,1,1)))\n"
+            "__kernel void " + name(2) + "(\n"
+            "global " + typeNames[copy_iType] + " *src,\n"
+            "global " + typeNames[copy_oType] + " *dst,\n"
+            "const uint numElements\n"
+            ");\n\n"
+
+            "// Dynamic specialization of generic template definition, using user supplied types\n"
+            "template __attribute__((mangled_name(" + name(3) + "Instantiated)))\n"
+            "__attribute__((reqd_work_group_size(256,1,1)))\n"
+            "__kernel void " + name(3) + "(\n"
+            "global " + typeNames[copy_iType] + " *src,\n"
+            "global " + typeNames[copy_oType] + " *dst,\n"
+            "const uint numElements\n"
+            ");\n\n"
+
+            "// Dynamic specialization of generic template definition, using user supplied types\n"
+            "template __attribute__((mangled_name(" + name(4) + "Instantiated)))\n"
+            "__attribute__((reqd_work_group_size(256,1,1)))\n"
+            "__kernel void " + name(4) + "(\n"
+            "global " + typeNames[copy_iType] + " *src,\n"
+            "global " + typeNames[copy_oType] + " *dst,\n"
+            "const uint numElements\n"
             ");\n\n"
             ;
     
@@ -187,8 +264,8 @@ void copy_enqueue(const bolt::cl::control &ctl, const DVInputIterator& first, co
     typedef std::iterator_traits<DVInputIterator>::value_type iType;
     typedef std::iterator_traits<DVOutputIterator>::value_type oType;
     std::vector<std::string> typeNames(2);
-    typeNames[e_iType] = TypeName< iType >::get( );
-    typeNames[e_oType] = TypeName< oType >::get( );
+    typeNames[copy_iType] = TypeName< iType >::get( );
+    typeNames[copy_oType] = TypeName< oType >::get( );
 
     /**********************************************************************************
      * Type Definitions - directly concatenated into kernel string (order may matter)
@@ -200,7 +277,10 @@ void copy_enqueue(const bolt::cl::control &ctl, const DVInputIterator& first, co
     /**********************************************************************************
      * Compile Options
      *********************************************************************************/
-     std::string compileOptions = "";
+    std::string compileOptions;
+    std::ostringstream oss;
+    oss << " -DBURST=" << BURST;
+    compileOptions = oss.str();
 
     /**********************************************************************************
      * Request Compiled Kernels
@@ -214,19 +294,30 @@ void copy_enqueue(const bolt::cl::control &ctl, const DVInputIterator& first, co
         copy_kernels,
         compileOptions);
 
+    const size_t workGroupSize  = 256; //kernelWithBoundsCheck.getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.device( ), &l_Error );
+    const size_t numComputeUnits = 40; //ctl.device( ).getInfo< CL_DEVICE_MAX_COMPUTE_UNITS >( ); // = 28
+    const size_t numWorkGroupsPerComputeUnit = 10; //ctl.wgPerComputeUnit( );
+    const size_t numWorkGroups = numComputeUnits * numWorkGroupsPerComputeUnit;
+    
+    const cl_uint numThreadsIdeal = static_cast<cl_uint>( numWorkGroups * workGroupSize );
+    cl_uint numElementsPerThread = n / numThreadsIdeal;
+    //if (numElementsPerThread*numThreads < n)
+    //{
+    //    std::cout << "not even num elements per thread" << std::endl;
+    //    numElementsPerThread++;
+    //}
+    // bool roundedUp = makeDivisible( numElementsPerThread
     //  Ceiling function to bump the size of input to the next whole wavefront size
-    unsigned int kernelWgSize = 256;
-    cl_uint numThreads = n;
-    size_t modWgSize = (numThreads & (kernelWgSize-1));
-    int whichKernel = 0;
-    if( modWgSize )
+    // unsigned int kernelWgSize = 256;
+    cl_uint numThreadsRUP = n;
+    size_t mod = (n & (workGroupSize-1));
+    if( mod )
     {
-        whichKernel = 1; // will need to do bounds check
-        numThreads &= ~modWgSize;
-        numThreads += kernelWgSize;
+        numThreadsRUP &= ~mod;
+        numThreadsRUP += workGroupSize;
     }
-    cl_uint numWorkGroups = static_cast< cl_uint >( numThreads / kernelWgSize );
-
+    //cl_uint numWorkGroups = static_cast< cl_uint >( numThreads / kernelWgSize );
+    
     /**********************************************************************************
      *  Kernel
      *********************************************************************************/
@@ -234,18 +325,42 @@ void copy_enqueue(const bolt::cl::control &ctl, const DVInputIterator& first, co
     cl_int l_Error;
     try
     {
-    V_OPENCL( kernels[whichKernel].setArg( 0, first->getBuffer()), "Error setArg kernels[ 0 ]" ); // Input keys
-    V_OPENCL( kernels[whichKernel].setArg( 1, result->getBuffer()),"Error setArg kernels[ 0 ]" ); // Input buffer
-    V_OPENCL( kernels[whichKernel].setArg( 2, n ),          "Error setArg kernels[ 0 ]" ); // Size of buffer
-    
-    l_Error = ctl.commandQueue( ).enqueueNDRangeKernel(
-        kernels[whichKernel],
-        ::cl::NullRange,
-        ::cl::NDRange( numThreads ),
-        ::cl::NDRange( kernelWgSize ),
-        NULL,
-        &kernelEvent);
-    V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for kernel" );
+        int whichKernel = 2;
+        cl_uint numThreadsChosen;
+        cl_uint workGroupSizeChosen = workGroupSize;
+        switch( whichKernel )
+        {
+        case 0: // 1 thread per element, even
+        case 1: // 1 thread per element, boundary check
+            numThreadsChosen = numThreadsRUP;
+            V_OPENCL( kernels[whichKernel].setArg( 0, first->getBuffer()), "Error setArg kernels[ 0 ]" ); // Input keys
+            V_OPENCL( kernels[whichKernel].setArg( 1, result->getBuffer()),"Error setArg kernels[ 0 ]" ); // Input buffer
+            V_OPENCL( kernels[whichKernel].setArg( 2, static_cast<cl_uint>( n ) ),                 "Error setArg kernels[ 0 ]" ); // Size of buffer
+            break;
+        case 2: // A: ideal threads, loop
+        case 3: // B: 
+            numThreadsChosen = numThreadsIdeal;
+            V_OPENCL( kernels[whichKernel].setArg( 0, first->getBuffer()), "Error setArg kernels[ 0 ]" ); // Input keys
+            V_OPENCL( kernels[whichKernel].setArg( 1, result->getBuffer()),"Error setArg kernels[ 0 ]" ); // Input buffer
+            V_OPENCL( kernels[whichKernel].setArg( 2, static_cast<cl_uint>(n) ),                 "Error setArg kernels[ 0 ]" ); // Size of buffer
+            break;
+            
+        case 4: // C: 
+        case 5: // D:
+            numThreadsChosen = numThreadsRUP / BURST;
+            V_OPENCL( kernels[whichKernel].setArg( 0, first->getBuffer()), "Error setArg kernels[ 0 ]" ); // Input keys
+            V_OPENCL( kernels[whichKernel].setArg( 1, result->getBuffer()),"Error setArg kernels[ 0 ]" ); // Input buffer
+            V_OPENCL( kernels[whichKernel].setArg( 2, static_cast<cl_uint>(n) ),                 "Error setArg kernels[ 0 ]" ); // Size of buffer
+        } // switch
+
+        l_Error = ctl.commandQueue( ).enqueueNDRangeKernel(
+            kernels[whichKernel],
+            ::cl::NullRange,
+            ::cl::NDRange( numThreadsChosen ),
+            ::cl::NDRange( workGroupSizeChosen ),
+            NULL,
+            &kernelEvent);
+        V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for kernel" );
     }
     catch( const ::cl::Error& e)
     {
@@ -258,22 +373,19 @@ void copy_enqueue(const bolt::cl::control &ctl, const DVInputIterator& first, co
     // wait for results
     bolt::cl::wait(ctl, kernelEvent);
 
-
-#if 0
-    ::cl::Event copyEvent;
-    cl_int l_Error = ctl.commandQueue().enqueueCopyBuffer(
-        first->getBuffer(),
-        result->getBuffer(),
-        first->getIndex(),
-        result->getIndex(),
-        n*sizeof(iType),
-        //0,
-        NULL,
-        &copyEvent);
-    V_OPENCL( l_Error, "enqueueCopyBuffer() failed for copy()" );
-    bolt::cl::wait(ctl, copyEvent);
-#endif
-
+    if (0) {
+        cl_ulong start_time, stop_time;
+        
+        l_Error = kernelEvent.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_START, &start_time);
+        V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_QUEUED>()");
+        l_Error = kernelEvent.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END, &stop_time);
+        V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_END>()");
+        size_t time = stop_time - start_time;
+        double gb = (n*(1.0*sizeof(iType)+sizeof(oType))/1024/1024/1024);
+        double sec = time/1000000000.0;
+        std::cout << "Global Memory Bandwidth: " << ( gb / sec) << " ( "
+          << time/1000000.0 << " ms)" << std::endl;
+    }
 };
 }//End OF detail namespace
 }//End OF cl namespace
