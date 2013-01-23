@@ -16,23 +16,25 @@
 ############################################################################                                                                                     
 
 # List the names of common files to compile across all platforms
+set( clBolt.Test.ReduceByKey.Source ${BOLT_CL_TEST_DIR}/common/stdafx.cpp 
+                             ReduceByKeyTest.cpp )
+set( clBolt.Test.ReduceByKey.Headers   ${BOLT_CL_TEST_DIR}/common/stdafx.h 
+                                ${BOLT_CL_TEST_DIR}/common/targetver.h                                 
+                                ${BOLT_INCLUDE_DIR}/bolt/cl/detail/reduce_by_key.inl )
 
-set( clBolt.Test.Reduce.Source stdafx.cpp ReduceTest.cpp ReduceDeviceVector.cpp ${BOLT_CL_TEST_DIR}/common/myocl.cpp) 
-set( clBolt.Test.Reduce.Headers stdafx.h ${BOLT_CL_TEST_DIR}/common/myocl.h targetver.h ${BOLT_INCLUDE_DIR}/bolt/cl/reduce.h )
+set( clBolt.Test.ReduceByKey.Files ${clBolt.Test.ReduceByKey.Source} ${clBolt.Test.ReduceByKey.Headers} )
 
-set( clBolt.Test.Reduce.Files ${clBolt.Test.Reduce.Source} ${clBolt.Test.Reduce.Headers} )
+add_executable( clBolt.Test.ReduceByKey ${clBolt.Test.ReduceByKey.Files} )
+target_link_libraries( clBolt.Test.ReduceByKey clBolt.Runtime ${GTEST_LIBRARIES} ${Boost_LIBRARIES} )
 
-add_executable( clBolt.Test.Reduce ${clBolt.Test.Reduce.Files} )
-target_link_libraries( clBolt.Test.Reduce clBolt.Runtime ${OPENCL_LIBRARIES} ${GTEST_LIBRARIES} ${Boost_LIBRARIES} ${TBB_LIBRARIES} )
+set_target_properties( clBolt.Test.ReduceByKey PROPERTIES VERSION ${Bolt_VERSION} )
+set_target_properties( clBolt.Test.ReduceByKey PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
 
-set_target_properties( clBolt.Test.Reduce PROPERTIES VERSION ${Bolt_VERSION} )
-set_target_properties( clBolt.Test.Reduce PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
+set_property( TARGET clBolt.Test.ReduceByKey PROPERTY FOLDER "Test/OpenCL")
 
-set_property( TARGET clBolt.Test.Reduce PROPERTY FOLDER "Test/OpenCL")
-		
 # CPack configuration; include the executable into the package
-install( TARGETS clBolt.Test.Reduce
-	RUNTIME DESTINATION ${BIN_DIR}
-	LIBRARY DESTINATION ${LIB_DIR}
-	ARCHIVE DESTINATION ${LIB_DIR}/import
-	)
+install( TARGETS clBolt.Test.ReduceByKey
+    RUNTIME DESTINATION ${BIN_DIR}
+    LIBRARY DESTINATION ${LIB_DIR}
+    ARCHIVE DESTINATION ${LIB_DIR}/import
+    )

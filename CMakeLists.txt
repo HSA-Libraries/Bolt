@@ -28,15 +28,15 @@ project( Bolt )
 
 # Define a version for the code
 if( NOT DEFINED Bolt_VERSION_MAJOR )
-	set( Bolt_VERSION_MAJOR 0 )
+   set( Bolt_VERSION_MAJOR 0 )
 endif( )
 
 if( NOT DEFINED Bolt_VERSION_MINOR )
-	set( Bolt_VERSION_MINOR 5 )
+   set( Bolt_VERSION_MINOR 5 )
 endif( )
 
 if( NOT DEFINED Bolt_VERSION_PATCH )
-	set( Bolt_VERSION_PATCH 0 )
+   set( Bolt_VERSION_PATCH 0 )
 endif( )
 
 set( Bolt_VERSION "${Bolt_VERSION_MAJOR}.${Bolt_VERSION_MINOR}.${Bolt_VERSION_PATCH}")
@@ -163,12 +163,12 @@ message( STATUS "CMAKE_EXE_LINKER link flags: " ${CMAKE_EXE_LINKER_FLAGS} )
 
 # Depending on whether we are building for 64 or 32 bit, construct common paths and names that subdirectories can reference for their use
 if( Bolt_BUILD64 )
-    set( CPACK_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}-${Bolt_VERSION}-${CMAKE_HOST_SYSTEM_NAME}-x64")
+    set( CPACK_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}-${Bolt_VERSION}-${CMAKE_HOST_SYSTEM_NAME}-x64" )
     set( INCLUDE_DIR include )
     set( BIN_DIR bin64 )
     set( LIB_DIR lib64 )
 else( )
-    set( CPACK_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}-${Bolt_VERSION}-${CMAKE_HOST_SYSTEM_NAME}-x32")
+    set( CPACK_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}-${Bolt_VERSION}-${CMAKE_HOST_SYSTEM_NAME}-x32" )
     set( INCLUDE_DIR include )
     set( BIN_DIR bin )
     set( LIB_DIR lib )
@@ -195,6 +195,25 @@ if( BUILD_clBolt )
         add_subdirectory( ${BOLT_LIBRARY_DIR}/cl )
     endif( )
 endif( )
+
+# Build TBB library
+if( BUILD_TBB )
+    # This will define TBB_FOUND
+    message ("Setting up TBB paths")
+    find_package( TBB REQUIRED )
+    if ( TBB_FOUND )
+        message("TBB is found installed in the path:" ${TBB_INSTALL_DIR} )
+        #list( APPEND Bolt.Dependencies TBB )
+    else ( ) 
+        message( FATAL_ERROR "TBB not found. Install TBB and set TBB_INSTALL_DIR env variable" )
+        #message( STATUS "Setting up TBB external..." )
+        #include( ExternalTBB )
+        #message( STATUS "TBB_ROOT configured as: " ${TBB_INSTALL_DIR} )
+        #list( APPEND Bolt.Dependencies TBB )
+        #list( APPEND Bolt.Cmake.Args -DBUILD_TBB=TRUE )
+    endif( )
+endif( )
+
 
 # After libraries are built, built tests
 if( BUILD_tests )
@@ -255,11 +274,12 @@ else( )
 endif( )
 
 set( CPACK_SOURCE_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}-${Bolt_VERSION}-${CMAKE_HOST_SYSTEM_NAME}-Source")
-
+set( CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/ReadMeBuild.html")
+set( CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE.txt")
 set( CPACK_PACKAGE_VERSION_MAJOR ${Bolt_VERSION_MAJOR} )
 set( CPACK_PACKAGE_VERSION_MINOR ${Bolt_VERSION_MINOR} )
 set( CPACK_PACKAGE_VERSION_PATCH ${Bolt_VERSION_PATCH} )
-set( CPACK_PACKAGE_DESCRIPTION_SUMMARY "Bolt reference implementation")
+set( CPACK_PACKAGE_DESCRIPTION_SUMMARY "Bolt library SDK package")
 set( CPACK_PACKAGE_VENDOR "AMD")
 set( CPACK_SOURCE_IGNORE_FILES "/\\\\.hg/;/\\\\.svn/;" )
 

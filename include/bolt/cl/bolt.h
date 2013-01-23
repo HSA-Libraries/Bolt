@@ -70,9 +70,11 @@ namespace bolt {
         extern const std::string copy_kernels;
         extern const std::string generate_kernels;
         extern const std::string reduce_kernels;
+        extern const std::string reduce_by_key_kernels;
         extern const std::string scan_kernels;
         extern const std::string scan_by_key_kernels;
         extern const std::string sort_kernels;
+		extern const std::string sort_uint_kernels;
         extern const std::string sort_by_key_kernels;
         extern const std::string transform_kernels;
         extern const std::string transform_reduce_kernels;
@@ -123,6 +125,7 @@ namespace bolt {
                 const std::string compileOptions,
                 const control &c);
 
+
         /**********************************************************************
          * DEPRECATED
          * used in structs
@@ -134,6 +137,11 @@ namespace bolt {
                 const std::string& instantiationString, 
                 const std::string& userCode, 
                 const std::string& valueTypeName, 
+                const std::string& functorTypeName, 
+                const control& ctl );
+        
+		void constructAndCompileProgram( ::cl::Program *masterProgram, 
+                const std::string& userCode, 
                 const std::string& functorTypeName, 
                 const control& ctl );
 
@@ -343,5 +351,5 @@ namespace bolt {
 BOLT_CREATE_TYPENAME(int);
 BOLT_CREATE_TYPENAME(float);
 BOLT_CREATE_TYPENAME(double);
-
+BOLT_CREATE_TYPENAME(unsigned);
 #endif

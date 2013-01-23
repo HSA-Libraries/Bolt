@@ -28,7 +28,11 @@ message( STATUS "Doxygen_Version: " ${Doxygen_Version} )
 # message( STATUS "status: " ${fileStatus} )
 # message( STATUS "log: " ${fileLog} )
 
-set( ext.Doxygen_URL "http://ftp.stack.nl/pub/users/dimitri/doxygen-${Doxygen_Version}.windows.bin.zip" CACHE STRING "URL to download Doxygen from" )
+if( DEFINED ENV{DOXYGEN_URL} )
+    set( ext.Doxygen_URL "$ENV{DOXYGEN_URL}" CACHE STRING "URL to download Doxygen from" )
+else( )
+    set( ext.Doxygen_URL "http://ftp.stack.nl/pub/users/dimitri/doxygen-${Doxygen_Version}.windows.bin.zip" CACHE STRING "URL to download Doxygen from" )
+endif( )
 
 mark_as_advanced( ext.Doxygen_URL )
 

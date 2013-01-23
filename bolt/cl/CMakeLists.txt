@@ -77,6 +77,7 @@ set( clBolt.Runtime.Headers
         ${clBolt.Include.Dir}/inner_product.h 
         ${clBolt.Include.Dir}/iterator_traits.h 
         ${clBolt.Include.Dir}/reduce.h 
+	${clBolt.Include.Dir}/reduce_by_key.h 
         ${clBolt.Include.Dir}/scan.h 
         ${clBolt.Include.Dir}/scan_by_key.h 
         ${clBolt.Include.Dir}/sort.h 
@@ -99,6 +100,7 @@ set( clBolt.Runtime.Headers.Detail
         ${clBolt.Include.Dir}/detail/generate.inl
         ${clBolt.Include.Dir}/detail/inner_product.inl
         ${clBolt.Include.Dir}/detail/reduce.inl
+	${clBolt.Include.Dir}/detail/reduce_by_key.inl
         ${clBolt.Include.Dir}/detail/scan.inl
         ${clBolt.Include.Dir}/detail/scan_by_key.inl
         ${clBolt.Include.Dir}/detail/sort.inl
@@ -112,12 +114,14 @@ set( clBolt.Runtime.clFiles
         copy_kernels.cl 
         generate_kernels.cl 
         reduce_kernels.cl 
+	reduce_by_key_kernels.cl
         transform_kernels.cl 
         transform_reduce_kernels.cl
         transform_scan_kernels.cl
         scan_kernels.cl
         scan_by_key_kernels.cl
         sort_kernels.cl
+        sort_uint_kernels.cl
         sort_by_key_kernels.cl        
     )
 
@@ -285,14 +289,21 @@ install( FILES
 # Copy over our Boost static library dependencies
 install( FILES
     ${Boost_SYSTEM_LIBRARY_DEBUG} 
-    ${Boost_SYSTEM_LIBRARY_RELEASE}
     ${Boost_THREAD_LIBRARY_DEBUG} 
-    ${Boost_THREAD_LIBRARY_RELEASE}
     ${Boost_DATE_TIME_LIBRARY_DEBUG} 
-    ${Boost_DATE_TIME_LIBRARY_RELEASE}
     ${Boost_CHRONO_LIBRARY_DEBUG} 
+    DESTINATION ${LIB_DIR}
+    CONFIGURATIONS Debug
+    )
+
+# Copy over our Boost static library dependencies
+install( FILES
+    ${Boost_SYSTEM_LIBRARY_RELEASE}
+    ${Boost_THREAD_LIBRARY_RELEASE}
+    ${Boost_DATE_TIME_LIBRARY_RELEASE}
     ${Boost_CHRONO_LIBRARY_RELEASE}
     DESTINATION ${LIB_DIR}
+    CONFIGURATIONS Release
     )
 
 # CPack configuration; include the executable into the package

@@ -34,9 +34,9 @@ namespace bolt {
         /*! \addtogroup sorting
         *   \ingroup algorithms
         *   An Algorithm for sorting the given InputIterator. 
-        *   It is capable of sorting the arithmetic data types, or the user-defined data types. For common code between the host
-        *   and device, take a look at the ClCode and TypeName implementations. See the Bolt Tools for Split-Source 
-        *   for a detailed description. 
+        *   It is capable of sorting the arithmetic data types, or the user-defined data types. For common code between 
+        *   the hostand device, take a look at the ClCode and TypeName implementations.  
+        *   See the Bolt Tools for Split-Source for a detailed description. 
         */ 
 
         /*! \addtogroup sort
@@ -46,9 +46,9 @@ namespace bolt {
         *   show decent results across a range of values (a graph).
         */
 
-        /*! \p This version of sort returns the sorted result of all the elements in the \p RandomAccessIterator between the the first and last elements.  
-        * The routine arranges the elements in ascending order. \p RandomAccessIterator's value_type must provide operator < overload. 
-
+        /*! \p This version of sort returns the sorted result of all the elements in the \p RandomAccessIterator  
+        * between the the first and last elements. The routine arranges the elements in ascending order. 
+        * \p RandomAccessIterator's value_type must provide operator < overload. 
         *
         * The \p sort operation is analogus to the std::sort function.  See http://www.sgi.com/tech/stl/sort.html.
         *  \tparam RandomAccessIterator Is a model of http://www.sgi.com/tech/stl/RandomAccessIterator.html, \n

@@ -33,6 +33,13 @@ include_directories( ${BOLT_INCLUDE_DIR} ${PROJECT_BINARY_DIR}/include ${GTEST_I
 # Googletest requires this to be defined to 10 in order to compile on windows, because windows does not support variable length templates yet
 add_definitions( "-D_VARIADIC_MAX=10" )
 
+if(BUILD_TBB)
+    include_directories( ${TBB_INCLUDE_DIRS} )
+    add_definitions( "-DENABLE_TBB=true" )
+    #add_library( ${TBB_LIBRARY} STATIC IMPORTED )
+    set(TBB_LIBRARIES debug;${TBB_LIBRARY_DEBUG};${TBB_LIBRARY_MALLOC_DEBUG};optimized;${TBB_LIBRARY};${TBB_LIBRARY_MALLOC})
+endif()
+
 if( BUILD_ampBolt AND GTEST_FOUND )
 	add_subdirectory( AMP )
 endif( )

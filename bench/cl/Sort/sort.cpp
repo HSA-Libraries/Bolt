@@ -40,7 +40,7 @@ int main( int argc, char* argv[] )
     cl_uint userPlatform = 0;
     cl_uint userDevice = 0;
     size_t numLoops = 0;
-    unsigned int length = 0;
+    int length = 0;
     size_t algo = 1;
     bool print_clInfo = false;
 
@@ -53,9 +53,9 @@ int main( int argc, char* argv[] )
             ( "version,v",		"Print queryable version information from the Bolt AMP library" )
             ( "platform,p",     po::value< cl_uint >( &userPlatform )->default_value( 0 ),	"Specify the platform under test" )
             ( "device,d",       po::value< cl_uint >( &userDevice )->default_value( 0 ),	"Specify the device under test" )
-            ( "length,l",		po::value< unsigned int >( &length )->default_value( 4194304 ), "Specify the length of sort array" )
-            ( "profile,i",		po::value< size_t >( &numLoops )->default_value( 1 ), "Time and report Sort speed GB/s (default: profiling off)" )
-			( "algo,a",		    po::value< size_t >( &algo )->default_value( 1 ), "Algorithm used [1,2]  1:SORT_BOLT, 2:SORT_AMP_SHOC" )
+            ( "length,l",		po::value< int >( &length )->default_value( 2097152 ), "Specify the length of sort array" )
+            ( "profile,i",		po::value< size_t >( &numLoops )->default_value( 5 ), "Time and report Sort speed GB/s (default: profiling off)" )
+			( "algo,a",		    po::value< size_t >( &algo )->default_value( 1 ), "Algorithm used [1,2,3,4]  1:SORT_BOLT UINT, 2:SORT_BOLT INT, 3:SORT_AMP_SHOC, 4:STD SORT" )
             ;
 
         po::variables_map vm;
@@ -91,58 +91,79 @@ int main( int argc, char* argv[] )
         std::cout << _T( "Sort Benchmark error condition reported:" ) << std::endl << e.what() << std::endl;
         return 1;
     }
-	//CPU sort inits
-    std::vector< double > input( length );
-	std::vector< double > backup( length );
-	//BOLT sort inits
 
-	//AMP sort inits
-	std::vector<unsigned int> integers(length);
 
-	std::generate(backup.begin(), backup.end(),rand);
-	std::generate(integers.begin(), integers.end(),rand);
-	// Copy vector to the device.
-#if (_MSC_VER == 1700)
-    array<unsigned int> dIntegers(length, integers.begin());
-	array<unsigned int> dTmpIntegers(length);
-	array<unsigned int> dTmpHistograms(cNTiles * 16);
-#endif
+
     bolt::statTimer& myTimer = bolt::statTimer::getInstance( );
+    double sortGB;
     myTimer.Reserve( 1, numLoops );
 
     size_t sortId	= myTimer.getUniqueID( _T( "sort" ), 0 );
-
     if( algo == 1 )
     {
-		std::cout<<"Running CL_SORT\n";
+        std::vector< unsigned int > input( length );
+	    std::vector< unsigned int > backup( length );
+	    //BOLT sort inits
+	    std::generate(backup.begin(), backup.end(),rand);
+		std::cout<<"Running CL - UINT RADIX SORT\n";
 		for( unsigned i = 0; i < numLoops; ++i )
         {
-			//input = backup;
-			bolt::cl::device_vector< double > boltInput( backup.begin(), backup.end(), CL_MEM_USE_HOST_PTR);
+            input = backup;
+			bolt::cl::device_vector< unsigned int > boltInput( input.begin(), input.end(), CL_MEM_USE_HOST_PTR);
             myTimer.Start( sortId );
             bolt::cl::sort( boltInput.begin( ), boltInput.end( ));
-			//bolt::cl::sort( input.begin( ), input.end( ));
             myTimer.Stop( sortId );
         }
+        sortGB = ( input.size( ) * sizeof( unsigned int ) ) / (1024.0 * 1024.0 * 1024.0);
     }
     else if( algo == 2 )
     {
+        std::vector< int > input( length );
+	    std::vector< int > backup( length );
+	    //BOLT sort inits
+	    std::generate(backup.begin(), backup.end(),rand);
+		std::cout<<"Running CL INT SORT\n";
+		for( unsigned i = 0; i < numLoops; ++i )
+        {
+            input = backup;
+			bolt::cl::device_vector< int > boltInput( input.begin(), input.end(), CL_MEM_USE_HOST_PTR);
+            myTimer.Start( sortId );
+            bolt::cl::sort( boltInput.begin( ), boltInput.end( ));
+            myTimer.Stop( sortId );
+        }
+        sortGB = ( input.size( ) * sizeof( int ) ) / (1024.0 * 1024.0 * 1024.0);
+    }
+    else if( algo == 3 )
+    {
+        std::vector< unsigned int > input( length );
+	    std::vector< unsigned int > backup( length );
+	    std::generate(backup.begin(), backup.end(),rand);
+
 #if (_MSC_VER == 1700)
-		std::cout<<"Running AMP_SORT\n";
-		// Allocate space for temporary integers and histograms.
-		for(int run = 0; run < numLoops; ++ run) 
+		std::cout<<"Running UINT AMP_SORT\n";
+
+		for(int run = 0; run < numLoops; ++ run)
 		{
+		    // Allocate space for temporary integers and histograms.
+            input = backup;
+            array<unsigned int> dIntegers(length, input.begin());
+	        array<unsigned int> dTmpIntegers(length);
+	        array<unsigned int> dTmpHistograms(cNTiles * 16);
 			// Execute and time the kernel.
-			myTimer.Start( sortId );			
+			myTimer.Start( sortId );
 			Sort(dIntegers, dTmpIntegers, dTmpHistograms);
 			myTimer.Stop( sortId );
 		}
+        sortGB = ( input.size( ) * sizeof( unsigned int ) ) / (1024.0 * 1024.0 * 1024.0);
 #else 
 		std::cout<<"Visual Studio 2010 does not support C++ AMP\n";
 #endif 
     }
-    else if( algo == 3 )
+    else if( algo == 4 )
     {
+        std::vector< unsigned int > input( length );
+	    std::vector< unsigned int > backup( length );
+	    std::generate(backup.begin(), backup.end(),rand);
 		std::cout<<"Running STD_SORT\n";
 		for( unsigned i = 0; i < numLoops; ++i )
         {
@@ -151,6 +172,7 @@ int main( int argc, char* argv[] )
             std::sort( input.begin( ), input.end( ));
             myTimer.Stop( sortId );
         }
+        sortGB = ( input.size( ) * sizeof( unsigned int ) ) / (1024.0 * 1024.0 * 1024.0);
     }
 	else
 	{
@@ -160,7 +182,7 @@ int main( int argc, char* argv[] )
     //	Remove all timings that are outside of 2 stddev (keep 65% of samples); we ignore outliers to get a more consistent result
     size_t pruned = myTimer.pruneOutliers( 1.0 );
     double sortTime = myTimer.getAverageTime( sortId );
-    double sortGB = ( input.size( ) * sizeof( int ) ) / (1024.0 * 1024.0 * 1024.0);
+    //double sortGB = ( input.size( ) * sizeof( int ) ) / (1024.0 * 1024.0 * 1024.0);
 
     bolt::tout << std::left;
     bolt::tout << std::setw( colWidth ) << _T( "Sort profile: " ) << _T( "[" ) << numLoops-pruned << _T( "] samples" ) << std::endl;
