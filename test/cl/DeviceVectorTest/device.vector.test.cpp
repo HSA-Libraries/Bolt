@@ -942,6 +942,16 @@ TEST( Vector, DataRoutineView )
     EXPECT_EQ( arr[50], av[50] );
 }
 
+TEST( Vector, ArrayViewBegin )
+{
+    std::vector<int> arr( 100, 99 );
+
+    bolt::amp::device_vector< int, concurrency::array_view > av( arr );
+
+    bolt::amp::device_vector< int, concurrency::array_view >::iterator avIT = av.begin( );
+
+    EXPECT_EQ( arr[0], *avIT );
+}
 
 int _tmain(int argc, _TCHAR* argv[])
 {

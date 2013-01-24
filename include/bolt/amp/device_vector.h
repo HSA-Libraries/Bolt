@@ -117,21 +117,10 @@ public:
         *   \note This get function could be implemented in the iterator, but the reference object is usually a temporary rvalue, so
         *   this location seems less intrusive to the design of the vector class.
         */
-        const container_type& getBuffer( ) const
+        arrayview_type getBuffer( ) const
         {
-            return *(m_Container.m_devMemory);
-        }
-
-        /*! \brief A get accessor function to return the encapsulated device buffer for non-const objects.
-        *   This member function allows access to the Buffer object, which can be retrieved through a reference or an iterator.
-        *   This is necessary to allow library functions to get the encapsulated C++ AMP array object as a pass by reference argument 
-        *   to the C++ AMP parallel_for_each constructs.
-        *   \note This get function can be implemented in the iterator, but the reference object is usually a temporary rvalue, so
-        *   this location seems less intrusive to the design of the vector class.
-        */
-        container_type& getBuffer( )
-        {
-            return *(m_Container.m_devMemory);
+            concurrency::extent<1> ext( static_cast< int >( m_Container.m_Size ) );
+            return m_Container.m_devMemory->view_as( ext );
         }
 
         /*! \brief A get accessor function to return the encapsulated device_vector.
@@ -368,19 +357,19 @@ public:
 
     /*! \brief Typedef to create the non-constant iterator
     */
-    typedef iterator_base< device_vector< value_type > > iterator;
+    typedef iterator_base< device_vector< value_type, CONT > > iterator;
 
     /*! \brief Typedef to create the constant iterator
     */
-    typedef iterator_base< const device_vector< value_type > > const_iterator;
+    typedef iterator_base< const device_vector< value_type, CONT > > const_iterator;
 
     /*! \brief Typedef to create the non-constant reverse iterator
     */
-    typedef reverse_iterator_base< device_vector< value_type > > reverse_iterator;
+    typedef reverse_iterator_base< device_vector< value_type, CONT > > reverse_iterator;
 
     /*! \brief Typedef to create the constant reverse iterator
     */
-    typedef reverse_iterator_base< const device_vector< value_type > > const_reverse_iterator;
+    typedef reverse_iterator_base< const device_vector< value_type, CONT > > const_reverse_iterator;
 
 
     /*! \brief A default constructor that creates an empty device_vector
@@ -434,16 +423,35 @@ public:
     *   \note Ignore the enable_if<> parameter; it prevents this constructor from being called with integral types.
     */
     template< typename InputIterator >
-    device_vector( const InputIterator begin, size_type newSize, bool init = true, control& ctl = control::getDefault( ),
-        typename std::enable_if< !std::is_integral< InputIterator >::value >::type* = 0 ): m_Size( newSize )
+    device_vector( const InputIterator begin, size_type newSize, control& ctl = control::getDefault( ),
+                typename std::enable_if< !std::is_integral< InputIterator >::value && 
+                                    std::is_same< array_type, container_type >::value>::type* = 0 ) : m_Size( newSize )
     {
         static_assert( std::is_same< array_type, container_type >::value,
             "This constructor is only valid for concurrency::array types.  concurrency::array_views should use a "
             "constructor that accepts containers" );
 
-        Concurrency::extent<1> ext( static_cast< int >( m_Size ) );
-
+        concurrency::extent<1> ext( static_cast< int >( m_Size ) );
         m_devMemory = new container_type( ext, begin, ctl.getAccelerator( ).default_view );
+    };
+
+    /*! \brief A constructor that creates a new device_vector using a range specified by the user.
+    *   \param begin An iterator pointing at the beginning of the range.
+    *   \param end An iterator pointing at the end of the range.
+    *   \param flags A bitfield that takes the OpenCL memory flags
+    *   to help specify where the device_vector allocates memory.
+    *   \param discard Boolean value to whether the container data will be read; basically used as a hint to indicate 
+    *   this is an output buffer
+    *   \param ctl A Bolt control class used to perform copy operations; a default is used if not supplied by the user.
+    *   \note Ignore the enable_if<> parameter; it prevents this constructor from being called with integral types.
+    */
+    template< typename InputIterator >
+    device_vector( const InputIterator begin, size_type newSize, bool discard = false, control& ctl = control::getDefault( ),
+                typename std::enable_if< !std::is_integral< InputIterator >::value && 
+                                    std::is_same< arrayview_type, container_type >::value>::type* = 0 ) : m_Size( newSize )
+    {
+        concurrency::extent<1> ext( static_cast< int >( m_Size ) );
+        m_devMemory = new container_type( ext, &begin[ 0 ] );
     };
 
     /*! \brief A constructor that creates a new device_vector using a range specified by the user.
@@ -468,14 +476,13 @@ public:
     /*! \brief A constructor that creates a new device_vector using a range specified by the user.
     *   \param begin An iterator pointing at the beginning of the range.
     *   \param end An iterator pointing at the end of the range.
-    *   \param flags A bitfield that takes the OpenCL memory flags
-    *   to help specify where the device_vector allocates memory.
     *   \param ctl A Bolt control class for copy operations; a default is used if not supplied by the user.
     *   \note Ignore the enable_if<> parameter; it prevents this constructor from being called with integral types.
     */
     template< typename InputIterator >
     device_vector( const InputIterator begin, const InputIterator end, control& ctl = control::getDefault( ),
-        typename std::enable_if< !std::is_integral< InputIterator >::value >::type* = 0 ) 
+        typename std::enable_if< !std::is_integral< InputIterator >::value && 
+                                    std::is_same< array_type, container_type >::value>::type* = 0 ) 
     {
         static_assert( std::is_same< array_type, container_type >::value,
             "This constructor is only valid for concurrency::array types.  concurrency::array_views should use a "
@@ -484,7 +491,26 @@ public:
         m_Size =  std::distance( begin, end );
 
         concurrency::extent<1> ext( static_cast< int >( m_Size ) );
+
         m_devMemory = new container_type( ext, begin, end, ctl.getAccelerator().default_view );
+    };
+
+    /*! \brief A constructor that creates a new device_vector using a range specified by the user.
+    *   \param begin An iterator pointing at the beginning of the range.
+    *   \param end An iterator pointing at the end of the range.
+    *   \param ctl A Bolt control class for copy operations; a default is used if not supplied by the user.
+    *   \note Ignore the enable_if<> parameter; it prevents this constructor from being called with integral types.
+    */
+    template< typename InputIterator >
+    device_vector( const InputIterator begin, const InputIterator end, bool discard = false, control& ctl = control::getDefault( ),
+        typename std::enable_if< !std::is_integral< InputIterator >::value && 
+                                    std::is_same< arrayview_type, container_type >::value>::type* = 0 ) 
+    {
+        m_Size =  std::distance( begin, end );
+
+        concurrency::extent<1> ext( static_cast< int >( m_Size ) );
+
+        m_devMemory = new container_type( ext, &begin[ 0 ] );
     };
 
     /*! \brief A constructor that creates a new device_vector using a pre-initialized buffer supplied by the user.
