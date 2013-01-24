@@ -930,29 +930,6 @@ TEST( Vector, DataRoutine )
     EXPECT_EQ( 0, pDa[50] );
 }
 
-TEST( Vector, DataRoutineView )
-{
-    std::vector<int> arr( 100, 99 );
-
-    bolt::amp::device_vector< int, concurrency::array_view > av( arr );
-
-    av[50] = 0;
-    av.data( );
-
-    EXPECT_EQ( arr[50], av[50] );
-}
-
-TEST( Vector, ArrayViewBegin )
-{
-    std::vector<int> arr( 100, 99 );
-
-    bolt::amp::device_vector< int, concurrency::array_view > av( arr );
-
-    bolt::amp::device_vector< int, concurrency::array_view >::iterator avIT = av.begin( );
-
-    EXPECT_EQ( arr[0], *avIT );
-}
-
 int _tmain(int argc, _TCHAR* argv[])
 {
 	::testing::InitGoogleTest( &argc, &argv[ 0 ] );

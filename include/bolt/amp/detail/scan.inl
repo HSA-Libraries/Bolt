@@ -316,6 +316,7 @@ aProfiler.stopTrial();
         scan_enqueue( ctl, dvInput.begin( ), dvInput.end( ), dvOutput.begin( ), init, binary_op, inclusive );
         std::cout << "Peeking in pick_iterator after scan_enqueue completed." << std::endl;
         PEEK_AT( dvOutput.begin()->getBuffer())
+
         // This should immediately map/unmap the buffer
         dvOutput.data( );
     }
