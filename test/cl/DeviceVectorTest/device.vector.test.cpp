@@ -911,7 +911,24 @@ TEST( Vector, ShrinkToFit)
 #endif
 }
 
+TEST( Vector, DataRoutine )
+{
+    std::vector<int>a( 100 );
 
+    //  Initialize data (could use constructor?)
+    std::fill( a.begin( ),a.end( ), 100 );
+
+    //  deep copy, all data is duplicated
+    bolt::BCKND::device_vector< int > da( a.begin( ),a.end( ) );
+
+    //  Change value in device memory
+    da[50] = 0;
+
+    //  Get host readable pointer to device memory
+    bolt::BCKND::device_vector< int >::pointer pDa = da.data();
+
+    EXPECT_EQ( 0, pDa[50] );
+}
 
 int _tmain(int argc, _TCHAR* argv[])
 {

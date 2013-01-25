@@ -309,13 +309,14 @@ aProfiler.stopTrial();
     {
 
         // Map the input iterator to a device_vector
-        device_vector< iType > dvInput( first, last, ctl );
-        device_vector< oType > dvOutput( result, numElements, false, ctl );
+        device_vector< iType, concurrency::array_view > dvInput( first, last, false, ctl );
+        device_vector< oType, concurrency::array_view > dvOutput( result, numElements, true, ctl );
 
         //Now call the actual cl algorithm
         scan_enqueue( ctl, dvInput.begin( ), dvInput.end( ), dvOutput.begin( ), init, binary_op, inclusive );
         std::cout << "Peeking in pick_iterator after scan_enqueue completed." << std::endl;
         PEEK_AT( dvOutput.begin()->getBuffer())
+
         // This should immediately map/unmap the buffer
         dvOutput.data( );
     }
@@ -462,8 +463,11 @@ size_t k0_stepNum, k1_stepNum, k2_stepNum;
     //concurrency::array_view< const oType > hostOutput( numElements, (oType *)&result[0] );
 
 	//	Wrap our output data in an array_view, and discard input data so it is not transferred to device
-	concurrency::array< iType >&  input = first->getBuffer(); //( numElements, av );
-    concurrency::array< oType >& output = result->getBuffer(); //( sizeInputBuff, av );
+    //  Use of the auto keyword here is OK, because AMP is restricted by definition to vs11 or above
+    //  The auto keyword is useful here in a polymorphic sense, because it does not care if the container
+    //  is wrapping an array or an array_view
+	auto&  input = first->getBuffer(); //( numElements, av );
+    auto& output = result->getBuffer(); //( sizeInputBuff, av );
     input.get_extent().size();
 	//hostInput.copy_to( input.section( concurrency::extent< 1 >( numElements ) ) );
 
@@ -484,8 +488,8 @@ aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(iType) + 1*sizeScanBuf
     std::cout << "Kernel 0 Launching w/ " << sizeInputBuff << " threads for " << numElements << " elements. " << std::endl;
 	concurrency::parallel_for_each( av, tileK0, //output.extent.tile< kernel0_WgSize >(),
         [
-            &output,
-            &input,
+            output,
+            input,
             init,
             numElements,
             &preSumArray,
@@ -765,7 +769,7 @@ aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(oType) + 1*sizeScanBuf
     std::cout << "Kernel 2 Launching w/ " << sizeInputBuff << " threads for " << numElements << " elements. " << std::endl;
     concurrency::parallel_for_each( av, tileK2,
         [
-            &output,
+            output,
             &postSumArray,
             numElements,
             binary_op,

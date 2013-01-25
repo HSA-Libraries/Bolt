@@ -169,6 +169,8 @@ public:
 
     // getters:
     Concurrency::accelerator& getAccelerator( ) { return m_accelerator; };
+    const Concurrency::accelerator& getAccelerator( ) const { return m_accelerator; };
+
     e_UseHostMode getUseHost() const { return m_useHost; };
     e_RunMode getForceRunMode() const { return m_forceRunMode; };
     unsigned getDebug() const { return m_debug;};
