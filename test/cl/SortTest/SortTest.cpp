@@ -36,6 +36,57 @@
 //  Below are helper routines to compare the results of two arrays for googletest
 //  They return an assertion object that googletest knows how to track
 //This is a compare routine for naked pointers.
+
+// UDD which contains four doubles
+BOLT_FUNCTOR(uddtD4,
+struct uddtD4
+{
+    double a;
+    double b;
+    double c;
+    double d;
+
+    bool operator==(const uddtD4& rhs) const
+    {
+        bool equal = true;
+        double th = 0.0000000001;
+        if (rhs.a < th && rhs.a > -th)
+            equal = ( (1.0*a - rhs.a) < th && (1.0*a - rhs.a) > -th) ? equal : false;
+        else
+            equal = ( (1.0*a - rhs.a)/rhs.a < th && (1.0*a - rhs.a)/rhs.a > -th) ? equal : false;
+        if (rhs.b < th && rhs.b > -th)
+            equal = ( (1.0*b - rhs.b) < th && (1.0*b - rhs.b) > -th) ? equal : false;
+        else
+            equal = ( (1.0*b - rhs.b)/rhs.b < th && (1.0*b - rhs.b)/rhs.b > -th) ? equal : false;
+        if (rhs.c < th && rhs.c > -th)
+            equal = ( (1.0*c - rhs.c) < th && (1.0*c - rhs.c) > -th) ? equal : false;
+        else
+            equal = ( (1.0*c - rhs.c)/rhs.c < th && (1.0*c - rhs.c)/rhs.c > -th) ? equal : false;
+        if (rhs.d < th && rhs.d > -th)
+            equal = ( (1.0*d - rhs.d) < th && (1.0*d - rhs.d) > -th) ? equal : false;
+        else
+            equal = ( (1.0*d - rhs.d)/rhs.d < th && (1.0*d - rhs.d)/rhs.d > -th) ? equal : false;
+        return equal;
+    }
+};
+);
+
+// Functor for UDD. Adds all four double elements and returns true if lhs_sum > rhs_sum
+BOLT_FUNCTOR(AddD4,
+struct AddD4
+{
+    bool operator()(const uddtD4 &lhs, const uddtD4 &rhs) const
+    {
+
+        if( ( lhs.a + lhs.b + lhs.c + lhs.d ) > ( rhs.a + rhs.b + rhs.c + rhs.d) )
+            return true;
+        return false;
+    };
+}; 
+);
+uddtD4 identityAddD4 = { 1.0, 1.0, 1.0, 1.0 };
+uddtD4 initialAddD4  = { 1.00001, 1.000003, 1.0000005, 1.00000007 };
+
 template< typename T >
 ::testing::AssertionResult cmpArrays( const T ref, const T calc, size_t N )
 {
@@ -131,6 +182,62 @@ protected:
 
 TYPED_TEST_CASE_P( SortArrayTest );
 
+TEST(SortUDD, AddDouble4)
+{
+    //setup containers
+    int length = (1<<8);
+    bolt::cl::device_vector< uddtD4 > input(  length, initialAddD4,  CL_MEM_READ_WRITE, true  );
+    std::vector< uddtD4 > refInput( length, initialAddD4 );
+
+    // call sort
+    AddD4 ad4gt;
+    bolt::cl::sort(input.begin(),    input.end(), ad4gt);
+    std::sort( refInput.begin(), refInput.end(), ad4gt );
+
+    // compare results
+    cmpArrays(refInput, input);
+}
+
+TEST(SortUDD, MultiCoreAddDouble4)
+{
+    //setup containers
+    int length = (1<<8);
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.forceRunMode(bolt::cl::control::MultiCoreCpu);
+    bolt::cl::device_vector< uddtD4 > input(  length, initialAddD4, CL_MEM_READ_WRITE, true  );
+    std::vector< uddtD4 > refInput( length, initialAddD4 );
+    
+    // call sort
+    AddD4 ad4gt;
+    bolt::cl::sort(input.begin(), input.end(), ad4gt);
+    std::sort( refInput.begin(), refInput.end(), ad4gt );
+
+    // compare results
+    cmpArrays(refInput, input);
+}
+
+TEST(SortUDD, GPUAddDouble4)
+{
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
+    std::vector< cl::Device > devices = myContext.getInfo< CL_CONTEXT_DEVICES >();
+    ::cl::CommandQueue myQueue( myContext, devices[ 0 ] );
+    bolt::cl::control c_gpu( myQueue );  // construct control structure from the queue.
+    //setup containers
+    int length = (1<<8);
+    bolt::cl::device_vector< uddtD4 > input(  length, initialAddD4,  CL_MEM_READ_WRITE, true  );
+    std::vector< uddtD4 > refInput( length, initialAddD4 );
+
+    // call sort
+    AddD4 ad4gt;
+    bolt::cl::sort(c_gpu, input.begin(), input.end(), ad4gt );
+    std::sort( refInput.begin(), refInput.end(), ad4gt );
+
+    // compare results
+    cmpArrays(refInput, input);
+}
+
 TYPED_TEST_P( SortArrayTest, Normal )
 {
     typedef std::array< ArrayType, ArraySize > ArrayCont;
@@ -153,9 +260,9 @@ TYPED_TEST_P( SortArrayTest, Normal )
 TYPED_TEST_P( SortArrayTest, MultiCoreNormal )
 {
     typedef std::array< ArrayType, ArraySize > ArrayCont;
-	::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
-	bolt::cl::control ctl = bolt::cl::control::getDefault( );
-	ctl.forceRunMode(bolt::cl::control::MultiCoreCpu);
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.forceRunMode(bolt::cl::control::MultiCoreCpu);
     //  Calling the actual functions under test
     std::sort( stdInput.begin( ), stdInput.end( ));
     bolt::cl::sort( ctl, boltInput.begin( ), boltInput.end( ) );
@@ -208,7 +315,7 @@ TYPED_TEST_P( SortArrayTest, CPU_DeviceNormal )
     typedef std::array< ArrayType, ArraySize > ArrayCont;
 
     MyOclContext oclcpu = initOcl(CL_DEVICE_TYPE_CPU, 0);
-	bolt::cl::control c_cpu(oclcpu._queue);  // construct control structure from the queue.
+    bolt::cl::control c_cpu(oclcpu._queue);  // construct control structure from the queue.
 
     //  Calling the actual functions under test
     std::sort( stdInput.begin( ), stdInput.end( ));
@@ -280,7 +387,7 @@ TYPED_TEST_P( SortArrayTest, CPU_DeviceGreaterFunction )
 {
     typedef std::array< ArrayType, ArraySize > ArrayCont;
     MyOclContext oclcpu = initOcl(CL_DEVICE_TYPE_CPU, 0);
-	bolt::cl::control c_cpu(oclcpu._queue);  // construct control structure from the queue.
+    bolt::cl::control c_cpu(oclcpu._queue);  // construct control structure from the queue.
 
     //  Calling the actual functions under test
     std::sort( stdInput.begin( ), stdInput.end( ), std::greater< ArrayType >( ));
@@ -349,7 +456,7 @@ TYPED_TEST_P( SortArrayTest, CPU_DeviceLessFunction )
 {
     typedef std::array< ArrayType, ArraySize > ArrayCont;
     MyOclContext oclcpu = initOcl(CL_DEVICE_TYPE_CPU, 0);
-	bolt::cl::control c_cpu(oclcpu._queue);  // construct control structure from the queue.
+    bolt::cl::control c_cpu(oclcpu._queue);  // construct control structure from the queue.
 
     //  Calling the actual functions under test
     std::sort( stdInput.begin( ), stdInput.end( ), std::less< ArrayType >( ));
@@ -1022,7 +1129,7 @@ int main(int argc, char* argv[])
     }
     std::cout << "Test Completed. Press Enter to exit.\n .... ";
     getchar();
-	return retVal;
+    return retVal;
 }
 #else
 //BOLT Header files
@@ -1271,7 +1378,7 @@ void BasicSortTestOfLength(size_t length)
     std::vector<T> stdInput(length);
     std::vector<T> boltInput(length);
     std::vector<T> stdBackup(length);
-	std::generate (stdInput.begin(), stdInput.end(),rand);
+    std::generate (stdInput.begin(), stdInput.end(),rand);
     
     //Ascending Sort 
     size_t i;
@@ -1285,7 +1392,7 @@ void BasicSortTestOfLength(size_t length)
         //printf ("\n%d",stdInput[i]);
     }
     stdBackup = stdInput;
-	//printf("\n");
+    //printf("\n");
     
     bolt::cl::sort(boltInput.begin(), boltInput.end()/*, bolt::cl::greater<T>()*/);
     std::sort(stdInput.begin(), stdInput.end()/*, bolt::cl::greater<T>()*/);
@@ -1324,7 +1431,7 @@ void BasicSortTestOfLength(size_t length)
     {
         boltInput[i]= (T)(stdInput[i]);
     }
-	//printf("\n");
+    //printf("\n");
 
     bolt::cl::sort(boltInput.begin(), boltInput.end(), bolt::cl::greater<T>());
     std::sort(stdInput.begin(), stdInput.end(), bolt::cl::greater<T>());
@@ -1480,8 +1587,8 @@ void UDDSortTestWithBoltFunctorOfLengthWithDeviceVector(size_t length)
 void TestWithBoltControl(int length)
 {
 
-	MyOclContext ocl = initOcl(CL_DEVICE_TYPE_CPU, 0);
-	bolt::cl::control c(ocl._queue);  // construct control structure from the queue.
+    MyOclContext ocl = initOcl(CL_DEVICE_TYPE_CPU, 0);
+    bolt::cl::control c(ocl._queue);  // construct control structure from the queue.
     //c.debug(bolt::cl::control::debug::Compile + bolt::cl::control::debug::SaveCompilerTemps);
     typedef MyFunctor<int> myfunctor;
     typedef MyType<int> mytype;
@@ -1536,7 +1643,7 @@ int main(int argc, char* argv[])
 
     //UDDSortTestOfLengthWithDeviceVector<int>(256);
     BasicSortTestOfLength<int>(257/*2097152/*131072/*16777216/*33554432/*atoi(argv[1])*/);
-	BasicSortTestOfLength<int>(4096);
+    BasicSortTestOfLength<int>(4096);
     BasicSortTestOfLength<int>(2097159);
     BasicSortTestOfLength<int>(111);
     BasicSortTestOfLength<int>(64);
@@ -1544,21 +1651,21 @@ int main(int argc, char* argv[])
     BasicSortTestOfLength<int>(31);
 
     BasicSortTestOfLength<unsigned int>(257/*2097152/*131072/*16777216/*33554432/*atoi(argv[1])*/);
-	BasicSortTestOfLength<unsigned int>(4096);
+    BasicSortTestOfLength<unsigned int>(4096);
     BasicSortTestOfLength<unsigned int>(2097159);
     BasicSortTestOfLength<unsigned int>(111);
     BasicSortTestOfLength<unsigned int>(65);
     BasicSortTestOfLength<unsigned int>(63);
     BasicSortTestOfLength<unsigned int>(31);
 #if 0
-	std::vector<int> input(1024);
-	std::generate(input.begin(), input.end(), rand);
-	bolt::cl::sort( input.begin(), input.end(), bolt::cl::greater<int>());
+    std::vector<int> input(1024);
+    std::generate(input.begin(), input.end(), rand);
+    bolt::cl::sort( input.begin(), input.end(), bolt::cl::greater<int>());
 
-	int a[10] = {2, 9, 3, 7, 5, 6, 3, 8, 3, 4};
-	bolt::cl::sort( a, a+10, bolt::cl::greater<int>());
+    int a[10] = {2, 9, 3, 7, 5, 6, 3, 8, 3, 4};
+    bolt::cl::sort( a, a+10, bolt::cl::greater<int>());
     //Test the non Power Of 2 Buffer size 
-	//The following two commented codes does not run. It will throw and cl::Error exception
+    //The following two commented codes does not run. It will throw and cl::Error exception
     //BasicSortTestOfLengthWithDeviceVector<int>(254);
     //BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<int>(254); 
     UserDefinedFunctorSortTestOfLength<int>(254);
@@ -1618,7 +1725,7 @@ int main(int argc, char* argv[])
     BasicSortTestOfLengthWithDeviceVector<int>(16);   
     BasicSortTestOfLengthWithDeviceVector<int>(32);   
     BasicSortTestOfLengthWithDeviceVector<int>(64);   
-	BasicSortTestOfLengthWithDeviceVector<int>(128);   
+    BasicSortTestOfLengthWithDeviceVector<int>(128);   
     BasicSortTestOfLengthWithDeviceVector<int>(256);   
     BasicSortTestOfLengthWithDeviceVector<int>(512);    
     BasicSortTestOfLengthWithDeviceVector<int>(1024);    
@@ -1628,7 +1735,7 @@ int main(int argc, char* argv[])
     BasicSortTestOfLengthWithDeviceVector<float>(16);   
     BasicSortTestOfLengthWithDeviceVector<float>(32);   
     BasicSortTestOfLengthWithDeviceVector<float>(64);   
-	BasicSortTestOfLengthWithDeviceVector<float>(128);   
+    BasicSortTestOfLengthWithDeviceVector<float>(128);   
     BasicSortTestOfLengthWithDeviceVector<float>(256);
     BasicSortTestOfLengthWithDeviceVector<float>(512);
     BasicSortTestOfLengthWithDeviceVector<float>(1024);
@@ -1639,7 +1746,7 @@ int main(int argc, char* argv[])
     BasicSortTestOfLengthWithDeviceVector<double>(16);   
     BasicSortTestOfLengthWithDeviceVector<double>(32);   
     BasicSortTestOfLengthWithDeviceVector<double>(64);   
-	BasicSortTestOfLengthWithDeviceVector<double>(128);   
+    BasicSortTestOfLengthWithDeviceVector<double>(128);   
     BasicSortTestOfLengthWithDeviceVector<double>(256);
     BasicSortTestOfLengthWithDeviceVector<double>(512);
     BasicSortTestOfLengthWithDeviceVector<double>(1024);
@@ -1800,8 +1907,8 @@ int main(int argc, char* argv[])
 #endif 
 
     std::cout << "Test Completed" << std::endl; 
-	return 0;
+    return 0;
     getchar();
-	return 0;
+    return 0;
 }
 #endif
