@@ -17,7 +17,6 @@
 
 
 #include <bolt/cl/pair.h>
-//#include <bolt/cl/detail/swap.h> //bah!
 
 namespace bolt
 {
@@ -90,16 +89,6 @@ namespace bolt
         {
           return !(x < y);
         } // end operator>=()
-
-        //todo: Add swap for this
-        //We don't have this thing?!
-        //template <typename T1, typename T2>
-        //  inline __host__ __device__
-        //    void swap(pair<T1,T2> &x, pair<T1,T2> &y)
-        //{
-        //  return x.swap(y);
-        //} // end swap()
-
 
         template <typename T1, typename T2>
         pair<T1,T2> make_pair(T1 x, T2 y)
@@ -188,7 +177,6 @@ namespace bolt
             return detail::pair_get<N, pair<T1,T2> >()(p);
 
         } // end get()
-
     } //end of cl
 } // end bolt
 

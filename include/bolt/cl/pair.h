@@ -42,11 +42,11 @@ namespace bolt
 template <typename T1, typename T2>
   struct pair
 {
-  /*! \p first_type is the type of \p pair's first object type.
+  /*! \p first_type is \p pair's first object type.
    */
   typedef T1 first_type;
 
-  /*! \p second_type is the type of \p pair's second object type.
+  /*! \p second_type is \p pair's second object type.
    */
   typedef T2 second_type;
 
@@ -95,11 +95,6 @@ template <typename T1, typename T2>
   template <typename U1, typename U2>
   pair(const std::pair<U1,U2> &p);
 
-  /*! \p swap swaps the elements of two <tt>pair</tt>s.
-   *  
-   *  \param p The other <tt>pair</tt> with which to swap.
-   */
-  void swap(pair &p);
 }; // end pair
 
 
@@ -181,16 +176,8 @@ template <typename T1, typename T2>
     bool operator>=(const pair<T1,T2> &x, const pair<T1,T2> &y);
 
 
-/*! \p swap swaps the contents of two <tt>pair</tt>s.
- *
- *  \param x The first \p pair to swap.
- *  \param y The second \p pair to swap.
- */
-template <typename T1, typename T2>
-    void swap(pair<T1,T2> &x, pair<T1,T2> &y);
 
-
-/*! This convenience function creates a \p pair from two objects.
+/*! This function creates a \p pair from two objects.
  *
  *  \param x The first object to copy from.
  *  \param y The second object to copy from.
@@ -222,47 +209,15 @@ template<int N, typename T> struct tuple_element;
 template<typename Pair> struct tuple_size;
 
 
-/*! This convenience function returns a reference to either the first or
- *  second member of a \p pair.
- *
- *  \param p The \p pair of interest.
- *  \return \c p.first or \c p.second, depending on the template
- *          parameter.
- *
- *  \tparam N This parameter selects the member of interest.
- */
-// XXX comment out these prototypes as a WAR to a problem on MSVC 2005
-//template<unsigned int N, typename T1, typename T2>
-//  inline __host__ __device__
-//    typename tuple_element<N, pair<T1,T2> >::type &
-//      get(pair<T1,T2> &p);
-
-
-/*! This convenience function returns a const reference to either the
- *  first or second member of a \p pair.
- *
- *  \param p The \p pair of interest.
- *  \return \c p.first or \c p.second, depending on the template
- *          parameter.
- *
- *  \tparam i This parameter selects the member of interest.
- */
-// XXX comment out these prototypes as a WAR to a problem on MSVC 2005
-//template<int N, typename T1, typename T2>
-//  inline __host__ __device__
-//    const typename tuple_element<N, pair<T1,T2> >::type &
-//      get(const pair<T1,T2> &p);
 
 /*! \} // pair
  */
 
-/*! \} // utility
+/*! \} // Miscellaneous
  */
-    }
-} // end thrust
+    } //end cl
+} // end bolt
 
 #include <bolt/cl/detail/pair.inl>
-
-
 
 #endif

@@ -35,237 +35,202 @@
 /// Pair Manipulation Test
 ///////////////////////////////////////////
 
+template <typename T>
+class ConstructPair : public ::testing::Test {
+    public:
+         bolt::cl::pair<T,T>x,y;    
 
-void pairManipulationTests()
+    ConstructPair()
+    {
+         x.first  = T(1);
+         x.second = T(2);
+         y = x;
+    }
+
+    public:
+    void DoPair(std::pair<T,T> stdx)
+    {
+        x = stdx;
+        y = stdx;
+    }
+
+};
+
+
+template <typename T>
+class ValuePair : public ::testing::Test
 {
+    public:
+         bolt::cl::pair<T,T>x,y;    
+    ValuePair()
+    {
+            x.first  = T(1);
+            y.second = T(2);
+    }
 
-    bolt::cl::pair<int,int> x,y;
+    public:
 
-    // test operator ==
-    x.first = x.second = y.first = y.second = 0;
-    EXPECT_EQ(true, x == y);
-    EXPECT_EQ(true, y == x);
+    bolt::cl::pair<T,T> ValueMakePair(T value1, T value2)
+    {
+        x.first = value1;
+        x.second = value2;
+        return bolt::cl::make_pair<T,T>(value1, value2);
+    }
 
-    // test individual value manipulation
-    x.first  = int(1);
-    y.second = int(2);
-    EXPECT_EQ((int)1, x.first);
-    EXPECT_EQ((int)2, y.second);
 
-    // test copy constructor
+};
+
+template <typename T>
+class PairOperators : public ::testing::Test 
+{
+    public:
+         bolt::cl::pair<T,T>x,y;    
+    PairOperators()
+    {
+        x.first = T(10);
+        x.second = T(20);
+        y.first = T(10);
+        y.second = T(20);
+                
+    }
+    public:
+    void MakeXLess()
+    {
+        x.first = T(1);
+        x.second = T(2);
+        y.first = T(10);
+        y.second = T(20);
+
+    }
+
+    void MakeYLess()
+    {
+        x.first = T(10);
+        x.second = T(20);
+        y.first = T(1);
+        y.second = T(2);
+
+    }
+
+    void MakeXYEqual()
+    {
+        x.first = T(10);
+        x.second = T(10);
+        y.first = T(10);
+        y.second = T(10);
+
+    }
+
+};
+
+
+typedef ::testing::Types<int, float, double> AllTypes;
+//typedef ::testing::Types <<int, float>, <float,int>, <int, double>> ComboTypes;
+TYPED_TEST_CASE(ValuePair, AllTypes);
+TYPED_TEST_CASE(ConstructPair, AllTypes);
+TYPED_TEST_CASE(PairOperators, AllTypes);
+
+TYPED_TEST(ValuePair, IntegerIntegerPair)
+{
+    
+    
+    //Value test
+    EXPECT_EQ(1, this->x.first);
+    EXPECT_EQ(2, this->y.second);
+
+    // == op
+    EXPECT_EQ(false, this->y.second == this->x.first);
+
+    //!= op
+    EXPECT_EQ(true, this->y.second != this->x.first);
+
+    EXPECT_EQ(this->x, ValueMakePair(10,20));
+
+
+}
+TYPED_TEST(ConstructPair, ConstructPair)
+{
+    // Inits
+    EXPECT_EQ(this->x.first,  this->y.first);
+    EXPECT_EQ(this->x.second, this->y.second);
+
+    //Test with std constructors
     typedef bolt::cl::pair<int,int> P;
+
     P p1;
     P p2(p1);
     EXPECT_EQ(p1.first,  p2.first);
     EXPECT_EQ(p1.second, p2.second);
 
-    // test copy from std::pair constructor
     std::pair<int,int> sp(p1.first, p1.second);
     EXPECT_EQ(p1.first,  sp.first);
     EXPECT_EQ(p1.second, sp.second);
 
-    // test initialization
-    P p3 = p2;
-    EXPECT_EQ(p2.first,  p3.first);
-    EXPECT_EQ(p2.second, p3.second);
-
-    // test initialization from std::pair
-    P p4 = sp;
-    EXPECT_EQ(sp.first,  p4.first);
-    EXPECT_EQ(sp.second, p4.second);
-
-    // test copy from pair
-    p4.first  = 2;
-    p4.second = 3;
-
-    P p5;
-    p5 = p4;
-    EXPECT_EQ(p4.first,  p5.first);
-    EXPECT_EQ(p4.second, p5.second);
-    // test copy from std::pair
-    sp.first  =4;
-    sp.second =5;
-
-
-    P p6;
-    p6 = sp;
-    EXPECT_EQ(sp.first,  p6.first);
-    EXPECT_EQ(sp.second, p6.second);
-
-
-    // test initialization from make_pair
-    P p7 = bolt::cl::make_pair( 6, 7);
-    EXPECT_EQ( 6, p7.first);
-    EXPECT_EQ( 7, p7.second);
-
-
-    // test copy from make_pair
-    p7 = bolt::cl::make_pair( 8, 9);
-    EXPECT_EQ( 8, p7.first);
-    EXPECT_EQ( 9, p7.second);
-
-    std::cout<<"Pair manipulation completed"<<std::endl;
-
+    sp.first = 10;
+    sp.second = 20;
+    DoPair(sp);
+    EXPECT_EQ(this->x.first,  sp.first );
+    EXPECT_EQ(this->y.second, sp.second);
+    
 }
 
-///////////////////////////////////////////////
-// Pair Comparison
-///////////////////////////////////////////////
-
-void pairComparisonTests()
+TYPED_TEST(PairOperators, OperatorTests)
 {
-    bolt::cl::pair<int,int> x,y;
+    // < >
+    EXPECT_EQ(false, this->x < this->y);
+    EXPECT_EQ(false, this->y < this->x);
 
+    
+    EXPECT_EQ(false, this->x < this->y);
+    EXPECT_EQ(false, this->y < this->x);
+    
+    
+    MakeXLess();
+    //std::cout<<(this->x<this->y)<<" Here"<<std::endl;
+    EXPECT_EQ(true,  this->x < this->y);
+    EXPECT_EQ(false, this->y < this->x);
+    
+    MakeYLess();
+    //std::cout<<(this->x<this->y)<<" Here"<<std::endl;
+    EXPECT_EQ(true,  this->x > this->y);
+    EXPECT_EQ(false, this->y > this->x);
+    
+    
+    EXPECT_EQ(true, this->x != this->y);
+    EXPECT_EQ(true, this->y != this->x);
 
-    // test operator ==
-    x.first = x.second = y.first = y.second = int(0);
-    EXPECT_EQ(true, x == y);
-    EXPECT_EQ(true, y == x);
+    // <=
+    MakeXYEqual();
+    EXPECT_EQ(true, this->x <= this->y);
+    EXPECT_EQ(true, this->y <= this->x);
 
+    MakeYLess();
+    EXPECT_EQ(false, this->x <= y);
 
-    x.first = y.first = y.second = int(0);
-    x.second = int(1);
-    EXPECT_EQ(false, x == y);
-    EXPECT_EQ(false, y == x);
+    EXPECT_EQ(false, this-> x <= this->y);
+    EXPECT_EQ(true,  this-> y <= this->x);
 
+    // >=
+    MakeXYEqual();
+    EXPECT_EQ(true, this-> x >=  this->y);
+    EXPECT_EQ(true, this-> y >=  this->x);
 
-    // test operator<
-    x.first  = int(0); x.second = int(0);
-    y.first  = int(0); y.second = int(0);
-    EXPECT_EQ(false, x < y);
-    EXPECT_EQ(false, y < x);
+    MakeYLess();
+    EXPECT_EQ(true,  x >= y);
+    EXPECT_EQ(false, y >= x);
 
-
-    x.first  = int(0); x.second = int(1);
-    y.first  = int(2); y.second = int(3);
-    EXPECT_EQ(true,  x < y);
-    EXPECT_EQ(false, y < x);
-
-
-    x.first  = int(0); x.second = int(0);
-    y.first  = int(0); y.second = int(1);
-    EXPECT_EQ(true,  x < y);
-    EXPECT_EQ(false, y < x);
-
-
-    x.first  = int(0); x.second = int(1);
-    y.first  = int(0); y.second = int(2);
-    EXPECT_EQ(true,  x < y);
-    EXPECT_EQ(false, y < x);
-
-
-    // test operator!=
-    x.first = y.first = y.second = int(0);
-    x.second = int(1);
-    EXPECT_EQ(true, x != y);
-    EXPECT_EQ(true, y != x);
-
-
-    x.first = x.second = y.first = y.second = int(0);
-    EXPECT_EQ(false, x != y);
-    EXPECT_EQ(false, y != x);
-
-
-    // test operator>
-    x.first  = int(0); x.second = int(0);
-    y.first  = int(0); y.second = int(0);
-    EXPECT_EQ(false, x > y);
-    EXPECT_EQ(false, y > x);
-
-
-    x.first  = int(2); x.second = int(3);
-    y.first  = int(0); y.second = int(1);
-    EXPECT_EQ(true,  x > y);
-    EXPECT_EQ(false, y > x);
-
-
-    x.first  = int(0); x.second = int(1);
-    y.first  = int(0); y.second = int(0);
-    EXPECT_EQ(true,  x > y);
-    EXPECT_EQ(false, y > x);
-
-
-    x.first  = int(0); x.second = int(2);
-    y.first  = int(0); y.second = int(1);
-    EXPECT_EQ(true,  x > y);
-    EXPECT_EQ(false, y > x);
-
-
-
-
-    // test operator <=
-    x.first = x.second = y.first = y.second = int(0);
-    EXPECT_EQ(true, x <= y);
-    EXPECT_EQ(true, y <= x);
-
-
-    x.first = y.first = y.second = int(0);
-    x.second = int(1);
-    EXPECT_EQ(false, x <= y);
-
-
-    x.first  = int(0); x.second = int(1);
-    y.first  = int(2); y.second = int(3);
-    EXPECT_EQ(true,  x <= y);
-    EXPECT_EQ(false, y <= x);
-
-
-    x.first  = int(0); x.second = int(0);
-    y.first  = int(0); y.second = int(1);
-    EXPECT_EQ(true,  x <= y);
-    EXPECT_EQ(false, y <= x);
-
-
-    x.first  = int(0); x.second = int(1);
-    y.first  = int(0); y.second = int(2);
-    EXPECT_EQ(true,  x <= y);
-    EXPECT_EQ(false, y <= x);
-
-
-
-
-    // test operator >=
-    x.first = x.second = y.first = y.second = int(0);
-    EXPECT_EQ(true, x >= y);
+    MakeXLess();
+    EXPECT_EQ(false,  x >= y);
     EXPECT_EQ(true, y >= x);
 
-
-    x.first = x.second = y.first = int(0);
-    y.second = int(1);
-    EXPECT_EQ(false, x >= y);
-
-
-    x.first  = int(2); x.second = int(3);
-    y.first  = int(0); y.second = int(1);
-    EXPECT_EQ(true,  x >= y);
-    EXPECT_EQ(false, y >= x);
-
-
-    x.first  = int(0); x.second = int(1);
-    y.first  = int(0); y.second = int(0);
-    EXPECT_EQ(true,  x >= y);
-    EXPECT_EQ(false, y >= x);
-
-
-    x.first  = int(0); x.second = int(2);
-    y.first  = int(0); y.second = int(1);
-    EXPECT_EQ(true,  x >= y);
-    EXPECT_EQ(false, y >= x);
-
-    std::cout<<"Comparison test completed"<<std::endl;
-
-
 }
-
-
 
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-
-    pairComparisonTests();
-    pairManipulationTests();
     std::cout<<"All done"<<std::endl;
+    ::testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
     return 0;
 }
 
