@@ -140,7 +140,7 @@ namespace bolt {
                
 				cl_int l_Error= CL_SUCCESS;
 				::cl::Event fillEvent;				
-				ctl.commandQueue().enqueueFillBuffer(first->getBuffer(),value,0,sz*sizeof(T),NULL,&fillEvent);
+				ctl.commandQueue().enqueueFillBuffer(first.getBuffer(),value,0,sz*sizeof(T),NULL,&fillEvent);
 				/*enqueueFillBuffer API:
 				cl_int enqueueFillBuffer(const Buffer& buffer,
 				PatternType pattern,

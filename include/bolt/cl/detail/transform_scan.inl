@@ -503,8 +503,8 @@ transform_scan_enqueue(
     try
     {
     ldsSize  = static_cast< cl_uint >( kernel0_WgSize * sizeof( iType ) );
-    V_OPENCL( kernels[0].setArg( 0, result->getBuffer( ) ), "Error setArg kernels[ 0 ]" ); // Output buffer
-    V_OPENCL( kernels[0].setArg( 1, first->getBuffer( ) ),  "Error setArg kernels[ 0 ]" ); // Input buffer
+    V_OPENCL( kernels[0].setArg( 0, result.getBuffer( ) ), "Error setArg kernels[ 0 ]" ); // Output buffer
+    V_OPENCL( kernels[0].setArg( 1, first.getBuffer( ) ),  "Error setArg kernels[ 0 ]" ); // Input buffer
     V_OPENCL( kernels[0].setArg( 2, init_T ),               "Error setArg kernels[ 0 ]" ); // Initial value exclusive
     V_OPENCL( kernels[0].setArg( 3, numElements ),          "Error setArg kernels[ 0 ]" ); // Size of scratch buffer
     V_OPENCL( kernels[0].setArg( 4, ldsSize, NULL ),        "Error setArg kernels[ 0 ]" ); // Scratch buffer
@@ -555,7 +555,7 @@ transform_scan_enqueue(
     /**********************************************************************************
      *  Kernel 2
      *********************************************************************************/
-    V_OPENCL( kernels[2].setArg( 0, result->getBuffer()),   "Error setArg kernels[ 2 ]" ); // Output buffer
+    V_OPENCL( kernels[2].setArg( 0, result.getBuffer( )),   "Error setArg kernels[ 2 ]" ); // Output buffer
     V_OPENCL( kernels[2].setArg( 1, *postSumArray ),        "Error setArg kernels[ 2 ]" ); // Input buffer
     V_OPENCL( kernels[2].setArg( 2, numElements ),          "Error setArg kernels[ 2 ]" ); // Size of scratch buffer
     V_OPENCL( kernels[2].setArg( 3, *binaryBuffer ),        "Error setArg kernels[ 2 ]" ); // User provided functor

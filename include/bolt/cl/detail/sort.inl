@@ -254,7 +254,7 @@ namespace bolt {
                     }
                     unsigned int numStages,stage,passOfStage;
 
-                    ::cl::Buffer A = first->getBuffer( );
+                    ::cl::Buffer A = first.getBuffer( );
                     ALIGNED( 256 ) StrictWeakOrdering aligned_comp( comp );
                     // ::cl::Buffer userFunctor(ctl.context(), CL_MEM_USE_HOST_PTR, sizeof( aligned_comp ), &aligned_comp );   // Create buffer wrapper so we can access host parameters.
                     control::buffPointer userFunctor = ctl.acquireBuffer( sizeof( aligned_comp ), CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_comp );
@@ -331,7 +331,7 @@ namespace bolt {
                     size_t globalSize = totalWorkGroups * wgSize;
                     V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
                     
-                    ::cl::Buffer& in = first->getBuffer( );
+                    const ::cl::Buffer& in = first.getBuffer( );
                     // ::cl::Buffer out(ctl.context(), CL_MEM_READ_WRITE, sizeof(T)*szElements);
                     control::buffPointer out = ctl.acquireBuffer( sizeof(T)*szElements );
 
