@@ -1282,7 +1282,9 @@ namespace cl
     };
 
     //  This string represents the device side definition of the constant_iterator template
-    static std::string deviceVectorIterator = STRINGIFY_CODE( 
+    static std::string deviceVectorIteratorTemplate = STRINGIFY_CODE( 
+        namespace bolt { \n
+        namespace cl { \n
         template< typename T > \n
         class device_vector \n
         { \n
@@ -1319,21 +1321,23 @@ namespace cl
                 global value_type* m_Ptr; \n
             }; \n
         }; \n
+    }; \n
+    }; \n
     );
-
-    BOLT_CREATE_TYPENAME( device_vector< int >::iterator );
-    BOLT_CREATE_CLCODE( device_vector< int >::iterator, deviceVectorIterator );
-
-    BOLT_CREATE_TYPENAME( device_vector< float >::iterator );
-    BOLT_CREATE_CLCODE( device_vector< float >::iterator, deviceVectorIterator );
-
-    BOLT_CREATE_TYPENAME( device_vector< double >::iterator );
-    BOLT_CREATE_CLCODE( device_vector< double >::iterator, deviceVectorIterator );
 
     //BOLT_TEMPLATE_REGISTER_NEW_TYPE( device_vector::iterator, int, float );
     //BOLT_TEMPLATE_REGISTER_NEW_TYPE( device_vector::iterator, int, double );
 
 }
 }
+
+BOLT_CREATE_TYPENAME( bolt::cl::device_vector< int >::iterator );
+BOLT_CREATE_CLCODE( bolt::cl::device_vector< int >::iterator, bolt::cl::deviceVectorIteratorTemplate );
+
+BOLT_CREATE_TYPENAME( bolt::cl::device_vector< float >::iterator );
+BOLT_CREATE_CLCODE( bolt::cl::device_vector< float >::iterator, bolt::cl::deviceVectorIteratorTemplate );
+
+BOLT_CREATE_TYPENAME( bolt::cl::device_vector< double >::iterator );
+BOLT_CREATE_CLCODE( bolt::cl::device_vector< double >::iterator, bolt::cl::deviceVectorIteratorTemplate );
 
 #endif
