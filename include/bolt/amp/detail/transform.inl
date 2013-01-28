@@ -21,6 +21,7 @@
 
 #if !defined( AMP_TRANSFORM_INL )
 #define AMP_TRANSFORM_INL
+#define WAVEFRONT_SIZE 64
 
 #ifdef BOLT_ENABLE_PROFILING
 #include "bolt/AsyncProfiler.h"
@@ -193,16 +194,20 @@ namespace bolt
                 // Use host pointers memory since these arrays are only read once - no benefit to copying.
 
                 // Map the input iterator to a device_vector
-                device_vector< iType > dvInput( first1, last1, ctl );
-                device_vector< iType > dvInput2( first2, sz, true, ctl );
+                //device_vector< iType > dvInput( first1, last1, ctl );
+                device_vector< iType, concurrency::array_view > dvInput( first1, last1, false, ctl );
+
+                //device_vector< iType > dvInput2( first2, sz, true, ctl );
+                device_vector< iType, concurrency::array_view > dvInput2( first2, sz, false, ctl );
 
                 // Map the output iterator to a device_vector
-                device_vector< oType > dvOutput( result, sz, false, ctl );
+                //device_vector< oType > dvOutput( result, sz, false, ctl );
+                device_vector< oType, concurrency::array_view > dvOutput( result, sz, true, ctl );
 
                 transform_enqueue( ctl, dvInput.begin( ), dvInput.end( ), dvInput2.begin( ), dvOutput.begin( ), f  );
 
                 // This should immediately map/unmap the buffer
-                //dvOutput.data( );
+                dvOutput.data( );
             }
 
             // This template is called by the non-detail versions of transform, it already assumes random access iterators
@@ -246,14 +251,17 @@ namespace bolt
                 // Use host pointers memory since these arrays are only read once - no benefit to copying.
 
                 // Map the input iterator to a device_vector
-                device_vector< iType > dvInput( first, last, ctl );
-                // Map the output iterator to a device_vector
-                device_vector< oType > dvOutput( result, sz, false, ctl );
+                //device_vector< iType > dvInput( first, last, ctl );
+                device_vector< iType, concurrency::array_view > dvInput( first, last, false, ctl );
 
-                transform_unary_enqueue( ctl, dvInput.begin( ), dvInput.end( ), dvOutput.begin( ), f  );
+                // Map the output iterator to a device_vector
+                //device_vector< oType > dvOutput( result, sz, false, ctl );
+                device_vector< oType, concurrency::array_view > dvOutput( result, sz, true, ctl );
+
+                transform_unary_enqueue( ctl, dvInput.begin( ), dvInput.end( ), dvOutput.begin( ), f );
 
                 // This should immediately map/unmap the buffer
-                //dvOutput.data( );
+                dvOutput.data( );
             }
 
             // This template is called by the non-detail versions of transform, it already assumes random access iterators
@@ -283,15 +291,28 @@ namespace bolt
                typedef std::iterator_traits< DVInputIterator >::value_type iType;
                typedef std::iterator_traits< DVOutputIterator >::value_type oType;
 
-               int sizet =  std::distance( first1, last1 );
+               const unsigned int arraySize =  static_cast< unsigned int >( std::distance( first1, last1 ) );
+               unsigned int wavefrontMultiple = arraySize;
+               const unsigned int lowerBits = ( arraySize & ( WAVEFRONT_SIZE -1 ) );
+
+               if( lowerBits )
+               {
+                   wavefrontMultiple &= ~lowerBits;
+                   wavefrontMultiple += WAVEFRONT_SIZE;
+               }
+
                concurrency::array_view<iType,1> inputV1 (first1->getBuffer());
                concurrency::array_view<iType,1> inputV2 (first2->getBuffer());
                concurrency::array_view<oType,1> resultV(result->getBuffer());
+               concurrency::extent< 1 > inputExtent( wavefrontMultiple );
 
-               concurrency::parallel_for_each(ctl.getAccelerator().default_view, inputV1.extent, [=](concurrency::index<1> idx) mutable restrict(amp)
-			   {
-                     resultV[idx[0]] = f(inputV1[idx[0]], inputV2[idx[0]]);
-			   });
+               concurrency::parallel_for_each(ctl.getAccelerator().default_view, inputExtent, [=](concurrency::index<1> idx) mutable restrict(amp)
+               {
+                   unsigned int globalId = idx[0];
+                   if( globalId >= wavefrontMultiple )  
+                       return;
+                   resultV[idx[0]] = f(inputV1[globalId], inputV2[globalId]);
+               });
 
             };
 
@@ -306,15 +327,27 @@ namespace bolt
                typedef std::iterator_traits< DVInputIterator >::value_type iType;
                typedef std::iterator_traits< DVOutputIterator >::value_type oType;
 
-               int sizet =  std::distance( first, last );
+               const unsigned int arraySize =  static_cast< unsigned int >( std::distance( first, last ) );
+               unsigned int wavefrontMultiple = arraySize;
+               const unsigned int lowerBits = ( arraySize & ( WAVEFRONT_SIZE -1 ) );
+
+               if( lowerBits )
+               {
+                   wavefrontMultiple &= ~lowerBits;
+                   wavefrontMultiple += WAVEFRONT_SIZE;
+               }
+
                concurrency::array_view<iType,1> inputV (first->getBuffer());
                concurrency::array_view<oType,1> resultV(result->getBuffer());
+               concurrency::extent< 1 > inputExtent( wavefrontMultiple );
 
-               concurrency::parallel_for_each(ctl.getAccelerator().default_view, inputV.extent, [=](concurrency::index<1> idx) mutable restrict(amp)
-			   {
-                     resultV[idx[0]] = f(inputV[idx[0]]);
+               concurrency::parallel_for_each(ctl.getAccelerator().default_view, inputExtent, [=](concurrency::index<1> idx) mutable restrict(amp)
+               {
+                   unsigned int globalId = idx[0];
+                   if( globalId >= wavefrontMultiple )  
+                       return;
+                   resultV[globalId] = f(inputV[globalId]);
                });
-               //std::cout<<resultV[0]<<" My answer"<<std::endl;
                
             }
 

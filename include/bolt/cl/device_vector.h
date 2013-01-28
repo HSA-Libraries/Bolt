@@ -562,6 +562,7 @@ namespace bolt
                 {
                     m_devMemory = ::cl::Buffer( l_Context, m_Flags, m_Size * sizeof( value_type ) );
 
+                    //  TODO:  This copy doesn't work because it uses the concept of a 'default' accelerator
                     ::cl::copy( begin, end, m_devMemory );
                 }
             };

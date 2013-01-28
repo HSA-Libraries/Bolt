@@ -16,40 +16,22 @@
 ############################################################################                                                                                     
 
 # List the names of common files to compile across all platforms
-# We want to use the same test files for both the CL and AMP backends  
-set( ampBolt.Test.Device.Vector.Source
-    ${BOLT_AMP_TEST_DIR}/common/stdafx.cpp 
-    ${BOLT_AMP_TEST_DIR}/device_vector/device.vector.test.cpp )
-    
-set( ampBolt.Test.Device.Vector.Headers
-    ${BOLT_CL_TEST_DIR}/common/stdafx.h 
-    ${BOLT_CL_TEST_DIR}/common/targetver.h 
-    ${BOLT_CL_TEST_DIR}/common/test_common.h 
-    ${BOLT_INCLUDE_DIR}/bolt/amp/device_vector.h )
 
-set( ampBolt.Test.Device.Vector.Files ${ampBolt.Test.Device.Vector.Source} ${ampBolt.Test.Device.Vector.Headers} )
+set( clBolt.Test.Pair.Source stdafx.cpp PairTest.cpp ${BOLT_CL_TEST_DIR}/common/myocl.cpp) 
+set( clBolt.Test.Pair.Headers stdafx.h ${BOLT_CL_TEST_DIR}/common/myocl.h targetver.h ${BOLT_INCLUDE_DIR}/bolt/cl/pair.h )
 
+set( clBolt.Test.Pair.Files ${clBolt.Test.Pair.Source} ${clBolt.Test.Pair.Headers} )
 
-# Set project specific compile and link options
-# For amp namespace code use AMP_TESTS=1
-if( MSVC )
-set( CMAKE_CXX_FLAGS "-DAMP_TESTS=1 ${CMAKE_CXX_FLAGS}" )
-                set( CMAKE_C_FLAGS "-DAMP_TESTS=1 ${CMAKE_C_FLAGS}" )
-endif()
+add_executable( clBolt.Test.Pair ${clBolt.Test.Pair.Files} )
+target_link_libraries( clBolt.Test.Pair clBolt.Runtime ${OPENCL_LIBRARIES} ${GTEST_LIBRARIES} ${Boost_LIBRARIES} )
 
-add_executable( ampBolt.Test.Device.Vector ${ampBolt.Test.Device.Vector.Files} )
-target_link_libraries( ampBolt.Test.Device.Vector
-  ampBolt.Runtime
-  ${GTEST_LIBRARIES}
-  ${Boost_LIBRARIES} )
+set_target_properties( clBolt.Test.Pair PROPERTIES VERSION ${Bolt_VERSION} )
+set_target_properties( clBolt.Test.Pair PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
 
-set_target_properties( ampBolt.Test.Device.Vector PROPERTIES VERSION ${Bolt_VERSION} )
-set_target_properties( ampBolt.Test.Device.Vector PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
-
-set_property( TARGET ampBolt.Test.Device.Vector PROPERTY FOLDER "Test/AMP")
-
+set_property( TARGET clBolt.Test.Pair PROPERTY FOLDER "Test/OpenCL")
+		
 # CPack configuration; include the executable into the package
-install( TARGETS ampBolt.Test.Device.Vector
+install( TARGETS clBolt.Test.Pair
 	RUNTIME DESTINATION ${BIN_DIR}
 	LIBRARY DESTINATION ${LIB_DIR}
 	ARCHIVE DESTINATION ${LIB_DIR}/import

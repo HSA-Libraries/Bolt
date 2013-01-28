@@ -22,6 +22,7 @@ set( ampBolt.Test.Transform.Headers stdafx.h targetver.h ${BOLT_INCLUDE_DIR}/bol
 set( ampBolt.Test.Transform.Files ${ampBolt.Test.Transform.Source} ${ampBolt.Test.Transform.Headers} )
 
 add_executable( ampBolt.Test.Transform ${ampBolt.Test.Transform.Files} )
+target_link_libraries( ampBolt.Test.Transform ${GTEST_LIBRARIES} ampBolt.Runtime )
 
 set_target_properties( ampBolt.Test.Transform PROPERTIES VERSION ${Bolt_VERSION} )
 set_target_properties( ampBolt.Test.Transform PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
