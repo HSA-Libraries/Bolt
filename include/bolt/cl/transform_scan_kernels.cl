@@ -18,17 +18,21 @@
 /******************************************************************************
  *  Kernel 0
  *****************************************************************************/
+
 //__attribute__((reqd_work_group_size(KERNEL0WORKGROUPSIZE,1,1)))
-template< typename iType, typename oType, typename UnaryFunction, typename BinaryFunction >
+template< typename iNakedType, typename iIterType, typename oNakedType, typename oIterType, typename UnaryFunction,
+        typename BinaryFunction >
 __kernel void perBlockTransformScan(
-                global oType* output,
-                global iType* input,
-                oType identity,
+                global oNakedType* output_ptr,
+                oIterType output_iter,
+                global iNakedType* input_ptr,
+                iIterType input_iter,
+                oNakedType identity,
                 const uint vecSize,
-                local oType* lds,
+                local oNakedType* lds,
                 global UnaryFunction* unaryOp,
                 global BinaryFunction* binaryOp,
-                global oType* scanBuffer,
+                global oNakedType* scanBuffer,
                 int exclusive) // do exclusive scan ?
 {
     size_t gloId = get_global_id( 0 );
@@ -37,17 +41,20 @@ __kernel void perBlockTransformScan(
     size_t wgSize = get_local_size( 0 );
     //printf("gid=%i, lTid=%i, gTid=%i\n", groId, locId, gloId);
 
-    //  Abort threads that are passed the end of the input vector
+    //  Abort threads that are passed the end of the input_ptr vector
     if (gloId >= vecSize) return; // on SI this doesn't mess-up barriers
 
+    output_iter.init( output_ptr );
+    input_iter.init( input_ptr );
+
     // if exclusive, load gloId=0 w/ identity, and all others shifted-1
-    oType val;
+    oNakedType val;
     if (exclusive)
     {
         if (gloId > 0)
         { // thread>0
-            iType inVal = input[gloId-1];
-            val = (oType) (*unaryOp)(inVal);
+            iNakedType inVal = input_iter[gloId-1];
+            val = (oNakedType) (*unaryOp)(inVal);
             lds[ locId ] = val;
         }
         else
@@ -58,19 +65,19 @@ __kernel void perBlockTransformScan(
     }
     else
     {
-        iType inVal = input[gloId];
-        val = (oType) (*unaryOp)(inVal);
+        iNakedType inVal = input_iter[gloId];
+        val = (oNakedType) (*unaryOp)(inVal);
         lds[ locId ] = val;
     }
 
     //  Computes a scan within a workgroup
-    oType sum = val;
+    oNakedType sum = val;
     for( size_t offset = 1; offset < wgSize; offset *= 2 )
     {
         barrier( CLK_LOCAL_MEM_FENCE );
         if (locId >= offset)
         {
-            oType y = lds[ locId - offset ];
+            oNakedType y = lds[ locId - offset ];
             sum = (*binaryOp)( sum, y );
         }
         barrier( CLK_LOCAL_MEM_FENCE );
@@ -79,7 +86,7 @@ __kernel void perBlockTransformScan(
 
     //  Each work item writes out its calculated scan result, relative to the beginning
     //  of each work group
-    output[ gloId ] = sum;
+    output_iter[ gloId ] = sum;
     barrier( CLK_LOCAL_MEM_FENCE ); // needed for large data types
     if (locId == 0)
     {
@@ -188,7 +195,8 @@ __kernel void intraBlockInclusiveScan(
 //__attribute__((reqd_work_group_size(KERNEL2WORKGROUPSIZE,1,1)))
 template< typename Type, typename BinaryFunction >
 __kernel void perBlockAddition( 
-                global Type* output,
+                global Type* output_ptr,
+                oIterType output_iter,
                 global Type* postSumArray,
                 const uint vecSize,
                 global BinaryFunction* binaryOp
@@ -198,17 +206,19 @@ __kernel void perBlockAddition(
     size_t groId = get_group_id( 0 );
     size_t locId = get_local_id( 0 );
 
-    //  Abort threads that are passed the end of the input vector
+    //  Abort threads that are passed the end of the input_ptr vector
     if( gloId >= vecSize )
         return;
-        
-    Type scanResult = output[ gloId ];
+
+    output_iter.init( output_ptr );
+
+    Type scanResult = output_iter[ gloId ];
 
     // accumulate prefix
     if (groId > 0)
     {
         Type postBlockSum = postSumArray[ groId-1 ];
         Type newResult = (*binaryOp)( scanResult, postBlockSum );
-        output[ gloId ] = newResult;
+        output_iter[ gloId ] = newResult;
     }
 }
