@@ -286,8 +286,8 @@ namespace bolt {
                     }
                     unsigned int numStages,stage,passOfStage;
 
-                    ::cl::Buffer Keys = keys_first->getBuffer( );
-                    ::cl::Buffer Values = values_first->getBuffer( );
+                    ::cl::Buffer Keys = keys_first.getBuffer( );
+                    ::cl::Buffer Values = values_first.getBuffer( );
                     ::cl::Buffer userFunctor(ctl.context(), CL_MEM_USE_HOST_PTR, sizeof(comp), (void*)&comp );   // Create buffer wrapper so we can access host parameters.
 
                     ::cl::Kernel k = masterKernel;  // hopefully create a copy of the kernel. FIXME, doesn't work.
@@ -355,8 +355,8 @@ namespace bolt {
                     size_t globalSize = totalWorkGroups * wgSize;
                     V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
 
-                    ::cl::Buffer in = keys_first->getBuffer( );
-                    ::cl::Buffer inValues = values_first->getBuffer( );
+                    ::cl::Buffer in = keys_first.getBuffer( );
+                    ::cl::Buffer inValues = values_first.getBuffer( );
                     ::cl::Buffer out(ctl.context(), CL_MEM_READ_WRITE, sizeof(T_keys)*szElements);
                     ::cl::Buffer outValues(ctl.context(), CL_MEM_READ_WRITE, sizeof(T_values)*szElements);
                     ::cl::Buffer userFunctor(ctl.context(), CL_MEM_USE_HOST_PTR, sizeof(comp), &comp );   // Create buffer wrapper so we can access host parameters.

@@ -210,7 +210,7 @@ namespace bolt {
 
                 cl_uint szElements = static_cast< cl_uint >( std::distance( first, last ) );
 
-                V_OPENCL( masterKernel.setArg(0, first->getBuffer( ) ), "Error setting kernel argument" );
+                V_OPENCL( masterKernel.setArg(0, first.getBuffer( ) ), "Error setting kernel argument" );
                 V_OPENCL( masterKernel.setArg(1, szElements), "Error setting kernel argument" );
                 V_OPENCL( masterKernel.setArg(2, *userFunctor), "Error setting kernel argument" );
                 V_OPENCL( masterKernel.setArg(3, *result), "Error setting kernel argument" );

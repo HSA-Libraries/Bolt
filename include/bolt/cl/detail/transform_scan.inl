@@ -183,14 +183,16 @@ public:
             "template __attribute__((mangled_name(" + name(0) + "Instantiated)))\n"
             "__attribute__((reqd_work_group_size(KERNEL0WORKGROUPSIZE,1,1)))\n"
             "__kernel void " + name(0) + "(\n"
-            "global " + typeNames[1] + "* output,\n"
-            "global " + typeNames[0] + "* input,\n"
-            ""        + typeNames[1] + " identity,\n"
+            "global " + typeNames[2] + "* output_ptr,\n"
+            ""        + typeNames[3] + " output_iter,\n"
+            "global " + typeNames[0] + "* input_ptr,\n"
+            ""        + typeNames[1] + " input_iter,\n"
+            ""        + typeNames[2] + " identity,\n"
             "const uint vecSize,\n"
-            "local "  + typeNames[1] + "* lds,\n"
-            "global " + typeNames[2] + "* unaryOp,\n"
-            "global " + typeNames[3] + "* binaryOp,\n"
-            "global " + typeNames[1] + "* scanBuffer,\n"
+            "local "  + typeNames[2] + "* lds,\n"
+            "global " + typeNames[4] + "* unaryOp,\n"
+            "global " + typeNames[5] + "* binaryOp,\n"
+            "global " + typeNames[2] + "* scanBuffer,\n"
             "int exclusive\n"
             ");\n\n"
     
@@ -198,23 +200,24 @@ public:
             "template __attribute__((mangled_name(" + name(1) + "Instantiated)))\n"
             "__attribute__((reqd_work_group_size(KERNEL1WORKGROUPSIZE,1,1)))\n"
             "__kernel void " + name(1) + "(\n"
-            "global " + typeNames[1] + "* postSumArray,\n"
-            "global " + typeNames[1] + "* preSumArray,\n"
-            ""        + typeNames[1] + " identity,\n"
+            "global " + typeNames[2] + "* postSumArray,\n"
+            "global " + typeNames[2] + "* preSumArray,\n"
+            ""        + typeNames[2] + " identity,\n"
             "const uint vecSize,\n"
-            "local "  + typeNames[1] + "* lds,\n"
+            "local "  + typeNames[2] + "* lds,\n"
             "const uint workPerThread,\n"
-            "global " + typeNames[3] + "* binaryOp\n"
+            "global " + typeNames[5] + "* binaryOp\n"
             ");\n\n"
     
             "// Dynamic specialization of generic template definition, using user supplied types\n"
             "template __attribute__((mangled_name(" + name(2) + "Instantiated)))\n"
             "__attribute__((reqd_work_group_size(KERNEL2WORKGROUPSIZE,1,1)))\n"
             "__kernel void " + name(2) + "(\n"
-            "global " + typeNames[1] + "* output,\n"
-            "global " + typeNames[1] + "* postSumArray,\n"
+            "global " + typeNames[2] + "* output_ptr,\n"
+            ""        + typeNames[3] + " output_iter,\n"
+            "global " + typeNames[2] + "* postSumArray,\n"
             "const uint vecSize,\n"
-            "global " + typeNames[3] + "* binaryOp\n"
+            "global " + typeNames[5] + "* binaryOp\n"
             ");\n\n";
     
         return templateSpecializationString;
@@ -263,7 +266,8 @@ transform_scan_detect_random_access(
     const BinaryFunction& binary_op,
     std::random_access_iterator_tag )
 {
-    return detail::transform_scan_pick_iterator( ctl, first, last, result, unary_op, init, inclusive, binary_op );
+    return detail::transform_scan_pick_iterator( ctl, first, last, result, unary_op, init, inclusive, binary_op,
+        std::iterator_traits< InputIterator >::iterator_category( ) );
 };
 
 /*! 
@@ -276,12 +280,7 @@ template<
     typename UnaryFunction,
     typename T,
     typename BinaryFunction >
-typename std::enable_if< 
-             !(std::is_base_of<typename device_vector<typename
-               std::iterator_traits<InputIterator>::value_type>::iterator,InputIterator>::value &&
-               std::is_base_of<typename device_vector<typename
-               std::iterator_traits<OutputIterator>::value_type>::iterator,OutputIterator>::value),
-         OutputIterator >::type
+OutputIterator
 transform_scan_pick_iterator(
     control &ctl,
     const InputIterator& first,
@@ -290,7 +289,8 @@ transform_scan_pick_iterator(
     const UnaryFunction& unary_op,
     const T& init,
     const bool& inclusive,
-    const BinaryFunction& binary_op )
+    const BinaryFunction& binary_op,
+    std::random_access_iterator_tag )
 {
     typedef typename std::iterator_traits< InputIterator >::value_type iType;
     typedef typename std::iterator_traits< OutputIterator >::value_type oType;
@@ -339,12 +339,7 @@ template<
     typename UnaryFunction,
     typename T,
     typename BinaryFunction >
-typename std::enable_if< 
-              (std::is_base_of<typename device_vector<typename
-               std::iterator_traits<DVInputIterator>::value_type>::iterator,DVInputIterator>::value &&
-               std::is_base_of<typename device_vector<typename
-               std::iterator_traits<DVOutputIterator>::value_type>::iterator,DVOutputIterator>::value),
-         DVOutputIterator >::type
+DVOutputIterator
 transform_scan_pick_iterator(
     control &ctl,
     const DVInputIterator& first,
@@ -353,7 +348,8 @@ transform_scan_pick_iterator(
     const UnaryFunction& unary_op,
     const T& init,
     const bool& inclusive,
-    const BinaryFunction& binary_op )
+    const BinaryFunction& binary_op,
+    bolt::cl::device_vector_tag )
 {
     typedef typename std::iterator_traits< DVInputIterator >::value_type iType;
     typedef typename std::iterator_traits< DVOutputIterator >::value_type oType;
@@ -412,7 +408,9 @@ transform_scan_enqueue(
     typedef std::iterator_traits< DVOutputIterator >::value_type oType;
     std::vector<std::string> typeNames;
     typeNames.push_back(TypeName< iType >::get( ));
+    typeNames.push_back(TypeName< DVInputIterator >::get( ));
     typeNames.push_back(TypeName< oType >::get( ));
+    typeNames.push_back(TypeName< DVOutputIterator >::get( ));
     typeNames.push_back(TypeName< UnaryFunction >::get());
     typeNames.push_back(TypeName< BinaryFunction >::get());
     
@@ -421,9 +419,14 @@ transform_scan_enqueue(
      *********************************************************************************/
     std::vector<std::string> typeDefinitions;
     typeDefinitions.push_back( ClCode< iType >::get() );
+    typeDefinitions.push_back( ClCode< DVInputIterator >::get() );
     if (TypeName< iType >::get() != TypeName< oType >::get())
     {
         typeDefinitions.push_back( ClCode< oType >::get() );
+    }
+    if (TypeName< DVInputIterator >::get() != TypeName< DVOutputIterator >::get())
+    {
+        typeDefinitions.push_back( ClCode< DVOutputIterator >::get() );
     }
     typeDefinitions.push_back( ClCode< UnaryFunction >::get() );
     typeDefinitions.push_back( ClCode< BinaryFunction >::get() );
@@ -503,8 +506,8 @@ transform_scan_enqueue(
     try
     {
     ldsSize  = static_cast< cl_uint >( kernel0_WgSize * sizeof( iType ) );
-    V_OPENCL( kernels[0].setArg( 0, result->getBuffer( ) ), "Error setArg kernels[ 0 ]" ); // Output buffer
-    V_OPENCL( kernels[0].setArg( 1, first->getBuffer( ) ),  "Error setArg kernels[ 0 ]" ); // Input buffer
+    V_OPENCL( kernels[0].setArg( 0, result.getBuffer( ) ), "Error setArg kernels[ 0 ]" ); // Output buffer
+    V_OPENCL( kernels[0].setArg( 1, first.getBuffer( ) ),  "Error setArg kernels[ 0 ]" ); // Input buffer
     V_OPENCL( kernels[0].setArg( 2, init_T ),               "Error setArg kernels[ 0 ]" ); // Initial value exclusive
     V_OPENCL( kernels[0].setArg( 3, numElements ),          "Error setArg kernels[ 0 ]" ); // Size of scratch buffer
     V_OPENCL( kernels[0].setArg( 4, ldsSize, NULL ),        "Error setArg kernels[ 0 ]" ); // Scratch buffer
@@ -555,7 +558,7 @@ transform_scan_enqueue(
     /**********************************************************************************
      *  Kernel 2
      *********************************************************************************/
-    V_OPENCL( kernels[2].setArg( 0, result->getBuffer()),   "Error setArg kernels[ 2 ]" ); // Output buffer
+    V_OPENCL( kernels[2].setArg( 0, result.getBuffer( )),   "Error setArg kernels[ 2 ]" ); // Output buffer
     V_OPENCL( kernels[2].setArg( 1, *postSumArray ),        "Error setArg kernels[ 2 ]" ); // Input buffer
     V_OPENCL( kernels[2].setArg( 2, numElements ),          "Error setArg kernels[ 2 ]" ); // Size of scratch buffer
     V_OPENCL( kernels[2].setArg( 3, *binaryBuffer ),        "Error setArg kernels[ 2 ]" ); // User provided functor

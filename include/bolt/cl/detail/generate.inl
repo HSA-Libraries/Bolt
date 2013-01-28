@@ -216,7 +216,7 @@ namespace bolt {
                 }
 
                 // set kernel arguments
-                k.setArg(0, first->getBuffer() );
+                k.setArg(0, first.getBuffer() );
                 k.setArg(1, sz );
                 k.setArg(2, *userGenerator);
 

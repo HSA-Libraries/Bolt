@@ -386,8 +386,8 @@ namespace bolt
                  *  Kernel 0
                  *********************************************************************************/
                 ldsSize  = static_cast< cl_uint >( ( kernel0_WgSize + ( kernel0_WgSize / 2 ) ) * sizeof( iType ) );
-                V_OPENCL( scanKernels[ 0 ].setArg( 0, result->getBuffer( ) ),   "Error setting argument for scanKernels[ 0 ]" ); // Output buffer
-                V_OPENCL( scanKernels[ 0 ].setArg( 1, first->getBuffer( ) ),    "Error setting argument for scanKernels[ 0 ]" ); // Input buffer
+                V_OPENCL( scanKernels[ 0 ].setArg( 0, result.getBuffer( ) ),   "Error setting argument for scanKernels[ 0 ]" ); // Output buffer
+                V_OPENCL( scanKernels[ 0 ].setArg( 1, first.getBuffer( ) ),    "Error setting argument for scanKernels[ 0 ]" ); // Input buffer
                 V_OPENCL( scanKernels[ 0 ].setArg( 2, init_T ),                 "Error setting argument for scanKernels[ 0 ]" ); // Initial value used for exclusive scan
                 V_OPENCL( scanKernels[ 0 ].setArg( 3, numElements ),            "Error setting argument for scanKernels[ 0 ]" ); // Size of scratch buffer
                 V_OPENCL( scanKernels[ 0 ].setArg( 4, ldsSize, NULL ),          "Error setting argument for scanKernels[ 0 ]" ); // Scratch buffer
@@ -473,7 +473,7 @@ namespace bolt
                  *  Kernel 2
                  *********************************************************************************/
                 //std::vector< ::cl::Event > perBlockEvent( 1 );
-                V_OPENCL( scanKernels[ 2 ].setArg( 0, result->getBuffer( ) ), "Error setting 0th argument for scanKernels[ 2 ]" );          // Output buffer
+                V_OPENCL( scanKernels[ 2 ].setArg( 0, result.getBuffer( ) ), "Error setting 0th argument for scanKernels[ 2 ]" );          // Output buffer
                 V_OPENCL( scanKernels[ 2 ].setArg( 1, *postSumArray ), "Error setting 1st argument for scanKernels[ 2 ]" );            // Input buffer
                 V_OPENCL( scanKernels[ 2 ].setArg( 2, numElements ), "Error setting 2nd argument for scanKernels[ 2 ]" );   // Size of scratch buffer
                 V_OPENCL( scanKernels[ 2 ].setArg( 3, *userFunctor ), "Error setting 3rd argument for scanKernels[ 2 ]" );           // User provided functor class

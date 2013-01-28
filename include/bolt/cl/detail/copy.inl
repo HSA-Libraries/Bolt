@@ -142,8 +142,8 @@ namespace bolt {
 
                 ::cl::Event copyEvent;
                 cl_int l_Error = ctl.commandQueue().enqueueCopyBuffer(
-                    first->getBuffer(),
-                    result->getBuffer(),
+                    first.getBuffer(),
+                    result.getBuffer(),
                     first->getIndex(),
                     result->getIndex(),
                     n*sizeof(iType),
