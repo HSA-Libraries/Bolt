@@ -21,6 +21,7 @@
 
 #if !defined( AMP_TRANSFORM_INL )
 #define AMP_TRANSFORM_INL
+#define WAVEFRONT_SIZE 64
 
 #ifdef BOLT_ENABLE_PROFILING
 #include "bolt/AsyncProfiler.h"
@@ -290,14 +291,27 @@ namespace bolt
                typedef std::iterator_traits< DVInputIterator >::value_type iType;
                typedef std::iterator_traits< DVOutputIterator >::value_type oType;
 
-               size_t sizet =  std::distance( first1, last1 );
+               const unsigned int arraySize =  static_cast< unsigned int >( std::distance( first1, last1 ) );
+               unsigned int wavefrontMultiple = arraySize;
+               const unsigned int lowerBits = ( arraySize & ( WAVEFRONT_SIZE -1 ) );
+
+               if( lowerBits )
+               {
+                   wavefrontMultiple &= ~lowerBits;
+                   wavefrontMultiple += WAVEFRONT_SIZE;
+               }
+
                concurrency::array_view<iType,1> inputV1 (first1->getBuffer());
                concurrency::array_view<iType,1> inputV2 (first2->getBuffer());
                concurrency::array_view<oType,1> resultV(result->getBuffer());
+               concurrency::extent< 1 > inputExtent( wavefrontMultiple );
 
-               concurrency::parallel_for_each(ctl.getAccelerator().default_view, inputV1.extent, [=](concurrency::index<1> idx) mutable restrict(amp)
+               concurrency::parallel_for_each(ctl.getAccelerator().default_view, inputExtent, [=](concurrency::index<1> idx) mutable restrict(amp)
                {
-                     resultV[idx[0]] = f(inputV1[idx[0]], inputV2[idx[0]]);
+                   unsigned int globalId = idx[0];
+                   if( globalId >= wavefrontMultiple )  
+                       return;
+                   resultV[idx[0]] = f(inputV1[globalId], inputV2[globalId]);
                });
 
             };
@@ -313,15 +327,27 @@ namespace bolt
                typedef std::iterator_traits< DVInputIterator >::value_type iType;
                typedef std::iterator_traits< DVOutputIterator >::value_type oType;
 
-               size_t sizet =  std::distance( first, last );
+               const unsigned int arraySize =  static_cast< unsigned int >( std::distance( first, last ) );
+               unsigned int wavefrontMultiple = arraySize;
+               const unsigned int lowerBits = ( arraySize & ( WAVEFRONT_SIZE -1 ) );
+
+               if( lowerBits )
+               {
+                   wavefrontMultiple &= ~lowerBits;
+                   wavefrontMultiple += WAVEFRONT_SIZE;
+               }
+
                concurrency::array_view<iType,1> inputV (first->getBuffer());
                concurrency::array_view<oType,1> resultV(result->getBuffer());
+               concurrency::extent< 1 > inputExtent( wavefrontMultiple );
 
-               concurrency::parallel_for_each(ctl.getAccelerator().default_view, inputV.extent, [=](concurrency::index<1> idx) mutable restrict(amp)
+               concurrency::parallel_for_each(ctl.getAccelerator().default_view, inputExtent, [=](concurrency::index<1> idx) mutable restrict(amp)
                {
-                     resultV[idx[0]] = f(inputV[idx[0]]);
+                   unsigned int globalId = idx[0];
+                   if( globalId >= wavefrontMultiple )  
+                       return;
+                   resultV[globalId] = f(inputV[globalId]);
                });
-               //std::cout<<resultV[0]<<" My answer"<<std::endl;
                
             }
 
