@@ -74,16 +74,19 @@ namespace bolt {
 
             // fill no support
             template<typename ForwardIterator, typename T>
-            void fill_detect_random_access( const bolt::cl::control &ctl, ForwardIterator first, ForwardIterator last, const T & value, const std::string &cl_code, std::forward_iterator_tag )
+            void fill_detect_random_access( const bolt::cl::control &ctl, ForwardIterator first, ForwardIterator last, 
+                const T & value, const std::string &cl_code, std::forward_iterator_tag )
             {
                 static_assert( false, "Bolt only supports random access iterator types" );
             }
 
             // fill random-access
             template<typename ForwardIterator, typename T>
-            void fill_detect_random_access( const bolt::cl::control &ctl, ForwardIterator first, ForwardIterator last, const T & value, const std::string &cl_code, std::random_access_iterator_tag )
+            void fill_detect_random_access( const bolt::cl::control &ctl, ForwardIterator first, ForwardIterator last, 
+                const T & value, const std::string &cl_code, std::random_access_iterator_tag )
             {
-                fill_pick_iterator(ctl, first, last, value, cl_code);
+                fill_pick_iterator(ctl, first, last, value, cl_code, 
+                    std::iterator_traits< ForwardIterator >::iterator_category( ) );
             }
 
 
@@ -96,8 +99,8 @@ namespace bolt {
              *  iterators.  This overload is called strictly for non-device_vector iterators
             */
             template<typename ForwardIterator, typename T>
-            typename std::enable_if< !(std::is_base_of<typename device_vector<typename std::iterator_traits<ForwardIterator>::value_type>::iterator, ForwardIterator>::value), void >::type
-            fill_pick_iterator(const bolt::cl::control &ctl,  const ForwardIterator &first, const ForwardIterator &last, const T & value, const std::string &user_code)
+            void fill_pick_iterator(const bolt::cl::control &ctl,  const ForwardIterator &first, 
+                const ForwardIterator &last, const T & value, const std::string &user_code, std::random_access_iterator_tag )
             {
                 typedef std::iterator_traits<ForwardIterator>::value_type Type;
 
@@ -117,13 +120,20 @@ namespace bolt {
             // This template is called by the non-detail versions of fill, it already assumes random access iterators
             // This is called strictly for iterators that are derived from device_vector< T >::iterator
             template<typename DVForwardIterator, typename T>
-            typename std::enable_if< (std::is_base_of<typename device_vector<typename std::iterator_traits<DVForwardIterator>::value_type>::iterator,DVForwardIterator>::value), void >::type
-            fill_pick_iterator(const bolt::cl::control &ctl,  const DVForwardIterator &first, const DVForwardIterator &last,  const T & value, const std::string& user_code)
+            void fill_pick_iterator(const bolt::cl::control &ctl,  const DVForwardIterator &first, 
+                const DVForwardIterator &last,  const T & value, const std::string& user_code, bolt::cl::device_vector_tag )
             {
-                fill_enqueue( ctl, first, last, value, user_code );          
-               
+                fill_enqueue( ctl, first, last, value, user_code );
             }
 
+            // This template is called by the non-detail versions of fill, it already assumes random access iterators
+            // This is called strictly for iterators that are derived from device_vector< T >::iterator
+            template<typename DVForwardIterator, typename T>
+            void fill_pick_iterator(const bolt::cl::control &ctl,  const DVForwardIterator &first, 
+                const DVForwardIterator &last,  const T & value, const std::string& user_code, bolt::cl::fancy_iterator_tag )
+            {
+                static_assert( false, "It is not possible to fill into fancy iterators. They are not mutable" );
+            }
 
             /*****************************************************************************
              * Fill Enqueue
@@ -137,20 +147,19 @@ namespace bolt {
                 cl_uint sz = static_cast< cl_uint >( std::distance( first, last ) );
                 if (sz < 1)
                     return;
-               
-				cl_int l_Error= CL_SUCCESS;
-				::cl::Event fillEvent;				
-				ctl.commandQueue().enqueueFillBuffer(first.getBuffer(),value,0,sz*sizeof(T),NULL,&fillEvent);
-				/*enqueueFillBuffer API:
-				cl_int enqueueFillBuffer(const Buffer& buffer,
-				PatternType pattern,
-				::size_t offset,
-				::size_t size,
-				const VECTOR_CLASS<Event>* events = NULL,
-				Event* event = NULL) const
-				*/
-				V_OPENCL( l_Error, "clEnqueueFillBuffer() failed" );
-				               
+
+                cl_int l_Error= CL_SUCCESS;
+                ::cl::Event fillEvent;
+                ctl.commandQueue().enqueueFillBuffer(first.getBuffer(),value,0,sz*sizeof(T),NULL,&fillEvent);
+                /*enqueueFillBuffer API:
+                cl_int enqueueFillBuffer(const Buffer& buffer,
+                PatternType pattern,
+                ::size_t offset,
+                ::size_t size,
+                const VECTOR_CLASS<Event>* events = NULL,
+                Event* event = NULL) const
+                */
+                V_OPENCL( l_Error, "clEnqueueFillBuffer() failed" );
                 bolt::cl::wait(ctl, fillEvent);
             }; // end fill_enqueue
 

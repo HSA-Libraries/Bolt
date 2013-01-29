@@ -34,7 +34,8 @@ namespace bolt {
             const std::string& user_code)
         {
             int n = std::distance( first, last );
-            return detail::copy_detect_random_access( ctl, first, n, result, user_code, std::iterator_traits< InputIterator >::iterator_category( ) );
+            return detail::copy_detect_random_access( ctl, first, n, result, user_code, 
+                std::iterator_traits< InputIterator >::iterator_category( ) );
         }
 
         // default control
@@ -43,7 +44,8 @@ namespace bolt {
             const std::string& user_code)
         {
             int n = (int) std::distance( first, last );
-            return detail::copy_detect_random_access( control::getDefault(), first, n, result, user_code, std::iterator_traits< InputIterator >::iterator_category( ) );
+            return detail::copy_detect_random_access( control::getDefault(), first, n, result, user_code, 
+                std::iterator_traits< InputIterator >::iterator_category( ) );
         }
 
         // default control
@@ -51,7 +53,8 @@ namespace bolt {
         OutputIterator copy_n(InputIterator first, Size n, OutputIterator result, 
             const std::string& user_code)
         {
-            return detail::copy_detect_random_access( control::getDefault(), first, n, result, user_code, std::iterator_traits< InputIterator >::iterator_category( ) );
+            return detail::copy_detect_random_access( control::getDefault(), first, n, result, user_code, 
+                std::iterator_traits< InputIterator >::iterator_category( ) );
         }
 
         // user control
@@ -59,7 +62,8 @@ namespace bolt {
         OutputIterator copy_n(const bolt::cl::control &ctl, InputIterator first, Size n, OutputIterator result, 
             const std::string& user_code)
         {
-            return detail::copy_detect_random_access( ctl, first, n, result, user_code, std::iterator_traits< InputIterator >::iterator_category( ) );
+            return detail::copy_detect_random_access( ctl, first, n, result, user_code, 
+                std::iterator_traits< InputIterator >::iterator_category( ) );
         }
 
 
@@ -86,7 +90,9 @@ namespace bolt {
             {
                 if (n > 0)
                 {
-                    copy_pick_iterator( ctl, first, n, result, user_code );
+                    copy_pick_iterator( ctl, first, n, result, user_code, 
+                        std::iterator_traits< InputIterator >::iterator_category( ),
+                        std::iterator_traits< InputIterator >::iterator_category( ) );
                 }
                 return (result+n);
             };
@@ -96,12 +102,9 @@ namespace bolt {
              *  iterators.  This overload is called strictly for non-device_vector iterators
             */
             template<typename InputIterator, typename Size, typename OutputIterator> 
-            typename std::enable_if< 
-                         !(std::is_base_of<typename device_vector<typename std::iterator_traits<InputIterator>::value_type>::iterator,InputIterator>::value &&
-                           std::is_base_of<typename device_vector<typename std::iterator_traits<OutputIterator>::value_type>::iterator,OutputIterator>::value),
-                     void >::type
-            copy_pick_iterator(const bolt::cl::control &ctl,  const InputIterator& first, const Size& n, 
-                    const OutputIterator& result, const std::string& user_code)
+            void copy_pick_iterator(const bolt::cl::control &ctl,  const InputIterator& first, const Size& n, 
+                    const OutputIterator& result, const std::string& user_code, std::random_access_iterator_tag,
+                    std::random_access_iterator_tag )
             {
                 typedef std::iterator_traits<InputIterator>::value_type iType;
                 typedef std::iterator_traits<OutputIterator>::value_type oType;
@@ -123,14 +126,29 @@ namespace bolt {
             // This template is called by the non-detail versions of inclusive_scan, it already assumes random access iterators
             // This is called strictly for iterators that are derived from device_vector< T >::iterator
             template<typename DVInputIterator, typename Size, typename DVOutputIterator> 
-            typename std::enable_if< 
-                          (std::is_base_of<typename device_vector<typename std::iterator_traits<DVInputIterator>::value_type>::iterator,DVInputIterator>::value &&
-                           std::is_base_of<typename device_vector<typename std::iterator_traits<DVOutputIterator>::value_type>::iterator,DVOutputIterator>::value),
-                     void >::type
-            copy_pick_iterator(const bolt::cl::control &ctl,  const DVInputIterator& first, const Size& n,
-                const DVOutputIterator& result, const std::string& user_code)
+            void copy_pick_iterator(const bolt::cl::control &ctl,  const DVInputIterator& first, const Size& n,
+                const DVOutputIterator& result, const std::string& user_code, bolt::cl::device_vector_tag,
+                bolt::cl::device_vector_tag )
             {
                 copy_enqueue( ctl, first, n, result, user_code );
+            }
+
+            // This template is called by the non-detail versions of inclusive_scan, it already assumes random access iterators
+            // This is called strictly for iterators that are derived from device_vector< T >::iterator
+            template<typename DVInputIterator, typename Size, typename DVOutputIterator> 
+            void copy_pick_iterator(const bolt::cl::control &ctl,  const DVInputIterator& first, const Size& n,
+                const DVOutputIterator& result, const std::string& user_code, bolt::cl::fancy_iterator_tag,
+                std::random_access_iterator_tag )
+            {
+                copy_enqueue( ctl, first, n, result, user_code );
+            }
+
+            template<typename DVInputIterator, typename Size, typename DVOutputIterator> 
+            void copy_pick_iterator(const bolt::cl::control &ctl,  const DVInputIterator& first, const Size& n,
+                const DVOutputIterator& result, const std::string& user_code, std::random_access_iterator_tag, 
+                bolt::cl::fancy_iterator_tag )
+            {
+                static_assert( false, "It is not possible to copy into fancy iterators. They are not mutable" );
             }
 
             template< typename DVInputIterator, typename Size, typename DVOutputIterator > 

@@ -342,6 +342,44 @@ namespace bolt
             return result + numElements;
         }
 
+        /*! 
+        * \brief This overload is called strictly for non-device_vector iterators
+        * \details This template function overload is used to seperate device_vector iterators from all other iterators
+        */
+        template< typename InputIterator, typename OutputIterator, typename T, typename BinaryFunction >
+        OutputIterator scan_pick_iterator( control &ctl, const InputIterator& fancyFirst, const InputIterator& fancyLast, 
+            const OutputIterator& result, const T& init, const bool& inclusive, const BinaryFunction& binary_op,
+            bolt::cl::fancy_iterator_tag, std::random_access_iterator_tag )
+        {
+            typedef typename std::iterator_traits< InputIterator >::value_type iType;
+            typedef typename std::iterator_traits< OutputIterator >::value_type oType;
+            static_assert( std::is_convertible< iType, oType >::value, "Input and Output iterators are incompatible" );
+
+            unsigned int numElements = static_cast< unsigned int >( std::distance( fancyFirst, fancyLast ) );
+            if( numElements == 0 )
+                return result;
+
+            const bolt::cl::control::e_RunMode runMode = ctl.forceRunMode( );  // could be dynamic choice some day.
+            if( runMode == bolt::cl::control::SerialCpu )
+            {
+                std::partial_sum( first, last, result, binary_op );
+                return result;
+            }
+            else if( runMode == bolt::cl::control::MultiCoreCpu )
+            {
+                std::cout << "The MultiCoreCpu version of inclusive_scan is not implemented yet." << std ::endl;
+            }
+            else
+            {
+                //Now call the actual cl algorithm
+                scan_enqueue( ctl, fancyFirst, fancyLast, dvOutput.begin( ), init, binary_op, inclusive );
+
+                // This should immediately map/unmap the buffer
+                dvOutput.data( );
+            }
+
+            return result + numElements;
+        }
 
         //  All calls to inclusive_scan end up here, unless an exception was thrown
         //  This is the function that sets up the kernels to compile (once only) and execute
