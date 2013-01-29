@@ -318,7 +318,7 @@ namespace bolt {
                 StrictWeakOrdering comp, const std::string& cl_code)
             {
                     typedef typename std::iterator_traits< DVRandomAccessIterator >::value_type T;
-                    const int RADIX = 2;
+                    const int RADIX = 4;
                     const int RADICES = (1 << RADIX);	//Values handeled by each work-item?
                     unsigned int szElements = (last - first);
                     device_vector< T > dvInputData;//(sizeof(T), 0);
@@ -402,7 +402,7 @@ namespace bolt {
                             ctl.commandQueue().enqueueFillBuffer(clInputData, BOLT_UINT_MIN, clBR.origin, clBR.size, NULL, NULL);
                         }
                     }
-                    std::cout << "szElements " << szElements << "\n";
+
                     ::cl::LocalSpaceArg localScanArray;
                     localScanArray.size_ = 2*RADICES* sizeof(cl_uint);
                     int swap = 0;
@@ -669,7 +669,6 @@ namespace bolt {
                             cl_buffer_region clBR;
                             clBR.origin = (last - first)* sizeof(T);
                             clBR.size  = (szElements * sizeof(T)) - (last - first)* sizeof(T);
-                            std::cout << " -- " << clBR.origin << " -- " << clBR.size << "\n";
                             ctl.commandQueue().enqueueFillBuffer(clInputData, BOLT_INT_MAX, clBR.origin, clBR.size, NULL, NULL);
                         }
                     }
@@ -687,7 +686,7 @@ namespace bolt {
                             ctl.commandQueue().enqueueFillBuffer(clInputData, BOLT_INT_MIN, clBR.origin, clBR.size, NULL, NULL);
                         }
                     }
-                    std::cout << "szElements " << szElements << "\n";
+                    //std::cout << "szElements " << szElements << "\n";
                     ::cl::LocalSpaceArg localScanArray;
                     localScanArray.size_ = 2*RADICES* sizeof(cl_uint);
                     int swap = 0;
@@ -893,7 +892,6 @@ namespace bolt {
                         if( comp(2,3) )
                         {
                             int index=0;
-                            std::cout<< "sort.inl -- Ascending Sort\n";
                             for( i=0; i<(last-first); i++)
                             {
                                 if(cpuBuffer[i] < 0)
@@ -902,7 +900,7 @@ namespace bolt {
                                     index++;
                                 }
                             }
-                            std::cout<< "sort.inl -- Ascending Sort\n";
+
                             //int positiveIndex=0;
                             for( i=0; i<(last-first); i++)
                             {

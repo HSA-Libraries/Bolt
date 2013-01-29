@@ -17,7 +17,7 @@
 
 # List the names of common files to compile across all platforms
 set( clBolt.Test.Device.Vector.Source stdafx.cpp device.vector.test.cpp )
-set( clBolt.Test.Device.Vector.Headers stdafx.h targetver.h ${BOLT_INCLUDE_DIR}/bolt/cl/device_vector.h ${BOLT_INCLUDE_DIR}/bolt/amp/device_vector.h)
+set( clBolt.Test.Device.Vector.Headers stdafx.h targetver.h ${BOLT_INCLUDE_DIR}/bolt/cl/device_vector.h )
 
 set( clBolt.Test.Device.Vector.Files ${clBolt.Test.Device.Vector.Source} ${clBolt.Test.Device.Vector.Headers} )
 
