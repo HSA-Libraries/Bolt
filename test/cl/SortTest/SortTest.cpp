@@ -18,6 +18,7 @@
 #define TEST_DOUBLE 0
 #define TEST_DEVICE_VECTOR 1
 #define TEST_CPU_DEVICE 0
+#define TEST_MULTICORE_TBB_SORT 0
 #define GOOGLE_TEST 0
 #if (GOOGLE_TEST == 1)
 
@@ -197,7 +198,7 @@ TEST(SortUDD, AddDouble4)
     // compare results
     cmpArrays(refInput, input);
 }
-
+#if (TEST_MULTICORE_TBB_SORT == 1)
 TEST(SortUDD, MultiCoreAddDouble4)
 {
     //setup containers
@@ -216,7 +217,7 @@ TEST(SortUDD, MultiCoreAddDouble4)
     // compare results
     cmpArrays(refInput, input);
 }
-
+#endif 
 TEST(SortUDD, GPUAddDouble4)
 {
 
@@ -256,7 +257,7 @@ TYPED_TEST_P( SortArrayTest, Normal )
     cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
     
 }
-
+#if (TEST_MULTICORE_TBB_SORT == 1)
 TYPED_TEST_P( SortArrayTest, MultiCoreNormal )
 {
     typedef std::array< ArrayType, ArraySize > ArrayCont;
@@ -276,7 +277,7 @@ TYPED_TEST_P( SortArrayTest, MultiCoreNormal )
     //  Loop through the array and compare all the values with each other
     cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
 }
-
+#endif
 
 TYPED_TEST_P( SortArrayTest, GPU_DeviceNormal )
 {
@@ -475,13 +476,17 @@ TYPED_TEST_P( SortArrayTest, CPU_DeviceLessFunction )
 #endif
 
 #if (TEST_CPU_DEVICE == 1)
-REGISTER_TYPED_TEST_CASE_P( SortArrayTest, Normal, MultiCoreNormal, GPU_DeviceNormal, 
+REGISTER_TYPED_TEST_CASE_P( SortArrayTest, Normal, GPU_DeviceNormal, 
                                            GreaterFunction, GPU_DeviceGreaterFunction,
                                            LessFunction, GPU_DeviceLessFunction, CPU_DeviceNormal, CPU_DeviceGreaterFunction, CPU_DeviceLessFunction);
 #else
-REGISTER_TYPED_TEST_CASE_P( SortArrayTest, Normal, MultiCoreNormal, GPU_DeviceNormal, 
+REGISTER_TYPED_TEST_CASE_P( SortArrayTest, Normal, GPU_DeviceNormal, 
                                            GreaterFunction, GPU_DeviceGreaterFunction,
                                            LessFunction, GPU_DeviceLessFunction );
+#endif
+
+#if (TEST_MULTICORE_TBB_SORT == 1)
+REGISTER_TYPED_TEST_CASE_P( SortArrayTest, MultiCoreNormal ); 
 #endif
 
 
@@ -1640,23 +1645,26 @@ void TestWithBoltControl(int length)
 */
 int main(int argc, char* argv[])
 {
-
+#if 1   
     //UDDSortTestOfLengthWithDeviceVector<int>(256);
-    BasicSortTestOfLength<int>(257/*2097152/*131072/*16777216/*33554432/*atoi(argv[1])*/);
+    BasicSortTestOfLength<int>(256/*2097152/*131072/*16777216/*33554432/*atoi(argv[1])*/);
     BasicSortTestOfLength<int>(4096);
-    BasicSortTestOfLength<int>(2097159);
-    BasicSortTestOfLength<int>(111);
-    BasicSortTestOfLength<int>(64);
-    BasicSortTestOfLength<int>(63);
-    BasicSortTestOfLength<int>(31);
-
-    BasicSortTestOfLength<unsigned int>(257/*2097152/*131072/*16777216/*33554432/*atoi(argv[1])*/);
+    BasicSortTestOfLength<int>(2097152);
+    BasicSortTestOfLength<int>(131072);
+    BasicSortTestOfLength<int>(512);
+    BasicSortTestOfLength<int>(1024);
+    BasicSortTestOfLength<int>(2048);
+    BasicSortTestOfLength<int>(2560);
+#endif
+#if 1
+    BasicSortTestOfLength<unsigned int>(256/*2097152/*131072/*16777216/*33554432/*atoi(argv[1])*/);
     BasicSortTestOfLength<unsigned int>(4096);
-    BasicSortTestOfLength<unsigned int>(2097159);
-    BasicSortTestOfLength<unsigned int>(111);
-    BasicSortTestOfLength<unsigned int>(65);
-    BasicSortTestOfLength<unsigned int>(63);
-    BasicSortTestOfLength<unsigned int>(31);
+    BasicSortTestOfLength<unsigned int>(2097152);
+    BasicSortTestOfLength<unsigned int>(131072);
+    BasicSortTestOfLength<unsigned int>(16777472); // 2^24 + 256
+    BasicSortTestOfLength<unsigned int>(2048);
+    BasicSortTestOfLength<unsigned int>(2560);
+#endif
 #if 0
     std::vector<int> input(1024);
     std::generate(input.begin(), input.end(), rand);
