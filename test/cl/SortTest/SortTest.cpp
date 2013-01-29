@@ -1133,6 +1133,7 @@ int main(int argc, char* argv[])
 }
 #else
 //BOLT Header files
+#include "common/myocl.h"
 #include <bolt/cl/clcode.h>
 #include <bolt/cl/device_vector.h>
 #include <bolt/cl/sort.h>
@@ -1144,7 +1145,6 @@ int main(int argc, char* argv[])
 #include <iostream>
 #include <algorithm>  // for testing against STL functions.
 #include <vector>
-#include "common/myocl.h"
 
 // A Data structure defining a less than operator
 
@@ -1382,7 +1382,7 @@ void BasicSortTestOfLength(size_t length)
     
     //Ascending Sort 
     size_t i;
-#if 1
+#if 0
     for (i=0;i<length;i++)
     {
         boltInput[i]= ((T)(stdInput[i]) * 0xAB789F) & ((1<<31) - 1);

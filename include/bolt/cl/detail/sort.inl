@@ -99,88 +99,90 @@ namespace bolt {
 namespace cl {
 namespace detail {
 
-            struct CallCompiler_Sort {
+struct CallCompiler_Sort {
 
-                static void constructAndCompileRadixSortInt(std::vector< ::cl::Kernel >* radixSortKernels,  std::string cl_code_dataType, std::string valueTypeName,  std::string compareTypeName, const control *ctl) {
+    static void constructAndCompileRadixSortInt(std::vector< ::cl::Kernel >* radixSortKernels,  std::string cl_code_dataType, std::string valueTypeName,  std::string compareTypeName, const control *ctl) {
 
-                    std::vector< const std::string > kernelNames;
-                    kernelNames.push_back( "histogramAscendingRadixN" );
-                    kernelNames.push_back( "histogramDescendingRadixN" );
-                    kernelNames.push_back( "scanLocalRadixN" );
-                    kernelNames.push_back( "permuteAscendingRadixN" );
-                    kernelNames.push_back( "permuteDescendingRadixN" );
+        std::vector< const std::string > kernelNames;
+        kernelNames.push_back( "histogramAscendingRadixN" );
+        kernelNames.push_back( "histogramDescendingRadixN" );
+        kernelNames.push_back( "scanLocalRadixN" );
+        kernelNames.push_back( "permuteAscendingRadixN" );
+        kernelNames.push_back( "permuteDescendingRadixN" );
 
-                    const std::string instantiationString = "";
+        const std::string instantiationString = "";
 
-                    bolt::cl::compileKernelsString( *radixSortKernels, kernelNames, sort_uint_kernels, instantiationString, cl_code_dataType, valueTypeName, "", *ctl );
-                }
-                static void constructAndCompileRadixSortUintTemplate(std::vector< ::cl::Kernel >* radixSortKernels,  int radix, std::string cl_code_dataType, std::string valueTypeName,  std::string compareTypeName, const control *ctl) {
-                    
-                    std::stringstream radixStream;
-                    std::vector< const std::string > kernelNames;
-                    radixStream << radix;
+        bolt::cl::compileKernelsString( *radixSortKernels, kernelNames, sort_uint_kernels, instantiationString, cl_code_dataType, valueTypeName, "", *ctl );
+    }
 
-                    std::string temp = "histogramAscendingRadix" + radixStream.str();
-                    kernelNames.push_back( temp );
-                    temp = "histogramDescendingRadix" + radixStream.str();
-                    kernelNames.push_back( temp );
+    static void constructAndCompileRadixSortUintTemplate(std::vector< ::cl::Kernel >* radixSortKernels,  int radix, std::string cl_code_dataType, std::string valueTypeName,  std::string compareTypeName, const control *ctl) {
+        
+        std::stringstream radixStream;
+        std::vector< const std::string > kernelNames;
+        radixStream << radix;
 
-                    kernelNames.push_back( "scanLocal" );
-                    
-                    temp = "permuteAscendingRadix" + radixStream.str();
-                    kernelNames.push_back( temp );
-                    temp = "permuteDescendingRadix" + radixStream.str();
-                    kernelNames.push_back( temp );
+        std::string temp = "histogramAscendingRadix" + radixStream.str();
+        kernelNames.push_back( temp );
+        temp = "histogramDescendingRadix" + radixStream.str();
+        kernelNames.push_back( temp );
 
-                    std::string tempHistAscending;
-                    std::string tempPermAscending; 
-                    std::string tempHistDescending;
-                    std::string tempPermDescending;
+        kernelNames.push_back( "scanLocal" );
+        
+        temp = "permuteAscendingRadix" + radixStream.str();
+        kernelNames.push_back( temp );
+        temp = "permuteDescendingRadix" + radixStream.str();
+        kernelNames.push_back( temp );
 
-                    tempHistAscending  = "histogramAscendingRadix"+ radixStream.str() +"Instantiated";
-                    tempPermAscending  = "permuteAscendingRadix"+ radixStream.str() +"Instantiated";
-                    tempHistDescending = "histogramDescendingRadix"+ radixStream.str() +"Instantiated";
-                    tempPermDescending = "permuteDescendingRadix"+ radixStream.str() +"Instantiated";
+        std::string tempHistAscending;
+        std::string tempPermAscending; 
+        std::string tempHistDescending;
+        std::string tempPermDescending;
 
-                    std::string ScanInstantiationString = 
-                        "\ntemplate __attribute__((mangled_name(scanLocalInstantiated)))\n"
-                         "void scanLocalTemplate< " +radixStream.str()+ " >(__global uint* buckets,\n"
-                         "global uint* histScanBuckets,\n"
-                         "local uint* localScanArray);\n\n";
+        tempHistAscending  = "histogramAscendingRadix"+ radixStream.str() +"Instantiated";
+        tempPermAscending  = "permuteAscendingRadix"+ radixStream.str() +"Instantiated";
+        tempHistDescending = "histogramDescendingRadix"+ radixStream.str() +"Instantiated";
+        tempPermDescending = "permuteDescendingRadix"+ radixStream.str() +"Instantiated";
 
-                    std::string AscendingInstantiationString = 
-                        "// Host generates this instantiation string with user-specified value type and functor\n"
-                        "\ntemplate __attribute__((mangled_name(" + tempHistAscending + ")))\n"
-                        "void histogramAscendingRadixNTemplate< " +radixStream.str()+ " >(__global uint* unsortedData,\n"
-                        "global uint* buckets,\n"
-                        "global uint* histScanBuckets,\n"
-                        "uint shiftCount\n"
-                        ");\n\n"
-                        "template __attribute__((mangled_name(" + tempPermAscending + ")))\n"
-                        "void permuteAscendingRadixNTemplate< " +radixStream.str()+ " >(__global uint* unsortedData,\n"
-                        "global uint* scanedBuckets,\n"
-                        "uint shiftCount,\n"
-                        "global uint* sortedData\n"
-                        ");\n\n";
+        std::string ScanInstantiationString = 
+            "\ntemplate __attribute__((mangled_name(scanLocalInstantiated)))\n"
+             "void scanLocalTemplate< " +radixStream.str()+ " >(__global uint* buckets,\n"
+             "global uint* histScanBuckets,\n"
+             "local uint* localScanArray);\n\n";
 
-                    std::string DescendingInstantiationString = 
-                        "// Host generates this instantiation string with user-specified value type and functor\n"
-                        "\ntemplate __attribute__((mangled_name(" + tempHistDescending + ")))\n"
-                        "void histogramDescendingRadixNTemplate< " +radixStream.str()+ " >(__global uint* unsortedData,\n"
-                        "global uint* buckets,\n"
-                        "global uint* histScanBuckets,\n"
-                        "uint shiftCount\n"
-                        ");\n\n"
-                        "template __attribute__((mangled_name(" + tempPermDescending + ")))\n"
-                        "void permuteDescendingRadixNTemplate< " +radixStream.str()+ " >(__global uint* unsortedData,\n"
-                        "global uint* scanedBuckets,\n"
-                        "uint shiftCount,\n"
-                        "global uint* sortedData\n"
-                        ");\n\n";
+        std::string AscendingInstantiationString = 
+            "// Host generates this instantiation string with user-specified value type and functor\n"
+            "\ntemplate __attribute__((mangled_name(" + tempHistAscending + ")))\n"
+            "void histogramAscendingRadixNTemplate< " +radixStream.str()+ " >(__global uint* unsortedData,\n"
+            "global uint* buckets,\n"
+            "global uint* histScanBuckets,\n"
+            "uint shiftCount\n"
+            ");\n\n"
+            "template __attribute__((mangled_name(" + tempPermAscending + ")))\n"
+            "void permuteAscendingRadixNTemplate< " +radixStream.str()+ " >(__global uint* unsortedData,\n"
+            "global uint* scanedBuckets,\n"
+            "uint shiftCount,\n"
+            "global uint* sortedData\n"
+            ");\n\n";
 
-                    bolt::cl::compileKernelsString( *radixSortKernels, kernelNames, sort_uint_kernels, AscendingInstantiationString + ScanInstantiationString + DescendingInstantiationString, cl_code_dataType, valueTypeName, "", *ctl );
-                }
-                static void constructAndCompile(::cl::Kernel *masterKernel,  std::string cl_code_dataType, std::string valueTypeName,  std::string compareTypeName, const control *ctl) {
+        std::string DescendingInstantiationString = 
+            "// Host generates this instantiation string with user-specified value type and functor\n"
+            "\ntemplate __attribute__((mangled_name(" + tempHistDescending + ")))\n"
+            "void histogramDescendingRadixNTemplate< " +radixStream.str()+ " >(__global uint* unsortedData,\n"
+            "global uint* buckets,\n"
+            "global uint* histScanBuckets,\n"
+            "uint shiftCount\n"
+            ");\n\n"
+            "template __attribute__((mangled_name(" + tempPermDescending + ")))\n"
+            "void permuteDescendingRadixNTemplate< " +radixStream.str()+ " >(__global uint* unsortedData,\n"
+            "global uint* scanedBuckets,\n"
+            "uint shiftCount,\n"
+            "global uint* sortedData\n"
+            ");\n\n";
+
+        bolt::cl::compileKernelsString( *radixSortKernels, kernelNames, sort_uint_kernels, AscendingInstantiationString + ScanInstantiationString + DescendingInstantiationString, cl_code_dataType, valueTypeName, "", *ctl );
+    }
+    
+    static void constructAndCompile(::cl::Kernel *masterKernel,  std::string cl_code_dataType, std::string valueTypeName,  std::string compareTypeName, const control *ctl) {
 
         const std::string instantiationString = 
             "// Host generates this instantiation string with user-specified value type and functor\n"
@@ -194,6 +196,7 @@ namespace detail {
 
         bolt::cl::constructAndCompileString(masterKernel, "sort", sort_kernels, instantiationString, cl_code_dataType, valueTypeName, "", *ctl);
     }
+
     static void constructAndCompileSelectionSort(std::vector< ::cl::Kernel >* sortKernels,  std::string cl_code_dataType, std::string valueTypeName,  std::string compareTypeName, const control *ctl) {
 
         std::vector< const std::string > kernelNames;
@@ -244,77 +247,77 @@ void sort_detect_random_access( control &ctl, const RandomAccessIterator& first,
     return sort_pick_iterator(ctl, first, last, comp, cl_code);
 };
 
-            //Device Vector specialization
-            template<typename DVRandomAccessIterator, typename StrictWeakOrdering> 
-            typename std::enable_if< std::is_base_of<typename device_vector<typename std::iterator_traits<DVRandomAccessIterator>::value_type>::iterator,DVRandomAccessIterator>::value >::type
-            sort_pick_iterator(control &ctl, const DVRandomAccessIterator& first, const DVRandomAccessIterator& last,
-                const StrictWeakOrdering& comp, const std::string& cl_code) 
-            {
-                // User defined Data types are not supported with device_vector. Hence we have a static assert here.
-                // The code here should be in compliant with the routine following this routine.
-                size_t szElements = (size_t)(last - first); 
-                if (szElements == 0 )
-                        return;
-                const bolt::cl::control::e_RunMode runMode = ctl.forceRunMode();  // could be dynamic choice some day.
-                if (runMode == bolt::cl::control::SerialCpu) {
-                    //  TODO:  Need access to the device_vector .data method to get a host pointer
-                    throw ::cl::Error( CL_INVALID_DEVICE, "Sort of device_vector CPU device not implemented" );
-                    return;
-                } else if (runMode == bolt::cl::control::MultiCoreCpu) {
-                    std::cout << "The MultiCoreCpu version of sort on device_vector is not supported." << std ::endl;
-                    throw ::cl::Error( CL_INVALID_DEVICE, "The MultiCoreCpu version of reduce on device_vector is not supported." );
-                    return;
-                } else {
-                    sort_enqueue(ctl,first,last,comp,cl_code);
-                }
-                return;
-            }
+//Device Vector specialization
+template<typename DVRandomAccessIterator, typename StrictWeakOrdering> 
+typename std::enable_if< std::is_base_of<typename device_vector<typename std::iterator_traits<DVRandomAccessIterator>::value_type>::iterator,DVRandomAccessIterator>::value >::type
+sort_pick_iterator(control &ctl, const DVRandomAccessIterator& first, const DVRandomAccessIterator& last,
+    const StrictWeakOrdering& comp, const std::string& cl_code) 
+{
+    // User defined Data types are not supported with device_vector. Hence we have a static assert here.
+    // The code here should be in compliant with the routine following this routine.
+    size_t szElements = (size_t)(last - first); 
+    if (szElements == 0 )
+            return;
+    const bolt::cl::control::e_RunMode runMode = ctl.forceRunMode();  // could be dynamic choice some day.
+    if (runMode == bolt::cl::control::SerialCpu) {
+        //  TODO:  Need access to the device_vector .data method to get a host pointer
+        throw ::cl::Error( CL_INVALID_DEVICE, "Sort of device_vector CPU device not implemented" );
+        return;
+    } else if (runMode == bolt::cl::control::MultiCoreCpu) {
+        std::cout << "The MultiCoreCpu version of sort on device_vector is not supported." << std ::endl;
+        throw ::cl::Error( CL_INVALID_DEVICE, "The MultiCoreCpu version of reduce on device_vector is not supported." );
+        return;
+    } else {
+        sort_enqueue(ctl,first,last,comp,cl_code);
+    }
+    return;
+}
             
-            //Non Device Vector specialization.
-            //This implementation creates a cl::Buffer and passes the cl buffer to the sort specialization whichtakes the cl buffer as a parameter. 
-            //In the future, Each input buffer should be mapped to the device_vector and the specialization specific to device_vector should be called. 
-            template<typename RandomAccessIterator, typename StrictWeakOrdering> 
-            typename std::enable_if< !std::is_base_of<typename device_vector<typename std::iterator_traits<RandomAccessIterator>::value_type>::iterator,RandomAccessIterator>::value >::type
-            sort_pick_iterator(control &ctl, const RandomAccessIterator& first, const RandomAccessIterator& last,
-                const StrictWeakOrdering& comp, const std::string& cl_code)  
-            {
-                typedef typename std::iterator_traits<RandomAccessIterator>::value_type T;
-                size_t szElements = (size_t)(last - first); 
-                if (szElements == 0)
-                    return;
+//Non Device Vector specialization.
+//This implementation creates a cl::Buffer and passes the cl buffer to the sort specialization whichtakes the cl buffer as a parameter. 
+//In the future, Each input buffer should be mapped to the device_vector and the specialization specific to device_vector should be called. 
+template<typename RandomAccessIterator, typename StrictWeakOrdering> 
+typename std::enable_if< !std::is_base_of<typename device_vector<typename std::iterator_traits<RandomAccessIterator>::value_type>::iterator,RandomAccessIterator>::value >::type
+sort_pick_iterator(control &ctl, const RandomAccessIterator& first, const RandomAccessIterator& last,
+    const StrictWeakOrdering& comp, const std::string& cl_code)  
+{
+    typedef typename std::iterator_traits<RandomAccessIterator>::value_type T;
+    size_t szElements = (size_t)(last - first); 
+    if (szElements == 0)
+        return;
 
-                const bolt::cl::control::e_RunMode runMode = ctl.forceRunMode();  // could be dynamic choice some day.
-                if ((runMode == bolt::cl::control::SerialCpu) || (szElements < WGSIZE)) {
-                    std::sort(first, last, comp);
-                    return;
-                } else if (runMode == bolt::cl::control::MultiCoreCpu) {
+    const bolt::cl::control::e_RunMode runMode = ctl.forceRunMode();  // could be dynamic choice some day.
+    if ((runMode == bolt::cl::control::SerialCpu) || (szElements < WGSIZE)) {
+        std::sort(first, last, comp);
+        return;
+    } else if (runMode == bolt::cl::control::MultiCoreCpu) {
 #ifdef ENABLE_TBB
-					std::cout << "The MultiCoreCpu version of sort is enabled with TBB. " << std ::endl;
-					tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
-					tbb::parallel_sort(first,last, comp);
+        std::cout << "The MultiCoreCpu version of sort is enabled with TBB. " << std ::endl;
+        tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
+        tbb::parallel_sort(first,last, comp);
 #else
-                    std::cout << "The MultiCoreCpu version of sort is not enabled. " << std ::endl;
-                    throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of sort is not enabled to be built." );
-                    return;
+        std::cout << "The MultiCoreCpu version of sort is not enabled. " << std ::endl;
+        throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of sort is not enabled to be built." );
+        return;
 #endif
-                } else {
-                    device_vector< T > dvInputOutput( first, last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctl );
-                    //Now call the actual cl algorithm
-                    sort_enqueue(ctl,dvInputOutput.begin(),dvInputOutput.end(),comp,cl_code);
-                    //Map the buffer back to the host
-                    dvInputOutput.data( );
-                    return;
-                }
-            }
+    } else {
+        device_vector< T > dvInputOutput( first, last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctl );
+        //Now call the actual cl algorithm
+        sort_enqueue(ctl,dvInputOutput.begin(),dvInputOutput.end(),comp,cl_code);
+        //Map the buffer back to the host
+        dvInputOutput.data( );
+        return;
+    }
+}
 
 /****** sort_enqueue specailization for unsigned int data types. ******
  * THE FOLLOWING CODE IMPLEMENTS THE RADIX SORT ALGORITHM FOR sort()
  *********************************************************************/
 #define DEBUG 0
-            template<typename DVRandomAccessIterator, typename StrictWeakOrdering> 
-            typename std::enable_if< std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type, unsigned int >::value >::type
-            sort_enqueue(control &ctl, DVRandomAccessIterator first, DVRandomAccessIterator last,
-                StrictWeakOrdering comp, const std::string& cl_code)
+template<typename DVRandomAccessIterator, typename StrictWeakOrdering> 
+typename std::enable_if< std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type, unsigned int >::value >::type
+sort_enqueue(control &ctl, DVRandomAccessIterator first, DVRandomAccessIterator last,
+    StrictWeakOrdering comp, const std::string& cl_code)
             {
                     typedef typename std::iterator_traits< DVRandomAccessIterator >::value_type T;
                     const int RADIX = 2;
@@ -595,10 +598,10 @@ void sort_detect_random_access( control &ctl, const RandomAccessIterator& first,
                     return;
             }
 
-            template<typename DVRandomAccessIterator, typename StrictWeakOrdering> 
-            typename std::enable_if< std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type, int >::value >::type
-            sort_enqueue(control &ctl, DVRandomAccessIterator first, DVRandomAccessIterator last,
-                StrictWeakOrdering comp, const std::string& cl_code)
+template<typename DVRandomAccessIterator, typename StrictWeakOrdering> 
+typename std::enable_if< std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type, int >::value >::type
+sort_enqueue(control &ctl, DVRandomAccessIterator first, DVRandomAccessIterator last,
+    StrictWeakOrdering comp, const std::string& cl_code)
             {
                     typedef typename std::iterator_traits< DVRandomAccessIterator >::value_type T;
                     const int RADIX = 4;
@@ -1022,24 +1025,10 @@ void sort_detect_random_access( control &ctl, const RandomAccessIterator& first,
                     return;
             }
 
-            template<typename DVRandomAccessIterator, typename StrictWeakOrdering> 
-            typename std::enable_if< !(std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type, unsigned int >::value || 
-                                       std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type,          int >::value) >::type
-            sort_enqueue(control &ctl, const DVRandomAccessIterator& first, const DVRandomAccessIterator& last,
-                const StrictWeakOrdering& comp, const std::string& cl_code)  
-            {
-                    typedef typename std::iterator_traits< DVRandomAccessIterator >::value_type T;
-                    size_t szElements = (size_t)(last - first);
-                    if(((szElements-1) & (szElements)) != 0)
-                    {
-                        sort_enqueue_non_powerOf2(ctl,first,last,comp,cl_code);
-                        return;
-                    }
-                    static  boost::once_flag initOnlyOnce;
-                    static  ::cl::Kernel masterKernel;
-
 template<typename DVRandomAccessIterator, typename StrictWeakOrdering> 
-void sort_enqueue(control &ctl, const DVRandomAccessIterator& first, const DVRandomAccessIterator& last,
+typename std::enable_if< !(std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type, unsigned int >::value || 
+                           std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type,          int >::value) >::type
+sort_enqueue(control &ctl, const DVRandomAccessIterator& first, const DVRandomAccessIterator& last,
     const StrictWeakOrdering& comp, const std::string& cl_code)  
 {
     typedef typename std::iterator_traits< DVRandomAccessIterator >::value_type T;
@@ -1054,21 +1043,21 @@ void sort_enqueue(control &ctl, const DVRandomAccessIterator& first, const DVRan
 
     size_t temp;
 
-                    //Power of 2 buffer size
-                    // For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retreive the name here.
-
-                    if (boost::is_same<T, StrictWeakOrdering>::value) 
-                        boost::call_once( initOnlyOnce, boost::bind( CallCompiler_Sort::constructAndCompile, &masterKernel, 
-                                      "\n//--User Code\n" + cl_code + 
-                                      "\n//--typedef T Code\n" + ClCode<T>::get(),
-                                      TypeName<T>::get(), TypeName<StrictWeakOrdering>::get(), &ctl) );
-                    else
-                        boost::call_once( initOnlyOnce, boost::bind( CallCompiler_Sort::constructAndCompile, &masterKernel, 
-                                      "\n//--User Code\n" + cl_code + 
-                                      "\n//--typedef T Code\n" + ClCode<T>::get() + 
-                                      "\n//--typedef StrictWeakOrdering Code\n" + ClCode<StrictWeakOrdering>::get(), 
-                                      TypeName<T>::get(), TypeName<StrictWeakOrdering>::get(), &ctl) );
-
+    //Power of 2 buffer size
+    // For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retreive the name here.
+    
+    if (boost::is_same<T, StrictWeakOrdering>::value) 
+        boost::call_once( initOnlyOnce, boost::bind( CallCompiler_Sort::constructAndCompile, &masterKernel, 
+                      "\n//--User Code\n" + cl_code + 
+                      "\n//--typedef T Code\n" + ClCode<T>::get(),
+                      TypeName<T>::get(), TypeName<StrictWeakOrdering>::get(), &ctl) );
+    else
+        boost::call_once( initOnlyOnce, boost::bind( CallCompiler_Sort::constructAndCompile, &masterKernel, 
+                      "\n//--User Code\n" + cl_code + 
+                      "\n//--typedef T Code\n" + ClCode<T>::get() + 
+                      "\n//--typedef StrictWeakOrdering Code\n" + ClCode<StrictWeakOrdering>::get(), 
+                      TypeName<T>::get(), TypeName<StrictWeakOrdering>::get(), &ctl) );
+    
     //Power of 2 buffer size
     // For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retreive the name here.
     if (boost::is_same<T, StrictWeakOrdering>::value) 
@@ -1141,33 +1130,33 @@ void sort_enqueue_non_powerOf2(control &ctl, const DVRandomAccessIterator& first
     static boost::once_flag initOnlyOnce;
     size_t szElements = (size_t)(last - first);
 
-                    //Power of 2 buffer size
-                    // For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retreive the name here.
-                    static std::vector< ::cl::Kernel > sortKernels;
+    //Power of 2 buffer size
+    // For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retreive the name here.
+    static std::vector< ::cl::Kernel > sortKernels;
 
-                    if (boost::is_same<T, StrictWeakOrdering>::value) 
-                        boost::call_once( initOnlyOnce, boost::bind( CallCompiler_Sort::constructAndCompileSelectionSort, &sortKernels, 
-                                      "\n//--User Code\n" + cl_code + 
-                                      "\n//--typedef T Code\n" + ClCode<T>::get(), 
-                                      TypeName<T>::get(), 
-                                      TypeName<StrictWeakOrdering>::get(), &ctl) );
-                    else
-                        boost::call_once( initOnlyOnce, boost::bind( CallCompiler_Sort::constructAndCompileSelectionSort, &sortKernels, 
-                                      "\n//--User Code\n" + cl_code + 
-                                      "\n//--typedef T Code\n" + ClCode<T>::get() + 
-                                      "\n//--typedef StrictWeakOrdering Code\n" + ClCode<StrictWeakOrdering>::get(), 
-                                      TypeName<T>::get(), 
-                                      TypeName<StrictWeakOrdering>::get(), &ctl) );
+    if (boost::is_same<T, StrictWeakOrdering>::value) 
+        boost::call_once( initOnlyOnce, boost::bind( CallCompiler_Sort::constructAndCompileSelectionSort, &sortKernels, 
+                      "\n//--User Code\n" + cl_code + 
+                      "\n//--typedef T Code\n" + ClCode<T>::get(), 
+                      TypeName<T>::get(), 
+                      TypeName<StrictWeakOrdering>::get(), &ctl) );
+    else
+        boost::call_once( initOnlyOnce, boost::bind( CallCompiler_Sort::constructAndCompileSelectionSort, &sortKernels, 
+                      "\n//--User Code\n" + cl_code + 
+                      "\n//--typedef T Code\n" + ClCode<T>::get() + 
+                      "\n//--typedef StrictWeakOrdering Code\n" + ClCode<StrictWeakOrdering>::get(), 
+                      TypeName<T>::get(), 
+                      TypeName<StrictWeakOrdering>::get(), &ctl) );
 
-                    size_t wgSize  = sortKernels[0].getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.device( ), &l_Error );
-                    
-                    size_t totalWorkGroups = (szElements + wgSize)/wgSize;
-                    size_t globalSize = totalWorkGroups * wgSize;
-                    V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
-                    
-                    ::cl::Buffer& in = first->getBuffer( );
-                    // ::cl::Buffer out(ctl.context(), CL_MEM_READ_WRITE, sizeof(T)*szElements);
-                    control::buffPointer out = ctl.acquireBuffer( sizeof(T)*szElements );
+    size_t wgSize  = sortKernels[0].getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.device( ), &l_Error );
+    
+    size_t totalWorkGroups = (szElements + wgSize)/wgSize;
+    size_t globalSize = totalWorkGroups * wgSize;
+    V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
+    
+    ::cl::Buffer& in = first->getBuffer( );
+    // ::cl::Buffer out(ctl.context(), CL_MEM_READ_WRITE, sizeof(T)*szElements);
+    control::buffPointer out = ctl.acquireBuffer( sizeof(T)*szElements );
 
     //Power of 2 buffer size
     // For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retreive the name here.

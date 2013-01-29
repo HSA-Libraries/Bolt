@@ -127,8 +127,11 @@ template< typename S, typename B >
 // mult64 vs not mult
 // zero vs positive
 
-static const int numLengths = 8;
-static const int lengths[8] = {0, 1, 63, 64, 65, 1023, 1024, 1025};
+static const int numLengths = 24;
+static const int lengths[24] = {
+    0, 1, 2, 3, 4, 5, 6, 7, 8, 9,
+    10, 11, 12, 13, 14, 15, 16, 17, 63, 64,
+    65, 1023, 1024, 1025 };
 //static const int numLengths = 1;
 //static const int lengths[1] = {13};
 

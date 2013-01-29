@@ -20,9 +20,10 @@
 // 1 thread per element
 template <typename oType, typename Generator>
 __kernel
-void generate_I( global oType* restrict dst,
-			const int numElements,
-			global Generator * restrict genPtr)
+void generate_I(
+    global oType * restrict dst,
+    const int numElements,
+    global Generator * restrict genPtr)
 {
     int gloIdx = get_global_id(0);
 #if BOUNDARY_CHECK

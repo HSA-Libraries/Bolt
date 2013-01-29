@@ -204,8 +204,8 @@ int _tmain( int argc, _TCHAR* argv[] )
 
     if( systemMemory )
     {
-        std::vector< float4 > source( length );
-        std::vector< float4 > destination( length );
+        std::vector< floatN > source( length );
+        std::vector< floatN > destination( length );
 
         for( unsigned i = 0; i < iterations; ++i )
         {
@@ -217,11 +217,17 @@ int _tmain( int argc, _TCHAR* argv[] )
     else
     {
          bolt::cl::control::getDefault( ).debug(bolt::cl::control::debug::SaveCompilerTemps);
-        float4 init={ 1.2f, 2.3f, 3.4f, 4.5f };
-        //floatN init={ 1.2f, 2.3f, 3.4f, 4.5f };
-        bolt::cl::device_vector< float4 > source( length, init );
-        bolt::cl::device_vector< float4 > destination( length );
-
+        //float4 init={ 1.2f, 2.3f, 3.4f, 4.5f };
+#if 0
+        floatN init={ 1.2f, 2.3f, 3.4f, 4.5f };
+        bolt::cl::device_vector< floatN > source( length, init );
+        bolt::cl::device_vector< floatN > destination( length );
+#endif
+#if 1
+        float init = 1.2f;
+        bolt::cl::device_vector< float > source( length, init );
+        bolt::cl::device_vector< float > destination( length );
+#endif
         for( unsigned int i = 0; i < iterations; ++i )
         {
             myTimer.Start( CopyId );
@@ -233,7 +239,7 @@ int _tmain( int argc, _TCHAR* argv[] )
     //	Remove all timings that are outside of 2 stddev (keep 65% of samples); we ignore outliers to get a more consistent result
     size_t pruned = myTimer.pruneOutliers( 1.0 );
     double testTime = myTimer.getAverageTime( CopyId );
-    double testMB = ( length * sizeof( float4 ) ) / ( 1024.0 * 1024.0);
+    double testMB = ( length * sizeof( float ) ) / ( 1024.0 * 1024.0);
 	  double testGB = testMB/ 1024.0;
 
     bolt::tout << std::left;

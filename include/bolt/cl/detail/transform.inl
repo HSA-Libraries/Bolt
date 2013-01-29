@@ -27,36 +27,36 @@
 
 namespace bolt {
     namespace cl {
-        // default control, two-input transform, std:: iterator
+        // default ::bolt::cl::control, two-input transform, std:: iterator
         template<typename InputIterator, typename OutputIterator, typename BinaryFunction> 
-        void transform( bolt::cl::control& ctl, InputIterator first1, InputIterator last1, InputIterator first2, OutputIterator result, 
+        void transform( ::bolt::cl::control& ctl, InputIterator first1, InputIterator last1, InputIterator first2, OutputIterator result, 
             BinaryFunction f, const std::string& user_code )
         {
             detail::transform_detect_random_access( ctl, first1, last1, first2, result, f, user_code, std::iterator_traits< InputIterator >::iterator_category( ) );
         }
 
-        // default control, two-input transform, std:: iterator
+        // default ::bolt::cl::control, two-input transform, std:: iterator
         template<typename InputIterator, typename OutputIterator, typename BinaryFunction> 
         void transform( InputIterator first1, InputIterator last1, InputIterator first2, OutputIterator result, 
             BinaryFunction f, const std::string& user_code )
         {
-            detail::transform_detect_random_access( control::getDefault(), first1, last1, first2, result, f, user_code, std::iterator_traits< InputIterator >::iterator_category( ) );
+            detail::transform_detect_random_access( ::bolt::cl::control::getDefault(), first1, last1, first2, result, f, user_code, std::iterator_traits< InputIterator >::iterator_category( ) );
         }
 
-        // default control, two-input transform, std:: iterator
+        // default ::bolt::cl::control, two-input transform, std:: iterator
         template<typename InputIterator, typename OutputIterator, typename UnaryFunction>
-        void transform( bolt::cl::control& ctl, InputIterator first1, InputIterator last1, OutputIterator result, 
+        void transform( ::bolt::cl::control& ctl, InputIterator first1, InputIterator last1, OutputIterator result, 
             UnaryFunction f, const std::string& user_code )
         {
             detail::transform_unary_detect_random_access( ctl, first1, last1, result, f, user_code, std::iterator_traits< InputIterator >::iterator_category( ) );
         }
 
-        // default control, two-input transform, std:: iterator
+        // default ::bolt::cl::control, two-input transform, std:: iterator
         template<typename InputIterator, typename OutputIterator, typename UnaryFunction> 
         void transform( InputIterator first1, InputIterator last1, OutputIterator result, 
             UnaryFunction f, const std::string& user_code )
         {
-            detail::transform_unary_detect_random_access( control::getDefault(), first1, last1, result, f, user_code, std::iterator_traits< InputIterator >::iterator_category( ) );
+            detail::transform_unary_detect_random_access( ::bolt::cl::control::getDefault(), first1, last1, result, f, user_code, std::iterator_traits< InputIterator >::iterator_category( ) );
         }
 
     }//end of cl namespace
@@ -73,7 +73,7 @@ namespace bolt {
                     std::string inValueTypeName,
                     std::string outValueTypeName,
                     std::string functorTypeName,
-                    const control *ctl) {
+                    const ::bolt::cl::control *ctl) {
 
                     std::vector< const std::string > kernelNames;
                     kernelNames.push_back( "transform" );
@@ -99,11 +99,11 @@ namespace bolt {
                         "const uint length,\n"
                         "global " + functorTypeName + "* userFunctor);\n\n";
 
-                    bolt::cl::compileKernelsString( *kernels, kernelNames, transform_kernels, instantiationString, cl_code, inValueTypeName,  functorTypeName, *ctl);
+                    ::bolt::cl::compileKernelsString( *kernels, kernelNames, transform_kernels, instantiationString, cl_code, inValueTypeName,  functorTypeName, *ctl);
                 };
             };
             struct CallCompiler_UnaryTransform {
-                static void init_(std::vector< ::cl::Kernel >* kernels, std::string cl_code, std::string inValueTypeName, std::string outValueTypeName, std::string functorTypeName, const control *ctl) {
+                static void init_(std::vector< ::cl::Kernel >* kernels, std::string cl_code, std::string inValueTypeName, std::string outValueTypeName, std::string functorTypeName, const ::bolt::cl::control *ctl) {
 
                     std::vector< const std::string > kernelNames;
                     kernelNames.push_back( "unaryTransform" );
@@ -138,13 +138,13 @@ namespace bolt {
                         "global " + functorTypeName + "* userFunctor);\n\n"
                         ;
 
-                    bolt::cl::compileKernelsString( *kernels, kernelNames, transform_kernels, instantiationString, cl_code, inValueTypeName,  functorTypeName, *ctl);
+                    ::bolt::cl::compileKernelsString( *kernels, kernelNames, transform_kernels, instantiationString, cl_code, inValueTypeName,  functorTypeName, *ctl);
                 };
             };
 
-            // Wrapper that uses default control class, iterator interface
+            // Wrapper that uses default ::bolt::cl::control class, iterator interface
             template<typename InputIterator, typename OutputIterator, typename BinaryFunction> 
-            void transform_detect_random_access( bolt::cl::control& ctl, const InputIterator& first1, const InputIterator& last1, const InputIterator& first2, 
+            void transform_detect_random_access( ::bolt::cl::control& ctl, const InputIterator& first1, const InputIterator& last1, const InputIterator& first2, 
                 const OutputIterator& result, const BinaryFunction& f, const std::string& user_code, std::input_iterator_tag )
             {
                 //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data 
@@ -153,15 +153,15 @@ namespace bolt {
             };
 
             template<typename InputIterator, typename OutputIterator, typename BinaryFunction> 
-            void transform_detect_random_access( bolt::cl::control& ctl, const InputIterator& first1, const InputIterator& last1, const InputIterator& first2, 
+            void transform_detect_random_access( ::bolt::cl::control& ctl, const InputIterator& first1, const InputIterator& last1, const InputIterator& first2, 
                 const OutputIterator& result, const BinaryFunction& f, const std::string& user_code, std::random_access_iterator_tag )
             {
                 transform_pick_iterator( ctl, first1, last1, first2, result, f, user_code );
             };
 
-            // Wrapper that uses default control class, iterator interface
+            // Wrapper that uses default ::bolt::cl::control class, iterator interface
             template<typename InputIterator, typename OutputIterator, typename UnaryFunction> 
-            void transform_unary_detect_random_access( bolt::cl::control& ctl, const InputIterator& first1, const InputIterator& last1, 
+            void transform_unary_detect_random_access( ::bolt::cl::control& ctl, const InputIterator& first1, const InputIterator& last1, 
                 const OutputIterator& result, const UnaryFunction& f, const std::string& user_code, std::input_iterator_tag )
             {
                 //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data 
@@ -170,7 +170,7 @@ namespace bolt {
             };
 
             template<typename InputIterator, typename OutputIterator, typename UnaryFunction> 
-            void transform_unary_detect_random_access( bolt::cl::control& ctl, const InputIterator& first1, const InputIterator& last1, 
+            void transform_unary_detect_random_access( ::bolt::cl::control& ctl, const InputIterator& first1, const InputIterator& last1, 
                 const OutputIterator& result, const UnaryFunction& f, const std::string& user_code, std::random_access_iterator_tag )
             {
                 transform_unary_pick_iterator( ctl, first1, last1, result, f, user_code );
@@ -185,7 +185,7 @@ namespace bolt {
                          !(std::is_base_of<typename device_vector<typename std::iterator_traits<InputIterator>::value_type>::iterator,InputIterator>::value &&
                            std::is_base_of<typename device_vector<typename std::iterator_traits<OutputIterator>::value_type>::iterator,OutputIterator>::value),
                      void >::type
-            transform_pick_iterator( bolt::cl::control &ctl,  const InputIterator& first1, const InputIterator& last1, const InputIterator& first2, 
+            transform_pick_iterator( ::bolt::cl::control &ctl,  const InputIterator& first1, const InputIterator& last1, const InputIterator& first2, 
                     const OutputIterator& result, const BinaryFunction& f, const std::string& user_code)
             {
                 typedef std::iterator_traits<InputIterator>::value_type iType;
@@ -216,7 +216,7 @@ namespace bolt {
                           (std::is_base_of<typename device_vector<typename std::iterator_traits<DVInputIterator>::value_type>::iterator,DVInputIterator>::value &&
                            std::is_base_of<typename device_vector<typename std::iterator_traits<DVOutputIterator>::value_type>::iterator,DVOutputIterator>::value),
                      void >::type
-            transform_pick_iterator( bolt::cl::control &ctl,  const DVInputIterator& first1, const DVInputIterator& last1, const DVInputIterator& first2, 
+            transform_pick_iterator( ::bolt::cl::control &ctl,  const DVInputIterator& first1, const DVInputIterator& last1, const DVInputIterator& first2, 
             const DVOutputIterator& result, const BinaryFunction& f, const std::string& user_code)
             {
                 transform_enqueue( ctl, first1, last1, first2, result, f, user_code );
@@ -231,7 +231,7 @@ namespace bolt {
                          !(std::is_base_of<typename device_vector<typename std::iterator_traits<InputIterator>::value_type>::iterator,InputIterator>::value &&
                            std::is_base_of<typename device_vector<typename std::iterator_traits<OutputIterator>::value_type>::iterator,OutputIterator>::value),
                      void >::type
-            transform_unary_pick_iterator( bolt::cl::control &ctl, const InputIterator& first, const InputIterator& last, 
+            transform_unary_pick_iterator( ::bolt::cl::control &ctl, const InputIterator& first, const InputIterator& last, 
             const OutputIterator& result, const UnaryFunction& f, const std::string& user_code)
             {
                 typedef std::iterator_traits<InputIterator>::value_type iType;
@@ -260,14 +260,14 @@ namespace bolt {
                           (std::is_base_of<typename device_vector<typename std::iterator_traits<DVInputIterator>::value_type>::iterator,DVInputIterator>::value &&
                            std::is_base_of<typename device_vector<typename std::iterator_traits<DVOutputIterator>::value_type>::iterator,DVOutputIterator>::value),
                      void >::type
-            transform_unary_pick_iterator( bolt::cl::control &ctl, const DVInputIterator& first, const DVInputIterator& last, 
+            transform_unary_pick_iterator( ::bolt::cl::control &ctl, const DVInputIterator& first, const DVInputIterator& last, 
             const DVOutputIterator& result, const UnaryFunction& f, const std::string& user_code)
             {
                 transform_unary_enqueue( ctl, first, last, result, f, user_code );
             }
 
             template< typename DVInputIterator, typename DVOutputIterator, typename BinaryFunction > 
-            void transform_enqueue( bolt::cl::control &ctl, const DVInputIterator& first1, const DVInputIterator& last1, const DVInputIterator& first2, 
+            void transform_enqueue( ::bolt::cl::control &ctl, const DVInputIterator& first1, const DVInputIterator& last1, const DVInputIterator& first2, 
                 const DVOutputIterator& result, const BinaryFunction& f, const std::string& cl_code)
             {
                 typedef std::iterator_traits<DVInputIterator>::value_type iType;
@@ -289,7 +289,7 @@ namespace bolt {
                 //typedef std::aligned_storage< sizeof( UnaryFunction ), 256 >::type alignedUnary;
                 __declspec( align( 256 ) ) BinaryFunction aligned_functor( f );
                 // ::cl::Buffer userFunctor(ctl.context(), CL_MEM_READ_ONLY|CL_MEM_USE_HOST_PTR, sizeof( aligned_functor ), const_cast< BinaryFunction* >( &aligned_functor ) );   // Create buffer wrapper so we can access host parameters.
-                control::buffPointer userFunctor = ctl.acquireBuffer( sizeof( aligned_functor ), CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_functor );
+                ::bolt::cl::control::buffPointer userFunctor = ctl.acquireBuffer( sizeof( aligned_functor ), CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_functor );
 
                 static boost::once_flag initOnlyOnce;
                 static std::vector< ::cl::Kernel > binaryTransformKernels;
@@ -346,7 +346,7 @@ namespace bolt {
                     &transformEvent );
                 V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for transform() kernel" );
 
-                bolt::cl::wait(ctl, transformEvent);
+                ::bolt::cl::wait(ctl, transformEvent);
 
                 if (1) {
                     cl_ulong start_time, stop_time;
@@ -361,7 +361,7 @@ namespace bolt {
             };
 
             template< typename DVInputIterator, typename DVOutputIterator, typename UnaryFunction > 
-            void transform_unary_enqueue( bolt::cl::control &ctl, const DVInputIterator& first, const DVInputIterator& last, 
+            void transform_unary_enqueue( ::bolt::cl::control &ctl, const DVInputIterator& first, const DVInputIterator& last, 
                 const DVOutputIterator& result, const UnaryFunction& f, const std::string& cl_code)
             {
                 typedef std::iterator_traits<DVInputIterator>::value_type iType;
@@ -380,7 +380,7 @@ namespace bolt {
                 //typedef std::aligned_storage< sizeof( UnaryFunction ), 256 >::type alignedUnary;
                 ALIGNED( 256 ) UnaryFunction aligned_functor( f );
                 // ::cl::Buffer userFunctor(ctl.context(), CL_MEM_READ_ONLY|CL_MEM_USE_HOST_PTR, sizeof( aligned_functor ), const_cast< UnaryFunction* >( &aligned_functor ) );   // Create buffer wrapper so we can access host parameters.
-                control::buffPointer userFunctor = ctl.acquireBuffer( sizeof( aligned_functor ), CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_functor );
+                ::bolt::cl::control::buffPointer userFunctor = ctl.acquireBuffer( sizeof( aligned_functor ), CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_functor );
 
                 static boost::once_flag initOnlyOnce;
                 static std::vector< ::cl::Kernel > unaryTransformKernels;
@@ -438,7 +438,7 @@ namespace bolt {
                     &transformEvent );
                 V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for transform() kernel" );
 
-                bolt::cl::wait(ctl, transformEvent);
+                ::bolt::cl::wait(ctl, transformEvent);
 
                 if (1) {
                     cl_ulong start_time, stop_time;

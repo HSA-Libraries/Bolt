@@ -15,41 +15,62 @@
 ***************************************************************************/
 
 
-// No Boundary Check Kernel
+// 1 thread / element: 166 GB/s
 template < typename iType, typename oType >
 __kernel
-void copyNoBoundsCheck(
-    global iType *src,
-    global oType *dst,
-	const uint length )
+void copy_I(
+    global iType * restrict src,
+    global oType * restrict dst,
+    const uint numElements )
 {
-    uint i = get_global_id(0);
-    dst[i] = src[i];
+    uint gloIdx = get_global_id(0);
+#if BOUNDARY_CHECK
+    if (gloIdx < numElements)
+#endif
+        dst[gloIdx] = src[gloIdx];
 };
 
 
-// Yes Boundary Generate Kernel
+// 1 thread / element / BURST
+// BURST,bandwidth: 1:150, 2:166, 4:151, 8:157, 12:90, 16:77
 template < typename iType, typename oType >
 __kernel
-void copyBoundsCheck(
-    global iType *src,
-    global oType *dst,
-	const uint length )
+void copy_II(
+    global iType * restrict src,
+    global oType * restrict dst,
+    const uint numElements )
 {
-    uint i = get_global_id(0);
-
-    if (i < length) {
-        dst[i] = src[i];
+    int offset = get_global_id(0)*BURST_SIZE;
+    __global iType *threadSrc = &src[ offset ];
+    __global oType *threadDst = &dst[ offset ];
+    iType tmp[BURST_SIZE];
+    
+    for ( int i = 0; i < BURST_SIZE; i++)
+    {
+//#if BOUNDARY_CHECK
+//        if (offset+i < numElements)
+//#endif
+            tmp[i] = threadSrc[i];
     }
+    for ( int j = 0; j < BURST_SIZE; j++)
+    {
+//#if BOUNDARY_CHECK
+//        if (offset+j < numElements)
+//#endif
+            threadDst[j] = tmp[j];
+    }
+    
 };
 
-// ideal num threads
+
+
+// ideal num threads: 144 GB/s
 template < typename iType, typename oType >
 __kernel
-void copyA(
-    global iType *src,
-    global oType *dst,
-	  const uint numElements )
+void copy_III(
+    global iType * restrict src,
+    global oType * restrict dst,
+      const uint numElements )
 {
     for (
         unsigned int i = get_global_id(0);
@@ -60,169 +81,159 @@ void copyA(
     }
 };
 
-// ideal num threads\
-// bursts
-//#define BURST 16
+
+// ideal num threads w/ BURST
+// BURST Bandwidth
+// 1     6 GB/s
+// 2     9 GB/s
+// 4    14 GB/s
+// 8    19 GB/s
 template < typename iType, typename oType >
 __kernel
-void copyB(
-    global iType *src,
-    global oType *dst,
-	  const uint numElements )
+void copy_IV(
+    global iType * restrict src,
+    global oType * restrict dst,
+    const uint numElements )
 {
-    __private iType tmp[BURST];
+    const int numMyElements = numElements / get_global_size(0);
+    const int start = numMyElements * get_global_id(0);
+    const int stop = (numElements < start+numMyElements) ? numElements : start+numMyElements;
+
+    __private iType tmp[BURST_SIZE];
+
     for (
-        unsigned int i = get_global_id(0)*BURST;
-        i < numElements;
-        i += get_global_size( 0 )*BURST )
+        int i = start;
+        i < stop;
+        i += BURST_SIZE )
     {
         
-        for ( unsigned int j = 0; j < BURST; j++)
+        for ( int j = 0; j < BURST_SIZE; j++)
         {
-            dst[i+j] = src[i+j];
+            tmp[j] = src[i+j];
         }
-        //for ( unsigned int j = 0; j < BURST; j++)
-        //{
-        //    dst[i+j] = tmp[j];
-        //}
+        for ( int k = 0; k < BURST_SIZE; k++)
+        {
+            dst[i+k] = tmp[k];
+        }
     }
 };
 
-template < typename iType, typename oType >
-__kernel
-void copyC(
-    global iType *src,
-    global oType *dst,
-	  const uint numElements )
-{
-    unsigned int offset = get_global_id(0)*BURST;
-    __private iType tmp[BURST];
-    
-    for ( unsigned int i = 0; i < BURST; i++)
-    {
-        tmp[i] = src[offset+i];
-    }
-    for ( unsigned int j = 0; j < BURST; j++)
-    {
-        dst[offset+j] = tmp[j];
-    }
-    
-};
-
+#if 0
 #define ITER 16
 
 __attribute__((reqd_work_group_size(256,1,1)))
 __kernel
-void copyDInstantiated(
+void copy_VInstantiated(
     global const float4 * restrict src,
     global float4 * restrict dst,
-	  const uint numElements )
+      const uint numElements )
 {
-    //unsigned int offset = get_global_id(0)*BURST;
-    __global const float4 *srcPtr = &src[get_global_id(0)*BURST];
-    __global float4 *dstPtr = &dst[get_global_id(0)*BURST];
-    __private float4 tmp[BURST];
+    //unsigned int offset = get_global_id(0)*BURST_SIZE;
+    __global const float4 *srcPtr = &src[get_global_id(0)*BURST_SIZE];
+    __global float4 *dstPtr = &dst[get_global_id(0)*BURST_SIZE];
+    __private float4 tmp[BURST_SIZE];
 
 
 
-#if BURST >  0
+#if BURST_SIZE >  0
                 tmp[ 0] = srcPtr[ 0];
 #endif                            
-#if BURST >  1                    
+#if BURST_SIZE >  1                    
                 tmp[ 1] = srcPtr[ 1];
 #endif                            
-#if BURST >  2                    
+#if BURST_SIZE >  2                    
                 tmp[ 2] = srcPtr[ 2];
 #endif                            
-#if BURST >  3                    
+#if BURST_SIZE >  3                    
                 tmp[ 3] = srcPtr[ 3];
 #endif                            
-#if BURST >  4                    
+#if BURST_SIZE >  4                    
                 tmp[ 4] = srcPtr[ 4];
 #endif                            
-#if BURST >  5                    
+#if BURST_SIZE >  5                    
                 tmp[ 5] = srcPtr[ 5];
 #endif                            
-#if BURST >  6                    
+#if BURST_SIZE >  6                    
                 tmp[ 6] = srcPtr[ 6];
 #endif                            
-#if BURST >  7                    
+#if BURST_SIZE >  7                    
                 tmp[ 7] = srcPtr[ 7];
 #endif                            
-#if BURST >  8                    
+#if BURST_SIZE >  8                    
                 tmp[ 8] = srcPtr[ 8];
 #endif                            
-#if BURST >  9                    
+#if BURST_SIZE >  9                    
                 tmp[ 9] = srcPtr[ 9];
 #endif                            
-#if BURST > 10                    
+#if BURST_SIZE > 10                    
                 tmp[10] = srcPtr[10];
 #endif                            
-#if BURST > 11                    
+#if BURST_SIZE > 11                    
                 tmp[11] = srcPtr[11];
 #endif                            
-#if BURST > 12                    
+#if BURST_SIZE > 12                    
                 tmp[12] = srcPtr[12];
 #endif                            
-#if BURST > 13                    
+#if BURST_SIZE > 13                    
                 tmp[13] = srcPtr[13];
 #endif                            
-#if BURST > 14                    
+#if BURST_SIZE > 14                    
                 tmp[14] = srcPtr[14];
 #endif                            
-#if BURST > 15                    
+#if BURST_SIZE > 15                    
                 tmp[15] = srcPtr[15];
 #endif
 
 
-#if BURST >  0
+#if BURST_SIZE >  0
                 dstPtr[ 0] = tmp[ 0];
 #endif                            
-#if BURST >  1                    
+#if BURST_SIZE >  1                    
                 dstPtr[ 1] = tmp[ 1];
 #endif                            
-#if BURST >  2                    
+#if BURST_SIZE >  2                    
                 dstPtr[ 2] = tmp[ 2];
 #endif                            
-#if BURST >  3                    
+#if BURST_SIZE >  3                    
                 dstPtr[ 3] = tmp[ 3];
 #endif                            
-#if BURST >  4                    
+#if BURST_SIZE >  4                    
                 dstPtr[ 4] = tmp[ 4];
 #endif                            
-#if BURST >  5                    
+#if BURST_SIZE >  5                    
                 dstPtr[ 5] = tmp[ 5];
 #endif                            
-#if BURST >  6                    
+#if BURST_SIZE >  6                    
                 dstPtr[ 6] = tmp[ 6];
 #endif                            
-#if BURST >  7                    
+#if BURST_SIZE >  7                    
                 dstPtr[ 7] = tmp[ 7];
 #endif                            
-#if BURST >  8                    
+#if BURST_SIZE >  8                    
                 dstPtr[ 8] = tmp[ 8];
 #endif                            
-#if BURST >  9                    
+#if BURST_SIZE >  9                    
                 dstPtr[ 9] = tmp[ 9];
 #endif                            
-#if BURST > 10                    
+#if BURST_SIZE > 10                    
                 dstPtr[10] = tmp[10];
 #endif                            
-#if BURST > 11                    
+#if BURST_SIZE > 11                    
                 dstPtr[11] = tmp[11];
 #endif                            
-#if BURST > 12                    
+#if BURST_SIZE > 12                    
                 dstPtr[12] = tmp[12];
 #endif                            
-#if BURST > 13                    
+#if BURST_SIZE > 13                    
                 dstPtr[13] = tmp[13];
 #endif                            
-#if BURST > 14                    
+#if BURST_SIZE > 14                    
                 dstPtr[14] = tmp[14];
 #endif                            
-#if BURST > 15                    
+#if BURST_SIZE > 15                    
                 dstPtr[15] = tmp[15];
 #endif
 
 
 };
+#endif
