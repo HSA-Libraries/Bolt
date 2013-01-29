@@ -54,7 +54,7 @@ namespace cl {
 
 
 namespace  detail {
-    struct kernelParams
+    struct kernelParamsTransformReduce
     {
         const std::string inValueNakedType;
         const std::string inValueIterType;
@@ -62,7 +62,7 @@ namespace  detail {
         const std::string transformFunctorTypeName;
         const std::string reduceFunctorTypeName;
 
-        kernelParams( const std::string& iTypePtr, const std::string& iTypeIter, 
+        kernelParamsTransformReduce( const std::string& iTypePtr, const std::string& iTypeIter, 
             const std::string& oTypePtr, const std::string& transFuncType, const std::string& redFuncType ): 
         inValueNakedType( iTypePtr ), inValueIterType( iTypeIter ), 
         outValueNakedType( oTypePtr ),
@@ -74,7 +74,7 @@ namespace  detail {
         static void constructAndCompile(
             ::cl::Kernel *masterKernel,
             std::string user_code,
-            kernelParams* kp,
+            kernelParamsTransformReduce* kp,
             const control *ctl) {
 
             const std::string instantiationString = 
@@ -94,7 +94,8 @@ namespace  detail {
 
             std::string functorNames = kp->transformFunctorTypeName + " , " + kp->reduceFunctorTypeName; // create for debug message
 
-            bolt::cl::constructAndCompileString( masterKernel, "transform_reduce", transform_reduce_kernels, instantiationString, user_code, kp->outValueNakedType, functorNames, *ctl);
+            bolt::cl::constructAndCompileString( masterKernel, "transform_reduce", transform_reduce_kernels, 
+                instantiationString, user_code, kp->outValueNakedType, functorNames, *ctl);
         };
     };
 
@@ -217,7 +218,7 @@ namespace  detail {
 
             typedef std::iterator_traits< DVInputIterator  >::value_type iType;
 
-            kernelParams args( TypeName< iType >::get( ), TypeName< DVInputIterator >::get( ),  TypeName< oType >::get( ), 
+            kernelParamsTransformReduce args( TypeName< iType >::get( ), TypeName< DVInputIterator >::get( ),  TypeName< oType >::get( ), 
                 TypeName< UnaryFunction >::get( ), TypeName< BinaryFunction >::get( ) );
 
             // For user-defined types, the user must create a TypeName trait which returns the name of the class 

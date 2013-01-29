@@ -31,27 +31,28 @@ namespace bolt{
         };
 };
 };
-//FIXME - this was added to support POD with bolt::cl::greater data types
-template<typename T>
-struct greater
-{
-    bool operator()(const T &lhs, const T &rhs) const  {return (lhs > rhs);}
-};
-template<typename T>
-struct less 
-{
-    bool operator()(const T &lhs, const T &rhs) const  {return (lhs < rhs);}
-};
+// //FIXME - this was added to support POD with bolt::cl::greater data types
+// template<typename T>
+// struct greater
+// {
+    // bool operator()(const T &lhs, const T &rhs) const  {return (lhs > rhs);}
+// };
+// template<typename T>
+// struct less 
+// {
+    // bool operator()(const T &lhs, const T &rhs) const  {return (lhs < rhs);}
+// };
 
-
-
-template <typename T_keys, typename T_values, typename Compare>
+template<typename iKeysType, typename iKeysIter, typename iValType, typename iValIter, typename Compare >
 kernel
-void sortByKeyTemplate(global T_keys * keys, 
-                 global T_values * values, 
-                 const uint stage,
-                 const uint passOfStage,
-                 global Compare *userComp)
+void sortByKeyTemplate(
+        global iKeysType* keys_ptr, 
+        iKeysIter        keys_iter, 
+        global iValType* values_ptr, 
+        iValIter         values_iter, 
+        const uint stage,
+        const uint passOfStage,
+        global Compare* userComp)
 {
     uint threadId = get_global_id(0);
     uint pairDistance = 1 << (stage - passOfStage);
@@ -60,13 +61,16 @@ void sortByKeyTemplate(global T_keys * keys,
     uint leftId = (threadId % pairDistance) 
                        + (threadId / pairDistance) * blockWidth;
     bool compareResult;
-    values;
     uint rightId = leftId + pairDistance;
-    T_keys greater, lesser;
-    T_keys leftElement = keys[leftId];
-    T_keys rightElement = keys[rightId];
-    T_values leftValue = values[leftId];
-    T_values rightValue = values[rightId];
+    iKeysType greater, lesser;
+    
+    keys_iter.init( keys_ptr );
+    values_iter.init( values_ptr );
+    
+    iKeysType leftElement = keys_iter[leftId];
+    iKeysType rightElement = keys_iter[rightId];
+    iValType leftValue = values_iter[leftId];
+    iValType rightValue = values_iter[rightId];
 
     uint sameDirectionBlockWidth = 1 << stage;
     
@@ -81,17 +85,17 @@ void sortByKeyTemplate(global T_keys * keys,
 
     if(compareResult)
     {
-        keys[rightId] = rightElement;
-        keys[leftId]  = leftElement;
-        values[rightId] = rightValue;
-        values[leftId]  = leftValue;
+        keys_iter[rightId] = rightElement;
+        keys_iter[leftId]  = leftElement;
+        values_iter[rightId] = rightValue;
+        values_iter[leftId]  = leftValue;
 
     }
     else
     {
-        keys[rightId] = leftElement;
-        keys[leftId]  = rightElement;
-        values[rightId] = leftValue;
-        values[leftId]  = rightValue;
+        keys_iter[rightId] = leftElement;
+        keys_iter[leftId]  = rightElement;
+        values_iter[rightId] = leftValue;
+        values_iter[leftId]  = rightValue;
     }
 }

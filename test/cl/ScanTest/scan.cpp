@@ -70,6 +70,10 @@ struct uddtD4
     }
 };
 );
+
+BOLT_CREATE_TYPENAME( bolt::cl::device_vector< uddtD4 >::iterator );
+BOLT_CREATE_CLCODE( bolt::cl::device_vector< uddtD4 >::iterator, bolt::cl::deviceVectorIteratorTemplate );
+
 BOLT_FUNCTOR(MultD4,
 struct MultD4
 {
@@ -105,6 +109,10 @@ struct uddtI2
     }
 };
 );
+
+BOLT_CREATE_TYPENAME( bolt::cl::device_vector< uddtI2 >::iterator );
+BOLT_CREATE_CLCODE( bolt::cl::device_vector< uddtI2 >::iterator, bolt::cl::deviceVectorIteratorTemplate );
+
 BOLT_FUNCTOR(AddI2,
 struct AddI2
 {
@@ -148,6 +156,10 @@ struct uddtM3
     }
 };
 );
+
+BOLT_CREATE_TYPENAME( bolt::cl::device_vector< uddtM3 >::iterator );
+BOLT_CREATE_CLCODE( bolt::cl::device_vector< uddtM3 >::iterator, bolt::cl::deviceVectorIteratorTemplate );
+
 BOLT_FUNCTOR(MixM3,
 struct MixM3
 {

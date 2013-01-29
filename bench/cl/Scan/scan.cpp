@@ -70,6 +70,8 @@ struct vecN
 };
 );
 
+BOLT_CREATE_TYPENAME( bolt::cl::device_vector< vecN >::iterator );
+BOLT_CREATE_CLCODE( bolt::cl::device_vector< vecN >::iterator, bolt::cl::deviceVectorIteratorTemplate );
 
 BOLT_FUNCTOR(vecNplus,
 struct vecNplus

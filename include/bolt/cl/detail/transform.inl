@@ -68,7 +68,7 @@ namespace cl {
     }
 
 namespace detail {
-    struct kernelParams
+    struct kernelParamsTransform
     {
         const std::string inValueType1Ptr;
         const std::string inValueType1Iter;
@@ -78,7 +78,7 @@ namespace detail {
         const std::string outValueTypeIter;
         const std::string functorTypeName;
 
-        kernelParams( const std::string& iType1Ptr, const std::string& iType1Iter, const std::string& iType2Ptr, 
+        kernelParamsTransform( const std::string& iType1Ptr, const std::string& iType1Iter, const std::string& iType2Ptr, 
             const std::string& iType2Iter, const std::string& oTypePtr, const std::string& oTypeIter, 
             const std::string& funcType ): 
         inValueType1Ptr( iType1Ptr ), inValueType1Iter( iType1Iter ), 
@@ -92,7 +92,7 @@ namespace detail {
         static void init_(
             std::vector< ::cl::Kernel >* kernels,
             std::string cl_code,
-            kernelParams* kp,
+            kernelParamsTransform* kp,
             const control *ctl) {
 
             std::vector< const std::string > kernelNames;
@@ -133,7 +133,7 @@ namespace detail {
         static void init_(
             std::vector< ::cl::Kernel >* kernels,
             std::string cl_code,
-            kernelParams* kp,
+            kernelParamsTransform* kp,
             const control *ctl) {
 
             std::vector< const std::string > kernelNames;
@@ -341,7 +341,7 @@ template< typename InputIterator1, typename InputIterator2, typename OutputItera
         static boost::once_flag initOnlyOnce;
         static std::vector< ::cl::Kernel > binaryTransformKernels;
 
-        kernelParams args( TypeName< iType1 >::get( ), TypeName< DVInputIterator1 >::get( ), TypeName< iType2 >::get( ), 
+        kernelParamsTransform args( TypeName< iType1 >::get( ), TypeName< DVInputIterator1 >::get( ), TypeName< iType2 >::get( ), 
             TypeName< DVInputIterator2 >::get( ), TypeName< oType >::get( ), TypeName< DVOutputIterator >::get( ), 
             TypeName< BinaryFunction >::get( ) );
 
@@ -432,7 +432,7 @@ template< typename InputIterator1, typename InputIterator2, typename OutputItera
         static boost::once_flag initOnlyOnce;
         static std::vector< ::cl::Kernel > unaryTransformKernels;
 
-        kernelParams args( TypeName< iType >::get( ), TypeName< DVInputIterator >::get( ), "", 
+        kernelParamsTransform args( TypeName< iType >::get( ), TypeName< DVInputIterator >::get( ), "", 
             "", TypeName< oType >::get( ), TypeName< DVOutputIterator >::get( ), 
             TypeName< UnaryFunction >::get( ) );
 

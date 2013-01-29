@@ -238,7 +238,7 @@ struct template_clCode
 #define BOLT_FUNCTOR( TYPE, ... ) \
                     __VA_ARGS__; \
                     BOLT_CREATE_TYPENAME( TYPE ); \
-                    BOLT_CREATE_CLCODE( TYPE, #__VA_ARGS__ );
+                    BOLT_CREATE_CLCODE( TYPE, #__VA_ARGS__ "\n" );
 
 #define BOLT_TEMPLATE_FUNCTOR1( CONTAINER, TYPE1, ... ) \
                     __VA_ARGS__; \
