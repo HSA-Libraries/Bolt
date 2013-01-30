@@ -102,6 +102,9 @@ struct vec2
 };
 );
 
+BOLT_CREATE_TYPENAME( bolt::cl::device_vector< vec2 >::iterator );
+BOLT_CREATE_CLCODE( bolt::cl::device_vector< vec2 >::iterator, bolt::cl::deviceVectorIteratorTemplate );
+
 BOLT_FUNCTOR(vec4,
 struct vec4
 {
@@ -118,6 +121,9 @@ struct vec4
     }
 };
 );
+
+BOLT_CREATE_TYPENAME( bolt::cl::device_vector< vec4 >::iterator );
+BOLT_CREATE_CLCODE( bolt::cl::device_vector< vec4 >::iterator, bolt::cl::deviceVectorIteratorTemplate );
 
 BOLT_FUNCTOR(vec8,
 struct vec8
@@ -140,6 +146,8 @@ struct vec8
 };
 );
 
+BOLT_CREATE_TYPENAME( bolt::cl::device_vector< vec8 >::iterator );
+BOLT_CREATE_CLCODE( bolt::cl::device_vector< vec8 >::iterator, bolt::cl::deviceVectorIteratorTemplate );
 
 /******************************************************************************
  *  User Defined Binary Functions - vec2,4,8plus

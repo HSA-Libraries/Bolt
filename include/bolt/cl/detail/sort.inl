@@ -182,6 +182,20 @@ struct CallCompiler_Sort {
         bolt::cl::compileKernelsString( *radixSortKernels, kernelNames, sort_uint_kernels, AscendingInstantiationString + ScanInstantiationString + DescendingInstantiationString, cl_code_dataType, valueTypeName, "", *ctl );
     }
 
+        struct kernelParamsSort
+        {
+            const std::string inValueTypePtr;
+            const std::string inValueTypeIter;
+            const std::string outValueTypePtr;
+            const std::string compareTypeName;
+
+            kernelParamsSort( const std::string& iTypePtr, const std::string& iTypeIter, const std::string& oTypePtr, 
+                const std::string& funcType ): 
+            inValueTypePtr( iTypePtr ), inValueTypeIter( iTypeIter ), 
+            outValueTypePtr( oTypePtr ), compareTypeName( funcType )
+            {}
+        };
+
         static void constructAndCompile(::cl::Kernel *masterKernel,  std::string cl_code_dataType, kernelParamsSort* kp, 
             const control *ctl) {
 
@@ -361,12 +375,12 @@ sort_enqueue(control &ctl, DVRandomAccessIterator first, DVRandomAccessIterator 
                     {
                         szElements  = ((szElements + mulFactor) /mulFactor) * mulFactor;
                         dvInputData.resize(sizeof(T)*szElements);
-                        ctl.commandQueue().enqueueCopyBuffer( first->getBuffer( ), dvInputData.begin( )->getBuffer( ), 0, 0, sizeof(T)*(last-first), NULL, NULL );
+                        ctl.commandQueue().enqueueCopyBuffer( first.getBuffer( ), dvInputData.begin( ).getBuffer( ), 0, 0, sizeof(T)*(last-first), NULL, NULL );
                         newBuffer = true;
             }
                     else
                     {
-                        dvInputData = device_vector< T >(first->getBuffer( ), ctl);
+                        dvInputData = device_vector< T >(first.getBuffer( ), ctl);
                         newBuffer = false;
                     }
 
@@ -377,10 +391,10 @@ sort_enqueue(control &ctl, DVRandomAccessIterator first, DVRandomAccessIterator 
                     ALIGNED( 256 ) StrictWeakOrdering aligned_comp( comp );
                     
                     control::buffPointer userFunctor = ctl.acquireBuffer( sizeof( aligned_comp ), CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_comp );
-                    ::cl::Buffer clInputData = dvInputData.begin( )->getBuffer( );
-                    ::cl::Buffer clSwapData = dvSwapInputData.begin( )->getBuffer( );
-                    ::cl::Buffer clHistData = dvHistogramBins.begin( )->getBuffer( );
-                    ::cl::Buffer clHistScanData = dvHistogramScanBuffer.begin( )->getBuffer( );
+                    ::cl::Buffer clInputData = dvInputData.begin( ).getBuffer( );
+                    ::cl::Buffer clSwapData = dvSwapInputData.begin( ).getBuffer( );
+                    ::cl::Buffer clHistData = dvHistogramBins.begin( ).getBuffer( );
+                    ::cl::Buffer clHistScanData = dvHistogramScanBuffer.begin( ).getBuffer( );
                     
                     ::cl::Kernel histKernel;
                     ::cl::Kernel permuteKernel;
@@ -603,7 +617,7 @@ sort_enqueue(control &ctl, DVRandomAccessIterator first, DVRandomAccessIterator 
                     if(newBuffer == true)
                     {
                         //::cl::copy(clInputData, first, last);
-                        ctl.commandQueue().enqueueCopyBuffer( dvInputData.begin( )->getBuffer( ), first->getBuffer( ), 0, 0, sizeof(T)*(last-first), NULL, NULL );
+                        ctl.commandQueue().enqueueCopyBuffer( dvInputData.begin( ).getBuffer( ), first.getBuffer( ), 0, 0, sizeof(T)*(last-first), NULL, NULL );
                     }
                     return;
             }
@@ -646,12 +660,12 @@ sort_enqueue(control &ctl, DVRandomAccessIterator first, DVRandomAccessIterator 
                         szElements  = ((szElements + mulFactor) /mulFactor) * mulFactor;
                         //the size is zero and not a multiple of mulFactor. So we need to resize the device_vector.
                         dvInputData.resize(sizeof(T)*szElements);
-                        ctl.commandQueue().enqueueCopyBuffer( first->getBuffer( ), dvInputData.begin( )->getBuffer( ), 0, 0, sizeof(T)*(last-first), NULL, NULL );
+                        ctl.commandQueue().enqueueCopyBuffer( first.getBuffer( ), dvInputData.begin( ).getBuffer( ), 0, 0, sizeof(T)*(last-first), NULL, NULL );
                         newBuffer = true;
                     }
                     else
                     {
-                        dvInputData = device_vector< T >(first->getBuffer( ), ctl);
+                        dvInputData = device_vector< T >(first.getBuffer( ), ctl);
                         newBuffer = false;
                     }
 
@@ -662,10 +676,10 @@ sort_enqueue(control &ctl, DVRandomAccessIterator first, DVRandomAccessIterator 
                     ALIGNED( 256 ) StrictWeakOrdering aligned_comp( comp );
                     
                     control::buffPointer userFunctor = ctl.acquireBuffer( sizeof( aligned_comp ), CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_comp );
-                    ::cl::Buffer clInputData = dvInputData.begin( )->getBuffer( );
-                    ::cl::Buffer clSwapData = dvSwapInputData.begin( )->getBuffer( );
-                    ::cl::Buffer clHistData = dvHistogramBins.begin( )->getBuffer( );
-                    ::cl::Buffer clHistScanData = dvHistogramScanBuffer.begin( )->getBuffer( );
+                    ::cl::Buffer clInputData = dvInputData.begin( ).getBuffer( );
+                    ::cl::Buffer clSwapData = dvSwapInputData.begin( ).getBuffer( );
+                    ::cl::Buffer clHistData = dvHistogramBins.begin( ).getBuffer( );
+                    ::cl::Buffer clHistScanData = dvHistogramScanBuffer.begin( ).getBuffer( );
                     
                     ::cl::Kernel histKernel;
                     ::cl::Kernel permuteKernel;
@@ -1027,7 +1041,7 @@ sort_enqueue(control &ctl, DVRandomAccessIterator first, DVRandomAccessIterator 
                     if(newBuffer == true)
                     {
                         //::cl::copy(clInputData, first, last);
-                        ctl.commandQueue().enqueueCopyBuffer( dvInputData.begin( )->getBuffer( ), first->getBuffer( ), 0, 0, sizeof(T)*(last-first), NULL, NULL );
+                        ctl.commandQueue().enqueueCopyBuffer( dvInputData.begin( ).getBuffer( ), first.getBuffer( ), 0, 0, sizeof(T)*(last-first), NULL, NULL );
                     }
 
                     return;

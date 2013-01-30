@@ -48,8 +48,8 @@ namespace bolt {
         template<typename OutputIterator, typename Size, typename T>
         OutputIterator fill_n( OutputIterator first, Size n, const T & value, const std::string& cl_code)
         {
-            detail::fill_detect_random_access( bolt::cl::control::getDefault(), first, first+n, value, cl_code, std::iterator_traits< OutputIterator >::iterator_category( ) );
-            return (first+n);
+            detail::fill_detect_random_access( bolt::cl::control::getDefault(), first, first+static_cast< const int >( n ), value, cl_code, std::iterator_traits< OutputIterator >::iterator_category( ) );
+            return first+static_cast< const int >( n );
         }
 
         // user specified control, start-> +n
@@ -147,30 +147,30 @@ namespace bolt {
                 cl_uint sz = static_cast< cl_uint >( std::distance( first, last ) );
                 if (sz < 1)
                     return;
-				cl_int l_Error= CL_SUCCESS;
-				::cl::Event fillEvent;				
+                cl_int l_Error= CL_SUCCESS;
+                ::cl::Event fillEvent;              
 
                 //Type comparison
                 if(std::is_same<T,Type>::value)
                 {
-			        
-				    ctl.commandQueue().enqueueFillBuffer(first.getBuffer(),val,0,sz*sizeof(T),NULL,&fillEvent);
-				/*enqueueFillBuffer API:
-				cl_int enqueueFillBuffer(const Buffer& buffer,
-				PatternType pattern,
-				::size_t offset,
-				::size_t size,
-				const VECTOR_CLASS<Event>* events = NULL,
-				Event* event = NULL) const
-				*/
-				V_OPENCL( l_Error, "clEnqueueFillBuffer() failed" );
+                    
+                    ctl.commandQueue().enqueueFillBuffer(first.getBuffer(),val,0,sz*sizeof(T),NULL,&fillEvent);
+                /*enqueueFillBuffer API:
+                cl_int enqueueFillBuffer(const Buffer& buffer,
+                PatternType pattern,
+                ::size_t offset,
+                ::size_t size,
+                const VECTOR_CLASS<Event>* events = NULL,
+                Event* event = NULL) const
+                */
+                V_OPENCL( l_Error, "clEnqueueFillBuffer() failed" );
                 bolt::cl::wait(ctl, fillEvent);
                 }
                 else
                 {
                     //If iterator and fill element are of different types then do a cast
                     const Type newval = static_cast<const Type>(val);
-                    ctl.commandQueue().enqueueFillBuffer(first->getBuffer(),newval,0,sz*sizeof(Type),NULL,&fillEvent);
+                    ctl.commandQueue().enqueueFillBuffer( first.getBuffer(),newval,0,sz*sizeof(Type),NULL,&fillEvent);
       				V_OPENCL( l_Error, "clEnqueueFillBuffer() failed" );
                     bolt::cl::wait(ctl, fillEvent);
                 }

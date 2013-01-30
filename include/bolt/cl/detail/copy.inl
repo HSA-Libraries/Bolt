@@ -334,8 +334,8 @@ void copy_enqueue(const bolt::cl::control &ctrl, const DVInputIterator& first, c
 
         std::cout << "NumElem: " << n << "; NumThreads: " << numThreadsChosen << "; NumWorkGroups: " << numThreadsChosen/workGroupSizeChosen << std::endl;
 
-        V_OPENCL( kernels[whichKernel].setArg( 0, first->getBuffer()), "Error setArg kernels[ 0 ]" ); // Input keys
-        V_OPENCL( kernels[whichKernel].setArg( 1, result->getBuffer()),"Error setArg kernels[ 0 ]" ); // Input buffer
+        V_OPENCL( kernels[whichKernel].setArg( 0, first.getBuffer()), "Error setArg kernels[ 0 ]" ); // Input keys
+        V_OPENCL( kernels[whichKernel].setArg( 1, result.getBuffer()),"Error setArg kernels[ 0 ]" ); // Input buffer
         V_OPENCL( kernels[whichKernel].setArg( 2, static_cast<cl_uint>( n ) ),                 "Error setArg kernels[ 0 ]" ); // Size of buffer
 
         l_Error = ctrl.commandQueue( ).enqueueNDRangeKernel(

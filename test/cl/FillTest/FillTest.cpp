@@ -471,11 +471,11 @@ TEST (simpleTest, basicDataBoltClDevVectAutoConvertCheck)
     // Test cases to verify casting
     ////////////////////////////////////////////////////
 
-    std::fill(hv.begin(), hv.end(), dValue); 
+    std::fill(hv.begin(), hv.end(), static_cast< int >( dValue ) ); 
     bolt::cl::fill(dv.begin(), dv.end(), dValue);
     cmpArrays(hv,dv);
 
-    std::fill(hv.begin(), hv.end(), fValue); 
+    std::fill(hv.begin(), hv.end(), static_cast< int >( fValue ) ); 
     bolt::cl::fill(dv.begin(), dv.end(), fValue);
     cmpArrays(hv,dv);
 

@@ -260,6 +260,7 @@ namespace bolt {
                     return init;
                 } else {
                 return reduce_enqueue( ctl, first, last, init, binary_op, cl_code);
+                }
             }
 
             // This template is called after we detect random access iterators
@@ -274,7 +275,6 @@ namespace bolt {
                 bolt::cl::fancy_iterator_tag )
             {
                 return reduce_enqueue( ctl, first, last, init, binary_op, cl_code);
-            }
             }
 
             //----

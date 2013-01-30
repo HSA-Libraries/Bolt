@@ -656,8 +656,8 @@ reduce_by_key_enqueue(
     {
     ldsKeySize   = static_cast< cl_uint >( kernel0_WgSize * sizeof( kType ) );
     ldsValueSize = static_cast< cl_uint >( kernel0_WgSize * sizeof( voType ) );
-    V_OPENCL( kernels[0].setArg( 0, keys_first->getBuffer()), "Error setArg kernels[ 0 ]" ); // Input keys
-    V_OPENCL( kernels[0].setArg( 1, values_first->getBuffer()),"Error setArg kernels[ 0 ]" ); // Input values
+    V_OPENCL( kernels[0].setArg( 0, keys_first.getBuffer()), "Error setArg kernels[ 0 ]" ); // Input keys
+    V_OPENCL( kernels[0].setArg( 1, values_first.getBuffer()),"Error setArg kernels[ 0 ]" ); // Input values
     V_OPENCL( kernels[0].setArg( 2, *offsetValArray ), "Error setArg kernels[ 0 ]" ); // Output values
     V_OPENCL( kernels[0].setArg( 3, *offsetArray  ), "Error setArg kernels[ 0 ]" ); // Output keys
     V_OPENCL( kernels[0].setArg( 4, numElements ), "Error setArg kernels[ 0 ]" ); // vecSize
@@ -723,7 +723,7 @@ reduce_by_key_enqueue(
      *********************************************************************************/
     V_OPENCL( kernels[2].setArg( 0, *keySumArray ),         "Error setArg kernels[ 2 ]" ); // Input buffer
     V_OPENCL( kernels[2].setArg( 1, *postSumArray ),        "Error setArg kernels[ 2 ]" ); // Input buffer
-    V_OPENCL( kernels[2].setArg( 2, keys_first->getBuffer()), "Error setArg kernels[ 2 ]" ); // Output buffer
+    V_OPENCL( kernels[2].setArg( 2, keys_first.getBuffer()), "Error setArg kernels[ 2 ]" ); // Output buffer
     V_OPENCL( kernels[2].setArg( 3, *offsetValArray),   "Error setArg kernels[ 2 ]" ); // Output buffer
     V_OPENCL( kernels[2].setArg( 4, numElements ),          "Error setArg kernels[ 2 ]" ); // Size of scratch buffer
     V_OPENCL( kernels[2].setArg( 5, *binaryPredicateBuffer ),"Error setArg kernels[ 2 ]" ); // User provided functor
@@ -823,9 +823,9 @@ reduce_by_key_enqueue(
     /**********************************************************************************
      *  Kernel 3
      *********************************************************************************/
-    V_OPENCL( kernels[3].setArg( 0, keys_first->getBuffer()),    "Error setArg kernels[ 3 ]" ); // Input buffer
-    V_OPENCL( kernels[3].setArg( 1, keys_output->getBuffer() ),  "Error setArg kernels[ 3 ]" ); // Output buffer
-    V_OPENCL( kernels[3].setArg( 2, values_output->getBuffer()), "Error setArg kernels[ 3 ]" ); // Output buffer
+    V_OPENCL( kernels[3].setArg( 0, keys_first.getBuffer()),    "Error setArg kernels[ 3 ]" ); // Input buffer
+    V_OPENCL( kernels[3].setArg( 1, keys_output.getBuffer() ),  "Error setArg kernels[ 3 ]" ); // Output buffer
+    V_OPENCL( kernels[3].setArg( 2, values_output.getBuffer()), "Error setArg kernels[ 3 ]" ); // Output buffer
     V_OPENCL( kernels[3].setArg( 3, *offsetArray),                "Error setArg kernels[ 3 ]" ); // Input buffer
     V_OPENCL( kernels[3].setArg( 4, *offsetValArray),             "Error setArg kernels[ 3 ]"  );
     V_OPENCL( kernels[3].setArg( 5, numElements ),               "Error setArg kernels[ 3 ]" ); // Size of scratch buffer

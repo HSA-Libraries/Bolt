@@ -436,7 +436,7 @@ template< typename InputIterator1, typename InputIterator2, typename OutputItera
                     l_Error = transformEvent.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END, &stop_time);
                     V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_END>()");
                     size_t time = stop_time - start_time;
-                    std::cout << "Global Memory Bandwidth: " << ( (distVec*(2.0*sizeof(iType)+sizeof(oType))) / time) << std::endl;
+                    std::cout << "Global Memory Bandwidth: " << ( (distVec*(2.0*sizeof(iType1)+sizeof(oType))) / time) << std::endl;
                 }
             };
 

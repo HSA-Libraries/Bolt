@@ -197,6 +197,8 @@ namespace cl
             typename device_vector::reference, int >
             {
             public:
+                typedef typename iterator_facade::difference_type difference_type;
+
             struct Payload
             {
                 typename iterator_facade::difference_type m_Index;
@@ -326,7 +328,7 @@ namespace cl
             */
             
             template< typename Container >
-            class reverse_iterator_base: public boost::iterator_facade< reverse_iterator_base< Container >, value_type, std::random_access_iterator_tag, typename device_vector::reference, bolt::cl::ptrdiff_t >
+            class reverse_iterator_base: public boost::iterator_facade< reverse_iterator_base< Container >, value_type, std::random_access_iterator_tag, typename device_vector::reference, int >
             {
             public:
 
@@ -1157,7 +1159,7 @@ namespace cl
                 --m_Size;
 
             size_type newIndex = (m_Size < index.m_Index) ? m_Size : index.m_Index;
-                return iterator( *this, newIndex );
+                return iterator( *this, static_cast< iterator::difference_type >( newIndex ) );
             }
 
             /*! \brief Removes a range of elements.
@@ -1176,7 +1178,7 @@ namespace cl
                 if( (first == begin( )) && (last == end( )) )
                 {
                     clear( );
-                    return iterator( *this, m_Size );
+                    return iterator( *this, static_cast< typename iterator::difference_type >( m_Size ) );
                 }
 
                 iterator l_End = end( );
@@ -1198,7 +1200,7 @@ namespace cl
                 m_Size -= sizeErase;
 
             size_type newIndex = (m_Size < last.m_Index) ? m_Size : last.m_Index;
-                return iterator( *this, newIndex );
+                return iterator( *this, static_cast< typename iterator::difference_type >( newIndex ) );
             }
 
             /*! \brief Insert a new element into the container.

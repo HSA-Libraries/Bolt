@@ -301,7 +301,7 @@ aProfiler.set(AsyncProfiler::device, control::SerialCpu);
     } // switch kernel
 
 
-    V_OPENCL( kernels[whichKernel].setArg( 0, first->getBuffer()),  "Error setArg kernels[ 0 ]" ); // Input keys
+    V_OPENCL( kernels[whichKernel].setArg( 0, first.getBuffer()),  "Error setArg kernels[ 0 ]" ); // Input keys
     V_OPENCL( kernels[whichKernel].setArg( 1, numElements),         "Error setArg kernels[ 0 ]" ); // Input buffer
     V_OPENCL( kernels[whichKernel].setArg( 2, *userGenerator ),     "Error setArg kernels[ 0 ]" ); // Size of buffer
 
