@@ -51,6 +51,7 @@ include_directories(
 add_subdirectory( ControlTest )
 add_subdirectory( CopyTest )
 add_subdirectory( CountTest )
+add_subdirectory( ConstantIteratorTest )
 add_subdirectory( DeviceVectorTest )
 add_subdirectory( FillTest )
 add_subdirectory( GenerateTest )

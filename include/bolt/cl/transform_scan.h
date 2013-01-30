@@ -15,9 +15,9 @@
 
 ***************************************************************************/                                                                                     
 
+#pragma once
 #if !defined( TRANSFORM_SCAN_H )
 #define TRANSFORM_SCAN_H
-#pragma once
 
 #include <bolt/cl/bolt.h>
 #include <bolt/cl/functional.h>

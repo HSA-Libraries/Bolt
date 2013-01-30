@@ -1,4 +1,4 @@
-/***************************************************************************                                                                                     
+/***************************************************************************         
 *   Copyright 2012 Advanced Micro Devices, Inc.                                     
 *                                                                                    
 *   Licensed under the Apache License, Version 2.0 (the "License");   
@@ -13,14 +13,14 @@
 *   See the License for the specific language governing permissions and              
 *   limitations under the License.                                                   
 
-***************************************************************************/                                                                                     
+***************************************************************************/         
 
 #pragma once
 
 #include "bolt/cl/bolt.h"
 #include "bolt/cl/functional.h"
 #include "bolt/cl/transform_reduce.h"
-#include "bolt/cl/iterator_traits.h"
+#include "bolt/cl/iterator/iterator_traits.h"
 
 namespace bolt {
     namespace cl {

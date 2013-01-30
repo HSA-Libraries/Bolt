@@ -349,7 +349,7 @@ namespace cl
         return totalSize;
     };
 
-    control::buffPointer control::acquireBuffer( size_t reqSize, cl_mem_flags flags, void* host_ptr )
+    control::buffPointer control::acquireBuffer( size_t reqSize, cl_mem_flags flags, const void* host_ptr )
     {
         ::cl::Context myContext = m_commandQueue.getInfo< CL_QUEUE_CONTEXT >( );
 
@@ -361,7 +361,7 @@ namespace cl
             //  std::multimap is not thread-safe; lock the map when inserting elements
             boost::lock_guard< boost::mutex > lock( mapGuard );
 
-            ::cl::Buffer tmp( myContext, flags, reqSize, host_ptr );
+            ::cl::Buffer tmp( myContext, flags, reqSize, const_cast< void*>( host_ptr ) );
             descBufferValue myValue = { reqSize, true, tmp };
             mapBufferType::iterator itInserted = mapBuffer.insert( std::make_pair( myDesc, myValue ) );
 
@@ -396,7 +396,7 @@ namespace cl
 
         //  If here, either all available buffers are currently in use, or we need to replace an existing buffer
         // create a new buffer and add it to the map
-        ::cl::Buffer tmp( myContext, flags, reqSize, host_ptr );
+        ::cl::Buffer tmp( myContext, flags, reqSize, const_cast< void* >( host_ptr ) );
         descBufferValue myValue = { reqSize, true, tmp };
 
         mapBufferType::iterator itInserted = mapBuffer.insert( std::make_pair( myDesc, myValue ) );

@@ -23,7 +23,7 @@
 #include <type_traits>
 #include <numeric>
 #include "bolt/cl/bolt.h"
-#include "bolt/cl/iterator_traits.h"
+#include "bolt/cl/iterator/iterator_traits.h"
 
 #include <boost/iterator/iterator_facade.hpp>
 #include <boost/iterator/reverse_iterator.hpp>
@@ -38,10 +38,11 @@
     */
 namespace bolt
 {
-    /*! \brief Namespace that captures OpenCL related data types and functions
+
+/*! \brief Namespace that captures OpenCL related data types and functions
      */
-    namespace cl
-    {
+namespace cl
+{
         /*! \addtogroup Containers
          */
 
@@ -49,6 +50,11 @@ namespace bolt
         *   \ingroup Containers
         *   Containers that guarantee sequential and linear access to memory "close" to the device
         */
+
+    struct device_vector_tag
+        : public std::random_access_iterator_tag
+        {   // identifying tag for random-access iterators
+        };
 
         /*! \brief This defines the OpenCL version of a device_vector
         *   \ingroup Device
@@ -61,7 +67,6 @@ namespace bolt
         template< typename T >
         class device_vector
         {
-
             /*! \brief Class used with shared_ptr<> as a custom deleter, to unmap a buffer that has been mapped with 
             *   device_vector data() method
             */
@@ -110,7 +115,7 @@ namespace bolt
             class reference_base
             {
             public:
-                reference_base( Container& rhs, size_type index ): m_Container( rhs ), m_index( index )
+            reference_base( Container& rhs, size_type index ): m_Container( rhs ), m_Index( index )
                 {}
 
                 //  Automatic type conversion operator to turn the reference object into a value_type
@@ -118,7 +123,7 @@ namespace bolt
                 {
                     cl_int l_Error = CL_SUCCESS;
                     naked_pointer result = reinterpret_cast< naked_pointer >( m_Container.m_commQueue.enqueueMapBuffer( 
-                        m_Container.m_devMemory, true, CL_MAP_READ, m_index * sizeof( value_type ), sizeof( value_type ), NULL, NULL, &l_Error ) );
+                    m_Container.m_devMemory, true, CL_MAP_READ, m_Index * sizeof( value_type ), sizeof( value_type ), NULL, NULL, &l_Error ) );
                     V_OPENCL( l_Error, "device_vector failed map device memory to host memory for operator[]" );
 
                     value_type valTmp = *result;
@@ -134,7 +139,7 @@ namespace bolt
                 {
                     cl_int l_Error = CL_SUCCESS;
                     naked_pointer result = reinterpret_cast< naked_pointer >( m_Container.m_commQueue.enqueueMapBuffer( 
-                        m_Container.m_devMemory, true, CL_MAP_WRITE_INVALIDATE_REGION, m_index * sizeof( value_type ), sizeof( value_type ), NULL, NULL, &l_Error ) );
+                    m_Container.m_devMemory, true, CL_MAP_WRITE_INVALIDATE_REGION, m_Index * sizeof( value_type ), sizeof( value_type ), NULL, NULL, &l_Error ) );
                     V_OPENCL( l_Error, "device_vector failed map device memory to host memory for operator[]" );
 
                     *result = rhs;
@@ -146,28 +151,6 @@ namespace bolt
                     return *this;
                 }
 
-                /*! \brief A get accessor function to return the encapsulated device buffer for const objects.
-                *   This member function allows access to the Buffer object, which can be retrieved through a reference or an iterator.
-                *   This is necessary to allow library functions to set the encapsulated buffer object as a kernel argument.  
-                *   \note This get function could be implemented in the iterator, but the reference object is usually a temporary rvalue, so 
-                *   this location seems less intrusive to the design of the vector class.
-                */
-                const ::cl::Buffer& getBuffer( ) const
-                {
-                    return m_Container.m_devMemory;
-                }
-
-                /*! \brief A get accessor function to return the encapsulated device buffer for non-const objects.
-                *   This member function allows access to the Buffer object, which can be retrieved through a reference or an iterator.
-                *   This is necessary to allow library functions to set the encapsulated buffer object as a kernel argument.  
-                *   \note This get function can be implemented in the iterator, but the reference object is usually a temporary rvalue, so 
-                *   this location seems less intrusive to the design of the vector class.
-                */
-                ::cl::Buffer& getBuffer( )
-                {
-                    return m_Container.m_devMemory;
-                }
-
                 /*! \brief A get accessor function to return the encapsulated device_vector.
                 */
                 Container& getContainer( ) const
@@ -177,12 +160,12 @@ namespace bolt
 
                 size_type getIndex() const
                 {
-                    return m_index;
+                return m_Index;
                 }
 
             private:
                 Container& m_Container;
-                size_type m_index;
+            size_type m_Index;
             };
 
             /*! \brief Typedef to create the non-constant reference.
@@ -206,19 +189,27 @@ namespace bolt
             *   \bug operator[] with device_vector iterators result in a compile-time error when accessed for reading.
             *   Writing with operator[] appears to be OK.  Workarounds: either use the operator[] on the device_vector
             *   container, or use iterator arithmetic instead, such as *(iter + 5) for reading from the iterator.
+        *   \note The difference_type for this iterator has been explicitely set to a 32-bit int, because m_Index 
+        *   is used in clSetKernelArg(), which does not accept size_t parameters
             */
             template< typename Container >
-            class iterator_base: public boost::iterator_facade< iterator_base< Container >, value_type, std::random_access_iterator_tag, typename device_vector::reference, bolt::cl::ptrdiff_t >
+        class iterator_base: public boost::iterator_facade< iterator_base< Container >, value_type, device_vector_tag, 
+            typename device_vector::reference, int >
             {
             public:
+            struct Payload
+            {
+                typename iterator_facade::difference_type m_Index;
+                typename iterator_facade::difference_type m_Ptr;        // This is a pseudo 32bit pointer stub
+            };
 
                 //  Basic constructor requires a reference to the container and a positional element
-                iterator_base( Container& rhs, size_type index ): m_Container( rhs ), m_index( index )
+            iterator_base( Container& rhs, typename iterator_facade::difference_type index ): m_Container( rhs ), m_Index( index )
                 {}
 
                 //  This copy constructor allows an iterator to convert into a const_iterator, but not vica versa
                 template< typename OtherContainer >
-                iterator_base( const iterator_base< OtherContainer >& rhs ): m_Container( rhs.m_Container ), m_index( rhs.m_index )
+            iterator_base( const iterator_base< OtherContainer >& rhs ): m_Container( rhs.m_Container ), m_Index( rhs.m_Index )
                 {}
 
                 //  This copy constructor allows an iterator to convert into a const_iterator, but not vica versa
@@ -226,28 +217,57 @@ namespace bolt
                 iterator_base< Container >& operator= ( const iterator_base< Container >& rhs )
                 {
                     m_Container = rhs.m_Container;
-                    m_index = rhs.m_index;
+                m_index = rhs.m_Index;
                     return *this;
                 }
                 
-                iterator_base< Container >& operator+= ( const difference_type & n )
+            iterator_base< Container >& operator+= ( const typename iterator_facade::difference_type & n )
                 {
                     advance( n );
                     return *this;
                 }
                 
-                const iterator_base< Container > operator+ ( const difference_type & n ) const
+            const iterator_base< Container > operator+ ( const typename iterator_facade::difference_type & n ) const
                 {
                     iterator_base< Container > result(*this);
                     result.advance(n);
                     return result;
                 }
 
-                int getIndex() const
+            /*! \brief A get accessor function to return the encapsulated device buffer for const objects.
+            *   This member function allows access to the Buffer object, which can be retrieved through a reference or an iterator.
+            *   This is necessary to allow library functions to set the encapsulated buffer object as a kernel argument.  
+            *   \note This get function could be implemented in the iterator, but the reference object is usually a temporary rvalue, so 
+            *   this location seems less intrusive to the design of the vector class.
+            */
+            const ::cl::Buffer& getBuffer( ) const
                 {
-                    return m_index;
+                return m_Container.m_devMemory;
                 }
 
+            /*! \brief A get accessor function to return the encapsulated device buffer for non-const objects.
+            *   This member function allows access to the Buffer object, which can be retrieved through a reference or an iterator.
+            *   This is necessary to allow library functions to set the encapsulated buffer object as a kernel argument.  
+            *   \note This get function can be implemented in the iterator, but the reference object is usually a temporary rvalue, so 
+            *   this location seems less intrusive to the design of the vector class.
+            */
+            ::cl::Buffer& getBuffer( )
+            {
+                return m_Container.m_devMemory;
+            }
+
+            Payload gpuPayload( ) const
+            {
+                Payload payload = { m_Index, 0 };
+                return payload;
+            }
+
+            const typename iterator_facade::difference_type gpuPayloadSize( ) const
+            {
+                return sizeof( Payload );
+            }
+
+            typename iterator_facade::difference_type m_Index;
 
             private:
                 //  Implementation detail of boost.iterator
@@ -259,9 +279,9 @@ namespace bolt
                 //  Used for templatized copy constructor and the templatized equal operator
                 template < typename > friend class iterator_base;
 
-                void advance( difference_type n )
+            void advance( typename iterator_facade::difference_type n )
                 {
-                    m_index += n;
+                m_Index += n;
                 }
 
                 void increment( )
@@ -276,13 +296,13 @@ namespace bolt
 
                 difference_type distance_to( const iterator_base< Container >& rhs ) const
                 {
-                    return static_cast< difference_type >( rhs.m_index - m_index );
+                return static_cast< typename iterator_facade::difference_type >( rhs.m_Index - m_Index );
                 }
 
                 template< typename OtherContainer >
                 bool equal( const iterator_base< OtherContainer >& rhs ) const
                 {
-                    bool sameIndex = rhs.m_index == m_index;
+                bool sameIndex = rhs.m_Index == m_Index;
                     bool sameContainer = (&m_Container == &rhs.m_Container );
 
                     return ( sameIndex && sameContainer );
@@ -290,11 +310,10 @@ namespace bolt
 
                 reference dereference( ) const
                 {
-                    return m_Container[ m_index ];
+                return m_Container[ m_Index ];
                 }
 
                 Container& m_Container;
-                size_type m_index;
             };
 
             /*! \brief A reverse random access iterator in the classic sense
@@ -883,7 +902,7 @@ namespace bolt
             */
             iterator end( void )
             {
-                return iterator( *this, m_Size );
+            return iterator( *this, static_cast< typename iterator::difference_type >( m_Size ) );
             }
 
             /*! \brief Retrieves an iterator for this container that points at the last constant element.
@@ -892,7 +911,7 @@ namespace bolt
             */
             const_iterator end( void ) const
             {
-                return const_iterator( *this, m_Size );
+            return const_iterator( *this, static_cast< typename iterator::difference_type >( m_Size ) );
             }
 
             /*! \brief Retrieves an iterator for this container that points at the last constant element.
@@ -902,7 +921,7 @@ namespace bolt
             */
             const_iterator cend( void ) const
             {
-                return const_iterator( *this, m_Size );
+            return const_iterator( *this, static_cast< typename iterator::difference_type >( m_Size ) );
             }
 
             /*! \brief Retrieves a reverse_iterator for this container that points at the beginning element.
@@ -1118,14 +1137,14 @@ namespace bolt
                     throw ::cl::Error( CL_INVALID_ARG_VALUE , "Iterator is not from this container" );
 
                 iterator l_End = end( );
-                if( index.m_index >= l_End.m_index )
+            if( index.m_Index >= l_End.m_Index )
                     throw ::cl::Error( CL_INVALID_ARG_INDEX , "Iterator is pointing past the end of this container" );
 
-                size_type sizeRegion = l_End.m_index - index.m_index;
+            size_type sizeRegion = l_End.m_Index - index.m_Index;
 
                 cl_int l_Error = CL_SUCCESS;
                 naked_pointer ptrBuff = reinterpret_cast< naked_pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ | CL_MAP_WRITE, 
-                        index.m_index * sizeof( value_type ), sizeRegion * sizeof( value_type ), NULL, NULL, &l_Error ) );
+                    index.m_Index * sizeof( value_type ), sizeRegion * sizeof( value_type ), NULL, NULL, &l_Error ) );
                 V_OPENCL( l_Error, "device_vector failed map device memory to host memory for operator[]" );
 
                 ::memmove( ptrBuff, ptrBuff + 1, (sizeRegion - 1)*sizeof( value_type ) );
@@ -1137,7 +1156,7 @@ namespace bolt
 
                 --m_Size;
 
-                size_type newIndex = (m_Size < index.m_index) ? m_Size : index.m_index;
+            size_type newIndex = (m_Size < index.m_Index) ? m_Size : index.m_Index;
                 return iterator( *this, newIndex );
             }
 
@@ -1151,7 +1170,7 @@ namespace bolt
                 if(( &first.m_Container != this ) && ( &last.m_Container != this ) )
                     throw ::cl::Error( CL_INVALID_ARG_VALUE , "Iterator is not from this container" );
 
-                if( last.m_index > m_Size )
+            if( last.m_Index > m_Size )
                     throw ::cl::Error( CL_INVALID_ARG_INDEX , "Iterator is pointing past the end of this container" );
 
                 if( (first == begin( )) && (last == end( )) )
@@ -1161,14 +1180,14 @@ namespace bolt
                 }
 
                 iterator l_End = end( );
-                size_type sizeMap = l_End.m_index - first.m_index;
+            size_type sizeMap = l_End.m_Index - first.m_Index;
 
                 cl_int l_Error = CL_SUCCESS;
                 naked_pointer ptrBuff = reinterpret_cast< naked_pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ | CL_MAP_WRITE, 
-                        first.m_index * sizeof( value_type ), sizeMap * sizeof( value_type ), NULL, NULL, &l_Error ) );
+                    first.m_Index * sizeof( value_type ), sizeMap * sizeof( value_type ), NULL, NULL, &l_Error ) );
                 V_OPENCL( l_Error, "device_vector failed map device memory to host memory for operator[]" );
 
-                size_type sizeErase = last.m_index - first.m_index;
+            size_type sizeErase = last.m_Index - first.m_Index;
                 ::memmove( ptrBuff, ptrBuff + sizeErase, (sizeMap - sizeErase)*sizeof( value_type ) );
 
                 ::cl::Event unmapEvent;
@@ -1178,7 +1197,7 @@ namespace bolt
 
                 m_Size -= sizeErase;
 
-                size_type newIndex = (m_Size < last.m_index) ? m_Size : last.m_index;
+            size_type newIndex = (m_Size < last.m_Index) ? m_Size : last.m_Index;
                 return iterator( *this, newIndex );
             }
 
@@ -1194,13 +1213,13 @@ namespace bolt
                 if( &index.m_Container != this )
                     throw ::cl::Error( CL_INVALID_ARG_VALUE , "Iterator is not from this container" );
 
-                if( index.m_index > m_Size )
+            if( index.m_Index > m_Size )
                     throw ::cl::Error( CL_INVALID_ARG_INDEX , "Iterator is pointing past the end of this container" );
 
-                if( index.m_index == m_Size )
+            if( index.m_Index == m_Size )
                 {
                     push_back( value );
-                    return iterator( *this, index.m_index );
+                return iterator( *this, index.m_Index );
                 }
 
                 //  Need to grow the vector to insert a new value.
@@ -1211,11 +1230,11 @@ namespace bolt
                     reserve( m_Size + 10 );
                 }
 
-                size_type sizeMap = (m_Size - index.m_index) + 1;
+            size_type sizeMap = (m_Size - index.m_Index) + 1;
 
                 cl_int l_Error = CL_SUCCESS;
                 naked_pointer ptrBuff = reinterpret_cast< naked_pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ | CL_MAP_WRITE, 
-                        index.m_index * sizeof( value_type ), sizeMap * sizeof( value_type ), NULL, NULL, &l_Error ) );
+                    index.m_Index * sizeof( value_type ), sizeMap * sizeof( value_type ), NULL, NULL, &l_Error ) );
                 V_OPENCL( l_Error, "device_vector failed map device memory to host memory for operator[]" );
 
                 //  Shuffle the old values 1 element down
@@ -1231,7 +1250,7 @@ namespace bolt
 
                 ++m_Size;
 
-                return iterator( *this, index.m_index );
+            return iterator( *this, index.m_Index );
             }
 
             /*! \brief Inserts n copies of the new element into the container.
@@ -1246,7 +1265,7 @@ namespace bolt
                 if( &index.m_Container != this )
                     throw ::cl::Error( CL_INVALID_ARG_VALUE , "Iterator is not from this container" );
 
-                if( index.m_index > m_Size )
+            if( index.m_Index > m_Size )
                     throw ::cl::Error( CL_INVALID_ARG_INDEX , "Iterator is pointing past the end of this container" );
 
                 //  Need to grow the vector to insert a new value.
@@ -1257,11 +1276,11 @@ namespace bolt
                     reserve( m_Size + n );
                 }
 
-                size_type sizeMap = (m_Size - index.m_index) + n;
+            size_type sizeMap = (m_Size - index.m_Index) + n;
 
                 cl_int l_Error = CL_SUCCESS;
                 naked_pointer ptrBuff = reinterpret_cast< naked_pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ | CL_MAP_WRITE, 
-                        index.m_index * sizeof( value_type ), sizeMap * sizeof( value_type ), NULL, NULL, &l_Error ) );
+                    index.m_Index * sizeof( value_type ), sizeMap * sizeof( value_type ), NULL, NULL, &l_Error ) );
                 V_OPENCL( l_Error, "device_vector failed map device memory to host memory for operator[]" );
 
                 //  Shuffle the old values n element down.
@@ -1287,7 +1306,7 @@ namespace bolt
                 if( &index.m_Container != this )
                     throw ::cl::Error( CL_INVALID_ARG_VALUE , "Iterator is not from this container" );
 
-                if( index.m_index > m_Size )
+            if( index.m_Index > m_Size )
                     throw ::cl::Error( CL_INVALID_ARG_INDEX , "Iterator is pointing past the end of this container" );
 
                 //  Need to grow the vector to insert a new value.
@@ -1298,11 +1317,11 @@ namespace bolt
                 {
                     reserve( m_Size + n );
                 }
-                size_type sizeMap = (m_Size - index.m_index) + n;
+            size_type sizeMap = (m_Size - index.m_Index) + n;
 
                 cl_int l_Error = CL_SUCCESS;
                 naked_pointer ptrBuff = reinterpret_cast< naked_pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ | CL_MAP_WRITE, 
-                        index.m_index * sizeof( value_type ), sizeMap * sizeof( value_type ), NULL, NULL, &l_Error ) );
+                    index.m_Index * sizeof( value_type ), sizeMap * sizeof( value_type ), NULL, NULL, &l_Error ) );
                 V_OPENCL( l_Error, "device_vector failed map device memory to host memory for iterator insert" );
 
                 //  Shuffle the old values n element down.
@@ -1385,7 +1404,63 @@ namespace bolt
             cl_mem_flags m_Flags;
         };
 
-    }
+    //  This string represents the device side definition of the constant_iterator template
+    static std::string deviceVectorIteratorTemplate = STRINGIFY_CODE( 
+        namespace bolt { \n
+        namespace cl { \n
+        template< typename T > \n
+        class device_vector \n
+        { \n
+        public: \n
+            class iterator \n
+            { \n
+            public:
+                typedef int iterator_category;      // device code does not understand std:: tags  \n
+                typedef T value_type; \n
+                typedef size_t difference_type; \n
+                typedef size_t size_type; \n
+                typedef T* pointer; \n
+                typedef T& reference; \n
+
+                iterator( value_type init ): m_StartIndex( init ), m_Ptr( 0 ) \n
+                {}; \n
+
+                void init( global value_type* ptr )\n
+                { \n
+                    m_Ptr = ptr; \n
+                }; \n
+
+                global value_type& operator[]( size_type threadID ) const \n
+                { \n
+                    return m_Ptr[ m_StartIndex + threadID ]; \n
+                } \n
+
+                value_type operator*( ) const \n
+                { \n
+                    return m_Ptr[ m_StartIndex + threadID ]; \n
+                } \n
+
+                size_type m_StartIndex; \n
+                global value_type* m_Ptr; \n
+            }; \n
+        }; \n
+    }; \n
+    }; \n
+    );
+
+    //BOLT_TEMPLATE_REGISTER_NEW_TYPE( device_vector::iterator, int, float );
+    //BOLT_TEMPLATE_REGISTER_NEW_TYPE( device_vector::iterator, int, double );
+
 }
+}
+
+BOLT_CREATE_TYPENAME( bolt::cl::device_vector< int >::iterator );
+BOLT_CREATE_CLCODE( bolt::cl::device_vector< int >::iterator, bolt::cl::deviceVectorIteratorTemplate );
+
+BOLT_CREATE_TYPENAME( bolt::cl::device_vector< float >::iterator );
+BOLT_CREATE_CLCODE( bolt::cl::device_vector< float >::iterator, bolt::cl::deviceVectorIteratorTemplate );
+
+BOLT_CREATE_TYPENAME( bolt::cl::device_vector< double >::iterator );
+BOLT_CREATE_CLCODE( bolt::cl::device_vector< double >::iterator, bolt::cl::deviceVectorIteratorTemplate );
 
 #endif

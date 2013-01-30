@@ -645,9 +645,16 @@ TEST_P (transformReduceTestMultFloat, multiplyWithFloats)
         myBoltArray[i] = myArray[i];
     }
 
+#if defined (_WIN32 )
+    std::transform( myArray, (float *)(myArray + arraySize), stdext::make_checked_array_iterator( myArray2, arraySize ), 
+        std::negate<float>( ) );
+#else
     std::transform( myArray, (float *)(myArray + arraySize), myArray2, std::negate<float>( ) );
+#endif
+
     float stlTransformReduce = std::accumulate(myArray2, myArray2 + arraySize, 1.0f, std::multiplies<float>());
-    float boltTransformReduce = bolt::cl::transform_reduce(myBoltArray, myBoltArray + arraySize, bolt::cl::negate<float>(), 1.0f, bolt::cl::multiplies<float>());
+    float boltTransformReduce = bolt::cl::transform_reduce(myBoltArray, myBoltArray + arraySize, bolt::cl::negate<float>(),
+        1.0f, bolt::cl::multiplies<float>());
 
     EXPECT_FLOAT_EQ(stlTransformReduce , boltTransformReduce )<<"Values does not match\n";
 
@@ -702,7 +709,13 @@ TEST_P (transformReduceTestMultDouble, multiplyWithDouble)
         myBoltArray[i] = myArray[i];
     }
 
+#if defined (_WIN32 )
+    std::transform( myArray, myArray + arraySize, stdext::make_checked_array_iterator( myArray2, arraySize ), 
+        std::negate<double>( ) );
+#else
     std::transform(myArray, myArray + arraySize, myArray2, std::negate<double>());
+#endif
+
     double stlTransformReduce = std::accumulate(myArray2, myArray2 + arraySize, 1.0, std::multiplies<double>());
 
     double boltTransformReduce = bolt::cl::transform_reduce(myBoltArray, myBoltArray + arraySize, bolt::cl::negate<double>(), 1.0, bolt::cl::multiplies<double>());
@@ -1045,6 +1058,7 @@ typedef ::testing::Types<
     std::tuple< double, TypeValue< 65536 > >
 > DoubleTests;
 #endif 
+
 BOLT_FUNCTOR(UDD,
 struct UDD { 
     int a; 
@@ -1068,6 +1082,9 @@ struct UDD {
         : a(_in), b(_in +1)  { } 
 }; 
 );
+
+BOLT_CREATE_TYPENAME( bolt::cl::device_vector< UDD >::iterator );
+BOLT_CREATE_CLCODE( bolt::cl::device_vector< UDD >::iterator, bolt::cl::deviceVectorIteratorTemplate );
 
 BOLT_FUNCTOR(DivUDD,
 struct DivUDD

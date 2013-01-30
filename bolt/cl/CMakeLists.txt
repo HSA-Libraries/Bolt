@@ -74,8 +74,7 @@ set( clBolt.Runtime.Headers
         ${clBolt.Include.Dir}/functional.h 
         ${clBolt.Include.Dir}/fill.h 
         ${clBolt.Include.Dir}/generate.h 
-        ${clBolt.Include.Dir}/inner_product.h 
-        ${clBolt.Include.Dir}/iterator_traits.h 
+		${clBolt.Include.Dir}/inner_product.h 
 		${clBolt.Include.Dir}/pair.h
         ${clBolt.Include.Dir}/reduce.h 
 		${clBolt.Include.Dir}/reduce_by_key.h 
@@ -85,6 +84,9 @@ set( clBolt.Runtime.Headers
         ${clBolt.Include.Dir}/sort_by_key.h 
         ${clBolt.Include.Dir}/transform.h 
         ${clBolt.Include.Dir}/transform_reduce.h
+        ${clBolt.Include.Dir}/iterator/iterator_traits.h 
+        ${clBolt.Include.Dir}/iterator/constant_iterator.h
+        ${clBolt.Include.Dir}/iterator/counting_iterator.h
         ${clBolt.Include.Dir}/transform_scan.h
     )
 
@@ -99,7 +101,7 @@ set( clBolt.Runtime.Headers.Detail
         ${clBolt.Include.Dir}/detail/copy.inl
         ${clBolt.Include.Dir}/detail/fill.inl
         ${clBolt.Include.Dir}/detail/generate.inl
-        ${clBolt.Include.Dir}/detail/inner_product.inl
+		${clBolt.Include.Dir}/detail/inner_product.inl
 		${clBolt.Include.Dir}/detail/pair.inl
         ${clBolt.Include.Dir}/detail/reduce.inl
 		${clBolt.Include.Dir}/detail/reduce_by_key.inl

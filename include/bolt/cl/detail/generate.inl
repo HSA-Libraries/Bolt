@@ -34,30 +34,34 @@ namespace cl {
 template<typename ForwardIterator, typename Generator> 
 void generate( ForwardIterator first, ForwardIterator last, Generator gen, const std::string& cl_code)
 {
-    detail::generate_detect_random_access( bolt::cl::control::getDefault(), first, last, gen, cl_code, std::iterator_traits< ForwardIterator >::iterator_category( ) );
+            detail::generate_detect_random_access( bolt::cl::control::getDefault(), first, last, gen, cl_code, 
+                std::iterator_traits< ForwardIterator >::iterator_category( ) );
 }
 
-// user specified control, start->stop
-template<typename ForwardIterator, typename Generator> 
-void generate( bolt::cl::control &ctrl, ForwardIterator first, ForwardIterator last, Generator gen, const std::string& cl_code)
-{
-    detail::generate_detect_random_access( ctrl, first, last, gen, cl_code, std::iterator_traits< ForwardIterator >::iterator_category( ) );
-}
+        // user specified control, start->stop
+        template<typename ForwardIterator, typename Generator> 
+        void generate( bolt::cl::control &ctl, ForwardIterator first, ForwardIterator last, Generator gen, const std::string& cl_code)
+        {
+            detail::generate_detect_random_access( ctl, first, last, gen, cl_code, 
+                std::iterator_traits< ForwardIterator >::iterator_category( ) );
+        }
 
 // default control, start-> +n
 template<typename OutputIterator, typename Size, typename Generator> 
 OutputIterator generate_n( OutputIterator first, Size n, Generator gen, const std::string& cl_code)
 {
-    detail::generate_detect_random_access( bolt::cl::control::getDefault(), first, first+n, gen, cl_code, std::iterator_traits< OutputIterator >::iterator_category( ) );
-    return (first+n);
+            detail::generate_detect_random_access( bolt::cl::control::getDefault(), first, first+n, gen, cl_code, 
+                std::iterator_traits< OutputIterator >::iterator_category( ) );
+            return (first+n);
 }
 
-// user specified control, start-> +n
-template<typename OutputIterator, typename Size, typename Generator> 
-OutputIterator generate_n( bolt::cl::control &ctrl, OutputIterator first, Size n, Generator gen, const std::string& cl_code)
-{
-    detail::generate_detect_random_access( ctrl, first, n, gen, cl_code, std::iterator_traits< OutputIterator >::iterator_category( ) );
-    return (first+n);
+        // user specified control, start-> +n
+        template<typename OutputIterator, typename Size, typename Generator> 
+        OutputIterator generate_n( bolt::cl::control &ctl, OutputIterator first, Size n, Generator gen, const std::string& cl_code)
+        {
+            detail::generate_detect_random_access( ctl, first, n, gen, cl_code, 
+                std::iterator_traits< OutputIterator >::iterator_category( ) );
+            return (first+n);
 }
 
 }//end of cl namespace
@@ -83,25 +87,25 @@ class Generate_KernelTemplateSpecializer : public KernelTemplateSpecializer
         addKernelName( "generate_II"  );
         addKernelName( "generate_III" );
     }
-    
+
     const ::std::string operator() ( const ::std::vector<::std::string>& typeNames ) const
     {
         const std::string templateSpecializationString =
-                "// Host generates this instantiation string with user-specified value type and generator\n"
+                        "// Host generates this instantiation string with user-specified value type and generator\n"
                 "template __attribute__((mangled_name("+name(0)+"Instantiated)))\n"
                 "kernel void "+name(0)+"(\n"
                 "global " + typeNames[gen_oType] + " * restrict dst,\n"
                 "const int numElements,\n"
                 "global " + typeNames[gen_genType] + " * restrict genPtr);\n\n"
 
-                "// Host generates this instantiation string with user-specified value type and generator\n"
+                        "// Host generates this instantiation string with user-specified value type and generator\n"
                 "template __attribute__((mangled_name("+name(1)+"Instantiated)))\n"
                 "kernel void "+name(1)+"(\n"
                 "global " + typeNames[gen_oType] + " * restrict dst,\n"
                 "const int numElements,\n"
                 "global " + typeNames[gen_genType] + " * restrict genPtr);\n\n"
 
-                "// Host generates this instantiation string with user-specified value type and generator\n"
+                        "// Host generates this instantiation string with user-specified value type and generator\n"
                 "template __attribute__((mangled_name("+name(2)+"Instantiated)))\n"
                 "kernel void "+name(2)+"(\n"
                 "global " + typeNames[gen_oType] + " * restrict dst,\n"
@@ -112,71 +116,80 @@ class Generate_KernelTemplateSpecializer : public KernelTemplateSpecializer
         return templateSpecializationString;
     }
 };
-
+                        
 
 
 /*****************************************************************************
- * Random Access
- ****************************************************************************/
+             * Random Access
+             ****************************************************************************/
 
 // generate, not random-access
 template<typename ForwardIterator, typename Generator>
 void generate_detect_random_access( bolt::cl::control &ctrl, const ForwardIterator& first, const ForwardIterator& last, 
-            const Generator& gen, const std::string &cl_code, std::forward_iterator_tag )
+                        const Generator& gen, const std::string &cl_code, std::forward_iterator_tag )
 {
-    static_assert( false, "Bolt only supports random access iterator types" );
+                static_assert( false, "Bolt only supports random access iterator types" );
 }
 
 // generate, yes random-access
 template<typename ForwardIterator, typename Generator>
 void generate_detect_random_access( bolt::cl::control &ctrl, const ForwardIterator& first, const ForwardIterator& last, 
-            const Generator& gen, const std::string &cl_code, std::random_access_iterator_tag )
-{
-    generate_pick_iterator(ctrl, first, last, gen, cl_code);
-}
-
+                        const Generator& gen, const std::string &cl_code, std::random_access_iterator_tag )
+            {
+                generate_pick_iterator(ctrl, first, last, gen, cl_code, 
+                    std::iterator_traits< ForwardIterator >::iterator_category( ) );
+            }
+           
 
 /*****************************************************************************
- * Pick Iterator
- ****************************************************************************/
+             * Pick Iterator
+             ****************************************************************************/
 
 /*! \brief This template function overload is used to seperate device_vector iterators from all other iterators
-    \detail This template is called by the non-detail versions of generate, it already assumes random access
- *  iterators.  This overload is called strictly for non-device_vector iterators
-*/
-template<typename ForwardIterator, typename Generator> 
-typename std::enable_if< !(std::is_base_of<typename device_vector<typename std::iterator_traits<ForwardIterator>::value_type>::iterator, ForwardIterator>::value), void >::type
-generate_pick_iterator(bolt::cl::control &ctrl,  const ForwardIterator &first, const ForwardIterator &last, const Generator &gen, const std::string &user_code)
-{
-    typedef std::iterator_traits<ForwardIterator>::value_type Type;
+                \detail This template is called by the non-detail versions of generate, it already assumes random access
+             *  iterators.  This overload is called strictly for non-device_vector iterators
+            */
+            template<typename ForwardIterator, typename Generator> 
+            void generate_pick_iterator(bolt::cl::control &ctrl,  const ForwardIterator &first, const ForwardIterator &last, 
+                const Generator &gen, const std::string &user_code, std::random_access_iterator_tag )
+            {
+                typedef std::iterator_traits<ForwardIterator>::value_type Type;
 
-    size_t sz = (last - first); 
-    if (sz < 1)
-        return;
+                size_t sz = (last - first); 
+                if (sz < 1)
+                    return;
 
-    // Use host pointers memory since these arrays are only write once - no benefit to copying.
-    // Map the forward iterator to a device_vector
+                // Use host pointers memory since these arrays are only write once - no benefit to copying.
+                // Map the forward iterator to a device_vector
     device_vector< Type > range( first, sz, CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY, false, ctrl );
 
     generate_enqueue( ctrl, range.begin( ), range.end( ), gen, user_code );
 
-    // This should immediately map/unmap the buffer
-    range.data( );
+                // This should immediately map/unmap the buffer
+                range.data( );
 }
 
-// This template is called by the non-detail versions of generate, it already assumes random access iterators
-// This is called strictly for iterators that are derived from device_vector< T >::iterator
-template<typename DVForwardIterator, typename Generator> 
-typename std::enable_if< (std::is_base_of<typename device_vector<typename std::iterator_traits<DVForwardIterator>::value_type>::iterator,DVForwardIterator>::value), void >::type
-generate_pick_iterator(bolt::cl::control &ctrl,  const DVForwardIterator &first, const DVForwardIterator &last, const Generator &gen, const std::string& user_code)
-{
-    generate_enqueue( ctrl, first, last, gen, user_code );
-}
+            // This template is called by the non-detail versions of generate, it already assumes random access iterators
+            // This is called strictly for iterators that are derived from device_vector< T >::iterator
+            template<typename DVForwardIterator, typename Generator> 
+            void generate_pick_iterator(bolt::cl::control &ctl, const DVForwardIterator &first, const DVForwardIterator &last, 
+                const Generator &gen, const std::string& user_code, bolt::cl::device_vector_tag )
+            {
+                generate_enqueue( ctl, first, last, gen, user_code );
+            }
 
+            // This template is called by the non-detail versions of generate, it already assumes random access iterators
+            // This is called strictly for iterators that are derived from device_vector< T >::iterator
+            template<typename DVForwardIterator, typename Generator> 
+            void generate_pick_iterator(bolt::cl::control &ctl,  const DVForwardIterator &first, const DVForwardIterator &last, 
+                const Generator &gen, const std::string& user_code, bolt::cl::fancy_iterator_tag )
+            {
+                static_assert( false, "It is not possible to generate into fancy iterators. They are not mutable" );
+            }
 
 /*****************************************************************************
- * Enqueue
- ****************************************************************************/
+             * Enqueue
+             ****************************************************************************/
 
 template< typename DVForwardIterator, typename Generator > 
 void generate_enqueue(
@@ -223,7 +236,7 @@ aProfiler.set(AsyncProfiler::device, control::SerialCpu);
     cl_uint numThreadsRUP = numElements;
     size_t mod = (numElements & (workGroupSize-1));
     if( mod )
-    {
+            {
         numThreadsRUP &= ~mod;
         numThreadsRUP += workGroupSize;
         doBoundaryCheck = 1;
@@ -249,7 +262,7 @@ aProfiler.set(AsyncProfiler::device, control::SerialCpu);
         typeDefs,
         generate_kernels,
         compileOptions);
-    
+
 #ifdef BOLT_ENABLE_PROFILING
 aProfiler.nextStep();
 aProfiler.setStepName("Acquire Intermediate Buffers");
@@ -259,15 +272,18 @@ aProfiler.set(AsyncProfiler::device, control::SerialCpu);
     /**********************************************************************************
      * Temporary Buffers
      *********************************************************************************/
-    ALIGNED( 256 ) Generator aligned_generator( gen );
-    control::buffPointer userGenerator = ctrl.acquireBuffer( sizeof( aligned_generator ), CL_MEM_READ_ONLY|CL_MEM_USE_HOST_PTR, &aligned_generator );
+                ALIGNED( 256 ) Generator aligned_generator( gen );
+                // ::cl::Buffer userGenerator(ctl.context(), CL_MEM_READ_ONLY|CL_MEM_USE_HOST_PTR, 
+                //  sizeof( aligned_generator ), const_cast< Generator* >( &aligned_generator ) );
+                control::buffPointer userGenerator = ctrl.acquireBuffer( sizeof( aligned_generator ), 
+                    CL_MEM_READ_ONLY|CL_MEM_USE_HOST_PTR, &aligned_generator );
 
 #ifdef BOLT_ENABLE_PROFILING
 aProfiler.nextStep();
 aProfiler.setStepName("Kernel 0 Setup");
 aProfiler.set(AsyncProfiler::device, control::SerialCpu);
 #endif
-
+                
     int whichKernel = 0;
     cl_uint numThreadsChosen;
     cl_uint workGroupSizeChosen = workGroupSize;
@@ -284,7 +300,7 @@ aProfiler.set(AsyncProfiler::device, control::SerialCpu);
         break;
     } // switch kernel
 
-    
+
     V_OPENCL( kernels[whichKernel].setArg( 0, first->getBuffer()),  "Error setArg kernels[ 0 ]" ); // Input keys
     V_OPENCL( kernels[whichKernel].setArg( 1, numElements),         "Error setArg kernels[ 0 ]" ); // Input buffer
     V_OPENCL( kernels[whichKernel].setArg( 2, *userGenerator ),     "Error setArg kernels[ 0 ]" ); // Size of buffer
@@ -301,18 +317,18 @@ aProfiler.set(AsyncProfiler::memory, 1*numElements*sizeof(oType)
         + (numThreadsChosen/workGroupSizeChosen)*sizeof(Generator));
 #endif
 
-    // enqueue kernel
-    ::cl::Event generateEvent;
+                // enqueue kernel
+                ::cl::Event generateEvent;
     l_Error = ctrl.commandQueue().enqueueNDRangeKernel(
         kernels[whichKernel], 
-        ::cl::NullRange,
+                    ::cl::NullRange,
         ::cl::NDRange(numThreadsChosen),
         ::cl::NDRange(workGroupSizeChosen),
-        NULL,
-        &generateEvent );
-    V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for generate() kernel" );
+                    NULL,
+                    &generateEvent );
+                V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for generate() kernel" );
 
-    // wait to kernel completion
+                // wait to kernel completion
     bolt::cl::wait(ctrl, generateEvent);
 #if 0
 #ifdef BOLT_ENABLE_PROFILING

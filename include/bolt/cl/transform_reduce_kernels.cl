@@ -17,22 +17,24 @@
 
 #define _REDUCE_STEP(_LENGTH, _IDX, _W) \
     if ((_IDX < _W) && ((_IDX + _W) < _LENGTH)) {\
-      oType mine = scratch[_IDX];\
-      oType other = scratch[_IDX + _W];\
+      oNakedType mine = scratch[_IDX];\
+      oNakedType other = scratch[_IDX + _W];\
       scratch[_IDX] = (*reduceFunctor)(mine, other); \
     }\
     barrier(CLK_LOCAL_MEM_FENCE);
 
-template <typename iType, typename oType, typename unary_function, typename binary_function>
-kernel
-void transform_reduceTemplate(
-    global iType* input, 
+template< typename iNakedType, typename iIterType, typename oNakedType, typename unary_function,
+    typename binary_function>
+kernel void transform_reduceTemplate(
+    global iNakedType* input_ptr,
+    iIterType input_iter,
     const int length,
-    global unary_function *transformFunctor,
-	const oType init,
-    global binary_function *reduceFunctor,
-    global oType* result,
-    local oType *scratch
+    global unary_function* transformFunctor,
+    const oNakedType init,
+    global binary_function* reduceFunctor,
+    global oNakedType* result_ptr,
+    // oIterType result_iter,
+    local oNakedType* scratch
 )
 {
     int gx = get_global_id( 0 );
@@ -40,19 +42,22 @@ void transform_reduceTemplate(
     //  Abort threads that are passed the end of the input vector
     if( gx >= length )
         return;
-    
+
+    input_iter.init( input_ptr );
+    // result_iter.init( result_ptr );
+
     //  Initialize the accumulator private variable with data from the input array
     //  This essentially unrolls the loop below at least once
-    iType inputReg = input[gx];
-    oType accumulator = (*transformFunctor)( inputReg );
+    iNakedType inputReg = input_iter[gx];
+    oNakedType accumulator = (*transformFunctor)( inputReg );
     gx += get_global_size( 0 );
 
     // Loop sequentially over chunks of input vector, reducing an arbitrary size input
     // length into a length related to the number of workgroups
     while( gx < length )
     {
-        iType element = input[gx];
-        oType transformedElement = (*transformFunctor)( element );
+        iNakedType element = input_iter[gx];
+        oNakedType transformedElement = (*transformFunctor)( element );
 
         accumulator = (*reduceFunctor)( accumulator, transformedElement );
         gx += get_global_size(0);
@@ -88,6 +93,6 @@ void transform_reduceTemplate(
 
     if( local_index == 0 )
     {
-        result[get_group_id( 0 )] = scratch[ 0 ];
+        result_ptr[ get_group_id( 0 ) ] = scratch[ 0 ];
     }
 };

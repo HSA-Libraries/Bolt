@@ -1012,6 +1012,9 @@ BOLT_FUNCTOR(sortBy_UDD_b,
 BOLT_CREATE_TYPENAME(bolt::cl::less<UDD>);
 BOLT_CREATE_TYPENAME(bolt::cl::greater<UDD>);
 
+BOLT_CREATE_TYPENAME( bolt::cl::device_vector< UDD >::iterator );
+BOLT_CREATE_CLCODE( bolt::cl::device_vector< UDD >::iterator, bolt::cl::deviceVectorIteratorTemplate );
+
 template< typename ArrayTuple >
 class SortUDDArrayTest: public ::testing::Test
 {

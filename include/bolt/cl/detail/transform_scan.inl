@@ -270,7 +270,8 @@ transform_scan_detect_random_access(
     const BinaryFunction& binary_op,
     std::random_access_iterator_tag )
 {
-    return detail::transform_scan_pick_iterator( ctl, first, last, result, unary_op, init, inclusive, binary_op );
+    return detail::transform_scan_pick_iterator( ctl, first, last, result, unary_op, init, inclusive, binary_op,
+        std::iterator_traits< InputIterator >::iterator_category( ) );
 };
 
 /*! 
@@ -283,12 +284,7 @@ template<
     typename UnaryFunction,
     typename T,
     typename BinaryFunction >
-typename std::enable_if< 
-             !(std::is_base_of<typename device_vector<typename
-               std::iterator_traits<InputIterator>::value_type>::iterator,InputIterator>::value &&
-               std::is_base_of<typename device_vector<typename
-               std::iterator_traits<OutputIterator>::value_type>::iterator,OutputIterator>::value),
-         OutputIterator >::type
+OutputIterator
 transform_scan_pick_iterator(
     control &ctl,
     const InputIterator& first,
@@ -297,7 +293,8 @@ transform_scan_pick_iterator(
     const UnaryFunction& unary_op,
     const T& init,
     const bool& inclusive,
-    const BinaryFunction& binary_op )
+    const BinaryFunction& binary_op,
+    std::random_access_iterator_tag )
 {
     typedef typename std::iterator_traits< InputIterator >::value_type iType;
     typedef typename std::iterator_traits< OutputIterator >::value_type oType;
@@ -346,12 +343,7 @@ template<
     typename UnaryFunction,
     typename T,
     typename BinaryFunction >
-typename std::enable_if< 
-              (std::is_base_of<typename device_vector<typename
-               std::iterator_traits<DVInputIterator>::value_type>::iterator,DVInputIterator>::value &&
-               std::is_base_of<typename device_vector<typename
-               std::iterator_traits<DVOutputIterator>::value_type>::iterator,DVOutputIterator>::value),
-         DVOutputIterator >::type
+DVOutputIterator
 transform_scan_pick_iterator(
     control &ctl,
     const DVInputIterator& first,
@@ -360,7 +352,8 @@ transform_scan_pick_iterator(
     const UnaryFunction& unary_op,
     const T& init,
     const bool& inclusive,
-    const BinaryFunction& binary_op )
+    const BinaryFunction& binary_op,
+    bolt::cl::device_vector_tag )
 {
     typedef typename std::iterator_traits< DVInputIterator >::value_type iType;
     typedef typename std::iterator_traits< DVOutputIterator >::value_type oType;
@@ -525,8 +518,8 @@ aProfiler.set(AsyncProfiler::device, control::SerialCpu);
 #endif
 
     ldsSize  = static_cast< cl_uint >( kernel0_WgSize * sizeof( oType ) );
-    V_OPENCL( kernels[0].setArg( 0, result->getBuffer( ) ), "Error setArg kernels[ 0 ]" ); // Output buffer
-    V_OPENCL( kernels[0].setArg( 1, first->getBuffer( ) ),  "Error setArg kernels[ 0 ]" ); // Input buffer
+    V_OPENCL( kernels[0].setArg( 0, result.getBuffer( ) ), "Error setArg kernels[ 0 ]" ); // Output buffer
+    V_OPENCL( kernels[0].setArg( 1, first.getBuffer( ) ),  "Error setArg kernels[ 0 ]" ); // Input buffer
     V_OPENCL( kernels[0].setArg( 2, init_T ),               "Error setArg kernels[ 0 ]" ); // Initial value exclusive
     V_OPENCL( kernels[0].setArg( 3, numElements ),          "Error setArg kernels[ 0 ]" ); // Size of scratch buffer
     V_OPENCL( kernels[0].setArg( 4, ldsSize, NULL ),        "Error setArg kernels[ 0 ]" ); // Scratch buffer
@@ -608,7 +601,7 @@ aProfiler.setStepName("Setup Kernel 2");
 aProfiler.set(AsyncProfiler::device, control::SerialCpu);
 #endif
 
-    V_OPENCL( kernels[2].setArg( 0, result->getBuffer()),   "Error setArg kernels[ 2 ]" ); // Output buffer
+    V_OPENCL( kernels[2].setArg( 0, result.getBuffer()),   "Error setArg kernels[ 2 ]" ); // Output buffer
     V_OPENCL( kernels[2].setArg( 1, *postSumArray ),        "Error setArg kernels[ 2 ]" ); // Input buffer
     V_OPENCL( kernels[2].setArg( 2, numElements ),          "Error setArg kernels[ 2 ]" ); // Size of scratch buffer
     V_OPENCL( kernels[2].setArg( 3, *binaryBuffer ),        "Error setArg kernels[ 2 ]" ); // User provided functor
@@ -652,7 +645,7 @@ aProfiler.setArchitecture(strDeviceName);
     try
     {
         cl_ulong k0_start, k0_stop, k1_stop, k2_stop;
-        
+
         l_Error = kernel0Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_START, &k0_start);
         V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_QUEUED>()");
         l_Error = kernel0Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END, &k0_stop);
