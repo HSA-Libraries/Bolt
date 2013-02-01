@@ -342,11 +342,12 @@ namespace bolt {
             }
 #endif
             if (infile.fail() ) {
-                TCHAR cCurrentPath[FILENAME_MAX];
-                if (_tgetcwd(cCurrentPath, sizeof(cCurrentPath) / sizeof(TCHAR))) {
-                    bolt::tout <<  _T( "CWD=" ) << cCurrentPath << std::endl;
-                };
-                std::cout << "error: failed to open file '" << fileName << std::endl;
+                //  Note:  Commented out because this widestr not initialized yet if called from global scope
+                //TCHAR cCurrentPath[FILENAME_MAX];
+                //if (_tgetcwd(cCurrentPath, sizeof(cCurrentPath) / sizeof(TCHAR))) {
+                //    bolt::tout <<  _T( "CWD=" ) << cCurrentPath << std::endl;
+                //};
+                std::cout << "error: failed to open file: " << fileName << std::endl;
                 throw;
             } 
         }

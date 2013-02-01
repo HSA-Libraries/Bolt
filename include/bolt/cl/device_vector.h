@@ -525,7 +525,8 @@ namespace cl
             template< typename InputIterator >
             device_vector( const InputIterator begin, size_type newSize, cl_mem_flags flags = CL_MEM_READ_WRITE, 
                 bool init = true, const control& ctl = control::getDefault( ),
-                typename std::enable_if< !std::is_integral< InputIterator >::value >::type* = 0 ): m_Size( newSize ), m_commQueue( ctl.commandQueue( ) ), m_Flags( flags )
+                typename std::enable_if< !std::is_integral< InputIterator >::value >::type* = 0 ): m_Size( newSize ), 
+                m_commQueue( ctl.commandQueue( ) ), m_Flags( flags )
             {
                 static_assert( std::is_convertible< value_type, typename std::iterator_traits< InputIterator >::value_type >::value, 
                     "iterator value_type does not convert to device_vector value_type" );
@@ -547,7 +548,20 @@ namespace cl
 
                     if( init )
                     {
-                        ::cl::copy( begin, begin+m_Size, m_devMemory );
+                        size_t byteSize = m_Size * sizeof( value_type );
+
+                        //  Note:  The Copy API doesn't work because it uses the concept of a 'default' accelerator
+                        // ::cl::copy( begin, begin+m_Size, m_devMemory );
+                        naked_pointer pointer = static_cast< naked_pointer >( m_commQueue.enqueueMapBuffer( 
+                            m_devMemory, CL_TRUE, CL_MEM_WRITE_ONLY, 0, byteSize, 0, 0, &l_Error) );
+                        V_OPENCL( l_Error, "enqueueMapBuffer failed in device_vector constructor" );
+#if (_WIN32)
+                        std::copy( begin, begin + m_Size, stdext::checked_array_iterator< naked_pointer >( pointer, m_Size ) );
+#else
+                        std::copy( begin, end, pointer );
+#endif
+                        l_Error = m_commQueue.enqueueUnmapMemObject( m_devMemory, pointer, 0, 0 );
+                        V_OPENCL( l_Error, "enqueueUnmapMemObject failed in device_vector constructor" );
                     }
                 }
             };
@@ -573,18 +587,29 @@ namespace cl
                 V_OPENCL( l_Error, "device_vector failed to query for the context of the ::cl::CommandQueue object" );
 
                 m_Size = std::distance( begin, end );
+                size_t byteSize = m_Size * sizeof( value_type );
 
                 if( m_Flags & CL_MEM_USE_HOST_PTR )
                 {
-                    m_devMemory = ::cl::Buffer( l_Context, m_Flags, m_Size * sizeof( value_type ), 
+                    m_devMemory = ::cl::Buffer( l_Context, m_Flags, byteSize, 
                         reinterpret_cast< value_type* >( const_cast< value_type* >( &*begin ) ) );
                 }
                 else
                 {
-                    m_devMemory = ::cl::Buffer( l_Context, m_Flags, m_Size * sizeof( value_type ) );
+                    m_devMemory = ::cl::Buffer( l_Context, m_Flags, byteSize );
 
-                    //  TODO:  This copy doesn't work because it uses the concept of a 'default' accelerator
-                    ::cl::copy( begin, end, m_devMemory );
+                    //  Note:  The Copy API doesn't work because it uses the concept of a 'default' accelerator
+                    //::cl::copy( begin, end, m_devMemory );
+                    naked_pointer pointer = static_cast< naked_pointer >( m_commQueue.enqueueMapBuffer( 
+                        m_devMemory, CL_TRUE, CL_MEM_WRITE_ONLY, 0, byteSize, 0, 0, &l_Error) );
+                    V_OPENCL( l_Error, "enqueueMapBuffer failed in device_vector constructor" );
+#if (_WIN32)
+                    std::copy( begin, end, stdext::checked_array_iterator< naked_pointer >( pointer, m_Size ) );
+#else
+                    std::copy( begin, end, pointer );
+#endif
+                    l_Error = m_commQueue.enqueueUnmapMemObject( m_devMemory, pointer, 0, 0 );
+                    V_OPENCL( l_Error, "enqueueUnmapMemObject failed in device_vector constructor" );
                 }
             };
 
@@ -1458,6 +1483,9 @@ namespace cl
 
 BOLT_CREATE_TYPENAME( bolt::cl::device_vector< int >::iterator );
 BOLT_CREATE_CLCODE( bolt::cl::device_vector< int >::iterator, bolt::cl::deviceVectorIteratorTemplate );
+
+BOLT_CREATE_TYPENAME( bolt::cl::device_vector< unsigned int >::iterator );
+BOLT_CREATE_CLCODE( bolt::cl::device_vector< unsigned int >::iterator, bolt::cl::deviceVectorIteratorTemplate );
 
 BOLT_CREATE_TYPENAME( bolt::cl::device_vector< float >::iterator );
 BOLT_CREATE_CLCODE( bolt::cl::device_vector< float >::iterator, bolt::cl::deviceVectorIteratorTemplate );

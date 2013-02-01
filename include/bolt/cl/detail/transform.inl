@@ -139,7 +139,7 @@ namespace detail {
                     std::vector< const std::string > kernelNames;
                     kernelNames.push_back( "unaryTransform" );
                     kernelNames.push_back( "unaryTransformNoBoundsCheck" );
-                    kernelNames.push_back( "unaryTransformA" );
+                    //kernelNames.push_back( "unaryTransformA" );
 
                     std::string instantiationString = 
                         "// Host generates this instantiation string with user-specified value type and functor\n"
@@ -337,11 +337,6 @@ template< typename InputIterator1, typename InputIterator2, typename OutputItera
                 const size_t numComputeUnits = ctl.device( ).getInfo< CL_DEVICE_MAX_COMPUTE_UNITS >( );
                 const size_t numWorkGroupsPerComputeUnit = ctl.wgPerComputeUnit( );
                 size_t numWorkGroups = numComputeUnits * numWorkGroupsPerComputeUnit;
-                
-
-
-
-
 
                 //typedef std::aligned_storage< sizeof( UnaryFunction ), 256 >::type alignedUnary;
                 __declspec( align( 256 ) ) BinaryFunction aligned_functor( f );
@@ -373,7 +368,7 @@ template< typename InputIterator1, typename InputIterator2, typename OutputItera
         if( !boost::is_same< DVInputIterator1, DVOutputIterator >::value )
         {
             typeDefinitions += ClCode< DVOutputIterator >::get( );
-                }
+        }
 
         boost::call_once( initOnlyOnce, boost::bind( CallCompiler_BinaryTransform::init_, &binaryTransformKernels, 
             typeDefinitions, &args, &ctl ) );
@@ -420,7 +415,7 @@ template< typename InputIterator1, typename InputIterator2, typename OutputItera
                 l_Error = ctl.commandQueue().enqueueNDRangeKernel(
                     k, 
                     ::cl::NullRange, 
-                    ::cl::NDRange(numWorkGroups*wgSize), // wgMultiple
+                    ::cl::NDRange(wgMultiple), // numWorkGroups*wgSize
                     ::cl::NDRange(wgSize),
                     NULL,
                     &transformEvent );
@@ -428,7 +423,8 @@ template< typename InputIterator1, typename InputIterator2, typename OutputItera
 
                 ::bolt::cl::wait(ctl, transformEvent);
 
-                if (1) {
+                if( 0 )
+                {
                     cl_ulong start_time, stop_time;
                     
                     l_Error = transformEvent.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_START, &start_time);
@@ -454,8 +450,7 @@ template< typename InputIterator1, typename InputIterator2, typename OutputItera
                 const size_t numComputeUnits = ctl.device( ).getInfo< CL_DEVICE_MAX_COMPUTE_UNITS >( );
                 const size_t numWorkGroupsPerComputeUnit = ctl.wgPerComputeUnit( );
                 const size_t numWorkGroups = numComputeUnits * numWorkGroupsPerComputeUnit;
-                const size_t wgSize  = 256; //kernelWithBoundsCheck.getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.device( ), &l_Error );
-                const cl_uint numThreads = static_cast<cl_uint>(numWorkGroups * wgSize);
+                //const cl_uint numThreads = static_cast<cl_uint>(numWorkGroups * wgSize);
 
                 //typedef std::aligned_storage< sizeof( UnaryFunction ), 256 >::type alignedUnary;
                 ALIGNED( 256 ) UnaryFunction aligned_functor( f );
@@ -478,7 +473,7 @@ template< typename InputIterator1, typename InputIterator2, typename OutputItera
         if( !boost::is_same<DVInputIterator, DVOutputIterator>::value )
         {
             typeDefinitions += ClCode< DVOutputIterator >::get( );
-                }
+        }
 
         boost::call_once( initOnlyOnce, boost::bind( CallCompiler_UnaryTransform::init_, &unaryTransformKernels, 
             typeDefinitions, &args, &ctl ) );
@@ -488,7 +483,8 @@ template< typename InputIterator1, typename InputIterator2, typename OutputItera
                 ::cl::Kernel k;
 
                 cl_int l_Error = CL_SUCCESS;
-                
+                const size_t wgSize  = kernelWithBoundsCheck.getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.device( ), &l_Error ); // 256
+
                 V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
                 assert( (wgSize & (wgSize-1) ) == 0 ); // The bitwise &,~ logic below requires wgSize to be a power of 2
 
@@ -503,46 +499,38 @@ template< typename InputIterator1, typename InputIterator2, typename OutputItera
                 }
                 else
                 {
-                    //k = kernelNoBoundsCheck;
-                    k = unaryTransformKernels[2];
+                    k = kernelNoBoundsCheck;
+                    //k = unaryTransformKernels[2];
                 }
 
-                cl_uint numElementsPerThread = static_cast<cl_uint>(wgMultiple / numThreads);
-                std::cout << "nE="<<distVec<<", nT="<<numThreads<<", nEpT="<<numElementsPerThread<<std::endl;
+                //cl_uint numElementsPerThread = static_cast<cl_uint>(wgMultiple / numThreads);
+                //std::cout << "nE="<<distVec<<", nT="<<numThreads<<", nEpT="<<numElementsPerThread<<std::endl;
 
                 //void* h_result = (void*)ctl.commandQueue().enqueueMapBuffer( userFunctor, true, CL_MAP_READ, 0, sizeof(aligned_functor), NULL, NULL, &l_Error );
                 //V_OPENCL( l_Error, "Error calling map on the result buffer" );
 
-        struct iterContainer
-        {
-            int m_Index;
-            int m_Ptr;
-        };
-
-        iterContainer inPar = { first.m_Index, 0 };
-        iterContainer resPar = { result.m_Index, 0 };
-
         k.setArg(0, first.getBuffer( ) );
-        k.setArg(1, sizeof( iterContainer ), &inPar );
+        k.setArg(1, first.gpuPayloadSize( ), &first.gpuPayload( ) );
         k.setArg(2, result.getBuffer( ) );
-        k.setArg(3, sizeof( iterContainer ), &resPar );
+        k.setArg(3, result.gpuPayloadSize( ), &result.gpuPayload( ) );
         k.setArg(4, distVec );
-        k.setArg(3, numElementsPerThread );
         k.setArg(5, *userFunctor);
+        //k.setArg(3, numElementsPerThread );
 
                 ::cl::Event transformEvent;
                 l_Error = ctl.commandQueue().enqueueNDRangeKernel(
                     k, 
                     ::cl::NullRange, 
-                    ::cl::NDRange(numThreads), 
-                    ::cl::NDRange(wgSize),
+                    ::cl::NDRange( wgMultiple ), // numThreads
+                    ::cl::NDRange( wgSize ),
                     NULL,
                     &transformEvent );
                 V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for transform() kernel" );
 
                 ::bolt::cl::wait(ctl, transformEvent);
 
-                if (1) {
+                if( 0 )
+                {
                     cl_ulong start_time, stop_time;
                     
                     l_Error = transformEvent.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_START, &start_time);

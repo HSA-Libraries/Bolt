@@ -198,7 +198,10 @@ void reduce_TestBuffer() {
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-    testTBB();
+#if defined( ENABLE_TBB )
+    testTBB( );
+#endif
+
     testDeviceVector();
 
     int numIters = 100;

@@ -348,8 +348,46 @@ namespace bolt {
 #define ALIGNED( bound ) __attribute__ ( (aligned( bound ) ) ) 
 #endif
 
-BOLT_CREATE_TYPENAME(int);
-BOLT_CREATE_TYPENAME(float);
-BOLT_CREATE_TYPENAME(double);
-BOLT_CREATE_TYPENAME(unsigned);
+BOLT_CREATE_TYPENAME( int );
+BOLT_CREATE_TYPENAME( unsigned int );
+BOLT_CREATE_TYPENAME( float );
+BOLT_CREATE_TYPENAME( double );
+
+////  Pre-define standard primitives that are likely to be used in a variety of OpenCL kernels
+//BOLT_CREATE_TYPENAME( cl_int );
+//BOLT_CREATE_CLCODE( cl_int, "int" );
+//
+//BOLT_CREATE_TYPENAME( cl_int2 );
+//BOLT_CREATE_CLCODE( cl_int2, "int2" );
+//
+//BOLT_CREATE_TYPENAME( cl_int4 );
+//BOLT_CREATE_CLCODE( cl_int4, "int4" );
+//
+//BOLT_CREATE_TYPENAME( cl_uint );
+//BOLT_CREATE_CLCODE( cl_uint, "uint" );
+//
+//BOLT_CREATE_TYPENAME( cl_uint2 );
+//BOLT_CREATE_CLCODE( cl_uint2, "uint2" );
+//
+//BOLT_CREATE_TYPENAME( cl_uint4 );
+//BOLT_CREATE_CLCODE( cl_uint4, "uint4" );
+//
+//BOLT_CREATE_TYPENAME( cl_float );
+//BOLT_CREATE_CLCODE( cl_float, "float" );
+//
+//BOLT_CREATE_TYPENAME( cl_float2 );
+//BOLT_CREATE_CLCODE( cl_float2, "float2" );
+//
+//BOLT_CREATE_TYPENAME( cl_float4 );
+//BOLT_CREATE_CLCODE( cl_float4, "float4" );
+//
+//BOLT_CREATE_TYPENAME( cl_double );
+//BOLT_CREATE_CLCODE( cl_double, "double" );
+//
+//BOLT_CREATE_TYPENAME( cl_double2 );
+//BOLT_CREATE_CLCODE( cl_double2, "double2" );
+//
+//BOLT_CREATE_TYPENAME( cl_double4 );
+//BOLT_CREATE_CLCODE( cl_double4, "double4" );
+
 #endif

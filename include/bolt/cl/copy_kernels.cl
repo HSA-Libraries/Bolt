@@ -23,11 +23,10 @@ void copy_I(
     global oType * restrict dst,
     const uint numElements )
 {
-    uint gloIdx = get_global_id(0);
-#if BOUNDARY_CHECK
-    if (gloIdx < numElements)
-#endif
-        dst[gloIdx] = src[gloIdx];
+    size_t gloIdx = get_global_id( 0 );
+    if( gloIdx >= numElements ) return; // on SI this doesn't mess-up barriers
+    
+    dst[ gloIdx ] = src[ gloIdx ];
 };
 
 

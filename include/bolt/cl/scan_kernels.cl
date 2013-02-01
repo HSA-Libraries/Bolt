@@ -85,7 +85,8 @@ kernel void perBlockAddition(
                 const uint vecSize,
     global BinaryFunction* binaryOp )
 {
-    BinaryFunction bf = *binaryOp;
+    // BinaryFunction bf = *binaryOp;
+    
 // 1 thread per element
 #if 1
     size_t gloId = get_global_id( 0 );
@@ -103,8 +104,8 @@ kernel void perBlockAddition(
     // accumulate prefix
     if (groId > 0)
     {
-        iPtrType postBlockSum = postSumArray[ groId-1 ];
-        iPtrType newResult = bf( scanResult, postBlockSum );
+        iPtrType postBlockSum = postSumArray_ptr[ groId-1 ];
+        iPtrType newResult = (*binaryOp)( scanResult, postBlockSum );
         output_iter[ gloId ] = newResult;
     }
 #endif
@@ -219,7 +220,6 @@ kernel void intraBlockInclusiveScan(
                 global BinaryFunction* binaryOp
                 )
 {
-    BinaryFunction bf = *binaryOp;
     size_t gloId = get_global_id( 0 );
     size_t locId = get_local_id( 0 );
     size_t wgSize = get_local_size( 0 );
@@ -313,7 +313,6 @@ kernel void perBlockInclusiveScan(
                 global oPtrType* scanBuffer,
                 int exclusive) // do exclusive scan ?
 {
-    BinaryFunction bf = *binaryOp;
     size_t gloId = get_global_id( 0 );
     size_t groId = get_group_id( 0 );
     size_t locId = get_local_id( 0 );
