@@ -209,11 +209,11 @@ kernel void perBlockAddition(
 /******************************************************************************
  *  Kernel 1
  *****************************************************************************/
-template< typename iPtrType, typename BinaryFunction >
+template< typename iPtrType, typename initType, typename BinaryFunction >
 kernel void intraBlockInclusiveScan(
                 global iPtrType* postSumArray,
                 global iPtrType* preSumArray, 
-                iPtrType identity,
+                initType identity,
                 const uint vecSize,
                 local iPtrType* lds,
                 const uint workPerThread,
