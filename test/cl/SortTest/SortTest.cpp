@@ -87,7 +87,7 @@ struct AddD4
 );
 uddtD4 identityAddD4 = { 1.0, 1.0, 1.0, 1.0 };
 uddtD4 initialAddD4  = { 1.00001, 1.000003, 1.0000005, 1.00000007 };
-
+BOLT_CREATE_TYPENAME( bolt::cl::device_vector< uddtD4 >::iterator );
 template< typename T >
 ::testing::AssertionResult cmpArrays( const T ref, const T calc, size_t N )
 {
@@ -1286,7 +1286,9 @@ BOLT_CREATE_TYPENAME(bolt::cl::greater< MyType<double> >);
 BOLT_CREATE_TYPENAME(bolt::cl::greater< MyFunctor<int> >);
 BOLT_CREATE_TYPENAME(bolt::cl::greater< MyFunctor<float> >);
 BOLT_CREATE_TYPENAME(bolt::cl::greater< MyFunctor<double> >);
-
+BOLT_CREATE_TYPENAME(bolt::cl::device_vector< bolt::cl::greater<MyFunctor<int>> >::iterator );
+BOLT_CREATE_TYPENAME(bolt::cl::device_vector< bolt::cl::greater<MyFunctor<float>> >::iterator );
+BOLT_CREATE_TYPENAME(bolt::cl::device_vector< bolt::cl::greater<MyFunctor<double>> >::iterator );
 template <typename stdType>
 void UserDefinedBoltFunctorSortTestOfLength(size_t length)
 {
@@ -1648,7 +1650,7 @@ void TestWithBoltControl(int length)
 */
 int main(int argc, char* argv[])
 {
-#if 1   
+#if 0  
     //UDDSortTestOfLengthWithDeviceVector<int>(256);
     BasicSortTestOfLength<int>(256/*2097152/*131072/*16777216/*33554432/*atoi(argv[1])*/);
     BasicSortTestOfLength<int>(4096);

@@ -1,32 +1,31 @@
-/***************************************************************************
-*   Copyright 2012 Advanced Micro Devices, Inc.                             
-*                                                                           
+/***************************************************************************                                                                                     
+*   Copyright 2012 Advanced Micro Devices, Inc.                                     
+*                                                                                    
 *   Licensed under the Apache License, Version 2.0 (the "License");   
-*   you may not use this file except in compliance with the License.        
-*   You may obtain a copy of the License at                                 
-*                                                                           
+*   you may not use this file except in compliance with the License.                 
+*   You may obtain a copy of the License at                                          
+*                                                                                    
 *       http://www.apache.org/licenses/LICENSE-2.0                      
-*                                                                           
-*   Unless required by applicable law or agreed to in writing, software     
-*   distributed under the License is distributed on an "AS IS" BASIS,       
-*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-*   See the License for the specific language governing permissions and     
-*   limitations under the License.                                          
+*                                                                                    
+*   Unless required by applicable law or agreed to in writing, software              
+*   distributed under the License is distributed on an "AS IS" BASIS,              
+*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.         
+*   See the License for the specific language governing permissions and              
+*   limitations under the License.                                                   
 
-***************************************************************************/
+***************************************************************************/                                                                                     
 
 #pragma OPENCL EXTENSION cl_amd_printf : enable
 //#pragma OPENCL EXTENSION cl_khr_fp64 : enable 
 
-template< typename iNakedType, typename iIterType, typename Compare >
+
+template <typename T, typename Compare>
 kernel
-void selectionSortLocalTemplate(
-            global iNakedType*          in_ptr, 
-            iIterType                   in_iter, 
-            global iNakedType*          out_ptr, 
-            global Compare*             userComp, 
-            local  iNakedType*          scratch, 
-            const int                   buffSize)
+void selectionSortLocalTemplate(global const T * in, 
+                           global T       * out, 
+                           global Compare * userComp, 
+                           local  T       * scratch, 
+                           const int        buffSize)
 {
   int          i  = get_local_id(0); // index in workgroup
   int numOfGroups = get_num_groups(0); // index in workgroup
@@ -37,22 +36,20 @@ void selectionSortLocalTemplate(
   
   int offset = groupID * wg;
   int same=0;
-  in_ptr  += offset; 
-  out_ptr += offset;
+  in  += offset; 
+  out += offset;
   n = (groupID == (numOfGroups-1))? (buffSize - wg*(numOfGroups-1)) : wg;
-
-  in_iter.init( in_ptr );
   
   if(i < n)
   {
-      iNakedType iData = in_iter[i];
+      T iData = in[i];
       scratch[i] = iData;
       barrier(CLK_LOCAL_MEM_FENCE);
   
       int pos = 0;
       for (int j=0;j<n;j++)
       {
-          iNakedType jData = scratch[j];
+          T jData = scratch[j];
           if((*userComp)(jData, iData)) 
               pos++;
           else 
@@ -67,20 +64,18 @@ void selectionSortLocalTemplate(
           }
       }
       for (int j=0; j< same; j++)      
-         out_ptr[pos + j] = iData;
+         out[pos + j] = iData;
   }
   return;
 }
 
-template< typename iNakedType, typename iIterType, typename Compare >
+template <typename T, typename Compare>
 kernel
-void selectionSortFinalTemplate(
-            global const iNakedType*    in_ptr, 
-            global iNakedType*          out_ptr, 
-            iIterType                   out_iter, 
-            global Compare*             userComp,
-            local  iNakedType*          scratch, 
-            const int                   buffSize)
+void selectionSortFinalTemplate(global const T * in, 
+                           global T       * out, 
+                           global Compare * userComp,
+                           local  T       * scratch, 
+                           const int        buffSize)
 {
   int          i  = get_local_id(0); // index in workgroup
   int numOfGroups = get_num_groups(0); // index in workgroup
@@ -90,9 +85,7 @@ void selectionSortFinalTemplate(
   int remainder;
   int offset = get_group_id(0) * wg;
 
-  out_iter.init( out_ptr );
-
-  iNakedType iData = in_ptr[groupID*wg + i];
+  T iData = in[groupID*wg + i];
   if((offset + i ) >= buffSize)
       return;
   
@@ -102,7 +95,7 @@ void selectionSortFinalTemplate(
   {
      for(int k=0; k<wg; k++)
      {
-        iNakedType jData = in_ptr[j*wg + k];
+        T jData = in[j*wg + k];
         if(((*userComp)(iData, jData)))
            break;
         else
@@ -119,7 +112,7 @@ void selectionSortFinalTemplate(
   
   for(int k=0; k<remainder; k++)
   {
-     iNakedType jData = in_ptr[(numOfGroups-1)*wg + k];
+     T jData = in[(numOfGroups-1)*wg + k];
         if(((*userComp)(iData, jData)))
            break;
         else
@@ -133,18 +126,16 @@ void selectionSortFinalTemplate(
         }
   }  
   for (int j=0; j< same; j++)      
-      out_iter[pos + j] = iData;  
+      out[pos + j] = iData;  
 }
 
 
-template< typename iNakedType, typename iIterType, typename Compare >
+template <typename T, typename Compare>
 kernel
-void sortTemplate(
-            global iNakedType*  array_ptr, 
-            iIterType           array_iter, 
-            const uint          stage,
-            const uint          passOfStage,
-            global Compare*     userComp)
+void sortTemplate(global T * theArray, 
+                 const uint stage,
+                 const uint passOfStage,
+                 global Compare *userComp)
 {
     uint threadId = get_global_id(0);
     uint pairDistance = 1 << (stage - passOfStage);
@@ -155,12 +146,10 @@ void sortTemplate(
     bool compareResult;
     
     uint rightId = leftId + pairDistance;
-
-    array_iter.init( array_ptr );
     
-    iNakedType greater, lesser;
-    iNakedType leftElement = array_iter[leftId];
-    iNakedType rightElement = array_iter[rightId];
+    T greater, lesser;
+    T leftElement = theArray[leftId];
+    T rightElement = theArray[rightId];
     
     uint sameDirectionBlockWidth = 1 << stage;
     
@@ -183,7 +172,9 @@ void sortTemplate(
         greater = leftElement;
         lesser  = rightElement;
     }
-    array_iter[leftId]  = lesser;
-    array_iter[rightId] = greater;
+    theArray[leftId]  = lesser;
+    theArray[rightId] = greater;
 
 }
+
+
