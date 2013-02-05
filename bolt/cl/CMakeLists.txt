@@ -84,12 +84,15 @@ set( clBolt.Runtime.Headers
         ${clBolt.Include.Dir}/sort_by_key.h 
         ${clBolt.Include.Dir}/transform.h 
         ${clBolt.Include.Dir}/transform_reduce.h
+        ${clBolt.Include.Dir}/transform_scan.h
+    )
+    
+set( clBolt.Runtime.Headers.Iterator
         ${clBolt.Include.Dir}/iterator/iterator_traits.h 
         ${clBolt.Include.Dir}/iterator/constant_iterator.h
         ${clBolt.Include.Dir}/iterator/counting_iterator.h
-        ${clBolt.Include.Dir}/transform_scan.h
     )
-
+    
 set( clBolt.Runtime.Headers.Misc
         ${clBolt.Include.Dir}/../countof.h
         ${clBolt.Include.Dir}/../unicode.h
@@ -147,6 +150,7 @@ set( clBolt.Runtime.Files
   ${clBolt.Runtime.Source}
   ${clBolt.Runtime.Headers}
   ${clBolt.Runtime.Headers.Detail}
+  ${clBolt.Runtime.Headers.Iterator}
   ${clBolt.Runtime.Headers.Misc}
   ${clBolt.Runtime.clFiles.FullPath} )
 
@@ -193,6 +197,11 @@ install( FILES
             ${clBolt.Runtime.Headers}
         DESTINATION
             ${INCLUDE_DIR}/bolt/cl )
+            
+install( FILES
+            ${clBolt.Runtime.Headers.Iterator}
+        DESTINATION
+            ${INCLUDE_DIR}/bolt/cl/iterator )
 
 install( FILES
             ${clBolt.Runtime.Headers.Detail}
