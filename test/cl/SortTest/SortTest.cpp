@@ -1248,6 +1248,8 @@ void UserDefinedLambdaSortTestOfLength(size_t length)
         std::cout << "Test Failed i = " << i <<std::endl;
 }
 
+// This is a test case for handling function pointers
+// OpenCL will not handle this so commented it out completely
 #if 0
 template <typename stdType>
 void UserDefinedFunctionSortTestOfLength(size_t length)
@@ -1650,7 +1652,7 @@ void TestWithBoltControl(int length)
 */
 int main(int argc, char* argv[])
 {
-#if 0  
+#if 1 
     //UDDSortTestOfLengthWithDeviceVector<int>(256);
     BasicSortTestOfLength<int>(256/*2097152/*131072/*16777216/*33554432/*atoi(argv[1])*/);
     BasicSortTestOfLength<int>(4096);
@@ -1691,7 +1693,7 @@ int main(int argc, char* argv[])
     //UDDSortTestOfLengthWithDeviceVector<int>(256);
     //UDDSortTestWithBoltFunctorOfLengthWithDeviceVector<int>(256);
 
-#define TEST_ALL 0
+#define TEST_ALL 1
 //#define TEST_DOUBLE 1
 
 #if (TEST_ALL == 1)
@@ -1841,6 +1843,8 @@ int main(int argc, char* argv[])
 #endif
 #endif
 
+// This is a test case for handling function pointers
+// OpenCL will not handle this so commented it out completely
 #if 0
     UserDefinedFunctionSortTestOfLength<int>(256);   
     UserDefinedFunctionSortTestOfLength<int>(512);    
