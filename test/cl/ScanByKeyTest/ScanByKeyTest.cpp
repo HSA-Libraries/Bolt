@@ -483,6 +483,22 @@ TEST(InclusiveScanByKey, IncMixedM3each)
     cmpArrays(refOutput, output);
 }
 
+TEST( equalValMult, iValues )
+{
+    int keys[11] = { 7, 0, 0, 3, 3, 3, -5, -5, -5, -5, 3 }; 
+    int vals[11] = { 2, 2, 2, 2, 2, 2,  2,  2,  2,  2, 2 }; 
+    int out[11]; 
+   
+    bolt::cl::equal_to<int> eq; 
+    bolt::cl::multiplies<int> mult; 
+   
+    bolt::cl::inclusive_scan_by_key( keys, keys+11, vals, out, eq, mult ); 
+   
+    int arrToMatch[11] = { 2, 2, 4, 2, 4, 8, 2, 4, 8, 16, 2 };
+
+    // compare results
+    cmpArrays( arrToMatch, out );
+}
 
 /////////////////////////////////////////////////  Exclusive  ///////////////////////////
 

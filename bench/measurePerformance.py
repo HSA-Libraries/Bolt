@@ -73,8 +73,8 @@ parser.add_argument('--ini',
 parser.add_argument('--tablefile',
     dest='tableOutputFilename', default=None,
     help='save the results to a plaintext table with the file name indicated. this can be used with clAmdFft.plotPerformance.py to generate graphs of the data (default: table prints to screen)')
-parser.add_argument('--algo',
-    dest='algo', default=1,
+parser.add_argument('--test',
+    dest='test', default=1,
     help='Algorithm used [1,2]  1:SORT_BOLT, 2:SORT_AMP_SHOC')
 parser.add_argument('--backend',
     dest='backend', default='cl', choices=backEndValues,
@@ -295,7 +295,7 @@ for params in test_combinations:
     printLog('preparing command: '+ str(vi))    
     device = params.device
     lengthx = str(params.x)
-    algo = args.algo
+    test = args.test
     
     if params.precision == 'single':
         precision = ''
@@ -307,7 +307,6 @@ for params in test_combinations:
     #set up arguments here
     if params.device == 'default':
         arguments = [executable(args.library, args.backend),
-                     '-a', algo,        
                      '-l', lengthx,
     #                     precision,
                      '-i', '50']
@@ -318,10 +317,14 @@ for params in test_combinations:
                      '-l', lengthx,
     #                     precision,
                      '-i', '50']
+    if args.library == 'sort':
+        arguments.append( '-t' )
+        arguments.append( str( test ) )
+    #    arguments.append( '-m' )
 
     writeline = True
     try:
-        printLog('Executing Command: '+str(arguments))
+        printLog('Executing Command: '+ str(arguments))
         output = checkTimeOutPut(arguments)
         output = output.split(os.linesep);
         printLog('Execution Successfull---------------\n')

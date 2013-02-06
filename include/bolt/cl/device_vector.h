@@ -628,6 +628,43 @@ namespace cl
                 V_OPENCL( l_Error, "device_vector failed to query for the memory flags of the ::cl::Buffer object" );
             };
 
+            //  Copying methods
+            device_vector( const device_vector& rhs ): m_Flags( rhs.m_Flags ), m_commQueue( rhs.m_commQueue )
+            {
+                //  This method will set the m_Size member variable upon successful completion
+                resize( rhs.m_Size );
+
+                size_type l_srcSize = m_Size * sizeof( value_type );
+                ::cl::Event copyEvent;
+
+                cl_int l_Error = CL_SUCCESS;
+                l_Error = m_commQueue.enqueueCopyBuffer( rhs.m_devMemory, m_devMemory, 0, 0, l_srcSize, NULL, &copyEvent );
+                V_OPENCL( l_Error, "device_vector failed to copy data inside of operator=()" );
+                V_OPENCL( copyEvent.wait( ), "device_vector failed to wait for copy event" );
+            }
+
+            device_vector& operator=( const device_vector& rhs )
+            {
+                if( this == &rhs )
+                    return *this;
+
+                m_Flags         = rhs.m_Flags;
+                m_commQueue     = rhs.m_commQueue;
+
+                //  This method will set the m_Size member variable upon successful completion
+                resize( rhs.m_Size );
+
+                size_type l_srcSize = m_Size * sizeof( value_type );
+                ::cl::Event copyEvent;
+
+                cl_int l_Error = CL_SUCCESS;
+                l_Error = m_commQueue.enqueueCopyBuffer( rhs.m_devMemory, m_devMemory, 0, 0, l_srcSize, NULL, &copyEvent );
+                V_OPENCL( l_Error, "device_vector failed to copy data inside of operator=()" );
+                V_OPENCL( copyEvent.wait( ), "device_vector failed to wait for copy event" );
+
+                return *this;
+            }
+
             //  Member functions
 
             /*! \brief Change the number of elements in device_vector to reqSize.
