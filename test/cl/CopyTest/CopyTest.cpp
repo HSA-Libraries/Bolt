@@ -35,26 +35,29 @@
 #include "test_common.h"
 
 //  Author: kfk
-//  Commenting out the character from the struct, because I am recieving and driver resets
-//  in our tests.  I've looked into the failures, and appears to be a memory corruption problem and it does not appear 
-//  to originate in Bolt.  I need to investigate further.  I'm commenting out the char right now so that our 
-//  test code doesn't hang test machines
+//  Originally, the char b was not an array.  However, testing on my machine showed driver hangs and unit test
+//  failures.  Reading the documentation of clEnqueueFillBuffer(), OpenCL seems to like structs of certain 
+//  sizes {1, 2, 4, 8, 16, 32, 64, 128}.  Making this struct one of those magic sizes seems to make the driver
+//  resets go away.
+//  \todo:  Need to research and find a way to handle structs of arbitrary size.
 BOLT_FUNCTOR(UserStruct,
 struct UserStruct
 {
     bool a;
-    //char b;
+    char b[ 4 ];
     int c;
     float d;
     //double e;
 
-    UserStruct() :
+    UserStruct():
         a(true),
-        //b('b'),
         c(3),
         d(4.f)//,
         //e(5.0)
-    { }
+    {
+        for( unsigned i = 0; i < 4; ++i )
+            b[ i ] = 0;
+    }
 
     bool operator==(const UserStruct& rhs) const
     {
@@ -185,7 +188,10 @@ TEST(Copy, DevStruct)
         {
             UserStruct us;
             us.a = (bool) (rand()%2 ? true : false);
-            //us.b = (char) (rand()%128);
+            us.b[0] = (char) (rand()%128);
+            us.b[1] = (char) (rand()%128);
+            us.b[2] = (char) (rand()%128);
+            us.b[3] = (char) (rand()%128);
             us.c = (int)  (rand());
             us.d = (float) (1.f*rand());
             //us.e = (double) (1.0*rand()/rand());
@@ -212,7 +218,10 @@ TEST(CopyN, DevStruct)
         {
             UserStruct us;
             us.a = (bool) (rand()%2 ? true : false);
-            //us.b = (char) (rand()%128);
+            us.b[0] = (char) (rand()%128);
+            us.b[1] = (char) (rand()%128);
+            us.b[2] = (char) (rand()%128);
+            us.b[3] = (char) (rand()%128);
             us.c = (int)  (rand());
             us.d = (float) (1.f*rand());
             //us.e = (double) (1.0*rand()/rand());
@@ -239,7 +248,10 @@ TEST(Copy, StdStruct)
         {
             UserStruct us;
             us.a = (bool) (rand()%2 ? true : false);
-            //us.b = (char) (rand()%128);
+            us.b[0] = (char) (rand()%128);
+            us.b[1] = (char) (rand()%128);
+            us.b[2] = (char) (rand()%128);
+            us.b[3] = (char) (rand()%128);
             us.c = (int)  (rand());
             us.d = (float) (1.f*rand());
             //us.e = (double) (1.0*rand()/rand());
@@ -266,7 +278,10 @@ TEST(CopyN, StdStruct)
         {
             UserStruct us;
             us.a = (bool) (rand()%2 ? true : false);
-            //us.b = (char) (rand()%128);
+            us.b[0] = (char) (rand()%128);
+            us.b[1] = (char) (rand()%128);
+            us.b[2] = (char) (rand()%128);
+            us.b[3] = (char) (rand()%128);
             us.c = (int)  (rand());
             us.d = (float) (1.f*rand());
             //us.e = (double) (1.0*rand()/rand());

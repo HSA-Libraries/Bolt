@@ -15,15 +15,13 @@
 
 ***************************************************************************/
 
+#pragma once
 #if !defined( FILL_INL )
 #define FILL_INL
-#pragma once
 
 #include <boost/thread/once.hpp>
 #include <boost/bind.hpp>
 #include <type_traits>
-
-#define STATIC /*static*/  /* FIXME - hack to approximate buffer pool management of the functor containing the buffer */
 
 #include "bolt/cl/bolt.h"
 
@@ -34,29 +32,35 @@ namespace bolt {
         template<typename ForwardIterator, typename T>
         void fill( ForwardIterator first, ForwardIterator last, const T & value, const std::string& cl_code)
         {
-            detail::fill_detect_random_access( bolt::cl::control::getDefault(), first, last, value, cl_code, std::iterator_traits< ForwardIterator >::iterator_category( ) );
+            detail::fill_detect_random_access( bolt::cl::control::getDefault(), first, last, value, cl_code, 
+                std::iterator_traits< ForwardIterator >::iterator_category( ) );
         }
 
         // user specified control, start->stop
         template<typename ForwardIterator, typename T>
-        void fill( const bolt::cl::control &ctl, ForwardIterator first, ForwardIterator last, const T & value, const std::string& cl_code)
+        void fill( const bolt::cl::control &ctl, ForwardIterator first, ForwardIterator last, const T & value, 
+            const std::string& cl_code)
         {
-            detail::fill_detect_random_access( ctl, first, last, value, cl_code, std::iterator_traits< ForwardIterator >::iterator_category( ) );
+            detail::fill_detect_random_access( ctl, first, last, value, cl_code, 
+                std::iterator_traits< ForwardIterator >::iterator_category( ) );
         }
 
         // default control, start-> +n
         template<typename OutputIterator, typename Size, typename T>
         OutputIterator fill_n( OutputIterator first, Size n, const T & value, const std::string& cl_code)
         {
-            detail::fill_detect_random_access( bolt::cl::control::getDefault(), first, first+static_cast< const int >( n ), value, cl_code, std::iterator_traits< OutputIterator >::iterator_category( ) );
+            detail::fill_detect_random_access( bolt::cl::control::getDefault(), first, first+static_cast< const int >( n ), 
+                value, cl_code, std::iterator_traits< OutputIterator >::iterator_category( ) );
             return first+static_cast< const int >( n );
         }
 
         // user specified control, start-> +n
         template<typename OutputIterator, typename Size, typename T>
-        OutputIterator fill_n( const bolt::cl::control &ctl, OutputIterator first, Size n, const T & value, const std::string& cl_code)
+        OutputIterator fill_n( const bolt::cl::control &ctl, OutputIterator first, Size n, const T & value, 
+            const std::string& cl_code)
         {
-            detail::fill_detect_random_access( ctl, first, n, value, cl_code, std::iterator_traits< OutputIterator >::iterator_category( ) );
+            detail::fill_detect_random_access( ctl, first, n, value, cl_code, 
+                std::iterator_traits< OutputIterator >::iterator_category( ) );
             return (first+n);
         }
 
@@ -140,7 +144,8 @@ namespace bolt {
              ****************************************************************************/
 
             template< typename DVForwardIterator, typename T >
-            void fill_enqueue(const bolt::cl::control &ctl, const DVForwardIterator &first, const DVForwardIterator &last, const T & val, const std::string& cl_code)
+            void fill_enqueue(const bolt::cl::control &ctl, const DVForwardIterator &first, const DVForwardIterator &last, 
+                const T & val, const std::string& cl_code)
             {
                 typedef std::iterator_traits<DVForwardIterator>::value_type Type;
                 // how many elements to fill
@@ -148,30 +153,35 @@ namespace bolt {
                 if (sz < 1)
                     return;
                 cl_int l_Error= CL_SUCCESS;
-                ::cl::Event fillEvent;              
+                ::cl::Event fillEvent;
 
                 //Type comparison
                 if(std::is_same<T,Type>::value)
                 {
-                    
+                    // \todo enqueueFillBuffer does not handle arbitrary data types.  We need to refactor 
+                    //  to use the Fill API
                     ctl.commandQueue().enqueueFillBuffer(first.getBuffer(),val,0,sz*sizeof(T),NULL,&fillEvent);
-                /*enqueueFillBuffer API:
-                cl_int enqueueFillBuffer(const Buffer& buffer,
-                PatternType pattern,
-                ::size_t offset,
-                ::size_t size,
-                const VECTOR_CLASS<Event>* events = NULL,
-                Event* event = NULL) const
-                */
-                V_OPENCL( l_Error, "clEnqueueFillBuffer() failed" );
-                bolt::cl::wait(ctl, fillEvent);
+
+                    /*enqueueFillBuffer API:
+                    cl_int enqueueFillBuffer(const Buffer& buffer,
+                    PatternType pattern,
+                    ::size_t offset,
+                    ::size_t size,
+                    const VECTOR_CLASS<Event>* events = NULL,
+                    Event* event = NULL) const
+                    */
+                    V_OPENCL( l_Error, "clEnqueueFillBuffer() failed" );
+                    bolt::cl::wait(ctl, fillEvent);
                 }
                 else
                 {
                     //If iterator and fill element are of different types then do a cast
                     const Type newval = static_cast<const Type>(val);
+
+                    // \todo enqueueFillBuffer does not handle arbitrary data types.  We need to refactor 
+                    //  to use the Fill API
                     ctl.commandQueue().enqueueFillBuffer( first.getBuffer(),newval,0,sz*sizeof(Type),NULL,&fillEvent);
-      				V_OPENCL( l_Error, "clEnqueueFillBuffer() failed" );
+                    V_OPENCL( l_Error, "clEnqueueFillBuffer() failed" );
                     bolt::cl::wait(ctl, fillEvent);
                 }
             }; // end fill_enqueue
