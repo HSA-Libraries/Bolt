@@ -36,7 +36,7 @@
     BOLT_CREATE_CLCODE(OPERATOR<TYPE>, CODE_STRING);
 
 
-// macro for creating a host-side routine and an OCL string (in the bolcl::clcode:: namespace).
+// macro for creating a host-side routine and an OCL string (in the bolt::cl:: namespace).
 // Also defines the typename trait automatically.
 #define CREATE_BOLT_FUNCTIONAL(OPERATOR, ... ) \
     __VA_ARGS__; \

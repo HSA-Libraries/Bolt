@@ -1131,6 +1131,83 @@ TEST( MixedTransform, OutOfPlace )
     cmpArrays(refOutput, output);
 }
 
+BOLT_FUNCTOR( point,
+     class point
+     {
+     public:
+           int xPoint;
+           int yPoint;
+
+           point(){
+           }
+           point(int x, int y){
+                xPoint = x;
+                yPoint = y;
+           }
+           point operator + (const point &rhs) const {
+                point tmp = *this;
+                tmp.xPoint = tmp.xPoint + rhs.xPoint;
+                tmp.yPoint = tmp.yPoint + rhs.yPoint;
+                return tmp;
+          }
+
+           point operator - () const {
+                point tmp = *this;
+                tmp.xPoint = -1 * (tmp.xPoint);
+                tmp.yPoint = -1 * (tmp.yPoint);
+                return tmp;
+           }
+    };
+);
+
+BOLT_CREATE_TYPENAME( bolt::cl::plus< point > );
+BOLT_CREATE_CLCODE( bolt::cl::plus< point >, 
+"namespace bolt { \n"
+"namespace cl { \n"
+"template<typename T> \n"
+"struct plus \n"
+"{ \n"
+"    T operator()(const T &lhs, const T &rhs) const {return lhs + rhs;} \n"
+"}; \n"
+"}; \n"
+"}; \n"
+);
+
+BOLT_CREATE_TYPENAME( bolt::cl::negate< point > );
+BOLT_CREATE_CLCODE( bolt::cl::negate< point >,
+"namespace bolt { \n"
+"namespace cl { \n"
+"template<typename T> \n"
+"struct negate \n"
+"{ \n"
+"    T operator()(const T& x) const {return -x;} \n"
+"}; \n"
+"}; \n"
+"}; \n"
+);
+
+BOLT_CREATE_TYPENAME( bolt::cl::device_vector< point >::iterator );
+BOLT_CREATE_CLCODE( bolt::cl::device_vector< point >::iterator, bolt::cl::deviceVectorIteratorTemplate );
+
+TEST( outputTypeMismatch, pointVsInt )
+{
+     point pt1(12, 3);
+     point pt2(2, 5);
+     point pt(0,0);
+
+     std::vector< point > my_input_vector( 2 );
+
+     //I am using this as we are not use bolt::cl::device_vector to contain “point” type, I’m not sure this  behavior is expected!
+     my_input_vector[0].xPoint = 12;
+     my_input_vector[0].yPoint = 3;
+
+     my_input_vector[1].xPoint = 2;
+     my_input_vector[1].yPoint = 5;
+
+     point newPt = bolt::cl::transform_reduce( my_input_vector.begin(), my_input_vector.end(), bolt::cl::negate<point>(), 
+                                                                pt, bolt::cl::plus<point>( ) );
+}
+
 BOLT_CREATE_TYPENAME(bolt::cl::less<UDD>);
 BOLT_CREATE_TYPENAME(bolt::cl::greater<UDD>);
 BOLT_CREATE_TYPENAME(bolt::cl::plus<UDD>);

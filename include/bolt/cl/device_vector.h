@@ -676,13 +676,20 @@ namespace cl
 
             void resize( size_type reqSize, const value_type& val = value_type( ) )
             {
+                if( (m_Flags & CL_MEM_USE_HOST_PTR) != 0 )
+                {
+                    throw ::cl::Error( CL_MEM_OBJECT_ALLOCATION_FAILURE , 
+                        "A device_vector can not resize() memory not under its direct control" );
+                }
+
                 size_type cap = capacity( );
 
                 if( reqSize == cap )
                     return;
 
                 if( reqSize > max_size( ) )
-                    throw ::cl::Error( CL_MEM_OBJECT_ALLOCATION_FAILURE , "The amount of memory requested exceeds what is available" );
+                    throw ::cl::Error( CL_MEM_OBJECT_ALLOCATION_FAILURE , 
+                    "The amount of memory requested exceeds what is available" );
 
                 cl_int l_Error = CL_SUCCESS;
 
