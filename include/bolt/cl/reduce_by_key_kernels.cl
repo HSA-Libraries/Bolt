@@ -22,7 +22,7 @@ template<
     typename kType,
     typename vType,
     typename oType,
-	typename voType,
+    typename voType,
     typename BinaryPredicate,
     typename BinaryFunction >
 __kernel void perBlockScanByKey(
@@ -30,7 +30,7 @@ __kernel void perBlockScanByKey(
     global vType *vals,
     global oType *output, // input
     global voType *output2,
-	const uint vecSize,
+    const uint vecSize,
     local kType *ldsKeys,
     local oType *ldsVals,
     global BinaryPredicate *binaryPred,
@@ -53,7 +53,7 @@ __kernel void perBlockScanByKey(
     //vType inVal = vals[gloId];
     //val = (oType) (*unaryOp)(inVal);
     key = keys[ gloId ];
-	val = vals[ gloId ];
+    val = vals[ gloId ];
     ldsKeys[ locId ] = key;
     ldsVals[ locId ] = val;
 
@@ -64,20 +64,20 @@ __kernel void perBlockScanByKey(
     {
         barrier( CLK_LOCAL_MEM_FENCE );
         kType key2 = ldsKeys[locId - offset];
-		kType prevKey = ldsKeys[locId - 1];
+        kType prevKey = ldsKeys[locId - 1];
         if (locId >= offset && (*binaryPred)(key, key2) && (*binaryPred)(key,prevKey))
         {
             oType y = ldsVals[ locId - offset ];
             sum = (*binaryFunct)( sum, y );
         }		
-		else //This has to be optimized
-		{
-			if (offset == 1) //Only when you compare neighbours
-			{
-					output2[ gloId ] = 1;
-			}
-				
-		}
+        else //This has to be optimized
+        {
+            if (offset == 1) //Only when you compare neighbours
+            {
+                    output2[ gloId ] = 1;
+            }
+                
+        }
         barrier( CLK_LOCAL_MEM_FENCE );
         ldsVals[ locId ] = sum;
     }
@@ -236,6 +236,7 @@ __kernel void perBlockAdditionByKey(
     global kType *keySumArray,
     global oType *postSumArray,
     global kType *keys,
+    global oType *output2,
     global oType *output,
     const uint vecSize,
     global BinaryPredicate *binaryPred,
@@ -259,6 +260,7 @@ __kernel void perBlockAdditionByKey(
         oType postBlockSum = postSumArray[ groId-1 ];
         oType newResult = (*binaryFunct)( scanResult, postBlockSum );
         output[ gloId ] = newResult;
+        output2[ gloId ] = 0;
     }
 }
 
@@ -266,35 +268,44 @@ __kernel void perBlockAdditionByKey(
  *  Kernel 3
  *****************************************************************************/
  template<
-	typename kType,
-	typename koType,
-	typename voType >
+    typename kType,
+    typename koType,
+    typename voType >
 __kernel void keyValueMapping(
-	global kType *keys,
-	global koType *keys_output,
-	global voType *vals_output,
-	global koType *offsetArray,
-	global koType *offsetValArray,
-	const uint vecSize)
+    global kType *keys,
+    global koType *keys_output,
+    global voType *vals_output,
+    global koType *offsetArray,
+    global koType *offsetValArray,
+    const uint vecSize)
 {
-	
+    
     size_t gloId = get_global_id( 0 );
 
     //  Abort threads that are passed the end of the input vector
     if( gloId >= vecSize )
         return;
-	
+    
 
-	if(offsetArray[ gloId ] != (koType) 0)
+    if(offsetArray[ gloId ] != (koType) 0)
+    {
+		int x = offsetArray [ gloId ] -1;
+		int xkeys = keys[ gloId-1 ];
+		int xvals = offsetValArray [ gloId-1 ]; 
+
+        keys_output[ offsetArray [ gloId ] -1 ] = keys[ gloId-1 ];
+        vals_output[ offsetArray [ gloId ] -1 ] = offsetValArray [ gloId-1 ];
+    }
+
+	if( gloId == (vecSize-1) )
 	{
-		keys_output[ offsetArray [ gloId ] ] = keys[ gloId-1 ];
-		vals_output[ offsetArray [ gloId ] ] = offsetValArray [ gloId-1 ];
+		//printf("ossfetarr=%d\n", offsetArray [ gloId ]);
+		//printf("keys=%d\n", keys[ gloId ]);
+		//printf("offsetval=%d\n",offsetValArray [ gloId ]);
+        keys_output[ keys[ gloId ] -1 ] = keys[ gloId ]; //Copying the last key directly. Works either ways
+        vals_output[keys[ gloId ] -1 ] = offsetValArray [ gloId ];
+			
 	}
 
-	//if(vecSize == (gloId-1))
-	//{
-	//	keys_output[ gloId ] = ;
-	//	vals_output[ gloId ] = 
-	//}
-
+    
 }

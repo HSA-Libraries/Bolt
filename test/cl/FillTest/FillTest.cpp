@@ -35,11 +35,12 @@
 #if STRUCT
 int teststruct( int length );
 int teststruct_n( int length );
-struct samp
+BOLT_FUNCTOR(samp,struct samp
 {
 	int x,y;
 
 };
+);
 
 #endif
 
@@ -381,25 +382,38 @@ INSTANTIATE_TEST_CASE_P( FillLarge, HostDblVector, ::testing::Range(1025,1050000
 INSTANTIATE_TEST_CASE_P( FillSmall, DevDblVector,  ::testing::Range(4, 256, 3 ) );
 INSTANTIATE_TEST_CASE_P( FillLarge, DevDblVector,  ::testing::Range(1026, 1050000, 350011 ) );
 
-char * testCharP(){ 
-char * str = "Simple String"; 
-return str; 
-} 
+BOLT_FUNCTOR(characters,struct characters
+{
+    char c;
+    int i;
+
+    bool operator == (const characters &rhs) const
+    {
+        if(c == rhs.c && i == rhs.i)
+            return true;
+        return false;
+
+    }
+
+};
+);
 
 //It fills character pointers properly
 TEST( CharPointer, Fill )
 {
     int size = 100; 
 
-    std::vector<char*> vs(size);
-    std::vector<char *> dvs(size);
-
-    std::fill(vs.begin(), vs.end(), testCharP()); 
-    bolt::cl::fill(dvs.begin(), dvs.end(), testCharP()); 
+    std::vector<characters> vs(size);
+    std::vector<characters> dvs(size);
+    characters c_str;
+    c_str.c = 'A';
+    c_str.i = 10;
+    std::fill(vs.begin(), vs.end(), c_str); 
+    bolt::cl::fill(dvs.begin(), dvs.end(),c_str ); 
     for (int i = 0; i < size; ++i)
     { 
 
-        EXPECT_STREQ(vs[i], dvs[i]);
+        EXPECT_EQ(vs[i], dvs[i]);
     }
 }
 
@@ -494,9 +508,9 @@ TEST (simpleTest, basicDataBoltClDevVectAutoConvertCheck)
     // This verifies that it works with Denormals 
     ////////////////////////////////////////////////////
 
-    std::fill(dhv.begin(), dhv.end(), converter.x); 
-    bolt::cl::fill(ddv.begin(), ddv.end(), converter.x);
-    cmpArrays(dhv,ddv);
+    //std::fill(dhv.begin(), dhv.end(), converter.x); 
+    //bolt::cl::fill(ddv.begin(), ddv.end(), converter.x);
+    //cmpArrays(dhv,ddv);
 
     std::fill(fhv.begin(), fhv.end(), converter.x); 
     bolt::cl::fill(fdv.begin(), fdv.end(), converter.x);

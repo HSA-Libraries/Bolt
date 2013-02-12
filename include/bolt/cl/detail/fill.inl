@@ -18,6 +18,7 @@
 #pragma once
 #if !defined( FILL_INL )
 #define FILL_INL
+#define WAVEFRONT_SIZE 64
 
 #include <boost/thread/once.hpp>
 #include <boost/bind.hpp>
@@ -29,25 +30,34 @@ namespace bolt {
     namespace cl {
 
         // default control, start->stop
-        template<typename ForwardIterator, typename T>
-        void fill( ForwardIterator first, ForwardIterator last, const T & value, const std::string& cl_code)
+        template< typename ForwardIterator, typename T >
+        void fill( ForwardIterator first,
+            ForwardIterator last,
+            const T & value,
+            const std::string& cl_code )
         {
             detail::fill_detect_random_access( bolt::cl::control::getDefault(), first, last, value, cl_code, 
                 std::iterator_traits< ForwardIterator >::iterator_category( ) );
         }
 
         // user specified control, start->stop
-        template<typename ForwardIterator, typename T>
-        void fill( const bolt::cl::control &ctl, ForwardIterator first, ForwardIterator last, const T & value, 
-            const std::string& cl_code)
+        template< typename ForwardIterator, typename T >
+        void fill( const bolt::cl::control &ctl,
+            ForwardIterator first,
+            ForwardIterator last,
+            const T & value, 
+            const std::string& cl_code )
         {
             detail::fill_detect_random_access( ctl, first, last, value, cl_code, 
                 std::iterator_traits< ForwardIterator >::iterator_category( ) );
         }
 
         // default control, start-> +n
-        template<typename OutputIterator, typename Size, typename T>
-        OutputIterator fill_n( OutputIterator first, Size n, const T & value, const std::string& cl_code)
+        template< typename OutputIterator, typename Size, typename T >
+        OutputIterator fill_n( OutputIterator first,
+            Size n,
+            const T & value,
+            const std::string& cl_code )
         {
             detail::fill_detect_random_access( bolt::cl::control::getDefault(), first, first+static_cast< const int >( n ), 
                 value, cl_code, std::iterator_traits< OutputIterator >::iterator_category( ) );
@@ -56,8 +66,11 @@ namespace bolt {
 
         // user specified control, start-> +n
         template<typename OutputIterator, typename Size, typename T>
-        OutputIterator fill_n( const bolt::cl::control &ctl, OutputIterator first, Size n, const T & value, 
-            const std::string& cl_code)
+        OutputIterator fill_n( const bolt::cl::control &ctl,
+            OutputIterator first,
+            Size n,
+            const T & value, 
+            const std::string& cl_code )
         {
             detail::fill_detect_random_access( ctl, first, n, value, cl_code, 
                 std::iterator_traits< OutputIterator >::iterator_category( ) );
@@ -71,6 +84,36 @@ namespace bolt {
 namespace bolt {
     namespace cl {
         namespace detail {
+        enum fillTypeName { fill_T, fill_Type };
+
+        ///////////////////////////////////////////////////////////////////////
+        //Kernel Template Specializer
+        ///////////////////////////////////////////////////////////////////////
+        class Fill_KernelTemplateSpecializer : public KernelTemplateSpecializer
+        {
+            public:
+
+            Fill_KernelTemplateSpecializer() : KernelTemplateSpecializer()
+                {
+                addKernelName( "fill_kernel" );
+                }
+
+            const ::std::string operator() ( const ::std::vector<::std::string>& typeNames ) const
+            {
+                const std::string templateSpecializationString = 
+                    "// Dynamic specialization of generic template definition, using user supplied types\n"
+                    "template __attribute__((mangled_name(" + name(0) + "Instantiated)))\n"
+                    "__attribute__((reqd_work_group_size(64,1,1)))\n"
+                    "__kernel void " + name(0) + "(\n"
+                    "const " + typeNames[fill_T] + " src,\n"
+                    "global " + typeNames[fill_Type] + " * dst,\n"
+                    "const uint numElements\n"
+                    ");\n\n";
+    
+                return templateSpecializationString;
+            }
+        };
+
 
             /*****************************************************************************
              * Random Access
@@ -147,43 +190,118 @@ namespace bolt {
             void fill_enqueue(const bolt::cl::control &ctl, const DVForwardIterator &first, const DVForwardIterator &last, 
                 const T & val, const std::string& cl_code)
             {
-                typedef std::iterator_traits<DVForwardIterator>::value_type Type;
                 // how many elements to fill
                 cl_uint sz = static_cast< cl_uint >( std::distance( first, last ) );
                 if (sz < 1)
                     return;
-                cl_int l_Error= CL_SUCCESS;
-                ::cl::Event fillEvent;
 
-                //Type comparison
-                if(std::is_same<T,Type>::value)
+                /**********************************************************************************
+                 * Type Names - used in KernelTemplateSpecializer
+                 *********************************************************************************/
+                typedef std::iterator_traits<DVForwardIterator>::value_type Type;
+                typedef T iType;
+                std::vector<std::string> typeNames(2);
+                typeNames[fill_T] = TypeName< T >::get( );
+                typeNames[fill_Type] = TypeName< Type >::get( );
+            
+                /**********************************************************************************
+                 * Type Definitions - directrly concatenated into kernel string (order may matter)
+                 *********************************************************************************/
+                std::vector<std::string> typeDefs;
+                PUSH_BACK_UNIQUE( typeDefs, ClCode< iType >::get() )
+                PUSH_BACK_UNIQUE( typeDefs, ClCode< Type >::get() )
+            
+                cl_int l_Error = CL_SUCCESS;
+                const size_t workGroupSize  = WAVEFRONT_SIZE;
+                const size_t numComputeUnits = ctl.device( ).getInfo< CL_DEVICE_MAX_COMPUTE_UNITS >( ); // = 28
+                const size_t numWorkGroupsPerComputeUnit = ctl.wgPerComputeUnit( );
+                const size_t numWorkGroups = numComputeUnits * numWorkGroupsPerComputeUnit;
+                
+                const cl_uint numThreadsIdeal = static_cast<cl_uint>( numWorkGroups * workGroupSize );
+                cl_uint numElementsPerThread = sz/ numThreadsIdeal;
+                cl_uint numThreadsRUP = sz;
+                size_t mod = (sz& (workGroupSize-1));
+                int doBoundaryCheck = 0;
+                if( mod )
                 {
-                    // \todo enqueueFillBuffer does not handle arbitrary data types.  We need to refactor 
-                    //  to use the Fill API
-                    ctl.commandQueue().enqueueFillBuffer(first.getBuffer(),val,0,sz*sizeof(T),NULL,&fillEvent);
-
-                    /*enqueueFillBuffer API:
-                    cl_int enqueueFillBuffer(const Buffer& buffer,
-                    PatternType pattern,
-                    ::size_t offset,
-                    ::size_t size,
-                    const VECTOR_CLASS<Event>* events = NULL,
-                    Event* event = NULL) const
-                    */
-                    V_OPENCL( l_Error, "clEnqueueFillBuffer() failed" );
-                    bolt::cl::wait(ctl, fillEvent);
+                  numThreadsRUP &= ~mod;
+                  numThreadsRUP += workGroupSize;
+                  doBoundaryCheck = 1;
                 }
-                else
+            
+                /**********************************************************************************
+                 * Compile Options
+                 *********************************************************************************/
+                std::string compileOptions;
+                std::ostringstream oss;
+                oss << " -DBOUNDARY_CHECK=" << doBoundaryCheck;
+                compileOptions = oss.str();
+            
+                /**********************************************************************************
+                 * Request Compiled Kernels
+                 *********************************************************************************/
+                Fill_KernelTemplateSpecializer c_kts;
+                std::vector< ::cl::Kernel > kernels = bolt::cl::getKernels(
+                    ctl,
+                    typeNames,
+                    &c_kts,
+                    typeDefs,
+                    fill_kernels,
+                    compileOptions);
+            
+                /**********************************************************************************
+                 *  Kernel
+                 *********************************************************************************/
+                ::cl::Event kernelEvent;
+                try
                 {
-                    //If iterator and fill element are of different types then do a cast
-                    const Type newval = static_cast<const Type>(val);
-
-                    // \todo enqueueFillBuffer does not handle arbitrary data types.  We need to refactor 
-                    //  to use the Fill API
-                    ctl.commandQueue().enqueueFillBuffer( first.getBuffer(),newval,0,sz*sizeof(Type),NULL,&fillEvent);
-                    V_OPENCL( l_Error, "clEnqueueFillBuffer() failed" );
-                    bolt::cl::wait(ctl, fillEvent);
+                    cl_uint numThreadsChosen;
+                    cl_uint workGroupSizeChosen = workGroupSize;
+                    numThreadsChosen = numThreadsRUP;
+            
+                    std::cout << "NumElem: " << sz<< "; NumThreads: " << numThreadsChosen << "; NumWorkGroups: " << numThreadsChosen/workGroupSizeChosen << std::endl;
+            
+                    V_OPENCL( kernels[0].setArg( 0, val), "Error setArg kernels[ 0 ]" ); // Input Value
+                    V_OPENCL( kernels[0].setArg( 1, first.getBuffer()),"Error setArg kernels[ 0 ]" ); // Fill buffer
+                    V_OPENCL( kernels[0].setArg( 2, static_cast<cl_uint>( sz) ), "Error setArg kernels[ 0 ]" ); // Size of buffer
+            
+                    l_Error = ctl.commandQueue( ).enqueueNDRangeKernel(
+                        kernels[0],
+                        ::cl::NullRange,
+                        ::cl::NDRange( numThreadsChosen ),
+                        ::cl::NDRange( workGroupSizeChosen ),
+                        NULL,
+                        &kernelEvent);
+                    V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for kernel" );
                 }
+                catch( const ::cl::Error& e)
+                {
+                    std::cerr << "::cl::enqueueNDRangeKernel( ) in bolt::cl::copy_enqueue()" << std::endl;
+                    std::cerr << "Error Code:   " << clErrorStringA(e.err()) << " (" << e.err() << ")" << std::endl;
+                    std::cerr << "File:         " << __FILE__ << ", line " << __LINE__ << std::endl;
+                    std::cerr << "Error String: " << e.what() << std::endl;
+                }
+            
+                // wait for results
+                bolt::cl::wait(ctl, kernelEvent);
+            
+            
+                // profiling
+                cl_command_queue_properties queueProperties;
+                l_Error = ctl.commandQueue().getInfo<cl_command_queue_properties>(CL_QUEUE_PROPERTIES, &queueProperties);
+                unsigned int profilingEnabled = queueProperties&CL_QUEUE_PROFILING_ENABLE;
+                if ( profilingEnabled ) {
+                    cl_ulong start_time, stop_time;
+                    
+                    V_OPENCL( kernelEvent.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_START, &start_time), "failed on getProfilingInfo<CL_PROFILING_COMMAND_START>()");
+                    V_OPENCL( kernelEvent.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END,    &stop_time), "failed on getProfilingInfo<CL_PROFILING_COMMAND_END>()");
+                    size_t time = stop_time - start_time;
+                    double gb = (sz*(sizeof(T)+sizeof(Type))/1024.0/1024.0/1024.0);
+                    double sec = time/1000000000.0;
+                    std::cout << "Global Memory Bandwidth: " << ( gb / sec) << " ( "
+                      << time/1000000.0 << " ms)" << std::endl;
+                }
+
             }; // end fill_enqueue
 
         }//End OF detail namespace
