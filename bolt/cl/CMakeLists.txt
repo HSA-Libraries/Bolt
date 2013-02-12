@@ -117,7 +117,8 @@ set( clBolt.Runtime.Headers.Detail
         ${clBolt.Include.Dir}/detail/transform_scan.inl
     )
 
-set( clBolt.Runtime.clFiles 
+set( clBolt.Runtime.clFiles
+	fill_kernels.cl
         copy_kernels.cl 
         generate_kernels.cl 
         reduce_kernels.cl 
