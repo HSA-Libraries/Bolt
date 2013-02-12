@@ -1160,34 +1160,9 @@ BOLT_FUNCTOR( point,
     };
 );
 
-BOLT_CREATE_TYPENAME( bolt::cl::plus< point > );
-BOLT_CREATE_CLCODE( bolt::cl::plus< point >, 
-"namespace bolt { \n"
-"namespace cl { \n"
-"template<typename T> \n"
-"struct plus \n"
-"{ \n"
-"    T operator()(const T &lhs, const T &rhs) const {return lhs + rhs;} \n"
-"}; \n"
-"}; \n"
-"}; \n"
-);
-
-BOLT_CREATE_TYPENAME( bolt::cl::negate< point > );
-BOLT_CREATE_CLCODE( bolt::cl::negate< point >,
-"namespace bolt { \n"
-"namespace cl { \n"
-"template<typename T> \n"
-"struct negate \n"
-"{ \n"
-"    T operator()(const T& x) const {return -x;} \n"
-"}; \n"
-"}; \n"
-"}; \n"
-);
-
-BOLT_CREATE_TYPENAME( bolt::cl::device_vector< point >::iterator );
-BOLT_CREATE_CLCODE( bolt::cl::device_vector< point >::iterator, bolt::cl::deviceVectorIteratorTemplate );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::plus, int, point );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::negate, int, point );
+BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, int, point );
 
 TEST( outputTypeMismatch, pointVsInt )
 {
