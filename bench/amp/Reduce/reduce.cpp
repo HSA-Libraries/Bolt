@@ -145,26 +145,11 @@ int _tmain( int argc, _TCHAR* argv[] )
 
 	size_t reduceId	= myTimer.getUniqueID( _T( "reduce" ), 0 );
 
-	if( defaultDevice )
+	for( unsigned i = 0; i < numLoops; ++i )
 	{
-		for( unsigned i = 0; i < numLoops; ++i )
-		{
-			myTimer.Start( reduceId );
-			int res = bolt::reduce( input.begin( ), input.end( ) );
-			myTimer.Stop( reduceId );
-		}
-	}
-	else
-	{
-		std::vector< concurrency::accelerator > allDevices = concurrency::accelerator::get_all( );
-		concurrency::accelerator_view av = allDevices.at( iDevice ).get_default_view( );
-
-		for( unsigned i = 0; i < numLoops; ++i )
-		{
-			myTimer.Start( reduceId );
-			int res = bolt::reduce( av, input.begin( ), input.end( ), 0, bolt::plus< int >( ) );
-			myTimer.Stop( reduceId );
-		}
+		myTimer.Start( reduceId );
+		int res = bolt::amp::reduce( input.begin( ), input.end( ), 0 );
+		myTimer.Stop( reduceId );
 	}
 
 	//	Remove all timings that are outside of 2 stddev (keep 65% of samples); we ignore outliers to get a more consistent result
