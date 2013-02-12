@@ -22,6 +22,7 @@
 #include <bolt/cl/bolt.h>
 #include <bolt/cl/functional.h>
 #include <bolt/cl/device_vector.h>
+#include <bolt/cl/pair.h>
 
 /*! \file reduce_by_key.h
 */
@@ -92,7 +93,7 @@ template<
     typename OutputIterator2,
     typename BinaryPredicate,
     typename BinaryFunction>
-void
+pair<OutputIterator1, OutputIterator2>
 reduce_by_key(
     InputIterator1  keys_first,
     InputIterator1  keys_last,
@@ -148,7 +149,7 @@ template<
     typename OutputIterator1,
     typename OutputIterator2,
     typename BinaryPredicate>
-void
+pair<OutputIterator1, OutputIterator2>
 reduce_by_key(
     InputIterator1  keys_first,
     InputIterator1  keys_last,
@@ -198,7 +199,7 @@ template<
     typename InputIterator2,
     typename OutputIterator1,
     typename OutputIterator2>
-void
+pair<OutputIterator1, OutputIterator2>
 reduce_by_key(
     InputIterator1  keys_first,
     InputIterator1  keys_last,
@@ -260,7 +261,7 @@ template<
     typename OutputIterator2,
     typename BinaryPredicate,
     typename BinaryFunction>
-void
+pair<OutputIterator1, OutputIterator2>
 reduce_by_key(
     control &ctl,
     InputIterator1  keys_first,
@@ -319,7 +320,7 @@ template<
     typename OutputIterator1,
     typename OutputIterator2,
     typename BinaryPredicate>
-void
+pair<OutputIterator1, OutputIterator2>
 reduce_by_key(
     control &ctl,
     InputIterator1  keys_first,
@@ -373,7 +374,7 @@ template<
     typename InputIterator2,
     typename OutputIterator1,
     typename OutputIterator2>
-void
+pair<OutputIterator1, OutputIterator2>
 reduce_by_key(
     control &ctl,
     InputIterator1  keys_first,
