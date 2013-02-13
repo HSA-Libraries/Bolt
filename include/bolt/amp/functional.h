@@ -17,9 +17,8 @@
 
 #pragma once
 
-
-
 namespace bolt {
+namespace amp {
 	template<typename Argument1,
 		typename Result>
 	struct unary_function
@@ -71,5 +70,19 @@ namespace bolt {
 	}; 
 
 
-};
+    template<typename T>
+    struct greater
+    {
+        bool operator()(const T &lhs, const T &rhs) const  restrict(cpu,amp) {return lhs > rhs;}
+    }; 
 
+
+
+    template<typename T>
+    struct less
+    {
+        bool operator()(const T &lhs, const T &rhs) const  restrict(cpu,amp) {return lhs < rhs;}
+    }; 
+
+};//End of amp namespace
+};//End of bolt namespace

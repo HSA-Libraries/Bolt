@@ -19,17 +19,25 @@
 #define TEST_DEVICE_VECTOR 1
 #define TEST_CPU_DEVICE 0
 #define TEST_MULTICORE_TBB_SORT 0
+#define TEST_AMP 1
 #define GOOGLE_TEST 1
 #if (GOOGLE_TEST == 1)
 #include <gtest/gtest.h>
 #include "common/stdafx.h"
+#if (TEST_AMP == 0)
 #include "common/myocl.h"
+#endif
 #include "common/test_common.h"
-
+#if (TEST_AMP == 1)
+#include <bolt/amp/sort.h>
+//#include <bolt/cl/sort.h>
+#include <bolt/miniDump.h>
+#include <bolt/unicode.h>
+#else
 #include <bolt/cl/sort.h>
 #include <bolt/miniDump.h>
 #include <bolt/unicode.h>
-
+#endif
 
 #include <boost/shared_array.hpp>
 #include <array>
@@ -40,7 +48,7 @@
 //This is a compare routine for naked pointers.
 
 // UDD which contains four doubles
-BOLT_FUNCTOR(uddtD4,
+//BOLT_FUNCTOR(uddtD4,
 struct uddtD4
 {
     double a;
@@ -71,10 +79,10 @@ struct uddtD4
         return equal;
     }
 };
-);
+//);
 
 // Functor for UDD. Adds all four double elements and returns true if lhs_sum > rhs_sum
-BOLT_FUNCTOR(AddD4,
+//BOLT_FUNCTOR(AddD4,
 struct AddD4
 {
     bool operator()(const uddtD4 &lhs, const uddtD4 &rhs) const
@@ -85,26 +93,27 @@ struct AddD4
         return false;
     };
 }; 
-);
+//);
 uddtD4 identityAddD4 = { 1.0, 1.0, 1.0, 1.0 };
 uddtD4 initialAddD4  = { 1.00001, 1.000003, 1.0000005, 1.00000007 };
-BOLT_CREATE_TYPENAME( bolt::cl::device_vector< uddtD4 >::iterator );
 
+#if 0
 TEST(SortUDD, AddDouble4)
 {
     //setup containers
-    int length = (1<<8);
-    bolt::cl::device_vector< uddtD4 > input(  length, initialAddD4,  CL_MEM_READ_WRITE, true  );
+    size_t length = (1<<8);
+    bolt::amp::device_vector< uddtD4 > input(  length, initialAddD4,  true );
     std::vector< uddtD4 > refInput( length, initialAddD4 );
 
     // call sort
     AddD4 ad4gt;
-    bolt::cl::sort(input.begin(),    input.end(), ad4gt);
+    bolt::amp::sort(input.begin(),    input.end(), ad4gt);
     std::sort( refInput.begin(), refInput.end(), ad4gt );
 
     // compare results
     cmpArrays(refInput, input);
 }
+#endif
 #if (TEST_MULTICORE_TBB_SORT == 1)
 TEST(SortUDD, MultiCoreAddDouble4)
 {
@@ -124,28 +133,25 @@ TEST(SortUDD, MultiCoreAddDouble4)
     // compare results
     cmpArrays(refInput, input);
 }
-#endif 
+
 TEST(SortUDD, GPUAddDouble4)
 {
-
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
-    std::vector< cl::Device > devices = myContext.getInfo< CL_CONTEXT_DEVICES >();
-    ::cl::CommandQueue myQueue( myContext, devices[ 0 ] );
-    bolt::cl::control c_gpu( myQueue );  // construct control structure from the queue.
+    Concurrency::accelerator accel(Concurrency::accelerator::default_accelerator);
+    bolt::amp::control c_gpu( accel );  // construct control structure from the queue.
     //setup containers
     int length = (1<<8);
-    bolt::cl::device_vector< uddtD4 > input(  length, initialAddD4,  CL_MEM_READ_WRITE, true  );
+    bolt::amp::device_vector< uddtD4 > input(  length, initialAddD4, true );
     std::vector< uddtD4 > refInput( length, initialAddD4 );
 
     // call sort
     AddD4 ad4gt;
-    bolt::cl::sort(c_gpu, input.begin(), input.end(), ad4gt );
+    bolt::amp::sort(c_gpu, input.begin(), input.end(), ad4gt );
     std::sort( refInput.begin(), refInput.end(), ad4gt );
 
     // compare results
     cmpArrays(refInput, input);
 }
-
+#endif 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Fixture classes are now defined to enable googletest to process type parameterized tests
@@ -194,7 +200,7 @@ TYPED_TEST_P( SortArrayTest, Normal )
 
     //  Calling the actual functions under test
     std::sort( stdInput.begin( ), stdInput.end( ));
-    bolt::cl::sort( boltInput.begin( ), boltInput.end( ) );
+    bolt::amp::sort( boltInput.begin( ), boltInput.end( ) );
 
     ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
     ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
@@ -206,47 +212,20 @@ TYPED_TEST_P( SortArrayTest, Normal )
     cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
     
 }
-#if (TEST_MULTICORE_TBB_SORT == 1)
-TYPED_TEST_P( SortArrayTest, MultiCoreNormal )
-{
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.forceRunMode(bolt::cl::control::MultiCoreCpu);
-    //  Calling the actual functions under test
-    std::sort( stdInput.begin( ), stdInput.end( ));
-    bolt::cl::sort( ctl, boltInput.begin( ), boltInput.end( ) );
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
-
-    //  Both collections should have the same number of elements
-    EXPECT_EQ( stdNumElements, boltNumElements );
-
-    //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
-}
-#endif
 
 TYPED_TEST_P( SortArrayTest, GPU_DeviceNormal )
 {
-    //  The first time our routines get called, we compile the library kernels with a certain context
-    //  OpenCL does not allow the context to change without a recompile of the kernel
-    // MyOclContext oclgpu = initOcl(CL_DEVICE_TYPE_GPU, 0);
-    //bolt::cl::control c_gpu(oclgpu._queue);  // construct control structure from the queue.
-
     //  Create a new command queue for a different device, but use the same context as was provided
     //  by the default control device
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
-    std::vector< cl::Device > devices = myContext.getInfo< CL_CONTEXT_DEVICES >();
-    ::cl::CommandQueue myQueue( myContext, devices[ 0 ] );
-    bolt::cl::control c_gpu( myQueue );  // construct control structure from the queue.
+    Concurrency::accelerator accel(Concurrency::accelerator::default_accelerator);
+    bolt::amp::control c_gpu( accel );  // construct control structure from the queue.
 
     typedef std::array< ArrayType, ArraySize > ArrayCont;
 
     //  Calling the actual functions under test
     std::sort( stdInput.begin( ), stdInput.end( ));
-    bolt::cl::sort( c_gpu, boltInput.begin( ), boltInput.end( ) );
+    bolt::amp::sort( c_gpu, boltInput.begin( ), boltInput.end( ) );
 
     ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
     ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
@@ -262,10 +241,10 @@ TYPED_TEST_P( SortArrayTest, GPU_DeviceNormal )
 #if (TEST_CPU_DEVICE == 1)
 TYPED_TEST_P( SortArrayTest, CPU_DeviceNormal )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
-
-    MyOclContext oclcpu = initOcl(CL_DEVICE_TYPE_CPU, 0);
-    bolt::cl::control c_cpu(oclcpu._queue);  // construct control structure from the queue.
+    //  Create a new command queue for a different device, but use the same context as was provided
+    //  by the default control device
+    Concurrency::accelerator accel(Concurrency::accelerator::cpu_accelerator);
+    bolt::amp::control c_cpu( accel );  // construct control structure from the queue.
 
     //  Calling the actual functions under test
     std::sort( stdInput.begin( ), stdInput.end( ));
@@ -290,7 +269,7 @@ TYPED_TEST_P( SortArrayTest, GreaterFunction )
     //  Calling the actual functions under test
     std::sort( stdInput.begin( ), stdInput.end( ), std::greater< ArrayType >() );
     
-    bolt::cl::sort( boltInput.begin( ), boltInput.end( ), bolt::cl::greater< ArrayType >( ) );
+    bolt::amp::sort( boltInput.begin( ), boltInput.end( ), bolt::amp::greater< ArrayType >( ) );
 
     ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
     ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
@@ -305,22 +284,16 @@ TYPED_TEST_P( SortArrayTest, GreaterFunction )
 
 TYPED_TEST_P( SortArrayTest, GPU_DeviceGreaterFunction )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
-    //  The first time our routines get called, we compile the library kernels with a certain context
-    //  OpenCL does not allow the context to change without a recompile of the kernel
-    // MyOclContext oclgpu = initOcl(CL_DEVICE_TYPE_GPU, 0);
-    //bolt::cl::control c_gpu(oclgpu._queue);  // construct control structure from the queue.
-
     //  Create a new command queue for a different device, but use the same context as was provided
     //  by the default control device
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
-    std::vector< cl::Device > devices = myContext.getInfo< CL_CONTEXT_DEVICES >();
-    ::cl::CommandQueue myQueue( myContext, devices[ 0 ] );
-    bolt::cl::control c_gpu( myQueue );  // construct control structure from the queue.
+    Concurrency::accelerator accel(Concurrency::accelerator::default_accelerator);
+    bolt::amp::control c_gpu( accel );  // construct control structure from the queue.
+    
+    typedef std::array< ArrayType, ArraySize > ArrayCont;
 
     //  Calling the actual functions under test
     std::sort( stdInput.begin( ), stdInput.end( ), std::greater< ArrayType >( ));
-    bolt::cl::sort( c_gpu, boltInput.begin( ), boltInput.end( ), bolt::cl::greater< ArrayType >( ) );
+    bolt::amp::sort( c_gpu, boltInput.begin( ), boltInput.end( ), bolt::amp::greater< ArrayType >( ) );
 
     ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
     ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
@@ -336,12 +309,12 @@ TYPED_TEST_P( SortArrayTest, GPU_DeviceGreaterFunction )
 TYPED_TEST_P( SortArrayTest, CPU_DeviceGreaterFunction )
 {
     typedef std::array< ArrayType, ArraySize > ArrayCont;
-    MyOclContext oclcpu = initOcl(CL_DEVICE_TYPE_CPU, 0);
-    bolt::cl::control c_cpu(oclcpu._queue);  // construct control structure from the queue.
+    Concurrency::accelerator accel(Concurrency::accelerator::default_accelerator);
+    bolt::amp::control c_gpu( accel );  // construct control structure from the queue.
 
     //  Calling the actual functions under test
     std::sort( stdInput.begin( ), stdInput.end( ), std::greater< ArrayType >( ));
-    bolt::cl::sort( c_cpu, boltInput.begin( ), boltInput.end( ), bolt::cl::greater< ArrayType >( ) );
+    bolt::amp::sort( c_cpu, boltInput.begin( ), boltInput.end( ), bolt::amp::greater< ArrayType >( ) );
 
     ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
     ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
@@ -360,7 +333,7 @@ TYPED_TEST_P( SortArrayTest, LessFunction )
 
     //  Calling the actual functions under test
     std::sort( stdInput.begin( ), stdInput.end( ), std::less<ArrayType>());
-    bolt::cl::sort( boltInput.begin( ), boltInput.end( ), bolt::cl::less<ArrayType>() );
+    bolt::amp::sort( boltInput.begin( ), boltInput.end( ), bolt::amp::less<ArrayType>() );
 
     ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
     ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
@@ -376,20 +349,14 @@ TYPED_TEST_P( SortArrayTest, LessFunction )
 TYPED_TEST_P( SortArrayTest, GPU_DeviceLessFunction )
 {
     typedef std::array< ArrayType, ArraySize > ArrayCont;
-    //  The first time our routines get called, we compile the library kernels with a certain context
-    //  OpenCL does not allow the context to change without a recompile of the kernel
-    // MyOclContext oclgpu = initOcl(CL_DEVICE_TYPE_GPU, 0);
-    //bolt::cl::control c_gpu(oclgpu._queue);  // construct control structure from the queue.
-
     //  Create a new command queue for a different device, but use the same context as was provided
     //  by the default control device
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
-    std::vector< cl::Device > devices = myContext.getInfo< CL_CONTEXT_DEVICES >();
-    ::cl::CommandQueue myQueue( myContext, devices[ 0 ] ); 
-    bolt::cl::control c_gpu( myQueue );  // construct control structure from the queue.
+    Concurrency::accelerator accel(Concurrency::accelerator::default_accelerator);
+    bolt::amp::control c_gpu( accel );  // construct control structure from the queue.
+
     //  Calling the actual functions under test
     std::sort( stdInput.begin( ), stdInput.end( ), std::less< ArrayType >( ));
-    bolt::cl::sort( c_gpu, boltInput.begin( ), boltInput.end( ), bolt::cl::less< ArrayType >( ) );
+    bolt::amp::sort( c_gpu, boltInput.begin( ), boltInput.end( ), bolt::amp::less< ArrayType >( ) );
 
     ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
     ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
@@ -401,16 +368,18 @@ TYPED_TEST_P( SortArrayTest, GPU_DeviceLessFunction )
     cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
     // FIXME - releaseOcl(ocl);
 }
+
 #if (TEST_CPU_DEVICE == 1)
 TYPED_TEST_P( SortArrayTest, CPU_DeviceLessFunction )
 {
     typedef std::array< ArrayType, ArraySize > ArrayCont;
-    MyOclContext oclcpu = initOcl(CL_DEVICE_TYPE_CPU, 0);
-    bolt::cl::control c_cpu(oclcpu._queue);  // construct control structure from the queue.
+
+    Concurrency::accelerator accel(Concurrency::accelerator::default_accelerator);
+    bolt::amp::control c_gpu( accel );  // construct control structure from the queue.
 
     //  Calling the actual functions under test
     std::sort( stdInput.begin( ), stdInput.end( ), std::less< ArrayType >( ));
-    bolt::cl::sort( c_cpu, boltInput.begin( ), boltInput.end( ), bolt::cl::less< ArrayType >( ) );
+    bolt::amp::sort( c_cpu, boltInput.begin( ), boltInput.end( ), bolt::amp::less< ArrayType >( ) );
 
     ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
     ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
@@ -438,7 +407,7 @@ REGISTER_TYPED_TEST_CASE_P( SortArrayTest, Normal, GPU_DeviceNormal,
 REGISTER_TYPED_TEST_CASE_P( SortArrayTest, MultiCoreNormal ); 
 #endif
 
-
+#if 0
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Fixture classes are now defined to enable googletest to process value parameterized tests
 //  ::testing::TestWithParam< int > means that GetParam( ) returns int values, which i use for array size
@@ -844,7 +813,7 @@ INSTANTIATE_TEST_CASE_P( SortValues, SortFloatNakedPointer, ::testing::ValuesIn(
 INSTANTIATE_TEST_CASE_P( SortRange, SortDoubleNakedPointer, ::testing::Range( 0, 1024, 13) );
 INSTANTIATE_TEST_CASE_P( Sort, SortDoubleNakedPointer, ::testing::ValuesIn( TestValues.begin(), TestValues.end() ) );
 #endif
-
+#endif
 typedef ::testing::Types< 
     std::tuple< int, TypeValue< 1 > >,
     std::tuple< int, TypeValue< 31 > >,
@@ -916,53 +885,72 @@ typedef ::testing::Types<
 #endif 
 
 /********* Test case to reproduce SuiCHi bugs ******************/
-BOLT_FUNCTOR(UDD,
+//BOLT_FUNCTOR(UDD,
+INSTANTIATE_TYPED_TEST_CASE_P( Integer, SortArrayTest, IntegerTests );
+INSTANTIATE_TYPED_TEST_CASE_P( UnsignedInteger, SortArrayTest, UnsignedIntegerTests );
+INSTANTIATE_TYPED_TEST_CASE_P( Float, SortArrayTest, FloatTests );
+#if (TEST_DOUBLE == 1)
+INSTANTIATE_TYPED_TEST_CASE_P( Double, SortArrayTest, DoubleTests );
+#endif 
+
+
+
+#if 1
 struct UDD { 
     int a; 
     int b;
 
-    bool operator() (const UDD& lhs, const UDD& rhs) const{ 
+    bool operator() (const UDD& lhs, const UDD& rhs) const restrict (amp, cpu){ 
         return ((lhs.a+lhs.b) > (rhs.a+rhs.b));
     } 
-    bool operator < (const UDD& other) const { 
+    bool operator < (const UDD& other) const restrict (amp, cpu) { 
         return ((a+b) < (other.a+other.b));
     }
-    bool operator > (const UDD& other) const { 
+    bool operator > (const UDD& other) const restrict (amp, cpu) { 
         return ((a+b) > (other.a+other.b));
     }
-    bool operator == (const UDD& other) const { 
+    bool operator == (const UDD& other) const restrict (amp, cpu) { 
         return ((a+b) == (other.a+other.b));
     }
-    UDD() 
+    UDD() restrict (amp, cpu)
         : a(0),b(0) { } 
-    UDD(int _in) 
-        : a(_in), b(_in +1)  { } 
-}; 
-);
 
-BOLT_FUNCTOR(sortBy_UDD_a,
+    UDD(int _in) restrict (amp, cpu)
+        : a(_in), b(_in +1)  { } 
+
+    static UDD &random()
+    {
+        UDD udd;
+        udd.a = rand();
+        udd.b = rand();
+        return udd;
+    }
+}; 
+//);
+
+//BOLT_FUNCTOR(sortBy_UDD_a,
     struct sortBy_UDD_a {
-        bool operator() (const UDD& a, const UDD& b) const
+        bool operator() (const UDD& a, const UDD& b) const restrict(amp, cpu) 
         { 
             return (a.a>b.a); 
         };
     };
-);
+//);
 
-BOLT_FUNCTOR(sortBy_UDD_b,
+//BOLT_FUNCTOR(sortBy_UDD_b,
     struct sortBy_UDD_b {
-        bool operator() (UDD& a, UDD& b) 
+        bool operator() (UDD& a, UDD& b) const restrict(amp, cpu)
         { 
             return (a.b>b.b); 
         };
     };
-);
+//);
 
-BOLT_CREATE_TYPENAME(bolt::cl::less<UDD>);
-BOLT_CREATE_TYPENAME(bolt::cl::greater<UDD>);
+//BOLT_CREATE_TYPENAME(bolt::cl::less<UDD>);
+//BOLT_CREATE_TYPENAME(bolt::cl::greater<UDD>);
 
-BOLT_CREATE_TYPENAME( bolt::cl::device_vector< UDD >::iterator );
-BOLT_CREATE_CLCODE( bolt::cl::device_vector< UDD >::iterator, bolt::cl::deviceVectorIteratorTemplate );
+//BOLT_CREATE_TYPENAME( bolt::cl::device_vector< UDD >::iterator );
+//BOLT_CREATE_CLCODE( bolt::cl::device_vector< UDD >::iterator, bolt::cl::deviceVectorIteratorTemplate );
 
 template< typename ArrayTuple >
 class SortUDDArrayTest: public ::testing::Test
@@ -973,7 +961,7 @@ public:
 
     virtual void SetUp( )
     {
-        std::generate(stdInput.begin(), stdInput.end(), rand);
+        std::generate(stdInput.begin(), stdInput.end(), UDD::random);
         boltInput = stdInput;
     };
 
@@ -998,7 +986,7 @@ TYPED_TEST_P( SortUDDArrayTest, Normal )
     //  Calling the actual functions under test
 
     std::sort( stdInput.begin( ), stdInput.end( ), UDD() );
-    bolt::cl::sort( boltInput.begin( ), boltInput.end( ), UDD() );
+    bolt::amp::sort( boltInput.begin( ), boltInput.end( ), UDD() );
 
     ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
     ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
@@ -1008,7 +996,7 @@ TYPED_TEST_P( SortUDDArrayTest, Normal )
     cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
 
     std::sort( stdInput.begin( ), stdInput.end( ), sortBy_UDD_a() );
-    bolt::cl::sort( boltInput.begin( ), boltInput.end( ), sortBy_UDD_a() );
+    bolt::amp::sort( boltInput.begin( ), boltInput.end( ), sortBy_UDD_a() );
 
     stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
     boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
@@ -1032,25 +1020,18 @@ typedef ::testing::Types<
     std::tuple< UDD, TypeValue< 1000 > >,
     std::tuple< UDD, TypeValue< 1053 > >,
     std::tuple< UDD, TypeValue< 4096 > >,
-    std::tuple< UDD, TypeValue< 4097 > >,
-    std::tuple< UDD, TypeValue< 65535 > >,
-    std::tuple< UDD, TypeValue< 65536 > >
+    std::tuple< UDD, TypeValue< 4097 > >
+    //std::tuple< UDD, TypeValue< 65535 > >,
+    //std::tuple< UDD, TypeValue< 65536 > >
 > UDDTests;
 
 
-
-INSTANTIATE_TYPED_TEST_CASE_P( Integer, SortArrayTest, IntegerTests );
-INSTANTIATE_TYPED_TEST_CASE_P( UnsignedInteger, SortArrayTest, UnsignedIntegerTests );
-INSTANTIATE_TYPED_TEST_CASE_P( Float, SortArrayTest, FloatTests );
-#if (TEST_DOUBLE == 1)
-INSTANTIATE_TYPED_TEST_CASE_P( Double, SortArrayTest, DoubleTests );
-#endif 
 
 
 
 REGISTER_TYPED_TEST_CASE_P( SortUDDArrayTest,  Normal);
 INSTANTIATE_TYPED_TEST_CASE_P( UDDTest, SortUDDArrayTest, UDDTests );
-
+#endif
 int main(int argc, char* argv[])
 {
     ::testing::InitGoogleTest( &argc, &argv[ 0 ] );
@@ -1085,7 +1066,7 @@ int main(int argc, char* argv[])
         bolt::tout << _T( "\t    (only on googletest assertion failures, not SEH exceptions)" ) << std::endl;
     }
     std::cout << "Test Completed. Press Enter to exit.\n .... ";
-    getchar();
+    //getchar();
     return retVal;
 }
 #else

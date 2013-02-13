@@ -49,6 +49,13 @@ namespace amp
 *   Containers that guarantee sequential and linear access to memory "close" to the device
 */
 
+
+
+    struct device_vector_tag
+        : public std::random_access_iterator_tag
+        {   // identifying tag for random-access iterators
+        };
+
 /*! \brief This defines the AMP version of a device_vector
 *   \ingroup Device
 *   \details A device_vector is an abstract data type that provides random access to a flat, sequential region of memory that is performant
@@ -390,7 +397,7 @@ public:
     *   \param ctl A Bolt control class for copy operations; a default is used if not supplied by the user.
     *   \warning The ::cl::CommandQueue is not an STD reserve( ) parameter.
     */
-    device_vector( value_type newSize, const value_type& initValue = value_type( ), bool init = true, 
+    device_vector( size_type newSize, const value_type& initValue = value_type( ), bool init = true, 
         control& ctl = control::getDefault( ) ): m_Size( newSize )
     {
         static_assert( std::is_same< array_type, container_type >::value,
@@ -506,7 +513,7 @@ public:
         typename std::enable_if< !std::is_integral< InputIterator >::value && 
                                     std::is_same< arrayview_type, container_type >::value>::type* = 0 ) 
     {
-        m_Size =  std::distance( begin, end );
+        m_Size =  std::distance( begin, end - 1 );
 
         concurrency::extent<1> ext( static_cast< int >( m_Size ) );
 
