@@ -33,6 +33,7 @@
 #include "bolt/copy_kernels.hpp"
 #include "bolt/fill_kernels.hpp"
 #include "bolt/generate_kernels.hpp"
+#include "bolt/min_element_kernels.hpp"
 #include "bolt/reduce_kernels.hpp"
 #include "bolt/reduce_by_key_kernels.hpp"
 #include "bolt/scan_kernels.hpp"

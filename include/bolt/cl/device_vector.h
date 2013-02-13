@@ -219,7 +219,7 @@ namespace cl
                 iterator_base< Container >& operator= ( const iterator_base< Container >& rhs )
                 {
                     m_Container = rhs.m_Container;
-                m_index = rhs.m_Index;
+                    m_Index = rhs.m_Index;
                     return *this;
                 }
                 

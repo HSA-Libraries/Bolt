@@ -56,6 +56,7 @@ add_subdirectory( DeviceVectorTest )
 add_subdirectory( FillTest )
 add_subdirectory( GenerateTest )
 add_subdirectory( InnerProductTest )
+add_subdirectory( MinElementTest )
 add_subdirectory( PairTest )
 add_subdirectory( ReduceTest )
 add_subdirectory( ReduceByKeyTest )
@@ -67,4 +68,5 @@ add_subdirectory( SortByKeyTest )
 add_subdirectory( TransformTest )   
 add_subdirectory( TransformReduceTest )
 add_subdirectory( TransformScanTest )
+
 
