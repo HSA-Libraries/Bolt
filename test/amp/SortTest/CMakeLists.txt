@@ -17,7 +17,7 @@
 
 # List the names of common files to compile across all platforms
 set( ampBolt.Test.Sort.Source SortTest.cpp )
-set( ampBolt.Test.Sort.Headers ${BOLT_INCLUDE_DIR}/bolt/amp/sort.h )
+set( ampBolt.Test.Sort.Headers ${BOLT_INCLUDE_DIR}/bolt/amp/sort.h ${BOLT_INCLUDE_DIR}/bolt/amp/detail/sort.inl )
 
 set( ampBolt.Test.Sort.Files ${ampBolt.Test.Sort.Source} ${ampBolt.Test.Sort.Headers} )
 

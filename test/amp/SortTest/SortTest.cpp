@@ -885,7 +885,7 @@ typedef ::testing::Types<
 #endif 
 
 /********* Test case to reproduce SuiCHi bugs ******************/
-//BOLT_FUNCTOR(UDD,
+
 INSTANTIATE_TYPED_TEST_CASE_P( Integer, SortArrayTest, IntegerTests );
 INSTANTIATE_TYPED_TEST_CASE_P( UnsignedInteger, SortArrayTest, UnsignedIntegerTests );
 INSTANTIATE_TYPED_TEST_CASE_P( Float, SortArrayTest, FloatTests );
@@ -896,6 +896,7 @@ INSTANTIATE_TYPED_TEST_CASE_P( Double, SortArrayTest, DoubleTests );
 
 
 #if 1
+//BOLT_FUNCTOR(UDD,
 struct UDD { 
     int a; 
     int b;
@@ -918,7 +919,7 @@ struct UDD {
     UDD(int _in) restrict (amp, cpu)
         : a(_in), b(_in +1)  { } 
 
-    static UDD &random()
+    static UDD random()
     {
         UDD udd;
         udd.a = rand();
