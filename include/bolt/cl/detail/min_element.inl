@@ -119,7 +119,8 @@ namespace bolt {
                         "const int length,\n"
                         "global " + kp->binaryFuncName + "* userFunctor,\n"
                         "global " + kp->inPtrType + "* result,\n"
-                        "local " + kp->inPtrType + "* scratch\n"
+                        "local " + kp->inPtrType + "* scratch,\n"
+                        "local " + kp->inPtrType + "* scratch_index\n"
                         ");\n\n";
 
                     bolt::cl::constructAndCompileString( masterKernel, "min_element", min_element_kernels, instantiationString, cl_code, kp->inPtrType, kp->binaryFuncName, *ctl);
@@ -182,9 +183,12 @@ namespace bolt {
                 V_OPENCL( masterKernel.setArg(3, *userFunctor), "Error setting kernel argument" );
                 V_OPENCL( masterKernel.setArg(4, *result), "Error setting kernel argument" );
 
-                ::cl::LocalSpaceArg loc;
+                ::cl::LocalSpaceArg loc,loc2;
                 loc.size_ = wgSize*sizeof(iType);
+                loc2 = loc;
                 V_OPENCL( masterKernel.setArg(5, loc), "Error setting kernel argument" );
+                V_OPENCL( masterKernel.setArg(6, loc2), "Error setting kernel argument" );
+
 
                 l_Error = ctl.commandQueue().enqueueNDRangeKernel(
                     masterKernel, 
@@ -206,18 +210,19 @@ namespace bolt {
 
                 bolt::cl::wait(ctl, l_mapEvent);
 
-                iType minele = static_cast< iType >( h_result[0] );
-                int j=0;
-                for(int i = 0; i < numTailReduce; ++i)
+                int minele_indx = static_cast< iType >( h_result[0] );
+                iType minele =  *(first + h_result[0]) ;
+
+                for(int i = 1; i < numTailReduce; ++i)
                 {
-                   if(binary_op(minele, h_result[i]))
-                   {
-                      j++;
-                   }
+
+                    bool stat = binary_op(minele,*(first + h_result[i]));
+                    minele = stat ? minele : *(first + h_result[i]);
+                    minele_indx =  stat ? minele_indx : h_result[i];                  
                      
                 }
 
-                return j;
+                return minele_indx;
             }
 
             template<typename ForwardIterator, typename BinaryPredicate> 

@@ -101,9 +101,10 @@ bool checkResult(std::string msg, T  stlResult, T boltResult, double errorThresh
 void mineletest(int aSize)
 {
     std::vector<int> A(aSize);
-
-    for (int i=0; i < aSize; i++) {
-        A[i] = i;
+    srand(GetTickCount());
+    for (int i=0; i < aSize; i++) 
+    {
+                A[i] = rand();
     };
 
     std::vector<int>::iterator stlReduce = std::min_element(A.begin(), A.end());

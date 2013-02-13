@@ -21,7 +21,9 @@
     if ((_IDX < _W) && ((_IDX + _W) < _LENGTH)) {\
       iTypePtr mine = scratch[_IDX];\
       iTypePtr other = scratch[_IDX + _W];\
-      scratch[_IDX] = (*userFunctor)(mine, other); \
+      stat = (*userFunctor)(mine, other);\
+      scratch[_IDX] = stat ? mine : other ; \
+      scratch_index[_IDX] = stat ? scratch_index[_IDX] : scratch_index[_IDX + _W];\
     }\
     barrier(CLK_LOCAL_MEM_FENCE);
 
@@ -32,11 +34,13 @@ kernel void min_elementTemplate(
     const int length,
     global binary_function* userFunctor,
     global iTypePtr*    result,
-    local iTypePtr*     scratch
+    local iTypePtr*     scratch,
+    local iTypePtr*     scratch_index
 )
 {
     int gx = get_global_id (0);
-
+    int igx = gx;
+    bool stat;
     //  Abort threads that are passed the end of the input vector
     if( gx >= length )
         return;
@@ -53,13 +57,16 @@ kernel void min_elementTemplate(
     while (gx < length)
     {
         iTypePtr element = input_iter[gx];
-        accumulator = (*userFunctor)(accumulator, element);
+        stat =  (*userFunctor)(accumulator, element);
+        accumulator = stat ? accumulator:element;
+        igx = stat ? igx : gx;
         gx += get_global_size(0);
     }
 
     //  Initialize local data store
     int local_index = get_local_id(0);
     scratch[local_index] = accumulator;
+    scratch_index[local_index] = igx;
     barrier(CLK_LOCAL_MEM_FENCE);
 
     //  Tail stops the last workgroup from reading past the end of the input vector
@@ -75,7 +82,8 @@ kernel void min_elementTemplate(
     _REDUCE_STEP(tail, local_index,  1);
  
     //  Write only the single reduced value for the entire workgroup
-    if (local_index == 0) {
-        result[get_group_id(0)] = scratch[0];
+    if (local_index == 0) 
+    {
+        result[get_group_id(0)] = scratch_index[0];        
     }
 };
