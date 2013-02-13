@@ -16,8 +16,8 @@
 ***************************************************************************/         
 
 #pragma once
-#if !defined( CLCODE_H )
-#define CLCODE_H
+#if !defined( BOLT_CL_CLCODE_H )
+#define BOLT_CL_CLCODE_H
 
 #include <string>
 
@@ -33,11 +33,6 @@
  *  \{
  */
 
-/*! 
- * Return a string with the specified function F, and also create code that is fed to the host compiler.
- */
-#define BOLT_CODE_STRING( ... )  #__VA_ARGS__; __VA_ARGS__;
-
 /*! \brief Macro that wraps around arbitrary text, and creates a string out of it
 *   \detailed This macro is helpful to write inline OpenCL programs, as it avoids wrapping every line of OpenCL 
 *   line with "XXX"\n
@@ -45,6 +40,19 @@
 */
 #define STRINGIFY_CODE2( ... ) #__VA_ARGS__
 #define STRINGIFY_CODE( ... ) STRINGIFY_CODE2( __VA_ARGS__ )
+
+/*! 
+ * Return a string with the specified function F, and also create code that is fed to the host compiler.
+ */
+#define BOLT_CODE_STRING( ... )  STRINGIFY_CODE( __VA_ARGS__ ); __VA_ARGS__;
+
+/*! 
+ * /brief Types that are defined within the bolt::cl namespace in host code should also be defined within the same
+ * namespace within the kernel code
+ * /detail This is a convenience macro, intended to only be used by the Bolt library itself, to wrap internal types
+ * in the appropriate bolt namespaces
+ */
+#define BOLT_HOST_DEVICE_DEFINITION( ... ) "namespace bolt { namespace cl {\n" STRINGIFY_CODE( __VA_ARGS__ ) "\n } } \n" ; __VA_ARGS__;
 
 /*!
  * Bolt uses the TypeName trait to determine the string name of function object parameters when 
@@ -81,31 +89,6 @@ struct TypeName
 };
 
 /*!
- * \brief Experimental code, the definition of a type trait to return a string representing fully specialized 
- * templated types
-
- * Defining a new type trait for templated types.  This is meant to be specialized with the specific templated type 
- * through BOLT_CREATE_TEMPLATE_TYPENAME.  template_TypeName returns a string that represents a fully specialized 
- * templated type
-
- * \tparam Container A template template parameter, which takes a container like std::vector
- * \tparam TemplateTypeValue The type that specializes the container, such as int
- * \todo If this does not pan out, remove
- */
-template< template< class > class Container, class TemplateTypeValue >
-struct template_TypeName
-{
-    /*!
-     * \brief This method asserts if it is called.  The get() method should be specialized with the macros in this 
-     * file to return a fully specified templated type
-     */
-    static std::string get()
-    {
-        static_assert( false, "Bolt< error >: Unknown typename; define missing TypeName with Bolt provided macro's" );
-    }
-};
-
-/*!
  * \brief The definition of a type trait for the definition of a type, which could be arbitrarily complex
 
  * Defining a new type trait to return code associated with a type.  This is meant to be specialized with the
@@ -121,29 +104,6 @@ struct ClCode
     static std::string get()
     {
         return "";
-        // static_assert( false, "Bolt< error >:
-        // No code is associated with this type.
-        // Use BOLT_CREATE_CLCODE or BOLT_FUNCTOR" );
-    }
-};
-
-/*!
- * \brief Experimental code, the definition of a type trait to return a string representing the definition of a type
-
- * Defining a new type trait for templated types.  This is meant to be specialized with BOLT_CREATE_TEMPLATE_CLCODE.
- * It returns the definition of the templated code.  It should not be fully specialized, the template definition.
-
- * \tparam Container A template template parameter, which takes a container like std::vector
- * \tparam TemplateTypeValue The type that specializes the container, such as int
- * \todo If this does not pan out, remove
- */
-template< template< class > class Container, class TemplateTypeValue >
-struct template_clCode
-{
-    static std::string get( )
-    {
-        return "";
-        //static_assert( false, "Bolt< error >: No code is associated with this type.  Use BOLT_CREATE_CLCODE or BOLT_FUNCTOR" );
     }
 };
 
@@ -163,33 +123,12 @@ struct template_clCode
  * See TypeName for more information.
  */
 #define BOLT_CREATE_TYPENAME( Type ) \
-    template<> struct TypeName< Type > { static std::string get() { return #Type; }};
+    template<> struct TypeName< Type > { static std::string get( ) { return #Type; } };
 
-/*!
- * A convenience macro to create the the fully specialized template type trait 
- *
- * \param container A template template parameter, which takes a container like std::vector
- * \param value_type The type that specializes the container, such as int
- *
- * \code
- * // Example that shows use of BOLT_CREATE_TYPENAME macro:
- * class MyClass { ... };
- *
- * // Associate string "MyClass" with class MyClass
- * BOLT_CREATE_TYPENAME(MyClass);
- * \endcode
- *
- * See TypeName for more information.
+/*! \brief An alias for the BOLT_CREATE_TYPENAME macro
  */
-
-#define BOLT_CREATE_TEMPLATE_TYPENAME( container, value_type ) \
-    template<> struct template_TypeName< container, value_type > \
-    { \
-        static std::string get() \
-        { \
-            return #container "<" #value_type ">"; \
-        } \
-    }; 
+#define BOLT_DECLARATION( Type ) \
+    template<> struct TypeName< Type > { static std::string get( ) { return #Type; } };
 
 /*!
  * Creates the ClCode trait that associates the specified type \p T with the string \p CODE_STRING.
@@ -206,30 +145,38 @@ struct template_clCode
  * pass the string read from the file to BOLT_CREATE_CLCODE. (See \ref clCodeFromFile)
  */
 #define BOLT_CREATE_CLCODE( Type, CODE_STRING ) \
-    template<> struct ClCode< Type > { static std::string get() { return CODE_STRING; }};
+    template<> struct ClCode< Type > { static std::string get( ) { return CODE_STRING; } };
 
-/*!
- * \brief Experimental code, this macro specializes the template_clCode type trait to handle a new templated type.
- * This macro associates arbitrary code with a fully specified template type
- * \param Container A template template parameter, which takes a container like std::vector
- * \param value_type The type that specializes the container, such as int
- * \param CODE_STRING The arbitrarily complex definition of the type, used for register a template type
- * \todo If this does not pan out, remove
+/*! \brief An alias for the BOLT_CREATE_CLCODE macro
  */
- #define BOLT_CREATE_TEMPLATE_CLCODE( container, value_type, CODE_STRING) \
-    template<> struct template_clCode< container, value_type > { static std::string get() { return CODE_STRING; }};
+#define BOLT_DEFINITION( Type, CODE_STRING ) \
+    template<> struct ClCode< Type > { static std::string get( ) { return CODE_STRING; } };
 
 /*!
- * \brief This macro specializes the ClCode type trait to handle a new fully specialized templated type
- * This macro associates a type definition with a fully specified template type.  The type definition
- * is templated code
- * \param CONTAINER A template template parameter, such as std::vector
+ * \brief This macro specializes a template with a new type using the template definition of a previously defined
+ * type
+ * \detail This is a convenience macro to specialize a template for a new type, using the generic template 
+ * definition from a previosly defined type
+ * \param CONTAINER A template template parameter, such as std::vector without the type specified
  * \param OLDTYPE A type that has already been registered with the container template definition
  * \param NEWTYPE A new type to register with the template definition
  */
 #define BOLT_TEMPLATE_REGISTER_NEW_TYPE( CONTAINER, OLDTYPE, NEWTYPE ) \
-            BOLT_CREATE_TYPENAME( CONTAINER<NEWTYPE> ) \
-            BOLT_CREATE_CLCODE( CONTAINER<NEWTYPE>, ClCode< CONTAINER<OLDTYPE> >::get( ) )
+            BOLT_CREATE_TYPENAME( CONTAINER< NEWTYPE > ) \
+            BOLT_CREATE_CLCODE( CONTAINER< NEWTYPE >, ClCode< CONTAINER< OLDTYPE > >::get( ) )
+
+/*!
+ * \brief This macro specializes a template iterator with a new type using the template definition of a previously 
+ * defined iterator type
+ * \detail This is a convenience macro to specialize an iterator for a new type, using the generic template 
+ * definition from a previosly defined iterator
+ * \param CONTAINER A template template parameter, such as std::vector without the type specified
+ * \param OLDTYPE A type that has already been registered with the container template definition
+ * \param NEWTYPE A new type to register with the template definition
+ */
+#define BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( CONTAINER, OLDTYPE, NEWTYPE ) \
+            BOLT_CREATE_TYPENAME( CONTAINER< NEWTYPE >::iterator ) \
+            BOLT_CREATE_CLCODE( CONTAINER< NEWTYPE >::iterator, ClCode< CONTAINER< OLDTYPE >::iterator >::get( ) )
 
 /*!
  * Creates a string and a regular version of the functor F, and automatically defines the ClCode trait to associate 

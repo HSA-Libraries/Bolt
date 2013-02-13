@@ -43,9 +43,11 @@ set( ampBolt.Runtime.Headers
     )
 
   set( ampBolt.Runtime.Headers.Detail
+         	${ampBolt.Include.Dir}/detail/reduce.inl
 		${ampBolt.Include.Dir}/detail/scan.inl
 		${ampBolt.Include.Dir}/detail/scan_by_key.inl
 		${ampBolt.Include.Dir}/detail/transform.inl
+		${ampBolt.Include.Dir}/detail/transform_reduce.inl
 		${ampBolt.Include.Dir}/detail/transform_scan.inl
     )
 

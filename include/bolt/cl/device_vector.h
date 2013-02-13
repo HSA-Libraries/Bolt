@@ -676,13 +676,20 @@ namespace cl
 
             void resize( size_type reqSize, const value_type& val = value_type( ) )
             {
+                if( (m_Flags & CL_MEM_USE_HOST_PTR) != 0 )
+                {
+                    throw ::cl::Error( CL_MEM_OBJECT_ALLOCATION_FAILURE , 
+                        "A device_vector can not resize() memory not under its direct control" );
+                }
+
                 size_type cap = capacity( );
 
                 if( reqSize == cap )
                     return;
 
                 if( reqSize > max_size( ) )
-                    throw ::cl::Error( CL_MEM_OBJECT_ALLOCATION_FAILURE , "The amount of memory requested exceeds what is available" );
+                    throw ::cl::Error( CL_MEM_OBJECT_ALLOCATION_FAILURE , 
+                    "The amount of memory requested exceeds what is available" );
 
                 cl_int l_Error = CL_SUCCESS;
 
@@ -1470,8 +1477,7 @@ namespace cl
 
     //  This string represents the device side definition of the constant_iterator template
     static std::string deviceVectorIteratorTemplate = STRINGIFY_CODE( 
-        namespace bolt { \n
-        namespace cl { \n
+        namespace bolt { namespace cl { \n
         template< typename T > \n
         class device_vector \n
         { \n
@@ -1508,26 +1514,16 @@ namespace cl
                 global value_type* m_Ptr; \n
             }; \n
         }; \n
-    }; \n
-    }; \n
+    } } \n
     );
-
-    //BOLT_TEMPLATE_REGISTER_NEW_TYPE( device_vector::iterator, int, float );
-    //BOLT_TEMPLATE_REGISTER_NEW_TYPE( device_vector::iterator, int, double );
-
 }
 }
 
 BOLT_CREATE_TYPENAME( bolt::cl::device_vector< int >::iterator );
 BOLT_CREATE_CLCODE( bolt::cl::device_vector< int >::iterator, bolt::cl::deviceVectorIteratorTemplate );
 
-BOLT_CREATE_TYPENAME( bolt::cl::device_vector< unsigned int >::iterator );
-BOLT_CREATE_CLCODE( bolt::cl::device_vector< unsigned int >::iterator, bolt::cl::deviceVectorIteratorTemplate );
-
-BOLT_CREATE_TYPENAME( bolt::cl::device_vector< float >::iterator );
-BOLT_CREATE_CLCODE( bolt::cl::device_vector< float >::iterator, bolt::cl::deviceVectorIteratorTemplate );
-
-BOLT_CREATE_TYPENAME( bolt::cl::device_vector< double >::iterator );
-BOLT_CREATE_CLCODE( bolt::cl::device_vector< double >::iterator, bolt::cl::deviceVectorIteratorTemplate );
+BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, int, unsigned int );
+BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, int, float );
+BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, int, double );
 
 #endif
