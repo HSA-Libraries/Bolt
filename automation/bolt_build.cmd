@@ -203,6 +203,7 @@ echo Info: Running CMake to generate build files.
   -G %BOLT_BUILD_CMAKE_GEN% ^
   -D BUILD_AMP=%BOLT_BUILD_USE_AMP% ^
   -D BUILD_StripSymbols=ON ^
+  -D BUILD_TBB=ON ^
   -D Bolt.SuperBuild_VERSION_PATCH=%BOLT_BUILD_VERSION_PATCH% ^
   %BOLT_BUILD_SOURCE_PATH%\superbuild
 if errorlevel 1 (
