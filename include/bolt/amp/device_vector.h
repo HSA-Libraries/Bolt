@@ -513,7 +513,7 @@ public:
         typename std::enable_if< !std::is_integral< InputIterator >::value && 
                                     std::is_same< arrayview_type, container_type >::value>::type* = 0 ) 
     {
-        m_Size =  std::distance( begin, end - 1 );
+        m_Size =  std::distance( begin, end );
 
         concurrency::extent<1> ext( static_cast< int >( m_Size ) );
 
