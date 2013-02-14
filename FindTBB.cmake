@@ -33,7 +33,7 @@
 #   TBB_INCLUDE_DIRS
 # Accepts the following variables as input:
 #
-#   TBB_INSTALL_DIR - (as a CMake or environment variable)
+#   TBB_ROOT - (as a CMake or environment variable)
 #                The root directory of the TBB implementation found
 #
 #   FIND_LIBRARY_USE_LIB64_PATHS - Global property that controls whether findTBB should search for 
@@ -63,12 +63,12 @@ if( MSVC )
     endif( )
 endif( )
 
-if ( NOT TBB_INSTALL_DIR )
-    set(TBB_INSTALL_DIR $ENV{TBB_INSTALL_DIR})
+if ( NOT TBB_ROOT )
+    set(TBB_ROOT $ENV{TBB_ROOT})
 endif( )
-message ("TBB_INSTALL_DIR:" ${TBB_INSTALL_DIR} )
-if ( NOT TBB_INSTALL_DIR )
-    message( "TBB install not found in the system. This will download and install TBB.")
+message ("TBB_ROOT:" ${TBB_ROOT} )
+if ( NOT TBB_ROOT )
+    message( "TBB install not found in the system.")
 else ( ) 
     # Search for 64bit libs if FIND_LIBRARY_USE_LIB64_PATHS is set to true in the global environment, 32bit libs else
     get_property( LIB64 GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS )
@@ -76,21 +76,21 @@ else ( )
     if( LIB64 )
         set(TBB_ARCH_PLATFORM intel64)
     else( )
-        set(TBB_ARCH_PLATFORM ia32)    
+        set(TBB_ARCH_PLATFORM ia32)
     endif( )    
     
 
     #Find TBB header files
     find_path( TBB_INCLUDE_DIRS 
         NAMES tbb/tbb.h
-        HINTS ${TBB_INSTALL_DIR}/include
+        HINTS ${TBB_ROOT}/include
         DOC "TBB header file path"
     )
     mark_as_advanced( TBB_INCLUDE_DIRS )
     message ("TBB_INCLUDE_DIRS: " ${TBB_INCLUDE_DIRS} )
     
     #Find TBB Libraries
-    set (_TBB_LIBRARY_DIR ${TBB_INSTALL_DIR}/lib/${TBB_ARCH_PLATFORM} )
+    set (_TBB_LIBRARY_DIR ${TBB_ROOT}/lib/${TBB_ARCH_PLATFORM} )
     find_library(TBB_LIBRARY ${_TBB_LIB_NAME} HINTS ${_TBB_LIBRARY_DIR}/${TBB_COMPILER}
                 PATHS ENV LIBRARY_PATH ENV LD_LIBRARY_PATH)
     find_library(TBB_MALLOC_LIBRARY ${_TBB_LIB_MALLOC_NAME} HINTS ${_TBB_LIBRARY_DIR}/${TBB_COMPILER}
@@ -110,11 +110,11 @@ else ( )
     mark_as_advanced( TBB_LIBRARY_DEBUG )
     mark_as_advanced( TBB_MALLOC_LIBRARY_DEBUG )
 
-    mark_as_advanced( TBB_INSTALL_DIR )
-    message ( "TBB_INSTALL_DIR: "${TBB_INSTALL_DIR} )
+    mark_as_advanced( TBB_ROOT )
+    message ( "TBB_ROOT: "${TBB_ROOT} )
 
     include( FindPackageHandleStandardArgs )
-    FIND_PACKAGE_HANDLE_STANDARD_ARGS( TBB DEFAULT_MSG TBB_LIBRARY TBB_MALLOC_LIBRARY TBB_LIBRARY_DEBUG TBB_MALLOC_LIBRARY_DEBUG TBB_INCLUDE_DIRS TBB_INSTALL_DIR)
+    FIND_PACKAGE_HANDLE_STANDARD_ARGS( TBB DEFAULT_MSG TBB_LIBRARY TBB_MALLOC_LIBRARY TBB_LIBRARY_DEBUG TBB_MALLOC_LIBRARY_DEBUG TBB_INCLUDE_DIRS TBB_ROOT)
 
     if( NOT TBB_FOUND )
         message( STATUS "FindTBB looked for libraries named tbb but could not find" )
