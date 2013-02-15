@@ -32,7 +32,7 @@
 
 
 extern void testDeviceVector();
-extern void testTBB();
+
 // Super-easy windows profiling interface.
 // Move to timing infrastructure when that becomes available.
 __int64 StartProfile() {
@@ -199,10 +199,6 @@ void reduce_TestBuffer() {
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-#if defined( ENABLE_TBB )
-    testTBB( );
-#endif
-
     testDeviceVector();
 
     int numIters = 100;
@@ -210,8 +206,8 @@ int _tmain(int argc, _TCHAR* argv[])
 
     maxele_TestControl(100, 1, 0);
 
-    maxeletest(0);
-    maxeletest(1);
+    maxeletest(256);
+    maxeletest(1024);
 
 
     maxele_TestControl(100, 1, 0);
