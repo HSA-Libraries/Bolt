@@ -187,6 +187,8 @@ REM Specify the location of a local image of boost, to help speed up the build p
 set BOOST_URL=http://see-srv/share/code/externals/boost/boost_1_52_0.zip
 set DOXYGEN_URL=http://see-srv/share/code/externals/doxygen/doxygen-1.8.3.windows.bin.zip
 set GTEST_URL=http://see-srv/share/code/externals/gtest/gtest-1.6.0.zip
+set TBB_ROOT=c:/Jenkins_FS_Root/dependencies/tbb41_20130116oss
+
 
 REM ################################################################################################
 REM # Start of build logic here
@@ -201,6 +203,7 @@ echo Info: Running CMake to generate build files.
   -G %BOLT_BUILD_CMAKE_GEN% ^
   -D BUILD_AMP=%BOLT_BUILD_USE_AMP% ^
   -D BUILD_StripSymbols=ON ^
+  -D BUILD_TBB=ON ^
   -D Bolt.SuperBuild_VERSION_PATCH=%BOLT_BUILD_VERSION_PATCH% ^
   %BOLT_BUILD_SOURCE_PATH%\superbuild
 if errorlevel 1 (

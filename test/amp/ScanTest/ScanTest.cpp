@@ -16,12 +16,12 @@
 ***************************************************************************/                                                                                     
 
 #include "common/stdafx.h"
-#include <bolt/amp/scan.h>
-#include <bolt/unicode.h>
-#include <bolt/miniDump.h>
+#include "bolt/amp/scan.h"
+#include "bolt/unicode.h"
+#include "bolt/miniDump.h"
 #include <gtest/gtest.h>
 #include <array>
-#include <bolt/AMP/functional.h>
+#include "bolt/amp/functional.h"
 
 #if 1
 
@@ -129,8 +129,8 @@ TYPED_TEST_P( ScanArrayTest, InPlacePlusFunction )
     typedef std::array< ArrayType, ArraySize > ArrayCont;
 
     //  Calling the actual functions under test
-    ArrayCont::iterator stdEnd  = std::partial_sum( stdInput.begin( ), stdInput.end( ), stdInput.begin( ), bolt::plus< ArrayType >( ) );
-    ArrayCont::iterator boltEnd = bolt::amp::inclusive_scan( boltInput.begin( ), boltInput.end( ), boltInput.begin( ), bolt::plus< ArrayType >( ) );
+    ArrayCont::iterator stdEnd  = std::partial_sum( stdInput.begin( ), stdInput.end( ), stdInput.begin( ), bolt::amp::plus< ArrayType >( ) );
+    ArrayCont::iterator boltEnd = bolt::amp::inclusive_scan( boltInput.begin( ), boltInput.end( ), boltInput.begin( ), bolt::amp::plus< ArrayType >( ) );
 
     //  The returned iterator should be one past the 
     EXPECT_EQ( stdInput.end( ), stdEnd );
@@ -151,8 +151,8 @@ TYPED_TEST_P( ScanArrayTest, InPlaceMaxFunction )
     typedef std::array< ArrayType, ArraySize > ArrayCont;
 
     //  Calling the actual functions under test
-    ArrayCont::iterator stdEnd  = std::partial_sum( stdInput.begin( ), stdInput.end( ), stdInput.begin( ), bolt::maximum< ArrayType >( ) );
-    ArrayCont::iterator boltEnd = bolt::amp::inclusive_scan( boltInput.begin( ), boltInput.end( ), boltInput.begin( ), bolt::maximum< ArrayType >( ) );
+    ArrayCont::iterator stdEnd  = std::partial_sum( stdInput.begin( ), stdInput.end( ), stdInput.begin( ), bolt::amp::maximum< ArrayType >( ) );
+    ArrayCont::iterator boltEnd = bolt::amp::inclusive_scan( boltInput.begin( ), boltInput.end( ), boltInput.begin( ), bolt::amp::maximum< ArrayType >( ) );
 
     //  The returned iterator should be one past the 
     EXPECT_EQ( stdInput.end( ), stdEnd );

@@ -469,7 +469,7 @@ namespace bolt {
             InputIterator first, 
             InputIterator last,  
             T init,
-            BinaryFunction binary_op=bolt::plus<T>());
+            BinaryFunction binary_op=bolt::amp::plus<T>());
 
         /*!   \}  */
 

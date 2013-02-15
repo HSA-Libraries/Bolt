@@ -16,10 +16,14 @@
 ***************************************************************************/                                                                                     
 
 #pragma once
+#if !defined( BOLT_AMP_FUNCTIONAL_H )
+#define BOLT_AMP_FUNCTIONAL_H
 
+#include "bolt/amp/bolt.h"
 
 
 namespace bolt {
+namespace amp {
 	template<typename Argument1,
 		typename Result>
 	struct unary_function
@@ -35,11 +39,45 @@ namespace bolt {
 	{
 	};
 
+/******************************************************************************
+ * Unary Operators
+ *****************************************************************************/
+	template <typename T>
+	struct square : public unary_function<T,T>
+	{
+		T operator() (const T& x)  const restrict(cpu,amp) {
+			return x * x;
+		}
+	};
+
+    template< typename T >
+    struct cube : public unary_function<T,T>
+    {
+        T operator() (const T& x)  const restrict(cpu,amp) { return x * x * x; }
+    };
+
+
+	template<typename T>
+	struct negate : public unary_function<T,T>  
+	{
+		T operator()(const T &__x) const restrict(cpu,amp) {return -__x;}
+	}; 
+
+/******************************************************************************
+ * Binary Operators
+ *****************************************************************************/
+
 	template<typename T>
 	struct plus : public binary_function<T,T,T>  
 	{
-		T operator()(const T &lhs, const T &rhs) const restrict(cpu,amp) {return lhs + rhs;}
+		T operator()(const T &lhs, const T &rhs) const restrict(cpu,amp)  {return lhs + rhs;}
 	}; 
+
+    template<typename T>
+    struct minus : public binary_function<T,T,T>
+    {
+        T operator()(const T &lhs, const T &rhs) const restrict(cpu,amp) {return lhs - rhs;}
+    }; 
 
     template<typename T>
     struct multiplies : public binary_function<T,T,T>
@@ -47,36 +85,115 @@ namespace bolt {
         T operator()(const T &lhs, const T &rhs) const restrict(cpu,amp) {return lhs * rhs;}
     }; 
 
+    template<typename T>
+    struct divides : public binary_function<T,T,T>
+    {
+        T operator()(const T &lhs, const T &rhs) const restrict(cpu,amp) {return lhs / rhs;}
+    }; 
 
 
-	template<typename T>
-	struct maximum : public binary_function<T,T,T>  
-	{
-		T operator()(const T &lhs, const T &rhs) const restrict(cpu,amp) {return rhs > lhs ? rhs:lhs;}
-	}; 
+	  template<typename T>
+	  struct maximum : public binary_function<T,T,T>  
+	  {
+	  	T operator()(const T &lhs, const T &rhs) const restrict(cpu,amp) {return rhs > lhs ? rhs:lhs;}
+	  }; 
+    
+	  template<typename T>
+	  struct minimum : public binary_function<T,T,T>
+	  {
+	  	T operator()(const T &lhs, const T &rhs) const restrict(cpu,amp) {return rhs < lhs ? rhs:lhs;}
+	  }; 
 
-	template<typename T>
-	struct minimum : public binary_function<T,T,T>  
-	{
-		T operator()(const T &lhs, const T &rhs) const restrict(cpu,amp) {return rhs < lhs ? rhs:lhs;}
-	}; 
+    template<typename T>
+    struct modulus : public binary_function<T,T,T>
+    {
+        T operator()(const T &lhs, const T &rhs) const restrict(cpu,amp) {return lhs % rhs;}
+    };
+
+    template<typename T>
+    struct bit_and : public binary_function<T,T,T>
+    {
+        T operator()(const T &lhs, const T &rhs) const restrict(cpu,amp) {return lhs & rhs;}
+    }; 
+
+    template<typename T>
+    struct bit_or : public binary_function<T,T,T>
+    {
+        T operator()(const T &lhs, const T &rhs) const restrict(cpu,amp) {return lhs | rhs;}
+    }; 
+
+    template<typename T>
+    struct bit_xor : public binary_function<T,T,T>
+    {
+        T operator()(const T &lhs, const T &rhs) const restrict(cpu,amp) {return lhs ^ rhs;}
+    }; 
 
 
-	template <typename T>
-	struct square
-	{
-		T operator() (const T& x)  const restrict(amp) {
-			return x * x;
-		}
-	};
+    /******************************************************************************
+     * Unary Predicates
+     *****************************************************************************/
+
+    template<typename T>
+    struct logical_not : public unary_function<T,T>
+    {
+        bool operator()(const T &x) const restrict(cpu,amp) {return !x;}
+    }; 
 
 
-	template<typename T>
-	struct negate : public unary_function<T,T>  
-	{
-		T operator()(const T &__x) const restrict(amp) {return -__x;}
-	}; 
+    /******************************************************************************
+     * Binary Predicates
+     *****************************************************************************/
 
+    template<typename T>
+    struct equal_to : public binary_function<T,T,T>
+    {
+        bool operator()(const T &lhs, const T &rhs) const restrict(cpu,amp) {return lhs == rhs;}
+    }; 
+
+    template<typename T>
+    struct not_equal_to : public binary_function<T,T,T>
+    {
+        bool operator()(const T &lhs, const T &rhs) const restrict(cpu,amp) {return lhs != rhs;}
+    }; 
+
+    template<typename T>
+    struct greater : public binary_function<T,T,T>
+    {
+        bool operator()(const T &lhs, const T &rhs) const restrict(cpu,amp) {return lhs > rhs;}
+    }; 
+
+    template<typename T>
+    struct less : public binary_function<T,T,T>
+    {
+        bool operator()(const T &lhs, const T &rhs) const restrict(cpu,amp) {return lhs < rhs;}
+    }; 
+
+    template<typename T>
+    struct greater_equal : public binary_function<T,T,T>
+    {
+        bool operator()(const T &lhs, const T &rhs) const restrict(cpu,amp) {return lhs >= rhs;}
+    }; 
+
+    template<typename T>
+    struct less_equal : public binary_function<T,T,T>
+    {
+        bool operator()(const T &lhs, const T &rhs) const restrict(cpu,amp) {return lhs <= rhs;}
+    }; 
+
+    template<typename T>
+    struct logical_and : public binary_function<T,T,T>
+    {
+        bool operator()(const T &lhs, const T &rhs) const restrict(cpu,amp) {return lhs && rhs;}
+    }; 
+
+    template<typename T>
+    struct logical_or : public binary_function<T,T,T>
+    {
+        bool operator()(const T &lhs, const T &rhs) const restrict(cpu,amp) {return lhs || rhs;}
+    }; 
 
 
 };
+};
+
+#endif
