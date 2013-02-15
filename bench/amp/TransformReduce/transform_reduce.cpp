@@ -18,9 +18,9 @@
 #include "stdafx.h"
 
 #include <bolt/amp/functional.h>
-#include <bolt/amp/scan.h>
-//#include <bolt/amp/control.h>
+#include <bolt/amp/transform_reduce.h>
 #include <bolt/unicode.h>
+#include <bolt/countof.h>
 #include <bolt/statisticalTimer.h>
 
 const std::streamsize colWidth = 26;
@@ -74,7 +74,7 @@ int _tmain( int argc, _TCHAR* argv[] )
 	try
 	{
 		// Declare the supported options.
-		po::options_description desc( "AMP Scan command line options" );
+		po::options_description desc( "AMP Transform Reduce command line options" );
 		desc.add_options()
 			( "help,h",			"produces this help message" )
 			( "version,v",		"Print queryable version information from the Bolt AMP library" )
@@ -96,7 +96,7 @@ int _tmain( int argc, _TCHAR* argv[] )
 			libMinor = 0;
 			libPatch = 1;
 
-			const int indent = 14; //countOf( "Bolt version: " );
+			const int indent = countOf( "Bolt version: " );
 			bolt::tout << std::left << std::setw( indent ) << _T( "Bolt version: " )
 				<< libMajor << _T( "." )
 				<< libMinor << _T( "." )
@@ -139,42 +139,26 @@ int _tmain( int argc, _TCHAR* argv[] )
 
 //	bolt::control::getDefault( );
 	std::vector< int > input( length, 1 );
-	std::vector< int > output( length );
 
 	bolt::statTimer& myTimer = bolt::statTimer::getInstance( );
 	myTimer.Reserve( 1, numLoops );
 
-	size_t scanId	= myTimer.getUniqueID( _T( "scan" ), 0 );
+	size_t reduceId	= myTimer.getUniqueID( _T( "reduce" ), 0 );
 
-	if( defaultDevice )
+	for( unsigned i = 0; i < numLoops; ++i )
 	{
-		for( unsigned i = 0; i < numLoops; ++i )
-		{
-			myTimer.Start( scanId );
-			bolt::amp::inclusive_scan( input.begin( ), input.end( ), output.begin( ) );
-			myTimer.Stop( scanId );
-		}
-	}
-	else
-	{
-		std::vector< concurrency::accelerator > allDevices = concurrency::accelerator::get_all( );
-		concurrency::accelerator_view av = allDevices.at( iDevice ).get_default_view( );
-
-		for( unsigned i = 0; i < numLoops; ++i )
-		{
-			myTimer.Start( scanId );
-			bolt::amp::inclusive_scan( input.begin( ), input.end( ), output.begin( ), bolt::amp::plus< int >( ) );
-			myTimer.Stop( scanId );
-		}
+		myTimer.Start( reduceId );
+		int res = bolt::amp::transform_reduce( input.begin( ), input.end( ),bolt::amp::square<int>(), 0, bolt::amp::plus<int>() );
+		myTimer.Stop( reduceId );
 	}
 
 	//	Remove all timings that are outside of 2 stddev (keep 65% of samples); we ignore outliers to get a more consistent result
 	size_t pruned = myTimer.pruneOutliers( 1.0 );
-	double scanTime = myTimer.getAverageTime( scanId );
-	double scanGB = ( output.size( ) * sizeof( int ) ) / (1024.0 * 1024.0 * 1024.0);
+	double scanTime = myTimer.getAverageTime( reduceId );
+	double scanGB = ( input.size( ) * sizeof( int ) ) / (1024.0 * 1024.0 * 1024.0);
 
 	bolt::tout << std::left;
-	bolt::tout << std::setw( colWidth ) << _T( "Scan profile: " ) << _T( "[" ) << numLoops-pruned << _T( "] samples" ) << std::endl;
+	bolt::tout << std::setw( colWidth ) << _T( "Transform Reduce profile: " ) << _T( "[" ) << numLoops-pruned << _T( "] samples" ) << std::endl;
 	bolt::tout << std::setw( colWidth ) << _T( "    Size (GB): " ) << scanGB << std::endl;
 	bolt::tout << std::setw( colWidth ) << _T( "    Time (s): " ) << scanTime << std::endl;
 	bolt::tout << std::setw( colWidth ) << _T( "    Speed (GB/s): " ) << scanGB / scanTime << std::endl;

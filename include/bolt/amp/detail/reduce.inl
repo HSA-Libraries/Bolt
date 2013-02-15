@@ -75,7 +75,7 @@ namespace bolt
                 T init )
         {
             typedef typename std::iterator_traits<InputIterator>::value_type iType;
-            return reduce(bolt::amp::control::getDefault(), first, last, init, bolt::plus<iType>());
+            return reduce(bolt::amp::control::getDefault(), first, last, init, bolt::amp::plus<iType>());
         };
 
         template< typename InputIterator,
@@ -87,7 +87,7 @@ namespace bolt
                 T init )
         {
             typedef typename std::iterator_traits<InputIterator>::value_type iType;
-            return reduce(ctl, first, last, init, bolt::plus< iType >( ));
+            return reduce(ctl, first, last, init, bolt::amp::plus< iType >( ));
         };
 
         // This template is called by all other "convenience" version of reduce.
