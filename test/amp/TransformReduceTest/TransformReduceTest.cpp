@@ -90,7 +90,7 @@
        	std::transform(A.begin(), A.end(), Z.begin(), std::negate<int>());
        	int stlReduce = std::accumulate(Z.begin(), Z.end(), 0);
        
-       	int boltReduce = bolt::amp::transform_reduce(A.begin() ,A.end(), bolt::negate<int>(), 0, bolt::plus<int>());
+       	int boltReduce = bolt::amp::transform_reduce(A.begin() ,A.end(), bolt::amp::negate<int>(), 0, bolt::amp::plus<int>());
        
        	checkResult(__FUNCTION__, stlReduce, boltReduce);
        };
@@ -186,8 +186,8 @@ TYPED_TEST_P( TransformArrayTest, Normal )
     ArrayType stlReduce = std::accumulate(stdOutput.begin(), stdOutput.end(), init);
 
     ArrayType boltReduce = bolt::amp::transform_reduce( boltInput.begin( ), boltInput.end( ),
-                                                       bolt::square<ArrayType>(), init,
-                                                       bolt::plus<ArrayType>());
+                                                       bolt::amp::square<ArrayType>(), init,
+                                                       bolt::amp::plus<ArrayType>());
 
     ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
     ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
@@ -209,8 +209,8 @@ TYPED_TEST_P( TransformArrayTest, GPU_DeviceNormal )
     ArrayType stlReduce = std::accumulate(stdOutput.begin(), stdOutput.end(), init);
 
     ArrayType boltReduce = bolt::amp::transform_reduce(boltInput.begin( ), boltInput.end( ),
-                                                       bolt::square<ArrayType>(), init,
-                                                       bolt::plus<ArrayType>());
+                                                       bolt::amp::square<ArrayType>(), init,
+                                                       bolt::amp::plus<ArrayType>());
 
     ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
     ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
@@ -269,8 +269,8 @@ TYPED_TEST_P( TransformArrayTest, MultipliesFunction )
     ArrayType stlReduce = std::accumulate(stdOutput.begin(), stdOutput.end(), init);
 
     ArrayType boltReduce = bolt::amp::transform_reduce( boltInput.begin( ), boltInput.end( ),
-                                                       bolt::negate<ArrayType>( ), init,
-                                                       bolt::plus<ArrayType>( ));
+                                                       bolt::amp::negate<ArrayType>( ), init,
+                                                       bolt::amp::plus<ArrayType>( ));
 
     ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
     ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
@@ -302,8 +302,8 @@ TYPED_TEST_P( TransformArrayTest, GPU_DeviceMultipliesFunction )
     ArrayType stlReduce = std::accumulate(stdOutput.begin(), stdOutput.end(), init);
 
     ArrayType boltReduce = bolt::amp::transform_reduce( c_gpu,boltInput.begin( ), boltInput.end( ),
-                                                       bolt::negate<ArrayType>(), init,
-                                                       bolt::plus<ArrayType>());
+                                                       bolt::amp::negate<ArrayType>(), init,
+                                                       bolt::amp::plus<ArrayType>());
 
     ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
     ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
@@ -330,12 +330,12 @@ TYPED_TEST_P( TransformArrayTest, CPU_DeviceMultipliesFunction )
 
     ArrayType init(0);
     //  Calling the actual functions under test
-    std::transform(stdInput.begin(), stdInput.end(), stdOutput.begin(), bolt::cl::negate<ArrayType>());
+    std::transform(stdInput.begin(), stdInput.end(), stdOutput.begin(), bolt::amp::negate<ArrayType>());
     ArrayType stlReduce = std::accumulate(stdOutput.begin(), stdOutput.end(), init);
 
     ArrayType boltReduce = bolt::cl::transform_reduce( c_cpu,boltInput.begin( ), boltInput.end( ),
-                                                       bolt::cl::negate<ArrayType>(), init,
-                                                       bolt::cl::plus<ArrayType>());
+                                                       bolt::amp::negate<ArrayType>(), init,
+                                                       bolt::amp::plus<ArrayType>());
 
     ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
     ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
@@ -587,8 +587,8 @@ TEST_P( transformReduceStdVectWithInit, withIntWdInit)
     //  Calling the actual functions under test
     int init = 10;
     std::transform(stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), [](int n){return n*n;} );  //there is no std::square available
-    int stlTransformReduce = std::accumulate(stdOutput.begin( ), stdOutput.end( ), init, bolt::plus<int>( ) );
-    int boltTransformReduce= bolt::amp::transform_reduce( boltInput.begin( ), boltInput.end( ), bolt::square<int>( ), init, bolt::plus<int>( ) );
+    int stlTransformReduce = std::accumulate(stdOutput.begin( ), stdOutput.end( ), init, bolt::amp::plus<int>( ) );
+    int boltTransformReduce= bolt::amp::transform_reduce( boltInput.begin( ), boltInput.end( ), bolt::amp::square<int>( ), init, bolt::amp::plus<int>( ) );
 
     EXPECT_EQ( stlTransformReduce, boltTransformReduce );
 }
@@ -612,7 +612,7 @@ TEST_P( transformReduceStdVectWithInit, withIntWdInitWithStdPlus)
     //  Calling the actual functions under test
     std::transform(stdInput.begin(), stdInput.end(), stdOutput.begin(), [](int n){return n*n;});
     int stlTransformReduce = std::accumulate(stdOutput.begin(), stdOutput.end(), init, std::plus<int>());
-    int boltTransformReduce= bolt::amp::transform_reduce( boltInput.begin( ), boltInput.end( ), bolt::square<int>(), init, bolt::plus<int>());
+    int boltTransformReduce= bolt::amp::transform_reduce( boltInput.begin( ), boltInput.end( ), bolt::amp::square<int>(), init, bolt::amp::plus<int>());
 
     EXPECT_EQ(stlTransformReduce, boltTransformReduce);
 }
@@ -637,7 +637,7 @@ TEST_P( transformReduceStdVectWithInit, withIntWdInitWdAnyFunctor)
     std::transform(stdInput.begin(), stdInput.end(), stdOutput.begin(), [](int x){return x*x;});
     int stlTransformReduce = std::accumulate(stdOutput.begin(), stdOutput.end(), init);
 
-    int boltTransformReduce= bolt::amp::transform_reduce( boltInput.begin( ), boltInput.end( ), bolt::square<int>(), init, bolt::plus<int>());
+    int boltTransformReduce= bolt::amp::transform_reduce( boltInput.begin( ), boltInput.end( ), bolt::amp::square<int>(), init, bolt::amp::plus<int>());
 
     EXPECT_EQ(stlTransformReduce, boltTransformReduce);
 }
@@ -674,8 +674,8 @@ TEST_P (transformReduceTestMultFloat, multiplyWithFloats)
 #endif
 
     float stlTransformReduce = std::accumulate(myArray2, myArray2 + arraySize, 1.0f, std::multiplies<float>());
-    float boltTransformReduce = bolt::amp::transform_reduce(myBoltArray, myBoltArray + arraySize, bolt::negate<float>(),
-        1.0f, bolt::multiplies<float>());
+    float boltTransformReduce = bolt::amp::transform_reduce(myBoltArray, myBoltArray + arraySize, bolt::amp::negate<float>(),
+        1.0f, bolt::amp::multiplies<float>());
 
     EXPECT_FLOAT_EQ(stlTransformReduce , boltTransformReduce )<<"Values does not match\n";
 
@@ -700,7 +700,7 @@ TEST_P( transformReduceTestMultFloat, serialFloatValuesWdControl )
 
     std::transform(A.begin(), A.end(), B.begin(), std::negate<float>());
     float stdTransformReduceValue = std::accumulate(B.begin(), B.end(), 0.0f, std::plus<float>());
-    float boltClTransformReduce = bolt::amp::transform_reduce(boltVect.begin(), boltVect.end(), bolt::negate<float>(), 0.0f, bolt::plus<float>());
+    float boltClTransformReduce = bolt::amp::transform_reduce(boltVect.begin(), boltVect.end(), bolt::amp::negate<float>(), 0.0f, bolt::amp::plus<float>());
 
     //compare these results with each other
     EXPECT_FLOAT_EQ( stdTransformReduceValue, boltClTransformReduce );
@@ -739,7 +739,7 @@ TEST_P (transformReduceTestMultDouble, multiplyWithDouble)
 
     double stlTransformReduce = std::accumulate(myArray2, myArray2 + arraySize, 1.0, std::multiplies<double>());
 
-    double boltTransformReduce = bolt::amp::transform_reduce(myBoltArray, myBoltArray + arraySize, bolt::negate<double>(), 1.0, bolt::multiplies<double>());
+    double boltTransformReduce = bolt::amp::transform_reduce(myBoltArray, myBoltArray + arraySize, bolt::amp::negate<double>(), 1.0, bolt::amp::multiplies<double>());
     
     EXPECT_DOUBLE_EQ(stlTransformReduce , boltTransformReduce )<<"Values does not match\n";
 
@@ -799,8 +799,8 @@ TEST_P( TransformIntegerVector, Normal )
     int stlReduce = std::accumulate(stdOutput.begin(), stdOutput.end(), init);
 
     int boltReduce = bolt::amp::transform_reduce( boltInput.begin( ), boltInput.end( ),
-                                                       bolt::negate<int>(), init,
-                                                       bolt::plus<int>());
+                                                       bolt::amp::negate<int>(), init,
+                                                       bolt::amp::plus<int>());
 
     size_t stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
     size_t boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
@@ -822,8 +822,8 @@ TEST_P( TransformFloatVector, Normal )
     float stlReduce = std::accumulate(stdOutput.begin(), stdOutput.end(), init);
 
     float boltReduce = bolt::amp::transform_reduce( boltInput.begin( ), boltInput.end( ),
-                                                       bolt::negate<float>(), init,
-                                                       bolt::plus<float>());
+                                                       bolt::amp::negate<float>(), init,
+                                                       bolt::amp::plus<float>());
 
     size_t stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
     size_t boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
@@ -840,12 +840,12 @@ TEST_P( TransformDoubleVector, Inplace )
 {
     double init(0);
     //  Calling the actual functions under test
-    std::transform(stdInput.begin(), stdInput.end(), stdOutput.begin(), bolt::cl::negate<double>());
+    std::transform(stdInput.begin(), stdInput.end(), stdOutput.begin(), bolt::amp::negate<double>());
     double stlReduce = std::accumulate(stdOutput.begin(), stdOutput.end(), init);
 
     double boltReduce = bolt::cl::transform_reduce( boltInput.begin( ), boltInput.end( ),
-                                                       bolt::cl::negate<double>(), init,
-                                                       bolt::cl::plus<double>());
+                                                       bolt::amp::negate<double>(), init,
+                                                       bolt::amp::plus<double>());
 
     size_t stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
     size_t boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
@@ -863,12 +863,12 @@ TEST_P( TransformIntegerDeviceVector, Inplace )
 {
     int init(0);
     //  Calling the actual functions under test
-    std::transform(stdInput.begin(), stdInput.end(), stdOutput.begin(), bolt::cl::negate<int>());
+    std::transform(stdInput.begin(), stdInput.end(), stdOutput.begin(), bolt::amp::negate<int>());
     int stlReduce = std::accumulate(stdOutput.begin(), stdOutput.end(), init);
 
     int boltReduce = bolt::cl::transform_reduce( boltInput.begin( ), boltInput.end( ),
-                                                       bolt::cl::negate<int>(), init,
-                                                       bolt::cl::plus<int>());
+                                                       bolt::amp::negate<int>(), init,
+                                                       bolt::amp::plus<int>());
 
     size_t stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
     size_t boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
@@ -884,12 +884,12 @@ TEST_P( TransformFloatDeviceVector, Inplace )
 {
     float init(0);
     //  Calling the actual functions under test
-    std::transform(stdInput.begin(), stdInput.end(), stdOutput.begin(), bolt::cl::negate<float>());
+    std::transform(stdInput.begin(), stdInput.end(), stdOutput.begin(), bolt::amp::negate<float>());
     float stlReduce = std::accumulate(stdOutput.begin(), stdOutput.end(), init);
 
     float boltReduce = bolt::cl::transform_reduce( boltInput.begin( ), boltInput.end( ),
-                                                       bolt::cl::negate<float>(), init,
-                                                       bolt::cl::plus<float>());
+                                                       bolt::amp::negate<float>(), init,
+                                                       bolt::amp::plus<float>());
 
     size_t stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
     size_t boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
@@ -906,12 +906,12 @@ TEST_P( TransformDoubleDeviceVector, Inplace )
 {
     double init(0);
     //  Calling the actual functions under test
-    std::transform(stdInput.begin(), stdInput.end(), stdOutput.begin(), bolt::cl::negate<double>());
+    std::transform(stdInput.begin(), stdInput.end(), stdOutput.begin(), bolt::amp::negate<double>());
     double stlReduce = std::accumulate(stdOutput.begin(), stdOutput.end(), init);
 
     double boltReduce = bolt::cl::transform_reduce( boltInput.begin( ), boltInput.end( ),
-                                                       bolt::cl::negate<double>(), init,
-                                                       bolt::cl::plus<double>());
+                                                       bolt::amp::negate<double>(), init,
+                                                       bolt::amp::plus<double>());
 
     size_t stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
     size_t boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
@@ -941,8 +941,8 @@ TEST_P( TransformIntegerNakedPointer, Inplace )
     int stlReduce = std::accumulate(wrapStdOutput,wrapStdOutput + endIndex, init);
 
     int boltReduce = bolt::amp::transform_reduce( wrapBoltInput, wrapBoltInput + endIndex,
-                                                       bolt::negate<int>(), init,
-                                                       bolt::plus<int>());
+                                                       bolt::amp::negate<int>(), init,
+                                                       bolt::amp::plus<int>());
 
     EXPECT_EQ( stlReduce, boltReduce );
 
@@ -965,8 +965,8 @@ TEST_P( TransformFloatNakedPointer, Inplace )
     float stlReduce = std::accumulate(wrapStdOutput,wrapStdOutput + endIndex, init);
 
     float boltReduce = bolt::amp::transform_reduce( wrapBoltInput, wrapBoltInput + endIndex,
-                                                       bolt::negate<float>(), init,
-                                                       bolt::plus<float>());
+                                                       bolt::amp::negate<float>(), init,
+                                                       bolt::amp::plus<float>());
 
     EXPECT_EQ( stlReduce, boltReduce );
 
