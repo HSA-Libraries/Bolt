@@ -32,6 +32,64 @@
 #include "tbb/blocked_range.h"
 #include "tbb/task_scheduler_init.h"
 #endif
+
+namespace bolt {
+    namespace cl {
+
+        template<typename ForwardIterator> 
+      ForwardIterator max_element(ForwardIterator first, 
+            ForwardIterator last, 
+            const std::string& cl_code)
+        {
+            typedef typename std::iterator_traits<ForwardIterator>::value_type T;
+            return min_element(bolt::cl::control::getDefault(), first, last, bolt::cl::greater<T>(), cl_code);
+        };
+
+
+        template<typename ForwardIterator,typename BinaryPredicate> 
+        ForwardIterator max_element(ForwardIterator first, 
+            ForwardIterator last,  
+            BinaryPredicate binary_op, 
+            const std::string& cl_code)  
+        {
+            return min_element(bolt::cl::control::getDefault(), first, last, binary_op, cl_code);
+        };
+
+
+
+        template<typename ForwardIterator> 
+        ForwardIterator  max_element(bolt::cl::control &ctl,
+            ForwardIterator first, 
+            ForwardIterator last, 
+            const std::string& cl_code)
+        {
+            typedef typename std::iterator_traits<ForwardIterator>::value_type T;
+            return min_element(ctl, first, last, bolt::cl::greater<T>(),cl_code);
+        };
+
+        // This template is called by all other "convenience" version of max_element.
+        // It also implements the CPU-side mappings of the algorithm for SerialCpu and MultiCoreCpu
+        template<typename ForwardIterator, typename BinaryPredicate> 
+        ForwardIterator max_element(bolt::cl::control &ctl,
+            ForwardIterator first, 
+            ForwardIterator last,  
+            BinaryPredicate binary_op, 
+            const std::string& cl_code)  
+        {
+            const bolt::cl::control::e_RunMode runMode = ctl.forceRunMode();  // could be dynamic choice some day.
+
+            if (runMode == bolt::cl::control::SerialCpu) {
+                return std::min_element(first, last, binary_op);
+            } else {
+                return detail::min_element_detect_random_access(ctl, first, last, binary_op, cl_code,
+                    std::iterator_traits< ForwardIterator >::iterator_category( ) );
+            }
+        };
+
+    }
+
+};
+
 namespace bolt {
     namespace cl {
 
