@@ -18,7 +18,7 @@
 #define KERNEL1WAVES 4
 #define WAVESIZE 64
 
-#define LENGTH_TEST 10000
+#define LENGTH_TEST 10
 #define ENABLE_PRINTS 0
 
 #include <iostream>
@@ -282,8 +282,8 @@ class ScanByKey_KernelTemplateSpecializer : public KernelTemplateSpecializer
             "__kernel void " + name(0) + "(\n"
             "global " + typeNames[e_kType] + "* keys,\n"
             "global " + typeNames[e_vType] + "* vals,\n"
-            "global " + typeNames[e_koType] + "* koutput,\n"
-            "global " + typeNames[e_voType] + "* voutput,\n"
+            "global " + typeNames[e_voType] + "* output,\n"
+            "global int * output2,\n"
             "const uint vecSize,\n"
             "local "  + typeNames[e_kType] + "* ldsKeys,\n"
             "local "  + typeNames[e_voType] + "* ldsVals,\n"
@@ -316,7 +316,7 @@ class ScanByKey_KernelTemplateSpecializer : public KernelTemplateSpecializer
             "global " + typeNames[e_kType] + "* keySumArray,\n"
             "global " + typeNames[e_voType] + "* postSumArray,\n"
             "global " + typeNames[e_kType] + "* keys,\n"
-            "global " + typeNames[e_koType] + "* output2,\n"
+            "global int * output2,\n"
             "global " + typeNames[e_voType] + "* output,\n"
             "const uint vecSize,\n"
             "global " + typeNames[e_BinaryPredicate] + "* binaryPred,\n"
@@ -330,9 +330,10 @@ class ScanByKey_KernelTemplateSpecializer : public KernelTemplateSpecializer
             "global " + typeNames[e_kType] + "*keys,\n"
             "global " + typeNames[e_koType] + "*keys_output,\n"
             "global " + typeNames[e_voType] + "*vals_output,\n"
-            "global " + typeNames[e_koType] + "*offsetArray,\n"
+            "global int *offsetArray,\n"
             "global " + typeNames[e_voType] + "*offsetValArray,\n"
-            "const uint vecSize\n"
+            "const uint vecSize,\n"
+            "const int numSections\n"
             ");\n\n";            
     
         return templateSpecializationString;
@@ -435,6 +436,7 @@ reduce_by_key_pick_iterator(
         return bolt::cl::make_pair( keys_last, values_first+numElements );
 
     const bolt::cl::control::e_RunMode runMode = ctl.forceRunMode( );  // could be dynamic choice some day.
+    unsigned int sizeOfOut;
 
     {
 
@@ -445,13 +447,13 @@ reduce_by_key_pick_iterator(
         device_vector< voType > dvVOutput( values_output, numElements, CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY, false, ctl );
 
         //Now call the actual cl algorithm
-        reduce_by_key_enqueue( ctl, dvKeys.begin( ), dvKeys.end( ), dvValues.begin(), dvKOutput.begin( ),dvVOutput.end( ), binary_pred, binary_op, user_code);
+        sizeOfOut = reduce_by_key_enqueue( ctl, dvKeys.begin( ), dvKeys.end( ), dvValues.begin(), dvKOutput.begin( ),dvVOutput.end( ), binary_pred, binary_op, user_code);
 
         // This should immediately map/unmap the buffer
         dvKOutput.data( );
         dvVOutput.data( );
     }
-    return bolt::cl::make_pair(keys_output+numElements, values_output+numElements);
+    return bolt::cl::make_pair(keys_output+sizeOfOut, values_output+sizeOfOut);
 }
 
 /*! 
@@ -512,11 +514,11 @@ reduce_by_key_pick_iterator(
     }
 
     //Now call the actual cl algorithm
-    reduce_by_key_enqueue( ctl, keys_first, keys_last, values_first, keys_output,
+    unsigned int sizeOfOut = reduce_by_key_enqueue( ctl, keys_first, keys_last, values_first, keys_output,
             values_output, binary_pred, binary_op, user_code);
 
     
-    return  bolt::cl::make_pair(keys_output+numElements, values_output+numElements);
+    return  bolt::cl::make_pair(keys_output+sizeOfOut, values_output+sizeOfOut);
 }
 
 
@@ -529,7 +531,7 @@ template<
     typename DVOutputIterator2,
     typename BinaryPredicate,
     typename BinaryFunction >
-void
+unsigned int
 reduce_by_key_enqueue(
     control& ctl,
     const DVInputIterator1& keys_first,
@@ -650,9 +652,14 @@ reduce_by_key_enqueue(
     control::buffPointer keySumArray  = ctl.acquireBuffer( sizeScanBuff*sizeof( kType ) );
     control::buffPointer preSumArray  = ctl.acquireBuffer( sizeScanBuff*sizeof( voType ) );
     control::buffPointer postSumArray = ctl.acquireBuffer( sizeScanBuff*sizeof( voType ) );
-    control::buffPointer offsetArray  = ctl.acquireBuffer( numElements *sizeof( koType ) );
+    control::buffPointer offsetArray  = ctl.acquireBuffer( numElements *sizeof( int ) );
     control::buffPointer offsetValArray  = ctl.acquireBuffer( numElements *sizeof( voType ) );
     cl_uint ldsKeySize, ldsValueSize;
+
+    //Fill the buffer with zeros
+    ::cl::Event fillEvent;
+    ctl.commandQueue().enqueueFillBuffer( *offsetArray, 0, 0, numElements *sizeof( int ), NULL, &fillEvent);
+    bolt::cl::wait(ctl, fillEvent);
 
 
     /**********************************************************************************
@@ -792,11 +799,11 @@ reduce_by_key_enqueue(
     //
 
     ::cl::Event l_mapEvent;
-    koType *h_result = (koType*)ctl.commandQueue().enqueueMapBuffer( *offsetArray,
+    int *h_result = (int*)ctl.commandQueue().enqueueMapBuffer( *offsetArray,
                                                                     false,
                                                                     CL_MAP_READ | CL_MAP_WRITE,
                                                                     0,
-                                                                    sizeof(koType)*numElements,
+                                                                    sizeof(int)*numElements,
                                                                     NULL,
                                                                     &l_mapEvent,
                                                                     &l_Error );
@@ -843,7 +850,7 @@ reduce_by_key_enqueue(
     //h_result [ numElements - 1 ] = 1;  //This is a quick fix!
     for( unsigned int i = 0; i < numElements; i++ )
     {        
-        if(h_result[i])
+        if(h_result[i]>0)
         {
             h_result[i] = count_number_of_sections;
             count_number_of_sections++;
@@ -882,6 +889,7 @@ reduce_by_key_enqueue(
     V_OPENCL( kernels[3].setArg( 3, *offsetArray),                "Error setArg kernels[ 3 ]" ); // Input buffer
     V_OPENCL( kernels[3].setArg( 4, *offsetValArray),             "Error setArg kernels[ 3 ]"  );
     V_OPENCL( kernels[3].setArg( 5, numElements ),               "Error setArg kernels[ 3 ]" ); // Size of scratch buffer
+    V_OPENCL( kernels[3].setArg( 6, count_number_of_sections),               "Error setArg kernels[ 3 ]" ); // Size of scratch buffer
 
 
     try
@@ -930,55 +938,7 @@ reduce_by_key_enqueue(
     //delete this code -end
 
 #endif
-
-#if 0
-    try
-    {
-        double k0_globalMemory = 2.0*sizeInputBuff*sizeof(iType) + 1*sizeScanBuff*sizeof(iType);
-        double k1_globalMemory = 4.0*sizeScanBuff*sizeof(iType);
-        double k2_globalMemory = 2.0*sizeInputBuff*sizeof(iType) + 1*sizeScanBuff*sizeof(iType);
-        cl_ulong k0_start, k0_end, k1_start, k1_end, k2_start, k2_end;
-
-        l_Error = kernel0Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_START, &k0_start);
-        V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_START>()");
-        l_Error = kernel0Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END, &k0_end);
-        V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_START>()");
-        
-        l_Error = kernel1Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_START, &k1_start);
-        V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_START>()");
-        l_Error = kernel1Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END, &k1_end);
-        V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_START>()");
-        
-        l_Error = kernel2Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_START, &k2_start);
-        V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_START>()");
-        l_Error = kernel2Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END, &k2_end);
-        V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_START>()");
-
-        double k0_sec = (k0_end-k0_start)/1000000000.0;
-        double k1_sec = (k1_end-k1_start)/1000000000.0;
-        double k2_sec = (k2_end-k2_start)/1000000000.0;
-
-        double k0_GBs = k0_globalMemory/(1024*1024*1024*k0_sec);
-        double k1_GBs = k1_globalMemory/(1024*1024*1024*k1_sec);
-        double k2_GBs = k2_globalMemory/(1024*1024*1024*k2_sec);
-
-        double k0_ms = k0_sec*1000.0;
-        double k1_ms = k1_sec*1000.0;
-        double k2_ms = k2_sec*1000.0;
-
-        printf("Kernel Profile:\n\t%7.3f GB/s  (%4.0f MB in %6.3f ms)\n\t%7.3f GB/s"
-            "  (%4.0f MB in %6.3f ms)\n\t%7.3f GB/s  (%4.0f MB in %6.3f ms)\n",
-            k0_GBs, k0_globalMemory/1024/1024, k0_ms,
-            k1_GBs, k1_globalMemory/1024/1024, k1_ms,
-            k2_GBs, k2_globalMemory/1024/1024, k2_ms);
-
-    }
-    catch( ::cl::Error& e )
-    {
-        std::cout << ( "Reduce By Key Benchmark error condition reported:" ) << std::endl << e.what() << std::endl;
-        return;
-    }
-#endif
+    return count_number_of_sections;
     }   //end of reduce_by_key_enqueue( )
 
     /*!   \}  */
