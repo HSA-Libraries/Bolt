@@ -202,6 +202,8 @@ void sort_pick_iterator( bolt::amp::control &ctl,
 /****** sort_enqueue specailization for unsigned int data types. ******
  * THE FOLLOWING CODE IMPLEMENTS THE RADIX SORT ALGORITHM FOR sort()
  *********************************************************************/
+
+/*AMP Kernels for unsigned integer sorting*/
 template <typename T, int N, typename Container>
 void AMP_RadixSortHistogramAscendingKernel(bolt::amp::control &ctl,
                                            Container &unsortedData, /*this can be either array_view or array*/
@@ -279,6 +281,7 @@ void AMP_RadixSortHistogramDescendingKernel(bolt::amp::control &ctl,
                                            unsigned int szElements,
                                            const unsigned int groupSize)
 {
+    const int RADICES = 1 << N;
     concurrency::extent< 1 > globalSizeK0( szElements/RADICES );
     concurrency::tiled_extent< RADICES > tileK0 = globalSizeK0.tile< RADICES >();
     concurrency::accelerator_view av = ctl.getAccelerator().default_view;
@@ -391,7 +394,7 @@ void AMP_permuteAscendingRadixNTemplate(bolt::amp::control &ctl,
                                     Container &sortedData,
                                     unsigned int szElements)
 {
-    const int RADICES = 1<<N;
+    const int RADICES = 1 << N;
     concurrency::extent< 1 > globalSizeK0( szElements/RADICES );
     concurrency::tiled_extent< RADICES > tileK0 = globalSizeK0.tile< RADICES >();
     concurrency::accelerator_view av = ctl.getAccelerator().default_view;
@@ -442,6 +445,7 @@ void AMP_permuteDescendingRadixNTemplate(bolt::amp::control &ctl,
                                     Container &sortedData,
                                     unsigned int szElements)
 {
+    const int RADICES = 1 << N;
     concurrency::extent< 1 > globalSizeK0( szElements/RADICES );
     concurrency::tiled_extent< RADICES > tileK0 = globalSizeK0.tile< RADICES >();
     concurrency::accelerator_view av = ctl.getAccelerator().default_view;
@@ -450,7 +454,8 @@ void AMP_permuteDescendingRadixNTemplate(bolt::amp::control &ctl,
 		unsortedData,
 		scanedBuckets,
         shiftCount,
-        sortedData
+        sortedData,
+        tileK0
 	] 
     ( concurrency::tiled_index< RADICES > t_idx ) restrict(amp)
 	{
@@ -481,9 +486,300 @@ void AMP_permuteDescendingRadixNTemplate(bolt::amp::control &ctl,
     } );
 }
 
+/*AMP Kernels for Signed integer sorting*/
+/*! 
+* \brief This template function is a permutation Algorithm for one work item. 
+*        This is called by the the sort_enqueue for input buffers with siigned numbers routine for other than int's and unsigned int's
+*        
+* \details
+*         The idea behind sorting signed numbers is that when we sort the MSB which contains the sign bit. We should 
+*         sort in the signed bit in the descending order. For example in a radix 4 sort of signed numbers if we are 
+*         doing ascending sort. Then the bits 28:31 should be sorted in an descending order, after doing the following 
+*         transformation of the input bits. 
+*         Shift bits 31:28 ->  3:0
+*               value = (value >> shiftCount);
+*         Retain the sign bit in the bit location 3. 
+*               signBit = value & (1<<(RADIX_T-1));
+*         XOR bits 2:1  with 111 
+*               value = ( ( ( value & MASK_T ) ^ MASK_T ) & MASK_T )
+*         Or the sign bit with the xor'ed bit. This forms your index.
+*               value = value | signBitl
+*
+*       As an Example for Ascending order sort of 4 bit signed numbers.
+*       ________________________________
+*       -Flip the three bits other than the sign bit
+*       -sort the resultant array considering them as unsigned numbers
+*       -map the corresponding flipped numbers with the corresponding values.
+*       1st Example
+*       1111     1000      0000     0111
+*       0111     0000      0101     0010     
+*       1000 ->  1111 ->   0111 ->  0000     
+*       1010     1101      1000     1111     
+*       0000     0111      1101     1010     
+*       0010     0101      1111     1000
+*       
+*       2nd Example 
+*       1111     1000     1111      1000
+*       0111     0000     1101      1010
+*       1101     1010     1010      1101
+*       1000     1111     1000      1111
+*       1010 ->  1101 ->  0111 ->   0000
+*       0000     0111     0101      0010
+*       0010     0101     0010      0101
+*       0101     0010     0001      0110
+*       0110     0001     0000      0111
+*
+*/
+/*Descending*/
+template <typename T, int N, typename Container>
+void AMP_RadixSortHistogramSignedAscendingKernel(bolt::amp::control &ctl,
+                                           Container &unsortedData, /*this can be either array_view or array*/
+                                           Container &buckets,
+                                           Container &histScanBuckets,
+                                           unsigned int shiftCount,
+                                           unsigned int szElements,
+                                           const unsigned int groupSize)
+{
+    const int RADICES = 1 << N;
+    concurrency::extent< 1 > globalSizeK0( szElements/RADICES );
+
+    concurrency::tiled_extent< RADICES > tileK0 = globalSizeK0.tile< RADICES >();
+    concurrency::accelerator_view av = ctl.getAccelerator().default_view;
+    printf("globalSizeK0 = %d   tileK0.tile_dim0 = %d    tileK0[0]=%d\n",globalSizeK0, tileK0.tile_dim0, tileK0[0]);
+	concurrency::parallel_for_each( av, tileK0, 
+	[
+		unsortedData,
+		buckets,
+		histScanBuckets,
+        shiftCount,
+        tileK0
+	] 
+    ( concurrency::tiled_index< RADICES > t_idx ) restrict(amp)
+	{
+        const int RADIX_T     = N;
+        const int RADICES_T   = (1 << RADIX_T);
+        const int NUM_OF_ELEMENTS_PER_WORK_ITEM_T = RADICES_T; 
+        const int MASK_T      = (1<<(RADIX_T-1))  - 1;
+
+        int localId     = t_idx.local[ 0 ];
+        int globalId    = t_idx.global[ 0 ];
+        int groupId     = t_idx.tile[ 0 ];
+        int groupSize   = tileK0.tile_dim0;
+        //tileK0[ 0 ] gives the global size 
+        //tileK0.tile_dim0 gives the number of threads in a tile
+        //\TODO - find a API to get the total number of numOfGroups
+        int numOfGroups = tileK0[ 0 ]/tileK0.tile_dim0;//get_num_groups(0);
+        unsigned int bucketPos   = groupId * RADICES_T * groupSize;
+        for(int i = 0; i < RADICES_T; ++i)
+        {
+            buckets[bucketPos + localId * RADICES_T + i] = 0;
+        }
+        //barrier(CLK_GLOBAL_MEM_FENCE)
+        t_idx.barrier.wait_with_all_memory_fence();
+
+        /* Calculate thread-histograms */
+        for(int i = 0; i < NUM_OF_ELEMENTS_PER_WORK_ITEM_T; ++i)
+        {
+            unsigned int value = unsortedData[globalId * NUM_OF_ELEMENTS_PER_WORK_ITEM_T + i];
+            value = (value >> shiftCount);
+            unsigned int signBit = value & (1<<(RADIX_T-1));
+            value = ( ( ( value & MASK_T ) ^ MASK_T ) & MASK_T ) | signBit;
+            buckets[bucketPos + localId * RADICES_T + value]++;
+        }
+
+        //barrier(CLK_GLOBAL_MEM_FENCE)
+        t_idx.barrier.wait_with_all_memory_fence();
+
+        //Start First step to scan
+        int sum =0;
+        for(int i = 0; i < groupSize; i++)
+        {
+            sum = sum + buckets[bucketPos + localId + groupSize*i];
+        }
+        histScanBuckets[localId*numOfGroups + groupId + 1] = sum;
+
+	} );// end of concurrency::parallel_for_each
+}
+
+template <typename T, int N, typename Container>
+void AMP_RadixSortHistogramSignedDescendingKernel(bolt::amp::control &ctl,
+                                           Container &unsortedData, /*this can be either array_view or array*/
+                                           Container &buckets,
+                                           Container &histScanBuckets,
+                                           unsigned int shiftCount,
+                                           unsigned int szElements,
+                                           const unsigned int groupSize)
+{
+    const int RADICES = 1 << N;
+    concurrency::extent< 1 > globalSizeK0( szElements/RADICES );
+    concurrency::tiled_extent< RADICES > tileK0 = globalSizeK0.tile< RADICES >();
+    concurrency::accelerator_view av = ctl.getAccelerator().default_view;
+	concurrency::parallel_for_each( av, tileK0, 
+	[
+		unsortedData,
+		buckets,
+		histScanBuckets,
+        shiftCount,
+        tileK0
+	] 
+    ( concurrency::tiled_index< RADICES > t_idx ) restrict(amp)
+	{
+        const int RADIX_T     = N;
+        const int RADICES_T   = (1 << RADIX_T);
+        const int NUM_OF_ELEMENTS_PER_WORK_ITEM_T = RADICES_T; 
+        const int MASK_T      = (1<<RADIX_T)  -1;
+        int localId     = t_idx.local[ 0 ];
+        int globalId    = t_idx.global[ 0 ];
+        int groupId     = t_idx.tile[ 0 ];
+        int groupSize   = tileK0.tile_dim0;
+        //tileK0[ 0 ] gives the global size 
+        //tileK0.tile_dim0 gives the number of threads in a tile
+        //\TODO - find a API to get the total number of numOfGroups
+        int numOfGroups = tileK0[ 0 ]/tileK0.tile_dim0;
+        /*size_t localId     = get_local_id(0);
+        size_t globalId    = get_global_id(0);
+        size_t groupId     = get_group_id(0);
+        size_t groupSize   = get_local_size(0);
+        size_t numOfGroups = get_num_groups(0);*/
+        unsigned int bucketPos   = groupId * RADICES_T * groupSize;
+
+        for(int i = 0; i < RADICES_T; ++i)
+        {
+            buckets[bucketPos + localId * RADICES_T + i] = 0;
+        }
+        //barrier(CLK_GLOBAL_MEM_FENCE)
+        t_idx.barrier.wait_with_all_memory_fence();
+
+        /* Calculate thread-histograms */
+        for(int i = 0; i < NUM_OF_ELEMENTS_PER_WORK_ITEM_T; ++i)
+        {
+            unsigned int value = unsortedData[globalId * NUM_OF_ELEMENTS_PER_WORK_ITEM_T + i];
+            value = (value >> shiftCount);
+            unsigned int signBit = value & (1<<(RADIX_T-1));
+            value = ( ( ( ( value & MASK_T ) ^ MASK_T ) & MASK_T ) | signBit );
+            buckets[bucketPos + localId * RADICES_T + (RADICES_T - value -1)]++;
+        }
+
+        //barrier(CLK_GLOBAL_MEM_FENCE)
+        t_idx.barrier.wait_with_all_memory_fence();
+        //Start First step to scan
+        int sum = 0;
+        for(int i = 0; i < groupSize; i++)
+            sum = sum + buckets[bucketPos + localId + groupSize*i];
+        histScanBuckets[localId*numOfGroups + groupId + 1] = sum;
+	} );// end of concurrency::parallel_for_each
+}
+
+template <typename T, int N, typename Container>
+void AMP_permuteSignedAscendingRadixNTemplate(bolt::amp::control &ctl,
+                                    Container &unsortedData,
+                                    Container &scanedBuckets,
+                                    unsigned int shiftCount,
+                                    Container &sortedData,
+                                    unsigned int szElements)
+{
+    const int RADICES = 1 << N;
+    concurrency::extent< 1 > globalSizeK0( szElements/RADICES );
+    concurrency::tiled_extent< RADICES > tileK0 = globalSizeK0.tile< RADICES >();
+    concurrency::accelerator_view av = ctl.getAccelerator().default_view;
+	concurrency::parallel_for_each( av, tileK0, 
+	[
+		unsortedData,
+		scanedBuckets,
+        shiftCount,
+        sortedData,
+        tileK0
+	] 
+    ( concurrency::tiled_index< RADICES > t_idx ) restrict(amp)
+	{
+        const int RADIX_T     = N;
+        const int RADICES_T   = (1 << RADIX_T);
+        //const int NUM_OF_ELEMENTS_PER_WORK_ITEM_T = RADICES_T; 
+        const int MASK_T      = (1<<(RADIX_T-1))  -1;
+        /*size_t groupId   = get_group_id(0);
+        size_t localId   = get_local_id(0);
+        size_t globalId  = get_global_id(0);
+        size_t groupSize = get_local_size(0);*/
+        int localId     = t_idx.local[ 0 ];
+        int globalId    = t_idx.global[ 0 ];
+        int groupId     = t_idx.tile[ 0 ];
+        int groupSize   = tileK0.tile_dim0;
+
+        unsigned int bucketPos   = groupId * RADICES_T * groupSize;
+
+        /* Premute elements to appropriate location */
+        for(int i = 0; i < RADICES_T; ++i)
+        {
+            unsigned int value = unsortedData[globalId * RADICES_T + i];
+            unsigned int resultValue = value;
+            value = (value >> shiftCount);
+            unsigned int signBit = value & (1<<(RADIX_T-1));
+            value = ( ( ( ( value & MASK_T ) ^ MASK_T ) & MASK_T ) | signBit );
+
+            unsigned int index = scanedBuckets[bucketPos+localId * RADICES_T + value];
+            sortedData[index] = unsortedData[globalId * RADICES_T + i];
+            scanedBuckets[bucketPos+localId * RADICES_T + value] = index + 1;
+            //barrier(CLK_LOCAL_MEM_FENCE);
+            t_idx.barrier.wait();
+        }
+    } );
+}
+
+template <typename T, int N, typename Container>
+void AMP_permuteSignedDescendingRadixNTemplate(bolt::amp::control &ctl,
+                                    Container &unsortedData,
+                                    Container &scanedBuckets,
+                                    unsigned int shiftCount,
+                                    Container &sortedData,
+                                    unsigned int szElements)
+{
+    const int RADICES = 1 << N;
+    concurrency::extent< 1 > globalSizeK0( szElements/RADICES );
+    concurrency::tiled_extent< RADICES > tileK0 = globalSizeK0.tile< RADICES >();
+    concurrency::accelerator_view av = ctl.getAccelerator().default_view;
+	concurrency::parallel_for_each( av, tileK0, 
+	[
+		unsortedData,
+		scanedBuckets,
+        shiftCount,
+        sortedData,
+        tileK0
+	] 
+    ( concurrency::tiled_index< RADICES > t_idx ) restrict(amp)
+	{
+        const int RADIX_T     = N;
+        const int RADICES_T   = (1 << RADIX_T);
+        const int MASK_T      = (1<<RADIX_T)  -1;
+        int localId     = t_idx.local[ 0 ];
+        int globalId    = t_idx.global[ 0 ];
+        int groupId     = t_idx.tile[ 0 ];
+        int groupSize   = tileK0.tile_dim0;
+        /*size_t groupId   = get_group_id(0);
+        size_t localId   = get_local_id(0);
+        size_t globalId  = get_global_id(0);
+        size_t groupSize = get_local_size(0);*/
+        unsigned int bucketPos   = groupId * RADICES_T * groupSize;
+
+        /* Premute elements to appropriate location */
+        for(int i = 0; i < RADICES_T; ++i)
+        {
+            unsigned int value = unsortedData[globalId * RADICES_T + i];
+            //value = (value >> shiftCount) & MASK_T;
+            value = (value >> shiftCount);
+            unsigned int signBit = value & (1<<(RADIX_T-1));
+            value = ( ( ( ( value & MASK_T ) ^ MASK_T ) & MASK_T ) | signBit );
+            unsigned int index = scanedBuckets[bucketPos+localId * RADICES_T + (RADICES_T -value-1)];
+            sortedData[index] = unsortedData[globalId * RADICES_T + i];
+            scanedBuckets[bucketPos+localId * RADICES_T + (RADICES_T -value-1)] = index + 1;
+            //barrier(CLK_LOCAL_MEM_FENCE);
+            t_idx.barrier.wait();
+        }
+    } );
+}
 
 
-#define BOLT_DEBUG 1
+
+#define BOLT_SORT_INL_DEBUG 0
 template<typename DVRandomAccessIterator, typename StrictWeakOrdering> 
 typename std::enable_if< std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type, unsigned int >::value >::type
 sort_enqueue(bolt::amp::control &ctl, 
@@ -491,52 +787,65 @@ sort_enqueue(bolt::amp::control &ctl,
              StrictWeakOrdering comp)
 {
     typedef typename std::iterator_traits< DVRandomAccessIterator >::value_type T;
-    const int RADIX = 4;
-    const int RADICES = (1 << RADIX);	//Values handeled by each work-item?
+    const int RADIX = 8;
+    const int RADICES = (1 << RADIX);	
     unsigned int orig_szElements = static_cast<unsigned int>(std::distance(first, last));
     unsigned int szElements = orig_szElements;
     bool  newBuffer = false;
-
-    unsigned int groupSize;
-
-    groupSize = RADICES;
-    const int NUM_OF_ELEMENTS_PER_WORK_ITEM = RADICES;
-    unsigned int num_of_elems_per_group = RADICES  * groupSize;
+    concurrency::array_view<T> *pLocalArrayView = NULL;
+    concurrency::array<T>      *pLocalArray = NULL;
+    unsigned int groupSize = RADICES;
     unsigned int mulFactor = groupSize * RADICES;
+    concurrency::extent<1> ext( static_cast< int >( orig_szElements ) );
 
     if(orig_szElements%mulFactor != 0)
     {
         szElements  = ((orig_szElements + mulFactor) /mulFactor) * mulFactor;
+        concurrency::extent<1> modified_ext( static_cast< int >( szElements ) );
+        pLocalArray     = new concurrency::array<T>( modified_ext );
+        pLocalArrayView = new concurrency::array_view<T>(pLocalArray->view_as(modified_ext));
+        concurrency::array_view<T> dest = pLocalArrayView->section( ext );
+        first->getBuffer( ).copy_to( dest );
+        dest.synchronize( );
         newBuffer = true;
     }
-    unsigned int numGroups = szElements / mulFactor;
-    device_vector< T, concurrency::array > dvInputData(static_cast<size_t>(szElements), BOLT_UINT_MAX);
+    else
+    {
+        pLocalArrayView = new concurrency::array_view<T>( first->getBuffer( ) );
+    }
 
-    concurrency::extent<1> ext( static_cast< int >( orig_szElements ) );
-    concurrency::array_view<T> dest = dvInputData.begin( )->getBuffer( ).section( ext );
-    first->getBuffer( ).copy_to( dest );
-    dest.synchronize( );
-    printf("\ndest.get_extent()[0]=%d     first->getBuffer( ).get_extent()[0] = %d\n",dest.get_extent()[0], first->getBuffer( ).get_extent()[0]); 
+    unsigned int numGroups = szElements / mulFactor;
+    concurrency::extent<1> modified_ext( static_cast< int >( szElements ) );
     
-    //dest.
-    printf("");
     device_vector< T, concurrency::array > dvSwapInputData(static_cast<size_t>(szElements), 0);
     device_vector< T, concurrency::array > dvHistogramBins(static_cast<size_t>(numGroups* groupSize * RADICES), 0);
     device_vector< T, concurrency::array > dvHistogramScanBuffer(static_cast<size_t>(numGroups* RADICES + 10), 0 );
 
-    auto& clInputData = dvInputData.begin( )->getBuffer( );
+    auto& clInputData = *pLocalArrayView;
     auto& clSwapData = dvSwapInputData.begin( )->getBuffer( );
     auto& clHistData = dvHistogramBins.begin( )->getBuffer( );
     auto& clHistScanData = dvHistogramScanBuffer.begin( )->getBuffer( );
     int swap = 0;
     if(comp(2,3))
     {
+        /*If the buffer is a local buffer which is more than the usual buffer size then */
+        if(newBuffer == true)
+        {
+            concurrency::index<1> origin(orig_szElements);
+            concurrency::array_view<T> dest = pLocalArrayView->section( origin, modified_ext - ext);
+            //arrayview_type m_devMemoryAV( *m_devMemory );
+            Concurrency::parallel_for_each( dest.extent, [dest]
+                (Concurrency::index<1> idx) restrict(amp)
+                {
+                    dest[idx] = BOLT_UINT_MAX;
+                }
+            );
+        }
         /*Ascending Sort*/
-
         for(int bits = 0; bits < (sizeof(T) * 8)/*Bits per Byte*/; bits += RADIX)
         {
             if (swap == 0)
-                AMP_RadixSortHistogramAscendingKernel<T, 4>(ctl,
+                AMP_RadixSortHistogramAscendingKernel<T, RADIX>(ctl,
                                                       clInputData, /*this can be either array_view or array*/
                                                       clHistData,
                                                       clHistScanData,
@@ -544,14 +853,14 @@ sort_enqueue(bolt::amp::control &ctl,
                                                       szElements,
                                                       groupSize); // \TODO - i don't need gropu size
             else
-                AMP_RadixSortHistogramAscendingKernel<T, 4>(ctl,
+                AMP_RadixSortHistogramAscendingKernel<T, RADIX>(ctl,
                                                       clSwapData, /*this can be either array_view or array*/
                                                       clHistData,
                                                       clHistScanData,
                                                       bits,
                                                       szElements,
                                                       groupSize); // \TODO - i don't need gropu size
-#if BOLT_DEBUG
+#if BOLT_SORT_INL_DEBUG
 
 printf("\n\n\n\n\nBITS = %d\nAfter Histogram", bits);
 for (unsigned int ng=0; ng<numGroups; ng++)
@@ -578,7 +887,7 @@ for(int i=0; i<RADICES;i++)
 }
 #endif
             detail::scan_enqueue( ctl, dvHistogramScanBuffer.begin( ), dvHistogramScanBuffer.end( ),dvHistogramScanBuffer.begin( ), 0, plus< T >( ) );
-#if BOLT_DEBUG
+#if BOLT_SORT_INL_DEBUG
 printf("\nprinting scan_enqueue SUM\n");        
         for(int i=0; i<RADICES;i++)
         { 
@@ -589,11 +898,11 @@ printf("\nprinting scan_enqueue SUM\n");
             }
         }
 #endif
-            AMP_scanLocalTemplate<T, 4>(ctl,
+            AMP_scanLocalTemplate<T, RADIX>(ctl,
                                         clHistData,
                                         clHistScanData,
                                         szElements);
-#if BOLT_DEBUG
+#if BOLT_SORT_INL_DEBUG
         printf("\n\nAfter Scan bits = %d", bits);
         for (unsigned int ng=0; ng<numGroups; ng++)
         { printf ("\nGroup-Block =%d",ng);
@@ -608,21 +917,21 @@ printf("\nprinting scan_enqueue SUM\n");
             }
         }
 #endif
-            if (swap == 0) 
-                AMP_permuteAscendingRadixNTemplate<T, 4>( ctl,
+            if (swap == 0)
+                AMP_permuteAscendingRadixNTemplate<T, RADIX>( ctl,
                                                         clInputData,
                                                         clHistData,
                                                         bits,
                                                         clSwapData,
                                                         szElements);
             else
-                AMP_permuteAscendingRadixNTemplate<T, 4>( ctl,
+                AMP_permuteAscendingRadixNTemplate<T, RADIX>( ctl,
                                                         clSwapData,
                                                         clHistData,
                                                         bits,
                                                         clInputData,
                                                         szElements);
-#if BOLT_DEBUG
+#if BOLT_SORT_INL_DEBUG
 if (swap == 0) 
 {
         printf("\n Printing swap data\n");
@@ -652,457 +961,379 @@ else
     }
     else
     {
+        if(newBuffer == true)
+        {
+            concurrency::index<1> origin(orig_szElements);
+            concurrency::array_view<T> dest = pLocalArrayView->section( origin, modified_ext - ext);
+            //arrayview_type m_devMemoryAV( *m_devMemory );
+            Concurrency::parallel_for_each( dest.extent, [dest]
+                (Concurrency::index<1> idx) restrict(amp)
+                {
+                    dest[idx] = BOLT_UINT_MIN;
+                }
+            );
+        }
+        /*Ascending Sort*/
+        for(int bits = 0; bits < (sizeof(T) * 8)/*Bits per Byte*/; bits += RADIX)
+        {
+            if (swap == 0)
+                AMP_RadixSortHistogramDescendingKernel<T, RADIX>(ctl,
+                                                      clInputData, /*this can be either array_view or array*/
+                                                      clHistData,
+                                                      clHistScanData,
+                                                      bits,
+                                                      szElements,
+                                                      groupSize); // \TODO - i don't need gropu size
+            else
+                AMP_RadixSortHistogramDescendingKernel<T, RADIX>(ctl,
+                                                      clSwapData, /*this can be either array_view or array*/
+                                                      clHistData,
+                                                      clHistScanData,
+                                                      bits,
+                                                      szElements,
+                                                      groupSize); // \TODO - i don't need gropu size
 
+            detail::scan_enqueue( ctl, dvHistogramScanBuffer.begin( ), dvHistogramScanBuffer.end( ),dvHistogramScanBuffer.begin( ), 0, plus< T >( ) );
+
+            AMP_scanLocalTemplate<T, RADIX>(ctl,
+                                        clHistData,
+                                        clHistScanData,
+                                        szElements);
+
+            if (swap == 0)
+                AMP_permuteDescendingRadixNTemplate<T, RADIX>( ctl,
+                                                        clInputData,
+                                                        clHistData,
+                                                        bits,
+                                                        clSwapData,
+                                                        szElements);
+            else
+                AMP_permuteDescendingRadixNTemplate<T, RADIX>( ctl,
+                                                        clSwapData,
+                                                        clHistData,
+                                                        bits,
+                                                        clInputData,
+                                                        szElements);
+            /*For swapping the buffers*/
+            swap = swap? 0: 1;
+        }//End of For loop
     }
-
-    dest = dvInputData.begin( )->getBuffer( ).section( ext );
-    dest.copy_to( first->getBuffer( ) );
-    first->getBuffer( ).synchronize( );
+    if(newBuffer == true)
+    {
+        std::cout << "New buffer was allocated So copying back the buffer\n";
+        //dest = clInputData.section( ext );
+        clInputData.section( ext ).copy_to( first->getBuffer( ) );
+        first->getBuffer( ).synchronize( );
+        delete pLocalArray;
+    }
+    delete pLocalArrayView;
     return;
 }
 
-#if 0
+
+/*
+ *
+ */
 template<typename DVRandomAccessIterator, typename StrictWeakOrdering> 
-typename std::enable_if< 
-    std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type, int >::value 
-                       >::type
+typename std::enable_if< std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type,          int >::value >::type
 sort_enqueue(bolt::amp::control &ctl, 
              DVRandomAccessIterator &first, DVRandomAccessIterator &last,
              StrictWeakOrdering comp)
 {
     typedef typename std::iterator_traits< DVRandomAccessIterator >::value_type T;
     const int RADIX = 4;
-    const int RADICES = (1 << RADIX);	//Values handeled by each work-item?
-    unsigned int szElements = (last - first);
-    device_vector< T > dvInputData;//(sizeof(T), 0);
+    const int RADICES = (1 << RADIX);
+    unsigned int orig_szElements = static_cast<unsigned int>(std::distance(first, last));
+    unsigned int szElements = orig_szElements;
     bool  newBuffer = false;
-    //std::cout << "Calling unsigned int sort_enqueue sizeof T = "<< sizeof(T) << "\n";
-    int computeUnits     = ctl.device().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
-    int wgPerComputeUnit =  ctl.wgPerComputeUnit(); 
-    //std::cout << "CU = " << computeUnits << "wgPerComputeUnit = "<< wgPerComputeUnit << "\n";
-    cl_int l_Error = CL_SUCCESS;
-
-    static  boost::once_flag initOnlyOnce;
-    static std::vector< ::cl::Kernel > radixSortIntKernels;
-                    
-    //Power of 2 buffer size
-    // For user-defined types, the user must create a TypeName trait which returns the name of the class - 
-    // note use of TypeName<>::get to retreive the name here.
-    boost::call_once( initOnlyOnce, boost::bind( CallCompiler_Sort::constructAndCompileRadixSortInt, 
-                                                 &radixSortIntKernels, 
-                                                 cl_code +ClCode<T>::get(), "", 
-                                                 TypeName<StrictWeakOrdering>::get(), &ctl) );
-    unsigned int groupSize  = 
-        (unsigned int)radixSortIntKernels[0].getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.device( ), &l_Error );
-    V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
-    groupSize = RADICES;
-    const int NUM_OF_ELEMENTS_PER_WORK_ITEM = RADICES;
-    unsigned int num_of_elems_per_group = RADICES  * groupSize;
-
-    int i = 0;
+    concurrency::array_view<T> *pLocalArrayView = NULL;
+    concurrency::array<T>      *pLocalArray = NULL;
+    unsigned int groupSize = RADICES;
     unsigned int mulFactor = groupSize * RADICES;
-    unsigned int numGroups = szElements / mulFactor;
-                    
-    if(szElements%mulFactor != 0)
+    concurrency::extent<1> ext( static_cast< int >( orig_szElements ) );
+
+    if(orig_szElements%mulFactor != 0)
     {
-        szElements  = ((szElements + mulFactor) /mulFactor) * mulFactor;
-        //the size is zero and not a multiple of mulFactor. So we need to resize the device_vector.
-        dvInputData.resize(sizeof(T)*szElements);
-        ctl.commandQueue().enqueueCopyBuffer( first.getBuffer( ), 
-                                              dvInputData.begin( ).getBuffer( ), 
-                                              0, 0, 
-                                              sizeof(T)*(last-first), NULL, NULL );
+        szElements  = ((orig_szElements + mulFactor) /mulFactor) * mulFactor;
+        concurrency::extent<1> modified_ext( static_cast< int >( szElements ) );
+        pLocalArray     = new concurrency::array<T>( modified_ext );
+        pLocalArrayView = new concurrency::array_view<T>(pLocalArray->view_as( modified_ext ) );
+        concurrency::array_view<T> dest = pLocalArrayView->section( ext );
+        first->getBuffer( ).copy_to( dest );
+        dest.synchronize( );
         newBuffer = true;
     }
     else
     {
-        dvInputData = device_vector< T >(first.getBuffer( ), ctl);
-        newBuffer = false;
+        pLocalArrayView = new concurrency::array_view<T>( first->getBuffer( ) );
     }
 
-    device_vector< T > dvSwapInputData( sizeof(T)*szElements, 0);
-    device_vector< T > dvHistogramBins( sizeof(T)*(numGroups* groupSize * RADICES), 0);
-    device_vector< T > dvHistogramScanBuffer( sizeof(T)*(numGroups* RADICES + 10), 0);
+    unsigned int numGroups = szElements / mulFactor;
+    concurrency::extent<1> modified_ext( static_cast< int >( szElements ) );
+    
+    device_vector< T, concurrency::array > dvSwapInputData(static_cast<size_t>(szElements), 0);
+    device_vector< T, concurrency::array > dvHistogramBins(static_cast<size_t>(numGroups* groupSize * RADICES), 0);
+    device_vector< T, concurrency::array > dvHistogramScanBuffer(static_cast<size_t>(numGroups* RADICES + 10), 0 );
 
-    ALIGNED( 256 ) StrictWeakOrdering aligned_comp( comp );
-                    
-    control::buffPointer userFunctor = ctl.acquireBuffer( sizeof( aligned_comp ), 
-                                                          CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, 
-                                                          &aligned_comp );
-    ::cl::Buffer clInputData = dvInputData.begin( ).getBuffer( );
-    ::cl::Buffer clSwapData = dvSwapInputData.begin( ).getBuffer( );
-    ::cl::Buffer clHistData = dvHistogramBins.begin( ).getBuffer( );
-    ::cl::Buffer clHistScanData = dvHistogramScanBuffer.begin( ).getBuffer( );
-                    
-    ::cl::Kernel histKernel;
-    ::cl::Kernel permuteKernel;
-    ::cl::Kernel scanLocalKernel;
+    auto& clInputData = *pLocalArrayView;
+    auto& clSwapData = dvSwapInputData.begin( )->getBuffer( );
+    auto& clHistData = dvHistogramBins.begin( )->getBuffer( );
+    auto& clHistScanData = dvHistogramScanBuffer.begin( )->getBuffer( );
+    int swap = 0;
     if(comp(2,3))
     {
+        /*If the buffer is a local buffer which is more than the usual buffer size then */
+        if(newBuffer == true)
+        {
+            concurrency::index<1> origin(orig_szElements);
+            concurrency::array_view<T> dest = pLocalArrayView->section( origin, modified_ext - ext);
+            //arrayview_type m_devMemoryAV( *m_devMemory );
+            Concurrency::parallel_for_each( dest.extent, [dest]
+                (Concurrency::index<1> idx) restrict(amp)
+                {
+                    dest[idx] = BOLT_UINT_MAX;
+                }
+            );
+        }
         /*Ascending Sort*/
-        histKernel = radixSortIntKernels[0];
-        scanLocalKernel = radixSortIntKernels[2];
-        permuteKernel = radixSortIntKernels[3];
-        if(newBuffer == true)
+        int bits = 0;
+        for(bits = 0; bits < ((sizeof(T) * 8) - RADIX); bits += RADIX)
         {
-            cl_buffer_region clBR;
-            clBR.origin = (last - first)* sizeof(T);
-            clBR.size  = (szElements * sizeof(T)) - (last - first)* sizeof(T);
-            ctl.commandQueue().enqueueFillBuffer(clInputData, BOLT_INT_MAX, clBR.origin, clBR.size, NULL, NULL);
+            if (swap == 0)
+                AMP_RadixSortHistogramAscendingKernel<T, RADIX>(ctl,
+                                                      clInputData, /*this can be either array_view or array*/
+                                                      clHistData,
+                                                      clHistScanData,
+                                                      bits,
+                                                      szElements,
+                                                      groupSize); // \TODO - i don't need group size
+            else
+                AMP_RadixSortHistogramAscendingKernel<T, RADIX>(ctl,
+                                                      clSwapData, /*this can be either array_view or array*/
+                                                      clHistData,
+                                                      clHistScanData,
+                                                      bits,
+                                                      szElements,
+                                                      groupSize); // \TODO - i don't need group size
+#if BOLT_SORT_INL_DEBUG
+
+printf("\n\n\n\n\nBITS = %d\nAfter Histogram", bits);
+for (unsigned int ng=0; ng<numGroups; ng++)
+{ printf ("\nGroup-Block =%d",ng);
+    for(unsigned int gS=0;gS<groupSize; gS++)
+    { printf ("\nGroup =%d\n",gS);
+        for(int i=0; i<RADICES;i++)
+        {
+            int index = ng * groupSize * RADICES + gS * RADICES + i;
+            int value = clHistData[ index ];
+            printf("%2x %2x, ",index, value);
         }
     }
-    else
+}
+int temp = 0;
+printf("\n Printing Histogram scan SUM\n");
+for(int i=0; i<RADICES;i++)
+{ 
+    printf ("\nRadix = %d\n",i);
+    for (unsigned int ng=0; ng<numGroups; ng++)
     {
-        /*Descending Sort*/
-        histKernel = radixSortIntKernels[1];
-        scanLocalKernel = radixSortIntKernels[2];
-        permuteKernel = radixSortIntKernels[4];
-        if(newBuffer == true)
-        {
-            cl_buffer_region clBR;
-            clBR.origin = (last - first)* sizeof(T);
-            clBR.size  = (szElements * sizeof(T)) - (last - first)* sizeof(T);
-            ctl.commandQueue().enqueueFillBuffer(clInputData, BOLT_INT_MIN, clBR.origin, clBR.size, NULL, NULL);
-        }
+        printf ("%4x, ",clHistScanData[i*numGroups + ng]);
     }
-    //std::cout << "szElements " << szElements << "\n";
-    ::cl::LocalSpaceArg localScanArray;
-    localScanArray.size_ = 2*RADICES* sizeof(cl_uint);
-    int swap = 0;
-    int mask = (1<<RADIX) - 1;
-    int bits = 0;
-    for(bits = 0; bits < (sizeof(T) * 8)/*Bits per Byte*/; bits += RADIX)
-    {
-        //Do a histogram pass locally
-        V_OPENCL( histKernel.setArg(0, RADIX), "Error setting a kernel argument" );
-        V_OPENCL( histKernel.setArg(1, mask), "Error setting a kernel argument" );
-        if (swap == 0)
-            V_OPENCL( histKernel.setArg(2, clInputData), "Error setting a kernel argument" );
-        else
-            V_OPENCL( histKernel.setArg(2, clSwapData), "Error setting a kernel argument" );
-        V_OPENCL( histKernel.setArg(3, clHistData), "Error setting a kernel argument" );
-        V_OPENCL( histKernel.setArg(4, clHistScanData), "Error setting a kernel argument" );
-        V_OPENCL( histKernel.setArg(5, bits), "Error setting a kernel argument" );
-        //V_OPENCL( histKernel.setArg(4, loc), "Error setting kernel argument" );
-
-        l_Error = ctl.commandQueue().enqueueNDRangeKernel(
-                            histKernel,
-                            ::cl::NullRange,
-                            ::cl::NDRange(szElements/RADICES),
-                            ::cl::NDRange(groupSize),
-                            NULL,
-                            NULL);
-        //V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
-
-#if (BOLT_DEBUG==1)
-        //This map is required since the data is not available to the host when scanning.
-        //Create local device_vector's 
-        T *histBuffer;// = (T*)malloc(numGroups* groupSize * RADICES * sizeof(T));
-        T *histScanBuffer;// = (T*)calloc(1, numGroups* RADICES * sizeof(T));
-        ::cl::Event l_histEvent;
-        histBuffer = (T*)ctl.commandQueue().enqueueMapBuffer(clHistData, false, CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(T) * numGroups* groupSize * RADICES, NULL, &l_histEvent, &l_Error );
-        bolt::cl::wait(ctl, l_histEvent);
-        V_OPENCL( l_Error, "Error calling map on the result buffer" );
-        printf("\n\n\n\n\nBITS = %d\nAfter Histogram", bits);
+}
+#endif
+            detail::scan_enqueue( ctl, dvHistogramScanBuffer.begin( ), dvHistogramScanBuffer.end( ),dvHistogramScanBuffer.begin( ), 0, plus< T >( ) );
+#if BOLT_SORT_INL_DEBUG
+printf("\nprinting scan_enqueue SUM\n");        
+        for(int i=0; i<RADICES;i++)
+        { 
+            printf ("\nRadix = %d\n",i);
+            for (unsigned int ng=0; ng<numGroups; ng++)
+            {
+                printf ("%4x, ",clHistScanData[i*numGroups + ng]);
+            }
+        }
+#endif
+            AMP_scanLocalTemplate<T, RADIX>(ctl,
+                                        clHistData,
+                                        clHistScanData,
+                                        szElements);
+#if BOLT_SORT_INL_DEBUG
+        printf("\n\nAfter Scan bits = %d", bits);
         for (unsigned int ng=0; ng<numGroups; ng++)
         { printf ("\nGroup-Block =%d",ng);
             for(unsigned int gS=0;gS<groupSize; gS++)
             { printf ("\nGroup =%d\n",gS);
                 for(int i=0; i<RADICES;i++)
                 {
-                    size_t index = ng * groupSize * RADICES + gS * RADICES + i;
-                    int value = histBuffer[ index ];
-                    printf("%x %x, ",index, value);
+                    int index = ng * groupSize * RADICES + gS * RADICES + i;
+                    int value = clHistData[ index ];
+                    printf("%4x %4x, ",index, value);
                 }
             }
         }
-        ctl.commandQueue().enqueueUnmapMemObject(clHistData, histBuffer);
-
-        ::cl::Event l_histScanBufferEvent;
-        histScanBuffer = (T*) ctl.commandQueue().enqueueMapBuffer(clHistScanData, false, CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(T) * numGroups * RADICES, NULL, &l_histScanBufferEvent, &l_Error );
-        bolt::cl::wait(ctl, l_histScanBufferEvent);
-        V_OPENCL( l_Error, "Error calling map on the result buffer" );
-        int temp = 0;
-        for(int i=0; i<RADICES;i++)
-        { 
-            printf ("\nRadix = %d\n",i);
-            for (unsigned int ng=0; ng<numGroups; ng++)
-            {
-                printf ("%x, ",histScanBuffer[i*numGroups + ng]);
-            }
-            for (unsigned int ng=0; ng<numGroups; ng++)
-            {
-                temp += histScanBuffer[i*numGroups + ng];
-                printf ("%x, ",temp);
-            }
-        }
-        ctl.commandQueue().enqueueUnmapMemObject(clHistScanData, histScanBuffer);
 #endif
-
-        //Perform a global scan 
-        detail::scan_enqueue(ctl, dvHistogramScanBuffer.begin(),dvHistogramScanBuffer.end(),dvHistogramScanBuffer.begin(), 0, plus< T >( ));
-#if (BOLT_DEBUG==1)
-        ::cl::Event l_histScanBufferEvent1;
-        histScanBuffer = (T*) ctl.commandQueue().enqueueMapBuffer(clHistScanData, false, CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(T) * numGroups * RADICES, NULL, &l_histScanBufferEvent1, &l_Error );
-        bolt::cl::wait(ctl, l_histScanBufferEvent1);
-        V_OPENCL( l_Error, "Error calling map on the result buffer" );
-        for(int i=0; i<RADICES;i++)
-        { 
-            printf ("\nRadix = %d\n",i);
-            for (int ng=0; ng<numGroups; ng++)
-            {
-                printf ("%x, ",histScanBuffer[i*numGroups + ng]);
-            }
-        }
-        ctl.commandQueue().enqueueUnmapMemObject(clHistScanData, histScanBuffer);
-
-#endif 
-
-        //Add the results of the global scan to the local scan buffers
-        V_OPENCL( scanLocalKernel.setArg(0, RADIX), "Error setting a kernel argument" );
-        V_OPENCL( scanLocalKernel.setArg(1, clHistData), "Error setting a kernel argument" );
-        V_OPENCL( scanLocalKernel.setArg(2, clHistScanData), "Error setting a kernel argument" );
-        V_OPENCL( scanLocalKernel.setArg(3, localScanArray), "Error setting a kernel argument" );
-        l_Error = ctl.commandQueue().enqueueNDRangeKernel(
-                            scanLocalKernel,
-                            ::cl::NullRange,
-                            ::cl::NDRange(szElements/RADICES),
-                            ::cl::NDRange(groupSize),
-                            NULL,
-                            NULL);
-        //V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
-
-#if (BOLT_DEBUG==1)
-        //This map is required since the data is not available to the host when scanning.
-        ::cl::Event l_histEvent1;
-        T *histBuffer1;
-        histBuffer1 = (T*)ctl.commandQueue().enqueueMapBuffer(clHistData, false, CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(T) * numGroups* groupSize * RADICES, NULL, &l_histEvent1, &l_Error );
-        bolt::cl::wait(ctl, l_histEvent1);
-        V_OPENCL( l_Error, "Error calling map on the result buffer" );
-
-        printf("\n\nAfter Scan bits = %d", bits);
-        for (int ng=0; ng<numGroups; ng++)
-        { printf ("\nGroup-Block =%d",ng);
-            for(int gS=0;gS<groupSize; gS++)
-            { printf ("\nGroup =%d\n",gS);
-                for(int i=0; i<RADICES;i++)
-                {
-                    size_t index = ng * groupSize * RADICES + gS * RADICES + i;
-                    int value = histBuffer1[ index ];
-                    printf("%x %x, ",index, value);
-                }
-            }
-        }
-        ctl.commandQueue().enqueueUnmapMemObject(clHistData, histBuffer1);
-#endif 
-        V_OPENCL( permuteKernel.setArg(0, RADIX), "Error setting a kernel argument" );
-        V_OPENCL( permuteKernel.setArg(1, mask),  "Error setting a kernel argument" );
-        if (swap == 0)
-            V_OPENCL( permuteKernel.setArg(2, clInputData), "Error setting kernel argument" );
-        else
-            V_OPENCL( permuteKernel.setArg(2, clSwapData), "Error setting kernel argument" );
-        V_OPENCL( permuteKernel.setArg(3, clHistData), "Error setting a kernel argument" );
-        V_OPENCL( permuteKernel.setArg(4, bits), "Error setting a kernel argument" );
-        //V_OPENCL( permuteKernel.setArg(3, loc), "Error setting kernel argument" );
-
-        if (swap == 0)
-            V_OPENCL( permuteKernel.setArg(5, clSwapData), "Error setting kernel argument" );
-        else
-            V_OPENCL( permuteKernel.setArg(5, clInputData), "Error setting kernel argument" );
-        l_Error = ctl.commandQueue().enqueueNDRangeKernel(
-                            permuteKernel,
-                            ::cl::NullRange,
-                            ::cl::NDRange(szElements/RADICES),
-                            ::cl::NDRange(groupSize),
-                            NULL,
-                            NULL);
-        //V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
-#if (BOLT_DEBUG==1)
-            T *swapBuffer;// = (T*)malloc(szElements * sizeof(T));
-            ::cl::Event l_swapEvent;
-            if(bits==0 || bits==16)
-            //if(bits==0 || bits==8 || bits==16 || bits==24)
-            {
-                swapBuffer = (T*)ctl.commandQueue().enqueueMapBuffer(clSwapData, false, CL_MAP_READ, 0, sizeof(T) * szElements, NULL, &l_swapEvent, &l_Error );
-                V_OPENCL( l_Error, "Error calling map on the result buffer" );
-                bolt::cl::wait(ctl, l_swapEvent);
-                printf("\n Printing swap data\n");
-                for(int i=0; i<szElements;i+= RADICES)
-                {
-                    for(int j =0;j< RADICES;j++)
-                        printf("%x %x, ",i+j,swapBuffer[i+j]);
-                    printf("\n");
-                }
-                ctl.commandQueue().enqueueUnmapMemObject(clSwapData, swapBuffer);
-            }
+            if (swap == 0)
+                AMP_permuteAscendingRadixNTemplate<T, RADIX>( ctl,
+                                                        clInputData,
+                                                        clHistData,
+                                                        bits,
+                                                        clSwapData,
+                                                        szElements);
             else
-            {
-                swapBuffer = (T*)ctl.commandQueue().enqueueMapBuffer(clInputData, false, CL_MAP_READ, 0, sizeof(T) * szElements, NULL, &l_swapEvent, &l_Error );
-                V_OPENCL( l_Error, "Error calling map on the result buffer" );
-                bolt::cl::wait(ctl, l_swapEvent);
-                printf("\n Printing swap data\n");
-                for(int i=0; i<szElements;i+= RADICES)
-                {
-                    for(int j =0;j< RADICES;j++)
-                        printf("%x %x, ",i+j,swapBuffer[i+j]);
-                    printf("\n");
-                }
-                ctl.commandQueue().enqueueUnmapMemObject(clInputData, swapBuffer);
-            }
-
-
-#endif
-        if(swap==0)
-            swap = 1;
-        else
-            swap = 0;
-        //For the last Iteration ignore the sign bit and perform radix sort
-        if(bits == ((sizeof(T) * 8) - 2*RADIX))
-            mask = (1 << (RADIX-1) ) - 1;
-    }
-#define CPU_CODE 1
-#if (CPU_CODE==1)
-    {
-        //This block is necessary because the mapped buffer pointer will get unmapped at the exit of this block.
-        //This is needed when the input buffer size is not a multiple of mulFactor
-        std::vector<T> cpuBuffer(szElements);
-        boost::shared_array< T > ptr = dvInputData.data();
-        memcpy_s(cpuBuffer.data(), szElements*sizeof(T), ptr.get(), szElements*sizeof(T));
-        if( comp(2,3) )
+                AMP_permuteAscendingRadixNTemplate<T, RADIX>( ctl,
+                                                        clSwapData,
+                                                        clHistData,
+                                                        bits,
+                                                        clInputData,
+                                                        szElements);
+#if BOLT_SORT_INL_DEBUG
+if (swap == 0) 
+{
+        printf("\n Printing swap data\n");
+        for(unsigned int i=0; i<szElements;i+= RADICES)
         {
-            int index=0;
-            for( i=0; i<(last-first); i++)
-            {
-                if(cpuBuffer[i] < 0)
-                {
-                    ptr[index] = cpuBuffer[i];
-                    index++;
-                }
-            }
-
-            //int positiveIndex=0;
-            for( i=0; i<(last-first); i++)
-            {
-                if(cpuBuffer[i] >= 0)
-                {
-                    ptr[index] = cpuBuffer[i];
-                    index++;
-                }
-            }
+            for(int j =0;j< RADICES;j++)
+                printf("%8x %8x, ",i+j,clSwapData[i+j]);
+            printf("\n");
         }
-        else
+}
+else
+{
+        printf("\n Printing swap data\n");
+        for(unsigned int i=0; i<szElements;i+= RADICES)
         {
-            int index=0;
-            for( i=0; i<(last-first); i++)
-            {
-                if(cpuBuffer[i] >= 0)
-                {
-                    ptr[index] = cpuBuffer[i];
-                    index++;
-                }
-            }
-            //int positiveIndex=0;
-            for( i=0; i<(last-first); i++)
-            {
-                if(cpuBuffer[i] < 0)
-                {
-                    ptr[index] = cpuBuffer[i];
-                    index++;
-                }
-            }
+            for(int j =0;j< RADICES;j++)
+                printf("%8x %8x, ",i+j,clInputData[i+j]);
+            printf("\n");
         }
-    }// End of the block the boost shared ptr gets freed here. 
-    //This calls the unmap buffer Functor in the 
-#endif // end of CPU code
-
-
-#if 0
-                    //Below code was not working for sorting the sign bit in the reverse order. 
-                    //Hence wrote the CPU code path above.
-                        if(comp(2,3))
-                        {
-                            /*Descending Sort*/
-                            histKernel = radixSortIntKernels[1];
-                            scanLocalKernel = radixSortIntKernels[2];
-                            permuteKernel = radixSortIntKernels[4];
-                        }
-                        else
-                        {
-                            /*Ascending Sort*/
-                            histKernel = radixSortIntKernels[0];
-                            scanLocalKernel = radixSortIntKernels[2];
-                            permuteKernel = radixSortIntKernels[3];
-                        }
-                        mask = 1;//(1<<(RADIX-1)); //only the sign bit needs to be set 
-                        bits = sizeof(T) - 1; // We take the MSB byte or nibble
-                        //Do a histogram pass locally
-                        V_OPENCL( histKernel.setArg(0, RADIX), "Error setting a kernel argument" );
-                        V_OPENCL( histKernel.setArg(1, mask), "Error setting a kernel argument" );
-                            V_OPENCL( histKernel.setArg(2, clInputData), "Error setting a kernel argument" );
-                        V_OPENCL( histKernel.setArg(3, clHistData), "Error setting a kernel argument" );
-                        V_OPENCL( histKernel.setArg(4, clHistScanData), "Error setting a kernel argument" );
-                        V_OPENCL( histKernel.setArg(5, bits), "Error setting a kernel argument" );
-                        //V_OPENCL( histKernel.setArg(4, loc), "Error setting kernel argument" );
-
-                        l_Error = ctl.commandQueue().enqueueNDRangeKernel(
-                                            histKernel,
-                                            ::cl::NullRange,
-                                            ::cl::NDRange(szElements/RADICES),
-                                            ::cl::NDRange(groupSize),
-                                            NULL,
-                                            NULL);
-                        //V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
-
-                        //Perform a global scan 
-                        detail::scan_enqueue(ctl, dvHistogramScanBuffer.begin(),dvHistogramScanBuffer.end(),dvHistogramScanBuffer.begin(), 0, plus< T >( ));
-
-                        //Add the results of the global scan to the local scan buffers
-                        V_OPENCL( scanLocalKernel.setArg(0, RADIX), "Error setting a kernel argument" );
-                        V_OPENCL( scanLocalKernel.setArg(1, clHistData), "Error setting a kernel argument" );
-                        V_OPENCL( scanLocalKernel.setArg(2, clHistScanData), "Error setting a kernel argument" );
-                        V_OPENCL( scanLocalKernel.setArg(3, localScanArray), "Error setting a kernel argument" );
-                        l_Error = ctl.commandQueue().enqueueNDRangeKernel(
-                                            scanLocalKernel,
-                                            ::cl::NullRange,
-                                            ::cl::NDRange(szElements/RADICES),
-                                            ::cl::NDRange(groupSize),
-                                            NULL,
-                                            NULL);
-                        //V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
-
-
-                        V_OPENCL( permuteKernel.setArg(0, RADIX), "Error setting a kernel argument radix" );
-                        V_OPENCL( permuteKernel.setArg(1, mask),  "Error setting a kernel argument mask" );
-                            V_OPENCL( permuteKernel.setArg(2, clInputData), "Error setting kernel argument" );
-                        V_OPENCL( permuteKernel.setArg(3, clHistData), "Error setting a kernel argument" );
-                        V_OPENCL( permuteKernel.setArg(4, bits), "Error setting a kernel argument bits" );
-                        //V_OPENCL( permuteKernel.setArg(3, loc), "Error setting kernel argument" );
-                            V_OPENCL( permuteKernel.setArg(5, clSwapData), "Error setting kernel argument" );
-                        l_Error = ctl.commandQueue().enqueueNDRangeKernel(
-                                            permuteKernel,
-                                            ::cl::NullRange,
-                                            ::cl::NDRange(szElements/RADICES),
-                                            ::cl::NDRange(groupSize),
-                                            NULL,
-                                            NULL);
-                        //V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
-                    ::cl::Event copy_event;
-                    ctl.commandQueue().enqueueCopyBuffer(clSwapData, clInputData, 0, 0, szElements*sizeof(T), NULL, &copy_event);
-                    copy_event.wait();
-                    /**************************************/
-#endif
-    if(newBuffer == true)
-    {
-        //::cl::copy(clInputData, first, last);
-        ctl.commandQueue().enqueueCopyBuffer( dvInputData.begin( ).getBuffer( ), 
-                                              first.getBuffer( ), 
-                                              0, 0, 
-                                              sizeof(T)*(last-first), NULL, NULL );
-    }
-
-    return;
 }
 #endif
+            /*For swapping the buffers*/
+            swap = swap? 0: 1;
+        }
+            /* Do descending for the signed bit 
+             * IN the case of radix 4 bits = 28 and in the case of radix 8 bits = 24 
+             */
+             AMP_RadixSortHistogramSignedDescendingKernel<T, RADIX>(ctl,
+                                                      clSwapData, /*this can be either array_view or array*/
+                                                      clHistData,
+                                                      clHistScanData,
+                                                      bits,
+                                                      szElements,
+                                                      groupSize); // \TODO - i don't need gropu size
+
+            detail::scan_enqueue( ctl, dvHistogramScanBuffer.begin( ), dvHistogramScanBuffer.end( ),dvHistogramScanBuffer.begin( ), 0, plus< T >( ) );
+
+            AMP_scanLocalTemplate<T, RADIX>(ctl,
+                                        clHistData,
+                                        clHistScanData,
+                                        szElements);
+
+            AMP_permuteSignedDescendingRadixNTemplate<T, RADIX>( ctl,
+                                                        clSwapData,
+                                                        clHistData,
+                                                        bits,
+                                                        clInputData,
+                                                        szElements);
+            /*End of Ascending for the signed bit */
+    }
+    else
+    {
+        if(newBuffer == true)
+        {
+            concurrency::index<1> origin(orig_szElements);
+            concurrency::array_view<T> dest = pLocalArrayView->section( origin, modified_ext - ext);
+            //arrayview_type m_devMemoryAV( *m_devMemory );
+            Concurrency::parallel_for_each( dest.extent, [dest]
+                (Concurrency::index<1> idx) restrict(amp)
+                {
+                    dest[idx] = BOLT_INT_MIN;
+                }
+            );
+        }
+        /* Descending Sort */
+        int bits=0;
+        for(bits = 0; bits < ((sizeof(T) * 8) - RADIX); bits += RADIX)
+        {
+            if (swap == 0)
+                AMP_RadixSortHistogramDescendingKernel<T, RADIX>(ctl,
+                                                      clInputData, /*this can be either array_view or array*/
+                                                      clHistData,
+                                                      clHistScanData,
+                                                      bits,
+                                                      szElements,
+                                                      groupSize); // \TODO - i don't need gropu size
+            else
+                AMP_RadixSortHistogramDescendingKernel<T, RADIX>(ctl,
+                                                      clSwapData, /*this can be either array_view or array*/
+                                                      clHistData,
+                                                      clHistScanData,
+                                                      bits,
+                                                      szElements,
+                                                      groupSize); // \TODO - i don't need gropu size
+
+            detail::scan_enqueue( ctl, dvHistogramScanBuffer.begin( ), dvHistogramScanBuffer.end( ),dvHistogramScanBuffer.begin( ), 0, plus< T >( ) );
+
+            AMP_scanLocalTemplate<T, RADIX>(ctl,
+                                        clHistData,
+                                        clHistScanData,
+                                        szElements);
+
+            if (swap == 0)
+                AMP_permuteDescendingRadixNTemplate<T, RADIX>( ctl,
+                                                        clInputData,
+                                                        clHistData,
+                                                        bits,
+                                                        clSwapData,
+                                                        szElements);
+            else
+                AMP_permuteDescendingRadixNTemplate<T, RADIX>( ctl,
+                                                        clSwapData,
+                                                        clHistData,
+                                                        bits,
+                                                        clInputData,
+                                                        szElements);
+            /*For swapping the buffers*/
+            swap = swap? 0: 1;
+        }//End of For loop
+            /* Do ascending for the signed bit 
+             * IN the case of radix 4 bits = 28 and in the case of radix 8 bits = 24 
+             */
+             AMP_RadixSortHistogramSignedAscendingKernel<T, RADIX>(ctl,
+                                                      clSwapData, /*this can be either array_view or array*/
+                                                      clHistData,
+                                                      clHistScanData,
+                                                      bits,
+                                                      szElements,
+                                                      groupSize); // \TODO - i don't need gropu size
+
+            detail::scan_enqueue( ctl, dvHistogramScanBuffer.begin( ), dvHistogramScanBuffer.end( ),dvHistogramScanBuffer.begin( ), 0, plus< T >( ) );
+
+            AMP_scanLocalTemplate<T, RADIX>(ctl,
+                                        clHistData,
+                                        clHistScanData,
+                                        szElements);
+
+            AMP_permuteSignedAscendingRadixNTemplate<T, RADIX>( ctl,
+                                                        clSwapData,
+                                                        clHistData,
+                                                        bits,
+                                                        clInputData,
+                                                        szElements);
+            /*End of Ascending for the signed bit */
+
+    }
+    if(newBuffer == true)
+    {
+        std::cout << "New buffer was allocated So copying back the buffer\n";
+        //dest = clInputData.section( ext );
+        clInputData.section( ext ).copy_to( first->getBuffer( ) );
+        first->getBuffer( ).synchronize( );
+        delete pLocalArray;
+    }
+    delete pLocalArrayView;
+    return;
+}
 
 /*! 
 * \brief This template function is a Bitonic Algorithm for one work item. 
@@ -1172,7 +1403,8 @@ void AMP_BitonicSortKernel(bolt::amp::control &ctl,
 
 template<typename DVRandomAccessIterator, typename StrictWeakOrdering> 
 typename std::enable_if<
-    !(std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type, unsigned int >::value)
+    !(std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type, unsigned int >::value || 
+      std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type,          int >::value)
                        >::type
 sort_enqueue(bolt::amp::control &ctl, const DVRandomAccessIterator& first, const DVRandomAccessIterator& last,
 const StrictWeakOrdering& comp)
