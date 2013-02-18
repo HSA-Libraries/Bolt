@@ -18,7 +18,7 @@
 #include "stdafx.h"
 
 #include <bolt/amp/functional.h>
-#include <bolt/amp/scan.h>
+#include <bolt/amp/transform.h>
 //#include <bolt/amp/control.h>
 #include <bolt/unicode.h>
 #include <bolt/statisticalTimer.h>
@@ -151,20 +151,19 @@ int _tmain( int argc, _TCHAR* argv[] )
 		for( unsigned i = 0; i < numLoops; ++i )
 		{
 			myTimer.Start( scanId );
-			bolt::amp::inclusive_scan( input.begin( ), input.end( ), output.begin( ) );
+      bolt::amp::transform( input.begin( ), input.end( ), output.begin( ), bolt::amp::square< int >( ) );
 			myTimer.Stop( scanId );
 		}
 	}
 	else
 	{
-		std::vector< concurrency::accelerator > allDevices = concurrency::accelerator::get_all( );
-		concurrency::accelerator_view av = allDevices.at( iDevice ).get_default_view( );
-
+    bolt::amp::control ctl;
+    ctl.getDefault();
 		for( unsigned i = 0; i < numLoops; ++i )
 		{
 			myTimer.Start( scanId );
             // api changed, use ctrl instead of accelerator_view
-			//bolt::amp::inclusive_scan( av, input.begin( ), input.end( ), output.begin( ), bolt::plus< int >( ) );
+      bolt::amp::transform( ctl, input.begin( ), input.end( ), output.begin( ), bolt::amp::square< int >( ) );
 			myTimer.Stop( scanId );
 		}
 	}

@@ -16,6 +16,8 @@
 ***************************************************************************/         
 
 #pragma once
+#if !defined( BOLT_CL_COUNT_H )
+#define BOLT_CL_COUNT_H
 
 #include "bolt/cl/bolt.h"
 #include "bolt/cl/functional.h"
@@ -40,8 +42,8 @@ namespace bolt {
 
         namespace detail
         {
-            std::string CountIfEqual_OclCode = 
-            BOLT_CODE_STRING(
+            static std::string CountIfEqual_OclCode = 
+            BOLT_HOST_DEVICE_DEFINITION(
             template <typename T> 
             struct CountIfEqual {
                 CountIfEqual(const T &targetValue)  : _targetValue(targetValue)
@@ -55,8 +57,6 @@ namespace bolt {
                 T _targetValue;
             };
             );
-
-            BOLT_CREATE_STD_TYPENAMES(CountIfEqual); 
         }
 
         /*!
@@ -108,3 +108,12 @@ namespace bolt {
         };
     };
 };
+
+BOLT_CREATE_TYPENAME( bolt::cl::detail::CountIfEqual< int > );
+BOLT_CREATE_CLCODE( bolt::cl::detail::CountIfEqual< int >, bolt::cl::detail::CountIfEqual_OclCode );
+
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::detail::CountIfEqual, int, unsigned int );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::detail::CountIfEqual, int, float );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::detail::CountIfEqual, int, double );
+
+#endif

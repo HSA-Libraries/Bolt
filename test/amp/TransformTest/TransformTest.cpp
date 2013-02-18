@@ -16,12 +16,12 @@
 ***************************************************************************/                                                                                     
 
 #include "common/stdafx.h"
-#include <bolt/amp/transform.h>
-#include <bolt/unicode.h>
-#include <bolt/miniDump.h>
+#include "bolt/amp/transform.h"
+#include "bolt/unicode.h"
+#include "bolt/miniDump.h"
 #include <gtest/gtest.h>
 #include <array>
-#include <bolt/AMP/functional.h>
+#include "bolt/amp/functional.h"
 #include "common/test_common.h"
 
 #define GTEST_TESTS 1
@@ -258,37 +258,37 @@ protected:
     int m_Errors;
 };
 
-//template< typename ArrayTuple >
-//class TransformOutPlaceArrayTest: public ::testing::Test
-//{
-//public:
-//    TransformOutPlaceArrayTest( ): m_Errors( 0 )
-//    {}
-//
-//    virtual void SetUp( )
-//    {
-//        for( int i=0; i < ArraySize; i++ )
-//        {
-//            stdInput[ i ] = 1;
-//            stdOutput[ i ] = 0;
-//            boltInput[ i ] = 1;
-//            boltOutput[ i ] = 0;
-//        }
-//    };
-//
-//    virtual void TearDown( )
-//    {};
-//
-//    virtual ~TransformOutPlaceArrayTest( )
-//    {}
-//
-//protected:
-//    typedef typename std::tuple_element< 0, ArrayTuple >::type ArrayType;
-//    static const size_t ArraySize = typename std::tuple_element< 1, ArrayTuple >::type::value;
-//
-//    typename std::array< ArrayType, ArraySize > stdInput, stdOutput, boltInput, boltOutput;
-//    int m_Errors;
-//};
+template< typename ArrayTuple >
+class TransformOutPlaceArrayTest: public ::testing::Test
+{
+public:
+    TransformOutPlaceArrayTest( ): m_Errors( 0 )
+    {}
+
+    virtual void SetUp( )
+    {
+        for( int i=0; i < ArraySize; i++ )
+        {
+            stdInput[ i ] = 1;
+            stdOutput[ i ] = 0;
+            boltInput[ i ] = 1;
+            boltOutput[ i ] = 0;
+        }
+    };
+
+    virtual void TearDown( )
+    {};
+
+    virtual ~TransformOutPlaceArrayTest( )
+    {}
+
+protected:
+    typedef typename std::tuple_element< 0, ArrayTuple >::type ArrayType;
+    static const size_t ArraySize = typename std::tuple_element< 1, ArrayTuple >::type::value;
+
+    typename std::array< ArrayType, ArraySize > stdInput, stdOutput, boltInput, boltOutput;
+    int m_Errors;
+};
 
 //  Explicit initialization of the C++ static const
 template< typename ArrayTuple >
@@ -297,13 +297,13 @@ const size_t TransformArrayTest< ArrayTuple >::ArraySize;
 template< typename ArrayTuple >
 const size_t TransformBinaryArrayTest< ArrayTuple >::ArraySize;
 
-//template< typename ArrayTuple >
-//const size_t TransformOutPlaceArrayTest< ArrayTuple >::ArraySize;
+template< typename ArrayTuple >
+const size_t TransformOutPlaceArrayTest< ArrayTuple >::ArraySize;
 
 
 TYPED_TEST_CASE_P( TransformArrayTest );
 TYPED_TEST_CASE_P( TransformBinaryArrayTest );
-//TYPED_TEST_CASE_P( TransformOutPlaceArrayTest );
+TYPED_TEST_CASE_P( TransformOutPlaceArrayTest );
 
 TYPED_TEST_P( TransformArrayTest, InPlaceNegateTransform )
 {
@@ -311,7 +311,7 @@ TYPED_TEST_P( TransformArrayTest, InPlaceNegateTransform )
 
     //  Calling the actual functions under test
     std::transform( stdInput.begin( ), stdInput.end( ), stdInput.begin( ), std::negate<ArrayType>() );
-    bolt::amp::transform( boltInput.begin( ), boltInput.end( ), boltInput.begin( ), bolt::negate<ArrayType>() );
+    bolt::amp::transform( boltInput.begin( ), boltInput.end( ), boltInput.begin( ), bolt::amp::negate<ArrayType>() );
 
     ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end( ) );
     ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end( ) );
@@ -329,7 +329,7 @@ TYPED_TEST_P( TransformBinaryArrayTest, BinaryPlusTransform )
 
     //  Calling the actual functions under test
     std::transform( stdInput1.begin( ), stdInput1.end( ), stdInput2.begin( ), stdOutput.begin(),std::plus< ArrayType >( ) );
-    bolt::amp::transform( boltInput1.begin( ), boltInput1.end( ), boltInput2.begin( ), boltOutput.begin(),bolt::plus< ArrayType >( ) );
+    bolt::amp::transform( boltInput1.begin( ), boltInput1.end( ), boltInput2.begin( ), boltOutput.begin(), bolt::amp::plus< ArrayType >( ) );
 
     ArrayCont::difference_type stdNumElements = std::distance( stdOutput.begin( ), stdOutput.end() );
     ArrayCont::difference_type boltNumElements = std::distance( boltOutput.begin( ), boltOutput.end() );
@@ -341,30 +341,68 @@ TYPED_TEST_P( TransformBinaryArrayTest, BinaryPlusTransform )
     cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdOutput, boltOutput );
 }
 
-//TYPED_TEST_P( TransformOutPlaceArrayTest, OutPlaceSquareTransform )
-//{
-//    typedef std::array< ArrayType, ArraySize > ArrayCont;
-//
-//    //  Calling the actual functions under test
-//    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin(), [=]( ArrayType x ) {return x*x;} );
-//    bolt::amp::transform( boltInput.begin( ), boltInput.end( ), boltOutput.begin(), bolt::square< ArrayType >( ) );
-//
-//
-//    ArrayCont::difference_type stdNumElements = std::distance( stdOutput.begin(), stdOutput.end() );
-//    ArrayCont::difference_type boltNumElements = std::distance( boltOutput.begin(), boltOutput.end() );
-//
-//    //  Both collections should have the same number of elements
-//    EXPECT_EQ( stdNumElements, boltNumElements );
-//
-//    //  Loop through the array and compare all the values with each other
-//    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdOutput, boltOutput );
-//}
+TYPED_TEST_P( TransformBinaryArrayTest, BinaryMultipliesTransform )
+{
+    typedef std::array< ArrayType, ArraySize > ArrayCont;
+
+    //  Calling the actual functions under test
+    std::transform( stdInput1.begin( ), stdInput1.end( ), stdInput2.begin( ), stdOutput.begin(),std::multiplies< ArrayType >( ) );
+    bolt::amp::transform( boltInput1.begin( ), boltInput1.end( ), boltInput2.begin( ), boltOutput.begin(), bolt::amp::multiplies< ArrayType >( ) );
+
+    ArrayCont::difference_type stdNumElements = std::distance( stdOutput.begin( ), stdOutput.end() );
+    ArrayCont::difference_type boltNumElements = std::distance( boltOutput.begin( ), boltOutput.end() );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdOutput, boltOutput );
+}
+
+TYPED_TEST_P( TransformBinaryArrayTest, BinaryMaxTransform )
+{
+    typedef std::array< ArrayType, ArraySize > ArrayCont;
+
+    //  Calling the actual functions under test
+    std::transform( stdInput1.begin( ), stdInput1.end( ), stdInput2.begin( ), stdOutput.begin(), [] (ArrayType lhs, ArrayType rhs) { return rhs > lhs ? rhs:lhs; } );
+    bolt::amp::transform( boltInput1.begin( ), boltInput1.end( ), boltInput2.begin( ), boltOutput.begin(), bolt::amp::maximum< ArrayType >( ) );
+
+    ArrayCont::difference_type stdNumElements = std::distance( stdOutput.begin( ), stdOutput.end() );
+    ArrayCont::difference_type boltNumElements = std::distance( boltOutput.begin( ), boltOutput.end() );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdOutput, boltOutput );
+}
+
+TYPED_TEST_P( TransformOutPlaceArrayTest, OutPlaceSquareTransform )
+{
+    typedef std::array< ArrayType, ArraySize > ArrayCont;
+
+    //  Calling the actual functions under test
+    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin(), []( ArrayType x ) {return x*x;} );
+    bolt::amp::transform( boltInput.begin( ), boltInput.end( ), boltOutput.begin(), bolt::amp::square< ArrayType >( ) );
+
+
+    ArrayCont::difference_type stdNumElements = std::distance( stdOutput.begin(), stdOutput.end() );
+    ArrayCont::difference_type boltNumElements = std::distance( boltOutput.begin(), boltOutput.end() );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdOutput, boltOutput );
+}
+
+
 
 
 
 REGISTER_TYPED_TEST_CASE_P( TransformArrayTest, InPlaceNegateTransform  );
-//REGISTER_TYPED_TEST_CASE_P( TransformOutPlaceArrayTest, OutPlaceSquareTransform );
-REGISTER_TYPED_TEST_CASE_P( TransformBinaryArrayTest, BinaryPlusTransform);
+REGISTER_TYPED_TEST_CASE_P( TransformOutPlaceArrayTest, OutPlaceSquareTransform );
+REGISTER_TYPED_TEST_CASE_P( TransformBinaryArrayTest, BinaryPlusTransform, BinaryMultipliesTransform, BinaryMaxTransform);
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -410,7 +448,7 @@ TEST_P( TransformIntegerVector, InplaceTransform )
 {
     //  Calling the actual functions under test
     std::transform( stdInput.begin(), stdInput.end(), stdInput.begin(), std::negate<int>());
-    bolt::amp::transform( boltInput.begin( ), boltInput.end( ), boltInput.begin( ), bolt::negate<int>() );
+    bolt::amp::transform( boltInput.begin( ), boltInput.end( ), boltInput.begin( ), bolt::amp::negate<int>() );
 
 
 
@@ -428,7 +466,7 @@ TEST_P( TransformFloatVector, InplaceTransform )
 {
     //  Calling the actual functions under test
     std::transform( stdInput.begin( ), stdInput.end( ), stdInput.begin( ), std::negate<float>() );
-    bolt::amp::transform( boltInput.begin( ), boltInput.end( ), boltInput.begin( ), bolt::negate<float>() );
+    bolt::amp::transform( boltInput.begin( ), boltInput.end( ), boltInput.begin( ), bolt::amp::negate<float>() );
 
 
     std::vector< float >::iterator::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
@@ -441,11 +479,48 @@ TEST_P( TransformFloatVector, InplaceTransform )
     cmpArrays( stdInput, boltInput );
 }
 
+TEST_P( TransformFloatVector, InplaceSquareTransform )
+{
+    //  Calling the actual functions under test
+  std::transform( stdInput.begin( ), stdInput.end( ), stdInput.begin( ), [](float x){return x*x;} );
+    bolt::amp::transform( boltInput.begin( ), boltInput.end( ), boltInput.begin( ), bolt::amp::square<float>() );
+
+
+    std::vector< float >::iterator::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
+    std::vector< float >::iterator::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( TransformFloatVector, InplaceCubeTransform )
+{
+    //  Calling the actual functions under test
+  std::transform( stdInput.begin( ), stdInput.end( ), stdInput.begin( ), [](float x){return x*x*x;} );
+    bolt::amp::transform( boltInput.begin( ), boltInput.end( ), boltInput.begin( ), bolt::amp::cube<float>() );
+
+
+    std::vector< float >::iterator::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
+    std::vector< float >::iterator::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+
+
+
+
 TEST_P( TransformDoubleVector, InplaceTransform )
 {
     //  Calling the actual functions under test
     std::transform( stdInput.begin( ), stdInput.end( ), stdInput.begin( ), std::negate<double>() );
-    bolt::amp::transform( boltInput.begin( ), boltInput.end( ), boltInput.begin( ), bolt::negate<double>() );
+    bolt::amp::transform( boltInput.begin( ), boltInput.end( ), boltInput.begin( ), bolt::amp::negate<double>() );
 
 
     std::vector< int >::iterator::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
@@ -463,7 +538,11 @@ INSTANTIATE_TEST_CASE_P( TransformInPlace, TransformIntegerVector, ::testing::Ra
 
 //  Test a huge range, suitable for floating point as they are less prone to overflow (but floating point loses granularity at large values)
 INSTANTIATE_TEST_CASE_P( TransformInPlace, TransformFloatVector, ::testing::Range( 0, 1048576, 4096 ) );
+INSTANTIATE_TEST_CASE_P( InplaceSquareTransform, TransformFloatVector, ::testing::Range( 0, 1048576, 4096 ) );
+INSTANTIATE_TEST_CASE_P( InplaceCubeTransform, TransformFloatVector, ::testing::Range( 0, 1048576, 4096 ) );
+
 INSTANTIATE_TEST_CASE_P( TransformInPlace, TransformDoubleVector, ::testing::Range( 0, 1048576, 4096 ) );
+INSTANTIATE_TEST_CASE_P( InplaceTransform, TransformDoubleVector, ::testing::Range( 0, 1048576, 4096 ) );
 
 typedef ::testing::Types< 
     std::tuple< int, TypeValue< 1 > >,
@@ -503,8 +582,8 @@ INSTANTIATE_TYPED_TEST_CASE_P( Integer, TransformArrayTest, IntegerTests );
 INSTANTIATE_TYPED_TEST_CASE_P( Float, TransformArrayTest, FloatTests );
 INSTANTIATE_TYPED_TEST_CASE_P( Integer, TransformBinaryArrayTest, IntegerTests );
 INSTANTIATE_TYPED_TEST_CASE_P( Float, TransformBinaryArrayTest, FloatTests );
-//INSTANTIATE_TYPED_TEST_CASE_P( Integer, TransformOutPlaceArrayTest, IntegerTests );
-//INSTANTIATE_TYPED_TEST_CASE_P( Float, TransformOutPlaceArrayTest, FloatTests );
+INSTANTIATE_TYPED_TEST_CASE_P( Integer, TransformOutPlaceArrayTest, IntegerTests );
+INSTANTIATE_TYPED_TEST_CASE_P( Float, TransformOutPlaceArrayTest, FloatTests );
 
 
 int main(int argc, char* argv[])

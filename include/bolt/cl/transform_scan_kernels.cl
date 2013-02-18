@@ -13,26 +13,26 @@
 *   See the License for the specific language governing permissions and              
 *   limitations under the License.                                                   
 ***************************************************************************/
-#pragma OPENCL EXTENSION cl_amd_printf : enable
+// #pragma OPENCL EXTENSION cl_amd_printf : enable
 
 /******************************************************************************
  *  Kernel 0
  *****************************************************************************/
 
 //__attribute__((reqd_work_group_size(KERNEL0WORKGROUPSIZE,1,1)))
-template< typename iNakedType, typename iIterType, typename oNakedType, typename oIterType,  typename initType, typename UnaryFunction,
-        typename BinaryFunction >
+template< typename iValueType, typename iIterType, typename oValueType, typename oIterType,  typename initType, 
+        typename UnaryFunction, typename BinaryFunction >
 __kernel void perBlockTransformScan(
-                global oNakedType* output_ptr,
+                global oValueType* output_ptr,
                 oIterType output_iter,
-                global iNakedType* input_ptr,
+                global iValueType* input_ptr,
                 iIterType input_iter,
                 initType identity,
                 const uint vecSize,
-                local oNakedType* lds,
+                local oValueType* lds,
                 global UnaryFunction* unaryOp,
                 global BinaryFunction* binaryOp,
-                global oNakedType* scanBuffer,
+                global oValueType* scanBuffer,
                 int exclusive) // do exclusive scan ?
 {
     size_t gloId = get_global_id( 0 );
@@ -48,36 +48,36 @@ __kernel void perBlockTransformScan(
     input_iter.init( input_ptr );
 
     // if exclusive, load gloId=0 w/ identity, and all others shifted-1
-    oNakedType val;
+    oValueType val;
     if (exclusive)
     {
         if (gloId > 0)
         { // thread>0
-            iNakedType inVal = input_iter[gloId-1];
-            val = (oNakedType) (*unaryOp)(inVal);
+            iValueType inVal = input_iter[gloId-1];
+            val = (oValueType) (*unaryOp)(inVal);
             lds[ locId ] = val;
         }
         else
         { // thread=0
-            val = init;
+            val = identity;
             lds[ locId ] = val;
         }
     }
     else
     {
-        iNakedType inVal = input_iter[gloId];
-        val = (oNakedType) (*unaryOp)(inVal);
+        iValueType inVal = input_iter[gloId];
+        val = (oValueType) (*unaryOp)(inVal);
         lds[ locId ] = val;
     }
 
     //  Computes a scan within a workgroup
-    oNakedType sum = val;
+    oValueType sum = val;
     for( size_t offset = 1; offset < wgSize; offset *= 2 )
     {
         barrier( CLK_LOCAL_MEM_FENCE );
         if (locId >= offset)
         {
-            oNakedType y = lds[ locId - offset ];
+            oValueType y = lds[ locId - offset ];
             sum = (*binaryOp)( sum, y );
         }
         barrier( CLK_LOCAL_MEM_FENCE );
@@ -192,11 +192,11 @@ __kernel void intraBlockInclusiveScan(
  *  Kernel 2
  *****************************************************************************/
 //__attribute__((reqd_work_group_size(KERNEL2WORKGROUPSIZE,1,1)))
-template< typename Type, typename BinaryFunction >
+template< typename oValueType, typename oIterType, typename BinaryFunction >
 __kernel void perBlockAddition( 
-                global Type* output_ptr,
+                global oValueType* output_ptr,
                 oIterType output_iter,
-                global Type* postSumArray,
+                global oValueType* postSumArray,
                 const uint vecSize,
                 global BinaryFunction* binaryOp
                 )
@@ -211,13 +211,13 @@ __kernel void perBlockAddition(
         
     output_iter.init( output_ptr );
 
-    Type scanResult = output_iter[ gloId ];
+    oValueType scanResult = output_iter[ gloId ];
 
     // accumulate prefix
     if (groId > 0)
     {
-        Type postBlockSum = postSumArray[ groId-1 ];
-        Type newResult = (*binaryOp)( scanResult, postBlockSum );
+        oValueType postBlockSum = postSumArray[ groId-1 ];
+        oValueType newResult = (*binaryOp)( scanResult, postBlockSum );
         output_iter[ gloId ] = newResult;
     }
 }

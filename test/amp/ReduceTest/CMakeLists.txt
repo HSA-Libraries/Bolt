@@ -16,40 +16,22 @@
 ############################################################################                                                                                     
 
 # List the names of common files to compile across all platforms
-message( STATUS "Setting up AMP specific test projects..." )
+set( ampBolt.Test.Reduce.Source stdafx.cpp ReduceTest.cpp )
+set( ampBolt.Test.Reduce.Headers stdafx.h targetver.h ${BOLT_INCLUDE_DIR}/bolt/amp/reduce.h )
 
-set( Boost_USE_MULTITHREADED ON )
-set( Boost_USE_STATIC_LIBS   ON )
-set( Boost_DETAILED_FAILURE_MSG   ON )
+set( ampBolt.Test.Reduce.Files ${ampBolt.Test.Reduce.Source} ${ampBolt.Test.Reduce.Headers} )
 
-# Set the test folder directory. This is common to cl and amp. 
-set( BOLT_AMP_TEST_DIR ${BOLT_TEST_DIR}/amp )
-set( BOLT_CL_TEST_DIR ${BOLT_TEST_DIR}/cl )
+add_executable( ampBolt.Test.Reduce ${ampBolt.Test.Reduce.Files} )
+target_link_libraries( ampBolt.Test.Reduce ${GTEST_BOTH_LIBRARIES} ${TBB_LIBRARIES} ampBolt.Runtime )
 
-# set( Boost_DEBUG ON )
+set_target_properties( ampBolt.Test.Reduce PROPERTIES VERSION ${Bolt_VERSION} )
+set_target_properties( ampBolt.Test.Reduce PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
 
-if( BOOST_ROOT )
-    # The root tree of BOOST was specified on the command line; use it to to find the specific Boost the user points too
-    find_package( Boost ${Boost.VERSION} COMPONENTS thread date_time chrono program_options REQUIRED )
-    # This will define Boost_FOUND
-else( )
-    message( "Configure Bolt in <BOLT_ROOT>/bin to build the SuperBuild which will download and build Boost automatically" )    
-    message( SEND_ERROR "The AMP Bolt library requires BOOST_ROOT to be defined" )
-endif( )
+set_property( TARGET ampBolt.Test.Reduce PROPERTY FOLDER "Test/AMP")
 
-# Include standard Boost headers
-include_directories( ${Boost_INCLUDE_DIRS} )
-
-# Include standard OpenCL headers
-include_directories(
-    ${BOLT_AMP_TEST_DIR}
-    ${BOLT_AMP_TEST_DIR}/common
-    ${OPENCL_INCLUDE_DIRS}) 
-# include_directories( ${BOLT_CL_TEST_DIR} )
-
-add_subdirectory( ReduceTest )
-add_subdirectory( ScanTest )
-add_subdirectory( SortTest )
-add_subdirectory( TransformTest )	
-add_subdirectory( TransformReduceTest )
-add_subdirectory( device_vector )
+# CPack configuration; include the executable into the package
+install( TARGETS ampBolt.Test.Reduce
+	RUNTIME DESTINATION ${BIN_DIR}
+	LIBRARY DESTINATION ${LIB_DIR}
+	ARCHIVE DESTINATION ${LIB_DIR}/import
+	)

@@ -68,7 +68,9 @@ namespace bolt {
     namespace cl {
 
         extern const std::string copy_kernels;
+        extern const std::string fill_kernels;
         extern const std::string generate_kernels;
+        extern const std::string min_element_kernels;
         extern const std::string reduce_kernels;
         extern const std::string reduce_by_key_kernels;
         extern const std::string scan_kernels;

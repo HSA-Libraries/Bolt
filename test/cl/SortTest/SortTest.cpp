@@ -1109,7 +1109,7 @@ template <typename T>
 struct MyType { 
     T a; 
 
-    bool operator() (const MyType& lhs, const MyType& rhs) { 
+    bool operator() (const MyType& lhs, const MyType& rhs) const { 
         return (lhs.a > rhs.a);
     } 
     bool operator < (const MyType& other) const { 
@@ -1141,7 +1141,7 @@ struct MyFunctor{
     T a; 
     T b; 
 
-    bool operator() (const MyFunctor& lhs, const MyFunctor& rhs) { 
+    bool operator() (const MyFunctor& lhs, const MyFunctor& rhs) const { 
         return (lhs.a > rhs.a);
     } 
     bool operator < (const MyFunctor& other) const { 

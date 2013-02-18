@@ -219,7 +219,7 @@ namespace cl
                 iterator_base< Container >& operator= ( const iterator_base< Container >& rhs )
                 {
                     m_Container = rhs.m_Container;
-                m_index = rhs.m_Index;
+                    m_Index = rhs.m_Index;
                     return *this;
                 }
                 
@@ -462,13 +462,6 @@ namespace cl
             {
                 static_assert( !std::is_polymorphic< value_type >::value, "AMD C++ template extensions do not support the virtual keyword yet" );
 
-                //printf("Element: %f,%f,%f,%f (Bolt constructor)\n",
-                //  (float) value.a,
-                //  (float) value.b,
-                //  (float) value.c,
-                //  (float) value.d
-                //   );
-
                 //  We want to use the context from the passed in commandqueue to initialize our buffer
                 cl_int l_Error = CL_SUCCESS;
                 ::cl::Context l_Context = m_commQueue.getInfo< CL_QUEUE_CONTEXT >( &l_Error );
@@ -484,8 +477,11 @@ namespace cl
                         //printf("Filling buffer of size %ix%i\n", newSize, sizeof(value_type));
                         try
                         {
-                        V_OPENCL( m_commQueue.enqueueFillBuffer< value_type >( m_devMemory, value, 0, newSize * sizeof( value_type ), NULL, &fillEvent.front( ) ), 
-                            "device_vector failed to fill the internal buffer with the requested pattern");
+                            // \todo enqueueFillBuffer does not handle arbitrary data types.  We need to refactor 
+                            //  to use the Fill API
+                            V_OPENCL( m_commQueue.enqueueFillBuffer< value_type >( m_devMemory, value, 0, 
+                                newSize * sizeof( value_type ), NULL, &fillEvent.front( ) ), 
+                                "device_vector failed to fill the internal buffer with the requested pattern");
                         }
                         catch( std::exception& e )
                         {
@@ -495,21 +491,14 @@ namespace cl
 
                         try
                         {
-                        //  Not allowed to return until the fill operation is finished
-                        V_OPENCL( m_commQueue.enqueueWaitForEvents( fillEvent ), "device_vector failed to wait for an event" );
+                            //  Not allowed to return until the fill operation is finished
+                            V_OPENCL( m_commQueue.enqueueWaitForEvents( fillEvent ), "device_vector failed to wait for an event" );
                         }
                         catch( std::exception& e )
                         {
                             std::cout << "device_vector enqueueFillBuffer enqueueWaitForEvents error condition reported:" << std::endl << e.what() << std::endl;
                             //return 1;
                         }
-                        //printf("Filling buffer of size %ix%i - DONE\n", newSize, sizeof(value_type));
-                 //       printf("Element: %f,%f,%f,%f (Bolt constructor)\n",
-                 // (float) value.a,
-                 // (float) value.b,
-                 // (float) value.c,
-                 // (float) value.d
-                 //  );
                     }
                 }
             }
@@ -629,10 +618,13 @@ namespace cl
             };
 
             //  Copying methods
-            device_vector( const device_vector& rhs ): m_Flags( rhs.m_Flags ), m_commQueue( rhs.m_commQueue )
+            device_vector( const device_vector& rhs ): m_Flags( rhs.m_Flags ), m_Size( 0 ), m_commQueue( rhs.m_commQueue )
             {
                 //  This method will set the m_Size member variable upon successful completion
                 resize( rhs.m_Size );
+
+                if( m_Size == 0 )
+                    return;
 
                 size_type l_srcSize = m_Size * sizeof( value_type );
                 ::cl::Event copyEvent;
@@ -650,9 +642,13 @@ namespace cl
 
                 m_Flags         = rhs.m_Flags;
                 m_commQueue     = rhs.m_commQueue;
+                m_Size          = 0;
 
                 //  This method will set the m_Size member variable upon successful completion
                 resize( rhs.m_Size );
+
+                if( m_Size == 0 )
+                    return *this;
 
                 size_type l_srcSize = m_Size * sizeof( value_type );
                 ::cl::Event copyEvent;
@@ -680,13 +676,20 @@ namespace cl
 
             void resize( size_type reqSize, const value_type& val = value_type( ) )
             {
+                if( (m_Flags & CL_MEM_USE_HOST_PTR) != 0 )
+                {
+                    throw ::cl::Error( CL_MEM_OBJECT_ALLOCATION_FAILURE , 
+                        "A device_vector can not resize() memory not under its direct control" );
+                }
+
                 size_type cap = capacity( );
 
                 if( reqSize == cap )
                     return;
 
                 if( reqSize > max_size( ) )
-                    throw ::cl::Error( CL_MEM_OBJECT_ALLOCATION_FAILURE , "The amount of memory requested exceeds what is available" );
+                    throw ::cl::Error( CL_MEM_OBJECT_ALLOCATION_FAILURE , 
+                    "The amount of memory requested exceeds what is available" );
 
                 cl_int l_Error = CL_SUCCESS;
 
@@ -708,6 +711,8 @@ namespace cl
                         l_Error = m_commQueue.enqueueCopyBuffer( m_devMemory, l_tmpBuffer, 0, 0, l_srcSize, NULL, &copyEvent.front( ) );
                         V_OPENCL( l_Error, "device_vector failed to copy data to the new ::cl::Buffer object" );
                         ::cl::Event fillEvent;
+                        // \todo enqueueFillBuffer does not handle arbitrary data types.  We need to refactor 
+                        //  to use the Fill API
                         l_Error = m_commQueue.enqueueFillBuffer< value_type >( l_tmpBuffer, val, l_srcSize, l_reqSize - l_srcSize, &copyEvent, &fillEvent );
                         V_OPENCL( l_Error, "device_vector failed to fill the new data with the provided pattern" );
                         //  Not allowed to return until the copy operation is finished
@@ -727,6 +732,8 @@ namespace cl
                 else
                 {
                     ::cl::Event fillEvent;
+                    // \todo enqueueFillBuffer does not handle arbitrary data types.  We need to refactor 
+                    //  to use the Fill API
                     l_Error = m_commQueue.enqueueFillBuffer< value_type >( l_tmpBuffer, val, 0, l_reqSize, NULL, &fillEvent );
                     V_OPENCL( l_Error, "device_vector failed to fill the new data with the provided pattern" );
 
@@ -1470,8 +1477,7 @@ namespace cl
 
     //  This string represents the device side definition of the constant_iterator template
     static std::string deviceVectorIteratorTemplate = STRINGIFY_CODE( 
-        namespace bolt { \n
-        namespace cl { \n
+        namespace bolt { namespace cl { \n
         template< typename T > \n
         class device_vector \n
         { \n
@@ -1508,26 +1514,16 @@ namespace cl
                 global value_type* m_Ptr; \n
             }; \n
         }; \n
-    }; \n
-    }; \n
+    } } \n
     );
-
-    //BOLT_TEMPLATE_REGISTER_NEW_TYPE( device_vector::iterator, int, float );
-    //BOLT_TEMPLATE_REGISTER_NEW_TYPE( device_vector::iterator, int, double );
-
 }
 }
 
 BOLT_CREATE_TYPENAME( bolt::cl::device_vector< int >::iterator );
 BOLT_CREATE_CLCODE( bolt::cl::device_vector< int >::iterator, bolt::cl::deviceVectorIteratorTemplate );
 
-BOLT_CREATE_TYPENAME( bolt::cl::device_vector< unsigned int >::iterator );
-BOLT_CREATE_CLCODE( bolt::cl::device_vector< unsigned int >::iterator, bolt::cl::deviceVectorIteratorTemplate );
-
-BOLT_CREATE_TYPENAME( bolt::cl::device_vector< float >::iterator );
-BOLT_CREATE_CLCODE( bolt::cl::device_vector< float >::iterator, bolt::cl::deviceVectorIteratorTemplate );
-
-BOLT_CREATE_TYPENAME( bolt::cl::device_vector< double >::iterator );
-BOLT_CREATE_CLCODE( bolt::cl::device_vector< double >::iterator, bolt::cl::deviceVectorIteratorTemplate );
+BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, int, unsigned int );
+BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, int, float );
+BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, int, double );
 
 #endif

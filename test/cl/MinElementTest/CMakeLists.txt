@@ -16,22 +16,23 @@
 ############################################################################                                                                                     
 
 # List the names of common files to compile across all platforms
-set( ampBolt.Test.Reduce.Source stdafx.cpp simple_reduce.cpp )
-set( ampBolt.Test.Reduce.Headers stdafx.h targetver.h ${BOLT_INCLUDE_DIR}/bolt/amp/reduce.h )
 
-set( ampBolt.Test.Reduce.Files ${ampBolt.Test.Reduce.Source} ${ampBolt.Test.Reduce.Headers} )
+set( clBolt.Test.MinElement.Source MinElementTest.cpp MinElementDeviceVector.cpp ${BOLT_CL_TEST_DIR}/common/myocl.cpp) 
+set( clBolt.Test.MinElement.Headers ${BOLT_CL_TEST_DIR}/common/myocl.h ${BOLT_INCLUDE_DIR}/bolt/cl/min_element.h ${BOLT_INCLUDE_DIR}/bolt/cl/detail/min_element.inl)
 
-add_executable( ampBolt.Test.Reduce ${ampBolt.Test.Reduce.Files} )
-target_link_libraries( ampBolt.Test.Reduce ${GTEST_BOTH_LIBRARIES} ampBolt.Runtime )
+set( clBolt.Test.MinElement.Files ${clBolt.Test.MinElement.Source} ${clBolt.Test.MinElement.Headers} )
 
-set_target_properties( ampBolt.Test.Reduce PROPERTIES VERSION ${Bolt_VERSION} )
-set_target_properties( ampBolt.Test.Reduce PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
+add_executable( clBolt.Test.MinElement ${clBolt.Test.MinElement.Files} )
+target_link_libraries( clBolt.Test.MinElement clBolt.Runtime ${OPENCL_LIBRARIES} ${GTEST_LIBRARIES} ${Boost_LIBRARIES} ${TBB_LIBRARIES} )
 
-set_property( TARGET ampBolt.Test.Reduce PROPERTY FOLDER "Test/AMP")
+set_target_properties( clBolt.Test.MinElement PROPERTIES VERSION ${Bolt_VERSION} )
+set_target_properties( clBolt.Test.MinElement PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
 
+set_property( TARGET clBolt.Test.MinElement PROPERTY FOLDER "Test/OpenCL")
+        
 # CPack configuration; include the executable into the package
-install( TARGETS ampBolt.Test.Reduce
-	RUNTIME DESTINATION ${BIN_DIR}
-	LIBRARY DESTINATION ${LIB_DIR}
-	ARCHIVE DESTINATION ${LIB_DIR}/import
-	)
+install( TARGETS clBolt.Test.MinElement
+    RUNTIME DESTINATION ${BIN_DIR}
+    LIBRARY DESTINATION ${LIB_DIR}
+    ARCHIVE DESTINATION ${LIB_DIR}/import
+    )

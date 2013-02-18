@@ -16,40 +16,23 @@
 ############################################################################                                                                                     
 
 # List the names of common files to compile across all platforms
-message( STATUS "Setting up AMP specific test projects..." )
 
-set( Boost_USE_MULTITHREADED ON )
-set( Boost_USE_STATIC_LIBS   ON )
-set( Boost_DETAILED_FAILURE_MSG   ON )
+set( clBolt.Test.MaxElement.Source MaxElementTest.cpp MaxElementDeviceVector.cpp ${BOLT_CL_TEST_DIR}/common/myocl.cpp) 
+set( clBolt.Test.MaxElement.Headers ${BOLT_CL_TEST_DIR}/common/myocl.h ${BOLT_INCLUDE_DIR}/bolt/cl/max_element.h ${BOLT_INCLUDE_DIR}/bolt/cl/detail/min_element.inl)
 
-# Set the test folder directory. This is common to cl and amp. 
-set( BOLT_AMP_TEST_DIR ${BOLT_TEST_DIR}/amp )
-set( BOLT_CL_TEST_DIR ${BOLT_TEST_DIR}/cl )
+set( clBolt.Test.MaxElement.Files ${clBolt.Test.MaxElement.Source} ${clBolt.Test.MaxElement.Headers} )
 
-# set( Boost_DEBUG ON )
+add_executable( clBolt.Test.MaxElement ${clBolt.Test.MaxElement.Files} )
+target_link_libraries( clBolt.Test.MaxElement clBolt.Runtime ${OPENCL_LIBRARIES} ${GTEST_LIBRARIES} ${Boost_LIBRARIES} ${TBB_LIBRARIES} )
 
-if( BOOST_ROOT )
-    # The root tree of BOOST was specified on the command line; use it to to find the specific Boost the user points too
-    find_package( Boost ${Boost.VERSION} COMPONENTS thread date_time chrono program_options REQUIRED )
-    # This will define Boost_FOUND
-else( )
-    message( "Configure Bolt in <BOLT_ROOT>/bin to build the SuperBuild which will download and build Boost automatically" )    
-    message( SEND_ERROR "The AMP Bolt library requires BOOST_ROOT to be defined" )
-endif( )
+set_target_properties( clBolt.Test.MaxElement PROPERTIES VERSION ${Bolt_VERSION} )
+set_target_properties( clBolt.Test.MaxElement PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
 
-# Include standard Boost headers
-include_directories( ${Boost_INCLUDE_DIRS} )
-
-# Include standard OpenCL headers
-include_directories(
-    ${BOLT_AMP_TEST_DIR}
-    ${BOLT_AMP_TEST_DIR}/common
-    ${OPENCL_INCLUDE_DIRS}) 
-# include_directories( ${BOLT_CL_TEST_DIR} )
-
-add_subdirectory( ReduceTest )
-add_subdirectory( ScanTest )
-add_subdirectory( SortTest )
-add_subdirectory( TransformTest )	
-add_subdirectory( TransformReduceTest )
-add_subdirectory( device_vector )
+set_property( TARGET clBolt.Test.MaxElement PROPERTY FOLDER "Test/OpenCL")
+        
+# CPack configuration; include the executable into the package
+install( TARGETS clBolt.Test.MaxElement
+    RUNTIME DESTINATION ${BIN_DIR}
+    LIBRARY DESTINATION ${LIB_DIR}
+    ARCHIVE DESTINATION ${LIB_DIR}/import
+    )

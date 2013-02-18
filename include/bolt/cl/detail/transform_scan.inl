@@ -172,7 +172,8 @@ namespace detail
 *   \ingroup scan
 *   \{
 */
-    enum transformScanTypes {transformScan_iType, transformScan_oType, transformScan_initType, transformScan_UnaryFunction, transformScan_BinaryFunction};
+    enum transformScanTypes{ transformScan_iValueType, transformScan_iIterType, transformScan_oValueType, transformScan_oIterType, transformScan_initType, transformScan_UnaryFunction, 
+        transformScan_BinaryFunction, transformScan_end };
 
 class TransformScan_KernelTemplateSpecializer : public KernelTemplateSpecializer
 {
@@ -191,14 +192,16 @@ public:
             "template __attribute__((mangled_name(" + name(0) + "Instantiated)))\n"
             "__attribute__((reqd_work_group_size(KERNEL0WORKGROUPSIZE,1,1)))\n"
             "__kernel void " + name(0) + "(\n"
-            "global " + typeNames[transformScan_oType] + "* output,\n"
-            "global " + typeNames[transformScan_iType] + "* input,\n"
-            ""        + typeNames[transformScan_initType] + " init,\n"
+            "global " + typeNames[transformScan_oValueType] + "* output_ptr,\n"
+            ""        + typeNames[transformScan_oIterType] + " output_iter,\n"
+            "global " + typeNames[transformScan_iValueType] + "* input_ptr,\n"
+            ""        + typeNames[transformScan_iIterType] + " input_iter,\n"
+            ""        + typeNames[transformScan_initType] + " identity,\n"
             "const uint vecSize,\n"
-            "local "  + typeNames[transformScan_oType] + "* lds,\n"
+            "local "  + typeNames[transformScan_oValueType] + "* lds,\n"
             "global " + typeNames[transformScan_UnaryFunction] + "* unaryOp,\n"
             "global " + typeNames[transformScan_BinaryFunction] + "* binaryOp,\n"
-            "global " + typeNames[transformScan_oType] + "* scanBuffer,\n"
+            "global " + typeNames[transformScan_oValueType] + "* scanBuffer,\n"
             "int exclusive\n"
             ");\n\n"
     
@@ -206,10 +209,10 @@ public:
             "template __attribute__((mangled_name(" + name(1) + "Instantiated)))\n"
             "__attribute__((reqd_work_group_size(KERNEL1WORKGROUPSIZE,1,1)))\n"
             "__kernel void " + name(1) + "(\n"
-            "global " + typeNames[transformScan_oType] + "* postSumArray,\n"
-            "global " + typeNames[transformScan_oType] + "* preSumArray,\n"
+            "global " + typeNames[transformScan_oValueType] + "* postSumArray,\n"
+            "global " + typeNames[transformScan_oValueType] + "* preSumArray,\n"
             "const uint vecSize,\n"
-            "local "  + typeNames[transformScan_oType] + "* lds,\n"
+            "local "  + typeNames[transformScan_oValueType] + "* lds,\n"
             "const uint workPerThread,\n"
             "global " + typeNames[transformScan_BinaryFunction] + "* binaryOp\n"
             ");\n\n"
@@ -218,8 +221,9 @@ public:
             "template __attribute__((mangled_name(" + name(2) + "Instantiated)))\n"
             "__attribute__((reqd_work_group_size(KERNEL2WORKGROUPSIZE,1,1)))\n"
             "__kernel void " + name(2) + "(\n"
-            "global " + typeNames[transformScan_oType] + "* output,\n"
-            "global " + typeNames[transformScan_oType] + "* postSumArray,\n"
+            "global " + typeNames[transformScan_oValueType] + "* output_ptr,\n"
+            ""        + typeNames[transformScan_oIterType] + " output_iter,\n"
+            "global " + typeNames[transformScan_oValueType] + "* postSumArray,\n"
             "const uint vecSize,\n"
             "global " + typeNames[transformScan_BinaryFunction] + "* binaryOp\n"
             ");\n\n";
@@ -418,9 +422,11 @@ size_t k0_stepNum, k1_stepNum, k2_stepNum;
      *********************************************************************************/
     typedef std::iterator_traits< DVInputIterator  >::value_type iType;
     typedef std::iterator_traits< DVOutputIterator >::value_type oType;
-    std::vector<std::string> typeNames( 5 );
-    typeNames[ transformScan_iType ] = TypeName< iType >::get( );
-    typeNames[ transformScan_oType ] = TypeName< oType >::get( );
+    std::vector<std::string> typeNames( transformScan_end );
+    typeNames[ transformScan_iValueType ] = TypeName< iType >::get( );
+    typeNames[ transformScan_iIterType ] = TypeName< DVInputIterator >::get( );
+    typeNames[ transformScan_oValueType ] = TypeName< oType >::get( );
+    typeNames[ transformScan_oIterType ] = TypeName< DVOutputIterator >::get( );
     typeNames[ transformScan_initType ] = TypeName< T >::get( );
     typeNames[ transformScan_UnaryFunction ] = TypeName< UnaryFunction >::get();
     typeNames[ transformScan_BinaryFunction ] = TypeName< BinaryFunction >::get();
@@ -428,9 +434,11 @@ size_t k0_stepNum, k1_stepNum, k2_stepNum;
     /**********************************************************************************
      * Type Definitions - directly concatenated into kernel string
      *********************************************************************************/
-    std::vector<std::string> typeDefinitions;
+    std::vector< std::string > typeDefinitions;
     PUSH_BACK_UNIQUE( typeDefinitions, ClCode< iType >::get() )
+    PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVInputIterator >::get() )
     PUSH_BACK_UNIQUE( typeDefinitions, ClCode< oType >::get() )
+    PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVOutputIterator >::get() )
     PUSH_BACK_UNIQUE( typeDefinitions, ClCode< T >::get() )
     PUSH_BACK_UNIQUE( typeDefinitions, ClCode< UnaryFunction >::get() )
     PUSH_BACK_UNIQUE( typeDefinitions, ClCode< BinaryFunction >::get() )
@@ -519,14 +527,16 @@ aProfiler.set(AsyncProfiler::device, control::SerialCpu);
 
     ldsSize  = static_cast< cl_uint >( kernel0_WgSize * sizeof( oType ) );
     V_OPENCL( kernels[0].setArg( 0, result.getBuffer( ) ), "Error setArg kernels[ 0 ]" ); // Output buffer
-    V_OPENCL( kernels[0].setArg( 1, first.getBuffer( ) ),  "Error setArg kernels[ 0 ]" ); // Input buffer
-    V_OPENCL( kernels[0].setArg( 2, init_T ),               "Error setArg kernels[ 0 ]" ); // Initial value exclusive
-    V_OPENCL( kernels[0].setArg( 3, numElements ),          "Error setArg kernels[ 0 ]" ); // Size of scratch buffer
-    V_OPENCL( kernels[0].setArg( 4, ldsSize, NULL ),        "Error setArg kernels[ 0 ]" ); // Scratch buffer
-    V_OPENCL( kernels[0].setArg( 5, *unaryBuffer ),         "Error setArg kernels[ 0 ]" ); // User provided functor
-    V_OPENCL( kernels[0].setArg( 6, *binaryBuffer ),        "Error setArg kernels[ 0 ]" ); // User provided functor
-    V_OPENCL( kernels[0].setArg( 7, *preSumArray ),         "Error setArg kernels[ 0 ]" ); // Output per block sum
-    V_OPENCL( kernels[0].setArg( 8, doExclusiveScan ),      "Error setArg kernels[ 0 ]" ); // Exclusive scan?
+    V_OPENCL( kernels[0].setArg( 1, result.gpuPayloadSize( ), &result.gpuPayload( ) ), "Error setting a kernel argument" );
+    V_OPENCL( kernels[0].setArg( 2, first.getBuffer( ) ),  "Error setArg kernels[ 0 ]" ); // Input buffer
+    V_OPENCL( kernels[0].setArg( 3, first.gpuPayloadSize( ), &first.gpuPayload( ) ), "Error setting a kernel argument" );
+    V_OPENCL( kernels[0].setArg( 4, init_T ),               "Error setArg kernels[ 0 ]" ); // Initial value exclusive
+    V_OPENCL( kernels[0].setArg( 5, numElements ),          "Error setArg kernels[ 0 ]" ); // Size of scratch buffer
+    V_OPENCL( kernels[0].setArg( 6, ldsSize, NULL ),        "Error setArg kernels[ 0 ]" ); // Scratch buffer
+    V_OPENCL( kernels[0].setArg( 7, *unaryBuffer ),         "Error setArg kernels[ 0 ]" ); // User provided functor
+    V_OPENCL( kernels[0].setArg( 8, *binaryBuffer ),        "Error setArg kernels[ 0 ]" ); // User provided functor
+    V_OPENCL( kernels[0].setArg( 9, *preSumArray ),         "Error setArg kernels[ 0 ]" ); // Output per block sum
+    V_OPENCL( kernels[0].setArg( 10, doExclusiveScan ),      "Error setArg kernels[ 0 ]" ); // Exclusive scan?
     
 #ifdef BOLT_ENABLE_PROFILING
 aProfiler.nextStep();
@@ -602,9 +612,10 @@ aProfiler.set(AsyncProfiler::device, control::SerialCpu);
 #endif
 
     V_OPENCL( kernels[2].setArg( 0, result.getBuffer()),   "Error setArg kernels[ 2 ]" ); // Output buffer
-    V_OPENCL( kernels[2].setArg( 1, *postSumArray ),        "Error setArg kernels[ 2 ]" ); // Input buffer
-    V_OPENCL( kernels[2].setArg( 2, numElements ),          "Error setArg kernels[ 2 ]" ); // Size of scratch buffer
-    V_OPENCL( kernels[2].setArg( 3, *binaryBuffer ),        "Error setArg kernels[ 2 ]" ); // User provided functor
+    V_OPENCL( kernels[2].setArg( 1, result.gpuPayloadSize( ), &result.gpuPayload( ) ), "Error setting a kernel argument" );
+    V_OPENCL( kernels[2].setArg( 2, *postSumArray ),        "Error setArg kernels[ 2 ]" ); // Input buffer
+    V_OPENCL( kernels[2].setArg( 3, numElements ),          "Error setArg kernels[ 2 ]" ); // Size of scratch buffer
+    V_OPENCL( kernels[2].setArg( 4, *binaryBuffer ),        "Error setArg kernels[ 2 ]" ); // User provided functor
 
 #ifdef BOLT_ENABLE_PROFILING
 aProfiler.nextStep();
