@@ -505,6 +505,59 @@ TEST( equalValMult, iValues )
 // paste from above
 #endif
 
+TEST(ExclusiveScanByKey, MulticoreExclFloatIntTBB)
+{
+    //setup keys
+    int length = 1<<20;//4096;
+    printf("i am in Exclusive scan by key\n");
+    std::vector< int > keys( length);
+    // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
+    int segmentLength = 0;
+    int segmentIndex = 0;
+    int key = 0;
+    for (int i = 0; i < length; i++)
+    {
+        
+        if (segmentIndex == segmentLength)
+        {
+    	      segmentLength++;
+            segmentIndex = 0;
+            ++key;
+        }
+    keys[i] = key;
+    segmentIndex++;
+    }
+  // input and output vectors for device and reference
+    std::vector< float > input( length);
+    std::vector< float > output( length);
+    std::vector< float > refInput( length);
+    std::vector< float > refOutput( length);
+    for(int i=0; i<length; i++) {
+        input[i] = 1;
+        refInput[i] = 1;
+    }
+    // call scan
+  
+  bolt::cl::equal_to<int> eq; 
+  bolt::cl::plus<float> mM3; 
+  
+  bolt::cl::exclusive_scan_by_key(keys.begin(), keys.end(), refInput.begin(), refOutput.begin(), 0.0f,eq, mM3);
+
+  for(int i=0; i<15; i++)
+     printf("%d  ", keys[i]);
+  printf("\n");
+  for(int i=0; i<15; i++) 
+    printf("%.0f  ", refInput[i]);
+  printf("\n");
+  for(int i=0; i<15; i++) 
+    printf("%.0f  ", refOutput[i]);
+  printf("\n");
+      
+    // compare results
+   // cmpArrays(refOutput, output);
+}
+
+
 int _tmain(int argc, _TCHAR* argv[])
 {
     //  Register our minidump generating logic
@@ -637,5 +690,5 @@ int _tmain(int argc, _TCHAR* argv[])
         bolt::tout << _T( "\t    (only on googletest assertion failures, not SEH exceptions)" ) << std::endl;
     }
 
-	return retVal;
+  return retVal;
 }
