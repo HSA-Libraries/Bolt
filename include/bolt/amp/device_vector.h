@@ -208,6 +208,10 @@ public:
             return m_index;
         }
 
+        difference_type distance_to( const iterator_base< Container >& rhs ) const
+        {
+            return ( rhs.m_index - m_index );
+        }
     private:
         //  Implementation detail of boost.iterator
         friend class boost::iterator_core_access;
@@ -233,10 +237,7 @@ public:
             advance( -1 );
         }
 
-        difference_type distance_to( const iterator_base< Container >& rhs ) const
-        {
-            return ( rhs.m_index - m_index );
-        }
+
 
         template< typename OtherContainer >
         bool equal( const iterator_base< OtherContainer >& rhs ) const
@@ -305,6 +306,11 @@ public:
             return m_index;
         }
 
+        difference_type distance_to( const reverse_iterator_base< Container >& lhs ) const
+        {
+            return static_cast< difference_type >( m_index - lhs.m_index );
+        }
+
     private:
         //  Implementation detail of boost.iterator
         friend class boost::iterator_core_access;
@@ -330,10 +336,7 @@ public:
             advance( 1 );
         }
 
-        difference_type distance_to( const reverse_iterator_base< Container >& lhs ) const
-        {
-            return static_cast< difference_type >( m_index - lhs.m_index );
-        }
+
 
         template< typename OtherContainer >
         bool equal( const reverse_iterator_base< OtherContainer >& lhs ) const

@@ -20,6 +20,7 @@
 #define OCL_CONTEXT_BUG_WORKAROUND 1
 
 #include "stdafx.h"
+#include <bolt/cl/iterator/counting_iterator.h>
 #include <bolt/cl/max_element.h>
 #include <bolt/cl/functional.h>
 #include <bolt/cl/control.h>
@@ -185,6 +186,28 @@ void simpleReduce_TestSerial(int aSize)
 };
 
 
+
+void simpleMaxele_countingiterator(int start,int size)
+{
+
+      bolt::cl::counting_iterator<int> first(start);
+      bolt::cl::counting_iterator<int> last = first +  size;
+
+    std::vector<int> a(size);
+
+    for (int i=0; i < size; i++) {
+        a[i] = i+start;
+    };
+    
+    std::vector<int>::iterator stlReduce = std::max_element(a.begin(), a.end());
+    bolt::cl::counting_iterator<int> boltReduce = bolt::cl::max_element(first, last);
+
+
+
+    checkResult("TestSerial", *stlReduce, *boltReduce);
+};
+
+
 #if 0
 // Disable test since the buffer interface is moving to device_vector.
 void reduce_TestBuffer() {
@@ -213,6 +236,8 @@ int _tmain(int argc, _TCHAR* argv[])
     maxele_TestControl(100, 1, 0);
 
     simpleReduce_TestSerial(1000);
+
+    simpleMaxele_countingiterator(20,10);
 
     //maxele_TestControl(1024000, numIters, 1); // may fail on systems with only one GPU installed.
 
