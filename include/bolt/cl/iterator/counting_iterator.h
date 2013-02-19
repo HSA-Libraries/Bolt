@@ -19,7 +19,7 @@
 #define COUNTING_ITERATOR_H
 #include "bolt/cl/bolt.h"
 #include "bolt/cl/iterator/iterator_traits.h"
-
+#include "bolt/cl/device_vector.h"
 #include <boost/iterator/iterator_facade.hpp>
 
 namespace bolt {
@@ -101,6 +101,12 @@ namespace cl {
 
             typename iterator_facade::difference_type m_Index;
 
+            difference_type distance_to( const counting_iterator< value_type >& rhs ) const
+            {
+                //return static_cast< typename iterator_facade::difference_type >( 1 );
+                return rhs.m_Index - m_Index;
+            }
+
         private:
             //  Implementation detail of boost.iterator
             friend class boost::iterator_core_access;
@@ -124,10 +130,7 @@ namespace cl {
                 advance( -1 );
             }
 
-            difference_type distance_to( const counting_iterator< value_type >& rhs ) const
-            {
-                return static_cast< typename iterator_facade::difference_type >( 1 );
-            }
+
 
             template< typename OtherType >
             bool equal( const counting_iterator< OtherType >& rhs ) const

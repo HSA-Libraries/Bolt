@@ -262,6 +262,36 @@ template< typename InputIterator1, typename InputIterator2, typename OutputItera
         dvOutput.data( );
     }
 
+
+        template< typename InputIterator1, typename InputIterator2, typename OutputIterator, typename BinaryFunction > 
+    void transform_pick_iterator( bolt::cl::control &ctl,  const InputIterator1& fancyIterfirst, const InputIterator1& fancyIterlast,
+        const InputIterator2& first2, const OutputIterator& result, const BinaryFunction& f, 
+        const std::string& user_code, bolt::cl::fancy_iterator_tag, std::random_access_iterator_tag)
+    {
+        typedef std::iterator_traits<InputIterator1>::value_type iType1;
+        typedef std::iterator_traits<InputIterator2>::value_type iType2;
+        typedef std::iterator_traits<OutputIterator>::value_type oType;
+        size_t sz = fancyIterfirst.distance_to( fancyIterlast );
+        if (sz == 0)
+            return;
+
+        // Use host pointers memory since these arrays are only read once - no benefit to copying.
+
+        // Map the input iterator to a device_vector
+        device_vector< iType2 > dvInput( first2, sz, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, true, ctl );
+
+        // Map the output iterator to a device_vector
+        device_vector< oType > dvOutput( result, sz, CL_MEM_USE_HOST_PTR|CL_MEM_WRITE_ONLY, false, ctl );
+
+        transform_enqueue( ctl, fancyIterfirst, fancyIterlast, dvInput.begin( ), dvOutput.begin( ), f, user_code );
+
+        // This should immediately map/unmap the buffer
+        dvOutput.data( );
+    }
+
+
+
+
             // This template is called by the non-detail versions of inclusive_scan, it already assumes random access iterators
             // This is called strictly for iterators that are derived from device_vector< T >::iterator
     template<typename DVInputIterator1, typename DVInputIterator2, typename DVOutputIterator, typename BinaryFunction> 
@@ -330,7 +360,7 @@ template< typename InputIterator1, typename InputIterator2, typename OutputItera
         typedef std::iterator_traits<DVInputIterator2>::value_type iType2;
                 typedef std::iterator_traits<DVOutputIterator>::value_type oType;
 
-                cl_uint distVec = static_cast< cl_uint >( std::distance( first1, last1 ) );
+                cl_uint distVec = static_cast< cl_uint >(  first1.distance_to(last1) );    
                 if( distVec == 0 )
                     return;
 
@@ -358,16 +388,20 @@ template< typename InputIterator1, typename InputIterator2, typename OutputItera
         }
         if( !boost::is_same< iType1, oType >::value )
         {
-            typeDefinitions += ClCode< oType >::get( );
+            typeDefinitions += ClCode< oType >::get( ); 
         }
+        
         typeDefinitions += ClCode< DVInputIterator1 >::get( );
         if( !boost::is_same< DVInputIterator1, DVInputIterator2 >::value )
         {
             typeDefinitions += ClCode< DVInputIterator2 >::get( );
         }
-        if( !boost::is_same< DVInputIterator1, DVOutputIterator >::value )
+        if( !boost::is_same< DVInputIterator1, DVOutputIterator >::value)            
         {
-            typeDefinitions += ClCode< DVOutputIterator >::get( );
+            if(!boost::is_same< DVInputIterator2, DVOutputIterator >::value )
+            {
+                typeDefinitions += ClCode< DVOutputIterator >::get( );
+            }
         }
 
         boost::call_once( initOnlyOnce, boost::bind( CallCompiler_BinaryTransform::init_, &binaryTransformKernels, 

@@ -26,10 +26,10 @@ template<
     typename BinaryPredicate,
     typename BinaryFunction >
 __kernel void perBlockScanByKey(
-    global kType *keys,
-    global vType *vals,
-    global oType *output, // input
-    global voType *output2,
+    global kType *keys, //input keys
+    global vType *vals, //input values
+    global voType *output, // offsetValues
+    global int *output2, //offsetKeys
     const uint vecSize,
     local kType *ldsKeys,
     local oType *ldsVals,
@@ -233,11 +233,11 @@ template<
     typename BinaryPredicate,
     typename BinaryFunction >
 __kernel void perBlockAdditionByKey(
-    global kType *keySumArray,
-    global oType *postSumArray,
-    global kType *keys,
-    global oType *output2,
-    global oType *output,
+    global kType *keySumArray, //InputBuffer
+    global oType *postSumArray, //InputBuffer
+    global kType *keys, //Input keys
+    global int *output2, //offsetArray
+    global oType *output, //offsetValArray
     const uint vecSize,
     global BinaryPredicate *binaryPred,
     global BinaryFunction *binaryFunct)
@@ -275,9 +275,10 @@ __kernel void keyValueMapping(
     global kType *keys,
     global koType *keys_output,
     global voType *vals_output,
-    global koType *offsetArray,
+    global int *offsetArray,
     global koType *offsetValArray,
-    const uint vecSize)
+    const uint vecSize,
+    const int numSections)
 {
     
     size_t gloId = get_global_id( 0 );
@@ -287,11 +288,11 @@ __kernel void keyValueMapping(
         return;
     
 
-    if(offsetArray[ gloId ] != (koType) 0)
+    if(offsetArray[ gloId ] != 0)
     {
-		int x = offsetArray [ gloId ] -1;
-		int xkeys = keys[ gloId-1 ];
-		int xvals = offsetValArray [ gloId-1 ]; 
+		    //int x = offsetArray [ gloId ] -1;
+		    //int xkeys = keys[ gloId-1 ];
+		    //int xvals = offsetValArray [ gloId-1 ]; 
 
         keys_output[ offsetArray [ gloId ] -1 ] = keys[ gloId-1 ];
         vals_output[ offsetArray [ gloId ] -1 ] = offsetValArray [ gloId-1 ];
@@ -302,8 +303,8 @@ __kernel void keyValueMapping(
 		//printf("ossfetarr=%d\n", offsetArray [ gloId ]);
 		//printf("keys=%d\n", keys[ gloId ]);
 		//printf("offsetval=%d\n",offsetValArray [ gloId ]);
-        keys_output[ keys[ gloId ] -1 ] = keys[ gloId ]; //Copying the last key directly. Works either ways
-        vals_output[keys[ gloId ] -1 ] = offsetValArray [ gloId ];
+        keys_output[ numSections - 1 ] = keys[ gloId ]; //Copying the last key directly. Works either ways
+        vals_output[ numSections - 1 ] = offsetValArray [ gloId ];
 			
 	}
 

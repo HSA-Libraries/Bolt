@@ -43,7 +43,8 @@ namespace cl {
             };
 
             //  Basic constructor requires a reference to the container and a positional element
-            constant_iterator( value_type init, const control& ctl = control::getDefault( ) ): m_constValue( init )
+            constant_iterator( value_type init, const control& ctl = control::getDefault( ) ): 
+                m_constValue( init ), m_Index( 0 )
             {
                 const ::cl::CommandQueue& m_commQueue = ctl.commandQueue( );
 
@@ -53,7 +54,7 @@ namespace cl {
                 V_OPENCL( l_Error, "device_vector failed to query for the context of the ::cl::CommandQueue object" );
 
                 m_devMemory = ::cl::Buffer( l_Context, CL_MEM_READ_ONLY | CL_MEM_ALLOC_HOST_PTR | CL_MEM_COPY_HOST_PTR,
-                    1 * sizeof( value_type ), &m_constValue );
+                    1 * sizeof( value_type ),const_cast<value_type *>(&m_constValue) );
             }
 
             //  This copy constructor allows an iterator to convert into a const_iterator, but not vica versa
@@ -97,7 +98,13 @@ namespace cl {
                 return sizeof( Payload );
             }
 
-            static const typename iterator_facade::difference_type m_Index = 0;
+           typename iterator_facade::difference_type m_Index;
+
+            difference_type distance_to( const constant_iterator< value_type >& rhs ) const
+            {
+                //return static_cast< typename iterator_facade::difference_type >( 1 );
+                return rhs.m_Index - m_Index;
+            }
 
         private:
             //  Implementation detail of boost.iterator
@@ -107,8 +114,9 @@ namespace cl {
             template < typename > friend class constant_iterator;
 
             //  For a constant_iterator, do nothing on an advance
-            void advance( typename iterator_facade::difference_type )
+            void advance( typename iterator_facade::difference_type n )
             {
+                m_Index += n;
             }
 
             void increment( )
@@ -121,10 +129,7 @@ namespace cl {
                 advance( -1 );
             }
 
-            difference_type distance_to( const constant_iterator< value_type >& rhs ) const
-            {
-                return static_cast< typename iterator_facade::difference_type >( 1 );
-            }
+
 
             template< typename OtherType >
             bool equal( const constant_iterator< OtherType >& rhs ) const
@@ -140,7 +145,7 @@ namespace cl {
             }
 
             ::cl::Buffer m_devMemory;
-            value_type m_constValue;
+            value_type const m_constValue;
         };
     //)
 

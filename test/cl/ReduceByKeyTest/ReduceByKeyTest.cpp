@@ -17,6 +17,7 @@
 
 #define ENABLE_GTEST 1
 #define ENABLE_DEBUGGING 0
+#define UDD 1
 
 //#include "common/stdafx.h"
 #include <vector>
@@ -157,19 +158,6 @@ int _tmain(int argc, _TCHAR* argv[])
 
 #else
 
-template< typename T, typename Iterator >
-::testing::AssertionResult cmpArrays2(  std::vector< T >& ref,  std::vector< T >& calc ,   Iterator& ref2,   Iterator& calc2)
-{
-    for(Iterator i = ref.begin(), j = calc.begin(); i < ref2, j < calc2 ; ++i, ++j )
-    {
-        EXPECT_EQ( i, j );
-    }
-
-    return ::testing::AssertionSuccess( );
-}
-
-
-
 template<
     typename InputIterator1,
     typename InputIterator2,
@@ -230,8 +218,8 @@ gold_reduce_by_key( InputIterator1 keys_first,
         values_first++;
     }
 
-
-    return std::make_pair(keys_output, values_output);
+    std::cout<<count<<std::endl;
+    return std::make_pair(keys_output+1, values_output+1);
 }
 
 TEST(ReduceByKeyBasic, IntegerTest)
@@ -269,12 +257,12 @@ TEST(ReduceByKeyBasic, IntegerTest)
     // call reduce_by_key
     auto p = bolt::cl::reduce_by_key( keys.begin(), keys.end(), input.begin(), koutput.begin(), voutput.begin(), binary_predictor, binary_operator);
 
-#if ENABLE_DEBUGGING
+#if 0
 
-    //for(unsigned int i = 0; i < 256 ; i++)
-    //{
-    //    std::cout<<"Ikey "<<keys[i]<<" IValues "<<input[i]<<" -> OKeys "<<koutput[i]<<" OValues "<<voutput[i]<<std::endl;
-    //}
+    for(unsigned int i = 0; i < 256 ; i++)
+    {
+        std::cout<<"Ikey "<<keys[i]<<" IValues "<<input[i]<<" -> OKeys "<<koutput[i]<<" OValues "<<voutput[i]<<std::endl;
+    }
 
 #endif
 
@@ -286,7 +274,251 @@ TEST(ReduceByKeyBasic, IntegerTest)
    // cmpArrays2(vrefOutput, voutput, refPair.second, p.second);
 }
 
+TEST(ReduceByKeyPairCheck, IntegerTest2)
+{
+    int length = 1<<24;
+    std::vector< int > keys( length);
+    // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
+    int segmentLength = 0;
+    int segmentIndex = 0;
+    int key = 1;
+    std::vector< int > refInput( length );
+    std::vector< int > input( length );
 
+    for (int i = 0; i < length; i++)
+    {
+        if(std::rand()%3 == 1) key++;
+        keys[i] = key;
+        refInput[i] = std::rand()%4;
+        input[i] = refInput[i];
+    }keys[1] = keys[2] = keys[3] = keys[4] =1;
+    keys[5] = keys[6] = keys[7] = keys[8] =2; keys[9] = 3;
+
+    // input and output vectors for device and reference
+
+    std::vector< int > koutput( length ); 
+    std::vector< int > voutput( length ); 
+    std::vector< int > krefOutput( length );
+    std::vector< int > vrefOutput( length );
+    std::fill(krefOutput.begin(),krefOutput.end(),0);
+    std::fill(vrefOutput.begin(),vrefOutput.end(),0);
+    std::fill(koutput.begin(),koutput.end(),0);
+    std::fill(voutput.begin(),voutput.end(),0);
+
+    bolt::cl::equal_to<int> binary_predictor;
+    bolt::cl::plus<int> binary_operator;
+
+    typedef std::pair<std::vector<int>::iterator,std::vector<int>::iterator> StdPairIterator;
+    typedef bolt::cl::pair<std::vector<int>::iterator,std::vector<int>::iterator> DevicePairIterator;
+
+    // call reduce_by_key
+    DevicePairIterator dv_pair = 
+    bolt::cl::reduce_by_key( 
+        keys.begin(),
+        keys.end(),
+        input.begin(),
+        koutput.begin(),
+        voutput.begin(),
+        binary_predictor,
+        binary_operator);
+
+#if 0
+
+    for(unsigned int i = 0; i < length ; i++)
+    {
+        std::cout<<"Ikey "<<keys[i]<<" IValues "<<input[i]<<" -> OKeys "<<koutput[i]<<" OValues "<<voutput[i]<<std::endl;
+    }
+
+#endif
+
+    DevicePairIterator gold_pair =
+    gold_reduce_by_key( keys.begin(), keys.end(), refInput.begin(), krefOutput.begin(), vrefOutput.begin(),std::plus<int>());
+
+    size_t sizeAfterCall = gold_pair.first - krefOutput.begin();
+    size_t sizeAfterDeviceCall = dv_pair.first - koutput.begin();
+
+    std::cout<<sizeAfterCall<<" Is the gold key size after call!"<<std::endl;
+    std::cout<<sizeAfterDeviceCall<<" Is the dv key size after call!"<<std::endl;
+
+    krefOutput.resize(sizeAfterCall);
+    vrefOutput.resize(sizeAfterCall);
+    koutput.resize(sizeAfterDeviceCall);
+    voutput.resize(sizeAfterDeviceCall);
+
+#if 0
+
+    for(unsigned int i = 0; i < sizeAfterDeviceCall ; i++)
+    {
+        std::cout<<" -> OKeys "<<koutput[i]<<" OValues "<<voutput[i]<<std::endl;
+    }
+
+#endif
+
+    cmpArrays(krefOutput, koutput);
+    cmpArrays(vrefOutput, voutput);
+}
+
+BOLT_FUNCTOR(uddfltint,
+struct uddfltint
+{
+    float x;
+    int y;
+
+    bool operator==(const uddfltint& rhs) const
+    {
+        bool equal = true;
+        double ths = 0.00001; // thresh hold single(float)
+        equal = ( x == rhs.x ) ? equal : false;
+        if (rhs.y < ths && rhs.y > -ths)
+            equal = ( (1.0*y - rhs.y) < ths && (1.0*y - rhs.y) > -ths) ? equal : false;
+        else
+            equal = ( (1.0*y - rhs.y)/rhs.y < ths && (1.0*y - rhs.y)/rhs.y > -ths) ? equal : false;
+        return equal;
+    }
+    void operator++()
+    {
+        x += 1;
+        y += 1.0f;
+    }
+
+    bool operator>(int rhs) const
+    {
+
+      bool greater = true;
+      greater = ( x > rhs ) ? greater : false;
+      greater = ( y > rhs ) ? greater : false;
+      return greater;
+
+    }
+    void operator=(int rhs)
+    {
+      x = rhs;
+      y = rhs;
+    }
+
+    bool operator!=(int rhs) const
+    {
+        bool nequal = true;
+        double ths = 0.00001; // thresh hold single(float)
+        nequal = ( x != rhs ) ? nequal : false;
+        if (rhs < ths && rhs > -ths)
+            nequal = ( (1.0*y - rhs) < ths && (1.0*y - rhs) > -ths) ? false : nequal;
+        else
+            nequal = ( (1.0*y - rhs)/rhs < ths && (1.0*y - rhs)/rhs > -ths) ? false : nequal;
+        return nequal;
+    }
+
+    void operator-(int rhs)
+    {
+        x -= rhs;
+        y -= rhs;
+    }
+};
+);
+
+BOLT_FUNCTOR(uddfltint_equal_to,
+struct uddfltint_equal_to
+{
+    bool operator()(const uddfltint& lhs, const uddfltint& rhs) const
+    {
+        return lhs == rhs;
+    };
+};);
+
+BOLT_FUNCTOR(uddfltint_plus,
+struct uddfltint_plus
+{
+    uddfltint operator()(const uddfltint &lhs, const uddfltint &rhs) const
+    {
+        uddfltint _result;
+        _result.x = lhs.x+rhs.x;
+        _result.y = lhs.y+rhs.y;
+        return _result;
+    }
+};
+);
+
+#if UDD
+TEST(ReduceByKeyPairUDDTest, UDDFloatIntTest)
+{
+    int length = 1024;
+    std::vector< uddfltint > keys( length);
+    uddfltint key;
+    key.x = 1;
+    key.y = 1.0;
+    std::vector< uddfltint > refInput( length );
+    std::vector< uddfltint > input( length );
+
+    for (int i = 0; i < length; i++)
+    {
+        if(std::rand()%5 == 1) key++;
+        keys[i] = key;
+        refInput[i].x = std::rand()%4;
+        refInput[i].y = std::rand()%4;
+        input[i] = refInput[i];
+    }
+
+    std::vector< uddfltint > koutput( length );
+    std::vector< uddfltint > voutput( length );
+    std::vector< uddfltint > krefOutput( length );
+    std::vector< uddfltint > vrefOutput( length );
+
+    // Instead of using fill
+    krefOutput.clear();krefOutput.resize(length);
+    vrefOutput.clear();vrefOutput.resize(length);
+    voutput.clear();voutput.resize(length);
+    koutput.clear();koutput.resize(length);
+
+    uddfltint_equal_to binary_predictor;
+    uddfltint_plus binary_operator;
+
+    typedef std::pair<std::vector<uddfltint>::iterator,
+            std::vector<uddfltint>::iterator> StdPairIterator;
+    typedef bolt::cl::pair<std::vector<uddfltint>::iterator,
+            std::vector<uddfltint>::iterator> DevicePairIterator;
+
+    DevicePairIterator gold_pair =
+    gold_reduce_by_key( keys.begin(),
+                        keys.end(),
+                        refInput.begin(),
+                        krefOutput.begin(),
+                        vrefOutput.begin(),
+                        binary_operator);
+
+    // call reduce_by_key
+    DevicePairIterator dv_pair = 
+    bolt::cl::reduce_by_key( 
+        keys.begin(),
+        keys.end(),
+        input.begin(),
+        koutput.begin(),
+        voutput.begin(),
+        binary_predictor,
+        binary_operator);
+
+    size_t sizeAfterCall = gold_pair.first - krefOutput.begin();
+    size_t sizeAfterDeviceCall = dv_pair.first - koutput.begin();
+
+    krefOutput.resize(sizeAfterCall);
+    vrefOutput.resize(sizeAfterCall);
+    koutput.resize(sizeAfterDeviceCall);
+    voutput.resize(sizeAfterDeviceCall);
+
+#if 0
+
+    for(unsigned int i = 0; i < sizeAfterDeviceCall ; i++)
+    {
+        std::cout<<" -> OKeys "<<koutput[i].x<<" OValues "<<voutput[i].x<<std::endl;
+    }
+
+#endif
+
+    cmpArrays(krefOutput, koutput);
+    cmpArrays(vrefOutput, voutput);
+
+}
+
+#endif
 
 int _tmain(int argc, _TCHAR* argv[])
 {
@@ -420,7 +652,7 @@ int _tmain(int argc, _TCHAR* argv[])
         bolt::tout << _T( "\t    (only on googletest assertion failures, not SEH exceptions)" ) << std::endl;
     }
 
-	return retVal;
+  return retVal;
 }
 
 

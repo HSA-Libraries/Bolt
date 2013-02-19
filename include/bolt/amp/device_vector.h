@@ -271,7 +271,10 @@ public:
             return m_Container.m_devMemory->view_as( ext );
         }
 
-
+        difference_type distance_to( const iterator_base< Container >& rhs ) const
+        {
+            return ( rhs.m_index - m_index );
+        }
     private:
         //  Implementation detail of boost.iterator
         friend class boost::iterator_core_access;
@@ -297,10 +300,7 @@ public:
             advance( -1 );
         }
 
-        difference_type distance_to( const iterator_base< Container >& rhs ) const
-        {
-            return ( rhs.m_index - m_index );
-        }
+
 
         template< typename OtherContainer >
         bool equal( const iterator_base< OtherContainer >& rhs ) const
@@ -369,6 +369,25 @@ public:
             return m_index;
         }
 
+        /*! \brief A get accessor function to return the encapsulated device buffer for const objects.
+        *   This member function allows access to the Buffer object, which can be retrieved through a reference or an iterator.
+        *   This is necessary to allow library functions to get the encapsulated C++ AMP array object as a pass by reference argument 
+        *   to the C++ AMP parallel_for_each constructs.
+        *   \note This get function could be implemented in the iterator, but the reference object is usually a temporary rvalue, so
+        *   this location seems less intrusive to the design of the vector class.
+        */
+        arrayview_type getBuffer( ) const
+        {
+            concurrency::extent<1> ext( static_cast< int >( m_Container.m_Size ) );
+            return m_Container.m_devMemory->view_as( ext );
+        }
+
+
+        difference_type distance_to( const reverse_iterator_base< Container >& lhs ) const
+        {
+            return static_cast< difference_type >( m_index - lhs.m_index );
+        }
+
     private:
         //  Implementation detail of boost.iterator
         friend class boost::iterator_core_access;
@@ -394,10 +413,7 @@ public:
             advance( 1 );
         }
 
-        difference_type distance_to( const reverse_iterator_base< Container >& lhs ) const
-        {
-            return static_cast< difference_type >( m_index - lhs.m_index );
-        }
+
 
         template< typename OtherContainer >
         bool equal( const reverse_iterator_base< OtherContainer >& lhs ) const
@@ -434,6 +450,7 @@ public:
     /*! \brief Typedef to create the constant reverse iterator
     */
     typedef reverse_iterator_base< const device_vector< value_type, CONT > > const_reverse_iterator;
+
 
     /*! \brief A default constructor that creates an empty device_vector
     *   \param ctl An Bolt control class used to perform copy operations; a default is used if not supplied by the user
