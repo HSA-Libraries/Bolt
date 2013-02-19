@@ -19,7 +19,7 @@
 #define TEST_DEVICE_VECTOR 1
 #define TEST_CPU_DEVICE 0
 #define TEST_MULTICORE_TBB_SORT 0
-#define GOOGLE_TEST 1
+#define GOOGLE_TEST 0
 #if (GOOGLE_TEST == 1)
 #include <gtest/gtest.h>
 #include "common/stdafx.h"

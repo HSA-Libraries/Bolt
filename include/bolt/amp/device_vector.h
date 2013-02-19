@@ -165,19 +165,6 @@ public:
             return *this;
         }
 
-        /*! \brief A get accessor function to return the encapsulated device buffer for const objects.
-        *   This member function allows access to the Buffer object, which can be retrieved through a reference or an iterator.
-        *   This is necessary to allow library functions to get the encapsulated C++ AMP array object as a pass by reference argument 
-        *   to the C++ AMP parallel_for_each constructs.
-        *   \note This get function could be implemented in the iterator, but the reference object is usually a temporary rvalue, so
-        *   this location seems less intrusive to the design of the vector class.
-        */
-        arrayview_type getBuffer( ) const
-        {
-            concurrency::extent<1> ext( static_cast< int >( m_Container.m_Size ) );
-            return m_Container.m_devMemory->view_as( ext );
-        }
-
         /*! \brief A get accessor function to return the encapsulated device_vector.
         */
         const Container& getContainer( ) const
