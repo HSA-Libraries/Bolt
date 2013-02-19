@@ -800,7 +800,7 @@ scan_by_key_pick_iterator(
 #else
         std::cout << "The MultiCoreCpu version of Scan by key is not implemented yet." << std ::endl;
         throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of scan by key is not enabled to be built." ); 
-        return (oType)init;
+        return result;
 #endif
   }
   else
