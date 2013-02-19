@@ -30,7 +30,7 @@ set( clBolt.Test.ScanByKey.Headers
 set( clBolt.Test.ScanByKey.Files ${clBolt.Test.ScanByKey.Source} ${clBolt.Test.ScanByKey.Headers} )
 
 add_executable( clBolt.Test.ScanByKey ${clBolt.Test.ScanByKey.Files} )
-target_link_libraries( clBolt.Test.ScanByKey clBolt.Runtime ${GTEST_LIBRARIES} ${Boost_LIBRARIES} )
+target_link_libraries( clBolt.Test.ScanByKey clBolt.Runtime ${GTEST_LIBRARIES} ${Boost_LIBRARIES} ${TBB_LIBRARIES})
 
 set_target_properties( clBolt.Test.ScanByKey PROPERTIES VERSION ${Bolt_VERSION} )
 set_target_properties( clBolt.Test.ScanByKey PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
