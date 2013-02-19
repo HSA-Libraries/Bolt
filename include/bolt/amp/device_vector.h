@@ -117,19 +117,6 @@ public:
             return *this;
         }
 
-        /*! \brief A get accessor function to return the encapsulated device buffer for const objects.
-        *   This member function allows access to the Buffer object, which can be retrieved through a reference or an iterator.
-        *   This is necessary to allow library functions to get the encapsulated C++ AMP array object as a pass by reference argument 
-        *   to the C++ AMP parallel_for_each constructs.
-        *   \note This get function could be implemented in the iterator, but the reference object is usually a temporary rvalue, so
-        *   this location seems less intrusive to the design of the vector class.
-        */
-        arrayview_type getBuffer( ) const
-        {
-            concurrency::extent<1> ext( static_cast< int >( m_Container.m_Size ) );
-            return m_Container.m_devMemory->view_as( ext );
-        }
-
         /*! \brief A get accessor function to return the encapsulated device_vector.
         */
         Container& getContainer( ) const
@@ -154,12 +141,68 @@ public:
 
     typedef reference_base< device_vector< value_type, CONT > > reference;
 
+    template< typename Container >
+    class const_reference_base
+    {
+    public:
+        const_reference_base( const Container& rhs, size_type index ): m_Container( rhs ), m_index( index )
+        {}
+
+        //  Automatic type conversion operator to turn the reference object into a value_type
+        operator value_type( ) const
+        {
+            arrayview_type av( *m_Container.m_devMemory );
+            value_type &result = av[static_cast< int >( m_index )];
+
+            return result;
+        }
+
+        const_reference_base< const Container >& operator=( const value_type& rhs ) 
+        {
+            arrayview_type av( *m_Container.m_devMemory );
+            av[static_cast< int >( m_index )] = rhs;
+
+            return *this;
+        }
+
+        /*! \brief A get accessor function to return the encapsulated device buffer for const objects.
+        *   This member function allows access to the Buffer object, which can be retrieved through a reference or an iterator.
+        *   This is necessary to allow library functions to get the encapsulated C++ AMP array object as a pass by reference argument 
+        *   to the C++ AMP parallel_for_each constructs.
+        *   \note This get function could be implemented in the iterator, but the reference object is usually a temporary rvalue, so
+        *   this location seems less intrusive to the design of the vector class.
+        */
+        arrayview_type getBuffer( ) const
+        {
+            concurrency::extent<1> ext( static_cast< int >( m_Container.m_Size ) );
+            return m_Container.m_devMemory->view_as( ext );
+        }
+
+        /*! \brief A get accessor function to return the encapsulated device_vector.
+        */
+        const Container& getContainer( ) const
+        {
+            return m_Container;
+        }
+
+        /*! \brief A get index function to return the index of the reference object within the AMP device_vector.
+        */
+        size_type getIndex() const
+        {
+            return m_index;
+        }
+
+    private:
+        const Container& m_Container;
+        size_type m_index;
+    };
+
     /*! \brief A non-writeable copy of an element of the container.
     *   Constant references are optimized to return a value_type, since it is certain that
     *   the value will not be modified
     *   \note A const_reference actually returns a value, not a reference.
     */
-    typedef const reference_base< device_vector< value_type, CONT > > const_reference;
+    typedef const_reference_base< device_vector< value_type, CONT > > const_reference;
 
     //  Handy for the reference class to get at the wrapped ::cl objects
     friend class reference;
@@ -174,7 +217,7 @@ public:
     */
     template< typename Container >
     class iterator_base: public boost::iterator_facade< iterator_base< Container >,
-        value_type, std::random_access_iterator_tag, typename device_vector::reference >
+        value_type, device_vector_tag, typename device_vector::reference >
     {
     public:
 
@@ -214,6 +257,20 @@ public:
         {
             return m_index;
         }
+
+        /*! \brief A get accessor function to return the encapsulated device buffer for const objects.
+        *   This member function allows access to the Buffer object, which can be retrieved through a reference or an iterator.
+        *   This is necessary to allow library functions to get the encapsulated C++ AMP array object as a pass by reference argument 
+        *   to the C++ AMP parallel_for_each constructs.
+        *   \note This get function could be implemented in the iterator, but the reference object is usually a temporary rvalue, so
+        *   this location seems less intrusive to the design of the vector class.
+        */
+        arrayview_type getBuffer( ) const
+        {
+            concurrency::extent<1> ext( static_cast< int >( m_Container.m_Size ) );
+            return m_Container.m_devMemory->view_as( ext );
+        }
+
 
     private:
         //  Implementation detail of boost.iterator
@@ -377,7 +434,6 @@ public:
     /*! \brief Typedef to create the constant reverse iterator
     */
     typedef reverse_iterator_base< const device_vector< value_type, CONT > > const_reverse_iterator;
-
 
     /*! \brief A default constructor that creates an empty device_vector
     *   \param ctl An Bolt control class used to perform copy operations; a default is used if not supplied by the user
@@ -706,19 +762,7 @@ public:
     */
     const_reference operator[]( size_type n ) const
     {
-        //cl_int l_Error = CL_SUCCESS;
-
-        //naked_pointer ptrBuff = reinterpret_cast< naked_pointer >
-        //( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ,
-        // n * sizeof( value_type), sizeof( value_type), NULL, NULL, &l_Error ) );
-        //V_OPENCL( l_Error, "device_vector failed map device memory to host memory for operator[]" );
-
-        const_reference tmpRef = *m_devMemory[n];
-
-        /*::cl::Event unmapEvent;
-        l_Error = m_commQueue.enqueueUnmapMemObject( m_devMemory, ptrBuff, NULL, &unmapEvent );
-        V_OPENCL( l_Error, "device_vector failed to unmap host memory back to device memory" );
-        V_OPENCL( unmapEvent.wait( ), "failed to wait for unmap event" );*/
+        const_reference tmpRef( *this, n );
 
         return tmpRef;
     }

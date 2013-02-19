@@ -132,7 +132,8 @@
 #include <boost/shared_array.hpp>
 #include <array>
 #include "common/test_common.h"
-
+#include <algorithm>
+#include <type_traits>
 #define TEST_CPU_DEVICE 0
 #define TEST_DOUBLE 0
 #define TEST_DEVICE_VECTOR 0
@@ -422,8 +423,8 @@ class ReduceIntegerDeviceVector: public ::testing::TestWithParam< int >
 {
 public:
     // Create an std and a bolt vector of requested size, and initialize all the elements to 1
-    ReduceIntegerDeviceVector( ): stdInput( GetParam( ) ), boltInput( GetParam( ) ),
-                                     stdOutput( GetParam( ) ), boltOutput( GetParam( ) )
+    ReduceIntegerDeviceVector( ): stdInput( GetParam( ) ), boltInput( static_cast<size_t>( GetParam( ) ) ),
+                                     stdOutput( GetParam( ) ), boltOutput( static_cast<size_t>( GetParam( ) ) )
     {
         std::generate(stdInput.begin(), stdInput.end(), generateRandom<int>);
         //boltInput = stdInput;      

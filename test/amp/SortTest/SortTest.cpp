@@ -468,18 +468,18 @@ typedef ::testing::Types<
 
 typedef ::testing::Types< 
     std::tuple< float, TypeValue< 1 > >,
-    std::tuple< float, TypeValue< 31 > >,
+    //std::tuple< float, TypeValue< 31 > >,
     std::tuple< float, TypeValue< 32 > >,
-    std::tuple< float, TypeValue< 63 > >,
+    //std::tuple< float, TypeValue< 63 > >,
     std::tuple< float, TypeValue< 64 > >,
-    std::tuple< float, TypeValue< 127 > >,
+    //std::tuple< float, TypeValue< 127 > >,
     std::tuple< float, TypeValue< 128 > >,
-    std::tuple< float, TypeValue< 129 > >,
-    std::tuple< float, TypeValue< 1000 > >,
-    std::tuple< float, TypeValue< 1053 > >,
+    //std::tuple< float, TypeValue< 129 > >,
+    //std::tuple< float, TypeValue< 1000 > >,
+    //std::tuple< float, TypeValue< 1053 > >,
     std::tuple< float, TypeValue< 4096 > >,
-    std::tuple< float, TypeValue< 4097 > >,
-    std::tuple< float, TypeValue< 65535 > >,
+    //std::tuple< float, TypeValue< 4097 > >,
+    //std::tuple< float, TypeValue< 65535 > >,
     std::tuple< float, TypeValue< 65536 > >
 > FloatTests;
 

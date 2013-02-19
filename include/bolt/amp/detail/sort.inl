@@ -41,7 +41,9 @@
 #define BOLT_INT_MAX 0x7FFFFFFFU
 #define BOLT_INT_MIN 0x80000000U
 
-#define WGSIZE 64
+#define BITONIC_SORT_WGSIZE 64
+/* \brief - SORT_CPU_THRESHOLD should be atleast 2 times the BITONIC_SORT_WGSIZE*/
+#define SORT_CPU_THRESHOLD 128 
 
 namespace bolt {
 namespace amp {
@@ -116,7 +118,7 @@ void sort_detect_random_access( bolt::amp::control &ctl,
                                 const StrictWeakOrdering& comp, std::random_access_iterator_tag )
 {
     return sort_pick_iterator(ctl, first, last, comp,
-							  std::iterator_traits< RandomAccessIterator >::iterator_category( ) );
+                              std::iterator_traits< RandomAccessIterator >::iterator_category( ) );
 };
 
 //Device Vector specialization
@@ -128,18 +130,26 @@ void sort_pick_iterator( bolt::amp::control &ctl,
     // User defined Data types are not supported with device_vector. Hence we have a static assert here.
     // The code here should be in compliant with the routine following this routine.
     //size_t szElements = (size_t)(last - first);
+    typedef typename std::iterator_traits<DVRandomAccessIterator>::value_type T;
     unsigned int szElements = static_cast< unsigned int >( std::distance( first, last ) );
     if(szElements > (1<<31))
         throw std::exception( "AMP device vectors shall support only upto 2 power 31 elements" );
     if (szElements == 0 )
         return;
-    const bolt::amp::control::e_RunMode runMode = ctl.forceRunMode();  // could be dynamic choice some day.
-    if (runMode == bolt::amp::control::SerialCpu) {
-        //  \TODO:  Need access to the device_vector .data method to get a host pointer
-        throw ::std::exception( "Sort of device_vector Serial CPU run Mode is not implemented" );
+    const bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+    if ((runMode == bolt::amp::control::SerialCpu) || (szElements < SORT_CPU_THRESHOLD)) {
+        std::vector<T> localBuffer(szElements);
+        //Copy the device_vector buffer to a CPU buffer
+        for(unsigned int index=0; index<szElements; index++)
+            localBuffer[index] = first.getBuffer()[index];
+        //Compute sort using std::sort
+        std::sort(localBuffer.begin(), localBuffer.end(), comp);
+        //Copy the CPU buffer back to device_vector 
+        for(unsigned int index=0; index<szElements; index++)
+            first.getBuffer()[index] = localBuffer[index];
         return;
-    } else if (runMode == bolt::cl::control::MultiCoreCpu) {
-		// \TODO - Find out what is the best way to report error std::cout should be removed
+    } else if (runMode == bolt::amp::control::MultiCoreCpu) {
+        // \TODO - Find out what is the best way to report error std::cout should be removed
         std::cout << "The MultiCoreCpu version of sort on device_vector is not supported." << std ::endl;
         throw std::exception( "The MultiCoreCpu version of reduce on device_vector is not supported." );
         return;
@@ -152,10 +162,10 @@ void sort_pick_iterator( bolt::amp::control &ctl,
 #if 0
 template<typename DVRandomAccessIterator, typename StrictWeakOrdering>
 void sort_pick_iterator( control &ctl,
-						 const DVRandomAccessIterator& first, const DVRandomAccessIterator& last,
-						 const StrictWeakOrdering& comp, bolt::cl::fancy_iterator_tag )
+                         const DVRandomAccessIterator& first, const DVRandomAccessIterator& last,
+                         const StrictWeakOrdering& comp, bolt::amp::fancy_iterator_tag )
 {
-	static_assert( false, "It is not possible to sort fancy iterators. They are not mutable" );
+    static_assert( false, "It is not possible to sort fancy iterators. They are not mutable" );
 }
 #endif
 
@@ -166,37 +176,31 @@ void sort_pick_iterator( control &ctl,
 template<typename RandomAccessIterator, typename StrictWeakOrdering>
 void sort_pick_iterator( bolt::amp::control &ctl,
                          const RandomAccessIterator& first, const RandomAccessIterator& last,
-	                     const StrictWeakOrdering& comp, std::random_access_iterator_tag )
+                         const StrictWeakOrdering& comp, std::random_access_iterator_tag )
 {
-	typedef typename std::iterator_traits<RandomAccessIterator>::value_type T;
+    typedef typename std::iterator_traits<RandomAccessIterator>::value_type T;
     unsigned int szElements = static_cast< unsigned int >( std::distance( first, last ) );
     if(szElements > (1<<31))
         throw std::exception( "AMP device vectors shall support only upto 2 power 31 elements" );
-	if (szElements == 0)
-		return;
+    if (szElements == 0)
+        return;
 
-	const bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
-	if ((runMode == bolt::amp::control::SerialCpu) || (szElements < (2*WGSIZE))) {
-		std::sort(first, last, comp);
-		return;
-	} else if (runMode == bolt::amp::control::MultiCoreCpu) {
-#ifdef ENABLE_TBB
-        std::cout << "The MultiCoreCpu version of sort is enabled with TBB. " << std ::endl;
-        tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
-        tbb::parallel_sort(first,last, comp);
-#else
+    const bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+    if ((runMode == bolt::amp::control::SerialCpu) || (szElements < SORT_CPU_THRESHOLD)) {
+        std::sort(first, last, comp);
+        return;
+    } else if (runMode == bolt::amp::control::MultiCoreCpu) {
         std::cout << "The MultiCoreCpu version of sort is not enabled. " << std ::endl;
         throw std::exception( "The MultiCoreCpu version of sort is not enabled to be built." );
         return;
-#endif
-	} else {
-		device_vector< T, concurrency::array_view > dvInputOutput( first, last, false, ctl );
-		//Now call the actual amp algorithm
-		sort_enqueue(ctl,dvInputOutput.begin(),dvInputOutput.end(),comp);
-		//Map the buffer back to the host
-		dvInputOutput.data( );
-		return;
-	}
+    } else {
+        device_vector< T, concurrency::array_view > dvInputOutput( first, last, false, ctl );
+        //Now call the actual amp algorithm
+        sort_enqueue(ctl,dvInputOutput.begin(),dvInputOutput.end(),comp);
+        //Map the buffer back to the host
+        dvInputOutput.data( );
+        return;
+    }
 }
 
 /****** sort_enqueue specailization for unsigned int data types. ******
@@ -219,16 +223,16 @@ void AMP_RadixSortHistogramAscendingKernel(bolt::amp::control &ctl,
     concurrency::tiled_extent< RADICES > tileK0 = globalSizeK0.tile< RADICES >();
     concurrency::accelerator_view av = ctl.getAccelerator().default_view;
     printf("globalSizeK0 = %d   tileK0.tile_dim0 = %d    tileK0[0]=%d\n",globalSizeK0, tileK0.tile_dim0, tileK0[0]);
-	concurrency::parallel_for_each( av, tileK0, 
-	[
-		unsortedData,
-		buckets,
-		histScanBuckets,
+    concurrency::parallel_for_each( av, tileK0, 
+    [
+        unsortedData,
+        buckets,
+        histScanBuckets,
         shiftCount,
         tileK0
-	] 
+    ] 
     ( concurrency::tiled_index< RADICES > t_idx ) restrict(amp)
-	{
+    {
         const int RADIX_T     = N;
         const int RADICES_T   = (1 << RADIX_T);
         const int NUM_OF_ELEMENTS_PER_WORK_ITEM_T = RADICES_T; 
@@ -269,7 +273,7 @@ void AMP_RadixSortHistogramAscendingKernel(bolt::amp::control &ctl,
         }
         histScanBuckets[localId*numOfGroups + groupId + 1] = sum;
 
-	} );// end of concurrency::parallel_for_each
+    } );// end of concurrency::parallel_for_each
 }
 
 template <typename T, int N, typename Container>
@@ -285,16 +289,16 @@ void AMP_RadixSortHistogramDescendingKernel(bolt::amp::control &ctl,
     concurrency::extent< 1 > globalSizeK0( szElements/RADICES );
     concurrency::tiled_extent< RADICES > tileK0 = globalSizeK0.tile< RADICES >();
     concurrency::accelerator_view av = ctl.getAccelerator().default_view;
-	concurrency::parallel_for_each( av, tileK0, 
-	[
-		unsortedData,
-		buckets,
-		histScanBuckets,
+    concurrency::parallel_for_each( av, tileK0, 
+    [
+        unsortedData,
+        buckets,
+        histScanBuckets,
         shiftCount,
         tileK0
-	] 
+    ] 
     ( concurrency::tiled_index< RADICES > t_idx ) restrict(amp)
-	{
+    {
         const int RADIX_T     = N;
         const int RADICES_T   = (1 << RADIX_T);
         const int NUM_OF_ELEMENTS_PER_WORK_ITEM_T = RADICES_T; 
@@ -336,7 +340,7 @@ void AMP_RadixSortHistogramDescendingKernel(bolt::amp::control &ctl,
         for(int i = 0; i < groupSize; i++)
             sum = sum + buckets[bucketPos + localId + groupSize*i];
         histScanBuckets[localId*numOfGroups + groupId + 1] = sum;
-	} );// end of concurrency::parallel_for_each
+    } );// end of concurrency::parallel_for_each
 }
 
 template <typename T, int N, typename Container>
@@ -349,14 +353,14 @@ void AMP_scanLocalTemplate(bolt::amp::control &ctl,
     concurrency::extent< 1 > globalSizeK0( szElements/RADICES );
     concurrency::tiled_extent< RADICES > tileK0 = globalSizeK0.tile< RADICES >();
     concurrency::accelerator_view av = ctl.getAccelerator().default_view;
-	concurrency::parallel_for_each( av, tileK0, 
-	[
-		buckets,
-		histScanBuckets,
+    concurrency::parallel_for_each( av, tileK0, 
+    [
+        buckets,
+        histScanBuckets,
         tileK0
-	] 
+    ] 
     ( concurrency::tiled_index< RADICES > t_idx ) restrict(amp)
-	{
+    {
         const int RADIX_T     = N;
         const int RADICES_T   = (1 << RADIX_T);
         //create tiled_static for localScanArray
@@ -398,16 +402,16 @@ void AMP_permuteAscendingRadixNTemplate(bolt::amp::control &ctl,
     concurrency::extent< 1 > globalSizeK0( szElements/RADICES );
     concurrency::tiled_extent< RADICES > tileK0 = globalSizeK0.tile< RADICES >();
     concurrency::accelerator_view av = ctl.getAccelerator().default_view;
-	concurrency::parallel_for_each( av, tileK0, 
-	[
-		unsortedData,
-		scanedBuckets,
+    concurrency::parallel_for_each( av, tileK0, 
+    [
+        unsortedData,
+        scanedBuckets,
         shiftCount,
         sortedData,
         tileK0
-	] 
+    ] 
     ( concurrency::tiled_index< RADICES > t_idx ) restrict(amp)
-	{
+    {
         const int RADIX_T     = N;
         const int RADICES_T   = (1 << RADIX_T);
         //const int NUM_OF_ELEMENTS_PER_WORK_ITEM_T = RADICES_T; 
@@ -449,16 +453,16 @@ void AMP_permuteDescendingRadixNTemplate(bolt::amp::control &ctl,
     concurrency::extent< 1 > globalSizeK0( szElements/RADICES );
     concurrency::tiled_extent< RADICES > tileK0 = globalSizeK0.tile< RADICES >();
     concurrency::accelerator_view av = ctl.getAccelerator().default_view;
-	concurrency::parallel_for_each( av, tileK0, 
-	[
-		unsortedData,
-		scanedBuckets,
+    concurrency::parallel_for_each( av, tileK0, 
+    [
+        unsortedData,
+        scanedBuckets,
         shiftCount,
         sortedData,
         tileK0
-	] 
+    ] 
     ( concurrency::tiled_index< RADICES > t_idx ) restrict(amp)
-	{
+    {
         const int RADIX_T     = N;
         const int RADICES_T   = (1 << RADIX_T);
         const int MASK_T      = (1<<RADIX_T)  -1;
@@ -546,20 +550,20 @@ void AMP_RadixSortHistogramSignedAscendingKernel(bolt::amp::control &ctl,
     concurrency::tiled_extent< RADICES > tileK0 = globalSizeK0.tile< RADICES >();
     concurrency::accelerator_view av = ctl.getAccelerator().default_view;
     printf("globalSizeK0 = %d   tileK0.tile_dim0 = %d    tileK0[0]=%d\n",globalSizeK0, tileK0.tile_dim0, tileK0[0]);
-	concurrency::parallel_for_each( av, tileK0, 
-	[
-		unsortedData,
-		buckets,
-		histScanBuckets,
+    concurrency::parallel_for_each( av, tileK0, 
+    [
+        unsortedData,
+        buckets,
+        histScanBuckets,
         shiftCount,
         tileK0
-	] 
+    ] 
     ( concurrency::tiled_index< RADICES > t_idx ) restrict(amp)
-	{
+    {
         const int RADIX_T     = N;
         const int RADICES_T   = (1 << RADIX_T);
         const int NUM_OF_ELEMENTS_PER_WORK_ITEM_T = RADICES_T; 
-        const int MASK_T      = (1<<(RADIX_T-1))  - 1;
+        const int MASK_T      = ( 1 << ( RADIX_T - 1 ) ) - 1;
 
         int localId     = t_idx.local[ 0 ];
         int globalId    = t_idx.global[ 0 ];
@@ -598,7 +602,7 @@ void AMP_RadixSortHistogramSignedAscendingKernel(bolt::amp::control &ctl,
         }
         histScanBuckets[localId*numOfGroups + groupId + 1] = sum;
 
-	} );// end of concurrency::parallel_for_each
+    } );// end of concurrency::parallel_for_each
 }
 
 template <typename T, int N, typename Container>
@@ -614,20 +618,20 @@ void AMP_RadixSortHistogramSignedDescendingKernel(bolt::amp::control &ctl,
     concurrency::extent< 1 > globalSizeK0( szElements/RADICES );
     concurrency::tiled_extent< RADICES > tileK0 = globalSizeK0.tile< RADICES >();
     concurrency::accelerator_view av = ctl.getAccelerator().default_view;
-	concurrency::parallel_for_each( av, tileK0, 
-	[
-		unsortedData,
-		buckets,
-		histScanBuckets,
+    concurrency::parallel_for_each( av, tileK0, 
+    [
+        unsortedData,
+        buckets,
+        histScanBuckets,
         shiftCount,
         tileK0
-	] 
+    ] 
     ( concurrency::tiled_index< RADICES > t_idx ) restrict(amp)
-	{
+    {
         const int RADIX_T     = N;
         const int RADICES_T   = (1 << RADIX_T);
         const int NUM_OF_ELEMENTS_PER_WORK_ITEM_T = RADICES_T; 
-        const int MASK_T      = (1<<RADIX_T)  -1;
+        const int MASK_T      = ( 1 << ( RADIX_T - 1 ) ) - 1;
         int localId     = t_idx.local[ 0 ];
         int globalId    = t_idx.global[ 0 ];
         int groupId     = t_idx.tile[ 0 ];
@@ -667,7 +671,7 @@ void AMP_RadixSortHistogramSignedDescendingKernel(bolt::amp::control &ctl,
         for(int i = 0; i < groupSize; i++)
             sum = sum + buckets[bucketPos + localId + groupSize*i];
         histScanBuckets[localId*numOfGroups + groupId + 1] = sum;
-	} );// end of concurrency::parallel_for_each
+    } );// end of concurrency::parallel_for_each
 }
 
 template <typename T, int N, typename Container>
@@ -682,20 +686,20 @@ void AMP_permuteSignedAscendingRadixNTemplate(bolt::amp::control &ctl,
     concurrency::extent< 1 > globalSizeK0( szElements/RADICES );
     concurrency::tiled_extent< RADICES > tileK0 = globalSizeK0.tile< RADICES >();
     concurrency::accelerator_view av = ctl.getAccelerator().default_view;
-	concurrency::parallel_for_each( av, tileK0, 
-	[
-		unsortedData,
-		scanedBuckets,
+    concurrency::parallel_for_each( av, tileK0, 
+    [
+        unsortedData,
+        scanedBuckets,
         shiftCount,
         sortedData,
         tileK0
-	] 
+    ] 
     ( concurrency::tiled_index< RADICES > t_idx ) restrict(amp)
-	{
+    {
         const int RADIX_T     = N;
         const int RADICES_T   = (1 << RADIX_T);
         //const int NUM_OF_ELEMENTS_PER_WORK_ITEM_T = RADICES_T; 
-        const int MASK_T      = (1<<(RADIX_T-1))  -1;
+        const int MASK_T      = ( 1 << ( RADIX_T - 1 ) )  -1;
         /*size_t groupId   = get_group_id(0);
         size_t localId   = get_local_id(0);
         size_t globalId  = get_global_id(0);
@@ -737,19 +741,19 @@ void AMP_permuteSignedDescendingRadixNTemplate(bolt::amp::control &ctl,
     concurrency::extent< 1 > globalSizeK0( szElements/RADICES );
     concurrency::tiled_extent< RADICES > tileK0 = globalSizeK0.tile< RADICES >();
     concurrency::accelerator_view av = ctl.getAccelerator().default_view;
-	concurrency::parallel_for_each( av, tileK0, 
-	[
-		unsortedData,
-		scanedBuckets,
+    concurrency::parallel_for_each( av, tileK0, 
+    [
+        unsortedData,
+        scanedBuckets,
         shiftCount,
         sortedData,
         tileK0
-	] 
+    ] 
     ( concurrency::tiled_index< RADICES > t_idx ) restrict(amp)
-	{
+    {
         const int RADIX_T     = N;
         const int RADICES_T   = (1 << RADIX_T);
-        const int MASK_T      = (1<<RADIX_T)  -1;
+        const int MASK_T      = ( 1 << ( RADIX_T - 1 ) )  -1;
         int localId     = t_idx.local[ 0 ];
         int globalId    = t_idx.global[ 0 ];
         int groupId     = t_idx.tile[ 0 ];
@@ -788,7 +792,7 @@ sort_enqueue(bolt::amp::control &ctl,
 {
     typedef typename std::iterator_traits< DVRandomAccessIterator >::value_type T;
     const int RADIX = 8;
-    const int RADICES = (1 << RADIX);	
+    const int RADICES = (1 << RADIX);
     unsigned int orig_szElements = static_cast<unsigned int>(std::distance(first, last));
     unsigned int szElements = orig_szElements;
     bool  newBuffer = false;
@@ -805,13 +809,13 @@ sort_enqueue(bolt::amp::control &ctl,
         pLocalArray     = new concurrency::array<T>( modified_ext );
         pLocalArrayView = new concurrency::array_view<T>(pLocalArray->view_as(modified_ext));
         concurrency::array_view<T> dest = pLocalArrayView->section( ext );
-        first->getBuffer( ).copy_to( dest );
+        first.getBuffer( ).copy_to( dest );
         dest.synchronize( );
         newBuffer = true;
     }
     else
     {
-        pLocalArrayView = new concurrency::array_view<T>( first->getBuffer( ) );
+        pLocalArrayView = new concurrency::array_view<T>( first.getBuffer( ) );
     }
 
     unsigned int numGroups = szElements / mulFactor;
@@ -822,9 +826,9 @@ sort_enqueue(bolt::amp::control &ctl,
     device_vector< T, concurrency::array > dvHistogramScanBuffer(static_cast<size_t>(numGroups* RADICES + 10), 0 );
 
     auto& clInputData = *pLocalArrayView;
-    auto& clSwapData = dvSwapInputData.begin( )->getBuffer( );
-    auto& clHistData = dvHistogramBins.begin( )->getBuffer( );
-    auto& clHistScanData = dvHistogramScanBuffer.begin( )->getBuffer( );
+    auto& clSwapData = dvSwapInputData.begin( ).getBuffer( );
+    auto& clHistData = dvHistogramBins.begin( ).getBuffer( );
+    auto& clHistScanData = dvHistogramScanBuffer.begin( ).getBuffer( );
     int swap = 0;
     if(comp(2,3))
     {
@@ -1022,8 +1026,8 @@ else
     {
         std::cout << "New buffer was allocated So copying back the buffer\n";
         //dest = clInputData.section( ext );
-        clInputData.section( ext ).copy_to( first->getBuffer( ) );
-        first->getBuffer( ).synchronize( );
+        clInputData.section( ext ).copy_to( first.getBuffer( ) );
+        first.getBuffer( ).synchronize( );
         delete pLocalArray;
     }
     delete pLocalArrayView;
@@ -1059,13 +1063,13 @@ sort_enqueue(bolt::amp::control &ctl,
         pLocalArray     = new concurrency::array<T>( modified_ext );
         pLocalArrayView = new concurrency::array_view<T>(pLocalArray->view_as( modified_ext ) );
         concurrency::array_view<T> dest = pLocalArrayView->section( ext );
-        first->getBuffer( ).copy_to( dest );
+        first.getBuffer( ).copy_to( dest );
         dest.synchronize( );
         newBuffer = true;
     }
     else
     {
-        pLocalArrayView = new concurrency::array_view<T>( first->getBuffer( ) );
+        pLocalArrayView = new concurrency::array_view<T>( first.getBuffer( ) );
     }
 
     unsigned int numGroups = szElements / mulFactor;
@@ -1076,9 +1080,9 @@ sort_enqueue(bolt::amp::control &ctl,
     device_vector< T, concurrency::array > dvHistogramScanBuffer(static_cast<size_t>(numGroups* RADICES + 10), 0 );
 
     auto& clInputData = *pLocalArrayView;
-    auto& clSwapData = dvSwapInputData.begin( )->getBuffer( );
-    auto& clHistData = dvHistogramBins.begin( )->getBuffer( );
-    auto& clHistScanData = dvHistogramScanBuffer.begin( )->getBuffer( );
+    auto& clSwapData = dvSwapInputData.begin( ).getBuffer( );
+    auto& clHistData = dvHistogramBins.begin( ).getBuffer( );
+    auto& clHistScanData = dvHistogramScanBuffer.begin( ).getBuffer( );
     int swap = 0;
     if(comp(2,3))
     {
@@ -1091,7 +1095,7 @@ sort_enqueue(bolt::amp::control &ctl,
             Concurrency::parallel_for_each( dest.extent, [dest]
                 (Concurrency::index<1> idx) restrict(amp)
                 {
-                    dest[idx] = BOLT_UINT_MAX;
+                    dest[idx] = BOLT_INT_MAX;
                 }
             );
         }
@@ -1272,7 +1276,9 @@ else
                                                       szElements,
                                                       groupSize); // \TODO - i don't need gropu size
 
-            detail::scan_enqueue( ctl, dvHistogramScanBuffer.begin( ), dvHistogramScanBuffer.end( ),dvHistogramScanBuffer.begin( ), 0, plus< T >( ) );
+            detail::scan_enqueue( ctl, dvHistogramScanBuffer.begin( ), 
+                                  dvHistogramScanBuffer.end( ),dvHistogramScanBuffer.begin( ), 
+                                  0, plus< T >( ) );
 
             AMP_scanLocalTemplate<T, RADIX>(ctl,
                                         clHistData,
@@ -1307,7 +1313,9 @@ else
                                                       szElements,
                                                       groupSize); // \TODO - i don't need gropu size
 
-            detail::scan_enqueue( ctl, dvHistogramScanBuffer.begin( ), dvHistogramScanBuffer.end( ),dvHistogramScanBuffer.begin( ), 0, plus< T >( ) );
+            detail::scan_enqueue( ctl, dvHistogramScanBuffer.begin( ), 
+                                  dvHistogramScanBuffer.end( ),dvHistogramScanBuffer.begin( ), 
+                                  0, plus< T >( ) );
 
             AMP_scanLocalTemplate<T, RADIX>(ctl,
                                         clHistData,
@@ -1327,8 +1335,8 @@ else
     {
         std::cout << "New buffer was allocated So copying back the buffer\n";
         //dest = clInputData.section( ext );
-        clInputData.section( ext ).copy_to( first->getBuffer( ) );
-        first->getBuffer( ).synchronize( );
+        clInputData.section( ext ).copy_to( first.getBuffer( ) );
+        first.getBuffer( ).synchronize( );
         delete pLocalArray;
     }
     delete pLocalArrayView;
@@ -1350,55 +1358,55 @@ void AMP_BitonicSortKernel(bolt::amp::control &ctl,
                            StrictWeakOrdering comp)
 {
     concurrency::extent< 1 > globalSizeK0( szElements/2 );
-    concurrency::tiled_extent< WGSIZE > tileK0 = globalSizeK0.tile< WGSIZE >();
+    concurrency::tiled_extent< BITONIC_SORT_WGSIZE > tileK0 = globalSizeK0.tile< BITONIC_SORT_WGSIZE >();
     concurrency::accelerator_view av = ctl.getAccelerator().default_view;
-	concurrency::parallel_for_each( av, tileK0, 
-	[
-		A,
-		passOfStage,
-		stage,
+    concurrency::parallel_for_each( av, tileK0, 
+    [
+        A,
+        passOfStage,
+        stage,
         comp
-	]
-    ( concurrency::tiled_index< WGSIZE > t_idx ) restrict(amp)
-	{
-		unsigned int  threadId = t_idx.global[ 0 ];
-		unsigned int  pairDistance = 1 << (stage - passOfStage);
-		unsigned int  blockWidth   = 2 * pairDistance;
-		unsigned int  temp;
-		unsigned int  leftId = (threadId % pairDistance) 
-							+ (threadId / pairDistance) * blockWidth;
-		bool compareResult;
+    ]
+    ( concurrency::tiled_index< BITONIC_SORT_WGSIZE > t_idx ) restrict(amp)
+    {
+        unsigned int  threadId = t_idx.global[ 0 ];
+        unsigned int  pairDistance = 1 << (stage - passOfStage);
+        unsigned int  blockWidth   = 2 * pairDistance;
+        unsigned int  temp;
+        unsigned int  leftId = (threadId % pairDistance) 
+                            + (threadId / pairDistance) * blockWidth;
+        bool compareResult;
     
-		unsigned int  rightId = leftId + pairDistance;
+        unsigned int  rightId = leftId + pairDistance;
 
-		T greater, lesser;
-		T leftElement = A[leftId];
-		T rightElement = A[rightId];
+        T greater, lesser;
+        T leftElement = A[leftId];
+        T rightElement = A[rightId];
 
-		unsigned int sameDirectionBlockWidth = 1 << stage;
+        unsigned int sameDirectionBlockWidth = 1 << stage;
     
-		if((threadId/sameDirectionBlockWidth) % 2 == 1)
-		{
-			temp = rightId;
-			rightId = leftId;
-			leftId = temp;
-		}
+        if((threadId/sameDirectionBlockWidth) % 2 == 1)
+        {
+            temp = rightId;
+            rightId = leftId;
+            leftId = temp;
+        }
 
-		compareResult = comp(leftElement, rightElement);
+        compareResult = comp(leftElement, rightElement);
 
-		if(compareResult)
-		{
-			greater = rightElement;
-			lesser  = leftElement;
-		}
-		else
-		{
-			greater = leftElement;
-			lesser  = rightElement;
-		}
-		A[leftId]  = lesser;
-		A[rightId] = greater;
-	} );// end of concurrency::parallel_for_each
+        if(compareResult)
+        {
+            greater = rightElement;
+            lesser  = leftElement;
+        }
+        else
+        {
+            greater = leftElement;
+            lesser  = rightElement;
+        }
+        A[leftId]  = lesser;
+        A[rightId] = greater;
+    } );// end of concurrency::parallel_for_each
 }
 
 template<typename DVRandomAccessIterator, typename StrictWeakOrdering> 
@@ -1409,28 +1417,31 @@ typename std::enable_if<
 sort_enqueue(bolt::amp::control &ctl, const DVRandomAccessIterator& first, const DVRandomAccessIterator& last,
 const StrictWeakOrdering& comp)
 {
-	unsigned int numStages,stage,passOfStage;
+    unsigned int numStages,stage,passOfStage;
     size_t  temp;
-	typedef typename std::iterator_traits< DVRandomAccessIterator >::value_type T;
+    typedef typename std::iterator_traits< DVRandomAccessIterator >::value_type T;
 
     int szElements = static_cast<int>( std::distance(first, last) );
 
-	if(((szElements-1) & (szElements)) != 0)
-	{
-		sort_enqueue_non_powerOf2(ctl,first,last,comp);
-		return;
-	}
+    if(((szElements-1) & (szElements)) != 0)
+    {
+        sort_enqueue_non_powerOf2(ctl,first,last,comp);
+        return;
+    }
+    /*if((szElements/2) < BITONIC_SORT_WGSIZE)
+    {
+        wgSize = (int)szElements/2;
+    }*/
+    auto&  A = first.getBuffer(); //( numElements, av );
 
-	auto&  A = first->getBuffer(); //( numElements, av );
-
-	numStages = 0;
-	for(temp = szElements; temp > 1; temp >>= 1)
-		++numStages;
+    numStages = 0;
+    for(temp = szElements; temp > 1; temp >>= 1)
+        ++numStages;
     
-	for(stage = 0; stage < numStages; ++stage)
-	{
-		for(passOfStage = 0; passOfStage < stage + 1; ++passOfStage) 
-		{
+    for(stage = 0; stage < numStages; ++stage)
+    {
+        for(passOfStage = 0; passOfStage < stage + 1; ++passOfStage) 
+        {
             //\TODO - can we remove this <T> specialization by getting the data type type from the container.
             AMP_BitonicSortKernel<T>(  ctl,
                                     A, 
@@ -1438,10 +1449,10 @@ const StrictWeakOrdering& comp)
                                     stage, 
                                     passOfStage, 
                                     comp );
-		}//end of for passStage = 0:stage-1
-	}//end of for stage = 0:numStage-1
+        }//end of for passStage = 0:stage-1
+    }//end of for stage = 0:numStage-1
 
-	return;
+    return;
 }// END of sort_enqueue
 
 template<typename DVRandomAccessIterator, typename StrictWeakOrdering>
@@ -1449,91 +1460,91 @@ void sort_enqueue_non_powerOf2(control &ctl, const DVRandomAccessIterator& first
 const StrictWeakOrdering& comp)
 {
 #if 0
-	//std::cout << "The BOLT sort routine does not support non power of 2 buffer size. Falling back to CPU std::sort" << std ::endl;
-	typedef typename std::iterator_traits< DVRandomAccessIterator >::value_type T;
-	static boost::once_flag initOnlyOnce;
-	size_t szElements = (size_t)(last - first);
+    //std::cout << "The BOLT sort routine does not support non power of 2 buffer size. Falling back to CPU std::sort" << std ::endl;
+    typedef typename std::iterator_traits< DVRandomAccessIterator >::value_type T;
+    static boost::once_flag initOnlyOnce;
+    size_t szElements = (size_t)(last - first);
 
-	//Power of 2 buffer size
-	// For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retreive the name here.
-	static std::vector< ::cl::Kernel > sortKernels;
+    //Power of 2 buffer size
+    // For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retreive the name here.
+    static std::vector< ::cl::Kernel > sortKernels;
 
-	kernelParamsSort args( TypeName< T >::get( ), TypeName< DVRandomAccessIterator >::get( ), TypeName< T >::get( ),
-	TypeName< StrictWeakOrdering >::get( ) );
+    kernelParamsSort args( TypeName< T >::get( ), TypeName< DVRandomAccessIterator >::get( ), TypeName< T >::get( ),
+    TypeName< StrictWeakOrdering >::get( ) );
 
-	std::string typeDefinitions = cl_code + ClCode< T >::get( ) + ClCode< DVRandomAccessIterator >::get( );
-	if( !boost::is_same< T, StrictWeakOrdering >::value)
-	{
-		typeDefinitions += ClCode< StrictWeakOrdering >::get( );
-	}
+    std::string typeDefinitions = cl_code + ClCode< T >::get( ) + ClCode< DVRandomAccessIterator >::get( );
+    if( !boost::is_same< T, StrictWeakOrdering >::value)
+    {
+        typeDefinitions += ClCode< StrictWeakOrdering >::get( );
+    }
 
-	//Power of 2 buffer size
+    //Power of 2 buffer size
 // For user-defined types, the user must create a TypeName trait which returns the name of the class
 //  - note use of TypeName<>::get to retreive the name here.
-	static std::vector< ::cl::Kernel > sortKernels;
-		boost::call_once( initOnlyOnce, boost::bind( CallCompiler_Sort::constructAndCompileSelectionSort, &sortKernels,
-			typeDefinitions, &args, &ctl) );
+    static std::vector< ::cl::Kernel > sortKernels;
+        boost::call_once( initOnlyOnce, boost::bind( CallCompiler_Sort::constructAndCompileSelectionSort, &sortKernels,
+            typeDefinitions, &args, &ctl) );
 
-	size_t wgSize  = sortKernels[0].getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.device( ), &l_Error );
+    size_t wgSize  = sortKernels[0].getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.device( ), &l_Error );
 
-	size_t totalWorkGroups = (szElements + wgSize)/wgSize;
-	size_t globalSize = totalWorkGroups * wgSize;
-	V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
+    size_t totalWorkGroups = (szElements + wgSize)/wgSize;
+    size_t globalSize = totalWorkGroups * wgSize;
+    V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
 
 const ::cl::Buffer& in = first.getBuffer( );
-	// ::cl::Buffer out(ctl.context(), CL_MEM_READ_WRITE, sizeof(T)*szElements);
-	control::buffPointer out = ctl.acquireBuffer( sizeof(T)*szElements );
+    // ::cl::Buffer out(ctl.context(), CL_MEM_READ_WRITE, sizeof(T)*szElements);
+    control::buffPointer out = ctl.acquireBuffer( sizeof(T)*szElements );
 
-	ALIGNED( 256 ) StrictWeakOrdering aligned_comp( comp );
+    ALIGNED( 256 ) StrictWeakOrdering aligned_comp( comp );
 // ::cl::Buffer userFunctor(ctl.context(), CL_MEM_USE_HOST_PTR, sizeof( aligned_comp ), &aligned_comp );
 control::buffPointer userFunctor = ctl.acquireBuffer( sizeof( aligned_comp ),
-									CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_comp );
+                                    CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_comp );
 
-	::cl::LocalSpaceArg loc;
-	loc.size_ = wgSize*sizeof(T);
+    ::cl::LocalSpaceArg loc;
+    loc.size_ = wgSize*sizeof(T);
 
-	V_OPENCL( sortKernels[0].setArg(0, in), "Error setting a kernel argument in" );
+    V_OPENCL( sortKernels[0].setArg(0, in), "Error setting a kernel argument in" );
 V_OPENCL( sortKernels[0].setArg(1, first.gpuPayloadSize( ), &first.gpuPayload( ) ), "Error setting a kernel argument" );
 V_OPENCL( sortKernels[0].setArg(2, *out), "Error setting a kernel argument out" );
 V_OPENCL( sortKernels[0].setArg(3, *userFunctor), "Error setting a kernel argument userFunctor" );
 V_OPENCL( sortKernels[0].setArg(4, loc), "Error setting kernel argument loc" );
 V_OPENCL( sortKernels[0].setArg(5, static_cast<cl_uint> (szElements)), "Error setting kernel argument szElements" );
-	{
-			l_Error = ctl.commandQueue().enqueueNDRangeKernel(
-					sortKernels[0],
-					::cl::NullRange,
-					::cl::NDRange(globalSize),
-					::cl::NDRange(wgSize),
-					NULL,
-					NULL);
-			V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for sort() kernel" );
-			V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
-	}
+    {
+            l_Error = ctl.commandQueue().enqueueNDRangeKernel(
+                    sortKernels[0],
+                    ::cl::NullRange,
+                    ::cl::NDRange(globalSize),
+                    ::cl::NDRange(wgSize),
+                    NULL,
+                    NULL);
+            V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for sort() kernel" );
+            V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
+    }
 
-	wgSize  = sortKernels[1].getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.device( ), &l_Error );
+    wgSize  = sortKernels[1].getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.device( ), &l_Error );
 
-	V_OPENCL( sortKernels[1].setArg(0, *out), "Error setting a kernel argument in" );
-	V_OPENCL( sortKernels[1].setArg(1, in), "Error setting a kernel argument out" );
+    V_OPENCL( sortKernels[1].setArg(0, *out), "Error setting a kernel argument in" );
+    V_OPENCL( sortKernels[1].setArg(1, in), "Error setting a kernel argument out" );
 V_OPENCL( sortKernels[1].setArg(2, first.gpuPayloadSize( ), &first.gpuPayload( ) ), "Error setting a kernel argument" );
 V_OPENCL( sortKernels[1].setArg(3, *userFunctor), "Error setting a kernel argument userFunctor" );
 V_OPENCL( sortKernels[1].setArg(4, loc), "Error setting kernel argument loc" );
 V_OPENCL( sortKernels[1].setArg(5, static_cast<cl_uint> (szElements)), "Error setting kernel argument szElements" );
-	{
-			l_Error = ctl.commandQueue().enqueueNDRangeKernel(
-					sortKernels[1],
-					::cl::NullRange,
-					::cl::NDRange(globalSize),
-					::cl::NDRange(wgSize),
-					NULL,
-					NULL);
-			V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for sort() kernel" );
-			V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
-	}
-	// Map the buffer back to the host
-	ctl.commandQueue().enqueueMapBuffer(in, true, CL_MAP_READ | CL_MAP_WRITE, 0/*offset*/, sizeof(T) * szElements, NULL, NULL, &l_Error );
-	V_OPENCL( l_Error, "Error calling map on the result buffer" );
+    {
+            l_Error = ctl.commandQueue().enqueueNDRangeKernel(
+                    sortKernels[1],
+                    ::cl::NullRange,
+                    ::cl::NDRange(globalSize),
+                    ::cl::NDRange(wgSize),
+                    NULL,
+                    NULL);
+            V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for sort() kernel" );
+            V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
+    }
+    // Map the buffer back to the host
+    ctl.commandQueue().enqueueMapBuffer(in, true, CL_MAP_READ | CL_MAP_WRITE, 0/*offset*/, sizeof(T) * szElements, NULL, NULL, &l_Error );
+    V_OPENCL( l_Error, "Error calling map on the result buffer" );
 #endif
-	return;
+    return;
 }// END of sort_enqueue_non_powerOf2
 
 }//namespace bolt::cl::detail
