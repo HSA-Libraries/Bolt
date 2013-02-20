@@ -31,10 +31,7 @@
 #include "bolt/amp/functional.h"
 #include "bolt/amp/device_vector.h"
 #include <amp.h>
-#ifdef ENABLE_TBB
-#include "tbb/parallel_sort.h"
-#include "tbb/task_scheduler_init.h"
-#endif
+
 
 #define BOLT_UINT_MAX 0xFFFFFFFFU
 #define BOLT_UINT_MIN 0x0U
@@ -129,11 +126,13 @@ void sort_pick_iterator( bolt::amp::control &ctl,
 {
     // User defined Data types are not supported with device_vector. Hence we have a static assert here.
     // The code here should be in compliant with the routine following this routine.
-    //size_t szElements = (size_t)(last - first);
     typedef typename std::iterator_traits<DVRandomAccessIterator>::value_type T;
     unsigned int szElements = static_cast< unsigned int >( std::distance( first, last ) );
     if(szElements > (1<<31))
-        throw std::exception( "AMP device vectors shall support only upto 2 power 31 elements" );
+	{
+        throw std::exception( "AMP device_vector shall support only upto 2 power 31 elements" );
+		return;
+	}
     if (szElements == 0 )
         return;
     const bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.

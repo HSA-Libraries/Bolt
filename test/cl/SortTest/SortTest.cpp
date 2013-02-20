@@ -1103,8 +1103,33 @@ int main(int argc, char* argv[])
 #include <algorithm>  // for testing against STL functions.
 #include <vector>
 
-// A Data structure defining a less than operator
+template <typename T>
+T random_gen()
+{
+    return (T)rand();
+}
 
+template <>
+int random_gen<int>()
+{
+
+    int result = rand();
+    static bool toggle = true;
+    toggle = toggle?false:true;
+    if (toggle)
+            return result;
+    else
+            return -result;
+}
+
+template <>
+unsigned int random_gen<unsigned int>()
+{
+    return rand();
+}
+
+// A Data structure defining a less than operator
+BOLT_TEMPLATE_FUNCTOR4( MyType,  int, float, double, unsigned int,
 template <typename T> 
 struct MyType { 
     T a; 
@@ -1118,128 +1143,59 @@ struct MyType {
     bool operator > (const MyType& other) const { 
         return (a > other.a);
     }
-    MyType(const MyType &other) 
+    MyType(const MyType &other)
         : a(other.a) { } 
     MyType() 
         : a(0) { } 
     MyType(T& _in) 
         : a(_in) { } 
 }; 
+);
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::less, int, MyType< int> );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::less, int, MyType< float> );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::less, int, MyType< unsigned int> );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::less, int, MyType< double> );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::greater, int, MyType< int> );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::greater, int, MyType< float> );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::greater, int, MyType< unsigned int> );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::greater, int, MyType< double> );
 
-
-BOLT_CREATE_TYPENAME(MyType<int>);
-BOLT_CREATE_CLCODE(MyType<int>, "template <typename T> struct MyType { T a; \n\nbool operator() (const MyType& lhs, const MyType& rhs) { return (lhs.a > rhs.a); } \n\nbool operator < (const MyType& other) const { return (a < other.a); }\n\n bool operator > (const MyType& other) const { return (a > other.a);} \n\n };");
-BOLT_CREATE_TYPENAME(MyType<float>);
-BOLT_CREATE_CLCODE(MyType<float>, "template <typename T> struct MyType { T a; \n\nbool operator() (const MyType& lhs, const MyType& rhs) { return (lhs.a > rhs.a); } \n\nbool operator < (const MyType& other) const { return (a < other.a); } \n\n bool operator > (const MyType& other) const { return (a > other.a);} \n\n };");
-BOLT_CREATE_TYPENAME(MyType<double>);
-BOLT_CREATE_CLCODE(MyType<double>, "template <typename T> struct MyType { T a; \n\nbool operator() (const MyType& lhs, const MyType& rhs) { return (lhs.a > rhs.a); } \n\nbool operator < (const MyType& other) const { return (a < other.a); }\n\n bool operator > (const MyType& other) const { return (a > other.a);} \n\n };");
-
-BOLT_CREATE_TYPENAME(bolt::cl::less< MyType<int> >);
 // A Data structure defining a Functor
-template <typename T>    
-struct MyFunctor{ 
-    T a; 
-    T b; 
+BOLT_TEMPLATE_FUNCTOR4( MyFunctor,  int, float, double, unsigned int,
+	template <typename T>    
+	struct MyFunctor{ 
+		T a; 
+		T b; 
 
-    bool operator() (const MyFunctor& lhs, const MyFunctor& rhs) const { 
-        return (lhs.a > rhs.a);
-    } 
-    bool operator < (const MyFunctor& other) const { 
-        return (a < other.a);
-    }
-    bool operator > (const MyFunctor& other) const { 
-        return (a > other.a);
-    }
-    MyFunctor(const MyFunctor &other) 
-        : a(other.a), b(other.b) { } 
-    MyFunctor() 
-        : a(0), b(0) { } 
-    MyFunctor(T& _in) 
-        : a(_in), b(_in) { } 
-}; 
-BOLT_CREATE_TYPENAME(MyFunctor<int>);
-BOLT_CREATE_CLCODE(MyFunctor<int>, "template<typename T> struct MyFunctor { T a; T b; \n\nbool operator() (const MyFunctor& lhs, const MyFunctor& rhs) { return (lhs.a > rhs.a); }   \n\nbool operator < (const MyFunctor& other) const { return (a < other.a); }   \n\nbool operator > (const MyFunctor& other) const { return (a > other.a);}  \n\n}; \n\n");
-BOLT_CREATE_TYPENAME(MyFunctor<float>);
-BOLT_CREATE_CLCODE(MyFunctor<float>, "template<typename T> struct MyFunctor { T a; T b; \n\nbool operator() (const MyFunctor& lhs, const MyFunctor& rhs) { return (lhs.a > rhs.a); }   \n\nbool operator < (const MyFunctor& other) const { return (a < other.a); }   \n\nbool operator > (const MyFunctor& other) const { return (a > other.a);}  \n\n}; \n\n");
-BOLT_CREATE_TYPENAME(MyFunctor<double>);
-BOLT_CREATE_CLCODE(MyFunctor<double>, "template<typename T> struct MyFunctor { T a; T b; \n\nbool operator() (const MyFunctor& lhs, const MyFunctor& rhs) { return (lhs.a > rhs.a); }   \n\nbool operator < (const MyFunctor& other) const { return (a < other.a); }   \n\nbool operator > (const MyFunctor& other) const { return (a > other.a);}  \n\n}; \n\n");
+		bool operator() (const MyFunctor& lhs, const MyFunctor& rhs) const { 
+			return (lhs.a > rhs.a);
+		} 
+		bool operator < (const MyFunctor& other) const { 
+			return (a < other.a);
+		}
+		bool operator > (const MyFunctor& other) const { 
+			return (a > other.a);
+		}
+		MyFunctor(const MyFunctor &other) 
+			: a(other.a), b(other.b) { } 
+		MyFunctor() 
+			: a(0), b(0) { } 
+		MyFunctor(T& _in) 
+			: a(_in), b(_in) { } 
+	}; 
+);
 
-template <typename T>
-bool FUNCTION (T &i,T &j) { return (i<j); }
 
-template <typename stdType>
-void UserDefinedLambdaSortTestOfLength(size_t length)
-{
-    std::vector<stdType> stdInput(length);
-    std::vector<stdType> boltInput(length);
-    std::vector<stdType>::iterator it; 
-    auto func = [](const stdType & a, const stdType & b) {  return a < b;  };
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::less, int, MyFunctor< int> );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::less, int, MyFunctor< float> );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::less, int, MyFunctor< unsigned int> );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::less, int, MyFunctor< double> );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::greater, int, MyFunctor< int> );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::greater, int, MyFunctor< float> );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::greater, int, MyFunctor< unsigned int> );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::greater, int, MyFunctor< double> );
 
-    size_t i;
-    for (i=0;i<length;i++)
-    {
-        boltInput[i]= (stdType)(length - i +2);
-        stdInput[i]= (stdType)(length - i +2);
-    }
-    
-    bolt::cl::sort(boltInput.begin(), boltInput.end(), func," [](const stdType & a, const stdType & b) {  return a < b;  };");
-    std::sort(stdInput.begin(), stdInput.end(),func); 
-    for (i=0; i<length; i++)
-    {
-        if(stdInput[i] == boltInput[i])
-            continue;
-        else
-            break;
-    }
-    if (i==length)
-        std::cout << "Test Passed" <<std::endl;
-    else 
-        std::cout << "Test Failed i = " << i <<std::endl;
-}
 
-// This is a test case for handling function pointers
-// OpenCL will not handle this so commented it out completely
-#if 0
-template <typename stdType>
-void UserDefinedFunctionSortTestOfLength(size_t length)
-{
-    std::vector<stdType> stdInput(length);
-    std::vector<stdType> boltInput(length);
-
-    typedef bool (*MyFunction)(stdType &i,stdType &j);
-    size_t i;
-    for (i=0;i<length;i++)
-    {
-        boltInput[i] = (stdType)(length - i +2);
-        stdInput[i]  = (stdType)(length - i +2);
-    }
-    MyFunction function = FUNCTION<stdType>;
-    std::string functionString("bool FUNCTION(" + std::string(typeid(stdType).name()) + " in1, " + std::string(typeid(stdType).name()) + " in2) { return (in1 < in2); }");
-    bolt::cl::sort(boltInput.begin(), boltInput.end(), functionString);
-    std::sort(stdInput.begin(), stdInput.end(), function);
-    for (i=0; i<length; i++)
-    {
-        if(stdInput[i] == boltInput[i])
-            continue;
-        else
-            break;
-    }
-    if (i==length)
-        std::cout << "Test Passed" <<std::endl;
-    else
-        std::cout << "Test Failed i = " << i <<std::endl;
-}
-#endif
-
-BOLT_CREATE_TYPENAME(bolt::cl::greater< MyType<int> >);
-BOLT_CREATE_TYPENAME(bolt::cl::greater< MyType<float> >);
-BOLT_CREATE_TYPENAME(bolt::cl::greater< MyType<double> >);
-BOLT_CREATE_TYPENAME(bolt::cl::greater< MyFunctor<int> >);
-BOLT_CREATE_TYPENAME(bolt::cl::greater< MyFunctor<float> >);
-BOLT_CREATE_TYPENAME(bolt::cl::greater< MyFunctor<double> >);
-BOLT_CREATE_TYPENAME(bolt::cl::device_vector< bolt::cl::greater<MyFunctor<int>> >::iterator );
-BOLT_CREATE_TYPENAME(bolt::cl::device_vector< bolt::cl::greater<MyFunctor<float>> >::iterator );
-BOLT_CREATE_TYPENAME(bolt::cl::device_vector< bolt::cl::greater<MyFunctor<double>> >::iterator );
 template <typename stdType>
 void UserDefinedBoltFunctorSortTestOfLength(size_t length)
 {
@@ -1255,7 +1211,7 @@ void UserDefinedBoltFunctorSortTestOfLength(size_t length)
         stdInput[i].a  = (stdType)(i +2);
     }
     
-    bolt::cl::sort(boltInput.begin(), boltInput.end(),bolt::cl::greater<myfunctor>());
+    bolt::cl::sort(boltInput.begin(), boltInput.end(),bolt::cl::greater<MyFunctor<stdType>>());
     std::sort(stdInput.begin(), stdInput.end(),bolt::cl::greater<myfunctor>());
 
     for (i=0; i<length; i++)
@@ -1313,8 +1269,8 @@ void UserDefinedObjectSortTestOfLength(size_t length)
     size_t i;
     for (i=0;i<length;i++)
     {
-        boltInput[i].a = (stdType)(i +2);
-        stdInput[i].a  = (stdType)(i +2);
+        boltInput[i].a = random_gen<stdType>();
+        stdInput[i].a  = boltInput[i].a;
     }
     
     bolt::cl::sort(boltInput.begin(), boltInput.end(),bolt::cl::greater<mytype>());
@@ -1343,24 +1299,17 @@ void BasicSortTestOfLength(size_t length)
     
     //Ascending Sort 
     size_t i;
-#if 0
+
     for (i=0;i<length;i++)
     {
-        boltInput[i]= ((T)(stdInput[i]) * 0xAB789F) & ((1<<31) - 1);
-        if(i%2)
-            boltInput[i] = - boltInput[i];
+        boltInput[i]= random_gen<T>();
         stdInput[i] = boltInput[i];
-        //printf ("\n%d",stdInput[i]);
     }
     stdBackup = stdInput;
-    //printf("\n");
     
-    bolt::cl::sort(boltInput.begin(), boltInput.end()/*, bolt::cl::greater<T>()*/);
-    std::sort(stdInput.begin(), stdInput.end()/*, bolt::cl::greater<T>()*/);
-    /*for (i=0; i<length; i++)
-    {
-        std::cout << i << " : " << stdInput[i] << " , " << boltInput[i] << std::endl;
-    }*/
+    bolt::cl::sort(boltInput.begin(), boltInput.end());
+    std::sort(stdInput.begin(), stdInput.end());
+
     for (i=0; i<length; i++)
     {
         if(stdInput[i] == boltInput[i])
@@ -1383,7 +1332,7 @@ void BasicSortTestOfLength(size_t length)
                 printf("%5x -- %8x -- %8x\n",(i+j),stdInput[i+j],boltInput[i+j]);
         }
     }
-#endif
+
 
 #if 1
     //Descending Sort 
@@ -1392,14 +1341,11 @@ void BasicSortTestOfLength(size_t length)
     {
         boltInput[i]= (T)(stdInput[i]);
     }
-    //printf("\n");
+
 
     bolt::cl::sort(boltInput.begin(), boltInput.end(), bolt::cl::greater<T>());
     std::sort(stdInput.begin(), stdInput.end(), bolt::cl::greater<T>());
-    /*for (i=0; i<length; i++)
-    {
-        std::cout << i << " : " << stdInput[i] << " , " << boltInput[i] << std::endl;
-    }*/
+
     for (i=0; i<length; i++)
     {
         if(stdInput[i] == boltInput[i])
@@ -1425,63 +1371,6 @@ void BasicSortTestOfLength(size_t length)
 #endif
 
 }
-
-template <typename T>
-void BasicSortTestOfLengthWithDeviceVector(size_t length)
-{
-    std::vector<T> stdInput(length);
-    bolt::cl::device_vector<T> boltInput(length);
-
-    size_t i;
-    for (i=0;i<length;i++)
-    {
-        boltInput[i]= (T)(length - i +2);
-        stdInput[i]= (T)(length - i +2);
-    }
-    
-    bolt::cl::sort(boltInput.begin(), boltInput.end());
-    std::sort(stdInput.begin(), stdInput.end());
-    for (i=0; i<length; i++)
-    {
-        if(stdInput[i] == boltInput[i])
-            continue;
-        else
-            break;
-    }
-    if (i==length)
-        std::cout << "Test Passed" <<std::endl;
-    else
-        std::cout << "Test Failed i = " << i <<std::endl;
-}
-
-template <typename T>
-void BasicSortTestWithBoltFunctorOfLengthWithDeviceVector(size_t length)
-{
-    std::vector<T> stdInput(length);
-    bolt::cl::device_vector<T> boltInput(length);
-
-    size_t i;
-    for (i=0;i<length;i++)
-    {
-        boltInput[i]= (T)(i +2);
-        stdInput[i]= (T)(i +2);
-    }
-    
-    bolt::cl::sort(boltInput.begin(), boltInput.end(), bolt::cl::greater<T>());
-    std::sort(stdInput.begin(), stdInput.end(), bolt::cl::greater<T>());
-    for (i=0; i<length; i++)
-    {
-        if(stdInput[i] == boltInput[i])
-            continue;
-        else
-            break;
-    }
-    if (i==length)
-        std::cout << "Test Passed" <<std::endl;
-    else 
-        std::cout << "Test Failed i = " << i <<std::endl;
-}
-
 
 template <typename stdType>
 void UDDSortTestOfLengthWithDeviceVector(size_t length)
@@ -1621,103 +1510,23 @@ int main(int argc, char* argv[])
     BasicSortTestOfLength<unsigned int>(2048);
     BasicSortTestOfLength<unsigned int>(2560);
 #endif
-#if 0
-    std::vector<int> input(1024);
-    std::generate(input.begin(), input.end(), rand);
-    bolt::cl::sort( input.begin(), input.end(), bolt::cl::greater<int>());
+#if 1
 
-    int a[10] = {2, 9, 3, 7, 5, 6, 3, 8, 3, 4};
-    bolt::cl::sort( a, a+10, bolt::cl::greater<int>());
     //Test the non Power Of 2 Buffer size 
     //The following two commented codes does not run. It will throw and cl::Error exception
-    //BasicSortTestOfLengthWithDeviceVector<int>(254);
-    //BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<int>(254); 
+    UserDefinedBoltFunctorSortTestOfLength<int>(256);
+	UserDefinedBoltFunctorSortTestOfLength<float>(256);
     UserDefinedFunctorSortTestOfLength<int>(254);
-    UserDefinedBoltFunctorSortTestOfLength<int>(254);
     UserDefinedObjectSortTestOfLength<int>(254);
-    BasicSortTestOfLength<int>(254);
 
 #endif
-    //The following two are not working because device_vector support is not there.
-    //UDDSortTestOfLengthWithDeviceVector<int>(256);
-    //UDDSortTestWithBoltFunctorOfLengthWithDeviceVector<int>(256);
+    
+    UDDSortTestOfLengthWithDeviceVector<int>(256);
+    UDDSortTestWithBoltFunctorOfLengthWithDeviceVector<int>(256);
 
 #define TEST_ALL 1
 //#define TEST_DOUBLE 1
 
-#if (TEST_ALL == 1)
-    std::cout << "Testing BasicSortTestWithBoltFunctorOfLengthWithDeviceVector\n";
-    BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<int>(8);   
-    BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<int>(16);    
-    BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<int>(32);   
-    BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<int>(64);  
-    BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<int>(128);  
-    BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<int>(256);   
-    BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<int>(512);    
-    BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<int>(1024);    
-    BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<int>(2048);    
-    //BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<int>(1048576); 
-    BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<float>(8);   
-    BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<float>(16);    
-    BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<float>(32);   
-    BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<float>(64);  
-    BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<float>(128);  
-    BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<float>(256);
-    BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<float>(512);
-    BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<float>(1024);
-    BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<float>(2048);
-    //BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<float>(1048576);
-#if (TEST_DOUBLE == 1)
-    BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<double>(8);   
-    BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<double>(16);    
-    BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<double>(32);   
-    BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<double>(64);  
-    BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<double>(128);  
-    BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<double>(256);
-    BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<double>(512);
-    BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<double>(1024);
-    BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<double>(2048);
-    //BasicSortTestWithBoltFunctorOfLengthWithDeviceVector<double>(1048576); 
-#endif
-#endif
-
-
-#if (TEST_ALL == 1)
-//#if 0
-    std::cout << "Testing BasicSortTestOfLengthWithDeviceVector\n";
-    BasicSortTestOfLengthWithDeviceVector<int>(8);   
-    BasicSortTestOfLengthWithDeviceVector<int>(16);   
-    BasicSortTestOfLengthWithDeviceVector<int>(32);   
-    BasicSortTestOfLengthWithDeviceVector<int>(64);   
-    BasicSortTestOfLengthWithDeviceVector<int>(128);   
-    BasicSortTestOfLengthWithDeviceVector<int>(256);   
-    BasicSortTestOfLengthWithDeviceVector<int>(512);    
-    BasicSortTestOfLengthWithDeviceVector<int>(1024);    
-    BasicSortTestOfLengthWithDeviceVector<int>(2048);    
-    //BasicSortTestOfLengthWithDeviceVector<int>(1048576); 
-    BasicSortTestOfLengthWithDeviceVector<float>(8);   
-    BasicSortTestOfLengthWithDeviceVector<float>(16);   
-    BasicSortTestOfLengthWithDeviceVector<float>(32);   
-    BasicSortTestOfLengthWithDeviceVector<float>(64);   
-    BasicSortTestOfLengthWithDeviceVector<float>(128);   
-    BasicSortTestOfLengthWithDeviceVector<float>(256);
-    BasicSortTestOfLengthWithDeviceVector<float>(512);
-    BasicSortTestOfLengthWithDeviceVector<float>(1024);
-    BasicSortTestOfLengthWithDeviceVector<float>(2048);
-    //BasicSortTestOfLengthWithDeviceVector<float>(1048576);
-#if (TEST_DOUBLE == 1)
-    BasicSortTestOfLengthWithDeviceVector<double>(8);   
-    BasicSortTestOfLengthWithDeviceVector<double>(16);   
-    BasicSortTestOfLengthWithDeviceVector<double>(32);   
-    BasicSortTestOfLengthWithDeviceVector<double>(64);   
-    BasicSortTestOfLengthWithDeviceVector<double>(128);   
-    BasicSortTestOfLengthWithDeviceVector<double>(256);
-    BasicSortTestOfLengthWithDeviceVector<double>(512);
-    BasicSortTestOfLengthWithDeviceVector<double>(1024);
-    BasicSortTestOfLengthWithDeviceVector<double>(2048);
-    //BasicSortTestOfLengthWithDeviceVector<double>(1048576); 
-#endif
-#endif
 
 #if (TEST_ALL == 1)
     std::cout << "Testing UserDefinedBoltFunctorSortTestOfLength\n";
@@ -1778,7 +1587,7 @@ int main(int argc, char* argv[])
     UserDefinedFunctorSortTestOfLength<float>(2048);
     UserDefinedFunctorSortTestOfLength<float>(1048576); 
 
-#if (TEST_DOUBLE == 1)     
+#if (TEST_DOUBLE == 0)     
     UserDefinedFunctorSortTestOfLength<double>(8);   
     UserDefinedFunctorSortTestOfLength<double>(16);    
     UserDefinedFunctorSortTestOfLength<double>(32);    
@@ -1857,11 +1666,11 @@ int main(int argc, char* argv[])
     BasicSortTestOfLength<int>(1024);
     BasicSortTestOfLength<int>(2048);
     BasicSortTestOfLength<int>(1048576);
-    //BasicSortTestOfLength<float>(256);
-    //BasicSortTestOfLength<float>(512);
-    //BasicSortTestOfLength<float>(1024);
-    //BasicSortTestOfLength<float>(2048);
-    //BasicSortTestOfLength<float>(1048576);
+    BasicSortTestOfLength<float>(256);
+    BasicSortTestOfLength<float>(512);
+    BasicSortTestOfLength<float>(1024);
+    BasicSortTestOfLength<float>(2048);
+    BasicSortTestOfLength<float>(1048576);
 
 #if (TEST_DOUBLE == 1) 
     BasicSortTestOfLength<double>(256);
