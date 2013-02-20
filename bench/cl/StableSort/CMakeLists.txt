@@ -29,10 +29,11 @@ set( clBolt.Bench.StableSort.Files
 
 # Include standard OpenCL headers
 include_directories( ${OPENCL_INCLUDE_DIRS} )
+add_definitions( "-DENABLE_TBB" )
 
 add_executable( clBolt.Bench.StableSort ${clBolt.Bench.StableSort.Files} )
 
-target_link_libraries( clBolt.Bench.StableSort ${Boost_LIBRARIES} clBolt.Runtime )
+target_link_libraries( clBolt.Bench.StableSort ${Boost_LIBRARIES} ${TBB_LIBRARIES} clBolt.Runtime )
 
 set_target_properties( clBolt.Bench.StableSort PROPERTIES VERSION ${Bolt_VERSION} )
 set_target_properties( clBolt.Bench.StableSort PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )

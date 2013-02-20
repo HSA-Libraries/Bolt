@@ -73,6 +73,7 @@ int main( int argc, char* argv[] )
     bool print_clInfo = false;
     bool hostMemory = false;
     bool serial = false;
+    bool multi = false;
     bool validate = false;
     bool compareSerial = false;
     std::string filename;
@@ -93,8 +94,9 @@ int main( int argc, char* argv[] )
             ( "gpu,g",          "Report only OpenCL GPU devices" )
             ( "cpu,c",          "Report only OpenCL CPU devices" )
             ( "all,a",          "Report all OpenCL devices" )
-            ( "reference-serial,r", "Run reference serial algorithm (std::stable_sort)." )
-            ( "hostMemory,m",   "Allocate vectors in host memory, otherwise device memory" )
+            ( "single,s",       "Run reference serial algorithm (std::stable_sort)." )
+            ( "multi,m",        "Run multicore TBB tbb::parallel_sort" )
+            ( "userMemory,u",   "Allocate vectors in host memory, otherwise device memory" )
             ( "platform,p",     po::value< cl_uint >( &userPlatform )->default_value( 0 ),
                 "Specify the platform under test using the index reported by -q flag" )
             ( "device,d",       po::value< cl_uint >( &userDevice )->default_value( 0 ),
@@ -105,13 +107,13 @@ int main( int argc, char* argv[] )
             ( "iterations,i",   po::value< size_t >( &iterations )->default_value( 1 ),
                 "Number of samples in timing loop" )
             ( "validate,v",     "Validate Bolt sort against serial CPU sort" )
-            ( "compare-serial",     "Compare speedup Bolt sort against serial CPU sort" )
+            //( "serial",         "Use the STL std::sort" )
             ( "filename,f",     po::value< std::string >( &filename )->default_value( "bench.xml" ),
                 "Name of output file" )
             ( "throw-away",     po::value< size_t >( &numThrowAway )->default_value( 0 ),
                 "Number of trials to skip averaging" )
-            ( "test,t",         po::value< size_t >( &algo )->default_value( 1 ), 
-                "Algorithm used [1,2,3,4]  1:SORT_BOLT UINT, 2:SORT_BOLT INT, 3:SORT_AMP_SHOC, 4:STD SORT" )
+            //( "test,t",         po::value< size_t >( &algo )->default_value( 1 ), 
+            //    "Algorithm used [1,2,3,4]  1:SORT_BOLT UINT, 2:SORT_BOLT INT, 3:SORT_AMP_SHOC, 4:STD SORT" )
             ;
 
         po::variables_map vm;
@@ -157,14 +159,20 @@ int main( int argc, char* argv[] )
             deviceType  = CL_DEVICE_TYPE_ALL;
         }
 
-        if( vm.count( "hostMemory" ) )
+        if( vm.count( "single" ) )
         {
+            serial = true;
             hostMemory = true;
         }
 
-        if( vm.count( "reference-serial" ) )
+        if( vm.count( "multi" ) )
         {
-            serial = true;
+            multi = true;
+            hostMemory = true;
+        }
+
+        if( vm.count( "userMemory" ) )
+        {
             hostMemory = true;
         }
 
@@ -173,7 +181,7 @@ int main( int argc, char* argv[] )
             validate = true;
         }
 
-        if( vm.count( "compare-serial" ) )
+        if( vm.count( "serial" ) )
         {
             compareSerial = true;
         }
@@ -195,6 +203,11 @@ int main( int argc, char* argv[] )
     if( serial )
     {
         ctrl.forceRunMode( bolt::cl::control::SerialCpu );  // choose serial std::scan
+    }
+
+    if( multi )
+    {
+        ctrl.forceRunMode( bolt::cl::control::MultiCoreCpu );  // choose tbb tbb::parallel_scan
     }
 
     // Platform vector contains all available platforms on system

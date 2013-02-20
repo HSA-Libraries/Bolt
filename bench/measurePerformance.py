@@ -79,6 +79,12 @@ parser.add_argument('--test',
 parser.add_argument('--backend',
     dest='backend', default='cl', choices=backEndValues,
     help='Which Bolt backend to use')
+parser.add_argument('--single',
+    dest='single', action="store_true",
+    help='Execute single threaded CPU benchmarks')
+parser.add_argument('--multi',
+    dest='multi', action="store_true",
+    help='Execute multi threaded CPU benchmarks')
 
 args = parser.parse_args()
 
@@ -320,6 +326,11 @@ for params in test_combinations:
     if args.library == 'sort':
         arguments.append( '-t' )
         arguments.append( str( test ) )
+    if args.single == True:
+        arguments.append( '-s' )
+    if args.multi == True:
+        arguments.append( '-m' )
+        
     #    arguments.append( '-m' )
 
     writeline = True

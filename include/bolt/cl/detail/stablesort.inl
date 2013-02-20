@@ -329,11 +329,10 @@ void stablesort_pick_iterator( control &ctl,
 
     const bolt::cl::control::e_RunMode runMode = ctl.forceRunMode();  // could be dynamic choice some day.
     if ((runMode == bolt::cl::control::SerialCpu) || (szElements < WGSIZE)) {
-        std::sort(first, last, comp);
+        std::stable_sort( first, last, comp );
         return;
     } else if (runMode == bolt::cl::control::MultiCoreCpu) {
-#ifdef ENABLE_TBB
-        std::cout << "The MultiCoreCpu version of sort is enabled with TBB. " << std ::endl;
+#if defined( ENABLE_TBB )
         tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
         tbb::parallel_sort(first,last, comp);
 #else
