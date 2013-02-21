@@ -55,9 +55,7 @@ reduce_by_key(
     BinaryFunction binary_op,
     const std::string& user_code )
 {
-    //typedef std::iterator_traits<OutputIterator1>::value_type KeyOType;
     control& ctl = control::getDefault();
-    //KeyOType init; memset(&init, 0, sizeof(KeyOType) );
     return detail::reduce_by_key_detect_random_access(
         ctl,
         keys_first,
@@ -90,7 +88,6 @@ reduce_by_key(
 {
     typedef std::iterator_traits<OutputIterator2>::value_type ValOType;
     control& ctl = control::getDefault();
-    //KeyOType init; memset(&init, 0, sizeof(KeyOType) );
     plus<ValOType> binary_op;
     return detail::reduce_by_key_detect_random_access(
         ctl,
@@ -123,7 +120,6 @@ reduce_by_key(
     typedef std::iterator_traits<InputIterator1>::value_type kType;
     typedef std::iterator_traits<OutputIterator2>::value_type ValOType;
     control& ctl = control::getDefault();
-    //KeyOType init; memset(&init, 0, sizeof(KeyOType) );
     equal_to <kType> binary_pred;
     plus <ValOType> binary_op;
     return detail::reduce_by_key_detect_random_access(
@@ -253,7 +249,7 @@ namespace detail
 /*!
 *   \internal
 *   \addtogroup detail
-*   \ingroup scan
+*   \ingroup reduction
 *   \{
 */
     enum typeName {e_kType, e_vType, e_koType, e_voType ,e_BinaryPredicate, e_BinaryFunction};
@@ -261,11 +257,11 @@ namespace detail
 /***********************************************************************************************************************
  * Kernel Template Specializer
  **********************************************************************************************************************/
-class ScanByKey_KernelTemplateSpecializer : public KernelTemplateSpecializer
+class ReduceByKey_KernelTemplateSpecializer : public KernelTemplateSpecializer
 {
     public:
 
-    ScanByKey_KernelTemplateSpecializer() : KernelTemplateSpecializer()
+    ReduceByKey_KernelTemplateSpecializer() : KernelTemplateSpecializer()
     {
         addKernelName("perBlockScanByKey");
         addKernelName("intraBlockInclusiveScanByKey");
@@ -503,13 +499,13 @@ reduce_by_key_pick_iterator(
     if( runMode == bolt::cl::control::SerialCpu )
     {
         //  TODO:  Need access to the device_vector .data method to get a host pointer
-        throw ::cl::Error( CL_INVALID_DEVICE, "Scan device_vector CPU device not implemented" );
+        throw ::cl::Error( CL_INVALID_DEVICE, "ReduceByKey device_vector CPU device not implemented" );
         return void;
     }
     else if( runMode == bolt::cl::control::MultiCoreCpu )
     {
         //  TODO:  Need access to the device_vector .data method to get a host pointer
-        throw ::cl::Error( CL_INVALID_DEVICE, "Scan device_vector CPU device not implemented" );
+        throw ::cl::Error( CL_INVALID_DEVICE, "ReduceByKey device_vector CPU device not implemented" );
         return void;
     }
 
@@ -522,7 +518,7 @@ reduce_by_key_pick_iterator(
 }
 
 
-//  All calls to scan_by_key end up here, unless an exception was thrown
+//  All calls to reduce_by_key end up here, unless an exception was thrown
 //  This is the function that sets up the kernels to compile (once only) and execute
 template<
     typename DVInputIterator1,
@@ -602,7 +598,7 @@ reduce_by_key_enqueue(
     /**********************************************************************************
      * Request Compiled Kernels
      *********************************************************************************/
-    ScanByKey_KernelTemplateSpecializer ts_kts;
+    ReduceByKey_KernelTemplateSpecializer ts_kts;
     std::vector< ::cl::Kernel > kernels = bolt::cl::getKernels(
         ctl,
         typeNames,
@@ -614,7 +610,7 @@ reduce_by_key_enqueue(
 
     // for profiling
     ::cl::Event kernel0Event, kernel1Event, kernel2Event, kernelAEvent, kernel3Event;
-    //cl_uint doExclusiveScan = inclusive ? 0 : 1;
+
     // Set up shape of launch grid and buffers:
     int computeUnits     = ctl.device( ).getInfo< CL_DEVICE_MAX_COMPUTE_UNITS >( );
     int wgPerComputeUnit =  ctl.wgPerComputeUnit( );
@@ -692,7 +688,7 @@ reduce_by_key_enqueue(
     }
     catch( const ::cl::Error& e)
     {
-        std::cerr << "::cl::enqueueNDRangeKernel( 0 ) in bolt::cl::scan_by_key_enqueue()" << std::endl;
+        std::cerr << "::cl::enqueueNDRangeKernel( 0 ) in bolt::cl::reduce_by_key_enqueue()" << std::endl;
         std::cerr << "Error Code:   " << clErrorStringA(e.err()) << " (" << e.err() << ")" << std::endl;
         std::cerr << "File:         " << __FILE__ << ", line " << __LINE__ << std::endl;
         std::cerr << "Error String: " << e.what() << std::endl;
@@ -725,7 +721,7 @@ reduce_by_key_enqueue(
     }
     catch( const ::cl::Error& e)
     {
-        std::cerr << "::cl::enqueueNDRangeKernel( 1 ) in bolt::cl::scan_by_key_enqueue()" << std::endl;
+        std::cerr << "::cl::enqueueNDRangeKernel( 1 ) in bolt::cl::reduce_by_key_enqueue()" << std::endl;
         std::cerr << "Error Code:   " << clErrorStringA(e.err()) << " (" << e.err() << ")" << std::endl;
         std::cerr << "File:         " << __FILE__ << ", line " << __LINE__ << std::endl;
         std::cerr << "Error String: " << e.what() << std::endl;
@@ -783,7 +779,7 @@ reduce_by_key_enqueue(
     }
     catch( const ::cl::Error& e)
     {
-        std::cerr << "::cl::enqueueNDRangeKernel( 2 ) in bolt::cl::scan_by_key_enqueue()" << std::endl;
+        std::cerr << "::cl::enqueueNDRangeKernel( 2 ) in bolt::cl::reduce_by_key_enqueue()" << std::endl;
         std::cerr << "Error Code:   " << clErrorStringA(e.err()) << " (" << e.err() << ")" << std::endl;
         std::cerr << "File:         " << __FILE__ << ", line " << __LINE__ << std::endl;
         std::cerr << "Error String: " << e.what() << std::endl;
@@ -905,7 +901,7 @@ reduce_by_key_enqueue(
     }
     catch( const ::cl::Error& e)
     {
-        std::cerr << "::cl::enqueueNDRangeKernel( 3 ) in bolt::cl::scan_by_key_enqueue()" << std::endl;
+        std::cerr << "::cl::enqueueNDRangeKernel( 3 ) in bolt::cl::reduce_by_key_enqueue()" << std::endl;
         std::cerr << "Error Code:   " << clErrorStringA(e.err()) << " (" << e.err() << ")" << std::endl;
         std::cerr << "File:         " << __FILE__ << ", line " << __LINE__ << std::endl;
         std::cerr << "Error String: " << e.what() << std::endl;

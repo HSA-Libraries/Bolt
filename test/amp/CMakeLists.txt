@@ -47,6 +47,7 @@ include_directories(
     ${OPENCL_INCLUDE_DIRS}) 
 # include_directories( ${BOLT_CL_TEST_DIR} )
 
+add_subdirectory( CountTest )
 add_subdirectory( ReduceTest )
 add_subdirectory( ScanTest )
 add_subdirectory( SortTest )
