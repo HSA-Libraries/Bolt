@@ -601,7 +601,8 @@ class ScanByKey_KernelTemplateSpecializer : public KernelTemplateSpecializer
 
 
 #ifdef ENABLE_TBB
-      template <typename T, typename InputIterator1, typename InputIterator2, typename OutputIterator, typename BinaryFunction, typename BinaryPredicate>
+      template <typename T, typename InputIterator1, typename InputIterator2, typename OutputIterator, 
+                 typename BinaryFunction, typename BinaryPredicate>
       struct ScanKey_tbb{
           typedef typename std::iterator_traits< OutputIterator >::value_type oType;
           oType sum;
@@ -612,7 +613,7 @@ class ScanByKey_KernelTemplateSpecializer : public KernelTemplateSpecializer
           const BinaryFunction binary_op;
           const BinaryPredicate binary_pred;
           const bool inclusive;
-          bool flag;
+          bool flag, pre_flag;
           public:
           ScanKey_tbb() : sum(0) {}
           ScanKey_tbb( InputIterator1&  _first,
@@ -622,14 +623,14 @@ class ScanByKey_KernelTemplateSpecializer : public KernelTemplateSpecializer
             const BinaryPredicate &_pred,
             const bool& _incl,
             const oType &init) : first_key(_first), first_value(first_val), result(_result), binary_op(_opr), binary_pred(_pred),
-                             inclusive(_incl), sum(init), start(init), flag(FALSE){}
+                             inclusive(_incl), start(init), flag(FALSE), pre_flag(TRUE){}
           oType get_sum() const {return sum;}
           template<typename Tag>
           void operator()( const tbb::blocked_range<int>& r, Tag ) {
               oType temp = sum;
               flag=FALSE;
-              for( int i=r.begin(),count = 0; i<r.end(); ++i,++count ) {
-                  if( Tag::is_final_scan() ) {
+              for( int i=r.begin(); i<r.end(); ++i ) {
+                 if( Tag::is_final_scan() ) {
                      if(!inclusive){
                           if( i==0){
                              *(result + i) = start;
@@ -657,9 +658,13 @@ class ScanByKey_KernelTemplateSpecializer : public KernelTemplateSpecializer
                         temp = *(first_value+i);
                      }
                      *(result + i) = temp;
-                     continue;
                  }
-                 if(binary_pred(*(first_key+i), *(first_key +i - 1)))
+                 else if(pre_flag){
+                   temp = *(first_value+i);
+                   pre_flag = FALSE;
+
+                 }
+                 else if(binary_pred(*(first_key+i), *(first_key +i - 1)))
                      temp = binary_op(temp, *(first_value+i));
                  else if (!inclusive){
                      flag = TRUE;
@@ -673,7 +678,7 @@ class ScanByKey_KernelTemplateSpecializer : public KernelTemplateSpecializer
              sum = temp;
           }
           ScanKey_tbb( ScanKey_tbb& b, tbb::split):first_key(b.first_key),result(b.result),first_value(b.first_value),
-                                                   inclusive(b.inclusive),sum(b.start),start(b.start){}
+                                                   inclusive(b.inclusive),start(b.start),pre_flag(TRUE){}
           void reverse_join( ScanKey_tbb& a ) {
             if(!flag)
                 sum = binary_op(a.sum,sum);
@@ -791,10 +796,9 @@ scan_by_key_pick_iterator(
   else if(runMode == bolt::cl::control::MultiCoreCpu)
   {
 #ifdef ENABLE_TBB
-          std::cout << "The MultiCoreCpu version of inclusive scan uses TBB." << std ::endl;
           tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
           ScanKey_tbb<T, InputIterator1, InputIterator2, OutputIterator, BinaryFunction, BinaryPredicate> tbbkey_scan((InputIterator1 &)firstKey,
-            (InputIterator2&) firstValue,(OutputIterator &)result, binary_funct, binary_pred, inclusive, (oType)init);
+            (InputIterator2&) firstValue,(OutputIterator &)result, binary_funct, binary_pred, inclusive, init);
           tbb::parallel_scan( tbb::blocked_range<int>(  0, static_cast< int >( std::distance( firstKey, lastKey ))), tbbkey_scan, tbb::auto_partitioner());
           return tbbkey_scan.result;
 #else

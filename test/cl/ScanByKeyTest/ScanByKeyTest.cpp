@@ -565,7 +565,7 @@ TEST( equalValMult, iValues )
 TEST(InclusiveScanByKey, MulticoreInclUdd)
 {
     //setup keys
-    int length = 1<<20;
+    int length = 1<<24;
     std::vector< uddtM2 > keys( length, identityMixM2);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
@@ -735,7 +735,7 @@ TEST(ExclusiveScanByKey, MulticoreExclFloat)
 TEST(ExclusiveScanByKey, MulticoreExclDouble)
 {
     //setup keys
-    int length = 1<<20;
+    int length = 1<<24;
     std::vector< int > keys( length);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
@@ -776,7 +776,7 @@ TEST(ExclusiveScanByKey, MulticoreExclDouble)
 TEST(ExclusiveScanByKey, MulticoreExclUdd)
 {
     //setup keys
-    int length = 1<<20;
+    int length = 1<<24;
     std::vector< uddtM2 > keys( length, identityMixM2);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
