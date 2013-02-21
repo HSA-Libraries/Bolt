@@ -185,20 +185,20 @@ void simpleReduce_TestSerial(int aSize)
 };
 
 
-void simpleReduce_countingiterator(int start,int size)
+void simpleReduce_countingiterator(float start,int size)
 {
 
-    bolt::cl::counting_iterator<int> first(start);
-    bolt::cl::counting_iterator<int> last = first +  size;
+    bolt::cl::counting_iterator<float> first(start);
+    bolt::cl::counting_iterator<float> last = first +  size;
 
-    std::vector<int> a(size);
+    std::vector<float> a(size);
 
     for (int i=0; i < size; i++) {
         a[i] = i+start;
     };
     
-    int stlReduce = std::accumulate(a.begin(), a.end(), 0);
-    int boltReduce = bolt::cl::reduce(first, last, 0);
+    float stlReduce = std::accumulate(a.begin(), a.end(), 0.0F);
+    float boltReduce = bolt::cl::reduce(first, last, 0.0F);
 
     checkResult("TestSerial", stlReduce, boltReduce);
 };
@@ -237,7 +237,7 @@ int _tmain(int argc, _TCHAR* argv[])
 
     simpleReduce_TestSerial(1000);
 
-    simpleReduce_countingiterator(20,10);
+    simpleReduce_countingiterator(20.05F,10);
     
     //simpleReduce_TestControl(1024000, numIters, 1); // may fail on systems with only one GPU installed.
 

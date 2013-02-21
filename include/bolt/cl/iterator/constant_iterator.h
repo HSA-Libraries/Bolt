@@ -39,7 +39,7 @@ namespace cl {
         public:
             struct Payload
             {
-                typename iterator_facade::difference_type m_Value;
+                typename value_type m_Value;
             };
 
             //  Basic constructor requires a reference to the container and a positional element
@@ -178,7 +178,7 @@ namespace cl {
                 return m_constValue; \n
             } \n
 
-            size_type m_constValue; \n
+            value_type m_constValue; \n
         }; \n
     );
 

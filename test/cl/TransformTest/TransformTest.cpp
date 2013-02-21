@@ -1290,6 +1290,34 @@ TEST(simple1,counting)
     cmpArrays( stdOutput, boltOutput, 1024 );
 }
 
+TEST(cl_const_iter_transformBoltClVectFloat, addIterFloatValues){
+	int size = 10;
+	float myConstValueF = 1.125f;
+	bolt::cl::plus<float> addKaro;
+	bolt::cl::device_vector<float> myDevVect(size);
+	
+	for (int i = 0; i < size; i++){
+		myDevVect[i] = (float)i + 1.0f;
+	}
+	
+	for (int i = 0; i<size; ++i){
+		std::cout.setf(std::ios::fixed);
+		std::cout<<std::setprecision(3)<<myDevVect[i]<<" ";
+	}
+
+	bolt::cl::constant_iterator<float> constIter (myConstValueF);
+
+	bolt::cl::transform(myDevVect.begin(), myDevVect.end(), constIter, myDevVect.begin(), addKaro);
+	
+	std::cout<<std::endl<<std::endl;
+	for (int i = 0; i<size; ++i){
+		std::cout.setf(std::ios::fixed);
+		std::cout<<std::setprecision(3)<<myDevVect[i]<<" ";
+	}
+}
+
+
+
 int main(int argc, char* argv[])
 {
     //  Register our minidump generating logic
