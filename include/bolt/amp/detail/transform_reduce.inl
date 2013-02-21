@@ -15,9 +15,9 @@
 
 ***************************************************************************/                                                                                     
 
-#if !defined( TRANSFORM_REDUCE_INL )
-#define TRANSFORM_REDUCE_INL
 #pragma once
+#if !defined( AMP_TRANSFORM_REDUCE_INL )
+#define AMP_TRANSFORM_REDUCE_INL
 
 #include <string>
 #include <iostream>
@@ -135,7 +135,8 @@ namespace bolt {
             if (runMode == bolt::amp::control::SerialCpu)
             {
                 //Create a temporary array to store the transform result;
-                std::vector<oType> output(szElements);
+                throw std::exception( "transform_reduce device_vector CPU device not implemented" );
+                //std::vector<oType> output(szElements);
 
                 //std::transform(first, last, output.begin(),transform_op);
                 //return std::accumulate(output.begin(), output.end(), init);
@@ -180,7 +181,7 @@ namespace bolt {
             if (runMode == bolt::amp::control::SerialCpu)
             {
                 //  TODO:  Need access to the device_vector .data method to get a host pointer
-                throw ::amp::Error( CL_INVALID_DEVICE, "transform_reduce device_vector CPU device not implemented" );
+                throw std::exception( "transform_reduce device_vector CPU device not implemented" );
 
                 //Create a temporary array to store the transform result;
                 std::vector<oType> output(szElements);
@@ -192,7 +193,7 @@ namespace bolt {
             else if (runMode == bolt::amp::control::MultiCoreCpu)
             {
                 //  TODO:  Need access to the device_vector .data method to get a host pointer
-                throw ::amp::Error( CL_INVALID_DEVICE, "transform_reduce device_vector CPU device not implemented" );
+                throw std::exception( "transform_reduce device_vector CPU device not implemented" );
 
                 std::cout << "The MultiCoreCpu version of transform_reduce is not implemented yet." << std ::endl;
                 return init;
@@ -225,18 +226,22 @@ namespace bolt {
             concurrency::array< iType, 1 > resultArray ( szElements, ctl.getAccelerator().default_view, cpuAcceleratorView);
 
             concurrency::array_view<iType, 1> result ( resultArray );
-            result.discard_data(); //Why no discard?
+            result.discard_data();
 
             concurrency::extent< 1 > inputExtent( ceilNumElements );
             concurrency::tiled_extent< tileSize > tiledExtentTransformReduce = inputExtent.tile< tileSize >();
 
-            // We may not need the while loop in the pfe. We are launching nWorkItems == Extent
+            // Algorithm is different from cl::transform_reduce. We launch worksize = number of elements here.
+            // AMP doesn't have APIs to get CU capacity. Launchable size is great though.
 
             try
             {
                concurrency::parallel_for_each(ctl.getAccelerator().default_view,
-                                              tiledExtentTransformReduce, [=] //todo: Capturing data by value is giving an unexpected compile error
-                                                                              // Using = as default capture mode
+                                              tiledExtentTransformReduce, [=]
+
+                                              //todo: Capturing data by value is giving an unexpected compile error
+                                              // Using [=] as default capture mode
+
                                               //[ inputV,
                                               //  szElements,
                                               //  result,
@@ -257,19 +262,8 @@ namespace bolt {
                   //  Initialize the accumulator private variable with data from the input array
                   //  This essentially unrolls the loop below at least once
                   iType accumulator = transform_op ( inputV[globalId] );
-                  globalId = globalId + szElements;
-                  
-                  // Loop sequentially over chunks of input vector, reducing an arbitrary size input
-                  // length into a length related to the number of workgroups
-                  while (globalId < szElements)
-                  {
-                     iType element = inputV[globalId];
-                     accumulator = reduce_op(accumulator, element);
-                     globalId = globalId + szElements; 
-                  
-                  }
-                  
                   scratch[tileIndex] = accumulator;
+
                  }
                  t_idx.barrier.wait();                  
                  
@@ -297,15 +291,7 @@ namespace bolt {
 
                iType *cpuPointerReduce =  result.data();
 
-               //for( int i=0; i < szElements ; i++ )
-               //{
-               //    if(cpuPointerReduce[i])  std::cout<<cpuPointerReduce[i]<<"at "<<i<<std::endl;
-               //}
-
-
                int numTailReduce = ceilNumTiles;      
-        
-        
                oType acc = static_cast< oType >( init );
                for(int i = 0; i < numTailReduce; ++i)
                {
