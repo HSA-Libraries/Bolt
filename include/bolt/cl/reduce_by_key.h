@@ -44,13 +44,14 @@ namespace cl
  *   \{
  */
 
-/*! \brief inclusive_scan_by_key performs, on a sequence,
- * an inclusive scan of each sub-sequence as defined by equivalent keys.
+/*! \brief reduce_by_key performs, on a sequence,
+ * a reduction of each sub-sequence as defined by equivalent keys.
  *
  * \param first1        The first element of the key sequence.
  * \param last1         The last  element of the key sequence.
  * \param first2        The first element of the value sequence.
- * \param result        The first element of the output sequence.
+ * \param keys_result   The first element of the output keys sequence.
+ * \param values_result The first element of the output values sequence.
  * \param binary_pred   Binary predicate which determines if two keys are equal.
  * \param binary_funct  Binary function for scanning transformed elements.
  * \param user_code     A user-specified string that is preppended to the generated OpenCL kernel.
@@ -60,31 +61,25 @@ namespace cl
  * \tparam OutputIterator   is a model of Output Iterator.
  * \tparam BinaryPredicate  is a model of Binary Predicate.
  * \tparam BinaryFunction   is a model of Binary Function whose return type
- *                          is convertible to \c OutputIterator's  \c value_type.
  *
- * \return result+(last1-first1).
+ * \return pair of last elements of \p keys_result \p values_result.
  *
  * \code
- * #include "bolt/cl/scan_by_key.h"
+ * #include "bolt/cl/reduce_by_key.h"
  * ...
  *
- * int keys[11] = { 7, 0, 0, 3, 3, 3, -5, -5, -5, -5, 3 };
+ * int keys[11] = { 0, 0, 0, 2, 2, 2, -5, -5, -5, -5, 6 };
  * int vals[11] = { 2, 2, 2, 2, 2, 2,  2,  2,  2,  2, 2 };
- * int out[11];
+ * int keys_out[11];
+ * int vals_out[11];
  *
  * bolt::cl::equal_to<int> eq;
  * bolt::cl::multiplies<int> mult;
  *
- * bolt::cl::inclusive_scan_by_key( keys, keys+11, vals, out, eq, mult );
- * // out => { 2, 2, 4, 2, 4, 8, 2, 4, 8, 16, 2 }
+ * bolt::cl::reduce_by_key( keys, keys+11, vals, keys_out, vals_out,eq, mult );
+ * // keys_out => { 0, 2, -5, 6 }
+ * // vals_out => { 6, 6, 8, 2 }
  *  \endcode
- *
- * \sa inclusive_scan
- * \sa http://www.sgi.com/tech/stl/partial_sum.html
- * \sa http://www.sgi.com/tech/stl/InputIterator.html
- * \sa http://www.sgi.com/tech/stl/OutputIterator.html
- * \sa http://www.sgi.com/tech/stl/BinaryPredicate.html
- * \sa http://www.sgi.com/tech/stl/BinaryFunction.html
  */
 template<
     typename InputIterator1,
@@ -104,8 +99,8 @@ reduce_by_key(
     BinaryFunction binary_op,
     const std::string& user_code="" );
 
-/*! \brief inclusive_scan_by_key performs, on a sequence,
- * an inclusive scan of each sub-sequence as defined by equivalent keys;
+/*! \brief reduce_by_key performs, on a sequence,
+ * a reduction of each sub-sequence as defined by equivalent keys;
  * the BinaryFunction in this version is plus().
  *
  * \param first1        The first element of the key sequence.
@@ -120,28 +115,24 @@ reduce_by_key(
  * \tparam OutputIterator   is a model of Output Iterator.
  * \tparam BinaryPredicate  is a model of Binary Predicate.
  *
- * \return result+(last1-first1).
+ * \return pair of last elements of \p keys_result \p values_result.
  *
  * \code
- * #include "bolt/cl/scan_by_key.h"
+ * #include "bolt/cl/reduce_by_key.h"
  * ...
  *
- * int keys[11] = { 7, 0, 0, 3, 3, 3, -5, -5, -5, -5, 3 };
- * int vals[11] = { 1, 1, 1, 1, 1, 1,  1,  1,  1,  1, 1 };
- * int out[11];
+ * int keys[11] = { 0, 0, 0, 2, 2, 2, -5, -5, -5, -5, 6 };
+ * int vals[11] = { 2, 2, 2, 2, 2, 2,  2,  2,  2,  2, 2 };
+ * int keys_out[11];
+ * int vals_out[11];
  *
  * bolt::cl::equal_to<int> eq;
  *
- * bolt::cl::inclusive_scan_by_key( keys, keys+11, vals, out, eq );
- * // out => { 1, 1, 2, 1, 2, 3, 1, 2, 3, 4, 1 }
+ * bolt::cl::reduce_by_key( keys, keys+11, vals, keys_out, vals_out, eq, mult );
+ * // keys_out => { 0, 2, -5, 6 }
+ * // vals_out => { 6, 6, 8, 2 }
  *  \endcode
  *
- * \sa inclusive_scan
- * \sa http://www.sgi.com/tech/stl/partial_sum.html
- * \sa http://www.sgi.com/tech/stl/InputIterator.html
- * \sa http://www.sgi.com/tech/stl/OutputIterator.html
- * \sa http://www.sgi.com/tech/stl/BinaryPredicate.html
- * \sa http://www.sgi.com/tech/stl/BinaryFunction.html
  */
 template<
     typename InputIterator1,
@@ -159,8 +150,8 @@ reduce_by_key(
     BinaryPredicate binary_pred,
     const std::string& user_code="" );
 
-/*! \brief inclusive_scan_by_key performs, on a sequence,
- * an inclusive scan of each sub-sequence as defined by equivalent keys;
+/*! \brief reduce_by_key performs, on a sequence,
+ * a reduction of each sub-sequence as defined by equivalent keys;
  * the BinaryFunction in this version is plus(), and the BinaryPredicate is equal_to().
  *
  * \param first1        The first element of the key sequence.
@@ -173,26 +164,22 @@ reduce_by_key(
  * \tparam InputIterator2   is a model of Input Iterator.
  * \tparam OutputIterator   is a model of Output Iterator.
  *
- * \return result+(last1-first1).
+ * \return pair of last elements of \p keys_result \p values_result.
  *
  * \code
- * #include "bolt/cl/scan_by_key.h"
+ * #include "bolt/cl/reduce_by_key.h"
  * ...
  *
- * int keys[11] = { 7, 0, 0, 3, 3, 3, -5, -5, -5, -5, 3 };
- * int vals[11] = { 1, 1, 1, 1, 1, 1,  1,  1,  1,  1, 1 };
- * int out[11];
+ * int keys[11] = { 0, 0, 0, 2, 2, 2, -5, -5, -5, -5, 6 };
+ * int vals[11] = { 2, 2, 2, 2, 2, 2,  2,  2,  2,  2, 2 };
+ * int keys_out[11];
+ * int vals_out[11];
  *
- * bolt::cl::inclusive_scan_by_key( keys, keys+11, vals, out );
- * // out => { 1, 1, 2, 1, 2, 3, 1, 2, 3, 4, 1 }
+ * bolt::cl::reduce_by_key( keys, keys+11, vals, keys_out, vals_out );
+ * // keys_out => { 0, 2, -5, 6 }
+ * // vals_out => { 6, 6, 8, 2 }
  *  \endcode
  *
- * \sa inclusive_scan
- * \sa http://www.sgi.com/tech/stl/partial_sum.html
- * \sa http://www.sgi.com/tech/stl/InputIterator.html
- * \sa http://www.sgi.com/tech/stl/OutputIterator.html
- * \sa http://www.sgi.com/tech/stl/BinaryPredicate.html
- * \sa http://www.sgi.com/tech/stl/BinaryFunction.html
  */
 template<
     typename InputIterator1,
@@ -210,8 +197,8 @@ reduce_by_key(
 
 ///////////////////////////// CTRL ////////////////////////////////////////////
 
-/*! \brief inclusive_scan_by_key performs, on a sequence,
- * an inclusive scan of each sub-sequence as defined by equivalent keys.
+/*! \brief reduce_by_key performs, on a sequence,
+ * a reduction of each sub-sequence as defined by equivalent keys;
  *
  * \param ctl           Control structure to control command-queue, debug, tuning, etc.  See bolt::cl::control.
  * \param first1        The first element of the key sequence.
@@ -232,27 +219,20 @@ reduce_by_key(
  * \return result+(last1-first1).
  *
  * \code
- * #include "bolt/cl/scan_by_key.h"
+ * #include "bolt/cl/reduce_by_key.h"
  * ...
  *
- * int keys[11] = { 7, 0, 0, 3, 3, 3, -5, -5, -5, -5, 3 };
+ * int keys[11] = { 0, 0, 0, 2, 2, 2, -5, -5, -5, -5, 6 };
  * int vals[11] = { 2, 2, 2, 2, 2, 2,  2,  2,  2,  2, 2 };
- * int out[11];
+ * int keys_out[11];
+ * int vals_out[11];
+ * bolt::cl::control ctl = control::getDefault();
  *
- * bolt::cl::equal_to<int> eq;
- * bolt::cl::multiplies<int> mult;
- * bolt::cl::control ctrl = control::getDefault();
- *
- * bolt::cl::inclusive_scan_by_key( ctrl, keys, keys+11, vals, out, eq, mult );
- * // out => { 2, 2, 4, 2, 4, 8, 2, 4, 8, 16, 2 }
+ * bolt::cl::reduce_by_key( ctl, keys, keys+11, vals, keys_out, vals_out );
+ * // keys_out => { 0, 2, -5, 6 }
+ * // vals_out => { 6, 6, 8, 2 }
  *  \endcode
  *
- * \sa inclusive_scan
- * \sa http://www.sgi.com/tech/stl/partial_sum.html
- * \sa http://www.sgi.com/tech/stl/InputIterator.html
- * \sa http://www.sgi.com/tech/stl/OutputIterator.html
- * \sa http://www.sgi.com/tech/stl/BinaryPredicate.html
- * \sa http://www.sgi.com/tech/stl/BinaryFunction.html
  */
 template<
     typename InputIterator1,
@@ -273,8 +253,8 @@ reduce_by_key(
     BinaryFunction binary_op,
     const std::string& user_code="" );
 
-/*! \brief inclusive_scan_by_key performs, on a sequence,
- * an inclusive scan of each sub-sequence as defined by equivalent keys;
+/*! \brief reduce_by_key performs, on a sequence,
+ * a reduction of each sub-sequence as defined by equivalent keys;
  * the BinaryFunction in this version is plus().
  *
  * \param ctl           Control structure to control command-queue, debug, tuning, etc.  See bolt::cl::control.
@@ -293,26 +273,22 @@ reduce_by_key(
  * \return result+(last1-first1).
  *
  * \code
- * #include "bolt/cl/scan_by_key.h"
+ * #include "bolt/cl/reduce_by_key.h"
  * ...
  *
- * int keys[11] = { 7, 0, 0, 3, 3, 3, -5, -5, -5, -5, 3 };
- * int vals[11] = { 1, 1, 1, 1, 1, 1,  1,  1,  1,  1, 1 };
- * int out[11];
+ * int keys[11] = { 0, 0, 0, 2, 2, 2, -5, -5, -5, -5, 6 };
+ * int vals[11] = { 2, 2, 2, 2, 2, 2,  2,  2,  2,  2, 2 };
+ * int keys_out[11];
+ * int vals_out[11];
  *
  * bolt::cl::equal_to<int> eq;
  * bolt::cl::control ctrl = control::getDefault();
  *
- * bolt::cl::inclusive_scan_by_key( ctrl, keys, keys+11, vals, out, eq );
- * // out => { 1, 1, 2, 1, 2, 3, 1, 2, 3, 4, 1 }
+ * bolt::cl::reduce_by_key( ctl, keys, keys+11, vals, keys_out, vals_out, eq );
+ * // keys_out => { 0, 2, -5, 6 }
+ * // vals_out => { 6, 6, 8, 2 }
  *  \endcode
  *
- * \sa inclusive_scan
- * \sa http://www.sgi.com/tech/stl/partial_sum.html
- * \sa http://www.sgi.com/tech/stl/InputIterator.html
- * \sa http://www.sgi.com/tech/stl/OutputIterator.html
- * \sa http://www.sgi.com/tech/stl/BinaryPredicate.html
- * \sa http://www.sgi.com/tech/stl/BinaryFunction.html
  */
 template<
     typename InputIterator1,
@@ -331,8 +307,8 @@ reduce_by_key(
     BinaryPredicate binary_pred,
     const std::string& user_code="" );
 
-/*! \brief inclusive_scan_by_key performs, on a sequence,
- * an inclusive scan of each sub-sequence as defined by equivalent keys;
+/*! \brief reduce_by_key performs, on a sequence,
+ * a reduction of each sub-sequence as defined by equivalent keys;
  * the BinaryFunction in this version is plus(), and the BinaryPredicate is equal_to().
  *
  * \param ctl           Control structure to control command-queue, debug, tuning, etc.  See bolt::cl::control.
@@ -349,25 +325,21 @@ reduce_by_key(
  * \return result+(last1-first1).
  *
  * \code
- * #include "bolt/cl/scan_by_key.h"
+ * #include "bolt/cl/reduce_by_key.h"
  * ...
  *
- * int keys[11] = { 7, 0, 0, 3, 3, 3, -5, -5, -5, -5, 3 };
- * int vals[11] = { 1, 1, 1, 1, 1, 1,  1,  1,  1,  1, 1 };
- * int out[11];
+ * int keys[11] = { 0, 0, 0, 2, 2, 2, -5, -5, -5, -5, 6 };
+ * int vals[11] = { 2, 2, 2, 2, 2, 2,  2,  2,  2,  2, 2 };
+ * int keys_out[11];
+ * int vals_out[11];
  *
  * bolt::cl::control ctrl = control::getDefault();
  *
- * bolt::cl::inclusive_scan_by_key( ctrl, keys, keys+11, vals, out );
- * // out => { 1, 1, 2, 1, 2, 3, 1, 2, 3, 4, 1 }
+ * bolt::cl::reduce_by_key( ctl, keys, keys+11, vals, keys_out, vals_out );
+ * // keys_out => { 0, 2, -5, 6 }
+ * // vals_out => { 6, 6, 8, 2 }
  *  \endcode
  *
- * \sa inclusive_scan
- * \sa http://www.sgi.com/tech/stl/partial_sum.html
- * \sa http://www.sgi.com/tech/stl/InputIterator.html
- * \sa http://www.sgi.com/tech/stl/OutputIterator.html
- * \sa http://www.sgi.com/tech/stl/BinaryPredicate.html
- * \sa http://www.sgi.com/tech/stl/BinaryFunction.html
  */
 template<
     typename InputIterator1,
@@ -383,56 +355,6 @@ reduce_by_key(
     OutputIterator1  keys_output,
     OutputIterator2  values_output,
     const std::string& user_code="" );
-
-
-/***********************************************************************************************************************
- * Exclusive Segmented Scan
- **********************************************************************************************************************/
-
-/*! \brief exclusive_scan_by_key performs, on a sequence,
- * an exclusive scan of each sub-sequence as defined by equivalent keys.
- *
- * \param first1        The first element of the key sequence.
- * \param last1         The last  element of the key sequence.
- * \param first2        The first element of the value sequence.
- * \param result        The first element of the output sequence.
- * \param init          The value used to initialize the output scan sequence.
- * \param binary_pred   Binary predicate which determines if two keys are equal.
- * \param binary_funct  Binary function for scanning transformed elements.
- * \param user_code     A user-specified string that is preppended to the generated OpenCL kernel.
- *
- * \tparam InputIterator1   is a model of Input Iterator.
- * \tparam InputIterator2   is a model of Input Iterator.
- * \tparam OutputIterator   is a model of Output Iterator.
- * \tparam T                is convertible to \c OutputIterator's value_type.
- * \tparam BinaryPredicate  is a model of Binary Predicate.
- * \tparam BinaryFunction   is a model of Binary Function whose return type
- *                          is convertible to \c OutputIterator's  \c value_type.
- *
- * \return result+(last1-first1).
- *
- * \code
- * #include "bolt/cl/scan_by_key.h"
- * ...
- *
- * int keys[11] = { 7, 0, 0, 3, 3, 3, -5, -5, -5, -5, 3 };
- * int vals[11] = { 2, 2, 2, 2, 2, 2,  2,  2,  2,  2, 2 };
- * int out[11];
- *
- * bolt::cl::equal_to<int> eq;
- * bolt::cl::multiplies<int> mult;
- *
- * bolt::cl::exclusive_scan_by_key( keys, keys+11, vals, out, 1, eq, mult );
- * // out => { 1, 1, 2, 1, 2, 4, 1, 2, 4, 8, 1 }
- *  \endcode
- *
- * \sa exclusive_scan
- * \sa http://www.sgi.com/tech/stl/partial_sum.html
- * \sa http://www.sgi.com/tech/stl/InputIterator.html
- * \sa http://www.sgi.com/tech/stl/OutputIterator.html
- * \sa http://www.sgi.com/tech/stl/BinaryPredicate.html
- * \sa http://www.sgi.com/tech/stl/BinaryFunction.html
- */
 
 }// end of bolt::cl namespace
 }// end of bolt namespace
