@@ -19,6 +19,7 @@
 // AMP Transform
 //////////////////////////////////////////////////////////////////////////////
 
+#pragma once
 #if !defined( AMP_TRANSFORM_INL )
 #define AMP_TRANSFORM_INL
 #define WAVEFRONT_SIZE 64
