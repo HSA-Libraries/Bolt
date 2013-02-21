@@ -25,7 +25,12 @@ set( clBolt.Test.Iterator.Constant.Headers   ${BOLT_CL_TEST_DIR}/common/stdafx.h
 set( clBolt.Test.Iterator.Constant.Files ${clBolt.Test.Iterator.Constant.Source} ${clBolt.Test.Iterator.Constant.Headers} )
 
 add_executable( clBolt.Test.Iterator.Constant ${clBolt.Test.Iterator.Constant.Files} )
-target_link_libraries( clBolt.Test.Iterator.Constant clBolt.Runtime ${GTEST_LIBRARIES} ${Boost_LIBRARIES} ${TBB_LIBRARIES} )
+
+if(BUILD_TBB)
+    target_link_libraries( clBolt.Test.Iterator.Constant clBolt.Runtime ${OPENCL_LIBRARIES} ${GTEST_LIBRARIES} ${Boost_LIBRARIES}  ${TBB_LIBRARIES} )
+else (BUILD_TBB)
+    target_link_libraries( clBolt.Test.Iterator.Constant clBolt.Runtime ${OPENCL_LIBRARIES} ${GTEST_LIBRARIES} ${Boost_LIBRARIES}  )
+endif()
 
 set_target_properties( clBolt.Test.Iterator.Constant PROPERTIES VERSION ${Bolt_VERSION} )
 set_target_properties( clBolt.Test.Iterator.Constant PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )

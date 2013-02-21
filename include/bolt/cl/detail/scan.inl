@@ -489,7 +489,7 @@ aProfiler.stopTrial();
 #else
         std::cout << "The MultiCoreCpu version of Scan is not implemented yet." << std ::endl;
         throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of Scan is not enabled to be built." ); 
-        return init;
+        return result;
 #endif
             }
             else

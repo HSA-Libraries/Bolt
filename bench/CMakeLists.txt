@@ -35,12 +35,7 @@ endif( )
 
 include_directories( ${BOLT_INCLUDE_DIR} ${PROJECT_BINARY_DIR}/include ${Boost_INCLUDE_DIRS} )
 
-if(BUILD_TBB)
-    include_directories( ${TBB_INCLUDE_DIRS} )
-    add_definitions( "-DENABLE_TBB=true" )
-    #add_library( ${TBB_LIBRARY} STATIC IMPORTED )
-    set(TBB_LIBRARIES debug;${TBB_LIBRARY_DEBUG};${TBB_LIBRARY_MALLOC_DEBUG};optimized;${TBB_LIBRARY};${TBB_LIBRARY_MALLOC})
-endif()
+
 
 if( BUILD_ampBolt AND Boost_FOUND )
 	add_subdirectory( AMP )

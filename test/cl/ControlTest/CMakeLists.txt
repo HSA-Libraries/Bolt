@@ -22,7 +22,12 @@ set( clBolt.Test.Control.Headers stdafx.h targetver.h ${BOLT_INCLUDE_DIR}/bolt/c
 set( clBolt.Test.Control.Files ${clBolt.Test.Control.Source} ${clBolt.Test.Control.Headers} )
 
 add_executable( clBolt.Test.Control ${clBolt.Test.Control.Files} )
-target_link_libraries( clBolt.Test.Control clBolt.Runtime ${GTEST_LIBRARIES} ${Boost_LIBRARIES} )
+
+if(BUILD_TBB)
+    target_link_libraries( clBolt.Test.Control clBolt.Runtime ${GTEST_LIBRARIES} ${Boost_LIBRARIES}  ${TBB_LIBRARIES} )
+else (BUILD_TBB)
+    target_link_libraries( clBolt.Test.Control clBolt.Runtime ${GTEST_LIBRARIES} ${Boost_LIBRARIES}  )
+endif()
 
 set_target_properties( clBolt.Test.Control PROPERTIES VERSION ${Bolt_VERSION} )
 set_target_properties( clBolt.Test.Control PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )

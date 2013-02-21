@@ -28,10 +28,12 @@ set( CMAKE_CXX_FLAGS "-DAMP_TESTS=0 ${CMAKE_CXX_FLAGS}" )
 endif()
 
 add_executable( clBolt.Test.Device.Vector ${clBolt.Test.Device.Vector.Files} )
-target_link_libraries( clBolt.Test.Device.Vector
-  clBolt.Runtime
-  ${GTEST_LIBRARIES}
-  ${Boost_LIBRARIES} )
+
+if(BUILD_TBB)
+    target_link_libraries( clBolt.Test.Device.Vector clBolt.Runtime ${OPENCL_LIBRARIES} ${GTEST_LIBRARIES} ${Boost_LIBRARIES}  ${TBB_LIBRARIES} )
+else (BUILD_TBB)
+    target_link_libraries( clBolt.Test.Device.Vector clBolt.Runtime ${OPENCL_LIBRARIES} ${GTEST_LIBRARIES} ${Boost_LIBRARIES}  )
+endif()
 
 set_target_properties( clBolt.Test.Device.Vector PROPERTIES VERSION ${Bolt_VERSION} )
 set_target_properties( clBolt.Test.Device.Vector PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
