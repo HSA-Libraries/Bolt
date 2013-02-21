@@ -20,6 +20,7 @@
 set( clBolt.Test.Sort.Source SortTest.cpp 
                              ${BOLT_CL_TEST_DIR}/common/myocl.cpp)
 set( clBolt.Test.Sort.Headers   ${BOLT_CL_TEST_DIR}/common/myocl.h
+                                ${BOLT_CL_TEST_DIR}/common/test_common.h
                                 ${BOLT_INCLUDE_DIR}/bolt/cl/sort.h
                                 ${BOLT_INCLUDE_DIR}/bolt/cl/detail/sort.inl )
 

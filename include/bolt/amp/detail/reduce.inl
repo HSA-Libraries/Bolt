@@ -290,7 +290,7 @@ namespace bolt
                 unsigned int ceilNumElements = tileSize * ceilNumTiles;
 
 
-                concurrency::array_view< iType, 1 > inputV (first->getBuffer());
+                concurrency::array_view< iType, 1 > inputV (first.getBuffer());
 
                 //Now create a staging array ; May support zero-copy in the future?!
                 concurrency::accelerator cpuAccelerator = concurrency::accelerator(concurrency::accelerator::cpu_accelerator);

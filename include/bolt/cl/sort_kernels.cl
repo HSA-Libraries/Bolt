@@ -31,24 +31,23 @@ void selectionSortLocalTemplate(global const T * in,
   int groupID     = get_group_id(0);
   int         wg  = get_local_size(0); // workgroup size = block size
   int n;
-  bool compareResult;
   
   int offset = groupID * wg;
   int same=0;
   in  += offset; 
   out += offset;
   n = (groupID == (numOfGroups-1))? (buffSize - wg*(numOfGroups-1)) : wg;
-  
+  T iData, jData;
   if(i < n)
   {
-      T iData = in[i];
+      iData = in[i];
       scratch[i] = iData;
       barrier(CLK_LOCAL_MEM_FENCE);
   
       int pos = 0;
       for (int j=0;j<n;j++)
       {
-          T jData = scratch[j];
+          jData = scratch[j];
           if((*userComp)(jData, iData)) 
               pos++;
           else 
@@ -83,8 +82,8 @@ void selectionSortFinalTemplate(global const T * in,
   int pos = 0, same = 0;
   int remainder;
   int offset = get_group_id(0) * wg;
-
-  T iData = in[groupID*wg + i];
+  T iData, jData;
+  iData = in[groupID*wg + i];
   if((offset + i ) >= buffSize)
       return;
   
@@ -94,7 +93,7 @@ void selectionSortFinalTemplate(global const T * in,
   {
      for(int k=0; k<wg; k++)
      {
-        T jData = in[j*wg + k];
+        jData = in[j*wg + k];
         if(((*userComp)(iData, jData)))
            break;
         else
@@ -111,7 +110,7 @@ void selectionSortFinalTemplate(global const T * in,
   
   for(int k=0; k<remainder; k++)
   {
-     T jData = in[(numOfGroups-1)*wg + k];
+     jData = in[(numOfGroups-1)*wg + k];
         if(((*userComp)(iData, jData)))
            break;
         else
@@ -147,8 +146,9 @@ void sortTemplate(global T * theArray,
     uint rightId = leftId + pairDistance;
     
     T greater, lesser;
-    T leftElement = theArray[leftId];
-    T rightElement = theArray[rightId];
+	T leftElement, rightElement;
+    leftElement = theArray[leftId];
+    rightElement = theArray[rightId];
     
     uint sameDirectionBlockWidth = 1 << stage;
     

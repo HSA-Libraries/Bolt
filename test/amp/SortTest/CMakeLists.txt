@@ -16,30 +16,22 @@
 ############################################################################                                                                                     
 
 # List the names of common files to compile across all platforms
-set( clBolt.Test.ScanByKey.Source
-    ${BOLT_CL_TEST_DIR}/common/stdafx.cpp 
-    ScanByKeyTest.cpp )
+set( ampBolt.Test.Sort.Source SortTest.cpp )
+set( ampBolt.Test.Sort.Headers ${BOLT_INCLUDE_DIR}/bolt/amp/sort.h ${BOLT_INCLUDE_DIR}/bolt/amp/detail/sort.inl )
 
-set( clBolt.Test.ScanByKey.Headers
-    ${BOLT_CL_TEST_DIR}/common/stdafx.h 
-    ${BOLT_CL_TEST_DIR}/common/targetver.h
-    ${BOLT_CL_TEST_DIR}/common/test_common.h 
-    ${BOLT_INCLUDE_DIR}/bolt/cl/transform_scan.h 
-    ${BOLT_INCLUDE_DIR}/bolt/cl/detail/scan_by_key.inl )
+set( ampBolt.Test.Sort.Files ${ampBolt.Test.Sort.Source} ${ampBolt.Test.Sort.Headers} )
 
-set( clBolt.Test.ScanByKey.Files ${clBolt.Test.ScanByKey.Source} ${clBolt.Test.ScanByKey.Headers} )
+add_executable( ampBolt.Test.Sort ${ampBolt.Test.Sort.Files} )
+target_link_libraries( ampBolt.Test.Sort ${GTEST_LIBRARIES} ampBolt.Runtime )
 
-add_executable( clBolt.Test.ScanByKey ${clBolt.Test.ScanByKey.Files} )
-target_link_libraries( clBolt.Test.ScanByKey clBolt.Runtime ${GTEST_LIBRARIES} ${Boost_LIBRARIES} ${TBB_LIBRARIES})
+set_target_properties( ampBolt.Test.Sort PROPERTIES VERSION ${Bolt_VERSION} )
+set_target_properties( ampBolt.Test.Sort PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
 
-set_target_properties( clBolt.Test.ScanByKey PROPERTIES VERSION ${Bolt_VERSION} )
-set_target_properties( clBolt.Test.ScanByKey PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
-
-set_property( TARGET clBolt.Test.ScanByKey PROPERTY FOLDER "Test/OpenCL")
+set_property( TARGET ampBolt.Test.Sort PROPERTY FOLDER "Test/AMP")
 
 # CPack configuration; include the executable into the package
-install( TARGETS clBolt.Test.ScanByKey
-    RUNTIME DESTINATION ${BIN_DIR}
-    LIBRARY DESTINATION ${LIB_DIR}
-    ARCHIVE DESTINATION ${LIB_DIR}/import
-    )
+install( TARGETS ampBolt.Test.Sort
+	RUNTIME DESTINATION ${BIN_DIR}
+	LIBRARY DESTINATION ${LIB_DIR}
+	ARCHIVE DESTINATION ${LIB_DIR}/import
+	)

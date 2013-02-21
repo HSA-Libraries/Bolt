@@ -49,6 +49,7 @@ include_directories(
 
 add_subdirectory( ReduceTest )
 add_subdirectory( ScanTest )
+add_subdirectory( SortTest )
 add_subdirectory( TransformTest )	
 add_subdirectory( TransformReduceTest )
 add_subdirectory( device_vector )
