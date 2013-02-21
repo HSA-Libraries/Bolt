@@ -1,19 +1,19 @@
-/***************************************************************************         
-*   Copyright 2012 Advanced Micro Devices, Inc.                                     
-*                                                                                    
-*   Licensed under the Apache License, Version 2.0 (the "License");   
-*   you may not use this file except in compliance with the License.                 
-*   You may obtain a copy of the License at                                          
-*                                                                                    
-*       http://www.apache.org/licenses/LICENSE-2.0                      
-*                                                                                    
-*   Unless required by applicable law or agreed to in writing, software              
-*   distributed under the License is distributed on an "AS IS" BASIS,              
-*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.         
-*   See the License for the specific language governing permissions and              
-*   limitations under the License.                                                   
+/***************************************************************************
+*   Copyright 2012 Advanced Micro Devices, Inc.
+*
+*   Licensed under the Apache License, Version 2.0 (the "License");
+*   you may not use this file except in compliance with the License.
+*   You may obtain a copy of the License at
+*
+*       http://www.apache.org/licenses/LICENSE-2.0
+*
+*   Unless required by applicable law or agreed to in writing, software
+*   distributed under the License is distributed on an "AS IS" BASIS,
+*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+*   See the License for the specific language governing permissions and
+*   limitations under the License.
 
-***************************************************************************/         
+***************************************************************************/
 
 #pragma once
 #if !defined( AMP_COUNT_H )
@@ -40,7 +40,7 @@ namespace bolt {
 
         namespace detail
         {
-            template <typename T> 
+            template <typename T>
             struct CountIfEqual {
                 CountIfEqual(const T &targetValue) restrict (amp, cpu)  : _targetValue(targetValue)
                 { };
@@ -69,10 +69,10 @@ namespace bolt {
         *
         * \returns: The number of elements which matches \p value.
         */
-        template<typename InputIterator, typename EqualityComparable> 
+        template<typename InputIterator, typename EqualityComparable>
         typename bolt::amp::iterator_traits<InputIterator>::difference_type
-            count(InputIterator first, 
-            InputIterator last, 
+            count(InputIterator first,
+            InputIterator last,
             EqualityComparable &value)
         {
             typedef typename std::iterator_traits<InputIterator>::value_type T;
@@ -100,11 +100,11 @@ namespace bolt {
         * \returns: The number of elements which matches \p value.
         */
 
-        template<typename InputIterator, typename EqualityComparable> 
+        template<typename InputIterator, typename EqualityComparable>
         typename bolt::amp::iterator_traits<InputIterator>::difference_type
             count(control& ctl,
-            InputIterator first, 
-            InputIterator last, 
+            InputIterator first,
+            InputIterator last,
             EqualityComparable &value)
         {
             typedef typename std::iterator_traits<InputIterator>::value_type T;
@@ -112,20 +112,19 @@ namespace bolt {
         };
 
         /*!
-        * \p count_if counts the number of elements in the specified range for which the specified \p predicate is \p true.  
-        * 
+        * \p count_if counts the number of elements in the specified range for which the specified \p predicate is \p true.
+        *
         * \param ctl Control structure to control accelerator, debug, tuning, etc.  See bolt::amp::control.
         * \param first The first position in the sequence to be counted.
         * \param last The last position in the sequence to be counted.
         * \param predicate The predicate. The count is incremented for each element which returns true when passed to the predicate function.
         * \code
           template < typename T >
-          struct IsEven {
-
-          	bool operator()(const T& value) const restrict (amp,cpu) { 
-          		return ( (value%2) == 0 ) ; 
-          	};
-          
+          struct IsEven
+          {
+              bool operator()(const T& value) const restrict (amp,cpu)
+              {return ( (value%2) == 0 ) ;
+              };
           };
           ...
           //Main
@@ -144,40 +143,40 @@ namespace bolt {
         * \returns: The number of elements for which \p predicate is true.
         */
 
-        template<typename InputIterator, typename Predicate> 
+        template<typename InputIterator, typename Predicate>
         typename bolt::amp::iterator_traits<InputIterator>::difference_type
             count_if(control& ctl,
-            InputIterator first, 
-            InputIterator last, 
+            InputIterator first,
+            InputIterator last,
             Predicate predicate)
         {
             typedef typename bolt::amp::iterator_traits<InputIterator>::value_type CountType;
 			      //typedef typename bolt::amp::iterator_traits<InputIterator>::difference_type ResultType;
 
-            // C++ AMP has a limitation: Can't use __int64. Calling transform_reduce with int as 
+            // C++ AMP has a limitation: Can't use __int64. Calling transform_reduce with int as
             // return type seems to be a good option.
             typedef int ResultType;
 
-            ResultType result = static_cast< ResultType >( transform_reduce( ctl, first, last, 
+            ResultType result = static_cast< ResultType >( transform_reduce( ctl, first, last,
                 predicate, static_cast< CountType >( 0 ), bolt::amp::plus< CountType >( )) );
 
             return result;
         };
 
         /*!
-        * \p count_if counts the number of elements in the specified range for which the specified \p predicate is \p true.  
-        * 
+        * \p count_if counts the number of elements in the specified range for which the specified \p predicate is \p true.
+        *
         * \param first The first position in the sequence to be counted.
         * \param last The last position in the sequence to be counted.
         * \param predicate The predicate. The count is incremented for each element which returns true when passed to the predicate function.
         * \code
           template < typename T >
-          struct IsEven {
-
-          	bool operator()(const T& value) const restrict (amp,cpu) { 
-          		return ( (value%2) == 0 ) ; 
-          	};
-          
+          struct IsEven
+          {
+            bool operator()(const T& value) const restrict (amp,cpu)
+            {
+              return ( (value%2) == 0 ) ;
+            };
           };
           ...
           //Main
@@ -191,20 +190,20 @@ namespace bolt {
         *
         * \returns: The number of elements for which \p predicate is true.
         */
-        template<typename InputIterator, typename Predicate> 
+        template<typename InputIterator, typename Predicate>
         typename bolt::amp::iterator_traits<InputIterator>::difference_type
-            count_if(InputIterator first, 
-            InputIterator last, 
+            count_if(InputIterator first,
+            InputIterator last,
             Predicate predicate)
         {
             typedef typename bolt::amp::iterator_traits<InputIterator>::value_type CountType;
 			      //typedef typename bolt::amp::iterator_traits<InputIterator>::difference_type ResultType;
 
-            // C++ AMP has a limitation: Can't use __int64. Calling transform_reduce with int as 
+            // C++ AMP has a limitation: Can't use __int64. Calling transform_reduce with int as
             // return type seems to be a good option.
             typedef int ResultType;
 
-            ResultType result = static_cast< ResultType >( transform_reduce( first, last, 
+            ResultType result = static_cast< ResultType >( transform_reduce( first, last,
                 predicate, static_cast< CountType >( 0 ), bolt::amp::plus< CountType >( )) );
 
             return result;
