@@ -23,7 +23,11 @@ set( clBolt.Bench.Transform.Files ${clBolt.Bench.Transform.Source} ${clBolt.Benc
 
 add_executable( clBolt.Bench.Transform ${clBolt.Bench.Transform.Files} )
 
-target_link_libraries( clBolt.Bench.Transform ${Boost_LIBRARIES} clBolt.Runtime )
+if (BUILD_TBB)
+    target_link_libraries( clBolt.Bench.Transform ${Boost_LIBRARIES} clBolt.Runtime $(TBB_LIBRARIES) )
+else (BUILD_TBB)
+    target_link_libraries( clBolt.Bench.Transform ${Boost_LIBRARIES} clBolt.Runtime )
+endif()
 
 set_target_properties( clBolt.Bench.Transform PROPERTIES VERSION ${Bolt_VERSION} )
 set_target_properties( clBolt.Bench.Transform PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )

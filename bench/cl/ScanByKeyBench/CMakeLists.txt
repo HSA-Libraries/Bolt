@@ -23,7 +23,11 @@ set( clBolt.Bench.ScanByKey.Files ${clBolt.Bench.ScanByKey.Source} ${clBolt.Benc
 
 add_executable( clBolt.Bench.ScanByKey ${clBolt.Bench.ScanByKey.Files} )
 
-target_link_libraries( clBolt.Bench.ScanByKey ${Boost_LIBRARIES} clBolt.Runtime )
+if (BUILD_TBB)
+    target_link_libraries( clBolt.Bench.ScanByKey ${Boost_LIBRARIES} clBolt.Runtime ${TBB_LIBRARIES} )
+else (BUILD_TBB)
+    target_link_libraries( clBolt.Bench.ScanByKey ${Boost_LIBRARIES} clBolt.Runtime )
+endif()
 
 set_target_properties( clBolt.Bench.ScanByKey PROPERTIES VERSION ${Bolt_VERSION} )
 set_target_properties( clBolt.Bench.ScanByKey PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )

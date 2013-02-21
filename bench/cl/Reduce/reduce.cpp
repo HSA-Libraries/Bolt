@@ -25,7 +25,7 @@
 #include "bolt/cl/reduce.h"
 
 const std::streamsize colWidth = 26;
-
+#define BOLT_BENCHMARK_DEBUG 1
 
 BOLT_FUNCTOR(SaxpyFunctor,
 struct SaxpyFunctor
@@ -53,7 +53,10 @@ int _tmain( int argc, _TCHAR* argv[] )
     bool defaultDevice = true;
     bool print_clInfo = false;
     bool systemMemory = false;
-
+    bool deviceMemory = false;
+    bool runTBB = false;
+    bool runBOLT = false;
+    bool runSTL = false;
     /******************************************************************************
     * Parameter parsing                                                           *
     ******************************************************************************/
@@ -68,10 +71,16 @@ int _tmain( int argc, _TCHAR* argv[] )
             ( "gpu,g",          "Report only OpenCL GPU devices" )
             ( "cpu,c",          "Report only OpenCL CPU devices" )
             ( "all,a",          "Report all OpenCL devices" )
-            ( "systemMemory,s", "Allocate vectors in system memory, otherwise device memory" )
-            ( "platform,p",     po::value< cl_uint >( &userPlatform )->default_value( 0 ), "Specify the platform under test using the index reported by -q flag" )
-            ( "device,d",       po::value< cl_uint >( &userDevice )->default_value( 0 ), "Specify the device under test using the index reported by the -q flag.  "
-                    "Index is relative with respect to -g, -c or -a flags" )
+            ( "systemMemory,S", "Allocate vectors in system memory, otherwise device memory" )
+            ( "deviceMemory,D", "Allocate vectors in system memory, otherwise device memory" )
+            ( "tbb,T",          "Benchmark TBB MULTICORE CPU Code" )
+            ( "bolt,B",         "Benchmark Bolt OpenCL Libray" )
+            ( "serial,E",       "Benchmark Serial Code STL Libray" )
+            ( "platform,p",     po::value< cl_uint >( &userPlatform )->default_value( 0 ), 
+                                "Specify the platform under test using the index reported by -q flag" )
+            ( "device,d",       po::value< cl_uint >( &userDevice )->default_value( 0 ), 
+                                "Specify the device under test using the index reported by the -q flag.  "
+                                "Index is relative with respect to -g, -c or -a flags" )
             ( "length,l",       po::value< size_t >( &length )->default_value( 8*1048576 ), "Specify the length of scan array" )
             ( "iterations,i",   po::value< size_t >( &iterations )->default_value( 100 ), "Number of samples in timing loop" )
 			//( "algo,a",		    po::value< size_t >( &algo )->default_value( 1 ), "Algorithm used [1,2]  1:SCAN_BOLT, 2:XYZ" )//Not used in this file
@@ -119,12 +128,26 @@ int _tmain( int argc, _TCHAR* argv[] )
         {
             deviceType	= CL_DEVICE_TYPE_ALL;
         }
-
         if( vm.count( "systemMemory" ) )
         {
             systemMemory = true;
         }
-
+        if( vm.count( "deviceMemory" ) )
+        {
+            deviceMemory = true;
+        }
+        if( vm.count( "tbb" ) )
+        {
+            runTBB = true;
+        }
+        if( vm.count( "bolt" ) )
+        {
+            runBOLT = true;
+        }
+        if( vm.count( "serial" ) ) 
+        {
+            runSTL = true;
+        }
     }
     catch( std::exception& e )
     {
@@ -166,10 +189,8 @@ int _tmain( int argc, _TCHAR* argv[] )
 
     std::cout << "Device under test : " << strDeviceName << std::endl;
 
-
     // Control setup:
 	bolt::cl::control::getDefault().waitMode(bolt::cl::control::BusyWait);
-
 
     /******************************************************************************
     * Benchmark logic                                                             *
@@ -180,26 +201,87 @@ int _tmain( int argc, _TCHAR* argv[] )
 
 	SaxpyFunctor s(100.0);
 
-    if( systemMemory )
+#if (BOLT_BENCHMARK_DEBUG == 1)
+    std::string library = runBOLT?"BOLT LIBRARY ":(runTBB?"TBB CODE MULTI CORE PATH":(runSTL?"SERIAL SINGLE CORE PATH":"NO PATH SELECTED"));
+    std::string memory  = systemMemory?"CPU/HOST MEMORY":(deviceMemory?"DEVICE MEMORY":"NO MEMORY SELECTED");
+    std::cout << "Run Mode LIBRARY--[" << library << "]  MEMORY--[" << memory<< "]" << std::endl;
+#endif
+    if (runBOLT)
     {
-        std::vector< int > input1( length, 1 );
-
-        for( unsigned i = 0; i < iterations; ++i )
+        if( systemMemory )
         {
-            myTimer.Start( testId );
-            int result = bolt::cl::reduce( input1.begin(), input1.end(), 0);
-            myTimer.Stop( testId );
+            std::vector< int > input1( length, 1 );
+
+            for( unsigned i = 0; i < iterations; ++i )
+            {
+                myTimer.Start( testId );
+                int result = bolt::cl::reduce( input1.begin(), input1.end(), 0);
+                myTimer.Stop( testId );
+            }
+        }
+        else if(deviceMemory)
+        {
+            bolt::cl::device_vector< int > input1( length, 1 );
+
+            for( unsigned i = 0; i < iterations; ++i )
+            {
+                myTimer.Start( testId );
+                int result = bolt::cl::reduce( input1.begin(), input1.end(), 0);
+                myTimer.Stop( testId );
+            }
+        }
+        else
+        {
+            std::cout << "BOLT LIBRARY PATH NO Memory selected"<< std::endl;
         }
     }
-    else
+    else if (runTBB)
     {
-        bolt::cl::device_vector< int > input1( length, 1 );
-
-        for( unsigned i = 0; i < iterations; ++i )
+        bolt::cl::control ctl = bolt::cl::control::getDefault();
+        ctl.forceRunMode(bolt::cl::control::MultiCoreCpu);
+        if( systemMemory )
         {
-            myTimer.Start( testId );
-            int result = bolt::cl::reduce( input1.begin(), input1.end(), 0);
-            myTimer.Stop( testId );
+            std::vector< int > input1( length, 1 );
+
+            for( unsigned i = 0; i < iterations; ++i )
+            {
+                myTimer.Start( testId );
+                int result = bolt::cl::reduce( ctl, input1.begin(), input1.end(), 0);
+                myTimer.Stop( testId );
+            }
+        }
+        else if(deviceMemory)
+        {
+            bolt::cl::device_vector< int > input1( length, 1 );
+
+            for( unsigned i = 0; i < iterations; ++i )
+            {
+                myTimer.Start( testId );
+                int result = bolt::cl::reduce( ctl, input1.begin(), input1.end(), 0);
+                myTimer.Stop( testId );
+            }
+        }
+        else
+        {
+            std::cout << "TBB LIBRARY PATH NO Memory selected"<< std::endl;
+        }
+    }
+    else if(runSTL)
+    {
+        if( systemMemory )
+        {
+            std::vector< int > input1( length, 1 );
+
+            for( unsigned i = 0; i < iterations; ++i )
+            {
+                myTimer.Start( testId );
+                int result = bolt::cl::reduce( input1.begin(), input1.end(), 0);
+                myTimer.Stop( testId );
+            }
+        }
+        else
+        {
+            std::cout << "Serial Code Path using STL is supported only for System Memory\n";
         }
     }
 

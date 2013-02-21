@@ -413,7 +413,7 @@ void sort_pick_iterator( control &ctl,
         return;
     } else if (runMode == bolt::cl::control::MultiCoreCpu) {
 #ifdef ENABLE_TBB
-        std::cout << "The MultiCoreCpu version of sort is enabled with TBB. " << std ::endl;
+        //std::cout << "The MultiCoreCpu version of sort is enabled with TBB. " << std ::endl;
 		::cl::Event multiCoreCPUEvent;
 		cl_int l_Error = CL_SUCCESS;
 		/*Map the device buffer to CPU*/

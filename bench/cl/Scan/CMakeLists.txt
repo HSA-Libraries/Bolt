@@ -23,7 +23,11 @@ set( clBolt.Bench.Scan.Files ${clBolt.Bench.Scan.Source} ${clBolt.Bench.Scan.Hea
 
 add_executable( clBolt.Bench.Scan ${clBolt.Bench.Scan.Files} )
 
-target_link_libraries( clBolt.Bench.Scan ${Boost_LIBRARIES} clBolt.Runtime )
+if (BUILD_TBB)
+    target_link_libraries( clBolt.Bench.Scan ${Boost_LIBRARIES} clBolt.Runtime ${TBB_LIBRARIES} )
+else (BUILD_TBB)
+    target_link_libraries( clBolt.Bench.Scan ${Boost_LIBRARIES} clBolt.Runtime )
+endif()
 
 set_target_properties( clBolt.Bench.Scan PROPERTIES VERSION ${Bolt_VERSION} )
 set_target_properties( clBolt.Bench.Scan PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )

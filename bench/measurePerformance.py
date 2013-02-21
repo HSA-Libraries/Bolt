@@ -45,7 +45,9 @@ def log(filename, txt):
 IAM = 'Bolt'
 
 precisionvalues = ['single', 'double']
-libraryvalues = ['copy','scan','sort','reduce','null']
+libraryvalues = ['STL','BOLT','TBB', 'null']
+memoryvalues = ['device','host', 'null']
+routinevalues = ['copy','scan','sort','reduce','null']
 backEndValues = ['cl','amp']
 
 parser = argparse.ArgumentParser(description='Measure performance of a Bolt library')
@@ -55,15 +57,24 @@ parser.add_argument('--device',
 parser.add_argument('-l', '--lengthx',
     dest='lengthx', default='1',
     help='length(s) of x to test; must be factors of 1, 2, 3, or 5 with clAmdFft; may be a range or a comma-delimited list. e.g., 16-128 or 1200 or 16,2048-32768 (default 1)')
+
 parser.add_argument('-r', '--precision',
     dest='precision', default='single',
     help='may enter multiple in a comma-delimited list. choices are ' + str(precisionvalues) + '. (default single)')
 parser.add_argument('--library',
+
     dest='library', default='null', choices=libraryvalues,
     help='indicates the library to use for testing on this run')
+parser.add_argument('--routine',
+    dest='routine', default='null', choices=routinevalues,
+    help='indicates the routine to use for testing on this run')
+parser.add_argument('--memory',
+    dest='memory', default='null', choices=memoryvalues,
+    help='indicates the memory subsystem to choose from')
 parser.add_argument('--label',
     dest='label', default=None,
     help='a label to be associated with all transforms performed in this run. if LABEL includes any spaces, it must be in \"double quotes\". note that the label is not saved to an .ini file. e.g., --label cayman may indicate that a test was performed on a cayman card or --label \"Windows 32\" may indicate that the test was performed on Windows 32')
+
 parser.add_argument('--createini',
     dest='createIniFilename', default=None,
     help='create an .ini file with the given name that saves the other parameters given at the command line, then quit. e.g., \'clAmdFft.performance.py -x 2048 --createini my_favorite_setup.ini\' will create an .ini file that will save the configuration for a 2048-datapoint 1D FFT.')
@@ -182,9 +193,11 @@ if args.createIniFilename != None:
 args.device = args.device.split(',')
 args.lengthx = args.lengthx.split(',')
 args.precision = args.precision.split(',')
-
+args.library = str(args.library)
+args.routine = str(args.routine)
 printLog('Executing for label: '+str(args.label))
-
+printLog('Executing for routine: '+str(args.routine))
+printLog('Executing for library: '+str(args.library))
 #check parameters for sanity
 
 # check for valid values in precision
@@ -193,8 +206,8 @@ for n in args.precision:
         printLog('ERROR: invalid value for precision')
         quit()
 
-if not os.path.isfile(executable(args.library, args.backend)):
-    printLog("ERROR: Could not find client named {0}".format(executable(args.library)))
+if not os.path.isfile(executable(args.routine, args.backend)):
+    printLog("ERROR: Could not find client named {0}".format(executable(args.routine)))
     quit()
    
 #expand ranges
@@ -291,6 +304,7 @@ vi = 0
 #test_combinations = test_combinations[825:830]
 for params in test_combinations:
     vi = vi+1
+
     printLog("")
     printLog('preparing command: '+ str(vi))    
     device = params.device
@@ -306,22 +320,33 @@ for params in test_combinations:
 
     #set up arguments here
     if params.device == 'default':
-        arguments = [executable(args.library, args.backend),
+        arguments = [executable(args.routine, args.backend),
                      '-l', lengthx,
     #                     precision,
                      '-i', '50']
     else:
-        arguments = [executable(args.library, args.backend),
+        arguments = [executable(args.routine, args.backend),
                      '-a', # Enumerate all devices in system, so that we can benchmark any device on command line
                      '-d', device,
                      '-l', lengthx,
     #                     precision,
                      '-i', '50']
-    if args.library == 'sort':
+    if args.routine == 'sort':
         arguments.append( '-t' )
         arguments.append( str( test ) )
     #    arguments.append( '-m' )
-
+    ###Set the Library Selection 
+    if args.library == 'TBB':
+        arguments.append( '-T' )
+    if args.library == 'BOLT':
+        arguments.append( '-B' )
+    if args.library == 'STL':
+        arguments.append( '-E' )
+    ###Set the Memory Selection     
+    if args.memory == 'host':
+        arguments.append( '-S' )
+    if args.memory == 'device':
+        arguments.append( '-D' )
     writeline = True
     try:
         printLog('Executing Command: '+ str(arguments))
