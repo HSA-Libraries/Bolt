@@ -16,6 +16,14 @@
 ############################################################################                                                                                     
 
 # List the names of common files to compile across all platforms
+
+
+# Set project specific compile and link options
+if( MSVC )
+set( CMAKE_CXX_FLAGS "-bigobj ${CMAKE_CXX_FLAGS}" )
+                set( CMAKE_C_FLAGS "-bigobj ${CMAKE_C_FLAGS}" )
+endif()
+
 set( clBolt.Test.ScanByKey.Source
     ${BOLT_CL_TEST_DIR}/common/stdafx.cpp 
     ScanByKeyTest.cpp )
