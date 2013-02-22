@@ -15,11 +15,11 @@
 
 ***************************************************************************/                                                                                     
 
-#define TEST_DOUBLE 0
+#define TEST_DOUBLE 1
 #define TEST_DEVICE_VECTOR 1
 #define TEST_CPU_DEVICE 0
-#define TEST_MULTICORE_TBB_SORT 0
-#define GOOGLE_TEST 0
+#define TEST_MULTICORE_TBB_SORT 1
+#define GOOGLE_TEST 1
 #if (GOOGLE_TEST == 1)
 #include <gtest/gtest.h>
 #include "common/stdafx.h"
@@ -105,26 +105,7 @@ TEST(SortUDD, AddDouble4)
     // compare results
     cmpArrays(refInput, input);
 }
-#if (TEST_MULTICORE_TBB_SORT == 1)
-TEST(SortUDD, MultiCoreAddDouble4)
-{
-    //setup containers
-    int length = (1<<8);
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.forceRunMode(bolt::cl::control::MultiCoreCpu);
-    bolt::cl::device_vector< uddtD4 > input(  length, initialAddD4, CL_MEM_READ_WRITE, true  );
-    std::vector< uddtD4 > refInput( length, initialAddD4 );
-    
-    // call sort
-    AddD4 ad4gt;
-    bolt::cl::sort(input.begin(), input.end(), ad4gt);
-    std::sort( refInput.begin(), refInput.end(), ad4gt );
 
-    // compare results
-    cmpArrays(refInput, input);
-}
-#endif 
 TEST(SortUDD, GPUAddDouble4)
 {
 
@@ -207,9 +188,32 @@ TYPED_TEST_P( SortArrayTest, Normal )
     
 }
 #if (TEST_MULTICORE_TBB_SORT == 1)
-TYPED_TEST_P( SortArrayTest, MultiCoreNormal )
+
+TEST(MultiCoreCPU, MultiCoreAddDouble4)
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+    //setup containers
+    int length = (1<<8);
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.forceRunMode(bolt::cl::control::MultiCoreCpu);
+    bolt::cl::device_vector< uddtD4 > input(  length, initialAddD4, CL_MEM_READ_WRITE, true  );
+    std::vector< uddtD4 > refInput( length, initialAddD4 );
+    
+    // call sort
+    AddD4 ad4gt;
+    bolt::cl::sort(input.begin(), input.end(), ad4gt);
+    std::sort( refInput.begin(), refInput.end(), ad4gt );
+
+    // compare results
+    cmpArrays(refInput, input);
+}
+
+TEST( MultiCoreCPU, MultiCoreNormal )
+{
+    int length = 1098376;
+    bolt::cl::device_vector< float > boltInput(  length, 0.0, CL_MEM_READ_WRITE, true  );
+    std::vector< float > stdInput( length, 0.0 );
+
     ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.forceRunMode(bolt::cl::control::MultiCoreCpu);
@@ -217,14 +221,14 @@ TYPED_TEST_P( SortArrayTest, MultiCoreNormal )
     std::sort( stdInput.begin( ), stdInput.end( ));
     bolt::cl::sort( ctl, boltInput.begin( ), boltInput.end( ) );
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+    std::vector< float >::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
+    bolt::cl::device_vector< float >::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
+    cmpArrays( stdInput, boltInput );
 }
 #endif
 
@@ -432,10 +436,6 @@ REGISTER_TYPED_TEST_CASE_P( SortArrayTest, Normal, GPU_DeviceNormal,
 REGISTER_TYPED_TEST_CASE_P( SortArrayTest, Normal, GPU_DeviceNormal, 
                                            GreaterFunction, GPU_DeviceGreaterFunction,
                                            LessFunction, GPU_DeviceLessFunction );
-#endif
-
-#if (TEST_MULTICORE_TBB_SORT == 1)
-REGISTER_TYPED_TEST_CASE_P( SortArrayTest, MultiCoreNormal ); 
 #endif
 
 
@@ -1085,7 +1085,7 @@ int main(int argc, char* argv[])
         bolt::tout << _T( "\t    (only on googletest assertion failures, not SEH exceptions)" ) << std::endl;
     }
     std::cout << "Test Completed. Press Enter to exit.\n .... ";
-    getchar();
+    //getchar();
     return retVal;
 }
 #else
@@ -1490,27 +1490,49 @@ void TestWithBoltControl(int length)
 */
 int main(int argc, char* argv[])
 {
-#if 1 
+
+#define TEST_ALL 1
+#if (TEST_ALL == 1)
     //UDDSortTestOfLengthWithDeviceVector<int>(256);
     BasicSortTestOfLength<int>(256/*2097152/*131072/*16777216/*33554432/*atoi(argv[1])*/);
     BasicSortTestOfLength<int>(4096);
+    BasicSortTestOfLength<int>(4096+64);
     BasicSortTestOfLength<int>(2097152);
+    BasicSortTestOfLength<int>(2097152+67);
     BasicSortTestOfLength<int>(131072);
     BasicSortTestOfLength<int>(512);
     BasicSortTestOfLength<int>(1024);
     BasicSortTestOfLength<int>(2048);
     BasicSortTestOfLength<int>(2560);
 #endif
-#if 1
+#if (TEST_ALL == 1)
     BasicSortTestOfLength<unsigned int>(256/*2097152/*131072/*16777216/*33554432/*atoi(argv[1])*/);
     BasicSortTestOfLength<unsigned int>(4096);
+    BasicSortTestOfLength<unsigned int>(4096+97);
     BasicSortTestOfLength<unsigned int>(2097152);
     BasicSortTestOfLength<unsigned int>(131072);
     BasicSortTestOfLength<unsigned int>(16777472); // 2^24 + 256
+    BasicSortTestOfLength<unsigned int>(16777472+77);
     BasicSortTestOfLength<unsigned int>(2048);
     BasicSortTestOfLength<unsigned int>(2560);
+    BasicSortTestOfLength<unsigned int>(2560+64);
+    BasicSortTestOfLength<float>(256);
+    BasicSortTestOfLength<float>(512);
+    BasicSortTestOfLength<float>(1024);
+    BasicSortTestOfLength<float>(2048);
+    BasicSortTestOfLength<float>(1048576);
+    BasicSortTestOfLength<float>(1048576-897);
+
+#if (TEST_DOUBLE == 1) 
+    BasicSortTestOfLength<double>(256);
+    BasicSortTestOfLength<double>(512);
+    BasicSortTestOfLength<double>(1024);
+    BasicSortTestOfLength<double>(2048);
+    BasicSortTestOfLength<double>(1048576);
+    BasicSortTestOfLength<double>(1048576-897);
 #endif
-#if 1
+#endif
+#if (TEST_ALL == 1)
 
     //Test the non Power Of 2 Buffer size 
     //The following two commented codes does not run. It will throw and cl::Error exception
@@ -1518,13 +1540,10 @@ int main(int argc, char* argv[])
 	UserDefinedBoltFunctorSortTestOfLength<float>(256);
     UserDefinedFunctorSortTestOfLength<int>(254);
     UserDefinedObjectSortTestOfLength<int>(254);
-
-#endif
-    
     UDDSortTestOfLengthWithDeviceVector<int>(256);
     UDDSortTestWithBoltFunctorOfLengthWithDeviceVector<int>(256);
+#endif
 
-#define TEST_ALL 1
 //#define TEST_DOUBLE 1
 
 
@@ -1540,6 +1559,7 @@ int main(int argc, char* argv[])
     UserDefinedBoltFunctorSortTestOfLength<int>(1024);    
     UserDefinedBoltFunctorSortTestOfLength<int>(2048);    
     UserDefinedBoltFunctorSortTestOfLength<int>(1048576); 
+    UserDefinedBoltFunctorSortTestOfLength<int>(1048576+75); 
     UserDefinedBoltFunctorSortTestOfLength<float>(8);   
     UserDefinedBoltFunctorSortTestOfLength<float>(16);    
     UserDefinedBoltFunctorSortTestOfLength<float>(32);    
@@ -1550,6 +1570,7 @@ int main(int argc, char* argv[])
     UserDefinedBoltFunctorSortTestOfLength<float>(1024);
     UserDefinedBoltFunctorSortTestOfLength<float>(2048);
     UserDefinedBoltFunctorSortTestOfLength<float>(1048576);
+    UserDefinedBoltFunctorSortTestOfLength<float>(1048576+75);
 #if (TEST_DOUBLE == 1)
     UserDefinedBoltFunctorSortTestOfLength<double>(8);   
     UserDefinedBoltFunctorSortTestOfLength<double>(16);    
@@ -1561,6 +1582,7 @@ int main(int argc, char* argv[])
     UserDefinedBoltFunctorSortTestOfLength<double>(1024);
     UserDefinedBoltFunctorSortTestOfLength<double>(2048);
     UserDefinedBoltFunctorSortTestOfLength<double>(1048576); 
+    UserDefinedBoltFunctorSortTestOfLength<double>(1048576+75); 
 #endif
 #endif
 
@@ -1576,6 +1598,7 @@ int main(int argc, char* argv[])
     UserDefinedFunctorSortTestOfLength<int>(1024);    
     UserDefinedFunctorSortTestOfLength<int>(2048);    
     UserDefinedFunctorSortTestOfLength<int>(1048576); 
+    UserDefinedFunctorSortTestOfLength<int>(1048576+75); 
     UserDefinedFunctorSortTestOfLength<float>(8);   
     UserDefinedFunctorSortTestOfLength<float>(16);    
     UserDefinedFunctorSortTestOfLength<float>(32);    
@@ -1586,6 +1609,7 @@ int main(int argc, char* argv[])
     UserDefinedFunctorSortTestOfLength<float>(1024); 
     UserDefinedFunctorSortTestOfLength<float>(2048);
     UserDefinedFunctorSortTestOfLength<float>(1048576); 
+    UserDefinedFunctorSortTestOfLength<float>(1048576+75); 
 
 #if (TEST_DOUBLE == 0)     
     UserDefinedFunctorSortTestOfLength<double>(8);   
@@ -1598,30 +1622,10 @@ int main(int argc, char* argv[])
     UserDefinedFunctorSortTestOfLength<double>(1024);    
     UserDefinedFunctorSortTestOfLength<double>(2048);  
     UserDefinedFunctorSortTestOfLength<double>(1048576); 
+    UserDefinedFunctorSortTestOfLength<double>(1048576+75); 
 #endif
 #endif
 
-// This is a test case for handling function pointers
-// OpenCL will not handle this so commented it out completely
-#if 0
-    UserDefinedFunctionSortTestOfLength<int>(256);   
-    UserDefinedFunctionSortTestOfLength<int>(512);    
-    UserDefinedFunctionSortTestOfLength<int>(1024);    
-    UserDefinedFunctionSortTestOfLength<int>(2048);    
-    UserDefinedFunctionSortTestOfLength<int>(1048576); 
-    UserDefinedFunctionSortTestOfLength<float>(256);   
-    UserDefinedFunctionSortTestOfLength<float>(512);    
-    UserDefinedFunctionSortTestOfLength<float>(1024);    
-    UserDefinedFunctionSortTestOfLength<float>(2048);  
-    UserDefinedFunctionSortTestOfLength<float>(1048576); 
-#if (TEST_DOUBLE == 1) 
-    UserDefinedFunctionSortTestOfLength<double>(256);   
-    UserDefinedFunctionSortTestOfLength<double>(512);    
-    UserDefinedFunctionSortTestOfLength<double>(1024);    
-    UserDefinedFunctionSortTestOfLength<double>(2048);  
-    UserDefinedFunctionSortTestOfLength<double>(1048576); 
-#endif
-#endif
 
 #if (TEST_ALL == 1)
     std::cout << "Testing UserDefinedObjectSortTestOfLength\n";
@@ -1635,6 +1639,7 @@ int main(int argc, char* argv[])
     UserDefinedObjectSortTestOfLength<int>(1024);    
     UserDefinedObjectSortTestOfLength<int>(2048);    
     UserDefinedObjectSortTestOfLength<int>(1048576); 
+    UserDefinedObjectSortTestOfLength<int>(1048576+95); 
     UserDefinedObjectSortTestOfLength<float>(8);   
     UserDefinedObjectSortTestOfLength<float>(16);    
     UserDefinedObjectSortTestOfLength<float>(32);    
@@ -1645,6 +1650,7 @@ int main(int argc, char* argv[])
     UserDefinedObjectSortTestOfLength<float>(1024);    
     UserDefinedObjectSortTestOfLength<float>(2048);    
     UserDefinedObjectSortTestOfLength<float>(1048576);
+    UserDefinedObjectSortTestOfLength<float>(1048576-31);
 #if (TEST_DOUBLE == 1) 
     UserDefinedObjectSortTestOfLength<double>(8);   
     UserDefinedObjectSortTestOfLength<double>(16);    
@@ -1656,30 +1662,9 @@ int main(int argc, char* argv[])
     UserDefinedObjectSortTestOfLength<double>(1024);    
     UserDefinedObjectSortTestOfLength<double>(2048);    
     UserDefinedObjectSortTestOfLength<double>(1048576);
+    UserDefinedObjectSortTestOfLength<double>(1048576-129);
 #endif
 #endif
-
-#if (TEST_ALL == 1)
-    std::cout << "Testing BasicSortTestOfLength\n";
-    BasicSortTestOfLength<int>(256);
-    BasicSortTestOfLength<int>(512);
-    BasicSortTestOfLength<int>(1024);
-    BasicSortTestOfLength<int>(2048);
-    BasicSortTestOfLength<int>(1048576);
-    BasicSortTestOfLength<float>(256);
-    BasicSortTestOfLength<float>(512);
-    BasicSortTestOfLength<float>(1024);
-    BasicSortTestOfLength<float>(2048);
-    BasicSortTestOfLength<float>(1048576);
-
-#if (TEST_DOUBLE == 1) 
-    BasicSortTestOfLength<double>(256);
-    BasicSortTestOfLength<double>(512);
-    BasicSortTestOfLength<double>(1024);
-    BasicSortTestOfLength<double>(2048);
-    BasicSortTestOfLength<double>(1048576);
-#endif
-#endif 
 
     std::cout << "Test Completed" << std::endl; 
     return 0;

@@ -491,7 +491,7 @@ void sort_pick_iterator( control &ctl,
 /****** sort_enqueue specailization for unsigned int data types. ******
  * THE FOLLOWING CODE IMPLEMENTS THE RADIX SORT ALGORITHM FOR sort()
  *********************************************************************/
-#define BOLT_SORT_INL_DEBUG 1
+#define BOLT_SORT_INL_DEBUG 0
 template<typename DVRandomAccessIterator, typename StrictWeakOrdering> 
 typename std::enable_if< std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type, unsigned int >::value >::type
 sort_enqueue(control &ctl, 
@@ -522,7 +522,7 @@ sort_enqueue(control &ctl,
                                                  RADIX, 
                                                  cl_code +ClCode<T>::get(), "", 
                                                  TypeName<StrictWeakOrdering>::get(), &ctl) );
-    unsigned int groupSize  = RADICES;
+    size_t groupSize  = RADICES;
     //const int NUM_OF_ELEMENTS_PER_WORK_ITEM = RADICES;
     //unsigned int num_of_elems_per_group = RADICES  * groupSize;
 
@@ -548,7 +548,7 @@ sort_enqueue(control &ctl,
         //dvInputData = device_vector< T >(first.getBuffer( ), ctl);
         newBuffer = false;
     }
-
+    numGroups = szElements / mulFactor;
     device_vector< T > dvSwapInputData( szElements, 0);
     device_vector< T > dvHistogramBins( (numGroups* groupSize * RADICES), 0);
     device_vector< T > dvHistogramScanBuffer( (numGroups* RADICES + 10), 0);
@@ -640,7 +640,7 @@ sort_enqueue(control &ctl,
                 {
                     size_t index = ng * groupSize * RADICES + gS * RADICES + i;
                     int value = histBuffer[ index ];
-                    printf("%x %x, ",index, value);
+                    printf("%3x %2x, ",index, value);
                 }
             }
         }
@@ -656,12 +656,12 @@ sort_enqueue(control &ctl,
             printf ("\nRadix = %d\n",i);
             for (unsigned int ng=0; ng<numGroups; ng++)
             {
-                printf ("%x, ",histScanBuffer[i*numGroups + ng]);
+                printf ("%3x, ",histScanBuffer[i*numGroups + ng]);
             }
             for (unsigned int ng=0; ng<numGroups; ng++)
             {
                 temp += histScanBuffer[i*numGroups + ng];
-                printf ("%x, ",temp);
+                printf ("%3x, ",temp);
             }
         }
         ctl.commandQueue().enqueueUnmapMemObject(clHistScanData, histScanBuffer);
@@ -745,7 +745,7 @@ sort_enqueue(control &ctl,
 #if (BOLT_SORT_INL_DEBUG==1)
             T *swapBuffer;// = (T*)malloc(szElements * sizeof(T));
             ::cl::Event l_swapEvent;
-            if(bits==0 || bits==16)
+            if(!swap)
             //if(bits==0 || bits==8 || bits==16 || bits==24)
             {
                 swapBuffer = (T*)ctl.commandQueue().enqueueMapBuffer(clSwapData, false, CL_MAP_READ, 0, sizeof(T) * szElements, NULL, &l_swapEvent, &l_Error );
@@ -827,7 +827,7 @@ sort_enqueue(control &ctl,
 
     int i = 0;
     size_t mulFactor = groupSize * RADICES;
-    size_t numGroups = szElements / mulFactor;
+    
     
     if(orig_szElements%mulFactor != 0)
     {
@@ -847,7 +847,7 @@ sort_enqueue(control &ctl,
         //dvInputData = device_vector< T >(first.getBuffer( ), ctl);
         newBuffer = false;
     }
-
+    size_t numGroups = szElements / mulFactor;
     device_vector< T > dvSwapInputData( szElements, 0);
     device_vector< T > dvHistogramBins( (numGroups* groupSize * RADICES), 0);
     device_vector< T > dvHistogramScanBuffer( (numGroups* RADICES + 10), 0);
