@@ -210,6 +210,7 @@ int _tmain( int argc, _TCHAR* argv[] )
     {
         if( systemMemory )
         {
+            std::cout << "Benchmarking Bolt Host\n"; 
             std::vector< int > input1( length, 1 );
 
             for( unsigned i = 0; i < iterations; ++i )
@@ -221,6 +222,7 @@ int _tmain( int argc, _TCHAR* argv[] )
         }
         else if(deviceMemory)
         {
+            std::cout << "Benchmarking Bolt Device\n"; 
             bolt::cl::device_vector< int > input1( length, 1 );
 
             for( unsigned i = 0; i < iterations; ++i )
@@ -237,10 +239,12 @@ int _tmain( int argc, _TCHAR* argv[] )
     }
     else if (runTBB)
     {
+
         bolt::cl::control ctl = bolt::cl::control::getDefault();
         ctl.forceRunMode(bolt::cl::control::MultiCoreCpu);
         if( systemMemory )
         {
+            std::cout << "Benchmarking TBB Host\n"; 
             std::vector< int > input1( length, 1 );
 
             for( unsigned i = 0; i < iterations; ++i )
@@ -252,6 +256,7 @@ int _tmain( int argc, _TCHAR* argv[] )
         }
         else if(deviceMemory)
         {
+            std::cout << "Benchmarking TBB Device\n"; 
             bolt::cl::device_vector< int > input1( length, 1 );
 
             for( unsigned i = 0; i < iterations; ++i )
@@ -268,20 +273,31 @@ int _tmain( int argc, _TCHAR* argv[] )
     }
     else if(runSTL)
     {
+        bolt::cl::control ctl = bolt::cl::control::getDefault();
+        ctl.forceRunMode(bolt::cl::control::SerialCpu);
         if( systemMemory )
         {
+            std::cout << "Benchmarking STL Host\n"; 
             std::vector< int > input1( length, 1 );
 
             for( unsigned i = 0; i < iterations; ++i )
             {
                 myTimer.Start( testId );
-                int result = bolt::cl::reduce( input1.begin(), input1.end(), 0);
+                int result = bolt::cl::reduce( ctl, input1.begin(), input1.end(), 0);
                 myTimer.Stop( testId );
             }
         }
         else
         {
-            std::cout << "Serial Code Path using STL is supported only for System Memory\n";
+            std::cout << "Benchmarking STL Device\n"; 
+            bolt::cl::device_vector< int > input1( length, 1 );
+
+            for( unsigned i = 0; i < iterations; ++i )
+            {
+                myTimer.Start( testId );
+                int result = bolt::cl::reduce( ctl, input1.begin(), input1.end(), 0);
+                myTimer.Stop( testId );
+            }
         }
     }
 
