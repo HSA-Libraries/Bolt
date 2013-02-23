@@ -48,7 +48,7 @@ namespace bolt {
             struct CountIfEqual {
                 CountIfEqual(const T &targetValue)  : _targetValue(targetValue)
                 { };
-
+                CountIfEqual(){}
                 bool operator() (const T &x) {
                     return x == _targetValue;
                 };
@@ -80,7 +80,19 @@ namespace bolt {
             typedef typename std::iterator_traits<InputIterator>::value_type T;
             return count_if(first, last, detail::CountIfEqual<T>(value), detail::CountIfEqual_OclCode + cl_code);
         };
+        
+        template<typename InputIterator, typename EqualityComparable> 
+        typename bolt::cl::iterator_traits<InputIterator>::difference_type
+            count(control& ctl, InputIterator first, 
+            InputIterator last, 
+            const EqualityComparable &value,
+            const std::string cl_code="")
+        {
+            typedef typename std::iterator_traits<InputIterator>::value_type T;
+            return count_if(ctl, first, last, detail::CountIfEqual<T>(value), detail::CountIfEqual_OclCode + cl_code);
+        };
 
+        
 
         /*!
         * \p count_if counts the number of elements in the specified range for which the specified \p predicate is \p true.  
@@ -99,13 +111,28 @@ namespace bolt {
             const std::string cl_code="")
         {
             typedef typename bolt::cl::iterator_traits<InputIterator>::value_type CountType;
-			typedef typename bolt::cl::iterator_traits<InputIterator>::difference_type ResultType;
-
+            /*Change result type from std::iterator_traits<InputIterator>::difference_type to size_t as
+               with device vectorits comming int64 but with stdvector its __int64 which is not in openCL*/ 
+            typedef int ResultType;
             ResultType result = static_cast< ResultType >( transform_reduce( first, last, 
-                predicate, static_cast< ResultType >( 0 ), bolt::cl::plus< ResultType >( ), cl_code ) );
-
+                predicate,  static_cast< CountType >( 0 ), bolt::cl::plus< CountType >( ), cl_code ) );
             return result;
         };
+        
+        template<typename InputIterator, typename Predicate> 
+        typename bolt::cl::iterator_traits<InputIterator>::difference_type
+            count_if(control& ctl, InputIterator first, 
+            InputIterator last, 
+            Predicate predicate,
+            const std::string cl_code="")
+        {
+            typedef typename bolt::cl::iterator_traits<InputIterator>::value_type CountType;
+            typedef size_t ResultType;
+            ResultType result = static_cast< ResultType >(  transform_reduce(ctl, first, last, 
+                predicate, static_cast< CountType >( 0 ), bolt::cl::plus< CountType >( ), cl_code ) );
+            return result;
+        };
+        
     };
 };
 
