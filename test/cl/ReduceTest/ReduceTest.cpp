@@ -20,6 +20,7 @@
 #define OCL_CONTEXT_BUG_WORKAROUND 1
 
 #include "stdafx.h"
+#include <bolt/cl/iterator/counting_iterator.h>
 #include <bolt/cl/reduce.h>
 #include <bolt/cl/functional.h>
 #include <bolt/cl/control.h>
@@ -184,6 +185,25 @@ void simpleReduce_TestSerial(int aSize)
 };
 
 
+void simpleReduce_countingiterator(float start,int size)
+{
+
+    bolt::cl::counting_iterator<float> first(start);
+    bolt::cl::counting_iterator<float> last = first +  size;
+
+    std::vector<float> a(size);
+
+    for (int i=0; i < size; i++) {
+        a[i] = i+start;
+    };
+    
+    float stlReduce = std::accumulate(a.begin(), a.end(), 0.0F);
+    float boltReduce = bolt::cl::reduce(first, last, 0.0F);
+
+    checkResult("TestSerial", stlReduce, boltReduce);
+};
+
+
 #if 0
 // Disable test since the buffer interface is moving to device_vector.
 void reduce_TestBuffer() {
@@ -216,6 +236,8 @@ int _tmain(int argc, _TCHAR* argv[])
     simpleReduce_TestControl(100, 1, 0);
 
     simpleReduce_TestSerial(1000);
+
+    simpleReduce_countingiterator(20.05F,10);
     
     //simpleReduce_TestControl(1024000, numIters, 1); // may fail on systems with only one GPU installed.
 

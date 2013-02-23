@@ -23,7 +23,6 @@
 
 #include <boost/thread/once.hpp>
 #include <boost/bind.hpp>
-
 #include "bolt/cl/bolt.h"
 #include "bolt/cl/functional.h"
 #ifdef ENABLE_TBB
@@ -32,6 +31,8 @@
 #include "tbb/blocked_range.h"
 #include "tbb/task_scheduler_init.h"
 #endif
+
+
 namespace bolt {
     namespace cl {
 
@@ -206,18 +207,12 @@ namespace bolt {
                 if (szElements == 0)
                     return init;
                 /*TODO - probably the forceRunMode should be replaced by getRunMode and setRunMode*/
-                // Its a dynamic choice. See the reduce Test Code
-                // What should we do if the run mode is automatic. Currently it goes to the last else statement
-                //How many threads we should spawn? 
-                //Need to look at how to control the number of threads spawned.
                 const bolt::cl::control::e_RunMode runMode = ctl.forceRunMode();  
                 if (runMode == bolt::cl::control::SerialCpu) {
-                    std::cout << "The SerialCpu version of reduce is not implemented yet." << std ::endl;
-                    throw ::cl::Error( CL_INVALID_OPERATION, "The SerialCpu version of reduce is not implemented yet." );
-                    return init;
+                    return std::accumulate(first, last, init) ;
                 } else if (runMode == bolt::cl::control::MultiCoreCpu) {
 #ifdef ENABLE_TBB
-                    std::cout << "The MultiCoreCpu version of reduce uses TBB." << std ::endl;
+                    //std::cout << "The MultiCoreCpu version of reduce uses TBB." << std ::endl;
 					tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
                     Reduce<iType, BinaryFunction> reduce_op(binary_op, init);
                     tbb::parallel_reduce( tbb::blocked_range<iType*>( &*first, (iType*)&*(last-1) + 1), reduce_op );
@@ -244,20 +239,47 @@ namespace bolt {
                 const std::string& cl_code,
                 bolt::cl::device_vector_tag )
             {
-                size_t szElements = (size_t)(last - first); 
+                typedef typename std::iterator_traits<DVInputIterator>::value_type iType;
+                size_t szElements = static_cast<size_t>(std::distance(first, last) ); 
                 if (szElements == 0)
                     return init;
 
                 const bolt::cl::control::e_RunMode runMode = ctl.forceRunMode();  
                 if (runMode == bolt::cl::control::SerialCpu) {
-                    std::cout << "The SerialCpu version of reduce is not implemented yet." << std ::endl;
-                    throw ::cl::Error( CL_INVALID_OPERATION, "The SerialCpu version of reduce is not implemented yet." );
-                    return init;
+		            ::cl::Event serialCPUEvent;
+		            cl_int l_Error = CL_SUCCESS;
+                    T reduceResult;
+		            /*Map the device buffer to CPU*/
+		            iType *reduceInputBuffer = (iType*)ctl.commandQueue().enqueueMapBuffer(first.getBuffer(), false, 
+			                                                                     CL_MAP_READ|CL_MAP_WRITE, 
+																	             0, sizeof(iType) * szElements, 
+																	             NULL, &serialCPUEvent, &l_Error );                    
+                    reduceResult = std::accumulate(reduceInputBuffer, reduceInputBuffer + szElements, init) ;
+		            /*Unmap the device buffer back to device memory. This will copy the host modified buffer back to the device*/
+                    ctl.commandQueue().enqueueUnmapMemObject(first.getBuffer(), reduceInputBuffer);
+                    return reduceResult;
                 } else if (runMode == bolt::cl::control::MultiCoreCpu) {
-                    /*TODO - ASK  - should we copy the device_vector to host memory, process the result and then store back the result into the device_vector.*/
-                    std::cout << "The MultiCoreCpu version of reduce on device_vector is not supported." << std ::endl;
-                    throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of reduce on device_vector is not supported." );
+#ifdef ENABLE_TBB
+                    //std::cout << "The MultiCoreCpu version of sort is enabled with TBB. " << std ::endl;
+		            ::cl::Event multiCoreCPUEvent;
+		            cl_int l_Error = CL_SUCCESS;
+		            /*Map the device buffer to CPU*/
+		            iType *reduceInputBuffer = (iType*)ctl.commandQueue().enqueueMapBuffer(first.getBuffer(), false, 
+			                                                                     CL_MAP_READ|CL_MAP_WRITE, 
+																	             0, sizeof(iType) * szElements, 
+																	             NULL, &multiCoreCPUEvent, &l_Error );
+		            multiCoreCPUEvent.wait();
+					tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
+                    Reduce<iType, BinaryFunction> reduce_op(binary_op, init);
+                    tbb::parallel_reduce( tbb::blocked_range<iType*>( reduceInputBuffer, reduceInputBuffer + szElements), reduce_op );
+		            /*Unmap the device buffer back to device memory. This will copy the host modified buffer back to the device*/
+                    ctl.commandQueue().enqueueUnmapMemObject(first.getBuffer(), reduceInputBuffer);
+                    return reduce_op.value;
+#else
+                    std::cout << "The MultiCoreCpu version of reduce is not enabled. " << std ::endl;
+                    throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of reduce is not enabled to be built." );
                     return init;
+#endif
                 } else {
                 return reduce_enqueue( ctl, first, last, init, binary_op, cl_code);
                 }
@@ -325,7 +347,7 @@ namespace bolt {
                 control::buffPointer result = ctl.acquireBuffer( sizeof( iType ) * numWG, 
                     CL_MEM_ALLOC_HOST_PTR|CL_MEM_WRITE_ONLY );
 
-                cl_uint szElements = static_cast< cl_uint >( std::distance( first, last ) );
+                cl_uint szElements = static_cast< cl_uint >( first.distance_to(last ) );
 
                 V_OPENCL( masterKernel.setArg(0, first.getBuffer( ) ), "Error setting kernel argument" );
                 V_OPENCL( masterKernel.setArg(1, first.gpuPayloadSize( ), &first.gpuPayload( ) ), "Error setting a kernel argument" );

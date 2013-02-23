@@ -22,6 +22,12 @@
 #if !defined( SCAN_BY_KEY_INL )
 #define SCAN_BY_KEY_INL
 
+#ifdef ENABLE_TBB
+//TBB Includes
+#include "tbb/parallel_scan.h"
+#include "tbb/blocked_range.h"
+#include "tbb/task_scheduler_init.h"
+#endif
 #ifdef BOLT_ENABLE_PROFILING
 #include "bolt/AsyncProfiler.h"
 //AsyncProfiler aProfiler("transform_scan");
@@ -593,6 +599,96 @@ class ScanByKey_KernelTemplateSpecializer : public KernelTemplateSpecializer
     }
 };
 
+
+#ifdef ENABLE_TBB
+      template <typename T, typename InputIterator1, typename InputIterator2, typename OutputIterator, 
+                 typename BinaryFunction, typename BinaryPredicate>
+      struct ScanKey_tbb{
+          typedef typename std::iterator_traits< OutputIterator >::value_type oType;
+          oType sum;
+          oType start;
+          InputIterator1& first_key;
+          InputIterator2& first_value;
+          OutputIterator& result;
+          const BinaryFunction binary_op;
+          const BinaryPredicate binary_pred;
+          const bool inclusive;
+          bool flag, pre_flag;
+          public:
+          ScanKey_tbb() : sum(0) {}
+          ScanKey_tbb( InputIterator1&  _first,
+            InputIterator2& first_val,
+            OutputIterator& _result,
+            const BinaryFunction &_opr,
+            const BinaryPredicate &_pred,
+            const bool& _incl,
+            const oType &init) : first_key(_first), first_value(first_val), result(_result), binary_op(_opr), binary_pred(_pred),
+                             inclusive(_incl), start(init), flag(FALSE), pre_flag(TRUE){}
+          oType get_sum() const {return sum;}
+          template<typename Tag>
+          void operator()( const tbb::blocked_range<int>& r, Tag ) {
+              oType temp = sum;
+              flag=FALSE;
+              for( int i=r.begin(); i<r.end(); ++i ) {
+                 if( Tag::is_final_scan() ) {
+                     if(!inclusive){
+                          if( i==0){
+                             *(result + i) = start;
+                             temp = binary_op(start, *(first_value+i));
+                          }
+                          else if(binary_pred(*(first_key+i), *(first_key +i- 1))){
+                             *(result + i) = temp;
+                             temp = binary_op(temp, *(first_value+i));
+                          }
+                          else{
+                             *(result + i) = start;
+                             temp = binary_op(start, *(first_value+i));
+                             flag = TRUE;
+                          }
+                          continue;
+                     }
+                     else if(i == 0 ){
+                        temp = *(first_value+i);
+                     }
+                     else if(binary_pred(*(first_key+i), *(first_key +i- 1))) {
+                        temp = binary_op(temp, *(first_value+i));
+                     }
+                     else{
+                        flag = TRUE;
+                        temp = *(first_value+i);
+                     }
+                     *(result + i) = temp;
+                 }
+                 else if(pre_flag){
+                   temp = *(first_value+i);
+                   pre_flag = FALSE;
+
+                 }
+                 else if(binary_pred(*(first_key+i), *(first_key +i - 1)))
+                     temp = binary_op(temp, *(first_value+i));
+                 else if (!inclusive){
+                     flag = TRUE;
+                     temp = binary_op(start, *(first_value+i));                    
+                 }
+                 else {
+                     flag = TRUE;
+                     temp = *(first_value+i);  
+                 }
+             }
+             sum = temp;
+          }
+          ScanKey_tbb( ScanKey_tbb& b, tbb::split):first_key(b.first_key),result(b.result),first_value(b.first_value),
+                                                   inclusive(b.inclusive),start(b.start),pre_flag(TRUE){}
+          void reverse_join( ScanKey_tbb& a ) {
+            if(!flag)
+                sum = binary_op(a.sum,sum);
+          }
+          void assign( ScanKey_tbb& b ) {
+             sum = b.sum;
+          }
+      };
+#endif
+
 /***********************************************************************************************************************
  * Detect Random Access
  **********************************************************************************************************************/
@@ -688,9 +784,31 @@ scan_by_key_pick_iterator(
     if( numElements < 1 )
         return result;
 
-    const bolt::cl::control::e_RunMode runMode = ctl.forceRunMode( );  // could be dynamic choice some day.
-
+  
+  const bolt::cl::control::e_RunMode runMode = ctl.forceRunMode( );  // could be dynamic choice some day.
+  
+  if( runMode == bolt::cl::control::SerialCpu )
     {
+                //  TODO:  Need access to the device_vector .data method to get a host pointer
+                throw ::cl::Error( CL_INVALID_DEVICE, "Scan device_vector Serial CPU device not implemented" );
+                return result;
+    }
+  else if(runMode == bolt::cl::control::MultiCoreCpu)
+  {
+#ifdef ENABLE_TBB
+          tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
+          ScanKey_tbb<T, InputIterator1, InputIterator2, OutputIterator, BinaryFunction, BinaryPredicate> tbbkey_scan((InputIterator1 &)firstKey,
+            (InputIterator2&) firstValue,(OutputIterator &)result, binary_funct, binary_pred, inclusive, init);
+          tbb::parallel_scan( tbb::blocked_range<int>(  0, static_cast< int >( std::distance( firstKey, lastKey ))), tbbkey_scan, tbb::auto_partitioner());
+          return tbbkey_scan.result;
+#else
+        std::cout << "The MultiCoreCpu version of Scan by key is not implemented yet." << std ::endl;
+        throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of scan by key is not enabled to be built." ); 
+        return result;
+#endif
+  }
+  else
+  {
 
         // Map the input iterator to a device_vector
         device_vector< kType > dvKeys( firstKey, lastKey, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctl );

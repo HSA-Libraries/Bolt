@@ -59,5 +59,29 @@ void testTBB()
     else
         printf ("\nTBB Test case FAILED\n");
 
+};
+
+
+void testTBBDevicevector()
+{
+    const int aSize = 1024;
+    std::vector<int> stdInput(aSize);
+    bolt::cl::device_vector<int> tbbInput(aSize, 0);
+
+
+    for(int i=0; i<aSize; i++) {
+        stdInput[i] = i;
+        tbbInput[i] = i;
+    };
+
+    int hSum = std::accumulate(stdInput.begin(), stdInput.end(), 0);
+    bolt::cl::control ctl = bolt::cl::control::getDefault();
+    ctl.forceRunMode(bolt::cl::control::MultiCoreCpu);
+    int sum = bolt::cl::reduce(ctl, tbbInput.begin(), tbbInput.end(), 0);
+    if(hSum == sum)
+        printf ("\nTBB Test case PASSED\n");
+    else
+        printf ("\nTBB Test case FAILED\n");
+
 
 };

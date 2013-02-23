@@ -20,6 +20,7 @@
 set( clBolt.Test.Sort.Source SortTest.cpp 
                              ${BOLT_CL_TEST_DIR}/common/myocl.cpp)
 set( clBolt.Test.Sort.Headers   ${BOLT_CL_TEST_DIR}/common/myocl.h
+                                ${BOLT_CL_TEST_DIR}/common/test_common.h
                                 ${BOLT_INCLUDE_DIR}/bolt/cl/sort.h
                                 ${BOLT_INCLUDE_DIR}/bolt/cl/detail/sort.inl )
 
@@ -35,7 +36,12 @@ set( CMAKE_CXX_FLAGS "-bigobj ${CMAKE_CXX_FLAGS}" )
 endif()
 
 add_executable( clBolt.Test.Sort ${clBolt.Test.Sort.Files} )
-target_link_libraries( clBolt.Test.Sort ${OPENCL_LIBRARIES} ${GTEST_LIBRARIES} ${Boost_LIBRARIES} clBolt.Runtime ${TBB_LIBRARIES})
+
+if(BUILD_TBB)
+    target_link_libraries( clBolt.Test.Sort ${OPENCL_LIBRARIES} ${GTEST_LIBRARIES} ${Boost_LIBRARIES} clBolt.Runtime  ${TBB_LIBRARIES} )
+else (BUILD_TBB)
+    target_link_libraries( clBolt.Test.Sort ${OPENCL_LIBRARIES} ${GTEST_LIBRARIES} ${Boost_LIBRARIES} clBolt.Runtime  )
+endif()
 
 set_target_properties( clBolt.Test.Sort PROPERTIES VERSION ${Bolt_VERSION} )
 set_target_properties( clBolt.Test.Sort PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )

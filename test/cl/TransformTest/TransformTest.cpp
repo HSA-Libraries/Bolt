@@ -26,6 +26,8 @@
 
 #include <bolt/cl/transform.h>
 #include <bolt/cl/functional.h>
+#include <bolt/cl/iterator/constant_iterator.h>
+#include <bolt/cl/iterator/counting_iterator.h>
 #include <bolt/miniDump.h>
 
 #include <gtest/gtest.h>
@@ -1002,6 +1004,9 @@ TEST_P( TransformFloatDeviceVector, Inplace )
     //  Loop through the array and compare all the values with each other
     cmpArrays( stdOutput, boltOutput );
 }
+
+
+
 #if (TEST_DOUBLE == 1)
 TEST_P( TransformDoubleDeviceVector, Inplace )
 {
@@ -1245,6 +1250,74 @@ INSTANTIATE_TYPED_TEST_CASE_P( Double, UnaryTransformArrayTest, DoubleTests );
 #endif 
 //INSTANTIATE_TYPED_TEST_CASE_P( UDDTest, SortArrayTest, UDDTests );
 
+//Teststotesttheconstantiterator
+template <int N>
+int gen_constant()
+{
+    return N;
+}
+TEST(simple,constant)
+{
+    bolt::cl::constant_iterator<int> iter( 1 );
+    bolt::cl::constant_iterator<int> iter2 = iter + 1024;
+    std::vector<int> input1(1024);
+    std::vector<int> input2(1024);
+    std::vector<int> stdOutput(1024);
+     std::vector<int> boltOutput(1024);
+    std::generate(input1.begin(),input1.end(),gen_constant<1>);
+    input2 = input1;
+    std::transform( input1.begin(), input1.end(), input2.begin(), stdOutput.begin(), bolt::cl::plus<int>());
+    bolt::cl::transform(iter,iter2,input1.begin(),boltOutput.begin(),bolt::cl::plus<int>());
+    cmpArrays( stdOutput, boltOutput, 1024 );
+}
+
+//Teststotestthecountingiterator
+TEST(simple1,counting)
+{
+    bolt::cl::counting_iterator<int> iter(0);
+    bolt::cl::counting_iterator<int> iter2=iter+1024;
+    std::vector<int> input1(1024);
+    std::vector<int> input2(1024);
+    std::vector<int> stdOutput(1024);
+     std::vector<int> boltOutput(1024);
+     for(int i=0 ; i< 1024;i++)
+     {
+         input1[i] = i;
+     }
+    input2 = input1;
+    std::transform( input1.begin(), input1.end(), input2.begin(), stdOutput.begin(), bolt::cl::plus<int>());
+    bolt::cl::transform(iter,iter2,input1.begin(),boltOutput.begin(),bolt::cl::plus<int>());
+    cmpArrays( stdOutput, boltOutput, 1024 );
+}
+
+TEST(cl_const_iter_transformBoltClVectFloat, addIterFloatValues){
+	int size = 10;
+	float myConstValueF = 1.125f;
+	bolt::cl::plus<float> addKaro;
+	bolt::cl::device_vector<float> myDevVect(size);
+	
+	for (int i = 0; i < size; i++){
+		myDevVect[i] = (float)i + 1.0f;
+	}
+	
+	for (int i = 0; i<size; ++i){
+		std::cout.setf(std::ios::fixed);
+		std::cout<<std::setprecision(3)<<myDevVect[i]<<" ";
+	}
+
+	bolt::cl::constant_iterator< float > constIter( myConstValueF );
+
+	bolt::cl::transform(myDevVect.begin(), myDevVect.end(), constIter, myDevVect.begin(), addKaro);
+	
+	std::cout<<std::endl<<std::endl;
+	for (int i = 0; i<size; ++i){
+		std::cout.setf(std::ios::fixed);
+		std::cout<<std::setprecision(3)<<myDevVect[i]<<" ";
+	}
+}
+
+
+
 int main(int argc, char* argv[])
 {
     //  Register our minidump generating logic
@@ -1284,9 +1357,10 @@ int main(int argc, char* argv[])
 
     ::testing::InitGoogleTest( &argc, &argv[ 0 ] );
 
-    ////  Set the standard OpenCL wait behavior to help debugging
+    //  Set the standard OpenCL wait behavior to help debugging
     //bolt::cl::control& myControl = bolt::cl::control::getDefault( );
-    //myControl.waitMode( bolt::cl::control::NiceWait );
+    // myControl.waitMode( bolt::cl::control::NiceWait );
+    //myControl.forceRunMode( bolt::cl::control::MultiCoreCpu );  // choose tbb
 
     int retVal = RUN_ALL_TESTS( );
 

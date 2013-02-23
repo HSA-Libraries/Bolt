@@ -315,7 +315,7 @@ aProfiler.stopTrial();
         //Now call the actual cl algorithm
         scan_enqueue( ctl, dvInput.begin( ), dvInput.end( ), dvOutput.begin( ), init, binary_op, inclusive );
         std::cout << "Peeking in pick_iterator after scan_enqueue completed." << std::endl;
-        PEEK_AT( dvOutput.begin()->getBuffer())
+        PEEK_AT( dvOutput.begin().getBuffer())
 
         // This should immediately map/unmap the buffer
         dvOutput.data( );
@@ -368,7 +368,7 @@ scan_pick_iterator(
     //Now call the actual cl algorithm
     scan_enqueue( ctl, first, last, result, init, binary_op, inclusive );
     std::cout << "Peeking in pick_iterator after scan_enqueue completed." << std::endl;
-    PEEK_AT( result->getBuffer())
+    PEEK_AT( result.getBuffer())
 
     return result + numElements;
 }
@@ -466,11 +466,10 @@ size_t k0_stepNum, k1_stepNum, k2_stepNum;
     //  Use of the auto keyword here is OK, because AMP is restricted by definition to vs11 or above
     //  The auto keyword is useful here in a polymorphic sense, because it does not care if the container
     //  is wrapping an array or an array_view
-	auto&  input = first->getBuffer(); //( numElements, av );
-    auto& output = result->getBuffer(); //( sizeInputBuff, av );
+	auto&  input = first.getBuffer(); //( numElements, av );
+    auto& output = result.getBuffer(); //( sizeInputBuff, av );
     input.get_extent().size();
 	//hostInput.copy_to( input.section( concurrency::extent< 1 >( numElements ) ) );
-
 
 	//	Loop to calculate the inclusive scan of each individual tile, and output the block sums of every tile
 	//	This loop is inherently parallel; every tile is independant with potentially many wavefronts

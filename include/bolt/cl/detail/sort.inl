@@ -37,10 +37,12 @@
 
 #define BOLT_UINT_MAX 0xFFFFFFFFU
 #define BOLT_UINT_MIN 0x0U
-#define BOLT_INT_MAX 0x7FFFFFFFU
-#define BOLT_INT_MIN 0x80000000U
+#define BOLT_INT_MAX 0x7FFFFFFF
+#define BOLT_INT_MIN 0x80000000
 
-#define WGSIZE 64
+#define BITONIC_SORT_WGSIZE 64
+/* \brief - SORT_CPU_THRESHOLD should be atleast 2 times the BITONIC_SORT_WGSIZE*/
+#define SORT_CPU_THRESHOLD 128 
 
 namespace bolt {
 namespace cl {
@@ -109,24 +111,128 @@ namespace detail {
 
 struct CallCompiler_Sort {
 
-    static void constructAndCompileRadixSortInt(std::vector< ::cl::Kernel >* radixSortKernels,  
-                                                std::string cl_code_dataType, std::string valueTypeName,  
-                                                std::string compareTypeName, const control *ctl) 
+    static void constructAndCompileRadixSortIntTemplate(std::vector< ::cl::Kernel >* radixSortKernels,  
+                                                         int radix, std::string cl_code_dataType, 
+                                                         std::string valueTypeName,  std::string compareTypeName, 
+                                                         const control *ctl) 
     {
+        std::stringstream radixStream;
         std::vector< const std::string > kernelNames;
-        kernelNames.push_back( "histogramAscendingRadixN" );
-        kernelNames.push_back( "histogramDescendingRadixN" );
-        kernelNames.push_back( "scanLocalRadixN" );
-        kernelNames.push_back( "permuteAscendingRadixN" );
-        kernelNames.push_back( "permuteDescendingRadixN" );
+        radixStream << radix;
 
-        const std::string instantiationString = "";
+        std::string temp = "histogramAscendingRadix" + radixStream.str();
+        kernelNames.push_back( temp );
+        temp = "histogramDescendingRadix" + radixStream.str();
+        kernelNames.push_back( temp );
+        kernelNames.push_back( "scanLocal" );
+        temp = "permuteAscendingRadix" + radixStream.str();
+        kernelNames.push_back( temp );
+        temp = "permuteDescendingRadix" + radixStream.str();
+        kernelNames.push_back( temp );
+        /*Signed integers sorting kernels*/
+        temp = "histogramSignedDescendingRadix" + radixStream.str();
+        kernelNames.push_back( temp );
+        temp = "histogramSignedAscendingRadix" + radixStream.str();
+        kernelNames.push_back( temp );
+
+        temp = "permuteSignedDescendingRadix" + radixStream.str();
+        kernelNames.push_back( temp );
+        temp = "permuteSignedAscendingRadix" + radixStream.str();
+        kernelNames.push_back( temp );
+
+
+        std::string tempHistAscending,tempHistSignedAscending;
+        std::string tempPermAscending,tempPermSignedAscending; 
+        std::string tempHistDescending,tempHistSignedDescending;
+        std::string tempPermDescending,tempPermSignedDescending;
+
+        tempHistAscending  = "histogramAscendingRadix"+ radixStream.str() +"Instantiated";
+        tempPermAscending  = "permuteAscendingRadix"+ radixStream.str() +"Instantiated";
+        tempHistDescending = "histogramDescendingRadix"+ radixStream.str() +"Instantiated";
+        tempPermDescending = "permuteDescendingRadix"+ radixStream.str() +"Instantiated";
+        tempHistSignedDescending  = "histogramSignedDescendingRadix"+ radixStream.str() +"Instantiated";
+        tempPermSignedDescending  = "permuteSignedDescendingRadix"+ radixStream.str() +"Instantiated";
+        tempHistSignedAscending = "histogramSignedAscendingRadix"+ radixStream.str() +"Instantiated";
+        tempPermSignedAscending = "permuteSignedAscendingRadix"+ radixStream.str() +"Instantiated";
+
+        std::string ScanInstantiationString = 
+            "\ntemplate __attribute__((mangled_name(scanLocalInstantiated)))\n"
+             "void scanLocalTemplate< " +radixStream.str()+ " >(__global uint* buckets,\n"
+             "global uint* histScanBuckets,\n"
+             "local uint* localScanArray);\n\n";
+
+        std::string AscendingInstantiationString = 
+            "// Host generates this instantiation string with user-specified value type and functor\n"
+            "\ntemplate __attribute__((mangled_name(" + tempHistAscending + ")))\n"
+            "void histogramAscendingRadixNTemplate< " +radixStream.str()+ " >(__global uint* unsortedData,\n"
+            "global uint* buckets,\n"
+            "global uint* histScanBuckets,\n"
+            "uint shiftCount\n"
+            ");\n"
+            "\n"
+            "\n"
+            "template __attribute__((mangled_name(" + tempPermAscending + ")))\n"
+            "void permuteAscendingRadixNTemplate< " +radixStream.str()+ " >(__global uint* unsortedData,\n"
+            "global uint* scanedBuckets,\n"
+            "uint shiftCount,\n"
+            "global uint* sortedData\n"
+            ");\n"
+            "\n"
+            "\n"
+            "\ntemplate __attribute__((mangled_name(" + tempHistSignedDescending + ")))\n"
+            "void histogramSignedDescendingRadixNTemplate< " +radixStream.str()+ " >(__global uint* unsortedData,\n"
+            "global uint* buckets,\n"
+            "global uint* histScanBuckets,\n"
+            "uint shiftCount\n"
+            ");\n"
+            "\n"
+            "\n"
+            "template __attribute__((mangled_name(" + tempPermSignedDescending + ")))\n"
+            "void permuteSignedDescendingRadixNTemplate< " +radixStream.str()+ " >(__global uint* unsortedData,\n"
+            "global uint* scanedBuckets,\n"
+            "uint shiftCount,\n"
+            "global uint* sortedData\n"
+            ");\n\n";
+
+        std::string DescendingInstantiationString = 
+            "// Host generates this instantiation string with user-specified value type and functor\n"
+            "\ntemplate __attribute__((mangled_name(" + tempHistDescending + ")))\n"
+            "void histogramDescendingRadixNTemplate< " +radixStream.str()+ " >(__global uint* unsortedData,\n"
+            "global uint* buckets,\n"
+            "global uint* histScanBuckets,\n"
+            "uint shiftCount\n"
+            ");\n"
+            "\n"
+            "\n"
+            "template __attribute__((mangled_name(" + tempPermDescending + ")))\n"
+            "void permuteDescendingRadixNTemplate< " +radixStream.str()+ " >(__global uint* unsortedData,\n"
+            "global uint* scanedBuckets,\n"
+            "uint shiftCount,\n"
+            "global uint* sortedData\n"
+            ");\n\n"
+            "\n"
+            "\n"
+            "\ntemplate __attribute__((mangled_name(" + tempHistSignedAscending + ")))\n"
+            "void histogramSignedAscendingRadixNTemplate< " +radixStream.str()+ " >(__global uint* unsortedData,\n"
+            "global uint* buckets,\n"
+            "global uint* histScanBuckets,\n"
+            "uint shiftCount\n"
+            ");\n"
+            "\n"
+            "\n"
+            "template __attribute__((mangled_name(" + tempPermSignedAscending + ")))\n"
+            "void permuteSignedAscendingRadixNTemplate< " +radixStream.str()+ " >(__global uint* unsortedData,\n"
+            "global uint* scanedBuckets,\n"
+            "uint shiftCount,\n"
+            "global uint* sortedData\n"
+            ");\n\n";
 
         bolt::cl::compileKernelsString( *radixSortKernels, kernelNames, 
-                                        sort_uint_kernels, instantiationString, 
-                                        cl_code_dataType, valueTypeName, "", *ctl );
+                               sort_uint_kernels, 
+                               AscendingInstantiationString + ScanInstantiationString + DescendingInstantiationString, 
+                               cl_code_dataType, valueTypeName, "", *ctl );
     }
-
+    
     static void constructAndCompileRadixSortUintTemplate(std::vector< ::cl::Kernel >* radixSortKernels,  
                                                          int radix, std::string cl_code_dataType, 
                                                          std::string valueTypeName,  std::string compareTypeName, 
@@ -208,7 +314,7 @@ struct CallCompiler_Sort {
             "// Host generates this instantiation string with user-specified value type and functor\n"
             "template __attribute__((mangled_name(sortInstantiated)))\n"
             "kernel void sortTemplate(\n"
-			"global " + valueTypeName + "* A,\n"
+            "global " + valueTypeName + "* A,\n"
             "const uint stage,\n"
             "const uint passOfStage,\n"
             "global " + compareTypeName + " * userComp\n"
@@ -286,24 +392,55 @@ void sort_pick_iterator( control &ctl,
 {
     // User defined Data types are not supported with device_vector. Hence we have a static assert here.
     // The code here should be in compliant with the routine following this routine.
-    size_t szElements = (size_t)(last - first); 
+    typedef typename std::iterator_traits<DVRandomAccessIterator>::value_type T;
+    size_t szElements = static_cast< size_t >( std::distance( first, last ) );
     if (szElements == 0 )
             return;
     const bolt::cl::control::e_RunMode runMode = ctl.forceRunMode();  // could be dynamic choice some day.
-    if (runMode == bolt::cl::control::SerialCpu) {
-        throw ::cl::Error( CL_INVALID_DEVICE, "Sort of device_vector CPU device not implemented" );
+    if ((runMode == bolt::cl::control::SerialCpu) || (szElements < SORT_CPU_THRESHOLD)) {
+        ::cl::Event serialCPUEvent;
+        cl_int l_Error = CL_SUCCESS;
+        /*Map the device buffer to CPU*/
+        T *sortInputBuffer = (T*)ctl.commandQueue().enqueueMapBuffer(first.getBuffer(), false, 
+                                                                     CL_MAP_READ|CL_MAP_WRITE, 
+                                                                     0, sizeof(T) * szElements, 
+                                                                     NULL, &serialCPUEvent, &l_Error );
+        serialCPUEvent.wait();
+        //Compute sort using STL
+        std::sort(sortInputBuffer, sortInputBuffer + szElements, comp);
+        /*Unmap the device buffer back to device memory. This will copy the host modified buffer back to the device*/
+        ctl.commandQueue().enqueueUnmapMemObject(first.getBuffer(), sortInputBuffer);
         return;
     } else if (runMode == bolt::cl::control::MultiCoreCpu) {
-        std::cout << "The MultiCoreCpu version of sort on device_vector is not supported." << std ::endl;
-        throw ::cl::Error( CL_INVALID_DEVICE, "The MultiCoreCpu version of reduce on device_vector is not supported." );
+#ifdef ENABLE_TBB
+        //std::cout << "The MultiCoreCpu version of sort is enabled with TBB. " << std ::endl;
+        ::cl::Event multiCoreCPUEvent;
+        cl_int l_Error = CL_SUCCESS;
+        /*Map the device buffer to CPU*/
+        T *sortInputBuffer = (T*)ctl.commandQueue().enqueueMapBuffer(first.getBuffer(), false, 
+                                                                     CL_MAP_READ|CL_MAP_WRITE, 
+                                                                     0, sizeof(T) * szElements, 
+                                                                     NULL, &multiCoreCPUEvent, &l_Error );
+        multiCoreCPUEvent.wait();
+        //Compute parallel sort using TBB
+        tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
+        tbb::parallel_sort(sortInputBuffer,sortInputBuffer+szElements, comp);
+        /*Unmap the device buffer back to device memory. This will copy the host modified buffer back to the device*/
+        ctl.commandQueue().enqueueUnmapMemObject(first.getBuffer(), sortInputBuffer);
         return;
+#else
+        std::cout << "The MultiCoreCpu version of sort is not enabled. " << std ::endl;
+        throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of sort is not enabled to be built." );
+        return;
+#endif
+
     } else {
         sort_enqueue(ctl,first,last,comp,cl_code);
     }
     return;
 }
             
-//Device Vector specialization
+//Fancy Iterator specialization
 template<typename DVRandomAccessIterator, typename StrictWeakOrdering> 
 void sort_pick_iterator( control &ctl, 
                          const DVRandomAccessIterator& first, const DVRandomAccessIterator& last,
@@ -328,7 +465,7 @@ void sort_pick_iterator( control &ctl,
         return;
 
     const bolt::cl::control::e_RunMode runMode = ctl.forceRunMode();  // could be dynamic choice some day.
-    if ((runMode == bolt::cl::control::SerialCpu) || (szElements < WGSIZE)) {
+    if ((runMode == bolt::cl::control::SerialCpu) || (szElements < BITONIC_SORT_WGSIZE)) {
         std::sort(first, last, comp);
         return;
     } else if (runMode == bolt::cl::control::MultiCoreCpu) {
@@ -354,7 +491,7 @@ void sort_pick_iterator( control &ctl,
 /****** sort_enqueue specailization for unsigned int data types. ******
  * THE FOLLOWING CODE IMPLEMENTS THE RADIX SORT ALGORITHM FOR sort()
  *********************************************************************/
-#define BOLT_DEBUG 0
+#define BOLT_SORT_INL_DEBUG 0
 template<typename DVRandomAccessIterator, typename StrictWeakOrdering> 
 typename std::enable_if< std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type, unsigned int >::value >::type
 sort_enqueue(control &ctl, 
@@ -364,9 +501,11 @@ sort_enqueue(control &ctl,
     typedef typename std::iterator_traits< DVRandomAccessIterator >::value_type T;
     const int RADIX = 4;
     const int RADICES = (1 << RADIX);	//Values handeled by each work-item?
-    unsigned int szElements = (last - first);
+    size_t orig_szElements = static_cast<size_t>(std::distance(first, last));
+    size_t szElements = orig_szElements;
     device_vector< T > dvInputData;//(sizeof(T), 0);
     bool  newBuffer = false;
+    ::cl::Buffer *pLocalBuffer;
     //std::cout << "Calling unsigned int sort_enqueue sizeof T = "<< sizeof(T) << "\n";
     int computeUnits     = ctl.device().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
     int wgPerComputeUnit =  ctl.wgPerComputeUnit(); 
@@ -375,41 +514,49 @@ sort_enqueue(control &ctl,
 
     static  boost::once_flag initOnlyOnce;
     static std::vector< ::cl::Kernel > radixSortUintKernels;
-                    
+    
     //Power of 2 buffer size
     // For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retreive the name here.
-    boost::call_once( initOnlyOnce, boost::bind( CallCompiler_Sort::constructAndCompileRadixSortUintTemplate, &radixSortUintKernels, RADIX, cl_code +ClCode<T>::get(), "", TypeName<StrictWeakOrdering>::get(), &ctl) );
-    unsigned int groupSize  = (unsigned int)radixSortUintKernels[0].getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.device( ), &l_Error );
-    V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
-    groupSize = RADICES;
-    const int NUM_OF_ELEMENTS_PER_WORK_ITEM = RADICES;
-    unsigned int num_of_elems_per_group = RADICES  * groupSize;
+    boost::call_once( initOnlyOnce, boost::bind( CallCompiler_Sort::constructAndCompileRadixSortUintTemplate, 
+                                                 &radixSortUintKernels, 
+                                                 RADIX, 
+                                                 cl_code +ClCode<T>::get(), "", 
+                                                 TypeName<StrictWeakOrdering>::get(), &ctl) );
+    size_t groupSize  = RADICES;
+    //const int NUM_OF_ELEMENTS_PER_WORK_ITEM = RADICES;
+    //unsigned int num_of_elems_per_group = RADICES  * groupSize;
 
     int i = 0;
-    unsigned int mulFactor = groupSize * RADICES;
-    unsigned int numGroups = szElements / mulFactor;
-                    
-    if(szElements%mulFactor != 0)
+    size_t mulFactor = groupSize * RADICES;
+    size_t numGroups = szElements / mulFactor;
+    
+    if(orig_szElements%mulFactor != 0)
     {
+        ::cl::Event copyEvent;
         szElements  = ((szElements + mulFactor) /mulFactor) * mulFactor;
-        dvInputData.resize(sizeof(T)*szElements);
-        ctl.commandQueue().enqueueCopyBuffer( first.getBuffer( ), dvInputData.begin( ).getBuffer( ), 0, 0, sizeof(T)*(last-first), NULL, NULL );
+        pLocalBuffer = new ::cl::Buffer(ctl.context(),CL_MEM_READ_WRITE| CL_MEM_ALLOC_HOST_PTR, sizeof(T) * szElements);
+        //dvInputData.resize(sizeof(T)*szElements);
+        ctl.commandQueue().enqueueCopyBuffer( first.getBuffer( ), 
+                                              *pLocalBuffer, 0, 0, 
+                                              orig_szElements*sizeof(T), NULL, &copyEvent );
+        copyEvent.wait();
         newBuffer = true;
     }
     else
     {
-        dvInputData = device_vector< T >(first.getBuffer( ), ctl);
+        pLocalBuffer = new ::cl::Buffer(first.getBuffer( ) ); 
+        //dvInputData = device_vector< T >(first.getBuffer( ), ctl);
         newBuffer = false;
     }
-
-    device_vector< T > dvSwapInputData( sizeof(T)*szElements, 0);
-    device_vector< T > dvHistogramBins( sizeof(T)*(numGroups* groupSize * RADICES), 0);
-    device_vector< T > dvHistogramScanBuffer( sizeof(T)*(numGroups* RADICES + 10), 0);
+    numGroups = szElements / mulFactor;
+    device_vector< T > dvSwapInputData( szElements, 0);
+    device_vector< T > dvHistogramBins( (numGroups* groupSize * RADICES), 0);
+    device_vector< T > dvHistogramScanBuffer( (numGroups* RADICES + 10), 0);
 
     ALIGNED( 256 ) StrictWeakOrdering aligned_comp( comp );
                     
     control::buffPointer userFunctor = ctl.acquireBuffer( sizeof( aligned_comp ), CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_comp );
-    ::cl::Buffer clInputData = dvInputData.begin( ).getBuffer( );
+    ::cl::Buffer clInputData = *pLocalBuffer;//dvInputData.begin( ).getBuffer( );
     ::cl::Buffer clSwapData = dvSwapInputData.begin( ).getBuffer( );
     ::cl::Buffer clHistData = dvHistogramBins.begin( ).getBuffer( );
     ::cl::Buffer clHistScanData = dvHistogramScanBuffer.begin( ).getBuffer( );
@@ -426,10 +573,11 @@ sort_enqueue(control &ctl,
         if(newBuffer == true)
         {
             cl_buffer_region clBR;
-            clBR.origin = (last - first)* sizeof(T);
-            clBR.size  = (szElements * sizeof(T)) - (last - first)* sizeof(T);
-
-            ctl.commandQueue().enqueueFillBuffer(clInputData, BOLT_UINT_MAX, clBR.origin, clBR.size, NULL, NULL);
+            ::cl::Event fillEvent;
+            clBR.origin = orig_szElements* sizeof(T);
+            clBR.size  = (szElements * sizeof(T)) - orig_szElements* sizeof(T);
+            ctl.commandQueue().enqueueFillBuffer(clInputData, (unsigned int)BOLT_UINT_MAX, clBR.origin, clBR.size, NULL, &fillEvent);
+            fillEvent.wait();
         }
     }
     else
@@ -441,9 +589,11 @@ sort_enqueue(control &ctl,
         if(newBuffer == true)
         {
             cl_buffer_region clBR;
-            clBR.origin = (last - first)* sizeof(T);
-            clBR.size  = (szElements * sizeof(T)) - (last - first)* sizeof(T);
-            ctl.commandQueue().enqueueFillBuffer(clInputData, BOLT_UINT_MIN, clBR.origin, clBR.size, NULL, NULL);
+            ::cl::Event fillEvent;
+            clBR.origin = orig_szElements* sizeof(T);
+            clBR.size  = (szElements * sizeof(T)) - orig_szElements* sizeof(T);
+            ctl.commandQueue().enqueueFillBuffer(clInputData, (unsigned int)BOLT_UINT_MIN, clBR.origin, clBR.size, NULL, &fillEvent);
+            fillEvent.wait();
         }
     }
 
@@ -472,7 +622,7 @@ sort_enqueue(control &ctl,
                             NULL);
         //V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
 
-#if (BOLT_DEBUG==1)
+#if (BOLT_SORT_INL_DEBUG==1)
         //This map is required since the data is not available to the host when scanning.
         //Create local device_vector's 
         T *histBuffer;// = (T*)malloc(numGroups* groupSize * RADICES * sizeof(T));
@@ -490,7 +640,7 @@ sort_enqueue(control &ctl,
                 {
                     size_t index = ng * groupSize * RADICES + gS * RADICES + i;
                     int value = histBuffer[ index ];
-                    printf("%x %x, ",index, value);
+                    printf("%3x %2x, ",index, value);
                 }
             }
         }
@@ -506,12 +656,12 @@ sort_enqueue(control &ctl,
             printf ("\nRadix = %d\n",i);
             for (unsigned int ng=0; ng<numGroups; ng++)
             {
-                printf ("%x, ",histScanBuffer[i*numGroups + ng]);
+                printf ("%3x, ",histScanBuffer[i*numGroups + ng]);
             }
             for (unsigned int ng=0; ng<numGroups; ng++)
             {
                 temp += histScanBuffer[i*numGroups + ng];
-                printf ("%x, ",temp);
+                printf ("%3x, ",temp);
             }
         }
         ctl.commandQueue().enqueueUnmapMemObject(clHistScanData, histScanBuffer);
@@ -519,7 +669,7 @@ sort_enqueue(control &ctl,
 
         //Perform a global scan 
         detail::scan_enqueue(ctl, dvHistogramScanBuffer.begin(),dvHistogramScanBuffer.end(),dvHistogramScanBuffer.begin(), 0, plus< T >( ));
-#if (BOLT_DEBUG==1)
+#if (BOLT_SORT_INL_DEBUG==1)
         ::cl::Event l_histScanBufferEvent1;
         histScanBuffer = (T*) ctl.commandQueue().enqueueMapBuffer(clHistScanData, false, CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(T) * numGroups * RADICES, NULL, &l_histScanBufferEvent1, &l_Error );
         bolt::cl::wait(ctl, l_histScanBufferEvent1);
@@ -549,7 +699,7 @@ sort_enqueue(control &ctl,
                             NULL);
         //V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
 
-#if (BOLT_DEBUG==1)
+#if (BOLT_SORT_INL_DEBUG==1)
         //This map is required since the data is not available to the host when scanning.
         ::cl::Event l_histEvent1;
         T *histBuffer1;
@@ -592,10 +742,10 @@ sort_enqueue(control &ctl,
                             NULL,
                             NULL);
         //V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
-#if (BOLT_DEBUG==1)
+#if (BOLT_SORT_INL_DEBUG==1)
             T *swapBuffer;// = (T*)malloc(szElements * sizeof(T));
             ::cl::Event l_swapEvent;
-            if(bits==0 || bits==16)
+            if(!swap)
             //if(bits==0 || bits==8 || bits==16 || bits==24)
             {
                 swapBuffer = (T*)ctl.commandQueue().enqueueMapBuffer(clSwapData, false, CL_MAP_READ, 0, sizeof(T) * szElements, NULL, &l_swapEvent, &l_Error );
@@ -605,7 +755,7 @@ sort_enqueue(control &ctl,
                 for(int i=0; i<szElements;i+= RADICES)
                 {
                     for(int j =0;j< RADICES;j++)
-                        printf("%x %x, ",i+j,swapBuffer[i+j]);
+                        printf("%8x %8x, ",i+j,swapBuffer[i+j]);
                     printf("\n");
                 }
                 ctl.commandQueue().enqueueUnmapMemObject(clSwapData, swapBuffer);
@@ -619,7 +769,7 @@ sort_enqueue(control &ctl,
                 for(int i=0; i<szElements;i+= RADICES)
                 {
                     for(int j =0;j< RADICES;j++)
-                        printf("%x %x, ",i+j,swapBuffer[i+j]);
+                        printf("%8x %8x, ",i+j,swapBuffer[i+j]);
                     printf("\n");
                 }
                 ctl.commandQueue().enqueueUnmapMemObject(clInputData, swapBuffer);
@@ -627,23 +777,22 @@ sort_enqueue(control &ctl,
 
 
 #endif
-        if(swap==0)
-            swap = 1;
-        else
-            swap = 0;
+            /*For swapping the buffers*/
+            swap = swap? 0: 1;
     }
     if(newBuffer == true)
     {
-        //::cl::copy(clInputData, first, last);
-        ctl.commandQueue().enqueueCopyBuffer( dvInputData.begin( ).getBuffer( ), first.getBuffer( ), 0, 0, sizeof(T)*(last-first), NULL, NULL );
+        ::cl::Event copyBackEvent;
+        ctl.commandQueue().enqueueCopyBuffer( clInputData, first.getBuffer( ), 0, 0, sizeof(T)*orig_szElements, NULL, &copyBackEvent );
+        copyBackEvent.wait();
     }
+    delete pLocalBuffer;
     return;
 }
 
+
 template<typename DVRandomAccessIterator, typename StrictWeakOrdering> 
-typename std::enable_if< 
-    std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type, int >::value 
-                       >::type
+typename std::enable_if< std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type,          int >::value >::type
 sort_enqueue(control &ctl, 
              DVRandomAccessIterator first, DVRandomAccessIterator last,
              StrictWeakOrdering comp, const std::string& cl_code)
@@ -651,9 +800,11 @@ sort_enqueue(control &ctl,
     typedef typename std::iterator_traits< DVRandomAccessIterator >::value_type T;
     const int RADIX = 4;
     const int RADICES = (1 << RADIX);	//Values handeled by each work-item?
-    unsigned int szElements = (last - first);
+    size_t orig_szElements = static_cast<size_t>(std::distance(first, last));
+    size_t szElements = orig_szElements;
     device_vector< T > dvInputData;//(sizeof(T), 0);
     bool  newBuffer = false;
+    ::cl::Buffer *pLocalBuffer;
     //std::cout << "Calling unsigned int sort_enqueue sizeof T = "<< sizeof(T) << "\n";
     int computeUnits     = ctl.device().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
     int wgPerComputeUnit =  ctl.wgPerComputeUnit(); 
@@ -662,58 +813,55 @@ sort_enqueue(control &ctl,
 
     static  boost::once_flag initOnlyOnce;
     static std::vector< ::cl::Kernel > radixSortIntKernels;
-                    
+    
     //Power of 2 buffer size
-    // For user-defined types, the user must create a TypeName trait which returns the name of the class - 
-    // note use of TypeName<>::get to retreive the name here.
-    boost::call_once( initOnlyOnce, boost::bind( CallCompiler_Sort::constructAndCompileRadixSortInt, 
+    // For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retreive the name here.
+    boost::call_once( initOnlyOnce, boost::bind( CallCompiler_Sort::constructAndCompileRadixSortIntTemplate, 
                                                  &radixSortIntKernels, 
+                                                 RADIX, 
                                                  cl_code +ClCode<T>::get(), "", 
                                                  TypeName<StrictWeakOrdering>::get(), &ctl) );
-    unsigned int groupSize  = 
-        (unsigned int)radixSortIntKernels[0].getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.device( ), &l_Error );
-    V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
-    groupSize = RADICES;
-    const int NUM_OF_ELEMENTS_PER_WORK_ITEM = RADICES;
-    unsigned int num_of_elems_per_group = RADICES  * groupSize;
+    unsigned int groupSize  = RADICES;
+    //const int NUM_OF_ELEMENTS_PER_WORK_ITEM = RADICES;
+    //unsigned int num_of_elems_per_group = RADICES  * groupSize;
 
     int i = 0;
-    unsigned int mulFactor = groupSize * RADICES;
-    unsigned int numGroups = szElements / mulFactor;
-                    
-    if(szElements%mulFactor != 0)
+    size_t mulFactor = groupSize * RADICES;
+    
+    
+    if(orig_szElements%mulFactor != 0)
     {
+        ::cl::Event copyEvent;
         szElements  = ((szElements + mulFactor) /mulFactor) * mulFactor;
-        //the size is zero and not a multiple of mulFactor. So we need to resize the device_vector.
-        dvInputData.resize(sizeof(T)*szElements);
+        pLocalBuffer = new ::cl::Buffer(ctl.context(),CL_MEM_READ_WRITE| CL_MEM_ALLOC_HOST_PTR, sizeof(T) * szElements);
+        //dvInputData.resize(sizeof(T)*szElements);
         ctl.commandQueue().enqueueCopyBuffer( first.getBuffer( ), 
-                                              dvInputData.begin( ).getBuffer( ), 
-                                              0, 0, 
-                                              sizeof(T)*(last-first), NULL, NULL );
+                                              *pLocalBuffer, 0, 0, 
+                                              orig_szElements*sizeof(T), NULL, &copyEvent );
+        copyEvent.wait();
         newBuffer = true;
     }
     else
     {
-        dvInputData = device_vector< T >(first.getBuffer( ), ctl);
+        pLocalBuffer = new ::cl::Buffer(first.getBuffer( ) ); 
+        //dvInputData = device_vector< T >(first.getBuffer( ), ctl);
         newBuffer = false;
     }
-
-    device_vector< T > dvSwapInputData( sizeof(T)*szElements, 0);
-    device_vector< T > dvHistogramBins( sizeof(T)*(numGroups* groupSize * RADICES), 0);
-    device_vector< T > dvHistogramScanBuffer( sizeof(T)*(numGroups* RADICES + 10), 0);
+    size_t numGroups = szElements / mulFactor;
+    device_vector< T > dvSwapInputData( szElements, 0);
+    device_vector< T > dvHistogramBins( (numGroups* groupSize * RADICES), 0);
+    device_vector< T > dvHistogramScanBuffer( (numGroups* RADICES + 10), 0);
 
     ALIGNED( 256 ) StrictWeakOrdering aligned_comp( comp );
                     
-    control::buffPointer userFunctor = ctl.acquireBuffer( sizeof( aligned_comp ), 
-                                                          CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, 
-                                                          &aligned_comp );
-    ::cl::Buffer clInputData = dvInputData.begin( ).getBuffer( );
+    control::buffPointer userFunctor = ctl.acquireBuffer( sizeof( aligned_comp ), CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_comp );
+    ::cl::Buffer clInputData = *pLocalBuffer;//dvInputData.begin( ).getBuffer( );
     ::cl::Buffer clSwapData = dvSwapInputData.begin( ).getBuffer( );
     ::cl::Buffer clHistData = dvHistogramBins.begin( ).getBuffer( );
     ::cl::Buffer clHistScanData = dvHistogramScanBuffer.begin( ).getBuffer( );
                     
-    ::cl::Kernel histKernel;
-    ::cl::Kernel permuteKernel;
+    ::cl::Kernel histKernel, histSignedKernel;
+    ::cl::Kernel permuteKernel, permuteSignedKernel;
     ::cl::Kernel scanLocalKernel;
     if(comp(2,3))
     {
@@ -724,8 +872,8 @@ sort_enqueue(control &ctl,
         if(newBuffer == true)
         {
             cl_buffer_region clBR;
-            clBR.origin = (last - first)* sizeof(T);
-            clBR.size  = (szElements * sizeof(T)) - (last - first)* sizeof(T);
+            clBR.origin = orig_szElements* sizeof(T);
+            clBR.size  = (szElements * sizeof(T)) - orig_szElements* sizeof(T);
             ctl.commandQueue().enqueueFillBuffer(clInputData, BOLT_INT_MAX, clBR.origin, clBR.size, NULL, NULL);
         }
     }
@@ -738,29 +886,27 @@ sort_enqueue(control &ctl,
         if(newBuffer == true)
         {
             cl_buffer_region clBR;
-            clBR.origin = (last - first)* sizeof(T);
-            clBR.size  = (szElements * sizeof(T)) - (last - first)* sizeof(T);
+            clBR.origin = orig_szElements* sizeof(T);
+            clBR.size  = (szElements * sizeof(T)) - orig_szElements* sizeof(T);
             ctl.commandQueue().enqueueFillBuffer(clInputData, BOLT_INT_MIN, clBR.origin, clBR.size, NULL, NULL);
         }
     }
-    //std::cout << "szElements " << szElements << "\n";
+
     ::cl::LocalSpaceArg localScanArray;
     localScanArray.size_ = 2*RADICES* sizeof(cl_uint);
     int swap = 0;
-    int mask = (1<<RADIX) - 1;
-    int bits = 0;
-    for(bits = 0; bits < (sizeof(T) * 8)/*Bits per Byte*/; bits += RADIX)
+    int bits;
+    for(bits = 0; bits < (sizeof(T) * 8 - RADIX)/*Bits per Byte*/; bits += RADIX)
     {
         //Do a histogram pass locally
-        V_OPENCL( histKernel.setArg(0, RADIX), "Error setting a kernel argument" );
-        V_OPENCL( histKernel.setArg(1, mask), "Error setting a kernel argument" );
         if (swap == 0)
-            V_OPENCL( histKernel.setArg(2, clInputData), "Error setting a kernel argument" );
+            V_OPENCL( histKernel.setArg(0, clInputData), "Error setting a kernel argument" );
         else
-            V_OPENCL( histKernel.setArg(2, clSwapData), "Error setting a kernel argument" );
-        V_OPENCL( histKernel.setArg(3, clHistData), "Error setting a kernel argument" );
-        V_OPENCL( histKernel.setArg(4, clHistScanData), "Error setting a kernel argument" );
-        V_OPENCL( histKernel.setArg(5, bits), "Error setting a kernel argument" );
+            V_OPENCL( histKernel.setArg(0, clSwapData), "Error setting a kernel argument" );
+
+        V_OPENCL( histKernel.setArg(1, clHistData), "Error setting a kernel argument" );
+        V_OPENCL( histKernel.setArg(2, clHistScanData), "Error setting a kernel argument" );
+        V_OPENCL( histKernel.setArg(3, bits), "Error setting a kernel argument" );
         //V_OPENCL( histKernel.setArg(4, loc), "Error setting kernel argument" );
 
         l_Error = ctl.commandQueue().enqueueNDRangeKernel(
@@ -772,7 +918,7 @@ sort_enqueue(control &ctl,
                             NULL);
         //V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
 
-#if (BOLT_DEBUG==1)
+#if (BOLT_SORT_INL_DEBUG==1)
         //This map is required since the data is not available to the host when scanning.
         //Create local device_vector's 
         T *histBuffer;// = (T*)malloc(numGroups* groupSize * RADICES * sizeof(T));
@@ -819,7 +965,7 @@ sort_enqueue(control &ctl,
 
         //Perform a global scan 
         detail::scan_enqueue(ctl, dvHistogramScanBuffer.begin(),dvHistogramScanBuffer.end(),dvHistogramScanBuffer.begin(), 0, plus< T >( ));
-#if (BOLT_DEBUG==1)
+#if (BOLT_SORT_INL_DEBUG==1)
         ::cl::Event l_histScanBufferEvent1;
         histScanBuffer = (T*) ctl.commandQueue().enqueueMapBuffer(clHistScanData, false, CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(T) * numGroups * RADICES, NULL, &l_histScanBufferEvent1, &l_Error );
         bolt::cl::wait(ctl, l_histScanBufferEvent1);
@@ -837,10 +983,9 @@ sort_enqueue(control &ctl,
 #endif 
 
         //Add the results of the global scan to the local scan buffers
-        V_OPENCL( scanLocalKernel.setArg(0, RADIX), "Error setting a kernel argument" );
-        V_OPENCL( scanLocalKernel.setArg(1, clHistData), "Error setting a kernel argument" );
-        V_OPENCL( scanLocalKernel.setArg(2, clHistScanData), "Error setting a kernel argument" );
-        V_OPENCL( scanLocalKernel.setArg(3, localScanArray), "Error setting a kernel argument" );
+        V_OPENCL( scanLocalKernel.setArg(0, clHistData), "Error setting a kernel argument" );
+        V_OPENCL( scanLocalKernel.setArg(1, clHistScanData), "Error setting a kernel argument" );
+        V_OPENCL( scanLocalKernel.setArg(2, localScanArray), "Error setting a kernel argument" );
         l_Error = ctl.commandQueue().enqueueNDRangeKernel(
                             scanLocalKernel,
                             ::cl::NullRange,
@@ -850,7 +995,7 @@ sort_enqueue(control &ctl,
                             NULL);
         //V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
 
-#if (BOLT_DEBUG==1)
+#if (BOLT_SORT_INL_DEBUG==1)
         //This map is required since the data is not available to the host when scanning.
         ::cl::Event l_histEvent1;
         T *histBuffer1;
@@ -873,20 +1018,18 @@ sort_enqueue(control &ctl,
         }
         ctl.commandQueue().enqueueUnmapMemObject(clHistData, histBuffer1);
 #endif 
-        V_OPENCL( permuteKernel.setArg(0, RADIX), "Error setting a kernel argument" );
-        V_OPENCL( permuteKernel.setArg(1, mask),  "Error setting a kernel argument" );
         if (swap == 0)
-            V_OPENCL( permuteKernel.setArg(2, clInputData), "Error setting kernel argument" );
+            V_OPENCL( permuteKernel.setArg(0, clInputData), "Error setting kernel argument" );
         else
-            V_OPENCL( permuteKernel.setArg(2, clSwapData), "Error setting kernel argument" );
-        V_OPENCL( permuteKernel.setArg(3, clHistData), "Error setting a kernel argument" );
-        V_OPENCL( permuteKernel.setArg(4, bits), "Error setting a kernel argument" );
+            V_OPENCL( permuteKernel.setArg(0, clSwapData), "Error setting kernel argument" );
+        V_OPENCL( permuteKernel.setArg(1, clHistData), "Error setting a kernel argument" );
+        V_OPENCL( permuteKernel.setArg(2, bits), "Error setting a kernel argument" );
         //V_OPENCL( permuteKernel.setArg(3, loc), "Error setting kernel argument" );
 
         if (swap == 0)
-            V_OPENCL( permuteKernel.setArg(5, clSwapData), "Error setting kernel argument" );
+            V_OPENCL( permuteKernel.setArg(3, clSwapData), "Error setting kernel argument" );
         else
-            V_OPENCL( permuteKernel.setArg(5, clInputData), "Error setting kernel argument" );
+            V_OPENCL( permuteKernel.setArg(3, clInputData), "Error setting kernel argument" );
         l_Error = ctl.commandQueue().enqueueNDRangeKernel(
                             permuteKernel,
                             ::cl::NullRange,
@@ -895,7 +1038,7 @@ sort_enqueue(control &ctl,
                             NULL,
                             NULL);
         //V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
-#if (BOLT_DEBUG==1)
+#if (BOLT_SORT_INL_DEBUG==1)
             T *swapBuffer;// = (T*)malloc(szElements * sizeof(T));
             ::cl::Event l_swapEvent;
             if(bits==0 || bits==16)
@@ -930,154 +1073,109 @@ sort_enqueue(control &ctl,
 
 
 #endif
-        if(swap==0)
-            swap = 1;
-        else
-            swap = 0;
-        //For the last Iteration ignore the sign bit and perform radix sort
-        if(bits == ((sizeof(T) * 8) - 2*RADIX))
-            mask = (1 << (RADIX-1) ) - 1;
+            /*For swapping the buffers*/
+            swap = swap? 0: 1;
     }
-#define CPU_CODE 1
-#if (CPU_CODE==1)
+
+    if(comp(2,3))
     {
-        //This block is necessary because the mapped buffer pointer will get unmapped at the exit of this block.
-        //This is needed when the input buffer size is not a multiple of mulFactor
-        std::vector<T> cpuBuffer(szElements);
-        boost::shared_array< T > ptr = dvInputData.data();
-        memcpy_s(cpuBuffer.data(), szElements*sizeof(T), ptr.get(), szElements*sizeof(T));
-        if( comp(2,3) )
-        {
-            int index=0;
-            for( i=0; i<(last-first); i++)
+        histSignedKernel = radixSortIntKernels[5];
+        permuteSignedKernel = radixSortIntKernels[7];
+    }
+    else
+    {
+        histSignedKernel = radixSortIntKernels[6];
+        permuteSignedKernel = radixSortIntKernels[8];
+    }
+        //Do a histogram pass locally
+            V_OPENCL( histSignedKernel.setArg(0, clSwapData), "Error setting a kernel argument" );
+            V_OPENCL( histSignedKernel.setArg(1, clHistData), "Error setting a kernel argument" );
+            V_OPENCL( histSignedKernel.setArg(2, clHistScanData), "Error setting a kernel argument" );
+            V_OPENCL( histSignedKernel.setArg(3, bits), "Error setting a kernel argument" );
+            //V_OPENCL( histKernel.setArg(4, loc), "Error setting kernel argument" );
+
+            l_Error = ctl.commandQueue().enqueueNDRangeKernel(
+                                histSignedKernel,
+                                ::cl::NullRange,
+                                ::cl::NDRange(szElements/RADICES),
+                                ::cl::NDRange(groupSize),
+                                NULL,
+                                NULL);
+            //V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
+
+            //Perform a global scan 
+            detail::scan_enqueue(ctl, dvHistogramScanBuffer.begin(),dvHistogramScanBuffer.end(),dvHistogramScanBuffer.begin(), 0, plus< T >( ));
+
+
+            //Add the results of the global scan to the local scan buffers
+            V_OPENCL( scanLocalKernel.setArg(0, clHistData), "Error setting a kernel argument" );
+            V_OPENCL( scanLocalKernel.setArg(1, clHistScanData), "Error setting a kernel argument" );
+            V_OPENCL( scanLocalKernel.setArg(2, localScanArray), "Error setting a kernel argument" );
+            l_Error = ctl.commandQueue().enqueueNDRangeKernel(
+                                scanLocalKernel,
+                                ::cl::NullRange,
+                                ::cl::NDRange(szElements/RADICES),
+                                ::cl::NDRange(groupSize),
+                                NULL,
+                                NULL);
+            //V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
+
+
+            V_OPENCL( permuteSignedKernel.setArg(0, clSwapData), "Error setting kernel argument" );
+            V_OPENCL( permuteSignedKernel.setArg(1, clHistData), "Error setting a kernel argument" );
+            V_OPENCL( permuteSignedKernel.setArg(2, bits), "Error setting a kernel argument" );
+            V_OPENCL( permuteSignedKernel.setArg(3, clInputData), "Error setting kernel argument" );
+            l_Error = ctl.commandQueue().enqueueNDRangeKernel(
+                                permuteSignedKernel,
+                                ::cl::NullRange,
+                                ::cl::NDRange(szElements/RADICES),
+                                ::cl::NDRange(groupSize),
+                                NULL,
+                                NULL);
+
+#if (BOLT_SORT_INL_DEBUG==1)
+            T *swapBuffer;// = (T*)malloc(szElements * sizeof(T));
+            ::cl::Event l_swapEvent;
+            if(bits==0 || bits==16)
+            //if(bits==0 || bits==8 || bits==16 || bits==24)
             {
-                if(cpuBuffer[i] < 0)
+                swapBuffer = (T*)ctl.commandQueue().enqueueMapBuffer(clSwapData, false, CL_MAP_READ, 0, sizeof(T) * szElements, NULL, &l_swapEvent, &l_Error );
+                V_OPENCL( l_Error, "Error calling map on the result buffer" );
+                bolt::cl::wait(ctl, l_swapEvent);
+                printf("\n Printing swap data\n");
+                for(int i=0; i<szElements;i+= RADICES)
                 {
-                    ptr[index] = cpuBuffer[i];
-                    index++;
+                    for(int j =0;j< RADICES;j++)
+                        printf("%x %x, ",i+j,swapBuffer[i+j]);
+                    printf("\n");
                 }
+                ctl.commandQueue().enqueueUnmapMemObject(clSwapData, swapBuffer);
+            }
+            else
+            {
+                swapBuffer = (T*)ctl.commandQueue().enqueueMapBuffer(clInputData, false, CL_MAP_READ, 0, sizeof(T) * szElements, NULL, &l_swapEvent, &l_Error );
+                V_OPENCL( l_Error, "Error calling map on the result buffer" );
+                bolt::cl::wait(ctl, l_swapEvent);
+                printf("\n Printing swap data\n");
+                for(int i=0; i<szElements;i+= RADICES)
+                {
+                    for(int j =0;j< RADICES;j++)
+                        printf("%x %x, ",i+j,swapBuffer[i+j]);
+                    printf("\n");
+                }
+                ctl.commandQueue().enqueueUnmapMemObject(clInputData, swapBuffer);
             }
 
-            //int positiveIndex=0;
-            for( i=0; i<(last-first); i++)
-            {
-                if(cpuBuffer[i] >= 0)
-                {
-                    ptr[index] = cpuBuffer[i];
-                    index++;
-                }
-            }
-        }
-        else
-        {
-            int index=0;
-            for( i=0; i<(last-first); i++)
-            {
-                if(cpuBuffer[i] >= 0)
-                {
-                    ptr[index] = cpuBuffer[i];
-                    index++;
-                }
-            }
-            //int positiveIndex=0;
-            for( i=0; i<(last-first); i++)
-            {
-                if(cpuBuffer[i] < 0)
-                {
-                    ptr[index] = cpuBuffer[i];
-                    index++;
-                }
-            }
-        }
-    }// End of the block the boost shared ptr gets freed here. 
-    //This calls the unmap buffer Functor in the 
-#endif // end of CPU code
 
-
-#if 0
-                    //Below code was not working for sorting the sign bit in the reverse order. 
-                    //Hence wrote the CPU code path above.
-                        if(comp(2,3))
-                        {
-                            /*Descending Sort*/
-                            histKernel = radixSortIntKernels[1];
-                            scanLocalKernel = radixSortIntKernels[2];
-                            permuteKernel = radixSortIntKernels[4];
-                        }
-                        else
-                        {
-                            /*Ascending Sort*/
-                            histKernel = radixSortIntKernels[0];
-                            scanLocalKernel = radixSortIntKernels[2];
-                            permuteKernel = radixSortIntKernels[3];
-                        }
-                        mask = 1;//(1<<(RADIX-1)); //only the sign bit needs to be set 
-                        bits = sizeof(T) - 1; // We take the MSB byte or nibble
-                        //Do a histogram pass locally
-                        V_OPENCL( histKernel.setArg(0, RADIX), "Error setting a kernel argument" );
-                        V_OPENCL( histKernel.setArg(1, mask), "Error setting a kernel argument" );
-                            V_OPENCL( histKernel.setArg(2, clInputData), "Error setting a kernel argument" );
-                        V_OPENCL( histKernel.setArg(3, clHistData), "Error setting a kernel argument" );
-                        V_OPENCL( histKernel.setArg(4, clHistScanData), "Error setting a kernel argument" );
-                        V_OPENCL( histKernel.setArg(5, bits), "Error setting a kernel argument" );
-                        //V_OPENCL( histKernel.setArg(4, loc), "Error setting kernel argument" );
-
-                        l_Error = ctl.commandQueue().enqueueNDRangeKernel(
-                                            histKernel,
-                                            ::cl::NullRange,
-                                            ::cl::NDRange(szElements/RADICES),
-                                            ::cl::NDRange(groupSize),
-                                            NULL,
-                                            NULL);
-                        //V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
-
-                        //Perform a global scan 
-                        detail::scan_enqueue(ctl, dvHistogramScanBuffer.begin(),dvHistogramScanBuffer.end(),dvHistogramScanBuffer.begin(), 0, plus< T >( ));
-
-                        //Add the results of the global scan to the local scan buffers
-                        V_OPENCL( scanLocalKernel.setArg(0, RADIX), "Error setting a kernel argument" );
-                        V_OPENCL( scanLocalKernel.setArg(1, clHistData), "Error setting a kernel argument" );
-                        V_OPENCL( scanLocalKernel.setArg(2, clHistScanData), "Error setting a kernel argument" );
-                        V_OPENCL( scanLocalKernel.setArg(3, localScanArray), "Error setting a kernel argument" );
-                        l_Error = ctl.commandQueue().enqueueNDRangeKernel(
-                                            scanLocalKernel,
-                                            ::cl::NullRange,
-                                            ::cl::NDRange(szElements/RADICES),
-                                            ::cl::NDRange(groupSize),
-                                            NULL,
-                                            NULL);
-                        //V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
-
-
-                        V_OPENCL( permuteKernel.setArg(0, RADIX), "Error setting a kernel argument radix" );
-                        V_OPENCL( permuteKernel.setArg(1, mask),  "Error setting a kernel argument mask" );
-                            V_OPENCL( permuteKernel.setArg(2, clInputData), "Error setting kernel argument" );
-                        V_OPENCL( permuteKernel.setArg(3, clHistData), "Error setting a kernel argument" );
-                        V_OPENCL( permuteKernel.setArg(4, bits), "Error setting a kernel argument bits" );
-                        //V_OPENCL( permuteKernel.setArg(3, loc), "Error setting kernel argument" );
-                            V_OPENCL( permuteKernel.setArg(5, clSwapData), "Error setting kernel argument" );
-                        l_Error = ctl.commandQueue().enqueueNDRangeKernel(
-                                            permuteKernel,
-                                            ::cl::NullRange,
-                                            ::cl::NDRange(szElements/RADICES),
-                                            ::cl::NDRange(groupSize),
-                                            NULL,
-                                            NULL);
-                        //V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
-                    ::cl::Event copy_event;
-                    ctl.commandQueue().enqueueCopyBuffer(clSwapData, clInputData, 0, 0, szElements*sizeof(T), NULL, &copy_event);
-                    copy_event.wait();
-                    /**************************************/
 #endif
     if(newBuffer == true)
     {
-        //::cl::copy(clInputData, first, last);
-        ctl.commandQueue().enqueueCopyBuffer( dvInputData.begin( ).getBuffer( ), 
-                                              first.getBuffer( ), 
-                                              0, 0, 
-                                              sizeof(T)*(last-first), NULL, NULL );
-    }
 
+        ::cl::Event copyBackEvent;
+        ctl.commandQueue().enqueueCopyBuffer( clInputData, first.getBuffer( ), 0, 0, sizeof(T)*orig_szElements, NULL, &copyBackEvent );
+        copyBackEvent.wait();
+    }
+    delete pLocalBuffer;
     return;
 }
 
@@ -1121,7 +1219,7 @@ sort_enqueue(control &ctl,
 
     size_t wgSize  = masterKernel.getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.device( ), &l_Error );
     V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
-    if((szElements/2) < wgSize)
+    if((szElements/2) < BITONIC_SORT_WGSIZE)
     {
         wgSize = (int)szElements/2;
     }
@@ -1155,7 +1253,7 @@ sort_enqueue(control &ctl,
                     k, 
                     ::cl::NullRange,
                     ::cl::NDRange(szElements/2),
-                    ::cl::NDRange(wgSize),
+                    ::cl::NDRange(BITONIC_SORT_WGSIZE),
                     NULL,
                     NULL);
             V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for sort() kernel" );

@@ -16,102 +16,13 @@
 ***************************************************************************/                                                                                     
 
 #pragma once
-
-#include <amp.h>
-#include <bolt/AMP/functional.h>
-
-
-//#define RESTRICT_AMP restrict(direct3d) 
-
-#define USE_PROTOTYPE 0
-
-#if USE_PROTOTYPE
-namespace bolt {
-
-    const int transformThreshold = 4; // FIXME, threshold for using CPU or GPU
-
-    /*! Comment and example here
-     */
-	template<typename InputIterator, typename OutputIterator, typename UnaryFunction> 
-	void transform(InputIterator first, InputIterator last, OutputIterator result, UnaryFunction f)  {
-
-        int sz = (int) (last - first);  //FIXME - size_t conversion.
-
-        if (sz < transformThreshold) {
-            // Run on CPU using serial implementation or concrt
-		} else {
-			concurrency::array_view<std::iterator_traits<InputIterator>::value_type,  1> inputV(sz, &*first);
-			concurrency::array_view<std::iterator_traits<OutputIterator>::value_type, 1> resultV(sz, &*result);
-
-			concurrency::parallel_for_each( inputV.extent, [=](concurrency::index<1> idx) mutable restrict(amp)
-			{
-                resultV[idx[0]] = f(inputV[idx[0]]);
-			}
-			);
-		};
-	};
-
-
-    /*! 
-	 * This version of transform accepts an accelerator_view as an argument.
-     */
-	template<typename InputIterator, typename OutputIterator, typename UnaryFunction> 
-	void transform(concurrency::accelerator_view av, InputIterator first, InputIterator last, OutputIterator result, UnaryFunction f)  {
-        size_t sz = last - first;
-
-        if (sz < transformThreshold) {
-            // Run on CPU using serial implementation or concrt
-		} else {
-			concurrency::array_view<iterator_traits<InputIterator>::value_type,  1> inputV(sz, &*first);
-			concurrency::array_view<iterator_traits<OutputIterator>::value_type, 1> resultV(sz, &*result);
-
-			concurrency::parallel_for_each(av, inputV.grid, [=](concurrency::index<1> idx) mutable restrict(amp)
-			{
-                resultV[idx.x] = f(inputV[idx.x]);
-			}
-			);
-		};
-	};
-
-
-
-	template<typename InputIterator, typename OutputIterator, typename BinaryFunction> 
-	void transform(InputIterator first1, InputIterator last1, InputIterator first2, OutputIterator result, BinaryFunction f)  {
-
-        int sz = last1 - first1; // FIXME - use size_t
-
-        if (sz < transformThreshold) {
-#if 1
-            // Run on CPU using serial implementation or concrt
-            concurrency::parallel_for(0, sz, [&](int x)
-            {
-                //result[x] = f(first1[x], first2[x]);
-                result[x] = (first1[x] + first2[x]);
-            });
-#endif
-		} else {
-			concurrency::array_view<std::iterator_traits<InputIterator>::value_type,  1> inputV1(sz, &*first1);
-			concurrency::array_view<std::iterator_traits<InputIterator>::value_type,  1> inputV2(sz, &*first2);
-			concurrency::array_view<std::iterator_traits<OutputIterator>::value_type, 1> resultV(sz, &*result);
-
-			concurrency::parallel_for_each( inputV1.extent, [=](concurrency::index<1> idx) mutable restrict(amp)
-			{
-                resultV[idx[0]] = f(inputV1[idx[0]], inputV2[idx[0]]);
-			}
-			);
-		};
-	};
-};
-
-
-// FIXME-TODO
-// Add Doxygen-style comments:
-#endif
-
 #if !defined( AMP_TRANSFORM_H )
 #define AMP_TRANSFORM_H
-#pragma once
-#include <bolt/amp/bolt.h>
+
+#include <amp.h>
+#include "bolt/amp/functional.h"
+
+#include "bolt/amp/bolt.h"
 #include <string>
 #include <assert.h>  
 

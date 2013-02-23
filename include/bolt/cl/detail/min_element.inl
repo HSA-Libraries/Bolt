@@ -233,7 +233,7 @@ namespace bolt {
                 control::buffPointer result = ctl.acquireBuffer( sizeof( iType ) * numWG, 
                     CL_MEM_ALLOC_HOST_PTR|CL_MEM_WRITE_ONLY );
 
-                cl_uint szElements = static_cast< cl_uint >( std::distance( first, last ) );
+                cl_uint szElements = static_cast< cl_uint >( first.distance_to(last ) );
 
                 V_OPENCL( masterKernel.setArg(0, first.getBuffer( ) ), "Error setting kernel argument" );
                 V_OPENCL( masterKernel.setArg(1, first.gpuPayloadSize( ), &first.gpuPayload( ) ), "Error setting a kernel argument" );

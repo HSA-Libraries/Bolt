@@ -23,7 +23,12 @@ set( clBolt.Test.Count.Headers stdafx.h targetver.h ${BOLT_INCLUDE_DIR}/bolt/cl/
 set( clBolt.Test.Count.Files ${clBolt.Test.Count.Source} ${clBolt.Test.Count.Headers} )
 
 add_executable( clBolt.Test.Count ${clBolt.Test.Count.Files} )
-target_link_libraries( clBolt.Test.Count clBolt.Runtime ${OPENCL_LIBRARIES} ${GTEST_LIBRARIES} ${Boost_LIBRARIES} )
+
+if(BUILD_TBB)
+    target_link_libraries( clBolt.Test.Count clBolt.Runtime ${OPENCL_LIBRARIES} ${GTEST_LIBRARIES} ${Boost_LIBRARIES}  ${TBB_LIBRARIES} )
+else (BUILD_TBB)
+    target_link_libraries( clBolt.Test.Count clBolt.Runtime ${OPENCL_LIBRARIES} ${GTEST_LIBRARIES} ${Boost_LIBRARIES}  )
+endif()
 
 set_target_properties( clBolt.Test.Count PROPERTIES VERSION ${Bolt_VERSION} )
 set_target_properties( clBolt.Test.Count PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )

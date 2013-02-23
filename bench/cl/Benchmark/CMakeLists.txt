@@ -26,7 +26,11 @@ set( clBolt.Bench.Benchmark.Files
 
 add_executable( clBolt.Bench.Benchmark ${clBolt.Bench.Benchmark.Files} )
 
-target_link_libraries( clBolt.Bench.Benchmark ${Boost_LIBRARIES} clBolt.Runtime )
+if(BUILD_TBB)
+    target_link_libraries( clBolt.Bench.Benchmark ${Boost_LIBRARIES} clBolt.Runtime ${TBB_LIBRARIES} )
+else (BUILD_TBB)
+    target_link_libraries( clBolt.Bench.Benchmark ${Boost_LIBRARIES} clBolt.Runtime )
+endif()
 
 set_target_properties( clBolt.Bench.Benchmark PROPERTIES VERSION ${Bolt_VERSION} )
 set_target_properties( clBolt.Bench.Benchmark PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
@@ -35,7 +39,7 @@ set_property( TARGET clBolt.Bench.Benchmark PROPERTY FOLDER "Benchmark/OpenCL")
 
 # CPack configuration; include the executable into the package
 install( TARGETS clBolt.Bench.Benchmark
-	RUNTIME DESTINATION ${BIN_DIR}
-	LIBRARY DESTINATION ${LIB_DIR}
-	ARCHIVE DESTINATION ${LIB_DIR}
-	)
+    RUNTIME DESTINATION ${BIN_DIR}
+    LIBRARY DESTINATION ${LIB_DIR}
+    ARCHIVE DESTINATION ${LIB_DIR}
+    )

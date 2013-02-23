@@ -16,6 +16,14 @@
 ############################################################################                                                                                     
 
 # List the names of common files to compile across all platforms
+
+
+# Set project specific compile and link options
+if( MSVC )
+set( CMAKE_CXX_FLAGS "-bigobj ${CMAKE_CXX_FLAGS}" )
+                set( CMAKE_C_FLAGS "-bigobj ${CMAKE_C_FLAGS}" )
+endif()
+
 set( clBolt.Test.ScanByKey.Source
     ${BOLT_CL_TEST_DIR}/common/stdafx.cpp 
     ScanByKeyTest.cpp )
@@ -30,7 +38,12 @@ set( clBolt.Test.ScanByKey.Headers
 set( clBolt.Test.ScanByKey.Files ${clBolt.Test.ScanByKey.Source} ${clBolt.Test.ScanByKey.Headers} )
 
 add_executable( clBolt.Test.ScanByKey ${clBolt.Test.ScanByKey.Files} )
-target_link_libraries( clBolt.Test.ScanByKey clBolt.Runtime ${GTEST_LIBRARIES} ${Boost_LIBRARIES} )
+
+if(BUILD_TBB)
+    target_link_libraries( clBolt.Test.ScanByKey clBolt.Runtime ${OPENCL_LIBRARIES} ${GTEST_LIBRARIES} ${Boost_LIBRARIES}  ${TBB_LIBRARIES} )
+else (BUILD_TBB)
+    target_link_libraries( clBolt.Test.ScanByKey clBolt.Runtime ${OPENCL_LIBRARIES} ${GTEST_LIBRARIES} ${Boost_LIBRARIES}  )
+endif()
 
 set_target_properties( clBolt.Test.ScanByKey PROPERTIES VERSION ${Bolt_VERSION} )
 set_target_properties( clBolt.Test.ScanByKey PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )

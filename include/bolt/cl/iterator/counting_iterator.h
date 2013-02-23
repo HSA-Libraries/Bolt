@@ -19,7 +19,7 @@
 #define COUNTING_ITERATOR_H
 #include "bolt/cl/bolt.h"
 #include "bolt/cl/iterator/iterator_traits.h"
-
+#include "bolt/cl/device_vector.h"
 #include <boost/iterator/iterator_facade.hpp>
 
 namespace bolt {
@@ -39,7 +39,7 @@ namespace cl {
         public:
             struct Payload
             {
-                typename iterator_facade::difference_type m_Value;
+                typename value_type m_Value;
             };
 
             //  Basic constructor requires a reference to the container and a positional element
@@ -60,13 +60,19 @@ namespace cl {
 
             //  This copy constructor allows an iterator to convert into a const_iterator, but not vica versa
             template< typename OtherType >
-            counting_iterator( const counting_iterator< OtherType >& rhs ): m_Index( rhs.m_Index )
-            {}
+            counting_iterator( const counting_iterator< OtherType >& rhs ): m_devMemory( rhs.m_devMemory ),
+                m_Index( rhs.m_Index ), m_initValue( rhs.m_initValue )
+            {
+            }
 
-            //  This copy constructor allows an iterator to convert into a const_iterator, but not vica versa
             counting_iterator< value_type >& operator= ( const counting_iterator< value_type >& rhs )
             {
+                if( this == &rhs )
+                    return *this;
+
+                m_devMemory = rhs.m_devMemory;
                 m_initValue = rhs.m_initValue;
+                m_Index = rhs.m_Index;
                 return *this;
             }
                 
@@ -99,6 +105,14 @@ namespace cl {
                 return sizeof( Payload );
             }
 
+
+            difference_type distance_to( const counting_iterator< value_type >& rhs ) const
+            {
+                //return static_cast< typename iterator_facade::difference_type >( 1 );
+                return rhs.m_Index - m_Index;
+            }
+
+            //  Public member variables
             typename iterator_facade::difference_type m_Index;
 
         private:
@@ -124,15 +138,10 @@ namespace cl {
                 advance( -1 );
             }
 
-            difference_type distance_to( const counting_iterator< value_type >& rhs ) const
-            {
-                return static_cast< typename iterator_facade::difference_type >( 1 );
-            }
-
             template< typename OtherType >
             bool equal( const counting_iterator< OtherType >& rhs ) const
             {
-                bool sameIndex = rhs.m_initValue == m_initValue;
+                bool sameIndex = (rhs.m_initValue == m_initValue) && (rhs.m_Index == m_Index);
 
                 return sameIndex;
             }
@@ -178,7 +187,7 @@ namespace cl {
                 return m_StartIndex + threadID; \n
             } \n
 
-            size_type m_StartIndex; \n
+            value_type m_StartIndex; \n
         }; \n
     );
 

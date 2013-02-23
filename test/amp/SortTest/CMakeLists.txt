@@ -16,41 +16,22 @@
 ############################################################################                                                                                     
 
 # List the names of common files to compile across all platforms
+set( ampBolt.Test.Sort.Source SortTest.cpp )
+set( ampBolt.Test.Sort.Headers ${BOLT_INCLUDE_DIR}/bolt/amp/sort.h ${BOLT_INCLUDE_DIR}/bolt/amp/detail/sort.inl )
 
-set( clBolt.Test.SortByKey.Source SortByKeyTest.cpp 
-                             ${BOLT_CL_TEST_DIR}/common/myocl.cpp)
-set( clBolt.Test.SortByKey.Headers   ${BOLT_CL_TEST_DIR}/common/myocl.h
-                                ${BOLT_INCLUDE_DIR}/bolt/cl/sort_by_key.h
-                                ${BOLT_INCLUDE_DIR}/bolt/cl/detail/sort_by_key.inl )
+set( ampBolt.Test.Sort.Files ${ampBolt.Test.Sort.Source} ${ampBolt.Test.Sort.Headers} )
 
-set( clBolt.Test.SortByKey.Files ${clBolt.Test.SortByKey.Source} ${clBolt.Test.SortByKey.Headers} )
+add_executable( ampBolt.Test.Sort ${ampBolt.Test.Sort.Files} )
+target_link_libraries( ampBolt.Test.Sort ${GTEST_LIBRARIES} ampBolt.Runtime )
 
-# Include standard OpenCL headers
-include_directories( ${OPENCL_INCLUDE_DIRS} )
+set_target_properties( ampBolt.Test.Sort PROPERTIES VERSION ${Bolt_VERSION} )
+set_target_properties( ampBolt.Test.Sort PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
 
-# Set project specific compile and link options
-if( MSVC )
-set( CMAKE_CXX_FLAGS "-bigobj ${CMAKE_CXX_FLAGS}" )
-                set( CMAKE_C_FLAGS "-bigobj ${CMAKE_C_FLAGS}" )
-endif()
+set_property( TARGET ampBolt.Test.Sort PROPERTY FOLDER "Test/AMP")
 
-add_executable( clBolt.Test.SortByKey ${clBolt.Test.SortByKey.Files} )
-
-if(BUILD_TBB)
-    target_link_libraries( clBolt.Test.SortByKey ${OPENCL_LIBRARIES} ${GTEST_LIBRARIES} ${Boost_LIBRARIES} clBolt.Runtime  ${TBB_LIBRARIES} )
-else (BUILD_TBB)
-    target_link_libraries( clBolt.Test.SortByKey ${OPENCL_LIBRARIES} ${GTEST_LIBRARIES} ${Boost_LIBRARIES} clBolt.Runtime )
-endif()
-
-
-set_target_properties( clBolt.Test.SortByKey PROPERTIES VERSION ${Bolt_VERSION} )
-set_target_properties( clBolt.Test.SortByKey PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
-
-set_property( TARGET clBolt.Test.SortByKey PROPERTY FOLDER "Test/OpenCL")
-        
 # CPack configuration; include the executable into the package
-install( TARGETS clBolt.Test.SortByKey
-    RUNTIME DESTINATION ${BIN_DIR}
-    LIBRARY DESTINATION ${LIB_DIR}
-    ARCHIVE DESTINATION ${LIB_DIR}/import
-    )
+install( TARGETS ampBolt.Test.Sort
+	RUNTIME DESTINATION ${BIN_DIR}
+	LIBRARY DESTINATION ${LIB_DIR}
+	ARCHIVE DESTINATION ${LIB_DIR}/import
+	)

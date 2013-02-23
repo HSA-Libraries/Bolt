@@ -48,6 +48,15 @@
 #include <type_traits>
 #include "bolt/cl/bolt.h"
 
+
+#ifdef ENABLE_TBB
+//TBB Includes
+#include "tbb/parallel_scan.h"
+#include "tbb/blocked_range.h"
+#include "tbb/task_scheduler_init.h"
+#endif
+
+
 #ifdef BOLT_PROFILER_ENABLED
 #define BOLT_PROFILER_START_TRIAL \
     aProfiler.setName("Scan"); \
@@ -337,7 +346,69 @@ public:
             return templateSpecializationString;
             }
 };
-                    
+
+
+#ifdef ENABLE_TBB
+      template <typename T, typename BinaryFunction, typename OutputIterator, typename InputIterator>
+      struct Scan_tbb{
+          T sum;
+          T start;
+          InputIterator& x;
+          OutputIterator& y;
+          BinaryFunction scan_op;
+          bool inclusive, flag;
+          public:
+          Scan_tbb() : sum(0) {}
+          Scan_tbb( InputIterator&  _x, 
+                    OutputIterator& _y,
+                    const BinaryFunction &_opr, 
+                    const bool &_incl ,const T &init) : x(_x), y(_y), scan_op(_opr),inclusive(_incl),start(init),flag(TRUE){}
+          T get_sum() const {return sum;}
+          template<typename Tag>
+          void operator()( const tbb::blocked_range<int>& r, Tag ) {
+             T temp = sum;
+             for(int i=r.begin(); i<r.end(); ++i ) {
+                 if(Tag::is_final_scan()){
+                     if(!inclusive){
+                        if(i==0 ) {
+                            *(y+i) = start;
+                            temp = scan_op(start, *(x+i));
+                         }
+                         else{
+                           *(y+i) = temp;
+                            temp = scan_op(temp, *(x+i));
+                         }
+                         continue;
+                     }
+                     else if(i == 0){
+                        temp = *(x+i);
+                     }
+                     else{
+                        temp = scan_op(temp, *(x+i));
+                     }
+                     *(y+i) = temp;
+                  }
+                  else{
+                     if(flag){
+                       temp = *(x+i);
+                       flag = FALSE;
+                     }
+                     else
+                        temp = scan_op(temp, *(x+i));
+                  }
+             }
+             sum = temp;
+          }
+          Scan_tbb( Scan_tbb& b, tbb::split):y(b.y),x(b.x),inclusive(b.inclusive),start(b.start),flag(TRUE){
+          }
+          void reverse_join( Scan_tbb& a ) {
+               sum = scan_op(a.sum, sum);
+          }
+          void assign( Scan_tbb& b ) {
+             sum = b.sum;
+          }
+       };
+#endif
 
         template< typename InputIterator, typename OutputIterator, typename T, typename BinaryFunction >
         OutputIterator scan_detect_random_access(
@@ -409,7 +480,17 @@ aProfiler.stopTrial();
             }
             else if( runMode == bolt::cl::control::MultiCoreCpu )
             {
-                std::cout << "The MultiCoreCpu version of inclusive_scan is not implemented yet." << std ::endl;
+#ifdef ENABLE_TBB
+          tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
+          Scan_tbb<iType, BinaryFunction, InputIterator, OutputIterator> tbb_scan((InputIterator &)first,(OutputIterator &)
+                                                                         result,binary_op,inclusive,init);
+          tbb::parallel_scan( tbb::blocked_range<int>(  0, static_cast< int >( std::distance( first, last ))), tbb_scan, tbb::auto_partitioner());
+          return tbb_scan.y;
+#else
+        std::cout << "The MultiCoreCpu version of Scan is not implemented yet." << std ::endl;
+        throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of Scan is not enabled to be built." ); 
+        return result;
+#endif
             }
             else
             {

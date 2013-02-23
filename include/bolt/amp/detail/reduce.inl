@@ -215,8 +215,7 @@ namespace bolt
                 if (runMode == bolt::amp::control::SerialCpu) 
                 {
                     std::cout << "The SerialCpu version of reduce is not implemented yet." << std ::endl;
-                    //todo
-                    //throw ::cl::Error( CL_INVALID_OPERATION, "The SerialCpu version of reduce is not implemented yet." );
+                    throw std::exception( "The SerialCpu version of reduce is not implemented yet." );
                     return init;
                 } else if (runMode == bolt::amp::control::MultiCoreCpu) {
 #ifdef ENABLE_TBB
@@ -227,8 +226,7 @@ namespace bolt
                     return reduce_op.value;
 #else
                     std::cout << "The MultiCoreCpu version of reduce is not enabled. " << std ::endl;
-                    //todo
-                    //throw ::amp::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of reduce is not enabled to be built." );
+                    throw std::exception( "The MultiCoreCpu version of reduce is not enabled to be built." );
                     return init;
 #endif
                 }
@@ -257,14 +255,13 @@ namespace bolt
                 if (runMode == bolt::amp::control::SerialCpu)
                 {
                     std::cout << "The SerialCpu version of reduce is not implemented yet." << std ::endl;
-                    throw ::amp::Error( CL_INVALID_OPERATION, "The SerialCpu version of reduce is not implemented yet." );
+                    throw std::exception( "The SerialCpu version of reduce is not implemented yet." );
                     return init;
                 }
                 else if (runMode == bolt::amp::control::MultiCoreCpu)
                 {
-                    /*TODO - ASK  - should we copy the device_vector to host memory, process the result and then store back the result into the device_vector.*/
                     std::cout << "The MultiCoreCpu version of reduce on device_vector is not supported." << std ::endl;
-                    throw ::amp::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of reduce on device_vector is not supported." );
+                    throw std::exception( "The MultiCoreCpu version of reduce on device_vector is not supported." );
                     return init;
                 } else {
                     return reduce_enqueue( ctl, first, last, init, binary_op);
@@ -290,29 +287,20 @@ namespace bolt
                 unsigned int ceilNumElements = tileSize * ceilNumTiles;
 
 
-                concurrency::array_view< iType, 1 > inputV (first->getBuffer());
+                concurrency::array_view< iType, 1 > inputV (first.getBuffer());
 
                 //Now create a staging array ; May support zero-copy in the future?!
                 concurrency::accelerator cpuAccelerator = concurrency::accelerator(concurrency::accelerator::cpu_accelerator);
                 concurrency::accelerator_view cpuAcceleratorView = cpuAccelerator.default_view;
                 concurrency::array< iType, 1 > resultArray ( szElements, ctl.getAccelerator().default_view, cpuAcceleratorView);
                 
-                //std::vector<iType> resultArray(szElements);
-                //resultArray.clear();
-
                 concurrency::array_view<iType, 1> result ( resultArray );
-
-                result.discard_data(); //Why no discard?
-                    
-                //Choosing not to use ceil ; p_f_e treats it as a divergent code!
+                result.discard_data();
                 concurrency::extent< 1 > inputExtent( ceilNumElements );
-
-                //concurrency::array_view<iType, 1> result ( inputExtent, &resultArray[0] );
-
                 concurrency::tiled_extent< tileSize > tiledExtentReduce = inputExtent.tile< tileSize >();
-                std::cout<<"Hello"<<std::endl;
 
-                // We may not need the while loop in the pfe. We are launching nWorkItems == Extent
+                // Algorithm is different from cl::reduce. We launch worksize = number of elements here.
+                // AMP doesn't have APIs to get CU capacity. Launchable size is great though.
 
                 try
                 {
@@ -329,27 +317,12 @@ namespace bolt
                       //  Initialize local data store
                       tile_static iType scratch [WAVEFRONT_SIZE] ;
 
-                      //result[globalId] = 0; 
-
                       //  Abort threads that are passed the end of the input vector
                       if( t_idx.global[ 0 ] < szElements )
                       {
-                       
                        //  Initialize the accumulator private variable with data from the input array
                        //  This essentially unrolls the loop below at least once
                        iType accumulator = inputV[globalId];
-                       globalId = globalId + szElements;
-                       
-                       // Loop sequentially over chunks of input vector, reducing an arbitrary size input
-                       // length into a length related to the number of workgroups
-                       while (globalId < szElements)
-                       {
-                          iType element = inputV[globalId];
-                          accumulator = binary_op(accumulator, element);
-                          globalId = globalId + szElements; 
-                       
-                       }
-                       
                        scratch[tileIndex] = accumulator;
                       }
                       t_idx.barrier.wait();                  
@@ -379,17 +352,9 @@ namespace bolt
                     
                     iType *cpuPointerReduce =  result.data();
 
-                    //for( int i=0; i < szElements ; i++ )
-                    //{
-                    //    if(cpuPointerReduce[i])  std::cout<<cpuPointerReduce[i]<<"at "<<i<<std::endl;
-                    //}
-
                     int numTailReduce = (ceilNumTiles>numTiles)? ceilNumTiles : numTiles;
                     iType acc = static_cast< iType >( init );
 
-                    std::cout<<"tailReduce ="<<numTailReduce<<std::endl;
-                    std::cout<<"ceilNumTiles ="<<ceilNumTiles<<std::endl;
-                    std::cout<<"numTiles ="<<numTiles<<std::endl;
                     for(int i = 0; i < numTailReduce; ++i)
                     {
                         acc = binary_op(acc, cpuPointerReduce[i]);

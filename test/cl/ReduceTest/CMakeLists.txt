@@ -18,12 +18,20 @@
 # List the names of common files to compile across all platforms
 
 set( clBolt.Test.Reduce.Source stdafx.cpp ReduceTest.cpp ReduceDeviceVector.cpp ${BOLT_CL_TEST_DIR}/common/myocl.cpp) 
-set( clBolt.Test.Reduce.Headers stdafx.h ${BOLT_CL_TEST_DIR}/common/myocl.h targetver.h ${BOLT_INCLUDE_DIR}/bolt/cl/reduce.h )
+set( clBolt.Test.Reduce.Headers stdafx.h ${BOLT_CL_TEST_DIR}/common/myocl.h 
+                                         targetver.h 
+                                         ${BOLT_INCLUDE_DIR}/bolt/cl/reduce.h
+                                         ${BOLT_INCLUDE_DIR}/bolt/cl/detail/reduce.inl )
 
 set( clBolt.Test.Reduce.Files ${clBolt.Test.Reduce.Source} ${clBolt.Test.Reduce.Headers} )
 
 add_executable( clBolt.Test.Reduce ${clBolt.Test.Reduce.Files} )
-target_link_libraries( clBolt.Test.Reduce clBolt.Runtime ${OPENCL_LIBRARIES} ${GTEST_LIBRARIES} ${Boost_LIBRARIES} ${TBB_LIBRARIES} )
+
+if(BUILD_TBB)
+    target_link_libraries( clBolt.Test.Reduce clBolt.Runtime ${OPENCL_LIBRARIES} ${GTEST_LIBRARIES} ${Boost_LIBRARIES}  ${TBB_LIBRARIES} )
+else (BUILD_TBB)
+    target_link_libraries( clBolt.Test.Reduce clBolt.Runtime ${OPENCL_LIBRARIES} ${GTEST_LIBRARIES} ${Boost_LIBRARIES}  )
+endif()
 
 set_target_properties( clBolt.Test.Reduce PROPERTIES VERSION ${Bolt_VERSION} )
 set_target_properties( clBolt.Test.Reduce PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )

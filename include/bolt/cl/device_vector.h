@@ -258,6 +258,11 @@ namespace cl
                 return m_Container.m_devMemory;
             }
 
+            Container& getContainer( ) const
+            {
+                return m_Container;
+            }
+
             Payload gpuPayload( ) const
             {
                 Payload payload = { m_Index, 0 };
@@ -270,7 +275,10 @@ namespace cl
             }
 
             typename iterator_facade::difference_type m_Index;
-
+            difference_type distance_to( const iterator_base< Container >& rhs ) const
+            {
+                return static_cast< typename iterator_facade::difference_type >( rhs.m_Index - m_Index );
+            }
             private:
                 //  Implementation detail of boost.iterator
                 friend class boost::iterator_core_access;
@@ -296,10 +304,7 @@ namespace cl
                     advance( -1 );
                 }
 
-                difference_type distance_to( const iterator_base< Container >& rhs ) const
-                {
-                return static_cast< typename iterator_facade::difference_type >( rhs.m_Index - m_Index );
-                }
+
 
                 template< typename OtherContainer >
                 bool equal( const iterator_base< OtherContainer >& rhs ) const
@@ -373,6 +378,10 @@ namespace cl
                 //    iterator_base<Container>(m_Container,m_index-1);
                 //}
 
+                difference_type distance_to( const reverse_iterator_base< Container >& lhs ) const
+                {
+                    return static_cast< difference_type >( m_index - lhs.m_index );
+                }
 
             private:
                 //  Implementation detail of boost.iterator
@@ -399,10 +408,7 @@ namespace cl
                     advance( 1 );
                 }
 
-                difference_type distance_to( const reverse_iterator_base< Container >& lhs ) const
-                {
-                    return static_cast< difference_type >( m_index - lhs.m_index );
-                }
+
 
                 template< typename OtherContainer >
                 bool equal( const reverse_iterator_base< OtherContainer >& lhs ) const

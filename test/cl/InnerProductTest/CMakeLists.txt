@@ -23,7 +23,12 @@ set( clBolt.Test.InnerProduct.Headers stdafx.h ${BOLT_CL_TEST_DIR}/common/myocl.
 set( clBolt.Test.InnerProduct.Files ${clBolt.Test.InnerProduct.Source} ${clBolt.Test.InnerProduct.Headers} )
 
 add_executable( clBolt.Test.InnerProduct ${clBolt.Test.InnerProduct.Files} )
-target_link_libraries( clBolt.Test.InnerProduct clBolt.Runtime ${OPENCL_LIBRARIES} ${GTEST_LIBRARIES} ${Boost_LIBRARIES} ${TBB_LIBRARIES} )
+
+if(BUILD_TBB)
+    target_link_libraries( clBolt.Test.InnerProduct clBolt.Runtime ${OPENCL_LIBRARIES} ${GTEST_LIBRARIES} ${Boost_LIBRARIES}  ${TBB_LIBRARIES} )
+else (BUILD_TBB)
+    target_link_libraries( clBolt.Test.InnerProduct clBolt.Runtime ${OPENCL_LIBRARIES} ${GTEST_LIBRARIES} ${Boost_LIBRARIES}  )
+endif()
 
 set_target_properties( clBolt.Test.InnerProduct PROPERTIES VERSION ${Bolt_VERSION} )
 set_target_properties( clBolt.Test.InnerProduct PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )

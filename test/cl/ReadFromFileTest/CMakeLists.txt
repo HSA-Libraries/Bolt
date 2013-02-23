@@ -39,7 +39,7 @@ if( MSVC )
 endif()
 
 add_executable( clBolt.Test.ReadFromFile ${clBolt.Test.ReadFromFile.Files} )
-target_link_libraries( clBolt.Test.ReadFromFile clBolt.Runtime ${OPENCL_LIBRARIES} ${GTEST_LIBRARIES} ${Boost_LIBRARIES} )
+target_link_libraries( clBolt.Test.ReadFromFile clBolt.Runtime ${OPENCL_LIBRARIES} ${GTEST_LIBRARIES} ${Boost_LIBRARIES} ${TBB_LIBRARIES} )
 
 set_target_properties( clBolt.Test.ReadFromFile PROPERTIES VERSION ${Bolt_VERSION} )
 set_target_properties( clBolt.Test.ReadFromFile PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )

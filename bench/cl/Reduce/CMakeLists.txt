@@ -17,13 +17,17 @@
 
 # List the names of common files to compile across all platforms
 set( clBolt.Bench.Reduce.Source stdafx.cpp Reduce.cpp )
-set( clBolt.Bench.Reduce.Headers stdafx.h targetver.h ${BOLT_INCLUDE_DIR}/bolt/cl/Reduce.h )
+set( clBolt.Bench.Reduce.Headers stdafx.h targetver.h ${BOLT_INCLUDE_DIR}/bolt/cl/reduce.h ${BOLT_INCLUDE_DIR}/bolt/cl/detail/reduce.inl)
 
 set( clBolt.Bench.Reduce.Files ${clBolt.Bench.Reduce.Source} ${clBolt.Bench.Reduce.Headers} )
 
 add_executable( clBolt.Bench.Reduce ${clBolt.Bench.Reduce.Files} )
 
-target_link_libraries( clBolt.Bench.Reduce ${Boost_LIBRARIES} clBolt.Runtime )
+if (BUILD_TBB)
+    target_link_libraries( clBolt.Bench.Reduce ${Boost_LIBRARIES} clBolt.Runtime ${TBB_LIBRARIES} )
+else (BUILD_TBB)
+    target_link_libraries( clBolt.Bench.Reduce ${Boost_LIBRARIES} clBolt.Runtime )
+endif()
 
 set_target_properties( clBolt.Bench.Reduce PROPERTIES VERSION ${Bolt_VERSION} )
 set_target_properties( clBolt.Bench.Reduce PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
@@ -32,7 +36,7 @@ set_property( TARGET clBolt.Bench.Reduce PROPERTY FOLDER "Benchmark/OpenCL")
 
 # CPack configuration; include the executable into the package
 install( TARGETS clBolt.Bench.Reduce
-	RUNTIME DESTINATION ${BIN_DIR}
-	LIBRARY DESTINATION ${LIB_DIR}
-	ARCHIVE DESTINATION ${LIB_DIR}
-	)
+    RUNTIME DESTINATION ${BIN_DIR}
+    LIBRARY DESTINATION ${LIB_DIR}
+    ARCHIVE DESTINATION ${LIB_DIR}
+    )
