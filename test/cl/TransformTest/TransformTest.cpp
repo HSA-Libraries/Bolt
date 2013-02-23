@@ -1258,8 +1258,8 @@ int gen_constant()
 }
 TEST(simple,constant)
 {
-    bolt::cl::constant_iterator<int> iter(1);
-    bolt::cl::constant_iterator<int> iter2=iter+1024;
+    bolt::cl::constant_iterator<int> iter( 1 );
+    bolt::cl::constant_iterator<int> iter2 = iter + 1024;
     std::vector<int> input1(1024);
     std::vector<int> input2(1024);
     std::vector<int> stdOutput(1024);
@@ -1305,7 +1305,7 @@ TEST(cl_const_iter_transformBoltClVectFloat, addIterFloatValues){
 		std::cout<<std::setprecision(3)<<myDevVect[i]<<" ";
 	}
 
-	bolt::cl::constant_iterator<float> constIter (myConstValueF);
+	bolt::cl::constant_iterator< float > constIter( myConstValueF );
 
 	bolt::cl::transform(myDevVect.begin(), myDevVect.end(), constIter, myDevVect.begin(), addKaro);
 	
@@ -1357,9 +1357,10 @@ int main(int argc, char* argv[])
 
     ::testing::InitGoogleTest( &argc, &argv[ 0 ] );
 
-    ////  Set the standard OpenCL wait behavior to help debugging
+    //  Set the standard OpenCL wait behavior to help debugging
     //bolt::cl::control& myControl = bolt::cl::control::getDefault( );
-    //myControl.waitMode( bolt::cl::control::NiceWait );
+    // myControl.waitMode( bolt::cl::control::NiceWait );
+    //myControl.forceRunMode( bolt::cl::control::MultiCoreCpu );  // choose tbb
 
     int retVal = RUN_ALL_TESTS( );
 
