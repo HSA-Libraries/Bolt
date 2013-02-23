@@ -90,6 +90,11 @@ def executable(library, backend):
             exe = 'clBolt.Bench.Scan'
         else:
             exe = 'ampBolt.Bench.Scan'
+    elif library == 'transform':
+        if backend == 'cl':
+            exe = 'clBolt.Bench.Transform'
+        else:
+            exe = 'ampBolt.Bench.Transform'
     elif library == 'reduce':
         if backend == 'cl':
             exe = 'clBolt.Bench.Reduce'

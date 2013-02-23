@@ -52,11 +52,12 @@ int main( int argc, char* argv[] )
     cl_device_type deviceType = CL_DEVICE_TYPE_DEFAULT;
     bool defaultDevice = true;
     bool print_clInfo = false;
-    bool hostMemory = false;
-    bool serial = false;
-    bool multi = false;
-    bool validate = false;
-    bool compareSerial = false;
+    bool systemMemory = false;
+    bool deviceMemory = false;
+    bool runTBB = false;
+    bool runBOLT = false;
+    bool runSTL = false;
+
     std::string filename;
     size_t numThrowAway = 10;
     bolt::cl::control& ctrl = bolt::cl::control::getDefault();
@@ -75,9 +76,11 @@ int main( int argc, char* argv[] )
             ( "gpu,g",          "Report only OpenCL GPU devices" )
             ( "cpu,c",          "Report only OpenCL CPU devices" )
             ( "all,a",          "Report all OpenCL devices" )
-            ( "single,s",       "Run reference serial algorithm (std::stable_sort)." )
-            ( "multi,m",        "Run multicore TBB tbb::parallel_sort" )
-            ( "userMemory,u",   "Allocate vectors in host memory, otherwise device memory" )
+            ( "systemMemory,S", "Allocate vectors in system memory, otherwise device memory" )
+            ( "deviceMemory,D", "Allocate vectors in system memory, otherwise device memory" )
+            ( "tbb,T",          "Benchmark TBB MULTICORE CPU Code" )
+            ( "bolt,B",         "Benchmark Bolt OpenCL Libray" )
+            ( "serial,E",       "Benchmark Serial Code STL Libray" )
             ( "platform,p",     po::value< cl_uint >( &userPlatform )->default_value( 0 ),
                 "Specify the platform under test using the index reported by -q flag" )
             ( "device,d",       po::value< cl_uint >( &userDevice )->default_value( 0 ),
@@ -87,14 +90,10 @@ int main( int argc, char* argv[] )
                 "Specify the length of sort array" )
             ( "iterations,i",   po::value< size_t >( &iterations )->default_value( 1 ),
                 "Number of samples in timing loop" )
-            ( "validate,v",     "Validate Bolt sort against serial CPU sort" )
-            //( "serial",         "Use the STL std::sort" )
             ( "filename,f",     po::value< std::string >( &filename )->default_value( "bench.xml" ),
                 "Name of output file" )
             ( "throw-away",     po::value< size_t >( &numThrowAway )->default_value( 0 ),
                 "Number of trials to skip averaging" )
-            //( "test,t",         po::value< size_t >( &algo )->default_value( 1 ), 
-            //    "Algorithm used [1,2,3,4]  1:SORT_BOLT UINT, 2:SORT_BOLT INT, 3:SORT_AMP_SHOC, 4:STD SORT" )
             ;
 
         po::variables_map vm;
@@ -140,33 +139,26 @@ int main( int argc, char* argv[] )
             deviceType  = CL_DEVICE_TYPE_ALL;
         }
 
-        if( vm.count( "single" ) )
+        if( vm.count( "systemMemory" ) )
         {
-            serial = true;
-            hostMemory = true;
+            systemMemory = true;
         }
-
-        if( vm.count( "multi" ) )
+        if( vm.count( "deviceMemory" ) )
         {
-            multi = true;
-            hostMemory = true;
+            deviceMemory = true;
         }
-
-        if( vm.count( "userMemory" ) )
+        if( vm.count( "tbb" ) )
         {
-            hostMemory = true;
+            runTBB = true;
         }
-
-        if( vm.count( "validate" ) )
+        if( vm.count( "bolt" ) )
         {
-            validate = true;
+            runBOLT = true;
         }
-
-        if( vm.count( "serial" ) )
+        if( vm.count( "serial" ) ) 
         {
-            compareSerial = true;
+            runSTL = true;
         }
-
     }
     catch( std::exception& e )
     {
@@ -181,12 +173,12 @@ int main( int argc, char* argv[] )
     //  Query OpenCL for available platforms
     cl_int err = CL_SUCCESS;
 
-    if( serial )
+    if( runSTL )
     {
         ctrl.forceRunMode( bolt::cl::control::SerialCpu );  // choose serial std::scan
     }
 
-    if( multi )
+    if( runTBB )
     {
         ctrl.forceRunMode( bolt::cl::control::MultiCoreCpu );  // choose tbb tbb::parallel_scan
     }
@@ -219,7 +211,7 @@ int main( int argc, char* argv[] )
 
     SaxpyFunctor s(100.0);
 
-    if( hostMemory )
+    if( systemMemory )
     {
         std::vector< int > input1( length, 1 );
         std::vector< int > input2( length, 1 );
@@ -251,12 +243,15 @@ int main( int argc, char* argv[] )
     double testTime = myTimer.getAverageTime( timerId );
     double testMB = ( length * sizeof( int ) ) / ( 1024.0 * 1024.0);
     double testGB = testMB/ 1024.0;
+    double MKeys = length / ( 1024.0 * 1024.0 );
 
     bolt::tout << std::left;
     bolt::tout << std::setw( colWidth ) << _T( "Transform profile: " ) << _T( "[" ) << iterations-pruned << _T( "] samples" ) << std::endl;
+    bolt::tout << std::setw( colWidth ) << _T( "    Size (MKeys): " ) << MKeys << std::endl;
     bolt::tout << std::setw( colWidth ) << _T( "    Size (MB): " ) << testMB << std::endl;
     bolt::tout << std::setw( colWidth ) << _T( "    Time (ms): " ) << testTime*1000.0 << std::endl;
     bolt::tout << std::setw( colWidth ) << _T( "    Speed (GB/s): " ) << testGB / testTime << std::endl;
+    bolt::tout << std::setw( colWidth ) << _T( "    Speed (MKeys/s): " ) << MKeys / testTime << std::endl;
     bolt::tout << std::endl;
 
 //  bolt::tout << myTimer;

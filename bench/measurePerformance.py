@@ -47,7 +47,7 @@ IAM = 'Bolt'
 precisionvalues = ['single', 'double']
 libraryvalues = ['STL','BOLT','TBB', 'null']
 memoryvalues = ['device','host', 'null']
-routinevalues = ['copy','scan','sort','reduce','null']
+routinevalues = ['copy','scan','sort', 'transform', 'reduce','null']
 backEndValues = ['cl','amp']
 
 parser = argparse.ArgumentParser(description='Measure performance of a Bolt library')
