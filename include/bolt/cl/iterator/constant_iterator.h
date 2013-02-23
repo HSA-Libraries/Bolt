@@ -59,13 +59,19 @@ namespace cl {
 
             //  This copy constructor allows an iterator to convert into a const_iterator, but not vica versa
             template< typename OtherType >
-            constant_iterator( const constant_iterator< OtherType >& rhs ): m_Index( rhs.m_Index )
+            constant_iterator( const constant_iterator< OtherType >& rhs ): m_devMemory( rhs.m_devMemory ),
+                m_Index( rhs.m_Index ), m_constValue( rhs.m_constValue )
             {}
 
             //  This copy constructor allows an iterator to convert into a const_iterator, but not vica versa
             constant_iterator< value_type >& operator= ( const constant_iterator< value_type >& rhs )
             {
+                if( this == &rhs )
+                    return *this;
+
+                m_devMemory = rhs.m_devMemory;
                 m_constValue = rhs.m_constValue;
+                m_Index = rhs.m_Index;
                 return *this;
             }
                 
@@ -98,13 +104,14 @@ namespace cl {
                 return sizeof( Payload );
             }
 
-           typename iterator_facade::difference_type m_Index;
-
             difference_type distance_to( const constant_iterator< value_type >& rhs ) const
             {
                 //return static_cast< typename iterator_facade::difference_type >( 1 );
                 return rhs.m_Index - m_Index;
             }
+
+            //  Public member variables
+           typename iterator_facade::difference_type m_Index;
 
         private:
             //  Implementation detail of boost.iterator
@@ -129,12 +136,10 @@ namespace cl {
                 advance( -1 );
             }
 
-
-
             template< typename OtherType >
             bool equal( const constant_iterator< OtherType >& rhs ) const
             {
-                bool sameIndex = rhs.m_constValue == m_constValue;
+                bool sameIndex = (rhs.m_constValue == m_constValue) && (rhs.m_Index == m_Index);
 
                 return sameIndex;
             }
@@ -145,7 +150,7 @@ namespace cl {
             }
 
             ::cl::Buffer m_devMemory;
-            value_type const m_constValue;
+            value_type m_constValue;
         };
     //)
 

@@ -258,6 +258,11 @@ namespace cl
                 return m_Container.m_devMemory;
             }
 
+            Container& getContainer( ) const
+            {
+                return m_Container;
+            }
+
             Payload gpuPayload( ) const
             {
                 Payload payload = { m_Index, 0 };

@@ -24,7 +24,7 @@ set( clBolt.Bench.Transform.Files ${clBolt.Bench.Transform.Source} ${clBolt.Benc
 add_executable( clBolt.Bench.Transform ${clBolt.Bench.Transform.Files} )
 
 if (BUILD_TBB)
-    target_link_libraries( clBolt.Bench.Transform ${Boost_LIBRARIES} clBolt.Runtime $(TBB_LIBRARIES) )
+    target_link_libraries( clBolt.Bench.Transform ${Boost_LIBRARIES} ${TBB_LIBRARIES} clBolt.Runtime )
 else (BUILD_TBB)
     target_link_libraries( clBolt.Bench.Transform ${Boost_LIBRARIES} clBolt.Runtime )
 endif()
