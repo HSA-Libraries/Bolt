@@ -52,7 +52,7 @@ void testTBB()
 
     int hSum = std::accumulate(stdInput.begin(), stdInput.end(), 0);
     bolt::cl::control ctl = bolt::cl::control::getDefault();
-    ctl.forceRunMode(bolt::cl::control::MultiCoreCpu);
+    //ctl.forceRunMode(bolt::cl::control::MultiCoreCpu);
     int sum = bolt::cl::reduce(ctl, tbbInput.begin(), tbbInput.end(), 0);
     if(hSum == sum)
         printf ("\nTBB Test case PASSED\n");

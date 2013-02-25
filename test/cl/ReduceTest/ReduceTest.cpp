@@ -134,7 +134,7 @@ void simpleReduce_TestControl(int aSize, int numIters, int deviceIndex)
 	// FIXME - temporarily disable use of new control queue here:
 #if OCL_CONTEXT_BUG_WORKAROUND
 	::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
-    bolt::cl::control c( getQueueFromContext(myContext, CL_DEVICE_TYPE_GPU, 0 )); 
+	bolt::cl::control c( bolt::cl::control::getDefaultCommandQueue( ) ); 
 #else
 	MyOclContext ocl = initOcl(CL_DEVICE_TYPE_GPU, deviceIndex);
     bolt::cl::control c(ocl._queue);  // construct control structure from the queue.

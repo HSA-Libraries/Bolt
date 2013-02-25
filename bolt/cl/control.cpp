@@ -267,13 +267,31 @@ namespace cl
         cl_uint maxMaxClock = 0;
         cl_uint maxMaxUnits = 0;
         ::cl::Device boltDevice;
+		cl_device_type selectedDevice;
         std::vector< ::cl::Platform >::iterator amdPlatDevice;
 
         for( std::vector< ::cl::Platform >::iterator amdPlatIter = amdPlatforms.begin( ); amdPlatIter != amdPlatforms.end( ); ++amdPlatIter )
         {
             //  We don't want to pick an AMD CPU device over another vendors GPU device, so filter only GPU devices
             std::vector< ::cl::Device > amdDevices;
-            bolt::cl::V_OPENCL( amdPlatIter->getDevices( CL_DEVICE_TYPE_GPU, &amdDevices ), "Platform::getDevices() failed" );
+			try 
+			{
+				amdPlatIter->getDevices( CL_DEVICE_TYPE_GPU, &amdDevices );
+			}
+			catch (::cl::Error err)
+			{
+				if(err.err() == CL_DEVICE_NOT_FOUND)
+					std::cout << "No GPU device Found" << std::endl; 
+			}
+			try 
+			{
+				amdPlatIter->getDevices( CL_DEVICE_TYPE_CPU, &amdDevices );
+			}
+			catch (::cl::Error err)
+			{
+				if(err.err() == CL_DEVICE_NOT_FOUND)
+					std::cout << "NoCPU device Found" << std::endl; 
+			}
 
             //  If there are no AMD GPU devices, skip to next available platform
             if( amdDevices.empty( ) )
@@ -283,6 +301,9 @@ namespace cl
 
             for( std::vector< ::cl::Device >::iterator amdDevIter = amdDevices.begin( ); amdDevIter != amdDevices.end( ); ++amdDevIter )
             {
+				cl_device_type dType = amdDevIter->getInfo< CL_DEVICE_TYPE >( &err );
+				bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_TYPE > failed" );
+
                 cl_ulong devDeviceMemory = amdDevIter->getInfo< CL_DEVICE_GLOBAL_MEM_SIZE >( &err );
                 bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_GLOBAL_MEM_SIZE > failed" );
 
@@ -303,6 +324,7 @@ namespace cl
                     maxMaxClock = devMaxClock;
                     maxMaxUnits = devMaxUnits;
                     amdPlatDevice = amdPlatIter;
+					selectedDevice = dType;
                 }
                 else if( devWorkPot == maxWorkPot )
                 {
@@ -314,6 +336,7 @@ namespace cl
                         maxMaxClock = devMaxClock;
                         maxMaxUnits = devMaxUnits;
                         amdPlatDevice = amdPlatIter;
+						selectedDevice = dType;
                     }
                 }
             }
@@ -329,7 +352,7 @@ namespace cl
         //::cl::Context boltContext( boltDevice );
 
         cl_context_properties cprops[3] = { CL_CONTEXT_PLATFORM, (cl_context_properties)(*amdPlatDevice)(), 0 };
-        ::cl::Context boltContext( CL_DEVICE_TYPE_GPU, cprops );
+        ::cl::Context boltContext( selectedDevice, cprops );
 
         ::cl::CommandQueue boltQueue( boltContext, boltDevice );
 
