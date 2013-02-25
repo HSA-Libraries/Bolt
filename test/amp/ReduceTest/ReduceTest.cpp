@@ -1059,84 +1059,65 @@ struct UDD {
     int a; 
     int b;
 
-    bool operator() (const UDD& lhs, const UDD& rhs) { 
+    bool operator() (const UDD& lhs, const UDD& rhs) const restrict (cpu,amp) {
         return ((lhs.a+lhs.b) > (rhs.a+rhs.b));
     } 
-    bool operator < (const UDD& other) const { 
+    bool operator < (const UDD& other) const restrict (cpu,amp){
         return ((a+b) < (other.a+other.b));
     }
-    bool operator > (const UDD& other) const { 
+    bool operator > (const UDD& other) const restrict (cpu,amp){
         return ((a+b) > (other.a+other.b));
     }
-    bool operator == (const UDD& other) const { 
+    bool operator == (const UDD& other) const restrict (cpu,amp){
         return ((a+b) == (other.a+other.b));
     }
-    UDD() 
-        : a(0),b(0) { } 
-    UDD(int _in) 
-        : a(_in), b(_in +1)  { } 
+    UDD()   restrict (cpu,amp)
+        : a(0),b(0) { }
+    UDD(int _in)   restrict (cpu,amp)
+        : a(_in), b(_in +1)  { }
 }; 
 
+struct UDDplus
+{
+   UDD operator() (const UDD &lhs, const UDD &rhs) const restrict (cpu,amp)
+   {
+     UDD _result;
+     _result.a = lhs.a + rhs.a;
+     _result.b = lhs.b + rhs.b;
+     return _result;
+   }
 
-///**********************************************************
-// * mixed unary operator - dtanner
-// *********************************************************/
-//TEST( MixedTransform, OutOfPlace )
-//{
-//    //size_t length = GetParam( );
-//
-//    //setup containers
-//    int length = (1<<16)+23;
-////    bolt::cl::negate< uddtI2 > nI2;
-//    UDD initial(2);
-//    //UDD identity();
-//    bolt::amp::device_vector< UDD >    input( length, initial, true  );
-//    bolt::amp::device_vector< float > output( length, 0.f, false );
-//    std::vector< UDD > refInput( length, initial );
-//    std::vector< float > refIntermediate( length, 0.f );
-//    std::vector< float > refOutput(       length, 0.f );
-//
-//    //    T stlReduce = std::accumulate(Z.begin(), Z.end(), init);
-//
-//    //T boltReduce = bolt::cl::transform_reduce(A.begin(), A.end(), SquareMe<T>(), init, 
-//    //                                          bolt::cl::plus<T>(), squareMeCode);
-//
-//    // call transform_reduce
-//    DivUDD ddd;
-//    bolt::plus<float> add;
-//    float boldReduce = bolt::amp::transform_reduce( input.begin(), input.end(),  ddd, 0.f, add );
-//    ::std::transform(   refInput.begin(), refInput.end(),  refIntermediate.begin(), ddd); // transform in-place
-//    float stdReduce = ::std::accumulate( refIntermediate.begin(), refIntermediate.end(), 0.f); // out-of-place scan
-//
-//    // compare results
-//    cmpArrays(refOutput, output);
-//}
-//
-//
-//typedef ::testing::Types< 
-//    std::tuple< UDD, TypeValue< 1 > >,
-//    std::tuple< UDD, TypeValue< 31 > >,
-//    std::tuple< UDD, TypeValue< 32 > >,
-//    std::tuple< UDD, TypeValue< 63 > >,
-//    std::tuple< UDD, TypeValue< 64 > >,
-//    std::tuple< UDD, TypeValue< 127 > >,
-//    std::tuple< UDD, TypeValue< 128 > >,
-//    std::tuple< UDD, TypeValue< 129 > >,
-//    std::tuple< UDD, TypeValue< 1000 > >,
-//    std::tuple< UDD, TypeValue< 1053 > >,
-//    std::tuple< UDD, TypeValue< 4096 > >,
-//    std::tuple< UDD, TypeValue< 4097 > >,
-//    std::tuple< UDD, TypeValue< 65535 > >,
-//    std::tuple< UDD, TypeValue< 65536 > >
-//> UDDTests;
+};
 
+
+TEST( ReduceUDD , UDDPlusOperatorInts )
+{
+    //setup containers
+    int length = 1024;
+    std::vector< UDD > refInput( length );
+    for( unsigned int i = 0; i < length ; i++ )
+    {
+      refInput[i].a = i;
+      refInput[i].b = i+1;
+    }
+
+    UDD zero;
+    zero.a = 0;
+    zero.b = 0;
+    // call reduce
+    UDDplus plusOp;
+    UDD boltReduce = bolt::amp::reduce( refInput.begin(), refInput.end(), zero, plusOp );
+    UDD stdReduce =  std::accumulate( refInput.begin(), refInput.end(), zero, plusOp ); // out-of-place scan
+
+    EXPECT_EQ(boltReduce,stdReduce);
+
+}
 
 INSTANTIATE_TYPED_TEST_CASE_P( Integer, ReduceArrayTest, IntegerTests );
 INSTANTIATE_TYPED_TEST_CASE_P( Float, ReduceArrayTest, FloatTests );
 #if (TEST_DOUBLE == 1)
 INSTANTIATE_TYPED_TEST_CASE_P( Double, ReduceArrayTest, DoubleTests );
 #endif 
-//INSTANTIATE_TYPED_TEST_CASE_P( UDDTest, SortArrayTest, UDDTests );
 
 
 int main(int argc, char* argv[])
