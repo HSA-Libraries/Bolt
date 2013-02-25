@@ -16,42 +16,19 @@
 ############################################################################                                                                                     
 
 ========================================================================
-    CONSOLE APPLICATION : scan Project Overview
+    FOR BENCHMARKING REDUCE API : Reduce Project Overview
 ========================================================================
 
-AppWizard has created this scan application for you.
-
-This file contains a summary of what you will find in each of the files that
-make up your scan application.
-
-
-scan.vcxproj
-    This is the main project file for VC++ projects generated using an Application Wizard.
-    It contains information about the version of Visual C++ that generated the file, and
-    information about the platforms, configurations, and project features selected with the
-    Application Wizard.
-
-scan.vcxproj.filters
-    This is the filters file for VC++ projects generated using an Application Wizard. 
-    It contains information about the association between the files in your project 
-    and the filters. This association is used in the IDE to show grouping of files with
-    similar extensions under a specific node (for e.g. ".cpp" files are associated with the
-    "Source Files" filter).
-
-scan.cpp
-    This is the main application source file.
-
-/////////////////////////////////////////////////////////////////////////////
-Other standard files:
-
-StdAfx.h, StdAfx.cpp
-    These files are used to build a precompiled header (PCH) file
-    named scan.pch and a precompiled types file named StdAfx.obj.
-
-/////////////////////////////////////////////////////////////////////////////
-Other notes:
-
-AppWizard uses "TODO:" comments to indicate parts of the source code you
-should add to or customize.
+Copy the puthon scripts to a folder along with the executable clBolt.Bench.Reduce.exe
+Then Use the following commands
+>>>>>>>
+python measurePerformance.py --label reduce_tbb_host --library=TBB --routine=reduce --memory host -l 4096-67108864:x2 --tablefile reduce_tbb_host.txt
+python measurePerformance.py --label reduce_tbb_device --library=TBB --routine=reduce --memory device -l 4096-67108864:x2 --tablefile reduce_tbb_device.txt
+python measurePerformance.py --label reduce_bolt_host --library=BOLT --routine=reduce --memory host -l 4096-67108864:x2 --tablefile reduce_bolt_host.txt
+python measurePerformance.py --label reduce_bolt_device --library=BOLT --routine=reduce --memory device -l 4096-67108864:x2 --tablefile reduce_bolt_device.txt
+python measurePerformance.py --label reduce_stl_host --library=STL --routine=reduce --memory host -l 4096-67108864:x2 --tablefile reduce_stl_host.txt
+>>>>>>>
+Run this command to plot the graph
+python plotPerformance.py --y_axis_label "MKeys/sec" --title "Reduce Performance" --x_axis_scale log2 -d reduce_tbb_host.txt -d reduce_tbb_device.txt -d reduce_bolt_host.txt -d reduce_bolt_device.txt -d reduce_stl_host.txt --outputfile reducePerfAll4096.pdf
 
 /////////////////////////////////////////////////////////////////////////////

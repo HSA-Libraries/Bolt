@@ -35,7 +35,13 @@ set( CMAKE_CXX_FLAGS "-bigobj ${CMAKE_CXX_FLAGS}" )
 endif()
 
 add_executable( clBolt.Test.SortByKey ${clBolt.Test.SortByKey.Files} )
-target_link_libraries( clBolt.Test.SortByKey ${OPENCL_LIBRARIES} ${GTEST_LIBRARIES} ${Boost_LIBRARIES} clBolt.Runtime )
+
+if(BUILD_TBB)
+    target_link_libraries( clBolt.Test.SortByKey ${OPENCL_LIBRARIES} ${GTEST_LIBRARIES} ${Boost_LIBRARIES} clBolt.Runtime  ${TBB_LIBRARIES} )
+else (BUILD_TBB)
+    target_link_libraries( clBolt.Test.SortByKey ${OPENCL_LIBRARIES} ${GTEST_LIBRARIES} ${Boost_LIBRARIES} clBolt.Runtime )
+endif()
+
 
 set_target_properties( clBolt.Test.SortByKey PROPERTIES VERSION ${Bolt_VERSION} )
 set_target_properties( clBolt.Test.SortByKey PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )

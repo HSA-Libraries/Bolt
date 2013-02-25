@@ -26,7 +26,12 @@ set( clBolt.Test.TransformScan.Headers   ${BOLT_CL_TEST_DIR}/common/stdafx.h
 set( clBolt.Test.TransformScan.Files ${clBolt.Test.TransformScan.Source} ${clBolt.Test.TransformScan.Headers} )
 
 add_executable( clBolt.Test.TransformScan ${clBolt.Test.TransformScan.Files} )
-target_link_libraries( clBolt.Test.TransformScan clBolt.Runtime ${GTEST_LIBRARIES} ${Boost_LIBRARIES} )
+
+if(BUILD_TBB)
+    target_link_libraries( clBolt.Test.TransformScan clBolt.Runtime ${OPENCL_LIBRARIES} ${GTEST_LIBRARIES} ${Boost_LIBRARIES}  ${TBB_LIBRARIES} )
+else (BUILD_TBB)
+    target_link_libraries( clBolt.Test.TransformScan clBolt.Runtime ${OPENCL_LIBRARIES} ${GTEST_LIBRARIES} ${Boost_LIBRARIES}  )
+endif()
 
 set_target_properties( clBolt.Test.TransformScan PROPERTIES VERSION ${Bolt_VERSION} )
 set_target_properties( clBolt.Test.TransformScan PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )

@@ -22,11 +22,15 @@
 
 #pragma once
 
+#define NOMINMAX
 #include "targetver.h"
 
-#include <stdio.h>
 #include <tchar.h>
+#include <algorithm>
+#include <iomanip>
 
+#include <boost/program_options.hpp>
+namespace po = boost::program_options;
 
 
 // TODO: reference additional headers here that your program requires.

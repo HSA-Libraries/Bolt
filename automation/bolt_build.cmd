@@ -46,6 +46,7 @@ set BOLT_BUILD_COMP_VER=11
 set BOLT_BUILD_BIT=64
 set BOLT_BUILD_USE_AMP=ON
 set BOLT_CONFIGURATION=Release
+set BOLT_VERSION=%BOLT_BUILD_VERSION_MAJOR%.%BOLT_BUILD_VERSION_MINOR%.%BOLT_BUILD_VERSION_PATCH%
 
 
 REM ################################################################################################
@@ -84,10 +85,10 @@ REM # Read command line parameters
     set BOLT_BUILD_BIT=%2
     SHIFT
   )
-  if /i "%1"=="--config" (
-    set BOLT_CONFIGURATION=%2
-    SHIFT
-  )
+  REM if /i "%1"=="--config" (
+    REM set BOLT_CONFIGURATION=%2
+    REM SHIFT
+  REM )
   if /i "%1"=="--version-major" (
     set BOLT_BUILD_VERSION_MAJOR=%2
     SHIFT
@@ -141,7 +142,7 @@ echo Info: Install:   %BOLT_BUILD_INSTALL_PATH%
 echo Info: OS:        %BOLT_BUILD_OS%%BOLT_BUILD_OS_VER%
 echo Info: Compiler:  %BOLT_BUILD_COMP%%BOLT_BUILD_COMP_VER% %BOLT_BUILD_BIT%bit
 echo Info: CMake Gen: %BOLT_BUILD_CMAKE_GEN%
-echo Info: CMake Config: %BOLT_CONFIGURATION%
+REM echo Info: CMake Config: %BOLT_CONFIGURATION%
 echo Info: Platform:  %BOLT_BUILD_MSBUILD_PLATFORM%
 echo Info: Toolset:   %BOLT_BUILD_MSBUILD_PLATFORM_TOOLSET%
 echo Info: Major:     %BOLT_BUILD_FLAG_MAJOR%
@@ -182,6 +183,12 @@ echo Info: Done setting up compiler environment variables.
 REM Echo a blank line into a file called success; the existence of success determines whether we built successfully
 echo. > %BOLT_BUILD_INSTALL_PATH%\success
 
+REM Specify the location of a local image of boost, to help speed up the build process
+set BOOST_URL=http://see-srv/share/code/externals/boost/boost_1_52_0.zip
+set DOXYGEN_URL=http://see-srv/share/code/externals/doxygen/doxygen-1.8.3.windows.bin.zip
+set GTEST_URL=http://see-srv/share/code/externals/gtest/gtest-1.6.0.zip
+set TBB_ROOT=c:/Jenkins_FS_Root/dependencies/tbb41_20130116oss
+
 
 REM ################################################################################################
 REM # Start of build logic here
@@ -196,6 +203,7 @@ echo Info: Running CMake to generate build files.
   -G %BOLT_BUILD_CMAKE_GEN% ^
   -D BUILD_AMP=%BOLT_BUILD_USE_AMP% ^
   -D BUILD_StripSymbols=ON ^
+  -D BUILD_TBB=ON ^
   -D Bolt.SuperBuild_VERSION_PATCH=%BOLT_BUILD_VERSION_PATCH% ^
   %BOLT_BUILD_SOURCE_PATH%\superbuild
 if errorlevel 1 (
@@ -206,30 +214,54 @@ if errorlevel 1 (
 )
 
 REM ################################################################################################
-REM # Super Build
+REM # Super Build -- Debug
 echo.
 echo %HR%
-echo Info: Running MSBuild for SuperBuild.
+echo Info: Running MSBuild for Debug SuperBuild
 MSBuild.exe ^
-  ALL_BUILD.vcxproj ^
+  Bolt.SuperBuild.sln ^
   /m ^
   /fl ^
-  /flp1:logfile=errors.log;errorsonly ^
-  /flp2:logfile=warnings.log;warningsonly ^
-  /flp3:logfile=build.log ^
-  /p:Configuration=%BOLT_CONFIGURATION% ^
+  /flp1:logfile=DebugErrors.log;errorsonly ^
+  /flp2:logfile=DebugWarnings.log;warningsonly ^
+  /flp3:logfile=DebugBuild.log ^
+  /p:Configuration=Debug ^
   /p:PlatformTarget=%BOLT_BUILD_MSBUILD_PLATFORM% ^
   /p:PlatformToolset=%BOLT_BUILD_MSBUILD_PLATFORM_TOOLSET% ^
   /t:build
-if errorlevel 1 (
-  echo Info: MSBuild failed for SuperBuild.
-  del /Q /F %BOLT_BUILD_INSTALL_PATH%\success
-  popd
-  goto :Done
-)
+REM The following error level does not seem to work!  What do the return codes of msbuild mean?
+REM if errorlevel 1 (
+  REM echo Info: MSBuild failed for SuperBuild.
+  REM del /Q /F %BOLT_BUILD_INSTALL_PATH%\success
+  REM goto :Done
+REM )
 
 REM ################################################################################################
-REM # Build Documentation
+REM # Super Build -- Release
+echo.
+echo %HR%
+echo Info: Running MSBuild for Release SuperBuild.
+MSBuild.exe ^
+  Bolt.vcxproj ^
+  /m ^
+  /fl ^
+  /flp1:logfile=ReleaseErrors.log;errorsonly ^
+  /flp2:logfile=ReleaseWarnings.log;warningsonly ^
+  /flp3:logfile=ReleaseBuild.log ^
+  /p:Configuration=Release ^
+  /p:BuildProjectReferences=false ^
+  /p:PlatformTarget=%BOLT_BUILD_MSBUILD_PLATFORM% ^
+  /p:PlatformToolset=%BOLT_BUILD_MSBUILD_PLATFORM_TOOLSET% ^
+  /t:build
+REM The following error level does not seem to work!  What do the return codes of msbuild mean?
+REM if errorlevel 1 (
+  REM echo Info: MSBuild failed for SuperBuild.
+  REM del /Q /F %BOLT_BUILD_INSTALL_PATH%\success
+  REM goto :Done
+REM )
+
+REM ################################################################################################
+REM # Build Documentation - Independent of configuration
 echo.
 echo %HR%
 echo Info: Running MSBuild for Bolt documentation.
@@ -239,10 +271,10 @@ MSBuild.exe ^
   Bolt.Documentation.vcxproj ^
   /m ^
   /fl ^
-  /flp1:logfile=errors.log;errorsonly ^
-  /flp2:logfile=warnings.log;warningsonly ^
-  /flp3:logfile=build.log ^
-  /p:Configuration=%BOLT_CONFIGURATION% ^
+  /flp1:logfile=ReleaseErrors.log;errorsonly ^
+  /flp2:logfile=ReleaseWarnings.log;warningsonly ^
+  /flp3:logfile=ReleaseBuild.log ^
+  /p:Configuration=Release ^
   /p:PlatformTarget=%BOLT_BUILD_MSBUILD_PLATFORM% ^
   /p:PlatformToolset=%BOLT_BUILD_MSBUILD_PLATFORM_TOOLSET% ^
   /t:build
@@ -254,8 +286,36 @@ if errorlevel 1 (
 )
 popd
 
+REM Inside of the bolt-build directory
 REM ################################################################################################
-REM # Zip Package
+REM # Zip Package - Debug
+echo.
+echo %HR%
+echo Info: Running MSBuild for packaging
+MSBuild.exe ^
+  PACKAGE.vcxproj ^
+  /m ^
+  /fl ^
+  /flp1:logfile=DebugErrors.log;errorsonly ^
+  /flp2:logfile=DebugWarnings.log;warningsonly ^
+  /flp3:logfile=DebugBuild.log ^
+  /p:Configuration=Debug ^
+  /p:PlatformTarget=%BOLT_BUILD_MSBUILD_PLATFORM% ^
+  /p:PlatformToolset=%BOLT_BUILD_MSBUILD_PLATFORM_TOOLSET% ^
+  /t:build
+if errorlevel 1 (
+  echo Info: MSBuild failed for Bolt-build.
+  del /Q /F %BOLT_BUILD_INSTALL_PATH%\success
+  goto :Done
+)
+
+REM Rename the package that we just built
+REM I do this here because I can not figure out how to get cpack to append the configuration string
+echo python %BOLT_BUILD_SOURCE_PATH%\automation\filename.append.py *.zip -debug -debug -release
+python %BOLT_BUILD_SOURCE_PATH%\automation\filename.append.py *.zip -debug -debug -release
+
+REM ################################################################################################
+REM # Zip Package - Release
 echo.
 echo %HR%
 echo Info: Running MSBuild for Bolt-build.
@@ -263,21 +323,24 @@ MSBuild.exe ^
   PACKAGE.vcxproj ^
   /m ^
   /fl ^
-  /flp1:logfile=errors.log;errorsonly ^
-  /flp2:logfile=warnings.log;warningsonly ^
-  /flp3:logfile=build.log ^
-  /p:Configuration=%BOLT_CONFIGURATION% ^
+  /flp1:logfile=ReleaseErrors.log;errorsonly ^
+  /flp2:logfile=ReleaseWarnings.log;warningsonly ^
+  /flp3:logfile=ReleaseBuild.log ^
+  /p:Configuration=Release ^
   /p:PlatformTarget=%BOLT_BUILD_MSBUILD_PLATFORM% ^
   /p:PlatformToolset=%BOLT_BUILD_MSBUILD_PLATFORM_TOOLSET% ^
   /t:build
 if errorlevel 1 (
   echo Info: MSBuild failed for Bolt-build.
   del /Q /F %BOLT_BUILD_INSTALL_PATH%\success
-  popd
   goto :Done
 )
-popd
 
+REM Rename the package that we just built
+REM I do this here because I can not figure out how to get cpack to append the configuration string
+echo python %BOLT_BUILD_SOURCE_PATH%\automation\filename.append.py *.zip -release -debug -release
+python %BOLT_BUILD_SOURCE_PATH%\automation\filename.append.py *.zip -release -debug -release
+popd
 
 REM ################################################################################################
 REM # End

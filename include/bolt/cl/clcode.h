@@ -1,4 +1,4 @@
-/***************************************************************************                                                                                     
+/***************************************************************************         
 *   Copyright 2012 Advanced Micro Devices, Inc.                                     
 *                                                                                    
 *   Licensed under the Apache License, Version 2.0 (the "License");   
@@ -13,21 +13,46 @@
 *   See the License for the specific language governing permissions and              
 *   limitations under the License.                                                   
 
-***************************************************************************/                                                                                     
+***************************************************************************/         
 
 #pragma once
-#if !defined( CLCODE_H )
-#define CLCODE_H
+#if !defined( BOLT_CL_CLCODE_H )
+#define BOLT_CL_CLCODE_H
 
 #include <string>
+
+/*! \file clcode.h
+    \brief Defines macros to help the user create code with C++ semantics for OpenCL kernels
+*/
 
 /*! \addtogroup miscellaneous
  */
 
 /*! \addtogroup ClCode ClCode: Traits and Helper Macros
- *   \ingroup miscellaneous
- *   \{
+ *  \ingroup miscellaneous
+ *  \{
  */
+
+/*! \brief Macro that wraps around arbitrary text, and creates a string out of it
+*   \detailed This macro is helpful to write inline OpenCL programs, as it avoids wrapping every line of OpenCL 
+*   line with "XXX"\n
+*   \return The contents of the macro wrapped in an ASCII string
+*/
+#define STRINGIFY_CODE2( ... ) #__VA_ARGS__
+#define STRINGIFY_CODE( ... ) STRINGIFY_CODE2( __VA_ARGS__ )
+
+/*! 
+ * Return a string with the specified function F, and also create code that is fed to the host compiler.
+ */
+#define BOLT_CODE_STRING( ... )  STRINGIFY_CODE( __VA_ARGS__ ); __VA_ARGS__;
+
+/*! 
+ * /brief Types that are defined within the bolt::cl namespace in host code should also be defined within the same
+ * namespace within the kernel code
+ * /detail This is a convenience macro, intended to only be used by the Bolt library itself, to wrap internal types
+ * in the appropriate bolt namespaces
+ */
+#define BOLT_HOST_DEVICE_DEFINITION( ... ) "namespace bolt { namespace cl {\n" STRINGIFY_CODE( __VA_ARGS__ ) "\n } } \n" ; __VA_ARGS__;
 
 /*!
  * Bolt uses the TypeName trait to determine the string name of function object parameters when 
@@ -54,7 +79,7 @@
  * Note that the TypeName trait must be defined exactly once for each functor class used
  * in a Bolt API.
  */
-template <typename T>
+template< typename TypeNameType >
 struct TypeName
 {
     static std::string get()
@@ -63,16 +88,22 @@ struct TypeName
     }
 };
 
-//---
-template <typename T>
+/*!
+ * \brief The definition of a type trait for the definition of a type, which could be arbitrarily complex
+
+ * Defining a new type trait to return code associated with a type.  This is meant to be specialized with the
+ * BOLT_CREATE_CLCODE.  A type may have an arbitrarily complex definition (templated or not) and this returns the 
+ * definition for the fully specified type.
+
+ * \tparam Type A fully specified Type
+ * \todo If this does not pan out, remove
+ */
+template< typename Type >
 struct ClCode
 {
     static std::string get()
     {
         return "";
-        // static_assert( false, "Bolt< error >:
-        // No code is associated with this type.
-        // Use BOLT_CREATE_CLCODE or BOLT_FUNCTOR" );
     }
 };
 
@@ -91,13 +122,18 @@ struct ClCode
  *
  * See TypeName for more information.
  */
-#define BOLT_CREATE_TYPENAME(T) \
-    template<> struct TypeName<T> { static std::string get() { return #T; }};
+#define BOLT_CREATE_TYPENAME( Type ) \
+    template<> struct TypeName< Type > { static std::string get( ) { return #Type; } };
+
+/*! \brief An alias for the BOLT_CREATE_TYPENAME macro
+ */
+#define BOLT_DECLARATION( Type ) \
+    template<> struct TypeName< Type > { static std::string get( ) { return #Type; } };
 
 /*!
  * Creates the ClCode trait that associates the specified type \p T with the string \p CODE_STRING.
- * \param T : Class. 
- * \param CODE_STRING : Code string to associate with T's ClCode trait.
+ * \param Type A fully specified type name
+ * \param CODE_STRING The definition of the type, which could be a template definition
  *
  * An example:
  * \code
@@ -108,28 +144,75 @@ struct ClCode
  * Another approach is to define the code string in a file (so host and string are identical), then
  * pass the string read from the file to BOLT_CREATE_CLCODE. (See \ref clCodeFromFile)
  */
-#define BOLT_CREATE_CLCODE(T,CODE_STRING) \
-    template<> struct ClCode<T> { static std::string get() { return CODE_STRING; }};
+#define BOLT_CREATE_CLCODE( Type, CODE_STRING ) \
+    template<> struct ClCode< Type > { static std::string get( ) { return CODE_STRING; } };
+
+/*! \brief An alias for the BOLT_CREATE_CLCODE macro
+ */
+#define BOLT_DEFINITION( Type, CODE_STRING ) \
+    template<> struct ClCode< Type > { static std::string get( ) { return CODE_STRING; } };
+
+/*!
+ * \brief This macro specializes a template with a new type using the template definition of a previously defined
+ * type
+ * \detail This is a convenience macro to specialize a template for a new type, using the generic template 
+ * definition from a previosly defined type
+ * \param CONTAINER A template template parameter, such as std::vector without the type specified
+ * \param OLDTYPE A type that has already been registered with the container template definition
+ * \param NEWTYPE A new type to register with the template definition
+ */
+#define BOLT_TEMPLATE_REGISTER_NEW_TYPE( CONTAINER, OLDTYPE, NEWTYPE ) \
+            BOLT_CREATE_TYPENAME( CONTAINER< NEWTYPE > ) \
+            BOLT_CREATE_CLCODE( CONTAINER< NEWTYPE >, ClCode< CONTAINER< OLDTYPE > >::get( ) )
+
+/*!
+ * \brief This macro specializes a template iterator with a new type using the template definition of a previously 
+ * defined iterator type
+ * \detail This is a convenience macro to specialize an iterator for a new type, using the generic template 
+ * definition from a previosly defined iterator
+ * \param CONTAINER A template template parameter, such as std::vector without the type specified
+ * \param OLDTYPE A type that has already been registered with the container template definition
+ * \param NEWTYPE A new type to register with the template definition
+ */
+#define BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( CONTAINER, OLDTYPE, NEWTYPE ) \
+            BOLT_CREATE_TYPENAME( CONTAINER< NEWTYPE >::iterator ) \
+            BOLT_CREATE_CLCODE( CONTAINER< NEWTYPE >::iterator, ClCode< CONTAINER< OLDTYPE >::iterator >::get( ) )
 
 /*!
  * Creates a string and a regular version of the functor F, and automatically defines the ClCode trait to associate 
  * the code string with the specified class T. 
- * \param T : Class.
- * \param FUNCTION : Function definition.  See \ref ClCodeTraits
+ * \param Type A fully specified type name
+ * \param ... Arbitrary type definition to associate with the type.  See \ref ClCodeTraits
  */
-#define BOLT_FUNCTOR( T, ... ) __VA_ARGS__; BOLT_CREATE_TYPENAME( T ); BOLT_CREATE_CLCODE( T, #__VA_ARGS__ );
+#define BOLT_FUNCTOR( TYPE, ... ) \
+                    __VA_ARGS__; \
+                    BOLT_CREATE_TYPENAME( TYPE ); \
+                    BOLT_CREATE_CLCODE( TYPE, #__VA_ARGS__ "\n" );
 
-/*! 
- * Return a string with the specified function F, and also create code that is fed to the host compiler.
- */
-#define BOLT_CODE_STRING( ... )  #__VA_ARGS__; __VA_ARGS__;
+#define BOLT_TEMPLATE_FUNCTOR1( CONTAINER, TYPE1, ... ) \
+                    __VA_ARGS__; \
+                    BOLT_CREATE_TYPENAME( CONTAINER<TYPE1> ) \
+                    BOLT_CREATE_CLCODE( CONTAINER<TYPE1>, #__VA_ARGS__ )
 
-/*! \brief Macro that wraps around arbitrary text, and creates a string out of it
-*   \detailed This macro is helpful to write inline OpenCL programs, as it avoids wrapping every line of OpenCL 
-*   line with "XXX"\n
-*   \return The contents of the macro wrapped in an ASCII string
-*/
-#define STRINGIFY_CODE2( ... ) #__VA_ARGS__
-#define STRINGIFY_CODE( ... ) STRINGIFY_CODE2( __VA_ARGS__ )
+#define BOLT_TEMPLATE_FUNCTOR2( CONTAINER, TYPE1, TYPE2, ... ) \
+                    __VA_ARGS__; \
+                    BOLT_CREATE_TYPENAME( CONTAINER<TYPE1> ) \
+                    BOLT_CREATE_CLCODE( CONTAINER<TYPE1>, #__VA_ARGS__ ) \
+                    BOLT_TEMPLATE_REGISTER_NEW_TYPE( CONTAINER, TYPE1, TYPE2 )
+
+#define BOLT_TEMPLATE_FUNCTOR3( CONTAINER, TYPE1, TYPE2, TYPE3, ... ) \
+                    __VA_ARGS__; \
+                    BOLT_CREATE_TYPENAME( CONTAINER<TYPE1> ) \
+                    BOLT_CREATE_CLCODE( CONTAINER<TYPE1>, #__VA_ARGS__ ) \
+                    BOLT_TEMPLATE_REGISTER_NEW_TYPE( CONTAINER, TYPE1, TYPE2 ) \
+                    BOLT_TEMPLATE_REGISTER_NEW_TYPE( CONTAINER, TYPE1, TYPE3 )
+
+#define BOLT_TEMPLATE_FUNCTOR4( CONTAINER, TYPE1, TYPE2, TYPE3, TYPE4, ... ) \
+                    __VA_ARGS__; \
+                    BOLT_CREATE_TYPENAME( CONTAINER<TYPE1> ) \
+                    BOLT_CREATE_CLCODE( CONTAINER<TYPE1>, #__VA_ARGS__ ) \
+                    BOLT_TEMPLATE_REGISTER_NEW_TYPE( CONTAINER, TYPE1, TYPE2 ) \
+                    BOLT_TEMPLATE_REGISTER_NEW_TYPE( CONTAINER, TYPE1, TYPE3 ) \
+                    BOLT_TEMPLATE_REGISTER_NEW_TYPE( CONTAINER, TYPE1, TYPE4 )
 
 #endif

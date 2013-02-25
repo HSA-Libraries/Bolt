@@ -30,7 +30,7 @@ message( STATUS "ext.Boost_VERSION: " ${ext.Boost_VERSION} )
 # message( STATUS "status: " ${fileStatus} )
 # message( STATUS "log: " ${fileLog} )
 
-set( Boost.Command b2 --with-program_options --with-thread --with-system --with-date_time --with-chrono )
+set( Boost.Command b2 -j 4 --with-program_options --with-thread --with-system --with-date_time --with-chrono )
 
 if( Bolt_BUILD64 )
 	list( APPEND Boost.Command address-model=64 )
@@ -48,7 +48,14 @@ endif( )
 
 list( APPEND Boost.Command link=static stage )
 
-set( ext.Boost_URL "http://sourceforge.net/projects/boost/files/boost/${ext.Boost_VERSION}/boost_${ext.Boost_Version_Underscore}.zip/download" CACHE STRING "URL to download Boost from" )
+# If the user has cached the Boost download to a local location, they may prefer to download the package from there instead of from the internet, as the
+# internet could be unpredictable or slow.
+# If the user has a local copy stored somewhere, they can define the full path to the package in a BOOST_URL environment variable
+if( DEFINED ENV{BOOST_URL} )
+    set( ext.Boost_URL "$ENV{BOOST_URL}" CACHE STRING "URL to download Boost from" )
+else( )
+    set( ext.Boost_URL "http://sourceforge.net/projects/boost/files/boost/${ext.Boost_VERSION}/boost_${ext.Boost_Version_Underscore}.zip/download" CACHE STRING "URL to download Boost from" )
+endif( )
 mark_as_advanced( ext.Boost_URL )
 
 # Below is a fancy CMake command to download, build and install Boost on the users computer

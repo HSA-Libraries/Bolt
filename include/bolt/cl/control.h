@@ -258,7 +258,7 @@ namespace bolt {
             typedef boost::shared_ptr< ::cl::Buffer > buffPointer;
 
             size_t totalBufferSize( );
-            buffPointer acquireBuffer( size_t reqSize, cl_mem_flags flags = CL_MEM_READ_WRITE, void* host_ptr = NULL );
+            buffPointer acquireBuffer( size_t reqSize, cl_mem_flags flags = CL_MEM_READ_WRITE, const void* host_ptr = NULL );
             void freeBuffers( );
 
         private:
@@ -291,7 +291,7 @@ namespace bolt {
             {
                 ::cl::Context buffContext;
                 cl_mem_flags memFlags;
-                void* host_ptr;
+                const void* host_ptr;
             };
 
             struct descBufferValue

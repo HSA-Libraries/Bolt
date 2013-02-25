@@ -46,7 +46,11 @@ set( gTest.Cmake.Args 	-Dgtest_force_shared_crt=ON
 						-DCMAKE_ARCHIVE_OUTPUT_DIRECTORY:PATH=${LIB_DIR}	# present to support minsizerel and relwithdebinfo
 						)
 
-set( ext.gTest_URL "https://googletest.googlecode.com/files/gtest-${ext.gTest_Version}.zip" CACHE STRING "URL to download gTest from" )
+if( DEFINED ENV{GTEST_URL} )
+    set( ext.gTest_URL "$ENV{GTEST_URL}" CACHE STRING "URL to download gTest from" )
+else( )
+    set( ext.gTest_URL "https://googletest.googlecode.com/files/gtest-${ext.gTest_Version}.zip" CACHE STRING "URL to download gTest from" )
+endif( )
 mark_as_advanced( ext.gTest_URL )
 
 # FindGTest.cmake assumes that debug gtest libraries end with a 'd' postfix.  The official gtest cmakelist files do not add this postfix, 

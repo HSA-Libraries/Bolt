@@ -29,12 +29,17 @@
 #include "bolt/unicode.h"
 
 //  Include all kernel string objects
+
 #include "bolt/copy_kernels.hpp"
+#include "bolt/fill_kernels.hpp"
 #include "bolt/generate_kernels.hpp"
+#include "bolt/min_element_kernels.hpp"
 #include "bolt/reduce_kernels.hpp"
+#include "bolt/reduce_by_key_kernels.hpp"
 #include "bolt/scan_kernels.hpp"
 #include "bolt/scan_by_key_kernels.hpp"
 #include "bolt/sort_kernels.hpp"
+#include "bolt/sort_uint_kernels.hpp"
 #include "bolt/sort_by_key_kernels.hpp"
 #include "bolt/transform_kernels.hpp"
 #include "bolt/transform_reduce_kernels.hpp"
@@ -340,11 +345,12 @@ namespace bolt {
             }
 #endif
             if (infile.fail() ) {
-                TCHAR cCurrentPath[FILENAME_MAX];
-                if (_tgetcwd(cCurrentPath, sizeof(cCurrentPath) / sizeof(TCHAR))) {
-                    bolt::tout <<  _T( "CWD=" ) << cCurrentPath << std::endl;
-                };
-                std::cout << "error: failed to open file '" << fileName << std::endl;
+                //  Note:  Commented out because this widestr not initialized yet if called from global scope
+                //TCHAR cCurrentPath[FILENAME_MAX];
+                //if (_tgetcwd(cCurrentPath, sizeof(cCurrentPath) / sizeof(TCHAR))) {
+                //    bolt::tout <<  _T( "CWD=" ) << cCurrentPath << std::endl;
+                //};
+                std::cout << "error: failed to open file: " << fileName << std::endl;
                 throw;
             } 
         }
@@ -636,7 +642,6 @@ namespace bolt {
             compileOptions,
             completeKernelString);
 
-        
         // retrieve kernels from program
         //std::cout << "Getting " << kts->numKernels() << " from program." << std::endl;
         ::std::vector<::cl::Kernel> kernels;

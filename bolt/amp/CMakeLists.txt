@@ -27,12 +27,15 @@ set( ampBolt.Runtime.Source
 set( ampBolt.Runtime.Headers 
 		${ampBolt.Include.Dir}/bolt.h 
 		${ampBolt.Include.Dir}/control.h 
+    ${ampBolt.Include.Dir}/count.h
 		${ampBolt.Include.Dir}/device_vector.h 
 		${ampBolt.Include.Dir}/functional.h 
+    ${ampBolt.Include.Dir}/iterator/iterator_traits.h
 		${ampBolt.Include.Dir}/parallel_iteration.h 
 		${ampBolt.Include.Dir}/pool_alloc.h 
 		${ampBolt.Include.Dir}/reduce.h 
 		${ampBolt.Include.Dir}/scan.h 
+        ${ampBolt.Include.Dir}/sort.h         
 		${ampBolt.Include.Dir}/synchronized_view.h 
 		${ampBolt.Include.Dir}/transform.h 
 		${ampBolt.Include.Dir}/transform_reduce.h 
@@ -43,9 +46,12 @@ set( ampBolt.Runtime.Headers
     )
 
   set( ampBolt.Runtime.Headers.Detail
+         	${ampBolt.Include.Dir}/detail/reduce.inl
 		${ampBolt.Include.Dir}/detail/scan.inl
 		${ampBolt.Include.Dir}/detail/scan_by_key.inl
+        ${ampBolt.Include.Dir}/detail/sort.inl        
 		${ampBolt.Include.Dir}/detail/transform.inl
+		${ampBolt.Include.Dir}/detail/transform_reduce.inl
 		${ampBolt.Include.Dir}/detail/transform_scan.inl
     )
 
@@ -76,6 +82,7 @@ add_library( ampBolt.Runtime STATIC ${ampBolt.Runtime.Files} )
 set_target_properties( ampBolt.Runtime PROPERTIES VERSION ${Bolt_VERSION} )
 set_target_properties( ampBolt.Runtime PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
 
+
 if( MSVC_VERSION VERSION_LESS 1600 )
     set_target_properties( ampBolt.Runtime PROPERTIES ARCHIVE_OUTPUT_NAME "ampBolt.Runtime.vc90" )
 elseif( MSVC_VERSION VERSION_LESS 1700 )
@@ -83,6 +90,16 @@ elseif( MSVC_VERSION VERSION_LESS 1700 )
 elseif( MSVC_VERSION VERSION_LESS 1800 )
     set_target_properties( ampBolt.Runtime PROPERTIES ARCHIVE_OUTPUT_NAME "ampBolt.Runtime.vc110" )
 endif( )
+
+install( FILES
+            ${ampBolt.Runtime.Headers}
+        DESTINATION
+            ${INCLUDE_DIR}/bolt/amp )
+            
+install( FILES
+            ${ampBolt.Runtime.Headers.Detail}
+        DESTINATION
+            ${INCLUDE_DIR}/bolt/cl/detail )
 
 # CPack configuration; include the executable into the package
 install( TARGETS ampBolt.Runtime

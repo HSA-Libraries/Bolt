@@ -47,8 +47,10 @@ include_directories(
     ${OPENCL_INCLUDE_DIRS}) 
 # include_directories( ${BOLT_CL_TEST_DIR} )
 
-add_subdirectory( reduce )
+add_subdirectory( CountTest )
+add_subdirectory( ReduceTest )
 add_subdirectory( ScanTest )
+add_subdirectory( SortTest )
 add_subdirectory( TransformTest )	
-add_subdirectory( transform_reduce )
+add_subdirectory( TransformReduceTest )
 add_subdirectory( device_vector )

@@ -492,7 +492,7 @@ void AsyncProfiler::calculateAverage()
 {
     if (trials.size() == 0) return;
     //std::cout << "########################################################################" << std::endl;
-    //std::cout << "Calculating Average" << std::endl;
+    std::cout << "Calculating Average" << std::endl;
     size_t numSteps = getNumSteps();
     average.resize(numSteps);
     average.trialName = "average";
@@ -614,6 +614,9 @@ void AsyncProfiler::calculateAverage()
         // bandwidth
         average[s].stdDev[bandwidth] = static_cast<size_t>(sqrt(average[s].stdDev[bandwidth]/(count.get(s,memory)-1.0) ));
     }
+
+    // Print basic info to stdout
+    printf("Avg Agg Time: %7.3f ms\n", average.aggregateStep.get( time ) /1000000.f );
 
 }
 

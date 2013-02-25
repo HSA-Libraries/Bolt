@@ -23,7 +23,6 @@
 
 #include <boost/thread/once.hpp>
 #include <boost/bind.hpp>
-
 #include "bolt/cl/bolt.h"
 #include "bolt/cl/functional.h"
 #ifdef ENABLE_TBB
@@ -32,6 +31,8 @@
 #include "tbb/blocked_range.h"
 #include "tbb/task_scheduler_init.h"
 #endif
+
+
 namespace bolt {
     namespace cl {
 
@@ -97,24 +98,36 @@ namespace bolt {
 namespace bolt {
     namespace cl {
         namespace detail {
+            struct kernelParamsReduce
+            {
+                const std::string inPtrType;
+                const std::string inIterType;
+                const std::string binaryFuncName;
+
+                kernelParamsReduce( const std::string& iPtrType, const std::string& iIterType, const std::string& binaryFuncType ): 
+                inPtrType( iPtrType ), inIterType( iIterType ), 
+                binaryFuncName( binaryFuncType )
+                {}
+            };
 
             // FIXME - move to cpp file
             struct CallCompiler_Reduce {
-                static void constructAndCompile(::cl::Kernel *masterKernel,  std::string cl_code, std::string valueTypeName,  std::string functorTypeName, const control *ctl) {
+                static void constructAndCompile(::cl::Kernel *masterKernel,  std::string cl_code, kernelParamsReduce* kp, const control *ctl) {
 
                     const std::string instantiationString = 
                         "// Host generates this instantiation string with user-specified value type and functor\n"
                         "template __attribute__((mangled_name(reduceInstantiated)))\n"
                         "__attribute__((reqd_work_group_size(64,1,1)))\n"
                         "kernel void reduceTemplate(\n"
-                        "global " + valueTypeName + "* A,\n"
+                        "global " + kp->inPtrType + "* input_ptr,\n"
+                         + kp->inIterType + " output_iter,\n"
                         "const int length,\n"
-                        "global " + functorTypeName + "* userFunctor,\n"
-                        "global " + valueTypeName + "* result,\n"
-                        "local " + valueTypeName + "* scratch\n"
+                        "global " + kp->binaryFuncName + "* userFunctor,\n"
+                        "global " + kp->inPtrType + "* result,\n"
+                        "local " + kp->inPtrType + "* scratch\n"
                         ");\n\n";
 
-                    bolt::cl::constructAndCompileString( masterKernel, "reduce", reduce_kernels, instantiationString, cl_code, valueTypeName, functorTypeName, *ctl);
+                    bolt::cl::constructAndCompileString( masterKernel, "reduce", reduce_kernels, instantiationString, cl_code, kp->inPtrType, kp->binaryFuncName, *ctl);
 
                 };
             };
@@ -150,7 +163,6 @@ namespace bolt {
                 }
             };
 #endif
-
             template<typename T, typename DVInputIterator, typename BinaryFunction> 
             T reduce_detect_random_access(bolt::cl::control &ctl, 
                 const DVInputIterator& first,
@@ -174,19 +186,20 @@ namespace bolt {
                 const std::string& cl_code, 
                 std::random_access_iterator_tag)  
             {
-                return reduce_pick_iterator( ctl, first, last, init, binary_op, cl_code );
+                return reduce_pick_iterator( ctl, first, last, init, binary_op, cl_code,
+                    std::iterator_traits< DVInputIterator >::iterator_category( ) );
             }
 
             // This template is called after we detect random access iterators
             // This is called strictly for any non-device_vector iterator
             template<typename T, typename InputIterator, typename BinaryFunction> 
-            typename std::enable_if< !std::is_base_of<typename device_vector<typename std::iterator_traits<InputIterator>::value_type>::iterator,InputIterator>::value, T >::type
-                reduce_pick_iterator(bolt::cl::control &ctl, 
+            T reduce_pick_iterator(bolt::cl::control &ctl, 
                 const InputIterator& first,
                 const InputIterator& last, 
                 const T& init,
                 const BinaryFunction& binary_op, 
-                const std::string& cl_code)
+                const std::string& cl_code,
+                std::random_access_iterator_tag )
             {
                 /*************/
                 typedef typename std::iterator_traits<InputIterator>::value_type iType;
@@ -194,18 +207,12 @@ namespace bolt {
                 if (szElements == 0)
                     return init;
                 /*TODO - probably the forceRunMode should be replaced by getRunMode and setRunMode*/
-                // Its a dynamic choice. See the reduce Test Code
-                // What should we do if the run mode is automatic. Currently it goes to the last else statement
-                //How many threads we should spawn? 
-                //Need to look at how to control the number of threads spawned.
                 const bolt::cl::control::e_RunMode runMode = ctl.forceRunMode();  
                 if (runMode == bolt::cl::control::SerialCpu) {
-                    std::cout << "The SerialCpu version of reduce is not implemented yet." << std ::endl;
-                    throw ::cl::Error( CL_INVALID_OPERATION, "The SerialCpu version of reduce is not implemented yet." );
-                    return init;
+                    return std::accumulate(first, last, init) ;
                 } else if (runMode == bolt::cl::control::MultiCoreCpu) {
 #ifdef ENABLE_TBB
-                    std::cout << "The MultiCoreCpu version of reduce uses TBB." << std ::endl;
+                    //std::cout << "The MultiCoreCpu version of reduce uses TBB." << std ::endl;
 					tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
                     Reduce<iType, BinaryFunction> reduce_op(binary_op, init);
                     tbb::parallel_reduce( tbb::blocked_range<iType*>( &*first, (iType*)&*(last-1) + 1), reduce_op );
@@ -216,39 +223,80 @@ namespace bolt {
                     return init;
 #endif
                 } else {
-                    device_vector< iType > dvInput( first, last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, ctl );
-                    return reduce_enqueue( ctl, dvInput.begin(), dvInput.end(), init, binary_op, cl_code);
+                device_vector< iType > dvInput( first, last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, ctl );
+                return reduce_enqueue( ctl, dvInput.begin(), dvInput.end(), init, binary_op, cl_code);
                 }
             };
 
             // This template is called after we detect random access iterators
             // This is called strictly for iterators that are derived from device_vector< T >::iterator
             template<typename T, typename DVInputIterator, typename BinaryFunction> 
-            typename std::enable_if< std::is_base_of<typename device_vector<typename std::iterator_traits<DVInputIterator>::value_type>::iterator,DVInputIterator>::value, T >::type
-                reduce_pick_iterator(bolt::cl::control &ctl, 
+            T reduce_pick_iterator(bolt::cl::control &ctl, 
                 const DVInputIterator& first,
                 const DVInputIterator& last, 
                 const T& init,
                 const BinaryFunction& binary_op, 
-                const std::string& cl_code)
+                const std::string& cl_code,
+                bolt::cl::device_vector_tag )
             {
-                size_t szElements = (size_t)(last - first); 
+                typedef typename std::iterator_traits<DVInputIterator>::value_type iType;
+                size_t szElements = static_cast<size_t>(std::distance(first, last) ); 
                 if (szElements == 0)
                     return init;
 
                 const bolt::cl::control::e_RunMode runMode = ctl.forceRunMode();  
                 if (runMode == bolt::cl::control::SerialCpu) {
-                    std::cout << "The SerialCpu version of reduce is not implemented yet." << std ::endl;
-                    throw ::cl::Error( CL_INVALID_OPERATION, "The SerialCpu version of reduce is not implemented yet." );
-                    return init;
+		            ::cl::Event serialCPUEvent;
+		            cl_int l_Error = CL_SUCCESS;
+                    T reduceResult;
+		            /*Map the device buffer to CPU*/
+		            iType *reduceInputBuffer = (iType*)ctl.commandQueue().enqueueMapBuffer(first.getBuffer(), false, 
+			                                                                     CL_MAP_READ|CL_MAP_WRITE, 
+																	             0, sizeof(iType) * szElements, 
+																	             NULL, &serialCPUEvent, &l_Error );                    
+                    reduceResult = std::accumulate(reduceInputBuffer, reduceInputBuffer + szElements, init) ;
+		            /*Unmap the device buffer back to device memory. This will copy the host modified buffer back to the device*/
+                    ctl.commandQueue().enqueueUnmapMemObject(first.getBuffer(), reduceInputBuffer);
+                    return reduceResult;
                 } else if (runMode == bolt::cl::control::MultiCoreCpu) {
-                    /*TODO - ASK  - should we copy the device_vector to host memory, process the result and then store back the result into the device_vector.*/
-                    std::cout << "The MultiCoreCpu version of reduce on device_vector is not supported." << std ::endl;
-                    throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of reduce on device_vector is not supported." );
+#ifdef ENABLE_TBB
+                    //std::cout << "The MultiCoreCpu version of sort is enabled with TBB. " << std ::endl;
+		            ::cl::Event multiCoreCPUEvent;
+		            cl_int l_Error = CL_SUCCESS;
+		            /*Map the device buffer to CPU*/
+		            iType *reduceInputBuffer = (iType*)ctl.commandQueue().enqueueMapBuffer(first.getBuffer(), false, 
+			                                                                     CL_MAP_READ|CL_MAP_WRITE, 
+																	             0, sizeof(iType) * szElements, 
+																	             NULL, &multiCoreCPUEvent, &l_Error );
+		            multiCoreCPUEvent.wait();
+					tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
+                    Reduce<iType, BinaryFunction> reduce_op(binary_op, init);
+                    tbb::parallel_reduce( tbb::blocked_range<iType*>( reduceInputBuffer, reduceInputBuffer + szElements), reduce_op );
+		            /*Unmap the device buffer back to device memory. This will copy the host modified buffer back to the device*/
+                    ctl.commandQueue().enqueueUnmapMemObject(first.getBuffer(), reduceInputBuffer);
+                    return reduce_op.value;
+#else
+                    std::cout << "The MultiCoreCpu version of reduce is not enabled. " << std ::endl;
+                    throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of reduce is not enabled to be built." );
                     return init;
+#endif
                 } else {
-                    return reduce_enqueue( ctl, first, last, init, binary_op, cl_code);
+                return reduce_enqueue( ctl, first, last, init, binary_op, cl_code);
                 }
+            }
+
+            // This template is called after we detect random access iterators
+            // This is called strictly for iterators that are derived from device_vector< T >::iterator
+            template<typename T, typename DVInputIterator, typename BinaryFunction> 
+            T reduce_pick_iterator(bolt::cl::control &ctl, 
+                const DVInputIterator& first,
+                const DVInputIterator& last, 
+                const T& init,
+                const BinaryFunction& binary_op, 
+                const std::string& cl_code,
+                bolt::cl::fancy_iterator_tag )
+            {
+                return reduce_enqueue( ctl, first, last, init, binary_op, cl_code);
             }
 
             //----
@@ -267,8 +315,16 @@ namespace bolt {
                 static boost::once_flag initOnlyOnce;
                 static ::cl::Kernel masterKernel;
 
-                // For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retreive the name here.
-                boost::call_once( initOnlyOnce, boost::bind( CallCompiler_Reduce::constructAndCompile, &masterKernel, cl_code + ClCode<BinaryFunction>::get(), TypeName<iType>::get(),  TypeName<BinaryFunction>::get(), &ctl) );
+                kernelParamsReduce args( TypeName< iType >::get( ), TypeName< DVInputIterator >::get( ), 
+                    TypeName< BinaryFunction >::get( ) );
+
+                std::string typeDefinitions = cl_code + ClCode< iType >::get( ) + ClCode< DVInputIterator >::get( );
+                typeDefinitions += ClCode< BinaryFunction >::get( );
+
+                // For user-defined types, the user must create a TypeName trait which returns the name of the class 
+                //  - note use of TypeName<>::get to retreive the name here.
+                boost::call_once( initOnlyOnce, boost::bind( CallCompiler_Reduce::constructAndCompile, &masterKernel, 
+                    typeDefinitions, &args, &ctl) );
 
                 // Set up shape of launch grid and buffers:
                 cl_uint computeUnits     = ctl.device().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
@@ -276,27 +332,32 @@ namespace bolt {
                 size_t numWG = computeUnits * wgPerComputeUnit;
 
                 cl_int l_Error = CL_SUCCESS;
-                const size_t wgSize  = masterKernel.getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.device( ), &l_Error );
+                const size_t wgSize  = masterKernel.getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( 
+                    ctl.device( ), &l_Error );
                 V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
 
                 // Create buffer wrappers so we can access the host functors, for read or writing in the kernel
                 ALIGNED( 256 ) BinaryFunction aligned_reduce( binary_op );
-                //::cl::Buffer userFunctor(ctl.context(), CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, sizeof( aligned_reduce ), &aligned_reduce );   // Create buffer wrapper so we can access host parameters.
-                control::buffPointer userFunctor = ctl.acquireBuffer( sizeof( aligned_reduce ), CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_reduce );
+                //::cl::Buffer userFunctor(ctl.context(), CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, sizeof( aligned_reduce ),
+                //  &aligned_reduce );
+                control::buffPointer userFunctor = ctl.acquireBuffer( sizeof( aligned_reduce ), 
+                    CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_reduce );
 
                 // ::cl::Buffer result(ctl.context(), CL_MEM_ALLOC_HOST_PTR|CL_MEM_WRITE_ONLY, sizeof( iType ) * numWG);
-                control::buffPointer result = ctl.acquireBuffer( sizeof( iType ) * numWG, CL_MEM_ALLOC_HOST_PTR|CL_MEM_WRITE_ONLY );
+                control::buffPointer result = ctl.acquireBuffer( sizeof( iType ) * numWG, 
+                    CL_MEM_ALLOC_HOST_PTR|CL_MEM_WRITE_ONLY );
 
-                cl_uint szElements = static_cast< cl_uint >( std::distance( first, last ) );
+                cl_uint szElements = static_cast< cl_uint >( first.distance_to(last ) );
 
-                V_OPENCL( masterKernel.setArg(0, first->getBuffer( ) ), "Error setting kernel argument" );
-                V_OPENCL( masterKernel.setArg(1, szElements), "Error setting kernel argument" );
-                V_OPENCL( masterKernel.setArg(2, *userFunctor), "Error setting kernel argument" );
-                V_OPENCL( masterKernel.setArg(3, *result), "Error setting kernel argument" );
+                V_OPENCL( masterKernel.setArg(0, first.getBuffer( ) ), "Error setting kernel argument" );
+                V_OPENCL( masterKernel.setArg(1, first.gpuPayloadSize( ), &first.gpuPayload( ) ), "Error setting a kernel argument" );
+                V_OPENCL( masterKernel.setArg(2, szElements), "Error setting kernel argument" );
+                V_OPENCL( masterKernel.setArg(3, *userFunctor), "Error setting kernel argument" );
+                V_OPENCL( masterKernel.setArg(4, *result), "Error setting kernel argument" );
 
                 ::cl::LocalSpaceArg loc;
                 loc.size_ = wgSize*sizeof(iType);
-                V_OPENCL( masterKernel.setArg(4, loc), "Error setting kernel argument" );
+                V_OPENCL( masterKernel.setArg(5, loc), "Error setting kernel argument" );
 
                 l_Error = ctl.commandQueue().enqueueNDRangeKernel(
                     masterKernel, 
@@ -306,10 +367,12 @@ namespace bolt {
                 V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for reduce() kernel" );
 
                 ::cl::Event l_mapEvent;
-                iType *h_result = (iType*)ctl.commandQueue().enqueueMapBuffer(*result, false, CL_MAP_READ, 0, sizeof(iType)*numWG, NULL, &l_mapEvent, &l_Error );
+                iType *h_result = (iType*)ctl.commandQueue().enqueueMapBuffer(*result, false, CL_MAP_READ, 0, 
+                    sizeof(iType)*numWG, NULL, &l_mapEvent, &l_Error );
                 V_OPENCL( l_Error, "Error calling map on the result buffer" );
 
-                //  Finish the tail end of the reduction on host side; the compute device reduces within the workgroups, with one result per workgroup
+                //  Finish the tail end of the reduction on host side; the compute device reduces within the workgroups, 
+                //  with one result per workgroup
                 size_t ceilNumWG = static_cast< size_t >( std::ceil( static_cast< float >( szElements ) / wgSize) );
                 bolt::cl::minimum<size_t>  min_size_t;
                 size_t numTailReduce = min_size_t( ceilNumWG, numWG );

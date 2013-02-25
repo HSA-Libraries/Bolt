@@ -15,18 +15,11 @@
 
 ***************************************************************************/                                                                                     
 
-// stdafx.h : include file for standard system include files,
-// or project-specific include files used frequently, but
-// changed infrequently.
-//
-
 #pragma once
 
-#include "targetver.h"
+// Including SDKDDKVer.h defines the highest available Windows platform.
 
-#include <stdio.h>
-#include <tchar.h>
+// To build your application for a previous Windows platform, include WinSDKVer.h, and, 
+// before including SDKDDKVer.h, set the _WIN32_WINNT macro to the platform you want to support.
 
-
-
-// TODO: reference additional headers here that your program requires.
+#include <SDKDDKVer.h>

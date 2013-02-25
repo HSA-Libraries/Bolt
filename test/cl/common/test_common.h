@@ -15,7 +15,9 @@
 ***************************************************************************/                                                                                     
 #include <array>
 
-#define BOLT_TEST_MAX_FAILURES 512
+#if !defined( BOLT_TEST_MAX_FAILURES )
+    #define BOLT_TEST_MAX_FAILURES 512
+#endif
 
 #define BOLT_TEST_RESET_FAILURES \
     size_t numFailures = 0;

@@ -163,7 +163,7 @@ int _tmain( int argc, _TCHAR* argv[] )
 		for( unsigned i = 0; i < numLoops; ++i )
 		{
 			myTimer.Start( scanId );
-			bolt::amp::inclusive_scan( input.begin( ), input.end( ), output.begin( ), bolt::plus< int >( ) );
+			bolt::amp::inclusive_scan( input.begin( ), input.end( ), output.begin( ), bolt::amp::plus< int >( ) );
 			myTimer.Stop( scanId );
 		}
 	}

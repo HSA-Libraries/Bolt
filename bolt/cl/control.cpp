@@ -349,30 +349,23 @@ namespace cl
         return totalSize;
     };
 
-    control::buffPointer control::acquireBuffer( size_t reqSize, cl_mem_flags flags, void* host_ptr )
+    control::buffPointer control::acquireBuffer( size_t reqSize, cl_mem_flags flags, const void* host_ptr )
     {
+        boost::lock_guard< boost::mutex > lock( mapGuard );
+
         ::cl::Context myContext = m_commandQueue.getInfo< CL_QUEUE_CONTEXT >( );
 
         descBufferKey myDesc = { myContext, flags , host_ptr };
         mapBufferType::iterator itLowerBound = mapBuffer.find( myDesc );
         if( itLowerBound == mapBuffer.end( ) )
         {
-            // TODO move me to top of routine
-            //  std::multimap is not thread-safe; lock the map when inserting elements
-            boost::lock_guard< boost::mutex > lock( mapGuard );
-
-            ::cl::Buffer tmp( myContext, flags, reqSize, host_ptr );
+            ::cl::Buffer tmp( myContext, flags, reqSize, const_cast< void*>( host_ptr ) );
             descBufferValue myValue = { reqSize, true, tmp };
             mapBufferType::iterator itInserted = mapBuffer.insert( std::make_pair( myDesc, myValue ) );
 
             buffPointer buffPtr( &(itInserted->second.buffBuff), UnlockBuffer( *this, itInserted ) );
             return buffPtr;
         }
-
-        //  Lock because we read and modify the inUse variable.
-        //  TODO: It could probably be compared and set with a good interlocked instruction like
-        //  InterlockedComparExchange, but need a good cross platform solution should be found
-        boost::lock_guard< boost::mutex > lock( mapGuard );
 
         for( ; itLowerBound != mapBuffer.upper_bound( myDesc ); ++itLowerBound )
         {
@@ -396,7 +389,7 @@ namespace cl
 
         //  If here, either all available buffers are currently in use, or we need to replace an existing buffer
         // create a new buffer and add it to the map
-        ::cl::Buffer tmp( myContext, flags, reqSize, host_ptr );
+        ::cl::Buffer tmp( myContext, flags, reqSize, const_cast< void* >( host_ptr ) );
         descBufferValue myValue = { reqSize, true, tmp };
 
         mapBufferType::iterator itInserted = mapBuffer.insert( std::make_pair( myDesc, myValue ) );

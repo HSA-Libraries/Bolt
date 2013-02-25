@@ -16,16 +16,16 @@
 ***************************************************************************/
 
 
+#include <array>
+
 #include "common/stdafx.h"
 #include "common/myocl.h"
-
-#include <bolt/cl/generate.h>
+#include "bolt/cl/generate.h"
+#include "bolt/cl/scan.h"
 //#include <bolt/miniDump.h>
 
 #include <gtest/gtest.h>
 //#include <boost/shared_array.hpp>
-#include <array>
-#include "bolt/cl/scan.h"
 
 template< typename T >
 ::testing::AssertionResult cmpArrays( const T ref, const T calc, size_t N )
@@ -158,7 +158,7 @@ struct GenInt
 /******************************************************************************
  * Generator GenConst: return constant
  *****************************************************************************/
-CREATE_BOLT_FUNCTIONAL(GenConst,
+BOLT_TEMPLATE_FUNCTOR2(GenConst, int, double,
 template< typename T >
 struct GenConst
 {

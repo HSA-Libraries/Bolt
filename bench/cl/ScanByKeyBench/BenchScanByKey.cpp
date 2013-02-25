@@ -72,6 +72,7 @@ struct vecN
 };
 );
 
+BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, int, vecN );
 
 BOLT_FUNCTOR(vecNplus,
 struct vecNplus

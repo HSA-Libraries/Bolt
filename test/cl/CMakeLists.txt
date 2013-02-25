@@ -40,19 +40,27 @@ endif( )
 include_directories( ${Boost_INCLUDE_DIRS} )
 
 # Include standard OpenCL headers
+
 include_directories(
     ${OPENCL_INCLUDE_DIRS}
     ${BOLT_CL_TEST_DIR}/common
-    ${BOLT_CL_TEST_DIR} ) 
+    ${BOLT_CL_TEST_DIR} 
+    ${TBB_INCLUDE_DIRS} ) 
+
 
 add_subdirectory( ControlTest )
 add_subdirectory( CopyTest )
 add_subdirectory( CountTest )
+add_subdirectory( ConstantIteratorTest )
 add_subdirectory( DeviceVectorTest )
 add_subdirectory( FillTest )
 add_subdirectory( GenerateTest )
 add_subdirectory( InnerProductTest )
+add_subdirectory( MaxElementTest )
+add_subdirectory( MinElementTest )
+add_subdirectory( PairTest )
 add_subdirectory( ReduceTest )
+add_subdirectory( ReduceByKeyTest )
 add_subdirectory( ReadFromFileTest )   
 add_subdirectory( ScanTest )
 add_subdirectory( ScanByKeyTest )
@@ -61,4 +69,5 @@ add_subdirectory( SortByKeyTest )
 add_subdirectory( TransformTest )   
 add_subdirectory( TransformReduceTest )
 add_subdirectory( TransformScanTest )
+
 

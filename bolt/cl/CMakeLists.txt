@@ -74,9 +74,12 @@ set( clBolt.Runtime.Headers
         ${clBolt.Include.Dir}/functional.h 
         ${clBolt.Include.Dir}/fill.h 
         ${clBolt.Include.Dir}/generate.h 
-        ${clBolt.Include.Dir}/inner_product.h 
-        ${clBolt.Include.Dir}/iterator_traits.h 
+        ${clBolt.Include.Dir}/inner_product.h
+        ${clBolt.Include.Dir}/max_element.h 
+        ${clBolt.Include.Dir}/min_element.h 
+        ${clBolt.Include.Dir}/pair.h
         ${clBolt.Include.Dir}/reduce.h 
+        ${clBolt.Include.Dir}/reduce_by_key.h 
         ${clBolt.Include.Dir}/scan.h 
         ${clBolt.Include.Dir}/scan_by_key.h 
         ${clBolt.Include.Dir}/sort.h 
@@ -85,7 +88,13 @@ set( clBolt.Runtime.Headers
         ${clBolt.Include.Dir}/transform_reduce.h
         ${clBolt.Include.Dir}/transform_scan.h
     )
-
+    
+set( clBolt.Runtime.Headers.Iterator
+        ${clBolt.Include.Dir}/iterator/iterator_traits.h 
+        ${clBolt.Include.Dir}/iterator/constant_iterator.h
+        ${clBolt.Include.Dir}/iterator/counting_iterator.h
+    )
+    
 set( clBolt.Runtime.Headers.Misc
         ${clBolt.Include.Dir}/../countof.h
         ${clBolt.Include.Dir}/../unicode.h
@@ -98,7 +107,10 @@ set( clBolt.Runtime.Headers.Detail
         ${clBolt.Include.Dir}/detail/fill.inl
         ${clBolt.Include.Dir}/detail/generate.inl
         ${clBolt.Include.Dir}/detail/inner_product.inl
+        ${clBolt.Include.Dir}/detail/min_element.inl        
+        ${clBolt.Include.Dir}/detail/pair.inl
         ${clBolt.Include.Dir}/detail/reduce.inl
+        ${clBolt.Include.Dir}/detail/reduce_by_key.inl
         ${clBolt.Include.Dir}/detail/scan.inl
         ${clBolt.Include.Dir}/detail/scan_by_key.inl
         ${clBolt.Include.Dir}/detail/sort.inl
@@ -108,16 +120,20 @@ set( clBolt.Runtime.Headers.Detail
         ${clBolt.Include.Dir}/detail/transform_scan.inl
     )
 
-set( clBolt.Runtime.clFiles 
+set( clBolt.Runtime.clFiles
+    fill_kernels.cl
         copy_kernels.cl 
-        generate_kernels.cl 
+        generate_kernels.cl
+        min_element_kernels.cl 
         reduce_kernels.cl 
+        reduce_by_key_kernels.cl
         transform_kernels.cl 
         transform_reduce_kernels.cl
         transform_scan_kernels.cl
         scan_kernels.cl
         scan_by_key_kernels.cl
         sort_kernels.cl
+        sort_uint_kernels.cl
         sort_by_key_kernels.cl        
     )
 
@@ -139,6 +155,7 @@ set( clBolt.Runtime.Files
   ${clBolt.Runtime.Source}
   ${clBolt.Runtime.Headers}
   ${clBolt.Runtime.Headers.Detail}
+  ${clBolt.Runtime.Headers.Iterator}
   ${clBolt.Runtime.Headers.Misc}
   ${clBolt.Runtime.clFiles.FullPath} )
 
@@ -185,6 +202,11 @@ install( FILES
             ${clBolt.Runtime.Headers}
         DESTINATION
             ${INCLUDE_DIR}/bolt/cl )
+            
+install( FILES
+            ${clBolt.Runtime.Headers.Iterator}
+        DESTINATION
+            ${INCLUDE_DIR}/bolt/cl/iterator )
 
 install( FILES
             ${clBolt.Runtime.Headers.Detail}
@@ -285,14 +307,21 @@ install( FILES
 # Copy over our Boost static library dependencies
 install( FILES
     ${Boost_SYSTEM_LIBRARY_DEBUG} 
-    ${Boost_SYSTEM_LIBRARY_RELEASE}
     ${Boost_THREAD_LIBRARY_DEBUG} 
-    ${Boost_THREAD_LIBRARY_RELEASE}
     ${Boost_DATE_TIME_LIBRARY_DEBUG} 
-    ${Boost_DATE_TIME_LIBRARY_RELEASE}
     ${Boost_CHRONO_LIBRARY_DEBUG} 
+    DESTINATION ${LIB_DIR}
+    CONFIGURATIONS Debug
+    )
+
+# Copy over our Boost static library dependencies
+install( FILES
+    ${Boost_SYSTEM_LIBRARY_RELEASE}
+    ${Boost_THREAD_LIBRARY_RELEASE}
+    ${Boost_DATE_TIME_LIBRARY_RELEASE}
     ${Boost_CHRONO_LIBRARY_RELEASE}
     DESTINATION ${LIB_DIR}
+    CONFIGURATIONS Release
     )
 
 # CPack configuration; include the executable into the package

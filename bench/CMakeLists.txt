@@ -35,6 +35,8 @@ endif( )
 
 include_directories( ${BOLT_INCLUDE_DIR} ${PROJECT_BINARY_DIR}/include ${Boost_INCLUDE_DIRS} )
 
+
+
 if( BUILD_ampBolt AND Boost_FOUND )
 	add_subdirectory( AMP )
 endif( )
@@ -42,6 +44,8 @@ endif( )
 if( BUILD_clBolt AND Boost_FOUND )
 	add_subdirectory( cl )
 endif( )
+
+
 
 install( FILES	
 			errorHandler.py

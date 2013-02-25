@@ -19,10 +19,12 @@
 # We want to use the same test files for both the CL and AMP backends  
 set( ampBolt.Test.Device.Vector.Source
     ${BOLT_AMP_TEST_DIR}/common/stdafx.cpp 
-    ${BOLT_CL_TEST_DIR}/DeviceVectorTest/device.vector.test.cpp )
+    ${BOLT_AMP_TEST_DIR}/device_vector/device.vector.test.cpp )
+    
 set( ampBolt.Test.Device.Vector.Headers
     ${BOLT_CL_TEST_DIR}/common/stdafx.h 
     ${BOLT_CL_TEST_DIR}/common/targetver.h 
+    ${BOLT_CL_TEST_DIR}/common/test_common.h 
     ${BOLT_INCLUDE_DIR}/bolt/amp/device_vector.h )
 
 set( ampBolt.Test.Device.Vector.Files ${ampBolt.Test.Device.Vector.Source} ${ampBolt.Test.Device.Vector.Headers} )

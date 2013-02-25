@@ -86,16 +86,19 @@ __kernel void perBlockScanByKey(
     for( size_t offset = 1; offset < wgSize; offset *= 2 )
     {
         barrier( CLK_LOCAL_MEM_FENCE );
-        kType key2 = ldsKeys[ locId - offset];
-        if (locId >= offset && (*binaryPred)( key, key2 )  )
+        if (locId >= offset )
         {
-            oType y = ldsVals[ locId - offset ];
-            sum = (*binaryFunct)( sum, y );
+            kType key2 = ldsKeys[ locId - offset];
+            if( (*binaryPred)( key, key2 )  )
+            {
+                oType y = ldsVals[ locId - offset ];
+                sum = (*binaryFunct)( sum, y );
+            }
         }
         barrier( CLK_LOCAL_MEM_FENCE );
         ldsVals[ locId ] = sum;
     }
-
+    
     // Each work item writes out its calculated scan result, relative to the beginning
     // of each work group
     output[ gloId ] = sum;
@@ -177,10 +180,11 @@ __kernel void intraBlockInclusiveScanByKey(
         ldsKeys[ locId ] = key;
         barrier( CLK_LOCAL_MEM_FENCE );
     
-        kType key1 = ldsKeys[ locId ];
-        kType key2 = ldsKeys[ locId-offset ];
         if (locId >= offset )
-        { // thread > 0
+        {   // thread > 0
+            kType key1 = ldsKeys[ locId ];
+            kType key2 = ldsKeys[ locId-offset ];
+
             oType y1 = ldsVals[ locId ];
             if ( (*binaryPred)( key1, key2 ) )
             {

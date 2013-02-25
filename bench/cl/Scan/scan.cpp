@@ -77,6 +77,8 @@ struct vecN
 vecN init_vecN = { 1, 2 };
 vecN empty_vecN = { 0, 0 };
 
+BOLT_CREATE_TYPENAME( bolt::cl::device_vector< vecN >::iterator );
+BOLT_CREATE_CLCODE( bolt::cl::device_vector< vecN >::iterator, bolt::cl::deviceVectorIteratorTemplate );
 
 BOLT_FUNCTOR(vecNplus,
 struct vecNplus
@@ -138,7 +140,7 @@ int _tmain( int argc, _TCHAR* argv[] )
             ( "device,d",       po::value< cl_uint >( &userDevice )->default_value( 0 ),
                 "Specify the device under test using the index reported by the -q flag.  "
                     "Index is relative with respect to -g, -c or -a flags" )
-            ( "length,l",       po::value< size_t >( &length )->default_value( 1024 ),
+            ( "length,l",       po::value< size_t >( &length )->default_value( 4096 ),
                 "Specify the length of scan array" )
             ( "iterations,i",   po::value< size_t >( &iterations )->default_value( 1 ),
                 "Number of samples in timing loop" )

@@ -35,11 +35,11 @@
 #include <algorithm>
 class testCountIfFloatWithStdVector: public ::testing::TestWithParam<int>{
 protected:
-	int aSize;
+  int aSize;
 public:
-	testCountIfFloatWithStdVector():aSize(GetParam()){
-	}
-	
+  testCountIfFloatWithStdVector():aSize(GetParam()){
+  }
+  
 };
 
 
@@ -48,18 +48,18 @@ BOLT_CODE_STRING(
 template<typename T>
 // Functor for range checking.
 struct InRange {
-	InRange (T low, T high) {
-		_low=low;
-		_high=high;
-	};
+  InRange (T low, T high) {
+    _low=low;
+    _high=high;
+  };
 
-	bool operator() (const T& value) { 
-		//printf("Val=%4.1f, Range:%4.1f ... %4.1f\n", value, _low, _high); 
-		return (value >= _low) && (value <= _high) ; 
-	};
+  bool operator() (const T& value) { 
+    //printf("Val=%4.1f, Range:%4.1f ... %4.1f\n", value, _low, _high); 
+    return (value >= _low) && (value <= _high) ; 
+  };
 
-	T _low;
-	T _high;
+  T _low;
+  T _high;
 };
 );
 
@@ -75,36 +75,36 @@ BOLT_CREATE_CLCODE(InRange<__int64>, InRange_CodeString);
 
 TEST_P (testCountIfFloatWithStdVector, countFloatValueInRange)
 {
-	bolt::cl::device_vector<float> A(aSize);
-	bolt::cl::device_vector<float> B(aSize);
+  bolt::cl::device_vector<float> A(aSize);
+  bolt::cl::device_vector<float> B(aSize);
 
-	for (int i=0; i < aSize; i++) {
-		A[i] = static_cast<float> (i+1);
-		B[i] = A[i];
-	};
+  for (int i=0; i < aSize; i++) {
+    A[i] = static_cast<float> (i+1);
+    B[i] = A[i];
+  };
 
-	size_t stdCount = std::count_if (A.begin(), A.end(), InRange<float>(6,10)) ;
-	size_t boltCount = bolt::cl::count_if (B.begin(), B.end(), InRange<float>(6,10)) ;
+  size_t stdCount = std::count_if (A.begin(), A.end(), InRange<float>(6,10)) ;
+  size_t boltCount = bolt::cl::count_if (B.begin(), B.end(), InRange<float>(6,10)) ;
 
-	EXPECT_EQ (stdCount, boltCount)<<"Failed as: STD Count = "<<stdCount<<"\nBolt Count = "<<boltCount<<std::endl;
-	std::cout<<"STD Count = "<<stdCount<<std::endl<<"bolt Count = "<<boltCount<<std::endl;
+  EXPECT_EQ (stdCount, boltCount)<<"Failed as: STD Count = "<<stdCount<<"\nBolt Count = "<<boltCount<<std::endl;
+  std::cout<<"STD Count = "<<stdCount<<std::endl<<"bolt Count = "<<boltCount<<std::endl;
 }
 
 TEST_P (testCountIfFloatWithStdVector, countFloatValueInRange2)
 {
-	bolt::cl::device_vector<float> A(aSize);
-	bolt::cl::device_vector<float> B(aSize);
+  bolt::cl::device_vector<float> A(aSize);
+  bolt::cl::device_vector<float> B(aSize);
 
-	for (int i=0; i < aSize; i++) {
-		A[i] = static_cast<float> (i+1);
-		B[i] = A[i];
-	};
+  for (int i=0; i < aSize; i++) {
+    A[i] = static_cast<float> (i+1);
+    B[i] = A[i];
+  };
 
-	size_t stdCount = std::count_if (A.begin(), A.end(), InRange<float>(1,10)) ;
-	size_t boltCount = bolt::cl::count_if (B.begin(), B.end(), InRange<float>(1,10)) ;
+  size_t stdCount = std::count_if (A.begin(), A.end(), InRange<float>(1,10)) ;
+  size_t boltCount = bolt::cl::count_if (B.begin(), B.end(), InRange<float>(1,10)) ;
 
-	EXPECT_EQ (stdCount, boltCount)<<"Failed as: STD Count = "<<stdCount<<"\nBolt Count = "<<boltCount<<std::endl;
-	std::cout<<"STD Count = "<<stdCount<<std::endl<<"bolt Count = "<<boltCount<<std::endl;
+  EXPECT_EQ (stdCount, boltCount)<<"Failed as: STD Count = "<<stdCount<<"\nBolt Count = "<<boltCount<<std::endl;
+  std::cout<<"STD Count = "<<stdCount<<std::endl<<"bolt Count = "<<boltCount<<std::endl;
 }
 
 //
@@ -112,45 +112,45 @@ TEST_P (testCountIfFloatWithStdVector, countFloatValueInRange2)
 
 class countFloatValueOccuranceStdVect :public ::testing::TestWithParam<int>{
 protected:
-	int stdVectSize;
+  int stdVectSize;
 public:
-	countFloatValueOccuranceStdVect():stdVectSize(GetParam()){}
+  countFloatValueOccuranceStdVect():stdVectSize(GetParam()){}
 };
 
 TEST_P(countFloatValueOccuranceStdVect, floatVectSearchWithSameValue){
-	bolt::cl::device_vector<float> stdVect(stdVectSize);
-	bolt::cl::device_vector<float> boltVect(stdVectSize);
-	
-	float myFloatValue = 1.23f;
+  bolt::cl::device_vector<float> stdVect(stdVectSize);
+  bolt::cl::device_vector<float> boltVect(stdVectSize);
+  
+  float myFloatValue = 1.23f;
 
-	for (int i =0; i < stdVectSize; i++){
-		stdVect[i] = myFloatValue;
-		boltVect[i] = stdVect[i];
-	}
+  for (int i =0; i < stdVectSize; i++){
+    stdVect[i] = myFloatValue;
+    boltVect[i] = stdVect[i];
+  }
 
-	size_t stdCount = std::count(stdVect.begin(), stdVect.end(), myFloatValue);
-	size_t boltCount = bolt::cl::count(boltVect.begin(), boltVect.end(), myFloatValue);
+  size_t stdCount = std::count(stdVect.begin(), stdVect.end(), myFloatValue);
+  size_t boltCount = bolt::cl::count(boltVect.begin(), boltVect.end(), myFloatValue);
 
-	EXPECT_EQ(stdCount, boltCount)<<"Failed as: \nSTD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
-	std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
+  EXPECT_EQ(stdCount, boltCount)<<"Failed as: \nSTD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
+  std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
 }
 
 TEST_P(countFloatValueOccuranceStdVect, floatVectSearchWithSameValue2){
-	bolt::cl::device_vector<float> stdVect(stdVectSize);
-	bolt::cl::device_vector<float> boltVect(stdVectSize);
-	
-	float myFloatValue2 = 9.87f;
+  bolt::cl::device_vector<float> stdVect(stdVectSize);
+  bolt::cl::device_vector<float> boltVect(stdVectSize);
+  
+  float myFloatValue2 = 9.87f;
 
-	for (int i =0; i < stdVectSize; i++){
-		stdVect[i] = myFloatValue2;
-		boltVect[i] = stdVect[i];
-	}
+  for (int i =0; i < stdVectSize; i++){
+    stdVect[i] = myFloatValue2;
+    boltVect[i] = stdVect[i];
+  }
 
-	size_t stdCount = std::count(stdVect.begin(), stdVect.end(), myFloatValue2);
-	size_t boltCount = bolt::cl::count(boltVect.begin(), boltVect.end(), myFloatValue2);
+  size_t stdCount = std::count(stdVect.begin(), stdVect.end(), myFloatValue2);
+  size_t boltCount = bolt::cl::count(boltVect.begin(), boltVect.end(), myFloatValue2);
 
-	EXPECT_EQ(stdCount, boltCount)<<"Failed as: \nSTD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
-	std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
+  EXPECT_EQ(stdCount, boltCount)<<"Failed as: \nSTD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
+  std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
 }
 
 INSTANTIATE_TEST_CASE_P (useStdVectWithFloatValues, countFloatValueOccuranceStdVect, ::testing::Values(1, 100, 1000, 10000, 100000));
@@ -159,62 +159,227 @@ INSTANTIATE_TEST_CASE_P (useStdVectWithFloatValues, countFloatValueOccuranceStdV
 //Test case id: 7 (Failed)
 class countDoubleValueUsedASKeyInStdVect :public ::testing::TestWithParam<int>{
 protected:
-	int stdVectSize;
+  int stdVectSize;
 public:
-	countDoubleValueUsedASKeyInStdVect():stdVectSize(GetParam()){}
+  countDoubleValueUsedASKeyInStdVect():stdVectSize(GetParam()){}
 };
 
 
 TEST_P(countDoubleValueUsedASKeyInStdVect, doubleVectSearchWithSameValue){
-	bolt::cl::device_vector<double> stdVect(stdVectSize);
-	bolt::cl::device_vector<double> boltVect(stdVectSize);
-	
-	double myDoubleValueAsKeyValue = 1.23456789l;
+  bolt::cl::device_vector<double> stdVect(stdVectSize);
+  bolt::cl::device_vector<double> boltVect(stdVectSize);
+  
+  double myDoubleValueAsKeyValue = 1.23456789l;
 
-	for (int i =0; i < stdVectSize; i++){
-		stdVect[i] = myDoubleValueAsKeyValue;
-		boltVect[i] = stdVect[i];
-	}
+  for (int i =0; i < stdVectSize; i++){
+    stdVect[i] = myDoubleValueAsKeyValue;
+    boltVect[i] = stdVect[i];
+  }
 
-	size_t stdCount = std::count(stdVect.begin(), stdVect.end(), myDoubleValueAsKeyValue);
-	size_t boltCount = bolt::cl::count(boltVect.begin(), boltVect.end(), myDoubleValueAsKeyValue);
+  size_t stdCount = std::count(stdVect.begin(), stdVect.end(), myDoubleValueAsKeyValue);
+  size_t boltCount = bolt::cl::count(boltVect.begin(), boltVect.end(), myDoubleValueAsKeyValue);
 
-	EXPECT_EQ(stdCount, boltCount)<<"Failed as: \nSTD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
-	std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
+  EXPECT_EQ(stdCount, boltCount)<<"Failed as: \nSTD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
+  std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
 }
 
 TEST_P(countDoubleValueUsedASKeyInStdVect, doubleVectSearchWithSameValue2){
-	bolt::cl::device_vector<double> stdVect(stdVectSize);
-	bolt::cl::device_vector<double> boltVect(stdVectSize);
-	
-	double myDoubleValueAsKeyValue2 = 9.876543210123456789l;
+  bolt::cl::device_vector<double> stdVect(stdVectSize);
+  bolt::cl::device_vector<double> boltVect(stdVectSize);
+  
+  double myDoubleValueAsKeyValue2 = 9.876543210123456789l;
 
-	for (int i =0; i < stdVectSize; i++){
-		stdVect[i] = myDoubleValueAsKeyValue2;
-		boltVect[i] = stdVect[i];
-	}
+  for (int i =0; i < stdVectSize; i++){
+    stdVect[i] = myDoubleValueAsKeyValue2;
+    boltVect[i] = stdVect[i];
+  }
 
-	size_t stdCount = std::count(stdVect.begin(), stdVect.end(), myDoubleValueAsKeyValue2);
-	size_t boltCount = bolt::cl::count(boltVect.begin(), boltVect.end(), myDoubleValueAsKeyValue2);
+  size_t stdCount = std::count(stdVect.begin(), stdVect.end(), myDoubleValueAsKeyValue2);
+  size_t boltCount = bolt::cl::count(boltVect.begin(), boltVect.end(), myDoubleValueAsKeyValue2);
 
-	EXPECT_EQ(stdCount, boltCount)<<"Failed as: \nSTD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
-	std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
+  EXPECT_EQ(stdCount, boltCount)<<"Failed as: \nSTD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
+  std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
 }
 
 //test case: 1, test: 1
 TEST (testCountIf, intBtwRange) 
 {
-	int aSize = 1024;
-	bolt::cl::device_vector<int> A(aSize);
-	
-	for (int i=0; i < aSize; i++) {
-		A[i] = rand() % 10 + 1;
-	}
+  int aSize = 1024;
+  bolt::cl::device_vector<int> A(aSize);
+  
+  for (int i=0; i < aSize; i++) {
+    A[i] = rand() % 10 + 1;
+  }
 
-	std::iterator_traits<bolt::cl::device_vector<int>::iterator>::difference_type stdInRangeCount = std::count_if (A.begin(), A.end(), InRange<int>(1,10)) ;
-	std::iterator_traits<bolt::cl::device_vector<int>::iterator>::difference_type boltInRangeCount = bolt::cl::count_if (A.begin(), A.end(), InRange<int>(1, 10)) ;
+  std::iterator_traits<bolt::cl::device_vector<int>::iterator>::difference_type stdInRangeCount = std::count_if (A.begin(), A.end(), InRange<int>(1,10)) ;
+  std::iterator_traits<bolt::cl::device_vector<int>::iterator>::difference_type boltInRangeCount = bolt::cl::count_if (A.begin(), A.end(), InRange<int>(1, 10)) ;
 
-	EXPECT_EQ(stdInRangeCount, boltInRangeCount);
+  EXPECT_EQ(stdInRangeCount, boltInRangeCount);
+}
+
+BOLT_FUNCTOR(UDD,
+struct UDD { 
+    int a; 
+    int b;
+
+    bool operator() (const UDD& lhs, const UDD& rhs) { 
+        return ((lhs.a+lhs.b) > (rhs.a+rhs.b));
+    } 
+    bool operator < (const UDD& other) const { 
+        return ((a+b) < (other.a+other.b));
+    }
+    bool operator > (const UDD& other) const { 
+        return ((a+b) > (other.a+other.b));
+    }
+    bool operator == (const UDD& other) const { 
+        return ((a+b) == (other.a+other.b));
+    }
+
+    UDD operator + (const UDD &rhs) const {
+                UDD tmp = *this;
+                tmp.a = tmp.a + rhs.a;
+                tmp.b = tmp.b + rhs.b;
+                return tmp;
+    }
+    
+    UDD() 
+        : a(0),b(0) { } 
+    UDD(int _in) 
+        : a(_in), b(_in +1)  { } 
+        
+}; 
+);
+
+TEST(countFloatValueOccuranceStdVect, MulticoreCountIntTBB){
+    const int aSize = 1<<24;
+    std::vector<int> stdInput(aSize);
+    std::vector<int> tbbInput(aSize);
+
+    //bolt::cl::device_vector<int> stdInput(aSize);
+    //bolt::cl::device_vector<int> tbbInput(aSize);
+
+
+    int myintValue = 2;
+
+    for (int i=0; i < aSize; i++) {
+    stdInput[i] = rand() % 10 + 1;
+    tbbInput[i] = stdInput[i];
+    }
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault();
+    ctl.forceRunMode(bolt::cl::control::MultiCoreCpu);
+    size_t stdCount = std::count(stdInput.begin(), stdInput.end(), myintValue);
+    size_t boltCount = bolt::cl::count(ctl, tbbInput.begin(), tbbInput.end(), myintValue);
+
+  EXPECT_EQ(stdCount, boltCount)<<"Failed as: \nSTD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
+ // std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
+}
+
+TEST(countFloatValueOccuranceStdVect, MulticoreCountFloatTBB){
+    const int aSize = 1<<24;
+    std::vector<float> stdInput(aSize);
+    std::vector<float> tbbInput(aSize);
+
+    //bolt::cl::device_vector<int> stdInput(aSize);
+    //bolt::cl::device_vector<int> tbbInput(aSize);
+
+
+    float myfloatValue = 9.5f;
+
+    for (int i=0; i < aSize; i++) {
+    stdInput[i] = 9.5f;//rand() % 10 + 1;
+    tbbInput[i] = stdInput[i];
+    }
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault();
+    ctl.forceRunMode(bolt::cl::control::MultiCoreCpu);
+    size_t stdCount = std::count(stdInput.begin(), stdInput.end(), myfloatValue);
+    size_t boltCount = bolt::cl::count(ctl, tbbInput.begin(), tbbInput.end(), myfloatValue);
+
+  EXPECT_EQ(stdCount, boltCount)<<"Failed as: \nSTD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
+  //std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
+}
+
+/*
+TEST(countFloatValueOccuranceStdVect, MulticoreCountUDDTBB){
+    const int aSize = 1<<21;
+    std::vector<UDD> stdInput(aSize);
+    std::vector<UDD> tbbInput(aSize);
+
+    //bolt::cl::device_vector<int> stdInput(aSize);
+    //bolt::cl::device_vector<int> tbbInput(aSize);
+
+
+    UDD myUDD;
+    myUDD.a = 3;
+    myUDD.b = 5;
+
+
+    for (int i=0; i < aSize; i++) {
+       stdInput[i].a = 3;
+       stdInput[i].b = 5;
+       tbbInput[i].a = stdInput[i].a;
+       stdInput[i].b = stdInput[i].b;
+    }
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault();
+    ctl.forceRunMode(bolt::cl::control::MultiCoreCpu);
+    size_t stdCount = std::count(stdInput.begin(), stdInput.end(), myUDD);
+    size_t boltCount = bolt::cl::count(ctl, tbbInput.begin(), tbbInput.end(), myUDD);
+
+    EXPECT_EQ(stdCount, boltCount)<<"Failed as: \nSTD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
+    std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
+}
+*/
+
+TEST(countFloatValueOccuranceStdVect, MulticoreCountifIntTBB){
+    const int aSize = 1<<24;
+    std::vector<int> stdInput(aSize);
+    std::vector<int> tbbInput(aSize);
+
+    //bolt::cl::device_vector<int> stdInput(aSize);
+    //bolt::cl::device_vector<int> tbbInput(aSize);
+
+
+    int myintValue = 2;
+
+    for (int i=0; i < aSize; i++) {
+    stdInput[i] = 2;//rand() % 10 + 1;
+    tbbInput[i] = stdInput[i];
+    }
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault();
+    ctl.forceRunMode(bolt::cl::control::MultiCoreCpu);
+    size_t stdCount = std::count_if(stdInput.begin(), stdInput.end(), InRange<int>(2,10000));
+    size_t boltCount = bolt::cl::count_if(ctl, tbbInput.begin(), tbbInput.end(), InRange<int>(2,10000));
+
+  EXPECT_EQ(stdCount, boltCount)<<"Failed as: \nSTD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
+  //std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
+}
+
+TEST(countFloatValueOccuranceStdVect, MulticoreCountifFloatTBB){
+    const int aSize = 1<<24;
+    std::vector<float> stdInput(aSize);
+    std::vector<float> tbbInput(aSize);
+
+    //bolt::cl::device_vector<int> stdInput(aSize);
+    //bolt::cl::device_vector<int> tbbInput(aSize);
+
+
+    float myfloatValue = 9.5f;
+
+    for (int i=0; i < aSize; i++) {
+    stdInput[i] = (rand() % 10 + 1) * 45.f;
+    tbbInput[i] = stdInput[i];
+    }
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault();
+    ctl.forceRunMode(bolt::cl::control::MultiCoreCpu);
+    size_t stdCount = std::count_if(stdInput.begin(), stdInput.end(), InRange<float>(5.2f,57.2f));
+    size_t boltCount = bolt::cl::count_if(ctl, tbbInput.begin(), tbbInput.end(), InRange<float>(5.2f,57.2f));
+
+  EXPECT_EQ(stdCount, boltCount)<<"Failed as: \nSTD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
+  //std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
 }
 
 
@@ -256,7 +421,7 @@ int main(int argc, char* argv[])
     }
     std::cout << "Test Completed. Press Enter to exit.\n .... ";
     getchar();
-	return retVal;
+  return retVal;
 }
 
 
@@ -273,30 +438,30 @@ int main(int argc, char* argv[])
 //Count with a vector input
 void testCount1(int aSize)
 {
-	bolt::cl::device_vector<int> A(aSize);
-	for (int i=0; i < aSize; i++) {
-		A[i] = i+1;
-	};
+  bolt::cl::device_vector<int> A(aSize);
+  for (int i=0; i < aSize; i++) {
+    A[i] = i+1;
+  };
 
-	bolt::cl::count (A.begin(), A.end(), 37);
+  bolt::cl::count (A.begin(), A.end(), 37);
 };
 
 
 // Count with an array input:
 void testCount2()
 {
-	const int aSize = 13;
-	int A[aSize] = {0, 10, 42, 55, 13, 13, 42, 19, 42, 11, 42, 99, 13};
+  const int aSize = 13;
+  int A[aSize] = {0, 10, 42, 55, 13, 13, 42, 19, 42, 11, 42, 99, 13};
 
-	size_t count42 = bolt::cl::count (A, A+aSize, 42);
-	size_t count13 = bolt::cl::count (A, A+aSize, 13);
+  size_t count42 = bolt::cl::count (A, A+aSize, 42);
+  size_t count13 = bolt::cl::count (A, A+aSize, 13);
 
-	bolt::cl::control::getDefault().debug(bolt::cl::control::debug::Compile);
+  bolt::cl::control::getDefault().debug(bolt::cl::control::debug::Compile);
 
-	std::cout << "Count42=" << count42 << std::endl;
-	std::cout << "Count13=" << count13 << std::endl;
-	std::cout << "Count7=" << bolt::cl::count (A, A+aSize, 7) << std::endl;
-	std::cout << "Count10=" << bolt::cl::count (A, A+aSize, 10) << std::endl;
+  std::cout << "Count42=" << count42 << std::endl;
+  std::cout << "Count13=" << count13 << std::endl;
+  std::cout << "Count7=" << bolt::cl::count (A, A+aSize, 7) << std::endl;
+  std::cout << "Count10=" << bolt::cl::count (A, A+aSize, 10) << std::endl;
 };
 
 
@@ -307,18 +472,18 @@ BOLT_CODE_STRING(
 template<typename T>
 // Functor for range checking.
 struct InRange {
-	InRange (T low, T high) {
-		_low=low;
-		_high=high;
-	};
+  InRange (T low, T high) {
+    _low=low;
+    _high=high;
+  };
 
-	bool operator() (const T& value) { 
-		//printf("Val=%4.1f, Range:%4.1f ... %4.1f\n", value, _low, _high); 
-		return (value >= _low) && (value <= _high) ; 
-	};
+  bool operator() (const T& value) { 
+    //printf("Val=%4.1f, Range:%4.1f ... %4.1f\n", value, _low, _high); 
+    return (value >= _low) && (value <= _high) ; 
+  };
 
-	T _low;
-	T _high;
+  T _low;
+  T _high;
 };
 );
 
@@ -335,43 +500,43 @@ BOLT_CREATE_CLCODE(InRange<float>, InRange_CodeString);
 
 void testCountIf(int aSize) 
 {
-	bolt::cl::device_vector<float> A(aSize);
-	bolt::cl::device_vector<float> B(aSize);
-	for (int i=0; i < aSize; i++) {
-		A[i] = static_cast<float> (i+1);
-		B[i] = A[i];
-	};
+  bolt::cl::device_vector<float> A(aSize);
+  bolt::cl::device_vector<float> B(aSize);
+  for (int i=0; i < aSize; i++) {
+    A[i] = static_cast<float> (i+1);
+    B[i] = A[i];
+  };
 
-	std::cout << "STD Count7..15=" << std::count_if (A.begin(), A.end(), InRange<float>(7,15)) << std::endl;
-	std::cout << "BOLT Count7..15=" << bolt::cl::count_if (B.begin(), B.end(), InRange<float>(7,15)) << std::endl;
+  std::cout << "STD Count7..15=" << std::count_if (A.begin(), A.end(), InRange<float>(7,15)) << std::endl;
+  std::cout << "BOLT Count7..15=" << bolt::cl::count_if (B.begin(), B.end(), InRange<float>(7,15)) << std::endl;
 }
 
 void test_bug(int aSize) 
 {
-	//int aSize = 1024;
-	bolt::cl::device_vector<int> A(aSize);
-	bolt::cl::device_vector<int> B(aSize);
-	for (int i=0; i < aSize; i++) {
-		A[i] = rand() % 10 + 1;
-		B[i] = A[i];
-	}
+  //int aSize = 1024;
+  bolt::cl::device_vector<int> A(aSize);
+  bolt::cl::device_vector<int> B(aSize);
+  for (int i=0; i < aSize; i++) {
+    A[i] = rand() % 10 + 1;
+    B[i] = A[i];
+  }
 
-	int stdInRangeCount = std::count_if (A.begin(), A.end(), InRange<int>(1,10)) ;
-	int boltInRangeCount = bolt::cl::count_if (B.begin(), B.end(), InRange<int>(1, 10)) ;
-	std:: cout << stdInRangeCount << "   "   << boltInRangeCount << "\n";
-	//std::cout << "STD Count7..15=" << std::count_if (A.begin(), A.end(), InRange<float>(7,15)) << std::endl;
-	//std::cout << "BOLT Count7..15=" << bolt::cl::count_if (A.begin(), A.end(), InRange<float>(7,15), InRange_CodeString) << std::endl;
+  int stdInRangeCount = std::count_if (A.begin(), A.end(), InRange<int>(1,10)) ;
+  int boltInRangeCount = bolt::cl::count_if (B.begin(), B.end(), InRange<int>(1, 10)) ;
+  std:: cout << stdInRangeCount << "   "   << boltInRangeCount << "\n";
+  //std::cout << "STD Count7..15=" << std::count_if (A.begin(), A.end(), InRange<float>(7,15)) << std::endl;
+  //std::cout << "BOLT Count7..15=" << bolt::cl::count_if (A.begin(), A.end(), InRange<float>(7,15), InRange_CodeString) << std::endl;
 }
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	testCount1(100);
+  testCount1(100);
 
-	testCount2();
+  testCount2();
 
-	testCountIf(1024);
-	test_bug(1024);
-	return 0;
+  testCountIf(1024);
+  test_bug(1024);
+  return 0;
 }
 
 #endif

@@ -16,21 +16,22 @@
 ############################################################################                                                                                     
 
 # List the names of common files to compile across all platforms
-set( ampBolt.Test.Reduce.Source stdafx.cpp simple_reduce.cpp )
-set( ampBolt.Test.Reduce.Headers stdafx.h targetver.h ${BOLT_INCLUDE_DIR}/bolt/amp/reduce.h )
 
-set( ampBolt.Test.Reduce.Files ${ampBolt.Test.Reduce.Source} ${ampBolt.Test.Reduce.Headers} )
+set( clBolt.Test.Pair.Source stdafx.cpp PairTest.cpp ${BOLT_CL_TEST_DIR}/common/myocl.cpp) 
+set( clBolt.Test.Pair.Headers stdafx.h ${BOLT_CL_TEST_DIR}/common/myocl.h targetver.h ${BOLT_INCLUDE_DIR}/bolt/cl/pair.h )
 
-add_executable( ampBolt.Test.Reduce ${ampBolt.Test.Reduce.Files} )
-target_link_libraries( ampBolt.Test.Reduce ${GTEST_BOTH_LIBRARIES} ampBolt.Runtime )
+set( clBolt.Test.Pair.Files ${clBolt.Test.Pair.Source} ${clBolt.Test.Pair.Headers} )
 
-set_target_properties( ampBolt.Test.Reduce PROPERTIES VERSION ${Bolt_VERSION} )
-set_target_properties( ampBolt.Test.Reduce PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
+add_executable( clBolt.Test.Pair ${clBolt.Test.Pair.Files} )
+target_link_libraries( clBolt.Test.Pair clBolt.Runtime ${OPENCL_LIBRARIES} ${GTEST_LIBRARIES} ${Boost_LIBRARIES} )
 
-set_property( TARGET ampBolt.Test.Reduce PROPERTY FOLDER "Test/AMP")
+set_target_properties( clBolt.Test.Pair PROPERTIES VERSION ${Bolt_VERSION} )
+set_target_properties( clBolt.Test.Pair PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
 
+set_property( TARGET clBolt.Test.Pair PROPERTY FOLDER "Test/OpenCL")
+		
 # CPack configuration; include the executable into the package
-install( TARGETS ampBolt.Test.Reduce
+install( TARGETS clBolt.Test.Pair
 	RUNTIME DESTINATION ${BIN_DIR}
 	LIBRARY DESTINATION ${LIB_DIR}
 	ARCHIVE DESTINATION ${LIB_DIR}/import

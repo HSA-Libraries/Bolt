@@ -19,19 +19,20 @@
 
 #define _REDUCE_STEP(_LENGTH, _IDX, _W) \
     if ((_IDX < _W) && ((_IDX + _W) < _LENGTH)) {\
-      T mine = scratch[_IDX];\
-      T other = scratch[_IDX + _W];\
+      iTypePtr mine = scratch[_IDX];\
+      iTypePtr other = scratch[_IDX + _W];\
       scratch[_IDX] = (*userFunctor)(mine, other); \
     }\
     barrier(CLK_LOCAL_MEM_FENCE);
 
-template <typename T,  typename binary_function>
+template< typename iTypePtr, typename iTypeIter, typename binary_function >
 kernel void reduceTemplate(
-    global T* input, 
+    global iTypePtr*    input_ptr, 
+    iTypeIter input_iter,
     const int length,
-    global binary_function *userFunctor,
-    global T* result,
-    local T *scratch
+    global binary_function* userFunctor,
+    global iTypePtr*    result,
+    local iTypePtr*     scratch
 )
 {
     int gx = get_global_id (0);
@@ -40,16 +41,18 @@ kernel void reduceTemplate(
     if( gx >= length )
         return;
 
+    input_iter.init( input_ptr );
+
     //  Initialize the accumulator private variable with data from the input array
     //  This essentially unrolls the loop below at least once
-    T accumulator = input[gx];
+    iTypePtr accumulator = input_iter[gx];
     gx += get_global_size(0);
 
     // Loop sequentially over chunks of input vector, reducing an arbitrary size input
     // length into a length related to the number of workgroups
     while (gx < length)
     {
-        T element = input[gx];
+        iTypePtr element = input_iter[gx];
         accumulator = (*userFunctor)(accumulator, element);
         gx += get_global_size(0);
     }

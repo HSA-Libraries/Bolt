@@ -68,11 +68,15 @@ namespace bolt {
     namespace cl {
 
         extern const std::string copy_kernels;
+        extern const std::string fill_kernels;
         extern const std::string generate_kernels;
+        extern const std::string min_element_kernels;
         extern const std::string reduce_kernels;
+        extern const std::string reduce_by_key_kernels;
         extern const std::string scan_kernels;
         extern const std::string scan_by_key_kernels;
         extern const std::string sort_kernels;
+		extern const std::string sort_uint_kernels;
         extern const std::string sort_by_key_kernels;
         extern const std::string transform_kernels;
         extern const std::string transform_reduce_kernels;
@@ -123,6 +127,7 @@ namespace bolt {
                 const std::string compileOptions,
                 const control &c);
 
+
         /**********************************************************************
          * DEPRECATED
          * used in structs
@@ -134,6 +139,11 @@ namespace bolt {
                 const std::string& instantiationString, 
                 const std::string& userCode, 
                 const std::string& valueTypeName, 
+                const std::string& functorTypeName, 
+                const control& ctl );
+        
+		void constructAndCompileProgram( ::cl::Program *masterProgram, 
+                const std::string& userCode, 
                 const std::string& functorTypeName, 
                 const control& ctl );
 
@@ -340,8 +350,46 @@ namespace bolt {
 #define ALIGNED( bound ) __attribute__ ( (aligned( bound ) ) ) 
 #endif
 
-BOLT_CREATE_TYPENAME(int);
-BOLT_CREATE_TYPENAME(float);
-BOLT_CREATE_TYPENAME(double);
+BOLT_CREATE_TYPENAME( int );
+BOLT_CREATE_TYPENAME( unsigned int );
+BOLT_CREATE_TYPENAME( float );
+BOLT_CREATE_TYPENAME( double );
+
+////  Pre-define standard primitives that are likely to be used in a variety of OpenCL kernels
+//BOLT_CREATE_TYPENAME( cl_int );
+//BOLT_CREATE_CLCODE( cl_int, "int" );
+//
+//BOLT_CREATE_TYPENAME( cl_int2 );
+//BOLT_CREATE_CLCODE( cl_int2, "int2" );
+//
+//BOLT_CREATE_TYPENAME( cl_int4 );
+//BOLT_CREATE_CLCODE( cl_int4, "int4" );
+//
+//BOLT_CREATE_TYPENAME( cl_uint );
+//BOLT_CREATE_CLCODE( cl_uint, "uint" );
+//
+//BOLT_CREATE_TYPENAME( cl_uint2 );
+//BOLT_CREATE_CLCODE( cl_uint2, "uint2" );
+//
+//BOLT_CREATE_TYPENAME( cl_uint4 );
+//BOLT_CREATE_CLCODE( cl_uint4, "uint4" );
+//
+//BOLT_CREATE_TYPENAME( cl_float );
+//BOLT_CREATE_CLCODE( cl_float, "float" );
+//
+//BOLT_CREATE_TYPENAME( cl_float2 );
+//BOLT_CREATE_CLCODE( cl_float2, "float2" );
+//
+//BOLT_CREATE_TYPENAME( cl_float4 );
+//BOLT_CREATE_CLCODE( cl_float4, "float4" );
+//
+//BOLT_CREATE_TYPENAME( cl_double );
+//BOLT_CREATE_CLCODE( cl_double, "double" );
+//
+//BOLT_CREATE_TYPENAME( cl_double2 );
+//BOLT_CREATE_CLCODE( cl_double2, "double2" );
+//
+//BOLT_CREATE_TYPENAME( cl_double4 );
+//BOLT_CREATE_CLCODE( cl_double4, "double4" );
 
 #endif
