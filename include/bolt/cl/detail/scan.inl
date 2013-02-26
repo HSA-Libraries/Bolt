@@ -259,6 +259,50 @@ OutputIterator exclusive_scan(
     return rtrn;
 };
 
+template<
+    typename vType,
+    typename oType,
+    typename BinaryFunction,
+    typename T>
+oType*
+Serial_scan(
+    vType *values,
+    oType *result,
+    unsigned int  num,
+    const BinaryFunction binary_op,
+    const bool Incl,
+    const T &init)
+{
+    oType  sum ;
+    if(Incl){
+      *result = *values; // assign value
+      sum = *values;
+    }
+    else {
+       *result = (oType)init;
+       sum = binary_op( *result, *values);
+    }
+    for ( unsigned int i= 1; i<num; i++)
+    {
+        oType currentValue = *(values + i); // convertible
+        if (Incl)
+        {
+            oType r = binary_op( sum, currentValue);
+            *(result + i) = r;
+            sum = r;
+        }
+        else // new segment
+        {
+            *(result + i) = sum;
+            sum = binary_op( sum, currentValue);
+             
+        }
+    }
+    return result;
+}
+
+
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 namespace detail
@@ -349,7 +393,7 @@ public:
 
 
 #ifdef ENABLE_TBB
-      template <typename T, typename BinaryFunction, typename OutputIterator, typename InputIterator>
+      template <typename T, typename BinaryFunction, typename InputIterator, typename OutputIterator>
       struct Scan_tbb{
           T sum;
           T start;
@@ -468,8 +512,7 @@ aProfiler.startTrial();
 aProfiler.setStepName("serial");
 aProfiler.set(AsyncProfiler::device, control::SerialCpu);
 #endif
-
-                std::partial_sum( first, last, result, binary_op );
+                 Serial_scan<iType, oType, BinaryFunction, T>(&(*first), &(*result), numElements, binary_op, inclusive, init);
 
 #ifdef BOLT_PROFILER_ENABLED
 aProfiler.setDataSize(numElements*sizeof(iType));
@@ -541,15 +584,41 @@ aProfiler.set(AsyncProfiler::memory, numElements*sizeof(iType));
             const bolt::cl::control::e_RunMode runMode = ctrl.forceRunMode( );  // could be dynamic choice some day.
             if( runMode == bolt::cl::control::SerialCpu )
             {
-                //  TODO:  Need access to the device_vector .data method to get a host pointer
-                throw ::cl::Error( CL_INVALID_DEVICE, "Scan device_vector CPU device not implemented" );
+                ::cl::Event serialCPUEvent;
+                cl_int l_Error = CL_SUCCESS;
+                iType *scanInputBuffer = (iType*)ctrl.commandQueue().enqueueMapBuffer(first.getBuffer(), false, 
+                                   CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(iType) * numElements, NULL, &serialCPUEvent, &l_Error );
+                oType *scanResultBuffer = (oType*)ctrl.commandQueue().enqueueMapBuffer(result.getBuffer(), false, 
+                                   CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(oType) * numElements, NULL, &serialCPUEvent, &l_Error );
+                serialCPUEvent.wait();
+                Serial_scan<iType, oType, BinaryFunction, T>(scanInputBuffer, scanResultBuffer, numElements, binary_op, inclusive, init);
+                ctrl.commandQueue().enqueueUnmapMemObject(first.getBuffer(), scanInputBuffer);
+                ctrl.commandQueue().enqueueUnmapMemObject(result.getBuffer(), scanResultBuffer);
+                
                 return result;
             }
             else if( runMode == bolt::cl::control::MultiCoreCpu )
             {
-                //  TODO:  Need access to the device_vector .data method to get a host pointer
-                throw ::cl::Error( CL_INVALID_DEVICE, "Scan device_vector CPU device not implemented" );
+#ifdef ENABLE_TBB
+                ::cl::Event multiCoreCPUEvent;
+                cl_int l_Error = CL_SUCCESS;
+                /*Map the device buffer to CPU*/
+                iType *scanInputBuffer = (iType*)ctrl.commandQueue().enqueueMapBuffer(first.getBuffer(), false, 
+                                   CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(iType) * numElements, NULL, &multiCoreCPUEvent, &l_Error );
+                oType *scanResultBuffer = (oType*)ctrl.commandQueue().enqueueMapBuffer(result.getBuffer(), false, 
+                                   CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(oType) * numElements, NULL, &multiCoreCPUEvent, &l_Error );
+                multiCoreCPUEvent.wait();
+                tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
+                Scan_tbb<iType, BinaryFunction, iType*, oType*> tbb_scan(scanInputBuffer, scanResultBuffer, binary_op, inclusive, init);
+                tbb::parallel_scan( tbb::blocked_range<int>(  0, numElements), tbb_scan, tbb::auto_partitioner());
+                ctrl.commandQueue().enqueueUnmapMemObject(first.getBuffer(), scanInputBuffer);
+                ctrl.commandQueue().enqueueUnmapMemObject(result.getBuffer(), scanResultBuffer);
                 return result;
+#else
+                std::cout << "The MultiCoreCpu version of Scan with device vector is not implemented yet." << std ::endl;
+                throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of Scan with device vector is not enabled to be built." ); 
+                return result;
+#endif
             }
 
             //Now call the actual cl algorithm
