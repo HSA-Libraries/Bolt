@@ -25,8 +25,10 @@ endif()
 
 set( clBolt.Test.Scan.Source
     ${BOLT_CL_TEST_DIR}/common/stdafx.cpp 
+    ${BOLT_CL_TEST_DIR}/common/myocl.cpp 
     ScanTest.cpp )
 set( clBolt.Test.Scan.Headers   ${BOLT_CL_TEST_DIR}/common/stdafx.h 
+                                ${BOLT_CL_TEST_DIR}/common/myocl.cpp 
                                 ${BOLT_CL_TEST_DIR}/common/targetver.h 
                                 ${BOLT_INCLUDE_DIR}/bolt/cl/scan.h 
                                 ${BOLT_INCLUDE_DIR}/bolt/cl/detail/scan.inl )
