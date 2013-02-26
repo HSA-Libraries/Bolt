@@ -1394,16 +1394,17 @@ void BasicSortTestOfLength(size_t length)
     
     //Ascending Sort 
     size_t i;
-#if 0
-    for (i=0;i<length;i++)
-    {
-        boltInput[i]= ((T)(stdInput[i]) * 0xAB789F) & ((1<<31) - 1);
-        if(i%2)
-            boltInput[i] = - boltInput[i];
-        stdInput[i] = boltInput[i];
-        //printf ("\n%d",stdInput[i]);
-    }
+#if 1
+    //for (i=0;i<length;i++)
+    //{
+    //    boltInput[i]= ((T)(stdInput[i]) * 0xAB789F) & ((1<<31) - 1);
+    //    if(i%2)
+    //        boltInput[i] = - boltInput[i];
+    //    stdInput[i] = boltInput[i];
+    //    //printf ("\n%d",stdInput[i]);
+    //}
     stdBackup = stdInput;
+    boltInput = stdInput;
     //printf("\n");
     
     bolt::cl::stable_sort(boltInput.begin(), boltInput.end()/*, bolt::cl::greater<T>()*/);
@@ -1652,7 +1653,10 @@ void TestWithBoltControl(int length)
 */
 int main(int argc, char* argv[])
 {
-#if 1 
+    bolt::cl::control& ctrl = bolt::cl::control::getDefault();
+    ctrl.forceRunMode( bolt::cl::control::MultiCoreCpu );  // choose tbb tbb::parallel_scan
+
+#if 1
     //UDDSortTestOfLengthWithDeviceVector<int>(256);
     BasicSortTestOfLength<int>(256/*2097152/*131072/*16777216/*33554432/*atoi(argv[1])*/);
     BasicSortTestOfLength<int>(4096);

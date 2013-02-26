@@ -25,16 +25,6 @@
 
 const std::streamsize colWidth = 26;
 
-//#if (_MSC_VER == 1700)
-//#include <amp.h>
-//#include <amp_short_vectors.h>
-//using namespace concurrency;
-////This function is defined in sort_amp.cpp
-//extern void Sort(array<unsigned int> &integers,
-//          array<unsigned int> &tmpIntegers,
-//          array<unsigned int> &tmpHistograms);
-//#endif
-
 template< typename container >
 void sortTest( bolt::statTimer& statTimer, size_t length, size_t iter )
 {
@@ -45,7 +35,14 @@ void sortTest( bolt::statTimer& statTimer, size_t length, size_t iter )
 
         {
             container::pointer mySP = backup.data( );
-            std::generate( &mySP[ 0 ], &mySP[ length ], rand );
+            //std::generate( &mySP[ 0 ], &mySP[ length ], rand );
+            for( int i = 0; i < backup.size( ); ++i )
+            {
+                if( (i & 1) == 0 )
+                    backup[ i/2 ] = i;
+                else
+                    backup[ (length >> 1) + i/2 ] = i;
+            }
         }
 
         for( size_t i = 0; i < iter; ++i )
@@ -71,9 +68,11 @@ int main( int argc, char* argv[] )
     cl_device_type deviceType = CL_DEVICE_TYPE_DEFAULT;
     bool defaultDevice = true;
     bool print_clInfo = false;
-    bool hostMemory = false;
-    bool serial = false;
-    bool multi = false;
+    bool systemMemory = false;
+    bool deviceMemory = false;
+    bool runTBB = false;
+    bool runBOLT = false;
+    bool runSTL = false;
     bool validate = false;
     bool compareSerial = false;
     std::string filename;
@@ -94,9 +93,11 @@ int main( int argc, char* argv[] )
             ( "gpu,g",          "Report only OpenCL GPU devices" )
             ( "cpu,c",          "Report only OpenCL CPU devices" )
             ( "all,a",          "Report all OpenCL devices" )
-            ( "single,s",       "Run reference serial algorithm (std::stable_sort)." )
-            ( "multi,m",        "Run multicore TBB tbb::parallel_sort" )
-            ( "userMemory,u",   "Allocate vectors in host memory, otherwise device memory" )
+            ( "systemMemory,S", "Allocate vectors in system memory, otherwise device memory" )
+            ( "deviceMemory,D", "Allocate vectors in system memory, otherwise device memory" )
+            ( "tbb,T",          "Benchmark TBB MULTICORE CPU Code" )
+            ( "bolt,B",         "Benchmark Bolt OpenCL Libray" )
+            ( "serial,E",       "Benchmark Serial Code STL Libray" )
             ( "platform,p",     po::value< cl_uint >( &userPlatform )->default_value( 0 ),
                 "Specify the platform under test using the index reported by -q flag" )
             ( "device,d",       po::value< cl_uint >( &userDevice )->default_value( 0 ),
@@ -159,33 +160,31 @@ int main( int argc, char* argv[] )
             deviceType  = CL_DEVICE_TYPE_ALL;
         }
 
-        if( vm.count( "single" ) )
+        if( vm.count( "systemMemory" ) )
         {
-            serial = true;
-            hostMemory = true;
+            systemMemory = true;
         }
-
-        if( vm.count( "multi" ) )
+        if( vm.count( "deviceMemory" ) )
         {
-            multi = true;
-            hostMemory = true;
+            deviceMemory = true;
         }
-
-        if( vm.count( "userMemory" ) )
+        if( vm.count( "tbb" ) )
         {
-            hostMemory = true;
+            runTBB = true;
+        }
+        if( vm.count( "bolt" ) )
+        {
+            runBOLT = true;
+        }
+        if( vm.count( "serial" ) ) 
+        {
+            runSTL = true;
         }
 
         if( vm.count( "validate" ) )
         {
             validate = true;
         }
-
-        if( vm.count( "serial" ) )
-        {
-            compareSerial = true;
-        }
-
     }
     catch( std::exception& e )
     {
@@ -200,12 +199,12 @@ int main( int argc, char* argv[] )
     //  Query OpenCL for available platforms
     cl_int err = CL_SUCCESS;
 
-    if( serial )
+    if( runSTL )
     {
         ctrl.forceRunMode( bolt::cl::control::SerialCpu );  // choose serial std::scan
     }
 
-    if( multi )
+    if( runTBB )
     {
         ctrl.forceRunMode( bolt::cl::control::MultiCoreCpu );  // choose tbb tbb::parallel_scan
     }
@@ -242,7 +241,7 @@ int main( int argc, char* argv[] )
     {
         std::cout<<"Running CL - UINT RADIX SORT\n";
 
-        if( hostMemory )
+        if( systemMemory )
         {
             sortTest< std::vector< unsigned int > >( myTimer, length, iterations );
         }
@@ -256,7 +255,7 @@ int main( int argc, char* argv[] )
     {
         std::cout<<"Running CL INT SORT\n";
 
-        if( hostMemory )
+        if( systemMemory )
         {
             sortTest< std::vector< int > >( myTimer, length, iterations );
         }
