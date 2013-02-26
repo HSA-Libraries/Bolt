@@ -282,16 +282,17 @@ namespace cl
 			{
 				if(err.err() == CL_DEVICE_NOT_FOUND)
 					std::cout << "No GPU device Found" << std::endl; 
+			    try 
+			    {
+				    amdPlatIter->getDevices( CL_DEVICE_TYPE_CPU, &amdDevices );
+			    }
+			    catch (::cl::Error err)
+			    {
+				    if(err.err() == CL_DEVICE_NOT_FOUND)
+					    std::cout << "No Valid Compute device found " << std::endl; 
+			    }
 			}
-			try 
-			{
-				amdPlatIter->getDevices( CL_DEVICE_TYPE_CPU, &amdDevices );
-			}
-			catch (::cl::Error err)
-			{
-				if(err.err() == CL_DEVICE_NOT_FOUND)
-					std::cout << "NoCPU device Found" << std::endl; 
-			}
+
 
             //  If there are no AMD GPU devices, skip to next available platform
             if( amdDevices.empty( ) )
