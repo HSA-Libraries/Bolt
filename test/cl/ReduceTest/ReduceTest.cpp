@@ -36,9 +36,11 @@
 #include "bolt/miniDump.h"
 
 
-
 extern void testDeviceVector();
 extern void testTBB();
+extern void testdoubleTBB();
+extern void testUDDTBB();
+extern void testTBBDevicevector();
 // Super-easy windows profiling interface.
 // Move to timing infrastructure when that becomes available.
 __int64 StartProfile() {
@@ -217,7 +219,7 @@ TYPED_TEST_P( ReduceArrayTest, GPU_DeviceMultipliesFunction )
 {
     typedef std::array< ArrayType, ArraySize > ArrayCont;
 #if OCL_CONTEXT_BUG_WORKAROUND
-	::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
+  ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
     bolt::cl::control c_gpu( getQueueFromContext(myContext, CL_DEVICE_TYPE_GPU, 0 ));  
 #else
     ::Concurrency::accelerator accel(::Concurrency::accelerator::default_accelerator);
@@ -1141,12 +1143,12 @@ void simpleReduce_TestControl(int aSize, int numIters, int deviceIndex)
     // Create an OCL context, device, queue.
 
 
-	// FIXME - temporarily disable use of new control queue here:
+  // FIXME - temporarily disable use of new control queue here:
 #if OCL_CONTEXT_BUG_WORKAROUND
-	::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
+  ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
     bolt::cl::control c( getQueueFromContext(myContext, CL_DEVICE_TYPE_GPU, 0 )); 
 #else
-	MyOclContext ocl = initOcl(CL_DEVICE_TYPE_GPU, deviceIndex);
+  MyOclContext ocl = initOcl(CL_DEVICE_TYPE_GPU, deviceIndex);
     bolt::cl::control c(ocl._queue);  // construct control structure from the queue.
 #endif
 
@@ -1230,6 +1232,9 @@ int _tmain(int argc, _TCHAR* argv[])
 {
 #if defined( ENABLE_TBB )
     testTBB( );
+    testdoubleTBB();
+    testUDDTBB();
+    testTBBDevicevector();
 #endif
     testDeviceVector();
     int numIters = 100;
