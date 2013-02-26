@@ -318,6 +318,7 @@ TEST( Constructor, ContainerIteratorEmpty )
     bolt::BCKND::device_vector< int >::iterator itEnd = dV.end( );
 
     EXPECT_TRUE( itBegin == itEnd );
+    EXPECT_TRUE( dV.empty() );
 }
 
 TEST( Constructor, ConstContainerConstIteratorEmpty )
@@ -641,6 +642,19 @@ TEST( VectorIterator, Size6AndValue7Dereference )
     EXPECT_EQ( 7, *(myIter + 5) );
 }
 
+
+//// Compilation errors
+//TEST( VectorIterator, BackFront )
+//{
+//    bolt::BCKND::device_vector< int > dV( 6ul, 7 );
+//    EXPECT_EQ( 6, dV.size( ) );
+//
+//    bolt::BCKND::device_vector< int >::iterator myIter = dV.begin( );
+//
+//    EXPECT_EQ( 7, dV.front( ) );
+//    EXPECT_EQ( 7, dV.back( ) );
+//}
+
 TEST( VectorIterator, ArithmeticAndEqual )
 {
     bolt::BCKND::device_vector< int > dV( 5 );
@@ -930,6 +944,155 @@ TEST( Vector, DataRoutine )
     EXPECT_EQ( 0, pDa[50] );
 }
 
+//////////////////////////////////////////////////////////////////////////////////
+// ARRAY_VIEW TEST CASES
+//////////////////////////////////////////////////////////////////////////////////
+
+//// This test case should throw compilation errors
+//// You cannot call reserve() and shrink_to_fit()
+//// using array_view as the container.
+////
+//TEST( Vector, ShrinkToFitView)
+//{
+//  std::vector< int > x( 100 );
+//  bolt::BCKND::device_vector< int , concurrency::array_view > dV( x );
+//	EXPECT_EQ(dV.size(),dV.capacity());
+//	dV.reserve(200);
+//	EXPECT_EQ(200,dV.capacity());
+//	dV.shrink_to_fit();
+//	EXPECT_EQ(dV.size(),dV.capacity());
+//#if 0
+//	//Just like that.
+//	for(int i=0; i<(2<<21);i+=(2<<3)){
+//		dV.reserve(i);
+//		dV.shrink_to_fit();
+//		EXPECT_EQ(dV.size(),dV.capacity());
+//	}
+//
+//#endif
+//}
+
+//// This test case should throw compilation errors
+//// You cannot call resize() using array_view as the container.
+////
+//TEST( Vector, ResizeView )
+//{
+//    std::vector< float > x( 100 );
+//    bolt::BCKND::device_vector< float , concurrency::array_view> dV( x );
+//    EXPECT_EQ( 0, dV.size( ) );
+//
+//    std::vector< float > sV( 10 );
+//    for(int i=0; i<10; i++)
+//    {
+//        sV[i] = (float)i;
+//    }
+//
+//    dV.insert( dV.cbegin( ), sV.begin( ), sV.end( ) );
+//    EXPECT_EQ( 10, dV.size( ) );
+//    dV.resize(7);
+//    EXPECT_EQ( 7, dV.size( ) );
+//    for(int i=0; i<7; i++)
+//    {
+//        EXPECT_FLOAT_EQ( (float)i, dV[ i ] );
+//    }
+//    dV.resize(15, 7);
+//    EXPECT_EQ( 15, dV.size( ) );
+//    for(int i=0; i<15; i++)
+//    {
+//        if(i<7)
+//            EXPECT_FLOAT_EQ( (float)i, dV[ i ] );
+//        else
+//            EXPECT_FLOAT_EQ( 7.0f, dV[ i ] );
+//    }
+//}
+
+//// This test case should throw compilation errors
+//// You cannot call insert() using array_view as the container.
+////
+//TEST( Vector, InsertFloatRangeEmptyView )
+//{
+//  bolt::amp::device_vector< float , concurrency::array_view > dV;
+//    EXPECT_EQ( 0, dV.size( ) );
+//
+//    dV.insert( dV.cbegin( ), 5, 7.0f );
+//    EXPECT_EQ( 5, dV.size( ) );
+//    EXPECT_FLOAT_EQ( 7.0f, dV[ 0 ] );
+//    EXPECT_FLOAT_EQ( 7.0f, dV[ 1 ] );
+//    EXPECT_FLOAT_EQ( 7.0f, dV[ 2 ] );
+//    EXPECT_FLOAT_EQ( 7.0f, dV[ 3 ] );
+//    EXPECT_FLOAT_EQ( 7.0f, dV[ 4 ] );
+//}
+
+TEST( Vector, DataReadView )
+{
+    std::vector< int > v( 5ul, 3 );
+    bolt::amp::device_vector< int, concurrency::array_view > dV( v );
+    EXPECT_EQ( 5, dV.size( ) );
+    dV[ 0 ] = 1;
+    dV[ 1 ] = 2;
+    dV[ 2 ] = 3;
+    dV[ 3 ] = 4;
+    dV[ 4 ] = 5;
+
+    // Any device_vector pointer can be used.
+    bolt::amp::device_vector< int, concurrency::array_view >::pointer mySP = dV.data( );
+
+    EXPECT_EQ( 1, mySP[ 0 ] );
+    EXPECT_EQ( 2, mySP[ 1 ] );
+    EXPECT_EQ( 3, mySP[ 2 ] );
+    EXPECT_EQ( 4, mySP[ 3 ] );
+    EXPECT_EQ( 5, mySP[ 4 ] );
+
+}
+
+TEST( Vector, DataWriteView )
+{
+    std::vector< int > v( 5 );
+    bolt::amp::device_vector< int, concurrency::array_view > dV( v );
+    EXPECT_EQ( 5, dV.size( ) );
+
+    bolt::amp::device_vector< int, concurrency::array_view  >::pointer mySP = dV.data( );
+    mySP[ 0 ] = 1;
+    mySP[ 1 ] = 2;
+    mySP[ 2 ] = 3;
+    mySP[ 3 ] = 4;
+    mySP[ 4 ] = 5;
+
+    EXPECT_EQ( 1, mySP[ 0 ] );
+    EXPECT_EQ( 2, mySP[ 1 ] );
+    EXPECT_EQ( 3, mySP[ 2 ] );
+    EXPECT_EQ( 4, mySP[ 3 ] );
+    EXPECT_EQ( 5, mySP[ 4 ] );
+}
+
+TEST( Vector, ClearView )
+{
+    std::vector< int > v( 5ul, 3 );
+    bolt::amp::device_vector< int, concurrency::array_view > dV( v );
+    EXPECT_EQ( 5, dV.size( ) );
+    dV.clear( );
+    EXPECT_EQ( 0, dV.size( ) );
+}
+
+//TEST( Vector, EraseEntireRange )
+//{
+//    bolt::BCKND::device_vector< int > dV( 5 );
+//    EXPECT_EQ( 5, dV.size( ) );
+//
+//    dV[ 0 ] = 1;
+//    dV[ 1 ] = 2;
+//    dV[ 2 ] = 3;
+//    dV[ 3 ] = 4;
+//    dV[ 4 ] = 5;
+//
+//    bolt::BCKND::device_vector< int >::iterator myBegin = dV.begin( );
+//    bolt::BCKND::device_vector< int >::iterator myEnd = dV.end( );
+//
+//    bolt::BCKND::device_vector< int >::iterator myResult = dV.erase( myBegin, myEnd );
+//    EXPECT_EQ( 0, dV.size( ) );
+//}
+
+
 TEST( Vector, DataRoutineView )
 {
     std::vector<int> arr( 100, 99 );
@@ -952,6 +1115,20 @@ TEST( Vector, ArrayViewBegin )
 
     EXPECT_EQ( arr[0], *avIT );
 }
+
+// array_view test case ends.
+///////////////////////////////////////////////////////////////////////////////////
+
+TEST( DeviceVector, Swap )
+{
+    bolt::BCKND::device_vector< int > dV( 5ul, 3 ), dV2(5ul, 10);
+    EXPECT_EQ( 5, dV.size( ) );
+    dV.swap(dV2);
+    EXPECT_EQ(3, dV2[0]);
+    EXPECT_EQ(10, dV[0]);
+
+}
+
 
 int _tmain(int argc, _TCHAR* argv[])
 {
