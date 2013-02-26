@@ -1162,6 +1162,7 @@ struct negatetbbUDD
 /**********************************************************
  * mixed unary operator - dtanner
  *********************************************************/
+/*
 TEST( MixedTransform, OutOfPlace )
 {
     //size_t length = GetParam( );
@@ -1192,7 +1193,7 @@ TEST( MixedTransform, OutOfPlace )
     // compare results
     cmpArrays(refOutput, output);
 }
-
+*/
 BOLT_FUNCTOR( point,
      class point
      {
@@ -1385,6 +1386,99 @@ TEST(TransformReduce, MultiCoreDoubleUDD)
     
 } 
 
+TEST(TransformReduce, DeviceVectorInt)
+{
+     int length = 1<<16;
+     std::vector<  int > refInput( length);
+     std::vector< int > refIntermediate( length );
+     bolt::cl::device_vector< int > input(length,0);
+     for(int i=0; i<length; i++) {
+        input[i] = i;
+        refInput[i] = i;
+     //   printf("%d \n", input[i]);
+     }
+     ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
+     bolt::cl::control ctl = bolt::cl::control::getDefault( );
+     ctl.forceRunMode(bolt::cl::control::MultiCoreCpu);
+     // call transform_reduce
+     //  DivUDD ddd;
+     bolt::cl::negate<int> ddd;
+     bolt::cl::plus<int> add;
+
+     int boldReduce = bolt::cl::transform_reduce(ctl, input.begin(), input.end(),  ddd, 0, add );
+     ::std::transform(   refInput.begin(), refInput.end(),  refIntermediate.begin(), ddd); // transform in-place
+     int stdReduce = ::std::accumulate( refIntermediate.begin(), refIntermediate.end(), 0); // out-of-place scan
+     printf("%d %d %d\n", length, boldReduce, stdReduce);  
+     // compare results
+     EXPECT_EQ( stdReduce, boldReduce );
+  
+  
+} 
+
+TEST(TransformReduce, DeviceVectorFloat)
+{
+   
+     int length = 1<<16;
+     
+     std::vector<  float > refInput( length);
+     std::vector< float > refIntermediate( length );
+     bolt::cl::device_vector< float > input(length,0);
+
+    for(int i=0; i<length; i++) {
+        input[i] = 2.f;
+        refInput[i] = 2.f;
+     //   printf("%d \n", input[i]);
+    }
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.forceRunMode(bolt::cl::control::MultiCoreCpu);
+    // call transform_reduce
+    //  DivUDD ddd;
+    bolt::cl::negate<float> ddd;
+    bolt::cl::plus<float> add;
+
+    float boldReduce = bolt::cl::transform_reduce(ctl, input.begin(), input.end(),  ddd, 0.f, add );
+    ::std::transform(   refInput.begin(), refInput.end(),  refIntermediate.begin(), ddd); // transform in-place
+    float stdReduce = ::std::accumulate( refIntermediate.begin(), refIntermediate.end(), 0.f); // out-of-place scan
+
+    printf("%d %f %f\n", length, boldReduce, stdReduce);  
+    // compare results
+    EXPECT_FLOAT_EQ( stdReduce, boldReduce );
+  
+  
+} 
+
+
+TEST(TransformReduce, DeviceVectorUDD)
+{
+    int length = 1<<20;
+    tbbUDD initial;
+    initial.a = 2.f;
+    initial.b = 5.0;
+    bolt::cl::device_vector< tbbUDD > input(  length, initial,  true );
+    std::vector< tbbUDD > refInput( length, initial );
+    std::vector< tbbUDD > refIntermediate( length);
+    /*
+     for(int i=0; i<length; i++) {
+        input[i].a = 1.f;
+        refInput[i].a = 1.f;
+        input[i].b = 5.0;
+        refInput[i].b = 5.0;
+    }
+    */
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.forceRunMode(bolt::cl::control::MultiCoreCpu);
+    negatetbbUDD ddd;
+    bolt::cl::plus<tbbUDD> add;
+    tbbUDD boldReduce = bolt::cl::transform_reduce(ctl, input.begin(), input.end(),  ddd, initial, add );
+    ::std::transform(   refInput.begin(), refInput.end(),  refIntermediate.begin(), ddd); // transform in-place
+    tbbUDD stdReduce = ::std::accumulate( refIntermediate.begin(), refIntermediate.end(), initial, add); // out-of-place scan
+    printf("%d %f %f %lf %lf\n", length, boldReduce.a, stdReduce.a, boldReduce.b, stdReduce.b);  
+    // compare results
+    EXPECT_EQ( stdReduce, boldReduce );
+    
+} 
 
 
 

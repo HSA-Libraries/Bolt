@@ -244,6 +244,50 @@ inclusive_scan_by_key(
     ); // return
 }
 
+template<
+    typename kType,
+    typename vType,
+    typename oType,
+    typename BinaryPredicate,
+    typename BinaryFunction>
+oType*
+Serial_inclusive_scan_by_key(
+    kType *firstKey,
+    vType *values,
+    oType *result,
+    unsigned int  num,
+    const BinaryPredicate binary_pred,
+    const BinaryFunction binary_op)
+{
+    // do zeroeth element
+    *result = *values; // assign value
+    // scan oneth element and beyond
+    for ( unsigned int i=1; i< num;  i++)
+    {
+        // load keys
+        kType currentKey  = *(firstKey+i);
+        kType previousKey = *(firstKey-1 + i);
+        // load value
+        oType currentValue = *(values+i); // convertible
+        oType previousValue = *(result-1+i);
+
+        // within segment
+        if (binary_pred(currentKey, previousKey))
+        {
+            oType r = binary_op( previousValue, currentValue);
+            *(result+i) = r;
+        }
+        else // new segment
+        {
+            *(result + i) = currentValue;
+        }
+    }
+
+    return result;
+}
+
+
+
 
 /***********************************************************************************************************************
  * Exclusive Segmented Scan
@@ -519,6 +563,52 @@ exclusive_scan_by_key(
     ); // return
 }
 
+template<
+    typename kType,
+    typename vType,
+    typename oType,
+    typename BinaryPredicate,
+    typename BinaryFunction,
+    typename T>
+oType*
+Serial_exclusive_scan_by_key(
+    kType *firstKey,
+    vType *values,
+    oType *result,
+    unsigned int  num,
+    const BinaryPredicate binary_pred,
+    const BinaryFunction binary_op,
+    const T &init)
+{
+    // do zeroeth element
+    //*result = *values; // assign value
+    *result = (vType)init;
+    // scan oneth element and beyond
+    for ( unsigned int i= 1; i<num; i++)
+    {
+        // load keys
+        kType currentKey  = *(firstKey + i);
+        kType previousKey = *(firstKey-1 + i);
+
+        // load value
+        oType currentValue = *(values + i); // convertible
+        oType previousValue = *(result-1 + i);
+
+        // within segment
+        if (binary_pred(currentKey,previousKey))
+        {
+            oType r = binary_op( previousValue, currentValue);
+            *(result + i) = r;
+        }
+        else // new segment
+        {
+            *(result + i) = (vType)init;
+        }
+    }
+
+    return result;
+}
+
 
 namespace detail
 {
@@ -789,18 +879,22 @@ scan_by_key_pick_iterator(
   
   if( runMode == bolt::cl::control::SerialCpu )
     {
-                //  TODO:  Need access to the device_vector .data method to get a host pointer
-                throw ::cl::Error( CL_INVALID_DEVICE, "Scan device_vector Serial CPU device not implemented" );
-                return result;
+       
+       if(inclusive){
+          Serial_inclusive_scan_by_key<kType, vType, oType, BinaryPredicate, BinaryFunction>(&(*firstKey), &(*firstValue), &(*result), numElements, binary_pred, binary_funct);
+       }
+       else{
+          Serial_exclusive_scan_by_key<kType, vType, oType, BinaryPredicate, BinaryFunction, T>(&(*firstKey), &(*firstValue), &(*result), numElements, binary_pred, binary_funct, init);
+       }
     }
   else if(runMode == bolt::cl::control::MultiCoreCpu)
   {
 #ifdef ENABLE_TBB
-          tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
-          ScanKey_tbb<T, InputIterator1, InputIterator2, OutputIterator, BinaryFunction, BinaryPredicate> tbbkey_scan((InputIterator1 &)firstKey,
+        tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
+        ScanKey_tbb<T, InputIterator1, InputIterator2, OutputIterator, BinaryFunction, BinaryPredicate> tbbkey_scan((InputIterator1 &)firstKey,
             (InputIterator2&) firstValue,(OutputIterator &)result, binary_funct, binary_pred, inclusive, init);
-          tbb::parallel_scan( tbb::blocked_range<int>(  0, static_cast< int >( std::distance( firstKey, lastKey ))), tbbkey_scan, tbb::auto_partitioner());
-          return tbbkey_scan.result;
+        tbb::parallel_scan( tbb::blocked_range<int>(  0, static_cast< int >( std::distance( firstKey, lastKey ))), tbbkey_scan, tbb::auto_partitioner());
+        return tbbkey_scan.result;
 #else
         std::cout << "The MultiCoreCpu version of Scan by key is not implemented yet." << std ::endl;
         throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of scan by key is not enabled to be built." ); 
@@ -869,17 +963,59 @@ scan_by_key_pick_iterator(
 
     const bolt::cl::control::e_RunMode runMode = ctl.forceRunMode( );  // could be dynamic choice some day.
     if( runMode == bolt::cl::control::SerialCpu )
-    {
-        //  TODO:  Need access to the device_vector .data method to get a host pointer
-        throw ::cl::Error( CL_INVALID_DEVICE, "Scan device_vector CPU device not implemented" );
-        return result;
+    {  
+                ::cl::Event serialCPUEvent;
+                cl_int l_Error = CL_SUCCESS;
+               
+                kType *scanInputkey = (kType*)ctl.commandQueue().enqueueMapBuffer(firstKey.getBuffer(), false, 
+                                   CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(kType) * numElements, NULL, &serialCPUEvent, &l_Error );
+                vType *scanInputBuffer = (vType*)ctl.commandQueue().enqueueMapBuffer(firstValue.getBuffer(), false, 
+                                   CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(vType) * numElements, NULL, &serialCPUEvent, &l_Error );
+                oType *scanResultBuffer = (oType*)ctl.commandQueue().enqueueMapBuffer(result.getBuffer(), false, 
+                                   CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(oType) * numElements, NULL, &serialCPUEvent, &l_Error );
+                serialCPUEvent.wait();
+                
+                if(inclusive)
+                  Serial_inclusive_scan_by_key<kType, vType, oType, BinaryPredicate, BinaryFunction>(scanInputkey, scanInputBuffer, scanResultBuffer, numElements, binary_pred, binary_funct);
+                else
+                  Serial_exclusive_scan_by_key<kType, vType, oType, BinaryPredicate, BinaryFunction, T>(scanInputkey, scanInputBuffer, scanResultBuffer, numElements, binary_pred, binary_funct, init);
+
+                ctl.commandQueue().enqueueUnmapMemObject(firstKey.getBuffer(), scanInputkey);
+                ctl.commandQueue().enqueueUnmapMemObject(firstValue.getBuffer(), scanInputBuffer);
+                ctl.commandQueue().enqueueUnmapMemObject(result.getBuffer(), scanResultBuffer);
+
+                return result;
+        
     }
     else if( runMode == bolt::cl::control::MultiCoreCpu )
     {
-        //  TODO:  Need access to the device_vector .data method to get a host pointer
-        throw ::cl::Error( CL_INVALID_DEVICE, "Scan device_vector CPU device not implemented" );
-        return result;
-    }
+#ifdef ENABLE_TBB
+                ::cl::Event multiCoreCPUEvent;
+                cl_int l_Error = CL_SUCCESS;
+                /*Map the device buffer to CPU*/
+                kType *scanInputkey = (kType*)ctl.commandQueue().enqueueMapBuffer(firstKey.getBuffer(), false, 
+                                   CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(kType) * numElements, NULL, &multiCoreCPUEvent, &l_Error );
+                vType *scanInputBuffer = (vType*)ctl.commandQueue().enqueueMapBuffer(firstValue.getBuffer(), false, 
+                                   CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(vType) * numElements, NULL, &multiCoreCPUEvent, &l_Error );
+                oType *scanResultBuffer = (oType*)ctl.commandQueue().enqueueMapBuffer(result.getBuffer(), false, 
+                                   CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(oType) * numElements, NULL, &multiCoreCPUEvent, &l_Error );
+                multiCoreCPUEvent.wait();
+
+                tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
+                ScanKey_tbb<T, kType*, vType*, oType*, BinaryFunction, BinaryPredicate> tbbkey_scan(scanInputkey, scanInputBuffer, scanResultBuffer, binary_funct, binary_pred, inclusive, init);
+                tbb::parallel_scan( tbb::blocked_range<int>(  0, numElements), tbbkey_scan, tbb::auto_partitioner());
+
+                ctl.commandQueue().enqueueUnmapMemObject(firstKey.getBuffer(), scanInputkey);
+                ctl.commandQueue().enqueueUnmapMemObject(firstValue.getBuffer(), scanInputBuffer);
+                ctl.commandQueue().enqueueUnmapMemObject(result.getBuffer(), scanResultBuffer);
+                return result;
+#else
+                std::cout << "The MultiCoreCpu version of scan by key is not enabled. " << std ::endl;
+                throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of scan by key is not enabled to be built." );
+                return init;
+#endif
+
+     }
 
     //Now call the actual cl algorithm
     scan_by_key_enqueue( ctl, firstKey, lastKey, firstValue, result,
