@@ -72,7 +72,6 @@ struct uddtD4
     }
 };
 );
-
 // Functor for UDD. Adds all four double elements and returns true if lhs_sum > rhs_sum
 BOLT_FUNCTOR(AddD4,
 struct AddD4
@@ -86,9 +85,13 @@ struct AddD4
     };
 }; 
 );
+BOLT_CREATE_TYPENAME( bolt::cl::device_vector< AddD4 >::iterator );
+BOLT_CREATE_CLCODE( bolt::cl::device_vector< AddD4 >::iterator, bolt::cl::deviceVectorIteratorTemplate );
+
 uddtD4 identityAddD4 = { 1.0, 1.0, 1.0, 1.0 };
 uddtD4 initialAddD4  = { 1.00001, 1.000003, 1.0000005, 1.00000007 };
 BOLT_CREATE_TYPENAME( bolt::cl::device_vector< uddtD4 >::iterator );
+BOLT_CREATE_CLCODE( bolt::cl::device_vector< uddtD4 >::iterator, bolt::cl::deviceVectorIteratorTemplate );
 
 TEST(SortUDD, AddDouble4)
 {
@@ -210,7 +213,7 @@ TEST(MultiCoreCPU, MultiCoreAddDouble4)
 
 TEST( MultiCoreCPU, MultiCoreNormal )
 {
-    int length = 1098376;
+    int length = 1025;
     bolt::cl::device_vector< float > boltInput(  length, 0.0, CL_MEM_READ_WRITE, true  );
     std::vector< float > stdInput( length, 0.0 );
 
