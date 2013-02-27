@@ -46,7 +46,6 @@ namespace bolt {
             return reduce(bolt::cl::control::getDefault(), first, last, init, binary_op, cl_code);
         };
 
-
         template<typename InputIterator, typename T> 
         typename std::iterator_traits<InputIterator>::value_type
             reduce(InputIterator first, 
@@ -69,7 +68,6 @@ namespace bolt {
             typedef typename std::iterator_traits<InputIterator>::value_type iType;
             return reduce(ctl, first, last, init, bolt::cl::plus< iType >( ), cl_code);
         };
-
         // This template is called by all other "convenience" version of reduce.
         // It also implements the CPU-side mappings of the algorithm for SerialCpu and MultiCoreCpu
         template<typename InputIterator, typename T, typename BinaryFunction> 
@@ -141,17 +139,23 @@ namespace bolt {
             struct Reduce {
                 T value;
                 BinaryFunction op;
+                bool flag;
+
                 //TODO - Decide on how many threads to spawn? Usually it should be equal to th enumber of cores
                 //You might need to look at the tbb::split and there there cousin's 
                 //
                 Reduce(const BinaryFunction &_op) : op(_op), value(0) {}
-                Reduce(const BinaryFunction &_op, const T &init) : op(_op), value(init) {}
+                Reduce(const BinaryFunction &_op, const T &init) : op(_op), value(init), flag(FALSE) {}
                 Reduce() : value(0) {}
-                Reduce( Reduce& s, tbb::split ) : value(0) {}
+                Reduce( Reduce& s, tbb::split ) : flag(TRUE), op(s.op) {}
                 void operator()( const tbb::blocked_range<T*>& r ) {
                     T temp = value;
-					//printf("r.size() = %d\n", r.size());
                     for( T* a=r.begin(); a!=r.end(); ++a ) {
+                      if(flag){
+                        temp = *a;
+                        flag = FALSE;
+                      }
+                      else
                         temp = op(temp,*a);
                     }
                     value = temp;
@@ -212,8 +216,7 @@ namespace bolt {
                     return std::accumulate(first, last, init) ;
                 } else if (runMode == bolt::cl::control::MultiCoreCpu) {
 #ifdef ENABLE_TBB
-                    //std::cout << "The MultiCoreCpu version of reduce uses TBB." << std ::endl;
-					tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
+                    tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
                     Reduce<iType, BinaryFunction> reduce_op(binary_op, init);
                     tbb::parallel_reduce( tbb::blocked_range<iType*>( &*first, (iType*)&*(last-1) + 1), reduce_op );
                     return reduce_op.value;
@@ -246,33 +249,29 @@ namespace bolt {
 
                 const bolt::cl::control::e_RunMode runMode = ctl.forceRunMode();  
                 if (runMode == bolt::cl::control::SerialCpu) {
-		            ::cl::Event serialCPUEvent;
-		            cl_int l_Error = CL_SUCCESS;
+                    ::cl::Event serialCPUEvent;
+                    cl_int l_Error = CL_SUCCESS;
                     T reduceResult;
-		            /*Map the device buffer to CPU*/
-		            iType *reduceInputBuffer = (iType*)ctl.commandQueue().enqueueMapBuffer(first.getBuffer(), false, 
-			                                                                     CL_MAP_READ|CL_MAP_WRITE, 
-																	             0, sizeof(iType) * szElements, 
-																	             NULL, &serialCPUEvent, &l_Error );                    
+                    /*Map the device buffer to CPU*/
+                    iType *reduceInputBuffer = (iType*)ctl.commandQueue().enqueueMapBuffer(first.getBuffer(), false, CL_MAP_READ|CL_MAP_WRITE,0, sizeof(iType) * szElements, 
+                                               NULL, &serialCPUEvent, &l_Error );       
+                    serialCPUEvent.wait();
                     reduceResult = std::accumulate(reduceInputBuffer, reduceInputBuffer + szElements, init) ;
-		            /*Unmap the device buffer back to device memory. This will copy the host modified buffer back to the device*/
+                    /*Unmap the device buffer back to device memory. This will copy the host modified buffer back to the device*/
                     ctl.commandQueue().enqueueUnmapMemObject(first.getBuffer(), reduceInputBuffer);
-                    return reduceResult;
+                     return reduceResult;
                 } else if (runMode == bolt::cl::control::MultiCoreCpu) {
 #ifdef ENABLE_TBB
-                    //std::cout << "The MultiCoreCpu version of sort is enabled with TBB. " << std ::endl;
-		            ::cl::Event multiCoreCPUEvent;
-		            cl_int l_Error = CL_SUCCESS;
-		            /*Map the device buffer to CPU*/
-		            iType *reduceInputBuffer = (iType*)ctl.commandQueue().enqueueMapBuffer(first.getBuffer(), false, 
-			                                                                     CL_MAP_READ|CL_MAP_WRITE, 
-																	             0, sizeof(iType) * szElements, 
-																	             NULL, &multiCoreCPUEvent, &l_Error );
-		            multiCoreCPUEvent.wait();
-					tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
+                    ::cl::Event multiCoreCPUEvent;
+                    cl_int l_Error = CL_SUCCESS;
+                   /*Map the device buffer to CPU*/
+                   iType *reduceInputBuffer = (iType*)ctl.commandQueue().enqueueMapBuffer(first.getBuffer(), false, CL_MAP_READ|CL_MAP_WRITE,0, sizeof(iType) * szElements, 
+                                               NULL, &multiCoreCPUEvent, &l_Error );
+                    multiCoreCPUEvent.wait();
+                    tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
                     Reduce<iType, BinaryFunction> reduce_op(binary_op, init);
                     tbb::parallel_reduce( tbb::blocked_range<iType*>( reduceInputBuffer, reduceInputBuffer + szElements), reduce_op );
-		            /*Unmap the device buffer back to device memory. This will copy the host modified buffer back to the device*/
+                    /*Unmap the device buffer back to device memory. This will copy the host modified buffer back to the device*/
                     ctl.commandQueue().enqueueUnmapMemObject(first.getBuffer(), reduceInputBuffer);
                     return reduce_op.value;
 #else

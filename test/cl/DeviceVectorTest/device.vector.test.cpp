@@ -318,6 +318,7 @@ TEST( Constructor, ContainerIteratorEmpty )
     bolt::BCKND::device_vector< int >::iterator itEnd = dV.end( );
 
     EXPECT_TRUE( itBegin == itEnd );
+    EXPECT_TRUE( dV.empty() );
 }
 
 TEST( Constructor, ConstContainerConstIteratorEmpty )
@@ -929,6 +930,29 @@ TEST( Vector, DataRoutine )
 
     EXPECT_EQ( 0, pDa[50] );
 }
+
+TEST( DeviceVector, Swap )
+{
+    bolt::BCKND::device_vector< int > dV( 5ul, 3 ), dV2(5ul, 10);
+    EXPECT_EQ( 5, dV.size( ) );
+    dV.swap(dV2);
+    EXPECT_EQ(3, dV2[0]);
+    EXPECT_EQ(10, dV[0]);
+
+}
+
+
+//// Compilation errors
+//TEST( VectorIterator, BackFront )
+//{
+//    bolt::BCKND::device_vector< int > dV( 6ul, 7 );
+//    EXPECT_EQ( 6, dV.size( ) );
+//
+//    bolt::BCKND::device_vector< int >::iterator myIter = dV.begin( );
+//
+//    EXPECT_EQ( 7, dV.front( ) );
+//    EXPECT_EQ( 7, dV.back( ) );
+//}
 
 int _tmain(int argc, _TCHAR* argv[])
 {

@@ -613,6 +613,8 @@ public:
 
     void resize( size_type reqSize, const value_type& val = value_type( ) )
     {
+        static_assert( std::is_same< array_type, container_type >::value,
+                       "This member function is only valid for concurrency::array types.");
         size_type cap = capacity( );
 
         if( reqSize == cap )
@@ -698,6 +700,8 @@ public:
     void reserve( size_type reqSize )
     {
 
+        static_assert( std::is_same< array_type, container_type >::value,
+                       "This member function is only valid for concurrency::array types.");
         if( reqSize <= capacity( ) )
             return;
 
@@ -737,6 +741,8 @@ public:
     */
     void shrink_to_fit( )
     {
+        static_assert( std::is_same< array_type, container_type >::value,
+                       "This member function is only valid for concurrency::array types.");
         if( m_Size == capacity( ) )
              return;
 
@@ -1132,7 +1138,9 @@ public:
      */
     void insert( const_iterator index, size_type n, const value_type& value )
     {
-        if( &index.m_Container != this )
+      static_assert( std::is_same< array_type, container_type >::value,
+                     "This member function is only valid for concurrency::array types.");
+      if( &index.m_Container != this )
             throw std::exception(  "Iterator is not from this container" );
 
         if( index.m_index > m_Size )

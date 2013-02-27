@@ -702,7 +702,7 @@ namespace detail {
             TypeName< BinaryFunction >::get( ) );
 
         // For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retrieve the name here.
-        std::string typeDefinitions = cl_code + ClCode< BinaryFunction >::get( ) + ClCode< iType1 >::get( );
+        std::string typeDefinitions = cl_code  + ClCode< iType1 >::get( ) + ClCode< BinaryFunction >::get( );
         if( !boost::is_same< iType1, iType2 >::value )
         {
             typeDefinitions += ClCode< iType2 >::get( );

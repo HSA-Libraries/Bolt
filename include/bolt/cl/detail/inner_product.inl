@@ -19,7 +19,6 @@
 TODO:
 1. Optimize the Kernel. In this version transform and reduce are called directly which performs better. 
 2. Found a caveat in Multi-GPU scenario (Evergreen+Tahiti). Which basically applies to most of the routines.
-3. Change to Gtest
 */
 
 #if !defined( INNERPRODUCT_INL )
@@ -275,9 +274,9 @@ namespace bolt {
                 if( distVec == 0 )
                     return -1;
 
-                
-                transform_enqueue( ctl, first1, last1, first2, first1,f2,cl_code);
-                return reduce_enqueue( ctl, first1, last1, init, f1, cl_code);
+                device_vector< iType > tempDV( distVec, 0, CL_MEM_READ_WRITE, false, ctl );
+                detail::transform_enqueue( ctl, first1, last1, first2, tempDV.begin() ,f2,cl_code);
+                return detail::reduce_enqueue( ctl, tempDV.begin(), tempDV.end(), init, f1, cl_code);
                 bolt::cl::wait(ctl, innerproductEvent);
 
             };

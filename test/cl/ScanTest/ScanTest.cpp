@@ -305,6 +305,98 @@ template< typename S, typename B >
  *  Scan with User Defined Data Types and Operators
  *****************************************************************************/
 
+TEST(InclusiveScan, DeviceVectorInclFloat)
+{
+    int length = 1<<16;
+    bolt::cl::device_vector< float > input( length);
+    bolt::cl::device_vector< float > output( length);
+    std::vector< float > refInput( length);
+    std::vector< float > refOutput( length);
+    for(int i=0; i<length; i++) {
+        input[i] = 2.f;
+        refInput[i] = 2.f;
+    }
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.forceRunMode(bolt::cl::control::MultiCoreCpu); // tested with serial also
+    // call scan
+    bolt::cl::plus<float> ai2;
+    bolt::cl::inclusive_scan( ctl,  input.begin(),    input.end(),    output.begin(), ai2 );
+    ::std::partial_sum(refInput.begin(), refInput.end(), refOutput.begin(), ai2);
+    // compare results
+    cmpArrays(refOutput, output);
+} 
+
+TEST(InclusiveScan, DeviceVectorIncluddtM3)
+{
+    //setup containers
+    int length = 1<<16;
+    bolt::cl::device_vector< uddtM3 > input( length, initialMixM3  );
+    bolt::cl::device_vector< uddtM3 > output( length);
+    std::vector< uddtM3 > refInput( length, initialMixM3  );
+    std::vector< uddtM3 > refOutput( length);
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.forceRunMode(bolt::cl::control::MultiCoreCpu); // tested with serial also
+    // call scan
+    MixM3 M3;
+    bolt::cl::inclusive_scan( ctl,  input.begin(),    input.end(),    output.begin(), M3 );
+    ::std::partial_sum(refInput.begin(), refInput.end(), refOutput.begin(), M3);
+    
+    cmpArrays(refOutput, output);  
+} 
+
+
+TEST(ExclusiveScan, DeviceVectorExclFloat)
+{
+    //setup containers
+    int length = 1<<16;
+    bolt::cl::device_vector< float > input( length);
+    bolt::cl::device_vector< float > output( length);
+    std::vector< float > refInput( length);
+    std::vector< float > refOutput( length);
+    for(int i=0; i<length; i++) {
+        input[i] = 2.0f;
+        if(i != length-1)
+           refInput[i+1] = 2.0f;
+        //refInput[i] = 2.0f;
+    }
+    refInput[0] = 3.0f;
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.forceRunMode(bolt::cl::control::MultiCoreCpu); // tested with serial also
+    // call scan
+    bolt::cl::plus<float> ai2;
+    ::std::partial_sum(refInput.begin(), refInput.end(), refOutput.begin(), ai2);
+    bolt::cl::exclusive_scan( ctl,  input.begin(),    input.end(),    output.begin(), 3.0f, ai2 );
+
+    // compare results
+    cmpArrays(refOutput, output);
+} 
+
+TEST(ExclusiveScan, DeviceVectorExcluddtM3)
+{
+    //setup containers
+    int length = 1<<16;
+  
+    bolt::cl::device_vector< uddtM3 > input( length, initialMixM3  );
+    bolt::cl::device_vector< uddtM3 > output( length);
+    std::vector< uddtM3 > refInput( length, initialMixM3  ); refInput[0] = initialMixM3;
+    std::vector< uddtM3 > refOutput( length);
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.forceRunMode(bolt::cl::control::MultiCoreCpu); // tested with serial also
+    // call scan
+    MixM3 M3;
+    bolt::cl::exclusive_scan( ctl,  input.begin(),    input.end(),    output.begin(), initialMixM3, M3 );
+    ::std::partial_sum(refInput.begin(), refInput.end(), refOutput.begin(), M3);
+    
+    cmpArrays(refOutput, output);  
+} 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 TEST(InclusiveScan, MulticoreInclUdd)
 {
     //setup containers
@@ -316,7 +408,7 @@ TEST(InclusiveScan, MulticoreInclUdd)
     std::vector< uddtI2 > refOutput( length);
     ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.forceRunMode(bolt::cl::control::MultiCoreCpu);
+    ctl.forceRunMode(bolt::cl::control::MultiCoreCpu); // tested with serial also
     // call scan
     AddI2 ai2;
     bolt::cl::inclusive_scan( ctl,  input.begin(),    input.end(),    output.begin(), ai2 );
@@ -340,7 +432,7 @@ TEST(InclusiveScan, MulticoreInclFloat)
     }
     ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.forceRunMode(bolt::cl::control::MultiCoreCpu);
+    ctl.forceRunMode(bolt::cl::control::MultiCoreCpu); // tested with serial also
     // call scan
     bolt::cl::plus<float> ai2;
     bolt::cl::inclusive_scan( ctl,  input.begin(),    input.end(),    output.begin(), ai2 );
@@ -359,7 +451,7 @@ TEST(InclusiveScan, MulticoreIncluddtM3)
     std::vector< uddtM3 > refOutput( length);
     ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.forceRunMode(bolt::cl::control::MultiCoreCpu);
+    ctl.forceRunMode(bolt::cl::control::MultiCoreCpu); // tested with serial also
     // call scan
     MixM3 M3;
     bolt::cl::inclusive_scan( ctl,  input.begin(),    input.end(),    output.begin(), M3 );
@@ -379,7 +471,7 @@ TEST(ExclusiveScan, MulticoreExclUdd)
     std::vector< uddtI2 > refOutput( length);
     ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.forceRunMode(bolt::cl::control::MultiCoreCpu);
+    ctl.forceRunMode(bolt::cl::control::MultiCoreCpu); // tested with serial also
     // call scan
     AddI2 ai2;
     bolt::cl::exclusive_scan( ctl,  input.begin(),    input.end(),    output.begin(), initialAddI2, ai2 );
@@ -407,7 +499,7 @@ TEST(ExclusiveScan, MulticoreExclFloat)
 
     ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.forceRunMode(bolt::cl::control::MultiCoreCpu);
+    ctl.forceRunMode(bolt::cl::control::MultiCoreCpu); // tested with serial also
     // call scan
     bolt::cl::plus<float> ai2;
     ::std::partial_sum(refInput.begin(), refInput.end(), refOutput.begin(), ai2);
@@ -428,7 +520,7 @@ TEST(ExclusiveScan, MulticoreExcluddtM3)
     std::vector< uddtM3 > refOutput( length);
     ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.forceRunMode(bolt::cl::control::MultiCoreCpu);
+    ctl.forceRunMode(bolt::cl::control::MultiCoreCpu); // tested with serial also
     // call scan
     MixM3 M3;
     bolt::cl::exclusive_scan( ctl,  input.begin(),    input.end(),    output.begin(), initialMixM3, M3 );

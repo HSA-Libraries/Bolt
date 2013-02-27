@@ -22,7 +22,22 @@ set( ampBolt.Test.Sort.Headers ${BOLT_INCLUDE_DIR}/bolt/amp/sort.h ${BOLT_INCLUD
 set( ampBolt.Test.Sort.Files ${ampBolt.Test.Sort.Source} ${ampBolt.Test.Sort.Headers} )
 
 add_executable( ampBolt.Test.Sort ${ampBolt.Test.Sort.Files} )
-target_link_libraries( ampBolt.Test.Sort ${GTEST_LIBRARIES} ampBolt.Runtime )
+
+
+if( MSVC )
+    set( CMAKE_CXX_FLAGS "-bigobj ${CMAKE_CXX_FLAGS}" )
+    set( CMAKE_C_FLAGS "-bigobj ${CMAKE_C_FLAGS}" )
+endif()
+
+
+if(BUILD_TBB)
+    target_link_libraries( ampBolt.Test.Sort ampBolt.Runtime ${GTEST_LIBRARIES} ${Boost_LIBRARIES}  ${TBB_LIBRARIES} )
+else (BUILD_TBB)
+    target_link_libraries( ampBolt.Test.Sort ampBolt.Runtime ${GTEST_LIBRARIES} ${Boost_LIBRARIES}  )
+endif()
+
+
+
 
 set_target_properties( ampBolt.Test.Sort PROPERTIES VERSION ${Bolt_VERSION} )
 set_target_properties( ampBolt.Test.Sort PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )

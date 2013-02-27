@@ -22,6 +22,13 @@
 #include <string>
 #include <iostream>
 #include <numeric>
+#ifdef ENABLE_TBB
+//TBB Includes
+#include "tbb/parallel_reduce.h"
+#include "tbb/blocked_range.h"
+#include "tbb/task_scheduler_init.h"
+#endif
+
 
 #define WAVEFRONT_SIZE 64
 
@@ -111,6 +118,50 @@ namespace bolt {
             return transform_reduce_pick_iterator( ctl, first, last, transform_op, init, reduce_op );
         };
 
+
+#ifdef ENABLE_TBB
+            /*For documentation on the reduce object see below link
+             *http://threadingbuildingblocks.org/docs/help/reference/algorithms/parallel_reduce_func.htm
+             *The imperative form of parallel_reduce is used. 
+             *
+            */
+            template <typename T, typename UnaryFunction, typename BinaryFunction>
+            struct Transform_Reduce {
+                T value;
+                BinaryFunction reduce_op;
+                UnaryFunction transform_op;
+                bool flag;
+               
+                //TODO - Decide on how many threads to spawn? Usually it should be equal to th enumber of cores
+                //You might need to look at the tbb::split and there there cousin's 
+                //
+                Transform_Reduce(const UnaryFunction &_opt, const BinaryFunction &_opr) : transform_op(_opt), reduce_op(_opr) ,value(0){}
+                Transform_Reduce(const UnaryFunction &_opt, const BinaryFunction &_opr, const T &init) : transform_op(_opt), reduce_op(_opr), value(init), flag(FALSE){}
+                
+                Transform_Reduce(): value(0) {}
+                Transform_Reduce( Transform_Reduce& s, tbb::split ):flag(TRUE),transform_op(s.transform_op),reduce_op(s.reduce_op){}
+                 void operator()( const tbb::blocked_range<T*>& r ) {
+                    T reduce_temp = value, transform_temp;
+                    for( T* a=r.begin(); a!=r.end(); ++a ) {
+                      transform_temp = transform_op(*a);
+                      if(flag){
+                        reduce_temp = transform_temp;
+                        flag = FALSE;
+                      }
+                      else
+                        reduce_temp = reduce_op(reduce_temp,transform_temp);
+                    }
+                    value = reduce_temp;
+                }
+                 //Join is called by the parent thread after the child finishes to execute.
+                void join( Transform_Reduce& rhs ) {
+                    value = reduce_op(value,rhs.value);
+                }
+            };
+#endif
+
+
+
         // This template is called by the non-detail versions of transform_reduce, it already assumes random access iterators
         // This is called strictly for any non-device_vector iterator
         template< typename InputIterator,
@@ -135,19 +186,24 @@ namespace bolt {
             if (runMode == bolt::amp::control::SerialCpu)
             {
                 //Create a temporary array to store the transform result;
-                throw std::exception( "transform_reduce device_vector CPU device not implemented" );
-                //std::vector<oType> output(szElements);
-
-                //std::transform(first, last, output.begin(),transform_op);
-                //return std::accumulate(output.begin(), output.end(), init);
-                return 0;
-
+                //throw std::exception( "transform_reduce device_vector CPU device not implemented" );
+                std::vector<oType> output(szElements);
+                std::transform(first, last, output.begin(),transform_op);
+                return std::accumulate(output.begin(), output.end(), init);
             }
             else if (runMode == bolt::amp::control::MultiCoreCpu) 
             {
-                std::cout << "The MultiCoreCpu version of transform_reduce is not implemented yet." << std ::endl;
-                return init;
-            }
+#ifdef ENABLE_TBB
+                    tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
+                    Transform_Reduce<oType, UnaryFunction, BinaryFunction> transform_reduce_op(transform_op, reduce_op, init);
+                    tbb::parallel_reduce( tbb::blocked_range<iType*>( &*first, (iType*)&*(last-1) + 1), transform_reduce_op );
+                    return transform_reduce_op.value;
+#else
+ //                   std::cout << "The MultiCoreCpu version of transform_reduce is not implemented yet." << std ::endl;
+                    throw std::exception(  "The MultiCoreCpu version of reduce is not enabled to be built." );
+                    return init;
+#endif  
+                 }
             else 
             {
                 // Map the input iterator to a device_vector
@@ -180,23 +236,34 @@ namespace bolt {
             const bolt::amp::control::e_RunMode runMode = c.getForceRunMode();  // could be dynamic choice some day.
             if (runMode == bolt::amp::control::SerialCpu)
             {
-                //  TODO:  Need access to the device_vector .data method to get a host pointer
-                throw std::exception( "transform_reduce device_vector CPU device not implemented" );
+               std::vector<iType> InputBuffer(szElements);
+               for(unsigned int index=0; index<szElements; index++){
+                   InputBuffer[index] = first.getBuffer()[index];
+               } 
+               std::vector<oType> output(szElements);
+               std::transform(InputBuffer.begin(), InputBuffer.end(), output.begin(),transform_op);
 
-                //Create a temporary array to store the transform result;
-                std::vector<oType> output(szElements);
-
-                std::transform(first, last, output.begin(),transform_op);
-                return std::accumulate(output.begin(), output.end(), init);
+               return std::accumulate(output.begin(), output.end(), init);
 
             }
             else if (runMode == bolt::amp::control::MultiCoreCpu)
             {
-                //  TODO:  Need access to the device_vector .data method to get a host pointer
-                throw std::exception( "transform_reduce device_vector CPU device not implemented" );
-
-                std::cout << "The MultiCoreCpu version of transform_reduce is not implemented yet." << std ::endl;
-                return init;
+               
+#ifdef ENABLE_TBB
+               std::vector<iType> InputBuffer(szElements);
+               for(unsigned int index=0; index<szElements; index++){
+                   InputBuffer[index] = first.getBuffer()[index];
+               } 
+               tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
+               Transform_Reduce<oType, UnaryFunction, BinaryFunction> transform_reduce_op(transform_op, reduce_op, init);
+               tbb::parallel_reduce( tbb::blocked_range<iType*>( &*(InputBuffer.begin()), (iType*)&*((InputBuffer.end())-1) + 1), transform_reduce_op );
+               return transform_reduce_op.value;
+#else
+//               std::cout << "The MultiCoreCpu version of transform_reduce is not implemented yet." << std ::endl;
+               throw std::exception(  "The MultiCoreCpu version of reduce is not enabled to be built." );
+               return init;
+#endif  
+                
             }
 
             return  transform_reduce_enqueue( c, first, last, transform_op, init, reduce_op );

@@ -32,6 +32,11 @@
 #include "bolt/amp/device_vector.h"
 #include <amp.h>
 
+#ifdef ENABLE_TBB
+#include "tbb/parallel_sort.h"
+#include "tbb/task_scheduler_init.h"
+#endif
+
 
 #define BOLT_UINT_MAX 0xFFFFFFFFU
 #define BOLT_UINT_MIN 0x0U
@@ -129,10 +134,10 @@ void sort_pick_iterator( bolt::amp::control &ctl,
     typedef typename std::iterator_traits<DVRandomAccessIterator>::value_type T;
     unsigned int szElements = static_cast< unsigned int >( std::distance( first, last ) );
     if(szElements > (1<<31))
-	{
+  {
         throw std::exception( "AMP device_vector shall support only upto 2 power 31 elements" );
-		return;
-	}
+    return;
+  }
     if (szElements == 0 )
         return;
     const bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
@@ -148,10 +153,26 @@ void sort_pick_iterator( bolt::amp::control &ctl,
             first.getBuffer()[index] = localBuffer[index];
         return;
     } else if (runMode == bolt::amp::control::MultiCoreCpu) {
-        // \TODO - Find out what is the best way to report error std::cout should be removed
-        std::cout << "The MultiCoreCpu version of sort on device_vector is not supported." << std ::endl;
-        throw std::exception( "The MultiCoreCpu version of reduce on device_vector is not supported." );
+#ifdef ENABLE_TBB
+        std::vector<T> localBuffer(szElements);
+        //Copy the device_vector buffer to a CPU buffer
+        for(unsigned int index=0; index<szElements; index++)
+            localBuffer[index] = first.getBuffer()[index];
+        tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
+        tbb::parallel_sort(localBuffer.begin(), localBuffer.end(), comp);
+
+        std::sort(localBuffer.begin(), localBuffer.end(), comp);
+
+        //Copy the CPU buffer back to device_vector 
+        for(unsigned int index=0; index<szElements; index++)
+            first.getBuffer()[index] = localBuffer[index];
         return;
+        
+#else
+ //       std::cout << "The MultiCoreCpu version of sort is not enabled. " << std ::endl;
+        throw std::exception( "The MultiCoreCpu version of sort is not enabled to be built." ); 
+        return;
+#endif
     } else {
         sort_enqueue(ctl,first,last,comp);
     }
@@ -189,9 +210,14 @@ void sort_pick_iterator( bolt::amp::control &ctl,
         std::sort(first, last, comp);
         return;
     } else if (runMode == bolt::amp::control::MultiCoreCpu) {
-        std::cout << "The MultiCoreCpu version of sort is not enabled. " << std ::endl;
-        throw std::exception( "The MultiCoreCpu version of sort is not enabled to be built." );
+#ifdef ENABLE_TBB
+        tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
+        tbb::parallel_sort(first,last, comp);
+#else
+//        std::cout << "The MultiCoreCpu version of sort is not enabled. " << std ::endl;
+        throw std::exception( "The MultiCoreCpu version of sort is not enabled to be built." ); 
         return;
+#endif
     } else {
         device_vector< T, concurrency::array_view > dvInputOutput( first, last, false, ctl );
         //Now call the actual amp algorithm

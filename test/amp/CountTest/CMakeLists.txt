@@ -22,7 +22,20 @@ set( ampBolt.Test.Count.Headers ${BOLT_INCLUDE_DIR}/bolt/amp/count.h )
 set( ampBolt.Test.Count.Files ${ampBolt.Test.Count.Source} ${ampBolt.Test.Count.Headers} )
 
 add_executable( ampBolt.Test.Count ${ampBolt.Test.Count.Files} )
-target_link_libraries( ampBolt.Test.Count ${GTEST_LIBRARIES} ampBolt.Runtime )
+
+if( MSVC )
+    set( CMAKE_CXX_FLAGS "-bigobj ${CMAKE_CXX_FLAGS}" )
+    set( CMAKE_C_FLAGS "-bigobj ${CMAKE_C_FLAGS}" )
+endif()
+
+
+if(BUILD_TBB)
+    target_link_libraries( ampBolt.Test.Count ampBolt.Runtime ${GTEST_LIBRARIES} ${Boost_LIBRARIES}  ${TBB_LIBRARIES} )
+else (BUILD_TBB)
+    target_link_libraries( ampBolt.Test.Count ampBolt.Runtime ${GTEST_LIBRARIES} ${Boost_LIBRARIES}  )
+endif()
+
+
 
 set_target_properties( ampBolt.Test.Count PROPERTIES VERSION ${Bolt_VERSION} )
 set_target_properties( ampBolt.Test.Count PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )

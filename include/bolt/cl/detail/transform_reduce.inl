@@ -234,30 +234,48 @@ namespace  detail {
             bolt::cl::device_vector_tag )
         {
             typedef std::iterator_traits<DVInputIterator>::value_type iType;
-            size_t szElements = (last - first); 
+            size_t szElements = static_cast<size_t>(std::distance(first, last) ); 
             if (szElements == 0)
                     return init;
 
             const bolt::cl::control::e_RunMode runMode = c.forceRunMode();  // could be dynamic choice some day.
             if (runMode == bolt::cl::control::SerialCpu)
             {
-                //  TODO:  Need access to the device_vector .data method to get a host pointer
-                throw ::cl::Error( CL_INVALID_DEVICE, "transform_reduce device_vector CPU device not implemented" );
-
-                //Create a temporary array to store the transform result;
+                ::cl::Event serialCPUEvent;
+                cl_int l_Error = CL_SUCCESS;
+                oType trans_reduceResult;
+                /*Map the device buffer to CPU*/
+                iType *trans_reduceInputBuffer = (iType*)c.commandQueue().enqueueMapBuffer(first.getBuffer(), false, 
+                                   CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(iType) * szElements, NULL, &serialCPUEvent, &l_Error );
+                serialCPUEvent.wait();
                 std::vector<oType> output(szElements);
-
-                std::transform(first, last, output.begin(),transform_op);
-                return std::accumulate(output.begin(), output.end(), init);
+                std::transform(trans_reduceInputBuffer, trans_reduceInputBuffer + szElements, output.begin(), transform_op);
+                trans_reduceResult = std::accumulate(output.begin(), output.end(), init) ;
+                /*Unmap the device buffer back to device memory. This will copy the host modified buffer back to the device*/
+                c.commandQueue().enqueueUnmapMemObject(first.getBuffer(), trans_reduceInputBuffer);
+                return trans_reduceResult;
 
             }
             else if (runMode == bolt::cl::control::MultiCoreCpu)
             {
-                //  TODO:  Need access to the device_vector .data method to get a host pointer
-                throw ::cl::Error( CL_INVALID_DEVICE, "transform_reduce device_vector CPU device not implemented" );
+#ifdef ENABLE_TBB
+                ::cl::Event multiCoreCPUEvent;
+                cl_int l_Error = CL_SUCCESS;
+                /*Map the device buffer to CPU*/
+                iType *trans_reduceInputBuffer = (iType*)c.commandQueue().enqueueMapBuffer(first.getBuffer(), false, 
+                                   CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(iType) * szElements, NULL, &multiCoreCPUEvent, &l_Error );
+                multiCoreCPUEvent.wait();
 
-                std::cout << "The MultiCoreCpu version of transform_reduce is not implemented yet." << std ::endl;
+                tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
+                Transform_Reduce<oType, UnaryFunction, BinaryFunction> transform_reduce_op(transform_op, reduce_op, init);
+                tbb::parallel_reduce( tbb::blocked_range<iType*>(trans_reduceInputBuffer, (trans_reduceInputBuffer + szElements)), transform_reduce_op );
+                c.commandQueue().enqueueUnmapMemObject(first.getBuffer(), trans_reduceInputBuffer);
+                return transform_reduce_op.value;
+#else
+                std::cout << "The MultiCoreCpu version of transform reduce is not enabled. " << std ::endl;
+                throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of transform reduce is not enabled to be built." );
                 return init;
+#endif
             }
 
             return  transform_reduce_enqueue( c, first, last, transform_op, init, reduce_op, user_code );

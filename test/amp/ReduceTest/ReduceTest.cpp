@@ -33,22 +33,22 @@
     template<typename T>
     void printCheckMessage(bool err, std::string msg, T  stlResult, T boltResult)
     {
-	    if (err) {
-		    std::cout << "*ERROR ";
-	    } else {
-		    std::cout << "PASSED ";
-	    }
+      if (err) {
+        std::cout << "*ERROR ";
+      } else {
+        std::cout << "PASSED ";
+      }
 
-	    std::cout << msg << "  STL=" << stlResult << " BOLT=" << boltResult << std::endl;
+      std::cout << msg << "  STL=" << stlResult << " BOLT=" << boltResult << std::endl;
     };
 
     template<typename T>
     bool checkResult(std::string msg, T  stlResult, T boltResult)
     {
-	    bool err =  (stlResult != boltResult);
-	    printCheckMessage(err, msg, stlResult, boltResult);
+      bool err =  (stlResult != boltResult);
+      printCheckMessage(err, msg, stlResult, boltResult);
 
-	    return err;
+      return err;
     };
 
 
@@ -56,17 +56,17 @@
     template<typename T>
     bool checkResult(std::string msg, T  stlResult, T boltResult, double errorThresh)
     {
-	    bool err;
-	    if ((errorThresh != 0.0) && stlResult) {
-		    double ratio = (double)(boltResult) / (double)(stlResult) - 1.0;
-		    err = abs(ratio) > errorThresh;
-	    } else {
-		    // Avoid div-by-zero, check for exact match.
-		    err = (stlResult != boltResult);
-	    }
+      bool err;
+      if ((errorThresh != 0.0) && stlResult) {
+        double ratio = (double)(boltResult) / (double)(stlResult) - 1.0;
+        err = abs(ratio) > errorThresh;
+      } else {
+        // Avoid div-by-zero, check for exact match.
+        err = (stlResult != boltResult);
+      }
 
-	    printCheckMessage(err, msg, stlResult, boltResult);
-	    return err;
+      printCheckMessage(err, msg, stlResult, boltResult);
+      return err;
     };
 
     // Simple test case for bolt::reduce:
@@ -77,25 +77,25 @@
     //    * use of bolt with explicit plus argument
     void simpleReduceArray( )
     {
-	    const unsigned int arraySize = 961;
+      const unsigned int arraySize = 961;
 
         std::vector< int > A(arraySize);
 
-	    for (int i=0; i < arraySize; i++) {
-		    A[i] = 1;
-	    };
+      for (int i=0; i < arraySize; i++) {
+        A[i] = 1;
+      };
 
-	    int stlReduce = std::accumulate(A.begin(), A.end(), 0);
+      int stlReduce = std::accumulate(A.begin(), A.end(), 0);
 
         for (int i=0; i < arraySize; i++) {
-		    A[i] = 1;
-	    };
+        A[i] = 1;
+      };
 
-	    int boltReduce = bolt::amp::reduce(A.begin(), A.end(), 0, bolt::plus<int>());
-	    //int boltReduce2 = bolt::amp::reduce(A.begin(), A.end(), 0);  // same as above...
-	    //int boltReduce3 = bolt::amp::reduce(A.rbegin(), A.rend(), 0);  // reverse iterators should not be supported
+      int boltReduce = bolt::amp::reduce(A.begin(), A.end(), 0, bolt::plus<int>());
+      //int boltReduce2 = bolt::amp::reduce(A.begin(), A.end(), 0);  // same as above...
+      //int boltReduce3 = bolt::amp::reduce(A.rbegin(), A.rend(), 0);  // reverse iterators should not be supported
 
-	    printf ("Sum: stl=%d,  bolt=%d\n", stlReduce, boltReduce);
+      printf ("Sum: stl=%d,  bolt=%d\n", stlReduce, boltReduce);
     };
 
 
@@ -103,23 +103,23 @@
     // Test driver function
     void simpleReduce()
     {
-	    simpleReduceArray( );
-	    //simpleReduce1(1024);
-	    //simpleReduce1(1024000);
-	    //simpleReduce2();
+      simpleReduceArray( );
+      //simpleReduce1(1024);
+      //simpleReduce1(1024000);
+      //simpleReduce2();
         //
-	    //simpleReduce3<float> ("sum", bolt::plus<float>(), 1000000, .0001/*errorThresh*/);
-	    //simpleReduce3<float> ("min", bolt::minimum<float>(), 1000000);
-	    //simpleReduce3<float> ("max", bolt::maximum<float>(), 1000000);
+      //simpleReduce3<float> ("sum", bolt::plus<float>(), 1000000, .0001/*errorThresh*/);
+      //simpleReduce3<float> ("min", bolt::minimum<float>(), 1000000);
+      //simpleReduce3<float> ("max", bolt::maximum<float>(), 1000000);
 
-	    //simpleReduce4();
+      //simpleReduce4();
     };
 
 
     int _tmain(int argc, _TCHAR* argv[])
     {
-	    simpleReduce();
-	    return 0;
+      simpleReduce();
+      return 0;
     }
 #else
 
@@ -296,7 +296,7 @@ TYPED_TEST_P( ReduceArrayTest, GPU_DeviceMultipliesFunction )
 {
     typedef std::array< ArrayType, ArraySize > ArrayCont;
 #if OCL_CONTEXT_BUG_WORKAROUND
-	::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
+  ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
     bolt::cl::control c_gpu( getQueueFromContext(myContext, CL_DEVICE_TYPE_GPU, 0 ));  
 #else
     ::Concurrency::accelerator accel(::Concurrency::accelerator::default_accelerator);
@@ -1071,6 +1071,12 @@ struct UDD {
     bool operator == (const UDD& other) const restrict (cpu,amp){
         return ((a+b) == (other.a+other.b));
     }
+    UDD operator + (const UDD &rhs) const restrict (amp,cpu){
+                UDD tmp = *this;
+                tmp.a = tmp.a + rhs.a;
+                tmp.b = tmp.b + rhs.b;
+                return tmp;
+    }
     UDD()   restrict (cpu,amp)
         : a(0),b(0) { }
     UDD(int _in)   restrict (cpu,amp)
@@ -1120,8 +1126,115 @@ INSTANTIATE_TYPED_TEST_CASE_P( Double, ReduceArrayTest, DoubleTests );
 #endif 
 
 
+void testTBB()
+{
+    const int aSize = 1<<24;
+    std::vector<int> stdInput(aSize);
+    std::vector<int> tbbInput(aSize);
+
+
+    for(int i=0; i<aSize; i++) {
+        stdInput[i] = 2;
+        tbbInput[i] = 2;
+    };
+
+    int hSum = std::accumulate(stdInput.begin(), stdInput.end(), 2);
+    bolt::amp::control ctl = bolt::amp::control::getDefault();
+    ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu); // serial path also tested
+    int sum = bolt::amp::reduce(ctl, tbbInput.begin(), tbbInput.end(), 2);
+    if(hSum == sum)
+        printf ("\nTBB Test case PASSED %d %d\n", hSum, sum);
+    else
+        printf ("\nTBB Test case FAILED\n");
+
+};
+void testdoubleTBB()
+{
+  const int aSize = 1<<24;
+    std::vector<double> stdInput(aSize);
+    std::vector<double> tbbInput(aSize);
+
+
+    for(int i=0; i<aSize; i++) {
+        stdInput[i] = 3.0;
+        tbbInput[i] = 3.0;
+    };
+
+    double hSum = std::accumulate(stdInput.begin(), stdInput.end(), 1);
+    bolt::amp::control ctl = bolt::amp::control::getDefault();
+    ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu); // serial path also tested
+    double sum = bolt::amp::reduce(ctl, tbbInput.begin(), tbbInput.end(), 1);
+    if(hSum == sum)
+        printf ("\nTBB Test case PASSED %lf %lf\n", hSum, sum);
+    else
+        printf ("\nTBB Test case FAILED\n");
+}
+
+void testUDDTBB()
+{
+
+    const int aSize = 1<<19;
+    std::vector<UDD> stdInput(aSize);
+    std::vector<UDD> tbbInput(aSize);
+
+    UDD initial;
+    initial.a = 1;
+    initial.b = 2;
+
+    for(int i=0; i<aSize; i++) {
+        stdInput[i].a = 2;
+        stdInput[i].b = 3;
+        tbbInput[i].a = 2;
+        tbbInput[i].b = 3;
+
+    };
+    bolt::amp::plus<UDD> add;
+    UDD hSum = std::accumulate(stdInput.begin(), stdInput.end(), initial,add);
+    bolt::amp::control ctl = bolt::amp::control::getDefault();
+    ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu); // serial path also tested
+    UDD sum = bolt::amp::reduce(ctl, tbbInput.begin(), tbbInput.end(), initial, add);
+    if(hSum == sum)
+        printf ("\nUDDTBB Test case PASSED %d %d %d %d\n", hSum.a, sum.a, hSum.b, sum.b);
+    else
+        printf ("\nUDDTBB Test case FAILED\n");
+        
+}
+
+void testTBBDevicevector()
+{
+    size_t aSize = 1<<16;
+    std::vector<int> stdInput(aSize);
+    bolt::amp::device_vector<int> tbbInput(aSize, 0);
+
+
+    for(int i=0; i<aSize; i++) {
+        stdInput[i] = i;
+        tbbInput[i] = i;
+    };
+
+    int hSum = std::accumulate(stdInput.begin(), stdInput.end(), 0);
+    bolt::amp::control ctl = bolt::amp::control::getDefault();
+    ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu); // serial path also tested
+    int sum = bolt::amp::reduce(ctl, tbbInput.begin(), tbbInput.end(), 0);
+    if(hSum == sum)
+        printf ("\nTBBDevicevector Test case PASSED %d %d\n", hSum, sum);
+    else
+        printf ("\nTBBDevicevector Test case FAILED*********\n");
+
+
+};
+
+
 int main(int argc, char* argv[])
 {
+
+#if defined( ENABLE_TBB )
+    testTBB( );
+    testdoubleTBB();
+    testUDDTBB();
+    testTBBDevicevector();
+#endif
+    
     ::testing::InitGoogleTest( &argc, &argv[ 0 ] );
 
     //  Register our minidump generating logic

@@ -22,7 +22,19 @@ set( ampBolt.Test.Scan.Headers ${BOLT_INCLUDE_DIR}/bolt/amp/scan.h )
 set( ampBolt.Test.Scan.Files ${ampBolt.Test.Scan.Source} ${ampBolt.Test.Scan.Headers} )
 
 add_executable( ampBolt.Test.Scan ${ampBolt.Test.Scan.Files} )
-target_link_libraries( ampBolt.Test.Scan ${GTEST_LIBRARIES} ampBolt.Runtime )
+
+if( MSVC )
+    set( CMAKE_CXX_FLAGS "-bigobj ${CMAKE_CXX_FLAGS}" )
+    set( CMAKE_C_FLAGS "-bigobj ${CMAKE_C_FLAGS}" )
+endif()
+
+
+if(BUILD_TBB)
+    target_link_libraries( ampBolt.Test.Scan ampBolt.Runtime ${GTEST_LIBRARIES} ${Boost_LIBRARIES}  ${TBB_LIBRARIES} )
+else (BUILD_TBB)
+    target_link_libraries( ampBolt.Test.Scan ampBolt.Runtime ${GTEST_LIBRARIES} ${Boost_LIBRARIES}  )
+endif()
+
 
 set_target_properties( ampBolt.Test.Scan PROPERTIES VERSION ${Bolt_VERSION} )
 set_target_properties( ampBolt.Test.Scan PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
