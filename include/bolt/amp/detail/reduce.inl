@@ -35,6 +35,7 @@
 //AsyncProfiler aProfiler("transform");
 #endif
 
+
 #ifdef ENABLE_TBB
 //TBB Includes
 #include "tbb/parallel_reduce.h"
@@ -46,6 +47,7 @@
 #include <type_traits>
 #include "bolt/amp/bolt.h"
 #include "bolt/amp/device_vector.h"
+
 
 namespace bolt
 {
@@ -136,17 +138,23 @@ namespace bolt
             struct Reduce {
                 T value;
                 BinaryFunction op;
+                bool flag;
+
                 //TODO - Decide on how many threads to spawn? Usually it should be equal to th enumber of cores
                 //You might need to look at the tbb::split and there there cousin's 
                 //
                 Reduce(const BinaryFunction &_op) : op(_op), value(0) {}
-                Reduce(const BinaryFunction &_op, const T &init) : op(_op), value(init) {}
+                Reduce(const BinaryFunction &_op, const T &init) : op(_op), value(init), flag(FALSE) {}
                 Reduce() : value(0) {}
-                Reduce( Reduce& s, tbb::split ) : value(0) {}
+                Reduce( Reduce& s, tbb::split ) : flag(TRUE), op(s.op) {}
                 void operator()( const tbb::blocked_range<T*>& r ) {
                     T temp = value;
-					//printf("r.size() = %d\n", r.size());
                     for( T* a=r.begin(); a!=r.end(); ++a ) {
+                      if(flag){
+                        temp = *a;
+                        flag = FALSE;
+                      }
+                      else
                         temp = op(temp,*a);
                     }
                     value = temp;
@@ -214,18 +222,16 @@ namespace bolt
                 const bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  
                 if (runMode == bolt::amp::control::SerialCpu) 
                 {
-                    std::cout << "The SerialCpu version of reduce is not implemented yet." << std ::endl;
-                    throw std::exception( "The SerialCpu version of reduce is not implemented yet." );
-                    return init;
+                    return std::accumulate(first, last, init);
+
                 } else if (runMode == bolt::amp::control::MultiCoreCpu) {
 #ifdef ENABLE_TBB
-                    std::cout << "The MultiCoreCpu version of reduce uses TBB." << std ::endl;
-					tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
+                    tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
                     Reduce<iType, BinaryFunction> reduce_op(binary_op, init);
                     tbb::parallel_reduce( tbb::blocked_range<iType*>( &*first, (iType*)&*(last-1) + 1), reduce_op );
                     return reduce_op.value;
 #else
-                    std::cout << "The MultiCoreCpu version of reduce is not enabled. " << std ::endl;
+ //                   std::cout << "The MultiCoreCpu version of reduce is not enabled. " << std ::endl;
                     throw std::exception( "The MultiCoreCpu version of reduce is not enabled to be built." );
                     return init;
 #endif
@@ -247,6 +253,7 @@ namespace bolt
                                   const T& init,
                                   const BinaryFunction& binary_op )
             {
+                typedef typename std::iterator_traits<DVInputIterator>::value_type iType;
                 size_t szElements = (size_t) (last - first);
                 if (szElements == 0)
                     return init;
@@ -254,15 +261,28 @@ namespace bolt
                 const bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  
                 if (runMode == bolt::amp::control::SerialCpu)
                 {
-                    std::cout << "The SerialCpu version of reduce is not implemented yet." << std ::endl;
-                    throw std::exception( "The SerialCpu version of reduce is not implemented yet." );
-                    return init;
+                     std::vector<iType> InputBuffer(szElements);
+                     for(unsigned int index=0; index<szElements; index++){
+                         InputBuffer[index] = first.getBuffer()[index];
+                     } 
+                     return std::accumulate(InputBuffer.begin(), InputBuffer.end(), init) ;
                 }
                 else if (runMode == bolt::amp::control::MultiCoreCpu)
                 {
-                    std::cout << "The MultiCoreCpu version of reduce on device_vector is not supported." << std ::endl;
-                    throw std::exception( "The MultiCoreCpu version of reduce on device_vector is not supported." );
-                    return init;
+#ifdef ENABLE_TBB
+                    std::vector<iType> InputBuffer(szElements);
+                    for(unsigned int index=0; index<szElements; index++){
+                        InputBuffer[index] = first.getBuffer()[index];
+                    } 
+                    tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
+                    Reduce<iType, BinaryFunction> reduce_op(binary_op, init);
+                    tbb::parallel_reduce( tbb::blocked_range<iType*>( &*(InputBuffer.begin()), (iType*)&*((InputBuffer.end())-1) + 1), reduce_op );
+                    return reduce_op.value;
+#else
+ //              std::cout << "The MultiCoreCpu version of transform_reduce is not implemented yet." << std ::endl;
+               throw std::exception( "The MultiCoreCpu version of reduce is not enabled to be built." );
+               return init;
+#endif  
                 } else {
                     return reduce_enqueue( ctl, first, last, init, binary_op);
                 }

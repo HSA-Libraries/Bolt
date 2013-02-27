@@ -55,6 +55,15 @@
 #include "bolt/amp/device_vector.h"
 #include <amp.h>
 
+#ifdef ENABLE_TBB
+//TBB Includes
+#include "tbb/parallel_scan.h"
+#include "tbb/blocked_range.h"
+#include "tbb/task_scheduler_init.h"
+#endif
+
+
+
 //#include <vector>
 //#include <stdexcept>
 //#include <numeric>
@@ -254,6 +263,113 @@ OutputIterator scan_detect_random_access(
     return detail::scan_pick_iterator( ctl, first, last, result, init, inclusive, binary_op );
 };
 
+
+template<
+    typename vType,
+    typename oType,
+    typename BinaryFunction,
+    typename T>
+oType*
+Serial_scan(
+    vType *values,
+    oType *result,
+    unsigned int  num,
+    const BinaryFunction binary_op,
+    const bool Incl,
+    const T &init)
+{
+    oType  sum ;
+    if(Incl){
+      *result = *values; // assign value
+      sum = *values;
+    }
+    else {
+       *result = (oType)init;
+       sum = binary_op( *result, *values);
+    }
+    for ( unsigned int i= 1; i<num; i++)
+    {
+        oType currentValue = *(values + i); // convertible
+        if (Incl)
+        {
+            oType r = binary_op( sum, currentValue);
+            *(result + i) = r;
+            sum = r;
+        }
+        else // new segment
+        {
+            *(result + i) = sum;
+            sum = binary_op( sum, currentValue);
+             
+        }
+    }
+    return result;
+}
+
+
+#ifdef ENABLE_TBB
+      template <typename T, typename BinaryFunction, typename InputIterator, typename OutputIterator>
+      struct Scan_tbb{
+          T sum;
+          T start;
+          InputIterator& x;
+          OutputIterator& y;
+          BinaryFunction scan_op;
+          bool inclusive, flag;
+          public:
+          Scan_tbb() : sum(0) {}
+          Scan_tbb( InputIterator&  _x, 
+                    OutputIterator& _y,
+                    const BinaryFunction &_opr, 
+                    const bool &_incl ,const T &init) : x(_x), y(_y), scan_op(_opr),inclusive(_incl),start(init),flag(TRUE){}
+          T get_sum() const {return sum;}
+          template<typename Tag>
+          void operator()( const tbb::blocked_range<int>& r, Tag ) {
+             T temp = sum;
+             for(int i=r.begin(); i<r.end(); ++i ) {
+                 if(Tag::is_final_scan()){
+                     if(!inclusive){
+                        if(i==0 ) {
+                            *(y+i) = start;
+                            temp = scan_op(start, *(x+i));
+                         }
+                         else{
+                           *(y+i) = temp;
+                            temp = scan_op(temp, *(x+i));
+                         }
+                         continue;
+                     }
+                     else if(i == 0){
+                        temp = *(x+i);
+                     }
+                     else{
+                        temp = scan_op(temp, *(x+i));
+                     }
+                     *(y+i) = temp;
+                  }
+                  else{
+                     if(flag){
+                       temp = *(x+i);
+                       flag = FALSE;
+                     }
+                     else
+                        temp = scan_op(temp, *(x+i));
+                  }
+             }
+             sum = temp;
+          }
+          Scan_tbb( Scan_tbb& b, tbb::split):y(b.y),x(b.x),inclusive(b.inclusive),start(b.start),flag(TRUE){
+          }
+          void reverse_join( Scan_tbb& a ) {
+               sum = scan_op(a.sum, sum);
+          }
+          void assign( Scan_tbb& b ) {
+             sum = b.sum;
+          }
+       };
+#endif
+
+
 /*! 
 * \brief This overload is called strictly for non-device_vector iterators
 * \details This template function overload is used to seperate device_vector iterators from all other iterators
@@ -274,7 +390,7 @@ scan_pick_iterator(
     const bool& inclusive,
     const BinaryFunction& binary_op )
 {
-    std::cout << "Host Iterator detected." << std::endl;
+//    std::cout << "Host Iterator detected." << std::endl;
     typedef typename std::iterator_traits< InputIterator >::value_type iType;
     typedef typename std::iterator_traits< OutputIterator >::value_type oType;
     static_assert( std::is_convertible< iType, oType >::value, "Input and Output iterators are incompatible" );
@@ -294,7 +410,7 @@ aProfiler.set(AsyncProfiler::device, control::SerialCpu);
 
 size_t k0_stepNum, k1_stepNum, k2_stepNum;
 #endif
-        std::partial_sum( first, last, result, binary_op );
+         Serial_scan<iType, oType, BinaryFunction, T>(&(*first), &(*result), numElements, binary_op, inclusive, init);
 #ifdef BOLT_ENABLE_PROFILING
 aProfiler.setDataSize(numElements*sizeof(iType));
 aProfiler.stopTrial();
@@ -303,7 +419,17 @@ aProfiler.stopTrial();
     }
     else if( runMode == bolt::amp::control::MultiCoreCpu )
     {
-        std::cout << "The MultiCoreCpu version of inclusive_scan is not implemented yet." << std ::endl;
+#ifdef ENABLE_TBB
+          tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
+          Scan_tbb<iType, BinaryFunction, InputIterator, OutputIterator> tbb_scan((InputIterator &)first,(OutputIterator &)
+                                                                         result,binary_op,inclusive,init);
+          tbb::parallel_scan( tbb::blocked_range<int>(  0, static_cast< int >( std::distance( first, last ))), tbb_scan, tbb::auto_partitioner());
+          return tbb_scan.y;
+#else
+//        std::cout << "The MultiCoreCpu version of Scan is not implemented yet." << std ::endl;
+        throw std::exception( "The MultiCoreCpu version of Scan is not enabled to be built." );
+        return result;
+#endif
     }
     else
     {
@@ -342,27 +468,68 @@ scan_pick_iterator(
     const bool& inclusive,
     const BinaryFunction& binary_op )
 {
-    std::cout << "Device Iterator detected." << std::endl;
+//    std::cout << "Device Iterator detected." << std::endl;
     typedef typename std::iterator_traits< DVInputIterator >::value_type iType;
     typedef typename std::iterator_traits< DVOutputIterator >::value_type oType;
     static_assert( std::is_convertible< iType, oType >::value, "Input and Output iterators are incompatible" );
+
+    typedef typename std::vector<iType>::iterator InputIterator;
+    typedef typename std::vector<oType>::iterator OutputIterator;
 
     unsigned int numElements = static_cast< unsigned int >( std::distance( first, last ) );
     if( numElements < 1 )
         return result;
 
-    const bolt::amp::control::e_RunMode runMode = ctl.forceRunMode( );  // could be dynamic choice some day.
+    const bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode( );  // could be dynamic choice some day.
     if( runMode == bolt::amp::control::SerialCpu )
     {
-        //  TODO:  Need access to the device_vector .data method to get a host pointer
-        throw ::cl::Error( CL_INVALID_DEVICE, "Scan device_vector CPU device not implemented" );
+       std::vector<iType> scanInputBuffer(numElements);
+       std::vector<oType> scanResultBuffer(numElements);
+
+        for(unsigned int index=0; index<numElements; index++){
+            scanInputBuffer[index] = first.getBuffer()[index];
+            scanResultBuffer[index] = result.getBuffer()[index];
+        }
+        Serial_scan<iType, oType, BinaryFunction, T>(&(scanInputBuffer[0]), &(scanResultBuffer[0]),
+                                                     numElements, binary_op, inclusive, init);
+        for(unsigned int index=0; index<numElements; index++){
+            first.getBuffer()[index] = scanInputBuffer[index];
+            result.getBuffer()[index] = scanResultBuffer[index];
+        }
         return result;
     }
     else if( runMode == bolt::amp::control::MultiCoreCpu )
     {
-        //  TODO:  Need access to the device_vector .data method to get a host pointer
-        throw ::cl::Error( CL_INVALID_DEVICE, "Scan device_vector CPU device not implemented" );
+
+#ifdef ENABLE_TBB
+        std::vector<iType> scanInputBuffer(numElements);
+        std::vector<oType> scanResultBuffer(numElements);
+
+        //Copy the device_vector buffer to a CPU buffer
+        for(unsigned int index=0; index<numElements; index++){
+            scanInputBuffer[index] = first.getBuffer()[index];
+            scanResultBuffer[index] = result.getBuffer()[index];
+        }
+        InputIterator input = scanInputBuffer.begin();
+        OutputIterator output = scanResultBuffer.begin();
+        tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
+        Scan_tbb<iType, BinaryFunction, InputIterator, OutputIterator> tbb_scan((InputIterator&)input, 
+                                                  (OutputIterator&)output, binary_op, inclusive, init);
+        tbb::parallel_scan( tbb::blocked_range<int>(  0, numElements), tbb_scan, tbb::auto_partitioner());
+        for(unsigned int index=0; index<numElements; index++){
+            first.getBuffer()[index] = scanInputBuffer[index];
+            result.getBuffer()[index] = scanResultBuffer[index];
+        }
         return result;
+#else
+//        std::cout << "The MultiCoreCpu version of Scan with device vector is not implemented yet." << std ::endl;
+        throw std::exception( "The MultiCoreCpu version of Scan with device vector is not enabled to be built." );
+        return result;
+#endif
+
+
+
+
     }
 
     //Now call the actual cl algorithm
@@ -462,17 +629,17 @@ size_t k0_stepNum, k1_stepNum, k2_stepNum;
     //concurrency::array_view< const iType >  hostInput( numElements, (iType *)&first[0] );
     //concurrency::array_view< const oType > hostOutput( numElements, (oType *)&result[0] );
 
-	//	Wrap our output data in an array_view, and discard input data so it is not transferred to device
+  //	Wrap our output data in an array_view, and discard input data so it is not transferred to device
     //  Use of the auto keyword here is OK, because AMP is restricted by definition to vs11 or above
     //  The auto keyword is useful here in a polymorphic sense, because it does not care if the container
     //  is wrapping an array or an array_view
-	auto&  input = first.getBuffer(); //( numElements, av );
+  auto&  input = first.getBuffer(); //( numElements, av );
     auto& output = result.getBuffer(); //( sizeInputBuff, av );
     input.get_extent().size();
-	//hostInput.copy_to( input.section( concurrency::extent< 1 >( numElements ) ) );
+  //hostInput.copy_to( input.section( concurrency::extent< 1 >( numElements ) ) );
 
-	//	Loop to calculate the inclusive scan of each individual tile, and output the block sums of every tile
-	//	This loop is inherently parallel; every tile is independant with potentially many wavefronts
+  //	Loop to calculate the inclusive scan of each individual tile, and output the block sums of every tile
+  //	This loop is inherently parallel; every tile is independant with potentially many wavefronts
 #ifdef BOLT_ENABLE_PROFILING
 aProfiler.nextStep();
 k0_stepNum = aProfiler.getStepNum();
@@ -485,7 +652,7 @@ aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(iType) + 1*sizeScanBuf
     concurrency::extent< 1 > globalSizeK0( sizeInputBuff );
     concurrency::tiled_extent< kernel0_WgSize > tileK0 = globalSizeK0.tile< kernel0_WgSize >();
     std::cout << "Kernel 0 Launching w/ " << sizeInputBuff << " threads for " << numElements << " elements. " << std::endl;
-	concurrency::parallel_for_each( av, tileK0, //output.extent.tile< kernel0_WgSize >(),
+  concurrency::parallel_for_each( av, tileK0, //output.extent.tile< kernel0_WgSize >(),
         [
             output,
             input,
@@ -496,7 +663,7 @@ aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(iType) + 1*sizeScanBuf
             exclusive,
             kernel0_WgSize
         ] ( concurrency::tiled_index< kernel0_WgSize > t_idx ) restrict(amp)
-	{
+  {
         unsigned int gloId = t_idx.global[ 0 ];
         unsigned int groId = t_idx.tile[ 0 ];
         unsigned int locId = t_idx.local[ 0 ];
@@ -555,7 +722,7 @@ aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(iType) + 1*sizeScanBuf
             preSumArray[ groId ] = lds[ wgSize-1 ];
         }
 
-	} );
+  } );
     std::cout << "Kernel 0 Done" << std::endl;
     PEEK_AT( output )
 
@@ -624,7 +791,7 @@ aProfiler.set(AsyncProfiler::memory, 4*sizeScanBuff*sizeof(oType));
     concurrency::extent< 1 > globalSizeK1( sizeScanBuff );
     concurrency::tiled_extent< kernel1_WgSize > tileK1 = globalSizeK1.tile< kernel1_WgSize >();
     std::cout << "Kernel 1 Launching w/" << sizeScanBuff << " threads for " << numWorkGroupsK0 << " elements. " << std::endl;
-	concurrency::parallel_for_each( av, tileK1,
+  concurrency::parallel_for_each( av, tileK1,
         [
             &postSumArray,
             &preSumArray,
@@ -633,7 +800,7 @@ aProfiler.set(AsyncProfiler::memory, 4*sizeScanBuff*sizeof(oType));
             binary_op,
             kernel1_WgSize
         ] ( concurrency::tiled_index< kernel1_WgSize > t_idx ) restrict(amp)
-	{
+  {
         unsigned int gloId = t_idx.global[ 0 ];
         unsigned int groId = t_idx.tile[ 0 ];
         unsigned int locId = t_idx.local[ 0 ];
@@ -774,7 +941,7 @@ aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(oType) + 1*sizeScanBuf
             binary_op,
             kernel2_WgSize
         ] ( concurrency::tiled_index< kernel2_WgSize > t_idx ) restrict(amp)
-	{
+  {
         unsigned int gloId = t_idx.global[ 0 ];
         unsigned int groId = t_idx.tile[ 0 ];
         unsigned int locId = t_idx.local[ 0 ];
@@ -800,7 +967,7 @@ aProfiler.setDataSize(numElements*sizeof(oType));
 #endif
 
     // concurrency::array_view< oType > hostOutput( static_cast< int >( numElements ), (oType *)&result[ 0 ] );
-	// hostOutput.discard_data( );
+  // hostOutput.discard_data( );
     // output.section( Concurrency::extent< 1 >( numElements ) ).copy_to( hostOutput );
     // output.copy_to( hostOutput.section( concurrency::extent< 1 >( numElements ) ) );
 
@@ -846,123 +1013,121 @@ aProfiler.stopTrial();
 
 namespace bolt {
 
-	const int scanMultiCpuThreshold	= 4; // FIXME, artificially low to force use of GPU
-	const int scanGpuThreshold		= 8; // FIXME, artificially low to force use of GPU
-	const int maxThreadsInTile		= 1024;
-	const int maxTilesPerDim		= 65535;
-	const int maxTilesPerPFE		= maxThreadsInTile*maxTilesPerDim;
+  const int scanMultiCpuThreshold	= 4; // FIXME, artificially low to force use of GPU
+  const int scanGpuThreshold		= 8; // FIXME, artificially low to force use of GPU
+  const int maxThreadsInTile		= 1024;
+  const int maxTilesPerDim		= 65535;
+  const int maxTilesPerPFE		= maxThreadsInTile*maxTilesPerDim;
 
-	//	Work routine for inclusive_scan that contains a compile time constant size
-	template< typename InputIterator, typename OutputIterator, typename BinaryFunction >
-	OutputIterator
-		inclusive_scan( const concurrency::accelerator_view& av, InputIterator first, InputIterator last, 
-		OutputIterator result, BinaryFunction binary_op )
-	{
+  //	Work routine for inclusive_scan that contains a compile time constant size
+  template< typename InputIterator, typename OutputIterator, typename BinaryFunction >
+  OutputIterator
+    inclusive_scan( const concurrency::accelerator_view& av, InputIterator first, InputIterator last, 
+    OutputIterator result, BinaryFunction binary_op )
+  {
 //		typedef seqTrait< InputIterator > Trait;
-		//typedef seqTrait< std::vector< int > > Trait;
-		//if( !Trait::seqPointer )
-		//{
-		//	throw std::domain_error( "Scan requires iterators that guarantee values in sequential memory layout" );
-		//}
+    //typedef seqTrait< std::vector< int > > Trait;
+    //if( !Trait::seqPointer )
+    //{
+    //	throw std::domain_error( "Scan requires iterators that guarantee values in sequential memory layout" );
+    //}
 
-		unsigned int numElements = static_cast< unsigned int >( std::distance( first, last ) );
+    unsigned int numElements = static_cast< unsigned int >( std::distance( first, last ) );
 
-		if( numElements < scanMultiCpuThreshold )
-		{
-			//	Serial CPU implementation
-			return std::partial_sum( first, last, result, binary_op);
-		} 
-		else if( numElements < scanGpuThreshold )
-		{
-			//	Implement this in TBB as tbb::parallel_scan( range, body )
-			//	Does not appear to have an implementation in PPL
-			//	TODO: Bring in the dependency to TBB and replace this STD call
-			return std::partial_sum( first, last, result, binary_op);
-		}
-		else
-		{
-			// FIXME - determine from HSA Runtime 
-			// - based on est of how many threads needed to hide memory latency.
-			static const unsigned int waveSize  = 64; // FIXME, read from device attributes.
-			static_assert( (waveSize & (waveSize-1)) == 0, "Scan depends on wavefronts being a power of 2" );
-			
-			//	AMP code can not read size_t as input, need to cast to int
-			//	Note: It would be nice to have 'constexpr' here, then we could use tileSize as the extent dimension
-			unsigned int tileSize = std::min(  numElements, waveSize );
+    if( numElements < scanMultiCpuThreshold )
+    {
+      //	Serial CPU implementation
+      return std::partial_sum( first, last, result, binary_op);
+    } 
+    else if( numElements < scanGpuThreshold )
+    {
+      //	Implement this in TBB as tbb::parallel_scan( range, body )
+      //	Does not appear to have an implementation in PPL
+      //	TODO: Bring in the dependency to TBB and replace this STD call
+      return std::partial_sum( first, last, result, binary_op);
+    }
+    else
+    {
+      // FIXME - determine from HSA Runtime 
+      // - based on est of how many threads needed to hide memory latency.
+      static const unsigned int waveSize  = 64; // FIXME, read from device attributes.
+      static_assert( (waveSize & (waveSize-1)) == 0, "Scan depends on wavefronts being a power of 2" );
+      
+      //	AMP code can not read size_t as input, need to cast to int
+      //	Note: It would be nice to have 'constexpr' here, then we could use tileSize as the extent dimension
+      unsigned int tileSize = std::min(  numElements, waveSize );
 
-			//int computeUnits		= 10; // FIXME - determine from HSA Runtime
-			//int wgPerComputeUnit	=  6;
-			unsigned int sizeDeviceBuff = numElements;
-			size_t modWaveFront = (numElements & (waveSize-1));
-			if( modWaveFront )
-			{
-				sizeDeviceBuff &= ~modWaveFront;
-				sizeDeviceBuff += waveSize;
-			}
-			unsigned int numWorkGroups = sizeDeviceBuff / waveSize;
-			unsigned int sizeScanBuff = numWorkGroups;
-			modWaveFront = (sizeScanBuff & (waveSize-1));
-			if( modWaveFront )
-			{
-				sizeScanBuff &= ~modWaveFront;
-				sizeScanBuff += waveSize;
-			}
+      //int computeUnits		= 10; // FIXME - determine from HSA Runtime
+      //int wgPerComputeUnit	=  6;
+      unsigned int sizeDeviceBuff = numElements;
+      size_t modWaveFront = (numElements & (waveSize-1));
+      if( modWaveFront )
+      {
+        sizeDeviceBuff &= ~modWaveFront;
+        sizeDeviceBuff += waveSize;
+      }
+      unsigned int numWorkGroups = sizeDeviceBuff / waveSize;
+      unsigned int sizeScanBuff = numWorkGroups;
+      modWaveFront = (sizeScanBuff & (waveSize-1));
+      if( modWaveFront )
+      {
+        sizeScanBuff &= ~modWaveFront;
+        sizeScanBuff += waveSize;
+      }
 
-			//	Wrap our input data in an array_view, and mark it const so data is not read back from device
-			typedef std::iterator_traits< InputIterator >::value_type iType;
-			typedef std::iterator_traits< OutputIterator >::value_type oType;
-
-
+      //	Wrap our input data in an array_view, and mark it const so data is not read back from device
+      typedef std::iterator_traits< InputIterator >::value_type iType;
+      typedef std::iterator_traits< OutputIterator >::value_type oType;
 
 
 
 
-			concurrency::array_view< const iType > hostInput( static_cast< int >( numElements ), &first[ 0 ] );
-
-			//	Wrap our output data in an array_view, and discard input data so it is not transferred to device
-			concurrency::array< iType > deviceInput( sizeDeviceBuff, av );
-			hostInput.copy_to( deviceInput.section( concurrency::extent< 1 >( numElements ) ) );
-
-			concurrency::array< oType > deviceOutput( sizeDeviceBuff, av );
-			concurrency::array< oType > scanBuffer( sizeScanBuff, av );
-
-			//	Loop to calculate the inclusive scan of each individual tile, and output the block sums of every tile
-			//	This loop is inherently parallel; every tile is independant with potentially many wavefronts
-			concurrency::parallel_for_each( av, deviceOutput.extent.tile< waveSize >(), [&deviceOutput, &deviceInput, &scanBuffer, tileSize, binary_op]( concurrency::tiled_index< waveSize > idx ) restrict(amp)
-			{
-				tile_static iType LDS[ waveSize + ( waveSize / 2 ) ];
-
-				int localID		= idx.local[ 0 ];
-				int globalID	= idx.global[ 0 ];
-
-				//	Initialize the padding to 0, for when the scan algorithm looks left.  
-				//	Then bump the LDS pointer past the extra padding.
-				LDS[ localID ] = 0;
-				iType* pLDS = LDS + ( waveSize / 2 );
-
-				iType val = deviceInput[ globalID ];
-				pLDS[ localID ] = val;
-
-				//	This loop essentially computes a scan within a tile, read from global memory.  No communication with other tiles yet.
-				iType sum = val;
-				for( unsigned int offset = 1; offset < tileSize; offset *= 2 )
-				{
-					iType y = pLDS[ localID - offset ];
-					sum = binary_op( sum, y );
-					pLDS[ localID ] = sum;
-				}
-
-				//	Write out the values of the per-tile scan
-				deviceOutput[ globalID ] = sum;
-
-				//	Take the very last thread in a tile, and save its value into a buffer for further processing
-				if( localID == (waveSize-1) )
-				{
-					scanBuffer[ idx.tile[ 0 ] ] = pLDS[ localID ];
-				}
-			} );
 
 
+      concurrency::array_view< const iType > hostInput( static_cast< int >( numElements ), &first[ 0 ] );
+
+      //	Wrap our output data in an array_view, and discard input data so it is not transferred to device
+      concurrency::array< iType > deviceInput( sizeDeviceBuff, av );
+      hostInput.copy_to( deviceInput.section( concurrency::extent< 1 >( numElements ) ) );
+
+      concurrency::array< oType > deviceOutput( sizeDeviceBuff, av );
+      concurrency::array< oType > scanBuffer( sizeScanBuff, av );
+
+      //	Loop to calculate the inclusive scan of each individual tile, and output the block sums of every tile
+      //	This loop is inherently parallel; every tile is independant with potentially many wavefronts
+      concurrency::parallel_for_each( av, deviceOutput.extent.tile< waveSize >(), [&deviceOutput, &deviceInput, &scanBuffer, tileSize, binary_op]( concurrency::tiled_index< waveSize > idx ) restrict(amp)
+      {
+        tile_static iType LDS[ waveSize + ( waveSize / 2 ) ];
+
+        int localID		= idx.local[ 0 ];
+        int globalID	= idx.global[ 0 ];
+
+        //	Initialize the padding to 0, for when the scan algorithm looks left.  
+        //	Then bump the LDS pointer past the extra padding.
+        LDS[ localID ] = 0;
+        iType* pLDS = LDS + ( waveSize / 2 );
+
+        iType val = deviceInput[ globalID ];
+        pLDS[ localID ] = val;
+
+        //	This loop essentially computes a scan within a tile, read from global memory.  No communication with other tiles yet.
+        iType sum = val;
+        for( unsigned int offset = 1; offset < tileSize; offset *= 2 )
+        {
+          iType y = pLDS[ localID - offset ];
+          sum = binary_op( sum, y );
+          pLDS[ localID ] = sum;
+        }
+
+        //	Write out the values of the per-tile scan
+        deviceOutput[ globalID ] = sum;
+
+        //	Take the very last thread in a tile, and save its value into a buffer for further processing
+        if( localID == (waveSize-1) )
+        {
+          scanBuffer[ idx.tile[ 0 ] ] = pLDS[ localID ];
+        }
+      } );
 
 
 
@@ -974,122 +1139,124 @@ namespace bolt {
 
 
 
-			std::vector< oType > scanData( sizeScanBuff );
-			scanData = scanBuffer;
-			concurrency::array< oType > exclusiveBuffer( sizeScanBuff, av );
 
-			//	Loop to calculate the exclusive scan of the block sums buffer
-			//	This loop is inherently serial; we need to calculate the exclusive scan of a single 'array'
-			//	This loop serves as a 'reduction' in spirit, and is calculated in a single wavefront
-			//	NOTE: TODO:  On an APU, it might be more efficient to calculate this on CPU
-			tileSize = static_cast< unsigned int >( std::min( numWorkGroups, waveSize ) );
-			unsigned int workPerThread = sizeScanBuff / waveSize;
-			concurrency::parallel_for_each( av, concurrency::extent<1>( waveSize ).tile< waveSize >(), [&scanBuffer, &exclusiveBuffer, tileSize, workPerThread, binary_op]( concurrency::tiled_index< waveSize > idx ) restrict(amp)
-			{
-				tile_static oType LDS[ waveSize + ( waveSize / 2 ) ];
 
-				int localID		= idx.local[ 0 ];
-				int globalID	= idx.global[ 0 ];
-				int mappedID	= globalID * workPerThread;
+      std::vector< oType > scanData( sizeScanBuff );
+      scanData = scanBuffer;
+      concurrency::array< oType > exclusiveBuffer( sizeScanBuff, av );
 
-				//	Initialize the padding to 0, for when the scan algorithm looks left.  
-				//	Then bump the LDS pointer past the extra padding.
-				LDS[ localID ] = 0;
-				oType* pLDS = LDS + ( waveSize / 2 );
+      //	Loop to calculate the exclusive scan of the block sums buffer
+      //	This loop is inherently serial; we need to calculate the exclusive scan of a single 'array'
+      //	This loop serves as a 'reduction' in spirit, and is calculated in a single wavefront
+      //	NOTE: TODO:  On an APU, it might be more efficient to calculate this on CPU
+      tileSize = static_cast< unsigned int >( std::min( numWorkGroups, waveSize ) );
+      unsigned int workPerThread = sizeScanBuff / waveSize;
+      concurrency::parallel_for_each( av, concurrency::extent<1>( waveSize ).tile< waveSize >(), [&scanBuffer, &exclusiveBuffer, tileSize, workPerThread, binary_op]( concurrency::tiled_index< waveSize > idx ) restrict(amp)
+      {
+        tile_static oType LDS[ waveSize + ( waveSize / 2 ) ];
 
-				//	Begin the loop reduction
-				oType workSum = 0;
-				for( unsigned int offset = 0; offset < workPerThread; offset += 1 )
-				{
-					oType y = scanBuffer[ mappedID + offset ];
-					workSum = binary_op( workSum, y );
-					exclusiveBuffer[ mappedID + offset ] = workSum;
-				}
-				pLDS[ localID ] = workSum;
+        int localID		= idx.local[ 0 ];
+        int globalID	= idx.global[ 0 ];
+        int mappedID	= globalID * workPerThread;
 
-				//	This loop essentially computes an exclusive scan within a tile, writing 0 out for first element.
-				oType scanSum = workSum;
-				for( unsigned int offset = 1; offset < tileSize; offset *= 2 )
-				{
-					oType y = pLDS[ localID - offset ];
-					scanSum = binary_op( scanSum, y );
-					pLDS[ localID ] = scanSum;
-				}
+        //	Initialize the padding to 0, for when the scan algorithm looks left.  
+        //	Then bump the LDS pointer past the extra padding.
+        LDS[ localID ] = 0;
+        oType* pLDS = LDS + ( waveSize / 2 );
 
-				idx.barrier.wait( );
+        //	Begin the loop reduction
+        oType workSum = 0;
+        for( unsigned int offset = 0; offset < workPerThread; offset += 1 )
+        {
+          oType y = scanBuffer[ mappedID + offset ];
+          workSum = binary_op( workSum, y );
+          exclusiveBuffer[ mappedID + offset ] = workSum;
+        }
+        pLDS[ localID ] = workSum;
 
-				//	Write out the values of the per-tile scan
-				scanSum -= workSum;
+        //	This loop essentially computes an exclusive scan within a tile, writing 0 out for first element.
+        oType scanSum = workSum;
+        for( unsigned int offset = 1; offset < tileSize; offset *= 2 )
+        {
+          oType y = pLDS[ localID - offset ];
+          scanSum = binary_op( scanSum, y );
+          pLDS[ localID ] = scanSum;
+        }
+
+        idx.barrier.wait( );
+
+        //	Write out the values of the per-tile scan
+        scanSum -= workSum;
 //				scanBuffer[ mappedID ] = scanSum;
-				for( unsigned int offset = 0; offset < workPerThread; offset += 1 )
-				{
-					oType y = exclusiveBuffer[ mappedID + offset ];
-					y = binary_op( y, scanSum );
-					y -= scanBuffer[ mappedID + offset ];
-					exclusiveBuffer[ mappedID + offset ] = y;
-				}
-			} );
+        for( unsigned int offset = 0; offset < workPerThread; offset += 1 )
+        {
+          oType y = exclusiveBuffer[ mappedID + offset ];
+          y = binary_op( y, scanSum );
+          y -= scanBuffer[ mappedID + offset ];
+          exclusiveBuffer[ mappedID + offset ] = y;
+        }
+      } );
 
 
-			scanData = exclusiveBuffer;
+      scanData = exclusiveBuffer;
 
-			//	Loop through the entire output array and add the exclusive scan back into the output array
-			concurrency::parallel_for_each( av, deviceOutput.extent.tile< waveSize >(), [&deviceOutput, &exclusiveBuffer, binary_op]( concurrency::tiled_index< waveSize > idx ) restrict(amp)
-			{
-				int globalID	= idx.global[ 0 ];
-				int tileID		= idx.tile[ 0 ];
+      //	Loop through the entire output array and add the exclusive scan back into the output array
+      concurrency::parallel_for_each( av, deviceOutput.extent.tile< waveSize >(), [&deviceOutput, &exclusiveBuffer, binary_op]( concurrency::tiled_index< waveSize > idx ) restrict(amp)
+      {
+        int globalID	= idx.global[ 0 ];
+        int tileID		= idx.tile[ 0 ];
 
-				//	Even though each wavefront threads access the same bank, it's the same location so there should not be bank conflicts
-				oType val = exclusiveBuffer[ tileID ];
+        //	Even though each wavefront threads access the same bank, it's the same location so there should not be bank conflicts
+        oType val = exclusiveBuffer[ tileID ];
 
-				//	Write out the values of the per-tile scan
-				oType y = deviceOutput[ globalID ];
-				deviceOutput[ globalID ] = binary_op( y, val );
-			} );
+        //	Write out the values of the per-tile scan
+        oType y = deviceOutput[ globalID ];
+        deviceOutput[ globalID ] = binary_op( y, val );
+      } );
 
-			concurrency::array_view< oType > hostOutput( static_cast< int >( numElements ), &result[ 0 ] );
-			hostOutput.discard_data( );
+      concurrency::array_view< oType > hostOutput( static_cast< int >( numElements ), &result[ 0 ] );
+      hostOutput.discard_data( );
 
-			deviceOutput.section( Concurrency::extent< 1 >( numElements ) ).copy_to( hostOutput );
+      deviceOutput.section( Concurrency::extent< 1 >( numElements ) ).copy_to( hostOutput );
 
-		};
+    };
 
-		return result + numElements;
-	};
+    return result + numElements;
+  };
 
-	/*
-	* This version of inclusive_scan defaults to disallow the use of iterators, unless a specialization exists below
-	*/
-	template< typename InputIterator, typename OutputIterator, typename BinaryFunction >
-	OutputIterator inclusive_scan( InputIterator begin, InputIterator end, OutputIterator result,
-		BinaryFunction binary_op, std::input_iterator_tag )
-	{
-		return inclusive_scan( concurrency::accelerator().default_view, begin, end, result, binary_op);
-	};
+  /*
+  * This version of inclusive_scan defaults to disallow the use of iterators, unless a specialization exists below
+  */
+  template< typename InputIterator, typename OutputIterator, typename BinaryFunction >
+  OutputIterator inclusive_scan( InputIterator begin, InputIterator end, OutputIterator result,
+    BinaryFunction binary_op, std::input_iterator_tag )
+  {
+    return inclusive_scan( concurrency::accelerator().default_view, begin, end, result, binary_op);
+  };
 
-	/*
-	* This version of inclusive_scan uses default accelerator
-	*/
-	template< typename InputIterator, typename OutputIterator, typename BinaryFunction > 
-	OutputIterator inclusive_scan( InputIterator first, InputIterator last, OutputIterator result, BinaryFunction binary_op )
-	{
+  /*
+  * This version of inclusive_scan uses default accelerator
+  */
+  template< typename InputIterator, typename OutputIterator, typename BinaryFunction > 
+  OutputIterator inclusive_scan( InputIterator first, InputIterator last, OutputIterator result, BinaryFunction binary_op )
+  {
 
-		return inclusive_scan( first, last, result, binary_op, std::iterator_traits< InputIterator >::iterator_category( ) );
-	};
+    return inclusive_scan( first, last, result, binary_op, std::iterator_traits< InputIterator >::iterator_category( ) );
+  };
 
-	/*
-	* This version of inclusive_scan uses a default plus<> as default argument.
-	*/
-	template< typename InputIterator, typename OutputIterator >
-	OutputIterator inclusive_scan( InputIterator first, InputIterator last, OutputIterator result )
-	{
-		typedef std::iterator_traits<InputIterator>::value_type T;
+  /*
+  * This version of inclusive_scan uses a default plus<> as default argument.
+  */
+  template< typename InputIterator, typename OutputIterator >
+  OutputIterator inclusive_scan( InputIterator first, InputIterator last, OutputIterator result )
+  {
+    typedef std::iterator_traits<InputIterator>::value_type T;
 
-		return inclusive_scan( first, last, result, bolt::plus< T >( ), std::iterator_traits< InputIterator >::iterator_category( ) );
-	};
+    return inclusive_scan( first, last, result, bolt::plus< T >( ), std::iterator_traits< InputIterator >::iterator_category( ) );
+  };
 
 
-	// still need more versions that take accelerator as first argument.
+  // still need more versions that take accelerator as first argument.
 
 
 }; // end namespace bolt

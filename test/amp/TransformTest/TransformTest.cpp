@@ -589,6 +589,13 @@ INSTANTIATE_TYPED_TEST_CASE_P( Float, TransformOutPlaceArrayTest, FloatTests );
 int main(int argc, char* argv[])
 {
     ::testing::InitGoogleTest( &argc, &argv[ 0 ] );
+
+    //    Set the standard OpenCL wait behavior to help debugging
+    bolt::amp::control& myControl = bolt::amp::control::getDefault( );
+    myControl.setWaitMode( bolt::amp::control::NiceWait );
+    myControl.setForceRunMode( bolt::amp::control::MultiCoreCpu );  // choose tbb
+
+
     int retVal = RUN_ALL_TESTS( );
 
     //  Reflection code to inspect how many tests failed in gTest

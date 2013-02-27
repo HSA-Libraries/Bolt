@@ -18,7 +18,7 @@
 #define TEST_DOUBLE 0
 #define TEST_DEVICE_VECTOR 1
 #define TEST_CPU_DEVICE 0
-#define TEST_MULTICORE_TBB_SORT 0
+#define TEST_MULTICORE_TBB_SORT 1
 #define TEST_AMP 1
 #define GOOGLE_TEST 1
 #if (GOOGLE_TEST == 1)
@@ -56,7 +56,7 @@ struct uddtD4
     double c;
     double d;
 
-    bool operator==(const uddtD4& rhs) const
+    bool operator==(const uddtD4& rhs) const restrict (amp,cpu)
     {
         bool equal = true;
         double th = 0.0000000001;
@@ -78,6 +78,7 @@ struct uddtD4
             equal = ( (1.0*d - rhs.d)/rhs.d < th && (1.0*d - rhs.d)/rhs.d > -th) ? equal : false;
         return equal;
     }
+
 };
 //);
 
@@ -85,7 +86,7 @@ struct uddtD4
 //BOLT_FUNCTOR(AddD4,
 struct AddD4
 {
-    bool operator()(const uddtD4 &lhs, const uddtD4 &rhs) const
+    bool operator()(const uddtD4 &lhs, const uddtD4 &rhs) const restrict (amp,cpu)
     {
 
         if( ( lhs.a + lhs.b + lhs.c + lhs.d ) > ( rhs.a + rhs.b + rhs.c + rhs.d) )
@@ -118,38 +119,52 @@ TEST(SortUDD, AddDouble4)
 TEST(SortUDD, MultiCoreAddDouble4)
 {
     //setup containers
-    int length = (1<<8);
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.forceRunMode(bolt::cl::control::MultiCoreCpu);
-    bolt::cl::device_vector< uddtD4 > input(  length, initialAddD4, CL_MEM_READ_WRITE, true  );
+    size_t length = (1<<16);
+    bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu); // tested with serial path also
+    bolt::amp::device_vector< uddtD4 > input(  length, initialAddD4);
     std::vector< uddtD4 > refInput( length, initialAddD4 );
     
     // call sort
     AddD4 ad4gt;
-    bolt::cl::sort(input.begin(), input.end(), ad4gt);
+    bolt::amp::sort(ctl, input.begin(), input.end(), ad4gt);
     std::sort( refInput.begin(), refInput.end(), ad4gt );
 
     // compare results
     cmpArrays(refInput, input);
 }
 
-TEST(SortUDD, GPUAddDouble4)
+TEST( MultiCoreCPU, MultiCoreFloat )
 {
-    Concurrency::accelerator accel(Concurrency::accelerator::default_accelerator);
-    bolt::amp::control c_gpu( accel );  // construct control structure from the queue.
-    //setup containers
-    int length = (1<<8);
-    bolt::amp::device_vector< uddtD4 > input(  length, initialAddD4, true );
-    std::vector< uddtD4 > refInput( length, initialAddD4 );
+    size_t length = 1<<16;
+    bolt::amp::device_vector< float > boltInput(  length, 3.f);
+    std::vector< float > stdInput( length, 3.f );
 
-    // call sort
-    AddD4 ad4gt;
-    bolt::amp::sort(c_gpu, input.begin(), input.end(), ad4gt );
-    std::sort( refInput.begin(), refInput.end(), ad4gt );
+    bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu); // tested with serial path also
+    //  Calling the actual functions under test
+    std::sort( stdInput.begin( ), stdInput.end( ));
+    bolt::amp::sort( ctl, boltInput.begin( ), boltInput.end( ) );
 
-    // compare results
-    cmpArrays(refInput, input);
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+
+}
+TEST( MultiCoreCPU, MultiCoreNormal )
+{
+    size_t length = 1<<16;
+    std::vector< float > boltInput( length, 2.f );
+    std::vector< float > stdInput( length, 2.f );
+
+    bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu); // tested with serial path also
+    //  Calling the actual functions under test
+    std::sort( stdInput.begin( ), stdInput.end( ));
+    bolt::amp::sort( ctl, boltInput.begin( ), boltInput.end( ) );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+
 }
 #endif 
 
@@ -429,7 +444,7 @@ REGISTER_TYPED_TEST_CASE_P( SortArrayTest, Normal, GPU_DeviceNormal,
 #endif
 
 #if (TEST_MULTICORE_TBB_SORT == 1)
-REGISTER_TYPED_TEST_CASE_P( SortArrayTest, MultiCoreNormal ); 
+//REGISTER_TYPED_TEST_CASE_P( SortArrayTest, MultiCoreNormal ); 
 #endif
 
 typedef ::testing::Types< 
