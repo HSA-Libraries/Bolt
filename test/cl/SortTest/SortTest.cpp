@@ -86,9 +86,13 @@ struct AddD4
     };
 }; 
 );
+BOLT_CREATE_TYPENAME( bolt::cl::device_vector< AddD4 >::iterator );
+BOLT_CREATE_CLCODE( bolt::cl::device_vector< AddD4 >::iterator, bolt::cl::deviceVectorIteratorTemplate );
+
 uddtD4 identityAddD4 = { 1.0, 1.0, 1.0, 1.0 };
 uddtD4 initialAddD4  = { 1.00001, 1.000003, 1.0000005, 1.00000007 };
 BOLT_CREATE_TYPENAME( bolt::cl::device_vector< uddtD4 >::iterator );
+BOLT_CREATE_CLCODE( bolt::cl::device_vector< uddtD4 >::iterator, bolt::cl::deviceVectorIteratorTemplate );
 
 TEST(SortUDD, AddDouble4)
 {
@@ -210,7 +214,7 @@ TEST(MultiCoreCPU, MultiCoreAddDouble4)
 
 TEST( MultiCoreCPU, MultiCoreNormal )
 {
-    int length = 1098376;
+    int length = 1025;
     bolt::cl::device_vector< float > boltInput(  length, 0.0, CL_MEM_READ_WRITE, true  );
     std::vector< float > stdInput( length, 0.0 );
 
@@ -319,6 +323,7 @@ TYPED_TEST_P( SortArrayTest, GPU_DeviceGreaterFunction )
     //  by the default control device
     ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
     std::vector< cl::Device > devices = myContext.getInfo< CL_CONTEXT_DEVICES >();
+
     ::cl::CommandQueue myQueue( myContext, devices[ 0 ] );
     bolt::cl::control c_gpu( myQueue );  // construct control structure from the queue.
 
