@@ -27,10 +27,10 @@ set( ampBolt.Runtime.Source
 set( ampBolt.Runtime.Headers 
 		${ampBolt.Include.Dir}/bolt.h 
 		${ampBolt.Include.Dir}/control.h 
-    ${ampBolt.Include.Dir}/count.h
+        ${ampBolt.Include.Dir}/count.h
 		${ampBolt.Include.Dir}/device_vector.h 
 		${ampBolt.Include.Dir}/functional.h 
-    ${ampBolt.Include.Dir}/iterator/iterator_traits.h
+        ${ampBolt.Include.Dir}/iterator/iterator_traits.h
 		${ampBolt.Include.Dir}/parallel_iteration.h 
 		${ampBolt.Include.Dir}/pool_alloc.h 
 		${ampBolt.Include.Dir}/reduce.h 
@@ -46,7 +46,7 @@ set( ampBolt.Runtime.Headers
     )
 
   set( ampBolt.Runtime.Headers.Detail
-         	${ampBolt.Include.Dir}/detail/reduce.inl
+        ${ampBolt.Include.Dir}/detail/reduce.inl
 		${ampBolt.Include.Dir}/detail/scan.inl
 		${ampBolt.Include.Dir}/detail/scan_by_key.inl
         ${ampBolt.Include.Dir}/detail/sort.inl        
@@ -99,7 +99,7 @@ install( FILES
 install( FILES
             ${ampBolt.Runtime.Headers.Detail}
         DESTINATION
-            ${INCLUDE_DIR}/bolt/cl/detail )
+            ${INCLUDE_DIR}/bolt/amp/detail )
 
 # CPack configuration; include the executable into the package
 install( TARGETS ampBolt.Runtime
