@@ -411,6 +411,7 @@ public:
           template<typename Tag>
           void operator()( const tbb::blocked_range<int>& r, Tag ) {
              T temp = sum;
+             printf("............\n");
              for(int i=r.begin(); i<r.end(); ++i ) {
                  if(Tag::is_final_scan()){
                      if(!inclusive){
@@ -519,20 +520,20 @@ aProfiler.setDataSize(numElements*sizeof(iType));
 aProfiler.stopTrial();
 #endif
 
-                return result;
+                return result + numElements;
             }
             else if( runMode == bolt::cl::control::MultiCoreCpu )
             {
 #ifdef ENABLE_TBB
-          tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
-          Scan_tbb<iType, BinaryFunction, InputIterator, OutputIterator> tbb_scan((InputIterator &)first,(OutputIterator &)
+               tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
+               Scan_tbb<iType, BinaryFunction, InputIterator, OutputIterator> tbb_scan((InputIterator &)first,(OutputIterator &)
                                                                          result,binary_op,inclusive,init);
-          tbb::parallel_scan( tbb::blocked_range<int>(  0, static_cast< int >( std::distance( first, last ))), tbb_scan, tbb::auto_partitioner());
-          return tbb_scan.y;
+               tbb::parallel_scan( tbb::blocked_range<int>(  0, static_cast< int >( std::distance( first, last ))), tbb_scan, tbb::auto_partitioner());
+               return result + numElements;
 #else
-        std::cout << "The MultiCoreCpu version of Scan is not implemented yet." << std ::endl;
-        throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of Scan is not enabled to be built." ); 
-        return result;
+               std::cout << "The MultiCoreCpu version of Scan is not implemented yet." << std ::endl;
+               throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of Scan is not enabled to be built." ); 
+               return result;
 #endif
             }
             else
@@ -595,7 +596,7 @@ aProfiler.set(AsyncProfiler::memory, numElements*sizeof(iType));
                 ctrl.commandQueue().enqueueUnmapMemObject(first.getBuffer(), scanInputBuffer);
                 ctrl.commandQueue().enqueueUnmapMemObject(result.getBuffer(), scanResultBuffer);
                 
-                return result;
+                return result + numElements;
             }
             else if( runMode == bolt::cl::control::MultiCoreCpu )
             {
@@ -613,16 +614,17 @@ aProfiler.set(AsyncProfiler::memory, numElements*sizeof(iType));
                 tbb::parallel_scan( tbb::blocked_range<int>(  0, numElements), tbb_scan, tbb::auto_partitioner());
                 ctrl.commandQueue().enqueueUnmapMemObject(first.getBuffer(), scanInputBuffer);
                 ctrl.commandQueue().enqueueUnmapMemObject(result.getBuffer(), scanResultBuffer);
-                return result;
+                return result + numElements;
 #else
                 std::cout << "The MultiCoreCpu version of Scan with device vector is not implemented yet." << std ::endl;
                 throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of Scan with device vector is not enabled to be built." ); 
                 return result;
 #endif
             }
-
+            else{
             //Now call the actual cl algorithm
-            scan_enqueue( ctrl, first, last, result, init, binary_op, inclusive );
+               scan_enqueue( ctrl, first, last, result, init, binary_op, inclusive );
+            }
 
             return result + numElements;
 }
@@ -646,12 +648,22 @@ aProfiler.set(AsyncProfiler::memory, numElements*sizeof(iType));
             const bolt::cl::control::e_RunMode runMode = ctl.forceRunMode( );  // could be dynamic choice some day.
             if( runMode == bolt::cl::control::SerialCpu )
             {
-                std::partial_sum( first, last, result, binary_op );
-                return result;
+                Serial_scan<iType, oType, BinaryFunction, T>(&(*fancyFirst), &(*result), numElements, binary_op, inclusive, init);
+                return result + numElements;
             }
             else if( runMode == bolt::cl::control::MultiCoreCpu )
             {
-                std::cout << "The MultiCoreCpu version of inclusive_scan is not implemented yet." << std ::endl;
+#ifdef ENABLE_TBB
+               tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
+               Scan_tbb<iType, BinaryFunction, InputIterator, OutputIterator> tbb_scan((InputIterator &)fancyFirst,(OutputIterator &)
+                                                                         result,binary_op,inclusive,init);
+               tbb::parallel_scan( tbb::blocked_range<int>(  0, static_cast< int >( std::distance( first, last ))), tbb_scan, tbb::auto_partitioner());
+               return result + numElements;
+#else
+               std::cout << "The MultiCoreCpu version of Scan is not implemented yet." << std ::endl;
+               throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of Scan is not enabled to be built." ); 
+               return result;
+#endif
             }
             else
             {
