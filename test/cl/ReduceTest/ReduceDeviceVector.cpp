@@ -107,10 +107,10 @@ void testdoubleTBB()
         tbbInput[i] = 3.0;
     };
 
-    double hSum = std::accumulate(stdInput.begin(), stdInput.end(), 1);
+    double hSum = std::accumulate(stdInput.begin(), stdInput.end(), 1.0);
     bolt::cl::control ctl = bolt::cl::control::getDefault();
     ctl.forceRunMode(bolt::cl::control::MultiCoreCpu);
-    double sum = bolt::cl::reduce(ctl, tbbInput.begin(), tbbInput.end(), 1);
+    double sum = bolt::cl::reduce(ctl, tbbInput.begin(), tbbInput.end(), 1.0);
     if(hSum == sum)
         printf ("\nTBB Test case PASSED %lf %lf\n", hSum, sum);
     else
@@ -147,6 +147,7 @@ void testUDDTBB()
         
 }
 
+
 void testTBBDevicevector()
 {
     const int aSize = 1024;
@@ -170,3 +171,4 @@ void testTBBDevicevector()
 
 
 };
+

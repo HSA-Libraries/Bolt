@@ -31,8 +31,8 @@
 #include <gtest/gtest.h>
 #include <type_traits>
 
-#include "common/myocl.h"
 #include "common/test_common.h"
+#include "common/myocl.h"
 #include "bolt/miniDump.h"
 
 
@@ -1033,7 +1033,7 @@ struct UDDplus
 TEST( ReduceUDD , UDDPlusOperatorInts )
 {
     //setup containers
-    int length = 1024;
+    unsigned int length = 1024;
     std::vector< UDD > refInput( length );
     for( unsigned int i = 0; i < length ; i++ )
     {
@@ -1054,6 +1054,52 @@ TEST( ReduceUDD , UDDPlusOperatorInts )
     EXPECT_EQ(boltReduce,stdReduce);
 
 }
+
+
+TEST( Reduceint , KcacheTest )
+{
+    //setup containers
+    unsigned int length = 1024;
+    std::vector< int > refInput( length );
+    for( unsigned int i = 0; i < length ; i++ )
+    {
+      refInput[i] = i;
+      refInput[i] = i+1;
+    }
+
+    //Call reduce with GPU device because the default is a GPU device
+    bolt::cl::control ctrl = bolt::cl::control::getDefault();
+    bolt::cl::device_vector< int >gpuInput( refInput.begin(), refInput.end() );
+
+    int initzero = 0;
+    int boltReduceGpu = bolt::cl::reduce( ctrl, gpuInput.begin(), gpuInput.end(), initzero );
+
+    //Call reduce with CPU device
+    ::cl::Context cpuContext(CL_DEVICE_TYPE_CPU);
+    std::vector< cl::Device > devices = cpuContext.getInfo< CL_CONTEXT_DEVICES >();
+    cl::Device selectedDevice;
+
+    for(std::vector< cl::Device >::iterator iter = devices.begin();iter < devices.end(); iter++)
+    {
+        if(iter->getInfo<CL_DEVICE_TYPE> ( ) == CL_DEVICE_TYPE_CPU) 
+        {
+            selectedDevice = *iter;
+            break;
+        }
+    }
+    ::cl::CommandQueue myQueue( cpuContext, selectedDevice );
+    bolt::cl::control cpu_ctrl( myQueue );  // construct control structure from the queue.
+    bolt::cl::device_vector< int > cpuInput( refInput.begin(), refInput.end() );
+
+    int boltReduceCpu = bolt::cl::reduce( cpu_ctrl, cpuInput.begin(), cpuInput.end(), initzero );
+
+    //Call reference code
+    int stdReduce =  std::accumulate( refInput.begin(), refInput.end(), initzero );
+    EXPECT_EQ(boltReduceGpu,stdReduce);
+    EXPECT_EQ(boltReduceCpu,stdReduce);
+}
+
+
 
 INSTANTIATE_TYPED_TEST_CASE_P( Integer, ReduceArrayTest, IntegerTests );
 INSTANTIATE_TYPED_TEST_CASE_P( Float, ReduceArrayTest, FloatTests );
@@ -1155,7 +1201,7 @@ void simpleReduce_TestControl(int aSize, int numIters, int deviceIndex)
 
     //printContext(c.context());
 
-    c.debug(bolt::cl::control::debug::Compile + bolt::cl::control::debug::SaveCompilerTemps);
+    //c.debug(bolt::cl::control::debug::Compile + bolt::cl::control::debug::SaveCompilerTemps);
 
     int stlReduce = std::accumulate(A.begin(), A.end(), 0);
     int boltReduce = 0;
@@ -1187,10 +1233,10 @@ void simpleReduce_TestSerial(int aSize)
     bolt::cl::control c;  // construct control structure from the queue.
     c.forceRunMode(bolt::cl::control::SerialCpu);
 
-    int stlReduce = std::accumulate(A.begin(), A.end(), 0);
+    int stlReduce = std::accumulate(A.begin(), A.end(),0);
     int boltReduce = 0;
 
-    boltReduce = bolt::cl::reduce(c, A.begin(), A.end(), 0);
+    boltReduce = bolt::cl::reduce(c, A.begin(), A.end());
 
 
     checkResult("TestSerial", stlReduce, boltReduce);
@@ -1236,6 +1282,7 @@ int _tmain(int argc, _TCHAR* argv[])
     testUDDTBB();
     testTBBDevicevector();
 #endif
+
     testDeviceVector();
     int numIters = 100;
     simpleReduce_TestControl(1024000, numIters, 0);
