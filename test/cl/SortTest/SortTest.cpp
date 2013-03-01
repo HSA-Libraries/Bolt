@@ -72,7 +72,6 @@ struct uddtD4
     }
 };
 );
-
 // Functor for UDD. Adds all four double elements and returns true if lhs_sum > rhs_sum
 BOLT_FUNCTOR(AddD4,
 struct AddD4
