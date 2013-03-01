@@ -1186,6 +1186,9 @@ BOLT_CREATE_TYPENAME(MyType<double>);
 BOLT_CREATE_CLCODE(MyType<double>, "template <typename T> struct MyType { T a; \n\nbool operator() (const MyType& lhs, const MyType& rhs) { return (lhs.a > rhs.a); } \n\nbool operator < (const MyType& other) const { return (a < other.a); }\n\n bool operator > (const MyType& other) const { return (a > other.a);} \n\n };");
 
 BOLT_CREATE_TYPENAME(bolt::cl::less< MyType<int> >);
+BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, int, MyType<int> );
+BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, int, MyType<float> );
+
 // A Data structure defining a Functor
 template <typename T>    
 struct MyFunctor{ 
@@ -1214,6 +1217,9 @@ BOLT_CREATE_TYPENAME(MyFunctor<float>);
 BOLT_CREATE_CLCODE(MyFunctor<float>, "template<typename T> struct MyFunctor { T a; T b; \n\nbool operator() (const MyFunctor& lhs, const MyFunctor& rhs) { return (lhs.a > rhs.a); }   \n\nbool operator < (const MyFunctor& other) const { return (a < other.a); }   \n\nbool operator > (const MyFunctor& other) const { return (a > other.a);}  \n\n}; \n\n");
 BOLT_CREATE_TYPENAME(MyFunctor<double>);
 BOLT_CREATE_CLCODE(MyFunctor<double>, "template<typename T> struct MyFunctor { T a; T b; \n\nbool operator() (const MyFunctor& lhs, const MyFunctor& rhs) { return (lhs.a > rhs.a); }   \n\nbool operator < (const MyFunctor& other) const { return (a < other.a); }   \n\nbool operator > (const MyFunctor& other) const { return (a > other.a);}  \n\n}; \n\n");
+
+BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, int, MyFunctor<int> );
+BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, int, MyFunctor<float> );
 
 template <typename T>
 bool FUNCTION (T &i,T &j) { return (i<j); }
@@ -1392,6 +1398,9 @@ void BasicSortTestOfLength(size_t length)
     std::vector<T> stdBackup(length);
     std::generate (stdInput.begin(), stdInput.end(),rand);
     
+    //boltInput = stdInput;
+    //bolt::cl::stable_sort(boltInput.begin(), boltInput.end()/*, bolt::cl::greater<T>()*/);
+
     //Ascending Sort 
     size_t i;
 #if 1
@@ -1437,7 +1446,7 @@ void BasicSortTestOfLength(size_t length)
     }
 #endif
 
-#if 1
+#if 0
     //Descending Sort 
     stdInput = stdBackup;
     for (i=0;i<length;i++)
@@ -1653,21 +1662,34 @@ void TestWithBoltControl(int length)
 */
 int main(int argc, char* argv[])
 {
+    cl_int err = CL_SUCCESS;
+
     bolt::cl::control& ctrl = bolt::cl::control::getDefault();
-    ctrl.forceRunMode( bolt::cl::control::MultiCoreCpu );  // choose tbb tbb::parallel_scan
+    //ctrl.forceRunMode( bolt::cl::control::MultiCoreCpu );  // choose tbb tbb::parallel_scan
+
+    std::string strDeviceName = ctrl.device( ).getInfo< CL_DEVICE_NAME >( &err );
+    bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_NAME > failed" );
+
+    std::cout << "Device under test : " << strDeviceName << std::endl;
 
 #if 1
+
+    for ( unsigned vecLength = 256; vecLength < 1024; vecLength += 64 )
+    {
+        std::cout << "Testing vecLength: " << vecLength << std::endl;
+        BasicSortTestOfLength< int >( vecLength );
+    }
     //UDDSortTestOfLengthWithDeviceVector<int>(256);
-    BasicSortTestOfLength<int>(256/*2097152/*131072/*16777216/*33554432/*atoi(argv[1])*/);
-    BasicSortTestOfLength<int>(4096);
-    BasicSortTestOfLength<int>(2097152);
-    BasicSortTestOfLength<int>(131072);
-    BasicSortTestOfLength<int>(512);
-    BasicSortTestOfLength<int>(1024);
-    BasicSortTestOfLength<int>(2048);
-    BasicSortTestOfLength<int>(2560);
+    BasicSortTestOfLength< int >( 64 );
+    //BasicSortTestOfLength<int>(4096);
+    //BasicSortTestOfLength<int>(2097152);
+    //BasicSortTestOfLength<int>(131072);
+    //BasicSortTestOfLength<int>(512);
+    //BasicSortTestOfLength<int>(1024);
+    //BasicSortTestOfLength<int>(2048);
+    //BasicSortTestOfLength<int>(2560);
 #endif
-#if 1
+#if 0
     BasicSortTestOfLength<unsigned int>(256/*2097152/*131072/*16777216/*33554432/*atoi(argv[1])*/);
     BasicSortTestOfLength<unsigned int>(4096);
     BasicSortTestOfLength<unsigned int>(2097152);
@@ -1697,7 +1719,7 @@ int main(int argc, char* argv[])
     //UDDSortTestOfLengthWithDeviceVector<int>(256);
     //UDDSortTestWithBoltFunctorOfLengthWithDeviceVector<int>(256);
 
-#define TEST_ALL 1
+#define TEST_ALL 0
 //#define TEST_DOUBLE 1
 
 #if (TEST_ALL == 1)

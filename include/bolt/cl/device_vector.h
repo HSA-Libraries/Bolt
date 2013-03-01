@@ -553,7 +553,7 @@ namespace cl
 #if (_WIN32)
                         std::copy( begin, begin + m_Size, stdext::checked_array_iterator< naked_pointer >( pointer, m_Size ) );
 #else
-                        std::copy( begin, end, pointer );
+                        std::copy( begin, begin + m_Size, pointer );
 #endif
                         l_Error = m_commQueue.enqueueUnmapMemObject( m_devMemory, pointer, 0, 0 );
                         V_OPENCL( l_Error, "enqueueUnmapMemObject failed in device_vector constructor" );

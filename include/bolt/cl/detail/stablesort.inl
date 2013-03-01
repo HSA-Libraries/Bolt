@@ -30,137 +30,110 @@
     #include "tbb/parallel_for.h"
 #endif
 
-#define CL_VERSION_1_2 1
 #include "bolt/cl/bolt.h"
-#include "bolt/cl/scan.h"
 #include "bolt/cl/functional.h"
 #include "bolt/cl/device_vector.h"
 
-#define BOLT_UINT_MAX 0xFFFFFFFFU
-#define BOLT_UINT_MIN 0x0U
-#define BOLT_INT_MAX 0x7FFFFFFFU
-#define BOLT_INT_MIN 0x80000000U
-
-#define WGSIZE 64
-
 namespace bolt {
 namespace cl {
-template<typename RandomAccessIterator> 
-void stable_sort(RandomAccessIterator first, 
-          RandomAccessIterator last, 
-          const std::string& cl_code)
-{
-    typedef std::iterator_traits< RandomAccessIterator >::value_type T;
-
-    detail::stablesort_detect_random_access( control::getDefault( ), 
-                                       first, last, 
-                                       less< T >( ), cl_code, 
-                                       std::iterator_traits< RandomAccessIterator >::iterator_category( ) );
-    return;
-}
-
-template<typename RandomAccessIterator, typename StrictWeakOrdering> 
-void stable_sort(RandomAccessIterator first, 
-          RandomAccessIterator last,  
-          StrictWeakOrdering comp, 
-          const std::string& cl_code)  
-{
-    detail::stablesort_detect_random_access( control::getDefault( ), 
-                                       first, last, 
-                                       comp, cl_code, 
-                                       std::iterator_traits< RandomAccessIterator >::iterator_category( ) );
-    return;
-}
-
-template<typename RandomAccessIterator> 
-void stable_sort(control &ctl,
-          RandomAccessIterator first, 
-          RandomAccessIterator last, 
-          const std::string& cl_code)
-{
-    typedef std::iterator_traits< RandomAccessIterator >::value_type T;
-
-    detail::stablesort_detect_random_access(ctl, 
-                                      first, last, 
-                                      less< T >( ), cl_code, 
-                                      std::iterator_traits< RandomAccessIterator >::iterator_category( ) );
-    return;
-}
-
-template<typename RandomAccessIterator, typename StrictWeakOrdering> 
-void stable_sort(control &ctl,
-          RandomAccessIterator first, 
-          RandomAccessIterator last,  
-          StrictWeakOrdering comp, 
-          const std::string& cl_code)  
-{
-    detail::stablesort_detect_random_access(ctl, 
-                                      first, last, 
-                                      comp, cl_code, 
-                                      std::iterator_traits< RandomAccessIterator >::iterator_category( ) );
-    return;
-}
-}
-};
-
-
-namespace bolt {
-namespace cl {
-namespace detail {
-
-struct CallCompiler_StableSort {
-    static void constructAndCompile(::cl::Kernel *masterKernel,  std::string cl_code_dataType, 
-                                std::string valueTypeName,  std::string compareTypeName, const control *ctl) 
+    template<typename RandomAccessIterator> 
+    void stable_sort(RandomAccessIterator first, 
+              RandomAccessIterator last, 
+              const std::string& cl_code)
     {
+        typedef std::iterator_traits< RandomAccessIterator >::value_type T;
 
-        const std::string instantiationString = 
-            "// Host generates this instantiation string with user-specified value type and functor\n"
-            "template __attribute__((mangled_name(stableSortInstantiated)))\n"
-            "kernel void stableSortTemplate(\n"
-            "global " + valueTypeName + "* A,\n"
-            "const uint stage,\n"
-            "const uint passOfStage,\n"
-            "global " + compareTypeName + " * userComp\n"
-            ");\n\n";
-
-        bolt::cl::constructAndCompileString( masterKernel, "stableSort", 
-                                            stablesort_kernels, instantiationString, 
-                                            cl_code_dataType, valueTypeName, "", *ctl);
+        detail::stablesort_detect_random_access( control::getDefault( ), 
+                                           first, last, 
+                                           less< T >( ), cl_code, 
+                                           std::iterator_traits< RandomAccessIterator >::iterator_category( ) );
+        return;
     }
 
-    static void constructAndCompileSelectionStableSort(std::vector< ::cl::Kernel >* sortKernels,  
-                                                 std::string cl_code_dataType, std::string valueTypeName,  
-                                                 std::string compareTypeName, const control *ctl)
+    template<typename RandomAccessIterator, typename StrictWeakOrdering> 
+    void stable_sort(RandomAccessIterator first, 
+              RandomAccessIterator last,  
+              StrictWeakOrdering comp, 
+              const std::string& cl_code)  
     {
-        std::vector< const std::string > kernelNames;
-        kernelNames.push_back( "selectionSortLocal" );
-        kernelNames.push_back( "selectionSortFinal" );
-
-        const std::string instantiationString = 
-            "\n// Host generates this instantiation string with user-specified value type and functor\n"
-            "template __attribute__((mangled_name(" + kernelNames[0] + "Instantiated)))\n"
-            "kernel void selectionSortLocalTemplate(\n"
-            "global const " + valueTypeName + " * in,\n"
-            "global " + valueTypeName + " * out,\n"
-            "global " + compareTypeName + " * userComp,\n"
-            "local  " + valueTypeName + " * scratch,\n"
-            "const int buffSize\n"
-            ");\n\n"
-            "\n// Host generates this instantiation string with user-specified value type and functor\n"
-            "template __attribute__((mangled_name(" + kernelNames[1] + "Instantiated)))\n"
-            "kernel void selectionSortFinalTemplate(\n"
-            "global const " + valueTypeName + " * in,\n"
-            "global " + valueTypeName + " * out,\n"
-            "global " + compareTypeName + " * userComp,\n"
-            "local  " + valueTypeName + " * scratch,\n"
-            "const int buffSize\n"
-            ");\n\n";
-
-        bolt::cl::compileKernelsString( *sortKernels, kernelNames, 
-                                        stablesort_kernels, instantiationString, 
-                                        cl_code_dataType, valueTypeName, "", *ctl );
+        detail::stablesort_detect_random_access( control::getDefault( ), 
+                                           first, last, 
+                                           comp, cl_code, 
+                                           std::iterator_traits< RandomAccessIterator >::iterator_category( ) );
+        return;
     }
-}; //End of struct CallCompiler_Sort  
+
+    template<typename RandomAccessIterator> 
+    void stable_sort(control &ctl,
+              RandomAccessIterator first, 
+              RandomAccessIterator last, 
+              const std::string& cl_code)
+    {
+        typedef std::iterator_traits< RandomAccessIterator >::value_type T;
+
+        detail::stablesort_detect_random_access(ctl, 
+                                          first, last, 
+                                          less< T >( ), cl_code, 
+                                          std::iterator_traits< RandomAccessIterator >::iterator_category( ) );
+        return;
+    }
+
+    template<typename RandomAccessIterator, typename StrictWeakOrdering> 
+    void stable_sort(control &ctl,
+              RandomAccessIterator first, 
+              RandomAccessIterator last,  
+              StrictWeakOrdering comp, 
+              const std::string& cl_code)  
+    {
+        detail::stablesort_detect_random_access(ctl, 
+                                          first, last, 
+                                          comp, cl_code, 
+                                          std::iterator_traits< RandomAccessIterator >::iterator_category( ) );
+        return;
+    }
+
+namespace detail
+{
+
+    enum stableSortTypes { stableSort_iValueType, stableSort_iIterType, stableSort_oValueType, stableSort_oIterType, 
+        stableSort_lessFunction, stableSort_end };
+
+    class StableSort_KernelTemplateSpecializer : public KernelTemplateSpecializer
+    {
+    public:
+        StableSort_KernelTemplateSpecializer() : KernelTemplateSpecializer( )
+        {
+            addKernelName( "blockInsertionSort" );
+            addKernelName( "merge" );
+        }
+
+        const ::std::string operator( ) ( const ::std::vector< ::std::string >& typeNames ) const
+        {
+            const std::string templateSpecializationString = 
+                "template __attribute__((mangled_name(" + name( 0 ) + "Instantiated)))\n"
+                "kernel void " + name( 0 ) + "Template(\n"
+                "global " + typeNames[stableSort_iValueType] + "* data_ptr,\n"
+                ""        + typeNames[stableSort_iIterType] + " data_iter,\n"
+                "const uint vecSize,\n"
+                "local "  + typeNames[stableSort_iValueType] + "* lds,\n"
+                "global " + typeNames[stableSort_lessFunction] + " * lessOp\n"
+                ");\n\n"
+
+                "template __attribute__((mangled_name(" + name( 1 ) + "Instantiated)))\n"
+                "kernel void " + name( 1 ) + "Template(\n"
+                "global " + typeNames[stableSort_iValueType] + "* source_ptr,\n"
+                ""        + typeNames[stableSort_iIterType] + " source_iter,\n"
+                "global " + typeNames[stableSort_iValueType] + "* result_ptr,\n"
+                ""        + typeNames[stableSort_iIterType] + " result_iter,\n"
+                "const uint srcVecSize,\n"
+                "const uint srcBlockSize,\n"
+                "local "  + typeNames[stableSort_iValueType] + "* lds,\n"
+                "global " + typeNames[stableSort_lessFunction] + " * lessOp\n"
+                ");\n\n";
+
+            return templateSpecializationString;
+        }
+    };
 
 // Wrapper that uses default control class, iterator interface
 template<typename RandomAccessIterator, typename StrictWeakOrdering> 
@@ -277,7 +250,11 @@ void stablesort_pick_iterator( control &ctl,
             std::stable_sort( srcLeft, srcRight, comp );
             if( dstWrite )
             {
+#if defined( _WIN32 )
+                std::copy( srcLeft, srcRight, stdext::make_unchecked_array_iterator( dstLeft ) );
+#else
                 std::copy( srcLeft, srcRight, dstLeft );
+#endif
             }
             return;
         }
@@ -350,8 +327,10 @@ void stablesort_pick_iterator( control &ctl, const RandomAccessIterator& first, 
     else 
     {
         device_vector< Type > dvInputOutput( first, last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctl );
+
         //Now call the actual cl algorithm
         stablesort_enqueue(ctl,dvInputOutput.begin(),dvInputOutput.end(),comp,cl_code);
+
         //Map the buffer back to the host
         dvInputOutput.data( );
         return;
@@ -402,180 +381,196 @@ void stablesort_pick_iterator( control &ctl,
 }
 
 template<typename DVRandomAccessIterator, typename StrictWeakOrdering> 
-void stablesort_enqueue(control &ctl, 
-             const DVRandomAccessIterator& first, const DVRandomAccessIterator& last,
-             const StrictWeakOrdering& comp, const std::string& cl_code)  
+void stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVRandomAccessIterator& last,
+             const StrictWeakOrdering& comp, const std::string& cl_code)
 {
-    typedef typename std::iterator_traits< DVRandomAccessIterator >::value_type T;
     cl_int l_Error;
-    size_t szElements = (size_t)(last - first);
-    if(((szElements-1) & (szElements)) != 0)
-    {
-        stablesort_enqueue_non_powerOf2(ctl,first,last,comp,cl_code);
-        return;
-    }
-    static  boost::once_flag initOnlyOnce;
-    static  ::cl::Kernel masterKernel;
+    cl_uint vecSize = static_cast< cl_uint >( std::distance( first, last ) );
 
-    size_t temp;
+    /**********************************************************************************
+     * Type Names - used in KernelTemplateSpecializer
+     *********************************************************************************/
+    typedef std::iterator_traits< DVRandomAccessIterator >::value_type iType;
 
-    //Power of 2 buffer size
-    // For user-defined types, the user must create a TypeName trait which returns the name of the class - 
-    // Note use of TypeName<>::get to retreive the name here.
-    if (boost::is_same<T, StrictWeakOrdering>::value) 
-        boost::call_once( initOnlyOnce, boost::bind( CallCompiler_StableSort::constructAndCompile, &masterKernel, 
-                      "\n//--User Code\n" + cl_code + 
-                      "\n//--typedef T Code\n" + ClCode<T>::get(),
-                      TypeName<T>::get(), TypeName<StrictWeakOrdering>::get(), &ctl) );
-    else
-        boost::call_once( initOnlyOnce, boost::bind( CallCompiler_StableSort::constructAndCompile, &masterKernel, 
-                      "\n//--User Code\n" + cl_code + 
-                      "\n//--typedef T Code\n" + ClCode<T>::get() + 
-                      "\n//--typedef StrictWeakOrdering Code\n" + ClCode<StrictWeakOrdering>::get(), 
-                      TypeName<T>::get(), TypeName<StrictWeakOrdering>::get(), &ctl) );
+    std::vector<std::string> typeNames( stableSort_end );
+    typeNames[stableSort_iValueType] = TypeName< iType >::get( );
+    typeNames[stableSort_iIterType] = TypeName< DVRandomAccessIterator >::get( );
+    typeNames[stableSort_lessFunction] = TypeName< StrictWeakOrdering >::get( );
 
-    //std::cout << "I am executing a bitonic sort" << std::endl;
+    /**********************************************************************************
+     * Type Definitions - directrly concatenated into kernel string
+     *********************************************************************************/
+    std::vector<std::string> typeDefinitions;
+    PUSH_BACK_UNIQUE( typeDefinitions, ClCode< iType >::get( ) )
+    PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVRandomAccessIterator >::get( ) )
+    PUSH_BACK_UNIQUE( typeDefinitions, ClCode< StrictWeakOrdering  >::get( ) )
 
-    size_t wgSize  = masterKernel.getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.device( ), &l_Error );
+    /**********************************************************************************
+     * Compile Options
+     *********************************************************************************/
+    bool cpuDevice = ctrl.device( ).getInfo< CL_DEVICE_TYPE >( ) == CL_DEVICE_TYPE_CPU;
+    //std::cout << "Device is CPU: " << (cpuDevice?"TRUE":"FALSE") << std::endl;
+    //const size_t kernel0_localRange = ( cpuDevice ) ? 1 : localRange*4;
+    //std::ostringstream oss;
+    //oss << " -DKERNEL0WORKGROUPSIZE=" << kernel0_localRange;
+
+    //oss << " -DUSE_AMD_HSA=" << USE_AMD_HSA;
+    //compileOptions = oss.str();
+
+    /**********************************************************************************
+     * Request Compiled Kernels
+     *********************************************************************************/
+    std::string compileOptions;
+
+    StableSort_KernelTemplateSpecializer ss_kts;
+    std::vector< ::cl::Kernel > kernels = bolt::cl::getKernels(
+        ctrl,
+        typeNames,
+        &ss_kts,
+        typeDefinitions,
+        stablesort_kernels,
+        compileOptions );
+    // kernels returned in same order as added in KernelTemplaceSpecializer constructor
+
+    size_t localRange  = kernels[ 0 ].getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctrl.device( ), &l_Error );
     V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
-    if((szElements/2) < wgSize)
+
+
+    //  Make sure that globalRange is a multiple of localRange
+    size_t globalRange = vecSize;
+    size_t modlocalRange = ( globalRange & ( localRange-1 ) );
+    if( modlocalRange )
     {
-        wgSize = (int)szElements/2;
+        globalRange &= ~modlocalRange;
+        globalRange += localRange;
     }
-    unsigned int numStages,stage,passOfStage;
 
-    ::cl::Buffer A = first.getBuffer( );
     ALIGNED( 256 ) StrictWeakOrdering aligned_comp( comp );
-    // ::cl::Buffer userFunctor(ctl.context(), CL_MEM_USE_HOST_PTR, sizeof( aligned_comp ), &aligned_comp );   // Create buffer wrapper so we can access host parameters.
-    control::buffPointer userFunctor = ctl.acquireBuffer( sizeof( aligned_comp ), CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_comp );
+    control::buffPointer userFunctor = ctrl.acquireBuffer( sizeof( aligned_comp ), CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_comp );
 
-    ::cl::Kernel k = masterKernel;  // hopefully create a copy of the kernel. FIXME, doesn't work.
-    numStages = 0;
-    for(temp = szElements; temp > 1; temp >>= 1)
-        ++numStages;
-    V_OPENCL( k.setArg(0, A), "Error setting a kernel argument" );
-    V_OPENCL( k.setArg(3, *userFunctor), "Error setting a kernel argument" );
-    for(stage = 0; stage < numStages; ++stage) 
+    //  kernels[ 0 ] sorts values within a workgroup, in parallel across the entire vector
+    //  kernels[ 0 ] reads and writes to the same vector
+    cl_uint ldsSize  = static_cast< cl_uint >( localRange * sizeof( iType ) );
+    V_OPENCL( kernels[ 0 ].setArg( 0, first.getBuffer( ) ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
+    V_OPENCL( kernels[ 0 ].setArg( 1, first.gpuPayloadSize( ), &first.gpuPayload( ) ), "Error setting a kernel argument" );
+    V_OPENCL( kernels[ 0 ].setArg( 2, vecSize ),            "Error setting argument for kernels[ 0 ]" ); // Size of scratch buffer
+    V_OPENCL( kernels[ 0 ].setArg( 3, ldsSize, NULL ),          "Error setting argument for kernels[ 0 ]" ); // Scratch buffer
+    V_OPENCL( kernels[ 0 ].setArg( 4, *userFunctor ),           "Error setting argument for kernels[ 0 ]" ); // User provided functor class
+
+    ::cl::CommandQueue& myCQ = ctrl.commandQueue( );
+
+    ::cl::Event blockSortEvent;
+    l_Error = myCQ.enqueueNDRangeKernel(
+            kernels[ 0 ],
+            ::cl::NullRange,
+            ::cl::NDRange( globalRange ),
+            ::cl::NDRange( localRange ),
+            NULL,
+            &blockSortEvent );
+    V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for perBlockInclusiveScan kernel" );
+
+    //  Early exit for the case of no merge passes, values are already in destination vector
+    if( vecSize <= localRange )
     {
-        // stage of the algorithm
-        V_OPENCL( k.setArg(1, stage), "Error setting a kernel argument" );
-        // Every stage has stage + 1 passes
-        for(passOfStage = 0; passOfStage < stage + 1; ++passOfStage) {
-            // pass of the current stage
-            V_OPENCL( k.setArg(2, passOfStage), "Error setting a kernel argument" );
-            /* 
-                * Enqueue a kernel run call.
-                * Each thread writes a sorted pair.
-                * So, the number of  threads (global) should be half the length of the input buffer.
-                */
-            l_Error = ctl.commandQueue().enqueueNDRangeKernel(
-                    k, 
-                    ::cl::NullRange,
-                    ::cl::NDRange(szElements/2),
-                    ::cl::NDRange(wgSize),
-                    NULL,
-                    NULL);
-            V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for sort() kernel" );
-            V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
-        }//end of for passStage = 0:stage-1
-    }//end of for stage = 0:numStage-1
-    //Map the buffer back to the host
-    ctl.commandQueue().enqueueMapBuffer(A, true, CL_MAP_READ | CL_MAP_WRITE, 0/*offset*/, sizeof(T) * szElements, NULL, NULL, &l_Error );
-    V_OPENCL( l_Error, "Error calling map on the result buffer" );
+        wait( ctrl, blockSortEvent );
+        return;
+    };
+
+    //  An odd number of elements requires an extra merge pass to sort
+    size_t numMerges = 0;
+
+    //  Calculate the log2 of vecSize, taking into account our block size from kernel 1 is 64
+    //  this is how many merge passes we want
+    for( size_t temp = vecSize >> 6; temp > 1; temp >>= 1 )
+        ++numMerges;
+
+    //  If there are elements that are not a multiple of the mergesize, then we add a merge pass to 
+    //  add those in
+    size_t mergeSize = localRange << 1;
+    numMerges += (vecSize & (mergeSize-1))? 1: 0;
+    {
+        device_vector< iType >::pointer myData = first.getContainer( ).data( );
+        myData.reset( );
+    }
+
+    //  Allocate a flipflop buffer because the merge passes are out of place
+    control::buffPointer tmpBuffer = ctrl.acquireBuffer( globalRange * sizeof( iType ) );
+    V_OPENCL( kernels[ 1 ].setArg( 4, vecSize ),            "Error setting argument for kernels[ 0 ]" ); // Size of scratch buffer
+    V_OPENCL( kernels[ 1 ].setArg( 6, ldsSize, NULL ),          "Error setting argument for kernels[ 0 ]" ); // Scratch buffer
+    V_OPENCL( kernels[ 1 ].setArg( 7, *userFunctor ),           "Error setting argument for kernels[ 0 ]" ); // User provided functor class
+
+    ::cl::Event kernelEvent;
+    for( size_t pass = 1; pass <= numMerges; ++pass )
+    {
+        //  For each pass, flip the input-output buffers 
+        if( pass & 0x1 )
+        {
+            V_OPENCL( kernels[ 1 ].setArg( 0, first.getBuffer( ) ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
+            V_OPENCL( kernels[ 1 ].setArg( 1, first.gpuPayloadSize( ), &first.gpuPayload( ) ), "Error setting a kernel argument" );
+            V_OPENCL( kernels[ 1 ].setArg( 2, *tmpBuffer ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
+            V_OPENCL( kernels[ 1 ].setArg( 3, first.gpuPayloadSize( ), &first.gpuPayload( ) ), "Error setting a kernel argument" );
+        }
+        else
+        {
+            V_OPENCL( kernels[ 1 ].setArg( 0, *tmpBuffer ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
+            V_OPENCL( kernels[ 1 ].setArg( 1, first.gpuPayloadSize( ), &first.gpuPayload( ) ), "Error setting a kernel argument" );
+            V_OPENCL( kernels[ 1 ].setArg( 2, first.getBuffer( ) ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
+            V_OPENCL( kernels[ 1 ].setArg( 3, first.gpuPayloadSize( ), &first.gpuPayload( ) ), "Error setting a kernel argument" );
+        }
+        //  For each pass, the merge window doubles
+        V_OPENCL( kernels[ 1 ].setArg( 5, static_cast< unsigned >( pass*localRange ) ),            "Error setting argument for kernels[ 0 ]" ); // Size of scratch buffer
+
+        if( pass == numMerges )
+        {
+            //  Grab the event to wait on from the last enqueue call
+            l_Error = myCQ.enqueueNDRangeKernel( kernels[ 1 ], ::cl::NullRange, ::cl::NDRange( globalRange ),
+                    ::cl::NDRange( localRange ), NULL, &kernelEvent );
+            V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for mergeTemplate kernel" );
+        }
+        else
+        {
+            l_Error = myCQ.enqueueNDRangeKernel( kernels[ 1 ], ::cl::NullRange, ::cl::NDRange( globalRange ),
+                    ::cl::NDRange( localRange ), NULL, &kernelEvent );
+            V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for mergeTemplate kernel" );
+        }
+
+        wait( ctrl, kernelEvent );
+        if( pass & 0x1 )
+        {
+            //  Debug mapping, to look at result vector in memory
+            iType* host2devH = static_cast< iType* >( myCQ.enqueueMapBuffer( *tmpBuffer, CL_TRUE, CL_MAP_WRITE, 0,
+                globalRange * sizeof( iType ), NULL, NULL, &l_Error) );
+            V_OPENCL( l_Error, "Error: Mapping Host->Device Buffer." );
+            myCQ.enqueueUnmapMemObject( *tmpBuffer, host2devH );
+        }
+        else
+        {
+            //  Debug mapping, to look at result vector in memory
+            iType* host2devH = static_cast< iType* >( myCQ.enqueueMapBuffer( first.getBuffer( ), CL_TRUE, CL_MAP_WRITE, 0,
+                globalRange * sizeof( iType ), NULL, NULL, &l_Error) );
+            V_OPENCL( l_Error, "Error: Mapping Host->Device Buffer." );
+            myCQ.enqueueUnmapMemObject( first.getBuffer( ), host2devH );
+        }
+    }
+
+    //  If there are an odd number of merges, then the output data is sitting in the temp buffer.  We need to copy
+    //  the results back into the input array
+    if( numMerges & 1 )
+    {
+        ::cl::Event copyEvent;
+
+        l_Error = myCQ.enqueueCopyBuffer( *tmpBuffer, first.getBuffer( ), 0, first.m_Index * sizeof( iType ), 
+            vecSize * sizeof( iType ), NULL, &copyEvent );
+        V_OPENCL( l_Error, "device_vector failed to copy data inside of operator=()" );
+        wait( ctrl, copyEvent );
+    }
+    else
+    {
+        wait( ctrl, kernelEvent );
+    }
+
     return;
 }// END of sort_enqueue
-
-template<typename DVRandomAccessIterator, typename StrictWeakOrdering> 
-void stablesort_enqueue_non_powerOf2(control &ctl, 
-                               const DVRandomAccessIterator& first, const DVRandomAccessIterator& last,
-                               const StrictWeakOrdering& comp, const std::string& cl_code)  
-{
-    typedef typename std::iterator_traits< DVRandomAccessIterator >::value_type T;
-    static boost::once_flag initOnlyOnce;
-    cl_int l_Error;
-    size_t szElements = (size_t)(last - first);
-
-    // Power of 2 buffer size
-    // For user-defined types, the user must create a TypeName trait which returns the name of the class - 
-    // Note use of TypeName<>::get to retreive the name here.
-    static std::vector< ::cl::Kernel > sortKernels;
-
-    if (boost::is_same<T, StrictWeakOrdering>::value) 
-        boost::call_once( initOnlyOnce, boost::bind( CallCompiler_StableSort::constructAndCompileSelectionStableSort, &sortKernels, 
-                          "\n//--User Code\n" + cl_code + 
-                          "\n//--typedef T Code\n" + ClCode<T>::get(), 
-                          TypeName<T>::get(), 
-                          TypeName<StrictWeakOrdering>::get(), &ctl) );
-        else
-        boost::call_once( initOnlyOnce, boost::bind( CallCompiler_StableSort::constructAndCompileSelectionStableSort, &sortKernels, 
-                          "\n//--User Code\n" + cl_code + 
-                          "\n//--typedef T Code\n" + ClCode<T>::get() + 
-                          "\n//--typedef StrictWeakOrdering Code\n" + ClCode<StrictWeakOrdering>::get(), 
-                          TypeName<T>::get(), 
-                          TypeName<StrictWeakOrdering>::get(), &ctl) );
-
-    size_t wgSize  = sortKernels[0].getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.device( ), &l_Error );
-                    
-    size_t totalWorkGroups = (szElements + wgSize)/wgSize;
-    size_t globalSize = totalWorkGroups * wgSize;
-    V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
-                    
-    const ::cl::Buffer& in = first.getBuffer( );
-    // ::cl::Buffer out(ctl.context(), CL_MEM_READ_WRITE, sizeof(T)*szElements);
-    control::buffPointer out = ctl.acquireBuffer( sizeof(T)*szElements );
-
-    ALIGNED( 256 ) StrictWeakOrdering aligned_comp( comp );
-    // ::cl::Buffer userFunctor(ctl.context(), CL_MEM_USE_HOST_PTR, sizeof( aligned_comp ), &aligned_comp );
-    control::buffPointer userFunctor = ctl.acquireBuffer( sizeof( aligned_comp ), 
-                                                          CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_comp );
-
-    ::cl::LocalSpaceArg loc;
-    loc.size_ = wgSize*sizeof(T);
-    
-    V_OPENCL( sortKernels[0].setArg(0, in), "Error setting a kernel argument in" );
-    V_OPENCL( sortKernels[0].setArg(1, *out), "Error setting a kernel argument out" );
-    V_OPENCL( sortKernels[0].setArg(2, *userFunctor), "Error setting a kernel argument userFunctor" );
-    V_OPENCL( sortKernels[0].setArg(3, loc), "Error setting kernel argument loc" );
-    V_OPENCL( sortKernels[0].setArg(4, static_cast<cl_uint> (szElements)), "Error setting kernel argument szElements" );
-    {
-        l_Error = ctl.commandQueue().enqueueNDRangeKernel(
-                                        sortKernels[0], 
-                                        ::cl::NullRange,
-                                        ::cl::NDRange(globalSize),
-                                        ::cl::NDRange(wgSize),
-                                        NULL,
-                                        NULL);
-        V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for sort() kernel" );
-        V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
-    }
-
-    wgSize  = sortKernels[1].getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.device( ), &l_Error );
-
-    V_OPENCL( sortKernels[1].setArg(0, *out), "Error setting a kernel argument in" );
-    V_OPENCL( sortKernels[1].setArg(1, in), "Error setting a kernel argument out" );
-    V_OPENCL( sortKernels[1].setArg(2, *userFunctor), "Error setting a kernel argument userFunctor" );
-    V_OPENCL( sortKernels[1].setArg(3, loc), "Error setting kernel argument loc" );
-    V_OPENCL( sortKernels[1].setArg(4, static_cast<cl_uint> (szElements)), "Error setting kernel argument szElements" );
-    {
-        l_Error = ctl.commandQueue().enqueueNDRangeKernel(
-                                        sortKernels[1],
-                                        ::cl::NullRange,
-                                        ::cl::NDRange(globalSize),
-                                        ::cl::NDRange(wgSize),
-                                        NULL,
-                                        NULL);
-        V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for sort() kernel" );
-        V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
-    }
-    // Map the buffer back to the host
-    ctl.commandQueue().enqueueMapBuffer(in, true, 
-                                        CL_MAP_READ | CL_MAP_WRITE, 
-                                        0/*offset*/, sizeof(T) * szElements, 
-                                        NULL, NULL, &l_Error );
-    V_OPENCL( l_Error, "Error calling map on the result buffer" );
-
-    return;
-}// END of sort_enqueue_non_powerOf2
 
 }//namespace bolt::cl::detail
 }//namespace bolt::cl
