@@ -19,20 +19,453 @@
 //
 #define OCL_CONTEXT_BUG_WORKAROUND 1
 
-#include "stdafx.h"
-#include <bolt/cl/iterator/counting_iterator.h>
-#include <bolt/cl/max_element.h>
-#include <bolt/cl/functional.h>
-#include <bolt/cl/control.h>
+
 
 #include <iostream>
 #include <algorithm>  // for testing against STL functions.
 #include <numeric>
+#include <gtest/gtest.h>
+#include <type_traits>
 
+#include "bolt/cl/iterator/counting_iterator.h"
+#include "bolt/cl/max_element.h"
+#include "bolt/cl/functional.h"
+#include "bolt/cl/control.h"
+#include "stdafx.h"
 #include "common/myocl.h"
+#include "common/test_common.h"
+#include "bolt/miniDump.h"
 
 
 extern void testDeviceVector();
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+//  GTEST CASES
+/////////////////////////////////////////////////////////////////////////////////////////////
+//  Fixture classes are now defined to enable googletest to process type parameterized tests
+
+//  This class creates a C++ 'TYPE' out of a size_t value
+template< size_t N >
+class TypeValue
+{
+public:
+    static const size_t value = N;
+};
+template <typename T>
+T generateRandom()
+{
+    double value = rand();
+    static bool negate = true;
+    if (negate)
+    {
+        negate = false;
+        return -(T)fmod(value, 10.0);
+    }
+    else
+    {
+        negate = true;
+        return (T)fmod(value, 10.0);
+    }
+}
+//  Test fixture class, used for the Type-parameterized tests
+//  Namely, the tests that use std::array and TYPED_TEST_P macros
+template< typename ArrayTuple >
+class MaxEArrayTest: public ::testing::Test
+{
+public:
+    MaxEArrayTest( ): m_Errors( 0 )
+    {}
+
+    virtual void SetUp( )
+    {
+        std::generate(stdInput.begin(), stdInput.end(), generateRandom<ArrayType>);
+        boltInput = stdInput;
+    };
+
+    virtual void TearDown( )
+    {};
+
+    virtual ~MaxEArrayTest( )
+    {}
+
+protected:
+    typedef typename std::tuple_element< 0, ArrayTuple >::type ArrayType;
+    static const size_t ArraySize = typename std::tuple_element< 1, ArrayTuple >::type::value;
+    typename std::array< ArrayType, ArraySize > stdInput, boltInput;
+    int m_Errors;
+};
+
+TYPED_TEST_CASE_P( MaxEArrayTest );
+
+TYPED_TEST_P( MaxEArrayTest, Normal )
+{
+    typedef std::array< ArrayType, ArraySize > ArrayCont;
+    ArrayType init(0);
+    //  Calling the actual functions under test
+    ArrayCont::iterator stlMaxE = std::max_element( stdInput.begin(), stdInput.end() );
+    ArrayCont::iterator boltMaxE = bolt::cl::max_element( boltInput.begin( ), boltInput.end( ) );
+
+    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
+    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+    EXPECT_EQ( *stlMaxE, *boltMaxE );
+
+    //  Loop through the array and compare all the values with each other
+    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
+}
+
+TYPED_TEST_P( MaxEArrayTest, GPU_DeviceGreaterFunction )
+{
+    typedef std::array< ArrayType, ArraySize > ArrayCont;
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
+    bolt::cl::control c_gpu( getQueueFromContext(myContext, CL_DEVICE_TYPE_GPU, 0 ));  
+
+
+    //  Calling the actual functions under test
+    ArrayCont::iterator stlMaxE = std::max_element( stdInput.begin(), stdInput.end() );
+    ArrayCont::iterator boltMaxE = bolt::cl::max_element( c_gpu,boltInput.begin( ), boltInput.end( ) );
+
+    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
+    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+    EXPECT_EQ( *stlMaxE, *boltMaxE );
+
+    //  Loop through the array and compare all the values with each other
+    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );    
+    // FIXME - releaseOcl(ocl);
+}
+
+REGISTER_TYPED_TEST_CASE_P( MaxEArrayTest, Normal, GPU_DeviceGreaterFunction );
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////
+//  Fixture classes are now defined to enable googletest to process value parameterized tests
+//  ::testing::TestWithParam< int > means that GetParam( ) returns int values, which i use for array size
+
+class MaxEIntegerVector: public ::testing::TestWithParam< int >
+{
+public:
+
+    MaxEIntegerVector( ): stdInput( GetParam( ) ), boltInput( GetParam( ) )
+    {
+        std::generate(stdInput.begin(), stdInput.end(), generateRandom<int>);
+        boltInput = stdInput;
+    }
+
+protected:
+    std::vector< int > stdInput, boltInput;
+};
+
+//  ::testing::TestWithParam< int > means that GetParam( ) returns int values, which i use for array size
+class MaxEFloatVector: public ::testing::TestWithParam< int >
+{
+public:
+    MaxEFloatVector( ): stdInput( GetParam( ) ), boltInput( GetParam( ) )
+    {
+        std::generate(stdInput.begin(), stdInput.end(), generateRandom<float>);
+        boltInput = stdInput;
+    }
+
+protected:
+    std::vector< float > stdInput, boltInput;
+};
+
+//  ::testing::TestWithParam< int > means that GetParam( ) returns int values, which i use for array size
+class MaxEIntegerDeviceVector: public ::testing::TestWithParam< int >
+{
+public:
+    // Create an std and a bolt vector of requested size, and initialize all the elements to 1
+    MaxEIntegerDeviceVector( ): stdInput( GetParam( ) ), boltInput( static_cast<size_t>( GetParam( ) ) )
+    {
+        std::generate(stdInput.begin(), stdInput.end(), generateRandom<int>);
+        for (int i=0; i< GetParam( ); i++)
+        {
+            boltInput[i] = stdInput[i];
+        }
+    }
+
+protected:
+    std::vector< int > stdInput;
+    bolt::cl::device_vector< int > boltInput;
+};
+
+//  ::testing::TestWithParam< int > means that GetParam( ) returns int values, which i use for array size
+class MaxEFloatDeviceVector: public ::testing::TestWithParam< int >
+{
+public:
+    // Create an std and a bolt vector of requested size, and initialize all the elements to 1
+    MaxEFloatDeviceVector( ): stdInput( GetParam( ) ), boltInput( GetParam( ) )
+    {
+        std::generate(stdInput.begin(), stdInput.end(), generateRandom<float>);
+        for (int i=0; i< GetParam( ); i++)
+        {
+            boltInput[i] = stdInput[i];
+        }
+    }
+
+protected:
+    std::vector< float > stdInput;
+    bolt::cl::device_vector< float > boltInput;
+};
+
+
+class MaxEStdVectWithInit :public ::testing::TestWithParam<int>{
+protected:
+    int mySize;
+public:	
+    MaxEStdVectWithInit():mySize(GetParam()){
+    }
+};
+
+
+class MaxEStdVectandCountingIterator :public ::testing::TestWithParam<int>{
+protected:
+    int mySize;
+public:	
+    MaxEStdVectandCountingIterator():mySize(GetParam()){
+    }
+};
+
+TEST_P( MaxEStdVectWithInit, withInt)
+{
+    std::vector<int> stdInput( mySize );
+    std::vector<int> boltInput( mySize );
+
+    for (int i = 0; i < mySize; ++i)
+    {
+        stdInput[i] = i;
+        boltInput[i] = stdInput[i];
+    }
+    
+    //  Calling the actual functions under test
+    std::vector<int>::iterator stlMaxE = std::max_element( stdInput.begin( ), stdInput.end() );
+    std::vector<int>::iterator boltMaxE= bolt::cl::max_element( boltInput.begin( ), boltInput.end() );
+
+    EXPECT_EQ( *stlMaxE, *boltMaxE );
+}
+
+TEST_P( MaxEStdVectandCountingIterator, withCountingIterator)
+{
+    bolt::cl::counting_iterator<int> first(0);
+    bolt::cl::counting_iterator<int> last = first +  mySize;
+
+    std::vector<int> a(mySize);
+
+    for (int i=0; i < mySize; i++) {
+        a[i] = i;
+    };
+    
+    std::vector<int>::iterator stlReduce = std::max_element(a.begin(), a.end());
+    bolt::cl::counting_iterator<int> boltReduce = bolt::cl::max_element(first, last);
+
+    EXPECT_EQ(*stlReduce, *boltReduce);
+}
+
+INSTANTIATE_TEST_CASE_P( withInt, MaxEStdVectWithInit, ::testing::Range(1, 100, 1) );
+INSTANTIATE_TEST_CASE_P( withInt, MaxEStdVectandCountingIterator, ::testing::Range(1, 100, 1) );
+
+class MaxETestFloat: public ::testing::TestWithParam<int>{
+protected:
+    int arraySize;
+public:
+    MaxETestFloat( ):arraySize( GetParam( ) )
+    {}
+};
+
+TEST_P( MaxETestFloat, serialFloatValuesWdControl )
+{
+    std::vector<float> A( arraySize );
+    std::vector<float> boltVect( arraySize );
+    
+    float myFloatValues = 9.0625f;
+
+    for( int i=0; i < arraySize; ++i )
+    {
+        A[i] = myFloatValues + float(i);
+        boltVect[i] = A[i];
+    }
+    bolt::cl::control ctl;
+
+    std::vector<float>::iterator stdMaxEValue = std::max_element(A.begin(), A.end() );
+    std::vector<float>::iterator boltClMaxE = bolt::cl::max_element(ctl.getDefault(), boltVect.begin(), boltVect.end() );
+
+    //compare these results with each other
+    EXPECT_EQ( *stdMaxEValue, *boltClMaxE );
+}
+
+INSTANTIATE_TEST_CASE_P(serialFloatValuesWdControl, MaxETestFloat, ::testing::Range(1, 100, 10));
+
+class MaxETestDouble: public ::testing::TestWithParam<int>{
+protected:
+        int arraySize;
+public:
+    MaxETestDouble():arraySize(GetParam()){
+    }
+};
+
+TEST_P (MaxETestDouble, WithDouble)
+{
+    std::vector<double> A( arraySize );
+    std::vector<double> boltVect( arraySize );
+    
+    double myFloatValues = 9.0625;
+
+    for( int i=0; i < arraySize; ++i )
+    {
+        A[i] = myFloatValues + double(i);
+        boltVect[i] = A[i];
+    }
+    bolt::cl::control ctl;
+
+    std::vector<double>::iterator stdMaxEValue = std::max_element(A.begin(), A.end() );
+    std::vector<double>::iterator boltClMaxE = bolt::cl::max_element(ctl.getDefault(), boltVect.begin(), boltVect.end() );
+
+    //compare these results with each other
+    EXPECT_EQ( *stdMaxEValue, *boltClMaxE );
+}
+
+INSTANTIATE_TEST_CASE_P( WithDouble, MaxETestDouble, ::testing::Range(1, 20, 1) );
+
+TEST_P( MaxEIntegerVector, Normal )
+{
+
+    //  Calling the actual functions under test
+    std::vector<int>::iterator stlMaxE = std::max_element( stdInput.begin(), stdInput.end() );
+    std::vector<int>::iterator boltMaxE = bolt::cl::max_element( boltInput.begin( ), boltInput.end( ) );
+
+    size_t stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
+    size_t boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+    EXPECT_TRUE( *stlMaxE == *boltMaxE );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+
+}
+
+TEST_P( MaxEFloatVector, Normal )
+{
+    //  Calling the actual functions under test
+    std::vector<float>::iterator stlMaxE = std::max_element( stdInput.begin(), stdInput.end() );
+    std::vector<float>::iterator boltMaxE = bolt::cl::max_element( boltInput.begin( ), boltInput.end( ) );
+
+    size_t stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
+    size_t boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+    EXPECT_TRUE( *stlMaxE == *boltMaxE );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+
+std::array<int, 15> TestValues = {2,4,8,16,32,64,128,256,512,1024,2048,4096,8192,16384,32768};
+//Test lots of consecutive numbers, but small range, suitable for integers because they overflow easier
+INSTANTIATE_TEST_CASE_P( MaxERange, MaxEIntegerVector, ::testing::Range( 1, 1024, 7 ) );
+INSTANTIATE_TEST_CASE_P( MaxEValues, MaxEIntegerVector, ::testing::ValuesIn( TestValues.begin(), TestValues.end() ) );
+INSTANTIATE_TEST_CASE_P( MaxERange, MaxEFloatVector, ::testing::Range( 1, 1024, 3 ) );
+INSTANTIATE_TEST_CASE_P( MaxEValues, MaxEFloatVector, ::testing::ValuesIn( TestValues.begin(), TestValues.end() ) );
+INSTANTIATE_TEST_CASE_P( MaxERange, MaxEIntegerDeviceVector, ::testing::Range( 0, 1024, 53 ) );
+INSTANTIATE_TEST_CASE_P( MaxEValues, MaxEIntegerDeviceVector, ::testing::ValuesIn( TestValues.begin(), TestValues.end() ) );
+INSTANTIATE_TEST_CASE_P( MaxERange, MaxEFloatDeviceVector, ::testing::Range( 0, 1024, 53 ) );
+INSTANTIATE_TEST_CASE_P( MaxEValues, MaxEFloatDeviceVector, ::testing::ValuesIn( TestValues.begin(), TestValues.end() ) );
+
+typedef ::testing::Types< 
+    std::tuple< int, TypeValue< 1 > >,
+    std::tuple< int, TypeValue< 31 > >,
+    std::tuple< int, TypeValue< 32 > >,
+    std::tuple< int, TypeValue< 63 > >,
+    std::tuple< int, TypeValue< 64 > >,
+    std::tuple< int, TypeValue< 127 > >,
+    std::tuple< int, TypeValue< 128 > >,
+    std::tuple< int, TypeValue< 129 > >,
+    std::tuple< int, TypeValue< 1000 > >,
+    std::tuple< int, TypeValue< 1053 > >,
+    std::tuple< int, TypeValue< 4096 > >,
+    std::tuple< int, TypeValue< 4097 > >,
+    std::tuple< int, TypeValue< 65535 > >,
+    std::tuple< int, TypeValue< 65536 > >
+> IntegerTests;
+
+typedef ::testing::Types< 
+    std::tuple< float, TypeValue< 1 > >,
+    std::tuple< float, TypeValue< 31 > >,
+    std::tuple< float, TypeValue< 32 > >,
+    std::tuple< float, TypeValue< 63 > >,
+    std::tuple< float, TypeValue< 64 > >,
+    std::tuple< float, TypeValue< 127 > >,
+    std::tuple< float, TypeValue< 128 > >,
+    std::tuple< float, TypeValue< 129 > >,
+    std::tuple< float, TypeValue< 1000 > >,
+    std::tuple< float, TypeValue< 1053 > >,
+    std::tuple< float, TypeValue< 4096 > >,
+    std::tuple< float, TypeValue< 4097 > >,
+    std::tuple< float, TypeValue< 65535 > >,
+    std::tuple< float, TypeValue< 65536 > >
+> FloatTests;
+
+BOLT_FUNCTOR( UDD,
+struct UDD
+{
+    int a; 
+    int b;
+
+    bool operator() (const UDD& lhs, const UDD& rhs) const {
+        return ((lhs.a+lhs.b) > (rhs.a+rhs.b));
+    } 
+    bool operator < (const UDD& other) const {
+        return ((a+b) < (other.a+other.b));
+    }
+    bool operator > (const UDD& other) const {
+        return ((a+b) > (other.a+other.b));
+    }
+    bool operator == (const UDD& other) const {
+        return ((a+b) == (other.a+other.b));
+    }
+
+    UDD()
+        : a(0),b(0) { }
+    UDD(int _in)
+        : a(_in), b(_in +1)  { }
+};
+);
+
+BOLT_CREATE_TYPENAME( bolt::cl::device_vector< UDD >::iterator );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::greater, int, UDD );
+BOLT_CREATE_CLCODE( bolt::cl::device_vector< UDD >::iterator, bolt::cl::deviceVectorIteratorTemplate );
+
+TEST( MaxEUDD , UDDPlusOperatorInts )
+{
+    //setup containers
+    const int length = 1024;
+    UDD refInput[ length ];
+    for( int i = 0; i < 10 ; i++ )
+    {
+      refInput[i].a = i;
+      refInput[i].b = i+1;
+    }
+
+    UDD UDDzero;
+    UDDzero.a = 0;
+    UDDzero.b = 0;
+
+    // call reduce
+    UDD *boltMaxE = bolt::cl::max_element( refInput , refInput + length);
+    UDD *stdMaxE = std::max_element( refInput, refInput + length );
+
+    EXPECT_EQ(*boltMaxE,*stdMaxE);
+
+}
+
+INSTANTIATE_TYPED_TEST_CASE_P( Integer, MaxEArrayTest, IntegerTests );
+INSTANTIATE_TYPED_TEST_CASE_P( Float, MaxEArrayTest, FloatTests );
 
 // Super-easy windows profiling interface.
 // Move to timing infrastructure when that becomes available.
@@ -132,18 +565,14 @@ void maxele_TestControl(int aSize, int numIters, int deviceIndex)
     // Create an OCL context, device, queue.
 
 
-	// FIXME - temporarily disable use of new control queue here:
+  // FIXME - temporarily disable use of new control queue here:
 #if OCL_CONTEXT_BUG_WORKAROUND
-	::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
+  ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
     bolt::cl::control c( getQueueFromContext(myContext, CL_DEVICE_TYPE_GPU, 0 ));
 #else
-	MyOclContext ocl = initOcl(CL_DEVICE_TYPE_GPU, deviceIndex);
+  MyOclContext ocl = initOcl(CL_DEVICE_TYPE_GPU, deviceIndex);
     bolt::cl::control c(ocl._queue);  // construct control structure from the queue.
 #endif
-
-
-    //printContext(c.context());
-
     c.debug(bolt::cl::control::debug::Compile + bolt::cl::control::debug::SaveCompilerTemps);
 
     std::vector<int>::iterator  stlReduce = std::max_element(A.begin(), A.end());
@@ -176,8 +605,8 @@ void simpleReduce_TestSerial(int aSize)
     bolt::cl::control c;  // construct control structure from the queue.
     c.forceRunMode(bolt::cl::control::SerialCpu);
 
-     std::vector<int>::iterator stlReduce = std::max_element(A.begin(), A.end());
-     std::vector<int>::iterator boltReduce = A.end();
+    std::vector<int>::iterator stlReduce = std::max_element(A.begin(), A.end());
+    std::vector<int>::iterator boltReduce = A.end();
 
     boltReduce = bolt::cl::max_element(c, A.begin(), A.end());
 
@@ -190,8 +619,8 @@ void simpleReduce_TestSerial(int aSize)
 void simpleMaxele_countingiterator(int start,int size)
 {
 
-      bolt::cl::counting_iterator<int> first(start);
-      bolt::cl::counting_iterator<int> last = first +  size;
+    bolt::cl::counting_iterator<int> first(start);
+    bolt::cl::counting_iterator<int> last = first +  size;
 
     std::vector<int> a(size);
 
@@ -208,38 +637,51 @@ void simpleMaxele_countingiterator(int start,int size)
 };
 
 
-#if 0
-// Disable test since the buffer interface is moving to device_vector.
-void reduce_TestBuffer() {
-
-    int a[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
-    cl::Buffer A(CL_MEM_USE_HOST_PTR, sizeof(int) * 10, a); // create a buffer from a.
-
-    int sum = bolt::cl::reduce2<int>(A, 0, bolt::cl::plus<int>()); // note type of date in the buffer ("int") explicitly specified.
-};
-#endif
-
-
 int _tmain(int argc, _TCHAR* argv[])
 {
-    testDeviceVector();
-
     int numIters = 100;
+    //NON_GTEST
+    testDeviceVector();
     maxele_TestControl(1024000, numIters, 0);
-
     maxele_TestControl(100, 1, 0);
-
     maxeletest(256);
     maxeletest(1024);
-
-
     maxele_TestControl(100, 1, 0);
-
     simpleReduce_TestSerial(1000);
-
     simpleMaxele_countingiterator(20,10);
 
-    //maxele_TestControl(1024000, numIters, 1); // may fail on systems with only one GPU installed.
+    //GTEST
+    ::testing::InitGoogleTest( &argc, &argv[ 0 ] );
+
+    //  Register our minidump generating logic
+    bolt::miniDumpSingleton::enableMiniDumps( );
+
+    int retVal = RUN_ALL_TESTS( );
+
+    //  Reflection code to inspect how many tests failed in gTest
+    ::testing::UnitTest& unitTest = *::testing::UnitTest::GetInstance( );
+
+    unsigned int failedTests = 0;
+    for( int i = 0; i < unitTest.total_test_case_count( ); ++i )
+    {
+        const ::testing::TestCase& testCase = *unitTest.GetTestCase( i );
+        for( int j = 0; j < testCase.total_test_count( ); ++j )
+        {
+            const ::testing::TestInfo& testInfo = *testCase.GetTestInfo( j );
+            if( testInfo.result( )->Failed( ) )
+                ++failedTests;
+        }
+    }
+
+    //  Print helpful message at termination if we detect errors, to help users figure out what to do next
+    if( failedTests )
+    {
+        bolt::tout << _T( "\nFailed tests detected in test pass; please run test again with:" ) << std::endl;
+        bolt::tout << _T( "\t--gtest_filter=<XXX> to select a specific failing test of interest" ) << std::endl;
+        bolt::tout << _T( "\t--gtest_catch_exceptions=0 to generate minidump of failing test, or" ) << std::endl;
+        bolt::tout << _T( "\t--gtest_break_on_failure to debug interactively with debugger" ) << std::endl;
+        bolt::tout << _T( "\t    (only on googletest assertion failures, not SEH exceptions)" ) << std::endl;
+    }
 
     return 0;
 }

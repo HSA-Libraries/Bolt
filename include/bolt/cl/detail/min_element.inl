@@ -176,9 +176,9 @@ namespace bolt {
                          + kp->inIterType + " output_iter,\n"
                         "const int length,\n"
                         "global " + kp->binaryFuncName + "* userFunctor,\n"
-                        "global " + kp->inPtrType + "* result,\n"
+                        "global int *result,\n"
                         "local " + kp->inPtrType + "* scratch,\n"
-                        "local " + kp->inPtrType + "* scratch_index\n"
+                        "local int *scratch_index\n"
                         ");\n\n";
 
                     bolt::cl::constructAndCompileString( masterKernel, "min_element", min_element_kernels, instantiationString, cl_code, kp->inPtrType, kp->binaryFuncName, *ctl);
@@ -230,7 +230,7 @@ namespace bolt {
                     CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_reduce );
 
                 // ::cl::Buffer result(ctl.context(), CL_MEM_ALLOC_HOST_PTR|CL_MEM_WRITE_ONLY, sizeof( iType ) * numWG);
-                control::buffPointer result = ctl.acquireBuffer( sizeof( iType ) * numWG, 
+                control::buffPointer result = ctl.acquireBuffer( sizeof( int ) * numWG, 
                     CL_MEM_ALLOC_HOST_PTR|CL_MEM_WRITE_ONLY );
 
                 cl_uint szElements = static_cast< cl_uint >( first.distance_to(last ) );
@@ -256,8 +256,8 @@ namespace bolt {
                 V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for reduce() kernel" );
 
                 ::cl::Event l_mapEvent;
-                iType *h_result = (iType*)ctl.commandQueue().enqueueMapBuffer(*result, false, CL_MAP_READ, 0, 
-                    sizeof(iType)*numWG, NULL, &l_mapEvent, &l_Error );
+                int *h_result = (int*)ctl.commandQueue().enqueueMapBuffer(*result, false, CL_MAP_READ, 0, 
+                    sizeof(int)*numWG, NULL, &l_mapEvent, &l_Error );
                 V_OPENCL( l_Error, "Error calling map on the result buffer" );
 
                 //  Finish the tail end of the reduction on host side; the compute device reduces within the workgroups, 
@@ -268,7 +268,7 @@ namespace bolt {
 
                 bolt::cl::wait(ctl, l_mapEvent);
 
-                int minele_indx = static_cast< iType >( h_result[0] );
+                int minele_indx = ( h_result[0] );
                 iType minele =  *(first + h_result[0]) ;
 
                 for(int i = 1; i < numTailReduce; ++i)
