@@ -40,23 +40,25 @@ namespace bolt {
         *   \{
         */
 
-        /*! \brief Inner Product returns the inner product of two iterators using user specified binary functors f1 and f2.  
-        *
-        * \p This is similar to calculating transform and then reducing the result. The functor f1 should be commutative.
-        *
+        /*! \brief Inner Product returns the inner product of two iterators.  
+        * This is similar to calculating binary transform and then reducing the result.
         * The \p inner_product operation is similar the std::inner_product function.
+        *  This function can take  optional \p control structure to control command-queue.
         *
+        * \param ctl    \b Optional Control structure to control command-queue, debug, tuning. See bolt::cl::control.
         * \param first1 The beginning of input sequence.
         * \param last1  The end of input sequence.
 		* \param first2 The beginning of the second input sequence.
 		* \param init   The initial value for the accumulator.
-        * \param cl_code Optional OpenCL(TM) code to be passed to the OpenCL compiler. The cl_code is inserted first in the generated code, before the cl_code trait.
-        * \tparam InputIterator An iterator that can be dereferenced for an object, and can be incremented to get to the next element in a sequence.
+        * \param cl_code Optional OpenCL(TM) code to be passed to the OpenCL compiler. The cl_code is inserted first in
+        *                the generated code, before the cl_code trait.
+        * \tparam InputIterator An iterator that can be dereferenced for an object, and can be incremented to get to 
+        *                       the next element in a sequence.
         * \tparam OutputType The type of the result.
-        * \return The result of the reduction.
-        * \sa http://www.sgi.com/tech/stl/inner_product.html
+        * \return The result of the inner product.
         *
-        * The following code example shows the use of \p inner_product to perform dot product on two vectors of size 10 , using the default multiplies and plus operator.
+        *\details The following code example shows the use of \p inner_product to perform dot product on two vectors of
+        * size 10 , using the default multiplies and plus operator.
         * \code
         * #include <bolt/cl/inner_product.h>
         *
@@ -67,118 +69,64 @@ namespace bolt {
         * // sum = 1209
         *  \endcode
         *
+        * \sa http://www.sgi.com/tech/stl/inner_product.html
         */
 		template<typename InputIterator, typename OutputType> 
-        OutputType inner_product( bolt::cl::control &ctl,  InputIterator first1, InputIterator last1, InputIterator first2, OutputType init, 
+        OutputType inner_product( bolt::cl::control &ctl,  InputIterator first1, InputIterator last1, 
+            InputIterator first2, OutputType init, 
             const std::string& user_code="");
-        /*! \p Inner Product returns the inner product of two iterators using user specified binary functors f1 and f2.  
-        * \p This is similar to calculating transform and then reducing the result. The functor f1 should be commutative.
-        *
+
+		template<typename InputIterator, typename OutputType> 
+        OutputType inner_product( InputIterator first1, InputIterator last1, InputIterator first2, OutputType init, 
+            const std::string& user_code="");
+
+
+        /*! \brief Inner Product returns the inner product of two iterators using user specified binary functors 
+        * f1 and f2.  
+        * This is similar to calculating transform and then reducing the result. The functor f1 should be commutative.
+        * This function can take  optional \p control structure to control command-queue.
         * The \p inner_product operation is similar the std::inner_product function.
         *
-        * \param ctl Control structure to control command-queue, debug, tuning. See FIXME.
+        * \param ctl    \b Optional Control structure to control command-queue, debug, tuning. See FIXME.
         * \param first1 The first position in the input sequence.
         * \param last1  The last position in the input sequence.
-		* \param last2  The beginning of second input sequence.
+		* \param first2  The beginning of second input sequence.
+		* \param init   The initial value for the accumulator.
 		* \param f1		Binary functor for transformation.
 		* \param f2     Binary functor for reduction.
-        * \param cl_code Optional OpenCL(TM) code to be passed to the OpenCL compiler. The cl_code is inserted first in the generated code, before the cl_code trait.
-        * \tparam InputIterator An iterator that can be dereferenced for an object, and can be incremented to get to the next element in a sequence.
+        * \param cl_code Optional OpenCL(TM) code to be passed to the OpenCL compiler. The cl_code is inserted first in
+        *                the generated code, before the cl_code trait.
+        * \tparam InputIterator An iterator that can be dereferenced for an object, and can be incremented to get to 
+        *                       the next element in a sequence.
         * \tparam OutputType The type of the result.
-        * \return The result of the reduction.
-        * \sa http://www.sgi.com/tech/stl/inner_product.html
+        * \return The result of the inner product.
         *
-        * The following code example shows the use of \p inner_product on two vectors of size 10, using the user defined functors.
+        *\details The following code example shows the use of \p inner_product on two vectors of size 10, using the 
+        * user defined functors.
         * \code
+        *
+        * #include <bolt/cl/functional.h>    //for bolt::cl::plus 
         * #include <bolt/cl/inner_product.h>
         *
         * int a[10] = {-5,  0,  2,  3,  2,  4, -2,  1,  2,  3};
 		* int b[10] = {-5,  0,  2,  3,  2,  4, -2,  1,  2,  3};
         *
-        * cl::CommandQueue myCommandQueue = ...
-        *
-        * bolt::cl::control ctl(myCommandQueue); // specify an OpenCL(TM) command queue to use for executing the reduce.
-        * ctl.debug(bolt::cl::control::debug::SaveCompilerTemps); // save IL and ISA files for generated kernel
-        *
-        * int ip = bolt::cl::inner_product(ctl, a, a+10, b, bolt::cl::plus<int>(),bolt::cl::multiplies<int>(),0);
+        * int ip = bolt::cl::inner_product(a, a+10, b, 0, bolt::cl::plus<int>(),bolt::cl::multiplies<int>());
         * // sum = 76
         *  \endcode
+        * \sa http://www.sgi.com/tech/stl/inner_product.html
         */
-
+        
+        template<typename InputIterator, typename OutputType, typename BinaryFunction1, typename BinaryFunction2> 
+        OutputType inner_product( bolt::cl::control &ctl,  InputIterator first1, InputIterator last1, 
+            InputIterator first2, OutputType init, 
+            BinaryFunction1 f1, BinaryFunction2 f2, const std::string& user_code="");
 
         template<typename InputIterator, typename OutputType, typename BinaryFunction1, typename BinaryFunction2> 
         OutputType inner_product( InputIterator first1, InputIterator last1, InputIterator first2, OutputType init, 
             BinaryFunction1 f1, BinaryFunction2 f2, const std::string& user_code="");
-
-        /*! \p Inner Product returns the inner product of two iterators.
-        * \p This is similar to calculating transform and then reducing the result.
-        *
-        * The \p inner_product operation is similar the std::inner_product function.
-        *        
-        * \param first1 The first position in the input sequence.
-        * \param last1  The last position in the input sequence.
-		* \param last2  The beginning of second input sequence.
-        * \param cl_code Optional OpenCL(TM) code to be passed to the OpenCL compiler. The cl_code is inserted first in the generated code, before the cl_code trait.
-        * \tparam InputIterator An iterator that can be dereferenced for an object, and can be incremented to get to the next element in a sequence.
-        * \tparam OutputType The type of the result.
-        * \return The result of the reduction.
-        * \sa http://www.sgi.com/tech/stl/inner_product.html
-        *
-        * The following code example shows the use of \p inner_product on two vectors of size 10, using the user defined functors.
-        * \code
-        * #include <bolt/cl/inner_product.h>
-        *
-        * int a[10] = {-5,  0,  2,  3,  2,  4, -2,  1,  2,  3};
-		* int b[10] = {-5,  0,  2,  3,  2,  4, -2,  1,  2,  3};
-        *
-        * int ip = bolt::cl::inner_product(ctl, a, a+10, b, 1);
-        * // sum = 77
-        *  \endcode
-        */
-
-
-		template<typename InputIterator, typename OutputType> 
-        OutputType inner_product( InputIterator first1, InputIterator last1, InputIterator first2, OutputType init, 
-            const std::string& user_code="");
-
-        /*! \p Inner Product returns the inner product of two iterators.
-        * \p This is similar to calculating transform and then reducing the result.
-        *
-        * The \p inner_product operation is similar the std::inner_product function.
-        *
-        * \param ctl Control structure to control command-queue, debug, tuning. See FIXME.
-        * \param first1 The first position in the input sequence.
-        * \param last1  The last position in the input sequence.
-		* \param last2  The beginning of second input sequence.
-        * \param cl_code Optional OpenCL(TM) code to be passed to the OpenCL compiler. The cl_code is inserted first in the generated code, before the cl_code trait.
-        * \tparam InputIterator An iterator that can be dereferenced for an object, and can be incremented to get to the next element in a sequence.
-        * \tparam OutputType The type of the result.
-        * \return The result of the reduction.
-        * \sa http://www.sgi.com/tech/stl/inner_product.html
-        *
-        * The following code example shows the use of \p inner_product on two vectors of size 10, using the user defined functors.
-        * \code
-        * #include <bolt/cl/inner_product.h>
-        *
-        * int a[10] = {-5,  0,  2,  3,  2,  4, -2,  1,  2,  3};
-		* int b[10] = {-5,  0,  2,  3,  2,  4, -2,  1,  2,  3};
-        *
-        * cl::CommandQueue myCommandQueue = ...
-        *
-        * bolt::cl::control ctl(myCommandQueue); // specify an OpenCL(TM) command queue to use for executing the reduce.
-        * ctl.debug(bolt::cl::control::debug::SaveCompilerTemps); // save IL and ISA files for generated kernel
-        *
-        * int ip = bolt::cl::inner_product(ctl, a, a+10, b,0);
-        * // sum = 76
-        *  \endcode
-        */
-
-
-        template<typename InputIterator, typename OutputType, typename BinaryFunction1, typename BinaryFunction2> 
-        OutputType inner_product( bolt::cl::control &ctl,  InputIterator first1, InputIterator last1, InputIterator first2, OutputType init, 
-            BinaryFunction1 f1, BinaryFunction2 f2, const std::string& user_code="");
-
        
+        /*!   \}  */
     };
 };
 
