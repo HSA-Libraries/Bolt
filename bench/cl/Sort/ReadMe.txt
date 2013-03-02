@@ -32,5 +32,10 @@ Run this command to plot the graph
 python plotPerformance.py --y_axis_label "GBeys/sec" --title "sort Performance" --x_axis_scale log2 -d sort_tbb_host.txt -d sort_tbb_device.txt -d sort_bolt_host.txt -d sort_bolt_device.txt -d sort_stl_host.txt --outputfile sortPerfAll4096.pdf
 
 /////////////////////////////////////////////////////////////////////////////
-
 python plotPerformance.py --y_axis_label "GBeys/sec" --title "sort Performance" --x_axis_scale log2 -d sort_tbb_host.txt -d sort_bolt_device_orig_radix.txt -d sort_bolt_device_orig_bitonic.txt --outputfile sortPerfBitonic_Radix.pdf
+
+/////////////////////////////////////////////////////////////////////////////
+copy D:\Project\bolt\GitHub\Bolt-new\bin\vs2012-tbb-SuperBuild\Bolt-build\staging\Release\clbolt.bench.sort.exe .
+python measurePerformance.py --label sort_bolt_device_bitonic_cont --library=BOLT --routine=sort --memory device -l 4096-67108864:x2 --tablefile sort_bolt_device_bitonic_cont.txt
+python measurePerformance.py --label sort_bolt_host_bitonic_cont --library=BOLT --routine=sort --memory host -l 4096-67108864:x2 --tablefile sort_bolt_host_bitonic_cont.txt
+python plotPerformance.py --y_axis_label "GBeys/sec" --title "sort Performance" --x_axis_scale log2 -d sort_tbb_host.txt -d sort_bolt_device_orig_radix.txt -d sort_bolt_device_orig_bitonic.txt -d sort_bolt_device_bitonic_cont.txt --outputfile sortPerfBitonic_Radix.pdf

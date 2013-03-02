@@ -214,25 +214,27 @@ int _tmain( int argc, _TCHAR* argv[] )
         if( systemMemory )
         {
             std::cout << "Benchmarking Bolt Host\n"; 
-            std::vector< DATA_TYPE > input1( length );
+            std::vector< DATA_TYPE > input( length );
 
             for( unsigned i = 0; i < iterations; ++i )
             {
-                input1 = backup;
+                input = backup;
                 myTimer.Start( testId );
-                bolt::cl::sort( input1.begin(), input1.end());
+                bolt::cl::sort( input.begin(), input.end());
                 myTimer.Stop( testId );
             }
         }
         else if(deviceMemory)
         {
-            std::cout << "Benchmarking Bolt Device\n"; 
+            std::cout << "Benchmarking Bolt Device for length \n"; 
+            std::cout << std::distance(backup.begin( ), backup.end( ) ) << "  ---\n";
             for( unsigned i = 0; i < iterations; ++i )
             {
-                bolt::cl::device_vector< DATA_TYPE > input1( backup.begin( ), backup.end( ) );
+                bolt::cl::device_vector< DATA_TYPE > dvInput( backup.begin( ), backup.end( ), CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE );
                 myTimer.Start( testId );
-                bolt::cl::sort( input1.begin( ), input1.end( ) );
+                bolt::cl::sort( dvInput.begin( ), dvInput.end( ) );
                 myTimer.Stop( testId );
+                dvInput.data();
             }
         }
         else
@@ -248,14 +250,14 @@ int _tmain( int argc, _TCHAR* argv[] )
         if( systemMemory )
         {
             std::cout << "Benchmarking TBB Host\n"; 
-            std::vector< DATA_TYPE > input1( length, 1 );
+            std::vector< DATA_TYPE > input( length, 1 );
 
             for( unsigned i = 0; i < iterations; ++i )
             {
-                input1 = backup;
+                input = backup;
 
                 myTimer.Start( testId );
-                bolt::cl::sort( ctl, input1.begin(), input1.end());
+                bolt::cl::sort( ctl, input.begin(), input.end());
                 myTimer.Stop( testId );
             }
         }
@@ -265,9 +267,9 @@ int _tmain( int argc, _TCHAR* argv[] )
 
             for( unsigned i = 0; i < iterations; ++i )
             {
-                bolt::cl::device_vector< DATA_TYPE > input1( backup.begin( ), backup.end( ) );
+                bolt::cl::device_vector< DATA_TYPE > dvInput( backup.begin( ), backup.end( ), CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE );
                 myTimer.Start( testId );
-                bolt::cl::sort( ctl, input1.begin(), input1.end());
+                bolt::cl::sort( ctl, dvInput.begin(), dvInput.end());
                 myTimer.Stop( testId );
             }
         }
@@ -298,7 +300,7 @@ int _tmain( int argc, _TCHAR* argv[] )
             std::cout << "Benchmarking STL Device\n"; 
             for( unsigned i = 0; i < iterations; ++i )
             {
-                bolt::cl::device_vector< DATA_TYPE > input1( backup.begin( ), backup.end( ) );
+                bolt::cl::device_vector< DATA_TYPE > input1( backup.begin( ), backup.end( ), CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE  );
                 myTimer.Start( testId );
                 bolt::cl::sort( ctl, input1.begin(), input1.end());
                 myTimer.Stop( testId );
@@ -317,10 +319,8 @@ int _tmain( int argc, _TCHAR* argv[] )
     bolt::tout << std::setw( colWidth ) << _T( "    Size (MB): " ) << testMB << std::endl;
     bolt::tout << std::setw( colWidth ) << _T( "    Time (ms): " ) << testTime*1000.0 << std::endl;
     bolt::tout << std::setw( colWidth ) << _T( "    Speed (GB/s): " ) << testGB / testTime << std::endl;
-    bolt::tout << std::setw( colWidth ) << _T( "    Speed (MKeys/s): " ) << length / testTime << std::endl;
+    //bolt::tout << std::setw( colWidth ) << _T( "    Speed (MKeys/s): " ) << length / ( testTime * ( 1024.0 * 1024.0 ) ) << std::endl;
     bolt::tout << std::endl;
-
-//	bolt::tout << myTimer;
 
     return 0;
 }

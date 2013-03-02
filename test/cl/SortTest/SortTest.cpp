@@ -1055,6 +1055,22 @@ INSTANTIATE_TYPED_TEST_CASE_P( Double, SortArrayTest, DoubleTests );
 REGISTER_TYPED_TEST_CASE_P( SortUDDArrayTest,  Normal);
 INSTANTIATE_TYPED_TEST_CASE_P( UDDTest, SortUDDArrayTest, UDDTests );
 
+TEST(largeBuffer, BitonicTest)
+{
+    int length = 1024*1024*128;
+    std::vector<int> backup(length);
+    std::vector<int> input(length);
+    std::generate(backup.begin(), backup.end(), rand);
+    input = backup;
+    std::cout << "Benchmarking Bolt Device for length \n"; 
+    std::cout << std::distance(backup.begin( ), backup.end( ) ) << "  ---\n";
+    bolt::cl::device_vector< int > dvInput( backup.begin( ), backup.end( ), CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE );
+    bolt::cl::sort( dvInput.begin( ), dvInput.end( ) );
+    dvInput.data();
+    std::sort( input.begin( ), input.end( ) );
+    cmpArrays(input, backup);
+}
+
 int main(int argc, char* argv[])
 {
     ::testing::InitGoogleTest( &argc, &argv[ 0 ] );

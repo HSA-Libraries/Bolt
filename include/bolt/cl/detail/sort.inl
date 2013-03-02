@@ -775,7 +775,7 @@ sort_enqueue(control &ctl,
     return;
 }
 
-
+#if 0
 template<typename DVRandomAccessIterator, typename StrictWeakOrdering> 
 typename std::enable_if< std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type,          int >::value >::type
 sort_enqueue(control &ctl, 
@@ -1175,11 +1175,12 @@ sort_enqueue(control &ctl,
     delete pLocalBuffer;
     return;
 }
-
+#endif
 template<typename DVRandomAccessIterator, typename StrictWeakOrdering> 
 typename std::enable_if< 
-    !(std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type, unsigned int >::value || 
-      std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type,          int >::value) 
+    !(std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type, unsigned int >::value 
+    //|| std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type,          int >::value
+    ) 
                        >::type
 sort_enqueue(control &ctl, 
              const DVRandomAccessIterator& first, const DVRandomAccessIterator& last,
@@ -1265,7 +1266,7 @@ sort_enqueue(control &ctl,
                                             NULL,
                                             NULL);
             V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for sort() kernel" );
-            V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
+            //V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
         }//end of for passStage = 0:stage-1
     }//end of for stage = 0:numStage-1
     return;
