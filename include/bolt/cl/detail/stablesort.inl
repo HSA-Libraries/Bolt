@@ -460,13 +460,8 @@ void stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, cons
     ::cl::CommandQueue& myCQ = ctrl.commandQueue( );
 
     ::cl::Event blockSortEvent;
-    l_Error = myCQ.enqueueNDRangeKernel(
-            kernels[ 0 ],
-            ::cl::NullRange,
-            ::cl::NDRange( globalRange ),
-            ::cl::NDRange( localRange ),
-            NULL,
-            &blockSortEvent );
+    l_Error = myCQ.enqueueNDRangeKernel( kernels[ 0 ], ::cl::NullRange,
+            ::cl::NDRange( globalRange ), ::cl::NDRange( localRange ), NULL, &blockSortEvent );
     V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for perBlockInclusiveScan kernel" );
 
     //  Early exit for the case of no merge passes, values are already in destination vector
@@ -481,17 +476,20 @@ void stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, cons
 
     //  Calculate the log2 of vecSize, taking into account our block size from kernel 1 is 64
     //  this is how many merge passes we want
-    for( size_t temp = vecSize >> 6; temp > 1; temp >>= 1 )
-        ++numMerges;
-
-    //  If there are elements that are not a multiple of the mergesize, then we add a merge pass to 
-    //  add those in
-    size_t mergeSize = localRange << 1;
-    numMerges += (vecSize & (mergeSize-1))? 1: 0;
+    size_t log2BlockSize = vecSize >> 6;
+    for( ; log2BlockSize > 1; log2BlockSize >>= 1 )
     {
-        device_vector< iType >::pointer myData = first.getContainer( ).data( );
-        myData.reset( );
+        ++numMerges;
     }
+
+    //  Check to see if the input vector size is a power of 2, if not we will need last merge pass
+    size_t vecPow2 = (vecSize & (vecSize-1));
+    numMerges += vecPow2? 1: 0;
+
+    //{
+    //    device_vector< iType >::pointer myData = first.getContainer( ).data( );
+    //    myData.reset( );
+    //}
 
     //  Allocate a flipflop buffer because the merge passes are out of place
     control::buffPointer tmpBuffer = ctrl.acquireBuffer( globalRange * sizeof( iType ) );
@@ -518,39 +516,71 @@ void stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, cons
             V_OPENCL( kernels[ 1 ].setArg( 3, first.gpuPayloadSize( ), &first.gpuPayload( ) ), "Error setting a kernel argument" );
         }
         //  For each pass, the merge window doubles
-        V_OPENCL( kernels[ 1 ].setArg( 5, static_cast< unsigned >( pass*localRange ) ),            "Error setting argument for kernels[ 0 ]" ); // Size of scratch buffer
+        unsigned srcLogicalBlockSize = static_cast< unsigned >( localRange << (pass-1) );
+        V_OPENCL( kernels[ 1 ].setArg( 5, static_cast< unsigned >( srcLogicalBlockSize ) ),            "Error setting argument for kernels[ 0 ]" ); // Size of scratch buffer
 
         if( pass == numMerges )
         {
             //  Grab the event to wait on from the last enqueue call
             l_Error = myCQ.enqueueNDRangeKernel( kernels[ 1 ], ::cl::NullRange, ::cl::NDRange( globalRange ),
-                    ::cl::NDRange( localRange ), NULL, &kernelEvent );
+                    //::cl::NDRange( localRange ), NULL, &kernelEvent );
+                    ::cl::NDRange( localRange ), NULL, NULL );
             V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for mergeTemplate kernel" );
         }
         else
         {
             l_Error = myCQ.enqueueNDRangeKernel( kernels[ 1 ], ::cl::NullRange, ::cl::NDRange( globalRange ),
-                    ::cl::NDRange( localRange ), NULL, &kernelEvent );
+                    //::cl::NDRange( localRange ), NULL, &kernelEvent );
+                    ::cl::NDRange( localRange ), NULL, NULL );
             V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for mergeTemplate kernel" );
         }
 
-        wait( ctrl, kernelEvent );
+        myCQ.finish( );
+        std::cout << "BlockSize[ " << srcLogicalBlockSize << " ] " << std::endl;
         if( pass & 0x1 )
         {
             //  Debug mapping, to look at result vector in memory
-            iType* host2devH = static_cast< iType* >( myCQ.enqueueMapBuffer( *tmpBuffer, CL_TRUE, CL_MAP_WRITE, 0,
+            iType* dev2Host = static_cast< iType* >( myCQ.enqueueMapBuffer( *tmpBuffer, CL_TRUE, CL_MAP_WRITE, 0,
                 globalRange * sizeof( iType ), NULL, NULL, &l_Error) );
-            V_OPENCL( l_Error, "Error: Mapping Host->Device Buffer." );
-            myCQ.enqueueUnmapMemObject( *tmpBuffer, host2devH );
+            V_OPENCL( l_Error, "Error: Mapping Device->Host Buffer." );
+
+            for( unsigned i = 0; i < globalRange/srcLogicalBlockSize; ++i )
+            {
+                unsigned blockIndex = i * srcLogicalBlockSize;
+                for( unsigned j = blockIndex; j < blockIndex+(srcLogicalBlockSize-1); ++j )
+                {
+                    if( !(comp)( dev2Host[ j ], dev2Host[ j + 1 ] ) && (dev2Host[ j ] != dev2Host[ j + 1 ]) )
+                    {
+                        std::cout << " Element[ " << j+1 << " ] out of sequence Block[ " << i << " ] Index[ " << j+1-blockIndex << " ]" << std::endl;
+                    }
+                }
+            }
+
+            myCQ.enqueueUnmapMemObject( *tmpBuffer, dev2Host );
         }
         else
         {
             //  Debug mapping, to look at result vector in memory
-            iType* host2devH = static_cast< iType* >( myCQ.enqueueMapBuffer( first.getBuffer( ), CL_TRUE, CL_MAP_WRITE, 0,
+            iType* dev2Host = static_cast< iType* >( myCQ.enqueueMapBuffer( first.getBuffer( ), CL_TRUE, CL_MAP_WRITE, 0,
                 globalRange * sizeof( iType ), NULL, NULL, &l_Error) );
-            V_OPENCL( l_Error, "Error: Mapping Host->Device Buffer." );
-            myCQ.enqueueUnmapMemObject( first.getBuffer( ), host2devH );
+            V_OPENCL( l_Error, "Error: Mapping Device->Host Buffer." );
+
+            for( unsigned i = 0; i < globalRange/srcLogicalBlockSize; ++i )
+            {
+                unsigned blockIndex = i * srcLogicalBlockSize;
+                for( unsigned j = blockIndex; j < blockIndex+(srcLogicalBlockSize-1); ++j )
+                {
+                    if( !(comp)( dev2Host[ j ], dev2Host[ j + 1 ] ) )
+                    {
+                        std::cout << "Block[ " << i << " ] Element[ " << j << " ] out of sequence" << std::endl;
+                    }
+                }
+            }
+
+            myCQ.enqueueUnmapMemObject( first.getBuffer( ), dev2Host );
         }
+        std::cout << std::endl;
+
     }
 
     //  If there are an odd number of merges, then the output data is sitting in the temp buffer.  We need to copy
@@ -562,13 +592,14 @@ void stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, cons
         l_Error = myCQ.enqueueCopyBuffer( *tmpBuffer, first.getBuffer( ), 0, first.m_Index * sizeof( iType ), 
             vecSize * sizeof( iType ), NULL, &copyEvent );
         V_OPENCL( l_Error, "device_vector failed to copy data inside of operator=()" );
-        wait( ctrl, copyEvent );
+        //wait( ctrl, copyEvent );
     }
     else
     {
-        wait( ctrl, kernelEvent );
+        //wait( ctrl, kernelEvent );
     }
 
+    myCQ.finish( );
     return;
 }// END of sort_enqueue
 

@@ -32,7 +32,7 @@
 //  passed as a functor parameter lessOp
 //  This function returns an index that would be the appropriate index to use to insert the value
 template< typename sType, typename StrictWeakOrdering >
-uint lowerBoundSequential( global sType* data, uint left, uint right, sType searchVal, global StrictWeakOrdering* lessOp )
+uint lowerBoundLinear( global sType* data, uint left, uint right, sType searchVal, global StrictWeakOrdering* lessOp )
 {
     //  The values firstIndex and lastIndex get modified within the loop, narrowing down the potential sequence
     uint firstIndex = left;
@@ -107,7 +107,7 @@ kernel void mergeTemplate(
                 global sPtrType* result_ptr,
                 dIterType    result_iter, 
                 const uint srcVecSize,
-                const uint srcBlockSize,
+                const uint srcLogicalBlockSize,
                 local sPtrType* lds,
                 global StrictWeakOrdering* lessOp
             )
@@ -118,39 +118,44 @@ kernel void mergeTemplate(
     size_t wgSize       = get_local_size( 0 );
 
     //  Abort threads that are passed the end of the input vector
-    if (globalID >= srcVecSize) return; // on SI this doesn't mess-up barriers
+    if( globalID >= srcVecSize )
+        return; // on SI this doesn't mess-up barriers
 
     //  For an element in sequence A, find the lowerbound index for it in sequence B
-    uint blockNum = globalID / srcBlockSize;
-    uint blockIndex = globalID % srcBlockSize;
+    uint srcBlockNum = globalID / srcLogicalBlockSize;
+    uint srcBlockIndex = globalID % srcLogicalBlockSize;
     
-    // printf( "mergeTemplate: blockNum[%i]=%i\n", blockNum, blockIndex );
+    // printf( "mergeTemplate: srcBlockNum[%i]=%i\n", srcBlockNum, srcBlockIndex );
 
     //  Pairs of even-odd blocks will be merged together 
-    uint oddEvenBlockIndex = blockNum&~0x1;
-    // uint leftBlockIndex = min( oddEvenBlockIndex * !(blockNum & 0x1)*srcBlockSize, srcVecSize );
-    uint leftBlockIndex = globalID & ~((srcBlockSize<<1) - 1 );
-    leftBlockIndex += (blockNum & 0x1) ? 0 : srcBlockSize;
-    uint rightBlockIndex = min( leftBlockIndex + srcBlockSize, srcVecSize );
+    //  An even block should search for an insertion point in the next odd block, 
+    //  and the odd block should look for an insertion point in the corresponding previous even block
+    uint dstLogicalBlockSize = srcLogicalBlockSize<<1;
+    uint leftBlockIndex = globalID & ~((dstLogicalBlockSize) - 1 );
+    leftBlockIndex += (srcBlockNum & 0x1) ? 0 : srcLogicalBlockSize;
+    leftBlockIndex = min( leftBlockIndex, srcVecSize );
+    uint rightBlockIndex = min( leftBlockIndex + srcLogicalBlockSize, srcVecSize );
     
-    if( localID == 0 )
-    {
-        if( blockNum&0x1 )
-            printf( "mergeTemplate: block[ %i ] index[ %i ] leftBlockIndex[ %i ] <=> rightBlockIndex[ %i ]\n", blockNum, blockIndex, leftBlockIndex, rightBlockIndex );
-        else
-            printf( "mergeTemplate: block[ %i ] index[ %i ] leftBlockIndex[ %i ] <=> rightBlockIndex[ %i ]\n", blockNum, blockIndex, leftBlockIndex, rightBlockIndex );
-    }
+    // if( localID == 0 )
+    // {
+        // printf( "mergeTemplate: wavefront[ %i ] logicalBlock[ %i ] logicalIndex[ %i ] leftBlockIndex[ %i ] <=> rightBlockIndex[ %i ]\n", groupID, srcBlockNum, srcBlockIndex, leftBlockIndex, rightBlockIndex );
+    // }
     
     //  For a particular element in the input array, find the lowerbound index for it in the search sequence given by leftBlockIndex & rightBlockIndex
-    uint insertionIndex = lowerBoundBinary( source_ptr, leftBlockIndex, rightBlockIndex, source_ptr[ globalID ], lessOp ) - leftBlockIndex;
+    uint insertionIndex = lowerBoundLinear( source_ptr, leftBlockIndex, rightBlockIndex, source_ptr[ globalID ], lessOp ) - leftBlockIndex;
 
     //  The index of an element in the result sequence is the summation of it's indixes in the two input 
     //  sequences
-    uint resultIndex = blockIndex + insertionIndex;
-    // printf( "mergeTemplate: resultIndex[ %i ] = blockIndex[ %i ] + ( insertionIndex[ %i ] )\n", resultIndex, blockIndex, insertionIndex );
-
-    result_ptr[ (oddEvenBlockIndex*srcBlockSize)+resultIndex ] = source_ptr[ globalID ];
-    // printf( "mergeTemplate: leftResultIndex[ %i ]=%i + %i\n", leftResultIndex, blockIndex, leftInsertionIndex );
+    uint dstBlockIndex = srcBlockIndex + insertionIndex;
+    uint dstBlockNum = srcBlockNum/2;
+    
+    // if( (dstBlockNum*dstLogicalBlockSize)+dstBlockIndex == 395 )
+    // {
+        // printf( "mergeTemplate: (dstBlockNum[ %i ] * dstLogicalBlockSize[ %i ]) + dstBlockIndex[ %i ] = srcBlockIndex[ %i ] + insertionIndex[ %i ]\n", dstBlockNum, dstLogicalBlockSize, dstBlockIndex, srcBlockIndex, insertionIndex );
+        // printf( "mergeTemplate: dstBlockIndex[ %i ] = source_ptr[ %i ] ( %i )\n", (dstBlockNum*dstLogicalBlockSize)+dstBlockIndex, globalID, source_ptr[ globalID ] );
+    // }
+    result_ptr[ (dstBlockNum*dstLogicalBlockSize)+dstBlockIndex ] = source_ptr[ globalID ];
+    // printf( "mergeTemplate: leftResultIndex[ %i ]=%i + %i\n", leftResultIndex, srcBlockIndex, leftInsertionIndex );
 }
 
 template< typename dPtrType, typename dIterType, typename StrictWeakOrdering >

@@ -1396,8 +1396,11 @@ void BasicSortTestOfLength(size_t length)
     std::vector<T> stdInput(length);
     std::vector<T> boltInput(length);
     std::vector<T> stdBackup(length);
-    std::generate (stdInput.begin(), stdInput.end(),rand);
+    std::generate( stdInput.begin( ), stdInput.end( ), rand );
     
+    //for( int b = stdInput.size( )-1; b >= 0; --b )
+    //    stdInput[ b ] = b;
+
     //boltInput = stdInput;
     //bolt::cl::stable_sort(boltInput.begin(), boltInput.end()/*, bolt::cl::greater<T>()*/);
 
@@ -1674,7 +1677,7 @@ int main(int argc, char* argv[])
 
 #if 1
 
-    for ( unsigned vecLength = 256; vecLength < 1024; vecLength += 64 )
+    for ( unsigned vecLength = 512; vecLength <= 1024; vecLength += 64 )
     {
         std::cout << "Testing vecLength: " << vecLength << std::endl;
         BasicSortTestOfLength< int >( vecLength );
