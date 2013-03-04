@@ -1269,6 +1269,7 @@ sort_enqueue(control &ctl,
             //V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
         }//end of for passStage = 0:stage-1
     }//end of for stage = 0:numStage-1
+    V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
     return;
 }// END of sort_enqueue
 
