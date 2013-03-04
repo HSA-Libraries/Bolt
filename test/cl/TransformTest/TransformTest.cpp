@@ -1316,6 +1316,51 @@ TEST(cl_const_iter_transformBoltClVectFloat, addIterFloatValues){
 	}
 }
 
+TEST( Transformint , KcacheTest )
+{
+    //setup containers
+    unsigned int length = 1024;
+    std::vector< int > refInput( length );
+    std::vector< int > refOutput( length );
+    for( unsigned int i = 0; i < length ; i++ )
+    {
+      refInput[i] = i;
+      refInput[i] = i+1;
+      refOutput[i] = 0;
+    }
+
+    //Call reduce with GPU device because the default is a GPU device
+    bolt::cl::control ctrl = bolt::cl::control::getDefault();
+    bolt::cl::device_vector< int >gpuInput( refInput.begin(), refInput.end() );
+    bolt::cl::device_vector< int >gpuOutput( refOutput.begin(), refOutput.end() );
+
+    bolt::cl::transform( ctrl, gpuInput.begin(), gpuInput.end(), gpuOutput.begin(), bolt::cl::negate<int>() );
+
+    //Call reduce with CPU device
+    ::cl::Context cpuContext(CL_DEVICE_TYPE_CPU);
+    std::vector< cl::Device > devices = cpuContext.getInfo< CL_CONTEXT_DEVICES >();
+    cl::Device selectedDevice;
+
+    for(std::vector< cl::Device >::iterator iter = devices.begin();iter < devices.end(); iter++)
+    {
+        if(iter->getInfo<CL_DEVICE_TYPE> ( ) == CL_DEVICE_TYPE_CPU)
+        {
+            selectedDevice = *iter;
+            break;
+        }
+    }
+    ::cl::CommandQueue myQueue( cpuContext, selectedDevice );
+    bolt::cl::control cpu_ctrl( myQueue );  // construct control structure from the queue.
+    bolt::cl::device_vector< int > cpuInput( refInput.begin(), refInput.end() );
+    bolt::cl::device_vector< int > cpuOutput( refOutput.begin(), refOutput.end() );
+
+    bolt::cl::transform( cpu_ctrl, cpuInput.begin(), cpuInput.end(), cpuOutput.begin() , bolt::cl::negate<int>());
+
+    //Call reference code
+    std::transform( refInput.begin(), refInput.end(), refOutput.begin(), std::negate<int>());
+    cmpArrays(cpuOutput,gpuOutput);
+}
+
 
 
 int main(int argc, char* argv[])

@@ -83,17 +83,70 @@ namespace bolt {
         *  \endcode
         * \sa http://www.sgi.com/tech/stl/accumulate.html
         */
-        template<typename InputIterator, typename T> 
+
+        template<typename InputIterator> 
         typename std::iterator_traits<InputIterator>::value_type
             reduce(bolt::cl::control &ctl,
+            InputIterator first, 
+            InputIterator last, 
+            const std::string& cl_code="");
+
+        template<typename InputIterator> 
+        typename std::iterator_traits<InputIterator>::value_type
+            reduce(InputIterator first, 
+            InputIterator last, 
+            const std::string& cl_code="");
+
+
+        /*! \breif reduce returns the result of combining all the elements in the specified range using the specified 
+        * binary_op.  
+        * The classic example is a summation, where the binary_op is the plus operator.  By default, the initial value 
+        * is "0" 
+        * and the binary operator is "plus<>()".
+        *
+        * \details \p reduce requires that the binary reduction op ("binary_op") is cummutative.  The order in which 
+        * \p reduce applies the binary_op
+        * is not deterministic.
+        *
+        * \details The \p reduce operation is similar the std::accumulate function
+        *
+        * \param ctl \b Optional Control structure to control command-queue, debug, tuning. See FIXME.
+        * \param first The first position in the sequence to be reduced.
+        * \param last  The last position in the sequence to be reduced.
+        * \param init  The initial value for the accumulator.
+        * \param cl_code Optional OpenCL(TM) code to be passed to the OpenCL compiler. The cl_code is inserted first in
+        * the generated code, before the cl_code trait.
+        * \tparam InputIterator An iterator that can be dereferenced for an object, and can be incremented to get to 
+        * the next element in a sequence.
+        * \tparam T The type of the result.
+        * \return The result of the reduction.
+        *
+        * \details The following code example shows the use of \p reduce to sum 10 numbers, using the default plus 
+        * operator.
+        * \code
+        * #include <bolt/cl/reduce.h>
+        *
+        * int a[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+        *
+        * cl::CommandQueue myCommandQueue = ...
+        *
+        * bolt::cl::control ctl(myCommandQueue); //specify an OpenCL(TM) command queue to use for executing the reduce.
+        * ctl.debug(bolt::cl::control::debug::SaveCompilerTemps); // save IL and ISA files for generated kernel
+        *
+        * int sum = bolt::cl::reduce(ctl, a, a+10, 0);
+        * // sum = 55
+        *  \endcode
+        * \sa http://www.sgi.com/tech/stl/accumulate.html
+        */
+        template<typename InputIterator, typename T> 
+        T    reduce(bolt::cl::control &ctl,
             InputIterator first, 
             InputIterator last, 
             T init,
             const std::string& cl_code="");
 
         template<typename InputIterator, typename T> 
-        typename std::iterator_traits<InputIterator>::value_type
-            reduce(InputIterator first, 
+        T   reduce(InputIterator first, 
             InputIterator last, 
             T init,
             const std::string& cl_code="");

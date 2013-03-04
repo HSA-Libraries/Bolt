@@ -151,39 +151,41 @@ namespace bolt {
 namespace bolt {
     namespace cl {
         namespace detail {
-            struct kernelParamsReduce
+
+
+
+        enum MineleTypes {min_iValueType, min_iIterType, min_BinaryPredicate, min_end };
+
+        ///////////////////////////////////////////////////////////////////////
+        //Kernel Template Specializer
+        ///////////////////////////////////////////////////////////////////////
+        class Min_KernelTemplateSpecializer : public KernelTemplateSpecializer
             {
-                const std::string inPtrType;
-                const std::string inIterType;
-                const std::string binaryFuncName;
+            public:
 
-                kernelParamsReduce( const std::string& iPtrType, const std::string& iIterType, const std::string& binaryFuncType ): 
-                inPtrType( iPtrType ), inIterType( iIterType ), 
-                binaryFuncName( binaryFuncType )
-                {}
-            };
+            Min_KernelTemplateSpecializer() : KernelTemplateSpecializer()
+                {
+                    addKernelName( "min_elementTemplate" );
+                }
 
-            // FIXME - move to cpp file
-            struct CallCompiler_Reduce {
-                static void constructAndCompile(::cl::Kernel *masterKernel,  std::string cl_code, kernelParamsReduce* kp, const control *ctl) {
-
-                    const std::string instantiationString = 
+            const ::std::string operator() ( const ::std::vector<::std::string>& typeNames ) const
+            {
+                const std::string templateSpecializationString = 
                         "// Host generates this instantiation string with user-specified value type and functor\n"
-                        "template __attribute__((mangled_name(min_elementInstantiated)))\n"
+                        "template __attribute__((mangled_name(" + name(0) + "Instantiated)))\n"
                         "__attribute__((reqd_work_group_size(64,1,1)))\n"
-                        "kernel void min_elementTemplate(\n"
-                        "global " + kp->inPtrType + "* input_ptr,\n"
-                         + kp->inIterType + " output_iter,\n"
+                        "kernel void " + name(0) + "(\n"
+                        "global " + typeNames[min_iValueType] + "* input_ptr,\n"
+                         + typeNames[min_iIterType] + " output_iter,\n"
                         "const int length,\n"
-                        "global " + kp->binaryFuncName + "* userFunctor,\n"
+                        "global " + typeNames[min_BinaryPredicate] + "* userFunctor,\n"
                         "global int *result,\n"
-                        "local " + kp->inPtrType + "* scratch,\n"
+                        "local " + typeNames[min_iValueType] + "* scratch,\n"
                         "local int *scratch_index\n"
                         ");\n\n";
 
-                    bolt::cl::constructAndCompileString( masterKernel, "min_element", min_element_kernels, instantiationString, cl_code, kp->inPtrType, kp->binaryFuncName, *ctl);
-
-                };
+                return templateSpecializationString;
+            }
             };
 
             //----
@@ -198,19 +200,32 @@ namespace bolt {
             {
                 typedef typename std::iterator_traits< DVInputIterator >::value_type iType;
 
-                static boost::once_flag initOnlyOnce;
-                static ::cl::Kernel masterKernel;
+                std::vector<std::string> typeNames( min_end);
+                typeNames[min_iValueType] = TypeName< iType >::get( );
+                typeNames[min_iIterType] = TypeName< DVInputIterator >::get( );
+                typeNames[min_BinaryPredicate] = TypeName< BinaryPredicate >::get();
 
-                kernelParamsReduce args( TypeName< iType >::get( ), TypeName< DVInputIterator >::get( ), 
-                    TypeName< BinaryPredicate >::get( ) );
+                std::vector<std::string> typeDefinitions;
+                PUSH_BACK_UNIQUE( typeDefinitions, ClCode< iType >::get() )
+                PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVInputIterator >::get() )
+                PUSH_BACK_UNIQUE( typeDefinitions, ClCode< BinaryPredicate  >::get() )
 
-                std::string typeDefinitions = cl_code + ClCode< iType >::get( ) + ClCode< DVInputIterator >::get( );
-                typeDefinitions += ClCode< BinaryPredicate >::get( );
+                //bool cpuDevice = ctl.device().getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_CPU;
+                /*\TODO - Do CPU specific kernel work group size selection here*/
+                //const size_t kernel0_WgSize = (cpuDevice) ? 1 : WAVESIZE*KERNEL02WAVES;
+                std::string compileOptions;
+                //std::ostringstream oss;
+                //oss << " -DKERNEL0WORKGROUPSIZE=" << kernel0_WgSize;
 
-                // For user-defined types, the user must create a TypeName trait which returns the name of the class 
-                //  - note use of TypeName<>::get to retreive the name here.
-                boost::call_once( initOnlyOnce, boost::bind( CallCompiler_Reduce::constructAndCompile, &masterKernel, 
-                    typeDefinitions, &args, &ctl) );
+                Min_KernelTemplateSpecializer ts_kts;
+                std::vector< ::cl::Kernel > kernels = bolt::cl::getKernels(
+                    ctl,
+                    typeNames,
+                    &ts_kts,
+                    typeDefinitions,
+                    min_element_kernels,
+                    compileOptions);
+
 
                 // Set up shape of launch grid and buffers:
                 cl_uint computeUnits     = ctl.device().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
@@ -218,7 +233,7 @@ namespace bolt {
                 size_t numWG = computeUnits * wgPerComputeUnit;
 
                 cl_int l_Error = CL_SUCCESS;
-                const size_t wgSize  = masterKernel.getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( 
+                const size_t wgSize  = kernels[0].getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( 
                     ctl.device( ), &l_Error );
                 V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
 
@@ -235,21 +250,21 @@ namespace bolt {
 
                 cl_uint szElements = static_cast< cl_uint >( first.distance_to(last ) );
 
-                V_OPENCL( masterKernel.setArg(0, first.getBuffer( ) ), "Error setting kernel argument" );
-                V_OPENCL( masterKernel.setArg(1, first.gpuPayloadSize( ), &first.gpuPayload( ) ), "Error setting a kernel argument" );
-                V_OPENCL( masterKernel.setArg(2, szElements), "Error setting kernel argument" );
-                V_OPENCL( masterKernel.setArg(3, *userFunctor), "Error setting kernel argument" );
-                V_OPENCL( masterKernel.setArg(4, *result), "Error setting kernel argument" );
+                V_OPENCL( kernels[0].setArg(0, first.getBuffer( ) ), "Error setting kernel argument" );
+                V_OPENCL( kernels[0].setArg(1, first.gpuPayloadSize( ), &first.gpuPayload( ) ), "Error setting a kernel argument" );
+                V_OPENCL( kernels[0].setArg(2, szElements), "Error setting kernel argument" );
+                V_OPENCL( kernels[0].setArg(3, *userFunctor), "Error setting kernel argument" );
+                V_OPENCL( kernels[0].setArg(4, *result), "Error setting kernel argument" );
 
                 ::cl::LocalSpaceArg loc,loc2;
                 loc.size_ = wgSize*sizeof(iType);
-                loc2 = loc;
-                V_OPENCL( masterKernel.setArg(5, loc), "Error setting kernel argument" );
-                V_OPENCL( masterKernel.setArg(6, loc2), "Error setting kernel argument" );
+                loc2.size_ = wgSize*sizeof(int);;
+                V_OPENCL( kernels[0].setArg(5, loc), "Error setting kernel argument" );
+                V_OPENCL( kernels[0].setArg(6, loc2), "Error setting kernel argument" );
 
 
                 l_Error = ctl.commandQueue().enqueueNDRangeKernel(
-                    masterKernel, 
+                    kernels[0], 
                     ::cl::NullRange, 
                     ::cl::NDRange(numWG * wgSize), 
                     ::cl::NDRange(wgSize));
@@ -268,7 +283,7 @@ namespace bolt {
 
                 bolt::cl::wait(ctl, l_mapEvent);
 
-                int minele_indx = ( h_result[0] );
+                int minele_indx =  h_result[0] ;
                 iType minele =  *(first + h_result[0]) ;
 
                 for(int i = 1; i < numTailReduce; ++i)

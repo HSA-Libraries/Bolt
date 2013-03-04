@@ -18,9 +18,8 @@
 #pragma once
 #if !defined( BOLT_CL_TRANSFORM_INL )
 #define BOLT_CL_TRANSFORM_INL
+#define WAVEFRONT_SIZE 64
 
-#include <boost/thread/once.hpp>
-#include <boost/bind.hpp>
 #include <type_traits>
 
 #ifdef ENABLE_TBB
@@ -73,105 +72,86 @@ void transform( InputIterator first1, InputIterator last1, OutputIterator result
 }
 
 namespace detail {
-    struct kernelParamsTransform
-    {
-        const std::string inValueType1Ptr;
-        const std::string inValueType1Iter;
-        const std::string inValueType2Ptr;
-        const std::string inValueType2Iter;
-        const std::string outValueTypePtr;
-        const std::string outValueTypeIter;
-        const std::string functorTypeName;
 
-        kernelParamsTransform( const std::string& iType1Ptr, const std::string& iType1Iter, const std::string& iType2Ptr, 
-            const std::string& iType2Iter, const std::string& oTypePtr, const std::string& oTypeIter, 
-            const std::string& funcType ): 
-        inValueType1Ptr( iType1Ptr ), inValueType1Iter( iType1Iter ), 
-        inValueType2Ptr( iType2Ptr ), inValueType2Iter( iType2Iter ), 
-        outValueTypePtr( oTypePtr ), outValueTypeIter( oTypeIter ), 
-        functorTypeName( funcType )
-        {}
-    };
+  enum TransformTypes {transform_iType1, transform_DVInputIterator1, transform_iType2, transform_DVInputIterator2, transform_oTypeB, 
+   transform_DVOutputIteratorB, transform_BinaryFunction, transform_endB };
+  enum TransformUnaryTypes {transform_iType, transform_DVInputIterator, transform_oTypeU, transform_DVOutputIteratorU, transform_UnaryFunction,
+    transform_endU };
 
-    struct CallCompiler_BinaryTransform {
-        static void init_(
-            std::vector< ::cl::Kernel >* kernels,
-            std::string cl_code,
-            kernelParamsTransform* kp,
-            const ::bolt::cl::control *ctl) {
+class Transform_KernelTemplateSpecializer : public KernelTemplateSpecializer
+{
+public:
+    Transform_KernelTemplateSpecializer() : KernelTemplateSpecializer()
+        {
+        addKernelName("transformTemplate");
+        addKernelName("transformNoBoundsCheckTemplate");
+    }
 
-            std::vector< const std::string > kernelNames;
-            kernelNames.push_back( "transform" );
-            kernelNames.push_back( "transformNoBoundsCheck" );
-
-            std::string instantiationString = 
+    const ::std::string operator() ( const ::std::vector<::std::string>& binaryTransformKernels ) const
+            {
+        const std::string templateSpecializationString = 
                 "// Host generates this instantiation string with user-specified value type and functor\n"
-                "template __attribute__((mangled_name(transformInstantiated)))\n"
-                "kernel void transformTemplate(\n"
-                "global " + kp->inValueType1Ptr + "* A_ptr,\n"
-                + kp->inValueType1Iter + " A_iter,\n"
-                "global " + kp->inValueType2Ptr + "* B_ptr,\n"
-                + kp->inValueType2Iter + " B_iter,\n"
-                "global " + kp->outValueTypePtr + "* Z_ptr,\n"
-                + kp->outValueTypeIter + " Z_iter,\n"
+            "template __attribute__((mangled_name("+name(0)+"Instantiated)))\n"
+            "kernel void "+name(0)+"(\n"
+            "global " + binaryTransformKernels[transform_iType1] + "* A_ptr,\n"
+            + binaryTransformKernels[transform_DVInputIterator1] + " A_iter,\n"
+            "global " + binaryTransformKernels[transform_iType2] + "* B_ptr,\n"
+            + binaryTransformKernels[transform_DVInputIterator2] + " B_iter,\n"
+            "global " + binaryTransformKernels[transform_oTypeB] + "* Z_ptr,\n"
+            + binaryTransformKernels[transform_DVOutputIteratorB] + " Z_iter,\n"
                 "const uint length,\n"
-                "global " + kp->functorTypeName + "* userFunctor);\n\n"
+            "global " + binaryTransformKernels[transform_BinaryFunction] + "* userFunctor);\n\n"
 
                 "// Host generates this instantiation string with user-specified value type and functor\n"
-                "template __attribute__((mangled_name(transformNoBoundsCheckInstantiated)))\n"
-                "kernel void transformNoBoundsCheckTemplate(\n"
-                "global " + kp->inValueType1Ptr + "* A_ptr,\n"
-                + kp->inValueType1Iter + " A_iter,\n"
-                "global " + kp->inValueType2Ptr + "* B_ptr,\n"
-                + kp->inValueType2Iter + " B_iter,\n"
-                "global " + kp->outValueTypePtr + "* Z_ptr,\n"
-                + kp->outValueTypeIter + " Z_iter,\n"
+            "template __attribute__((mangled_name("+name(1)+"Instantiated)))\n"
+            "kernel void "+name(1)+"(\n"
+            "global " + binaryTransformKernels[transform_iType1] + "* A_ptr,\n"
+            + binaryTransformKernels[transform_DVInputIterator1] + " A_iter,\n"
+            "global " + binaryTransformKernels[transform_iType2] + "* B_ptr,\n"
+            + binaryTransformKernels[transform_DVInputIterator2] + " B_iter,\n"
+            "global " + binaryTransformKernels[transform_oTypeB] + "* Z_ptr,\n"
+            + binaryTransformKernels[transform_DVOutputIteratorB] + " Z_iter,\n"
                 "const uint length,\n"
-                "global " + kp->functorTypeName + "* userFunctor);\n\n";
+            "global " + binaryTransformKernels[transform_BinaryFunction] + "* userFunctor);\n\n";
 
-                bolt::cl::compileKernelsString( *kernels, kernelNames, transform_kernels, instantiationString, 
-                    cl_code, kp->inValueType1Ptr + kp->inValueType2Ptr, kp->functorTypeName, *ctl);
-        };
+            return templateSpecializationString;
+            }
     };
 
-    struct CallCompiler_UnaryTransform
+class TransformUnary_KernelTemplateSpecializer : public KernelTemplateSpecializer
     {
-    static void init_(
-        std::vector< ::cl::Kernel >* kernels,
-        std::string cl_code,
-        kernelParamsTransform* kp,
-        const control *ctl)
-    {
-        std::vector< const std::string > kernelNames;
-        kernelNames.push_back( "unaryTransform" );
-        kernelNames.push_back( "unaryTransformNoBoundsCheck" );
-        //kernelNames.push_back( "unaryTransformA" );
+public:
+    TransformUnary_KernelTemplateSpecializer() : KernelTemplateSpecializer()
+        {
+        addKernelName("unaryTransformTemplate");
+        addKernelName("unaryTransformNoBoundsCheckTemplate");
+    }
 
-        std::string instantiationString = 
+    const ::std::string operator() ( const ::std::vector<::std::string>& unaryTransformKernels ) const
+            {
+        const std::string templateSpecializationString = 
             "// Host generates this instantiation string with user-specified value type and functor\n"
-            "template __attribute__((mangled_name(unaryTransformInstantiated)))\n"
+            "template __attribute__((mangled_name("+name( 0 )+"Instantiated)))\n"
             "kernel void unaryTransformTemplate(\n"
-            "global " + kp->inValueType1Ptr + "* A,\n"
-            + kp->inValueType1Iter + " A_iter,\n"
-            "global " + kp->outValueTypePtr + "* Z,\n"
-            + kp->outValueTypeIter + " Z_iter,\n"
+            "global " + unaryTransformKernels[transform_iType] + "* A,\n"
+            + unaryTransformKernels[transform_DVInputIterator] + " A_iter,\n"
+            "global " + unaryTransformKernels[transform_oTypeU] + "* Z,\n"
+            + unaryTransformKernels[transform_DVOutputIteratorU] + " Z_iter,\n"
             "const uint length,\n"
-            "global " + kp->functorTypeName + "* userFunctor);\n\n"
+            "global " + unaryTransformKernels[transform_UnaryFunction] + "* userFunctor);\n\n"
 
             "// Host generates this instantiation string with user-specified value type and functor\n"
-            "template __attribute__((mangled_name(unaryTransformNoBoundsCheckInstantiated)))\n"
+            "template __attribute__((mangled_name("+name(1)+"Instantiated)))\n"
             "kernel void unaryTransformNoBoundsCheckTemplate(\n"
-            "global " + kp->inValueType1Ptr + "* A,\n"
-            + kp->inValueType1Iter + " A_iter,\n"
-            "global " + kp->outValueTypePtr + "* Z,\n"
-            + kp->outValueTypeIter + " Z_iter,\n"
+            "global " + unaryTransformKernels[transform_iType] + "* A,\n"
+            + unaryTransformKernels[transform_DVInputIterator] + " A_iter,\n"
+            "global " + unaryTransformKernels[transform_oTypeU] + "* Z,\n"
+            + unaryTransformKernels[transform_DVOutputIteratorU] + " Z_iter,\n"
             "const uint length,\n"
-            "global " + kp->functorTypeName + "* userFunctor);\n\n"
-            ;
+            "global " +unaryTransformKernels[transform_UnaryFunction] + "* userFunctor);\n\n";
 
-        bolt::cl::compileKernelsString( *kernels, kernelNames, transform_kernels, instantiationString, 
-                    cl_code, kp->inValueType1Ptr, kp->functorTypeName, *ctl);
-        };
+            return templateSpecializationString;
+            }
         };
 
     // Wrapper that uses default ::bolt::cl::control class, iterator interface
@@ -689,54 +669,41 @@ namespace detail {
         const size_t numWorkGroupsPerComputeUnit = ctl.wgPerComputeUnit( );
         size_t numWorkGroups = numComputeUnits * numWorkGroupsPerComputeUnit;
 
-        //typedef std::aligned_storage< sizeof( UnaryFunction ), 256 >::type alignedUnary;
-        __declspec( align( 256 ) ) BinaryFunction aligned_functor( f );
-        // ::cl::Buffer userFunctor(ctl.context(), CL_MEM_READ_ONLY|CL_MEM_USE_HOST_PTR, sizeof( aligned_functor ), const_cast< BinaryFunction* >( &aligned_functor ) );   // Create buffer wrapper so we can access host parameters.
-        ::bolt::cl::control::buffPointer userFunctor = ctl.acquireBuffer( sizeof( aligned_functor ), CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_functor );
+        /**********************************************************************************
+         * Type Names - used in KernelTemplateSpecializer
+         *********************************************************************************/
 
-        static boost::once_flag initOnlyOnce;
-        static std::vector< ::cl::Kernel > binaryTransformKernels;
+        std::vector<std::string> binaryTransformKernels(transform_endB);
+        binaryTransformKernels[transform_iType1] = TypeName< iType1 >::get( );
+        binaryTransformKernels[transform_iType2] = TypeName< iType2 >::get( );
+        binaryTransformKernels[transform_DVInputIterator1] = TypeName< DVInputIterator1 >::get( );
+        binaryTransformKernels[transform_DVInputIterator2] = TypeName< DVInputIterator2 >::get( );
+        binaryTransformKernels[transform_oTypeB] = TypeName< oType >::get( );
+        binaryTransformKernels[transform_DVOutputIteratorB] = TypeName< DVOutputIterator >::get( );
+        binaryTransformKernels[transform_BinaryFunction] = TypeName< BinaryFunction >::get();
 
-        kernelParamsTransform args( TypeName< iType1 >::get( ), TypeName< DVInputIterator1 >::get( ), TypeName< iType2 >::get( ), 
-            TypeName< DVInputIterator2 >::get( ), TypeName< oType >::get( ), TypeName< DVOutputIterator >::get( ), 
-            TypeName< BinaryFunction >::get( ) );
+       /**********************************************************************************
+        * Type Definitions - directrly concatenated into kernel string
+        *********************************************************************************/
 
         // For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retrieve the name here.
-        std::string typeDefinitions = cl_code  + ClCode< iType1 >::get( ) + ClCode< BinaryFunction >::get( );
-        if( !boost::is_same< iType1, iType2 >::value )
-        {
-            typeDefinitions += ClCode< iType2 >::get( );
-        }
-        if( !boost::is_same< iType1, oType >::value )
-        {
-            typeDefinitions += ClCode< oType >::get( ); 
-        }
-        
-        typeDefinitions += ClCode< DVInputIterator1 >::get( );
-        if( !boost::is_same< DVInputIterator1, DVInputIterator2 >::value )
-        {
-            typeDefinitions += ClCode< DVInputIterator2 >::get( );
-        }
-        if( !boost::is_same< DVInputIterator1, DVOutputIterator >::value)            
-        {
-            if(!boost::is_same< DVInputIterator2, DVOutputIterator >::value )
-            {
-                typeDefinitions += ClCode< DVOutputIterator >::get( );
-            }
-        }
-
-        boost::call_once( initOnlyOnce, boost::bind( CallCompiler_BinaryTransform::init_, &binaryTransformKernels, 
-            typeDefinitions, &args, &ctl ) );
-
-        const ::cl::Kernel& kernelWithBoundsCheck = binaryTransformKernels[0];
-        const ::cl::Kernel& kernelNoBoundsCheck   = binaryTransformKernels[1];
-        ::cl::Kernel k;
+        std::vector<std::string> typeDefinitions;
+        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< iType1 >::get() )
+        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVInputIterator1 >::get() )
+        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVInputIterator2 >::get() )
+        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< oType >::get() )
+        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVOutputIterator >::get() )
+        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< BinaryFunction  >::get() )
+        /**********************************************************************************
+         * Calculate WG Size
+         *********************************************************************************/
 
         cl_int l_Error = CL_SUCCESS;
-        const size_t wgSize  = kernelNoBoundsCheck.getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.device( ), &l_Error );
+        const size_t wgSize  = WAVEFRONT_SIZE;
         V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
         assert( (wgSize & (wgSize-1) ) == 0 ); // The bitwise &,~ logic below requires wgSize to be a power of 2
 
+        int boundsCheck = 0;
         size_t wgMultiple = distVec;
         size_t lowerBits = ( distVec & (wgSize-1) );
         if( lowerBits )
@@ -744,31 +711,55 @@ namespace detail {
             //  Bump the workitem count to the next multiple of wgSize
             wgMultiple &= ~lowerBits;
             wgMultiple += wgSize;
-            k = kernelWithBoundsCheck;
         }
         else
         {
-            k = kernelNoBoundsCheck;
+            boundsCheck = 1;
         }
         if (wgMultiple/wgSize < numWorkGroups)
             numWorkGroups = wgMultiple/wgSize;
-        //std::cout
-        //    <<"numCU="<<numComputeUnits
-        //    <<", numWg/CU="<<numWorkGroupsPerComputeUnit
-        //    <<", numWg="<<numWorkGroups<<std::endl;
 
-        k.setArg( 0, first1.getBuffer( ) );
-        k.setArg( 1, first1.gpuPayloadSize( ), &first1.gpuPayload( ) );
-        k.setArg( 2, first2.getBuffer( ) );
-        k.setArg( 3, first2.gpuPayloadSize( ), &first2.gpuPayload( ) );
-        k.setArg( 4, result.getBuffer( ) );
-        k.setArg( 5, result.gpuPayloadSize( ), &result.gpuPayload( ) );
-        k.setArg( 6, distVec );
-        k.setArg( 7, *userFunctor);
+        /**********************************************************************************
+         * Compile Options
+         *********************************************************************************/
+        bool cpuDevice = ctl.device().getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_CPU;
+        //std::cout << "Device is CPU: " << (cpuDevice?"TRUE":"FALSE") << std::endl;
+        const size_t kernel_WgSize = (cpuDevice) ? 1 : wgSize;
+        std::string compileOptions;
+        std::ostringstream oss;
+        oss << " -DKERNELWORKGROUPSIZE=" << kernel_WgSize;
+        compileOptions = oss.str();
+
+        /**********************************************************************************
+          * Request Compiled Kernels
+          *********************************************************************************/
+         Transform_KernelTemplateSpecializer ts_kts;
+         std::vector< ::cl::Kernel > kernels = bolt::cl::getKernels(
+             ctl,
+             binaryTransformKernels,
+             &ts_kts,
+             typeDefinitions,
+             transform_kernels,
+             compileOptions);
+         // kernels returned in same order as added in KernelTemplaceSpecializer constructor
+
+
+        ALIGNED( 256 ) BinaryFunction aligned_binary( f );
+        control::buffPointer userFunctor = ctl.acquireBuffer( sizeof( aligned_binary ),
+        CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_binary );
+
+        kernels[boundsCheck].setArg( 0, first1.getBuffer( ) );
+        kernels[boundsCheck].setArg( 1, first1.gpuPayloadSize( ), &first1.gpuPayload( ) );
+        kernels[boundsCheck].setArg( 2, first2.getBuffer( ) );
+        kernels[boundsCheck].setArg( 3, first2.gpuPayloadSize( ), &first2.gpuPayload( ) );
+        kernels[boundsCheck].setArg( 4, result.getBuffer( ) );
+        kernels[boundsCheck].setArg( 5, result.gpuPayloadSize( ), &result.gpuPayload( ) );
+        kernels[boundsCheck].setArg( 6, distVec );
+        kernels[boundsCheck].setArg( 7, *userFunctor);
 
         ::cl::Event transformEvent;
         l_Error = ctl.commandQueue().enqueueNDRangeKernel(
-            k, 
+          kernels[boundsCheck], 
             ::cl::NullRange, 
             ::cl::NDRange(wgMultiple), // numWorkGroups*wgSize
             ::cl::NDRange(wgSize),
@@ -805,40 +796,35 @@ namespace detail {
         const size_t numComputeUnits = ctl.device( ).getInfo< CL_DEVICE_MAX_COMPUTE_UNITS >( );
         const size_t numWorkGroupsPerComputeUnit = ctl.wgPerComputeUnit( );
         const size_t numWorkGroups = numComputeUnits * numWorkGroupsPerComputeUnit;
-        //const cl_uint numThreads = static_cast<cl_uint>(numWorkGroups * wgSize);
 
-        //typedef std::aligned_storage< sizeof( UnaryFunction ), 256 >::type alignedUnary;
-        ALIGNED( 256 ) UnaryFunction aligned_functor( f );
-        // ::cl::Buffer userFunctor(ctl.context(), CL_MEM_READ_ONLY|CL_MEM_USE_HOST_PTR, sizeof( aligned_functor ), const_cast< UnaryFunction* >( &aligned_functor ) );   // Create buffer wrapper so we can access host parameters.
-        ::bolt::cl::control::buffPointer userFunctor = ctl.acquireBuffer( sizeof( aligned_functor ), CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_functor );
+        /**********************************************************************************
+         * Type Names - used in KernelTemplateSpecializer
+         *********************************************************************************/
 
-        static boost::once_flag initOnlyOnce;
-        static std::vector< ::cl::Kernel > unaryTransformKernels;
+        std::vector<std::string> unaryTransformKernels( transform_endU );
+        unaryTransformKernels[transform_iType] = TypeName< iType >::get( );
+        unaryTransformKernels[transform_DVInputIterator] = TypeName< DVInputIterator >::get( );
+        unaryTransformKernels[transform_oTypeU] = TypeName< oType >::get( );
+        unaryTransformKernels[transform_DVOutputIteratorU] = TypeName< DVOutputIterator >::get( );
+        unaryTransformKernels[transform_UnaryFunction] = TypeName< UnaryFunction >::get();
 
-        kernelParamsTransform args( TypeName< iType >::get( ), TypeName< DVInputIterator >::get( ), "", 
-            "", TypeName< oType >::get( ), TypeName< DVOutputIterator >::get( ), 
-            TypeName< UnaryFunction >::get( ) );
+        /**********************************************************************************
+         * Type Definitions - directrly concatenated into kernel string
+         *********************************************************************************/
+        std::vector<std::string> typeDefinitions;
+        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< iType >::get() )
+        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVInputIterator >::get() )
+        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< oType >::get() )
+        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVOutputIterator >::get() )
+        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< UnaryFunction  >::get() )
 
-        std::string typeDefinitions = cl_code + ClCode< UnaryFunction >::get( ) + ClCode< iType >::get( );
-        if( !boost::is_same<iType, oType>::value )
-        {
-            typeDefinitions += ClCode<oType>::get( );
-        }
-        typeDefinitions += ClCode< DVInputIterator >::get( );
-        if( !boost::is_same<DVInputIterator, DVOutputIterator>::value )
-        {
-            typeDefinitions += ClCode< DVOutputIterator >::get( );
-        }
 
-        boost::call_once( initOnlyOnce, boost::bind( CallCompiler_UnaryTransform::init_, &unaryTransformKernels, 
-            typeDefinitions, &args, &ctl ) );
-
-        const ::cl::Kernel& kernelWithBoundsCheck = unaryTransformKernels[0];
-        const ::cl::Kernel& kernelNoBoundsCheck   = unaryTransformKernels[1];
-        ::cl::Kernel k;
-
+        /**********************************************************************************
+         * Calculate WG Size
+         *********************************************************************************/
         cl_int l_Error = CL_SUCCESS;
-        const size_t wgSize  = kernelWithBoundsCheck.getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.device( ), &l_Error ); // 256
+        const size_t wgSize  = WAVEFRONT_SIZE;
+        int boundsCheck = 0;
 
         V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
         assert( (wgSize & (wgSize-1) ) == 0 ); // The bitwise &,~ logic below requires wgSize to be a power of 2
@@ -850,31 +836,53 @@ namespace detail {
             //  Bump the workitem count to the next multiple of wgSize
             wgMultiple &= ~lowerBits;
             wgMultiple += wgSize;
-            k = kernelWithBoundsCheck;
         }
         else
         {
-            k = kernelNoBoundsCheck;
-            //k = unaryTransformKernels[2];
+            boundsCheck = 1;
         }
 
-        //cl_uint numElementsPerThread = static_cast<cl_uint>(wgMultiple / numThreads);
-        //std::cout << "nE="<<distVec<<", nT="<<numThreads<<", nEpT="<<numElementsPerThread<<std::endl;
+        /**********************************************************************************
+         * Compile Options
+         *********************************************************************************/
+        bool cpuDevice = ctl.device().getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_CPU;
+        //std::cout << "Device is CPU: " << (cpuDevice?"TRUE":"FALSE") << std::endl;
+        const size_t kernel_WgSize = (cpuDevice) ? 1 : wgSize;
+        std::string compileOptions;
+        std::ostringstream oss;
+        oss << " -DKERNELWORKGROUPSIZE=" << kernel_WgSize;
+        compileOptions = oss.str();
 
-        //void* h_result = (void*)ctl.commandQueue().enqueueMapBuffer( userFunctor, true, CL_MAP_READ, 0, sizeof(aligned_functor), NULL, NULL, &l_Error );
-        //V_OPENCL( l_Error, "Error calling map on the result buffer" );
+        /**********************************************************************************
+         * Request Compiled Kernels
+         *********************************************************************************/
+        TransformUnary_KernelTemplateSpecializer ts_kts;
+        std::vector< ::cl::Kernel > kernels = bolt::cl::getKernels(
+            ctl,
+            unaryTransformKernels,
+            &ts_kts,
+            typeDefinitions,
+            transform_kernels,
+            compileOptions);
+        // kernels returned in same order as added in KernelTemplaceSpecializer constructor
 
-        k.setArg(0, first.getBuffer( ) );
-        k.setArg(1, first.gpuPayloadSize( ), &first.gpuPayload( ) );
-        k.setArg(2, result.getBuffer( ) );
-        k.setArg(3, result.gpuPayloadSize( ), &result.gpuPayload( ) );
-        k.setArg(4, distVec );
-        k.setArg(5, *userFunctor);
+        // Create buffer wrappers so we can access the host functors, for read or writing in the kernel
+        ALIGNED( 256 ) UnaryFunction aligned_binary( f );
+        control::buffPointer userFunctor = ctl.acquireBuffer( sizeof( aligned_binary ),
+        CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_binary );
+
+
+        kernels[boundsCheck].setArg(0, first.getBuffer( ) );
+        kernels[boundsCheck].setArg(1, first.gpuPayloadSize( ), &first.gpuPayload( ) );
+        kernels[boundsCheck].setArg(2, result.getBuffer( ) );
+        kernels[boundsCheck].setArg(3, result.gpuPayloadSize( ), &result.gpuPayload( ) );
+        kernels[boundsCheck].setArg(4, distVec );
+        kernels[boundsCheck].setArg(5, *userFunctor);
         //k.setArg(3, numElementsPerThread );
 
         ::cl::Event transformEvent;
         l_Error = ctl.commandQueue().enqueueNDRangeKernel(
-            k, 
+            kernels[boundsCheck], 
             ::cl::NullRange, 
             ::cl::NDRange( wgMultiple ), // numThreads
             ::cl::NDRange( wgSize ),

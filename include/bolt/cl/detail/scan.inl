@@ -411,7 +411,6 @@ public:
           template<typename Tag>
           void operator()( const tbb::blocked_range<int>& r, Tag ) {
              T temp = sum;
-             printf("............\n");
              for(int i=r.begin(); i<r.end(); ++i ) {
                  if(Tag::is_final_scan()){
                      if(!inclusive){
