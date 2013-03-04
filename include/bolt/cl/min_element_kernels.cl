@@ -33,9 +33,9 @@ kernel void min_elementTemplate(
     iTypeIter input_iter,
     const int length,
     global binary_function* userFunctor,
-    global iTypePtr*    result,
+    global int*    result,
     local iTypePtr*     scratch,
-    local iTypePtr*     scratch_index
+    local int*     scratch_index
 )
 {
     int gx = get_global_id (0);

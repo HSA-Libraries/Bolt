@@ -1064,7 +1064,6 @@ TEST( Reduceint , KcacheTest )
     for( unsigned int i = 0; i < length ; i++ )
     {
       refInput[i] = i;
-      refInput[i] = i+1;
     }
 
     //Call reduce with GPU device because the default is a GPU device

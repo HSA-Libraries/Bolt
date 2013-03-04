@@ -119,17 +119,6 @@ namespace bolt {
 namespace bolt {
     namespace cl {
         namespace detail {
-            struct kernelParamsReduce
-            {
-                const std::string inPtrType;
-                const std::string inIterType;
-                const std::string binaryFuncName;
-
-                kernelParamsReduce( const std::string& iPtrType, const std::string& iIterType, const std::string& binaryFuncType ): 
-                inPtrType( iPtrType ), inIterType( iIterType ), 
-                binaryFuncName( binaryFuncType )
-                {}
-            };
 
             ///////////////
 
