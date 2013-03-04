@@ -16,24 +16,41 @@
 ############################################################################                                                                                     
 
 # List the names of common files to compile across all platforms
-message( STATUS "Setting up CL specific benchmarking projects" )
+
+set( clBolt.Test.StableSort.Source 
+        StableSortTest.cpp 
+        ${BOLT_CL_TEST_DIR}/common/myocl.cpp )
+
+set( clBolt.Test.StableSort.Headers   
+        ${BOLT_CL_TEST_DIR}/common/myocl.h
+        ${BOLT_INCLUDE_DIR}/bolt/cl/StableSort.h
+        ${BOLT_INCLUDE_DIR}/bolt/cl/detail/StableSort.inl )
+
+set( clBolt.Test.StableSort.Files 
+        ${clBolt.Test.StableSort.Source} 
+        ${clBolt.Test.StableSort.Headers} )
 
 # Include standard OpenCL headers
 include_directories( ${OPENCL_INCLUDE_DIRS} )
 
-if( BUILD_clBolt )
-    # Include standard OpenCL headers
-    add_subdirectory( Benchmark )
-    add_subdirectory( CopyBench )
-    add_subdirectory( CopyBuffer )
-    add_subdirectory( Fill ) 
-    add_subdirectory( Generate )
-    add_subdirectory( InnerProduct )
-    add_subdirectory( Reduce )
-    add_subdirectory( Scan )
-    add_subdirectory( ScanByKeyBench )
-    add_subdirectory( Sort )
-    add_subdirectory( StableSort )
-    add_subdirectory( Transform )
-    add_subdirectory( TransformScanBench )
-endif( )
+# Set project specific compile and link options
+# if( MSVC )
+    # set( CMAKE_CXX_FLAGS "-bigobj ${CMAKE_CXX_FLAGS}" )
+    # set( CMAKE_C_FLAGS "-bigobj ${CMAKE_C_FLAGS}" )
+# endif()
+
+add_executable( clBolt.Test.StableSort ${clBolt.Test.StableSort.Files} )
+target_link_libraries( clBolt.Test.StableSort ${OPENCL_LIBRARIES} ${GTEST_LIBRARIES} ${Boost_LIBRARIES} ${TBB_LIBRARIES} 
+         clBolt.Runtime )
+
+set_target_properties( clBolt.Test.StableSort PROPERTIES VERSION ${Bolt_VERSION} )
+set_target_properties( clBolt.Test.StableSort PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
+
+set_property( TARGET clBolt.Test.StableSort PROPERTY FOLDER "Test/OpenCL")
+        
+# CPack configuration; include the executable into the package
+install( TARGETS clBolt.Test.StableSort
+    RUNTIME DESTINATION ${BIN_DIR}
+    LIBRARY DESTINATION ${LIB_DIR}
+    ARCHIVE DESTINATION ${LIB_DIR}/import
+    )

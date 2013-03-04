@@ -84,6 +84,7 @@ set( clBolt.Runtime.Headers
         ${clBolt.Include.Dir}/scan_by_key.h 
         ${clBolt.Include.Dir}/sort.h 
         ${clBolt.Include.Dir}/sort_by_key.h 
+        ${clBolt.Include.Dir}/stablesort.h 
         ${clBolt.Include.Dir}/transform.h 
         ${clBolt.Include.Dir}/transform_reduce.h
         ${clBolt.Include.Dir}/transform_scan.h
@@ -115,6 +116,7 @@ set( clBolt.Runtime.Headers.Detail
         ${clBolt.Include.Dir}/detail/scan_by_key.inl
         ${clBolt.Include.Dir}/detail/sort.inl
         ${clBolt.Include.Dir}/detail/sort_by_key.inl
+        ${clBolt.Include.Dir}/detail/stablesort.inl
         ${clBolt.Include.Dir}/detail/transform.inl
         ${clBolt.Include.Dir}/detail/transform_reduce.inl
         ${clBolt.Include.Dir}/detail/transform_scan.inl
@@ -133,8 +135,9 @@ set( clBolt.Runtime.clFiles
         scan_kernels.cl
         scan_by_key_kernels.cl
         sort_kernels.cl
+        stablesort_kernels.cl
         sort_uint_kernels.cl
-        sort_by_key_kernels.cl        
+        sort_by_key_kernels.cl
     )
 
 # Create a list of .cl files that we would like to be a part of the IDE
