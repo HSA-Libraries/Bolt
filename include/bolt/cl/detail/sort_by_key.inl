@@ -256,7 +256,7 @@ public:
             {
                 // sort_by_key_enqueue_non_powerOf2(ctl,keys_first,keys_last,values_first,comp,cl_code);
                 std::cout << "There is no use supporting selection sort for the sort_by_key routine.\n";
-                std::cout << " Hence only power of 2 buffer sizes work.\n;
+                std::cout << " Hence only power of 2 buffer sizes work.\n";
                 std::cout << "non power of 2 buffer sizes will be supported once radix-sort is working\n";
                 throw ::cl::Error( CL_INVALID_BUFFER_SIZE, 
                     "Currently the sort_by_key routine supports only power of 2 buffer size" );
