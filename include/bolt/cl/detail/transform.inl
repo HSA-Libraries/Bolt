@@ -328,7 +328,8 @@ public:
                     transformBinaryRangeBody< InputIterator1, InputIterator2, OutputIterator, BinaryFunction >( ),
                     tbb::simple_partitioner( ) );
 #else
-                std::transform( first1, last1, first2, result, f );
+                std::cout << "The MultiCoreCpu version of Transform is not enabled. " << std ::endl;
+                throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of transform is not enabled to be built." );
 #endif
             return;
         }
@@ -376,7 +377,8 @@ public:
                     transformBinaryRangeBody< InputIterator1, InputIterator2, OutputIterator, BinaryFunction >( ),
                     tbb::simple_partitioner( ) );
 #else
-                std::transform( first1, last1, fancyIter, result, f );
+                std::cout << "The MultiCoreCpu version of Transform is not enabled. " << std ::endl;
+                throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of transform is not enabled to be built." );
 #endif
             return;
         }
@@ -424,7 +426,8 @@ public:
                     transformBinaryRangeBody< InputIterator1, InputIterator2, OutputIterator, BinaryFunction >( ),
                     tbb::simple_partitioner( ) );
 #else
-                std::transform( fancyIterfirst, fancyIterlast, first2, result, f );
+                std::cout << "The MultiCoreCpu version of Transform is not enabled. " << std ::endl;
+                throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of transform is not enabled to be built." );
 #endif
             return;
         }
@@ -488,7 +491,8 @@ public:
                 transformBinaryRangeBody< iType1*, iType2*, oType*, BinaryFunction >( ),
                 tbb::simple_partitioner( ) );
 #else
-            std::transform( &firstPtr[ first1.m_Index ], &firstPtr[ sz ], &secPtr[ 0 ], &resPtr[ 0 ], f );
+             std::cout << "The MultiCoreCpu version of Transform is not enabled. " << std ::endl;
+             throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of transform is not enabled to be built." );
 #endif
             return;
         }
@@ -540,7 +544,8 @@ public:
                 transformBinaryRangeBody< iType1*, DVInputIterator2, oType*, BinaryFunction >( ),
                 tbb::simple_partitioner( ) );
 #else
-            std::transform( &firstPtr[ first1.m_Index ], &firstPtr[ sz ], fancyIter, &resPtr[ 0 ], f );
+             std::cout << "The MultiCoreCpu version of Transform is not enabled. " << std ::endl;
+             throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of transform is not enabled to be built." );
 #endif
             return;
         }
@@ -580,7 +585,8 @@ public:
                 transformUnaryRangeBody< InputIterator, OutputIterator, UnaryFunction >( ),
                 tbb::simple_partitioner( ) );
 #else
-            std::transform( first, last, result, f );
+             std::cout << "The MultiCoreCpu version of Transform is not enabled. " << std ::endl;
+             throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of transform is not enabled to be built." );
 #endif
             return;
         }
@@ -643,7 +649,8 @@ public:
                 transformUnaryRangeBody< iType*, oType*, UnaryFunction >( ),
                 tbb::simple_partitioner( ) );
 #else
-            std::transform( &firstPtr[ first.m_Index ], &firstPtr[ sz ], &resPtr[ 0 ], f );
+             std::cout << "The MultiCoreCpu version of Transform is not enabled. " << std ::endl;
+             throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of transform is not enabled to be built." );
 #endif
             return;
         }

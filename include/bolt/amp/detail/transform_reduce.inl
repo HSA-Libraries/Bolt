@@ -199,8 +199,8 @@ namespace bolt {
                     tbb::parallel_reduce( tbb::blocked_range<iType*>( &*first, (iType*)&*(last-1) + 1), transform_reduce_op );
                     return transform_reduce_op.value;
 #else
- //                   std::cout << "The MultiCoreCpu version of transform_reduce is not implemented yet." << std ::endl;
-                    throw std::exception(  "The MultiCoreCpu version of reduce is not enabled to be built." );
+//                    std::cout << "The MultiCoreCpu version of transform_reduce is not implemented yet." << std ::endl;
+                    throw std::exception(  "The MultiCoreCpu version of transform_reduce is not enabled to be built." );
                     return init;
 #endif  
                  }
@@ -260,7 +260,7 @@ namespace bolt {
                return transform_reduce_op.value;
 #else
 //               std::cout << "The MultiCoreCpu version of transform_reduce is not implemented yet." << std ::endl;
-               throw std::exception(  "The MultiCoreCpu version of reduce is not enabled to be built." );
+               throw std::exception(  "The MultiCoreCpu version of transform_reduce is not enabled to be built." );
                return init;
 #endif  
                 
