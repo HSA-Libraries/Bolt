@@ -17,20 +17,6 @@
 
 #pragma OPENCL EXTENSION cl_amd_printf : enable
 //#pragma OPENCL EXTENSION cl_khr_fp64 : enable 
-namespace bolt{
-    namespace cl{
-        template<typename T>
-        struct greater
-        {
-            bool operator()(const T &lhs, const T &rhs) const  {return (lhs > rhs);}
-        };
-        template<typename T>
-        struct less 
-        {
-            bool operator()(const T &lhs, const T &rhs) const  {return (lhs < rhs);}
-        };
-};
-};
 // //FIXME - this was added to support POD with bolt::cl::greater data types
 // template<typename T>
 // struct greater
@@ -45,7 +31,7 @@ namespace bolt{
 
 template<typename iKeysType, typename iKeysIter, typename iValType, typename iValIter, typename Compare >
 kernel
-void sortByKeyTemplate(
+void BitonicSortByKeyTemplate(
         global iKeysType* keys_ptr, 
         iKeysIter        keys_iter, 
         global iValType* values_ptr, 
@@ -62,7 +48,6 @@ void sortByKeyTemplate(
                        + (threadId / pairDistance) * blockWidth;
     bool compareResult;
     uint rightId = leftId + pairDistance;
-    iKeysType greater, lesser;
     
     keys_iter.init( keys_ptr );
     values_iter.init( values_ptr );
@@ -89,7 +74,6 @@ void sortByKeyTemplate(
         keys_iter[leftId]  = leftElement;
         values_iter[rightId] = rightValue;
         values_iter[leftId]  = leftValue;
-
     }
     else
     {

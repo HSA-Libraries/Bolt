@@ -13,8 +13,12 @@
 *   See the License for the specific language governing permissions and              
 *   limitations under the License.                                         
 ***************************************************************************/                                                                                     
-#include <array>
+#if !defined( TEST_COMMON_H )
+#define TEST_COMMON_H
+#pragma once
 
+#include <array>
+#include <gtest/gtest.h>
 #if !defined( BOLT_TEST_MAX_FAILURES )
     #define BOLT_TEST_MAX_FAILURES 512
 #endif
@@ -164,3 +168,4 @@ template< typename S, typename B >
 }
 
 
+#endif

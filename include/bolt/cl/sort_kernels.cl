@@ -178,5 +178,3 @@ void BitonicSortTemplate(
     input_iter[rightId] = greater;
 
 }
-
-
