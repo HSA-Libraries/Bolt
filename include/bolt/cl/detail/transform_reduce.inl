@@ -96,7 +96,6 @@ namespace  detail {
     };
 
 
-
 #ifdef ENABLE_TBB
             /*For documentation on the reduce object see below link
              *http://threadingbuildingblocks.org/docs/help/reference/algorithms/parallel_reduce_func.htm
@@ -280,6 +279,7 @@ namespace  detail {
             const std::string& user_code="")
         {
             unsigned debugMode = 0; //FIXME, use control
+
             typedef std::iterator_traits< DVInputIterator  >::value_type iType;
 
             /**********************************************************************************

@@ -149,7 +149,6 @@ void testUDDTBB()
         
 }
 
-
 void testTBBDevicevector()
 {
     const int aSize = 1024;
@@ -173,4 +172,3 @@ void testTBBDevicevector()
 
 
 };
-

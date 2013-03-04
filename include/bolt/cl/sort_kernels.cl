@@ -128,9 +128,11 @@ void selectionSortFinalTemplate(global const T * in,
 }
 
 
-template <typename T, typename Compare>
+template <typename iPtrType, typename iIterType, typename Compare>
 kernel
-void sortTemplate(global T * theArray, 
+void BitonicSortTemplate(
+                    global iPtrType *input_ptr,
+                    iIterType       input_iter,
                  const uint stage,
                  const uint passOfStage,
                  global Compare *userComp)
@@ -142,13 +144,14 @@ void sortTemplate(global T * theArray,
     uint leftId = (threadId % pairDistance) 
                        + (threadId / pairDistance) * blockWidth;
     bool compareResult;
+    input_iter.init( input_ptr );
     
     uint rightId = leftId + pairDistance;
     
-    T greater, lesser;
-	T leftElement, rightElement;
-    leftElement = theArray[leftId];
-    rightElement = theArray[rightId];
+    iPtrType greater, lesser;
+	iPtrType leftElement, rightElement;
+    leftElement = input_iter[leftId];
+    rightElement = input_iter[rightId];
     
     uint sameDirectionBlockWidth = 1 << stage;
     
@@ -171,8 +174,8 @@ void sortTemplate(global T * theArray,
         greater = leftElement;
         lesser  = rightElement;
     }
-    theArray[leftId]  = lesser;
-    theArray[rightId] = greater;
+    input_iter[leftId]  = lesser;
+    input_iter[rightId] = greater;
 
 }
 

@@ -1232,7 +1232,7 @@ void simpleReduce_TestSerial(int aSize)
     bolt::cl::control c;  // construct control structure from the queue.
     c.forceRunMode(bolt::cl::control::SerialCpu);
 
-    int stlReduce = std::accumulate(A.begin(), A.end(),0);
+    int stlReduce = std::accumulate(A.begin(), A.end(), 0);
     int boltReduce = 0;
 
     boltReduce = bolt::cl::reduce(c, A.begin(), A.end());
@@ -1281,7 +1281,6 @@ int _tmain(int argc, _TCHAR* argv[])
     testUDDTBB();
     testTBBDevicevector();
 #endif
-
     testDeviceVector();
     int numIters = 100;
     simpleReduce_TestControl(1024000, numIters, 0);

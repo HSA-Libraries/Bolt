@@ -1366,7 +1366,6 @@ TEST( Transformint , KcacheTest )
 int main(int argc, char* argv[])
 {
     //  Register our minidump generating logic
-
     bolt::miniDumpSingleton::enableMiniDumps( );
 
     //	Define MEMORYREPORT on windows platfroms to enable debug memory heap checking
