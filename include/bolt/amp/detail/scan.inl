@@ -415,7 +415,7 @@ size_t k0_stepNum, k1_stepNum, k2_stepNum;
 aProfiler.setDataSize(numElements*sizeof(iType));
 aProfiler.stopTrial();
 #endif
-        return result;
+         return result + numElements;
     }
     else if( runMode == bolt::amp::control::MultiCoreCpu )
     {
@@ -424,7 +424,7 @@ aProfiler.stopTrial();
           Scan_tbb<iType, BinaryFunction, InputIterator, OutputIterator> tbb_scan((InputIterator &)first,(OutputIterator &)
                                                                          result,binary_op,inclusive,init);
           tbb::parallel_scan( tbb::blocked_range<int>(  0, static_cast< int >( std::distance( first, last ))), tbb_scan, tbb::auto_partitioner());
-          return tbb_scan.y;
+          return result + numElements;
 #else
 //        std::cout << "The MultiCoreCpu version of Scan is not implemented yet." << std ::endl;
         throw std::exception( "The MultiCoreCpu version of Scan is not enabled to be built." );
@@ -496,7 +496,7 @@ scan_pick_iterator(
             first.getBuffer()[index] = scanInputBuffer[index];
             result.getBuffer()[index] = scanResultBuffer[index];
         }
-        return result;
+        return result + numElements;
     }
     else if( runMode == bolt::amp::control::MultiCoreCpu )
     {
@@ -520,22 +520,20 @@ scan_pick_iterator(
             first.getBuffer()[index] = scanInputBuffer[index];
             result.getBuffer()[index] = scanResultBuffer[index];
         }
-        return result;
+        return result + numElements;
 #else
 //        std::cout << "The MultiCoreCpu version of Scan with device vector is not implemented yet." << std ::endl;
         throw std::exception( "The MultiCoreCpu version of Scan with device vector is not enabled to be built." );
         return result;
 #endif
-
-
-
-
     }
+    else{
 
     //Now call the actual cl algorithm
-    scan_enqueue( ctl, first, last, result, init, binary_op, inclusive );
-    std::cout << "Peeking in pick_iterator after scan_enqueue completed." << std::endl;
-    PEEK_AT( result.getBuffer())
+        scan_enqueue( ctl, first, last, result, init, binary_op, inclusive );
+        std::cout << "Peeking in pick_iterator after scan_enqueue completed." << std::endl;
+        PEEK_AT( result.getBuffer())
+    }
 
     return result + numElements;
 }

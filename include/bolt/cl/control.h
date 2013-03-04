@@ -122,7 +122,7 @@ namespace bolt {
                 ) :
             m_commandQueue(commandQueue),
                 m_useHost(useHost),
-                m_forceRunMode(getDefault().m_forceRunMode),
+                m_forceRunMode(Automatic), //Replaced this with automatic because the default is not MultiCoreCPU if no GPU is found
                 m_debug(debug),
                 m_autoTune(getDefault().m_autoTune),
                 m_wgPerComputeUnit(getDefault().m_wgPerComputeUnit),
@@ -274,7 +274,18 @@ namespace bolt {
                 m_compileForAllDevices(true),
                 m_waitMode(BusyWait),
                 m_unroll(1)
-            {};
+            {
+                ::cl::Device device = m_commandQueue.getInfo<CL_QUEUE_DEVICE>();
+                ::cl_device_type dType = device.getInfo<CL_DEVICE_TYPE>();
+                if(dType == CL_DEVICE_TYPE_CPU)
+                {
+#ifdef ENABLE_TBB
+                    m_forceRunMode = MultiCoreCpu;
+#else
+                    m_forceRunMode = SerialCpu;
+#endif
+                }
+            };
 
             ::cl::CommandQueue  m_commandQueue;
             e_UseHostMode       m_useHost;

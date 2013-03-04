@@ -36,30 +36,33 @@ namespace bolt {
         *   \p Fill fills a range with values passed in the function.        
         */ 
         
-        /*! \addtogroup transform
+        /*! \addtogroup filling
         *   \ingroup transformations
         *   \{
         */
 
-        /*! Fill assigns the value of \c value to each element in the range [first,last).
-		 *  \param ctl	Optional control structure to control command-queue, debug, tuning, etc.  See bolt::cl::control.
-         *  \param first	The first element in the range of interest.
-         *  \param last	The last element in the range of interest.
-         *  \param value	Sets this value to elements in the range [first,last).
-         *  \param cl_code	Optional OpenCL(TM) code to be prepended to any OpenCL kernels used by this function.
+        /*! \brief  Fill assigns the value of \c value to each element in the range [first,last].
+         *
+		 *  \param ctl      \b Optional control structure to control command-queue, debug, tuning, etc.  
+         *                  See bolt::cl::control.
+         *  \param first    The first element in the range of interest.
+         *  \param last     The last element in the range of interest.
+         *  \param value    Sets this value to elements in the range [first,last].
+         *  \param cl_code  Optional OpenCL(TM) code to be prepended to any OpenCL kernels used by this function.
          *
          *  \tparam ForwardIterator is a model of \c Forward Iterator, and \c InputIterator is mutable.
          *  \tparam T is a model of Assignable.
 		 *
-         *
-         *  The following code snippet demonstrates how to fill a device_vector with a float value.
+         * \details The following code snippet demonstrates how to fill a device_vector with a float value.
          *
          *  \code
          *  #include <bolt/cl/fill.h>
          *  #include <bolt/device_vector.h>
          *  #include <stdlib.h>
-         *  ...
+         *  ...  
+         *
          *  bolt::cl::device_vector<float> v(10);
+         *
          *  float x=25.0f;
          *  bolt::cl::fill(v.begin(), v.end(), x);
          *
@@ -68,20 +71,22 @@ namespace bolt {
          *
          *  \sa http://www.sgi.com/tech/stl/fill.html
          */
+
+        template<typename ForwardIterator, typename T> 
+        void fill( const bolt::cl::control &ctl, ForwardIterator first, ForwardIterator last, const T & value, 
+            const std::string& cl_code="");
+        
         template<typename ForwardIterator, typename T> 
         void fill( ForwardIterator first, ForwardIterator last, const T & value, const std::string& cl_code="");
-
-        template<typename ForwardIterator, typename T> 
-        void fill( const bolt::cl::control &ctl, ForwardIterator first, ForwardIterator last, const T & value, const std::string& cl_code="");
-
-
-        /*! fill_n assigns the value \c value to every element in the range [first,first+n).
+        
+        /*! \brief fill_n assigns the value \c value to every element in the range [first,first+n].
          *  The return value is first + n.
          *  
-         *  \param ctl      Optional control structure to control command-queue, debug, tuning, etc.  See bolt::cl::control.
+         *  \param ctl      \b Optional control structure to control command-queue, debug, tuning, etc.  
+         *                  See bolt::cl::control.
          *  \param first    The first element in the range of interest.
          *  \param n        The size of the range of interest.
-         *  \param value    Sets this value to elements in the range [first,first+n).
+         *  \param value    Sets this value to elements in the range [first,first+n].
          *  \param cl_code  Optional OpenCL(TM) code to be prepended to any OpenCL kernels used by this function.
          *
          *  \tparam OutputIterator	is a model of Output Iterator
@@ -90,14 +95,17 @@ namespace bolt {
          *
          *  \return first+n.
          *
-         *  The following code snippet demonstrates how to fill a device_vector with a float value.
+         *  \details The following code snippet demonstrates how to fill a device_vector with a float value.
          *
          *  \code
          *  #include <bolt/cl/fill.h>
          *  #include <bolt/device_vector.h>
          *  #include <stdlib.h>
-         *  ...
+         *
+         *  ...  
+         *
          *  bolt::cl::device_vector<float> v(10);
+         *
          *  float x=25.0f;
          *  bolt::cl::fill_n(v.begin(), 10, x);
          *
@@ -106,13 +114,14 @@ namespace bolt {
          *
          *  \sa http://www.sgi.com/tech/stl/fill_n.html
          */
+
+        template<typename OutputIterator, typename Size, typename T> 
+        OutputIterator fill_n( const bolt::cl::control &ctl, OutputIterator first, Size n, const T & value, 
+            const std::string& cl_code="");
+        
         template<typename OutputIterator, typename Size, typename T> 
         OutputIterator fill_n( OutputIterator first, Size n, const T & value, const std::string& cl_code="");
-
-        template<typename OutputIterator, typename Size, typename T> 
-        OutputIterator fill_n( const bolt::cl::control &ctl, OutputIterator first, Size n, const T & value, const std::string& cl_code="");
-
-
+        
         /*!   \}  */
     };
 };

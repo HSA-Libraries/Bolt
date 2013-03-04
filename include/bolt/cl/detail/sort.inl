@@ -498,7 +498,6 @@ sort_enqueue(control &ctl,
 
     std::string compileOptions;
     //std::ostringstream oss;
-    
     RadixSort_Uint_KernelTemplateSpecializer ts_kts(RADIX);
     std::vector< ::cl::Kernel > kernels = bolt::cl::getKernels(
         ctl,
@@ -819,6 +818,7 @@ sort_enqueue(control &ctl,
         typeDefinitions,
         sort_uint_kernels,
         compileOptions);
+
 
     unsigned int groupSize  = RADICES;
 
@@ -1264,6 +1264,7 @@ sort_enqueue(control &ctl,
                                             ::cl::NDRange(BITONIC_SORT_WGSIZE),
                                             NULL,
                                             NULL);
+
             V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for sort() kernel" );
             V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
         }//end of for passStage = 0:stage-1
@@ -1312,7 +1313,7 @@ void sort_enqueue_non_powerOf2(control &ctl,
         compileOptions);
 
     size_t wgSize  = kernels[0].getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.device( ), &l_Error );
-    
+
     size_t totalWorkGroups = (szElements + wgSize)/wgSize;
     size_t globalSize = totalWorkGroups * wgSize;
     V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );

@@ -16,6 +16,7 @@
 ***************************************************************************/                                                                                     
 
 #include "common/stdafx.h"
+#include "common/myocl.h"
 #include <vector>
 #include <array>
 
@@ -1168,6 +1169,21 @@ typedef ::testing::Types<
 INSTANTIATE_TYPED_TEST_CASE_P( Integer, ScanArrayTest, IntegerTests );
 INSTANTIATE_TYPED_TEST_CASE_P( Float, ScanArrayTest, FloatTests );
 //here
+
+TEST(Scan, cpuQueue)
+{
+	MyOclContext ocl = initOcl(CL_DEVICE_TYPE_CPU, 0);
+    bolt::cl::control c(ocl._queue);  // construct control structure from the queue.
+    std::vector< float > boltInput( 1024, 1.0f );
+    std::vector< float > boltOutput( 1024, 1.0f );
+    std::vector< float > stdInput( 1024, 1.0f );
+    std::vector< float > stdOutput( 1024, 1.0f );
+    std::cout << "Doing BOLT scan\n";
+    std::vector< float >::iterator boltEnd  = bolt::cl::inclusive_scan( c, boltInput.begin( ), boltInput.end( ), boltOutput.begin( ) );
+    std::cout << "Doing STD scan\n";
+    std::vector< float >::iterator stdEnd  = std::partial_sum( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ) );
+    cmpArrays( stdInput, boltInput );
+}
 
 int _tmain(int argc, _TCHAR* argv[])
 {

@@ -322,6 +322,7 @@ TYPED_TEST_P( SortArrayTest, GPU_DeviceGreaterFunction )
     //  by the default control device
     ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
     std::vector< cl::Device > devices = myContext.getInfo< CL_CONTEXT_DEVICES >();
+
     ::cl::CommandQueue myQueue( myContext, devices[ 0 ] );
     bolt::cl::control c_gpu( myQueue );  // construct control structure from the queue.
 

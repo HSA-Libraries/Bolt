@@ -32,27 +32,31 @@ namespace bolt {
         /*! \addtogroup algorithms
          */
 
-        /*! \addtogroup min_elements
+        /*! \addtogroup Find
         *   \ingroup algorithms
-        *    The min_element finds the location of the first smallest in the range [first, last]
+        *    The min_element finds the location of the first smallest element in the range [first, last]
         */
 
         /*! \addtogroup min_element
-        *   \ingroup min_elements
+        *   \ingroup Find
         *   \{
-        *   \todo Document wg-per-compute unit flags for min_element
         */
 
         /*! \brief The min_element returns the location of the first minimum element in the specified range.
         *
-        *
-        * \param first A forward iterator addressing the position of the first element in the range to be searched for the minimum element
-        * \param last  A forward iterator addressing the position one past the final element in the range to be searched for the minimum element
-        * \param cl_code Optional OpenCL(TM) code to be passed to the OpenCL compiler. The cl_code is inserted first in the generated code, before the cl_code trait.
-        * \tparam ForwardIterator An iterator that can be dereferenced for an object, and can be incremented to get to the next element in a sequence.
-        * \return The result of the min_element.
+        * \param ctl \b Optional Control structure to control command-queue, debug, tuning, etc. See bolt::cl::control.
+        * \param first A forward iterator addressing the position of the first element in the range to be searched for 
+        *  the minimum element
+        * \param last  A forward iterator addressing the position one past the final element in the range to be 
+        *  searched for the minimum element
+        * \param cl_code Optional OpenCL(TM) code to be passed to the OpenCL compiler. The cl_code is inserted first in
+        * the generated code, before the cl_code trait.
+        * \tparam ForwardIterator An iterator that can be dereferenced for an object, and can be incremented to get to 
+        * the next element in a sequence.
+        * \return The position of the min_element.
                 *
-        * The following code example shows the use of \p min_element of 10 numbers, using the default BinaryPredicate.
+        * \details  The following code example shows how to find \p min_element of 10 numbers, using the default 
+        * BinaryPredicate.
         * \code
         * #include <bolt/cl/min_element.h>
         *
@@ -61,95 +65,40 @@ namespace bolt {
         * int min_pos = bolt::cl::min_element(a, a+10);
         * // min_pos = 3
         *  \endcode
-        *
+        * \sa http://www.sgi.com/tech/stl/min_element.html
         */
-        template<typename ForwardIterator> 
-        ForwardIterator min_element(ForwardIterator first, 
-            ForwardIterator last, 
-            const std::string& cl_code="");
 
-        /*! \brief The min_element returns the location of the first minimum element in the specified range using the specified binary_op.    
-        * \param first A forward iterator addressing the position of the first element in the range to be searched for the minimum element
-        * \param last  A forward iterator addressing the position one past the final element in the range to be searched for the minimum element
-        * \param binary_op  The binary operation used to combine two values.   By default, the binary operation is less<>().
-        * \param cl_code Optional OpenCL(TM) code to be passed to the OpenCL compiler. The cl_code is inserted first in the generated code, before the cl_code trait.
-        * \tparam InputIterator An iterator that can be dereferenced for an object, and can be incremented to get to the next element in a sequence.
-        * \return The result of the min_element.
-        *
-        *
-        * The following code example shows the use of \p min_element  10 numbers plus 100, using the default less operator.
-        * \code
-        * #include <bolt/cl/min_element.h>
-        *
-        * int a[10] = {4, 8, 6, 1, 5, 3, 10, 2, 9, 7};
-        *
-        * int min_pos = bolt::cl::min_element(a, a+10, bolt::cl::less<T>());
-        * // min_pos = 3
-        *  \endcode
-        *
-        * The following code example shows the use of \p min_element to find the max of 10 numbers:
-        * \code
-        * #include <bolt/cl/min_element.h>
-        *
-        * int a[10] = {4, 8, 6, 1, 5, 3, 10, 2, 9, 7};
-        *
-        * int max_pos = bolt::cl::min_element(a, a+10, bolt::cl::greater<T>());
-        * // max_pos = 6
-        *  \endcode
-        */
-        template<typename ForwardIterator, typename BinaryPredicate> 
-        ForwardIterator min_element(ForwardIterator first, 
-            ForwardIterator last,  
-            BinaryPredicate binary_op, 
-            const std::string& cl_code="")  ;
-
-
-        /*! \brief The min_element returns the location of the first minimum element in the specified range.
-        *
-        *
-        * \param ctl Control structure to control command-queue, debug, tuning.
-        * \param first A forward iterator addressing the position of the first element in the range to be searched for the minimum element
-        * \param last  A forward iterator addressing the position one past the final element in the range to be searched for the minimum element
-        * \param cl_code Optional OpenCL(TM) code to be passed to the OpenCL compiler. The cl_code is inserted first in the generated code, before the cl_code trait.
-        * \tparam ForwardIterator An iterator that can be dereferenced for an object, and can be incremented to get to the next element in a sequence.
-        * \return The result of the min_element.
-                *
-        * The following code example shows the use of \p min_element of 10 numbers, using the default BinaryPredicate.
-        * \code
-        * #include <bolt/cl/min_element.h>
-        *
-        * int a[10] = {4, 8, 6, 1, 5, 3, 10, 2, 9, 7};
-        *
-        * cl::CommandQueue myCommandQueue = ...
-        *
-        * bolt::cl::control ctl(myCommandQueue); // specify an OpenCL(TM) command queue to use for executing the min_element.
-        * ctl.debug(bolt::cl::control::debug::SaveCompilerTemps); // save IL and ISA files for generated kernel
-        *
-        * int min_pos = bolt::cl::min_element(a, a+10);
-        * // min_pos = 3
-        *  \endcode
-        *
-        */
-          
         template<typename ForwardIterator> 
         ForwardIterator  min_element(bolt::cl::control &ctl,
             ForwardIterator first, 
             ForwardIterator last, 
             const std::string& cl_code="");
 
-            
-        /*! \brief The min_element returns the location of the first minimum element in the specified range using the specified binary_op.    
+        template<typename ForwardIterator> 
+        ForwardIterator min_element(ForwardIterator first, 
+            ForwardIterator last, 
+            const std::string& cl_code="");
+
+                
+        /*! \brief The min_element returns the location of the first minimum element in the specified range using the 
+        * specified binary_op.    
         *
-        * \param ctl Control structure to control command-queue, debug, tuning, etc.  See control.
-        * \param first A forward iterator addressing the position of the first element in the range to be searched for the minimum element
-        * \param last  A forward iterator addressing the position one past the final element in the range to be searched for the minimum element
-        * \param binary_op  The binary operation used to combine two values.   By default, the binary operation is less<>().
-        * \param cl_code Optional OpenCL(TM) code to be passed to the OpenCL compiler. The cl_code is inserted first in the generated code, before the cl_code trait.
-        * \tparam InputIterator An iterator that can be dereferenced for an object, and can be incremented to get to the next element in a sequence.
-        * \return The result of the min_element.
+        * \param ctl \b Optional Control structure to control command-queue, debug, tuning, etc. See bolt::cl::control.
+        * \param first A forward iterator addressing the position of the first element in the range to be searched for 
+        * the minimum element
+        * \param last  A forward iterator addressing the position one past the final element in the range to be 
+        * searched for the minimum element
+        * \param binary_op  The binary operation used to combine two values.   By default, the binary operation is 
+        * less<>().
+        * \param cl_code Optional OpenCL(TM) code to be passed to the OpenCL compiler. The cl_code is inserted first in
+        * the generated code, before the cl_code trait.
+        * \tparam InputIterator An iterator that can be dereferenced for an object, and can be incremented to get to 
+        * the next element in a sequence.
+        * \return The position of the min_element.
         *
         *
-        * The following code example shows the use of \p min_element  10 numbers plus 100, using the default less operator.
+        * \details The following code example shows how to find \p min_element  of 10 numbers, using the default less 
+        * operator.
         * \code
         * #include <bolt/cl/min_element.h>
         *
@@ -157,28 +106,14 @@ namespace bolt {
         *
         * cl::CommandQueue myCommandQueue = ...
         *
-        * bolt::cl::control ctl(myCommandQueue); // specify an OpenCL(TM) command queue to use for executing the min_element.
+        * bolt::cl::control ctl(myCommandQueue); // specify an OpenCL(TM) command queue to use for executing the 
+        * // min_element.
         * ctl.debug(bolt::cl::control::debug::SaveCompilerTemps); // save IL and ISA files for generated kernel.
         *
         * int min_pos = bolt::cl::min_element(a, a+10, bolt::cl::less<T>());
         * // min_pos = 3
         *  \endcode
-        *
-        * The following code example shows the use of \p min_element to find the max of 10 numbers:
-        * \code
-        * #include <bolt/cl/min_element.h>
-        *
-        * int a[10] = {4, 8, 6, 1, 5, 3, 10, 2, 9, 7};
-        *
-        * cl::CommandQueue myCommandQueue = ...
-        *
-        * bolt::cl::control ctl(myCommandQueue); // specify an OpenCL(TM) command queue to use for executing the min_element.
-        * ctl.debug(bolt::cl::control::debug::SaveCompilerTemps); // save IL and ISA files for generated kernel.
-        *
-        * int max_pos = bolt::cl::min_element(a, a+10, bolt::cl::greater<T>());
-        *
-        * // max_pos = 6
-        *  \endcode
+        * \sa http://www.sgi.com/tech/stl/min_element.html
         */
 
         template<typename ForwardIterator, typename BinaryPredicate> 
@@ -187,6 +122,14 @@ namespace bolt {
             ForwardIterator last,  
             BinaryPredicate binary_op, 
             const std::string& cl_code="")  ;
+
+        template<typename ForwardIterator, typename BinaryPredicate> 
+        ForwardIterator min_element(ForwardIterator first, 
+            ForwardIterator last,  
+            BinaryPredicate binary_op, 
+            const std::string& cl_code="")  ;
+
+
 
         /*!   \}  */
 

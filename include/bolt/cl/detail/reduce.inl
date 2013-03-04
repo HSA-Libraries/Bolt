@@ -36,31 +36,6 @@
 namespace bolt {
     namespace cl {
 
-
-
-        template<typename InputIterator> 
-        typename std::iterator_traits<InputIterator>::value_type
-            reduce(InputIterator first, 
-            InputIterator last, 
-            const std::string& cl_code)
-        {
-            typedef typename std::iterator_traits<InputIterator>::value_type iType;
-            return reduce(bolt::cl::control::getDefault(), first, last, iType(), bolt::cl::plus<iType>(), cl_code);
-        };
-
-        template<typename InputIterator> 
-        typename std::iterator_traits<InputIterator>::value_type
-            reduce(bolt::cl::control &ctl,
-            InputIterator first, 
-            InputIterator last, 
-            const std::string& cl_code)
-        {
-            typedef typename std::iterator_traits<InputIterator>::value_type iType;
-            return reduce(ctl, first, last, iType(), bolt::cl::plus< iType >( ), cl_code);
-        };
-
-
-
         template<typename InputIterator, typename T, typename BinaryFunction> 
         T reduce(InputIterator first, 
             InputIterator last,  
@@ -72,7 +47,8 @@ namespace bolt {
         };
 
         template<typename InputIterator, typename T> 
-         T  reduce(InputIterator first, 
+        typename std::iterator_traits<InputIterator>::value_type
+            reduce(InputIterator first, 
             InputIterator last, 
             T init,
             const std::string& cl_code)
@@ -82,7 +58,8 @@ namespace bolt {
         };
 
         template<typename InputIterator, typename T> 
-         T  reduce(bolt::cl::control &ctl,
+        typename std::iterator_traits<InputIterator>::value_type
+            reduce(bolt::cl::control &ctl,
             InputIterator first, 
             InputIterator last, 
             T init,
@@ -109,7 +86,7 @@ namespace bolt {
                 return detail::reduce_detect_random_access(ctl, first, last, init, binary_op, cl_code,
                     std::iterator_traits< InputIterator >::iterator_category( ) );
             }
-        }
+        };
 
     }
 
@@ -119,42 +96,39 @@ namespace bolt {
 namespace bolt {
     namespace cl {
         namespace detail {
-
-            ///////////////
-
-        enum ReduceTypes {reduce_iValueType, reduce_iIterType, reduce_BinaryFunction, reduce_end };
-
-        ///////////////////////////////////////////////////////////////////////
-        //Kernel Template Specializer
-        ///////////////////////////////////////////////////////////////////////
-        class Reduce_KernelTemplateSpecializer : public KernelTemplateSpecializer
-        {
-            public:
-
-            Reduce_KernelTemplateSpecializer() : KernelTemplateSpecializer()
-                {
-                    addKernelName( "reduceTemplate" );
-                }
-
-            const ::std::string operator() ( const ::std::vector<::std::string>& typeNames ) const
+            struct kernelParamsReduce
             {
-                const std::string templateSpecializationString = 
+                const std::string inPtrType;
+                const std::string inIterType;
+                const std::string binaryFuncName;
+
+                kernelParamsReduce( const std::string& iPtrType, const std::string& iIterType, const std::string& binaryFuncType ): 
+                inPtrType( iPtrType ), inIterType( iIterType ), 
+                binaryFuncName( binaryFuncType )
+                {}
+            };
+
+            // FIXME - move to cpp file
+            struct CallCompiler_Reduce {
+                static void constructAndCompile(::cl::Kernel *masterKernel,  std::string cl_code, kernelParamsReduce* kp, const control *ctl) {
+
+                    const std::string instantiationString = 
                         "// Host generates this instantiation string with user-specified value type and functor\n"
-                        "template __attribute__((mangled_name(" + name(0) + "Instantiated)))\n"
+                        "template __attribute__((mangled_name(reduceInstantiated)))\n"
                         "__attribute__((reqd_work_group_size(64,1,1)))\n"
                         "kernel void reduceTemplate(\n"
-                        "global " + typeNames[reduce_iValueType] + "* input_ptr,\n"
-                         + typeNames[reduce_iIterType] + " output_iter,\n"
+                        "global " + kp->inPtrType + "* input_ptr,\n"
+                         + kp->inIterType + " output_iter,\n"
                         "const int length,\n"
-                        "global " + typeNames[reduce_BinaryFunction] + "* userFunctor,\n"
-                        "global " + typeNames[reduce_iValueType] + "* result,\n"
-                        "local " + typeNames[reduce_iValueType] + "* scratch\n"
+                        "global " + kp->binaryFuncName + "* userFunctor,\n"
+                        "global " + kp->inPtrType + "* result,\n"
+                        "local " + kp->inPtrType + "* scratch\n"
                         ");\n\n";
-    
-                return templateSpecializationString;
-            }
-        };
 
+                    bolt::cl::constructAndCompileString( masterKernel, "reduce", reduce_kernels, instantiationString, cl_code, kp->inPtrType, kp->binaryFuncName, *ctl);
+
+                };
+            };
 #ifdef ENABLE_TBB
             /*For documentation on the reduce object see below link
              *http://threadingbuildingblocks.org/docs/help/reference/algorithms/parallel_reduce_func.htm
@@ -337,35 +311,19 @@ namespace bolt {
             {
                 typedef typename std::iterator_traits< DVInputIterator >::value_type iType;
 
+                static boost::once_flag initOnlyOnce;
+                static ::cl::Kernel masterKernel;
 
-                std::vector<std::string> typeNames( reduce_end);
-                typeNames[reduce_iValueType] = TypeName< T >::get( );
-                typeNames[reduce_iIterType] = TypeName< DVInputIterator >::get( );
-                typeNames[reduce_BinaryFunction] = TypeName< BinaryFunction >::get();
+                kernelParamsReduce args( TypeName< iType >::get( ), TypeName< DVInputIterator >::get( ), 
+                    TypeName< BinaryFunction >::get( ) );
 
-                std::vector<std::string> typeDefinitions;
-                PUSH_BACK_UNIQUE( typeDefinitions, ClCode< T >::get() )
-                PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVInputIterator >::get() )
-                PUSH_BACK_UNIQUE( typeDefinitions, ClCode< BinaryFunction  >::get() )
+                std::string typeDefinitions = cl_code + ClCode< iType >::get( ) + ClCode< DVInputIterator >::get( );
+                typeDefinitions += ClCode< BinaryFunction >::get( );
 
-                //bool cpuDevice = ctl.device().getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_CPU;
-                /*\TODO - Do CPU specific kernel work group size selection here*/
-                //const size_t kernel0_WgSize = (cpuDevice) ? 1 : WAVESIZE*KERNEL02WAVES;
-                std::string compileOptions;
-                //std::ostringstream oss;
-                //oss << " -DKERNEL0WORKGROUPSIZE=" << kernel0_WgSize;
-
-                Reduce_KernelTemplateSpecializer ts_kts;
-                std::vector< ::cl::Kernel > kernels = bolt::cl::getKernels(
-                    ctl,
-                    typeNames,
-                    &ts_kts,
-                    typeDefinitions,
-                    reduce_kernels,
-                    compileOptions);
-
-
-
+                // For user-defined types, the user must create a TypeName trait which returns the name of the class 
+                //  - note use of TypeName<>::get to retreive the name here.
+                boost::call_once( initOnlyOnce, boost::bind( CallCompiler_Reduce::constructAndCompile, &masterKernel, 
+                    typeDefinitions, &args, &ctl) );
 
                 // Set up shape of launch grid and buffers:
                 cl_uint computeUnits     = ctl.device().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
@@ -373,7 +331,7 @@ namespace bolt {
                 size_t numWG = computeUnits * wgPerComputeUnit;
 
                 cl_int l_Error = CL_SUCCESS;
-                const size_t wgSize  = kernels[0].getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( 
+                const size_t wgSize  = masterKernel.getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( 
                     ctl.device( ), &l_Error );
                 V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
 
@@ -390,18 +348,18 @@ namespace bolt {
 
                 cl_uint szElements = static_cast< cl_uint >( first.distance_to(last ) );
 
-                V_OPENCL( kernels[0].setArg(0, first.getBuffer( ) ), "Error setting kernel argument" );
-                V_OPENCL( kernels[0].setArg(1, first.gpuPayloadSize( ), &first.gpuPayload( ) ), "Error setting a kernel argument" );
-                V_OPENCL( kernels[0].setArg(2, szElements), "Error setting kernel argument" );
-                V_OPENCL( kernels[0].setArg(3, *userFunctor), "Error setting kernel argument" );
-                V_OPENCL( kernels[0].setArg(4, *result), "Error setting kernel argument" );
+                V_OPENCL( masterKernel.setArg(0, first.getBuffer( ) ), "Error setting kernel argument" );
+                V_OPENCL( masterKernel.setArg(1, first.gpuPayloadSize( ), &first.gpuPayload( ) ), "Error setting a kernel argument" );
+                V_OPENCL( masterKernel.setArg(2, szElements), "Error setting kernel argument" );
+                V_OPENCL( masterKernel.setArg(3, *userFunctor), "Error setting kernel argument" );
+                V_OPENCL( masterKernel.setArg(4, *result), "Error setting kernel argument" );
 
                 ::cl::LocalSpaceArg loc;
                 loc.size_ = wgSize*sizeof(iType);
-                V_OPENCL( kernels[0].setArg(5, loc), "Error setting kernel argument" );
+                V_OPENCL( masterKernel.setArg(5, loc), "Error setting kernel argument" );
 
                 l_Error = ctl.commandQueue().enqueueNDRangeKernel(
-                    kernels[0], 
+                    masterKernel, 
                     ::cl::NullRange, 
                     ::cl::NDRange(numWG * wgSize), 
                     ::cl::NDRange(wgSize));

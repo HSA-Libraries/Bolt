@@ -886,6 +886,7 @@ scan_by_key_pick_iterator(
        else{
           Serial_exclusive_scan_by_key<kType, vType, oType, BinaryPredicate, BinaryFunction, T>(&(*firstKey), &(*firstValue), &(*result), numElements, binary_pred, binary_funct, init);
        }
+       return result + numElements;
     }
   else if(runMode == bolt::cl::control::MultiCoreCpu)
   {
@@ -894,7 +895,7 @@ scan_by_key_pick_iterator(
         ScanKey_tbb<T, InputIterator1, InputIterator2, OutputIterator, BinaryFunction, BinaryPredicate> tbbkey_scan((InputIterator1 &)firstKey,
             (InputIterator2&) firstValue,(OutputIterator &)result, binary_funct, binary_pred, inclusive, init);
         tbb::parallel_scan( tbb::blocked_range<int>(  0, static_cast< int >( std::distance( firstKey, lastKey ))), tbbkey_scan, tbb::auto_partitioner());
-        return tbbkey_scan.result;
+        return result + numElements;
 #else
         std::cout << "The MultiCoreCpu version of Scan by key is not implemented yet." << std ::endl;
         throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of scan by key is not enabled to be built." ); 
@@ -984,7 +985,7 @@ scan_by_key_pick_iterator(
                 ctl.commandQueue().enqueueUnmapMemObject(firstValue.getBuffer(), scanInputBuffer);
                 ctl.commandQueue().enqueueUnmapMemObject(result.getBuffer(), scanResultBuffer);
 
-                return result;
+                return result + numElements;
         
     }
     else if( runMode == bolt::cl::control::MultiCoreCpu )
@@ -1008,7 +1009,7 @@ scan_by_key_pick_iterator(
                 ctl.commandQueue().enqueueUnmapMemObject(firstKey.getBuffer(), scanInputkey);
                 ctl.commandQueue().enqueueUnmapMemObject(firstValue.getBuffer(), scanInputBuffer);
                 ctl.commandQueue().enqueueUnmapMemObject(result.getBuffer(), scanResultBuffer);
-                return result;
+                return result + numElements;
 #else
                 std::cout << "The MultiCoreCpu version of scan by key is not enabled. " << std ::endl;
                 throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of scan by key is not enabled to be built." );
@@ -1016,11 +1017,12 @@ scan_by_key_pick_iterator(
 #endif
 
      }
+     else{
 
     //Now call the actual cl algorithm
-    scan_by_key_enqueue( ctl, firstKey, lastKey, firstValue, result,
-            init, binary_pred, binary_funct, user_code, inclusive );
-
+              scan_by_key_enqueue( ctl, firstKey, lastKey, firstValue, result,
+                       init, binary_pred, binary_funct, user_code, inclusive );
+     }
     return result + numElements;
 }
 

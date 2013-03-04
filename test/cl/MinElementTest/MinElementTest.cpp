@@ -540,12 +540,12 @@ void Mineletest(int aSize)
                 A[i] = rand();
     };
 
-    std::vector<int>::iterator stlReduce = std::max_element(A.begin(), A.end());
+    std::vector<int>::iterator stlReduce = std::min_element(A.begin(), A.end());
     std::vector<int>::iterator boltReduce = bolt::cl::min_element(A.begin(), A.end(),bolt::cl::greater<int>());
 
 
 
-    checkResult("Minelement", *stlReduce, *boltReduce);
+    checkResult("Minelement", stlReduce, boltReduce);
     //printf ("Sum: stl=%d,  bolt=%d %d\n", stlReduce, boltReduce, boltReduce2);
 };
 
@@ -572,7 +572,7 @@ void Minele_TestControl(int aSize, int numIters, int deviceIndex)
   MyOclContext ocl = initOcl(CL_DEVICE_TYPE_GPU, deviceIndex);
     bolt::cl::control c(ocl._queue);  // construct control structure from the queue.
 #endif
-    //c.debug(bolt::cl::control::debug::Compile + bolt::cl::control::debug::SaveCompilerTemps);
+    c.debug(bolt::cl::control::debug::Compile + bolt::cl::control::debug::SaveCompilerTemps);
 
     std::vector<int>::iterator  stlReduce = std::min_element(A.begin(), A.end());
     std::vector<int>::iterator boltReduce(A.end());
@@ -635,48 +635,6 @@ void simpleMinele_countingiterator(int start,int size)
     checkResult("TestSerial", *stlReduce, *boltReduce);
 };
 
-TEST( Min_Element , KcacheTest )
-{
-    //setup containers
-    unsigned int length = 1024;
-    std::vector< int > refInput( length );
-    for( unsigned int i = 0; i < length ; i++ )
-    {
-      refInput[i] = rand();
-    }
-
-    //Call reduce with GPU device because the default is a GPU device
-    bolt::cl::control ctrl = bolt::cl::control::getDefault();
-    bolt::cl::device_vector< int > gpuInput( refInput.begin(), refInput.end() );
-    bolt::cl::device_vector< int >::iterator   boltGpuMin = bolt::cl::min_element( ctrl, gpuInput.begin(), gpuInput.end() );
-
-    //Call reduce with CPU device
-    ::cl::Context cpuContext(CL_DEVICE_TYPE_CPU);
-    std::vector< cl::Device > devices = cpuContext.getInfo< CL_CONTEXT_DEVICES >();
-    cl::Device selectedDevice;
-
-    for(std::vector< cl::Device >::iterator iter = devices.begin();iter < devices.end(); iter++)
-    {
-        if(iter->getInfo<CL_DEVICE_TYPE> ( ) == CL_DEVICE_TYPE_CPU) 
-        {
-            selectedDevice = *iter;
-            break;
-        }
-    }
-    ::cl::CommandQueue myQueue( cpuContext, selectedDevice );
-    bolt::cl::control cpu_ctrl( myQueue );  // construct control structure from the queue.
-    bolt::cl::device_vector< int > cpuInput( refInput.begin(), refInput.end() );
-    bolt::cl::device_vector< int >::iterator boltCpuMin= bolt::cl::min_element( cpu_ctrl, cpuInput.begin(), cpuInput.end() );
-
-    std::vector< int >::iterator stdCpuMin;
-    //Call reference code
-    stdCpuMin =  std::min_element( refInput.begin(), refInput.end());
-
-
-    EXPECT_EQ(*boltGpuMin,*stdCpuMin);
-    EXPECT_EQ(*boltCpuMin,*stdCpuMin);
-}
-
 
 int _tmain(int argc, _TCHAR* argv[])
 {
@@ -727,3 +685,4 @@ int _tmain(int argc, _TCHAR* argv[])
 
     return 0;
 }
+

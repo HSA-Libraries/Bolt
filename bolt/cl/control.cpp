@@ -254,35 +254,40 @@ namespace cl
                 amdPlatforms.push_back( *clPlatIter );
             }
         }
-
-        //  No AMD platforms available to choose from; allow OpenCL runtime to choose for us
-        if( amdPlatforms.empty( ) )
-        {
-            return ::cl::CommandQueue::getDefault( );
-        }
-
-        //  Choose the OpenCL device that has the greatest amount of available memory
-        //std::max_element( amdPlatforms.begin( ), amdPlatforms.end( ), chooseDevice( CL_DEVICE_GLOBAL_MEM_SIZE, ::bolt::cl::max< cl_ulong >( ) ) );
         cl_ulong maxDeviceMemory = 0;
         cl_uint maxMaxClock = 0;
         cl_uint maxMaxUnits = 0;
+
+
+        //  No AMD platforms available to choose from; allow OpenCL runtime to choose for us
+        //  Protocol to select the device and the corresponding Command Queue
+        //  If AMD Platforms are found choose the best GPU device on larger number of Compute Units and larger 
+        //  Global memory 
+        //  If no AMD platforms are found choose the first available platform and then Choose the best CPU 
+        //  device on larger number of Compute Units and larger Global memory. We choose the CPU device. 
+        //  This logic you might want to change when Other OpenCL implementation start supporting 
+        //  C++ Static Kernel Specification or may be "SPIR".
+        //  But finally in the default control object if the device Type is CPU then we fallback to the MultiCoreCPU Path.
+        std::vector< ::cl::Platform >::iterator selectedPlatformIter;
+		cl_device_type selectedDevice;
         ::cl::Device boltDevice;
-        std::vector< ::cl::Platform >::iterator amdPlatDevice;
-
-        for( std::vector< ::cl::Platform >::iterator amdPlatIter = amdPlatforms.begin( ); amdPlatIter != amdPlatforms.end( ); ++amdPlatIter )
+        if( amdPlatforms.empty( ) )
         {
-            //  We don't want to pick an AMD CPU device over another vendors GPU device, so filter only GPU devices
-            std::vector< ::cl::Device > amdDevices;
-            bolt::cl::V_OPENCL( amdPlatIter->getDevices( CL_DEVICE_TYPE_GPU, &amdDevices ), "Platform::getDevices() failed" );
-
-            //  If there are no AMD GPU devices, skip to next available platform
-            if( amdDevices.empty( ) )
+            //If no AMD platform is found then select the first available platform and choose the CPU device out of that. 
+            
+            std::vector< ::cl::Device > otherDevices;
+            std::vector< ::cl::Platform >::iterator otherPlatDevice;
+            platforms.begin()->getDevices( CL_DEVICE_TYPE_CPU, &otherDevices );
+            if( otherDevices.empty( ) )
             {
-                continue;
+                return ::cl::CommandQueue::getDefault( );
             }
-
-            for( std::vector< ::cl::Device >::iterator amdDevIter = amdDevices.begin( ); amdDevIter != amdDevices.end( ); ++amdDevIter )
+            selectedPlatformIter = platforms.begin();
+            for( std::vector< ::cl::Device >::iterator amdDevIter = otherDevices.begin( ); amdDevIter != otherDevices.end( ); ++amdDevIter )
             {
+				cl_device_type dType = amdDevIter->getInfo< CL_DEVICE_TYPE >( &err );
+				bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_TYPE > failed" );
+
                 cl_ulong devDeviceMemory = amdDevIter->getInfo< CL_DEVICE_GLOBAL_MEM_SIZE >( &err );
                 bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_GLOBAL_MEM_SIZE > failed" );
 
@@ -302,7 +307,8 @@ namespace cl
                     maxDeviceMemory = devDeviceMemory;
                     maxMaxClock = devMaxClock;
                     maxMaxUnits = devMaxUnits;
-                    amdPlatDevice = amdPlatIter;
+                    //selectedPlatformIter = amdPlatIter;
+					selectedDevice = dType;
                 }
                 else if( devWorkPot == maxWorkPot )
                 {
@@ -313,24 +319,99 @@ namespace cl
                         maxDeviceMemory = devDeviceMemory;
                         maxMaxClock = devMaxClock;
                         maxMaxUnits = devMaxUnits;
-                        amdPlatDevice = amdPlatIter;
+                        //selectedPlatformIter = amdPlatIter;
+						selectedDevice = dType;
+                    }
+                }
+
+            }//End of For Other devices
+        }//End of if no amdPlatforms
+        else
+        {// Start of if amdPlatforms
+            //  Choose the OpenCL device that has the greatest amount of available memory
+
+
+
+            for( std::vector< ::cl::Platform >::iterator amdPlatIter = amdPlatforms.begin( ); amdPlatIter != amdPlatforms.end( ); ++amdPlatIter )
+            {
+                //  We don't want to pick an AMD CPU device over another vendors GPU device, so filter only GPU devices
+                std::vector< ::cl::Device > amdDevices;
+			    try 
+			    {
+				    amdPlatIter->getDevices( CL_DEVICE_TYPE_GPU, &amdDevices );
+			    }
+			    catch (::cl::Error err)
+			    {
+				    if(err.err() == CL_DEVICE_NOT_FOUND)
+					    std::cout << "No GPU device Found" << std::endl; 
+			        try 
+			        {
+				        amdPlatIter->getDevices( CL_DEVICE_TYPE_CPU, &amdDevices );
+			        }
+			        catch (::cl::Error err)
+			        {
+				        if(err.err() == CL_DEVICE_NOT_FOUND)
+					        std::cout << "No Valid Compute device found " << std::endl; 
+			        }
+			    }
+
+                //  If there are no AMD GPU devices, skip to next available platform
+                if( amdDevices.empty( ) )
+                {
+                    continue;
+                }
+
+                for( std::vector< ::cl::Device >::iterator amdDevIter = amdDevices.begin( ); amdDevIter != amdDevices.end( ); ++amdDevIter )
+                {
+				    cl_device_type dType = amdDevIter->getInfo< CL_DEVICE_TYPE >( &err );
+				    bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_TYPE > failed" );
+
+                    cl_ulong devDeviceMemory = amdDevIter->getInfo< CL_DEVICE_GLOBAL_MEM_SIZE >( &err );
+                    bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_GLOBAL_MEM_SIZE > failed" );
+
+                    cl_uint devMaxClock = amdDevIter->getInfo< CL_DEVICE_MAX_CLOCK_FREQUENCY >( &err );
+                    bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_MAX_CLOCK_FREQUENCY > failed" );
+
+                    cl_uint devMaxUnits = amdDevIter->getInfo< CL_DEVICE_MAX_COMPUTE_UNITS >( &err );
+                    bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_MAX_COMPUTE_UNITS > failed" );
+
+                    cl_uint maxWorkPot = maxMaxClock * maxMaxUnits;
+                    cl_uint devWorkPot = devMaxClock * devMaxUnits;
+
+                    //  Multiply the CU by the frequency, to arrive at a estimate of work potential
+                    if( devWorkPot > maxWorkPot )
+                    {
+                        boltDevice = *amdDevIter;
+                        maxDeviceMemory = devDeviceMemory;
+                        maxMaxClock = devMaxClock;
+                        maxMaxUnits = devMaxUnits;
+                        selectedPlatformIter = amdPlatIter;
+					    selectedDevice = dType;
+                    }
+                    else if( devWorkPot == maxWorkPot )
+                    {
+                        //  Tie breakers go to the device with the most memory
+                        if( devDeviceMemory > maxDeviceMemory )
+                        {
+                            boltDevice = *amdDevIter;
+                            maxDeviceMemory = devDeviceMemory;
+                            maxMaxClock = devMaxClock;
+                            maxMaxUnits = devMaxUnits;
+                            selectedPlatformIter = amdPlatIter;
+						    selectedDevice = dType;
+                        }
                     }
                 }
             }
         }
-
         //  If for some reason no device was picked in the loop above, revert to OpenCL runtime choosing
         if( maxDeviceMemory == 0 )
         {
             return ::cl::CommandQueue::getDefault( );
         }
 
-        //  Create a ::cl::CommandQueue for the device we chose
-        //::cl::Context boltContext( boltDevice );
-
-        cl_context_properties cprops[3] = { CL_CONTEXT_PLATFORM, (cl_context_properties)(*amdPlatDevice)(), 0 };
-        ::cl::Context boltContext( CL_DEVICE_TYPE_GPU, cprops );
-
+        cl_context_properties cprops[3] = { CL_CONTEXT_PLATFORM, (cl_context_properties)(*selectedPlatformIter)(), 0 };
+        ::cl::Context boltContext( selectedDevice, cprops );
         ::cl::CommandQueue boltQueue( boltContext, boltDevice );
 
         return boltQueue;
