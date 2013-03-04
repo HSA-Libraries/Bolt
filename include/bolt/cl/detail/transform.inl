@@ -20,8 +20,6 @@
 #define BOLT_CL_TRANSFORM_INL
 #define WAVEFRONT_SIZE 64
 
-#include <boost/thread/once.hpp>
-#include <boost/bind.hpp>
 #include <type_traits>
 
 #ifdef ENABLE_TBB
@@ -74,107 +72,6 @@ void transform( InputIterator first1, InputIterator last1, OutputIterator result
 }
 
 namespace detail {
-/*    struct kernelParamsTransform
-    {
-        const std::string inValueType1Ptr;
-        const std::string inValueType1Iter;
-        const std::string inValueType2Ptr;
-        const std::string inValueType2Iter;
-        const std::string outValueTypePtr;
-        const std::string outValueTypeIter;
-        const std::string functorTypeName;
-
-        kernelParamsTransform( const std::string& iType1Ptr, const std::string& iType1Iter, const std::string& iType2Ptr, 
-            const std::string& iType2Iter, const std::string& oTypePtr, const std::string& oTypeIter, 
-            const std::string& funcType ): 
-        inValueType1Ptr( iType1Ptr ), inValueType1Iter( iType1Iter ), 
-        inValueType2Ptr( iType2Ptr ), inValueType2Iter( iType2Iter ), 
-        outValueTypePtr( oTypePtr ), outValueTypeIter( oTypeIter ), 
-        functorTypeName( funcType )
-        {}
-    };
-
-    struct CallCompiler_BinaryTransform {
-        static void init_(
-            std::vector< ::cl::Kernel >* kernels,
-            std::string cl_code,
-            kernelParamsTransform* kp,
-            const ::bolt::cl::control *ctl) {
-
-            std::vector< const std::string > kernelNames;
-            kernelNames.push_back( "transform" );
-            kernelNames.push_back( "transformNoBoundsCheck" );
-
-            std::string instantiationString = 
-                "// Host generates this instantiation string with user-specified value type and functor\n"
-                "template __attribute__((mangled_name(transformInstantiated)))\n"
-                "kernel void transformTemplate(\n"
-                "global " + kp->inValueType1Ptr + "* A_ptr,\n"
-                + kp->inValueType1Iter + " A_iter,\n"
-                "global " + kp->inValueType2Ptr + "* B_ptr,\n"
-                + kp->inValueType2Iter + " B_iter,\n"
-                "global " + kp->outValueTypePtr + "* Z_ptr,\n"
-                + kp->outValueTypeIter + " Z_iter,\n"
-                "const uint length,\n"
-                "global " + kp->functorTypeName + "* userFunctor);\n\n"
-
-                "// Host generates this instantiation string with user-specified value type and functor\n"
-                "template __attribute__((mangled_name(transformNoBoundsCheckInstantiated)))\n"
-                "kernel void transformNoBoundsCheckTemplate(\n"
-                "global " + kp->inValueType1Ptr + "* A_ptr,\n"
-                + kp->inValueType1Iter + " A_iter,\n"
-                "global " + kp->inValueType2Ptr + "* B_ptr,\n"
-                + kp->inValueType2Iter + " B_iter,\n"
-                "global " + kp->outValueTypePtr + "* Z_ptr,\n"
-                + kp->outValueTypeIter + " Z_iter,\n"
-                "const uint length,\n"
-                "global " + kp->functorTypeName + "* userFunctor);\n\n";
-
-                bolt::cl::compileKernelsString( *kernels, kernelNames, transform_kernels, instantiationString, 
-                    cl_code, kp->inValueType1Ptr + kp->inValueType2Ptr, kp->functorTypeName, *ctl);
-        };
-    };
-
-    struct CallCompiler_UnaryTransform
-    {
-    static void init_(
-        std::vector< ::cl::Kernel >* kernels,
-        std::string cl_code,
-        kernelParamsTransform* kp,
-        const control *ctl)
-    {
-        std::vector< const std::string > kernelNames;
-        kernelNames.push_back( "unaryTransform" );
-        kernelNames.push_back( "unaryTransformNoBoundsCheck" );
-        //kernelNames.push_back( "unaryTransformA" );
-
-        std::string instantiationString = 
-            "// Host generates this instantiation string with user-specified value type and functor\n"
-            "template __attribute__((mangled_name(unaryTransformInstantiated)))\n"
-            "kernel void unaryTransformTemplate(\n"
-            "global " + kp->inValueType1Ptr + "* A,\n"
-            + kp->inValueType1Iter + " A_iter,\n"
-            "global " + kp->outValueTypePtr + "* Z,\n"
-            + kp->outValueTypeIter + " Z_iter,\n"
-            "const uint length,\n"
-            "global " + kp->functorTypeName + "* userFunctor);\n\n"
-
-            "// Host generates this instantiation string with user-specified value type and functor\n"
-            "template __attribute__((mangled_name(unaryTransformNoBoundsCheckInstantiated)))\n"
-            "kernel void unaryTransformNoBoundsCheckTemplate(\n"
-            "global " + kp->inValueType1Ptr + "* A,\n"
-            + kp->inValueType1Iter + " A_iter,\n"
-            "global " + kp->outValueTypePtr + "* Z,\n"
-            + kp->outValueTypeIter + " Z_iter,\n"
-            "const uint length,\n"
-            "global " + kp->functorTypeName + "* userFunctor);\n\n"
-            ;
-
-        bolt::cl::compileKernelsString( *kernels, kernelNames, transform_kernels, instantiationString, 
-                    cl_code, kp->inValueType1Ptr, kp->functorTypeName, *ctl);
-        };
-        };
-*/
 
   enum TransformTypes {transform_iType1, transform_DVInputIterator1, transform_iType2, transform_DVInputIterator2, transform_oTypeB, 
    transform_DVOutputIteratorB, transform_BinaryFunction, transform_endB };
@@ -195,7 +92,7 @@ public:
         const std::string templateSpecializationString = 
             "// Host generates this instantiation string with user-specified value type and functor\n"
             "template __attribute__((mangled_name("+name(0)+"Instantiated)))\n"
-            "kernel void transformTemplate(\n"
+            "kernel void "+name(0)+"(\n"
             "global " + binaryTransformKernels[transform_iType1] + "* A_ptr,\n"
             + binaryTransformKernels[transform_DVInputIterator1] + " A_iter,\n"
             "global " + binaryTransformKernels[transform_iType2] + "* B_ptr,\n"
@@ -207,7 +104,7 @@ public:
 
             "// Host generates this instantiation string with user-specified value type and functor\n"
             "template __attribute__((mangled_name("+name(1)+"Instantiated)))\n"
-            "kernel void transformNoBoundsCheckTemplate(\n"
+            "kernel void "+name(1)+"(\n"
             "global " + binaryTransformKernels[transform_iType1] + "* A_ptr,\n"
             + binaryTransformKernels[transform_DVInputIterator1] + " A_iter,\n"
             "global " + binaryTransformKernels[transform_iType2] + "* B_ptr,\n"

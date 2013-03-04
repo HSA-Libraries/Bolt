@@ -1316,23 +1316,24 @@ TEST(cl_const_iter_transformBoltClVectFloat, addIterFloatValues){
 	}
 }
 
-TEST( Reduceint , KcacheTest )
+TEST( Transformint , KcacheTest )
 {
     //setup containers
     unsigned int length = 1024;
     std::vector< int > refInput( length );
+    std::vector< int > refOutput( length );
     for( unsigned int i = 0; i < length ; i++ )
     {
       refInput[i] = i;
       refInput[i] = i+1;
+      refOutput[i] = 0;
     }
 
     //Call reduce with GPU device because the default is a GPU device
     bolt::cl::control ctrl = bolt::cl::control::getDefault();
     bolt::cl::device_vector< int >gpuInput( refInput.begin(), refInput.end() );
-    bolt::cl::device_vector< int >gpuOutput( refInput.begin(), refInput.end() );
+    bolt::cl::device_vector< int >gpuOutput( refOutput.begin(), refOutput.end() );
 
-    int initzero = 0;
     bolt::cl::transform( ctrl, gpuInput.begin(), gpuInput.end(), gpuOutput.begin(), bolt::cl::negate<int>() );
 
     //Call reduce with CPU device
@@ -1342,7 +1343,7 @@ TEST( Reduceint , KcacheTest )
 
     for(std::vector< cl::Device >::iterator iter = devices.begin();iter < devices.end(); iter++)
     {
-        if(iter->getInfo<CL_DEVICE_TYPE> ( ) == CL_DEVICE_TYPE_CPU) 
+        if(iter->getInfo<CL_DEVICE_TYPE> ( ) == CL_DEVICE_TYPE_CPU)
         {
             selectedDevice = *iter;
             break;
@@ -1351,12 +1352,12 @@ TEST( Reduceint , KcacheTest )
     ::cl::CommandQueue myQueue( cpuContext, selectedDevice );
     bolt::cl::control cpu_ctrl( myQueue );  // construct control structure from the queue.
     bolt::cl::device_vector< int > cpuInput( refInput.begin(), refInput.end() );
-    bolt::cl::device_vector< int > cpuOutput( refInput.begin(), refInput.end() );
+    bolt::cl::device_vector< int > cpuOutput( refOutput.begin(), refOutput.end() );
 
     bolt::cl::transform( cpu_ctrl, cpuInput.begin(), cpuInput.end(), cpuOutput.begin() , bolt::cl::negate<int>());
 
     //Call reference code
-    int stdReduce =  std::accumulate( refInput.begin(), refInput.end(), initzero );
+    std::transform( refInput.begin(), refInput.end(), refOutput.begin(), std::negate<int>());
     cmpArrays(cpuOutput,gpuOutput);
 }
 

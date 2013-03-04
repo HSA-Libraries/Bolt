@@ -19,12 +19,11 @@
 #define TRANSFORM_REDUCE_INL
 #pragma once
 
+#define WAVEFRONT_SIZE 64
+
 #include <string>
 #include <iostream>
 #include <numeric>
-
-#include <boost/thread/once.hpp>
-#include <boost/bind.hpp>
 
 #include "bolt/cl/bolt.h"
 
@@ -63,50 +62,39 @@ namespace cl {
 
 
 namespace  detail {
-    struct kernelParamsTransformReduce
+
+    enum transformReduceTypes {tr_iType, tr_iIterType, tr_oType, tr_UnaryFunction,
+    tr_BinaryFunction, tr_end };
+
+    class TransformReduce_KernelTemplateSpecializer : public KernelTemplateSpecializer
     {
-        const std::string inValueNakedType;
-        const std::string inValueIterType;
-        const std::string outValueNakedType;
-        const std::string transformFunctorTypeName;
-        const std::string reduceFunctorTypeName;
+    public:
+       TransformReduce_KernelTemplateSpecializer() : KernelTemplateSpecializer()
+        {
+            addKernelName("transform_reduceTemplate");
+        }
 
-        kernelParamsTransformReduce( const std::string& iTypePtr, const std::string& iTypeIter, 
-            const std::string& oTypePtr, const std::string& transFuncType, const std::string& redFuncType ): 
-        inValueNakedType( iTypePtr ), inValueIterType( iTypeIter ), 
-        outValueNakedType( oTypePtr ),
-        transformFunctorTypeName( transFuncType ), reduceFunctorTypeName( redFuncType )
-        {}
-    };
+        const ::std::string operator() ( const ::std::vector<::std::string>& typeNames ) const
+        {
 
-    struct CallCompiler_TransformReduce {
-        static void constructAndCompile(
-            ::cl::Kernel *masterKernel,
-            std::string user_code,
-            kernelParamsTransformReduce* kp,
-            const control *ctl) {
-
-            const std::string instantiationString = 
+            const std::string templateSpecializationString =
                 "// Host generates this instantiation string with user-specified value type and functor\n"
-                "template __attribute__((mangled_name(transform_reduceInstantiated)))\n"
+                "template __attribute__((mangled_name("+name(0)+"Instantiated)))\n"
                 "__attribute__((reqd_work_group_size(64,1,1)))\n"
-                "kernel void transform_reduceTemplate(\n"
-                "global " + kp->inValueNakedType + "* input_ptr,\n"
-                 + kp->inValueIterType + " iIter,\n"
+                "kernel void "+name(0)+"(\n"
+                "global " + typeNames[tr_iType] + "* input_ptr,\n"
+                + typeNames[tr_iIterType] + " iIter,\n"
                 "const int length,\n"
-                "global " + kp->transformFunctorTypeName + "* transformFunctor,\n"
-                "const " + kp->outValueNakedType + " init,\n"
-                "global " + kp->reduceFunctorTypeName + "* reduceFunctor,\n"
-                "global " + kp->outValueNakedType + "* result,\n"
-                "local " + kp->outValueNakedType + "* scratch\n"
+                "global " + typeNames[tr_UnaryFunction] + "* transformFunctor,\n"
+                "const " + typeNames[tr_oType] + " init,\n"
+                "global " + typeNames[tr_BinaryFunction] + "* reduceFunctor,\n"
+                "global " + typeNames[tr_oType] + "* result,\n"
+                "local " + typeNames[tr_oType] + "* scratch\n"
                 ");\n\n";
-
-            std::string functorNames = kp->transformFunctorTypeName + " , " + kp->reduceFunctorTypeName; // create for debug message
-
-            bolt::cl::constructAndCompileString( masterKernel, "transform_reduce", transform_reduce_kernels, 
-                instantiationString, user_code, kp->outValueNakedType, functorNames, *ctl);
-        };
+                return templateSpecializationString;
+        }
     };
+
 
 
 #ifdef ENABLE_TBB
@@ -209,7 +197,7 @@ namespace  detail {
                     return transform_reduce_op.value;
 #else
                     std::cout << "The MultiCoreCpu version of transform_reduce is not implemented yet." << std ::endl;
-                    throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of reduce is not enabled to be built." );
+                    throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of transform_reduce is not enabled to be built." );
                     return init;
 #endif  
             } else {
@@ -272,8 +260,8 @@ namespace  detail {
                 c.commandQueue().enqueueUnmapMemObject(first.getBuffer(), trans_reduceInputBuffer);
                 return transform_reduce_op.value;
 #else
-                std::cout << "The MultiCoreCpu version of transform reduce is not enabled. " << std ::endl;
-                throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of transform reduce is not enabled to be built." );
+                std::cout << "The MultiCoreCpu version of transform_reduce is not enabled. " << std ::endl;
+                throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of transform_reduce is not enabled to be built." );
                 return init;
 #endif
             }
@@ -291,33 +279,32 @@ namespace  detail {
             const BinaryFunction& reduce_op,
             const std::string& user_code="")
         {
-            static boost::once_flag initOnlyOnce;
-            static  ::cl::Kernel masterKernel;
             unsigned debugMode = 0; //FIXME, use control
-
             typedef std::iterator_traits< DVInputIterator  >::value_type iType;
 
-            kernelParamsTransformReduce args( TypeName< iType >::get( ), TypeName< DVInputIterator >::get( ),  TypeName< oType >::get( ), 
-                TypeName< UnaryFunction >::get( ), TypeName< BinaryFunction >::get( ) );
+            /**********************************************************************************
+             * Type Names - used in KernelTemplateSpecializer
+             *********************************************************************************/
+            std::vector<std::string> typeNames( tr_end );
+            typeNames[tr_iType] = TypeName< iType >::get( );
+            typeNames[tr_iIterType] = TypeName< DVInputIterator >::get( );
+            typeNames[tr_oType] = TypeName< oType >::get( );
+            typeNames[tr_UnaryFunction] = TypeName< UnaryFunction >::get( );
+            typeNames[tr_BinaryFunction] = TypeName< BinaryFunction >::get();
 
-            // For user-defined types, the user must create a TypeName trait which returns the name of the class 
-            //  - note use of TypeName<>::get to retrieve the name here.
-            std::string typeDefinitions = user_code + ClCode< iType >::get( ) + ClCode< DVInputIterator >::get( ) +
-                        ClCode< UnaryFunction >::get( ) + ClCode< BinaryFunction >::get( );
-            if( !boost::is_same< iType, oType >::value )
-            {
-                typeDefinitions += ClCode< oType >::get( );
-            }
+            /**********************************************************************************
+             * Type Definitions - directrly concatenated into kernel string
+             *********************************************************************************/
+            std::vector<std::string> typeDefinitions;
+            PUSH_BACK_UNIQUE( typeDefinitions, ClCode< iType >::get() )
+            PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVInputIterator >::get() )
+            PUSH_BACK_UNIQUE( typeDefinitions, ClCode< oType >::get() )
+            PUSH_BACK_UNIQUE( typeDefinitions, ClCode< UnaryFunction >::get() )
+            PUSH_BACK_UNIQUE( typeDefinitions, ClCode< BinaryFunction  >::get() )
 
-            boost::call_once( initOnlyOnce,
-                boost::bind(
-                    CallCompiler_TransformReduce::constructAndCompile,
-                    &masterKernel, 
-                    typeDefinitions, 
-                    &args,
-                    &ctl
-                )
-            );
+            /**********************************************************************************
+             * Calculate Work Size
+             *********************************************************************************/
 
             // Set up shape of launch grid and buffers:
             // FIXME, read from device attributes.
@@ -326,22 +313,40 @@ namespace  detail {
             int numWG = computeUnits * wgPerComputeUnit;
 
             cl_int l_Error = CL_SUCCESS;
-            const size_t wgSize  = masterKernel.getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.device( ), &l_Error );
+            const size_t wgSize  = WAVEFRONT_SIZE;
             V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
+
+            /**********************************************************************************
+             * Compile Options
+             *********************************************************************************/
+            bool cpuDevice = ctl.device().getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_CPU;
+            const size_t kernel_WgSize = (cpuDevice) ? 1 : wgSize;
+            std::string compileOptions;
+            std::ostringstream oss;
+            oss << " -DKERNELWORKGROUPSIZE=" << kernel_WgSize;
+            compileOptions = oss.str();
+
+            /**********************************************************************************
+             * Request Compiled Kernels
+             *********************************************************************************/
+            TransformReduce_KernelTemplateSpecializer ts_kts;
+            std::vector< ::cl::Kernel > kernels = bolt::cl::getKernels(
+                ctl,
+                typeNames,
+                &ts_kts,
+                typeDefinitions,
+                transform_reduce_kernels,
+                compileOptions);
+            // kernels returned in same order as added in KernelTemplaceSpecializer constructor
+
 
             // Create Buffer wrappers so we can access the host functors, for read or writing in the kernel
             ALIGNED( 256 ) UnaryFunction aligned_unary( transform_op );
             ALIGNED( 256 ) BinaryFunction aligned_binary( reduce_op );
 
-            //::cl::Buffer transformFunctor(ctl.context(), CL_MEM_USE_HOST_PTR, sizeof(aligned_unary), &aligned_unary );   
-            //::cl::Buffer reduceFunctor(ctl.context(), CL_MEM_USE_HOST_PTR, sizeof(aligned_binary), &aligned_binary );
             control::buffPointer transformFunctor = ctl.acquireBuffer( sizeof( aligned_unary ), CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_unary );
             control::buffPointer reduceFunctor = ctl.acquireBuffer( sizeof( aligned_binary ), CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_binary );
-
-            // ::cl::Buffer result(ctl.context(), CL_MEM_ALLOC_HOST_PTR|CL_MEM_WRITE_ONLY, sizeof(T) * numWG);
             control::buffPointer result = ctl.acquireBuffer( sizeof( oType ) * numWG, CL_MEM_ALLOC_HOST_PTR|CL_MEM_WRITE_ONLY );
-
-            ::cl::Kernel k = masterKernel;  // hopefully create a copy of the kernel. FIXME, doesn't work.
 
             cl_uint szElements = static_cast< cl_uint >( std::distance( first, last ) );
                 
@@ -352,20 +357,20 @@ namespace  detail {
                 numWG = requiredWorkGroups;
             /**********************/
 
-            V_OPENCL( k.setArg( 0, first.getBuffer( ) ), "Error setting kernel argument" );
-            V_OPENCL( k.setArg( 1, first.gpuPayloadSize( ), &first.gpuPayload( ) ), "Error setting kernel argument" );
-            V_OPENCL( k.setArg( 2, szElements), "Error setting kernel argument" );
-            V_OPENCL( k.setArg( 3, *transformFunctor), "Error setting kernel argument" );
-            V_OPENCL( k.setArg( 4, init), "Error setting kernel argument" );
-            V_OPENCL( k.setArg( 5, *reduceFunctor), "Error setting kernel argument" );
-            V_OPENCL( k.setArg( 6, *result), "Error setting kernel argument" );
+            V_OPENCL( kernels[0].setArg( 0, first.getBuffer( ) ), "Error setting kernel argument" );
+            V_OPENCL( kernels[0].setArg( 1, first.gpuPayloadSize( ), &first.gpuPayload( ) ), "Error setting kernel argument" );
+            V_OPENCL( kernels[0].setArg( 2, szElements), "Error setting kernel argument" );
+            V_OPENCL( kernels[0].setArg( 3, *transformFunctor), "Error setting kernel argument" );
+            V_OPENCL( kernels[0].setArg( 4, init), "Error setting kernel argument" );
+            V_OPENCL( kernels[0].setArg( 5, *reduceFunctor), "Error setting kernel argument" );
+            V_OPENCL( kernels[0].setArg( 6, *result), "Error setting kernel argument" );
 
             ::cl::LocalSpaceArg loc;
             loc.size_ = wgSize*sizeof(oType);
-            V_OPENCL( k.setArg( 7, loc ), "Error setting kernel argument" );
+            V_OPENCL( kernels[0].setArg( 7, loc ), "Error setting kernel argument" );
 
             l_Error = ctl.commandQueue().enqueueNDRangeKernel( 
-                k, 
+                kernels[0],
                 ::cl::NullRange, 
                 ::cl::NDRange(numWG * wgSize), 
                 ::cl::NDRange(wgSize) );

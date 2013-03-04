@@ -1481,6 +1481,55 @@ TEST(TransformReduce, DeviceVectorUDD)
 } 
 
 
+TEST( TransformReduceInt , KcacheTest )
+{
+    //setup containers
+    unsigned int length = 1024;
+    std::vector< int > refInput( length );
+    std::vector< int > temp( length );
+    for( unsigned int i = 0; i < length ; i++ )
+    {
+      refInput[i] = i;
+      refInput[i] = i+1;
+      temp[i] = 0;
+    }
+
+    //Call reduce with GPU device because the default is a GPU device
+    bolt::cl::control ctrl = bolt::cl::control::getDefault();
+    bolt::cl::device_vector< int >gpuInput( refInput.begin(), refInput.end() );
+
+    int initzero = 0;
+    int resultGPU_OCL;
+    int resultCPU_OCL;
+    int resultCPU_STL;
+    resultGPU_OCL = bolt::cl::transform_reduce( ctrl, gpuInput.begin(), gpuInput.end(), bolt::cl::negate<int>(), initzero, bolt::cl::plus<int>() );
+
+    //Call reduce with CPU device
+    ::cl::Context cpuContext(CL_DEVICE_TYPE_CPU);
+    std::vector< cl::Device > devices = cpuContext.getInfo< CL_CONTEXT_DEVICES >();
+    cl::Device selectedDevice;
+
+    for(std::vector< cl::Device >::iterator iter = devices.begin();iter < devices.end(); iter++)
+    {
+        if(iter->getInfo<CL_DEVICE_TYPE> ( ) == CL_DEVICE_TYPE_CPU)
+        {
+            selectedDevice = *iter;
+            break;
+        }
+    }
+    ::cl::CommandQueue myQueue( cpuContext, selectedDevice );
+    bolt::cl::control cpu_ctrl( myQueue );  // construct control structure from the queue.
+    bolt::cl::device_vector< int > cpuInput( refInput.begin(), refInput.end() );
+
+    resultCPU_OCL = bolt::cl::transform_reduce( cpu_ctrl, cpuInput.begin(), cpuInput.end(), bolt::cl::negate<int>(), initzero, bolt::cl::plus<int>());
+
+    //Call reference code
+    std::transform( refInput.begin(), refInput.end(), temp.begin(), std::negate<int>() );
+    resultCPU_STL = std::accumulate( temp.begin(), temp.end(), initzero );
+
+    EXPECT_EQ(resultCPU_OCL,resultCPU_STL);
+}
+
 
 
 int main(int argc, char* argv[])
