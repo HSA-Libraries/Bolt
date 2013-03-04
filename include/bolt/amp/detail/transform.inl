@@ -319,7 +319,8 @@ namespace bolt
                     transformBinaryRangeBody< InputIterator, InputIterator, OutputIterator, BinaryFunction >( ),
                     tbb::simple_partitioner( ) );
 #else
-                    std::transform( first1, last1, first2, result, f );
+                    std::cout << "The MultiCoreCpu version of Transform is not enabled. " << std ::endl;
+                    throw std::exception(  "The MultiCoreCpu version of transform is not enabled to be built." );
 #endif
                     return;
                }
@@ -391,7 +392,8 @@ namespace bolt
                  transformBinaryRangeBody< iType1*, iType2*, oType*, BinaryFunction >( ),
                  tbb::simple_partitioner( ) );
 #else
-                 std::transform( &firstPtr[ first1.m_Index ], &firstPtr[ sz ], &secPtr[ 0 ], &resPtr[ 0 ], f );
+                    std::cout << "The MultiCoreCpu version of Transform is not enabled. " << std ::endl;
+                     throw std::exception(  "The MultiCoreCpu version of transform is not enabled to be built." );
 #endif
                  return;
               }
@@ -436,7 +438,8 @@ namespace bolt
                    transformUnaryRangeBody< InputIterator, OutputIterator, UnaryFunction >( ),
                    tbb::simple_partitioner( ) );
 #else
-                   std::transform( first, last, result, f );
+                    std::cout << "The MultiCoreCpu version of Transform is not enabled. " << std ::endl;
+                     throw std::exception(  "The MultiCoreCpu version of transform is not enabled to be built." );
 #endif
                   return;
                 }
@@ -508,7 +511,8 @@ namespace bolt
                 transformUnaryRangeBody< iType*, oType*, UnaryFunction >( ),
                 tbb::simple_partitioner( ) );
 #else
-                std::transform( &firstPtr[ first.m_Index ], &firstPtr[ sz ], &resPtr[ 0 ], f );
+                    std::cout << "The MultiCoreCpu version of Transform is not enabled. " << std ::endl;
+                    throw std::exception(  "The MultiCoreCpu version of transform is not enabled to be built." );
 #endif
                 return;
              }

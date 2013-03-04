@@ -530,7 +530,7 @@ aProfiler.stopTrial();
                tbb::parallel_scan( tbb::blocked_range<int>(  0, static_cast< int >( std::distance( first, last ))), tbb_scan, tbb::auto_partitioner());
                return result + numElements;
 #else
-               std::cout << "The MultiCoreCpu version of Scan is not implemented yet." << std ::endl;
+               std::cout << "The MultiCoreCpu version of Scan is not ebabled" << std ::endl;
                throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of Scan is not enabled to be built." ); 
                return result;
 #endif
@@ -615,7 +615,7 @@ aProfiler.set(AsyncProfiler::memory, numElements*sizeof(iType));
                 ctrl.commandQueue().enqueueUnmapMemObject(result.getBuffer(), scanResultBuffer);
                 return result + numElements;
 #else
-                std::cout << "The MultiCoreCpu version of Scan with device vector is not implemented yet." << std ::endl;
+                std::cout << "The MultiCoreCpu version of Scan with device vector is not enabled" << std ::endl;
                 throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of Scan with device vector is not enabled to be built." ); 
                 return result;
 #endif
