@@ -35,23 +35,41 @@ void sortTest( bolt::statTimer& statTimer, size_t length, size_t iter )
 
         {
             container::pointer mySP = backup.data( );
-            //std::generate( &mySP[ 0 ], &mySP[ length ], rand );
-            for( int i = 0; i < backup.size( ); ++i )
-            {
-                if( (i & 1) == 0 )
-                    backup[ i/2 ] = i;
-                else
-                    backup[ (length >> 1) + i/2 ] = i;
-            }
+
+            /// Generate buffer of random data
+            std::generate( &mySP[ 0 ], &mySP[ length ], rand );
+
+            /// Already sorted data
+            //for( int i = 0; i < backup.size( ); ++i )
+            //{
+            //    mySP[ i ] = i;
+            //}
+
+            /// Create even/odd partition; evens got left, odds got right
+            //for( int i = 0; i < backup.size( ); ++i )
+            //{
+            //    if( (i & 1) == 0 )
+            //        mySP[ i/2 ] = i;
+            //    else
+            //        mySP[ (length >> 1) + i/2 ] = i;
+            //}
         }
 
         for( size_t i = 0; i < iter; ++i )
         {
             input = backup;
 
+            //{
+            //container::pointer mySP = input.data( );
+            //}
+
             statTimer.Start( sortId );
             bolt::cl::stable_sort( input.begin( ), input.end( ) );
             statTimer.Stop( sortId );
+
+            //{
+            //container::pointer mySP = input.data( );
+            //}
         }
 }
 

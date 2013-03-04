@@ -25,7 +25,7 @@
 //  Designing Efficient sorting algorithms for ManyCore GPUs: 
 //  http://www.drdobbs.com/parallel/parallel-merge/229204454
 
-#pragma OPENCL EXTENSION cl_amd_printf : enable
+// #pragma OPENCL EXTENSION cl_amd_printf : enable
 
 //  This implements a linear search routine to look for an 'insertion point' in a sequence, denoted
 //  by a base pointer and a left and right index, with a  candidate value.  The comparison operator is 
@@ -60,9 +60,9 @@ uint lowerBoundLinear( global sType* data, uint left, uint right, sType searchVa
 }
 
 //  This implements a binary search routine to look for an 'insertion point' in a sequence, denoted
-//  by a base pointer and left and right index, with a particular candidate value.  The comparison operator is 
+//  by a base pointer and left and right index for a particular candidate value.  The comparison operator is 
 //  passed as a functor parameter lessOp
-//  This function returns an index that would be the appropriate index to use to insert the value
+//  This function returns an index that is the first index whos value would be equal to the searched value
 template< typename sType, typename StrictWeakOrdering >
 uint lowerBoundBinary( global sType* data, uint left, uint right, sType searchVal, global StrictWeakOrdering* lessOp )
 {
@@ -93,6 +93,32 @@ uint lowerBoundBinary( global sType* data, uint left, uint right, sType searchVa
     }
     
     return firstIndex;
+}
+
+//  This implements a binary search routine to look for an 'insertion point' in a sequence, denoted
+//  by a base pointer and left and right index for a particular candidate value.  The comparison operator is 
+//  passed as a functor parameter lessOp
+//  This function returns an index that is the first index whos value would be greater than the searched value
+//  If the search value is not found in the sequence, upperbound returns the same result as lowerbound
+template< typename sType, typename StrictWeakOrdering >
+uint upperBoundBinary( global sType* data, uint left, uint right, sType searchVal, global StrictWeakOrdering* lessOp )
+{
+    uint upperBound = lowerBoundBinary( data, left, right, searchVal, lessOp );
+    
+    // printf( "upperBoundBinary: upperBound[ %i, %i ]= %i\n", left, right, upperBound );
+    //  If upperBound == right, then  searchVal was not found in the sequence.  Just return.
+    if( upperBound != right )
+    {
+        //  While the values are equal i.e. !(x < y) && !(y < x) increment the index
+        sType upperValue = data[ upperBound ];
+        while( !(*lessOp)( upperValue, searchVal ) && !(*lessOp)( searchVal, upperValue) )
+        {
+            upperBound++;
+            upperValue = data[ upperBound ];
+        }
+    }
+    
+    return upperBound;
 }
 
 //  This kernel implements merging of blocks of sorted data.  The input to this kernel most likely is
@@ -142,8 +168,17 @@ kernel void mergeTemplate(
     // }
     
     //  For a particular element in the input array, find the lowerbound index for it in the search sequence given by leftBlockIndex & rightBlockIndex
-    uint insertionIndex = lowerBoundLinear( source_ptr, leftBlockIndex, rightBlockIndex, source_ptr[ globalID ], lessOp ) - leftBlockIndex;
-
+    // uint insertionIndex = lowerBoundLinear( source_ptr, leftBlockIndex, rightBlockIndex, source_ptr[ globalID ], lessOp ) - leftBlockIndex;
+    uint insertionIndex = 0;
+    if( (srcBlockNum & 0x1) == 0 )
+    {
+        insertionIndex = lowerBoundBinary( source_ptr, leftBlockIndex, rightBlockIndex, source_ptr[ globalID ], lessOp ) - leftBlockIndex;
+    }
+    else
+    {
+        insertionIndex = upperBoundBinary( source_ptr, leftBlockIndex, rightBlockIndex, source_ptr[ globalID ], lessOp ) - leftBlockIndex;
+    }
+    
     //  The index of an element in the result sequence is the summation of it's indixes in the two input 
     //  sequences
     uint dstBlockIndex = srcBlockIndex + insertionIndex;

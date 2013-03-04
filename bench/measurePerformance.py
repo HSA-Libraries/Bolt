@@ -380,7 +380,7 @@ for params in test_combinations:
             printLog('ERROR: Omitting line from table - problem is too large')
 
     speedStr = 'GB/s'
-    if args.library == 'stablesort':
+    if args.routine == 'stablesort':
         speedStr = 'MKeys/s'
 
     if writeline:

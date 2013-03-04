@@ -1396,17 +1396,24 @@ void BasicSortTestOfLength(size_t length)
     std::vector<T> stdInput(length);
     std::vector<T> boltInput(length);
     std::vector<T> stdBackup(length);
+
     std::generate( stdInput.begin( ), stdInput.end( ), rand );
     
+    /// Already sorted data
+    //for( int i = 0; i < length; ++i )
+    //{
+    //    stdInput[ i ] = i;
+    //}
+
     //for( int b = stdInput.size( )-1; b >= 0; --b )
     //    stdInput[ b ] = b;
 
     //boltInput = stdInput;
-    //bolt::cl::stable_sort(boltInput.begin(), boltInput.end()/*, bolt::cl::greater<T>()*/);
+    //bolt::cl::stable_sort( boltInput.begin( ), boltInput.end( ) );
 
     //Ascending Sort 
-    size_t i;
 #if 1
+    size_t i;
     //for (i=0;i<length;i++)
     //{
     //    boltInput[i]= ((T)(stdInput[i]) * 0xAB789F) & ((1<<31) - 1);
@@ -1675,22 +1682,24 @@ int main(int argc, char* argv[])
 
     std::cout << "Device under test : " << strDeviceName << std::endl;
 
-#if 1
-
-    for ( unsigned vecLength = 512; vecLength <= 1024; vecLength += 64 )
+    for ( unsigned vecLength = 0; vecLength <= 32768; vecLength += 1 )
     {
         std::cout << "Testing vecLength: " << vecLength << std::endl;
         BasicSortTestOfLength< int >( vecLength );
     }
+
+#if 0
+
     //UDDSortTestOfLengthWithDeviceVector<int>(256);
     BasicSortTestOfLength< int >( 64 );
-    //BasicSortTestOfLength<int>(4096);
-    //BasicSortTestOfLength<int>(2097152);
-    //BasicSortTestOfLength<int>(131072);
-    //BasicSortTestOfLength<int>(512);
-    //BasicSortTestOfLength<int>(1024);
-    //BasicSortTestOfLength<int>(2048);
-    //BasicSortTestOfLength<int>(2560);
+    BasicSortTestOfLength<int>(4096);
+    BasicSortTestOfLength<int>(2097152);
+    BasicSortTestOfLength<int>(131072);
+    BasicSortTestOfLength<int>(512);
+    BasicSortTestOfLength<int>(1024);
+    BasicSortTestOfLength<int>(2048);
+    BasicSortTestOfLength<int>(2560);
+    BasicSortTestOfLength<int>(1048576);
 #endif
 #if 0
     BasicSortTestOfLength<unsigned int>(256/*2097152/*131072/*16777216/*33554432/*atoi(argv[1])*/);

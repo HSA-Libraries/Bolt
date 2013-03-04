@@ -34,6 +34,8 @@
 #include "bolt/cl/functional.h"
 #include "bolt/cl/device_vector.h"
 
+#define BOLT_CL_STABLESORT_CPU_THRESHOLD 64
+
 namespace bolt {
 namespace cl {
     template<typename RandomAccessIterator> 
@@ -185,7 +187,7 @@ void stablesort_pick_iterator( control &ctl,
         tbbOutputIterator result;
         tbbCompare comp;
         static const size_t divSize = 256;
-        //static const size_t divSize = 4;
+        //static const size_t divSize = 4;  // for debug
 
         bool empty( ) const
         {
@@ -194,7 +196,7 @@ void stablesort_pick_iterator( control &ctl,
 
         bool is_divisible( ) const
         {
-            bolt::cl::minimum< size_t > myMin;
+            bolt::cl::maximum< size_t > myMin;
             return myMin( std::distance( first1, last1 ), std::distance( first2, last2 )) > divSize;
         }
 
@@ -208,9 +210,11 @@ void stablesort_pick_iterator( control &ctl,
              result( r.result ), comp( r.comp )
         {
             size_t length1 = std::distance( r.first1, r.last1 );
+            //size_t length2 = std::distance( r.first2, r.last2 );
 
             tbbInputIterator1 mid1 = r.first1 + (length1 >> 1);
             tbbInputIterator2 mid2 = std::lower_bound( r.first2, r.last2, *mid1, comp );
+             //tbbInputIterator2 mid2 = r.first2 + (length2 >> 1);  // doesn't work
 
             first1 = mid1;
             first2 = mid2;
@@ -303,17 +307,17 @@ void stablesort_pick_iterator( control &ctl, const RandomAccessIterator& first, 
     typedef typename std::iterator_traits< RandomAccessIterator >::value_type Type;
 
     size_t vecSize = std::distance( first, last ); 
-    if( vecSize == 0 )
+    if( vecSize < 2 )
         return;
 
     const bolt::cl::control::e_RunMode runMode = ctl.forceRunMode();
 
-    if ((runMode == bolt::cl::control::SerialCpu) )
+    if( (runMode == bolt::cl::control::SerialCpu) || (vecSize < BOLT_CL_STABLESORT_CPU_THRESHOLD) )
     {
         std::stable_sort( first, last, comp );
         return;
     }
-    else if (runMode == bolt::cl::control::MultiCoreCpu)
+    else if( runMode == bolt::cl::control::MultiCoreCpu )
     {
 #if defined( ENABLE_TBB )
         std::vector< Type > scratchBuffer( vecSize );
@@ -347,19 +351,19 @@ void stablesort_pick_iterator( control &ctl,
     typedef typename std::iterator_traits< DVRandomAccessIterator >::value_type Type;
 
     size_t vecSize = std::distance( first, last ); 
-    if( vecSize == 0 )
+    if( vecSize < 2 )
         return;
 
     const bolt::cl::control::e_RunMode runMode = ctl.forceRunMode();
 
-    if (runMode == bolt::cl::control::SerialCpu)
+    if( runMode == bolt::cl::control::SerialCpu )
     {
         bolt::cl::device_vector< Type >::pointer firstPtr =  first.getContainer( ).data( );
 
         std::stable_sort( &firstPtr[ first.m_Index ], &firstPtr[ vecSize-1 ], comp );
         return;
     }
-    else if (runMode == bolt::cl::control::MultiCoreCpu)
+    else if( runMode == bolt::cl::control::MultiCoreCpu )
     {
 #if defined( ENABLE_TBB )
         bolt::cl::device_vector< Type >::pointer firstPtr =  first.getContainer( ).data( );
@@ -523,64 +527,64 @@ void stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, cons
         {
             //  Grab the event to wait on from the last enqueue call
             l_Error = myCQ.enqueueNDRangeKernel( kernels[ 1 ], ::cl::NullRange, ::cl::NDRange( globalRange ),
-                    //::cl::NDRange( localRange ), NULL, &kernelEvent );
-                    ::cl::NDRange( localRange ), NULL, NULL );
+                    ::cl::NDRange( localRange ), NULL, &kernelEvent );
             V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for mergeTemplate kernel" );
         }
         else
         {
             l_Error = myCQ.enqueueNDRangeKernel( kernels[ 1 ], ::cl::NullRange, ::cl::NDRange( globalRange ),
-                    //::cl::NDRange( localRange ), NULL, &kernelEvent );
                     ::cl::NDRange( localRange ), NULL, NULL );
             V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for mergeTemplate kernel" );
         }
 
-        myCQ.finish( );
-        std::cout << "BlockSize[ " << srcLogicalBlockSize << " ] " << std::endl;
-        if( pass & 0x1 )
-        {
-            //  Debug mapping, to look at result vector in memory
-            iType* dev2Host = static_cast< iType* >( myCQ.enqueueMapBuffer( *tmpBuffer, CL_TRUE, CL_MAP_WRITE, 0,
-                globalRange * sizeof( iType ), NULL, NULL, &l_Error) );
-            V_OPENCL( l_Error, "Error: Mapping Device->Host Buffer." );
+        ///  Debug code to examine input/output buffers on every pass
+        //myCQ.finish( );
+        //std::cout << "BlockSize[ " << srcLogicalBlockSize << " ] " << std::endl;
+        //if( pass & 0x1 )
+        //{
+        //    //  Debug mapping, to look at result vector in memory
+        //    iType* dev2Host = static_cast< iType* >( myCQ.enqueueMapBuffer( *tmpBuffer, CL_TRUE, CL_MAP_READ, 0,
+        //        globalRange * sizeof( iType ), NULL, NULL, &l_Error) );
+        //    V_OPENCL( l_Error, "Error: Mapping Device->Host Buffer." );
 
-            for( unsigned i = 0; i < globalRange/srcLogicalBlockSize; ++i )
-            {
-                unsigned blockIndex = i * srcLogicalBlockSize;
-                for( unsigned j = blockIndex; j < blockIndex+(srcLogicalBlockSize-1); ++j )
-                {
-                    if( !(comp)( dev2Host[ j ], dev2Host[ j + 1 ] ) && (dev2Host[ j ] != dev2Host[ j + 1 ]) )
-                    {
-                        std::cout << " Element[ " << j+1 << " ] out of sequence Block[ " << i << " ] Index[ " << j+1-blockIndex << " ]" << std::endl;
-                    }
-                }
-            }
+        //    for( unsigned i = 0; i < globalRange/srcLogicalBlockSize; ++i )
+        //    {
+        //        unsigned blockIndex = i * srcLogicalBlockSize;
+        //        unsigned endIndex = bolt::cl::minimum< unsigned >()( blockIndex+(srcLogicalBlockSize-1), vecSize ) - 1;
+        //        for( unsigned j = blockIndex; j < endIndex; ++j )
+        //        {
+        //            if( !(comp)( dev2Host[ j ], dev2Host[ j + 1 ] ) && (dev2Host[ j ] != dev2Host[ j + 1 ]) )
+        //            {
+        //                std::cout << " Element[ " << j+1 << " ] out of sequence Block[ " << i << " ] Index[ " << j+1-blockIndex << " ]" << std::endl;
+        //            }
+        //        }
+        //    }
 
-            myCQ.enqueueUnmapMemObject( *tmpBuffer, dev2Host );
-        }
-        else
-        {
-            //  Debug mapping, to look at result vector in memory
-            iType* dev2Host = static_cast< iType* >( myCQ.enqueueMapBuffer( first.getBuffer( ), CL_TRUE, CL_MAP_WRITE, 0,
-                globalRange * sizeof( iType ), NULL, NULL, &l_Error) );
-            V_OPENCL( l_Error, "Error: Mapping Device->Host Buffer." );
+        //    myCQ.enqueueUnmapMemObject( *tmpBuffer, dev2Host );
+        //}
+        //else
+        //{
+        //    //  Debug mapping, to look at result vector in memory
+        //    iType* dev2Host = static_cast< iType* >( myCQ.enqueueMapBuffer( first.getBuffer( ), CL_TRUE, CL_MAP_READ, 0,
+        //        bolt::cl::minimum< size_t >()( globalRange, vecSize ) * sizeof( iType ), NULL, NULL, &l_Error) );
+        //    V_OPENCL( l_Error, "Error: Mapping Device->Host Buffer." );
 
-            for( unsigned i = 0; i < globalRange/srcLogicalBlockSize; ++i )
-            {
-                unsigned blockIndex = i * srcLogicalBlockSize;
-                for( unsigned j = blockIndex; j < blockIndex+(srcLogicalBlockSize-1); ++j )
-                {
-                    if( !(comp)( dev2Host[ j ], dev2Host[ j + 1 ] ) )
-                    {
-                        std::cout << "Block[ " << i << " ] Element[ " << j << " ] out of sequence" << std::endl;
-                    }
-                }
-            }
+        //    for( unsigned i = 0; i < globalRange/srcLogicalBlockSize; ++i )
+        //    {
+        //        unsigned blockIndex = i * srcLogicalBlockSize;
+        //        unsigned endIndex = bolt::cl::minimum< unsigned >()( blockIndex+(srcLogicalBlockSize-1), vecSize ) - 1;
+        //        for( unsigned j = blockIndex; j < endIndex; ++j )
+        //        {
+        //            if( !(comp)( dev2Host[ j ], dev2Host[ j + 1 ] ) && (dev2Host[ j ] != dev2Host[ j + 1 ]) )
+        //            {
+        //                std::cout << "Block[ " << i << " ] Element[ " << j << " ] out of sequence" << std::endl;
+        //            }
+        //        }
+        //    }
 
-            myCQ.enqueueUnmapMemObject( first.getBuffer( ), dev2Host );
-        }
-        std::cout << std::endl;
-
+        //    myCQ.enqueueUnmapMemObject( first.getBuffer( ), dev2Host );
+        //}
+        //std::cout << std::endl;
     }
 
     //  If there are an odd number of merges, then the output data is sitting in the temp buffer.  We need to copy
@@ -592,14 +596,13 @@ void stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, cons
         l_Error = myCQ.enqueueCopyBuffer( *tmpBuffer, first.getBuffer( ), 0, first.m_Index * sizeof( iType ), 
             vecSize * sizeof( iType ), NULL, &copyEvent );
         V_OPENCL( l_Error, "device_vector failed to copy data inside of operator=()" );
-        //wait( ctrl, copyEvent );
+        wait( ctrl, copyEvent );
     }
     else
     {
-        //wait( ctrl, kernelEvent );
+        wait( ctrl, kernelEvent );
     }
 
-    myCQ.finish( );
     return;
 }// END of sort_enqueue
 
