@@ -279,7 +279,11 @@ namespace bolt {
                 ::cl_device_type dType = device.getInfo<CL_DEVICE_TYPE>();
                 if(dType == CL_DEVICE_TYPE_CPU)
                 {
+#ifdef ENABLE_TBB
                     m_forceRunMode = MultiCoreCpu;
+#else
+                    m_forceRunMode = SerialCpu;
+#endif
                 }
             };
 
