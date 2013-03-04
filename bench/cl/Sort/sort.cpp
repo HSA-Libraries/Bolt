@@ -230,11 +230,10 @@ int _tmain( int argc, _TCHAR* argv[] )
             std::cout << std::distance(backup.begin( ), backup.end( ) ) << "  ---\n";
             for( unsigned i = 0; i < iterations; ++i )
             {
-                bolt::cl::device_vector< DATA_TYPE > dvInput( backup.begin( ), backup.end( ), CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE );
+                bolt::cl::device_vector< DATA_TYPE > dvInput( backup.begin( ), backup.end( ), CL_MEM_READ_WRITE );
                 myTimer.Start( testId );
                 bolt::cl::sort( dvInput.begin( ), dvInput.end( ) );
                 myTimer.Stop( testId );
-                dvInput.data();
             }
         }
         else
@@ -319,7 +318,7 @@ int _tmain( int argc, _TCHAR* argv[] )
     bolt::tout << std::setw( colWidth ) << _T( "    Size (MB): " ) << testMB << std::endl;
     bolt::tout << std::setw( colWidth ) << _T( "    Time (ms): " ) << testTime*1000.0 << std::endl;
     bolt::tout << std::setw( colWidth ) << _T( "    Speed (GB/s): " ) << testGB / testTime << std::endl;
-    //bolt::tout << std::setw( colWidth ) << _T( "    Speed (MKeys/s): " ) << length / ( testTime * ( 1024.0 * 1024.0 ) ) << std::endl;
+    bolt::tout << std::setw( colWidth ) << _T( "    Speed (MKeys/s): " ) << length / ( testTime * ( 1024.0 * 1024.0 ) ) << std::endl;
     bolt::tout << std::endl;
 
     return 0;

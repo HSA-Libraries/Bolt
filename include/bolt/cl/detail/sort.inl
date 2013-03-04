@@ -440,7 +440,7 @@ void sort_pick_iterator( control &ctl,
         return;
     } else if (runMode == bolt::cl::control::MultiCoreCpu) {
 #ifdef ENABLE_TBB
-        std::cout << "The MultiCoreCpu version of sort is enabled with TBB. " << std ::endl;
+        //std::cout << "The MultiCoreCpu version of sort is enabled with TBB. " << std ::endl;
         tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
         tbb::parallel_sort(first,last, comp);
 #else
@@ -1269,7 +1269,11 @@ sort_enqueue(control &ctl,
             //V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
         }//end of for passStage = 0:stage-1
     }//end of for stage = 0:numStage-1
-    V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
+    ::cl::Event bitonicSortEvent;
+    V_OPENCL( ctl.commandQueue().clEnqueueBarrierWithWaitList(NULL, &bitonicSortEvent) , "Error calling clEnqueueBarrierWithWaitList on the command queue" );
+    l_Error = bitonicSortEvent.wait( );
+    V_OPENCL( l_Error, "bitonicSortEvent failed to wait" );
+    //V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
     return;
 }// END of sort_enqueue
 
