@@ -461,7 +461,7 @@ void sort_pick_iterator( control &ctl,
 /****** sort_enqueue specailization for unsigned int data types. ******
  * THE FOLLOWING CODE IMPLEMENTS THE RADIX SORT ALGORITHM FOR sort()
  *********************************************************************/
-#define BOLT_SORT_INL_DEBUG 0
+#define BOLT_SORT_INL_DEBUG 1
 template<typename DVRandomAccessIterator, typename StrictWeakOrdering> 
 typename std::enable_if< std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type, unsigned int >::value >::type
 sort_enqueue(control &ctl, 
@@ -514,7 +514,7 @@ sort_enqueue(control &ctl,
 
     int i = 0;
     size_t mulFactor = groupSize * RADICES;
-    size_t numGroups = szElements / mulFactor;
+    size_t numGroups;// = szElements / mulFactor;
     
     if(orig_szElements%mulFactor != 0)
     {
@@ -539,7 +539,7 @@ sort_enqueue(control &ctl,
     device_vector< T > dvHistogramScanBuffer( (numGroups* RADICES + 10), 0, CL_MEM_READ_WRITE, true, ctl);
 
     ALIGNED( 256 ) StrictWeakOrdering aligned_comp( comp );
-                    
+    
     control::buffPointer userFunctor = ctl.acquireBuffer( sizeof( aligned_comp ), CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_comp );
     ::cl::Buffer clInputData = *pLocalBuffer;
     ::cl::Buffer clSwapData = dvSwapInputData.begin( ).getBuffer( );
@@ -611,13 +611,13 @@ sort_enqueue(control &ctl,
         //This map is required since the data is not available to the host when scanning.
         //Create local device_vector's 
         T *histBuffer;// = (T*)malloc(numGroups* groupSize * RADICES * sizeof(T));
-        T *histScanBuffer;// = (T*)calloc(1, numGroups* RADICES * sizeof(T));
+        //T *histScanBuffer;// = (T*)calloc(1, numGroups* RADICES * sizeof(T));
         ::cl::Event l_histEvent;
         histBuffer = (T*)ctl.commandQueue().enqueueMapBuffer(clHistData, false, CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(T) * numGroups* groupSize * RADICES, NULL, &l_histEvent, &l_Error );
         bolt::cl::wait(ctl, l_histEvent);
         V_OPENCL( l_Error, "Error calling map on the result buffer" );
         printf("\n\n\n\n\nBITS = %d\nAfter Histogram", bits);
-        for (unsigned int ng=0; ng<numGroups; ng++)
+        for (unsigned int ng=0; ng<128; ng++)
         { printf ("\nGroup-Block =%d",ng);
             for(unsigned int gS=0;gS<groupSize; gS++)
             { printf ("\nGroup =%d\n",gS);
@@ -631,14 +631,14 @@ sort_enqueue(control &ctl,
         }
         ctl.commandQueue().enqueueUnmapMemObject(clHistData, histBuffer);
 
-        ::cl::Event l_histScanBufferEvent;
+        /*::cl::Event l_histScanBufferEvent;
         histScanBuffer = (T*) ctl.commandQueue().enqueueMapBuffer(clHistScanData, false, CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(T) * numGroups * RADICES, NULL, &l_histScanBufferEvent, &l_Error );
         bolt::cl::wait(ctl, l_histScanBufferEvent);
         V_OPENCL( l_Error, "Error calling map on the result buffer" );
         int temp = 0;
         for(int i=0; i<RADICES;i++)
         { 
-            printf ("\nRadix = %d\n",i);
+            printf ("\n Radix = %d\n",i);
             for (unsigned int ng=0; ng<numGroups; ng++)
             {
                 printf ("%3x, ",histScanBuffer[i*numGroups + ng]);
@@ -649,13 +649,23 @@ sort_enqueue(control &ctl,
                 printf ("%3x, ",temp);
             }
         }
-        ctl.commandQueue().enqueueUnmapMemObject(clHistScanData, histScanBuffer);
+        ctl.commandQueue().enqueueUnmapMemObject(clHistScanData, histScanBuffer);*/
 #endif
 
         //Perform a global scan 
-        detail::scan_enqueue(ctl, dvHistogramScanBuffer.begin(),dvHistogramScanBuffer.end(),dvHistogramScanBuffer.begin(), 0, plus< T >( ));
+        detail::scan_enqueue(ctl, dvHistogramBins.begin(), dvHistogramBins.end(), dvHistogramBins.begin(), 0, plus< T >( ), false);
+        /*{//Do CPU scan
+            boost::shared_array<T> histogramBins = dvHistogramBins.data();
+            T temp = histogramBins[0];
+            histogramBins[0] = 0;
+            for(int i=1; i< szElements; i++)
+            {
+                histogramBins[i] = temp;
+                temp += histogramBins[i];
+            }
+        }*/
 #if (BOLT_SORT_INL_DEBUG==1)
-        ::cl::Event l_histScanBufferEvent1;
+        /*::cl::Event l_histScanBufferEvent1;
         histScanBuffer = (T*) ctl.commandQueue().enqueueMapBuffer(clHistScanData, false, CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(T) * numGroups * RADICES, NULL, &l_histScanBufferEvent1, &l_Error );
         bolt::cl::wait(ctl, l_histScanBufferEvent1);
         V_OPENCL( l_Error, "Error calling map on the result buffer" );
@@ -667,12 +677,12 @@ sort_enqueue(control &ctl,
                 printf ("%x, ",histScanBuffer[i*numGroups + ng]);
             }
         }
-        ctl.commandQueue().enqueueUnmapMemObject(clHistScanData, histScanBuffer);
+        ctl.commandQueue().enqueueUnmapMemObject(clHistScanData, histScanBuffer);*/
 
 #endif 
 
         //Add the results of the global scan to the local scan buffers
-        V_OPENCL( scanLocalKernel.setArg(0, clHistData), "Error setting a kernel argument" );
+        /*V_OPENCL( scanLocalKernel.setArg(0, clHistData), "Error setting a kernel argument" );
         V_OPENCL( scanLocalKernel.setArg(1, clHistScanData), "Error setting a kernel argument" );
         V_OPENCL( scanLocalKernel.setArg(2, localScanArray), "Error setting a kernel argument" );
         l_Error = ctl.commandQueue().enqueueNDRangeKernel(
@@ -681,7 +691,7 @@ sort_enqueue(control &ctl,
                             ::cl::NDRange(szElements/RADICES),
                             ::cl::NDRange(groupSize),
                             NULL,
-                            NULL);
+                            NULL);*/
         //V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
 
 #if (BOLT_SORT_INL_DEBUG==1)
@@ -693,7 +703,7 @@ sort_enqueue(control &ctl,
         V_OPENCL( l_Error, "Error calling map on the result buffer" );
 
         printf("\n\nAfter Scan bits = %d", bits);
-        for (int ng=0; ng<numGroups; ng++)
+        for (int ng=0; ng<128; ng++)
         { printf ("\nGroup-Block =%d",ng);
             for(int gS=0;gS<groupSize; gS++)
             { printf ("\nGroup =%d\n",gS);
@@ -726,7 +736,7 @@ sort_enqueue(control &ctl,
                             ::cl::NDRange(groupSize),
                             NULL,
                             NULL);
-        //V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
+        V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
 #if (BOLT_SORT_INL_DEBUG==1)
             T *swapBuffer;// = (T*)malloc(szElements * sizeof(T));
             ::cl::Event l_swapEvent;
@@ -737,7 +747,7 @@ sort_enqueue(control &ctl,
                 V_OPENCL( l_Error, "Error calling map on the result buffer" );
                 bolt::cl::wait(ctl, l_swapEvent);
                 printf("\n Printing swap data\n");
-                for(int i=0; i<szElements;i+= RADICES)
+                for(int i=0; i<128*RADICES*RADICES;i+= RADICES)
                 {
                     for(int j =0;j< RADICES;j++)
                         printf("%8x %8x, ",i+j,swapBuffer[i+j]);
@@ -751,7 +761,7 @@ sort_enqueue(control &ctl,
                 V_OPENCL( l_Error, "Error calling map on the result buffer" );
                 bolt::cl::wait(ctl, l_swapEvent);
                 printf("\n Printing swap data\n");
-                for(int i=0; i<szElements;i+= RADICES)
+                for(int i=0; i<128*RADICES*RADICES;i+= RADICES)
                 {
                     for(int j =0;j< RADICES;j++)
                         printf("%8x %8x, ",i+j,swapBuffer[i+j]);
@@ -759,8 +769,6 @@ sort_enqueue(control &ctl,
                 }
                 ctl.commandQueue().enqueueUnmapMemObject(clInputData, swapBuffer);
             }
-
-
 #endif
             /*For swapping the buffers*/
             swap = swap? 0: 1;

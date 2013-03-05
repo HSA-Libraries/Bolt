@@ -39,6 +39,7 @@
 //  They return an assertion object that googletest knows how to track
 //This is a compare routine for naked pointers.
 
+#if 0
 // UDD which contains four doubles
 BOLT_FUNCTOR(uddtD4,
 struct uddtD4
@@ -130,7 +131,7 @@ TEST(SortUDD, GPUAddDouble4)
     cmpArrays(refInput, input);
 }
 
-
+#endif
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Fixture classes are now defined to enable googletest to process type parameterized tests
 
@@ -190,6 +191,8 @@ TYPED_TEST_P( SortArrayTest, Normal )
     cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
     
 }
+#if 0
+
 #if (TEST_MULTICORE_TBB_SORT == 1)
 
 TEST(MultiCoreCPU, MultiCoreAddDouble4)
@@ -432,17 +435,18 @@ TYPED_TEST_P( SortArrayTest, CPU_DeviceLessFunction )
 }
 #endif
 
+#endif
 #if (TEST_CPU_DEVICE == 1)
 REGISTER_TYPED_TEST_CASE_P( SortArrayTest, Normal, GPU_DeviceNormal, 
                                            GreaterFunction, GPU_DeviceGreaterFunction,
                                            LessFunction, GPU_DeviceLessFunction, CPU_DeviceNormal, CPU_DeviceGreaterFunction, CPU_DeviceLessFunction);
 #else
-REGISTER_TYPED_TEST_CASE_P( SortArrayTest, Normal, GPU_DeviceNormal, 
+REGISTER_TYPED_TEST_CASE_P( SortArrayTest, Normal/*, GPU_DeviceNormal, 
                                            GreaterFunction, GPU_DeviceGreaterFunction,
-                                           LessFunction, GPU_DeviceLessFunction );
+                                           LessFunction, GPU_DeviceLessFunction*/ );
 #endif
 
-
+#if 0
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Fixture classes are now defined to enable googletest to process value parameterized tests
 //  ::testing::TestWithParam< int > means that GetParam( ) returns int values, which i use for array size
@@ -849,6 +853,7 @@ INSTANTIATE_TEST_CASE_P( SortRange, SortDoubleNakedPointer, ::testing::Range( 0,
 INSTANTIATE_TEST_CASE_P( Sort, SortDoubleNakedPointer, ::testing::ValuesIn( TestValues.begin(), TestValues.end() ) );
 #endif
 
+
 typedef ::testing::Types< 
     std::tuple< int, TypeValue< 1 > >,
     std::tuple< int, TypeValue< 31 > >,
@@ -865,7 +870,7 @@ typedef ::testing::Types<
     std::tuple< int, TypeValue< 65535 > >,
     std::tuple< int, TypeValue< 65536 > >
 > IntegerTests;
-
+#endif
 typedef ::testing::Types< 
     std::tuple< unsigned int, TypeValue< 1 > >,
     std::tuple< unsigned int, TypeValue< 31 > >,
@@ -877,12 +882,25 @@ typedef ::testing::Types<
     std::tuple< unsigned int, TypeValue< 129 > >,
     std::tuple< unsigned int, TypeValue< 1000 > >,
     std::tuple< unsigned int, TypeValue< 1053 > >,
-    std::tuple< unsigned int, TypeValue< 4096 > >,
+    std::tuple< unsigned int, TypeValue< 4096 > >,//10
     std::tuple< unsigned int, TypeValue< 4097 > >,
-    std::tuple< unsigned int, TypeValue< 65535 > >,
-    std::tuple< unsigned int, TypeValue< 65536 > >
+    std::tuple< unsigned int, TypeValue< 8192 > >,
+    std::tuple< unsigned int, TypeValue< 16384 > >,//13
+    std::tuple< unsigned int, TypeValue< 32768 > >,//14
+    std::tuple< unsigned int, TypeValue< 65535 > >,//15
+    std::tuple< unsigned int, TypeValue< 65536 > >,//16
+    std::tuple< unsigned int, TypeValue< 131072 > >,//17    
+    std::tuple< unsigned int, TypeValue< 262144 > >,//18    
+    std::tuple< unsigned int, TypeValue< 524288 > >,//19    
+    std::tuple< unsigned int, TypeValue< 1048576 > >,//20    
+    std::tuple< unsigned int, TypeValue< 2097152 > >,//21    
+    std::tuple< unsigned int, TypeValue< 4194304 > >,//22    
+    std::tuple< unsigned int, TypeValue< 8388608 > >,//23
+    std::tuple< unsigned int, TypeValue< 16777216 > >,//24
+    std::tuple< unsigned int, TypeValue< 33554432 > >,//25
+    std::tuple< unsigned int, TypeValue< 67108864 > >//26
 > UnsignedIntegerTests;
-
+#if 0
 typedef ::testing::Types< 
     std::tuple< float, TypeValue< 1 > >,
     std::tuple< float, TypeValue< 31 > >,
@@ -1044,7 +1062,9 @@ typedef ::testing::Types<
 
 
 INSTANTIATE_TYPED_TEST_CASE_P( Integer, SortArrayTest, IntegerTests );
+#endif
 INSTANTIATE_TYPED_TEST_CASE_P( UnsignedInteger, SortArrayTest, UnsignedIntegerTests );
+#if 0
 INSTANTIATE_TYPED_TEST_CASE_P( Float, SortArrayTest, FloatTests );
 #if (TEST_DOUBLE == 1)
 INSTANTIATE_TYPED_TEST_CASE_P( Double, SortArrayTest, DoubleTests );
@@ -1054,23 +1074,7 @@ INSTANTIATE_TYPED_TEST_CASE_P( Double, SortArrayTest, DoubleTests );
 
 REGISTER_TYPED_TEST_CASE_P( SortUDDArrayTest,  Normal);
 INSTANTIATE_TYPED_TEST_CASE_P( UDDTest, SortUDDArrayTest, UDDTests );
-
-TEST(largeBuffer, BitonicTest)
-{
-    int length = 1024*1024*128;
-    std::vector<int> backup(length);
-    std::vector<int> input(length);
-    std::generate(backup.begin(), backup.end(), rand);
-    input = backup;
-    std::cout << "Benchmarking Bolt Device for length \n"; 
-    std::cout << std::distance(backup.begin( ), backup.end( ) ) << "  ---\n";
-    bolt::cl::device_vector< int > dvInput( backup.begin( ), backup.end( ), CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE );
-    bolt::cl::sort( dvInput.begin( ), dvInput.end( ) );
-    dvInput.data();
-    std::sort( input.begin( ), input.end( ) );
-    cmpArrays(input, backup);
-}
-
+#endif
 int main(int argc, char* argv[])
 {
     ::testing::InitGoogleTest( &argc, &argv[ 0 ] );
