@@ -588,10 +588,10 @@ sort_enqueue(control &ctl,
     for(int bits = 0; bits < (sizeof(T) * 8)/*Bits per Byte*/; bits += RADIX)
     {
         //Do a histogram pass locally
-        if (swap == 0)
+        //if (swap == 0)
             V_OPENCL( histKernel.setArg(0, clInputData), "Error setting a kernel argument" );
-        else
-            V_OPENCL( histKernel.setArg(0, clSwapData), "Error setting a kernel argument" );
+        //else
+        //    V_OPENCL( histKernel.setArg(0, clSwapData), "Error setting a kernel argument" );
 
         V_OPENCL( histKernel.setArg(1, clHistData), "Error setting a kernel argument" );
         V_OPENCL( histKernel.setArg(2, clHistScanData), "Error setting a kernel argument" );
@@ -617,7 +617,7 @@ sort_enqueue(control &ctl,
         bolt::cl::wait(ctl, l_histEvent);
         V_OPENCL( l_Error, "Error calling map on the result buffer" );
         printf("\n\n\n\n\nBITS = %d\nAfter Histogram", bits);
-        for (unsigned int ng=0; ng<128; ng++)
+        for (unsigned int ng=0; ng<256; ng++)
         { printf ("\nGroup-Block =%d",ng);
             for(unsigned int gS=0;gS<groupSize; gS++)
             { printf ("\nGroup =%d\n",gS);
@@ -703,7 +703,7 @@ sort_enqueue(control &ctl,
         V_OPENCL( l_Error, "Error calling map on the result buffer" );
 
         printf("\n\nAfter Scan bits = %d", bits);
-        for (int ng=0; ng<128; ng++)
+        for (int ng=0; ng<256; ng++)
         { printf ("\nGroup-Block =%d",ng);
             for(int gS=0;gS<groupSize; gS++)
             { printf ("\nGroup =%d\n",gS);
@@ -717,6 +717,7 @@ sort_enqueue(control &ctl,
         }
         ctl.commandQueue().enqueueUnmapMemObject(clHistData, histBuffer1);
 #endif 
+#if 0
         if (swap == 0)
             V_OPENCL( permuteKernel.setArg(0, clInputData), "Error setting kernel argument" );
         else
@@ -770,6 +771,7 @@ sort_enqueue(control &ctl,
                 ctl.commandQueue().enqueueUnmapMemObject(clInputData, swapBuffer);
             }
 #endif
+#endif //#if 0
             /*For swapping the buffers*/
             swap = swap? 0: 1;
     }
