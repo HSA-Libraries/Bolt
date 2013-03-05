@@ -18,7 +18,7 @@
 /*!
  * \mainpage Bolt Documentation
  * \tableofcontents
- * \image html bolt.jpg
+ * \image html bolt.png
 
  * \section intro_sec Introduction
  * Bolt is a C++ template library optimized for GPUs.  

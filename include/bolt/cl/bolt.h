@@ -264,6 +264,8 @@ namespace bolt {
         /******************************************************************
          * Program Map - so each kernel is only compiled once
          *****************************************************************/
+        /*! \brief This structure ensures that a kernel is compiled only once for specified devices.
+        */
         struct ProgramMapKey
         {
             ::cl::Context context;
