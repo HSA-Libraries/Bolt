@@ -22,9 +22,11 @@
 #include <map>
 
 #include <boost/thread/mutex.hpp>
-// #include <boost/interprocess/detail/atomic.hpp>
-// #include <boost/detail/interlocked.hpp>
 #include <boost/shared_ptr.hpp>
+
+/*! \file control.h
+*/
+
 
 namespace bolt {
     namespace cl {

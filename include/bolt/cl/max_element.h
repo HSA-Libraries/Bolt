@@ -26,6 +26,10 @@
 #include <string>
 #include <iostream>
 
+/*! \file max_element.h
+*/
+
+
 namespace bolt {
     namespace cl {
 

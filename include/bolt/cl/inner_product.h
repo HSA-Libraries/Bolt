@@ -25,6 +25,11 @@
 #include <string>
 #include <iostream>
 
+/*! \file inner_product.h
+*/
+
+
+
 namespace bolt {
     namespace cl {
 

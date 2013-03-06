@@ -24,6 +24,10 @@
 #include "bolt/cl/transform_reduce.h"
 #include "bolt/cl/iterator/iterator_traits.h"
 
+/*! \file count.h
+*/
+
+
 namespace bolt {
     namespace cl {
 

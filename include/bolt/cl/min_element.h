@@ -26,6 +26,10 @@
 #include <string>
 #include <iostream>
 
+/*! \file min_element.h
+*/
+
+
 namespace bolt {
     namespace cl {
 

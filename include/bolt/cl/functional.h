@@ -20,6 +20,10 @@
 
 #include "bolt/cl/bolt.h"
 
+/*! \file functional.h
+*/
+
+
 namespace bolt {
 namespace cl {
 
