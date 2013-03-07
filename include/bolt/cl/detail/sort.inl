@@ -617,17 +617,14 @@ sort_enqueue(control &ctl,
         bolt::cl::wait(ctl, l_histEvent);
         V_OPENCL( l_Error, "Error calling map on the result buffer" );
         printf("\n\n\n\n\nBITS = %d\nAfter Histogram", bits);
-        for (unsigned int ng=0; ng<numGroups; ng++)
-        { printf ("\nGroup-Block =%d",ng);
-            for(unsigned int gS=0;gS<groupSize; gS++)
-            { printf ("\nGroup =%d\n",gS);
-                for(int i=0; i<RADICES;i++)
-                {
-                    //size_t index = ng * groupSize * RADICES + gS * RADICES + i;
-                    size_t index = ng * groupSize * RADICES + gS * RADICES + i;
-                    int value = histBuffer[ index ];
-                    printf("%3x %2x, ",index, value);
-                }
+        for (unsigned int ng=0; ng<numGroups*RADICES; ng++)
+        { 
+            printf ("\nGlobal-ID =%4x ",ng);
+            for(unsigned int i=0;i<RADICES; i++)
+            {
+                size_t index = i* numGroups*RADICES + ng ;
+                int value = histBuffer[ index ];
+                printf("%2x, ", value);
             }
         }
         ctl.commandQueue().enqueueUnmapMemObject(clHistData, histBuffer);
