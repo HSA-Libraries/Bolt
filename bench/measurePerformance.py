@@ -47,7 +47,7 @@ IAM = 'Bolt'
 precisionvalues = ['single', 'double']
 libraryvalues = ['STL','BOLT','TBB', 'null']
 memoryvalues = ['device','host', 'null']
-routinevalues = ['copy','scan','sort', 'transform', 'reduce','null']
+routinevalues = ['copy','scan','sort', 'stablesort', 'transform', 'reduce','null']
 backEndValues = ['cl','amp']
 
 parser = argparse.ArgumentParser(description='Measure performance of a Bolt library')
@@ -379,9 +379,13 @@ for params in test_combinations:
             writeline = False
             printLog('ERROR: Omitting line from table - problem is too large')
 
+    speedStr = 'GB/s'
+    if args.routine == 'stablesort':
+        speedStr = 'MKeys/s'
+
     if writeline:
         try:
-            output = itertools.ifilter( lambda x: x.count('GB/s'), output)
+            output = itertools.ifilter( lambda x: x.count( speedStr ), output)
             output = list(itertools.islice(output, None))
             thisResult = re.search('\d+\.*\d*e*-*\d*$', output[-1])
             thisResult = float(thisResult.group(0))
