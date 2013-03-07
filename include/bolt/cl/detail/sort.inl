@@ -585,7 +585,7 @@ sort_enqueue(control &ctl,
     ::cl::LocalSpaceArg localScanArray;
     localScanArray.size_ = 2*RADICES* sizeof(cl_uint);
     int swap = 0;
-    for(int bits = 0; bits < 4/*(sizeof(T) * 8)/*Bits per Byte*/; bits += RADIX)
+    for(int bits = 0; bits < 8/*(sizeof(T) * 8)/*Bits per Byte*/; bits += RADIX)
     {
         //Do a histogram pass locally
         //if (swap == 0)
@@ -610,7 +610,7 @@ sort_enqueue(control &ctl,
 #if (BOLT_SORT_INL_DEBUG==1)
         //This map is required since the data is not available to the host when scanning.
         //Create local device_vector's 
-        T *histBuffer;// = (T*)malloc(numGroups* groupSize * RADICES * sizeof(T));
+        /*T *histBuffer;// = (T*)malloc(numGroups* groupSize * RADICES * sizeof(T));
         //T *histScanBuffer;// = (T*)calloc(1, numGroups* RADICES * sizeof(T));
         ::cl::Event l_histEvent;
         histBuffer = (T*)ctl.commandQueue().enqueueMapBuffer(clHistData, false, CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(T) * numGroups* groupSize * RADICES, NULL, &l_histEvent, &l_Error );
@@ -627,7 +627,7 @@ sort_enqueue(control &ctl,
                 printf("%2x, ", value);
             }
         }
-        ctl.commandQueue().enqueueUnmapMemObject(clHistData, histBuffer);
+        ctl.commandQueue().enqueueUnmapMemObject(clHistData, histBuffer);*/
 
         /*::cl::Event l_histScanBufferEvent;
         histScanBuffer = (T*) ctl.commandQueue().enqueueMapBuffer(clHistScanData, false, CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(T) * numGroups * RADICES, NULL, &l_histScanBufferEvent, &l_Error );
@@ -694,27 +694,25 @@ sort_enqueue(control &ctl,
 
 #if (BOLT_SORT_INL_DEBUG==1)
         //This map is required since the data is not available to the host when scanning.
-        /*::cl::Event l_histEvent1;
+        ::cl::Event l_histEvent1;
         T *histBuffer1;
         histBuffer1 = (T*)ctl.commandQueue().enqueueMapBuffer(clHistData, false, CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(T) * numGroups* groupSize * RADICES, NULL, &l_histEvent1, &l_Error );
         bolt::cl::wait(ctl, l_histEvent1);
         V_OPENCL( l_Error, "Error calling map on the result buffer" );
 
         printf("\n\nAfter Scan bits = %d", bits);
-        for (int ng=0; ng<numGroups; ng++)
-        { printf ("\nGroup-Block =%d",ng);
-            for(int gS=0;gS<groupSize; gS++)
-            { printf ("\nGroup =%d\n",gS);
-                for(int i=0; i<RADICES;i++)
-                {
-                    size_t index = ng * groupSize * RADICES + gS * RADICES + i;
-                    int value = histBuffer1[ index ];
-                    printf("%x %x, ",index, value);
-                }
+        for (unsigned int ng=0; ng<numGroups*RADICES; ng++)
+        { 
+            printf ("\nGlobal-ID =%4x ",ng);
+            for(unsigned int i=0;i<RADICES; i++)
+            {
+                size_t index = ng*RADICES + i;
+                int value = histBuffer1[ index ];
+                printf("%8x, ", value);
             }
         }
-        ctl.commandQueue().enqueueUnmapMemObject(clHistData, histBuffer1);*/
-#endif 
+        ctl.commandQueue().enqueueUnmapMemObject(clHistData, histBuffer1);
+#endif
 #if 0
         if (swap == 0)
             V_OPENCL( permuteKernel.setArg(0, clInputData), "Error setting kernel argument" );
