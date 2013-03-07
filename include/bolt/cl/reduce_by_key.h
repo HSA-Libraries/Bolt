@@ -40,7 +40,7 @@ namespace bolt
             *   reduce_by_key performs, on a sequence, a reduction of each sub-sequence as defined by equivalent keys.
             */ 
 
-            /*! \addtogroup reduce_by_key
+            /*! \addtogroup CL-reduce_by_key
             *   \ingroup reductions
             *   \{
             */

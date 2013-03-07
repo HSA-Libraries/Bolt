@@ -44,7 +44,7 @@ namespace bolt {
         *   See the Bolt Tools for Split-Source for a detailed description. 
         */ 
 
-        /*! \addtogroup sort
+        /*! \addtogroup CL-sort
         *   \ingroup sorting
         *   \{
         *   \todo Prove the performance of the Sort routines using a benchmark program that can 

@@ -669,6 +669,8 @@ INPUT                  = @CMAKE_CURRENT_SOURCE_DIR@/mainpage.dox \
                          @CMAKE_CURRENT_SOURCE_DIR@/clcodestring.dox \
                          @CMAKE_CURRENT_SOURCE_DIR@/faq.dox \
                          @CMAKE_CURRENT_SOURCE_DIR@/buildingExamples.dox \
+                         @CMAKE_CURRENT_SOURCE_DIR@/../include/bolt/amp \
+                         @CMAKE_CURRENT_SOURCE_DIR@/../include/bolt/amp/detail \                         
                          @CMAKE_CURRENT_SOURCE_DIR@/../include/bolt/cl \
                          @CMAKE_CURRENT_SOURCE_DIR@/../include/bolt/cl/detail
 

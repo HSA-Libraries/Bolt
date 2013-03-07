@@ -37,7 +37,7 @@ namespace bolt {
         /*! \addtogroup reductions
         *   \ingroup algorithms
 
-        /*! \addtogroup counting
+        /*! \addtogroup CL-counting
         *  \ingroup reductions
         *  \{
         *  \bug Interfaces which accept a control structure need to be added

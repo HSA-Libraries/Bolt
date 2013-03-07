@@ -45,7 +45,7 @@ namespace cl
  *   The sorting Algorithm for sorting the given InputIterator.
  */ 
 
-/*! \addtogroup scan
+/*! \addtogroup CL-scan
  *   \ingroup PrefixSums
  *   \{
  *  

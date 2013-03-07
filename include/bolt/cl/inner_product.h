@@ -40,7 +40,7 @@ namespace bolt {
         *   \ingroup algorithms
         */
 
-        /*! \addtogroup inner_product
+        /*! \addtogroup CL-inner_product
         *   \ingroup reductions
         *   \{
         */

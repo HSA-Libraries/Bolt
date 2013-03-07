@@ -46,7 +46,7 @@ namespace cl
         /*! \addtogroup Containers
          */
 
-        /*! \addtogroup Device
+        /*! \addtogroup CL-Device
         *   \ingroup Containers
         *   Containers that guarantee sequential and linear access to memory "close" to the device
         */

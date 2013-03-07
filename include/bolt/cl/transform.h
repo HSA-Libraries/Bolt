@@ -43,7 +43,7 @@ namespace bolt {
         *   for a detailed description. 
         */ 
         
-        /*! \addtogroup transform
+        /*! \addtogroup CL-transform
         *   \ingroup transformations
         *   \{
         */

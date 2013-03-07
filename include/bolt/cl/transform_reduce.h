@@ -38,7 +38,7 @@ namespace bolt {
         *   \ingroup algorithms
         */ 
         
-        /*! \addtogroup transform_reduce
+        /*! \addtogroup CL-transform_reduce
         *   \ingroup reductions
         *   \{
         */

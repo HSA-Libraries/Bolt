@@ -82,8 +82,7 @@ template< typename InputIterator, typename OutputIterator >
 OutputIterator inclusive_scan(
     InputIterator first,
     InputIterator last,
-    OutputIterator result,
-    const std::string& user_code )
+    OutputIterator result)
 {
     typedef std::iterator_traits<InputIterator>::value_type iType;
     iType init; memset(&init, 0, sizeof(iType) );
@@ -97,8 +96,7 @@ OutputIterator inclusive_scan(
     InputIterator first,
     InputIterator last,
     OutputIterator result,
-    BinaryFunction binary_op, 
-    const std::string& user_code )
+    BinaryFunction binary_op )
 {
     typedef std::iterator_traits<InputIterator>::value_type iType;
     iType init; memset(&init, 0, sizeof(iType) );
@@ -112,8 +110,7 @@ OutputIterator inclusive_scan(
     control &ctl,
     InputIterator first,
     InputIterator last,
-    OutputIterator result, 
-    const std::string& user_code )
+    OutputIterator result)
 {
     typedef std::iterator_traits<InputIterator>::value_type iType;
     iType init; memset(&init, 0, sizeof(iType) );
@@ -128,8 +125,7 @@ OutputIterator inclusive_scan(
     InputIterator first,
     InputIterator last,
     OutputIterator result,
-    BinaryFunction binary_op, 
-    const std::string& user_code )
+    BinaryFunction binary_op)
 {
     typedef std::iterator_traits<InputIterator>::value_type iType;
     iType init; memset(&init, 0, sizeof(iType) );
@@ -145,8 +141,7 @@ template< typename InputIterator, typename OutputIterator >
 OutputIterator exclusive_scan(
     InputIterator first,
     InputIterator last,
-    OutputIterator result,
-    const std::string& user_code )
+    OutputIterator result)
 {
     typedef std::iterator_traits<InputIterator>::value_type iType;
     iType init; memset(&init, 0, sizeof(iType) );
@@ -160,8 +155,7 @@ OutputIterator exclusive_scan(
     InputIterator first,
     InputIterator last,
     OutputIterator result,
-    T init,
-    const std::string& user_code )
+    T init)
 {
     typedef std::iterator_traits<InputIterator>::value_type iType;
     return detail::scan_detect_random_access(
@@ -175,8 +169,7 @@ OutputIterator exclusive_scan(
     InputIterator last,
     OutputIterator result,
     T init,
-    BinaryFunction binary_op,
-    const std::string& user_code )
+    BinaryFunction binary_op)
 {
     return detail::scan_detect_random_access(
         control::getDefault( ), first, last, result, init, false, binary_op,
@@ -188,8 +181,7 @@ OutputIterator exclusive_scan(
     const control &ctl,
     InputIterator first,
     InputIterator last,
-    OutputIterator result, 
-    const std::string& user_code ) // assumes addition of numbers
+    OutputIterator result ) // assumes addition of numbers
 {
     typedef std::iterator_traits<InputIterator>::value_type iType;
     iType init = static_cast< iType >( 0 );
@@ -204,8 +196,7 @@ OutputIterator exclusive_scan(
     InputIterator first,
     InputIterator last,
     OutputIterator result,
-    T init, 
-    const std::string& user_code )
+    T init)
 {
     typedef std::iterator_traits<InputIterator>::value_type iType;
     return detail::scan_detect_random_access(
@@ -220,8 +211,7 @@ OutputIterator exclusive_scan(
     InputIterator last,
     OutputIterator result,
     T init,
-    BinaryFunction binary_op,
-    const std::string& user_code )
+    BinaryFunction binary_op)
 {
     return detail::scan_detect_random_access(
         ctl, first, last, result, init, false, binary_op,

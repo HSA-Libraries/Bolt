@@ -41,7 +41,7 @@ namespace bolt {
         *    The min_element finds the location of the first smallest element in the range [first, last]
         */
 
-        /*! \addtogroup min_element
+        /*! \addtogroup CL-min_element
         *   \ingroup Find
         *   \{
         */

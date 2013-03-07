@@ -37,7 +37,7 @@ namespace bolt {
         *   \ingroup algorithms
         */ 
         
-        /*! \addtogroup transform_reduce
+        /*! \addtogroup amp-transform_reduce
         *   \ingroup reductions
         *   \{
         *   \todo experiment with passing functors as objects rather than as parameters.(Args can't return state to host, but OK?)

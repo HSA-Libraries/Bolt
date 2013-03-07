@@ -38,7 +38,7 @@ namespace cl
 *   \ingroup algorithms
 */ 
 
-/*! \addtogroup TransformedPrefixSums Transformed Prefix Sums
+/*! \addtogroup TransformedPrefixSums CL-Transformed Prefix Sums
 *   \ingroup PrefixSums
 *   \{
 */

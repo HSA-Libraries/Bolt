@@ -39,7 +39,7 @@ namespace bolt {
         *   \p generate assigns to each element of a sequence the value returned by a generator.
         */ 
         
-        /*! \addtogroup filling
+        /*! \addtogroup CL-filling
         *   \ingroup transformations
         *   \{
         */

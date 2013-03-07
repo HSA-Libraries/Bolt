@@ -27,6 +27,12 @@
 #include "bolt/amp/bolt.h"
 #include "bolt/amp/functional.h"
 
+
+
+/*! \file reduce.h
+*/
+
+
 namespace bolt {
     namespace amp {
 
@@ -35,111 +41,90 @@ namespace bolt {
 
         /*! \addtogroup reductions
         *   \ingroup algorithms
-        *   Family of reduction operations for boiling data down to a small set by summation, counting, finding min/max, and more.
+        *   Family of reduction operations for boiling data down to a small set by summation, counting, finding min/max
+        *   and more.
         */
 
-        /*! \addtogroup reduce
+        /*! \addtogroup amp-reduce
         *   \ingroup reductions
         *   \{
         *   \todo Document wg-per-compute unit flags for reduce
         */
 
-        /*! \brief reduce returns the result of combining all the elements in the specified range using the specified binary_op.  
-        * The classic example is a summation, where the binary_op is the plus operator.  By default, the initial value is "0", 
+
+        /*! \breif reduce returns the result of combining all the elements in the specified range using the specified 
+        * binary_op.  
+        * The classic example is a summation, where the binary_op is the plus operator.  By default, the initial value 
+        * is "0" 
         * and the binary operator is "plus<>()".
         *
-        * \p reduce requires that the binary reduction op ("binary_op") is cummutative.  The order in which \p reduce applies the binary_op
+        * \details \p reduce requires that the binary reduction op ("binary_op") is cummutative.  The order in which 
+        * \p reduce applies the binary_op
         * is not deterministic.
         *
-        * The \p reduce operation is similar the std::accumulate function.
+        * \details The \p reduce operation is similar the std::accumulate function
         *
+        * \param ctl \b Optional Control structure to control accelerator,debug, tuning. See bolt::amp::control.
         * \param first The first position in the sequence to be reduced.
         * \param last  The last position in the sequence to be reduced.
-        * \tparam InputIterator An iterator that can be dereferenced for an object, and can be incremented to get to the next element in a sequence.
+        * the generated code, before the cl_code trait.
+        * \tparam InputIterator An iterator that can be dereferenced for an object, and can be incremented to get to 
+        * the next element in a sequence.
         * \tparam T The type of the result.
         * \return The result of the reduction.
-        * \sa http://www.sgi.com/tech/stl/accumulate.html
         *
-        * The following code example shows the use of \p reduce to sum 10 numbers, using the default plus operator.
+        * \details The following code example shows the use of \p reduce to sum 10 numbers, using the default plus 
+        * operator.
         * \code
-        * #include <bolt/amp/reduce.h>
+        * #include <bolt/cl/reduce.h>
         *
         * int a[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
         *
-        * int sum = bolt::amp::reduce(a, a+10, 0);
+        * cl::CommandQueue myCommandQueue = ...
+        *
+        *  //Create an AMP Control object using the default accelerator
+        *  ::Concurrency::accelerator accel(::Concurrency::accelerator::default_accelerator);
+        *  bolt::amp::control ctl(accel);
+        *
+        * int sum = bolt::cl::reduce(ctl, a, a+10, 0);
         * // sum = 55
         *  \endcode
-        *
+        * \sa http://www.sgi.com/tech/stl/accumulate.html
         */
-        template<typename InputIterator, typename T> 
+
+        template<typename InputIterator> 
+        typename std::iterator_traits<InputIterator>::value_type
+            reduce(bolt::amp::control &ctl,
+            InputIterator first, 
+            InputIterator last);
+
+        template<typename InputIterator> 
         typename std::iterator_traits<InputIterator>::value_type
             reduce(InputIterator first, 
-            InputIterator last, 
-            T init);
+            InputIterator last);
 
-        /*! \brief reduce returns the result of combining all the elements in the specified range using the specified binary_op.  
-        * The classic example is a summation, where the binary_op is the plus operator.  By default, 
-        * the binary operator is "plus<>()".
-        *
-        * \p reduce Requires that the binary reduction op ("binary_op") is cummutative.  The order in which \p reduce applies the binary_op
-        * is not deterministic.
-        *
-        * The \p reduce operation is similar the std::accumulate function.
-        *
-        * \param first The first position in the sequence to be reduced.
-        * \param last  The last position in the sequence to be reduced.
-        * \param init  The initial value for the accumulator.
-        * \param binary_op  The binary operation used to combine two values.   By default, the binary operation is plus<>().
-        * \tparam InputIterator An iterator that can be dereferenced for an object, and can be incremented to get to the next element in a sequence.
-        * \tparam T The type of the result.
-        * \tparam BinaryFunction A function object defining an operation that is applied to consecutive elements in the sequence.
-        * \return The result of the reduction.
-        * \sa http://www.sgi.com/tech/stl/accumulate.html
-        *
-        * The following code example shows the use of \p reduce to sum 10 numbers plus 100, using the default plus operator.
-        * \code
-        * #include <bolt/amp/reduce.h>
-        *
-        * int a[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
-        *
-        * int sum = bolt::amp::reduce(a, a+10, 100);
-        * // sum = 155
-        *  \endcode
-        *
-        * The following code example shows the use of \p reduce to find the max of 10 numbers:
-        * \code
-        * #include <bolt/amp/reduce.h>
-        *
-        * int a[10] = {2, 9, 3, 7, 5, 6, 3, 8, 3, 4};
-        *
-        * int max = bolt::amp::reduce(a, a+10, -1, bolt::amp:maximum<int>());
-        * // max = 9
-        *  \endcode
-        */
-        template<typename InputIterator, typename T, typename BinaryFunction> 
-        T reduce(InputIterator first, 
-            InputIterator last,  
-            T init,
-            BinaryFunction binary_op);
 
-        /*! \p reduce returns the result of combining all the elements in the specified range using the specified binary_op.  
-        * The classic example is a summation, where the binary_op is the plus operator.  By default, the initial value is "0" 
-        * and the binary operator is "plus<>()".
+        /*! \breif \p reduce returns the result of combining all the elements in the specified range using the 
+        * specified binary_op. The classic example is a summation, where the binary_op is the plus operator.  
+        * By default, the initial value is "0" and the binary operator is "plus<>()".
         *
-        * \p reduce requires that the binary reduction op ("binary_op") is cummutative.  The order in which \p reduce applies the binary_op
-        * is not deterministic.
+        * \p reduce requires that the binary reduction op ("binary_op") is cummutative.  The order in which \p reduce 
+        * applies the binary_op is not deterministic.
         *
         * The \p reduce operation is similar the std::accumulate function
         *
-        * \param ctl Control structure to control accelerator,debug, tuning. See bolt::amp::control.
+        * \param ctl \b Optional Control structure to control accelerator,debug, tuning. See bolt::amp::control.
         * \param first The first position in the sequence to be reduced.
         * \param last  The last position in the sequence to be reduced.
-        * \tparam InputIterator An iterator that can be dereferenced for an object, and can be incremented to get to the next element in a sequence.
+        * \param init  The initial value for the accumulator.
+        * \tparam InputIterator An iterator that can be dereferenced for an object, and can be incremented to get to 
+        * the next element in a sequence.
         * \tparam T The type of the result.
         * \return The result of the reduction.
         * \sa http://www.sgi.com/tech/stl/accumulate.html
         *
-        * The following code example shows the use of \p reduce to sum 10 numbers, using the default plus operator.
+        * \details The following code example shows the use of \p reduce to sum 10 numbers, using the default plus 
+        * operator.
         * \code
         * #include <bolt/amp/reduce.h>
         *
@@ -155,18 +140,22 @@ namespace bolt {
         *  \endcode
         */
         template<typename InputIterator, typename T> 
-        typename std::iterator_traits<InputIterator>::value_type
-            reduce(bolt::amp::control &ctl,
+            T  reduce(bolt::amp::control &ctl,
             InputIterator first, 
             InputIterator last, 
             T init);
 
-        /*! \brief reduce returns the result of combining all the elements in the specified range using the specified binary_op.  
-        * The classic example is a summation, where the binary_op is the plus operator.  By default, 
+        template<typename InputIterator, typename T> 
+            T reduce(InputIterator first, 
+            InputIterator last, 
+            T init);
+
+        /*! \brief reduce returns the result of combining all the elements in the specified range using the specified 
+        * binary_op. The classic example is a summation, where the binary_op is the plus operator.  By default, 
         * the binary operator is "plus<>()".  The version takes a bolt::amp::control structure as a first argument.
         *
-        * \p reduce requires that the binary reduction op ("binary_op") is cummutative.  The order in which \p reduce applies the binary_op
-        * is not deterministic.
+        * \p reduce requires that the binary reduction op ("binary_op") is cummutative.  The order in which \p reduce 
+        * applies the binary_op  is not deterministic.
         *
         * The \p reduce operation is similar the std::accumulate function.
         *
@@ -174,26 +163,29 @@ namespace bolt {
         * \param first The first position in the sequence to be reduced.
         * \param last  The last position in the sequence to be reduced.
         * \param init  The initial value for the accumulator.
-        * \param binary_op  The binary operation used to combine two values.   By default, the binary operation is plus<>().
-        * \tparam InputIterator An iterator that can be dereferenced for an object, and can be incremented to get to the next element in a sequence.
-        * \tparam BinaryFunction A function object defining an operation that is applied to consecutive elements in the sequence.
+        * \param binary_op  The binary operation used to combine two values.   By default, the binary operation is 
+        * plus<>().
+        * \tparam InputIterator An iterator that can be dereferenced for an object, and can be incremented to get to 
+        * the next element in a sequence.
+        * \tparam BinaryFunction A function object defining an operation that is applied to consecutive elements in the 
+        * sequence.
         * \return The result of the reduction.
-        * \sa http://www.sgi.com/tech/stl/accumulate.html
         *
         * The following code example shows the use of \p reduce to find the max of 10 numbers, 
         * specifying a specific command-queue and enabling debug messages.
-        \code
-        #include <bolt/amp/reduce.h>
-        
-        int a[10] = {2, 9, 3, 7, 5, 6, 3, 8, 3, 4};
-        
-        //Create an AMP Control object using the default accelerator
-        ::Concurrency::accelerator accel(::Concurrency::accelerator::default_accelerator);
-        bolt::amp::control ctl(accel);
-        
-        int max = bolt::amp::reduce(ctl, a, a+10, -1, bolt::amp::maximum<int>());
-        // max = 9
-        \endcode
+        * \code
+        * #include <bolt/amp/reduce.h>
+        *
+        * int a[10] = {2, 9, 3, 7, 5, 6, 3, 8, 3, 4};
+        *
+        * //Create an AMP Control object using the default accelerator
+        * ::Concurrency::accelerator accel(::Concurrency::accelerator::default_accelerator);
+        * bolt::amp::control ctl(accel);
+        *
+        * int max = bolt::amp::reduce(ctl, a, a+10, -1, bolt::amp::maximum<int>());
+        * // max = 9
+        * \endcode
+        * \sa http://www.sgi.com/tech/stl/accumulate.html
         */
         template<typename InputIterator, typename T, typename BinaryFunction> 
         T reduce(bolt::amp::control &ctl,
@@ -201,6 +193,16 @@ namespace bolt {
             InputIterator last,  
             T init,
             BinaryFunction binary_op=bolt::amp::plus<T>());
+
+        template<typename InputIterator, typename T, typename BinaryFunction> 
+        T reduce(InputIterator first, 
+            InputIterator last,  
+            T init,
+            BinaryFunction binary_op);
+
+
+
+
 
         /*!   \}  */
 

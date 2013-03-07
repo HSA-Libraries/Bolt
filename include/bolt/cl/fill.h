@@ -40,7 +40,7 @@ namespace bolt {
         *   \p Fill fills a range with values passed in the function.        
         */ 
         
-        /*! \addtogroup filling
+        /*! \addtogroup CL-filling
         *   \ingroup transformations
         *   \{
         */

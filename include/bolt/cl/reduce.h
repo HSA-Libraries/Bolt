@@ -43,7 +43,7 @@ namespace bolt {
         *   min/max, and more.
         */
 
-        /*! \addtogroup reduce
+        /*! \addtogroup CL-reduce
         *   \ingroup reductions
         *   \{
         */
@@ -61,7 +61,7 @@ namespace bolt {
         *
         * \details The \p reduce operation is similar the std::accumulate function
         *
-        * \param ctl \b Optional Control structure to control command-queue, debug, tuning. See FIXME.
+        * \param ctl \b Optional Control structure to control command-queue, debug, tuning.
         * \param first The first position in the sequence to be reduced.
         * \param last  The last position in the sequence to be reduced.
         * \param cl_code Optional OpenCL(TM) code to be passed to the OpenCL compiler. The cl_code is inserted first in
@@ -115,7 +115,7 @@ namespace bolt {
         *
         * \details The \p reduce operation is similar the std::accumulate function
         *
-        * \param ctl \b Optional Control structure to control command-queue, debug, tuning. See FIXME.
+        * \param ctl \b Optional Control structure to control command-queue, debug, tuning.
         * \param first The first position in the sequence to be reduced.
         * \param last  The last position in the sequence to be reduced.
         * \param init  The initial value for the accumulator.
@@ -167,7 +167,7 @@ namespace bolt {
         *
         * \details The \p reduce operation is similar the std::accumulate function.
         *
-        * \param ctl \b Optional Control structure to control command-queue, debug, tuning, etc.  See control.
+        * \param ctl \b Optional Control structure to control command-queue, debug, tuning, etc.
         * \param first The first position in the sequence to be reduced.
         * \param last  The last position in the sequence to be reduced.
         * \param init  The initial value for the accumulator.

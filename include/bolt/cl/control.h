@@ -34,7 +34,10 @@ namespace bolt {
         /*! \addtogroup miscellaneous
         */
 
-        /*! \addtogroup control
+        /*! \addtogroup miscellaneous
+        */
+
+        /*! \addtogroup CL-control
         * \ingroup miscellaneous
         * \{
         */

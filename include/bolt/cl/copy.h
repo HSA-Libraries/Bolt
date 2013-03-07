@@ -39,7 +39,7 @@ namespace bolt {
         *   \p copy copies each element from the sequence [first, last) to [result, result + (last - first)). 
         */ 
         
-        /*! \addtogroup copy
+        /*! \addtogroup CL-copy
         *   \ingroup copying
         *   \{
         */
