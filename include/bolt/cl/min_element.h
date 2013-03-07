@@ -26,7 +26,8 @@
 #include <string>
 #include <iostream>
 
-/*! \file min_element.h
+/*! \file bolt/cl/min_element.h
+    \brief min_element returns the location of the first minimum element in the specified range.
 */
 
 

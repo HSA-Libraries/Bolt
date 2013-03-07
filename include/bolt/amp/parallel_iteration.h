@@ -15,6 +15,10 @@
 
 ***************************************************************************/                                                                                     
 
+/*! \file bolt/amp/parallel_iteration.h
+    \brief parallel_iteration just use a parallel_for for all devices
+*/
+
 #pragma once
 
 #include <amp.h>

@@ -15,6 +15,11 @@
 
 ***************************************************************************/                                                                                     
 
+
+/*! \file bolt/cl/bolt.h
+    \brief Define global functions for Bolt CL.
+*/
+
 #pragma once
 #if !defined( OCL_BOLT_H )
 #define OCL_BOLT_H
@@ -28,6 +33,8 @@
 #endif
 
 #include <string>
+
+
 #include <map>
 #include <boost/thread/mutex.hpp>
 #include "bolt/BoltVersion.h"

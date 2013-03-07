@@ -25,7 +25,8 @@
 #include <string>
 #include <iostream>
 
-/*! \file generate.h
+/*! \file bolt/cl/generate.h
+    \brief Generate assigns to each element of a sequence [first,last].
 */
 
 namespace bolt {

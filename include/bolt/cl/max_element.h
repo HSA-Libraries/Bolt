@@ -26,7 +26,8 @@
 #include <string>
 #include <iostream>
 
-/*! \file max_element.h
+/*! \file bolt/cl/max_element.h
+    \brief max_element returns the location of the first maximum element in the specified range.
 */
 
 

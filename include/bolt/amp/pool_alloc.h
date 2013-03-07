@@ -15,6 +15,11 @@
 
 ***************************************************************************/                                                                                     
 
+/*! \file bolt/amp/pool_alloc.h
+    \brief Pool allocator.
+*/
+
+
 #include <amp.h>
 #pragma once
 

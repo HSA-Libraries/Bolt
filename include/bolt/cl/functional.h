@@ -20,9 +20,9 @@
 
 #include "bolt/cl/bolt.h"
 
-/*! \file functional.h
+/*! \file bolt/cl/functional.h
+    \brief List all the unary and binary functions.
 */
-
 
 namespace bolt {
 namespace cl {

@@ -15,6 +15,11 @@
 
 ***************************************************************************/                                                                                     
 
+
+/*! \file bolt/cl/control.h
+    \brief Control the parameters of a specific Bolt algorithm call.
+*/
+
 #pragma once
 
 #include <bolt/cl/bolt.h>
@@ -204,6 +209,7 @@ namespace bolt {
             /*! Set the method used to detect completion at the end of a Bolt routine. */
             void waitMode(e_WaitMode waitMode) { m_waitMode = waitMode; };
 
+            /*! unroll assignment */
             void unroll(int unroll) { m_unroll = unroll; };
 
             //! 
@@ -262,8 +268,11 @@ namespace bolt {
              */
             typedef boost::shared_ptr< ::cl::Buffer > buffPointer;
 
+            /*! Return device memory size */
             size_t totalBufferSize( );
+            /*! Return a pointer to memory from per allocated memory pool */
             buffPointer acquireBuffer( size_t reqSize, cl_mem_flags flags = CL_MEM_READ_WRITE, const void* host_ptr = NULL );
+            /*! Freeing memory*/
             void freeBuffers( );
 
         private:

@@ -25,7 +25,8 @@
 #include <string>
 #include <iostream>
 
-/*! \file transform.h
+/*! \file bolt/cl/transform.h
+    \brief  Applies a binary function to each pair of elements from two input sequences.
 */
 
 

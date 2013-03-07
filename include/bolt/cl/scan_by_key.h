@@ -23,9 +23,9 @@
 #include <bolt/cl/functional.h>
 #include <bolt/cl/device_vector.h>
 
-/*! \file scan_by_key.h
+/*! \file bolt/cl/scan_by_key.h
+    \brief Performs, on a sequence, scan of each sub-sequence as defined by equivalent keys inclusive or exclusive.
 */
-
 namespace bolt
 {
 namespace cl

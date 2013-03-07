@@ -25,7 +25,8 @@
 #include <string>
 #include <iostream>
 
-/*! \file copy.h
+/*! \file bolt/cl/copy.h
+    \brief Copies each element from the sequence to result.
 */
 
 namespace bolt {

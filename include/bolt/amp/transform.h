@@ -15,6 +15,10 @@
 
 ***************************************************************************/                                                                                     
 
+/*! \file bolt/amp/transform.h
+    \brief  Applies a specific function object to each element pair in the specified input ranges.
+*/
+
 #pragma once
 #if !defined( AMP_TRANSFORM_H )
 #define AMP_TRANSFORM_H

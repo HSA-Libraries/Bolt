@@ -25,7 +25,8 @@
 #include <string>
 #include <iostream>
 
-/*! \file transform_reduce.h
+/*! \file bolt/cl/transform_reduce.h
+    \brief  Fuses transform and reduce operations together.
 */
 
 namespace bolt {

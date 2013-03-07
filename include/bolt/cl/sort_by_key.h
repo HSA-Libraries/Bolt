@@ -24,7 +24,8 @@
 #include <string>
 #include <iostream>
 
-/*! \file sort_by_key.h
+/*! \file bolt/cl/sort_by_key.h
+    \brief Returns the sorted result of all the elements in input besed on equivalent keys.
 */
 
 namespace bolt {

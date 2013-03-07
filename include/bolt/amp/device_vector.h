@@ -15,6 +15,11 @@
 
 ***************************************************************************/
 
+/*! \file bolt/amp/device_vector.h
+    \brief Header file for the device_container class.
+*/
+
+
 #pragma once
 #if !defined( BOLT_DEVICE_VECTOR_H )
 #define BOLT_DEVICE_VECTOR_H
@@ -29,9 +34,6 @@
 #include <boost/iterator/reverse_iterator.hpp>
 #include <boost/shared_array.hpp>
 
-/*! \file device_vector.h
- * Header file for the device_container class
- */
 
 /*! \brief Defining namespace for the Bolt project
     */

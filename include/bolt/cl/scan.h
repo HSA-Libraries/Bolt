@@ -28,7 +28,8 @@
 #include <bolt/cl/device_vector.h>
 
 
-/*! \file scan.h
+/*! \file bolt/cl/scan.h
+    \brief Scan calculates a running sum over a range of values, inclusive or exclusive
 */
 
 

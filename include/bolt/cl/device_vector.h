@@ -15,6 +15,9 @@
 
 ***************************************************************************/                                                                                     
 
+
+
+
 #pragma once
 #if !defined( BOLT_DEVICE_VECTOR_H )
 #define BOLT_DEVICE_VECTOR_H
@@ -29,18 +32,16 @@
 #include <boost/iterator/reverse_iterator.hpp>
 #include <boost/shared_array.hpp>
 
-/*! \file device_vector.h
+/*! \file bolt/cl/device_vector.h
+ *  \brief Namespace that captures OpenCL related data types and functions 
  * Public header file for the device_container class
  * \bug iterator::getBuffer() returns "pointer" to beginning of array, instead of where the iterator has incremented to; may need to map a subBuffer or something simmilar
  */
 
-/*! \brief Defining namespace for the Bolt project
-    */
+
 namespace bolt
 {
 
-/*! \brief Namespace that captures OpenCL related data types and functions
-     */
 namespace cl
 {
         /*! \addtogroup Containers

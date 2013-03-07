@@ -14,7 +14,9 @@
 *   limitations under the License.                                                   
 
 ***************************************************************************/                                                                                     
-
+/*! \file bolt/amp/transform_reduce.h
+    \brief  Fuses transform and reduce operations together.
+*/
 
 #pragma once
 #if !defined( AMP_TRANSFORM_REDUCE_H )

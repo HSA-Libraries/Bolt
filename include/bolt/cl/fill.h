@@ -25,7 +25,8 @@
 #include <string>
 #include <iostream>
 
-/*! \file fill.h
+/*! \file bolt/cl/fill.h
+    \brief Fills a range with values passed in the function.
 */
 
 

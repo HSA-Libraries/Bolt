@@ -15,6 +15,10 @@
 
 ***************************************************************************/                                                                                     
 
+/*! \file bolt/amp/reduce.h
+    \brief Returns the result of combining all the elements in the specified range using the specified binary_op.
+*/
+
 #if !defined( REDUCE_H )
 #define REDUCE_H
 #pragma once

@@ -18,6 +18,12 @@
 /******************************************************************************
  * AMP Scan
  *****************************************************************************/
+
+/*! \file bolt/amp/scan.h
+    \brief Scan calculates a running sum over a range of values, inclusive or exclusive.
+*/
+
+
 #if !defined( AMP_SCAN_H )
 #define AMP_SCAN_H
 #pragma once

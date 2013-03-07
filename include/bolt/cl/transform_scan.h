@@ -23,9 +23,9 @@
 #include <bolt/cl/functional.h>
 #include <bolt/cl/device_vector.h>
 
-/*! \file transform_scan.h
+/*! \file bolt/cl/transform_scan.h
+    \brief  Performs on a sequence, the transformation defined by a unary operator, then the inclusive scan defined by a binary operator.
 */
-
 namespace bolt
 {
 namespace cl

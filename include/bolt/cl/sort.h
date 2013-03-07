@@ -25,7 +25,8 @@
 #include <iostream>
 
 
-/*! \file sort.h
+/*! \file bolt/cl/sort.h
+    \brief Returns the sorted result of all the elements in input.
 */
 
 

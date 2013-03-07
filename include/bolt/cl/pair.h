@@ -17,7 +17,7 @@
 
 
 
-/*! \file pair.h
+/*! \file bolt/cl/pair.h
  *  \brief A type encapsulating a heterogeneous pair of elements
  */
 

@@ -15,6 +15,11 @@
 
 ***************************************************************************/
 
+/*! \file bolt/amp/sort.h
+    \brief  Returns the sorted result of all the elements in input.
+*/
+
+
 #if !defined( AMP_SORT_H )
 #define AMP_SORT_H
 #pragma once

@@ -26,7 +26,8 @@
 #include <string>
 #include <iostream>
 
-/*! \file reduce.h
+/*! \file bolt/cl/reduce.h
+    \brief Returns the result of combining all the elements in the specified range using the specified.
 */
 
 

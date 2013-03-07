@@ -15,6 +15,11 @@
 
 ***************************************************************************/
 
+/*! \file bolt/amp/count.h
+    \brief Counts the number of elements in the specified range.
+*/
+
+
 #pragma once
 #if !defined( AMP_COUNT_H )
 #define AMP_COUNT_H

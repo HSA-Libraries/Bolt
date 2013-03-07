@@ -25,7 +25,8 @@
 #include <string>
 #include <iostream>
 
-/*! \file inner_product.h
+/*! \file bolt/cl/inner_product.h
+    \brief Inner Product returns the inner product of two iterators.
 */
 
 
