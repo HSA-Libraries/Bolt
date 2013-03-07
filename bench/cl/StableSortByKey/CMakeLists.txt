@@ -16,16 +16,16 @@
 ############################################################################                                                                                     
 
 # List the names of common files to compile across all platforms
-set( clBolt.Bench.StableSort.Source 
-        StableSortBench.cpp )
+set( clBolt.Bench.StableSortByKey.Source 
+        StableSortByKeyBench.cpp )
 
-set( clBolt.Bench.StableSort.Headers stdafx.h 
-        ${BOLT_INCLUDE_DIR}/bolt/cl/StableSort.h 
-        ${BOLT_INCLUDE_DIR}/bolt/cl/detail/StableSort.inl)
+set( clBolt.Bench.StableSortByKey.Headers stdafx.h 
+        ${BOLT_INCLUDE_DIR}/bolt/cl/stablesort_by_key.h 
+        ${BOLT_INCLUDE_DIR}/bolt/cl/detail/stablesort_by_key.inl)
 
-set( clBolt.Bench.StableSort.Files 
-        ${clBolt.Bench.StableSort.Source} 
-        ${clBolt.Bench.StableSort.Headers} )
+set( clBolt.Bench.StableSortByKey.Files 
+        ${clBolt.Bench.StableSortByKey.Source} 
+        ${clBolt.Bench.StableSortByKey.Headers} )
 
 # Include standard OpenCL headers
 include_directories( ${OPENCL_INCLUDE_DIRS} )
@@ -34,17 +34,17 @@ if( BUILD_TBB )
     add_definitions( "-DENABLE_TBB" )
 endif( )
 
-add_executable( clBolt.Bench.StableSort ${clBolt.Bench.StableSort.Files} )
+add_executable( clBolt.Bench.StableSortByKey ${clBolt.Bench.StableSortByKey.Files} )
 
-target_link_libraries( clBolt.Bench.StableSort ${Boost_LIBRARIES} ${TBB_LIBRARIES} clBolt.Runtime )
+target_link_libraries( clBolt.Bench.StableSortByKey ${Boost_LIBRARIES} ${TBB_LIBRARIES} clBolt.Runtime )
 
-set_target_properties( clBolt.Bench.StableSort PROPERTIES VERSION ${Bolt_VERSION} )
-set_target_properties( clBolt.Bench.StableSort PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
+set_target_properties( clBolt.Bench.StableSortByKey PROPERTIES VERSION ${Bolt_VERSION} )
+set_target_properties( clBolt.Bench.StableSortByKey PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
 
-set_property( TARGET clBolt.Bench.StableSort PROPERTY FOLDER "Benchmark/OpenCL")
+set_property( TARGET clBolt.Bench.StableSortByKey PROPERTY FOLDER "Benchmark/OpenCL")
 
 # CPack configuration; include the executable into the package
-install( TARGETS clBolt.Bench.StableSort
+install( TARGETS clBolt.Bench.StableSortByKey
 	RUNTIME DESTINATION ${BIN_DIR}
 	LIBRARY DESTINATION ${LIB_DIR}
 	ARCHIVE DESTINATION ${LIB_DIR}

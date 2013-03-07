@@ -16,8 +16,8 @@
 ***************************************************************************/ 
 
 #pragma once
-#if !defined( BOLT_CL_STABLESORT_H )
-#define BOLT_CL_STABLESORT_H
+#if !defined( BOLT_CL_STABLESORT_BY_KEY_H )
+#define BOLT_CL_STABLESORT_BY_KEY_H
 
 #include "bolt/cl/bolt.h"
 #include "bolt/cl/functional.h"
@@ -37,7 +37,7 @@ namespace cl {
     *   See the Bolt Tools for Split-Source for a detailed description. 
     */ 
 
-    /*! \addtogroup stable_sort
+    /*! \addtogroup stable_sort_by_key
     *   \ingroup sorting
     *   \{
     *   \todo Prove the performance of the stable_sort routines using a benchmark program that can 
@@ -71,8 +71,9 @@ namespace cl {
     * 
     *  \endcode
     */
-    template<typename RandomAccessIterator> 
-    void stable_sort( RandomAccessIterator first, RandomAccessIterator last, const std::string& cl_code="" );
+    template< typename RandomAccessIterator1, typename RandomAccessIterator2 > 
+    void stable_sort_by_key( RandomAccessIterator1 keys_first, RandomAccessIterator1 keys_last, 
+        RandomAccessIterator2 values_first, const std::string& cl_code="" );
 
     /*! \p stable_sort returns the sorted result of all the elements in the inputIterator between the the first and last elements using the specified binary_op.  
     * You can arrange the elements in ascending order, where the binary_op is the less<>() operator. 
@@ -106,10 +107,9 @@ namespace cl {
     * 
     *  \endcode
     */
-        
-    template<typename RandomAccessIterator, typename StrictWeakOrdering> 
-    void stable_sort( RandomAccessIterator first, RandomAccessIterator last, StrictWeakOrdering comp, 
-        const std::string& cl_code="");
+    template< typename RandomAccessIterator1, typename RandomAccessIterator2, typename StrictWeakOrdering> 
+    void stable_sort_by_key( RandomAccessIterator1 keys_first, RandomAccessIterator1 keys_last, RandomAccessIterator2 values_first, 
+        StrictWeakOrdering comp, const std::string& cl_code="");
 
     /*! \p This version of stable_sort returns the sorted result of all the elements in the \p RandomAccessIterator between the the first and last elements.  
     * The routine arranges the elements in an ascending order. \p RandomAccessIterator's value_type must provide operator < overload. 
@@ -142,9 +142,9 @@ namespace cl {
     * 
     *  \endcode
     */
-    template<typename RandomAccessIterator> 
-    void stable_sort( bolt::cl::control &ctl, RandomAccessIterator first, RandomAccessIterator last, 
-        const std::string& cl_code="");
+    template< typename RandomAccessIterator1, typename RandomAccessIterator2 >
+    void stable_sort_by_key( bolt::cl::control &ctl, RandomAccessIterator1 keys_first, RandomAccessIterator1 keys_last, 
+        RandomAccessIterator2 values_first, const std::string& cl_code="");
 
     /*! \p stable_sort returns the sorted result of all the elements in the inputIterator between the the first and last elements using the specified binary_op.  
     * You can arrange the elements in an ascending order, where the binary_op is the less<>() operator. 
@@ -182,14 +182,14 @@ namespace cl {
     *  \endcode
     */
 
-    template<typename RandomAccessIterator, typename StrictWeakOrdering> 
-    void stable_sort( bolt::cl::control &ctl, RandomAccessIterator first, RandomAccessIterator last,
-        StrictWeakOrdering comp, const std::string& cl_code="");
+    template< typename RandomAccessIterator1, typename RandomAccessIterator2, typename StrictWeakOrdering> 
+    void stable_sort_by_key( bolt::cl::control &ctl, RandomAccessIterator1 keys_first, RandomAccessIterator1 keys_last, 
+        RandomAccessIterator2 values_first, StrictWeakOrdering comp, const std::string& cl_code="");
 
     /*!   \}  */
 
 }// end of bolt::cl namespace
 }// end of bolt namespace
 
-#include "bolt/cl/detail/stablesort.inl"
+#include "bolt/cl/detail/stablesort_by_key.inl"
 #endif

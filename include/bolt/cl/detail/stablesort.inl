@@ -372,6 +372,8 @@ void stablesort_pick_iterator( control &ctl,
         tbbParallelStableSort( &firstPtr[ first.m_Index ], &firstPtr[ vecSize ], 
             &*scratchBuffer.begin( ), &*scratchBuffer.begin( )+vecSize, comp, false );
 #else
+        bolt::cl::device_vector< Type >::pointer firstPtr =  first.getContainer( ).data( );
+
         std::stable_sort( &firstPtr[ first.m_Index ], &firstPtr[ vecSize ], comp );
 #endif
         return;
