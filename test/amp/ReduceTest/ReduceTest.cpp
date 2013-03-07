@@ -1101,7 +1101,7 @@ TEST( ReduceUDD , UDDPlusOperatorInts )
     //setup containers
     int length = 1024;
     std::vector< UDD > refInput( length );
-    for( unsigned int i = 0; i < length ; i++ )
+    for( int i = 0; i < length ; i++ )
     {
       refInput[i].a = i;
       refInput[i].b = i+1;
@@ -1160,10 +1160,10 @@ void testdoubleTBB()
         tbbInput[i] = 3.0;
     };
 
-    double hSum = std::accumulate(stdInput.begin(), stdInput.end(), 1);
+    double hSum = std::accumulate(stdInput.begin(), stdInput.end(), 1.0);
     bolt::amp::control ctl = bolt::amp::control::getDefault();
     ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu); // serial path also tested
-    double sum = bolt::amp::reduce(ctl, tbbInput.begin(), tbbInput.end(), 1);
+    double sum = bolt::amp::reduce(ctl, tbbInput.begin(), tbbInput.end(), 1.0);
     if(hSum == sum)
         printf ("\nTBB Test case PASSED %lf %lf\n", hSum, sum);
     else

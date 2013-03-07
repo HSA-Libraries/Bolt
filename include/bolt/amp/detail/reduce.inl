@@ -92,8 +92,7 @@ namespace bolt
 
         template< typename InputIterator,
                  typename T > 
-        typename std::iterator_traits<InputIterator>::value_type
-        reduce( InputIterator first, 
+        T reduce( InputIterator first, 
                 InputIterator last, 
                 T init )
         {
@@ -103,8 +102,7 @@ namespace bolt
 
         template< typename InputIterator,
                   typename T > 
-        typename std::iterator_traits<InputIterator>::value_type
-        reduce( bolt::amp::control &ctl,
+        T reduce( bolt::amp::control &ctl,
                 InputIterator first, 
                 InputIterator last, 
                 T init )
