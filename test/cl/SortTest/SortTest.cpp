@@ -188,7 +188,7 @@ TYPED_TEST_P( SortArrayTest, Normal )
     EXPECT_EQ( stdNumElements, boltNumElements );
 
     //  Loop through the array and compare all the values with each other
-    //cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
+    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
     
 }
 #if 0

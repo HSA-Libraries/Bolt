@@ -23,7 +23,7 @@
 #include "bolt/statisticalTimer.h"
 #include "bolt/countof.h"
 #include "bolt/cl/sort.h"
-#define DATA_TYPE int
+#define DATA_TYPE unsigned int
 const std::streamsize colWidth = 26;
 #define BOLT_BENCHMARK_DEBUG 1
 
@@ -213,7 +213,7 @@ int _tmain( int argc, _TCHAR* argv[] )
     {
         if( systemMemory )
         {
-            std::cout << "Benchmarking Bolt Host\n"; 
+            std::cout << "Benchmarking Bolt Host\n";
             std::vector< DATA_TYPE > input( length );
 
             for( unsigned i = 0; i < iterations; ++i )
