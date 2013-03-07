@@ -585,7 +585,7 @@ sort_enqueue(control &ctl,
     ::cl::LocalSpaceArg localScanArray;
     localScanArray.size_ = 2*RADICES* sizeof(cl_uint);
     int swap = 0;
-    for(int bits = 0; bits < (sizeof(T) * 8)/*Bits per Byte*/; bits += RADIX)
+    for(int bits = 0; bits < 4/*(sizeof(T) * 8)/*Bits per Byte*/; bits += RADIX)
     {
         //Do a histogram pass locally
         //if (swap == 0)
@@ -617,12 +617,13 @@ sort_enqueue(control &ctl,
         bolt::cl::wait(ctl, l_histEvent);
         V_OPENCL( l_Error, "Error calling map on the result buffer" );
         printf("\n\n\n\n\nBITS = %d\nAfter Histogram", bits);
-        for (unsigned int ng=0; ng<256; ng++)
+        for (unsigned int ng=0; ng<numGroups; ng++)
         { printf ("\nGroup-Block =%d",ng);
             for(unsigned int gS=0;gS<groupSize; gS++)
             { printf ("\nGroup =%d\n",gS);
                 for(int i=0; i<RADICES;i++)
                 {
+                    //size_t index = ng * groupSize * RADICES + gS * RADICES + i;
                     size_t index = ng * groupSize * RADICES + gS * RADICES + i;
                     int value = histBuffer[ index ];
                     printf("%3x %2x, ",index, value);
@@ -696,14 +697,14 @@ sort_enqueue(control &ctl,
 
 #if (BOLT_SORT_INL_DEBUG==1)
         //This map is required since the data is not available to the host when scanning.
-        ::cl::Event l_histEvent1;
+        /*::cl::Event l_histEvent1;
         T *histBuffer1;
         histBuffer1 = (T*)ctl.commandQueue().enqueueMapBuffer(clHistData, false, CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(T) * numGroups* groupSize * RADICES, NULL, &l_histEvent1, &l_Error );
         bolt::cl::wait(ctl, l_histEvent1);
         V_OPENCL( l_Error, "Error calling map on the result buffer" );
 
         printf("\n\nAfter Scan bits = %d", bits);
-        for (int ng=0; ng<256; ng++)
+        for (int ng=0; ng<numGroups; ng++)
         { printf ("\nGroup-Block =%d",ng);
             for(int gS=0;gS<groupSize; gS++)
             { printf ("\nGroup =%d\n",gS);
@@ -715,7 +716,7 @@ sort_enqueue(control &ctl,
                 }
             }
         }
-        ctl.commandQueue().enqueueUnmapMemObject(clHistData, histBuffer1);
+        ctl.commandQueue().enqueueUnmapMemObject(clHistData, histBuffer1);*/
 #endif 
 #if 0
         if (swap == 0)
