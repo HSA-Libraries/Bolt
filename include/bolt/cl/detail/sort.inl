@@ -610,7 +610,7 @@ sort_enqueue(control &ctl,
 #if (BOLT_SORT_INL_DEBUG==1)
         //This map is required since the data is not available to the host when scanning.
         //Create local device_vector's 
-        /*T *histBuffer;// = (T*)malloc(numGroups* groupSize * RADICES * sizeof(T));
+        T *histBuffer;// = (T*)malloc(numGroups* groupSize * RADICES * sizeof(T));
         //T *histScanBuffer;// = (T*)calloc(1, numGroups* RADICES * sizeof(T));
         ::cl::Event l_histEvent;
         histBuffer = (T*)ctl.commandQueue().enqueueMapBuffer(clHistData, false, CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(T) * numGroups* groupSize * RADICES, NULL, &l_histEvent, &l_Error );
@@ -627,7 +627,7 @@ sort_enqueue(control &ctl,
                 printf("%2x, ", value);
             }
         }
-        ctl.commandQueue().enqueueUnmapMemObject(clHistData, histBuffer);*/
+        ctl.commandQueue().enqueueUnmapMemObject(clHistData, histBuffer);
 
         /*::cl::Event l_histScanBufferEvent;
         histScanBuffer = (T*) ctl.commandQueue().enqueueMapBuffer(clHistScanData, false, CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(T) * numGroups * RADICES, NULL, &l_histScanBufferEvent, &l_Error );
@@ -651,7 +651,11 @@ sort_enqueue(control &ctl,
 #endif
 
         //Perform a global scan 
-        detail::scan_enqueue(ctl, dvHistogramBins.begin(), dvHistogramBins.end(), dvHistogramBins.begin(), 0, plus< T >( ), false);
+        //detail::scan_enqueue(ctl, dvHistogramBins.begin(), dvHistogramBins.end(), dvHistogramBins.begin(), 0, plus< T >( ), false);
+        bolt::cl::device_vector< T >::iterator scanEnd = 
+            bolt::cl::exclusive_scan(ctl, dvHistogramBins.begin(), 
+                                         dvHistogramBins.end(), 
+                                         dvHistogramBins.begin(), 0, plus< T >( ) );
         /*{//Do CPU scan
             boost::shared_array<T> histogramBins = dvHistogramBins.data();
             T temp = histogramBins[0];
@@ -694,7 +698,7 @@ sort_enqueue(control &ctl,
 
 #if (BOLT_SORT_INL_DEBUG==1)
         //This map is required since the data is not available to the host when scanning.
-        ::cl::Event l_histEvent1;
+        /*::cl::Event l_histEvent1;
         T *histBuffer1;
         histBuffer1 = (T*)ctl.commandQueue().enqueueMapBuffer(clHistData, false, CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(T) * numGroups* groupSize * RADICES, NULL, &l_histEvent1, &l_Error );
         bolt::cl::wait(ctl, l_histEvent1);
@@ -711,7 +715,7 @@ sort_enqueue(control &ctl,
                 printf("%8x, ", value);
             }
         }
-        ctl.commandQueue().enqueueUnmapMemObject(clHistData, histBuffer1);
+        ctl.commandQueue().enqueueUnmapMemObject(clHistData, histBuffer1);*/
 #endif
 #if 0
         if (swap == 0)
