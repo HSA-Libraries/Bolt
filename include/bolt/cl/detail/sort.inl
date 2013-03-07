@@ -703,7 +703,7 @@ sort_enqueue(control &ctl,
         printf("\n\nAfter Scan bits = %d", bits);
         for (unsigned int ng=0; ng<numGroups*RADICES; ng++)
         { 
-            printf ("\nGlobal-ID =%4x ",ng);
+            printf ("\nGlobal-ID =%8x ",ng);
             for(unsigned int i=0;i<RADICES; i++)
             {
                 size_t index = ng*RADICES + i;
