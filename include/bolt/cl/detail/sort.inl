@@ -25,7 +25,7 @@
 #include <boost/bind.hpp>
 #include <boost/thread/once.hpp>
 #include <boost/shared_array.hpp>
-#define CL_VERSION_1_2 1
+
 #include "bolt/cl/bolt.h"
 #include "bolt/cl/scan.h"
 #include "bolt/cl/functional.h"

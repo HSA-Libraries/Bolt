@@ -307,18 +307,21 @@ int _tmain( int argc, _TCHAR* argv[] )
         }
     }
 
-    //	Remove all timings that are outside of 2 stddev (keep 65% of samples); we ignore outliers to get a more consistent result
+    //  Remove all timings that are outside of 2 stddev (keep 65% of samples); we ignore outliers to get a more consistent result
+    double MKeys = length / ( 1024.0 * 1024.0 );
     size_t pruned = myTimer.pruneOutliers( 1.0 );
-    double testTime = myTimer.getAverageTime( testId );
-    double testMB = ( length * sizeof( DATA_TYPE ) ) / ( 1024.0 * 1024.0);
-	double testGB = testMB/ 1024.0;
+    double sortTime = myTimer.getAverageTime( testId );
+    double testMB = MKeys*sizeof(DATA_TYPE);
+    double testGB = testMB/ 1024.0;
+    //double sortGB = ( input.size( ) * sizeof( int ) ) / (1024.0 * 1024.0 * 1024.0);
 
     bolt::tout << std::left;
     bolt::tout << std::setw( colWidth ) << _T( "Test profile: " ) << _T( "[" ) << iterations-pruned << _T( "] samples" ) << std::endl;
-    bolt::tout << std::setw( colWidth ) << _T( "    Size (MB): " ) << testMB << std::endl;
-    bolt::tout << std::setw( colWidth ) << _T( "    Time (ms): " ) << testTime*1000.0 << std::endl;
-    bolt::tout << std::setw( colWidth ) << _T( "    Speed (GB/s): " ) << testGB / testTime << std::endl;
-    bolt::tout << std::setw( colWidth ) << _T( "    Speed (MKeys/s): " ) << length / ( testTime * ( 1024.0 * 1024.0 ) ) << std::endl;
+    bolt::tout << std::setw( colWidth ) << _T( "    Size (MKeys): " ) << MKeys << std::endl;
+    bolt::tout << std::setw( colWidth ) << _T( "    Size (GB): " ) << testGB << std::endl;
+    bolt::tout << std::setw( colWidth ) << _T( "    Time (s): " ) << sortTime << std::endl;
+    bolt::tout << std::setw( colWidth ) << _T( "    Speed (GB/s): " ) << testGB / sortTime << std::endl;
+    bolt::tout << std::setw( colWidth ) << _T( "    Speed (MKeys/s): " ) << MKeys / sortTime << std::endl;
     bolt::tout << std::endl;
 
     return 0;

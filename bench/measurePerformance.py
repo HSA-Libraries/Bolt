@@ -331,9 +331,9 @@ for params in test_combinations:
                      '-l', lengthx,
     #                     precision,
                      '-i', '50']
-    if args.routine == 'sort':
-        arguments.append( '-t' )
-        arguments.append( str( test ) )
+    #if args.routine == 'sort':
+    #    arguments.append( '-t' )
+    #    arguments.append( str( test ) )
     #    arguments.append( '-m' )
     ###Set the Library Selection 
     if args.library == 'TBB':
@@ -382,7 +382,8 @@ for params in test_combinations:
     speedStr = 'GB/s'
     if args.routine == 'stablesort':
         speedStr = 'MKeys/s'
-
+    if args.routine == 'sort':
+        speedStr = 'MKeys/s'
     if writeline:
         try:
             output = itertools.ifilter( lambda x: x.count( speedStr ), output)

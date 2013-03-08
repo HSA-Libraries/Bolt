@@ -38,4 +38,4 @@ python plotPerformance.py --y_axis_label "GBeys/sec" --title "sort Performance" 
 copy D:\Project\bolt\GitHub\Bolt-new\bin\vs2012-tbb-SuperBuild\Bolt-build\staging\Release\clbolt.bench.sort.exe .
 python measurePerformance.py --label sort_bolt_device_radix_cont --library=BOLT --routine=sort --memory device -l 4096-67108864:x2 --tablefile sort_bolt_device_radix_cont.txt
 python measurePerformance.py --label sort_bolt_host_bitonic_cont --library=BOLT --routine=sort --memory host -l 4096-67108864:x2 --tablefile sort_bolt_host_bitonic_cont.txt
-python plotPerformance.py --y_axis_label "MKeys/sec" --title "sort Performance" --x_axis_scale log2 -d sort_bolt_device_radix_cont.txt -d sort_tbb_host.txt --outputfile newSortPerfRadixUint.pdf
+python plotPerformance.py --y_axis_label "Unsigned int MKeys/sec" --title "Sort Performance" --x_axis_scale log2 -d sort_bolt_device.txt -d sort_tbb_host.txt -d stable_sort_tbb_host.txt --outputfile newSortPerfRadixUint.pdf
