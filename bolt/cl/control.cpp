@@ -277,7 +277,15 @@ namespace cl
             
             std::vector< ::cl::Device > otherDevices;
             std::vector< ::cl::Platform >::iterator otherPlatDevice;
-            platforms.begin()->getDevices( CL_DEVICE_TYPE_CPU, &otherDevices );
+            try 
+            {
+                platforms.begin()->getDevices( CL_DEVICE_TYPE_CPU, &otherDevices );
+            }
+            catch (::cl::Error err)
+            {
+                std::cout << "No CPU device Found\n";
+                return ::cl::CommandQueue();  //return a NULL queue
+            }
             if( otherDevices.empty( ) )
             {
                 return ::cl::CommandQueue::getDefault( );
@@ -488,3 +496,4 @@ namespace cl
 
 }
 }
+

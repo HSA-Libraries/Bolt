@@ -289,9 +289,13 @@ namespace bolt {
                 m_waitMode(BusyWait),
                 m_unroll(1)
             {
-                ::cl::Device device = m_commandQueue.getInfo<CL_QUEUE_DEVICE>();
-                ::cl_device_type dType = device.getInfo<CL_DEVICE_TYPE>();
-                if(dType == CL_DEVICE_TYPE_CPU)
+                ::cl_device_type dType;
+                if(m_commandQueue() != NULL)
+                {
+                    ::cl::Device device = m_commandQueue.getInfo<CL_QUEUE_DEVICE>();
+                    dType = device.getInfo<CL_DEVICE_TYPE>();
+                }
+                if(dType == CL_DEVICE_TYPE_CPU || m_commandQueue() == NULL)
                 {
 #ifdef ENABLE_TBB
                     m_forceRunMode = MultiCoreCpu;
