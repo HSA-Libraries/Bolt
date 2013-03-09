@@ -15,18 +15,13 @@
 
 ***************************************************************************/                                                                                     
 
-#if !defined( SORT_INL )
-#define SORT_INL
+#if !defined( OCL_SORT_INL )
+#define OCL_SORT_INL
 #pragma once
 
 #include <algorithm>
 #include <type_traits>
 
-#include <boost/bind.hpp>
-#include <boost/thread/once.hpp>
-#include <boost/shared_array.hpp>
-#define CL_VERSION_1_2 1
-#include "bolt/cl/bolt.h"
 #include "bolt/cl/scan.h"
 #include "bolt/cl/functional.h"
 #include "bolt/cl/device_vector.h"
@@ -480,7 +475,7 @@ sort_enqueue(control &ctl,
     int wgPerComputeUnit =  ctl.wgPerComputeUnit(); 
     cl_int l_Error = CL_SUCCESS;
 
-    static  boost::once_flag initOnlyOnce;
+
     static std::vector< ::cl::Kernel > radixSortUintKernels;
     std::vector<std::string> typeNames( sort_end );
     typeNames[sort_iValueType] = TypeName< T >::get( );
@@ -1279,7 +1274,7 @@ void sort_enqueue_non_powerOf2(control &ctl,
                                const StrictWeakOrdering& comp, const std::string& cl_code)  
 {
     typedef typename std::iterator_traits< DVRandomAccessIterator >::value_type T;
-    static boost::once_flag initOnlyOnce;
+
     cl_int l_Error;
     size_t szElements = (size_t)(last - first);
 

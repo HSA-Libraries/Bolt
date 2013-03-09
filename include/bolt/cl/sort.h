@@ -15,14 +15,13 @@
 
 ***************************************************************************/                                                                                     
 
-#if !defined( SORT_H )
-#define SORT_H
+#if !defined( OCL_SORT_H )
+#define OCL_SORT_H
 #pragma once
 
 #include <bolt/cl/bolt.h>
-#include <bolt/cl/functional.h>
 #include <string>
-#include <iostream>
+
 
 
 /*! \file bolt/cl/sort.h
