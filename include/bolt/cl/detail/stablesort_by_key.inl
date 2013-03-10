@@ -93,8 +93,8 @@ namespace cl {
 namespace detail
 {
 
-    enum stableSortTypes { stableSort_by_key_iValueType, stableSort_by_key_iIterType, stableSort_by_key_oValueType, 
-        stableSort_by_key_oIterType, stableSort_by_key_lessFunction, stableSort_by_key_end };
+    enum stableSortTypes { stableSort_by_key_KeyType, stableSort_by_key_KeyIterType, stableSort_by_key_ValueType, 
+        stableSort_by_key_ValueIterType, stableSort_by_key_lessFunction, stableSort_by_key_end };
 
     class StableSort_by_key_KernelTemplateSpecializer : public KernelTemplateSpecializer
     {
@@ -110,22 +110,30 @@ namespace detail
             const std::string templateSpecializationString = 
                 "template __attribute__((mangled_name(" + name( 0 ) + "Instantiated)))\n"
                 "kernel void " + name( 0 ) + "Template(\n"
-                "global " + typeNames[stableSort_by_key_iValueType] + "* data_ptr,\n"
-                ""        + typeNames[stableSort_by_key_iIterType] + " data_iter,\n"
+                "global " + typeNames[stableSort_by_key_KeyType] + "* data_ptr,\n"
+                ""        + typeNames[stableSort_by_key_KeyIterType] + " data_iter,\n"
+                "global " + typeNames[stableSort_by_key_ValueType] + "* value_ptr,\n"
+                ""        + typeNames[stableSort_by_key_ValueIterType] + " value_iter,\n"
                 "const uint vecSize,\n"
-                "local "  + typeNames[stableSort_by_key_iValueType] + "* lds,\n"
+                "local "  + typeNames[stableSort_by_key_KeyType] + "* key_lds,\n"
+                "local "  + typeNames[stableSort_by_key_ValueType] + "* val_lds,\n"
                 "global " + typeNames[stableSort_by_key_lessFunction] + " * lessOp\n"
                 ");\n\n"
 
                 "template __attribute__((mangled_name(" + name( 1 ) + "Instantiated)))\n"
                 "kernel void " + name( 1 ) + "Template(\n"
-                "global " + typeNames[stableSort_by_key_iValueType] + "* source_ptr,\n"
-                ""        + typeNames[stableSort_by_key_iIterType] + " source_iter,\n"
-                "global " + typeNames[stableSort_by_key_iValueType] + "* result_ptr,\n"
-                ""        + typeNames[stableSort_by_key_iIterType] + " result_iter,\n"
+                "global " + typeNames[stableSort_by_key_KeyType] + "* iKey_ptr,\n"
+                ""        + typeNames[stableSort_by_key_KeyIterType] + " iKey_iter,\n"
+                "global " + typeNames[stableSort_by_key_ValueType] + "* iValue_ptr,\n"
+                ""        + typeNames[stableSort_by_key_ValueIterType] + " iValue_iter,\n"
+                "global " + typeNames[stableSort_by_key_KeyType] + "* oKey_ptr,\n"
+                ""        + typeNames[stableSort_by_key_KeyIterType] + " oKey_iter,\n"
+                "global " + typeNames[stableSort_by_key_ValueType] + "* oValue_ptr,\n"
+                ""        + typeNames[stableSort_by_key_ValueIterType] + " oValue_iter,\n"
                 "const uint srcVecSize,\n"
                 "const uint srcBlockSize,\n"
-                "local "  + typeNames[stableSort_by_key_iValueType] + "* lds,\n"
+                "local "  + typeNames[stableSort_by_key_KeyType] + "* key_lds,\n"
+                "local "  + typeNames[stableSort_by_key_ValueType] + "* val_lds,\n"
                 "global " + typeNames[stableSort_by_key_lessFunction] + " * lessOp\n"
                 ");\n\n";
 
@@ -409,19 +417,24 @@ namespace detail
         /**********************************************************************************
          * Type Names - used in KernelTemplateSpecializer
          *********************************************************************************/
-        typedef std::iterator_traits< DVRandomAccessIterator1 >::value_type iType;
+        typedef std::iterator_traits< DVRandomAccessIterator1 >::value_type keyType;
+        typedef std::iterator_traits< DVRandomAccessIterator2 >::value_type valueType;
 
         std::vector<std::string> typeNames( stableSort_by_key_end );
-        typeNames[stableSort_by_key_iValueType] = TypeName< iType >::get( );
-        typeNames[stableSort_by_key_iIterType] = TypeName< DVRandomAccessIterator1 >::get( );
+        typeNames[stableSort_by_key_KeyType] = TypeName< keyType >::get( );
+        typeNames[stableSort_by_key_ValueType] = TypeName< valueType >::get( );
+        typeNames[stableSort_by_key_KeyIterType] = TypeName< DVRandomAccessIterator1 >::get( );
+        typeNames[stableSort_by_key_ValueIterType] = TypeName< DVRandomAccessIterator2 >::get( );
         typeNames[stableSort_by_key_lessFunction] = TypeName< StrictWeakOrdering >::get( );
 
         /**********************************************************************************
          * Type Definitions - directrly concatenated into kernel string
          *********************************************************************************/
         std::vector< std::string > typeDefinitions;
-        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< iType >::get( ) )
+        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< keyType >::get( ) )
+        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< valueType >::get( ) )
         PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVRandomAccessIterator1 >::get( ) )
+        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVRandomAccessIterator2 >::get( ) )
         PUSH_BACK_UNIQUE( typeDefinitions, ClCode< StrictWeakOrdering  >::get( ) )
 
         /**********************************************************************************
@@ -447,7 +460,7 @@ namespace detail
             typeNames,
             &ss_kts,
             typeDefinitions,
-            stablesort_kernels,
+            stablesort_by_key_kernels,
             compileOptions );
         // kernels returned in same order as added in KernelTemplaceSpecializer constructor
 
@@ -469,12 +482,16 @@ namespace detail
 
         //  kernels[ 0 ] sorts values within a workgroup, in parallel across the entire vector
         //  kernels[ 0 ] reads and writes to the same vector
-        cl_uint ldsSize  = static_cast< cl_uint >( localRange * sizeof( iType ) );
+        cl_uint keyLdsSize  = static_cast< cl_uint >( localRange * sizeof( keyType ) );
+        cl_uint valueLdsSize  = static_cast< cl_uint >( localRange * sizeof( valueType ) );
         V_OPENCL( kernels[ 0 ].setArg( 0, keys_first.getBuffer( ) ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
         V_OPENCL( kernels[ 0 ].setArg( 1, keys_first.gpuPayloadSize( ), &keys_first.gpuPayload( ) ), "Error setting a kernel argument" );
-        V_OPENCL( kernels[ 0 ].setArg( 2, vecSize ),            "Error setting argument for kernels[ 0 ]" ); // Size of scratch buffer
-        V_OPENCL( kernels[ 0 ].setArg( 3, ldsSize, NULL ),          "Error setting argument for kernels[ 0 ]" ); // Scratch buffer
-        V_OPENCL( kernels[ 0 ].setArg( 4, *userFunctor ),           "Error setting argument for kernels[ 0 ]" ); // User provided functor class
+        V_OPENCL( kernels[ 0 ].setArg( 2, values_first.getBuffer( ) ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
+        V_OPENCL( kernels[ 0 ].setArg( 3, values_first.gpuPayloadSize( ), &values_first.gpuPayload( ) ), "Error setting a kernel argument" );
+        V_OPENCL( kernels[ 0 ].setArg( 4, vecSize ),            "Error setting argument for kernels[ 0 ]" ); // Size of scratch buffer
+        V_OPENCL( kernels[ 0 ].setArg( 5, keyLdsSize, NULL ),          "Error setting argument for kernels[ 0 ]" ); // Scratch buffer
+        V_OPENCL( kernels[ 0 ].setArg( 6, valueLdsSize, NULL ),          "Error setting argument for kernels[ 0 ]" ); // Scratch buffer
+        V_OPENCL( kernels[ 0 ].setArg( 7, *userFunctor ),           "Error setting argument for kernels[ 0 ]" ); // User provided functor class
 
         ::cl::CommandQueue& myCQ = ctrl.commandQueue( );
 
@@ -505,16 +522,18 @@ namespace detail
         size_t vecPow2 = (vecSize & (vecSize-1));
         numMerges += vecPow2? 1: 0;
 
-        //{
-        //    device_vector< iType >::pointer myData = first.getContainer( ).data( );
-        //    myData.reset( );
-        //}
+        {
+            device_vector< keyType >::pointer myKeys = keys_first.getContainer( ).data( );
+            device_vector< valueType >::pointer myValues = values_first.getContainer( ).data( );
+        }
 
         //  Allocate a flipflop buffer because the merge passes are out of place
-        control::buffPointer tmpBuffer = ctrl.acquireBuffer( globalRange * sizeof( iType ) );
-        V_OPENCL( kernels[ 1 ].setArg( 4, vecSize ),            "Error setting argument for kernels[ 0 ]" ); // Size of scratch buffer
-        V_OPENCL( kernels[ 1 ].setArg( 6, ldsSize, NULL ),          "Error setting argument for kernels[ 0 ]" ); // Scratch buffer
-        V_OPENCL( kernels[ 1 ].setArg( 7, *userFunctor ),           "Error setting argument for kernels[ 0 ]" ); // User provided functor class
+        control::buffPointer tmpKeyBuffer = ctrl.acquireBuffer( globalRange * sizeof( keyType ) );
+        control::buffPointer tmpValueBuffer = ctrl.acquireBuffer( globalRange * sizeof( valueType ) );
+        V_OPENCL( kernels[ 1 ].setArg( 8, vecSize ),            "Error setting argument for kernels[ 0 ]" ); // Size of scratch buffer
+        V_OPENCL( kernels[ 1 ].setArg( 10, keyLdsSize, NULL ),          "Error setting argument for kernels[ 0 ]" ); // Scratch buffer
+        V_OPENCL( kernels[ 1 ].setArg( 11, valueLdsSize, NULL ),          "Error setting argument for kernels[ 0 ]" ); // Scratch buffer
+        V_OPENCL( kernels[ 1 ].setArg( 12, *userFunctor ),           "Error setting argument for kernels[ 0 ]" ); // User provided functor class
 
         ::cl::Event kernelEvent;
         for( size_t pass = 1; pass <= numMerges; ++pass )
@@ -524,19 +543,27 @@ namespace detail
             {
                 V_OPENCL( kernels[ 1 ].setArg( 0, keys_first.getBuffer( ) ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
                 V_OPENCL( kernels[ 1 ].setArg( 1, keys_first.gpuPayloadSize( ), &keys_first.gpuPayload( ) ), "Error setting a kernel argument" );
-                V_OPENCL( kernels[ 1 ].setArg( 2, *tmpBuffer ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
-                V_OPENCL( kernels[ 1 ].setArg( 3, keys_first.gpuPayloadSize( ), &keys_first.gpuPayload( ) ), "Error setting a kernel argument" );
+                V_OPENCL( kernels[ 1 ].setArg( 2, values_first.getBuffer( ) ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
+                V_OPENCL( kernels[ 1 ].setArg( 3, values_first.gpuPayloadSize( ), &values_first.gpuPayload( ) ), "Error setting a kernel argument" );
+                V_OPENCL( kernels[ 1 ].setArg( 4, *tmpKeyBuffer ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
+                V_OPENCL( kernels[ 1 ].setArg( 5, keys_first.gpuPayloadSize( ), &keys_first.gpuPayload( ) ), "Error setting a kernel argument" );
+                V_OPENCL( kernels[ 1 ].setArg( 6, *tmpValueBuffer ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
+                V_OPENCL( kernels[ 1 ].setArg( 7, values_first.gpuPayloadSize( ), &values_first.gpuPayload( ) ), "Error setting a kernel argument" );
             }
             else
             {
-                V_OPENCL( kernels[ 1 ].setArg( 0, *tmpBuffer ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
+                V_OPENCL( kernels[ 1 ].setArg( 0, *tmpKeyBuffer ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
                 V_OPENCL( kernels[ 1 ].setArg( 1, keys_first.gpuPayloadSize( ), &keys_first.gpuPayload( ) ), "Error setting a kernel argument" );
-                V_OPENCL( kernels[ 1 ].setArg( 2, keys_first.getBuffer( ) ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
-                V_OPENCL( kernels[ 1 ].setArg( 3, keys_first.gpuPayloadSize( ), &keys_first.gpuPayload( ) ), "Error setting a kernel argument" );
+                V_OPENCL( kernels[ 1 ].setArg( 2, *tmpValueBuffer ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
+                V_OPENCL( kernels[ 1 ].setArg( 3, values_first.gpuPayloadSize( ), &values_first.gpuPayload( ) ), "Error setting a kernel argument" );
+                V_OPENCL( kernels[ 1 ].setArg( 4, keys_first.getBuffer( ) ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
+                V_OPENCL( kernels[ 1 ].setArg( 5, keys_first.gpuPayloadSize( ), &keys_first.gpuPayload( ) ), "Error setting a kernel argument" );
+                V_OPENCL( kernels[ 1 ].setArg( 6, values_first.getBuffer( ) ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
+                V_OPENCL( kernels[ 1 ].setArg( 7, values_first.gpuPayloadSize( ), &values_first.gpuPayload( ) ), "Error setting a kernel argument" );
             }
             //  For each pass, the merge window doubles
             unsigned srcLogicalBlockSize = static_cast< unsigned >( localRange << (pass-1) );
-            V_OPENCL( kernels[ 1 ].setArg( 5, static_cast< unsigned >( srcLogicalBlockSize ) ),            "Error setting argument for kernels[ 0 ]" ); // Size of scratch buffer
+            V_OPENCL( kernels[ 1 ].setArg( 9, static_cast< unsigned >( srcLogicalBlockSize ) ),            "Error setting argument for kernels[ 0 ]" ); // Size of scratch buffer
 
             if( pass == numMerges )
             {
@@ -558,8 +585,8 @@ namespace detail
             //if( pass & 0x1 )
             //{
             //    //  Debug mapping, to look at result vector in memory
-            //    iType* dev2Host = static_cast< iType* >( myCQ.enqueueMapBuffer( *tmpBuffer, CL_TRUE, CL_MAP_READ, 0,
-            //        globalRange * sizeof( iType ), NULL, NULL, &l_Error) );
+            //    keyType* dev2Host = static_cast< keyType* >( myCQ.enqueueMapBuffer( *tmpBuffer, CL_TRUE, CL_MAP_READ, 0,
+            //        globalRange * sizeof( keyType ), NULL, NULL, &l_Error) );
             //    V_OPENCL( l_Error, "Error: Mapping Device->Host Buffer." );
 
             //    for( unsigned i = 0; i < globalRange/srcLogicalBlockSize; ++i )
@@ -580,8 +607,8 @@ namespace detail
             //else
             //{
             //    //  Debug mapping, to look at result vector in memory
-            //    iType* dev2Host = static_cast< iType* >( myCQ.enqueueMapBuffer( first.getBuffer( ), CL_TRUE, CL_MAP_READ, 0,
-            //        bolt::cl::minimum< size_t >()( globalRange, vecSize ) * sizeof( iType ), NULL, NULL, &l_Error) );
+            //    keyType* dev2Host = static_cast< keyType* >( myCQ.enqueueMapBuffer( first.getBuffer( ), CL_TRUE, CL_MAP_READ, 0,
+            //        bolt::cl::minimum< size_t >()( globalRange, vecSize ) * sizeof( keyType ), NULL, NULL, &l_Error) );
             //    V_OPENCL( l_Error, "Error: Mapping Device->Host Buffer." );
 
             //    for( unsigned i = 0; i < globalRange/srcLogicalBlockSize; ++i )
@@ -608,12 +635,12 @@ namespace detail
         {
             ::cl::Event copyEvent;
 
-            l_Error = myCQ.enqueueCopyBuffer( *tmpBuffer, keys_first.getBuffer( ), 0, keys_first.m_Index * sizeof( iType ), 
-                vecSize * sizeof( iType ), NULL, NULL );
+            l_Error = myCQ.enqueueCopyBuffer( *tmpKeyBuffer, keys_first.getBuffer( ), 0, keys_first.m_Index * sizeof( keyType ), 
+                vecSize * sizeof( keyType ), NULL, NULL );
             V_OPENCL( l_Error, "device_vector failed to copy data inside of operator=()" );
 
-            l_Error = myCQ.enqueueCopyBuffer( *tmpBuffer, values_first.getBuffer( ), 0, values_first.m_Index * sizeof( iType ), 
-                vecSize * sizeof( iType ), NULL, &copyEvent );
+            l_Error = myCQ.enqueueCopyBuffer( *tmpValueBuffer, values_first.getBuffer( ), 0, values_first.m_Index * sizeof( keyType ), 
+                vecSize * sizeof( keyType ), NULL, &copyEvent );
             V_OPENCL( l_Error, "device_vector failed to copy data inside of operator=()" );
 
             wait( ctrl, copyEvent );

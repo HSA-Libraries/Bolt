@@ -1683,14 +1683,14 @@ int main(int argc, char* argv[])
     cl_int err = CL_SUCCESS;
 
     bolt::cl::control& ctrl = bolt::cl::control::getDefault();
-    ctrl.forceRunMode( bolt::cl::control::MultiCoreCpu );  // choose tbb tbb::parallel_scan
+    //ctrl.forceRunMode( bolt::cl::control::MultiCoreCpu );  // choose tbb tbb::parallel_scan
 
     std::string strDeviceName = ctrl.device( ).getInfo< CL_DEVICE_NAME >( &err );
     bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_NAME > failed" );
 
     std::cout << "Device under test : " << strDeviceName << std::endl;
 
-    for ( unsigned vecLength = 64; vecLength <= 512; vecLength += 64 )
+    for ( unsigned vecLength = 128; vecLength <= 512; vecLength += 64 )
     {
         std::cout << "Testing vecLength: " << vecLength << std::endl;
         BasicSortTestOfLength< int, float >( vecLength );

@@ -42,6 +42,7 @@
 #include "bolt/sort_uint_kernels.hpp"
 #include "bolt/sort_by_key_kernels.hpp"
 #include "bolt/stablesort_kernels.hpp"
+#include "bolt/stablesort_by_key_kernels.hpp"
 #include "bolt/transform_kernels.hpp"
 #include "bolt/transform_reduce_kernels.hpp"
 #include "bolt/transform_scan_kernels.hpp"

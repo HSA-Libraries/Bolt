@@ -126,15 +126,21 @@ uint upperBoundBinary( global sType* data, uint left, uint right, sType searchVa
 //  blocks, each block is independently sorted.  The goal is to write into the output buffer half as 
 //  many blocks, of double the size.  The even and odd blocks are stably merged together to form
 //  a new sorted block of twice the size.  The algorithm is out-of-place.
-template< typename sPtrType, typename dIterType, typename StrictWeakOrdering >
+template< typename keyType, typename keyIterType, typename valueType, typename valueIterType, 
+            typename StrictWeakOrdering >
 kernel void mergeTemplate( 
-                global sPtrType* source_ptr,
-                dIterType    source_iter, 
-                global sPtrType* result_ptr,
-                dIterType    result_iter, 
+                global keyType*     iKey_ptr,
+                keyIterType         iKey_iter, 
+                global valueType*   iValue_ptr,
+                valueIterType       iValue_iter, 
+                global keyType*     oKey_ptr,
+                keyIterType         oKey_iter, 
+                global valueType*   oValue_ptr,
+                valueIterType       oValue_iter, 
                 const uint srcVecSize,
                 const uint srcLogicalBlockSize,
-                local sPtrType* lds,
+                local keyType*      key_lds,
+                local valueType*    val_lds,
                 global StrictWeakOrdering* lessOp
             )
 {
@@ -168,15 +174,15 @@ kernel void mergeTemplate(
     // }
     
     //  For a particular element in the input array, find the lowerbound index for it in the search sequence given by leftBlockIndex & rightBlockIndex
-    // uint insertionIndex = lowerBoundLinear( source_ptr, leftBlockIndex, rightBlockIndex, source_ptr[ globalID ], lessOp ) - leftBlockIndex;
+    // uint insertionIndex = lowerBoundLinear( iKey_ptr, leftBlockIndex, rightBlockIndex, iKey_ptr[ globalID ], lessOp ) - leftBlockIndex;
     uint insertionIndex = 0;
     if( (srcBlockNum & 0x1) == 0 )
     {
-        insertionIndex = lowerBoundBinary( source_ptr, leftBlockIndex, rightBlockIndex, source_ptr[ globalID ], lessOp ) - leftBlockIndex;
+        insertionIndex = lowerBoundBinary( iKey_ptr, leftBlockIndex, rightBlockIndex, iKey_ptr[ globalID ], lessOp ) - leftBlockIndex;
     }
     else
     {
-        insertionIndex = upperBoundBinary( source_ptr, leftBlockIndex, rightBlockIndex, source_ptr[ globalID ], lessOp ) - leftBlockIndex;
+        insertionIndex = upperBoundBinary( iKey_ptr, leftBlockIndex, rightBlockIndex, iKey_ptr[ globalID ], lessOp ) - leftBlockIndex;
     }
     
     //  The index of an element in the result sequence is the summation of it's indixes in the two input 
@@ -187,18 +193,23 @@ kernel void mergeTemplate(
     // if( (dstBlockNum*dstLogicalBlockSize)+dstBlockIndex == 395 )
     // {
         // printf( "mergeTemplate: (dstBlockNum[ %i ] * dstLogicalBlockSize[ %i ]) + dstBlockIndex[ %i ] = srcBlockIndex[ %i ] + insertionIndex[ %i ]\n", dstBlockNum, dstLogicalBlockSize, dstBlockIndex, srcBlockIndex, insertionIndex );
-        // printf( "mergeTemplate: dstBlockIndex[ %i ] = source_ptr[ %i ] ( %i )\n", (dstBlockNum*dstLogicalBlockSize)+dstBlockIndex, globalID, source_ptr[ globalID ] );
+        // printf( "mergeTemplate: dstBlockIndex[ %i ] = iKey_ptr[ %i ] ( %i )\n", (dstBlockNum*dstLogicalBlockSize)+dstBlockIndex, globalID, iKey_ptr[ globalID ] );
     // }
-    result_ptr[ (dstBlockNum*dstLogicalBlockSize)+dstBlockIndex ] = source_ptr[ globalID ];
+    oKey_ptr[ (dstBlockNum*dstLogicalBlockSize)+dstBlockIndex ] = iKey_ptr[ globalID ];
+    oValue_ptr[ (dstBlockNum*dstLogicalBlockSize)+dstBlockIndex ] = iValue_ptr[ globalID ];
     // printf( "mergeTemplate: leftResultIndex[ %i ]=%i + %i\n", leftResultIndex, srcBlockIndex, leftInsertionIndex );
 }
 
-template< typename dPtrType, typename dIterType, typename StrictWeakOrdering >
+template< typename keyType, typename keyIterType, typename valueType, typename valueIterType, 
+            typename StrictWeakOrdering >
 kernel void blockInsertionSortTemplate( 
-                global dPtrType* data_ptr,
-                dIterType    data_iter, 
-                const uint vecSize,
-                local dPtrType* lds,
+                global keyType*     key_ptr,
+                keyIterType         key_iter, 
+                global valueType*   value_ptr,
+                valueIterType       value_iter, 
+                const uint          vecSize,
+                local keyType*      key_lds,
+                local valueType*    val_lds,
                 global StrictWeakOrdering* lessOp
             )
 {
@@ -210,11 +221,14 @@ kernel void blockInsertionSortTemplate(
     //  Abort threads that are passed the end of the input vector
     if (gloId >= vecSize) return; // on SI this doesn't mess-up barriers
 
-    data_iter.init( data_ptr );
+    key_iter.init( key_ptr );
+    value_iter.init( value_ptr );
 
     //  Make a copy of the entire input array into fast local memory
-    dPtrType val = data_iter[ gloId ];
-    lds[ locId ] = val;
+    keyType key = key_iter[ gloId ];
+    valueType val = value_iter[ gloId ];
+    key_lds[ locId ] = key;
+    val_lds[ locId ] = val;
     barrier( CLK_LOCAL_MEM_FENCE );
 
     //  Sorts a workgroup using a naive insertion sort
@@ -231,20 +245,30 @@ kernel void blockInsertionSortTemplate(
         //  Indices are signed because the while loop will generate a -1 index inside of the max function
         for( int currIndex = 1; currIndex < endIndex; ++currIndex )
         {
-            val = lds[ currIndex ];
+            key = key_lds[ currIndex ];
+            val = val_lds[ currIndex ];
             int scanIndex = currIndex;
-            dPtrType ldsVal = lds[scanIndex - 1];
-            while( scanIndex > 0 && (*lessOp)( val, ldsVal ) )
+            keyType ldsKey = key_lds[scanIndex - 1];
+            while( scanIndex > 0 && (*lessOp)( key, ldsKey ) )
             {
-                lds[ scanIndex ] = ldsVal;
+                valueType ldsVal = val_lds[scanIndex - 1];
+                
+                //  If the keys are being swapped, make sure the values are swapped identicaly
+                key_lds[ scanIndex ] = ldsKey;
+                val_lds[ scanIndex ] = ldsVal;
+
                 scanIndex = scanIndex - 1;
-                ldsVal = lds[ max(0, scanIndex - 1) ];  // scanIndex-1 may be -1
+                ldsKey = key_lds[ max( 0, scanIndex - 1 ) ];  // scanIndex-1 may be -1
             }
-            lds[ scanIndex ] = val;
+            key_lds[ scanIndex ] = key;
+            val_lds[ scanIndex ] = val;
         }
     }
     barrier( CLK_LOCAL_MEM_FENCE );
 
-    val = lds[ locId ];
-    data_iter[ gloId ] = val;
+    key = key_lds[ locId ];
+    key_iter[ gloId ] = key;
+    
+    val = val_lds[ locId ];
+    value_iter[ gloId ] = val;
 }
