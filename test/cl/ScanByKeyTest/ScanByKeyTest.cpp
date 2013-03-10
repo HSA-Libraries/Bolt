@@ -226,7 +226,7 @@ struct uddtM2
     bool operator==(const uddtM2& rhs) const
     {
         bool equal = true;
-        double ths = 0.00001; // thresh hold single(float)
+        float ths = 0.00001; // thresh hold single(float)
         equal = ( a == rhs.a ) ? equal : false;
         if (rhs.b < ths && rhs.b > -ths)
             equal = ( (1.0*b - rhs.b) < ths && (1.0*b - rhs.b) > -ths) ? equal : false;
@@ -255,7 +255,25 @@ struct uddtM2
     }
 };
 );
+
+BOLT_FUNCTOR(MixM2,
+struct MixM2
+{
+    uddtM2 operator()(const uddtM2 &lhs, const uddtM2 &rhs) const
+    {
+        uddtM2 _result;
+        _result.a = lhs.a^rhs.a;
+        _result.b = lhs.b+rhs.b;
+        return _result;
+    };
+}; 
+);
+
+
 uddtM2 identityMixM2 = { 0, 3.141596f };
+uddtM2 initialMixM2  = { 2, 1.000001f };
+
+
 BOLT_FUNCTOR(uddtM2_equal_to,
 struct uddtM2_equal_to
 {
@@ -1092,7 +1110,125 @@ TEST(ExclusiveScanByKey, MulticoreExclUdd)
     cmpArrays(refOutput, output);
 }
 
-/////////////////////////////////////////////////  Exclusive  ///////////////////////////
+/////////////////////////////////////////////////CL Exclusive test Cases after fix ///////////////////////////
+
+TEST(ExclusiveScanByKey, CLscanbykeyExclFloat)
+{
+    //setup keys
+    int length = 1<<18;
+    std::vector< int > keys( length);
+    // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
+    int segmentLength = 0;
+    int segmentIndex = 0;
+    int key = 0;
+    for (int i = 0; i < length; i++)
+    {
+        if (segmentIndex == segmentLength)
+        {
+    	      segmentLength++;
+            segmentIndex = 0;
+            ++key;
+        }
+        keys[i] = key; // tested with key = 1 also which is actually scan
+        segmentIndex++;
+    }
+    // input and output vectors for device and reference
+    std::vector< float > input( length);
+    std::vector< float > output( length);
+    std::vector< float > refInput( length);
+    std::vector< float > refOutput( length);
+    for(int i=0; i<length; i++) {
+        input[i] = 1.0f;
+        refInput[i] = 1.0f;
+    }
+    // call scan
+    bolt::cl::equal_to<int> eq; 
+    bolt::cl::plus<float> mM3; 
+  
+    bolt::cl::exclusive_scan_by_key(keys.begin(), keys.end(), input.begin(), output.begin(), 4.0f,eq, mM3);
+    gold_scan_by_key_exclusive(keys.begin(), keys.end(), refInput.begin(), refOutput.begin(), mM3, 4.0f);
+    // compare results
+    cmpArrays(refOutput, output);
+}
+
+TEST(ExclusiveScanByKey, CLscanbykeyExclDouble)
+{
+    //setup keys
+    int length = 1<<18;
+    std::vector< int > keys( length);
+    // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
+    int segmentLength = 0;
+    int segmentIndex = 0;
+    int key = 0;
+    for (int i = 0; i < length; i++)
+    {
+        if (segmentIndex == segmentLength)
+        {
+    	      segmentLength++;
+            segmentIndex = 0;
+            ++key;
+        }
+        keys[i] = key; // tested with key = 1 also which is just scan
+        segmentIndex++;
+    }
+    // input and output vectors for device and reference
+    std::vector< double > input( length);
+    std::vector< double > output( length);
+    std::vector< double> refInput( length);
+    std::vector< double > refOutput( length);
+    for(int i=0; i<length; i++) {
+        input[i] = 1.0;
+        refInput[i] = 1.0;
+    }
+    // call scan
+    bolt::cl::equal_to<int> eq; 
+    bolt::cl::plus<double> mM3; 
+    bolt::cl::exclusive_scan_by_key(keys.begin(), keys.end(), input.begin(), output.begin(), 4.0,eq, mM3);
+    gold_scan_by_key_exclusive(keys.begin(), keys.end(), refInput.begin(), refOutput.begin(), mM3, 4.0);
+    // compare results
+    cmpArrays(refOutput, output);
+}
+
+TEST(ExclusiveScanByKey, CLscanbykeyExclUDD)
+{
+    //setup keys
+    int length = 1<<18;
+    std::vector< uddtM2 > keys( length, identityMixM2);
+    // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
+    int segmentLength = 0;
+    int segmentIndex = 0;
+    uddtM2 key = identityMixM2;
+    for (int i = 0; i < length; i++)
+    {
+        // start over, i.e., begin assigning new key
+        if (segmentIndex == segmentLength)
+        {
+            segmentLength++;
+            segmentIndex = 0;
+            ++key;
+        }
+        keys[i] = key;
+        segmentIndex++;
+    }
+    // input and output vectors for device and reference
+    std::vector< uddtM2 > input(  length, initialMixM2 );
+    std::vector< uddtM2 > output( length, identityMixM2 );
+    std::vector< uddtM2 > refInput( length, initialMixM2 );
+    std::vector< uddtM2 > refOutput( length );
+    // call scan
+    MixM2 mM2;
+    uddtM2_equal_to eq;
+    bolt::cl::exclusive_scan_by_key( keys.begin(), keys.end(), input.begin(), output.begin(), initialMixM2,eq, mM2);
+    gold_scan_by_key_exclusive(keys.begin(), keys.end(), refInput.begin(), refOutput.begin(), mM2, initialMixM2);
+    // compare results
+    cmpArrays(refOutput, output);
+}
+
+
+
+
+
+
 
 // paste from above
 #endif
