@@ -31,12 +31,6 @@
 #include "bolt/amp/bolt.h"
 #include "bolt/amp/functional.h"
 
-
-
-/*! \file reduce.h
-*/
-
-
 namespace bolt {
     namespace amp {
 
@@ -56,7 +50,7 @@ namespace bolt {
         */
 
 
-        /*! \breif reduce returns the result of combining all the elements in the specified range using the specified 
+        /*! \brief reduce returns the result of combining all the elements in the specified range using the specified 
         * binary_op.  
         * The classic example is a summation, where the binary_op is the plus operator.  By default, the initial value 
         * is "0" 
@@ -108,7 +102,7 @@ namespace bolt {
             InputIterator last);
 
 
-        /*! \breif \p reduce returns the result of combining all the elements in the specified range using the 
+        /*! \brief \p reduce returns the result of combining all the elements in the specified range using the 
         * specified binary_op. The classic example is a summation, where the binary_op is the plus operator.  
         * By default, the initial value is "0" and the binary operator is "plus<>()".
         *
@@ -163,7 +157,7 @@ namespace bolt {
         *
         * The \p reduce operation is similar the std::accumulate function.
         *
-        * \param ctl Control structure to control command-queue, debug, tuning, etc.  See bolt::amp::control.
+        * \param ctl \b Optional Control structure to control command-queue, debug, tuning, etc.  See bolt::amp::control.
         * \param first The first position in the sequence to be reduced.
         * \param last  The last position in the sequence to be reduced.
         * \param init  The initial value for the accumulator.
