@@ -50,11 +50,11 @@ namespace bolt
         //  Transform overloads
         //////////////////////////////////////////
         // default control, two-input transform, std:: iterator
-        template<typename InputIterator, typename OutputIterator, typename BinaryFunction> 
+        template<typename InputIterator1, typename InputIterator2, typename OutputIterator, typename BinaryFunction> 
         void transform( bolt::amp::control& ctl,
-                       InputIterator first1,
-                       InputIterator last1,
-                       InputIterator first2,
+                       InputIterator1 first1,
+                       InputIterator1 last1,
+                       InputIterator2 first2,
                        OutputIterator result, 
                        BinaryFunction f )
         {
@@ -64,14 +64,15 @@ namespace bolt
                                                    first2,
                                                    result,
                                                    f,                                                    
-                                                   std::iterator_traits< InputIterator >::iterator_category( ) );
+                                                   std::iterator_traits< InputIterator1 >::iterator_category( ),
+                                                   std::iterator_traits< InputIterator2 >::iterator_category( ));
         };
 
         // default control, two-input transform, std:: iterator
-        template<typename InputIterator, typename OutputIterator, typename BinaryFunction> 
-        void transform( InputIterator first1,
-                        InputIterator last1,
-                        InputIterator first2,
+        template<typename InputIterator1, typename InputIterator2, typename OutputIterator, typename BinaryFunction> 
+        void transform( InputIterator1 first1,
+                        InputIterator1 last1,
+                        InputIterator2 first2,
                         OutputIterator result, 
                         BinaryFunction f )
         {
@@ -81,7 +82,8 @@ namespace bolt
                                                     first2,
                                                     result,
                                                     f,                                                     
-                                                    std::iterator_traits< InputIterator >::iterator_category( ) );
+                                                    std::iterator_traits< InputIterator1 >::iterator_category( ),
+                                                    std::iterator_traits< InputIterator2 >::iterator_category( ) );
         };
 
         // default control, two-input transform, std:: iterator
@@ -126,28 +128,62 @@ namespace bolt
         namespace detail 
         {
             // Wrapper that uses default control class, iterator interface
-            template<typename InputIterator, typename OutputIterator, typename BinaryFunction> 
+            template<typename InputIterator1, typename InputIterator2, typename OutputIterator, typename BinaryFunction> 
             void transform_detect_random_access( bolt::amp::control& ctl,
-                                                 const InputIterator& first1,
-                                                 const InputIterator& last1,
-                                                 const InputIterator& first2, 
+                                                 const InputIterator1& first1,
+                                                 const InputIterator1& last1,
+                                                 const InputIterator2& first2, 
                                                  const OutputIterator& result,
                                                  const BinaryFunction& f,
-                                                 std::input_iterator_tag )
+                                                 std::input_iterator_tag,
+                                                 std::input_iterator_tag)
             {
                 //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data 
                 //  to a temporary buffer.  Should we?
                 static_assert( false, "Bolt only supports random access iterator types" );
             }
 
-            template<typename InputIterator, typename OutputIterator, typename BinaryFunction> 
+            // Wrapper that uses default control class, iterator interface
+            template<typename InputIterator1, typename InputIterator2, typename OutputIterator, typename BinaryFunction> 
             void transform_detect_random_access( bolt::amp::control& ctl,
-                                                 const InputIterator& first1,
-                                                 const InputIterator& last1,
-                                                 const InputIterator& first2, 
+                                                 const InputIterator1& first1,
+                                                 const InputIterator1& last1,
+                                                 const InputIterator2& first2, 
                                                  const OutputIterator& result,
                                                  const BinaryFunction& f,
-                                                 std::random_access_iterator_tag )
+                                                 std::input_iterator_tag,
+                                                 std::random_access_iterator_tag)
+            {
+                //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data 
+                //  to a temporary buffer.  Should we?
+                static_assert( false, "Bolt only supports random access iterator types" );
+            }
+
+            // Wrapper that uses default control class, iterator interface
+            template<typename InputIterator1, typename InputIterator2, typename OutputIterator, typename BinaryFunction> 
+            void transform_detect_random_access( bolt::amp::control& ctl,
+                                                 const InputIterator1& first1,
+                                                 const InputIterator1& last1,
+                                                 const InputIterator2& first2, 
+                                                 const OutputIterator& result,
+                                                 const BinaryFunction& f,
+                                                 std::random_access_iterator_tag,
+                                                 std::input_iterator_tag)
+            {
+                //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data 
+                //  to a temporary buffer.  Should we?
+                static_assert( false, "Bolt only supports random access iterator types" );
+            }
+
+            template<typename InputIterator1, typename InputIterator2, typename OutputIterator, typename BinaryFunction> 
+            void transform_detect_random_access( bolt::amp::control& ctl,
+                                                 const InputIterator1& first1,
+                                                 const InputIterator1& last1,
+                                                 const InputIterator2& first2, 
+                                                 const OutputIterator& result,
+                                                 const BinaryFunction& f,
+                                                 std::random_access_iterator_tag,
+                                                 std::random_access_iterator_tag)
             {
                 transform_pick_iterator( ctl, first1, last1, first2, result, f  );
             }
@@ -286,19 +322,21 @@ namespace bolt
                 \detail This template is called by the non-detail versions of transform, it already assumes random access
              *  iterators.  This overload is called strictly for non-device_vector iterators
             */
-            template<typename InputIterator, typename OutputIterator, typename BinaryFunction> 
+            template<typename InputIterator1, typename InputIterator2, typename OutputIterator, typename BinaryFunction> 
             typename std::enable_if< 
-                         !(std::is_base_of<typename device_vector<typename std::iterator_traits<InputIterator>::value_type>::iterator,InputIterator>::value &&
+                         !(std::is_base_of<typename device_vector<typename std::iterator_traits<InputIterator1>::value_type>::iterator,InputIterator1>::value &&
+                           std::is_base_of<typename device_vector<typename std::iterator_traits<InputIterator2>::value_type>::iterator,InputIterator2>::value &&
                            std::is_base_of<typename device_vector<typename std::iterator_traits<OutputIterator>::value_type>::iterator,OutputIterator>::value),
                      void >::type
             transform_pick_iterator( bolt::amp::control &ctl,
-                                     const InputIterator& first1,
-                                     const InputIterator& last1,
-                                     const InputIterator& first2, 
+                                     const InputIterator1& first1,
+                                     const InputIterator1& last1,
+                                     const InputIterator2& first2, 
                                      const OutputIterator& result,
                                      const BinaryFunction& f)
             {
-                typedef std::iterator_traits<InputIterator>::value_type iType;
+                typedef std::iterator_traits<InputIterator1>::value_type iType1;
+                typedef std::iterator_traits<InputIterator2>::value_type iType2;
                 typedef std::iterator_traits<OutputIterator>::value_type oType;
                 size_t sz = (last1 - first1); 
                 if (sz == 0)
@@ -314,9 +352,9 @@ namespace bolt
                {
 #if defined( ENABLE_TBB )
                     tbb::parallel_for( 
-                    transformBinaryRange< InputIterator, InputIterator, OutputIterator, BinaryFunction >( 
+                    transformBinaryRange< InputIterator1, InputIterator2, OutputIterator, BinaryFunction >( 
                         first1, last1, first2, result, f ), 
-                    transformBinaryRangeBody< InputIterator, InputIterator, OutputIterator, BinaryFunction >( ),
+                    transformBinaryRangeBody< InputIterator1, InputIterator2, OutputIterator, BinaryFunction >( ),
                     tbb::simple_partitioner( ) );
 #else
                     std::cout << "The MultiCoreCpu version of Transform is not enabled. " << std ::endl;
@@ -329,9 +367,9 @@ namespace bolt
                     // Use host pointers memory since these arrays are only read once - no benefit to copying.
                     // Map the input iterator to a device_vector
                     //device_vector< iType > dvInput( first1, last1, ctl );
-                    device_vector< iType, concurrency::array_view > dvInput( first1, last1, false, ctl );
+                    device_vector< iType1, concurrency::array_view > dvInput( first1, last1, false, ctl );
                     //device_vector< iType > dvInput2( first2, sz, true, ctl );
-                    device_vector< iType, concurrency::array_view > dvInput2( first2, sz, false, ctl );
+                    device_vector< iType2, concurrency::array_view > dvInput2( first2, sz, false, ctl );
                     // Map the output iterator to a device_vector
                     //device_vector< oType > dvOutput( result, sz, false, ctl );
                     device_vector< oType, concurrency::array_view > dvOutput( result, sz, true, ctl );
@@ -343,15 +381,16 @@ namespace bolt
 
             // This template is called by the non-detail versions of transform, it already assumes random access iterators
             // This is called strictly for iterators that are derived from device_vector< T >::iterator
-            template<typename DVInputIterator, typename DVOutputIterator, typename BinaryFunction> 
+            template<typename DVInputIterator1, typename DVInputIterator2, typename DVOutputIterator, typename BinaryFunction> 
             typename std::enable_if< 
-                          (std::is_base_of<typename device_vector<typename std::iterator_traits<DVInputIterator>::value_type>::iterator,DVInputIterator>::value &&
+                          (std::is_base_of<typename device_vector<typename std::iterator_traits<DVInputIterator1>::value_type>::iterator,DVInputIterator1>::value &&
+                           std::is_base_of<typename device_vector<typename std::iterator_traits<DVInputIterator2>::value_type>::iterator,DVInputIterator2>::value &&
                            std::is_base_of<typename device_vector<typename std::iterator_traits<DVOutputIterator>::value_type>::iterator,DVOutputIterator>::value),
                      void >::type
             transform_pick_iterator( bolt::amp::control &ctl,
-                                     const DVInputIterator& first1,
-                                     const DVInputIterator& last1,
-                                     const DVInputIterator& first2, 
+                                     const DVInputIterator1& first1,
+                                     const DVInputIterator1& last1,
+                                     const DVInputIterator2& first2, 
                                      const DVOutputIterator& result,
                                      const BinaryFunction& f )
             {
@@ -522,15 +561,16 @@ namespace bolt
              }
          };
 
-            template< typename DVInputIterator, typename DVOutputIterator, typename BinaryFunction > 
+            template< typename DVInputIterator1, typename DVInputIterator2, typename DVOutputIterator, typename BinaryFunction > 
             void transform_enqueue( bolt::amp::control &ctl,
-                                    const DVInputIterator& first1,
-                                    const DVInputIterator& last1,
-                                    const DVInputIterator& first2, 
+                                    const DVInputIterator1& first1,
+                                    const DVInputIterator1& last1,
+                                    const DVInputIterator2& first2, 
                                     const DVOutputIterator& result,
                                     const BinaryFunction& f)
             {
-               typedef std::iterator_traits< DVInputIterator >::value_type iType;
+               typedef std::iterator_traits< DVInputIterator1 >::value_type iType1;
+               typedef std::iterator_traits< DVInputIterator2 >::value_type iType2;
                typedef std::iterator_traits< DVOutputIterator >::value_type oType;
 
                const unsigned int arraySize =  static_cast< unsigned int >( std::distance( first1, last1 ) );
@@ -543,8 +583,8 @@ namespace bolt
                    wavefrontMultiple += WAVEFRONT_SIZE;
                }
 
-               concurrency::array_view<iType,1> inputV1 (first1.getBuffer());
-               concurrency::array_view<iType,1> inputV2 (first2.getBuffer());
+               concurrency::array_view<iType1,1> inputV1 (first1.getBuffer());
+               concurrency::array_view<iType2,1> inputV2 (first2.getBuffer());
                concurrency::array_view<oType,1> resultV(result.getBuffer());
                concurrency::extent< 1 > inputExtent( wavefrontMultiple );
 

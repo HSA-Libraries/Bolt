@@ -533,6 +533,31 @@ TEST_P( TransformDoubleVector, InplaceTransform )
     cmpArrays( stdInput, boltInput );
 }
 
+TEST( TransformDeviceVector, OutOfPlaceTransform)
+{
+  int length = 1<<8;
+  std::vector<int> hVectorA( length ), hVectorB( length ), hVectorO( length );
+  std::fill( hVectorA.begin(), hVectorA.end(), 1024 );
+  std::fill( hVectorB.begin(), hVectorB.end(), 1024 );
+  std::fill( hVectorB.begin(), hVectorB.end(), 0 );
+
+  bolt::amp::device_vector<int, concurrency::array> dVectorA(hVectorA.begin(), hVectorA.end()),
+    dVectorB(hVectorB.begin(), hVectorB.end()),
+    dVectorO(hVectorO.begin(), hVectorO.end());
+
+  std::transform( hVectorA.begin(), hVectorA.end(), hVectorB.begin(), hVectorO.begin(), std::plus< int >( ) );
+  bolt::amp::transform( dVectorA.begin(),
+    dVectorA.end(),
+    dVectorB.begin(),
+    dVectorO.begin(),
+    bolt::amp::plus< int >( ) );
+  
+  cmpArrays(hVectorO, dVectorO);
+
+
+
+}
+
 //  Test lots of consecutive numbers, but small range, suitable for integers because they overflow easier
 INSTANTIATE_TEST_CASE_P( TransformInPlace, TransformIntegerVector, ::testing::Range( 0, 1024, 1 ) );
 
@@ -593,11 +618,22 @@ int main(int argc, char* argv[])
     //    Set the standard OpenCL wait behavior to help debugging
     bolt::amp::control& myControl = bolt::amp::control::getDefault( );
     myControl.setWaitMode( bolt::amp::control::NiceWait );
+    myControl.setForceRunMode( bolt::amp::control::Automatic );  // choose tbb
+
+
+    int retVal = RUN_ALL_TESTS( );
+
+#ifdef BUILD_TBB
+
+    bolt::amp::control& myControl = bolt::amp::control::getDefault( );
+    myControl.setWaitMode( bolt::amp::control::NiceWait );
     myControl.setForceRunMode( bolt::amp::control::MultiCoreCpu );  // choose tbb
 
 
     int retVal = RUN_ALL_TESTS( );
 
+#endif
+    
     //  Reflection code to inspect how many tests failed in gTest
     ::testing::UnitTest& unitTest = *::testing::UnitTest::GetInstance( );
 
