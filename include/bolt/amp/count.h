@@ -38,13 +38,17 @@ namespace bolt {
         /*! \addtogroup reductions
         *   \ingroup algorithms
 
-        /*! \addtogroup counting
+        /*! \addtogroup amp-counting
         *  \ingroup reductions
         *  \{
         */
 
         namespace detail
         {
+
+            /*! \brief CountIfEqual: A bolt functor which matches if the object value is same as the input value
+             */
+
             template <typename T>
             struct CountIfEqual {
                 CountIfEqual(const T &targetValue) restrict (amp, cpu)  : _targetValue(targetValue)
@@ -60,49 +64,23 @@ namespace bolt {
         }
 
         /*!
-        * \p count counts the number of elements in the specified range which compare equal to the specified \p value.
+        * \brief \p count counts the number of elements in the specified range which compare equal to the specified 
+        * \p value.
         *
+        * \param ctl \b Optional Control structure to control accelerator, debug, tuning, etc.  See bolt::amp::control.
         * \param first The first position in the sequence to be counted.
         * \param last The last position in the sequence to be counted.
         * \param value This is the value to be searched.
+        * \return  The number of elements which matches \p value.
+        *
         * \code
-          int a[14] = {0, 10, 42, 55, 13, 13, 42, 19, 42, 11, 42, 99, 13, 77};
-
-          size_t countOf42 = bolt::amp::count (A, A+14, 42);
-          // countOf42 contains 4.
+        *  int a[14] = {0, 10, 42, 55, 13, 13, 42, 19, 42, 11, 42, 99, 13, 77};
+        *
+        * size_t countOf42 = bolt::amp::count (A, A+14, 42);
+        *  // countOf42 contains 4.
         * \endcode
         *
-        * \returns: The number of elements which matches \p value.
-        */
-        template<typename InputIterator, typename EqualityComparable>
-        typename bolt::amp::iterator_traits<InputIterator>::difference_type
-            count(InputIterator first,
-            InputIterator last,
-            EqualityComparable &value)
-        {
-            typedef typename std::iterator_traits<InputIterator>::value_type T;
-            return bolt::amp::count_if(first, last, detail::CountIfEqual<T>(value));
-        };
 
-        /*!
-        * \p count counts the number of elements in the specified range which compare equal to the specified \p value.
-        *
-        * \param ctl Control structure to control accelerator, debug, tuning, etc.  See bolt::amp::control.
-        * \param first The first position in the sequence to be counted.
-        * \param last The last position in the sequence to be counted.
-        * \param value This is the value to be searched.
-        * \code
-          //Create an AMP Control object using the default accelerator
-          ::Concurrency::accelerator accel(::Concurrency::accelerator::default_accelerator);
-          bolt::amp::control ctl(accel);
-
-          int a[14] = {0, 10, 42, 55, 13, 13, 42, 19, 42, 11, 42, 99, 13, 77};
-
-          size_t countOf42 = bolt::amp::count (ctl, A, A+14, 42);
-          // countOf42 contains 4.
-        * \endcode
-        *
-        * \returns: The number of elements which matches \p value.
         */
 
         template<typename InputIterator, typename EqualityComparable>
@@ -116,36 +94,50 @@ namespace bolt {
             return bolt::amp::count_if(ctl, first, last, detail::CountIfEqual<T>(value));
         };
 
+
+        template<typename InputIterator, typename EqualityComparable>
+        typename bolt::amp::iterator_traits<InputIterator>::difference_type
+            count(InputIterator first,
+            InputIterator last,
+            EqualityComparable &value)
+        {
+            typedef typename std::iterator_traits<InputIterator>::value_type T;
+            return bolt::amp::count_if(first, last, detail::CountIfEqual<T>(value));
+        };
+
+
         /*!
-        * \p count_if counts the number of elements in the specified range for which the specified \p predicate is \p true.
+        * \brief \p count_if counts the number of elements in the specified range for which the specified \p predicate 
+        * is \p true.
         *
-        * \param ctl Control structure to control accelerator, debug, tuning, etc.  See bolt::amp::control.
+        * \param ctl \b Optional Control structure to control accelerator, debug, tuning, etc.  See bolt::amp::control.
         * \param first The first position in the sequence to be counted.
         * \param last The last position in the sequence to be counted.
         * \param predicate The predicate. The count is incremented for each element which returns true when passed to the predicate function.
+        * \returns The number of elements for which \p predicate is true.
         * \code
-          template < typename T >
-          struct IsEven
-          {
-              bool operator()(const T& value) const restrict (amp,cpu)
-              {return ( (value%2) == 0 ) ;
-              };
-          };
-          ...
-          //Main
-
-          //Create an AMP Control object using the default accelerator
-          ::Concurrency::accelerator accel(::Concurrency::accelerator::default_accelerator);
-          bolt::amp::control ctl(accel);
-
-          int a[14] = {0, 10, 42, 55, 13, 13, 42, 19, 42, 11, 42, 99, 13, 77};
-
-
-          size_t countIsEven = bolt::amp::count (ctl, A, A+14, IsEven);
-        // countIsEven contains 6 even elements.
+        *  template < typename T >
+        *  struct IsEven
+        *  {
+        *      bool operator()(const T& value) const restrict (amp,cpu)
+        *      {return ( (value%2) == 0 ) ;
+        *      };
+        *  };
+        *  ...
+        *  //Main
+        *
+        *  //Create an AMP Control object using the default accelerator
+        *  ::Concurrency::accelerator accel(::Concurrency::accelerator::default_accelerator);
+        *  bolt::amp::control ctl(accel);
+        *
+        *  int a[14] = {0, 10, 42, 55, 13, 13, 42, 19, 42, 11, 42, 99, 13, 77};
+        *
+        *
+        *  size_t countIsEven = bolt::amp::count (ctl, A, A+14, IsEven);
+        * // countIsEven contains 6 even elements.
         * \endcode
         *
-        * \returns: The number of elements for which \p predicate is true.
+        *
         */
 
         template<typename InputIterator, typename Predicate>
@@ -168,33 +160,7 @@ namespace bolt {
             return result;
         };
 
-        /*!
-        * \p count_if counts the number of elements in the specified range for which the specified \p predicate is \p true.
-        *
-        * \param first The first position in the sequence to be counted.
-        * \param last The last position in the sequence to be counted.
-        * \param predicate The predicate. The count is incremented for each element which returns true when passed to the predicate function.
-        * \code
-          template < typename T >
-          struct IsEven
-          {
-            bool operator()(const T& value) const restrict (amp,cpu)
-            {
-              return ( (value%2) == 0 ) ;
-            };
-          };
-          ...
-          //Main
 
-          int a[14] = {0, 10, 42, 55, 13, 13, 42, 19, 42, 11, 42, 99, 13, 77};
-
-
-          size_t countIsEven = bolt::amp::count (A, A+14, IsEven);
-        // countIsEven contains 6 even elements.
-        * \endcode
-        *
-        * \returns: The number of elements for which \p predicate is true.
-        */
         template<typename InputIterator, typename Predicate>
         typename bolt::amp::iterator_traits<InputIterator>::difference_type
             count_if(InputIterator first,
@@ -213,6 +179,8 @@ namespace bolt {
 
             return result;
         };
+
+        /*!   \}  */
     };
 };
 #endif

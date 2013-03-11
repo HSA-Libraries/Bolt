@@ -31,12 +31,6 @@
 #include "bolt/amp/bolt.h"
 #include "bolt/amp/functional.h"
 
-
-
-/*! \file reduce.h
-*/
-
-
 namespace bolt {
     namespace amp {
 
