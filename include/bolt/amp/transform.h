@@ -170,18 +170,18 @@ namespace bolt
          *  \sa http://www.sgi.com/tech/stl/BinaryFunction.html
          */
 
-        template<typename InputIterator, typename OutputIterator, typename BinaryFunction> 
+        template<typename InputIterator1, typename InputIterator2, typename OutputIterator, typename BinaryFunction> 
         void transform(control &ctl,
-					   InputIterator first1,
-					   InputIterator last1,
-					   InputIterator first2,
+					   InputIterator1 first1,
+					   InputIterator1 last1,
+					   InputIterator2 first2,
 					   OutputIterator result, 
 					   BinaryFunction op);
 
-        template<typename InputIterator, typename OutputIterator, typename BinaryFunction> 
-        void transform(InputIterator first1,
-                       InputIterator last1,
-                       InputIterator first2,
+        template<typename InputIterator1, typename InputIterator2, typename OutputIterator, typename BinaryFunction> 
+        void transform(InputIterator1 first1,
+                       InputIterator1 last1,
+                       InputIterator2 first2,
                        OutputIterator result,
                        BinaryFunction op);
      /*!   \}  */
