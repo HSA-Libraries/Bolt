@@ -22,6 +22,7 @@
 
 #include "myocl.h"
 
+#if defined(BOLT_OPENCL_CL_H)
 void  CHECK_OPENCL_ERROR(cl_int err, const char * name)
 {
 	if (err != CL_SUCCESS)
@@ -181,3 +182,4 @@ cl::Kernel compileKernelCpp(const MyOclContext &ocl, const char *kernelFile, con
 };
 
 
+#endif //#if defined(BOLT_OPENCL_CL_H)

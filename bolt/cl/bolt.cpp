@@ -48,13 +48,13 @@
 namespace bolt {
     namespace cl {
 
-    void getVersion( cl_uint& major, cl_uint& minor, cl_uint& patch )
+    void getVersion( unsigned int& major, unsigned int& minor, unsigned int& patch )
     {
         major	= BoltVersionMajor;
         minor	= BoltVersionMinor;
         patch	= BoltVersionPatch;
     }
-
+#if defined(BOLT_OPENCL_CL_H)
     // for printing errors
     const std::string hr = "###############################################################################";
     const std::string es = "ERROR: ";
@@ -762,7 +762,7 @@ namespace bolt {
         // externed in bolt.h
         boost::mutex programMapMutex;
         ProgramMap programMap;
-        
+#endif //#if defined(BOLT_OPENCL_CL_H)        
 
     }; //namespace bolt::cl
 }; // namespace bolt

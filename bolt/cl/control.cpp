@@ -30,7 +30,7 @@ void printExtention( const std::string& str )
 {
     std::cout << std::setw( colWidth ) << "" << str << std::endl;
 }
-
+#if defined(BOLT_OPENCL_CL_H)
 class printDeviceFunctor
 {
     cl_uint m_numDev;
@@ -205,11 +205,13 @@ public:
     }
 };
 
+#endif //#if defined(BOLT_OPENCL_CL_H)
+
 namespace bolt
 {
 namespace cl
 {
-
+#if defined(BOLT_OPENCL_CL_H)
     void control::printPlatforms( bool printDevices, cl_device_type deviceType )
     {
         //  Query OpenCL for available platforms
@@ -493,7 +495,7 @@ namespace cl
 
         mapBuffer.clear( );
     };
-
+#endif //#if defined(BOLT_OPENCL_CL_H)
 }
 }
 

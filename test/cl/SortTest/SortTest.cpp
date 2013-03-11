@@ -23,9 +23,11 @@
 #if (GOOGLE_TEST == 1)
 #include <gtest/gtest.h>
 #include "common/stdafx.h"
-#include "common/myocl.h"
-#include "common/test_common.h"
 
+#if defined(BOLT_OPENCL_CL_H)
+#include "common/myocl.h"
+#endif
+#include "common/test_common.h"
 #include <bolt/cl/sort.h>
 #include <bolt/miniDump.h>
 #include <bolt/unicode.h>
@@ -40,6 +42,8 @@
 //This is a compare routine for naked pointers.
 
 // UDD which contains four doubles
+
+
 BOLT_FUNCTOR(uddtD4,
 struct uddtD4
 {
@@ -72,7 +76,10 @@ struct uddtD4
     }
 };
 );
+
+
 // Functor for UDD. Adds all four double elements and returns true if lhs_sum > rhs_sum
+
 BOLT_FUNCTOR(AddD4,
 struct AddD4
 {
@@ -84,15 +91,20 @@ struct AddD4
         return false;
     };
 }; 
+
 );
+
+
+#if defined(BOLT_OPENCL_CL_H)
 BOLT_CREATE_TYPENAME( bolt::cl::device_vector< AddD4 >::iterator );
 BOLT_CREATE_CLCODE( bolt::cl::device_vector< AddD4 >::iterator, bolt::cl::deviceVectorIteratorTemplate );
+BOLT_CREATE_TYPENAME( bolt::cl::device_vector< uddtD4 >::iterator );
+BOLT_CREATE_CLCODE( bolt::cl::device_vector< uddtD4 >::iterator, bolt::cl::deviceVectorIteratorTemplate );
+#endif 
 
 uddtD4 identityAddD4 = { 1.0, 1.0, 1.0, 1.0 };
 uddtD4 initialAddD4  = { 1.00001, 1.000003, 1.0000005, 1.00000007 };
-BOLT_CREATE_TYPENAME( bolt::cl::device_vector< uddtD4 >::iterator );
-BOLT_CREATE_CLCODE( bolt::cl::device_vector< uddtD4 >::iterator, bolt::cl::deviceVectorIteratorTemplate );
-
+#if defined(BOLT_OPENCL_CL_H)
 TEST(SortUDD, AddDouble4)
 {
     //setup containers
@@ -108,6 +120,7 @@ TEST(SortUDD, AddDouble4)
     // compare results
     cmpArrays(refInput, input);
 }
+
 
 TEST(SortUDD, GPUAddDouble4)
 {
@@ -129,7 +142,7 @@ TEST(SortUDD, GPUAddDouble4)
     // compare results
     cmpArrays(refInput, input);
 }
-
+#endif //#if defined(BOLT_OPENCL_CL_H)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Fixture classes are now defined to enable googletest to process type parameterized tests
@@ -196,10 +209,10 @@ TEST(MultiCoreCPU, MultiCoreAddDouble4)
 {
     //setup containers
     int length = (1<<8);
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
+
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.forceRunMode(bolt::cl::control::MultiCoreCpu);
-    bolt::cl::device_vector< uddtD4 > input(  length, initialAddD4, CL_MEM_READ_WRITE, true  );
+    bolt::cl::device_vector< uddtD4 > input(  length, initialAddD4, 0, true  );
     std::vector< uddtD4 > refInput( length, initialAddD4 );
     
     // call sort
@@ -214,10 +227,9 @@ TEST(MultiCoreCPU, MultiCoreAddDouble4)
 TEST( MultiCoreCPU, MultiCoreNormal )
 {
     int length = 1025;
-    bolt::cl::device_vector< float > boltInput(  length, 0.0, CL_MEM_READ_WRITE, true  );
+    bolt::cl::device_vector< float > boltInput(  length, 0.0, 0, true  );
     std::vector< float > stdInput( length, 0.0 );
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.forceRunMode(bolt::cl::control::MultiCoreCpu);
     //  Calling the actual functions under test
@@ -235,6 +247,7 @@ TEST( MultiCoreCPU, MultiCoreNormal )
 }
 #endif
 
+#if defined(BOLT_OPENCL_CL_H)
 TYPED_TEST_P( SortArrayTest, GPU_DeviceNormal )
 {
     //  The first time our routines get called, we compile the library kernels with a certain context
@@ -265,7 +278,7 @@ TYPED_TEST_P( SortArrayTest, GPU_DeviceNormal )
     cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
     // FIXME - releaseOcl(ocl);
 }
-
+#endif //#if defined(BOLT_OPENCL_CL_H)
 #if (TEST_CPU_DEVICE == 1)
 TYPED_TEST_P( SortArrayTest, CPU_DeviceNormal )
 {
@@ -310,6 +323,7 @@ TYPED_TEST_P( SortArrayTest, GreaterFunction )
     
 }
 
+#if defined(BOLT_OPENCL_CL_H)
 TYPED_TEST_P( SortArrayTest, GPU_DeviceGreaterFunction )
 {
     typedef std::array< ArrayType, ArraySize > ArrayCont;
@@ -340,6 +354,8 @@ TYPED_TEST_P( SortArrayTest, GPU_DeviceGreaterFunction )
     cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
     // FIXME - releaseOcl(ocl);
 }
+#endif //#if defined(BOLT_OPENCL_CL_H)
+
 #if (TEST_CPU_DEVICE == 1)
 TYPED_TEST_P( SortArrayTest, CPU_DeviceGreaterFunction )
 {
@@ -381,6 +397,7 @@ TYPED_TEST_P( SortArrayTest, LessFunction )
 
 }
 
+#if defined(BOLT_OPENCL_CL_H)
 TYPED_TEST_P( SortArrayTest, GPU_DeviceLessFunction )
 {
     typedef std::array< ArrayType, ArraySize > ArrayCont;
@@ -409,6 +426,8 @@ TYPED_TEST_P( SortArrayTest, GPU_DeviceLessFunction )
     cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
     // FIXME - releaseOcl(ocl);
 }
+#endif //#if defined(BOLT_OPENCL_CL_H)
+
 #if (TEST_CPU_DEVICE == 1)
 TYPED_TEST_P( SortArrayTest, CPU_DeviceLessFunction )
 {
@@ -431,16 +450,20 @@ TYPED_TEST_P( SortArrayTest, CPU_DeviceLessFunction )
     // FIXME - releaseOcl(ocl);
 }
 #endif
-
+#if defined(BOLT_OPENCL_CL_H)
 #if (TEST_CPU_DEVICE == 1)
 REGISTER_TYPED_TEST_CASE_P( SortArrayTest, Normal, GPU_DeviceNormal, 
                                            GreaterFunction, GPU_DeviceGreaterFunction,
                                            LessFunction, GPU_DeviceLessFunction, CPU_DeviceNormal, CPU_DeviceGreaterFunction, CPU_DeviceLessFunction);
 #else
-REGISTER_TYPED_TEST_CASE_P( SortArrayTest, Normal, GPU_DeviceNormal, 
-                                           GreaterFunction, GPU_DeviceGreaterFunction,
-                                           LessFunction, GPU_DeviceLessFunction );
+REGISTER_TYPED_TEST_CASE_P( SortArrayTest, Normal, 
+                           GPU_DeviceNormal, GPU_DeviceGreaterFunction, GPU_DeviceLessFunction,
+                           GreaterFunction, LessFunction  );
 #endif
+#else
+REGISTER_TYPED_TEST_CASE_P( SortArrayTest, Normal, 
+                           GreaterFunction, LessFunction  );
+#endif //#if defined(BOLT_OPENCL_CL_H)
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -953,6 +976,7 @@ BOLT_FUNCTOR(sortBy_UDD_a,
     };
 );
 
+
 BOLT_FUNCTOR(sortBy_UDD_b,
     struct sortBy_UDD_b {
         bool operator() (UDD& a, UDD& b) 
@@ -962,11 +986,13 @@ BOLT_FUNCTOR(sortBy_UDD_b,
     };
 );
 
+#if defined(BOLT_OPENCL_CL_H)
 BOLT_CREATE_TYPENAME(bolt::cl::less<UDD>);
 BOLT_CREATE_TYPENAME(bolt::cl::greater<UDD>);
 
 BOLT_CREATE_TYPENAME( bolt::cl::device_vector< UDD >::iterator );
 BOLT_CREATE_CLCODE( bolt::cl::device_vector< UDD >::iterator, bolt::cl::deviceVectorIteratorTemplate );
+#endif //#if defined(BOLT_OPENCL_CL_H)
 
 template< typename ArrayTuple >
 class SortUDDArrayTest: public ::testing::Test

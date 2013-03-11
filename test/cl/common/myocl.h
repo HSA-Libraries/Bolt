@@ -17,6 +17,7 @@
 
 #define __CL_ENABLE_EXCEPTIONS
 #define CL_USE_DEPRECATED_OPENCL_1_1_APIS
+#if defined(BOLT_OPENCL_CL_H)
 #include "CL/cl.hpp"
 
 enum t_DeviceType  {e_Cpu, e_Gpu, e_All};
@@ -34,3 +35,4 @@ extern MyOclContext initOcl(cl_int clDeviceType, int deviceIndex=0, int verbose=
 extern cl::CommandQueue getQueueFromContext(cl::Context context, cl_int clDeviceType, int deviceIndex) ;
 extern cl::Kernel compileKernelCpp(const MyOclContext &ocl, const char *kernelFile, const char *kernelName, std::string compileOpt);
 
+#endif //#if defined(BOLT_OPENCL_CL_H)

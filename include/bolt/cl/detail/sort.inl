@@ -105,7 +105,7 @@ namespace cl {
 namespace detail {
 
 enum sortTypes {sort_iValueType, sort_iIterType, sort_StrictWeakOrdering, sort_end };
-
+#if defined(BOLT_OPENCL_CL_H)
 class BitonicSort_KernelTemplateSpecializer : public KernelTemplateSpecializer
 {
 public:
@@ -323,6 +323,8 @@ public:
         return templateSpecializationString;
     }
 };
+#endif //#if defined(BOLT_OPENCL_CL_H)
+
 
 // Wrapper that uses default control class, iterator interface
 template<typename RandomAccessIterator, typename StrictWeakOrdering> 
@@ -347,7 +349,7 @@ void sort_detect_random_access( control &ctl,
                               std::iterator_traits< RandomAccessIterator >::iterator_category( ) );
 };
 
-
+#if defined(BOLT_OPENCL_CL_H)
 //Device Vector specialization
 template<typename DVRandomAccessIterator, typename StrictWeakOrdering> 
 void sort_pick_iterator( control &ctl, 
@@ -404,7 +406,8 @@ void sort_pick_iterator( control &ctl,
     }
     return;
 }
-            
+
+
 //Fancy Iterator specialization
 template<typename DVRandomAccessIterator, typename StrictWeakOrdering> 
 void sort_pick_iterator( control &ctl, 
@@ -414,6 +417,7 @@ void sort_pick_iterator( control &ctl,
 {
     static_assert( false, "It is not possible to sort fancy iterators. They are not mutable" );
 }
+#endif //#if defined(BOLT_OPENCL_CL_H)    
 
 //Non Device Vector specialization.
 //This implementation creates a cl::Buffer and passes the cl buffer to the sort specialization whichtakes the cl buffer as a parameter. 
@@ -444,15 +448,28 @@ void sort_pick_iterator( control &ctl,
         return;
 #endif
     } else {
+#if defined(BOLT_OPENCL_CL_H)    
         device_vector< T > dvInputOutput( first, last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctl );
         //Now call the actual cl algorithm
         sort_enqueue(ctl,dvInputOutput.begin(),dvInputOutput.end(),comp,cl_code);
         //Map the buffer back to the host
         dvInputOutput.data( );
         return;
+#else
+#ifdef ENABLE_TBB
+        std::cout << "The OpenCL path was not found. Hence running the TBB Sort path" << std ::endl;
+        tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
+        tbb::parallel_sort(first,last, comp);
+#else
+        std::cout << "The OpenCL path was not found. Neither TBB was enbaled to be built. Hence running serial code path." << std ::endl;
+        std::sort(first, last, comp);
+        return;
+#endif
+#endif //#if defined(BOLT_OPENCL_CL_H)    
     }
 }
 
+#if defined(BOLT_OPENCL_CL_H)    
 /****** sort_enqueue specailization for unsigned int data types. ******
  * THE FOLLOWING CODE IMPLEMENTS THE RADIX SORT ALGORITHM FOR sort()
  *********************************************************************/
@@ -1361,8 +1378,13 @@ void sort_enqueue_non_powerOf2(control &ctl,
     return;
 }// END of sort_enqueue_non_powerOf2
 
+#endif //#if defined(BOLT_OPENCL_CL_H)    
+
 }//namespace bolt::cl::detail
 }//namespace bolt::cl
 }//namespace bolt
+
+
+
 
 #endif
