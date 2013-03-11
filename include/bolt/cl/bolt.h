@@ -23,17 +23,18 @@
 #pragma once
 #if !defined( OCL_BOLT_H )
 #define OCL_BOLT_H
-#define __CL_ENABLE_EXCEPTIONS
-#define CL_USE_DEPRECATED_OPENCL_1_1_APIS
+
 
 /* Uncomment the following to build the bolt librray without the OpenCL dependencies*/
 //#define BUILD_NON_OPENCL_BOLT_LIB
 #if !defined(BUILD_NON_OPENCL_BOLT_LIB)
+#define __CL_ENABLE_EXCEPTIONS
+#define CL_USE_DEPRECATED_OPENCL_1_1_APIS
 #include <CL/cl.h>
 /*For enabling only the OpenCL 1.1 specification uncomment the following line*/
 //#undef CL_VERSION_1_2
 #include <CL/cl.hpp>
-#if defined(BOLT_OPENCL_CL_H)
+#if defined(__OPENCL_CL_H)
 #define BOLT_OPENCL_CL_H 1
 #endif
 #endif
