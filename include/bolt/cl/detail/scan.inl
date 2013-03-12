@@ -310,7 +310,7 @@ namespace detail
 
 enum scanTypes {scan_iValueType, scan_iIterType, scan_oValueType, scan_oIterType, scan_initType, 
     scan_BinaryFunction, scan_end };
-#if defined(BOLT_OPENCL_CL_H)
+
 class Scan_KernelTemplateSpecializer : public KernelTemplateSpecializer
 {
 public:
@@ -390,7 +390,7 @@ public:
             return templateSpecializationString;
             }
 };
-#endif //#if defined(BOLT_OPENCL_CL_H)
+
 
 #ifdef ENABLE_TBB
       template <typename T, typename BinaryFunction, typename InputIterator, typename OutputIterator>
@@ -478,7 +478,7 @@ public:
                 std::iterator_traits< InputIterator >::iterator_category( ), 
                 std::iterator_traits< OutputIterator >::iterator_category( ) );
         };
-#if defined(BOLT_OPENCL_CL_H)
+
         template< typename InputIterator, typename OutputIterator, typename T, typename BinaryFunction >
         OutputIterator scan_pick_iterator( control &ctl, const InputIterator& first, const InputIterator& last, 
             const OutputIterator& result, const T& init, const bool& inclusive, const BinaryFunction& binary_op,
@@ -486,7 +486,7 @@ public:
         {
             static_assert( false, "It is not possible to output to fancy iterators; they are not mutable" );
         }
-#endif //#if defined(BOLT_OPENCL_CL_H)
+
         /*! 
         * \brief This overload is called strictly for non-device_vector iterators
         * \details This template function overload is used to seperate device_vector iterators from all other iterators
@@ -537,7 +537,6 @@ aProfiler.stopTrial();
             }
             else
             {
-#if defined(BOLT_OPENCL_CL_H)
 #ifdef BOLT_PROFILER_ENABLED
 aProfiler.nextStep();
 aProfiler.setStepName("Mapping Buffers to Device");
@@ -560,26 +559,11 @@ aProfiler.set(AsyncProfiler::memory, numElements*sizeof(iType));
 
                 // This should immediately map/unmap the buffer
                 dvOutput.data( );
-#else 
-#ifdef ENABLE_TBB
-               std::cout << "The OpenCL path was not found. Hence running the TBB Scan path" << std ::endl;
-               tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
-               Scan_tbb<iType, BinaryFunction, InputIterator, OutputIterator> tbb_scan((InputIterator &)first,(OutputIterator &)
-                                                                         result,binary_op,inclusive,init);
-               tbb::parallel_scan( tbb::blocked_range<int>(  0, static_cast< int >( std::distance( first, last ))), tbb_scan, tbb::auto_partitioner());
-               return result + numElements;
-#else
-               std::cout << "The OpenCL path was not found. Neither TBB was enbaled to be built. Hence running serial code path." << std ::endl;
-               Serial_scan<iType, oType, BinaryFunction, T>(&(*first), &(*result), numElements, binary_op, inclusive, init);
-#endif
-#endif //#if defined(BOLT_OPENCL_CL_H)
             }
 
             return result + numElements;
 }
 
-
-#if defined(BOLT_OPENCL_CL_H)
         /*! 
         * \brief This overload is called strictly for device_vector iterators
         * \details This template function overload is used to seperate device_vector iterators from all other iterators
@@ -643,7 +627,6 @@ aProfiler.set(AsyncProfiler::memory, numElements*sizeof(iType));
 
             return result + numElements;
 }
-
 
         /*! 
         * \brief This overload is called strictly for non-device_vector iterators
@@ -1221,7 +1204,6 @@ aProfiler.setArchitecture(strDeviceName);
 
 }   //end of inclusive_scan_enqueue( )
 
-#endif //#if defined(BOLT_OPENCL_CL_H)
 }   //namespace detail
 }   //namespace cl
 }//namespace bolt

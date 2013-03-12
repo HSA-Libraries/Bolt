@@ -23,21 +23,14 @@
 #pragma once
 #if !defined( OCL_BOLT_H )
 #define OCL_BOLT_H
-
-
-/* Uncomment the following to build the bolt librray without the OpenCL dependencies*/
-//#define BUILD_NON_OPENCL_BOLT_LIB
-#if !defined(BUILD_NON_OPENCL_BOLT_LIB)
 #define __CL_ENABLE_EXCEPTIONS
 #define CL_USE_DEPRECATED_OPENCL_1_1_APIS
+
 #include <CL/cl.h>
 /*For enabling only the OpenCL 1.1 specification uncomment the following line*/
 //#undef CL_VERSION_1_2
 #include <CL/cl.hpp>
-#if defined(__OPENCL_CL_H)
-#define BOLT_OPENCL_CL_H 1
-#endif
-#endif
+
 
 #include <string>
 #include <map>
@@ -93,7 +86,7 @@ namespace bolt {
         extern const std::string transform_kernels;
         extern const std::string transform_reduce_kernels;
         extern const std::string transform_scan_kernels;
-#if defined(BOLT_OPENCL_CL_H)
+
         // transform_scan kernel names
         //static std::string transform_scan_kernel_names_array[] = { "perBlockTransformScan", "intraBlockInclusiveScan", "perBlockAddition" };
         //const std::vector<std::string> transformScanKernelNames(transform_scan_kernel_names_array, transform_scan_kernel_names_array+3);
@@ -354,11 +347,9 @@ namespace bolt {
         // declared in bolt.cpp
         extern boost::mutex programMapMutex;
         extern ProgramMap programMap;
-#endif // #if defined(BOLT_OPENCL_CL_H)
+
 	};
 };
-
-#if defined(BOLT_OPENCL_CL_H)
 
 #if defined( _WIN32 )
 #define ALIGNED( bound ) __declspec( align( bound ) )
@@ -407,6 +398,5 @@ BOLT_CREATE_TYPENAME( double );
 //
 //BOLT_CREATE_TYPENAME( cl_double4 );
 //BOLT_CREATE_CLCODE( cl_double4, "double4" );
-#endif //#if defined(BOLT_OPENCL_CL_H)
 
 #endif

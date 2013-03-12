@@ -25,11 +25,9 @@
 #include <iterator>
 #include <type_traits>
 #include <numeric>
-#include <algorithm>
 #include "bolt/cl/bolt.h"
-#if defined(BOLT_OPENCL_CL_H)
 #include "bolt/cl/iterator/iterator_traits.h"
-#endif
+
 #include <boost/iterator/iterator_facade.hpp>
 #include <boost/iterator/reverse_iterator.hpp>
 #include <boost/shared_array.hpp>
@@ -46,7 +44,6 @@ namespace bolt
 
 namespace cl
 {
-#if defined(BOLT_OPENCL_CL_H)
         /*! \addtogroup Containers
          */
 
@@ -1526,84 +1523,14 @@ namespace cl
         }; \n
     } } \n
     );
-#else  //#if defined(BOLT_OPENCL_CL_H)
-    template< typename T >
-    class device_vector : public std::vector<T>{
-    public:
-            typedef T value_type;
-
-            typedef size_t size_type;
-            typedef unsigned __int64 cl_mem_flags; //This is added just as a dummy since it is not used. 
-                                                   //But the device_vector constructor is kept compliant.
-
-            /*! \brief A default constructor that creates an empty device_vector
-            *   \param ctl An Bolt control class used to perform copy operations; a default is used if not supplied by the user
-            *   \todo Find a way to be able to unambiguously specify memory flags for this constructor, that is not 
-            *   confused with the size constructor below.
-            */
-            device_vector(  ) 
-            {
-                std::cout << "Warning: OpenCL implementation was not found. Hence the device_vector will use the std::vector as the base class.";
-            }
-
-            /*! \brief A constructor that creates a new device_vector with the specified number of elements, with a specified initial value.
-            *   \param newSize The number of elements of the new device_vector
-            *   \param value The value with which to initialize new elements.
-            *   \param flags A bitfield that takes the OpenCL memory flags to help specify where the device_vector allocates memory.
-            *   \param init Boolean value to indicate whether to initialize device memory from host memory.
-            *   \param ctl A Bolt control class for copy operations; a default is used if not supplied by the user.
-            *   \warning The ::cl::CommandQueue is not an STD reserve( ) parameter.
-            */
-            device_vector( size_type newSize, const value_type& value = value_type( ), cl_mem_flags flags = 0, 
-                bool init = true, const control& ctl = control::getDefault( ) ) : std::vector<value_type>(newSize)
-            {
-                std::cout << "Warning: OpenCL implementation was not found. Hence the device_vector will use the std::vector as the base class.";
-                for( std::vector<value_type>::iterator iter = begin(); iter != end(); iter++)
-                {
-                    *iter = value;
-                }
-            }
-
-            /*! \brief A constructor that creates a new device_vector using a range specified by the user.
-            *   \param begin An iterator pointing at the beginning of the range.
-            *   \param end An iterator pointing at the end of the range.
-            *   \param flags A bitfield that takes the OpenCL memory flags to help specify where the device_vector allocates memory.
-            *   \param init Boolean value to indicate whether to initialize device memory from host memory.
-            *   \param ctl A Bolt control class used to perform copy operations; a default is used if not supplied by the user.
-            *   \note Ignore the enable_if<> parameter; it prevents this constructor from being called with integral types.
-            */
-            template< typename InputIterator >
-            device_vector( const InputIterator begin, size_type newSize, cl_mem_flags flags = 0, 
-                bool init = true, const control& ctl = control::getDefault( ),
-                typename std::enable_if< !std::is_integral< InputIterator >::value >::type* = 0 ): std::vector<value_type> (begin, newSize)
-            {
-                std::cout << "Warning: OpenCL implementation was not found. Hence the device_vector will use the std::vector as the base class.";
-            };
-
-            /*! \brief A constructor that creates a new device_vector using a range specified by the user.
-            *   \param begin An iterator pointing at the beginning of the range.
-            *   \param end An iterator pointing at the end of the range.
-            *   \param flags A bitfield that takes the OpenCL memory flags to help specify where the device_vector allocates memory.
-            *   \param ctl A Bolt control class for copy operations; a default is used if not supplied by the user.
-            *   \note Ignore the enable_if<> parameter; it prevents this constructor from being called with integral types.
-            */
-            template< typename InputIterator >
-            device_vector( const InputIterator begin, const InputIterator end, cl_mem_flags flags = 0, const control& ctl = control::getDefault( ),
-                typename std::enable_if< !std::is_integral< InputIterator >::value >::type* = 0 ): std::vector<value_type> (begin, end)
-            {
-                std::cout << "Warning: OpenCL implementation was not found. Hence the device_vector will use the std::vector as the base class.";
-            };
-    };
-#endif //#if defined(BOLT_OPENCL_CL_H)
-} 
+}
 }
 
-#if defined(BOLT_OPENCL_CL_H)
 BOLT_CREATE_TYPENAME( bolt::cl::device_vector< int >::iterator );
 BOLT_CREATE_CLCODE( bolt::cl::device_vector< int >::iterator, bolt::cl::deviceVectorIteratorTemplate );
 
 BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, int, unsigned int );
 BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, int, float );
 BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, int, double );
-#endif //#if defined(BOLT_OPENCL_CL_H)
+
 #endif
