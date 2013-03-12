@@ -37,13 +37,13 @@ namespace bolt {
         /*! \addtogroup algorithms
          */
 
-        /*! \addtogroup Find
+        /*! \addtogroup reductions
         *   \ingroup algorithms
         *    The min_element finds the location of the first smallest element in the range [first, last]
         */
 
         /*! \addtogroup CL-min_element
-        *   \ingroup Find
+        *   \ingroup reductions
         *   \{
         */
 
@@ -60,8 +60,8 @@ namespace bolt {
         * the next element in a sequence.
         * \return The position of the min_element.
                 *
-        * \details  The following code example shows how to find \p min_element of 10 numbers, using the default 
-        * BinaryPredicate.
+        * \details The following code example shows how to find the position of the  \p min_element of 10 numbers,
+        * using the default BinaryPredicate.
         * \code
         * #include <bolt/cl/min_element.h>
         *
@@ -97,23 +97,19 @@ namespace bolt {
         * less<>().
         * \param cl_code Optional OpenCL(TM) code to be passed to the OpenCL compiler. The cl_code is inserted first in
         * the generated code, before the cl_code trait.
-        * \tparam InputIterator An iterator that can be dereferenced for an object, and can be incremented to get to 
+        * \tparam ForwardIterator An iterator that can be dereferenced for an object, and can be incremented to get to 
         * the next element in a sequence.
+        * \tparam BinaryPredicate A function object defining an operation that is applied to consecutive elements in 
+        * the sequence.
         * \return The position of the min_element.
         *
         *
-        * \details The following code example shows how to find \p min_element  of 10 numbers, using the default less 
-        * operator.
+        * \details The following code example shows how to find the position of the  \p max_element of 10 numbers,
+        * using the default less operator.
         * \code
         * #include <bolt/cl/min_element.h>
         *
         * int a[10] = {4, 8, 6, 1, 5, 3, 10, 2, 9, 7};
-        *
-        * cl::CommandQueue myCommandQueue = ...
-        *
-        * bolt::cl::control ctl(myCommandQueue); // specify an OpenCL(TM) command queue to use for executing the 
-        * // min_element.
-        * ctl.debug(bolt::cl::control::debug::SaveCompilerTemps); // save IL and ISA files for generated kernel.
         *
         * int min_pos = bolt::cl::min_element(a, a+10, bolt::cl::less<T>());
         * // min_pos = 3

@@ -44,8 +44,7 @@ namespace bolt {
         /*! \addtogroup CL-counting
         *  \ingroup reductions
         *  \{
-        *  \bug Interfaces which accept a control structure need to be added
-        *  \todo Better documentation and example code need to be added
+        *  
         */
 
 
@@ -80,6 +79,7 @@ namespace bolt {
          *  \param first Beginning of the source copy sequence.
          *  \param last  End of the source copy sequence.
          *  \param value Equality Comparable value.
+         *  \param cl_code  Optional OpenCL(TM) code to be prepended to any OpenCL kernels used by this function.
          *  \return Count of the number of occurrences of \p value.
          *
          *  \tparam InputIterator is a model of InputIterator
@@ -126,6 +126,7 @@ namespace bolt {
         * \param last The last position in the sequence to be counted.
         * \param predicate The count is incremented for each element which returns true when passed to 
         *  the predicate function.        
+        *  \param cl_code  Optional OpenCL(TM) code to be prepended to any OpenCL kernels used by this function.
         * \returns: The number of elements for which \p predicate is true.          
         *
         *  \tparam InputIterator is a model of InputIterator

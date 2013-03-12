@@ -37,13 +37,13 @@ namespace bolt {
         /*! \addtogroup algorithms
          */
 
-        /*! \addtogroup Find
+        /*! \addtogroup reductions
         *   \ingroup algorithms
         *    The max_element finds the location of the first maximum element in the range [first, last]
         */
 
         /*! \addtogroup CL-max_element
-        *   \ingroup Find
+        *   \ingroup reductions
         *   \{
         */
 
@@ -61,18 +61,12 @@ namespace bolt {
         *  the next element in a sequence.
         * \return The position of the max_element.
         *
-        * \details The following code example shows how to find \p max_element of 10 numbers, using the default 
-        * BinaryPredicate.
+        * \details The following code example shows how to find the position of the   \p max_element of 10 numbers,
+         * using the default BinaryPredicate.
         * \code
         * #include <bolt/cl/max_element.h>
         *
         * int a[10] = {4, 8, 6, 1, 5, 3, 10, 2, 9, 7};
-        *
-        * cl::CommandQueue myCommandQueue = ...
-        *
-        * bolt::cl::control ctl(myCommandQueue); // specify an OpenCL(TM) command queue to use for executing the 
-        * //max_element.
-        * ctl.debug(bolt::cl::control::debug::SaveCompilerTemps); // save IL and ISA files for generated kernel
         *
         * int max_pos = bolt::cl::max_element(a, a+10);
         * // max_pos = 6
@@ -103,23 +97,20 @@ namespace bolt {
         * less<>().
         * \param cl_code Optional OpenCL(TM) code to be passed to the OpenCL compiler. The cl_code is inserted first in
         * the generated code, before the cl_code trait.
-        * \tparam InputIterator An iterator that can be dereferenced for an object, and can be incremented to get to 
+        * \tparam ForwardIterator An iterator that can be dereferenced for an object, and can be incremented to get to 
         * the next element in a sequence.
+        * \tparam BinaryPredicate A function object defining an operation that is applied to consecutive elements in 
+        * the sequence.
+
         * \return The position of the max_element.
         *
         *
-        * \details The following code example shows how to find  \p max_element  10 numbers, using the default greater 
-        * operator.
+        * \details The following code example shows how to find the position of the   \p max_element of 10 numbers,
+        * using the default greater operator.
         * \code
         * #include <bolt/cl/max_element.h>
         *
         * int a[10] = {4, 8, 6, 1, 5, 3, 10, 2, 9, 7};
-        *
-        * cl::CommandQueue myCommandQueue = ...
-        *
-        * bolt::cl::control ctl(myCommandQueue); // specify an OpenCL(TM) command queue to use for executing the 
-        * //max_element.
-        * ctl.debug(bolt::cl::control::debug::SaveCompilerTemps); // save IL and ISA files for generated kernel.
         *
         * int max_pos = bolt::cl::max_element(a, a+10, bolt::cl::greater<T>());
         * // max_pos = 6

@@ -79,7 +79,7 @@ namespace bolt {
         *
         * int a[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
         *
-        * cl::CommandQueue myCommandQueue = ...
+        * cl::CommandQueue myCommandQueue = bolt::cl::control::getDefaultCommandQueue();
         *
         * bolt::cl::control ctl(myCommandQueue); //specify an OpenCL(TM) command queue to use for executing the reduce.
         * ctl.debug(bolt::cl::control::debug::SaveCompilerTemps); // save IL and ISA files for generated kernel
@@ -120,8 +120,8 @@ namespace bolt {
         * \param first The first position in the sequence to be reduced.
         * \param last  The last position in the sequence to be reduced.
         * \param init  The initial value for the accumulator.
-        * \param cl_code Optional OpenCL(TM) code to be passed to the OpenCL compiler. The cl_code is inserted first in
-        * the generated code, before the cl_code trait.
+        * \param cl_code \b Optional OpenCL(TM) code to be passed to the OpenCL compiler. The cl_code is inserted first
+        * in the generated code, before the cl_code trait.
         * \tparam InputIterator An iterator that can be dereferenced for an object, and can be incremented to get to 
         * the next element in a sequence.
         * \tparam T The type of the result.
@@ -189,7 +189,7 @@ namespace bolt {
         
         int a[10] = {2, 9, 3, 7, 5, 6, 3, 8, 3, 4};
         
-        cl::CommandQueue myCommandQueue = ...
+        cl::CommandQueue myCommandQueue = bolt::cl::control::getDefaultCommandQueue();
         
         bolt::cl::control ctl(myCommandQueue); // specify an OpenCL(TM) command queue to use for executing the reduce.
         ctl.debug(bolt::cl::control::debug::SaveCompilerTemps); // save IL and ISA files for generated kernel.

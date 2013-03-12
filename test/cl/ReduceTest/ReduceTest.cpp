@@ -1229,8 +1229,11 @@ void simpleReduce_TestSerial(int aSize)
     };
 
 
-    bolt::cl::control c;  // construct control structure from the queue.
-    c.forceRunMode(bolt::cl::control::SerialCpu);
+   cl::CommandQueue myCommandQueue = bolt::cl::control::getDefaultCommandQueue();
+   bolt::cl::control c(myCommandQueue);
+
+  //  bolt::cl::control c;  // construct control structure from the queue.
+   // c.forceRunMode(bolt::cl::control::SerialCpu);
 
     int stlReduce = std::accumulate(A.begin(), A.end(), 0);
     int boltReduce = 0;

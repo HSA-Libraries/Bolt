@@ -56,13 +56,12 @@ namespace bolt
         */
 
 
-        /*! This version of \p transform applies a binary function to each pair
-         *  of elements from two input sequences and stores the result in the
+        /*! This version of \p transform applies a unary function to  input sequences and stores the result in the
          *  corresponding position in an output sequence.  
          *  The input and output sequences can coincide, resulting in an 
          *  in-place transformation.
          *    
-         *  \param ctl \b Optional Control structure to control accelerator, debug, tuning, etc.  See bolt::amp::control.
+         *  \param ctl \b Optional Control structure to control accelerator, debug, tuning, etc.See bolt::amp::control.
          *  \param first The beginning of the first input sequence.
          *  \param last The end of the first input sequence.
          *  \param result The beginning of the output sequence.
@@ -125,7 +124,7 @@ namespace bolt
          *  The input and output sequences can coincide, resulting in an 
          *  in-place transformation.
          *    
-         *  \param ctl Control structure to control accelerator, debug, tuning, etc.  See bolt::amp::control.
+         *  \param ctl \b Optional Control structure to control accelerator, debug, tuning, etc.See bolt::amp::control.
          *  \param first1 The beginning of the first input sequence.
          *  \param last1 The end of the first input sequence.
          *  \param first2 The beginning of the second input sequence.
@@ -151,7 +150,7 @@ namespace bolt
          *  #include <bolt/amp/functional.h>
          *  
          *  int input1[10] = {-5,  0,  2,  3,  2,  4, -2,  1,  2,  3};
-         *  int input2[10] = { 3,  6, -2,  1,  2,  3, -5,  0,  2,  3};
+         *  int input2[10] = { 3,  6, -2,  1,  2,  3, -5,  0,  3,  3};
          *  int output[10];
          *
          *  //Create an AMP Control object using the default accelerator
@@ -160,7 +159,7 @@ namespace bolt
          *  bolt::plus<int> op;
          *  bolt::amp::transform(ctl, input1, input1 + 10, input2, output, op);
          *
-         *  // output is now {-2,  6,  0,  4,  4,  7};
+         *  // output is now {-2,  6,  0,  4,  4,  7, -7, 1, 5, 6};
          *  \endcode
          *
          *  \sa http://www.sgi.com/tech/stl/transform.html

@@ -50,7 +50,6 @@ namespace amp
 /*! \addtogroup amp-scan
  *   \ingroup PrefixSums
  *   \{
- *   \todo The user_code parameter is not used yet.
  */
 
 /*! \brief inclusive_scan calculates a running sum over a range of values, inclusive of the current value.
@@ -98,7 +97,6 @@ inclusive_scan(
  * \param last  The last iterator in the input range to be scanned.
  * \param result  The first iterator in the output range.
  * \param binary_op A functor object specifying the operation between two elements in the input range.
- * \param user_code A client-specified string that is appended to the generated OpenCL kernel.
  * \tparam InputIterator An iterator signifying the range is used as input.
  * \tparam OutputIterator An iterator signifying the range is used as output.
  * \return Iterator at the end of result sequence.
@@ -214,7 +212,7 @@ exclusive_scan(
 /*! \brief exclusive_scan calculates a running sum over a range of values, exclusive of the current value.
  *   The result value at iterator position \p i is the running sum of all values less than \p i in the input range.
  *
- * \param ctl A Bolt control object, to describe the environment under which the function runs.
+ * \param ctl A \b Optional Bolt control object, to describe the environment under which the function runs.
  * \param first The first iterator in the input range to be scanned.
  * \param last  The last iterator in the input range to be scanned.
  * \param result  The first iterator in the output range.

@@ -57,7 +57,7 @@ namespace bolt
             * \param values_first  The first element of the value sequence.
             * \param keys_output   The first element of the key output sequence.
             * \param values_output The first element of the value output sequence.
-            * \param user_code     A user-specified string that is preppended to the generated OpenCL kernel.
+            * \param user_code     A user-specified Optional string that is preppended to the generated OpenCL kernel.
             *
             * \tparam InputIterator1   is a model of Input Iterator.
             * \tparam InputIterator2   is a model of Input Iterator.
@@ -124,7 +124,7 @@ namespace bolt
             * \param keys_output   The first element of the key output sequence.
             * \param values_output The first element of the value output sequence.
             * \param binary_pred   Binary predicate which determines if two keys are equal.
-            * \param user_code     A user-specified string that is preppended to the generated OpenCL kernel.
+            * \param user_code     A user-specified Optional string that is preppended to the generated OpenCL kernel.
             *
             * \tparam InputIterator1   is a model of Input Iterator.
             * \tparam InputIterator2   is a model of Input Iterator.
@@ -198,7 +198,7 @@ namespace bolt
             * \param values_output The first element of the value output sequence.
             * \param binary_pred   Binary predicate which determines if two keys are equal.
             * \param binary_op     Binary function for scanning transformed elements.
-            * \param user_code     A user-specified string that is preppended to the generated OpenCL kernel.
+            * \param user_code     A user-specified Optional tring that is preppended to the generated OpenCL kernel.
             *
             * \tparam InputIterator1   is a model of Input Iterator.
             * \tparam InputIterator2   is a model of Input Iterator.
@@ -220,7 +220,8 @@ namespace bolt
             * int vals_out[11];
             * bolt::cl::control ctl = control::getDefault();
             *
-            * bolt::cl::reduce_by_key( ctl, keys, keys+11, vals, keys_out, vals_out );
+            * bolt::cl::reduce_by_key( ctl, keys, keys+11, vals, keys_out, vals_out,bolt::cl::equal_to<int>(),
+            * bolt::cl::plus<int>());
             * // keys_out => { 0, 2, -5, 6 }
             * // vals_out => { 6, 6, 8, 2 }
             *  \endcode

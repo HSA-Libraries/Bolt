@@ -98,8 +98,8 @@ namespace bolt {
         * \param last1  The last position in the input sequence.
 		* \param first2  The beginning of second input sequence.
 		* \param init   The initial value for the accumulator.
-		* \param f1		Binary functor for transformation.
-		* \param f2     Binary functor for reduction.
+		* \param f1		Binary functor for reduction.
+		* \param f2     Binary functor for transformation.
         * \param cl_code Optional OpenCL(TM) code to be passed to the OpenCL compiler. The cl_code is inserted first in
         *                the generated code, before the cl_code trait.
         * \tparam InputIterator An iterator that can be dereferenced for an object, and can be incremented to get to 

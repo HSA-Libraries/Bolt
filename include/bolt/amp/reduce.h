@@ -46,7 +46,7 @@ namespace bolt {
         /*! \addtogroup amp-reduce
         *   \ingroup reductions
         *   \{
-        *   \todo Document wg-per-compute unit flags for reduce
+        *   
         */
 
 
@@ -74,17 +74,15 @@ namespace bolt {
         * \details The following code example shows the use of \p reduce to sum 10 numbers, using the default plus 
         * operator.
         * \code
-        * #include <bolt/cl/reduce.h>
+        * #include <bolt/amp/reduce.h>
         *
         * int a[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
-        *
-        * cl::CommandQueue myCommandQueue = ...
         *
         *  //Create an AMP Control object using the default accelerator
         *  ::Concurrency::accelerator accel(::Concurrency::accelerator::default_accelerator);
         *  bolt::amp::control ctl(accel);
         *
-        * int sum = bolt::cl::reduce(ctl, a, a+10, 0);
+        * int sum = bolt::cl::reduce(ctl, a, a+10);
         * // sum = 55
         *  \endcode
         * \sa http://www.sgi.com/tech/stl/accumulate.html
@@ -106,7 +104,7 @@ namespace bolt {
         * specified binary_op. The classic example is a summation, where the binary_op is the plus operator.  
         * By default, the initial value is "0" and the binary operator is "plus<>()".
         *
-        * \p reduce requires that the binary reduction op ("binary_op") is cummutative.  The order in which \p reduce 
+        * \details \p reduce requires that the binary reduction op ("binary_op") is cummutative.  The order in which \p reduce 
         * applies the binary_op is not deterministic.
         *
         * The \p reduce operation is similar the std::accumulate function
@@ -152,7 +150,7 @@ namespace bolt {
         * binary_op. The classic example is a summation, where the binary_op is the plus operator.  By default, 
         * the binary operator is "plus<>()".  The version takes a bolt::amp::control structure as a first argument.
         *
-        * \p reduce requires that the binary reduction op ("binary_op") is cummutative.  The order in which \p reduce 
+        * \details \p reduce requires that the binary reduction op ("binary_op") is cummutative.  The order in which \p reduce 
         * applies the binary_op  is not deterministic.
         *
         * The \p reduce operation is similar the std::accumulate function.
@@ -169,7 +167,7 @@ namespace bolt {
         * sequence.
         * \return The result of the reduction.
         *
-        * The following code example shows the use of \p reduce to find the max of 10 numbers, 
+        * \details The following code example shows the use of \p reduce to find the max of 10 numbers, 
         * specifying a specific command-queue and enabling debug messages.
         * \code
         * #include <bolt/amp/reduce.h>
@@ -197,11 +195,7 @@ namespace bolt {
             InputIterator last,  
             T init,
             BinaryFunction binary_op);
-
-
-
-
-
+        
         /*!   \}  */
 
     };

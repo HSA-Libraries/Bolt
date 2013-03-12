@@ -118,7 +118,7 @@ transform_inclusive_scan(
 
 
 
-/*! \brief transform_exclusive_scan performs, on a sequence, the transformation defined by a unary operator,
+/*! \brief \p transform_exclusive_scan performs, on a sequence, the transformation defined by a unary operator,
 * then the exclusive scan defined by a binary operator.
 *
 * \param ctl   \b Optional control structure to control command-queue, debug, tuning, etc.  See bolt::cl::control.
