@@ -31,7 +31,7 @@
 #include "bolt/cl/device_vector.h"
 
 
-#define WGSIZE 64
+#define BITONIC_SORT_WGSIZE 64
 #define DEBUG 1
 namespace bolt {
     namespace cl {
@@ -114,84 +114,44 @@ namespace bolt {
 namespace bolt {
 namespace cl {
 namespace detail {
-    struct kernelParamsSortByKey
+
+enum sortByKeyTypes {sort_by_key_keyValueType, sort_by_key_keyIterType, 
+                     sort_by_key_valueValueType, sort_by_key_valueIterType, 
+                     sort_by_key_StrictWeakOrdering, sort_by_key_end };
+
+class BitonicSortByKey_KernelTemplateSpecializer : public KernelTemplateSpecializer
+{
+public:
+    BitonicSortByKey_KernelTemplateSpecializer() : KernelTemplateSpecializer()
     {
-        const std::string inKeyTypePtr;
-        const std::string inKeyTypeIter;
-        const std::string inValueTypePtr;
-        const std::string inValueTypeIter;
-        const std::string compareTypeName;
+        addKernelName("BitonicSortByKeyTemplate");
+    }
 
-        kernelParamsSortByKey( const std::string& iKeyPtr, const std::string& iKeyIter, const std::string& iTypePtr, 
-            const std::string& iTypeIter, const std::string& compType ): 
-        inKeyTypePtr( iKeyPtr ), inKeyTypeIter( iKeyIter ), 
-        inValueTypePtr( iTypePtr ), inValueTypeIter( iTypeIter ), 
-        compareTypeName( compType )
-        {}
-    };
+    const ::std::string operator() ( const ::std::vector<::std::string>& typeNames ) const
+    {
+        const std::string templateSpecializationString = 
 
-    struct CallCompiler_SortByKey {
-
-        static void constructAndCompile(::cl::Kernel *masterKernel, std::string cl_code_dataType, kernelParamsSortByKey* kp, 
-            const control *ctl) {
-
-            const std::string instantiationString =
-                "// Host generates this instantiation string with user-specified value type and functor\n"
-                "template __attribute__((mangled_name(sort_by_keyInstantiated)))\n"
-                "kernel void sortByKeyTemplate(\n"
-                "global " + kp->inKeyTypePtr + "* keys_ptr,\n"
-                 + kp->inKeyTypeIter + " keys_iter,\n"
-                "global " + kp->inValueTypePtr + "* values_ptr,\n"
-                 + kp->inValueTypeIter + " values_iter,\n"
-                "const uint stage,\n"
-                "const uint passOfStage,\n"
-                "global " + kp->compareTypeName + " * userComp\n"
-                ");\n\n";
-
-            bolt::cl::constructAndCompileString(masterKernel, "sort_by_key", sort_by_key_kernels, instantiationString, 
-                cl_code_dataType, kp->inKeyTypePtr, kp->compareTypeName, *ctl);
+            "// Host generates this instantiation string with user-specified value type and functor\n"
+            "template __attribute__((mangled_name(" + name(0) + "Instantiated)))\n"
+            "kernel void BitonicSortByKeyTemplate(\n"
+            "global " + typeNames[sort_by_key_keyValueType] + "* A,\n"
+            ""        + typeNames[sort_by_key_keyIterType]  + " input_iter,\n"
+            "global " + typeNames[sort_by_key_valueValueType] + "* values_ptr,\n"
+            ""        + typeNames[sort_by_key_valueIterType] + " values_iter,\n"
+            "const uint stage,\n"
+            "const uint passOfStage,\n"
+            "global " + typeNames[sort_by_key_StrictWeakOrdering] + " * userComp\n"
+            ");\n\n";
+            return templateSpecializationString;
         }
-#if 0
-        static void constructAndCompileSelectionSort(std::vector< ::cl::Kernel >* sortKernels,  std::string cl_code_dataType, std::string keysTypeName,  std::string valuesTypeName, std::string compareTypeName, const control *ctl) {
-
-            std::vector< const std::string > kernelNames;
-            kernelNames.push_back( "ssByKeyLocal" );
-            kernelNames.push_back( "ssByKeyFinal" );
+};
 
 
-            const std::string instantiationString =
-                "\n// Host generates this instantiation string with user-specified value type and functor\n"
-                "template __attribute__((mangled_name(" + kernelNames[0] + "Instantiated)))\n"
-                "kernel void ssByKeyLocalTemplate(\n"
-                "global const " + keysTypeName + " * keys,\n"
-                "global const " + valuesTypeName + " * values,\n"
-                "global " + keysTypeName + " * outKeys,\n"
-                "global " + valuesTypeName + " * outValues,\n"
-                "global " + compareTypeName + " * userComp,\n"
-                "local  " + keysTypeName + " * scratch,\n"
-                "const int buffSize\n"
-                ");\n\n"
-
-                "\n// Host generates this instantiation string with user-specified value type and functor\n"
-                "template __attribute__((mangled_name(" + kernelNames[1] + "Instantiated)))\n"
-                "kernel void ssByKeyFinalTemplate(\n"
-                "global const " + keysTypeName + " * keys,\n"
-                "global const " + valuesTypeName + " * values,\n"
-                "global " + keysTypeName + " * outKeys,\n"
-                "global " + valuesTypeName + " * outValues,\n"
-                "global " + compareTypeName + " * userComp,\n"
-                "local  " + keysTypeName + " * scratch,\n"
-                "const int buffSize\n"
-                ");\n\n";
-
-            bolt::cl::compileKernelsString( *sortKernels, kernelNames, sort_by_key_kernels, instantiationString, cl_code_dataType, keysTypeName, compareTypeName, *ctl );
-        }
-#endif
-    }; //End of struct CallCompiler_Sort
 
     // Wrapper that uses default control class, iterator interface
     template<typename RandomAccessIterator1, typename RandomAccessIterator2, typename StrictWeakOrdering>
-    void sort_by_key_detect_random_access( const control &ctl, RandomAccessIterator1 keys_first, RandomAccessIterator1 keys_last,
+    void sort_by_key_detect_random_access( const control &ctl, RandomAccessIterator1 keys_first, 
+                                            RandomAccessIterator1 keys_last,
                                             RandomAccessIterator2 values_first, StrictWeakOrdering comp,
                                             const std::string& cl_code, std::input_iterator_tag )
     {
@@ -201,7 +161,8 @@ namespace detail {
     };
 
     template<typename RandomAccessIterator1, typename RandomAccessIterator2, typename StrictWeakOrdering>
-    void sort_by_key_detect_random_access( const control &ctl, RandomAccessIterator1 keys_first, RandomAccessIterator1 keys_last,
+    void sort_by_key_detect_random_access( const control &ctl, RandomAccessIterator1 keys_first, 
+                                            RandomAccessIterator1 keys_last,
                                             RandomAccessIterator2 values_first, StrictWeakOrdering comp,
                                             const std::string& cl_code, std::random_access_iterator_tag )
     {
@@ -211,16 +172,18 @@ namespace detail {
 
     //Fancy iterator specialization
     template<typename DVRandomAccessIterator1, typename DVRandomAccessIterator2, typename StrictWeakOrdering>
-    void sort_by_key_pick_iterator(const control &ctl, DVRandomAccessIterator1 keys_first, DVRandomAccessIterator1 keys_last, DVRandomAccessIterator2 values_first,
-        StrictWeakOrdering comp, const std::string& cl_code, bolt::cl::fancy_iterator_tag )
+    void sort_by_key_pick_iterator(const control &ctl, DVRandomAccessIterator1 keys_first, 
+                                   DVRandomAccessIterator1 keys_last, DVRandomAccessIterator2 values_first,
+                                   StrictWeakOrdering comp, const std::string& cl_code, bolt::cl::fancy_iterator_tag )
     {
         static_assert( false, "It is not possible to output to fancy iterators; they are not mutable" );
     }
 
     //Device Vector specialization
     template<typename DVRandomAccessIterator1, typename DVRandomAccessIterator2, typename StrictWeakOrdering>
-    void sort_by_key_pick_iterator(const control &ctl, DVRandomAccessIterator1 keys_first, DVRandomAccessIterator1 keys_last, DVRandomAccessIterator2 values_first,
-        StrictWeakOrdering comp, const std::string& cl_code, bolt::cl::device_vector_tag )
+    void sort_by_key_pick_iterator(const control &ctl, DVRandomAccessIterator1 keys_first, 
+                                   DVRandomAccessIterator1 keys_last, DVRandomAccessIterator2 values_first,
+                                   StrictWeakOrdering comp, const std::string& cl_code, bolt::cl::device_vector_tag )
     {
         // User defined Data types are not supported with device_vector. Hence we have a static assert here.
         // The code here should be in compliant with the routine following this routine.
@@ -243,11 +206,15 @@ namespace detail {
     }
 
     //Non Device Vector specialization.
-    //This implementation creates a cl::Buffer and passes the cl buffer to the sort specialization whichtakes the cl buffer as a parameter.
-    //In the future, Each input buffer should be mapped to the device_vector and the specialization specific to device_vector should be called.
+    //This implementation creates a cl::Buffer and passes the cl buffer to the 
+    //sort specialization whichtakes the cl buffer as a parameter.
+    //In the future, Each input buffer should be mapped to the device_vector and the 
+    //specialization specific to device_vector should be called.
     template<typename RandomAccessIterator1, typename RandomAccessIterator2, typename StrictWeakOrdering>
-    void sort_by_key_pick_iterator(const control &ctl, RandomAccessIterator1 keys_first, RandomAccessIterator1 keys_last, RandomAccessIterator2 values_first,
-        StrictWeakOrdering comp, const std::string& cl_code, std::random_access_iterator_tag )
+    void sort_by_key_pick_iterator(const control &ctl, RandomAccessIterator1 keys_first, 
+                                   RandomAccessIterator1 keys_last, RandomAccessIterator2 values_first,
+                                   StrictWeakOrdering comp, const std::string& cl_code, 
+                                   std::random_access_iterator_tag )
     {
         typedef typename std::iterator_traits<RandomAccessIterator1>::value_type T_keys;
         typedef typename std::iterator_traits<RandomAccessIterator2>::value_type T_values;
@@ -256,15 +223,17 @@ namespace detail {
             return;
 
         const bolt::cl::control::e_RunMode runMode = ctl.forceRunMode();  // could be dynamic choice some day.
-        if ((runMode == bolt::cl::control::SerialCpu) || (szElements < WGSIZE)) {
+        if ((runMode == bolt::cl::control::SerialCpu) /*|| (szElements < WGSIZE) */) {
             std::cout << "The SerialCpu version of sort is not implemented yet." << std ::endl;
             std::sort(keys_first, keys_last);
             return;
         } else if (runMode == bolt::cl::control::MultiCoreCpu) {
             std::cout << "The MultiCoreCpu version of sort is not implemented yet." << std ::endl;
         } else {
-            device_vector< T_values > dvInputValues( values_first, szElements, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, true, ctl );
-            device_vector< T_keys > dvInputKeys( keys_first, keys_last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctl );
+            device_vector< T_values > dvInputValues( values_first, szElements, 
+                                                     CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, true, ctl );
+            device_vector< T_keys > dvInputKeys( keys_first, keys_last, 
+                                                 CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctl );
             //Now call the actual cl algorithm
             sort_by_key_enqueue(ctl,dvInputKeys.begin(),dvInputKeys.end(), dvInputValues.begin(), comp, cl_code);
             //Map the buffer back to the host
@@ -276,8 +245,9 @@ namespace detail {
 
 
     template<typename DVRandomAccessIterator1, typename DVRandomAccessIterator2, typename StrictWeakOrdering> 
-    void sort_by_key_enqueue(const control &ctl, const DVRandomAccessIterator1& keys_first, const DVRandomAccessIterator1& keys_last, const DVRandomAccessIterator2& values_first, 
-        const StrictWeakOrdering& comp, const std::string& cl_code)  
+    void sort_by_key_enqueue(const control &ctl, const DVRandomAccessIterator1& keys_first, 
+                             const DVRandomAccessIterator1& keys_last, const DVRandomAccessIterator2& values_first, 
+                             const StrictWeakOrdering& comp, const std::string& cl_code)  
     {
             typedef typename std::iterator_traits< DVRandomAccessIterator1 >::value_type T_keys;
             typedef typename std::iterator_traits< DVRandomAccessIterator2 >::value_type T_values;
@@ -285,12 +255,43 @@ namespace detail {
             if(((szElements-1) & (szElements)) != 0)
             {
                 // sort_by_key_enqueue_non_powerOf2(ctl,keys_first,keys_last,values_first,comp,cl_code);
-                std::cout << "There is no use supporting selection sort for the sort_by_key routine.\n Hence only power of 2 buffer sizes work.\n non power of 2 buffer sizes will be supported once radix-sort is working\n";
-                throw ::cl::Error( CL_INVALID_BUFFER_SIZE, "Currently the sort_by_key routine supports only power of 2 buffer size" );
+                std::cout << "There is no use supporting selection sort for the sort_by_key routine.\n";
+                std::cout << " Hence only power of 2 buffer sizes work.\n";
+                std::cout << "non power of 2 buffer sizes will be supported once radix-sort is working\n";
+                throw ::cl::Error( CL_INVALID_BUFFER_SIZE, 
+                    "Currently the sort_by_key routine supports only power of 2 buffer size" );
                 return;
             }
-            static  boost::once_flag initOnlyOnce;
-            static  ::cl::Kernel masterKernel;
+
+            std::vector<std::string> typeNames( sort_by_key_end );
+            typeNames[sort_by_key_keyValueType] = TypeName< T_keys >::get( );
+            typeNames[sort_by_key_valueValueType] = TypeName< T_values >::get( );
+            typeNames[sort_by_key_keyIterType] = TypeName< DVRandomAccessIterator1 >::get( );
+            typeNames[sort_by_key_valueIterType] = TypeName< DVRandomAccessIterator2 >::get( );
+            typeNames[sort_by_key_StrictWeakOrdering] = TypeName< StrictWeakOrdering >::get();
+
+            std::vector<std::string> typeDefinitions;
+            PUSH_BACK_UNIQUE( typeDefinitions, ClCode< T_keys >::get() )
+            PUSH_BACK_UNIQUE( typeDefinitions, ClCode< T_values >::get() )
+            PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVRandomAccessIterator1 >::get() )
+            PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVRandomAccessIterator2 >::get() )
+            PUSH_BACK_UNIQUE( typeDefinitions, ClCode< StrictWeakOrdering  >::get() )
+
+            bool cpuDevice = ctl.device().getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_CPU;
+            /*\TODO - Do CPU specific kernel work group size selection here*/
+            //const size_t kernel0_WgSize = (cpuDevice) ? 1 : WAVESIZE*KERNEL02WAVES;
+            std::string compileOptions;
+            //std::ostringstream oss;
+            //oss << " -DKERNEL0WORKGROUPSIZE=" << kernel0_WgSize;
+
+            BitonicSortByKey_KernelTemplateSpecializer ts_kts;
+            std::vector< ::cl::Kernel > kernels = bolt::cl::getKernels(
+                ctl,
+                typeNames,
+                &ts_kts,
+                typeDefinitions,
+                sort_by_key_kernels,
+                compileOptions);
 
             size_t temp;
 
@@ -300,33 +301,8 @@ namespace detail {
             int resultCnt = computeUnits * wgPerComputeUnit;
             cl_int l_Error = CL_SUCCESS;
 
-            kernelParamsSortByKey args( TypeName< T_keys >::get( ), TypeName< DVRandomAccessIterator1 >::get( ), 
-                TypeName< T_values >::get( ), TypeName< DVRandomAccessIterator2 >::get( ), 
-                TypeName< StrictWeakOrdering >::get( ) );
-
-            std::string typeDefinitions = cl_code + ClCode< T_keys >::get( );
-            if( !boost::is_same< T_keys, T_values >::value) 
-            {
-                typeDefinitions += ClCode< T_values >::get( );
-            }
-            if( !boost::is_same< T_keys, StrictWeakOrdering >::value) 
-            {
-                typeDefinitions += ClCode< StrictWeakOrdering >::get( );
-            }
-            typeDefinitions += ClCode< DVRandomAccessIterator1 >::get( );
-            if( !boost::is_same< std::iterator_traits< DVRandomAccessIterator1 >::iterator_category( ), 
-                std::iterator_traits< DVRandomAccessIterator2 >::iterator_category( ) >::value ) 
-            {
-                typeDefinitions += ClCode< DVRandomAccessIterator2 >::get( );
-            }
-
-            //Power of 2 buffer size
-            //For user-defined types, the user must create a TypeName trait which returns the name of the class 
-            //  - note use of TypeName<>::get to retreive the name here.
-            boost::call_once( initOnlyOnce, boost::bind( CallCompiler_SortByKey::constructAndCompile, &masterKernel, 
-                typeDefinitions, &args, &ctl) );
-
-            size_t wgSize  = masterKernel.getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.device( ), &l_Error );
+            size_t wgSize  = kernels[0].getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >
+                                                                                ( ctl.device( ), &l_Error );
             V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
             if((szElements/2) < wgSize)
             {
@@ -338,31 +314,32 @@ namespace detail {
             ::cl::Buffer Values = values_first.getBuffer( );
             ::cl::Buffer userFunctor(ctl.context(), CL_MEM_USE_HOST_PTR, sizeof(comp), (void*)&comp );
 
-            ::cl::Kernel k = masterKernel;  // hopefully create a copy of the kernel. FIXME, doesn't work.
             numStages = 0;
             for(temp = szElements; temp > 1; temp >>= 1)
                 ++numStages;
-            V_OPENCL( k.setArg(0, Keys), "Error setting a kernel argument" );
-            V_OPENCL( k.setArg(1, keys_first.gpuPayloadSize( ), &keys_first.gpuPayload( ) ), "Error setting a kernel argument" );
-            V_OPENCL( k.setArg(2, Values), "Error setting a kernel argument" );
-            V_OPENCL( k.setArg(3, values_first.gpuPayloadSize( ), &values_first.gpuPayload( ) ), 
-                "Error setting a kernel argument" );
-            V_OPENCL( k.setArg(6, userFunctor), "Error setting a kernel argument" );
+            V_OPENCL( kernels[0].setArg(0, Keys), "Error setting a kernel argument" );
+            V_OPENCL( kernels[0].setArg(1, keys_first.gpuPayloadSize( ), &keys_first.gpuPayload( ) ), 
+                                                  "Error setting a kernel argument" );
+            V_OPENCL( kernels[0].setArg(2, Values), "Error setting a kernel argument" );
+            V_OPENCL( kernels[0].setArg(3, values_first.gpuPayloadSize( ), &values_first.gpuPayload( ) ), 
+                                                  "Error setting a kernel argument" );
+            V_OPENCL( kernels[0].setArg(6, userFunctor), "Error setting a kernel argument" );
             for(stage = 0; stage < numStages; ++stage)
             {
                 // stage of the algorithm
-                V_OPENCL( k.setArg(4, stage), "Error setting a kernel argument" );
+                V_OPENCL( kernels[0].setArg(4, stage), "Error setting a kernel argument" );
                 // Every stage has stage + 1 passes
-                for(passOfStage = 0; passOfStage < stage + 1; ++passOfStage) {
+                for(passOfStage = 0; passOfStage < stage + 1; ++passOfStage) 
+                {
                     // pass of the current stage
-                    V_OPENCL( k.setArg(5, passOfStage), "Error setting a kernel argument" );
+                    V_OPENCL( kernels[0].setArg(5, passOfStage), "Error setting a kernel argument" );
                     /*
                         * Enqueue a kernel run call.
                         * Each thread writes a sorted pair.
                         * So, the number of  threads (global) should be half the length of the input buffer.
                         */
                     l_Error = ctl.commandQueue().enqueueNDRangeKernel(
-                            k,
+                            kernels[0],
                             ::cl::NullRange,
                             ::cl::NDRange(szElements/2),
                             ::cl::NDRange(wgSize),
@@ -373,10 +350,11 @@ namespace detail {
                 }//end of for passStage = 0:stage-1
             }//end of for stage = 0:numStage-1
             //Map the buffer back to the host
-            ctl.commandQueue().enqueueMapBuffer(Keys, true, CL_MAP_READ | CL_MAP_WRITE, 0/*offset*/, 
-                sizeof(T_keys) * szElements, NULL, NULL, &l_Error );
-            ctl.commandQueue().enqueueMapBuffer(Values, true, CL_MAP_READ | CL_MAP_WRITE, 0/*offset*/, 
-                sizeof(T_values) * szElements, NULL, NULL, &l_Error );
+            //ctl.commandQueue().enqueueMapBuffer(Keys, true, CL_MAP_READ | CL_MAP_WRITE, 0/*offset*/, 
+            //    sizeof(T_keys) * szElements, NULL, NULL, &l_Error );
+            //ctl.commandQueue().enqueueMapBuffer(Values, true, CL_MAP_READ | CL_MAP_WRITE, 0/*offset*/, 
+            //   sizeof(T_values) * szElements, NULL, NULL, &l_Error );
+            V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
             V_OPENCL( l_Error, "Error calling map on the result buffer" );
             return;
     }// END of sort_enqueue

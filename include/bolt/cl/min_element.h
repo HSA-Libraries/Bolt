@@ -26,6 +26,11 @@
 #include <string>
 #include <iostream>
 
+/*! \file bolt/cl/min_element.h
+    \brief min_element returns the location of the first minimum element in the specified range.
+*/
+
+
 namespace bolt {
     namespace cl {
 
@@ -37,7 +42,7 @@ namespace bolt {
         *    The min_element finds the location of the first smallest element in the range [first, last]
         */
 
-        /*! \addtogroup min_element
+        /*! \addtogroup CL-min_element
         *   \ingroup Find
         *   \{
         */

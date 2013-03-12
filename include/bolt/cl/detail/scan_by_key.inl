@@ -897,7 +897,7 @@ scan_by_key_pick_iterator(
         tbb::parallel_scan( tbb::blocked_range<int>(  0, static_cast< int >( std::distance( firstKey, lastKey ))), tbbkey_scan, tbb::auto_partitioner());
         return result + numElements;
 #else
-        std::cout << "The MultiCoreCpu version of Scan by key is not implemented yet." << std ::endl;
+        std::cout << "The MultiCoreCpu version of Scan by key is not enabled." << std ::endl;
         throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of scan by key is not enabled to be built." ); 
         return result;
 #endif

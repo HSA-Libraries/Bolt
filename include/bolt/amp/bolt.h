@@ -15,6 +15,11 @@
 
 ***************************************************************************/                                                                                     
 
+/*! \file bolt/amp/bolt.h
+    \brief Define global functions for Bolt AMP.
+*/
+
+
 #pragma once
 #if !defined( AMP_BOLT_H )
 #define AMP_BOLT_H

@@ -26,6 +26,11 @@
 #include <string>
 #include <iostream>
 
+/*! \file bolt/cl/max_element.h
+    \brief max_element returns the location of the first maximum element in the specified range.
+*/
+
+
 namespace bolt {
     namespace cl {
 
@@ -37,7 +42,7 @@ namespace bolt {
         *    The max_element finds the location of the first maximum element in the range [first, last]
         */
 
-        /*! \addtogroup max_element
+        /*! \addtogroup CL-max_element
         *   \ingroup Find
         *   \{
         */

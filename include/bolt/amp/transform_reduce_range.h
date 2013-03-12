@@ -15,6 +15,10 @@
 
 ***************************************************************************/                                                                                     
 
+/*! \file bolt/amp/transform_reduce_range.h
+    \brief  Takes a start index and extent as the range to iterate.
+*/
+
 #pragma once
 
 #include <bolt/transform_reduce.h>

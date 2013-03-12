@@ -25,6 +25,11 @@
 #include <string>
 #include <iostream>
 
+/*! \file bolt/cl/fill.h
+    \brief Fills a range with values passed in the function.
+*/
+
+
 namespace bolt {
     namespace cl {
 
@@ -36,7 +41,7 @@ namespace bolt {
         *   \p Fill fills a range with values passed in the function.        
         */ 
         
-        /*! \addtogroup filling
+        /*! \addtogroup CL-filling
         *   \ingroup transformations
         *   \{
         */

@@ -15,6 +15,11 @@
 
 ***************************************************************************/                                                                                     
 
+
+/*! \file bolt/cl/control.h
+    \brief Control the parameters of a specific Bolt algorithm call.
+*/
+
 #pragma once
 
 #include <bolt/cl/bolt.h>
@@ -22,9 +27,11 @@
 #include <map>
 
 #include <boost/thread/mutex.hpp>
-// #include <boost/interprocess/detail/atomic.hpp>
-// #include <boost/detail/interlocked.hpp>
 #include <boost/shared_ptr.hpp>
+
+/*! \file control.h
+*/
+
 
 namespace bolt {
     namespace cl {
@@ -32,7 +39,10 @@ namespace bolt {
         /*! \addtogroup miscellaneous
         */
 
-        /*! \addtogroup control
+        /*! \addtogroup miscellaneous
+        */
+
+        /*! \addtogroup CL-control
         * \ingroup miscellaneous
         * \{
         */
@@ -199,6 +209,7 @@ namespace bolt {
             /*! Set the method used to detect completion at the end of a Bolt routine. */
             void waitMode(e_WaitMode waitMode) { m_waitMode = waitMode; };
 
+            /*! unroll assignment */
             void unroll(int unroll) { m_unroll = unroll; };
 
             //! 
@@ -257,8 +268,11 @@ namespace bolt {
              */
             typedef boost::shared_ptr< ::cl::Buffer > buffPointer;
 
+            /*! Return device memory size */
             size_t totalBufferSize( );
+            /*! Return a pointer to memory from per allocated memory pool */
             buffPointer acquireBuffer( size_t reqSize, cl_mem_flags flags = CL_MEM_READ_WRITE, const void* host_ptr = NULL );
+            /*! Freeing memory*/
             void freeBuffers( );
 
         private:
@@ -275,11 +289,19 @@ namespace bolt {
                 m_waitMode(BusyWait),
                 m_unroll(1)
             {
-                ::cl::Device device = m_commandQueue.getInfo<CL_QUEUE_DEVICE>();
-                ::cl_device_type dType = device.getInfo<CL_DEVICE_TYPE>();
-                if(dType == CL_DEVICE_TYPE_CPU)
+                ::cl_device_type dType;
+                if(m_commandQueue() != NULL)
                 {
+                    ::cl::Device device = m_commandQueue.getInfo<CL_QUEUE_DEVICE>();
+                    dType = device.getInfo<CL_DEVICE_TYPE>();
+                }
+                if(dType == CL_DEVICE_TYPE_CPU || m_commandQueue() == NULL)
+                {
+#ifdef ENABLE_TBB
                     m_forceRunMode = MultiCoreCpu;
+#else
+                    m_forceRunMode = SerialCpu;
+#endif
                 }
             };
 

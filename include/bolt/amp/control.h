@@ -15,6 +15,12 @@
 
 ***************************************************************************/                                                                                     
 
+
+/*! \file bolt/amp/control.h
+    \brief Control the parameters of a specific Bolt algorithm call.
+*/
+
+
 #pragma once
 
 #include <amp.h>
@@ -165,6 +171,7 @@ public:
     /*! Set the method used to detect completion at the end of a Bolt routine. */
     void setWaitMode(e_WaitMode waitMode) { m_waitMode = waitMode; };
 
+    /*! unroll assignment */
     void setUnroll(int unroll) { m_unroll = unroll; };
 
     // getters:

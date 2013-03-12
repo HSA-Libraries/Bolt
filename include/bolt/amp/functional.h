@@ -15,6 +15,11 @@
 
 ***************************************************************************/
 
+/*! \file bolt/amp/functional.h
+    \brief List all the unary and binary functions.
+*/
+
+
 #pragma once
 #if !defined( BOLT_AMP_FUNCTIONAL_H )
 #define BOLT_AMP_FUNCTIONAL_H

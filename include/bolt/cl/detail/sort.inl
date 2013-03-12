@@ -15,18 +15,13 @@
 
 ***************************************************************************/                                                                                     
 
-#if !defined( SORT_INL )
-#define SORT_INL
+#if !defined( OCL_SORT_INL )
+#define OCL_SORT_INL
 #pragma once
 
 #include <algorithm>
 #include <type_traits>
 
-#include <boost/bind.hpp>
-#include <boost/thread/once.hpp>
-#include <boost/shared_array.hpp>
-
-#include "bolt/cl/bolt.h"
 #include "bolt/cl/scan.h"
 #include "bolt/cl/functional.h"
 #include "bolt/cl/device_vector.h"
@@ -479,7 +474,7 @@ sort_enqueue(control &ctl,
     int wgPerComputeUnit =  ctl.wgPerComputeUnit(); 
     cl_int l_Error = CL_SUCCESS;
 
-    static  boost::once_flag initOnlyOnce;
+
     static std::vector< ::cl::Kernel > radixSortUintKernels;
     std::vector<std::string> typeNames( sort_end );
     typeNames[sort_iValueType] = TypeName< T >::get( );
@@ -497,7 +492,6 @@ sort_enqueue(control &ctl,
 
     std::string compileOptions;
     //std::ostringstream oss;
-    
     RadixSort_Uint_KernelTemplateSpecializer ts_kts(RADIX);
     std::vector< ::cl::Kernel > kernels = bolt::cl::getKernels(
         ctl,
@@ -831,6 +825,7 @@ sort_enqueue(control &ctl,
         typeDefinitions,
         sort_uint_kernels,
         compileOptions);
+
 
     unsigned int groupSize  = RADICES;
 
@@ -1277,6 +1272,7 @@ sort_enqueue(control &ctl,
                                             ::cl::NDRange(BITONIC_SORT_WGSIZE),
                                             NULL,
                                             NULL);
+
             V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for sort() kernel" );
             //V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
         }//end of for passStage = 0:stage-1
@@ -1296,7 +1292,7 @@ void sort_enqueue_non_powerOf2(control &ctl,
                                const StrictWeakOrdering& comp, const std::string& cl_code)  
 {
     typedef typename std::iterator_traits< DVRandomAccessIterator >::value_type T;
-    static boost::once_flag initOnlyOnce;
+
     cl_int l_Error;
     size_t szElements = (size_t)(last - first);
 
@@ -1330,7 +1326,7 @@ void sort_enqueue_non_powerOf2(control &ctl,
         compileOptions);
 
     size_t wgSize  = kernels[0].getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.device( ), &l_Error );
-    
+
     size_t totalWorkGroups = (szElements + wgSize)/wgSize;
     size_t globalSize = totalWorkGroups * wgSize;
     V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );

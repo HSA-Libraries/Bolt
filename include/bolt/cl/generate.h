@@ -25,7 +25,8 @@
 #include <string>
 #include <iostream>
 
-/*! \file generate.h
+/*! \file bolt/cl/generate.h
+    \brief Generate assigns to each element of a sequence [first,last].
 */
 
 namespace bolt {
@@ -39,7 +40,7 @@ namespace bolt {
         *   \p generate assigns to each element of a sequence the value returned by a generator.
         */ 
         
-        /*! \addtogroup filling
+        /*! \addtogroup CL-filling
         *   \ingroup transformations
         *   \{
         */

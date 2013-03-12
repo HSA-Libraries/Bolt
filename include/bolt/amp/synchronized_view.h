@@ -15,6 +15,10 @@
 
 ***************************************************************************/                                                                                     
 
+/*! \file bolt/amp/synchronized_view.h
+    \brief  Override the CPU implementation of array indexes.
+*/
+
 #include <amp.h>
 #pragma once
 

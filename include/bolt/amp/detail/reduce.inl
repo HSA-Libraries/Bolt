@@ -57,6 +57,27 @@ namespace bolt
         //  Reduce overloads
         //////////////////////////////////////////
         // default control, two-input transform, std:: iterator
+
+        template<typename InputIterator> 
+        typename std::iterator_traits<InputIterator>::value_type
+            reduce(InputIterator first, 
+            InputIterator last)
+        {
+            typedef typename std::iterator_traits<InputIterator>::value_type iType;
+            return reduce(bolt::amp::control::getDefault(), first, last, iType(), bolt::amp::plus<iType>());
+        };
+
+        template<typename InputIterator> 
+        typename std::iterator_traits<InputIterator>::value_type
+            reduce(bolt::amp::control &ctl,
+            InputIterator first, 
+            InputIterator last)
+        {
+            typedef typename std::iterator_traits<InputIterator>::value_type iType;
+            return reduce(ctl, first, last, iType(), bolt::amp::plus< iType >( ));
+        };
+
+
         template< typename InputIterator,
                   typename T,
                   typename BinaryFunction > 
@@ -71,8 +92,7 @@ namespace bolt
 
         template< typename InputIterator,
                  typename T > 
-        typename std::iterator_traits<InputIterator>::value_type
-        reduce( InputIterator first, 
+        T reduce( InputIterator first, 
                 InputIterator last, 
                 T init )
         {
@@ -82,8 +102,7 @@ namespace bolt
 
         template< typename InputIterator,
                   typename T > 
-        typename std::iterator_traits<InputIterator>::value_type
-        reduce( bolt::amp::control &ctl,
+        T reduce( bolt::amp::control &ctl,
                 InputIterator first, 
                 InputIterator last, 
                 T init )

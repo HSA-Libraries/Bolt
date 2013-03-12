@@ -24,9 +24,9 @@
 #include <bolt/cl/device_vector.h>
 #include <bolt/cl/pair.h>
 
-/*! \file reduce_by_key.h
+/*! \file bolt/cl/reduce_by_key.h
+    \brief Performs on a sequence, a reduction of each sub-sequence as defined by equivalent keys.
 */
-
 namespace bolt
 {
      namespace cl
@@ -40,7 +40,7 @@ namespace bolt
             *   reduce_by_key performs, on a sequence, a reduction of each sub-sequence as defined by equivalent keys.
             */ 
 
-            /*! \addtogroup reduce_by_key
+            /*! \addtogroup CL-reduce_by_key
             *   \ingroup reductions
             *   \{
             */

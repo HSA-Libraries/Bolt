@@ -15,6 +15,11 @@
 
 ***************************************************************************/
 
+/*! \file bolt/amp/device_vector.h
+    \brief Header file for the device_container class.
+*/
+
+
 #pragma once
 #if !defined( BOLT_DEVICE_VECTOR_H )
 #define BOLT_DEVICE_VECTOR_H
@@ -29,9 +34,6 @@
 #include <boost/iterator/reverse_iterator.hpp>
 #include <boost/shared_array.hpp>
 
-/*! \file device_vector.h
- * Header file for the device_container class
- */
 
 /*! \brief Defining namespace for the Bolt project
     */
@@ -97,14 +99,14 @@ public:
     class reference_base
     {
     public:
-        reference_base( Container& rhs, size_type index ): m_Container( rhs ), m_index( index )
+        reference_base( Container& rhs, size_type index ): m_Container( rhs ), m_Index( index )
         {}
 
         //  Automatic type conversion operator to turn the reference object into a value_type
         operator value_type( ) const
         {
             arrayview_type av( *m_Container.m_devMemory );
-            value_type &result = av[static_cast< int >( m_index )];
+            value_type &result = av[static_cast< int >( m_Index )];
 
             return result;
         }
@@ -112,7 +114,7 @@ public:
         reference_base< Container >& operator=( const value_type& rhs )
         {
             arrayview_type av( *m_Container.m_devMemory );
-            av[static_cast< int >( m_index )] = rhs;
+            av[static_cast< int >( m_Index )] = rhs;
 
             return *this;
         }
@@ -128,12 +130,12 @@ public:
         */
         size_type getIndex() const
         {
-            return m_index;
+            return m_Index;
         }
 
     private:
         Container& m_Container;
-        size_type m_index;
+        size_type m_Index;
     };
 
     /*! \brief Typedef to create the non-constant reference.
@@ -145,14 +147,14 @@ public:
     class const_reference_base
     {
     public:
-        const_reference_base( const Container& rhs, size_type index ): m_Container( rhs ), m_index( index )
+        const_reference_base( const Container& rhs, size_type index ): m_Container( rhs ), m_Index( index )
         {}
 
         //  Automatic type conversion operator to turn the reference object into a value_type
         operator value_type( ) const
         {
             arrayview_type av( *m_Container.m_devMemory );
-            value_type &result = av[static_cast< int >( m_index )];
+            value_type &result = av[static_cast< int >( m_Index )];
 
             return result;
         }
@@ -160,7 +162,7 @@ public:
         const_reference_base< const Container >& operator=( const value_type& rhs ) 
         {
             arrayview_type av( *m_Container.m_devMemory );
-            av[static_cast< int >( m_index )] = rhs;
+            av[static_cast< int >( m_Index )] = rhs;
 
             return *this;
         }
@@ -176,12 +178,12 @@ public:
         */
         size_type getIndex() const
         {
-            return m_index;
+            return m_Index;
         }
 
     private:
         const Container& m_Container;
-        size_type m_index;
+        size_type m_Index;
     };
 
     /*! \brief A non-writeable copy of an element of the container.
@@ -209,13 +211,13 @@ public:
     public:
 
         //  Basic constructor requires a reference to the container and a positional element
-        iterator_base( Container& rhs, size_type index ): m_Container( rhs ), m_index( index )
+        iterator_base( Container& rhs, size_type index ): m_Container( rhs ), m_Index( index )
         {}
 
         //  This copy constructor allows an iterator to convert into a const_iterator, but not vica versa
         template< typename OtherContainer >
         iterator_base( const iterator_base< OtherContainer >& rhs ):
-            m_Container( rhs.m_Container ), m_index( rhs.m_index )
+            m_Container( rhs.m_Container ), m_Index( rhs.m_Index )
         {}
 
         //  This copy constructor allows an iterator to convert into a const_iterator, but not vica versa
@@ -223,7 +225,7 @@ public:
         iterator_base< Container >& operator= ( const iterator_base< Container >& rhs )
         {
             m_Container = rhs.m_Container;
-            m_index = rhs.m_index;
+            m_Index = rhs.m_Index;
             return *this;
         }
 
@@ -240,10 +242,16 @@ public:
             return result;
         }
 
-        int getIndex() const
+        Container& getContainer( ) const
         {
-            return m_index;
+          return m_Container;
         }
+
+        size_type getIndex() const
+        {
+            return m_Index;
+        }
+
 
         /*! \brief A get accessor function to return the encapsulated device buffer for const objects.
         *   This member function allows access to the Buffer object, which can be retrieved through a reference or an iterator.
@@ -260,8 +268,9 @@ public:
 
         difference_type distance_to( const iterator_base< Container >& rhs ) const
         {
-            return ( rhs.m_index - m_index );
+            return ( rhs.m_Index - m_Index );
         }
+        size_type m_Index;
     private:
         //  Implementation detail of boost.iterator
         friend class boost::iterator_core_access;
@@ -274,7 +283,7 @@ public:
 
         void advance( difference_type n )
         {
-            m_index += n;
+            m_Index += n;
         }
 
         void increment( )
@@ -292,7 +301,7 @@ public:
         template< typename OtherContainer >
         bool equal( const iterator_base< OtherContainer >& rhs ) const
         {
-            bool sameIndex = rhs.m_index == m_index;
+            bool sameIndex = rhs.m_Index == m_Index;
             bool sameContainer = (&m_Container == &rhs.m_Container );
 
             return ( sameIndex && sameContainer );
@@ -300,11 +309,11 @@ public:
 
         reference dereference( ) const
         {
-            return m_Container[ m_index ];
+            return m_Container[ m_Index ];
         }
 
         Container& m_Container;
-        size_type m_index;
+
     };
 
 
@@ -320,13 +329,13 @@ public:
     public:
 
         //  Basic constructor requires a reference to the container and a positional element
-        reverse_iterator_base( Container& lhs, size_type index ): m_Container( lhs ), m_index( index-1 )
+        reverse_iterator_base( Container& lhs, size_type index ): m_Container( lhs ), m_Index( index-1 )
         {}
 
         //  This copy constructor allows an iterator to convert into a const_iterator, but not vica versa
         template< typename OtherContainer >
         reverse_iterator_base( const reverse_iterator_base< OtherContainer >& lhs ):
-            m_Container( lhs.m_Container ), m_index( lhs.m_index-1 )
+            m_Container( lhs.m_Container ), m_Index( lhs.m_Index-1 )
         {}
 
         //  This copy constructor allows an iterator to convert into a const_iterator, but not vica versa
@@ -334,7 +343,7 @@ public:
         reverse_iterator_base< Container >& operator= ( const reverse_iterator_base< Container >& lhs )
         {
             m_Container = lhs.m_Container;
-            m_index = lhs.m_index;
+            m_Index = lhs.m_Index;
             return *this;
         }
         
@@ -351,10 +360,16 @@ public:
             return result;
         }
 
-        int getIndex() const
+        size_type getIndex() const
         {
-            return m_index;
+            return m_Index;
         }
+
+        Container& getContainer( ) const
+        {
+          return m_Container;
+        }
+
 
         /*! \brief A get accessor function to return the encapsulated device buffer for const objects.
         *   This member function allows access to the Buffer object, which can be retrieved through a reference or an iterator.
@@ -372,7 +387,7 @@ public:
 
         difference_type distance_to( const reverse_iterator_base< Container >& lhs ) const
         {
-            return static_cast< difference_type >( m_index - lhs.m_index );
+            return static_cast< difference_type >( m_Index - lhs.m_Index );
         }
 
     private:
@@ -387,7 +402,7 @@ public:
 
         void advance( difference_type n )
         {
-            m_index += n;
+            m_Index += n;
         }
 
         void increment( )
@@ -405,7 +420,7 @@ public:
         template< typename OtherContainer >
         bool equal( const reverse_iterator_base< OtherContainer >& lhs ) const
         {
-            bool sameIndex = lhs.m_index == m_index;
+            bool sameIndex = lhs.m_Index == m_Index;
             bool sameContainer = (&m_Container == &lhs.m_Container );
 
             return ( sameIndex && sameContainer );
@@ -413,11 +428,11 @@ public:
 
         reference dereference( ) const
         {
-            return m_Container[ m_index ];
+            return m_Container[ m_Index ];
         }
 
         Container& m_Container;
-        size_type m_index;
+        size_type m_Index;
 
     };
 
@@ -1033,19 +1048,19 @@ public:
             throw std::exception( "Iterator is not from this container" );
 
         iterator l_End = end( );
-        if( index.m_index >= l_End.m_index )
+        if( index.m_Index >= l_End.m_Index )
             throw std::exception( "Iterator is pointing past the end of this container" );
 
-        size_type sizeRegion = l_End.m_index - index.m_index;
+        size_type sizeRegion = l_End.m_Index - index.m_Index;
 
         arrayview_type av( *m_devMemory );
         naked_pointer ptrBuff = av.data();
-        naked_pointer ptrBuffTemp = ptrBuff + index.m_index;
+        naked_pointer ptrBuffTemp = ptrBuff + index.m_Index;
         ::memmove( ptrBuffTemp, ptrBuffTemp + 1, (sizeRegion - 1)*sizeof( value_type ) );
 
         --m_Size;
 
-        size_type newIndex = (m_Size < index.m_index) ? m_Size : index.m_index;
+        size_type newIndex = (m_Size < index.m_Index) ? m_Size : index.m_Index;
         return iterator( *this, newIndex );
     }
 
@@ -1059,7 +1074,7 @@ public:
         if(( &first.m_Container != this ) && ( &last.m_Container != this ) )
             throw std::exception( "Iterator is not from this container" );
 
-        if( last.m_index > m_Size )
+        if( last.m_Index > m_Size )
             throw std::exception( "Iterator is pointing past the end of this container" );
 
         if( (first == begin( )) && (last == end( )) )
@@ -1069,17 +1084,17 @@ public:
         }
 
         iterator l_End = end( );
-        size_type sizeMap = l_End.m_index - first.m_index;
+        size_type sizeMap = l_End.m_Index - first.m_Index;
 
         arrayview_type av( *m_devMemory );
         naked_pointer ptrBuff = av.data();
-        ptrBuff = ptrBuff + first.m_index;
-        size_type sizeErase = last.m_index - first.m_index;
+        ptrBuff = ptrBuff + first.m_Index;
+        size_type sizeErase = last.m_Index - first.m_Index;
         ::memmove( ptrBuff, ptrBuff + sizeErase, (sizeMap - sizeErase)*sizeof( value_type ) );
 
         m_Size -= sizeErase;
 
-        size_type newIndex = (m_Size < last.m_index) ? m_Size : last.m_index;
+        size_type newIndex = (m_Size < last.m_Index) ? m_Size : last.m_Index;
         return iterator( *this, newIndex );
     }
 
@@ -1095,13 +1110,13 @@ public:
         if( &index.m_Container != this )
             throw std::exception( "Iterator is not from this container" );
 
-        if( index.m_index > m_Size )
+        if( index.m_Index > m_Size )
             throw std::exception( "Iterator is pointing past the end of this container" );
 
-        if( index.m_index == m_Size )
+        if( index.m_Index == m_Size )
         {
             push_back( value );
-            return iterator( *this, index.m_index );
+            return iterator( *this, index.m_Index );
         }
 
         //  Need to grow the vector to insert a new value.
@@ -1112,11 +1127,11 @@ public:
             m_Size ? reserve( m_Size * 2 ) : reserve( 1 );
         }
 
-        size_type sizeMap = (m_Size - index.m_index) + 1;
+        size_type sizeMap = (m_Size - index.m_Index) + 1;
 
         arrayview_type av( *m_devMemory );
         naked_pointer ptrBuff = av.data();
-        ptrBuff = ptrBuff + index.m_index;
+        ptrBuff = ptrBuff + index.m_Index;
 
         //  Shuffle the old values 1 element down
         ::memmove( ptrBuff + 1, ptrBuff, (sizeMap - 1)*sizeof( value_type ) );
@@ -1126,7 +1141,7 @@ public:
 
         ++m_Size;
 
-        return iterator( *this, index.m_index );
+        return iterator( *this, index.m_Index );
     }
 
     /*! \brief Inserts n copies of the new element into the container.
@@ -1143,7 +1158,7 @@ public:
       if( &index.m_Container != this )
             throw std::exception(  "Iterator is not from this container" );
 
-        if( index.m_index > m_Size )
+        if( index.m_Index > m_Size )
             throw std::exception(  "Iterator is pointing past the end of this container" );
 
         //  Need to grow the vector to insert n new values
@@ -1152,11 +1167,11 @@ public:
             reserve( m_Size + n );
         }
 
-        size_type sizeMap = (m_Size - index.m_index) + n;
+        size_type sizeMap = (m_Size - index.m_Index) + n;
 
         arrayview_type av( *m_devMemory );
         naked_pointer ptrBuff = av.data( );
-        ptrBuff = ptrBuff + index.m_index;
+        ptrBuff = ptrBuff + index.m_Index;
 
         //  Shuffle the old values n element down.
         ::memmove( ptrBuff + n, ptrBuff, (sizeMap - n)*sizeof( value_type ) );
@@ -1176,7 +1191,7 @@ public:
         if( &index.m_Container != this )
             throw std::exception(  "Iterator is not from this container" );
 
-        if( index.m_index > m_Size )
+        if( index.m_Index > m_Size )
             throw std::exception(  "Iterator is pointing past the end of this container" );
 
         //  Need to grow the vector to insert the range of new values
@@ -1185,10 +1200,10 @@ public:
         {
             reserve( m_Size + n );
         }
-        size_type sizeMap = (m_Size - index.m_index) + n;
+        size_type sizeMap = (m_Size - index.m_Index) + n;
 
         arrayview_type av( *m_devMemory );
-        naked_pointer ptrBuff = av.data() + index.m_index;
+        naked_pointer ptrBuff = av.data() + index.m_Index;
 
         //  Shuffle the old values n element down.
         ::memmove( ptrBuff + n, ptrBuff, (sizeMap - n)*sizeof( value_type ) );

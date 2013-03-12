@@ -133,9 +133,9 @@ kernel
 void BitonicSortTemplate(
                     global iPtrType *input_ptr,
                     iIterType       input_iter,
-                    const uint      stage,
-                    const uint      passOfStage,
-                    global Compare  *userComp)
+                 const uint stage,
+                 const uint passOfStage,
+                 global Compare *userComp)
 {
     uint threadId = get_global_id(0);
     uint pairDistance = 1 << (stage - passOfStage);
@@ -145,7 +145,7 @@ void BitonicSortTemplate(
                        + (threadId >> (stage - passOfStage) ) * blockWidth;
     bool compareResult;
     input_iter.init( input_ptr );
-
+    
     uint rightId = leftId + pairDistance;
     
     iPtrType greater, lesser;

@@ -14,7 +14,9 @@
 *   limitations under the License.                                                   
 
 ***************************************************************************/                                                                                     
-
+/*! \file bolt/amp/transform_reduce.h
+    \brief  Fuses transform and reduce operations together.
+*/
 
 #pragma once
 #if !defined( AMP_TRANSFORM_REDUCE_H )
@@ -37,7 +39,7 @@ namespace bolt {
         *   \ingroup algorithms
         */ 
         
-        /*! \addtogroup transform_reduce
+        /*! \addtogroup amp-transform_reduce
         *   \ingroup reductions
         *   \{
         *   \todo experiment with passing functors as objects rather than as parameters.(Args can't return state to host, but OK?)

@@ -15,17 +15,22 @@
 
 ***************************************************************************/                                                                                     
 
+
+/*! \file bolt/cl/bolt.h
+    \brief Define global functions for Bolt CL.
+*/
+
 #pragma once
 #if !defined( OCL_BOLT_H )
 #define OCL_BOLT_H
-
 #define __CL_ENABLE_EXCEPTIONS
 #define CL_USE_DEPRECATED_OPENCL_1_1_APIS
-#if defined(__APPLE__) || defined(__MACOSX)
-    #include <OpenCL/cl.hpp>
-#else
-    #include <CL/cl.hpp>
-#endif
+
+#include <CL/cl.h>
+/*For enabling only the OpenCL 1.1 specification uncomment the following line*/
+//#undef CL_VERSION_1_2
+#include <CL/cl.hpp>
+
 
 #include <string>
 #include <map>
@@ -264,6 +269,8 @@ namespace bolt {
         /******************************************************************
          * Program Map - so each kernel is only compiled once
          *****************************************************************/
+        /*! \brief This structure ensures that a kernel is compiled only once for specified devices.
+        */
         struct ProgramMapKey
         {
             ::cl::Context context;

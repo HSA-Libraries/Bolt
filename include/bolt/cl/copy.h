@@ -25,7 +25,8 @@
 #include <string>
 #include <iostream>
 
-/*! \file copy.h
+/*! \file bolt/cl/copy.h
+    \brief Copies each element from the sequence to result.
 */
 
 namespace bolt {
@@ -39,7 +40,7 @@ namespace bolt {
         *   \p copy copies each element from the sequence [first, last) to [result, result + (last - first)). 
         */ 
         
-        /*! \addtogroup copy
+        /*! \addtogroup CL-copy
         *   \ingroup copying
         *   \{
         */

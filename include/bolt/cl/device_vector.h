@@ -15,6 +15,9 @@
 
 ***************************************************************************/                                                                                     
 
+
+
+
 #pragma once
 #if !defined( BOLT_DEVICE_VECTOR_H )
 #define BOLT_DEVICE_VECTOR_H
@@ -29,24 +32,22 @@
 #include <boost/iterator/reverse_iterator.hpp>
 #include <boost/shared_array.hpp>
 
-/*! \file device_vector.h
+/*! \file bolt/cl/device_vector.h
+ *  \brief Namespace that captures OpenCL related data types and functions 
  * Public header file for the device_container class
  * \bug iterator::getBuffer() returns "pointer" to beginning of array, instead of where the iterator has incremented to; may need to map a subBuffer or something simmilar
  */
 
-/*! \brief Defining namespace for the Bolt project
-    */
+
 namespace bolt
 {
 
-/*! \brief Namespace that captures OpenCL related data types and functions
-     */
 namespace cl
 {
         /*! \addtogroup Containers
          */
 
-        /*! \addtogroup Device
+        /*! \addtogroup CL-Device
         *   \ingroup Containers
         *   Containers that guarantee sequential and linear access to memory "close" to the device
         */
@@ -338,12 +339,12 @@ namespace cl
             public:
 
                 //  Basic constructor requires a reference to the container and a positional element
-                reverse_iterator_base( Container& lhs, size_type index ): m_Container( lhs ), m_index( index-1 )
+                reverse_iterator_base( Container& lhs, size_type index ): m_Container( lhs ), m_Index( index-1 )
                 {}
 
                 //  This copy constructor allows an iterator to convert into a const_iterator, but not vica versa
                 template< typename OtherContainer >
-                reverse_iterator_base( const reverse_iterator_base< OtherContainer >& lhs ): m_Container( lhs.m_Container ), m_index( lhs.m_index-1 )
+                reverse_iterator_base( const reverse_iterator_base< OtherContainer >& lhs ): m_Container( lhs.m_Container ), m_Index( lhs.m_Index-1 )
                 {}
 
                 //  This copy constructor allows an iterator to convert into a const_iterator, but not vica versa
@@ -351,7 +352,7 @@ namespace cl
                 reverse_iterator_base< Container >& operator= ( const reverse_iterator_base< Container >& lhs )
                 {
                     m_Container = lhs.m_Container;
-                    m_index = lhs.m_index;
+                    m_Index = lhs.m_Index;
                     return *this;
                 }
                 
@@ -370,17 +371,17 @@ namespace cl
 
                 int getIndex() const
                 {
-                    return m_index;
+                    return m_Index;
                 }
 
                 //iterator_base<Container> base()
                 //{
-                //    iterator_base<Container>(m_Container,m_index-1);
+                //    iterator_base<Container>(m_Container,m_Index-1);
                 //}
 
                 difference_type distance_to( const reverse_iterator_base< Container >& lhs ) const
                 {
-                    return static_cast< difference_type >( m_index - lhs.m_index );
+                    return static_cast< difference_type >( m_Index - lhs.m_Index );
                 }
 
             private:
@@ -395,7 +396,7 @@ namespace cl
 
                 void advance( difference_type n )
                 {
-                    m_index += n;
+                    m_Index += n;
                 }
 
                 void increment( )
@@ -413,7 +414,7 @@ namespace cl
                 template< typename OtherContainer >
                 bool equal( const reverse_iterator_base< OtherContainer >& lhs ) const
                 {
-                    bool sameIndex = lhs.m_index == m_index;
+                    bool sameIndex = lhs.m_Index == m_Index;
                     bool sameContainer = (&m_Container == &lhs.m_Container );
 
                     return ( sameIndex && sameContainer );
@@ -421,11 +422,11 @@ namespace cl
 
                 reference dereference( ) const
                 {
-                    return m_Container[ m_index ];
+                    return m_Container[ m_Index ];
                 }
 
                 Container& m_Container;
-                size_type m_index;
+                size_type m_Index;
             };
 
             /*! \brief Typedef to create the non-constant iterator

@@ -15,6 +15,12 @@
 
 ***************************************************************************/
 
+
+/*! \file bolt/amp/iterator/iterator_traits.h
+    \brief Defines new iterator_traits structures used by the Bolt runtime.
+*/
+
+
 #pragma once
 #if !defined( AMP_ITERATOR_TRAITS_H )
 #define AMP_ITERATOR_TRAITS_H

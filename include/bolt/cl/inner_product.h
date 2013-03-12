@@ -25,6 +25,12 @@
 #include <string>
 #include <iostream>
 
+/*! \file bolt/cl/inner_product.h
+    \brief Inner Product returns the inner product of two iterators.
+*/
+
+
+
 namespace bolt {
     namespace cl {
 
@@ -35,7 +41,7 @@ namespace bolt {
         *   \ingroup algorithms
         */
 
-        /*! \addtogroup inner_product
+        /*! \addtogroup CL-inner_product
         *   \ingroup reductions
         *   \{
         */

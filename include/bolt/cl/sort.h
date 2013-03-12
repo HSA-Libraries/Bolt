@@ -15,14 +15,19 @@
 
 ***************************************************************************/                                                                                     
 
-#if !defined( SORT_H )
-#define SORT_H
+#if !defined( OCL_SORT_H )
+#define OCL_SORT_H
 #pragma once
 
 #include <bolt/cl/bolt.h>
-#include <bolt/cl/functional.h>
 #include <string>
-#include <iostream>
+
+
+
+/*! \file bolt/cl/sort.h
+    \brief Returns the sorted result of all the elements in input.
+*/
+
 
 namespace bolt {
     namespace cl {
@@ -39,14 +44,14 @@ namespace bolt {
         *   See the Bolt Tools for Split-Source for a detailed description. 
         */ 
 
-        /*! \addtogroup sort
+        /*! \addtogroup CL-sort
         *   \ingroup sorting
         *   \{
         *   \todo Prove the performance of the Sort routines using a benchmark program that can 
         *   show decent results across a range of values (a graph).
         */
 
-        /*! \p This version of sort returns the sorted result of all the elements in the \p RandomAccessIterator  
+        /*! \brief This version of \p sort returns the sorted result of all the elements in the \p RandomAccessIterator  
         * between the the first and last elements. The routine arranges the elements in ascending order. 
         * \p RandomAccessIterator's value_type must provide operator < overload. 
         *
@@ -78,7 +83,7 @@ namespace bolt {
             RandomAccessIterator last, 
             const std::string& cl_code="");
 
-        /*! \p sort returns the sorted result of all the elements in the inputIterator between the the first and last elements using the specified binary_op.  
+        /*! \brief \p sort returns the sorted result of all the elements in the inputIterator between the the first and last elements using the specified binary_op.  
         * You can arrange the elements in ascending order, where the binary_op is the less<>() operator. 
         * This version of \p sort does not take a bolt::cl::control structure. The Bolt library provides a default command Queue for a device. The 
         * comparison object \c functor object is defined by \p StrictWeakOrdering.
@@ -117,7 +122,7 @@ namespace bolt {
             StrictWeakOrdering comp, 
             const std::string& cl_code="");
 
-        /*! \p This version of sort returns the sorted result of all the elements in the \p RandomAccessIterator between the the first and last elements.  
+        /*! \brief This version of \p sort returns the sorted result of all the elements in the \p RandomAccessIterator between the the first and last elements.  
         * The routine arranges the elements in an ascending order. \p RandomAccessIterator's value_type must provide operator < overload. 
 
         *
@@ -154,7 +159,7 @@ namespace bolt {
             RandomAccessIterator last, 
             const std::string& cl_code="");
 
-        /*! \p sort returns the sorted result of all the elements in the inputIterator between the the first and last elements using the specified binary_op.  
+        /*! \brief \p sort returns the sorted result of all the elements in the inputIterator between the the first and last elements using the specified binary_op.  
         * You can arrange the elements in an ascending order, where the binary_op is the less<>() operator. 
         * This version of \p sort takes a bolt::cl::control structure as a first argument and compares objects using \c functor object defined by \p StrictWeakOrdering.
 

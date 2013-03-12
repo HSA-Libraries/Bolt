@@ -82,7 +82,7 @@
         std::vector< int > A(arraySize);
 
       for (int i=0; i < arraySize; i++) {
-        A[i] = 1;
+        A[i(= 1;
       };
 
       int stlReduce = std::accumulate(A.begin(), A.end(), 0);
@@ -1101,7 +1101,7 @@ TEST( ReduceUDD , UDDPlusOperatorInts )
     //setup containers
     int length = 1024;
     std::vector< UDD > refInput( length );
-    for( unsigned int i = 0; i < length ; i++ )
+    for( int i = 0; i < length ; i++ )
     {
       refInput[i].a = i;
       refInput[i].b = i+1;
@@ -1160,10 +1160,10 @@ void testdoubleTBB()
         tbbInput[i] = 3.0;
     };
 
-    double hSum = std::accumulate(stdInput.begin(), stdInput.end(), 1);
+    double hSum = std::accumulate(stdInput.begin(), stdInput.end(), 1.0);
     bolt::amp::control ctl = bolt::amp::control::getDefault();
     ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu); // serial path also tested
-    double sum = bolt::amp::reduce(ctl, tbbInput.begin(), tbbInput.end(), 1);
+    double sum = bolt::amp::reduce(ctl, tbbInput.begin(), tbbInput.end(), 1.0);
     if(hSum == sum)
         printf ("\nTBB Test case PASSED %lf %lf\n", hSum, sum);
     else
@@ -1198,6 +1198,36 @@ void testUDDTBB()
     else
         printf ("\nUDDTBB Test case FAILED\n");
         
+}
+
+
+TEST( ReduceFunctor, NormalLambdaFunctor )
+{
+  
+    int init(0);
+    //  Calling the actual functions under test
+    std::vector<int> stdInput(1024), boltInput(1024);
+    std::fill( stdInput.begin(), stdInput.end(), 100 );
+    std::copy( stdInput.begin(), stdInput.end(), boltInput.begin() );
+
+    int stlReduce = std::accumulate(stdInput.begin(),
+                                    stdInput.end(),
+                                    init,
+                                    []( int x, int y ) restrict (amp,cpu){return x+y;}
+                                   );
+
+    int boltReduce = bolt::amp::reduce( boltInput.begin( ),
+                                        boltInput.end( ),
+                                        init,
+                                        []( int x, int y ) restrict (amp,cpu){return x+y;}
+                                      );
+
+    size_t stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
+    size_t boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+    //EXPECT_EQ( stlReduce, boltReduce );
 }
 
 void testTBBDevicevector()

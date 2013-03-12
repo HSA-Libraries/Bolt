@@ -101,7 +101,19 @@ __kernel void perBlockScanByKey(
     
     // Each work item writes out its calculated scan result, relative to the beginning
     // of each work group
-    output[ gloId ] = sum;
+    kType curkey, prekey;
+    if(exclusive && gloId > 0)
+    {
+       curkey = keys[gloId];
+       prekey = keys[gloId-1];
+       if((*binaryPred)( curkey, prekey  ))
+          output[ gloId ] =  (*binaryFunct)( init, sum ); 
+       else
+          output[ gloId ] = init;
+    }
+    else
+         output[ gloId ] = sum;
+
     barrier( CLK_LOCAL_MEM_FENCE ); // needed for large data types
     if (locId == 0)
     {
