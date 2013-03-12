@@ -285,3 +285,4 @@ set( CPACK_SOURCE_IGNORE_FILES "/\\\\.hg/;/\\\\.svn/;" )
 
 # Define all variables that influence CPack before including CPack, such as install targets
 include( CPack )
+message ( "This is a test for pull request" )
