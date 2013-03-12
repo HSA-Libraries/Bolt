@@ -14,11 +14,8 @@ void histogramAscendingRadixNTemplate(__global uint* unsortedData,
     const int NUM_OF_ELEMENTS_PER_WORK_ITEM_T = RADICES_T; 
     const int MASK_T      = (1<<RADIX_T)  -1;
     int       localBuckets[16] = {0,0,0,0,0,0,0,0,
-                                         0,0,0,0,0,0,0,0};
-    size_t localId     = get_local_id(0);
+                                  0,0,0,0,0,0,0,0};
     size_t globalId    = get_global_id(0);
-    size_t groupId     = get_group_id(0);
-    size_t groupSize   = get_local_size(0);
     size_t numOfGroups = get_num_groups(0);
 
     /* Calculate thread-histograms */
@@ -39,42 +36,34 @@ template <int N>
 kernel
 void histogramDescendingRadixNTemplate(__global uint* unsortedData,
                __global uint* buckets,
-               __global uint* histScanBuckets,
+               //__global uint* histScanBuckets,
                uint shiftCount)
 {
     const int RADIX_T     = N;
     const int RADICES_T   = (1 << RADIX_T);
     const int NUM_OF_ELEMENTS_PER_WORK_ITEM_T = RADICES_T; 
     const int MASK_T      = (1<<RADIX_T)  -1;
+    int       localBuckets[16] = {0,0,0,0,0,0,0,0,
+                                  0,0,0,0,0,0,0,0};
     size_t localId     = get_local_id(0);
     size_t globalId    = get_global_id(0);
-    size_t groupId     = get_group_id(0);
-    size_t groupSize   = get_local_size(0);
     size_t numOfGroups = get_num_groups(0);
-    uint   bucketPos   = groupId * RADICES_T * groupSize;
-
-    for(int i = 0; i < RADICES_T; ++i)
-    {
-        buckets[bucketPos + localId * RADICES_T + i] = 0;
-    }
-    barrier(CLK_GLOBAL_MEM_FENCE);
 
     /* Calculate thread-histograms */
     for(int i = 0; i < NUM_OF_ELEMENTS_PER_WORK_ITEM_T; ++i)
     {
         uint value = unsortedData[globalId * NUM_OF_ELEMENTS_PER_WORK_ITEM_T + i];
         value = (value >> shiftCount) & MASK_T;
-        buckets[bucketPos + localId * RADICES_T + (RADICES_T - value -1)]++;
+        localBuckets[RADICES_T - value - 1]++;
     }
 
-    barrier(CLK_GLOBAL_MEM_FENCE);
-    //Start First step to scan
-    int sum =0;
-    for(int i = 0; i < groupSize; i++)
-        sum = sum + buckets[bucketPos + localId + groupSize*i];
-    histScanBuckets[localId*numOfGroups + groupId + 1] = sum;
+    for(int i = 0; i < NUM_OF_ELEMENTS_PER_WORK_ITEM_T; ++i)
+    {
+        buckets[i * RADICES_T * numOfGroups + globalId ] = localBuckets[i];
+    }
 }
 
+#if 0
 /*scanLocal is used for both ascending and descending*/
 template <int N>
 kernel 
@@ -102,6 +91,7 @@ void scanLocalTemplate(__global uint* buckets,
         localScanArray[RADICES_T+localId] += temp;
     }
 }
+#endif
 
 template <int N>
 kernel
@@ -114,16 +104,15 @@ void permuteAscendingRadixNTemplate(__global uint* unsortedData,
     const int RADICES_T   = (1 << RADIX_T);
     const int MASK_T = (1<<RADIX_T)  -1;
 
-
     size_t globalId  = get_global_id(0);
-
     size_t numOfGroups = get_num_groups(0);
     const int NUM_OF_ELEMENTS_PER_WORK_GROUP_T = numOfGroups << N;
     int  localIndex[16];
-    /* Premute elements to appropriate location */
+
+    /*Load the index to local memory*/
     for(int i = 0; i < RADICES_T; ++i)
         localIndex[i] = scanedBuckets[i*NUM_OF_ELEMENTS_PER_WORK_GROUP_T + globalId];
-
+    /* Permute elements to appropriate location */
     for(int i = 0; i < RADICES_T; ++i)
     {
         uint value = unsortedData[globalId * RADICES_T + i];
@@ -146,21 +135,23 @@ void permuteDescendingRadixNTemplate(__global uint* unsortedData,
     const int RADICES_T   = (1 << RADIX_T);
     const int MASK_T      = (1<<RADIX_T)  -1;
 
-    size_t groupId   = get_group_id(0);
-    size_t localId   = get_local_id(0);
     size_t globalId  = get_global_id(0);
-    size_t groupSize = get_local_size(0);
-    uint bucketPos   = groupId * RADICES_T * groupSize;
+    size_t numOfGroups = get_num_groups(0);
+    const int NUM_OF_ELEMENTS_PER_WORK_GROUP_T = numOfGroups << N;
+    int  localIndex[16];
 
-    /* Premute elements to appropriate location */
+    /*Load the index to local memory*/
+    for(int i = 0; i < RADICES_T; ++i)
+        localIndex[i] = scanedBuckets[(RADICES_T - i - 1)*NUM_OF_ELEMENTS_PER_WORK_GROUP_T + globalId];
+    /*Permute elements to appropriate location */
     for(int i = 0; i < RADICES_T; ++i)
     {
         uint value = unsortedData[globalId * RADICES_T + i];
-        value = (value >> shiftCount) & MASK_T;
-        uint index = scanedBuckets[bucketPos+localId * RADICES_T + (RADICES_T -value-1)];
-        sortedData[index] = unsortedData[globalId * RADICES_T + i];
-        scanedBuckets[bucketPos+localId * RADICES_T + (RADICES_T -value-1)] = index + 1;
-        barrier(CLK_LOCAL_MEM_FENCE);
+        uint maskedValue = (value >> shiftCount) & MASK_T;
+        uint scanIndex = maskedValue * NUM_OF_ELEMENTS_PER_WORK_GROUP_T + globalId;
+        uint index = localIndex[maskedValue];
+        sortedData[index] = value;
+        localIndex[maskedValue] = index + 1;
     }
 }
 

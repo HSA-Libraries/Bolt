@@ -176,7 +176,7 @@ public:
         _radix = radix;
         addKernelName("histogramAscendingRadixNTemplate");
         addKernelName("histogramDescendingRadixNTemplate");
-        addKernelName("scanLocalTemplate");
+        //addKernelName("scanLocalTemplate");
         addKernelName("permuteAscendingRadixNTemplate");
         addKernelName("permuteDescendingRadixNTemplate");
         addKernelName("histogramSignedDescendingRadixNTemplate");
@@ -191,10 +191,6 @@ public:
         radixStream << _radix;
         const std::string templateSpecializationString = 
 
-            "\ntemplate __attribute__((mangled_name(" + name(2) + "Instantiated)))\n"
-             "void scanLocalTemplate< " +radixStream.str()+ " >(__global uint* buckets,\n"
-             "global uint* histScanBuckets,\n"
-             "local uint* localScanArray);\n\n"
             "// Host generates this instantiation string with user-specified value type and functor\n"
             "\ntemplate __attribute__((mangled_name(" + name(0) + "Instantiated)))\n"
             "void histogramAscendingRadixNTemplate< " +radixStream.str()+ " >(__global uint* unsortedData,\n"
@@ -204,7 +200,7 @@ public:
             ");\n"
             "\n"
             "\n"
-            "template __attribute__((mangled_name(" + name(3) + "Instantiated)))\n"
+            "template __attribute__((mangled_name(" + name(2) + "Instantiated)))\n"
             "void permuteAscendingRadixNTemplate< " +radixStream.str()+ " >(__global uint* unsortedData,\n"
             "global uint* scanedBuckets,\n"
             "uint shiftCount,\n"
@@ -212,7 +208,7 @@ public:
             ");\n"
             "\n"
             "\n"
-            "\ntemplate __attribute__((mangled_name(" + name(5) + "Instantiated)))\n"
+            "\ntemplate __attribute__((mangled_name(" + name(4) + "Instantiated)))\n"
             "void histogramSignedDescendingRadixNTemplate< " +radixStream.str()+ " >(__global uint* unsortedData,\n"
             "global uint* buckets,\n"
             "global uint* histScanBuckets,\n"
@@ -220,7 +216,7 @@ public:
             ");\n"
             "\n"
             "\n"
-            "template __attribute__((mangled_name(" + name(7) + "Instantiated)))\n"
+            "template __attribute__((mangled_name(" + name(6) + "Instantiated)))\n"
             "void permuteSignedDescendingRadixNTemplate< " +radixStream.str()+ " >(__global uint* unsortedData,\n"
             "global uint* scanedBuckets,\n"
             "uint shiftCount,\n"
@@ -235,7 +231,7 @@ public:
             ");\n"
             "\n"
             "\n"
-            "template __attribute__((mangled_name(" + name(4) + "Instantiated)))\n"
+            "template __attribute__((mangled_name(" + name(3) + "Instantiated)))\n"
             "void permuteDescendingRadixNTemplate< " +radixStream.str()+ " >(__global uint* unsortedData,\n"
             "global uint* scanedBuckets,\n"
             "uint shiftCount,\n"
@@ -251,7 +247,7 @@ public:
             ");\n"
             "\n"
             "\n"
-            "template __attribute__((mangled_name(" + name(8) + "Instantiated)))\n"
+            "template __attribute__((mangled_name(" + name(7) + "Instantiated)))\n"
             "void permuteSignedAscendingRadixNTemplate< " +radixStream.str()+ " >(__global uint* unsortedData,\n"
             "global uint* scanedBuckets,\n"
             "uint shiftCount,\n"
@@ -271,7 +267,6 @@ public:
         _radix = radix;
         addKernelName("histogramAscendingRadixNTemplate");
         addKernelName("histogramDescendingRadixNTemplate");
-        addKernelName("scanLocalTemplate");
         addKernelName("permuteAscendingRadixNTemplate");
         addKernelName("permuteDescendingRadixNTemplate");
     }
@@ -282,10 +277,6 @@ public:
         radixStream << _radix;
         const std::string templateSpecializationString = 
 
-            "\ntemplate __attribute__((mangled_name(" + name(2) + "Instantiated)))\n"
-             "void scanLocalTemplate< " +radixStream.str()+ " >(__global uint* buckets,\n"
-             "global uint* histScanBuckets,\n"
-             "local uint* localScanArray);\n\n"
             "// Host generates this instantiation string with user-specified value type and functor\n"
             "\ntemplate __attribute__((mangled_name(" + name(0) + "Instantiated)))\n"
             "void histogramAscendingRadixNTemplate< " +radixStream.str()+ " >(__global uint* unsortedData,\n"
@@ -294,7 +285,7 @@ public:
             ");\n"
             "\n"
             "\n"
-            "template __attribute__((mangled_name(" + name(3) + "Instantiated)))\n"
+            "template __attribute__((mangled_name(" + name(2) + "Instantiated)))\n"
             "void permuteAscendingRadixNTemplate< " +radixStream.str()+ " >(__global uint* unsortedData,\n"
             "global uint* scanedBuckets,\n"
             "uint shiftCount,\n"
@@ -306,12 +297,11 @@ public:
             "\ntemplate __attribute__((mangled_name(" + name(1) + "Instantiated)))\n"
             "void histogramDescendingRadixNTemplate< " +radixStream.str()+ " >(__global uint* unsortedData,\n"
             "global uint* buckets,\n"
-            "global uint* histScanBuckets,\n"
             "uint shiftCount\n"
             ");\n"
             "\n"
             "\n"
-            "template __attribute__((mangled_name(" + name(4) + "Instantiated)))\n"
+            "template __attribute__((mangled_name(" + name(3) + "Instantiated)))\n"
             "void permuteDescendingRadixNTemplate< " +radixStream.str()+ " >(__global uint* unsortedData,\n"
             "global uint* scanedBuckets,\n"
             "uint shiftCount,\n"
@@ -477,8 +467,8 @@ sort_enqueue(control &ctl,
 
     static std::vector< ::cl::Kernel > radixSortUintKernels;
     std::vector<std::string> typeNames( sort_end );
-    typeNames[sort_iValueType] = TypeName< T >::get( );
-    typeNames[sort_iIterType] = TypeName< DVRandomAccessIterator >::get( );
+    typeNames[sort_iValueType]         = TypeName< T >::get( );
+    typeNames[sort_iIterType]          = TypeName< DVRandomAccessIterator >::get( );
     typeNames[sort_StrictWeakOrdering] = TypeName< StrictWeakOrdering >::get();
 
     std::vector<std::string> typeDefinitions;
@@ -488,7 +478,6 @@ sort_enqueue(control &ctl,
 
     bool cpuDevice = ctl.device().getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_CPU;
     /*\TODO - Do CPU specific kernel work group size selection here*/
-    //const size_t kernel0_WgSize = (cpuDevice) ? 1 : WAVESIZE*KERNEL02WAVES;
 
     std::string compileOptions;
     //std::ostringstream oss;
@@ -502,12 +491,10 @@ sort_enqueue(control &ctl,
         compileOptions);    
 
     size_t groupSize  = RADICES;
-    //const int NUM_OF_ELEMENTS_PER_WORK_ITEM = RADICES;
-    //unsigned int num_of_elems_per_group = RADICES  * groupSize;
 
     int i = 0;
     size_t mulFactor = groupSize * RADICES;
-    size_t numGroups;// = szElements / mulFactor;
+    size_t numGroups;
     
     if(orig_szElements%mulFactor != 0)
     {
@@ -529,8 +516,8 @@ sort_enqueue(control &ctl,
     numGroups = szElements / mulFactor;
     device_vector< T > dvSwapInputData( szElements, 0, CL_MEM_READ_WRITE, false, ctl);
     device_vector< T > dvHistogramBins( (numGroups* groupSize * RADICES), 0, CL_MEM_READ_WRITE, false, ctl);
+    //This can be avoided if we do a inplace scan.
     device_vector< T > dvHistogramBinsDest( (numGroups* groupSize * RADICES), 0, CL_MEM_READ_WRITE, false, ctl);
-    //device_vector< T > dvHistogramScanBuffer( (numGroups* RADICES + 10), 0, CL_MEM_READ_WRITE, true, ctl);
 
     ALIGNED( 256 ) StrictWeakOrdering aligned_comp( comp );
     
@@ -539,17 +526,15 @@ sort_enqueue(control &ctl,
     ::cl::Buffer clSwapData = dvSwapInputData.begin( ).getBuffer( );
     ::cl::Buffer clHistData = dvHistogramBins.begin( ).getBuffer( );
     ::cl::Buffer clHistDataDest = dvHistogramBinsDest.begin( ).getBuffer( );
-    //::cl::Buffer clHistScanData = dvHistogramScanBuffer.begin( ).getBuffer( );
                     
     ::cl::Kernel histKernel;
     ::cl::Kernel permuteKernel;
-    ::cl::Kernel scanLocalKernel;
+
     if(comp(2,3))
     {
         /*Ascending Sort*/
         histKernel = kernels[0];
-        scanLocalKernel = kernels[2];
-        permuteKernel = kernels[3];
+        permuteKernel = kernels[2];
         if(newBuffer == true)
         {
             cl_buffer_region clBR;
@@ -564,8 +549,7 @@ sort_enqueue(control &ctl,
     {
         /*Descending Sort*/
         histKernel = kernels[1];
-        scanLocalKernel = kernels[2];
-        permuteKernel = kernels[4];
+        permuteKernel = kernels[3];
         if(newBuffer == true)
         {
             cl_buffer_region clBR;
@@ -642,52 +626,8 @@ sort_enqueue(control &ctl,
         }
         ctl.commandQueue().enqueueUnmapMemObject(clHistScanData, histScanBuffer);*/
 #endif
-
         //Perform a global scan 
         detail::scan_enqueue(ctl, dvHistogramBins.begin(), dvHistogramBins.end(), dvHistogramBinsDest.begin(), 0, plus< T >( ), false);
-        /*bolt::cl::device_vector< T >::iterator scanEnd = 
-            bolt::cl::exclusive_scan(ctl, dvHistogramBins.begin(), 
-                                         dvHistogramBins.end(), 
-                                         dvHistogramBinsDest.begin(), 0, plus< T >( ) );*/
-        /*{//Do CPU scan
-            boost::shared_array<T> histogramBins = dvHistogramBins.data();
-            T temp = histogramBins[0];
-            histogramBins[0] = 0;
-            for(int i=1; i< szElements; i++)
-            {
-                histogramBins[i] = temp;
-                temp += histogramBins[i];
-            }
-        }*/
-#if (BOLT_SORT_INL_DEBUG==1)
-        /*::cl::Event l_histScanBufferEvent1;
-        histScanBuffer = (T*) ctl.commandQueue().enqueueMapBuffer(clHistScanData, false, CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(T) * numGroups * RADICES, NULL, &l_histScanBufferEvent1, &l_Error );
-        bolt::cl::wait(ctl, l_histScanBufferEvent1);
-        V_OPENCL( l_Error, "Error calling map on the result buffer" );
-        for(int i=0; i<RADICES;i++)
-        { 
-            printf ("\nRadix = %d\n",i);
-            for (int ng=0; ng<numGroups; ng++)
-            {
-                printf ("%x, ",histScanBuffer[i*numGroups + ng]);
-            }
-        }
-        ctl.commandQueue().enqueueUnmapMemObject(clHistScanData, histScanBuffer);*/
-
-#endif 
-
-        //Add the results of the global scan to the local scan buffers
-        /*V_OPENCL( scanLocalKernel.setArg(0, clHistData), "Error setting a kernel argument" );
-        V_OPENCL( scanLocalKernel.setArg(1, clHistScanData), "Error setting a kernel argument" );
-        V_OPENCL( scanLocalKernel.setArg(2, localScanArray), "Error setting a kernel argument" );
-        l_Error = ctl.commandQueue().enqueueNDRangeKernel(
-                            scanLocalKernel,
-                            ::cl::NullRange,
-                            ::cl::NDRange(szElements/RADICES),
-                            ::cl::NDRange(groupSize),
-                            NULL,
-                            NULL);*/
-        //V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
 
 #if (BOLT_SORT_INL_DEBUG==1)
         //This map is required since the data is not available to the host when scanning.
@@ -832,7 +772,6 @@ sort_enqueue(control &ctl,
     int i = 0;
     size_t mulFactor = groupSize * RADICES;
     
-    
     if(orig_szElements%mulFactor != 0)
     {
         ::cl::Event copyEvent;
@@ -854,7 +793,9 @@ sort_enqueue(control &ctl,
     size_t numGroups = szElements / mulFactor;
     device_vector< T > dvSwapInputData( szElements, 0, CL_MEM_READ_WRITE, true, ctl);
     device_vector< T > dvHistogramBins( (numGroups* groupSize * RADICES), 0, CL_MEM_READ_WRITE, true, ctl);
-    device_vector< T > dvHistogramScanBuffer( (numGroups* RADICES + 10), 0, CL_MEM_READ_WRITE, true, ctl);
+    //device_vector< T > dvHistogramScanBuffer( (numGroups* RADICES + 10), 0, CL_MEM_READ_WRITE, true, ctl);
+    //This can be avoided if we do a inplace scan.
+    device_vector< T > dvHistogramBinsDest( (numGroups* groupSize * RADICES), 0, CL_MEM_READ_WRITE, false, ctl);
 
     ALIGNED( 256 ) StrictWeakOrdering aligned_comp( comp );
                     
@@ -862,7 +803,8 @@ sort_enqueue(control &ctl,
     ::cl::Buffer clInputData = *pLocalBuffer;
     ::cl::Buffer clSwapData = dvSwapInputData.begin( ).getBuffer( );
     ::cl::Buffer clHistData = dvHistogramBins.begin( ).getBuffer( );
-    ::cl::Buffer clHistScanData = dvHistogramScanBuffer.begin( ).getBuffer( );
+    //::cl::Buffer clHistScanData = dvHistogramScanBuffer.begin( ).getBuffer( );
+    ::cl::Buffer clHistDataDest = dvHistogramBinsDest.begin( ).getBuffer( );
                     
     ::cl::Kernel histKernel, histSignedKernel;
     ::cl::Kernel permuteKernel, permuteSignedKernel;
@@ -987,7 +929,7 @@ sort_enqueue(control &ctl,
 #endif 
 
         //Add the results of the global scan to the local scan buffers
-        V_OPENCL( scanLocalKernel.setArg(0, clHistData), "Error setting a kernel argument" );
+        /*V_OPENCL( scanLocalKernel.setArg(0, clHistData), "Error setting a kernel argument" );
         V_OPENCL( scanLocalKernel.setArg(1, clHistScanData), "Error setting a kernel argument" );
         V_OPENCL( scanLocalKernel.setArg(2, localScanArray), "Error setting a kernel argument" );
         l_Error = ctl.commandQueue().enqueueNDRangeKernel(
@@ -996,7 +938,7 @@ sort_enqueue(control &ctl,
                             ::cl::NDRange(szElements/RADICES),
                             ::cl::NDRange(groupSize),
                             NULL,
-                            NULL);
+                            NULL);*/
         //V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
 
 #if (BOLT_SORT_INL_DEBUG==1)
@@ -1112,7 +1054,7 @@ sort_enqueue(control &ctl,
 
 
             //Add the results of the global scan to the local scan buffers
-            V_OPENCL( scanLocalKernel.setArg(0, clHistData), "Error setting a kernel argument" );
+            /*V_OPENCL( scanLocalKernel.setArg(0, clHistData), "Error setting a kernel argument" );
             V_OPENCL( scanLocalKernel.setArg(1, clHistScanData), "Error setting a kernel argument" );
             V_OPENCL( scanLocalKernel.setArg(2, localScanArray), "Error setting a kernel argument" );
             l_Error = ctl.commandQueue().enqueueNDRangeKernel(
@@ -1121,7 +1063,7 @@ sort_enqueue(control &ctl,
                                 ::cl::NDRange(szElements/RADICES),
                                 ::cl::NDRange(groupSize),
                                 NULL,
-                                NULL);
+                                NULL);*/
             //V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
 
 
@@ -1182,6 +1124,7 @@ sort_enqueue(control &ctl,
     delete pLocalBuffer;
     return;
 }
+
 #endif
 template<typename DVRandomAccessIterator, typename StrictWeakOrdering> 
 typename std::enable_if< 
