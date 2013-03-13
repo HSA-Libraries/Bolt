@@ -16,34 +16,41 @@
 ############################################################################                                                                                     
 
 # List the names of common files to compile across all platforms
-message( STATUS "Setting up testing projects..." )
 
-if( GTEST_ROOT )
-	# The root tree of BOOST was specified on the command line; use it to to find the specific gTest the user wants
-    find_package( GTest REQUIRED )
-	# This will define GTEST_FOUND
-else( )
-	message( "Configure Bolt in <BOLT_ROOT>/bin to build the SuperBuild which will download and build GoogleTest automatically" )	
-	message( SEND_ERROR "The testing projects for Bolt requires GTEST_ROOT to be defined" )	
-endif( )
+set( clBolt.Test.StableSort.Source 
+        StableSortTest.cpp 
+        ${BOLT_CL_TEST_DIR}/common/myocl.cpp )
 
-# Include Bolt headers for all testing projects
-include_directories( ${BOLT_INCLUDE_DIR} ${PROJECT_BINARY_DIR}/include ${GTEST_INCLUDE_DIRS})
+set( clBolt.Test.StableSort.Headers   
+        ${BOLT_CL_TEST_DIR}/common/myocl.h
+        ${BOLT_INCLUDE_DIR}/bolt/cl/StableSort.h
+        ${BOLT_INCLUDE_DIR}/bolt/cl/detail/StableSort.inl )
 
-# Googletest requires this to be defined to 10 in order to compile on windows, because windows does not support variable length templates yet
-add_definitions( "-D_VARIADIC_MAX=10" )
+set( clBolt.Test.StableSort.Files 
+        ${clBolt.Test.StableSort.Source} 
+        ${clBolt.Test.StableSort.Headers} )
 
-if(BUILD_TBB)
-    include_directories( ${TBB_INCLUDE_DIRS} )
-    add_definitions( "-DENABLE_TBB" )
-    #add_library( ${TBB_LIBRARY} STATIC IMPORTED )
-    set(TBB_LIBRARIES debug;${TBB_LIBRARY_DEBUG};${TBB_LIBRARY_MALLOC_DEBUG};optimized;${TBB_LIBRARY};${TBB_LIBRARY_MALLOC})
-endif()
+# Include standard OpenCL headers
+include_directories( ${OPENCL_INCLUDE_DIRS} )
 
-if( BUILD_ampBolt AND GTEST_FOUND )
-	add_subdirectory( AMP )
-endif( )
+# Set project specific compile and link options
+# if( MSVC )
+    # set( CMAKE_CXX_FLAGS "-bigobj ${CMAKE_CXX_FLAGS}" )
+    # set( CMAKE_C_FLAGS "-bigobj ${CMAKE_C_FLAGS}" )
+# endif()
 
-if( BUILD_clBolt AND GTEST_FOUND )
-	add_subdirectory( cl )
-endif( )
+add_executable( clBolt.Test.StableSort ${clBolt.Test.StableSort.Files} )
+target_link_libraries( clBolt.Test.StableSort ${OPENCL_LIBRARIES} ${GTEST_LIBRARIES} ${Boost_LIBRARIES} ${TBB_LIBRARIES} 
+         clBolt.Runtime )
+
+set_target_properties( clBolt.Test.StableSort PROPERTIES VERSION ${Bolt_VERSION} )
+set_target_properties( clBolt.Test.StableSort PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
+
+set_property( TARGET clBolt.Test.StableSort PROPERTY FOLDER "Test/OpenCL")
+        
+# CPack configuration; include the executable into the package
+install( TARGETS clBolt.Test.StableSort
+    RUNTIME DESTINATION ${BIN_DIR}
+    LIBRARY DESTINATION ${LIB_DIR}
+    ARCHIVE DESTINATION ${LIB_DIR}/import
+    )

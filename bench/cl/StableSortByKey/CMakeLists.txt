@@ -16,50 +16,37 @@
 ############################################################################                                                                                     
 
 # List the names of common files to compile across all platforms
-message( STATUS "Setting up benchmarking projects..." )
+set( clBolt.Bench.StableSortByKey.Source 
+        StableSortByKeyBench.cpp )
 
-set( Boost_USE_MULTITHREADED ON )
-set( Boost_USE_STATIC_LIBS   ON )
-set( Boost_DETAILED_FAILURE_MSG   ON )
-# set( Boost_DEBUG ON )
+set( clBolt.Bench.StableSortByKey.Headers stdafx.h 
+        ${BOLT_INCLUDE_DIR}/bolt/cl/stablesort_by_key.h 
+        ${BOLT_INCLUDE_DIR}/bolt/cl/detail/stablesort_by_key.inl)
 
-if( BOOST_ROOT )
-	# The root tree of BOOST was specified on the command line; use it to to find the specific Boost the user points too
-	find_package( Boost ${Boost.VERSION} COMPONENTS program_options date_time chrono REQUIRED )
-	# This will define Boost_FOUND
-	message( STATUS "Boost_PROGRAM_OPTIONS_LIBRARY: ${Boost_PROGRAM_OPTIONS_LIBRARY}" )
-else( )
-	message( "Configure Bolt in <BOLT_ROOT>/bin to build the SuperBuild which will download and build Boost automatically" )	
-	message( SEND_ERROR "The Benchmarking projects for Bolt requires BOOST_ROOT to be defined" )
-endif( )
+set( clBolt.Bench.StableSortByKey.Files 
+        ${clBolt.Bench.StableSortByKey.Source} 
+        ${clBolt.Bench.StableSortByKey.Headers} )
 
-include_directories( ${BOLT_INCLUDE_DIR} ${PROJECT_BINARY_DIR}/include ${Boost_INCLUDE_DIRS} )
+# Include standard OpenCL headers
+include_directories( ${OPENCL_INCLUDE_DIRS} )
 
 if( BUILD_TBB )
-    include_directories( ${TBB_INCLUDE_DIRS} )
-    set( TBB_LIBRARIES debug;${TBB_LIBRARY_DEBUG};${TBB_LIBRARY_MALLOC_DEBUG};optimized;${TBB_LIBRARY};${TBB_LIBRARY_MALLOC} )
-endif()
-
-if( BUILD_ampBolt AND Boost_FOUND )
-	add_subdirectory( AMP )
+    add_definitions( "-DENABLE_TBB" )
 endif( )
 
-if( BUILD_clBolt AND Boost_FOUND )
-	add_subdirectory( cl )
-endif( )
+add_executable( clBolt.Bench.StableSortByKey ${clBolt.Bench.StableSortByKey.Files} )
 
-install( FILES	
-			errorHandler.py
-			measurePerformance.py
-			performanceTesting.py
-			plotPerformance.py
-		DESTINATION
-			${BIN_DIR} )
+target_link_libraries( clBolt.Bench.StableSortByKey ${Boost_LIBRARIES} ${TBB_LIBRARIES} clBolt.Runtime )
 
-install( FILES	
-			errorHandler.py
-			measurePerformance.py
-			performanceTesting.py
-			plotPerformance.py
-		DESTINATION
-			${PROJECT_BINARY_DIR}/staging/\${CMAKE_INSTALL_CONFIG_NAME} )
+set_target_properties( clBolt.Bench.StableSortByKey PROPERTIES VERSION ${Bolt_VERSION} )
+set_target_properties( clBolt.Bench.StableSortByKey PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
+
+set_property( TARGET clBolt.Bench.StableSortByKey PROPERTY FOLDER "Benchmark/OpenCL")
+
+# CPack configuration; include the executable into the package
+install( TARGETS clBolt.Bench.StableSortByKey
+	RUNTIME DESTINATION ${BIN_DIR}
+	LIBRARY DESTINATION ${LIB_DIR}
+	ARCHIVE DESTINATION ${LIB_DIR}
+	)
+
