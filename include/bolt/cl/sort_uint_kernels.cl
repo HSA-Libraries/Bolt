@@ -117,7 +117,7 @@ void permuteAscendingRadixNTemplate(__global uint* unsortedData,
     {
         uint value = unsortedData[globalId * RADICES_T + i];
         uint maskedValue = (value >> shiftCount) & MASK_T;
-        uint scanIndex = maskedValue * NUM_OF_ELEMENTS_PER_WORK_GROUP_T + globalId;
+        //uint scanIndex = maskedValue * NUM_OF_ELEMENTS_PER_WORK_GROUP_T + globalId;
         uint index = localIndex[maskedValue];
         sortedData[index] = value;
         localIndex[maskedValue] = index + 1;
@@ -148,7 +148,7 @@ void permuteDescendingRadixNTemplate(__global uint* unsortedData,
     {
         uint value = unsortedData[globalId * RADICES_T + i];
         uint maskedValue = (value >> shiftCount) & MASK_T;
-        uint scanIndex = maskedValue * NUM_OF_ELEMENTS_PER_WORK_GROUP_T + globalId;
+        //uint scanIndex = maskedValue * NUM_OF_ELEMENTS_PER_WORK_GROUP_T + globalId;
         uint index = localIndex[maskedValue];
         sortedData[index] = value;
         localIndex[maskedValue] = index + 1;
@@ -166,16 +166,12 @@ void histogramSignedAscendingRadixNTemplate(__global uint* unsortedData,
     const int RADIX_T     = N;
     const int RADICES_T   = (1 << RADIX_T);
     const int NUM_OF_ELEMENTS_PER_WORK_ITEM_T = RADICES_T; 
-    const int MASK_T      = (1<<RADIX_T)  -1;
+    //const int MASK_T      = (1<<RADIX_T)  -1;
+    const int MASK_T      = ( 1 << ( RADIX_T - 1 ) ) - 1;
     int       localBuckets[16] = {0,0,0,0,0,0,0,0,
                                   0,0,0,0,0,0,0,0};
     size_t globalId    = get_global_id(0);
     size_t numOfGroups = get_num_groups(0);
-
-    for(int i = 0; i < RADICES_T; ++i)
-    {
-        buckets[bucketPos + localId * RADICES_T + i] = 0;
-    }
 
     /* Calculate thread-histograms */
     for(int i = 0; i < NUM_OF_ELEMENTS_PER_WORK_ITEM_T; ++i)
@@ -218,17 +214,12 @@ void histogramSignedDescendingRadixNTemplate(__global uint* unsortedData,
     const int RADIX_T     = N;
     const int RADICES_T   = (1 << RADIX_T);
     const int NUM_OF_ELEMENTS_PER_WORK_ITEM_T = RADICES_T; 
-    const int MASK_T      = (1<<RADIX_T)  -1;
+    //const int MASK_T      = (1<<RADIX_T)  -1;
+    const int MASK_T      = ( 1 << ( RADIX_T - 1 ) ) - 1;
     int       localBuckets[16] = {0,0,0,0,0,0,0,0,
                                   0,0,0,0,0,0,0,0};
     size_t globalId    = get_global_id(0);
     size_t numOfGroups = get_num_groups(0);
-
-    for(int i = 0; i < RADICES_T; ++i)
-    {
-        buckets[bucketPos + localId * RADICES_T + i] = 0;
-    }
-    
 
     /* Calculate thread-histograms */
     for(int i = 0; i < NUM_OF_ELEMENTS_PER_WORK_ITEM_T; ++i)
@@ -290,7 +281,8 @@ void permuteSignedAscendingRadixNTemplate(__global uint* unsortedData,
         value = (resultValue >> shiftCount);
         uint signBit = value & (1<<(RADIX_T-1));
         value = ( ( ( ( value & MASK_T ) ^ MASK_T ) & MASK_T ) | signBit );
-        uint index = scanedBuckets[bucketPos+localId * RADICES_T + value];
+        //uint index = scanedBuckets[bucketPos+localId * RADICES_T + value];
+        uint index = localIndex[value];
         sortedData[index] = resultValue;
         //scanedBuckets[bucketPos+localId * RADICES_T + value] = index + 1;
         //barrier(CLK_LOCAL_MEM_FENCE);
@@ -308,13 +300,17 @@ void permuteSignedDescendingRadixNTemplate(__global uint* unsortedData,
 {
     const int RADIX_T     = N;
     const int RADICES_T   = (1 << RADIX_T);
+    //const int MASK_T = (1<<RADIX_T)  -1;
     const int MASK_T      = ( 1 << ( RADIX_T - 1 ) ) - 1;
 
-    size_t groupId   = get_group_id(0);
-    size_t localId   = get_local_id(0);
     size_t globalId  = get_global_id(0);
-    size_t groupSize = get_local_size(0);
-    uint bucketPos   = groupId * RADICES_T * groupSize;
+    size_t numOfGroups = get_num_groups(0);
+    const int NUM_OF_ELEMENTS_PER_WORK_GROUP_T = numOfGroups << N;
+    int  localIndex[16];
+
+    /*Load the index to local memory*/
+    for(int i = 0; i < RADICES_T; ++i)
+        localIndex[i] = scanedBuckets[(RADICES_T - i - 1)*NUM_OF_ELEMENTS_PER_WORK_GROUP_T + globalId];
 
     /* Premute elements to appropriate location */
     for(int i = 0; i < RADICES_T; ++i)
@@ -323,10 +319,12 @@ void permuteSignedDescendingRadixNTemplate(__global uint* unsortedData,
         uint value = (resultValue >> shiftCount);
         uint signBit = value & (1<<(RADIX_T-1));
         value = ( ( ( ( value & MASK_T ) ^ MASK_T ) & MASK_T ) | signBit );
-        uint index = scanedBuckets[bucketPos+localId * RADICES_T + (RADICES_T -value-1)];
-        sortedData[index] = unsortedData[globalId * RADICES_T + i];
-        scanedBuckets[bucketPos+localId * RADICES_T + (RADICES_T -value-1)] = index + 1;
-        barrier(CLK_LOCAL_MEM_FENCE);
+        //uint index = scanedBuckets[bucketPos+localId * RADICES_T + (RADICES_T -value-1)];
+        uint index = localIndex[value];
+        sortedData[index] = resultValue;//unsortedData[globalId * RADICES_T + i];
+        //scanedBuckets[bucketPos+localId * RADICES_T + (RADICES_T -value-1)] = index + 1;
+        localIndex[ value ]++;
+        //barrier(CLK_LOCAL_MEM_FENCE);
     }
 }
 /****************************End of Signed integers templates********************************/
