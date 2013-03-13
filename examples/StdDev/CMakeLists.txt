@@ -28,7 +28,12 @@ set( clBolt.Example.StdDev.Files ${clBolt.Example.StdDev.Source} ${clBolt.Exampl
 include_directories( ${BOLT_INCLUDE_DIRS} ${OPENCL_INCLUDE_DIRS} )
 
 add_executable( clBolt.Example.StdDev ${clBolt.Example.StdDev.Files} )
-target_link_libraries( clBolt.Example.StdDev ${BOLT_LIBRARIES} ${OPENCL_LIBRARIES} ${Boost_LIBRARIES} )
+
+if(BUILD_TBB)
+    target_link_libraries( clBolt.Example.StdDev ${BOLT_LIBRARIES} ${OPENCL_LIBRARIES} ${GTEST_LIBRARIES} ${Boost_LIBRARIES}  ${TBB_LIBRARIES} )
+else (BUILD_TBB)
+    target_link_libraries( clBolt.Example.StdDev ${BOLT_LIBRARIES} ${OPENCL_LIBRARIES} ${GTEST_LIBRARIES} ${Boost_LIBRARIES}  )
+endif()
 
 set_target_properties( clBolt.Example.StdDev PROPERTIES VERSION ${Examples_VERSION} )
 set_target_properties( clBolt.Example.StdDev PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )

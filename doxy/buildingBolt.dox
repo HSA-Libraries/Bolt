@@ -45,8 +45,7 @@
 * features found in the AMD OpenCL implementation that to date are not found in other vendor implementations.  
 * During its configuration, CMake requires an environment variable to find the root of the OpenCL installation.   
 * Provide this by defining the environment variable <b>AMDAPPSDKROOT</b> with the path to the root 
-* of the OpenCL SDK, typically <tt>'C:/Program Files (x86)/AMD APP'</tt> on Windows 64-bit machines. This environment
-* variable is automatically defined by the catalyst installer; so, in most circumstances, no additional work is needed.  
+* of the OpenCL SDK, typically <tt>'C:/Program Files (x86)/AMD APP'</tt> on Windows 64-bit machines  
 * A more vendor-neutral environment variable is <b>OPENCL_ROOT</b>, but it is not defined by the 
 * catalyst installer.
 * \image html opencl_environment_variable2.png "Environment variable setup screen"
