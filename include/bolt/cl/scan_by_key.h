@@ -44,16 +44,16 @@ namespace cl
  */
 
 
-/*! \brief inclusive_scan_by_key performs, on a sequence,
+/*! \brief \p inclusive_scan_by_key performs, on a sequence,
  * an inclusive scan of each sub-sequence as defined by equivalent keys;
  * the BinaryFunction in this version is plus(), and the BinaryPredicate is equal_to().
  *
- * \param ctl           \b Optional Control structure to control command-queue, debug, tuning, etc.  See bolt::cl::control.
- * \param first1        The first element of the key sequence.
- * \param last1         The last  element of the key sequence.
- * \param first2        The first element of the value sequence.
- * \param result        The first element of the output sequence.
- * \param user_code     A user-specified string that is preppended to the generated OpenCL kernel.
+ * \param ctl          \b Optional Control structure to control command-queue, debug, tuning, etc.See bolt::cl::control.
+ * \param first1       The first element of the key sequence.
+ * \param last1        The last  element of the key sequence.
+ * \param first2       The first element of the value sequence.
+ * \param result       The first element of the output sequence.
+ * \param user_code    A user-specified string that is preppended to the generated OpenCL kernel.
  *
  * \tparam InputIterator1   is a model of Input Iterator.
  * \tparam InputIterator2   is a model of Input Iterator.
@@ -109,7 +109,7 @@ inclusive_scan_by_key(
     const std::string& user_code="" );
 
 
-/*! \brief inclusive_scan_by_key performs, on a sequence,
+/*! \brief \p inclusive_scan_by_key performs, on a sequence,
  * an inclusive scan of each sub-sequence as defined by equivalent keys;
  * the BinaryFunction in this version is plus().
  *
@@ -181,7 +181,7 @@ inclusive_scan_by_key(
 
 
 
-/*! \brief inclusive_scan_by_key performs, on a sequence,
+/*! \brief \p inclusive_scan_by_key performs, on a sequence,
  * an inclusive scan of each sub-sequence as defined by equivalent keys.
  *
  * \param ctl           \b Optional Control structure to control command-queue, debug, tuning, etc.  See bolt::cl::control.
@@ -264,7 +264,7 @@ inclusive_scan_by_key(
  * Exclusive Segmented Scan
  **********************************************************************************************************************/
 
-/*! \brief exclusive_scan_by_key performs, on a sequence,
+/*! \brief \p exclusive_scan_by_key performs, on a sequence,
  * an exclusive scan of each sub-sequence as defined by equivalent keys;
  * the BinaryFunction in this version is plus(), the BinaryPredicate is equal_to(), and init is 0.
  *
@@ -292,7 +292,7 @@ inclusive_scan_by_key(
  * bolt::cl::control ctrl = control::getDefault();
  *
  * bolt::cl::exclusive_scan_by_key( ctrl, keys, keys+11, vals, out );
- * // out => { 1, 1, 2, 1, 2, 3, 1, 2, 3, 4, 1 }
+ * // out => { 0, 0, 1, 0, 1, 2, 0, 1, 2, 3, 0 }
  *  \endcode
  *
  * \sa exclusive_scan
@@ -329,7 +329,7 @@ exclusive_scan_by_key(
 
 
 
-/*! \brief exclusive_scan_by_key performs, on a sequence,
+/*! \brief \p exclusive_scan_by_key performs, on a sequence,
  * an exclusive scan of each sub-sequence as defined by equivalent keys;
  * the BinaryFunction in this version is plus(), and the BinaryPredicate is equal_to().
  *
@@ -400,7 +400,7 @@ exclusive_scan_by_key(
 
 
 
-/*! \brief exclusive_scan_by_key performs, on a sequence,
+/*! \brief \p exclusive_scan_by_key performs, on a sequence,
  * an exclusive scan of each sub-sequence as defined by equivalent keys;
  * the BinaryFunction in this version is plus().
  *
@@ -477,7 +477,7 @@ exclusive_scan_by_key(
     const std::string& user_code="" );
 
 
-/*! \brief exclusive_scan_by_key performs, on a sequence,
+/*! \brief \p exclusive_scan_by_key performs, on a sequence,
  * an exclusive scan of each sub-sequence as defined by equivalent keys.
  *
  * \param ctl           \b Optional Control structure to control command-queue, debug, tuning, etc.  See bolt::cl::control.
@@ -513,7 +513,7 @@ exclusive_scan_by_key(
  * bolt::cl::control ctrl = control::getDefault();
  *
  * bolt::cl::exclusive_scan_by_key( ctrl, keys, keys+11, vals, out, 1, eq, mult );
- * // out => { 1, 1, 3, 1, 3, 5, 1, 3, 5, 7, 1 }
+ * // out => { 1, 1, 2, 1, 2, 4, 1, 2, 4, 8, 1 }
  *  \endcode
  *
  * \sa exclusive_scan

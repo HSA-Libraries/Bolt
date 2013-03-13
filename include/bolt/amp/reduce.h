@@ -168,7 +168,7 @@ namespace bolt {
         * \return The result of the reduction.
         *
         * \details The following code example shows the use of \p reduce to find the max of 10 numbers, 
-        * specifying a specific command-queue and enabling debug messages.
+        * specifying a specific accelerator.
         * \code
         * #include <bolt/amp/reduce.h>
         *

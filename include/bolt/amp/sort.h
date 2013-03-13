@@ -51,8 +51,6 @@ namespace bolt {
         /*! \addtogroup amp-sort
         *   \ingroup sorting
         *   \{
-        *   \todo Prove the performance of the Sort routines using a benchmark program that can
-        *   show decent results across a range of values (a graph).
         */
 
         /*! \breif This version of \p sort returns the sorted result of all the elements in the \p RandomAccessIterator
@@ -69,22 +67,23 @@ namespace bolt {
         * http://www.sgi.com/tech/stl/LessThanComparable.html; i.e., the value _type must provide operator 
         * '<' overloaded. \n
         * 
-        * \param ctl A \b Optional Bolt control object, to describe the environment under which the function will run.
+        * \param ctl \b Optional Bolt control object, to describe the environment under which the function will run.
         * \param first The first position in the sequence to be sorted.
         * \param last  The last position in the sequence to be sorted.
         * \return The sorted data that is available in place.
         *
         * \details The following code example shows the use of \p sort to sort the elements in the ascending order,
-        * specifying a specific command-queue.
+        * specifying a specific accelerator.
         * \code
         * #include <bolt/amp/sort.h>
         *
         * int a[8] = {2, 9, 3, 7, 5, 6, 3, 8};
         *
-        * //Allocate ctl bolt::amp::control object.
-        * //
-        * // for arranging the elements in descending order, use bolt::amp::greater<int>()
-        * bolt::amp::sort(ctl, a, a+10);
+        * //Create an AMP Control object using the default accelerator
+        * ::Concurrency::accelerator accel(::Concurrency::accelerator::default_accelerator);
+        *
+        * bolt::amp::control ctl(accel);
+        * bolt::amp::sort(ctl, a, a+8);
         *
         *  \endcode
         */
@@ -113,22 +112,27 @@ namespace bolt {
         * operator '<' overloaded. \n
         *  \tparam StrictWeakOrdering Is a model of http://www.sgi.com/tech/stl/StrictWeakOrdering.html. \n
 
-        * \param ctl Control structure to control command-queue, debug, tuning, etc.  See bolt::amp::control.
+        * \param ctl \b Optional Control structure to control command-queue, debug, tuning, etc. See bolt::amp::control.
         * \param first The first position in the sequence to be sorted.
         * \param last  The last position in the sequence to be sorted.
         * \param comp  The comparison operation used to compare two values.
         * \return The sorted data that is available in place.
         *
         * \details The following code example shows the use of \p sort to sort the elements in the descending order,
-        * specifying a specific command-queue.
+        * specifying a specific accelerator.
         * \code
         * #include <bolt/amp/sort.h>
         * #include <bolt/amp/functional.h>
         *
         * int a[8] = {2, 9, 3, 7, 5, 6, 3, 8};
         *
+        * //Create an AMP Control object using the default accelerator
+        * ::Concurrency::accelerator accel(::Concurrency::accelerator::default_accelerator);
+        *
+        * bolt::amp::control ctl(accel);
+        *
         * // for arranging the elements in descending order, use bolt::amp::greater<int>()
-        * bolt::amp::sort(ctl, a, a+10, bolt::amp::greater<int>());
+        * bolt::amp::sort(ctl, a, a+8, bolt::amp::greater<int>());
         *
         *  \endcode
         */

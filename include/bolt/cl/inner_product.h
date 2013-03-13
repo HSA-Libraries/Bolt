@@ -54,8 +54,8 @@ namespace bolt {
         * \param ctl    \b Optional Control structure to control command-queue, debug, tuning. See bolt::cl::control.
         * \param first1 The beginning of input sequence.
         * \param last1  The end of input sequence.
-		* \param first2 The beginning of the second input sequence.
-		* \param init   The initial value for the accumulator.
+		    * \param first2 The beginning of the second input sequence.
+		    * \param init   The initial value for the accumulator.
         * \param cl_code Optional OpenCL(TM) code to be passed to the OpenCL compiler. The cl_code is inserted first in
         *                the generated code, before the cl_code trait.
         * \tparam InputIterator An iterator that can be dereferenced for an object, and can be incremented to get to 
@@ -69,7 +69,7 @@ namespace bolt {
         * #include <bolt/cl/inner_product.h>
         *
         * int a[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
-		* int b[10] = {1, 1, 2, 3, 5, 8, 13, 21, 34, 55};
+		    * int b[10] = {1, 1, 2, 3, 5, 8, 13, 21, 34, 55};
         *
         * int ip = bolt::cl::inner_product(a, a+10, b,0);
         * // sum = 1209
@@ -80,11 +80,11 @@ namespace bolt {
 		template<typename InputIterator, typename OutputType> 
         OutputType inner_product( bolt::cl::control &ctl,  InputIterator first1, InputIterator last1, 
             InputIterator first2, OutputType init, 
-            const std::string& user_code="");
+            const std::string& cl_code="");
 
 		template<typename InputIterator, typename OutputType> 
         OutputType inner_product( InputIterator first1, InputIterator last1, InputIterator first2, OutputType init, 
-            const std::string& user_code="");
+            const std::string& cl_code="");
 
 
         /*! \brief Inner Product returns the inner product of two iterators using user specified binary functors 
@@ -96,10 +96,10 @@ namespace bolt {
         * \param ctl    \b Optional Control structure to control command-queue, debug, tuning. See FIXME.
         * \param first1 The first position in the input sequence.
         * \param last1  The last position in the input sequence.
-		* \param first2  The beginning of second input sequence.
-		* \param init   The initial value for the accumulator.
-		* \param f1		Binary functor for reduction.
-		* \param f2     Binary functor for transformation.
+		    * \param first2  The beginning of second input sequence.
+		    * \param init   The initial value for the accumulator.
+		    * \param f1		Binary functor for reduction.
+		    * \param f2     Binary functor for transformation.
         * \param cl_code Optional OpenCL(TM) code to be passed to the OpenCL compiler. The cl_code is inserted first in
         *                the generated code, before the cl_code trait.
         * \tparam InputIterator An iterator that can be dereferenced for an object, and can be incremented to get to 
@@ -115,7 +115,7 @@ namespace bolt {
         * #include <bolt/cl/inner_product.h>
         *
         * int a[10] = {-5,  0,  2,  3,  2,  4, -2,  1,  2,  3};
-		* int b[10] = {-5,  0,  2,  3,  2,  4, -2,  1,  2,  3};
+		    * int b[10] = {-5,  0,  2,  3,  2,  4, -2,  1,  2,  3};
         *
         * int ip = bolt::cl::inner_product(a, a+10, b, 0, bolt::cl::plus<int>(),bolt::cl::multiplies<int>());
         * // sum = 76
@@ -126,11 +126,11 @@ namespace bolt {
         template<typename InputIterator, typename OutputType, typename BinaryFunction1, typename BinaryFunction2> 
         OutputType inner_product( bolt::cl::control &ctl,  InputIterator first1, InputIterator last1, 
             InputIterator first2, OutputType init, 
-            BinaryFunction1 f1, BinaryFunction2 f2, const std::string& user_code="");
+            BinaryFunction1 f1, BinaryFunction2 f2, const std::string& cl_code="");
 
         template<typename InputIterator, typename OutputType, typename BinaryFunction1, typename BinaryFunction2> 
         OutputType inner_product( InputIterator first1, InputIterator last1, InputIterator first2, OutputType init, 
-            BinaryFunction1 f1, BinaryFunction2 f2, const std::string& user_code="");
+            BinaryFunction1 f1, BinaryFunction2 f2, const std::string& cl_code="");
        
         /*!   \}  */
     };

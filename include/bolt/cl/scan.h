@@ -52,7 +52,7 @@ namespace cl
  *  
  */
 
-/*! \brief inclusive_scan calculates a running sum over a range of values, inclusive of the current value.
+/*! \brief \p inclusive_scan calculates a running sum over a range of values, inclusive of the current value.
  *   The result value at iterator position \p i is the running sum of all values less than \p i in the input range.
  *
  * \param ctl A \b Optional Bolt control object, to describe the environment under which the function runs.
@@ -91,7 +91,7 @@ inclusive_scan(
 
 
 
-/*! \brief inclusive_scan calculates a running sum over a range of values, inclusive of the current value.
+/*! \brief \p inclusive_scan calculates a running sum over a range of values, inclusive of the current value.
  *   The result value at iterator position \p i is the running sum of all values less than \p i in the input range.
  *
  * \param ctl A \b Optional Bolt control object, to describe the environment under which the function runs.
@@ -130,7 +130,7 @@ inclusive_scan(
     const std::string& user_code="" );
 
 
-/*! \brief exclusive_scan calculates a running sum over a range of values, exclusive of the current value.
+/*! \brief \p exclusive_scan calculates a running sum over a range of values, exclusive of the current value.
  *   The result value at iterator position \p i is the running sum of all values less than \p i in the input range.
  *
  * \param ctl A \b Optional Bolt control object, to describe the environment under which the function runs.
@@ -164,7 +164,7 @@ OutputIterator
     const std::string& user_code="" );
 
 
-/*! \brief exclusive_scan calculates a running sum over a range of values, exclusive of the current value.
+/*! \brief \p exclusive_scan calculates a running sum over a range of values, exclusive of the current value.
  *   The result value at iterator position \p i is the running sum of all values less than \p i in the input range.
  *
  * \param ctl A \b Optional Bolt control object, to describe the environment under which the function runs.
@@ -183,8 +183,10 @@ OutputIterator
  *
  * int a[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
  *
+ * int init = 0;
+ *
  * // Calculate the exclusive scan of an input range, modifying the values in-place.
- * bolt::cl::exclusive_scan( a, a+10, a, 0 );
+ * bolt::cl::exclusive_scan( a, a+10, a, init );
  * // a => {0, 1, 3, 6, 10, 15, 21, 28, 36, 45}
  *  \endcode
  * \sa http://www.sgi.com/tech/stl/partial_sum.html
@@ -199,13 +201,14 @@ OutputIterator
     exclusive_scan( InputIterator first, InputIterator last, OutputIterator result, T init,
     const std::string& user_code="" );
 
-/*! \brief exclusive_scan calculates a running sum over a range of values, exclusive of the current value.
+/*! \brief \p exclusive_scan calculates a running sum over a range of values, exclusive of the current value.
  *   The result value at iterator position \p i is the running sum of all values less than \p i in the input range.
  *
  * \param ctl A \b Optional Bolt control object, to describe the environment under which the function runs.
  * \param first The first iterator in the input range to be scanned.
  * \param last  The last iterator in the input range to be scanned.
  * \param result  The first iterator in the output range.
+ * \param init  The value used to initialize the output scan sequence.
  * \param binary_op A functor object specifying the operation between two elements in the input range.
  * \param user_code A client-specified string that is appended to the generated OpenCL kernel.
  * \tparam InputIterator An iterator signifying the range is used as input.

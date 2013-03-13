@@ -142,6 +142,7 @@ namespace bolt {
          *
          *  ConstFunctor cf(1);
          *  std::vector<int> vec(1024);
+         *  int n = 1024; 
          *  bolt::cl::generate_n(vec.begin(), n, cf);
          *
          *  // vec is now filled with 1

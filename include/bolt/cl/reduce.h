@@ -50,7 +50,7 @@ namespace bolt {
         */
 
 
-        /*! \breif reduce returns the result of combining all the elements in the specified range using the specified 
+        /*! \brief \p reduce returns the result of combining all the elements in the specified range using the specified 
         * binary_op.  
         * The classic example is a summation, where the binary_op is the plus operator.  By default, the initial value 
         * is "0" 
@@ -84,7 +84,7 @@ namespace bolt {
         * bolt::cl::control ctl(myCommandQueue); //specify an OpenCL(TM) command queue to use for executing the reduce.
         * ctl.debug(bolt::cl::control::debug::SaveCompilerTemps); // save IL and ISA files for generated kernel
         *
-        * int sum = bolt::cl::reduce(ctl, a, a+10, 0);
+        * int sum = bolt::cl::reduce(ctl, a, a+10);
         * // sum = 55
         *  \endcode
         * \sa http://www.sgi.com/tech/stl/accumulate.html
@@ -104,8 +104,8 @@ namespace bolt {
             const std::string& cl_code="");
 
 
-        /*! \breif reduce returns the result of combining all the elements in the specified range using the specified 
-        * binary_op.  
+        /*! \brief \p reduce returns the result of combining all the elements in the specified range using the 
+        * specified binary_op.  
         * The classic example is a summation, where the binary_op is the plus operator.  By default, the initial value 
         * is "0" 
         * and the binary operator is "plus<>()".
@@ -138,9 +138,11 @@ namespace bolt {
         *
         * bolt::cl::control ctl(myCommandQueue); //specify an OpenCL(TM) command queue to use for executing the reduce.
         * ctl.debug(bolt::cl::control::debug::SaveCompilerTemps); // save IL and ISA files for generated kernel
+        * 
+        * int init = 10;
         *
-        * int sum = bolt::cl::reduce(ctl, a, a+10, 0);
-        * // sum = 55
+        * int sum = bolt::cl::reduce(ctl, a, a+10, init);
+        * // sum = 65
         *  \endcode
         * \sa http://www.sgi.com/tech/stl/accumulate.html
         */
@@ -157,7 +159,7 @@ namespace bolt {
             T init,
             const std::string& cl_code="");
 
-        /*! \brief reduce returns the result of combining all the elements in the specified range using the specified 
+        /*! \brief \p reduce returns the result of combining all the elements in the specified range using the specified 
         * binary_op.  
         * The classic example is a summation, where the binary_op is the plus operator.  By default, 
         * the binary operator is "plus<>()".  The version takes a bolt::cl::control structure as a first argument.

@@ -46,7 +46,7 @@ namespace bolt
             */
 
 
-            /*! \brief reduce_by_key performs, on a sequence,
+            /*! \brief \p reduce_by_key performs, on a sequence,
             * a reduction of each sub-sequence as defined by equivalent keys;
             * the BinaryFunction in this version is plus(), and the BinaryPredicate is equal_to().
             *
@@ -112,7 +112,7 @@ namespace bolt
                 OutputIterator2  values_output,
                 const std::string& user_code="" );
 
-            /*! \brief reduce_by_key performs, on a sequence,
+            /*! \brief \p reduce_by_key performs, on a sequence,
             * a reduction of each sub-sequence as defined by equivalent keys;
             * the BinaryFunction in this version is plus().
             *
@@ -186,7 +186,7 @@ namespace bolt
                 const std::string& user_code="" );
 
 
-           /*! \brief reduce_by_key performs, on a sequence,
+           /*! \brief \p reduce_by_key performs, on a sequence,
             * a reduction of each sub-sequence as defined by equivalent keys;
             *
             * \param ctl           \b Optional Control structure to control command-queue, debug, tuning, etc.  
@@ -221,7 +221,7 @@ namespace bolt
             * bolt::cl::control ctl = control::getDefault();
             *
             * bolt::cl::reduce_by_key( ctl, keys, keys+11, vals, keys_out, vals_out,bolt::cl::equal_to<int>(),
-            * bolt::cl::plus<int>());
+            * bolt::cl::plus<int>() );
             * // keys_out => { 0, 2, -5, 6 }
             * // vals_out => { 6, 6, 8, 2 }
             *  \endcode

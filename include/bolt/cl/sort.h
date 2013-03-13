@@ -78,8 +78,14 @@ namespace bolt {
         * 
         * int a[8] = {2, 9, 3, 7, 5, 6, 3, 8};
         *
+        * cl::CommandQueue myCommandQueue = bolt::cl::control::getDefaultCommandQueue();
+        * 
+        * bolt::cl::control ctl(myCommandQueue); //Specify an OpenCL(TM) command queue to use for executing the reduce.
+        * ctl.debug(bolt::cl::control::debug::SaveCompilerTemps); // save IL and ISA files for generated kernel.
+        *
+        *
         * // for arranging the elements in descending order, use bolt::cl::greater<int>()
-        * bolt::cl::sort( a, a+8);
+        * bolt::cl::sort(ctl, a, a+8 );
         * 
         *  \endcode
         */
@@ -119,8 +125,7 @@ namespace bolt {
         *  This can be used for any extra cl code that is to be passed when compiling the OpenCl Kernel.
         * \return The sorted data that is available in place.
         *
-        * \details The following code example shows the use of \p sort to sort the elements in the descending order, 
-        * specifying a specific command-queue.
+        * \details The following code example shows the use of \p sort to sort the elements in the descending order.
         * \code
         * #include <bolt/cl/sort.h>
         * #include <bolt/cl/functional.h>

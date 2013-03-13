@@ -62,7 +62,7 @@ namespace bolt {
         * \return The position of the max_element.
         *
         * \details The following code example shows how to find the position of the   \p max_element of 10 numbers,
-         * using the default BinaryPredicate.
+         * using the default BinaryPredicate which is bolt::cl::greater<T>().
         * \code
         * #include <bolt/cl/max_element.h>
         *

@@ -131,7 +131,7 @@ namespace bolt {
         *
         *  \tparam InputIterator is a model of InputIterator
         *  \tparam OutputIterator is a model of OutputIterator
-        * \details  Example:
+        * \details  This example returns the number of elements in the range 1-60.
         * \code
         *
         * std::string InRange_CodeString = 
@@ -155,7 +155,7 @@ namespace bolt {
         * );
         *
         *    int a[14] = {0, 10, 42, 55, 13, 13, 42, 19, 42, 11, 42, 99, 13, 77};
-        *    size_t boltCount = bolt::cl::count_if (a, A+14, InRange<float>(1,60)) ;
+        *    size_t boltCount = bolt::cl::count_if (a, a+14, InRange<float>(1,60)) ;
         *    // contains 12 in range 1-60.
         *  \endcode
         *

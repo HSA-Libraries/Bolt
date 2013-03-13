@@ -126,8 +126,8 @@ namespace bolt {
         * // for arranging the elements in descending order, use bolt::cl::greater<int>()
         * bolt::cl::sort_by_key(keys, keys+8,values,bolt::cl::less<int>());
         *  //Output
-        * //keys[8] =   {2,3,3,5,6,7,8,9}
-        * //values[8] = {100,16,3,15,8,50,5,200}
+        * //keys[8] =   {9,8,7,6,5,3,3,2}
+        * //values[8] = {200,5,50,8,15,3,16,100}
         *
         *  \endcode
         */
