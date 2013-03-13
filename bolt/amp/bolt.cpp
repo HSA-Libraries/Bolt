@@ -34,9 +34,9 @@ namespace amp {
 
 void getVersion( unsigned int& major, unsigned int& minor, unsigned int& patch )
 {
-    major	= static_cast<unsigned int>( 0 );
-    minor	= static_cast<unsigned int>( 1 );
-    patch	= static_cast<unsigned int>( 0 );
+    major	= static_cast<unsigned int>( BoltVersionMajor );
+    minor	= static_cast<unsigned int>( BoltVersionMinor );
+    patch	= static_cast<unsigned int>( BoltVersionPatch );
 }
 
 // for printing errors
