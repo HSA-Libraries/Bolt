@@ -862,8 +862,21 @@ typedef ::testing::Types<
     std::tuple< int, TypeValue< 1053 > >,
     std::tuple< int, TypeValue< 4096 > >,
     std::tuple< int, TypeValue< 4097 > >,
-    std::tuple< int, TypeValue< 65535 > >,
-    std::tuple< int, TypeValue< 65536 > >
+    std::tuple< int, TypeValue< 8192 > >,
+    std::tuple< int, TypeValue< 16384 > >,//13
+    std::tuple< int, TypeValue< 32768 > >,//14
+    std::tuple< int, TypeValue< 65535 > >,//15
+    std::tuple< int, TypeValue< 65536 > >,//16
+    std::tuple< int, TypeValue< 131072 > >,//17    
+    std::tuple< int, TypeValue< 262144 > >,//18    
+    std::tuple< int, TypeValue< 524288 > >,//19    
+    std::tuple< int, TypeValue< 1048576 > >,//20    
+    std::tuple< int, TypeValue< 2097152 > >,//21    
+    std::tuple< int, TypeValue< 4194304 > >,//22    
+    std::tuple< int, TypeValue< 8388608 > >,//23
+    std::tuple< int, TypeValue< 16777216 > >,//24
+    std::tuple< int, TypeValue< 33554432 > >,//25
+    std::tuple< int, TypeValue< 67108864 > >//26
 > IntegerTests;
 
 typedef ::testing::Types< 
