@@ -91,9 +91,12 @@ void writeHeaderFile( const std::string& inputFileName, const std::string& destD
             //std::cout << line << std::endl;
             //std::cout << substLine << std::endl << std::endl;
 
-            //  Escape the \ and " characters
-            boost::replace_all( line, "\\", "\\\\" );
-            boost::replace_all( line, "\"", "\\\"" );
+            //  Escape the \ and " characters, except for printf statements
+            if( line.find( "printf" ) == std::string::npos )
+            {
+                boost::replace_all( line, "\\", "\\\\" );
+                boost::replace_all( line, "\"", "\\\"" );
+            }
 
             //  For every line of code, we append a '\n' that will be preserved in the string passed into the ::clBuildProgram API
             //  This makes debugging kernels in debuggers easier

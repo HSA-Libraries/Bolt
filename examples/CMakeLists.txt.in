@@ -118,6 +118,30 @@ message( STATUS "CMAKE_CXX_COMPILER release flags: " ${CMAKE_CXX_FLAGS_RELEASE} 
 message( STATUS "CMAKE_CXX_COMPILER relwithdebinfo flags: " ${CMAKE_CXX_FLAGS_RELWITHDEBINFO} )
 message( STATUS "CMAKE_EXE_LINKER link flags: " ${CMAKE_EXE_LINKER_FLAGS} )
 
+
+option( BUILD_TBB "Create a solution that will work with TBB" OFF )
+
+if( BUILD_TBB )
+    # This will define TBB_FOUND
+    message ("Setting up TBB paths")
+    find_package( TBB REQUIRED )
+    if ( TBB_FOUND )
+        message("TBB is found installed in the path:" ${TBB_INSTALL_DIR} )
+        #list( APPEND Bolt.Dependencies TBB )
+        include_directories( ${TBB_INCLUDE_DIRS} )
+        add_definitions( "-DENABLE_TBB=true" )
+        set(TBB_LIBRARIES debug;${TBB_LIBRARY_DEBUG};${TBB_LIBRARY_MALLOC_DEBUG};optimized;${TBB_LIBRARY};${TBB_LIBRARY_MALLOC})
+    else ( ) 
+        message( FATAL_ERROR "TBB not found. Install TBB and set TBB_INSTALL_DIR env variable" )
+        #message( STATUS "Setting up TBB external..." )
+        #include( ExternalTBB )
+        #message( STATUS "TBB_ROOT configured as: " ${TBB_INSTALL_DIR} )
+        #list( APPEND Bolt.Dependencies TBB )
+        #list( APPEND Bolt.Cmake.Args -DBUILD_TBB=TRUE )
+    endif( )
+endif( )
+
+
 # Depending on whether we are building for 64 or 32 bit, construct common paths and names that subdirectories can reference for their use
 if( Bolt_BUILD64 )
     set( CPACK_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}-${Bolt_VERSION}-${CMAKE_HOST_SYSTEM_NAME}-x64")

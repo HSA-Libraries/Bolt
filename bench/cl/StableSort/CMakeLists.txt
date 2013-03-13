@@ -16,31 +16,37 @@
 ############################################################################                                                                                     
 
 # List the names of common files to compile across all platforms
-set( clBolt.Example.StdDev.Source stdafx.cpp StdDev.cpp )
-set( clBolt.Example.StdDev.Headers 	stdafx.h 
-								targetver.h 
-								${BOLT_INCLUDE_DIRS}/bolt/cl/scan.h 
-								${BOLT_INCLUDE_DIRS}/bolt/cl/detail/scan.inl )
+set( clBolt.Bench.StableSort.Source 
+        StableSortBench.cpp )
 
-set( clBolt.Example.StdDev.Files ${clBolt.Example.StdDev.Source} ${clBolt.Example.StdDev.Headers} )
+set( clBolt.Bench.StableSort.Headers stdafx.h 
+        ${BOLT_INCLUDE_DIR}/bolt/cl/StableSort.h 
+        ${BOLT_INCLUDE_DIR}/bolt/cl/detail/StableSort.inl)
 
-# Include headers files
-include_directories( ${BOLT_INCLUDE_DIRS} ${OPENCL_INCLUDE_DIRS} )
+set( clBolt.Bench.StableSort.Files 
+        ${clBolt.Bench.StableSort.Source} 
+        ${clBolt.Bench.StableSort.Headers} )
 
-add_executable( clBolt.Example.StdDev ${clBolt.Example.StdDev.Files} )
+# Include standard OpenCL headers
+include_directories( ${OPENCL_INCLUDE_DIRS} )
 
-if(BUILD_TBB)
-    target_link_libraries( clBolt.Example.StdDev ${BOLT_LIBRARIES} ${OPENCL_LIBRARIES} ${GTEST_LIBRARIES} ${Boost_LIBRARIES}  ${TBB_LIBRARIES} )
-else (BUILD_TBB)
-    target_link_libraries( clBolt.Example.StdDev ${BOLT_LIBRARIES} ${OPENCL_LIBRARIES} ${GTEST_LIBRARIES} ${Boost_LIBRARIES}  )
-endif()
+if( BUILD_TBB )
+    add_definitions( "-DENABLE_TBB" )
+endif( )
 
-set_target_properties( clBolt.Example.StdDev PROPERTIES VERSION ${Examples_VERSION} )
-set_target_properties( clBolt.Example.StdDev PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
+add_executable( clBolt.Bench.StableSort ${clBolt.Bench.StableSort.Files} )
+
+target_link_libraries( clBolt.Bench.StableSort ${Boost_LIBRARIES} ${TBB_LIBRARIES} clBolt.Runtime )
+
+set_target_properties( clBolt.Bench.StableSort PROPERTIES VERSION ${Bolt_VERSION} )
+set_target_properties( clBolt.Bench.StableSort PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
+
+set_property( TARGET clBolt.Bench.StableSort PROPERTY FOLDER "Benchmark/OpenCL")
 
 # CPack configuration; include the executable into the package
-install( TARGETS clBolt.Example.StdDev
+install( TARGETS clBolt.Bench.StableSort
 	RUNTIME DESTINATION ${BIN_DIR}
 	LIBRARY DESTINATION ${LIB_DIR}
 	ARCHIVE DESTINATION ${LIB_DIR}
 	)
+

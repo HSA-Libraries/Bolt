@@ -141,8 +141,8 @@ void BitonicSortTemplate(
     uint pairDistance = 1 << (stage - passOfStage);
     uint blockWidth   = 2 * pairDistance;
     uint temp;
-    uint leftId = (threadId % pairDistance) 
-                       + (threadId / pairDistance) * blockWidth;
+    uint leftId = (threadId & (pairDistance -1)) 
+                       + (threadId >> (stage - passOfStage) ) * blockWidth;
     bool compareResult;
     input_iter.init( input_ptr );
     
@@ -153,27 +153,18 @@ void BitonicSortTemplate(
     leftElement = input_iter[leftId];
     rightElement = input_iter[rightId];
     
-    uint sameDirectionBlockWidth = 1 << stage;
+    uint sameDirectionBlockWidth = threadId >> stage;
+    uint sameDirection = sameDirectionBlockWidth & 0x1;
     
-    if((threadId/sameDirectionBlockWidth) % 2 == 1)
-    {
-        temp = rightId;
-        rightId = leftId;
-        leftId = temp;
-    }
+    temp    = sameDirection?rightId:temp;
+    rightId = sameDirection?leftId:rightId;
+    leftId  = sameDirection?temp:leftId;
 
     compareResult = (*userComp)(leftElement, rightElement);
 
-    if(compareResult)
-    {
-        greater = rightElement;
-        lesser  = leftElement;
-    }
-    else
-    {
-        greater = leftElement;
-        lesser  = rightElement;
-    }
+    greater = compareResult?rightElement:leftElement;
+    lesser  = compareResult?leftElement:rightElement;
+
     input_iter[leftId]  = lesser;
     input_iter[rightId] = greater;
 

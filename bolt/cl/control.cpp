@@ -222,8 +222,9 @@ namespace cl
         std::for_each( platforms.begin( ), platforms.end( ), printPlatformFunctor( 0, deviceType ) );
     }
 
-    void control::printPlatformsRange( std::vector< ::cl::Platform >::iterator begin, std::vector< ::cl::Platform >::iterator end, 
-                                                bool printDevices, cl_device_type deviceType )
+    void control::printPlatformsRange( std::vector< ::cl::Platform >::iterator begin, 
+                                       std::vector< ::cl::Platform >::iterator end, 
+                                       bool printDevices, cl_device_type deviceType )
     {
         //  Query OpenCL for available platforms
         std::for_each( begin, end, printPlatformFunctor( 0, deviceType ) );
@@ -236,15 +237,30 @@ namespace cl
 
         // Platform vector contains all available platforms on system
         std::vector< ::cl::Platform > platforms;
-        bolt::cl::V_OPENCL( ::cl::Platform::get( &platforms ), "Platform::get() failed" );
 
-        //  If Bolt detects 0 platforms, let the default OpenCL runtime handle this
+        // Catch exception when no OpenCL version is installed on the system
+        try 
+        {
+            bolt::cl::V_OPENCL( ::cl::Platform::get( &platforms ), "Platform::get() failed" );
+        }
+        catch(::cl::Error err)
+        {
+            std::cout << "No Platforms detected\n";
+            return ::cl::CommandQueue();  //return a NULL queue
+        }
+
+        //If Bolt detects 0 platforms, let the default OpenCL runtime handle this
+        //Ideally this if case should not be reached if no platforms are found since we catch the exception above
         if( platforms.empty( ) )
-            return ::cl::CommandQueue::getDefault( );
+        {
+            std::cout << "No OpenCL Platforms Found\n";
+            return ::cl::CommandQueue();  //return a NULL queue
+        }
 
         //  Find all AMD platforms
         std::vector< ::cl::Platform > amdPlatforms;
-        for( std::vector< ::cl::Platform >::iterator clPlatIter = platforms.begin(); clPlatIter != platforms.end( ); ++clPlatIter )
+        for( std::vector< ::cl::Platform >::iterator clPlatIter = platforms.begin(); 
+             clPlatIter != platforms.end( ); ++clPlatIter )
         {
             std::string szPlatformVendor = clPlatIter->getInfo< CL_PLATFORM_VENDOR >( &err );
             bolt::cl::V_OPENCL( err, "Platform::getInfo< CL_PLATFORM_VENDOR > failed" );
@@ -257,7 +273,6 @@ namespace cl
         cl_ulong maxDeviceMemory = 0;
         cl_uint maxMaxClock = 0;
         cl_uint maxMaxUnits = 0;
-
 
         //  No AMD platforms available to choose from; allow OpenCL runtime to choose for us
         //  Protocol to select the device and the corresponding Command Queue
@@ -291,7 +306,8 @@ namespace cl
                 return ::cl::CommandQueue::getDefault( );
             }
             selectedPlatformIter = platforms.begin();
-            for( std::vector< ::cl::Device >::iterator amdDevIter = otherDevices.begin( ); amdDevIter != otherDevices.end( ); ++amdDevIter )
+            for( std::vector< ::cl::Device >::iterator amdDevIter = otherDevices.begin( ); 
+                 amdDevIter != otherDevices.end( ); ++amdDevIter )
             {
 				cl_device_type dType = amdDevIter->getInfo< CL_DEVICE_TYPE >( &err );
 				bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_TYPE > failed" );
@@ -338,9 +354,8 @@ namespace cl
         {// Start of if amdPlatforms
             //  Choose the OpenCL device that has the greatest amount of available memory
 
-
-
-            for( std::vector< ::cl::Platform >::iterator amdPlatIter = amdPlatforms.begin( ); amdPlatIter != amdPlatforms.end( ); ++amdPlatIter )
+            for( std::vector< ::cl::Platform >::iterator amdPlatIter = amdPlatforms.begin( ); 
+                 amdPlatIter != amdPlatforms.end( ); ++amdPlatIter )
             {
                 //  We don't want to pick an AMD CPU device over another vendors GPU device, so filter only GPU devices
                 std::vector< ::cl::Device > amdDevices;
@@ -369,7 +384,8 @@ namespace cl
                     continue;
                 }
 
-                for( std::vector< ::cl::Device >::iterator amdDevIter = amdDevices.begin( ); amdDevIter != amdDevices.end( ); ++amdDevIter )
+                for( std::vector< ::cl::Device >::iterator amdDevIter = amdDevices.begin( ); 
+                     amdDevIter != amdDevices.end( ); ++amdDevIter )
                 {
 				    cl_device_type dType = amdDevIter->getInfo< CL_DEVICE_TYPE >( &err );
 				    bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_TYPE > failed" );

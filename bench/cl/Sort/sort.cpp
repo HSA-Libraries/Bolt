@@ -15,54 +15,35 @@
 
 ***************************************************************************/                                                                                     
 
+
+
 #include "stdafx.h"
 
 #include "bolt/unicode.h"
 #include "bolt/statisticalTimer.h"
 #include "bolt/countof.h"
 #include "bolt/cl/sort.h"
-#define cNTiles 64
-
+#define DATA_TYPE unsigned int
 const std::streamsize colWidth = 26;
+#define BOLT_BENCHMARK_DEBUG 1
 
-#if (_MSC_VER == 1700)
-#include <amp.h>
-#include <amp_short_vectors.h>
-using namespace concurrency;
-//This function is defined in sort_amp.cpp
-extern void Sort(array<unsigned int> &integers,
-          array<unsigned int> &tmpIntegers,
-          array<unsigned int> &tmpHistograms);
-#endif
-
-template< typename container >
-void sortTest( bolt::statTimer& statTimer, size_t length, size_t iter )
+BOLT_FUNCTOR(SaxpyFunctor,
+struct SaxpyFunctor
 {
-        size_t sortId   = statTimer.getUniqueID( _T( "sort" ), 0 );
+	float _a;
+	SaxpyFunctor(float a) : _a(a) {};
 
-        container input( length );
-        container backup( length );
+	float operator() (const float &xx, const float &yy) 
+	{
+		return _a * xx + yy;
+	};
+};
+);  // end BOLT_FUNCTOR
 
-        {
-            container::pointer mySP = backup.data( );
-            std::generate( &mySP[ 0 ], &mySP[ length ], rand );
-        }
 
-        for( size_t i = 0; i < iter; ++i )
-        {
-            input = backup;
 
-            statTimer.Start( sortId );
-            bolt::cl::sort( input.begin( ), input.end( ) );
-            statTimer.Stop( sortId );
-        }
-}
-
-int main( int argc, char* argv[] )
+int _tmain( int argc, _TCHAR* argv[] )
 {
-    /******************************************************************************
-     * Default Benchmark Parameters
-     *****************************************************************************/
     cl_uint userPlatform = 0;
     cl_uint userDevice = 0;
     size_t iterations = 0;
@@ -71,47 +52,38 @@ int main( int argc, char* argv[] )
     cl_device_type deviceType = CL_DEVICE_TYPE_DEFAULT;
     bool defaultDevice = true;
     bool print_clInfo = false;
-    bool hostMemory = false;
-    bool serial = false;
-    bool validate = false;
-    bool compareSerial = false;
-    std::string filename;
-    size_t numThrowAway = 10;
-    bolt::cl::control& ctrl = bolt::cl::control::getDefault();
-
+    bool systemMemory = false;
+    bool deviceMemory = false;
+    bool runTBB = false;
+    bool runBOLT = false;
+    bool runSTL = false;
     /******************************************************************************
-     * Parameter Parsing
-     ******************************************************************************/
+    * Parameter parsing                                                           *
+    ******************************************************************************/
     try
     {
         // Declare the supported options.
-        po::options_description desc( "OpenCL sort command line options" );
+        po::options_description desc( "OpenCL Scan command line options" );
         desc.add_options()
-            ( "help,h",         "produces this help message" )
-            ( "version",        "Print queryable version information from the Bolt CL library" )
+            ( "help,h",			"produces this help message" )
+            ( "version,v",		"Print queryable version information from the Bolt CL library" )
             ( "queryOpenCL,q",  "Print queryable platform and device info and return" )
             ( "gpu,g",          "Report only OpenCL GPU devices" )
             ( "cpu,c",          "Report only OpenCL CPU devices" )
             ( "all,a",          "Report all OpenCL devices" )
-            ( "reference-serial,r", "Run reference serial algorithm (std::sort)." )
-            ( "hostMemory,m",   "Allocate vectors in host memory, otherwise device memory" )
-            ( "platform,p",     po::value< cl_uint >( &userPlatform )->default_value( 0 ),
-                "Specify the platform under test using the index reported by -q flag" )
-            ( "device,d",       po::value< cl_uint >( &userDevice )->default_value( 0 ),
-                "Specify the device under test using the index reported by the -q flag.  "
-                    "Index is relative with respect to -g, -c or -a flags" )
-            ( "length,l",       po::value< size_t >( &length )->default_value( 4096 ),
-                "Specify the length of sort array" )
-            ( "iterations,i",   po::value< size_t >( &iterations )->default_value( 1 ),
-                "Number of samples in timing loop" )
-            ( "validate,v",     "Validate Bolt sort against serial CPU sort" )
-            ( "compare-serial",     "Compare speedup Bolt sort against serial CPU sort" )
-            ( "filename,f",     po::value< std::string >( &filename )->default_value( "bench.xml" ),
-                "Name of output file" )
-            ( "throw-away",     po::value< size_t >( &numThrowAway )->default_value( 0 ),
-                "Number of trials to skip averaging" )
-            ( "test,t",         po::value< size_t >( &algo )->default_value( 1 ), 
-                "Algorithm used [1,2,3,4]  1:SORT_BOLT UINT, 2:SORT_BOLT INT, 3:SORT_AMP_SHOC, 4:STD SORT" )
+            ( "systemMemory,S", "Allocate vectors in system memory, otherwise device memory" )
+            ( "deviceMemory,D", "Allocate vectors in system memory, otherwise device memory" )
+            ( "tbb,T",          "Benchmark TBB MULTICORE CPU Code" )
+            ( "bolt,B",         "Benchmark Bolt OpenCL Libray" )
+            ( "serial,E",       "Benchmark Serial Code STL Libray" )
+            ( "platform,p",     po::value< cl_uint >( &userPlatform )->default_value( 0 ), 
+                                "Specify the platform under test using the index reported by -q flag" )
+            ( "device,d",       po::value< cl_uint >( &userDevice )->default_value( 0 ), 
+                                "Specify the device under test using the index reported by the -q flag.  "
+                                "Index is relative with respect to -g, -c or -a flags" )
+            ( "length,l",       po::value< size_t >( &length )->default_value( 8*1048576 ), "Specify the length of scan array" )
+            ( "iterations,i",   po::value< size_t >( &iterations )->default_value( 100 ), "Number of samples in timing loop" )
+			//( "algo,a",		    po::value< size_t >( &algo )->default_value( 1 ), "Algorithm used [1,2]  1:SCAN_BOLT, 2:XYZ" )//Not used in this file
             ;
 
         po::variables_map vm;
@@ -132,7 +104,7 @@ int main( int argc, char* argv[] )
 
         if( vm.count( "help" ) )
         {
-            //  This needs to be 'cout' as program-options does not support wcout yet
+            //	This needs to be 'cout' as program-options does not support wcout yet
             std::cout << desc << std::endl;
             return 0;
         }
@@ -144,44 +116,42 @@ int main( int argc, char* argv[] )
 
         if( vm.count( "gpu" ) )
         {
-            deviceType  = CL_DEVICE_TYPE_GPU;
+            deviceType	= CL_DEVICE_TYPE_GPU;
         }
         
         if( vm.count( "cpu" ) )
         {
-            deviceType  = CL_DEVICE_TYPE_CPU;
+            deviceType	= CL_DEVICE_TYPE_CPU;
         }
 
         if( vm.count( "all" ) )
         {
-            deviceType  = CL_DEVICE_TYPE_ALL;
+            deviceType	= CL_DEVICE_TYPE_ALL;
         }
-
-        if( vm.count( "hostMemory" ) )
+        if( vm.count( "systemMemory" ) )
         {
-            hostMemory = true;
+            systemMemory = true;
         }
-
-        if( vm.count( "reference-serial" ) )
+        if( vm.count( "deviceMemory" ) )
         {
-            serial = true;
-            hostMemory = true;
+            deviceMemory = true;
         }
-
-        if( vm.count( "validate" ) )
+        if( vm.count( "tbb" ) )
         {
-            validate = true;
+            runTBB = true;
         }
-
-        if( vm.count( "compare-serial" ) )
+        if( vm.count( "bolt" ) )
         {
-            compareSerial = true;
+            runBOLT = true;
         }
-
+        if( vm.count( "serial" ) ) 
+        {
+            runSTL = true;
+        }
     }
     catch( std::exception& e )
     {
-        std::cout << _T( "Sort Benchmark error condition reported:" ) << std::endl << e.what() << std::endl;
+        std::cout << _T( "Scan Benchmark error condition reported:" ) << std::endl << e.what() << std::endl;
         return 1;
     }
 
@@ -192,123 +162,166 @@ int main( int argc, char* argv[] )
     //  Query OpenCL for available platforms
     cl_int err = CL_SUCCESS;
 
-    if( serial )
+    // Platform vector contains all available platforms on system
+    std::vector< cl::Platform > platforms;
+    bolt::cl::V_OPENCL( cl::Platform::get( &platforms ), "Platform::get() failed" );
+
+    if( print_clInfo )
     {
-        ctrl.forceRunMode( bolt::cl::control::SerialCpu );  // choose serial std::scan
+        //  /todo: port the printing code from test/scan to control class
+        //std::for_each( platforms.begin( ), platforms.end( ), printPlatformFunctor( 0 ) );
+        return 0;
     }
 
-    // Platform vector contains all available platforms on system
-    std::vector< ::cl::Platform > platforms;
-    bolt::cl::V_OPENCL( ::cl::Platform::get( &platforms ), "Platform::get() failed" );
-
     // Device info
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
-    std::vector< cl::Device > devices = myContext.getInfo< CL_CONTEXT_DEVICES >();
+    std::vector< cl::Device > devices;
+    bolt::cl::V_OPENCL( platforms.at( userPlatform ).getDevices( deviceType, &devices ), "Platform::getDevices() failed" );
 
-    ::cl::CommandQueue myQueue( myContext, devices.at( userDevice ) , CL_QUEUE_PROFILING_ENABLE);
-    ctrl.commandQueue( myQueue );
-    std::string strDeviceName = ctrl.device( ).getInfo< CL_DEVICE_NAME >( &err );
+    cl::Context myContext( devices.at( userDevice ) );
+    cl::CommandQueue myQueue( myContext, devices.at( userDevice ) );
+
+    //  Now that the device we want is selected and we have created our own cl::CommandQueue, set it as the
+    //  default cl::CommandQueue for the Bolt API
+    bolt::cl::control::getDefault( ).commandQueue( myQueue );
+
+    std::string strDeviceName = bolt::cl::control::getDefault( ).device( ).getInfo< CL_DEVICE_NAME >( &err );
     bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_NAME > failed" );
 
     std::cout << "Device under test : " << strDeviceName << std::endl;
 
-    if( print_clInfo )
-    {
-        bolt::cl::control::printPlatforms( true, deviceType );
-        return 0;
-    }
+    // Control setup:
+	bolt::cl::control::getDefault().waitMode(bolt::cl::control::BusyWait);
 
+    /******************************************************************************
+    * Benchmark logic                                                             *
+    ******************************************************************************/
     bolt::statTimer& myTimer = bolt::statTimer::getInstance( );
-    double sortGB;
     myTimer.Reserve( 1, iterations );
-    size_t sortId   = myTimer.getUniqueID( _T( "sort" ), 0 );
+    size_t testId	= myTimer.getUniqueID( _T( "test" ), 0 );
 
-    std::vector< unsigned int > input( length );
-    std::vector< unsigned int > backup( length );
-    if( algo == 1 )
+	SaxpyFunctor s(100.0);
+
+#if (BOLT_BENCHMARK_DEBUG == 1)
+    std::string library = runBOLT?"BOLT LIBRARY ":(runTBB?"TBB CODE MULTI CORE PATH":(runSTL?"SERIAL SINGLE CORE PATH":"NO PATH SELECTED"));
+    std::string memory  = systemMemory?"CPU/HOST MEMORY":(deviceMemory?"DEVICE MEMORY":"NO MEMORY SELECTED");
+    std::cout << "Run Mode LIBRARY--[" << library << "]  MEMORY--[" << memory<< "]" << std::endl;
+#endif
+    std::vector<DATA_TYPE> backup(length);
+    std::generate(backup.begin(), backup.end(), rand);
+
+    if (runBOLT)
     {
-        std::cout<<"Running CL - UINT RADIX SORT\n";
-
-        if( hostMemory )
+        if( systemMemory )
         {
-            sortTest< std::vector< unsigned int > >( myTimer, length, iterations );
+            std::cout << "Benchmarking Bolt Host\n";
+            std::vector< DATA_TYPE > input( length );
+
+            for( unsigned i = 0; i < iterations; ++i )
+            {
+                input = backup;
+                myTimer.Start( testId );
+                bolt::cl::sort( input.begin(), input.end());
+                myTimer.Stop( testId );
+            }
+        }
+        else if(deviceMemory)
+        {
+            std::cout << "Benchmarking Bolt Device for length \n"; 
+            std::cout << std::distance(backup.begin( ), backup.end( ) ) << "  ---\n";
+            for( unsigned i = 0; i < iterations; ++i )
+            {
+                bolt::cl::device_vector< DATA_TYPE > dvInput( backup.begin( ), backup.end( ), CL_MEM_READ_WRITE );
+                myTimer.Start( testId );
+                bolt::cl::sort( dvInput.begin( ), dvInput.end( ) );
+                myTimer.Stop( testId );
+            }
         }
         else
         {
-            sortTest< bolt::cl::device_vector< unsigned int > >( myTimer, length, iterations );
+            std::cout << "BOLT LIBRARY PATH NO Memory selected"<< std::endl;
         }
-        sortGB = ( input.size( ) * sizeof( unsigned int ) ) / (1024.0 * 1024.0 * 1024.0);
     }
-    else if( algo == 2 )
+    else if (runTBB)
     {
-        std::cout<<"Running CL INT SORT\n";
 
-        if( hostMemory )
+        bolt::cl::control ctl = bolt::cl::control::getDefault();
+        ctl.forceRunMode(bolt::cl::control::MultiCoreCpu);
+        if( systemMemory )
         {
-            sortTest< std::vector< int > >( myTimer, length, iterations );
+            std::cout << "Benchmarking TBB Host\n"; 
+            std::vector< DATA_TYPE > input( length, 1 );
+
+            for( unsigned i = 0; i < iterations; ++i )
+            {
+                input = backup;
+
+                myTimer.Start( testId );
+                bolt::cl::sort( ctl, input.begin(), input.end());
+                myTimer.Stop( testId );
+            }
+        }
+        else if(deviceMemory)
+        {
+            std::cout << "Benchmarking TBB Device\n"; 
+
+            for( unsigned i = 0; i < iterations; ++i )
+            {
+                bolt::cl::device_vector< DATA_TYPE > dvInput( backup.begin( ), backup.end( ), CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE );
+                myTimer.Start( testId );
+                bolt::cl::sort( ctl, dvInput.begin(), dvInput.end());
+                myTimer.Stop( testId );
+            }
         }
         else
         {
-            sortTest< bolt::cl::device_vector< int > >( myTimer, length, iterations );
+            std::cout << "TBB LIBRARY PATH NO Memory selected"<< std::endl;
         }
-        sortGB = ( input.size( ) * sizeof( int ) ) / (1024.0 * 1024.0 * 1024.0);
     }
-    else if( algo == 3 )
+    else if(runSTL)
     {
-        std::vector< unsigned int > input( length );
-        std::vector< unsigned int > backup( length );
-        std::generate(backup.begin(), backup.end(),rand);
-
-#if (_MSC_VER == 1700)
-        std::cout<<"Running UINT AMP_SORT\n";
-
-        for(int run = 0; run < iterations; ++ run)
+        bolt::cl::control ctl = bolt::cl::control::getDefault();
+        ctl.forceRunMode(bolt::cl::control::SerialCpu);
+        if( systemMemory )
         {
-            // Allocate space for temporary integers and histograms.
-            input = backup;
-            array<unsigned int> dIntegers( static_cast< unsigned int >( length ), input.begin());
-            array<unsigned int> dTmpIntegers( static_cast< unsigned int >( length ) );
-            array<unsigned int> dTmpHistograms(cNTiles * 16);
-            // Execute and time the kernel.
-            myTimer.Start( sortId );
-            Sort(dIntegers, dTmpIntegers, dTmpHistograms);
-            myTimer.Stop( sortId );
+            std::cout << "Benchmarking STL Host\n"; 
+            std::vector< DATA_TYPE > input1( length, 1 );
+
+            for( unsigned i = 0; i < iterations; ++i )
+            {
+                input1 = backup;
+                myTimer.Start( testId );
+                bolt::cl::sort( ctl, input1.begin(), input1.end());
+                myTimer.Stop( testId );
+            }
         }
-        sortGB = ( input.size( ) * sizeof( unsigned int ) ) / (1024.0 * 1024.0 * 1024.0);
-#else 
-        std::cout<<"Visual Studio 2010 does not support C++ AMP\n";
-#endif 
-    }
-    else if( algo == 4 )
-    {
-        std::vector< unsigned int > input( length );
-        std::vector< unsigned int > backup( length );
-        std::generate(backup.begin(), backup.end(),rand);
-        std::cout<<"Running STD_SORT\n";
-        for( unsigned i = 0; i < iterations; ++i )
+        else
         {
-            input = backup;
-            myTimer.Start( sortId );
-            std::sort( input.begin( ), input.end( ));
-            myTimer.Stop( sortId );
+            std::cout << "Benchmarking STL Device\n"; 
+            for( unsigned i = 0; i < iterations; ++i )
+            {
+                bolt::cl::device_vector< DATA_TYPE > input1( backup.begin( ), backup.end( ), CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE  );
+                myTimer.Start( testId );
+                bolt::cl::sort( ctl, input1.begin(), input1.end());
+                myTimer.Stop( testId );
+            }
         }
-        sortGB = ( input.size( ) * sizeof( unsigned int ) ) / (1024.0 * 1024.0 * 1024.0);
-    }
-    else
-    {
-        std::cout <<"Invalid SORT algorithm specified\n";
     }
 
     //  Remove all timings that are outside of 2 stddev (keep 65% of samples); we ignore outliers to get a more consistent result
+    double MKeys = length / ( 1024.0 * 1024.0 );
     size_t pruned = myTimer.pruneOutliers( 1.0 );
-    double sortTime = myTimer.getAverageTime( sortId );
+    double sortTime = myTimer.getAverageTime( testId );
+    double testMB = MKeys*sizeof(DATA_TYPE);
+    double testGB = testMB/ 1024.0;
     //double sortGB = ( input.size( ) * sizeof( int ) ) / (1024.0 * 1024.0 * 1024.0);
 
     bolt::tout << std::left;
-    bolt::tout << std::setw( colWidth ) << _T( "Sort profile: " ) << _T( "[" ) << iterations-pruned << _T( "] samples" ) << std::endl;
-    bolt::tout << std::setw( colWidth ) << _T( "    Size (GB): " ) << sortGB << std::endl;
+    bolt::tout << std::setw( colWidth ) << _T( "Test profile: " ) << _T( "[" ) << iterations-pruned << _T( "] samples" ) << std::endl;
+    bolt::tout << std::setw( colWidth ) << _T( "    Size (MKeys): " ) << MKeys << std::endl;
+    bolt::tout << std::setw( colWidth ) << _T( "    Size (GB): " ) << testGB << std::endl;
     bolt::tout << std::setw( colWidth ) << _T( "    Time (s): " ) << sortTime << std::endl;
-    bolt::tout << std::setw( colWidth ) << _T( "    Speed (GB/s): " ) << sortGB / sortTime << std::endl;
+    bolt::tout << std::setw( colWidth ) << _T( "    Speed (GB/s): " ) << testGB / sortTime << std::endl;
+    bolt::tout << std::setw( colWidth ) << _T( "    Speed (MKeys/s): " ) << MKeys / sortTime << std::endl;
     bolt::tout << std::endl;
 
     return 0;
