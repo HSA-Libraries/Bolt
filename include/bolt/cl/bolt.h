@@ -52,10 +52,6 @@
  *  \todo Add support for linux/mingw
  *  \todo Review the the use of parameters to the Bolt API; should parameters for chained functions past 
  *  the public API be references?  Iterators and everything.
- *  \todo Add buffer pool for temporary memory allocated by Bolt calls
- *  \bug The calls to cl::kernel::setArg() are unprotected, and are documented to be not thread safe.  
- *  Make cl::program static rather than cl::kernel, and call clCreateKernel on each Bolt call
- *  \todo Review documentation for typos, clarity, etc
  *  \todo Add CPU implementations, i.e. link an external library or define our own CPU implementation
  *  \todo Statically link the Boost libraries into the Bolt library
  *  \todo Explain the cl_code parameter better, with possible use cases
@@ -125,50 +121,6 @@ namespace bolt {
         extern std::string fileToString(const std::string &fileName);
 
         /**********************************************************************
-         * DEPRECATED
-         * used in constructAndCompileString
-         **********************************************************************/
-        extern ::cl::Kernel compileFunctor(
-                const std::string &kernelCodeString,
-                const std::string kernelName,
-                const std::string compileOptions,
-                const control &c);
-
-
-        /**********************************************************************
-         * DEPRECATED
-         * used in structs
-         **********************************************************************/
-        void constructAndCompileString(
-                ::cl::Kernel *masterKernel, 
-                const std::string& apiName, 
-                const std::string& clKernel, 
-                const std::string& instantiationString, 
-                const std::string& userCode, 
-                const std::string& valueTypeName, 
-                const std::string& functorTypeName, 
-                const control& ctl );
-        
-		void constructAndCompileProgram( ::cl::Program *masterProgram, 
-                const std::string& userCode, 
-                const std::string& functorTypeName, 
-                const control& ctl );
-
-        /**********************************************************************
-         * DEPRECATED
-         * used in structs
-         **********************************************************************/
-        void compileKernelsString(
-                std::vector< ::cl::Kernel >& clKernels,
-                const std::vector< const std::string >& kernelNames,
-                const std::string& clKernel,
-                const std::string& instantiationString,
-                const std::string& userCode,
-                const std::string& valueTypeName,
-                const std::string& functorTypeName,
-                const control& ctl );
-
-        /**********************************************************************
          * getKernels
          * returns vector of cl::Kernel objects either by constructing
          * and compiling the kernels, or by returning the kernels if
@@ -184,35 +136,6 @@ namespace bolt {
             const std::string&  compileOptions = ""
                  );
         
-        /**********************************************************************
-         * acquireProgram
-         * returns cl::Program object by constructing
-         * and compiling the program, or by returning the Program if
-         * previously compiled.
-         * Called from getKernels.
-         * see bolt/cl/detail/scan.inl for example usage
-         **********************************************************************/
-        ::cl::Program acquireProgram(
-            const ::cl::Context& context,
-            const ::cl::Device&  device,
-            const ::std::string& compileOptions,
-            const ::std::string& completeKernelSource
-            );
-
-        /**********************************************************************
-         * compileProgram
-         * returns cl::Program object by constructing
-         * and compiling the program.
-         * Called from acquireProgram.
-         * see bolt/cl/detail/scan.inl for example usage
-         **********************************************************************/
-        ::cl::Program compileProgram(
-            const ::cl::Context& context,
-            const ::cl::Device&  device,
-            const ::std::string& compileOptions,
-            const ::std::string& completeKernelSource,
-            cl_int * err = NULL);
-
         /*! \brief Query the Bolt library for version information
             *  \details Return the major, minor and patch version numbers associated with the Bolt library
             *  \param[out] major Major functionality change
@@ -261,12 +184,7 @@ namespace bolt {
         }
         #define V_OPENCL( status, message ) V_OpenCL( status, message, __LINE__ )
 
-
-		void wait(const bolt::cl::control &ctl, ::cl::Event &e) ;
-
-
-        
-
+        void wait( const bolt::cl::control &ctl, ::cl::Event &e );
 
         /******************************************************************
          * Program Map - so each kernel is only compiled once

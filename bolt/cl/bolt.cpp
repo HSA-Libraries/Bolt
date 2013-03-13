@@ -362,180 +362,35 @@ namespace bolt {
         return str;
     };
 
-    ::cl::Kernel compileFunctor(const std::string &kernelCodeString, const std::string kernelName,  std::string compileOptions, const control &c)
-    {
+    /**********************************************************************
+        * acquireProgram
+        * returns cl::Program object by constructing
+        * and compiling the program, or by returning the Program if
+        * previously compiled.
+        * Called from getKernels.
+        * see bolt/cl/detail/scan.inl for example usage
+        **********************************************************************/
+    ::cl::Program acquireProgram(
+        const ::cl::Context& context,
+        const ::cl::Device&  device,
+        const ::std::string& compileOptions,
+        const ::std::string& completeKernelSource
+        );
 
-        if (c.debug() & control::debug::ShowCode) {
-            std::cout << "debug: code=" << std::endl << kernelCodeString;
-        }
+    /**********************************************************************
+        * compileProgram
+        * returns cl::Program object by constructing
+        * and compiling the program.
+        * Called from acquireProgram.
+        * see bolt/cl/detail/scan.inl for example usage
+        **********************************************************************/
+    ::cl::Program compileProgram(
+        const ::cl::Context& context,
+        const ::cl::Device&  device,
+        const ::std::string& compileOptions,
+        const ::std::string& completeKernelSource,
+        cl_int * err = NULL);
 
-        ::cl::Program mainProgram(c.context(), kernelCodeString, false);
-        try
-        {
-            compileOptions += c.compileOptions();
-            compileOptions += " -x clc++  -cl-std=CL1.2";
-
-            if (c.compileForAllDevices()) {
-                std::vector<::cl::Device> devices = c.context().getInfo<CL_CONTEXT_DEVICES>();
-
-                mainProgram.build(devices, compileOptions.c_str());
-            } else {
-                std::vector<::cl::Device> devices;
-                devices.push_back(c.device());
-                mainProgram.build(devices, compileOptions.c_str());
-            };
-
-        } catch(::cl::Error e) {
-            std::cout << "Code         :\n" << kernelCodeString << std::endl;
-
-            std::vector<::cl::Device> devices = c.context().getInfo<CL_CONTEXT_DEVICES>();
-            std::for_each(devices.begin(), devices.end(), [&] (::cl::Device &d) {
-                if (mainProgram.getBuildInfo<CL_PROGRAM_BUILD_STATUS>(d) != CL_SUCCESS) {
-                    std::cout << "Build status for device: " << d.getInfo<CL_DEVICE_NAME>() << "_"<< d.getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>() << "CU_"<< d.getInfo<CL_DEVICE_MAX_CLOCK_FREQUENCY>() << "Mhz" << "\n";
-                    std::cout << "    Build Status: " << mainProgram.getBuildInfo<CL_PROGRAM_BUILD_STATUS>(d) << std::endl;
-                    std::cout << "    Build Options:\t" << mainProgram.getBuildInfo<CL_PROGRAM_BUILD_OPTIONS>(d) << std::endl;
-                    std::cout << "    Build Log:\n " << mainProgram.getBuildInfo<CL_PROGRAM_BUILD_LOG>(d) << std::endl;
-                }
-            });
-            throw;
-        }
-
-        if ( c.debug() & control::debug::Compile) {
-            std::vector<::cl::Device> devices = c.context().getInfo<CL_CONTEXT_DEVICES>();
-            std::for_each(devices.begin(), devices.end(), [&] (::cl::Device &d) {
-                std::cout << "debug: Build status for device: " << d.getInfo<CL_DEVICE_NAME>() << "_"<< d.getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>() << "CU_"<< d.getInfo<CL_DEVICE_MAX_CLOCK_FREQUENCY>() << "Mhz" << "\n";
-                std::cout << "debug:   Build Status: " << mainProgram.getBuildInfo<CL_PROGRAM_BUILD_STATUS>(d) << std::endl;
-                std::cout << "debug:   Build Options:\t" << mainProgram.getBuildInfo<CL_PROGRAM_BUILD_OPTIONS>(d) << std::endl;
-                std::cout << "debug:   Build Log:\n " << mainProgram.getBuildInfo<CL_PROGRAM_BUILD_LOG>(d) << std::endl;
-            }); 
-        };
-
-        return ::cl::Kernel(mainProgram, kernelName.c_str());
-    }
-
-    ::cl::Program buildProgram( const std::string& kernelCodeString, std::string compileOptions, const control& ctl )
-    {
-        if( ctl.debug() & control::debug::ShowCode )
-        {
-            std::cout << "debug: code=" << std::endl << kernelCodeString;
-        }
-
-        ::cl::Program mainProgram( ctl.context( ), kernelCodeString, false );
-        try
-        {
-            compileOptions += ctl.compileOptions( );
-            compileOptions += " -x clc++";
-
-            if( ctl.compileForAllDevices( ) )
-            {
-                std::vector<::cl::Device> devices = ctl.context( ).getInfo<CL_CONTEXT_DEVICES>( );
-
-                mainProgram.build( devices, compileOptions.c_str( ) );
-            } 
-            else
-            {
-                std::vector<::cl::Device> devices;
-                devices.push_back( ctl.device( ) );
-                mainProgram.build( devices, compileOptions.c_str( ) );
-            };
-        } 
-        catch( const ::cl::Error& )
-        {
-            std::cout << "Code:\n---\n" << kernelCodeString << "\n----\n";
-
-            std::vector<::cl::Device> devices = ctl.context( ).getInfo<CL_CONTEXT_DEVICES>( );
-            std::for_each( devices.begin( ), devices.end( ), [&]( ::cl::Device &d )
-            {
-                if (mainProgram.getBuildInfo<CL_PROGRAM_BUILD_STATUS>(d) != CL_SUCCESS)
-                {
-                    std::cout << "Build status for device: " << d.getInfo<CL_DEVICE_NAME>() << "_"<< d.getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>() << "CU_"<< d.getInfo<CL_DEVICE_MAX_CLOCK_FREQUENCY>() << "Mhz" << "\n";
-                    std::cout << "    Build Status: " << mainProgram.getBuildInfo<CL_PROGRAM_BUILD_STATUS>(d) << std::endl;
-                    std::cout << "    Build Options:\t" << mainProgram.getBuildInfo<CL_PROGRAM_BUILD_OPTIONS>(d) << std::endl;
-                    std::cout << "    Build Log:\n " << mainProgram.getBuildInfo<CL_PROGRAM_BUILD_LOG>(d) << std::endl;
-                }
-            });
-            throw;
-        }
-
-        if( ctl.debug( ) & control::debug::Compile )
-        {
-            std::vector<::cl::Device> devices = ctl.context( ).getInfo<CL_CONTEXT_DEVICES>( );
-            std::for_each(devices.begin(), devices.end(), [&] (::cl::Device &d )
-            {
-                std::cout << "debug: Build status for device: " << d.getInfo<CL_DEVICE_NAME>() << "_"<< d.getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>() << "CU_"<< d.getInfo<CL_DEVICE_MAX_CLOCK_FREQUENCY>() << "Mhz" << "\n";
-                std::cout << "debug:   Build Status: " << mainProgram.getBuildInfo<CL_PROGRAM_BUILD_STATUS>(d) << std::endl;
-                std::cout << "debug:   Build Options:\t" << mainProgram.getBuildInfo<CL_PROGRAM_BUILD_OPTIONS>(d) << std::endl;
-                std::cout << "debug:   Build Log:\n " << mainProgram.getBuildInfo<CL_PROGRAM_BUILD_LOG>(d) << std::endl;
-            }); 
-        };
-
-        return mainProgram;
-    }
-
-    // deprecated
-    void compileKernelsString(
-            std::vector< ::cl::Kernel >& clKernels, 
-            const std::vector< const std::string >& kernelNames, 
-            //const boltKernel& clKernel,
-            const std::string& clKernel, 
-            const std::string& instantiationString,
-            const std::string& userCode,
-            const std::string& valueTypeName,
-            const std::string& functorTypeName,
-            const control& ctl )
-    {
-
-        std::string codeStr = clKernel + "\n\n" + userCode + "\n\n" + instantiationString;
-
-        std::string compileOptions = "";
-        if( ctl.debug() & control::debug::SaveCompilerTemps )
-        {
-            compileOptions += "-save-temps=BOLT";
-        }
-
-        if( ctl.debug() & control::debug::Compile )
-        {
-            std::cout << "debug: compiling" << " with valueType='" << valueTypeName << "'" << " ;  functorType='" << functorTypeName << "'" << std::endl;
-        }
-
-        try {
-            ::cl::Program clProgram = buildProgram( codeStr, compileOptions, ctl );
-
-            for( size_t k = 0; k < kernelNames.size( ); ++k )
-            {
-                std::string kernelName = kernelNames[ k ] + "Instantiated";
-                clKernels.push_back( ::cl::Kernel( clProgram, kernelName.c_str( ) ) );
-            } 
-        }  catch(::cl::Error e) {
-            std::cerr << "clBuildProgram failed in compileKernelsString.  Code=" << e.err() << "\n";
-        }
-
-    };
-
-    // deprecated
-    void constructAndCompileString( ::cl::Kernel *masterKernel, 
-            const std::string& kernelName, 
-            //const boltKernel& clKernel, 
-            const std::string& clKernel, 
-            const std::string& instantiationString, 
-            const std::string& userCode, 
-            const std::string& valueTypeName, 
-            const std::string& functorTypeName, 
-            const control &c )
-    {
-        std::string codeStr = userCode + "\n\n" + clKernel +   instantiationString;
-
-        std::string compileOptions = "";
-        if (c.debug() & control::debug::SaveCompilerTemps) {
-            compileOptions += "-save-temps=BOLT";
-        }
-
-        if (c.debug() & control::debug::Compile) {
-            std::cout << "debug: compiling algorithm: '" << kernelName << "' with valueType='" << valueTypeName << "'" << " ;  functorType='" << functorTypeName << "'" << std::endl;
-        }
-
-        *masterKernel = bolt::cl::compileFunctor(codeStr, kernelName + "Instantiated", compileOptions, c);
-    };
 
 
     void wait(const bolt::cl::control &ctl, ::cl::Event &e) 
@@ -617,10 +472,6 @@ namespace bolt {
         //{
         //    completeKernelString += "\n" + typeDef+ "\n";
         //});
-
-
-
-
 
         // (3) template specialization
         std::string templateSpecialization = (*kts)(typeNames);
