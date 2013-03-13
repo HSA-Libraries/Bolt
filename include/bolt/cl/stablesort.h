@@ -31,157 +31,163 @@ namespace cl {
 
     /*! \addtogroup sorting
     *   \ingroup algorithms
-    *   An Algorithm for sorting the given InputIterator. 
-    *   It is capable of sorting the arithmetic data types, or the user-defined data types. For common code between 
-    *   the hostand device, take a look at the ClCode and TypeName implementations.  
-    *   See the Bolt Tools for Split-Source for a detailed description. 
+    *   Algorithms for sorting a given iterator range, with a possible user specified sorting criteria.
+    *   Either fundamental or user-defined data types can be sorted.
     */ 
 
     /*! \addtogroup stable_sort
     *   \ingroup sorting
     *   \{
-    *   \todo Prove the performance of the stable_sort routines using a benchmark program that can 
-    *   show decent results across a range of values (a graph).
     */
 
-    /*! \p This version of stable_sort returns the sorted result of all the elements in the \p RandomAccessIterator  
-    * between the the first and last elements. The routine arranges the elements in ascending order. 
-    * \p RandomAccessIterator's value_type must provide operator < overload. 
+    /*! \p Stable_sort returns the sorted result of all the elements in the range specified 
+    * between the the first and last \p RandomAccessIterator iterators. This routine arranges the elements in 
+    * ascending order assuming that an operator < exists for the value_type given by the iterator.
     *
-    * The \p stable_sort operation is analogus to the std::stable_sort function.  See http://www.sgi.com/tech/stl/stable_sort.html.
-    *  \tparam RandomAccessIterator Is a model of http://www.sgi.com/tech/stl/RandomAccessIterator.html, \n
-    *          \p RandomAccessIterator is mutable, \n
-    *          \p RandomAccessIterator's \c value_type is convertible to \p StrictWeakOrdering's \n
-    *          \p RandomAccessIterator's \c value_type is \p LessThanComparable http://www.sgi.com/tech/stl/LessThanComparable.html; i.e., the value _type must provide operator < overloaded. \n
+    * The \p stable_sort operation is analogus to the std::stable_sort function.  It is a stable operation with respect
+    * to the input data, in that if two elements are equivalent in the input range, and element X appears before element
+    * Y, then element X has to maintain that relationship and appear before element Y after the sorting operation.  In 
+    * general, stable sorts are usually prefered over unstable sorting algorithms, but may sacrifice a little performance 
+    * to maintain this relationship.
 
-    * \param first The first position in the sequence to be sorted.
-    * \param last  The last position in the sequence to be sorted.
-    * \param cl_code Optional OpenCL(TM) code to be passed to the OpenCL compiler. The cl_code is inserted first in the generated code, before the cl_code traits. 
+    * \param first Defines the beginning of the range to be sorted
+    * \param last  Defines the end of the range to be sorted
+    * \param cl_code Optional OpenCL &trade; code to be passed to the OpenCL compiler. The cl_code is inserted first in the generated code, before the cl_code traits. 
     *  This can be used for any extra cl code to be passed when compiling the OpenCl Kernel.
-    * \return The sorted data that is available in place.
+    * \return The data is sorted in place in the range [first,last)
     *
-    * The following code example shows the use of \p stable_sort to sort the elements in the ascending order.
+    * \tparam RandomAccessIterator models a random access iterator
+
+    * The following code example shows the use of \p stable_sort to sort the elements in ascending order
     * \code
-    * #include <bolt/cl/stablesort.h>
+    * #include "bolt/cl/stablesort.h"
     * 
-    * int a[8] = {2, 9, 3, 7, 5, 6, 3, 8};
+    * int   a[ 10 ] = { 2, 9, 3, 7, 5, 6, 3, 8, 9, 0 };
     * 
-    * // for arranging the elements in descending order, use bolt::cl::greater<int>()
-    * bolt::cl::stable_sort(ctl, a, a+10);
+    * bolt::cl::stable_sort( a, a + 10 );
     * 
-    *  \endcode
+    * \\ results a[] = { 0, 2, 3, 3, 5, 6, 7, 8, 9, 9 }
+    * \\ The 3s and the 9s kept their respective ordering from the original input
+    * \endcode
+    * \see http://www.sgi.com/tech/stl/stable_sort.html
+    * \see http://www.sgi.com/tech/stl/RandomAccessIterator.html
     */
-    template<typename RandomAccessIterator> 
+    template< typename RandomAccessIterator > 
     void stable_sort( RandomAccessIterator first, RandomAccessIterator last, const std::string& cl_code="" );
 
-    /*! \p stable_sort returns the sorted result of all the elements in the inputIterator between the the first and last elements using the specified binary_op.  
-    * You can arrange the elements in ascending order, where the binary_op is the less<>() operator. 
-    * This version of \p stable_sort does not take a bolt::cl::control structure. The Bolt library provides a default command Queue for a device. The 
-    * comparison object \c functor object is defined by \p StrictWeakOrdering.
-
+    /*! \p Stable_sort returns the sorted result of all the elements in the range specified 
+    * between the the first and last \p RandomAccessIterator iterators. This routine arranges the elements in 
+    * ascending order assuming that an operator < exists for the value_type given by the iterator.
     *
-    * The \p stable_sort operation is analogus to the std::sort function.  See http://www.sgi.com/tech/stl/stable_sort.html.
-    *  \tparam RandomAccessIterator is a model of http://www.sgi.com/tech/stl/RandomAccessIterator.html, \n
-    *          \p RandomAccessIterator is mutable, \n
-    *          \p RandomAccessIterator's \c value_type is convertible to \p StrictWeakOrdering's \n
-    *          \p RandomAccessIterator's \c value_type is \p LessThanComparable http://www.sgi.com/tech/stl/LessThanComparable.html i.e the value _type should provide operator < overloaded. \n
-    *  \tparam StrictWeakOrdering Is a model of http://www.sgi.com/tech/stl/StrictWeakOrdering.html. \n
+    * The \p stable_sort operation is analogus to the std::stable_sort function.  It is a stable operation with respect
+    * to the input data, in that if two elements are equivalent in the input range, and element X appears before element
+    * Y, then element X has to maintain that relationship and appear before element Y after the sorting operation.  In 
+    * general, stable sorts are usually prefered over unstable sorting algorithms, but may sacrifice a little performance 
+    * to maintain this relationship.  This overload of stable_sort accepts an additional comparator functor that allows
+    * the user to specify the comparison operator to use.
 
-    * \param first The first position in the sequence to be sorted.
-    * \param last  The last position in the sequence to be sorted.
-    * \param comp  The comparison operation used to compare two values. 
-    * \param cl_code Optional OpenCL(TM) code to be passed to the OpenCL compiler. The cl_code is inserted first in the generated code, before the cl_code traits. 
-    *  This can be used for any extra cl code that is to be passed when compiling the OpenCl Kernel.
-    * \return The sorted data that is available in place.
+    * \param first Defines the beginning of the range to be sorted
+    * \param last  Defines the end of the range to be sorted
+    * \param comp A user defined comparison function or functor that models a strict weak < operator
+    * \param cl_code Optional OpenCL &trade; code to be passed to the OpenCL compiler. The cl_code is inserted first in the generated code, before the cl_code traits. 
+    *  This can be used for any extra cl code to be passed when compiling the OpenCl Kernel.
+    * \return The data is sorted in place in the range [first,last)
     *
-    * The following code example shows the use of \p stable_sort to sort the elements in descending order.
+    * \tparam RandomAccessIterator models a random access iterator
+    * \tparam StrictWeakOrdering models a binary predicate which returns true if the first element is 'less than' the second
+
+    * The following code example shows the use of \p stable_sort to sort the elements in ascending order
     * \code
-    * #include <bolt/cl/stablesort.h>
-    * #include <bolt/cl/functional.h>
+    * #include "bolt/cl/stablesort.h"
     * 
-    * int a[8] = {2, 9, 3, 7, 5, 6, 3, 8};
-    *
-    * // for arranging the elements in descending order, use bolt::cl::greater<int>()
-    * bolt::cl::stable_sort(a, a+10, bolt::cl::greater<int>());
+    * int   a[ 10 ] = { 2, 9, 3, 7, 5, 6, 3, 8, 9, 0 };
     * 
-    *  \endcode
+    * bolt::cl::stable_sort( a, a + 10, bolt::cl::greater< int >( ) );
+    * 
+    * \\ results a[] = { 9, 9, 8, 7, 6, 5, 3, 3, 2, 0 }
+    * \endcode
+    * \see http://www.sgi.com/tech/stl/stable_sort.html
+    * \see http://www.sgi.com/tech/stl/RandomAccessIterator.html
     */
-        
     template<typename RandomAccessIterator, typename StrictWeakOrdering> 
     void stable_sort( RandomAccessIterator first, RandomAccessIterator last, StrictWeakOrdering comp, 
         const std::string& cl_code="");
 
-    /*! \p This version of stable_sort returns the sorted result of all the elements in the \p RandomAccessIterator between the the first and last elements.  
-    * The routine arranges the elements in an ascending order. \p RandomAccessIterator's value_type must provide operator < overload. 
-
+    /*! \p Stable_sort returns the sorted result of all the elements in the range specified 
+    * between the the first and last \p RandomAccessIterator iterators. This routine arranges the elements in 
+    * ascending order assuming that an operator < exists for the value_type given by the iterator.
     *
-    * The \p stable_sort operation is analogus to the std::stable_sort function.  See http://www.sgi.com/tech/stl/stable_sort.html
-    *  \tparam RandomAccessIterator Is a model of http://www.sgi.com/tech/stl/RandomAccessIterator.html, \n
-    *          \p RandomAccessIterator is mutable, \n
-    *          \p RandomAccessIterator's \c value_type is convertible to \p StrictWeakOrdering's \n
-    *          \p RandomAccessIterator's \c value_type is \p LessThanComparable http://www.sgi.com/tech/stl/LessThanComparable.html; i.e., the value _type must provide operator < overloaded. \n
+    * The \p stable_sort operation is analogus to the std::stable_sort function.  It is a stable operation with respect
+    * to the input data, in that if two elements are equivalent in the input range, and element X appears before element
+    * Y, then element X has to maintain that relationship and appear before element Y after the sorting operation.  In 
+    * general, stable sorts are usually prefered over unstable sorting algorithms, but may sacrifice a little performance 
+    * to maintain this relationship.  This overload of stable_sort accepts an additional bolt::cl::control object that
+    * allows the user to change the state that the function uses to make runtime decisions.
 
-    * \param ctl Control structure to control command-queue, debug, tuning, etc.  See bolt::cl::control.
-    * \param first The first position in the sequence to be sorted.
-    * \param last  The last position in the sequence to be sorted.
-    * \param cl_code Optional OpenCL(TM) code to be passed to the OpenCL compiler. The cl_code is inserted first in the generated code, before the cl_code traits. 
-    *  This can be used for any extra cl code that is to be passed when compiling the OpenCl Kernel.
-    * \return The sorted data that is available in place.
+    * \param ctl A control object passed into stable_sort that the function uses to make runtime decisions
+    * \param first Defines the beginning of the range to be sorted
+    * \param last  Defines the end of the range to be sorted
+    * \param cl_code Optional OpenCL &trade; code to be passed to the OpenCL compiler. The cl_code is inserted first in the generated code, before the cl_code traits. 
+    *  This can be used for any extra cl code to be passed when compiling the OpenCl Kernel.
+    * \return The data is sorted in place in the range [first,last)
     *
-    * The following code example shows the use of \p stable_sort to sort the elements in the ascending order, 
-    * specifying a specific command-queue.
+    * \tparam RandomAccessIterator models a random access iterator
+
+    * The following code example shows the use of \p stable_sort to sort the elements in ascending order
     * \code
-    * #include <bolt/cl/stablesort.h>
+    * #include "bolt/cl/stablesort.h"
     * 
-    * int a[8] = {2, 9, 3, 7, 5, 6, 3, 8};
-    *
-    * cl::CommandQueue myCommandQueue = ...
-    * bolt::cl::control ctl(myCommandQueue); // specify an OpenCL(TM) command queue.
-    * // for arranging the elements in descending order, use bolt::cl::greater<int>()
-    * bolt::cl::stable_sort(ctl, a, a+10);
+    * int   a[ 10 ] = { 2, 9, 3, 7, 5, 6, 3, 8, 9, 0 };
     * 
-    *  \endcode
+    * bolt::cl::stable_sort( a, a + 10, bolt::cl::greater< int >( ) );
+    * 
+    * \\ results a[] = { 9, 9, 8, 7, 6, 5, 3, 3, 2, 0 }
+    * \endcode
+    * \see bolt::cl::control
+    * \see http://www.sgi.com/tech/stl/stable_sort.html
+    * \see http://www.sgi.com/tech/stl/RandomAccessIterator.html
     */
     template<typename RandomAccessIterator> 
     void stable_sort( bolt::cl::control &ctl, RandomAccessIterator first, RandomAccessIterator last, 
         const std::string& cl_code="");
 
-    /*! \p stable_sort returns the sorted result of all the elements in the inputIterator between the the first and last elements using the specified binary_op.  
-    * You can arrange the elements in an ascending order, where the binary_op is the less<>() operator. 
-    * This version of \p stable_sort takes a bolt::cl::control structure as a first argument and compares objects using \c functor object defined by \p StrictWeakOrdering.
-
+    /*! \p Stable_sort returns the sorted result of all the elements in the range specified 
+    * between the the first and last \p RandomAccessIterator iterators. This routine arranges the elements in 
+    * ascending order assuming that an operator < exists for the value_type given by the iterator.
     *
-    * The \p stable_sort operation is analogus to the std::stable_sort function.  See http://www.sgi.com/tech/stl/stable_sort.html.
-    *  \tparam RandomAccessIterator Is a model of http://www.sgi.com/tech/stl/RandomAccessIterator.html, \n
-    *          \p RandomAccessIterator is mutable, \n
-    *          \p RandomAccessIterator's \c value_type is convertible to \p StrictWeakOrdering's \n
-    *          \p RandomAccessIterator's \c value_type is \p LessThanComparable http://www.sgi.com/tech/stl/LessThanComparable.html i.e the value _type should provide operator < overloaded. \n
-    *  \tparam StrictWeakOrdering Is a model of http://www.sgi.com/tech/stl/StrictWeakOrdering.html. \n
+    * The \p stable_sort operation is analogus to the std::stable_sort function.  It is a stable operation with respect
+    * to the input data, in that if two elements are equivalent in the input range, and element X appears before element
+    * Y, then element X has to maintain that relationship and appear before element Y after the sorting operation.  In 
+    * general, stable sorts are usually prefered over unstable sorting algorithms, but may sacrifice a little performance 
+    * to maintain this relationship.  This overload of stable_sort accepts an additional comparator functor that allows
+    * the user to specify the comparison operator to use.  This overload also accepts an additional bolt::cl::control
+    * object that allows the user to change the state that the function uses to make runtime decisions.
 
-    * \param ctl Control structure to control command-queue, debug, tuning, etc.  See bolt::cl::control.
-    * \param first The first position in the sequence to be sorted.
-    * \param last  The last position in the sequence to be sorted.
-    * \param comp  The comparison operation used to compare two values. 
-    * \param cl_code Optional OpenCL(TM) code to be passed to the OpenCL compiler. The cl_code is inserted first in the generated code, before the cl_code traits. 
-    *  This can be used for any extra cl code that is to be passed when compiling the OpenCl Kernel.
-    * \return The sorted data that is available in place.
+    * \param ctl A control object passed into stable_sort that the function uses to make runtime decisions
+    * \param first Defines the beginning of the range to be sorted
+    * \param last  Defines the end of the range to be sorted
+    * \param comp A user defined comparison function or functor that models a strict weak < operator
+    * \param cl_code Optional OpenCL &trade; code to be passed to the OpenCL compiler. The cl_code is inserted first in the generated code, before the cl_code traits. 
+    *  This can be used for any extra cl code to be passed when compiling the OpenCl Kernel.
+    * \return The data is sorted in place in the range [first,last)
     *
-    * The following code example shows the use of \p stable_sort to sort the elements in the descending order, 
-    * specifying a specific command-queue.
+    * \tparam RandomAccessIterator models a random access iterator
+    * \tparam StrictWeakOrdering models a binary predicate which returns true if the first element is 'less than' the second
+
+    * The following code example shows the use of \p stable_sort to sort the elements in ascending order
     * \code
-    * #include <bolt/cl/stablesort.h>
-    * #include <bolt/cl/functional.h>
+    * #include "bolt/cl/stablesort.h"
     * 
-    * int a[8] = {2, 9, 3, 7, 5, 6, 3, 8};
-    *
-    * cl::CommandQueue myCommandQueue = ...
-    * bolt::cl::control ctl(myCommandQueue); // specify an OpenCL(TM) command queue.
-    * // for arranging the elements in descending order, use bolt::cl::greater<int>()
-    * bolt::cl::stable_sort(ctl, a, a+10, bolt::cl::greater<int>());
+    * int   a[ 10 ] = { 2, 9, 3, 7, 5, 6, 3, 8, 9, 0 };
     * 
-    *  \endcode
+    * bolt::cl::stable_sort( a, a + 10, bolt::cl::greater< int >( ) );
+    * 
+    * \\ results a[] = { 9, 9, 8, 7, 6, 5, 3, 3, 2, 0 }
+    * \endcode
+    * \see bolt::cl::control
+    * \see http://www.sgi.com/tech/stl/stable_sort.html
+    * \see http://www.sgi.com/tech/stl/RandomAccessIterator.html
     */
-
     template<typename RandomAccessIterator, typename StrictWeakOrdering> 
     void stable_sort( bolt::cl::control &ctl, RandomAccessIterator first, RandomAccessIterator last,
         StrictWeakOrdering comp, const std::string& cl_code="");

@@ -26,10 +26,6 @@
 #include <boost/thread/once.hpp>
 #include <boost/shared_array.hpp>
 
-#if defined( ENABLE_TBB )
-    #include "tbb/parallel_for.h"
-#endif
-
 #include "bolt/cl/bolt.h"
 #include "bolt/cl/functional.h"
 #include "bolt/cl/device_vector.h"
@@ -187,132 +183,6 @@ namespace detail
         static_assert( false, "It is not possible to sort fancy iterators. They are not mutable" );
     }
 
-#if defined( ENABLE_TBB )
-
-    //  This is a parallel implementation of a merge with tbb acceleration.  It takes two input ranges as input,
-    //  which it assumes are sorted.  The two input ranges can be from the same container, but must not alias.
-    //  The output range must be out-of-place, or this merge will fail.  The size of the output range is infered 
-    //  as the total size of the input ranges.
-    //  Good references for how parallel merging works can be found at:
-    //  http://software.intel.com/sites/products/documentation/doclib/tbb_sa/help/reference/algorithms/parallel_for_func.htm
-    //  http://www.drdobbs.com/article/print?articleId=229204454&siteSectionName=parallel
-    template< class tbbInputIterator1, class tbbInputIterator2, class tbbOutputIterator, class tbbCompare > 
-    struct outOfPlaceMergeRange
-    {
-        tbbInputIterator1 first1, last1;
-        tbbInputIterator2 first2, last2;
-        tbbOutputIterator result;
-        tbbCompare comp;
-        static const size_t divSize = 256;
-        //static const size_t divSize = 4;  // for debug
-
-        bool empty( ) const
-        {
-            return (std::distance( first1, last1 ) == 0) && (std::distance( first2, last2 ) == 0);
-        }
-
-        bool is_divisible( ) const
-        {
-            bolt::cl::maximum< size_t > myMin;
-            return myMin( std::distance( first1, last1 ), std::distance( first2, last2 )) > divSize;
-        }
-
-        outOfPlaceMergeRange( tbbInputIterator1 begin1, tbbInputIterator1 end1, tbbInputIterator2 begin2, tbbInputIterator2 end2,
-            tbbOutputIterator out, tbbCompare func ):
-            first1( begin1 ), last1( end1 ), first2( begin2 ), last2( end2 ), result( out ), comp( func )
-        {
-        }
-
-        outOfPlaceMergeRange( outOfPlaceMergeRange& r, tbb::split ): first1( r.first1 ), last1( r.last1 ), first2( r.first2 ), last2( r.last2 ),
-             result( r.result ), comp( r.comp )
-        {
-            size_t length1 = std::distance( r.first1, r.last1 );
-            //size_t length2 = std::distance( r.first2, r.last2 );
-
-            tbbInputIterator1 mid1 = r.first1 + (length1 >> 1);
-            tbbInputIterator2 mid2 = std::lower_bound( r.first2, r.last2, *mid1, comp );
-             //tbbInputIterator2 mid2 = r.first2 + (length2 >> 1);  // doesn't work
-
-            first1 = mid1;
-            first2 = mid2;
-            last1 = r.last1;
-            last2 = r.last2;
-            r.last1 = mid1;
-            r.last2 = mid2;
-
-            result = r.result + std::distance( r.first1, mid1 ) + std::distance( r.first2, mid2 );
-        }
-    };
-
-    template< class tbbInputIterator1, class tbbInputIterator2, class tbbOutputIterator, class tbbCompare >
-    struct outOfPlaceMergeRangeBody
-    {
-        void operator( )( outOfPlaceMergeRange< tbbInputIterator1, tbbInputIterator2, tbbOutputIterator, tbbCompare >& r ) const
-        {
-#if defined( _WIN32 )
-            std::merge( r.first1, r.last1, r.first2, r.last2, stdext::make_unchecked_array_iterator( r.result ), r.comp );
-#else
-            std::merge( r.first1, r.last1, r.first2, r.last2, r.result, r.comp );
-#endif
-        }
-    };
-
-    //  This is the parallel implementation of a stable_sort implemented with tbb acceleration.  The stable sort 
-    //  is recursive, first sorting the left half of the input array, then sorting the right half.  Once two
-    //  halves are sorted, the recursion stack pops once and the two halves are merged together.  This recursive
-    //  routine has no parallelism, but relies on a parallel merge implemented in TBB to use multiple cores.
-    //  A good reference for this algorithm can be found at
-    //  http://www.drdobbs.com/article/print?articleId=229400239&siteSectionName=parallel
-    template< typename RandomAccessIterator, typename StrictWeakOrdering > 
-    void tbbParallelStableSort( RandomAccessIterator srcLeft, RandomAccessIterator srcRight, RandomAccessIterator dstLeft, RandomAccessIterator dstRight, const StrictWeakOrdering& comp, bool dstWrite = true )
-    {
-        if( std::distance( srcLeft, srcRight ) < outOfPlaceMergeRange< RandomAccessIterator, RandomAccessIterator, RandomAccessIterator, StrictWeakOrdering >::divSize )
-        {
-            std::stable_sort( srcLeft, srcRight, comp );
-            if( dstWrite )
-            {
-#if defined( _WIN32 )
-                std::copy( srcLeft, srcRight, stdext::make_unchecked_array_iterator( dstLeft ) );
-#else
-                std::copy( srcLeft, srcRight, dstLeft );
-#endif
-            }
-            return;
-        }
-
-        size_t srcLength = std::distance( srcLeft, srcRight );
-        size_t dstLength = std::distance( dstLeft, dstRight );
-        RandomAccessIterator midSrc = srcLeft + (srcLength >> 1);
-        RandomAccessIterator midDst = dstLeft + (dstLength >> 1);
-
-        //  TODO: Should the left and right recursive calls themselves be parallelized with tbb::parallel_invoke?
-        //  This might oversubscribe threads, as the merge operation is already multi-threaded
-        // recurse left half
-        tbbParallelStableSort( srcLeft, midSrc, dstLeft, midDst, comp, !dstWrite );
-
-        // recurse right half
-        tbbParallelStableSort( midSrc, srcRight, midDst, dstRight, comp, !dstWrite );
-
-        if( dstWrite )
-        {
-            tbb::parallel_for( 
-                outOfPlaceMergeRange< RandomAccessIterator, RandomAccessIterator, RandomAccessIterator, StrictWeakOrdering >( srcLeft, midSrc, midSrc, srcRight, dstLeft, comp ),
-                outOfPlaceMergeRangeBody< RandomAccessIterator, RandomAccessIterator, RandomAccessIterator, StrictWeakOrdering >( ),
-                tbb::simple_partitioner( )
-            );
-        }
-        else
-        {
-            tbb::parallel_for( 
-                outOfPlaceMergeRange< RandomAccessIterator, RandomAccessIterator, RandomAccessIterator, StrictWeakOrdering >( dstLeft, midDst, midDst, dstRight, srcLeft, comp ),
-                outOfPlaceMergeRangeBody< RandomAccessIterator, RandomAccessIterator, RandomAccessIterator, StrictWeakOrdering >( ),
-                tbb::simple_partitioner( )
-            );
-        }
-    }
-
-#endif
-
     //Non Device Vector specialization.
     //This implementation creates a cl::Buffer and passes the cl buffer to the sort specialization whichtakes the cl buffer as a parameter. 
     //In the future, Each input buffer should be mapped to the device_vector and the specialization specific to device_vector should be called. 
@@ -332,20 +202,14 @@ namespace detail
 
         const bolt::cl::control::e_RunMode runMode = ctl.forceRunMode();
 
-        if( (runMode == bolt::cl::control::SerialCpu) || (vecSize < BOLT_CL_STABLESORT_BY_KEY_CPU_THRESHOLD) )
+        if( runMode == bolt::cl::control::SerialCpu )
         {
             throw ::cl::Error( CL_INVALID_OPERATION, "stable_sort_by_key not implemented yet for SerialCPU" );
             return;
         }
         else if( runMode == bolt::cl::control::MultiCoreCpu )
         {
-    #if defined( ENABLE_TBB )
-            std::vector< keyType > scratchBuffer( vecSize );
-
-            tbbParallelStableSort( keys_first, keys_last, scratchBuffer.begin( ), scratchBuffer.end( ), comp, false );
-    #else
             throw ::cl::Error( CL_INVALID_OPERATION, "stable_sort_by_key not implemented yet for MultiCoreCpu" );
-    #endif
             return;
         } 
         else 
@@ -386,15 +250,7 @@ namespace detail
         }
         else if( runMode == bolt::cl::control::MultiCoreCpu )
         {
-    #if defined( ENABLE_TBB )
-            bolt::cl::device_vector< keyType >::pointer firstPtr =  first.getContainer( ).data( );
-            std::vector< keyType > scratchBuffer( vecSize );
-
-            tbbParallelStableSort( &firstPtr[ first.m_Index ], &firstPtr[ vecSize ], 
-                &*scratchBuffer.begin( ), &*scratchBuffer.begin( )+vecSize, comp, false );
-    #else
             throw ::cl::Error( CL_INVALID_OPERATION, "stable_sort_by_key not implemented yet for MultiCoreCpu" );
-    #endif
             return;
         } 
         else
@@ -522,10 +378,10 @@ namespace detail
         size_t vecPow2 = (vecSize & (vecSize-1));
         numMerges += vecPow2? 1: 0;
 
-        {
-            device_vector< keyType >::pointer myKeys = keys_first.getContainer( ).data( );
-            device_vector< valueType >::pointer myValues = values_first.getContainer( ).data( );
-        }
+        //{
+        //    device_vector< keyType >::pointer myKeys = keys_first.getContainer( ).data( );
+        //    device_vector< valueType >::pointer myValues = values_first.getContainer( ).data( );
+        //}
 
         //  Allocate a flipflop buffer because the merge passes are out of place
         control::buffPointer tmpKeyBuffer = ctrl.acquireBuffer( globalRange * sizeof( keyType ) );
