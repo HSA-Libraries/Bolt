@@ -195,7 +195,6 @@ public:
             "\ntemplate __attribute__((mangled_name(" + name(0) + "Instantiated)))\n"
             "void histogramAscendingRadixNTemplate< " +radixStream.str()+ " >(__global uint* unsortedData,\n"
             "global uint* buckets,\n"
-            "global uint* histScanBuckets,\n"
             "uint shiftCount\n"
             ");\n"
             "\n"
@@ -211,7 +210,6 @@ public:
             "\ntemplate __attribute__((mangled_name(" + name(4) + "Instantiated)))\n"
             "void histogramSignedDescendingRadixNTemplate< " +radixStream.str()+ " >(__global uint* unsortedData,\n"
             "global uint* buckets,\n"
-            "global uint* histScanBuckets,\n"
             "uint shiftCount\n"
             ");\n"
             "\n"
@@ -226,7 +224,6 @@ public:
             "\ntemplate __attribute__((mangled_name(" + name(1) + "Instantiated)))\n"
             "void histogramDescendingRadixNTemplate< " +radixStream.str()+ " >(__global uint* unsortedData,\n"
             "global uint* buckets,\n"
-            "global uint* histScanBuckets,\n"
             "uint shiftCount\n"
             ");\n"
             "\n"
@@ -242,7 +239,6 @@ public:
             "\ntemplate __attribute__((mangled_name(" + name(6) + "Instantiated)))\n"
             "void histogramSignedAscendingRadixNTemplate< " +radixStream.str()+ " >(__global uint* unsortedData,\n"
             "global uint* buckets,\n"
-            "global uint* histScanBuckets,\n"
             "uint shiftCount\n"
             ");\n"
             "\n"
@@ -721,7 +717,7 @@ sort_enqueue(control &ctl,
     return;
 }
 
-#if 0
+#if 1
 template<typename DVRandomAccessIterator, typename StrictWeakOrdering> 
 typename std::enable_if< std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type,          int >::value >::type
 sort_enqueue(control &ctl, 
@@ -766,7 +762,6 @@ sort_enqueue(control &ctl,
         sort_uint_kernels,
         compileOptions);
 
-
     unsigned int groupSize  = RADICES;
 
     int i = 0;
@@ -787,7 +782,6 @@ sort_enqueue(control &ctl,
     else
     {
         pLocalBuffer = new ::cl::Buffer(first.getBuffer( ) ); 
-
         newBuffer = false;
     }
     size_t numGroups = szElements / mulFactor;
@@ -805,16 +799,16 @@ sort_enqueue(control &ctl,
     ::cl::Buffer clHistData = dvHistogramBins.begin( ).getBuffer( );
     //::cl::Buffer clHistScanData = dvHistogramScanBuffer.begin( ).getBuffer( );
     ::cl::Buffer clHistDataDest = dvHistogramBinsDest.begin( ).getBuffer( );
-                    
+
     ::cl::Kernel histKernel, histSignedKernel;
     ::cl::Kernel permuteKernel, permuteSignedKernel;
-    ::cl::Kernel scanLocalKernel;
+    //::cl::Kernel scanLocalKernel;
     if(comp(2,3))
     {
         /*Ascending Sort*/
         histKernel = kernels[0];
-        scanLocalKernel = kernels[2];
-        permuteKernel = kernels[3];
+        //scanLocalKernel = kernels[2];
+        permuteKernel = kernels[2];
         if(newBuffer == true)
         {
             cl_buffer_region clBR;
@@ -827,8 +821,8 @@ sort_enqueue(control &ctl,
     {
         /*Descending Sort*/
         histKernel = kernels[1];
-        scanLocalKernel = kernels[2];
-        permuteKernel = kernels[4];
+        //scanLocalKernel = kernels[2];
+        permuteKernel = kernels[3];
         if(newBuffer == true)
         {
             cl_buffer_region clBR;
@@ -851,8 +845,8 @@ sort_enqueue(control &ctl,
             V_OPENCL( histKernel.setArg(0, clSwapData), "Error setting a kernel argument" );
 
         V_OPENCL( histKernel.setArg(1, clHistData), "Error setting a kernel argument" );
-        V_OPENCL( histKernel.setArg(2, clHistScanData), "Error setting a kernel argument" );
-        V_OPENCL( histKernel.setArg(3, bits), "Error setting a kernel argument" );
+        //V_OPENCL( histKernel.setArg(2, clHistScanData), "Error setting a kernel argument" );
+        V_OPENCL( histKernel.setArg(2, bits), "Error setting a kernel argument" );
         //V_OPENCL( histKernel.setArg(4, loc), "Error setting kernel argument" );
 
         l_Error = ctl.commandQueue().enqueueNDRangeKernel(
@@ -910,7 +904,8 @@ sort_enqueue(control &ctl,
 #endif
 
         //Perform a global scan 
-        detail::scan_enqueue(ctl, dvHistogramScanBuffer.begin(),dvHistogramScanBuffer.end(),dvHistogramScanBuffer.begin(), 0, plus< T >( ));
+        //detail::scan_enqueue(ctl, dvHistogramScanBuffer.begin(),dvHistogramScanBuffer.end(),dvHistogramScanBuffer.begin(), 0, plus< T >( ));
+        detail::scan_enqueue(ctl, dvHistogramBins.begin(), dvHistogramBins.end(), dvHistogramBinsDest.begin(), 0, plus< T >( ), false);
 #if (BOLT_SORT_INL_DEBUG==1)
         ::cl::Event l_histScanBufferEvent1;
         histScanBuffer = (T*) ctl.commandQueue().enqueueMapBuffer(clHistScanData, false, CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(T) * numGroups * RADICES, NULL, &l_histScanBufferEvent1, &l_Error );
@@ -1025,19 +1020,19 @@ sort_enqueue(control &ctl,
 
     if(comp(2,3))
     {
-        histSignedKernel = kernels[5];
-        permuteSignedKernel = kernels[7];
+        histSignedKernel = kernels[4];
+        permuteSignedKernel = kernels[6];
     }
     else
     {
-        histSignedKernel = kernels[6];
-        permuteSignedKernel = kernels[8];
+        histSignedKernel = kernels[5];
+        permuteSignedKernel = kernels[7];
     }
         //Do a histogram pass locally
             V_OPENCL( histSignedKernel.setArg(0, clSwapData), "Error setting a kernel argument" );
             V_OPENCL( histSignedKernel.setArg(1, clHistData), "Error setting a kernel argument" );
-            V_OPENCL( histSignedKernel.setArg(2, clHistScanData), "Error setting a kernel argument" );
-            V_OPENCL( histSignedKernel.setArg(3, bits), "Error setting a kernel argument" );
+            //V_OPENCL( histSignedKernel.setArg(2, clHistScanData), "Error setting a kernel argument" );
+            V_OPENCL( histSignedKernel.setArg(2, bits), "Error setting a kernel argument" );
             //V_OPENCL( histKernel.setArg(4, loc), "Error setting kernel argument" );
 
             l_Error = ctl.commandQueue().enqueueNDRangeKernel(
@@ -1050,8 +1045,8 @@ sort_enqueue(control &ctl,
             //V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
 
             //Perform a global scan 
-            detail::scan_enqueue(ctl, dvHistogramScanBuffer.begin(),dvHistogramScanBuffer.end(),dvHistogramScanBuffer.begin(), 0, plus< T >( ));
-
+            //detail::scan_enqueue(ctl, dvHistogramScanBuffer.begin(),dvHistogramScanBuffer.end(),dvHistogramScanBuffer.begin(), 0, plus< T >( ));
+            detail::scan_enqueue(ctl, dvHistogramBins.begin(), dvHistogramBins.end(), dvHistogramBinsDest.begin(), 0, plus< T >( ), false);
 
             //Add the results of the global scan to the local scan buffers
             /*V_OPENCL( scanLocalKernel.setArg(0, clHistData), "Error setting a kernel argument" );
@@ -1129,7 +1124,7 @@ sort_enqueue(control &ctl,
 template<typename DVRandomAccessIterator, typename StrictWeakOrdering> 
 typename std::enable_if< 
     !(std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type, unsigned int >::value 
-    //|| std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type,          int >::value
+    || std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type,          int >::value
     ) 
                        >::type
 sort_enqueue(control &ctl, 
