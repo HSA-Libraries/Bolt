@@ -35,7 +35,7 @@ add_definitions( "-D_VARIADIC_MAX=10" )
 
 if(BUILD_TBB)
     include_directories( ${TBB_INCLUDE_DIRS} )
-    add_definitions( "-DENABLE_TBB=true" )
+    add_definitions( "-DENABLE_TBB" )
     #add_library( ${TBB_LIBRARY} STATIC IMPORTED )
     set(TBB_LIBRARIES debug;${TBB_LIBRARY_DEBUG};${TBB_LIBRARY_MALLOC_DEBUG};optimized;${TBB_LIBRARY};${TBB_LIBRARY_MALLOC})
 endif()

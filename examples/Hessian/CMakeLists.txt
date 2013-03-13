@@ -64,8 +64,13 @@ include_directories( ${BOLT_ROOT_DIR}/BoltForOpenCL ${BOLT_ROOT_DIR}/BoltForC++A
 link_directories(${TBB_LIBRARY_DIR} )
 
 add_executable( examples.Hessian ${examples.Hessian.Files} )
-target_link_libraries( examples.Hessian ${OPENCL_LIBRARIES} ${TBB_LIBRARY_DIR}/tbb.lib)
-#target_link_libraries( examples.Hessian ${OPENCL_LIBRARIES} )
+
+if(BUILD_TBB)
+    target_link_libraries( examples.Hessian ${BOLT_LIBRARIES} ${OPENCL_LIBRARIES} ${GTEST_LIBRARIES} ${Boost_LIBRARIES}  ${TBB_LIBRARIES} )
+else (BUILD_TBB)
+    target_link_libraries( examples.Hessian ${BOLT_LIBRARIES} ${OPENCL_LIBRARIES} ${GTEST_LIBRARIES} ${Boost_LIBRARIES}  )
+endif()
+
 
 set_target_properties( examples.Hessian PROPERTIES VERSION ${Bolt_VERSION} )
 set_target_properties( examples.Hessian PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )

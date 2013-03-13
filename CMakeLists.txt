@@ -28,11 +28,11 @@ project( Bolt )
 
 # Define a version for the code
 if( NOT DEFINED Bolt_VERSION_MAJOR )
-   set( Bolt_VERSION_MAJOR 0 )
+   set( Bolt_VERSION_MAJOR 1 )
 endif( )
 
 if( NOT DEFINED Bolt_VERSION_MINOR )
-   set( Bolt_VERSION_MINOR 5 )
+   set( Bolt_VERSION_MINOR 0 )
 endif( )
 
 if( NOT DEFINED Bolt_VERSION_PATCH )

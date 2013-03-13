@@ -384,6 +384,7 @@ for params in test_combinations:
         speedStr = 'MKeys/s'
     if args.routine == 'sort':
         speedStr = 'MKeys/s'
+
     if writeline:
         try:
             output = itertools.ifilter( lambda x: x.count( speedStr ), output)

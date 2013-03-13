@@ -28,7 +28,13 @@ set( clBolt.Example.Scan.Files ${clBolt.Example.Scan.Source} ${clBolt.Example.Sc
 include_directories( ${BOLT_INCLUDE_DIRS} ${OPENCL_INCLUDE_DIRS} )
 
 add_executable( clBolt.Example.Scan ${clBolt.Example.Scan.Files} )
-target_link_libraries( clBolt.Example.Scan ${BOLT_LIBRARIES} ${OPENCL_LIBRARIES} ${Boost_LIBRARIES} )
+
+if(BUILD_TBB)
+    target_link_libraries( clBolt.Example.Scan ${BOLT_LIBRARIES} ${OPENCL_LIBRARIES} ${GTEST_LIBRARIES} ${Boost_LIBRARIES}  ${TBB_LIBRARIES} )
+else (BUILD_TBB)
+    target_link_libraries( clBolt.Example.Scan ${BOLT_LIBRARIES} ${OPENCL_LIBRARIES} ${GTEST_LIBRARIES} ${Boost_LIBRARIES}  )
+endif()
+
 
 set_target_properties( clBolt.Example.Scan PROPERTIES VERSION ${Examples_VERSION} )
 set_target_properties( clBolt.Example.Scan PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )

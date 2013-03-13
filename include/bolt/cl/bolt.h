@@ -81,7 +81,9 @@ namespace bolt {
         extern const std::string scan_kernels;
         extern const std::string scan_by_key_kernels;
         extern const std::string sort_kernels;
-		extern const std::string sort_uint_kernels;
+        extern const std::string stablesort_kernels;
+        extern const std::string stablesort_by_key_kernels;
+        extern const std::string sort_uint_kernels;
         extern const std::string sort_by_key_kernels;
         extern const std::string transform_kernels;
         extern const std::string transform_reduce_kernels;
