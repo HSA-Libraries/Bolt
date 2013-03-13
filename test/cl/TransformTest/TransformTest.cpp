@@ -1362,6 +1362,29 @@ TEST( Transformint , KcacheTest )
 }
 
 
+TEST( TransformDeviceVector, OutOfPlaceTransform)
+{
+  int length = 1<<8;
+  std::vector<int> hVectorA( length ), hVectorB( length ), hVectorO( length );
+  std::fill( hVectorA.begin(), hVectorA.end(), 1024 );
+  std::fill( hVectorB.begin(), hVectorB.end(), 1024 );
+  std::fill( hVectorB.begin(), hVectorB.end(), 0 );
+
+  bolt::cl::device_vector<int> dVectorAAV(hVectorA.begin(), hVectorA.end()),
+    dVectorBAV(hVectorB.begin(), hVectorB.end()),
+    dVectorOAV(hVectorO.begin(), hVectorO.end());
+
+  std::transform( hVectorA.begin(), hVectorA.end(), hVectorB.begin(), hVectorO.begin(), std::plus< int >( ) );
+  bolt::cl::transform( dVectorAAV.begin(),
+    dVectorAAV.end(),
+    dVectorBAV.begin(),
+    dVectorOAV.begin(),
+    bolt::cl::plus< int >( ) );
+
+
+
+}
+
 
 int main(int argc, char* argv[])
 {

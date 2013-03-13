@@ -1,0 +1,125 @@
+/***************************************************************************                                                                                     
+*   Copyright 2012 Advanced Micro Devices, Inc.                                     
+*                                                                                    
+*   Licensed under the Apache License, Version 2.0 (the "License");   
+*   you may not use this file except in compliance with the License.                 
+*   You may obtain a copy of the License at                                          
+*                                                                                    
+*       http://www.apache.org/licenses/LICENSE-2.0                      
+*                                                                                    
+*   Unless required by applicable law or agreed to in writing, software              
+*   distributed under the License is distributed on an "AS IS" BASIS,              
+*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.         
+*   See the License for the specific language governing permissions and              
+*   limitations under the License.                                                   
+
+***************************************************************************/                                                                                     
+
+
+/*!
+* \page buildingBolt Building Bolt
+* \tableofcontents
+* \section cloning_bolt Cloning Bolt from GitHub
+*
+* \subsection clone Git Clone
+* Download git source control system. git-scm is freely available from 
+* <a href="http://git-scm.com/downloads">http://git-scm.com/downloads</a>. Once installed, open git bash and clone the
+* the repository using this command <tt>git clone https://github.com/HSA-Libraries/Bolt </tt>. This will clone the
+* repository for you to start working with Bolt.
+* 
+* \subsection branches Bolt branches on GitHub
+* \section cmake Using CMake build infrastructure
+* \subsection cmake_overview CMake Overview
+* Bolt does not provide Microsoft&r; Visual Studio&r; project files, makefiles, or any other native 
+* build infrastructure for its examples.  Instead, the examples directory contains a file named CMakeLists.txt.  
+* Bolt uses CMake as a 'master' build system, and native build files, such as Visual Studio projects, nmake makefiles, 
+* UNIX makefiles, or Mac xcode projects are GENERATED with CMake.  CMake is very similar to the autoconf tool
+* 'configure', except that it is cross-platform. <br><i><b>NOTE:</b> With CMAKE the native OS build files are 
+* GENERATED, so changes made to the native build files are overwritten the next time cmake runs.</i>
+
+* CMake is freely available for download on the web from:\n
+* <a class="external" href="http://www.cmake.org/">http://www.cmake.org/</a>
+* \subsection cl_dependencies OpenCL&tm; Dependencies
+* Bolt's OpenCL&tm; projects have a dependency on the AMD APP SDK and the AMD OpenCL runtime provided by the Catalyst
+* drivers. While OpenCL is regarded as a cross-platform, vendor-neutral API, AMD is using C++ kernel template
+* features found in the AMD OpenCL implementation that to date are not found in other vendor implementations.  
+* During its configuration, CMake requires an environment variable to find the root of the OpenCL installation.   
+* Provide this by defining the environment variable <b>AMDAPPSDKROOT</b> with the path to the root 
+* of the OpenCL SDK, typically <tt>'C:/Program Files (x86)/AMD APP'</tt> on Windows 64-bit machines. This environment
+* variable is automatically defined by the catalyst installer; so, in most circumstances, no additional work is needed.  
+* A more vendor-neutral environment variable is <b>OPENCL_ROOT</b>, but it is not defined by the 
+* catalyst installer.
+* \image html opencl_environment_variable2.png "Environment variable setup screen"
+
+* Cmake ships with several interfaces to help a developer generate native build files.  For Windows-based systems,
+* CMake has a GUI interface called CMake-gui that incorporates the traditional point-and-click conventions of buttons,
+* list boxes, and search boxes.  For CLI-based sytems (including CMD from windows), cmake has a native command-line
+* executable (the GUI is just a wrapper around the command line).  The command line executable is useful,
+* even in Windows, for scripting purposes, such as might be used with automated and continuous build systems.
+
+* \section config CMake Bolt Configuration
+* Once installed, the easiest interface for Windows or X-windows is the cmake GUI program 'cmake-gui'.
+* The terminal applications cmake.exe and ccmake.exe (based on curses library) are  
+* easy to learn.  Cmake automates the creation of build environments in a cross-platform manner,
+* generating native build files for each respective platform. When launched, it inspects the host computer and searches
+* for all tools, SDKs, libraries, and code necessary to build the project.
+
+* \c Bolt/superbuild contains all the CMake files necesasary for configuring Bolt. In the CMake Window, enter the source
+* code and binary URIs as given in the image below and press Configure. You can also use the 'Browse Source ...' and
+* "Browse Build..." buttons to navigate to the \c superbuild and \c binary folder. It is better not to put the \c bin
+* directory inside any folder which has a \c .git folder as a sibling or as a parent structure.
+* \image html cmake.bolt_build.blank.png "Bolt superbuild"
+* Then, click on the Configure button. This will ask you for your choice of generator. You can choose to use
+* Visual Studio 10 or Visual Studio 11. In this example, 'Visual Studio 11 Win64' generator is selected. The selected
+* bin directory should be descriptive of the generator used ; otherwise it's easy to start over 
+* (delete the binaries directory). After selecting the generator, CMake examines the system, finding all the project
+* dependencies and properties, which appear red in the properties box.
+* \image html cmake.pick.generator2.png "List of CMake generators"
+*
+* While cmake finishes configuring the projects, it prints messages in the output log visible in the bottom textbox 
+* within the GUI; this states that cmake found the OpenCL and Bolt libraries.  If not, cmake prints in red text 
+* which libraries or header files are missing. This usually means the environment variables that cmake uses to find 
+* dependencies are not set up properly (see \ref clDependencies ).
+* \image html cmake.build.first.configure2.png "Cmake system introspection"
+*
+* CMake gives you some values which represent some features that you can choose to generate. In this example below, we
+* chose not to generate BUILD_TBB (see \ref tbb on how to build TBB for Bolt). Now, press the Configure button again to
+* continue, and then press Generate button to complete the generation of binaries. Now, all the project files will be
+* generated to the specified location.
+*
+* \subsection startup Startup projects
+* After a successful configuration pass, the directory specified initially in the <tt>'Where to build the binaries:'</tt>
+* textbox contains an 'Bolt.Superbuild.sln' file, which can be opened in the appropriate version of Visual Studio.
+* At this point, selecting the 'Build Solution' menu item builds all the samples.is selected.  By default, Visual
+* Studio will have the 'ALL_BUILD' project selected as the \c 'Startup' project.  If a particular solution must be run
+* under a debugger, mark it \c 'Startup' by first right-clicking on the project, then selecting 
+* <tt>'Set as Startup Project'</tt>.  On building this solution, required libraries such as
+* <a href="http://www.boost.org/users/download/">Boost</a>,
+* <a href="http://www.stack.nl/~dimitri/doxygen/download.html">Doxygen</a>,
+* and <a href="https://code.google.com/p/googletest/downloads/list">Gtest</a> are downloaded, and it also builds all
+* the projects in Bolt. To start developing, go to \c Bolt-build folder in your \c binary folder and open 'Bolt.sln'.
+* This will have all the project files i.e. Tests, Benchmarks, Tools, Runtimes etc. You can build tests for projects by
+* setting it as a 'Startup' project and by building the project. You run the tests (Google Tests) by clicking the start
+* button in the Debug Menu in Visual Studio.
+*
+* 
+*
+* \subsection compDependency Supported compilers
+* Bolt currently uses type traits introduced in Visual Studio 2010.  We hope to include additional compilers at some time.  
+* We also hope to add GCC/MinGW support at some time.
+*
+* \section bolt_directories Code layout
+* This is a list of bolt directories:
+* Bolt/
+*   - bench/ - contains benchmarking codes for Bolt routines.
+*   - bolt/ - contains bolt runtime library calls. Contents are packaged as a bolt binary library.
+*   - doxy/ - contains files required for generating the doxygen documentation for Bolt.
+*   - examples/ - contains some example codes on how to use Bolt.
+*   - include/ - contains header files and inline files of all the supported Bolt routines.
+*   - superbuild/ - contains CMakeFiles required to build a superbuild binary file for Bolt.
+*   - test/ - contains testing solution files for all the routines in Bolt.
+*   - tools/ - contains some useful scripts and codes.
+*
+*
+*
+*/
