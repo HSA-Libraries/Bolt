@@ -289,7 +289,7 @@ namespace bolt {
                 m_waitMode(BusyWait),
                 m_unroll(1)
             {
-                ::cl_device_type dType;
+                ::cl_device_type dType = CL_DEVICE_TYPE_CPU;
                 if(m_commandQueue() != NULL)
                 {
                     ::cl::Device device = m_commandQueue.getInfo<CL_QUEUE_DEVICE>();
