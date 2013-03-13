@@ -187,12 +187,6 @@ namespace cl {
         }; \n
     );
 
-    BOLT_CREATE_TYPENAME( constant_iterator<int> );
-    BOLT_CREATE_CLCODE( constant_iterator<int>, deviceConstantIterator );
-
-    BOLT_TEMPLATE_REGISTER_NEW_TYPE( constant_iterator, int, float );
-    BOLT_TEMPLATE_REGISTER_NEW_TYPE( constant_iterator, int, double );
-
     template< typename Type >
     constant_iterator< Type > make_constant_iterator( Type constValue )
     {
@@ -202,5 +196,12 @@ namespace cl {
 
 }
 }
+
+BOLT_CREATE_TYPENAME( bolt::cl::constant_iterator< int > );
+BOLT_CREATE_CLCODE( bolt::cl::constant_iterator< int >, bolt::cl::deviceConstantIterator );
+
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::constant_iterator, int, unsigned int );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::constant_iterator, int, float );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::constant_iterator, int, double );
 
 #endif

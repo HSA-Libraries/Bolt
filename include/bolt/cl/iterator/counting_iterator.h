@@ -191,11 +191,6 @@ namespace cl {
         }; \n
     );
 
-    BOLT_CREATE_TYPENAME( counting_iterator<int> );
-    BOLT_CREATE_CLCODE( counting_iterator<int>, deviceCountingIterator );
-
-    BOLT_TEMPLATE_REGISTER_NEW_TYPE( counting_iterator, int, float );
-    BOLT_TEMPLATE_REGISTER_NEW_TYPE( counting_iterator, int, double );
 
     template< typename Type >
     counting_iterator< Type > make_counting_iterator( Type constValue )
@@ -206,5 +201,12 @@ namespace cl {
 
 }
 }
+
+BOLT_CREATE_TYPENAME( bolt::cl::counting_iterator< int > );
+BOLT_CREATE_CLCODE( bolt::cl::counting_iterator< int >, bolt::cl::deviceCountingIterator );
+
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::counting_iterator, int, unsigned int );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::counting_iterator, int, float );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::counting_iterator, int, double );
 
 #endif
