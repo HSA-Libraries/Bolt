@@ -125,11 +125,6 @@ struct ClCode
 #define BOLT_CREATE_TYPENAME( Type ) \
     template<> struct TypeName< Type > { static std::string get( ) { return #Type; } };
 
-/*! \brief An alias for the BOLT_CREATE_TYPENAME macro
- */
-#define BOLT_DECLARATION( Type ) \
-    template<> struct TypeName< Type > { static std::string get( ) { return #Type; } };
-
 /*!
  * Creates the ClCode trait that associates the specified type \p T with the string \p CODE_STRING.
  * \param Type A fully specified type name
@@ -144,13 +139,17 @@ struct ClCode
  * Another approach is to define the code string in a file (so host and string are identical), then
  * pass the string read from the file to BOLT_CREATE_CLCODE. (See \ref clCodeFromFile)
  */
-#define BOLT_CREATE_CLCODE( Type, CODE_STRING ) \
-    template<> struct ClCode< Type > { static std::string get( ) { return CODE_STRING; } };
-
-/*! \brief An alias for the BOLT_CREATE_CLCODE macro
- */
-#define BOLT_DEFINITION( Type, CODE_STRING ) \
-    template<> struct ClCode< Type > { static std::string get( ) { return CODE_STRING; } };
+#define BOLT_CREATE_CLCODE(Type,CODE_STRING) \
+    template<> struct ClCode< Type > {	static std::vector< std::string > dependencies;\
+                                        static void addDependency(std::string s) { dependencies.push_back(s); }; \
+                                        static std::string getDependingCodeString() { \
+                                            std::string c;\
+                                            for (std::vector<std::string>::iterator i = dependencies.begin(); i != dependencies.end(); i++) { c = c + *i; } \
+                                            return c; \
+                                        };\
+                                        static std::string getCodeString() { return CODE_STRING; }; \
+                                        static std::string get() { return getDependingCodeString() + getCodeString(); }; };\
+__declspec( selectany ) std::vector<std::string> ClCode< Type >::dependencies; 
 
 /*!
  * \brief This macro specializes a template with a new type using the template definition of a previously defined
@@ -178,16 +177,23 @@ struct ClCode
             BOLT_CREATE_TYPENAME( CONTAINER< NEWTYPE >::iterator ) \
             BOLT_CREATE_CLCODE( CONTAINER< NEWTYPE >::iterator, ClCode< CONTAINER< OLDTYPE >::iterator >::get( ) )
 
+#define BOLT_CREATE_DEFINE( DefineName,D,... ) struct DefineName {}; BOLT_CREATE_CLCODE( DefineName,   std::string("#ifndef ") + std::string(#D) + std::string(" \n")\
+                                                                                                  + std::string("#define ") + std::string(#D) + std::string(" ") + std::string(#__VA_ARGS__) + std::string(" \n")\
+                                                                                                  + std::string("#endif \n"));
+
 /*!
  * Creates a string and a regular version of the functor F, and automatically defines the ClCode trait to associate 
  * the code string with the specified class T. 
  * \param Type A fully specified type name
  * \param ... Arbitrary type definition to associate with the type.  See \ref ClCodeTraits
  */
-#define BOLT_FUNCTOR( TYPE, ... ) \
-                    __VA_ARGS__; \
-                    BOLT_CREATE_TYPENAME( TYPE ); \
-                    BOLT_CREATE_CLCODE( TYPE, #__VA_ARGS__ "\n" );
+#define BOLT_FUNCTOR( T, ... ) __VA_ARGS__; \
+                               BOLT_CREATE_TYPENAME( T ); \
+                               BOLT_CREATE_CLCODE( T,     std::string("#ifndef ") + std::string("BOLT_FUNCTOR_") + std::string(#T) + std::string(" \n")\
+                                                        + std::string("#define ") + std::string("BOLT_FUNCTOR_") + std::string(#T) + std::string(" \n")\
+                                                        + std::string(#__VA_ARGS__) + std::string(" \n")\
+                                                        + std::string("#endif \n"));
+                               
 
 #define BOLT_TEMPLATE_FUNCTOR1( CONTAINER, TYPE1, ... ) \
                     __VA_ARGS__; \
@@ -214,5 +220,15 @@ struct ClCode
                     BOLT_TEMPLATE_REGISTER_NEW_TYPE( CONTAINER, TYPE1, TYPE2 ) \
                     BOLT_TEMPLATE_REGISTER_NEW_TYPE( CONTAINER, TYPE1, TYPE3 ) \
                     BOLT_TEMPLATE_REGISTER_NEW_TYPE( CONTAINER, TYPE1, TYPE4 )
+
+ #define BOLT_CREATE_CODE_SNIPPET(Name,...) \
+    __VA_ARGS__;\
+    struct Name {};\
+    BOLT_CREATE_CLCODE(Name,  std::string("#ifndef ") + std::string(#Name) +std::string(" \n") \
+                            + std::string("#define ") + std::string(#Name) + std::string(" \n") \
+                            + std::string(#__VA_ARGS__) + std::string(" \n") \
+                            + std::string("#endif \n"));
+
+#define BOLT_ADD_DEPENDENCY(Type,DependingType) ClCode<Type>::addDependency(ClCode<DependingType>::get());
 
 #endif
