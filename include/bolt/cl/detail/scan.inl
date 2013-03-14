@@ -586,14 +586,14 @@ aProfiler.set(AsyncProfiler::memory, numElements*sizeof(iType));
             {
                 ::cl::Event serialCPUEvent;
                 cl_int l_Error = CL_SUCCESS;
-                iType *scanInputBuffer = (iType*)ctrl.commandQueue().enqueueMapBuffer(first.getBuffer(), false, 
+                iType *scanInputBuffer = (iType*)ctrl.getCommandQueue().enqueueMapBuffer(first.getBuffer(), false, 
                                    CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(iType) * numElements, NULL, &serialCPUEvent, &l_Error );
-                oType *scanResultBuffer = (oType*)ctrl.commandQueue().enqueueMapBuffer(result.getBuffer(), false, 
+                oType *scanResultBuffer = (oType*)ctrl.getCommandQueue().enqueueMapBuffer(result.getBuffer(), false, 
                                    CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(oType) * numElements, NULL, &serialCPUEvent, &l_Error );
                 serialCPUEvent.wait();
                 Serial_scan<iType, oType, BinaryFunction, T>(scanInputBuffer, scanResultBuffer, numElements, binary_op, inclusive, init);
-                ctrl.commandQueue().enqueueUnmapMemObject(first.getBuffer(), scanInputBuffer);
-                ctrl.commandQueue().enqueueUnmapMemObject(result.getBuffer(), scanResultBuffer);
+                ctrl.getCommandQueue().enqueueUnmapMemObject(first.getBuffer(), scanInputBuffer);
+                ctrl.getCommandQueue().enqueueUnmapMemObject(result.getBuffer(), scanResultBuffer);
                 
                 return result + numElements;
             }
@@ -603,16 +603,16 @@ aProfiler.set(AsyncProfiler::memory, numElements*sizeof(iType));
                 ::cl::Event multiCoreCPUEvent;
                 cl_int l_Error = CL_SUCCESS;
                 /*Map the device buffer to CPU*/
-                iType *scanInputBuffer = (iType*)ctrl.commandQueue().enqueueMapBuffer(first.getBuffer(), false, 
+                iType *scanInputBuffer = (iType*)ctrl.getCommandQueue().enqueueMapBuffer(first.getBuffer(), false, 
                                    CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(iType) * numElements, NULL, &multiCoreCPUEvent, &l_Error );
-                oType *scanResultBuffer = (oType*)ctrl.commandQueue().enqueueMapBuffer(result.getBuffer(), false, 
+                oType *scanResultBuffer = (oType*)ctrl.getCommandQueue().enqueueMapBuffer(result.getBuffer(), false, 
                                    CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(oType) * numElements, NULL, &multiCoreCPUEvent, &l_Error );
                 multiCoreCPUEvent.wait();
                 tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
                 Scan_tbb<iType, BinaryFunction, iType*, oType*> tbb_scan(scanInputBuffer, scanResultBuffer, binary_op, inclusive, init);
                 tbb::parallel_scan( tbb::blocked_range<int>(  0, numElements), tbb_scan, tbb::auto_partitioner());
-                ctrl.commandQueue().enqueueUnmapMemObject(first.getBuffer(), scanInputBuffer);
-                ctrl.commandQueue().enqueueUnmapMemObject(result.getBuffer(), scanResultBuffer);
+                ctrl.getCommandQueue().enqueueUnmapMemObject(first.getBuffer(), scanInputBuffer);
+                ctrl.getCommandQueue().enqueueUnmapMemObject(result.getBuffer(), scanResultBuffer);
                 return result + numElements;
 #else
                 std::cout << "The MultiCoreCpu version of Scan with device vector is not enabled" << std ::endl;
@@ -697,8 +697,8 @@ aProfiler.set(AsyncProfiler::device, control::SerialCpu);
 #endif
     cl_int l_Error = CL_SUCCESS;
     cl_uint doExclusiveScan = inclusive ? 0 : 1; 
-    const size_t numComputeUnits = ctrl.device( ).getInfo< CL_DEVICE_MAX_COMPUTE_UNITS >( );
-    const size_t numWorkGroupsPerComputeUnit = ctrl.wgPerComputeUnit( );
+    const size_t numComputeUnits = ctrl.getDevice( ).getInfo< CL_DEVICE_MAX_COMPUTE_UNITS >( );
+    const size_t numWorkGroupsPerComputeUnit = ctrl.getWGPerComputeUnit( );
     const size_t workGroupSize = HSAWAVES*WAVESIZE;
 
     /**********************************************************************************
@@ -729,7 +729,7 @@ aProfiler.set(AsyncProfiler::device, control::SerialCpu);
     /**********************************************************************************
      * Compile Options
      *********************************************************************************/
-    bool cpuDevice = ctrl.device().getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_CPU;
+    bool cpuDevice = ctrl.getDevice().getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_CPU;
     //std::cout << "Device is CPU: " << (cpuDevice?"TRUE":"FALSE") << std::endl;
     const size_t kernel0_WgSize = (cpuDevice) ? 1 : WAVESIZE*KERNEL02WAVES;
     const size_t kernel1_WgSize = (cpuDevice) ? 1 : WAVESIZE*KERNEL1WAVES;
@@ -808,16 +808,16 @@ aProfiler.set(AsyncProfiler::device, control::SerialCpu);
     // allocate and initialize gpu -> cpu array
     control::buffPointer dev2hostD = ctrl.acquireBuffer( numWorkGroups*sizeof( int ),
         CL_MEM_ALLOC_HOST_PTR /*| CL_MEM_READ_WRITE*/ );
-    ctrl.commandQueue().enqueueFillBuffer( *dev2hostD, HSA_STAT_INIT, 0, numWorkGroups*sizeof( int ) );
-    int *dev2hostH = (int *) ctrl.commandQueue().enqueueMapBuffer( *dev2hostD, CL_TRUE, CL_MAP_READ, 0,
+    ctrl.getCommandQueue().enqueueFillBuffer( *dev2hostD, HSA_STAT_INIT, 0, numWorkGroups*sizeof( int ) );
+    int *dev2hostH = (int *) ctrl.getCommandQueue().enqueueMapBuffer( *dev2hostD, CL_TRUE, CL_MAP_READ, 0,
         numWorkGroups*sizeof( int ), NULL, NULL, &l_Error);
     V_OPENCL( l_Error, "Error: Mapping Device->Host Buffer." );
 
     // allocate and initialize cpu -> gpu array
     control::buffPointer host2devD = ctrl.acquireBuffer( numWorkGroups*sizeof( int ),
         CL_MEM_USE_PERSISTENT_MEM_AMD | CL_MEM_READ_ONLY /*CL_MEM_ALLOC_HOST_PTR | CL_MEM_READ_ONLY*/ );
-    ctrl.commandQueue().enqueueFillBuffer( *host2devD, HSA_STAT_INIT, 0, numWorkGroups*sizeof( int ) );
-    int *host2devH = (int *) ctrl.commandQueue().enqueueMapBuffer( *host2devD, CL_TRUE, CL_MAP_WRITE, 0,
+    ctrl.getCommandQueue().enqueueFillBuffer( *host2devD, HSA_STAT_INIT, 0, numWorkGroups*sizeof( int ) );
+    int *host2devH = (int *) ctrl.getCommandQueue().enqueueMapBuffer( *host2devD, CL_TRUE, CL_MAP_WRITE, 0,
         numWorkGroups*sizeof( int ), NULL, NULL, &l_Error);
     V_OPENCL( l_Error, "Error: Mapping Host->Device Buffer." );
 
@@ -868,21 +868,21 @@ aProfiler.set(AsyncProfiler::memory,
     1*numWorkGroups*sizeof(binary_op) + // in case the functor has state
     2*numWorkGroups*sizeof(oType)+ // write,read intermediate array
     2*numWorkGroups*sizeof(int)); // write,read intermediate array status (perhaps multiple times)
-std::string strDeviceName = ctrl.device().getInfo< CL_DEVICE_NAME >( &l_Error );
+std::string strDeviceName = ctrl.getDevice().getInfo< CL_DEVICE_NAME >( &l_Error );
 bolt::cl::V_OPENCL( l_Error, "Device::getInfo< CL_DEVICE_NAME > failed" );
 aProfiler.setArchitecture(strDeviceName);
 #endif
     /**********************************************************************************
      * Launch Kernel
      *********************************************************************************/
-    l_Error = ctrl.commandQueue( ).enqueueNDRangeKernel(
+    l_Error = ctrl.getCommandQueue( ).enqueueNDRangeKernel(
         kernels[ 0 ],
         ::cl::NullRange,
         ::cl::NDRange( numElementsRUP ),
         ::cl::NDRange( workGroupSize ),
         NULL,
         &kernel0Event);
-    ctrl.commandQueue().flush(); // needed
+    ctrl.getCommandQueue().flush(); // needed
     
     bool printAgain = true;
     while (printAgain)
@@ -1011,7 +1011,7 @@ aProfiler.set(AsyncProfiler::flops, 2*numElements);
 aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(iType) + 1*sizeScanBuff*sizeof(oType));
 #endif
 
-    l_Error = ctrl.commandQueue( ).enqueueNDRangeKernel(
+    l_Error = ctrl.getCommandQueue( ).enqueueNDRangeKernel(
         kernels[ 0 ],
                     ::cl::NullRange,
         ::cl::NDRange( numElementsRUP ),
@@ -1046,7 +1046,7 @@ aProfiler.set(AsyncProfiler::flops, 2*sizeScanBuff);
 aProfiler.set(AsyncProfiler::memory, 4*sizeScanBuff*sizeof(oType));
 #endif
 
-    l_Error = ctrl.commandQueue( ).enqueueNDRangeKernel(
+    l_Error = ctrl.getCommandQueue( ).enqueueNDRangeKernel(
         kernels[ 1 ],
                     ::cl::NullRange,
                     ::cl::NDRange( kernel1_WgSize ),
@@ -1079,7 +1079,7 @@ aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(oType) + 1*sizeScanBuf
 #endif
                 try
                 {
-                    l_Error = ctrl.commandQueue( ).enqueueNDRangeKernel(
+                    l_Error = ctrl.getCommandQueue( ).enqueueNDRangeKernel(
                     kernels[ 2 ],
                     ::cl::NullRange,
                     ::cl::NDRange( numElementsRUP/1 ), // remove /2 to return to 1 element per thread
