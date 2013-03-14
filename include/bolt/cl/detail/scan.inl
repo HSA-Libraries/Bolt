@@ -504,7 +504,13 @@ public:
             if( numElements < 1 )
                 return result;
 
-            const bolt::cl::control::e_RunMode runMode = ctrl.forceRunMode( );  // could be dynamic choice some day.
+            bolt::cl::control::e_RunMode runMode = ctrl.getForceRunMode( );
+
+            if( runMode == bolt::cl::control::Automatic )
+            {
+                runMode = ctrl.getDefaultPathToRun( );
+            }
+
             if( runMode == bolt::cl::control::SerialCpu )
             {
 #ifdef BOLT_PROFILER_ENABLED
@@ -581,7 +587,13 @@ aProfiler.set(AsyncProfiler::memory, numElements*sizeof(iType));
             if( numElements < 1 )
                 return result;
 
-            const bolt::cl::control::e_RunMode runMode = ctrl.forceRunMode( );  // could be dynamic choice some day.
+            bolt::cl::control::e_RunMode runMode = ctrl.getForceRunMode( );
+
+            if( runMode == bolt::cl::control::Automatic )
+            {
+                runMode = ctrl.getDefaultPathToRun( );
+            }
+
             if( runMode == bolt::cl::control::SerialCpu )
             {
                 ::cl::Event serialCPUEvent;
@@ -626,7 +638,7 @@ aProfiler.set(AsyncProfiler::memory, numElements*sizeof(iType));
             }
 
             return result + numElements;
-}
+        }
 
         /*! 
         * \brief This overload is called strictly for non-device_vector iterators
@@ -644,7 +656,14 @@ aProfiler.set(AsyncProfiler::memory, numElements*sizeof(iType));
             unsigned int numElements = static_cast< unsigned int >( std::distance( fancyFirst, fancyLast ) );
             if( numElements == 0 )
                 return result;
-            const bolt::cl::control::e_RunMode runMode = ctl.forceRunMode( );  // could be dynamic choice some day.
+
+            bolt::cl::control::e_RunMode runMode = ctrl.getForceRunMode( );
+
+            if( runMode == bolt::cl::control::Automatic )
+            {
+                runMode = ctl.getDefaultPathToRun( );
+            }
+
             if( runMode == bolt::cl::control::SerialCpu )
             {
                 Serial_scan<iType, oType, BinaryFunction, T>(&(*fancyFirst), &(*result), numElements, binary_op, inclusive, init);
