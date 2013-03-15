@@ -158,6 +158,7 @@ namespace cl {
 
     //  This string represents the device side definition of the counting_iterator template
     static std::string deviceCountingIterator = STRINGIFY_CODE( 
+        namespace bolt { namespace cl { \n
         template< typename T > \n
         class counting_iterator \n
         { \n
@@ -189,6 +190,7 @@ namespace cl {
 
             value_type m_StartIndex; \n
         }; \n
+    } } \n
     );
 
 

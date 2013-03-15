@@ -573,7 +573,7 @@ void maxele_TestControl(int aSize, int numIters, int deviceIndex)
   MyOclContext ocl = initOcl(CL_DEVICE_TYPE_GPU, deviceIndex);
     bolt::cl::control c(ocl._queue);  // construct control structure from the queue.
 #endif
-    c.debug(bolt::cl::control::debug::Compile + bolt::cl::control::debug::SaveCompilerTemps);
+    //c.debug(bolt::cl::control::debug::Compile + bolt::cl::control::debug::SaveCompilerTemps);
 
     std::vector<int>::iterator  stlReduce = std::max_element(A.begin(), A.end());
     std::vector<int>::iterator boltReduce(A.end());
