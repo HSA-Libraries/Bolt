@@ -28,11 +28,11 @@ project( Bolt.SuperBuild )
 
 # Define a version for the code
 if( NOT DEFINED Bolt.SuperBuild_VERSION_MAJOR )
-	set( Bolt.SuperBuild_VERSION_MAJOR 0 )
+	set( Bolt.SuperBuild_VERSION_MAJOR 1 )
 endif( )
 
 if( NOT DEFINED Bolt.SuperBuild_VERSION_MINOR )
-	set( Bolt.SuperBuild_VERSION_MINOR 6 )
+	set( Bolt.SuperBuild_VERSION_MINOR 0 )
 endif( )
 
 if( NOT DEFINED Bolt.SuperBuild_VERSION_PATCH )
