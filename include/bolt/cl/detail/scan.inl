@@ -1017,15 +1017,15 @@ aProfiler.set(AsyncProfiler::device, control::SerialCpu);
 aProfiler.nextStep();
 aProfiler.setStepName("Enqueue Kernel 0");
 k0e_stepNum = aProfiler.getStepNum();
-aProfiler.set(AsyncProfiler::device, ctrl.forceRunMode());
+aProfiler.set(AsyncProfiler::device, ctrl.getForceRunMode());
 aProfiler.nextStep();
 aProfiler.setStepName("Submit Kernel 0");
 k0s_stepNum = aProfiler.getStepNum();
-aProfiler.set(AsyncProfiler::device, ctrl.forceRunMode());
+aProfiler.set(AsyncProfiler::device, ctrl.getForceRunMode());
 aProfiler.nextStep();
 aProfiler.setStepName("Kernel 0");
 k0_stepNum = aProfiler.getStepNum();
-aProfiler.set(AsyncProfiler::device, ctrl.forceRunMode());
+aProfiler.set(AsyncProfiler::device, ctrl.getForceRunMode());
 aProfiler.set(AsyncProfiler::flops, 2*numElements);
 aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(iType) + 1*sizeScanBuff*sizeof(oType));
 #endif
@@ -1056,11 +1056,11 @@ aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(iType) + 1*sizeScanBuf
 aProfiler.nextStep();
 aProfiler.setStepName("Submit Kernel 1");
 k1s_stepNum = aProfiler.getStepNum();
-aProfiler.set(AsyncProfiler::device, ctrl.forceRunMode());
+aProfiler.set(AsyncProfiler::device, ctrl.getForceRunMode());
 aProfiler.nextStep();
 k1_stepNum = aProfiler.getStepNum();
 aProfiler.setStepName("Kernel 1");
-aProfiler.set(AsyncProfiler::device, ctrl.forceRunMode());
+aProfiler.set(AsyncProfiler::device, ctrl.getForceRunMode());
 aProfiler.set(AsyncProfiler::flops, 2*sizeScanBuff);
 aProfiler.set(AsyncProfiler::memory, 4*sizeScanBuff*sizeof(oType));
 #endif
@@ -1088,11 +1088,11 @@ aProfiler.set(AsyncProfiler::memory, 4*sizeScanBuff*sizeof(oType));
 aProfiler.nextStep();
 aProfiler.setStepName("Submit Kernel 2");
 k2s_stepNum = aProfiler.getStepNum();
-aProfiler.set(AsyncProfiler::device, ctrl.forceRunMode());
+aProfiler.set(AsyncProfiler::device, ctrl.getForceRunMode());
 aProfiler.nextStep();
 k2_stepNum = aProfiler.getStepNum();
 aProfiler.setStepName("Kernel 2");
-aProfiler.set(AsyncProfiler::device, ctrl.forceRunMode());
+aProfiler.set(AsyncProfiler::device, ctrl.getForceRunMode());
 aProfiler.set(AsyncProfiler::flops, numElements);
 aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(oType) + 1*sizeScanBuff*sizeof(oType));
 #endif
@@ -1119,13 +1119,13 @@ aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(oType) + 1*sizeScanBuf
 aProfiler.nextStep();
 aProfiler.setStepName("Returning Control To Device");
 ret_stepNum = aProfiler.getStepNum();
-aProfiler.set(AsyncProfiler::device, ctrl.forceRunMode());
+aProfiler.set(AsyncProfiler::device, ctrl.getForceRunMode());
 aProfiler.nextStep();
 aProfiler.setStepName("Querying Kernel Times");
 aProfiler.set(AsyncProfiler::device, control::SerialCpu);
 
 aProfiler.setDataSize(numElements*sizeof(iType));
-std::string strDeviceName = ctrl.device().getInfo< CL_DEVICE_NAME >( &l_Error );
+std::string strDeviceName = ctrl.getDevice().getInfo< CL_DEVICE_NAME >( &l_Error );
 bolt::cl::V_OPENCL( l_Error, "Device::getInfo< CL_DEVICE_NAME > failed" );
 aProfiler.setArchitecture(strDeviceName);
 

@@ -554,7 +554,7 @@ aProfiler.set(AsyncProfiler::device, control::SerialCpu);
 aProfiler.nextStep();
 k0_stepNum = aProfiler.getStepNum();
 aProfiler.setStepName("Kernel 0");
-aProfiler.set(AsyncProfiler::device, ctl.forceRunMode());
+aProfiler.set(AsyncProfiler::device, ctl.getForceRunMode());
 aProfiler.set(AsyncProfiler::flops, 2*numElements);
 aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(iType) + 1*sizeScanBuff*sizeof(oType));
 #endif
@@ -598,7 +598,7 @@ aProfiler.set(AsyncProfiler::device, control::SerialCpu);
 aProfiler.nextStep();
 k1_stepNum = aProfiler.getStepNum();
 aProfiler.setStepName("Kernel 1");
-aProfiler.set(AsyncProfiler::device, ctl.forceRunMode());
+aProfiler.set(AsyncProfiler::device, ctl.getForceRunMode());
 aProfiler.set(AsyncProfiler::flops, 2*sizeScanBuff);
 aProfiler.set(AsyncProfiler::memory, 4*sizeScanBuff*sizeof(oType));
 #endif
@@ -633,7 +633,7 @@ aProfiler.set(AsyncProfiler::device, control::SerialCpu);
 aProfiler.nextStep();
 k2_stepNum = aProfiler.getStepNum();
 aProfiler.setStepName("Kernel 2");
-aProfiler.set(AsyncProfiler::device, ctl.forceRunMode());
+aProfiler.set(AsyncProfiler::device, ctl.getForceRunMode());
 aProfiler.set(AsyncProfiler::flops, numElements);
 aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(oType) + 1*sizeScanBuff*sizeof(oType));
 #endif
@@ -661,7 +661,7 @@ aProfiler.setStepName("Querying Kernel Times");
 aProfiler.set(AsyncProfiler::device, control::SerialCpu);
 
 aProfiler.setDataSize(numElements*sizeof(iType));
-std::string strDeviceName = ctl.device().getInfo< CL_DEVICE_NAME >( &l_Error );
+std::string strDeviceName = ctl.getDevice().getInfo< CL_DEVICE_NAME >( &l_Error );
 bolt::cl::V_OPENCL( l_Error, "Device::getInfo< CL_DEVICE_NAME > failed" );
 aProfiler.setArchitecture(strDeviceName);
 

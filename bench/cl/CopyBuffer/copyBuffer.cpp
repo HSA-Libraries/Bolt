@@ -141,9 +141,9 @@ int _tmain( int argc, _TCHAR* argv[] )
 
     //  Now that the device we want is selected and we have created our own cl::CommandQueue, set it as the
     //  default cl::CommandQueue for the Bolt API
-    bolt::cl::control::getDefault( ).commandQueue( myQueue );
+    bolt::cl::control::getDefault( ).setCommandQueue( myQueue );
 
-    std::string strDeviceName = bolt::cl::control::getDefault( ).device( ).getInfo< CL_DEVICE_NAME >( &err );
+    std::string strDeviceName = bolt::cl::control::getDefault( ).getDevice( ).getInfo< CL_DEVICE_NAME >( &err );
     bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_NAME > failed" );
 
     std::cout << "Device under test : " << strDeviceName << std::endl;
@@ -158,7 +158,7 @@ int _tmain( int argc, _TCHAR* argv[] )
     size_t pruned = 0;
     double scanTime = std::numeric_limits< double >::max( );
     double scanGB = ( length * sizeof( int ) ) / (1024.0 * 1024.0 * 1024.0);
-    ::cl::CommandQueue& boltQueue = bolt::cl::control::getDefault( ).commandQueue( );
+    ::cl::CommandQueue& boltQueue = bolt::cl::control::getDefault( ).getCommandQueue( );
 
     //  ::cl::Buffer can not handle buffers of size 0
     if( length > 0 )
@@ -167,8 +167,8 @@ int _tmain( int argc, _TCHAR* argv[] )
         {
             std::vector< int > input( length, 1 );
             std::vector< int > output( length );
-            ::cl::Buffer inputBuffer( bolt::cl::control::getDefault( ).context( ), CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, length * sizeof( int ), input.data( ) );
-            ::cl::Buffer outputBuffer( bolt::cl::control::getDefault( ).context( ), CL_MEM_USE_HOST_PTR|CL_MEM_WRITE_ONLY, length * sizeof( int ), output.data( ) );
+            ::cl::Buffer inputBuffer( bolt::cl::control::getDefault( ).getContext( ), CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, length * sizeof( int ), input.data( ) );
+            ::cl::Buffer outputBuffer( bolt::cl::control::getDefault( ).getContext( ), CL_MEM_USE_HOST_PTR|CL_MEM_WRITE_ONLY, length * sizeof( int ), output.data( ) );
 
             for( unsigned i = 0; i < iterations; ++i )
             {
@@ -182,8 +182,8 @@ int _tmain( int argc, _TCHAR* argv[] )
         }
         else
         {
-            ::cl::Buffer inputBuffer( bolt::cl::control::getDefault( ).context( ), CL_MEM_READ_ONLY, length * sizeof( int ) );
-            ::cl::Buffer outputBuffer( bolt::cl::control::getDefault( ).context( ), CL_MEM_WRITE_ONLY, length * sizeof( int ) );
+            ::cl::Buffer inputBuffer( bolt::cl::control::getDefault( ).getContext( ), CL_MEM_READ_ONLY, length * sizeof( int ) );
+            ::cl::Buffer outputBuffer( bolt::cl::control::getDefault( ).getContext( ), CL_MEM_WRITE_ONLY, length * sizeof( int ) );
 
             for( unsigned i = 0; i < iterations; ++i )
             {
