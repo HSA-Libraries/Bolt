@@ -534,6 +534,49 @@ TEST (simpleTest, basicDataBoltClDevVectAutoConvertCheck)
 } 
 
 
+TEST(Fill, AllRunModes)
+{
+  int length = 1024;
+  bolt::cl::control ctlA, ctlCPU, ctlMCPU;
+
+  // Try with Automatic runmode
+  ctlA.setForceRunMode(bolt::cl::control::Automatic);
+
+  std::vector<int> hA(length), dA(length);
+  bolt::cl::device_vector<int> dVA(length);
+
+  std::fill(hA.begin(), hA.end(), 20);
+  bolt::cl::fill(ctlA,dA.begin(), dA.end(), 20);
+
+  cmpArrays(hA,dA);
+
+  // Try with SerialCpu runmode
+  ctlCPU.setForceRunMode(bolt::cl::control::SerialCpu);  
+  std::fill(hA.begin(), hA.end(), 10);
+  bolt::cl::fill(ctlCPU, dA.begin(), dA.end(), 10);
+
+  cmpArrays(hA,dA);
+
+  // Try with MultiCoreCpu runmode
+  ctlMCPU.setForceRunMode(bolt::cl::control::MultiCoreCpu);  
+  std::fill(hA.begin(), hA.end(), 50);
+  bolt::cl::fill(ctlMCPU, dA.begin(), dA.end(), 50);
+
+  cmpArrays(hA,dA);
+
+    // Try DV with MultiCoreCpu runmode
+  ctlMCPU.setForceRunMode(bolt::cl::control::MultiCoreCpu);  
+  std::fill(hA.begin(), hA.end(), 120);
+  bolt::cl::fill(ctlMCPU, dVA.begin(), dVA.end(),120);
+  cmpArrays(hA,dVA);
+
+
+
+
+
+}
+
+
 int main(int argc, char **argv)
 {
     ::testing::InitGoogleTest(&argc, argv);
