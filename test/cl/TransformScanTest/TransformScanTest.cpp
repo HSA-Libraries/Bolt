@@ -623,7 +623,7 @@ TEST(SwitchDevices, IncAddInt2)
         ::cl::CommandQueue queue( context, devices.at( i ), CL_QUEUE_PROFILING_ENABLE); // select device; make queue
         bolt::cl::control ctrl(queue);
         //bolt::cl::control::getDefault().commandQueue(queue);
-        strDeviceName = ctrl.device( ).getInfo< CL_DEVICE_NAME >( &err );
+        strDeviceName = ctrl.getDevice( ).getInfo< CL_DEVICE_NAME >( &err );
         bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_NAME > failed" );
         std::cout << "Testing Device[" << i << "]: " << strDeviceName << std::endl;
 
@@ -647,7 +647,7 @@ TEST(MultiCoreCPU, NegPlusInt)
     // print device 1
     cl_int err;
     int deviceNum = 1;
-    std::string strDeviceName = bolt::cl::control::getDefault( ).device( ).getInfo< CL_DEVICE_NAME >( &err );
+    std::string strDeviceName = bolt::cl::control::getDefault( ).getDevice( ).getInfo< CL_DEVICE_NAME >( &err );
     bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_NAME > failed" );
     
     //setup initial values
@@ -677,7 +677,7 @@ TEST(MultiCoreCPU, NegPlusInt)
     ::cl::CommandQueue queue( context, devices.at( deviceNum ), CL_QUEUE_PROFILING_ENABLE); // select device; make queue
     bolt::cl::control ctrl(queue);
     //bolt::cl::control::getDefault().commandQueue(queue);
-    strDeviceName = ctrl.device( ).getInfo< CL_DEVICE_NAME >( &err );
+    strDeviceName = ctrl.getDevice( ).getInfo< CL_DEVICE_NAME >( &err );
     bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_NAME > failed" );
     std::cout << "Testing Device[" << deviceNum << "]: " << strDeviceName << std::endl;
     bolt::cl::transform_inclusive_scan( ctrl, input.begin(), input.end(), output.begin(), unary_op, binary_op );
@@ -785,9 +785,9 @@ int _tmain(int argc, _TCHAR* argv[])
 
     cl::Context myContext( devices.at( userDevice ) );
     cl::CommandQueue myQueue( myContext, devices.at( userDevice ) );
-    bolt::cl::control::getDefault( ).commandQueue( myQueue );
+    bolt::cl::control::getDefault( ).setCommandQueue( myQueue );
 
-    std::string strDeviceName = bolt::cl::control::getDefault( ).device( ).getInfo< CL_DEVICE_NAME >( &err );
+    std::string strDeviceName = bolt::cl::control::getDefault( ).getDevice( ).getInfo< CL_DEVICE_NAME >( &err );
     bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_NAME > failed" );
 
     std::cout << "Device under test : " << strDeviceName << std::endl;
