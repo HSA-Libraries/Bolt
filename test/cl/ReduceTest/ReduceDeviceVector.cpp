@@ -88,7 +88,7 @@ void testTBB()
     int hSum = std::accumulate(stdInput.begin(), stdInput.end(), 2);
     bolt::cl::control ctl = bolt::cl::control::getDefault();
 
-    ctl.forceRunMode(bolt::cl::control::MultiCoreCpu);
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
     int sum = bolt::cl::reduce(ctl, tbbInput.begin(), tbbInput.end(), 2);
 
     if(hSum == sum)
@@ -111,7 +111,7 @@ void testdoubleTBB()
 
     double hSum = std::accumulate(stdInput.begin(), stdInput.end(), 1.0);
     bolt::cl::control ctl = bolt::cl::control::getDefault();
-    ctl.forceRunMode(bolt::cl::control::MultiCoreCpu);
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
     double sum = bolt::cl::reduce(ctl, tbbInput.begin(), tbbInput.end(), 1.0);
     if(hSum == sum)
         printf ("\nTBB Test case PASSED %lf %lf\n", hSum, sum);
@@ -140,7 +140,7 @@ void testUDDTBB()
     bolt::cl::plus<UDD> add;
     UDD hSum = std::accumulate(stdInput.begin(), stdInput.end(), initial,add);
     bolt::cl::control ctl = bolt::cl::control::getDefault();
-    ctl.forceRunMode(bolt::cl::control::MultiCoreCpu);
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
     UDD sum = bolt::cl::reduce(ctl, tbbInput.begin(), tbbInput.end(), initial, add);
     if(hSum == sum)
         printf ("\nUDDTBB Test case PASSED %d %d %d %d\n", hSum.a, sum.a, hSum.b, sum.b);
@@ -163,7 +163,7 @@ void testTBBDevicevector()
 
     int hSum = std::accumulate(stdInput.begin(), stdInput.end(), 0);
     bolt::cl::control ctl = bolt::cl::control::getDefault();
-    ctl.forceRunMode(bolt::cl::control::MultiCoreCpu);
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
     int sum = bolt::cl::reduce(ctl, tbbInput.begin(), tbbInput.end(), 0);
     if(hSum == sum)
         printf ("\nTBBDevicevector Test case PASSED %d %d\n", hSum, sum);

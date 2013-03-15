@@ -178,7 +178,13 @@ namespace  detail {
             if (szElements == 0)
                     return init;
 
-            const bolt::cl::control::e_RunMode runMode = c.forceRunMode();  // could be dynamic choice some day.
+            //const bolt::cl::control::e_RunMode runMode = c.forceRunMode();  // could be dynamic choice some day.
+
+			bolt::cl::control::e_RunMode runMode = c.getForceRunMode();  // could be dynamic choice some day.
+            if(runMode == bolt::cl::control::Automatic)
+            {
+                runMode = c.getDefaultPathToRun();
+            }
             if (runMode == bolt::cl::control::SerialCpu)
             {
                 //Create a temporary array to store the transform result;
@@ -225,21 +231,25 @@ namespace  detail {
             if (szElements == 0)
                     return init;
 
-            const bolt::cl::control::e_RunMode runMode = c.forceRunMode();  // could be dynamic choice some day.
+            bolt::cl::control::e_RunMode runMode = c.getForceRunMode();  // could be dynamic choice some day.
+            if(runMode == bolt::cl::control::Automatic)
+            {
+                runMode = c.getDefaultPathToRun();
+            }
             if (runMode == bolt::cl::control::SerialCpu)
             {
                 ::cl::Event serialCPUEvent;
                 cl_int l_Error = CL_SUCCESS;
                 oType trans_reduceResult;
                 /*Map the device buffer to CPU*/
-                iType *trans_reduceInputBuffer = (iType*)c.commandQueue().enqueueMapBuffer(first.getBuffer(), false, 
+                iType *trans_reduceInputBuffer = (iType*)c.getCommandQueue().enqueueMapBuffer(first.getBuffer(), false, 
                                    CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(iType) * szElements, NULL, &serialCPUEvent, &l_Error );
                 serialCPUEvent.wait();
                 std::vector<oType> output(szElements);
                 std::transform(trans_reduceInputBuffer, trans_reduceInputBuffer + szElements, output.begin(), transform_op);
                 trans_reduceResult = std::accumulate(output.begin(), output.end(), init) ;
                 /*Unmap the device buffer back to device memory. This will copy the host modified buffer back to the device*/
-                c.commandQueue().enqueueUnmapMemObject(first.getBuffer(), trans_reduceInputBuffer);
+                c.getCommandQueue().enqueueUnmapMemObject(first.getBuffer(), trans_reduceInputBuffer);
                 return trans_reduceResult;
 
             }
@@ -249,14 +259,14 @@ namespace  detail {
                 ::cl::Event multiCoreCPUEvent;
                 cl_int l_Error = CL_SUCCESS;
                 /*Map the device buffer to CPU*/
-                iType *trans_reduceInputBuffer = (iType*)c.commandQueue().enqueueMapBuffer(first.getBuffer(), false, 
+                iType *trans_reduceInputBuffer = (iType*)c.getCommandQueue().enqueueMapBuffer(first.getBuffer(), false, 
                                    CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(iType) * szElements, NULL, &multiCoreCPUEvent, &l_Error );
                 multiCoreCPUEvent.wait();
 
                 tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
                 Transform_Reduce<oType, UnaryFunction, BinaryFunction> transform_reduce_op(transform_op, reduce_op, init);
                 tbb::parallel_reduce( tbb::blocked_range<iType*>(trans_reduceInputBuffer, (trans_reduceInputBuffer + szElements)), transform_reduce_op );
-                c.commandQueue().enqueueUnmapMemObject(first.getBuffer(), trans_reduceInputBuffer);
+                c.getCommandQueue().enqueueUnmapMemObject(first.getBuffer(), trans_reduceInputBuffer);
                 return transform_reduce_op.value;
 #else
                 std::cout << "The MultiCoreCpu version of transform_reduce is not enabled. " << std ::endl;
@@ -308,8 +318,8 @@ namespace  detail {
 
             // Set up shape of launch grid and buffers:
             // FIXME, read from device attributes.
-            int computeUnits     = ctl.device().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();  // round up if we don't know. 
-            int wgPerComputeUnit =  ctl.wgPerComputeUnit(); 
+            int computeUnits     = ctl.getDevice().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();  // round up if we don't know. 
+			int wgPerComputeUnit =  ctl.getWGPerComputeUnit(); 
             int numWG = computeUnits * wgPerComputeUnit;
 
             cl_int l_Error = CL_SUCCESS;
@@ -319,7 +329,7 @@ namespace  detail {
             /**********************************************************************************
              * Compile Options
              *********************************************************************************/
-            bool cpuDevice = ctl.device().getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_CPU;
+            bool cpuDevice = ctl.getDevice().getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_CPU;
             const size_t kernel_WgSize = (cpuDevice) ? 1 : wgSize;
             std::string compileOptions;
             std::ostringstream oss;
@@ -369,7 +379,7 @@ namespace  detail {
             loc.size_ = wgSize*sizeof(oType);
             V_OPENCL( kernels[0].setArg( 7, loc ), "Error setting kernel argument" );
 
-            l_Error = ctl.commandQueue().enqueueNDRangeKernel( 
+            l_Error = ctl.getCommandQueue().enqueueNDRangeKernel( 
                 kernels[0],
                 ::cl::NullRange, 
                 ::cl::NDRange(numWG * wgSize), 
@@ -377,7 +387,7 @@ namespace  detail {
             V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for transform_reduce() kernel" );
 
             ::cl::Event l_mapEvent;
-            oType *h_result = (oType*)ctl.commandQueue().enqueueMapBuffer(*result, false, CL_MAP_READ, 0, sizeof(oType)*numWG, NULL, &l_mapEvent, &l_Error );
+            oType *h_result = (oType*)ctl.getCommandQueue().enqueueMapBuffer(*result, false, CL_MAP_READ, 0, sizeof(oType)*numWG, NULL, &l_mapEvent, &l_Error );
             V_OPENCL( l_Error, "Error calling map on the result buffer" );
 
             //  Finish the tail end of the reduction on host side; the compute device reduces within the workgroups, with one result per workgroup
