@@ -76,7 +76,7 @@ namespace bolt {
             BinaryPredicate binary_op, 
             const std::string& cl_code)  
         {
-            const bolt::cl::control::e_RunMode runMode = ctl.forceRunMode();  // could be dynamic choice some day.
+            const bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
 
             if (runMode == bolt::cl::control::SerialCpu) {
                 return std::min_element(first, last, binary_op);
@@ -133,7 +133,7 @@ namespace bolt {
             BinaryPredicate binary_op, 
             const std::string& cl_code)  
         {
-            const bolt::cl::control::e_RunMode runMode = ctl.forceRunMode();  // could be dynamic choice some day.
+            const bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
 
             if (runMode == bolt::cl::control::SerialCpu) {
                 return std::min_element(first, last, binary_op);
@@ -228,13 +228,13 @@ namespace bolt {
 
 
                 // Set up shape of launch grid and buffers:
-                cl_uint computeUnits     = ctl.device().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
-                int wgPerComputeUnit =  ctl.wgPerComputeUnit(); 
+                cl_uint computeUnits     = ctl.getDevice().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
+                int wgPerComputeUnit =  ctl.getWGPerComputeUnit(); 
                 size_t numWG = computeUnits * wgPerComputeUnit;
 
                 cl_int l_Error = CL_SUCCESS;
                 const size_t wgSize  = kernels[0].getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( 
-                    ctl.device( ), &l_Error );
+                    ctl.getDevice( ), &l_Error );
                 V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
 
                 // Create buffer wrappers so we can access the host functors, for read or writing in the kernel
@@ -263,7 +263,7 @@ namespace bolt {
                 V_OPENCL( kernels[0].setArg(6, loc2), "Error setting kernel argument" );
 
 
-                l_Error = ctl.commandQueue().enqueueNDRangeKernel(
+                l_Error = ctl.getCommandQueue().enqueueNDRangeKernel(
                     kernels[0], 
                     ::cl::NullRange, 
                     ::cl::NDRange(numWG * wgSize), 
@@ -271,7 +271,7 @@ namespace bolt {
                 V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for reduce() kernel" );
 
                 ::cl::Event l_mapEvent;
-                int *h_result = (int*)ctl.commandQueue().enqueueMapBuffer(*result, false, CL_MAP_READ, 0, 
+                int *h_result = (int*)ctl.getCommandQueue().enqueueMapBuffer(*result, false, CL_MAP_READ, 0, 
                     sizeof(int)*numWG, NULL, &l_mapEvent, &l_Error );
                 V_OPENCL( l_Error, "Error calling map on the result buffer" );
 
@@ -344,7 +344,7 @@ namespace bolt {
                 // What should we do if the run mode is automatic. Currently it goes to the last else statement
                 //How many threads we should spawn? 
                 //Need to look at how to control the number of threads spawned.
-                const bolt::cl::control::e_RunMode runMode = ctl.forceRunMode();  
+                const bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  
                 if (runMode == bolt::cl::control::SerialCpu) {
                     std::cout << "The SerialCpu version of reduce is not implemented yet." << std ::endl;
                     throw ::cl::Error( CL_INVALID_OPERATION, "The SerialCpu version of reduce is not implemented yet." );
@@ -378,7 +378,7 @@ namespace bolt {
                 if (szElements == 0)
                     return last;
 
-                const bolt::cl::control::e_RunMode runMode = ctl.forceRunMode();  
+                const bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  
                 if (runMode == bolt::cl::control::SerialCpu) {
                     std::cout << "The SerialCpu version of min_element is not implemented yet." << std ::endl;
                     throw ::cl::Error( CL_INVALID_OPERATION, "The SerialCpu version of min_element is not implemented yet." );

@@ -119,7 +119,7 @@ TYPED_TEST_P( MaxEArrayTest, Normal )
 TYPED_TEST_P( MaxEArrayTest, GPU_DeviceGreaterFunction )
 {
     typedef std::array< ArrayType, ArraySize > ArrayCont;
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control c_gpu( getQueueFromContext(myContext, CL_DEVICE_TYPE_GPU, 0 ));  
 
 
@@ -567,20 +567,20 @@ void maxele_TestControl(int aSize, int numIters, int deviceIndex)
 
   // FIXME - temporarily disable use of new control queue here:
 #if OCL_CONTEXT_BUG_WORKAROUND
-  ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
+  ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control c( getQueueFromContext(myContext, CL_DEVICE_TYPE_GPU, 0 ));
 #else
   MyOclContext ocl = initOcl(CL_DEVICE_TYPE_GPU, deviceIndex);
     bolt::cl::control c(ocl._queue);  // construct control structure from the queue.
 #endif
-    c.debug(bolt::cl::control::debug::Compile + bolt::cl::control::debug::SaveCompilerTemps);
+   // c.debug(bolt::cl::control::debug::Compile + bolt::cl::control::debug::SaveCompilerTemps);
 
     std::vector<int>::iterator  stlReduce = std::max_element(A.begin(), A.end());
     std::vector<int>::iterator boltReduce(A.end());
 
     char testTag[2000];
     sprintf_s(testTag, 2000, "maxele_TestControl sz=%d iters=%d, device=%s", aSize, numIters,
-        c.device( ).getInfo<CL_DEVICE_NAME>( ).c_str( ) );
+        c.getDevice( ).getInfo<CL_DEVICE_NAME>( ).c_str( ) );
 
     __int64 start = StartProfile();
     for (int i=0; i<numIters; i++) {
@@ -603,7 +603,7 @@ void simpleReduce_TestSerial(int aSize)
 
 
     bolt::cl::control c;  // construct control structure from the queue.
-    c.forceRunMode(bolt::cl::control::SerialCpu);
+    c.setForceRunMode(bolt::cl::control::SerialCpu);
 
     std::vector<int>::iterator stlReduce = std::max_element(A.begin(), A.end());
     std::vector<int>::iterator boltReduce = A.end();
