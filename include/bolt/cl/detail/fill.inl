@@ -155,13 +155,27 @@ namespace bolt {
                 if (sz < 1)
                     return;
 
-                // Use host pointers memory since these arrays are only write once - no benefit to copying.
-                // Map the forward iterator to a device_vector
-                device_vector< Type > range( first, sz, CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY, false, ctl );
+                bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+                if(runMode == bolt::cl::control::Automatic)
+                {
+                     runMode = ctl.getDefaultPathToRun();
+                }
+              
+                if( runMode == bolt::cl::control::SerialCpu || runMode == bolt::cl::control::MultiCoreCpu )
+                {
+                  return std::fill(first, last, value );
+                }
+                else
+                {
+                        // Use host pointers memory since these arrays are only write once - no benefit to copying.
+                        // Map the forward iterator to a device_vector
+                        device_vector< Type > range( first, sz, CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY, false, ctl );
+              
+                        fill_enqueue( ctl, range.begin( ), range.end( ), value, user_code );
+              
+                        range.data( );
+                }
 
-                fill_enqueue( ctl, range.begin( ), range.end( ), value, user_code );
-
-                range.data( );
             }
 
             // This template is called by the non-detail versions of fill, it already assumes random access iterators
@@ -170,7 +184,19 @@ namespace bolt {
             void fill_pick_iterator(const bolt::cl::control &ctl,  const DVForwardIterator &first, 
                 const DVForwardIterator &last,  const T & value, const std::string& user_code, bolt::cl::device_vector_tag )
             {
-                fill_enqueue( ctl, first, last, value, user_code );          
+                bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+                if(runMode == bolt::cl::control::Automatic)
+                {
+                     runMode = ctl.getDefaultPathToRun();
+                }
+                if( runMode == bolt::cl::control::SerialCpu || runMode == bolt::cl::control::MultiCoreCpu )
+                {
+                  return std::fill(first, last, value );
+                }
+                else
+                {
+                    fill_enqueue( ctl, first, last, value, user_code );          
+                }
             }
                
             // This template is called by the non-detail versions of fill, it already assumes random access iterators
@@ -213,8 +239,8 @@ namespace bolt {
             
                 cl_int l_Error = CL_SUCCESS;
                 const size_t workGroupSize  = WAVEFRONT_SIZE;
-                const size_t numComputeUnits = ctl.device( ).getInfo< CL_DEVICE_MAX_COMPUTE_UNITS >( ); // = 28
-                const size_t numWorkGroupsPerComputeUnit = ctl.wgPerComputeUnit( );
+                const size_t numComputeUnits = ctl.getDevice( ).getInfo< CL_DEVICE_MAX_COMPUTE_UNITS >( ); // = 28
+                const size_t numWorkGroupsPerComputeUnit = ctl.getWGPerComputeUnit( );
                 const size_t numWorkGroups = numComputeUnits * numWorkGroupsPerComputeUnit;
                 
                 const cl_uint numThreadsIdeal = static_cast<cl_uint>( numWorkGroups * workGroupSize );
@@ -259,13 +285,13 @@ namespace bolt {
                     cl_uint workGroupSizeChosen = workGroupSize;
                     numThreadsChosen = numThreadsRUP;
             
-                    std::cout << "NumElem: " << sz<< "; NumThreads: " << numThreadsChosen << "; NumWorkGroups: " << numThreadsChosen/workGroupSizeChosen << std::endl;
+                    //std::cout << "NumElem: " << sz<< "; NumThreads: " << numThreadsChosen << "; NumWorkGroups: " << numThreadsChosen/workGroupSizeChosen << std::endl;
             
                     V_OPENCL( kernels[0].setArg( 0, val), "Error setArg kernels[ 0 ]" ); // Input Value
                     V_OPENCL( kernels[0].setArg( 1, first.getBuffer()),"Error setArg kernels[ 0 ]" ); // Fill buffer
                     V_OPENCL( kernels[0].setArg( 2, static_cast<cl_uint>( sz) ), "Error setArg kernels[ 0 ]" ); // Size of buffer
             
-                    l_Error = ctl.commandQueue( ).enqueueNDRangeKernel(
+                    l_Error = ctl.getCommandQueue( ).enqueueNDRangeKernel(
                         kernels[0],
                         ::cl::NullRange,
                         ::cl::NDRange( numThreadsChosen ),
@@ -288,7 +314,7 @@ namespace bolt {
             
                 // profiling
                 cl_command_queue_properties queueProperties;
-                l_Error = ctl.commandQueue().getInfo<cl_command_queue_properties>(CL_QUEUE_PROPERTIES, &queueProperties);
+                l_Error = ctl.getCommandQueue().getInfo<cl_command_queue_properties>(CL_QUEUE_PROPERTIES, &queueProperties);
                 unsigned int profilingEnabled = queueProperties&CL_QUEUE_PROFILING_ENABLE;
                 if ( profilingEnabled ) {
                     cl_ulong start_time, stop_time;
