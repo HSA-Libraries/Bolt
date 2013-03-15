@@ -228,8 +228,8 @@ aProfiler.set(AsyncProfiler::device, control::SerialCpu);
     const cl_uint numElements = static_cast< cl_uint >( std::distance( first, last ) );
     if (numElements < 1) return;
     const size_t workGroupSize  = 256;
-    const size_t numComputeUnits = ctrl.device( ).getInfo< CL_DEVICE_MAX_COMPUTE_UNITS >( ); // = 28
-    const size_t numWorkGroupsPerComputeUnit = ctrl.wgPerComputeUnit( );
+    const size_t numComputeUnits = ctrl.getDevice( ).getInfo< CL_DEVICE_MAX_COMPUTE_UNITS >( ); // = 28
+    const size_t numWorkGroupsPerComputeUnit = ctrl.getWGPerComputeUnit( );
     const size_t numWorkGroupsIdeal = numComputeUnits * numWorkGroupsPerComputeUnit;
     const cl_uint numThreadsIdeal = static_cast<cl_uint>( numWorkGroupsIdeal * workGroupSize );
     int doBoundaryCheck = 0;
@@ -319,7 +319,7 @@ aProfiler.set(AsyncProfiler::memory, 1*numElements*sizeof(oType)
 
                 // enqueue kernel
                 ::cl::Event generateEvent;
-    l_Error = ctrl.commandQueue().enqueueNDRangeKernel(
+    l_Error = ctrl.getCommandQueue().enqueueNDRangeKernel(
         kernels[whichKernel], 
                     ::cl::NullRange,
         ::cl::NDRange(numThreadsChosen),
@@ -386,7 +386,7 @@ aProfiler.stopTrial();
 #endif
     // profiling
     cl_command_queue_properties queueProperties;
-    l_Error = ctrl.commandQueue().getInfo<cl_command_queue_properties>(CL_QUEUE_PROPERTIES, &queueProperties);
+    l_Error = ctrl.getCommandQueue().getInfo<cl_command_queue_properties>(CL_QUEUE_PROPERTIES, &queueProperties);
     unsigned int profilingEnabled = queueProperties&CL_QUEUE_PROFILING_ENABLE;
     if (1 && profilingEnabled) {
         cl_ulong start_time, stop_time;

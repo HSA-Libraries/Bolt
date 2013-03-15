@@ -202,7 +202,9 @@ public:
         tbbOutputIterator result;
         tbbFunctor func;
         static const size_t divSize = 1024;
-
+        typedef typename std::iterator_traits< tbbInputIterator1 >::value_type T_input1;
+        typedef typename std::iterator_traits< tbbInputIterator2 >::value_type T_input2;
+        typedef typename std::iterator_traits< tbbOutputIterator >::value_type T_output;
         bool empty( ) const
         {
             return (std::distance( first1, last1 ) == 0);
@@ -222,7 +224,7 @@ public:
         transformBinaryRange( transformBinaryRange& r, tbb::split ): first1( r.first1 ), last1( r.last1 ), first2( r.first2 ), 
             result( r.result ), func( r.func )
         {
-            size_t halfSize = std::distance( r.first1, r.last1 ) >> 1;
+            int halfSize = static_cast<int>(std::distance( r.first1, r.last1 ) >> 1);
             r.last1 = r.first1 + halfSize;
 
             first1 = r.last1;
@@ -256,7 +258,7 @@ public:
         transformUnaryRange( transformUnaryRange& r, tbb::split ): first1( r.first1 ), last1( r.last1 ), 
              result( r.result ), func( r.func )
         {
-            size_t halfSize = std::distance( r.first1, r.last1 ) >> 1;
+            int halfSize = static_cast<int>(std::distance( r.first1, r.last1 ) >> 1);
             r.last1 = r.first1 + halfSize;
 
             first1 = r.last1;
