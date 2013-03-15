@@ -273,7 +273,6 @@ namespace bolt {
             control(bool createGlobal) :
                 m_commandQueue( getDefaultCommandQueue( ) ),
                 m_useHost(UseHost),
-                m_forceRunMode(Automatic),
                 m_debug(debug::None),
                 m_autoTune(AutoTuneAll),
                 m_wgPerComputeUnit(8),

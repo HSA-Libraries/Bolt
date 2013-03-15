@@ -418,7 +418,7 @@ void sort_pick_iterator( control &ctl,
     if (szElements == 0)
         return;
 
-    const bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+    bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
     if(runMode == bolt::cl::control::Automatic)
     {
         runMode = ctl.getDefaultPathToRun();

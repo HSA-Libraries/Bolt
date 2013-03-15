@@ -581,7 +581,7 @@ aProfiler.set(AsyncProfiler::memory, numElements*sizeof(iType));
             if( numElements < 1 )
                 return result;
 
-            const bolt::cl::control::e_RunMode runMode = ctrl.forceRunMode( );  // could be dynamic choice some day.
+            const bolt::cl::control::e_RunMode runMode = ctrl.getForceRunMode( );  // could be dynamic choice some day.
             if( runMode == bolt::cl::control::SerialCpu )
             {
                 ::cl::Event serialCPUEvent;
