@@ -177,9 +177,7 @@ namespace  detail {
             size_t szElements = (last - first); 
             if (szElements == 0)
                     return init;
-
-            //const bolt::cl::control::e_RunMode runMode = c.forceRunMode();  // could be dynamic choice some day.
-
+			            
 			bolt::cl::control::e_RunMode runMode = c.getForceRunMode();  // could be dynamic choice some day.
             if(runMode == bolt::cl::control::Automatic)
             {
@@ -201,8 +199,8 @@ namespace  detail {
                     tbb::parallel_reduce( tbb::blocked_range<iType*>( &*first, (iType*)&*(last-1) + 1), transform_reduce_op );
                     return transform_reduce_op.value;
 #else
-                    std::cout << "The MultiCoreCpu version of transform_reduce is not enabled." << std ::endl;
-                    throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of transform_reduce is not enabled to be built." );
+                    std::cout << "The MultiCoreCpu version of this function is not enabled." << std ::endl;
+                    throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of this function is not enabled to be built." );
                     return init;
 #endif  
             } else {
@@ -269,8 +267,8 @@ namespace  detail {
                 c.getCommandQueue().enqueueUnmapMemObject(first.getBuffer(), trans_reduceInputBuffer);
                 return transform_reduce_op.value;
 #else
-                std::cout << "The MultiCoreCpu version of transform_reduce is not enabled. " << std ::endl;
-                throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of transform_reduce is not enabled to be built." );
+                std::cout << "The MultiCoreCpu version of this function is not enabled. " << std ::endl;
+                throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of this function is not enabled to be built." );
                 return init;
 #endif
             }
