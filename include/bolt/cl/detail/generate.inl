@@ -228,8 +228,8 @@ aProfiler.set(AsyncProfiler::device, control::SerialCpu);
     const cl_uint numElements = static_cast< cl_uint >( std::distance( first, last ) );
     if (numElements < 1) return;
     const size_t workGroupSize  = 256;
-    const size_t numComputeUnits = ctrl.device( ).getInfo< CL_DEVICE_MAX_COMPUTE_UNITS >( ); // = 28
-    const size_t numWorkGroupsPerComputeUnit = ctrl.wgPerComputeUnit( );
+    const size_t numComputeUnits = ctrl.getDevice( ).getInfo< CL_DEVICE_MAX_COMPUTE_UNITS >( ); // = 28
+    const size_t numWorkGroupsPerComputeUnit = ctrl.getWGPerComputeUnit( );
     const size_t numWorkGroupsIdeal = numComputeUnits * numWorkGroupsPerComputeUnit;
     const cl_uint numThreadsIdeal = static_cast<cl_uint>( numWorkGroupsIdeal * workGroupSize );
     int doBoundaryCheck = 0;
@@ -300,7 +300,6 @@ aProfiler.set(AsyncProfiler::device, control::SerialCpu);
         break;
     } // switch kernel
 
-
     V_OPENCL( kernels[whichKernel].setArg( 0, first.getBuffer()),  "Error setArg kernels[ 0 ]" ); // Input keys
     V_OPENCL( kernels[whichKernel].setArg( 1, numElements),         "Error setArg kernels[ 0 ]" ); // Input buffer
     V_OPENCL( kernels[whichKernel].setArg( 2, *userGenerator ),     "Error setArg kernels[ 0 ]" ); // Size of buffer
@@ -308,10 +307,10 @@ aProfiler.set(AsyncProfiler::device, control::SerialCpu);
 #ifdef BOLT_ENABLE_PROFILING
 aProfiler.nextStep();
 aProfiler.setStepName("Kernel 0 Enqueue");
-aProfiler.set(AsyncProfiler::device, ctrl.forceRunMode());
+aProfiler.set(AsyncProfiler::device, ctrl.getForceRunMode());
 aProfiler.nextStep();
 aProfiler.setStepName("Kernel 0");
-aProfiler.set(AsyncProfiler::device, ctrl.forceRunMode());
+aProfiler.set(AsyncProfiler::device, ctrl.getForceRunMode());
 aProfiler.set(AsyncProfiler::flops, 1*numElements);
 aProfiler.set(AsyncProfiler::memory, 1*numElements*sizeof(oType)
         + (numThreadsChosen/workGroupSizeChosen)*sizeof(Generator));
@@ -319,7 +318,7 @@ aProfiler.set(AsyncProfiler::memory, 1*numElements*sizeof(oType)
 
                 // enqueue kernel
                 ::cl::Event generateEvent;
-    l_Error = ctrl.commandQueue().enqueueNDRangeKernel(
+    l_Error = ctrl.getCommandQueue().enqueueNDRangeKernel(
         kernels[whichKernel], 
                     ::cl::NullRange,
         ::cl::NDRange(numThreadsChosen),
@@ -337,7 +336,7 @@ aProfiler.setStepName("Querying Kernel Times");
 aProfiler.set(AsyncProfiler::device, control::SerialCpu);
 
 aProfiler.setDataSize(numElements*sizeof(iType));
-std::string strDeviceName = ctrl.device().getInfo< CL_DEVICE_NAME >( &l_Error );
+std::string strDeviceName = ctrl.getDevice().getInfo< CL_DEVICE_NAME >( &l_Error );
 bolt::cl::V_OPENCL( l_Error, "Device::getInfo< CL_DEVICE_NAME > failed" );
 aProfiler.setArchitecture(strDeviceName);
 
@@ -386,7 +385,7 @@ aProfiler.stopTrial();
 #endif
     // profiling
     cl_command_queue_properties queueProperties;
-    l_Error = ctrl.commandQueue().getInfo<cl_command_queue_properties>(CL_QUEUE_PROPERTIES, &queueProperties);
+    l_Error = ctrl.getCommandQueue().getInfo<cl_command_queue_properties>(CL_QUEUE_PROPERTIES, &queueProperties);
     unsigned int profilingEnabled = queueProperties&CL_QUEUE_PROFILING_ENABLE;
     if (1 && profilingEnabled) {
         cl_ulong start_time, stop_time;
