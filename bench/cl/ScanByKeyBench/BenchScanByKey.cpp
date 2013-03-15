@@ -227,7 +227,7 @@ int _tmain( int argc, _TCHAR* argv[] )
 
     if ( serial )
     {
-        ctrl.forceRunMode( bolt::cl::control::SerialCpu );  // choose serial std::scan
+        ctrl.setForceRunMode( bolt::cl::control::SerialCpu );  // choose serial std::scan
     }
 
     // Platform vector contains all available platforms on system
@@ -239,17 +239,17 @@ int _tmain( int argc, _TCHAR* argv[] )
         return 0;    }
 
     // Device info
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     std::vector< cl::Device > devices = myContext.getInfo< CL_CONTEXT_DEVICES >();
 
     ::cl::CommandQueue myQueue( myContext, devices.at( userDevice ) , CL_QUEUE_PROFILING_ENABLE);
 
     //  Now that the device we want is selected and we have created our own cl::CommandQueue, set it as the
     //  default cl::CommandQueue for the Bolt API
-    ctrl.commandQueue( myQueue );
+    ctrl.setCommandQueue( myQueue );
 
 
-    std::string strDeviceName = ctrl.device( ).getInfo< CL_DEVICE_NAME >( &err );
+    std::string strDeviceName = ctrl.getDevice( ).getInfo< CL_DEVICE_NAME >( &err );
     bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_NAME > failed" );
 
     std::cout << "Device under test : " << strDeviceName << std::endl;

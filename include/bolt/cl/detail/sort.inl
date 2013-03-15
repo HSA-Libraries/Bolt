@@ -345,12 +345,16 @@ void sort_pick_iterator( control &ctl,
     size_t szElements = static_cast< size_t >( std::distance( first, last ) );
     if (szElements == 0 )
             return;
-    const bolt::cl::control::e_RunMode runMode = ctl.forceRunMode();  // could be dynamic choice some day.
+    bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+    if(runMode == bolt::cl::control::Automatic)
+    {
+        runMode = ctl.getDefaultPathToRun();
+    }
     if ((runMode == bolt::cl::control::SerialCpu) || (szElements < SORT_CPU_THRESHOLD)) {
         ::cl::Event serialCPUEvent;
         cl_int l_Error = CL_SUCCESS;
         /*Map the device buffer to CPU*/
-        T *sortInputBuffer = (T*)ctl.commandQueue().enqueueMapBuffer(first.getBuffer(), false, 
+        T *sortInputBuffer = (T*)ctl.getCommandQueue().enqueueMapBuffer(first.getBuffer(), false, 
                                                                      CL_MAP_READ|CL_MAP_WRITE, 
                                                                      0, sizeof(T) * szElements, 
                                                                      NULL, &serialCPUEvent, &l_Error );
@@ -358,7 +362,7 @@ void sort_pick_iterator( control &ctl,
         //Compute sort using STL
         std::sort(sortInputBuffer, sortInputBuffer + szElements, comp);
         /*Unmap the device buffer back to device memory. This will copy the host modified buffer back to the device*/
-        ctl.commandQueue().enqueueUnmapMemObject(first.getBuffer(), sortInputBuffer);
+        ctl.getCommandQueue().enqueueUnmapMemObject(first.getBuffer(), sortInputBuffer);
         return;
     } else if (runMode == bolt::cl::control::MultiCoreCpu) {
 #ifdef ENABLE_TBB
@@ -366,7 +370,7 @@ void sort_pick_iterator( control &ctl,
         ::cl::Event multiCoreCPUEvent;
         cl_int l_Error = CL_SUCCESS;
         /*Map the device buffer to CPU*/
-        T *sortInputBuffer = (T*)ctl.commandQueue().enqueueMapBuffer(first.getBuffer(), false, 
+        T *sortInputBuffer = (T*)ctl.getCommandQueue().enqueueMapBuffer(first.getBuffer(), false, 
                                                                      CL_MAP_READ|CL_MAP_WRITE, 
                                                                      0, sizeof(T) * szElements, 
                                                                      NULL, &multiCoreCPUEvent, &l_Error );
@@ -375,7 +379,7 @@ void sort_pick_iterator( control &ctl,
         tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
         tbb::parallel_sort(sortInputBuffer,sortInputBuffer+szElements, comp);
         /*Unmap the device buffer back to device memory. This will copy the host modified buffer back to the device*/
-        ctl.commandQueue().enqueueUnmapMemObject(first.getBuffer(), sortInputBuffer);
+        ctl.getCommandQueue().enqueueUnmapMemObject(first.getBuffer(), sortInputBuffer);
         return;
 #else
         std::cout << "The MultiCoreCpu version of sort is not enabled. " << std ::endl;
@@ -414,7 +418,11 @@ void sort_pick_iterator( control &ctl,
     if (szElements == 0)
         return;
 
-    const bolt::cl::control::e_RunMode runMode = ctl.forceRunMode();  // could be dynamic choice some day.
+    bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+    if(runMode == bolt::cl::control::Automatic)
+    {
+        runMode = ctl.getDefaultPathToRun();
+    }
     if ((runMode == bolt::cl::control::SerialCpu) || (szElements < BITONIC_SORT_WGSIZE)) {
         std::sort(first, last, comp);
         return;
@@ -460,10 +468,8 @@ sort_enqueue(control &ctl,
 
     bool  newBuffer = false;
     ::cl::Buffer *pLocalBuffer;
-    int computeUnits     = ctl.device().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
-    int wgPerComputeUnit =  ctl.wgPerComputeUnit(); 
+    int computeUnits     = ctl.getDevice().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
     cl_int l_Error = CL_SUCCESS;
-
 
     static std::vector< ::cl::Kernel > radixSortUintKernels;
     std::vector<std::string> typeNames( sort_end );
@@ -476,7 +482,7 @@ sort_enqueue(control &ctl,
     PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVRandomAccessIterator >::get() )
     PUSH_BACK_UNIQUE( typeDefinitions, ClCode< StrictWeakOrdering  >::get() )
 
-    bool cpuDevice = ctl.device().getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_CPU;
+    bool cpuDevice = ctl.getDevice().getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_CPU;
     /*\TODO - Do CPU specific kernel work group size selection here*/
 
     std::string compileOptions;
@@ -500,9 +506,9 @@ sort_enqueue(control &ctl,
     {
         ::cl::Event copyEvent;
         szElements  = ((szElements + mulFactor) /mulFactor) * mulFactor;
-        pLocalBuffer = new ::cl::Buffer(ctl.context(),CL_MEM_READ_WRITE| CL_MEM_ALLOC_HOST_PTR, sizeof(T) * szElements);
+        pLocalBuffer = new ::cl::Buffer(ctl.getContext(),CL_MEM_READ_WRITE| CL_MEM_ALLOC_HOST_PTR, sizeof(T) * szElements);
 
-        ctl.commandQueue().enqueueCopyBuffer( first.getBuffer( ), 
+        ctl.getCommandQueue().enqueueCopyBuffer( first.getBuffer( ), 
                                               *pLocalBuffer, 0, 0, 
                                               orig_szElements*sizeof(T), NULL, &copyEvent );
         copyEvent.wait();
@@ -543,7 +549,7 @@ sort_enqueue(control &ctl,
             ::cl::Event fillEvent;
             clBR.origin = orig_szElements* sizeof(T);
             clBR.size  = (szElements * sizeof(T)) - orig_szElements* sizeof(T);
-            ctl.commandQueue().enqueueFillBuffer(clInputData, (unsigned int)BOLT_UINT_MAX, clBR.origin, clBR.size, NULL, &fillEvent);
+            ctl.getCommandQueue().enqueueFillBuffer(clInputData, (unsigned int)BOLT_UINT_MAX, clBR.origin, clBR.size, NULL, &fillEvent);
             fillEvent.wait();
         }
     }
@@ -558,7 +564,7 @@ sort_enqueue(control &ctl,
             ::cl::Event fillEvent;
             clBR.origin = orig_szElements* sizeof(T);
             clBR.size  = (szElements * sizeof(T)) - orig_szElements* sizeof(T);
-            ctl.commandQueue().enqueueFillBuffer(clInputData, (unsigned int)BOLT_UINT_MIN, clBR.origin, clBR.size, NULL, &fillEvent);
+            ctl.getCommandQueue().enqueueFillBuffer(clInputData, (unsigned int)BOLT_UINT_MIN, clBR.origin, clBR.size, NULL, &fillEvent);
             fillEvent.wait();
         }
     }
@@ -575,14 +581,14 @@ sort_enqueue(control &ctl,
         V_OPENCL( histKernel.setArg(1, clHistData), "Error setting a kernel argument" );
         V_OPENCL( histKernel.setArg(2, bits), "Error setting a kernel argument" );
 
-        l_Error = ctl.commandQueue().enqueueNDRangeKernel(
+        l_Error = ctl.getCommandQueue().enqueueNDRangeKernel(
                             histKernel,
                             ::cl::NullRange,
                             ::cl::NDRange(szElements/RADICES),
                             ::cl::NDRange(groupSize),
                             NULL,
                             NULL);
-        //V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
+        //V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
 
         //Perform a global scan 
         detail::scan_enqueue(ctl, dvHistogramBins.begin(), dvHistogramBins.end(), dvHistogramBinsDest.begin(), 0, plus< T >( ), false);
@@ -598,25 +604,25 @@ sort_enqueue(control &ctl,
             V_OPENCL( permuteKernel.setArg(3, clSwapData), "Error setting kernel argument" );
         else
             V_OPENCL( permuteKernel.setArg(3, clInputData), "Error setting kernel argument" );
-        l_Error = ctl.commandQueue().enqueueNDRangeKernel(
+        l_Error = ctl.getCommandQueue().enqueueNDRangeKernel(
                             permuteKernel,
                             ::cl::NullRange,
                             ::cl::NDRange(szElements/RADICES),
                             ::cl::NDRange(groupSize),
                             NULL,
                             NULL);
-        V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
+        V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
         /*For swapping the buffers*/
         swap = swap? 0: 1;
     }
     ::cl::Event uintRadixSortEvent;
-    V_OPENCL( ctl.commandQueue().clEnqueueBarrierWithWaitList(NULL, &uintRadixSortEvent) , "Error calling clEnqueueBarrierWithWaitList on the command queue" );
+    V_OPENCL( ctl.getCommandQueue().clEnqueueBarrierWithWaitList(NULL, &uintRadixSortEvent) , "Error calling clEnqueueBarrierWithWaitList on the command queue" );
     bolt::cl::wait(ctl, uintRadixSortEvent);
 
     if(newBuffer == true)
     {
         ::cl::Event copyBackEvent;
-        ctl.commandQueue().enqueueCopyBuffer( clInputData, first.getBuffer( ), 0, 0, sizeof(T)*orig_szElements, NULL, &copyBackEvent );
+        ctl.getCommandQueue().enqueueCopyBuffer( clInputData, first.getBuffer( ), 0, 0, sizeof(T)*orig_szElements, NULL, &copyBackEvent );
         copyBackEvent.wait();
     }
     delete pLocalBuffer;
@@ -646,8 +652,7 @@ sort_enqueue(control &ctl,
     bool  newBuffer = false;
     ::cl::Buffer *pLocalBuffer;
 
-    int computeUnits     = ctl.device().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
-    int wgPerComputeUnit =  ctl.wgPerComputeUnit(); 
+    int computeUnits     = ctl.getDevice().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
 
     std::vector<std::string> typeNames( sort_end );
     typeNames[sort_iValueType] = TypeName< T >::get( );
@@ -659,7 +664,7 @@ sort_enqueue(control &ctl,
     PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVRandomAccessIterator >::get() )
     PUSH_BACK_UNIQUE( typeDefinitions, ClCode< StrictWeakOrdering  >::get() )
 
-    bool cpuDevice = ctl.device().getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_CPU;
+    bool cpuDevice = ctl.getDevice().getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_CPU;
     /*\TODO - Do CPU specific kernel work group size selection here*/
     //const size_t kernel0_WgSize = (cpuDevice) ? 1 : WAVESIZE*KERNEL02WAVES;
 
@@ -684,9 +689,9 @@ sort_enqueue(control &ctl,
     {
         ::cl::Event copyEvent;
         szElements  = ((szElements + mulFactor) /mulFactor) * mulFactor;
-        pLocalBuffer = new ::cl::Buffer(ctl.context(),CL_MEM_READ_WRITE| CL_MEM_ALLOC_HOST_PTR, sizeof(T) * szElements);
+        pLocalBuffer = new ::cl::Buffer(ctl.getContext(),CL_MEM_READ_WRITE| CL_MEM_ALLOC_HOST_PTR, sizeof(T) * szElements);
 
-        ctl.commandQueue().enqueueCopyBuffer( first.getBuffer( ), 
+        ctl.getCommandQueue().enqueueCopyBuffer( first.getBuffer( ), 
                                               *pLocalBuffer, 0, 0, 
                                               orig_szElements*sizeof(T), NULL, &copyEvent );
         copyEvent.wait();
@@ -724,7 +729,7 @@ sort_enqueue(control &ctl,
             cl_buffer_region clBR;
             clBR.origin = orig_szElements* sizeof(T);
             clBR.size  = (szElements * sizeof(T)) - orig_szElements* sizeof(T);
-            ctl.commandQueue().enqueueFillBuffer(clInputData, BOLT_INT_MAX, clBR.origin, clBR.size, NULL, NULL);
+            ctl.getCommandQueue().enqueueFillBuffer(clInputData, BOLT_INT_MAX, clBR.origin, clBR.size, NULL, NULL);
         }
     }
     else
@@ -738,7 +743,7 @@ sort_enqueue(control &ctl,
             cl_buffer_region clBR;
             clBR.origin = orig_szElements* sizeof(T);
             clBR.size  = (szElements * sizeof(T)) - orig_szElements* sizeof(T);
-            ctl.commandQueue().enqueueFillBuffer(clInputData, BOLT_INT_MIN, clBR.origin, clBR.size, NULL, NULL);
+            ctl.getCommandQueue().enqueueFillBuffer(clInputData, BOLT_INT_MIN, clBR.origin, clBR.size, NULL, NULL);
         }
     }
 
@@ -759,14 +764,14 @@ sort_enqueue(control &ctl,
         V_OPENCL( histKernel.setArg(2, bits), "Error setting a kernel argument" );
         //V_OPENCL( histKernel.setArg(4, loc), "Error setting kernel argument" );
 
-        l_Error = ctl.commandQueue().enqueueNDRangeKernel(
+        l_Error = ctl.getCommandQueue().enqueueNDRangeKernel(
                             histKernel,
                             ::cl::NullRange,
                             ::cl::NDRange(szElements/RADICES),
                             ::cl::NDRange(groupSize),
                             NULL,
                             NULL);
-        //V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
+        //V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
 
         //Perform a global scan 
 
@@ -785,14 +790,14 @@ sort_enqueue(control &ctl,
             V_OPENCL( permuteKernel.setArg(3, clSwapData), "Error setting kernel argument" );
         else
             V_OPENCL( permuteKernel.setArg(3, clInputData), "Error setting kernel argument" );
-        l_Error = ctl.commandQueue().enqueueNDRangeKernel(
+        l_Error = ctl.getCommandQueue().enqueueNDRangeKernel(
                             permuteKernel,
                             ::cl::NullRange,
                             ::cl::NDRange(szElements/RADICES),
                             ::cl::NDRange(groupSize),
                             NULL,
                             NULL);
-        //V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
+        //V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
 
             /*For swapping the buffers*/
             swap = swap? 0: 1;
@@ -816,14 +821,14 @@ sort_enqueue(control &ctl,
             V_OPENCL( histSignedKernel.setArg(2, bits), "Error setting a kernel argument" );
             //V_OPENCL( histKernel.setArg(4, loc), "Error setting kernel argument" );
 
-            l_Error = ctl.commandQueue().enqueueNDRangeKernel(
+            l_Error = ctl.getCommandQueue().enqueueNDRangeKernel(
                                 histSignedKernel,
                                 ::cl::NullRange,
                                 ::cl::NDRange(szElements/RADICES),
                                 ::cl::NDRange(groupSize),
                                 NULL,
                                 NULL);
-            //V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
+            //V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
 
             //Perform a global scan 
             detail::scan_enqueue(ctl, dvHistogramBins.begin(), dvHistogramBins.end(), dvHistogramBinsDest.begin(), 0, plus< T >( ), false);
@@ -832,7 +837,7 @@ sort_enqueue(control &ctl,
             V_OPENCL( permuteSignedKernel.setArg(1, clHistDataDest), "Error setting a kernel argument" );
             V_OPENCL( permuteSignedKernel.setArg(2, bits), "Error setting a kernel argument" );
             V_OPENCL( permuteSignedKernel.setArg(3, clInputData), "Error setting kernel argument" );
-            l_Error = ctl.commandQueue().enqueueNDRangeKernel(
+            l_Error = ctl.getCommandQueue().enqueueNDRangeKernel(
                                 permuteSignedKernel,
                                 ::cl::NullRange,
                                 ::cl::NDRange(szElements/RADICES),
@@ -841,13 +846,13 @@ sort_enqueue(control &ctl,
                                 NULL);
 
     ::cl::Event intRadixSortEvent;
-    V_OPENCL( ctl.commandQueue().clEnqueueBarrierWithWaitList(NULL, &intRadixSortEvent) , "Error calling clEnqueueBarrierWithWaitList on the command queue" );
+    V_OPENCL( ctl.getCommandQueue().clEnqueueBarrierWithWaitList(NULL, &intRadixSortEvent) , "Error calling clEnqueueBarrierWithWaitList on the command queue" );
     bolt::cl::wait(ctl, intRadixSortEvent);
 
     if(newBuffer == true)
     {
         ::cl::Event copyBackEvent;
-        ctl.commandQueue().enqueueCopyBuffer( clInputData, first.getBuffer( ), 0, 0, sizeof(T)*orig_szElements, NULL, &copyBackEvent );
+        ctl.getCommandQueue().enqueueCopyBuffer( clInputData, first.getBuffer( ), 0, 0, sizeof(T)*orig_szElements, NULL, &copyBackEvent );
         copyBackEvent.wait();
     }
     delete pLocalBuffer;
@@ -884,7 +889,7 @@ sort_enqueue(control &ctl,
     PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVRandomAccessIterator >::get() )
     PUSH_BACK_UNIQUE( typeDefinitions, ClCode< StrictWeakOrdering  >::get() )
 
-    bool cpuDevice = ctl.device().getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_CPU;
+    bool cpuDevice = ctl.getDevice().getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_CPU;
     /*\TODO - Do CPU specific kernel work group size selection here*/
     //const size_t kernel0_WgSize = (cpuDevice) ? 1 : WAVESIZE*KERNEL02WAVES;
     std::string compileOptions;
@@ -938,7 +943,7 @@ sort_enqueue(control &ctl,
              * Each thread writes a sorted pair.
              * So, the number of  threads (global) should be half the length of the input buffer.
              */
-            l_Error = ctl.commandQueue().enqueueNDRangeKernel(
+            l_Error = ctl.getCommandQueue().enqueueNDRangeKernel(
                                             kernels[0], 
                                             ::cl::NullRange,
                                             ::cl::NDRange(szElements/2),
@@ -947,15 +952,15 @@ sort_enqueue(control &ctl,
                                             NULL);
 
             V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for sort() kernel" );
-            //V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
+            //V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
         }//end of for passStage = 0:stage-1
     }//end of for stage = 0:numStage-1
     ::cl::Event bitonicSortEvent;
-    V_OPENCL( ctl.commandQueue().clEnqueueBarrierWithWaitList(NULL, &bitonicSortEvent) , 
+    V_OPENCL( ctl.getCommandQueue().clEnqueueBarrierWithWaitList(NULL, &bitonicSortEvent) , 
                         "Error calling clEnqueueBarrierWithWaitList on the command queue" );
     l_Error = bitonicSortEvent.wait( );
     V_OPENCL( l_Error, "bitonicSortEvent failed to wait" );
-    //V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
+    //V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
     return;
 }// END of sort_enqueue
 
@@ -983,7 +988,7 @@ void sort_enqueue_non_powerOf2(control &ctl,
     PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVRandomAccessIterator >::get() )
     PUSH_BACK_UNIQUE( typeDefinitions, ClCode< StrictWeakOrdering  >::get() )
 
-    bool cpuDevice = ctl.device().getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_CPU;
+    bool cpuDevice = ctl.getDevice().getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_CPU;
     /*\TODO - Do CPU specific kernel work group size selection here*/
     //const size_t kernel0_WgSize = (cpuDevice) ? 1 : WAVESIZE*KERNEL02WAVES;
     std::string compileOptions;
@@ -999,7 +1004,7 @@ void sort_enqueue_non_powerOf2(control &ctl,
         sort_kernels,
         compileOptions);
 
-    size_t wgSize  = kernels[0].getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.device( ), &l_Error );
+    size_t wgSize  = kernels[0].getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.getDevice( ), &l_Error );
 
     size_t totalWorkGroups = (szElements + wgSize)/wgSize;
     size_t globalSize = totalWorkGroups * wgSize;
@@ -1021,7 +1026,7 @@ void sort_enqueue_non_powerOf2(control &ctl,
     V_OPENCL( kernels[0].setArg(3, loc), "Error setting kernel argument loc" );
     V_OPENCL( kernels[0].setArg(4, static_cast<cl_uint> (szElements)), "Error setting kernel argument szElements" );
     {
-        l_Error = ctl.commandQueue().enqueueNDRangeKernel(
+        l_Error = ctl.getCommandQueue().enqueueNDRangeKernel(
                                         kernels[0], 
                                         ::cl::NullRange,
                                         ::cl::NDRange(globalSize),
@@ -1029,10 +1034,10 @@ void sort_enqueue_non_powerOf2(control &ctl,
                                         NULL,
                                         NULL);
         V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for sort() kernel" );
-        V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
+        V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
     }
 
-    wgSize  = kernels[1].getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.device( ), &l_Error );
+    wgSize  = kernels[1].getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.getDevice( ), &l_Error );
 
     V_OPENCL( kernels[1].setArg(0, *out), "Error setting a kernel argument in" );
     V_OPENCL( kernels[1].setArg(1, in), "Error setting a kernel argument out" );
@@ -1040,7 +1045,7 @@ void sort_enqueue_non_powerOf2(control &ctl,
     V_OPENCL( kernels[1].setArg(3, loc), "Error setting kernel argument loc" );
     V_OPENCL( kernels[1].setArg(4, static_cast<cl_uint> (szElements)), "Error setting kernel argument szElements" );
     {
-        l_Error = ctl.commandQueue().enqueueNDRangeKernel(
+        l_Error = ctl.getCommandQueue().enqueueNDRangeKernel(
                                         kernels[1],
                                         ::cl::NullRange,
                                         ::cl::NDRange(globalSize),
@@ -1048,7 +1053,7 @@ void sort_enqueue_non_powerOf2(control &ctl,
                                         NULL,
                                         NULL);
         V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for sort() kernel" );
-        V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
+        V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
     }
     return;
 }// END of sort_enqueue_non_powerOf2

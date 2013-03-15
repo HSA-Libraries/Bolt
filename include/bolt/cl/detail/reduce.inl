@@ -101,8 +101,11 @@ namespace bolt {
             BinaryFunction binary_op, 
             const std::string& cl_code)  
         {
-            const bolt::cl::control::e_RunMode runMode = ctl.forceRunMode();  // could be dynamic choice some day.
-
+            bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+            if(runMode == bolt::cl::control::Automatic)
+            {
+                  runMode = ctl.getDefaultPathToRun();
+            }
             if (runMode == bolt::cl::control::SerialCpu) {
                 return std::accumulate(first, last, init, binary_op);
             } else {
@@ -236,7 +239,11 @@ namespace bolt {
                 if (szElements == 0)
                     return init;
                 /*TODO - probably the forceRunMode should be replaced by getRunMode and setRunMode*/
-                const bolt::cl::control::e_RunMode runMode = ctl.forceRunMode();  
+                bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+                if(runMode == bolt::cl::control::Automatic)
+                {
+                    runMode = ctl.getDefaultPathToRun();
+                }
                 if (runMode == bolt::cl::control::SerialCpu) {
                     return std::accumulate(first, last, init) ;
                 } else if (runMode == bolt::cl::control::MultiCoreCpu) {
@@ -272,32 +279,36 @@ namespace bolt {
                 if (szElements == 0)
                     return init;
 
-                const bolt::cl::control::e_RunMode runMode = ctl.forceRunMode();  
+                bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+                if(runMode == bolt::cl::control::Automatic)
+                {
+                    runMode = ctl.getDefaultPathToRun();
+                }
                 if (runMode == bolt::cl::control::SerialCpu) {
                     ::cl::Event serialCPUEvent;
                     cl_int l_Error = CL_SUCCESS;
                     T reduceResult;
                     /*Map the device buffer to CPU*/
-                    iType *reduceInputBuffer = (iType*)ctl.commandQueue().enqueueMapBuffer(first.getBuffer(), false, CL_MAP_READ|CL_MAP_WRITE,0, sizeof(iType) * szElements, 
+                    iType *reduceInputBuffer = (iType*)ctl.getCommandQueue().enqueueMapBuffer(first.getBuffer(), false, CL_MAP_READ|CL_MAP_WRITE,0, sizeof(iType) * szElements, 
                                                NULL, &serialCPUEvent, &l_Error );       
                     serialCPUEvent.wait();
                     reduceResult = std::accumulate(reduceInputBuffer, reduceInputBuffer + szElements, init) ;
                     /*Unmap the device buffer back to device memory. This will copy the host modified buffer back to the device*/
-                    ctl.commandQueue().enqueueUnmapMemObject(first.getBuffer(), reduceInputBuffer);
+                    ctl.getCommandQueue().enqueueUnmapMemObject(first.getBuffer(), reduceInputBuffer);
                      return reduceResult;
                 } else if (runMode == bolt::cl::control::MultiCoreCpu) {
 #ifdef ENABLE_TBB
                     ::cl::Event multiCoreCPUEvent;
                     cl_int l_Error = CL_SUCCESS;
                    /*Map the device buffer to CPU*/
-                   iType *reduceInputBuffer = (iType*)ctl.commandQueue().enqueueMapBuffer(first.getBuffer(), false, CL_MAP_READ|CL_MAP_WRITE,0, sizeof(iType) * szElements, 
+                   iType *reduceInputBuffer = (iType*)ctl.getCommandQueue().enqueueMapBuffer(first.getBuffer(), false, CL_MAP_READ|CL_MAP_WRITE,0, sizeof(iType) * szElements, 
                                                NULL, &multiCoreCPUEvent, &l_Error );
                     multiCoreCPUEvent.wait();
                     tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
                     Reduce<iType, BinaryFunction> reduce_op(binary_op, init);
                     tbb::parallel_reduce( tbb::blocked_range<iType*>( reduceInputBuffer, reduceInputBuffer + szElements), reduce_op );
                     /*Unmap the device buffer back to device memory. This will copy the host modified buffer back to the device*/
-                    ctl.commandQueue().enqueueUnmapMemObject(first.getBuffer(), reduceInputBuffer);
+                    ctl.getCommandQueue().enqueueUnmapMemObject(first.getBuffer(), reduceInputBuffer);
                     return reduce_op.value;
 #else
                     std::cout << "The MultiCoreCpu version of reduce is not enabled. " << std ::endl;
@@ -367,13 +378,13 @@ namespace bolt {
 
 
                 // Set up shape of launch grid and buffers:
-                cl_uint computeUnits     = ctl.device().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
-                int wgPerComputeUnit =  ctl.wgPerComputeUnit(); 
+                cl_uint computeUnits     = ctl.getDevice().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
+                int wgPerComputeUnit =  ctl.getWGPerComputeUnit(); 
                 size_t numWG = computeUnits * wgPerComputeUnit;
 
                 cl_int l_Error = CL_SUCCESS;
                 const size_t wgSize  = kernels[0].getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( 
-                    ctl.device( ), &l_Error );
+                    ctl.getDevice( ), &l_Error );
                 V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
 
                 // Create buffer wrappers so we can access the host functors, for read or writing in the kernel
@@ -399,7 +410,7 @@ namespace bolt {
                 loc.size_ = wgSize*sizeof(iType);
                 V_OPENCL( kernels[0].setArg(5, loc), "Error setting kernel argument" );
 
-                l_Error = ctl.commandQueue().enqueueNDRangeKernel(
+                l_Error = ctl.getCommandQueue().enqueueNDRangeKernel(
                     kernels[0], 
                     ::cl::NullRange, 
                     ::cl::NDRange(numWG * wgSize), 
@@ -407,7 +418,7 @@ namespace bolt {
                 V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for reduce() kernel" );
 
                 ::cl::Event l_mapEvent;
-                iType *h_result = (iType*)ctl.commandQueue().enqueueMapBuffer(*result, false, CL_MAP_READ, 0, 
+                iType *h_result = (iType*)ctl.getCommandQueue().enqueueMapBuffer(*result, false, CL_MAP_READ, 0, 
                     sizeof(iType)*numWG, NULL, &l_mapEvent, &l_Error );
                 V_OPENCL( l_Error, "Error calling map on the result buffer" );
 

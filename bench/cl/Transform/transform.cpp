@@ -175,12 +175,12 @@ int main( int argc, char* argv[] )
 
     if( runSTL )
     {
-        ctrl.forceRunMode( bolt::cl::control::SerialCpu );  // choose serial std::scan
+        ctrl.setForceRunMode( bolt::cl::control::SerialCpu );  // choose serial std::scan
     }
 
     if( runTBB )
     {
-        ctrl.forceRunMode( bolt::cl::control::MultiCoreCpu );  // choose tbb tbb::parallel_scan
+        ctrl.setForceRunMode( bolt::cl::control::MultiCoreCpu );  // choose tbb tbb::parallel_scan
     }
 
     // Platform vector contains all available platforms on system
@@ -188,12 +188,12 @@ int main( int argc, char* argv[] )
     bolt::cl::V_OPENCL( ::cl::Platform::get( &platforms ), "Platform::get() failed" );
 
     // Device info
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     std::vector< cl::Device > devices = myContext.getInfo< CL_CONTEXT_DEVICES >();
 
     ::cl::CommandQueue myQueue( myContext, devices.at( userDevice ) , CL_QUEUE_PROFILING_ENABLE);
-    ctrl.commandQueue( myQueue );
-    std::string strDeviceName = ctrl.device( ).getInfo< CL_DEVICE_NAME >( &err );
+    ctrl.setCommandQueue( myQueue );
+    std::string strDeviceName = ctrl.getDevice( ).getInfo< CL_DEVICE_NAME >( &err );
     bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_NAME > failed" );
 
     std::cout << "Device under test : " << strDeviceName << std::endl;

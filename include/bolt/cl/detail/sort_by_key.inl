@@ -190,7 +190,11 @@ public:
         size_t szElements = (size_t)(keys_last - keys_first);
         if (szElements == 0 )
                 return;
-        const bolt::cl::control::e_RunMode runMode = ctl.forceRunMode();  // could be dynamic choice some day.
+        bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode( );
+        if( runMode == bolt::cl::control::Automatic )
+        {
+            runMode = ctl.getDefaultPathToRun( );
+        }
         if (runMode == bolt::cl::control::SerialCpu) {
             //  TODO:  Need access to the device_vector .data method to get a host pointer
             throw ::cl::Error( CL_INVALID_DEVICE, "Sort of device_vector CPU device not implemented" );
@@ -222,7 +226,11 @@ public:
         if (szElements == 0)
             return;
 
-        const bolt::cl::control::e_RunMode runMode = ctl.forceRunMode();  // could be dynamic choice some day.
+        bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode( );
+        if( runMode == bolt::cl::control::Automatic )
+        {
+            runMode = ctl.getDefaultPathToRun( );
+        }
         if ((runMode == bolt::cl::control::SerialCpu) /*|| (szElements < WGSIZE) */) {
             std::cout << "The SerialCpu version of sort is not implemented yet." << std ::endl;
             std::sort(keys_first, keys_last);
@@ -277,7 +285,7 @@ public:
             PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVRandomAccessIterator2 >::get() )
             PUSH_BACK_UNIQUE( typeDefinitions, ClCode< StrictWeakOrdering  >::get() )
 
-            bool cpuDevice = ctl.device().getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_CPU;
+            bool cpuDevice = ctl.getDevice().getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_CPU;
             /*\TODO - Do CPU specific kernel work group size selection here*/
             //const size_t kernel0_WgSize = (cpuDevice) ? 1 : WAVESIZE*KERNEL02WAVES;
             std::string compileOptions;
@@ -296,13 +304,13 @@ public:
             size_t temp;
 
             // Set up shape of launch grid and buffers:
-            int computeUnits     = ctl.device().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
-            int wgPerComputeUnit =  ctl.wgPerComputeUnit();
+            int computeUnits     = ctl.getDevice().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
+            int wgPerComputeUnit =  ctl.getWGPerComputeUnit();
             int resultCnt = computeUnits * wgPerComputeUnit;
             cl_int l_Error = CL_SUCCESS;
 
             size_t wgSize  = kernels[0].getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >
-                                                                                ( ctl.device( ), &l_Error );
+                                                                                ( ctl.getDevice( ), &l_Error );
             V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
             if((szElements/2) < wgSize)
             {
@@ -312,7 +320,7 @@ public:
 
             ::cl::Buffer Keys = keys_first.getBuffer( );
             ::cl::Buffer Values = values_first.getBuffer( );
-            ::cl::Buffer userFunctor(ctl.context(), CL_MEM_USE_HOST_PTR, sizeof(comp), (void*)&comp );
+            ::cl::Buffer userFunctor(ctl.getContext(), CL_MEM_USE_HOST_PTR, sizeof(comp), (void*)&comp );
 
             numStages = 0;
             for(temp = szElements; temp > 1; temp >>= 1)
@@ -338,7 +346,7 @@ public:
                         * Each thread writes a sorted pair.
                         * So, the number of  threads (global) should be half the length of the input buffer.
                         */
-                    l_Error = ctl.commandQueue().enqueueNDRangeKernel(
+                    l_Error = ctl.getCommandQueue().enqueueNDRangeKernel(
                             kernels[0],
                             ::cl::NullRange,
                             ::cl::NDRange(szElements/2),
@@ -346,7 +354,7 @@ public:
                             NULL,
                             NULL);
                     V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for sort() kernel" );
-                    V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
+                    V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
                 }//end of for passStage = 0:stage-1
             }//end of for stage = 0:numStage-1
             //Map the buffer back to the host
@@ -354,7 +362,7 @@ public:
             //    sizeof(T_keys) * szElements, NULL, NULL, &l_Error );
             //ctl.commandQueue().enqueueMapBuffer(Values, true, CL_MAP_READ | CL_MAP_WRITE, 0/*offset*/, 
             //   sizeof(T_values) * szElements, NULL, NULL, &l_Error );
-            V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
+            V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
             V_OPENCL( l_Error, "Error calling map on the result buffer" );
             return;
     }// END of sort_enqueue

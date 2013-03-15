@@ -46,7 +46,7 @@ namespace cl {
             constant_iterator( value_type init, const control& ctl = control::getDefault( ) ): 
                 m_constValue( init ), m_Index( 0 )
             {
-                const ::cl::CommandQueue& m_commQueue = ctl.commandQueue( );
+                const ::cl::CommandQueue& m_commQueue = ctl.getCommandQueue( );
 
                 //  We want to use the context from the passed in commandqueue to initialize our buffer
                 cl_int l_Error = CL_SUCCESS;
@@ -157,6 +157,7 @@ namespace cl {
     //  This string represents the device side definition of the constant_iterator template
     static std::string deviceConstantIterator = STRINGIFY_CODE( 
         template< typename T > \n
+        namespace bolt { namespace cl { \n 
         class constant_iterator \n
         { \n
         public: \n
@@ -185,6 +186,7 @@ namespace cl {
 
             value_type m_constValue; \n
         }; \n
+    } } \n
     );
 
     template< typename Type >

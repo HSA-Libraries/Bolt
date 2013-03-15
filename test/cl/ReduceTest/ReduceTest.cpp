@@ -219,7 +219,7 @@ TYPED_TEST_P( ReduceArrayTest, GPU_DeviceMultipliesFunction )
 {
     typedef std::array< ArrayType, ArraySize > ArrayCont;
 #if OCL_CONTEXT_BUG_WORKAROUND
-  ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
+  ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control c_gpu( getQueueFromContext(myContext, CL_DEVICE_TYPE_GPU, 0 ));  
 #else
     ::Concurrency::accelerator accel(::Concurrency::accelerator::default_accelerator);
@@ -1190,7 +1190,7 @@ void simpleReduce_TestControl(int aSize, int numIters, int deviceIndex)
 
   // FIXME - temporarily disable use of new control queue here:
 #if OCL_CONTEXT_BUG_WORKAROUND
-  ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
+  ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control c( getQueueFromContext(myContext, CL_DEVICE_TYPE_GPU, 0 )); 
 #else
   MyOclContext ocl = initOcl(CL_DEVICE_TYPE_GPU, deviceIndex);
@@ -1207,7 +1207,7 @@ void simpleReduce_TestControl(int aSize, int numIters, int deviceIndex)
 
     char testTag[2000];
     sprintf_s(testTag, 2000, "simpleReduce_TestControl sz=%d iters=%d, device=%s", aSize, numIters, 
-        c.device( ).getInfo<CL_DEVICE_NAME>( ).c_str( ) );
+        c.getDevice( ).getInfo<CL_DEVICE_NAME>( ).c_str( ) );
 
     __int64 start = StartProfile();
     for (int i=0; i<numIters; i++) {

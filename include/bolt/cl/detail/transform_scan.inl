@@ -308,7 +308,13 @@ transform_scan_pick_iterator(
     if( numElements == 0 )
         return result;
 
-    const bolt::cl::control::e_RunMode runMode = ctl.forceRunMode( );  // could be dynamic choice some day.
+    bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode( );
+
+    if( runMode == bolt::cl::control::Automatic )
+    {
+        runMode = ctl.getDefaultPathToRun();
+    }
+
     if( runMode == bolt::cl::control::SerialCpu )
     {
         // TODO fix this
@@ -367,7 +373,13 @@ transform_scan_pick_iterator(
     if( numElements < 1 )
         return result;
 
-    const bolt::cl::control::e_RunMode runMode = ctl.forceRunMode( );  // could be dynamic choice some day.
+    bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode( );
+
+    if( runMode == bolt::cl::control::Automatic )
+    {
+        runMode = ctl.getDefaultPathToRun();
+    }
+
     if( runMode == bolt::cl::control::SerialCpu )
     {
         //  TODO:  Need access to the device_vector .data method to get a host pointer
@@ -446,7 +458,7 @@ size_t k0_stepNum, k1_stepNum, k2_stepNum;
     /**********************************************************************************
      * Compile Options
      *********************************************************************************/
-    bool cpuDevice = ctl.device().getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_CPU;
+    bool cpuDevice = ctl.getDevice().getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_CPU;
     //std::cout << "Device is CPU: " << (cpuDevice?"TRUE":"FALSE") << std::endl;
     const size_t kernel0_WgSize = (cpuDevice) ? 1 : WAVESIZE*KERNEL02WAVES;
     const size_t kernel1_WgSize = (cpuDevice) ? 1 : WAVESIZE*KERNEL1WAVES;
@@ -475,8 +487,8 @@ size_t k0_stepNum, k1_stepNum, k2_stepNum;
     ::cl::Event kernel0Event, kernel1Event, kernel2Event, kernelAEvent;
     cl_uint doExclusiveScan = inclusive ? 0 : 1;
     // Set up shape of launch grid and buffers:
-    int computeUnits     = ctl.device( ).getInfo< CL_DEVICE_MAX_COMPUTE_UNITS >( );
-    int wgPerComputeUnit =  ctl.wgPerComputeUnit( );
+    int computeUnits     = ctl.getDevice( ).getInfo< CL_DEVICE_MAX_COMPUTE_UNITS >( );
+    int wgPerComputeUnit =  ctl.getWGPerComputeUnit( );
     int resultCnt = computeUnits * wgPerComputeUnit;
 
     //  Ceiling function to bump the size of input to the next whole wavefront size
@@ -542,12 +554,12 @@ aProfiler.set(AsyncProfiler::device, control::SerialCpu);
 aProfiler.nextStep();
 k0_stepNum = aProfiler.getStepNum();
 aProfiler.setStepName("Kernel 0");
-aProfiler.set(AsyncProfiler::device, ctl.forceRunMode());
+aProfiler.set(AsyncProfiler::device, ctl.getForceRunMode());
 aProfiler.set(AsyncProfiler::flops, 2*numElements);
 aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(iType) + 1*sizeScanBuff*sizeof(oType));
 #endif
 
-    l_Error = ctl.commandQueue( ).enqueueNDRangeKernel(
+    l_Error = ctl.getCommandQueue( ).enqueueNDRangeKernel(
         kernels[0],
         ::cl::NullRange,
         ::cl::NDRange( sizeInputBuff ),
@@ -586,12 +598,12 @@ aProfiler.set(AsyncProfiler::device, control::SerialCpu);
 aProfiler.nextStep();
 k1_stepNum = aProfiler.getStepNum();
 aProfiler.setStepName("Kernel 1");
-aProfiler.set(AsyncProfiler::device, ctl.forceRunMode());
+aProfiler.set(AsyncProfiler::device, ctl.getForceRunMode());
 aProfiler.set(AsyncProfiler::flops, 2*sizeScanBuff);
 aProfiler.set(AsyncProfiler::memory, 4*sizeScanBuff*sizeof(oType));
 #endif
 
-    l_Error = ctl.commandQueue( ).enqueueNDRangeKernel(
+    l_Error = ctl.getCommandQueue( ).enqueueNDRangeKernel(
         kernels[1],
         ::cl::NullRange,
         ::cl::NDRange( kernel1_WgSize ), // only 1 work-group
@@ -621,12 +633,12 @@ aProfiler.set(AsyncProfiler::device, control::SerialCpu);
 aProfiler.nextStep();
 k2_stepNum = aProfiler.getStepNum();
 aProfiler.setStepName("Kernel 2");
-aProfiler.set(AsyncProfiler::device, ctl.forceRunMode());
+aProfiler.set(AsyncProfiler::device, ctl.getForceRunMode());
 aProfiler.set(AsyncProfiler::flops, numElements);
 aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(oType) + 1*sizeScanBuff*sizeof(oType));
 #endif
 
-    l_Error = ctl.commandQueue( ).enqueueNDRangeKernel(
+    l_Error = ctl.getCommandQueue( ).enqueueNDRangeKernel(
         kernels[2],
         ::cl::NullRange,
         ::cl::NDRange( sizeInputBuff ),
@@ -649,7 +661,7 @@ aProfiler.setStepName("Querying Kernel Times");
 aProfiler.set(AsyncProfiler::device, control::SerialCpu);
 
 aProfiler.setDataSize(numElements*sizeof(iType));
-std::string strDeviceName = ctl.device().getInfo< CL_DEVICE_NAME >( &l_Error );
+std::string strDeviceName = ctl.getDevice().getInfo< CL_DEVICE_NAME >( &l_Error );
 bolt::cl::V_OPENCL( l_Error, "Device::getInfo< CL_DEVICE_NAME > failed" );
 aProfiler.setArchitecture(strDeviceName);
 
