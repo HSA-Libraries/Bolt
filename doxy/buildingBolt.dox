@@ -19,13 +19,36 @@
 /*!
 * \page buildingBolt Building Bolt
 * \tableofcontents
-* \section cloning_bolt Cloning Bolt from GitHub
+* \section cloning_bolt Cloning the Bolt source from GitHub
 *
-* \subsection clone Git Clone
-* Download git source control system. git-scm is freely available from 
-* <a href="http://git-scm.com/downloads">http://git-scm.com/downloads</a>. Once installed, open git bash and clone the
-* the repository using this command <tt>git clone https://github.com/HSA-Libraries/Bolt </tt>. This will clone the
-* repository for you to start working with Bolt.
+* \subsection clone Clone Bolt
+* There are many available git clients for both Windows and Linux.  If you are already familiar with git, the quick start
+* instructions are to choose your favorite client and issue a <tt>git clone https://github.com/HSA-Libraries/Bolt </tt>.
+* If you are not familiar with git, you have to first install a git client on your host OS in order to 'clone' the 
+* Bolt code onto your computer.  For linux, if git is not already included in your distribution (type git --version at
+* your commandline), then most likely you can still use the native OS's package manager system to easily install the 
+* git package; the package is usually called 'git' or 'git-core'.
+* For windows, a variety of options also exist, but you may have to manually install a package that you download from the 
+* web.  The recommended package that seems easiest to use is <a href="http://windows.github.com/">GitHub for Windows</a>. 
+* Once installed, it helps you create a GitHub account if you don't already have one, 
+* and creates private/public RSA keys that are tied to your account that allows git to remember who you are so that 
+* you don't have to type your credentials every time you want to push or pull code from github.  However, if you want 
+* to use the the most current version of git, that is freely available from 
+* <a href="http://git-scm.com/downloads">http://git-scm.com/downloads</a>. With either package, you may open a git prompt 
+* and clone the repository.
+*
+* \section forking_bolt Forking the Bolt source from GitHub
+*
+* \subsection fork Fork Bolt 
+* GitHub maintains a concept of forking a project, separate from the idea of cloning a project.  After a github
+* user account is created, it is possible to 'fork' a project into your personal account repository which is a complete copy of
+* the original repository.   It will have a slightly different upstream URL that includes your account name and you 
+* can start hacking on the code as you please.  You may issue a 'pull request' back to the original project if 
+* you feel like your code contribution will be useful.  
+* At the top right corner of the <a href="https://github.com/HSA-Libraries/Bolt">Bolt GitHub</a> page is a button 
+* that forks the Bolt code into your private repository.  This is a nice shortcut as the button will create the 
+* new repository with multiple upstream URL's, allowing new code to be fetched from either the original repository
+* or your own.
 * 
 * \subsection branches Bolt branches on GitHub
 * \section cmake Using CMake build infrastructure
@@ -45,9 +68,8 @@
 * features found in the AMD OpenCL implementation that to date are not found in other vendor implementations.  
 * During its configuration, CMake requires an environment variable to find the root of the OpenCL installation.   
 * Provide this by defining the environment variable <b>AMDAPPSDKROOT</b> with the path to the root 
-* of the OpenCL SDK, typically <tt>'C:/Program Files (x86)/AMD APP'</tt> on Windows 64-bit machines  
-* A more vendor-neutral environment variable is <b>OPENCL_ROOT</b>, but it is not defined by the 
-* catalyst installer.
+* of the OpenCL SDK, typically <tt>'C:/Program Files (x86)/AMD APP'</tt> on Windows 64-bit machines.
+* A more vendor-neutral environment variable is <b>OPENCL_ROOT</b>.
 * \image html opencl_environment_variable2.png "Environment variable setup screen"
 
 * Cmake ships with several interfaces to help a developer generate native build files.  For Windows-based systems,

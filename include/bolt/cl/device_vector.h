@@ -451,7 +451,7 @@ namespace cl
             *   \todo Find a way to be able to unambiguously specify memory flags for this constructor, that is not 
             *   confused with the size constructor below.
             */
-            device_vector( /* cl_mem_flags flags = CL_MEM_READ_WRITE,*/ const control& ctl = control::getDefault( ) ): m_Size( 0 ), m_commQueue( ctl.commandQueue( ) ), m_Flags( CL_MEM_READ_WRITE )
+            device_vector( /* cl_mem_flags flags = CL_MEM_READ_WRITE,*/ const control& ctl = control::getDefault( ) ): m_Size( 0 ), m_commQueue( ctl.getCommandQueue( ) ), m_Flags( CL_MEM_READ_WRITE )
             {
                 static_assert( !std::is_polymorphic< value_type >::value, "AMD C++ template extensions do not support the virtual keyword yet" );
             }
@@ -465,7 +465,7 @@ namespace cl
             *   \warning The ::cl::CommandQueue is not an STD reserve( ) parameter.
             */
             device_vector( size_type newSize, const value_type& value = value_type( ), cl_mem_flags flags = CL_MEM_READ_WRITE, 
-                bool init = true, const control& ctl = control::getDefault( ) ): m_Size( newSize ), m_commQueue( ctl.commandQueue( ) ), m_Flags( flags )
+                bool init = true, const control& ctl = control::getDefault( ) ): m_Size( newSize ), m_commQueue( ctl.getCommandQueue( ) ), m_Flags( flags )
             {
                 static_assert( !std::is_polymorphic< value_type >::value, "AMD C++ template extensions do not support the virtual keyword yet" );
 
@@ -522,7 +522,7 @@ namespace cl
             device_vector( const InputIterator begin, size_type newSize, cl_mem_flags flags = CL_MEM_READ_WRITE, 
                 bool init = true, const control& ctl = control::getDefault( ),
                 typename std::enable_if< !std::is_integral< InputIterator >::value >::type* = 0 ): m_Size( newSize ), 
-                m_commQueue( ctl.commandQueue( ) ), m_Flags( flags )
+                m_commQueue( ctl.getCommandQueue( ) ), m_Flags( flags )
             {
                 static_assert( std::is_convertible< value_type, typename std::iterator_traits< InputIterator >::value_type >::value, 
                     "iterator value_type does not convert to device_vector value_type" );
@@ -571,7 +571,7 @@ namespace cl
             */
             template< typename InputIterator >
             device_vector( const InputIterator begin, const InputIterator end, cl_mem_flags flags = CL_MEM_READ_WRITE, const control& ctl = control::getDefault( ),
-                typename std::enable_if< !std::is_integral< InputIterator >::value >::type* = 0 ): m_commQueue( ctl.commandQueue( ) ), m_Flags( flags )
+                typename std::enable_if< !std::is_integral< InputIterator >::value >::type* = 0 ): m_commQueue( ctl.getCommandQueue( ) ), m_Flags( flags )
             {
                 static_assert( std::is_convertible< value_type, typename std::iterator_traits< InputIterator >::value_type >::value,
                     "iterator value_type does not convert to device_vector value_type" );
@@ -613,7 +613,7 @@ namespace cl
             *   \param rhs A pre-existing ::cl::Buffer supplied by the user.
             *   \param ctl A Bolt control class for copy operations; a default is used if not supplied by the user.
             */
-            device_vector( const ::cl::Buffer& rhs, const control& ctl = control::getDefault( ) ): m_devMemory( rhs ), m_commQueue( ctl.commandQueue( ) )
+            device_vector( const ::cl::Buffer& rhs, const control& ctl = control::getDefault( ) ): m_devMemory( rhs ), m_commQueue( ctl.getCommandQueue( ) )
             {
                 static_assert( !std::is_polymorphic< value_type >::value, "AMD C++ template extensions do not support the virtual keyword yet" );
 

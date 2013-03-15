@@ -188,9 +188,9 @@ int _tmain( int argc, _TCHAR* argv[] )
     ::cl::CommandQueue myQueue( myContext, devices.at( userDevice ), CL_QUEUE_PROFILING_ENABLE );
     //  Now that the device we want is selected and we have created our own cl::CommandQueue, set it as the
     //  default cl::CommandQueue for the Bolt API
-    bolt::cl::control::getDefault( ).commandQueue( myQueue );
+    bolt::cl::control::getDefault( ).setCommandQueue( myQueue );
 
-    std::string strDeviceName = bolt::cl::control::getDefault( ).device( ).getInfo< CL_DEVICE_NAME >( &err );
+    std::string strDeviceName = bolt::cl::control::getDefault( ).getDevice( ).getInfo< CL_DEVICE_NAME >( &err );
     bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_NAME > failed" );
 
     std::cout << "Device under test : " << strDeviceName << std::endl;
@@ -216,7 +216,7 @@ int _tmain( int argc, _TCHAR* argv[] )
     }
     else
     {
-         bolt::cl::control::getDefault( ).debug(bolt::cl::control::debug::SaveCompilerTemps);
+         bolt::cl::control::getDefault( ).setDebugMode(bolt::cl::control::debug::SaveCompilerTemps);
         //float4 init={ 1.2f, 2.3f, 3.4f, 4.5f };
 #if 0
         floatN init={ 1.2f, 2.3f, 3.4f, 4.5f };

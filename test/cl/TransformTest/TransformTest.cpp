@@ -192,7 +192,7 @@ TYPED_TEST_P( TransformArrayTest, GPU_DeviceNormal )
 
     //  Create a new command queue for a different device, but use the same context as was provided
     //  by the default control device
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     std::vector< cl::Device > devices = myContext.getInfo< CL_CONTEXT_DEVICES >();
     ::cl::CommandQueue myQueue( myContext, devices[ 0 ] );
     bolt::cl::control c_gpu( myQueue );  // construct control structure from the queue.
@@ -265,7 +265,7 @@ TYPED_TEST_P( TransformArrayTest, GPU_DeviceMultipliesFunction )
 
     //  Create a new command queue for a different device, but use the same context as was provided
     //  by the default control device
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     std::vector< cl::Device > devices = myContext.getInfo< CL_CONTEXT_DEVICES >();
     ::cl::CommandQueue myQueue( myContext, devices[ 0 ] );
     bolt::cl::control c_gpu( myQueue );  // construct control structure from the queue.
@@ -336,7 +336,7 @@ TYPED_TEST_P( TransformArrayTest, GPU_DeviceMinusFunction )
 
     //  Create a new command queue for a different device, but use the same context as was provided
     //  by the default control device
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     std::vector< cl::Device > devices = myContext.getInfo< CL_CONTEXT_DEVICES >();
     ::cl::CommandQueue myQueue( myContext, devices[ 0 ] );
     bolt::cl::control c_gpu( myQueue );  // construct control structure from the queue.
@@ -409,7 +409,7 @@ TYPED_TEST_P( UnaryTransformArrayTest, GPU_DeviceNormal )
 
     //  Create a new command queue for a different device, but use the same context as was provided
     //  by the default control device
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     std::vector< cl::Device > devices = myContext.getInfo< CL_CONTEXT_DEVICES >();
     ::cl::CommandQueue myQueue( myContext, devices[ 0 ] );
     bolt::cl::control c_gpu( myQueue );  // construct control structure from the queue.
@@ -481,7 +481,7 @@ TYPED_TEST_P( UnaryTransformArrayTest, GPU_DeviceMultipliesFunction )
 
     //  Create a new command queue for a different device, but use the same context as was provided
     //  by the default control device
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     std::vector< cl::Device > devices = myContext.getInfo< CL_CONTEXT_DEVICES >();
     ::cl::CommandQueue myQueue( myContext, devices[ 0 ] );
     bolt::cl::control c_gpu( myQueue );  // construct control structure from the queue.
@@ -552,7 +552,7 @@ TYPED_TEST_P( UnaryTransformArrayTest, GPU_DeviceMinusFunction )
 
     //  Create a new command queue for a different device, but use the same context as was provided
     //  by the default control device
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     std::vector< cl::Device > devices = myContext.getInfo< CL_CONTEXT_DEVICES >();
     ::cl::CommandQueue myQueue( myContext, devices[ 0 ] );
     bolt::cl::control c_gpu( myQueue );  // construct control structure from the queue.

@@ -112,7 +112,7 @@ TEST(SortUDD, AddDouble4)
 TEST(SortUDD, GPUAddDouble4)
 {
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     std::vector< cl::Device > devices = myContext.getInfo< CL_CONTEXT_DEVICES >();
     ::cl::CommandQueue myQueue( myContext, devices[ 0 ] );
     bolt::cl::control c_gpu( myQueue );  // construct control structure from the queue.
@@ -196,9 +196,9 @@ TEST(MultiCoreCPU, MultiCoreAddDouble4)
 {
     //setup containers
     int length = (1<<8);
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.forceRunMode(bolt::cl::control::MultiCoreCpu);
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
     bolt::cl::device_vector< uddtD4 > input(  length, initialAddD4, CL_MEM_READ_WRITE, true  );
     std::vector< uddtD4 > refInput( length, initialAddD4 );
     
@@ -217,9 +217,9 @@ TEST( MultiCoreCPU, MultiCoreNormal )
     bolt::cl::device_vector< float > boltInput(  length, 0.0, CL_MEM_READ_WRITE, true  );
     std::vector< float > stdInput( length, 0.0 );
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.forceRunMode(bolt::cl::control::MultiCoreCpu);
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
     //  Calling the actual functions under test
     std::sort( stdInput.begin( ), stdInput.end( ));
     bolt::cl::sort( ctl, boltInput.begin( ), boltInput.end( ) );
@@ -244,7 +244,7 @@ TYPED_TEST_P( SortArrayTest, GPU_DeviceNormal )
 
     //  Create a new command queue for a different device, but use the same context as was provided
     //  by the default control device
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     std::vector< cl::Device > devices = myContext.getInfo< CL_CONTEXT_DEVICES >();
     ::cl::CommandQueue myQueue( myContext, devices[ 0 ] );
     bolt::cl::control c_gpu( myQueue );  // construct control structure from the queue.
@@ -320,7 +320,7 @@ TYPED_TEST_P( SortArrayTest, GPU_DeviceGreaterFunction )
 
     //  Create a new command queue for a different device, but use the same context as was provided
     //  by the default control device
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     std::vector< cl::Device > devices = myContext.getInfo< CL_CONTEXT_DEVICES >();
 
     ::cl::CommandQueue myQueue( myContext, devices[ 0 ] );
@@ -391,7 +391,7 @@ TYPED_TEST_P( SortArrayTest, GPU_DeviceLessFunction )
 
     //  Create a new command queue for a different device, but use the same context as was provided
     //  by the default control device
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     std::vector< cl::Device > devices = myContext.getInfo< CL_CONTEXT_DEVICES >();
     ::cl::CommandQueue myQueue( myContext, devices[ 0 ] ); 
     bolt::cl::control c_gpu( myQueue );  // construct control structure from the queue.
@@ -1081,6 +1081,84 @@ INSTANTIATE_TYPED_TEST_CASE_P( Double, SortArrayTest, DoubleTests );
 
 REGISTER_TYPED_TEST_CASE_P( SortUDDArrayTest,  Normal);
 INSTANTIATE_TYPED_TEST_CASE_P( UDDTest, SortUDDArrayTest, UDDTests );
+
+class withStdVect: public ::testing::TestWithParam<int>{
+protected:
+	int sizeOfInputBuffer;
+public:
+	withStdVect():sizeOfInputBuffer(GetParam()){
+	}
+};
+
+
+/*
+Failed as: 
+unknown file: error: C++ exception with description "clEnqueueNDRangeKernel" thrown in the test body. happening buffer size is >=64
+*/
+TEST_P (withStdVect, intSerialValuesWithDefaulFunctorWithClControl){
+	std::vector <int> my_vect(sizeOfInputBuffer);
+	std::vector <int> std_vect(sizeOfInputBuffer);
+
+	for (int i = 0 ; i < sizeOfInputBuffer; ++i){
+		my_vect[i] = rand() % 65535;
+		std_vect[i] = my_vect[i];
+		//srand(1);
+	}
+
+	// Create an OCL context, device, queue.
+	MyOclContext ocl = initOcl(CL_DEVICE_TYPE_GPU, 0); //zero stand for one GPU
+
+	bolt::cl::control c(ocl._queue);  // construct control structure from the queue.
+	
+	std::sort(std_vect.begin(), std_vect.end());
+	bolt::cl::sort(c, my_vect.begin(), my_vect.end());
+	
+	for (int i = 0 ; i < sizeOfInputBuffer; ++i){
+		//std::cout<<"buffer size: "<<sizeOfInputBuffer<<std::endl;
+		EXPECT_EQ(my_vect[i], std_vect[i])<<"Failed at i = "<<i<<std::endl;
+	}
+}
+TEST_P (withStdVect, intSerialValuesWithDefaulFunctorWithClControlGreater){
+	std::vector <int> my_vect(sizeOfInputBuffer);
+	std::vector <int> std_vect(sizeOfInputBuffer);
+
+	for (int i = 0 ; i < sizeOfInputBuffer; ++i){
+		my_vect[i] = rand() % 65535;
+		std_vect[i] = my_vect[i];
+		//srand(1);
+	}
+
+	// Create an OCL context, device, queue.
+    cl_device_type deviceType = CL_DEVICE_TYPE_GPU;
+    std::vector< cl::Platform > platforms;
+    bolt::cl::V_OPENCL( cl::Platform::get( &platforms ), "Platform::get() failed" );
+
+    // Device info
+    std::vector< cl::Device > devices;
+    //Select the first Platform
+    platforms.at( 0 ).getDevices( deviceType, &devices );
+    //Create an OpenCL context with the first device
+    cl::Device device = devices.at( 0 );
+    cl::Context myContext( device );
+    cl::CommandQueue myQueue( myContext, device );
+
+    //  Now that the device we want is selected and we have created our own cl::CommandQueue, set it as the
+    //  default cl::CommandQueue for the Bolt API
+    bolt::cl::control boltControl = bolt::cl::control::getDefault( );
+    boltControl.setCommandQueue( myQueue );
+
+    // Control setup:
+	boltControl.setWaitMode(bolt::cl::control::BusyWait);
+
+	std::sort(std_vect.begin(), std_vect.end(), std::greater<int>());
+	bolt::cl::sort(boltControl, my_vect.begin(), my_vect.end(), bolt::cl::greater<int>());
+	
+	for (int i = 0 ; i < sizeOfInputBuffer; ++i){
+		//std::cout<<"buffer size: "<<sizeOfInputBuffer<<std::endl;
+		EXPECT_EQ(my_vect[i], std_vect[i])<<"Failed at i = "<<i<<std::endl;
+	}
+}
+INSTANTIATE_TEST_CASE_P(sortDescending, withStdVect, ::testing::Range(50, 100, 1));
 
 int main(int argc, char* argv[])
 {

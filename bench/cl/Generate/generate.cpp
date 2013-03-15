@@ -170,9 +170,9 @@ int _tmain( int argc, _TCHAR* argv[] )
 
     //  Now that the device we want is selected and we have created our own cl::CommandQueue, set it as the
     //  default cl::CommandQueue for the Bolt API
-    bolt::cl::control::getDefault( ).commandQueue( myQueue );
+    bolt::cl::control::getDefault( ).setCommandQueue( myQueue );
 
-    std::string strDeviceName = bolt::cl::control::getDefault( ).device( ).getInfo< CL_DEVICE_NAME >( &err );
+    std::string strDeviceName = bolt::cl::control::getDefault( ).getDevice( ).getInfo< CL_DEVICE_NAME >( &err );
     bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_NAME > failed" );
 
     std::cout << "Device under test : " << strDeviceName << std::endl;

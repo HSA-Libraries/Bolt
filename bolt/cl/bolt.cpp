@@ -362,6 +362,7 @@ namespace bolt {
         return str;
     };
 
+
     /**********************************************************************
         * acquireProgram
         * returns cl::Program object by constructing
@@ -392,12 +393,11 @@ namespace bolt {
         cl_int * err = NULL);
 
 
-
     void wait(const bolt::cl::control &ctl, ::cl::Event &e) 
     {
-        const bolt::cl::control::e_WaitMode waitMode = ctl.waitMode();
+        const bolt::cl::control::e_WaitMode waitMode = ctl.getWaitMode();
         if (waitMode == bolt::cl::control::BusyWait) {
-            const ::cl::CommandQueue& q = ctl.commandQueue();
+            const ::cl::CommandQueue& q = ctl.getCommandQueue();
             q.flush();
             while (e.getInfo<CL_EVENT_COMMAND_EXECUTION_STATUS>() != CL_COMPLETE) {
                 // spin here for fast completion detection...
@@ -406,7 +406,7 @@ namespace bolt {
             cl_int l_Error = e.wait();
             V_OPENCL( l_Error, "wait call failed" );
         } else if (waitMode == bolt::cl::control::ClFinish) {
-            const ::cl::CommandQueue& q = ctl.commandQueue();
+            const ::cl::CommandQueue& q = ctl.getCommandQueue();
             cl_int l_Error = q.finish();
             V_OPENCL( l_Error, "clFinish call failed" );
         }
@@ -479,19 +479,19 @@ namespace bolt {
 
         // compile options
         std::string compileOptions = options;
-        compileOptions += ctl.compileOptions( );
+        compileOptions += ctl.getCompileOptions( );
         compileOptions += " -x clc++ ";
-        if (ctl.debug() & control::debug::SaveCompilerTemps) {
+        if (ctl.getDebugMode() & control::debug::SaveCompilerTemps) {
             compileOptions += " -save-temps=BOLT ";
         }
-        if (ctl.debug() & control::debug::Compile) {
+        if (ctl.getDebugMode() & control::debug::Compile) {
             printKernels(kts->getKernelNames(), completeKernelString, compileOptions);
         }
 
         // request program from program cache (ProgramMap)
         ::cl::Program program = acquireProgram(
-            ctl.context(),
-            ctl.device(),
+            ctl.getContext(),
+            ctl.getDevice(),
             compileOptions,
             completeKernelString);
 

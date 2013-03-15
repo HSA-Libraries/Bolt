@@ -875,7 +875,12 @@ scan_by_key_pick_iterator(
         return result;
 
   
-  const bolt::cl::control::e_RunMode runMode = ctl.forceRunMode( );  // could be dynamic choice some day.
+    bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode( );
+
+    if( runMode == bolt::cl::control::Automatic )
+    {
+        runMode = ctl.getDefaultPathToRun( );
+    }
   
   if( runMode == bolt::cl::control::SerialCpu )
     {
@@ -962,30 +967,36 @@ scan_by_key_pick_iterator(
     if( numElements < 1 )
         return result;
 
-    const bolt::cl::control::e_RunMode runMode = ctl.forceRunMode( );  // could be dynamic choice some day.
+    bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode( );
+
+    if( runMode == bolt::cl::control::Automatic )
+    {
+        runMode = ctl.getDefaultPathToRun( );
+    }
+
     if( runMode == bolt::cl::control::SerialCpu )
-    {  
-                ::cl::Event serialCPUEvent;
-                cl_int l_Error = CL_SUCCESS;
+    {
+        ::cl::Event serialCPUEvent;
+        cl_int l_Error = CL_SUCCESS;
                
-                kType *scanInputkey = (kType*)ctl.commandQueue().enqueueMapBuffer(firstKey.getBuffer(), false, 
-                                   CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(kType) * numElements, NULL, &serialCPUEvent, &l_Error );
-                vType *scanInputBuffer = (vType*)ctl.commandQueue().enqueueMapBuffer(firstValue.getBuffer(), false, 
-                                   CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(vType) * numElements, NULL, &serialCPUEvent, &l_Error );
-                oType *scanResultBuffer = (oType*)ctl.commandQueue().enqueueMapBuffer(result.getBuffer(), false, 
-                                   CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(oType) * numElements, NULL, &serialCPUEvent, &l_Error );
-                serialCPUEvent.wait();
+        kType *scanInputkey = (kType*)ctl.getCommandQueue().enqueueMapBuffer(firstKey.getBuffer(), false, 
+                            CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(kType) * numElements, NULL, &serialCPUEvent, &l_Error );
+        vType *scanInputBuffer = (vType*)ctl.getCommandQueue().enqueueMapBuffer(firstValue.getBuffer(), false, 
+                            CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(vType) * numElements, NULL, &serialCPUEvent, &l_Error );
+        oType *scanResultBuffer = (oType*)ctl.getCommandQueue().enqueueMapBuffer(result.getBuffer(), false, 
+                            CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(oType) * numElements, NULL, &serialCPUEvent, &l_Error );
+        serialCPUEvent.wait();
                 
-                if(inclusive)
-                  Serial_inclusive_scan_by_key<kType, vType, oType, BinaryPredicate, BinaryFunction>(scanInputkey, scanInputBuffer, scanResultBuffer, numElements, binary_pred, binary_funct);
-                else
-                  Serial_exclusive_scan_by_key<kType, vType, oType, BinaryPredicate, BinaryFunction, T>(scanInputkey, scanInputBuffer, scanResultBuffer, numElements, binary_pred, binary_funct, init);
+        if(inclusive)
+            Serial_inclusive_scan_by_key<kType, vType, oType, BinaryPredicate, BinaryFunction>(scanInputkey, scanInputBuffer, scanResultBuffer, numElements, binary_pred, binary_funct);
+        else
+            Serial_exclusive_scan_by_key<kType, vType, oType, BinaryPredicate, BinaryFunction, T>(scanInputkey, scanInputBuffer, scanResultBuffer, numElements, binary_pred, binary_funct, init);
 
-                ctl.commandQueue().enqueueUnmapMemObject(firstKey.getBuffer(), scanInputkey);
-                ctl.commandQueue().enqueueUnmapMemObject(firstValue.getBuffer(), scanInputBuffer);
-                ctl.commandQueue().enqueueUnmapMemObject(result.getBuffer(), scanResultBuffer);
+        ctl.getCommandQueue().enqueueUnmapMemObject(firstKey.getBuffer(), scanInputkey);
+        ctl.getCommandQueue().enqueueUnmapMemObject(firstValue.getBuffer(), scanInputBuffer);
+        ctl.getCommandQueue().enqueueUnmapMemObject(result.getBuffer(), scanResultBuffer);
 
-                return result + numElements;
+        return result + numElements;
         
     }
     else if( runMode == bolt::cl::control::MultiCoreCpu )
@@ -994,11 +1005,11 @@ scan_by_key_pick_iterator(
                 ::cl::Event multiCoreCPUEvent;
                 cl_int l_Error = CL_SUCCESS;
                 /*Map the device buffer to CPU*/
-                kType *scanInputkey = (kType*)ctl.commandQueue().enqueueMapBuffer(firstKey.getBuffer(), false, 
+                kType *scanInputkey = (kType*)ctl.getCommandQueue().enqueueMapBuffer(firstKey.getBuffer(), false, 
                                    CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(kType) * numElements, NULL, &multiCoreCPUEvent, &l_Error );
-                vType *scanInputBuffer = (vType*)ctl.commandQueue().enqueueMapBuffer(firstValue.getBuffer(), false, 
+                vType *scanInputBuffer = (vType*)ctl.getCommandQueue().enqueueMapBuffer(firstValue.getBuffer(), false, 
                                    CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(vType) * numElements, NULL, &multiCoreCPUEvent, &l_Error );
-                oType *scanResultBuffer = (oType*)ctl.commandQueue().enqueueMapBuffer(result.getBuffer(), false, 
+                oType *scanResultBuffer = (oType*)ctl.getCommandQueue().enqueueMapBuffer(result.getBuffer(), false, 
                                    CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(oType) * numElements, NULL, &multiCoreCPUEvent, &l_Error );
                 multiCoreCPUEvent.wait();
 
@@ -1006,9 +1017,9 @@ scan_by_key_pick_iterator(
                 ScanKey_tbb<T, kType*, vType*, oType*, BinaryFunction, BinaryPredicate> tbbkey_scan(scanInputkey, scanInputBuffer, scanResultBuffer, binary_funct, binary_pred, inclusive, init);
                 tbb::parallel_scan( tbb::blocked_range<int>(  0, numElements), tbbkey_scan, tbb::auto_partitioner());
 
-                ctl.commandQueue().enqueueUnmapMemObject(firstKey.getBuffer(), scanInputkey);
-                ctl.commandQueue().enqueueUnmapMemObject(firstValue.getBuffer(), scanInputBuffer);
-                ctl.commandQueue().enqueueUnmapMemObject(result.getBuffer(), scanResultBuffer);
+                ctl.getCommandQueue().enqueueUnmapMemObject(firstKey.getBuffer(), scanInputkey);
+                ctl.getCommandQueue().enqueueUnmapMemObject(firstValue.getBuffer(), scanInputBuffer);
+                ctl.getCommandQueue().enqueueUnmapMemObject(result.getBuffer(), scanResultBuffer);
                 return result + numElements;
 #else
                 std::cout << "The MultiCoreCpu version of scan by key is not enabled. " << std ::endl;
@@ -1087,7 +1098,7 @@ size_t k0_stepNum, k1_stepNum, k2_stepNum;
     /**********************************************************************************
      * Compile Options
      *********************************************************************************/
-    bool cpuDevice = ctl.device().getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_CPU;
+    bool cpuDevice = ctl.getDevice().getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_CPU;
     //std::cout << "Device is CPU: " << (cpuDevice?"TRUE":"FALSE") << std::endl;
     const size_t kernel0_WgSize = (cpuDevice) ? 1 : WAVESIZE*KERNEL02WAVES;
     const size_t kernel1_WgSize = (cpuDevice) ? 1 : WAVESIZE*KERNEL1WAVES;
@@ -1116,8 +1127,8 @@ size_t k0_stepNum, k1_stepNum, k2_stepNum;
     ::cl::Event kernel0Event, kernel1Event, kernel2Event, kernelAEvent;
     cl_uint doExclusiveScan = inclusive ? 0 : 1;
     // Set up shape of launch grid and buffers:
-    int computeUnits     = ctl.device( ).getInfo< CL_DEVICE_MAX_COMPUTE_UNITS >( );
-    int wgPerComputeUnit =  ctl.wgPerComputeUnit( );
+    int computeUnits     = ctl.getDevice( ).getInfo< CL_DEVICE_MAX_COMPUTE_UNITS >( );
+    int wgPerComputeUnit =  ctl.getWGPerComputeUnit( );
     int resultCnt = computeUnits * wgPerComputeUnit;
 
     //  Ceiling function to bump the size of input to the next whole wavefront size
@@ -1161,7 +1172,7 @@ size_t k0_stepNum, k1_stepNum, k2_stepNum;
 #ifdef BOLT_ENABLE_PROFILING
 aProfiler.nextStep();
 aProfiler.setStepName("Setup Kernel 0");
-aProfiler.set(AsyncProfiler::device, control::SerialCpu);
+aProfiler.set(AsyncProfiler::getDevice, control::SerialCpu);
 #endif
     try
     {
@@ -1184,12 +1195,12 @@ aProfiler.set(AsyncProfiler::device, control::SerialCpu);
 aProfiler.nextStep();
 k0_stepNum = aProfiler.getStepNum();
 aProfiler.setStepName("Kernel 0");
-aProfiler.set(AsyncProfiler::device, ctl.forceRunMode());
+aProfiler.set(AsyncProfiler::getDevice, ctl.forceRunMode());
 aProfiler.set(AsyncProfiler::flops, 2*numElements);
 aProfiler.set(AsyncProfiler::memory, 2*numElements*(sizeof(vType)+sizeof(kType)) + 1*sizeScanBuff*(sizeof(vType)+sizeof(kType)) );
 #endif
 
-    l_Error = ctl.commandQueue( ).enqueueNDRangeKernel(
+    l_Error = ctl.getCommandQueue( ).enqueueNDRangeKernel(
         kernels[0],
         ::cl::NullRange,
         ::cl::NDRange( sizeInputBuff ),
@@ -1237,7 +1248,7 @@ aProfiler.set(AsyncProfiler::memory, 4*sizeScanBuff*(sizeof(kType)+sizeof(vType)
 
     try
     {
-    l_Error = ctl.commandQueue( ).enqueueNDRangeKernel(
+    l_Error = ctl.getCommandQueue( ).enqueueNDRangeKernel(
         kernels[1],
         ::cl::NullRange,
         ::cl::NDRange( kernel1_WgSize ), // only 1 work-group
@@ -1284,7 +1295,7 @@ aProfiler.set(
 
     try
     {
-    l_Error = ctl.commandQueue( ).enqueueNDRangeKernel(
+    l_Error = ctl.getCommandQueue( ).enqueueNDRangeKernel(
         kernels[2],
         ::cl::NullRange,
         ::cl::NDRange( sizeInputBuff ),
@@ -1311,7 +1322,7 @@ aProfiler.setStepName("Querying Kernel Times");
 aProfiler.set(AsyncProfiler::device, control::SerialCpu);
 
 aProfiler.setDataSize(numElements*sizeof(oType));
-std::string strDeviceName = ctl.device().getInfo< CL_DEVICE_NAME >( &l_Error );
+std::string strDeviceName = ctl.getDevice().getInfo< CL_DEVICE_NAME >( &l_Error );
 bolt::cl::V_OPENCL( l_Error, "Device::getInfo< CL_DEVICE_NAME > failed" );
 aProfiler.setArchitecture(strDeviceName);
 

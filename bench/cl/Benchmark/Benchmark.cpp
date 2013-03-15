@@ -723,12 +723,12 @@ int _tmain( int argc, _TCHAR* argv[] )
     std::string strDeviceName;
     if (runMode == 1) // serial cpu
     {
-        ctrl.forceRunMode( bolt::cl::control::SerialCpu );
+        ctrl.setForceRunMode( bolt::cl::control::SerialCpu );
         strDeviceName = "Serial CPU";
     }
     else if (runMode == 2) // multicore cpu
     {
-        ctrl.forceRunMode( bolt::cl::control::MultiCoreCpu );
+        ctrl.setForceRunMode( bolt::cl::control::MultiCoreCpu );
         strDeviceName = "MultiCore CPU";
     }
     else // gpu || automatic
@@ -739,15 +739,15 @@ int _tmain( int argc, _TCHAR* argv[] )
         if( print_clInfo ) return 0;
 
         // Device info
-        ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
+        ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
         std::vector< cl::Device > devices = myContext.getInfo< CL_CONTEXT_DEVICES >();
         ::cl::CommandQueue myQueue( myContext, devices.at( userDevice ) , CL_QUEUE_PROFILING_ENABLE);
 
         //  Now that the device we want is selected and we have created our own cl::CommandQueue, set it as the
         //  default cl::CommandQueue for the Bolt API
-        ctrl.commandQueue( myQueue );
+        ctrl.setCommandQueue( myQueue );
 
-        strDeviceName = ctrl.device( ).getInfo< CL_DEVICE_NAME >( &err );
+        strDeviceName = ctrl.getDevice( ).getInfo< CL_DEVICE_NAME >( &err );
         bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_NAME > failed" );
     }
     std::cout << "Device: " << strDeviceName << std::endl;

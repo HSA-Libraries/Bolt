@@ -372,7 +372,7 @@ void copy_enqueue(const bolt::cl::control &ctrl, const DVInputIterator& first, c
         V_OPENCL( kernels[whichKernel].setArg( 1, result.getBuffer()),"Error setArg kernels[ 0 ]" ); // Input buffer
         V_OPENCL( kernels[whichKernel].setArg( 2, static_cast<cl_uint>( n ) ),                 "Error setArg kernels[ 0 ]" ); // Size of buffer
 
-        l_Error = ctrl.commandQueue( ).enqueueNDRangeKernel(
+        l_Error = ctrl.getCommandQueue( ).enqueueNDRangeKernel(
             kernels[whichKernel],
             ::cl::NullRange,
             ::cl::NDRange( numThreadsChosen ),
@@ -395,7 +395,7 @@ void copy_enqueue(const bolt::cl::control &ctrl, const DVInputIterator& first, c
 
     // profiling
     cl_command_queue_properties queueProperties;
-    l_Error = ctrl.commandQueue().getInfo<cl_command_queue_properties>(CL_QUEUE_PROPERTIES, &queueProperties);
+    l_Error = ctrl.getCommandQueue().getInfo<cl_command_queue_properties>(CL_QUEUE_PROPERTIES, &queueProperties);
     unsigned int profilingEnabled = queueProperties&CL_QUEUE_PROFILING_ENABLE;
     if ( profilingEnabled ) {
         cl_ulong start_time, stop_time;

@@ -101,7 +101,7 @@ namespace bolt {
             enum e_RunMode     {Automatic,
                                 SerialCpu,   
                                 MultiCoreCpu, 
-                                Gpu };
+                                OpenCL };
 
             enum e_AutoTuneMode{NoAutoTune=0x0, 
                                 AutoTuneDevice=0x1, 
@@ -126,13 +126,14 @@ namespace bolt {
 
             // Construct a new control structure, copying from default control for arguments that are not overridden.
             control(
-                const ::cl::CommandQueue& commandQueue = getDefault().commandQueue(),
-                e_UseHostMode useHost=getDefault().useHost(),
-                unsigned debug=getDefault().debug()
+                const ::cl::CommandQueue& commandQueue = getDefault().getCommandQueue(),
+                e_UseHostMode useHost=getDefault().getUseHost(),
+                unsigned debug=getDefault().getDebugMode()
                 ) :
             m_commandQueue(commandQueue),
                 m_useHost(useHost),
-                m_forceRunMode(Automatic), //Replaced this with automatic because the default is not MultiCoreCPU if no GPU is found
+                m_forceRunMode(OpenCL),   //Replaced this with automatic because the default is not MultiCoreCPU if no GPU is found
+                m_defaultRunMode(OpenCL), 
                 m_debug(debug),
                 m_autoTune(getDefault().m_autoTune),
                 m_wgPerComputeUnit(getDefault().m_wgPerComputeUnit),
@@ -142,22 +143,12 @@ namespace bolt {
                 m_unroll(getDefault().m_unroll)
             {};
 
-            /*
-                m_commandQueue( getDefaultCommandQueue( ) ),
-                m_useHost(UseHost),
-                m_forceRunMode(Automatic),
-                m_debug(debug::None),
-                m_autoTune(AutoTuneAll),
-                m_wgPerComputeUnit(8),
-                m_compileForAllDevices(true),
-                m_waitMode(BusyWait),
-                m_unroll(1)
-            */
 
             control( const control& ref) :
                 m_commandQueue(ref.m_commandQueue),
                 m_useHost(ref.m_useHost),
                 m_forceRunMode(ref.m_forceRunMode),
+                m_defaultRunMode(ref.m_defaultRunMode),
                 m_debug(ref.m_debug),
                 m_autoTune(ref.m_autoTune),
                 m_wgPerComputeUnit(ref.m_wgPerComputeUnit),
@@ -174,19 +165,19 @@ namespace bolt {
             //! Only one command-queue can be specified for each call; Bolt does not load-balance across
             //! multiple command queues.  Bolt also uses the specified command queue to determine the OpenCL context and
             //! device.
-            void commandQueue(::cl::CommandQueue commandQueue) { m_commandQueue = commandQueue; };
+            void setCommandQueue(::cl::CommandQueue commandQueue) { m_commandQueue = commandQueue; };
 
             //! If enabled, Bolt can use the host CPU to run parts of the algorithm.  If false, Bolt runs the
             //! entire algorithm using the device specified by the command-queue. This can be appropriate 
             //! on a discrete GPU, where the input data is located on the device memory.
-            void useHost(e_UseHostMode useHost) { m_useHost = useHost; };
+            void setUseHost(e_UseHostMode useHost) { m_useHost = useHost; };
 
 
             //! Force the Bolt command to run on the specifed device.  Default is "Automatic," in which case the Bolt
             //! runtime selects the device.  Forcing the mode to SerialCpu can be useful for debugging the algorithm.
             //! Forcing the mode can also be useful for performance comparisons, or for direct 
             //! control over the run location (perhaps due to knowledge that the algorithm is best-suited for GPU).
-            void forceRunMode(e_RunMode forceRunMode) { m_forceRunMode = forceRunMode; };
+            void setForceRunMode(e_RunMode forceRunMode) { m_forceRunMode = forceRunMode; };
 
             /*! Enable debug messages to be printed to stdout as the algorithm is compiled, run, and tuned.  See the #debug
             * namespace for a list of values.  Multiple debug options can be combined with the + sign, as in 
@@ -195,40 +186,41 @@ namespace bolt {
             * \code
             * bolt::cl::control myControl;
             * // Show example of combining two debug options with the '+' sign.
-            * myControl.debug(bolt::cl::control::debug::Compile + bolt::cl::control:debug::SaveCompilerTemps);
+            * myControl.setDebug(bolt::cl::control::debug::Compile + bolt::cl::control:debug::SaveCompilerTemps);
             * \endcode
             */
-            void debug(unsigned debug) { m_debug = debug; };
+            void setDebugMode(unsigned debug) { m_debug = debug; };
 
             /*! Set the work-groups-per-compute unit that will be used for reduction-style operations (reduce, transform_reduce).
                 Higher numbers can hide latency by improving the occupancy but will increase the amoutn of data that
                 has to be reduced in the final, less efficient step.  Experimentation may be required to find
                 the optimal point for a given algorithm and device; typically 8-12 will deliver good results */
-            void wgPerComputeUnit(int wgPerComputeUnit) { m_wgPerComputeUnit = wgPerComputeUnit; }; 
+            void setWGPerComputeUnit(int wgPerComputeUnit) { m_wgPerComputeUnit = wgPerComputeUnit; }; 
 
             /*! Set the method used to detect completion at the end of a Bolt routine. */
-            void waitMode(e_WaitMode waitMode) { m_waitMode = waitMode; };
+            void setWaitMode(e_WaitMode waitMode) { m_waitMode = waitMode; };
 
             /*! unroll assignment */
-            void unroll(int unroll) { m_unroll = unroll; };
+            void setUnroll(int unroll) { m_unroll = unroll; };
 
             //! 
             //! Specify the compile options passed to the OpenCL(TM) compiler.
-            void compileOptions(std::string &compileOptions) { m_compileOptions = compileOptions; }; 
+            void setCompileOptions(std::string &compileOptions) { m_compileOptions = compileOptions; }; 
 
             // getters:
-            ::cl::CommandQueue&         commandQueue( ) { return m_commandQueue; };
-            const ::cl::CommandQueue&   commandQueue( ) const { return m_commandQueue; };
-            ::cl::Context               context() const { return m_commandQueue.getInfo<CL_QUEUE_CONTEXT>();};
-            ::cl::Device                device() const { return m_commandQueue.getInfo<CL_QUEUE_DEVICE>();};
-            e_UseHostMode               useHost() const { return m_useHost; };
-            e_RunMode                   forceRunMode() const { return m_forceRunMode; };
-            unsigned                    debug() const { return m_debug;};
-            int const                   wgPerComputeUnit() const { return m_wgPerComputeUnit; };
-            const ::std::string         compileOptions() const { return m_compileOptions; };  
-            e_WaitMode                  waitMode() const { return m_waitMode; };
-            int                         unroll() const { return m_unroll; };
-            bool                        compileForAllDevices() const { return m_compileForAllDevices; };
+            ::cl::CommandQueue&         getCommandQueue( ) { return m_commandQueue; };
+            const ::cl::CommandQueue&   getCommandQueue( ) const { return m_commandQueue; };
+            ::cl::Context               getContext() const { return m_commandQueue.getInfo<CL_QUEUE_CONTEXT>();};
+            ::cl::Device                getDevice() const { return m_commandQueue.getInfo<CL_QUEUE_DEVICE>();};
+            e_UseHostMode               getUseHost() const { return m_useHost; };
+            e_RunMode                   getForceRunMode() const { return m_forceRunMode; };
+            e_RunMode                   getDefaultPathToRun() const { return m_defaultRunMode; };
+            unsigned                    getDebugMode() const { return m_debug;};
+            int const                   getWGPerComputeUnit() const { return m_wgPerComputeUnit; };
+            const ::std::string         getCompileOptions() const { return m_compileOptions; };  
+            e_WaitMode                  getWaitMode() const { return m_waitMode; };
+            int                         getUnroll() const { return m_unroll; };
+            bool                        getCompileForAllDevices() const { return m_compileForAllDevices; };
 
             /*!
               * Return default default \p control structure.  This is used for Bolt API calls when the user
@@ -242,7 +234,7 @@ namespace bolt {
               * bolt::cl::control myControl;  // same as last line - the constructor also copies values from the default control
               *
               * // Modify a setting in the default \p control
-              * bolt::cl::control::getDefault().compileOptions("-g"); A
+              * bolt::cl::control::getDefault().compileOptions("-g"); 
               * \endcode
               */
             static control &getDefault() 
@@ -281,7 +273,6 @@ namespace bolt {
             control(bool createGlobal) :
                 m_commandQueue( getDefaultCommandQueue( ) ),
                 m_useHost(UseHost),
-                m_forceRunMode(Automatic),
                 m_debug(debug::None),
                 m_autoTune(AutoTuneAll),
                 m_wgPerComputeUnit(8),
@@ -297,17 +288,28 @@ namespace bolt {
                 }
                 if(dType == CL_DEVICE_TYPE_CPU || m_commandQueue() == NULL)
                 {
+                    //m_commandQueue will be NULL if no platforms are found and 
+                    //if a non AMD paltform is found but cound not enumerate any CPU device                                                  
 #ifdef ENABLE_TBB
                     m_forceRunMode = MultiCoreCpu;
+                    m_defaultRunMode = MultiCoreCpu;
 #else
                     m_forceRunMode = SerialCpu;
+                    m_defaultRunMode = SerialCpu;
 #endif
+                }
+                else
+                {
+                    //If dType = CL_DEVICE_TYPE_GPU
+                    m_forceRunMode   = OpenCL;
+                    m_defaultRunMode = OpenCL;
                 }
             };
 
             ::cl::CommandQueue  m_commandQueue;
             e_UseHostMode       m_useHost;
-            e_RunMode           m_forceRunMode; 
+            e_RunMode           m_forceRunMode;
+            e_RunMode           m_defaultRunMode;
             e_AutoTuneMode      m_autoTune;  /* auto-tune the choice of device CPU/GPU and  workgroup shape */
             unsigned            m_debug;
             int                 m_wgPerComputeUnit;
@@ -369,7 +371,6 @@ namespace bolt {
 
             typedef std::multimap< descBufferKey, descBufferValue, descBufferComp > mapBufferType;
             
-
             /*! \brief Class used with shared_ptr<> as a custom deleter, to signal to the context object when
              * a buffer is finished being used by a client.  We want to remove the ability to destroy the buffer
              * from the caller; only the context object shall control the lifetime of these scratch

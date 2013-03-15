@@ -32,7 +32,7 @@ if( NOT DEFINED Bolt.SuperBuild_VERSION_MAJOR )
 endif( )
 
 if( NOT DEFINED Bolt.SuperBuild_VERSION_MINOR )
-	set( Bolt.SuperBuild_VERSION_MINOR 5 )
+	set( Bolt.SuperBuild_VERSION_MINOR 6 )
 endif( )
 
 if( NOT DEFINED Bolt.SuperBuild_VERSION_PATCH )

@@ -182,15 +182,15 @@ int _tmain( int argc, _TCHAR* argv[] )
 
     //  Now that the device we want is selected and we have created our own cl::CommandQueue, set it as the
     //  default cl::CommandQueue for the Bolt API
-    bolt::cl::control::getDefault( ).commandQueue( myQueue );
+    bolt::cl::control::getDefault( ).setCommandQueue( myQueue );
 
-    std::string strDeviceName = bolt::cl::control::getDefault( ).device( ).getInfo< CL_DEVICE_NAME >( &err );
+    std::string strDeviceName = bolt::cl::control::getDefault( ).getDevice( ).getInfo< CL_DEVICE_NAME >( &err );
     bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_NAME > failed" );
 
     std::cout << "Device under test : " << strDeviceName << std::endl;
 
     // Control setup:
-	bolt::cl::control::getDefault().waitMode(bolt::cl::control::BusyWait);
+	bolt::cl::control::getDefault().setWaitMode(bolt::cl::control::BusyWait);
 
     /******************************************************************************
     * Benchmark logic                                                             *
@@ -245,7 +245,7 @@ int _tmain( int argc, _TCHAR* argv[] )
     {
 
         bolt::cl::control ctl = bolt::cl::control::getDefault();
-        ctl.forceRunMode(bolt::cl::control::MultiCoreCpu);
+        ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
         if( systemMemory )
         {
             std::cout << "Benchmarking TBB Host\n"; 
@@ -280,7 +280,7 @@ int _tmain( int argc, _TCHAR* argv[] )
     else if(runSTL)
     {
         bolt::cl::control ctl = bolt::cl::control::getDefault();
-        ctl.forceRunMode(bolt::cl::control::SerialCpu);
+        ctl.setForceRunMode(bolt::cl::control::SerialCpu);
         if( systemMemory )
         {
             std::cout << "Benchmarking STL Host\n"; 

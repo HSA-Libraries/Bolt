@@ -189,7 +189,7 @@ TYPED_TEST_P( InnerProductArrayTest, GPU_DeviceMultipliesFunction )
 {
     typedef std::array< ArrayType, ArraySize > ArrayCont;
 #if OCL_CONTEXT_BUG_WORKAROUND
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control c_gpu( getQueueFromContext(myContext, CL_DEVICE_TYPE_GPU, 0 ));  
 #else
     ::Concurrency::accelerator accel(::Concurrency::accelerator::default_accelerator);
@@ -760,9 +760,9 @@ void ctlInprod(){
         B[i] = i;
     };
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control c( getQueueFromContext(myContext, CL_DEVICE_TYPE_GPU, 0 )); 
-    c.debug(bolt::cl::control::debug::Compile + bolt::cl::control::debug::SaveCompilerTemps);
+    //c.setDebugMode(bolt::cl::control::debug::Compile + bolt::cl::control::debug::SaveCompilerTemps);
 
     int stlReduce = std::inner_product(A.begin(), A.end(), B.begin(),0);
     int boltReduce = 0;
