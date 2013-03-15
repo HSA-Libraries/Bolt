@@ -180,7 +180,12 @@ void stablesort_pick_iterator( control &ctl, const RandomAccessIterator& first, 
     if( vecSize < 2 )
         return;
 
-    const bolt::cl::control::e_RunMode runMode = ctl.forceRunMode();
+    bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode( );
+
+    if( runMode == bolt::cl::control::Automatic )
+    {
+        runMode = ctl.getDefaultPathToRun();
+    }
 
     if( (runMode == bolt::cl::control::SerialCpu) || (vecSize < BOLT_CL_STABLESORT_CPU_THRESHOLD) )
     {
@@ -218,7 +223,12 @@ void stablesort_pick_iterator( control &ctl,
     if( vecSize < 2 )
         return;
 
-    const bolt::cl::control::e_RunMode runMode = ctl.forceRunMode();
+    bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode( );
+
+    if( runMode == bolt::cl::control::Automatic )
+    {
+        runMode = ctl.getDefaultPathToRun();
+    }
 
     if( runMode == bolt::cl::control::SerialCpu )
     {
@@ -268,7 +278,7 @@ void stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, cons
     /**********************************************************************************
      * Compile Options
      *********************************************************************************/
-    bool cpuDevice = ctrl.device( ).getInfo< CL_DEVICE_TYPE >( ) == CL_DEVICE_TYPE_CPU;
+    bool cpuDevice = ctrl.getDevice( ).getInfo< CL_DEVICE_TYPE >( ) == CL_DEVICE_TYPE_CPU;
     //std::cout << "Device is CPU: " << (cpuDevice?"TRUE":"FALSE") << std::endl;
     //const size_t kernel0_localRange = ( cpuDevice ) ? 1 : localRange*4;
     //std::ostringstream oss;
@@ -292,7 +302,7 @@ void stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, cons
         compileOptions );
     // kernels returned in same order as added in KernelTemplaceSpecializer constructor
 
-    size_t localRange  = kernels[ 0 ].getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctrl.device( ), &l_Error );
+    size_t localRange  = kernels[ 0 ].getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctrl.getDevice( ), &l_Error );
     V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
 
 
@@ -317,7 +327,7 @@ void stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, cons
     V_OPENCL( kernels[ 0 ].setArg( 3, ldsSize, NULL ),          "Error setting argument for kernels[ 0 ]" ); // Scratch buffer
     V_OPENCL( kernels[ 0 ].setArg( 4, *userFunctor ),           "Error setting argument for kernels[ 0 ]" ); // User provided functor class
 
-    ::cl::CommandQueue& myCQ = ctrl.commandQueue( );
+    ::cl::CommandQueue& myCQ = ctrl.getCommandQueue( );
 
     ::cl::Event blockSortEvent;
     l_Error = myCQ.enqueueNDRangeKernel( kernels[ 0 ], ::cl::NullRange,

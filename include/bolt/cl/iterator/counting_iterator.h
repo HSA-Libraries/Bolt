@@ -47,7 +47,7 @@ namespace cl {
                 m_initValue( init ),
                 m_Index( 0 )
             {
-                const ::cl::CommandQueue& m_commQueue = ctl.commandQueue( );
+                const ::cl::CommandQueue& m_commQueue = ctl.getCommandQueue( );
 
                 //  We want to use the context from the passed in commandqueue to initialize our buffer
                 cl_int l_Error = CL_SUCCESS;
