@@ -313,7 +313,11 @@ public:
             return;
 
         // Use host pointers memory since these arrays are only read once - no benefit to copying.
-        const bolt::cl::control::e_RunMode runMode = ctl.forceRunMode();  // could be dynamic choice some day.
+        bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+        if(runMode == bolt::cl::control::Automatic)
+        {
+           runMode = ctl.getDefaultPathToRun();
+        }
         if( runMode == bolt::cl::control::SerialCpu )
         {
             std::transform( first1, last1, first2, result, f );
@@ -362,7 +366,11 @@ public:
             return;
 
         // Use host pointers memory since these arrays are only read once - no benefit to copying.
-        const bolt::cl::control::e_RunMode runMode = ctl.forceRunMode();  // could be dynamic choice some day.
+        bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+        if(runMode == bolt::cl::control::Automatic)
+        {
+           runMode = ctl.getDefaultPathToRun();
+        }
         if( runMode == bolt::cl::control::SerialCpu )
         {
             std::transform( first1, last1, fancyIter, result, f );
@@ -411,7 +419,11 @@ public:
             return;
 
         // Use host pointers memory since these arrays are only read once - no benefit to copying.
-        const bolt::cl::control::e_RunMode runMode = ctl.forceRunMode();  // could be dynamic choice some day.
+        bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+        if(runMode == bolt::cl::control::Automatic)
+        {
+           runMode = ctl.getDefaultPathToRun();
+        }
         if( runMode == bolt::cl::control::SerialCpu )
         {
             std::transform( fancyIterfirst, fancyIterlast, first2, result, f );
@@ -462,7 +474,11 @@ public:
         if( sz == 0 )
             return;
 
-        const bolt::cl::control::e_RunMode runMode = ctl.forceRunMode();  // could be dynamic choice some day.
+        bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+        if(runMode == bolt::cl::control::Automatic)
+        {
+             runMode = ctl.getDefaultPathToRun();
+        }
 
         if( runMode == bolt::cl::control::SerialCpu )
         {
@@ -517,7 +533,11 @@ public:
         if( sz == 0 )
             return;
 
-        const bolt::cl::control::e_RunMode runMode = ctl.forceRunMode();  // could be dynamic choice some day.
+        bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+        if(runMode == bolt::cl::control::Automatic)
+        {
+           runMode = ctl.getDefaultPathToRun();
+        }
 
         if( runMode == bolt::cl::control::SerialCpu )
         {
@@ -571,7 +591,11 @@ public:
         if (sz == 0)
             return;
 
-        const bolt::cl::control::e_RunMode runMode = ctl.forceRunMode();
+        bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+        if(runMode == bolt::cl::control::Automatic)
+        {
+           runMode = ctl.getDefaultPathToRun();
+        }
         if( runMode == bolt::cl::control::SerialCpu )
         {
             std::transform( first, last, result, f );
@@ -621,7 +645,11 @@ public:
         if( sz == 0 )
             return;
 
-        const bolt::cl::control::e_RunMode runMode = ctl.forceRunMode();  // could be dynamic choice some day.
+        bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+        if(runMode == bolt::cl::control::Automatic)
+        {
+             runMode = ctl.getDefaultPathToRun();
+        }
 
         //  TBB does not have an equivalent for two input iterator std::transform
         if( (runMode == bolt::cl::control::SerialCpu) )
@@ -672,8 +700,8 @@ public:
         if( distVec == 0 )
             return;
 
-        const size_t numComputeUnits = ctl.device( ).getInfo< CL_DEVICE_MAX_COMPUTE_UNITS >( );
-        const size_t numWorkGroupsPerComputeUnit = ctl.wgPerComputeUnit( );
+        const size_t numComputeUnits = ctl.getDevice( ).getInfo< CL_DEVICE_MAX_COMPUTE_UNITS >( );
+        const size_t numWorkGroupsPerComputeUnit = ctl.getWGPerComputeUnit( );
         size_t numWorkGroups = numComputeUnits * numWorkGroupsPerComputeUnit;
 
         /**********************************************************************************
@@ -729,7 +757,7 @@ public:
         /**********************************************************************************
          * Compile Options
          *********************************************************************************/
-        bool cpuDevice = ctl.device().getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_CPU;
+        bool cpuDevice = ctl.getDevice().getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_CPU;
         //std::cout << "Device is CPU: " << (cpuDevice?"TRUE":"FALSE") << std::endl;
         const size_t kernel_WgSize = (cpuDevice) ? 1 : wgSize;
         std::string compileOptions;
@@ -765,7 +793,7 @@ public:
         kernels[boundsCheck].setArg( 7, *userFunctor);
 
         ::cl::Event transformEvent;
-        l_Error = ctl.commandQueue().enqueueNDRangeKernel(
+        l_Error = ctl.getCommandQueue().enqueueNDRangeKernel(
           kernels[boundsCheck], 
             ::cl::NullRange, 
             ::cl::NDRange(wgMultiple), // numWorkGroups*wgSize
@@ -800,8 +828,8 @@ public:
         if( distVec == 0 )
             return;
 
-        const size_t numComputeUnits = ctl.device( ).getInfo< CL_DEVICE_MAX_COMPUTE_UNITS >( );
-        const size_t numWorkGroupsPerComputeUnit = ctl.wgPerComputeUnit( );
+        const size_t numComputeUnits = ctl.getDevice( ).getInfo< CL_DEVICE_MAX_COMPUTE_UNITS >( );
+        const size_t numWorkGroupsPerComputeUnit = ctl.getWGPerComputeUnit( );
         const size_t numWorkGroups = numComputeUnits * numWorkGroupsPerComputeUnit;
 
         /**********************************************************************************
@@ -852,7 +880,7 @@ public:
         /**********************************************************************************
          * Compile Options
          *********************************************************************************/
-        bool cpuDevice = ctl.device().getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_CPU;
+        bool cpuDevice = ctl.getDevice().getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_CPU;
         //std::cout << "Device is CPU: " << (cpuDevice?"TRUE":"FALSE") << std::endl;
         const size_t kernel_WgSize = (cpuDevice) ? 1 : wgSize;
         std::string compileOptions;
@@ -888,7 +916,7 @@ public:
         //k.setArg(3, numElementsPerThread );
 
         ::cl::Event transformEvent;
-        l_Error = ctl.commandQueue().enqueueNDRangeKernel(
+        l_Error = ctl.getCommandQueue().enqueueNDRangeKernel(
             kernels[boundsCheck], 
             ::cl::NullRange, 
             ::cl::NDRange( wgMultiple ), // numThreads

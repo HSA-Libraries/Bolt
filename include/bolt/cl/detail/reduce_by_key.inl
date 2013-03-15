@@ -431,7 +431,11 @@ reduce_by_key_pick_iterator(
     if( numElements == 1 )
         return bolt::cl::make_pair( keys_last, values_first+numElements );
 
-    const bolt::cl::control::e_RunMode runMode = ctl.forceRunMode( );  // could be dynamic choice some day.
+     bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+     if(runMode == bolt::cl::control::Automatic)
+     {
+           runMode = ctl.getDefaultPathToRun();
+     }
     unsigned int sizeOfOut;
 
     {
@@ -583,7 +587,7 @@ reduce_by_key_enqueue(
     /**********************************************************************************
      * Compile Options
      *********************************************************************************/
-    bool cpuDevice = ctl.device().getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_CPU;
+    bool cpuDevice = ctl.getDevice().getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_CPU;
     //std::cout << "Device is CPU: " << (cpuDevice?"TRUE":"FALSE") << std::endl;
     const size_t kernel0_WgSize = (cpuDevice) ? 1 : WAVESIZE*KERNEL02WAVES;
     const size_t kernel1_WgSize = (cpuDevice) ? 1 : WAVESIZE*KERNEL1WAVES;
@@ -612,8 +616,8 @@ reduce_by_key_enqueue(
     ::cl::Event kernel0Event, kernel1Event, kernel2Event, kernelAEvent, kernel3Event;
 
     // Set up shape of launch grid and buffers:
-    int computeUnits     = ctl.device( ).getInfo< CL_DEVICE_MAX_COMPUTE_UNITS >( );
-    int wgPerComputeUnit =  ctl.wgPerComputeUnit( );
+    int computeUnits     = ctl.getDevice( ).getInfo< CL_DEVICE_MAX_COMPUTE_UNITS >( );
+    int wgPerComputeUnit =  ctl.getWGPerComputeUnit( );
     int resultCnt = computeUnits * wgPerComputeUnit;
 
     //  Ceiling function to bump the size of input to the next whole wavefront size
@@ -654,7 +658,7 @@ reduce_by_key_enqueue(
 
     //Fill the buffer with zeros
     ::cl::Event fillEvent;
-    ctl.commandQueue().enqueueFillBuffer( *offsetArray, 0, 0, numElements *sizeof( int ), NULL, &fillEvent);
+    ctl.getCommandQueue().enqueueFillBuffer( *offsetArray, 0, 0, numElements *sizeof( int ), NULL, &fillEvent);
     bolt::cl::wait(ctl, fillEvent);
 
 
@@ -677,7 +681,7 @@ reduce_by_key_enqueue(
     V_OPENCL( kernels[0].setArg( 9, *keySumArray ),         "Error setArg kernels[ 0 ]" ); // Output per block sum
     V_OPENCL( kernels[0].setArg( 10, *preSumArray ),         "Error setArg kernels[ 0 ]" ); // Output per block sum
     
-    l_Error = ctl.commandQueue( ).enqueueNDRangeKernel(
+    l_Error = ctl.getCommandQueue( ).enqueueNDRangeKernel(
         kernels[0],
         ::cl::NullRange,
         ::cl::NDRange( sizeInputBuff ),
@@ -710,7 +714,7 @@ reduce_by_key_enqueue(
 
     try
     {
-    l_Error = ctl.commandQueue( ).enqueueNDRangeKernel(
+    l_Error = ctl.getCommandQueue( ).enqueueNDRangeKernel(
         kernels[1],
         ::cl::NullRange,
         ::cl::NDRange( kernel1_WgSize ), // only 1 work-group
@@ -768,7 +772,7 @@ reduce_by_key_enqueue(
 
     try
     {
-    l_Error = ctl.commandQueue( ).enqueueNDRangeKernel(
+    l_Error = ctl.getCommandQueue( ).enqueueNDRangeKernel(
         kernels[2],
         ::cl::NullRange,
         ::cl::NDRange( sizeInputBuff ),
@@ -795,7 +799,7 @@ reduce_by_key_enqueue(
     //
 
     ::cl::Event l_mapEvent;
-    int *h_result = (int*)ctl.commandQueue().enqueueMapBuffer( *offsetArray,
+    int *h_result = (int*)ctl.getCommandQueue().enqueueMapBuffer( *offsetArray,
                                                                     false,
                                                                     CL_MAP_READ | CL_MAP_WRITE,
                                                                     0,
@@ -870,7 +874,7 @@ reduce_by_key_enqueue(
 
     ::cl::Event l_unmapEvent;
     cl_int l_unmapError = CL_SUCCESS;
-    l_unmapError = ctl.commandQueue().enqueueUnmapMemObject( *offsetArray , h_result, NULL, &l_unmapEvent );
+    l_unmapError = ctl.getCommandQueue().enqueueUnmapMemObject( *offsetArray , h_result, NULL, &l_unmapEvent );
     V_OPENCL( l_unmapError, "device_vector failed to unmap host memory back to device memory" );
     //V_OPENCL( l_unmapEvent.wait( ), "failed to wait for unmap event" );
 
@@ -890,7 +894,7 @@ reduce_by_key_enqueue(
 
     try
     {
-    l_Error = ctl.commandQueue( ).enqueueNDRangeKernel(
+    l_Error = ctl.getCommandQueue( ).enqueueNDRangeKernel(
         kernels[3],
         ::cl::NullRange,
         ::cl::NDRange( sizeInputBuff ),

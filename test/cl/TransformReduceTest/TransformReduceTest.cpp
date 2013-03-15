@@ -174,7 +174,7 @@ TYPED_TEST_P( TransformArrayTest, GPU_DeviceNormal )
 {
     typedef std::array< ArrayType, ArraySize > ArrayCont;
 #if OCL_CONTEXT_BUG_WORKAROUND
-  ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control c_gpu( getQueueFromContext(myContext, CL_DEVICE_TYPE_GPU, 0 ));  
 #else
     MyOclContext oclgpu = initOcl(CL_DEVICE_TYPE_GPU, 0);
@@ -266,7 +266,7 @@ TYPED_TEST_P( TransformArrayTest, GPU_DeviceMultipliesFunction )
 {
     typedef std::array< ArrayType, ArraySize > ArrayCont;
 #if OCL_CONTEXT_BUG_WORKAROUND
-  ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control c_gpu( getQueueFromContext(myContext, CL_DEVICE_TYPE_GPU, 0 ));  
 #else
     MyOclContext oclgpu = initOcl(CL_DEVICE_TYPE_GPU, 0);
@@ -1285,9 +1285,8 @@ TEST(TransformReduce, MultiCoreFloat)
         input[i] = 2.f;
         refInput[i] = 2.f;
     }
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.forceRunMode(bolt::cl::control::MultiCoreCpu);
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
     // call transform_reduce
     //  DivUDD ddd;
     bolt::cl::negate<float> ddd;
@@ -1311,9 +1310,8 @@ TEST(TransformReduce, MultiCoreDouble)
         input[i] = 2.0;
         refInput[i] = 2.0;
     }
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.forceRunMode(bolt::cl::control::MultiCoreCpu);
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
     // call transform_reduce
     //  DivUDD ddd;
     bolt::cl::negate<double> ddd;
@@ -1343,9 +1341,8 @@ TEST(TransformReduce, MultiCoreUDD)
         input[i].b = 2;
         refInput[i].b = 2;
     }
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.forceRunMode(bolt::cl::control::MultiCoreCpu);
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
     negateUDD ddd;
     bolt::cl::plus<UDD> add;
     UDD boldReduce = bolt::cl::transform_reduce(ctl, input.begin(), input.end(),  ddd, initial, add );
@@ -1372,9 +1369,8 @@ TEST(TransformReduce, MultiCoreDoubleUDD)
         input[i].b = 5.0;
         refInput[i].b = 5.0;
     }
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.forceRunMode(bolt::cl::control::MultiCoreCpu);
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
     negatetbbUDD ddd;
     bolt::cl::plus<tbbUDD> add;
     tbbUDD boldReduce = bolt::cl::transform_reduce(ctl, input.begin(), input.end(),  ddd, initial, add );
@@ -1397,9 +1393,8 @@ TEST(TransformReduce, DeviceVectorInt)
         refInput[i] = i;
      //   printf("%d \n", input[i]);
      }
-     ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
      bolt::cl::control ctl = bolt::cl::control::getDefault( );
-     ctl.forceRunMode(bolt::cl::control::MultiCoreCpu);
+     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
      // call transform_reduce
      //  DivUDD ddd;
      bolt::cl::negate<int> ddd;
@@ -1429,9 +1424,8 @@ TEST(TransformReduce, DeviceVectorFloat)
         refInput[i] = 2.f;
      //   printf("%d \n", input[i]);
     }
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.forceRunMode(bolt::cl::control::MultiCoreCpu);
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
     // call transform_reduce
     //  DivUDD ddd;
     bolt::cl::negate<float> ddd;
@@ -1466,9 +1460,8 @@ TEST(TransformReduce, DeviceVectorUDD)
         refInput[i].b = 5.0;
     }
     */
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.forceRunMode(bolt::cl::control::MultiCoreCpu);
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
     negatetbbUDD ddd;
     bolt::cl::plus<tbbUDD> add;
     tbbUDD boldReduce = bolt::cl::transform_reduce(ctl, input.begin(), input.end(),  ddd, initial, add );

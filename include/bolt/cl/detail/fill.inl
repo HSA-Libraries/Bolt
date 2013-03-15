@@ -213,8 +213,8 @@ namespace bolt {
             
                 cl_int l_Error = CL_SUCCESS;
                 const size_t workGroupSize  = WAVEFRONT_SIZE;
-                const size_t numComputeUnits = ctl.getDevice( ).getInfo< CL_DEVICE_MAX_COMPUTE_UNITS >( ); // = 28
-                const size_t numWorkGroupsPerComputeUnit = ctl.getWGPerComputeUnit( );
+                const size_t numComputeUnits = ctl.device( ).getInfo< CL_DEVICE_MAX_COMPUTE_UNITS >( ); // = 28
+                const size_t numWorkGroupsPerComputeUnit = ctl.wgPerComputeUnit( );
                 const size_t numWorkGroups = numComputeUnits * numWorkGroupsPerComputeUnit;
                 
                 const cl_uint numThreadsIdeal = static_cast<cl_uint>( numWorkGroups * workGroupSize );
@@ -265,7 +265,7 @@ namespace bolt {
                     V_OPENCL( kernels[0].setArg( 1, first.getBuffer()),"Error setArg kernels[ 0 ]" ); // Fill buffer
                     V_OPENCL( kernels[0].setArg( 2, static_cast<cl_uint>( sz) ), "Error setArg kernels[ 0 ]" ); // Size of buffer
             
-                    l_Error = ctl.getCommandQueue().enqueueNDRangeKernel(
+                    l_Error = ctl.commandQueue( ).enqueueNDRangeKernel(
                         kernels[0],
                         ::cl::NullRange,
                         ::cl::NDRange( numThreadsChosen ),
@@ -288,7 +288,7 @@ namespace bolt {
             
                 // profiling
                 cl_command_queue_properties queueProperties;
-                l_Error = ctl.getCommandQueue().getInfo<cl_command_queue_properties>(CL_QUEUE_PROPERTIES, &queueProperties);
+                l_Error = ctl.commandQueue().getInfo<cl_command_queue_properties>(CL_QUEUE_PROPERTIES, &queueProperties);
                 unsigned int profilingEnabled = queueProperties&CL_QUEUE_PROFILING_ENABLE;
                 if ( profilingEnabled ) {
                     cl_ulong start_time, stop_time;

@@ -178,7 +178,13 @@ namespace  detail {
             if (szElements == 0)
                     return init;
 
-            const bolt::cl::control::e_RunMode runMode = c.getForceRunMode();  // could be dynamic choice some day.
+            //const bolt::cl::control::e_RunMode runMode = c.forceRunMode();  // could be dynamic choice some day.
+
+			bolt::cl::control::e_RunMode runMode = c.getForceRunMode();  // could be dynamic choice some day.
+            if(runMode == bolt::cl::control::Automatic)
+            {
+                runMode = c.getDefaultPathToRun();
+            }
             if (runMode == bolt::cl::control::SerialCpu)
             {
                 //Create a temporary array to store the transform result;
@@ -225,7 +231,11 @@ namespace  detail {
             if (szElements == 0)
                     return init;
 
-            const bolt::cl::control::e_RunMode runMode = c.getForceRunMode();  // could be dynamic choice some day.
+            bolt::cl::control::e_RunMode runMode = c.getForceRunMode();  // could be dynamic choice some day.
+            if(runMode == bolt::cl::control::Automatic)
+            {
+                runMode = c.getDefaultPathToRun();
+            }
             if (runMode == bolt::cl::control::SerialCpu)
             {
                 ::cl::Event serialCPUEvent;
@@ -309,7 +319,7 @@ namespace  detail {
             // Set up shape of launch grid and buffers:
             // FIXME, read from device attributes.
             int computeUnits     = ctl.getDevice().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();  // round up if we don't know. 
-            int wgPerComputeUnit =  ctl.getWGPerComputeUnit(); 
+			int wgPerComputeUnit =  ctl.getWGPerComputeUnit(); 
             int numWG = computeUnits * wgPerComputeUnit;
 
             cl_int l_Error = CL_SUCCESS;

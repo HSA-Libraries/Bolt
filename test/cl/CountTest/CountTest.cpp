@@ -267,7 +267,7 @@ TEST(countFloatValueOccuranceStdVect, MulticoreCountIntTBB){
     }
 
     bolt::cl::control ctl = bolt::cl::control::getDefault();
-    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+    ctl.forceRunMode(bolt::cl::control::MultiCoreCpu);
     size_t stdCount = std::count(stdInput.begin(), stdInput.end(), myintValue);
     size_t boltCount = bolt::cl::count(ctl, tbbInput.begin(), tbbInput.end(), myintValue);
 
@@ -292,7 +292,7 @@ TEST(countFloatValueOccuranceStdVect, MulticoreCountFloatTBB){
     }
 
     bolt::cl::control ctl = bolt::cl::control::getDefault();
-    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+    ctl.forceRunMode(bolt::cl::control::MultiCoreCpu);
     size_t stdCount = std::count(stdInput.begin(), stdInput.end(), myfloatValue);
     size_t boltCount = bolt::cl::count(ctl, tbbInput.begin(), tbbInput.end(), myfloatValue);
 
@@ -323,7 +323,7 @@ TEST(countFloatValueOccuranceStdVect, MulticoreCountUDDTBB){
     }
 
     bolt::cl::control ctl = bolt::cl::control::getDefault();
-    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+    ctl.forceRunMode(bolt::cl::control::MultiCoreCpu);
     size_t stdCount = std::count(stdInput.begin(), stdInput.end(), myUDD);
     size_t boltCount = bolt::cl::count(ctl, tbbInput.begin(), tbbInput.end(), myUDD);
 
@@ -349,7 +349,7 @@ TEST(countFloatValueOccuranceStdVect, MulticoreCountifIntTBB){
     }
 
     bolt::cl::control ctl = bolt::cl::control::getDefault();
-    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+    ctl.forceRunMode(bolt::cl::control::MultiCoreCpu);
     size_t stdCount = std::count_if(stdInput.begin(), stdInput.end(), InRange<int>(2,10000));
     size_t boltCount = bolt::cl::count_if(ctl, tbbInput.begin(), tbbInput.end(), InRange<int>(2,10000));
 
@@ -374,7 +374,7 @@ TEST(countFloatValueOccuranceStdVect, MulticoreCountifFloatTBB){
     }
 
     bolt::cl::control ctl = bolt::cl::control::getDefault();
-    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+    ctl.forceRunMode(bolt::cl::control::MultiCoreCpu);
     size_t stdCount = std::count_if(stdInput.begin(), stdInput.end(), InRange<float>(5.2f,57.2f));
     size_t boltCount = bolt::cl::count_if(ctl, tbbInput.begin(), tbbInput.end(), InRange<float>(5.2f,57.2f));
 
