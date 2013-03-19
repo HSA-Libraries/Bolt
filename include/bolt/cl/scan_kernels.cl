@@ -104,7 +104,7 @@ kernel void perBlockAddition(
     // accumulate prefix
     if (groId > 0)
     {
-        iPtrType postBlockSum = postSumArray_ptr[ groId-1 ];
+        iPtrType postBlockSum = postSumArray_ptr[ groId - 1];
         iPtrType newResult = (*binaryOp)( scanResult, postBlockSum );
         output_iter[ gloId ] = newResult;
     }
@@ -224,7 +224,7 @@ kernel void intraBlockInclusiveScan(
     size_t locId = get_local_id( 0 );
     size_t wgSize = get_local_size( 0 );
     uint mapId  = gloId * workPerThread;
-
+	
     // do offset of zero manually
     uint offset;
     iPtrType workSum;
@@ -247,26 +247,11 @@ kernel void intraBlockInclusiveScan(
         }
     }
     barrier( CLK_LOCAL_MEM_FENCE );
-    iPtrType scanSum;
+    iPtrType scanSum = workSum;
+	lds[ locId ] = workSum;
     offset = 1;
-    // load LDS with register sums
-    if (mapId < vecSize)
-    {
-        lds[ locId ] = workSum;
-        barrier( CLK_LOCAL_MEM_FENCE );
-    
-        if (locId >= offset)
-        { // thread > 0
-            iPtrType y = lds[ locId - offset ];
-            iPtrType y2 = lds[ locId ];
-            scanSum = (*binaryOp)( y2, y );
-            lds[ locId ] = scanSum;
-        } else { // thread 0
-            scanSum = workSum;
-        }  
-    }
-    // scan in lds
-    for( offset = offset*2; offset < wgSize; offset *= 2 )
+	// scan in lds
+    for( offset = offset*1; offset < wgSize; offset *= 2 )
     {
         barrier( CLK_LOCAL_MEM_FENCE );
         if (mapId < vecSize)
@@ -275,13 +260,16 @@ kernel void intraBlockInclusiveScan(
             {
                 iPtrType y = lds[ locId - offset ];
                 scanSum = (*binaryOp)( scanSum, y );
-                lds[ locId ] = scanSum;
             }
         }
+		barrier( CLK_LOCAL_MEM_FENCE );
+        lds[ locId ] = scanSum;  
+		
     } // for offset
-    barrier( CLK_LOCAL_MEM_FENCE );
-    
+    //barrier( CLK_LOCAL_MEM_FENCE );
+	
     // write final scan from pre-scan and lds scan
+	
     for( offset = 0; offset < workPerThread; offset += 1 )
     {
         barrier( CLK_GLOBAL_MEM_FENCE );
@@ -293,7 +281,9 @@ kernel void intraBlockInclusiveScan(
             y = (*binaryOp)( y, y2 );
             postSumArray[ mapId + offset ] = y;
         } // thread in bounds
+
     } // for 
+	
 } // end kernel
 
 
