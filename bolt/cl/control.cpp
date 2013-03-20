@@ -383,7 +383,7 @@ namespace cl
                 {
                     continue;
                 }
-
+                     
                 for( std::vector< ::cl::Device >::iterator amdDevIter = amdDevices.begin( ); 
                      amdDevIter != amdDevices.end( ); ++amdDevIter )
                 {
