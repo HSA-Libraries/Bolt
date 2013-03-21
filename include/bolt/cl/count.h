@@ -47,28 +47,25 @@ namespace bolt {
         *  
         */
 
-
-
-        namespace detail
-        {
-            /*! \brief CountIfEqual: A bolt functor which matches if the object value is same as the input value
-             */
-            static std::string CountIfEqual_OclCode = 
-            BOLT_HOST_DEVICE_DEFINITION(
-            template <typename T> 
-            struct CountIfEqual {
-                CountIfEqual(const T &targetValue)  : _targetValue(targetValue)
-                { };
-                CountIfEqual(){}
-                bool operator() (const T &x) {
-                    return x == _targetValue;
-                };
-
-            private:
-                T _targetValue;
+        /*! \brief CountIfEqual: A bolt functor which matches if the object value is same as the input value
+            */
+        static std::string CountIfEqual_OclCode = 
+        BOLT_HOST_DEVICE_DEFINITION(
+        namespace detail {
+        template <typename T> 
+        struct CountIfEqual {
+            CountIfEqual(const T &targetValue)  : _targetValue(targetValue)
+            { };
+            CountIfEqual(){}
+            bool operator() (const T &x) {
+                return x == _targetValue;
             };
-            );
+
+        private:
+            T _targetValue;
+        };
         }
+        );
 
         /*!
          * \brief \p count counts the number of elements in the specified range which compare equal to the specified 
@@ -102,7 +99,7 @@ namespace bolt {
             const std::string cl_code="")
         {
             typedef typename std::iterator_traits<InputIterator>::value_type T;
-            return count_if(ctl, first, last, detail::CountIfEqual<T>(value), detail::CountIfEqual_OclCode + cl_code);
+            return count_if(ctl, first, last, detail::CountIfEqual<T>(value), CountIfEqual_OclCode + cl_code);
         };
 
         template<typename InputIterator, typename EqualityComparable> 
@@ -113,7 +110,7 @@ namespace bolt {
             const std::string cl_code="")
         {
             typedef typename std::iterator_traits<InputIterator>::value_type T;
-            return count_if(first, last, detail::CountIfEqual<T>(value), detail::CountIfEqual_OclCode + cl_code);
+            return count_if(first, last, detail::CountIfEqual<T>(value), CountIfEqual_OclCode + cl_code);
         };
         
         
@@ -197,7 +194,7 @@ namespace bolt {
 };
 
 BOLT_CREATE_TYPENAME( bolt::cl::detail::CountIfEqual< int > );
-BOLT_CREATE_CLCODE( bolt::cl::detail::CountIfEqual< int >, bolt::cl::detail::CountIfEqual_OclCode );
+BOLT_CREATE_CLCODE( bolt::cl::detail::CountIfEqual< int >, bolt::cl::CountIfEqual_OclCode );
 
 BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::detail::CountIfEqual, int, unsigned int );
 BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::detail::CountIfEqual, int, float );
