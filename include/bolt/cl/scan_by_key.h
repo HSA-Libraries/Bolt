@@ -47,6 +47,7 @@ namespace cl
 /*! \brief \p inclusive_scan_by_key performs, on a sequence,
  * an inclusive scan of each sub-sequence as defined by equivalent keys;
  * the BinaryFunction in this version is plus(), and the BinaryPredicate is equal_to().
+ * inclusive_scan_by_key uses the associative operator binary_op to perform the parallel segmented prefix sum. 
  *
  * \param ctl          \b Optional Control structure to control command-queue, debug, tuning, etc.See bolt::cl::control.
  * \param first1       The first element of the key sequence.
@@ -112,6 +113,7 @@ inclusive_scan_by_key(
 /*! \brief \p inclusive_scan_by_key performs, on a sequence,
  * an inclusive scan of each sub-sequence as defined by equivalent keys;
  * the BinaryFunction in this version is plus().
+ * inclusive_scan_by_key uses the associative operator binary_op to perform the parallel segmented prefix sum.
  *
  * \param ctl        \b Optional Control structure to control command-queue, debug, tuning, etc. See bolt::cl::control.
  * \param first1      The first element of the key sequence.
@@ -183,6 +185,7 @@ inclusive_scan_by_key(
 
 /*! \brief \p inclusive_scan_by_key performs, on a sequence,
  * an inclusive scan of each sub-sequence as defined by equivalent keys.
+ * inclusive_scan_by_key uses the associative operator binary_op to perform the parallel segmented prefix sum.
  *
  * \param ctl           \b Optional Control structure to control command-queue, debug, tuning, etc.  See bolt::cl::control.
  * \param first1        The first element of the key sequence.
@@ -267,6 +270,7 @@ inclusive_scan_by_key(
 /*! \brief \p exclusive_scan_by_key performs, on a sequence,
  * an exclusive scan of each sub-sequence as defined by equivalent keys;
  * the BinaryFunction in this version is plus(), the BinaryPredicate is equal_to(), and init is 0.
+ * exclusive_scan_by_key uses the associative operator binary_op to perform the parallel segmented prefix sum.
  *
  * \param ctl           \b Optional Control structure to control command-queue, debug, tuning, etc.  See bolt::cl::control.
  * \param first1        The first element of the key sequence.
@@ -332,6 +336,7 @@ exclusive_scan_by_key(
 /*! \brief \p exclusive_scan_by_key performs, on a sequence,
  * an exclusive scan of each sub-sequence as defined by equivalent keys;
  * the BinaryFunction in this version is plus(), and the BinaryPredicate is equal_to().
+ * exclusive_scan_by_key uses the associative operator binary_op to perform the parallel segmented prefix sum.
  *
  * \param ctl           \b Optional Control structure to control command-queue, debug, tuning, etc.  See bolt::cl::control.
  * \param first1        The first element of the key sequence.
@@ -403,6 +408,7 @@ exclusive_scan_by_key(
 /*! \brief \p exclusive_scan_by_key performs, on a sequence,
  * an exclusive scan of each sub-sequence as defined by equivalent keys;
  * the BinaryFunction in this version is plus().
+ * exclusive_scan_by_key uses the associative operator binary_op to perform the parallel segmented prefix sum.
  *
  * \param ctl           \b Optional Control structure to control command-queue, debug, tuning, etc.  See bolt::cl::control.
  * \param first1        The first element of the key sequence.
@@ -479,6 +485,7 @@ exclusive_scan_by_key(
 
 /*! \brief \p exclusive_scan_by_key performs, on a sequence,
  * an exclusive scan of each sub-sequence as defined by equivalent keys.
+ * exclusive_scan_by_key uses the associative operator binary_op to perform the parallel segmented prefix sum.
  *
  * \param ctl           \b Optional Control structure to control command-queue, debug, tuning, etc.  See bolt::cl::control.
  * \param first1        The first element of the key sequence.
