@@ -41,6 +41,8 @@
 
 namespace bolt
 {
+  /*! \brief Namespace containing OpenCL related data types and functions
+  */
 
 namespace cl
 {
