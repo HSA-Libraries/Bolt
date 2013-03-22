@@ -430,7 +430,7 @@ aProfiler.stopTrial();
 
         //Now call the actual cl algorithm
         scan_enqueue( ctl, dvInput.begin( ), dvInput.end( ), dvOutput.begin( ), init, binary_op, inclusive );
-        std::cout << "Peeking in pick_iterator after scan_enqueue completed." << std::endl;
+        //std::cout << "Peeking in pick_iterator after scan_enqueue completed." << std::endl;
         PEEK_AT( dvOutput.begin().getBuffer())
 
         // This should immediately map/unmap the buffer
@@ -507,7 +507,6 @@ scan_pick_iterator(
                                                   (OutputIterator&)output, binary_op, inclusive, init);
         tbb::parallel_scan( tbb::blocked_range<int>(  0, numElements), tbb_scan, tbb::auto_partitioner());
         for(unsigned int index=0; index<numElements; index++){
-            first.getBuffer()[index] = scanInputBuffer[index];
             result.getBuffer()[index] = scanResultBuffer[index];
         }
         return result + numElements;

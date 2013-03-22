@@ -245,7 +245,7 @@ namespace bolt {
                     runMode = ctl.getDefaultPathToRun();
                 }
                 if (runMode == bolt::cl::control::SerialCpu) {
-                    return std::accumulate(first, last, init) ;
+                    return std::accumulate(first, last, init,binary_op) ;
                 } else if (runMode == bolt::cl::control::MultiCoreCpu) {
 #ifdef ENABLE_TBB
                     tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
@@ -307,8 +307,7 @@ namespace bolt {
                     tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
                     Reduce<iType, BinaryFunction> reduce_op(binary_op, init);
                     tbb::parallel_reduce( tbb::blocked_range<iType*>( reduceInputBuffer, reduceInputBuffer + szElements), reduce_op );
-                    /*Unmap the device buffer back to device memory. This will copy the host modified buffer back to the device*/
-                    ctl.getCommandQueue().enqueueUnmapMemObject(first.getBuffer(), reduceInputBuffer);
+
                     return reduce_op.value;
 #else
                     std::cout << "The MultiCoreCpu version of reduce is not enabled. " << std ::endl;
