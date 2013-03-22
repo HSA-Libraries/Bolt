@@ -623,7 +623,7 @@ aProfiler.set(AsyncProfiler::memory, numElements*sizeof(iType));
                 tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
                 Scan_tbb<iType, BinaryFunction, iType*, oType*> tbb_scan(scanInputBuffer, scanResultBuffer, binary_op, inclusive, init);
                 tbb::parallel_scan( tbb::blocked_range<int>(  0, numElements), tbb_scan, tbb::auto_partitioner());
-                ctrl.getCommandQueue().enqueueUnmapMemObject(first.getBuffer(), scanInputBuffer);
+
                 ctrl.getCommandQueue().enqueueUnmapMemObject(result.getBuffer(), scanResultBuffer);
                 return result + numElements;
 #else

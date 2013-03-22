@@ -1017,8 +1017,6 @@ scan_by_key_pick_iterator(
                 ScanKey_tbb<T, kType*, vType*, oType*, BinaryFunction, BinaryPredicate> tbbkey_scan(scanInputkey, scanInputBuffer, scanResultBuffer, binary_funct, binary_pred, inclusive, init);
                 tbb::parallel_scan( tbb::blocked_range<int>(  0, numElements), tbbkey_scan, tbb::auto_partitioner());
 
-                ctl.getCommandQueue().enqueueUnmapMemObject(firstKey.getBuffer(), scanInputkey);
-                ctl.getCommandQueue().enqueueUnmapMemObject(firstValue.getBuffer(), scanInputBuffer);
                 ctl.getCommandQueue().enqueueUnmapMemObject(result.getBuffer(), scanResultBuffer);
                 return result + numElements;
 #else
