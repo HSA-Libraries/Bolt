@@ -483,7 +483,6 @@ scan_pick_iterator(
         Serial_scan<iType, oType, BinaryFunction, T>(&(scanInputBuffer[0]), &(scanResultBuffer[0]),
                                                      numElements, binary_op, inclusive, init);
         for(unsigned int index=0; index<numElements; index++){
-            first.getBuffer()[index] = scanInputBuffer[index];
             result.getBuffer()[index] = scanResultBuffer[index];
         }
         return result + numElements;

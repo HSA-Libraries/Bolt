@@ -599,7 +599,7 @@ aProfiler.set(AsyncProfiler::memory, numElements*sizeof(iType));
                 ::cl::Event serialCPUEvent;
                 cl_int l_Error = CL_SUCCESS;
                 iType *scanInputBuffer = (iType*)ctrl.getCommandQueue().enqueueMapBuffer(first.getBuffer(), false, 
-                                   CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(iType) * numElements, NULL, &serialCPUEvent, &l_Error );
+                                   CL_MAP_READ, 0, sizeof(iType) * numElements, NULL, &serialCPUEvent, &l_Error );
                 oType *scanResultBuffer = (oType*)ctrl.getCommandQueue().enqueueMapBuffer(result.getBuffer(), false, 
                                    CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(oType) * numElements, NULL, &serialCPUEvent, &l_Error );
                 serialCPUEvent.wait();
@@ -616,14 +616,14 @@ aProfiler.set(AsyncProfiler::memory, numElements*sizeof(iType));
                 cl_int l_Error = CL_SUCCESS;
                 /*Map the device buffer to CPU*/
                 iType *scanInputBuffer = (iType*)ctrl.getCommandQueue().enqueueMapBuffer(first.getBuffer(), false, 
-                                   CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(iType) * numElements, NULL, &multiCoreCPUEvent, &l_Error );
+                                   CL_MAP_READ, 0, sizeof(iType) * numElements, NULL, &multiCoreCPUEvent, &l_Error );
                 oType *scanResultBuffer = (oType*)ctrl.getCommandQueue().enqueueMapBuffer(result.getBuffer(), false, 
                                    CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(oType) * numElements, NULL, &multiCoreCPUEvent, &l_Error );
                 multiCoreCPUEvent.wait();
                 tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
                 Scan_tbb<iType, BinaryFunction, iType*, oType*> tbb_scan(scanInputBuffer, scanResultBuffer, binary_op, inclusive, init);
                 tbb::parallel_scan( tbb::blocked_range<int>(  0, numElements), tbb_scan, tbb::auto_partitioner());
-
+                ctrl.getCommandQueue().enqueueUnmapMemObject(first.getBuffer(), scanInputBuffer);
                 ctrl.getCommandQueue().enqueueUnmapMemObject(result.getBuffer(), scanResultBuffer);
                 return result + numElements;
 #else
