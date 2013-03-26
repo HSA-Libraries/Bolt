@@ -42,9 +42,11 @@ struct MyType {
         : a(0) { }
 };
 );
-BOLT_CREATE_TYPENAME(bolt::cl::greater< MyType<int> >);
-BOLT_CREATE_TYPENAME( bolt::cl::device_vector< MyType<int> >::iterator );
-BOLT_CREATE_CLCODE( bolt::cl::device_vector< MyType<int> >::iterator, bolt::cl::deviceVectorIteratorTemplate );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE(bolt::cl::greater, int, MyType<int>);
+BOLT_TEMPLATE_REGISTER_NEW_ITERATOR(bolt::cl::device_vector, int, MyType<int>);
+//BOLT_CREATE_TYPENAME(bolt::cl::greater< MyType<int> >);
+//BOLT_CREATE_TYPENAME( bolt::cl::device_vector< MyType<int> >::iterator );
+//BOLT_CREATE_CLCODE( bolt::cl::device_vector< MyType<int> >::iterator, bolt::cl::deviceVectorIteratorTemplate );
 template <typename T>
 void CheckDescendingPtr(T *input, size_t length)
 {

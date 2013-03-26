@@ -1524,7 +1524,16 @@ TEST( TransformReduceInt ,  DISABLED_KcacheTest )
     EXPECT_EQ(resultCPU_OCL,resultCPU_STL);
 }
 
+TEST (cl_outputType_transform_reduce_sq_max, epr__all_raised){
 
+  int data[6] = {-1, 0, -2, -2, 1, -3};
+  bolt::cl::control my_ctl;
+  my_ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+  //int result = bolt::cl::transform_reduce(data, data + 6, bolt::cl::modulus<int>(), 0, bolt::cl::maximum<int>());
+  int result = bolt::cl::transform_reduce(my_ctl, data, data + 6, bolt::cl::square<int>(), 0, bolt::cl::maximum<int>());
+    
+  EXPECT_EQ(9, result);
+}
 
 int main(int argc, char* argv[])
 {
