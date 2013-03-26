@@ -202,5 +202,8 @@ like BOLT_TEMPLATE_FUNCTOR2, BOLT_TEMPLATE_FUNCTOR3 etc from include/bolt/cl/clc
  * \section Requirements Requirements 
  * Bolt requires an OpenCL(TM) implementation that supports the static C++ kernel
  * features; specifically, C++ template support for OpenCL(TM) kernels.  Currently,
- * the AMD OpenCL(TM) SDK 2.7 provides this support; other vendors may adopt this feature in the future.  
+ * the AMD OpenCL(TM) SDK 2.7 provides this support; other vendors may adopt this feature in the future. 
+ * Currently BOLT is tested with AMD HD7970 TAHITI card only. Future plan is to test across multiple platforms. 
+ * If you face any issue with any other AMD HD7000 family of cards and above. Please log an issue in 
+ * <a href="https://github.com/HSA-Libraries/bolt/wiki">BOLT Issues page</a>.
  */

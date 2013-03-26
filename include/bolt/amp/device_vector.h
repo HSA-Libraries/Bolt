@@ -39,7 +39,7 @@
     */
 namespace bolt
 {
-/*! \brief Namespace that AMP related data types and functions
+/*! \brief Namespace containing AMP related data types and functions
  */
 namespace amp
 {
