@@ -54,6 +54,7 @@ namespace cl
 
 /*! \brief \p inclusive_scan calculates a running sum over a range of values, inclusive of the current value.
  *   The result value at iterator position \p i is the running sum of all values less than \p i in the input range.
+ *   inclusive_scan requires associativity of the binary operation to parallelize the prefix sum.
  *
  * \param ctl A \b Optional Bolt control object, to describe the environment under which the function runs.
  * \param first The first iterator in the input range to be scanned.
@@ -93,6 +94,7 @@ inclusive_scan(
 
 /*! \brief \p inclusive_scan calculates a running sum over a range of values, inclusive of the current value.
  *   The result value at iterator position \p i is the running sum of all values less than \p i in the input range.
+ *   inclusive_scan requires associativity of the binary operation to parallelize the prefix sum.
  *
  * \param ctl A \b Optional Bolt control object, to describe the environment under which the function runs.
  * \param first The first iterator in the input range to be scanned.
@@ -132,6 +134,7 @@ inclusive_scan(
 
 /*! \brief \p exclusive_scan calculates a running sum over a range of values, exclusive of the current value.
  *   The result value at iterator position \p i is the running sum of all values less than \p i in the input range.
+ *   exclusive_scan requires associativity of the binary operation to parallelize it.
  *
  * \param ctl A \b Optional Bolt control object, to describe the environment under which the function runs.
  * \param first The first iterator in the input range to be scanned.
@@ -166,6 +169,7 @@ OutputIterator
 
 /*! \brief \p exclusive_scan calculates a running sum over a range of values, exclusive of the current value.
  *   The result value at iterator position \p i is the running sum of all values less than \p i in the input range.
+ *   exclusive_scan requires associativity of the binary operation to parallelize it.
  *
  * \param ctl A \b Optional Bolt control object, to describe the environment under which the function runs.
  * \param first The first iterator in the input range to be scanned.
@@ -203,6 +207,7 @@ OutputIterator
 
 /*! \brief \p exclusive_scan calculates a running sum over a range of values, exclusive of the current value.
  *   The result value at iterator position \p i is the running sum of all values less than \p i in the input range.
+ *   exclusive_scan requires associativity of the binary operation to parallelize it.
  *
  * \param ctl A \b Optional Bolt control object, to describe the environment under which the function runs.
  * \param first The first iterator in the input range to be scanned.
