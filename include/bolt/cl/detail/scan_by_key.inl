@@ -980,9 +980,9 @@ scan_by_key_pick_iterator(
         cl_int l_Error = CL_SUCCESS;
                
         kType *scanInputkey = (kType*)ctl.getCommandQueue().enqueueMapBuffer(firstKey.getBuffer(), false, 
-                            CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(kType) * numElements, NULL, &serialCPUEvent, &l_Error );
+                            CL_MAP_READ, 0, sizeof(kType) * numElements, NULL, &serialCPUEvent, &l_Error );
         vType *scanInputBuffer = (vType*)ctl.getCommandQueue().enqueueMapBuffer(firstValue.getBuffer(), false, 
-                            CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(vType) * numElements, NULL, &serialCPUEvent, &l_Error );
+                            CL_MAP_READ, 0, sizeof(vType) * numElements, NULL, &serialCPUEvent, &l_Error );
         oType *scanResultBuffer = (oType*)ctl.getCommandQueue().enqueueMapBuffer(result.getBuffer(), false, 
                             CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(oType) * numElements, NULL, &serialCPUEvent, &l_Error );
         serialCPUEvent.wait();
@@ -1006,9 +1006,9 @@ scan_by_key_pick_iterator(
                 cl_int l_Error = CL_SUCCESS;
                 /*Map the device buffer to CPU*/
                 kType *scanInputkey = (kType*)ctl.getCommandQueue().enqueueMapBuffer(firstKey.getBuffer(), false, 
-                                   CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(kType) * numElements, NULL, &multiCoreCPUEvent, &l_Error );
+                                   CL_MAP_READ, 0, sizeof(kType) * numElements, NULL, &multiCoreCPUEvent, &l_Error );
                 vType *scanInputBuffer = (vType*)ctl.getCommandQueue().enqueueMapBuffer(firstValue.getBuffer(), false, 
-                                   CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(vType) * numElements, NULL, &multiCoreCPUEvent, &l_Error );
+                                   CL_MAP_READ, 0, sizeof(vType) * numElements, NULL, &multiCoreCPUEvent, &l_Error );
                 oType *scanResultBuffer = (oType*)ctl.getCommandQueue().enqueueMapBuffer(result.getBuffer(), false, 
                                    CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(oType) * numElements, NULL, &multiCoreCPUEvent, &l_Error );
                 multiCoreCPUEvent.wait();

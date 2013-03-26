@@ -599,7 +599,7 @@ aProfiler.set(AsyncProfiler::memory, numElements*sizeof(iType));
                 ::cl::Event serialCPUEvent;
                 cl_int l_Error = CL_SUCCESS;
                 iType *scanInputBuffer = (iType*)ctrl.getCommandQueue().enqueueMapBuffer(first.getBuffer(), false, 
-                                   CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(iType) * numElements, NULL, &serialCPUEvent, &l_Error );
+                                   CL_MAP_READ, 0, sizeof(iType) * numElements, NULL, &serialCPUEvent, &l_Error );
                 oType *scanResultBuffer = (oType*)ctrl.getCommandQueue().enqueueMapBuffer(result.getBuffer(), false, 
                                    CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(oType) * numElements, NULL, &serialCPUEvent, &l_Error );
                 serialCPUEvent.wait();
@@ -616,7 +616,7 @@ aProfiler.set(AsyncProfiler::memory, numElements*sizeof(iType));
                 cl_int l_Error = CL_SUCCESS;
                 /*Map the device buffer to CPU*/
                 iType *scanInputBuffer = (iType*)ctrl.getCommandQueue().enqueueMapBuffer(first.getBuffer(), false, 
-                                   CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(iType) * numElements, NULL, &multiCoreCPUEvent, &l_Error );
+                                   CL_MAP_READ, 0, sizeof(iType) * numElements, NULL, &multiCoreCPUEvent, &l_Error );
                 oType *scanResultBuffer = (oType*)ctrl.getCommandQueue().enqueueMapBuffer(result.getBuffer(), false, 
                                    CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(oType) * numElements, NULL, &multiCoreCPUEvent, &l_Error );
                 multiCoreCPUEvent.wait();

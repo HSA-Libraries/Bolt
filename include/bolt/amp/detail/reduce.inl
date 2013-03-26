@@ -241,7 +241,7 @@ namespace bolt
                 const bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  
                 if (runMode == bolt::amp::control::SerialCpu) 
                 {
-                    return std::accumulate(first, last, init);
+                    return std::accumulate(first, last, init, binary_op);
 
                 } else if (runMode == bolt::amp::control::MultiCoreCpu) {
 #ifdef ENABLE_TBB
@@ -284,7 +284,7 @@ namespace bolt
                      for(unsigned int index=0; index<szElements; index++){
                          InputBuffer[index] = first.getBuffer()[index];
                      } 
-                     return std::accumulate(InputBuffer.begin(), InputBuffer.end(), init) ;
+                     return std::accumulate(InputBuffer.begin(), InputBuffer.end(), init, binary_op) ;
                 }
                 else if (runMode == bolt::amp::control::MultiCoreCpu)
                 {
