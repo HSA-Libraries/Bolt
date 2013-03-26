@@ -26,12 +26,7 @@
 
 #include "bolt/cl/bolt.h"
 #include "bolt/cl/functional.h"
-#ifdef ENABLE_TBB
-//TBB Includes
-#include "tbb/parallel_reduce.h"
-#include "tbb/blocked_range.h"
-#include "tbb/task_scheduler_init.h"
-#endif
+
 
 namespace bolt {
     namespace cl {

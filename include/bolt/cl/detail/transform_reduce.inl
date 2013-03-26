@@ -189,7 +189,7 @@ namespace  detail {
                 std::vector<oType> output(szElements);
 
                 std::transform(first, last, output.begin(),transform_op);
-                return std::accumulate(output.begin(), output.end(), init);
+                return std::accumulate(output.begin(), output.end(), init,reduce_op);
 
             } else if (runMode == bolt::cl::control::MultiCoreCpu) {
 
@@ -264,7 +264,7 @@ namespace  detail {
                 tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
                 Transform_Reduce<oType, UnaryFunction, BinaryFunction> transform_reduce_op(transform_op, reduce_op, init);
                 tbb::parallel_reduce( tbb::blocked_range<iType*>(trans_reduceInputBuffer, (trans_reduceInputBuffer + szElements)), transform_reduce_op );
-                c.getCommandQueue().enqueueUnmapMemObject(first.getBuffer(), trans_reduceInputBuffer);
+
                 return transform_reduce_op.value;
 #else
                 std::cout << "The MultiCoreCpu version of this function is not enabled. " << std ::endl;
