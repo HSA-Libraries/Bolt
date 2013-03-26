@@ -44,6 +44,7 @@
  * 
 
  * \section example_sec Examples
+ * \subsection simplexample_sec Simple Example
  * The simple example below shows how to use Bolt to sort a random array of 8192 integers.  
  \code
 #include <bolt/cl/sort.h>
@@ -73,6 +74,129 @@ void main()
  * \li The Bolt \p bolt::cl::sort call submits to the platform, rather than a specific device.  The Bolt runtime selects
 *      the best device to run the sort, potentially running it on the CPU in the event a GPU is not available or the sort 
 *      size is too small to benefit from GPU acceleration.
+
+
+ * \subsection subexample_sec Bolt Functor Example
+ * Below example shows how to use Functors with BOLT. 
+ * For user defined datatypes to work with BOLT functor, user has to wrap his data type around a macro BOLT_FUNCTOR.
+ * This enables the user defined class to be available as a string to the OpenCL Compiler which is invoked during a call to 
+ * clBuildProgram(). Consider the following example.    
+ \code
+BOLT_FUNCTOR(MyType<int>,
+template <typename T>
+struct MyType {
+    T a;
+
+    bool operator() (const MyType& lhs, const MyType& rhs) const  {
+        return (lhs.a > rhs.a);
+    }
+    bool operator < (const MyType& other) const {
+        return (a < other.a);
+    }
+    bool operator > (const MyType& other) const {
+        return (a > other.a);
+    }
+    bool operator >= (const MyType& other) const {
+        return (a >= other.a);
+    }
+    MyType()
+        : a(0) { }
+};
+);
+\endcode
+
+After defining the class, user need to register it with BOLT. Internally bolt algorithms will make use of the device_vector class. 
+But these are defined only for the basic data types like int, float, unsigned int etc. For User defined datat types it’s the 
+responsibility of the application developer to create a definition of the deveice_vector for his own defined data type.
+See the below example. 
+\code
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::greater, int, MyType< int> );
+BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, int, MyType< int> );
+\endcode
+In the above example bolt::cl::greater functor is defined in include/bolt/cl/functional.h. For the user defined data types it is 
+the responsibility of the application developer to define as shown above for the functors which he uses from include/bolt/cl/functional.h .
+
+Stitching it all together with a below sample code for Sort:
+\code
+void main()
+{
+	typedef MyType<int> mytype;
+	std::vector<mytype> myTypeBoltInput(length);
+	bolt::cl::sort(myTypeBoltInput.begin(), myTypeBoltInput.end(),bolt::cl::greater<mytype>());
+}
+\endcode
+
+User can also work with his own defined Functor as shown below:
+\code
+BOLT_FUNCTOR(uddtD4,
+struct uddtD4
+{
+    double a;
+    double b;
+    double c;
+    double d;
+  
+};
+);
+// Functor for UDD. Adds all four double elements and returns true if lhs_sum > rhs_sum
+BOLT_FUNCTOR(AddD4,
+struct AddD4
+{
+    bool operator()(const uddtD4 &lhs, const uddtD4 &rhs) const
+    {
+
+        if( ( lhs.a + lhs.b + lhs.c + lhs.d ) > ( rhs.a + rhs.b + rhs.c + rhs.d) )
+            return true;
+        return false;
+    };
+}; 
+);
+void main()
+{
+	std::vector <uddtD4> boltInput(sizeOfInputBuffer);
+	bolt::cl::sort( boltInput.begin( ), boltInput.end( ), AddD4() );
+}
+\endcode
+
+* \subsection subexample2_sec Templatized Bolt Functor 
+*  User can also use Templatized version of Bolt Functor with User defined data types as shown below:
+
+\code
+BOLT_TEMPLATE_FUNCTOR1( MyFunctor,  int
+template <typename T>    
+struct MyFunctor{ 
+	T a; 
+	T b; 
+	bool operator() (const MyFunctor& lhs, const MyFunctor& rhs) const { 
+		return (lhs.a > rhs.a);
+	} 
+ 	bool operator < (const MyFunctor& other) const { 
+		return (a < other.a);
+	}
+	bool operator > (const MyFunctor& other) const { 
+		return (a > other.a);
+	}
+	MyFunctor(const MyFunctor &other) 
+		: a(other.a), b(other.b) { } 
+	MyFunctor() 
+		: a(0), b(0) { } 
+	MyFunctor(T& _in) 
+		: a(_in), b(_in) { } 
+}; 
+);
+
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::greater, int, MyFunctor< int> );
+BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, int, MyFunctor< int> );
+
+void main()
+{
+	typedef MyFunctor<int> myfunctor;
+	std::vector <myfunctor> boltInput(sizeOfInputBuffer);
+	bolt::cl::sort( boltInput.begin( ), boltInput.end( ), bolt::cl::greater<myfunctor>() );
+}
+\endcode
+If the user wants to use TEMPLATE_FUNCTOR for more than one datatype then he can use other variants of this
+like BOLT_TEMPLATE_FUNCTOR2, BOLT_TEMPLATE_FUNCTOR3 etc from include/bolt/cl/clcode.h file.
 
 
  * \section Requirements Requirements 
