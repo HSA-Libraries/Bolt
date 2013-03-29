@@ -31,6 +31,7 @@
 //  Include all kernel string objects
 
 #include "bolt/copy_kernels.hpp"
+#include "bolt/count_kernels.hpp"
 #include "bolt/fill_kernels.hpp"
 #include "bolt/generate_kernels.hpp"
 #include "bolt/min_element_kernels.hpp"
