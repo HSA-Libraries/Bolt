@@ -292,7 +292,7 @@ namespace bolt {
                     iType *reduceInputBuffer = (iType*)ctl.getCommandQueue().enqueueMapBuffer(first.getBuffer(), false, CL_MAP_READ|CL_MAP_WRITE,0, sizeof(iType) * szElements, 
                                                NULL, &serialCPUEvent, &l_Error );       
                     serialCPUEvent.wait();
-                    reduceResult = std::accumulate(reduceInputBuffer, reduceInputBuffer + szElements, init) ;
+                    reduceResult = std::accumulate(reduceInputBuffer, reduceInputBuffer + szElements, init, binary_op) ;
                     /*Unmap the device buffer back to device memory. This will copy the host modified buffer back to the device*/
                     ctl.getCommandQueue().enqueueUnmapMemObject(first.getBuffer(), reduceInputBuffer);
                      return reduceResult;
@@ -301,13 +301,14 @@ namespace bolt {
                     ::cl::Event multiCoreCPUEvent;
                     cl_int l_Error = CL_SUCCESS;
                    /*Map the device buffer to CPU*/
-                   iType *reduceInputBuffer = (iType*)ctl.getCommandQueue().enqueueMapBuffer(first.getBuffer(), false, CL_MAP_READ|CL_MAP_WRITE,0, sizeof(iType) * szElements, 
+                   iType *reduceInputBuffer = (iType*)ctl.getCommandQueue().enqueueMapBuffer(first.getBuffer(), false, CL_MAP_READ,0, sizeof(iType) * szElements, 
                                                NULL, &multiCoreCPUEvent, &l_Error );
                     multiCoreCPUEvent.wait();
                     tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
                     Reduce<iType, BinaryFunction> reduce_op(binary_op, init);
                     tbb::parallel_reduce( tbb::blocked_range<iType*>( reduceInputBuffer, reduceInputBuffer + szElements), reduce_op );
-
+                    /*Unmap the device buffer back to device memory. This will copy the host modified buffer back to the device*/
+                    ctl.getCommandQueue().enqueueUnmapMemObject(first.getBuffer(), reduceInputBuffer);
                     return reduce_op.value;
 #else
                     std::cout << "The MultiCoreCpu version of reduce is not enabled. " << std ::endl;
