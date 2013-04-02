@@ -19,7 +19,7 @@
 * \page distributingBoltProjects Distributing Projects Built With Bolt
 * \tableofcontents
 * Bolt is a runtime library that also contains dependencies on other runtimes.  For instance, if the project is built
-* with the OpenCL backend, Bolt contains a dependency on the OpenCL runtime.  If the project is built with the AMP
+* with the OpenCL &tm; backend, Bolt contains a dependency on the OpenCL &tm; runtime.  If the project is built with the AMP
 * backend, Bolt contains a dependency on the AMP runtime.  Likewise for a project that wishes Bolt to use TBB support.
 * Each of these runtimes includes DLLs that must be found on the machine that is executing at runtime.  For each
 * backend Bolt provides, instructions are provided to help Bolt users understand what the dependencies are and how to
@@ -31,11 +31,11 @@
 * <a href='http://www.khronos.org/registry/cl/'>http://www.khronos.org/registry/cl/</a>. When a Bolt application
 * executes, the ICD is expected to be found on the users machine or else the Bolt application will fail to load and the
 * OS will provide an exception message stating that the .DLL is missing. The ICD file is typically installed on user's
-* computers through AMD's Catalyst software package; more information can found at
+* computers through the AMD Catalyst<SUP>TM</SUP> software package; more information can found at
 * <a href='http://www.amd.com/us/products/technologies/amd-catalyst/pages/catalyst.aspx'>
 * http://www.amd.com/us/products/technologies/amd-catalyst/pages/catalyst.aspx </a>.
 *
-* If the Bolt application can require that the Catalyst software be installed on all users machine, no further action
+* If the Bolt application can require that the AMD Catalyst software be installed on all user machines, no further action
 * is necessary.  The OpenCL.dll will be pre-installed on user's machines.  However, if this guarantee cannot be made,
 * then it must be the responsibility for the Bolt application to bundle the OpenCL.dll into the Bolt package.  This is
 * required even if Bolt is only expected to run on CPU cores, because Bolt needs OpenCL.dll to query the platform to
@@ -48,7 +48,7 @@
 * http://blogs.msdn.com/b/nativeconcurrency/archive/2012/03/12/deploying-apps-built-with-c-amp.aspx.
 * The recommended solution from the blog is to install the  Visual Studio redistributable package on the target
 * machine.
-* As no current operations systems by Microsoft deploys with this file pre-installed, if the Bolt application can
+* As no current operations systems by Microsoft deploys with this file pre-installed at this time, if the Bolt application can
 * require that Visual Studio 2012 be present on the users machine, then no further action is necessary.  However, if
 * this guarantee cannot be made, then it must be the responsibility for the Bolt applications installer to either
 * install the correct Visual Studio redistributable or do prompt the user to do so. Failure to do so will cause the
