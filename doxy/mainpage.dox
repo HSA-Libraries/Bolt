@@ -1,5 +1,5 @@
 /***************************************************************************                                                                                     
-*   Copyright 2012 Advanced Micro Devices, Inc.                                     
+*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                               
 *                                                                                    
 *   Licensed under the Apache License, Version 2.0 (the "License");   
 *   you may not use this file except in compliance with the License.                 
@@ -117,9 +117,9 @@ Stitching it all together with a below sample code for Sort:
 \code
 void main()
 {
-	typedef MyType<int> mytype;
-	std::vector<mytype> myTypeBoltInput(length);
-	bolt::cl::sort(myTypeBoltInput.begin(), myTypeBoltInput.end(),bolt::cl::greater<mytype>());
+    typedef MyType<int> mytype;
+    std::vector<mytype> myTypeBoltInput(length);
+    bolt::cl::sort(myTypeBoltInput.begin(), myTypeBoltInput.end(),bolt::cl::greater<mytype>());
 }
 \endcode
 
@@ -150,8 +150,8 @@ struct AddD4
 );
 void main()
 {
-	std::vector <uddtD4> boltInput(sizeOfInputBuffer);
-	bolt::cl::sort( boltInput.begin( ), boltInput.end( ), AddD4() );
+    std::vector <uddtD4> boltInput(sizeOfInputBuffer);
+    bolt::cl::sort( boltInput.begin( ), boltInput.end( ), AddD4() );
 }
 \endcode
 
@@ -162,23 +162,23 @@ void main()
 BOLT_TEMPLATE_FUNCTOR1( MyFunctor,  int
 template <typename T>    
 struct MyFunctor{ 
-	T a; 
-	T b; 
-	bool operator() (const MyFunctor& lhs, const MyFunctor& rhs) const { 
-		return (lhs.a > rhs.a);
-	} 
- 	bool operator < (const MyFunctor& other) const { 
-		return (a < other.a);
-	}
-	bool operator > (const MyFunctor& other) const { 
-		return (a > other.a);
-	}
-	MyFunctor(const MyFunctor &other) 
-		: a(other.a), b(other.b) { } 
-	MyFunctor() 
-		: a(0), b(0) { } 
-	MyFunctor(T& _in) 
-		: a(_in), b(_in) { } 
+    T a; 
+    T b; 
+    bool operator() (const MyFunctor& lhs, const MyFunctor& rhs) const { 
+        return (lhs.a > rhs.a);
+    } 
+    bool operator < (const MyFunctor& other) const { 
+        return (a < other.a);
+    }
+    bool operator > (const MyFunctor& other) const { 
+        return (a > other.a);
+    }
+    MyFunctor(const MyFunctor &other) 
+        : a(other.a), b(other.b) { } 
+    MyFunctor() 
+        : a(0), b(0) { } 
+    MyFunctor(T& _in) 
+        : a(_in), b(_in) { } 
 }; 
 );
 
@@ -187,9 +187,9 @@ BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, int, MyFunctor< in
 
 void main()
 {
-	typedef MyFunctor<int> myfunctor;
-	std::vector <myfunctor> boltInput(sizeOfInputBuffer);
-	bolt::cl::sort( boltInput.begin( ), boltInput.end( ), bolt::cl::greater<myfunctor>() );
+    typedef MyFunctor<int> myfunctor;
+    std::vector <myfunctor> boltInput(sizeOfInputBuffer);
+    bolt::cl::sort( boltInput.begin( ), boltInput.end( ), bolt::cl::greater<myfunctor>() );
 }
 \endcode
 If the user wants to use TEMPLATE_FUNCTOR for more than one datatype then he can use other variants of this

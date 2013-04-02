@@ -1,5 +1,5 @@
 /***************************************************************************                                                                                     
-*   Copyright 2012 Advanced Micro Devices, Inc.                                     
+*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                      
 *                                                                                    
 *   Licensed under the Apache License, Version 2.0 (the "License");   
 *   you may not use this file except in compliance with the License.                 
@@ -139,7 +139,7 @@ void main() {
 *        see the \ref clCode_Templates section below on templated functors.
 *    \li \ref BOLT_FUNCTOR uses macro stringification to create the OpenCL&trade; code string.  As a result, 
          the class definition has all line feeds removed and is compressed into a single line before being passed 
-		 to the compiler.  This can make debugging harder; thus,
+         to the compiler.  This can make debugging harder; thus,
 *        you may choose to use one of the other techniqueus described below.
 *
 * \subsection clCode_Traits TypeName and ClCode Traits
