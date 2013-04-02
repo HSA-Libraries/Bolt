@@ -1,5 +1,5 @@
 /***************************************************************************                                                                                     
-*   Copyright 2012 Advanced Micro Devices, Inc.                                     
+*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
 *                                                                                    
 *   Licensed under the Apache License, Version 2.0 (the "License");   
 *   you may not use this file except in compliance with the License.                 
@@ -22,13 +22,13 @@
 * \section cloning_bolt Cloning the Bolt source from GitHub
 *
 * \subsection clone Clone Bolt
-* There are many available git clients for both Windows and Linux.  If you are already familiar with git, the quick start
+* There are many available git clients for both Windows &reg; and Linux &reg;.  If you are already familiar with git, the quick start
 * instructions are to choose your favorite client and issue a <tt>git clone https://github.com/HSA-Libraries/Bolt </tt>.
 * If you are not familiar with git, you have to first install a git client on your host OS in order to 'clone' the 
-* Bolt code onto your computer.  For linux, if git is not already included in your distribution (type git --version at
+* Bolt code onto your computer.  For Linux &reg;, if git is not already included in your distribution (type git --version at
 * your commandline), then most likely you can still use the native OS's package manager system to easily install the 
 * git package; the package is usually called 'git' or 'git-core'.
-* For windows, a variety of options also exist, but you may have to manually install a package that you download from the 
+* For Windows &reg;, a variety of options also exist, but you may have to manually install a package that you download from the 
 * web.  The recommended package that seems easiest to use is <a href="http://windows.github.com/">GitHub for Windows</a>. 
 * Once installed, it helps you create a GitHub account if you don't already have one, 
 * and creates private/public RSA keys that are tied to your account that allows git to remember who you are so that 
@@ -63,8 +63,8 @@
 * CMake is freely available for download on the web from:\n
 * <a class="external" href="http://www.cmake.org/">http://www.cmake.org/</a>
 * \subsection cl_dependencies OpenCL&tm; Dependencies
-* Bolt's OpenCL&tm; projects have a dependency on the AMD APP SDK and the AMD OpenCL runtime provided by the Catalyst
-* drivers. While OpenCL is regarded as a cross-platform, vendor-neutral API, AMD is using C++ kernel template
+* Bolt's OpenCL&tm; projects have a dependency on the AMD APP SDK and the AMD OpenCL runtime provided by the Catalyst &tm;
+* drivers. OpenCL is regarded as a cross-platform, vendor-neutral API and AMD is using C++ kernel template
 * features found in the AMD OpenCL implementation that to date are not found in other vendor implementations.  
 * During its configuration, CMake requires an environment variable to find the root of the OpenCL installation.   
 * Provide this by defining the environment variable <b>AMDAPPSDKROOT</b> with the path to the root 
@@ -72,16 +72,16 @@
 * A more vendor-neutral environment variable is <b>OPENCL_ROOT</b>.
 * \image html opencl_environment_variable2.png "Environment variable setup screen"
 
-* Cmake ships with several interfaces to help a developer generate native build files.  For Windows-based systems,
+* CMake ships with several interfaces to help a developer generate native build files.  For Windows-based systems,
 * CMake has a GUI interface called CMake-gui that incorporates the traditional point-and-click conventions of buttons,
-* list boxes, and search boxes.  For CLI-based sytems (including CMD from windows), cmake has a native command-line
+* list boxes, and search boxes.  For CLI-based sytems (including CMD from Windows), CMake has a native command-line
 * executable (the GUI is just a wrapper around the command line).  The command line executable is useful,
 * even in Windows, for scripting purposes, such as might be used with automated and continuous build systems.
 
 * \section config CMake Bolt Configuration
-* Once installed, the easiest interface for Windows or X-windows is the cmake GUI program 'cmake-gui'.
-* The terminal applications cmake.exe and ccmake.exe (based on curses library) are  
-* easy to learn.  Cmake automates the creation of build environments in a cross-platform manner,
+* Once installed, the easiest interface for Windows or X-windows is the CMake GUI program 'CMake-gui'.
+* The terminal applications CMake.exe and ccmake.exe (based on curses library) are  
+* easy to learn.  CMake automates the creation of build environments in a cross-platform manner,
 * generating native build files for each respective platform. When launched, it inspects the host computer and searches
 * for all tools, SDKs, libraries, and code necessary to build the project.
 
@@ -89,19 +89,19 @@
 * code and binary URIs as given in the image below and press Configure. You can also use the 'Browse Source ...' and
 * "Browse Build..." buttons to navigate to the \c superbuild and \c binary folder. It is better not to put the \c bin
 * directory inside any folder which has a \c .git folder as a sibling or as a parent structure.
-* \image html cmake.bolt_build.blank.png "Bolt superbuild"
+* \image html CMake.bolt_build.blank.png "Bolt superbuild"
 * Then, click on the Configure button. This will ask you for your choice of generator. You can choose to use
 * Visual Studio 10 or Visual Studio 11. In this example, 'Visual Studio 11 Win64' generator is selected. The selected
 * bin directory should be descriptive of the generator used ; otherwise it's easy to start over 
 * (delete the binaries directory). After selecting the generator, CMake examines the system, finding all the project
 * dependencies and properties, which appear red in the properties box.
-* \image html cmake.pick.generator2.png "List of CMake generators"
+* \image html CMake.pick.generator2.png "List of CMake generators"
 *
-* While cmake finishes configuring the projects, it prints messages in the output log visible in the bottom textbox 
-* within the GUI; this states that cmake found the OpenCL and Bolt libraries.  If not, cmake prints in red text 
-* which libraries or header files are missing. This usually means the environment variables that cmake uses to find 
+* While CMake finishes configuring the projects, it prints messages in the output log visible in the bottom textbox 
+* within the GUI; this states that CMake found the OpenCL and Bolt libraries.  If not, CMake prints in red text 
+* which libraries or header files are missing. This usually means the environment variables that CMake uses to find 
 * dependencies are not set up properly (see \ref clDependencies ).
-* \image html cmake.build.first.configure2.png "Cmake system introspection"
+* \image html CMake.build.first.configure2.png "Cmake system introspection"
 *
 * CMake gives you some values which represent some features that you can choose to generate. In this example below, we
 * chose not to generate BUILD_TBB (see \ref tbb on how to build TBB for Bolt). Now, press the Configure button again to
@@ -126,7 +126,7 @@
 * 
 *
 * \subsection compDependency Supported compilers
-* Bolt currently uses type traits introduced in Visual Studio 2010.  We hope to include additional compilers at some time.  
+* Bolt currently uses type traits introduced in Visual Studio 2010.  We hope to support additional compilers at some time.  
 * We also hope to add GCC/MinGW support at some time.
 *
 * \section bolt_directories Code layout

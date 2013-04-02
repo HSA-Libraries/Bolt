@@ -1,5 +1,5 @@
 /***************************************************************************
-*   Copyright 2012 Advanced Micro Devices, Inc.
+*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.
 *
 *   Licensed under the Apache License, Version 2.0 (the "License");
 *   you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@
 #include <iostream>
 
 /*! \file bolt/cl/sort_by_key.h
-    \brief Returns the sorted result of all the elements in input besed on equivalent keys.
+    \brief Returns the sorted result of all the elements in input based on equivalent keys.
     \bug bolt::cl::sort_by_key does not work for non power of 2 buffer sizes.
 */
 
