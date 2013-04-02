@@ -980,9 +980,9 @@ scan_by_key_pick_iterator(
         cl_int l_Error = CL_SUCCESS;
                
         kType *scanInputkey = (kType*)ctl.getCommandQueue().enqueueMapBuffer(firstKey.getBuffer(), false, 
-                            CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(kType) * numElements, NULL, &serialCPUEvent, &l_Error );
+                            CL_MAP_READ, 0, sizeof(kType) * numElements, NULL, &serialCPUEvent, &l_Error );
         vType *scanInputBuffer = (vType*)ctl.getCommandQueue().enqueueMapBuffer(firstValue.getBuffer(), false, 
-                            CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(vType) * numElements, NULL, &serialCPUEvent, &l_Error );
+                            CL_MAP_READ, 0, sizeof(vType) * numElements, NULL, &serialCPUEvent, &l_Error );
         oType *scanResultBuffer = (oType*)ctl.getCommandQueue().enqueueMapBuffer(result.getBuffer(), false, 
                             CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(oType) * numElements, NULL, &serialCPUEvent, &l_Error );
         serialCPUEvent.wait();
@@ -1006,9 +1006,9 @@ scan_by_key_pick_iterator(
                 cl_int l_Error = CL_SUCCESS;
                 /*Map the device buffer to CPU*/
                 kType *scanInputkey = (kType*)ctl.getCommandQueue().enqueueMapBuffer(firstKey.getBuffer(), false, 
-                                   CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(kType) * numElements, NULL, &multiCoreCPUEvent, &l_Error );
+                                   CL_MAP_READ, 0, sizeof(kType) * numElements, NULL, &multiCoreCPUEvent, &l_Error );
                 vType *scanInputBuffer = (vType*)ctl.getCommandQueue().enqueueMapBuffer(firstValue.getBuffer(), false, 
-                                   CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(vType) * numElements, NULL, &multiCoreCPUEvent, &l_Error );
+                                   CL_MAP_READ, 0, sizeof(vType) * numElements, NULL, &multiCoreCPUEvent, &l_Error );
                 oType *scanResultBuffer = (oType*)ctl.getCommandQueue().enqueueMapBuffer(result.getBuffer(), false, 
                                    CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(oType) * numElements, NULL, &multiCoreCPUEvent, &l_Error );
                 multiCoreCPUEvent.wait();
@@ -1017,6 +1017,8 @@ scan_by_key_pick_iterator(
                 ScanKey_tbb<T, kType*, vType*, oType*, BinaryFunction, BinaryPredicate> tbbkey_scan(scanInputkey, scanInputBuffer, scanResultBuffer, binary_funct, binary_pred, inclusive, init);
                 tbb::parallel_scan( tbb::blocked_range<int>(  0, numElements), tbbkey_scan, tbb::auto_partitioner());
 
+                ctl.getCommandQueue().enqueueUnmapMemObject(firstKey.getBuffer(), scanInputkey);
+                ctl.getCommandQueue().enqueueUnmapMemObject(firstValue.getBuffer(), scanInputBuffer);
                 ctl.getCommandQueue().enqueueUnmapMemObject(result.getBuffer(), scanResultBuffer);
                 return result + numElements;
 #else
