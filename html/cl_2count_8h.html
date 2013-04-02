@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.3"/>
-<title>Bolt Beta: C:/Avinash/Bolt/include/bolt/cl/count.h File Reference</title>
+<title>Bolt Beta: C:/Project/BOLT/bolt/fresh_co/Bolt/include/bolt/cl/count.h File Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -18,7 +18,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">Bolt Beta
-   &#160;<span id="projectnumber">0.5.0</span>
+   &#160;<span id="projectnumber">1.0.0</span>
    </div>
    <div id="projectbrief">C++ template library with support for OpenCL</div>
   </td>
@@ -46,7 +46,7 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_33065aeea99578d2088bdef6d41465e7.html">bolt</a></li><li class="navelem"><a class="el" href="dir_421f711f8ea929b04bc8cde87c375942.html">cl</a></li>  </ul>
+<li class="navelem"><a class="el" href="dir_d85ff93a7a0b95ef0beebd3e71ac10ab.html">Bolt</a></li><li class="navelem"><a class="el" href="dir_aff3fb4e33c4e3fda3d8a9e0453099eb.html">include</a></li><li class="navelem"><a class="el" href="dir_26e99746cae57718948b6048b12f1b53.html">bolt</a></li><li class="navelem"><a class="el" href="dir_fa1b764b3edefb7f42dfbb957044b2c3.html">cl</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
@@ -65,6 +65,7 @@
 <code>#include &quot;<a class="el" href="cl_2functional_8h_source.html">bolt/cl/functional.h</a>&quot;</code><br/>
 <code>#include &quot;<a class="el" href="cl_2transform__reduce_8h_source.html">bolt/cl/transform_reduce.h</a>&quot;</code><br/>
 <code>#include &quot;bolt/cl/iterator/iterator_traits.h&quot;</code><br/>
+<code>#include &lt;bolt/cl/detail/count.inl&gt;</code><br/>
 </div>
 <p><a href="cl_2count_8h_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
@@ -79,30 +80,30 @@ Namespaces</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:ga0762299eb641b230179231cbca93ab72"><td class="memTemplParams" colspan="2">template&lt;typename InputIterator , typename EqualityComparable &gt; </td></tr>
-<tr class="memitem:ga0762299eb641b230179231cbca93ab72"><td class="memTemplItemLeft" align="right" valign="top">bolt::cl::iterator_traits<br class="typebreak"/>
+<tr class="memitem:ga435aec45805217f60fdb0d9fa1d27bb7"><td class="memTemplParams" colspan="2">template&lt;typename InputIterator , typename EqualityComparable &gt; </td></tr>
+<tr class="memitem:ga435aec45805217f60fdb0d9fa1d27bb7"><td class="memTemplItemLeft" align="right" valign="top">bolt::cl::iterator_traits<br class="typebreak"/>
 &lt; InputIterator &gt;<br class="typebreak"/>
-::difference_type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__CL-counting.html#ga0762299eb641b230179231cbca93ab72">bolt::cl::count</a> (control &amp;ctl, InputIterator first, InputIterator last, const EqualityComparable &amp;value, const std::string cl_code=&quot;&quot;)</td></tr>
-<tr class="memdesc:ga0762299eb641b230179231cbca93ab72"><td class="mdescLeft">&#160;</td><td class="mdescRight"><code>count</code> counts the number of elements in the specified range which compare equal to the specified <code>value</code>.  <a href="group__CL-counting.html#ga0762299eb641b230179231cbca93ab72"></a><br/></td></tr>
-<tr class="separator:ga0762299eb641b230179231cbca93ab72"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gaa1738def4e27eae9efa5417c7845bfb7"><td class="memTemplParams" colspan="2"><a class="anchor" id="gaa1738def4e27eae9efa5417c7845bfb7"></a>
+::difference_type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__CL-counting.html#ga435aec45805217f60fdb0d9fa1d27bb7">bolt::cl::count</a> (control &amp;ctl, InputIterator first, InputIterator last, const EqualityComparable &amp;value, const std::string &amp;cl_code=&quot;&quot;)</td></tr>
+<tr class="memdesc:ga435aec45805217f60fdb0d9fa1d27bb7"><td class="mdescLeft">&#160;</td><td class="mdescRight"><code>count</code> counts the number of elements in the specified range which compare equal to the specified <code>value</code>.  <a href="group__CL-counting.html#ga435aec45805217f60fdb0d9fa1d27bb7"></a><br/></td></tr>
+<tr class="separator:ga435aec45805217f60fdb0d9fa1d27bb7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gacccaf6da628e6dfaec6e27a5bae9f501"><td class="memTemplParams" colspan="2"><a class="anchor" id="gacccaf6da628e6dfaec6e27a5bae9f501"></a>
 template&lt;typename InputIterator , typename EqualityComparable &gt; </td></tr>
-<tr class="memitem:gaa1738def4e27eae9efa5417c7845bfb7"><td class="memTemplItemLeft" align="right" valign="top">bolt::cl::iterator_traits<br class="typebreak"/>
+<tr class="memitem:gacccaf6da628e6dfaec6e27a5bae9f501"><td class="memTemplItemLeft" align="right" valign="top">bolt::cl::iterator_traits<br class="typebreak"/>
 &lt; InputIterator &gt;<br class="typebreak"/>
-::difference_type&#160;</td><td class="memTemplItemRight" valign="bottom"><b>bolt::cl::count</b> (InputIterator first, InputIterator last, const EqualityComparable &amp;value, const std::string cl_code=&quot;&quot;)</td></tr>
-<tr class="separator:gaa1738def4e27eae9efa5417c7845bfb7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gad81b84f598a0851b744490ef4f4929bc"><td class="memTemplParams" colspan="2">template&lt;typename InputIterator , typename Predicate &gt; </td></tr>
-<tr class="memitem:gad81b84f598a0851b744490ef4f4929bc"><td class="memTemplItemLeft" align="right" valign="top">bolt::cl::iterator_traits<br class="typebreak"/>
+::difference_type&#160;</td><td class="memTemplItemRight" valign="bottom"><b>bolt::cl::count</b> (InputIterator first, InputIterator last, const EqualityComparable &amp;value, const std::string &amp;cl_code=&quot;&quot;)</td></tr>
+<tr class="separator:gacccaf6da628e6dfaec6e27a5bae9f501"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga662cd6dc9ea399244a2cd8c2f764c611"><td class="memTemplParams" colspan="2">template&lt;typename InputIterator , typename Predicate &gt; </td></tr>
+<tr class="memitem:ga662cd6dc9ea399244a2cd8c2f764c611"><td class="memTemplItemLeft" align="right" valign="top">bolt::cl::iterator_traits<br class="typebreak"/>
 &lt; InputIterator &gt;<br class="typebreak"/>
-::difference_type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__CL-counting.html#gad81b84f598a0851b744490ef4f4929bc">bolt::cl::count_if</a> (control &amp;ctl, InputIterator first, InputIterator last, Predicate predicate, const std::string cl_code=&quot;&quot;)</td></tr>
-<tr class="memdesc:gad81b84f598a0851b744490ef4f4929bc"><td class="mdescLeft">&#160;</td><td class="mdescRight"><code>count_if</code> counts the number of elements in the specified range for which the specified <code>predicate</code> is <code>true</code>.  <a href="group__CL-counting.html#gad81b84f598a0851b744490ef4f4929bc"></a><br/></td></tr>
-<tr class="separator:gad81b84f598a0851b744490ef4f4929bc"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga5b0964aa8f2835f9d21ecc4e067f2294"><td class="memTemplParams" colspan="2"><a class="anchor" id="ga5b0964aa8f2835f9d21ecc4e067f2294"></a>
+::difference_type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__CL-counting.html#ga662cd6dc9ea399244a2cd8c2f764c611">bolt::cl::count_if</a> (control &amp;ctl, InputIterator first, InputIterator last, Predicate predicate=bolt::cl::detail::CountIfEqual&lt; int &gt;(), const std::string &amp;cl_code=&quot;&quot;)</td></tr>
+<tr class="memdesc:ga662cd6dc9ea399244a2cd8c2f764c611"><td class="mdescLeft">&#160;</td><td class="mdescRight"><code>count_if</code> counts the number of elements in the specified range for which the specified <code>predicate</code> is <code>true</code>.  <a href="group__CL-counting.html#ga662cd6dc9ea399244a2cd8c2f764c611"></a><br/></td></tr>
+<tr class="separator:ga662cd6dc9ea399244a2cd8c2f764c611"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gafce53579e10b38526c0a5db0fdb0d7be"><td class="memTemplParams" colspan="2"><a class="anchor" id="gafce53579e10b38526c0a5db0fdb0d7be"></a>
 template&lt;typename InputIterator , typename Predicate &gt; </td></tr>
-<tr class="memitem:ga5b0964aa8f2835f9d21ecc4e067f2294"><td class="memTemplItemLeft" align="right" valign="top">bolt::cl::iterator_traits<br class="typebreak"/>
+<tr class="memitem:gafce53579e10b38526c0a5db0fdb0d7be"><td class="memTemplItemLeft" align="right" valign="top">bolt::cl::iterator_traits<br class="typebreak"/>
 &lt; InputIterator &gt;<br class="typebreak"/>
-::difference_type&#160;</td><td class="memTemplItemRight" valign="bottom"><b>bolt::cl::count_if</b> (InputIterator first, InputIterator last, Predicate predicate, const std::string cl_code=&quot;&quot;)</td></tr>
-<tr class="separator:ga5b0964aa8f2835f9d21ecc4e067f2294"><td class="memSeparator" colspan="2">&#160;</td></tr>
+::difference_type&#160;</td><td class="memTemplItemRight" valign="bottom"><b>bolt::cl::count_if</b> (InputIterator first, InputIterator last, Predicate predicate, const std::string &amp;cl_code=&quot;&quot;)</td></tr>
+<tr class="separator:gafce53579e10b38526c0a5db0fdb0d7be"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afeef3bb64b9989dfb4468bdb9a233266"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afeef3bb64b9989dfb4468bdb9a233266"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>BOLT_CREATE_TYPENAME</b> (bolt::cl::detail::CountIfEqual&lt; int &gt;)</td></tr>
 <tr class="separator:afeef3bb64b9989dfb4468bdb9a233266"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -124,7 +125,7 @@ template&lt;typename InputIterator , typename Predicate &gt; </td></tr>
 </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Mar 22 2013 12:44:23 for Bolt Beta by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Tue Apr 2 2013 20:37:22 for Bolt Beta by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.3
 </small></address>

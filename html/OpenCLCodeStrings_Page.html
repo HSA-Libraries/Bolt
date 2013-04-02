@@ -18,7 +18,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">Bolt Beta
-   &#160;<span id="projectnumber">0.5.0</span>
+   &#160;<span id="projectnumber">1.0.0</span>
    </div>
    <div id="projectbrief">C++ template library with support for OpenCL</div>
   </td>
@@ -100,12 +100,9 @@ Bolt Tools for Split-Source</h1>
 BOLT_FUNCTOR macro</h2>
 <p>The simplest technique is to use the <a class="el" href="group__ClCode.html#ga2478d544fdd6b2cb0b1104ee5378a177">BOLT_FUNCTOR</a> macro. Given a class name and a definition for that class, this macro automatically: </p>
 <ul>
-<li>Creates a string version of the class definition, and associates the string with the class. (Bolt </li>
-<li>finds the string using a C++ trait called <code><a class="el" href="structClCode.html" title="The definition of a type trait for the definition of a type, which could be arbitrarily complex...">ClCode</a></code>. This is described in more detail below.) </li>
-<li>Create a string version of the class name. (Bolt finds the class name using the <code><a class="el" href="structTypeName.html">TypeName</a></code> </li>
-<li>trait. This is described in more detail below in the section <a class="el" href="OpenCLCodeStrings_Page.html#clCode_Traits">TypeName and ClCode Traits</a>.) </li>
-<li>The macro expansion also creates the class definition, so it is visible to the host compiler. This </li>
-<li>lets the constructor be called from the host compiler.</li>
+<li>Creates a string version of the class definition, and associates the string with the class. (Bolt finds the string using a C++ trait called <code><a class="el" href="structClCode.html" title="The definition of a type trait for the definition of a type, which could be arbitrarily complex...">ClCode</a></code>. This is described in more detail below.) </li>
+<li>Creates a string version of the class name. (Bolt finds the class name using the <code><a class="el" href="structTypeName.html">TypeName</a></code> trait. This is described in more detail below in the section <a class="el" href="OpenCLCodeStrings_Page.html#clCode_Traits">TypeName and ClCode Traits</a>.) </li>
+<li>The macro expansion also creates the class definition, so it is visible to the host compiler. This lets the constructor be called from the host compiler.</li>
 </ul>
 <p>The example below shows how to use the <a class="el" href="group__ClCode.html#ga2478d544fdd6b2cb0b1104ee5378a177">BOLT_FUNCTOR</a> macro to implement the Saxpy function using Bolt: </p>
 <div class="fragment"><div class="line"><span class="preprocessor">#include &lt;<a class="code" href="cl_2transform_8h.html" title="Applies a binary function to each pair of elements from two input sequences.">bolt/cl/transform.h</a>&gt;</span></div>
@@ -150,7 +147,7 @@ TypeName and ClCode Traits</h2>
 <h3><a class="anchor" id="TypeName"></a>
 TypeName</h3>
 <p>Bolt defines a baseline <a class="el" href="structTypeName.html">TypeName</a> trait that returns an error message. Each class to be used by Bolt must provide a template specialization for the <a class="el" href="structTypeName.html">TypeName</a> class that returns the string version of the class. For example: </p>
-<div class="fragment"><div class="line"><span class="comment">// Explicity create a TypeName trait for the example &#39;SaxpyFunctor&#39; class</span></div>
+<div class="fragment"><div class="line"><span class="comment">// Explicitly create a TypeName trait for the example &#39;SaxpyFunctor&#39; class</span></div>
 <div class="line"><span class="keyword">template</span>&lt;&gt; <span class="keyword">struct </span><a class="code" href="structTypeName.html">TypeName</a>&lt;SaxpyFunctor&gt; { <span class="keyword">static</span> std::string <span class="keyword">get</span>() { <span class="keywordflow">return</span> <span class="stringliteral">&quot;SaxpyFunctor&quot;</span>; }};</div>
 <div class="line"></div>
 <div class="line"><span class="comment">// Use convenience function - this produces the same result as above.</span></div>
@@ -243,12 +240,12 @@ Templated Classes</h2>
 <div class="line">    <span class="comment">// Count the number of elements from 7..15:</span></div>
 <div class="line">    <span class="comment">// Note the last parameter passed in is the InRange_CodeString we defined above,</span></div>
 <div class="line">    <span class="comment">// InRange_CodeString contains the definition of the templated InRange class</span></div>
-<div class="line">    <span class="keywordtype">int</span> count7to15 = <a class="code" href="group__CL-counting.html#gad81b84f598a0851b744490ef4f4929bc" title="count_if counts the number of elements in the specified range for which the specified predicate is tr...">bolt::cl::count_if</a> (A.begin(), A.end(), InRange&lt;float&gt;(7.0,15.0), InRange_CodeString);</div>
+<div class="line">    <span class="keywordtype">int</span> count7to15 = <a class="code" href="group__CL-counting.html#ga662cd6dc9ea399244a2cd8c2f764c611" title="count_if counts the number of elements in the specified range for which the specified predicate is tr...">bolt::cl::count_if</a> (A.begin(), A.end(), InRange&lt;float&gt;(7.0,15.0), InRange_CodeString);</div>
 <div class="line"></div>
 <div class="line">}</div>
 </div><!-- fragment --><h1><a class="anchor" id="functorLanguage"></a>
 Functor Language</h1>
-<p>The functor must be able to be compiled on both the host (C++) and device (OpenCL&trade; compilers. Thus, it must use only language constructs available in both of those languages. OpenCL&trade; is an "extended subset" of C99: the extensions include new built-in functions, as well as new types (i.e., vector types such as float4). In general, none of the OpenCL extensions can be used in Bolt functor definitions. Developers can work around this restriction by providing host-side functions with the same calling signature and functionality as OpenCL&trade; built-ins. Many of the OpenCL&trade; built-ins already have equivalent host code definitions in &lt;math.h&gt; (i.e., sin, cos, exp, log, pow, ceil, fabs, etc.). If host-side versions are provided, the host code compiles and links correctly using the host code definition, while the OpenCL&trade; code compiles correcly using the OpenCL&trade; built-in.</p>
+<p>The functor must be able to be compiled on both the host (C++) and device (OpenCL&trade; compilers. Thus, it must use only language constructs available in both of those languages. OpenCL&trade; is an "extended subset" of C99: the extensions include new built-in functions, as well as new types (e.g. vector types such as float4). In general, none of the OpenCL extensions can be used in Bolt functor definitions. Developers can provide host-side functions with the same calling signature and functionality as OpenCL&trade; built-ins. Many of the OpenCL&trade; built-ins already have equivalent host code definitions in &lt;math.h&gt; (e.g. sin, cos, exp, log, pow, ceil, fabs, etc.). If host-side versions are provided, the host code compiles and links correctly using the host code definition, while the OpenCL&trade; code compiles correcly using the OpenCL&trade; built-in.</p>
 <p>For more information, see : </p>
 <ul>
 <li>The Khronos OpenCL Specification: <a href="http://www.khronos.org/opencl/">http://www.khronos.org/opencl/</a> </li>
@@ -270,7 +267,7 @@ Conclusion</h1>
 </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Mar 22 2013 12:44:23 for Bolt Beta by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Tue Apr 2 2013 20:37:23 for Bolt Beta by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.3
 </small></address>
