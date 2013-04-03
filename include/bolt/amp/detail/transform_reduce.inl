@@ -189,7 +189,7 @@ namespace bolt {
                 //throw std::exception( "transform_reduce device_vector CPU device not implemented" );
                 std::vector<oType> output(szElements);
                 std::transform(first, last, output.begin(),transform_op);
-                return std::accumulate(output.begin(), output.end(), init);
+                return std::accumulate(output.begin(), output.end(), init, reduce_op);
             }
             else if (runMode == bolt::amp::control::MultiCoreCpu) 
             {
@@ -243,7 +243,7 @@ namespace bolt {
                std::vector<oType> output(szElements);
                std::transform(InputBuffer.begin(), InputBuffer.end(), output.begin(),transform_op);
 
-               return std::accumulate(output.begin(), output.end(), init);
+               return std::accumulate(output.begin(), output.end(), init, reduce_op);
 
             }
             else if (runMode == bolt::amp::control::MultiCoreCpu)

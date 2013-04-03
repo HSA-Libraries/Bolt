@@ -189,7 +189,7 @@ namespace  detail {
                 std::vector<oType> output(szElements);
 
                 std::transform(first, last, output.begin(),transform_op);
-                return std::accumulate(output.begin(), output.end(), init);
+                return std::accumulate(output.begin(), output.end(), init, reduce_op);
 
             } else if (runMode == bolt::cl::control::MultiCoreCpu) {
 
@@ -241,11 +241,11 @@ namespace  detail {
                 oType trans_reduceResult;
                 /*Map the device buffer to CPU*/
                 iType *trans_reduceInputBuffer = (iType*)c.getCommandQueue().enqueueMapBuffer(first.getBuffer(), false, 
-                                   CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(iType) * szElements, NULL, &serialCPUEvent, &l_Error );
+                                   CL_MAP_READ, 0, sizeof(iType) * szElements, NULL, &serialCPUEvent, &l_Error );
                 serialCPUEvent.wait();
                 std::vector<oType> output(szElements);
                 std::transform(trans_reduceInputBuffer, trans_reduceInputBuffer + szElements, output.begin(), transform_op);
-                trans_reduceResult = std::accumulate(output.begin(), output.end(), init) ;
+                trans_reduceResult = std::accumulate(output.begin(), output.end(), init, reduce_op) ;
                 /*Unmap the device buffer back to device memory. This will copy the host modified buffer back to the device*/
                 c.getCommandQueue().enqueueUnmapMemObject(first.getBuffer(), trans_reduceInputBuffer);
                 return trans_reduceResult;
@@ -258,7 +258,7 @@ namespace  detail {
                 cl_int l_Error = CL_SUCCESS;
                 /*Map the device buffer to CPU*/
                 iType *trans_reduceInputBuffer = (iType*)c.getCommandQueue().enqueueMapBuffer(first.getBuffer(), false, 
-                                   CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(iType) * szElements, NULL, &multiCoreCPUEvent, &l_Error );
+                                   CL_MAP_READ, 0, sizeof(iType) * szElements, NULL, &multiCoreCPUEvent, &l_Error );
                 multiCoreCPUEvent.wait();
 
                 tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
