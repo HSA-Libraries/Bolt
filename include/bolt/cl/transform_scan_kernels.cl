@@ -46,7 +46,7 @@ __kernel void perBlockTransformScan(
 
     // if exclusive, load gloId=0 w/ identity, and all others shifted-1
     oValueType val;
-  if (gloId < vecSize){
+    if (gloId < vecSize){
        if (exclusive)
        {
           if (gloId > 0)
@@ -82,9 +82,9 @@ __kernel void perBlockTransformScan(
         lds[ locId ] = sum;
     }
 
-  barrier( CLK_LOCAL_MEM_FENCE );
+    barrier( CLK_LOCAL_MEM_FENCE );
   
-  //  Abort threads that are passed the end of the input vector
+    //  Abort threads that are passed the end of the input vector
     if (gloId >= vecSize) return; 
 
     //  Each work item writes out its calculated scan result, relative to the beginning
@@ -141,7 +141,7 @@ __kernel void intraBlockInclusiveScan(
     }
     barrier( CLK_LOCAL_MEM_FENCE );
     Type scanSum = workSum;
-  lds[ locId ] = workSum;
+    lds[ locId ] = workSum;
     offset = 1;
     // load LDS with register sums
     // scan in lds
@@ -156,8 +156,8 @@ __kernel void intraBlockInclusiveScan(
                 scanSum = (*binaryOp)( scanSum, y );
             }
         }
-    barrier( CLK_LOCAL_MEM_FENCE );
-    lds[ locId ] = scanSum;
+        barrier( CLK_LOCAL_MEM_FENCE );
+        lds[ locId ] = scanSum;
     } // for offset
     barrier( CLK_LOCAL_MEM_FENCE );
     
