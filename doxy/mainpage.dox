@@ -198,16 +198,16 @@ like BOLT_TEMPLATE_FUNCTOR2, BOLT_TEMPLATE_FUNCTOR3 etc from include/bolt/cl/clc
 
  * \section Paths Bolt Code Paths
  * \subsection Default Default Behaviour
- * Bolt function can be executed on the three code paths(GPU, Multicore CPU and Serial). The default mode is "Automatic" which means 
- * it will go into OpenCL &tm; path first, then TBB (Intel), then SerialCpu with below mentioned order. The control will go to other paths only if the selected not found.
+ * Bolt function can be executed with three code paths(GPU, Multicore CPU and Serial). The default mode is "Automatic" which means 
+ * it will go into OpenCL&tm; path first, then TBB (Intel), then SerialCpu with below mentioned order. The control will go to other paths only if the selected one not found.
  
  * Selection order will be: 
- * \li Run on GPU if AMD GPU is found and APP SDK is installed.
- * \li Run on Multicore CPU if TBB is Installed.
+ * \li Run on GPU if AMD GPU is found and AMD APP SDK is installed.
+ * \li Run on Multicore CPU if Intel TBB is installed.
  * \li Run CPU serial path.
   
 * \subsection Force Force Behaviour
-* Forcing the mode to Specified device will run the function on Specified device only. There are two ways in BOLT to force the control to Specified Device.
+* Forcing mode to any device will run the function on that device only. There are two ways in BOLT to force the control to specific Device.
 *   -# <b> Setting control to Device Globally: </b>
 *      \code bolt::cl::control& myControl = bolt::cl::control::getDefault( );
 *  myControl.waitMode( bolt::cl::control::NiceWait );
@@ -217,8 +217,8 @@ like BOLT_TEMPLATE_FUNCTOR2, BOLT_TEMPLATE_FUNCTOR3 etc from include/bolt/cl/clc
 *       \code bolt::amp::control ctl = bolt::amp::control::getDefault( );
 * ctl.setForceRunMode(bolt::amp::control::OpenCL);
 *       \endcode
-* This will set the control to Specified Device locally, passing this control object to BOLT function enables Specified device 
-* path only for that function, so reference to any BOLT function will always run Specified device path.
+* This will set the control to specified device locally, passing this control object to BOLT function enables specified device 
+* path only for that function, so reference to any BOLT function will always run specified device path.
 
 
  * \section Requirements Requirements 
