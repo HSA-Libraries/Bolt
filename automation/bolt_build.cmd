@@ -10,8 +10,8 @@ set CMAKE="C:\Program Files (x86)\CMake 2.8\bin\cmake.exe"
 
 REM ################################################################################################
 REM # File Paths
-set BOLT_BUILD_SOURCE_PATH=C:\Jenkins_FS_Root\workspace\bolt_GitHub_repository_clone
 set BOLT_BUILD_INSTALL_PATH=%CD%
+set BOLT_BUILD_SOURCE_PATH=%~dp0..
 
 REM ################################################################################################
 REM # Build Version
