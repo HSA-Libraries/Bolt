@@ -46,6 +46,7 @@ set( ampBolt.Runtime.Headers.Iterator
    )
     
 set( ampBolt.Runtime.Headers.Detail
+        ${ampBolt.Include.Dir}/detail/count.inl
         ${ampBolt.Include.Dir}/detail/reduce.inl
         ${ampBolt.Include.Dir}/detail/scan.inl
         ${ampBolt.Include.Dir}/detail/scan_by_key.inl

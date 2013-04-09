@@ -36,17 +36,16 @@ kernel void reduceTemplate(
 )
 {
     int gx = get_global_id (0);
-
-    //  Abort threads that are passed the end of the input vector
-    if( gx >= length )
-        return;
-
+    int gloId = gx;
     input_iter.init( input_ptr );
 
     //  Initialize the accumulator private variable with data from the input array
     //  This essentially unrolls the loop below at least once
-    iTypePtr accumulator = input_iter[gx];
-    gx += get_global_size(0);
+    iTypePtr accumulator;
+    if(gloId < length){
+       accumulator = input_iter[gx];
+       gx += get_global_size(0);
+    }
 
     // Loop sequentially over chunks of input vector, reducing an arbitrary size input
     // length into a length related to the number of workgroups
@@ -74,6 +73,10 @@ kernel void reduceTemplate(
     _REDUCE_STEP(tail, local_index,  2);
     _REDUCE_STEP(tail, local_index,  1);
  
+     //  Abort threads that are passed the end of the input vector
+    if( gloId >= length )
+        return;
+
     //  Write only the single reduced value for the entire workgroup
     if (local_index == 0) {
         result[get_group_id(0)] = scratch[0];
