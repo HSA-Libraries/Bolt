@@ -1,5 +1,5 @@
 /***************************************************************************                                                                                     
-*   Copyright 2012 Advanced Micro Devices, Inc.                                     
+*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
 *                                                                                    
 *   Licensed under the Apache License, Version 2.0 (the "License");   
 *   you may not use this file except in compliance with the License.                 
@@ -69,6 +69,7 @@ namespace bolt {
     namespace cl {
 
         extern const std::string copy_kernels;
+        extern const std::string count_kernels;
         extern const std::string fill_kernels;
         extern const std::string generate_kernels;
         extern const std::string min_element_kernels;

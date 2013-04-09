@@ -1,5 +1,5 @@
 ############################################################################                                                                                     
-#   Copyright 2012 Advanced Micro Devices, Inc.                                     
+#   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
 #                                                                                    
 #   Licensed under the Apache License, Version 2.0 (the "License");   
 #   you may not use this file except in compliance with the License.                 
@@ -106,6 +106,7 @@ set( clBolt.Runtime.Headers.Misc
         
 set( clBolt.Runtime.Headers.Detail 
         ${clBolt.Include.Dir}/detail/copy.inl
+        ${clBolt.Include.Dir}/detail/count.inl
         ${clBolt.Include.Dir}/detail/fill.inl
         ${clBolt.Include.Dir}/detail/generate.inl
         ${clBolt.Include.Dir}/detail/inner_product.inl
@@ -127,6 +128,7 @@ set( clBolt.Runtime.Headers.Detail
 set( clBolt.Runtime.clFiles
     fill_kernels.cl
         copy_kernels.cl 
+        count_kernels.cl 
         generate_kernels.cl
         min_element_kernels.cl 
         reduce_kernels.cl 

@@ -1,5 +1,5 @@
 /***************************************************************************                                                                                     
-*   Copyright 2012 Advanced Micro Devices, Inc.                                     
+*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                      
 *                                                                                    
 *   Licensed under the Apache License, Version 2.0 (the "License");   
 *   you may not use this file except in compliance with the License.                 
@@ -91,11 +91,11 @@ void main() {
 * The simplest technique is to use the \ref BOLT_FUNCTOR macro.  Given a class name and
 * a definition for that class, this macro automatically:
 *    \li Creates a string version of the class definition, and associates the string with the class.  (Bolt 
-*    \li finds the string using a C++ trait called \p ClCode. This is described in more detail below.)
-*    \li Create a string version of the class name.  (Bolt finds the class name using the \p TypeName 
-*    \li trait.  This is described in more detail below in the section \ref clCode_Traits.)
+*     finds the string using a C++ trait called \p ClCode. This is described in more detail below.)
+*    \li Creates a string version of the class name.  (Bolt finds the class name using the \p TypeName 
+*     trait.  This is described in more detail below in the section \ref clCode_Traits.)
 *    \li The macro expansion also creates the class definition, so it is visible to the host compiler.  This 
-*    \li lets the constructor be called from the host compiler.
+*     lets the constructor be called from the host compiler.
 *
 * The example below shows how to use the \ref BOLT_FUNCTOR macro to implement the Saxpy function using Bolt:
 * \code
@@ -139,7 +139,7 @@ void main() {
 *        see the \ref clCode_Templates section below on templated functors.
 *    \li \ref BOLT_FUNCTOR uses macro stringification to create the OpenCL&trade; code string.  As a result, 
          the class definition has all line feeds removed and is compressed into a single line before being passed 
-		 to the compiler.  This can make debugging harder; thus,
+         to the compiler.  This can make debugging harder; thus,
 *        you may choose to use one of the other techniqueus described below.
 *
 * \subsection clCode_Traits TypeName and ClCode Traits
@@ -157,7 +157,7 @@ void main() {
 * returns an error message.  Each class to be used by Bolt must provide a template specialization for the TypeName
 * class that returns the string version of the class.   For example:
 * \code
-* // Explicity create a TypeName trait for the example 'SaxpyFunctor' class
+* // Explicitly create a TypeName trait for the example 'SaxpyFunctor' class
 * template<> struct TypeName<SaxpyFunctor> { static std::string get() { return "SaxpyFunctor"; }};
 *
 * // Use convenience function - this produces the same result as above.
@@ -297,11 +297,10 @@ void testCountIf(int aSize)
 * The functor must be able to be compiled on both the host (C++) and device (OpenCL&trade; compilers. 
 * Thus, it must use only language constructs available in both of those languages.  
 * OpenCL&trade; is an "extended subset" of C99: the extensions include new built-in functions, 
-* as well as new types (i.e., vector types such as float4).  In general, none of the OpenCL extensions
-* can be used in Bolt functor definitions.  Developers can work around this restriction by
-* providing host-side functions with the same calling signature and functionality as OpenCL&trade; 
+* as well as new types (e.g. vector types such as float4).  In general, none of the OpenCL extensions
+* can be used in Bolt functor definitions.  Developers can provide host-side functions with the same calling signature and functionality as OpenCL&trade; 
 * built-ins.  Many of the OpenCL&trade; built-ins already have equivalent host code definitions in <math.h> 
-* (i.e., sin, cos, exp, log, pow, ceil, fabs, etc.).  
+* (e.g. sin, cos, exp, log, pow, ceil, fabs, etc.).  
 * If host-side versions are provided, the host code compiles and links correctly using the host code definition,
 * while the OpenCL&trade; code compiles correcly using the OpenCL&trade; built-in.
 

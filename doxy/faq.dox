@@ -1,5 +1,5 @@
 /***************************************************************************      
-*   Copyright 2012 Advanced Micro Devices, Inc.                                     
+*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                           
 *                                                                                    
 *   Licensed under the Apache License, Version 2.0 (the "License");   
 *   you may not use this file except in compliance with the License.                 
@@ -22,7 +22,7 @@
 * \subsection Q0 Does Bolt require linking to a library?
 * Yes, Bolt includes a small static library that must be linked into a user program to properly resolve
 * symbols.  Since Bolt is a template library, almost all functionality is written in header files, 
-* but OpenCL follows an online compilation model to be included in a library, not 
+* but OpenCL &tm; follows an online compilation model to be included in a library, not 
 * in header files.
 * \subsection Q1 Does Bolt depend on any other libraries?
 * Yes, Bolt contains dependencies on Boost.  All dependent header files and pre-compiled libraries
@@ -30,11 +30,11 @@
 * \subsection Q2 What algorithms does Bolt currently support?
 * Transform, reduce, transform_reduce, count, count_if, inclusive_scan, exclusive_scan, and sort.
 * \subsection Q3 What version of OpenCL does Bolt currently require?
-* Bolt uses features available in OpenCL v1.2.
+* OpenCL Programming Specification version 1.2.
 * \subsection Q4 Does Bolt require the AMD OpenCL runtime?
 * Yes, Bolt requires the use of templates in kernel code; currently, AMD is the only vendor
 * to provide this support.
-* \subsection Q5 Which Catalyst package should I use with Bolt?
+* \subsection Q5 Which Catalyst &tm; package should I use with Bolt?
 * Generally speaking, the latest Catalyst package contains the most 
 * recent OpenCL runtime.  As of this writing, the recommended Catalyst package is 12.10.
 * \subsection Q6 Will Bolt be provided as Open Source software?
@@ -44,7 +44,7 @@
 * The <a href="http://opensource.org/licenses/apache2.0.php">Apache License, Version 2.0</a>.
 * \section Performance Performance
 * \subsection Q8 When should I use device_vector vs regular host memory?
-* bolt::cl::device_vector manages device-local memory and can deliver higher 
+* bolt::cl::device_vector manages device-local memory and is degined to deliver higher 
 * performance on discrete GPU system; however, host memory interfaces
 * eliminate the need to create and manage device_vectors. 
 * If memory is re-used across multiple Bolt calls, or is referenced by other

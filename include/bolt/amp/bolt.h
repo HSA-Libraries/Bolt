@@ -1,5 +1,5 @@
 /***************************************************************************                                                                                     
-*   Copyright 2012 Advanced Micro Devices, Inc.                                     
+*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
 *                                                                                    
 *   Licensed under the Apache License, Version 2.0 (the "License");   
 *   you may not use this file except in compliance with the License.                 
@@ -64,32 +64,6 @@
 namespace bolt {
     namespace amp {
                 
-        /******************************************************************
-         * Kernel Template Specialization
-         *****************************************************************/
-        class KernelTemplateSpecializer
-        {
-            public:
-                // kernel template specializer functor
-                virtual const ::std::string operator() (const ::std::vector<::std::string>& typeNames) const
-                { return "Error; virtual function not overloaded"; }
-
-                // add a kernel name
-                void addKernelName( const std::string& kernelName) { kernelNames.push_back(kernelName); }
-
-                // get the name of a particular kernel
-                const ::std::string name( int kernelIndex ) const { return kernelNames[ kernelIndex ]; }
-
-                // return number of kernels
-                size_t numKernels() const { return kernelNames.size(); }
-
-                // kernel vector
-                const ::std::vector<::std::string> getKernelNames() const { return kernelNames; }
-
-            public:
-                ::std::vector<std::string> kernelNames;
-        };
-
         class control;
 
 
