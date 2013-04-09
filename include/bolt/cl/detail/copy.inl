@@ -145,9 +145,10 @@ class Copy_KernelTemplateSpecializer : public KernelTemplateSpecializer
             "__kernel void " + name(0) + "(\n"
             "global " + typeNames[copy_iType] + " * restrict src,\n"
             "global " + typeNames[copy_oType] + " * restrict dst,\n"
-            "const uint numElements\n"
+            "const uint numElements,\n"
+            "const uint srcOffset,\n"
+            "const uint dstOffset\n"
             ");\n\n"
-
 
             "// Dynamic specialization of generic template definition, using user supplied types\n"
             "template __attribute__((mangled_name(" + name(1) + "Instantiated)))\n"
@@ -284,7 +285,34 @@ void copy_pick_iterator(const bolt::cl::control &ctl,  const DVInputIterator& fi
 }
 
 template< typename DVInputIterator, typename Size, typename DVOutputIterator > 
-void copy_enqueue(const bolt::cl::control &ctrl, const DVInputIterator& first, const Size& n, 
+typename std::enable_if< std::is_same< typename std::iterator_traits<DVInputIterator >::value_type, 
+                                       typename std::iterator_traits<DVOutputIterator >::value_type 
+                                     >::value 
+                       >::type  /*If enabled then this typename will be evaluated to void*/
+    copy_enqueue(const bolt::cl::control &ctrl, const DVInputIterator& first, const Size& n, 
+    const DVOutputIterator& result, const std::string& cl_code)
+{
+    typedef std::iterator_traits<DVInputIterator>::value_type iType;
+    typedef std::iterator_traits<DVOutputIterator>::value_type oType;
+    ::cl::Event copyEvent;
+    ctrl.getCommandQueue( ).enqueueCopyBuffer(
+                        first.getBuffer(),
+                        result.getBuffer(),
+                        first.m_Index * sizeof(iType),
+                        result.m_Index * sizeof(oType),
+                        n*sizeof(oType),
+                        NULL,
+                        &copyEvent);
+    // wait for results
+    bolt::cl::wait(ctrl, copyEvent);
+}
+
+template< typename DVInputIterator, typename Size, typename DVOutputIterator > 
+typename std::enable_if< !std::is_same< typename std::iterator_traits<DVInputIterator >::value_type, 
+                                       typename std::iterator_traits<DVOutputIterator >::value_type 
+                                     >::value 
+                       >::type  /*If enabled then this typename will be evaluated to void*/
+    copy_enqueue(const bolt::cl::control &ctrl, const DVInputIterator& first, const Size& n, 
     const DVOutputIterator& result, const std::string& cl_code)
 {
     /**********************************************************************************
@@ -366,12 +394,13 @@ void copy_enqueue(const bolt::cl::control &ctrl, const DVInputIterator& first, c
             break;
         } // switch
 
-        std::cout << "NumElem: " << n << "; NumThreads: " << numThreadsChosen << "; NumWorkGroups: " << numThreadsChosen/workGroupSizeChosen << std::endl;
+        //std::cout << "NumElem: " << n << "; NumThreads: " << numThreadsChosen << "; NumWorkGroups: " << numThreadsChosen/workGroupSizeChosen << std::endl;
 
         V_OPENCL( kernels[whichKernel].setArg( 0, first.getBuffer()), "Error setArg kernels[ 0 ]" ); // Input keys
         V_OPENCL( kernels[whichKernel].setArg( 1, result.getBuffer()),"Error setArg kernels[ 0 ]" ); // Input buffer
-        V_OPENCL( kernels[whichKernel].setArg( 2, static_cast<cl_uint>( n ) ),                 "Error setArg kernels[ 0 ]" ); // Size of buffer
-
+        V_OPENCL( kernels[whichKernel].setArg( 2, static_cast<cl_uint>( n ) ),     "Error setArg kernels[ 0 ]" ); // Size of buffer
+        V_OPENCL( kernels[whichKernel].setArg( 3, first.m_Index ),                 "Error setArg kernels[ 0 ]" ); // Size of buffer
+        V_OPENCL( kernels[whichKernel].setArg( 4, result.m_Index ),                "Error setArg kernels[ 0 ]" ); // Size of buffer
         l_Error = ctrl.getCommandQueue( ).enqueueNDRangeKernel(
             kernels[whichKernel],
             ::cl::NullRange,

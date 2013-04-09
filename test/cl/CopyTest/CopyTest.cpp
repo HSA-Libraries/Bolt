@@ -15,7 +15,7 @@
 
 ***************************************************************************/                                                                                     
 
-#define TEST_DOUBLE 0
+#define TEST_DOUBLE 1
 #define TEST_DEVICE_VECTOR 1
 #define TEST_CPU_DEVICE 1
 
@@ -381,6 +381,223 @@ TEST (copyIntBoltCLDevVect, withIntAsWhole){
         EXPECT_EQ(sourceIntDevVect[i], destIntDevVect[i]);
     }
 } 
+
+TEST (stdIntToIntCopy, offsetCopy){ 
+    int length = 100;
+    int splitSize = 25;
+    std::vector<int> v(length);
+    //Set all the elements to the expected result
+    for(int i=0;i<length/splitSize;i++)
+        for(int count=0; count < splitSize; ++count) {
+                        v[i*splitSize + count] = count+1;
+        }
+    
+    std::vector<int> stdv(length);
+    memcpy(stdv.data(), v.data(), 25 * sizeof(int));      // Copy 25 elements to device vector
+
+    bolt::cl::copy( stdv.begin(), stdv.begin()+25, stdv.begin()+25);  // Copy 1st set of 25 elements to 2nd set of 25 elements
+    bolt::cl::copy_n(stdv.begin(), 25, stdv.begin() + 50);  // Copy 1st set of 25 elements to 3nd set of 25 elements
+    bolt::cl::copy_n(stdv.begin(), 25, stdv.begin() + 75);  // Copy 1st set of 25 elements to 4nd set of 25 elements
+    
+    for (int i = 0; i < length; ++i){ 
+        EXPECT_EQ(stdv[i], v[i]);
+    }
+} 
+
+TEST (dvIntToIntCopy, offsetCopy){ 
+    int length = 100;
+    int splitSize = 25;
+    bolt::cl::device_vector<int> dvIn(length);
+    //Set all the elements
+    for(int i=0;i<length/splitSize;i++)
+        for(int count=0; count < splitSize; ++count) {
+                        dvIn[i*splitSize + count] = count+1;
+        }
+    
+    bolt::cl::device_vector<int> dvOut(length);
+    {
+        bolt::cl::device_vector<int>::pointer dpOut=dvOut.data();
+        bolt::cl::device_vector<int>::pointer dpIn=dvIn.data();
+        memcpy(dpOut.get(), dpIn.get(), 25 * sizeof(int));      // Copy 25 elements to device vector
+    }
+    
+    bolt::cl::copy( dvIn.begin(), dvIn.begin()+25, dvOut.begin()+25);  // Copy 1st set of 25 elements to 2nd set of 25 elements
+    bolt::cl::copy_n(dvIn.begin(), 25, dvOut.begin() + 50);  // Copy 1st set of 25 elements to 3nd set of 25 elements
+    bolt::cl::copy_n(dvIn.begin(), 25, dvOut.begin() + 75);  // Copy 1st set of 25 elements to 4nd set of 25 elements
+    
+    for (int i = 0; i < length; ++i){ 
+        EXPECT_EQ(dvOut[i], dvIn[i]);
+    }
+} 
+
+TEST (stdIntToFloatCopy, offsetCopy){ 
+    int length = 100;
+    int splitSize = 25;
+    std::vector<int> v(length);
+    //Set all the elements to the expected result
+    for(int i=0;i<length/splitSize;i++)
+        for(int count=0; count < splitSize; ++count) {
+                        v[i*splitSize + count] = count+1;
+        }
+    
+    bolt::cl::device_vector<float> dv(length);
+    
+    //Copy 0- 24 elements
+    bolt::cl::copy( v.begin(), v.begin()+25, dv.begin());
+    //Copy 25- 49 elements
+    bolt::cl::copy( v.begin()+25, v.begin()+50, dv.begin()+25);  // Copy 1st set of 25 elements to 2nd set of 25 elements
+    //Copy 50- 74 elements 
+    bolt::cl::copy_n(v.begin(), 25, dv.begin() + 50);  // Copy 1st set of 25 elements to 3nd set of 25 elements
+    //Copy 75- 99 elements 
+    bolt::cl::copy_n(v.begin()+25, 25, dv.begin() + 75);  // Copy 1st set of 25 elements to 4nd set of 25 elements
+    
+    for (int i = 0; i < length; ++i){ 
+        EXPECT_FLOAT_EQ(dv[i], (float)v[i]);
+    }
+} 
+
+TEST (dvIntToFloatCopy, offsetCopy){ 
+    int length = 100;
+    int splitSize = 25;
+    bolt::cl::device_vector<int> dvIn(length);
+    //Set all the elements to the expected result
+    for(int i=0;i<length/splitSize;i++)
+        for(int count=0; count < splitSize; ++count) {
+                        dvIn[i*splitSize + count] = count+1;
+        }
+    
+    bolt::cl::device_vector<float> dvOut(length);
+    //memcpy will copy the bit representation but std::copy will convert it.
+    bolt::cl::copy(dvIn.begin(), dvIn.begin()+25, dvOut.begin());
+    for (int i = 0; i < splitSize; ++i){ 
+        EXPECT_FLOAT_EQ(dvOut[i], dvIn[i]);
+    }
+    bolt::cl::copy(dvIn.begin()+25, dvIn.begin()+50, dvOut.begin()+25);  // Copy 1st set of 25 elements to 2nd set of 25 elements
+    for (int i = 25; i < splitSize+25; ++i){ 
+        EXPECT_FLOAT_EQ(dvOut[i], dvIn[i]);
+    }
+    bolt::cl::copy_n(dvIn.begin(), 25, dvOut.begin()+50);  // Copy 1st set of 25 elements to 3nd set of 25 elements
+    for (int i = 50; i < splitSize+50; ++i){ 
+        EXPECT_FLOAT_EQ(dvOut[i], dvIn[i]);
+    }
+
+    bolt::cl::copy_n(dvIn.begin()+25, 25, dvOut.begin()+75);  // Copy 1st set of 25 elements to 4nd set of 25 elements
+    for (int i = 75; i < length; ++i){ 
+        EXPECT_FLOAT_EQ(dvOut[i], dvIn[i]);
+    }
+} 
+
+TEST (dvIntToFloatlargeBufferCopy, offsetCopy){ 
+    int length = 4096;
+    bolt::cl::device_vector<int> dvIn(length);
+    //Set all the elements to the expected result
+    for(int i=0;i<length;i++)
+    {
+         dvIn[i] = i+1;
+    }
+    for(int copyStride= 17; copyStride<300; copyStride+=17)
+    {
+        bolt::cl::device_vector<float> dvOut(length);
+        //memcpy will copy the bit representation but std::copy will convert it.
+        for(int i=0; i<(length-copyStride*2); i+=copyStride*2)
+        {
+            int offset = i;
+            bolt::cl::copy(dvIn.begin()+offset, dvIn.begin()+offset+copyStride, dvOut.begin()+offset);
+            for (int j = 0; j < copyStride; ++j){ 
+                {
+                EXPECT_FLOAT_EQ(dvOut[offset+j], dvIn[offset+j]);
+                }
+            }
+
+            offset = i+copyStride;
+            bolt::cl::copy(dvIn.begin()+offset, dvIn.begin()+offset+copyStride, dvOut.begin()+offset);
+            for (int j = 0; j < copyStride; ++j){ 
+                {
+                EXPECT_FLOAT_EQ(dvOut[offset+j], dvIn[offset+j]);
+                }
+            }
+        }
+    }
+} 
+
+BOLT_FUNCTOR(ichar,
+struct ichar
+{
+  int x;
+  char c;
+  bool operator==(const ichar& rhs) const
+  {
+      return ( x == rhs.x );
+  }
+
+  void set_values(int ux, char uc)
+  {
+    x = ux;
+    c = uc;
+  }
+
+};
+);
+
+
+TEST (copyStructOdd, BufferTest)
+{
+  int length = 1024;
+  //std::vector<ichar> destination(length), sauce(length);
+  bolt::cl::device_vector<ichar> destination(length), sauce(length);
+  for (int i = 0; i < length; i++)
+  {
+     ichar user;
+     user.set_values(100,'b');
+     sauce[i] = user;
+  }
+
+  bolt::cl::copy( sauce.begin(), sauce.end(), destination.begin());
+  cmpArrays( sauce, destination, length );
+
+}
+
+
+TEST (copyStructOdd, BufferTestSameBuffer)
+{
+  int length = 1024;
+  //std::vector<ichar> destination(length), sauce(length);
+  bolt::cl::device_vector<ichar> sauce(length);
+  for (int i = 0; i < 128; i++)
+  {
+     ichar user;
+     user.set_values(100,'b');
+     sauce[i] = user;
+  }
+
+  bolt::cl::copy( sauce.begin(), sauce.begin() + 128, sauce.begin() + 128);
+
+  ichar user2;
+  user2  = sauce[129];
+  std::cout<<"vals are";
+  std::cout<<user2.c<<std::endl;
+  std::cout<<user2.x<<std::endl;
+
+}
+
+
+
+TEST (copyStructOdd, BufferTestHostToDevice)
+{
+  int length = 1024;
+  std::vector<ichar> sauce(length);
+  bolt::cl::device_vector<ichar> destination(length);
+  for (int i = 0; i < length; i++)
+  {
+     ichar user;
+     user.set_values(100,'b');
+     sauce[i] = user;
+  }
+
+  bolt::cl::copy( sauce.begin(), sauce.end(), destination.begin());
+  cmpArrays( sauce, destination );
+
+}
 
 int main(int argc, char* argv[])
 {
