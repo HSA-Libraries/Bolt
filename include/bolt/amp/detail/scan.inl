@@ -817,30 +817,13 @@ aProfiler.set(AsyncProfiler::memory, 4*sizeScanBuff*sizeof(oType));
             }
         }
         t_idx.barrier.wait();
-        oType scanSum;
+        oType scanSum = workSum;
         offset = 1;
         // load LDS with register sums
-        if (mapId < numWorkGroupsK0)
-        {
-            lds[ locId ] = workSum;
-        }
+        lds[ locId ] = workSum;
 
-        t_idx.barrier.wait();
-
-        if (mapId < numWorkGroupsK0)
-        {
-            if (locId >= offset)
-            { // thread > 0
-                oType y = lds[ locId - offset ];
-                oType y2 = lds[ locId ];
-                scanSum = binary_op( y2, y );
-                lds[ locId ] = scanSum;
-            } else { // thread 0
-                scanSum = workSum;
-            }  
-        }
         // scan in lds
-        for( offset = offset*2; offset < wgSize; offset *= 2 )
+        for( offset = offset*1; offset < wgSize; offset *= 2 )
         {
             t_idx.barrier.wait();
             if (mapId < numWorkGroupsK0)
@@ -849,17 +832,17 @@ aProfiler.set(AsyncProfiler::memory, 4*sizeScanBuff*sizeof(oType));
                 {
                     oType y = lds[ locId - offset ];
                     scanSum = binary_op( scanSum, y );
-                    lds[ locId ] = scanSum;
                 }
             }
+		      	lds[ locId ] = scanSum;
+			      t_idx.barrier.wait();
+
         } // for offset
-        t_idx.barrier.wait();
-        
+       
         // write final scan from pre-scan and lds scan
         for( offset = 0; offset < workPerThread; offset += 1 )
         {
             t_idx.barrier.wait();
-
             if (mapId < numWorkGroupsK0 && locId > 0)
             {
                 oType y = postSumArray[ mapId + offset ];
