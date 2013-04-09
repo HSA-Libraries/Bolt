@@ -358,6 +358,81 @@ TEST(ReduceByKeyPairCheck, IntegerTest2)
     cmpArrays(vrefOutput, voutput);
 }
 
+
+TEST(ReduceByKeyBasic, IntegerTestOddSizes)
+{
+    int length;
+
+    int num,n,i, count=0;
+
+   for(num=1<<16;count<=20;num++)  
+   {
+      for(i=2;i<num;i++)
+      {
+         if(num%i==0)
+         break;
+      }
+      if(num==i)
+      {
+      //  printf("****%d\n", length); 
+        length = num; 
+        std::vector< int > keys( length);
+        // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
+        int segmentLength = 0;
+        int segmentIndex = 0;
+        int key = 1;
+        std::vector< int > refInput( length );
+        std::vector< int > input( length );
+        for (int i = 0; i < length; i++)
+        {
+            if(std::rand()%3 == 1) key++;
+            keys[i] = key;
+            refInput[i] = std::rand()%4;
+            input[i] = refInput[i];
+        }
+
+        // input and output vectors for device and reference
+    
+        std::vector< int > koutput( length ); 
+        std::vector< int > voutput( length ); 
+        std::vector< int > krefOutput( length );
+        std::vector< int > vrefOutput( length );
+        std::fill(krefOutput.begin(),krefOutput.end(),0);
+        std::fill(vrefOutput.begin(),vrefOutput.end(),0);
+
+
+        bolt::cl::equal_to<int> binary_predictor;
+        bolt::cl::plus<int> binary_operator;
+
+
+        // call reduce_by_key
+        auto p = bolt::cl::reduce_by_key( keys.begin(), keys.end(), input.begin(), koutput.begin(), voutput.begin(), binary_predictor, binary_operator);
+
+    #if 0
+
+        for(unsigned int i = 0; i < 256 ; i++)
+        {
+            std::cout<<"Ikey "<<keys[i]<<" IValues "<<input[i]<<" -> OKeys "<<koutput[i]<<" OValues "<<voutput[i]<<std::endl;
+        }
+
+    #endif
+
+        auto refPair = gold_reduce_by_key( keys.begin(), keys.end(), refInput.begin(), krefOutput.begin(), vrefOutput.begin(),std::plus<int>());
+    
+        //cmpArrays2(krefOutput, koutput, refPair.first, p.first);
+        cmpArrays(krefOutput, koutput);
+        cmpArrays(vrefOutput, voutput);
+        // cmpArrays2(vrefOutput, voutput, refPair.second, p.second);        
+        count++;
+      }
+   }
+  
+    
+}
+
+
+
+
 BOLT_FUNCTOR(uddfltint,
 struct uddfltint
 {
@@ -367,7 +442,7 @@ struct uddfltint
     bool operator==(const uddfltint& rhs) const
     {
         bool equal = true;
-        double ths = 0.00001; // thresh hold single(float)
+        float ths = 0.00001; // thresh hold single(float)
         equal = ( x == rhs.x ) ? equal : false;
         if (rhs.y < ths && rhs.y > -ths)
             equal = ( (1.0*y - rhs.y) < ths && (1.0*y - rhs.y) > -ths) ? equal : false;
@@ -399,7 +474,7 @@ struct uddfltint
     bool operator!=(int rhs) const
     {
         bool nequal = true;
-        double ths = 0.00001; // thresh hold single(float)
+        float ths = 0.00001; // thresh hold single(float)
         nequal = ( x != rhs ) ? nequal : false;
         if (rhs < ths && rhs > -ths)
             nequal = ( (1.0*y - rhs) < ths && (1.0*y - rhs) > -ths) ? false : nequal;
