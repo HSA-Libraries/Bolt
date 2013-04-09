@@ -1,5 +1,5 @@
 /***************************************************************************                                                                                     
-*   Copyright 2012 Advanced Micro Devices, Inc.                                     
+*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
 *                                                                                    
 *   Licensed under the Apache License, Version 2.0 (the "License");   
 *   you may not use this file except in compliance with the License.                 
@@ -43,8 +43,7 @@ public:
 };
 
 
-std::string InRange_CodeString = 
-BOLT_CODE_STRING(
+BOLT_TEMPLATE_FUNCTOR4(InRange,int,float,double,__int64,
 template<typename T>
 // Functor for range checking.
 struct InRange {
@@ -54,7 +53,6 @@ struct InRange {
   };
 
   bool operator() (const T& value) { 
-    //printf("Val=%4.1f, Range:%4.1f ... %4.1f\n", value, _low, _high); 
     return (value >= _low) && (value <= _high) ; 
   };
 
@@ -62,16 +60,16 @@ struct InRange {
   T _high;
 };
 );
-
-BOLT_CREATE_TYPENAME(InRange<int>);
-BOLT_CREATE_CLCODE(InRange<int>, InRange_CodeString);
-BOLT_CREATE_TYPENAME(InRange<float>);
-BOLT_CREATE_CLCODE(InRange<float>, InRange_CodeString);
-BOLT_CREATE_TYPENAME(InRange<double>);
-BOLT_CREATE_CLCODE(InRange<double>, InRange_CodeString);
-BOLT_CREATE_TYPENAME(InRange<__int64>);
-BOLT_CREATE_CLCODE(InRange<__int64>, InRange_CodeString);
-
+//
+//BOLT_CREATE_TYPENAME(InRange<int>);
+//BOLT_CREATE_CLCODE(InRange<int>, InRange_CodeString);
+//BOLT_CREATE_TYPENAME(InRange<float>);
+//BOLT_CREATE_CLCODE(InRange<float>, InRange_CodeString);
+//BOLT_CREATE_TYPENAME(InRange<double>);
+//BOLT_CREATE_CLCODE(InRange<double>, InRange_CodeString);
+//BOLT_CREATE_TYPENAME(InRange<__int64>);
+//BOLT_CREATE_CLCODE(InRange<__int64>, InRange_CodeString);
+//
 
 TEST_P (testCountIfFloatWithStdVector, countFloatValueInRange)
 {
@@ -235,6 +233,11 @@ struct UDD {
         return ((a+b) == (other.a+other.b));
     }
 
+
+    bool operator() (const int &x) {
+        return (x == a || x == b);
+    }
+
     UDD operator + (const UDD &rhs) const {
                 UDD tmp = *this;
                 tmp.a = tmp.a + rhs.a;
@@ -249,6 +252,9 @@ struct UDD {
         
 }; 
 );
+
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::detail::CountIfEqual, int, UDD );
+BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, int, UDD );
 
 TEST(countFloatValueOccuranceStdVect, MulticoreCountIntTBB){
     const int aSize = 1<<24;
@@ -300,7 +306,8 @@ TEST(countFloatValueOccuranceStdVect, MulticoreCountFloatTBB){
   //std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
 }
 
-/*
+
+
 TEST(countFloatValueOccuranceStdVect, MulticoreCountUDDTBB){
     const int aSize = 1<<21;
     std::vector<UDD> stdInput(aSize);
@@ -316,40 +323,83 @@ TEST(countFloatValueOccuranceStdVect, MulticoreCountUDDTBB){
 
 
     for (int i=0; i < aSize; i++) {
-       stdInput[i].a = 3;
-       stdInput[i].b = 5;
+       stdInput[i].a = rand()%10;
+       stdInput[i].b = rand()%10;
        tbbInput[i].a = stdInput[i].a;
-       stdInput[i].b = stdInput[i].b;
+       tbbInput[i].b = stdInput[i].b;
     }
 
     bolt::cl::control ctl = bolt::cl::control::getDefault();
-    ctl.forceRunMode(bolt::cl::control::MultiCoreCpu);
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
     size_t stdCount = std::count(stdInput.begin(), stdInput.end(), myUDD);
     size_t boltCount = bolt::cl::count(ctl, tbbInput.begin(), tbbInput.end(), myUDD);
 
     EXPECT_EQ(stdCount, boltCount)<<"Failed as: \nSTD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
     std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
 }
-*/
 
-TEST(countFloatValueOccuranceStdVect, MulticoreCountifIntTBB){
-    const int aSize = 1<<24;
-    std::vector<int> stdInput(aSize);
-    std::vector<int> tbbInput(aSize);
+TEST(countFloatValueOccuranceStdVect,DeviceCountUDDTBB){
+    const int aSize = 1<<21;
+    std::vector<UDD> stdInput(aSize);
+    
+    UDD myUDD;
+    myUDD.a = 3;
+    myUDD.b = 5;
+    
+    for (int i=0; i < aSize; i++) {
+       stdInput[i].a = rand()%10;
+       stdInput[i].b = rand()%10;
+    }
 
-    //bolt::cl::device_vector<int> stdInput(aSize);
-    //bolt::cl::device_vector<int> tbbInput(aSize);
+    bolt::cl::device_vector<UDD> tbbInput(stdInput.begin(),stdInput.end());
+    
+    bolt::cl::control ctl = bolt::cl::control::getDefault();
+    size_t stdCount = std::count(stdInput.begin(), stdInput.end(), myUDD);
+    size_t boltCount = bolt::cl::count(ctl, tbbInput.begin(), tbbInput.end(), myUDD);
 
+    EXPECT_EQ(stdCount, boltCount)<<"Failed as: \nSTD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
+    std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
+}
+TEST(countFloatValueOccuranceStdVect, STDCountUDDTBB){
+    const int aSize = 1<<21;
+    std::vector<UDD> stdInput(aSize);
+    std::vector<UDD> tbbInput(aSize);
 
-    int myintValue = 2;
+    UDD myUDD;
+    myUDD.a = 3;
+    myUDD.b = 5;
+
 
     for (int i=0; i < aSize; i++) {
-    stdInput[i] = 2;//rand() % 10 + 1;
-    tbbInput[i] = stdInput[i];
+       stdInput[i].a = rand()%10;
+       stdInput[i].b = rand()%10;
+       tbbInput[i].a = stdInput[i].a;
+       tbbInput[i].b = stdInput[i].b;
     }
 
     bolt::cl::control ctl = bolt::cl::control::getDefault();
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+    size_t stdCount = std::count(stdInput.begin(), stdInput.end(), myUDD);
+    size_t boltCount = bolt::cl::count(ctl, tbbInput.begin(), tbbInput.end(), myUDD);
+
+    EXPECT_EQ(stdCount, boltCount)<<"Failed as: \nSTD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
+    std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
+}
+TEST(countFloatValueOccuranceStdVect, MulticoreCountifIntTBB){
+    const int aSize = 1<<24;
+    std::vector<int> stdInput(aSize);
+
+    int myintValue = 2;
+
+    for (int i=0; i < aSize; i++) {
+    stdInput[i] = rand() % 10 + 1;
+    //tbbInput[i] = stdInput[i];
+    }
+    bolt::cl::device_vector<int> tbbInput(stdInput.begin(),stdInput.end());
+
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault();
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
     size_t stdCount = std::count_if(stdInput.begin(), stdInput.end(), InRange<int>(2,10000));
     size_t boltCount = bolt::cl::count_if(ctl, tbbInput.begin(), tbbInput.end(), InRange<int>(2,10000));
 

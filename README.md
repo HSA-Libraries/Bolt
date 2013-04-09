@@ -4,7 +4,7 @@ The primary goal of Bolt is to make it easier for developers to utilize the inhe
 
 Compared to writing the equivalent functionality in OpenCL™, you’ll find that Bolt requires significantly fewer lines-of-code and less developer effort.  Bolt provides a standard way to develop an application that can execute on either a regular CPU, or use any available OpenCL™ capable accelerated compute unit, with a single code path.
 
-Here's a link to our <a href="https://github.com/jayavanth/bolt/wiki">wiki page</a>.
+Here's a link to our <a href="https://github.com/HSA-Libraries/bolt/wiki">BOLT wiki page</a>.
 
 Prerequisites:
 

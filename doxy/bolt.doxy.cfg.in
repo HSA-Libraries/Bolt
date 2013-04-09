@@ -670,6 +670,7 @@ INPUT                  = @CMAKE_CURRENT_SOURCE_DIR@/mainpage.dox \
                          @CMAKE_CURRENT_SOURCE_DIR@/faq.dox \
                          @CMAKE_CURRENT_SOURCE_DIR@/buildingBolt.dox \
                          @CMAKE_CURRENT_SOURCE_DIR@/buildingTBB.dox \
+                         @CMAKE_CURRENT_SOURCE_DIR@/distributingBoltProjects.dox \
                          @CMAKE_CURRENT_SOURCE_DIR@/buildingExamples.dox \
                          @CMAKE_CURRENT_SOURCE_DIR@/../include/bolt/amp \
                          @CMAKE_CURRENT_SOURCE_DIR@/../include/bolt/amp/detail \                         
