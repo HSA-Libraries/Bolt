@@ -1,5 +1,5 @@
 /***************************************************************************                                                                                     
-*   Copyright 2012 Advanced Micro Devices, Inc.                                     
+*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
 *                                                                                    
 *   Licensed under the Apache License, Version 2.0 (the "License");   
 *   you may not use this file except in compliance with the License.                 
@@ -31,6 +31,7 @@
 //  Include all kernel string objects
 
 #include "bolt/copy_kernels.hpp"
+#include "bolt/count_kernels.hpp"
 #include "bolt/fill_kernels.hpp"
 #include "bolt/generate_kernels.hpp"
 #include "bolt/min_element_kernels.hpp"

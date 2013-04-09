@@ -1,5 +1,5 @@
 /***************************************************************************         
-*   Copyright 2012 Advanced Micro Devices, Inc.                                     
+*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
 *                                                                                    
 *   Licensed under the Apache License, Version 2.0 (the "License");   
 *   you may not use this file except in compliance with the License.                 
@@ -57,8 +57,10 @@ namespace bolt {
             CountIfEqual(const T &targetValue)  : _targetValue(targetValue)
             { };
             CountIfEqual(){}
-            bool operator() (const T &x) {
-                return x == _targetValue;
+            bool operator() (const T &x) 
+            {
+                   T temp= _targetValue;
+                   return x == temp;
             };
 
         private:
@@ -96,7 +98,7 @@ namespace bolt {
             count(control& ctl, InputIterator first, 
             InputIterator last, 
             const EqualityComparable &value,
-            const std::string cl_code="")
+            const std::string& cl_code="")
         {
             typedef typename std::iterator_traits<InputIterator>::value_type T;
             return count_if(ctl, first, last, detail::CountIfEqual<T>(value), CountIfEqual_OclCode + cl_code);
@@ -107,7 +109,7 @@ namespace bolt {
             count(InputIterator first, 
             InputIterator last, 
             const EqualityComparable &value,
-            const std::string cl_code="")
+            const std::string& cl_code="")
         {
             typedef typename std::iterator_traits<InputIterator>::value_type T;
             return count_if(first, last, detail::CountIfEqual<T>(value), CountIfEqual_OclCode + cl_code);
@@ -131,8 +133,8 @@ namespace bolt {
         * \details  This example returns the number of elements in the range 1-60.
         * \code
         *
-        * std::string InRange_CodeString = 
-        * BOLT_CODE_STRING(
+        * //Bolt functor specialized for int type.
+        * BOLT_TEMPLATE_FUNCTOR1(InRange,int,
         * template<typename T>
         * // Functor for range checking.
         * struct InRange {
@@ -142,7 +144,6 @@ namespace bolt {
         *   };
         *
         *   bool operator() (const T& value) { 
-        *     //printf("Val=%4.1f, Range:%4.1f ... %4.1f\n", value, _low, _high); 
         *     return (value >= _low) && (value <= _high) ; 
         *   };
         *
@@ -152,41 +153,59 @@ namespace bolt {
         * );
         *
         *    int a[14] = {0, 10, 42, 55, 13, 13, 42, 19, 42, 11, 42, 99, 13, 77};
-        *    size_t boltCount = bolt::cl::count_if (a, a+14, InRange<float>(1,60)) ;
-        *    // contains 12 in range 1-60.
+        *    int boltCount = bolt::cl::count_if (a, a+14, InRange<int>(1,60)) ;
+        *    // boltCount 11 in range 1-60.
         *  \endcode
         *
+        * \details Example to show how to use UDD type for count_if.
+        * \code
+        *  BOLT_FUNCTOR(UDD,
+        *  struct UDD { 
+        *      int a; 
+        *      int b;
+        *
+        *      bool operator() (const int &x) {
+        *          return (x == a || x == b);
+        *      }
+        *
+        *      UDD() 
+        *          : a(0),b(0) { } 
+        *      UDD(int _in) 
+        *          : a(_in), b(_in +1)  { } 
+        *          
+        *  }; 
+        *  );
+        *
+        *  BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::detail::CountIfEqual, int, UDD );
+        *  BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, int, UDD );
+        *
+        *
+        *    std::vector<UDD> boltInput(SIZE);
+        *    UDD myUDD;
+        *    myUDD.a = 3;
+        *    myUDD.b = 5;
+        *    // Initialize boltInput
+        *    size_t boltCount = bolt::cl::count(boltInput.begin(), boltInput.end(), myUDD);
+        *
+        *
+        *  \endcode
         */
 
        template<typename InputIterator, typename Predicate> 
         typename bolt::cl::iterator_traits<InputIterator>::difference_type
             count_if(control& ctl, InputIterator first, 
             InputIterator last, 
-            Predicate predicate,
-            const std::string cl_code="")
-        {
-            typedef typename bolt::cl::iterator_traits<InputIterator>::value_type CountType;
-            typedef size_t ResultType;
-            ResultType result = static_cast< ResultType >(  transform_reduce(ctl, first, last, 
-                predicate, static_cast< CountType >( 0 ), bolt::cl::plus< CountType >( ), cl_code ) );
-            return result;
-        };
+            Predicate predicate=bolt::cl::detail::CountIfEqual< int >(),
+            const std::string& cl_code="");
+
 
         template<typename InputIterator, typename Predicate> 
         typename bolt::cl::iterator_traits<InputIterator>::difference_type
             count_if(InputIterator first, 
             InputIterator last, 
             Predicate predicate,
-            const std::string cl_code="")
-        {
-            typedef typename bolt::cl::iterator_traits<InputIterator>::value_type CountType;
-            /*Change result type from std::iterator_traits<InputIterator>::difference_type to size_t as
-               with device vectorits comming int64 but with stdvector its __int64 which is not in openCL*/ 
-            typedef int ResultType;
-            ResultType result = static_cast< ResultType >( transform_reduce( first, last, 
-                predicate,  static_cast< CountType >( 0 ), bolt::cl::plus< CountType >( ), cl_code ) );
-            return result;
-        };
+            const std::string &cl_code="");
+            
         
          /*!   \}  */
         
@@ -199,5 +218,7 @@ BOLT_CREATE_CLCODE( bolt::cl::detail::CountIfEqual< int >, bolt::cl::CountIfEqua
 BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::detail::CountIfEqual, int, unsigned int );
 BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::detail::CountIfEqual, int, float );
 BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::detail::CountIfEqual, int, double );
+
+#include <bolt/cl/detail/count.inl>
 
 #endif

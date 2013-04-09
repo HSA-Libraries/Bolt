@@ -1,5 +1,5 @@
 /***************************************************************************                                                                                     
-*   Copyright 2012 Advanced Micro Devices, Inc.                                     
+*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
 *                                                                                    
 *   Licensed under the Apache License, Version 2.0 (the "License");   
 *   you may not use this file except in compliance with the License.                 
@@ -26,7 +26,7 @@ template <typename T>
 struct MyType {
     T a;
 
-    bool operator() (const MyType& lhs, const MyType& rhs) {
+    bool operator() (const MyType& lhs, const MyType& rhs) const {
         return (lhs.a > rhs.a);
     }
     bool operator < (const MyType& other) const {
