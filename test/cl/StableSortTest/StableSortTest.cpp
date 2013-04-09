@@ -19,11 +19,13 @@
 #define TEST_DEVICE_VECTOR 1
 #define TEST_CPU_DEVICE 0
 #define TEST_MULTICORE_TBB_SORT 0
-#define GOOGLE_TEST 0
+#define GOOGLE_TEST 1
 #if (GOOGLE_TEST == 1)
 
 #include "common/stdafx.h"
 #include "common/myocl.h"
+
+#include "test_common.h"
 
 #include <bolt/cl/stablesort.h>
 #include <bolt/miniDump.h>
@@ -85,59 +87,12 @@ struct AddD4
     };
 }; 
 );
+
 uddtD4 identityAddD4 = { 1.0, 1.0, 1.0, 1.0 };
 uddtD4 initialAddD4  = { 1.00001, 1.000003, 1.0000005, 1.00000007 };
-BOLT_CREATE_TYPENAME( bolt::cl::device_vector< uddtD4 >::iterator );
-template< typename T >
-::testing::AssertionResult cmpArrays( const T ref, const T calc, size_t N )
-{
-    for( size_t i = 0; i < N; ++i )
-    {
-        EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-    }
 
-    return ::testing::AssertionSuccess( );
-}
-
-template< typename T, size_t N >
-::testing::AssertionResult cmpArrays( const T (&ref)[N], const T (&calc)[N] )
-{
-    for( size_t i = 0; i < N; ++i )
-    {
-        EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-    }
-
-    return ::testing::AssertionSuccess( );
-}
-
-//  Primary class template for std::array types
-//  The struct wrapper is necessary to partially specialize the member function
-template< typename T, size_t N >
-struct cmpStdArray
-{
-    static ::testing::AssertionResult cmpArrays( const std::array< T, N >& ref, const std::array< T, N >& calc )
-    {
-        for( size_t i = 0; i < N; ++i )
-        {
-            EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-        }
-
-        return ::testing::AssertionSuccess( );
-    }
-};
-
-//  A very generic template that takes two container, and compares their values assuming a vector interface
-template< typename S, typename B >
-::testing::AssertionResult cmpArrays( const S& ref, const B& calc )
-{
-    for( size_t i = 0; i < ref.size( ); ++i )
-    {
-        EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-    }
-
-    return ::testing::AssertionSuccess( );
-}
-
+BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, int, AddD4 );
+BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, int, uddtD4 );
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Fixture classes are now defined to enable googletest to process type parameterized tests
@@ -149,8 +104,6 @@ class TypeValue
 public:
     static const size_t value = N;
 };
-
-
 
 
 //  Test fixture class, used for the Type-parameterized tests
@@ -192,7 +145,7 @@ TEST(SortUDD, AddDouble4)
 
     // call sort
     AddD4 ad4gt;
-    bolt::cl::stable_sort(input.begin(),    input.end(), ad4gt);
+    bolt::cl::stable_sort( input.begin(), input.end(), ad4gt );
     std::stable_sort( refInput.begin(), refInput.end(), ad4gt );
 
     // compare results
@@ -203,7 +156,7 @@ TEST(SortUDD, MultiCoreAddDouble4)
 {
     //setup containers
     int length = (1<<8);
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.forceRunMode(bolt::cl::control::MultiCoreCpu);
     bolt::cl::device_vector< uddtD4 > input(  length, initialAddD4, CL_MEM_READ_WRITE, true  );
@@ -221,7 +174,7 @@ TEST(SortUDD, MultiCoreAddDouble4)
 TEST(SortUDD, GPUAddDouble4)
 {
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     std::vector< cl::Device > devices = myContext.getInfo< CL_CONTEXT_DEVICES >();
     ::cl::CommandQueue myQueue( myContext, devices[ 0 ] );
     bolt::cl::control c_gpu( myQueue );  // construct control structure from the queue.
@@ -261,7 +214,7 @@ TYPED_TEST_P( SortArrayTest, Normal )
 TYPED_TEST_P( SortArrayTest, MultiCoreNormal )
 {
     typedef std::array< ArrayType, ArraySize > ArrayCont;
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.forceRunMode(bolt::cl::control::MultiCoreCpu);
     //  Calling the actual functions under test
@@ -281,14 +234,14 @@ TYPED_TEST_P( SortArrayTest, MultiCoreNormal )
 
 TYPED_TEST_P( SortArrayTest, GPU_DeviceNormal )
 {
-    //  The first time our routines get called, we compile the library kernels with a certain context
+    //  The first time our routines get called, we compile the library kernels with a certain getContext
     //  OpenCL does not allow the context to change without a recompile of the kernel
     // MyOclContext oclgpu = initOcl(CL_DEVICE_TYPE_GPU, 0);
     //bolt::cl::control c_gpu(oclgpu._queue);  // construct control structure from the queue.
 
     //  Create a new command queue for a different device, but use the same context as was provided
     //  by the default control device
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     std::vector< cl::Device > devices = myContext.getInfo< CL_CONTEXT_DEVICES >();
     ::cl::CommandQueue myQueue( myContext, devices[ 0 ] );
     bolt::cl::control c_gpu( myQueue );  // construct control structure from the queue.
@@ -364,7 +317,7 @@ TYPED_TEST_P( SortArrayTest, GPU_DeviceGreaterFunction )
 
     //  Create a new command queue for a different device, but use the same context as was provided
     //  by the default control device
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     std::vector< cl::Device > devices = myContext.getInfo< CL_CONTEXT_DEVICES >();
     ::cl::CommandQueue myQueue( myContext, devices[ 0 ] );
     bolt::cl::control c_gpu( myQueue );  // construct control structure from the queue.
@@ -434,7 +387,7 @@ TYPED_TEST_P( SortArrayTest, GPU_DeviceLessFunction )
 
     //  Create a new command queue for a different device, but use the same context as was provided
     //  by the default control device
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     std::vector< cl::Device > devices = myContext.getInfo< CL_CONTEXT_DEVICES >();
     ::cl::CommandQueue myQueue( myContext, devices[ 0 ] ); 
     bolt::cl::control c_gpu( myQueue );  // construct control structure from the queue.
@@ -1135,8 +1088,7 @@ int main(int argc, char* argv[])
         bolt::tout << _T( "\t--gtest_break_on_failure to debug interactively with debugger" ) << std::endl;
         bolt::tout << _T( "\t    (only on googletest assertion failures, not SEH exceptions)" ) << std::endl;
     }
-    std::cout << "Test Completed. Press Enter to exit.\n .... ";
-    getchar();
+
     return retVal;
 }
 #else

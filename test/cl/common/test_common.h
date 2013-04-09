@@ -70,10 +70,10 @@ struct cmpStdArray
 {
     static ::testing::AssertionResult cmpArrays( const std::array< T, N >& ref, const std::array< T, N >& calc )
     {
-        //BOLT_TEST_RESET_FAILURES
+        BOLT_TEST_RESET_FAILURES
         for( size_t i = 0; i < N; ++i )
         {
-            //BOLT_TEST_INCREMENT_FAILURES
+            BOLT_TEST_INCREMENT_FAILURES
             EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
         }
 
