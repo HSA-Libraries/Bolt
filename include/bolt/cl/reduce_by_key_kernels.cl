@@ -44,19 +44,19 @@ __kernel void perBlockScanByKey(
     size_t wgSize = get_local_size( 0 );
     //printf("gid=%i, lTid=%i, gTid=%i\n", groId, locId, gloId);
 
-    //  Abort threads that are passed the end of the input vector
-    if (gloId >= vecSize) return; // on SI this doesn't mess-up barriers
-
     // if exclusive, load gloId=0 w/ init, and all others shifted-1
     kType key;
     oType val;
     //vType inVal = vals[gloId];
     //val = (oType) (*unaryOp)(inVal);
-    key = keys[ gloId ];
-    val = vals[ gloId ];
-    ldsKeys[ locId ] = key;
-    ldsVals[ locId ] = val;
-
+    
+    if(gloId < vecSize){
+      key = keys[ gloId ];
+      val = vals[ gloId ];
+      ldsKeys[ locId ] = key;
+      ldsVals[ locId ] = val;
+    }
+    
     // Computes a scan within a workgroup
     // updates vals in lds but not keys
     oType sum = val;
@@ -72,7 +72,7 @@ __kernel void perBlockScanByKey(
         }		
         else //This has to be optimized
         {
-            if (offset == 1) //Only when you compare neighbours
+            if (offset == 1 && gloId < vecSize) //Only when you compare neighbours
             {
                     output2[ gloId ] = 1;
             }
@@ -81,11 +81,14 @@ __kernel void perBlockScanByKey(
         barrier( CLK_LOCAL_MEM_FENCE );
         ldsVals[ locId ] = sum;
     }
+    barrier( CLK_LOCAL_MEM_FENCE ); // needed for large data types
+    //  Abort threads that are passed the end of the input vector
+    if (gloId >= vecSize) return;
 
     // Each work item writes out its calculated scan result, relative to the beginning
     // of each work group
     output[ gloId ] = sum;
-    barrier( CLK_LOCAL_MEM_FENCE ); // needed for large data types
+    
     if (locId == 0)
     {
         keyBuffer[ groId ] = ldsKeys[ wgSize-1 ];
@@ -118,11 +121,12 @@ __kernel void intraBlockInclusiveScanByKey(
     size_t locId = get_local_id( 0 );
     size_t wgSize = get_local_size( 0 );
     uint mapId  = gloId * workPerThread;
-
+    
     // do offset of zero manually
     uint offset;
     kType key;
     oType workSum;
+
     if (mapId < vecSize)
     {
         kType prevKey;
@@ -154,36 +158,14 @@ __kernel void intraBlockInclusiveScanByKey(
         }
     }
     barrier( CLK_LOCAL_MEM_FENCE );
-    oType scanSum;
+   
+    oType scanSum = workSum;
     offset = 1;
     // load LDS with register sums
-    if (mapId < vecSize)
-    {
-        ldsVals[ locId ] = workSum;
-        ldsKeys[ locId ] = key;
-        barrier( CLK_LOCAL_MEM_FENCE );
-    
-        kType key1 = ldsKeys[ locId ];
-        kType key2 = ldsKeys[ locId-offset ];
-        if (locId >= offset )
-        { // thread > 0
-            oType y1 = ldsVals[ locId ];
-            if ( (*binaryPred)( key1, key2 ) )
-            {
-                oType y2 = ldsVals[ locId-offset ];
-                scanSum = (*binaryFunct)( y1, y2 );
-            }
-            else
-            {
-                scanSum = y1;
-            }
-            ldsVals[ locId ] = scanSum;
-        } else { // thread 0
-            scanSum = workSum;
-        }  
-    }
+    ldsVals[ locId ] = workSum;
+    ldsKeys[ locId ] = key;
     // scan in lds
-    for( offset = offset*2; offset < wgSize; offset *= 2 )
+    for( offset = offset*1; offset < wgSize; offset *= 2 )
     {
         barrier( CLK_LOCAL_MEM_FENCE );
         if (mapId < vecSize)
@@ -195,11 +177,15 @@ __kernel void intraBlockInclusiveScanByKey(
                 kType key2 = ldsKeys[ locId-offset ];
                 if ( (*binaryPred)( key1, key2 ) )
                 {
-                    scanSum = (*binaryFunct)( scanSum, y );
+                   scanSum = (*binaryFunct)( scanSum, y );
                 }
-                ldsVals[ locId ] = scanSum;
-            }
+                else
+                   scanSum = ldsVals[ locId ];
+             }
+      
         }
+        barrier( CLK_LOCAL_MEM_FENCE );
+        ldsVals[ locId ] = scanSum;
     } // for offset
     barrier( CLK_LOCAL_MEM_FENCE );
     
@@ -221,6 +207,7 @@ __kernel void intraBlockInclusiveScanByKey(
             postSumArray[ mapId+offset ] = y;
         } // thread in bounds
     } // for 
+    
 } // end kernel
 
 
@@ -290,23 +277,23 @@ __kernel void keyValueMapping(
 
     if(offsetArray[ gloId ] != 0)
     {
-		    //int x = offsetArray [ gloId ] -1;
-		    //int xkeys = keys[ gloId-1 ];
-		    //int xvals = offsetValArray [ gloId-1 ]; 
+        //int x = offsetArray [ gloId ] -1;
+        //int xkeys = keys[ gloId-1 ];
+        //int xvals = offsetValArray [ gloId-1 ]; 
 
         keys_output[ offsetArray [ gloId ] -1 ] = keys[ gloId-1 ];
         vals_output[ offsetArray [ gloId ] -1 ] = offsetValArray [ gloId-1 ];
     }
 
-	if( gloId == (vecSize-1) )
-	{
-		//printf("ossfetarr=%d\n", offsetArray [ gloId ]);
-		//printf("keys=%d\n", keys[ gloId ]);
-		//printf("offsetval=%d\n",offsetValArray [ gloId ]);
+  if( gloId == (vecSize-1) )
+  {
+    //printf("ossfetarr=%d\n", offsetArray [ gloId ]);
+    //printf("keys=%d\n", keys[ gloId ]);
+    //printf("offsetval=%d\n",offsetValArray [ gloId ]);
         keys_output[ numSections - 1 ] = keys[ gloId ]; //Copying the last key directly. Works either ways
         vals_output[ numSections - 1 ] = offsetValArray [ gloId ];
-			
-	}
+      
+  }
 
     
 }

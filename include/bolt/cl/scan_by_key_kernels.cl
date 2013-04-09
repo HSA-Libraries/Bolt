@@ -45,41 +45,39 @@ __kernel void perBlockScanByKey(
     size_t wgSize = get_local_size( 0 );
     //printf("gid=%i, lTid=%i, gTid=%i\n", groId, locId, gloId);
 
-    //  Abort threads that are passed the end of the input vector
-    if (gloId >= vecSize) return; // on SI this doesn't mess-up barriers
-
     // if exclusive, load gloId=0 w/ init, and all others shifted-1
     kType key;
     oType val;
-    if (exclusive)
-    {
-        if (gloId > 0)
-        { // thread>0
-            key = keys[ gloId-1 ];
-            val = vals[ gloId-1 ];
-            ldsKeys[ locId ] = key;
-            ldsVals[ locId ] = val;
-        }
-        else
-        { // thread=0
-            val = init;
-            ldsVals[ locId ] = val;
+	  if (gloId < vecSize){
+       if (exclusive)
+       {
+          if (gloId > 0)
+          { // thread>0
+              key = keys[ gloId-1 ];
+              val = vals[ gloId-1 ];
+              ldsKeys[ locId ] = key;
+              ldsVals[ locId ] = val;
+          }
+          else
+          { // thread=0
+              val = init;
+              ldsVals[ locId ] = val;
             // key stays null, this thread should never try to compare it's key
             // nor should any thread compare it's key to ldsKey[ 0 ]
             // I could put another key into lds just for whatevs
             // for now ignore this
-        }
-    }
-    else
-    {
-        //vType inVal = vals[gloId];
-        //val = (oType) (*unaryOp)(inVal);
-        key = keys[ gloId ];
-        val = vals[ gloId ];
-        ldsKeys[ locId ] = key;
-        ldsVals[ locId ] = val;
-    }
-
+          }
+       }
+       else
+       {
+          //vType inVal = vals[gloId];
+          //val = (oType) (*unaryOp)(inVal);
+          key = keys[ gloId ];
+          val = vals[ gloId ];
+          ldsKeys[ locId ] = key;
+          ldsVals[ locId ] = val;
+       }
+     }
     // Computes a scan within a workgroup
     // updates vals in lds but not keys
     oType sum = val;
@@ -99,6 +97,10 @@ __kernel void perBlockScanByKey(
         ldsVals[ locId ] = sum;
     }
     
+  	barrier( CLK_LOCAL_MEM_FENCE ); // needed for large data types
+	  //  Abort threads that are passed the end of the input vector
+    if (gloId >= vecSize) return; 
+
     // Each work item writes out its calculated scan result, relative to the beginning
     // of each work group
     kType curkey, prekey;
@@ -114,7 +116,7 @@ __kernel void perBlockScanByKey(
     else
          output[ gloId ] = sum;
 
-    barrier( CLK_LOCAL_MEM_FENCE ); // needed for large data types
+    
     if (locId == 0)
     {
         keyBuffer[ groId ] = ldsKeys[ wgSize-1 ];
@@ -183,37 +185,13 @@ __kernel void intraBlockInclusiveScanByKey(
         }
     }
     barrier( CLK_LOCAL_MEM_FENCE );
-    oType scanSum;
+    oType scanSum = workSum;
     offset = 1;
     // load LDS with register sums
-    if (mapId < vecSize)
-    {
-        ldsVals[ locId ] = workSum;
-        ldsKeys[ locId ] = key;
-        barrier( CLK_LOCAL_MEM_FENCE );
-    
-        if (locId >= offset )
-        {   // thread > 0
-            kType key1 = ldsKeys[ locId ];
-            kType key2 = ldsKeys[ locId-offset ];
-
-            oType y1 = ldsVals[ locId ];
-            if ( (*binaryPred)( key1, key2 ) )
-            {
-                oType y2 = ldsVals[ locId-offset ];
-                scanSum = (*binaryFunct)( y1, y2 );
-            }
-            else
-            {
-                scanSum = y1;
-            }
-            ldsVals[ locId ] = scanSum;
-        } else { // thread 0
-            scanSum = workSum;
-        }  
-    }
+  	ldsVals[ locId ] = workSum;
+    ldsKeys[ locId ] = key;
     // scan in lds
-    for( offset = offset*2; offset < wgSize; offset *= 2 )
+    for( offset = offset*1; offset < wgSize; offset *= 2 )
     {
         barrier( CLK_LOCAL_MEM_FENCE );
         if (mapId < vecSize)
@@ -227,9 +205,13 @@ __kernel void intraBlockInclusiveScanByKey(
                 {
                     scanSum = (*binaryFunct)( scanSum, y );
                 }
-                ldsVals[ locId ] = scanSum;
+			        	else
+				            scanSum = ldsVals[ locId ];
             }
+			
         }
+		    barrier( CLK_LOCAL_MEM_FENCE );
+        ldsVals[ locId ] = scanSum;
     } // for offset
     barrier( CLK_LOCAL_MEM_FENCE );
     
