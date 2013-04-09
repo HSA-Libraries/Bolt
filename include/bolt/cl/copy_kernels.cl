@@ -21,12 +21,14 @@ __kernel
 void copy_I(
     global iType * restrict src,
     global oType * restrict dst,
-    const uint numElements )
+    const uint numElements,
+    const uint srcOffset,
+    const uint dstOffset)
 {
     size_t gloIdx = get_global_id( 0 );
-    if( gloIdx >= numElements ) return; // on SI this doesn't mess-up barriers
-    
-    dst[ gloIdx ] = src[ gloIdx ];
+    if( gloIdx >= numElements) return; // on SI this doesn't mess-up barriers
+
+    dst[ dstOffset + gloIdx ] = src[ srcOffset + gloIdx ];
 };
 
 
