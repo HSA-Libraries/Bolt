@@ -19,12 +19,11 @@
 
 
 #pragma once
-#if !defined( BOLT_amp_COUNT_H )
-#define BOLT_amp_COUNT_H
+#if !defined( BOLT_AMP_COUNT_H )
+#define BOLT_AMP_COUNT_H
 
 #include "bolt/amp/bolt.h"
 #include "bolt/amp/functional.h"
-#include "bolt/amp/transform_reduce.h"
 #include "bolt/amp/iterator/iterator_traits.h"
 
 /*! \file bolt/amp/count.h
@@ -54,7 +53,7 @@ namespace bolt {
             CountIfEqual(const T &targetValue)  : _targetValue(targetValue)
             { };
             CountIfEqual(){}
-            bool operator()  (const T &x) restrict(amp,cpu)
+            bool operator()  (const T &x) const restrict(amp,cpu)
             {
                    T temp= _targetValue;
                    return x == temp;
@@ -70,7 +69,7 @@ namespace bolt {
          * \p value.
          * 
 
-         *  \param ctl \b Optional Control structure to control command-queue, debug, tuning,etc. See bolt::amp::control
+         *  \param ctl \b Optional Control structure to control accelerator,debug, tuning. See bolt::amp::control.
          *  \param first Beginning of the source copy sequence.
          *  \param last  End of the source copy sequence.
          *  \param value Equality Comparable value.
@@ -113,7 +112,7 @@ namespace bolt {
         * \brief \p count_if counts the number of elements in the specified range for which the specified \p predicate 
         *  is \p true.  
         * 
-        * \param ctl \b Optional Control structure to control command-queue, debug, tuning,etc. See bolt::amp::control
+        * \param ctl \b Optional Control structure to control accelerator,debug, tuning. See bolt::amp::control.
         * \param first The first position in the sequence to be counted.
         * \param last The last position in the sequence to be counted.
         * \param predicate The count is incremented for each element which returns true when passed to 

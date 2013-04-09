@@ -21,11 +21,9 @@
 
 #include <algorithm>
 
-#include <boost/thread/once.hpp>
-#include <boost/bind.hpp>
-
 #include "bolt/amp/bolt.h"
 #include "bolt/amp/functional.h"
+#include "bolt/amp/device_vector.h"
 #ifdef ENABLE_TBB
 //TBB Includes
 #include "tbb/parallel_reduce.h"
@@ -39,6 +37,7 @@
     }\
     t_idx.barrier.wait();
 
+#define WAVEFRONT_SIZE 64
 
 namespace bolt {
     namespace amp {
@@ -163,7 +162,7 @@ namespace bolt {
                       bool stat;
                       int count = 0;
 
-                      tile_static iType scratch_count [WAVEFRONT_SIZE] ;
+                      tile_static int scratch_count [WAVEFRONT_SIZE] ;
 
                       //  Abort threads that are passed the end of the input vector
                       if( t_idx.global[ 0 ] < szElements )
@@ -171,7 +170,9 @@ namespace bolt {
                        //  Initialize the accumulator private variable with data from the input array
                        //  This essentially unrolls the loop below at least once
                        iType accumulator = inputV[globalId];
-                       scratch[tileIndex] = accumulator;
+                       stat =  predicate(accumulator);
+                       count=  stat?++count:count;
+                       scratch_count[tileIndex] = count;
                       }
                       t_idx.barrier.wait();                  
                       
@@ -198,17 +199,19 @@ namespace bolt {
                     });
                     
                     
-                    iType *cpuPointerReduce =  result.data();
+                    int *cpuPointerReduce =  result.data();
 
                     int numTailReduce = (ceilNumTiles>numTiles)? ceilNumTiles : numTiles;
-                    iType acc = static_cast< iType >( init );
 
-                    for(int i = 0; i < numTailReduce; ++i)
+                    int count =  cpuPointerReduce[0] ;
+                    for(int i = 1; i < numTailReduce; ++i)
                     {
-                        acc = binary_op(acc, cpuPointerReduce[i]);
+
+                       count +=  cpuPointerReduce[i];              
+                     
                     }
                     
-                    return acc;
+                    return count;
                 }
                 catch(std::exception &e)
                 {
@@ -237,24 +240,23 @@ namespace bolt {
                 const Predicate& predicate, 
                 std::random_access_iterator_tag)  
             {
-                return count_pick_iterator( ctl, first, last,  predicate );
+                return count_pick_iterator( ctl, first, last, predicate );
             }
 
             // This template is called after we detect random access iterators
             // This is called strictly for any non-device_vector iterator
             template<typename InputIterator, typename Predicate> 
-            typename std::enable_if< !std::is_base_of<typename device_vector<typename std::iterator_traits<InputIterator>::value_type>::iterator,InputIterator>::value, T >::type
-            int count_pick_iterator(bolt::amp::control &ctl, 
+            typename std::enable_if< !std::is_base_of<typename device_vector<typename std::iterator_traits<InputIterator>::value_type>::iterator,InputIterator>::value, int >::type
+            count_pick_iterator(bolt::amp::control &ctl, 
                 const InputIterator& first,
                 const InputIterator& last, 
-                const Predicate& predicate,
-                std::random_access_iterator_tag )
+                const Predicate& predicate )
             {
                 /*************/
                 typedef typename std::iterator_traits<InputIterator>::value_type iType;
                 size_t szElements = (size_t)(last - first); 
                 if (szElements == 0)
-                    return init;
+                    return 0;
                 /*TODO - probably the forceRunMode should be replaced by getRunMode and setRunMode*/
                 // Its a dynamic choice. See the reduce Test Code
                 // What should we do if the run mode is automatic. Currently it goes to the last else statement
@@ -263,10 +265,6 @@ namespace bolt {
 
                 //
                 bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
-                if(runMode == bolt::amp::control::Automatic)
-                {
-                    runMode = ctl.getDefaultPathToRun();
-                }
                 if (runMode == bolt::amp::control::SerialCpu)
                 {
                       return (int) std::count_if(first,last,predicate);
@@ -294,8 +292,8 @@ namespace bolt {
             // This template is called after we detect random access iterators
             // This is called strictly for iterators that are derived from device_vector< T >::iterator
             template<typename DVInputIterator, typename Predicate>
-            typename std::enable_if< std::is_base_of<typename device_vector<typename std::iterator_traits<DVInputIterator>::value_type>::iterator,DVInputIterator>::value, T >::type
-            int count_pick_iterator(bolt::amp::control &ctl, 
+            typename std::enable_if< std::is_base_of<typename device_vector<typename std::iterator_traits<DVInputIterator>::value_type>::iterator,DVInputIterator>::value, int >::type
+            count_pick_iterator(bolt::amp::control &ctl, 
                 const DVInputIterator& first,
                 const DVInputIterator& last, 
                 const Predicate& predicate )
@@ -304,43 +302,40 @@ namespace bolt {
                 typedef typename std::iterator_traits<DVInputIterator>::value_type iType;
                 size_t szElements = (size_t) (last - first);
                 if (szElements == 0)
-                    return init;
+                    return 0;
 
                 bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
                 if(runMode == bolt::amp::control::Automatic)
                 {
-                    runMode = ctl.getDefaultPathToRun();
+                    //runMode = ctl.getDefaultPathToRun(); *Fixit*
                 }
-               if (runMode == bolt::amp::control::SerialCpu) {
-                //    ::amp::Event serialCPUEvent;
-                //    amp_int l_Error = CL_SUCCESS;
-                //    int countResult;
-                //    /*Map the device buffer to CPU*/
-                //    iType *cpuPointerReduce =  first.getBuffer();
-                //    countResult = (int)std::count_if(countInputBuffer, countInputBuffer + szElements, predicate) ;
-                //    /*Unmap the device buffer back to device memory. This will copy the host modified buffer back to the device*/
-                //    ctl.getCommandQueue().enqueueUnmapMemObject(first.getBuffer(), countInputBuffer);
-                //     return countResult;
-                 return 0;
+                if (runMode == bolt::amp::control::SerialCpu) {
+                     std::vector<iType> InputBuffer(szElements);
+                     for(unsigned int index=0; index<szElements; index++){
+                         InputBuffer[index] = first.getBuffer()[index];
+                     }
+                     return (int) std::count_if(InputBuffer.begin(),InputBuffer.end() ,predicate);
+
+
                 }
+
                 else if (runMode == bolt::amp::control::MultiCoreCpu)
                 {
 #ifdef ENABLE_TBB
-                    ::cl::Event multiCoreCPUEvent;
-                    cl_int l_Error = CL_SUCCESS;
-                   /*Map the device buffer to CPU*/
-                   iType *countInputBuffer = (iType*)ctl.getCommandQueue().enqueueMapBuffer(first.getBuffer(), false, CL_MAP_READ,0, sizeof(iType) * szElements, 
-                                               NULL, &multiCoreCPUEvent, &l_Error );
-                    multiCoreCPUEvent.wait();
+                    std::vector<iType> InputBuffer(szElements);
+                    for(unsigned int index=0; index<szElements; index++){
+                        InputBuffer[index] = first.getBuffer()[index];
+                    }
                     tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
-                    Count<iType, Predicate> count_op(predicate);
-                    tbb::parallel_reduce( tbb::blocked_range<iType*>( countInputBuffer, countInputBuffer + szElements), count_op );
+                    Count<iType,Predicate> count_op(predicate);
+                    tbb::parallel_reduce( tbb::blocked_range<iType*>( &*first, (iType*)&*(last-1) + 1), count_op );
                     return (int)count_op.value;
 #else
-                    std::cout << "The MultiCoreCpu version of count is not enabled. " << std ::endl;
-                    throw std::exception( CL_INVALID_OPERATION, "The MultiCoreCpu version of count is not enabled to be built." );
+                    std::cout << "The MultiCoreCpu version of count function is not enabled." << std ::endl;
+                    throw std::exception( "The MultiCoreCpu version of count function is not enabled to be built." );
                     return 0;
-#endif
+#endif  
+
                 }
                 else
                 {
