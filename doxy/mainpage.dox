@@ -1,5 +1,5 @@
 /***************************************************************************                                                                                     
-*   Copyright 2012 Advanced Micro Devices, Inc.                                     
+*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                               
 *                                                                                    
 *   Licensed under the Apache License, Version 2.0 (the "License");   
 *   you may not use this file except in compliance with the License.                 
@@ -22,20 +22,18 @@
 
  * \section intro_sec Introduction
  * Bolt is a C++ template library optimized for GPUs.  
- * Bolt provides high-performance library implementations for common algorithms
+ * Bolt is designed to provide high-performance library implementations for common algorithms
  * such as scan, reduce, transform, and sort.  
- * The Bolt interface resembles the C++ Standard Template Library (STL). Developers familiar with 
+ * The Bolt interface was modeled on the C++ Standard Template Library (STL). Developers familiar with 
  * STL will recognize many of the Bolt APIs and customization techniques.  
- * In some cases, developers can benefit from GPU acceleration simply by changing the namespace
- * for STL algorithm calls from "std" to "bolt::cl".
-
+ 
  * C++ templates can be used to customize the algorithms with new types (for example, the Bolt \p sort can operate
  * on ints, float, or any custom type defined by the user).
  * Additionally, Bolt lets users customize the template routines using function objects 
- * (functors) written in OpenCL; for example, to provide a custom comparison operation for \p sort, or a custom reduction operation.
+ * (functors) written in OpenCL &tm; for example, to provide a custom comparison operation for \p sort, or a custom reduction operation.
 
  * Bolt can directly interface with host memory structures such as \p std::vector 
- * or host arrays (ie \p float*).  On today's GPU systems, the host memory is mapped or copied automatically to the GPU.  
+ * or host arrays (e.g. \p float*).  On today's GPU systems, the host memory is mapped or copied automatically to the GPU.  
  * On future systems that support the Heterogeneous System Architecture, the GPU will directly access the host data structures. 
  * Bolt also provides a bolt::cl::device_vector that can be used to allocate and manage device-local memory 
  * for higher performance on discrete GPU systems.  Bolt APIs can accept either host memory or the device vector.
@@ -44,6 +42,7 @@
  * 
 
  * \section example_sec Examples
+ * \subsection simplexample_sec Simple Example
  * The simple example below shows how to use Bolt to sort a random array of 8192 integers.  
  \code
 #include <bolt/cl/sort.h>
@@ -61,9 +60,8 @@ void main()
 }
 \endcode
 
- * The code is very similar to familiar C++ Standard Template Library; the 
- * only difference is the include file (bolt/cl/sort.h) and the \p bolt::cl namespace before the \p sort call.  
- * If the include were removed and the \p bolt::cl namespace changed to \p std, the code would use the STL version of sort. 
+ * The code will be familiar to the programmers who have used the C++ Standard Template Library; the 
+ * difference is the include file (bolt/cl/sort.h) and the \p bolt::cl namespace before the \p sort call.  
  * Bolt developers do not need to learn a new device-specific programming model to leverage the power and performance 
  * advantages of GPU computing.
   
@@ -75,8 +73,158 @@ void main()
 *      size is too small to benefit from GPU acceleration.
 
 
+ * \subsection subexample_sec Bolt Functor Example
+ * Below example shows how to use Functors with BOLT. 
+ * For user defined datatypes to work with BOLT functor, user has to wrap his data type around a macro BOLT_FUNCTOR.
+ * This enables the user defined class to be available as a string to the OpenCL Compiler which is invoked during a call to 
+ * clBuildProgram(). Consider the following example.    
+ \code
+BOLT_FUNCTOR(MyType<int>,
+template <typename T>
+struct MyType {
+    T a;
+
+    bool operator() (const MyType& lhs, const MyType& rhs) const  {
+        return (lhs.a > rhs.a);
+    }
+    bool operator < (const MyType& other) const {
+        return (a < other.a);
+    }
+    bool operator > (const MyType& other) const {
+        return (a > other.a);
+    }
+    bool operator >= (const MyType& other) const {
+        return (a >= other.a);
+    }
+    MyType()
+        : a(0) { }
+};
+);
+\endcode
+
+After defining the class, user need to register it with BOLT. Internally bolt algorithms will make use of the device_vector class. 
+But these are defined only for the basic data types like int, float, unsigned int etc. For User defined datat types it’s the 
+responsibility of the application developer to create a definition of the deveice_vector for his own defined data type.
+See the below example. 
+\code
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::greater, int, MyType< int> );
+BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, int, MyType< int> );
+\endcode
+In the above example bolt::cl::greater functor is defined in include/bolt/cl/functional.h. For the user defined data types it is 
+the responsibility of the application developer to define as shown above for the functors which he uses from include/bolt/cl/functional.h .
+
+Stitching it all together with a below sample code for Sort:
+\code
+void main()
+{
+    typedef MyType<int> mytype;
+    std::vector<mytype> myTypeBoltInput(length);
+    bolt::cl::sort(myTypeBoltInput.begin(), myTypeBoltInput.end(),bolt::cl::greater<mytype>());
+}
+\endcode
+
+User can also work with his own defined Functor as shown below:
+\code
+BOLT_FUNCTOR(uddtD4,
+struct uddtD4
+{
+    double a;
+    double b;
+    double c;
+    double d;
+  
+};
+);
+// Functor for UDD. Adds all four double elements and returns true if lhs_sum > rhs_sum
+BOLT_FUNCTOR(AddD4,
+struct AddD4
+{
+    bool operator()(const uddtD4 &lhs, const uddtD4 &rhs) const
+    {
+
+        if( ( lhs.a + lhs.b + lhs.c + lhs.d ) > ( rhs.a + rhs.b + rhs.c + rhs.d) )
+            return true;
+        return false;
+    };
+}; 
+);
+void main()
+{
+    std::vector <uddtD4> boltInput(sizeOfInputBuffer);
+    bolt::cl::sort( boltInput.begin( ), boltInput.end( ), AddD4() );
+}
+\endcode
+
+* \subsection subexample2_sec Templatized Bolt Functor 
+*  User can also use Templatized version of Bolt Functor with User defined data types as shown below:
+
+\code
+BOLT_TEMPLATE_FUNCTOR1( MyFunctor,  int
+template <typename T>    
+struct MyFunctor{ 
+    T a; 
+    T b; 
+    bool operator() (const MyFunctor& lhs, const MyFunctor& rhs) const { 
+        return (lhs.a > rhs.a);
+    } 
+    bool operator < (const MyFunctor& other) const { 
+        return (a < other.a);
+    }
+    bool operator > (const MyFunctor& other) const { 
+        return (a > other.a);
+    }
+    MyFunctor(const MyFunctor &other) 
+        : a(other.a), b(other.b) { } 
+    MyFunctor() 
+        : a(0), b(0) { } 
+    MyFunctor(T& _in) 
+        : a(_in), b(_in) { } 
+}; 
+);
+
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::greater, int, MyFunctor< int> );
+BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, int, MyFunctor< int> );
+
+void main()
+{
+    typedef MyFunctor<int> myfunctor;
+    std::vector <myfunctor> boltInput(sizeOfInputBuffer);
+    bolt::cl::sort( boltInput.begin( ), boltInput.end( ), bolt::cl::greater<myfunctor>() );
+}
+\endcode
+If the user wants to use TEMPLATE_FUNCTOR for more than one datatype then he can use other variants of this
+like BOLT_TEMPLATE_FUNCTOR2, BOLT_TEMPLATE_FUNCTOR3 etc from include/bolt/cl/clcode.h file.
+
+
+ * \section Paths Bolt Code Paths
+ * \subsection Default Default Behaviour
+ * Bolt function can be executed with three code paths(GPU, Multicore CPU and Serial). The default mode is "Automatic" which means 
+ * it will go into OpenCL&tm; path first, then TBB (Intel), then SerialCpu with below mentioned order. The control will go to other paths only if the selected one not found.
+ 
+ * Selection order will be: 
+ * \li Run on GPU if AMD GPU is found and AMD APP SDK is installed.
+ * \li Run on Multicore CPU if Intel TBB is installed.
+ * \li Run CPU serial path.
+  
+* \subsection Force Force Behaviour
+* Forcing mode to any device will run the function on that device only. There are two ways in BOLT to force the control to specific Device.
+*   -# <b> Setting control to Device Globally: </b>
+*      \code bolt::cl::control& myControl = bolt::cl::control::getDefault( );
+*  myControl.waitMode( bolt::cl::control::NiceWait );
+*  myControl.setForceRunMode( bolt::cl::control::OpenCL );
+*      \endcode
+*   -# <b> Setting control to Device locally </b>
+*       \code bolt::amp::control ctl = bolt::amp::control::getDefault( );
+* ctl.setForceRunMode(bolt::amp::control::OpenCL);
+*       \endcode
+* This will set the control to specified device locally, passing this control object to BOLT function enables specified device 
+* path only for that function, so reference to any BOLT function will always run specified device path.
+
+
  * \section Requirements Requirements 
- * Bolt requires an OpenCL(TM) implementation that supports the static C++ kernel
- * features; specifically, C++ template support for OpenCL(TM) kernels.  Currently,
- * the AMD OpenCL(TM) SDK 2.7 provides this support; other vendors may adopt this feature in the future.  
+ * Bolt requires an OpenCL<SUP>TM</SUP> implementation that supports the static C++ kernel
+ * features; specifically, C++ template support for OpenCL<SUP>TM</SUP> kernels.  Currently,
+ * the AMD OpenCL<SUP>TM</SUP> SDK 2.7 provides this support; other vendors may adopt this feature in the future. 
+ * If you face any issue with any AMD HD7000 family of cards and APU(Richland and Trinity). Please log an issue in 
+ * <a href="https://github.com/HSA-Libraries/bolt/issues">BOLT Issues page</a>.
  */
