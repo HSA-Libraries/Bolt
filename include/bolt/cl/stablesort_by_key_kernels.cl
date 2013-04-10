@@ -111,7 +111,7 @@ uint upperBoundBinary( global sType* data, uint left, uint right, sType searchVa
     {
         //  While the values are equal i.e. !(x < y) && !(y < x) increment the index
         sType upperValue = data[ upperBound ];
-        while( !(*lessOp)( upperValue, searchVal ) && !(*lessOp)( searchVal, upperValue) )
+        while( !(*lessOp)( upperValue, searchVal ) && !(*lessOp)( searchVal, upperValue) && (upperBound != right) )
         {
             upperBound++;
             upperValue = data[ upperBound ];
