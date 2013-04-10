@@ -45,7 +45,7 @@
 
 #define BITONIC_SORT_WGSIZE 64
 /* \brief - SORT_CPU_THRESHOLD should be atleast 2 times the BITONIC_SORT_WGSIZE*/
-#define SORT_CPU_THRESHOLD 128 
+#define SORT_CPU_THRESHOLD 128
 
 namespace bolt {
 namespace amp {
@@ -148,7 +148,7 @@ void sort_pick_iterator( bolt::amp::control &ctl,
             localBuffer[index] = first.getBuffer()[index];
         //Compute sort using std::sort
         std::sort(localBuffer.begin(), localBuffer.end(), comp);
-        //Copy the CPU buffer back to device_vector 
+        //Copy the CPU buffer back to device_vector
         for(unsigned int index=0; index<szElements; index++)
             first.getBuffer()[index] = localBuffer[index];
         return;
@@ -163,14 +163,14 @@ void sort_pick_iterator( bolt::amp::control &ctl,
 
         std::sort(localBuffer.begin(), localBuffer.end(), comp);
 
-        //Copy the CPU buffer back to device_vector 
+        //Copy the CPU buffer back to device_vector
         for(unsigned int index=0; index<szElements; index++)
             first.getBuffer()[index] = localBuffer[index];
         return;
-        
+
 #else
  //       std::cout << "The MultiCoreCpu version of sort is not enabled. " << std ::endl;
-        throw std::exception( "The MultiCoreCpu version of sort is not enabled to be built." ); 
+        throw std::exception( "The MultiCoreCpu version of sort is not enabled to be built." );
         return;
 #endif
     } else {
@@ -215,7 +215,7 @@ void sort_pick_iterator( bolt::amp::control &ctl,
         tbb::parallel_sort(first,last, comp);
 #else
 //        std::cout << "The MultiCoreCpu version of sort is not enabled. " << std ::endl;
-        throw std::exception( "The MultiCoreCpu version of sort is not enabled to be built." ); 
+        throw std::exception( "The MultiCoreCpu version of sort is not enabled to be built." );
         return;
 #endif
     } else {
@@ -248,26 +248,26 @@ void AMP_RadixSortHistogramAscendingKernel(bolt::amp::control &ctl,
     concurrency::tiled_extent< RADICES > tileK0 = globalSizeK0.tile< RADICES >();
     concurrency::accelerator_view av = ctl.getAccelerator().default_view;
     printf("globalSizeK0 = %d   tileK0.tile_dim0 = %d    tileK0[0]=%d\n",globalSizeK0, tileK0.tile_dim0, tileK0[0]);
-    concurrency::parallel_for_each( av, tileK0, 
+    concurrency::parallel_for_each( av, tileK0,
     [
         unsortedData,
         buckets,
         histScanBuckets,
         shiftCount,
         tileK0
-    ] 
+    ]
     ( concurrency::tiled_index< RADICES > t_idx ) restrict(amp)
     {
         const int RADIX_T     = N;
         const int RADICES_T   = (1 << RADIX_T);
-        const int NUM_OF_ELEMENTS_PER_WORK_ITEM_T = RADICES_T; 
+        const int NUM_OF_ELEMENTS_PER_WORK_ITEM_T = RADICES_T;
         const int MASK_T      = (1<<RADIX_T)  - 1;
 
         int localId     = t_idx.local[ 0 ];
         int globalId    = t_idx.global[ 0 ];
         int groupId     = t_idx.tile[ 0 ];
         int groupSize   = tileK0.tile_dim0;
-        //tileK0[ 0 ] gives the global size 
+        //tileK0[ 0 ] gives the global size
         //tileK0.tile_dim0 gives the number of threads in a tile
         //\TODO - find a API to get the total number of numOfGroups
         int numOfGroups = tileK0[ 0 ]/tileK0.tile_dim0;//get_num_groups(0);
@@ -314,25 +314,25 @@ void AMP_RadixSortHistogramDescendingKernel(bolt::amp::control &ctl,
     concurrency::extent< 1 > globalSizeK0( szElements/RADICES );
     concurrency::tiled_extent< RADICES > tileK0 = globalSizeK0.tile< RADICES >();
     concurrency::accelerator_view av = ctl.getAccelerator().default_view;
-    concurrency::parallel_for_each( av, tileK0, 
+    concurrency::parallel_for_each( av, tileK0,
     [
         unsortedData,
         buckets,
         histScanBuckets,
         shiftCount,
         tileK0
-    ] 
+    ]
     ( concurrency::tiled_index< RADICES > t_idx ) restrict(amp)
     {
         const int RADIX_T     = N;
         const int RADICES_T   = (1 << RADIX_T);
-        const int NUM_OF_ELEMENTS_PER_WORK_ITEM_T = RADICES_T; 
+        const int NUM_OF_ELEMENTS_PER_WORK_ITEM_T = RADICES_T;
         const int MASK_T      = (1<<RADIX_T)  -1;
         int localId     = t_idx.local[ 0 ];
         int globalId    = t_idx.global[ 0 ];
         int groupId     = t_idx.tile[ 0 ];
         int groupSize   = tileK0.tile_dim0;
-        //tileK0[ 0 ] gives the global size 
+        //tileK0[ 0 ] gives the global size
         //tileK0.tile_dim0 gives the number of threads in a tile
         //\TODO - find a API to get the total number of numOfGroups
         int numOfGroups = tileK0[ 0 ]/tileK0.tile_dim0;
@@ -378,19 +378,19 @@ void AMP_scanLocalTemplate(bolt::amp::control &ctl,
     concurrency::extent< 1 > globalSizeK0( szElements/RADICES );
     concurrency::tiled_extent< RADICES > tileK0 = globalSizeK0.tile< RADICES >();
     concurrency::accelerator_view av = ctl.getAccelerator().default_view;
-    concurrency::parallel_for_each( av, tileK0, 
+    concurrency::parallel_for_each( av, tileK0,
     [
         buckets,
         histScanBuckets,
         tileK0
-    ] 
+    ]
     ( concurrency::tiled_index< RADICES > t_idx ) restrict(amp)
     {
         const int RADIX_T     = N;
         const int RADICES_T   = (1 << RADIX_T);
         //create tiled_static for localScanArray
         tile_static T localScanArray[2*RADICES_T];
-        /*size_t localId     = get_local_id(0); 
+        /*size_t localId     = get_local_id(0);
         size_t numOfGroups = get_num_groups(0);
         size_t groupId     = get_group_id(0);
         size_t groupSize   = get_local_size(0);*/
@@ -427,19 +427,19 @@ void AMP_permuteAscendingRadixNTemplate(bolt::amp::control &ctl,
     concurrency::extent< 1 > globalSizeK0( szElements/RADICES );
     concurrency::tiled_extent< RADICES > tileK0 = globalSizeK0.tile< RADICES >();
     concurrency::accelerator_view av = ctl.getAccelerator().default_view;
-    concurrency::parallel_for_each( av, tileK0, 
+    concurrency::parallel_for_each( av, tileK0,
     [
         unsortedData,
         scanedBuckets,
         shiftCount,
         sortedData,
         tileK0
-    ] 
+    ]
     ( concurrency::tiled_index< RADICES > t_idx ) restrict(amp)
     {
         const int RADIX_T     = N;
         const int RADICES_T   = (1 << RADIX_T);
-        //const int NUM_OF_ELEMENTS_PER_WORK_ITEM_T = RADICES_T; 
+        //const int NUM_OF_ELEMENTS_PER_WORK_ITEM_T = RADICES_T;
         const int MASK_T      = (1<<RADIX_T)  -1;
         /*size_t groupId   = get_group_id(0);
         size_t localId   = get_local_id(0);
@@ -478,14 +478,14 @@ void AMP_permuteDescendingRadixNTemplate(bolt::amp::control &ctl,
     concurrency::extent< 1 > globalSizeK0( szElements/RADICES );
     concurrency::tiled_extent< RADICES > tileK0 = globalSizeK0.tile< RADICES >();
     concurrency::accelerator_view av = ctl.getAccelerator().default_view;
-    concurrency::parallel_for_each( av, tileK0, 
+    concurrency::parallel_for_each( av, tileK0,
     [
         unsortedData,
         scanedBuckets,
         shiftCount,
         sortedData,
         tileK0
-    ] 
+    ]
     ( concurrency::tiled_index< RADICES > t_idx ) restrict(amp)
     {
         const int RADIX_T     = N;
@@ -516,20 +516,20 @@ void AMP_permuteDescendingRadixNTemplate(bolt::amp::control &ctl,
 }
 
 /*AMP Kernels for Signed integer sorting*/
-/*! 
-* \brief This template function is a permutation Algorithm for one work item. 
+/*!
+* \brief This template function is a permutation Algorithm for one work item.
 *        This is called by the the sort_enqueue for input buffers with siigned numbers routine for other than int's and unsigned int's
-*        
+*
 * \details
-*         The idea behind sorting signed numbers is that when we sort the MSB which contains the sign bit. We should 
-*         sort in the signed bit in the descending order. For example in a radix 4 sort of signed numbers if we are 
-*         doing ascending sort. Then the bits 28:31 should be sorted in an descending order, after doing the following 
-*         transformation of the input bits. 
+*         The idea behind sorting signed numbers is that when we sort the MSB which contains the sign bit. We should
+*         sort in the signed bit in the descending order. For example in a radix 4 sort of signed numbers if we are
+*         doing ascending sort. Then the bits 28:31 should be sorted in an descending order, after doing the following
+*         transformation of the input bits.
 *         Shift bits 31:28 ->  3:0
 *               value = (value >> shiftCount);
-*         Retain the sign bit in the bit location 3. 
+*         Retain the sign bit in the bit location 3.
 *               signBit = value & (1<<(RADIX_T-1));
-*         XOR bits 2:1  with 111 
+*         XOR bits 2:1  with 111
 *               value = ( ( ( value & MASK_T ) ^ MASK_T ) & MASK_T )
 *         Or the sign bit with the xor'ed bit. This forms your index.
 *               value = value | signBitl
@@ -541,13 +541,13 @@ void AMP_permuteDescendingRadixNTemplate(bolt::amp::control &ctl,
 *       -map the corresponding flipped numbers with the corresponding values.
 *       1st Example
 *       1111     1000      0000     0111
-*       0111     0000      0101     0010     
-*       1000 ->  1111 ->   0111 ->  0000     
-*       1010     1101      1000     1111     
-*       0000     0111      1101     1010     
+*       0111     0000      0101     0010
+*       1000 ->  1111 ->   0111 ->  0000
+*       1010     1101      1000     1111
+*       0000     0111      1101     1010
 *       0010     0101      1111     1000
-*       
-*       2nd Example 
+*
+*       2nd Example
 *       1111     1000     1111      1000
 *       0111     0000     1101      1010
 *       1101     1010     1010      1101
@@ -575,26 +575,26 @@ void AMP_RadixSortHistogramSignedAscendingKernel(bolt::amp::control &ctl,
     concurrency::tiled_extent< RADICES > tileK0 = globalSizeK0.tile< RADICES >();
     concurrency::accelerator_view av = ctl.getAccelerator().default_view;
     printf("globalSizeK0 = %d   tileK0.tile_dim0 = %d    tileK0[0]=%d\n",globalSizeK0, tileK0.tile_dim0, tileK0[0]);
-    concurrency::parallel_for_each( av, tileK0, 
+    concurrency::parallel_for_each( av, tileK0,
     [
         unsortedData,
         buckets,
         histScanBuckets,
         shiftCount,
         tileK0
-    ] 
+    ]
     ( concurrency::tiled_index< RADICES > t_idx ) restrict(amp)
     {
         const int RADIX_T     = N;
         const int RADICES_T   = (1 << RADIX_T);
-        const int NUM_OF_ELEMENTS_PER_WORK_ITEM_T = RADICES_T; 
+        const int NUM_OF_ELEMENTS_PER_WORK_ITEM_T = RADICES_T;
         const int MASK_T      = ( 1 << ( RADIX_T - 1 ) ) - 1;
 
         int localId     = t_idx.local[ 0 ];
         int globalId    = t_idx.global[ 0 ];
         int groupId     = t_idx.tile[ 0 ];
         int groupSize   = tileK0.tile_dim0;
-        //tileK0[ 0 ] gives the global size 
+        //tileK0[ 0 ] gives the global size
         //tileK0.tile_dim0 gives the number of threads in a tile
         //\TODO - find a API to get the total number of numOfGroups
         int numOfGroups = tileK0[ 0 ]/tileK0.tile_dim0;//get_num_groups(0);
@@ -643,25 +643,25 @@ void AMP_RadixSortHistogramSignedDescendingKernel(bolt::amp::control &ctl,
     concurrency::extent< 1 > globalSizeK0( szElements/RADICES );
     concurrency::tiled_extent< RADICES > tileK0 = globalSizeK0.tile< RADICES >();
     concurrency::accelerator_view av = ctl.getAccelerator().default_view;
-    concurrency::parallel_for_each( av, tileK0, 
+    concurrency::parallel_for_each( av, tileK0,
     [
         unsortedData,
         buckets,
         histScanBuckets,
         shiftCount,
         tileK0
-    ] 
+    ]
     ( concurrency::tiled_index< RADICES > t_idx ) restrict(amp)
     {
         const int RADIX_T     = N;
         const int RADICES_T   = (1 << RADIX_T);
-        const int NUM_OF_ELEMENTS_PER_WORK_ITEM_T = RADICES_T; 
+        const int NUM_OF_ELEMENTS_PER_WORK_ITEM_T = RADICES_T;
         const int MASK_T      = ( 1 << ( RADIX_T - 1 ) ) - 1;
         int localId     = t_idx.local[ 0 ];
         int globalId    = t_idx.global[ 0 ];
         int groupId     = t_idx.tile[ 0 ];
         int groupSize   = tileK0.tile_dim0;
-        //tileK0[ 0 ] gives the global size 
+        //tileK0[ 0 ] gives the global size
         //tileK0.tile_dim0 gives the number of threads in a tile
         //\TODO - find a API to get the total number of numOfGroups
         int numOfGroups = tileK0[ 0 ]/tileK0.tile_dim0;
@@ -711,19 +711,19 @@ void AMP_permuteSignedAscendingRadixNTemplate(bolt::amp::control &ctl,
     concurrency::extent< 1 > globalSizeK0( szElements/RADICES );
     concurrency::tiled_extent< RADICES > tileK0 = globalSizeK0.tile< RADICES >();
     concurrency::accelerator_view av = ctl.getAccelerator().default_view;
-    concurrency::parallel_for_each( av, tileK0, 
+    concurrency::parallel_for_each( av, tileK0,
     [
         unsortedData,
         scanedBuckets,
         shiftCount,
         sortedData,
         tileK0
-    ] 
+    ]
     ( concurrency::tiled_index< RADICES > t_idx ) restrict(amp)
     {
         const int RADIX_T     = N;
         const int RADICES_T   = (1 << RADIX_T);
-        //const int NUM_OF_ELEMENTS_PER_WORK_ITEM_T = RADICES_T; 
+        //const int NUM_OF_ELEMENTS_PER_WORK_ITEM_T = RADICES_T;
         const int MASK_T      = ( 1 << ( RADIX_T - 1 ) )  -1;
         /*size_t groupId   = get_group_id(0);
         size_t localId   = get_local_id(0);
@@ -766,14 +766,14 @@ void AMP_permuteSignedDescendingRadixNTemplate(bolt::amp::control &ctl,
     concurrency::extent< 1 > globalSizeK0( szElements/RADICES );
     concurrency::tiled_extent< RADICES > tileK0 = globalSizeK0.tile< RADICES >();
     concurrency::accelerator_view av = ctl.getAccelerator().default_view;
-    concurrency::parallel_for_each( av, tileK0, 
+    concurrency::parallel_for_each( av, tileK0,
     [
         unsortedData,
         scanedBuckets,
         shiftCount,
         sortedData,
         tileK0
-    ] 
+    ]
     ( concurrency::tiled_index< RADICES > t_idx ) restrict(amp)
     {
         const int RADIX_T     = N;
@@ -809,9 +809,9 @@ void AMP_permuteSignedDescendingRadixNTemplate(bolt::amp::control &ctl,
 
 
 #define BOLT_SORT_INL_DEBUG 0
-template<typename DVRandomAccessIterator, typename StrictWeakOrdering> 
+template<typename DVRandomAccessIterator, typename StrictWeakOrdering>
 typename std::enable_if< std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type, unsigned int >::value >::type
-sort_enqueue(bolt::amp::control &ctl, 
+sort_enqueue(bolt::amp::control &ctl,
              DVRandomAccessIterator &first, DVRandomAccessIterator &last,
              StrictWeakOrdering comp)
 {
@@ -845,7 +845,7 @@ sort_enqueue(bolt::amp::control &ctl,
 
     unsigned int numGroups = szElements / mulFactor;
     concurrency::extent<1> modified_ext( static_cast< int >( szElements ) );
-    
+
     device_vector< T, concurrency::array > dvSwapInputData(static_cast<size_t>(szElements), 0);
     device_vector< T, concurrency::array > dvHistogramBins(static_cast<size_t>(numGroups* groupSize * RADICES), 0);
     device_vector< T, concurrency::array > dvHistogramScanBuffer(static_cast<size_t>(numGroups* RADICES + 10), 0 );
@@ -907,7 +907,7 @@ for (unsigned int ng=0; ng<numGroups; ng++)
 int temp = 0;
 printf("\n Printing Histogram scan SUM\n");
 for(int i=0; i<RADICES;i++)
-{ 
+{
     printf ("\nRadix = %d\n",i);
     for (unsigned int ng=0; ng<numGroups; ng++)
     {
@@ -917,9 +917,9 @@ for(int i=0; i<RADICES;i++)
 #endif
             detail::scan_enqueue( ctl, dvHistogramScanBuffer.begin( ), dvHistogramScanBuffer.end( ),dvHistogramScanBuffer.begin( ), 0, plus< T >( ) );
 #if BOLT_SORT_INL_DEBUG
-printf("\nprinting scan_enqueue SUM\n");        
+printf("\nprinting scan_enqueue SUM\n");
         for(int i=0; i<RADICES;i++)
-        { 
+        {
             printf ("\nRadix = %d\n",i);
             for (unsigned int ng=0; ng<numGroups; ng++)
             {
@@ -961,7 +961,7 @@ printf("\nprinting scan_enqueue SUM\n");
                                                         clInputData,
                                                         szElements);
 #if BOLT_SORT_INL_DEBUG
-if (swap == 0) 
+if (swap == 0)
 {
         printf("\n Printing swap data\n");
         for(unsigned int i=0; i<szElements;i+= RADICES)
@@ -1049,7 +1049,7 @@ else
     }
     if(newBuffer == true)
     {
-        std::cout << "New buffer was allocated So copying back the buffer\n";
+        //std::cout << "New buffer was allocated So copying back the buffer\n";
         //dest = clInputData.section( ext );
         clInputData.section( ext ).copy_to( first.getBuffer( ) );
         first.getBuffer( ).synchronize( );
@@ -1063,9 +1063,9 @@ else
 /*
  *
  */
-template<typename DVRandomAccessIterator, typename StrictWeakOrdering> 
+template<typename DVRandomAccessIterator, typename StrictWeakOrdering>
 typename std::enable_if< std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type,          int >::value >::type
-sort_enqueue(bolt::amp::control &ctl, 
+sort_enqueue(bolt::amp::control &ctl,
              DVRandomAccessIterator &first, DVRandomAccessIterator &last,
              StrictWeakOrdering comp)
 {
@@ -1099,7 +1099,7 @@ sort_enqueue(bolt::amp::control &ctl,
 
     unsigned int numGroups = szElements / mulFactor;
     concurrency::extent<1> modified_ext( static_cast< int >( szElements ) );
-    
+
     device_vector< T, concurrency::array > dvSwapInputData(static_cast<size_t>(szElements), 0);
     device_vector< T, concurrency::array > dvHistogramBins(static_cast<size_t>(numGroups* groupSize * RADICES), 0);
     device_vector< T, concurrency::array > dvHistogramScanBuffer(static_cast<size_t>(numGroups* RADICES + 10), 0 );
@@ -1162,7 +1162,7 @@ for (unsigned int ng=0; ng<numGroups; ng++)
 int temp = 0;
 printf("\n Printing Histogram scan SUM\n");
 for(int i=0; i<RADICES;i++)
-{ 
+{
     printf ("\nRadix = %d\n",i);
     for (unsigned int ng=0; ng<numGroups; ng++)
     {
@@ -1172,9 +1172,9 @@ for(int i=0; i<RADICES;i++)
 #endif
             detail::scan_enqueue( ctl, dvHistogramScanBuffer.begin( ), dvHistogramScanBuffer.end( ),dvHistogramScanBuffer.begin( ), 0, plus< T >( ) );
 #if BOLT_SORT_INL_DEBUG
-printf("\nprinting scan_enqueue SUM\n");        
+printf("\nprinting scan_enqueue SUM\n");
         for(int i=0; i<RADICES;i++)
-        { 
+        {
             printf ("\nRadix = %d\n",i);
             for (unsigned int ng=0; ng<numGroups; ng++)
             {
@@ -1216,7 +1216,7 @@ printf("\nprinting scan_enqueue SUM\n");
                                                         clInputData,
                                                         szElements);
 #if BOLT_SORT_INL_DEBUG
-if (swap == 0) 
+if (swap == 0)
 {
         printf("\n Printing swap data\n");
         for(unsigned int i=0; i<szElements;i+= RADICES)
@@ -1240,8 +1240,8 @@ else
             /*For swapping the buffers*/
             swap = swap? 0: 1;
         }
-            /* Do descending for the signed bit 
-             * IN the case of radix 4 bits = 28 and in the case of radix 8 bits = 24 
+            /* Do descending for the signed bit
+             * IN the case of radix 4 bits = 28 and in the case of radix 8 bits = 24
              */
              AMP_RadixSortHistogramSignedDescendingKernel<T, RADIX>(ctl,
                                                       clSwapData, /*this can be either array_view or array*/
@@ -1301,8 +1301,8 @@ else
                                                       szElements,
                                                       groupSize); // \TODO - i don't need gropu size
 
-            detail::scan_enqueue( ctl, dvHistogramScanBuffer.begin( ), 
-                                  dvHistogramScanBuffer.end( ),dvHistogramScanBuffer.begin( ), 
+            detail::scan_enqueue( ctl, dvHistogramScanBuffer.begin( ),
+                                  dvHistogramScanBuffer.end( ),dvHistogramScanBuffer.begin( ),
                                   0, plus< T >( ) );
 
             AMP_scanLocalTemplate<T, RADIX>(ctl,
@@ -1327,8 +1327,8 @@ else
             /*For swapping the buffers*/
             swap = swap? 0: 1;
         }//End of For loop
-            /* Do ascending for the signed bit 
-             * IN the case of radix 4 bits = 28 and in the case of radix 8 bits = 24 
+            /* Do ascending for the signed bit
+             * IN the case of radix 4 bits = 28 and in the case of radix 8 bits = 24
              */
              AMP_RadixSortHistogramSignedAscendingKernel<T, RADIX>(ctl,
                                                       clSwapData, /*this can be either array_view or array*/
@@ -1338,8 +1338,8 @@ else
                                                       szElements,
                                                       groupSize); // \TODO - i don't need gropu size
 
-            detail::scan_enqueue( ctl, dvHistogramScanBuffer.begin( ), 
-                                  dvHistogramScanBuffer.end( ),dvHistogramScanBuffer.begin( ), 
+            detail::scan_enqueue( ctl, dvHistogramScanBuffer.begin( ),
+                                  dvHistogramScanBuffer.end( ),dvHistogramScanBuffer.begin( ),
                                   0, plus< T >( ) );
 
             AMP_scanLocalTemplate<T, RADIX>(ctl,
@@ -1358,7 +1358,7 @@ else
     }
     if(newBuffer == true)
     {
-        std::cout << "New buffer was allocated So copying back the buffer\n";
+        //std::cout << "New buffer was allocated So copying back the buffer\n";
         //dest = clInputData.section( ext );
         clInputData.section( ext ).copy_to( first.getBuffer( ) );
         first.getBuffer( ).synchronize( );
@@ -1368,10 +1368,10 @@ else
     return;
 }
 
-/*! 
-* \brief This template function is a Bitonic Algorithm for one work item. 
+/*!
+* \brief This template function is a Bitonic Algorithm for one work item.
 *        This is called by the the sort_enqueue routine for other than int's and unsigned int's
-* \details Container - can be either array or array_view object and is dependant on the 
+* \details Container - can be either array or array_view object and is dependant on the
 *                      device_vector of the calling routine
 */
 template <typename T, typename Container, typename StrictWeakOrdering>
@@ -1385,7 +1385,7 @@ void AMP_BitonicSortKernel(bolt::amp::control &ctl,
     concurrency::extent< 1 > globalSizeK0( szElements/2 );
     concurrency::tiled_extent< BITONIC_SORT_WGSIZE > tileK0 = globalSizeK0.tile< BITONIC_SORT_WGSIZE >();
     concurrency::accelerator_view av = ctl.getAccelerator().default_view;
-    concurrency::parallel_for_each( av, tileK0, 
+    concurrency::parallel_for_each( av, tileK0,
     [
         A,
         passOfStage,
@@ -1398,10 +1398,10 @@ void AMP_BitonicSortKernel(bolt::amp::control &ctl,
         unsigned int  pairDistance = 1 << (stage - passOfStage);
         unsigned int  blockWidth   = 2 * pairDistance;
         unsigned int  temp;
-        unsigned int  leftId = (threadId % pairDistance) 
+        unsigned int  leftId = (threadId % pairDistance)
                             + (threadId / pairDistance) * blockWidth;
         bool compareResult;
-    
+
         unsigned int  rightId = leftId + pairDistance;
 
         T greater, lesser;
@@ -1409,7 +1409,7 @@ void AMP_BitonicSortKernel(bolt::amp::control &ctl,
         T rightElement = A[rightId];
 
         unsigned int sameDirectionBlockWidth = 1 << stage;
-    
+
         if((threadId/sameDirectionBlockWidth) % 2 == 1)
         {
             temp = rightId;
@@ -1434,9 +1434,9 @@ void AMP_BitonicSortKernel(bolt::amp::control &ctl,
     } );// end of concurrency::parallel_for_each
 }
 
-template<typename DVRandomAccessIterator, typename StrictWeakOrdering> 
+template<typename DVRandomAccessIterator, typename StrictWeakOrdering>
 typename std::enable_if<
-    !(std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type, unsigned int >::value || 
+    !(std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type, unsigned int >::value ||
       std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type,          int >::value)
                        >::type
 sort_enqueue(bolt::amp::control &ctl, const DVRandomAccessIterator& first, const DVRandomAccessIterator& last,
@@ -1462,17 +1462,17 @@ const StrictWeakOrdering& comp)
     numStages = 0;
     for(temp = szElements; temp > 1; temp >>= 1)
         ++numStages;
-    
+
     for(stage = 0; stage < numStages; ++stage)
     {
-        for(passOfStage = 0; passOfStage < stage + 1; ++passOfStage) 
+        for(passOfStage = 0; passOfStage < stage + 1; ++passOfStage)
         {
             //\TODO - can we remove this <T> specialization by getting the data type type from the container.
             AMP_BitonicSortKernel<T>(  ctl,
-                                    A, 
+                                    A,
                                     szElements,
-                                    stage, 
-                                    passOfStage, 
+                                    stage,
+                                    passOfStage,
                                     comp );
         }//end of for passStage = 0:stage-1
     }//end of for stage = 0:numStage-1
