@@ -207,7 +207,7 @@ OutputIterator exclusive_scan(
 
 template< typename InputIterator, typename OutputIterator >
 OutputIterator exclusive_scan(
-    const control &ctrl,
+    control &ctrl,
     InputIterator first,
     InputIterator last,
     OutputIterator result,
