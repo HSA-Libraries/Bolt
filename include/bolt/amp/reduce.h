@@ -155,7 +155,7 @@ namespace bolt {
         *
         * The \p reduce operation is similar the std::accumulate function.
         *
-        * \param ctl \b Optional Control structure to control command-queue, debug, tuning, etc.  See bolt::amp::control.
+        * \param ctl \b Optional Control structure to control accelerator,debug, tuning. See bolt::amp::control.
         * \param first The first position in the sequence to be reduced.
         * \param last  The last position in the sequence to be reduced.
         * \param init  The initial value for the accumulator.

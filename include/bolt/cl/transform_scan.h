@@ -68,7 +68,7 @@ namespace cl
 * ...
 *
 * bolt::cl::square<int> sqInt;
-* bolt::cl::plut<int> plInt;
+* bolt::cl::plus<int> plInt;
 * bolt::cl::control ctrl = control::getDefault();
 * ...
 *
@@ -128,7 +128,7 @@ transform_inclusive_scan(
 * \param unary_op Unary operator for transformation.
 * \param init  The value used to initialize the output scan sequence.
 * \param binary_op Binary operator for scanning transformed elements.
-* \param user_code A user-specified string that is preppended to the generated OpenCL kernel.
+* \param user_code A user-specified string that is prepended to the generated OpenCL kernel.
 *
 * \tparam InputIterator is a model of Input Iterator.
 * \tparam OutputIterator is a model of Output Iterator.

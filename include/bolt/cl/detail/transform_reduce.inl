@@ -1,19 +1,19 @@
-/***************************************************************************                                                                                     
-*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
-*                                                                                    
-*   Licensed under the Apache License, Version 2.0 (the "License");   
-*   you may not use this file except in compliance with the License.                 
-*   You may obtain a copy of the License at                                          
-*                                                                                    
-*       http://www.apache.org/licenses/LICENSE-2.0                      
-*                                                                                    
-*   Unless required by applicable law or agreed to in writing, software              
-*   distributed under the License is distributed on an "AS IS" BASIS,              
-*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.         
-*   See the License for the specific language governing permissions and              
-*   limitations under the License.                                                   
+/***************************************************************************
+*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.
+*
+*   Licensed under the Apache License, Version 2.0 (the "License");
+*   you may not use this file except in compliance with the License.
+*   You may obtain a copy of the License at
+*
+*       http://www.apache.org/licenses/LICENSE-2.0
+*
+*   Unless required by applicable law or agreed to in writing, software
+*   distributed under the License is distributed on an "AS IS" BASIS,
+*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+*   See the License for the specific language governing permissions and
+*   limitations under the License.
 
-***************************************************************************/                                                                                     
+***************************************************************************/
 
 #if !defined( TRANSFORM_REDUCE_INL )
 #define TRANSFORM_REDUCE_INL
@@ -41,22 +41,22 @@ namespace cl {
 
     // The following two functions are visible in .h file
     // Wrapper that user passes a control class
-    template<typename InputIterator, typename UnaryFunction, typename T, typename BinaryFunction> 
-    T transform_reduce( control& ctl, InputIterator first, InputIterator last,  
-        UnaryFunction transform_op, 
-        T init,  BinaryFunction reduce_op, const std::string& user_code )  
+    template<typename InputIterator, typename UnaryFunction, typename T, typename BinaryFunction>
+    T transform_reduce( control& ctl, InputIterator first, InputIterator last,
+        UnaryFunction transform_op,
+        T init,  BinaryFunction reduce_op, const std::string& user_code )
     {
-        return detail::transform_reduce_detect_random_access( ctl, first, last, transform_op, init, reduce_op, user_code, 
+        return detail::transform_reduce_detect_random_access( ctl, first, last, transform_op, init, reduce_op, user_code,
             std::iterator_traits< InputIterator >::iterator_category( ) );
     };
 
     // Wrapper that generates default control class
-    template<typename InputIterator, typename UnaryFunction, typename T, typename BinaryFunction> 
+    template<typename InputIterator, typename UnaryFunction, typename T, typename BinaryFunction>
     T transform_reduce(InputIterator first, InputIterator last,
         UnaryFunction transform_op,
         T init,  BinaryFunction reduce_op, const std::string& user_code )
     {
-        return detail::transform_reduce_detect_random_access( control::getDefault(), first, last, transform_op, init, reduce_op, user_code, 
+        return detail::transform_reduce_detect_random_access( control::getDefault(), first, last, transform_op, init, reduce_op, user_code,
             std::iterator_traits< InputIterator >::iterator_category( ) );
     };
 
@@ -99,7 +99,7 @@ namespace  detail {
 #ifdef ENABLE_TBB
             /*For documentation on the reduce object see below link
              *http://threadingbuildingblocks.org/docs/help/reference/algorithms/parallel_reduce_func.htm
-             *The imperative form of parallel_reduce is used. 
+             *The imperative form of parallel_reduce is used.
              *
             */
             template <typename T, typename UnaryFunction, typename BinaryFunction>
@@ -108,13 +108,13 @@ namespace  detail {
                 BinaryFunction reduce_op;
                 UnaryFunction transform_op;
                 bool flag;
-               
+
                 //TODO - Decide on how many threads to spawn? Usually it should be equal to th enumber of cores
-                //You might need to look at the tbb::split and there there cousin's 
+                //You might need to look at the tbb::split and there there cousin's
                 //
                 Transform_Reduce(const UnaryFunction &_opt, const BinaryFunction &_opr) : transform_op(_opt), reduce_op(_opr) ,value(0){}
                 Transform_Reduce(const UnaryFunction &_opt, const BinaryFunction &_opr, const T &init) : transform_op(_opt), reduce_op(_opr), value(init), flag(FALSE){}
-                
+
                 Transform_Reduce(): value(0) {}
                 Transform_Reduce( Transform_Reduce& s, tbb::split ):flag(TRUE),transform_op(s.transform_op),reduce_op(s.reduce_op){}
                  void operator()( const tbb::blocked_range<T*>& r ) {
@@ -140,44 +140,44 @@ namespace  detail {
 
         //  The following two functions disallow non-random access functions
         // Wrapper that uses default control class, iterator interface
-        template<typename InputIterator, typename UnaryFunction, typename T, typename BinaryFunction> 
+        template<typename InputIterator, typename UnaryFunction, typename T, typename BinaryFunction>
         T transform_reduce_detect_random_access( control &ctl, const InputIterator& first, const InputIterator& last,
             const UnaryFunction& transform_op,
             const T& init, const BinaryFunction& reduce_op, const std::string& user_code, std::input_iterator_tag )
         {
-            //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data 
+            //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data
             //  to a temporary buffer.  Should we?
             static_assert( false, "Bolt only supports random access iterator types" );
         };
 
         // Wrapper that uses default control class, iterator interface
-        template<typename InputIterator, typename UnaryFunction, typename T, typename BinaryFunction> 
+        template<typename InputIterator, typename UnaryFunction, typename T, typename BinaryFunction>
         T transform_reduce_detect_random_access( control& ctl, const InputIterator& first, const InputIterator& last,
             const UnaryFunction& transform_op,
             const T& init, const BinaryFunction& reduce_op, const std::string& user_code, std::random_access_iterator_tag )
         {
-            return transform_reduce_pick_iterator( ctl, first, last, transform_op, init, reduce_op, user_code, 
+            return transform_reduce_pick_iterator( ctl, first, last, transform_op, init, reduce_op, user_code,
                 std::iterator_traits< InputIterator >::iterator_category( ) );
         };
 
         // This template is called by the non-detail versions of transform_reduce, it already assumes random access iterators
         // This is called strictly for any non-device_vector iterator
-        template<typename InputIterator, typename UnaryFunction, typename oType, typename BinaryFunction> 
+        template<typename InputIterator, typename UnaryFunction, typename oType, typename BinaryFunction>
         oType transform_reduce_pick_iterator(
             control &c,
             const InputIterator& first,
             const InputIterator& last,
-            const UnaryFunction& transform_op, 
+            const UnaryFunction& transform_op,
             const oType& init,
             const BinaryFunction& reduce_op,
             const std::string& user_code,
             std::random_access_iterator_tag )
         {
             typedef std::iterator_traits<InputIterator>::value_type iType;
-            size_t szElements = (last - first); 
+            size_t szElements = (last - first);
             if (szElements == 0)
                     return init;
-			            
+
 			bolt::cl::control::e_RunMode runMode = c.getForceRunMode();  // could be dynamic choice some day.
             if(runMode == bolt::cl::control::Automatic)
             {
@@ -199,10 +199,9 @@ namespace  detail {
                     tbb::parallel_reduce( tbb::blocked_range<iType*>( &*first, (iType*)&*(last-1) + 1), transform_reduce_op );
                     return transform_reduce_op.value;
 #else
-                    std::cout << "The MultiCoreCpu version of this function is not enabled." << std ::endl;
-                    throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of this function is not enabled to be built." );
-                    return init;
-#endif  
+                    //std::cout << "The MultiCoreCpu version of this function is not enabled." << std ::endl;
+                    throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of transform_reduce function is not enabled to be built." );
+#endif
             } else {
                 // Map the input iterator to a device_vector
                 device_vector< iType > dvInput( first, last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, c );
@@ -213,19 +212,19 @@ namespace  detail {
 
         // This template is called by the non-detail versions of transform_reduce, it already assumes random access iterators
         // This is called strictly for iterators that are derived from device_vector< T >::iterator
-        template<typename DVInputIterator, typename UnaryFunction, typename oType, typename BinaryFunction> 
+        template<typename DVInputIterator, typename UnaryFunction, typename oType, typename BinaryFunction>
         oType transform_reduce_pick_iterator(
             control &c,
             const DVInputIterator& first,
             const DVInputIterator& last,
-            const UnaryFunction& transform_op, 
+            const UnaryFunction& transform_op,
             const oType& init,
             const BinaryFunction& reduce_op,
             const std::string& user_code,
             bolt::cl::device_vector_tag )
         {
             typedef std::iterator_traits<DVInputIterator>::value_type iType;
-            size_t szElements = static_cast<size_t>(std::distance(first, last) ); 
+            size_t szElements = static_cast<size_t>(std::distance(first, last) );
             if (szElements == 0)
                     return init;
 
@@ -240,7 +239,7 @@ namespace  detail {
                 cl_int l_Error = CL_SUCCESS;
                 oType trans_reduceResult;
                 /*Map the device buffer to CPU*/
-                iType *trans_reduceInputBuffer = (iType*)c.getCommandQueue().enqueueMapBuffer(first.getBuffer(), false, 
+                iType *trans_reduceInputBuffer = (iType*)c.getCommandQueue().enqueueMapBuffer(first.getBuffer(), false,
                                    CL_MAP_READ, 0, sizeof(iType) * szElements, NULL, &serialCPUEvent, &l_Error );
                 serialCPUEvent.wait();
                 std::vector<oType> output(szElements);
@@ -257,7 +256,7 @@ namespace  detail {
                 ::cl::Event multiCoreCPUEvent;
                 cl_int l_Error = CL_SUCCESS;
                 /*Map the device buffer to CPU*/
-                iType *trans_reduceInputBuffer = (iType*)c.getCommandQueue().enqueueMapBuffer(first.getBuffer(), false, 
+                iType *trans_reduceInputBuffer = (iType*)c.getCommandQueue().enqueueMapBuffer(first.getBuffer(), false,
                                    CL_MAP_READ, 0, sizeof(iType) * szElements, NULL, &multiCoreCPUEvent, &l_Error );
                 multiCoreCPUEvent.wait();
 
@@ -267,16 +266,15 @@ namespace  detail {
                 c.getCommandQueue().enqueueUnmapMemObject(first.getBuffer(), trans_reduceInputBuffer);
                 return transform_reduce_op.value;
 #else
-                std::cout << "The MultiCoreCpu version of this function is not enabled. " << std ::endl;
-                throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of this function is not enabled to be built." );
-                return init;
+                //std::cout << "The MultiCoreCpu version of this function is not enabled. " << std ::endl;
+                throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of transform_reduce function is not enabled to be built." );
 #endif
             }
 
             return  transform_reduce_enqueue( c, first, last, transform_op, init, reduce_op, user_code );
         };
 
-        template<typename DVInputIterator, typename UnaryFunction, typename oType, typename BinaryFunction> 
+        template<typename DVInputIterator, typename UnaryFunction, typename oType, typename BinaryFunction>
         oType transform_reduce_enqueue(
             control& ctl,
             const DVInputIterator& first,
@@ -316,8 +314,8 @@ namespace  detail {
 
             // Set up shape of launch grid and buffers:
             // FIXME, read from device attributes.
-            int computeUnits     = ctl.getDevice().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();  // round up if we don't know. 
-			int wgPerComputeUnit =  ctl.getWGPerComputeUnit(); 
+            int computeUnits     = ctl.getDevice().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();  // round up if we don't know.
+			int wgPerComputeUnit =  ctl.getWGPerComputeUnit();
             int numWG = computeUnits * wgPerComputeUnit;
 
             cl_int l_Error = CL_SUCCESS;
@@ -357,10 +355,10 @@ namespace  detail {
             control::buffPointer result = ctl.acquireBuffer( sizeof( oType ) * numWG, CL_MEM_ALLOC_HOST_PTR|CL_MEM_WRITE_ONLY );
 
             cl_uint szElements = static_cast< cl_uint >( std::distance( first, last ) );
-                
+
             /***** This is a temporaray fix *****/
             /*What if  requiredWorkGroups > numWG? Do you want to loop or increase the work group size or increase the per item processing?*/
-            int requiredWorkGroups = (int)ceil((float)szElements/wgSize); 
+            int requiredWorkGroups = (int)ceil((float)szElements/wgSize);
             if (requiredWorkGroups < numWG)
                 numWG = requiredWorkGroups;
             /**********************/
@@ -377,10 +375,10 @@ namespace  detail {
             loc.size_ = wgSize*sizeof(oType);
             V_OPENCL( kernels[0].setArg( 7, loc ), "Error setting kernel argument" );
 
-            l_Error = ctl.getCommandQueue().enqueueNDRangeKernel( 
+            l_Error = ctl.getCommandQueue().enqueueNDRangeKernel(
                 kernels[0],
-                ::cl::NullRange, 
-                ::cl::NDRange(numWG * wgSize), 
+                ::cl::NullRange,
+                ::cl::NDRange(numWG * wgSize),
                 ::cl::NDRange(wgSize) );
             V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for transform_reduce() kernel" );
 

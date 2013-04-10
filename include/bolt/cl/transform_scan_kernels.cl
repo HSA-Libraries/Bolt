@@ -41,41 +41,39 @@ __kernel void perBlockTransformScan(
     size_t wgSize = get_local_size( 0 );
     //printf("gid=%i, lTid=%i, gTid=%i\n", groId, locId, gloId);
 
-    //  Abort threads that are passed the end of the input_ptr vector
-    if (gloId >= vecSize) return; // on SI this doesn't mess-up barriers
-
     output_iter.init( output_ptr );
     input_iter.init( input_ptr );
 
     // if exclusive, load gloId=0 w/ identity, and all others shifted-1
     oValueType val;
-    if (exclusive)
-    {
-        if (gloId > 0)
-        { // thread>0
-            iValueType inVal = input_iter[gloId-1];
-            val = (oValueType) (*unaryOp)(inVal);
-            lds[ locId ] = val;
-        }
-        else
-        { // thread=0
-            val = identity;
-            lds[ locId ] = val;
-        }
+    if (gloId < vecSize){
+       if (exclusive)
+       {
+          if (gloId > 0)
+          { // thread>0
+              iValueType inVal = input_iter[gloId-1];
+              val = (oValueType) (*unaryOp)(inVal);
+              lds[ locId ] = val;
+          }
+          else
+          { // thread=0
+              val = identity;
+              lds[ locId ] = val;
+          }
+       }
+       else
+       {
+          iValueType inVal = input_iter[gloId];
+          val = (oValueType) (*unaryOp)(inVal);
+          lds[ locId ] = val;
+       }
     }
-    else
-    {
-        iValueType inVal = input_iter[gloId];
-        val = (oValueType) (*unaryOp)(inVal);
-        lds[ locId ] = val;
-    }
-
     //  Computes a scan within a workgroup
     oValueType sum = val;
     for( size_t offset = 1; offset < wgSize; offset *= 2 )
     {
         barrier( CLK_LOCAL_MEM_FENCE );
-        if (locId >= offset)
+        if (locId >= offset && gloId < vecSize)
         {
             oValueType y = lds[ locId - offset ];
             sum = (*binaryOp)( sum, y );
@@ -84,10 +82,14 @@ __kernel void perBlockTransformScan(
         lds[ locId ] = sum;
     }
 
+    barrier( CLK_LOCAL_MEM_FENCE );
+  
+    //  Abort threads that are passed the end of the input vector
+    if (gloId >= vecSize) return; 
+
     //  Each work item writes out its calculated scan result, relative to the beginning
     //  of each work group
     output_iter[ gloId ] = sum;
-    barrier( CLK_LOCAL_MEM_FENCE ); // needed for large data types
     if (locId == 0)
     {
         // last work-group can be wrong b/c ignored
@@ -138,26 +140,12 @@ __kernel void intraBlockInclusiveScan(
         }
     }
     barrier( CLK_LOCAL_MEM_FENCE );
-    Type scanSum;
+    Type scanSum = workSum;
+    lds[ locId ] = workSum;
     offset = 1;
     // load LDS with register sums
-    if (mapId < vecSize)
-    {
-        lds[ locId ] = workSum;
-        barrier( CLK_LOCAL_MEM_FENCE );
-    
-        if (locId >= offset)
-        { // thread > 0
-            Type y = lds[ locId - offset ];
-            Type y2 = lds[ locId ];
-            scanSum = (*binaryOp)( y2, y );
-            lds[ locId ] = scanSum;
-        } else { // thread 0
-            scanSum = workSum;
-        }  
-    }
     // scan in lds
-    for( offset = offset*2; offset < wgSize; offset *= 2 )
+    for( offset = offset*1; offset < wgSize; offset *= 2 )
     {
         barrier( CLK_LOCAL_MEM_FENCE );
         if (mapId < vecSize)
@@ -166,9 +154,10 @@ __kernel void intraBlockInclusiveScan(
             {
                 Type y = lds[ locId - offset ];
                 scanSum = (*binaryOp)( scanSum, y );
-                lds[ locId ] = scanSum;
             }
         }
+        barrier( CLK_LOCAL_MEM_FENCE );
+        lds[ locId ] = scanSum;
     } // for offset
     barrier( CLK_LOCAL_MEM_FENCE );
     

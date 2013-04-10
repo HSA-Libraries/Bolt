@@ -1,19 +1,19 @@
-/***************************************************************************                                                                                     
-*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
-*                                                                                    
-*   Licensed under the Apache License, Version 2.0 (the "License");   
-*   you may not use this file except in compliance with the License.                 
-*   You may obtain a copy of the License at                                          
-*                                                                                    
-*       http://www.apache.org/licenses/LICENSE-2.0                      
-*                                                                                    
-*   Unless required by applicable law or agreed to in writing, software              
-*   distributed under the License is distributed on an "AS IS" BASIS,              
-*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.         
-*   See the License for the specific language governing permissions and              
-*   limitations under the License.                                                   
+/***************************************************************************
+*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.
+*
+*   Licensed under the Apache License, Version 2.0 (the "License");
+*   you may not use this file except in compliance with the License.
+*   You may obtain a copy of the License at
+*
+*       http://www.apache.org/licenses/LICENSE-2.0
+*
+*   Unless required by applicable law or agreed to in writing, software
+*   distributed under the License is distributed on an "AS IS" BASIS,
+*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+*   See the License for the specific language governing permissions and
+*   limitations under the License.
 
-***************************************************************************/                                                
+***************************************************************************/
 #define KERNEL02WAVES 4
 #define KERNEL1WAVES 4
 #define WAVESIZE 64
@@ -53,7 +53,7 @@ inclusive_scan_by_key(
     InputIterator1  first1,
     InputIterator1  last1,
     InputIterator2  first2,
-    OutputIterator  result, 
+    OutputIterator  result,
     BinaryPredicate binary_pred,
     BinaryFunction  binary_funct,
     const std::string& user_code )
@@ -86,7 +86,7 @@ inclusive_scan_by_key(
     InputIterator1  first1,
     InputIterator1  last1,
     InputIterator2  first2,
-    OutputIterator  result, 
+    OutputIterator  result,
     BinaryPredicate binary_pred,
     const std::string& user_code )
 {
@@ -156,7 +156,7 @@ inclusive_scan_by_key(
     InputIterator1  first1,
     InputIterator1  last1,
     InputIterator2  first2,
-    OutputIterator  result, 
+    OutputIterator  result,
     BinaryPredicate binary_pred,
     BinaryFunction  binary_funct,
     const std::string& user_code )
@@ -189,7 +189,7 @@ inclusive_scan_by_key(
     InputIterator1  first1,
     InputIterator1  last1,
     InputIterator2  first2,
-    OutputIterator  result, 
+    OutputIterator  result,
     BinaryPredicate binary_pred,
     const std::string& user_code )
 {
@@ -633,10 +633,10 @@ class ScanByKey_KernelTemplateSpecializer : public KernelTemplateSpecializer
         addKernelName("intraBlockInclusiveScanByKey");
         addKernelName("perBlockAdditionByKey");
     }
-    
+
     const ::std::string operator() ( const ::std::vector<::std::string>& typeNames ) const
     {
-        const std::string templateSpecializationString = 
+        const std::string templateSpecializationString =
             "// Dynamic specialization of generic template definition, using user supplied types\n"
             "template __attribute__((mangled_name(" + name(0) + "Instantiated)))\n"
             "__attribute__((reqd_work_group_size(KERNEL0WORKGROUPSIZE,1,1)))\n"
@@ -670,7 +670,7 @@ class ScanByKey_KernelTemplateSpecializer : public KernelTemplateSpecializer
             "global " + typeNames[scanByKey_BinaryPredicate] + "* binaryPred,\n"
             "global " + typeNames[scanByKey_BinaryFunction] + "* binaryFunct\n"
             ");\n\n"
-    
+
 
             "// Dynamic specialization of generic template definition, using user supplied types\n"
             "template __attribute__((mangled_name(" + name(2) + "Instantiated)))\n"
@@ -684,14 +684,14 @@ class ScanByKey_KernelTemplateSpecializer : public KernelTemplateSpecializer
             "global " + typeNames[scanByKey_BinaryPredicate] + "* binaryPred,\n"
             "global " + typeNames[scanByKey_BinaryFunction] + "* binaryFunct\n"
             ");\n\n";
-    
+
         return templateSpecializationString;
     }
 };
 
 
 #ifdef ENABLE_TBB
-      template <typename T, typename InputIterator1, typename InputIterator2, typename OutputIterator, 
+      template <typename T, typename InputIterator1, typename InputIterator2, typename OutputIterator,
                  typename BinaryFunction, typename BinaryPredicate>
       struct ScanKey_tbb{
           typedef typename std::iterator_traits< OutputIterator >::value_type oType;
@@ -758,11 +758,11 @@ class ScanByKey_KernelTemplateSpecializer : public KernelTemplateSpecializer
                      temp = binary_op(temp, *(first_value+i));
                  else if (!inclusive){
                      flag = TRUE;
-                     temp = binary_op(start, *(first_value+i));                    
+                     temp = binary_op(start, *(first_value+i));
                  }
                  else {
                      flag = TRUE;
-                     temp = *(first_value+i);  
+                     temp = *(first_value+i);
                  }
              }
              sum = temp;
@@ -804,7 +804,7 @@ scan_by_key_detect_random_access(
     const bool& inclusive,
     std::input_iterator_tag )
 {
-    //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data 
+    //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data
     //  to a temporary buffer.  Should we?
     static_assert( false, "Bolt only supports random access iterator types" );
 };
@@ -834,7 +834,7 @@ scan_by_key_detect_random_access(
         binary_pred, binary_funct, user_code, inclusive );
 }
 
-/*! 
+/*!
 * \brief This overload is called strictly for non-device_vector iterators
 * \details This template function overload is used to seperate device_vector iterators from all other iterators
 */
@@ -845,7 +845,7 @@ template<
     typename T,
     typename BinaryPredicate,
     typename BinaryFunction >
-typename std::enable_if< 
+typename std::enable_if<
              !(std::is_base_of<typename device_vector<typename
                std::iterator_traits<InputIterator1>::value_type>::iterator,InputIterator1>::value &&
                std::is_base_of<typename device_vector<typename
@@ -874,17 +874,17 @@ scan_by_key_pick_iterator(
     if( numElements < 1 )
         return result;
 
-  
+
     bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode( );
 
     if( runMode == bolt::cl::control::Automatic )
     {
         runMode = ctl.getDefaultPathToRun( );
     }
-  
+
   if( runMode == bolt::cl::control::SerialCpu )
     {
-       
+
        if(inclusive){
           Serial_inclusive_scan_by_key<kType, vType, oType, BinaryPredicate, BinaryFunction>(&(*firstKey), &(*firstValue), &(*result), numElements, binary_pred, binary_funct);
        }
@@ -902,9 +902,8 @@ scan_by_key_pick_iterator(
         tbb::parallel_scan( tbb::blocked_range<int>(  0, static_cast< int >( std::distance( firstKey, lastKey ))), tbbkey_scan, tbb::auto_partitioner());
         return result + numElements;
 #else
-        std::cout << "The MultiCoreCpu version of Scan by key is not enabled." << std ::endl;
-        throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of scan by key is not enabled to be built." ); 
-        return result;
+        //std::cout << "The MultiCoreCpu version of Scan by key is not enabled." << std ::endl;
+        throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of scan by key is not enabled to be built." );
 #endif
   }
   else
@@ -926,7 +925,7 @@ scan_by_key_pick_iterator(
     return result + numElements;
 }
 
-/*! 
+/*!
 * \brief This overload is called strictly for device_vector iterators
 * \details This template function overload is used to seperate device_vector iterators from all other iterators
 */
@@ -938,7 +937,7 @@ scan_by_key_pick_iterator(
     typename T,
     typename BinaryPredicate,
     typename BinaryFunction >
-typename std::enable_if< 
+typename std::enable_if<
              (std::is_base_of<typename device_vector<typename
                std::iterator_traits<DVInputIterator1>::value_type>::iterator,DVInputIterator1>::value &&
                std::is_base_of<typename device_vector<typename
@@ -978,15 +977,15 @@ scan_by_key_pick_iterator(
     {
         ::cl::Event serialCPUEvent;
         cl_int l_Error = CL_SUCCESS;
-               
-        kType *scanInputkey = (kType*)ctl.getCommandQueue().enqueueMapBuffer(firstKey.getBuffer(), false, 
+
+        kType *scanInputkey = (kType*)ctl.getCommandQueue().enqueueMapBuffer(firstKey.getBuffer(), false,
                             CL_MAP_READ, 0, sizeof(kType) * numElements, NULL, &serialCPUEvent, &l_Error );
-        vType *scanInputBuffer = (vType*)ctl.getCommandQueue().enqueueMapBuffer(firstValue.getBuffer(), false, 
+        vType *scanInputBuffer = (vType*)ctl.getCommandQueue().enqueueMapBuffer(firstValue.getBuffer(), false,
                             CL_MAP_READ, 0, sizeof(vType) * numElements, NULL, &serialCPUEvent, &l_Error );
-        oType *scanResultBuffer = (oType*)ctl.getCommandQueue().enqueueMapBuffer(result.getBuffer(), false, 
+        oType *scanResultBuffer = (oType*)ctl.getCommandQueue().enqueueMapBuffer(result.getBuffer(), false,
                             CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(oType) * numElements, NULL, &serialCPUEvent, &l_Error );
         serialCPUEvent.wait();
-                
+
         if(inclusive)
             Serial_inclusive_scan_by_key<kType, vType, oType, BinaryPredicate, BinaryFunction>(scanInputkey, scanInputBuffer, scanResultBuffer, numElements, binary_pred, binary_funct);
         else
@@ -997,7 +996,7 @@ scan_by_key_pick_iterator(
         ctl.getCommandQueue().enqueueUnmapMemObject(result.getBuffer(), scanResultBuffer);
 
         return result + numElements;
-        
+
     }
     else if( runMode == bolt::cl::control::MultiCoreCpu )
     {
@@ -1005,11 +1004,11 @@ scan_by_key_pick_iterator(
                 ::cl::Event multiCoreCPUEvent;
                 cl_int l_Error = CL_SUCCESS;
                 /*Map the device buffer to CPU*/
-                kType *scanInputkey = (kType*)ctl.getCommandQueue().enqueueMapBuffer(firstKey.getBuffer(), false, 
+                kType *scanInputkey = (kType*)ctl.getCommandQueue().enqueueMapBuffer(firstKey.getBuffer(), false,
                                    CL_MAP_READ, 0, sizeof(kType) * numElements, NULL, &multiCoreCPUEvent, &l_Error );
-                vType *scanInputBuffer = (vType*)ctl.getCommandQueue().enqueueMapBuffer(firstValue.getBuffer(), false, 
+                vType *scanInputBuffer = (vType*)ctl.getCommandQueue().enqueueMapBuffer(firstValue.getBuffer(), false,
                                    CL_MAP_READ, 0, sizeof(vType) * numElements, NULL, &multiCoreCPUEvent, &l_Error );
-                oType *scanResultBuffer = (oType*)ctl.getCommandQueue().enqueueMapBuffer(result.getBuffer(), false, 
+                oType *scanResultBuffer = (oType*)ctl.getCommandQueue().enqueueMapBuffer(result.getBuffer(), false,
                                    CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(oType) * numElements, NULL, &multiCoreCPUEvent, &l_Error );
                 multiCoreCPUEvent.wait();
 
@@ -1022,9 +1021,8 @@ scan_by_key_pick_iterator(
                 ctl.getCommandQueue().enqueueUnmapMemObject(result.getBuffer(), scanResultBuffer);
                 return result + numElements;
 #else
-                std::cout << "The MultiCoreCpu version of scan by key is not enabled. " << std ::endl;
+                //std::cout << "The MultiCoreCpu version of scan by key is not enabled. " << std ::endl;
                 throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of scan by key is not enabled to be built." );
-                return result;
 #endif
 
      }
@@ -1083,7 +1081,7 @@ size_t k0_stepNum, k1_stepNum, k2_stepNum;
     typeNames[scanByKey_initType] = TypeName< T >::get( );
     typeNames[scanByKey_BinaryPredicate] = TypeName< BinaryPredicate >::get( );
     typeNames[scanByKey_BinaryFunction]  = TypeName< BinaryFunction >::get( );
-    
+
     /**********************************************************************************
      * Type Definitions - directly concatenated into kernel string
      *********************************************************************************/
@@ -1109,7 +1107,7 @@ size_t k0_stepNum, k1_stepNum, k2_stepNum;
     oss << " -DKERNEL1WORKGROUPSIZE=" << kernel1_WgSize;
     oss << " -DKERNEL2WORKGROUPSIZE=" << kernel2_WgSize;
     compileOptions = oss.str();
-    
+
     /**********************************************************************************
      * Request Compiled Kernels
      *********************************************************************************/
@@ -1152,7 +1150,7 @@ size_t k0_stepNum, k1_stepNum, k2_stepNum;
     }
 
     // Create buffer wrappers so we can access the host functors, for read or writing in the kernel
-    
+
     ALIGNED( 256 ) BinaryPredicate aligned_binary_pred( binary_pred );
     control::buffPointer binaryPredicateBuffer = ctl.acquireBuffer( sizeof( aligned_binary_pred ),
         CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_binary_pred );
@@ -1190,7 +1188,7 @@ aProfiler.set(AsyncProfiler::getDevice, control::SerialCpu);
     V_OPENCL( kernels[0].setArg( 9, *keySumArray ),         "Error setArg kernels[ 0 ]" ); // Output per block sum
     V_OPENCL( kernels[0].setArg(10, *preSumArray ),         "Error setArg kernels[ 0 ]" ); // Output per block sum
     V_OPENCL( kernels[0].setArg(11, doExclusiveScan ),      "Error setArg kernels[ 0 ]" ); // Exclusive scan?
-    
+
 #ifdef BOLT_ENABLE_PROFILING
 aProfiler.nextStep();
 k0_stepNum = aProfiler.getStepNum();
@@ -1329,17 +1327,17 @@ aProfiler.setArchitecture(strDeviceName);
     try
     {
         cl_ulong k0_start, k0_stop, k1_stop, k2_stop;
-        
+
         l_Error = kernel0Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_START, &k0_start);
         V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_QUEUED>()");
         l_Error = kernel0Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END, &k0_stop);
         V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_END>()");
-        
+
         //l_Error = kernel1Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_START, &k1_start);
         //V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_START>()");
         l_Error = kernel1Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END, &k1_stop);
         V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_END>()");
-        
+
         //l_Error = kernel2Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_START, &k2_start);
         //V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_START>()");
         l_Error = kernel2Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END, &k2_stop);
