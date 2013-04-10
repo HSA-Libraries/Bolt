@@ -1,19 +1,19 @@
-/***************************************************************************                                                                                     
-*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
-*                                                                                    
-*   Licensed under the Apache License, Version 2.0 (the "License");   
-*   you may not use this file except in compliance with the License.                 
-*   You may obtain a copy of the License at                                          
-*                                                                                    
-*       http://www.apache.org/licenses/LICENSE-2.0                      
-*                                                                                    
-*   Unless required by applicable law or agreed to in writing, software              
-*   distributed under the License is distributed on an "AS IS" BASIS,              
-*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.         
-*   See the License for the specific language governing permissions and              
-*   limitations under the License.                                                   
+/***************************************************************************
+*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.
+*
+*   Licensed under the Apache License, Version 2.0 (the "License");
+*   you may not use this file except in compliance with the License.
+*   You may obtain a copy of the License at
+*
+*       http://www.apache.org/licenses/LICENSE-2.0
+*
+*   Unless required by applicable law or agreed to in writing, software
+*   distributed under the License is distributed on an "AS IS" BASIS,
+*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+*   See the License for the specific language governing permissions and
+*   limitations under the License.
 
-***************************************************************************/                                                
+***************************************************************************/
 
 //#ifndef USE_AMD_HSA
 #define USE_AMD_HSA 0
@@ -96,12 +96,12 @@ OutputIterator inclusive_scan(
         //std::iterator_traits< InputIterator >::iterator_category( ) );
 };
 
-template< typename InputIterator, typename OutputIterator, typename BinaryFunction > 
+template< typename InputIterator, typename OutputIterator, typename BinaryFunction >
 OutputIterator inclusive_scan(
     InputIterator first,
     InputIterator last,
     OutputIterator result,
-    BinaryFunction binary_op, 
+    BinaryFunction binary_op,
             const std::string& user_code )
 {
     BOLT_PROFILER_START_TRIAL
@@ -119,7 +119,7 @@ OutputIterator inclusive_scan(
     control &ctrl,
     InputIterator first,
     InputIterator last,
-    OutputIterator result, 
+    OutputIterator result,
             const std::string& user_code )
 {
     BOLT_PROFILER_START_TRIAL
@@ -132,13 +132,13 @@ OutputIterator inclusive_scan(
     return rtrn;
 };
 
-template< typename InputIterator, typename OutputIterator, typename BinaryFunction > 
+template< typename InputIterator, typename OutputIterator, typename BinaryFunction >
 OutputIterator inclusive_scan(
     control &ctrl,
     InputIterator first,
     InputIterator last,
     OutputIterator result,
-    BinaryFunction binary_op, 
+    BinaryFunction binary_op,
             const std::string& user_code )
 {
     BOLT_PROFILER_START_TRIAL
@@ -188,7 +188,7 @@ OutputIterator exclusive_scan(
     return rtrn;
 };
 
-template< typename InputIterator, typename OutputIterator, typename T, typename BinaryFunction > 
+template< typename InputIterator, typename OutputIterator, typename T, typename BinaryFunction >
 OutputIterator exclusive_scan(
     InputIterator first,
     InputIterator last,
@@ -210,7 +210,7 @@ OutputIterator exclusive_scan(
     control &ctrl,
     InputIterator first,
     InputIterator last,
-    OutputIterator result, 
+    OutputIterator result,
             const std::string& user_code ) // assumes addition of numbers
 {
     BOLT_PROFILER_START_TRIAL
@@ -229,7 +229,7 @@ OutputIterator exclusive_scan(
     InputIterator first,
     InputIterator last,
     OutputIterator result,
-    T init, 
+    T init,
             const std::string& user_code )
 {
     BOLT_PROFILER_START_TRIAL
@@ -241,7 +241,7 @@ OutputIterator exclusive_scan(
     return rtrn;
 };
 
-template< typename InputIterator, typename OutputIterator, typename T, typename BinaryFunction > 
+template< typename InputIterator, typename OutputIterator, typename T, typename BinaryFunction >
 OutputIterator exclusive_scan(
     control &ctrl,
     InputIterator first,
@@ -295,7 +295,7 @@ Serial_scan(
         {
             *(result + i) = sum;
             sum = binary_op( sum, currentValue);
-             
+
         }
     }
     return result;
@@ -308,7 +308,7 @@ Serial_scan(
 namespace detail
 {
 
-enum scanTypes {scan_iValueType, scan_iIterType, scan_oValueType, scan_oIterType, scan_initType, 
+enum scanTypes {scan_iValueType, scan_iIterType, scan_oValueType, scan_oIterType, scan_initType,
     scan_BinaryFunction, scan_end };
 
 class Scan_KernelTemplateSpecializer : public KernelTemplateSpecializer
@@ -328,7 +328,7 @@ public:
     const ::std::string operator() ( const ::std::vector<::std::string>& typeNames ) const
             {
 #if USE_AMD_HSA
-                    const std::string templateSpecializationString = 
+                    const std::string templateSpecializationString =
                         "// Dynamic specialization of generic template definition, using user supplied types\n"
             "template __attribute__((mangled_name(" + name(0) + "Instantiated)))\n"
             "__attribute__((reqd_work_group_size(KERNEL0WORKGROUPSIZE,1,1)))\n"
@@ -346,7 +346,7 @@ public:
             "int exclusive\n"
             ");\n\n";
 #else
-        const std::string templateSpecializationString = 
+        const std::string templateSpecializationString =
             "// Template specialization\n"
             "template __attribute__((mangled_name(" + name(0) + "Instantiated)))\n"
             "__attribute__((reqd_work_group_size(KERNEL0WORKGROUPSIZE,1,1)))\n"
@@ -403,9 +403,9 @@ public:
           bool inclusive, flag;
           public:
           Scan_tbb() : sum(0) {}
-          Scan_tbb( InputIterator&  _x, 
+          Scan_tbb( InputIterator&  _x,
                     OutputIterator& _y,
-                    const BinaryFunction &_opr, 
+                    const BinaryFunction &_opr,
                     const bool &_incl ,const T &init) : x(_x), y(_y), scan_op(_opr),inclusive(_incl),start(init),flag(TRUE){}
           T get_sum() const {return sum;}
           template<typename Tag>
@@ -465,7 +465,7 @@ public:
             BinaryFunction binary_op,
             std::input_iterator_tag )
         {
-            //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data 
+            //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data
             //  to a temporary buffer.  Should we?
             static_assert( false, "Bolt only supports random access iterator types" );
         };
@@ -474,25 +474,25 @@ public:
         OutputIterator scan_detect_random_access( control &ctl, const InputIterator& first, const InputIterator& last, const OutputIterator& result,  const T& init, const bool& inclusive,
             const BinaryFunction& binary_op, std::random_access_iterator_tag )
         {
-            return detail::scan_pick_iterator( ctl, first, last, result, init, inclusive, binary_op, 
-                std::iterator_traits< InputIterator >::iterator_category( ), 
+            return detail::scan_pick_iterator( ctl, first, last, result, init, inclusive, binary_op,
+                std::iterator_traits< InputIterator >::iterator_category( ),
                 std::iterator_traits< OutputIterator >::iterator_category( ) );
         };
 
         template< typename InputIterator, typename OutputIterator, typename T, typename BinaryFunction >
-        OutputIterator scan_pick_iterator( control &ctl, const InputIterator& first, const InputIterator& last, 
+        OutputIterator scan_pick_iterator( control &ctl, const InputIterator& first, const InputIterator& last,
             const OutputIterator& result, const T& init, const bool& inclusive, const BinaryFunction& binary_op,
             std::random_access_iterator_tag, bolt::cl::fancy_iterator_tag )
         {
             static_assert( false, "It is not possible to output to fancy iterators; they are not mutable" );
         }
 
-        /*! 
+        /*!
         * \brief This overload is called strictly for non-device_vector iterators
         * \details This template function overload is used to seperate device_vector iterators from all other iterators
         */
         template< typename InputIterator, typename OutputIterator, typename T, typename BinaryFunction >
-        OutputIterator scan_pick_iterator( control &ctrl, const InputIterator& first, const InputIterator& last, 
+        OutputIterator scan_pick_iterator( control &ctrl, const InputIterator& first, const InputIterator& last,
             const OutputIterator& result, const T& init, const bool& inclusive, const BinaryFunction& binary_op,
             std::random_access_iterator_tag, std::random_access_iterator_tag )
         {
@@ -536,9 +536,8 @@ aProfiler.stopTrial();
                tbb::parallel_scan( tbb::blocked_range<int>(  0, static_cast< int >( std::distance( first, last ))), tbb_scan, tbb::auto_partitioner());
                return result + numElements;
 #else
-               std::cout << "The MultiCoreCpu version of Scan is not ebabled" << std ::endl;
-               throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of Scan is not enabled to be built." ); 
-               return result;
+               //std::cout << "The MultiCoreCpu version of Scan is not ebabled" << std ::endl;
+               throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of Scan is not enabled to be built." );
 #endif
             }
             else
@@ -570,12 +569,12 @@ aProfiler.set(AsyncProfiler::memory, numElements*sizeof(iType));
             return result + numElements;
 }
 
-        /*! 
+        /*!
         * \brief This overload is called strictly for device_vector iterators
         * \details This template function overload is used to seperate device_vector iterators from all other iterators
         */
         template< typename DVInputIterator, typename DVOutputIterator, typename T, typename BinaryFunction >
-        DVOutputIterator scan_pick_iterator( control &ctrl, const DVInputIterator& first, const DVInputIterator& last, 
+        DVOutputIterator scan_pick_iterator( control &ctrl, const DVInputIterator& first, const DVInputIterator& last,
             const DVOutputIterator& result, const T& init, const bool& inclusive, const BinaryFunction& binary_op,
             bolt::cl::device_vector_tag, bolt::cl::device_vector_tag )
         {
@@ -598,15 +597,15 @@ aProfiler.set(AsyncProfiler::memory, numElements*sizeof(iType));
             {
                 ::cl::Event serialCPUEvent;
                 cl_int l_Error = CL_SUCCESS;
-                iType *scanInputBuffer = (iType*)ctrl.getCommandQueue().enqueueMapBuffer(first.getBuffer(), false, 
+                iType *scanInputBuffer = (iType*)ctrl.getCommandQueue().enqueueMapBuffer(first.getBuffer(), false,
                                    CL_MAP_READ, 0, sizeof(iType) * numElements, NULL, &serialCPUEvent, &l_Error );
-                oType *scanResultBuffer = (oType*)ctrl.getCommandQueue().enqueueMapBuffer(result.getBuffer(), false, 
+                oType *scanResultBuffer = (oType*)ctrl.getCommandQueue().enqueueMapBuffer(result.getBuffer(), false,
                                    CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(oType) * numElements, NULL, &serialCPUEvent, &l_Error );
                 serialCPUEvent.wait();
                 Serial_scan<iType, oType, BinaryFunction, T>(scanInputBuffer, scanResultBuffer, numElements, binary_op, inclusive, init);
                 ctrl.getCommandQueue().enqueueUnmapMemObject(first.getBuffer(), scanInputBuffer);
                 ctrl.getCommandQueue().enqueueUnmapMemObject(result.getBuffer(), scanResultBuffer);
-                
+
                 return result + numElements;
             }
             else if( runMode == bolt::cl::control::MultiCoreCpu )
@@ -615,9 +614,9 @@ aProfiler.set(AsyncProfiler::memory, numElements*sizeof(iType));
                 ::cl::Event multiCoreCPUEvent;
                 cl_int l_Error = CL_SUCCESS;
                 /*Map the device buffer to CPU*/
-                iType *scanInputBuffer = (iType*)ctrl.getCommandQueue().enqueueMapBuffer(first.getBuffer(), false, 
+                iType *scanInputBuffer = (iType*)ctrl.getCommandQueue().enqueueMapBuffer(first.getBuffer(), false,
                                    CL_MAP_READ, 0, sizeof(iType) * numElements, NULL, &multiCoreCPUEvent, &l_Error );
-                oType *scanResultBuffer = (oType*)ctrl.getCommandQueue().enqueueMapBuffer(result.getBuffer(), false, 
+                oType *scanResultBuffer = (oType*)ctrl.getCommandQueue().enqueueMapBuffer(result.getBuffer(), false,
                                    CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(oType) * numElements, NULL, &multiCoreCPUEvent, &l_Error );
                 multiCoreCPUEvent.wait();
                 tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
@@ -627,9 +626,8 @@ aProfiler.set(AsyncProfiler::memory, numElements*sizeof(iType));
                 ctrl.getCommandQueue().enqueueUnmapMemObject(result.getBuffer(), scanResultBuffer);
                 return result + numElements;
 #else
-                std::cout << "The MultiCoreCpu version of Scan with device vector is not enabled" << std ::endl;
-                throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of Scan with device vector is not enabled to be built." ); 
-                return result;
+                //std::cout << "The MultiCoreCpu version of Scan with device vector is not enabled" << std ::endl;
+                throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of Scan with device vector is not enabled to be built." );
 #endif
             }
             else{
@@ -640,12 +638,12 @@ aProfiler.set(AsyncProfiler::memory, numElements*sizeof(iType));
             return result + numElements;
         }
 
-        /*! 
+        /*!
         * \brief This overload is called strictly for non-device_vector iterators
         * \details This template function overload is used to seperate device_vector iterators from all other iterators
         */
         template< typename InputIterator, typename OutputIterator, typename T, typename BinaryFunction >
-        OutputIterator scan_pick_iterator( control &ctl, const InputIterator& fancyFirst, const InputIterator& fancyLast, 
+        OutputIterator scan_pick_iterator( control &ctl, const InputIterator& fancyFirst, const InputIterator& fancyLast,
             const OutputIterator& result, const T& init, const bool& inclusive, const BinaryFunction& binary_op,
             bolt::cl::fancy_iterator_tag, std::random_access_iterator_tag )
         {
@@ -678,9 +676,8 @@ aProfiler.set(AsyncProfiler::memory, numElements*sizeof(iType));
                tbb::parallel_scan( tbb::blocked_range<int>(  0, static_cast< int >( std::distance( first, last ))), tbb_scan, tbb::auto_partitioner());
                return result + numElements;
 #else
-               std::cout << "The MultiCoreCpu version of Scan is not implemented yet." << std ::endl;
-               throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of Scan is not enabled to be built." ); 
-               return result;
+               //std::cout << "The MultiCoreCpu version of Scan is not implemented yet." << std ::endl;
+               throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of Scan is not enabled to be built." );
 #endif
             }
             else
@@ -715,7 +712,7 @@ aProfiler.setStepName("Acquire Kernel");
 aProfiler.set(AsyncProfiler::device, control::SerialCpu);
 #endif
     cl_int l_Error = CL_SUCCESS;
-    cl_uint doExclusiveScan = inclusive ? 0 : 1; 
+    cl_uint doExclusiveScan = inclusive ? 0 : 1;
     const size_t numComputeUnits = ctrl.getDevice( ).getInfo< CL_DEVICE_MAX_COMPUTE_UNITS >( );
     const size_t numWorkGroupsPerComputeUnit = ctrl.getWGPerComputeUnit( );
     const size_t workGroupSize = HSAWAVES*WAVESIZE;
@@ -805,7 +802,7 @@ aProfiler.set(AsyncProfiler::device, control::SerialCpu);
     cl_uint ldsSize;
 
 
-    
+
 #if USE_AMD_HSA
     /**********************************************************************************
      *
@@ -823,7 +820,7 @@ aProfiler.set(AsyncProfiler::device, control::SerialCpu);
     if (numWorkGroupsK0 < numWorkGroups)
         numWorkGroups = numWorkGroupsK0; // nWG is lesser of elements vs compute units
     ldsSize = static_cast< cl_uint >( ( kernel0_WgSize ) * sizeof( oType ) );
-    
+
     // allocate and initialize gpu -> cpu array
     control::buffPointer dev2hostD = ctrl.acquireBuffer( numWorkGroups*sizeof( int ),
         CL_MEM_ALLOC_HOST_PTR /*| CL_MEM_READ_WRITE*/ );
@@ -840,7 +837,7 @@ aProfiler.set(AsyncProfiler::device, control::SerialCpu);
         numWorkGroups*sizeof( int ), NULL, NULL, &l_Error);
     V_OPENCL( l_Error, "Error: Mapping Host->Device Buffer." );
 
-    
+
 
     int *intermediateScanStatusHost = new int[ numWorkGroups ];
     memset( intermediateScanStatusHost, HSA_STAT_INIT, numWorkGroups*sizeof( int ) );
@@ -902,7 +899,7 @@ aProfiler.setArchitecture(strDeviceName);
         NULL,
         &kernel0Event);
     ctrl.getCommandQueue().flush(); // needed
-    
+
     bool printAgain = true;
     while (printAgain)
     {
@@ -943,7 +940,7 @@ aProfiler.setArchitecture(strDeviceName);
         if (writtenToDevice)
         {
             std::cout << "\ttmp readback" << std::endl;
-            
+
             for (size_t i = 0; i < numWorkGroups; i++)
             {
                 tmp += host2devH[i];
@@ -974,7 +971,7 @@ aProfiler.stopTrial();
      *********************************************************************************/
     // for profiling
     ::cl::Event kernel0Event, kernel1Event, kernel2Event, kernelAEvent;
-    
+
                 //  Ceiling function to bump the size of the sum array to the next whole wavefront size
     device_vector< oType >::size_type sizeScanBuff = numWorkGroupsK0;
     modWgSize = (sizeScanBuff & (kernel0_WgSize-1));
@@ -1138,12 +1135,12 @@ aProfiler.setArchitecture(strDeviceName);
 
         //cl_ulong k0_start, k0_stop, k1_stop, k2_stop;
         //cl_ulong k1_start, k2_start;
-                    
+
         V_OPENCL( kernel0Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_QUEUED, &k0enq),   "getProfInfo" );
         V_OPENCL( kernel0Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_SUBMIT, &k0sub),   "getProfInfo" );
         V_OPENCL( kernel0Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_START,  &k0start), "getProfInfo" );
         V_OPENCL( kernel0Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END,    &k0stop),  "getProfInfo" );
-                    
+
         V_OPENCL( kernel1Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_SUBMIT, &k1sub),   "getProfInfo" );
         V_OPENCL( kernel1Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_START,  &k1start), "getProfInfo" );
         V_OPENCL( kernel1Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END,    &k1stop),  "getProfInfo" );

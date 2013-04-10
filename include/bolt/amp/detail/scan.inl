@@ -1,19 +1,19 @@
-/***************************************************************************                                                                                     
-*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
-*                                                                                    
-*   Licensed under the Apache License, Version 2.0 (the "License");   
-*   you may not use this file except in compliance with the License.                 
-*   You may obtain a copy of the License at                                          
-*                                                                                    
-*       http://www.apache.org/licenses/LICENSE-2.0                      
-*                                                                                    
-*   Unless required by applicable law or agreed to in writing, software              
-*   distributed under the License is distributed on an "AS IS" BASIS,              
-*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.         
-*   See the License for the specific language governing permissions and              
-*   limitations under the License.                                                   
+/***************************************************************************
+*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.
+*
+*   Licensed under the Apache License, Version 2.0 (the "License");
+*   you may not use this file except in compliance with the License.
+*   You may obtain a copy of the License at
+*
+*       http://www.apache.org/licenses/LICENSE-2.0
+*
+*   Unless required by applicable law or agreed to in writing, software
+*   distributed under the License is distributed on an "AS IS" BASIS,
+*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+*   See the License for the specific language governing permissions and
+*   limitations under the License.
 
-***************************************************************************/                                                                                     
+***************************************************************************/
 
 /******************************************************************************
  * AMP Scan
@@ -91,7 +91,7 @@ OutputIterator inclusive_scan(
         std::iterator_traits< InputIterator >::iterator_category( ) );
 };
 
-template< typename InputIterator, typename OutputIterator, typename BinaryFunction > 
+template< typename InputIterator, typename OutputIterator, typename BinaryFunction >
 OutputIterator inclusive_scan(
     InputIterator first,
     InputIterator last,
@@ -119,7 +119,7 @@ OutputIterator inclusive_scan(
         std::iterator_traits< InputIterator >::iterator_category( ) );
 };
 
-template< typename InputIterator, typename OutputIterator, typename BinaryFunction > 
+template< typename InputIterator, typename OutputIterator, typename BinaryFunction >
 OutputIterator inclusive_scan(
     control &ctl,
     InputIterator first,
@@ -163,7 +163,7 @@ OutputIterator exclusive_scan(
         std::iterator_traits< InputIterator >::iterator_category( ) );
 };
 
-template< typename InputIterator, typename OutputIterator, typename T, typename BinaryFunction > 
+template< typename InputIterator, typename OutputIterator, typename T, typename BinaryFunction >
 OutputIterator exclusive_scan(
     InputIterator first,
     InputIterator last,
@@ -204,7 +204,7 @@ OutputIterator exclusive_scan(
         std::iterator_traits< InputIterator >::iterator_category( ) );
 };
 
-template< typename InputIterator, typename OutputIterator, typename T, typename BinaryFunction > 
+template< typename InputIterator, typename OutputIterator, typename T, typename BinaryFunction >
 OutputIterator exclusive_scan(
     control &ctl,
     InputIterator first,
@@ -234,7 +234,7 @@ OutputIterator scan_detect_random_access(
     BinaryFunction binary_op,
     std::input_iterator_tag )
 {
-    //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data 
+    //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data
     //  to a temporary buffer.  Should we?
     static_assert( false, "Bolt only supports random access iterator types" );
 };
@@ -290,7 +290,7 @@ Serial_scan(
         {
             *(result + i) = sum;
             sum = binary_op( sum, currentValue);
-             
+
         }
     }
     return result;
@@ -308,9 +308,9 @@ Serial_scan(
           bool inclusive, flag;
           public:
           Scan_tbb() : sum(0) {}
-          Scan_tbb( InputIterator&  _x, 
+          Scan_tbb( InputIterator&  _x,
                     OutputIterator& _y,
-                    const BinaryFunction &_opr, 
+                    const BinaryFunction &_opr,
                     const bool &_incl ,const T &init) : x(_x), y(_y), scan_op(_opr),inclusive(_incl),start(init),flag(TRUE){}
           T get_sum() const {return sum;}
           template<typename Tag>
@@ -360,12 +360,12 @@ Serial_scan(
 #endif
 
 
-/*! 
+/*!
 * \brief This overload is called strictly for non-device_vector iterators
 * \details This template function overload is used to seperate device_vector iterators from all other iterators
 */
 template< typename InputIterator, typename OutputIterator, typename T, typename BinaryFunction >
-typename std::enable_if< 
+typename std::enable_if<
     !(std::is_base_of<typename device_vector<typename
            std::iterator_traits<InputIterator>::value_type>::iterator,InputIterator>::value &&
       std::is_base_of<typename device_vector<typename
@@ -440,12 +440,12 @@ aProfiler.stopTrial();
     return result + numElements;
 }
 
-/*! 
+/*!
 * \brief This overload is called strictly for non-device_vector iterators
 * \details This template function overload is used to seperate device_vector iterators from all other iterators
 */
 template< typename DVInputIterator, typename DVOutputIterator, typename T, typename BinaryFunction >
-typename std::enable_if< 
+typename std::enable_if<
     (std::is_base_of<typename device_vector<typename std::iterator_traits<DVInputIterator>::value_type>::iterator,DVInputIterator>::value &&
      std::is_base_of<typename device_vector<typename std::iterator_traits<DVOutputIterator>::value_type>::iterator,DVOutputIterator>::value),
 DVOutputIterator >::type
@@ -502,7 +502,7 @@ scan_pick_iterator(
         InputIterator input = scanInputBuffer.begin();
         OutputIterator output = scanResultBuffer.begin();
         tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
-        Scan_tbb<iType, BinaryFunction, InputIterator, OutputIterator> tbb_scan((InputIterator&)input, 
+        Scan_tbb<iType, BinaryFunction, InputIterator, OutputIterator> tbb_scan((InputIterator&)input,
                                                   (OutputIterator&)output, binary_op, inclusive, init);
         tbb::parallel_scan( tbb::blocked_range<int>(  0, numElements), tbb_scan, tbb::auto_partitioner());
         for(unsigned int index=0; index<numElements; index++){
@@ -519,7 +519,7 @@ scan_pick_iterator(
 
     //Now call the actual cl algorithm
         scan_enqueue( ctl, first, last, result, init, binary_op, inclusive );
-        std::cout << "Peeking in pick_iterator after scan_enqueue completed." << std::endl;
+        //std::cout << "Peeking in pick_iterator after scan_enqueue completed." << std::endl;
         PEEK_AT( result.getBuffer())
     }
 
@@ -556,9 +556,9 @@ size_t k0_stepNum, k1_stepNum, k2_stepNum;
     typedef std::iterator_traits< DVInputIterator >::value_type iType;
     typedef std::iterator_traits< DVOutputIterator >::value_type oType;
 
-    
 
-    int exclusive = inclusive ? 0 : 1;    
+
+    int exclusive = inclusive ? 0 : 1;
 
     unsigned int numElements = static_cast< unsigned int >( std::distance( first, last ) );
     const unsigned int kernel0_WgSize = WAVESIZE*KERNEL02WAVES;
@@ -587,7 +587,7 @@ size_t k0_stepNum, k1_stepNum, k2_stepNum;
         sizeScanBuff += kernel0_WgSize;
     }
 
-    
+
 
     // Create buffer wrappers so we can access the host functors, for read or writing in the kernel
     //ALIGNED( 256 ) BinaryFunction aligned_binary( binary_op );
@@ -637,7 +637,7 @@ aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(iType) + 1*sizeScanBuf
 
     concurrency::extent< 1 > globalSizeK0( sizeInputBuff );
     concurrency::tiled_extent< kernel0_WgSize > tileK0 = globalSizeK0.tile< kernel0_WgSize >();
-    std::cout << "Kernel 0 Launching w/ " << sizeInputBuff << " threads for " << numElements << " elements. " << std::endl;
+    //std::cout << "Kernel 0 Launching w/ " << sizeInputBuff << " threads for " << numElements << " elements. " << std::endl;
   concurrency::parallel_for_each( av, tileK0, //output.extent.tile< kernel0_WgSize >(),
         [
             output,
@@ -709,7 +709,7 @@ aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(iType) + 1*sizeScanBuf
         }
 
   } );
-    std::cout << "Kernel 0 Done" << std::endl;
+    //std::cout << "Kernel 0 Done" << std::endl;
     PEEK_AT( output )
 
 /*
@@ -776,7 +776,7 @@ aProfiler.set(AsyncProfiler::memory, 4*sizeScanBuff*sizeof(oType));
 */
     concurrency::extent< 1 > globalSizeK1( sizeScanBuff );
     concurrency::tiled_extent< kernel1_WgSize > tileK1 = globalSizeK1.tile< kernel1_WgSize >();
-    std::cout << "Kernel 1 Launching w/" << sizeScanBuff << " threads for " << numWorkGroupsK0 << " elements. " << std::endl;
+    //std::cout << "Kernel 1 Launching w/" << sizeScanBuff << " threads for " << numWorkGroupsK0 << " elements. " << std::endl;
   concurrency::parallel_for_each( av, tileK1,
         [
             &postSumArray,
@@ -838,7 +838,7 @@ aProfiler.set(AsyncProfiler::memory, 4*sizeScanBuff*sizeof(oType));
 			      t_idx.barrier.wait();
 
         } // for offset
-       
+
         // write final scan from pre-scan and lds scan
         for( offset = 0; offset < workPerThread; offset += 1 )
         {
@@ -850,10 +850,10 @@ aProfiler.set(AsyncProfiler::memory, 4*sizeScanBuff*sizeof(oType));
                 y = binary_op( y, y2 );
                 postSumArray[ mapId + offset ] = y;
             } // thread in bounds
-        } // for 
+        } // for
 
     } );
-    std::cout << "Kernel 1 Done" << std::endl;
+    //std::cout << "Kernel 1 Done" << std::endl;
     PEEK_AT( postSumArray )
 
     /**********************************************************************************
@@ -901,7 +901,7 @@ aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(oType) + 1*sizeScanBuf
 */
     concurrency::extent< 1 > globalSizeK2( sizeInputBuff );
     concurrency::tiled_extent< kernel2_WgSize > tileK2 = globalSizeK2.tile< kernel2_WgSize >();
-    std::cout << "Kernel 2 Launching w/ " << sizeInputBuff << " threads for " << numElements << " elements. " << std::endl;
+    //std::cout << "Kernel 2 Launching w/ " << sizeInputBuff << " threads for " << numElements << " elements. " << std::endl;
     concurrency::parallel_for_each( av, tileK2,
         [
             output,
@@ -925,7 +925,7 @@ aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(oType) + 1*sizeScanBuf
         }
 
     } );
-    std::cout << "Kernel 2 Done" << std::endl;
+    //std::cout << "Kernel 2 Done" << std::endl;
     PEEK_AT( output )
 
 #ifdef BOLT_ENABLE_PROFILING
@@ -991,7 +991,7 @@ namespace bolt {
   //	Work routine for inclusive_scan that contains a compile time constant size
   template< typename InputIterator, typename OutputIterator, typename BinaryFunction >
   OutputIterator
-    inclusive_scan( const concurrency::accelerator_view& av, InputIterator first, InputIterator last, 
+    inclusive_scan( const concurrency::accelerator_view& av, InputIterator first, InputIterator last,
     OutputIterator result, BinaryFunction binary_op )
   {
 //		typedef seqTrait< InputIterator > Trait;
@@ -1007,7 +1007,7 @@ namespace bolt {
     {
       //	Serial CPU implementation
       return std::partial_sum( first, last, result, binary_op);
-    } 
+    }
     else if( numElements < scanGpuThreshold )
     {
       //	Implement this in TBB as tbb::parallel_scan( range, body )
@@ -1017,11 +1017,11 @@ namespace bolt {
     }
     else
     {
-      // FIXME - determine from HSA Runtime 
+      // FIXME - determine from HSA Runtime
       // - based on est of how many threads needed to hide memory latency.
       static const unsigned int waveSize  = 64; // FIXME, read from device attributes.
       static_assert( (waveSize & (waveSize-1)) == 0, "Scan depends on wavefronts being a power of 2" );
-      
+
       //	AMP code can not read size_t as input, need to cast to int
       //	Note: It would be nice to have 'constexpr' here, then we could use tileSize as the extent dimension
       unsigned int tileSize = std::min(  numElements, waveSize );
@@ -1071,7 +1071,7 @@ namespace bolt {
         int localID		= idx.local[ 0 ];
         int globalID	= idx.global[ 0 ];
 
-        //	Initialize the padding to 0, for when the scan algorithm looks left.  
+        //	Initialize the padding to 0, for when the scan algorithm looks left.
         //	Then bump the LDS pointer past the extra padding.
         LDS[ localID ] = 0;
         iType* pLDS = LDS + ( waveSize / 2 );
@@ -1128,7 +1128,7 @@ namespace bolt {
         int globalID	= idx.global[ 0 ];
         int mappedID	= globalID * workPerThread;
 
-        //	Initialize the padding to 0, for when the scan algorithm looks left.  
+        //	Initialize the padding to 0, for when the scan algorithm looks left.
         //	Then bump the LDS pointer past the extra padding.
         LDS[ localID ] = 0;
         oType* pLDS = LDS + ( waveSize / 2 );
@@ -1206,7 +1206,7 @@ namespace bolt {
   /*
   * This version of inclusive_scan uses default accelerator
   */
-  template< typename InputIterator, typename OutputIterator, typename BinaryFunction > 
+  template< typename InputIterator, typename OutputIterator, typename BinaryFunction >
   OutputIterator inclusive_scan( InputIterator first, InputIterator last, OutputIterator result, BinaryFunction binary_op )
   {
 
