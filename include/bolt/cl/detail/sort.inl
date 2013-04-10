@@ -1,19 +1,19 @@
-/***************************************************************************                                                                                     
-*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
-*                                                                                    
-*   Licensed under the Apache License, Version 2.0 (the "License");   
-*   you may not use this file except in compliance with the License.                 
-*   You may obtain a copy of the License at                                          
-*                                                                                    
-*       http://www.apache.org/licenses/LICENSE-2.0                      
-*                                                                                    
-*   Unless required by applicable law or agreed to in writing, software              
-*   distributed under the License is distributed on an "AS IS" BASIS,              
-*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.         
-*   See the License for the specific language governing permissions and              
-*   limitations under the License.                                                   
+/***************************************************************************
+*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.
+*
+*   Licensed under the Apache License, Version 2.0 (the "License");
+*   you may not use this file except in compliance with the License.
+*   You may obtain a copy of the License at
+*
+*       http://www.apache.org/licenses/LICENSE-2.0
+*
+*   Unless required by applicable law or agreed to in writing, software
+*   distributed under the License is distributed on an "AS IS" BASIS,
+*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+*   See the License for the specific language governing permissions and
+*   limitations under the License.
 
-***************************************************************************/                                                                                     
+***************************************************************************/
 
 #if !defined( OCL_SORT_INL )
 #define OCL_SORT_INL
@@ -37,62 +37,62 @@
 
 #define BITONIC_SORT_WGSIZE 64
 /* \brief - SORT_CPU_THRESHOLD should be atleast 2 times the BITONIC_SORT_WGSIZE*/
-#define SORT_CPU_THRESHOLD 128 
+#define SORT_CPU_THRESHOLD 128
 
 namespace bolt {
 namespace cl {
-template<typename RandomAccessIterator> 
-void sort(RandomAccessIterator first, 
-          RandomAccessIterator last, 
+template<typename RandomAccessIterator>
+void sort(RandomAccessIterator first,
+          RandomAccessIterator last,
           const std::string& cl_code)
 {
     typedef std::iterator_traits< RandomAccessIterator >::value_type T;
 
-    detail::sort_detect_random_access( control::getDefault( ), 
-                                       first, last, 
-                                       less< T >( ), cl_code, 
+    detail::sort_detect_random_access( control::getDefault( ),
+                                       first, last,
+                                       less< T >( ), cl_code,
                                        std::iterator_traits< RandomAccessIterator >::iterator_category( ) );
     return;
 }
 
-template<typename RandomAccessIterator, typename StrictWeakOrdering> 
-void sort(RandomAccessIterator first, 
-          RandomAccessIterator last,  
-          StrictWeakOrdering comp, 
-          const std::string& cl_code)  
+template<typename RandomAccessIterator, typename StrictWeakOrdering>
+void sort(RandomAccessIterator first,
+          RandomAccessIterator last,
+          StrictWeakOrdering comp,
+          const std::string& cl_code)
 {
-    detail::sort_detect_random_access( control::getDefault( ), 
-                                       first, last, 
-                                       comp, cl_code, 
+    detail::sort_detect_random_access( control::getDefault( ),
+                                       first, last,
+                                       comp, cl_code,
                                        std::iterator_traits< RandomAccessIterator >::iterator_category( ) );
     return;
 }
 
-template<typename RandomAccessIterator> 
+template<typename RandomAccessIterator>
 void sort(control &ctl,
-          RandomAccessIterator first, 
-          RandomAccessIterator last, 
+          RandomAccessIterator first,
+          RandomAccessIterator last,
           const std::string& cl_code)
 {
     typedef std::iterator_traits< RandomAccessIterator >::value_type T;
 
-    detail::sort_detect_random_access(ctl, 
-                                      first, last, 
-                                      less< T >( ), cl_code, 
+    detail::sort_detect_random_access(ctl,
+                                      first, last,
+                                      less< T >( ), cl_code,
                                       std::iterator_traits< RandomAccessIterator >::iterator_category( ) );
     return;
 }
 
-template<typename RandomAccessIterator, typename StrictWeakOrdering> 
+template<typename RandomAccessIterator, typename StrictWeakOrdering>
 void sort(control &ctl,
-          RandomAccessIterator first, 
-          RandomAccessIterator last,  
-          StrictWeakOrdering comp, 
-          const std::string& cl_code)  
+          RandomAccessIterator first,
+          RandomAccessIterator last,
+          StrictWeakOrdering comp,
+          const std::string& cl_code)
 {
-    detail::sort_detect_random_access(ctl, 
-                                      first, last, 
-                                      comp, cl_code, 
+    detail::sort_detect_random_access(ctl,
+                                      first, last,
+                                      comp, cl_code,
                                       std::iterator_traits< RandomAccessIterator >::iterator_category( ) );
     return;
 }
@@ -116,7 +116,7 @@ public:
 
     const ::std::string operator() ( const ::std::vector<::std::string>& typeNames ) const
     {
-        const std::string templateSpecializationString = 
+        const std::string templateSpecializationString =
 
             "// Host generates this instantiation string with user-specified value type and functor\n"
             "template __attribute__((mangled_name(" + name(0) + "Instantiated)))\n"
@@ -142,7 +142,7 @@ public:
 
     const ::std::string operator() ( const ::std::vector<::std::string>& typeNames ) const
     {
-        const std::string templateSpecializationString = 
+        const std::string templateSpecializationString =
 
             "\n// Host generates this instantiation string with user-specified value type and functor\n"
             "template __attribute__((mangled_name(" + name(0) + "Instantiated)))\n"
@@ -168,7 +168,7 @@ public:
 
 class RadixSort_Int_KernelTemplateSpecializer : public KernelTemplateSpecializer
 {
-private: 
+private:
     int _radix;
 public:
     RadixSort_Int_KernelTemplateSpecializer(int radix) : KernelTemplateSpecializer()
@@ -188,7 +188,7 @@ public:
     {
         std::stringstream radixStream;
         radixStream << _radix;
-        const std::string templateSpecializationString = 
+        const std::string templateSpecializationString =
 
             "// Host generates this instantiation string with user-specified value type and functor\n"
             "\ntemplate __attribute__((mangled_name(" + name(0) + "Instantiated)))\n"
@@ -270,7 +270,7 @@ public:
     {
         std::stringstream radixStream;
         radixStream << _radix;
-        const std::string templateSpecializationString = 
+        const std::string templateSpecializationString =
 
             "// Host generates this instantiation string with user-specified value type and functor\n"
             "\ntemplate __attribute__((mangled_name(" + name(0) + "Instantiated)))\n"
@@ -309,35 +309,35 @@ public:
 };
 
 // Wrapper that uses default control class, iterator interface
-template<typename RandomAccessIterator, typename StrictWeakOrdering> 
-void sort_detect_random_access( control &ctl, 
+template<typename RandomAccessIterator, typename StrictWeakOrdering>
+void sort_detect_random_access( control &ctl,
                                 const RandomAccessIterator& first, const RandomAccessIterator& last,
-                                const StrictWeakOrdering& comp, const std::string& cl_code, 
+                                const StrictWeakOrdering& comp, const std::string& cl_code,
                                 std::input_iterator_tag )
 {
-    //  \TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data 
+    //  \TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data
     //  to a temporary buffer.  Should we?
     static_assert( false, "Bolt only supports random access iterator types" );
 };
 
-template<typename RandomAccessIterator, typename StrictWeakOrdering> 
-void sort_detect_random_access( control &ctl, 
+template<typename RandomAccessIterator, typename StrictWeakOrdering>
+void sort_detect_random_access( control &ctl,
                                 const RandomAccessIterator& first, const RandomAccessIterator& last,
-                                const StrictWeakOrdering& comp, const std::string& cl_code, 
+                                const StrictWeakOrdering& comp, const std::string& cl_code,
                                 std::random_access_iterator_tag )
 {
-    return sort_pick_iterator(ctl, first, last, 
-                              comp, cl_code, 
+    return sort_pick_iterator(ctl, first, last,
+                              comp, cl_code,
                               std::iterator_traits< RandomAccessIterator >::iterator_category( ) );
 };
 
 
 //Device Vector specialization
-template<typename DVRandomAccessIterator, typename StrictWeakOrdering> 
-void sort_pick_iterator( control &ctl, 
+template<typename DVRandomAccessIterator, typename StrictWeakOrdering>
+void sort_pick_iterator( control &ctl,
                          const DVRandomAccessIterator& first, const DVRandomAccessIterator& last,
-                         const StrictWeakOrdering& comp, const std::string& cl_code, 
-                         bolt::cl::device_vector_tag ) 
+                         const StrictWeakOrdering& comp, const std::string& cl_code,
+                         bolt::cl::device_vector_tag )
 {
     // User defined Data types are not supported with device_vector. Hence we have a static assert here.
     // The code here should be in compliant with the routine following this routine.
@@ -354,9 +354,9 @@ void sort_pick_iterator( control &ctl,
         ::cl::Event serialCPUEvent;
         cl_int l_Error = CL_SUCCESS;
         /*Map the device buffer to CPU*/
-        T *sortInputBuffer = (T*)ctl.getCommandQueue().enqueueMapBuffer(first.getBuffer(), false, 
-                                                                     CL_MAP_READ|CL_MAP_WRITE, 
-                                                                     0, sizeof(T) * szElements, 
+        T *sortInputBuffer = (T*)ctl.getCommandQueue().enqueueMapBuffer(first.getBuffer(), false,
+                                                                     CL_MAP_READ|CL_MAP_WRITE,
+                                                                     0, sizeof(T) * szElements,
                                                                      NULL, &serialCPUEvent, &l_Error );
         serialCPUEvent.wait();
         //Compute sort using STL
@@ -370,9 +370,9 @@ void sort_pick_iterator( control &ctl,
         ::cl::Event multiCoreCPUEvent;
         cl_int l_Error = CL_SUCCESS;
         /*Map the device buffer to CPU*/
-        T *sortInputBuffer = (T*)ctl.getCommandQueue().enqueueMapBuffer(first.getBuffer(), false, 
-                                                                     CL_MAP_READ|CL_MAP_WRITE, 
-                                                                     0, sizeof(T) * szElements, 
+        T *sortInputBuffer = (T*)ctl.getCommandQueue().enqueueMapBuffer(first.getBuffer(), false,
+                                                                     CL_MAP_READ|CL_MAP_WRITE,
+                                                                     0, sizeof(T) * szElements,
                                                                      NULL, &multiCoreCPUEvent, &l_Error );
         multiCoreCPUEvent.wait();
         //Compute parallel sort using TBB
@@ -382,9 +382,8 @@ void sort_pick_iterator( control &ctl,
         ctl.getCommandQueue().enqueueUnmapMemObject(first.getBuffer(), sortInputBuffer);
         return;
 #else
-        std::cout << "The MultiCoreCpu version of sort is not enabled. " << std ::endl;
+        //std::cout << "The MultiCoreCpu version of sort is not enabled. " << std ::endl;
         throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of sort is not enabled to be built." );
-        return;
 #endif
 
     } else {
@@ -392,29 +391,29 @@ void sort_pick_iterator( control &ctl,
     }
     return;
 }
-            
+
 //Fancy Iterator specialization
-template<typename DVRandomAccessIterator, typename StrictWeakOrdering> 
-void sort_pick_iterator( control &ctl, 
+template<typename DVRandomAccessIterator, typename StrictWeakOrdering>
+void sort_pick_iterator( control &ctl,
                          const DVRandomAccessIterator& first, const DVRandomAccessIterator& last,
-                         const StrictWeakOrdering& comp, const std::string& cl_code, 
-                         bolt::cl::fancy_iterator_tag ) 
+                         const StrictWeakOrdering& comp, const std::string& cl_code,
+                         bolt::cl::fancy_iterator_tag )
 {
     static_assert( false, "It is not possible to sort fancy iterators. They are not mutable" );
 }
 
 //Non Device Vector specialization.
-//This implementation creates a cl::Buffer and passes the cl buffer to the sort specialization 
-//whichtakes the cl buffer as a parameter. In the future, Each input buffer should be mapped to the device_vector 
-//and the specialization specific to device_vector should be called. 
-template<typename RandomAccessIterator, typename StrictWeakOrdering> 
-void sort_pick_iterator( control &ctl, 
+//This implementation creates a cl::Buffer and passes the cl buffer to the sort specialization
+//whichtakes the cl buffer as a parameter. In the future, Each input buffer should be mapped to the device_vector
+//and the specialization specific to device_vector should be called.
+template<typename RandomAccessIterator, typename StrictWeakOrdering>
+void sort_pick_iterator( control &ctl,
                          const RandomAccessIterator& first, const RandomAccessIterator& last,
-                         const StrictWeakOrdering& comp, const std::string& cl_code, 
-                         std::random_access_iterator_tag )  
+                         const StrictWeakOrdering& comp, const std::string& cl_code,
+                         std::random_access_iterator_tag )
 {
     typedef typename std::iterator_traits<RandomAccessIterator>::value_type T;
-    size_t szElements = (size_t)(last - first); 
+    size_t szElements = (size_t)(last - first);
     if (szElements == 0)
         return;
 
@@ -432,9 +431,8 @@ void sort_pick_iterator( control &ctl,
         tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
         tbb::parallel_sort(first,last, comp);
 #else
-        std::cout << "The MultiCoreCpu version of sort is not enabled. " << std ::endl;
+        //std::cout << "The MultiCoreCpu version of sort is not enabled. " << std ::endl;
         throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of sort is not enabled to be built." );
-        return;
 #endif
     } else {
         device_vector< T > dvInputOutput( first, last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctl );
@@ -447,21 +445,21 @@ void sort_pick_iterator( control &ctl,
 }
 
 /****** sort_enqueue specailization for unsigned int data types. ******
- * THE FOLLOWING CODE IMPLEMENTS THE RADIX SORT ALGORITHM FOR unsigned integers 
+ * THE FOLLOWING CODE IMPLEMENTS THE RADIX SORT ALGORITHM FOR unsigned integers
  *********************************************************************/
 
-template<typename DVRandomAccessIterator, typename StrictWeakOrdering> 
-typename std::enable_if< std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type, 
-                                       unsigned int 
-                                     >::value 
+template<typename DVRandomAccessIterator, typename StrictWeakOrdering>
+typename std::enable_if< std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type,
+                                       unsigned int
+                                     >::value
                        >::type  /*If enabled then this typename will be evaluated to void*/
-sort_enqueue(control &ctl, 
+sort_enqueue(control &ctl,
              DVRandomAccessIterator first, DVRandomAccessIterator last,
              StrictWeakOrdering comp, const std::string& cl_code)
 {
     typedef typename std::iterator_traits< DVRandomAccessIterator >::value_type T;
-    const int RADIX = 4; //Now you cannot replace this with Radix 8 since there is a 
-                         //local array of 16 elements in the histogram kernel. 
+    const int RADIX = 4; //Now you cannot replace this with Radix 8 since there is a
+                         //local array of 16 elements in the histogram kernel.
     const int RADICES = (1 << RADIX);	//Values handeled by each work-item?
     size_t orig_szElements = static_cast<size_t>(std::distance(first, last));
     size_t szElements = orig_szElements;
@@ -494,29 +492,29 @@ sort_enqueue(control &ctl,
         &ts_kts,
         typeDefinitions,
         sort_uint_kernels,
-        compileOptions);    
+        compileOptions);
 
     size_t groupSize  = RADICES;
 
     int i = 0;
     size_t mulFactor = groupSize * RADICES;
     size_t numGroups;
-    
+
     if(orig_szElements%mulFactor != 0)
     {
         ::cl::Event copyEvent;
         szElements  = ((szElements + mulFactor) /mulFactor) * mulFactor;
         pLocalBuffer = new ::cl::Buffer(ctl.getContext(),CL_MEM_READ_WRITE| CL_MEM_ALLOC_HOST_PTR, sizeof(T) * szElements);
 
-        ctl.getCommandQueue().enqueueCopyBuffer( first.getBuffer( ), 
-                                              *pLocalBuffer, 0, 0, 
+        ctl.getCommandQueue().enqueueCopyBuffer( first.getBuffer( ),
+                                              *pLocalBuffer, 0, 0,
                                               orig_szElements*sizeof(T), NULL, &copyEvent );
         copyEvent.wait();
         newBuffer = true;
     }
     else
     {
-        pLocalBuffer = new ::cl::Buffer(first.getBuffer( ) ); 
+        pLocalBuffer = new ::cl::Buffer(first.getBuffer( ) );
         newBuffer = false;
     }
     numGroups = szElements / mulFactor;
@@ -526,15 +524,15 @@ sort_enqueue(control &ctl,
     device_vector< T > dvHistogramBinsDest( (numGroups* groupSize * RADICES), 0, CL_MEM_READ_WRITE, false, ctl);
 
     ALIGNED( 256 ) StrictWeakOrdering aligned_comp( comp );
-    
-    control::buffPointer userFunctor = ctl.acquireBuffer( sizeof( aligned_comp ), 
-                                                          CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, 
+
+    control::buffPointer userFunctor = ctl.acquireBuffer( sizeof( aligned_comp ),
+                                                          CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY,
                                                           &aligned_comp );
     ::cl::Buffer clInputData = *pLocalBuffer;
     ::cl::Buffer clSwapData = dvSwapInputData.begin( ).getBuffer( );
     ::cl::Buffer clHistData = dvHistogramBins.begin( ).getBuffer( );
     ::cl::Buffer clHistDataDest = dvHistogramBinsDest.begin( ).getBuffer( );
-                    
+
     ::cl::Kernel histKernel;
     ::cl::Kernel permuteKernel;
 
@@ -590,7 +588,7 @@ sort_enqueue(control &ctl,
                             NULL);
         //V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
 
-        //Perform a global scan 
+        //Perform a global scan
         detail::scan_enqueue(ctl, dvHistogramBins.begin(), dvHistogramBins.end(), dvHistogramBinsDest.begin(), 0, plus< T >( ), false);
 
         if (swap == 0)
@@ -631,20 +629,20 @@ sort_enqueue(control &ctl,
 
 
 /****** sort_enqueue specailization for signed int data types. ******
- * THE FOLLOWING CODE IMPLEMENTS THE RADIX SORT ALGORITHM FOR signed integers 
+ * THE FOLLOWING CODE IMPLEMENTS THE RADIX SORT ALGORITHM FOR signed integers
  *********************************************************************/
-template<typename DVRandomAccessIterator, typename StrictWeakOrdering> 
-typename std::enable_if< std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type,          
-                                       int 
-                                     >::value 
+template<typename DVRandomAccessIterator, typename StrictWeakOrdering>
+typename std::enable_if< std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type,
+                                       int
+                                     >::value
                        >::type   /*If enabled then this typename will be evaluated to void*/
-sort_enqueue(control &ctl, 
+sort_enqueue(control &ctl,
              DVRandomAccessIterator first, DVRandomAccessIterator last,
              StrictWeakOrdering comp, const std::string& cl_code)
 {
     typedef typename std::iterator_traits< DVRandomAccessIterator >::value_type T;
-    const int RADIX = 4; //Now you cannot replace this with Radix 8 since there is a 
-                         //local array of 16 elements in the histogram kernel. 
+    const int RADIX = 4; //Now you cannot replace this with Radix 8 since there is a
+                         //local array of 16 elements in the histogram kernel.
     const int RADICES = (1 << RADIX);	//Values handeled by each work-item?
     cl_int l_Error = CL_SUCCESS;
     size_t orig_szElements = static_cast<size_t>(std::distance(first, last));
@@ -670,7 +668,7 @@ sort_enqueue(control &ctl,
 
     std::string compileOptions;
     //std::ostringstream oss;
-    
+
     RadixSort_Int_KernelTemplateSpecializer ts_kts(RADIX);
     std::vector< ::cl::Kernel > kernels = bolt::cl::getKernels(
         ctl,
@@ -684,22 +682,22 @@ sort_enqueue(control &ctl,
 
     int i = 0;
     size_t mulFactor = groupSize * RADICES;
-    
+
     if(orig_szElements%mulFactor != 0)
     {
         ::cl::Event copyEvent;
         szElements  = ((szElements + mulFactor) /mulFactor) * mulFactor;
         pLocalBuffer = new ::cl::Buffer(ctl.getContext(),CL_MEM_READ_WRITE| CL_MEM_ALLOC_HOST_PTR, sizeof(T) * szElements);
 
-        ctl.getCommandQueue().enqueueCopyBuffer( first.getBuffer( ), 
-                                              *pLocalBuffer, 0, 0, 
+        ctl.getCommandQueue().enqueueCopyBuffer( first.getBuffer( ),
+                                              *pLocalBuffer, 0, 0,
                                               orig_szElements*sizeof(T), NULL, &copyEvent );
         copyEvent.wait();
         newBuffer = true;
     }
     else
     {
-        pLocalBuffer = new ::cl::Buffer(first.getBuffer( ) ); 
+        pLocalBuffer = new ::cl::Buffer(first.getBuffer( ) );
         newBuffer = false;
     }
     size_t numGroups = szElements / mulFactor;
@@ -709,7 +707,7 @@ sort_enqueue(control &ctl,
     device_vector< T > dvHistogramBinsDest( (numGroups* groupSize * RADICES), 0, CL_MEM_READ_WRITE, false, ctl);
 
     ALIGNED( 256 ) StrictWeakOrdering aligned_comp( comp );
-                    
+
     control::buffPointer userFunctor = ctl.acquireBuffer( sizeof( aligned_comp ), CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_comp );
     ::cl::Buffer clInputData = *pLocalBuffer;
     ::cl::Buffer clSwapData = dvSwapInputData.begin( ).getBuffer( );
@@ -773,9 +771,9 @@ sort_enqueue(control &ctl,
                             NULL);
         //V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
 
-        //Perform a global scan 
+        //Perform a global scan
 
-        detail::scan_enqueue(ctl, dvHistogramBins.begin(), dvHistogramBins.end(), 
+        detail::scan_enqueue(ctl, dvHistogramBins.begin(), dvHistogramBins.end(),
                                   dvHistogramBinsDest.begin(), 0, plus< T >( ), false);
 
         if (swap == 0)
@@ -830,7 +828,7 @@ sort_enqueue(control &ctl,
                                 NULL);
             //V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
 
-            //Perform a global scan 
+            //Perform a global scan
             detail::scan_enqueue(ctl, dvHistogramBins.begin(), dvHistogramBins.end(), dvHistogramBinsDest.begin(), 0, plus< T >( ), false);
 
             V_OPENCL( permuteSignedKernel.setArg(0, clSwapData), "Error setting kernel argument" );
@@ -860,15 +858,15 @@ sort_enqueue(control &ctl,
 }
 
 
-template<typename DVRandomAccessIterator, typename StrictWeakOrdering> 
-typename std::enable_if< 
-    !(std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type, unsigned int >::value 
+template<typename DVRandomAccessIterator, typename StrictWeakOrdering>
+typename std::enable_if<
+    !(std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type, unsigned int >::value
    || std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type,          int >::value
-    ) 
+    )
                        >::type
-sort_enqueue(control &ctl, 
+sort_enqueue(control &ctl,
              const DVRandomAccessIterator& first, const DVRandomAccessIterator& last,
-             const StrictWeakOrdering& comp, const std::string& cl_code)  
+             const StrictWeakOrdering& comp, const std::string& cl_code)
 {
     cl_int l_Error = CL_SUCCESS;
     typedef typename std::iterator_traits< DVRandomAccessIterator >::value_type T;
@@ -878,7 +876,7 @@ sort_enqueue(control &ctl,
         sort_enqueue_non_powerOf2(ctl,first,last,comp,cl_code);
         return;
     }
-    
+
     std::vector<std::string> typeNames( sort_end );
     typeNames[sort_iValueType] = TypeName< T >::get( );
     typeNames[sort_iIterType] = TypeName< DVRandomAccessIterator >::get( );
@@ -897,7 +895,7 @@ sort_enqueue(control &ctl,
     //oss << " -DKERNEL0WORKGROUPSIZE=" << kernel0_WgSize;
 
     size_t temp;
-    
+
     BitonicSort_KernelTemplateSpecializer ts_kts;
     std::vector< ::cl::Kernel > kernels = bolt::cl::getKernels(
         ctl,
@@ -907,7 +905,7 @@ sort_enqueue(control &ctl,
         sort_kernels,
         compileOptions);
     //Power of 2 buffer size
-    // For user-defined types, the user must create a TypeName trait which returns the name of the class - 
+    // For user-defined types, the user must create a TypeName trait which returns the name of the class -
     // Note use of TypeName<>::get to retreive the name here.
 
 
@@ -924,13 +922,13 @@ sort_enqueue(control &ctl,
 
     //::cl::Buffer A = first.getBuffer( );
     ALIGNED( 256 ) StrictWeakOrdering aligned_comp( comp );
-    control::buffPointer userFunctor = ctl.acquireBuffer( sizeof( aligned_comp ), 
+    control::buffPointer userFunctor = ctl.acquireBuffer( sizeof( aligned_comp ),
                                                           CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_comp );
 
     V_OPENCL( kernels[0].setArg(0, first.getBuffer( )), "Error setting 0th kernel argument" );
     V_OPENCL( kernels[0].setArg(1, first.gpuPayloadSize( ), &first.gpuPayload( )), "Error setting 1st kernel argument" );
     V_OPENCL( kernels[0].setArg(4, *userFunctor), "Error setting 4th kernel argument" );
-    for(stage = 0; stage < numStages; ++stage) 
+    for(stage = 0; stage < numStages; ++stage)
     {
         // stage of the algorithm
         V_OPENCL( kernels[0].setArg(2, stage), "Error setting 2nd kernel argument" );
@@ -938,13 +936,13 @@ sort_enqueue(control &ctl,
         for(passOfStage = 0; passOfStage < stage + 1; ++passOfStage) {
             // pass of the current stage
             V_OPENCL( kernels[0].setArg(3, passOfStage), "Error setting 3rd kernel argument" );
-            /* 
+            /*
              * Enqueue a kernel run call.
              * Each thread writes a sorted pair.
              * So, the number of  threads (global) should be half the length of the input buffer.
              */
             l_Error = ctl.getCommandQueue().enqueueNDRangeKernel(
-                                            kernels[0], 
+                                            kernels[0],
                                             ::cl::NullRange,
                                             ::cl::NDRange(szElements/2),
                                             ::cl::NDRange(BITONIC_SORT_WGSIZE),
@@ -956,7 +954,7 @@ sort_enqueue(control &ctl,
         }//end of for passStage = 0:stage-1
     }//end of for stage = 0:numStage-1
     ::cl::Event bitonicSortEvent;
-    V_OPENCL( ctl.getCommandQueue().clEnqueueBarrierWithWaitList(NULL, &bitonicSortEvent) , 
+    V_OPENCL( ctl.getCommandQueue().clEnqueueBarrierWithWaitList(NULL, &bitonicSortEvent) ,
                         "Error calling clEnqueueBarrierWithWaitList on the command queue" );
     l_Error = bitonicSortEvent.wait( );
     V_OPENCL( l_Error, "bitonicSortEvent failed to wait" );
@@ -965,10 +963,10 @@ sort_enqueue(control &ctl,
 }// END of sort_enqueue
 
 
-template<typename DVRandomAccessIterator, typename StrictWeakOrdering> 
-void sort_enqueue_non_powerOf2(control &ctl, 
+template<typename DVRandomAccessIterator, typename StrictWeakOrdering>
+void sort_enqueue_non_powerOf2(control &ctl,
                                const DVRandomAccessIterator& first, const DVRandomAccessIterator& last,
-                               const StrictWeakOrdering& comp, const std::string& cl_code)  
+                               const StrictWeakOrdering& comp, const std::string& cl_code)
 {
     typedef typename std::iterator_traits< DVRandomAccessIterator >::value_type T;
 
@@ -980,7 +978,7 @@ void sort_enqueue_non_powerOf2(control &ctl,
     typeNames[sort_iIterType] = TypeName< DVRandomAccessIterator >::get( );
     typeNames[sort_StrictWeakOrdering] = TypeName< StrictWeakOrdering >::get();
     // Power of 2 buffer size
-    // For user-defined types, the user must create a TypeName trait which returns the name of the class - 
+    // For user-defined types, the user must create a TypeName trait which returns the name of the class -
     // Note use of TypeName<>::get to retreive the name here.
 
     std::vector<std::string> typeDefinitions;
@@ -1009,17 +1007,17 @@ void sort_enqueue_non_powerOf2(control &ctl,
     size_t totalWorkGroups = (szElements + wgSize)/wgSize;
     size_t globalSize = totalWorkGroups * wgSize;
     V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
-    
+
     const ::cl::Buffer& in = first.getBuffer( );
     control::buffPointer out = ctl.acquireBuffer( sizeof(T)*szElements );
 
     ALIGNED( 256 ) StrictWeakOrdering aligned_comp( comp );
-    control::buffPointer userFunctor = ctl.acquireBuffer( sizeof( aligned_comp ), 
+    control::buffPointer userFunctor = ctl.acquireBuffer( sizeof( aligned_comp ),
                                                           CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_comp );
 
     ::cl::LocalSpaceArg loc;
     loc.size_ = wgSize*sizeof(T);
-    
+
     V_OPENCL( kernels[0].setArg(0, in), "Error setting a kernel argument in" );
     V_OPENCL( kernels[0].setArg(1, *out), "Error setting a kernel argument out" );
     V_OPENCL( kernels[0].setArg(2, *userFunctor), "Error setting a kernel argument userFunctor" );
@@ -1027,7 +1025,7 @@ void sort_enqueue_non_powerOf2(control &ctl,
     V_OPENCL( kernels[0].setArg(4, static_cast<cl_uint> (szElements)), "Error setting kernel argument szElements" );
     {
         l_Error = ctl.getCommandQueue().enqueueNDRangeKernel(
-                                        kernels[0], 
+                                        kernels[0],
                                         ::cl::NullRange,
                                         ::cl::NDRange(globalSize),
                                         ::cl::NDRange(wgSize),
