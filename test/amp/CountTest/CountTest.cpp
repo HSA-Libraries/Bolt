@@ -200,6 +200,147 @@ TEST (testCountIf, intBtwRange)
 INSTANTIATE_TEST_CASE_P (useStdVectWithDoubleValues, countDoubleValueUsedASKeyInStdVect, ::testing::Values(1, 100, 1000, 10000, 100000));
 INSTANTIATE_TEST_CASE_P (serialFloatValueWithStdVector, testCountIfFloatWithStdVector, ::testing::Values(10, 100, 1000, 10000, 100000));
 //
+
+struct UDD { 
+    int a; 
+    int b;
+
+    bool operator() (const UDD& lhs, const UDD& rhs) restrict(amp,cpu) { 
+        return ((lhs.a+lhs.b) > (rhs.a+rhs.b));
+    } 
+    bool operator < (const UDD& other) const restrict(amp,cpu) { 
+        return ((a+b) < (other.a+other.b));
+    }
+    bool operator > (const UDD& other) const restrict(amp,cpu) { 
+        return ((a+b) > (other.a+other.b));
+    }
+    bool operator == (const UDD& other) const restrict(amp,cpu) { 
+        return ((a+b) == (other.a+other.b));
+    }
+
+
+    bool operator() (const int &x) restrict(amp,cpu) {
+        return (x == a || x == b);
+    }
+
+    UDD operator + (const UDD &rhs) const restrict(amp,cpu) {
+                UDD tmp = *this;
+                tmp.a = tmp.a + rhs.a;
+                tmp.b = tmp.b + rhs.b;
+                return tmp;
+    }
+    
+    UDD() 
+        : a(0),b(0) { } 
+    UDD(int _in) 
+        : a(_in), b(_in +1)  { } 
+        
+}; 
+
+TEST(countFloatValueOccuranceStdVect, MulticoreCountUDDTBB){
+    const int aSize = 1<<21;
+    std::vector<UDD> stdInput(aSize);
+    std::vector<UDD> tbbInput(aSize);
+
+    //bolt::amp::device_vector<int> stdInput(aSize);
+    //bolt::amp::device_vector<int> tbbInput(aSize);
+
+
+    UDD myUDD;
+    myUDD.a = 3;
+    myUDD.b = 5;
+
+
+    for (int i=0; i < aSize; i++) {
+       stdInput[i].a = rand()%10;
+       stdInput[i].b = rand()%10;
+       tbbInput[i].a = stdInput[i].a;
+       tbbInput[i].b = stdInput[i].b;
+    }
+
+    bolt::amp::control ctl = bolt::amp::control::getDefault();
+    ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu);
+    size_t stdCount = std::count(stdInput.begin(), stdInput.end(), myUDD);
+    size_t boltCount = bolt::amp::count(ctl, tbbInput.begin(), tbbInput.end(), myUDD);
+
+    EXPECT_EQ(stdCount, boltCount)<<"Failed as: \nSTD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
+    std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
+}
+
+TEST(countFloatValueOccuranceStdVect,DeviceCountUDDTBB){
+    const int aSize = 1<<21;
+    std::vector<UDD> stdInput(aSize);
+    
+    UDD myUDD;
+    myUDD.a = 3;
+    myUDD.b = 5;
+    
+    for (int i=0; i < aSize; i++) {
+       stdInput[i].a = rand()%10;
+       stdInput[i].b = rand()%10;
+    }
+
+    bolt::amp::device_vector<UDD> tbbInput(stdInput.begin(),stdInput.end());
+    
+    bolt::amp::control ctl = bolt::amp::control::getDefault();
+    size_t stdCount = std::count(stdInput.begin(), stdInput.end(), myUDD);
+    size_t boltCount = bolt::amp::count(ctl, tbbInput.begin(), tbbInput.end(), myUDD);
+
+    EXPECT_EQ(stdCount, boltCount)<<"Failed as: \nSTD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
+    std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
+}
+TEST(countFloatValueOccuranceStdVect, STDCountUDDTBB){
+    const int aSize = 1<<21;
+    std::vector<UDD> stdInput(aSize);
+    std::vector<UDD> tbbInput(aSize);
+
+    UDD myUDD;
+    myUDD.a = 3;
+    myUDD.b = 5;
+
+
+    for (int i=0; i < aSize; i++) {
+       stdInput[i].a = rand()%10;
+       stdInput[i].b = rand()%10;
+       tbbInput[i].a = stdInput[i].a;
+       tbbInput[i].b = stdInput[i].b;
+    }
+
+    bolt::amp::control ctl = bolt::amp::control::getDefault();
+    ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu);
+    size_t stdCount = std::count(stdInput.begin(), stdInput.end(), myUDD);
+    size_t boltCount = bolt::amp::count(ctl, tbbInput.begin(), tbbInput.end(), myUDD);
+
+    EXPECT_EQ(stdCount, boltCount)<<"Failed as: \nSTD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
+    std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
+}
+
+
+TEST(countFloatValueOccuranceStdVect, MulticoreCountifIntTBB){
+    const int aSize = 1<<24;
+    std::vector<int> stdInput(aSize);
+
+    int myintValue = 2;
+
+    for (int i=0; i < aSize; i++) {
+    stdInput[i] = rand() % 10 + 1;
+    //tbbInput[i] = stdInput[i];
+    }
+    bolt::amp::device_vector<int> tbbInput(stdInput.begin(),stdInput.end());
+
+
+    bolt::amp::control ctl = bolt::amp::control::getDefault();
+    ctl.setForceRunMode(bolt::amp::control::SerialCpu);
+    size_t stdCount = std::count_if(stdInput.begin(), stdInput.end(), InRange<int>(2,10000));
+    size_t boltCount = bolt::amp::count_if(ctl, tbbInput.begin(), tbbInput.end(), InRange<int>(2,10000));
+
+  EXPECT_EQ(stdCount, boltCount)<<"Failed as: \nSTD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
+  //std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
+}
+
+
+
+
 int main(int argc, char* argv[])
 {
     ::testing::InitGoogleTest( &argc, &argv[ 0 ] );

@@ -115,8 +115,8 @@ namespace bolt {
 namespace cl {
 namespace detail {
 
-enum sortByKeyTypes {sort_by_key_keyValueType, sort_by_key_keyIterType, 
-                     sort_by_key_valueValueType, sort_by_key_valueIterType, 
+enum sortByKeyTypes {sort_by_key_keyValueType, sort_by_key_keyIterType,
+                     sort_by_key_valueValueType, sort_by_key_valueIterType,
                      sort_by_key_StrictWeakOrdering, sort_by_key_end };
 
 class BitonicSortByKey_KernelTemplateSpecializer : public KernelTemplateSpecializer
@@ -129,7 +129,7 @@ public:
 
     const ::std::string operator() ( const ::std::vector<::std::string>& typeNames ) const
     {
-        const std::string templateSpecializationString = 
+        const std::string templateSpecializationString =
 
             "// Host generates this instantiation string with user-specified value type and functor\n"
             "template __attribute__((mangled_name(" + name(0) + "Instantiated)))\n"
@@ -150,7 +150,7 @@ public:
 
     // Wrapper that uses default control class, iterator interface
     template<typename RandomAccessIterator1, typename RandomAccessIterator2, typename StrictWeakOrdering>
-    void sort_by_key_detect_random_access( const control &ctl, RandomAccessIterator1 keys_first, 
+    void sort_by_key_detect_random_access( const control &ctl, RandomAccessIterator1 keys_first,
                                             RandomAccessIterator1 keys_last,
                                             RandomAccessIterator2 values_first, StrictWeakOrdering comp,
                                             const std::string& cl_code, std::input_iterator_tag )
@@ -161,7 +161,7 @@ public:
     };
 
     template<typename RandomAccessIterator1, typename RandomAccessIterator2, typename StrictWeakOrdering>
-    void sort_by_key_detect_random_access( const control &ctl, RandomAccessIterator1 keys_first, 
+    void sort_by_key_detect_random_access( const control &ctl, RandomAccessIterator1 keys_first,
                                             RandomAccessIterator1 keys_last,
                                             RandomAccessIterator2 values_first, StrictWeakOrdering comp,
                                             const std::string& cl_code, std::random_access_iterator_tag )
@@ -172,7 +172,7 @@ public:
 
     //Fancy iterator specialization
     template<typename DVRandomAccessIterator1, typename DVRandomAccessIterator2, typename StrictWeakOrdering>
-    void sort_by_key_pick_iterator(const control &ctl, DVRandomAccessIterator1 keys_first, 
+    void sort_by_key_pick_iterator(const control &ctl, DVRandomAccessIterator1 keys_first,
                                    DVRandomAccessIterator1 keys_last, DVRandomAccessIterator2 values_first,
                                    StrictWeakOrdering comp, const std::string& cl_code, bolt::cl::fancy_iterator_tag )
     {
@@ -181,7 +181,7 @@ public:
 
     //Device Vector specialization
     template<typename DVRandomAccessIterator1, typename DVRandomAccessIterator2, typename StrictWeakOrdering>
-    void sort_by_key_pick_iterator(const control &ctl, DVRandomAccessIterator1 keys_first, 
+    void sort_by_key_pick_iterator(const control &ctl, DVRandomAccessIterator1 keys_first,
                                    DVRandomAccessIterator1 keys_last, DVRandomAccessIterator2 values_first,
                                    StrictWeakOrdering comp, const std::string& cl_code, bolt::cl::device_vector_tag )
     {
@@ -200,9 +200,8 @@ public:
             throw ::cl::Error( CL_INVALID_DEVICE, "Sort of device_vector CPU device not implemented" );
             return;
         } else if (runMode == bolt::cl::control::MultiCoreCpu) {
-            std::cout << "The MultiCoreCpu version of device_vector sort is not implemented yet." << std ::endl;
-            throw ::cl::Error( CL_INVALID_DEVICE, "The BOLT sort routine device_vector does not support non power of 2 buffer size." );
-            return;
+            //std::cout << "The MultiCoreCpu version of device_vector sort is not implemented yet." << std ::endl;
+            throw std::exception( "The MultiCoreCpu version of Sort_by_key is not enabled to be built with TBB." );
         } else {
             sort_by_key_enqueue(ctl, keys_first, keys_last, values_first, comp, cl_code);
         }
@@ -210,14 +209,14 @@ public:
     }
 
     //Non Device Vector specialization.
-    //This implementation creates a cl::Buffer and passes the cl buffer to the 
+    //This implementation creates a cl::Buffer and passes the cl buffer to the
     //sort specialization whichtakes the cl buffer as a parameter.
-    //In the future, Each input buffer should be mapped to the device_vector and the 
+    //In the future, Each input buffer should be mapped to the device_vector and the
     //specialization specific to device_vector should be called.
     template<typename RandomAccessIterator1, typename RandomAccessIterator2, typename StrictWeakOrdering>
-    void sort_by_key_pick_iterator(const control &ctl, RandomAccessIterator1 keys_first, 
+    void sort_by_key_pick_iterator(const control &ctl, RandomAccessIterator1 keys_first,
                                    RandomAccessIterator1 keys_last, RandomAccessIterator2 values_first,
-                                   StrictWeakOrdering comp, const std::string& cl_code, 
+                                   StrictWeakOrdering comp, const std::string& cl_code,
                                    std::random_access_iterator_tag )
     {
         typedef typename std::iterator_traits<RandomAccessIterator1>::value_type T_keys;
@@ -232,15 +231,15 @@ public:
             runMode = ctl.getDefaultPathToRun( );
         }
         if ((runMode == bolt::cl::control::SerialCpu) /*|| (szElements < WGSIZE) */) {
-            std::cout << "The SerialCpu version of sort is not implemented yet." << std ::endl;
+            //std::cout << "The SerialCpu version of sort is not implemented yet." << std ::endl;
             std::sort(keys_first, keys_last);
-            return;
         } else if (runMode == bolt::cl::control::MultiCoreCpu) {
-            std::cout << "The MultiCoreCpu version of sort is not implemented yet." << std ::endl;
+            //std::cout << "The MultiCoreCpu version of sort is not implemented yet." << std ::endl;
+            throw std::exception( "The MultiCoreCpu version of Sort_by_key is not enabled to be built with TBB." );
         } else {
-            device_vector< T_values > dvInputValues( values_first, szElements, 
+            device_vector< T_values > dvInputValues( values_first, szElements,
                                                      CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, true, ctl );
-            device_vector< T_keys > dvInputKeys( keys_first, keys_last, 
+            device_vector< T_keys > dvInputKeys( keys_first, keys_last,
                                                  CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctl );
             //Now call the actual cl algorithm
             sort_by_key_enqueue(ctl,dvInputKeys.begin(),dvInputKeys.end(), dvInputValues.begin(), comp, cl_code);
@@ -252,10 +251,10 @@ public:
     }
 
 
-    template<typename DVRandomAccessIterator1, typename DVRandomAccessIterator2, typename StrictWeakOrdering> 
-    void sort_by_key_enqueue(const control &ctl, const DVRandomAccessIterator1& keys_first, 
-                             const DVRandomAccessIterator1& keys_last, const DVRandomAccessIterator2& values_first, 
-                             const StrictWeakOrdering& comp, const std::string& cl_code)  
+    template<typename DVRandomAccessIterator1, typename DVRandomAccessIterator2, typename StrictWeakOrdering>
+    void sort_by_key_enqueue(const control &ctl, const DVRandomAccessIterator1& keys_first,
+                             const DVRandomAccessIterator1& keys_last, const DVRandomAccessIterator2& values_first,
+                             const StrictWeakOrdering& comp, const std::string& cl_code)
     {
             typedef typename std::iterator_traits< DVRandomAccessIterator1 >::value_type T_keys;
             typedef typename std::iterator_traits< DVRandomAccessIterator2 >::value_type T_values;
@@ -263,10 +262,10 @@ public:
             if(((szElements-1) & (szElements)) != 0)
             {
                 // sort_by_key_enqueue_non_powerOf2(ctl,keys_first,keys_last,values_first,comp,cl_code);
-                std::cout << "There is no use supporting selection sort for the sort_by_key routine.\n";
-                std::cout << " Hence only power of 2 buffer sizes work.\n";
-                std::cout << "non power of 2 buffer sizes will be supported once radix-sort is working\n";
-                throw ::cl::Error( CL_INVALID_BUFFER_SIZE, 
+                //std::cout << "There is no use supporting selection sort for the sort_by_key routine.\n";
+                //std::cout << " Hence only power of 2 buffer sizes work.\n";
+                //std::cout << "non power of 2 buffer sizes will be supported once radix-sort is working\n";
+                throw ::cl::Error( CL_INVALID_BUFFER_SIZE,
                     "Currently the sort_by_key routine supports only power of 2 buffer size" );
                 return;
             }
@@ -326,10 +325,10 @@ public:
             for(temp = szElements; temp > 1; temp >>= 1)
                 ++numStages;
             V_OPENCL( kernels[0].setArg(0, Keys), "Error setting a kernel argument" );
-            V_OPENCL( kernels[0].setArg(1, keys_first.gpuPayloadSize( ), &keys_first.gpuPayload( ) ), 
+            V_OPENCL( kernels[0].setArg(1, keys_first.gpuPayloadSize( ), &keys_first.gpuPayload( ) ),
                                                   "Error setting a kernel argument" );
             V_OPENCL( kernels[0].setArg(2, Values), "Error setting a kernel argument" );
-            V_OPENCL( kernels[0].setArg(3, values_first.gpuPayloadSize( ), &values_first.gpuPayload( ) ), 
+            V_OPENCL( kernels[0].setArg(3, values_first.gpuPayloadSize( ), &values_first.gpuPayload( ) ),
                                                   "Error setting a kernel argument" );
             V_OPENCL( kernels[0].setArg(6, userFunctor), "Error setting a kernel argument" );
             for(stage = 0; stage < numStages; ++stage)
@@ -337,7 +336,7 @@ public:
                 // stage of the algorithm
                 V_OPENCL( kernels[0].setArg(4, stage), "Error setting a kernel argument" );
                 // Every stage has stage + 1 passes
-                for(passOfStage = 0; passOfStage < stage + 1; ++passOfStage) 
+                for(passOfStage = 0; passOfStage < stage + 1; ++passOfStage)
                 {
                     // pass of the current stage
                     V_OPENCL( kernels[0].setArg(5, passOfStage), "Error setting a kernel argument" );
@@ -358,9 +357,9 @@ public:
                 }//end of for passStage = 0:stage-1
             }//end of for stage = 0:numStage-1
             //Map the buffer back to the host
-            //ctl.commandQueue().enqueueMapBuffer(Keys, true, CL_MAP_READ | CL_MAP_WRITE, 0/*offset*/, 
+            //ctl.commandQueue().enqueueMapBuffer(Keys, true, CL_MAP_READ | CL_MAP_WRITE, 0/*offset*/,
             //    sizeof(T_keys) * szElements, NULL, NULL, &l_Error );
-            //ctl.commandQueue().enqueueMapBuffer(Values, true, CL_MAP_READ | CL_MAP_WRITE, 0/*offset*/, 
+            //ctl.commandQueue().enqueueMapBuffer(Values, true, CL_MAP_READ | CL_MAP_WRITE, 0/*offset*/,
             //   sizeof(T_values) * szElements, NULL, NULL, &l_Error );
             V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
             V_OPENCL( l_Error, "Error calling map on the result buffer" );

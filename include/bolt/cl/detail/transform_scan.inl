@@ -1,19 +1,19 @@
-/***************************************************************************                                                                                     
-*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
-*                                                                                    
-*   Licensed under the Apache License, Version 2.0 (the "License");   
-*   you may not use this file except in compliance with the License.                 
-*   You may obtain a copy of the License at                                          
-*                                                                                    
-*       http://www.apache.org/licenses/LICENSE-2.0                      
-*                                                                                    
-*   Unless required by applicable law or agreed to in writing, software              
-*   distributed under the License is distributed on an "AS IS" BASIS,              
-*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.         
-*   See the License for the specific language governing permissions and              
-*   limitations under the License.                                                   
+/***************************************************************************
+*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.
+*
+*   Licensed under the Apache License, Version 2.0 (the "License");
+*   you may not use this file except in compliance with the License.
+*   You may obtain a copy of the License at
+*
+*       http://www.apache.org/licenses/LICENSE-2.0
+*
+*   Unless required by applicable law or agreed to in writing, software
+*   distributed under the License is distributed on an "AS IS" BASIS,
+*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+*   See the License for the specific language governing permissions and
+*   limitations under the License.
 
-***************************************************************************/                                                
+***************************************************************************/
 #define KERNEL02WAVES 4
 #define KERNEL1WAVES 4
 #define WAVESIZE 64
@@ -53,7 +53,7 @@ namespace cl
     transform_inclusive_scan(
         InputIterator first,
         InputIterator last,
-        OutputIterator result, 
+        OutputIterator result,
         UnaryFunction unary_op,
         BinaryFunction binary_op,
         const std::string& user_code )
@@ -82,7 +82,7 @@ namespace cl
         bolt::cl::control &ctl,
         InputIterator first,
         InputIterator last,
-        OutputIterator result, 
+        OutputIterator result,
         UnaryFunction unary_op,
         BinaryFunction binary_op,
         const std::string& user_code )
@@ -114,7 +114,7 @@ namespace cl
     transform_exclusive_scan(
         InputIterator first,
         InputIterator last,
-        OutputIterator result, 
+        OutputIterator result,
         UnaryFunction unary_op,
         T init,
         BinaryFunction binary_op,
@@ -143,7 +143,7 @@ namespace cl
         bolt::cl::control &ctl,
         InputIterator first,
         InputIterator last,
-        OutputIterator result, 
+        OutputIterator result,
         UnaryFunction unary_op,
         T init,
         BinaryFunction binary_op,
@@ -161,7 +161,7 @@ namespace cl
             std::iterator_traits< InputIterator >::iterator_category( ) );
     }
 
-    
+
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
 namespace detail
@@ -172,7 +172,7 @@ namespace detail
 *   \ingroup scan
 *   \{
 */
-    enum transformScanTypes{ transformScan_iValueType, transformScan_iIterType, transformScan_oValueType, transformScan_oIterType, transformScan_initType, transformScan_UnaryFunction, 
+    enum transformScanTypes{ transformScan_iValueType, transformScan_iIterType, transformScan_oValueType, transformScan_oIterType, transformScan_initType, transformScan_UnaryFunction,
         transformScan_BinaryFunction, transformScan_end };
 
 class TransformScan_KernelTemplateSpecializer : public KernelTemplateSpecializer
@@ -184,10 +184,10 @@ public:
         addKernelName("intraBlockInclusiveScan");
         addKernelName("perBlockAddition");
     }
-    
+
     const ::std::string operator() ( const ::std::vector<::std::string>& typeNames ) const
     {
-        const std::string templateSpecializationString = 
+        const std::string templateSpecializationString =
             "// Dynamic specialization of generic template definition, using user supplied types\n"
             "template __attribute__((mangled_name(" + name(0) + "Instantiated)))\n"
             "__attribute__((reqd_work_group_size(KERNEL0WORKGROUPSIZE,1,1)))\n"
@@ -204,7 +204,7 @@ public:
             "global " + typeNames[transformScan_oValueType] + "* scanBuffer,\n"
             "int exclusive\n"
             ");\n\n"
-    
+
             "// Dynamic specialization of generic template definition, using user supplied types\n"
             "template __attribute__((mangled_name(" + name(1) + "Instantiated)))\n"
             "__attribute__((reqd_work_group_size(KERNEL1WORKGROUPSIZE,1,1)))\n"
@@ -216,7 +216,7 @@ public:
             "const uint workPerThread,\n"
             "global " + typeNames[transformScan_BinaryFunction] + "* binaryOp\n"
             ");\n\n"
-    
+
             "// Dynamic specialization of generic template definition, using user supplied types\n"
             "template __attribute__((mangled_name(" + name(2) + "Instantiated)))\n"
             "__attribute__((reqd_work_group_size(KERNEL2WORKGROUPSIZE,1,1)))\n"
@@ -227,7 +227,7 @@ public:
             "const uint vecSize,\n"
             "global " + typeNames[transformScan_BinaryFunction] + "* binaryOp\n"
             ");\n\n";
-    
+
         return templateSpecializationString;
     }
 };
@@ -251,7 +251,7 @@ transform_scan_detect_random_access(
     const BinaryFunction& binary_op,
     std::input_iterator_tag )
 {
-    //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data 
+    //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data
     //  to a temporary buffer.  Should we?
     static_assert( false, "Bolt only supports random access iterator types" );
 };
@@ -278,7 +278,7 @@ transform_scan_detect_random_access(
         std::iterator_traits< InputIterator >::iterator_category( ) );
 };
 
-/*! 
+/*!
 * \brief This overload is called strictly for non-device_vector iterators
 * \details This template function overload is used to seperate device_vector iterators from all other iterators
 */
@@ -323,7 +323,7 @@ transform_scan_pick_iterator(
     }
     else if( runMode == bolt::cl::control::MultiCoreCpu )
     {
-        std::cout << "The MultiCoreCpu version of inclusive_scan is not implemented yet." << std ::endl;
+        throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of transform_scan function is not enabled to be built." );
     }
     else
     {
@@ -343,7 +343,7 @@ transform_scan_pick_iterator(
     return result + numElements;
 }
 
-/*! 
+/*!
 * \brief This overload is called strictly for non-device_vector iterators
 * \details This template function overload is used to seperate device_vector iterators from all other iterators
 */
@@ -442,7 +442,7 @@ size_t k0_stepNum, k1_stepNum, k2_stepNum;
     typeNames[ transformScan_initType ] = TypeName< T >::get( );
     typeNames[ transformScan_UnaryFunction ] = TypeName< UnaryFunction >::get();
     typeNames[ transformScan_BinaryFunction ] = TypeName< BinaryFunction >::get();
-    
+
     /**********************************************************************************
      * Type Definitions - directly concatenated into kernel string
      *********************************************************************************/
@@ -469,7 +469,7 @@ size_t k0_stepNum, k1_stepNum, k2_stepNum;
     oss << " -DKERNEL1WORKGROUPSIZE=" << kernel1_WgSize;
     oss << " -DKERNEL2WORKGROUPSIZE=" << kernel2_WgSize;
     compileOptions = oss.str();
-    
+
     /**********************************************************************************
      * Request Compiled Kernels
      *********************************************************************************/
@@ -549,7 +549,7 @@ aProfiler.set(AsyncProfiler::device, control::SerialCpu);
     V_OPENCL( kernels[0].setArg( 8, *binaryBuffer ),        "Error setArg kernels[ 0 ]" ); // User provided functor
     V_OPENCL( kernels[0].setArg( 9, *preSumArray ),         "Error setArg kernels[ 0 ]" ); // Output per block sum
     V_OPENCL( kernels[0].setArg( 10, doExclusiveScan ),      "Error setArg kernels[ 0 ]" ); // Exclusive scan?
-    
+
 #ifdef BOLT_ENABLE_PROFILING
 aProfiler.nextStep();
 k0_stepNum = aProfiler.getStepNum();
@@ -673,12 +673,12 @@ aProfiler.setArchitecture(strDeviceName);
         V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_QUEUED>()");
         l_Error = kernel0Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END, &k0_stop);
         V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_END>()");
-        
+
         //l_Error = kernel1Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_START, &k1_start);
         //V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_START>()");
         l_Error = kernel1Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END, &k1_stop);
         V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_END>()");
-        
+
         //l_Error = kernel2Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_START, &k2_start);
         //V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_START>()");
         l_Error = kernel2Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END, &k2_stop);
