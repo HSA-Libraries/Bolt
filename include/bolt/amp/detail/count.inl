@@ -328,7 +328,7 @@ namespace bolt {
                     }
                     tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
                     Count<iType,Predicate> count_op(predicate);
-                    tbb::parallel_reduce( tbb::blocked_range<iType*>( &*first, (iType*)&*(last-1) + 1), count_op );
+                    tbb::parallel_reduce( tbb::blocked_range<iType*>( &*InputBuffer.begin(), (iType*)&*(InputBuffer.end()-1) + 1), count_op );
                     return (int)count_op.value;
 #else
                     std::cout << "The MultiCoreCpu version of count function is not enabled." << std ::endl;
