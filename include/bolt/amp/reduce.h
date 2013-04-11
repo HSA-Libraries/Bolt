@@ -1,5 +1,5 @@
 /***************************************************************************                                                                                     
-*   Copyright 2012 Advanced Micro Devices, Inc.                                     
+*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
 *                                                                                    
 *   Licensed under the Apache License, Version 2.0 (the "License");   
 *   you may not use this file except in compliance with the License.                 
@@ -155,7 +155,7 @@ namespace bolt {
         *
         * The \p reduce operation is similar the std::accumulate function.
         *
-        * \param ctl \b Optional Control structure to control command-queue, debug, tuning, etc.  See bolt::amp::control.
+        * \param ctl \b Optional Control structure to control accelerator,debug, tuning. See bolt::amp::control.
         * \param first The first position in the sequence to be reduced.
         * \param last  The last position in the sequence to be reduced.
         * \param init  The initial value for the accumulator.

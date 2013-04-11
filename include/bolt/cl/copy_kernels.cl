@@ -1,5 +1,5 @@
 /***************************************************************************
-*   Copyright 2012 Advanced Micro Devices, Inc.                                     
+*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
 *                                                                                    
 *   Licensed under the Apache License, Version 2.0 (the "License");   
 *   you may not use this file except in compliance with the License.                 
@@ -21,12 +21,14 @@ __kernel
 void copy_I(
     global iType * restrict src,
     global oType * restrict dst,
-    const uint numElements )
+    const uint numElements,
+    const uint srcOffset,
+    const uint dstOffset)
 {
     size_t gloIdx = get_global_id( 0 );
-    if( gloIdx >= numElements ) return; // on SI this doesn't mess-up barriers
-    
-    dst[ gloIdx ] = src[ gloIdx ];
+    if( gloIdx >= numElements) return; // on SI this doesn't mess-up barriers
+
+    dst[ dstOffset + gloIdx ] = src[ srcOffset + gloIdx ];
 };
 
 

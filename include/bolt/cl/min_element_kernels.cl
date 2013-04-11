@@ -1,5 +1,5 @@
 /***************************************************************************                                                                                     
-*   Copyright 2012 Advanced Micro Devices, Inc.                                     
+*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
 *                                                                                    
 *   Licensed under the Apache License, Version 2.0 (the "License");   
 *   you may not use this file except in compliance with the License.                 
@@ -40,20 +40,22 @@ kernel void min_elementTemplate(
 {
     int gx = get_global_id (0);
     int igx = gx;
+    int gloId = gx;
     bool stat;
-    //  Abort threads that are passed the end of the input vector
-    if( gx >= length )
-        return;
+    
 
     input_iter.init( input_ptr );
 
     //  Initialize the accumulator private variable with data from the input array
     //  This essentially unrolls the loop below at least once
-    iTypePtr accumulator = input_iter[gx];
-    gx += get_global_size(0);
+    iTypePtr accumulator;
+    if(gloId < length){
+       accumulator = input_iter[gx];
+       gx += get_global_size(0);
+    }
 
     // Loop sequentially over chunks of input vector, reducing an arbitrary size input
-    // length into a length related to the number of workgroups
+    // length into a length related to the number of workgroupsz
     while (gx < length)
     {
         iTypePtr element = input_iter[gx];
@@ -81,6 +83,10 @@ kernel void min_elementTemplate(
     _REDUCE_STEP(tail, local_index,  2);
     _REDUCE_STEP(tail, local_index,  1);
  
+    //  Abort threads that are passed the end of the input vector
+    if( gloId >= length )
+        return;
+
     //  Write only the single reduced value for the entire workgroup
     if (local_index == 0) 
     {

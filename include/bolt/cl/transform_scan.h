@@ -1,5 +1,5 @@
 /***************************************************************************                                                                                     
-*   Copyright 2012 Advanced Micro Devices, Inc.                                     
+*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
 *                                                                                    
 *   Licensed under the Apache License, Version 2.0 (the "License");   
 *   you may not use this file except in compliance with the License.                 
@@ -68,7 +68,7 @@ namespace cl
 * ...
 *
 * bolt::cl::square<int> sqInt;
-* bolt::cl::plut<int> plInt;
+* bolt::cl::plus<int> plInt;
 * bolt::cl::control ctrl = control::getDefault();
 * ...
 *
@@ -128,7 +128,7 @@ transform_inclusive_scan(
 * \param unary_op Unary operator for transformation.
 * \param init  The value used to initialize the output scan sequence.
 * \param binary_op Binary operator for scanning transformed elements.
-* \param user_code A user-specified string that is preppended to the generated OpenCL kernel.
+* \param user_code A user-specified string that is prepended to the generated OpenCL kernel.
 *
 * \tparam InputIterator is a model of Input Iterator.
 * \tparam OutputIterator is a model of Output Iterator.

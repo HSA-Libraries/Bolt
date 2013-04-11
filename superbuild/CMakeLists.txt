@@ -1,5 +1,5 @@
 ############################################################################                                                                                     
-#   Copyright 2012 Advanced Micro Devices, Inc.                                     
+#   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
 #                                                                                    
 #   Licensed under the Apache License, Version 2.0 (the "License");   
 #   you may not use this file except in compliance with the License.                 
@@ -32,7 +32,7 @@ if( NOT DEFINED Bolt.SuperBuild_VERSION_MAJOR )
 endif( )
 
 if( NOT DEFINED Bolt.SuperBuild_VERSION_MINOR )
-	set( Bolt.SuperBuild_VERSION_MINOR 1 )
+	set( Bolt.SuperBuild_VERSION_MINOR 0 )
 endif( )
 
 if( NOT DEFINED Bolt.SuperBuild_VERSION_PATCH )

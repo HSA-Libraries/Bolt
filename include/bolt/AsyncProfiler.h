@@ -1,6 +1,23 @@
+/***************************************************************************
+*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.
+*
+*   Licensed under the Apache License, Version 2.0 (the "License");
+*   you may not use this file except in compliance with the License.
+*   You may obtain a copy of the License at
+*
+*       http://www.apache.org/licenses/LICENSE-2.0
+*
+*   Unless required by applicable law or agreed to in writing, software
+*   distributed under the License is distributed on an "AS IS" BASIS,
+*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+*   See the License for the specific language governing permissions and
+*   limitations under the License.
+
+***************************************************************************/
+
 #pragma once
 /******************************************************************************
- * Asynchronous Profiler 
+ * Asynchronous Profiler
  *****************************************************************************/
 #include <vector>
 #include <Windows.h>
@@ -16,12 +33,12 @@ private:
 public:
 
     static enum attributeTypes {
-        /*native*/  id, device, time, memory, bandwidth, flops, flops_s, startTime, stopTime, 
+        /*native*/  id, device, time, memory, bandwidth, flops, flops_s, startTime, stopTime,
         /*total*/   NUM_ATTRIBUTES};
     static char *attributeNames[];// = {"ID", "StartTime", "StopTime", "Memory", "Device", "Flops"};
     static char *trialAttributeNames[];
     /******************************************************************************
-     * Class Step 
+     * Class Step
      *****************************************************************************/
     class Step
     {
@@ -31,7 +48,7 @@ public:
         size_t attributeValues[NUM_ATTRIBUTES];
 
     public:
-        
+
         size_t stdDev[NUM_ATTRIBUTES];
         /******************************************************************************
          * Constructors
@@ -49,7 +66,7 @@ public:
         std::string getName( ) const;
         void computeDerived();
         ::std::ostream& writeLog( ::std::ostream& s ) const;
-    
+
     }; // class Step
 
 
@@ -61,7 +78,7 @@ public:
     private:
         std::vector<Step> steps;
         size_t currentStepIndex;
-        
+
     public:
         Step aggregateStep;
         std::string trialName;

@@ -1,5 +1,5 @@
 /***************************************************************************
-*   Copyright 2012 Advanced Micro Devices, Inc.                                     
+*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
 *                                                                                    
 *   Licensed under the Apache License, Version 2.0 (the "License");   
 *   you may not use this file except in compliance with the License.                 
@@ -247,26 +247,11 @@ kernel void intraBlockInclusiveScan(
         }
     }
     barrier( CLK_LOCAL_MEM_FENCE );
-    iPtrType scanSum;
+    iPtrType scanSum = workSum;
+    lds[ locId ] = workSum;
     offset = 1;
-    // load LDS with register sums
-    if (mapId < vecSize)
-    {
-        lds[ locId ] = workSum;
-        barrier( CLK_LOCAL_MEM_FENCE );
-    
-        if (locId >= offset)
-        { // thread > 0
-            iPtrType y = lds[ locId - offset ];
-            iPtrType y2 = lds[ locId ];
-            scanSum = (*binaryOp)( y2, y );
-            lds[ locId ] = scanSum;
-        } else { // thread 0
-            scanSum = workSum;
-        }  
-    }
-    // scan in lds
-    for( offset = offset*2; offset < wgSize; offset *= 2 )
+  // scan in lds
+    for( offset = offset*1; offset < wgSize; offset *= 2 )
     {
         barrier( CLK_LOCAL_MEM_FENCE );
         if (mapId < vecSize)
@@ -275,13 +260,16 @@ kernel void intraBlockInclusiveScan(
             {
                 iPtrType y = lds[ locId - offset ];
                 scanSum = (*binaryOp)( scanSum, y );
-                lds[ locId ] = scanSum;
             }
         }
+        barrier( CLK_LOCAL_MEM_FENCE );
+        lds[ locId ] = scanSum;  
+
     } // for offset
     barrier( CLK_LOCAL_MEM_FENCE );
-    
+
     // write final scan from pre-scan and lds scan
+
     for( offset = 0; offset < workPerThread; offset += 1 )
     {
         barrier( CLK_GLOBAL_MEM_FENCE );
@@ -293,7 +281,9 @@ kernel void intraBlockInclusiveScan(
             y = (*binaryOp)( y, y2 );
             postSumArray[ mapId + offset ] = y;
         } // thread in bounds
+
     } // for 
+
 } // end kernel
 
 
@@ -318,35 +308,36 @@ kernel void perBlockInclusiveScan(
     size_t locId = get_local_id( 0 );
     size_t wgSize = get_local_size( 0 );
 
-    //  Abort threads that are passed the end of the input vector
-    if (gloId >= vecSize) return; // on SI this doesn't mess-up barriers
-
+    
     output_iter.init( output_ptr );
     input_iter.init( input_ptr );
 
     // if exclusive, load gloId=0 w/ identity, and all others shifted-1
     oPtrType val;
-    if (exclusive)
-    {
-        if (gloId > 0)
-        { // thread>0
-            val = input_iter[gloId-1];
-            lds[ locId ] = val;
-        }
-        else
-        { // thread=0
-            val = identity;
-            lds[ locId ] = val;
-        }
-    }
-    else
-    {
-        val = input_iter[gloId];
-        lds[ locId ] = val;
+    if (gloId < vecSize){
+       if (exclusive)
+       {
+          if (gloId > 0)
+          { // thread>0
+              val = input_iter[gloId-1];
+              lds[ locId ] = val;
+          }
+          else
+          { // thread=0
+              val = identity;
+              lds[ locId ] = val;
+          }
+       }
+       else
+       {
+          val = input_iter[gloId];
+          lds[ locId ] = val;
+       }
     }
 
     //  Computes a scan within a workgroup
     oPtrType sum = val;
+
     for( size_t offset = 1; offset < wgSize; offset *= 2 )
     {
         barrier( CLK_LOCAL_MEM_FENCE );
@@ -358,11 +349,14 @@ kernel void perBlockInclusiveScan(
         barrier( CLK_LOCAL_MEM_FENCE );
         lds[ locId ] = sum;
     }
-
+    barrier( CLK_LOCAL_MEM_FENCE );
+  
+    //  Abort threads that are passed the end of the input vector
+    if (gloId >= vecSize) return; 
+   
     //  Each work item writes out its calculated scan result, relative to the beginning
     //  of each work group
     output_iter[ gloId ] = sum;
-    barrier( CLK_LOCAL_MEM_FENCE ); // needed for large data types
     if (locId == 0)
     {
         // last work-group can be wrong b/c ignored

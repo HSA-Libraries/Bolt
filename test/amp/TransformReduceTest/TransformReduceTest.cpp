@@ -1,5 +1,5 @@
 /***************************************************************************                                                                                     
-*   Copyright 2012 Advanced Micro Devices, Inc.                                     
+*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
 *                                                                                    
 *   Licensed under the Apache License, Version 2.0 (the "License");   
 *   you may not use this file except in compliance with the License.                 
@@ -1435,7 +1435,7 @@ int main(int argc, char* argv[])
 
     bolt::amp::control& myControl = bolt::amp::control::getDefault( );
     myControl.setWaitMode( bolt::amp::control::NiceWait );
-    myControl.setForceRunMode( bolt::amp::control::MultiCoreCpu );  // choose tbb
+    myControl.setForceRunMode( bolt::amp::control::Automatic );  // choose tbb
 
 
     int retVal = RUN_ALL_TESTS( );

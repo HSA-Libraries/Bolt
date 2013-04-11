@@ -1,5 +1,5 @@
 ############################################################################                                                                                     
-#   Copyright 2012 Advanced Micro Devices, Inc.                                     
+#   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
 #                                                                                    
 #   Licensed under the Apache License, Version 2.0 (the "License");   
 #   you may not use this file except in compliance with the License.                 
@@ -46,6 +46,7 @@ set( ampBolt.Runtime.Headers.Iterator
    )
     
 set( ampBolt.Runtime.Headers.Detail
+        ${ampBolt.Include.Dir}/detail/count.inl
         ${ampBolt.Include.Dir}/detail/reduce.inl
         ${ampBolt.Include.Dir}/detail/scan.inl
         ${ampBolt.Include.Dir}/detail/scan_by_key.inl
