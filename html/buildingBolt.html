@@ -96,20 +96,20 @@ CMake Bolt Configuration</h1>
 <p>Once installed, the easiest interface for Windows or X-windows is the CMake GUI program 'CMake-gui'. The terminal applications CMake.exe and ccmake.exe (based on curses library) are easy to learn. CMake automates the creation of build environments in a cross-platform manner, generating native build files for each respective platform. When launched, it inspects the host computer and searches for all tools, SDKs, libraries, and code necessary to build the project.</p>
 <p><code>Bolt/superbuild</code> contains all the CMake files necesasary for configuring Bolt. In the CMake Window, enter the source code and binary URIs as given in the image below and press Configure. You can also use the 'Browse Source ...' and "Browse Build..." buttons to navigate to the <code>superbuild</code> and <code>binary</code> folder. It is better not to put the <code>bin</code> directory inside any folder which has a <code></code>.git folder as a sibling or as a parent structure. </p>
 <div class="image">
-<img src="CMake.bolt_build.blank.png" alt="CMake.bolt_build.blank.png"/>
+<img src="cmake.bolt_build.blank.png" alt="cmake.bolt_build.blank.png"/>
 <div class="caption">
 Bolt superbuild</div></div>
 <p>Then, click on the Configure button. This will ask you for your choice of generator. You can choose to use Visual Studio 10 or Visual Studio 11. In this example, 'Visual Studio 11 Win64' generator is selected. The selected bin directory should be descriptive of the generator used ; otherwise it's easy to start over (delete the binaries directory). After selecting the generator, CMake examines the system, finding all the project dependencies and properties, which appear red in the properties box. </p>
 <div class="image">
-<img src="CMake.pick.generator2.png" alt="CMake.pick.generator2.png"/>
+<img src="cmake.pick.generator2.png" alt="cmake.pick.generator2.png"/>
 <div class="caption">
 List of CMake generators</div></div>
 <p> While CMake finishes configuring the projects, it prints messages in the output log visible in the bottom textbox within the GUI; this states that CMake found the OpenCL and Bolt libraries. If not, CMake prints in red text which libraries or header files are missing. This usually means the environment variables that CMake uses to find dependencies are not set up properly (see <a class="el" href="buildingExamples.html#clDependencies">OpenCL&trade; Dependencies</a> ). </p>
 <div class="image">
-<img src="CMake.build.first.configure2.png" alt="CMake.build.first.configure2.png"/>
+<img src="cmake.build.first.configure2.png" alt="cmake.build.first.configure2.png"/>
 <div class="caption">
 Cmake system introspection</div></div>
-<p> CMake gives you some values which represent some features that you can choose to generate. In this example below, we chose not to generate BUILD_TBB (see <a class="el" href="buildingTBB.html#tbb">TBB (Intel &reg;)</a> on how to build TBB for Bolt). Now, press the Configure button again to continue, and then press Generate button to complete the generation of binaries. Now, all the project files will be generated to the specified location.</p>
+<p> CMake gives you some values which represent some features that you can choose to generate. In this example below, we chose not to generate BUILD_TBB (see <a class="el" href="buildingTBB.html#tbb">TBB (Intel)</a> on how to build TBB for Bolt). Now, press the Configure button again to continue, and then press Generate button to complete the generation of binaries. Now, all the project files will be generated to the specified location.</p>
 <h2><a class="anchor" id="startup"></a>
 Startup projects</h2>
 <p>After a successful configuration pass, the directory specified initially in the <code>'Where to build the binaries:'</code> textbox contains an 'Bolt.Superbuild.sln' file, which can be opened in the appropriate version of Visual Studio. At this point, selecting the 'Build Solution' menu item builds all the samples.is selected. By default, Visual Studio will have the 'ALL_BUILD' project selected as the <code>'Startup'</code> project. If a particular solution must be run under a debugger, mark it <code>'Startup'</code> by first right-clicking on the project, then selecting <code>'Set as Startup Project'</code>. On building this solution, required libraries such as <a href="http://www.boost.org/users/download/">Boost</a>, <a href="http://www.stack.nl/~dimitri/doxygen/download.html">Doxygen</a>, and <a href="https://code.google.com/p/googletest/downloads/list">Gtest</a> are downloaded, and it also builds all the projects in Bolt. To start developing, go to <code>Bolt-build</code> folder in your <code>binary</code> folder and open 'Bolt.sln'. This will have all the project files i.e. Tests, Benchmarks, Tools, Runtimes etc. You can build tests for projects by setting it as a 'Startup' project and by building the project. You run the tests (Google Tests) by clicking the start button in the Debug Menu in Visual Studio.</p>
@@ -132,7 +132,7 @@ Code layout</h1>
 </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Apr 2 2013 20:37:23 for Bolt Beta by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Apr 12 2013 10:32:28 for Bolt Beta by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.3
 </small></address>

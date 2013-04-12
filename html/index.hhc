@@ -13,6 +13,11 @@
     <LI><OBJECT type="text/sitemap"><param name="Name" value="Bolt Functor Example"><param name="Local" value="index.html#subexample_sec"><param name="ImageNumber" value="1"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Name" value="Templatized Bolt Functor"><param name="Local" value="index.html#subexample2_sec"><param name="ImageNumber" value="1"></OBJECT>
     </UL>
+  <LI><OBJECT type="text/sitemap"><param name="Name" value="Bolt Code Paths"><param name="Local" value="index.html#Paths"><param name="ImageNumber" value="1"></OBJECT>
+    <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="Default Behaviour"><param name="Local" value="index.html#Default"><param name="ImageNumber" value="1"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="Force Behaviour"><param name="Local" value="index.html#Force"><param name="ImageNumber" value="1"></OBJECT>
+    </UL>
   <LI><OBJECT type="text/sitemap"><param name="Name" value="Requirements"><param name="Local" value="index.html#Requirements"><param name="ImageNumber" value="1"></OBJECT>
   </UL>
 <LI><OBJECT type="text/sitemap"><param name="Name" value="Specifying OpenCL&trade; Code Strings : Overview"><param name="Local" value="OpenCLCodeStrings_Page.html"><param name="ImageNumber" value="11"></OBJECT>
@@ -77,14 +82,14 @@
     </UL>
   <LI><OBJECT type="text/sitemap"><param name="Name" value="Code layout"><param name="Local" value="buildingBolt.html#bolt_directories"><param name="ImageNumber" value="1"></OBJECT>
   </UL>
-<LI><OBJECT type="text/sitemap"><param name="Name" value="Building TBB (Intel &reg;) with Bolt"><param name="Local" value="buildingTBB.html"><param name="ImageNumber" value="11"></OBJECT>
+<LI><OBJECT type="text/sitemap"><param name="Name" value="Building TBB (Intel) with Bolt"><param name="Local" value="buildingTBB.html"><param name="ImageNumber" value="11"></OBJECT>
   <UL>
-  <LI><OBJECT type="text/sitemap"><param name="Name" value="TBB (Intel &reg;)"><param name="Local" value="buildingTBB.html#tbb"><param name="ImageNumber" value="1"></OBJECT>
+  <LI><OBJECT type="text/sitemap"><param name="Name" value="TBB (Intel)"><param name="Local" value="buildingTBB.html#tbb"><param name="ImageNumber" value="1"></OBJECT>
     <UL>
-    <LI><OBJECT type="text/sitemap"><param name="Name" value="Setting up TBB (Intel &reg;) with Bolt."><param name="Local" value="buildingTBB.html#install"><param name="ImageNumber" value="1"></OBJECT>
-    <LI><OBJECT type="text/sitemap"><param name="Name" value="TBB (Intel &reg;) routines in Bolt"><param name="Local" value="buildingTBB.html#bolt_tbb"><param name="ImageNumber" value="1"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="Setting up TBB (Intel) with Bolt."><param name="Local" value="buildingTBB.html#install"><param name="ImageNumber" value="1"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="TBB (Intel) routines in Bolt"><param name="Local" value="buildingTBB.html#bolt_tbb"><param name="ImageNumber" value="1"></OBJECT>
     </UL>
-  <LI><OBJECT type="text/sitemap"><param name="Name" value="Running TBB (Intel &reg;) routines in Bolt"><param name="Local" value="buildingTBB.html#using_tbb"><param name="ImageNumber" value="1"></OBJECT>
+  <LI><OBJECT type="text/sitemap"><param name="Name" value="Running TBB (Intel) routines in Bolt"><param name="Local" value="buildingTBB.html#using_tbb"><param name="ImageNumber" value="1"></OBJECT>
     <UL>
     <LI><OBJECT type="text/sitemap"><param name="Name" value="Control object"><param name="Local" value="buildingTBB.html#tbb_control"><param name="ImageNumber" value="1"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Name" value="Examples:"><param name="Local" value="buildingTBB.html#examples"><param name="ImageNumber" value="1"></OBJECT>
@@ -297,8 +302,8 @@
       <UL>
       <LI><OBJECT type="text/sitemap"><param name="Name" value="Amp-counting"><param name="Local" value="group__amp-counting.html"><param name="ImageNumber" value="1"></OBJECT>
         <UL>
-        <LI><OBJECT type="text/sitemap"><param name="Name" value="count"><param name="Local" value="group__amp-counting.html#gabe5da1f166af70bfd313561d96644bdc"><param name="ImageNumber" value="11"></OBJECT>
-        <LI><OBJECT type="text/sitemap"><param name="Name" value="count_if"><param name="Local" value="group__amp-counting.html#gab0b8daa4c17258657bfc055d18c87088"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="count"><param name="Local" value="group__amp-counting.html#gad3782886c9fe9bc57a9c1a9fedca9ea4"><param name="ImageNumber" value="11"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="count_if"><param name="Local" value="group__amp-counting.html#ga1f99b47f7420737186c5deebfba5c6f6"><param name="ImageNumber" value="11"></OBJECT>
         </UL>
       <LI><OBJECT type="text/sitemap"><param name="Name" value="Amp-reduce"><param name="Local" value="group__amp-reduce.html"><param name="ImageNumber" value="1"></OBJECT>
         <UL>
@@ -614,10 +619,11 @@
           <UL>
           <LI><OBJECT type="text/sitemap"><param name="Name" value="CountIfEqual"><param name="Local" value="structbolt_1_1amp_1_1detail_1_1CountIfEqual.html"><param name="ImageNumber" value="1"></OBJECT>
             <UL>
-            <LI><OBJECT type="text/sitemap"><param name="Name" value="CountIfEqual"><param name="Local" value="structbolt_1_1amp_1_1detail_1_1CountIfEqual.html#a772a370de96e998271c90adcbbdf4a74"><param name="ImageNumber" value="11"></OBJECT>
+            <LI><OBJECT type="text/sitemap"><param name="Name" value="CountIfEqual"><param name="Local" value="structbolt_1_1amp_1_1detail_1_1CountIfEqual.html#a423c66478f58435e77dd2fb2a126f61b"><param name="ImageNumber" value="11"></OBJECT>
+            <LI><OBJECT type="text/sitemap"><param name="Name" value="CountIfEqual"><param name="Local" value="structbolt_1_1amp_1_1detail_1_1CountIfEqual.html#afb0d6b1968a981b9a73a8a5e75ad226c"><param name="ImageNumber" value="11"></OBJECT>
             <LI><OBJECT type="text/sitemap"><param name="Name" value="operator()"><param name="Local" value="structbolt_1_1amp_1_1detail_1_1CountIfEqual.html#a9ee01482332a38942d3ec1531f82a034"><param name="ImageNumber" value="11"></OBJECT>
-            <LI><OBJECT type="text/sitemap"><param name="Name" value="__pad0__"><param name="Local" value="structbolt_1_1amp_1_1detail_1_1CountIfEqual.html#aff2ad7cf22639a7a07c3da02174021fb"><param name="ImageNumber" value="11"></OBJECT>
             <LI><OBJECT type="text/sitemap"><param name="Name" value="cpu"><param name="Local" value="structbolt_1_1amp_1_1detail_1_1CountIfEqual.html#a24c81fd0ccf2f204d3718bcf98cf9f97"><param name="ImageNumber" value="11"></OBJECT>
+            <LI><OBJECT type="text/sitemap"><param name="Name" value="x"><param name="Local" value="structbolt_1_1amp_1_1detail_1_1CountIfEqual.html#af04f7ef6169e2ab42a6114a1fa12e7de"><param name="ImageNumber" value="11"></OBJECT>
             </UL>
           </UL>
         <LI><OBJECT type="text/sitemap"><param name="Name" value="device_vector_tag"><param name="Local" value="structbolt_1_1amp_1_1device__vector__tag.html"><param name="ImageNumber" value="11"></OBJECT>
@@ -1140,13 +1146,13 @@
   <UL>
   <LI><OBJECT type="text/sitemap"><param name="Name" value="File List"><param name="Local" value="files.html"><param name="ImageNumber" value="1"></OBJECT>
     <UL>
-    <LI><OBJECT type="text/sitemap"><param name="Name" value="Bolt"><param name="Local" value="dir_d85ff93a7a0b95ef0beebd3e71ac10ab.html"><param name="ImageNumber" value="1"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Name" value="hsa_bolt"><param name="Local" value="dir_9851deb669ed8df5ba5fd399e2ebe56c.html"><param name="ImageNumber" value="1"></OBJECT>
       <UL>
-      <LI><OBJECT type="text/sitemap"><param name="Name" value="include"><param name="Local" value="dir_aff3fb4e33c4e3fda3d8a9e0453099eb.html"><param name="ImageNumber" value="1"></OBJECT>
+      <LI><OBJECT type="text/sitemap"><param name="Name" value="include"><param name="Local" value="dir_958292f73b3ae70a9502decc70ac6188.html"><param name="ImageNumber" value="1"></OBJECT>
         <UL>
-        <LI><OBJECT type="text/sitemap"><param name="Name" value="bolt"><param name="Local" value="dir_26e99746cae57718948b6048b12f1b53.html"><param name="ImageNumber" value="1"></OBJECT>
+        <LI><OBJECT type="text/sitemap"><param name="Name" value="bolt"><param name="Local" value="dir_97913691ce5893d99a5e47223e40881c.html"><param name="ImageNumber" value="1"></OBJECT>
           <UL>
-          <LI><OBJECT type="text/sitemap"><param name="Name" value="amp"><param name="Local" value="dir_2d7738e7bd40514dbf779f49aba56bc1.html"><param name="ImageNumber" value="1"></OBJECT>
+          <LI><OBJECT type="text/sitemap"><param name="Name" value="amp"><param name="Local" value="dir_0f6089b7f8cd65f1534cbc8cd2086175.html"><param name="ImageNumber" value="1"></OBJECT>
             <UL>
             <LI><OBJECT type="text/sitemap"><param name="Name" value="bolt.h"><param name="Local" value="amp_2bolt_8h.html"><param name="ImageNumber" value="1"></OBJECT>
               <UL>
@@ -1162,16 +1168,17 @@
               <UL>
               <LI><OBJECT type="text/sitemap"><param name="Name" value="CountIfEqual"><param name="Local" value="structbolt_1_1amp_1_1detail_1_1CountIfEqual.html"><param name="ImageNumber" value="1"></OBJECT>
                 <UL>
-                <LI><OBJECT type="text/sitemap"><param name="Name" value="CountIfEqual"><param name="Local" value="structbolt_1_1amp_1_1detail_1_1CountIfEqual.html#a772a370de96e998271c90adcbbdf4a74"><param name="ImageNumber" value="11"></OBJECT>
+                <LI><OBJECT type="text/sitemap"><param name="Name" value="CountIfEqual"><param name="Local" value="structbolt_1_1amp_1_1detail_1_1CountIfEqual.html#a423c66478f58435e77dd2fb2a126f61b"><param name="ImageNumber" value="11"></OBJECT>
+                <LI><OBJECT type="text/sitemap"><param name="Name" value="CountIfEqual"><param name="Local" value="structbolt_1_1amp_1_1detail_1_1CountIfEqual.html#afb0d6b1968a981b9a73a8a5e75ad226c"><param name="ImageNumber" value="11"></OBJECT>
                 <LI><OBJECT type="text/sitemap"><param name="Name" value="operator()"><param name="Local" value="structbolt_1_1amp_1_1detail_1_1CountIfEqual.html#a9ee01482332a38942d3ec1531f82a034"><param name="ImageNumber" value="11"></OBJECT>
-                <LI><OBJECT type="text/sitemap"><param name="Name" value="__pad0__"><param name="Local" value="structbolt_1_1amp_1_1detail_1_1CountIfEqual.html#aff2ad7cf22639a7a07c3da02174021fb"><param name="ImageNumber" value="11"></OBJECT>
                 <LI><OBJECT type="text/sitemap"><param name="Name" value="cpu"><param name="Local" value="structbolt_1_1amp_1_1detail_1_1CountIfEqual.html#a24c81fd0ccf2f204d3718bcf98cf9f97"><param name="ImageNumber" value="11"></OBJECT>
+                <LI><OBJECT type="text/sitemap"><param name="Name" value="x"><param name="Local" value="structbolt_1_1amp_1_1detail_1_1CountIfEqual.html#af04f7ef6169e2ab42a6114a1fa12e7de"><param name="ImageNumber" value="11"></OBJECT>
                 </UL>
-              <LI><OBJECT type="text/sitemap"><param name="Name" value="AMP_COUNT_H"><param name="Local" value="amp_2count_8h.html#ad4969b69285afb43171782ad975d8bf4"><param name="ImageNumber" value="11"></OBJECT>
-              <LI><OBJECT type="text/sitemap"><param name="Name" value="count"><param name="Local" value="amp_2count_8h.html#gabe5da1f166af70bfd313561d96644bdc"><param name="ImageNumber" value="11"></OBJECT>
-              <LI><OBJECT type="text/sitemap"><param name="Name" value="count"><param name="Local" value="amp_2count_8h.html#ga977e690c5a6223ffe376d70a89edf7a1"><param name="ImageNumber" value="11"></OBJECT>
-              <LI><OBJECT type="text/sitemap"><param name="Name" value="count_if"><param name="Local" value="amp_2count_8h.html#gab0b8daa4c17258657bfc055d18c87088"><param name="ImageNumber" value="11"></OBJECT>
-              <LI><OBJECT type="text/sitemap"><param name="Name" value="count_if"><param name="Local" value="amp_2count_8h.html#ga7196405cbf3c4963e6c4219f5e00ceea"><param name="ImageNumber" value="11"></OBJECT>
+              <LI><OBJECT type="text/sitemap"><param name="Name" value="BOLT_AMP_COUNT_H"><param name="Local" value="amp_2count_8h.html#aea174fe6aa089228b841af0e672d05bc"><param name="ImageNumber" value="11"></OBJECT>
+              <LI><OBJECT type="text/sitemap"><param name="Name" value="count"><param name="Local" value="amp_2count_8h.html#gad3782886c9fe9bc57a9c1a9fedca9ea4"><param name="ImageNumber" value="11"></OBJECT>
+              <LI><OBJECT type="text/sitemap"><param name="Name" value="count"><param name="Local" value="amp_2count_8h.html#ga0befd872f303bae2f526397a0a331cf5"><param name="ImageNumber" value="11"></OBJECT>
+              <LI><OBJECT type="text/sitemap"><param name="Name" value="count_if"><param name="Local" value="amp_2count_8h.html#ga1f99b47f7420737186c5deebfba5c6f6"><param name="ImageNumber" value="11"></OBJECT>
+              <LI><OBJECT type="text/sitemap"><param name="Name" value="count_if"><param name="Local" value="amp_2count_8h.html#gac2fa9d1e677ed42ee1f8265754ae5f44"><param name="ImageNumber" value="11"></OBJECT>
               </UL>
             <LI><OBJECT type="text/sitemap"><param name="Name" value="device_vector.h"><param name="Local" value="amp_2device__vector_8h.html"><param name="ImageNumber" value="1"></OBJECT>
               <UL>
@@ -1445,7 +1452,7 @@
               <LI><OBJECT type="text/sitemap"><param name="Name" value="transform_reduce_range"><param name="Local" value="transform__reduce__range_8h.html#aef61abd492910dc405770d51704ba9e3"><param name="ImageNumber" value="11"></OBJECT>
               </UL>
             </UL>
-          <LI><OBJECT type="text/sitemap"><param name="Name" value="cl"><param name="Local" value="dir_fa1b764b3edefb7f42dfbb957044b2c3.html"><param name="ImageNumber" value="1"></OBJECT>
+          <LI><OBJECT type="text/sitemap"><param name="Name" value="cl"><param name="Local" value="dir_5c51b1b685f5bf528ffb07f475f4fd24.html"><param name="ImageNumber" value="1"></OBJECT>
             <UL>
             <LI><OBJECT type="text/sitemap"><param name="Name" value="bolt.h"><param name="Local" value="cl_2bolt_8h.html"><param name="ImageNumber" value="1"></OBJECT>
               <UL>

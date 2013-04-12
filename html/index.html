@@ -51,6 +51,10 @@
 <li class="level2"><a href="#subexample2_sec">Templatized Bolt Functor</a></li>
 </ul>
 </li>
+<li class="level1"><a href="#Paths">Bolt Code Paths</a><ul><li class="level2"><a href="#Default">Default Behaviour</a></li>
+<li class="level2"><a href="#Force">Force Behaviour</a></li>
+</ul>
+</li>
 <li class="level1"><a href="#Requirements">Requirements</a></li>
 </ul>
 </div>
@@ -187,13 +191,36 @@ Templatized Bolt Functor</h2>
 <div class="line">    <a class="code" href="group__CL-sort.html#ga7720660d4a8dee06ea5314d3a1db7db3" title="This version of sort returns the sorted result of all the elements in the RandomAccessIterator betwee...">bolt::cl::sort</a>( boltInput.begin( ), boltInput.end( ), bolt::cl::greater&lt;myfunctor&gt;() );</div>
 <div class="line">}</div>
 </div><!-- fragment --><p> If the user wants to use TEMPLATE_FUNCTOR for more than one datatype then he can use other variants of this like BOLT_TEMPLATE_FUNCTOR2, BOLT_TEMPLATE_FUNCTOR3 etc from <a class="el" href="clcode_8h.html" title="Defines macros to help the user create code with C++ semantics for OpenCL kernels.">include/bolt/cl/clcode.h</a> file.</p>
+<h1><a class="anchor" id="Paths"></a>
+Bolt Code Paths</h1>
+<h2><a class="anchor" id="Default"></a>
+Default Behaviour</h2>
+<p>Bolt function can be executed with three code paths(GPU, Multicore CPU and Serial). The default mode is "Automatic" which means it will go into OpenCL&trade; path first, then TBB (Intel), then SerialCpu with below mentioned order. The control will go to other paths only if the selected one not found.</p>
+<p>Selection order will be: </p>
+<ul>
+<li>Run on GPU if AMD GPU is found and AMD APP SDK is installed. </li>
+<li>Run on Multicore CPU if Intel TBB is installed. </li>
+<li>Run CPU serial path.</li>
+</ul>
+<h2><a class="anchor" id="Force"></a>
+Force Behaviour</h2>
+<p>Forcing mode to any device will run the function on that device only. There are two ways in BOLT to force the control to specific Device.</p>
+<ol type="1">
+<li><b> Setting control to Device Globally: </b> <div class="fragment"><div class="line"><a class="code" href="classbolt_1_1cl_1_1control.html">bolt::cl::control</a>&amp; myControl = <a class="code" href="group__CL-control.html#ga59712ff5a77d3714f716d85938705289">bolt::cl::control::getDefault</a>( );</div>
+<div class="line">  myControl.waitMode( bolt::cl::control::NiceWait );</div>
+<div class="line">  myControl.<a class="code" href="group__CL-control.html#gab2ae4ea074dd26814f6356d884cc2146">setForceRunMode</a>( bolt::cl::control::OpenCL );</div>
+</div><!-- fragment --></li>
+<li><b> Setting control to Device locally </b> <div class="fragment"><div class="line"><a class="code" href="classbolt_1_1amp_1_1control.html">bolt::amp::control</a> ctl = <a class="code" href="group__control.html#gaffa8e713ecb8bd1ee469c3565e046a62">bolt::amp::control::getDefault</a>( );</div>
+<div class="line"> ctl.<a class="code" href="group__control.html#ga3e51894078b4d33db3aa97fc30ac24b4">setForceRunMode</a>(bolt::amp::control::OpenCL);</div>
+</div><!-- fragment --> This will set the control to specified device locally, passing this control object to BOLT function enables specified device path only for that function, so reference to any BOLT function will always run specified device path.</li>
+</ol>
 <h1><a class="anchor" id="Requirements"></a>
 Requirements</h1>
-<p>Bolt requires an OpenCL<sup>TM</sup> implementation that supports the static C++ kernel features; specifically, C++ template support for OpenCL<sup>TM</sup> kernels. Currently, the AMD OpenCL<sup>TM</sup> SDK 2.7 provides this support; other vendors may adopt this feature in the future. Currently BOLT is tested with AMD HD7970 TAHITI card only. Future plan is to test across multiple platforms. If you face any issue with any other AMD HD7000 family of cards and above. Please log an issue in <a href="https://github.com/HSA-Libraries/bolt/issues">BOLT Issues page</a>. </p>
+<p>Bolt requires an OpenCL<sup>TM</sup> implementation that supports the static C++ kernel features; specifically, C++ template support for OpenCL<sup>TM</sup> kernels. Currently, the AMD OpenCL<sup>TM</sup> SDK 2.7 provides this support; other vendors may adopt this feature in the future. If you face any issue with any AMD HD7000 family of cards and APU(Richland and Trinity). Please log an issue in <a href="https://github.com/HSA-Libraries/bolt/issues">BOLT Issues page</a>. </p>
 </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Apr 2 2013 20:37:28 for Bolt Beta by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Apr 12 2013 10:32:29 for Bolt Beta by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.3
 </small></address>

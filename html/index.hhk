@@ -5,7 +5,6 @@
 </OBJECT>
 <UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="cl_2bolt_8h.html#af1b68fb4ba71d72d397f46a730f03f2f"><param name="Name" value="__CL_ENABLE_EXCEPTIONS"></OBJECT>
-  <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1detail_1_1CountIfEqual.html#aff2ad7cf22639a7a07c3da02174021fb"><param name="Name" value="__pad0__"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1synchronized__view.html#ada251ba1a51718c258ed22181b365026"><param name="Name" value="_Access"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1ArrayPool_1_1PoolEntry.html#aef38cc5aa09fb9ed538b8b839a1a2740"><param name="Name" value="_dBuffer"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1ArrayPool_1_1PoolEntry.html#a3f46a7f32cb7f9c155875b98a6d97782"><param name="Name" value="_stagingBuffer"></OBJECT>
@@ -26,8 +25,8 @@
   <LI><OBJECT type="text/sitemap"><param name="Local" value="group__amp-counting.html"><param name="Name" value="Amp-counting"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="group__amp-counting.html"><param name="Name" value="amp-counting"></OBJECT>
   <UL>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__amp-counting.html#gabe5da1f166af70bfd313561d96644bdc"><param name="Name" value="count"></OBJECT>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__amp-counting.html#gab0b8daa4c17258657bfc055d18c87088"><param name="Name" value="count_if"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__amp-counting.html#gad3782886c9fe9bc57a9c1a9fedca9ea4"><param name="Name" value="count"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__amp-counting.html#ga1f99b47f7420737186c5deebfba5c6f6"><param name="Name" value="count_if"></OBJECT>
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="group__amp-reduce.html"><param name="Name" value="Amp-reduce"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="group__amp-reduce.html"><param name="Name" value="amp-reduce"></OBJECT>
@@ -52,8 +51,8 @@
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="amp_2count_8h.html"><param name="Name" value="amp/count.h"></OBJECT>
   <UL>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="amp_2count_8h.html#gabe5da1f166af70bfd313561d96644bdc"><param name="Name" value="count"></OBJECT>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="amp_2count_8h.html#gab0b8daa4c17258657bfc055d18c87088"><param name="Name" value="count_if"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="amp_2count_8h.html#gad3782886c9fe9bc57a9c1a9fedca9ea4"><param name="Name" value="count"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="amp_2count_8h.html#ga1f99b47f7420737186c5deebfba5c6f6"><param name="Name" value="count_if"></OBJECT>
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="amp_2reduce_8h.html"><param name="Name" value="amp/reduce.h"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="amp_2scan_8h.html"><param name="Name" value="amp/scan.h"></OBJECT>
@@ -165,10 +164,10 @@
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1detail_1_1CountIfEqual.html"><param name="Name" value="bolt::amp::detail::CountIfEqual"></OBJECT>
   <UL>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1detail_1_1CountIfEqual.html#aff2ad7cf22639a7a07c3da02174021fb"><param name="Name" value="__pad0__"></OBJECT>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1detail_1_1CountIfEqual.html#a772a370de96e998271c90adcbbdf4a74"><param name="Name" value="CountIfEqual"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1detail_1_1CountIfEqual.html#a423c66478f58435e77dd2fb2a126f61b"><param name="Name" value="CountIfEqual"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1detail_1_1CountIfEqual.html#a24c81fd0ccf2f204d3718bcf98cf9f97"><param name="Name" value="cpu"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1detail_1_1CountIfEqual.html#a9ee01482332a38942d3ec1531f82a034"><param name="Name" value="operator()"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1detail_1_1CountIfEqual.html#af04f7ef6169e2ab42a6114a1fa12e7de"><param name="Name" value="x"></OBJECT>
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1device__vector.html"><param name="Name" value="bolt::amp::device_vector"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1device__vector_1_1const__reference__base.html"><param name="Name" value="bolt::amp::device_vector::const_reference_base"></OBJECT>
@@ -351,8 +350,8 @@
   <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1unary__function.html"><param name="Name" value="bolt::amp::unary_function"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html"><param name="Name" value="bolt::amp"></OBJECT>
   <UL>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#gabe5da1f166af70bfd313561d96644bdc"><param name="Name" value="count"></OBJECT>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#gab0b8daa4c17258657bfc055d18c87088"><param name="Name" value="count_if"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#gad3782886c9fe9bc57a9c1a9fedca9ea4"><param name="Name" value="count"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#ga1f99b47f7420737186c5deebfba5c6f6"><param name="Name" value="count_if"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#ga19d5200c9b608c7409a588a3ff5b7c1f"><param name="Name" value="exclusive_scan"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#aecbd83ae96bb6ea1e6f5b1d72b0ed343"><param name="Name" value="getVersion"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1amp.html#gaf8552608c570f33a7b3b018a8cedd852"><param name="Name" value="inclusive_scan"></OBJECT>
@@ -822,7 +821,7 @@
   <LI><OBJECT type="text/sitemap"><param name="Local" value="bug.html"><param name="Name" value="Bug List"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="buildingBolt.html"><param name="Name" value="Building Bolt"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="buildingExamples.html"><param name="Name" value="Building Bolt Example Programs"></OBJECT>
-  <LI><OBJECT type="text/sitemap"><param name="Local" value="buildingTBB.html"><param name="Name" value="Building TBB (Intel &reg;) with Bolt"></OBJECT>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="buildingTBB.html"><param name="Name" value="Building TBB (Intel) with Bolt"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1device__vector.html#afa36cb327688c4c54b8f682af3a31c12"><param name="Name" value="capacity"></OBJECT>
   <UL>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1device__vector.html#afa36cb327688c4c54b8f682af3a31c12"><param name="Name" value="bolt::amp::device_vector"></OBJECT>
@@ -1150,20 +1149,20 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__CL-copy.html#ga8151b13733fc985661375fd20daa95b6"><param name="Name" value="copy.h"></OBJECT>
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="group__copying.html"><param name="Name" value="Copying"></OBJECT>
-  <LI><OBJECT type="text/sitemap"><param name="Local" value="group__amp-counting.html#gabe5da1f166af70bfd313561d96644bdc"><param name="Name" value="count"></OBJECT>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="group__amp-counting.html#gad3782886c9fe9bc57a9c1a9fedca9ea4"><param name="Name" value="count"></OBJECT>
   <UL>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__amp-counting.html#gabe5da1f166af70bfd313561d96644bdc"><param name="Name" value="amp-counting"></OBJECT>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__amp-counting.html#gabe5da1f166af70bfd313561d96644bdc"><param name="Name" value="amp/count.h"></OBJECT>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__amp-counting.html#gabe5da1f166af70bfd313561d96644bdc"><param name="Name" value="bolt::amp"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__amp-counting.html#gad3782886c9fe9bc57a9c1a9fedca9ea4"><param name="Name" value="amp-counting"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__amp-counting.html#gad3782886c9fe9bc57a9c1a9fedca9ea4"><param name="Name" value="amp/count.h"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__amp-counting.html#gad3782886c9fe9bc57a9c1a9fedca9ea4"><param name="Name" value="bolt::amp"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__CL-counting.html#ga435aec45805217f60fdb0d9fa1d27bb7"><param name="Name" value="bolt::cl"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__CL-counting.html#ga435aec45805217f60fdb0d9fa1d27bb7"><param name="Name" value="CL-counting"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__CL-counting.html#ga435aec45805217f60fdb0d9fa1d27bb7"><param name="Name" value="cl/count.h"></OBJECT>
   </UL>
-  <LI><OBJECT type="text/sitemap"><param name="Local" value="group__amp-counting.html#gab0b8daa4c17258657bfc055d18c87088"><param name="Name" value="count_if"></OBJECT>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="group__amp-counting.html#ga1f99b47f7420737186c5deebfba5c6f6"><param name="Name" value="count_if"></OBJECT>
   <UL>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__amp-counting.html#gab0b8daa4c17258657bfc055d18c87088"><param name="Name" value="amp-counting"></OBJECT>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__amp-counting.html#gab0b8daa4c17258657bfc055d18c87088"><param name="Name" value="amp/count.h"></OBJECT>
-    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__amp-counting.html#gab0b8daa4c17258657bfc055d18c87088"><param name="Name" value="bolt::amp"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__amp-counting.html#ga1f99b47f7420737186c5deebfba5c6f6"><param name="Name" value="amp-counting"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__amp-counting.html#ga1f99b47f7420737186c5deebfba5c6f6"><param name="Name" value="amp/count.h"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="group__amp-counting.html#ga1f99b47f7420737186c5deebfba5c6f6"><param name="Name" value="bolt::amp"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__CL-counting.html#ga662cd6dc9ea399244a2cd8c2f764c611"><param name="Name" value="bolt::cl"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__CL-counting.html#ga662cd6dc9ea399244a2cd8c2f764c611"><param name="Name" value="CL-counting"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__CL-counting.html#ga662cd6dc9ea399244a2cd8c2f764c611"><param name="Name" value="cl/count.h"></OBJECT>
@@ -1173,7 +1172,7 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1cl.html#a6f263c32fc2ad9d1fde3b6aef640b004"><param name="Name" value="bolt::cl"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1cl.html#a6f263c32fc2ad9d1fde3b6aef640b004"><param name="Name" value="cl/bolt.h"></OBJECT>
   </UL>
-  <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1detail_1_1CountIfEqual.html#a772a370de96e998271c90adcbbdf4a74"><param name="Name" value="CountIfEqual"></OBJECT>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1detail_1_1CountIfEqual.html#a423c66478f58435e77dd2fb2a126f61b"><param name="Name" value="CountIfEqual"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1detail_1_1CountIfEqual.html#a24c81fd0ccf2f204d3718bcf98cf9f97"><param name="Name" value="cpu"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1device__vector.html#a5adeba7bbe408754dfba3814314a4ac9"><param name="Name" value="crbegin"></OBJECT>
   <UL>
@@ -1735,8 +1734,11 @@
   <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1cl_1_1ProgramMapValue.html#af99ae5c1002c1c950fabb3f6444bf9d3"><param name="Name" value="program"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1cl.html#aa788480e96d351a0719acd6e71909856"><param name="Name" value="ProgramMap"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1cl.html#a78bfa97be96f77df5db6ebc8c8a34192"><param name="Name" value="programMap"></OBJECT>
+  <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1cl.html#a78bfa97be96f77df5db6ebc8c8a34192"><param name="Name" value="bolt::cl"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1cl.html#a78bfa97be96f77df5db6ebc8c8a34192"><param name="Name" value="cl/bolt.h"></OBJECT>
+  </UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1cl.html#aa788480e96d351a0719acd6e71909856"><param name="Name" value="ProgramMap"></OBJECT>
-  <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1cl.html#a78bfa97be96f77df5db6ebc8c8a34192"><param name="Name" value="programMap"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1cl.html#ab22c2b00c5aebe16bb2763a0833f3bc4"><param name="Name" value="programMapMutex"></OBJECT>
   <UL>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1cl.html#ab22c2b00c5aebe16bb2763a0833f3bc4"><param name="Name" value="bolt::cl"></OBJECT>
@@ -2100,8 +2102,11 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="group__CL-control.html#ga3a60a46ca2d52aa788d589ef729c1a65"><param name="Name" value="CL-control"></OBJECT>
   </UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1cl.html#aee08a3741d7d306bccbd5f5f308c3d39"><param name="Name" value="V_OpenCL"></OBJECT>
+  <UL>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1cl.html#aee08a3741d7d306bccbd5f5f308c3d39"><param name="Name" value="bolt::cl"></OBJECT>
+    <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1cl.html#aee08a3741d7d306bccbd5f5f308c3d39"><param name="Name" value="cl/bolt.h"></OBJECT>
+  </UL>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="cl_2bolt_8h.html#a86aa5bc653847452d5817663bb94edc7"><param name="Name" value="V_OPENCL"></OBJECT>
-  <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1cl.html#aee08a3741d7d306bccbd5f5f308c3d39"><param name="Name" value="V_OpenCL"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1cl_1_1tuple__size_3_01pair_3_01T1_00_01T2_01_4_01_4.html#a26abab8f0bfb7c291abeb3020daaf6bd"><param name="Name" value="value"></OBJECT>
   <LI><OBJECT type="text/sitemap"><param name="Local" value="classbolt_1_1amp_1_1device__vector.html#a6b79197b8b185e6256dced0ed0ed75d5"><param name="Name" value="value_type"></OBJECT>
   <UL>
@@ -2115,6 +2120,7 @@
     <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1cl.html#aae75f86cee9f23a2c950ce732e164593"><param name="Name" value="bolt::cl"></OBJECT>
     <LI><OBJECT type="text/sitemap"><param name="Local" value="namespacebolt_1_1cl.html#aae75f86cee9f23a2c950ce732e164593"><param name="Name" value="cl/bolt.h"></OBJECT>
   </UL>
+  <LI><OBJECT type="text/sitemap"><param name="Local" value="structbolt_1_1amp_1_1detail_1_1CountIfEqual.html#af04f7ef6169e2ab42a6114a1fa12e7de"><param name="Name" value="x"></OBJECT>
 </UL>
 </BODY>
 </HTML>

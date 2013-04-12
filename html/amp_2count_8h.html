@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.3"/>
-<title>Bolt Beta: C:/Project/BOLT/bolt/fresh_co/Bolt/include/bolt/amp/count.h File Reference</title>
+<title>Bolt Beta: C:/Jay_Win8/BOLT/hsa_bolt/include/bolt/amp/count.h File Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -46,7 +46,7 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="dir_d85ff93a7a0b95ef0beebd3e71ac10ab.html">Bolt</a></li><li class="navelem"><a class="el" href="dir_aff3fb4e33c4e3fda3d8a9e0453099eb.html">include</a></li><li class="navelem"><a class="el" href="dir_26e99746cae57718948b6048b12f1b53.html">bolt</a></li><li class="navelem"><a class="el" href="dir_2d7738e7bd40514dbf779f49aba56bc1.html">amp</a></li>  </ul>
+<li class="navelem"><a class="el" href="dir_9851deb669ed8df5ba5fd399e2ebe56c.html">hsa_bolt</a></li><li class="navelem"><a class="el" href="dir_958292f73b3ae70a9502decc70ac6188.html">include</a></li><li class="navelem"><a class="el" href="dir_97913691ce5893d99a5e47223e40881c.html">bolt</a></li><li class="navelem"><a class="el" href="dir_0f6089b7f8cd65f1534cbc8cd2086175.html">amp</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
@@ -64,15 +64,14 @@
 <a href="#details">More...</a></p>
 <div class="textblock"><code>#include &quot;<a class="el" href="amp_2bolt_8h_source.html">bolt/amp/bolt.h</a>&quot;</code><br/>
 <code>#include &quot;<a class="el" href="amp_2functional_8h_source.html">bolt/amp/functional.h</a>&quot;</code><br/>
-<code>#include &quot;<a class="el" href="amp_2transform__reduce_8h_source.html">bolt/amp/transform_reduce.h</a>&quot;</code><br/>
 <code>#include &quot;bolt/amp/iterator/iterator_traits.h&quot;</code><br/>
+<code>#include &lt;bolt/amp/detail/count.inl&gt;</code><br/>
 </div>
 <p><a href="amp_2count_8h_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
 Classes</h2></td></tr>
 <tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structbolt_1_1amp_1_1detail_1_1CountIfEqual.html">bolt::amp::detail::CountIfEqual&lt; T &gt;</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight"><a class="el" href="structbolt_1_1amp_1_1detail_1_1CountIfEqual.html" title="CountIfEqual: A bolt functor which matches if the object value is same as the input value...">CountIfEqual</a>: A bolt functor which matches if the object value is same as the input value.  <a href="structbolt_1_1amp_1_1detail_1_1CountIfEqual.html#details">More...</a><br/></td></tr>
 <tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="namespaces"></a>
@@ -86,37 +85,37 @@ Namespaces</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
-<tr class="memitem:gabe5da1f166af70bfd313561d96644bdc"><td class="memTemplParams" colspan="2">template&lt;typename InputIterator , typename EqualityComparable &gt; </td></tr>
-<tr class="memitem:gabe5da1f166af70bfd313561d96644bdc"><td class="memTemplItemLeft" align="right" valign="top">bolt::amp::iterator_traits<br class="typebreak"/>
+<tr class="memitem:gad3782886c9fe9bc57a9c1a9fedca9ea4"><td class="memTemplParams" colspan="2">template&lt;typename InputIterator , typename EqualityComparable &gt; </td></tr>
+<tr class="memitem:gad3782886c9fe9bc57a9c1a9fedca9ea4"><td class="memTemplItemLeft" align="right" valign="top">bolt::amp::iterator_traits<br class="typebreak"/>
 &lt; InputIterator &gt;<br class="typebreak"/>
-::difference_type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__amp-counting.html#gabe5da1f166af70bfd313561d96644bdc">bolt::amp::count</a> (control &amp;ctl, InputIterator first, InputIterator last, EqualityComparable &amp;value)</td></tr>
-<tr class="memdesc:gabe5da1f166af70bfd313561d96644bdc"><td class="mdescLeft">&#160;</td><td class="mdescRight"><code>count</code> counts the number of elements in the specified range which compare equal to the specified <code>value</code>.  <a href="group__amp-counting.html#gabe5da1f166af70bfd313561d96644bdc"></a><br/></td></tr>
-<tr class="separator:gabe5da1f166af70bfd313561d96644bdc"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga977e690c5a6223ffe376d70a89edf7a1"><td class="memTemplParams" colspan="2"><a class="anchor" id="ga977e690c5a6223ffe376d70a89edf7a1"></a>
+::difference_type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__amp-counting.html#gad3782886c9fe9bc57a9c1a9fedca9ea4">bolt::amp::count</a> (control &amp;ctl, InputIterator first, InputIterator last, const EqualityComparable &amp;value)</td></tr>
+<tr class="memdesc:gad3782886c9fe9bc57a9c1a9fedca9ea4"><td class="mdescLeft">&#160;</td><td class="mdescRight"><code>count</code> counts the number of elements in the specified range which compare equal to the specified <code>value</code>.  <a href="group__amp-counting.html#gad3782886c9fe9bc57a9c1a9fedca9ea4"></a><br/></td></tr>
+<tr class="separator:gad3782886c9fe9bc57a9c1a9fedca9ea4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga0befd872f303bae2f526397a0a331cf5"><td class="memTemplParams" colspan="2"><a class="anchor" id="ga0befd872f303bae2f526397a0a331cf5"></a>
 template&lt;typename InputIterator , typename EqualityComparable &gt; </td></tr>
-<tr class="memitem:ga977e690c5a6223ffe376d70a89edf7a1"><td class="memTemplItemLeft" align="right" valign="top">bolt::amp::iterator_traits<br class="typebreak"/>
+<tr class="memitem:ga0befd872f303bae2f526397a0a331cf5"><td class="memTemplItemLeft" align="right" valign="top">bolt::amp::iterator_traits<br class="typebreak"/>
 &lt; InputIterator &gt;<br class="typebreak"/>
-::difference_type&#160;</td><td class="memTemplItemRight" valign="bottom"><b>bolt::amp::count</b> (InputIterator first, InputIterator last, EqualityComparable &amp;value)</td></tr>
-<tr class="separator:ga977e690c5a6223ffe376d70a89edf7a1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gab0b8daa4c17258657bfc055d18c87088"><td class="memTemplParams" colspan="2">template&lt;typename InputIterator , typename Predicate &gt; </td></tr>
-<tr class="memitem:gab0b8daa4c17258657bfc055d18c87088"><td class="memTemplItemLeft" align="right" valign="top">bolt::amp::iterator_traits<br class="typebreak"/>
+::difference_type&#160;</td><td class="memTemplItemRight" valign="bottom"><b>bolt::amp::count</b> (InputIterator first, InputIterator last, const EqualityComparable &amp;value)</td></tr>
+<tr class="separator:ga0befd872f303bae2f526397a0a331cf5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga1f99b47f7420737186c5deebfba5c6f6"><td class="memTemplParams" colspan="2">template&lt;typename InputIterator , typename Predicate &gt; </td></tr>
+<tr class="memitem:ga1f99b47f7420737186c5deebfba5c6f6"><td class="memTemplItemLeft" align="right" valign="top">bolt::amp::iterator_traits<br class="typebreak"/>
 &lt; InputIterator &gt;<br class="typebreak"/>
-::difference_type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__amp-counting.html#gab0b8daa4c17258657bfc055d18c87088">bolt::amp::count_if</a> (control &amp;ctl, InputIterator first, InputIterator last, Predicate predicate)</td></tr>
-<tr class="memdesc:gab0b8daa4c17258657bfc055d18c87088"><td class="mdescLeft">&#160;</td><td class="mdescRight"><code>count_if</code> counts the number of elements in the specified range for which the specified <code>predicate</code> is <code>true</code>.  <a href="group__amp-counting.html#gab0b8daa4c17258657bfc055d18c87088"></a><br/></td></tr>
-<tr class="separator:gab0b8daa4c17258657bfc055d18c87088"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga7196405cbf3c4963e6c4219f5e00ceea"><td class="memTemplParams" colspan="2"><a class="anchor" id="ga7196405cbf3c4963e6c4219f5e00ceea"></a>
+::difference_type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__amp-counting.html#ga1f99b47f7420737186c5deebfba5c6f6">bolt::amp::count_if</a> (control &amp;ctl, InputIterator first, InputIterator last, Predicate predicate=<a class="el" href="structbolt_1_1amp_1_1detail_1_1CountIfEqual.html">bolt::amp::detail::CountIfEqual</a>&lt; int &gt;())</td></tr>
+<tr class="memdesc:ga1f99b47f7420737186c5deebfba5c6f6"><td class="mdescLeft">&#160;</td><td class="mdescRight"><code>count_if</code> counts the number of elements in the specified range for which the specified <code>predicate</code> is <code>true</code>.  <a href="group__amp-counting.html#ga1f99b47f7420737186c5deebfba5c6f6"></a><br/></td></tr>
+<tr class="separator:ga1f99b47f7420737186c5deebfba5c6f6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gac2fa9d1e677ed42ee1f8265754ae5f44"><td class="memTemplParams" colspan="2"><a class="anchor" id="gac2fa9d1e677ed42ee1f8265754ae5f44"></a>
 template&lt;typename InputIterator , typename Predicate &gt; </td></tr>
-<tr class="memitem:ga7196405cbf3c4963e6c4219f5e00ceea"><td class="memTemplItemLeft" align="right" valign="top">bolt::amp::iterator_traits<br class="typebreak"/>
+<tr class="memitem:gac2fa9d1e677ed42ee1f8265754ae5f44"><td class="memTemplItemLeft" align="right" valign="top">bolt::amp::iterator_traits<br class="typebreak"/>
 &lt; InputIterator &gt;<br class="typebreak"/>
 ::difference_type&#160;</td><td class="memTemplItemRight" valign="bottom"><b>bolt::amp::count_if</b> (InputIterator first, InputIterator last, Predicate predicate)</td></tr>
-<tr class="separator:ga7196405cbf3c4963e6c4219f5e00ceea"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="separator:gac2fa9d1e677ed42ee1f8265754ae5f44"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><p>Counts the number of elements in the specified range. </p>
 </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Apr 2 2013 20:37:22 for Bolt Beta by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Apr 12 2013 10:32:28 for Bolt Beta by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.3
 </small></address>
