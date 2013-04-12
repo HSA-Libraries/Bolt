@@ -202,10 +202,17 @@ namespace cl
             public:
                 typedef typename iterator_facade::difference_type difference_type;
 
+            //  This class represents the iterator data transferred to the openCL device.  Transferring pointers is tricky,
+            //  the only reason we allocate space for a pointer in this payload is because the openCl clSetKernelArg() checks the
+            //  size ( bytes ) of the argument passed in, and the corresponding GPU iterator has a pointer member.  
+            //  The value of the pointer is not relevant on host side, and is initialized on the device side with the init method 
+            //  This size of the payload needs to be able to encapsulate both 32bit and 64bit devices
+            //  sizeof( 32bit device payload ) = 32bit index & 32bit pointer = 8 bytes
+            //  sizeof( 64bit device payload ) = 32bit index & 64bit aligned pointer = 16 bytes
             struct Payload
             {
                 typename iterator_facade::difference_type m_Index;
-                typename iterator_facade::difference_type m_Ptr;        // This is a pseudo 32bit pointer stub
+                typename iterator_facade::difference_type m_Ptr1[ 3 ];  // Represents device pointer, big enough for 32 or 64bit
             };
 
                 //  Basic constructor requires a reference to the container and a positional element
@@ -266,15 +273,30 @@ namespace cl
                 return m_Container;
             }
 
+            //  This method initializes the payload of the iterator for the cl device; the contents of the pointer is 0 as it has no relevance
+            //  on the host
             Payload gpuPayload( ) const
             {
-                Payload payload = { m_Index, 0 };
+                Payload payload = { m_Index, { 0, 0, 0 } };
                 return payload;
             }
 
+            //  Calculates the size of payload for the cl device.  The bitness of the device is independant of the host and must be 
+            //  queried.  The bitness of the device determines the size of the pointer contained in the payload.  64bit pointers must
+            //  be 8 byte aligned, so 
             const typename iterator_facade::difference_type gpuPayloadSize( ) const
             {
-                return sizeof( Payload );
+                cl_int l_Error = CL_SUCCESS;
+                cl_uint deviceBits = m_Container.m_commQueue.getInfo< CL_QUEUE_DEVICE >( &l_Error ).getInfo< CL_DEVICE_ADDRESS_BITS >( );
+
+                //  Size of index and pointer
+                typename iterator_facade::difference_type payloadSize = sizeof( iterator_facade::difference_type ) + ( deviceBits >> 3 );
+
+                //  64bit devices need to add padding for 8 byte aligned pointer
+                if( deviceBits == 64 )
+                    payloadSize += 4;
+
+                return payloadSize;
             }
 
             typename iterator_facade::difference_type m_Index;
@@ -306,8 +328,6 @@ namespace cl
                 {
                     advance( -1 );
                 }
-
-
 
                 template< typename OtherContainer >
                 bool equal( const iterator_base< OtherContainer >& rhs ) const
@@ -410,8 +430,6 @@ namespace cl
                 {
                     advance( 1 );
                 }
-
-
 
                 template< typename OtherContainer >
                 bool equal( const reverse_iterator_base< OtherContainer >& lhs ) const
@@ -1496,8 +1514,8 @@ namespace cl
             public:
                 typedef int iterator_category;      // device code does not understand std:: tags  \n
                 typedef T value_type; \n
-                typedef size_t difference_type; \n
-                typedef size_t size_type; \n
+                typedef int difference_type; \n
+                typedef int size_type; \n
                 typedef T* pointer; \n
                 typedef T& reference; \n
 

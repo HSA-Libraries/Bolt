@@ -635,9 +635,7 @@ void simpleMinele_countingiterator(int start,int size)
     checkResult("TestSerial", *stlReduce, *boltReduce);
 };
 
-//  Temporarily disabling this test because we have a known issue running on the CPU device with our 
-//  Bolt iterators
-TEST( Min_Element , DISABLED_KcacheTest )
+TEST( Min_Element , KcacheTest )
 {
     //setup containers
     unsigned int length = 1024;
@@ -650,7 +648,6 @@ TEST( Min_Element , DISABLED_KcacheTest )
     //Call reduce with GPU device because the default is a GPU device
     bolt::cl::control ctrl = bolt::cl::control::getDefault();
     bolt::cl::device_vector< int > gpuInput( refInput.begin(), refInput.end() );
-    bolt::cl::device_vector< int >::iterator   boltGpuMin = bolt::cl::min_element( ctrl, gpuInput.begin(), gpuInput.end() );
 
     //Call reduce with CPU device
     ::cl::Context cpuContext(CL_DEVICE_TYPE_CPU);
@@ -667,13 +664,14 @@ TEST( Min_Element , DISABLED_KcacheTest )
     }
     ::cl::CommandQueue myQueue( cpuContext, selectedDevice );
     bolt::cl::control cpu_ctrl( myQueue );  // construct control structure from the queue.
-    bolt::cl::device_vector< int > cpuInput( refInput.begin(), refInput.end() );
+    bolt::cl::device_vector< int > cpuInput( refInput.begin( ), refInput.end( ), CL_MEM_READ_ONLY, cpu_ctrl );
+
+    bolt::cl::device_vector< int >::iterator boltGpuMin = bolt::cl::min_element( ctrl, gpuInput.begin(), gpuInput.end() );
+
     bolt::cl::device_vector< int >::iterator boltCpuMin= bolt::cl::min_element( cpu_ctrl, cpuInput.begin(), cpuInput.end() );
 
-    std::vector< int >::iterator stdCpuMin;
     //Call reference code
-    stdCpuMin =  std::min_element( refInput.begin(), refInput.end());
-
+    std::vector< int >::iterator stdCpuMin =  std::min_element( refInput.begin(), refInput.end());
 
     EXPECT_EQ(*boltGpuMin,*stdCpuMin);
     EXPECT_EQ(*boltCpuMin,*stdCpuMin);

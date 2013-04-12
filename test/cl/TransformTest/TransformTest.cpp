@@ -1318,7 +1318,7 @@ TEST(cl_const_iter_transformBoltClVectFloat, addIterFloatValues){
 
 //  Temporarily disabling this test because we have a known issue running on the CPU device with our 
 //  Bolt iterators
-TEST( Transformint ,  DISABLED_KcacheTest )
+TEST( Transformint , KcacheTest )
 {
     //setup containers
     unsigned int length = 1024;
@@ -1336,7 +1336,11 @@ TEST( Transformint ,  DISABLED_KcacheTest )
     bolt::cl::device_vector< int >gpuInput( refInput.begin(), refInput.end() );
     bolt::cl::device_vector< int >gpuOutput( refOutput.begin(), refOutput.end() );
 
+    //Call reference code
+    std::transform( refInput.begin(), refInput.end(), refOutput.begin(), std::negate<int>());
+
     bolt::cl::transform( ctrl, gpuInput.begin(), gpuInput.end(), gpuOutput.begin(), bolt::cl::negate<int>() );
+    cmpArrays( refOutput, gpuOutput );
 
     //Call reduce with CPU device
     ::cl::Context cpuContext(CL_DEVICE_TYPE_CPU);
@@ -1353,14 +1357,12 @@ TEST( Transformint ,  DISABLED_KcacheTest )
     }
     ::cl::CommandQueue myQueue( cpuContext, selectedDevice );
     bolt::cl::control cpu_ctrl( myQueue );  // construct control structure from the queue.
-    bolt::cl::device_vector< int > cpuInput( refInput.begin(), refInput.end() );
-    bolt::cl::device_vector< int > cpuOutput( refOutput.begin(), refOutput.end() );
+    bolt::cl::device_vector< int > cpuInput( refInput.begin( ), refInput.end( ), CL_MEM_READ_ONLY, cpu_ctrl );
+    bolt::cl::device_vector< int > cpuOutput( refOutput.begin( ), refOutput.end( ), CL_MEM_WRITE_ONLY, cpu_ctrl );
 
     bolt::cl::transform( cpu_ctrl, cpuInput.begin(), cpuInput.end(), cpuOutput.begin() , bolt::cl::negate<int>());
 
-    //Call reference code
-    std::transform( refInput.begin(), refInput.end(), refOutput.begin(), std::negate<int>());
-    cmpArrays(cpuOutput,gpuOutput);
+    cmpArrays( refOutput, cpuOutput );
 }
 
 

@@ -1300,6 +1300,8 @@ TEST(TransformReduce, MultiCoreFloat)
     EXPECT_FLOAT_EQ( stdReduce, boldReduce );
   
 } 
+
+
 TEST(TransformReduce, MultiCoreDouble)
 {
      int length = 1<<24;
@@ -1475,7 +1477,7 @@ TEST(TransformReduce, DeviceVectorUDD)
 
 //  Temporarily disabling this test because we have a known issue running on the CPU device with our 
 //  Bolt iterators
-TEST( TransformReduceInt ,  DISABLED_KcacheTest )
+TEST( TransformReduceInt , KcacheTest )
 {
     //setup containers
     unsigned int length = 1024;
@@ -1513,7 +1515,7 @@ TEST( TransformReduceInt ,  DISABLED_KcacheTest )
     }
     ::cl::CommandQueue myQueue( cpuContext, selectedDevice );
     bolt::cl::control cpu_ctrl( myQueue );  // construct control structure from the queue.
-    bolt::cl::device_vector< int > cpuInput( refInput.begin(), refInput.end() );
+    bolt::cl::device_vector< int > cpuInput( refInput.begin( ), refInput.end( ), CL_MEM_READ_ONLY, cpu_ctrl );
 
     resultCPU_OCL = bolt::cl::transform_reduce( cpu_ctrl, cpuInput.begin(), cpuInput.end(), bolt::cl::negate<int>(), initzero, bolt::cl::plus<int>());
 
@@ -1521,7 +1523,8 @@ TEST( TransformReduceInt ,  DISABLED_KcacheTest )
     std::transform( refInput.begin(), refInput.end(), temp.begin(), std::negate<int>() );
     resultCPU_STL = std::accumulate( temp.begin(), temp.end(), initzero );
 
-    EXPECT_EQ(resultCPU_OCL,resultCPU_STL);
+    EXPECT_EQ( resultCPU_STL, resultGPU_OCL );
+    EXPECT_EQ( resultCPU_STL, resultCPU_OCL );
 }
 
 TEST (cl_outputType_transform_reduce_sq_max, epr__all_raised){

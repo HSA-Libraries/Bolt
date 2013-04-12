@@ -1055,10 +1055,7 @@ TEST( ReduceUDD , UDDPlusOperatorInts )
 
 }
 
-
-//  Temporarily disabling this test because we have a known issue running on the CPU device with our 
-//  Bolt iterators
-TEST( Reduceint , DISABLED_KcacheTest )
+TEST( Reduceint , KcacheTest )
 {
     //setup containers
     unsigned int length = 1024;
@@ -1068,12 +1065,10 @@ TEST( Reduceint , DISABLED_KcacheTest )
       refInput[i] = i;
     }
 
+    bolt::cl::device_vector< int > gpuInput( refInput.begin(), refInput.end() );
+
     //Call reduce with GPU device because the default is a GPU device
     bolt::cl::control ctrl = bolt::cl::control::getDefault();
-    bolt::cl::device_vector< int >gpuInput( refInput.begin(), refInput.end() );
-
-    int initzero = 0;
-    int boltReduceGpu = bolt::cl::reduce( ctrl, gpuInput.begin(), gpuInput.end(), initzero );
 
     //Call reduce with CPU device
     ::cl::Context cpuContext(CL_DEVICE_TYPE_CPU);
@@ -1090,17 +1085,19 @@ TEST( Reduceint , DISABLED_KcacheTest )
     }
     ::cl::CommandQueue myQueue( cpuContext, selectedDevice );
     bolt::cl::control cpu_ctrl( myQueue );  // construct control structure from the queue.
-    bolt::cl::device_vector< int > cpuInput( refInput.begin(), refInput.end() );
+    bolt::cl::device_vector< int > cpuInput( refInput.begin( ), refInput.end( ), CL_MEM_READ_WRITE, cpu_ctrl );
+
+    int initzero = 0;
+    int boltReduceGpu = bolt::cl::reduce( ctrl, gpuInput.begin(), gpuInput.end(), initzero );
 
     int boltReduceCpu = bolt::cl::reduce( cpu_ctrl, cpuInput.begin(), cpuInput.end(), initzero );
 
     //Call reference code
     int stdReduce =  std::accumulate( refInput.begin(), refInput.end(), initzero );
+
     EXPECT_EQ(boltReduceGpu,stdReduce);
     EXPECT_EQ(boltReduceCpu,stdReduce);
 }
-
-
 
 INSTANTIATE_TYPED_TEST_CASE_P( Integer, ReduceArrayTest, IntegerTests );
 INSTANTIATE_TYPED_TEST_CASE_P( Float, ReduceArrayTest, FloatTests );
