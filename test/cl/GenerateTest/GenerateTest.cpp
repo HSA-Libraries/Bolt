@@ -22,6 +22,7 @@
 #include "common/myocl.h"
 #include "bolt/cl/generate.h"
 #include "bolt/cl/scan.h"
+
 //#include <bolt/miniDump.h>
 
 #include <gtest/gtest.h>
@@ -375,6 +376,87 @@ INSTANTIATE_TEST_CASE_P( GenSmall, HostDblVector, ::testing::Range( 3, 256, 3 ) 
 INSTANTIATE_TEST_CASE_P( GenLarge, HostDblVector, ::testing::Range( 1025, 1050000, 350007 ) );
 INSTANTIATE_TEST_CASE_P( GenSmall, DevDblVector,  ::testing::Range( 4, 256, 3 ) );
 INSTANTIATE_TEST_CASE_P( GenLarge, DevDblVector,  ::testing::Range( 1026, 1050000, 350011 ) );
+
+//////////////////////////////////////////////////////////////////////////////////////
+// Tests for EPRid#375981
+/////////////////////////////////////////////////////////////////////////////////////
+BOLT_FUNCTOR(ConstFunctor,
+struct ConstFunctor {
+int val;
+
+ConstFunctor(int a) : val(a) {
+}
+
+int operator() () {
+return val;
+}
+};
+);
+
+TEST(ControlObjectTests, GenIntegersSerialCpu)
+{
+
+int size = 100;
+ConstFunctor cf(1);
+std::vector<int> vec(size);
+bolt::cl::control ctl = bolt::cl::control::getDefault();
+ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+bolt::cl::generate_n(ctl, vec.begin(), size, cf);
+
+for (int i = 1 ; i < size; ++i){
+EXPECT_EQ(1, vec[i]);
+}
+
+}
+
+TEST(ControlObjectTests, GenIntegersAutomatic)
+{
+
+int size = 100;
+ConstFunctor cf(1);
+std::vector<int> vec(size);
+bolt::cl::control ctl = bolt::cl::control::getDefault();
+ctl.setForceRunMode(bolt::cl::control::Automatic);
+bolt::cl::generate_n(ctl, vec.begin(), size, cf);
+
+for (int i = 1 ; i < size; ++i){
+EXPECT_EQ(1, vec[i]);
+}
+
+}
+
+TEST(ControlObjectTests, GenIntegersMultiCoreCPU)
+{
+
+int size = 100;
+ConstFunctor cf(1);
+std::vector<int> vec(size);
+bolt::cl::control ctl = bolt::cl::control::getDefault();
+ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+bolt::cl::generate_n(ctl, vec.begin(), size, cf);
+
+for (int i = 1 ; i < size; ++i){
+EXPECT_EQ(1, vec[i]);
+}
+
+}
+
+
+TEST(ControlObjectTests, GenIntegersOpenCL)
+{
+
+int size = 100;
+ConstFunctor cf(1);
+std::vector<int> vec(size);
+bolt::cl::control ctl = bolt::cl::control::getDefault();
+ctl.setForceRunMode(bolt::cl::control::OpenCL);
+bolt::cl::generate_n(ctl, vec.begin(), size, cf);
+
+for (int i = 1 ; i < size; ++i){
+EXPECT_EQ(1, vec[i]);
+}
+
+}
 
 
 int main(int argc, char **argv)
