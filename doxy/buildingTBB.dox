@@ -63,12 +63,15 @@
 *  myControl.waitMode( bolt::cl::control::NiceWait );
 *  myControl.setForceRunMode( bolt::cl::control::MultiCoreCpu );
 *      \endcode
+* This will set the control to MultiCore CPU globally, So reference to any BOLT function will always run MultiCore CPU path.
 *   -# <b> Setting control to MuticoreCPU locally </b>
-*       \code bolt::amp::control ctl = bolt::amp::control::getDefault( );
-* ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu);
+*       \code bolt::cl::control myControl = bolt::cl::control::getDefault( );
+*  myControl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 *       \endcode
-* This will set the control to MultiCore CPU locally, passing this control object to BOLT function enables multicore 
-* path only for that function, so reference to any BOLT function will always run MultiCore CPU path.
+* This will set the control to MultiCore CPU locally, passing this control object as first parameter to BOLT function enables multicore 
+* path only for the calling function.
+*
+* AMP has same use case only CL namespace(bolt::cl) needs to be change to AMP(bolt::amp)
 *
 * <b>Other Scenarios: </b>
 *   -# Using MulticoreCPU flag with BOLT function, when TBB (Intel) is not installed on the machine will throw an exception
