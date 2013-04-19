@@ -195,17 +195,44 @@ __declspec( selectany ) std::vector<std::string> ClCode< Type >::dependencies;
                                                         + std::string("#endif \n"));
                                
 
+/*!
+ * Helper macro to define and specialize a template type for Bolt.  The code given as the macro vararg
+ * should be a template container that requires 1 template paramter.  The type passed into the TYPE1
+ * argument is used to fully specialize the template container into a concrete type for Bolt.
+ * \param CONTAINER Name  to associate with the code given in the macro variable argument
+ * \param TYPE1 Type used to fully specialize the template code given in the macro variable argument
+ * \param ... Arbitrary user defined code; expected to be a 1 argument template type
+ */
 #define BOLT_TEMPLATE_FUNCTOR1( CONTAINER, TYPE1, ... ) \
                     __VA_ARGS__; \
                     BOLT_CREATE_TYPENAME( CONTAINER<TYPE1> ) \
                     BOLT_CREATE_CLCODE( CONTAINER<TYPE1>, #__VA_ARGS__ )
 
+/*!
+ * Helper macro to define and specialize a template type for Bolt.  The code given as the macro vararg
+ * should be a template container that requires 1 template paramter.  The types passed into TYPE1 & TYPE2
+ * are used to fully specialize the template container into concrete types for Bolt use with two different types
+ * \param CONTAINER Name  to associate with the code given in the macro variable argument
+ * \param TYPE1 Type used to fully specialize the template code given in the macro variable argument
+ * \param TYPE2 Second type used to fully specialize the template code, independant of 1st type
+ * \param ... Arbitrary user defined code; expected to be a 1 argument template type
+ */
 #define BOLT_TEMPLATE_FUNCTOR2( CONTAINER, TYPE1, TYPE2, ... ) \
                     __VA_ARGS__; \
                     BOLT_CREATE_TYPENAME( CONTAINER<TYPE1> ) \
                     BOLT_CREATE_CLCODE( CONTAINER<TYPE1>, #__VA_ARGS__ ) \
                     BOLT_TEMPLATE_REGISTER_NEW_TYPE( CONTAINER, TYPE1, TYPE2 )
 
+/*!
+ * Helper macro to define and specialize a template type for Bolt.  The code given as the macro vararg
+ * should be a template container that requires 1 template paramter.  The types passed into TYPE1 & TYPE2 & TYPE3
+ * are used to fully specialize the template container into concrete types for Bolt use with two different types
+ * \param CONTAINER Name  to associate with the code given in the macro variable argument
+ * \param TYPE1 Type used to fully specialize the template code given in the macro variable argument
+ * \param TYPE2 Second type used to fully specialize the template code , independant of other types
+ * \param TYPE3 Third type used to fully specialize the template code, independant of other types
+ * \param ... Arbitrary user defined code; expected to be a 1 argument template type
+ */
 #define BOLT_TEMPLATE_FUNCTOR3( CONTAINER, TYPE1, TYPE2, TYPE3, ... ) \
                     __VA_ARGS__; \
                     BOLT_CREATE_TYPENAME( CONTAINER<TYPE1> ) \
@@ -213,6 +240,17 @@ __declspec( selectany ) std::vector<std::string> ClCode< Type >::dependencies;
                     BOLT_TEMPLATE_REGISTER_NEW_TYPE( CONTAINER, TYPE1, TYPE2 ) \
                     BOLT_TEMPLATE_REGISTER_NEW_TYPE( CONTAINER, TYPE1, TYPE3 )
 
+/*!
+ * Helper macro to define and specialize a template type for Bolt.  The code given as the macro vararg
+ * should be a template container that requires 1 template paramter.  The types passed into TYPE1 & TYPE2 & TYPE3 & type4
+ * are used to fully specialize the template container into concrete types for Bolt use with two different types
+ * \param CONTAINER Name  to associate with the code given in the macro variable argument
+ * \param TYPE1 Type used to fully specialize the template code given in the macro variable argument
+ * \param TYPE2 Second type used to fully specialize the template code , independant of other types
+ * \param TYPE3 Third type used to fully specialize the template code, independant of other types
+ * \param TYPE4 Fourth type used to fully specialize the template code, independant of other types
+ * \param ... Arbitrary user defined code; expected to be a 1 argument template type
+ */
 #define BOLT_TEMPLATE_FUNCTOR4( CONTAINER, TYPE1, TYPE2, TYPE3, TYPE4, ... ) \
                     __VA_ARGS__; \
                     BOLT_CREATE_TYPENAME( CONTAINER<TYPE1> ) \
@@ -221,7 +259,15 @@ __declspec( selectany ) std::vector<std::string> ClCode< Type >::dependencies;
                     BOLT_TEMPLATE_REGISTER_NEW_TYPE( CONTAINER, TYPE1, TYPE3 ) \
                     BOLT_TEMPLATE_REGISTER_NEW_TYPE( CONTAINER, TYPE1, TYPE4 )
 
- #define BOLT_CREATE_CODE_SNIPPET(Name,...) \
+/*!
+ * Registers code used on both host and device.  It is used to help define complex 
+ * relationships between user defined types, such as when one type contains instances of another.
+ * BOLT_CREATE_CODE_SNIPPET defines new types and BOLT_ADD_DEPENDENCY is used to specify the 
+ * relationship to Bolt how the definition of one type relies on the definition of the other.
+ * \param Name An identifier to associate with the trailing code
+ * \param ... Arbitrary user defined code
+ */
+#define BOLT_CREATE_CODE_SNIPPET( Name, ... ) \
     __VA_ARGS__;\
     struct Name {};\
     BOLT_CREATE_CLCODE(Name,  std::string("#ifndef ") + std::string(#Name) +std::string(" \n") \
@@ -229,6 +275,12 @@ __declspec( selectany ) std::vector<std::string> ClCode< Type >::dependencies;
                             + std::string(#__VA_ARGS__) + std::string(" \n") \
                             + std::string("#endif \n"));
 
-#define BOLT_ADD_DEPENDENCY(Type,DependingType) ClCode<Type>::addDependency(ClCode<DependingType>::get());
+/*!
+ * This macro is used to specify an A-depends-on-B type relationship between types.  Bolt will ensure that 
+ * whenever the definition of the A type is needed, the definition for the B type is also included 
+ * \param Type The A type
+ * \param DependingType The B type 
+ */
+#define BOLT_ADD_DEPENDENCY( Type, DependingType ) ClCode<Type>::addDependency(ClCode<DependingType>::get());
 
 #endif
