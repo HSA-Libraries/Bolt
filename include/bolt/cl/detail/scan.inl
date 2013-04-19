@@ -84,16 +84,11 @@ OutputIterator inclusive_scan(
     OutputIterator result,
     const std::string& user_code )
 {
-    BOLT_PROFILER_START_TRIAL
-            typedef std::iterator_traits<InputIterator>::value_type iType;
-            iType init; memset(&init, 0, sizeof(iType) );
-    OutputIterator& rtrn = detail::scan_detect_random_access(
-        control::getDefault( ), first, last, result, init, true, plus< iType >( ),
-        std::iterator_traits< InputIterator >::iterator_category( ) );
-    BOLT_PROFILER_STOP_TRIAL
-    return rtrn; //detail::scan_detect_random_access(
-        //control::getDefault( ), first, last, result, init, true, plus< iType >( ),
-        //std::iterator_traits< InputIterator >::iterator_category( ) );
+    typedef std::iterator_traits<InputIterator>::value_type iType;
+    iType init; memset(&init, 0, sizeof(iType) );
+    return detail::scan_detect_random_access(
+           control::getDefault( ), first, last, result, init, true, plus< iType >( ),
+           std::iterator_traits< InputIterator >::iterator_category( ) );
 };
 
 template< typename InputIterator, typename OutputIterator, typename BinaryFunction >
@@ -104,14 +99,11 @@ OutputIterator inclusive_scan(
     BinaryFunction binary_op,
             const std::string& user_code )
 {
-    BOLT_PROFILER_START_TRIAL
-            typedef std::iterator_traits<InputIterator>::value_type iType;
-            iType init; memset(&init, 0, sizeof(iType) );
-    OutputIterator& rtrn = detail::scan_detect_random_access(
-        control::getDefault( ), first, last, result, init, true, binary_op,
-        std::iterator_traits< InputIterator >::iterator_category( ) );
-    BOLT_PROFILER_STOP_TRIAL
-    return rtrn;
+    typedef std::iterator_traits<InputIterator>::value_type iType;
+    iType init; memset(&init, 0, sizeof(iType) );
+    return detail::scan_detect_random_access(
+           control::getDefault( ), first, last, result, init, true, binary_op,
+           std::iterator_traits< InputIterator >::iterator_category( ) );
 };
 
 template< typename InputIterator, typename OutputIterator >
@@ -122,14 +114,11 @@ OutputIterator inclusive_scan(
     OutputIterator result,
             const std::string& user_code )
 {
-    BOLT_PROFILER_START_TRIAL
-            typedef std::iterator_traits<InputIterator>::value_type iType;
-            iType init; memset(&init, 0, sizeof(iType) );
-    OutputIterator& rtrn = detail::scan_detect_random_access(
-        ctrl, first, last, result, init, true, plus< iType >( ),
-        std::iterator_traits< InputIterator >::iterator_category( ) );
-    BOLT_PROFILER_STOP_TRIAL
-    return rtrn;
+    typedef std::iterator_traits<InputIterator>::value_type iType;
+    iType init; memset(&init, 0, sizeof(iType) );
+    return detail::scan_detect_random_access(
+           ctrl, first, last, result, init, true, plus< iType >( ),
+           std::iterator_traits< InputIterator >::iterator_category( ) );
 };
 
 template< typename InputIterator, typename OutputIterator, typename BinaryFunction >
@@ -141,14 +130,11 @@ OutputIterator inclusive_scan(
     BinaryFunction binary_op,
             const std::string& user_code )
 {
-    BOLT_PROFILER_START_TRIAL
-            typedef std::iterator_traits<InputIterator>::value_type iType;
-            iType init; memset(&init, 0, sizeof(iType) );
-    OutputIterator& rtrn = detail::scan_detect_random_access(
-        ctrl, first, last, result, init, true, binary_op,
-        std::iterator_traits< InputIterator >::iterator_category( ) );
-    BOLT_PROFILER_STOP_TRIAL
-    return rtrn;
+    typedef std::iterator_traits<InputIterator>::value_type iType;
+    iType init; memset(&init, 0, sizeof(iType) );
+	return detail::scan_detect_random_access(
+           ctrl, first, last, result, init, true, binary_op,
+           std::iterator_traits< InputIterator >::iterator_category( ) );
 };
 
 //////////////////////////////////////////
@@ -161,14 +147,11 @@ OutputIterator exclusive_scan(
     OutputIterator result,
     const std::string& user_code )
 {
-    BOLT_PROFILER_START_TRIAL
-            typedef std::iterator_traits<InputIterator>::value_type iType;
-            iType init; memset(&init, 0, sizeof(iType) );
-    OutputIterator& rtrn = detail::scan_detect_random_access(
-        control::getDefault( ), first, last, result, init, false, plus< iType >( ),
-        std::iterator_traits< InputIterator >::iterator_category( ) );
-    BOLT_PROFILER_STOP_TRIAL
-    return rtrn;
+    typedef std::iterator_traits<InputIterator>::value_type iType;
+    iType init; memset(&init, 0, sizeof(iType) );
+    return detail::scan_detect_random_access(
+           control::getDefault( ), first, last, result, init, false, plus< iType >( ),
+           std::iterator_traits< InputIterator >::iterator_category( ) );
 };
 
 template< typename InputIterator, typename OutputIterator, typename T >
@@ -179,13 +162,10 @@ OutputIterator exclusive_scan(
     T init,
     const std::string& user_code )
 {
-    BOLT_PROFILER_START_TRIAL
-            typedef std::iterator_traits<InputIterator>::value_type iType;
-    OutputIterator& rtrn = detail::scan_detect_random_access(
-        control::getDefault( ), first, last, result, init, false, plus< iType >( ),
-        std::iterator_traits< InputIterator >::iterator_category( ) );
-    BOLT_PROFILER_STOP_TRIAL
-    return rtrn;
+    typedef std::iterator_traits<InputIterator>::value_type iType;
+    return detail::scan_detect_random_access(
+           control::getDefault( ), first, last, result, init, false, plus< iType >( ),
+           std::iterator_traits< InputIterator >::iterator_category( ) );
 };
 
 template< typename InputIterator, typename OutputIterator, typename T, typename BinaryFunction >
@@ -197,12 +177,9 @@ OutputIterator exclusive_scan(
     BinaryFunction binary_op,
             const std::string& user_code )
 {
-    BOLT_PROFILER_START_TRIAL
-    OutputIterator& rtrn = detail::scan_detect_random_access(
-        control::getDefault( ), first, last, result, init, false, binary_op,
-        std::iterator_traits< InputIterator >::iterator_category( ) );
-    BOLT_PROFILER_STOP_TRIAL
-    return rtrn;
+    return detail::scan_detect_random_access(
+           control::getDefault( ), first, last, result, init, false, binary_op,
+           std::iterator_traits< InputIterator >::iterator_category( ) );
 };
 
 template< typename InputIterator, typename OutputIterator >
@@ -213,14 +190,11 @@ OutputIterator exclusive_scan(
     OutputIterator result,
             const std::string& user_code ) // assumes addition of numbers
 {
-    BOLT_PROFILER_START_TRIAL
-            typedef std::iterator_traits<InputIterator>::value_type iType;
-            iType init = static_cast< iType >( 0 );
-    OutputIterator& rtrn = detail::scan_detect_random_access(
-        ctrl, first, last, result, init, false, plus< iType >( ),
-        std::iterator_traits< InputIterator >::iterator_category( ) );
-    BOLT_PROFILER_STOP_TRIAL
-    return rtrn;
+    typedef std::iterator_traits<InputIterator>::value_type iType;
+    iType init = static_cast< iType >( 0 );
+    return detail::scan_detect_random_access(
+           ctrl, first, last, result, init, false, plus< iType >( ),
+           std::iterator_traits< InputIterator >::iterator_category( ) );
 };
 
 template< typename InputIterator, typename OutputIterator, typename T >
@@ -232,13 +206,10 @@ OutputIterator exclusive_scan(
     T init,
             const std::string& user_code )
 {
-    BOLT_PROFILER_START_TRIAL
-            typedef std::iterator_traits<InputIterator>::value_type iType;
-    OutputIterator& rtrn = detail::scan_detect_random_access(
-        ctrl, first, last, result, init, false, plus< iType >( ),
-        std::iterator_traits< InputIterator >::iterator_category( ) );
-    BOLT_PROFILER_STOP_TRIAL
-    return rtrn;
+    typedef std::iterator_traits<InputIterator>::value_type iType;
+    return detail::scan_detect_random_access(
+           ctrl, first, last, result, init, false, plus< iType >( ),
+           std::iterator_traits< InputIterator >::iterator_category( ) );
 };
 
 template< typename InputIterator, typename OutputIterator, typename T, typename BinaryFunction >
@@ -251,12 +222,9 @@ OutputIterator exclusive_scan(
     BinaryFunction binary_op,
             const std::string& user_code )
 {
-    BOLT_PROFILER_START_TRIAL
-    OutputIterator& rtrn = detail::scan_detect_random_access(
-        ctrl, first, last, result, init, false, binary_op,
-        std::iterator_traits< InputIterator >::iterator_category( ) );
-    BOLT_PROFILER_STOP_TRIAL
-    return rtrn;
+	return detail::scan_detect_random_access(
+           ctrl, first, last, result, init, false, binary_op,
+           std::iterator_traits< InputIterator >::iterator_category( ) );
 };
 
 template<
