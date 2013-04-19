@@ -304,9 +304,31 @@ template< typename S, typename B >
 /******************************************************************************
  *  Scan with User Defined Data Types and Operators
  *****************************************************************************/
+TEST(InclusiveScan, normalArrayTest)
+{
+
+    float input[10000] ;
+   
+    float refInput[10000];
+   
+    for(int i=0; i<10000; i++) {
+        input[i] = 2.f;
+        refInput[i] = 2.f;
+	}
+    // call scan
+    bolt::cl::plus<float> ai2;
+    bolt::cl::inclusive_scan( input,    input + 10000,    input, ai2 );
+    ::std::partial_sum(refInput, refInput + 10000, refInput, ai2);
+    // compare results
+    cmpArrays(input, refInput);
+	
+	
+} 
 
 TEST(InclusiveScan, DeviceVectorInclFloat)
 {
+
+	
     int length = 1<<16;
     bolt::cl::device_vector< float > input( length);
     bolt::cl::device_vector< float > output( length);
@@ -325,6 +347,8 @@ TEST(InclusiveScan, DeviceVectorInclFloat)
     ::std::partial_sum(refInput.begin(), refInput.end(), refOutput.begin(), ai2);
     // compare results
     cmpArrays(refOutput, output);
+	
+	
 } 
 
 TEST(InclusiveScan, DeviceVectorIncluddtM3)

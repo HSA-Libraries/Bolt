@@ -15,8 +15,8 @@
 
 ***************************************************************************/                                                                                     
 
-#if !defined( REDUCE_H )
-#define REDUCE_H
+#if !defined( MIN_ELEMENT_H )
+#define MIN_ELEMENT_H
 #pragma once
 
 #include <bolt/cl/bolt.h>

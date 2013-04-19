@@ -15,8 +15,8 @@
 
 ***************************************************************************/                                                                                     
 
-#if !defined( REDUCE_H )
-#define REDUCE_H
+#if !defined( MAX_ELEMENT_H )
+#define MAX_ELEMENT_H
 #pragma once
 
 #include <bolt/cl/bolt.h>
