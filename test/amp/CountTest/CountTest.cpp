@@ -338,6 +338,27 @@ TEST(countFloatValueOccuranceStdVect, MulticoreCountifIntTBB){
   //std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
 }
 
+TEST(countIntegerUDD,DeviceCountUDD_EPR_Test){
+    const int aSize = 1<<21;
+    std::vector<UDD> stdInput(aSize);
+    
+    UDD myUDD;
+    myUDD.a = 3;
+    myUDD.b = 5;
+    
+    for (int i=0; i < aSize; i++) {
+       stdInput[i].a = rand()%10;
+       stdInput[i].b = rand()%10;
+    }
+
+    
+    bolt::amp::control ctl = bolt::amp::control::getDefault();
+    size_t stdCount = std::count(stdInput.begin(), stdInput.end(), myUDD);
+    size_t boltCount = bolt::amp::count( stdInput.begin(), stdInput.end(), myUDD);
+
+    EXPECT_EQ(stdCount, boltCount)<<"Failed as: \nSTD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
+    std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
+}
 
 
 
