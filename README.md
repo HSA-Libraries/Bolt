@@ -14,6 +14,8 @@ Prerequisites:
 4.  TBB (For Multicore path)
 5.  APP SDK 2.7 onwards
 
+Compiled binary windows packages (zip packages) for Bolt may be downloaded from the <a href="http://developer.amd.com/tools-and-sdks/heterogeneous-computing/amd-accelerated-parallel-processing-app-sdk/bolt-c-template-library/">Bolt landing page</a> hosted on AMD's Developer Central website.
+
 Examples:
 The simple example below shows how to use Bolt to sort a random array of 8192 integers.
 
