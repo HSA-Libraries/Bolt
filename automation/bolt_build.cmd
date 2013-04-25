@@ -183,12 +183,15 @@ echo Info: Done setting up compiler environment variables.
 REM Echo a blank line into a file called success; the existence of success determines whether we built successfully
 echo. > %BOLT_BUILD_INSTALL_PATH%\success
 
-REM Specify the location of a local image of boost, to help speed up the build process
-set BOOST_URL=http://see-srv/share/code/externals/boost/boost_1_52_0.zip
-set DOXYGEN_URL=http://see-srv/share/code/externals/doxygen/doxygen-1.8.3.windows.bin.zip
-set GTEST_URL=http://see-srv/share/code/externals/gtest/gtest-1.6.0.zip
-set TBB_ROOT=c:/Jenkins_FS_Root/dependencies/tbb41_20130116oss
+REM Specify the location of a local image of boost, Google test and doxygen. 
+REM Currently BOLT uses Boost 1.52.0, Doxygen 1.8.3.windows, Google Test 1.6.0 versions
+REM and TBB version 4.1 update 2. 
+REM set BOOST_URL=<Enter path to Boost folder>/boost_1_52_0.zip
+REM set DOXYGEN_URL=<Enter path to Doxygen zip file>/doxygen-1.8.3.windows.bin.zip
+REM set GTEST_URL=<Enter path to GTEST folder>/gtest-1.6.0.zip
+REM set TBB_ROOT=<Enter path to Boost folder>
 
+REM Otherwise The above 4 variables can also be defined in the environment variable. 
 
 REM ################################################################################################
 REM # Start of build logic here
