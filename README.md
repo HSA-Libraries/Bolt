@@ -26,7 +26,8 @@ The simple example below shows how to use Bolt to sort a random array of 8192 in
     #include <bolt/cl/sort.h>
     #include <vector>
     #include <algorithm>
-    void main ()
+    
+    int main ()
     {
         // generate random data (on host)
         size_t length = 8192
@@ -44,7 +45,7 @@ The code will be familiar to programmers who have used the C++ Standard Template
     #include <vector>
     #include <numeric>
     
-    void main()
+    int main()
     {
       size_t length = 1024;
       // Create device_vector and initialize it to 1
