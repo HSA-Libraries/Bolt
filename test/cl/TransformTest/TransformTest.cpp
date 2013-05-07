@@ -162,18 +162,6 @@ protected:
 };
 
 TYPED_TEST_CASE_P( TransformArrayTest );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE(bolt::cl::plus, int, short );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE(bolt::cl::plus, int, unsigned short );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE(bolt::cl::plus, int, long );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE(bolt::cl::plus, int, unsigned long);
-BOLT_TEMPLATE_REGISTER_NEW_TYPE(bolt::cl::multiplies, int, short );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE(bolt::cl::multiplies, int, unsigned short );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE(bolt::cl::multiplies, int, long );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE(bolt::cl::multiplies, int, unsigned long);
-BOLT_TEMPLATE_REGISTER_NEW_TYPE(bolt::cl::minus, int, short );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE(bolt::cl::minus, int, unsigned short );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE(bolt::cl::minus, int, long );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE(bolt::cl::minus, int, unsigned long);
 
 TYPED_TEST_P( TransformArrayTest, Normal )
 {
