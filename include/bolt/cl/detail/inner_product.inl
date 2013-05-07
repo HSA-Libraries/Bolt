@@ -227,8 +227,8 @@ namespace bolt {
                     numWG = requiredWorkGroups;
                 /**********************/
 
-                V_OPENCL( k.setArg(0, first1.getBuffer( ) ), "Error setting kernel argument" );
-                V_OPENCL( k.setArg(1, first2.getBuffer( ) ), "Error setting kernel argument" );
+                V_OPENCL( k.setArg(0, first1.getContainer().getBuffer() ), "Error setting kernel argument" );
+                V_OPENCL( k.setArg(1, first2.getContainer().getBuffer() ), "Error setting kernel argument" );
                 V_OPENCL( k.setArg(2, szElements), "Error setting kernel argument" );
                 V_OPENCL( k.setArg(3, userFunctor1), "Error setting kernel argument" );
                 V_OPENCL( k.setArg(4, userFunctor2), "Error setting kernel argument" );                       

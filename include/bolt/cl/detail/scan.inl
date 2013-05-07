@@ -597,14 +597,14 @@ aProfiler.set(AsyncProfiler::memory, numElements*sizeof(iType));
             {
                 ::cl::Event serialCPUEvent;
                 cl_int l_Error = CL_SUCCESS;
-                iType *scanInputBuffer = (iType*)ctrl.getCommandQueue().enqueueMapBuffer(first.getBuffer(), false,
+                iType *scanInputBuffer = (iType*)ctrl.getCommandQueue().enqueueMapBuffer(first.getContainer().getBuffer(), false,
                                    CL_MAP_READ, 0, sizeof(iType) * numElements, NULL, &serialCPUEvent, &l_Error );
-                oType *scanResultBuffer = (oType*)ctrl.getCommandQueue().enqueueMapBuffer(result.getBuffer(), false,
+                oType *scanResultBuffer = (oType*)ctrl.getCommandQueue().enqueueMapBuffer(result.getContainer().getBuffer(), false,
                                    CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(oType) * numElements, NULL, &serialCPUEvent, &l_Error );
                 serialCPUEvent.wait();
                 Serial_scan<iType, oType, BinaryFunction, T>(scanInputBuffer, scanResultBuffer, numElements, binary_op, inclusive, init);
-                ctrl.getCommandQueue().enqueueUnmapMemObject(first.getBuffer(), scanInputBuffer);
-                ctrl.getCommandQueue().enqueueUnmapMemObject(result.getBuffer(), scanResultBuffer);
+                ctrl.getCommandQueue().enqueueUnmapMemObject(first.getContainer().getBuffer(), scanInputBuffer);
+                ctrl.getCommandQueue().enqueueUnmapMemObject(result.getContainer().getBuffer(), scanResultBuffer);
 
                 return result + numElements;
             }
@@ -614,16 +614,16 @@ aProfiler.set(AsyncProfiler::memory, numElements*sizeof(iType));
                 ::cl::Event multiCoreCPUEvent;
                 cl_int l_Error = CL_SUCCESS;
                 /*Map the device buffer to CPU*/
-                iType *scanInputBuffer = (iType*)ctrl.getCommandQueue().enqueueMapBuffer(first.getBuffer(), false,
+                iType *scanInputBuffer = (iType*)ctrl.getCommandQueue().enqueueMapBuffer(first.getContainer().getBuffer(), false,
                                    CL_MAP_READ, 0, sizeof(iType) * numElements, NULL, &multiCoreCPUEvent, &l_Error );
-                oType *scanResultBuffer = (oType*)ctrl.getCommandQueue().enqueueMapBuffer(result.getBuffer(), false,
+                oType *scanResultBuffer = (oType*)ctrl.getCommandQueue().enqueueMapBuffer(result.getContainer().getBuffer(), false,
                                    CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(oType) * numElements, NULL, &multiCoreCPUEvent, &l_Error );
                 multiCoreCPUEvent.wait();
                 tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
                 Scan_tbb<iType, BinaryFunction, iType*, oType*> tbb_scan(scanInputBuffer, scanResultBuffer, binary_op, inclusive, init);
                 tbb::parallel_scan( tbb::blocked_range<int>(  0, numElements), tbb_scan, tbb::auto_partitioner());
-                ctrl.getCommandQueue().enqueueUnmapMemObject(first.getBuffer(), scanInputBuffer);
-                ctrl.getCommandQueue().enqueueUnmapMemObject(result.getBuffer(), scanResultBuffer);
+                ctrl.getCommandQueue().enqueueUnmapMemObject(first.getContainer().getBuffer(), scanInputBuffer);
+                ctrl.getCommandQueue().enqueueUnmapMemObject(result.getContainer().getBuffer(), scanResultBuffer);
                 return result + numElements;
 #else
                 //std::cout << "The MultiCoreCpu version of Scan with device vector is not enabled" << std ::endl;
@@ -999,9 +999,9 @@ aProfiler.set(AsyncProfiler::device, control::SerialCpu);
 #endif
 
     ldsSize  = static_cast< cl_uint >( ( kernel0_WgSize /*+ ( kernel0_WgSize / 2 )*/ ) * sizeof( iType ) );
-    V_OPENCL( kernels[ 0 ].setArg( 0, result.getBuffer( ) ),   "Error setting argument for kernels[ 0 ]" ); // Output buffer
+    V_OPENCL( kernels[ 0 ].setArg( 0, result.getContainer().getBuffer() ),   "Error setting argument for kernels[ 0 ]" ); // Output buffer
     V_OPENCL( kernels[ 0 ].setArg( 1, result.gpuPayloadSize( ), &result.gpuPayload( ) ), "Error setting a kernel argument" );
-    V_OPENCL( kernels[ 0 ].setArg( 2, first.getBuffer( ) ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
+    V_OPENCL( kernels[ 0 ].setArg( 2, first.getContainer().getBuffer() ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
     V_OPENCL( kernels[ 0 ].setArg( 3, first.gpuPayloadSize( ), &first.gpuPayload( ) ), "Error setting a kernel argument" );
     V_OPENCL( kernels[ 0 ].setArg( 4, init_T ),                 "Error setting argument for kernels[ 0 ]" ); // Initial value used for exclusive scan
     V_OPENCL( kernels[ 0 ].setArg( 5, numElements ),            "Error setting argument for kernels[ 0 ]" ); // Size of scratch buffer
@@ -1075,7 +1075,7 @@ aProfiler.set(AsyncProfiler::memory, 4*sizeScanBuff*sizeof(oType));
      *  Kernel 2
      *********************************************************************************/
 
-    V_OPENCL( kernels[ 2 ].setArg( 0, result.getBuffer( ) ), "Error setting 0th argument for scanKernels[ 2 ]" );          // Output buffer
+    V_OPENCL( kernels[ 2 ].setArg( 0, result.getContainer().getBuffer() ), "Error setting 0th argument for scanKernels[ 2 ]" );          // Output buffer
     V_OPENCL( kernels[ 2 ].setArg( 1, result.gpuPayloadSize( ), &result.gpuPayload( ) ), "Error setting a kernel argument" );
     V_OPENCL( kernels[ 2 ].setArg( 2, *postSumArray ), "Error setting 1st argument for scanKernels[ 2 ]" );            // Input buffer
     V_OPENCL( kernels[ 2 ].setArg( 3, numElements ), "Error setting 2nd argument for scanKernels[ 2 ]" );   // Size of scratch buffer

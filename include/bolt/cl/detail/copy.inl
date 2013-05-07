@@ -296,8 +296,8 @@ typename std::enable_if< std::is_same< typename std::iterator_traits<DVInputIter
     typedef std::iterator_traits<DVOutputIterator>::value_type oType;
     ::cl::Event copyEvent;
     ctrl.getCommandQueue( ).enqueueCopyBuffer(
-                        first.getBuffer(),
-                        result.getBuffer(),
+                        first.getContainer().getBuffer(),
+                        result.getContainer().getBuffer(),
                         first.m_Index * sizeof(iType),
                         result.m_Index * sizeof(oType),
                         n*sizeof(oType),
@@ -396,8 +396,8 @@ typename std::enable_if< !std::is_same< typename std::iterator_traits<DVInputIte
 
         //std::cout << "NumElem: " << n << "; NumThreads: " << numThreadsChosen << "; NumWorkGroups: " << numThreadsChosen/workGroupSizeChosen << std::endl;
 
-        V_OPENCL( kernels[whichKernel].setArg( 0, first.getBuffer()), "Error setArg kernels[ 0 ]" ); // Input keys
-        V_OPENCL( kernels[whichKernel].setArg( 1, result.getBuffer()),"Error setArg kernels[ 0 ]" ); // Input buffer
+        V_OPENCL( kernels[whichKernel].setArg( 0, first.getContainer().getBuffer()), "Error setArg kernels[ 0 ]" ); // Input keys
+        V_OPENCL( kernels[whichKernel].setArg( 1, result.getContainer().getBuffer()),"Error setArg kernels[ 0 ]" ); // Input buffer
         V_OPENCL( kernels[whichKernel].setArg( 2, static_cast<cl_uint>( n ) ),     "Error setArg kernels[ 0 ]" ); // Size of buffer
         V_OPENCL( kernels[whichKernel].setArg( 3, first.m_Index ),                 "Error setArg kernels[ 0 ]" ); // Size of buffer
         V_OPENCL( kernels[whichKernel].setArg( 4, result.m_Index ),                "Error setArg kernels[ 0 ]" ); // Size of buffer

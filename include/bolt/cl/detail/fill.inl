@@ -288,7 +288,7 @@ namespace bolt {
                     //std::cout << "NumElem: " << sz<< "; NumThreads: " << numThreadsChosen << "; NumWorkGroups: " << numThreadsChosen/workGroupSizeChosen << std::endl;
             
                     V_OPENCL( kernels[0].setArg( 0, val), "Error setArg kernels[ 0 ]" ); // Input Value
-                    V_OPENCL( kernels[0].setArg( 1, first.getBuffer()),"Error setArg kernels[ 0 ]" ); // Fill buffer
+                    V_OPENCL( kernels[0].setArg( 1, first.getContainer().getBuffer()),"Error setArg kernels[ 0 ]" ); // Fill buffer
                     V_OPENCL( kernels[0].setArg( 2, static_cast<cl_uint>( sz) ), "Error setArg kernels[ 0 ]" ); // Size of buffer
             
                     l_Error = ctl.getCommandQueue( ).enqueueNDRangeKernel(

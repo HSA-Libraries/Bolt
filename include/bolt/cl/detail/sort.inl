@@ -354,7 +354,7 @@ void sort_pick_iterator( control &ctl,
         ::cl::Event serialCPUEvent;
         cl_int l_Error = CL_SUCCESS;
         /*Map the device buffer to CPU*/
-        T *sortInputBuffer = (T*)ctl.getCommandQueue().enqueueMapBuffer(first.getBuffer(), false,
+        T *sortInputBuffer = (T*)ctl.getCommandQueue().enqueueMapBuffer(first.getContainer().getBuffer(), false,
                                                                      CL_MAP_READ|CL_MAP_WRITE,
                                                                      0, sizeof(T) * szElements,
                                                                      NULL, &serialCPUEvent, &l_Error );
@@ -362,7 +362,7 @@ void sort_pick_iterator( control &ctl,
         //Compute sort using STL
         std::sort(sortInputBuffer, sortInputBuffer + szElements, comp);
         /*Unmap the device buffer back to device memory. This will copy the host modified buffer back to the device*/
-        ctl.getCommandQueue().enqueueUnmapMemObject(first.getBuffer(), sortInputBuffer);
+        ctl.getCommandQueue().enqueueUnmapMemObject(first.getContainer().getBuffer(), sortInputBuffer);
         return;
     } else if (runMode == bolt::cl::control::MultiCoreCpu) {
 #ifdef ENABLE_TBB
@@ -370,7 +370,7 @@ void sort_pick_iterator( control &ctl,
         ::cl::Event multiCoreCPUEvent;
         cl_int l_Error = CL_SUCCESS;
         /*Map the device buffer to CPU*/
-        T *sortInputBuffer = (T*)ctl.getCommandQueue().enqueueMapBuffer(first.getBuffer(), false,
+        T *sortInputBuffer = (T*)ctl.getCommandQueue().enqueueMapBuffer(first.getContainer().getBuffer(), false,
                                                                      CL_MAP_READ|CL_MAP_WRITE,
                                                                      0, sizeof(T) * szElements,
                                                                      NULL, &multiCoreCPUEvent, &l_Error );
@@ -379,7 +379,7 @@ void sort_pick_iterator( control &ctl,
         tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
         tbb::parallel_sort(sortInputBuffer,sortInputBuffer+szElements, comp);
         /*Unmap the device buffer back to device memory. This will copy the host modified buffer back to the device*/
-        ctl.getCommandQueue().enqueueUnmapMemObject(first.getBuffer(), sortInputBuffer);
+        ctl.getCommandQueue().enqueueUnmapMemObject(first.getContainer().getBuffer(), sortInputBuffer);
         return;
 #else
         //std::cout << "The MultiCoreCpu version of sort is not enabled. " << std ::endl;
@@ -506,7 +506,7 @@ sort_enqueue(control &ctl,
         szElements  = ((szElements + mulFactor) /mulFactor) * mulFactor;
         pLocalBuffer = new ::cl::Buffer(ctl.getContext(),CL_MEM_READ_WRITE| CL_MEM_ALLOC_HOST_PTR, sizeof(T) * szElements);
 
-        ctl.getCommandQueue().enqueueCopyBuffer( first.getBuffer( ),
+        ctl.getCommandQueue().enqueueCopyBuffer( first.getContainer().getBuffer(),
                                               *pLocalBuffer, 0, 0,
                                               orig_szElements*sizeof(T), NULL, &copyEvent );
         copyEvent.wait();
@@ -514,7 +514,7 @@ sort_enqueue(control &ctl,
     }
     else
     {
-        pLocalBuffer = new ::cl::Buffer(first.getBuffer( ) );
+        pLocalBuffer = new ::cl::Buffer(first.getContainer().getBuffer() );
         newBuffer = false;
     }
     numGroups = szElements / mulFactor;
@@ -529,9 +529,9 @@ sort_enqueue(control &ctl,
                                                           CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY,
                                                           &aligned_comp );
     ::cl::Buffer clInputData = *pLocalBuffer;
-    ::cl::Buffer clSwapData = dvSwapInputData.begin( ).getBuffer( );
-    ::cl::Buffer clHistData = dvHistogramBins.begin( ).getBuffer( );
-    ::cl::Buffer clHistDataDest = dvHistogramBinsDest.begin( ).getBuffer( );
+    ::cl::Buffer clSwapData = dvSwapInputData.begin( ).getContainer().getBuffer();
+    ::cl::Buffer clHistData = dvHistogramBins.begin( ).getContainer().getBuffer();
+    ::cl::Buffer clHistDataDest = dvHistogramBinsDest.begin( ).getContainer().getBuffer();
 
     ::cl::Kernel histKernel;
     ::cl::Kernel permuteKernel;
@@ -620,7 +620,7 @@ sort_enqueue(control &ctl,
     if(newBuffer == true)
     {
         ::cl::Event copyBackEvent;
-        ctl.getCommandQueue().enqueueCopyBuffer( clInputData, first.getBuffer( ), 0, 0, sizeof(T)*orig_szElements, NULL, &copyBackEvent );
+        ctl.getCommandQueue().enqueueCopyBuffer( clInputData, first.getContainer().getBuffer(), 0, 0, sizeof(T)*orig_szElements, NULL, &copyBackEvent );
         copyBackEvent.wait();
     }
     delete pLocalBuffer;
@@ -689,7 +689,7 @@ sort_enqueue(control &ctl,
         szElements  = ((szElements + mulFactor) /mulFactor) * mulFactor;
         pLocalBuffer = new ::cl::Buffer(ctl.getContext(),CL_MEM_READ_WRITE| CL_MEM_ALLOC_HOST_PTR, sizeof(T) * szElements);
 
-        ctl.getCommandQueue().enqueueCopyBuffer( first.getBuffer( ),
+        ctl.getCommandQueue().enqueueCopyBuffer( first.getContainer().getBuffer(),
                                               *pLocalBuffer, 0, 0,
                                               orig_szElements*sizeof(T), NULL, &copyEvent );
         copyEvent.wait();
@@ -697,7 +697,7 @@ sort_enqueue(control &ctl,
     }
     else
     {
-        pLocalBuffer = new ::cl::Buffer(first.getBuffer( ) );
+        pLocalBuffer = new ::cl::Buffer(first.getContainer().getBuffer() );
         newBuffer = false;
     }
     size_t numGroups = szElements / mulFactor;
@@ -710,9 +710,9 @@ sort_enqueue(control &ctl,
 
     control::buffPointer userFunctor = ctl.acquireBuffer( sizeof( aligned_comp ), CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_comp );
     ::cl::Buffer clInputData = *pLocalBuffer;
-    ::cl::Buffer clSwapData = dvSwapInputData.begin( ).getBuffer( );
-    ::cl::Buffer clHistData = dvHistogramBins.begin( ).getBuffer( );
-    ::cl::Buffer clHistDataDest = dvHistogramBinsDest.begin( ).getBuffer( );
+    ::cl::Buffer clSwapData = dvSwapInputData.begin( ).getContainer().getBuffer();
+    ::cl::Buffer clHistData = dvHistogramBins.begin( ).getContainer().getBuffer();
+    ::cl::Buffer clHistDataDest = dvHistogramBinsDest.begin( ).getContainer().getBuffer();
 
     ::cl::Kernel histKernel, histSignedKernel;
     ::cl::Kernel permuteKernel, permuteSignedKernel;
@@ -850,7 +850,7 @@ sort_enqueue(control &ctl,
     if(newBuffer == true)
     {
         ::cl::Event copyBackEvent;
-        ctl.getCommandQueue().enqueueCopyBuffer( clInputData, first.getBuffer( ), 0, 0, sizeof(T)*orig_szElements, NULL, &copyBackEvent );
+        ctl.getCommandQueue().enqueueCopyBuffer( clInputData, first.getContainer().getBuffer(), 0, 0, sizeof(T)*orig_szElements, NULL, &copyBackEvent );
         copyBackEvent.wait();
     }
     delete pLocalBuffer;
@@ -920,12 +920,12 @@ sort_enqueue(control &ctl,
     for(temp = szElements; temp > 1; temp >>= 1)
         ++numStages;
 
-    //::cl::Buffer A = first.getBuffer( );
+    //::cl::Buffer A = first.getContainer().getBuffer();
     ALIGNED( 256 ) StrictWeakOrdering aligned_comp( comp );
     control::buffPointer userFunctor = ctl.acquireBuffer( sizeof( aligned_comp ),
                                                           CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_comp );
 
-    V_OPENCL( kernels[0].setArg(0, first.getBuffer( )), "Error setting 0th kernel argument" );
+    V_OPENCL( kernels[0].setArg(0, first.getContainer().getBuffer()), "Error setting 0th kernel argument" );
     V_OPENCL( kernels[0].setArg(1, first.gpuPayloadSize( ), &first.gpuPayload( )), "Error setting 1st kernel argument" );
     V_OPENCL( kernels[0].setArg(4, *userFunctor), "Error setting 4th kernel argument" );
     for(stage = 0; stage < numStages; ++stage)
@@ -1008,7 +1008,7 @@ void sort_enqueue_non_powerOf2(control &ctl,
     size_t globalSize = totalWorkGroups * wgSize;
     V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
 
-    const ::cl::Buffer& in = first.getBuffer( );
+    const ::cl::Buffer& in = first.getContainer().getBuffer();
     control::buffPointer out = ctl.acquireBuffer( sizeof(T)*szElements );
 
     ALIGNED( 256 ) StrictWeakOrdering aligned_comp( comp );

@@ -978,11 +978,11 @@ scan_by_key_pick_iterator(
         ::cl::Event serialCPUEvent;
         cl_int l_Error = CL_SUCCESS;
 
-        kType *scanInputkey = (kType*)ctl.getCommandQueue().enqueueMapBuffer(firstKey.getBuffer(), false,
+        kType *scanInputkey = (kType*)ctl.getCommandQueue().enqueueMapBuffer(firstKey.getContainer().getBuffer(), false,
                             CL_MAP_READ, 0, sizeof(kType) * numElements, NULL, &serialCPUEvent, &l_Error );
-        vType *scanInputBuffer = (vType*)ctl.getCommandQueue().enqueueMapBuffer(firstValue.getBuffer(), false,
+        vType *scanInputBuffer = (vType*)ctl.getCommandQueue().enqueueMapBuffer(firstValue.getContainer().getBuffer(), false,
                             CL_MAP_READ, 0, sizeof(vType) * numElements, NULL, &serialCPUEvent, &l_Error );
-        oType *scanResultBuffer = (oType*)ctl.getCommandQueue().enqueueMapBuffer(result.getBuffer(), false,
+        oType *scanResultBuffer = (oType*)ctl.getCommandQueue().enqueueMapBuffer(result.getContainer().getBuffer(), false,
                             CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(oType) * numElements, NULL, &serialCPUEvent, &l_Error );
         serialCPUEvent.wait();
 
@@ -991,9 +991,9 @@ scan_by_key_pick_iterator(
         else
             Serial_exclusive_scan_by_key<kType, vType, oType, BinaryPredicate, BinaryFunction, T>(scanInputkey, scanInputBuffer, scanResultBuffer, numElements, binary_pred, binary_funct, init);
 
-        ctl.getCommandQueue().enqueueUnmapMemObject(firstKey.getBuffer(), scanInputkey);
-        ctl.getCommandQueue().enqueueUnmapMemObject(firstValue.getBuffer(), scanInputBuffer);
-        ctl.getCommandQueue().enqueueUnmapMemObject(result.getBuffer(), scanResultBuffer);
+        ctl.getCommandQueue().enqueueUnmapMemObject(firstKey.getContainer().getBuffer(), scanInputkey);
+        ctl.getCommandQueue().enqueueUnmapMemObject(firstValue.getContainer().getBuffer(), scanInputBuffer);
+        ctl.getCommandQueue().enqueueUnmapMemObject(result.getContainer().getBuffer(), scanResultBuffer);
 
         return result + numElements;
 
@@ -1004,11 +1004,11 @@ scan_by_key_pick_iterator(
                 ::cl::Event multiCoreCPUEvent;
                 cl_int l_Error = CL_SUCCESS;
                 /*Map the device buffer to CPU*/
-                kType *scanInputkey = (kType*)ctl.getCommandQueue().enqueueMapBuffer(firstKey.getBuffer(), false,
+                kType *scanInputkey = (kType*)ctl.getCommandQueue().enqueueMapBuffer(firstKey.getContainer().getBuffer(), false,
                                    CL_MAP_READ, 0, sizeof(kType) * numElements, NULL, &multiCoreCPUEvent, &l_Error );
-                vType *scanInputBuffer = (vType*)ctl.getCommandQueue().enqueueMapBuffer(firstValue.getBuffer(), false,
+                vType *scanInputBuffer = (vType*)ctl.getCommandQueue().enqueueMapBuffer(firstValue.getContainer().getBuffer(), false,
                                    CL_MAP_READ, 0, sizeof(vType) * numElements, NULL, &multiCoreCPUEvent, &l_Error );
-                oType *scanResultBuffer = (oType*)ctl.getCommandQueue().enqueueMapBuffer(result.getBuffer(), false,
+                oType *scanResultBuffer = (oType*)ctl.getCommandQueue().enqueueMapBuffer(result.getContainer().getBuffer(), false,
                                    CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(oType) * numElements, NULL, &multiCoreCPUEvent, &l_Error );
                 multiCoreCPUEvent.wait();
 
@@ -1016,9 +1016,9 @@ scan_by_key_pick_iterator(
                 ScanKey_tbb<T, kType*, vType*, oType*, BinaryFunction, BinaryPredicate> tbbkey_scan(scanInputkey, scanInputBuffer, scanResultBuffer, binary_funct, binary_pred, inclusive, init);
                 tbb::parallel_scan( tbb::blocked_range<int>(  0, numElements), tbbkey_scan, tbb::auto_partitioner());
 
-                ctl.getCommandQueue().enqueueUnmapMemObject(firstKey.getBuffer(), scanInputkey);
-                ctl.getCommandQueue().enqueueUnmapMemObject(firstValue.getBuffer(), scanInputBuffer);
-                ctl.getCommandQueue().enqueueUnmapMemObject(result.getBuffer(), scanResultBuffer);
+                ctl.getCommandQueue().enqueueUnmapMemObject(firstKey.getContainer().getBuffer(), scanInputkey);
+                ctl.getCommandQueue().enqueueUnmapMemObject(firstValue.getContainer().getBuffer(), scanInputBuffer);
+                ctl.getCommandQueue().enqueueUnmapMemObject(result.getContainer().getBuffer(), scanResultBuffer);
                 return result + numElements;
 #else
                 //std::cout << "The MultiCoreCpu version of scan by key is not enabled. " << std ::endl;
@@ -1176,9 +1176,9 @@ aProfiler.set(AsyncProfiler::getDevice, control::SerialCpu);
     {
     ldsKeySize   = static_cast< cl_uint >( kernel0_WgSize * sizeof( kType ) );
     ldsValueSize = static_cast< cl_uint >( kernel0_WgSize * sizeof( oType ) );
-    V_OPENCL( kernels[0].setArg( 0, firstKey.getBuffer()), "Error setArg kernels[ 0 ]" ); // Input keys
-    V_OPENCL( kernels[0].setArg( 1, firstValue.getBuffer()),"Error setArg kernels[ 0 ]" ); // Input buffer
-    V_OPENCL( kernels[0].setArg( 2, result.getBuffer( ) ), "Error setArg kernels[ 0 ]" ); // Output buffer
+    V_OPENCL( kernels[0].setArg( 0, firstKey.getContainer().getBuffer()), "Error setArg kernels[ 0 ]" ); // Input keys
+    V_OPENCL( kernels[0].setArg( 1, firstValue.getContainer().getBuffer()),"Error setArg kernels[ 0 ]" ); // Input buffer
+    V_OPENCL( kernels[0].setArg( 2, result.getContainer().getBuffer() ), "Error setArg kernels[ 0 ]" ); // Output buffer
     V_OPENCL( kernels[0].setArg( 3, init ),                 "Error setArg kernels[ 0 ]" ); // Initial value exclusive
     V_OPENCL( kernels[0].setArg( 4, numElements ),          "Error setArg kernels[ 0 ]" ); // Size of scratch buffer
     V_OPENCL( kernels[0].setArg( 5, ldsKeySize, NULL ),     "Error setArg kernels[ 0 ]" ); // Scratch buffer
@@ -1274,8 +1274,8 @@ aProfiler.set(AsyncProfiler::device, control::SerialCpu);
 
     V_OPENCL( kernels[2].setArg( 0, *keySumArray ),         "Error setArg kernels[ 2 ]" ); // Input buffer
     V_OPENCL( kernels[2].setArg( 1, *postSumArray ),        "Error setArg kernels[ 2 ]" ); // Input buffer
-    V_OPENCL( kernels[2].setArg( 2, firstKey.getBuffer()), "Error setArg kernels[ 2 ]" ); // Output buffer
-    V_OPENCL( kernels[2].setArg( 3, result.getBuffer()),   "Error setArg kernels[ 2 ]" ); // Output buffer
+    V_OPENCL( kernels[2].setArg( 2, firstKey.getContainer().getBuffer()), "Error setArg kernels[ 2 ]" ); // Output buffer
+    V_OPENCL( kernels[2].setArg( 3, result.getContainer().getBuffer()),   "Error setArg kernels[ 2 ]" ); // Output buffer
     V_OPENCL( kernels[2].setArg( 4, numElements ),          "Error setArg kernels[ 2 ]" ); // Size of scratch buffer
     V_OPENCL( kernels[2].setArg( 5, *binaryPredicateBuffer ),"Error setArg kernels[ 2 ]" ); // User provided functor
     V_OPENCL( kernels[2].setArg( 6, *binaryFunctionBuffer ),"Error setArg kernels[ 2 ]" ); // User provided functor

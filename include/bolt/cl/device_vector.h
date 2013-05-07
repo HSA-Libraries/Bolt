@@ -246,27 +246,7 @@ namespace cl
                     return result;
                 }
 
-            /*! \brief A get accessor function to return the encapsulated device buffer for const objects.
-            *   This member function allows access to the Buffer object, which can be retrieved through a reference or an iterator.
-            *   This is necessary to allow library functions to set the encapsulated buffer object as a kernel argument.  
-            *   \note This get function could be implemented in the iterator, but the reference object is usually a temporary rvalue, so 
-            *   this location seems less intrusive to the design of the vector class.
-            */
-            const ::cl::Buffer& getBuffer( ) const
-                {
-                return m_Container.m_devMemory;
-                }
 
-            /*! \brief A get accessor function to return the encapsulated device buffer for non-const objects.
-            *   This member function allows access to the Buffer object, which can be retrieved through a reference or an iterator.
-            *   This is necessary to allow library functions to set the encapsulated buffer object as a kernel argument.  
-            *   \note This get function can be implemented in the iterator, but the reference object is usually a temporary rvalue, so 
-            *   this location seems less intrusive to the design of the vector class.
-            */
-            ::cl::Buffer& getBuffer( )
-            {
-                return m_Container.m_devMemory;
-            }
 
             Container& getContainer( ) const
             {
@@ -1493,6 +1473,29 @@ namespace cl
                 l_Error = m_commQueue.enqueueUnmapMemObject( m_devMemory, ptrBuffer, NULL, &unmapEvent );
                 V_OPENCL( l_Error, "device_vector failed to unmap host memory back to device memory" );
                 V_OPENCL( unmapEvent.wait( ), "failed to wait for unmap event" );
+            }
+
+
+            /*! \brief A get accessor function to return the encapsulated device buffer for const objects.
+            *   This member function allows access to the Buffer object, which can be retrieved through a reference or an iterator.
+            *   This is necessary to allow library functions to set the encapsulated buffer object as a kernel argument.  
+            *   \note This get function could be implemented in the iterator, but the reference object is usually a temporary rvalue, so 
+            *   this location seems less intrusive to the design of the vector class.
+            */
+            const ::cl::Buffer& getBuffer( ) const
+                {
+                return m_devMemory;
+                }
+
+            /*! \brief A get accessor function to return the encapsulated device buffer for non-const objects.
+            *   This member function allows access to the Buffer object, which can be retrieved through a reference or an iterator.
+            *   This is necessary to allow library functions to set the encapsulated buffer object as a kernel argument.  
+            *   \note This get function can be implemented in the iterator, but the reference object is usually a temporary rvalue, so 
+            *   this location seems less intrusive to the design of the vector class.
+            */
+            ::cl::Buffer& getBuffer( )
+            {
+                return m_devMemory;
             }
 
         private:

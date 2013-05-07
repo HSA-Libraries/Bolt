@@ -238,7 +238,7 @@ namespace bolt {
             {
                std::vector<iType> InputBuffer(szElements);
                for(unsigned int index=0; index<szElements; index++){
-                   InputBuffer[index] = first.getBuffer()[index];
+                   InputBuffer[index] = first.getContainer().getBuffer()[index];
                } 
                std::vector<oType> output(szElements);
                std::transform(InputBuffer.begin(), InputBuffer.end(), output.begin(),transform_op);
@@ -252,7 +252,7 @@ namespace bolt {
 #ifdef ENABLE_TBB
                std::vector<iType> InputBuffer(szElements);
                for(unsigned int index=0; index<szElements; index++){
-                   InputBuffer[index] = first.getBuffer()[index];
+                   InputBuffer[index] = first.getContainer().getBuffer()[index];
                } 
                tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
                Transform_Reduce<oType, UnaryFunction, BinaryFunction> transform_reduce_op(transform_op, reduce_op, init);
@@ -285,7 +285,7 @@ namespace bolt {
             const unsigned int ceilNumTiles = static_cast< size_t >( std::ceil( static_cast< float >( szElements ) / tileSize) );
             unsigned int ceilNumElements = tileSize * ceilNumTiles;
 
-            concurrency::array_view< iType, 1 > inputV (first.getBuffer());
+            concurrency::array_view< iType, 1 > inputV (first.getContainer().getBuffer());
 
             //Now create a staging array ; May support zero-copy in the future?!
             concurrency::accelerator cpuAccelerator = concurrency::accelerator(concurrency::accelerator::cpu_accelerator);

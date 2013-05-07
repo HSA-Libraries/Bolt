@@ -785,11 +785,11 @@ public:
         control::buffPointer userFunctor = ctl.acquireBuffer( sizeof( aligned_binary ),
         CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_binary );
 
-        kernels[boundsCheck].setArg( 0, first1.getBuffer( ) );
+        kernels[boundsCheck].setArg( 0, first1.getContainer().getBuffer() );
         kernels[boundsCheck].setArg( 1, first1.gpuPayloadSize( ), &first1.gpuPayload( ) );
-        kernels[boundsCheck].setArg( 2, first2.getBuffer( ) );
+        kernels[boundsCheck].setArg( 2, first2.getContainer().getBuffer() );
         kernels[boundsCheck].setArg( 3, first2.gpuPayloadSize( ), &first2.gpuPayload( ) );
-        kernels[boundsCheck].setArg( 4, result.getBuffer( ) );
+        kernels[boundsCheck].setArg( 4, result.getContainer().getBuffer() );
         kernels[boundsCheck].setArg( 5, result.gpuPayloadSize( ), &result.gpuPayload( ) );
         kernels[boundsCheck].setArg( 6, distVec );
         kernels[boundsCheck].setArg( 7, *userFunctor);
@@ -909,9 +909,9 @@ public:
         CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_binary );
 
 
-        kernels[boundsCheck].setArg(0, first.getBuffer( ) );
+        kernels[boundsCheck].setArg(0, first.getContainer().getBuffer() );
         kernels[boundsCheck].setArg(1, first.gpuPayloadSize( ), &first.gpuPayload( ) );
-        kernels[boundsCheck].setArg(2, result.getBuffer( ) );
+        kernels[boundsCheck].setArg(2, result.getContainer().getBuffer() );
         kernels[boundsCheck].setArg(3, result.gpuPayloadSize( ), &result.gpuPayload( ) );
         kernels[boundsCheck].setArg(4, distVec );
         kernels[boundsCheck].setArg(5, *userFunctor);
