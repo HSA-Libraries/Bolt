@@ -431,7 +431,7 @@ aProfiler.stopTrial();
         //Now call the actual cl algorithm
         scan_enqueue( ctl, dvInput.begin( ), dvInput.end( ), dvOutput.begin( ), init, binary_op, inclusive );
         //std::cout << "Peeking in pick_iterator after scan_enqueue completed." << std::endl;
-        PEEK_AT( dvOutput.begin().getBuffer())
+        PEEK_AT( dvOutput.begin().getContainer().getBuffer())
 
         // This should immediately map/unmap the buffer
         dvOutput.data( );
@@ -477,13 +477,13 @@ scan_pick_iterator(
        std::vector<oType> scanResultBuffer(numElements);
 
         for(unsigned int index=0; index<numElements; index++){
-            scanInputBuffer[index] = first.getBuffer()[index];
-            scanResultBuffer[index] = result.getBuffer()[index];
+            scanInputBuffer[index] = first.getContainer().getBuffer()[index];
+            scanResultBuffer[index] = result.getContainer().getBuffer()[index];
         }
         Serial_scan<iType, oType, BinaryFunction, T>(&(scanInputBuffer[0]), &(scanResultBuffer[0]),
                                                      numElements, binary_op, inclusive, init);
         for(unsigned int index=0; index<numElements; index++){
-            result.getBuffer()[index] = scanResultBuffer[index];
+            result.getContainer().getBuffer()[index] = scanResultBuffer[index];
         }
         return result + numElements;
     }
@@ -496,8 +496,8 @@ scan_pick_iterator(
 
         //Copy the device_vector buffer to a CPU buffer
         for(unsigned int index=0; index<numElements; index++){
-            scanInputBuffer[index] = first.getBuffer()[index];
-            scanResultBuffer[index] = result.getBuffer()[index];
+            scanInputBuffer[index] = first.getContainer().getBuffer()[index];
+            scanResultBuffer[index] = result.getContainer().getBuffer()[index];
         }
         InputIterator input = scanInputBuffer.begin();
         OutputIterator output = scanResultBuffer.begin();
@@ -506,7 +506,7 @@ scan_pick_iterator(
                                                   (OutputIterator&)output, binary_op, inclusive, init);
         tbb::parallel_scan( tbb::blocked_range<int>(  0, numElements), tbb_scan, tbb::auto_partitioner());
         for(unsigned int index=0; index<numElements; index++){
-            result.getBuffer()[index] = scanResultBuffer[index];
+            result.getContainer().getBuffer()[index] = scanResultBuffer[index];
         }
         return result + numElements;
 #else
@@ -520,7 +520,7 @@ scan_pick_iterator(
     //Now call the actual cl algorithm
         scan_enqueue( ctl, first, last, result, init, binary_op, inclusive );
         //std::cout << "Peeking in pick_iterator after scan_enqueue completed." << std::endl;
-        PEEK_AT( result.getBuffer())
+        PEEK_AT( result.getContainer().getBuffer())
     }
 
     return result + numElements;
@@ -619,8 +619,8 @@ size_t k0_stepNum, k1_stepNum, k2_stepNum;
     //  Use of the auto keyword here is OK, because AMP is restricted by definition to vs11 or above
     //  The auto keyword is useful here in a polymorphic sense, because it does not care if the container
     //  is wrapping an array or an array_view
-  auto&  input = first.getBuffer(); //( numElements, av );
-    auto& output = result.getBuffer(); //( sizeInputBuff, av );
+  auto&  input = first.getContainer().getBuffer(); //( numElements, av );
+    auto& output = result.getContainer().getBuffer(); //( sizeInputBuff, av );
     input.get_extent().size();
   //hostInput.copy_to( input.section( concurrency::extent< 1 >( numElements ) ) );
 

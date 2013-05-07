@@ -205,7 +205,7 @@ namespace bolt {
 
                 cl_uint szElements = static_cast< cl_uint >( first.distance_to(last ) );
 
-                V_OPENCL( kernels[0].setArg(0, first.getBuffer( ) ), "Error setting kernel argument" );
+                V_OPENCL( kernels[0].setArg(0, first.getContainer().getBuffer() ), "Error setting kernel argument" );
                 V_OPENCL( kernels[0].setArg(1, first.gpuPayloadSize( ), &first.gpuPayload( ) ), "Error setting a kernel argument" );
                 V_OPENCL( kernels[0].setArg(2, szElements), "Error setting kernel argument" );
                 V_OPENCL( kernels[0].setArg(3, *userFunctor), "Error setting kernel argument" );
@@ -349,19 +349,19 @@ namespace bolt {
                     cl_int l_Error = CL_SUCCESS;
                     int countResult;
                     /*Map the device buffer to CPU*/
-                    iType *countInputBuffer = (iType*)ctl.getCommandQueue().enqueueMapBuffer(first.getBuffer(), false,
+                    iType *countInputBuffer = (iType*)ctl.getCommandQueue().enqueueMapBuffer(first.getContainer().getBuffer(), false,
                     CL_MAP_READ,0, sizeof(iType) * szElements, NULL, &serialCPUEvent, &l_Error );
                     serialCPUEvent.wait();
                     countResult = (int)std::count_if(countInputBuffer, countInputBuffer + szElements, predicate) ;
                     /*Unmap the device buffer back to device memory. This will copy the host modified buffer back to the device*/
-                    ctl.getCommandQueue().enqueueUnmapMemObject(first.getBuffer(), countInputBuffer);
+                    ctl.getCommandQueue().enqueueUnmapMemObject(first.getContainer().getBuffer(), countInputBuffer);
                      return countResult;
                 } else if (runMode == bolt::cl::control::MultiCoreCpu) {
 #ifdef ENABLE_TBB
                     ::cl::Event multiCoreCPUEvent;
                     cl_int l_Error = CL_SUCCESS;
                    /*Map the device buffer to CPU*/
-                   iType *countInputBuffer = (iType*)ctl.getCommandQueue().enqueueMapBuffer(first.getBuffer(), false, CL_MAP_READ,0, sizeof(iType) * szElements,
+                   iType *countInputBuffer = (iType*)ctl.getCommandQueue().enqueueMapBuffer(first.getContainer().getBuffer(), false, CL_MAP_READ,0, sizeof(iType) * szElements,
                                                NULL, &multiCoreCPUEvent, &l_Error );
                     multiCoreCPUEvent.wait();
                     tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);

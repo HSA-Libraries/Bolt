@@ -321,7 +321,7 @@ void stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, cons
     //  kernels[ 0 ] sorts values within a workgroup, in parallel across the entire vector
     //  kernels[ 0 ] reads and writes to the same vector
     cl_uint ldsSize  = static_cast< cl_uint >( localRange * sizeof( iType ) );
-    V_OPENCL( kernels[ 0 ].setArg( 0, first.getBuffer( ) ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
+    V_OPENCL( kernels[ 0 ].setArg( 0, first.getContainer().getBuffer() ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
     V_OPENCL( kernels[ 0 ].setArg( 1, first.gpuPayloadSize( ), &first.gpuPayload( ) ), "Error setting a kernel argument" );
     V_OPENCL( kernels[ 0 ].setArg( 2, vecSize ),            "Error setting argument for kernels[ 0 ]" ); // Size of scratch buffer
     V_OPENCL( kernels[ 0 ].setArg( 3, ldsSize, NULL ),          "Error setting argument for kernels[ 0 ]" ); // Scratch buffer
@@ -373,7 +373,7 @@ void stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, cons
         //  For each pass, flip the input-output buffers 
         if( pass & 0x1 )
         {
-            V_OPENCL( kernels[ 1 ].setArg( 0, first.getBuffer( ) ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
+            V_OPENCL( kernels[ 1 ].setArg( 0, first.getContainer().getBuffer() ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
             V_OPENCL( kernels[ 1 ].setArg( 1, first.gpuPayloadSize( ), &first.gpuPayload( ) ), "Error setting a kernel argument" );
             V_OPENCL( kernels[ 1 ].setArg( 2, *tmpBuffer ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
             V_OPENCL( kernels[ 1 ].setArg( 3, first.gpuPayloadSize( ), &first.gpuPayload( ) ), "Error setting a kernel argument" );
@@ -382,7 +382,7 @@ void stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, cons
         {
             V_OPENCL( kernels[ 1 ].setArg( 0, *tmpBuffer ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
             V_OPENCL( kernels[ 1 ].setArg( 1, first.gpuPayloadSize( ), &first.gpuPayload( ) ), "Error setting a kernel argument" );
-            V_OPENCL( kernels[ 1 ].setArg( 2, first.getBuffer( ) ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
+            V_OPENCL( kernels[ 1 ].setArg( 2, first.getContainer().getBuffer() ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
             V_OPENCL( kernels[ 1 ].setArg( 3, first.gpuPayloadSize( ), &first.gpuPayload( ) ), "Error setting a kernel argument" );
         }
         //  For each pass, the merge window doubles
@@ -431,7 +431,7 @@ void stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, cons
         //else
         //{
         //    //  Debug mapping, to look at result vector in memory
-        //    iType* dev2Host = static_cast< iType* >( myCQ.enqueueMapBuffer( first.getBuffer( ), CL_TRUE, CL_MAP_READ, 0,
+        //    iType* dev2Host = static_cast< iType* >( myCQ.enqueueMapBuffer( first.getContainer().getBuffer(), CL_TRUE, CL_MAP_READ, 0,
         //        bolt::cl::minimum< size_t >()( globalRange, vecSize ) * sizeof( iType ), NULL, NULL, &l_Error) );
         //    V_OPENCL( l_Error, "Error: Mapping Device->Host Buffer." );
 
@@ -448,7 +448,7 @@ void stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, cons
         //        }
         //    }
 
-        //    myCQ.enqueueUnmapMemObject( first.getBuffer( ), dev2Host );
+        //    myCQ.enqueueUnmapMemObject( first.getContainer().getBuffer(), dev2Host );
         //}
         //std::cout << std::endl;
     }
@@ -459,7 +459,7 @@ void stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, cons
     {
         ::cl::Event copyEvent;
 
-        l_Error = myCQ.enqueueCopyBuffer( *tmpBuffer, first.getBuffer( ), 0, first.m_Index * sizeof( iType ), 
+        l_Error = myCQ.enqueueCopyBuffer( *tmpBuffer, first.getContainer().getBuffer(), 0, first.m_Index * sizeof( iType ), 
             vecSize * sizeof( iType ), NULL, &copyEvent );
         V_OPENCL( l_Error, "device_vector failed to copy data inside of operator=()" );
         wait( ctrl, copyEvent );

@@ -93,6 +93,11 @@ namespace cl {
                 return m_devMemory;
             }
 
+          const constant_iterator< value_type > & getContainer( ) const
+            {
+                return *this;
+            }
+
             Payload gpuPayload( ) const
             {
                 Payload payload = { m_constValue };

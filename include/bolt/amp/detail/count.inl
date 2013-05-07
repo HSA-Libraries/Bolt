@@ -131,7 +131,7 @@ namespace bolt {
                 unsigned int ceilNumElements = tileSize * ceilNumTiles;
 
 
-                concurrency::array_view< iType, 1 > inputV (first.getBuffer());
+                concurrency::array_view< iType, 1 > inputV (first.getContainer().getBuffer());
 
                 //Now create a staging array ; May support zero-copy in the future?!
                 concurrency::accelerator cpuAccelerator = concurrency::accelerator(concurrency::accelerator::cpu_accelerator);
@@ -312,7 +312,7 @@ namespace bolt {
                 if (runMode == bolt::amp::control::SerialCpu) {
                      std::vector<iType> InputBuffer(szElements);
                      for(unsigned int index=0; index<szElements; index++){
-                         InputBuffer[index] = first.getBuffer()[index];
+                         InputBuffer[index] = first.getContainer().getBuffer()[index];
                      }
                      return (int) std::count_if(InputBuffer.begin(),InputBuffer.end() ,predicate);
 
@@ -324,7 +324,7 @@ namespace bolt {
 #ifdef ENABLE_TBB
                     std::vector<iType> InputBuffer(szElements);
                     for(unsigned int index=0; index<szElements; index++){
-                        InputBuffer[index] = first.getBuffer()[index];
+                        InputBuffer[index] = first.getContainer().getBuffer()[index];
                     }
                     tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
                     Count<iType,Predicate> count_op(predicate);

@@ -239,14 +239,14 @@ namespace  detail {
                 cl_int l_Error = CL_SUCCESS;
                 oType trans_reduceResult;
                 /*Map the device buffer to CPU*/
-                iType *trans_reduceInputBuffer = (iType*)c.getCommandQueue().enqueueMapBuffer(first.getBuffer(), false,
+                iType *trans_reduceInputBuffer = (iType*)c.getCommandQueue().enqueueMapBuffer(first.getContainer().getBuffer(), false,
                                    CL_MAP_READ, 0, sizeof(iType) * szElements, NULL, &serialCPUEvent, &l_Error );
                 serialCPUEvent.wait();
                 std::vector<oType> output(szElements);
                 std::transform(trans_reduceInputBuffer, trans_reduceInputBuffer + szElements, output.begin(), transform_op);
                 trans_reduceResult = std::accumulate(output.begin(), output.end(), init, reduce_op) ;
                 /*Unmap the device buffer back to device memory. This will copy the host modified buffer back to the device*/
-                c.getCommandQueue().enqueueUnmapMemObject(first.getBuffer(), trans_reduceInputBuffer);
+                c.getCommandQueue().enqueueUnmapMemObject(first.getContainer().getBuffer(), trans_reduceInputBuffer);
                 return trans_reduceResult;
 
             }
@@ -256,14 +256,14 @@ namespace  detail {
                 ::cl::Event multiCoreCPUEvent;
                 cl_int l_Error = CL_SUCCESS;
                 /*Map the device buffer to CPU*/
-                iType *trans_reduceInputBuffer = (iType*)c.getCommandQueue().enqueueMapBuffer(first.getBuffer(), false,
+                iType *trans_reduceInputBuffer = (iType*)c.getCommandQueue().enqueueMapBuffer(first.getContainer().getBuffer(), false,
                                    CL_MAP_READ, 0, sizeof(iType) * szElements, NULL, &multiCoreCPUEvent, &l_Error );
                 multiCoreCPUEvent.wait();
 
                 tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
                 Transform_Reduce<oType, UnaryFunction, BinaryFunction> transform_reduce_op(transform_op, reduce_op, init);
                 tbb::parallel_reduce( tbb::blocked_range<iType*>(trans_reduceInputBuffer, (trans_reduceInputBuffer + szElements)), transform_reduce_op );
-                c.getCommandQueue().enqueueUnmapMemObject(first.getBuffer(), trans_reduceInputBuffer);
+                c.getCommandQueue().enqueueUnmapMemObject(first.getContainer().getBuffer(), trans_reduceInputBuffer);
                 return transform_reduce_op.value;
 #else
                 //std::cout << "The MultiCoreCpu version of this function is not enabled. " << std ::endl;
@@ -363,7 +363,7 @@ namespace  detail {
                 numWG = requiredWorkGroups;
             /**********************/
 
-            V_OPENCL( kernels[0].setArg( 0, first.getBuffer( ) ), "Error setting kernel argument" );
+            V_OPENCL( kernels[0].setArg( 0, first.getContainer().getBuffer() ), "Error setting kernel argument" );
             V_OPENCL( kernels[0].setArg( 1, first.gpuPayloadSize( ), &first.gpuPayload( ) ), "Error setting kernel argument" );
             V_OPENCL( kernels[0].setArg( 2, szElements), "Error setting kernel argument" );
             V_OPENCL( kernels[0].setArg( 3, *transformFunctor), "Error setting kernel argument" );

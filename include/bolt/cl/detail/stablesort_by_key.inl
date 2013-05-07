@@ -350,9 +350,9 @@ namespace detail
         //  kernels[ 0 ] reads and writes to the same vector
         cl_uint keyLdsSize  = static_cast< cl_uint >( localRange * sizeof( keyType ) );
         cl_uint valueLdsSize  = static_cast< cl_uint >( localRange * sizeof( valueType ) );
-        V_OPENCL( kernels[ 0 ].setArg( 0, keys_first.getBuffer( ) ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
+        V_OPENCL( kernels[ 0 ].setArg( 0, keys_first.getContainer().getBuffer() ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
         V_OPENCL( kernels[ 0 ].setArg( 1, keys_first.gpuPayloadSize( ), &keys_first.gpuPayload( ) ), "Error setting a kernel argument" );
-        V_OPENCL( kernels[ 0 ].setArg( 2, values_first.getBuffer( ) ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
+        V_OPENCL( kernels[ 0 ].setArg( 2, values_first.getContainer().getBuffer() ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
         V_OPENCL( kernels[ 0 ].setArg( 3, values_first.gpuPayloadSize( ), &values_first.gpuPayload( ) ), "Error setting a kernel argument" );
         V_OPENCL( kernels[ 0 ].setArg( 4, vecSize ),            "Error setting argument for kernels[ 0 ]" ); // Size of scratch buffer
         V_OPENCL( kernels[ 0 ].setArg( 5, keyLdsSize, NULL ),          "Error setting argument for kernels[ 0 ]" ); // Scratch buffer
@@ -407,9 +407,9 @@ namespace detail
             //  For each pass, flip the input-output buffers 
             if( pass & 0x1 )
             {
-                V_OPENCL( kernels[ 1 ].setArg( 0, keys_first.getBuffer( ) ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
+                V_OPENCL( kernels[ 1 ].setArg( 0, keys_first.getContainer().getBuffer() ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
                 V_OPENCL( kernels[ 1 ].setArg( 1, keys_first.gpuPayloadSize( ), &keys_first.gpuPayload( ) ), "Error setting a kernel argument" );
-                V_OPENCL( kernels[ 1 ].setArg( 2, values_first.getBuffer( ) ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
+                V_OPENCL( kernels[ 1 ].setArg( 2, values_first.getContainer().getBuffer() ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
                 V_OPENCL( kernels[ 1 ].setArg( 3, values_first.gpuPayloadSize( ), &values_first.gpuPayload( ) ), "Error setting a kernel argument" );
                 V_OPENCL( kernels[ 1 ].setArg( 4, *tmpKeyBuffer ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
                 V_OPENCL( kernels[ 1 ].setArg( 5, keys_first.gpuPayloadSize( ), &keys_first.gpuPayload( ) ), "Error setting a kernel argument" );
@@ -422,9 +422,9 @@ namespace detail
                 V_OPENCL( kernels[ 1 ].setArg( 1, keys_first.gpuPayloadSize( ), &keys_first.gpuPayload( ) ), "Error setting a kernel argument" );
                 V_OPENCL( kernels[ 1 ].setArg( 2, *tmpValueBuffer ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
                 V_OPENCL( kernels[ 1 ].setArg( 3, values_first.gpuPayloadSize( ), &values_first.gpuPayload( ) ), "Error setting a kernel argument" );
-                V_OPENCL( kernels[ 1 ].setArg( 4, keys_first.getBuffer( ) ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
+                V_OPENCL( kernels[ 1 ].setArg( 4, keys_first.getContainer().getBuffer() ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
                 V_OPENCL( kernels[ 1 ].setArg( 5, keys_first.gpuPayloadSize( ), &keys_first.gpuPayload( ) ), "Error setting a kernel argument" );
-                V_OPENCL( kernels[ 1 ].setArg( 6, values_first.getBuffer( ) ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
+                V_OPENCL( kernels[ 1 ].setArg( 6, values_first.getContainer().getBuffer() ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
                 V_OPENCL( kernels[ 1 ].setArg( 7, values_first.gpuPayloadSize( ), &values_first.gpuPayload( ) ), "Error setting a kernel argument" );
             }
             //  For each pass, the merge window doubles
@@ -473,7 +473,7 @@ namespace detail
             //else
             //{
             //    //  Debug mapping, to look at result vector in memory
-            //    keyType* dev2Host = static_cast< keyType* >( myCQ.enqueueMapBuffer( first.getBuffer( ), CL_TRUE, CL_MAP_READ, 0,
+            //    keyType* dev2Host = static_cast< keyType* >( myCQ.enqueueMapBuffer( first.getContainer().getBuffer(), CL_TRUE, CL_MAP_READ, 0,
             //        bolt::cl::minimum< size_t >()( globalRange, vecSize ) * sizeof( keyType ), NULL, NULL, &l_Error) );
             //    V_OPENCL( l_Error, "Error: Mapping Device->Host Buffer." );
 
@@ -490,7 +490,7 @@ namespace detail
             //        }
             //    }
 
-            //    myCQ.enqueueUnmapMemObject( first.getBuffer( ), dev2Host );
+            //    myCQ.enqueueUnmapMemObject( first.getContainer().getBuffer(), dev2Host );
             //}
             //std::cout << std::endl;
         }
@@ -501,11 +501,11 @@ namespace detail
         {
             ::cl::Event copyEvent;
 
-            l_Error = myCQ.enqueueCopyBuffer( *tmpKeyBuffer, keys_first.getBuffer( ), 0, keys_first.m_Index * sizeof( keyType ), 
+            l_Error = myCQ.enqueueCopyBuffer( *tmpKeyBuffer, keys_first.getContainer().getBuffer(), 0, keys_first.m_Index * sizeof( keyType ), 
                 vecSize * sizeof( keyType ), NULL, NULL );
             V_OPENCL( l_Error, "device_vector failed to copy data inside of operator=()" );
 
-            l_Error = myCQ.enqueueCopyBuffer( *tmpValueBuffer, values_first.getBuffer( ), 0, values_first.m_Index * sizeof( keyType ), 
+            l_Error = myCQ.enqueueCopyBuffer( *tmpValueBuffer, values_first.getContainer().getBuffer(), 0, values_first.m_Index * sizeof( keyType ), 
                 vecSize * sizeof( keyType ), NULL, &copyEvent );
             V_OPENCL( l_Error, "device_vector failed to copy data inside of operator=()" );
 
