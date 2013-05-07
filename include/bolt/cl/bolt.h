@@ -269,7 +269,7 @@ namespace bolt {
         extern boost::mutex programMapMutex;
         extern ProgramMap programMap;
 
-	};
+    };
 };
 
 #if defined( _WIN32 )
@@ -282,6 +282,13 @@ BOLT_CREATE_TYPENAME( int );
 BOLT_CREATE_TYPENAME( unsigned int );
 BOLT_CREATE_TYPENAME( float );
 BOLT_CREATE_TYPENAME( double );
+BOLT_CREATE_TYPENAME( char );
+BOLT_CREATE_TYPENAME( unsigned char );
+BOLT_CREATE_TYPENAME( short );
+BOLT_CREATE_TYPENAME( unsigned short );
+BOLT_CREATE_TYPENAME( long );
+BOLT_CREATE_TYPENAME( unsigned long );
+
 
 ////  Pre-define standard primitives that are likely to be used in a variety of OpenCL kernels
 //BOLT_CREATE_TYPENAME( cl_int );

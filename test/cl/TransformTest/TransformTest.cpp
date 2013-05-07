@@ -19,6 +19,7 @@
 #define TEST_DEVICE_VECTOR 1
 #define TEST_CPU_DEVICE 0
 #define GOOGLE_TEST 1
+#define LARGE_SIZE 0
 #if (GOOGLE_TEST == 1)
 
 #include "common/stdafx.h"
@@ -161,6 +162,18 @@ protected:
 };
 
 TYPED_TEST_CASE_P( TransformArrayTest );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE(bolt::cl::plus, int, short );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE(bolt::cl::plus, int, unsigned short );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE(bolt::cl::plus, int, long );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE(bolt::cl::plus, int, unsigned long);
+BOLT_TEMPLATE_REGISTER_NEW_TYPE(bolt::cl::multiplies, int, short );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE(bolt::cl::multiplies, int, unsigned short );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE(bolt::cl::multiplies, int, long );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE(bolt::cl::multiplies, int, unsigned long);
+BOLT_TEMPLATE_REGISTER_NEW_TYPE(bolt::cl::minus, int, short );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE(bolt::cl::minus, int, unsigned short );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE(bolt::cl::minus, int, long );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE(bolt::cl::minus, int, unsigned long);
 
 TYPED_TEST_P( TransformArrayTest, Normal )
 {
@@ -1174,6 +1187,76 @@ typedef ::testing::Types<
     std::tuple< float, TypeValue< 65536 > >
 > FloatTests;
 
+typedef ::testing::Types< 
+    std::tuple< long, TypeValue< 1 > >,
+    std::tuple< long, TypeValue< 31 > >,
+    std::tuple< long, TypeValue< 32 > >,
+    std::tuple< long, TypeValue< 63 > >,
+    std::tuple< long, TypeValue< 64 > >,
+    std::tuple< long, TypeValue< 127 > >,
+    std::tuple< long, TypeValue< 128 > >,
+    std::tuple< long, TypeValue< 129 > >,
+    std::tuple< long, TypeValue< 1000 > >,
+    std::tuple< long, TypeValue< 1053 > >,
+    std::tuple< long, TypeValue< 4096 > >,
+    std::tuple< long, TypeValue< 4097 > >
+> LongTests;
+
+
+// todo: Run long with larger sizes
+
+typedef ::testing::Types< 
+    std::tuple< unsigned long, TypeValue< 1 > >,
+    std::tuple< unsigned long, TypeValue< 31 > >,
+    std::tuple< unsigned long, TypeValue< 32 > >,
+    std::tuple< unsigned long, TypeValue< 63 > >,
+    std::tuple< unsigned long, TypeValue< 64 > >,
+    std::tuple< unsigned long, TypeValue< 127 > >,
+    std::tuple< unsigned long, TypeValue< 128 > >,
+    std::tuple< unsigned long, TypeValue< 129 > >,
+    std::tuple< unsigned long, TypeValue< 1000 > >,
+    std::tuple< unsigned long, TypeValue< 1053 > >,
+    std::tuple< unsigned long, TypeValue< 4096 > >,
+    std::tuple< unsigned long, TypeValue< 4097 > >
+> ULongTests;
+
+// todo: Run ulong with larger sizes
+
+typedef ::testing::Types< 
+    std::tuple< short, TypeValue< 1 > >,
+    std::tuple< short, TypeValue< 31 > >,
+    std::tuple< short, TypeValue< 32 > >,
+    std::tuple< short, TypeValue< 63 > >,
+    std::tuple< short, TypeValue< 64 > >,
+    std::tuple< short, TypeValue< 127 > >,
+    std::tuple< short, TypeValue< 128 > >,
+    std::tuple< short, TypeValue< 129 > >,
+    std::tuple< short, TypeValue< 1000 > >,
+    std::tuple< short, TypeValue< 1053 > >,
+    std::tuple< short, TypeValue< 4096 > >,
+    std::tuple< short, TypeValue< 4097 > >,
+    std::tuple< short, TypeValue< 65535 > >,
+    std::tuple< short, TypeValue< 65536 > >
+> ShortTests;
+
+typedef ::testing::Types< 
+    std::tuple< unsigned short, TypeValue< 1 > >,
+    std::tuple< unsigned short, TypeValue< 31 > >,
+    std::tuple< unsigned short, TypeValue< 32 > >,
+    std::tuple< unsigned short, TypeValue< 63 > >,
+    std::tuple< unsigned short, TypeValue< 64 > >,
+    std::tuple< unsigned short, TypeValue< 127 > >,
+    std::tuple< unsigned short, TypeValue< 128 > >,
+    std::tuple< unsigned short, TypeValue< 129 > >,
+    std::tuple< unsigned short, TypeValue< 1000 > >,
+    std::tuple< unsigned short, TypeValue< 1053 > >,
+    std::tuple< unsigned short, TypeValue< 4096 > >,
+    std::tuple< unsigned short, TypeValue< 4097 > >,
+    std::tuple< unsigned short, TypeValue< 65535 > >,
+    std::tuple< unsigned short, TypeValue< 65536 > >
+> UShortTests;
+
+
 #if (TEST_DOUBLE == 1)
 typedef ::testing::Types< 
     std::tuple< double, TypeValue< 1 > >,
@@ -1193,31 +1276,43 @@ typedef ::testing::Types<
 > DoubleTests;
 #endif 
 BOLT_FUNCTOR(UDD,
-struct UDD { 
+struct UDD
+{
     int a; 
     int b;
 
-    bool operator() (const UDD& lhs, const UDD& rhs) { 
+    bool operator() (const UDD& lhs, const UDD& rhs) const {
         return ((lhs.a+lhs.b) > (rhs.a+rhs.b));
     } 
-    bool operator < (const UDD& other) const { 
+    bool operator < (const UDD& other) const {
         return ((a+b) < (other.a+other.b));
     }
-    bool operator > (const UDD& other) const { 
+    bool operator > (const UDD& other) const {
         return ((a+b) > (other.a+other.b));
     }
-    bool operator == (const UDD& other) const { 
+    bool operator == (const UDD& other) const {
         return ((a+b) == (other.a+other.b));
     }
-    UDD() 
-        : a(0),b(0) { } 
-    UDD(int _in) 
-        : a(_in), b(_in +1)  { } 
-}; 
+
+    UDD operator + (const UDD &rhs) const
+    {
+      UDD _result;
+      _result.a = a + rhs.a;
+      _result.b = b + rhs.b;
+      return _result;
+    }
+
+    UDD()
+        : a(0),b(0) { }
+    UDD(int _in)
+        : a(_in), b(_in +1)  { }
+};
 );
-BOLT_CREATE_TYPENAME(bolt::cl::less<UDD>);
-BOLT_CREATE_TYPENAME(bolt::cl::greater<UDD>);
-BOLT_CREATE_TYPENAME(bolt::cl::plus<UDD>);
+
+BOLT_CREATE_TYPENAME( bolt::cl::device_vector< UDD >::iterator );
+BOLT_CREATE_CLCODE( bolt::cl::device_vector< UDD >::iterator, bolt::cl::deviceVectorIteratorTemplate );
+
+BOLT_TEMPLATE_REGISTER_NEW_TYPE(bolt::cl::plus, int, UDD );
 
 typedef ::testing::Types< 
     std::tuple< UDD, TypeValue< 1 > >,
@@ -1238,6 +1333,10 @@ typedef ::testing::Types<
 
 INSTANTIATE_TYPED_TEST_CASE_P( Integer, TransformArrayTest, IntegerTests );
 INSTANTIATE_TYPED_TEST_CASE_P( Float, TransformArrayTest, FloatTests );
+//INSTANTIATE_TYPED_TEST_CASE_P( Long, TransformArrayTest, LongTests );
+//INSTANTIATE_TYPED_TEST_CASE_P( ULong, TransformArrayTest, ULongTests );
+INSTANTIATE_TYPED_TEST_CASE_P( Short, TransformArrayTest, ShortTests );
+INSTANTIATE_TYPED_TEST_CASE_P( UShort, TransformArrayTest, UShortTests );
 #if (TEST_DOUBLE == 1)
 INSTANTIATE_TYPED_TEST_CASE_P( Double, TransformArrayTest, DoubleTests );
 #endif 
@@ -1389,6 +1488,198 @@ TEST( TransformDeviceVector, OutOfPlaceTransform)
 
 }
 
+BOLT_FUNCTOR(StringFunctor,
+struct StringFunctor
+{
+    char operator() ( const char& in )
+    {
+        return in + 1;
+    };
+};
+);
+
+BOLT_FUNCTOR(UnsignedStringFunctor,
+struct UnsignedStringFunctor
+{
+    unsigned char operator() ( const unsigned char& in )
+    {
+        return in + 1;
+    };
+};
+);
+
+TEST(TransformStdVect, BoltVideo)
+{
+    // Initialize and print an input string
+    std::string inputString( "GdkknVnqkc" );
+
+    // Create input and ourput buffers
+    std::vector< char > inputVec( inputString.begin(), inputString.end() );
+    std::vector< char > outputVec( inputString.size() );
+
+    // This calls into OpenCL to do the work
+    bolt::cl::transform( inputVec.begin(), inputVec.end(), outputVec.begin(), StringFunctor() );
+
+    // transfer data to host memory from device memory.
+    std::string outputString( outputVec.data(), outputVec.size() );
+    std::string expectedString("HelloWorld");
+    EXPECT_TRUE(outputString==expectedString);
+
+
+}
+
+TEST(TransformStdVect, BoltVideoUnsignedChar)
+{
+    // Initialize and print an input string
+    std::string inputString( "GdkknVnqkc" );
+
+    // Create input and ourput buffers
+    std::vector< unsigned char > inputVec( inputString.begin(), inputString.end() );
+    std::vector< unsigned char > outputVec( inputString.size() );
+
+    // This calls into OpenCL to do the work
+    bolt::cl::transform( inputVec.begin(), inputVec.end(), outputVec.begin(), UnsignedStringFunctor() );
+
+    // transfer data to host memory from device memory.
+    std::string outputString(reinterpret_cast<const char *>(outputVec.data()), outputVec.size()  );
+    std::string expectedString("HelloWorld");
+    EXPECT_TRUE(outputString==expectedString);
+
+
+}
+
+TEST( TransformUDD, UDDTestStdVector)
+{
+
+#if LARGE_SIZE
+  int length = 1<<21;
+#else
+  int length =1024;
+#endif
+  std::vector<UDD> hVectorA( length ), hVectorB( length ), hVectorO( length ), hVectorBoltO( length );
+  std::fill( hVectorA.begin(), hVectorA.end(), 1024 );
+  std::fill( hVectorB.begin(), hVectorB.end(), 1024 );
+  std::fill( hVectorO.begin(), hVectorO.end(), 0 );
+  std::fill( hVectorBoltO.begin(), hVectorBoltO.end(), 0 );
+
+  bolt::cl::plus<UDD> pl;
+  std::transform( hVectorA.begin(), hVectorA.end(), hVectorB.begin(), hVectorO.begin(), std::plus< UDD >( ) );
+  bolt::cl::transform( hVectorA.begin(),
+    hVectorA.end(),
+    hVectorB.begin(),
+    hVectorBoltO.begin(), pl );
+
+  cmpArrays(hVectorO, hVectorBoltO);
+
+}
+
+
+TEST( TransformUDD, UDDTestDeviceVector)
+{
+
+#if LARGE_SIZE
+  int length = 1<<21;
+#else
+  int length = 1024;
+#endif
+  std::vector<UDD> hVectorA( length ),
+                   hVectorB( length ),
+                   hVectorO( length );
+  std::fill( hVectorA.begin(), hVectorA.end(), 1024 );
+  std::fill( hVectorB.begin(), hVectorB.end(), 1024 );
+  std::fill( hVectorO.begin(), hVectorO.end(), 0 );
+
+  bolt::cl::plus<UDD> pl;
+  bolt::cl::device_vector<UDD> dVectorA( hVectorA.begin(), hVectorA.end() ),
+                               dVectorB( hVectorB.begin(), hVectorB.end() ),
+                               dVectorO( hVectorO.begin(), hVectorO.end() );
+  std::transform( hVectorA.begin(), hVectorA.end(), hVectorB.begin(), hVectorO.begin(), std::plus< UDD >( ) );
+  bolt::cl::transform( dVectorA.begin(),
+    dVectorA.end(),
+    dVectorB.begin(),
+    dVectorO.begin(), pl );
+
+  cmpArrays(hVectorO, dVectorO);
+
+}
+
+
+TEST( TransformLong, LongTests)
+{
+
+#if LARGE_SIZE
+  int length = 1<<21;
+#else
+  int length = 1024;
+#endif
+  std::vector<long> hVectorA( length ),
+                   hVectorB( length ),
+                   hVectorO( length );
+  std::fill( hVectorA.begin(), hVectorA.end(), 1024 );
+  std::fill( hVectorB.begin(), hVectorB.end(), 1024 );
+  std::fill( hVectorO.begin(), hVectorO.end(), 0 );
+
+  bolt::cl::plus<long> pl;
+  bolt::cl::device_vector<long> dVectorA( hVectorA.begin(), hVectorA.end() ),
+                               dVectorB( hVectorB.begin(), hVectorB.end() ),
+                               dVectorO( hVectorO.begin(), hVectorO.end() );
+  std::transform( hVectorA.begin(), hVectorA.end(), hVectorB.begin(), hVectorO.begin(), std::plus< long >( ) );
+  bolt::cl::transform( dVectorA.begin(),
+    dVectorA.end(),
+    dVectorB.begin(),
+    dVectorO.begin(), pl );
+
+  cmpArrays(hVectorO, dVectorO);
+
+}
+
+TEST( TransformULong, ULongTests)
+{
+
+#if LARGE_SIZE
+  int length = 1<<21;
+#else
+  int length = 1024;
+#endif
+  std::vector<unsigned long> hVectorA( length ),
+                   hVectorB( length ),
+                   hVectorO( length );
+  std::fill( hVectorA.begin(), hVectorA.end(), 1024 );
+  std::fill( hVectorB.begin(), hVectorB.end(), 1024 );
+  std::fill( hVectorO.begin(), hVectorO.end(), 0 );
+
+  bolt::cl::plus<unsigned long> pl;
+  bolt::cl::device_vector<unsigned long> dVectorA( hVectorA.begin(), hVectorA.end() ),
+                               dVectorB( hVectorB.begin(), hVectorB.end() ),
+                               dVectorO( hVectorO.begin(), hVectorO.end() );
+  std::transform( hVectorA.begin(), hVectorA.end(), hVectorB.begin(), hVectorO.begin(), std::plus< long >( ) );
+  bolt::cl::transform( dVectorA.begin(),
+    dVectorA.end(),
+    dVectorB.begin(),
+    dVectorO.begin(), pl );
+
+  cmpArrays(hVectorO, dVectorO);
+
+}
+
+TEST(TransformStd, OffsetTest)
+{
+  int length = 1024;
+  std::vector<int> hVectorA( length ), hVectorB( length ), hVectorO( length ), hVectorBoltO( length );
+  std::fill( hVectorA.begin(), hVectorA.end(), 1024 );
+  std::fill( hVectorB.begin(), hVectorB.end(), 1024 );
+  std::fill( hVectorO.begin(), hVectorO.end(), 0 );
+  std::fill( hVectorBoltO.begin(), hVectorBoltO.end(), 0 );
+
+  std::transform( hVectorA.begin()+70, hVectorA.begin()+135, hVectorB.begin()+85, hVectorO.begin()+150, std::plus< int >( ) );
+  bolt::cl::transform( hVectorA.begin()+70,
+    hVectorA.begin()+135,
+    hVectorB.begin()+85,
+    hVectorBoltO.begin()+150, bolt::cl::plus<int>( ) );
+
+  cmpArrays(hVectorO, hVectorBoltO);
+
+}
 
 int main(int argc, char* argv[])
 {

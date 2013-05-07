@@ -1551,6 +1551,18 @@ namespace cl
 
 BOLT_CREATE_TYPENAME( bolt::cl::device_vector< int >::iterator );
 BOLT_CREATE_CLCODE( bolt::cl::device_vector< int >::iterator, bolt::cl::deviceVectorIteratorTemplate );
+BOLT_CREATE_TYPENAME( bolt::cl::device_vector< char >::iterator );
+BOLT_CREATE_CLCODE( bolt::cl::device_vector< char >::iterator, bolt::cl::deviceVectorIteratorTemplate );
+BOLT_CREATE_TYPENAME( bolt::cl::device_vector< unsigned char >::iterator );
+BOLT_CREATE_CLCODE( bolt::cl::device_vector< unsigned char >::iterator, bolt::cl::deviceVectorIteratorTemplate );
+BOLT_CREATE_TYPENAME( bolt::cl::device_vector< short >::iterator );
+BOLT_CREATE_CLCODE( bolt::cl::device_vector< short >::iterator, bolt::cl::deviceVectorIteratorTemplate );
+BOLT_CREATE_TYPENAME( bolt::cl::device_vector< unsigned short >::iterator );
+BOLT_CREATE_CLCODE( bolt::cl::device_vector< unsigned short >::iterator, bolt::cl::deviceVectorIteratorTemplate );
+BOLT_CREATE_TYPENAME( bolt::cl::device_vector< long >::iterator );
+BOLT_CREATE_CLCODE( bolt::cl::device_vector< long >::iterator, bolt::cl::deviceVectorIteratorTemplate );
+BOLT_CREATE_TYPENAME( bolt::cl::device_vector< unsigned long >::iterator );
+BOLT_CREATE_CLCODE( bolt::cl::device_vector< unsigned long >::iterator, bolt::cl::deviceVectorIteratorTemplate );
 
 BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, int, unsigned int );
 BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, int, float );
