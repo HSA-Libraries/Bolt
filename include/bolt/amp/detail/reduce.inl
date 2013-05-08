@@ -38,9 +38,8 @@
 
 #ifdef ENABLE_TBB
 //TBB Includes
-#include "tbb/parallel_reduce.h"
-#include "tbb/blocked_range.h"
-#include "tbb/task_scheduler_init.h"
+#include "bolt/btbb/reduce.h"
+
 #endif
 
 #include <algorithm>
@@ -122,23 +121,15 @@ namespace bolt
                   T init,
                   BinaryFunction binary_op )  
         {
-            const bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
-
-            if (runMode == bolt::amp::control::SerialCpu)
-            {
-                return std::accumulate(first, last, init, binary_op);
-            } 
-            else
-            {
                 return detail::reduce_detect_random_access(ctl, first, last, init, binary_op,
                     std::iterator_traits< InputIterator >::iterator_category( ) );
-            }
+
         };
 
 
     };//end of namespace amp
 };//end of namespace bolt
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 namespace bolt 
 {    
@@ -147,44 +138,7 @@ namespace bolt
         namespace detail 
         {
 
-#ifdef ENABLE_TBB
-            /*For documentation on the reduce object see below link
-             *http://threadingbuildingblocks.org/docs/help/reference/algorithms/parallel_reduce_func.htm
-             *The imperative form of parallel_reduce is used. 
-             *
-            */
-            template <typename T, typename BinaryFunction>
-            struct Reduce {
-                T value;
-                BinaryFunction op;
-                bool flag;
 
-                //TODO - Decide on how many threads to spawn? Usually it should be equal to th enumber of cores
-                //You might need to look at the tbb::split and there there cousin's 
-                //
-                Reduce(const BinaryFunction &_op) : op(_op), value(0) {}
-                Reduce(const BinaryFunction &_op, const T &init) : op(_op), value(init), flag(FALSE) {}
-                Reduce() : value(0) {}
-                Reduce( Reduce& s, tbb::split ) : flag(TRUE), op(s.op) {}
-                void operator()( const tbb::blocked_range<T*>& r ) {
-                    T temp = value;
-                    for( T* a=r.begin(); a!=r.end(); ++a ) {
-                      if(flag){
-                        temp = *a;
-                        flag = FALSE;
-                      }
-                      else
-                        temp = op(temp,*a);
-                    }
-                    value = temp;
-                }
-                //Join is called by the parent thread after the child finishes to execute.
-                void join( Reduce& rhs ) 
-                {
-                    value = op(value,rhs.value);
-                }
-            };
-#endif
 
             template< typename T,
                       typename DVInputIterator,
@@ -196,7 +150,8 @@ namespace bolt
                                            const BinaryFunction& binary_op, 
                                            std::input_iterator_tag )  
             {
-                //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data 
+                //  TODO:  It should be possible to support non-random_access_iterator_tag iterators,
+                // if we copied the data
                 //  to a temporary buffer.  Should we?
                 static_assert( false, "Bolt only supports random access iterator types" );
             }
@@ -219,7 +174,8 @@ namespace bolt
             template< typename T,
                       typename InputIterator,
                       typename BinaryFunction > 
-            typename std::enable_if< !std::is_base_of<typename device_vector<typename std::iterator_traits<InputIterator>::value_type>::iterator,InputIterator>::value, T >::type
+            typename std::enable_if< !std::is_base_of<typename device_vector<typename std::
+                iterator_traits<InputIterator>::value_type>::iterator,InputIterator>::value, T >::type
             reduce_pick_iterator( bolt::amp::control &ctl, 
                                   const InputIterator& first,
                                   const InputIterator& last, 
@@ -237,20 +193,18 @@ namespace bolt
                 //How many threads we should spawn? 
                 //Need to look at how to control the number of threads spawned.
 
-                //
+
                 const bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  
                 if (runMode == bolt::amp::control::SerialCpu) 
                 {
                     return std::accumulate(first, last, init, binary_op);
 
                 } else if (runMode == bolt::amp::control::MultiCoreCpu) {
+
 #ifdef ENABLE_TBB
-                    tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
-                    Reduce<iType, BinaryFunction> reduce_op(binary_op, init);
-                    tbb::parallel_reduce( tbb::blocked_range<iType*>( &*first, (iType*)&*(last-1) + 1), reduce_op );
-                    return reduce_op.value;
+
+                    return bolt::btbb::reduce(first,last,init,binary_op);
 #else
- //                   std::cout << "The MultiCoreCpu version of reduce is not enabled. " << std ::endl;
                     throw std::exception( "The MultiCoreCpu version of reduce is not enabled to be built." );
                     return init;
 #endif
@@ -265,7 +219,8 @@ namespace bolt
             // This template is called after we detect random access iterators
             // This is called strictly for iterators that are derived from device_vector< T >::iterator
             template<typename T, typename DVInputIterator, typename BinaryFunction> 
-            typename std::enable_if< std::is_base_of<typename device_vector<typename std::iterator_traits<DVInputIterator>::value_type>::iterator,DVInputIterator>::value, T >::type
+            typename std::enable_if< std::is_base_of<typename device_vector<typename std::
+                iterator_traits<DVInputIterator>::value_type>::iterator,DVInputIterator>::value, T >::type
             reduce_pick_iterator( bolt::amp::control &ctl, 
                                   const DVInputIterator& first,
                                   const DVInputIterator& last, 
@@ -281,7 +236,8 @@ namespace bolt
                 if (runMode == bolt::amp::control::SerialCpu)
                 {
                      std::vector<iType> InputBuffer(szElements);
-                     for(unsigned int index=0; index<szElements; index++){
+                     for(unsigned int index=0; index<szElements; index++)
+                     {
                          InputBuffer[index] = first.getContainer().getBuffer()[index];
                      } 
                      return std::accumulate(InputBuffer.begin(), InputBuffer.end(), init, binary_op) ;
@@ -293,12 +249,10 @@ namespace bolt
                     for(unsigned int index=0; index<szElements; index++){
                         InputBuffer[index] = first.getContainer().getBuffer()[index];
                     } 
-                    tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
-                    Reduce<iType, BinaryFunction> reduce_op(binary_op, init);
-                    tbb::parallel_reduce( tbb::blocked_range<iType*>( &*(InputBuffer.begin()), (iType*)&*((InputBuffer.end())-1) + 1), reduce_op );
-                    return reduce_op.value;
+
+                    return bolt::btbb::reduce(InputBuffer.begin(), InputBuffer.end(),init,binary_op);
+
 #else
- //              std::cout << "The MultiCoreCpu version of transform_reduce is not implemented yet." << std ::endl;
                throw std::exception( "The MultiCoreCpu version of reduce is not enabled to be built." );
                return init;
 #endif  
@@ -322,16 +276,19 @@ namespace bolt
                 const int szElements = static_cast< unsigned int >( std::distance( first, last ) );
                 const unsigned int tileSize = WAVEFRONT_SIZE;
                 unsigned int numTiles = (szElements/tileSize);
-                const unsigned int ceilNumTiles = static_cast< size_t >( std::ceil( static_cast< float >( szElements ) / tileSize) );
+                const unsigned int ceilNumTiles = static_cast< size_t >
+                                    ( std::ceil( static_cast< float >( szElements ) / tileSize) );
                 unsigned int ceilNumElements = tileSize * ceilNumTiles;
 
 
                 concurrency::array_view< iType, 1 > inputV (first.getContainer().getBuffer());
 
                 //Now create a staging array ; May support zero-copy in the future?!
-                concurrency::accelerator cpuAccelerator = concurrency::accelerator(concurrency::accelerator::cpu_accelerator);
+                concurrency::accelerator cpuAccelerator = concurrency::
+                                                        accelerator(concurrency::accelerator::cpu_accelerator);
                 concurrency::accelerator_view cpuAcceleratorView = cpuAccelerator.default_view;
-                concurrency::array< iType, 1 > resultArray ( szElements, ctl.getAccelerator().default_view, cpuAcceleratorView);
+                concurrency::array< iType, 1 > resultArray ( szElements, ctl.getAccelerator().default_view,
+                                                                                        cpuAcceleratorView);
                 
                 concurrency::array_view<iType, 1> result ( resultArray );
                 result.discard_data();
@@ -403,7 +360,8 @@ namespace bolt
                 }
                 catch(std::exception &e)
                 {
-                      std::cout << "Exception while calling bolt::amp::reduce parallel_for_each " << e.what() << std::endl;
+                      std::cout << "Exception while calling bolt::amp::reduce parallel_for_each " ;
+                      std::cout<< e.what() << std::endl;
                       return 0;
                 }
                 

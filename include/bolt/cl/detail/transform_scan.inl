@@ -172,8 +172,11 @@ namespace detail
 *   \ingroup scan
 *   \{
 */
-    enum transformScanTypes{ transformScan_iValueType, transformScan_iIterType, transformScan_oValueType, transformScan_oIterType, transformScan_initType, transformScan_UnaryFunction,
-        transformScan_BinaryFunction, transformScan_end };
+
+    enum transformScanTypes{ transformScan_iValueType, transformScan_iIterType, transformScan_oValueType,
+                             transformScan_oIterType, transformScan_initType, transformScan_UnaryFunction,
+                             transformScan_BinaryFunction, transformScan_end };
+
 
 class TransformScan_KernelTemplateSpecializer : public KernelTemplateSpecializer
 {
@@ -317,17 +320,23 @@ transform_scan_pick_iterator(
 
     if( runMode == bolt::cl::control::SerialCpu )
     {
-        // TODO fix this
+        std::transform(first, last, first, unary_op);
         std::partial_sum( first, last, result, binary_op );
         return result;
     }
     else if( runMode == bolt::cl::control::MultiCoreCpu )
     {
-        throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of transform_scan function is not enabled to be built." );
+        #ifdef ENABLE_TBB
+                throw std::exception("transform_scan not implemented yet for MultiCoreCpu! \n");
+        #else
+                throw std::exception("MultiCoreCPU Version of tranform_scan not Enabled! \n");
+        #endif
+
+        return result;
+
     }
     else
     {
-
         // Map the input iterator to a device_vector
         device_vector< iType > dvInput( first, last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctl );
         device_vector< oType > dvOutput( result, numElements, CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY, false, ctl );
@@ -337,10 +346,12 @@ transform_scan_pick_iterator(
             unary_op, init, binary_op, inclusive );
 
         // This should immediately map/unmap the buffer
+        dvInput.data();
         dvOutput.data( );
+
     }
 
-    return result + numElements;
+   return result + numElements;
 }
 
 /*!
@@ -383,19 +394,27 @@ transform_scan_pick_iterator(
     if( runMode == bolt::cl::control::SerialCpu )
     {
         //  TODO:  Need access to the device_vector .data method to get a host pointer
-        throw ::cl::Error( CL_INVALID_DEVICE, "Scan device_vector CPU device not implemented" );
+        throw std::exception( "Transform_Scan of device vectors on CPU device not implemented! \n" );
         return result;
     }
     else if( runMode == bolt::cl::control::MultiCoreCpu )
     {
         //  TODO:  Need access to the device_vector .data method to get a host pointer
-        throw ::cl::Error( CL_INVALID_DEVICE, "Scan device_vector CPU device not implemented" );
-        return result;
+       #ifdef ENABLE_TBB
+                throw std::exception("transform_scan not implemented yet for MultiCoreCpu! \n");
+       #else
+                throw std::exception("MultiCoreCPU Version of tranform_scan not Enabled! \n");
+       #endif
+
+       return result;
     }
 
-    //Now call the actual cl algorithm
-    transform_scan_enqueue( ctl, first, last, result, unary_op, init, binary_op, inclusive );
+    else
+    {
+        //Now call the actual cl algorithm
+        transform_scan_enqueue( ctl, first, last, result, unary_op, init, binary_op, inclusive );
 
+    }
     return result + numElements;
 }
 
@@ -520,6 +539,7 @@ size_t k0_stepNum, k1_stepNum, k2_stepNum;
     control::buffPointer binaryBuffer = ctl.acquireBuffer( sizeof( aligned_binary_op ),
         CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_binary_op );
 
+
     control::buffPointer preSumArray  = ctl.acquireBuffer( sizeScanBuff*sizeof( oType ) );
     control::buffPointer postSumArray = ctl.acquireBuffer( sizeScanBuff*sizeof( oType ) );
     cl_uint ldsSize;
@@ -538,17 +558,20 @@ aProfiler.set(AsyncProfiler::device, control::SerialCpu);
 #endif
 
     ldsSize  = static_cast< cl_uint >( kernel0_WgSize * sizeof( oType ) );
+
     V_OPENCL( kernels[0].setArg( 0, result.getContainer().getBuffer() ), "Error setArg kernels[ 0 ]" ); // Output buffer
-    V_OPENCL( kernels[0].setArg( 1, result.gpuPayloadSize( ), &result.gpuPayload( ) ), "Error setting a kernel argument" );
+    V_OPENCL( kernels[0].setArg( 1, result.gpuPayloadSize( ), &result.gpuPayload()),"Error setting a kernel argument");
     V_OPENCL( kernels[0].setArg( 2, first.getContainer().getBuffer() ),  "Error setArg kernels[ 0 ]" ); // Input buffer
-    V_OPENCL( kernels[0].setArg( 3, first.gpuPayloadSize( ), &first.gpuPayload( ) ), "Error setting a kernel argument" );
+    V_OPENCL( kernels[0].setArg( 3, first.gpuPayloadSize( ), &first.gpuPayload( ) ),"Error setting a kernel argument");
     V_OPENCL( kernels[0].setArg( 4, init_T ),               "Error setArg kernels[ 0 ]" ); // Initial value exclusive
     V_OPENCL( kernels[0].setArg( 5, numElements ),          "Error setArg kernels[ 0 ]" ); // Size of scratch buffer
     V_OPENCL( kernels[0].setArg( 6, ldsSize, NULL ),        "Error setArg kernels[ 0 ]" ); // Scratch buffer
     V_OPENCL( kernels[0].setArg( 7, *unaryBuffer ),         "Error setArg kernels[ 0 ]" ); // User provided functor
     V_OPENCL( kernels[0].setArg( 8, *binaryBuffer ),        "Error setArg kernels[ 0 ]" ); // User provided functor
     V_OPENCL( kernels[0].setArg( 9, *preSumArray ),         "Error setArg kernels[ 0 ]" ); // Output per block sum
-    V_OPENCL( kernels[0].setArg( 10, doExclusiveScan ),      "Error setArg kernels[ 0 ]" ); // Exclusive scan?
+
+    V_OPENCL( kernels[0].setArg( 10, doExclusiveScan ),     "Error setArg kernels[ 0 ]" ); // Exclusive scan?
+
 
 #ifdef BOLT_ENABLE_PROFILING
 aProfiler.nextStep();
@@ -623,8 +646,10 @@ aProfiler.setStepName("Setup Kernel 2");
 aProfiler.set(AsyncProfiler::device, control::SerialCpu);
 #endif
 
+
     V_OPENCL( kernels[2].setArg( 0, result.getContainer().getBuffer()),   "Error setArg kernels[ 2 ]" ); // Output buffer
-    V_OPENCL( kernels[2].setArg( 1, result.gpuPayloadSize( ), &result.gpuPayload( ) ), "Error setting a kernel argument" );
+    V_OPENCL( kernels[2].setArg( 1, result.gpuPayloadSize( ), &result.gpuPayload()),"Error setting a kernel argument");
+
     V_OPENCL( kernels[2].setArg( 2, *postSumArray ),        "Error setArg kernels[ 2 ]" ); // Input buffer
     V_OPENCL( kernels[2].setArg( 3, numElements ),          "Error setArg kernels[ 2 ]" ); // Size of scratch buffer
     V_OPENCL( kernels[2].setArg( 4, *binaryBuffer ),        "Error setArg kernels[ 2 ]" ); // User provided functor
@@ -688,7 +713,8 @@ aProfiler.setArchitecture(strDeviceName);
         size_t shift = k0_start - k0_start_cpu;
         //size_t shift = k0_start_cpu - k0_start;
 
-        //std::cout << "setting step " << k0_stepNum << " attribute " << AsyncProfiler::stopTime << " to " << k0_stop-shift << std::endl;
+        //std::cout << "setting step " << k0_stepNum << " attribute " << AsyncProfiler::stopTime << " to " ;
+        //std::cout << k0_stop-shift << std::endl;
         aProfiler.set(k0_stepNum, AsyncProfiler::stopTime,  static_cast<size_t>(k0_stop-shift) );
 
         aProfiler.set(k1_stepNum, AsyncProfiler::startTime, static_cast<size_t>(k0_stop-shift) );

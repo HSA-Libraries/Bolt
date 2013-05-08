@@ -19,6 +19,8 @@
 #define TEST_DEVICE_VECTOR 1
 #define TEST_CPU_DEVICE 1
 
+#include "bolt/cl/iterator/counting_iterator.h"
+
 #include <bolt/cl/copy.h>
 #include <bolt/cl/functional.h>
 #include <bolt/miniDump.h>
@@ -91,7 +93,235 @@ static const int lengths[24] = {
 //static const int lengths[1] = {13};
 
 
-TEST(Copy, DevPrim)
+//Failing Test Case (1 of 2)
+TEST(Copy, FancyDeviceIterator) 
+{
+    for (int i = 0; i < numLengths; i++)
+    {
+        // test length
+        int length = lengths[i];
+
+        bolt::cl::counting_iterator<int> first(0);
+        bolt::cl::counting_iterator<int> last = first + length;
+
+        std::vector<int> a(length);
+
+        for (int i=0; i < length; i++) {
+            a[i] = i;
+        }; 
+
+        //STL destination vector
+        bolt::cl::device_vector<int> dest(length);
+        //Bolt destination vector
+        bolt::cl::device_vector<int> destination(length);
+
+        // perform copy
+        std::copy(a.begin(), a.end(), dest.begin());
+        bolt::cl::copy(first, last, destination.begin());
+       
+        // GoogleTest Comparison
+        cmpArrays(dest, destination);
+    }
+} 
+
+TEST(Copy, SerialFancyDeviceIterator) 
+{
+    for (int i = 0; i < numLengths; i++)
+    {
+        // test length
+        int length = lengths[i];
+
+        bolt::cl::counting_iterator<int> first(0);
+        bolt::cl::counting_iterator<int> last = first + length;
+
+        std::vector<int> a(length);
+
+        for (int i=0; i < length; i++) {
+            a[i] = i;
+        }; 
+
+        //STL destination vector
+        bolt::cl::device_vector<int> dest(length);
+        //Bolt destination vector
+        bolt::cl::device_vector<int> destination(length);
+
+        ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+        bolt::cl::control ctl = bolt::cl::control::getDefault( );
+        ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+        // perform copy
+        std::copy(a.begin(), a.end(), dest.begin());
+        bolt::cl::copy(ctl, first, last, destination.begin());
+       
+        // GoogleTest Comparison
+        cmpArrays(dest, destination);
+    }
+} 
+
+TEST(Copy, MultiCoreFancyDeviceIterator) 
+{
+    for (int i = 0; i < numLengths; i++)
+    {
+        // test length
+        int length = lengths[i];
+
+        bolt::cl::counting_iterator<int> first(0);
+        bolt::cl::counting_iterator<int> last = first + length;
+
+        std::vector<int> a(length);
+
+        for (int i=0; i < length; i++) {
+            a[i] = i;
+        }; 
+
+        //STL destination vector
+        bolt::cl::device_vector<int> dest(length);
+        //Bolt destination vector
+        bolt::cl::device_vector<int> destination(length);
+
+        ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+        bolt::cl::control ctl = bolt::cl::control::getDefault( );
+        ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+        // perform copy
+        std::copy(a.begin(), a.end(), dest.begin());
+        bolt::cl::copy(ctl, first, last, destination.begin());
+       
+        // GoogleTest Comparison
+        cmpArrays(dest, destination);
+    }
+} 
+
+//Failing Test Case (2 of 2)
+TEST(Copy, FancyRandomIterator)  
+{
+    for (int i = 0; i < numLengths; i++)
+    {
+        // test length
+        int length = lengths[i];
+
+        bolt::cl::counting_iterator<int> first(0);
+        bolt::cl::counting_iterator<int> last = first + length;
+
+        std::vector<int> a(length);
+
+        for (int i=0; i < length; i++) {
+            a[i] = i;
+        }; 
+
+        //STL destination vector
+        std::vector<int> dest(length);
+        //Bolt destination vector
+        std::vector<int> destination(length);
+
+        // perform copy
+        std::copy(a.begin(), a.end(), dest.begin());
+        bolt::cl::copy(first, last, destination.begin());
+       
+        // GoogleTest Comparison
+        cmpArrays(dest, destination, length);
+    }
+} 
+
+TEST(Copy, SerialFancyRandomIterator)  
+{
+    for (int i = 0; i < numLengths; i++)
+    {
+        // test length
+        int length = lengths[i];
+
+        bolt::cl::counting_iterator<int> first(0);
+        bolt::cl::counting_iterator<int> last = first + length;
+
+        std::vector<int> a(length);
+
+        for (int i=0; i < length; i++) {
+            a[i] = i;
+        }; 
+
+        //STL destination vector
+        std::vector<int> dest(length);
+        //Bolt destination vector
+        std::vector<int> destination(length);
+
+        ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+        bolt::cl::control ctl = bolt::cl::control::getDefault( );
+        ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+        // perform copy
+        std::copy(a.begin(), a.end(), dest.begin());
+        bolt::cl::copy(ctl, first, last, destination.begin());
+       
+        // GoogleTest Comparison
+        cmpArrays(dest, destination, length);
+    }
+} 
+
+TEST(Copy, MultiCoreFancyRandomIterator)  
+{
+    for (int i = 0; i < numLengths; i++)
+    {
+        // test length
+        int length = lengths[i];
+
+        bolt::cl::counting_iterator<int> first(0);
+        bolt::cl::counting_iterator<int> last = first + length;
+
+        std::vector<int> a(length);
+
+        for (int i=0; i < length; i++) {
+            a[i] = i;
+        }; 
+
+        //STL destination vector
+        std::vector<int> dest(length);
+        //Bolt destination vector
+        std::vector<int> destination(length);
+
+        ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+        bolt::cl::control ctl = bolt::cl::control::getDefault( );
+        ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+        // perform copy
+        std::copy(a.begin(), a.end(), dest.begin());
+        bolt::cl::copy(ctl, first, last, destination.begin());
+       
+        // GoogleTest Comparison
+        cmpArrays(dest, destination, length);
+    }
+} 
+
+//Copy with Fancy Iterator as destination results in Complilation Failure!
+/*TEST(Copy, RandomFancyIterator)  
+{
+    for (int i = 0; i < numLengths; i++)
+    {
+        // test length
+        int length = lengths[i];
+
+        //Bolt Destination fancy vector
+        bolt::cl::counting_iterator<int> first(0);
+        bolt::cl::counting_iterator<int> last = first + length;
+
+        std::vector<int> a(length);
+
+        for (int i=0; i < length; i++) {
+            a[i] = i;
+        }; 
+
+        //STL destination vector
+        std::vector<int> dest(length);
+
+        // perform copy
+        std::copy(a.begin(), a.end(), dest.begin());
+        bolt::cl::copy(a.begin(), a.end(), first); // This is logically wrong!
+       
+        // GoogleTest Comparison
+        //cmpArrays(dest, first, length);
+    }
+}*/
+
+TEST(Copy, DevPrim)  // Default path code.
 {
     for (int i = 0; i < numLengths; i++)
     {
@@ -103,14 +333,94 @@ TEST(Copy, DevPrim)
         {
             source[j] = rand();
         }
-        // destination vector
+
+       // destination vector
         bolt::cl::device_vector<int> destination(length);
         // perform copy
         bolt::cl::copy(source.begin(), source.end(), destination.begin());
         // GoogleTest Comparison
         cmpArrays(source, destination, length);
     }
+} // Default code path
+
+TEST(Copy, AutomaticDevPrim) //Automatic Code Path
+{
+    for (int i = 0; i < numLengths; i++)
+    {
+        // test length
+        int length = lengths[i];
+        // populate source vector with random ints
+        bolt::cl::device_vector<int> source(length);
+        for (int j = 0; j < length; j++)
+        {
+            source[j] = rand();
+        }
+
+        ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+        bolt::cl::control ctl = bolt::cl::control::getDefault( );
+        ctl.setForceRunMode(bolt::cl::control::Automatic); 
+
+        // destination vector
+        bolt::cl::device_vector<int> destination(length);
+        // perform copy
+        bolt::cl::copy(ctl, source.begin(), source.end(), destination.begin());
+        // GoogleTest Comparison
+        cmpArrays(source, destination, length);
+    }
 }
+
+TEST(Copy, CPUDevPrim) // Serial Code Path
+{
+    for (int i = 0; i < numLengths; i++)
+    {
+        // test length
+        int length = lengths[i];
+        // populate source vector with random ints
+        bolt::cl::device_vector<int> source(length);
+        for (int j = 0; j < length; j++)
+        {
+            source[j] = rand();
+        }
+        
+        ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+        bolt::cl::control ctl = bolt::cl::control::getDefault( );
+        ctl.setForceRunMode(bolt::cl::control::SerialCpu); 
+        
+        // destination vector
+        bolt::cl::device_vector<int> destination(length);
+        // perform copy
+        bolt::cl::copy(ctl, source.begin(), source.end(), destination.begin());
+        // GoogleTest Comparison
+        cmpArrays(source, destination, length);
+    }
+}
+
+TEST(Copy, MultiCoreDevPrim) // MultiCore CPU - TBB Path
+{
+    for (int i = 0; i < numLengths; i++)
+    {
+        // test length
+        int length = lengths[i];
+        // populate source vector with random ints
+        bolt::cl::device_vector<int> source(length);
+        for (int j = 0; j < length; j++)
+        {
+            source[j] = rand();
+        }
+        
+        ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+        bolt::cl::control ctl = bolt::cl::control::getDefault( );
+        ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu); 
+        
+        // destination vector
+        bolt::cl::device_vector<int> destination(length);
+        // perform copy
+        bolt::cl::copy(ctl, source.begin(), source.end(), destination.begin());
+        // GoogleTest Comparison
+        cmpArrays(source, destination, length);
+    }
+}
+
 
 
 TEST(CopyN, DevPrim)
@@ -125,6 +435,7 @@ TEST(CopyN, DevPrim)
         {
             source[j] = rand();
         }
+        
         // destination vector
         bolt::cl::device_vector<int> destination(length);
         // perform copy
@@ -133,6 +444,86 @@ TEST(CopyN, DevPrim)
         cmpArrays(source, destination, length);
     }
 }
+
+TEST(CopyN, AutomaticDevPrim)
+{    
+    for (int i = 0; i < numLengths; i++)
+    {
+        // test length
+        int length = lengths[i];
+        // populate source vector with random ints
+        bolt::cl::device_vector<int> source(length);
+        for (int j = 0; j < length; j++)
+        {
+            source[j] = rand();
+        }
+    
+        ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+        bolt::cl::control ctl = bolt::cl::control::getDefault( );
+        ctl.setForceRunMode(bolt::cl::control::Automatic); 
+        
+        // destination vector
+        bolt::cl::device_vector<int> destination(length);
+        // perform copy
+        bolt::cl::copy_n(ctl, source.begin(), length, destination.begin());
+        // GoogleTest Comparison
+        cmpArrays(source, destination, length);
+    }
+}
+
+TEST(CopyN, CPUDevPrim)
+{    
+    for (int i = 0; i < numLengths; i++)
+    {
+        // test length
+        int length = lengths[i];
+        // populate source vector with random ints
+        bolt::cl::device_vector<int> source(length);
+        for (int j = 0; j < length; j++)
+        {
+            source[j] = rand();
+        }
+    
+        ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+        bolt::cl::control ctl = bolt::cl::control::getDefault( );
+        ctl.setForceRunMode(bolt::cl::control::SerialCpu); 
+        
+        // destination vector
+        bolt::cl::device_vector<int> destination(length);
+        // perform copy
+        bolt::cl::copy_n(ctl, source.begin(), length, destination.begin());
+        // GoogleTest Comparison
+        cmpArrays(source, destination, length);
+    }
+}
+
+TEST(CopyN, MultiCoreDevPrim)
+{
+    for (int i = 0; i < numLengths; i++)
+    {
+        // test length
+        int length = lengths[i];
+        // populate source vector with random ints
+        bolt::cl::device_vector<int> source(length);
+        for (int j = 0; j < length; j++)
+        {
+            source[j] = rand();
+        }
+
+        ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+        bolt::cl::control ctl = bolt::cl::control::getDefault( );
+        ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu); 
+
+        // destination vector
+        bolt::cl::device_vector<int> destination(length);
+        // perform copy
+        bolt::cl::copy_n(ctl, source.begin(), length, destination.begin());
+        // GoogleTest Comparison
+        cmpArrays(source, destination, length);
+    }
+}
+
+
 
 TEST(Copy, StdPrim)
 {
@@ -146,6 +537,7 @@ TEST(Copy, StdPrim)
         {
             source[j] = rand();
         }
+      
         // destination vector
         std::vector<int> destination(length);
         // perform copy
@@ -154,6 +546,86 @@ TEST(Copy, StdPrim)
         cmpArrays(source, destination, length);
     }
 }
+
+TEST(Copy, AutomaticStdPrim)
+{
+    for (int i = 0; i < numLengths; i++)
+    {
+        // test length
+        int length = lengths[i];
+        // populate source vector with random ints
+        std::vector<int> source(length);
+        for (int j = 0; j < length; j++)
+        {
+            source[j] = rand();
+        }
+
+        ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+        bolt::cl::control ctl = bolt::cl::control::getDefault( );
+        ctl.setForceRunMode(bolt::cl::control::Automatic); 
+
+        // destination vector
+        std::vector<int> destination(length);
+        // perform copy
+        bolt::cl::copy(ctl, source.begin(), source.end(), destination.begin());
+        // GoogleTest Comparison
+        cmpArrays(source, destination, length);
+    }
+}
+
+TEST(Copy, CPUStdPrim)
+{
+    for (int i = 0; i < numLengths; i++)
+    {
+        // test length
+        int length = lengths[i];
+        // populate source vector with random ints
+        std::vector<int> source(length);
+        for (int j = 0; j < length; j++)
+        {
+            source[j] = rand();
+        }
+
+        ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+        bolt::cl::control ctl = bolt::cl::control::getDefault( );
+        ctl.setForceRunMode(bolt::cl::control::SerialCpu); 
+        
+        // destination vector
+        std::vector<int> destination(length);
+        // perform copy
+        bolt::cl::copy(ctl, source.begin(), source.end(), destination.begin());
+        // GoogleTest Comparison
+        cmpArrays(source, destination, length);
+    }
+}
+
+TEST(Copy, MultiCoreStdPrim)
+{
+    for (int i = 0; i < numLengths; i++)
+    {
+        // test length
+        int length = lengths[i];
+        // populate source vector with random ints
+        std::vector<int> source(length);
+        for (int j = 0; j < length; j++)
+        {
+            source[j] = rand();
+        }
+
+        ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+        bolt::cl::control ctl = bolt::cl::control::getDefault( );
+        ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu); 
+         
+        // destination vector
+        std::vector<int> destination(length);
+        // perform copy
+        bolt::cl::copy(ctl, source.begin(), source.end(), destination.begin());
+        // GoogleTest Comparison
+        cmpArrays(source, destination, length);
+    }
+}
+
+
 
 TEST(CopyN, StdPrim)
 {
@@ -167,6 +639,7 @@ TEST(CopyN, StdPrim)
         {
             source[j] = rand();
         }
+
         // destination vector
         std::vector<int> destination(length);
         // perform copy
@@ -175,6 +648,85 @@ TEST(CopyN, StdPrim)
         cmpArrays(source, destination, length);
     }
 }
+
+TEST(CopyN, AutomaticStdPrim)
+{
+    for (int i = 0; i < numLengths; i++)
+    {
+        // test length
+        int length = lengths[i];
+        // populate source vector with random ints
+        std::vector<int> source(length);
+        for (int j = 0; j < length; j++)
+        {
+            source[j] = rand();
+        }
+
+        ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+        bolt::cl::control ctl = bolt::cl::control::getDefault( );
+        ctl.setForceRunMode(bolt::cl::control::Automatic); 
+        
+        // destination vector
+        std::vector<int> destination(length);
+        // perform copy
+        bolt::cl::copy_n(ctl, source.begin(), length, destination.begin());
+        // GoogleTest Comparison
+        cmpArrays(source, destination, length);
+    }
+}
+
+TEST(CopyN, CPUStdPrim)
+{
+    for (int i = 0; i < numLengths; i++)
+    {
+        // test length
+        int length = lengths[i];
+        // populate source vector with random ints
+        std::vector<int> source(length);
+        for (int j = 0; j < length; j++)
+        {
+            source[j] = rand();
+        }
+
+        ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+        bolt::cl::control ctl = bolt::cl::control::getDefault( );
+        ctl.setForceRunMode(bolt::cl::control::SerialCpu); 
+        
+        // destination vector
+        std::vector<int> destination(length);
+        // perform copy
+        bolt::cl::copy_n(ctl, source.begin(), length, destination.begin());
+        // GoogleTest Comparison
+        cmpArrays(source, destination, length);
+    }
+}
+
+TEST(CopyN, MultiCoreStdPrim)
+{
+    for (int i = 0; i < numLengths; i++)
+    {
+        // test length
+        int length = lengths[i];
+        // populate source vector with random ints
+        std::vector<int> source(length);
+        for (int j = 0; j < length; j++)
+        {
+            source[j] = rand();
+        }
+
+        ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+        bolt::cl::control ctl = bolt::cl::control::getDefault( );
+        ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu); 
+                
+        // destination vector
+        std::vector<int> destination(length);
+        // perform copy
+        bolt::cl::copy_n(ctl, source.begin(), length, destination.begin());
+        // GoogleTest Comparison
+        cmpArrays(source, destination, length);
+    }
+}
+
 
 TEST(Copy, DevStruct)
 {
@@ -197,6 +749,7 @@ TEST(Copy, DevStruct)
             //us.e = (double) (1.0*rand()/rand());
             source.push_back(us);
         }
+                
         // destination vector
         bolt::cl::device_vector<UserStruct> destination(length, UserStruct(), CL_MEM_READ_WRITE, false);
         // perform copy
@@ -205,6 +758,112 @@ TEST(Copy, DevStruct)
         cmpArrays(source, destination, length);
     }
 }
+
+TEST(Copy, AutomaticDevStruct)
+{
+        for (int i = 0; i < numLengths; i++)
+    {
+        // test length
+        int length = lengths[i];
+        // populate source vector with random ints
+        bolt::cl::device_vector<UserStruct> source;
+        for (int j = 0; j < length; j++)
+        {
+            UserStruct us;
+            us.a = (bool) (rand()%2 ? true : false);
+            us.b[0] = (char) (rand()%128);
+            us.b[1] = (char) (rand()%128);
+            us.b[2] = (char) (rand()%128);
+            us.b[3] = (char) (rand()%128);
+            us.c = (int)  (rand());
+            us.d = (float) (1.f*rand());
+            //us.e = (double) (1.0*rand()/rand());
+            source.push_back(us);
+        }
+                
+        ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+        bolt::cl::control ctl = bolt::cl::control::getDefault( );
+        ctl.setForceRunMode(bolt::cl::control::Automatic); // tested with serial also
+                
+        // destination vector
+        bolt::cl::device_vector<UserStruct> destination(length, UserStruct(), CL_MEM_READ_WRITE, false);
+        // perform copy
+        bolt::cl::copy(ctl, source.begin(), source.end(), destination.begin());
+        // GoogleTest Comparison
+        cmpArrays(source, destination, length);
+    }
+}
+
+TEST(Copy, CPUDevStruct)
+{
+        for (int i = 0; i < numLengths; i++)
+    {
+        // test length
+        int length = lengths[i];
+        // populate source vector with random ints
+        bolt::cl::device_vector<UserStruct> source;
+        for (int j = 0; j < length; j++)
+        {
+            UserStruct us;
+            us.a = (bool) (rand()%2 ? true : false);
+            us.b[0] = (char) (rand()%128);
+            us.b[1] = (char) (rand()%128);
+            us.b[2] = (char) (rand()%128);
+            us.b[3] = (char) (rand()%128);
+            us.c = (int)  (rand());
+            us.d = (float) (1.f*rand());
+            //us.e = (double) (1.0*rand()/rand());
+            source.push_back(us);
+        }
+                
+        ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+        bolt::cl::control ctl = bolt::cl::control::getDefault( );
+        ctl.setForceRunMode(bolt::cl::control::SerialCpu); 
+                
+        // destination vector
+        bolt::cl::device_vector<UserStruct> destination(length, UserStruct(), CL_MEM_READ_WRITE, false);
+        // perform copy
+        bolt::cl::copy(ctl, source.begin(), source.end(), destination.begin());
+        // GoogleTest Comparison
+        cmpArrays(source, destination, length);
+    }
+}
+
+TEST(Copy, MultiCoreDevStruct)
+{
+    for (int i = 0; i < numLengths; i++)
+    {
+        // test length
+        int length = lengths[i];
+        // populate source vector with random ints
+        bolt::cl::device_vector<UserStruct> source;
+        for (int j = 0; j < length; j++)
+        {
+            UserStruct us;
+            us.a = (bool) (rand()%2 ? true : false);
+            us.b[0] = (char) (rand()%128);
+            us.b[1] = (char) (rand()%128);
+            us.b[2] = (char) (rand()%128);
+            us.b[3] = (char) (rand()%128);
+            us.c = (int)  (rand());
+            us.d = (float) (1.f*rand());
+            //us.e = (double) (1.0*rand()/rand());
+            source.push_back(us);
+        }
+                
+        ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+        bolt::cl::control ctl = bolt::cl::control::getDefault( );
+        ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu); 
+                
+        // destination vector
+        bolt::cl::device_vector<UserStruct> destination(length, UserStruct(), CL_MEM_READ_WRITE, false);
+        // perform copy
+        bolt::cl::copy(ctl, source.begin(), source.end(), destination.begin());
+        // GoogleTest Comparison
+        cmpArrays(source, destination, length);
+    }
+}
+
 
 TEST(CopyN, DevStruct)
 {
@@ -227,6 +886,8 @@ TEST(CopyN, DevStruct)
             //us.e = (double) (1.0*rand()/rand());
             source.push_back(us);
         }
+                
+                
         // destination vector
         bolt::cl::device_vector<UserStruct> destination(length, UserStruct(), CL_MEM_READ_WRITE, false);
         // perform copy
@@ -235,6 +896,113 @@ TEST(CopyN, DevStruct)
         cmpArrays(source, destination, length);
     }
 }
+
+TEST(CopyN, AutomaticDevStruct)
+{
+    for (int i = 0; i < numLengths; i++)
+    {
+        // test length
+        int length = lengths[i];
+        // populate source vector with random ints
+        bolt::cl::device_vector<UserStruct> source;
+        for (int j = 0; j < length; j++)
+        {
+            UserStruct us;
+            us.a = (bool) (rand()%2 ? true : false);
+            us.b[0] = (char) (rand()%128);
+            us.b[1] = (char) (rand()%128);
+            us.b[2] = (char) (rand()%128);
+            us.b[3] = (char) (rand()%128);
+            us.c = (int)  (rand());
+            us.d = (float) (1.f*rand());
+            //us.e = (double) (1.0*rand()/rand());
+            source.push_back(us);
+        }
+                
+        ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+        bolt::cl::control ctl = bolt::cl::control::getDefault( );
+        ctl.setForceRunMode(bolt::cl::control::Automatic);
+                
+        // destination vector
+        bolt::cl::device_vector<UserStruct> destination(length, UserStruct(), CL_MEM_READ_WRITE, false);
+        // perform copy
+        bolt::cl::copy_n(ctl, source.begin(), length, destination.begin());
+        // GoogleTest Comparison
+        cmpArrays(source, destination, length);
+    }
+}
+
+TEST(CopyN, CPUDevStruct)
+{
+    for (int i = 0; i < numLengths; i++)
+    {
+        // test length
+        int length = lengths[i];
+        // populate source vector with random ints
+        bolt::cl::device_vector<UserStruct> source;
+        for (int j = 0; j < length; j++)
+        {
+            UserStruct us;
+            us.a = (bool) (rand()%2 ? true : false);
+            us.b[0] = (char) (rand()%128);
+            us.b[1] = (char) (rand()%128);
+            us.b[2] = (char) (rand()%128);
+            us.b[3] = (char) (rand()%128);
+            us.c = (int)  (rand());
+            us.d = (float) (1.f*rand());
+            //us.e = (double) (1.0*rand()/rand());
+            source.push_back(us);
+        }
+                
+        ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+        bolt::cl::control ctl = bolt::cl::control::getDefault( );
+        ctl.setForceRunMode(bolt::cl::control::SerialCpu); 
+                
+        // destination vector
+        bolt::cl::device_vector<UserStruct> destination(length, UserStruct(), CL_MEM_READ_WRITE, false);
+        // perform copy
+        bolt::cl::copy_n(ctl, source.begin(), length, destination.begin());
+        // GoogleTest Comparison
+        cmpArrays(source, destination, length);
+    }
+}
+
+TEST(CopyN, MultiCoreDevStruct)
+{
+    for (int i = 0; i < numLengths; i++)
+    {
+        // test length
+        int length = lengths[i];
+        // populate source vector with random ints
+        bolt::cl::device_vector<UserStruct> source;
+        for (int j = 0; j < length; j++)
+        {
+            UserStruct us;
+            us.a = (bool) (rand()%2 ? true : false);
+            us.b[0] = (char) (rand()%128);
+            us.b[1] = (char) (rand()%128);
+            us.b[2] = (char) (rand()%128);
+            us.b[3] = (char) (rand()%128);
+            us.c = (int)  (rand());
+            us.d = (float) (1.f*rand());
+            //us.e = (double) (1.0*rand()/rand());
+            source.push_back(us);
+        }
+                
+        ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+        bolt::cl::control ctl = bolt::cl::control::getDefault( );
+        ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu); 
+                
+        // destination vector
+        bolt::cl::device_vector<UserStruct> destination(length, UserStruct(), CL_MEM_READ_WRITE, false);
+        // perform copy
+        bolt::cl::copy_n(ctl, source.begin(), length, destination.begin());
+        // GoogleTest Comparison
+        cmpArrays(source, destination, length);
+    }
+}
+
+
 
 TEST(Copy, StdStruct)
 {
@@ -257,7 +1025,7 @@ TEST(Copy, StdStruct)
             //us.e = (double) (1.0*rand()/rand());
             source.push_back(us);
         }
-        // destination vector
+                // destination vector
         std::vector<UserStruct> destination(length);
         // perform copy
         bolt::cl::copy(source.begin(), source.end(), destination.begin());
@@ -265,6 +1033,112 @@ TEST(Copy, StdStruct)
         cmpArrays(source, destination, length);
     }
 }
+
+TEST(Copy, AutomaticStdStruct)
+{
+    for (int i = 0; i < numLengths; i++)
+    {
+        // test length
+        int length = lengths[i];
+        // populate source vector with random ints
+        std::vector<UserStruct> source;
+        for (int j = 0; j < length; j++)
+        {
+            UserStruct us;
+            us.a = (bool) (rand()%2 ? true : false);
+            us.b[0] = (char) (rand()%128);
+            us.b[1] = (char) (rand()%128);
+            us.b[2] = (char) (rand()%128);
+            us.b[3] = (char) (rand()%128);
+            us.c = (int)  (rand());
+            us.d = (float) (1.f*rand());
+            //us.e = (double) (1.0*rand()/rand());
+            source.push_back(us);
+        }
+                
+        ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+        bolt::cl::control ctl = bolt::cl::control::getDefault( );
+        ctl.setForceRunMode(bolt::cl::control::Automatic); 
+                
+        // destination vector
+        std::vector<UserStruct> destination(length);
+        // perform copy
+        bolt::cl::copy(ctl, source.begin(), source.end(), destination.begin());
+        // GoogleTest Comparison
+        cmpArrays(source, destination, length);
+    }
+}
+
+TEST(Copy, CPUStdStruct)
+{
+    for (int i = 0; i < numLengths; i++)
+    {
+        // test length
+        int length = lengths[i];
+        // populate source vector with random ints
+        std::vector<UserStruct> source;
+        for (int j = 0; j < length; j++)
+        {
+            UserStruct us;
+            us.a = (bool) (rand()%2 ? true : false);
+            us.b[0] = (char) (rand()%128);
+            us.b[1] = (char) (rand()%128);
+            us.b[2] = (char) (rand()%128);
+            us.b[3] = (char) (rand()%128);
+            us.c = (int)  (rand());
+            us.d = (float) (1.f*rand());
+            //us.e = (double) (1.0*rand()/rand());
+            source.push_back(us);
+        }
+                
+        ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+        bolt::cl::control ctl = bolt::cl::control::getDefault( );
+        ctl.setForceRunMode(bolt::cl::control::SerialCpu); 
+                
+        // destination vector
+        std::vector<UserStruct> destination(length);
+        // perform copy
+        bolt::cl::copy(ctl, source.begin(), source.end(), destination.begin());
+        // GoogleTest Comparison
+        cmpArrays(source, destination, length);
+    }
+}
+
+TEST(Copy, MultiCoreStdStruct)
+{
+    for (int i = 0; i < numLengths; i++)
+    {
+        // test length
+        int length = lengths[i];
+        // populate source vector with random ints
+        std::vector<UserStruct> source;
+        for (int j = 0; j < length; j++)
+        {
+            UserStruct us;
+            us.a = (bool) (rand()%2 ? true : false);
+            us.b[0] = (char) (rand()%128);
+            us.b[1] = (char) (rand()%128);
+            us.b[2] = (char) (rand()%128);
+            us.b[3] = (char) (rand()%128);
+            us.c = (int)  (rand());
+            us.d = (float) (1.f*rand());
+            //us.e = (double) (1.0*rand()/rand());
+            source.push_back(us);
+        }
+                
+        ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+        bolt::cl::control ctl = bolt::cl::control::getDefault( );
+        ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu); 
+                
+        // destination vector
+        std::vector<UserStruct> destination(length);
+        // perform copy
+        bolt::cl::copy(ctl, source.begin(), source.end(), destination.begin());
+        // GoogleTest Comparison
+        cmpArrays(source, destination, length);
+    }
+}
+
 
 TEST(CopyN, StdStruct)
 {
@@ -287,6 +1161,7 @@ TEST(CopyN, StdStruct)
             //us.e = (double) (1.0*rand()/rand());
             source.push_back(us);
         }
+        
         // destination vector
         std::vector<UserStruct> destination(length);
         // perform copy
@@ -296,70 +1171,315 @@ TEST(CopyN, StdStruct)
     }
 }
 
+TEST(CopyN, AutomaticStdStruct)
+{
+    for (int i = 0; i < numLengths; i++)
+    {
+        // test length
+        int length = lengths[i];
+        // populate source vector with random ints
+        std::vector<UserStruct> source;
+        for (int j = 0; j < length; j++)
+        {
+            UserStruct us;
+            us.a = (bool) (rand()%2 ? true : false);
+            us.b[0] = (char) (rand()%128);
+            us.b[1] = (char) (rand()%128);
+            us.b[2] = (char) (rand()%128);
+            us.b[3] = (char) (rand()%128);
+            us.c = (int)  (rand());
+            us.d = (float) (1.f*rand());
+            //us.e = (double) (1.0*rand()/rand());
+            source.push_back(us);
+        }
+    
+        ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+        bolt::cl::control ctl = bolt::cl::control::getDefault( );
+        ctl.setForceRunMode(bolt::cl::control::Automatic); 
+    
+        // destination vector
+        std::vector<UserStruct> destination(length);
+        // perform copy
+        bolt::cl::copy_n(ctl, source.begin(), length, destination.begin());
+        // GoogleTest Comparison
+        cmpArrays(source, destination, length);
+    }
+}
 
-TEST (copyArrWithDiffTypes, IntAndFloats){
-   	int arraySize = 100;
-   		
-   	int* sourceArr1; 
-   	float *sourceFloatArr1;
+TEST(CopyN, CPUStdStruct)
+{
+    for (int i = 0; i < numLengths; i++)
+    {
+        // test length
+        int length = lengths[i];
+        // populate source vector with random ints
+        std::vector<UserStruct> source;
+        for (int j = 0; j < length; j++)
+        {
+            UserStruct us;
+            us.a = (bool) (rand()%2 ? true : false);
+            us.b[0] = (char) (rand()%128);
+            us.b[1] = (char) (rand()%128);
+            us.b[2] = (char) (rand()%128);
+            us.b[3] = (char) (rand()%128);
+            us.c = (int)  (rand());
+            us.d = (float) (1.f*rand());
+            //us.e = (double) (1.0*rand()/rand());
+            source.push_back(us);
+        }
+    
+        ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+        bolt::cl::control ctl = bolt::cl::control::getDefault( );
+        ctl.setForceRunMode(bolt::cl::control::SerialCpu); 
+    
+        // destination vector
+        std::vector<UserStruct> destination(length);
+        // perform copy
+        bolt::cl::copy_n(ctl, source.begin(), length, destination.begin());
+        // GoogleTest Comparison
+        cmpArrays(source, destination, length);
+    }
+}
+
+TEST(CopyN, MultiCoreStdStruct)
+{
+    for (int i = 0; i < numLengths; i++)
+    {
+        // test length
+        int length = lengths[i];
+        // populate source vector with random ints
+        std::vector<UserStruct> source;
+        for (int j = 0; j < length; j++)
+        {
+            UserStruct us;
+            us.a = (bool) (rand()%2 ? true : false);
+            us.b[0] = (char) (rand()%128);
+            us.b[1] = (char) (rand()%128);
+            us.b[2] = (char) (rand()%128);
+            us.b[3] = (char) (rand()%128);
+            us.c = (int)  (rand());
+            us.d = (float) (1.f*rand());
+            //us.e = (double) (1.0*rand()/rand());
+            source.push_back(us);
+        }
+    
+         ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+         bolt::cl::control ctl = bolt::cl::control::getDefault( );
+         ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu); 
+    
+        // destination vector
+        std::vector<UserStruct> destination(length);
+        // perform copy
+        bolt::cl::copy_n(ctl, source.begin(), length, destination.begin());
+        // GoogleTest Comparison
+        cmpArrays(source, destination, length);
+    }
+}
+
+
+TEST (copyArrWithDiffTypes, IntAndFloats)
+{
+    int arraySize = 100;
+       
+    int* sourceArr1; 
+    float *sourceFloatArr1;
 #if TEST_DOUBLE
-   	double *sourceDoubleArr1;
+    double *sourceDoubleArr1;
 #endif
-   	int* destArr1; 
-   	float *destFloatArr1;
+    int* destArr1; 
+    float *destFloatArr1;
 #if TEST_DOUBLE
-   	double *destDoubleArr1;
+    double *destDoubleArr1;
 #endif
-   	sourceArr1 = (int *) malloc (arraySize* sizeof (int));
-   	destArr1= (int *) malloc (arraySize * sizeof (int));
+    sourceArr1 = (int *) malloc (arraySize* sizeof (int));
+    destArr1= (int *) malloc (arraySize * sizeof (int));
    
-   	sourceFloatArr1 = (float*) malloc (arraySize* sizeof (float));
-   	destFloatArr1	= (float *) malloc (arraySize * sizeof(float));
+    sourceFloatArr1 = (float*) malloc (arraySize* sizeof (float));
+    destFloatArr1 = (float *) malloc (arraySize * sizeof(float));
 #if TEST_DOUBLE
-   	sourceDoubleArr1 = (double *) malloc (arraySize * sizeof(double));
-   	destDoubleArr1 = (double *) malloc (arraySize * sizeof(double));
+    sourceDoubleArr1 = (double *) malloc (arraySize * sizeof(double));
+    destDoubleArr1 = (double *) malloc (arraySize * sizeof(double));
 #endif
    
-   	for (int i = 0; i < arraySize; i++){
-   		sourceArr1[i] = 56535 - i;
-   	}
+    for (int i = 0; i < arraySize; i++){
+       sourceArr1[i] = 56535 - i;
+    }
    
-   	for (int i = 0; i < arraySize ; i++){
-   		sourceFloatArr1[i] = ( float )i  + 0.125f;
-   	}
+    for (int i = 0; i < arraySize ; i++){
+       sourceFloatArr1[i] = ( float )i  + 0.125f;
+    }
 #if TEST_DOUBLE
-   	for (int i = 0; i < arraySize ; i++){
-   		sourceDoubleArr1[i] = ( double )i  + 0.0009765625;
-   	}
+    for (int i = 0; i < arraySize ; i++){
+       sourceDoubleArr1[i] = ( double )i  + 0.0009765625;
+    }
 #endif
-   	//using bolt::cl::control
+    //using bolt::cl::control
    
-   	bolt::cl::control useThisControl = bolt::cl::control::getDefault();
-   	
-   	//copying int array as a whole to all there types of arrays :)
-   	bolt::cl::copy(useThisControl, sourceArr1, sourceArr1 + arraySize, destArr1);                   //no prob
+    bolt::cl::control useThisControl = bolt::cl::control::getDefault();
+    
+    //copying int array as a whole to all there types of arrays :)
+    bolt::cl::copy(useThisControl, sourceArr1, sourceArr1 + arraySize, destArr1);                   //no prob
     //cmpArrays(sourceArr1, destArr1, arraySize);
-   	bolt::cl::copy(useThisControl, sourceArr1, sourceArr1 + arraySize, destFloatArr1);				//no prob
+    bolt::cl::copy(useThisControl, sourceArr1, sourceArr1 + arraySize, destFloatArr1);        //no prob
     //cmpArrays(sourceArr1, destFloatArr1, arraySize);
 #if TEST_DOUBLE
-   	bolt::cl::copy(useThisControl, sourceArr1, sourceArr1 + arraySize, destDoubleArr1);				//no prob
+    bolt::cl::copy(useThisControl, sourceArr1, sourceArr1 + arraySize, destDoubleArr1);        //no prob
 #endif
     //cmpArrays(sourceArr1, destDoubleArr1, arraySize);
    
-   	//copying float array as a whole to all there types of arrays :)
-   	bolt::cl::copy(useThisControl, sourceFloatArr1, sourceFloatArr1 + arraySize, destArr1);			//data loss
-   	bolt::cl::copy(useThisControl, sourceFloatArr1, sourceFloatArr1 + arraySize, destFloatArr1);    //no prob
+    //copying float array as a whole to all there types of arrays :)
+    bolt::cl::copy(useThisControl, sourceFloatArr1, sourceFloatArr1 + arraySize, destArr1);     //data loss
+    bolt::cl::copy(useThisControl, sourceFloatArr1, sourceFloatArr1 + arraySize, destFloatArr1);    //no prob
 #if TEST_DOUBLE
-   	bolt::cl::copy(useThisControl, sourceFloatArr1, sourceFloatArr1 + arraySize, destDoubleArr1);   //no prob
+    bolt::cl::copy(useThisControl, sourceFloatArr1, sourceFloatArr1 + arraySize, destDoubleArr1);   //no prob
 #endif
    
-   	//copying double array as a whole to all there types of arrays :)
+    //copying double array as a whole to all there types of arrays :)
 #if TEST_DOUBLE
-   	bolt::cl::copy(useThisControl, sourceDoubleArr1, sourceDoubleArr1 + arraySize, destArr1);		 //data loss
-   	bolt::cl::copy(useThisControl, sourceDoubleArr1, sourceDoubleArr1 + arraySize, destFloatArr1);   //data loss
-   	bolt::cl::copy(useThisControl, sourceDoubleArr1, sourceDoubleArr1 + arraySize, destDoubleArr1);  //no prob
+    bolt::cl::copy(useThisControl, sourceDoubleArr1, sourceDoubleArr1 + arraySize, destArr1);     //data loss
+    bolt::cl::copy(useThisControl, sourceDoubleArr1, sourceDoubleArr1 + arraySize, destFloatArr1);   //data loss
+    bolt::cl::copy(useThisControl, sourceDoubleArr1, sourceDoubleArr1 + arraySize, destDoubleArr1);  //no prob
 #endif
    }
+
+
+TEST (SerialcopyArrWithDiffTypes, IntAndFloats)
+{
+    int arraySize = 100;
+       
+    int* sourceArr1; 
+    float *sourceFloatArr1;
+#if TEST_DOUBLE
+    double *sourceDoubleArr1;
+#endif
+    int* destArr1; 
+    float *destFloatArr1;
+#if TEST_DOUBLE
+    double *destDoubleArr1;
+#endif
+    sourceArr1 = (int *) malloc (arraySize* sizeof (int));
+    destArr1= (int *) malloc (arraySize * sizeof (int));
+   
+    sourceFloatArr1 = (float*) malloc (arraySize* sizeof (float));
+    destFloatArr1 = (float *) malloc (arraySize * sizeof(float));
+#if TEST_DOUBLE
+    sourceDoubleArr1 = (double *) malloc (arraySize * sizeof(double));
+    destDoubleArr1 = (double *) malloc (arraySize * sizeof(double));
+#endif
+   
+    for (int i = 0; i < arraySize; i++){
+       sourceArr1[i] = 56535 - i;
+    }
+   
+    for (int i = 0; i < arraySize ; i++){
+       sourceFloatArr1[i] = ( float )i  + 0.125f;
+    }
+#if TEST_DOUBLE
+    for (int i = 0; i < arraySize ; i++){
+       sourceDoubleArr1[i] = ( double )i  + 0.0009765625;
+    }
+#endif
+    //using bolt::cl::control
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control useThisControl = bolt::cl::control::getDefault( );
+    useThisControl.setForceRunMode(bolt::cl::control::SerialCpu); 
+
+
+    //copying int array as a whole to all there types of arrays :)
+    bolt::cl::copy(useThisControl, sourceArr1, sourceArr1 + arraySize, destArr1);                   //no prob
+    //cmpArrays(sourceArr1, destArr1, arraySize);
+    bolt::cl::copy(useThisControl, sourceArr1, sourceArr1 + arraySize, destFloatArr1);        //no prob
+    //cmpArrays(sourceArr1, destFloatArr1, arraySize);
+#if TEST_DOUBLE
+    bolt::cl::copy(useThisControl, sourceArr1, sourceArr1 + arraySize, destDoubleArr1);        //no prob
+#endif
+    //cmpArrays(sourceArr1, destDoubleArr1, arraySize);
+   
+    //copying float array as a whole to all there types of arrays :)
+    bolt::cl::copy(useThisControl, sourceFloatArr1, sourceFloatArr1 + arraySize, destArr1);     //data loss
+    bolt::cl::copy(useThisControl, sourceFloatArr1, sourceFloatArr1 + arraySize, destFloatArr1);    //no prob
+#if TEST_DOUBLE
+    bolt::cl::copy(useThisControl, sourceFloatArr1, sourceFloatArr1 + arraySize, destDoubleArr1);   //no prob
+#endif
+   
+    //copying double array as a whole to all there types of arrays :)
+#if TEST_DOUBLE
+    bolt::cl::copy(useThisControl, sourceDoubleArr1, sourceDoubleArr1 + arraySize, destArr1);     //data loss
+    bolt::cl::copy(useThisControl, sourceDoubleArr1, sourceDoubleArr1 + arraySize, destFloatArr1);   //data loss
+    bolt::cl::copy(useThisControl, sourceDoubleArr1, sourceDoubleArr1 + arraySize, destDoubleArr1);  //no prob
+#endif
+}
+
+
+TEST (MultiCorecopyArrWithDiffTypes, IntAndFloats)
+{
+    int arraySize = 100;
+       
+    int* sourceArr1; 
+    float *sourceFloatArr1;
+#if TEST_DOUBLE
+    double *sourceDoubleArr1;
+#endif
+    int* destArr1; 
+    float *destFloatArr1;
+#if TEST_DOUBLE
+    double *destDoubleArr1;
+#endif
+    sourceArr1 = (int *) malloc (arraySize* sizeof (int));
+    destArr1= (int *) malloc (arraySize * sizeof (int));
+   
+    sourceFloatArr1 = (float*) malloc (arraySize* sizeof (float));
+    destFloatArr1 = (float *) malloc (arraySize * sizeof(float));
+#if TEST_DOUBLE
+    sourceDoubleArr1 = (double *) malloc (arraySize * sizeof(double));
+    destDoubleArr1 = (double *) malloc (arraySize * sizeof(double));
+#endif
+   
+    for (int i = 0; i < arraySize; i++){
+       sourceArr1[i] = 56535 - i;
+    }
+   
+    for (int i = 0; i < arraySize ; i++){
+       sourceFloatArr1[i] = ( float )i  + 0.125f;
+    }
+#if TEST_DOUBLE
+    for (int i = 0; i < arraySize ; i++){
+       sourceDoubleArr1[i] = ( double )i  + 0.0009765625;
+    }
+#endif
+    //using bolt::cl::control
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control useThisControl = bolt::cl::control::getDefault( );
+    useThisControl.setForceRunMode(bolt::cl::control::MultiCoreCpu); 
+
+
+    //copying int array as a whole to all there types of arrays :)
+    bolt::cl::copy(useThisControl, sourceArr1, sourceArr1 + arraySize, destArr1);                   //no prob
+    //cmpArrays(sourceArr1, destArr1, arraySize);
+    bolt::cl::copy(useThisControl, sourceArr1, sourceArr1 + arraySize, destFloatArr1);        //no prob
+    //cmpArrays(sourceArr1, destFloatArr1, arraySize);
+#if TEST_DOUBLE
+    bolt::cl::copy(useThisControl, sourceArr1, sourceArr1 + arraySize, destDoubleArr1);        //no prob
+#endif
+    //cmpArrays(sourceArr1, destDoubleArr1, arraySize);
+   
+    //copying float array as a whole to all there types of arrays :)
+    bolt::cl::copy(useThisControl, sourceFloatArr1, sourceFloatArr1 + arraySize, destArr1);     //data loss
+    bolt::cl::copy(useThisControl, sourceFloatArr1, sourceFloatArr1 + arraySize, destFloatArr1);    //no prob
+#if TEST_DOUBLE
+    bolt::cl::copy(useThisControl, sourceFloatArr1, sourceFloatArr1 + arraySize, destDoubleArr1);   //no prob
+#endif
+   
+    //copying double array as a whole to all there types of arrays :)
+#if TEST_DOUBLE
+    bolt::cl::copy(useThisControl, sourceDoubleArr1, sourceDoubleArr1 + arraySize, destArr1);     //data loss
+    bolt::cl::copy(useThisControl, sourceDoubleArr1, sourceDoubleArr1 + arraySize, destFloatArr1);   //data loss
+    bolt::cl::copy(useThisControl, sourceDoubleArr1, sourceDoubleArr1 + arraySize, destDoubleArr1);  //no prob
+#endif
+}
+
 
 TEST (copyIntBoltCLDevVect, withIntAsWhole){ 
     int devVectSize = 10;
@@ -370,7 +1490,55 @@ TEST (copyIntBoltCLDevVect, withIntAsWhole){
     
     
     for (int i = 0; i < devVectSize; i++){ 
-        sourceIntDevVect[i]	= 56535 - i; 
+        sourceIntDevVect[i] = 56535 - i; 
+    } 
+    
+    //bolt::cl::control& ctrl = bolt::cl::control::getDefault(); 
+    
+    bolt::cl::copy (ctrl, sourceIntDevVect.begin(), sourceIntDevVect.end(), destIntDevVect.begin()); 
+    
+    for (int i = 0; i < devVectSize; ++i){ 
+        EXPECT_EQ(sourceIntDevVect[i], destIntDevVect[i]);
+    }
+} 
+
+TEST (SerialcopyIntBoltCLDevVect, withIntAsWhole){ 
+    int devVectSize = 10;
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctrl = bolt::cl::control::getDefault( );
+    ctrl.setForceRunMode(bolt::cl::control::SerialCpu); 
+    
+    bolt::cl::device_vector<int> sourceIntDevVect(10);//, 0, CL_MEM_READ_WRITE, false, ctrl );
+    bolt::cl::device_vector<int>   destIntDevVect(10);//, 0, CL_MEM_READ_WRITE, false, ctrl ); 
+    
+    
+    for (int i = 0; i < devVectSize; i++){ 
+        sourceIntDevVect[i] = 56535 - i; 
+    } 
+    
+    //bolt::cl::control& ctrl = bolt::cl::control::getDefault(); 
+    
+    bolt::cl::copy (ctrl, sourceIntDevVect.begin(), sourceIntDevVect.end(), destIntDevVect.begin()); 
+    
+    for (int i = 0; i < devVectSize; ++i){ 
+        EXPECT_EQ(sourceIntDevVect[i], destIntDevVect[i]);
+    }
+} 
+
+TEST (MultiCorecopyIntBoltCLDevVect, withIntAsWhole){ 
+    int devVectSize = 10;
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctrl = bolt::cl::control::getDefault( );
+    ctrl.setForceRunMode(bolt::cl::control::MultiCoreCpu); 
+    
+    bolt::cl::device_vector<int> sourceIntDevVect(10);//, 0, CL_MEM_READ_WRITE, false, ctrl );
+    bolt::cl::device_vector<int>   destIntDevVect(10);//, 0, CL_MEM_READ_WRITE, false, ctrl ); 
+    
+    
+    for (int i = 0; i < devVectSize; i++){ 
+        sourceIntDevVect[i] = 56535 - i; 
     } 
     
     //bolt::cl::control& ctrl = bolt::cl::control::getDefault(); 
@@ -604,14 +1772,14 @@ int main(int argc, char* argv[])
     //  Register our minidump generating logic
     bolt::miniDumpSingleton::enableMiniDumps( );
 
-    //	Define MEMORYREPORT on windows platfroms to enable debug memory heap checking
+    // Define MEMORYREPORT on windows platfroms to enable debug memory heap checking
 #if defined( MEMORYREPORT ) && defined( _WIN32 )
     TCHAR logPath[ MAX_PATH ];
     ::GetCurrentDirectory( MAX_PATH, logPath );
     ::_tcscat_s( logPath, _T( "\\MemoryReport.txt") );
 
-    //	We leak the handle to this file, on purpose, so that the ::_CrtSetReportFile() can output it's memory 
-    //	statistics on app shutdown
+    // We leak the handle to this file, on purpose, so that the ::_CrtSetReportFile() can output it's memory 
+    // statistics on app shutdown
     HANDLE hLogFile;
     hLogFile = ::CreateFile( logPath, GENERIC_WRITE, 
         FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL );
@@ -628,11 +1796,11 @@ int main(int argc, char* argv[])
     tmp |= _CRTDBG_LEAK_CHECK_DF | _CRTDBG_ALLOC_MEM_DF | _CRTDBG_CHECK_ALWAYS_DF;
     ::_CrtSetDbgFlag( tmp );
 
-    //	By looking at the memory leak report that is generated by this debug heap, there is a number with 
-    //	{} brackets that indicates the incremental allocation number of that block.  If you wish to set
-    //	a breakpoint on that allocation number, put it in the _CrtSetBreakAlloc() call below, and the heap
-    //	will issue a bp on the request, allowing you to look at the call stack
-    //	::_CrtSetBreakAlloc( 1833 );
+    // By looking at the memory leak report that is generated by this debug heap, there is a number with 
+    // {} brackets that indicates the incremental allocation number of that block.  If you wish to set
+    // a breakpoint on that allocation number, put it in the _CrtSetBreakAlloc() call below, and the heap
+    // will issue a bp on the request, allowing you to look at the call stack
+    // ::_CrtSetBreakAlloc( 1833 );
 
 #endif /* MEMORYREPORT */
 

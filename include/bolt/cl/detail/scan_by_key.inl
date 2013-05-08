@@ -24,9 +24,8 @@
 
 #ifdef ENABLE_TBB
 //TBB Includes
-#include "tbb/parallel_scan.h"
-#include "tbb/blocked_range.h"
-#include "tbb/task_scheduler_init.h"
+#include "bolt/btbb/scan_by_key.h"
+
 #endif
 #ifdef BOLT_ENABLE_PROFILING
 #include "bolt/AsyncProfiler.h"
@@ -39,9 +38,9 @@ namespace bolt
 namespace cl
 {
 
-/***********************************************************************************************************************
+/*********************************************************************************************************************
  * Inclusive Segmented Scan
- **********************************************************************************************************************/
+ ********************************************************************************************************************/
 template<
     typename InputIterator1,
     typename InputIterator2,
@@ -289,9 +288,9 @@ Serial_inclusive_scan_by_key(
 
 
 
-/***********************************************************************************************************************
+/*********************************************************************************************************************
  * Exclusive Segmented Scan
- **********************************************************************************************************************/
+ ********************************************************************************************************************/
 
 template<
     typename InputIterator1,
@@ -618,11 +617,12 @@ namespace detail
 *   \ingroup scan
 *   \{
 */
-    enum  {scanByKey_kType, scanByKey_vType, scanByKey_oType, scanByKey_initType, scanByKey_BinaryPredicate, scanByKey_BinaryFunction};
+    enum  {scanByKey_kType, scanByKey_vType, scanByKey_oType, scanByKey_initType, scanByKey_BinaryPredicate,
+           scanByKey_BinaryFunction};
 
-/***********************************************************************************************************************
+/*********************************************************************************************************************
  * Kernel Template Specializer
- **********************************************************************************************************************/
+ ********************************************************************************************************************/
 class ScanByKey_KernelTemplateSpecializer : public KernelTemplateSpecializer
 {
     public:
@@ -689,99 +689,9 @@ class ScanByKey_KernelTemplateSpecializer : public KernelTemplateSpecializer
     }
 };
 
-
-#ifdef ENABLE_TBB
-      template <typename T, typename InputIterator1, typename InputIterator2, typename OutputIterator,
-                 typename BinaryFunction, typename BinaryPredicate>
-      struct ScanKey_tbb{
-          typedef typename std::iterator_traits< OutputIterator >::value_type oType;
-          oType sum;
-          oType start;
-          InputIterator1& first_key;
-          InputIterator2& first_value;
-          OutputIterator& result;
-          const BinaryFunction binary_op;
-          const BinaryPredicate binary_pred;
-          const bool inclusive;
-          bool flag, pre_flag;
-          public:
-          ScanKey_tbb() : sum(0) {}
-          ScanKey_tbb( InputIterator1&  _first,
-            InputIterator2& first_val,
-            OutputIterator& _result,
-            const BinaryFunction &_opr,
-            const BinaryPredicate &_pred,
-            const bool& _incl,
-            const oType &init) : first_key(_first), first_value(first_val), result(_result), binary_op(_opr), binary_pred(_pred),
-                             inclusive(_incl), start(init), flag(FALSE), pre_flag(TRUE){}
-          oType get_sum() const {return sum;}
-          template<typename Tag>
-          void operator()( const tbb::blocked_range<int>& r, Tag ) {
-              oType temp = sum;
-              flag=FALSE;
-              for( int i=r.begin(); i<r.end(); ++i ) {
-                 if( Tag::is_final_scan() ) {
-                     if(!inclusive){
-                          if( i==0){
-                             *(result + i) = start;
-                             temp = binary_op(start, *(first_value+i));
-                          }
-                          else if(binary_pred(*(first_key+i), *(first_key +i- 1))){
-                             *(result + i) = temp;
-                             temp = binary_op(temp, *(first_value+i));
-                          }
-                          else{
-                             *(result + i) = start;
-                             temp = binary_op(start, *(first_value+i));
-                             flag = TRUE;
-                          }
-                          continue;
-                     }
-                     else if(i == 0 ){
-                        temp = *(first_value+i);
-                     }
-                     else if(binary_pred(*(first_key+i), *(first_key +i- 1))) {
-                        temp = binary_op(temp, *(first_value+i));
-                     }
-                     else{
-                        flag = TRUE;
-                        temp = *(first_value+i);
-                     }
-                     *(result + i) = temp;
-                 }
-                 else if(pre_flag){
-                   temp = *(first_value+i);
-                   pre_flag = FALSE;
-
-                 }
-                 else if(binary_pred(*(first_key+i), *(first_key +i - 1)))
-                     temp = binary_op(temp, *(first_value+i));
-                 else if (!inclusive){
-                     flag = TRUE;
-                     temp = binary_op(start, *(first_value+i));
-                 }
-                 else {
-                     flag = TRUE;
-                     temp = *(first_value+i);
-                 }
-             }
-             sum = temp;
-          }
-          ScanKey_tbb( ScanKey_tbb& b, tbb::split):first_key(b.first_key),result(b.result),first_value(b.first_value),
-                                                   inclusive(b.inclusive),start(b.start),pre_flag(TRUE){}
-          void reverse_join( ScanKey_tbb& a ) {
-            if(!flag)
-                sum = binary_op(a.sum,sum);
-          }
-          void assign( ScanKey_tbb& b ) {
-             sum = b.sum;
-          }
-      };
-#endif
-
 /***********************************************************************************************************************
  * Detect Random Access
- **********************************************************************************************************************/
+ ********************************************************************************************************************/
 
 template<
     typename InputIterator1,
@@ -884,31 +794,33 @@ scan_by_key_pick_iterator(
 
   if( runMode == bolt::cl::control::SerialCpu )
     {
-
-       if(inclusive){
-          Serial_inclusive_scan_by_key<kType, vType, oType, BinaryPredicate, BinaryFunction>(&(*firstKey), &(*firstValue), &(*result), numElements, binary_pred, binary_funct);
+          if(inclusive){
+          Serial_inclusive_scan_by_key<kType, vType, oType, BinaryPredicate, BinaryFunction>(&(*firstKey),
+                                      &(*firstValue), &(*result), numElements, binary_pred, binary_funct);
        }
        else{
-          Serial_exclusive_scan_by_key<kType, vType, oType, BinaryPredicate, BinaryFunction, T>(&(*firstKey), &(*firstValue), &(*result), numElements, binary_pred, binary_funct, init);
+          Serial_exclusive_scan_by_key<kType, vType, oType, BinaryPredicate, BinaryFunction, T>(&(*firstKey),
+                                   &(*firstValue), &(*result), numElements, binary_pred, binary_funct, init);
        }
        return result + numElements;
     }
   else if(runMode == bolt::cl::control::MultiCoreCpu)
   {
 #ifdef ENABLE_TBB
-        tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
-        ScanKey_tbb<T, InputIterator1, InputIterator2, OutputIterator, BinaryFunction, BinaryPredicate> tbbkey_scan((InputIterator1 &)firstKey,
-            (InputIterator2&) firstValue,(OutputIterator &)result, binary_funct, binary_pred, inclusive, init);
-        tbb::parallel_scan( tbb::blocked_range<int>(  0, static_cast< int >( std::distance( firstKey, lastKey ))), tbbkey_scan, tbb::auto_partitioner());
-        return result + numElements;
+
+      if (inclusive)
+        return bolt::btbb::inclusive_scan_by_key(firstKey,lastKey,firstValue,result,binary_pred,binary_funct);
+      else
+        return bolt::btbb::exclusive_scan_by_key(firstKey,lastKey,firstValue,result,init,binary_pred,binary_funct);
+
 #else
         //std::cout << "The MultiCoreCpu version of Scan by key is not enabled." << std ::endl;
-        throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of scan by key is not enabled to be built." );
+        throw std::exception( "The MultiCoreCpu version of scan by key is not enabled to be built! \n" );
+
 #endif
   }
   else
   {
-
         // Map the input iterator to a device_vector
         device_vector< kType > dvKeys( firstKey, lastKey, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctl );
         device_vector< vType > dvValues( firstValue, numElements, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, true, ctl );
@@ -975,21 +887,25 @@ scan_by_key_pick_iterator(
 
     if( runMode == bolt::cl::control::SerialCpu )
     {
-        ::cl::Event serialCPUEvent;
-        cl_int l_Error = CL_SUCCESS;
+     ::cl::Event serialCPUEvent;
+     cl_int l_Error = CL_SUCCESS;
 
-        kType *scanInputkey = (kType*)ctl.getCommandQueue().enqueueMapBuffer(firstKey.getContainer().getBuffer(), false,
-                            CL_MAP_READ, 0, sizeof(kType) * numElements, NULL, &serialCPUEvent, &l_Error );
-        vType *scanInputBuffer = (vType*)ctl.getCommandQueue().enqueueMapBuffer(firstValue.getContainer().getBuffer(), false,
-                            CL_MAP_READ, 0, sizeof(vType) * numElements, NULL, &serialCPUEvent, &l_Error );
-        oType *scanResultBuffer = (oType*)ctl.getCommandQueue().enqueueMapBuffer(result.getContainer().getBuffer(), false,
-                            CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(oType) * numElements, NULL, &serialCPUEvent, &l_Error );
-        serialCPUEvent.wait();
+     kType *scanInputkey = (kType*)ctl.getCommandQueue().enqueueMapBuffer(firstKey.getContainer().getBuffer(),false,
+                       CL_MAP_READ, 0, sizeof(kType) * numElements, NULL, &serialCPUEvent, &l_Error );
+     vType *scanInputBuffer = (vType*)ctl.getCommandQueue().enqueueMapBuffer(firstValue.getContainer().getBuffer(),
+         false, CL_MAP_READ, 0, sizeof(vType) * numElements, NULL, &serialCPUEvent, &l_Error );
+
+     oType *scanResultBuffer = (oType*)ctl.getCommandQueue().enqueueMapBuffer(result.getContainer().getBuffer(), false,
+                         CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(oType)*numElements, NULL, &serialCPUEvent, &l_Error);
+
+ serialCPUEvent.wait();
 
         if(inclusive)
-            Serial_inclusive_scan_by_key<kType, vType, oType, BinaryPredicate, BinaryFunction>(scanInputkey, scanInputBuffer, scanResultBuffer, numElements, binary_pred, binary_funct);
+            Serial_inclusive_scan_by_key<kType, vType, oType, BinaryPredicate, BinaryFunction>(scanInputkey,
+                                 scanInputBuffer, scanResultBuffer, numElements, binary_pred, binary_funct);
         else
-            Serial_exclusive_scan_by_key<kType, vType, oType, BinaryPredicate, BinaryFunction, T>(scanInputkey, scanInputBuffer, scanResultBuffer, numElements, binary_pred, binary_funct, init);
+            Serial_exclusive_scan_by_key<kType, vType, oType, BinaryPredicate, BinaryFunction, T>(scanInputkey,
+                             scanInputBuffer, scanResultBuffer, numElements, binary_pred, binary_funct, init);
 
         ctl.getCommandQueue().enqueueUnmapMemObject(firstKey.getContainer().getBuffer(), scanInputkey);
         ctl.getCommandQueue().enqueueUnmapMemObject(firstValue.getContainer().getBuffer(), scanInputBuffer);
@@ -1001,6 +917,7 @@ scan_by_key_pick_iterator(
     else if( runMode == bolt::cl::control::MultiCoreCpu )
     {
 #ifdef ENABLE_TBB
+
                 ::cl::Event multiCoreCPUEvent;
                 cl_int l_Error = CL_SUCCESS;
                 /*Map the device buffer to CPU*/
@@ -1012,17 +929,21 @@ scan_by_key_pick_iterator(
                                    CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(oType) * numElements, NULL, &multiCoreCPUEvent, &l_Error );
                 multiCoreCPUEvent.wait();
 
-                tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
-                ScanKey_tbb<T, kType*, vType*, oType*, BinaryFunction, BinaryPredicate> tbbkey_scan(scanInputkey, scanInputBuffer, scanResultBuffer, binary_funct, binary_pred, inclusive, init);
-                tbb::parallel_scan( tbb::blocked_range<int>(  0, numElements), tbbkey_scan, tbb::auto_partitioner());
+              if (inclusive)
+                 bolt::btbb::inclusive_scan_by_key(scanInputkey,scanInputkey + numElements,scanInputBuffer,
+                 scanResultBuffer,binary_pred,binary_funct);
+              else
+                bolt::btbb::exclusive_scan_by_key(scanInputkey,scanInputkey + numElements,scanInputBuffer,
+                scanResultBuffer,init,binary_pred,binary_funct);
+
 
                 ctl.getCommandQueue().enqueueUnmapMemObject(firstKey.getContainer().getBuffer(), scanInputkey);
                 ctl.getCommandQueue().enqueueUnmapMemObject(firstValue.getContainer().getBuffer(), scanInputBuffer);
                 ctl.getCommandQueue().enqueueUnmapMemObject(result.getContainer().getBuffer(), scanResultBuffer);
                 return result + numElements;
 #else
-                //std::cout << "The MultiCoreCpu version of scan by key is not enabled. " << std ::endl;
-                throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of scan by key is not enabled to be built." );
+                throw std::exception("The MultiCoreCpu version of scan by key is not enabled to be built! \n" );
+
 #endif
 
      }
@@ -1195,7 +1116,8 @@ k0_stepNum = aProfiler.getStepNum();
 aProfiler.setStepName("Kernel 0");
 aProfiler.set(AsyncProfiler::getDevice, ctl.forceRunMode());
 aProfiler.set(AsyncProfiler::flops, 2*numElements);
-aProfiler.set(AsyncProfiler::memory, 2*numElements*(sizeof(vType)+sizeof(kType)) + 1*sizeScanBuff*(sizeof(vType)+sizeof(kType)) );
+aProfiler.set(AsyncProfiler::memory,2*numElements*(sizeof(vType)+sizeof(kType)) +
+                                  1*sizeScanBuff*(sizeof(vType)+sizeof(kType)) );
 #endif
 
     l_Error = ctl.getCommandQueue( ).enqueueNDRangeKernel(
@@ -1347,7 +1269,8 @@ aProfiler.setArchitecture(strDeviceName);
         size_t shift = k0_start - k0_start_cpu;
         //size_t shift = k0_start_cpu - k0_start;
 
-        //std::cout << "setting step " << k0_stepNum << " attribute " << AsyncProfiler::stopTime << " to " << k0_stop-shift << std::endl;
+        //std::cout << "setting step " << k0_stepNum << " attribute " << AsyncProfiler::stopTime;
+        //std::cout << " to " << k0_stop-shift << std::endl;
         aProfiler.set(k0_stepNum, AsyncProfiler::stopTime,  static_cast<size_t>(k0_stop-shift) );
 
         aProfiler.set(k1_stepNum, AsyncProfiler::startTime, static_cast<size_t>(k0_stop-shift) );

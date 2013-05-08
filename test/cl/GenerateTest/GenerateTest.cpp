@@ -18,6 +18,8 @@
 
 #include <array>
 
+#include "bolt/cl/iterator/constant_iterator.h"
+
 #include "common/stdafx.h"
 #include "common/myocl.h"
 #include "bolt/cl/generate.h"
@@ -26,6 +28,7 @@
 
 #include <gtest/gtest.h>
 //#include <boost/shared_array.hpp>
+#define TEST_DOUBLE 0
 
 template< typename T >
 ::testing::AssertionResult cmpArrays( const T ref, const T calc, size_t N )
@@ -63,7 +66,7 @@ struct cmpStdArray
 template< size_t N >
 struct cmpStdArray< float, N >
 {
-    static ::testing::AssertionResult cmpArrays( const std::array< float, N >& ref, const std::array< float, N >& calc )
+    static ::testing::AssertionResult cmpArrays( const std::array< float, N >& ref, const std::array< float, N >& calc)
     {
         for( size_t i = 0; i < N; ++i )
         {
@@ -76,7 +79,7 @@ struct cmpStdArray< float, N >
 template< size_t N >
 struct cmpStdArray< double, N >
 {
-    static ::testing::AssertionResult cmpArrays( const std::array< double, N >& ref, const std::array< double, N >& calc )
+    static ::testing::AssertionResult cmpArrays(const std::array<double,N>& ref,const std::array<double,N>& calc)
     {
         for( size_t i = 0; i < N; ++i )
         {
@@ -131,10 +134,10 @@ struct GenDbl
     const float _a;
     GenDbl( float a ) : _a(a) {};
 
-	float operator() ()
-	{
-		return _a;
-	};
+    float operator() ()
+    {
+        return _a;
+    };
 
 };
 );  // end BOLT_FUNCTOR
@@ -145,13 +148,13 @@ struct GenDbl
 BOLT_FUNCTOR(GenInt,
 struct GenInt
 {
-	const int _a;
-	GenInt( int a ) : _a(a) {};
+    const int _a;
+    GenInt( int a ) : _a(a) {};
 
-	int operator() ()
-	{
+    int operator() ()
+    {
         return _a;
-	};
+    };
 };
 );  // end BOLT_FUNCTOR
 
@@ -163,13 +166,13 @@ template< typename T >
 struct GenConst
 {
     // return value
-	T _a;
+    T _a;
 
     // constructor
-	GenConst( T a ) : _a(a) {};
+    GenConst( T a ) : _a(a) {};
 
     // functor
-	T operator() () { return _a; };
+    T operator() () { return _a; };
 };
 );  // end BOLT_FUNCTOR
 
@@ -219,31 +222,125 @@ protected:
     bolt::cl::device_vector< double > boltInput;
 };
 
+class GenerateConstantIterator :public ::testing::TestWithParam<int>{
+protected:
+     int mySize;
+public:
+    GenerateConstantIterator(): mySize(GetParam()){
+    }
+};
+
+//Generate with Fancy Iterator would result in compilation error!
+/* TEST_P(GenerateConstantIterator, withConstantIterator)
+{
+    std::vector<int> a(mySize);
+    GenConst<int> gen(1234);
+
+    bolt::cl::constant_iterator<int> first(0);
+    bolt::cl::constant_iterator<int> last = first + mySize;
+      
+    std::generate(a.begin(), a.end(), gen);
+
+    bolt::cl::generate(first, last, gen); // This is logically wrong!
+
+    //EXPECT_EQ(a,first);
+} */
+
 TEST_P( HostIntVector, Generate )
 {
     // create generator
     GenConst<int> gen(1234);
 
     //  Calling the actual functions under test
-         std::generate(  stdInput.begin( ),  stdInput.end( ), gen );
+    std::generate(  stdInput.begin( ),  stdInput.end( ), gen );
     bolt::cl::generate( boltInput.begin( ), boltInput.end( ), gen );
 
     //  Loop through the array and compare all the values with each other
     cmpArrays( stdInput, boltInput );
 }
 
+TEST_P( HostIntVector, CPUGenerate )
+{
+    // create generator
+    GenConst<int> gen(1234);
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+    
+    //  Calling the actual functions under test
+    std::generate(  stdInput.begin( ),  stdInput.end( ), gen );
+    bolt::cl::generate( ctl, boltInput.begin( ), boltInput.end( ), gen );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( HostIntVector, MultiCoreGenerate )
+{
+    // create generator
+    GenConst<int> gen(1234);
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+    
+    //  Calling the actual functions under test
+    std::generate(  stdInput.begin( ),  stdInput.end( ), gen );
+    bolt::cl::generate( ctl, boltInput.begin( ), boltInput.end( ), gen );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+
+#if (TEST_DOUBLE == 1)
 TEST_P( HostDblVector, Generate )
 {
     // create generator
     GenConst<double> gen(1.234);
     //  Calling the actual functions under test
 
-         std::generate(  stdInput.begin( ),  stdInput.end( ), gen );
+    std::generate(  stdInput.begin( ),  stdInput.end( ), gen );
     bolt::cl::generate( boltInput.begin( ), boltInput.end( ), gen );
 
     //  Loop through the array and compare all the values with each other
     cmpArrays( stdInput, boltInput );
 }
+
+TEST_P( HostDblVector, CPUGenerate )
+{
+    // create generator
+    GenConst<double> gen(1.234);
+    //  Calling the actual functions under test
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+    
+    std::generate(  stdInput.begin( ),  stdInput.end( ), gen );
+    bolt::cl::generate(ctl,  boltInput.begin( ), boltInput.end( ), gen );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+} 
+
+TEST_P( HostDblVector, MultiCoreGenerate )
+{
+    // create generator
+    GenConst<double> gen(1.234);
+    //  Calling the actual functions under test
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+    
+    std::generate(  stdInput.begin( ),  stdInput.end( ), gen );
+    bolt::cl::generate(ctl,  boltInput.begin( ), boltInput.end( ), gen );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+#endif
 
 TEST_P( DevIntVector, Generate )
 {
@@ -251,24 +348,94 @@ TEST_P( DevIntVector, Generate )
     GenConst<int> gen(2345);
 
     //  Calling the actual functions under test
-         std::generate(  stdInput.begin( ),  stdInput.end( ), gen );
+    std::generate(  stdInput.begin( ),  stdInput.end( ), gen );
     bolt::cl::generate( boltInput.begin( ), boltInput.end( ), gen );
 
     //  Loop through the array and compare all the values with each other
     cmpArrays( stdInput, boltInput );
 }
 
+TEST_P( DevIntVector, CPUGenerate )
+{
+    // create generator
+    GenConst<int> gen(2345);
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+    
+    //  Calling the actual functions under test
+    std::generate(  stdInput.begin( ),  stdInput.end( ), gen );
+    bolt::cl::generate( ctl, boltInput.begin( ), boltInput.end( ), gen );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( DevIntVector, MultiCoreGenerate )
+{
+    // create generator
+    GenConst<int> gen(2345);
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+    
+    //  Calling the actual functions under test
+    std::generate(  stdInput.begin( ),  stdInput.end( ), gen );
+    bolt::cl::generate( ctl, boltInput.begin( ), boltInput.end( ), gen );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+
+
+#if (TEST_DOUBLE == 1)
 TEST_P( DevDblVector, Generate )
 {
     // create generator
     GenConst<double> gen(2.345);
 
     //  Calling the actual functions under test
-         std::generate(  stdInput.begin( ),  stdInput.end( ), gen );
+    std::generate(  stdInput.begin( ),  stdInput.end( ), gen );
     bolt::cl::generate( boltInput.begin( ), boltInput.end( ), gen );
     //  Loop through the array and compare all the values with each other
     cmpArrays( stdInput, boltInput );
 }
+
+TEST_P( DevDblVector, CPUGenerate )
+{
+    // create generator
+    GenConst<double> gen(2.345);
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+    
+    //  Calling the actual functions under test
+    std::generate(  stdInput.begin( ),  stdInput.end( ), gen );
+    bolt::cl::generate( ctl, boltInput.begin( ), boltInput.end( ), gen );
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( DevDblVector, MultiCoreGenerate )
+{
+    // create generator
+    GenConst<double> gen(2.345);
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+    
+    //  Calling the actual functions under test
+    std::generate(  stdInput.begin( ),  stdInput.end( ), gen );
+    bolt::cl::generate( ctl, boltInput.begin( ), boltInput.end( ), gen );
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+
+#endif
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -278,7 +445,7 @@ TEST_P( HostIntVector, GenerateN )
     int size = GetParam();
     // create generator
     GenConst<int> gen(3456);
-
+    
     //  Calling the actual functions under test
     std::vector< int >::iterator  stdEnd  =       std::generate_n(  stdInput.begin( ), size, gen );
     std::vector< int >::iterator  stdEnd  =       std::generate_n(  stdInput.begin( ), size, gen );
@@ -297,6 +464,63 @@ TEST_P( HostIntVector, GenerateN )
     cmpArrays( stdInput, boltInput );
 }
 
+TEST_P( HostIntVector, CPUGenerateN )
+{
+    int size = GetParam();
+    // create generator
+    GenConst<int> gen(3456);
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+    
+    //  Calling the actual functions under test
+    std::vector< int >::iterator  stdEnd  =       std::generate_n(  stdInput.begin( ), size, gen );
+    std::vector< int >::iterator  stdEnd  =       std::generate_n(  stdInput.begin( ), size, gen );
+    std::vector< int >::iterator boltEnd  =  bolt::cl::generate_n( ctl, boltInput.begin( ), size, gen );
+
+    //  The returned iterator should be at the end
+    EXPECT_EQ( stdInput.end( ), stdEnd );
+    EXPECT_EQ( boltInput.end( ), boltEnd );
+    
+    //  Both collections should have the same number of elements
+    std::vector< int >::iterator::difference_type  stdNumElements = std::distance(  stdInput.begin( ),  stdEnd );
+    std::vector< int >::iterator::difference_type boltNumElements = std::distance( boltInput.begin( ), boltEnd );
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P(HostIntVector, MultiCoreGenerateN )
+{
+    int size = GetParam();
+    // create generator
+    GenConst<int> gen(3456);
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+    
+    //  Calling the actual functions under test
+    std::vector< int >::iterator  stdEnd  =       std::generate_n(  stdInput.begin( ), size, gen );
+    std::vector< int >::iterator  stdEnd  =       std::generate_n(  stdInput.begin( ), size, gen );
+    std::vector< int >::iterator boltEnd  =  bolt::cl::generate_n( ctl, boltInput.begin( ), size, gen );
+
+    //  The returned iterator should be at the end
+    EXPECT_EQ( stdInput.end( ), stdEnd );
+    EXPECT_EQ( boltInput.end( ), boltEnd );
+    
+    //  Both collections should have the same number of elements
+    std::vector< int >::iterator::difference_type  stdNumElements = std::distance(  stdInput.begin( ),  stdEnd );
+    std::vector< int >::iterator::difference_type boltNumElements = std::distance( boltInput.begin( ), boltEnd );
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+
+#if (TEST_DOUBLE == 1)
 TEST_P( HostDblVector, GenerateN )
 {
     int size = GetParam();
@@ -319,6 +543,61 @@ TEST_P( HostDblVector, GenerateN )
     //  Loop through the array and compare all the values with each other
     cmpArrays( stdInput, boltInput );
 }
+
+TEST_P( HostDblVector, CPUGenerateN )
+{
+    int size = GetParam();
+    // create generator
+    GenConst<double> gen(3.456);
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+    
+    //  Calling the actual functions under test
+    std::vector< double >::iterator  stdEnd  =      std::generate_n(  stdInput.begin( ), size, gen );
+    std::vector< double >::iterator boltEnd  = bolt::cl::generate_n( ctl, boltInput.begin( ), size, gen );
+    
+    //  The returned iterator should be at the end
+    EXPECT_EQ( stdInput.end( ), stdEnd );
+    EXPECT_EQ( boltInput.end( ), boltEnd );
+    
+    //  Both collections should have the same number of elements
+    std::vector< double >::iterator::difference_type  stdNumElements = std::distance(  stdInput.begin( ),  stdEnd );
+    std::vector< double >::iterator::difference_type boltNumElements = std::distance( boltInput.begin( ), boltEnd );
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( HostDblVector, MultiCoreGenerateN )
+{
+    int size = GetParam();
+    // create generator
+    GenConst<double> gen(3.456);
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+    
+    //  Calling the actual functions under test
+    std::vector< double >::iterator  stdEnd  =      std::generate_n(  stdInput.begin( ), size, gen );
+    std::vector< double >::iterator boltEnd  = bolt::cl::generate_n( ctl, boltInput.begin( ), size, gen );
+    
+    //  The returned iterator should be at the end
+    EXPECT_EQ( stdInput.end( ), stdEnd );
+    EXPECT_EQ( boltInput.end( ), boltEnd );
+    
+    //  Both collections should have the same number of elements
+    std::vector< double >::iterator::difference_type  stdNumElements = std::distance(  stdInput.begin( ),  stdEnd );
+    std::vector< double >::iterator::difference_type boltNumElements = std::distance( boltInput.begin( ), boltEnd );
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+#endif
 
 TEST_P( DevIntVector, GenerateN )
 {
@@ -343,6 +622,61 @@ TEST_P( DevIntVector, GenerateN )
     cmpArrays( stdInput, boltInput );
 }
 
+TEST_P( DevIntVector, CPUGenerateN )
+{
+    int size = GetParam();
+    // create generator
+    GenConst<int> gen(4567);
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+    
+    //  Calling the actual functions under test
+    std::vector< int >::iterator              stdEnd =      std::generate_n(  stdInput.begin( ), size, gen );
+    bolt::cl::device_vector< int >::iterator boltEnd = bolt::cl::generate_n( ctl, boltInput.begin( ), size, gen );
+
+    //  The returned iterator should be at the end
+    EXPECT_EQ( stdInput.end( ), stdEnd );
+    EXPECT_EQ( boltInput.end( ), boltEnd );
+    
+    //  Both collections should have the same number of elements
+    std::vector< int >::iterator::difference_type  stdNumElements = std::distance(  stdInput.begin( ),  stdEnd );
+    std::vector< int >::iterator::difference_type boltNumElements = std::distance( boltInput.begin( ), boltEnd );
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( DevIntVector, MultiCoreGenerateN )
+{
+    int size = GetParam();
+    // create generator
+    GenConst<int> gen(4567);
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+    
+    //  Calling the actual functions under test
+    std::vector< int >::iterator              stdEnd =      std::generate_n(  stdInput.begin( ), size, gen );
+    bolt::cl::device_vector< int >::iterator boltEnd = bolt::cl::generate_n( ctl, boltInput.begin( ), size, gen );
+
+    //  The returned iterator should be at the end
+    EXPECT_EQ( stdInput.end( ), stdEnd );
+    EXPECT_EQ( boltInput.end( ), boltEnd );
+    
+    //  Both collections should have the same number of elements
+    std::vector< int >::iterator::difference_type  stdNumElements = std::distance(  stdInput.begin( ),  stdEnd );
+    std::vector< int >::iterator::difference_type boltNumElements = std::distance( boltInput.begin( ), boltEnd );
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+
+#if (TEST_DOUBLE == 1)
 TEST_P( DevDblVector, GenerateN )
 {
     int size = GetParam();
@@ -365,17 +699,75 @@ TEST_P( DevDblVector, GenerateN )
     //  Loop through the array and compare all the values with each other
     cmpArrays( stdInput, boltInput );
 }
+
+TEST_P( DevDblVector, CPUGenerateN )
+{
+    int size = GetParam();
+    // create generator
+    GenConst<double> gen(4.567);
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+    
+    //  Calling the actual functions under test
+    std::vector< double >::iterator                 stdEnd =      std::generate_n(  stdInput.begin( ), size, gen );
+    bolt::cl::device_vector< double >::iterator boltEnd = bolt::cl::generate_n( ctl, boltInput.begin( ), size, gen );
+    
+    //  The returned iterator should be at the end
+    EXPECT_EQ( stdInput.end( ), stdEnd );
+    EXPECT_EQ( boltInput.end( ), boltEnd );
+    
+    //  Both collections should have the same number of elements
+    std::vector< double >::iterator::difference_type  stdNumElements = std::distance(  stdInput.begin( ),  stdEnd );
+    std::vector< double >::iterator::difference_type boltNumElements = std::distance( boltInput.begin( ), boltEnd );
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( DevDblVector, MultiCoreGenerateN )
+{
+    int size = GetParam();
+    // create generator
+    GenConst<double> gen(4.567);
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+    
+    //  Calling the actual functions under test
+    std::vector< double >::iterator                 stdEnd =      std::generate_n(  stdInput.begin( ), size, gen );
+    bolt::cl::device_vector< double >::iterator boltEnd = bolt::cl::generate_n( ctl, boltInput.begin( ), size, gen );
+    
+    //  The returned iterator should be at the end
+    EXPECT_EQ( stdInput.end( ), stdEnd );
+    EXPECT_EQ( boltInput.end( ), boltEnd );
+    
+    //  Both collections should have the same number of elements
+    std::vector< double >::iterator::difference_type  stdNumElements = std::distance(  stdInput.begin( ),  stdEnd );
+    std::vector< double >::iterator::difference_type boltNumElements = std::distance( boltInput.begin( ), boltEnd );
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+#endif
+
 #endif
 
 INSTANTIATE_TEST_CASE_P( GenSmall, HostIntVector, ::testing::Range( 1, 256, 3 ) );
 INSTANTIATE_TEST_CASE_P( GenLarge, HostIntVector, ::testing::Range( 1023, 1050000, 350001 ) );
 INSTANTIATE_TEST_CASE_P( GenSmall, DevIntVector,  ::testing::Range( 2, 256, 3 ) );
 INSTANTIATE_TEST_CASE_P( GenLarge, DevIntVector,  ::testing::Range( 1024, 1050000, 350003 ) );
+
+#if (TEST_DOUBLE == 1)
 INSTANTIATE_TEST_CASE_P( GenSmall, HostDblVector, ::testing::Range( 3, 256, 3 ) );
 INSTANTIATE_TEST_CASE_P( GenLarge, HostDblVector, ::testing::Range( 1025, 1050000, 350007 ) );
 INSTANTIATE_TEST_CASE_P( GenSmall, DevDblVector,  ::testing::Range( 4, 256, 3 ) );
 INSTANTIATE_TEST_CASE_P( GenLarge, DevDblVector,  ::testing::Range( 1026, 1050000, 350011 ) );
-
+#endif
 
 int main(int argc, char **argv)
 {

@@ -59,7 +59,8 @@ namespace bolt {
             const T & value,
             const std::string& cl_code )
         {
-            detail::fill_detect_random_access( bolt::cl::control::getDefault(), first, first+static_cast< const int >( n ), 
+            detail::fill_detect_random_access( bolt::cl::control::getDefault(), 
+                first, first+static_cast< const int >( n ), 
                 value, cl_code, std::iterator_traits< OutputIterator >::iterator_category( ) );
             return first+static_cast< const int >( n );
         }
@@ -72,9 +73,9 @@ namespace bolt {
             const T & value, 
             const std::string& cl_code )
         {
-            detail::fill_detect_random_access( ctl, first, n, value, cl_code, 
+            detail::fill_detect_random_access( ctl, first, first+static_cast< const int >( n ), value, cl_code, 
                 std::iterator_traits< OutputIterator >::iterator_category( ) );
-            return (first+n);
+            return (first+static_cast< const int >( n ));
         }
 
     }//end of cl namespace
@@ -132,7 +133,7 @@ namespace bolt {
             void fill_detect_random_access( const bolt::cl::control &ctl, ForwardIterator first, ForwardIterator last, 
                 const T & value, const std::string &cl_code, std::random_access_iterator_tag )
             {
-                fill_pick_iterator(ctl, first, last, value, cl_code, 
+                     fill_pick_iterator(ctl, first, last, value, cl_code, 
                     std::iterator_traits< ForwardIterator >::iterator_category( ) );
             }
 
@@ -141,14 +142,17 @@ namespace bolt {
              * Pick Iterator
              ****************************************************************************/
 
-            /*! \brief This template function overload is used to seperate device_vector iterators from all other iterators
+        /*! \brief This template function overload is used to seperate device_vector iterators from all other iterators
                 \detail This template is called by the non-detail versions of fill, it already assumes random access
              *  iterators.  This overload is called strictly for non-device_vector iterators
-            */
+        */
             template<typename ForwardIterator, typename T>
             void fill_pick_iterator(const bolt::cl::control &ctl,  const ForwardIterator &first, 
-                const ForwardIterator &last, const T & value, const std::string &user_code, std::random_access_iterator_tag )
+                const ForwardIterator &last, const T & value, const std::string &user_code, 
+                std::random_access_iterator_tag )
             {
+                
+
                 typedef std::iterator_traits<ForwardIterator>::value_type Type;
 
                 size_t sz = (last - first);
@@ -161,9 +165,17 @@ namespace bolt {
                      runMode = ctl.getDefaultPathToRun();
                 }
               
-                if( runMode == bolt::cl::control::SerialCpu || runMode == bolt::cl::control::MultiCoreCpu )
+                if( runMode == bolt::cl::control::SerialCpu)
                 {
-                  return std::fill(first, last, value );
+                     std::fill(first, last, value );
+                }
+                else if(runMode == bolt::cl::control::MultiCoreCpu)
+                {
+                    #ifdef ENABLE_TBB
+                          throw  std::exception("MultiCoreCPU Version of fill not implemented yet! \n");
+                    #else
+                          throw std::exception("MultiCoreCPU Version of fill not Enabled! \n");
+                    #endif
                 }
                 else
                 {
@@ -182,16 +194,27 @@ namespace bolt {
             // This is called strictly for iterators that are derived from device_vector< T >::iterator
             template<typename DVForwardIterator, typename T>
             void fill_pick_iterator(const bolt::cl::control &ctl,  const DVForwardIterator &first, 
-                const DVForwardIterator &last,  const T & value, const std::string& user_code, bolt::cl::device_vector_tag )
+                const DVForwardIterator &last,  const T & value, const std::string& user_code, 
+                bolt::cl::device_vector_tag )
             {
+               
+
                 bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
                 if(runMode == bolt::cl::control::Automatic)
                 {
                      runMode = ctl.getDefaultPathToRun();
                 }
-                if( runMode == bolt::cl::control::SerialCpu || runMode == bolt::cl::control::MultiCoreCpu )
+                if( runMode == bolt::cl::control::SerialCpu)
                 {
-                  return std::fill(first, last, value );
+                    std::fill(first, last, value );
+                }
+                else if(runMode == bolt::cl::control::MultiCoreCpu)
+                {
+                    #ifdef ENABLE_TBB
+                           throw std::exception("MultiCoreCPU Version of fill not implemented yet! \n");
+                    #else
+                           throw std::exception("MultiCoreCPU Version of fill not Enabled! \n");
+                    #endif
                 }
                 else
                 {
@@ -203,9 +226,11 @@ namespace bolt {
             // This is called strictly for iterators that are derived from device_vector< T >::iterator
             template<typename DVForwardIterator, typename T>
             void fill_pick_iterator(const bolt::cl::control &ctl,  const DVForwardIterator &first, 
-                const DVForwardIterator &last,  const T & value, const std::string& user_code, bolt::cl::fancy_iterator_tag )
+                const DVForwardIterator &last,  const T & value, const std::string& user_code, 
+                bolt::cl::fancy_iterator_tag )
             {
-                static_assert( false, "It is not possible to fill into fancy iterators. They are not mutable" );
+
+                static_assert( false, "It is not possible to fill into fancy iterators. They are not mutable! \n" );
             }
 
             /*****************************************************************************
@@ -213,8 +238,8 @@ namespace bolt {
              ****************************************************************************/
 
             template< typename DVForwardIterator, typename T >
-            void fill_enqueue(const bolt::cl::control &ctl, const DVForwardIterator &first, const DVForwardIterator &last, 
-                const T & val, const std::string& cl_code)
+            void fill_enqueue(const bolt::cl::control &ctl, const DVForwardIterator &first,
+                const DVForwardIterator &last, const T & val, const std::string& cl_code)
             {
                 // how many elements to fill
                 cl_uint sz = static_cast< cl_uint >( std::distance( first, last ) );
@@ -285,11 +310,14 @@ namespace bolt {
                     cl_uint workGroupSizeChosen = workGroupSize;
                     numThreadsChosen = numThreadsRUP;
             
-                    //std::cout << "NumElem: " << sz<< "; NumThreads: " << numThreadsChosen << "; NumWorkGroups: " << numThreadsChosen/workGroupSizeChosen << std::endl;
+                    //std::cout << "NumElem: " << sz<< "; NumThreads: " << numThreadsChosen << "; 
+                    //NumWorkGroups: " << numThreadsChosen/workGroupSizeChosen << std::endl;
             
                     V_OPENCL( kernels[0].setArg( 0, val), "Error setArg kernels[ 0 ]" ); // Input Value
+
                     V_OPENCL( kernels[0].setArg( 1, first.getContainer().getBuffer()),"Error setArg kernels[ 0 ]" ); // Fill buffer
-                    V_OPENCL( kernels[0].setArg( 2, static_cast<cl_uint>( sz) ), "Error setArg kernels[ 0 ]" ); // Size of buffer
+                    // Size of buffer
+                    V_OPENCL( kernels[0].setArg( 2, static_cast<cl_uint>( sz) ), "Error setArg kernels[ 0 ]" ); 
             
                     l_Error = ctl.getCommandQueue( ).enqueueNDRangeKernel(
                         kernels[0],
@@ -314,13 +342,16 @@ namespace bolt {
             
                 // profiling
                 cl_command_queue_properties queueProperties;
-                l_Error = ctl.getCommandQueue().getInfo<cl_command_queue_properties>(CL_QUEUE_PROPERTIES, &queueProperties);
+                l_Error = ctl.getCommandQueue().getInfo<cl_command_queue_properties>(CL_QUEUE_PROPERTIES, 
+                    &queueProperties);
                 unsigned int profilingEnabled = queueProperties&CL_QUEUE_PROFILING_ENABLE;
                 if ( profilingEnabled ) {
                     cl_ulong start_time, stop_time;
                     
-                    V_OPENCL( kernelEvent.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_START, &start_time), "failed on getProfilingInfo<CL_PROFILING_COMMAND_START>()");
-                    V_OPENCL( kernelEvent.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END,    &stop_time), "failed on getProfilingInfo<CL_PROFILING_COMMAND_END>()");
+                    V_OPENCL( kernelEvent.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_START, &start_time), 
+                        "failed on getProfilingInfo<CL_PROFILING_COMMAND_START>()");
+                    V_OPENCL( kernelEvent.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END,    &stop_time), 
+                        "failed on getProfilingInfo<CL_PROFILING_COMMAND_END>()");
                     size_t time = stop_time - start_time;
                     double gb = (sz*(sizeof(T)+sizeof(Type))/1024.0/1024.0/1024.0);
                     double sec = time/1000000000.0;

@@ -20,8 +20,12 @@
 #include "common/myocl.h"
 #include <bolt/cl/fill.h>
 
+#include "bolt/cl/iterator/constant_iterator.h"
+
 #define STRUCT 1
 #define FILL_GOOGLE_TEST 1
+
+#define TEST_DOUBLE 0
 
 #if FILL_GOOGLE_TEST
 #include <gtest/gtest.h>
@@ -37,7 +41,7 @@ int teststruct( int length );
 int teststruct_n( int length );
 BOLT_FUNCTOR(samp,struct samp
 {
-	int x,y;
+    int x,y;
 
 };
 );
@@ -47,7 +51,7 @@ BOLT_FUNCTOR(samp,struct samp
 
 
 #if STRUCT
-/*	
+/*
 *
 *Fill and Fill_N Host/Device Vector Tests
 *
@@ -56,85 +60,87 @@ BOLT_FUNCTOR(samp,struct samp
  // Fill 
 int teststruct( int length )
 {
-	int errCnt=0;
-	static const int maxErrCnt = 10;
+    int errCnt=0;
+    static const int maxErrCnt = 10;
     // function name for reporting
     std::string fName = __FUNCTION__;
     // containers
     std::vector<samp> gold(length);
     std::vector<samp> hv(length);
-	bolt::cl::device_vector<samp>dv(length);
-	struct samp s1,temp;			/*temp is used to map back the device_vector to host_vector*/
-	s1.x=10;
-	s1.y=20;
+    bolt::cl::device_vector<samp>dv(length);
+    struct samp s1,temp; /*temp is used to map back the device_vector to host_vector*/
+    s1.x=10;
+    s1.y=20;
     std::fill(gold.begin(), gold.end(),s1);
     bolt::cl::fill(hv.begin(), hv.end(),s1);
-	bolt::cl::fill(dv.begin(), dv.end(),s1);
+    bolt::cl::fill(dv.begin(), dv.end(),s1);
     //check results
 
     for (int i=0; i<length ; i++) {
-		temp = dv[i];
-		if((gold[i].x!=hv[i].x)&&(gold[i].y!=hv[i].y)&&(gold[i].x!=temp.x)&&(gold[i].y!=temp.y)){
-				errCnt++;
-				if (errCnt < maxErrCnt) 
-				{
-				std::cout<<"\tMISMATCH"<<std::endl;
-				}
-				else if (errCnt == maxErrCnt) 
-				{
-				std::cout << "\tMax error count reached; no more mismatches will be printed...\n";
-				}
-		}
-	}
-	 if ( errCnt == 0 ) {
-		printf(" PASSED %20s Correct for all %6i elements.\n", fName.c_str(), length);
-	} else {
-		printf("*FAILED %20s Mismatch for %6i /%6i elements.\n", fName.c_str(), length);
-	};
+        temp = dv[i];
+        if((gold[i].x!=hv[i].x)&&(gold[i].y!=hv[i].y)&&(gold[i].x!=temp.x)&&(gold[i].y!=temp.y)){
+            errCnt++;
+            if (errCnt < maxErrCnt) 
+            {
+                std::cout<<"\tMISMATCH"<<std::endl;
+            }
+            else if (errCnt == maxErrCnt) 
+            {
+                std::cout << "\tMax error count reached; no more mismatches will be printed...\n";
+            }
+        }
+    }
+    if ( errCnt == 0 ) {
+        printf(" PASSED %20s Correct for all %6i elements.\n", fName.c_str(), length);
+    } else {
+        printf("*FAILED %20s Mismatch for %6i /%6i elements.\n", fName.c_str(), length);
+    };
     fflush(stdout);
-	return errCnt;
+    return errCnt;
 }
 
 // Fill_n 
 int teststruct_n( int length )
 {
-	int errCnt=0;
-	static const int maxErrCnt = 10;
+    int errCnt=0;
+    static const int maxErrCnt = 10;
     // function name for reporting
     std::string fName = __FUNCTION__;
     // containers
     std::vector<samp> gold(length);
     std::vector<samp> hv(length);
-	bolt::cl::device_vector<samp>dv(length);
-	struct samp s1,temp;			/*temp is used to map back the device_vector to host_vector*/
-	s1.x=10;
-	s1.y=20;
+    bolt::cl::device_vector<samp>dv(length);
+    struct samp s1,temp; /*temp is used to map back the device_vector to host_vector*/
+    s1.x=10;
+    s1.y=20;
     std::fill_n(gold.begin(), length,s1);
     bolt::cl::fill_n(hv.begin(), length,s1);
-	bolt::cl::fill_n(dv.begin(), length,s1);
+    bolt::cl::fill_n(dv.begin(), length,s1);
     //check results
 
     for (int i=0; i<length ; i++) {
-		temp = dv[i];
-		if((gold[i].x!=hv[i].x)&&(gold[i].y!=hv[i].y)&&(gold[i].x!=temp.x)&&(gold[i].y!=temp.y)){
-				errCnt++;
-				if (errCnt < maxErrCnt) 
-				{
-				std::cout<<"\tMISMATCH"<<std::endl;
-				}
-				else if (errCnt == maxErrCnt) 
-				{
-				std::cout << "\tMax error count reached; no more mismatches will be printed...\n";
-				}
-		}
-	}
-	 if ( errCnt == 0 ) {
-		printf(" PASSED %20s Correct for all %6i elements.\n", fName.c_str(), length);
-	} else {
-		printf("*FAILED %20s Mismatch for %6i /%6i elements.\n", fName.c_str(), length);
-	};
+        temp = dv[i];
+        if((gold[i].x!=hv[i].x)&&(gold[i].y!=hv[i].y)&&(gold[i].x!=temp.x)&&(gold[i].y!=temp.y)){
+            errCnt++;
+            if (errCnt < maxErrCnt) 
+            {
+                std::cout<<"\tMISMATCH"<<std::endl;
+            }
+            else if (errCnt == maxErrCnt) 
+            {
+                std::cout << "\tMax error count reached; no more mismatches will be printed...\n";
+            }
+        }
+    }
+    
+    if ( errCnt == 0 ) {
+        printf(" PASSED %20s Correct for all %6i elements.\n", fName.c_str(), length);
+    } else {
+        printf("*FAILED %20s Mismatch for %6i /%6i elements.\n", fName.c_str(), length);
+    };
     fflush(stdout);
-	return errCnt;
+
+    return errCnt;
 }
 
 
@@ -176,7 +182,7 @@ struct cmpStdArray
 template< size_t N >
 struct cmpStdArray< float, N >
 {
-    static ::testing::AssertionResult cmpArrays( const std::array< float, N >& ref, const std::array< float, N >& calc )
+    static ::testing::AssertionResult cmpArrays( const std::array< float, N >& ref, const std::array< float, N >& calc)
     {
         for( size_t i = 0; i < N; ++i )
         {
@@ -186,10 +192,12 @@ struct cmpStdArray< float, N >
         return ::testing::AssertionSuccess( );
     }
 };
+
+#if (TEST_DOUBLE == 1)
 template< size_t N >
 struct cmpStdArray< double, N >
 {
-    static ::testing::AssertionResult cmpArrays( const std::array< double, N >& ref, const std::array< double, N >& calc )
+    static ::testing::AssertionResult cmpArrays( const std::array< double,N>& ref,const std::array< double, N >& calc)
     {
         for( size_t i = 0; i < N; ++i )
         {
@@ -199,6 +207,7 @@ struct cmpStdArray< double, N >
         return ::testing::AssertionSuccess( );
     }
 };
+#endif
 template< typename T >
 ::testing::AssertionResult cmpArrays( const std::vector< T >& ref, const std::vector< T >& calc )
 {
@@ -218,6 +227,7 @@ template< typename T >
 
     return ::testing::AssertionSuccess( );
 }
+#if (TEST_DOUBLE == 1)
 ::testing::AssertionResult cmpArrays( const std::vector< double >& ref, const std::vector< double >& calc )
 {
     for( size_t i = 0; i < ref.size( ); ++i )
@@ -227,6 +237,8 @@ template< typename T >
 
     return ::testing::AssertionSuccess( );
 }
+#endif
+
 template< typename S, typename B >
 ::testing::AssertionResult cmpArrays( const S& ref, const B& calc )
 {
@@ -241,13 +253,21 @@ template< typename S, typename B >
 
 class HostIntVector: public ::testing::TestWithParam< int >
 {
+    
 public:
     //  Create an std and a bolt vector of requested size, and initialize all the elements to -1
-    HostIntVector( ): stdInput( GetParam( ), -1 ), boltInput( GetParam( ), -1 )
-    {}
+    HostIntVector( ): stdInput( GetParam( ), -1 ), boltInput( GetParam( ), -1 )  {}
 
 protected:
     std::vector< int > stdInput, boltInput;
+};
+
+class FillStdVectandConstantIterator :public ::testing::TestWithParam<int>{
+protected:
+     int mySize;
+public:
+    FillStdVectandConstantIterator(): mySize(GetParam()){
+    }
 };
 
 class DevIntVector: public ::testing::TestWithParam< int >
@@ -262,6 +282,7 @@ protected:
     bolt::cl::device_vector< int > boltInput;
 };
 
+#if (TEST_DOUBLE == 1)
 class HostDblVector: public ::testing::TestWithParam< int >
 {
 public:
@@ -272,6 +293,7 @@ public:
 protected:
     std::vector< double > stdInput, boltInput;
 };
+
 
 class DevDblVector: public ::testing::TestWithParam< int >
 {
@@ -284,10 +306,27 @@ protected:
     std::vector< double > stdInput;
     bolt::cl::device_vector< double > boltInput;
 };
+#endif
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 //Test Cases for Fill
 //////////////////////////////////////////////////////////////////////////////////////////////
+
+//Fill into Fancy Iterator results in compilation error!
+/* TEST_P( FillStdVectandConstantIterator, withConstantIterator)
+{
+    std::vector<int> a(mySize);
+
+    int val = 73;
+    bolt::cl::constant_iterator<int> first(val);
+    bolt::cl::constant_iterator<int> last = first + mySize;
+      
+    std::fill(a.begin(), a.end(), val);
+
+    bolt::cl::fill(first, last, first[0]); // This is logically wrong!
+
+    //EXPECT_EQ(a,first);
+} */
 
 
 TEST_P( HostIntVector, Fill )
@@ -299,6 +338,49 @@ TEST_P( HostIntVector, Fill )
     cmpArrays( stdInput, boltInput );
 }
 
+TEST_P( HostIntVector, AutomaticFill )
+{
+    int val = 73;
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::Automatic);
+
+    std::fill(  stdInput.begin( ),  stdInput.end( ), val );
+    bolt::cl::fill( ctl, boltInput.begin( ), boltInput.end( ), val );
+
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( HostIntVector, CPUFill )
+{
+    int val = 73;
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    std::fill(  stdInput.begin( ),  stdInput.end( ), val );
+    bolt::cl::fill( ctl, boltInput.begin( ), boltInput.end( ), val );
+
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( HostIntVector, MultiCoreFill )
+{
+    int val = 73;
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    std::fill(  stdInput.begin( ),  stdInput.end( ), val );
+    bolt::cl::fill( ctl, boltInput.begin( ), boltInput.end( ), val );
+
+    cmpArrays( stdInput, boltInput );
+}
+
+#if (TEST_DOUBLE == 1)
 TEST_P( HostDblVector, Fill )
 {
     double val = CL_M_E;
@@ -307,6 +389,49 @@ TEST_P( HostDblVector, Fill )
 
     cmpArrays( stdInput, boltInput );
 }
+
+TEST_P( HostDblVector, AutomaticFill )
+{
+    double val = CL_M_E;
+    
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::Automatic);
+
+    std::fill(  stdInput.begin( ),  stdInput.end( ), val );
+    bolt::cl::fill( ctl, boltInput.begin( ), boltInput.end( ), val );
+
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( HostDblVector, CPUFill )
+{
+    double val = CL_M_E;
+    
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    std::fill(  stdInput.begin( ),  stdInput.end( ), val );
+    bolt::cl::fill( ctl, boltInput.begin( ), boltInput.end( ), val );
+
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( HostDblVector, MultiCoreFill )
+{
+    double val = CL_M_E;
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    std::fill(  stdInput.begin( ),  stdInput.end( ), val );
+    bolt::cl::fill( ctl, boltInput.begin( ), boltInput.end( ), val );
+
+    cmpArrays( stdInput, boltInput );
+}
+#endif
 
 TEST_P( DevIntVector, Fill )
 {
@@ -317,6 +442,50 @@ TEST_P( DevIntVector, Fill )
     cmpArrays( stdInput, boltInput );
 }
 
+TEST_P( DevIntVector, AutomaticFill )
+{
+    int val = 73;
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::Automatic);
+
+    std::fill(  stdInput.begin( ),  stdInput.end( ), val );
+    bolt::cl::fill( ctl, boltInput.begin( ), boltInput.end( ), val );
+
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( DevIntVector, CPUFill )
+{
+    int val = 73;
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    std::fill(  stdInput.begin( ),  stdInput.end( ), val );
+    bolt::cl::fill( ctl, boltInput.begin( ), boltInput.end( ), val );
+
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( DevIntVector, MultiCoreFill )
+{
+    int val = 73;
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    std::fill(  stdInput.begin( ),  stdInput.end( ), val );
+    bolt::cl::fill( ctl, boltInput.begin( ), boltInput.end( ), val );
+
+    cmpArrays( stdInput, boltInput );
+}
+
+
+#if (TEST_DOUBLE == 1)
 TEST_P( DevDblVector, Fill )
 {
     double val = CL_M_E;
@@ -326,11 +495,57 @@ TEST_P( DevDblVector, Fill )
     cmpArrays( stdInput, boltInput );
 }
 
-//////////////////////////////////////////////////////////////////////////////////////////////
+TEST_P(DevDblVector,  AutomaticFill )
+{
+    double val = CL_M_E;
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::Automatic);
+
+    std::fill(  stdInput.begin( ),  stdInput.end( ), val );
+    bolt::cl::fill( ctl, boltInput.begin( ), boltInput.end( ), val );
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( DevDblVector, CPUFill )
+{
+    double val = CL_M_E;
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    std::fill(  stdInput.begin( ),  stdInput.end( ), val );
+    bolt::cl::fill( ctl, boltInput.begin( ), boltInput.end( ), val );
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P(DevDblVector,  MultiCoreFill )
+{
+    double val = CL_M_E;
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    std::fill(  stdInput.begin( ),  stdInput.end( ), val );
+    bolt::cl::fill( ctl, boltInput.begin( ), boltInput.end( ), val );
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+#endif
 
 //////////////////////////////////////////////////////////////////////////////////////////////
+
+/////////////////////////////////////////////////////////////////////////////////////////////
 //Test Cases for Fill_N
 //////////////////////////////////////////////////////////////////////////////////////////////
+
+
+
 TEST_P( HostIntVector, Fill_n )
 {
     int val = 73;
@@ -341,7 +556,54 @@ TEST_P( HostIntVector, Fill_n )
     cmpArrays(stdInput, boltInput);
 }
 
+                        
+TEST_P( HostIntVector, AutomaticFill_n )
+{
+    int val = 73;
+    size_t size = stdInput.size();
 
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::Automatic);
+
+    std::fill_n(stdInput.begin( ),size,val);
+    bolt::cl::fill_n(ctl, boltInput.begin( ),size,val);
+
+    cmpArrays(stdInput, boltInput);
+}
+
+TEST_P( HostIntVector, CPUFill_n )
+{
+    int val = 73;
+    size_t size = stdInput.size();
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    std::fill_n(stdInput.begin( ),size,val);
+    bolt::cl::fill_n(ctl, boltInput.begin( ),size,val);
+
+    cmpArrays(stdInput, boltInput);
+}
+
+TEST_P( HostIntVector, MultiCoreFill_n )
+{
+    int val = 73;
+    size_t size = stdInput.size();
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    std::fill_n(stdInput.begin( ),size,val);
+    bolt::cl::fill_n(ctl, boltInput.begin( ),size,val);
+
+    cmpArrays(stdInput, boltInput);
+}
+
+
+#if (TEST_DOUBLE == 1)
 TEST_P( HostDblVector, Fill_n )
 {
     double val = CL_M_E;
@@ -351,6 +613,53 @@ TEST_P( HostDblVector, Fill_n )
 
     cmpArrays(stdInput,boltInput);
 }
+
+TEST_P( HostDblVector, AutomaticFill_n )
+{
+    double val = CL_M_E;
+    size_t size = stdInput.size();
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::Automatic);
+
+    std::fill_n(stdInput.begin(),size,val );
+    bolt::cl::fill_n(ctl, boltInput.begin(),size,val );
+
+    cmpArrays(stdInput,boltInput);
+}
+
+TEST_P( HostDblVector, CPUFill_n )
+{
+    double val = CL_M_E;
+    size_t size = stdInput.size();
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    std::fill_n(stdInput.begin(),size,val );
+    bolt::cl::fill_n(ctl, boltInput.begin(),size,val );
+
+    cmpArrays(stdInput,boltInput);
+}
+
+TEST_P(HostDblVector,  MultiCoreFill_n )
+{
+    double val = CL_M_E;
+    size_t size = stdInput.size();
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    std::fill_n(stdInput.begin(),size,val );
+    bolt::cl::fill_n(ctl, boltInput.begin(),size,val );
+
+    cmpArrays(stdInput,boltInput);
+}
+#endif
+
 
 TEST_P( DevIntVector, Fill_n )
 {
@@ -362,6 +671,55 @@ TEST_P( DevIntVector, Fill_n )
     cmpArrays(stdInput, boltInput);
 }
 
+
+TEST_P( DevIntVector, AutomaticFill_n )
+{
+    int val = 73;
+    size_t size = stdInput.size();
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::Automatic);
+
+    std::fill_n(stdInput.begin(),size,val);
+    bolt::cl::fill_n(ctl, boltInput.begin(),size,val);
+
+    cmpArrays(stdInput, boltInput);
+}
+
+
+TEST_P( DevIntVector, CPUFill_n )
+{
+    int val = 73;
+    size_t size = stdInput.size();
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    std::fill_n(stdInput.begin(),size,val);
+    bolt::cl::fill_n(ctl, boltInput.begin(),size,val);
+
+    cmpArrays(stdInput, boltInput);
+}
+
+TEST_P( DevIntVector, MultiCoreFill_n )
+{
+    int val = 73;
+    size_t size = stdInput.size();
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    std::fill_n(stdInput.begin(),size,val);
+    bolt::cl::fill_n(ctl, boltInput.begin(),size,val);
+
+    cmpArrays(stdInput, boltInput);
+}
+
+
+#if (TEST_DOUBLE == 1)
 TEST_P( DevDblVector, Fill_n )
 {
     double val = CL_M_E;
@@ -371,16 +729,65 @@ TEST_P( DevDblVector, Fill_n )
     cmpArrays( stdInput, boltInput );
 }
 
+TEST_P( DevDblVector, AutomaticFill_n )
+{
+    double val = CL_M_E;
+    size_t size = stdInput.size();
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::Automatic);
+
+    std::fill_n(stdInput.begin( ),size, val );
+    bolt::cl::fill_n(ctl, boltInput.begin( ),size,val );
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( DevDblVector, CPUFill_n )
+{
+    double val = CL_M_E;
+    size_t size = stdInput.size();
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    std::fill_n(stdInput.begin( ),size, val );
+    bolt::cl::fill_n(ctl, boltInput.begin( ),size,val );
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P(DevDblVector, MultiCoreFill_n )
+{
+    double val = CL_M_E;
+    size_t size = stdInput.size();
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    std::fill_n(stdInput.begin( ),size, val );
+    bolt::cl::fill_n(ctl, boltInput.begin( ),size,val );
+    cmpArrays( stdInput, boltInput );
+}
+#endif
+
 //////////////////////////////////////////////////////////////////////////////////////////////
 
 INSTANTIATE_TEST_CASE_P( FillSmall, HostIntVector, ::testing::Range(1,256,3));
 INSTANTIATE_TEST_CASE_P( FillLarge, HostIntVector, ::testing::Range(1023,1050000,350001));
 INSTANTIATE_TEST_CASE_P( FillSmall, DevIntVector,  ::testing::Range(2,256,3));
 INSTANTIATE_TEST_CASE_P( FillLarge, DevIntVector,  ::testing::Range(1024,1050000,350003));
+
+INSTANTIATE_TEST_CASE_P( FillSmall, FillStdVectandConstantIterator, ::testing::Range(1,256,3));
+INSTANTIATE_TEST_CASE_P( FillLarge, FillStdVectandConstantIterator, ::testing::Range(1023,1050000,350001));
+
+#if (TEST_DOUBLE == 1)
 INSTANTIATE_TEST_CASE_P( FillSmall, HostDblVector, ::testing::Range(3,256,3));
 INSTANTIATE_TEST_CASE_P( FillLarge, HostDblVector, ::testing::Range(1025,1050000, 350007 ) );
 INSTANTIATE_TEST_CASE_P( FillSmall, DevDblVector,  ::testing::Range(4, 256, 3 ) );
 INSTANTIATE_TEST_CASE_P( FillLarge, DevDblVector,  ::testing::Range(1026, 1050000, 350011 ) );
+#endif
 
 BOLT_FUNCTOR(characters,struct characters
 {
@@ -397,7 +804,7 @@ BOLT_FUNCTOR(characters,struct characters
 
 };
 );
-
+/*
 //It fills character pointers properly
 TEST( CharPointer, Fill )
 {
@@ -410,6 +817,75 @@ TEST( CharPointer, Fill )
     c_str.i = 10;
     std::fill(vs.begin(), vs.end(), c_str); 
     bolt::cl::fill(dvs.begin(), dvs.end(),c_str ); 
+    for (int i = 0; i < size; ++i)
+    { 
+
+        EXPECT_EQ(vs[i], dvs[i]);
+    }
+}
+
+TEST( AutomaticCharPointer, Fill )
+{
+    int size = 100; 
+
+    std::vector<characters> vs(size);
+    std::vector<characters> dvs(size);
+    characters c_str;
+    c_str.c = 'A';
+    c_str.i = 10;
+    std::fill(vs.begin(), vs.end(), c_str); 
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::Automatic);
+
+    bolt::cl::fill(ctl, dvs.begin(), dvs.end(),c_str ); 
+    for (int i = 0; i < size; ++i)
+    { 
+
+        EXPECT_EQ(vs[i], dvs[i]);
+    }
+}
+
+TEST( CPUCharPointer, Fill )
+{
+    int size = 100; 
+
+    std::vector<characters> vs(size);
+    std::vector<characters> dvs(size);
+    characters c_str;
+    c_str.c = 'A';
+    c_str.i = 10;
+    std::fill(vs.begin(), vs.end(), c_str); 
+    
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    bolt::cl::fill(ctl, dvs.begin(), dvs.end(),c_str ); 
+    for (int i = 0; i < size; ++i)
+    { 
+
+        EXPECT_EQ(vs[i], dvs[i]);
+    }
+}
+
+TEST(MultiCoreCharPointer, Fill )
+{
+    int size = 100; 
+
+    std::vector<characters> vs(size);
+    std::vector<characters> dvs(size);
+    characters c_str;
+    c_str.c = 'A';
+    c_str.i = 10;
+    std::fill(vs.begin(), vs.end(), c_str); 
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    bolt::cl::fill(ctl, dvs.begin(), dvs.end(),c_str ); 
     for (int i = 0; i < size; ++i)
     { 
 
@@ -447,7 +923,7 @@ TEST( CharPointer, Fill )
 //    
 //}
 
-
+#if (TEST_DOUBLE == 1)
 
 TEST (simpleTest, basicDataBoltClDevVectAutoConvertCheck)
 { 
@@ -533,6 +1009,271 @@ TEST (simpleTest, basicDataBoltClDevVectAutoConvertCheck)
 
 } 
 
+TEST (AutomaticsimpleTest, basicDataBoltClDevVectAutoConvertCheck)
+{ 
+    size_t size =10; 
+    int iValue = 48; 
+    union ieeeconvert
+    {
+        float x;
+        int y;
+    }converter;
+    double dValue = 48.6;
+    float fValue = 48.0;
+    double dNan = std::numeric_limits<double>::signaling_NaN();
+    bolt::cl::device_vector<int> dv(size); 
+    std::vector<int> hv(size);
+    bolt::cl::device_vector<double> ddv(size); 
+    std::vector<double> dhv(size);
+    bolt::cl::device_vector<float> fdv(size); 
+    std::vector<float> fhv(size);    
+
+
+    ////////////////////////////////////////////////////
+    // No casting needed here!
+    ////////////////////////////////////////////////////
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::Automatic);
+
+    bolt::cl::fill(ctl, dv.begin(), dv.end(),iValue);  
+    std::fill(hv.begin(), hv.end(),iValue); 
+    cmpArrays(hv,dv);
+
+    std::fill(dhv.begin(), dhv.end(), dValue);
+    bolt::cl::fill(ctl, ddv.begin(), ddv.end(), dValue); 
+    cmpArrays(dhv,ddv);
+
+    ////////////////////////////////////////////////////
+    // Test cases to verify casting
+    ////////////////////////////////////////////////////
+
+    std::fill(hv.begin(), hv.end(), static_cast< int >( dValue ) ); 
+    bolt::cl::fill(ctl, dv.begin(), dv.end(), dValue);
+    cmpArrays(hv,dv);
+
+    std::fill(hv.begin(), hv.end(), static_cast< int >( fValue ) ); 
+    bolt::cl::fill(ctl, dv.begin(), dv.end(), fValue);
+    cmpArrays(hv,dv);
+
+    bolt::cl::fill(ctl, ddv.begin(), ddv.end(),iValue);
+    std::fill(dhv.begin(), dhv.end(),iValue); 
+    cmpArrays(dhv,ddv);
+
+    std::fill(dhv.begin(), dhv.end(), fValue); 
+    bolt::cl::fill(ctl, ddv.begin(), ddv.end(), fValue); 
+    cmpArrays(dhv,ddv);
+
+
+    converter.y =_FPCLASS_ND;
+
+    ////////////////////////////////////////////////////
+    // This verifies that it works with Denormals 
+    ////////////////////////////////////////////////////
+
+    //std::fill(dhv.begin(), dhv.end(), converter.x); 
+    //bolt::cl::fill(ddv.begin(), ddv.end(), converter.x);
+    //cmpArrays(dhv,ddv);
+
+    std::fill(fhv.begin(), fhv.end(), converter.x); 
+    bolt::cl::fill(ctl, fdv.begin(), fdv.end(), converter.x);
+    cmpArrays(fhv,fdv);
+
+    ////////////////////////////////////////////////////
+    // Fill some NANs: It fills, but the test fails
+    //                 since you can't compare NANs
+    ////////////////////////////////////////////////////
+
+    //std::fill(fhv.begin(), fhv.end(), dNan); 
+    //bolt::cl::fill(fdv.begin(), fdv.end(), dNan);
+    //cmpArrays(fhv,fdv);
+
+    //std::fill(dhv.begin(), dhv.end(), dNan); 
+    //bolt::cl::fill(ddv.begin(), ddv.end(), dNan);
+    //cmpArrays(dhv,ddv);
+    //std::cout<<dhv[0]<<" Hst"<<ddv[0]<<" Device"<<std::endl;
+
+} 
+
+TEST (CPUsimpleTest, basicDataBoltClDevVectAutoConvertCheck)
+{ 
+    size_t size =10; 
+    int iValue = 48; 
+    union ieeeconvert
+    {
+        float x;
+        int y;
+    }converter;
+    double dValue = 48.6;
+    float fValue = 48.0;
+    double dNan = std::numeric_limits<double>::signaling_NaN();
+    bolt::cl::device_vector<int> dv(size); 
+    std::vector<int> hv(size);
+    bolt::cl::device_vector<double> ddv(size); 
+    std::vector<double> dhv(size);
+    bolt::cl::device_vector<float> fdv(size); 
+    std::vector<float> fhv(size);    
+
+
+    ////////////////////////////////////////////////////
+    // No casting needed here!
+    ////////////////////////////////////////////////////
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    bolt::cl::fill(ctl, dv.begin(), dv.end(),iValue);  
+    std::fill(hv.begin(), hv.end(),iValue); 
+    cmpArrays(hv,dv);
+
+    std::fill(dhv.begin(), dhv.end(), dValue);
+    bolt::cl::fill(ctl, ddv.begin(), ddv.end(), dValue); 
+    cmpArrays(dhv,ddv);
+
+    ////////////////////////////////////////////////////
+    // Test cases to verify casting
+    ////////////////////////////////////////////////////
+
+    std::fill(hv.begin(), hv.end(), static_cast< int >( dValue ) ); 
+    bolt::cl::fill(ctl, dv.begin(), dv.end(), dValue);
+    cmpArrays(hv,dv);
+
+    std::fill(hv.begin(), hv.end(), static_cast< int >( fValue ) ); 
+    bolt::cl::fill(ctl, dv.begin(), dv.end(), fValue);
+    cmpArrays(hv,dv);
+
+    bolt::cl::fill(ctl, ddv.begin(), ddv.end(),iValue);
+    std::fill(dhv.begin(), dhv.end(),iValue); 
+    cmpArrays(dhv,ddv);
+
+    std::fill(dhv.begin(), dhv.end(), fValue); 
+    bolt::cl::fill(ctl, ddv.begin(), ddv.end(), fValue); 
+    cmpArrays(dhv,ddv);
+
+
+    converter.y =_FPCLASS_ND;
+
+    ////////////////////////////////////////////////////
+    // This verifies that it works with Denormals 
+    ////////////////////////////////////////////////////
+
+    //std::fill(dhv.begin(), dhv.end(), converter.x); 
+    //bolt::cl::fill(ddv.begin(), ddv.end(), converter.x);
+    //cmpArrays(dhv,ddv);
+
+    std::fill(fhv.begin(), fhv.end(), converter.x); 
+    bolt::cl::fill(ctl, fdv.begin(), fdv.end(), converter.x);
+    cmpArrays(fhv,fdv);
+
+    ////////////////////////////////////////////////////
+    // Fill some NANs: It fills, but the test fails
+    //                 since you can't compare NANs
+    ////////////////////////////////////////////////////
+
+    //std::fill(fhv.begin(), fhv.end(), dNan); 
+    //bolt::cl::fill(fdv.begin(), fdv.end(), dNan);
+    //cmpArrays(fhv,fdv);
+
+    //std::fill(dhv.begin(), dhv.end(), dNan); 
+    //bolt::cl::fill(ddv.begin(), ddv.end(), dNan);
+    //cmpArrays(dhv,ddv);
+    //std::cout<<dhv[0]<<" Hst"<<ddv[0]<<" Device"<<std::endl;
+
+
+} 
+
+TEST (MultiCoresimpleTest, basicDataBoltClDevVectAutoConvertCheck)
+{ 
+    size_t size =10; 
+    int iValue = 48; 
+    union ieeeconvert
+    {
+        float x;
+        int y;
+    }converter;
+    double dValue = 48.6;
+    float fValue = 48.0;
+    double dNan = std::numeric_limits<double>::signaling_NaN();
+    bolt::cl::device_vector<int> dv(size); 
+    std::vector<int> hv(size);
+    bolt::cl::device_vector<double> ddv(size); 
+    std::vector<double> dhv(size);
+    bolt::cl::device_vector<float> fdv(size); 
+    std::vector<float> fhv(size);    
+
+
+    ////////////////////////////////////////////////////
+    // No casting needed here!
+    ////////////////////////////////////////////////////
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    bolt::cl::fill(ctl, dv.begin(), dv.end(),iValue);  
+    std::fill(hv.begin(), hv.end(),iValue); 
+    cmpArrays(hv,dv);
+
+    std::fill(dhv.begin(), dhv.end(), dValue);
+    bolt::cl::fill(ctl, ddv.begin(), ddv.end(), dValue); 
+    cmpArrays(dhv,ddv);
+
+    ////////////////////////////////////////////////////
+    // Test cases to verify casting
+    ////////////////////////////////////////////////////
+
+    std::fill(hv.begin(), hv.end(), static_cast< int >( dValue ) ); 
+    bolt::cl::fill(ctl, dv.begin(), dv.end(), dValue);
+    cmpArrays(hv,dv);
+
+    std::fill(hv.begin(), hv.end(), static_cast< int >( fValue ) ); 
+    bolt::cl::fill(ctl, dv.begin(), dv.end(), fValue);
+    cmpArrays(hv,dv);
+
+    bolt::cl::fill(ctl, ddv.begin(), ddv.end(),iValue);
+    std::fill(dhv.begin(), dhv.end(),iValue); 
+    cmpArrays(dhv,ddv);
+
+    std::fill(dhv.begin(), dhv.end(), fValue); 
+    bolt::cl::fill(ctl, ddv.begin(), ddv.end(), fValue); 
+    cmpArrays(dhv,ddv);
+
+
+    converter.y =_FPCLASS_ND;
+
+    ////////////////////////////////////////////////////
+    // This verifies that it works with Denormals 
+    ////////////////////////////////////////////////////
+
+    //std::fill(dhv.begin(), dhv.end(), converter.x); 
+    //bolt::cl::fill(ddv.begin(), ddv.end(), converter.x);
+    //cmpArrays(dhv,ddv);
+
+    std::fill(fhv.begin(), fhv.end(), converter.x); 
+    bolt::cl::fill(ctl, fdv.begin(), fdv.end(), converter.x);
+    cmpArrays(fhv,fdv);
+
+    ////////////////////////////////////////////////////
+    // Fill some NANs: It fills, but the test fails
+    //                 since you can't compare NANs
+    ////////////////////////////////////////////////////
+
+    //std::fill(fhv.begin(), fhv.end(), dNan); 
+    //bolt::cl::fill(fdv.begin(), fdv.end(), dNan);
+    //cmpArrays(fhv,fdv);
+
+    //std::fill(dhv.begin(), dhv.end(), dNan); 
+    //bolt::cl::fill(ddv.begin(), ddv.end(), dNan);
+    //cmpArrays(dhv,ddv);
+    //std::cout<<dhv[0]<<" Hst"<<ddv[0]<<" Device"<<std::endl;
+
+
+} 
+#endif
+
+*/
 
 TEST(Fill, AllRunModes)
 {
@@ -571,9 +1312,6 @@ TEST(Fill, AllRunModes)
   cmpArrays(hA,dVA);
 
 
-
-
-
 }
 
 
@@ -589,33 +1327,34 @@ int main(int argc, char **argv)
  * checkResults
  *      compare std:: and bolt::cl:: results
  *      returns number of errors
- *		For testing struct types checkResults is embedded in the test function.
+ *    For testing struct types checkResults is embedded in the test function.
  *****************************************************************************/
 template<typename InputIterator1, typename InputIterator2>
 int checkResults(std::string &msg, InputIterator1 first1 , InputIterator1 end1 , InputIterator2 first2)
 {
-	int errCnt = 0;
-	static const int maxErrCnt = 10;
-	size_t sz = end1-first1 ;
-	for (int i=0; i<sz ; i++) {
-		if (first1 [i] != *(first2 + i) ) {
-			errCnt++;
-			if (errCnt < maxErrCnt) {
-				std::cout << "\tMISMATCH[" << i << "] " << msg << " STL= " << first1[i] << "  BOLT=" << *(first2 + i) << std::endl;
-			} else if (errCnt == maxErrCnt) {
-				std::cout << "\tMax error count reached; no more mismatches will be printed...\n";
-			}
-		};
-	};
+    int errCnt = 0;
+    static const int maxErrCnt = 10;
+    size_t sz = end1-first1 ;
+    for (int i=0; i<sz ; i++) {
+        if (first1 [i] != *(first2 + i) ) {
+            errCnt++;
+            if (errCnt < maxErrCnt) {
+                std::cout<<"\tMISMATCH["<<i<<"] " <<msg<< " STL= "<<first1[i]<<"  BOLT=" <<*(first2 + i)<<std::endl;
+            } else if (errCnt == maxErrCnt) {
+                std::cout << "\tMax error count reached; no more mismatches will be printed...\n";
+            }
+        };
+
+};
 
     if ( errCnt == 0 ) {
-		printf(" PASSED %20s Correct for all %6i elements.\n", msg.c_str(), sz);
-	} else {
-		printf("*FAILED %20s Mismatch for %6i /%6i elements.\n", msg.c_str(), sz);
-	};
+        printf(" PASSED %20s Correct for all %6i elements.\n", msg.c_str(), sz);
+    } else {
+        printf("*FAILED %20s Mismatch for %6i /%6i elements.\n", msg.c_str(), sz);
+    };
     fflush(stdout);
 
-	return errCnt;
+    return errCnt;
 };
 
 /******************************************************************************
@@ -673,7 +1412,7 @@ int main(int argc, char* argv[])
          * Test Device Vectors
          **********************************************************/
 
-		//Fill 1
+        //Fill 1
         errorCount = testFill1DevVec(lengths[i]);
         if ( errorCount == 0 )
             testsPassed++;
@@ -736,21 +1475,21 @@ int main(int argc, char* argv[])
             testsFailed++;
 
 #if STRUCT
-		// Fill struct
-		errorCount = teststruct(lengths[i]);
+        // Fill struct
+        errorCount = teststruct(lengths[i]);
         if ( errorCount == 0 )
             testsPassed++;
         else
             testsFailed++;
 
-		errorCount = teststruct_n(lengths[i]);
+        errorCount = teststruct_n(lengths[i]);
         if ( errorCount == 0 )
             testsPassed++;
         else
             testsFailed++;
     
 #endif
-	}
+}
     // Print final results
     printf("Final Results:\n");
     printf("%9i Tests Passed\n", testsPassed);
@@ -773,7 +1512,7 @@ int testFill1DevVec( int length )
     // containers
     std::vector<float> gold(length);
     bolt::cl::device_vector<float> dv(length);
-	//Call Fill
+   //Call Fill
     std::fill(gold.begin(), gold.end(), 3.14159f);
     bolt::cl::fill(dv.begin(), dv.end(), 3.14159f);
     //check results
@@ -788,7 +1527,7 @@ int testFill2DevVec( int length )
     // containers
     std::vector<float> gold(length);
     bolt::cl::device_vector<float> dv(length);
-	//Call Fill
+    //Call Fill
     std::fill(gold.begin(), gold.end(), 0.f);
     bolt::cl::fill(dv.begin(), dv.end(), 0.f);
     //check results
@@ -803,7 +1542,7 @@ int testFillN1DevVec( int length )
     // containers
     std::vector<float> gold(length);
     bolt::cl::device_vector<float> dv(length);
-	//Call Fill_N
+    //Call Fill_N
     std::fill_n(gold.begin(), length, 3.14159f);
     bolt::cl::fill_n(dv.begin(), length, 3.14159f);
     //check results
@@ -818,7 +1557,7 @@ int testFillN2DevVec( int length )
     // containers
     std::vector<float> gold(length);
     bolt::cl::device_vector<float> dv(length);
-	//Call Fill_N
+    //Call Fill_N
     std::fill_n(gold.begin(), length, 0.f);
     bolt::cl::fill_n(dv.begin(), length, 0.f);
     //check results

@@ -33,8 +33,8 @@
 #include <amp.h>
 
 #ifdef ENABLE_TBB
-#include "tbb/parallel_sort.h"
-#include "tbb/task_scheduler_init.h"
+#include "bolt/btbb/sort.h"
+
 #endif
 
 
@@ -158,10 +158,8 @@ void sort_pick_iterator( bolt::amp::control &ctl,
         //Copy the device_vector buffer to a CPU buffer
         for(unsigned int index=0; index<szElements; index++)
             localBuffer[index] = first.getContainer().getBuffer()[index];
-        tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
-        tbb::parallel_sort(localBuffer.begin(), localBuffer.end(), comp);
 
-        std::sort(localBuffer.begin(), localBuffer.end(), comp);
+        bolt::btbb::sort(localBuffer.begin(), localBuffer.end(), comp);
 
         //Copy the CPU buffer back to device_vector
         for(unsigned int index=0; index<szElements; index++)
@@ -211,8 +209,10 @@ void sort_pick_iterator( bolt::amp::control &ctl,
         return;
     } else if (runMode == bolt::amp::control::MultiCoreCpu) {
 #ifdef ENABLE_TBB
-        tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
-        tbb::parallel_sort(first,last, comp);
+
+        bolt::btbb::sort(first,last, comp);
+       
+
 #else
 //        std::cout << "The MultiCoreCpu version of sort is not enabled. " << std ::endl;
         throw std::exception( "The MultiCoreCpu version of sort is not enabled to be built." );

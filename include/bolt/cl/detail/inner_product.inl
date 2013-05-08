@@ -38,8 +38,9 @@ namespace bolt {
     namespace cl {
         // default control, two-input transform, std:: iterator
         template<typename InputIterator, typename OutputType, typename BinaryFunction1, typename BinaryFunction2> 
-        OutputType inner_product(bolt::cl::control& ctl, InputIterator first1, InputIterator last1, InputIterator first2,
-             OutputType init, BinaryFunction1 f1, BinaryFunction2 f2, const std::string& user_code )
+         OutputType inner_product(bolt::cl::control& ctl, InputIterator first1, InputIterator last1, 
+         InputIterator first2, OutputType init, BinaryFunction1 f1, BinaryFunction2 f2,
+         const std::string& user_code )
         {
             return detail::inner_product_detect_random_access( ctl, first1, last1, first2, init, f1, f2, user_code, 
                 std::iterator_traits< InputIterator >::iterator_category( ) );
@@ -54,12 +55,12 @@ namespace bolt {
                 f2, user_code, std::iterator_traits< InputIterator >::iterator_category( ) );
         }
         template<typename InputIterator, typename OutputType> 
-        OutputType inner_product(bolt::cl::control& ctl, InputIterator first1, InputIterator last1, InputIterator first2,
+        OutputType inner_product(bolt::cl::control& ctl,InputIterator first1,InputIterator last1,InputIterator first2,
             OutputType init, const std::string& user_code )
         {
             typedef typename std::iterator_traits<InputIterator>::value_type iType;
-            return detail::inner_product_detect_random_access( ctl, first1, last1, first2, init, bolt::cl::plus< iType >( ),
-                bolt::cl::multiplies< iType >( ), user_code, std::iterator_traits< InputIterator >::iterator_category( ) );
+            return detail::inner_product_detect_random_access(ctl, first1,last1,first2,init,bolt::cl::plus< iType >( ),
+                bolt::cl::multiplies< iType >( ), user_code, std::iterator_traits<InputIterator>::iterator_category());
         }
 
         // default control, two-input transform, std:: iterator
@@ -84,8 +85,9 @@ namespace bolt {
 
 #if USE_KERNEL
              struct CallCompiler_InnerProduct {
-                static void constructAndCompile(::cl::Kernel *masterKernel,  std::string cl_code, std::string valueTypeName,
-                    std::string functorTypeName1, std::string functorTypeName2, const control *ctl) {
+                static void constructAndCompile(::cl::Kernel *masterKernel,  std::string cl_code, 
+                    std::string valueTypeName, std::string functorTypeName1, std::string functorTypeName2, 
+                    const control *ctl) {
 
                     const std::string instantiationString = 
                         "// Host generates this instantiation string with user-specified value type and functor\n"
@@ -112,32 +114,38 @@ namespace bolt {
             
 #endif
             // Wrapper that uses default control class, iterator interface
-            template<typename InputIterator, typename OutputType, typename BinaryFunction1, typename BinaryFunction2> 
+            template<typename InputIterator, typename OutputType, typename BinaryFunction1, typename BinaryFunction2>
             OutputType inner_product_detect_random_access( bolt::cl::control& ctl, const InputIterator& first1, 
-                const InputIterator& last1, const InputIterator& first2, const OutputType& init, const BinaryFunction1& f1, 
-                const BinaryFunction2& f2, const std::string& user_code, std::input_iterator_tag )
+                const InputIterator& last1, const InputIterator& first2, const OutputType& init, 
+                const BinaryFunction1& f1, const BinaryFunction2& f2, const std::string& user_code,
+                std::input_iterator_tag )
             {
-                //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data 
+                //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, 
+                //  if we copied the data 
                 //  to a temporary buffer.  Should we?
                 static_assert( false, "Bolt only supports random access iterator types" );
             };
 
             template<typename InputIterator, typename OutputType, typename BinaryFunction1, typename BinaryFunction2> 
             OutputType inner_product_detect_random_access( bolt::cl::control& ctl, const InputIterator& first1, 
-                const InputIterator& last1, const InputIterator& first2, const OutputType& init, const BinaryFunction1& f1, 
+                const InputIterator& last1, const InputIterator& first2, const OutputType& init, 
+                const BinaryFunction1& f1, 
                 const BinaryFunction2& f2, const std::string& user_code, std::random_access_iterator_tag )
             {
                 return inner_product_pick_iterator( ctl, first1, last1, first2, init, f1, f2, user_code,
                 std::iterator_traits< InputIterator >::iterator_category( ) );
             };
 
-            /*! \brief This template function overload is used to seperate device_vector iterators from all other iterators
-                \detail This template is called by the non-detail versions of inclusive_scan, it already assumes random access
+            /*! \brief This template function overload is used to seperate device_vector iterators from all
+                other iterators
+                \detail This template is called by the non-detail versions of inclusive_scan, 
+                it already assumes random access
              *  iterators.  This overload is called strictly for non-device_vector iterators
             */
             template<typename InputIterator, typename OutputType, typename BinaryFunction1,typename BinaryFunction2> 
             OutputType inner_product_pick_iterator(bolt::cl::control &ctl,  const InputIterator& first1, 
-                const InputIterator& last1, const InputIterator& first2, const OutputType& init, const BinaryFunction1& f1, 
+                const InputIterator& last1, const InputIterator& first2, const OutputType& init,
+                const BinaryFunction1& f1, 
                 const BinaryFunction2& f2, const std::string& user_code, std::random_access_iterator_tag )
             {
                 typedef std::iterator_traits<InputIterator>::value_type iType;
@@ -145,46 +153,117 @@ namespace bolt {
                 if (sz == 0)
                     return -1;
 
-                // Use host pointers memory since these arrays are only read once - no benefit to copying.
+                bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+                if(runMode == bolt::cl::control::Automatic)
+                {
+                     runMode = ctl.getDefaultPathToRun();
+                }
 
-                // Map the input iterator to a device_vector
-                device_vector< iType > dvInput( first1, last1, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, ctl );
-                device_vector< iType > dvInput2( first2, sz, CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, true, ctl );
+                if( runMode == bolt::cl::control::SerialCpu)
+                {
+                    std::inner_product(first1, last1, first2, init, f1, f2);
+                }
+                else if(runMode == bolt::cl::control::MultiCoreCpu)
+                {
+                    #ifdef ENABLE_TBB
+                           throw std::exception("MultiCoreCPU Version of inner_product not implemented yet! \n");
+                    #else
+                           throw std::exception("MultiCoreCPU Version of inner_product not Enabled! \n");
+                    #endif
+                }
+                else
+                {
 
-                // Map the output iterator to a device_vector
-                //Make the fourth argument as true; We will use it as a temporary buffer for copying the transform result to reduce
-                //device_vector< iType > dvOutput( result, sz, CL_MEM_USE_HOST_PTR|CL_MEM_READ_WRITE, false, ctl );
+                    // Use host pointers memory since these arrays are only read once - no benefit to copying.
 
-                return inner_product_enqueue( ctl, dvInput.begin( ), dvInput.end( ), dvInput2.begin( ), init, f1, f2, user_code );
+                    // Map the input iterator to a device_vector
+                    device_vector< iType > dvInput( first1, last1, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, ctl );
+                    device_vector< iType > dvInput2( first2, sz, CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, true, ctl );
 
-                // This should immediately map/unmap the buffer
-                //dvOutput.data( );
+                    // Map the output iterator to a device_vector
+                    //Make the fourth argument as true; We will use it as a temporary buffer 
+                    //for copying the transform result to reduce
+                    //device_vector< iType > dvOutput( result, sz, CL_MEM_USE_HOST_PTR|CL_MEM_READ_WRITE, false, ctl );
+
+                    return inner_product_enqueue( ctl, dvInput.begin( ), dvInput.end( ), dvInput2.begin( ), 
+                                                   init, f1, f2, user_code );
+
+                    // This should immediately map/unmap the buffer
+                    //dvOutput.data( );
+                }
             }
 
-            // This template is called by the non-detail versions of inclusive_scan, it already assumes random access iterators
+            // This template is called by the non-detail versions of inclusive_scan,
+            // it already assumes random access iterators
             // This is called strictly for iterators that are derived from device_vector< T >::iterator
             template<typename DVInputIterator, typename OutputType, typename BinaryFunction1, typename BinaryFunction2> 
             OutputType inner_product_pick_iterator(bolt::cl::control &ctl,  const DVInputIterator& first1, 
-                const DVInputIterator& last1, const DVInputIterator& first2, const OutputType& init, const BinaryFunction1& f1, 
-                const BinaryFunction2& f2, const std::string& user_code, bolt::cl::device_vector_tag )
+                const DVInputIterator& last1,const DVInputIterator& first2,const OutputType& init,
+                const BinaryFunction1&f1,const BinaryFunction2& f2, const std::string& user_code,
+                bolt::cl::device_vector_tag )
             {
-                return inner_product_enqueue( ctl, first1, last1, first2, init, f1, f2, user_code );
+
+                bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+                if(runMode == bolt::cl::control::Automatic)
+                {
+                     runMode = ctl.getDefaultPathToRun();
+                }
+
+                if( runMode == bolt::cl::control::SerialCpu)
+                {
+                    std::inner_product(first1, last1, first2, init, f1, f2);
+                }
+                else if(runMode == bolt::cl::control::MultiCoreCpu)
+                {
+                    #ifdef ENABLE_TBB
+                           throw std::exception("MultiCoreCPU Version of inner_product not implemented yet! \n");
+                    #else
+                           throw std::exception("MultiCoreCPU Version of inner_product not Enabled! \n");
+                    #endif
+                }
+                else
+                {
+                    return inner_product_enqueue( ctl, first1, last1, first2, init, f1, f2, user_code );
+                }
             }
 
-            // This template is called by the non-detail versions of inclusive_scan, it already assumes random access iterators
+            // This template is called by the non-detail versions of inclusive_scan, 
+            // it already assumes random access iterators
             // This is called strictly for iterators that are derived from device_vector< T >::iterator
-            template<typename DVInputIterator, typename OutputType, typename BinaryFunction1, typename BinaryFunction2> 
+            template<typename DVInputIterator, typename OutputType, typename BinaryFunction1,typename BinaryFunction2> 
             OutputType inner_product_pick_iterator(bolt::cl::control &ctl,  const DVInputIterator& first1, 
-                const DVInputIterator& last1, const DVInputIterator& first2, const OutputType& init, const BinaryFunction1& f1, 
-                const BinaryFunction2& f2, const std::string& user_code, bolt::cl::fancy_iterator_tag )
+                const DVInputIterator& last1, const DVInputIterator& first2, const OutputType& init,
+                const BinaryFunction1& f1, const BinaryFunction2& f2, const std::string& user_code,
+                bolt::cl::fancy_iterator_tag )
             {
-                return inner_product_enqueue( ctl, first1, last1, first2, init, f1, f2, user_code );
+                bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+                if(runMode == bolt::cl::control::Automatic)
+                {
+                     runMode = ctl.getDefaultPathToRun();
+                }
+
+                if( runMode == bolt::cl::control::SerialCpu)
+                {
+                    std::inner_product(first1, last1, first2, init, f1, f2);
+                }
+                else if(runMode == bolt::cl::control::MultiCoreCpu)
+                {
+                    #ifdef ENABLE_TBB
+                           throw std::exception("MultiCoreCPU Version of inner_product not implemented yet! \n");
+                    #else
+                           throw std::exception("MultiCoreCPU Version of inner_product not Enabled! \n");
+                    #endif
+                }
+                else
+                {
+                    return inner_product_enqueue( ctl, first1, last1, first2, init, f1, f2, user_code );
+                }
             }
 
             template< typename DVInputIterator, typename OutputType, typename BinaryFunction1,typename BinaryFunction2> 
             OutputType inner_product_enqueue(bolt::cl::control &ctl, const DVInputIterator& first1, 
-                const DVInputIterator& last1, const DVInputIterator& first2, const OutputType& init, const BinaryFunction1& f1, 
-                const BinaryFunction2& f2, const std::string& cl_code)
+                const DVInputIterator& last1, const DVInputIterator& first2, const OutputType& init, 
+                const BinaryFunction1& f1, const BinaryFunction2& f2, const std::string& cl_code)
             {
 
 #if USE_KERNEL
@@ -193,35 +272,40 @@ namespace bolt {
                 static  ::cl::Kernel masterKernel;
 
 
-                // For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retreive the name here.
-                boost::call_once( initOnlyOnce, boost::bind( CallCompiler_InnerProduct::constructAndCompile, &masterKernel, 
-                    "\n//--user Code\n" + cl_code + "\n//---Functions\n" + ClCode<BinaryFunction1>::get() + ClCode<BinaryFunction2>::get(), 
-                    TypeName<OutputType>::get(), TypeName<BinaryFunction1>::get(), TypeName<BinaryFunction2>::get(), &ctl ) );
+                // For user-defined types, the user must create a TypeName trait which returns the name of the 
+                // class - note use of TypeName<>::get to retreive the name here.
+                boost::call_once( initOnlyOnce, boost::bind( CallCompiler_InnerProduct::constructAndCompile,
+                    &masterKernel, 
+ "\n//--user Code\n" + cl_code + "\n//---Functions\n" + ClCode<BinaryFunction1>::get()+ClCode<BinaryFunction2>::get(), 
+                    TypeName<OutputType>::get(), TypeName<BinaryFunction1>::get(),
+                    TypeName<BinaryFunction2>::get(), &ctl));
                 
                 // Set up shape of launch grid and buffers:
                 // FIXME, read from device attributes.
-                int computeUnits     = ctl.device().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();  // round up if we don't know. 
+                int computeUnits     = ctl.device().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();//round up if we don't know. 
                 int wgPerComputeUnit =  ctl.wgPerComputeUnit(); 
                 int numWG = computeUnits * wgPerComputeUnit;
 
                 cl_int l_Error = CL_SUCCESS;
-                const size_t wgSize  = masterKernel.getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.device( ), &l_Error );                
+      const size_t wgSize=masterKernel.getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE > (ctl.device(),
+                &l_Error );                
                 V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
 
                 // Create Buffer wrappers so we can access the host functors, for read or writing in the kernel
                 ALIGNED( 256 ) BinaryFunction1 aligned_binary1( f1 );
                 ALIGNED( 256 ) BinaryFunction2 aligned_binary2( f2 );
 
-                ::cl::Buffer userFunctor1(ctl.context(), CL_MEM_USE_HOST_PTR, sizeof(aligned_binary1), &aligned_binary1 );   
-                ::cl::Buffer userFunctor2(ctl.context(), CL_MEM_USE_HOST_PTR, sizeof(aligned_binary2), &aligned_binary2 );
-                ::cl::Buffer result(ctl.context(), CL_MEM_ALLOC_HOST_PTR|CL_MEM_WRITE_ONLY, sizeof(OutputType) * numWG);
+                ::cl::Buffer userFunctor1(ctl.context(), CL_MEM_USE_HOST_PTR,sizeof(aligned_binary1),&aligned_binary1);   
+                ::cl::Buffer userFunctor2(ctl.context(), CL_MEM_USE_HOST_PTR,sizeof(aligned_binary2),&aligned_binary2);
+                ::cl::Buffer result(ctl.context(), CL_MEM_ALLOC_HOST_PTR|CL_MEM_WRITE_ONLY, sizeof(OutputType)*numWG);
 
                 ::cl::Kernel k = masterKernel;  // hopefully create a copy of the kernel. FIXME, doesn't work.
 
                 cl_uint szElements = static_cast< cl_uint >( std::distance( first1, last1 ) );
                 
                 /***** This is a temporaray fix - Same as Transform Reduce *****/
-                /*What if  requiredWorkGroups > numWG? Do you want to loop or increase the work group size or increase the per item processing?*/
+                /*What if  requiredWorkGroups > numWG? Do you want to loop or increase the work group size or
+                  increase the per item processing?*/
                 int requiredWorkGroups = (int)ceil((float)szElements/wgSize); 
                 if (requiredWorkGroups < numWG)
                     numWG = requiredWorkGroups;
@@ -246,10 +330,12 @@ namespace bolt {
                 V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for inner_product() kernel" );
 
                 ::cl::Event l_mapEvent;
-                OutputType *h_result = (OutputType*)ctl.commandQueue().enqueueMapBuffer(result, false, CL_MAP_READ, 0, sizeof(OutputType)*numWG, NULL, &l_mapEvent, &l_Error );
+                OutputType *h_result = (OutputType*)ctl.commandQueue().enqueueMapBuffer(result, false, CL_MAP_READ, 0, 
+               sizeof(OutputType)*numWG, NULL, &l_mapEvent, &l_Error );
                 V_OPENCL( l_Error, "Error calling map on the result buffer" );
 
-                //  Finish the tail end of the reduction on host side; the compute device reduces within the workgroups, with one result per workgroup
+                //  Finish the tail end of the reduction on host side; the compute device reduces
+                // within the workgroups, with one result per workgroup
                 size_t ceilNumWG = static_cast< size_t >( std::ceil( static_cast< float >( szElements ) / wgSize) );
                 bolt::cl::minimum< size_t >  min_size_t;
                 size_t numTailReduce = min_size_t( ceilNumWG, numWG );

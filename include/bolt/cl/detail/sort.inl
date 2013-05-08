@@ -26,8 +26,7 @@
 #include "bolt/cl/functional.h"
 #include "bolt/cl/device_vector.h"
 #ifdef ENABLE_TBB
-#include "tbb/parallel_sort.h"
-#include "tbb/task_scheduler_init.h"
+#include "bolt/btbb/sort.h"
 #endif
 
 #define BOLT_UINT_MAX 0xFFFFFFFFU
@@ -370,20 +369,21 @@ void sort_pick_iterator( control &ctl,
         ::cl::Event multiCoreCPUEvent;
         cl_int l_Error = CL_SUCCESS;
         /*Map the device buffer to CPU*/
+
         T *sortInputBuffer = (T*)ctl.getCommandQueue().enqueueMapBuffer(first.getContainer().getBuffer(), false,
-                                                                     CL_MAP_READ|CL_MAP_WRITE,
+                                                                     CL_MAP_READ,
                                                                      0, sizeof(T) * szElements,
                                                                      NULL, &multiCoreCPUEvent, &l_Error );
         multiCoreCPUEvent.wait();
         //Compute parallel sort using TBB
-        tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
-        tbb::parallel_sort(sortInputBuffer,sortInputBuffer+szElements, comp);
+        bolt::btbb::sort(sortInputBuffer,sortInputBuffer+szElements,comp);
+
         /*Unmap the device buffer back to device memory. This will copy the host modified buffer back to the device*/
         ctl.getCommandQueue().enqueueUnmapMemObject(first.getContainer().getBuffer(), sortInputBuffer);
         return;
 #else
         //std::cout << "The MultiCoreCpu version of sort is not enabled. " << std ::endl;
-        throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of sort is not enabled to be built." );
+        throw std::exception( "The MultiCoreCpu version of sort is not enabled to be built! \n" );
 #endif
 
     } else {
@@ -427,12 +427,12 @@ void sort_pick_iterator( control &ctl,
         return;
     } else if (runMode == bolt::cl::control::MultiCoreCpu) {
 #ifdef ENABLE_TBB
-        //std::cout << "The MultiCoreCpu version of sort is enabled with TBB. " << std ::endl;
-        tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
-        tbb::parallel_sort(first,last, comp);
+
+        bolt::btbb::sort(first,last, comp);
+
 #else
-        //std::cout << "The MultiCoreCpu version of sort is not enabled. " << std ::endl;
-        throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of sort is not enabled to be built." );
+        throw std::exception( "The MultiCoreCpu version of sort is not enabled to be built! \n" );
+
 #endif
     } else {
         device_vector< T > dvInputOutput( first, last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctl );
@@ -460,7 +460,9 @@ sort_enqueue(control &ctl,
     typedef typename std::iterator_traits< DVRandomAccessIterator >::value_type T;
     const int RADIX = 4; //Now you cannot replace this with Radix 8 since there is a
                          //local array of 16 elements in the histogram kernel.
-    const int RADICES = (1 << RADIX);	//Values handeled by each work-item?
+
+    const int RADICES = (1 << RADIX); //Values handeled by each work-item?
+
     size_t orig_szElements = static_cast<size_t>(std::distance(first, last));
     size_t szElements = orig_szElements;
 
@@ -504,7 +506,8 @@ sort_enqueue(control &ctl,
     {
         ::cl::Event copyEvent;
         szElements  = ((szElements + mulFactor) /mulFactor) * mulFactor;
-        pLocalBuffer = new ::cl::Buffer(ctl.getContext(),CL_MEM_READ_WRITE| CL_MEM_ALLOC_HOST_PTR, sizeof(T) * szElements);
+        pLocalBuffer = new ::cl::Buffer(ctl.getContext(),CL_MEM_READ_WRITE| CL_MEM_ALLOC_HOST_PTR,
+                                                                          sizeof(T) * szElements);
 
         ctl.getCommandQueue().enqueueCopyBuffer( first.getContainer().getBuffer(),
                                               *pLocalBuffer, 0, 0,
@@ -547,7 +550,8 @@ sort_enqueue(control &ctl,
             ::cl::Event fillEvent;
             clBR.origin = orig_szElements* sizeof(T);
             clBR.size  = (szElements * sizeof(T)) - orig_szElements* sizeof(T);
-            ctl.getCommandQueue().enqueueFillBuffer(clInputData, (unsigned int)BOLT_UINT_MAX, clBR.origin, clBR.size, NULL, &fillEvent);
+            ctl.getCommandQueue().enqueueFillBuffer(clInputData, (unsigned int)BOLT_UINT_MAX, clBR.origin, clBR.size,
+                                                                                                   NULL, &fillEvent);
             fillEvent.wait();
         }
     }
@@ -562,7 +566,8 @@ sort_enqueue(control &ctl,
             ::cl::Event fillEvent;
             clBR.origin = orig_szElements* sizeof(T);
             clBR.size  = (szElements * sizeof(T)) - orig_szElements* sizeof(T);
-            ctl.getCommandQueue().enqueueFillBuffer(clInputData, (unsigned int)BOLT_UINT_MIN, clBR.origin, clBR.size, NULL, &fillEvent);
+            ctl.getCommandQueue().enqueueFillBuffer(clInputData, (unsigned int)BOLT_UINT_MIN, clBR.origin, clBR.size,
+                                                                                                    NULL, &fillEvent);
             fillEvent.wait();
         }
     }
@@ -589,7 +594,9 @@ sort_enqueue(control &ctl,
         //V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
 
         //Perform a global scan
-        detail::scan_enqueue(ctl, dvHistogramBins.begin(), dvHistogramBins.end(), dvHistogramBinsDest.begin(), 0, plus< T >( ), false);
+
+        detail::scan_enqueue(ctl, dvHistogramBins.begin(), dvHistogramBins.end(), dvHistogramBinsDest.begin(), 0,
+                                                                                            plus< T >( ), false);
 
         if (swap == 0)
             V_OPENCL( permuteKernel.setArg(0, clInputData), "Error setting kernel argument" );
@@ -614,13 +621,17 @@ sort_enqueue(control &ctl,
         swap = swap? 0: 1;
     }
     ::cl::Event uintRadixSortEvent;
-    V_OPENCL( ctl.getCommandQueue().clEnqueueBarrierWithWaitList(NULL, &uintRadixSortEvent) , "Error calling clEnqueueBarrierWithWaitList on the command queue" );
+    V_OPENCL( ctl.getCommandQueue().clEnqueueBarrierWithWaitList(NULL, &uintRadixSortEvent) ,
+                            "Error calling clEnqueueBarrierWithWaitList on the command queue" );
     bolt::cl::wait(ctl, uintRadixSortEvent);
 
     if(newBuffer == true)
     {
         ::cl::Event copyBackEvent;
-        ctl.getCommandQueue().enqueueCopyBuffer( clInputData, first.getContainer().getBuffer(), 0, 0, sizeof(T)*orig_szElements, NULL, &copyBackEvent );
+
+        ctl.getCommandQueue().enqueueCopyBuffer( clInputData, first.getContainer().getBuffer(), 0, 0, sizeof(T)*orig_szElements,
+                                                                                            NULL, &copyBackEvent );
+
         copyBackEvent.wait();
     }
     delete pLocalBuffer;
@@ -643,7 +654,9 @@ sort_enqueue(control &ctl,
     typedef typename std::iterator_traits< DVRandomAccessIterator >::value_type T;
     const int RADIX = 4; //Now you cannot replace this with Radix 8 since there is a
                          //local array of 16 elements in the histogram kernel.
-    const int RADICES = (1 << RADIX);	//Values handeled by each work-item?
+
+    const int RADICES = (1 << RADIX); //Values handeled by each work-item?
+
     cl_int l_Error = CL_SUCCESS;
     size_t orig_szElements = static_cast<size_t>(std::distance(first, last));
     size_t szElements = orig_szElements;
@@ -687,7 +700,8 @@ sort_enqueue(control &ctl,
     {
         ::cl::Event copyEvent;
         szElements  = ((szElements + mulFactor) /mulFactor) * mulFactor;
-        pLocalBuffer = new ::cl::Buffer(ctl.getContext(),CL_MEM_READ_WRITE| CL_MEM_ALLOC_HOST_PTR, sizeof(T) * szElements);
+        pLocalBuffer = new ::cl::Buffer(ctl.getContext(),CL_MEM_READ_WRITE| CL_MEM_ALLOC_HOST_PTR,
+                                                                        sizeof(T) * szElements);
 
         ctl.getCommandQueue().enqueueCopyBuffer( first.getContainer().getBuffer(),
                                               *pLocalBuffer, 0, 0,
@@ -708,7 +722,10 @@ sort_enqueue(control &ctl,
 
     ALIGNED( 256 ) StrictWeakOrdering aligned_comp( comp );
 
-    control::buffPointer userFunctor = ctl.acquireBuffer( sizeof( aligned_comp ), CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_comp );
+
+    control::buffPointer userFunctor = ctl.acquireBuffer( sizeof( aligned_comp ), CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY,
+                                                                                                       &aligned_comp );
+
     ::cl::Buffer clInputData = *pLocalBuffer;
     ::cl::Buffer clSwapData = dvSwapInputData.begin( ).getContainer().getBuffer();
     ::cl::Buffer clHistData = dvHistogramBins.begin( ).getContainer().getBuffer();
@@ -829,7 +846,10 @@ sort_enqueue(control &ctl,
             //V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
 
             //Perform a global scan
-            detail::scan_enqueue(ctl, dvHistogramBins.begin(), dvHistogramBins.end(), dvHistogramBinsDest.begin(), 0, plus< T >( ), false);
+
+            detail::scan_enqueue(ctl, dvHistogramBins.begin(), dvHistogramBins.end(), dvHistogramBinsDest.begin(),
+                                                                                         0, plus< T >( ), false);
+
 
             V_OPENCL( permuteSignedKernel.setArg(0, clSwapData), "Error setting kernel argument" );
             V_OPENCL( permuteSignedKernel.setArg(1, clHistDataDest), "Error setting a kernel argument" );
@@ -844,13 +864,17 @@ sort_enqueue(control &ctl,
                                 NULL);
 
     ::cl::Event intRadixSortEvent;
-    V_OPENCL( ctl.getCommandQueue().clEnqueueBarrierWithWaitList(NULL, &intRadixSortEvent) , "Error calling clEnqueueBarrierWithWaitList on the command queue" );
+    V_OPENCL( ctl.getCommandQueue().clEnqueueBarrierWithWaitList(NULL, &intRadixSortEvent) ,
+                        "Error calling clEnqueueBarrierWithWaitList on the command queue" );
     bolt::cl::wait(ctl, intRadixSortEvent);
 
     if(newBuffer == true)
     {
         ::cl::Event copyBackEvent;
-        ctl.getCommandQueue().enqueueCopyBuffer( clInputData, first.getContainer().getBuffer(), 0, 0, sizeof(T)*orig_szElements, NULL, &copyBackEvent );
+
+        ctl.getCommandQueue().enqueueCopyBuffer( clInputData, first.getContainer().getBuffer(), 0, 0, sizeof(T)*orig_szElements,
+                                                                                            NULL, &copyBackEvent );
+
         copyBackEvent.wait();
     }
     delete pLocalBuffer;
@@ -925,8 +949,11 @@ sort_enqueue(control &ctl,
     control::buffPointer userFunctor = ctl.acquireBuffer( sizeof( aligned_comp ),
                                                           CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_comp );
 
+
     V_OPENCL( kernels[0].setArg(0, first.getContainer().getBuffer()), "Error setting 0th kernel argument" );
-    V_OPENCL( kernels[0].setArg(1, first.gpuPayloadSize( ), &first.gpuPayload( )), "Error setting 1st kernel argument" );
+    V_OPENCL( kernels[0].setArg(1, first.gpuPayloadSize( ), &first.gpuPayload( )),
+                                                "Error setting 1st kernel argument" );
+
     V_OPENCL( kernels[0].setArg(4, *userFunctor), "Error setting 4th kernel argument" );
     for(stage = 0; stage < numStages; ++stage)
     {
@@ -1002,7 +1029,8 @@ void sort_enqueue_non_powerOf2(control &ctl,
         sort_kernels,
         compileOptions);
 
-    size_t wgSize  = kernels[0].getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.getDevice( ), &l_Error );
+    size_t wgSize  = kernels[0].getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.getDevice( ),
+                                                                                                        &l_Error );
 
     size_t totalWorkGroups = (szElements + wgSize)/wgSize;
     size_t globalSize = totalWorkGroups * wgSize;
@@ -1035,7 +1063,7 @@ void sort_enqueue_non_powerOf2(control &ctl,
         V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
     }
 
-    wgSize  = kernels[1].getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.getDevice( ), &l_Error );
+    wgSize  = kernels[1].getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.getDevice( ),&l_Error);
 
     V_OPENCL( kernels[1].setArg(0, *out), "Error setting a kernel argument in" );
     V_OPENCL( kernels[1].setArg(1, in), "Error setting a kernel argument out" );

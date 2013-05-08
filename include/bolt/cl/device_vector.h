@@ -202,6 +202,7 @@ namespace cl
             public:
                 typedef typename iterator_facade::difference_type difference_type;
 
+
             //  This class represents the iterator data transferred to the openCL device.  Transferring pointers is tricky,
             //  the only reason we allocate space for a pointer in this payload is because the openCl clSetKernelArg() checks the
             //  size ( bytes ) of the argument passed in, and the corresponding GPU iterator has a pointer member.  
@@ -213,6 +214,7 @@ namespace cl
             {
                 typename iterator_facade::difference_type m_Index;
                 typename iterator_facade::difference_type m_Ptr1[ 3 ];  // Represents device pointer, big enough for 32 or 64bit
+
             };
 
                 //  Basic constructor requires a reference to the container and a positional element
@@ -277,6 +279,7 @@ namespace cl
                     payloadSize += 4;
 
                 return payloadSize;
+
             }
 
             typename iterator_facade::difference_type m_Index;
@@ -410,6 +413,7 @@ namespace cl
                 {
                     advance( 1 );
                 }
+
 
                 template< typename OtherContainer >
                 bool equal( const reverse_iterator_base< OtherContainer >& lhs ) const

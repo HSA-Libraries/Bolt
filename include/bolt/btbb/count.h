@@ -19,20 +19,20 @@
 
 
 #pragma once
-#if !defined( BOLT_AMP_COUNT_H )
-#define BOLT_AMP_COUNT_H
+#if !defined( BTBB_COUNT_H )
+#define BTBB_COUNT_H
 
-#include "bolt/amp/bolt.h"
-#include "bolt/amp/functional.h"
-#include "bolt/amp/iterator/iterator_traits.h"
+#include "tbb/parallel_reduce.h"
+#include "tbb/blocked_range.h"
+#include "tbb/task_scheduler_init.h"
 
-/*! \file bolt/amp/count.h
+/*! \file bolt/tbb/count.h
     \brief Counts the number of elements in the specified range.
 */
 
 
 namespace bolt {
-    namespace amp {
+    namespace btbb {
 
         /*! \addtogroup algorithms
          */
@@ -40,36 +40,17 @@ namespace bolt {
         /*! \addtogroup reductions
         *   \ingroup algorithms
 
-        /*! \addtogroup amp-counting
+        /*! \addtogroup TBB-Counting
         *  \ingroup reductions
         *  \{
         *
         */
-
-        namespace detail
-        {
-        template <typename T>
-        struct CountIfEqual {
-            CountIfEqual(const T &targetValue)  : _targetValue(targetValue)
-            { };
-            CountIfEqual(){}
-            bool operator()  (const T &x) const restrict(amp,cpu)
-            {
-                   T temp= _targetValue;
-                   return x == temp;
-            };
-
-        private:
-            T _targetValue;
-        };
-        }
 
         /*!
          * \brief \p count counts the number of elements in the specified range which compare equal to the specified
          * \p value.
          *
 
-         *  \param ctl \b Optional Control structure to control accelerator,debug, tuning. See bolt::amp::control.
          *  \param first Beginning of the source copy sequence.
          *  \param last  End of the source copy sequence.
          *  \param value Equality Comparable value.
@@ -81,38 +62,22 @@ namespace bolt {
          * \code
          *    int a[14] = {0, 10, 42, 55, 13, 13, 42, 19, 42, 11, 42, 99, 13, 77};
          *
-         *    size_t countOf42 = bolt::amp::count (A, A+14, 42);
+         *    size_t countOf42 = bolt::btbb::count (A, A+14, 42);
          *    // countOf42 contains 4.
          *  \endcode
          *
          */
 
         template<typename InputIterator, typename EqualityComparable>
-        typename bolt::amp::iterator_traits<InputIterator>::difference_type
-            count(control& ctl, InputIterator first,
-            InputIterator last,
-            const EqualityComparable &value)
-        {
-            typedef typename std::iterator_traits<InputIterator>::value_type T;
-            return count_if(ctl, first, last, detail::CountIfEqual<T>(value));
-        };
-
-        template<typename InputIterator, typename EqualityComparable>
-        typename bolt::amp::iterator_traits<InputIterator>::difference_type
+        typename std::iterator_traits<InputIterator>::difference_type
             count(InputIterator first,
             InputIterator last,
-            const EqualityComparable &value)
-        {
-            typedef typename std::iterator_traits<InputIterator>::value_type T;
-            return count_if(first, last, detail::CountIfEqual<T>(value));
-        };
-
+            const EqualityComparable &value);
 
         /*!
         * \brief \p count_if counts the number of elements in the specified range for which the specified \p predicate
         *  is \p true.
         *
-        * \param ctl \b Optional Control structure to control accelerator,debug, tuning. See bolt::amp::control.
         * \param first The first position in the sequence to be counted.
         * \param last The last position in the sequence to be counted.
         * \param predicate The count is incremented for each element which returns true when passed to
@@ -125,6 +90,7 @@ namespace bolt {
         * \code
         *
         * //Bolt functor specialized for int type.
+        * BOLT_TEMPLATE_FUNCTOR1(InRange,int,
         * template<typename T>
         * // Functor for range checking.
         * struct InRange {
@@ -133,26 +99,28 @@ namespace bolt {
         *     _high=high;
         *   };
         *
-        *   bool operator() (const T& value) restrict(amp,cpu) {
+        *   bool operator() (const T& value) {
         *     return (value >= _low) && (value <= _high) ;
         *   };
         *
         *  T _low;
         *  T _high;
         * };
+        * );
         *
         *    int a[14] = {0, 10, 42, 55, 13, 13, 42, 19, 42, 11, 42, 99, 13, 77};
-        *    int boltCount = bolt::amp::count_if (a, a+14, InRange<int>(1,60)) ;
+        *    int boltCount = bolt::btbb::count_if (a, a+14, InRange<int>(1,60)) ;
         *    // boltCount 11 in range 1-60.
         *  \endcode
         *
-        * \details Example to show how to use UDD type for count.
+        * \details Example to show how to use UDD type for count_if.
         * \code
+        *  BOLT_FUNCTOR(UDD,
         *  struct UDD {
         *      int a;
         *      int b;
         *
-        *      bool operator() (const int &x) restrict(amp,cpu) {
+        *      bool operator() (const int &x) {
         *          return (x == a || x == b);
         *      }
         *
@@ -162,6 +130,10 @@ namespace bolt {
         *          : a(_in), b(_in +1)  { }
         *
         *  };
+        *  );
+        *
+        *  BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::detail::CountIfEqual, int, UDD );
+        *  BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, int, UDD );
         *
         *
         *    std::vector<UDD> boltInput(SIZE);
@@ -169,21 +141,15 @@ namespace bolt {
         *    myUDD.a = 3;
         *    myUDD.b = 5;
         *    // Initialize boltInput
-        *    size_t boltCount = bolt::amp::count(boltInput.begin(), boltInput.end(), myUDD);
+        *    size_t boltCount = bolt::cl::count(boltInput.begin(), boltInput.end(), myUDD);
         *
         *
         *  \endcode
         */
 
-       template<typename InputIterator, typename Predicate>
-        typename bolt::amp::iterator_traits<InputIterator>::difference_type
-            count_if(control& ctl, InputIterator first,
-            InputIterator last,
-            Predicate predicate=bolt::amp::detail::CountIfEqual< int >());
-
 
         template<typename InputIterator, typename Predicate>
-        typename bolt::amp::iterator_traits<InputIterator>::difference_type
+        typename std::iterator_traits<InputIterator>::difference_type
             count_if(InputIterator first,
             InputIterator last,
             Predicate predicate);
@@ -195,6 +161,6 @@ namespace bolt {
 };
 
 
-#include <bolt/amp/detail/count.inl>
+#include <bolt/btbb/detail/count.inl>
 
 #endif
