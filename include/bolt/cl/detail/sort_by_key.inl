@@ -176,7 +176,7 @@ public:
                                    DVRandomAccessIterator1 keys_last, DVRandomAccessIterator2 values_first,
                                    StrictWeakOrdering comp, const std::string& cl_code, bolt::cl::fancy_iterator_tag )
     {
-        static_assert( false, "It is not possible to output to fancy iterators; they are not mutable" );
+        static_assert( false, "It is not possible to output to fancy iterators; they are not mutable! " );
     }
 
     //Device Vector specialization
@@ -185,6 +185,7 @@ public:
                                    DVRandomAccessIterator1 keys_last, DVRandomAccessIterator2 values_first,
                                    StrictWeakOrdering comp, const std::string& cl_code, bolt::cl::device_vector_tag )
     {
+
         // User defined Data types are not supported with device_vector. Hence we have a static assert here.
         // The code here should be in compliant with the routine following this routine.
         size_t szElements = (size_t)(keys_last - keys_first);
@@ -196,13 +197,21 @@ public:
             runMode = ctl.getDefaultPathToRun( );
         }
         if (runMode == bolt::cl::control::SerialCpu) {
+
             //  TODO:  Need access to the device_vector .data method to get a host pointer
-            throw ::cl::Error( CL_INVALID_DEVICE, "Sort of device_vector CPU device not implemented" );
+            throw std::exception("Sort_by_key of device_vector CPU device not implemented! \n" );
             return;
         } else if (runMode == bolt::cl::control::MultiCoreCpu) {
-            //std::cout << "The MultiCoreCpu version of device_vector sort is not implemented yet." << std ::endl;
-            throw std::exception( "The MultiCoreCpu version of Sort_by_key is not enabled to be built with TBB." );
-        } else {
+
+            #ifdef ENABLE_TBB
+                throw std::exception("MultiCoreCPU Version of Sort_by_key is not implemented yet! \n");
+            #else
+               throw std::exception( "The MultiCoreCpu version of Sort_by_key is not enabled to be built with TBB!\n");
+            #endif
+        }
+
+        else {
+
             sort_by_key_enqueue(ctl, keys_first, keys_last, values_first, comp, cl_code);
         }
         return;
@@ -219,6 +228,7 @@ public:
                                    StrictWeakOrdering comp, const std::string& cl_code,
                                    std::random_access_iterator_tag )
     {
+
         typedef typename std::iterator_traits<RandomAccessIterator1>::value_type T_keys;
         typedef typename std::iterator_traits<RandomAccessIterator2>::value_type T_values;
         size_t szElements = (size_t)(keys_last - keys_first);
@@ -231,12 +241,17 @@ public:
             runMode = ctl.getDefaultPathToRun( );
         }
         if ((runMode == bolt::cl::control::SerialCpu) /*|| (szElements < WGSIZE) */) {
-            //std::cout << "The SerialCpu version of sort is not implemented yet." << std ::endl;
+
             std::sort(keys_first, keys_last);
         } else if (runMode == bolt::cl::control::MultiCoreCpu) {
-            //std::cout << "The MultiCoreCpu version of sort is not implemented yet." << std ::endl;
-            throw std::exception( "The MultiCoreCpu version of Sort_by_key is not enabled to be built with TBB." );
+
+            #ifdef ENABLE_TBB
+                throw std::exception("MultiCoreCPU Version of Sort_by_key is not implemented yet! \n");
+            #else
+                throw std::exception("The MultiCoreCpu Version of Sort_by_key is not enabled to be built with TBB!\n");
+            #endif
         } else {
+
             device_vector< T_values > dvInputValues( values_first, szElements,
                                                      CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, true, ctl );
             device_vector< T_keys > dvInputKeys( keys_first, keys_last,
@@ -317,8 +332,8 @@ public:
             }
             unsigned int numStages,stage,passOfStage;
 
-            ::cl::Buffer Keys = keys_first.getBuffer( );
-            ::cl::Buffer Values = values_first.getBuffer( );
+            ::cl::Buffer Keys = keys_first.getContainer().getBuffer();
+            ::cl::Buffer Values = values_first.getContainer().getBuffer();
             ::cl::Buffer userFunctor(ctl.getContext(), CL_MEM_USE_HOST_PTR, sizeof(comp), (void*)&comp );
 
             numStages = 0;
@@ -368,10 +383,12 @@ public:
 
 #if 0
     template<typename DVRandomAccessIterator1, typename DVRandomAccessIterator2, typename StrictWeakOrdering>
-    void sort_by_key_enqueue_non_powerOf2(const control &ctl, DVRandomAccessIterator1 keys_first, DVRandomAccessIterator1 keys_last, DVRandomAccessIterator2 values_first,
+    void sort_by_key_enqueue_non_powerOf2(const control &ctl, DVRandomAccessIterator1 keys_first,
+                                          DVRandomAccessIterator1 keys_last, DVRandomAccessIterator2 values_first,
         StrictWeakOrdering comp, const std::string& cl_code)
     {
-            //std::cout << "The BOLT sort routine does not support non power of 2 buffer size. Falling back to CPU std::sort" << std ::endl;
+            //std::cout << "The BOLT sort routine does not support non power of 2 buffer size."
+            //std::cout<<"Falling back to CPU std::sort" << std ::endl;
             typedef typename std::iterator_traits< DVRandomAccessIterator1 >::value_type T_keys;
             typedef typename std::iterator_traits< DVRandomAccessIterator2 >::value_type T_values;
             static boost::once_flag initOnlyOnce;
@@ -383,21 +400,27 @@ public:
             cl_int l_Error = CL_SUCCESS;
 
             //Power of 2 buffer size
-            // For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retreive the name here.
+            // For user-defined types, the user must create a TypeName trait which returns the name of the
+            // class - note use of TypeName<>::get to retreive the name here.
             static std::vector< ::cl::Kernel > sortByKeyKernels;
-            boost::call_once( initOnlyOnce, boost::bind( CallCompiler_SortByKey::constructAndCompileSelectionSort, &sortByKeyKernels, cl_code + ClCode<T_keys>::get() + ClCode<T_values>::get(), TypeName<T_keys>::get(), TypeName<T_values>::get(), TypeName<StrictWeakOrdering>::get(), &ctl) );
+            boost::call_once( initOnlyOnce, boost::bind( CallCompiler_SortByKey::constructAndCompileSelectionSort,
+                              &sortByKeyKernels, cl_code + ClCode<T_keys>::get() + ClCode<T_values>::get(),
+                              TypeName<T_keys>::get(), TypeName<T_values>::get(), TypeName<StrictWeakOrdering>::get(),
+                              &ctl) );
 
-            size_t wgSize  = sortByKeyKernels[0].getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.device( ), &l_Error );
+            size_t wgSize  = sortByKeyKernels[0].getWorkGroupInfo<CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE>
+                                                (ctl.device( ),&l_Error );
 
             size_t totalWorkGroups = (szElements + wgSize)/wgSize;
             size_t globalSize = totalWorkGroups * wgSize;
             V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
 
-            ::cl::Buffer in = keys_first.getBuffer( );
-            ::cl::Buffer inValues = values_first.getBuffer( );
+            ::cl::Buffer in = keys_first.getContainer().getBuffer();
+            ::cl::Buffer inValues = values_first.getContainer().getBuffer();
             ::cl::Buffer out(ctl.context(), CL_MEM_READ_WRITE, sizeof(T_keys)*szElements);
             ::cl::Buffer outValues(ctl.context(), CL_MEM_READ_WRITE, sizeof(T_values)*szElements);
-            ::cl::Buffer userFunctor(ctl.context(), CL_MEM_USE_HOST_PTR, sizeof(comp), &comp );   // Create buffer wrapper so we can access host parameters.
+            // Create buffer wrapper so we can access host parameters.
+            ::cl::Buffer userFunctor(ctl.context(), CL_MEM_USE_HOST_PTR, sizeof(comp), &comp );
             ::cl::LocalSpaceArg loc;
             loc.size_ = wgSize*sizeof(T_keys);
 
@@ -407,7 +430,8 @@ public:
             V_OPENCL( sortByKeyKernels[0].setArg(3, outValues), "Error setting a kernel argument out" );
             V_OPENCL( sortByKeyKernels[0].setArg(4, userFunctor), "Error setting a kernel argument userFunctor" );
             V_OPENCL( sortByKeyKernels[0].setArg(5, loc), "Error setting kernel argument loc" );
-            V_OPENCL( sortByKeyKernels[0].setArg(6, static_cast<cl_uint> (szElements)), "Error setting kernel argument szElements" );
+            V_OPENCL( sortByKeyKernels[0].setArg(6, static_cast<cl_uint> (szElements)),
+                                                 "Error setting kernel argument szElements" );
             {
                     l_Error = ctl.commandQueue().enqueueNDRangeKernel(
                             sortByKeyKernels[0],
@@ -420,7 +444,8 @@ public:
                     V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
             }
 
-            wgSize  = sortByKeyKernels[1].getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.device( ), &l_Error );
+            wgSize  = sortByKeyKernels[1].getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE>
+                                         ( ctl.device( ), &l_Error );
 
             V_OPENCL( sortByKeyKernels[1].setArg(0, out), "Error setting a kernel argument in" );
             V_OPENCL( sortByKeyKernels[1].setArg(1, outValues), "Error setting a kernel argument in" );
@@ -428,7 +453,8 @@ public:
             V_OPENCL( sortByKeyKernels[1].setArg(3, inValues), "Error setting a kernel argument out" );
             V_OPENCL( sortByKeyKernels[1].setArg(4, userFunctor), "Error setting a kernel argument userFunctor" );
             V_OPENCL( sortByKeyKernels[1].setArg(5, loc), "Error setting kernel argument loc" );
-            V_OPENCL( sortByKeyKernels[1].setArg(6, static_cast<cl_uint> (szElements)), "Error setting kernel argument szElements" );
+            V_OPENCL( sortByKeyKernels[1].setArg(6, static_cast<cl_uint> (szElements)),
+                                                 "Error setting kernel argument szElements" );
             {
                     l_Error = ctl.commandQueue().enqueueNDRangeKernel(
                             sortByKeyKernels[1],
@@ -441,8 +467,10 @@ public:
                     V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
             }
             // Map the buffer back to the host
-            ctl.commandQueue().enqueueMapBuffer(in, true, CL_MAP_READ | CL_MAP_WRITE, 0/*offset*/, sizeof(T_keys) * szElements, NULL, NULL, &l_Error );
-            ctl.commandQueue().enqueueMapBuffer(inValues, true, CL_MAP_READ | CL_MAP_WRITE, 0/*offset*/, sizeof(T_values) * szElements, NULL, NULL, &l_Error );
+            ctl.commandQueue().enqueueMapBuffer(in, true, CL_MAP_READ | CL_MAP_WRITE, 0/*offset*/,
+                                               sizeof(T_keys) * szElements, NULL, NULL, &l_Error );
+            ctl.commandQueue().enqueueMapBuffer(inValues, true, CL_MAP_READ | CL_MAP_WRITE, 0/*offset*/,
+                                               sizeof(T_values) * szElements, NULL, NULL, &l_Error );
             V_OPENCL( l_Error, "Error calling map on the result buffer" );
             return;
     }// END of sort_enqueue_non_powerOf2

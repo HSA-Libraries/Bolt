@@ -33,8 +33,8 @@
 #include <amp.h>
 
 #ifdef ENABLE_TBB
-#include "tbb/parallel_sort.h"
-#include "tbb/task_scheduler_init.h"
+#include "bolt/btbb/sort.h"
+
 #endif
 
 
@@ -145,27 +145,25 @@ void sort_pick_iterator( bolt::amp::control &ctl,
         std::vector<T> localBuffer(szElements);
         //Copy the device_vector buffer to a CPU buffer
         for(unsigned int index=0; index<szElements; index++)
-            localBuffer[index] = first.getBuffer()[index];
+            localBuffer[index] = first.getContainer().getBuffer()[index];
         //Compute sort using std::sort
         std::sort(localBuffer.begin(), localBuffer.end(), comp);
         //Copy the CPU buffer back to device_vector
         for(unsigned int index=0; index<szElements; index++)
-            first.getBuffer()[index] = localBuffer[index];
+            first.getContainer().getBuffer()[index] = localBuffer[index];
         return;
     } else if (runMode == bolt::amp::control::MultiCoreCpu) {
 #ifdef ENABLE_TBB
         std::vector<T> localBuffer(szElements);
         //Copy the device_vector buffer to a CPU buffer
         for(unsigned int index=0; index<szElements; index++)
-            localBuffer[index] = first.getBuffer()[index];
-        tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
-        tbb::parallel_sort(localBuffer.begin(), localBuffer.end(), comp);
+            localBuffer[index] = first.getContainer().getBuffer()[index];
 
-        std::sort(localBuffer.begin(), localBuffer.end(), comp);
+        bolt::btbb::sort(localBuffer.begin(), localBuffer.end(), comp);
 
         //Copy the CPU buffer back to device_vector
         for(unsigned int index=0; index<szElements; index++)
-            first.getBuffer()[index] = localBuffer[index];
+            first.getContainer().getBuffer()[index] = localBuffer[index];
         return;
 
 #else
@@ -211,8 +209,10 @@ void sort_pick_iterator( bolt::amp::control &ctl,
         return;
     } else if (runMode == bolt::amp::control::MultiCoreCpu) {
 #ifdef ENABLE_TBB
-        tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
-        tbb::parallel_sort(first,last, comp);
+
+        bolt::btbb::sort(first,last, comp);
+       
+
 #else
 //        std::cout << "The MultiCoreCpu version of sort is not enabled. " << std ::endl;
         throw std::exception( "The MultiCoreCpu version of sort is not enabled to be built." );
@@ -834,13 +834,13 @@ sort_enqueue(bolt::amp::control &ctl,
         pLocalArray     = new concurrency::array<T>( modified_ext );
         pLocalArrayView = new concurrency::array_view<T>(pLocalArray->view_as(modified_ext));
         concurrency::array_view<T> dest = pLocalArrayView->section( ext );
-        first.getBuffer( ).copy_to( dest );
+        first.getContainer().getBuffer().copy_to( dest );
         dest.synchronize( );
         newBuffer = true;
     }
     else
     {
-        pLocalArrayView = new concurrency::array_view<T>( first.getBuffer( ) );
+        pLocalArrayView = new concurrency::array_view<T>( first.getContainer().getBuffer() );
     }
 
     unsigned int numGroups = szElements / mulFactor;
@@ -851,9 +851,9 @@ sort_enqueue(bolt::amp::control &ctl,
     device_vector< T, concurrency::array > dvHistogramScanBuffer(static_cast<size_t>(numGroups* RADICES + 10), 0 );
 
     auto& clInputData = *pLocalArrayView;
-    auto& clSwapData = dvSwapInputData.begin( ).getBuffer( );
-    auto& clHistData = dvHistogramBins.begin( ).getBuffer( );
-    auto& clHistScanData = dvHistogramScanBuffer.begin( ).getBuffer( );
+    auto& clSwapData = dvSwapInputData.begin( ).getContainer().getBuffer();
+    auto& clHistData = dvHistogramBins.begin( ).getContainer().getBuffer();
+    auto& clHistScanData = dvHistogramScanBuffer.begin( ).getContainer().getBuffer();
     int swap = 0;
     if(comp(2,3))
     {
@@ -1051,8 +1051,8 @@ else
     {
         //std::cout << "New buffer was allocated So copying back the buffer\n";
         //dest = clInputData.section( ext );
-        clInputData.section( ext ).copy_to( first.getBuffer( ) );
-        first.getBuffer( ).synchronize( );
+        clInputData.section( ext ).copy_to( first.getContainer().getBuffer() );
+        first.getContainer().getBuffer().synchronize( );
         delete pLocalArray;
     }
     delete pLocalArrayView;
@@ -1088,13 +1088,13 @@ sort_enqueue(bolt::amp::control &ctl,
         pLocalArray     = new concurrency::array<T>( modified_ext );
         pLocalArrayView = new concurrency::array_view<T>(pLocalArray->view_as( modified_ext ) );
         concurrency::array_view<T> dest = pLocalArrayView->section( ext );
-        first.getBuffer( ).copy_to( dest );
+        first.getContainer().getBuffer().copy_to( dest );
         dest.synchronize( );
         newBuffer = true;
     }
     else
     {
-        pLocalArrayView = new concurrency::array_view<T>( first.getBuffer( ) );
+        pLocalArrayView = new concurrency::array_view<T>( first.getContainer().getBuffer() );
     }
 
     unsigned int numGroups = szElements / mulFactor;
@@ -1105,9 +1105,9 @@ sort_enqueue(bolt::amp::control &ctl,
     device_vector< T, concurrency::array > dvHistogramScanBuffer(static_cast<size_t>(numGroups* RADICES + 10), 0 );
 
     auto& clInputData = *pLocalArrayView;
-    auto& clSwapData = dvSwapInputData.begin( ).getBuffer( );
-    auto& clHistData = dvHistogramBins.begin( ).getBuffer( );
-    auto& clHistScanData = dvHistogramScanBuffer.begin( ).getBuffer( );
+    auto& clSwapData = dvSwapInputData.begin( ).getContainer().getBuffer();
+    auto& clHistData = dvHistogramBins.begin( ).getContainer().getBuffer();
+    auto& clHistScanData = dvHistogramScanBuffer.begin( ).getContainer().getBuffer();
     int swap = 0;
     if(comp(2,3))
     {
@@ -1360,8 +1360,8 @@ else
     {
         //std::cout << "New buffer was allocated So copying back the buffer\n";
         //dest = clInputData.section( ext );
-        clInputData.section( ext ).copy_to( first.getBuffer( ) );
-        first.getBuffer( ).synchronize( );
+        clInputData.section( ext ).copy_to( first.getContainer().getBuffer() );
+        first.getContainer().getBuffer().synchronize( );
         delete pLocalArray;
     }
     delete pLocalArrayView;
@@ -1457,7 +1457,7 @@ const StrictWeakOrdering& comp)
     {
         wgSize = (int)szElements/2;
     }*/
-    auto&  A = first.getBuffer(); //( numElements, av );
+    auto&  A = first.getContainer().getBuffer(); //( numElements, av );
 
     numStages = 0;
     for(temp = szElements; temp > 1; temp >>= 1)
@@ -1516,7 +1516,7 @@ const StrictWeakOrdering& comp)
     size_t globalSize = totalWorkGroups * wgSize;
     V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
 
-const ::cl::Buffer& in = first.getBuffer( );
+const ::cl::Buffer& in = first.getContainer().getBuffer();
     // ::cl::Buffer out(ctl.context(), CL_MEM_READ_WRITE, sizeof(T)*szElements);
     control::buffPointer out = ctl.acquireBuffer( sizeof(T)*szElements );
 

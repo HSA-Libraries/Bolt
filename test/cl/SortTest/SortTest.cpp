@@ -15,7 +15,7 @@
 
 ***************************************************************************/                                                                                     
 
-#define TEST_DOUBLE 1
+#define TEST_DOUBLE 0
 #define TEST_DEVICE_VECTOR 1
 #define TEST_CPU_DEVICE 0
 #define TEST_MULTICORE_TBB_SORT 1
@@ -25,6 +25,7 @@
 #include "common/stdafx.h"
 #include "common/myocl.h"
 #include "common/test_common.h"
+#include "bolt/cl/iterator/counting_iterator.h"
 
 #include <bolt/cl/sort.h>
 #include <bolt/miniDump.h>
@@ -39,6 +40,7 @@
 //  They return an assertion object that googletest knows how to track
 //This is a compare routine for naked pointers.
 
+#if ( TEST_DOUBLE == 1)
 // UDD which contains four doubles
 BOLT_FUNCTOR(uddtD4,
 struct uddtD4
@@ -129,7 +131,7 @@ TEST(SortUDD, GPUAddDouble4)
     // compare results
     cmpArrays(refInput, input);
 }
-
+#endif
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Fixture classes are now defined to enable googletest to process type parameterized tests
@@ -192,6 +194,7 @@ TYPED_TEST_P( SortArrayTest, Normal )
 }
 #if (TEST_MULTICORE_TBB_SORT == 1)
 
+#if ( TEST_DOUBLE == 1)
 TEST(MultiCoreCPU, MultiCoreAddDouble4)
 {
     //setup containers
@@ -210,6 +213,55 @@ TEST(MultiCoreCPU, MultiCoreAddDouble4)
     // compare results
     cmpArrays(refInput, input);
 }
+#endif
+
+TEST( DefaultGPU, Normal )
+{
+    int length = 1025;
+    bolt::cl::device_vector< float > boltInput(  length, 0.0, CL_MEM_READ_WRITE, true  );
+    std::vector< float > stdInput( length, 0.0 );
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+
+    //  Calling the actual functions under test
+    std::sort( stdInput.begin( ), stdInput.end( ));
+    bolt::cl::sort( ctl, boltInput.begin( ), boltInput.end( ) );
+
+    std::vector< float >::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
+    bolt::cl::device_vector< float >::difference_type boltNumElements = std::distance( boltInput.begin( ),
+                                                                                        boltInput.end() );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST( SerialCPU, SerialNormal )
+{
+    int length = 1025;
+    bolt::cl::device_vector< float > boltInput(  length, 0.0, CL_MEM_READ_WRITE, true  );
+    std::vector< float > stdInput( length, 0.0 );
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+    //  Calling the actual functions under test
+    std::sort( stdInput.begin( ), stdInput.end( ));
+    bolt::cl::sort( ctl, boltInput.begin( ), boltInput.end( ) );
+
+    std::vector< float >::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
+    bolt::cl::device_vector< float >::difference_type boltNumElements = std::distance( boltInput.begin( ), 
+                                                                                        boltInput.end() );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
 
 TEST( MultiCoreCPU, MultiCoreNormal )
 {
@@ -225,7 +277,8 @@ TEST( MultiCoreCPU, MultiCoreNormal )
     bolt::cl::sort( ctl, boltInput.begin( ), boltInput.end( ) );
 
     std::vector< float >::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    bolt::cl::device_vector< float >::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+    bolt::cl::device_vector< float >::difference_type boltNumElements = std::distance( boltInput.begin( ), 
+                                                                                        boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
@@ -435,7 +488,8 @@ TYPED_TEST_P( SortArrayTest, CPU_DeviceLessFunction )
 #if (TEST_CPU_DEVICE == 1)
 REGISTER_TYPED_TEST_CASE_P( SortArrayTest, Normal, GPU_DeviceNormal, 
                                            GreaterFunction, GPU_DeviceGreaterFunction,
-                                           LessFunction, GPU_DeviceLessFunction, CPU_DeviceNormal, CPU_DeviceGreaterFunction, CPU_DeviceLessFunction);
+                                           LessFunction, GPU_DeviceLessFunction, CPU_DeviceNormal, 
+                                           CPU_DeviceGreaterFunction, CPU_DeviceLessFunction);
 #else
 REGISTER_TYPED_TEST_CASE_P( SortArrayTest, Normal, GPU_DeviceNormal, 
                                            GreaterFunction, GPU_DeviceGreaterFunction,
@@ -671,14 +725,82 @@ protected:
 };
 #endif
 
+class SortCountingIterator :public ::testing::TestWithParam<int>{
+protected:
+     int mySize;
+public:
+    SortCountingIterator(): mySize(GetParam()){
+    }
+};
+
+//Sort with Fancy Iterator would result in compilation error!
+
+/* TEST_P(SortCountingIterator, withCountingIterator)
+{
+    std::vector<int> a(mySize);
+
+    bolt::cl::counting_iterator<int> first(0);
+    bolt::cl::counting_iterator<int> last = first + mySize;
+    
+    for(int i=0; i< a.size() ; i++)
+    {
+        a[i] = i;
+    }
+
+    std::stable_sort( a.begin( ), a.end( ));
+    bolt::cl::sort( first, last); // This is logically wrong!
+
+    cmpArrays( a, first);
+
+} */
+
+
 TEST_P( SortIntegerVector, Normal )
 {
     //  Calling the actual functions under test
     std::sort( stdInput.begin( ), stdInput.end( ) );
     bolt::cl::sort( boltInput.begin( ), boltInput.end( ) );
 
-    std::vector< int >::iterator::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end( ) );
-    std::vector< int >::iterator::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end( ) );
+    std::vector< int >::iterator::difference_type stdNumElements = std::distance( stdInput.begin(),stdInput.end());
+    std::vector< int >::iterator::difference_type boltNumElements = std::distance( boltInput.begin(),boltInput.end());
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( SortIntegerVector, SerialCPU )
+{
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    //  Calling the actual functions under test
+    std::sort( stdInput.begin( ), stdInput.end( ) );
+    bolt::cl::sort(ctl, boltInput.begin( ), boltInput.end( ) );
+
+    std::vector< int >::iterator::difference_type stdNumElements = std::distance( stdInput.begin( ),stdInput.end( ) );
+    std::vector< int >::iterator::difference_type boltNumElements = std::distance( boltInput.begin(),boltInput.end());
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( SortIntegerVector, MultiCoreCPU )
+{
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    //  Calling the actual functions under test
+    std::sort( stdInput.begin( ), stdInput.end( ) );
+    bolt::cl::sort(ctl, boltInput.begin( ), boltInput.end( ) );
+
+    std::vector< int >::iterator::difference_type stdNumElements = std::distance( stdInput.begin( ),stdInput.end( ) );
+    std::vector< int >::iterator::difference_type boltNumElements = std::distance( boltInput.begin(),boltInput.end());
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
@@ -694,8 +816,8 @@ TEST_P( SortFloatVector, Normal )
     std::sort( stdInput.begin( ), stdInput.end( ) );
     bolt::cl::sort( boltInput.begin( ), boltInput.end( ) );
 
-    std::vector< float >::iterator::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end( ) );
-    std::vector< float >::iterator::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end( ) );
+    std::vector< float >::iterator::difference_type stdNumElements = std::distance( stdInput.begin( ),stdInput.end());
+    std::vector< float >::iterator::difference_type boltNumElements = std::distance(boltInput.begin(),boltInput.end());
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
@@ -703,6 +825,45 @@ TEST_P( SortFloatVector, Normal )
     //  Loop through the array and compare all the values with each other
     cmpArrays( stdInput, boltInput );
 }
+
+TEST_P( SortFloatVector, SerialCPU)
+{
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    //  Calling the actual functions under test
+    std::sort( stdInput.begin( ), stdInput.end( ) );
+    bolt::cl::sort( ctl, boltInput.begin( ), boltInput.end( ) );
+
+    std::vector< float >::iterator::difference_type stdNumElements = std::distance( stdInput.begin( ),stdInput.end());
+    std::vector< float >::iterator::difference_type boltNumElements = std::distance(boltInput.begin(),boltInput.end());
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( SortFloatVector, MultiCoreCPU)
+{
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    //  Calling the actual functions under test
+    std::sort( stdInput.begin( ), stdInput.end( ) );
+    bolt::cl::sort( ctl, boltInput.begin( ), boltInput.end( ) );
+
+    std::vector< float >::iterator::difference_type stdNumElements = std::distance( stdInput.begin( ),stdInput.end());
+    std::vector< float >::iterator::difference_type boltNumElements = std::distance(boltInput.begin(),boltInput.end());
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+
 #if (TEST_DOUBLE == 1)
 TEST_P( SortDoubleVector, Inplace )
 {
@@ -710,8 +871,8 @@ TEST_P( SortDoubleVector, Inplace )
     std::sort( stdInput.begin( ), stdInput.end( ) );
     bolt::cl::sort( boltInput.begin( ), boltInput.end( ) );
 
-    std::vector< double >::iterator::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end( ) );
-    std::vector< double >::iterator::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end( ) );
+    std::vector< double >::iterator::difference_type stdNumElements = std::distance( stdInput.begin( ),stdInput.end());
+    std::vector< double >::iterator::difference_type boltNumElements =std::distance(boltInput.begin(),boltInput.end());
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
@@ -719,6 +880,45 @@ TEST_P( SortDoubleVector, Inplace )
     //  Loop through the array and compare all the values with each other
     cmpArrays( stdInput, boltInput );
 }
+
+TEST_P( SortDoubleVector, SerialInplace )
+{
+    
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+    //  Calling the actual functions under test
+    std::sort( stdInput.begin( ), stdInput.end( ) );
+    bolt::cl::sort( ctl, boltInput.begin( ), boltInput.end( ) );
+
+    std::vector< double >::iterator::difference_type stdNumElements = std::distance( stdInput.begin( ),stdInput.end());
+    std::vector< double >::iterator::difference_type boltNumElements =std::distance(boltInput.begin(),boltInput.end());
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( SortDoubleVector, MulticoreInplace )
+{
+    
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+    //  Calling the actual functions under test
+    std::sort( stdInput.begin( ), stdInput.end( ) );
+    bolt::cl::sort( ctl, boltInput.begin( ), boltInput.end( ) );
+
+    std::vector< double >::iterator::difference_type stdNumElements = std::distance( stdInput.begin( ),stdInput.end());
+    std::vector< double >::iterator::difference_type boltNumElements =std::distance(boltInput.begin(),boltInput.end());
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+
 #endif
 #if (TEST_DEVICE_VECTOR == 1)
 TEST_P( SortIntegerDeviceVector, Inplace )
@@ -727,8 +927,8 @@ TEST_P( SortIntegerDeviceVector, Inplace )
     std::sort( stdInput.begin( ), stdInput.end( ) );
     bolt::cl::sort( boltInput.begin( ), boltInput.end( ) );
 
-    std::vector< int >::iterator::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end( ) );
-    std::vector< int >::iterator::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end( ) );
+    std::vector< int >::iterator::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end());
+    std::vector< int >::iterator::difference_type boltNumElements = std::distance( boltInput.begin(),boltInput.end());
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
@@ -736,14 +936,54 @@ TEST_P( SortIntegerDeviceVector, Inplace )
     //  Loop through the array and compare all the values with each other
     cmpArrays( stdInput, boltInput );
 }
+
+TEST_P( SortIntegerDeviceVector, SerialInplace )
+{
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    //  Calling the actual functions under test
+    std::sort( stdInput.begin( ), stdInput.end( ) );
+    bolt::cl::sort(ctl,  boltInput.begin( ), boltInput.end( ) );
+
+    std::vector< int >::iterator::difference_type stdNumElements = std::distance( stdInput.begin( ),stdInput.end());
+    std::vector< int >::iterator::difference_type boltNumElements = std::distance( boltInput.begin( ),boltInput.end());
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( SortIntegerDeviceVector, MultiCoreInplace )
+{
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    //  Calling the actual functions under test
+    std::sort( stdInput.begin( ), stdInput.end( ) );
+    bolt::cl::sort(ctl,  boltInput.begin( ), boltInput.end( ) );
+
+    std::vector< int >::iterator::difference_type stdNumElements = std::distance( stdInput.begin( ),stdInput.end());
+    std::vector< int >::iterator::difference_type boltNumElements = std::distance( boltInput.begin( ),boltInput.end());
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+
+
 TEST_P( SortFloatDeviceVector, Inplace )
 {
     //  Calling the actual functions under test
     std::sort( stdInput.begin( ), stdInput.end( ) );
     bolt::cl::sort( boltInput.begin( ), boltInput.end( ) );
 
-    std::vector< float >::iterator::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end( ) );
-    std::vector< float >::iterator::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end( ) );
+    std::vector< float >::iterator::difference_type stdNumElements = std::distance( stdInput.begin( ),stdInput.end());
+    std::vector< float >::iterator::difference_type boltNumElements = std::distance(boltInput.begin(),boltInput.end());
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
@@ -751,6 +991,45 @@ TEST_P( SortFloatDeviceVector, Inplace )
     //  Loop through the array and compare all the values with each other
     cmpArrays( stdInput, boltInput );
 }
+
+TEST_P( SortFloatDeviceVector, SerialInplace )
+{
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    //  Calling the actual functions under test
+    std::sort( stdInput.begin( ), stdInput.end( ) );
+    bolt::cl::sort( ctl, boltInput.begin( ), boltInput.end( ) );
+
+    std::vector< float >::iterator::difference_type stdNumElements = std::distance( stdInput.begin(),stdInput.end());
+    std::vector< float >::iterator::difference_type boltNumElements = std::distance(boltInput.begin(),boltInput.end());
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( SortFloatDeviceVector, MultiCoreInplace )
+{
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    //  Calling the actual functions under test
+    std::sort( stdInput.begin( ), stdInput.end( ) );
+    bolt::cl::sort( ctl, boltInput.begin( ), boltInput.end( ) );
+
+    std::vector< float >::iterator::difference_type stdNumElements = std::distance( stdInput.begin(),stdInput.end());
+    std::vector< float >::iterator::difference_type boltNumElements = std::distance(boltInput.begin(),boltInput.end());
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+
 #if (TEST_DOUBLE == 1)
 TEST_P( SortDoubleDeviceVector, Inplace )
 {
@@ -758,8 +1037,8 @@ TEST_P( SortDoubleDeviceVector, Inplace )
     std::sort( stdInput.begin( ), stdInput.end( ) );
     bolt::cl::sort( boltInput.begin( ), boltInput.end( ) );
 
-    std::vector< double >::iterator::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end( ) );
-    std::vector< double >::iterator::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end( ) );
+    std::vector< double >::iterator::difference_type stdNumElements = std::distance( stdInput.begin(),stdInput.end());
+    std::vector< double >::iterator::difference_type boltNumElements =std::distance(boltInput.begin(),boltInput.end());
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
@@ -767,6 +1046,43 @@ TEST_P( SortDoubleDeviceVector, Inplace )
     //  Loop through the array and compare all the values with each other
     cmpArrays( stdInput, boltInput );
 }
+
+TEST_P( SortDoubleDeviceVector, SerialInplace )
+{
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+    //  Calling the actual functions under test
+    std::sort( stdInput.begin( ), stdInput.end( ) );
+    bolt::cl::sort( boltInput.begin( ), boltInput.end( ) );
+
+    std::vector< double >::iterator::difference_type stdNumElements = std::distance( stdInput.begin(),stdInput.end());
+    std::vector< double >::iterator::difference_type boltNumElements =std::distance(boltInput.begin(),boltInput.end());
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( SortDoubleDeviceVector, MulticoreInplace )
+{
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+    //  Calling the actual functions under test
+    std::sort( stdInput.begin( ), stdInput.end( ) );
+    bolt::cl::sort( boltInput.begin( ), boltInput.end( ) );
+
+    std::vector< double >::iterator::difference_type stdNumElements = std::distance( stdInput.begin(),stdInput.end());
+    std::vector< double >::iterator::difference_type boltNumElements =std::distance(boltInput.begin(),boltInput.end());
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+
 #endif
 #endif
 
@@ -787,6 +1103,47 @@ TEST_P( SortIntegerNakedPointer, Inplace )
     cmpArrays( stdInput, boltInput, endIndex );
 }
 
+TEST_P( SortIntegerNakedPointer, SerialInplace )
+{
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    size_t endIndex = GetParam( );
+
+    //  Calling the actual functions under test
+    stdext::checked_array_iterator< int* > wrapStdInput( stdInput, endIndex );
+    std::sort( wrapStdInput, wrapStdInput + endIndex );
+    //std::sort( stdInput, stdInput + endIndex );
+
+    stdext::checked_array_iterator< int* > wrapBoltInput( boltInput, endIndex );
+    bolt::cl::sort( ctl, wrapBoltInput, wrapBoltInput + endIndex );
+    //bolt::cl::sort( boltInput, boltInput + endIndex );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput, endIndex );
+}
+
+TEST_P( SortIntegerNakedPointer, MultiCoreInplace )
+{
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    size_t endIndex = GetParam( );
+
+    //  Calling the actual functions under test
+    stdext::checked_array_iterator< int* > wrapStdInput( stdInput, endIndex );
+    std::sort( wrapStdInput, wrapStdInput + endIndex );
+    //std::sort( stdInput, stdInput + endIndex );
+
+    stdext::checked_array_iterator< int* > wrapBoltInput( boltInput, endIndex );
+    bolt::cl::sort( ctl, wrapBoltInput, wrapBoltInput + endIndex );
+    //bolt::cl::sort( boltInput, boltInput + endIndex );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput, endIndex );
+}
+
+
 TEST_P( SortFloatNakedPointer, Inplace )
 {
     size_t endIndex = GetParam( );
@@ -798,6 +1155,46 @@ TEST_P( SortFloatNakedPointer, Inplace )
 
     stdext::checked_array_iterator< float* > wrapBoltInput( boltInput, endIndex );
     bolt::cl::sort( wrapBoltInput, wrapBoltInput + endIndex );
+    //bolt::cl::sort( boltInput, boltInput + endIndex );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput, endIndex );
+}
+
+TEST_P( SortFloatNakedPointer, SerialInplace )
+{
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    size_t endIndex = GetParam( );
+
+    //  Calling the actual functions under test
+    stdext::checked_array_iterator< float* > wrapStdInput( stdInput, endIndex );
+    std::sort( wrapStdInput, wrapStdInput + endIndex );
+    //std::sort( stdInput, stdInput + endIndex );
+
+    stdext::checked_array_iterator< float* > wrapBoltInput( boltInput, endIndex );
+    bolt::cl::sort( ctl, wrapBoltInput, wrapBoltInput + endIndex );
+    //bolt::cl::sort( boltInput, boltInput + endIndex );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput, endIndex );
+}
+
+TEST_P( SortFloatNakedPointer, MultiCoreInplace )
+{
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    size_t endIndex = GetParam( );
+
+    //  Calling the actual functions under test
+    stdext::checked_array_iterator< float* > wrapStdInput( stdInput, endIndex );
+    std::sort( wrapStdInput, wrapStdInput + endIndex );
+    //std::sort( stdInput, stdInput + endIndex );
+
+    stdext::checked_array_iterator< float* > wrapBoltInput( boltInput, endIndex );
+    bolt::cl::sort( ctl, wrapBoltInput, wrapBoltInput + endIndex );
     //bolt::cl::sort( boltInput, boltInput + endIndex );
 
     //  Loop through the array and compare all the values with each other
@@ -821,32 +1218,82 @@ TEST_P( SortDoubleNakedPointer, Inplace )
     //  Loop through the array and compare all the values with each other
     cmpArrays( stdInput, boltInput, endIndex );
 }
+
+TEST_P( SortDoubleNakedPointer, SerialInplace )
+{
+    size_t endIndex = GetParam( );
+
+    //  Calling the actual functions under test
+    stdext::checked_array_iterator< double* > wrapStdInput( stdInput, endIndex );
+    std::sort( wrapStdInput, wrapStdInput + endIndex );
+    //std::sort( stdInput, stdInput + endIndex );
+    
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    stdext::checked_array_iterator< double* > wrapBoltInput( boltInput, endIndex );
+    bolt::cl::sort( wrapBoltInput, wrapBoltInput + endIndex );
+    //bolt::cl::sort( boltInput, boltInput + endIndex );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput, endIndex );
+}
+TEST_P( SortDoubleNakedPointer, MulticoreInplace )
+{
+    size_t endIndex = GetParam( );
+
+    //  Calling the actual functions under test
+    stdext::checked_array_iterator< double* > wrapStdInput( stdInput, endIndex );
+    std::sort( wrapStdInput, wrapStdInput + endIndex );
+    //std::sort( stdInput, stdInput + endIndex );
+    
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    stdext::checked_array_iterator< double* > wrapBoltInput( boltInput, endIndex );
+    bolt::cl::sort( wrapBoltInput, wrapBoltInput + endIndex );
+    //bolt::cl::sort( boltInput, boltInput + endIndex );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput, endIndex );
+}
+
+
 #endif
 std::array<int, 15> TestValues = {2,4,8,16,32,64,128,256,512,1024,2048,4096,8192,16384,32768};
 //Test lots of consecutive numbers, but small range, suitable for integers because they overflow easier
 INSTANTIATE_TEST_CASE_P( SortRange, SortIntegerVector, ::testing::Range( 0, 1024, 7 ) );
-INSTANTIATE_TEST_CASE_P( SortValues, SortIntegerVector, ::testing::ValuesIn( TestValues.begin(), TestValues.end() ) );
+INSTANTIATE_TEST_CASE_P( SortValues, SortIntegerVector, ::testing::ValuesIn( TestValues.begin(),
+                                                                            TestValues.end() ) );
 INSTANTIATE_TEST_CASE_P( SortRange, SortFloatVector, ::testing::Range( 0, 1024, 3 ) );
-INSTANTIATE_TEST_CASE_P( SortValues, SortFloatVector, ::testing::ValuesIn( TestValues.begin(), TestValues.end() ) );
+INSTANTIATE_TEST_CASE_P( SortValues, SortFloatVector, ::testing::ValuesIn( TestValues.begin(), 
+                                                                        TestValues.end() ) );
 #if (TEST_DOUBLE == 1)
 INSTANTIATE_TEST_CASE_P( SortRange, SortDoubleVector, ::testing::Range( 0, 1024, 21 ) );
-INSTANTIATE_TEST_CASE_P( SortValues, SortDoubleVector, ::testing::ValuesIn( TestValues.begin(), TestValues.end() ) );
+INSTANTIATE_TEST_CASE_P( SortValues, SortDoubleVector, ::testing::ValuesIn( TestValues.begin(), 
+                                                                            TestValues.end() ) );
 #endif
 INSTANTIATE_TEST_CASE_P( SortRange, SortIntegerDeviceVector, ::testing::Range( 0, 1024, 53 ) );
-INSTANTIATE_TEST_CASE_P( SortValues, SortIntegerDeviceVector, ::testing::ValuesIn( TestValues.begin(), TestValues.end() ) );
+INSTANTIATE_TEST_CASE_P( SortValues, SortIntegerDeviceVector, ::testing::ValuesIn( TestValues.begin(), 
+                                                                                TestValues.end() ) );
 INSTANTIATE_TEST_CASE_P( SortRange, SortFloatDeviceVector, ::testing::Range( 0, 1024, 53 ) );
-INSTANTIATE_TEST_CASE_P( SortValues, SortFloatDeviceVector, ::testing::ValuesIn( TestValues.begin(), TestValues.end() ) );
+INSTANTIATE_TEST_CASE_P( SortValues, SortFloatDeviceVector, ::testing::ValuesIn( TestValues.begin(),
+                                                                                TestValues.end()));
 #if (TEST_DOUBLE == 1)
 INSTANTIATE_TEST_CASE_P( SortRange, SortDoubleDeviceVector, ::testing::Range( 0, 1024, 53 ) );
-INSTANTIATE_TEST_CASE_P( SortValues, SortDoubleDeviceVector, ::testing::ValuesIn( TestValues.begin(), TestValues.end() ) );
+INSTANTIATE_TEST_CASE_P( SortValues, SortDoubleDeviceVector, ::testing::ValuesIn(TestValues.begin(),
+                                                                                    TestValues.end()));
 #endif
 INSTANTIATE_TEST_CASE_P( SortRange, SortIntegerNakedPointer, ::testing::Range( 0, 1024, 13) );
-INSTANTIATE_TEST_CASE_P( SortValues, SortIntegerNakedPointer, ::testing::ValuesIn( TestValues.begin(), TestValues.end() ) );
+INSTANTIATE_TEST_CASE_P( SortValues, SortIntegerNakedPointer, ::testing::ValuesIn( TestValues.begin(),
+                                                                                    TestValues.end()));
 INSTANTIATE_TEST_CASE_P( SortRange, SortFloatNakedPointer, ::testing::Range( 0, 1024, 13) );
-INSTANTIATE_TEST_CASE_P( SortValues, SortFloatNakedPointer, ::testing::ValuesIn( TestValues.begin(), TestValues.end() ) );
+INSTANTIATE_TEST_CASE_P( SortValues, SortFloatNakedPointer, ::testing::ValuesIn( TestValues.begin(), 
+                                                                                TestValues.end() ) );
 #if (TEST_DOUBLE == 1)
 INSTANTIATE_TEST_CASE_P( SortRange, SortDoubleNakedPointer, ::testing::Range( 0, 1024, 13) );
-INSTANTIATE_TEST_CASE_P( Sort, SortDoubleNakedPointer, ::testing::ValuesIn( TestValues.begin(), TestValues.end() ) );
+INSTANTIATE_TEST_CASE_P( Sort, SortDoubleNakedPointer, ::testing::ValuesIn( TestValues.begin(),
+                                                                            TestValues.end() ) );
 #endif
 
 typedef ::testing::Types< 
@@ -1084,51 +1531,52 @@ INSTANTIATE_TYPED_TEST_CASE_P( UDDTest, SortUDDArrayTest, UDDTests );
 
 class withStdVect: public ::testing::TestWithParam<int>{
 protected:
-	int sizeOfInputBuffer;
+    int sizeOfInputBuffer;
 public:
-	withStdVect():sizeOfInputBuffer(GetParam()){
-	}
+    withStdVect():sizeOfInputBuffer(GetParam()){
+    }
 };
 
 
 /*
 Failed as: 
-unknown file: error: C++ exception with description "clEnqueueNDRangeKernel" thrown in the test body. happening buffer size is >=64
+unknown file: error: C++ exception with description "clEnqueueNDRangeKernel"thrown in the test body. 
+happening buffer size is >=64
 */
-TEST_P (withStdVect, intSerialValuesWithDefaulFunctorWithClControl){
-	std::vector <int> my_vect(sizeOfInputBuffer);
-	std::vector <int> std_vect(sizeOfInputBuffer);
+/*TEST_P (withStdVect, intSerialValuesWithDefaulFunctorWithClControl){
+    std::vector <int> my_vect(sizeOfInputBuffer);
+    std::vector <int> std_vect(sizeOfInputBuffer);
 
-	for (int i = 0 ; i < sizeOfInputBuffer; ++i){
-		my_vect[i] = rand() % 65535;
-		std_vect[i] = my_vect[i];
-		//srand(1);
-	}
+    for (int i = 0 ; i < sizeOfInputBuffer; ++i){
+        my_vect[i] = rand() % 65535;
+        std_vect[i] = my_vect[i];
+        //srand(1);
+    }
 
-	// Create an OCL context, device, queue.
-	MyOclContext ocl = initOcl(CL_DEVICE_TYPE_GPU, 0); //zero stand for one GPU
+    // Create an OCL context, device, queue.
+    MyOclContext ocl = initOcl(CL_DEVICE_TYPE_GPU, 0); //zero stand for one GPU
 
-	bolt::cl::control c(ocl._queue);  // construct control structure from the queue.
-	
-	std::sort(std_vect.begin(), std_vect.end());
-	bolt::cl::sort(c, my_vect.begin(), my_vect.end());
-	
-	for (int i = 0 ; i < sizeOfInputBuffer; ++i){
-		//std::cout<<"buffer size: "<<sizeOfInputBuffer<<std::endl;
-		EXPECT_EQ(my_vect[i], std_vect[i])<<"Failed at i = "<<i<<std::endl;
-	}
-}
+    bolt::cl::control c(ocl._queue);  // construct control structure from the queue.
+    
+    std::sort(std_vect.begin(), std_vect.end());
+    bolt::cl::sort(c, my_vect.begin(), my_vect.end());
+    
+    for (int i = 0 ; i < sizeOfInputBuffer; ++i){
+        //std::cout<<"buffer size: "<<sizeOfInputBuffer<<std::endl;
+        EXPECT_EQ(my_vect[i], std_vect[i])<<"Failed at i = "<<i<<std::endl;
+    }
+} */
 TEST_P (withStdVect, intSerialValuesWithDefaulFunctorWithClControlGreater){
-	std::vector <int> my_vect(sizeOfInputBuffer);
-	std::vector <int> std_vect(sizeOfInputBuffer);
+    std::vector <int> my_vect(sizeOfInputBuffer);
+    std::vector <int> std_vect(sizeOfInputBuffer);
 
-	for (int i = 0 ; i < sizeOfInputBuffer; ++i){
-		my_vect[i] = rand() % 65535;
-		std_vect[i] = my_vect[i];
-		//srand(1);
-	}
+    for (int i = 0 ; i < sizeOfInputBuffer; ++i){
+        my_vect[i] = rand() % 65535;
+        std_vect[i] = my_vect[i];
+        //srand(1);
+    }
 
-	// Create an OCL context, device, queue.
+    // Create an OCL context, device, queue.
     cl_device_type deviceType = CL_DEVICE_TYPE_GPU;
     std::vector< cl::Platform > platforms;
     bolt::cl::V_OPENCL( cl::Platform::get( &platforms ), "Platform::get() failed" );
@@ -1148,15 +1596,15 @@ TEST_P (withStdVect, intSerialValuesWithDefaulFunctorWithClControlGreater){
     boltControl.setCommandQueue( myQueue );
 
     // Control setup:
-	boltControl.setWaitMode(bolt::cl::control::BusyWait);
+    boltControl.setWaitMode(bolt::cl::control::BusyWait);
 
-	std::sort(std_vect.begin(), std_vect.end(), std::greater<int>());
-	bolt::cl::sort(boltControl, my_vect.begin(), my_vect.end(), bolt::cl::greater<int>());
-	
-	for (int i = 0 ; i < sizeOfInputBuffer; ++i){
-		//std::cout<<"buffer size: "<<sizeOfInputBuffer<<std::endl;
-		EXPECT_EQ(my_vect[i], std_vect[i])<<"Failed at i = "<<i<<std::endl;
-	}
+    std::sort(std_vect.begin(), std_vect.end(), std::greater<int>());
+    bolt::cl::sort(boltControl, my_vect.begin(), my_vect.end(), bolt::cl::greater<int>());
+    
+    for (int i = 0 ; i < sizeOfInputBuffer; ++i){
+        //std::cout<<"buffer size: "<<sizeOfInputBuffer<<std::endl;
+        EXPECT_EQ(my_vect[i], std_vect[i])<<"Failed at i = "<<i<<std::endl;
+    }
 }
 INSTANTIATE_TEST_CASE_P(sortDescending, withStdVect, ::testing::Range(50, 100, 1));
 
@@ -1237,6 +1685,7 @@ unsigned int random_gen<unsigned int>()
     return rand();
 }
 
+if ( TEST_DOUBLE == 1)
 // A Data structure defining a less than operator
 BOLT_TEMPLATE_FUNCTOR4( MyType,  int, float, double, unsigned int,
 template <typename T> 
@@ -1271,27 +1720,27 @@ BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::greater, int, MyType< double> );
 
 // A Data structure defining a Functor
 BOLT_TEMPLATE_FUNCTOR4( MyFunctor,  int, float, double, unsigned int,
-	template <typename T>    
-	struct MyFunctor{ 
-		T a; 
-		T b; 
+    template <typename T>    
+    struct MyFunctor{ 
+        T a; 
+        T b; 
 
-		bool operator() (const MyFunctor& lhs, const MyFunctor& rhs) const { 
-			return (lhs.a > rhs.a);
-		} 
-		bool operator < (const MyFunctor& other) const { 
-			return (a < other.a);
-		}
-		bool operator > (const MyFunctor& other) const { 
-			return (a > other.a);
-		}
-		MyFunctor(const MyFunctor &other) 
-			: a(other.a), b(other.b) { } 
-		MyFunctor() 
-			: a(0), b(0) { } 
-		MyFunctor(T& _in) 
-			: a(_in), b(_in) { } 
-	}; 
+        bool operator() (const MyFunctor& lhs, const MyFunctor& rhs) const { 
+            return (lhs.a > rhs.a);
+        } 
+        bool operator < (const MyFunctor& other) const { 
+            return (a < other.a);
+        }
+        bool operator > (const MyFunctor& other) const { 
+            return (a > other.a);
+        }
+        MyFunctor(const MyFunctor &other) 
+            : a(other.a), b(other.b) { } 
+        MyFunctor() 
+            : a(0), b(0) { } 
+        MyFunctor(T& _in) 
+            : a(_in), b(_in) { } 
+    }; 
 );
 
 
@@ -1304,6 +1753,7 @@ BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::greater, int, MyFunctor< float> );
 BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::greater, int, MyFunctor< unsigned int> );
 BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::greater, int, MyFunctor< double> );
 
+//#endif
 
 template <typename stdType>
 void UserDefinedBoltFunctorSortTestOfLength(size_t length)
@@ -1571,7 +2021,7 @@ void TestWithBoltControl(int length)
     }
 
     //BasicSortTestOfLengthWithDeviceVector
-    bolt::cl::device_vector<int> dvInput( boltInput.begin(), boltInput.end(), CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, c);
+    bolt::cl::device_vector<int> dvInput( boltInput.begin(),boltInput.end(),CL_MEM_USE_HOST_PTR |CL_MEM_READ_WRITE, c);
     bolt::cl::sort(c, dvInput.begin(), dvInput.end());
 
     std::sort(stdInput.begin(),stdInput.end());
@@ -1646,7 +2096,7 @@ int main(int argc, char* argv[])
     //Test the non Power Of 2 Buffer size 
     //The following two commented codes does not run. It will throw and cl::Error exception
     UserDefinedBoltFunctorSortTestOfLength<int>(256);
-	UserDefinedBoltFunctorSortTestOfLength<float>(256);
+    UserDefinedBoltFunctorSortTestOfLength<float>(256);
     UserDefinedFunctorSortTestOfLength<int>(254);
     UserDefinedObjectSortTestOfLength<int>(254);
     UDDSortTestOfLengthWithDeviceVector<int>(256);

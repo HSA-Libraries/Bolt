@@ -32,9 +32,9 @@
 * \subsection install Setting up TBB (Intel) with Bolt.
 * To start using high performance MultiCore routines with Bolt. Install TBB (Intel) from
 * <a href="http://threadingbuildingblocks.org/download"> here </a> and add TBB_ROOT to your environment variable list.
-* e.g. \c TBB_ROOT=C:\\tbb41_20121003oss_win\\tbb41_20121003oss. Run the batch file \c tbbvars.bat (e.g. \c tbbvars.bat intel64 vs2012) 
-* which is in \c < tbb_install_dir >\\bin\\directory. This batch file takes 2 arguments. <arch> = [32|64] and <vs> - version of Visual Studio.
-* Append the TBB (Intel) dll path e.g. \c C:\\tbb41_20121003oss_win\\tbb41_20121003oss\\bin\\intel64\\vc11 in “PATH” Environment variable. This will set all the
+* e.g. \c TBB_ROOT=<path-to-tbb-root>. Run the batch file \c tbbvars.bat (e.g. \c tbbvars.bat intel64 vs2012) 
+* which is in \c %TBB_ROOT%\\bin\\directory. This batch file takes 2 arguments. <arch> = [32|64] and <vs> - version of Visual Studio.
+* If you want to set it globally then append the TBB (Intel) dll path e.g. \c %TBB_ROOT%\bin\\intel64\\vc11 in “PATH” Environment variable. This will set all the
 * paths required for TBB (Intel). Then install CMake (see \ref cmake). To enable TBB (Intel), BUILD_TBB check box should be checked in CMake configuration list
 * as shown below, the build procedure is as usual.
 * \image html cmake.build.first.tbb.png "Check BUILD_TBB"

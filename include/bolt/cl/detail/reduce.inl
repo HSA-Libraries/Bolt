@@ -15,6 +15,7 @@
 
 ***************************************************************************/
 
+
 #if !defined( REDUCE_INL )
 #define REDUCE_INL
 #pragma once
@@ -27,9 +28,7 @@
 #include "bolt/cl/functional.h"
 #ifdef ENABLE_TBB
 //TBB Includes
-#include "tbb/parallel_reduce.h"
-#include "tbb/blocked_range.h"
-#include "tbb/task_scheduler_init.h"
+#include "bolt/btbb/reduce.h"
 #endif
 
 
@@ -157,46 +156,10 @@ namespace bolt {
                 return templateSpecializationString;
             }
             };
-#ifdef ENABLE_TBB
-            /*For documentation on the reduce object see below link
-             *http://threadingbuildingblocks.org/docs/help/reference/algorithms/parallel_reduce_func.htm
-             *The imperative form of parallel_reduce is used.
-             *
-            */
-            template <typename T, typename BinaryFunction>
-            struct Reduce {
-                T value;
-                BinaryFunction op;
-                bool flag;
 
-                //TODO - Decide on how many threads to spawn? Usually it should be equal to th enumber of cores
-                //You might need to look at the tbb::split and there there cousin's
-                //
-                Reduce(const BinaryFunction &_op) : op(_op), value(0) {}
-                Reduce(const BinaryFunction &_op, const T &init) : op(_op), value(init), flag(FALSE) {}
-                Reduce() : value(0) {}
-                Reduce( Reduce& s, tbb::split ) : flag(TRUE), op(s.op) {}
-                void operator()( const tbb::blocked_range<T*>& r ) {
-                    T temp = value;
-                    for( T* a=r.begin(); a!=r.end(); ++a ) {
-                      if(flag){
-                        temp = *a;
-                        flag = FALSE;
-                      }
-                      else
-                        temp = op(temp,*a);
-                    }
-                    value = temp;
-                }
-                //Join is called by the parent thread after the child finishes to execute.
-                void join( Reduce& rhs )
-                {
-                    value = op(value,rhs.value);
-                }
-            };
-#endif
             template<typename T, typename DVInputIterator, typename BinaryFunction>
             T reduce_detect_random_access(bolt::cl::control &ctl,
+
                 const DVInputIterator& first,
                 const DVInputIterator& last,
                 const T& init,
@@ -204,8 +167,8 @@ namespace bolt {
                 const std::string& cl_code,
                 std::input_iterator_tag)
             {
-                //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data
-                //  to a temporary buffer.  Should we?
+              //  TODO: It should be possible to support non-random_access_iterator_tag iterators,if we copied the data
+              //  to a temporary buffer.  Should we?
                 static_assert( false, "Bolt only supports random access iterator types" );
             }
 
@@ -244,19 +207,22 @@ namespace bolt {
                 {
                     runMode = ctl.getDefaultPathToRun();
                 }
-                if (runMode == bolt::cl::control::SerialCpu) {
-                    return std::accumulate(first, last, init,binary_op) ;
-                } else if (runMode == bolt::cl::control::MultiCoreCpu) {
+                if (runMode == bolt::cl::control::SerialCpu)
+                {
+                        return std::accumulate(first, last, init,binary_op) ;
+                }
+                else if (runMode == bolt::cl::control::MultiCoreCpu)
+                {
 #ifdef ENABLE_TBB
-                    tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
-                    Reduce<iType, BinaryFunction> reduce_op(binary_op, init);
-                    tbb::parallel_reduce( tbb::blocked_range<iType*>( &*first, (iType*)&*(last-1) + 1), reduce_op );
-                    return reduce_op.value;
+                    return bolt::btbb::reduce(first,last,init,binary_op);
 #else
-                    //std::cout << "The MultiCoreCpu version of reduce is not enabled. " << std ::endl;
-                    throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of reduce is not enabled to be built." );
+
+                    throw std::exception( "The MultiCoreCpu version of reduce is not enabled to be built! \n" );
+
 #endif
-                } else {
+                }
+                else
+                {
                 device_vector< iType > dvInput( first, last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, ctl );
                 return reduce_enqueue( ctl, dvInput.begin(), dvInput.end(), init, binary_op, cl_code);
                 }
@@ -288,30 +254,38 @@ namespace bolt {
                     cl_int l_Error = CL_SUCCESS;
                     T reduceResult;
                     /*Map the device buffer to CPU*/
-                    iType *reduceInputBuffer = (iType*)ctl.getCommandQueue().enqueueMapBuffer(first.getBuffer(), false, CL_MAP_READ|CL_MAP_WRITE,0, sizeof(iType) * szElements,
-                                               NULL, &serialCPUEvent, &l_Error );
+
+                    iType *reduceInputBuffer = (iType*)ctl.getCommandQueue().enqueueMapBuffer(first.getContainer().getBuffer(), false,
+                              CL_MAP_READ|CL_MAP_WRITE,0, sizeof(iType) * szElements,NULL, &serialCPUEvent, &l_Error );
                     serialCPUEvent.wait();
-                    reduceResult = std::accumulate(reduceInputBuffer, reduceInputBuffer + szElements, init, binary_op) ;
-                    /*Unmap the device buffer back to device memory. This will copy the host modified buffer back to the device*/
-                    ctl.getCommandQueue().enqueueUnmapMemObject(first.getBuffer(), reduceInputBuffer);
+                    reduceResult = std::accumulate(reduceInputBuffer, reduceInputBuffer + szElements, init, binary_op);
+                    /*Unmap the device buffer back to device memory.
+                    This will copy the host modified buffer back to the device*/
+                    ctl.getCommandQueue().enqueueUnmapMemObject(first.getContainer().getBuffer(), reduceInputBuffer);
+
                      return reduceResult;
                 } else if (runMode == bolt::cl::control::MultiCoreCpu) {
 #ifdef ENABLE_TBB
                     ::cl::Event multiCoreCPUEvent;
                     cl_int l_Error = CL_SUCCESS;
                    /*Map the device buffer to CPU*/
-                   iType *reduceInputBuffer = (iType*)ctl.getCommandQueue().enqueueMapBuffer(first.getBuffer(), false, CL_MAP_READ,0, sizeof(iType) * szElements,
-                                               NULL, &multiCoreCPUEvent, &l_Error );
+
+                   iType *reduceInputBuffer = (iType*)ctl.getCommandQueue().enqueueMapBuffer(first.getContainer().getBuffer(), false,
+                                      CL_MAP_READ,0, sizeof(iType) * szElements, NULL, &multiCoreCPUEvent, &l_Error );
+
                     multiCoreCPUEvent.wait();
-                    tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
-                    Reduce<iType, BinaryFunction> reduce_op(binary_op, init);
-                    tbb::parallel_reduce( tbb::blocked_range<iType*>( reduceInputBuffer, reduceInputBuffer + szElements), reduce_op );
+
+                    T  reduce_val = bolt::btbb::reduce(reduceInputBuffer, reduceInputBuffer + szElements,init,binary_op);
                     /*Unmap the device buffer back to device memory. This will copy the host modified buffer back to the device*/
-                    ctl.getCommandQueue().enqueueUnmapMemObject(first.getBuffer(), reduceInputBuffer);
-                    return reduce_op.value;
+
+
+                    ctl.getCommandQueue().enqueueUnmapMemObject(first.getContainer().getBuffer(), reduceInputBuffer);
+                    return reduce_val;
+
+
 #else
-                    //std::cout << "The MultiCoreCpu version of reduce is not enabled. " << std ::endl;
-                    throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of reduce is not enabled to be built." );
+                    throw std::exception( "The MultiCoreCpu version of reduce is not enabled to be built! \n" );
+
 #endif
                 } else {
                 return reduce_enqueue( ctl, first, last, init, binary_op, cl_code);
@@ -329,7 +303,34 @@ namespace bolt {
                 const std::string& cl_code,
                 bolt::cl::fancy_iterator_tag )
             {
-                return reduce_enqueue( ctl, first, last, init, binary_op, cl_code);
+                typedef typename std::iterator_traits<DVInputIterator>::value_type iType;
+                size_t szElements = static_cast<size_t>(std::distance(first, last) );
+                if (szElements == 0)
+                    return init;
+
+                bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+                if(runMode == bolt::cl::control::Automatic)
+                {
+                    runMode = ctl.getDefaultPathToRun();
+                }
+                if (runMode == bolt::cl::control::SerialCpu)
+                {
+                    throw std::exception("SerialCPU Version of Count not implemented yet! \n");
+                }
+                else if (runMode == bolt::cl::control::MultiCoreCpu)
+                {
+
+                    #ifdef ENABLE_TBB
+                           throw std::exception("MultiCoreCPU Version of Count not implemented yet! \n");
+                    #else
+                           throw std::exception("MultiCoreCPU Version of Count not Enabled! \n");
+                    #endif
+
+                }
+                else
+                {
+                    return reduce_enqueue( ctl, first, last, init, binary_op, cl_code);
+                }
             }
 
             //----
@@ -372,34 +373,36 @@ namespace bolt {
                     reduce_kernels,
                     compileOptions);
 
-
-
-
                 // Set up shape of launch grid and buffers:
                 cl_uint computeUnits     = ctl.getDevice().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
                 int wgPerComputeUnit =  ctl.getWGPerComputeUnit();
                 size_t numWG = computeUnits * wgPerComputeUnit;
 
                 cl_int l_Error = CL_SUCCESS;
+
                 const size_t wgSize  = kernels[0].getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >(
                     ctl.getDevice( ), &l_Error );
+
                 V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
 
                 // Create buffer wrappers so we can access the host functors, for read or writing in the kernel
                 ALIGNED( 256 ) BinaryFunction aligned_reduce( binary_op );
-                //::cl::Buffer userFunctor(ctl.context(), CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, sizeof( aligned_reduce ),
+                //::cl::Buffer userFunctor(ctl.context(), CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, sizeof(aligned_reduce),
                 //  &aligned_reduce );
                 control::buffPointer userFunctor = ctl.acquireBuffer( sizeof( aligned_reduce ),
                     CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_reduce );
 
-                // ::cl::Buffer result(ctl.context(), CL_MEM_ALLOC_HOST_PTR|CL_MEM_WRITE_ONLY, sizeof( iType ) * numWG);
+                // ::cl::Buffer result(ctl.context(), CL_MEM_ALLOC_HOST_PTR|CL_MEM_WRITE_ONLY, sizeof( iType )*numWG);
                 control::buffPointer result = ctl.acquireBuffer( sizeof( iType ) * numWG,
                     CL_MEM_ALLOC_HOST_PTR|CL_MEM_WRITE_ONLY );
 
                 cl_uint szElements = static_cast< cl_uint >( first.distance_to(last ) );
 
-                V_OPENCL( kernels[0].setArg(0, first.getBuffer( ) ), "Error setting kernel argument" );
-                V_OPENCL( kernels[0].setArg(1, first.gpuPayloadSize( ), &first.gpuPayload( ) ), "Error setting a kernel argument" );
+
+                V_OPENCL( kernels[0].setArg(0, first.getContainer().getBuffer() ), "Error setting kernel argument" );
+                V_OPENCL( kernels[0].setArg(1, first.gpuPayloadSize( ), &first.gpuPayload( ) ),
+                                                           "Error setting a kernel argument" );
+
                 V_OPENCL( kernels[0].setArg(2, szElements), "Error setting kernel argument" );
                 V_OPENCL( kernels[0].setArg(3, *userFunctor), "Error setting kernel argument" );
                 V_OPENCL( kernels[0].setArg(4, *result), "Error setting kernel argument" );
@@ -420,7 +423,7 @@ namespace bolt {
                     sizeof(iType)*numWG, NULL, &l_mapEvent, &l_Error );
                 V_OPENCL( l_Error, "Error calling map on the result buffer" );
 
-                //  Finish the tail end of the reduction on host side; the compute device reduces within the workgroups,
+                //  Finish the tail end of the reduction on host side;the compute device reduces within the workgroups,
                 //  with one result per workgroup
                 size_t ceilNumWG = static_cast< size_t >( std::ceil( static_cast< float >( szElements ) / wgSize) );
                 bolt::cl::minimum<size_t>  min_size_t;

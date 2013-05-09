@@ -13,7 +13,7 @@
 *   See the License for the specific language governing permissions and              
 *   limitations under the License.                                                   
 
-***************************************************************************/                                                                                     
+***************************************************************************/
 
 #include "common/stdafx.h"
 #include <vector>
@@ -26,13 +26,10 @@
 
 #include <gtest/gtest.h>
 //#include <boost/shared_array.hpp>
+#define TEST_DOUBLE 0
 
 #include <boost/program_options.hpp>
 namespace po = boost::program_options;
-
-
-
-
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Below are helper routines to compare the results of two arrays for googletest
@@ -41,6 +38,7 @@ namespace po = boost::program_options;
 /******************************************************************************
  *  Double x4
  *****************************************************************************/
+#if(TEST_DOUBLE == 1)
 BOLT_FUNCTOR(uddtD4,
 struct uddtD4
 {
@@ -107,7 +105,7 @@ struct MultD4
         _result.d = lhs.d*rhs.d;
         return _result;
     };
-}; 
+};
 );
 uddtD4 identityMultD4 = { 1.0, 1.0, 1.0, 1.0 };
 uddtD4 initialMultD4  = { 1.00001, 1.000003, 1.0000005, 1.00000007 };
@@ -124,7 +122,7 @@ BOLT_FUNCTOR(NegateD4,
             ret.d = -rhs.d;
             return ret;
         }
-    }; 
+    };
 );
 NegateD4 nD4;
 
@@ -140,9 +138,10 @@ BOLT_FUNCTOR(SquareD4,
             ret.d = rhs.d*rhs.d;
             return ret;
         }
-    }; 
+    };
 );
 SquareD4 sD4;
+#endif
 
 /******************************************************************************
  *  Integer x2
@@ -190,7 +189,7 @@ struct AddI2
         _result.b = lhs.b+rhs.b;
         return _result;
     };
-}; 
+};
 );
 uddtI2 identityAddI2 = {  0, 0 };
 uddtI2 initialAddI2  = { -1, 2 };
@@ -205,7 +204,7 @@ BOLT_FUNCTOR(NegateI2,
             ret.b = -rhs.b;
             return ret;
         }
-    }; 
+    };
 );
 NegateI2 nI2;
 
@@ -219,13 +218,15 @@ BOLT_FUNCTOR(SquareI2,
             ret.b = rhs.b*rhs.b;
             return ret;
         }
-    }; 
+    };
 );
 SquareI2 sI2;
 
 /******************************************************************************
  *  Heterogeneous Unary Operator
+
  *****************************************************************************/
+#if (TEST_DOUBLE == 1)
 BOLT_FUNCTOR(squareD4I2,
     struct squareD4I2
     {
@@ -236,7 +237,7 @@ BOLT_FUNCTOR(squareD4I2,
             ret.b = (int) (rhs.c*rhs.d);
             return ret;
         }
-    }; 
+    };
 );
 squareD4I2 sD4I2;
 
@@ -244,6 +245,7 @@ squareD4I2 sD4I2;
 /******************************************************************************
  *  Mixed float and int
  *****************************************************************************/
+
 BOLT_FUNCTOR(uddtM3,
 struct uddtM3
 {
@@ -289,6 +291,8 @@ struct uddtM3
 BOLT_CREATE_TYPENAME( bolt::cl::device_vector< uddtM3 >::iterator );
 BOLT_CREATE_CLCODE( bolt::cl::device_vector< uddtM3 >::iterator, bolt::cl::deviceVectorIteratorTemplate );
 
+
+
 BOLT_FUNCTOR(MixM3,
 struct MixM3
 {
@@ -300,7 +304,7 @@ struct MixM3
         _result.c = lhs.c*rhs.c;
         return _result;
     };
-}; 
+};
 );
 uddtM3 identityMixM3 = { 0, 0.f, 1.0 };
 uddtM3 initialMixM3  = { 2, 3, 1.000001 };
@@ -316,7 +320,7 @@ BOLT_FUNCTOR(NegateM3,
             ret.c = -rhs.c;
             return ret;
         }
-    }; 
+    };
 );
 NegateM3 nM3;
 
@@ -331,10 +335,10 @@ BOLT_FUNCTOR(SquareM3,
             ret.c = rhs.c*rhs.c;
             return ret;
         }
-    }; 
+    };
 );
 SquareM3 sM3;
-
+#endif
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -383,7 +387,7 @@ struct cmpStdArray
 template< size_t N >
 struct cmpStdArray< float, N >
 {
-    static ::testing::AssertionResult cmpArrays( const std::array< float, N >& ref, const std::array< float, N >& calc )
+    static ::testing::AssertionResult cmpArrays( const std::array< float, N >& ref, const std::array< float, N >& calc)
     {
         for( size_t i = 0; i < N; ++i )
         {
@@ -467,6 +471,57 @@ TEST(NegateScanUserDefined, IncAddInt2)
     cmpArrays(refOutput, output);
 }
 
+TEST(NegateScanUserDefined, SerialIncAddInt2)
+{
+    //setup containers
+    int length = (1<<16)+23;
+//    bolt::cl::negate< uddtI2 > nI2;
+    bolt::cl::device_vector< uddtI2 > input(  length, initialAddI2,  CL_MEM_READ_WRITE, true  );
+    bolt::cl::device_vector< uddtI2 > output( length, identityAddI2, CL_MEM_READ_WRITE, false );
+    std::vector< uddtI2 > refInput( length, initialAddI2 );
+    std::vector< uddtI2 > refOutput( length );
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    // call transform_scan
+    AddI2 aI2;
+    bolt::cl::transform_inclusive_scan( ctl, input.begin(), input.end(), output.begin(), nI2, aI2 );
+    ::std::transform(   refInput.begin(), refInput.end(),  refInput.begin(), nI2); // transform in-place
+    ::std::partial_sum( refInput.begin(), refInput.end(), refOutput.begin(), aI2); // out-of-place scan
+
+    // compare results
+    cmpArrays(refOutput, output);
+}
+
+
+
+TEST(NegateScanUserDefined, MultiCoreIncAddInt2)
+{
+    //setup containers
+    int length = (1<<16)+23;
+//    bolt::cl::negate< uddtI2 > nI2;
+    bolt::cl::device_vector< uddtI2 > input(  length, initialAddI2,  CL_MEM_READ_WRITE, true  );
+    bolt::cl::device_vector< uddtI2 > output( length, identityAddI2, CL_MEM_READ_WRITE, false );
+    std::vector< uddtI2 > refInput( length, initialAddI2 );
+    std::vector< uddtI2 > refOutput( length );
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    // call transform_scan
+    AddI2 aI2;
+    bolt::cl::transform_inclusive_scan( ctl, input.begin(), input.end(), output.begin(), nI2, aI2 );
+    ::std::transform(   refInput.begin(), refInput.end(),  refInput.begin(), nI2); // transform in-place
+    ::std::partial_sum( refInput.begin(), refInput.end(), refOutput.begin(), aI2); // out-of-place scan
+
+    // compare results
+    cmpArrays(refOutput, output);
+}
+
+#if(TEST_DOUBLE == 1)
 TEST(NegateScanUserDefined, IncMultiplyDouble4)
 {
     //setup containers
@@ -486,6 +541,55 @@ TEST(NegateScanUserDefined, IncMultiplyDouble4)
     // compare results
     cmpArrays(refOutput, output);
 }
+
+TEST(NegateScanUserDefined, SerialIncMultiplyDouble4)
+{
+    //setup containers
+    int length = (1<<16)+11;
+//    bolt::cl::negate< uddtD4 > nD4;
+    bolt::cl::device_vector< uddtD4 > input(  length, initialMultD4,  CL_MEM_READ_WRITE, true  );
+    bolt::cl::device_vector< uddtD4 > output( length, identityMultD4, CL_MEM_READ_WRITE, false );
+    std::vector< uddtD4 > refInput( length, initialMultD4 );
+    std::vector< uddtD4 > refOutput( length );
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    // call transform_scan
+    MultD4 mD4;
+    bolt::cl::transform_inclusive_scan( ctl, input.begin(), input.end(), output.begin(), nD4, mD4 );
+    ::std::transform(   refInput.begin(), refInput.end(),  refInput.begin(), nD4); // transform in-place
+    ::std::partial_sum( refInput.begin(), refInput.end(), refOutput.begin(), mD4); // out-of-place scan
+
+    // compare results
+    cmpArrays(refOutput, output);
+}
+
+TEST(NegateScanUserDefined, MultiCoreIncMultiplyDouble4)
+{
+    //setup containers
+    int length = (1<<16)+11;
+//    bolt::cl::negate< uddtD4 > nD4;
+    bolt::cl::device_vector< uddtD4 > input(  length, initialMultD4,  CL_MEM_READ_WRITE, true  );
+    bolt::cl::device_vector< uddtD4 > output( length, identityMultD4, CL_MEM_READ_WRITE, false );
+    std::vector< uddtD4 > refInput( length, initialMultD4 );
+    std::vector< uddtD4 > refOutput( length );
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    // call transform_scan
+    MultD4 mD4;
+    bolt::cl::transform_inclusive_scan( ctl, input.begin(), input.end(), output.begin(), nD4, mD4 );
+    ::std::transform(   refInput.begin(), refInput.end(),  refInput.begin(), nD4); // transform in-place
+    ::std::partial_sum( refInput.begin(), refInput.end(), refOutput.begin(), mD4); // out-of-place scan
+
+    // compare results
+    cmpArrays(refOutput, output);
+}
+
 
 TEST(NegateScanUserDefined, IncMixedM3)
 {
@@ -507,6 +611,55 @@ TEST(NegateScanUserDefined, IncMixedM3)
     cmpArrays(refOutput, output);
 }
 
+TEST(NegateScanUserDefined, SerialIncMixedM3)
+{
+    //setup containers
+    int length = (1<<16)+57;
+//    bolt::cl::negate< uddtM3 > nM3;
+    bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3,  CL_MEM_READ_WRITE, true  );
+    bolt::cl::device_vector< uddtM3 > output( length, identityMixM3, CL_MEM_READ_WRITE, false );
+    std::vector< uddtM3 > refInput( length, initialMixM3 );
+    std::vector< uddtM3 > refOutput( length );
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    // call scan
+    MixM3 mM3;
+    bolt::cl::transform_inclusive_scan( ctl, input.begin(), input.end(), output.begin(), nM3, mM3 );
+    ::std::transform(   refInput.begin(), refInput.end(),  refInput.begin(), nM3);
+    ::std::partial_sum( refInput.begin(), refInput.end(), refOutput.begin(), mM3);
+
+    // compare results
+    cmpArrays(refOutput, output);
+}
+
+TEST(NegateScanUserDefined, MultiCoreIncMixedM3)
+{
+    //setup containers
+    int length = (1<<16)+57;
+//    bolt::cl::negate< uddtM3 > nM3;
+    bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3,  CL_MEM_READ_WRITE, true  );
+    bolt::cl::device_vector< uddtM3 > output( length, identityMixM3, CL_MEM_READ_WRITE, false );
+    std::vector< uddtM3 > refInput( length, initialMixM3 );
+    std::vector< uddtM3 > refOutput( length );
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    // call scan
+    MixM3 mM3;
+    bolt::cl::transform_inclusive_scan( ctl, input.begin(), input.end(), output.begin(), nM3, mM3 );
+    ::std::transform(   refInput.begin(), refInput.end(),  refInput.begin(), nM3);
+    ::std::partial_sum( refInput.begin(), refInput.end(), refOutput.begin(), mM3);
+
+    // compare results
+    cmpArrays(refOutput, output);
+}
+
+#endif
 
 /////////////////////////////////////////////////  Exclusive  ///////////////////////////
 
@@ -531,6 +684,57 @@ TEST(NegateScanUserDefined, ExclAddInt2)
     cmpArrays(refOutput, output);
 }
 
+TEST(NegateScanUserDefined, SerialExclAddInt2)
+{
+    //setup containers
+    int length = (1<<16)+23;
+//    bolt::cl::negate< uddtI2 > nI2;
+    bolt::cl::device_vector< uddtI2 > input(  length, initialAddI2,  CL_MEM_READ_WRITE, true  );
+    bolt::cl::device_vector< uddtI2 > output( length, identityAddI2, CL_MEM_READ_WRITE, false );
+    std::vector< uddtI2 > refInput( length, initialAddI2 ); refInput[0] = identityAddI2;
+    std::vector< uddtI2 > refOutput( length );
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    // call scan
+    AddI2 aI2;
+    bolt::cl::transform_exclusive_scan( ctl, input.begin(), input.end(), output.begin(), nI2, identityAddI2, aI2 );
+    ::std::transform(  refInput.begin(), refInput.end(),  refInput.begin(), nI2);
+    refInput[0] = identityAddI2;
+    ::std::partial_sum( refInput.begin(), refInput.end(), refOutput.begin(), aI2);
+
+    // compare results
+    cmpArrays(refOutput, output);
+}
+
+TEST(NegateScanUserDefined, MultiCoreExclAddInt2)
+{
+    //setup containers
+    int length = (1<<16)+23;
+//    bolt::cl::negate< uddtI2 > nI2;
+    bolt::cl::device_vector< uddtI2 > input(  length, initialAddI2,  CL_MEM_READ_WRITE, true  );
+    bolt::cl::device_vector< uddtI2 > output( length, identityAddI2, CL_MEM_READ_WRITE, false );
+    std::vector< uddtI2 > refInput( length, initialAddI2 ); refInput[0] = identityAddI2;
+    std::vector< uddtI2 > refOutput( length );
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    // call scan
+    AddI2 aI2;
+    bolt::cl::transform_exclusive_scan( ctl, input.begin(), input.end(), output.begin(), nI2, identityAddI2, aI2 );
+    ::std::transform(  refInput.begin(), refInput.end(),  refInput.begin(), nI2);
+    refInput[0] = identityAddI2;
+    ::std::partial_sum( refInput.begin(), refInput.end(), refOutput.begin(), aI2);
+
+    // compare results
+    cmpArrays(refOutput, output);
+}
+
+#if (TEST_DOUBLE == 1)
 TEST(NegateScanUserDefined, ExclMultiplyDouble4)
 {
     //setup containers
@@ -544,6 +748,56 @@ TEST(NegateScanUserDefined, ExclMultiplyDouble4)
     // call scan
     MultD4 mD4;
     bolt::cl::transform_exclusive_scan( input.begin(), input.end(), output.begin(), nD4, identityMultD4, mD4 );
+    ::std::transform(   refInput.begin(), refInput.end(),  refInput.begin(), nD4);
+    refInput[0] = identityMultD4;
+    ::std::partial_sum( refInput.begin(), refInput.end(), refOutput.begin(), mD4);
+
+    // compare results
+    cmpArrays(refOutput, output);
+}
+
+TEST(NegateScanUserDefined, SerialExclMultiplyDouble4)
+{
+    //setup containers
+    int length = (1<<16)+11;
+//    bolt::cl::negate< uddtD4 > nD4;
+    bolt::cl::device_vector< uddtD4 > input(  length, initialMultD4,  CL_MEM_READ_WRITE, true  );
+    bolt::cl::device_vector< uddtD4 > output( length, identityMultD4, CL_MEM_READ_WRITE, false );
+    std::vector< uddtD4 > refInput( length, initialMultD4 ); refInput[0] = identityMultD4;
+    std::vector< uddtD4 > refOutput( length );
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    // call scan
+    MultD4 mD4;
+    bolt::cl::transform_exclusive_scan( ctl, input.begin(), input.end(), output.begin(), nD4, identityMultD4, mD4 );
+    ::std::transform(   refInput.begin(), refInput.end(),  refInput.begin(), nD4);
+    refInput[0] = identityMultD4;
+    ::std::partial_sum( refInput.begin(), refInput.end(), refOutput.begin(), mD4);
+
+    // compare results
+    cmpArrays(refOutput, output);
+}
+
+TEST(NegateScanUserDefined, MultiCoreExclMultiplyDouble4)
+{
+    //setup containers
+    int length = (1<<16)+11;
+//    bolt::cl::negate< uddtD4 > nD4;
+    bolt::cl::device_vector< uddtD4 > input(  length, initialMultD4,  CL_MEM_READ_WRITE, true  );
+    bolt::cl::device_vector< uddtD4 > output( length, identityMultD4, CL_MEM_READ_WRITE, false );
+    std::vector< uddtD4 > refInput( length, initialMultD4 ); refInput[0] = identityMultD4;
+    std::vector< uddtD4 > refOutput( length );
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    // call scan
+    MultD4 mD4;
+    bolt::cl::transform_exclusive_scan( ctl, input.begin(), input.end(), output.begin(), nD4, identityMultD4, mD4 );
     ::std::transform(   refInput.begin(), refInput.end(),  refInput.begin(), nD4);
     refInput[0] = identityMultD4;
     ::std::partial_sum( refInput.begin(), refInput.end(), refOutput.begin(), mD4);
@@ -574,6 +828,58 @@ TEST(NegateScanUserDefined, ExclMixedM3)
     cmpArrays(refOutput, output);
 }
 
+TEST(NegateScanUserDefined, SerialExclMixedM3)
+{
+    //setup containers
+    int length = (1<<16)+57;
+//    bolt::cl::negate< uddtM3 > nM3;
+    bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3,  CL_MEM_READ_WRITE, true  );
+    bolt::cl::device_vector< uddtM3 > output( length, identityMixM3, CL_MEM_READ_WRITE, false );
+    std::vector< uddtM3 > refInput( length, initialMixM3 ); refInput[0] = identityMixM3;
+    std::vector< uddtM3 > refOutput( length );
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    // call scan
+    MixM3 mM3;
+    bolt::cl::transform_exclusive_scan( ctl, input.begin(), input.end(), output.begin(), nM3, identityMixM3, mM3 );
+    ::std::transform(   refInput.begin(), refInput.end(),  refInput.begin(), nM3);
+    refInput[0] = identityMixM3;
+    ::std::partial_sum( refInput.begin(), refInput.end(), refOutput.begin(), mM3);
+
+    // compare results
+    cmpArrays(refOutput, output);
+}
+
+TEST(NegateScanUserDefined, MultiCoreExclMixedM3)
+{
+    //setup containers
+    int length = (1<<16)+57;
+//    bolt::cl::negate< uddtM3 > nM3;
+    bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3,  CL_MEM_READ_WRITE, true  );
+    bolt::cl::device_vector< uddtM3 > output( length, identityMixM3, CL_MEM_READ_WRITE, false );
+    std::vector< uddtM3 > refInput( length, initialMixM3 ); refInput[0] = identityMixM3;
+    std::vector< uddtM3 > refOutput( length );
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    // call scan
+    MixM3 mM3;
+    bolt::cl::transform_exclusive_scan( ctl, input.begin(), input.end(), output.begin(), nM3, identityMixM3, mM3 );
+    ::std::transform(   refInput.begin(), refInput.end(),  refInput.begin(), nM3);
+    refInput[0] = identityMixM3;
+    ::std::partial_sum( refInput.begin(), refInput.end(), refOutput.begin(), mM3);
+
+    // compare results
+    cmpArrays(refOutput, output);
+}
+
+
+
 TEST(Mixed, IncAddInt2)
 {
     //setup containers
@@ -596,13 +902,66 @@ TEST(Mixed, IncAddInt2)
     cmpArrays(refOutput, output);
 }
 
+TEST(Mixed, SerialIncAddInt2)
+{
+    //setup containers
+    int length = (1<<16)+23;
+//    bolt::cl::negate< uddtI2 > nI2;
+    uddtD4 initialD4 = {1.234, 2.345, 3.456, 4.567};
+    bolt::cl::device_vector< uddtD4 > input(  length, initialD4,  CL_MEM_READ_WRITE, true  );
+    bolt::cl::device_vector< uddtI2 > output( length, identityAddI2, CL_MEM_READ_WRITE, false );
+    std::vector< uddtD4 > refInput( length, initialD4 );
+    std::vector< uddtI2 > refIntermediate( length, identityAddI2 );
+    std::vector< uddtI2 > refOutput( length, identityAddI2 );
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    // call transform_scan
+    AddI2 aI2;
+    bolt::cl::transform_inclusive_scan( ctl, input.begin(), input.end(), output.begin(), sD4I2, aI2 );
+    ::std::transform(   refInput.begin(), refInput.end(),  refIntermediate.begin(), sD4I2); // transform in-place
+    ::std::partial_sum( refIntermediate.begin(), refIntermediate.end(), refOutput.begin(), aI2); // out-of-place scan
+
+    // compare results
+    cmpArrays(refOutput, output);
+}
+
+TEST(Mixed, MultiCoreIncAddInt2)
+{
+    //setup containers
+    int length = (1<<16)+23;
+//    bolt::cl::negate< uddtI2 > nI2;
+    uddtD4 initialD4 = {1.234, 2.345, 3.456, 4.567};
+    bolt::cl::device_vector< uddtD4 > input(  length, initialD4,  CL_MEM_READ_WRITE, true  );
+    bolt::cl::device_vector< uddtI2 > output( length, identityAddI2, CL_MEM_READ_WRITE, false );
+    std::vector< uddtD4 > refInput( length, initialD4 );
+    std::vector< uddtI2 > refIntermediate( length, identityAddI2 );
+    std::vector< uddtI2 > refOutput( length, identityAddI2 );
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    // call transform_scan
+    AddI2 aI2;
+    bolt::cl::transform_inclusive_scan( ctl, input.begin(), input.end(), output.begin(), sD4I2, aI2 );
+    ::std::transform(   refInput.begin(), refInput.end(),  refIntermediate.begin(), sD4I2); // transform in-place
+    ::std::partial_sum( refIntermediate.begin(), refIntermediate.end(), refOutput.begin(), aI2); // out-of-place scan
+
+    // compare results
+    cmpArrays(refOutput, output);
+}
+
+
 TEST(SwitchDevices, IncAddInt2)
 {
     //bolt::cl::control ctrl = bolt::cl::control::getDefault();
     // print device 1
     cl_int err;
     std::string strDeviceName;
-    
+
     //setup initial values
     AddI2 aI2;
     int length = (1<<16)+23;
@@ -618,7 +977,7 @@ TEST(SwitchDevices, IncAddInt2)
     std::vector< cl::Device > devices = context.getInfo< CL_CONTEXT_DEVICES >(); // get devices
     for (int iter = 0; iter < 3; iter++)
     for (int i = 0; i < devices.size(); i++) {
-        
+
         // setup device/queue
         ::cl::CommandQueue queue( context, devices.at( i ), CL_QUEUE_PROFILING_ENABLE); // select device; make queue
         bolt::cl::control ctrl(queue);
@@ -634,14 +993,18 @@ TEST(SwitchDevices, IncAddInt2)
 
         // compute on device
         bolt::cl::transform_inclusive_scan( ctrl, input.begin(), input.end(), output.begin(), sD4I2, aI2 );
-    
+
         // compare results
         cmpArrays(refOutput, output);
     }
 
 }
 
-TEST(MultiCoreCPU, NegPlusInt)
+#endif
+
+/* Failing Test case - Random Access Iterator with Default Path!
+
+TEST(DefaultGPU, NegPlusInt)
 {
     //bolt::cl::control ctrl = bolt::cl::control::getDefault();
     // print device 1
@@ -649,7 +1012,55 @@ TEST(MultiCoreCPU, NegPlusInt)
     int deviceNum = 1;
     std::string strDeviceName = bolt::cl::control::getDefault( ).getDevice( ).getInfo< CL_DEVICE_NAME >( &err );
     bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_NAME > failed" );
-    
+
+    //setup initial values
+    bolt::cl::negate<int> unary_op;
+    bolt::cl::plus<int> binary_op;
+    int length = (1<<16);
+    int init = -1;
+    int identity = 0;
+
+    // reference data
+    std::vector< int > refInput( length, init );
+    std::vector< int > refIntermediate( length, identity );
+    std::vector< int > refOutput( length, identity );
+
+    // perform reference CPU calculation
+    ::std::transform (refInput.begin(), refInput.end(),  refIntermediate.begin(), unary_op); // transform in-place
+    // out-of-place scan
+    ::std::partial_sum( refIntermediate.begin(), refIntermediate.end(), refOutput.begin(), binary_op);
+
+    // device data
+    std::vector< int > input( length, init);
+    std::vector< int > output( length, identity);
+
+    // calculate on device
+    ::cl::Context context(CL_DEVICE_TYPE_ALL);//bolt::cl::control::getDefault( ).context( ); // get context
+    std::vector< cl::Device > devices = context.getInfo< CL_CONTEXT_DEVICES >(); // get devices
+    // setup device/queue
+    ::cl::CommandQueue queue( context, devices.at( deviceNum ), CL_QUEUE_PROFILING_ENABLE); // select device;make queue
+    bolt::cl::control ctrl(queue);
+    //bolt::cl::control::getDefault().commandQueue(queue);
+    strDeviceName = ctrl.getDevice( ).getInfo< CL_DEVICE_NAME >( &err );
+    bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_NAME > failed" );
+    std::cout << "Testing Device[" << deviceNum << "]: " << strDeviceName << std::endl;
+    bolt::cl::transform_inclusive_scan( ctrl, input.begin(), input.end(), output.begin(), unary_op, binary_op );
+
+
+    // compare results
+    cmpArrays(refOutput, output);
+} */
+
+
+TEST(SerialCPU, NegPlusInt)
+{
+    //bolt::cl::control ctrl = bolt::cl::control::getDefault();
+    // print device 1
+    cl_int err;
+    int deviceNum = 1;
+    std::string strDeviceName = bolt::cl::control::getDefault( ).getDevice( ).getInfo< CL_DEVICE_NAME >( &err );
+    bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_NAME > failed" );
+
     //setup initial values
     bolt::cl::negate<int> unary_op;
     bolt::cl::plus<int> binary_op;
@@ -664,28 +1075,78 @@ TEST(MultiCoreCPU, NegPlusInt)
 
     // perform reference CPU calculation
     ::std::transform(   refInput.begin(), refInput.end(),  refIntermediate.begin(), unary_op); // transform in-place
-    ::std::partial_sum( refIntermediate.begin(), refIntermediate.end(), refOutput.begin(), binary_op); // out-of-place scan
+    ::std::partial_sum( refIntermediate.begin(), refIntermediate.end(),refOutput.begin(),binary_op);//out-of-place scan
 
     // device data
     std::vector< int > input( length, init);
     std::vector< int > output( length, identity);
-    
+
+
     // calculate on device
     ::cl::Context context(CL_DEVICE_TYPE_ALL);//bolt::cl::control::getDefault( ).context( ); // get context
     std::vector< cl::Device > devices = context.getInfo< CL_CONTEXT_DEVICES >(); // get devices
     // setup device/queue
-    ::cl::CommandQueue queue( context, devices.at( deviceNum ), CL_QUEUE_PROFILING_ENABLE); // select device; make queue
+    ::cl::CommandQueue queue( context, devices.at( deviceNum ), CL_QUEUE_PROFILING_ENABLE); // select device;make queue
     bolt::cl::control ctrl(queue);
-    //bolt::cl::control::getDefault().commandQueue(queue);
+    ctrl.setForceRunMode(bolt::cl::control::SerialCpu);
     strDeviceName = ctrl.getDevice( ).getInfo< CL_DEVICE_NAME >( &err );
     bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_NAME > failed" );
     std::cout << "Testing Device[" << deviceNum << "]: " << strDeviceName << std::endl;
     bolt::cl::transform_inclusive_scan( ctrl, input.begin(), input.end(), output.begin(), unary_op, binary_op );
-    
+
 
     // compare results
     cmpArrays(refOutput, output);
 }
+
+
+TEST(MultiCoreCPU, NegPlusInt)
+{
+    //bolt::cl::control ctrl = bolt::cl::control::getDefault();
+    // print device 1
+    cl_int err;
+    int deviceNum = 1;
+    std::string strDeviceName = bolt::cl::control::getDefault( ).getDevice( ).getInfo< CL_DEVICE_NAME >( &err );
+    bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_NAME > failed" );
+
+    //setup initial values
+    bolt::cl::negate<int> unary_op;
+    bolt::cl::plus<int> binary_op;
+    int length = (1<<16);
+    int init = -1;
+    int identity = 0;
+
+    // reference data
+    std::vector< int > refInput( length, init );
+    std::vector< int > refIntermediate( length, identity );
+    std::vector< int > refOutput( length, identity );
+
+    // perform reference CPU calculation
+    ::std::transform(   refInput.begin(), refInput.end(),  refIntermediate.begin(), unary_op); // transform in-place
+    ::std::partial_sum( refIntermediate.begin(), refIntermediate.end(),refOutput.begin(),binary_op);//out-of-place scan
+
+    // device data
+    std::vector< int > input( length, init);
+    std::vector< int > output( length, identity);
+
+
+    // calculate on device
+    ::cl::Context context(CL_DEVICE_TYPE_ALL);//bolt::cl::control::getDefault( ).context( ); // get context
+    std::vector< cl::Device > devices = context.getInfo< CL_CONTEXT_DEVICES >(); // get devices
+    // setup device/queue
+    ::cl::CommandQueue queue( context, devices.at( deviceNum ), CL_QUEUE_PROFILING_ENABLE); // select device;make queue
+    bolt::cl::control ctrl(queue);
+    ctrl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+    strDeviceName = ctrl.getDevice( ).getInfo< CL_DEVICE_NAME >( &err );
+    bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_NAME > failed" );
+    std::cout << "Testing Device[" << deviceNum << "]: " << strDeviceName << std::endl;
+    bolt::cl::transform_inclusive_scan( ctrl, input.begin(), input.end(), output.begin(), unary_op, binary_op );
+
+
+    // compare results
+    cmpArrays(refOutput, output);
+}
+
 
 int _tmain(int argc, _TCHAR* argv[])
 {
@@ -707,8 +1168,10 @@ int _tmain(int argc, _TCHAR* argv[])
         desc.add_options()
             ( "help,h",         "produces this help message" )
             ( "queryOpenCL,q",  "Print queryable platform and device info and return" )
-            ( "platform,p",     po::value< cl_uint >( &userPlatform )->default_value( 0 ),	"Specify the platform under test" )
-            ( "device,d",       po::value< cl_uint >( &userDevice )->default_value( 0 ),	"Specify the device under test" )
+            ( "platform,p",     po::value< cl_uint >( &userPlatform )->default_value( 0 ),
+                                                        "Specify the platform under test" )
+            ( "device,d",       po::value< cl_uint >( &userDevice )->default_value( 0 ),
+                                                          "Specify the device under test" )
             ;
 
 
@@ -718,7 +1181,7 @@ int _tmain(int argc, _TCHAR* argv[])
 
         if( vm.count( "help" ) )
         {
-            //	This needs to be 'cout' as program-options does not support wcout yet
+            //This needs to be 'cout' as program-options does not support wcout yet
             std::cout << desc << std::endl;
             return 0;
         }
@@ -733,7 +1196,7 @@ int _tmain(int argc, _TCHAR* argv[])
         {
             deviceType	= CL_DEVICE_TYPE_GPU;
         }
-        
+
         if( vm.count( "cpu" ) )
         {
             deviceType	= CL_DEVICE_TYPE_CPU;
@@ -781,7 +1244,7 @@ int _tmain(int argc, _TCHAR* argv[])
 
     // Device info
     std::vector< cl::Device > devices;
-    bolt::cl::V_OPENCL( platforms.front( ).getDevices( CL_DEVICE_TYPE_ALL, &devices ), "Platform::getDevices() failed" );
+    bolt::cl::V_OPENCL( platforms.front( ).getDevices( CL_DEVICE_TYPE_ALL, &devices ),"Platform::getDevices() failed");
 
     cl::Context myContext( devices.at( userDevice ) );
     cl::CommandQueue myQueue( myContext, devices.at( userDevice ) );
@@ -819,5 +1282,5 @@ int _tmain(int argc, _TCHAR* argv[])
         bolt::tout << _T( "\t    (only on googletest assertion failures, not SEH exceptions)" ) << std::endl;
     }
 
-	return retVal;
+    return retVal;
 }

@@ -23,8 +23,7 @@
 #include <type_traits>
 
 #ifdef ENABLE_TBB
-    #include "tbb/parallel_for_each.h"
-    #include "tbb/parallel_for.h"
+    #include "bolt/btbb/transform.h"
 #endif
 
 #include "bolt/cl/bolt.h"
@@ -35,6 +34,7 @@ namespace bolt {
 namespace cl {
 // two-input transform, std:: iterator
 template< typename InputIterator1, typename InputIterator2, typename OutputIterator, typename BinaryFunction >
+
 void transform( bolt::cl::control& ctl, InputIterator1 first1, InputIterator1 last1, InputIterator2 first2,
                 OutputIterator result, BinaryFunction f, const std::string& user_code )
 {
@@ -73,10 +73,10 @@ void transform( InputIterator first1, InputIterator last1, OutputIterator result
 
 namespace detail {
 
-  enum TransformTypes {transform_iType1, transform_DVInputIterator1, transform_iType2, transform_DVInputIterator2, transform_oTypeB,
-   transform_DVOutputIteratorB, transform_BinaryFunction, transform_endB };
-  enum TransformUnaryTypes {transform_iType, transform_DVInputIterator, transform_oTypeU, transform_DVOutputIteratorU, transform_UnaryFunction,
-    transform_endU };
+  enum TransformTypes {transform_iType1, transform_DVInputIterator1, transform_iType2, transform_DVInputIterator2,
+                       transform_oTypeB,transform_DVOutputIteratorB, transform_BinaryFunction, transform_endB };
+  enum TransformUnaryTypes {transform_iType, transform_DVInputIterator, transform_oTypeU,
+                            transform_DVOutputIteratorU, transform_UnaryFunction, transform_endU };
 
 class Transform_KernelTemplateSpecializer : public KernelTemplateSpecializer
 {
@@ -156,29 +156,36 @@ public:
 
     // Wrapper that uses default ::bolt::cl::control class, iterator interface
     template< typename InputIterator1, typename InputIterator2, typename OutputIterator, typename BinaryFunction >
-    void transform_detect_random_access( bolt::cl::control& ctl, const InputIterator1& first1, const InputIterator1& last1,
-            const InputIterator2& first2, const OutputIterator& result, const BinaryFunction& f,
-            const std::string& user_code, std::input_iterator_tag, std::input_iterator_tag )
+    void transform_detect_random_access( bolt::cl::control& ctl, const InputIterator1& first1,
+            const InputIterator1& last1, const InputIterator2& first2, const OutputIterator& result,
+            const BinaryFunction& f,const std::string& user_code, std::input_iterator_tag, std::input_iterator_tag )
         {
-            //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data
-            //  to a temporary buffer.  Should we?
+            // TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data
+            // to a temporary buffer.  Should we?
+
             static_assert( false, "Bolt only supports random access iterator types" );
         };
 
     template< typename InputIterator1, typename InputIterator2, typename OutputIterator, typename BinaryFunction >
-    void transform_detect_random_access( bolt::cl::control& ctl, const InputIterator1& first1, const InputIterator1& last1,
-            const InputIterator2& first2, const OutputIterator& result, const BinaryFunction& f, const std::string& user_code,
-            std::random_access_iterator_tag, std::random_access_iterator_tag )
+
+    void transform_detect_random_access( bolt::cl::control& ctl, const InputIterator1& first1,
+            const InputIterator1& last1, const InputIterator2& first2, const OutputIterator& result,
+            const BinaryFunction& f, const std::string& user_code, std::random_access_iterator_tag,
+            std::random_access_iterator_tag )
     {
-        transform_pick_iterator( ctl, first1, last1, first2, result, f, user_code,
+            transform_pick_iterator( ctl, first1, last1, first2, result, f, user_code,
+
             std::iterator_traits< InputIterator1 >::iterator_category( ),
             std::iterator_traits< InputIterator2 >::iterator_category( ) );
     };
 
     // Wrapper that uses default ::bolt::cl::control class, iterator interface
     template<typename InputIterator, typename OutputIterator, typename UnaryFunction>
-    void transform_unary_detect_random_access( ::bolt::cl::control& ctl, const InputIterator& first1, const InputIterator& last1,
-        const OutputIterator& result, const UnaryFunction& f, const std::string& user_code, std::input_iterator_tag )
+
+    void transform_unary_detect_random_access( ::bolt::cl::control& ctl, const InputIterator& first1,
+        const InputIterator& last1, const OutputIterator& result, const UnaryFunction& f,
+        const std::string& user_code, std::input_iterator_tag )
+
     {
         //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data
         //  to a temporary buffer.  Should we?
@@ -186,117 +193,16 @@ public:
     };
 
     template<typename InputIterator, typename OutputIterator, typename UnaryFunction>
-    void transform_unary_detect_random_access( ::bolt::cl::control& ctl, const InputIterator& first1, const InputIterator& last1,
-        const OutputIterator& result, const UnaryFunction& f, const std::string& user_code, std::random_access_iterator_tag )
+
+    void transform_unary_detect_random_access( ::bolt::cl::control& ctl, const InputIterator& first1,
+        const InputIterator& last1,const OutputIterator& result, const UnaryFunction& f,
+        const std::string& user_code, std::random_access_iterator_tag )
+
     {
         transform_unary_pick_iterator( ctl, first1, last1, result, f, user_code,
              std::iterator_traits< InputIterator >::iterator_category( ) );
     };
 
-#if defined( ENABLE_TBB )
-    template< typename tbbInputIterator1, typename tbbInputIterator2, typename tbbOutputIterator, typename tbbFunctor >
-    struct transformBinaryRange
-    {
-        tbbInputIterator1 first1, last1;
-        tbbInputIterator2 first2;
-        tbbOutputIterator result;
-        tbbFunctor func;
-        static const size_t divSize = 1024;
-        typedef typename std::iterator_traits< tbbInputIterator1 >::value_type T_input1;
-        typedef typename std::iterator_traits< tbbInputIterator2 >::value_type T_input2;
-        typedef typename std::iterator_traits< tbbOutputIterator >::value_type T_output;
-        bool empty( ) const
-        {
-            return (std::distance( first1, last1 ) == 0);
-        }
-
-        bool is_divisible( ) const
-        {
-            return (std::distance( first1, last1 ) > divSize);
-        }
-
-        transformBinaryRange( tbbInputIterator1 begin1, tbbInputIterator1 end1, tbbInputIterator2 begin2,
-            tbbOutputIterator out, tbbFunctor func1 ):
-            first1( begin1 ), last1( end1 ),
-            first2( begin2 ), result( out ), func( func1 )
-        {}
-
-        transformBinaryRange( transformBinaryRange& r, tbb::split ): first1( r.first1 ), last1( r.last1 ), first2( r.first2 ),
-            result( r.result ), func( r.func )
-        {
-            int halfSize = static_cast<int>(std::distance( r.first1, r.last1 ) >> 1);
-            r.last1 = r.first1 + halfSize;
-
-            first1 = r.last1;
-            first2 = r.first2 + halfSize;
-            result = r.result + halfSize;
-        }
-    };
-
-    template< typename tbbInputIterator1, typename tbbOutputIterator, typename tbbFunctor >
-    struct transformUnaryRange
-    {
-        tbbInputIterator1 first1, last1;
-        tbbOutputIterator result;
-        tbbFunctor func;
-        static const size_t divSize = 1024;
-
-        bool empty( ) const
-        {
-            return (std::distance( first1, last1 ) == 0);
-        }
-
-        bool is_divisible( ) const
-        {
-            return (std::distance( first1, last1 ) > divSize);
-        }
-
-        transformUnaryRange( tbbInputIterator1 begin1, tbbInputIterator1 end1, tbbOutputIterator out, tbbFunctor func1 ):
-            first1( begin1 ), last1( end1 ), result( out ), func( func1 )
-        {}
-
-        transformUnaryRange( transformUnaryRange& r, tbb::split ): first1( r.first1 ), last1( r.last1 ),
-             result( r.result ), func( r.func )
-        {
-            int halfSize = static_cast<int>(std::distance( r.first1, r.last1 ) >> 1);
-            r.last1 = r.first1 + halfSize;
-
-            first1 = r.last1;
-            result = r.result + halfSize;
-        }
-    };
-
-    template< typename tbbInputIterator1, typename tbbInputIterator2, typename tbbOutputIterator, typename tbbFunctor >
-    struct transformBinaryRangeBody
-    {
-        void operator( )( transformBinaryRange< tbbInputIterator1, tbbInputIterator2, tbbOutputIterator, tbbFunctor >& r ) const
-        {
-            //size_t sz = std::distance( r.first1, r.last1 );
-
-#if defined( _WIN32 )
-            std::transform( r.first1, r.last1, r.first2,
-                stdext::make_unchecked_array_iterator( r.result ), r.func );
-#else
-            std::transform( r.first1, r.last1, r.first2, r.result, r.func );
-#endif
-        }
-    };
-
-    template< typename tbbInputIterator1, typename tbbOutputIterator, typename tbbFunctor >
-    struct transformUnaryRangeBody
-    {
-        void operator( )( transformUnaryRange< tbbInputIterator1, tbbOutputIterator, tbbFunctor >& r ) const
-        {
-            //size_t sz = std::distance( r.first1, r.last1 );
-
-#if defined( _WIN32 )
-            std::transform( r.first1, r.last1, stdext::make_unchecked_array_iterator( r.result ), r.func );
-#else
-            std::transform( r.first1, r.last1, r.result, r.func );
-#endif
-        }
-    };
-#endif
 
     /*! \brief This template function overload is used to seperate device_vector iterators from all other iterators
         \detail This template is called by the non-detail versions of inclusive_scan, it already assumes random access
@@ -328,14 +234,13 @@ public:
         else if( runMode == bolt::cl::control::MultiCoreCpu )
         {
 #if defined( ENABLE_TBB )
-                tbb::parallel_for(
-                    transformBinaryRange< InputIterator1, InputIterator2, OutputIterator, BinaryFunction >(
-                        first1, last1, first2, result, f ),
-                    transformBinaryRangeBody< InputIterator1, InputIterator2, OutputIterator, BinaryFunction >( ),
-                    tbb::simple_partitioner( ) );
+
+                bolt::btbb::transform(first1,last1,first2,result,f);
+
 #else
                 //std::cout << "The MultiCoreCpu version of Transform is not enabled. " << std ::endl;
-                throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of transform is not enabled to be built." );
+                throw std::exception( "The MultiCoreCpu version of transform is not enabled to be built! \n" );
+
 #endif
             return;
         }
@@ -348,7 +253,7 @@ public:
             // Map the output iterator to a device_vector
             device_vector< oType > dvOutput( result, sz, CL_MEM_USE_HOST_PTR|CL_MEM_WRITE_ONLY, false, ctl );
 
-            transform_enqueue( ctl, dvInput.begin( ), dvInput.end( ), dvInput2.begin( ), dvOutput.begin( ), f, user_code );
+            transform_enqueue(ctl,dvInput.begin( ),dvInput.end( ),dvInput2.begin( ),dvOutput.begin( ),f,user_code );
 
             // This should immediately map/unmap the buffer
             dvOutput.data( );
@@ -381,14 +286,13 @@ public:
         else if( runMode == bolt::cl::control::MultiCoreCpu )
         {
 #if defined( ENABLE_TBB )
-                tbb::parallel_for(
-                    transformBinaryRange< InputIterator1, InputIterator2, OutputIterator, BinaryFunction >(
-                        first1, last1, fancyIter, result, f ),
-                    transformBinaryRangeBody< InputIterator1, InputIterator2, OutputIterator, BinaryFunction >( ),
-                    tbb::simple_partitioner( ) );
+
+                bolt::btbb::transform(first1,last1,fancyIter,result,f);
+
 #else
                 //std::cout << "The MultiCoreCpu version of Transform is not enabled. " << std ::endl;
-                throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of transform is not enabled to be built." );
+                throw std::exception( "The MultiCoreCpu version of transform is not enabled to be built! \n" );
+
 #endif
             return;
         }
@@ -411,8 +315,11 @@ public:
     template< typename InputIterator1, typename InputIterator2, typename OutputIterator, typename BinaryFunction >
     void transform_pick_iterator( bolt::cl::control &ctl,  const InputIterator1& fancyIterfirst,
         const InputIterator1& fancyIterlast, const InputIterator2& first2, const OutputIterator& result,
-        const BinaryFunction& f, const std::string& user_code, bolt::cl::fancy_iterator_tag, std::random_access_iterator_tag)
+
+        const BinaryFunction& f, const std::string& user_code, bolt::cl::fancy_iterator_tag,
+        std::random_access_iterator_tag)
     {
+
         typedef std::iterator_traits<InputIterator1>::value_type iType1;
         typedef std::iterator_traits<InputIterator2>::value_type iType2;
         typedef std::iterator_traits<OutputIterator>::value_type oType;
@@ -434,14 +341,13 @@ public:
         else if( runMode == bolt::cl::control::MultiCoreCpu )
         {
 #if defined( ENABLE_TBB )
-                tbb::parallel_for(
-                    transformBinaryRange< InputIterator1, InputIterator2, OutputIterator, BinaryFunction >(
-                        fancyIterfirst, fancyIterlast, first2, result, f ),
-                    transformBinaryRangeBody< InputIterator1, InputIterator2, OutputIterator, BinaryFunction >( ),
-                    tbb::simple_partitioner( ) );
+
+                bolt::btbb::transform(fancyIterfirst,fancyIterlast,first2,result,f);
+
 #else
                 //std::cout << "The MultiCoreCpu version of Transform is not enabled. " << std ::endl;
-                throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of transform is not enabled to be built." );
+                throw std::exception( "The MultiCoreCpu version of transform is not enabled to be built! \n" );
+
 #endif
             return;
         }
@@ -454,7 +360,7 @@ public:
             // Map the output iterator to a device_vector
             device_vector< oType > dvOutput( result, sz, CL_MEM_USE_HOST_PTR|CL_MEM_WRITE_ONLY, false, ctl );
 
-            transform_enqueue( ctl, fancyIterfirst, fancyIterlast, dvInput.begin( ), dvOutput.begin( ), f, user_code );
+            transform_enqueue( ctl, fancyIterfirst, fancyIterlast, dvInput.begin( ), dvOutput.begin( ),f,user_code );
 
             // This should immediately map/unmap the buffer
             dvOutput.data( );
@@ -464,10 +370,12 @@ public:
     // This template is called by the non-detail versions of inclusive_scan, it already assumes random access iterators
     // This is called strictly for iterators that are derived from device_vector< T >::iterator
     template<typename DVInputIterator1, typename DVInputIterator2, typename DVOutputIterator, typename BinaryFunction>
-    void transform_pick_iterator( bolt::cl::control &ctl,  const DVInputIterator1& first1, const DVInputIterator1& last1,
-        const DVInputIterator2& first2, const DVOutputIterator& result, const BinaryFunction& f,
-        const std::string& user_code, bolt::cl::device_vector_tag, bolt::cl::device_vector_tag )
+
+    void transform_pick_iterator( bolt::cl::control &ctl,  const DVInputIterator1& first1,
+        const DVInputIterator1& last1, const DVInputIterator2& first2, const DVOutputIterator& result,
+        const BinaryFunction& f,const std::string& user_code, bolt::cl::device_vector_tag, bolt::cl::device_vector_tag)
     {
+
         typedef std::iterator_traits< DVInputIterator1 >::value_type iType1;
         typedef std::iterator_traits< DVInputIterator2 >::value_type iType2;
         typedef std::iterator_traits< DVOutputIterator >::value_type oType;
@@ -498,19 +406,19 @@ public:
         }
         else if( runMode == bolt::cl::control::MultiCoreCpu )
         {
+ 
+#if defined( ENABLE_TBB )
+
             bolt::cl::device_vector< iType1 >::pointer firstPtr =  first1.getContainer( ).data( );
             bolt::cl::device_vector< iType2 >::pointer secPtr =  first2.getContainer( ).data( );
             bolt::cl::device_vector< oType >::pointer resPtr =  result.getContainer( ).data( );
 
-#if defined( ENABLE_TBB )
-            tbb::parallel_for(
-                transformBinaryRange< iType1*, iType2*, oType*, BinaryFunction >(
-                    &firstPtr[ first1.m_Index ], &firstPtr[ sz ], &secPtr[ 0 ], &resPtr[ 0 ], f ),
-                transformBinaryRangeBody< iType1*, iType2*, oType*, BinaryFunction >( ),
-                tbb::simple_partitioner( ) );
+            bolt::btbb::transform(&firstPtr[ first1.m_Index ],&firstPtr[ sz ],&secPtr[ 0 ],&resPtr[ 0 ],f);
+
+
 #else
              //std::cout << "The MultiCoreCpu version of Transform is not enabled. " << std ::endl;
-             throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of transform is not enabled to be built." );
+             throw std::exception( "The MultiCoreCpu version of transform is not enabled to be built! \n" );
 #endif
             return;
         }
@@ -523,7 +431,7 @@ public:
     // This template is called by the non-detail versions of inclusive_scan, it already assumes random access iterators
     // This is called strictly for iterators that are derived from device_vector< T >::iterator
     template<typename DVInputIterator1, typename DVInputIterator2, typename DVOutputIterator, typename BinaryFunction>
-    void transform_pick_iterator( bolt::cl::control &ctl,  const DVInputIterator1& first1, const DVInputIterator1& last1,
+    void transform_pick_iterator( bolt::cl::control &ctl,const DVInputIterator1& first1,const DVInputIterator1& last1,
         const DVInputIterator2& fancyIter, const DVOutputIterator& result, const BinaryFunction& f,
         const std::string& user_code, bolt::cl::device_vector_tag, bolt::cl::fancy_iterator_tag )
     {
@@ -556,18 +464,19 @@ public:
         }
         else if( runMode == bolt::cl::control::MultiCoreCpu )
         {
+ 
+#if defined( ENABLE_TBB )
+
             bolt::cl::device_vector< iType1 >::pointer firstPtr =  first1.getContainer( ).data( );
             bolt::cl::device_vector< oType >::pointer resPtr =  result.getContainer( ).data( );
 
-#if defined( ENABLE_TBB )
-            tbb::parallel_for(
-                transformBinaryRange< iType1*, DVInputIterator2, oType*, BinaryFunction >(
-                    &firstPtr[ first1.m_Index ], &firstPtr[ sz ], fancyIter, &resPtr[ 0 ], f ),
-                transformBinaryRangeBody< iType1*, DVInputIterator2, oType*, BinaryFunction >( ),
-                tbb::simple_partitioner( ) );
+            bolt::btbb::transform(&firstPtr[ first1.m_Index ], &firstPtr[ sz ], fancyIter, &resPtr[ 0 ], f );
+
+
 #else
              //std::cout << "The MultiCoreCpu version of Transform is not enabled. " << std ::endl;
-             throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of transform is not enabled to be built." );
+             throw std::exception( "The MultiCoreCpu version of transform is not enabled to be built! \n" );
+
 #endif
             return;
         }
@@ -606,13 +515,14 @@ public:
         else if( runMode == bolt::cl::control::MultiCoreCpu )
         {
 #if defined( ENABLE_TBB )
-            tbb::parallel_for(
-                transformUnaryRange< InputIterator, OutputIterator, UnaryFunction >( first, last, result, f ),
-                transformUnaryRangeBody< InputIterator, OutputIterator, UnaryFunction >( ),
-                tbb::simple_partitioner( ) );
+
+
+                bolt::btbb::transform(first, last, result, f);
+
 #else
              //std::cout << "The MultiCoreCpu version of Transform is not enabled. " << std ::endl;
-             throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of transform is not enabled to be built." );
+             throw std::exception( "The MultiCoreCpu version of transform is not enabled to be built! \n" );
+
 #endif
             return;
         }
@@ -669,18 +579,18 @@ public:
         }
         else if( (runMode == bolt::cl::control::MultiCoreCpu) )
         {
+
+#if defined( ENABLE_TBB )
             bolt::cl::device_vector< iType >::pointer firstPtr = first.getContainer( ).data( );
             bolt::cl::device_vector< oType >::pointer resPtr = result.getContainer( ).data( );
 
-#if defined( ENABLE_TBB )
-            tbb::parallel_for(
-                transformUnaryRange< iType*, oType*, UnaryFunction >(
-                    &firstPtr[ first.m_Index ], &firstPtr[ sz ], &resPtr[ 0 ], f ),
-                transformUnaryRangeBody< iType*, oType*, UnaryFunction >( ),
-                tbb::simple_partitioner( ) );
+            bolt::btbb::transform(&firstPtr[ first.m_Index ], &firstPtr[ sz ], &resPtr[ 0 ], f );
+
+
 #else
              //std::cout << "The MultiCoreCpu version of Transform is not enabled. " << std ::endl;
-             throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of transform is not enabled to be built." );
+             throw std::exception("The MultiCoreCpu version of transform is not enabled to be built! \n" );
+
 #endif
             return;
         }
@@ -692,7 +602,8 @@ public:
 
     template<typename DVInputIterator1, typename DVInputIterator2, typename DVOutputIterator, typename BinaryFunction>
     void transform_enqueue( bolt::cl::control &ctl, const DVInputIterator1& first1, const DVInputIterator1& last1,
-        const DVInputIterator2& first2, const DVOutputIterator& result, const BinaryFunction& f, const std::string& cl_code)
+        const DVInputIterator2& first2, const DVOutputIterator& result,
+        const BinaryFunction& f, const std::string& cl_code)
     {
         typedef std::iterator_traits<DVInputIterator1>::value_type iType1;
         typedef std::iterator_traits<DVInputIterator2>::value_type iType2;
@@ -723,7 +634,8 @@ public:
         * Type Definitions - directrly concatenated into kernel string
         *********************************************************************************/
 
-        // For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retrieve the name here.
+        // For user-defined types, the user must create a TypeName trait which returns the name of the
+        //class - note use of TypeName<>::get to retrieve the name here.
         std::vector<std::string> typeDefinitions;
         PUSH_BACK_UNIQUE( typeDefinitions, ClCode< iType1 >::get() )
         PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVInputIterator1 >::get() )
@@ -785,11 +697,11 @@ public:
         control::buffPointer userFunctor = ctl.acquireBuffer( sizeof( aligned_binary ),
         CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_binary );
 
-        kernels[boundsCheck].setArg( 0, first1.getBuffer( ) );
+        kernels[boundsCheck].setArg( 0, first1.getContainer().getBuffer() );
         kernels[boundsCheck].setArg( 1, first1.gpuPayloadSize( ), &first1.gpuPayload( ) );
-        kernels[boundsCheck].setArg( 2, first2.getBuffer( ) );
+        kernels[boundsCheck].setArg( 2, first2.getContainer().getBuffer() );
         kernels[boundsCheck].setArg( 3, first2.gpuPayloadSize( ), &first2.gpuPayload( ) );
-        kernels[boundsCheck].setArg( 4, result.getBuffer( ) );
+        kernels[boundsCheck].setArg( 4, result.getContainer().getBuffer() );
         kernels[boundsCheck].setArg( 5, result.gpuPayloadSize( ), &result.gpuPayload( ) );
         kernels[boundsCheck].setArg( 6, distVec );
         kernels[boundsCheck].setArg( 7, *userFunctor);
@@ -815,7 +727,7 @@ public:
             l_Error = transformEvent.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END, &stop_time);
             V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_END>()");
             size_t time = stop_time - start_time;
-            std::cout << "Global Memory Bandwidth: " << ( (distVec*(2.0*sizeof(iType1)+sizeof(oType))) / time) << std::endl;
+            std::cout << "Global Memory Bandwidth: "<<((distVec*(2.0*sizeof(iType1)+sizeof(oType)))/time)<<std::endl;
         }
     };
 
@@ -909,9 +821,9 @@ public:
         CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_binary );
 
 
-        kernels[boundsCheck].setArg(0, first.getBuffer( ) );
+        kernels[boundsCheck].setArg(0, first.getContainer().getBuffer() );
         kernels[boundsCheck].setArg(1, first.gpuPayloadSize( ), &first.gpuPayload( ) );
-        kernels[boundsCheck].setArg(2, result.getBuffer( ) );
+        kernels[boundsCheck].setArg(2, result.getContainer().getBuffer() );
         kernels[boundsCheck].setArg(3, result.gpuPayloadSize( ), &result.gpuPayload( ) );
         kernels[boundsCheck].setArg(4, distVec );
         kernels[boundsCheck].setArg(5, *userFunctor);
@@ -938,7 +850,8 @@ public:
             l_Error = transformEvent.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END, &stop_time);
             V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_END>()");
             size_t time = stop_time - start_time;
-            //std::cout << "Global Memory Bandwidth: " << ( (distVec*(1.0*sizeof(iType)+sizeof(oType))) / time) << std::endl;
+            //std::cout << "Global Memory Bandwidth: "<<((distVec*(1.0*sizeof(iType)+sizeof(oType)))/time)<< std::endl;
+
         }
     };
 

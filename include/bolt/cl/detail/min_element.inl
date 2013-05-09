@@ -15,6 +15,7 @@
 
 ***************************************************************************/
 
+
 #if !defined( REDUCE_INL )
 #define REDUCE_INL
 #pragma once
@@ -70,23 +71,13 @@ namespace bolt {
             ForwardIterator last,
             BinaryPredicate binary_op,
             const std::string& cl_code)
-        {
-            bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
-            if(runMode == bolt::cl::control::Automatic)
             {
-                   runMode = ctl.getDefaultPathToRun();
-            }
-			if (runMode == bolt::cl::control::SerialCpu) {
-                return std::min_element(first, last, binary_op);
-            } else {
-                return detail::min_element_detect_random_access(ctl, first, last, binary_op, cl_code,
+                    return detail::min_element_detect_random_access(ctl, first, last, binary_op, cl_code,
                     std::iterator_traits< ForwardIterator >::iterator_category( ) );
             }
         };
 
-    }
-
-};
+  };
 
 namespace bolt {
     namespace cl {
@@ -130,21 +121,11 @@ namespace bolt {
             ForwardIterator last,
             BinaryPredicate binary_op,
             const std::string& cl_code)
-        {
-            bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
-            if(runMode == bolt::cl::control::Automatic)
-            {
-                  runMode = ctl.getDefaultPathToRun();
-            }
-			if (runMode == bolt::cl::control::SerialCpu) {
-                return std::min_element(first, last, binary_op);
-            } else {
-                return detail::min_element_detect_random_access(ctl, first, last, binary_op, cl_code,
-                    std::iterator_traits< ForwardIterator >::iterator_category( ) );
+             {
+               return detail::min_element_detect_random_access(ctl, first, last, binary_op, cl_code,
+               std::iterator_traits< ForwardIterator >::iterator_category( ) );
             }
         };
-
-    }
 
 };
 
@@ -234,25 +215,30 @@ namespace bolt {
                 size_t numWG = computeUnits * wgPerComputeUnit;
 
                 cl_int l_Error = CL_SUCCESS;
+
                 const size_t wgSize  = kernels[0].getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >(
                     ctl.getDevice( ), &l_Error );
+
                 V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
 
                 // Create buffer wrappers so we can access the host functors, for read or writing in the kernel
                 ALIGNED( 256 ) BinaryPredicate aligned_reduce( binary_op );
-                //::cl::Buffer userFunctor(ctl.context(), CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, sizeof( aligned_reduce ),
+                //::cl::Buffer userFunctor(ctl.context(), CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY,sizeof(aligned_reduce),
                 //  &aligned_reduce );
                 control::buffPointer userFunctor = ctl.acquireBuffer( sizeof( aligned_reduce ),
                     CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_reduce );
 
-                // ::cl::Buffer result(ctl.context(), CL_MEM_ALLOC_HOST_PTR|CL_MEM_WRITE_ONLY, sizeof( iType ) * numWG);
+                // ::cl::Buffer result(ctl.context(), CL_MEM_ALLOC_HOST_PTR|CL_MEM_WRITE_ONLY, sizeof( iType )*numWG);
                 control::buffPointer result = ctl.acquireBuffer( sizeof( int ) * numWG,
                     CL_MEM_ALLOC_HOST_PTR|CL_MEM_WRITE_ONLY );
 
                 cl_uint szElements = static_cast< cl_uint >( first.distance_to(last ) );
 
-                V_OPENCL( kernels[0].setArg(0, first.getBuffer( ) ), "Error setting kernel argument" );
-                V_OPENCL( kernels[0].setArg(1, first.gpuPayloadSize( ), &first.gpuPayload( ) ), "Error setting a kernel argument" );
+
+                V_OPENCL( kernels[0].setArg(0, first.getContainer().getBuffer() ), "Error setting kernel argument" );
+                V_OPENCL( kernels[0].setArg(1,first.gpuPayloadSize(),&first.gpuPayload()),
+                          "Error setting a kernel argument");
+
                 V_OPENCL( kernels[0].setArg(2, szElements), "Error setting kernel argument" );
                 V_OPENCL( kernels[0].setArg(3, *userFunctor), "Error setting kernel argument" );
                 V_OPENCL( kernels[0].setArg(4, *result), "Error setting kernel argument" );
@@ -276,8 +262,8 @@ namespace bolt {
                     sizeof(int)*numWG, NULL, &l_mapEvent, &l_Error );
                 V_OPENCL( l_Error, "Error calling map on the result buffer" );
 
-                //  Finish the tail end of the reduction on host side; the compute device reduces within the workgroups,
-                //  with one result per workgroup
+                // Finish the tail end of the reduction on host side; the compute device reduces within the workgroups,
+                // with one result per workgroup
                 size_t ceilNumWG = static_cast< size_t >( std::ceil( static_cast< float >( szElements ) / wgSize) );
                 bolt::cl::minimum<size_t>  min_size_t;
                 size_t numTailReduce = min_size_t( ceilNumWG, numWG );
@@ -307,8 +293,8 @@ namespace bolt {
                 const std::string& cl_code,
                 std::input_iterator_tag)
             {
-                //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data
-                //  to a temporary buffer.  Should we?
+                //TODO:It should be possible to support non-random_access_iterator_tag iterators,if we copied the data
+                //to a temporary buffer.  Should we?
                 static_assert( false, "Bolt only supports random access iterator types" );
             }
 
@@ -336,6 +322,7 @@ namespace bolt {
                 std::random_access_iterator_tag )
             {
                 /*************/
+
                 typedef typename std::iterator_traits<ForwardIterator>::value_type iType;
                 size_t szElements = (size_t)(last - first);
                 if (szElements == 0)
@@ -345,27 +332,34 @@ namespace bolt {
                 // What should we do if the run mode is automatic. Currently it goes to the last else statement
                 //How many threads we should spawn?
                 //Need to look at how to control the number of threads spawned.
+
                 bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
                 if(runMode == bolt::cl::control::Automatic)
                 {
                     runMode = ctl.getDefaultPathToRun();
                 }
-                if (runMode == bolt::cl::control::SerialCpu) {
-                    //std::cout << "The SerialCpu version of reduce is not implemented yet." << std ::endl;
-                    throw ::cl::Error( CL_INVALID_OPERATION, "The SerialCpu version of reduce is not implemented yet." );
+
+                if (runMode == bolt::cl::control::SerialCpu)
+                {
+                    return std::min_element(first, last, binary_op);
+                }
+                else if (runMode == bolt::cl::control::MultiCoreCpu)
+                {
+
+                    #ifdef ENABLE_TBB
+                           throw std::exception("MultiCoreCPU Version not implemented yet! \n");
+                    #else
+                           throw std::exception("MultiCoreCPU Version not Enabled! \n");
+                    #endif
+
                     return last;
-                } else if (runMode == bolt::cl::control::MultiCoreCpu) {
+                }
+                else
+                {
+                    device_vector< iType > dvInput( first, last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, ctl );
+                    int  dvminele = min_element_enqueue( ctl, dvInput.begin(), dvInput.end(), binary_op, cl_code);
 
-                    //std::cout << "The MultiCoreCpu version of reduce is not enabled. " << std ::endl;
-                    throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of reduce is not enabled to be built." );
-                    return last;
-
-                } else {
-                device_vector< iType > dvInput( first, last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, ctl );
-                int  dvminele = min_element_enqueue( ctl, dvInput.begin(), dvInput.end(), binary_op, cl_code);
-
-                return first + dvminele ;
-
+                    return first + dvminele ;
                 }
             };
 
@@ -388,19 +382,30 @@ namespace bolt {
                 {
                     runMode = ctl.getDefaultPathToRun();
                 }
-                if (runMode == bolt::cl::control::SerialCpu) {
-                    //std::cout << "The SerialCpu version of min_element is not implemented yet." << std ::endl;
-                    throw ::cl::Error( CL_INVALID_OPERATION, "The SerialCpu version of min_element is not implemented yet." );
-                    return last;
-                } else if (runMode == bolt::cl::control::MultiCoreCpu) {
-                    /*TODO - ASK  - should we copy the device_vector to host memory, process the result and then store back the result into the device_vector.*/
-                    //std::cout << "The MultiCoreCpu version of min_element on device_vector is not supported." << std ::endl;
-                    throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of min_element on device_vector is not supported." );
-                    return last;
-                } else {
-                int pos =  min_element_enqueue( ctl, first, last,  binary_op, cl_code);
-                return first+pos;
+
+                if (runMode == bolt::cl::control::SerialCpu)
+                {
+                    return std::min_element(first, last, binary_op);
                 }
+                else if (runMode == bolt::cl::control::MultiCoreCpu)
+                {
+                   /*TODO - ASK  - should we copy the device_vector to host memory, process the result and
+                   then store back the result into the device_vector.*/
+                  //std::cout<<"The MultiCoreCpu version of min_element on device_vector is not supported."<<std::endl;
+                    #ifdef ENABLE_TBB
+                           throw std::exception("MultiCoreCPU Version on device_vector not implemented yet! \n");
+                    #else
+                           throw std::exception("MultiCoreCPU Version on device_vector not Enabled! \n");
+                    #endif
+
+                    return last;
+                }
+                else
+                {
+                    int pos =  min_element_enqueue( ctl, first, last,  binary_op, cl_code);
+                    return first+pos;
+                }
+
             }
 
             // This template is called after we detect random access iterators
@@ -413,13 +418,37 @@ namespace bolt {
                 const std::string& cl_code,
                 bolt::cl::fancy_iterator_tag )
             {
-                int pos = min_element_enqueue( ctl, first, last,  binary_op, cl_code);
-                return first+pos;
+                bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+                if(runMode == bolt::cl::control::Automatic)
+                {
+                    runMode = ctl.getDefaultPathToRun();
+                }
+                if (runMode == bolt::cl::control::SerialCpu)
+                {
+                     return std::min_element(first, last, binary_op);
+
+                }
+                else if (runMode == bolt::cl::control::MultiCoreCpu)
+                {
+                  /*TODO - ASK  - should we copy the device_vector to host memory, process the result and
+                  then store back the result into the device_vector.*/
+                  //std::cout<<"The MultiCoreCpu version of min_element on device_vector is not supported."<<std::endl;
+                    #ifdef ENABLE_TBB
+                           throw std::exception("MultiCoreCPU Version not implemented yet! \n");
+                    #else
+                           throw std::exception("MultiCoreCPU Version not Enabled! \n");
+                    #endif
+                }
+                else
+                {
+                    int pos = min_element_enqueue( ctl, first, last,  binary_op, cl_code);
+                    return first+pos;
+                }
             }
 
 
-        }
-    }
-}
+        };
+    };
+};
 
 #endif

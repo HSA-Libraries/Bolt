@@ -186,6 +186,10 @@ namespace detail
     //Non Device Vector specialization.
     //This implementation creates a cl::Buffer and passes the cl buffer to the sort specialization whichtakes the cl buffer as a parameter. 
     //In the future, Each input buffer should be mapped to the device_vector and the specialization specific to device_vector should be called. 
+    //This implementation creates a cl::Buffer and passes the cl buffer to the sort specialization whichtakes 
+    //the cl buffer as a parameter. 
+    //In the future, Each input buffer should be mapped to the device_vector and the specialization specific
+    //to device_vector should be called. 
     template< typename RandomAccessIterator1, typename RandomAccessIterator2, typename StrictWeakOrdering >
     void stablesort_by_key_pick_iterator( control &ctl, 
                                 const RandomAccessIterator1 keys_first, const RandomAccessIterator1 keys_last, 
@@ -205,20 +209,28 @@ namespace detail
         if( runMode == bolt::cl::control::Automatic )
         {
             runMode = ctl.getDefaultPathToRun( );
+
         }
 
         if( runMode == bolt::cl::control::SerialCpu )
         {
-            throw ::cl::Error( CL_INVALID_OPERATION, "stable_sort_by_key not implemented yet for SerialCPU" );
+            throw std::exception("stable_sort_by_key not implemented yet for SerialCPU! \n");
             return;
         }
         else if( runMode == bolt::cl::control::MultiCoreCpu )
         {
-            throw ::cl::Error( CL_INVALID_OPERATION, "stable_sort_by_key not implemented yet for MultiCoreCpu" );
+            
+            #ifdef ENABLE_TBB
+                    throw std::exception("stable_sort_by_key not implemented yet for MultiCoreCpu! \n");
+            #else
+                    throw std::exception("MultiCoreCPU Version of stable_sort_by_key not Enabled! \n");
+            #endif
+                    
             return;
         } 
         else 
         {
+
             device_vector< keyType > dvKeys( keys_first, keys_last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctl );
             device_vector< valType > dvValues( values_first, vecSize, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, false, ctl );
 
@@ -240,9 +252,10 @@ namespace detail
                                     const StrictWeakOrdering& comp, const std::string& cl_code, 
                                     bolt::cl::device_vector_tag, bolt::cl::device_vector_tag )
     {
+
         typedef typename std::iterator_traits< DVRandomAccessIterator1 >::value_type keyType;
 
-        size_t vecSize = std::distance( first, last ); 
+        size_t vecSize = std::distance( keys_first, keys_last ); 
         if( vecSize < 2 )
             return;
 
@@ -255,13 +268,17 @@ namespace detail
 
         if( runMode == bolt::cl::control::SerialCpu )
         {
-            throw ::cl::Error( CL_INVALID_OPERATION, "stable_sort_by_key not implemented yet for SerialCPU" );
+            throw std::exception( "stable_sort_by_key not implemented yet for SerialCPU! \n" );
             return;
         }
         else if( runMode == bolt::cl::control::MultiCoreCpu )
         {
-            throw ::cl::Error( CL_INVALID_OPERATION, "stable_sort_by_key not implemented yet for MultiCoreCpu" );
-            return;
+             #ifdef ENABLE_TBB
+                    throw std::exception("stable_sort_by_key not implemented yet for MultiCoreCpu! \n");
+             #else
+                    throw std::exception("MultiCoreCPU Version of stable_sort_by_key not Enabled! \n");
+             #endif
+             return;
         } 
         else
         {
@@ -270,6 +287,17 @@ namespace detail
 
         return;
     }
+
+    //Fancy iterator specialization
+    template<typename DVRandomAccessIterator1, typename DVRandomAccessIterator2, typename StrictWeakOrdering>
+    void stablesort_by_key_pick_iterator( control &ctl, 
+                                    const DVRandomAccessIterator1 keys_first, const DVRandomAccessIterator1 keys_last, 
+                                    const DVRandomAccessIterator2 values_first,
+                                    const StrictWeakOrdering& comp, const std::string& cl_code, bolt::cl::fancy_iterator_tag )
+    {
+        static_assert( false, "It is not possible to output to fancy iterators; they are not mutable! " );
+    }
+
 
     template< typename DVRandomAccessIterator1, typename DVRandomAccessIterator2, typename StrictWeakOrdering >
     void stablesort_by_key_enqueue( control& ctrl, 
@@ -330,7 +358,8 @@ namespace detail
             compileOptions );
         // kernels returned in same order as added in KernelTemplaceSpecializer constructor
 
-        size_t localRange  = kernels[ 0 ].getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctrl.getDevice( ), &l_Error );
+        size_t localRange=kernels[0].getWorkGroupInfo<CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE>(ctrl.getDevice(),
+                                                                                                    &l_Error);
         V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
 
 
@@ -344,20 +373,33 @@ namespace detail
         }
 
         ALIGNED( 256 ) StrictWeakOrdering aligned_comp( comp );
-        control::buffPointer userFunctor = ctrl.acquireBuffer( sizeof( aligned_comp ), CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, &aligned_comp );
+        control::buffPointer userFunctor = ctrl.acquireBuffer( sizeof( aligned_comp ),
+                                                              CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, &aligned_comp );
 
         //  kernels[ 0 ] sorts values within a workgroup, in parallel across the entire vector
         //  kernels[ 0 ] reads and writes to the same vector
         cl_uint keyLdsSize  = static_cast< cl_uint >( localRange * sizeof( keyType ) );
         cl_uint valueLdsSize  = static_cast< cl_uint >( localRange * sizeof( valueType ) );
-        V_OPENCL( kernels[ 0 ].setArg( 0, keys_first.getBuffer( ) ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
-        V_OPENCL( kernels[ 0 ].setArg( 1, keys_first.gpuPayloadSize( ), &keys_first.gpuPayload( ) ), "Error setting a kernel argument" );
-        V_OPENCL( kernels[ 0 ].setArg( 2, values_first.getBuffer( ) ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
-        V_OPENCL( kernels[ 0 ].setArg( 3, values_first.gpuPayloadSize( ), &values_first.gpuPayload( ) ), "Error setting a kernel argument" );
-        V_OPENCL( kernels[ 0 ].setArg( 4, vecSize ),            "Error setting argument for kernels[ 0 ]" ); // Size of scratch buffer
-        V_OPENCL( kernels[ 0 ].setArg( 5, keyLdsSize, NULL ),          "Error setting argument for kernels[ 0 ]" ); // Scratch buffer
-        V_OPENCL( kernels[ 0 ].setArg( 6, valueLdsSize, NULL ),          "Error setting argument for kernels[ 0 ]" ); // Scratch buffer
-        V_OPENCL( kernels[ 0 ].setArg( 7, *userFunctor ),           "Error setting argument for kernels[ 0 ]" ); // User provided functor class
+
+         // Input buffer
+        V_OPENCL( kernels[ 0 ].setArg( 0, keys_first.getContainer().getBuffer( ) ),    "Error setting argument for kernels[ 0 ]" );
+        V_OPENCL( kernels[ 0 ].setArg( 1, keys_first.gpuPayloadSize( ), &keys_first.gpuPayload( ) ), 
+                                       "Error setting a kernel argument" );
+         // Input buffer
+        V_OPENCL( kernels[ 0 ].setArg( 2, values_first.getContainer().getBuffer( ) ),   
+                                       "Error setting argument for kernels[ 0 ]" );
+        V_OPENCL( kernels[ 0 ].setArg( 3, values_first.gpuPayloadSize( ), &values_first.gpuPayload( ) ),
+                                       "Error setting a kernel argument" );
+         // Size of scratch buffer
+        V_OPENCL( kernels[ 0 ].setArg( 4, vecSize ),            "Error setting argument for kernels[ 0 ]" );
+         // Scratch buffer
+        V_OPENCL( kernels[ 0 ].setArg( 5, keyLdsSize, NULL ),          "Error setting argument for kernels[ 0 ]" );
+         // Scratch buffer
+        V_OPENCL( kernels[ 0 ].setArg( 6, valueLdsSize, NULL ),          "Error setting argument for kernels[ 0 ]" );
+         // User provided functor class
+        V_OPENCL( kernels[ 0 ].setArg( 7, *userFunctor ),           "Error setting argument for kernels[ 0 ]" );
+        
+        
 
         ::cl::CommandQueue& myCQ = ctrl.getCommandQueue( );
 
@@ -396,40 +438,61 @@ namespace detail
         //  Allocate a flipflop buffer because the merge passes are out of place
         control::buffPointer tmpKeyBuffer = ctrl.acquireBuffer( globalRange * sizeof( keyType ) );
         control::buffPointer tmpValueBuffer = ctrl.acquireBuffer( globalRange * sizeof( valueType ) );
-        V_OPENCL( kernels[ 1 ].setArg( 8, vecSize ),            "Error setting argument for kernels[ 0 ]" ); // Size of scratch buffer
-        V_OPENCL( kernels[ 1 ].setArg( 10, keyLdsSize, NULL ),          "Error setting argument for kernels[ 0 ]" ); // Scratch buffer
-        V_OPENCL( kernels[ 1 ].setArg( 11, valueLdsSize, NULL ),          "Error setting argument for kernels[ 0 ]" ); // Scratch buffer
-        V_OPENCL( kernels[ 1 ].setArg( 12, *userFunctor ),           "Error setting argument for kernels[ 0 ]" ); // User provided functor class
-
+         // Size of scratch buffer
+        V_OPENCL( kernels[ 1 ].setArg( 8, vecSize ),            "Error setting argument for kernels[ 0 ]" );
+         // Scratch buffer
+        V_OPENCL( kernels[ 1 ].setArg( 10, keyLdsSize, NULL ),          "Error setting argument for kernels[ 0 ]" );
+         // Scratch buffer
+        V_OPENCL( kernels[ 1 ].setArg( 11, valueLdsSize, NULL ),          "Error setting argument for kernels[ 0 ]" );
+         // User provided functor class
+        V_OPENCL( kernels[ 1 ].setArg( 12, *userFunctor ),           "Error setting argument for kernels[ 0 ]" );
+        
         ::cl::Event kernelEvent;
         for( size_t pass = 1; pass <= numMerges; ++pass )
         {
             //  For each pass, flip the input-output buffers 
             if( pass & 0x1 )
             {
-                V_OPENCL( kernels[ 1 ].setArg( 0, keys_first.getBuffer( ) ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
-                V_OPENCL( kernels[ 1 ].setArg( 1, keys_first.gpuPayloadSize( ), &keys_first.gpuPayload( ) ), "Error setting a kernel argument" );
-                V_OPENCL( kernels[ 1 ].setArg( 2, values_first.getBuffer( ) ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
-                V_OPENCL( kernels[ 1 ].setArg( 3, values_first.gpuPayloadSize( ), &values_first.gpuPayload( ) ), "Error setting a kernel argument" );
-                V_OPENCL( kernels[ 1 ].setArg( 4, *tmpKeyBuffer ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
-                V_OPENCL( kernels[ 1 ].setArg( 5, keys_first.gpuPayloadSize( ), &keys_first.gpuPayload( ) ), "Error setting a kernel argument" );
-                V_OPENCL( kernels[ 1 ].setArg( 6, *tmpValueBuffer ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
-                V_OPENCL( kernels[ 1 ].setArg( 7, values_first.gpuPayloadSize( ), &values_first.gpuPayload( ) ), "Error setting a kernel argument" );
+                 // Input buffer
+                V_OPENCL( kernels[ 1 ].setArg( 0, keys_first.getContainer().getBuffer() ),"Error setting argument for kernels[ 0 ]");
+                V_OPENCL( kernels[ 1 ].setArg( 1, keys_first.gpuPayloadSize( ), &keys_first.gpuPayload( ) ),
+                                               "Error setting a kernel argument" );
+                 // Input buffer
+                V_OPENCL( kernels[ 1 ].setArg( 2, values_first.getContainer().getBuffer() ),"Error setting argument for kernels[0]");
+                V_OPENCL( kernels[ 1 ].setArg( 3, values_first.gpuPayloadSize( ), &values_first.gpuPayload( ) ),
+                                               "Error setting a kernel argument" );
+                 // Input buffer
+                V_OPENCL( kernels[ 1 ].setArg( 4, *tmpKeyBuffer ),"Error setting argument for kernels[0]");
+                V_OPENCL( kernels[ 1 ].setArg( 5, keys_first.gpuPayloadSize( ), &keys_first.gpuPayload( ) ),
+                                               "Error setting a kernel argument" );
+                 // Input buffer
+                V_OPENCL( kernels[ 1 ].setArg( 6, *tmpValueBuffer ),"Error setting argument for kernels[ 0 ]" );
+                V_OPENCL( kernels[ 1 ].setArg( 7, values_first.gpuPayloadSize( ), &values_first.gpuPayload( ) ), 
+                                               "Error setting a kernel argument" );
             }
             else
             {
-                V_OPENCL( kernels[ 1 ].setArg( 0, *tmpKeyBuffer ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
-                V_OPENCL( kernels[ 1 ].setArg( 1, keys_first.gpuPayloadSize( ), &keys_first.gpuPayload( ) ), "Error setting a kernel argument" );
-                V_OPENCL( kernels[ 1 ].setArg( 2, *tmpValueBuffer ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
-                V_OPENCL( kernels[ 1 ].setArg( 3, values_first.gpuPayloadSize( ), &values_first.gpuPayload( ) ), "Error setting a kernel argument" );
-                V_OPENCL( kernels[ 1 ].setArg( 4, keys_first.getBuffer( ) ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
-                V_OPENCL( kernels[ 1 ].setArg( 5, keys_first.gpuPayloadSize( ), &keys_first.gpuPayload( ) ), "Error setting a kernel argument" );
-                V_OPENCL( kernels[ 1 ].setArg( 6, values_first.getBuffer( ) ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
-                V_OPENCL( kernels[ 1 ].setArg( 7, values_first.gpuPayloadSize( ), &values_first.gpuPayload( ) ), "Error setting a kernel argument" );
+                 // Input buffer
+                V_OPENCL( kernels[ 1 ].setArg( 0, *tmpKeyBuffer ),    "Error setting argument for kernels[ 0 ]" );
+                V_OPENCL( kernels[ 1 ].setArg( 1, keys_first.gpuPayloadSize( ), &keys_first.gpuPayload( ) ), 
+                                               "Error setting a kernel argument" );
+                 // Input buffer
+                V_OPENCL( kernels[ 1 ].setArg( 2, *tmpValueBuffer ),    "Error setting argument for kernels[ 0 ]" );
+                V_OPENCL( kernels[ 1 ].setArg( 3, values_first.gpuPayloadSize( ), &values_first.gpuPayload( ) ),
+                                               "Error setting a kernel argument" );
+                V_OPENCL( kernels[ 1 ].setArg( 4, keys_first.getContainer().getBuffer() ),    
+                                               "Error setting argument for kernels[ 0 ]" ); // Input buffer
+                V_OPENCL( kernels[ 1 ].setArg( 5, keys_first.gpuPayloadSize( ), &keys_first.gpuPayload( ) ),
+                                               "Error setting a kernel argument" );
+                V_OPENCL( kernels[ 1 ].setArg( 6, values_first.getContainer().getBuffer() ),   
+                                               "Error setting argument for kernels[ 0 ]" ); // Input buffer
+                V_OPENCL( kernels[ 1 ].setArg( 7, values_first.gpuPayloadSize( ), &values_first.gpuPayload( ) ),
+                                               "Error setting a kernel argument" );
             }
             //  For each pass, the merge window doubles
             unsigned srcLogicalBlockSize = static_cast< unsigned >( localRange << (pass-1) );
-            V_OPENCL( kernels[ 1 ].setArg( 9, static_cast< unsigned >( srcLogicalBlockSize ) ),            "Error setting argument for kernels[ 0 ]" ); // Size of scratch buffer
+            V_OPENCL( kernels[ 1 ].setArg( 9, static_cast< unsigned >( srcLogicalBlockSize ) ),           
+                                           "Error setting argument for kernels[ 0 ]" ); // Size of scratch buffer
 
             if( pass == numMerges )
             {
@@ -451,19 +514,20 @@ namespace detail
             //if( pass & 0x1 )
             //{
             //    //  Debug mapping, to look at result vector in memory
-            //    keyType* dev2Host = static_cast< keyType* >( myCQ.enqueueMapBuffer( *tmpBuffer, CL_TRUE, CL_MAP_READ, 0,
-            //        globalRange * sizeof( keyType ), NULL, NULL, &l_Error) );
+            //    keyType* dev2Host = static_cast< keyType* >( myCQ.enqueueMapBuffer(*tmpBuffer,CL_TRUE,CL_MAP_READ,0,
+            //                                                globalRange * sizeof( keyType ), NULL, NULL, &l_Error) );
             //    V_OPENCL( l_Error, "Error: Mapping Device->Host Buffer." );
 
             //    for( unsigned i = 0; i < globalRange/srcLogicalBlockSize; ++i )
             //    {
             //        unsigned blockIndex = i * srcLogicalBlockSize;
-            //        unsigned endIndex = bolt::cl::minimum< unsigned >()( blockIndex+(srcLogicalBlockSize-1), vecSize ) - 1;
+            //        unsigned endIndex =bolt::cl::minimum< unsigned >()(blockIndex+(srcLogicalBlockSize-1),vecSize)-1;
             //        for( unsigned j = blockIndex; j < endIndex; ++j )
             //        {
             //            if( !(comp)( dev2Host[ j ], dev2Host[ j + 1 ] ) && (dev2Host[ j ] != dev2Host[ j + 1 ]) )
             //            {
-            //                std::cout << " Element[ " << j+1 << " ] out of sequence Block[ " << i << " ] Index[ " << j+1-blockIndex << " ]" << std::endl;
+            //                std::cout << " Element[ " << j+1 << " ] out of sequence Block[ " << i << " ] Index[ " ;
+            //                std::cout << j+1-blockIndex << " ]" << std::endl;
             //            }
             //        }
             //    }
@@ -473,14 +537,18 @@ namespace detail
             //else
             //{
             //    //  Debug mapping, to look at result vector in memory
-            //    keyType* dev2Host = static_cast< keyType* >( myCQ.enqueueMapBuffer( first.getBuffer( ), CL_TRUE, CL_MAP_READ, 0,
-            //        bolt::cl::minimum< size_t >()( globalRange, vecSize ) * sizeof( keyType ), NULL, NULL, &l_Error) );
+
+            //    keyType* dev2Host = static_cast< keyType* >( myCQ.enqueueMapBuffer( first.getContainer().getBuffer(), 
+            //                                                                      CL_TRUE, CL_MAP_READ, 0,
+            //        bolt::cl::minimum< size_t >()( globalRange, vecSize ) * sizeof( keyType ), NULL, 
+            //                                                                        NULL, &l_Error) );
+
             //    V_OPENCL( l_Error, "Error: Mapping Device->Host Buffer." );
 
             //    for( unsigned i = 0; i < globalRange/srcLogicalBlockSize; ++i )
             //    {
             //        unsigned blockIndex = i * srcLogicalBlockSize;
-            //        unsigned endIndex = bolt::cl::minimum< unsigned >()( blockIndex+(srcLogicalBlockSize-1), vecSize ) - 1;
+            //        unsigned endIndex =bolt::cl::minimum< unsigned >()(blockIndex+(srcLogicalBlockSize-1),vecSize)-1;
             //        for( unsigned j = blockIndex; j < endIndex; ++j )
             //        {
             //            if( !(comp)( dev2Host[ j ], dev2Host[ j + 1 ] ) && (dev2Host[ j ] != dev2Host[ j + 1 ]) )
@@ -490,7 +558,7 @@ namespace detail
             //        }
             //    }
 
-            //    myCQ.enqueueUnmapMemObject( first.getBuffer( ), dev2Host );
+            //    myCQ.enqueueUnmapMemObject( first.getContainer().getBuffer(), dev2Host );
             //}
             //std::cout << std::endl;
         }
@@ -501,12 +569,15 @@ namespace detail
         {
             ::cl::Event copyEvent;
 
-            l_Error = myCQ.enqueueCopyBuffer( *tmpKeyBuffer, keys_first.getBuffer( ), 0, keys_first.m_Index * sizeof( keyType ), 
-                vecSize * sizeof( keyType ), NULL, NULL );
+
+            l_Error = myCQ.enqueueCopyBuffer( *tmpKeyBuffer, keys_first.getContainer().getBuffer(), 0, 
+                                               keys_first.m_Index * sizeof( keyType ), 
+                                               vecSize * sizeof( keyType ), NULL, NULL );
             V_OPENCL( l_Error, "device_vector failed to copy data inside of operator=()" );
 
-            l_Error = myCQ.enqueueCopyBuffer( *tmpValueBuffer, values_first.getBuffer( ), 0, values_first.m_Index * sizeof( keyType ), 
-                vecSize * sizeof( keyType ), NULL, &copyEvent );
+            l_Error = myCQ.enqueueCopyBuffer( *tmpValueBuffer, values_first.getContainer().getBuffer(), 0,
+                                               values_first.m_Index * sizeof( keyType ), 
+                                               vecSize * sizeof( keyType ), NULL, &copyEvent );
             V_OPENCL( l_Error, "device_vector failed to copy data inside of operator=()" );
 
             wait( ctrl, copyEvent );

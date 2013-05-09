@@ -57,9 +57,8 @@
 
 #ifdef ENABLE_TBB
 //TBB Includes
-#include "tbb/parallel_scan.h"
-#include "tbb/blocked_range.h"
-#include "tbb/task_scheduler_init.h"
+#include "bolt/btbb/scan.h"
+
 #endif
 
 
@@ -297,67 +296,6 @@ Serial_scan(
 }
 
 
-#ifdef ENABLE_TBB
-      template <typename T, typename BinaryFunction, typename InputIterator, typename OutputIterator>
-      struct Scan_tbb{
-          T sum;
-          T start;
-          InputIterator& x;
-          OutputIterator& y;
-          BinaryFunction scan_op;
-          bool inclusive, flag;
-          public:
-          Scan_tbb() : sum(0) {}
-          Scan_tbb( InputIterator&  _x,
-                    OutputIterator& _y,
-                    const BinaryFunction &_opr,
-                    const bool &_incl ,const T &init) : x(_x), y(_y), scan_op(_opr),inclusive(_incl),start(init),flag(TRUE){}
-          T get_sum() const {return sum;}
-          template<typename Tag>
-          void operator()( const tbb::blocked_range<int>& r, Tag ) {
-             T temp = sum;
-             for(int i=r.begin(); i<r.end(); ++i ) {
-                 if(Tag::is_final_scan()){
-                     if(!inclusive){
-                        if(i==0 ) {
-                            *(y+i) = start;
-                            temp = scan_op(start, *(x+i));
-                         }
-                         else{
-                           *(y+i) = temp;
-                            temp = scan_op(temp, *(x+i));
-                         }
-                         continue;
-                     }
-                     else if(i == 0){
-                        temp = *(x+i);
-                     }
-                     else{
-                        temp = scan_op(temp, *(x+i));
-                     }
-                     *(y+i) = temp;
-                  }
-                  else{
-                     if(flag){
-                       temp = *(x+i);
-                       flag = FALSE;
-                     }
-                     else
-                        temp = scan_op(temp, *(x+i));
-                  }
-             }
-             sum = temp;
-          }
-          Scan_tbb( Scan_tbb& b, tbb::split):y(b.y),x(b.x),inclusive(b.inclusive),start(b.start),flag(TRUE){
-          }
-          void reverse_join( Scan_tbb& a ) {
-               sum = scan_op(a.sum, sum);
-          }
-          void assign( Scan_tbb& b ) {
-             sum = b.sum;
-          }
-       };
-#endif
 
 
 /*!
@@ -410,11 +348,15 @@ aProfiler.stopTrial();
     else if( runMode == bolt::amp::control::MultiCoreCpu )
     {
 #ifdef ENABLE_TBB
-          tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
-          Scan_tbb<iType, BinaryFunction, InputIterator, OutputIterator> tbb_scan((InputIterator &)first,(OutputIterator &)
-                                                                         result,binary_op,inclusive,init);
-          tbb::parallel_scan( tbb::blocked_range<int>(  0, static_cast< int >( std::distance( first, last ))), tbb_scan, tbb::auto_partitioner());
-          return result + numElements;
+
+           if(inclusive)
+               {
+                 return bolt::btbb::inclusive_scan(first, last, result, binary_op);
+               }
+               else
+               {
+                return bolt::btbb::exclusive_scan( first, last, result, init, binary_op);
+               }
 #else
 //        std::cout << "The MultiCoreCpu version of Scan is not implemented yet." << std ::endl;
         throw std::exception( "The MultiCoreCpu version of Scan is not enabled to be built." );
@@ -431,7 +373,7 @@ aProfiler.stopTrial();
         //Now call the actual cl algorithm
         scan_enqueue( ctl, dvInput.begin( ), dvInput.end( ), dvOutput.begin( ), init, binary_op, inclusive );
         //std::cout << "Peeking in pick_iterator after scan_enqueue completed." << std::endl;
-        PEEK_AT( dvOutput.begin().getBuffer())
+        PEEK_AT( dvOutput.begin().getContainer().getBuffer())
 
         // This should immediately map/unmap the buffer
         dvOutput.data( );
@@ -477,13 +419,13 @@ scan_pick_iterator(
        std::vector<oType> scanResultBuffer(numElements);
 
         for(unsigned int index=0; index<numElements; index++){
-            scanInputBuffer[index] = first.getBuffer()[index];
-            scanResultBuffer[index] = result.getBuffer()[index];
+            scanInputBuffer[index] = first.getContainer().getBuffer()[index];
+            scanResultBuffer[index] = result.getContainer().getBuffer()[index];
         }
         Serial_scan<iType, oType, BinaryFunction, T>(&(scanInputBuffer[0]), &(scanResultBuffer[0]),
                                                      numElements, binary_op, inclusive, init);
         for(unsigned int index=0; index<numElements; index++){
-            result.getBuffer()[index] = scanResultBuffer[index];
+            result.getContainer().getBuffer()[index] = scanResultBuffer[index];
         }
         return result + numElements;
     }
@@ -496,17 +438,21 @@ scan_pick_iterator(
 
         //Copy the device_vector buffer to a CPU buffer
         for(unsigned int index=0; index<numElements; index++){
-            scanInputBuffer[index] = first.getBuffer()[index];
-            scanResultBuffer[index] = result.getBuffer()[index];
+            scanInputBuffer[index] = first.getContainer().getBuffer()[index];
+            scanResultBuffer[index] = result.getContainer().getBuffer()[index];
         }
-        InputIterator input = scanInputBuffer.begin();
-        OutputIterator output = scanResultBuffer.begin();
-        tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
-        Scan_tbb<iType, BinaryFunction, InputIterator, OutputIterator> tbb_scan((InputIterator&)input,
-                                                  (OutputIterator&)output, binary_op, inclusive, init);
-        tbb::parallel_scan( tbb::blocked_range<int>(  0, numElements), tbb_scan, tbb::auto_partitioner());
+
+        if(inclusive)
+        {
+            bolt::btbb::inclusive_scan( scanInputBuffer.begin(),  scanInputBuffer.end(), scanResultBuffer.begin(), binary_op);
+        }
+        else
+        {
+            bolt::btbb::exclusive_scan(  scanInputBuffer.begin(),  scanInputBuffer.end(), scanResultBuffer.begin(), init, binary_op);
+        }
+
         for(unsigned int index=0; index<numElements; index++){
-            result.getBuffer()[index] = scanResultBuffer[index];
+            result.getContainer().getBuffer()[index] = scanResultBuffer[index];
         }
         return result + numElements;
 #else
@@ -520,7 +466,7 @@ scan_pick_iterator(
     //Now call the actual cl algorithm
         scan_enqueue( ctl, first, last, result, init, binary_op, inclusive );
         //std::cout << "Peeking in pick_iterator after scan_enqueue completed." << std::endl;
-        PEEK_AT( result.getBuffer())
+        PEEK_AT( result.getContainer().getBuffer())
     }
 
     return result + numElements;
@@ -619,8 +565,8 @@ size_t k0_stepNum, k1_stepNum, k2_stepNum;
     //  Use of the auto keyword here is OK, because AMP is restricted by definition to vs11 or above
     //  The auto keyword is useful here in a polymorphic sense, because it does not care if the container
     //  is wrapping an array or an array_view
-  auto&  input = first.getBuffer(); //( numElements, av );
-    auto& output = result.getBuffer(); //( sizeInputBuff, av );
+  auto&  input = first.getContainer().getBuffer(); //( numElements, av );
+    auto& output = result.getContainer().getBuffer(); //( sizeInputBuff, av );
     input.get_extent().size();
   //hostInput.copy_to( input.section( concurrency::extent< 1 >( numElements ) ) );
 

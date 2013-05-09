@@ -35,8 +35,7 @@
 #include "bolt/amp/device_vector.h"
 
 #ifdef ENABLE_TBB
-    #include "tbb/parallel_for_each.h"
-    #include "tbb/parallel_for.h"
+    #include "bolt/btbb/transform.h"
 #endif
 
 
@@ -213,110 +212,6 @@ namespace bolt
                 transform_unary_pick_iterator( ctl, first1, last1, result, f  );
             }
 
-#if defined( ENABLE_TBB )
-    template< typename tbbInputIterator1, typename tbbInputIterator2, typename tbbOutputIterator, typename tbbFunctor >
-    struct transformBinaryRange
-    {
-        tbbInputIterator1 first1, last1;
-        tbbInputIterator2 first2;
-        tbbOutputIterator result;
-        tbbFunctor func;
-        static const size_t divSize = 1024;
-
-        bool empty( ) const
-        {
-            return (std::distance( first1, last1 ) == 0);
-        }
-
-        bool is_divisible( ) const
-        {
-            return (std::distance( first1, last1 ) > divSize);
-        }
-
-        transformBinaryRange( tbbInputIterator1 begin1, tbbInputIterator1 end1, tbbInputIterator2 begin2,
-            tbbOutputIterator out, tbbFunctor func1 ):
-            first1( begin1 ), last1( end1 ),
-            first2( begin2 ), result( out ), func( func1 )
-        {}
-
-        transformBinaryRange( transformBinaryRange& r, tbb::split ): first1( r.first1 ), last1( r.last1 ), first2( r.first2 ),
-            result( r.result ), func( r.func )
-        {
-            size_t halfSize = std::distance( r.first1, r.last1 ) >> 1;
-            r.last1 = r.first1 + halfSize;
-
-            first1 = r.last1;
-            first2 = r.first2 + halfSize;
-            result = r.result + halfSize;
-        }
-    };
-
-    template< typename tbbInputIterator1, typename tbbOutputIterator, typename tbbFunctor >
-    struct transformUnaryRange
-    {
-        tbbInputIterator1 first1, last1;
-        tbbOutputIterator result;
-        tbbFunctor func;
-        static const size_t divSize = 1024;
-
-        bool empty( ) const
-        {
-            return (std::distance( first1, last1 ) == 0);
-        }
-
-        bool is_divisible( ) const
-        {
-            return (std::distance( first1, last1 ) > divSize);
-        }
-
-        transformUnaryRange( tbbInputIterator1 begin1, tbbInputIterator1 end1, tbbOutputIterator out, tbbFunctor func1 ):
-            first1( begin1 ), last1( end1 ), result( out ), func( func1 )
-        {}
-
-        transformUnaryRange( transformUnaryRange& r, tbb::split ): first1( r.first1 ), last1( r.last1 ),
-             result( r.result ), func( r.func )
-        {
-            size_t halfSize = std::distance( r.first1, r.last1 ) >> 1;
-            r.last1 = r.first1 + halfSize;
-
-            first1 = r.last1;
-            result = r.result + halfSize;
-        }
-    };
-
-    template< typename tbbInputIterator1, typename tbbInputIterator2, typename tbbOutputIterator, typename tbbFunctor >
-    struct transformBinaryRangeBody
-    {
-        void operator( )( transformBinaryRange< tbbInputIterator1, tbbInputIterator2, tbbOutputIterator, tbbFunctor >& r ) const
-        {
-            //size_t sz = std::distance( r.first1, r.last1 );
-
-#if defined( _WIN32 )
-            std::transform( r.first1, r.last1, r.first2,
-                stdext::make_unchecked_array_iterator( r.result ), r.func );
-#else
-            std::transform( r.first1, r.last1, r.first2, r.result, r.func );
-#endif
-        }
-    };
-
-    template< typename tbbInputIterator1, typename tbbOutputIterator, typename tbbFunctor >
-    struct transformUnaryRangeBody
-    {
-        void operator( )( transformUnaryRange< tbbInputIterator1, tbbOutputIterator, tbbFunctor >& r ) const
-        {
-            //size_t sz = std::distance( r.first1, r.last1 );
-
-#if defined( _WIN32 )
-            std::transform( r.first1, r.last1, stdext::make_unchecked_array_iterator( r.result ), r.func );
-#else
-            std::transform( r.first1, r.last1, r.result, r.func );
-#endif
-        }
-    };
-#endif
-
-
 
             /*! \brief This template function overload is used to seperate device_vector iterators from all other iterators
                 \detail This template is called by the non-detail versions of transform, it already assumes random access
@@ -351,11 +246,8 @@ namespace bolt
                else if( runMode == bolt::amp::control::MultiCoreCpu )
                {
 #if defined( ENABLE_TBB )
-                    tbb::parallel_for(
-                    transformBinaryRange< InputIterator1, InputIterator2, OutputIterator, BinaryFunction >(
-                        first1, last1, first2, result, f ),
-                    transformBinaryRangeBody< InputIterator1, InputIterator2, OutputIterator, BinaryFunction >( ),
-                    tbb::simple_partitioner( ) );
+
+                    bolt::btbb::transform(first1,last1,first2,result,f);
 #else
                     //std::cout << "The MultiCoreCpu version of Transform is not enabled. " << std ::endl;
                     throw std::exception(  "The MultiCoreCpu version of transform is not enabled to be built." );
@@ -420,16 +312,13 @@ namespace bolt
               }
               else if( runMode == bolt::amp::control::MultiCoreCpu )
               {
+
+#if defined( ENABLE_TBB )
                   bolt::amp::device_vector< iType1 >::pointer firstPtr =  first1.getContainer( ).data( );
                   bolt::amp::device_vector< iType2 >::pointer secPtr =  first2.getContainer( ).data( );
                   bolt::amp::device_vector< oType >::pointer resPtr =  result.getContainer( ).data( );
+                  bolt::btbb::transform(&firstPtr[ first1.m_Index ],&firstPtr[ sz ],&secPtr[ 0 ],&resPtr[ 0 ],f);
 
-#if defined( ENABLE_TBB )
-                 tbb::parallel_for(
-                 transformBinaryRange< iType1*, iType2*, oType*, BinaryFunction >(
-                    &firstPtr[ first1.m_Index ], &firstPtr[ sz ], &secPtr[ 0 ], &resPtr[ 0 ], f ),
-                 transformBinaryRangeBody< iType1*, iType2*, oType*, BinaryFunction >( ),
-                 tbb::simple_partitioner( ) );
 #else
                  //std::cout << "The MultiCoreCpu version of Transform is not enabled. " << std ::endl;
                  throw std::exception(  "The MultiCoreCpu version of transform is not enabled to be built." );
@@ -472,10 +361,9 @@ namespace bolt
                 else if( runMode == bolt::amp::control::MultiCoreCpu )
                 {
 #if defined( ENABLE_TBB )
-                   tbb::parallel_for(
-                       transformUnaryRange< InputIterator, OutputIterator, UnaryFunction >( first, last, result, f ),
-                   transformUnaryRangeBody< InputIterator, OutputIterator, UnaryFunction >( ),
-                   tbb::simple_partitioner( ) );
+
+                    bolt::btbb::transform(first, last, result, f);
+
 #else
                    //std::cout << "The MultiCoreCpu version of Transform is not enabled. " << std ::endl;
                    throw std::exception(  "The MultiCoreCpu version of transform is not enabled to be built." );
@@ -540,15 +428,12 @@ namespace bolt
              }
              else if( (runMode == bolt::amp::control::MultiCoreCpu) )
              {
+            
+#if defined( ENABLE_TBB )                 
                 bolt::amp::device_vector< iType >::pointer firstPtr = first.getContainer( ).data( );
                 bolt::amp::device_vector< oType >::pointer resPtr = result.getContainer( ).data( );
 
-#if defined( ENABLE_TBB )
-                tbb::parallel_for(
-                   transformUnaryRange< iType*, oType*, UnaryFunction >(
-                        &firstPtr[ first.m_Index ], &firstPtr[ sz ], &resPtr[ 0 ], f ),
-                transformUnaryRangeBody< iType*, oType*, UnaryFunction >( ),
-                tbb::simple_partitioner( ) );
+                bolt::btbb::transform( &firstPtr[ first.m_Index ],  &firstPtr[ sz ], &resPtr[ 0 ], f);
 #else
                 //std::cout << "The MultiCoreCpu version of Transform is not enabled. " << std ::endl;
                 throw std::exception(  "The MultiCoreCpu version of transform is not enabled to be built." );
@@ -583,9 +468,9 @@ namespace bolt
                    wavefrontMultiple += WAVEFRONT_SIZE;
                }
 
-               concurrency::array_view<iType1,1> inputV1 (first1.getBuffer());
-               concurrency::array_view<iType2,1> inputV2 (first2.getBuffer());
-               concurrency::array_view<oType,1> resultV(result.getBuffer());
+               concurrency::array_view<iType1,1> inputV1 (first1.getContainer().getBuffer());
+               concurrency::array_view<iType2,1> inputV2 (first2.getContainer().getBuffer());
+               concurrency::array_view<oType,1> resultV(result.getContainer().getBuffer());
                concurrency::extent< 1 > inputExtent( wavefrontMultiple );
 
                concurrency::parallel_for_each(ctl.getAccelerator().default_view, inputExtent, [=](concurrency::index<1> idx) mutable restrict(amp)
@@ -619,8 +504,8 @@ namespace bolt
                    wavefrontMultiple += WAVEFRONT_SIZE;
                }
 
-               concurrency::array_view<iType,1> inputV (first.getBuffer());
-               concurrency::array_view<oType,1> resultV(result.getBuffer());
+               concurrency::array_view<iType,1> inputV (first.getContainer().getBuffer());
+               concurrency::array_view<oType,1> resultV(result.getContainer().getBuffer());
                concurrency::extent< 1 > inputExtent( wavefrontMultiple );
 
                concurrency::parallel_for_each(ctl.getAccelerator().default_view, inputExtent, [=](concurrency::index<1> idx) mutable restrict(amp)

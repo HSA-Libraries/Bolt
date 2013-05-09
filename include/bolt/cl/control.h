@@ -177,6 +177,8 @@ namespace bolt {
             //! runtime selects the device.  Forcing the mode to SerialCpu can be useful for debugging the algorithm.
             //! Forcing the mode can also be useful for performance comparisons, or for direct 
             //! control over the run location (perhaps due to knowledge that the algorithm is best-suited for GPU).
+            //! Please note that forcing the run modes will not change the OpenCL device in the control object. This
+            //! API is designed to simplify the process of choosing the appropriate path in the Bolt API.
             void setForceRunMode(e_RunMode forceRunMode) { m_forceRunMode = forceRunMode; };
 
             /*! Enable debug messages to be printed to stdout as the algorithm is compiled, run, and tuned.  See the #debug
