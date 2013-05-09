@@ -132,7 +132,7 @@ namespace bolt {
             const UnaryFunction& transform_op, 
             const oType& init,
             const BinaryFunction& reduce_op )
-        {
+        {  std::cout<<"InputIterator------------\n";
             typedef std::iterator_traits<InputIterator>::value_type iType;
             size_t szElements = (last - first); 
             if (szElements == 0)
@@ -140,7 +140,7 @@ namespace bolt {
 
             const bolt::amp::control::e_RunMode runMode = c.getForceRunMode();  // could be dynamic choice some day.
             if (runMode == bolt::amp::control::SerialCpu)
-            {
+            {  std::cout<<"Serial code path------------\n";
                 //Create a temporary array to store the transform result;
                 //throw std::exception( "transform_reduce device_vector CPU device not implemented" );
                 std::vector<oType> output(szElements);
@@ -148,7 +148,7 @@ namespace bolt {
                 return std::accumulate(output.begin(), output.end(), init, reduce_op);
             }
             else if (runMode == bolt::amp::control::MultiCoreCpu) 
-            {
+            {  std::cout<<"Multicore code path------------\n";
 #ifdef ENABLE_TBB
 
                     return bolt::btbb::transform_reduce(first,last,transform_op,init,reduce_op);
@@ -159,7 +159,7 @@ namespace bolt {
 #endif  
                  }
             else 
-            {
+            {  std::cout<<"Default code path------------\n";
                 // Map the input iterator to a device_vector
                 device_vector< iType, concurrency::array_view > dvInput( first, last, false, c );
 
@@ -181,7 +181,7 @@ namespace bolt {
             const UnaryFunction& transform_op, 
             const oType& init,
             const BinaryFunction& reduce_op )
-        {
+        {   std::cout<<"DVInputIterator------------\n";
             typedef std::iterator_traits<DVInputIterator>::value_type iType;
             size_t szElements = (last - first); 
             if (szElements == 0)
@@ -189,7 +189,7 @@ namespace bolt {
 
             const bolt::amp::control::e_RunMode runMode = c.getForceRunMode();  // could be dynamic choice some day.
             if (runMode == bolt::amp::control::SerialCpu)
-            {
+            {  std::cout<<"Serial code path------------\n";
                std::vector<iType> InputBuffer(szElements);
                for(unsigned int index=0; index<szElements; index++){
                    InputBuffer[index] = first.getContainer().getBuffer()[index];
@@ -201,25 +201,27 @@ namespace bolt {
 
             }
             else if (runMode == bolt::amp::control::MultiCoreCpu)
-            {
+            {  std::cout<<"Multicore code path------------\n";
                
 #ifdef ENABLE_TBB
                std::vector<iType> InputBuffer(szElements);
-               for(unsigned int index=0; index<szElements; index++){
+               for(unsigned int index=0; index<szElements; index++)
+               {
                    InputBuffer[index] = first.getContainer().getBuffer()[index];
                } 
- 			return bolt::btbb::transform_reduce(InputBuffer.begin(),InputBuffer.end(),transform_op,init,reduce_op);
-
-
+            return bolt::btbb::transform_reduce(InputBuffer.begin(),InputBuffer.end(),transform_op,init,reduce_op);
+            
 #else
 //               std::cout << "The MultiCoreCpu version of transform_reduce is not implemented yet." << std ::endl;
                throw std::exception(  "The MultiCoreCpu version of transform_reduce is not enabled to be built." );
                return init;
-#endif  
-                
+#endif                  
             }
-
+            else
+            {
+             std::cout<<"Default code path------------\n";
             return  transform_reduce_enqueue( c, first, last, transform_op, init, reduce_op );
+            }
         };
 
         template<typename DVInputIterator, typename UnaryFunction, typename oType, typename BinaryFunction> 
