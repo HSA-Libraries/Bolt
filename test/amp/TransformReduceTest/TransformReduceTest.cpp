@@ -675,7 +675,7 @@ protected:
 class transformReduceStdVectWithInit :public ::testing::TestWithParam<int>{
 protected:
     int mySize;
-public:
+public:	
     transformReduceStdVectWithInit():mySize(GetParam()){
     }
 };
@@ -1100,7 +1100,7 @@ public:
     transformReduceTestMultDouble():arraySize(GetParam()){
     }
 };
-
+#if(TEST_DOUBLE == 1)
 TEST_P (transformReduceTestMultDouble, multiplyWithDouble)
 {
     double* myArray = new double[ arraySize ];
@@ -1195,8 +1195,11 @@ TEST_P (transformReduceTestMultDouble, MulticoremultiplyWithDouble)
     delete [] myArray2;
     delete [] myBoltArray;
 }
+#endif
 
+#if(TEST_DOUBLE == 1)
 INSTANTIATE_TEST_CASE_P( multiplyWithDoublePredicate, transformReduceTestMultDouble, ::testing::Range(1, 20, 1) );
+#endif
 
 #if (TEST_DOUBLE ==1 )
 //  ::testing::TestWithParam< int > means that GetParam( ) returns int values, which i use for array size
@@ -2084,7 +2087,7 @@ TEST(TransformReduce, MulticoreFloat)
     EXPECT_FLOAT_EQ( stdReduce, boldReduce );
   
 } 
-
+#if(TEST_DOUBLE == 1)
 TEST(TransformReduce, Double)
 {
      size_t length = 1<<20;
@@ -2156,7 +2159,7 @@ TEST(TransformReduce, MulticoreDouble)
     EXPECT_DOUBLE_EQ( stdReduce, boldReduce );
   
 } 
-
+#endif
 
 TEST(TransformReduce, DefaultUDD)
 {
@@ -2238,6 +2241,7 @@ TEST(TransformReduce, MulticoreUDD)
     
 } 
 
+#if(TEST_DOUBLE == 1)
 TEST(TransformReduce, DoubleUDD)
 {
     size_t length = 1<<20;
@@ -2317,6 +2321,7 @@ TEST(TransformReduce, MulticoreDoubleUDD)
     EXPECT_EQ( stdReduce, boldReduce );
     
 } 
+#endif
 
 TEST(TransformReduce, DeviceVectorInt)
 {
@@ -2481,7 +2486,7 @@ TEST(TransformReduce, MulticoreDeviceVectorFloat)
   
   
 } 
-
+#if(TEST_DOUBLE == 1	)
 TEST(TransformReduce, DeviceVectorUDD)
 {
     int length = 1<<16;
@@ -2567,7 +2572,7 @@ TEST(TransformReduce, MulticoreDeviceVectorUDD)
     EXPECT_EQ( stdReduce, boldReduce );
     
 } 
-
+#endif
 
 int main(int argc, char* argv[])
 {
@@ -2602,7 +2607,7 @@ int main(int argc, char* argv[])
     {
         bolt::tout << _T( "\nFailed tests detected in test pass; please run test again with:" ) << std::endl;
         bolt::tout << _T( "\t--gtest_filter=<XXX> to select a specific failing test of interest" ) << std::endl;
-        bolt::tout << _T( "\t--gtest_catch_exceptions=0 to generate minidump of failing test, or" ) << std::endl;      
+        bolt::tout << _T( "\t--gtest_catch_exceptions=0 to generate minidump of failing test, or" ) << std::endl;
         bolt::tout << _T( "\t--gtest_break_on_failure to debug interactively with debugger" ) << std::endl;
         bolt::tout << _T( "\t    (only on googletest assertion failures, not SEH exceptions)" ) << std::endl;
     }
