@@ -70,7 +70,8 @@ namespace bolt {
                             T init,
                             BinaryFunction reduce_op )
         {
-            return detail::transform_reduce_detect_random_access( control::getDefault(), first, last, transform_op, init, reduce_op,
+            return detail::transform_reduce_detect_random_access( control::getDefault(), first, last, transform_op,
+                                                                                                    init, reduce_op,
                 std::iterator_traits< InputIterator >::iterator_category( ) );
         };
     }; //end of namespace amp
@@ -96,7 +97,7 @@ namespace bolt {
                                                  const BinaryFunction& reduce_op,
                                                  std::input_iterator_tag )
         {
-            //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data 
+            //  TODO:  It should be possible to support non-random_access_iterator_tag iterators,if we copied the data 
             //  to a temporary buffer.  Should we?
             static_assert( false, "Bolt only supports random access iterator types" );
         };
@@ -118,7 +119,8 @@ namespace bolt {
         };
 
 
-        // This template is called by the non-detail versions of transform_reduce, it already assumes random access iterators
+        // This template is called by the non-detail versions of transform_reduce, it already assumes
+        // random access iterators
         // This is called strictly for any non-device_vector iterator
         template< typename InputIterator,
                   typename UnaryFunction,
@@ -132,7 +134,7 @@ namespace bolt {
             const UnaryFunction& transform_op, 
             const oType& init,
             const BinaryFunction& reduce_op )
-        {  std::cout<<"InputIterator------------\n";
+        { 
             typedef std::iterator_traits<InputIterator>::value_type iType;
             size_t szElements = (last - first); 
             if (szElements == 0)
@@ -140,7 +142,7 @@ namespace bolt {
 
             const bolt::amp::control::e_RunMode runMode = c.getForceRunMode();  // could be dynamic choice some day.
             if (runMode == bolt::amp::control::SerialCpu)
-            {  std::cout<<"Serial code path------------\n";
+            { 
                 //Create a temporary array to store the transform result;
                 //throw std::exception( "transform_reduce device_vector CPU device not implemented" );
                 std::vector<oType> output(szElements);
@@ -148,18 +150,17 @@ namespace bolt {
                 return std::accumulate(output.begin(), output.end(), init, reduce_op);
             }
             else if (runMode == bolt::amp::control::MultiCoreCpu) 
-            {  std::cout<<"Multicore code path------------\n";
+            { 
 #ifdef ENABLE_TBB
 
                     return bolt::btbb::transform_reduce(first,last,transform_op,init,reduce_op);
 #else
-//                    std::cout << "The MultiCoreCpu version of transform_reduce is not implemented yet." << std ::endl;
-                    throw std::exception(  "The MultiCoreCpu version of transform_reduce is not enabled to be built." );
+                    throw std::exception(  "The MultiCoreCpu version of transform_reduce is not enabled to be built.");
                     return init;
 #endif  
                  }
             else 
-            {  std::cout<<"Default code path------------\n";
+            {  
                 // Map the input iterator to a device_vector
                 device_vector< iType, concurrency::array_view > dvInput( first, last, false, c );
 
@@ -167,7 +168,8 @@ namespace bolt {
             }
         };
 
-        // This template is called by the non-detail versions of transform_reduce, it already assumes random access iterators
+        // This template is called by the non-detail versions of transform_reduce,
+        // it already assumes random access iterators
         // This is called strictly for iterators that are derived from device_vector< T >::iterator
         template< typename DVInputIterator,
                   typename UnaryFunction,
@@ -181,7 +183,7 @@ namespace bolt {
             const UnaryFunction& transform_op, 
             const oType& init,
             const BinaryFunction& reduce_op )
-        {   std::cout<<"DVInputIterator------------\n";
+        {  
             typedef std::iterator_traits<DVInputIterator>::value_type iType;
             size_t szElements = (last - first); 
             if (szElements == 0)
@@ -189,7 +191,7 @@ namespace bolt {
 
             const bolt::amp::control::e_RunMode runMode = c.getForceRunMode();  // could be dynamic choice some day.
             if (runMode == bolt::amp::control::SerialCpu)
-            {  std::cout<<"Serial code path------------\n";
+            { 
                std::vector<iType> InputBuffer(szElements);
                for(unsigned int index=0; index<szElements; index++){
                    InputBuffer[index] = first.getContainer().getBuffer()[index];
@@ -201,7 +203,7 @@ namespace bolt {
 
             }
             else if (runMode == bolt::amp::control::MultiCoreCpu)
-            {  std::cout<<"Multicore code path------------\n";
+            {  
                
 #ifdef ENABLE_TBB
                std::vector<iType> InputBuffer(szElements);
@@ -212,14 +214,12 @@ namespace bolt {
             return bolt::btbb::transform_reduce(InputBuffer.begin(),InputBuffer.end(),transform_op,init,reduce_op);
             
 #else
-//               std::cout << "The MultiCoreCpu version of transform_reduce is not implemented yet." << std ::endl;
                throw std::exception(  "The MultiCoreCpu version of transform_reduce is not enabled to be built." );
                return init;
 #endif                  
             }
             else
             {
-             std::cout<<"Default code path------------\n";
             return  transform_reduce_enqueue( c, first, last, transform_op, init, reduce_op );
             }
         };
@@ -237,15 +237,17 @@ namespace bolt {
             const int szElements = static_cast< unsigned int >( std::distance( first, last ) );
             const unsigned int tileSize = WAVEFRONT_SIZE;
             unsigned int numTiles = (szElements/tileSize);
-            const unsigned int ceilNumTiles = static_cast< size_t >( std::ceil( static_cast< float >( szElements ) / tileSize) );
+            const unsigned int ceilNumTiles = static_cast< size_t >( std::ceil( static_cast< float >( szElements )
+                                                                                                    / tileSize) );
             unsigned int ceilNumElements = tileSize * ceilNumTiles;
 
             concurrency::array_view< iType, 1 > inputV (first.getContainer().getBuffer());
 
             //Now create a staging array ; May support zero-copy in the future?!
-            concurrency::accelerator cpuAccelerator = concurrency::accelerator(concurrency::accelerator::cpu_accelerator);
+           concurrency::accelerator cpuAccelerator=concurrency::accelerator(concurrency::accelerator::cpu_accelerator);
             concurrency::accelerator_view cpuAcceleratorView = cpuAccelerator.default_view;
-            concurrency::array< iType, 1 > resultArray ( szElements, ctl.getAccelerator().default_view, cpuAcceleratorView);
+            concurrency::array< iType, 1 > resultArray ( szElements, ctl.getAccelerator().default_view,
+                                                                                    cpuAcceleratorView);
 
             concurrency::array_view<iType, 1> result ( resultArray );
             result.discard_data();
@@ -326,7 +328,8 @@ namespace bolt {
             }
             catch(std::exception &e)
             {
-                  std::cout << "Exception while calling bolt::amp::transform_reduce parallel_for_each " << e.what() << std::endl;
+                  std::cout << "Exception while calling bolt::amp::transform_reduce parallel_for_each " << e.what();   
+                  std::cout << std::endl;
                   return 0;
             }
 

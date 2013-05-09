@@ -249,7 +249,6 @@ namespace bolt
 
                     bolt::btbb::transform(first1,last1,first2,result,f);
 #else
-                    //std::cout << "The MultiCoreCpu version of Transform is not enabled. " << std ::endl;
                     throw std::exception(  "The MultiCoreCpu version of transform is not enabled to be built." );
 #endif
                     return;
@@ -320,7 +319,6 @@ namespace bolt
                   bolt::btbb::transform(&firstPtr[ first1.m_Index ],&firstPtr[ sz ],&secPtr[ 0 ],&resPtr[ 0 ],f);
 
 #else
-                 //std::cout << "The MultiCoreCpu version of Transform is not enabled. " << std ::endl;
                  throw std::exception(  "The MultiCoreCpu version of transform is not enabled to be built." );
 #endif
                  return;
@@ -365,7 +363,6 @@ namespace bolt
                     bolt::btbb::transform(first, last, result, f);
 
 #else
-                   //std::cout << "The MultiCoreCpu version of Transform is not enabled. " << std ::endl;
                    throw std::exception(  "The MultiCoreCpu version of transform is not enabled to be built." );
 #endif
                   return;
@@ -435,7 +432,6 @@ namespace bolt
 
                 bolt::btbb::transform( &firstPtr[ first.m_Index ],  &firstPtr[ sz ], &resPtr[ 0 ], f);
 #else
-                //std::cout << "The MultiCoreCpu version of Transform is not enabled. " << std ::endl;
                 throw std::exception(  "The MultiCoreCpu version of transform is not enabled to be built." );
 #endif
                 return;
