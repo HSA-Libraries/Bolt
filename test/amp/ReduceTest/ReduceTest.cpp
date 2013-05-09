@@ -150,7 +150,7 @@ public:
 template <typename T>
 T generateRandom()
 {
-    float value = rand();
+    double value = rand();
     static bool negate = true;
     if (negate)
     {
@@ -1930,8 +1930,8 @@ void testTBBDevicevector()
 {
     size_t aSize = 1<<16;
     std::vector<int> stdInput(aSize);
-    bolt::amp::device_vector<int> tbbInput(aSize, 0);
-
+ //   bolt::amp::device_vector<int> tbbInput(aSize, 0);
+    bolt::amp::device_vector<int> tbbInput(aSize);
 
     for(int i=0; i<aSize; i++) {
         stdInput[i] = i;
@@ -1949,6 +1949,9 @@ void testTBBDevicevector()
 
 
 };
+
+
+
 
 
 int main(int argc, char* argv[])

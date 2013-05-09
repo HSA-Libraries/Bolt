@@ -35,8 +35,6 @@
 namespace bolt {
     namespace cl {
 
-
-
         template<typename InputIterator>
         typename std::iterator_traits<InputIterator>::value_type
             reduce(InputIterator first,
@@ -348,12 +346,12 @@ namespace bolt {
 
 
                 std::vector<std::string> typeNames( reduce_end);
-                typeNames[reduce_iValueType] = TypeName< T >::get( );
+                typeNames[reduce_iValueType] = TypeName< iType >::get( );
                 typeNames[reduce_iIterType] = TypeName< DVInputIterator >::get( );
                 typeNames[reduce_BinaryFunction] = TypeName< BinaryFunction >::get();
 
                 std::vector<std::string> typeDefinitions;
-                PUSH_BACK_UNIQUE( typeDefinitions, ClCode< T >::get() )
+                PUSH_BACK_UNIQUE( typeDefinitions, ClCode< iType >::get() )
                 PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVInputIterator >::get() )
                 PUSH_BACK_UNIQUE( typeDefinitions, ClCode< BinaryFunction  >::get() )
 
@@ -431,7 +429,7 @@ namespace bolt {
 
                 bolt::cl::wait(ctl, l_mapEvent);
 
-                iType acc = static_cast< iType >( init );
+                T acc = static_cast< T >( init );
                 for(int i = 0; i < numTailReduce; ++i)
                 {
                     acc = binary_op(acc, h_result[i]);

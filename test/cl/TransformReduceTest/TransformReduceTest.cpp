@@ -104,7 +104,7 @@ public:
 template <typename T>
 T generateRandom()
 {
-    float value = rand();
+    double value = rand();
     static bool negate = true;
     if (negate)
     {
@@ -117,6 +117,7 @@ T generateRandom()
         return (T)fmod(value, 10.0);
     }
 }
+
 
 
 //  Test fixture class, used for the Type-parameterized tests
