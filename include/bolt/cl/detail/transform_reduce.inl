@@ -239,7 +239,7 @@ namespace  detail {
 
 #else
 
-         throw std::exception( "The MultiCoreCpu version of transform_reduce function is not enabled to be built! \n");
+                throw std::exception( "The MultiCoreCpu version of transform_reduce function is not enabled to be built! \n");
 				return init;
 
 #endif
