@@ -297,7 +297,9 @@ Serial_scan(
 
 
 
-/* \brief This overload is called strictly for non-device_vector iterators
+
+/*!
+* \brief This overload is called strictly for non-device_vector iterators
 * \details This template function overload is used to seperate device_vector iterators from all other iterators
 */
 template< typename InputIterator, typename OutputIterator, typename T, typename BinaryFunction >

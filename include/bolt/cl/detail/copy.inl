@@ -1,17 +1,17 @@
-/***************************************************************************
-*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.
-*
-*   Licensed under the Apache License, Version 2.0 (the "License");
-*   you may not use this file except in compliance with the License.
-*   You may obtain a copy of the License at
-*
-*       http://www.apache.org/licenses/LICENSE-2.0
-*
-*   Unless required by applicable law or agreed to in writing, software
-*   distributed under the License is distributed on an "AS IS" BASIS,
-*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-*   See the License for the specific language governing permissions and
-*   limitations under the License.
+/***************************************************************************                                                                                     
+*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
+*                                                                                    
+*   Licensed under the Apache License, Version 2.0 (the "License");   
+*   you may not use this file except in compliance with the License.                 
+*   You may obtain a copy of the License at                                          
+*                                                                                    
+*       http://www.apache.org/licenses/LICENSE-2.0                      
+*                                                                                    
+*   Unless required by applicable law or agreed to in writing, software              
+*   distributed under the License is distributed on an "AS IS" BASIS,              
+*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.         
+*   See the License for the specific language governing permissions and              
+*   limitations under the License.                                                   
 
 ***************************************************************************/
 
@@ -389,12 +389,12 @@ void copy_pick_iterator(const bolt::cl::control &ctl,  const DVInputIterator& fi
     static_assert( false, "It is not possible to copy into fancy iterators. They are not mutable" );
 }
 
-template< typename DVInputIterator, typename Size, typename DVOutputIterator >
-typename std::enable_if< std::is_same< typename std::iterator_traits<DVInputIterator >::value_type,
-                                       typename std::iterator_traits<DVOutputIterator >::value_type
-                                     >::value
+template< typename DVInputIterator, typename Size, typename DVOutputIterator > 
+typename std::enable_if< std::is_same< typename std::iterator_traits<DVInputIterator >::value_type, 
+                                       typename std::iterator_traits<DVOutputIterator >::value_type 
+                                     >::value 
                        >::type  /*If enabled then this typename will be evaluated to void*/
-    copy_enqueue(const bolt::cl::control &ctrl, const DVInputIterator& first, const Size& n,
+    copy_enqueue(const bolt::cl::control &ctrl, const DVInputIterator& first, const Size& n, 
     const DVOutputIterator& result, const std::string& cl_code)
 {
     typedef std::iterator_traits<DVInputIterator>::value_type iType;
