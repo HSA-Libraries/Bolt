@@ -293,6 +293,69 @@ TEST_P( HostIntVector, MultiCoreGenerate )
     cmpArrays( stdInput, boltInput );
 }
 
+BOLT_FUNCTOR(ConstFunctor,
+struct ConstFunctor {
+int val;
+
+ConstFunctor(int a) : val(a) {
+}
+
+int operator() () {
+return val;
+}
+};
+);
+
+TEST(generate_n_doc_ctl, sample)
+{
+int size = 100;
+//TAKE_THIS_CONTROL_PATH
+std::vector<int> vec(size);
+ConstFunctor cf(1);
+
+bolt::cl::generate_n( vec.begin(), size, cf);
+
+for (int i = 1 ; i < size; ++i)
+{
+EXPECT_EQ(1, vec[i]);
+}
+}
+
+TEST(generate_n_doc_ctl, Serialsample)
+{
+int size = 100;
+//TAKE_THIS_CONTROL_PATH
+std::vector<int> vec(size);
+ConstFunctor cf(1);
+bolt::cl::control ctl = bolt::cl::control::getDefault( );
+ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+bolt::cl::generate_n(ctl,  vec.begin(), size, cf);
+
+for (int i = 1 ; i < size; ++i)
+{
+EXPECT_EQ(1, vec[i]);
+}
+}
+
+TEST(generate_n_doc_ctl, Multicoresample)
+{
+int size = 100;
+//TAKE_THIS_CONTROL_PATH
+std::vector<int> vec(size);
+ConstFunctor cf(1);
+bolt::cl::control ctl = bolt::cl::control::getDefault( );
+ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+bolt::cl::generate_n( vec.begin(), size, cf);
+
+for (int i = 1 ; i < size; ++i)
+{
+EXPECT_EQ(1, vec[i]);
+}
+}
+
+
 #if (TEST_DOUBLE == 1)
 TEST_P( HostDblVector, Generate )
 {
@@ -354,7 +417,6 @@ TEST_P( DevIntVector, Generate )
     //  Loop through the array and compare all the values with each other
     cmpArrays( stdInput, boltInput );
 }
-
 TEST_P( DevIntVector, CPUGenerate )
 {
     // create generator
@@ -371,7 +433,6 @@ TEST_P( DevIntVector, CPUGenerate )
     //  Loop through the array and compare all the values with each other
     cmpArrays( stdInput, boltInput );
 }
-
 TEST_P( DevIntVector, MultiCoreGenerate )
 {
     // create generator
@@ -758,6 +819,7 @@ TEST_P( DevDblVector, MultiCoreGenerateN )
 #endif
 
 INSTANTIATE_TEST_CASE_P( GenSmall, HostIntVector, ::testing::Range( 1, 256, 3 ) );
+//INSTANTIATE_TEST_CAS_P( GenSmall, generate_n_doc_ctl, ::testing::Range( 1, 256, 3 ) );
 INSTANTIATE_TEST_CASE_P( GenLarge, HostIntVector, ::testing::Range( 1023, 1050000, 350001 ) );
 INSTANTIATE_TEST_CASE_P( GenSmall, DevIntVector,  ::testing::Range( 2, 256, 3 ) );
 INSTANTIATE_TEST_CASE_P( GenLarge, DevIntVector,  ::testing::Range( 1024, 1050000, 350003 ) );
