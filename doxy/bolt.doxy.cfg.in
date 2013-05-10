@@ -673,9 +673,12 @@ INPUT                  = @CMAKE_CURRENT_SOURCE_DIR@/mainpage.dox \
                          @CMAKE_CURRENT_SOURCE_DIR@/distributingBoltProjects.dox \
                          @CMAKE_CURRENT_SOURCE_DIR@/buildingExamples.dox \
                          @CMAKE_CURRENT_SOURCE_DIR@/../include/bolt/amp \
-                         @CMAKE_CURRENT_SOURCE_DIR@/../include/bolt/amp/detail \                         
+                         @CMAKE_CURRENT_SOURCE_DIR@/../include/bolt/amp/detail \     
+					     @CMAKE_CURRENT_SOURCE_DIR@/../include/bolt/amp/iterator \ 						 
                          @CMAKE_CURRENT_SOURCE_DIR@/../include/bolt/cl \
-                         @CMAKE_CURRENT_SOURCE_DIR@/../include/bolt/cl/detail
+                         @CMAKE_CURRENT_SOURCE_DIR@/../include/bolt/cl/detail \
+						 @CMAKE_CURRENT_SOURCE_DIR@/../include/bolt/cl/iterator
+						 
 
 # This tag can be used to specify the character encoding of the source files 
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding, which is 
