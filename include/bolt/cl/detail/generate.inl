@@ -155,7 +155,7 @@ void generate_detect_random_access( bolt::cl::control &ctrl, const ForwardIterat
             void generate_pick_iterator(bolt::cl::control &ctl,  const ForwardIterator &first, 
                 const ForwardIterator &last, 
                 const Generator &gen, const std::string &user_code, std::random_access_iterator_tag )
-            {std::cout<<"random_access_iterator_tag.....\n";
+            {
                 typedef std::iterator_traits<ForwardIterator>::value_type Type;
 
                 size_t sz = (last - first); 
@@ -169,11 +169,11 @@ void generate_detect_random_access( bolt::cl::control &ctrl, const ForwardIterat
                 }
 
                 if( runMode == bolt::cl::control::SerialCpu)
-                {std::cout<<"Serial code Path.....\n";;
+                {
                     std::generate(first, last, gen );
                 }
                 else if(runMode == bolt::cl::control::MultiCoreCpu)
-                {std::cout<<"Multicore code Path.....\n";
+                {
                     #ifdef ENABLE_TBB
                            throw std::exception("MultiCoreCPU Version of generate not Implemented yet! \n");
                     #else
@@ -181,7 +181,7 @@ void generate_detect_random_access( bolt::cl::control &ctrl, const ForwardIterat
                     #endif
                 }
                 else
-                {std::cout<<"Default code Path.....\n";
+                {
                     // Use host pointers memory since these arrays are only write once - no benefit to copying.
                     // Map the forward iterator to a device_vector
                     device_vector< Type > range( first, sz, CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY, false, ctl );
@@ -200,7 +200,7 @@ void generate_detect_random_access( bolt::cl::control &ctrl, const ForwardIterat
             void generate_pick_iterator(bolt::cl::control &ctl, const DVForwardIterator &first,
                 const DVForwardIterator &last, 
                 const Generator &gen, const std::string& user_code, bolt::cl::device_vector_tag )
-            {std::cout<<"DVForwardIterator code Path.....";
+            {
                 bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
                 if(runMode == bolt::cl::control::Automatic)
                 {
@@ -208,11 +208,11 @@ void generate_detect_random_access( bolt::cl::control &ctrl, const ForwardIterat
                 }
 
                 if( runMode == bolt::cl::control::SerialCpu)
-                {std::cout<<"Serial code Path.....\n";
+                {
                     std::generate(first, last, gen );
                 }
                 else if(runMode == bolt::cl::control::MultiCoreCpu)
-                {std::cout<<"Multicore code Path.....\n";
+                {
                     #ifdef ENABLE_TBB
                            throw std::exception("MultiCoreCPU Version of generate not implemented yet! \n");
                     #else
@@ -220,7 +220,7 @@ void generate_detect_random_access( bolt::cl::control &ctrl, const ForwardIterat
                     #endif
                 }
                 else
-                {std::cout<<"Default code Path.....\n";
+                {
                     generate_enqueue( ctl, first, last, gen, user_code );
                 }
             }
