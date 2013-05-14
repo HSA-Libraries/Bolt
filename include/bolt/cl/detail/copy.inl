@@ -355,7 +355,6 @@ void copy_pick_iterator(const bolt::cl::control &ctrl,  const DVInputIterator& f
     const DVOutputIterator& result, const std::string& user_code, bolt::cl::fancy_iterator_tag,
     bolt::cl::device_vector_tag )
 {
-    std::cout<<"\nfancy_iterator_tag  device_vector_tag \n";
      bolt::cl::control::e_RunMode runMode = ctrl.getForceRunMode( );
 
      if( runMode == bolt::cl::control::Automatic )
@@ -365,13 +364,10 @@ void copy_pick_iterator(const bolt::cl::control &ctrl,  const DVInputIterator& f
 
      if( runMode == bolt::cl::control::SerialCpu )
      {
-            std::cout<<"Serial code path \n";
-
                std::copy_n( first, n, result );
      }
      else if( runMode == bolt::cl::control::MultiCoreCpu )
      {
-         std::cout<<"Multicore code path \n";
         #ifdef ENABLE_TBB
               throw std::exception( "The MultiCoreCpu version of Copy is not Implemented yet!" );
         #else
@@ -379,7 +375,7 @@ void copy_pick_iterator(const bolt::cl::control &ctrl,  const DVInputIterator& f
         #endif
      }
      else
-     {std::cout<<"default code path \n";
+     {
               copy_enqueue( ctrl, first, n, result, user_code );
      }
 }
@@ -399,7 +395,7 @@ typename std::enable_if< std::is_same< typename std::iterator_traits<DVInputIter
                        >::type  /*If enabled then this typename will be evaluated to void*/
     copy_enqueue(const bolt::cl::control &ctrl, const DVInputIterator& first, const Size& n,
     const DVOutputIterator& result, const std::string& cl_code)
-{    std::cout<<"IS SAME \n";
+{ 
     typedef std::iterator_traits<DVInputIterator>::value_type iType;
     typedef std::iterator_traits<DVOutputIterator>::value_type oType;
     ::cl::Event copyEvent;
@@ -422,7 +418,7 @@ typename std::enable_if< !std::is_same< typename std::iterator_traits<DVInputIte
                        >::type  /*If enabled then this typename will be evaluated to void*/
     copy_enqueue(const bolt::cl::control &ctrl, const DVInputIterator& first, const Size& n,
     const DVOutputIterator& result, const std::string& cl_code)
-{   std::cout<<"IS NOT SAME \n";
+{  
     /**********************************************************************************
      * Type Names - used in KernelTemplateSpecializer
      *********************************************************************************/
