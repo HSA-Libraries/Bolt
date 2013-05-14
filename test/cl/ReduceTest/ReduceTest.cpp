@@ -15,8 +15,8 @@
 
 ***************************************************************************/                                                                                     
 
-// TransformTest.cpp : Defines the entry point for the console application.
-//
+// Defines the entry point for the console application.
+
 #define OCL_CONTEXT_BUG_WORKAROUND 1
 #define TEST_DOUBLE 0
 #define TEST_CPU_DEVICE 0
@@ -1395,7 +1395,7 @@ int _tmain(int argc, _TCHAR* argv[])
     testUDDTBB();
     testTBBDevicevector();
 #endif
-    testDeviceVector();
+  /*  testDeviceVector();
     int numIters = 100;
     simpleReduce_TestControl(1024000, numIters, 0);
     simpleReduce_TestControl(100, 1, 0);
@@ -1403,7 +1403,7 @@ int _tmain(int argc, _TCHAR* argv[])
     simpleReduce1(1024);    
     simpleReduce_TestControl(100, 1, 0);
     simpleReduce_TestSerial(1000);
-    simpleReduce_countingiterator(20.05F,10);    
+    simpleReduce_countingiterator(20.05F,10);    */
     //simpleReduce_TestControl(1024000, numIters, 1); // may fail on systems with only one GPU installed.
 
     ::testing::InitGoogleTest( &argc, &argv[ 0 ] );

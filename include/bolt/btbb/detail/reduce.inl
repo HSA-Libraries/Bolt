@@ -15,8 +15,8 @@
 
 ***************************************************************************/
 
-#if !defined( BTBB_REDUCE_INL)
-#define BTBB_REDUCE_INL
+#if !defined( BOLT_BTBB_REDUCE_INL)
+#define BOLT_BTBB_REDUCE_INL
 #pragma once
 
 
@@ -28,7 +28,7 @@ namespace bolt{
              *The imperative form of parallel_reduce is used.
              *
             */
-            template <typename T, typename BinaryFunction>
+            template <typename T, typename InputIterator,typename BinaryFunction>
             struct Reduce {
                 T value;
                 BinaryFunction op;
@@ -41,22 +41,22 @@ namespace bolt{
                 Reduce(const BinaryFunction &_op, const T &init) : op(_op), value(init), flag(FALSE) {}
                 Reduce() : value(0) {}
                 Reduce( Reduce& s, tbb::split ) : flag(TRUE), op(s.op) {}
-                void operator()( const tbb::blocked_range<T*>& r ) {
+                void operator()( const tbb::blocked_range<InputIterator>& r ) {
                     T temp = value;
-                    for( T* a=r.begin(); a!=r.end(); ++a ) {
+                    for( InputIterator a=r.begin(); a!=r.end(); ++a ) {
                       if(flag){
-                        temp = *a;
+                        temp = (T) *a;
                         flag = FALSE;
                       }
                       else
-                        temp = op(temp,*a);
+                        temp = (T)op(temp,*a);
                     }
                     value = temp;
                 }
                 //Join is called by the parent thread after the child finishes to execute.
                 void join( Reduce& rhs )
                 {
-                    value = op(value,rhs.value);
+                    value = (T) op(value,rhs.value);
                 }
             };
 
@@ -68,8 +68,8 @@ namespace bolt{
 
             typedef typename std::iterator_traits<InputIterator>::value_type iType;
             tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
-            Reduce<iType, BinaryFunction> reduce_op();
-            tbb::parallel_reduce( tbb::blocked_range<iType*>( &*first, (iType*)&*(last-1) + 1), reduce_op );
+            Reduce<T,InputIterator, BinaryFunction> reduce_op();
+            tbb::parallel_reduce( tbb::blocked_range<InputIterator>( first, last), reduce_op );
             return reduce_op.value;
 
         }
@@ -82,8 +82,8 @@ namespace bolt{
 
             typedef typename std::iterator_traits<InputIterator>::value_type iType;
             tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
-            Reduce<iType, BinaryFunction> reduce_op(init);
-            tbb::parallel_reduce( tbb::blocked_range<iType*>( &*first, (iType*)&*(last-1) + 1), reduce_op );
+            Reduce<T,InputIterator, BinaryFunction> reduce_op(init);
+            tbb::parallel_reduce( tbb::blocked_range<InputIterator>( first, last), reduce_op );
             return reduce_op.value;
 
         }
@@ -97,8 +97,8 @@ namespace bolt{
         {
             typedef typename std::iterator_traits<InputIterator>::value_type iType;
             tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
-            Reduce<iType, BinaryFunction> reduce_op(binary_op, init);
-            tbb::parallel_reduce( tbb::blocked_range<iType*>( &*first, (iType*)&*(last-1) + 1), reduce_op );
+            Reduce<T,InputIterator, BinaryFunction> reduce_op(binary_op, init);
+            tbb::parallel_reduce( tbb::blocked_range<InputIterator>( first, last), reduce_op );
             return reduce_op.value;
         }
 

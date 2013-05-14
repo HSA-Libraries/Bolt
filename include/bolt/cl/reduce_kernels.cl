@@ -19,20 +19,20 @@
 
 #define _REDUCE_STEP(_LENGTH, _IDX, _W) \
     if ((_IDX < _W) && ((_IDX + _W) < _LENGTH)) {\
-      iTypePtr mine = scratch[_IDX];\
-      iTypePtr other = scratch[_IDX + _W];\
+      T mine = scratch[_IDX];\
+      T other = scratch[_IDX + _W];\
       scratch[_IDX] = (*userFunctor)(mine, other); \
     }\
     barrier(CLK_LOCAL_MEM_FENCE);
 
-template< typename iTypePtr, typename iTypeIter, typename binary_function >
+template< typename iTypePtr, typename iTypeIter, typename binary_function,typename T >
 kernel void reduceTemplate(
     global iTypePtr*    input_ptr, 
     iTypeIter input_iter,
     const int length,
     global binary_function* userFunctor,
-    global iTypePtr*    result,
-    local iTypePtr*     scratch
+    global T*    result,
+    local T*     scratch
 )
 {
     int gx = get_global_id (0);
@@ -41,9 +41,9 @@ kernel void reduceTemplate(
 
     //  Initialize the accumulator private variable with data from the input array
     //  This essentially unrolls the loop below at least once
-    iTypePtr accumulator;
+    T accumulator;
     if(gloId < length){
-       accumulator = input_iter[gx];
+       accumulator = (T) input_iter[gx];
        gx += get_global_size(0);
     }
 
