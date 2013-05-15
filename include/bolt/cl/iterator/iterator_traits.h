@@ -19,7 +19,7 @@
 #if !defined( ITERATOR_TRAITS_H )
 #define ITERATOR_TRAITS_H
 
-/*! \file iterator_traits.h
+/*! \file bolt/cl/iterator/iterator_traits.h
     \brief Defines new iterator_traits structures used by the Bolt runtime to make runtime decisions on how to 
     dispatch calls to various supported backends
 */

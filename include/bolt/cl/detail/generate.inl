@@ -51,9 +51,9 @@ void generate( bolt::cl::control &ctl, ForwardIterator first, ForwardIterator la
 template<typename OutputIterator, typename Size, typename Generator> 
 OutputIterator generate_n( OutputIterator first, Size n, Generator gen, const std::string& cl_code)
 {
-            detail::generate_detect_random_access( bolt::cl::control::getDefault(), first, first+n, gen, cl_code, 
+            detail::generate_detect_random_access( bolt::cl::control::getDefault(), first, first+static_cast< const int >( n ), gen, cl_code, 
             std::iterator_traits< OutputIterator >::iterator_category( ) );
-            return (first+n);
+            return (first+static_cast< const int >( n ));
 }
 
 // user specified control, start-> +n
@@ -61,9 +61,9 @@ template<typename OutputIterator, typename Size, typename Generator>
 OutputIterator generate_n( bolt::cl::control &ctl, OutputIterator first, Size n, Generator gen,
                           const std::string& cl_code)
 {
-            detail::generate_detect_random_access( ctl, first, n, gen, cl_code, 
+            detail::generate_detect_random_access( ctl, first, first+static_cast< const int >( n ), gen, cl_code, 
             std::iterator_traits< OutputIterator >::iterator_category( ) );
-            return (first+n);
+            return (first+static_cast< const int >( n ));
 }
 
 }//end of cl namespace

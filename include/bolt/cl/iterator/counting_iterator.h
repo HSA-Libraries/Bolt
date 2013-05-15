@@ -19,8 +19,11 @@
 #define COUNTING_ITERATOR_H
 #include "bolt/cl/bolt.h"
 #include "bolt/cl/iterator/iterator_traits.h"
-#include "bolt/cl/device_vector.h"
 #include <boost/iterator/iterator_facade.hpp>
+
+/*! \file bolt/cl/iterator/counting_iterator.h
+    \brief Return Incremented Value on dereferencing.
+*/
 
 namespace bolt {
 namespace cl {

@@ -76,7 +76,7 @@ namespace cl {
 
 // user control
 template<typename InputIterator, typename OutputIterator>
-OutputIterator copy(const bolt::cl::control &ctrl,  InputIterator first, InputIterator last, OutputIterator result,
+OutputIterator copy(const bolt::cl::control &ctrl,  InputIterator first, InputIterator last, OutputIterator result,    
             const std::string& user_code)
 {
     int n = static_cast<int>( std::distance( first, last ) );
@@ -120,7 +120,7 @@ namespace bolt {
 namespace cl {
 namespace detail {
 
-enum copyTypeName { copy_iType, copy_oType, end_copy };
+enum copyTypeName { copy_iType, copy_DVInputIterator/*added*/, copy_oType, copy_DVOutputIterator/*added*/, end_copy };
 
 /**********************************************************************************************************************
  * Kernel Template Specializer
@@ -146,7 +146,9 @@ class Copy_KernelTemplateSpecializer : public KernelTemplateSpecializer
             "__attribute__((reqd_work_group_size(256,1,1)))\n"
             "__kernel void " + name(0) + "(\n"
             "global " + typeNames[copy_iType] + " * restrict src,\n"
+             + typeNames[copy_DVInputIterator] + " input_iter,\n"  // Added
             "global " + typeNames[copy_oType] + " * restrict dst,\n"
+             + typeNames[copy_DVOutputIterator] + " output_iter,\n" // added
             "const uint numElements,\n"
             "const uint srcOffset,\n"
             "const uint dstOffset\n"
@@ -353,7 +355,6 @@ void copy_pick_iterator(const bolt::cl::control &ctrl,  const DVInputIterator& f
     const DVOutputIterator& result, const std::string& user_code, bolt::cl::fancy_iterator_tag,
     bolt::cl::device_vector_tag )
 {
-
      bolt::cl::control::e_RunMode runMode = ctrl.getForceRunMode( );
 
      if( runMode == bolt::cl::control::Automatic )
@@ -363,12 +364,10 @@ void copy_pick_iterator(const bolt::cl::control &ctrl,  const DVInputIterator& f
 
      if( runMode == bolt::cl::control::SerialCpu )
      {
-
                std::copy_n( first, n, result );
      }
      else if( runMode == bolt::cl::control::MultiCoreCpu )
      {
-
         #ifdef ENABLE_TBB
               throw std::exception( "The MultiCoreCpu version of Copy is not Implemented yet!" );
         #else
@@ -389,14 +388,22 @@ void copy_pick_iterator(const bolt::cl::control &ctl,  const DVInputIterator& fi
     static_assert( false, "It is not possible to copy into fancy iterators. They are not mutable" );
 }
 
+<<<<<<< HEAD
 template< typename DVInputIterator, typename Size, typename DVOutputIterator > 
 typename std::enable_if< std::is_same< typename std::iterator_traits<DVInputIterator >::value_type, 
                                        typename std::iterator_traits<DVOutputIterator >::value_type 
                                      >::value 
                        >::type  /*If enabled then this typename will be evaluated to void*/
+=======
+
+template< typename DVInputIterator, typename Size, typename DVOutputIterator >
+typename std::enable_if< std::is_same< typename std::iterator_traits<DVInputIterator >::iterator_category,
+                                       typename std::iterator_traits<DVOutputIterator >::iterator_category
+                                     >::value >::type  /*If enabled then this typename will be evaluated to void*/
+>>>>>>> 1f091a2e95a2df6bbc1ee58d2803b892813591fe
     copy_enqueue(const bolt::cl::control &ctrl, const DVInputIterator& first, const Size& n, 
     const DVOutputIterator& result, const std::string& cl_code)
-{
+{ 
     typedef std::iterator_traits<DVInputIterator>::value_type iType;
     typedef std::iterator_traits<DVOutputIterator>::value_type oType;
     ::cl::Event copyEvent;
@@ -413,28 +420,32 @@ typename std::enable_if< std::is_same< typename std::iterator_traits<DVInputIter
 }
 
 template< typename DVInputIterator, typename Size, typename DVOutputIterator >
-typename std::enable_if< !std::is_same< typename std::iterator_traits<DVInputIterator >::value_type,
-                                       typename std::iterator_traits<DVOutputIterator >::value_type
+typename std::enable_if< !std::is_same< typename std::iterator_traits<DVInputIterator >::iterator_category,
+                                       typename std::iterator_traits<DVOutputIterator >::iterator_category
                                      >::value
                        >::type  /*If enabled then this typename will be evaluated to void*/
     copy_enqueue(const bolt::cl::control &ctrl, const DVInputIterator& first, const Size& n,
     const DVOutputIterator& result, const std::string& cl_code)
-{
+{  
     /**********************************************************************************
      * Type Names - used in KernelTemplateSpecializer
      *********************************************************************************/
     typedef std::iterator_traits<DVInputIterator>::value_type iType;
     typedef std::iterator_traits<DVOutputIterator>::value_type oType;
-    std::vector<std::string> typeNames(2);
+    std::vector<std::string> typeNames(end_copy);
     typeNames[copy_iType] = TypeName< iType >::get( );
+    typeNames[copy_DVInputIterator] = TypeName< DVInputIterator >::get( ); // added
     typeNames[copy_oType] = TypeName< oType >::get( );
+    typeNames[copy_DVOutputIterator] = TypeName< DVOutputIterator >::get( ); // added
 
     /**********************************************************************************
      * Type Definitions - directrly concatenated into kernel string (order may matter)
      *********************************************************************************/
     std::vector<std::string> typeDefs;
     PUSH_BACK_UNIQUE( typeDefs, ClCode< iType >::get() )
+    PUSH_BACK_UNIQUE( typeDefs, ClCode< DVInputIterator >::get() ) // added
     PUSH_BACK_UNIQUE( typeDefs, ClCode< oType >::get() )
+    PUSH_BACK_UNIQUE( typeDefs, ClCode< DVOutputIterator >::get() ) // added
 
     //kernelWithBoundsCheck.getWorkGroupInfo<CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctrl.device( ), &l_Error )
     const size_t workGroupSize  = 256;
@@ -504,11 +515,22 @@ typename std::enable_if< !std::is_same< typename std::iterator_traits<DVInputIte
         //std::cout << "NumElem: " << n << "; NumThreads: " << numThreadsChosen << ";
         //NumWorkGroups: " << numThreadsChosen/workGroupSizeChosen << std::endl;
 
-        V_OPENCL( kernels[whichKernel].setArg( 0, first.getContainer().getBuffer()), "Error setArg kernels[ 0 ]" ); // Input keys
-        V_OPENCL( kernels[whichKernel].setArg( 1, result.getContainer().getBuffer()),"Error setArg kernels[ 0 ]" ); // Input buffer
-        V_OPENCL( kernels[whichKernel].setArg( 2, static_cast<cl_uint>( n ) ),"Error setArg kernels[0]" );//Buffer Size
-        V_OPENCL( kernels[whichKernel].setArg( 3, first.m_Index ), "Error setArg kernels[ 0 ]" ); // Buffer Size
-        V_OPENCL( kernels[whichKernel].setArg( 4, result.m_Index ), "Error setArg kernels[ 0 ]" ); // Buffer Size
+        // Input buffer
+
+        // Input keys
+        V_OPENCL( kernels[whichKernel].setArg( 0, first.getContainer().getBuffer()), "Error setArg kernels[ 0 ]" ); 
+        V_OPENCL( kernels[whichKernel].setArg( 1, first.gpuPayloadSize( ), &first.gpuPayload( ) ),  // added
+                                                           "Error setting a kernel argument" );
+        // Output buffer
+
+         // Input buffer
+        V_OPENCL( kernels[whichKernel].setArg( 2, result.getContainer().getBuffer()),"Error setArg kernels[ 0 ]" );    
+        V_OPENCL( kernels[whichKernel].setArg( 3, result.gpuPayloadSize( ), &result.gpuPayload( ) ),  // added
+                                                           "Error setting a kernel argument" );
+        //Buffer Size
+        V_OPENCL( kernels[whichKernel].setArg( 4, static_cast<cl_uint>( n ) ),"Error setArg kernels[0]" );
+        V_OPENCL( kernels[whichKernel].setArg( 5, first.m_Index ), "Error setArg kernels[ 0 ]" ); 
+        V_OPENCL( kernels[whichKernel].setArg( 6, result.m_Index ), "Error setArg kernels[ 0 ]" );
 
         l_Error = ctrl.getCommandQueue( ).enqueueNDRangeKernel(
             kernels[whichKernel],

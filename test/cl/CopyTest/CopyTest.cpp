@@ -19,6 +19,14 @@
 #define TEST_DEVICE_VECTOR 1
 #define TEST_CPU_DEVICE 1
 
+
+
+#include <vector>
+#include "bolt/cl/transform.h"
+#include "bolt/cl/count.h"
+
+
+
 #include "bolt/cl/iterator/counting_iterator.h"
 
 #include <bolt/cl/copy.h>
@@ -37,7 +45,7 @@
 #include "test_common.h"
 
 //  Author: kfk
-//  Originally, the char b was not an array.  However, testing on my machine showed driver hangs and unit test
+//  Originally, the char b was not an array.  However, testing on my machine showed driver hangs and unit test         
 //  failures.  Reading the documentation of clEnqueueFillBuffer(), OpenCL seems to like structs of certain 
 //  sizes {1, 2, 4, 8, 16, 32, 64, 128}.  Making this struct one of those magic sizes seems to make the driver
 //  resets go away.
@@ -93,8 +101,7 @@ static const int lengths[24] = {
 //static const int lengths[1] = {13};
 
 
-//Failing Test Case (1 of 2)
-TEST(Copy, FancyDeviceIterator) 
+TEST(CopySameDataType, FancyDeviceIterator) 
 {
     for (int i = 0; i < numLengths; i++)
     {
@@ -111,7 +118,7 @@ TEST(Copy, FancyDeviceIterator)
         }; 
 
         //STL destination vector
-        bolt::cl::device_vector<int> dest(length);
+         std::vector<int> dest(length);
         //Bolt destination vector
         bolt::cl::device_vector<int> destination(length);
 
@@ -123,8 +130,7 @@ TEST(Copy, FancyDeviceIterator)
         cmpArrays(dest, destination);
     }
 } 
-
-TEST(Copy, SerialFancyDeviceIterator) 
+TEST(CopySameDataType, SerialFancyDeviceIterator) 
 {
     for (int i = 0; i < numLengths; i++)
     {
@@ -140,7 +146,7 @@ TEST(Copy, SerialFancyDeviceIterator)
             a[i] = i;
         }; 
 
-        //STL destination vector
+        //STL destination vector or device_vector both are valid
         bolt::cl::device_vector<int> dest(length);
         //Bolt destination vector
         bolt::cl::device_vector<int> destination(length);
@@ -157,8 +163,7 @@ TEST(Copy, SerialFancyDeviceIterator)
         cmpArrays(dest, destination);
     }
 } 
-
-TEST(Copy, MultiCoreFancyDeviceIterator) 
+TEST(CopySameDataType, MultiCoreFancyDeviceIterator) 
 {
     for (int i = 0; i < numLengths; i++)
     {
@@ -174,7 +179,7 @@ TEST(Copy, MultiCoreFancyDeviceIterator)
             a[i] = i;
         }; 
 
-        //STL destination vector
+        //STL destination vector or device_vector both are valid
         bolt::cl::device_vector<int> dest(length);
         //Bolt destination vector
         bolt::cl::device_vector<int> destination(length);
@@ -192,10 +197,105 @@ TEST(Copy, MultiCoreFancyDeviceIterator)
     }
 } 
 
-//Failing Test Case (2 of 2)
-TEST(Copy, FancyRandomIterator)  
+TEST(CopyDiffDataType, FancyDeviceIterator) 
 {
     for (int i = 0; i < numLengths; i++)
+    {
+        // test length
+        int length = lengths[i];
+
+        bolt::cl::counting_iterator<int> first(0);
+        bolt::cl::counting_iterator<int> last = first + length;
+
+        std::vector<int> a(length);
+
+        for (int i=0; i < length; i++) {
+            a[i] = i;
+        }; 
+
+        //STL destination vector
+         std::vector<float> dest(length);
+        //Bolt destination vector
+        bolt::cl::device_vector<float> destination(length);
+
+        // perform copy
+        std::copy(a.begin(), a.end(), dest.begin());
+        bolt::cl::copy(first, last, destination.begin());
+       
+        // GoogleTest Comparison
+        cmpArrays(dest, destination);
+    }
+} 
+TEST(CopyDiffDataType, SerialFancyDeviceIterator) 
+{
+    for (int i = 0; i < numLengths; i++)
+    {
+        // test length
+        int length = lengths[i];
+
+        bolt::cl::counting_iterator<int> first(0);
+        bolt::cl::counting_iterator<int> last = first + length;
+
+        std::vector<int> a(length);
+
+        for (int i=0; i < length; i++) {
+            a[i] = i;
+        }; 
+
+        //STL destination vector or device_vector both are valid
+        bolt::cl::device_vector<float> dest(length);
+        //Bolt destination vector
+        bolt::cl::device_vector<float> destination(length);
+
+        ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+        bolt::cl::control ctl = bolt::cl::control::getDefault( );
+        ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+        // perform copy
+        std::copy(a.begin(), a.end(), dest.begin());
+        bolt::cl::copy(ctl, first, last, destination.begin());
+       
+        // GoogleTest Comparison
+        cmpArrays(dest, destination);
+    }
+} 
+TEST(CopyDiffDataType, MultiCoreFancyDeviceIterator) 
+{
+    for (int i = 0; i < numLengths; i++)
+    {
+        // test length
+        int length = lengths[i];
+
+        bolt::cl::counting_iterator<int> first(0);
+        bolt::cl::counting_iterator<int> last = first + length;
+
+        std::vector<int> a(length);
+
+        for (int i=0; i < length; i++) {
+            a[i] = i;
+        }; 
+
+        //STL destination vector or device_vector both are valid
+        bolt::cl::device_vector<float> dest(length);
+        //Bolt destination vector
+        bolt::cl::device_vector<float> destination(length);
+
+        ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+        bolt::cl::control ctl = bolt::cl::control::getDefault( );
+        ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+        // perform copy
+        std::copy(a.begin(), a.end(), dest.begin());
+        bolt::cl::copy(ctl, first, last, destination.begin());
+       
+        // GoogleTest Comparison
+        cmpArrays(dest, destination);
+    }
+}
+
+TEST(CopySameDataType, FancyRandomIterator)  
+{
+    for (int i = 3; i < numLengths; i++)
     {
         // test length
         int length = lengths[i];
@@ -222,8 +322,7 @@ TEST(Copy, FancyRandomIterator)
         cmpArrays(dest, destination, length);
     }
 } 
-
-TEST(Copy, SerialFancyRandomIterator)  
+TEST(CopySameDataType, SerialFancyRandomIterator)  
 {
     for (int i = 0; i < numLengths; i++)
     {
@@ -256,8 +355,7 @@ TEST(Copy, SerialFancyRandomIterator)
         cmpArrays(dest, destination, length);
     }
 } 
-
-TEST(Copy, MultiCoreFancyRandomIterator)  
+TEST(CopySameDataType, MultiCoreFancyRandomIterator)  
 {
     for (int i = 0; i < numLengths; i++)
     {
@@ -277,6 +375,102 @@ TEST(Copy, MultiCoreFancyRandomIterator)
         std::vector<int> dest(length);
         //Bolt destination vector
         std::vector<int> destination(length);
+
+        ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+        bolt::cl::control ctl = bolt::cl::control::getDefault( );
+        ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+        // perform copy
+        std::copy(a.begin(), a.end(), dest.begin());
+        bolt::cl::copy(ctl, first, last, destination.begin());
+       
+        // GoogleTest Comparison
+        cmpArrays(dest, destination, length);
+    }
+} 
+
+TEST(CopyDiffDataType, FancyRandomIterator)  
+{
+    for (int i = 3; i < numLengths; i++)
+    {
+        // test length
+        int length = lengths[i];
+
+        bolt::cl::counting_iterator<int> first(0);
+        bolt::cl::counting_iterator<int> last = first + length;
+
+        std::vector<int> a(length);
+
+        for (int i=0; i < length; i++) {
+            a[i] = i;
+        }; 
+
+        //STL destination vector
+        std::vector<float> dest(length);
+        //Bolt destination vector
+        std::vector<float> destination(length);
+
+        // perform copy
+        std::copy(a.begin(), a.end(), dest.begin());
+        bolt::cl::copy(first, last, destination.begin());
+       
+        // GoogleTest Comparison
+        cmpArrays(dest, destination, length);
+    }
+} 
+TEST(CopyDiffDataType, SerialFancyRandomIterator)  
+{
+    for (int i = 0; i < numLengths; i++)
+    {
+        // test length
+        int length = lengths[i];
+
+        bolt::cl::counting_iterator<int> first(0);
+        bolt::cl::counting_iterator<int> last = first + length;
+
+        std::vector<int> a(length);
+
+        for (int i=0; i < length; i++) {
+            a[i] = i;
+        }; 
+
+        //STL destination vector
+        std::vector<float> dest(length);
+        //Bolt destination vector
+        std::vector<float> destination(length);
+
+        ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+        bolt::cl::control ctl = bolt::cl::control::getDefault( );
+        ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+        // perform copy
+        std::copy(a.begin(), a.end(), dest.begin());
+        bolt::cl::copy(ctl, first, last, destination.begin());
+       
+        // GoogleTest Comparison
+        cmpArrays(dest, destination, length);
+    }
+} 
+TEST(CopyDiffDataType, MultiCoreFancyRandomIterator)  
+{
+    for (int i = 0; i < numLengths; i++)
+    {
+        // test length
+        int length = lengths[i];
+
+        bolt::cl::counting_iterator<int> first(0);
+        bolt::cl::counting_iterator<int> last = first + length;
+
+        std::vector<int> a(length);
+
+        for (int i=0; i < length; i++) {
+            a[i] = i;
+        }; 
+
+        //STL destination vector
+        std::vector<float> dest(length);
+        //Bolt destination vector
+        std::vector<float> destination(length);
 
         ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
         bolt::cl::control ctl = bolt::cl::control::getDefault( );
@@ -1563,7 +1757,8 @@ TEST (stdIntToIntCopy, offsetCopy){
     std::vector<int> stdv(length);
     memcpy(stdv.data(), v.data(), 25 * sizeof(int));      // Copy 25 elements to device vector
 
-    bolt::cl::copy( stdv.begin(), stdv.begin()+25, stdv.begin()+25);  // Copy 1st set of 25 elements to 2nd set of 25 elements
+      // Copy 1st set of 25 elements to 2nd set of 25 elements
+    bolt::cl::copy( stdv.begin(), stdv.begin()+25, stdv.begin()+25);
     bolt::cl::copy_n(stdv.begin(), 25, stdv.begin() + 50);  // Copy 1st set of 25 elements to 3nd set of 25 elements
     bolt::cl::copy_n(stdv.begin(), 25, stdv.begin() + 75);  // Copy 1st set of 25 elements to 4nd set of 25 elements
     
@@ -1588,8 +1783,8 @@ TEST (dvIntToIntCopy, offsetCopy){
         bolt::cl::device_vector<int>::pointer dpIn=dvIn.data();
         memcpy(dpOut.get(), dpIn.get(), 25 * sizeof(int));      // Copy 25 elements to device vector
     }
-    
-    bolt::cl::copy( dvIn.begin(), dvIn.begin()+25, dvOut.begin()+25);  // Copy 1st set of 25 elements to 2nd set of 25 elements
+    // Copy 1st set of 25 elements to 2nd set of 25 elements
+    bolt::cl::copy( dvIn.begin(), dvIn.begin()+25, dvOut.begin()+25);  
     bolt::cl::copy_n(dvIn.begin(), 25, dvOut.begin() + 50);  // Copy 1st set of 25 elements to 3nd set of 25 elements
     bolt::cl::copy_n(dvIn.begin(), 25, dvOut.begin() + 75);  // Copy 1st set of 25 elements to 4nd set of 25 elements
     
@@ -1613,7 +1808,7 @@ TEST (stdIntToFloatCopy, offsetCopy){
     //Copy 0- 24 elements
     bolt::cl::copy( v.begin(), v.begin()+25, dv.begin());
     //Copy 25- 49 elements
-    bolt::cl::copy( v.begin()+25, v.begin()+50, dv.begin()+25);  // Copy 1st set of 25 elements to 2nd set of 25 elements
+    bolt::cl::copy( v.begin()+25, v.begin()+50, dv.begin()+25);// Copy 1st set of 25 elements to 2nd set of 25 elements
     //Copy 50- 74 elements 
     bolt::cl::copy_n(v.begin(), 25, dv.begin() + 50);  // Copy 1st set of 25 elements to 3nd set of 25 elements
     //Copy 75- 99 elements 
@@ -1640,7 +1835,8 @@ TEST (dvIntToFloatCopy, offsetCopy){
     for (int i = 0; i < splitSize; ++i){ 
         EXPECT_FLOAT_EQ(dvOut[i], dvIn[i]);
     }
-    bolt::cl::copy(dvIn.begin()+25, dvIn.begin()+50, dvOut.begin()+25);  // Copy 1st set of 25 elements to 2nd set of 25 elements
+     // Copy 1st set of 25 elements to 2nd set of 25 elements
+    bolt::cl::copy(dvIn.begin()+25, dvIn.begin()+50, dvOut.begin()+25); 
     for (int i = 25; i < splitSize+25; ++i){ 
         EXPECT_FLOAT_EQ(dvOut[i], dvIn[i]);
     }
@@ -1724,8 +1920,6 @@ TEST (copyStructOdd, BufferTest)
   cmpArrays( sauce, destination, length );
 
 }
-
-
 TEST (copyStructOdd, BufferTestSameBuffer)
 {
   int length = 1024;
@@ -1747,9 +1941,6 @@ TEST (copyStructOdd, BufferTestSameBuffer)
   std::cout<<user2.x<<std::endl;
 
 }
-
-
-
 TEST (copyStructOdd, BufferTestHostToDevice)
 {
   int length = 1024;
@@ -1769,6 +1960,7 @@ TEST (copyStructOdd, BufferTestHostToDevice)
 
 int main(int argc, char* argv[])
 {
+    
     //  Register our minidump generating logic
     bolt::miniDumpSingleton::enableMiniDumps( );
 

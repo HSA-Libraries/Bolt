@@ -265,12 +265,15 @@ TYPED_TEST_P( ReduceArrayTest, MultiCoreNormal )
 
 TYPED_TEST_P( ReduceArrayTest, GPU_DeviceNormal )
 {
+    Concurrency::accelerator accel(Concurrency::accelerator::default_accelerator);
+    bolt::amp::control c_gpu( accel );  // construct control structure from the queue.
+
     typedef std::array< ArrayType, ArraySize > ArrayCont;
     ArrayType init(0);
     //  Calling the actual functions under test
     ArrayType stlReduce = std::accumulate(stdInput.begin(), stdInput.end(), init);
 
-    ArrayType boltReduce = bolt::amp::reduce(boltInput.begin( ), boltInput.end( ), init, bolt::amp::plus<ArrayType>());
+    ArrayType boltReduce = bolt::amp::reduce(c_gpu, boltInput.begin( ), boltInput.end( ), init, bolt::amp::plus<ArrayType>());
 
     ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
     ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );

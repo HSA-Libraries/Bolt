@@ -676,7 +676,7 @@ namespace cl
 
             /*! \brief Change the number of elements in device_vector to reqSize.
             *   If the new requested size is less than the original size, the data is truncated and lost.  If the 
-			*   new size is greater than the original
+            *   new size is greater than the original
             *   size, the extra paddign will be initialized with the value specified by the user.
             *   \param reqSize The requested size of the device_vector in elements.
             *   \param val All new elements are initialized with this new value.
