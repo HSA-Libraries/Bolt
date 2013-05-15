@@ -16,8 +16,8 @@
 ***************************************************************************/
 
 
-#if !defined( REDUCE_INL )
-#define REDUCE_INL
+#if !defined( BOLT_CL_REDUCE_INL )
+#define BOLT_CL_REDUCE_INL
 #pragma once
 
 #include <algorithm>
@@ -34,8 +34,6 @@
 
 namespace bolt {
     namespace cl {
-
-
 
         template<typename InputIterator>
         typename std::iterator_traits<InputIterator>::value_type
@@ -124,7 +122,7 @@ namespace bolt {
 
             ///////////////
 
-        enum ReduceTypes {reduce_iValueType, reduce_iIterType, reduce_BinaryFunction, reduce_end };
+        enum ReduceTypes {reduce_iValueType, reduce_iIterType, reduce_BinaryFunction,reduce_resType, reduce_end };
 
         ///////////////////////////////////////////////////////////////////////
         //Kernel Template Specializer
@@ -149,8 +147,8 @@ namespace bolt {
                          + typeNames[reduce_iIterType] + " output_iter,\n"
                         "const int length,\n"
                         "global " + typeNames[reduce_BinaryFunction] + "* userFunctor,\n"
-                        "global " + typeNames[reduce_iValueType] + "* result,\n"
-                        "local " + typeNames[reduce_iValueType] + "* scratch\n"
+                        "global " + typeNames[reduce_resType] + "* result,\n"
+                        "local " + typeNames[reduce_resType] + "* scratch\n"
                         ");\n\n";
 
                 return templateSpecializationString;
@@ -203,29 +201,35 @@ namespace bolt {
                     return init;
                 /*TODO - probably the forceRunMode should be replaced by getRunMode and setRunMode*/
                 bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+
                 if(runMode == bolt::cl::control::Automatic)
                 {
                     runMode = ctl.getDefaultPathToRun();
                 }
-                if (runMode == bolt::cl::control::SerialCpu)
-                {
-                        return std::accumulate(first, last, init,binary_op) ;
-                }
-                else if (runMode == bolt::cl::control::MultiCoreCpu)
-                {
-#ifdef ENABLE_TBB
-                    return bolt::btbb::reduce(first,last,init,binary_op);
-#else
 
-                    throw std::exception( "The MultiCoreCpu version of reduce is not enabled to be built! \n" );
-
-#endif
-                }
-                else
+                switch(runMode)
                 {
-                device_vector< iType > dvInput( first, last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, ctl );
-                return reduce_enqueue( ctl, dvInput.begin(), dvInput.end(), init, binary_op, cl_code);
+                case bolt::cl::control::OpenCL :
+                    {
+                        device_vector< iType > dvInput( first, last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, ctl );
+                        return reduce_enqueue( ctl, dvInput.begin(), dvInput.end(), init, binary_op, cl_code);
+                    }
+              
+                case bolt::cl::control::MultiCoreCpu: 
+                    #ifdef ENABLE_TBB
+                        return bolt::btbb::reduce(first,last,init,binary_op);
+                    #else
+                        throw std::exception( "The MultiCoreCpu version of reduce is not enabled to be built! \n" );
+                    #endif
+
+                case bolt::cl::control::SerialCpu: 
+                    return std::accumulate(first, last, init,binary_op);
+
+                default:
+                    return std::accumulate(first, last, init,binary_op);
+
                 }
+
             };
 
             // This template is called after we detect random access iterators
@@ -249,47 +253,38 @@ namespace bolt {
                 {
                     runMode = ctl.getDefaultPathToRun();
                 }
-                if (runMode == bolt::cl::control::SerialCpu) {
-                    ::cl::Event serialCPUEvent;
-                    cl_int l_Error = CL_SUCCESS;
-                    T reduceResult;
-                    /*Map the device buffer to CPU*/
 
-                    iType *reduceInputBuffer = (iType*)ctl.getCommandQueue().enqueueMapBuffer(first.getContainer().getBuffer(), false,
-                              CL_MAP_READ|CL_MAP_WRITE,0, sizeof(iType) * szElements,NULL, &serialCPUEvent, &l_Error );
-                    serialCPUEvent.wait();
-                    reduceResult = std::accumulate(reduceInputBuffer, reduceInputBuffer + szElements, init, binary_op);
-                    /*Unmap the device buffer back to device memory.
-                    This will copy the host modified buffer back to the device*/
-                    ctl.getCommandQueue().enqueueUnmapMemObject(first.getContainer().getBuffer(), reduceInputBuffer);
+                switch(runMode)
+                {
+                case bolt::cl::control::OpenCL :
+                        return reduce_enqueue( ctl, first, last, init, binary_op, cl_code);
+              
+                case bolt::cl::control::MultiCoreCpu: 
+                    #ifdef ENABLE_TBB
+                    {
+                      bolt::cl::device_vector< iType >::pointer reduceInputBuffer =  first.getContainer( ).data( );
+                      return bolt::btbb::reduce(&reduceInputBuffer[first.m_Index],&reduceInputBuffer[ szElements ],init,binary_op);
+                    }
+                    #else
+                    {
+                        throw std::exception( "The MultiCoreCpu version of reduce is not enabled to be built! \n" );
+                    }
+                    #endif
 
-                     return reduceResult;
-                } else if (runMode == bolt::cl::control::MultiCoreCpu) {
-#ifdef ENABLE_TBB
-                    ::cl::Event multiCoreCPUEvent;
-                    cl_int l_Error = CL_SUCCESS;
-                   /*Map the device buffer to CPU*/
+                case bolt::cl::control::SerialCpu: 
+                    {
+                      bolt::cl::device_vector< iType >::pointer reduceInputBuffer =  first.getContainer( ).data( );
+                      return std::accumulate(&reduceInputBuffer[first.m_Index],&reduceInputBuffer[ szElements ], init, binary_op);
+                    }
 
-                   iType *reduceInputBuffer = (iType*)ctl.getCommandQueue().enqueueMapBuffer(first.getContainer().getBuffer(), false,
-                                      CL_MAP_READ,0, sizeof(iType) * szElements, NULL, &multiCoreCPUEvent, &l_Error );
+                default: /* Incase of runMode not set/corrupted */
+                    {
+                      bolt::cl::device_vector< iType >::pointer reduceInputBuffer =  first.getContainer( ).data( );
+                      return std::accumulate(&reduceInputBuffer[first.m_Index],&reduceInputBuffer[ szElements ], init, binary_op);
+                    }
 
-                    multiCoreCPUEvent.wait();
-
-                    T  reduce_val = bolt::btbb::reduce(reduceInputBuffer, reduceInputBuffer + szElements,init,binary_op);
-                    /*Unmap the device buffer back to device memory. This will copy the host modified buffer back to the device*/
-
-
-                    ctl.getCommandQueue().enqueueUnmapMemObject(first.getContainer().getBuffer(), reduceInputBuffer);
-                    return reduce_val;
-
-
-#else
-                    throw std::exception( "The MultiCoreCpu version of reduce is not enabled to be built! \n" );
-
-#endif
-                } else {
-                return reduce_enqueue( ctl, first, last, init, binary_op, cl_code);
                 }
+
             }
 
             // This template is called after we detect random access iterators
@@ -313,24 +308,33 @@ namespace bolt {
                 {
                     runMode = ctl.getDefaultPathToRun();
                 }
-                if (runMode == bolt::cl::control::SerialCpu)
+                
+                switch(runMode)
                 {
-                    throw std::exception("SerialCPU Version of Count not implemented yet! \n");
-                }
-                else if (runMode == bolt::cl::control::MultiCoreCpu)
-                {
-
+                case bolt::cl::control::OpenCL :
+                        return reduce_enqueue( ctl, first, last, init, binary_op, cl_code);
+              
+                case bolt::cl::control::MultiCoreCpu: 
                     #ifdef ENABLE_TBB
-                           throw std::exception("MultiCoreCPU Version of Count not implemented yet! \n");
+                    {
+                      return bolt::btbb::reduce(first,last,init,binary_op);
+                    }
                     #else
-                           throw std::exception("MultiCoreCPU Version of Count not Enabled! \n");
+                    {
+                        throw std::exception( "The MultiCoreCpu version of reduce is not enabled to be built! \n" );
+                    }
                     #endif
 
+                case bolt::cl::control::SerialCpu: 
+                     return std::accumulate(first,last, init, binary_op);
+
+                default: /* Incase of runMode not set/corrupted */
+                    return std::accumulate(first,last, init, binary_op);
+
                 }
-                else
-                {
-                    return reduce_enqueue( ctl, first, last, init, binary_op, cl_code);
-                }
+
+
+
             }
 
             //----
@@ -348,14 +352,17 @@ namespace bolt {
 
 
                 std::vector<std::string> typeNames( reduce_end);
-                typeNames[reduce_iValueType] = TypeName< T >::get( );
+                typeNames[reduce_iValueType] = TypeName< iType >::get( );
                 typeNames[reduce_iIterType] = TypeName< DVInputIterator >::get( );
                 typeNames[reduce_BinaryFunction] = TypeName< BinaryFunction >::get();
+                typeNames[reduce_resType] = TypeName< T >::get( );
+                
 
                 std::vector<std::string> typeDefinitions;
-                PUSH_BACK_UNIQUE( typeDefinitions, ClCode< T >::get() )
+                PUSH_BACK_UNIQUE( typeDefinitions, ClCode< iType >::get() )
                 PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVInputIterator >::get() )
                 PUSH_BACK_UNIQUE( typeDefinitions, ClCode< BinaryFunction  >::get() )
+                PUSH_BACK_UNIQUE( typeDefinitions, ClCode< T >::get() )                
 
                 //bool cpuDevice = ctl.device().getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_CPU;
                 /*\TODO - Do CPU specific kernel work group size selection here*/
@@ -393,7 +400,7 @@ namespace bolt {
                     CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_reduce );
 
                 // ::cl::Buffer result(ctl.context(), CL_MEM_ALLOC_HOST_PTR|CL_MEM_WRITE_ONLY, sizeof( iType )*numWG);
-                control::buffPointer result = ctl.acquireBuffer( sizeof( iType ) * numWG,
+                control::buffPointer result = ctl.acquireBuffer( sizeof( T ) * numWG,
                     CL_MEM_ALLOC_HOST_PTR|CL_MEM_WRITE_ONLY );
 
                 cl_uint szElements = static_cast< cl_uint >( first.distance_to(last ) );
@@ -408,7 +415,7 @@ namespace bolt {
                 V_OPENCL( kernels[0].setArg(4, *result), "Error setting kernel argument" );
 
                 ::cl::LocalSpaceArg loc;
-                loc.size_ = wgSize*sizeof(iType);
+                loc.size_ = wgSize*sizeof(T);
                 V_OPENCL( kernels[0].setArg(5, loc), "Error setting kernel argument" );
 
                 l_Error = ctl.getCommandQueue().enqueueNDRangeKernel(
@@ -416,11 +423,12 @@ namespace bolt {
                     ::cl::NullRange,
                     ::cl::NDRange(numWG * wgSize),
                     ::cl::NDRange(wgSize));
+
                 V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for reduce() kernel" );
 
                 ::cl::Event l_mapEvent;
-                iType *h_result = (iType*)ctl.getCommandQueue().enqueueMapBuffer(*result, false, CL_MAP_READ, 0,
-                    sizeof(iType)*numWG, NULL, &l_mapEvent, &l_Error );
+                T *h_result = (T*)ctl.getCommandQueue().enqueueMapBuffer(*result, false, CL_MAP_READ, 0,
+                    sizeof(T)*numWG, NULL, &l_mapEvent, &l_Error );
                 V_OPENCL( l_Error, "Error calling map on the result buffer" );
 
                 //  Finish the tail end of the reduction on host side;the compute device reduces within the workgroups,
@@ -431,10 +439,10 @@ namespace bolt {
 
                 bolt::cl::wait(ctl, l_mapEvent);
 
-                iType acc = static_cast< iType >( init );
+                T acc = init;
                 for(int i = 0; i < numTailReduce; ++i)
                 {
-                    acc = binary_op(acc, h_result[i]);
+                    acc =(T) binary_op(acc, h_result[i]);
                 }
 
                 return acc;
@@ -443,4 +451,4 @@ namespace bolt {
     }
 }
 
-#endif
+#endif //BOLT_CL_REDUCE_INL

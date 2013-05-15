@@ -15,8 +15,8 @@
 
 ***************************************************************************/                                                                                     
 
-// TransformTest.cpp : Defines the entry point for the console application.
-//
+// Defines the entry point for the console application.
+
 #define OCL_CONTEXT_BUG_WORKAROUND 1
 #define TEST_DOUBLE 0
 #define TEST_CPU_DEVICE 0
@@ -1347,6 +1347,33 @@ void simpleReduce_countingiterator(float start,int size)
 };
 
 
+
+TEST(sanity_reduce__reducedoubleStdVect, serialNegdoubleValuesWithPlusOp){
+int sizeOfStdVect = 5;
+std::vector<double> vect1(sizeOfStdVect);
+
+vect1[0] = 5.6;
+vect1[1] = 3.8;
+vect1[2] = 4.3;
+vect1[3] = 0;
+vect1[4] = 0;
+/*
+for (int i = 0; i < sizeOfStdVect; i++){
+vect1[i] = (-1) * (i + 1.0f);
+}*/
+
+bolt::cl::control my_ctl = bolt::cl::control::getDefault();
+
+double stlAccumulate = std::accumulate(vect1.begin(), vect1.end(), 3);
+double boltClReduce = bolt::cl::reduce(my_ctl, vect1.begin(), vect1.end(), 3, bolt::cl::plus<double>());
+// double boltClReduce = bolt::cl::reduce(my_ctl, vect1.begin(), vect1.end(), 0.0f, bolt::cl::plus());
+
+EXPECT_DOUBLE_EQ(stlAccumulate, boltClReduce);
+}
+
+
+
+
 #if 0
 // Disable test since the buffer interface is moving to device_vector.
 void reduce_TestBuffer() {
@@ -1368,7 +1395,7 @@ int _tmain(int argc, _TCHAR* argv[])
     testUDDTBB();
     testTBBDevicevector();
 #endif
-    testDeviceVector();
+  /*  testDeviceVector();
     int numIters = 100;
     simpleReduce_TestControl(1024000, numIters, 0);
     simpleReduce_TestControl(100, 1, 0);
@@ -1376,7 +1403,7 @@ int _tmain(int argc, _TCHAR* argv[])
     simpleReduce1(1024);    
     simpleReduce_TestControl(100, 1, 0);
     simpleReduce_TestSerial(1000);
-    simpleReduce_countingiterator(20.05F,10);    
+    simpleReduce_countingiterator(20.05F,10);    */
     //simpleReduce_TestControl(1024000, numIters, 1); // may fail on systems with only one GPU installed.
 
     ::testing::InitGoogleTest( &argc, &argv[ 0 ] );

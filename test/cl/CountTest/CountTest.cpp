@@ -566,7 +566,6 @@ struct UDD {
 BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::detail::CountIfEqual, int, UDD );
 BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, int, UDD );
 
-
 TEST(countFloatValueOccuranceStdVect, CountInt){
     const int aSize = 1<<24;
     std::vector<int> stdInput(aSize);
@@ -796,10 +795,7 @@ TEST(countFloatValueOccuranceStdVect, MulticoreCountUDDTBB){
     size_t stdCount = std::count(stdInput.begin(), stdInput.end(), myUDD);
     size_t boltCount = bolt::cl::count(ctl, tbbInput.begin(), tbbInput.end(), myUDD);
 
-
-    EXPECT_EQ(stdCount, boltCount)<<"Failed as: \nSTD Count = "<<stdCount<<std::endl<<"Bolt Count = "
-        <<boltCount<<std::endl;
-
+    EXPECT_EQ(stdCount, boltCount)<<"Failed as: \nSTD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
     std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
 }
 
@@ -819,11 +815,15 @@ TEST(countFloatValueOccuranceStdVect,DeviceCountUDDTBB){
     bolt::cl::device_vector<UDD> tbbInput(stdInput.begin(),stdInput.end());
 
     bolt::cl::control ctl = bolt::cl::control::getDefault();
+
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
     size_t stdCount = std::count(stdInput.begin(), stdInput.end(), myUDD);
     size_t boltCount = bolt::cl::count(ctl, tbbInput.begin(), tbbInput.end(), myUDD);
 
+
     EXPECT_EQ(stdCount, boltCount)<<"Failed as: \nSTD Count = "<<stdCount<<std::endl<<"Bolt Count = "
         <<boltCount<<std::endl;
+
     std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
 }
 
@@ -953,7 +953,6 @@ TEST(countFloatValueOccuranceStdVect, MultiCore_STDCountUDDTBB){
     size_t stdCount = std::count(stdInput.begin(), stdInput.end(), myUDD);
     size_t boltCount = bolt::cl::count(ctl, tbbInput.begin(), tbbInput.end(), myUDD);
 
-
     EXPECT_EQ(stdCount, boltCount)<<"Failed as: \nSTD Count = "<<stdCount<<std::endl<<"Bolt Count = "
         <<boltCount<<std::endl;
     std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
@@ -984,12 +983,10 @@ TEST(countFloatValueOccuranceStdVect, Serial_CountifInt){
     const int aSize = 1<<24;
     std::vector<int> stdInput(aSize);
 
-
     int myintValue = 2;
 
     for (int i=0; i < aSize; i++) {
-    stdInput[i] = rand() % 10 + 1;
-
+        stdInput[i] = rand() % 10 + 1;
     }
     bolt::cl::device_vector<int> tbbInput(stdInput.begin(),stdInput.end());
 
@@ -999,7 +996,7 @@ TEST(countFloatValueOccuranceStdVect, Serial_CountifInt){
     size_t stdCount = std::count_if(stdInput.begin(), stdInput.end(), InRange<int>(2,10000));
     size_t boltCount = bolt::cl::count_if(ctl, tbbInput.begin(), tbbInput.end(), InRange<int>(2,10000));
 
-  EXPECT_EQ(stdCount, boltCount)<<"Failed as: \nSTD Count = "<<stdCount<<std::endl<<"Bolt Count = "
+    EXPECT_EQ(stdCount, boltCount)<<"Failed as: \nSTD Count = "<<stdCount<<std::endl<<"Bolt Count = "
       <<boltCount<<std::endl;
 
 }

@@ -381,7 +381,6 @@ public:
             const BinaryFunction& binary_op, std::random_access_iterator_tag )
         {
             return detail::scan_pick_iterator( ctrl, first, last, result, init, inclusive, binary_op,
-
                 std::iterator_traits< InputIterator >::iterator_category( ),
                 std::iterator_traits< OutputIterator >::iterator_category( ) );
         };

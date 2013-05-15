@@ -1,19 +1,19 @@
-/***************************************************************************
-*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.
-*
-*   Licensed under the Apache License, Version 2.0 (the "License");
-*   you may not use this file except in compliance with the License.
-*   You may obtain a copy of the License at
-*
-*       http://www.apache.org/licenses/LICENSE-2.0
-*
-*   Unless required by applicable law or agreed to in writing, software
-*   distributed under the License is distributed on an "AS IS" BASIS,
-*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-*   See the License for the specific language governing permissions and
-*   limitations under the License.
+/***************************************************************************         
+*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
+*                                                                                    
+*   Licensed under the Apache License, Version 2.0 (the "License");   
+*   you may not use this file except in compliance with the License.                 
+*   You may obtain a copy of the License at                                          
+*                                                                                    
+*       http://www.apache.org/licenses/LICENSE-2.0                      
+*                                                                                    
+*   Unless required by applicable law or agreed to in writing, software              
+*   distributed under the License is distributed on an "AS IS" BASIS,              
+*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.         
+*   See the License for the specific language governing permissions and              
+*   limitations under the License.                                                   
 
-***************************************************************************/
+***************************************************************************/         
 
 
 
@@ -43,12 +43,12 @@ namespace bolt {
         /*! \addtogroup amp-counting
         *  \ingroup reductions
         *  \{
-        *
+        *  
         */
 
-        namespace detail
+        namespace detail 
         {
-        template <typename T>
+        template <typename T> 
         struct CountIfEqual {
             CountIfEqual(const T &targetValue)  : _targetValue(targetValue)
             { };
@@ -65,9 +65,9 @@ namespace bolt {
         }
 
         /*!
-         * \brief \p count counts the number of elements in the specified range which compare equal to the specified
+         * \brief \p count counts the number of elements in the specified range which compare equal to the specified 
          * \p value.
-         *
+         * 
 
          *  \param ctl \b Optional Control structure to control accelerator,debug, tuning. See bolt::amp::control.
          *  \param first Beginning of the source copy sequence.
@@ -84,40 +84,40 @@ namespace bolt {
          *    size_t countOf42 = bolt::amp::count (A, A+14, 42);
          *    // countOf42 contains 4.
          *  \endcode
-         *
+         * 
          */
 
-        template<typename InputIterator, typename EqualityComparable>
+        template<typename InputIterator, typename EqualityComparable> 
         typename bolt::amp::iterator_traits<InputIterator>::difference_type
-            count(control& ctl, InputIterator first,
-            InputIterator last,
+            count(control& ctl, InputIterator first, 
+            InputIterator last, 
             const EqualityComparable &value)
         {
             typedef typename std::iterator_traits<InputIterator>::value_type T;
             return count_if(ctl, first, last, detail::CountIfEqual<T>(value));
         };
 
-        template<typename InputIterator, typename EqualityComparable>
+        template<typename InputIterator, typename EqualityComparable> 
         typename bolt::amp::iterator_traits<InputIterator>::difference_type
-            count(InputIterator first,
-            InputIterator last,
+            count(InputIterator first, 
+            InputIterator last, 
             const EqualityComparable &value)
         {
             typedef typename std::iterator_traits<InputIterator>::value_type T;
             return count_if(first, last, detail::CountIfEqual<T>(value));
         };
-
-
+        
+        
         /*!
-        * \brief \p count_if counts the number of elements in the specified range for which the specified \p predicate
-        *  is \p true.
-        *
+        * \brief \p count_if counts the number of elements in the specified range for which the specified \p predicate 
+        *  is \p true.  
+        * 
         * \param ctl \b Optional Control structure to control accelerator,debug, tuning. See bolt::amp::control.
         * \param first The first position in the sequence to be counted.
         * \param last The last position in the sequence to be counted.
-        * \param predicate The count is incremented for each element which returns true when passed to
-        *  the predicate function.
-        * \returns: The number of elements for which \p predicate is true.
+        * \param predicate The count is incremented for each element which returns true when passed to 
+        *  the predicate function.        
+        * \returns: The number of elements for which \p predicate is true.          
         *
         *  \tparam InputIterator is a model of InputIterator
         *  \tparam OutputIterator is a model of OutputIterator
@@ -133,8 +133,8 @@ namespace bolt {
         *     _high=high;
         *   };
         *
-        *   bool operator() (const T& value) restrict(amp,cpu) {
-        *     return (value >= _low) && (value <= _high) ;
+        *   bool operator() (const T& value) restrict(amp,cpu) { 
+        *     return (value >= _low) && (value <= _high) ; 
         *   };
         *
         *  T _low;
@@ -148,20 +148,20 @@ namespace bolt {
         *
         * \details Example to show how to use UDD type for count.
         * \code
-        *  struct UDD {
-        *      int a;
+        *  struct UDD { 
+        *      int a; 
         *      int b;
         *
         *      bool operator() (const int &x) restrict(amp,cpu) {
         *          return (x == a || x == b);
         *      }
         *
-        *      UDD()
-        *          : a(0),b(0) { }
-        *      UDD(int _in)
-        *          : a(_in), b(_in +1)  { }
-        *
-        *  };
+        *      UDD() 
+        *          : a(0),b(0) { } 
+        *      UDD(int _in) 
+        *          : a(_in), b(_in +1)  { } 
+        *          
+        *  }; 
         *
         *
         *    std::vector<UDD> boltInput(SIZE);
@@ -175,22 +175,22 @@ namespace bolt {
         *  \endcode
         */
 
-       template<typename InputIterator, typename Predicate>
+       template<typename InputIterator, typename Predicate> 
         typename bolt::amp::iterator_traits<InputIterator>::difference_type
-            count_if(control& ctl, InputIterator first,
-            InputIterator last,
+            count_if(control& ctl, InputIterator first, 
+            InputIterator last, 
             Predicate predicate=bolt::amp::detail::CountIfEqual< int >());
 
 
-        template<typename InputIterator, typename Predicate>
+        template<typename InputIterator, typename Predicate> 
         typename bolt::amp::iterator_traits<InputIterator>::difference_type
-            count_if(InputIterator first,
-            InputIterator last,
+            count_if(InputIterator first, 
+            InputIterator last, 
             Predicate predicate);
-
-
+            
+        
          /*!   \}  */
-
+        
     };
 };
 

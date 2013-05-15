@@ -43,7 +43,8 @@ namespace cl {
         detail::stablesort_by_key_detect_random_access( control::getDefault( ), 
                                            keys_first, keys_last, values_first,
                                            less< T >( ), cl_code, 
-                                           std::iterator_traits< RandomAccessIterator1 >::iterator_category( ) );
+                                           std::iterator_traits< RandomAccessIterator1 >::iterator_category( ),
+                                           std::iterator_traits< RandomAccessIterator2 >::iterator_category( ) );
         return;
     }
 
@@ -54,7 +55,8 @@ namespace cl {
         detail::stablesort_by_key_detect_random_access( control::getDefault( ), 
                                            keys_first, keys_last, values_first,
                                            comp, cl_code, 
-                                           std::iterator_traits< RandomAccessIterator1 >::iterator_category( ) );
+                                           std::iterator_traits< RandomAccessIterator1 >::iterator_category( ),
+                                           std::iterator_traits< RandomAccessIterator2 >::iterator_category( ) );
         return;
     }
 
@@ -67,7 +69,8 @@ namespace cl {
         detail::stablesort_by_key_detect_random_access(ctl, 
                                            keys_first, keys_last, values_first,
                                           less< T >( ), cl_code, 
-                                           std::iterator_traits< RandomAccessIterator1 >::iterator_category( ) );
+                                           std::iterator_traits< RandomAccessIterator1 >::iterator_category( ),
+                                           std::iterator_traits< RandomAccessIterator2 >::iterator_category( ) );
         return;
     }
 
@@ -78,7 +81,8 @@ namespace cl {
         detail::stablesort_by_key_detect_random_access(ctl, 
                                            keys_first, keys_last, values_first,
                                           comp, cl_code, 
-                                           std::iterator_traits< RandomAccessIterator1 >::iterator_category( ));
+                                           std::iterator_traits< RandomAccessIterator1 >::iterator_category( ),
+                                           std::iterator_traits< RandomAccessIterator2 >::iterator_category( ) );
         return;
     }
 
@@ -133,18 +137,17 @@ namespace detail
         }
     };
 
-
 // Wrapper that uses default control class, iterator interface
     template< typename RandomAccessIterator1, typename RandomAccessIterator2, typename StrictWeakOrdering >
     void stablesort_by_key_detect_random_access( control &ctl, 
                                     const RandomAccessIterator1 keys_first, const RandomAccessIterator1 keys_last, 
                                     const RandomAccessIterator2 values_first,
                                     const StrictWeakOrdering& comp, const std::string& cl_code, 
-                                    std::input_iterator_tag)
+                                    std::input_iterator_tag, std::input_iterator_tag )
     {
         //  \TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data 
         //  to a temporary buffer.  Should we?
-        static_assert( false, "Bolt only supports random access iterator types! \n" );
+        static_assert( false, "Bolt only supports random access iterator types" );
     };
 
     template< typename RandomAccessIterator1, typename RandomAccessIterator2, typename StrictWeakOrdering >
@@ -152,16 +155,37 @@ namespace detail
                                     const RandomAccessIterator1 keys_first, const RandomAccessIterator1 keys_last, 
                                     const RandomAccessIterator2 values_first,
                                     const StrictWeakOrdering& comp, const std::string& cl_code, 
-                                    std::random_access_iterator_tag )
+                                    std::random_access_iterator_tag, std::random_access_iterator_tag )
     {
         return stablesort_by_key_pick_iterator( ctl, keys_first, keys_last, values_first,
                                     comp, cl_code, 
-                                    std::iterator_traits< RandomAccessIterator1 >::iterator_category( ) );
+                                    std::iterator_traits< RandomAccessIterator1 >::iterator_category( ),
+                                    std::iterator_traits< RandomAccessIterator2 >::iterator_category( ) );
     };
 
+    template< typename RandomAccessIterator1, typename RandomAccessIterator2, typename StrictWeakOrdering >
+    void stablesort_by_key_detect_random_access( control &ctl, 
+                                    const RandomAccessIterator1 keys_first, const RandomAccessIterator1 keys_last, 
+                                    const RandomAccessIterator2 values_first,
+                                    const StrictWeakOrdering& comp, const std::string& cl_code, 
+                                    bolt::cl::fancy_iterator_tag, std::input_iterator_tag ) 
+    {
+        static_assert( false, "It is not possible to sort fancy iterators. They are not mutable" );
+    }
 
-   
+    template< typename RandomAccessIterator1, typename RandomAccessIterator2, typename StrictWeakOrdering >
+    void stablesort_by_key_detect_random_access( control &ctl, 
+                                    const RandomAccessIterator1 keys_first, const RandomAccessIterator1 keys_last, 
+                                    const RandomAccessIterator2 values_first,
+                                    const StrictWeakOrdering& comp, const std::string& cl_code, 
+                                    std::input_iterator_tag, bolt::cl::fancy_iterator_tag ) 
+    {
+        static_assert( false, "It is not possible to sort fancy iterators. They are not mutable" );
+    }
+
     //Non Device Vector specialization.
+    //This implementation creates a cl::Buffer and passes the cl buffer to the sort specialization whichtakes the cl buffer as a parameter. 
+    //In the future, Each input buffer should be mapped to the device_vector and the specialization specific to device_vector should be called. 
     //This implementation creates a cl::Buffer and passes the cl buffer to the sort specialization whichtakes 
     //the cl buffer as a parameter. 
     //In the future, Each input buffer should be mapped to the device_vector and the specialization specific
@@ -171,9 +195,8 @@ namespace detail
                                 const RandomAccessIterator1 keys_first, const RandomAccessIterator1 keys_last, 
                                 const RandomAccessIterator2 values_first,
                                 const StrictWeakOrdering& comp, const std::string& cl_code, 
-                                std::random_access_iterator_tag )
+                                std::random_access_iterator_tag, std::random_access_iterator_tag )
     {
-
         typedef typename std::iterator_traits< RandomAccessIterator1 >::value_type keyType;
         typedef typename std::iterator_traits< RandomAccessIterator2 >::value_type valType;
 
@@ -209,7 +232,7 @@ namespace detail
         {
 
             device_vector< keyType > dvKeys( keys_first, keys_last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctl );
-            device_vector< valType > dvValues(values_first, vecSize,CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE,false,ctl);
+            device_vector< valType > dvValues( values_first, vecSize, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, false, ctl );
 
             //Now call the actual cl algorithm
             stablesort_by_key_enqueue( ctl, dvKeys.begin(), dvKeys.end(), dvValues.begin( ), comp, cl_code );
@@ -227,7 +250,7 @@ namespace detail
                                     const DVRandomAccessIterator1 keys_first, const DVRandomAccessIterator1 keys_last, 
                                     const DVRandomAccessIterator2 values_first,
                                     const StrictWeakOrdering& comp, const std::string& cl_code, 
-                                    bolt::cl::device_vector_tag )
+                                    bolt::cl::device_vector_tag, bolt::cl::device_vector_tag )
     {
 
         typedef typename std::iterator_traits< DVRandomAccessIterator1 >::value_type keyType;
