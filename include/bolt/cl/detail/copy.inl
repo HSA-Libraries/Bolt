@@ -388,18 +388,11 @@ void copy_pick_iterator(const bolt::cl::control &ctl,  const DVInputIterator& fi
     static_assert( false, "It is not possible to copy into fancy iterators. They are not mutable" );
 }
 
-<<<<<<< HEAD
-template< typename DVInputIterator, typename Size, typename DVOutputIterator > 
-typename std::enable_if< std::is_same< typename std::iterator_traits<DVInputIterator >::value_type, 
-                                       typename std::iterator_traits<DVOutputIterator >::value_type 
-                                     >::value 
-=======
+
 template< typename DVInputIterator, typename Size, typename DVOutputIterator >
 typename std::enable_if< std::is_same< typename std::iterator_traits<DVInputIterator >::iterator_category,
                                        typename std::iterator_traits<DVOutputIterator >::iterator_category
-                                     >::value
->>>>>>> 49981ba... Resolved the EPR id# 377305 with help of shruti and Appropriate Google testcases And Ensured no line is Exceeding the 120 columns and no tab
-                       >::type  /*If enabled then this typename will be evaluated to void*/
+                                     >::value >::type  /*If enabled then this typename will be evaluated to void*/
     copy_enqueue(const bolt::cl::control &ctrl, const DVInputIterator& first, const Size& n, 
     const DVOutputIterator& result, const std::string& cl_code)
 { 
