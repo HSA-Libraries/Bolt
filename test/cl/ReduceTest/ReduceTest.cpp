@@ -1138,6 +1138,28 @@ TEST( ReduceUDD , UDDPlusOperatorInts )
 
 }
 
+
+TEST( ReduceDevice , DeviceVectoroffset )
+{
+    //setup containers
+    unsigned int length = 1024;
+    bolt::cl::device_vector< int > input( length );
+    for( unsigned int i = 0; i < length ; i++ )
+    {
+      input[i] = i;
+
+    }
+    
+    // call reduce
+
+    int boltReduce = bolt::cl::reduce( input.begin() + 10 , input.end(), 0, bolt::cl::plus<int>() );
+    int stdReduce =  523731;
+
+    EXPECT_EQ(boltReduce,stdReduce);
+
+}
+
+
 TEST( Reduceint , KcacheTest )
 {
     //setup containers
@@ -1364,8 +1386,8 @@ vect1[i] = (-1) * (i + 1.0f);
 
 bolt::cl::control my_ctl = bolt::cl::control::getDefault();
 
-double stlAccumulate = std::accumulate(vect1.begin(), vect1.end(), 3);
-double boltClReduce = bolt::cl::reduce(my_ctl, vect1.begin(), vect1.end(), 3, bolt::cl::plus<double>());
+double stlAccumulate = std::accumulate(vect1.begin(), vect1.end(), 3.0);
+double boltClReduce = bolt::cl::reduce(my_ctl, vect1.begin(), vect1.end(), 3.0, bolt::cl::plus<double>());
 // double boltClReduce = bolt::cl::reduce(my_ctl, vect1.begin(), vect1.end(), 0.0f, bolt::cl::plus());
 
 EXPECT_DOUBLE_EQ(stlAccumulate, boltClReduce);

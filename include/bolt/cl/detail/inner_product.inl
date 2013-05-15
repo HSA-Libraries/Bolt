@@ -166,7 +166,7 @@ namespace bolt {
                 else if(runMode == bolt::cl::control::MultiCoreCpu)
                 {
                     #ifdef ENABLE_TBB
-                           throw std::exception("MultiCoreCPU Version of inner_product not implemented yet! \n");
+                           std::inner_product(first1, last1, first2, init, f1, f2);
                     #else
                            throw std::exception("MultiCoreCPU Version of inner_product not Enabled! \n");
                     #endif
@@ -216,7 +216,7 @@ namespace bolt {
                 else if(runMode == bolt::cl::control::MultiCoreCpu)
                 {
                     #ifdef ENABLE_TBB
-                           throw std::exception("MultiCoreCPU Version of inner_product not implemented yet! \n");
+                           std::inner_product(first1, last1, first2, init, f1, f2);
                     #else
                            throw std::exception("MultiCoreCPU Version of inner_product not Enabled! \n");
                     #endif
@@ -249,7 +249,7 @@ namespace bolt {
                 else if(runMode == bolt::cl::control::MultiCoreCpu)
                 {
                     #ifdef ENABLE_TBB
-                           throw std::exception("MultiCoreCPU Version of inner_product not implemented yet! \n");
+                          std::inner_product(first1, last1, first2, init, f1, f2);
                     #else
                            throw std::exception("MultiCoreCPU Version of inner_product not Enabled! \n");
                     #endif
