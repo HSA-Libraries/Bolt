@@ -20,8 +20,8 @@
 */
 
 
-#if !defined( TBB_TRANSFORM_REDUCE_INL )
-#define TBB_TRANSFORM_REDUCE_INL
+#if !defined( BOLT_BTBB_TRANSFORM_REDUCE_INL )
+#define BOLT_BTBB_TRANSFORM_REDUCE_INL
 #pragma once
 
 namespace bolt {

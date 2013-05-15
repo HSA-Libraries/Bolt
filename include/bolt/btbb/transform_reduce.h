@@ -20,8 +20,8 @@
 */
 
 #pragma once
-#if !defined( TBB_TRANSFORM_REDUCE_H )
-#define TBB_TRANSFORM_REDUCE_H
+#if !defined( BOLT_BTBB_TRANSFORM_REDUCE_H )
+#define BOLT_BTBB_TRANSFORM_REDUCE_H
 
 #include "tbb/parallel_reduce.h"
 #include "tbb/blocked_range.h"

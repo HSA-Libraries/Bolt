@@ -15,8 +15,8 @@
 
 ***************************************************************************/
 
-#if !defined( BTBB_COUNT_INL)
-#define BTBB_COUNT_INL
+#if !defined( BOLT_BTBB_COUNT_INL)
+#define BOLT_BTBB_COUNT_INL
 #pragma once
 
 #include "tbb/parallel_reduce.h"

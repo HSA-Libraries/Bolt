@@ -15,8 +15,8 @@
 
 ***************************************************************************/
 
-#if !defined(TBB_SORT_INL )
-#define TBB_SORT_INL
+#if !defined(BOLT_BTBB_SORT_INL )
+#define BOLT_BTBB_SORT_INL
 #pragma once
 
 

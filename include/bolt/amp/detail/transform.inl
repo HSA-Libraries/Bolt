@@ -20,8 +20,8 @@
 //////////////////////////////////////////////////////////////////////////////
 
 #pragma once
-#if !defined( AMP_TRANSFORM_INL )
-#define AMP_TRANSFORM_INL
+#if !defined( BOLT_AMP_TRANSFORM_INL )
+#define BOLT_AMP_TRANSFORM_INL
 #define WAVEFRONT_SIZE 64
 
 #ifdef BOLT_ENABLE_PROFILING
@@ -425,8 +425,8 @@ namespace bolt
              }
              else if( (runMode == bolt::amp::control::MultiCoreCpu) )
              {
-            
-#if defined( ENABLE_TBB )                 
+
+#if defined( ENABLE_TBB )
                 bolt::amp::device_vector< iType >::pointer firstPtr = first.getContainer( ).data( );
                 bolt::amp::device_vector< oType >::pointer resPtr = result.getContainer( ).data( );
 

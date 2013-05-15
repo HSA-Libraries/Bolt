@@ -16,8 +16,8 @@
 ***************************************************************************/
 
 #pragma once
-#if !defined( SORT_BY_KEY_INL )
-#define SORT_BY_KEY_INL
+#if !defined( BOLT_CL_SORT_BY_KEY_INL )
+#define BOLT_CL_SORT_BY_KEY_INL
 
 #include <algorithm>
 #include <type_traits>

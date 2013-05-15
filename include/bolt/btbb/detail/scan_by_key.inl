@@ -15,8 +15,8 @@
 
 ***************************************************************************/
 
-#if !defined( TBB_SCAN_BY_KEY_INL )
-#define TBB_SCAN_BY_KEY_INL
+#if !defined( BOLT_BTBB_SCAN_BY_KEY_INL )
+#define BOLT_BTBB_SCAN_BY_KEY_INL
 #pragma once
 
 namespace bolt

@@ -1,27 +1,27 @@
-/***************************************************************************                                                                                     
-*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
-*                                                                                    
-*   Licensed under the Apache License, Version 2.0 (the "License");   
-*   you may not use this file except in compliance with the License.                 
-*   You may obtain a copy of the License at                                          
-*                                                                                    
-*       http://www.apache.org/licenses/LICENSE-2.0                      
-*                                                                                    
-*   Unless required by applicable law or agreed to in writing, software              
-*   distributed under the License is distributed on an "AS IS" BASIS,              
-*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.         
-*   See the License for the specific language governing permissions and              
-*   limitations under the License.                                                   
+/***************************************************************************
+*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.
+*
+*   Licensed under the Apache License, Version 2.0 (the "License");
+*   you may not use this file except in compliance with the License.
+*   You may obtain a copy of the License at
+*
+*       http://www.apache.org/licenses/LICENSE-2.0
+*
+*   Unless required by applicable law or agreed to in writing, software
+*   distributed under the License is distributed on an "AS IS" BASIS,
+*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+*   See the License for the specific language governing permissions and
+*   limitations under the License.
 
-***************************************************************************/                                                                                     
+***************************************************************************/
 
-#if !defined( GENERATE_INL )
-#define GENERATE_INL
+#if !defined( BOLT_CL_GENERATE_INL )
+#define BOLT_CL_GENERATE_INL
 #pragma once
 
 #include <boost/thread/once.hpp>
 #include <boost/bind.hpp>
-#include <type_traits> 
+#include <type_traits>
 
 #include "bolt/cl/bolt.h"
 
@@ -31,37 +31,37 @@ namespace bolt {
 namespace cl {
 
 // default control, start->stop
-template<typename ForwardIterator, typename Generator> 
+template<typename ForwardIterator, typename Generator>
 void generate( ForwardIterator first, ForwardIterator last, Generator gen, const std::string& cl_code)
 {
-            detail::generate_detect_random_access( bolt::cl::control::getDefault(), first, last, gen, cl_code, 
+            detail::generate_detect_random_access( bolt::cl::control::getDefault(), first, last, gen, cl_code,
             std::iterator_traits< ForwardIterator >::iterator_category( ) );
 }
 
 // user specified control, start->stop
-template<typename ForwardIterator, typename Generator> 
-void generate( bolt::cl::control &ctl, ForwardIterator first, ForwardIterator last, Generator gen, 
+template<typename ForwardIterator, typename Generator>
+void generate( bolt::cl::control &ctl, ForwardIterator first, ForwardIterator last, Generator gen,
               const std::string& cl_code)
 {
-            detail::generate_detect_random_access( ctl, first, last, gen, cl_code, 
+            detail::generate_detect_random_access( ctl, first, last, gen, cl_code,
             std::iterator_traits< ForwardIterator >::iterator_category( ) );
 }
 
 // default control, start-> +n
-template<typename OutputIterator, typename Size, typename Generator> 
+template<typename OutputIterator, typename Size, typename Generator>
 OutputIterator generate_n( OutputIterator first, Size n, Generator gen, const std::string& cl_code)
 {
-            detail::generate_detect_random_access( bolt::cl::control::getDefault(), first, first+static_cast< const int >( n ), gen, cl_code, 
+            detail::generate_detect_random_access( bolt::cl::control::getDefault(), first, first+static_cast< const int >( n ), gen, cl_code,
             std::iterator_traits< OutputIterator >::iterator_category( ) );
             return (first+static_cast< const int >( n ));
 }
 
 // user specified control, start-> +n
-template<typename OutputIterator, typename Size, typename Generator> 
+template<typename OutputIterator, typename Size, typename Generator>
 OutputIterator generate_n( bolt::cl::control &ctl, OutputIterator first, Size n, Generator gen,
                           const std::string& cl_code)
 {
-            detail::generate_detect_random_access( ctl, first, first+static_cast< const int >( n ), gen, cl_code, 
+            detail::generate_detect_random_access( ctl, first, first+static_cast< const int >( n ), gen, cl_code,
             std::iterator_traits< OutputIterator >::iterator_category( ) );
             return (first+static_cast< const int >( n ));
 }
@@ -114,11 +114,11 @@ class Generate_KernelTemplateSpecializer : public KernelTemplateSpecializer
                 "const int numElements,\n"
                 "global " + typeNames[gen_genType] + " * restrict genPtr);\n\n"
                 ;
-    
+
         return templateSpecializationString;
     }
 };
-                        
+
 
 
 /*****************************************************************************
@@ -127,7 +127,7 @@ class Generate_KernelTemplateSpecializer : public KernelTemplateSpecializer
 
 // generate, not random-access
 template<typename ForwardIterator, typename Generator>
-void generate_detect_random_access( bolt::cl::control &ctrl, const ForwardIterator& first, const ForwardIterator& last, 
+void generate_detect_random_access( bolt::cl::control &ctrl, const ForwardIterator& first, const ForwardIterator& last,
                         const Generator& gen, const std::string &cl_code, std::forward_iterator_tag )
 {
                 static_assert( false, "Bolt only supports random access iterator types" );
@@ -135,13 +135,13 @@ void generate_detect_random_access( bolt::cl::control &ctrl, const ForwardIterat
 
 // generate, yes random-access
 template<typename ForwardIterator, typename Generator>
-void generate_detect_random_access( bolt::cl::control &ctrl, const ForwardIterator& first, const ForwardIterator& last, 
+void generate_detect_random_access( bolt::cl::control &ctrl, const ForwardIterator& first, const ForwardIterator& last,
                         const Generator& gen, const std::string &cl_code, std::random_access_iterator_tag )
 {
-                generate_pick_iterator(ctrl, first, last, gen, cl_code, 
+                generate_pick_iterator(ctrl, first, last, gen, cl_code,
                 std::iterator_traits< ForwardIterator >::iterator_category( ) );
 }
-           
+
 
 /*****************************************************************************
              * Pick Iterator
@@ -151,14 +151,14 @@ void generate_detect_random_access( bolt::cl::control &ctrl, const ForwardIterat
                \detail This template is called by the non-detail versions of generate, it already assumes random access
              *  iterators.  This overload is called strictly for non-device_vector iterators
             */
-            template<typename ForwardIterator, typename Generator> 
-            void generate_pick_iterator(bolt::cl::control &ctl,  const ForwardIterator &first, 
-                const ForwardIterator &last, 
+            template<typename ForwardIterator, typename Generator>
+            void generate_pick_iterator(bolt::cl::control &ctl,  const ForwardIterator &first,
+                const ForwardIterator &last,
                 const Generator &gen, const std::string &user_code, std::random_access_iterator_tag )
             {
                 typedef std::iterator_traits<ForwardIterator>::value_type Type;
 
-                size_t sz = (last - first); 
+                size_t sz = (last - first);
                 if (sz < 1)
                     return;
 
@@ -193,12 +193,12 @@ void generate_detect_random_access( bolt::cl::control &ctrl, const ForwardIterat
                 }
 }
 
-            // This template is called by the non-detail versions of generate, 
+            // This template is called by the non-detail versions of generate,
             // it already assumes random access iterators
             // This is called strictly for iterators that are derived from device_vector< T >::iterator
-            template<typename DVForwardIterator, typename Generator> 
+            template<typename DVForwardIterator, typename Generator>
             void generate_pick_iterator(bolt::cl::control &ctl, const DVForwardIterator &first,
-                const DVForwardIterator &last, 
+                const DVForwardIterator &last,
                 const Generator &gen, const std::string& user_code, bolt::cl::device_vector_tag )
             {
                 bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
@@ -228,9 +228,9 @@ void generate_detect_random_access( bolt::cl::control &ctrl, const ForwardIterat
             // This template is called by the non-detail versions of generate,
             // it already assumes random access iterators
             // This is called strictly for iterators that are derived from device_vector< T >::iterator
-            template<typename DVForwardIterator, typename Generator> 
-            void generate_pick_iterator(bolt::cl::control &ctl,  const DVForwardIterator &first, 
-                const DVForwardIterator &last, 
+            template<typename DVForwardIterator, typename Generator>
+            void generate_pick_iterator(bolt::cl::control &ctl,  const DVForwardIterator &first,
+                const DVForwardIterator &last,
                 const Generator &gen, const std::string& user_code, bolt::cl::fancy_iterator_tag )
             {
                 static_assert( false, "It is not possible to generate into fancy iterators. They are not mutable! " );
@@ -240,7 +240,7 @@ void generate_detect_random_access( bolt::cl::control &ctrl, const ForwardIterat
              * Enqueue
              ****************************************************************************/
 
-template< typename DVForwardIterator, typename Generator > 
+template< typename DVForwardIterator, typename Generator >
 void generate_enqueue(
     bolt::cl::control &ctrl,
     const DVForwardIterator &first,
@@ -322,9 +322,9 @@ aProfiler.set(AsyncProfiler::device, control::SerialCpu);
      * Temporary Buffers
      *********************************************************************************/
                 ALIGNED( 256 ) Generator aligned_generator( gen );
-                // ::cl::Buffer userGenerator(ctl.context(), CL_MEM_READ_ONLY|CL_MEM_USE_HOST_PTR, 
+                // ::cl::Buffer userGenerator(ctl.context(), CL_MEM_READ_ONLY|CL_MEM_USE_HOST_PTR,
                 //  sizeof( aligned_generator ), const_cast< Generator* >( &aligned_generator ) );
-                control::buffPointer userGenerator = ctrl.acquireBuffer( sizeof( aligned_generator ), 
+                control::buffPointer userGenerator = ctrl.acquireBuffer( sizeof( aligned_generator ),
                     CL_MEM_READ_ONLY|CL_MEM_USE_HOST_PTR, &aligned_generator );
 
 #ifdef BOLT_ENABLE_PROFILING
@@ -332,7 +332,7 @@ aProfiler.nextStep();
 aProfiler.setStepName("Kernel 0 Setup");
 aProfiler.set(AsyncProfiler::device, control::SerialCpu);
 #endif
-                
+
     int whichKernel = 0;
     cl_uint numThreadsChosen;
     cl_uint workGroupSizeChosen = workGroupSize;
@@ -369,7 +369,7 @@ aProfiler.set(AsyncProfiler::memory, 1*numElements*sizeof(oType)
                 // enqueue kernel
                 ::cl::Event generateEvent;
     l_Error = ctrl.getCommandQueue().enqueueNDRangeKernel(
-        kernels[whichKernel], 
+        kernels[whichKernel],
                     ::cl::NullRange,
         ::cl::NDRange(numThreadsChosen),
         ::cl::NDRange(workGroupSizeChosen),
@@ -394,17 +394,17 @@ aProfiler.setArchitecture(strDeviceName);
     {
         cl_ulong k0_start, k0_stop, k1_stop, k2_stop;
         cl_ulong k1_start, k2_start;
-        
+
         l_Error = kernel0Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_START, &k0_start);
         V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_QUEUED>()");
         l_Error = kernel0Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END, &k0_stop);
         V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_END>()");
-        
+
         l_Error = kernel1Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_START, &k1_start);
         V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_START>()");
         l_Error = kernel1Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END, &k1_stop);
         V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_END>()");
-        
+
         l_Error = kernel2Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_START, &k2_start);
         V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_START>()");
         l_Error = kernel2Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END, &k2_stop);
@@ -414,7 +414,7 @@ aProfiler.setArchitecture(strDeviceName);
         size_t shift = k0_start - k0_start_cpu;
         //size_t shift = k0_start_cpu - k0_start;
 
-        //std::cout << "setting step " << k0_stepNum << " attribute " << AsyncProfiler::stopTime 
+        //std::cout << "setting step " << k0_stepNum << " attribute " << AsyncProfiler::stopTime
         //<< " to " << k0_stop-shift << std::endl;
         aProfiler.set(k0_stepNum, AsyncProfiler::stopTime,  static_cast<size_t>(k0_stop-shift) );
 

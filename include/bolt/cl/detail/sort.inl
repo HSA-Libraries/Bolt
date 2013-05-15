@@ -15,8 +15,8 @@
 
 ***************************************************************************/
 
-#if !defined( OCL_SORT_INL )
-#define OCL_SORT_INL
+#if !defined( BOLT_CL_SORT_INL )
+#define BOLT_CL_SORT_INL
 #pragma once
 
 #include <algorithm>

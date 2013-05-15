@@ -21,8 +21,8 @@
 
 
 #pragma once
-#if !defined( BOLT_DEVICE_VECTOR_H )
-#define BOLT_DEVICE_VECTOR_H
+#if !defined( BOLT_AMP_DEVICE_VECTOR_H )
+#define BOLT_AMP_DEVICE_VECTOR_H
 
 #include <iterator>
 #include <type_traits>
@@ -159,7 +159,7 @@ public:
             return result;
         }
 
-        const_reference_base< const Container >& operator=( const value_type& rhs ) 
+        const_reference_base< const Container >& operator=( const value_type& rhs )
         {
             arrayview_type av( *m_Container.m_devMemory );
             av[static_cast< int >( m_Index )] = rhs;
@@ -334,13 +334,13 @@ public:
             m_Index = lhs.m_Index;
             return *this;
         }
-        
+
         reverse_iterator_base< Container >& operator+= ( const difference_type & n )
         {
             advance( -n );
             return *this;
         }
-        
+
         const reverse_iterator_base< Container > operator+ ( const difference_type & n ) const
         {
             reverse_iterator_base< Container > result(*this);
@@ -446,7 +446,7 @@ public:
     *   \param ctl A Bolt control class for copy operations; a default is used if not supplied by the user.
     *   \warning The ::cl::CommandQueue is not an STD reserve( ) parameter.
     */
-    device_vector( size_type newSize, const value_type& initValue = value_type( ), bool init = true, 
+    device_vector( size_type newSize, const value_type& initValue = value_type( ), bool init = true,
         control& ctl = control::getDefault( ) ): m_Size( newSize )
     {
         static_assert( std::is_same< array_type, container_type >::value,
@@ -480,7 +480,7 @@ public:
     */
     template< typename InputIterator >
     device_vector( const InputIterator begin, size_type newSize, control& ctl = control::getDefault( ),
-                typename std::enable_if< !std::is_integral< InputIterator >::value && 
+                typename std::enable_if< !std::is_integral< InputIterator >::value &&
                                     std::is_same< array_type, container_type >::value>::type* = 0 ) : m_Size( newSize )
     {
         static_assert( std::is_same< array_type, container_type >::value,
@@ -496,14 +496,14 @@ public:
     *   \param end An iterator pointing at the end of the range.
     *   \param flags A bitfield that takes the OpenCL memory flags
     *   to help specify where the device_vector allocates memory.
-    *   \param discard Boolean value to whether the container data will be read; basically used as a hint to indicate 
+    *   \param discard Boolean value to whether the container data will be read; basically used as a hint to indicate
     *   this is an output buffer
     *   \param ctl A Bolt control class used to perform copy operations; a default is used if not supplied by the user.
     *   \note Ignore the enable_if<> parameter; it prevents this constructor from being called with integral types.
     */
     template< typename InputIterator >
     device_vector( const InputIterator begin, size_type newSize, bool discard = false, control& ctl = control::getDefault( ),
-                typename std::enable_if< !std::is_integral< InputIterator >::value && 
+                typename std::enable_if< !std::is_integral< InputIterator >::value &&
                                     std::is_same< arrayview_type, container_type >::value>::type* = 0 ) : m_Size( newSize )
     {
         concurrency::extent<1> ext( static_cast< int >( m_Size ) );
@@ -512,7 +512,7 @@ public:
 
     /*! \brief A constructor that creates a new device_vector using a range specified by the user.
     *   \param cont An object that has both .data() and .size() members
-    *   \param discard Boolean value to whether the container data will be read; basically used as a hint to indicate 
+    *   \param discard Boolean value to whether the container data will be read; basically used as a hint to indicate
     *   this is an output buffer
     *   \param ctl A Bolt control class used to perform copy operations; a default is used if not supplied by the user.
     */
@@ -537,8 +537,8 @@ public:
     */
     template< typename InputIterator >
     device_vector( const InputIterator begin, const InputIterator end, control& ctl = control::getDefault( ),
-        typename std::enable_if< !std::is_integral< InputIterator >::value && 
-                                    std::is_same< array_type, container_type >::value>::type* = 0 ) 
+        typename std::enable_if< !std::is_integral< InputIterator >::value &&
+                                    std::is_same< array_type, container_type >::value>::type* = 0 )
     {
         static_assert( std::is_same< array_type, container_type >::value,
             "This constructor is only valid for concurrency::array types.  concurrency::array_views should use a "
@@ -559,8 +559,8 @@ public:
     */
     template< typename InputIterator >
     device_vector( const InputIterator begin, const InputIterator end, bool discard = false, control& ctl = control::getDefault( ),
-        typename std::enable_if< !std::is_integral< InputIterator >::value && 
-                                    std::is_same< arrayview_type, container_type >::value>::type* = 0 ) 
+        typename std::enable_if< !std::is_integral< InputIterator >::value &&
+                                    std::is_same< arrayview_type, container_type >::value>::type* = 0 )
     {
         m_Size =  std::distance( begin, end );
 
@@ -592,7 +592,7 @@ public:
 
     /*! \brief A get accessor function to return the encapsulated device buffer for const objects.
     *   This member function allows access to the Buffer object, which can be retrieved through a reference or an iterator.
-    *   This is necessary to allow library functions to get the encapsulated C++ AMP array object as a pass by reference argument 
+    *   This is necessary to allow library functions to get the encapsulated C++ AMP array object as a pass by reference argument
     *   to the C++ AMP parallel_for_each constructs.
     *   \note This get function could be implemented in the iterator, but the reference object is usually a temporary rvalue, so
     *   this location seems less intrusive to the design of the vector class.
@@ -660,7 +660,7 @@ public:
 
         //  Remember the new size
         m_Size = reqSize;
-        //  delete the old buffer 
+        //  delete the old buffer
         delete(m_devMemory);
         m_devMemory = l_tmpBuffer;
     }
@@ -941,11 +941,11 @@ public:
         return tmpRef;
     }
 
-    //Yes you need the shared_array object. 
-    //Ask kent for a better solution. 
+    //Yes you need the shared_array object.
+    //Ask kent for a better solution.
     pointer data( void )
     {
-        /// \TODO need to understand what Array_view.data is returning. Who should free the pointer? 
+        /// \TODO need to understand what Array_view.data is returning. Who should free the pointer?
         // below av.data(). It should anyway be freed in the UnMapBufferFunctor Functor
 
         synchronize( *this );
@@ -1268,9 +1268,9 @@ public:
 
 private:
 
-    //  These private routines make sure that the data that resides in the concurrency::array* object are 
+    //  These private routines make sure that the data that resides in the concurrency::array* object are
     //  reflected back in the host memory.  However, the complication is that the concurrency::array object
-    //  does not expose a synchronize method, whereas the concurrency::array_view does.  These routines 
+    //  does not expose a synchronize method, whereas the concurrency::array_view does.  These routines
     //  differentiate between the two different containers
     void synchronize( device_vector< T, concurrency::array >& rhs )
     {

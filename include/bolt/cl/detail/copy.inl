@@ -1,22 +1,22 @@
-/***************************************************************************                                                                                     
-*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
-*                                                                                    
-*   Licensed under the Apache License, Version 2.0 (the "License");   
-*   you may not use this file except in compliance with the License.                 
-*   You may obtain a copy of the License at                                          
-*                                                                                    
-*       http://www.apache.org/licenses/LICENSE-2.0                      
-*                                                                                    
-*   Unless required by applicable law or agreed to in writing, software              
-*   distributed under the License is distributed on an "AS IS" BASIS,              
-*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.         
-*   See the License for the specific language governing permissions and              
-*   limitations under the License.                                                   
+/***************************************************************************
+*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.
+*
+*   Licensed under the Apache License, Version 2.0 (the "License");
+*   you may not use this file except in compliance with the License.
+*   You may obtain a copy of the License at
+*
+*       http://www.apache.org/licenses/LICENSE-2.0
+*
+*   Unless required by applicable law or agreed to in writing, software
+*   distributed under the License is distributed on an "AS IS" BASIS,
+*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+*   See the License for the specific language governing permissions and
+*   limitations under the License.
 
 ***************************************************************************/
 
-#if !defined( COPY_INL )
-#define COPY_INL
+#if !defined( BOLT_CL_COPY_INL )
+#define BOLT_CL_COPY_INL
 #pragma once
 
 #ifndef BURST_SIZE
@@ -76,7 +76,7 @@ namespace cl {
 
 // user control
 template<typename InputIterator, typename OutputIterator>
-OutputIterator copy(const bolt::cl::control &ctrl,  InputIterator first, InputIterator last, OutputIterator result,    
+OutputIterator copy(const bolt::cl::control &ctrl,  InputIterator first, InputIterator last, OutputIterator result,
             const std::string& user_code)
 {
     int n = static_cast<int>( std::distance( first, last ) );
@@ -388,22 +388,15 @@ void copy_pick_iterator(const bolt::cl::control &ctl,  const DVInputIterator& fi
     static_assert( false, "It is not possible to copy into fancy iterators. They are not mutable" );
 }
 
-<<<<<<< HEAD
-template< typename DVInputIterator, typename Size, typename DVOutputIterator > 
-typename std::enable_if< std::is_same< typename std::iterator_traits<DVInputIterator >::value_type, 
-                                       typename std::iterator_traits<DVOutputIterator >::value_type 
-                                     >::value 
-                       >::type  /*If enabled then this typename will be evaluated to void*/
-=======
+
 
 template< typename DVInputIterator, typename Size, typename DVOutputIterator >
 typename std::enable_if< std::is_same< typename std::iterator_traits<DVInputIterator >::iterator_category,
                                        typename std::iterator_traits<DVOutputIterator >::iterator_category
                                      >::value >::type  /*If enabled then this typename will be evaluated to void*/
->>>>>>> 1f091a2e95a2df6bbc1ee58d2803b892813591fe
-    copy_enqueue(const bolt::cl::control &ctrl, const DVInputIterator& first, const Size& n, 
+    copy_enqueue(const bolt::cl::control &ctrl, const DVInputIterator& first, const Size& n,
     const DVOutputIterator& result, const std::string& cl_code)
-{ 
+{
     typedef std::iterator_traits<DVInputIterator>::value_type iType;
     typedef std::iterator_traits<DVOutputIterator>::value_type oType;
     ::cl::Event copyEvent;
@@ -426,7 +419,7 @@ typename std::enable_if< !std::is_same< typename std::iterator_traits<DVInputIte
                        >::type  /*If enabled then this typename will be evaluated to void*/
     copy_enqueue(const bolt::cl::control &ctrl, const DVInputIterator& first, const Size& n,
     const DVOutputIterator& result, const std::string& cl_code)
-{  
+{
     /**********************************************************************************
      * Type Names - used in KernelTemplateSpecializer
      *********************************************************************************/
@@ -518,18 +511,18 @@ typename std::enable_if< !std::is_same< typename std::iterator_traits<DVInputIte
         // Input buffer
 
         // Input keys
-        V_OPENCL( kernels[whichKernel].setArg( 0, first.getContainer().getBuffer()), "Error setArg kernels[ 0 ]" ); 
+        V_OPENCL( kernels[whichKernel].setArg( 0, first.getContainer().getBuffer()), "Error setArg kernels[ 0 ]" );
         V_OPENCL( kernels[whichKernel].setArg( 1, first.gpuPayloadSize( ), &first.gpuPayload( ) ),  // added
                                                            "Error setting a kernel argument" );
         // Output buffer
 
          // Input buffer
-        V_OPENCL( kernels[whichKernel].setArg( 2, result.getContainer().getBuffer()),"Error setArg kernels[ 0 ]" );    
+        V_OPENCL( kernels[whichKernel].setArg( 2, result.getContainer().getBuffer()),"Error setArg kernels[ 0 ]" );
         V_OPENCL( kernels[whichKernel].setArg( 3, result.gpuPayloadSize( ), &result.gpuPayload( ) ),  // added
                                                            "Error setting a kernel argument" );
         //Buffer Size
         V_OPENCL( kernels[whichKernel].setArg( 4, static_cast<cl_uint>( n ) ),"Error setArg kernels[0]" );
-        V_OPENCL( kernels[whichKernel].setArg( 5, first.m_Index ), "Error setArg kernels[ 0 ]" ); 
+        V_OPENCL( kernels[whichKernel].setArg( 5, first.m_Index ), "Error setArg kernels[ 0 ]" );
         V_OPENCL( kernels[whichKernel].setArg( 6, result.m_Index ), "Error setArg kernels[ 0 ]" );
 
         l_Error = ctrl.getCommandQueue( ).enqueueNDRangeKernel(

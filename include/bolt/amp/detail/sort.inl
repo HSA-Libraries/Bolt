@@ -15,8 +15,8 @@
 
 ***************************************************************************/
 
-#if !defined( AMP_SORT_INL )
-#define AMP_SORT_INL
+#if !defined( BOLT_AMP_SORT_INL )
+#define BOLT_AMP_SORT_INL
 #pragma once
 
 #include <algorithm>
@@ -211,7 +211,7 @@ void sort_pick_iterator( bolt::amp::control &ctl,
 #ifdef ENABLE_TBB
 
         bolt::btbb::sort(first,last, comp);
-       
+
 
 #else
 //        std::cout << "The MultiCoreCpu version of sort is not enabled. " << std ::endl;

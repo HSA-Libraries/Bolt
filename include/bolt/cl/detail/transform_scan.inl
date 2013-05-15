@@ -14,12 +14,14 @@
 *   limitations under the License.
 
 ***************************************************************************/
+#if !defined( BOLT_CL_TRANSFORM_SCAN_INL )
+#define BOLT_CL_TRANSFORM_SCAN_INL
+
 #define KERNEL02WAVES 4
 #define KERNEL1WAVES 4
 #define WAVESIZE 64
 
-#if !defined( TRANSFORM_SCAN_INL )
-#define TRANSFORM_SCAN_INL
+
 
 //#define BOLT_ENABLE_PROFILING
 

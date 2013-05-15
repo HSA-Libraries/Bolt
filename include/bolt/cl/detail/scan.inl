@@ -14,7 +14,11 @@
 *   limitations under the License.
 
 ***************************************************************************/
-
+/******************************************************************************
+ * OpenCL Scan
+ *****************************************************************************/
+#if !defined( BOLT_CL_SCAN_INL )
+#define BOLT_CL_SCAN_INL
 //#ifndef USE_AMD_HSA
 #define USE_AMD_HSA 0
 //#endif
@@ -26,11 +30,7 @@
 #define HSA_STAT_DEVP3COMPLETE 3 // gpu has done post scan
 #endif
 
-/******************************************************************************
- * OpenCL Scan
- *****************************************************************************/
-#if !defined( BOLT_CL_SCAN_INL )
-#define BOLT_CL_SCAN_INL
+
 #pragma once
 
 
@@ -276,7 +276,7 @@ Serial_scan(
 namespace detail
 {
 
-enum scanTypes {scan_iValueType, scan_iIterType, scan_oValueType, scan_oIterType, scan_initType, 
+enum scanTypes {scan_iValueType, scan_iIterType, scan_oValueType, scan_oIterType, scan_initType,
     scan_BinaryFunction, scan_end };
 
 class Scan_KernelTemplateSpecializer : public KernelTemplateSpecializer
@@ -947,7 +947,7 @@ aProfiler.set(AsyncProfiler::device, control::SerialCpu);
     V_OPENCL( kernels[ 0 ].setArg( 4, ldsSize, NULL ),          "Error setting argument for kernels[ 0 ]" ); // Scratch buffer
     V_OPENCL( kernels[ 0 ].setArg( 5, *userFunctor ),           "Error setting argument for kernels[ 0 ]" ); // User provided functor class
     V_OPENCL( kernels[ 0 ].setArg( 6, *preSumArray ),           "Error setting argument for kernels[ 0 ]" ); // Output per block sum buffer
-    V_OPENCL( kernels[ 0 ].setArg( 7, *preSumArray1 ),           "Error setting argument for kernels[ 0 ]" ); // Output per block 
+    V_OPENCL( kernels[ 0 ].setArg( 7, *preSumArray1 ),           "Error setting argument for kernels[ 0 ]" ); // Output per block
     V_OPENCL( kernels[ 0 ].setArg( 8, doExclusiveScan ),        "Error setting argument for scanKernels[ 0 ]" ); // Exclusive scan?
 
 #ifdef BOLT_PROFILER_ENABLED
@@ -1022,7 +1022,7 @@ aProfiler.set(AsyncProfiler::memory, 4*sizeScanBuff*sizeof(oType));
     V_OPENCL( kernels[ 2 ].setArg( 2, first.getContainer().getBuffer() ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
     V_OPENCL( kernels[ 2 ].setArg( 3, first.gpuPayloadSize( ), &first.gpuPayload( ) ), "Error setting a kernel argument" );
     V_OPENCL( kernels[ 2 ].setArg( 4, *postSumArray ), "Error setting 1st argument for scanKernels[ 2 ]" );            // Input buffer
-    V_OPENCL( kernels[ 2 ].setArg( 5, *preSumArray1 ),           "Error setting argument for kernels[ 0 ]" ); // Output per block 
+    V_OPENCL( kernels[ 2 ].setArg( 5, *preSumArray1 ),           "Error setting argument for kernels[ 0 ]" ); // Output per block
     V_OPENCL( kernels[ 2 ].setArg( 6, ldsSize, NULL ),          "Error setting argument for kernels[ 0 ]" ); // Scratch buffer
     V_OPENCL( kernels[ 2 ].setArg( 7, numElements ), "Error setting 2nd argument for scanKernels[ 2 ]" );   // Size of scratch buffer
     V_OPENCL( kernels[ 2 ].setArg( 8, *userFunctor ), "Error setting 3rd argument for scanKernels[ 2 ]" );           // User provided functor class

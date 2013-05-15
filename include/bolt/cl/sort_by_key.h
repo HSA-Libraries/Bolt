@@ -15,8 +15,8 @@
 
 ***************************************************************************/
 
-#if !defined( SORT_BY_KEY_H )
-#define SORT_BY_KEY_H
+#if !defined( BOLT_CL_SORT_BY_KEY_H )
+#define BOLT_CL_SORT_BY_KEY_H
 #pragma once
 
 #include <bolt/cl/bolt.h>

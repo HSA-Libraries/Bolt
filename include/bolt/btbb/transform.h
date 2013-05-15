@@ -20,8 +20,8 @@
 */
 
 #pragma once
-#if !defined( TBB_TRANSFORM_H )
-#define TBB_TRANSFORM_H
+#if !defined( BOLT_BTBB_TRANSFORM_H )
+#define BOLT_BTBB_TRANSFORM_H
 
 #include "tbb/parallel_for_each.h"
 #include "tbb/parallel_for.h"

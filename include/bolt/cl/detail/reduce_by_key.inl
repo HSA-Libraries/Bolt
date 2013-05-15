@@ -1,19 +1,24 @@
-/***************************************************************************                                                                                     
-*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
-*                                                                                    
-*   Licensed under the Apache License, Version 2.0 (the "License");   
-*   you may not use this file except in compliance with the License.                 
-*   You may obtain a copy of the License at                                          
-*                                                                                    
-*       http://www.apache.org/licenses/LICENSE-2.0                      
-*                                                                                    
-*   Unless required by applicable law or agreed to in writing, software              
-*   distributed under the License is distributed on an "AS IS" BASIS,              
-*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.         
-*   See the License for the specific language governing permissions and              
-*   limitations under the License.                                                   
+/***************************************************************************
+*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.
+*
+*   Licensed under the Apache License, Version 2.0 (the "License");
+*   you may not use this file except in compliance with the License.
+*   You may obtain a copy of the License at
+*
+*       http://www.apache.org/licenses/LICENSE-2.0
+*
+*   Unless required by applicable law or agreed to in writing, software
+*   distributed under the License is distributed on an "AS IS" BASIS,
+*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+*   See the License for the specific language governing permissions and
+*   limitations under the License.
 
-***************************************************************************/                                                
+***************************************************************************/
+
+
+#if !defined( BOLT_CL_REDUCE_BY_KEY_INL )
+#define BOLT_CL_REDUCE_BY_KEY_INL
+
 #define KERNEL02WAVES 4
 #define KERNEL1WAVES 4
 #define WAVESIZE 64
@@ -23,10 +28,6 @@
 
 #include <iostream>
 #include <fstream>
-
-#if !defined( REDUCE_BY_KEY_INL )
-#define REDUCE_BY_KEY_INL
-
 
 namespace bolt
 {
@@ -268,10 +269,10 @@ class ReduceByKey_KernelTemplateSpecializer : public KernelTemplateSpecializer
         addKernelName("perBlockAdditionByKey");
         addKernelName("keyValueMapping");
     }
-    
+
     const ::std::string operator() ( const ::std::vector<::std::string>& typeNames ) const
     {
-        const std::string templateSpecializationString = 
+        const std::string templateSpecializationString =
             "// Dynamic specialization of generic template definition, using user supplied types\n"
             "template __attribute__((mangled_name(" + name(0) + "Instantiated)))\n"
             "__attribute__((reqd_work_group_size(KERNEL0WORKGROUPSIZE,1,1)))\n"
@@ -288,7 +289,7 @@ class ReduceByKey_KernelTemplateSpecializer : public KernelTemplateSpecializer
             "global " + typeNames[e_kType] + "* keyBuffer,\n"
             "global " + typeNames[e_voType] + "* valBuffer\n"
             ");\n\n"
-            
+
             "// Dynamic specialization of generic template definition, using user supplied types\n"
             "template __attribute__((mangled_name(" + name(1) + "Instantiated)))\n"
             "__attribute__((reqd_work_group_size(KERNEL1WORKGROUPSIZE,1,1)))\n"
@@ -303,7 +304,7 @@ class ReduceByKey_KernelTemplateSpecializer : public KernelTemplateSpecializer
             "global " + typeNames[e_BinaryPredicate] + "* binaryPred,\n"
             "global " + typeNames[e_BinaryFunction] + "* binaryFunct\n"
             ");\n\n"
-    
+
 
             "// Dynamic specialization of generic template definition, using user supplied types\n"
             "template __attribute__((mangled_name(" + name(2) + "Instantiated)))\n"
@@ -330,8 +331,8 @@ class ReduceByKey_KernelTemplateSpecializer : public KernelTemplateSpecializer
             "global " + typeNames[e_voType] + "*offsetValArray,\n"
             "const uint vecSize,\n"
             "const int numSections\n"
-            ");\n\n";            
-    
+            ");\n\n";
+
         return templateSpecializationString;
     }
 };
@@ -359,7 +360,7 @@ reduce_by_key_detect_random_access(
     const std::string& user_code,
     std::input_iterator_tag )
 {
-    //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data 
+    //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data
     //  to a temporary buffer.  Should we?
     static_assert( false, "Bolt only supports random access iterator types" );
 };
@@ -389,7 +390,7 @@ reduce_by_key_detect_random_access(
         binary_pred, binary_op, user_code);
 }
 
-/*! 
+/*!
 * \brief This overload is called strictly for non-device_vector iterators
 * \details This template function overload is used to seperate device_vector iterators from all other iterators
 */
@@ -400,7 +401,7 @@ template<
     typename OutputIterator2,
     typename BinaryPredicate,
     typename BinaryFunction >
-typename std::enable_if< 
+typename std::enable_if<
              !(std::is_base_of<typename device_vector<typename
                std::iterator_traits<InputIterator1>::value_type>::iterator,InputIterator1>::value &&
                std::is_base_of<typename device_vector<typename
@@ -438,9 +439,9 @@ reduce_by_key_pick_iterator(
         runMode = ctl.getDefaultPathToRun();
     }
     if (runMode == bolt::cl::control::SerialCpu) {
-                 
+
         throw std::exception("The SerialCpu version of ReduceByKey is not implemented yet! \n" );
-                    
+
     } else if (runMode == bolt::cl::control::MultiCoreCpu) {
 
         #ifdef ENABLE_TBB
@@ -448,9 +449,9 @@ reduce_by_key_pick_iterator(
         #else
             throw std::exception("MultiCoreCPU Version of ReduceByKey not Enabled! \n");
         #endif
-    } 
+    }
     else {
-        
+
     unsigned int sizeOfOut;
     {
 
@@ -472,7 +473,7 @@ reduce_by_key_pick_iterator(
     }
 }
 
-/*! 
+/*!
 * \brief This overload is called strictly for device_vector iterators
 * \details This template function overload is used to seperate device_vector iterators from all other iterators
 */
@@ -484,7 +485,7 @@ reduce_by_key_pick_iterator(
     typename DVOutputIterator2,
     typename BinaryPredicate,
     typename BinaryFunction >
-typename std::enable_if< 
+typename std::enable_if<
              (std::is_base_of<typename device_vector<typename
                std::iterator_traits<DVInputIterator1>::value_type>::iterator,DVInputIterator1>::value &&
                std::is_base_of<typename device_vector<typename
@@ -519,17 +520,17 @@ reduce_by_key_pick_iterator(
 
     bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode( );  // could be dynamic choice some day.
     if(runMode == bolt::cl::control::Automatic)
-    {  
+    {
         runMode = ctl.getDefaultPathToRun();
     }
 
     if( runMode == bolt::cl::control::SerialCpu )
-    {    
+    {
         //  TODO:  Need access to the device_vector .data method to get a host pointer
         throw std::exception( "ReduceByKey device_vector CPU device not implemented! \n" );
     }
     else if( runMode == bolt::cl::control::MultiCoreCpu )
-    {    
+    {
         #ifdef ENABLE_TBB
             throw std::exception("MultiCoreCPU Version of ReduceByKey not implemented yet! \n");
         #else
@@ -537,7 +538,7 @@ reduce_by_key_pick_iterator(
         #endif
     }
     else
-    {        
+    {
             //Now call the actual cl algorithm
             unsigned int sizeOfOut = reduce_by_key_enqueue( ctl, keys_first, keys_last, values_first, keys_output,
             values_output, binary_pred, binary_op, user_code);
@@ -584,7 +585,7 @@ reduce_by_key_enqueue(
     typeNames[e_voType] = TypeName< voType >::get( );
     typeNames[e_BinaryPredicate] = TypeName< BinaryPredicate >::get( );
     typeNames[e_BinaryFunction]  = TypeName< BinaryFunction >::get( );
-    
+
     /**********************************************************************************
      * Type Definitions - directly concatenated into kernel string
      *********************************************************************************/
@@ -623,7 +624,7 @@ reduce_by_key_enqueue(
     oss << " -DKERNEL1WORKGROUPSIZE=" << kernel1_WgSize;
     oss << " -DKERNEL2WORKGROUPSIZE=" << kernel2_WgSize;
     compileOptions = oss.str();
-    
+
     /**********************************************************************************
      * Request Compiled Kernels
      *********************************************************************************/
@@ -666,7 +667,7 @@ reduce_by_key_enqueue(
     }
 
     // Create buffer wrappers so we can access the host functors, for read or writing in the kernel
-    
+
     ALIGNED( 256 ) BinaryPredicate aligned_binary_pred( binary_pred );
     control::buffPointer binaryPredicateBuffer = ctl.acquireBuffer( sizeof( aligned_binary_pred ),
         CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_binary_pred );
@@ -705,7 +706,7 @@ reduce_by_key_enqueue(
     V_OPENCL( kernels[0].setArg( 8, *binaryFunctionBuffer ),"Error setArg kernels[ 0 ]" ); // User provided functor
     V_OPENCL( kernels[0].setArg( 9, *keySumArray ),         "Error setArg kernels[ 0 ]" ); // Output per block sum
     V_OPENCL( kernels[0].setArg( 10, *preSumArray ),         "Error setArg kernels[ 0 ]" ); // Output per block sum
-    
+
     l_Error = ctl.getCommandQueue( ).enqueueNDRangeKernel(
         kernels[0],
         ::cl::NullRange,
@@ -758,8 +759,8 @@ reduce_by_key_enqueue(
 
 #if ENABLE_PRINTS
     //delete this code -start
-    bolt::cl::wait(ctl, kernel0Event); 
-    bolt::cl::wait(ctl, kernel1Event); 
+    bolt::cl::wait(ctl, kernel0Event);
+    bolt::cl::wait(ctl, kernel1Event);
     ::cl::Event l_mapEvent_k1;
     voType *post_sum_k1= (voType*)ctl.commandQueue().enqueueMapBuffer( *postSumArray,
                                                                     false,
@@ -778,7 +779,7 @@ reduce_by_key_enqueue(
     }
     postsum.close();
     std::cout<<"Myval-------------------------ends"<<std::endl;
-    bolt::cl::wait(ctl, l_mapEvent_k1); 
+    bolt::cl::wait(ctl, l_mapEvent_k1);
     //delete this code -end
 
 #endif
@@ -835,7 +836,7 @@ reduce_by_key_enqueue(
     V_OPENCL( l_Error, "Error calling map on the result buffer" );
 
     bolt::cl::wait(ctl, l_mapEvent);
-    
+
 #if ENABLE_PRINTS
     //delete this code -start
     ::cl::Event l_mapEvent2;
@@ -857,13 +858,13 @@ reduce_by_key_enqueue(
     }
     val_result.close();
     std::cout<<"Myval-------------------------ends"<<std::endl;
-    bolt::cl::wait(ctl, l_mapEvent2); 
+    bolt::cl::wait(ctl, l_mapEvent2);
     //delete this code -end
     std::ofstream result_b4_ser("result_b4_ser.txt");
     for(unsigned int i = 0; i < LENGTH_TEST ; i++)
     {
         //std::cout<<h_result[i]<<std::endl;
-        
+
         result_b4_ser<<h_result[i]<<std::endl;
     }
     result_b4_ser.close();
@@ -874,14 +875,14 @@ reduce_by_key_enqueue(
     unsigned int count_number_of_sections = 0;
     //h_result [ numElements - 1 ] = 1;  //This is a quick fix!
     for( unsigned int i = 0; i < numElements; i++ )
-    {        
+    {
         if(h_result[i]>0)
         {
             h_result[i] = count_number_of_sections;
             count_number_of_sections++;
         }
     }
-    
+
 
 #if ENABLE_PRINTS
     std::cout<<count_number_of_sections<<std::endl;
@@ -959,7 +960,7 @@ reduce_by_key_enqueue(
     }
     result_val_after_launch.close();
     std::cout<<"Myval-------------------------ends"<<std::endl;
-    bolt::cl::wait(ctl, l_mapEvent3); 
+    bolt::cl::wait(ctl, l_mapEvent3);
     //delete this code -end
 
 #endif

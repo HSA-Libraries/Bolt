@@ -19,8 +19,8 @@
 
 
 #pragma once
-#if !defined( BTBB_COUNT_H )
-#define BTBB_COUNT_H
+#if !defined( BOLT_BTBB_COUNT_H )
+#define BOLT_BTBB_COUNT_H
 
 #include "tbb/parallel_reduce.h"
 #include "tbb/blocked_range.h"

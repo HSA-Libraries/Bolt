@@ -16,8 +16,8 @@
 ***************************************************************************/
 
 
-#if !defined( REDUCE_INL )
-#define REDUCE_INL
+#if !defined( BOLT_CL_MINELEMENT_INL )
+#define BOLT_CL_MINELEMENT_INL
 #pragma once
 
 #include <algorithm>
@@ -348,15 +348,15 @@ namespace bolt {
                         int  dvminele = min_element_enqueue( ctl, dvInput.begin(), dvInput.end(), binary_op, cl_code);
                         return first + dvminele ;
                     }
-              
-                case bolt::cl::control::MultiCoreCpu: 
+
+                case bolt::cl::control::MultiCoreCpu:
                     #ifdef ENABLE_TBB
                         return std::min_element(first, last, binary_op);
                     #else
                         throw std::exception( "The MultiCoreCpu version of Max-Min is not enabled to be built! \n" );
                     #endif
 
-                case bolt::cl::control::SerialCpu: 
+                case bolt::cl::control::SerialCpu:
                     return std::min_element(first, last, binary_op);
 
                 default:
@@ -394,15 +394,15 @@ namespace bolt {
                         int pos =  min_element_enqueue( ctl, first, last,  binary_op, cl_code);
                         return first+pos;
                     }
-              
-                case bolt::cl::control::MultiCoreCpu: 
+
+                case bolt::cl::control::MultiCoreCpu:
                     #ifdef ENABLE_TBB
                         return std::min_element(first, last, binary_op);
                     #else
                         throw std::exception( "The MultiCoreCpu version of Max-Min is not enabled to be built! \n" );
                     #endif
 
-                case bolt::cl::control::SerialCpu: 
+                case bolt::cl::control::SerialCpu:
                     return std::min_element(first, last, binary_op);
 
                 default:
@@ -435,15 +435,15 @@ namespace bolt {
                         int pos =  min_element_enqueue( ctl, first, last,  binary_op, cl_code);
                         return first+pos;
                     }
-              
-                case bolt::cl::control::MultiCoreCpu: 
+
+                case bolt::cl::control::MultiCoreCpu:
                     #ifdef ENABLE_TBB
                         return std::min_element(first, last, binary_op);
                     #else
                         throw std::exception( "The MultiCoreCpu version of Max-Min is not enabled to be built! \n" );
                     #endif
 
-                case bolt::cl::control::SerialCpu: 
+                case bolt::cl::control::SerialCpu:
                     return std::min_element(first, last, binary_op);
 
                 default:

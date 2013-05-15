@@ -15,8 +15,8 @@
 
 ***************************************************************************/
 
-#if !defined( COUNT_INL )
-#define COUNT_INL
+#if !defined( BOLT_CL_COUNT_INL )
+#define BOLT_CL_COUNT_INL
 #pragma once
 
 #include <algorithm>
@@ -279,15 +279,15 @@ namespace bolt {
                     device_vector< iType > dvInput( first, last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, ctl );
                     return count_enqueue( ctl, dvInput.begin(), dvInput.end(), predicate, cl_code);
                     }
-              
-                case bolt::cl::control::MultiCoreCpu: 
+
+                case bolt::cl::control::MultiCoreCpu:
                     #ifdef ENABLE_TBB
                      return (int)bolt::btbb::count_if(first,last,predicate);
                     #else
                      throw std::exception("The MultiCoreCpu version of count function is not enabled to be built! \n");
                     #endif
 
-                case bolt::cl::control::SerialCpu: 
+                case bolt::cl::control::SerialCpu:
                     return std::count_if(first,last,predicate);
 
                 default:
@@ -322,13 +322,13 @@ namespace bolt {
                     runMode = ctl.getDefaultPathToRun();
                 }
 
-                
+
                 switch(runMode)
                 {
                 case bolt::cl::control::OpenCL :
                         return  count_enqueue( ctl, first, last,  predicate, cl_code);
-              
-                case bolt::cl::control::MultiCoreCpu: 
+
+                case bolt::cl::control::MultiCoreCpu:
                     #ifdef ENABLE_TBB
                     {
                       bolt::cl::device_vector< iType >::pointer countInputBuffer =  first.getContainer( ).data( );
@@ -342,11 +342,11 @@ namespace bolt {
                     }
                     #endif
 
-                case bolt::cl::control::SerialCpu: 
+                case bolt::cl::control::SerialCpu:
                     {
                       bolt::cl::device_vector< iType >::pointer countInputBuffer =  first.getContainer( ).data( );
                       return  (rType) std::count_if(&countInputBuffer[first.m_Index],
-                          &countInputBuffer[szElements], predicate) ; 
+                          &countInputBuffer[szElements], predicate) ;
 
                     }
 
@@ -358,7 +358,7 @@ namespace bolt {
                     }
 
                 }
-                 
+
             }
 
             // This template is called after we detect random access iterators
@@ -389,22 +389,22 @@ namespace bolt {
                     {
                         return count_enqueue( ctl, first, last,  predicate, cl_code);
                     }
-              
-                case bolt::cl::control::MultiCoreCpu: 
+
+                case bolt::cl::control::MultiCoreCpu:
                     #ifdef ENABLE_TBB
                         return bolt::btbb::count_if(first,last,predicate);
                     #else
                      throw std::exception("The MultiCoreCpu version of count function is not enabled to be built! \n");
                     #endif
 
-                case bolt::cl::control::SerialCpu: 
+                case bolt::cl::control::SerialCpu:
                     return std::count_if(first,last,predicate);
 
                 default:
                     return  std::count_if(first,last,predicate);
 
                 }
-                
+
             }
 
 

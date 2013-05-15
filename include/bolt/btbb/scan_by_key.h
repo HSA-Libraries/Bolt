@@ -15,8 +15,8 @@
 
 ***************************************************************************/
 
-#if !defined( TBB_SCAN_BY_KEY_H )
-#define TBB_SCAN_BY_KEY_H
+#if !defined( BOLT_BTBB_SCAN_BY_KEY_H )
+#define BOLT_BTBB_SCAN_BY_KEY_H
 #pragma once
 
 #include "tbb/parallel_scan.h"

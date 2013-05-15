@@ -14,13 +14,15 @@
 *   limitations under the License.
 
 ***************************************************************************/
+#if !defined( BOLT_CL_SCAN_BY_KEY_INL )
+#define BOLT_CL_SCAN_BY_KEY_INL
+
 #define KERNEL02WAVES 4
 #define KERNEL1WAVES 4
 #define WAVESIZE 64
 
 
-#if !defined( SCAN_BY_KEY_INL )
-#define SCAN_BY_KEY_INL
+
 
 #ifdef ENABLE_TBB
 //TBB Includes
