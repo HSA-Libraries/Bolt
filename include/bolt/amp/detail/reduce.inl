@@ -362,7 +362,7 @@ namespace bolt
                 {
                       std::cout << "Exception while calling bolt::amp::reduce parallel_for_each " ;
                       std::cout<< e.what() << std::endl;
-                      return 0;
+                      throw std::exception();
                 }
 
             };
