@@ -512,6 +512,10 @@ namespace cl
                         }
                     }
                 }
+                else
+                {
+                    m_devMemory=NULL;
+                }
             }
 
             /*! \brief A constructor that creates a new device_vector using a range specified by the user.
@@ -811,7 +815,6 @@ namespace cl
                 {
                     ::cl::Buffer l_tmpBuffer( l_Context, m_Flags, reqSize * sizeof( value_type ) );
                     m_devMemory = l_tmpBuffer;
-                    m_Size = reqSize;
                     return;
                 }
 

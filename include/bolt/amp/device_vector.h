@@ -467,6 +467,10 @@ public:
                 );
             }
         }
+        else
+        {
+            m_devMemory = NULL;
+        }
     }
 
     /*! \brief A constructor that creates a new device_vector using a range specified by the user.
@@ -709,10 +713,9 @@ public:
         if( reqSize <= capacity( ) )
             return;
 
-        if( m_Size == 0 )
+        if( capacity() == 0 )
         {
             m_devMemory = new container_type((int)reqSize);
-            m_Size = reqSize;
             return;
         }
 
@@ -997,6 +1000,7 @@ public:
         }
 
         arrayview_type av( *m_devMemory );
+        //insert(end(),value);
         av[static_cast<int>( m_Size )] = value;
         ++m_Size;
     }
