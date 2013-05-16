@@ -118,7 +118,7 @@ namespace cl
             class reference_base
             {
             public:
-            reference_base( Container& rhs, size_type index ): m_Container( rhs ), m_Index( index )
+                reference_base( Container& rhs, size_type index ): m_Container( rhs ), m_Index( index )
                 {}
 
                 //  Automatic type conversion operator to turn the reference object into a value_type
@@ -168,7 +168,7 @@ namespace cl
 
             private:
                 Container& m_Container;
-            size_type m_Index;
+                size_type m_Index;
             };
 
             /*! \brief Typedef to create the non-constant reference.
@@ -192,38 +192,36 @@ namespace cl
             *   \bug operator[] with device_vector iterators result in a compile-time error when accessed for reading.
             *   Writing with operator[] appears to be OK.  Workarounds: either use the operator[] on the device_vector
             *   container, or use iterator arithmetic instead, such as *(iter + 5) for reading from the iterator.
-        *   \note The difference_type for this iterator has been explicitely set to a 32-bit int, because m_Index
-        *   is used in clSetKernelArg(), which does not accept size_t parameters
+            *   \note The difference_type for this iterator has been explicitely set to a 32-bit int, because m_Index 
+            *   is used in clSetKernelArg(), which does not accept size_t parameters
             */
             template< typename Container >
-        class iterator_base: public boost::iterator_facade< iterator_base< Container >, value_type, device_vector_tag,
+            class iterator_base: public boost::iterator_facade< iterator_base< Container >, value_type, device_vector_tag, 
             typename device_vector::reference, int >
             {
             public:
                 typedef typename iterator_facade::difference_type difference_type;
 
-
-            //  This class represents the iterator data transferred to the openCL device.  Transferring pointers is tricky,
-            //  the only reason we allocate space for a pointer in this payload is because the openCl clSetKernelArg() checks the
-            //  size ( bytes ) of the argument passed in, and the corresponding GPU iterator has a pointer member.
-            //  The value of the pointer is not relevant on host side, and is initialized on the device side with the init method
-            //  This size of the payload needs to be able to encapsulate both 32bit and 64bit devices
-            //  sizeof( 32bit device payload ) = 32bit index & 32bit pointer = 8 bytes
-            //  sizeof( 64bit device payload ) = 32bit index & 64bit aligned pointer = 16 bytes
-            struct Payload
-            {
-                typename iterator_facade::difference_type m_Index;
-                typename iterator_facade::difference_type m_Ptr1[ 3 ];  // Represents device pointer, big enough for 32 or 64bit
-
-            };
+                //  This class represents the iterator data transferred to the openCL device.  Transferring pointers is tricky,
+                //  the only reason we allocate space for a pointer in this payload is because the openCl clSetKernelArg() checks the
+                //  size ( bytes ) of the argument passed in, and the corresponding GPU iterator has a pointer member.  
+                //  The value of the pointer is not relevant on host side, and is initialized on the device side with the init method 
+                //  This size of the payload needs to be able to encapsulate both 32bit and 64bit devices
+                //  sizeof( 32bit device payload ) = 32bit index & 32bit pointer = 8 bytes
+                //  sizeof( 64bit device payload ) = 32bit index & 64bit aligned pointer = 16 bytes
+                struct Payload
+                {
+                    typename iterator_facade::difference_type m_Index;
+                    typename iterator_facade::difference_type m_Ptr1[ 3 ];  // Represents device pointer, big enough for 32 or 64bit
+                };
 
                 //  Basic constructor requires a reference to the container and a positional element
-            iterator_base( Container& rhs, typename iterator_facade::difference_type index ): m_Container( rhs ), m_Index( index )
+                iterator_base( Container& rhs, typename iterator_facade::difference_type index ): m_Container( rhs ), m_Index( index )
                 {}
 
                 //  This copy constructor allows an iterator to convert into a const_iterator, but not vica versa
                 template< typename OtherContainer >
-            iterator_base( const iterator_base< OtherContainer >& rhs ): m_Container( rhs.m_Container ), m_Index( rhs.m_Index )
+                iterator_base( const iterator_base< OtherContainer >& rhs ): m_Container( rhs.m_Container ), m_Index( rhs.m_Index )
                 {}
 
                 //  This copy constructor allows an iterator to convert into a const_iterator, but not vica versa
@@ -234,59 +232,57 @@ namespace cl
                     m_Index = rhs.m_Index;
                     return *this;
                 }
-
-            iterator_base< Container >& operator+= ( const typename iterator_facade::difference_type & n )
+    
+                iterator_base< Container >& operator+= ( const typename iterator_facade::difference_type & n )
                 {
                     advance( n );
                     return *this;
                 }
-
-            const iterator_base< Container > operator+ ( const typename iterator_facade::difference_type & n ) const
+                
+                const iterator_base< Container > operator+ ( const typename iterator_facade::difference_type & n ) const
                 {
                     iterator_base< Container > result(*this);
                     result.advance(n);
                     return result;
                 }
 
+                Container& getContainer( ) const
+                {
+                    return m_Container;
+                }
 
+                //  This method initializes the payload of the iterator for the cl device; the contents of the pointer is 0 as it has no relevance
+                //  on the host
+                Payload gpuPayload( ) const
+                {
+                    Payload payload = { m_Index, { 0, 0, 0 } };
+                    return payload;
+                }
 
-            Container& getContainer( ) const
-            {
-                return m_Container;
-            }
+                //  Calculates the size of payload for the cl device.  The bitness of the device is independant of the host and must be 
+                //  queried.  The bitness of the device determines the size of the pointer contained in the payload.  64bit pointers must
+                //  be 8 byte aligned, so 
+                const typename iterator_facade::difference_type gpuPayloadSize( ) const
+                {
+                    cl_int l_Error = CL_SUCCESS;
+                    cl_uint deviceBits = m_Container.m_commQueue.getInfo< CL_QUEUE_DEVICE >( &l_Error ).getInfo< CL_DEVICE_ADDRESS_BITS >( );
 
-            //  This method initializes the payload of the iterator for the cl device; the contents of the pointer is 0 as it has no relevance
-            //  on the host
-            Payload gpuPayload( ) const
-            {
-                Payload payload = { m_Index, { 0, 0, 0 } };
-                return payload;
-            }
+                    //  Size of index and pointer
+                    typename iterator_facade::difference_type payloadSize = sizeof( iterator_facade::difference_type ) + ( deviceBits >> 3 );
 
-            //  Calculates the size of payload for the cl device.  The bitness of the device is independant of the host and must be
-            //  queried.  The bitness of the device determines the size of the pointer contained in the payload.  64bit pointers must
-            //  be 8 byte aligned, so
-            const typename iterator_facade::difference_type gpuPayloadSize( ) const
-            {
-                cl_int l_Error = CL_SUCCESS;
-                cl_uint deviceBits = m_Container.m_commQueue.getInfo< CL_QUEUE_DEVICE >( &l_Error ).getInfo< CL_DEVICE_ADDRESS_BITS >( );
+                    //  64bit devices need to add padding for 8 byte aligned pointer
+                    if( deviceBits == 64 )
+                        payloadSize += 4;
 
-                //  Size of index and pointer
-                typename iterator_facade::difference_type payloadSize = sizeof( iterator_facade::difference_type ) + ( deviceBits >> 3 );
+                    return payloadSize;
 
-                //  64bit devices need to add padding for 8 byte aligned pointer
-                if( deviceBits == 64 )
-                    payloadSize += 4;
+                }
 
-                return payloadSize;
-
-            }
-
-            typename iterator_facade::difference_type m_Index;
-            difference_type distance_to( const iterator_base< Container >& rhs ) const
-            {
-                return static_cast< typename iterator_facade::difference_type >( rhs.m_Index - m_Index );
-            }
+                typename iterator_facade::difference_type m_Index;
+                difference_type distance_to( const iterator_base< Container >& rhs ) const
+                {
+                    return static_cast< typename iterator_facade::difference_type >( rhs.m_Index - m_Index );
+                }
             private:
                 //  Implementation detail of boost.iterator
                 friend class boost::iterator_core_access;
@@ -297,9 +293,9 @@ namespace cl
                 //  Used for templatized copy constructor and the templatized equal operator
                 template < typename > friend class iterator_base;
 
-            void advance( typename iterator_facade::difference_type n )
+                void advance( typename iterator_facade::difference_type n )
                 {
-                m_Index += n;
+                    m_Index += n;
                 }
 
                 void increment( )
@@ -315,7 +311,7 @@ namespace cl
                 template< typename OtherContainer >
                 bool equal( const iterator_base< OtherContainer >& rhs ) const
                 {
-                bool sameIndex = rhs.m_Index == m_Index;
+                    bool sameIndex = rhs.m_Index == m_Index;
                     bool sameContainer = (&m_Container == &rhs.m_Container );
 
                     return ( sameIndex && sameContainer );
@@ -323,7 +319,7 @@ namespace cl
 
                 reference dereference( ) const
                 {
-                return m_Container[ m_Index ];
+                    return m_Container[ m_Index ];
                 }
 
                 Container& m_Container;
@@ -1041,9 +1037,9 @@ namespace cl
             /*! \brief Retrieves the value stored at index 0.
             *   \note This returns a proxy object, to control when device memory gets mapped.
             */
-            reference front( void )
+            reference front( void ) 
             {
-                return reference( m_devMemory, m_commQueue, 0 );
+		        return (*begin());
             }
 
             /*! \brief Retrieves the value stored at index 0.
@@ -1051,19 +1047,7 @@ namespace cl
             */
             const_reference front( void ) const
             {
-                cl_int l_Error = CL_SUCCESS;
-
-                const_naked_pointer ptrBuff = reinterpret_cast< const_naked_pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ, 0, sizeof( value_type ), NULL, NULL, &l_Error ) );
-                V_OPENCL( l_Error, "device_vector failed map device memory to host memory for operator[]" );
-
-                const_reference tmpRef = *ptrBuff;
-
-                ::cl::Event unmapEvent;
-                l_Error = m_commQueue.enqueueUnmapMemObject( m_devMemory, ptrBuff, NULL, &unmapEvent );
-                V_OPENCL( l_Error, "device_vector failed to unmap host memory back to device memory" );
-                V_OPENCL( unmapEvent.wait( ), "failed to wait for unmap event" );
-
-                return tmpRef;
+                return (*begin());
             }
 
             /*! \brief Retrieves the value stored at index size( ) - 1.
@@ -1071,7 +1055,7 @@ namespace cl
             */
             reference back( void )
             {
-                return reference( m_devMemory, m_commQueue, m_Size - 1 );
+		        return ( *(end() - 1) );
             }
 
             /*! \brief Retrieves the value stored at index size( ) - 1.
@@ -1079,20 +1063,7 @@ namespace cl
             */
             const_reference back( void ) const
             {
-                cl_int l_Error = CL_SUCCESS;
-
-                const_naked_pointer ptrBuff = reinterpret_cast< const_naked_pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ,
-                    (m_Size - 1) * sizeof( value_type ), sizeof( value_type ), NULL, NULL, &l_Error ) );
-                V_OPENCL( l_Error, "device_vector failed map device memory to host memory for operator[]" );
-
-                const_reference tmpRef = *ptrBuff;
-
-                ::cl::Event unmapEvent;
-                l_Error = m_commQueue.enqueueUnmapMemObject( m_devMemory, ptrBuff, NULL, &unmapEvent );
-                V_OPENCL( l_Error, "device_vector failed to unmap host memory back to device memory" );
-                V_OPENCL( unmapEvent.wait( ), "failed to wait for unmap event" );
-
-                return tmpRef;
+		        return ( *(end() - 1) );
             }
 
             pointer data( void )
@@ -1453,8 +1424,9 @@ namespace cl
              *  \param end The iterator position signifying the end of the range (exclusive).
             *   \warning All previous iterators, references, and pointers are invalidated.
             */
-            template< typename InputIterator >
-            void assign( InputIterator begin, InputIterator end )
+	        template<typename InputIterator>
+            typename std::enable_if< std::_Is_iterator<InputIterator>::value, void>::type
+            assign( InputIterator begin, InputIterator end )
             {
                 size_type l_Count = std::distance( begin, end );
 
