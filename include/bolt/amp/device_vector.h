@@ -712,6 +712,7 @@ public:
         if( m_Size == 0 )
         {
             m_devMemory = new container_type((int)reqSize);
+            m_Size = reqSize;
             return;
         }
 

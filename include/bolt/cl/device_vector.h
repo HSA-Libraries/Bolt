@@ -811,6 +811,7 @@ namespace cl
                 {
                     ::cl::Buffer l_tmpBuffer( l_Context, m_Flags, reqSize * sizeof( value_type ) );
                     m_devMemory = l_tmpBuffer;
+                    m_Size = reqSize;
                     return;
                 }
 
