@@ -905,9 +905,9 @@ public:
     /*! \brief Retrieves the value stored at index 0.
     *   \note This returns a proxy object, to control when device memory gets mapped.
     */
-    reference front( void )
+    reference front( void ) 
     {
-        return reference( *m_devMemory, 0 );
+		return (*begin());
     }
 
     /*! \brief Retrieves the value stored at index 0.
@@ -915,15 +915,7 @@ public:
     */
     const_reference front( void ) const
     {
-
-        const_reference tmpRef = *m_devMemory[0];
-
-        /*::cl::Event unmapEvent;
-        l_Error = m_commQueue.enqueueUnmapMemObject( m_devMemory, ptrBuff, NULL, &unmapEvent );
-        V_OPENCL( l_Error, "device_vector failed to unmap host memory back to device memory" );
-        V_OPENCL( unmapEvent.wait( ), "failed to wait for unmap event" );*/
-
-        return tmpRef;
+        return (*begin());
     }
 
     /*! \brief Retrieves the value stored at index size( ) - 1.
@@ -931,7 +923,7 @@ public:
     */
     reference back( void )
     {
-        return reference( *m_devMemory, m_Size - 1 );
+		return ( *(end() - 1) );
     }
 
     /*! \brief Retrieves the value stored at index size( ) - 1.
@@ -939,10 +931,7 @@ public:
     */
     const_reference back( void ) const
     {
-
-        const_reference tmpRef = *m_devMemory[m_Size - 1];
-
-        return tmpRef;
+		return ( *(end() - 1) );
     }
 
     //Yes you need the shared_array object.
@@ -1210,7 +1199,7 @@ public:
 
         m_Size += n;
     }
-#if 0
+
     /*! \brief Assigns newSize copies of element value.
      *  \param newSize The new size of the device_vector.
      *  \param value The value of the element that is replicated newSize times.
@@ -1224,25 +1213,22 @@ public:
         }
         m_Size = newSize;
 
-        cl_int l_Error = CL_SUCCESS;
-
-        ::cl::Event fillEvent;
-        l_Error = m_commQueue.enqueueFillBuffer< value_type >(
-            m_devMemory, value, 0, m_Size * sizeof( value_type ), NULL, &fillEvent );
-        V_OPENCL( l_Error, "device_vector failed to fill the new data with the provided pattern" );
-
-        //  Not allowed to return until the copy operation is finished.
-        l_Error = fillEvent.wait( );
-        V_OPENCL( l_Error, "device_vector failed to wait for fill event" );
+        arrayview_type m_devMemoryAV( *m_devMemory );
+        Concurrency::parallel_for_each( m_devMemoryAV.extent, [=](Concurrency::index<1> idx) restrict(amp)
+        {
+            m_devMemoryAV[idx] = value;
+        }
+        );
     }
-
+#if 1
     /*! \brief Assigns a range of values to device_vector, replacing all previous elements.
      *  \param begin The iterator position signifiying the beginning of the range.
      *  \param end The iterator position signifying the end of the range (exclusive).
     *   \warning All previous iterators, references, and pointers are invalidated.
     */
-    template< typename InputIterator >
-    void assign( InputIterator begin, InputIterator end )
+	template<typename InputIterator>
+    typename std::enable_if< std::_Is_iterator<InputIterator>::value, void>::type
+    assign( InputIterator begin, InputIterator end )
     {
         size_type l_Count = std::distance( begin, end );
 
@@ -1251,26 +1237,15 @@ public:
             reserve( l_Count );
         }
         m_Size = l_Count;
-
-        cl_int l_Error = CL_SUCCESS;
-
-        naked_pointer ptrBuffer = reinterpret_cast< naked_pointer >(
-            m_commQueue.enqueueMapBuffer( m_devMemory, CL_TRUE, CL_MAP_WRITE_INVALIDATE_REGION, 0 ,
-            m_Size * sizeof( value_type ), NULL, NULL, &l_Error ) );
-        V_OPENCL( l_Error, "device_vector failed map device memory to host memory for push_back" );
-
+        arrayview_type m_devMemoryAV( *m_devMemory );
+        naked_pointer ptrBuff = m_devMemoryAV.data();
 #if( _WIN32 )
-        std::copy( begin, end, stdext::checked_array_iterator< naked_pointer >( ptrBuffer, m_Size ) );
+        std::copy( begin, end, stdext::checked_array_iterator< naked_pointer >( ptrBuff, m_Size ) );
 #else
-        std::copy( begin, end, ptrBuffer );
+        std::copy( begin, end, ptrBuff );
 #endif
-        ::cl::Event unmapEvent;
-        l_Error = m_commQueue.enqueueUnmapMemObject( m_devMemory, ptrBuffer, NULL, &unmapEvent );
-        V_OPENCL( l_Error, "device_vector failed to unmap host memory back to device memory" );
-        V_OPENCL( unmapEvent.wait( ), "failed to wait for unmap event" );
     }
 #endif
-
 private:
 
     //  These private routines make sure that the data that resides in the concurrency::array* object are
