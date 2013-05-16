@@ -313,7 +313,7 @@ namespace bolt {
 
                });
 
-               iType *cpuPointerReduce =  result.data();
+               oType *cpuPointerReduce =  result.data();
 
                int numTailReduce = ceilNumTiles;
                oType acc = static_cast< oType >( init );
@@ -328,9 +328,9 @@ namespace bolt {
             }
             catch(std::exception &e)
             {
-                  std::cout << "Exception while calling bolt::amp::transform_reduce parallel_for_each " << e.what();
-                  std::cout << std::endl;
-                  return 0;
+              std::cout<<"Exception while calling bolt::amp::transform_reduce parallel_for_each!\n"
+                       <<std::endl<<e.what();
+              throw std::exception();
             }
 
         };

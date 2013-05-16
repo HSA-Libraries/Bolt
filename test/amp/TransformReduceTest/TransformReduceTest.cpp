@@ -2573,6 +2573,110 @@ TEST(TransformReduce, MulticoreDeviceVectorUDD)
     
 } 
 #endif
+const char * bolt_code_path_adjustment = "Automatic";
+
+#define TAKE_AMP_CONTROL_PATH bolt::amp::control& my_amp_ctl= bolt::amp::control::getDefault(); \
+if (strcmp(bolt_code_path_adjustment, "Automatic") == 0 ) \
+{\
+my_amp_ctl.setWaitMode( bolt::amp::control::NiceWait );\
+my_amp_ctl.setForceRunMode(bolt::amp::control::Automatic);\
+}\
+if (strcmp(bolt_code_path_adjustment, "Gpu") == 0 )\
+{\
+my_amp_ctl.setWaitMode( bolt::amp::control::NiceWait );\
+my_amp_ctl.setForceRunMode(bolt::amp::control::Gpu);\
+}\
+if (strcmp(bolt_code_path_adjustment, "MultiCoreCpu") == 0 )\
+{\
+my_amp_ctl.setWaitMode( bolt::amp::control::NiceWait );\
+my_amp_ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu);\
+}\
+if (strcmp(bolt_code_path_adjustment, "SerialCpu") == 0 )\
+{\
+my_amp_ctl.setWaitMode( bolt::amp::control::NiceWait );\
+my_amp_ctl.setForceRunMode(bolt::amp::control::SerialCpu);\
+}
+
+
+class point{
+  public:
+  int xPoint;
+  int yPoint;
+
+  point()
+  {
+    xPoint =0;
+    yPoint =0;
+  }
+
+  point(int x, int y)
+  {
+    xPoint = x;
+    yPoint = y;
+  }
+
+  point operator + (const point &rhs) const restrict(cpu,amp)
+  {
+    point tmp = *this;
+    tmp.xPoint = tmp.xPoint + rhs.xPoint;
+    tmp.yPoint = tmp.yPoint + rhs.yPoint;
+    return tmp;
+  }
+  point operator - (const point &rhs) const
+  {
+    point tmp = *this;
+    tmp.xPoint = tmp.xPoint - rhs.xPoint;
+    tmp.yPoint = tmp.yPoint - rhs.yPoint;
+    return tmp;
+  }
+
+  point operator - () const
+  {
+    point tmp = *this;
+    tmp.xPoint = -1 * (tmp.xPoint);
+    tmp.yPoint = -1 * (tmp.yPoint);
+    return tmp;
+  }
+  point operator * (const point &rhs) const restrict(cpu,amp)
+  {
+    point tmp = *this;
+    tmp.xPoint = tmp.xPoint * rhs.xPoint;
+    tmp.yPoint = tmp.yPoint * rhs.yPoint;
+    return tmp;
+  }
+
+};
+
+
+//failed compilation
+
+TEST(Bug377748, userDefinedDataType)
+{
+
+  point pt1(12, 3);
+  point pt2(2, 5);
+  point pt(0, 0);
+  TAKE_AMP_CONTROL_PATH
+  std::vector<point> my_input_bolt_dev_vect(2);
+
+  my_input_bolt_dev_vect[0].xPoint = 12 ;
+  my_input_bolt_dev_vect[0].yPoint = 3 ; 
+
+
+  my_input_bolt_dev_vect[1].xPoint = 2 ; 
+  my_input_bolt_dev_vect[1].yPoint = 5 ; 
+
+  bolt::amp::square<point> sq;
+  bolt::amp::plus<point> pl;
+
+  point newPt = bolt::amp::transform_reduce(my_amp_ctl, my_input_bolt_dev_vect.begin(), my_input_bolt_dev_vect.end(), 
+  sq, pt, pl);
+
+  //Expected result is newPt (148, 38)
+  EXPECT_EQ (148, newPt.xPoint);
+  EXPECT_EQ (34, newPt.yPoint);
+}
+
 
 int main(int argc, char* argv[])
 {
