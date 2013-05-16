@@ -214,6 +214,10 @@ namespace cl
                     typename iterator_facade::difference_type m_Index;
                     typename iterator_facade::difference_type m_Ptr1[ 3 ];  // Represents device pointer, big enough for 32 or 64bit
                 };
+                
+                //  Basic constructor requires a reference to the container and a positional element
+                iterator_base( ): m_Container( NULL ), m_Index( 0 )
+                {}
 
                 //  Basic constructor requires a reference to the container and a positional element
                 iterator_base( Container& rhs, typename iterator_facade::difference_type index ): m_Container( rhs ), m_Index( index )
@@ -238,6 +242,14 @@ namespace cl
                     advance( n );
                     return *this;
                 }
+
+                iterator_base< Container >& operator= ( const typename iterator_facade::difference_type & n )
+                {
+                    advance( n );
+                    return *this;
+                }
+                
+
                 
                 const iterator_base< Container > operator+ ( const typename iterator_facade::difference_type & n ) const
                 {
