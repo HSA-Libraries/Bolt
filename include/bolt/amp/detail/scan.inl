@@ -269,14 +269,15 @@ Serial_scan(
     const bool Incl,
     const T &init)
 {
-    oType  sum ;
+    oType  sum, temp;
     if(Incl){
       *result = *values; // assign value
       sum = *values;
     }
     else {
+        temp = *values;
        *result = (oType)init;
-       sum = binary_op( *result, *values);
+       sum = binary_op( *result, temp);
     }
     for ( unsigned int i= 1; i<num; i++)
     {
