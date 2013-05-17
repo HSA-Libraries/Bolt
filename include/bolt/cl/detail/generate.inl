@@ -74,7 +74,7 @@ namespace bolt {
 namespace cl {
 namespace detail {
 
-enum typeName { gen_oType, gen_genType };
+enum typeName { gen_oType, gen_genType, generate_DVInputIterator, generate_end };
 
 /**********************************************************************************************************************
  * Kernel Template Specializer
@@ -97,6 +97,7 @@ class Generate_KernelTemplateSpecializer : public KernelTemplateSpecializer
                 "template __attribute__((mangled_name("+name(0)+"Instantiated)))\n"
                 "kernel void "+name(0)+"(\n"
                 "global " + typeNames[gen_oType] + " * restrict dst,\n"
+                 + typeNames[generate_DVInputIterator] + " input_iter,\n"
                 "const int numElements,\n"
                 "global " + typeNames[gen_genType] + " * restrict genPtr);\n\n"
 
@@ -260,9 +261,10 @@ aProfiler.set(AsyncProfiler::device, control::SerialCpu);
      * Type Names - used in KernelTemplateSpecializer
      *********************************************************************************/
      typedef std::iterator_traits<DVForwardIterator>::value_type oType;
-    std::vector<std::string> typeNames(2);
+    std::vector<std::string> typeNames(generate_end);
     typeNames[gen_oType] = TypeName< oType >::get( );
     typeNames[gen_genType] = TypeName< Generator >::get( );
+    typeNames[generate_DVInputIterator] = TypeName< DVForwardIterator >::get( );
 
     /**********************************************************************************
      * Type Definitions - directly concatenated into kernel string (order may matter)
@@ -270,6 +272,7 @@ aProfiler.set(AsyncProfiler::device, control::SerialCpu);
     std::vector<std::string> typeDefs;
     PUSH_BACK_UNIQUE( typeDefs, ClCode< oType >::get() )
     PUSH_BACK_UNIQUE( typeDefs, ClCode< Generator >::get() )
+    PUSH_BACK_UNIQUE( typeDefs, ClCode< DVForwardIterator >::get() )
 
     /**********************************************************************************
      * Number of Threads
@@ -349,10 +352,12 @@ aProfiler.set(AsyncProfiler::device, control::SerialCpu);
         break;
     } // switch kernel
 
-
-    V_OPENCL( kernels[whichKernel].setArg( 0, first.getContainer().getBuffer()),  "Error setArg kernels[ 0 ]" ); // Input keys
-    V_OPENCL( kernels[whichKernel].setArg( 1, numElements),         "Error setArg kernels[ 0 ]" ); // Input buffer
-    V_OPENCL( kernels[whichKernel].setArg( 2, *userGenerator ),     "Error setArg kernels[ 0 ]" ); // Size of buffer
+    
+    V_OPENCL( kernels[whichKernel].setArg( 0, first.getContainer().getBuffer()),"Error setArg kernels[0]");//I/P Buffer
+    V_OPENCL( kernels[whichKernel].setArg( 1, first.gpuPayloadSize( ), &first.gpuPayload( ) ), 
+        "Error setting a kernel argument" );
+    V_OPENCL( kernels[whichKernel].setArg( 2, numElements),         "Error setArg kernels[ 0 ]" ); // Size of buffer
+    V_OPENCL( kernels[whichKernel].setArg( 3, *userGenerator ),     "Error setArg kernels[ 0 ]" ); // Generator
 
 #ifdef BOLT_ENABLE_PROFILING
 aProfiler.nextStep();

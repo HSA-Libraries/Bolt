@@ -85,7 +85,7 @@ namespace bolt {
 namespace bolt {
     namespace cl {
         namespace detail {
-        enum fillTypeName { fill_T, fill_Type };
+        enum fillTypeName { fill_T, fill_Type, fill_DVInputIterator, fill_end };
 
         ///////////////////////////////////////////////////////////////////////
         //Kernel Template Specializer
@@ -108,6 +108,7 @@ namespace bolt {
                     "__kernel void " + name(0) + "(\n"
                     "const " + typeNames[fill_T] + " src,\n"
                     "global " + typeNames[fill_Type] + " * dst,\n"
+                     + typeNames[fill_DVInputIterator] + " input_iter,\n"
                     "const uint numElements\n"
                     ");\n\n";
 
@@ -251,17 +252,19 @@ namespace bolt {
                  *********************************************************************************/
                 typedef std::iterator_traits<DVForwardIterator>::value_type Type;
                 typedef T iType;
-                std::vector<std::string> typeNames(2);
+                std::vector<std::string> typeNames(fill_end);
                 typeNames[fill_T] = TypeName< T >::get( );
                 typeNames[fill_Type] = TypeName< Type >::get( );
-
+                typeNames[fill_DVInputIterator] = TypeName< DVForwardIterator >::get( );
+            
                 /**********************************************************************************
                  * Type Definitions - directrly concatenated into kernel string (order may matter)
                  *********************************************************************************/
                 std::vector<std::string> typeDefs;
                 PUSH_BACK_UNIQUE( typeDefs, ClCode< iType >::get() )
                 PUSH_BACK_UNIQUE( typeDefs, ClCode< Type >::get() )
-
+                PUSH_BACK_UNIQUE( typeDefs, ClCode< DVForwardIterator >::get() )
+            
                 cl_int l_Error = CL_SUCCESS;
                 const size_t workGroupSize  = WAVEFRONT_SIZE;
                 const size_t numComputeUnits = ctl.getDevice( ).getInfo< CL_DEVICE_MAX_COMPUTE_UNITS >( ); // = 28
@@ -312,13 +315,17 @@ namespace bolt {
 
                     //std::cout << "NumElem: " << sz<< "; NumThreads: " << numThreadsChosen << ";
                     //NumWorkGroups: " << numThreadsChosen/workGroupSizeChosen << std::endl;
-
-                    V_OPENCL( kernels[0].setArg( 0, val), "Error setArg kernels[ 0 ]" ); // Input Value
-
-                    V_OPENCL( kernels[0].setArg( 1, first.getContainer().getBuffer()),"Error setArg kernels[ 0 ]" ); // Fill buffer
+                    
+                    // Input Value
+                    V_OPENCL( kernels[0].setArg( 0, val), "Error setArg kernels[ 0 ]" ); 
+                    // Fill buffer
+                    V_OPENCL( kernels[0].setArg( 1, first.getContainer().getBuffer()),"Error setArg kernels[ 0 ]" ); 
+                    // Input Iterator
+                    V_OPENCL( kernels[0].setArg( 2, first.gpuPayloadSize( ), &first.gpuPayload( ) ),
+                        "Error setting a kernel argument" );
                     // Size of buffer
-                    V_OPENCL( kernels[0].setArg( 2, static_cast<cl_uint>( sz) ), "Error setArg kernels[ 0 ]" );
-
+                    V_OPENCL( kernels[0].setArg( 3, static_cast<cl_uint>( sz) ), "Error setArg kernels[ 0 ]" ); 
+            
                     l_Error = ctl.getCommandQueue( ).enqueueNDRangeKernel(
                         kernels[0],
                         ::cl::NullRange,

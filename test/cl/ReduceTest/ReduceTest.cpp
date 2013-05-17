@@ -119,6 +119,28 @@ protected:
     int m_Errors;
 };
 
+TEST( ReduceStdVectWithInit, OffsetTest)
+{
+    int length = 1024;
+    std::vector<int> stdInput( length );
+    std::vector<int> stdOutput( length );
+    std::vector<int> boltInput( length );
+
+
+    for (int i = 0; i < length; ++i)
+    {
+        stdInput[i] = 1;
+        boltInput[i] = stdInput[i];
+    }
+    
+    //  Calling the actual functions under test
+    int init = 0, offset = 100;
+    int stlTransformReduce = std::accumulate(stdInput.begin( ) + offset, stdInput.end( ), init, bolt::cl::plus<int>( ) );
+    int boltTransformReduce= bolt::cl::reduce( boltInput.begin( ) + offset, boltInput.end( ), init, bolt::cl::plus<int>( ) );
+
+    EXPECT_EQ( stlTransformReduce, boltTransformReduce );
+}
+
 TYPED_TEST_CASE_P( ReduceArrayTest );
 
 TYPED_TEST_P( ReduceArrayTest, Normal )

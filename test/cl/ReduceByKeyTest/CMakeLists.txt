@@ -20,7 +20,8 @@ set( clBolt.Test.ReduceByKey.Source ${BOLT_CL_TEST_DIR}/common/stdafx.cpp
                              ReduceByKeyTest.cpp )
 set( clBolt.Test.ReduceByKey.Headers   ${BOLT_CL_TEST_DIR}/common/stdafx.h 
                                 ${BOLT_CL_TEST_DIR}/common/targetver.h                                 
-                                ${BOLT_INCLUDE_DIR}/bolt/cl/detail/reduce_by_key.inl )
+                                ${BOLT_INCLUDE_DIR}/bolt/cl/reduce_by_key.h
+                                ${BOLT_INCLUDE_DIR}/bolt/cl/detail/reduce_by_key.inl)
 
 set( clBolt.Test.ReduceByKey.Files ${clBolt.Test.ReduceByKey.Source} ${clBolt.Test.ReduceByKey.Headers} )
 

@@ -120,7 +120,7 @@ namespace bolt {
 namespace cl {
 namespace detail {
 
-enum copyTypeName { copy_iType, copy_DVInputIterator/*added*/, copy_oType, copy_DVOutputIterator/*added*/, end_copy };
+enum copyTypeName { copy_iType, copy_DVInputIterator, copy_oType, copy_DVOutputIterator, end_copy };
 
 /**********************************************************************************************************************
  * Kernel Template Specializer
@@ -141,17 +141,15 @@ class Copy_KernelTemplateSpecializer : public KernelTemplateSpecializer
     const ::std::string operator() ( const ::std::vector<::std::string>& typeNames ) const
     {
         const std::string templateSpecializationString =
-            "// Dynamic specialization of generic template definition, using user supplied types\n"
+             "// Dynamic specialization of generic template definition, using user supplied types\n"
             "template __attribute__((mangled_name(" + name(0) + "Instantiated)))\n"
             "__attribute__((reqd_work_group_size(256,1,1)))\n"
             "__kernel void " + name(0) + "(\n"
             "global " + typeNames[copy_iType] + " * restrict src,\n"
-             + typeNames[copy_DVInputIterator] + " input_iter,\n"  // Added
+             + typeNames[copy_DVInputIterator] + " input_iter,\n"
             "global " + typeNames[copy_oType] + " * restrict dst,\n"
-             + typeNames[copy_DVOutputIterator] + " output_iter,\n" // added
-            "const uint numElements,\n"
-            "const uint srcOffset,\n"
-            "const uint dstOffset\n"
+             + typeNames[copy_DVOutputIterator] + " output_iter,\n"
+            "const uint numElements"
             ");\n\n"
 
             "// Dynamic specialization of generic template definition, using user supplied types\n"
@@ -389,14 +387,20 @@ void copy_pick_iterator(const bolt::cl::control &ctl,  const DVInputIterator& fi
 }
 
 
-
 template< typename DVInputIterator, typename Size, typename DVOutputIterator >
 typename std::enable_if< std::is_same< typename std::iterator_traits<DVInputIterator >::iterator_category,
                                        typename std::iterator_traits<DVOutputIterator >::iterator_category
-                                     >::value >::type  /*If enabled then this typename will be evaluated to void*/
+                                     >::value
+
+                     && std::is_same< typename std::iterator_traits<DVInputIterator >::value_type,
+                                       typename std::iterator_traits<DVOutputIterator >::value_type
+                                     >::value
+
+                       >::type  /*If enabled then this typename will be evaluated to void*/
     copy_enqueue(const bolt::cl::control &ctrl, const DVInputIterator& first, const Size& n,
     const DVOutputIterator& result, const std::string& cl_code)
 {
+
     typedef std::iterator_traits<DVInputIterator>::value_type iType;
     typedef std::iterator_traits<DVOutputIterator>::value_type oType;
     ::cl::Event copyEvent;
@@ -412,14 +416,19 @@ typename std::enable_if< std::is_same< typename std::iterator_traits<DVInputIter
     bolt::cl::wait(ctrl, copyEvent);
 }
 
+
 template< typename DVInputIterator, typename Size, typename DVOutputIterator >
-typename std::enable_if< !std::is_same< typename std::iterator_traits<DVInputIterator >::iterator_category,
+typename std::enable_if< !(std::is_same< typename std::iterator_traits<DVInputIterator >::iterator_category,
                                        typename std::iterator_traits<DVOutputIterator >::iterator_category
                                      >::value
+                     && std::is_same< typename std::iterator_traits<DVInputIterator >::value_type,
+                                       typename std::iterator_traits<DVOutputIterator >::value_type
+                                     >::value )                       
                        >::type  /*If enabled then this typename will be evaluated to void*/
     copy_enqueue(const bolt::cl::control &ctrl, const DVInputIterator& first, const Size& n,
     const DVOutputIterator& result, const std::string& cl_code)
 {
+
     /**********************************************************************************
      * Type Names - used in KernelTemplateSpecializer
      *********************************************************************************/
@@ -427,18 +436,19 @@ typename std::enable_if< !std::is_same< typename std::iterator_traits<DVInputIte
     typedef std::iterator_traits<DVOutputIterator>::value_type oType;
     std::vector<std::string> typeNames(end_copy);
     typeNames[copy_iType] = TypeName< iType >::get( );
-    typeNames[copy_DVInputIterator] = TypeName< DVInputIterator >::get( ); // added
-    typeNames[copy_oType] = TypeName< oType >::get( );
-    typeNames[copy_DVOutputIterator] = TypeName< DVOutputIterator >::get( ); // added
+    typeNames[copy_DVInputIterator] = TypeName< DVInputIterator >::get( );
+    typeNames[copy_oType] = TypeName< oType >::get( ); 
+    typeNames[copy_DVOutputIterator] = TypeName< DVOutputIterator >::get( );
 
     /**********************************************************************************
-     * Type Definitions - directrly concatenated into kernel string (order may matter)
+     * Type Definitions - directly concatenated into kernel string (order may matter)
      *********************************************************************************/
     std::vector<std::string> typeDefs;
     PUSH_BACK_UNIQUE( typeDefs, ClCode< iType >::get() )
-    PUSH_BACK_UNIQUE( typeDefs, ClCode< DVInputIterator >::get() ) // added
+    PUSH_BACK_UNIQUE( typeDefs, ClCode< DVInputIterator >::get() )
     PUSH_BACK_UNIQUE( typeDefs, ClCode< oType >::get() )
-    PUSH_BACK_UNIQUE( typeDefs, ClCode< DVOutputIterator >::get() ) // added
+    PUSH_BACK_UNIQUE( typeDefs, ClCode< DVOutputIterator >::get() )
+
 
     //kernelWithBoundsCheck.getWorkGroupInfo<CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctrl.device( ), &l_Error )
     const size_t workGroupSize  = 256;
@@ -510,20 +520,16 @@ typename std::enable_if< !std::is_same< typename std::iterator_traits<DVInputIte
 
         // Input buffer
 
-        // Input keys
-        V_OPENCL( kernels[whichKernel].setArg( 0, first.getContainer().getBuffer()), "Error setArg kernels[ 0 ]" );
-        V_OPENCL( kernels[whichKernel].setArg( 1, first.gpuPayloadSize( ), &first.gpuPayload( ) ),  // added
+        V_OPENCL( kernels[whichKernel].setArg( 0, first.getContainer().getBuffer()), "Error setArg kernels[ 0 ]" ); 
+        V_OPENCL( kernels[whichKernel].setArg( 1, first.gpuPayloadSize( ), &first.gpuPayload( ) ),
                                                            "Error setting a kernel argument" );
         // Output buffer
-
-         // Input buffer
-        V_OPENCL( kernels[whichKernel].setArg( 2, result.getContainer().getBuffer()),"Error setArg kernels[ 0 ]" );
-        V_OPENCL( kernels[whichKernel].setArg( 3, result.gpuPayloadSize( ), &result.gpuPayload( ) ),  // added
+        V_OPENCL( kernels[whichKernel].setArg( 2, result.getContainer().getBuffer()),"Error setArg kernels[ 0 ]" ); 
+        V_OPENCL( kernels[whichKernel].setArg( 3, result.gpuPayloadSize( ), &result.gpuPayload( ) ),
                                                            "Error setting a kernel argument" );
         //Buffer Size
         V_OPENCL( kernels[whichKernel].setArg( 4, static_cast<cl_uint>( n ) ),"Error setArg kernels[0]" );
-        V_OPENCL( kernels[whichKernel].setArg( 5, first.m_Index ), "Error setArg kernels[ 0 ]" );
-        V_OPENCL( kernels[whichKernel].setArg( 6, result.m_Index ), "Error setArg kernels[ 0 ]" );
+
 
         l_Error = ctrl.getCommandQueue( ).enqueueNDRangeKernel(
             kernels[whichKernel],
@@ -534,6 +540,7 @@ typename std::enable_if< !std::is_same< typename std::iterator_traits<DVInputIte
             &kernelEvent);
         V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for kernel" );
     }
+
     catch( const ::cl::Error& e)
     {
         std::cerr << "::cl::enqueueNDRangeKernel( ) in bolt::cl::copy_enqueue()" << std::endl;
