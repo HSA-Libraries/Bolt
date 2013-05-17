@@ -15,7 +15,7 @@
 
 ***************************************************************************/                                                                                     
 
-#define TEST_DOUBLE 0
+#define TEST_DOUBLE 1
 #define TEST_DEVICE_VECTOR 1
 #define TEST_CPU_DEVICE 0
 #define GOOGLE_TEST 1
@@ -1899,6 +1899,58 @@ INSTANTIATE_TYPED_TEST_CASE_P( Double, TransformArrayTest, DoubleTests );
 #endif 
 //INSTANTIATE_TYPED_TEST_CASE_P( UDDTest, SortArrayTest, UDDTests );
 
+
+//BUG 377596 reproducable program
+BOLT_FUNCTOR(PointT,
+struct PointT {
+float x;
+float y;
+
+PointT(float x, float y):x(x),y(y) {};
+PointT() {};
+PointT operator+ (const PointT& point1)
+{
+return PointT( (x + point1.x), (y + point1.y) );
+}
+};
+);
+
+BOLT_TEMPLATE_REGISTER_NEW_ITERATOR(bolt::cl::device_vector, int, PointT);
+
+BOLT_FUNCTOR(isInsideCircleFunctor,
+struct isInsideCircleFunctor {
+isInsideCircleFunctor(float _radius):radius(_radius) { };
+int operator() (const PointT& point) {
+float tx = point.x;
+float ty = point.y;
+float t = sqrt( (tx*tx) + (ty*ty) );
+return (t <= radius)? 1: 0;
+};
+
+private:
+float radius;
+};
+);
+
+//BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::plus, int, PointT );
+
+
+TEST( TestBug377596, TestBug377596 )
+{
+   
+bolt::cl::device_vector<PointT> boltInputPoints;
+
+#define RADIUS 1.0f
+
+int pointsInCircle = bolt::cl::transform_reduce(boltInputPoints.begin(), boltInputPoints.end(), isInsideCircleFunctor(RADIUS), 0, bolt::cl::plus<int>());
+
+}
+
+
+
+
+
+
 TEST(TransformReduce, Float)
 {
      int length = 1<<24;
@@ -2384,6 +2436,7 @@ TEST(TransformReduce, MultiCoreDeviceVectorUDD)
 
 //  Temporarily disabling this test because we have a known issue running on the CPU device with our 
 //  Bolt iterators
+/*
 TEST( TransformReduceInt , KcacheTest )
 {
     //setup containers
@@ -2435,7 +2488,7 @@ TEST( TransformReduceInt , KcacheTest )
     EXPECT_EQ( resultCPU_STL, resultGPU_OCL );
     EXPECT_EQ( resultCPU_STL, resultCPU_OCL );
 }
-
+*/
 TEST (cl_outputType_transform_reduce_sq_max, epr__all_raised){
 
   int data[6] = {-1, 0, -2, -2, 1, -3};

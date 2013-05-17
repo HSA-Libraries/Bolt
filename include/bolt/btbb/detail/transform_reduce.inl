@@ -31,7 +31,7 @@ namespace bolt {
 			 *The imperative form of parallel_reduce is used.
 			 *
 			*/
-			template < typename UnaryFunction, typename BinaryFunction,typename T>
+			template < typename InputIterator, typename UnaryFunction, typename BinaryFunction,typename T>
 			struct Transform_Reduce {
 				T value;
 				BinaryFunction reduce_op;
@@ -46,9 +46,9 @@ namespace bolt {
 
 				Transform_Reduce(): value(0) {}
 				Transform_Reduce( Transform_Reduce& s, tbb::split ):flag(TRUE),transform_op(s.transform_op),reduce_op(s.reduce_op){}
-				 void operator()( const tbb::blocked_range<T*>& r ) {
+				 void operator()( const tbb::blocked_range<InputIterator>& r ) {
 					T reduce_temp = value, transform_temp;
-					for( T* a=r.begin(); a!=r.end(); ++a ) {
+					for(InputIterator a=r.begin(); a!=r.end(); ++a ) {
 					  transform_temp = transform_op(*a);
 					  if(flag){
 						reduce_temp = transform_temp;
@@ -77,8 +77,8 @@ namespace bolt {
 
 				  typedef std::iterator_traits< InputIterator >::value_type iType;
 					tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
-					Transform_Reduce< UnaryFunction, BinaryFunction,T> transform_reduce_op(transform_op, reduce_op, init);
-					tbb::parallel_reduce( tbb::blocked_range<iType*>( &*first, (iType*)&*(last-1) + 1), transform_reduce_op );
+					Transform_Reduce<InputIterator, UnaryFunction, BinaryFunction,T> transform_reduce_op(transform_op, reduce_op, init);
+					tbb::parallel_reduce( tbb::blocked_range<InputIterator>( first, last), transform_reduce_op );
 					return transform_reduce_op.value;
 
 		}
