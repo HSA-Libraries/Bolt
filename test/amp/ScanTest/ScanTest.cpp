@@ -22,7 +22,7 @@
 #include <gtest/gtest.h>
 #include <array>
 #include "bolt/amp/functional.h"
-#define TEST_DOUBLE 0
+#define TEST_DOUBLE 1
 
 #if 1
 
