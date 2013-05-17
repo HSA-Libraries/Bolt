@@ -253,6 +253,73 @@ namespace detail
 *   \ingroup reduction
 *   \{
 */
+
+template<
+    typename InputIterator1,
+    typename InputIterator2,
+    typename OutputIterator1,
+    typename OutputIterator2,
+    typename BinaryPredicate,
+    typename BinaryFunction>
+//bolt::cl::pair<OutputIterator1, OutputIterator2>
+unsigned int
+gold_reduce_by_key_enqueue( InputIterator1 keys_first,
+                            InputIterator1 keys_last,
+                            InputIterator2 values_first,
+                            OutputIterator1 keys_output,
+                            OutputIterator2 values_output,
+                            BinaryPredicate binary_pred,
+                            BinaryFunction binary_op )
+{
+    typedef std::iterator_traits< InputIterator1 >::value_type kType;
+    typedef std::iterator_traits< InputIterator2 >::value_type vType;
+    typedef std::iterator_traits< OutputIterator1 >::value_type koType;
+    typedef std::iterator_traits< OutputIterator2 >::value_type voType;
+    static_assert( std::is_convertible< vType, voType >::value,
+                   "InputIterator2 and OutputIterator's value types are not convertible." );
+
+   unsigned int numElements = static_cast< unsigned int >( std::distance( keys_first, keys_last ) );
+
+    // do zeroeth element
+    *values_output = *values_first;
+    *keys_output = *keys_first;
+    unsigned int count = 1;
+    // rbk oneth element and beyond
+
+    values_first++;
+    for ( InputIterator1 key = (keys_first+1); key != keys_last; key++)
+    {
+        // load keys
+        kType currentKey  = *(key);
+        kType previousKey = *(key-1);
+
+        // load value
+        voType currentValue = *values_first;
+        voType previousValue = *values_output;
+
+        previousValue = *values_output;
+        // within segment
+        if (currentKey == previousKey)
+        {
+            voType r = binary_op( previousValue, currentValue);
+            *values_output = r;
+            *keys_output = currentKey;
+
+        }
+        else // new segment
+        {
+            values_output++;
+            keys_output++;
+            *values_output = currentValue;
+            *keys_output = currentKey;
+            count++; //To count the number of elements in the output array
+        }
+        values_first++;
+    }
+
+    //return bolt::cl::make_pair(keys_output+1, values_output+1);
+    return count;
+}
     enum typeName {e_kType, e_vType, e_koType, e_voType ,e_BinaryPredicate, e_BinaryFunction};
 
 /*********************************************************************************************************************
@@ -440,7 +507,10 @@ reduce_by_key_pick_iterator(
     }
     if (runMode == bolt::cl::control::SerialCpu) {
 
-        throw std::exception("The SerialCpu version of ReduceByKey is not implemented yet! \n" );
+            unsigned int sizeOfOut = gold_reduce_by_key_enqueue( keys_first, keys_last, values_first, keys_output,
+            values_output, binary_pred, binary_op);
+
+            return  bolt::cl::make_pair(keys_output+sizeOfOut, values_output+sizeOfOut);
 
     } else if (runMode == bolt::cl::control::MultiCoreCpu) {
 
@@ -526,8 +596,15 @@ reduce_by_key_pick_iterator(
 
     if( runMode == bolt::cl::control::SerialCpu )
     {
-        //  TODO:  Need access to the device_vector .data method to get a host pointer
-        throw std::exception( "ReduceByKey device_vector CPU device not implemented! \n" );
+        bolt::cl::device_vector< kType >::pointer keysPtr =  keys_first.getContainer( ).data( );
+        bolt::cl::device_vector< vType >::pointer valsPtr =  values_first.getContainer( ).data( );
+        bolt::cl::device_vector< koType >::pointer oKeysPtr =  keys_output.getContainer( ).data( );
+        bolt::cl::device_vector< voType >::pointer oValsPtr =  values_output.getContainer( ).data( );
+        unsigned int sizeOfOut = gold_reduce_by_key_enqueue( &keysPtr[keys_first.m_Index], &keysPtr[numElements],
+                                           &valsPtr[values_first.m_Index], &oKeysPtr[keys_output.m_Index],
+                                          &oValsPtr[values_output.m_Index], binary_pred, binary_op);
+        return bolt::cl::make_pair(keys_output+sizeOfOut, values_output+sizeOfOut);
+
     }
     else if( runMode == bolt::cl::control::MultiCoreCpu )
     {
