@@ -14,8 +14,6 @@
 *   limitations under the License.                                                   
 
 ***************************************************************************/
-
-
 #include <array>
 
 #include "bolt/cl/iterator/constant_iterator.h"
@@ -425,10 +423,12 @@ TEST ( StdIntVectorWithSplit, OffsetGenerate )
     
     std::vector<int> stdv(length);
 
-    //memcpy(stdv.data(), v.data(), splitSize * sizeof(int)); // Copy 25 elements to device vector
+
+    //memcpy(stdv.data(), v.data(), splitSize * sizeof(int)); // Copy 250 elements to device vector
     bolt::cl::generate_n(stdv.begin(), splitSize, gen1);
-    bolt::cl::generate(stdv.begin() + splitSize, stdv.begin() + (splitSize * 2), gen2);  // Fill 2nd set of 250 elements
-    bolt::cl::generate(stdv.begin() + (splitSize * 2), stdv.begin() + (splitSize * 3), gen1);  // Fill 3rd set of 250 elements
+    bolt::cl::generate(stdv.begin() + splitSize, stdv.begin() + (splitSize * 2), gen2); // Fill 2nd set of 250 elements
+    bolt::cl::generate(stdv.begin() + (splitSize * 2), stdv.begin() + (splitSize * 3),gen1);//Fill 3rd set of 250 elmts
+
     bolt::cl::generate(stdv.begin() + (splitSize * 3), stdv.end(), gen2);  // Fill 4th set of 250 elements
     
     for (int i = 0; i < length; ++i){ 
@@ -461,9 +461,10 @@ TEST (dvIntWithSplit, OffsetGenerate){
         //memcpy(dpOut.get(), dpIn.get(), splitSize * sizeof(int)); // Copy 250 elements to device vector
         bolt::cl::generate_n(dpOut.get(), splitSize, gen1);
     
-        //bolt::cl::fill(dvOut.begin() + splitSize, dvOut.begin() + (splitSize * 2), gen2);  // Fill 2nd set of 250 elements
+        //bolt::cl::fill(dvOut.begin() + splitSize, dvOut.begin() + (splitSize * 2), gen2);//Fill 2nd set of 250 elmnts
         bolt::cl::generate(dpOut.get() + splitSize, dpOut.get() + (splitSize * 2), gen2);
-        //bolt::cl::fill(dvOut.begin() + (splitSize * 2), dvOut.begin() + (splitSize * 3), gen1);  // Fill 3rd set of 250 elements
+        //bolt::cl::fill(dvOut.begin() + (splitSize * 2),dvOut.begin()+(splitSize*3),gen1);//Fill 3rd set of 250 elmnts
+
         bolt::cl::generate(dpOut.get() + (splitSize * 2), dpOut.get() + (splitSize * 3), gen1);
 
     }
@@ -662,7 +663,9 @@ TEST_P( HostShortVector, MultiCoreGenerate )
 TEST_P( HostFloatVector, Generate )
 {
     // create generator
-    GenConst1<float> gen(1.2);
+
+    GenConst1<float> gen((float)1.234);
+
 
     //  Calling the actual functions under test
     std::generate(  stdInput.begin( ),  stdInput.end( ), gen );
@@ -675,7 +678,9 @@ TEST_P( HostFloatVector, Generate )
 TEST_P( HostFloatVector, SerialGenerate )
 {
     // create generator
-    GenConst1<float> gen(1.234);
+
+    GenConst1<float> gen((float)1.234);
+
 
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
@@ -691,7 +696,8 @@ TEST_P( HostFloatVector, SerialGenerate )
 TEST_P( HostFloatVector, MultiCoreGenerate )
 {
     // create generator
-    GenConst1<float> gen(1.234);
+    GenConst1<float> gen((float)1.234);
+
 
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
@@ -1005,7 +1011,8 @@ TEST_P( DevShortVector, MultiCoreGenerate )
 TEST_P( DevFloatVector, Generate )
 {
     // create generator
-    GenConst1<float> gen(2.345);
+    GenConst1<float> gen((float)2.345);
+
 
     //  Calling the actual functions under test
     std::generate(  stdInput.begin( ),  stdInput.end( ), gen );
@@ -1018,7 +1025,8 @@ TEST_P( DevFloatVector, Generate )
 TEST_P( DevFloatVector, SerialGenerate )
 {
     // create generator
-    GenConst1<float> gen(2.345);
+
+    GenConst1<float> gen((float)2.345);
 
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
@@ -1034,7 +1042,9 @@ TEST_P( DevFloatVector, SerialGenerate )
 TEST_P( DevFloatVector, MultiCoreGenerate )
 {
     // create generator
-    GenConst1<float> gen(2.345);
+
+    GenConst1<float> gen((float)2.345);
+
 
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
@@ -1497,4 +1507,3 @@ int main(int argc, char **argv)
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }
-

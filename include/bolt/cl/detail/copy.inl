@@ -223,20 +223,7 @@ void copy_pick_iterator(const bolt::cl::control &ctrl,  const InputIterator& fir
     typedef std::iterator_traits<InputIterator>::value_type iType;
     typedef std::iterator_traits<OutputIterator>::value_type oType;
 
-    // Use host pointers memory since these arrays are only read once - no benefit to copying.
-
-    //// Map the input iterator to a device_vector
-    //device_vector< iType >  dvInput( first, n, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, true, ctrl );
-
-    //            // Map the output iterator to a device_vector
-    //device_vector< oType > dvOutput( result, n, CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY, false, ctrl );
-
-    //copy_enqueue( ctrl, dvInput.begin( ), n, dvOutput.begin( ), user_code );
-
-    //// This should immediately map/unmap the buffer
-    //dvOutput.data( );
-
-    // A host 2 host copy operation, just fallback on the optimized std:: implementation
+   
      bolt::cl::control::e_RunMode runMode = ctrl.getForceRunMode( );
 
      if( runMode == bolt::cl::control::Automatic )
@@ -252,13 +239,29 @@ void copy_pick_iterator(const bolt::cl::control &ctrl,  const InputIterator& fir
      {
 
         #ifdef ENABLE_TBB
-               throw std::exception( "The MultiCoreCpu version of Copy is not Implemented yet!" );
+               //TODO : The MultiCoreCpu version of Copy is not Implemented yet...
+               std::copy_n( first, n, result );
         #else
                throw std::exception( "The MultiCoreCpu version of Copy is not enabled to be built." );
         #endif
      }
      else
      {
+                 // Use host pointers memory since these arrays are only read once - no benefit to copying.
+
+                 //// Map the input iterator to a device_vector
+                 //device_vector< iType >  dvInput( first, n, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, true, ctrl );
+
+                 //            // Map the output iterator to a device_vector
+                 //device_vector< oType > dvOutput( result, n, CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY, false, ctrl );
+
+                 //copy_enqueue( ctrl, dvInput.begin( ), n, dvOutput.begin( ), user_code );
+
+                //// This should immediately map/unmap the buffer
+                //dvOutput.data( );
+
+                // A host 2 host copy operation, just fallback on the optimized std:: implementation
+
                 std::copy_n( first, n, result );
      }
 }
@@ -285,14 +288,14 @@ void copy_pick_iterator(const bolt::cl::control &ctrl,  const InputIterator& fir
 
      if( runMode == bolt::cl::control::SerialCpu )
      {
-
                 std::copy_n( first, n, result );
      }
      else if( runMode == bolt::cl::control::MultiCoreCpu )
      {
 
          #ifdef ENABLE_TBB
-               throw std::exception( "The MultiCoreCpu version of Copy is not Implemented yet!" );
+               //TODO : The MultiCoreCpu version of Copy is not Implemented yet...
+               std::copy_n( first, n, result );
          #else
                throw std::exception( "The MultiCoreCpu version of Copy is not enabled to be built." );
          #endif
@@ -335,7 +338,8 @@ void copy_pick_iterator(const bolt::cl::control &ctrl,  const DVInputIterator& f
      {
 
          #ifdef ENABLE_TBB
-                throw std::exception( "The MultiCoreCpu version of Copy is not Implemented yet!" );
+                //TODO : The MultiCoreCpu version of Copy is not Implemented yet...
+                std::copy_n( first, n, result );
          #else
                 throw std::exception( "The MultiCoreCpu version of Copy is not enabled to be built." );
          #endif
@@ -367,7 +371,8 @@ void copy_pick_iterator(const bolt::cl::control &ctrl,  const DVInputIterator& f
      else if( runMode == bolt::cl::control::MultiCoreCpu )
      {
         #ifdef ENABLE_TBB
-              throw std::exception( "The MultiCoreCpu version of Copy is not Implemented yet!" );
+              //TODO : The MultiCoreCpu version of Copy is not Implemented yet...
+              std::copy_n( first, n, result );
         #else
               throw std::exception( "The MultiCoreCpu version of Copy is not enabled to be built." );
         #endif

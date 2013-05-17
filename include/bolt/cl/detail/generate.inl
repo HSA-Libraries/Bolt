@@ -176,7 +176,8 @@ void generate_detect_random_access( bolt::cl::control &ctrl, const ForwardIterat
                 else if(runMode == bolt::cl::control::MultiCoreCpu)
                 {
                     #ifdef ENABLE_TBB
-                           throw std::exception("MultiCoreCPU Version of generate not Implemented yet! \n");
+                           //TODO : MultiCoreCPU Version of generate not Implemented yet...
+                           std::generate(first, last, gen );
                     #else
                            throw std::exception("MultiCoreCPU Version of generate not Enabled! \n");
                     #endif
@@ -215,7 +216,8 @@ void generate_detect_random_access( bolt::cl::control &ctrl, const ForwardIterat
                 else if(runMode == bolt::cl::control::MultiCoreCpu)
                 {
                     #ifdef ENABLE_TBB
-                           throw std::exception("MultiCoreCPU Version of generate not implemented yet! \n");
+                           //TODO : MultiCoreCPU Version of generate not implemented yet...
+                           std::generate(first, last, gen );
                     #else
                            throw std::exception("MultiCoreCPU Version of generate not Enabled! \n");
                     #endif

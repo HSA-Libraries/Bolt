@@ -19,6 +19,13 @@
 #define TEST_DEVICE_VECTOR 1
 #define TEST_CPU_DEVICE 1
 
+//std::copy issues warning when it is used with raw pointers,
+//because when used incorrectly, it can result in buffer overflows.
+#define _SCL_SECURE_NO_WARNINGS // Disabling checked iterators warnings
+
+#pragma warning(push)
+#pragma warning(disable:4244)
+
 #include "bolt/cl/iterator/counting_iterator.h"
 
 #include <bolt/cl/copy.h>
@@ -118,6 +125,7 @@ TEST( CopyStdVectWithInt, OffsetTest)
     cmpArrays(stdOutput, boltOutput);
 }
 
+
 TEST( CopyStdVectWithIntFloat, OffsetTest)
 {
     int length = 1024;
@@ -176,6 +184,7 @@ TEST( CopyDevVectWithIntFloat, OffsetTest)
     bolt::cl::device_vector<float> boltOutput( length );
 
 
+
     for (int i = 0; i < length; ++i)
     {
         stdInput[i] = i;
@@ -208,7 +217,9 @@ TEST(Copy, FancyDeviceIterator)
         }; 
 
         //STL destination vector
-        bolt::cl::device_vector<int> dest(length);
+
+        std::vector<int> dest(length);
+
         //Bolt destination vector
         bolt::cl::device_vector<int> destination(length);
 
@@ -239,7 +250,9 @@ TEST(Copy, SerialFancyDeviceIterator)
         }; 
 
         //STL destination vector
-        bolt::cl::device_vector<int> dest(length);
+
+        std::vector<int> dest(length);
+
         //Bolt destination vector
         bolt::cl::device_vector<int> destination(length);
 
@@ -272,7 +285,9 @@ TEST(Copy, MultiCoreFancyDeviceIterator)
         }; 
 
         //STL destination vector
-        bolt::cl::device_vector<int> dest(length);
+
+        std::vector<int> dest(length);
+
         //Bolt destination vector
         bolt::cl::device_vector<int> destination(length);
 
@@ -305,7 +320,9 @@ TEST(Copy, FancyDeviceIntFloat)
         }; 
 
         //STL destination vector
-        bolt::cl::device_vector<float> dest(length);
+
+        std::vector<float> dest(length);
+
         //Bolt destination vector
         bolt::cl::device_vector<float> destination(length);
 
@@ -338,7 +355,9 @@ TEST(Copy, SerialFancyDeviceIntFloat)
         ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
         //STL destination vector
-        bolt::cl::device_vector<float> dest(length);
+
+        std::vector<float> dest(length);
+
         //Bolt destination vector
         bolt::cl::device_vector<float> destination(length);
 
@@ -371,7 +390,9 @@ TEST(Copy, MultiCoreFancyDeviceIntFloat)
         ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
         //STL destination vector
-        bolt::cl::device_vector<float> dest(length);
+
+        std::vector<float> dest(length);
+
         //Bolt destination vector
         bolt::cl::device_vector<float> destination(length);
 
@@ -383,8 +404,6 @@ TEST(Copy, MultiCoreFancyDeviceIntFloat)
         cmpArrays(dest, destination);
     }
 } 
-
-
 
 TEST(Copy, FancyRandomIterator)  
 {
@@ -412,7 +431,7 @@ TEST(Copy, FancyRandomIterator)
         bolt::cl::copy(first, last, destination.begin());
        
         // GoogleTest Comparison
-        cmpArrays(dest, destination, length);
+        cmpArrays(dest, destination);
     }
 } 
 
@@ -445,7 +464,7 @@ TEST(Copy, SerialFancyRandomIterator)
         bolt::cl::copy(ctl, first, last, destination.begin());
        
         // GoogleTest Comparison
-        cmpArrays(dest, destination, length);
+        cmpArrays(dest, destination);
     }
 } 
 
@@ -478,7 +497,7 @@ TEST(Copy, MultiCoreFancyRandomIterator)
         bolt::cl::copy(ctl, first, last, destination.begin());
        
         // GoogleTest Comparison
-        cmpArrays(dest, destination, length);
+        cmpArrays(dest, destination);
     }
 } 
 
@@ -508,7 +527,7 @@ TEST(Copy, FancyRandomIntFloat)
         bolt::cl::copy(first, last, destination.begin());
        
         // GoogleTest Comparison
-        cmpArrays(dest, destination, length);
+        cmpArrays(dest, destination);
     }
 } 
 
@@ -541,7 +560,7 @@ TEST(Copy, SerialFancyRandomIntFloat)
         bolt::cl::copy(ctl, first, last, destination.begin());
        
         // GoogleTest Comparison
-        cmpArrays(dest, destination, length);
+        cmpArrays(dest, destination);
     }
 }
 
@@ -574,7 +593,7 @@ TEST(Copy, MultiCoreFancyRandomIntFloat)
         bolt::cl::copy(ctl, first, last, destination.begin());
        
         // GoogleTest Comparison
-        cmpArrays(dest, destination, length);
+        cmpArrays(dest, destination);
     }
 }
 
@@ -626,7 +645,9 @@ TEST(Copy, DevUnsignedInt)
         // perform copy
         bolt::cl::copy(source.begin(), source.end(), destination.begin());
         // GoogleTest Comparison
-        cmpArrays(source, destination, length);
+
+        cmpArrays(source, destination);
+
     }
 } 
 
@@ -651,7 +672,9 @@ TEST(Copy, SerialDevUnsignedInt)
         // perform copy
         bolt::cl::copy(ctl, source.begin(), source.end(), destination.begin());
         // GoogleTest Comparison
-        cmpArrays(source, destination, length);
+
+        cmpArrays(source, destination);
+
     }
 } 
 
@@ -676,7 +699,9 @@ TEST(Copy, MultiCoreDevUnsignedInt)
         // perform copy
         bolt::cl::copy(ctl, source.begin(), source.end(), destination.begin());
         // GoogleTest Comparison
-        cmpArrays(source, destination, length);
+
+        cmpArrays(source, destination);
+
     }
 } 
 
@@ -698,7 +723,9 @@ TEST(Copy, DevShort)
         // perform copy
         bolt::cl::copy(source.begin(), source.end(), destination.begin());
         // GoogleTest Comparison
-        cmpArrays(source, destination, length);
+
+        cmpArrays(source, destination);
+
     }
 } 
 
@@ -724,7 +751,9 @@ TEST(Copy, SerialDevShort)
         // perform copy
         bolt::cl::copy(ctl, source.begin(), source.end(), destination.begin());
         // GoogleTest Comparison
-        cmpArrays(source, destination, length);
+
+        cmpArrays(source, destination);
+
     }
 } 
 
@@ -749,7 +778,9 @@ TEST(Copy, MultiCoreDevShort)
         // perform copy
         bolt::cl::copy(ctl, source.begin(), source.end(), destination.begin());
         // GoogleTest Comparison
-        cmpArrays(source, destination, length);
+
+        cmpArrays(source, destination);
+
     }
 } 
 
@@ -772,7 +803,7 @@ TEST(Copy, DevPrim)  // Default code path
         // perform copy
         bolt::cl::copy(source.begin(), source.end(), destination.begin());
         // GoogleTest Comparison
-        cmpArrays(source, destination, length);
+        cmpArrays(source, destination);
     }
 } 
 
@@ -797,7 +828,7 @@ TEST(Copy, AutomaticDevPrim) //Automatic Code Path
         // perform copy
         bolt::cl::copy(ctl, source.begin(), source.end(), destination.begin());
         // GoogleTest Comparison
-        cmpArrays(source, destination, length);
+        cmpArrays(source, destination);
     }
 }
 
@@ -822,7 +853,7 @@ TEST(Copy, SerialDevPrim) // Serial Code Path
         // perform copy
         bolt::cl::copy(ctl, source.begin(), source.end(), destination.begin());
         // GoogleTest Comparison
-        cmpArrays(source, destination, length);
+        cmpArrays(source, destination);
     }
 }
 
@@ -847,10 +878,9 @@ TEST(Copy, MultiCoreDevPrim) // MultiCore CPU - TBB Path
         // perform copy
         bolt::cl::copy(ctl, source.begin(), source.end(), destination.begin());
         // GoogleTest Comparison
-        cmpArrays(source, destination, length);
+        cmpArrays(source, destination);
     }
 }
-
 
 
 TEST(CopyN, DevPrim)
@@ -970,7 +1000,7 @@ TEST(Copy, StdPrim)
         // perform copy
         bolt::cl::copy(source.begin(), source.end(), destination.begin());
         // GoogleTest Comparison
-        cmpArrays(source, destination, length);
+        cmpArrays(source, destination);
     }
 }
 
@@ -995,7 +1025,7 @@ TEST(Copy, AutomaticStdPrim)
         // perform copy
         bolt::cl::copy(ctl, source.begin(), source.end(), destination.begin());
         // GoogleTest Comparison
-        cmpArrays(source, destination, length);
+        cmpArrays(source, destination);
     }
 }
 
@@ -1020,7 +1050,7 @@ TEST(Copy, SerialStdPrim)
         // perform copy
         bolt::cl::copy(ctl, source.begin(), source.end(), destination.begin());
         // GoogleTest Comparison
-        cmpArrays(source, destination, length);
+        cmpArrays(source, destination);
     }
 }
 
@@ -1045,7 +1075,7 @@ TEST(Copy, MultiCoreStdPrim)
         // perform copy
         bolt::cl::copy(ctl, source.begin(), source.end(), destination.begin());
         // GoogleTest Comparison
-        cmpArrays(source, destination, length);
+        cmpArrays(source, destination);
     }
 }
 
@@ -1970,9 +2000,9 @@ TEST (stdIntToIntCopy, offsetCopy){
     std::vector<int> stdv(length);
     memcpy(stdv.data(), v.data(), 25 * sizeof(int));      // Copy 25 elements to device vector
 
-    bolt::cl::copy( stdv.begin(), stdv.begin()+25, stdv.begin()+25);  // Copy 1st set of 25 elements to 2nd set of 25 elements
-    bolt::cl::copy_n(stdv.begin(), 25, stdv.begin() + 50);  // Copy 1st set of 25 elements to 3nd set of 25 elements
-    bolt::cl::copy_n(stdv.begin(), 25, stdv.begin() + 75);  // Copy 1st set of 25 elements to 4nd set of 25 elements
+    bolt::cl::copy( stdv.begin(), stdv.begin()+25, stdv.begin()+25);//Copy 1st set of 25 eles to 2nd set of 25 eles
+    bolt::cl::copy_n(stdv.begin(), 25, stdv.begin() + 50);//Copy 1st set of 25 elements to 3rd set of 25 elmnts
+    bolt::cl::copy_n(stdv.begin(), 25, stdv.begin() + 75);//Copy 1st set of 25 elements to 4th set of 25 elemnts
     
     for (int i = 0; i < length; ++i){ 
         EXPECT_EQ(stdv[i], v[i]);
@@ -1990,14 +2020,14 @@ TEST (stdIntToIntCopy, SerialoffsetCopy){
         }
     
     std::vector<int> stdv(length);
-    memcpy(stdv.data(), v.data(), 25 * sizeof(int));      // Copy 25 elements to device vector
+    memcpy(stdv.data(), v.data(), 25 * sizeof(int)); // Copy 25 elements to device vector
 
     bolt::cl::control ctrl = bolt::cl::control::getDefault( );
     ctrl.setForceRunMode(bolt::cl::control::SerialCpu); 
 
-    bolt::cl::copy( ctrl, stdv.begin(), stdv.begin()+25, stdv.begin()+25);  // Copy 1st set of 25 elements to 2nd set of 25 elements
-    bolt::cl::copy_n(ctrl, stdv.begin(), 25, stdv.begin() + 50);  // Copy 1st set of 25 elements to 3nd set of 25 elements
-    bolt::cl::copy_n(ctrl, stdv.begin(), 25, stdv.begin() + 75);  // Copy 1st set of 25 elements to 4nd set of 25 elements
+    bolt::cl::copy( ctrl,stdv.begin(),stdv.begin()+25,stdv.begin()+25);//Copy 1st set of 25 eles to 2nd set of 25 eles
+    bolt::cl::copy_n(ctrl, stdv.begin(), 25, stdv.begin() + 50);//Copy 1st set of 25 elements to 3rd set of 25 elmnts
+    bolt::cl::copy_n(ctrl, stdv.begin(), 25, stdv.begin() + 75);//Copy 1st set of 25 elements to 4th set of 25 elemnts
     
     for (int i = 0; i < length; ++i){ 
         EXPECT_EQ(stdv[i], v[i]);
@@ -2020,14 +2050,15 @@ TEST (stdIntToIntCopy, MultiCoreoffsetCopy){
     bolt::cl::control ctrl = bolt::cl::control::getDefault( );
     ctrl.setForceRunMode(bolt::cl::control::MultiCoreCpu); 
 
-    bolt::cl::copy( ctrl, stdv.begin(), stdv.begin()+25, stdv.begin()+25);  // Copy 1st set of 25 elements to 2nd set of 25 elements
-    bolt::cl::copy_n(ctrl, stdv.begin(), 25, stdv.begin() + 50);  // Copy 1st set of 25 elements to 3nd set of 25 elements
-    bolt::cl::copy_n(ctrl, stdv.begin(), 25, stdv.begin() + 75);  // Copy 1st set of 25 elements to 4nd set of 25 elements
+    bolt::cl::copy( ctrl,stdv.begin(),stdv.begin()+25,stdv.begin()+25);//Copy 1st set of 25 eles to 2nd set of 25 eles
+    bolt::cl::copy_n(ctrl, stdv.begin(), 25, stdv.begin() + 50);//Copy 1st set of 25 elements to 3rd set of 25 elmnts
+    bolt::cl::copy_n(ctrl, stdv.begin(), 25, stdv.begin() + 75);//Copy 1st set of 25 elements to 4th set of 25 elemnts
     
     for (int i = 0; i < length; ++i){ 
         EXPECT_EQ(stdv[i], v[i]);
     }
 } 
+
 
 
 TEST (dvIntToIntCopy, offsetCopy){ 
@@ -2044,12 +2075,12 @@ TEST (dvIntToIntCopy, offsetCopy){
     {
         bolt::cl::device_vector<int>::pointer dpOut=dvOut.data();
         bolt::cl::device_vector<int>::pointer dpIn=dvIn.data();
-        memcpy(dpOut.get(), dpIn.get(), 25 * sizeof(int));      // Copy 25 elements to device vector
+        memcpy(dpOut.get(), dpIn.get(), 25 * sizeof(int)); // Copy 25 elements to device vector
     }
     
-    bolt::cl::copy( dvIn.begin(), dvIn.begin()+25, dvOut.begin()+25);  // Copy 1st set of 25 elements to 2nd set of 25 elements
-    bolt::cl::copy_n(dvIn.begin(), 25, dvOut.begin() + 50);  // Copy 1st set of 25 elements to 3nd set of 25 elements
-    bolt::cl::copy_n(dvIn.begin(), 25, dvOut.begin() + 75);  // Copy 1st set of 25 elements to 4nd set of 25 elements
+    bolt::cl::copy( dvIn.begin(), dvIn.begin()+25, dvOut.begin()+25);//Copy 1st set of 25 eles to 2nd set of 25 eles
+    bolt::cl::copy_n(dvIn.begin(), 25, dvOut.begin() + 50);//Copy 1st set of 25 elements to 3rd set of 25 elmnts
+    bolt::cl::copy_n(dvIn.begin(), 25, dvOut.begin() + 75);//Copy 1st set of 25 elements to 4th set of 25 elemnts
     
     for (int i = 0; i < length; ++i){ 
         EXPECT_EQ(dvOut[i], dvIn[i]);
@@ -2076,9 +2107,9 @@ TEST (dvIntToIntCopy, SerialoffsetCopy){
         memcpy(dpOut.get(), dpIn.get(), 25 * sizeof(int));      // Copy 25 elements to device vector
     }
     
-    bolt::cl::copy( ctrl, dvIn.begin(), dvIn.begin()+25, dvOut.begin()+25);  // Copy 1st set of 25 elements to 2nd set of 25 elements
-    bolt::cl::copy_n(ctrl, dvIn.begin(), 25, dvOut.begin() + 50);  // Copy 1st set of 25 elements to 3nd set of 25 elements
-    bolt::cl::copy_n(ctrl, dvIn.begin(), 25, dvOut.begin() + 75);  // Copy 1st set of 25 elements to 4nd set of 25 elements
+    bolt::cl::copy(ctrl,dvIn.begin(),dvIn.begin()+25,dvOut.begin()+25);//Copy 1st set of 25 eles to 2nd set of 25 eles
+    bolt::cl::copy_n(ctrl, dvIn.begin(), 25, dvOut.begin() + 50);//Copy 1st set of 25 elements to 3rd set of 25 elmnts
+    bolt::cl::copy_n(ctrl, dvIn.begin(), 25, dvOut.begin() + 75);//Copy 1st set of 25 elements to 4th set of 25 elemnts
     
     for (int i = 0; i < length; ++i){ 
         EXPECT_EQ(dvOut[i], dvIn[i]);
@@ -2105,14 +2136,16 @@ TEST (dvIntToIntCopy, MultiCoreoffsetCopy){
         memcpy(dpOut.get(), dpIn.get(), 25 * sizeof(int));      // Copy 25 elements to device vector
     }
     
-    bolt::cl::copy( ctrl, dvIn.begin(), dvIn.begin()+25, dvOut.begin()+25);  // Copy 1st set of 25 elements to 2nd set of 25 elements
-    bolt::cl::copy_n(ctrl, dvIn.begin(), 25, dvOut.begin() + 50);  // Copy 1st set of 25 elements to 3nd set of 25 elements
-    bolt::cl::copy_n(ctrl, dvIn.begin(), 25, dvOut.begin() + 75);  // Copy 1st set of 25 elements to 4nd set of 25 elements
+
+    bolt::cl::copy(ctrl,dvIn.begin(),dvIn.begin()+25,dvOut.begin()+25);//Copy 1st set of 25 eles to 2nd set of 25 eles
+    bolt::cl::copy_n(ctrl, dvIn.begin(), 25, dvOut.begin() + 50);//Copy 1st set of 25 elements to 3rd set of 25 elmnts
+    bolt::cl::copy_n(ctrl, dvIn.begin(), 25, dvOut.begin() + 75);//Copy 1st set of 25 elements to 4th set of 25 elemnts
     
     for (int i = 0; i < length; ++i){ 
         EXPECT_EQ(dvOut[i], dvIn[i]);
     }
 } 
+
 
 TEST (stdIntToFloatCopy, offsetCopy){ 
     int length = 100;
@@ -2131,9 +2164,9 @@ TEST (stdIntToFloatCopy, offsetCopy){
     //Copy 25- 49 elements
     bolt::cl::copy( v.begin()+25, v.begin()+50, dv.begin()+25);  // Copy 1st set of 25 elements to 2nd set of 25 elements
     //Copy 50- 74 elements 
-    bolt::cl::copy_n(v.begin(), 25, dv.begin() + 50);  // Copy 1st set of 25 elements to 3nd set of 25 elements
+    bolt::cl::copy_n(v.begin(), 25, dv.begin() + 50);  // Copy 1st set of 25 elements to 3rd set of 25 elements
     //Copy 75- 99 elements 
-    bolt::cl::copy_n(v.begin()+25, 25, dv.begin() + 75);  // Copy 1st set of 25 elements to 4nd set of 25 elements
+    bolt::cl::copy_n(v.begin()+25, 25, dv.begin() + 75);  // Copy 1st set of 25 elements to 4th set of 25 elements
     
     for (int i = 0; i < length; ++i){ 
         EXPECT_FLOAT_EQ(dv[i], (float)v[i]);
@@ -2158,11 +2191,11 @@ TEST (stdIntToFloatCopy, SerialoffsetCopy){
     //Copy 0- 24 elements
     bolt::cl::copy( ctrl, v.begin(), v.begin()+25, dv.begin());
     //Copy 25- 49 elements
-    bolt::cl::copy( ctrl, v.begin()+25, v.begin()+50, dv.begin()+25);  // Copy 1st set of 25 elements to 2nd set of 25 elements
+    bolt::cl::copy( ctrl, v.begin()+25, v.begin()+50, dv.begin()+25);//Copy 1st set of 25 elmnts to 2nd set of 25 elmnts
     //Copy 50- 74 elements 
-    bolt::cl::copy_n(ctrl, v.begin(), 25, dv.begin() + 50);  // Copy 1st set of 25 elements to 3nd set of 25 elements
+    bolt::cl::copy_n(ctrl, v.begin(), 25, dv.begin() + 50);  // Copy 1st set of 25 elements to 3rd set of 25 elements
     //Copy 75- 99 elements 
-    bolt::cl::copy_n(ctrl, v.begin()+25, 25, dv.begin() + 75);  // Copy 1st set of 25 elements to 4nd set of 25 elements
+    bolt::cl::copy_n(ctrl, v.begin()+25, 25, dv.begin() + 75);  // Copy 1st set of 25 elements to 4th set of 25 elements
     
     for (int i = 0; i < length; ++i){ 
         EXPECT_FLOAT_EQ(dv[i], (float)v[i]);
@@ -2187,16 +2220,17 @@ TEST (stdIntToFloatCopy, MultiCoreoffsetCopy){
     //Copy 0- 24 elements
     bolt::cl::copy( ctrl, v.begin(), v.begin()+25, dv.begin());
     //Copy 25- 49 elements
-    bolt::cl::copy( ctrl, v.begin()+25, v.begin()+50, dv.begin()+25);  // Copy 1st set of 25 elements to 2nd set of 25 elements
+    bolt::cl::copy(ctrl, v.begin()+25, v.begin()+50, dv.begin()+25);//Copy 1st set of 25 elmnts to 2nd set of 25 elmnts
     //Copy 50- 74 elements 
-    bolt::cl::copy_n(ctrl, v.begin(), 25, dv.begin() + 50);  // Copy 1st set of 25 elements to 3nd set of 25 elements
+    bolt::cl::copy_n(ctrl, v.begin(), 25, dv.begin() + 50);  // Copy 1st set of 25 elements to 3rd set of 25 elements
     //Copy 75- 99 elements 
-    bolt::cl::copy_n(ctrl, v.begin()+25, 25, dv.begin() + 75);  // Copy 1st set of 25 elements to 4nd set of 25 elements
+    bolt::cl::copy_n(ctrl, v.begin()+25, 25, dv.begin() + 75);  //Copy 1st set of 25 elements to 4th set of 25 elements
     
     for (int i = 0; i < length; ++i){ 
         EXPECT_FLOAT_EQ(dv[i], (float)v[i]);
     }
 } 
+
 
 TEST (dvIntToFloatCopy, offsetCopy){ 
     int length = 100;
@@ -2212,20 +2246,20 @@ TEST (dvIntToFloatCopy, offsetCopy){
     //memcpy will copy the bit representation but std::copy will convert it.
     bolt::cl::copy(dvIn.begin(), dvIn.begin()+25, dvOut.begin());
     for (int i = 0; i < splitSize; ++i){ 
-        EXPECT_FLOAT_EQ(dvOut[i], dvIn[i]);
+        EXPECT_FLOAT_EQ(dvOut[i], (float) dvIn[i]);
     }
-    bolt::cl::copy(dvIn.begin()+25, dvIn.begin()+50, dvOut.begin()+25);  // Copy 1st set of 25 elements to 2nd set of 25 elements
+    bolt::cl::copy(dvIn.begin()+25,dvIn.begin()+50,dvOut.begin()+25);//Copy 1st set of 25 elmnts to 2nd set of 25 elmts
     for (int i = 25; i < splitSize+25; ++i){ 
-        EXPECT_FLOAT_EQ(dvOut[i], dvIn[i]);
+        EXPECT_FLOAT_EQ(dvOut[i], (float) dvIn[i]);
     }
-    bolt::cl::copy_n(dvIn.begin(), 25, dvOut.begin()+50);  // Copy 1st set of 25 elements to 3nd set of 25 elements
+    bolt::cl::copy_n(dvIn.begin(), 25, dvOut.begin()+50);  // Copy 1st set of 25 elements to 3rd set of 25 elements
     for (int i = 50; i < splitSize+50; ++i){ 
-        EXPECT_FLOAT_EQ(dvOut[i], dvIn[i]);
+        EXPECT_FLOAT_EQ(dvOut[i], (float) dvIn[i]);
     }
 
-    bolt::cl::copy_n(dvIn.begin()+25, 25, dvOut.begin()+75);  // Copy 1st set of 25 elements to 4nd set of 25 elements
+    bolt::cl::copy_n(dvIn.begin()+25, 25, dvOut.begin()+75);  // Copy 1st set of 25 elements to 4th set of 25 elements
     for (int i = 75; i < length; ++i){ 
-        EXPECT_FLOAT_EQ(dvOut[i], dvIn[i]);
+        EXPECT_FLOAT_EQ(dvOut[i], (float) dvIn[i]);
     }
 } 
 
@@ -2248,20 +2282,22 @@ TEST (dvIntToFloatCopy, SerialoffsetCopy){
     //memcpy will copy the bit representation but std::copy will convert it.
     bolt::cl::copy(ctrl, dvIn.begin(), dvIn.begin()+25, dvOut.begin());
     for (int i = 0; i < splitSize; ++i){ 
-        EXPECT_FLOAT_EQ(dvOut[i], dvIn[i]);
-    }
-    bolt::cl::copy(ctrl, dvIn.begin()+25, dvIn.begin()+50, dvOut.begin()+25);  // Copy 1st set of 25 elements to 2nd set of 25 elements
-    for (int i = 25; i < splitSize+25; ++i){ 
-        EXPECT_FLOAT_EQ(dvOut[i], dvIn[i]);
-    }
-    bolt::cl::copy_n(ctrl, dvIn.begin(), 25, dvOut.begin()+50);  // Copy 1st set of 25 elements to 3nd set of 25 elements
-    for (int i = 50; i < splitSize+50; ++i){ 
-        EXPECT_FLOAT_EQ(dvOut[i], dvIn[i]);
+        EXPECT_FLOAT_EQ(dvOut[i], (float) dvIn[i]);
     }
 
-    bolt::cl::copy_n(ctrl, dvIn.begin()+25, 25, dvOut.begin()+75);  // Copy 1st set of 25 elements to 4nd set of 25 elements
+    bolt::cl::copy(ctrl,dvIn.begin()+25,dvIn.begin()+50,dvOut.begin()+25);//Copy 1st set of 25 els to 2nd set of 25 ele
+
+    for (int i = 25; i < splitSize+25; ++i){ 
+        EXPECT_FLOAT_EQ(dvOut[i], (float) dvIn[i]);
+    }
+    bolt::cl::copy_n(ctrl, dvIn.begin(), 25, dvOut.begin()+50); //Copy 1st set of 25 elements to 3rd set of 25 elements
+    for (int i = 50; i < splitSize+50; ++i){ 
+        EXPECT_FLOAT_EQ(dvOut[i], (float) dvIn[i]);
+    }
+
+    bolt::cl::copy_n(ctrl, dvIn.begin()+25, 25, dvOut.begin()+75);//Copy 1st set of 25 elemnts to 4th set of 25 elemnts
     for (int i = 75; i < length; ++i){ 
-        EXPECT_FLOAT_EQ(dvOut[i], dvIn[i]);
+        EXPECT_FLOAT_EQ(dvOut[i], (float) dvIn[i]);
     }
 } 
 
@@ -2283,22 +2319,23 @@ TEST (dvIntToFloatCopy, MultiCoreoffsetCopy){
     //memcpy will copy the bit representation but std::copy will convert it.
     bolt::cl::copy(ctrl, dvIn.begin(), dvIn.begin()+25, dvOut.begin());
     for (int i = 0; i < splitSize; ++i){ 
-        EXPECT_FLOAT_EQ(dvOut[i], dvIn[i]);
+        EXPECT_FLOAT_EQ(dvOut[i], (float) dvIn[i]);
     }
-    bolt::cl::copy(ctrl, dvIn.begin()+25, dvIn.begin()+50, dvOut.begin()+25);  // Copy 1st set of 25 elements to 2nd set of 25 elements
+    bolt::cl::copy(ctrl,dvIn.begin()+25,dvIn.begin()+50,dvOut.begin()+25);//Copy 1st set of 25 ele to 2nd set of 25 ele
     for (int i = 25; i < splitSize+25; ++i){ 
-        EXPECT_FLOAT_EQ(dvOut[i], dvIn[i]);
+        EXPECT_FLOAT_EQ(dvOut[i], (float) dvIn[i]);
     }
-    bolt::cl::copy_n(ctrl, dvIn.begin(), 25, dvOut.begin()+50);  // Copy 1st set of 25 elements to 3nd set of 25 elements
+    bolt::cl::copy_n(ctrl, dvIn.begin(), 25, dvOut.begin()+50);//Copy 1st set of 25 elements to 3rd set of 25 elements
     for (int i = 50; i < splitSize+50; ++i){ 
-        EXPECT_FLOAT_EQ(dvOut[i], dvIn[i]);
+        EXPECT_FLOAT_EQ(dvOut[i], (float) dvIn[i]);
     }
 
-    bolt::cl::copy_n(ctrl, dvIn.begin()+25, 25, dvOut.begin()+75);  // Copy 1st set of 25 elements to 4nd set of 25 elements
+    bolt::cl::copy_n(ctrl, dvIn.begin()+25, 25, dvOut.begin()+75);//Copy 1st set of 25 elemnts to 4th set of 25 elemnts
     for (int i = 75; i < length; ++i){ 
-        EXPECT_FLOAT_EQ(dvOut[i], dvIn[i]);
+        EXPECT_FLOAT_EQ(dvOut[i], (float) dvIn[i]);
     }
 } 
+
 
 TEST (dvIntToFloatlargeBufferCopy, offsetCopy){ 
     int length = 4096;
@@ -2318,7 +2355,7 @@ TEST (dvIntToFloatlargeBufferCopy, offsetCopy){
             bolt::cl::copy(dvIn.begin()+offset, dvIn.begin()+offset+copyStride, dvOut.begin()+offset);
             for (int j = 0; j < copyStride; ++j){ 
                 {
-                EXPECT_FLOAT_EQ(dvOut[offset+j], dvIn[offset+j]);
+                EXPECT_FLOAT_EQ(dvOut[offset+j], (float) dvIn[offset+j]);
                 }
             }
 
@@ -2326,7 +2363,7 @@ TEST (dvIntToFloatlargeBufferCopy, offsetCopy){
             bolt::cl::copy(dvIn.begin()+offset, dvIn.begin()+offset+copyStride, dvOut.begin()+offset);
             for (int j = 0; j < copyStride; ++j){ 
                 {
-                EXPECT_FLOAT_EQ(dvOut[offset+j], dvIn[offset+j]);
+                EXPECT_FLOAT_EQ(dvOut[offset+j], (float) dvIn[offset+j]);
                 }
             }
         }
@@ -2355,7 +2392,7 @@ TEST (dvIntToFloatlargeBufferCopy, SerialoffsetCopy){
             bolt::cl::copy(ctrl, dvIn.begin()+offset, dvIn.begin()+offset+copyStride, dvOut.begin()+offset);
             for (int j = 0; j < copyStride; ++j){ 
                 {
-                EXPECT_FLOAT_EQ(dvOut[offset+j], dvIn[offset+j]);
+                EXPECT_FLOAT_EQ(dvOut[offset+j], (float) dvIn[offset+j]);
                 }
             }
 
@@ -2363,12 +2400,13 @@ TEST (dvIntToFloatlargeBufferCopy, SerialoffsetCopy){
             bolt::cl::copy(ctrl, dvIn.begin()+offset, dvIn.begin()+offset+copyStride, dvOut.begin()+offset);
             for (int j = 0; j < copyStride; ++j){ 
                 {
-                EXPECT_FLOAT_EQ(dvOut[offset+j], dvIn[offset+j]);
+                EXPECT_FLOAT_EQ(dvOut[offset+j], (float) dvIn[offset+j]);
                 }
             }
         }
     }
 } 
+
 
 TEST (dvIntToFloatlargeBufferCopy, MultiCoreoffsetCopy){ 
     int length = 4096;
@@ -2392,7 +2430,9 @@ TEST (dvIntToFloatlargeBufferCopy, MultiCoreoffsetCopy){
             bolt::cl::copy(ctrl, dvIn.begin()+offset, dvIn.begin()+offset+copyStride, dvOut.begin()+offset);
             for (int j = 0; j < copyStride; ++j){ 
                 {
-                EXPECT_FLOAT_EQ(dvOut[offset+j], dvIn[offset+j]);
+				
+                EXPECT_FLOAT_EQ(dvOut[offset+j], (float) dvIn[offset+j]);
+
                 }
             }
 
@@ -2400,7 +2440,9 @@ TEST (dvIntToFloatlargeBufferCopy, MultiCoreoffsetCopy){
             bolt::cl::copy(ctrl, dvIn.begin()+offset, dvIn.begin()+offset+copyStride, dvOut.begin()+offset);
             for (int j = 0; j < copyStride; ++j){ 
                 {
-                EXPECT_FLOAT_EQ(dvOut[offset+j], dvIn[offset+j]);
+
+                EXPECT_FLOAT_EQ(dvOut[offset+j], (float) dvIn[offset+j]);
+
                 }
             }
         }
@@ -2559,3 +2601,5 @@ int main(int argc, char* argv[])
 
     return retVal;
 }
+
+#pragma warning(pop)

@@ -14,8 +14,6 @@
 *   limitations under the License.
 
 ***************************************************************************/
-
-
 #include "common/stdafx.h"
 #include "common/myocl.h"
 #include <bolt/cl/fill.h>
@@ -488,10 +486,11 @@ TEST ( StdIntVectorWithSplit, OffsetFill )
     
     std::vector<int> stdv(length);
 
-    //memcpy(stdv.data(), v.data(), splitSize * sizeof(int)); // Copy 25 elements to device vector
+    //memcpy(stdv.data(), v.data(), splitSize * sizeof(int)); // Copy 250 elements to device vector
     bolt::cl::fill_n(stdv.begin(), splitSize, val);
-    bolt::cl::fill(stdv.begin() + splitSize, stdv.begin() + (splitSize * 2), val * 3);  // Fill 2nd set of 250 elements
-    bolt::cl::fill(stdv.begin() + (splitSize * 2), stdv.begin() + (splitSize * 3), val);  // Fill 3rd set of 250 elements
+    bolt::cl::fill(stdv.begin() + splitSize, stdv.begin() + (splitSize * 2), val * 3); // Fill 2nd set of 250 elements
+    bolt::cl::fill(stdv.begin() + (splitSize * 2), stdv.begin() + (splitSize * 3), val);// Fill 3rd set of 250 elements
+
     bolt::cl::fill(stdv.begin() + (splitSize * 3), stdv.end(), val * 3);  // Fill 4th set of 250 elements
     
     for (int i = 0; i < length; ++i){ 
@@ -522,9 +521,10 @@ TEST (dvIntWithSplit, OffsetFill){
         //memcpy(dpOut.get(), dpIn.get(), splitSize * sizeof(int)); // Copy 250 elements to device vector
         bolt::cl::fill_n(dpOut.get(), splitSize, val);
     
-       //bolt::cl::fill(dvOut.begin() + splitSize, dvOut.begin() + (splitSize * 2), val * 3);  // Fill 2nd set of 250 elements
+       //bolt::cl::fill(dvOut.begin() + splitSize, dvOut.begin() + (splitSize*2),val*3); //Fill 2nd set of 250 elements
        bolt::cl::fill(dpOut.get() + splitSize, dpOut.get() + (splitSize * 2), val * 3);
-       //bolt::cl::fill(dvOut.begin() + (splitSize * 2), dvOut.begin() + (splitSize * 3), val);  // Fill 3rd set of 250 elements
+       //bolt::cl::fill(dvOut.begin()+(splitSize * 2),dvOut.begin()+(splitSize*3),val); //Fill 3rd set of 250 elements
+
        bolt::cl::fill(dpOut.get() + (splitSize * 2), dpOut.get() + (splitSize * 3), val);
 
     }
@@ -705,7 +705,8 @@ TEST_P( HostIntVector, MultiCoreFill )
 
 TEST_P( HostFloatVector, Fill )
 {
-    float val = 73.6;
+    float val = (float)73.6;
+
     std::fill(  stdInput.begin( ),  stdInput.end( ), val );
     bolt::cl::fill( boltInput.begin( ), boltInput.end( ), val );
 
@@ -714,7 +715,7 @@ TEST_P( HostFloatVector, Fill )
 
 TEST_P( HostFloatVector, SerialFill )
 {
-    float val = 73.6;
+    float val = (float)73.6;
 
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
@@ -727,7 +728,9 @@ TEST_P( HostFloatVector, SerialFill )
 
 TEST_P( HostFloatVector, MultiCoreFill )
 {
-    float val = 73.6;
+
+    float val = (float)73.6;
+
 
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
@@ -944,7 +947,8 @@ TEST_P( DevIntVector, MultiCoreFill )
 
 TEST_P( DevFloatVector, Fill )
 {
-    float val = 73.7;
+    float val = (float)73.7;
+
     std::fill(  stdInput.begin( ),  stdInput.end( ), val );
     bolt::cl::fill( boltInput.begin( ), boltInput.end( ), val );
 
@@ -953,7 +957,9 @@ TEST_P( DevFloatVector, Fill )
 
 TEST_P( DevFloatVector, SerialFill )
 {
-    float val = 73.7;
+
+    float val = (float)73.7;
+
 
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
@@ -966,7 +972,9 @@ TEST_P( DevFloatVector, SerialFill )
 
 TEST_P( DevFloatVector, MultiCoreFill )
 {
-    float val = 73.7;
+
+    float val = (float)73.7;
+
 
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
@@ -1206,7 +1214,9 @@ TEST_P( HostIntVector, MultiCoreFill_n )
 
 TEST_P( HostFloatVector, Fill_n )
 {
-    float val = 73.6;
+
+    float val = (float) 73.6;
+
     size_t size = stdInput.size();
     std::fill_n(stdInput.begin( ),size,val);
     bolt::cl::fill_n(boltInput.begin( ),size,val);
@@ -1217,7 +1227,9 @@ TEST_P( HostFloatVector, Fill_n )
                         
 TEST_P( HostFloatVector, AutomaticFill_n )
 {
-    float val = 73.6;
+
+    float val = (float) 73.6;
+
     size_t size = stdInput.size();
 
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
@@ -1231,7 +1243,9 @@ TEST_P( HostFloatVector, AutomaticFill_n )
 
 TEST_P( HostFloatVector, SerialFill_n )
 {
-    float val = 73.6;
+
+    float val = (float)73.6;
+
     size_t size = stdInput.size();
 
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
@@ -1245,7 +1259,9 @@ TEST_P( HostFloatVector, SerialFill_n )
 
 TEST_P( HostFloatVector, MultiCoreFill_n )
 {
-    float val = 73.6;
+
+    float val = (float) 73.6;
+
     size_t size = stdInput.size();
 
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
@@ -1483,7 +1499,9 @@ TEST_P( DevIntVector, MultiCoreFill_n )
 
 TEST_P( DevFloatVector, Fill_n )
 {
-    float val = 73.7;
+
+    float val = (float) 73.7;
+
     size_t size = stdInput.size();
     std::fill_n(stdInput.begin(),size,val);
     bolt::cl::fill_n(boltInput.begin(),size,val);
@@ -1494,7 +1512,9 @@ TEST_P( DevFloatVector, Fill_n )
 
 TEST_P( DevFloatVector, AutomaticFill_n )
 {
-    float val = 73.7;
+
+    float val = (float)73.7;
+
     size_t size = stdInput.size();
 
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
@@ -1509,7 +1529,9 @@ TEST_P( DevFloatVector, AutomaticFill_n )
 
 TEST_P( DevFloatVector, SerialFill_n )
 {
-    float val = 73.7;
+
+    float val = (float)73.7;
+
     size_t size = stdInput.size();
 
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
@@ -1523,7 +1545,9 @@ TEST_P( DevFloatVector, SerialFill_n )
 
 TEST_P( DevFloatVector, MultiCoreFill_n )
 {
-    float val = 73.7;
+
+    float val = (float)73.7;
+
     size_t size = stdInput.size();
 
     bolt::cl::control ctl = bolt::cl::control::getDefault( );

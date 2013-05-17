@@ -173,7 +173,8 @@ namespace bolt {
                 else if(runMode == bolt::cl::control::MultiCoreCpu)
                 {
                     #ifdef ENABLE_TBB
-                          throw  std::exception("MultiCoreCPU Version of fill not implemented yet! \n");
+                          //TODO : MultiCoreCPU Version of fill not implemented yet...
+                          std::fill(first, last, value );
                     #else
                           throw std::exception("MultiCoreCPU Version of fill not Enabled! \n");
                     #endif
@@ -212,7 +213,8 @@ namespace bolt {
                 else if(runMode == bolt::cl::control::MultiCoreCpu)
                 {
                     #ifdef ENABLE_TBB
-                           throw std::exception("MultiCoreCPU Version of fill not implemented yet! \n");
+                           //TODO : MultiCoreCPU Version of fill not implemented yet...
+                           std::fill(first, last, value );
                     #else
                            throw std::exception("MultiCoreCPU Version of fill not Enabled! \n");
                     #endif
