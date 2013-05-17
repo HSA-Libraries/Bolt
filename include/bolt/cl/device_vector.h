@@ -173,14 +173,14 @@ namespace cl
 
             /*! \brief Typedef to create the non-constant reference.
             */
-            typedef reference_base< device_vector< value_type > > reference;
+            typedef typename reference_base< device_vector< value_type > > reference;
 
             /*! \brief A non-writeable copy of an element of the container.
             *   Constant references are optimized to return a value_type, since it is certain that
             *   the value will not be modified
             *   \note A const_reference actually returns a value, not a reference.
             */
-            typedef const value_type const_reference;
+            typedef typename const value_type const_reference;
 
             //  Handy for the reference class to get at the wrapped ::cl objects
             friend class reference;
@@ -466,6 +466,7 @@ namespace cl
             device_vector( /* cl_mem_flags flags = CL_MEM_READ_WRITE,*/ const control& ctl = control::getDefault( ) ): m_Size( 0 ), m_commQueue( ctl.getCommandQueue( ) ), m_Flags( CL_MEM_READ_WRITE )
             {
                 static_assert( !std::is_polymorphic< value_type >::value, "AMD C++ template extensions do not support the virtual keyword yet" );
+                m_devMemory = NULL;
             }
 
             /*! \brief A constructor that creates a new device_vector with the specified number of elements, with a specified initial value.
@@ -856,13 +857,15 @@ namespace cl
                 cl_int l_Error = CL_SUCCESS;
 
                 // this seems like bug; what if i popped everything?
-                if( m_Size == 0 )
-                    return m_Size;
+             //   if( m_Size == 0 )
+             //       return m_Size;
+                if(m_devMemory() == NULL)
+                   return 0;
 
-                l_memSize = m_devMemory.getInfo< CL_MEM_SIZE >( &l_Error );
-                V_OPENCL( l_Error, "device_vector failed to request the size of the ::cl::Buffer object" );
-
-                return static_cast< size_type >( l_memSize / sizeof( value_type ) );
+                    l_memSize = m_devMemory.getInfo< CL_MEM_SIZE >( &l_Error );
+                    V_OPENCL( l_Error, "device_vector failed to request the size of the ::cl::Buffer object" );
+                    return static_cast< size_type >( l_memSize / sizeof( value_type ) );
+                
             }
 
             /*! \brief Shrink the capacity( ) of this device_vector to just fit its elements.
@@ -909,6 +912,7 @@ namespace cl
             */
             reference operator[]( size_type n )
             {
+
                 return reference( *this, n );
             }
 
@@ -1086,7 +1090,7 @@ namespace cl
                 cl_int l_Error = CL_SUCCESS;
 
                 naked_pointer ptrBuff = reinterpret_cast< naked_pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ | CL_MAP_WRITE,
-                    0, m_Size * sizeof( value_type ), NULL, NULL, &l_Error ) );
+                    0, capacity() * sizeof( value_type ), NULL, NULL, &l_Error ) );
 
                 V_OPENCL( l_Error, "device_vector failed map device memory to host memory for operator[]" );
 
@@ -1100,7 +1104,7 @@ namespace cl
                 cl_int l_Error = CL_SUCCESS;
 
                 const_naked_pointer ptrBuff = reinterpret_cast< const_naked_pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ,
-                    0, m_Size * sizeof( value_type ), NULL, NULL, &l_Error ) );
+                    0, capacity() * sizeof( value_type ), NULL, NULL, &l_Error ) );
                 V_OPENCL( l_Error, "device_vector failed map device memory to host memory for operator[]" );
 
                 const_pointer sp( ptrBuff, UnMapBufferFunctor< const device_vector< value_type > >( *this ) );
