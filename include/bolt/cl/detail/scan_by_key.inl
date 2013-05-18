@@ -619,8 +619,8 @@ namespace detail
 *   \ingroup scan
 *   \{
 */
-    enum scanTypes  {scanByKey_kType, scanByKey_kIterType, scanByKey_vType, scanByKey_iIterType, scanByKey_oType, scanByKey_oIterType,
-                scanByKey_initType, scanByKey_BinaryPredicate, scanByKey_BinaryFunction, scan_end};
+    enum scanByKeyTypes  {scanByKey_kType, scanByKey_kIterType, scanByKey_vType, scanByKey_iIterType, scanByKey_oType, scanByKey_oIterType,
+                scanByKey_initType, scanByKey_BinaryPredicate, scanByKey_BinaryFunction, scanbykey_end};
 
 /*********************************************************************************************************************
  * Kernel Template Specializer
@@ -1007,7 +1007,7 @@ size_t k0_stepNum, k1_stepNum, k2_stepNum;
     typedef typename std::iterator_traits< DVInputIterator1 >::value_type kType;
     typedef typename std::iterator_traits< DVInputIterator2 >::value_type vType;
     typedef typename std::iterator_traits< DVOutputIterator >::value_type oType;
-    std::vector<std::string> typeNames(scan_end);
+    std::vector<std::string> typeNames(scanbykey_end);
     
     typeNames[scanByKey_kType] = TypeName< kType >::get( );
     typeNames[scanByKey_kIterType] = TypeName< DVInputIterator1 >::get( );
