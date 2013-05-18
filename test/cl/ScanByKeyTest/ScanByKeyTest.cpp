@@ -25,7 +25,7 @@
 #include "bolt/unicode.h"
 #include "bolt/miniDump.h"
 
-#define TEST_DOUBLE 0
+#define TEST_DOUBLE 1
 
 #include <gtest/gtest.h>
 //#include <boost/shared_array.hpp>
@@ -108,6 +108,12 @@ struct MultD4
     };
 }; 
 );
+
+BOLT_CREATE_TYPENAME( bolt::cl::device_vector< uddtD4 >::iterator );
+BOLT_CREATE_CLCODE( bolt::cl::device_vector< uddtD4 >::iterator, bolt::cl::deviceVectorIteratorTemplate );
+
+
+
 uddtD4 identityMultD4 = { 1.0, 1.0, 1.0, 1.0 };
 uddtD4 initialMultD4  = { 1.00001, 1.000003, 1.0000005, 1.00000007 };
 
@@ -157,6 +163,12 @@ struct AddI2
     };
 }; 
 );
+
+BOLT_CREATE_TYPENAME( bolt::cl::device_vector< uddtI2 >::iterator );
+BOLT_CREATE_CLCODE( bolt::cl::device_vector< uddtI2 >::iterator, bolt::cl::deviceVectorIteratorTemplate );
+
+
+
 uddtI2 identityAddI2 = {  0, 0 };
 uddtI2 initialAddI2  = { -1, 2 };
 
@@ -221,6 +233,11 @@ struct MixM3
     };
 }; 
 );
+BOLT_CREATE_TYPENAME( bolt::cl::device_vector< uddtM3 >::iterator );
+BOLT_CREATE_CLCODE( bolt::cl::device_vector< uddtM3 >::iterator, bolt::cl::deviceVectorIteratorTemplate );
+
+
+
 uddtM3 identityMixM3 = { 0, 0, 1.0 };
 uddtM3 initialMixM3  = { 2, 1, 1.000001 };
 #endif
@@ -276,6 +293,9 @@ struct MixM2
     };
 }; 
 );
+
+BOLT_CREATE_TYPENAME( bolt::cl::device_vector< uddtM2 >::iterator );
+BOLT_CREATE_CLCODE( bolt::cl::device_vector< uddtM2 >::iterator, bolt::cl::deviceVectorIteratorTemplate );
 
 
 uddtM2 identityMixM2 = { 0, 3.141596f };
