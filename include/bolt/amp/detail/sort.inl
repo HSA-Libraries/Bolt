@@ -134,40 +134,21 @@ void sort_pick_iterator( bolt::amp::control &ctl,
     typedef typename std::iterator_traits<DVRandomAccessIterator>::value_type T;
     unsigned int szElements = static_cast< unsigned int >( std::distance( first, last ) );
     if(szElements > (1<<31))
-  {
+    {
         throw std::exception( "AMP device_vector shall support only upto 2 power 31 elements" );
-    return;
-  }
+        return;
+    }
     if (szElements == 0 )
         return;
     const bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
     if ((runMode == bolt::amp::control::SerialCpu) || (szElements < SORT_CPU_THRESHOLD)) {
-        std::vector<T> localBuffer(szElements);
-        //Copy the device_vector buffer to a CPU buffer
-        for(unsigned int index=0; index<szElements; index++)
-            localBuffer[index] = first.getContainer().getBuffer()[index];
-        //Compute sort using std::sort
-        std::sort(localBuffer.begin(), localBuffer.end(), comp);
-        //Copy the CPU buffer back to device_vector
-        for(unsigned int index=0; index<szElements; index++)
-            first.getContainer().getBuffer()[index] = localBuffer[index];
-        return;
+        bolt::amp::device_vector< T >::pointer firstPtr =  first.getContainer( ).data( );
+        std::sort(&firstPtr[ first.m_Index ], &firstPtr[ last.m_Index ], comp);
     } else if (runMode == bolt::amp::control::MultiCoreCpu) {
 #ifdef ENABLE_TBB
-        std::vector<T> localBuffer(szElements);
-        //Copy the device_vector buffer to a CPU buffer
-        for(unsigned int index=0; index<szElements; index++)
-            localBuffer[index] = first.getContainer().getBuffer()[index];
-
-        bolt::btbb::sort(localBuffer.begin(), localBuffer.end(), comp);
-
-        //Copy the CPU buffer back to device_vector
-        for(unsigned int index=0; index<szElements; index++)
-            first.getContainer().getBuffer()[index] = localBuffer[index];
-        return;
-
+        bolt::amp::device_vector< T >::pointer firstPtr =  first.getContainer( ).data( );
+        bolt::btbb::sort(&firstPtr[ first.m_Index ], &firstPtr[ last.m_Index ], comp);
 #else
- //       std::cout << "The MultiCoreCpu version of sort is not enabled. " << std ::endl;
         throw std::exception( "The MultiCoreCpu version of sort is not enabled to be built." );
         return;
 #endif
@@ -209,12 +190,9 @@ void sort_pick_iterator( bolt::amp::control &ctl,
         return;
     } else if (runMode == bolt::amp::control::MultiCoreCpu) {
 #ifdef ENABLE_TBB
-
         bolt::btbb::sort(first,last, comp);
-
-
 #else
-//        std::cout << "The MultiCoreCpu version of sort is not enabled. " << std ::endl;
+//      std::cout << "The MultiCoreCpu version of sort is not enabled. " << std ::endl;
         throw std::exception( "The MultiCoreCpu version of sort is not enabled to be built." );
         return;
 #endif

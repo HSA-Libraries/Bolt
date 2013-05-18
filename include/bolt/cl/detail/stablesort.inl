@@ -199,7 +199,8 @@ void stablesort_pick_iterator( control &ctl, const RandomAccessIterator& first, 
     else if( runMode == bolt::cl::control::MultiCoreCpu )
     {
         #ifdef ENABLE_TBB
-            throw std::exception("MultiCoreCPU Version of stable_sort not implemented yet! \n");
+            //TODO - Add Log for the serial CPU code path taken when multicore is called
+            std::stable_sort( first, last, comp );
         #else
             throw std::exception("MultiCoreCPU Version of stable_sort not Enabled! \n");
         #endif
@@ -243,14 +244,15 @@ void stablesort_pick_iterator( control &ctl,
     if( runMode == bolt::cl::control::SerialCpu || (vecSize < BOLT_CL_STABLESORT_CPU_THRESHOLD) )
     {
         bolt::cl::device_vector< Type >::pointer firstPtr =  first.getContainer( ).data( );
-
-        std::stable_sort( &firstPtr[ first.m_Index ], &firstPtr[ vecSize-1 ], comp );
+        std::stable_sort( &firstPtr[ first.m_Index ], &firstPtr[ last.m_Index ], comp );
         return;
     }
     else if( runMode == bolt::cl::control::MultiCoreCpu )
     {
         #ifdef ENABLE_TBB
-            throw std::exception("MultiCoreCPU Version of stable_sort not implemented yet! \n");
+            //TODO - ADDLOG calling serial CPU code paths 
+            bolt::cl::device_vector< Type >::pointer firstPtr =  first.getContainer( ).data( );
+            std::stable_sort( &firstPtr[ first.m_Index ], &firstPtr[ last.m_Index ], comp );
         #else
             throw std::exception("MultiCoreCPU Version of stable_sort not Enabled! \n");
         #endif

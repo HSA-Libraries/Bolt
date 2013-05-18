@@ -85,7 +85,7 @@ namespace bolt {
         *  \endcode
         */
         template<typename RandomAccessIterator1 , typename RandomAccessIterator2>
-        void sort_by_key(const bolt::cl::control &ctl,
+        void sort_by_key(bolt::cl::control &ctl,
                          RandomAccessIterator1 keys_first,
                          RandomAccessIterator1 keys_last,
                          RandomAccessIterator2 values_first,
@@ -134,7 +134,7 @@ namespace bolt {
         */
 
         template<typename RandomAccessIterator1 , typename RandomAccessIterator2 , typename StrictWeakOrdering>
-        void sort_by_key(const bolt::cl::control &ctl,
+        void sort_by_key(bolt::cl::control &ctl,
                   RandomAccessIterator1 keys_first,
                   RandomAccessIterator1 keys_last,
                   RandomAccessIterator2 values_first,
