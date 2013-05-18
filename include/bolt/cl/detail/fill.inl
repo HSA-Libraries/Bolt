@@ -200,7 +200,7 @@ namespace bolt {
                 bolt::cl::device_vector_tag )
             {
 
-
+                typedef std::iterator_traits<DVForwardIterator>::value_type iType;
                 bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
                 if(runMode == bolt::cl::control::Automatic)
                 {
@@ -208,13 +208,15 @@ namespace bolt {
                 }
                 if( runMode == bolt::cl::control::SerialCpu)
                 {
-                    std::fill(first, last, value );
+                    bolt::cl::device_vector< iType >::pointer fillInputBuffer =  first.getContainer( ).data( );
+                    std::fill(&fillInputBuffer[first.m_Index], &fillInputBuffer[last.m_Index], value );
                 }
                 else if(runMode == bolt::cl::control::MultiCoreCpu)
                 {
                     #ifdef ENABLE_TBB
                            //TODO : MultiCoreCPU Version of fill not implemented yet...
-                           std::fill(first, last, value );
+                        bolt::cl::device_vector< iType >::pointer fillInputBuffer =  first.getContainer( ).data( );
+                        std::fill(first, last, value );
                     #else
                            throw std::exception("MultiCoreCPU Version of fill not Enabled! \n");
                     #endif

@@ -233,36 +233,22 @@ void copy_pick_iterator(const bolt::cl::control &ctrl,  const InputIterator& fir
 
      if( runMode == bolt::cl::control::SerialCpu )
      {
-                std::copy_n( first, n, result );
+         std::copy_n( first, n, result );
      }
      else if( runMode == bolt::cl::control::MultiCoreCpu )
      {
 
         #ifdef ENABLE_TBB
-               //TODO : The MultiCoreCpu version of Copy is not Implemented yet...
-               std::copy_n( first, n, result );
+            //TODO : The MultiCoreCpu version of Copy is not Implemented yet...
+            std::copy_n( first, n, result );
         #else
-               throw std::exception( "The MultiCoreCpu version of Copy is not enabled to be built." );
+            throw std::exception( "The MultiCoreCpu version of Copy is not enabled to be built." );
         #endif
      }
      else
      {
-                 // Use host pointers memory since these arrays are only read once - no benefit to copying.
-
-                 //// Map the input iterator to a device_vector
-                 //device_vector< iType >  dvInput( first, n, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, true, ctrl );
-
-                 //            // Map the output iterator to a device_vector
-                 //device_vector< oType > dvOutput( result, n, CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY, false, ctrl );
-
-                 //copy_enqueue( ctrl, dvInput.begin( ), n, dvOutput.begin( ), user_code );
-
-                //// This should immediately map/unmap the buffer
-                //dvOutput.data( );
-
-                // A host 2 host copy operation, just fallback on the optimized std:: implementation
-
-                std::copy_n( first, n, result );
+        // A host 2 host copy operation, just fallback on the optimized std:: implementation
+        std::copy_n( first, n, result );
      }
 }
 
@@ -283,12 +269,12 @@ void copy_pick_iterator(const bolt::cl::control &ctrl,  const InputIterator& fir
 
      if( runMode == bolt::cl::control::Automatic )
      {
-                runMode = ctrl.getDefaultPathToRun( );
+         runMode = ctrl.getDefaultPathToRun( );
      }
 
      if( runMode == bolt::cl::control::SerialCpu )
      {
-                std::copy_n( first, n, result );
+         std::copy_n( first, n, result );
      }
      else if( runMode == bolt::cl::control::MultiCoreCpu )
      {
@@ -302,16 +288,11 @@ void copy_pick_iterator(const bolt::cl::control &ctrl,  const InputIterator& fir
      }
      else
      {
-
         // Use host pointers memory since these arrays are only read once - no benefit to copying.
-
         // Map the output iterator to a device_vector
         device_vector< oType > dvOutput( result, n, CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY, false, ctrl );
-
         copy_enqueue( ctrl, first, n, dvOutput.begin( ), user_code );
-
-        // This should immediately map/unmap the buffer
-        dvOutput.data( );
+        dvOutput.data();
      }
 }
 
@@ -322,7 +303,8 @@ void copy_pick_iterator(const bolt::cl::control &ctrl,  const DVInputIterator& f
     const DVOutputIterator& result, const std::string& user_code, bolt::cl::device_vector_tag,
     bolt::cl::device_vector_tag )
 {
-
+    typedef std::iterator_traits<DVInputIterator>::value_type iType;
+    typedef std::iterator_traits<DVOutputIterator>::value_type oType;
      bolt::cl::control::e_RunMode runMode = ctrl.getForceRunMode( );
 
      if( runMode == bolt::cl::control::Automatic )
@@ -332,21 +314,27 @@ void copy_pick_iterator(const bolt::cl::control &ctrl,  const DVInputIterator& f
 
      if( runMode == bolt::cl::control::SerialCpu )
      {
-                std::copy_n( first, n, result );
+            bolt::cl::device_vector< iType >::pointer copySrc =  first.getContainer( ).data( );
+            bolt::cl::device_vector< oType >::pointer copyDest =  result.getContainer( ).data( );
+            std::copy_n( &copySrc[first.m_Index], n, &copyDest[result.m_Index] );
+            return;
      }
      else if( runMode == bolt::cl::control::MultiCoreCpu )
      {
 
          #ifdef ENABLE_TBB
-                //TODO : The MultiCoreCpu version of Copy is not Implemented yet...
-                std::copy_n( first, n, result );
+            //TODO : The MultiCoreCpu version of Copy is not Implemented yet...
+            bolt::cl::device_vector< iType >::pointer copySrc =  first.getContainer( ).data( );
+            bolt::cl::device_vector< oType >::pointer copyDest =  result.getContainer( ).data( );
+            std::copy_n( &copySrc[first.m_Index], n, &copyDest[result.m_Index] );
+            return;
          #else
                 throw std::exception( "The MultiCoreCpu version of Copy is not enabled to be built." );
          #endif
      }
      else
      {
-              copy_enqueue( ctrl, first, n, result, user_code );
+         copy_enqueue( ctrl, first, n, result, user_code );
      }
 }
 
@@ -357,22 +345,27 @@ void copy_pick_iterator(const bolt::cl::control &ctrl,  const DVInputIterator& f
     const DVOutputIterator& result, const std::string& user_code, bolt::cl::fancy_iterator_tag,
     bolt::cl::device_vector_tag )
 {
+    typedef std::iterator_traits<DVInputIterator>::value_type iType;
+    typedef std::iterator_traits<DVOutputIterator>::value_type oType;
      bolt::cl::control::e_RunMode runMode = ctrl.getForceRunMode( );
 
      if( runMode == bolt::cl::control::Automatic )
      {
-               runMode = ctrl.getDefaultPathToRun( );
+         runMode = ctrl.getDefaultPathToRun( );
      }
 
      if( runMode == bolt::cl::control::SerialCpu )
      {
-               std::copy_n( first, n, result );
+         std::copy_n( first, n, result );
      }
      else if( runMode == bolt::cl::control::MultiCoreCpu )
      {
         #ifdef ENABLE_TBB
               //TODO : The MultiCoreCpu version of Copy is not Implemented yet...
-              std::copy_n( first, n, result );
+            bolt::cl::device_vector< oType >::pointer copyDest =  result.getContainer( ).data( );
+            std::copy_n( first, n, &copyDest[result.m_Index] );
+            return;
+            //std::copy_n( first, n, result );
         #else
               throw std::exception( "The MultiCoreCpu version of Copy is not enabled to be built." );
         #endif
@@ -391,6 +384,13 @@ void copy_pick_iterator(const bolt::cl::control &ctl,  const DVInputIterator& fi
     static_assert( false, "It is not possible to copy into fancy iterators. They are not mutable" );
 }
 
+template<typename DVInputIterator, typename Size, typename DVOutputIterator>
+void copy_pick_iterator(const bolt::cl::control &ctl,  const DVInputIterator& first, const Size& n,
+    const DVOutputIterator& result, const std::string& user_code, bolt::cl::device_vector_tag,
+    bolt::cl::fancy_iterator_tag )
+{
+    static_assert( false, "It is not possible to copy into fancy iterators. They are not mutable" );
+}
 
 template< typename DVInputIterator, typename Size, typename DVOutputIterator >
 typename std::enable_if< std::is_same< typename std::iterator_traits<DVInputIterator >::iterator_category,

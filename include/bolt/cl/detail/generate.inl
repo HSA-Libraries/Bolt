@@ -203,6 +203,7 @@ void generate_detect_random_access( bolt::cl::control &ctrl, const ForwardIterat
                 const DVForwardIterator &last,
                 const Generator &gen, const std::string& user_code, bolt::cl::device_vector_tag )
             {
+                typedef std::iterator_traits<DVForwardIterator>::value_type iType;
                 bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
                 if(runMode == bolt::cl::control::Automatic)
                 {
@@ -211,15 +212,17 @@ void generate_detect_random_access( bolt::cl::control &ctrl, const ForwardIterat
 
                 if( runMode == bolt::cl::control::SerialCpu)
                 {
-                    std::generate(first, last, gen );
+                    bolt::cl::device_vector< iType >::pointer generateInputBuffer =  first.getContainer( ).data( );
+                    std::generate(&generateInputBuffer[first.m_Index], &generateInputBuffer[last.m_Index], gen );
                 }
                 else if(runMode == bolt::cl::control::MultiCoreCpu)
                 {
                     #ifdef ENABLE_TBB
                            //TODO : MultiCoreCPU Version of generate not implemented yet...
-                           std::generate(first, last, gen );
+                        bolt::cl::device_vector< iType >::pointer generateInputBuffer =  first.getContainer( ).data( );
+                        std::generate(&generateInputBuffer[first.m_Index], &generateInputBuffer[last.m_Index], gen );
                     #else
-                           throw std::exception("MultiCoreCPU Version of generate not Enabled! \n");
+                        throw std::exception("MultiCoreCPU Version of generate not Enabled! \n");
                     #endif
                 }
                 else
@@ -240,8 +243,8 @@ void generate_detect_random_access( bolt::cl::control &ctrl, const ForwardIterat
             }
 
 /*****************************************************************************
-             * Enqueue
-             ****************************************************************************/
+* Enqueue
+****************************************************************************/
 
 template< typename DVForwardIterator, typename Generator >
 void generate_enqueue(
