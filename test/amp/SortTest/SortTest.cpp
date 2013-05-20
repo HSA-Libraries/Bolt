@@ -322,7 +322,6 @@ TYPED_TEST_P( SortArrayTest, Normal )
     //  Loop through the array and compare all the values with each other
     cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
 }
-
 TYPED_TEST_P( SortArrayTest, SerialNormal )
 {
     typedef std::array< ArrayType, ArraySize > ArrayCont;
@@ -341,7 +340,6 @@ TYPED_TEST_P( SortArrayTest, SerialNormal )
     //  Loop through the array and compare all the values with each other
     cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
 }
-
 TYPED_TEST_P( SortArrayTest, MulticoreNormal )
 {
     typedef std::array< ArrayType, ArraySize > ArrayCont;
@@ -360,8 +358,6 @@ TYPED_TEST_P( SortArrayTest, MulticoreNormal )
     //  Loop through the array and compare all the values with each other
     cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
 }
-
-
 
 TYPED_TEST_P( SortArrayTest, GPU_DeviceNormal )
 {

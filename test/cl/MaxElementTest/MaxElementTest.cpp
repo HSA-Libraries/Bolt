@@ -320,6 +320,27 @@ TEST_P( MaxEStdVectWithInit, SerialwithInt)
     EXPECT_EQ( *stlMaxE, *boltMaxE );
 }
 
+
+TEST( MaxEleDevice , DeviceVectoroffset )
+{
+    //setup containers
+    unsigned int length = 1024;
+    bolt::cl::device_vector< int > input( length );
+    for( unsigned int i = 0; i < length ; i++ )
+    {
+      input[i] = length - i;
+
+    }
+    
+    // call reduce
+
+    bolt::cl::device_vector< int >::iterator  boltReduce =  bolt::cl::max_element( input.begin()+20, input.end());
+    int stdReduce =  1004;
+
+    EXPECT_EQ(*boltReduce,stdReduce);
+
+}
+
 TEST_P( MaxEStdVectWithInit, MultiCorewithInt)
 {
     std::vector<int> stdInput( mySize );

@@ -103,7 +103,7 @@ struct MyType {
 \endcode
 
 After defining the class, user need to register it with BOLT. Internally bolt algorithms will make use of the device_vector class. 
-But these are defined only for the basic data types like int, float, unsigned int etc. For User defined datat types it’s the 
+But these are defined only for the basic data types like int, float, unsigned int etc. For User defined data types it’s the 
 responsibility of the application developer to create a definition of the deveice_vector for his own defined data type.
 See the below example. 
 \code

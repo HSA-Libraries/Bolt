@@ -22,8 +22,8 @@ set( clBolt.Test.Generate.Source ${BOLT_CL_TEST_DIR}/common/stdafx.cpp
 set( clBolt.Test.Generate.Headers ${BOLT_CL_TEST_DIR}/common/stdafx.h 
                                    ${BOLT_CL_TEST_DIR}/common/targetver.h 
                                    ${BOLT_CL_TEST_DIR}/common/myocl.h 
-                                   ${BOLT_INCLUDE_DIR}/bolt/cl/transform.h 
-                                   ${BOLT_INCLUDE_DIR}/bolt/cl/detail/transform.inl
+                                   ${BOLT_INCLUDE_DIR}/bolt/cl/generate.h 
+                                   ${BOLT_INCLUDE_DIR}/bolt/cl/detail/generate.inl
                                    utils.h 
                                    )
 

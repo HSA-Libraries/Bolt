@@ -15,8 +15,8 @@
 
 ***************************************************************************/
 
-#if !defined( COUNT_INL )
-#define COUNT_INL
+#if !defined( BOLT_AMP_COUNT_INL )
+#define BOLT_AMP_COUNT_INL
 #pragma once
 
 #include <algorithm>
@@ -295,7 +295,7 @@ namespace bolt {
                         InputBuffer[index] = first.getContainer().getBuffer()[index];
                     }
 
-                    return bolt::btbb::count_if(InputBuffer.begin(),InputBuffer.end(),predicate);                    
+                    return bolt::btbb::count_if(InputBuffer.begin(),InputBuffer.end(),predicate);
 #else
                     throw std::exception( "The MultiCoreCpu version of count function is not enabled to be built." );
 

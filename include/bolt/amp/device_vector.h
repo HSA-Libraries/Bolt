@@ -21,8 +21,8 @@
 
 
 #pragma once
-#if !defined( BOLT_DEVICE_VECTOR_H )
-#define BOLT_DEVICE_VECTOR_H
+#if !defined( BOLT_AMP_DEVICE_VECTOR_H )
+#define BOLT_AMP_DEVICE_VECTOR_H
 
 #include <iterator>
 #include <type_traits>
@@ -159,7 +159,7 @@ public:
             return result;
         }
 
-        const_reference_base< const Container >& operator=( const value_type& rhs ) 
+        const_reference_base< const Container >& operator=( const value_type& rhs )
         {
             arrayview_type av( *m_Container.m_devMemory );
             av[static_cast< int >( m_Index )] = rhs;
@@ -334,13 +334,13 @@ public:
             m_Index = lhs.m_Index;
             return *this;
         }
-        
+
         reverse_iterator_base< Container >& operator+= ( const difference_type & n )
         {
             advance( -n );
             return *this;
         }
-        
+
         const reverse_iterator_base< Container > operator+ ( const difference_type & n ) const
         {
             reverse_iterator_base< Container > result(*this);
@@ -446,7 +446,7 @@ public:
     *   \param ctl A Bolt control class for copy operations; a default is used if not supplied by the user.
     *   \warning The ::cl::CommandQueue is not an STD reserve( ) parameter.
     */
-    device_vector( size_type newSize, const value_type& initValue = value_type( ), bool init = true, 
+    device_vector( size_type newSize, const value_type& initValue = value_type( ), bool init = true,
         control& ctl = control::getDefault( ) ): m_Size( newSize )
     {
         static_assert( std::is_same< array_type, container_type >::value,
@@ -467,6 +467,10 @@ public:
                 );
             }
         }
+        else
+        {
+            m_devMemory = NULL;
+        }
     }
 
     /*! \brief A constructor that creates a new device_vector using a range specified by the user.
@@ -480,7 +484,7 @@ public:
     */
     template< typename InputIterator >
     device_vector( const InputIterator begin, size_type newSize, control& ctl = control::getDefault( ),
-                typename std::enable_if< !std::is_integral< InputIterator >::value && 
+                typename std::enable_if< !std::is_integral< InputIterator >::value &&
                                     std::is_same< array_type, container_type >::value>::type* = 0 ) : m_Size( newSize )
     {
         static_assert( std::is_same< array_type, container_type >::value,
@@ -496,14 +500,14 @@ public:
     *   \param end An iterator pointing at the end of the range.
     *   \param flags A bitfield that takes the OpenCL memory flags
     *   to help specify where the device_vector allocates memory.
-    *   \param discard Boolean value to whether the container data will be read; basically used as a hint to indicate 
+    *   \param discard Boolean value to whether the container data will be read; basically used as a hint to indicate
     *   this is an output buffer
     *   \param ctl A Bolt control class used to perform copy operations; a default is used if not supplied by the user.
     *   \note Ignore the enable_if<> parameter; it prevents this constructor from being called with integral types.
     */
     template< typename InputIterator >
     device_vector( const InputIterator begin, size_type newSize, bool discard = false, control& ctl = control::getDefault( ),
-                typename std::enable_if< !std::is_integral< InputIterator >::value && 
+                typename std::enable_if< !std::is_integral< InputIterator >::value &&
                                     std::is_same< arrayview_type, container_type >::value>::type* = 0 ) : m_Size( newSize )
     {
         concurrency::extent<1> ext( static_cast< int >( m_Size ) );
@@ -512,7 +516,7 @@ public:
 
     /*! \brief A constructor that creates a new device_vector using a range specified by the user.
     *   \param cont An object that has both .data() and .size() members
-    *   \param discard Boolean value to whether the container data will be read; basically used as a hint to indicate 
+    *   \param discard Boolean value to whether the container data will be read; basically used as a hint to indicate
     *   this is an output buffer
     *   \param ctl A Bolt control class used to perform copy operations; a default is used if not supplied by the user.
     */
@@ -537,8 +541,8 @@ public:
     */
     template< typename InputIterator >
     device_vector( const InputIterator begin, const InputIterator end, control& ctl = control::getDefault( ),
-        typename std::enable_if< !std::is_integral< InputIterator >::value && 
-                                    std::is_same< array_type, container_type >::value>::type* = 0 ) 
+        typename std::enable_if< !std::is_integral< InputIterator >::value &&
+                                    std::is_same< array_type, container_type >::value>::type* = 0 )
     {
         static_assert( std::is_same< array_type, container_type >::value,
             "This constructor is only valid for concurrency::array types.  concurrency::array_views should use a "
@@ -559,8 +563,8 @@ public:
     */
     template< typename InputIterator >
     device_vector( const InputIterator begin, const InputIterator end, bool discard = false, control& ctl = control::getDefault( ),
-        typename std::enable_if< !std::is_integral< InputIterator >::value && 
-                                    std::is_same< arrayview_type, container_type >::value>::type* = 0 ) 
+        typename std::enable_if< !std::is_integral< InputIterator >::value &&
+                                    std::is_same< arrayview_type, container_type >::value>::type* = 0 )
     {
         m_Size =  std::distance( begin, end );
 
@@ -592,7 +596,7 @@ public:
 
     /*! \brief A get accessor function to return the encapsulated device buffer for const objects.
     *   This member function allows access to the Buffer object, which can be retrieved through a reference or an iterator.
-    *   This is necessary to allow library functions to get the encapsulated C++ AMP array object as a pass by reference argument 
+    *   This is necessary to allow library functions to get the encapsulated C++ AMP array object as a pass by reference argument
     *   to the C++ AMP parallel_for_each constructs.
     *   \note This get function could be implemented in the iterator, but the reference object is usually a temporary rvalue, so
     *   this location seems less intrusive to the design of the vector class.
@@ -660,7 +664,7 @@ public:
 
         //  Remember the new size
         m_Size = reqSize;
-        //  delete the old buffer 
+        //  delete the old buffer
         delete(m_devMemory);
         m_devMemory = l_tmpBuffer;
     }
@@ -709,7 +713,7 @@ public:
         if( reqSize <= capacity( ) )
             return;
 
-        if( m_Size == 0 )
+        if( capacity() == 0 )
         {
             m_devMemory = new container_type((int)reqSize);
             return;
@@ -901,9 +905,9 @@ public:
     /*! \brief Retrieves the value stored at index 0.
     *   \note This returns a proxy object, to control when device memory gets mapped.
     */
-    reference front( void )
+    reference front( void ) 
     {
-        return reference( *m_devMemory, 0 );
+		return (*begin());
     }
 
     /*! \brief Retrieves the value stored at index 0.
@@ -911,15 +915,7 @@ public:
     */
     const_reference front( void ) const
     {
-
-        const_reference tmpRef = *m_devMemory[0];
-
-        /*::cl::Event unmapEvent;
-        l_Error = m_commQueue.enqueueUnmapMemObject( m_devMemory, ptrBuff, NULL, &unmapEvent );
-        V_OPENCL( l_Error, "device_vector failed to unmap host memory back to device memory" );
-        V_OPENCL( unmapEvent.wait( ), "failed to wait for unmap event" );*/
-
-        return tmpRef;
+        return (*begin());
     }
 
     /*! \brief Retrieves the value stored at index size( ) - 1.
@@ -927,7 +923,7 @@ public:
     */
     reference back( void )
     {
-        return reference( *m_devMemory, m_Size - 1 );
+		return ( *(end() - 1) );
     }
 
     /*! \brief Retrieves the value stored at index size( ) - 1.
@@ -935,17 +931,14 @@ public:
     */
     const_reference back( void ) const
     {
-
-        const_reference tmpRef = *m_devMemory[m_Size - 1];
-
-        return tmpRef;
+		return ( *(end() - 1) );
     }
 
-    //Yes you need the shared_array object. 
-    //Ask kent for a better solution. 
+    //Yes you need the shared_array object.
+    //Ask kent for a better solution.
     pointer data( void )
     {
-        /// \TODO need to understand what Array_view.data is returning. Who should free the pointer? 
+        /// \TODO need to understand what Array_view.data is returning. Who should free the pointer?
         // below av.data(). It should anyway be freed in the UnMapBufferFunctor Functor
 
         synchronize( *this );
@@ -996,6 +989,7 @@ public:
         }
 
         arrayview_type av( *m_devMemory );
+        //insert(end(),value);
         av[static_cast<int>( m_Size )] = value;
         ++m_Size;
     }
@@ -1205,7 +1199,7 @@ public:
 
         m_Size += n;
     }
-#if 0
+
     /*! \brief Assigns newSize copies of element value.
      *  \param newSize The new size of the device_vector.
      *  \param value The value of the element that is replicated newSize times.
@@ -1219,25 +1213,22 @@ public:
         }
         m_Size = newSize;
 
-        cl_int l_Error = CL_SUCCESS;
-
-        ::cl::Event fillEvent;
-        l_Error = m_commQueue.enqueueFillBuffer< value_type >(
-            m_devMemory, value, 0, m_Size * sizeof( value_type ), NULL, &fillEvent );
-        V_OPENCL( l_Error, "device_vector failed to fill the new data with the provided pattern" );
-
-        //  Not allowed to return until the copy operation is finished.
-        l_Error = fillEvent.wait( );
-        V_OPENCL( l_Error, "device_vector failed to wait for fill event" );
+        arrayview_type m_devMemoryAV( *m_devMemory );
+        Concurrency::parallel_for_each( m_devMemoryAV.extent, [=](Concurrency::index<1> idx) restrict(amp)
+        {
+            m_devMemoryAV[idx] = value;
+        }
+        );
     }
-
+#if 1
     /*! \brief Assigns a range of values to device_vector, replacing all previous elements.
      *  \param begin The iterator position signifiying the beginning of the range.
      *  \param end The iterator position signifying the end of the range (exclusive).
     *   \warning All previous iterators, references, and pointers are invalidated.
     */
-    template< typename InputIterator >
-    void assign( InputIterator begin, InputIterator end )
+	template<typename InputIterator>
+    typename std::enable_if< std::_Is_iterator<InputIterator>::value, void>::type
+    assign( InputIterator begin, InputIterator end )
     {
         size_type l_Count = std::distance( begin, end );
 
@@ -1246,31 +1237,20 @@ public:
             reserve( l_Count );
         }
         m_Size = l_Count;
-
-        cl_int l_Error = CL_SUCCESS;
-
-        naked_pointer ptrBuffer = reinterpret_cast< naked_pointer >(
-            m_commQueue.enqueueMapBuffer( m_devMemory, CL_TRUE, CL_MAP_WRITE_INVALIDATE_REGION, 0 ,
-            m_Size * sizeof( value_type ), NULL, NULL, &l_Error ) );
-        V_OPENCL( l_Error, "device_vector failed map device memory to host memory for push_back" );
-
+        arrayview_type m_devMemoryAV( *m_devMemory );
+        naked_pointer ptrBuff = m_devMemoryAV.data();
 #if( _WIN32 )
-        std::copy( begin, end, stdext::checked_array_iterator< naked_pointer >( ptrBuffer, m_Size ) );
+        std::copy( begin, end, stdext::checked_array_iterator< naked_pointer >( ptrBuff, m_Size ) );
 #else
-        std::copy( begin, end, ptrBuffer );
+        std::copy( begin, end, ptrBuff );
 #endif
-        ::cl::Event unmapEvent;
-        l_Error = m_commQueue.enqueueUnmapMemObject( m_devMemory, ptrBuffer, NULL, &unmapEvent );
-        V_OPENCL( l_Error, "device_vector failed to unmap host memory back to device memory" );
-        V_OPENCL( unmapEvent.wait( ), "failed to wait for unmap event" );
     }
 #endif
-
 private:
 
-    //  These private routines make sure that the data that resides in the concurrency::array* object are 
+    //  These private routines make sure that the data that resides in the concurrency::array* object are
     //  reflected back in the host memory.  However, the complication is that the concurrency::array object
-    //  does not expose a synchronize method, whereas the concurrency::array_view does.  These routines 
+    //  does not expose a synchronize method, whereas the concurrency::array_view does.  These routines
     //  differentiate between the two different containers
     void synchronize( device_vector< T, concurrency::array >& rhs )
     {

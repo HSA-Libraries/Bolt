@@ -19,8 +19,8 @@
  * OpenCL Scan
  *****************************************************************************/
 
-#if !defined( OCL_SCAN_H )
-#define OCL_SCAN_H
+#if !defined( BOLT_CL_SCAN_H )
+#define BOLT_CL_SCAN_H
 #pragma once
 
 #include <bolt/cl/bolt.h>
@@ -251,4 +251,4 @@ OutputIterator
 
 #include <bolt/cl/detail/scan.inl>
 
-#endif // OCL_SCAN_H
+#endif // BOLT_CL_SCAN_H

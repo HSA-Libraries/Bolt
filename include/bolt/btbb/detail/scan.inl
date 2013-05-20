@@ -19,8 +19,8 @@
  * OpenCL Scan
  *****************************************************************************/
 
-#if !defined( BTBB_SCAN_INL )
-#define BTBB_SCAN_INL
+#if !defined( BOLT_BTBB_SCAN_INL )
+#define BOLT_BTBB_SCAN_INL
 #pragma once
 
 

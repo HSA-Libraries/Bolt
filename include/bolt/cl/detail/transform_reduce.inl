@@ -15,8 +15,8 @@
 
 ***************************************************************************/
 
-#if !defined( TRANSFORM_REDUCE_INL )
-#define TRANSFORM_REDUCE_INL
+#if !defined( BOLT_CL_TRANSFORM_REDUCE_INL )
+#define BOLT_CL_TRANSFORM_REDUCE_INL
 #pragma once
 
 #define WAVEFRONT_SIZE 64

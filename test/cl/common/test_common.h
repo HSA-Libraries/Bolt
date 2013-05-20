@@ -20,7 +20,7 @@
 #include <array>
 #include <gtest/gtest.h>
 #if !defined( BOLT_TEST_MAX_FAILURES )
-    #define BOLT_TEST_MAX_FAILURES 512
+    #define BOLT_TEST_MAX_FAILURES 8
 #endif
 
 #define BOLT_TEST_RESET_FAILURES \

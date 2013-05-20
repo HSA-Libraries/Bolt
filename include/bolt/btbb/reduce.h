@@ -15,8 +15,8 @@
 
 ***************************************************************************/
 
-#if !defined( BTBB_REDUCE_H )
-#define BTBB_REDUCE_H
+#if !defined( BOLT_BTBB_REDUCE_H )
+#define BOLT_BTBB_REDUCE_H
 #pragma once
 
 /*! \file bolt/tbb/reduce.h

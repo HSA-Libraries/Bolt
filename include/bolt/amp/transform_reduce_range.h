@@ -1,23 +1,26 @@
-/***************************************************************************                                                                                     
-*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
-*                                                                                    
-*   Licensed under the Apache License, Version 2.0 (the "License");   
-*   you may not use this file except in compliance with the License.                 
-*   You may obtain a copy of the License at                                          
-*                                                                                    
-*       http://www.apache.org/licenses/LICENSE-2.0                      
-*                                                                                    
-*   Unless required by applicable law or agreed to in writing, software              
-*   distributed under the License is distributed on an "AS IS" BASIS,              
-*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.         
-*   See the License for the specific language governing permissions and              
-*   limitations under the License.                                                   
+/***************************************************************************
+*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.
+*
+*   Licensed under the Apache License, Version 2.0 (the "License");
+*   you may not use this file except in compliance with the License.
+*   You may obtain a copy of the License at
+*
+*       http://www.apache.org/licenses/LICENSE-2.0
+*
+*   Unless required by applicable law or agreed to in writing, software
+*   distributed under the License is distributed on an "AS IS" BASIS,
+*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+*   See the License for the specific language governing permissions and
+*   limitations under the License.
 
-***************************************************************************/                                                                                     
+***************************************************************************/
 
 /*! \file bolt/amp/transform_reduce_range.h
     \brief  Takes a start index and extent as the range to iterate.
 */
+
+#if !defined( BOLT_AMP_TRANSFORM_REDUCE_RANGE_H )
+#define BOLT_AMP_TRANSFORM_REDUCE_RANGE_H
 
 #pragma once
 
@@ -42,16 +45,16 @@ namespace bolt {
 
 
 	//=======================
-	// This version takes a start index and extent as the range to iterate.  
+	// This version takes a start index and extent as the range to iterate.
 	// The tranform_op is called with topLeft, bottomRight, and stride for each section that to be processed by
 	// the function.  Function must do iteration over the specified range with specified stride, and also reduce results.
-	// May avoid copies on some compilers and deliver higher performance than the cleaner transform_reduce function, 
+	// May avoid copies on some compilers and deliver higher performance than the cleaner transform_reduce function,
 	// where transform op only takes a single index point.
 	// Useful for indexing over all points in an image or array
-	template<typename outputT, int Rank, typename UnaryFunction, typename BinaryFunction> 
-	outputT transform_reduce_range(concurrency::accelerator_view av, 
+	template<typename outputT, int Rank, typename UnaryFunction, typename BinaryFunction>
+	outputT transform_reduce_range(concurrency::accelerator_view av,
 		concurrency::index<Rank> origin, concurrency::extent<Rank> ext,
-		UnaryFunction transform_op, 
+		UnaryFunction transform_op,
 		outputT init,  BinaryFunction reduce_op)
 	{
 		using namespace concurrency;
@@ -83,7 +86,7 @@ namespace bolt {
 		concurrency::parallel_for_each(av,  launchExt.tile<localH, localW>(), [=,&results1](concurrency::tiled_index<localH, localW> idx) mutable restrict(amp)
 		{
 			tile_static outputT tiled_data[waveSize];
-			
+
 #if 1
 			init = reduce_op(init, transform_op(index<Rank>(origin[0]+idx.global[0], origin[1]+idx.global[1]),  //top/left
 				bottomRight,  // bottomRight
@@ -101,7 +104,7 @@ namespace bolt {
 			//---
 			// Reduce through LDS across wavefront:
 			int lx = localW * idx.local[0] + idx.local[1];
-			tiled_data[lx] = init; 
+			tiled_data[lx] = init;
 			BARRIER(waveSize);
 
 			REDUCE_STEP(lx, 32);
@@ -122,9 +125,9 @@ namespace bolt {
 
 		//---
 		//Copy partial array back to host
-		// FIXME - we'd really like to use ZC memory for this final step 
+		// FIXME - we'd really like to use ZC memory for this final step
 		//std::vector<outputT> h_data(resultCnt);
-		//h_data = results1; 
+		//h_data = results1;
 		concurrency::copy(*entry._dBuffer, *entry._stagingBuffer);
 
 
@@ -142,10 +145,10 @@ namespace bolt {
 
 	};
 
-	template<typename outputT, int Rank, typename UnaryFunction, typename BinaryFunction> 
-	outputT transform_reduce_range( 
+	template<typename outputT, int Rank, typename UnaryFunction, typename BinaryFunction>
+	outputT transform_reduce_range(
 		concurrency::index<Rank> origin, concurrency::extent<Rank> ext,
-		UnaryFunction transform_op, 
+		UnaryFunction transform_op,
 		outputT init,  BinaryFunction reduce_op)
 	{
 		return transform_reduce_range(concurrency::accelerator().default_view, origin, ext, transform_op, init, reduce_op);
@@ -154,3 +157,6 @@ namespace bolt {
 	}; // end namespace amp
 
 }; // end namespace bolt
+
+
+#endif
