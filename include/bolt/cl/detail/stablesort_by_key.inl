@@ -90,7 +90,7 @@ namespace cl {
 namespace detail
 {
 
-    enum stableSortTypes { stableSort_by_key_KeyType, stableSort_by_key_KeyIterType, stableSort_by_key_ValueType, 
+    enum stableSort_by_keyTypes { stableSort_by_key_KeyType, stableSort_by_key_KeyIterType, stableSort_by_key_ValueType, 
         stableSort_by_key_ValueIterType, stableSort_by_key_lessFunction, stableSort_by_key_end };
 
     class StableSort_by_key_KernelTemplateSpecializer : public KernelTemplateSpecializer
