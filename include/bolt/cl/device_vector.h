@@ -1419,6 +1419,7 @@ namespace cl
              *  \param value The value of the element that is replicated newSize times.
             *   \warning All previous iterators, references, and pointers are invalidated.
             */
+#if 0
             void assign( size_type newSize, const value_type& value )
             {
                 if( newSize > m_Size )
@@ -1471,7 +1472,7 @@ namespace cl
                 V_OPENCL( unmapEvent.wait( ), "failed to wait for unmap event" );
             }
 
-
+#endif
             /*! \brief A get accessor function to return the encapsulated device buffer for const objects.
             *   This member function allows access to the Buffer object, which can be retrieved through a reference or an iterator.
             *   This is necessary to allow library functions to set the encapsulated buffer object as a kernel argument.

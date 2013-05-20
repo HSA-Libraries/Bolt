@@ -940,7 +940,7 @@ TEST( DeviceVector, Swap )
     EXPECT_EQ(10, dV[0]);
 
 }
-
+#if 0
 TEST( DeviceVector, Assign )
 {
     bolt::BCKND::device_vector< int > dV( 3, 98 );
@@ -995,7 +995,7 @@ TEST( DeviceVector, AssignIterator )
         EXPECT_EQ(stdV[i], dV[i]);
     }
 }
-
+#endif
 TEST( VectorIterator, BackFront )
 {
     std::vector< int > stdV( 1024 );
