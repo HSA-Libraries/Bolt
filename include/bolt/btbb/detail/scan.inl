@@ -45,17 +45,19 @@ namespace   btbb {
           T get_sum() const {return sum;}
           template<typename Tag>
           void operator()( const tbb::blocked_range<int>& r, Tag ) {
-             T temp = sum;
+             T temp = sum, temp1;
              for(int i=r.begin(); i<r.end(); ++i ) {
                  if(Tag::is_final_scan()){
                      if(!inclusive){
                         if(i==0 ) {
+                            temp1 = *(x+i);
                             *(y+i) = start;
-                            temp = scan_op(start, *(x+i));
+                            temp = scan_op(start, temp1);
                          }
                          else{
+                           temp1 = *(x+i);
                            *(y+i) = temp;
-                            temp = scan_op(temp, *(x+i));
+                            temp = scan_op(temp, temp1);
                          }
                          continue;
                      }
