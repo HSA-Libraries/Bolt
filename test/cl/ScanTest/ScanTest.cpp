@@ -34,6 +34,7 @@ namespace po = boost::program_options;
 #define TEST_DOUBLE 1
 
 
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Below are helper routines to compare the results of two arrays for googletest
 //  They return an assertion object that googletest knows how to track
@@ -144,7 +145,7 @@ struct uddtM3
     bool operator==(const uddtM3& rhs) const
     {
         bool equal = true;
-        float ths = 0.00001;
+        float ths = 0.00001f;
         double thd = 0.0000000001;
         equal = ( a == rhs.a ) ? equal : false;
         if (rhs.b < ths && rhs.b > -ths)
@@ -177,7 +178,7 @@ struct MixM3
 }; 
 );
 uddtM3 identityMixM3 = { 0, 0.f, 1.0 };
-uddtM3 initialMixM3  = { 1, 1, 1.000001 };
+uddtM3 initialMixM3  = { 1, 1.f, 1.000001 };
 #endif
 
 #if 0
@@ -1757,15 +1758,11 @@ TEST_P (scanStdVectorWithIters, floatDefiniteValues){
 TEST_P (ScanOffsetTest, InclOffsetTestFloat)
 {
     bolt::cl::device_vector< float > input( myStdVectSize, 2.f);
-    bolt::cl::device_vector< float > output( myStdVectSize);
     std::vector< float > refInput( myStdVectSize, 2.f);
-    std::vector< float > refOutput( myStdVectSize);
-   
-  
    // call scan
     bolt::cl::plus<float> ai2;
-    bolt::cl::inclusive_scan( input.begin() + (myStdVectSize/2),    input.end() - (myStdVectSize/4),    input.begin()+ (myStdVectSize/2) , ai2 );
-    ::std::partial_sum(refInput.begin()+ (myStdVectSize/2) , refInput.end()- (myStdVectSize/4), refInput.begin()+ (myStdVectSize/2) , ai2);
+    bolt::cl::inclusive_scan( input.begin() + (myStdVectSize/4),    input.end() - (myStdVectSize/4),    input.begin()+ (myStdVectSize/4) , ai2 );
+    ::std::partial_sum(refInput.begin()+ (myStdVectSize/4) , refInput.end()- (myStdVectSize/4), refInput.begin()+ (myStdVectSize/4) , ai2);
 
     cmpArrays(input, refInput);
 	  printf("\nPass for size=%d Offset=%d\n",myStdVectSize, myStdVectSize/2);
@@ -1773,109 +1770,155 @@ TEST_P (ScanOffsetTest, InclOffsetTestFloat)
 TEST_P (ScanOffsetTest, ExclOffsetTestFloat)
 {
     bolt::cl::device_vector< float > input( myStdVectSize,2.f);
-    bolt::cl::device_vector< float > output( myStdVectSize);
     std::vector< float > refInput( myStdVectSize,2.f);
-    std::vector< float > refOutput( myStdVectSize);
    
-	  refInput[myStdVectSize/2] = 3.0f;
+	  refInput[myStdVectSize/4] = 3.0f;
 
     // call scan
     bolt::cl::plus<float> ai2;
 
-    ::std::partial_sum(refInput.begin()+ (myStdVectSize/2) , refInput.end()- (myStdVectSize/4), refInput.begin()+ (myStdVectSize/2) , ai2);
-    bolt::cl::exclusive_scan(input.begin() + (myStdVectSize/2),    input.end() - (myStdVectSize/4),    input.begin()+ (myStdVectSize/2) , 3.0f, ai2  );
-
-	// ::std::partial_sum(refInput.begin(), refInput.end(), refInput.begin(), ai2);
-   //  bolt::cl::exclusive_scan( input.begin(),    input.end(),    input.begin(), 3.0f, ai2 );
-
+    ::std::partial_sum(refInput.begin()+ (myStdVectSize/4) , refInput.end()- (myStdVectSize/4), refInput.begin()+ (myStdVectSize/4) , ai2);
+    bolt::cl::exclusive_scan(input.begin() + (myStdVectSize/4),    input.end() - (myStdVectSize/4),    input.begin()+ (myStdVectSize/4) , 3.0f, ai2  );
 
     cmpArrays(input, refInput);
-	  printf("\nPass for size=%d Offset=%d\n",myStdVectSize, myStdVectSize/2);
+	  printf("\nPass for size=%d Offset=%d\n",myStdVectSize, myStdVectSize/4);
 } 
 
 
+TEST_P (ScanOffsetTest, InclOffsetTestFloatSerial)
+{
+    bolt::cl::device_vector< float > input( myStdVectSize, 2.f);
+    std::vector< float > refInput( myStdVectSize, 2.f);
+   
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+   // call scan
+    bolt::cl::plus<float> ai2;
+    bolt::cl::inclusive_scan( ctl, input.begin() + (myStdVectSize/4),    input.end() - (myStdVectSize/4),    input.begin()+ (myStdVectSize/4) , ai2 );
+    ::std::partial_sum(refInput.begin()+ (myStdVectSize/4) , refInput.end()- (myStdVectSize/4), refInput.begin()+ (myStdVectSize/4) , ai2);
+
+    cmpArrays(input, refInput);
+	  printf("\nPass for size=%d Offset=%d\n",myStdVectSize, myStdVectSize/4);
+} 
+TEST_P (ScanOffsetTest, ExclOffsetTestFloatSerial)
+{
+    bolt::cl::device_vector< float > input( myStdVectSize,2.f);
+    std::vector< float > refInput( myStdVectSize,2.f);
+   
+	  refInput[myStdVectSize/4] = 3.0f;
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+    // call scan
+    bolt::cl::plus<float> ai2;
+
+    ::std::partial_sum(refInput.begin()+ (myStdVectSize/4) , refInput.end()- (myStdVectSize/4), refInput.begin()+ (myStdVectSize/4) , ai2);
+    bolt::cl::exclusive_scan(ctl, input.begin() + (myStdVectSize/4),    input.end() - (myStdVectSize/4),    input.begin()+ (myStdVectSize/4) , 3.0f, ai2  );
+    cmpArrays(input, refInput);
+	  printf("\nPass for size=%d Offset=%d\n",myStdVectSize, myStdVectSize/4);
+} 
 
 
+TEST_P (ScanOffsetTest, InclOffsetTestFloatMultiCore)
+{
+    bolt::cl::device_vector< float > input( myStdVectSize, 2.f);
+    std::vector< float > refInput( myStdVectSize, 2.f);
+   
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+   // call scan
+    bolt::cl::plus<float> ai2;
+    bolt::cl::inclusive_scan( ctl, input.begin() + (myStdVectSize/4),    input.end() - (myStdVectSize/4),    input.begin()+ (myStdVectSize/4) , ai2 );
+    ::std::partial_sum(refInput.begin()+ (myStdVectSize/4) , refInput.end()- (myStdVectSize/4), refInput.begin()+ (myStdVectSize/4) , ai2);
 
+    cmpArrays(input, refInput);
+	  printf("\nPass for size=%d Offset=%d\n",myStdVectSize, myStdVectSize/4);
+} 
+TEST_P (ScanOffsetTest, ExclOffsetTestFloatMultiCore)
+{
+    bolt::cl::device_vector< float > input( myStdVectSize,2.f);
+    std::vector< float > refInput( myStdVectSize,2.f);
+   
+	  refInput[myStdVectSize/4] = 3.0f;
 
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+    // call scan
+    bolt::cl::plus<float> ai2;
 
+    ::std::partial_sum(refInput.begin()+ (myStdVectSize/4) , refInput.end()- (myStdVectSize/4), refInput.begin()+ (myStdVectSize/4) , ai2);
+    bolt::cl::exclusive_scan(ctl, input.begin() + (myStdVectSize/4),    input.end() - (myStdVectSize/4),    input.begin()+ (myStdVectSize/4) , 3.f, ai2  );
+
+    cmpArrays(input, refInput);
+	  printf("\nPass for size=%d Offset=%d\n",myStdVectSize, myStdVectSize/4);
+} 
 
 #if (TEST_DOUBLE == 1)
 
 TEST_P (ScanOffsetTest, InclOffsetTestDouble)
 {
     bolt::cl::device_vector< double > input( myStdVectSize, 2.f);
-    bolt::cl::device_vector< double > output( myStdVectSize);
     std::vector< double > refInput( myStdVectSize, 2.f);
-    std::vector< double > refOutput( myStdVectSize);
-   
-  
    // call scan
     bolt::cl::plus<double> ai2;
-    bolt::cl::inclusive_scan( input.begin() + (myStdVectSize/2),    input.end() - (myStdVectSize/4),    input.begin()+ (myStdVectSize/2) , ai2 );
-    ::std::partial_sum(refInput.begin()+ (myStdVectSize/2) , refInput.end()- (myStdVectSize/4), refInput.begin()+ (myStdVectSize/2) , ai2);
+    bolt::cl::inclusive_scan( input.begin() + (myStdVectSize/4),    input.end() - (myStdVectSize/4),    input.begin()+ (myStdVectSize/4) , ai2 );
+    ::std::partial_sum(refInput.begin()+ (myStdVectSize/4) , refInput.end()- (myStdVectSize/4), refInput.begin()+ (myStdVectSize/4) , ai2);
 
     cmpArrays(input, refInput);
-	  printf("\nPass for size=%d Offset=%d\n",myStdVectSize, myStdVectSize/2);
+	  printf("\nPass for size=%d Offset=%d\n",myStdVectSize, myStdVectSize/4);
 } 
 TEST_P (ScanOffsetTest, ExclOffsetTestDouble)
 {
     bolt::cl::device_vector< double > input( myStdVectSize,2.f);
-    bolt::cl::device_vector< double > output( myStdVectSize);
     std::vector< double > refInput( myStdVectSize,2.f);
-    std::vector< double > refOutput( myStdVectSize);
    
-  	refInput[myStdVectSize/2] = 3.0f;
+  	refInput[myStdVectSize/4] = 3.0f;
 
     // call scan
     bolt::cl::plus<double> ai2;
 
-    ::std::partial_sum(refInput.begin()+ (myStdVectSize/2) , refInput.end()- (myStdVectSize/4), refInput.begin()+ (myStdVectSize/2) , ai2);
-    bolt::cl::exclusive_scan(input.begin() + (myStdVectSize/2),    input.end() - (myStdVectSize/4),    input.begin()+ (myStdVectSize/2) , 3.0f, ai2  );
+    ::std::partial_sum(refInput.begin()+ (myStdVectSize/4) , refInput.end()- (myStdVectSize/4), refInput.begin()+ (myStdVectSize/4) , ai2);
+    bolt::cl::exclusive_scan(input.begin() + (myStdVectSize/4),    input.end() - (myStdVectSize/4),    input.begin()+ (myStdVectSize/4) , 3.0f, ai2  );
 
 	// ::std::partial_sum(refInput.begin(), refInput.end(), refInput.begin(), ai2);
    //  bolt::cl::exclusive_scan( input.begin(),    input.end(),    input.begin(), 3.0f, ai2 );
 
 
     cmpArrays(input, refInput);
-	  printf("\nPass for size=%d Offset=%d\n",myStdVectSize, myStdVectSize/2);
+	  printf("\nPass for size=%d Offset=%d\n",myStdVectSize, myStdVectSize/4);
 } 
 
 TEST (ScanOffsetTest, InclOffsetTestUDD)
 {
 	
-    int length = 1<<20;
+    int length = 1<<16;
     bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3,  CL_MEM_READ_WRITE, true  );
-    bolt::cl::device_vector< uddtM3 > output( length, identityMixM3, CL_MEM_READ_WRITE, false );
     std::vector< uddtM3 > refInput( length, initialMixM3 );
-    std::vector< uddtM3 > refOutput( length );
 
     // call scan
     MixM3 ai2;
-    bolt::cl::inclusive_scan( input.begin() + (length/2),    input.end() - (length/4),    input.begin()+ (length/2) , ai2 );
-    ::std::partial_sum(refInput.begin()+ (length/2) , refInput.end()- (length/4), refInput.begin()+ (length/2) , ai2);
+    bolt::cl::inclusive_scan( input.begin() + (length/4),    input.end() - (length/4),    input.begin()+ (length/4) , ai2 );
+    ::std::partial_sum(refInput.begin()+ (length/4) , refInput.end()- (length/4), refInput.begin()+ (length/4) , ai2);
 
     cmpArrays(input, refInput);
-	  printf("\nPass for size=%d Offset=%d\n",length, length/2);
+	  printf("\nPass for size=%d Offset=%d\n",length, length/4);
 } 
 TEST (ScanOffsetTest, ExclOffsetTestUDD)
 {
-	int length = 1<<20;
+  	int length = 1<<16;
     bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3,  CL_MEM_READ_WRITE, true  );
-    bolt::cl::device_vector< uddtM3 > output( length, identityMixM3, CL_MEM_READ_WRITE, false );
     std::vector< uddtM3 > refInput( length, initialMixM3 );
-    std::vector< uddtM3 > refOutput( length );
 
-	  refInput[length/2] = initialMixM3;
+	  refInput[length/4] = initialMixM3;
 
     // call scan
     MixM3 ai2;
     // call scan
-    ::std::partial_sum(refInput.begin()+ (length/2) , refInput.end()- (length/4), refInput.begin()+ (length/2) , ai2);
-    bolt::cl::exclusive_scan(input.begin() + (length/2),    input.end() - (length/4),    input.begin()+ (length/2) , initialMixM3, ai2  );
+    ::std::partial_sum(refInput.begin()+ (length/4) , refInput.end()- (length/4), refInput.begin()+ (length/4) , ai2);
+    bolt::cl::exclusive_scan(input.begin() + (length/4),    input.end() - (length/4),    input.begin()+ (length/4) , initialMixM3, ai2  );
 
 	 cmpArrays(input, refInput);
-	 printf("\nPass for size=%d Offset=%d\n",length, length/2);
+	 printf("\nPass for size=%d Offset=%d\n",length, length/4);
 } 
 
 

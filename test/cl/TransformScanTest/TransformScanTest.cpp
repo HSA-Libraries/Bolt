@@ -256,7 +256,7 @@ struct uddtM3
     bool operator==(const uddtM3& rhs) const
     {
         bool equal = true;
-        double ths = 0.00001;
+        float ths = 0.00001f;
         double thd = 0.0000000001;
         equal = ( a == rhs.a ) ? equal : false;
         if (rhs.b < ths && rhs.b > -ths)

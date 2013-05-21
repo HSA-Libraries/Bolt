@@ -515,44 +515,22 @@ aProfiler.set(AsyncProfiler::memory, numElements*sizeof(iType));
 
             if( runMode == bolt::cl::control::SerialCpu )
             {
-                ::cl::Event serialCPUEvent;
-                cl_int l_Error = CL_SUCCESS;
-                iType *scanInputBuffer = (iType*)ctrl.getCommandQueue().enqueueMapBuffer(first.getContainer().getBuffer(), false,
-                                   CL_MAP_READ, 0, sizeof(iType) * numElements, NULL, &serialCPUEvent, &l_Error );
-
-                oType *scanResultBuffer = (oType*)ctrl.getCommandQueue().enqueueMapBuffer(result.getContainer().getBuffer(), false,
-
-                                   CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(oType) * numElements, NULL, &serialCPUEvent,
-                                                                                                        &l_Error );
-                serialCPUEvent.wait();
-                Serial_scan<iType, oType, BinaryFunction, T>(scanInputBuffer, scanResultBuffer, numElements, binary_op,
-                                                                                                    inclusive, init);
-                ctrl.getCommandQueue().enqueueUnmapMemObject(first.getContainer().getBuffer(), scanInputBuffer);
-                ctrl.getCommandQueue().enqueueUnmapMemObject(result.getContainer().getBuffer(), scanResultBuffer);
-
+                bolt::cl::device_vector< iType >::pointer scanInputBuffer =  first.getContainer( ).data( );
+                bolt::cl::device_vector< oType >::pointer scanResultBuffer =  result.getContainer( ).data( );
+                Serial_scan<iType, oType, BinaryFunction, T>(&scanInputBuffer[first.m_Index], &scanResultBuffer[result.m_Index],
+                                                              numElements, binary_op, inclusive, init);
                 return result + numElements;
             }
             else if( runMode == bolt::cl::control::MultiCoreCpu )
             {
 #ifdef ENABLE_TBB
-                ::cl::Event multiCoreCPUEvent;
-                cl_int l_Error = CL_SUCCESS;
-                /*Map the device buffer to CPU*/
-                iType *scanInputBuffer = (iType*)ctrl.getCommandQueue().enqueueMapBuffer(first.getContainer().getBuffer(), false,
-                                   CL_MAP_READ, 0, sizeof(iType) * numElements, NULL, &multiCoreCPUEvent, &l_Error );
-                oType *scanResultBuffer = (oType*)ctrl.getCommandQueue().enqueueMapBuffer(result.getContainer().getBuffer(), false,
-                                   CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(oType) * numElements, NULL, &multiCoreCPUEvent, &l_Error );
-                multiCoreCPUEvent.wait();
-
-
+                bolt::cl::device_vector< iType >::pointer scanInputBuffer =  first.getContainer( ).data( );
+                bolt::cl::device_vector< oType >::pointer scanResultBuffer =  result.getContainer( ).data( );
 
                if(inclusive)
-                 bolt::btbb::inclusive_scan(scanInputBuffer, scanInputBuffer+numElements, scanResultBuffer, binary_op);
+                 bolt::btbb::inclusive_scan(&scanInputBuffer[first.m_Index], &scanInputBuffer[first.m_Index] + numElements, &scanResultBuffer[result.m_Index], binary_op);
                else
-                bolt::btbb::exclusive_scan( scanInputBuffer, scanInputBuffer+numElements, scanResultBuffer, init, binary_op);
-
-                ctrl.getCommandQueue().enqueueUnmapMemObject(result.getContainer().getBuffer(), scanResultBuffer);
-                ctrl.getCommandQueue().enqueueUnmapMemObject(first.getContainer().getBuffer(), scanInputBuffer);
+                 bolt::btbb::exclusive_scan( &scanInputBuffer[first.m_Index], &scanInputBuffer[first.m_Index] + numElements, &scanResultBuffer[result.m_Index], init, binary_op);
 
                 return result + numElements;
 #else
