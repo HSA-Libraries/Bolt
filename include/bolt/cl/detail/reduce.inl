@@ -263,7 +263,8 @@ namespace bolt {
                     #ifdef ENABLE_TBB
                     {
                       bolt::cl::device_vector< iType >::pointer reduceInputBuffer =  first.getContainer( ).data( );
-                      return bolt::btbb::reduce(&reduceInputBuffer[first.m_Index],&reduceInputBuffer[ szElements ],init,binary_op);
+                      return bolt::btbb::reduce(  &reduceInputBuffer[first.m_Index],&reduceInputBuffer[ last.m_Index ],
+                                                  init, binary_op);
                     }
                     #else
                     {
@@ -274,13 +275,15 @@ namespace bolt {
                 case bolt::cl::control::SerialCpu: 
                     {
                       bolt::cl::device_vector< iType >::pointer reduceInputBuffer =  first.getContainer( ).data( );
-                      return std::accumulate(&reduceInputBuffer[first.m_Index],&reduceInputBuffer[ szElements ], init, binary_op);
+                      return std::accumulate(  &reduceInputBuffer[first.m_Index], &reduceInputBuffer[ last.m_Index ],
+                                               init, binary_op);
                     }
 
                 default: /* Incase of runMode not set/corrupted */
                     {
                       bolt::cl::device_vector< iType >::pointer reduceInputBuffer =  first.getContainer( ).data( );
-                      return std::accumulate(&reduceInputBuffer[first.m_Index],&reduceInputBuffer[ szElements ], init, binary_op);
+                      return std::accumulate(  &reduceInputBuffer[first.m_Index], &reduceInputBuffer[ last.m_Index ],
+                                               init, binary_op);
                     }
 
                 }

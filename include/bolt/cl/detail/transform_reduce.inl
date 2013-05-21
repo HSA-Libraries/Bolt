@@ -202,41 +202,21 @@ namespace  detail {
             }
             if (runMode == bolt::cl::control::SerialCpu)
             {
-                ::cl::Event serialCPUEvent;
-                cl_int l_Error = CL_SUCCESS;
-                oType trans_reduceResult;
-                /*Map the device buffer to CPU*/
-                iType *trans_reduceInputBuffer = (iType*)c.getCommandQueue().enqueueMapBuffer(first.getContainer().getBuffer(), false,
-                                   CL_MAP_READ, 0, sizeof(iType) * szElements, NULL, &serialCPUEvent, &l_Error );
-                serialCPUEvent.wait();
-                std::vector<oType> output(szElements);
-                std::transform(trans_reduceInputBuffer, trans_reduceInputBuffer + szElements, output.begin(),
-                                                                                                transform_op);
-                trans_reduceResult = std::accumulate(output.begin(), output.end(), init, reduce_op) ;
+                bolt::cl::device_vector< iType >::pointer firstPtr = first.getContainer( ).data( );
+                std::vector< oType > result ( last.m_Index - first.m_Index );
 
-                /*Unmap the device buffer back to device memory. This will copy the host modified buffer back
-                to the device*/
-                c.getCommandQueue().enqueueUnmapMemObject(first.getContainer().getBuffer(), trans_reduceInputBuffer);
-                return trans_reduceResult;
+                std::transform( &firstPtr[ first.m_Index ], &firstPtr[ last.m_Index ], result.begin(), transform_op );
+            
+                return std::accumulate(  result.begin(), result.end(), init, reduce_op );
 
             }
             else if (runMode == bolt::cl::control::MultiCoreCpu)
             {
 #ifdef ENABLE_TBB
-                ::cl::Event multiCoreCPUEvent;
-                cl_int l_Error = CL_SUCCESS;
-                /*Map the device buffer to CPU*/
-                iType *trans_reduceInputBuffer = (iType*)c.getCommandQueue().enqueueMapBuffer(first.getContainer().getBuffer(), false,
-                                   CL_MAP_READ, 0, sizeof(iType) * szElements, NULL, &multiCoreCPUEvent, &l_Error );
-                multiCoreCPUEvent.wait();
+                bolt::cl::device_vector< iType >::pointer firstPtr = first.getContainer( ).data( );
 
-
-				oType res_val =  bolt::btbb::transform_reduce(trans_reduceInputBuffer,(trans_reduceInputBuffer + szElements),
-				transform_op,init,reduce_op);
-                c.getCommandQueue().enqueueUnmapMemObject(first.getContainer().getBuffer(), trans_reduceInputBuffer);
-                return res_val;
-
-
+				return  bolt::btbb::transform_reduce(  &firstPtr[ first.m_Index ], &firstPtr[ last.m_Index ],
+				                                       transform_op,init,reduce_op);
 #else
 
                 throw std::exception( "The MultiCoreCpu version of transform_reduce function is not enabled to be built! \n");

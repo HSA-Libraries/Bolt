@@ -397,10 +397,11 @@ public:
             bolt::cl::device_vector< oType >::pointer resPtr =  result.getContainer( ).data( );
 
 #if defined( _WIN32 )
-            std::transform( &firstPtr[ first1.m_Index ], &firstPtr[ sz ], &secPtr[ 0 ],
-                stdext::make_checked_array_iterator( &resPtr[ 0 ], sz ), f );
+            std::transform( &firstPtr[ first1.m_Index ], &firstPtr[ last1.m_Index ], &secPtr[ first2.m_Index ],
+                stdext::make_checked_array_iterator( &resPtr[ result.m_Index ], sz ), f );
 #else
-            std::transform( &firstPtr[ first1.m_Index ], &firstPtr[ sz ], &secPtr[ 0 ], &resPtr[ 0 ], f );
+            std::transform( &firstPtr[ first1.m_Index ], &firstPtr[ last1.m_Index ],
+                &secPtr[ first2.m_Index ], &resPtr[ result.m_Index ], f );
 #endif
             return;
         }
@@ -413,7 +414,8 @@ public:
             bolt::cl::device_vector< iType2 >::pointer secPtr =  first2.getContainer( ).data( );
             bolt::cl::device_vector< oType >::pointer resPtr =  result.getContainer( ).data( );
 
-            bolt::btbb::transform(&firstPtr[ first1.m_Index ],&firstPtr[ sz ],&secPtr[ 0 ],&resPtr[ 0 ],f);
+            bolt::btbb::transform( &firstPtr[ first1.m_Index ], &firstPtr[ last1.m_Index ],
+                                   &secPtr[ first2.m_Index ],&resPtr[ result.m_Index ],f );
 
 
 #else
@@ -455,10 +457,11 @@ public:
             bolt::cl::device_vector< oType >::pointer resPtr =  result.getContainer( ).data( );
 
 #if defined( _WIN32 )
-            std::transform( &firstPtr[ first1.m_Index ], &firstPtr[ sz ], fancyIter,
-                stdext::make_checked_array_iterator( &resPtr[ 0 ], sz ), f );
+            std::transform( &firstPtr[ first1.m_Index ], &firstPtr[ last1.m_Index ], fancyIter,
+                stdext::make_checked_array_iterator( &resPtr[ result.m_Index ], sz ), f );
 #else
-            std::transform( &firstPtr[ first1.m_Index ], &firstPtr[ sz ], fancyIter, &resPtr[ 0 ], f );
+            std::transform( &firstPtr[ first1.m_Index ], &firstPtr[ last1.m_Index ],
+                            fancyIter, &resPtr[ result.m_Index ], f );
 #endif
             return;
         }
@@ -470,7 +473,8 @@ public:
             bolt::cl::device_vector< iType1 >::pointer firstPtr =  first1.getContainer( ).data( );
             bolt::cl::device_vector< oType >::pointer resPtr =  result.getContainer( ).data( );
 
-            bolt::btbb::transform(&firstPtr[ first1.m_Index ], &firstPtr[ sz ], fancyIter, &resPtr[ 0 ], f );
+            bolt::btbb::transform(  &firstPtr[ first1.m_Index ], &firstPtr[ last1.m_Index ],
+                                    fancyIter, &resPtr[ result.m_Index ], f );
 
 
 #else
@@ -570,10 +574,10 @@ public:
             bolt::cl::device_vector< oType >::pointer resPtr = result.getContainer( ).data( );
 
 #if defined( _WIN32 )
-            std::transform( &firstPtr[ first.m_Index ], &firstPtr[ sz ],
-                stdext::make_checked_array_iterator( &resPtr[ 0 ], sz ), f );
+            std::transform( &firstPtr[ first.m_Index ], &firstPtr[ last.m_Index ],
+                stdext::make_checked_array_iterator( &resPtr[ result.m_Index ], sz ), f );
 #else
-            std::transform( &firstPtr[ first.m_Index ], &firstPtr[ sz ], &resPtr[ 0 ], f );
+            std::transform( &firstPtr[ first.m_Index ], &firstPtr[ last.m_Index ], &resPtr[ result.m_Index ], f );
 #endif
             return;
         }
@@ -584,7 +588,7 @@ public:
             bolt::cl::device_vector< iType >::pointer firstPtr = first.getContainer( ).data( );
             bolt::cl::device_vector< oType >::pointer resPtr = result.getContainer( ).data( );
 
-            bolt::btbb::transform(&firstPtr[ first.m_Index ], &firstPtr[ sz ], &resPtr[ 0 ], f );
+            bolt::btbb::transform(&firstPtr[ first.m_Index ], &firstPtr[ last.m_Index ], &resPtr[ result.m_Index ], f );
 
 
 #else
