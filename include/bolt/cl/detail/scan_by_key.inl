@@ -583,6 +583,7 @@ Serial_exclusive_scan_by_key(
 {
     // do zeroeth element
     //*result = *values; // assign value
+    oType temp = *values;
     *result = (vType)init;
     // scan oneth element and beyond
     for ( unsigned int i= 1; i<num; i++)
@@ -592,17 +593,19 @@ Serial_exclusive_scan_by_key(
         kType previousKey = *(firstKey-1 + i);
 
         // load value
-        oType currentValue = *(values + i-1); // convertible
+        oType currentValue = temp; // convertible
         oType previousValue = *(result-1 + i);
 
         // within segment
         if (binary_pred(currentKey,previousKey))
         {
+            temp = *(values + i);
             oType r = binary_op( previousValue, currentValue);
             *(result + i) = r;
         }
         else // new segment
         {
+             temp = *(values + i);
             *(result + i) = (vType)init;
         }
     }

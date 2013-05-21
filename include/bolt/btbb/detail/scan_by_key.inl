@@ -51,22 +51,25 @@ namespace bolt
 		  oType get_sum() const {return sum;}
 		  template<typename Tag>
 		  void operator()( const tbb::blocked_range<int>& r, Tag ) {
-			  oType temp = sum;
+			  oType temp = sum, temp1;
 			  flag=FALSE;
 			  for( int i=r.begin(); i<r.end(); ++i ) {
 				 if( Tag::is_final_scan() ) {
 					 if(!inclusive){
 						  if( i==0){
+                temp1 = *(first_value + i);
 							 *(result + i) = start;
-							 temp = binary_op(start, *(first_value+i));
+							 temp = binary_op(start, temp1);
 						  }
 						  else if(binary_pred(*(first_key+i), *(first_key +i- 1))){
+                temp1 = *(first_value + i);
 							 *(result + i) = temp;
-							 temp = binary_op(temp, *(first_value+i));
+							 temp = binary_op(temp, temp1);
 						  }
 						  else{
+                temp1 = *(first_value + i);
 							 *(result + i) = start;
-							 temp = binary_op(start, *(first_value+i));
+							 temp = binary_op(start, temp1);
 							 flag = TRUE;
 						  }
 						  continue;
