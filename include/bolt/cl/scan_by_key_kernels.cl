@@ -57,38 +57,38 @@ __kernel void perBlockScanByKey(
     if (exclusive)
     {
        if (gloId > 0 && groId*wgSize+locId < vecSize){
-          kType key1 = keys[ groId*wgSize+locId];
-          kType key2 = keys[ groId*wgSize+locId-1];
+          kType key1 = keys_iter[ groId*wgSize+locId];
+          kType key2 = keys_iter[ groId*wgSize+locId-1];
           if( (*binaryPred)( key1, key2 )  )
-             ldsVals[locId] = vals[groId*wgSize+locId-1];
+             ldsVals[locId] = vals_iter[groId*wgSize+locId-1];
           else 
              ldsVals[locId] = init;
-          ldsKeys[locId] = keys[groId*wgSize+locId];
+          ldsKeys[locId] = keys_iter[groId*wgSize+locId];
        }
        else{ 
           ldsVals[locId] = init;
-          ldsKeys[locId] = keys[0];
+          ldsKeys[locId] = keys_iter[0];
        }
        if(groId*wgSize +locId+ (wgSize/2) < vecSize){
-          kType key1 = keys[ groId*wgSize +locId+ (wgSize/2)];
-          kType key2 = keys[groId*wgSize +locId+ (wgSize/2) -1];
+          kType key1 = keys_iter[ groId*wgSize +locId+ (wgSize/2)];
+          kType key2 = keys_iter[groId*wgSize +locId+ (wgSize/2) -1];
           if( (*binaryPred)( key1, key2 )  )
-             ldsVals[locId+(wgSize/2)] = vals[groId*wgSize +locId+ (wgSize/2)-1];
+             ldsVals[locId+(wgSize/2)] = vals_iter[groId*wgSize +locId+ (wgSize/2)-1];
           else 
              ldsVals[locId+(wgSize/2)] = init;
-          ldsKeys[locId+(wgSize/2)] = keys[groId*wgSize +locId+ (wgSize/2)];
+          ldsKeys[locId+(wgSize/2)] = keys_iter[groId*wgSize +locId+ (wgSize/2)];
        }
      
     }
     else
     {
        if(groId*wgSize+locId < vecSize){
-           ldsVals[locId] = vals[groId*wgSize+locId];
-           ldsKeys[locId] = keys[groId*wgSize+locId];
+           ldsVals[locId] = vals_iter[groId*wgSize+locId];
+           ldsKeys[locId] = keys_iter[groId*wgSize+locId];
        }
        if(groId*wgSize +locId+ (wgSize/2) < vecSize){
-           ldsVals[locId+(wgSize/2)] = vals[ groId*wgSize +locId+ (wgSize/2)];
-           ldsKeys[locId+(wgSize/2)] = keys[ groId*wgSize +locId+ (wgSize/2)];
+           ldsVals[locId+(wgSize/2)] = vals_iter[ groId*wgSize +locId+ (wgSize/2)];
+           ldsKeys[locId+(wgSize/2)] = keys_iter[ groId*wgSize +locId+ (wgSize/2)];
        }
     }
     
@@ -281,11 +281,11 @@ __kernel void perBlockAdditionByKey(
        {
           if (gloId > 0)
           { // thread>0
-              key = keys[ gloId];
-              kType key1 = keys[ gloId];
-              kType key2 = keys[ gloId-1];
+              key = keys_iter[ gloId];
+              kType key1 = keys_iter[ gloId];
+              kType key2 = keys_iter[ gloId-1];
               if( (*binaryPred)( key1, key2 )  )
-                  val = vals[ gloId-1 ];
+                  val = vals_iter[ gloId-1 ];
               else 
                   val = init;
               ldsKeys[ locId ] = key;
@@ -295,7 +295,7 @@ __kernel void perBlockAdditionByKey(
           { // thread=0
               val = init;
               ldsVals[ locId ] = val;
-              ldsKeys[ locId ] = keys[gloId];
+              ldsKeys[ locId ] = keys_iter[gloId];
             // key stays null, this thread should never try to compare it's key
             // nor should any thread compare it's key to ldsKey[ 0 ]
             // I could put another key into lds just for whatevs
@@ -306,8 +306,8 @@ __kernel void perBlockAdditionByKey(
        {
           //vType inVal = vals[gloId];
           //val = (oType) (*unaryOp)(inVal);
-          key = keys[ gloId ];
-          val = vals[ gloId ];
+          key = keys_iter[ gloId ];
+          val = vals_iter[ gloId ];
           ldsKeys[ locId ] = key;
           ldsVals[ locId ] = val;
        }
@@ -347,15 +347,15 @@ __kernel void perBlockAdditionByKey(
     vType y, y1;
     kType key1, key2, key3, key4;
     if(groId > 0) {
-       key1 = keys[gloId];
-       key2 = keys[groId*wgSize -1 ];
+       key1 = keys_iter[gloId];
+       key2 = keys_iter[groId*wgSize -1 ];
        if(groId % 2 == 0)
           postBlockSum = postSumArray[ groId/2 -1 ];
        else if(groId == 1)
           postBlockSum = preSumArray1[0];
        else {
-          key3 = keys[groId*wgSize -1];
-          key4 = keys[(groId-1)*wgSize -1];
+          key3 = keys_iter[groId*wgSize -1];
+          key4 = keys_iter[(groId-1)*wgSize -1];
           if((*binaryPred)(key3 ,key4)){
              y = postSumArray[ groId/2 -1 ];
              y1 = preSumArray1[groId/2];
