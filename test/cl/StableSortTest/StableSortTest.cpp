@@ -904,7 +904,7 @@ public:
         size_t size = GetParam( );
 
         std::generate(stdInput, stdInput + size, rand);
-        for (int i = 0; i<size; i++)
+        for (size_t i = 0; i<size; i++)
         {
             boltInput[i] = stdInput[i];
         }
@@ -934,7 +934,7 @@ public:
         size_t size = GetParam( );
 
         std::generate(stdInput, stdInput + size, rand);
-        for (int i = 0; i<size; i++)
+        for (size_t i = 0; i<size; i++)
         {
             boltInput[i] = stdInput[i];
         }
@@ -966,7 +966,7 @@ public:
 
         std::generate(stdInput, stdInput + size, rand);
 
-        for( int i=0; i < size; i++ )
+        for( size_t i=0; i < size; i++ )
         {
             boltInput[ i ] = stdInput[ i ];
         }
@@ -2192,7 +2192,7 @@ TEST (sanity_sort__withBoltClDevVectDouble_epr, floatSerial){
 	std::vector<double>  stdVect(0);
 	bolt::cl::device_vector<double>  boltVect(0);
 
-	for (int i = 0 ; i < sizeOfInputBufer; i++){
+	for (size_t i = 0 ; i < sizeOfInputBufer; i++){
 	    double dValue = rand();
         dValue = dValue/rand();
         dValue = dValue*rand();
@@ -2202,7 +2202,7 @@ TEST (sanity_sort__withBoltClDevVectDouble_epr, floatSerial){
 	std::SORT_FUNC(stdVect.begin(), stdVect.end(), std::greater<double>( ) );
 	bolt::BKND::SORT_FUNC(boltVect.begin(), boltVect.end(), bolt::cl::greater<double>( ) );
 
-	for (int i = 0 ; i < sizeOfInputBufer; i++){
+	for (size_t i = 0 ; i < sizeOfInputBufer; i++){
 	    EXPECT_DOUBLE_EQ(stdVect[i], boltVect[i]);
 	}
 }
