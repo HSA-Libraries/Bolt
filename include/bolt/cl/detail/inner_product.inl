@@ -161,12 +161,12 @@ namespace bolt {
 
                 if( runMode == bolt::cl::control::SerialCpu)
                 {
-                    std::inner_product(first1, last1, first2, init, f1, f2);
+                    return std::inner_product(first1, last1, first2, init, f1, f2);
                 }
                 else if(runMode == bolt::cl::control::MultiCoreCpu)
                 {
                     #ifdef ENABLE_TBB
-                           std::inner_product(first1, last1, first2, init, f1, f2);
+                           return std::inner_product(first1, last1, first2, init, f1, f2);
                     #else
                            throw std::exception("MultiCoreCPU Version of inner_product not Enabled! \n");
                     #endif
@@ -202,7 +202,7 @@ namespace bolt {
                 const BinaryFunction1&f1,const BinaryFunction2& f2, const std::string& user_code,
                 bolt::cl::device_vector_tag )
             {
-
+                typedef std::iterator_traits< DVInputIterator >::value_type iType1;
                 bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
                 if(runMode == bolt::cl::control::Automatic)
                 {
@@ -211,15 +211,22 @@ namespace bolt {
 
                 if( runMode == bolt::cl::control::SerialCpu)
                 {
-                    std::inner_product(first1, last1, first2, init, f1, f2);
+                    bolt::cl::device_vector< iType1 >::pointer firstPtr =  first1.getContainer( ).data( );
+                    bolt::cl::device_vector< iType1 >::pointer first2Ptr =  first2.getContainer( ).data( );
+                    return std::inner_product(  &firstPtr[ first1.m_Index ],
+                                                &firstPtr[ last1.m_Index ],
+                                                &first2Ptr[ first2.m_Index ], init, f1, f2);
                 }
                 else if(runMode == bolt::cl::control::MultiCoreCpu)
                 {
-                    #ifdef ENABLE_TBB
-                           std::inner_product(first1, last1, first2, init, f1, f2);
-                    #else
+                #ifdef ENABLE_TBB
+                    bolt::cl::device_vector< iType1 >::pointer firstPtr =  first1.getContainer( ).data( );
+                    bolt::cl::device_vector< iType1 >::pointer first2Ptr =  first2.getContainer( ).data( );
+                    return std::inner_product(  &firstPtr[ first1.m_Index ],  &firstPtr[ last1.m_Index ],
+                                                &first2Ptr[ first2.m_Index ], init, f1, f2);
+                #else
                            throw std::exception("MultiCoreCPU Version of inner_product not Enabled! \n");
-                    #endif
+                #endif
                 }
                 else
                 {
@@ -236,6 +243,9 @@ namespace bolt {
                 const BinaryFunction1& f1, const BinaryFunction2& f2, const std::string& user_code,
                 bolt::cl::fancy_iterator_tag )
             {
+
+                size_t sz = std::distance( first1, last1 );
+
                 bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
                 if(runMode == bolt::cl::control::Automatic)
                 {
@@ -244,12 +254,15 @@ namespace bolt {
 
                 if( runMode == bolt::cl::control::SerialCpu)
                 {
-                    std::inner_product(first1, last1, first2, init, f1, f2);
+                    return std::inner_product(  first1,
+                                                last1,
+                                                first2,
+                                                init, f1, f2  );
                 }
                 else if(runMode == bolt::cl::control::MultiCoreCpu)
                 {
                     #ifdef ENABLE_TBB
-                          std::inner_product(first1, last1, first2, init, f1, f2);
+                          return std::inner_product(first1, last1, first2, init, f1, f2);
                     #else
                            throw std::exception("MultiCoreCPU Version of inner_product not Enabled! \n");
                     #endif
