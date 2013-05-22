@@ -241,7 +241,7 @@ Serial_scan(
     const bool Incl,
     const T &init)
 {
-    oType  sum, temp;
+    vType  sum, temp;
     if(Incl){
       *result = *values; // assign value
       sum = *values;
@@ -253,10 +253,10 @@ Serial_scan(
     }
     for ( unsigned int i= 1; i<num; i++)
     {
-        oType currentValue = *(values + i); // convertible
+        vType currentValue = *(values + i); // convertible
         if (Incl)
         {
-            oType r = binary_op( sum, currentValue);
+            vType r = binary_op( sum, currentValue);
             *(result + i) = r;
             sum = r;
         }
@@ -892,7 +892,7 @@ aProfiler.stopTrial();
     ::cl::Event kernel0Event, kernel1Event, kernel2Event, kernelAEvent;
 
                 //  Ceiling function to bump the size of the sum array to the next whole wavefront size
-    device_vector< oType >::size_type sizeScanBuff = numWorkGroupsK0;
+    device_vector< iType >::size_type sizeScanBuff = numWorkGroupsK0;
     modWgSize = (sizeScanBuff & ((kernel0_WgSize*2)-1));
                 if( modWgSize )
                 {
@@ -900,9 +900,9 @@ aProfiler.stopTrial();
                     sizeScanBuff += (kernel0_WgSize*2);
                 }
 
-    control::buffPointer preSumArray = ctrl.acquireBuffer( (sizeScanBuff)*sizeof( oType ) );
-  control::buffPointer preSumArray1 = ctrl.acquireBuffer( (sizeScanBuff)*sizeof( oType ) );
-    control::buffPointer postSumArray = ctrl.acquireBuffer( (sizeScanBuff)*sizeof( oType ) );
+    control::buffPointer preSumArray = ctrl.acquireBuffer( (sizeScanBuff)*sizeof( iType ) );
+  control::buffPointer preSumArray1 = ctrl.acquireBuffer( (sizeScanBuff)*sizeof( iType ) );
+    control::buffPointer postSumArray = ctrl.acquireBuffer( (sizeScanBuff)*sizeof( iType ) );
     //::cl::Buffer userFunctor( ctrl.context( ), CL_MEM_USE_HOST_PTR, sizeof( binary_op ), &binary_op );
     //::cl::Buffer preSumArray( ctrl.context( ), CL_MEM_READ_WRITE, sizeScanBuff*sizeof(iType) );
     //::cl::Buffer postSumArray( ctrl.context( ), CL_MEM_READ_WRITE, sizeScanBuff*sizeof(iType) );

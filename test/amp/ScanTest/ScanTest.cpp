@@ -1231,7 +1231,7 @@ TEST(InclusiveScan, DeviceVectorInclFloat)
     std::vector< float > refInput( length);
     std::vector< float > refOutput( length);
    
-    for(int i=0; i<length; i++) {
+    for(size_t i=0; i<length; i++) {
         input[i] = 2.f;
         refInput[i] = 2.f;
     }
@@ -1255,7 +1255,7 @@ TEST(InclusiveScan, SerialDeviceVectorInclFloat)
     std::vector< float > refInput( length);
     std::vector< float > refOutput( length);
    
-    for(int i=0; i<length; i++) {
+    for(size_t i=0; i<length; i++) {
         input[i] = 2.f;
         refInput[i] = 2.f;
     }
@@ -1282,7 +1282,7 @@ TEST(InclusiveScan, MulticoreDeviceVectorInclFloat)
     std::vector< float > refInput( length);
     std::vector< float > refOutput( length);
    
-    for(int i=0; i<length; i++) {
+    for(size_t i=0; i<length; i++) {
         input[i] = 2.f;
         refInput[i] = 2.f;
     }
@@ -1364,7 +1364,7 @@ TEST(ExclusiveScan, DeviceVectorExclFloat)
     bolt::amp::device_vector< float > output( length);
     std::vector< float > refInput( length);
     std::vector< float > refOutput( length);
-    for(int i=0; i<length; i++) {
+    for(size_t i=0; i<length; i++) {
         input[i] = 2.0f;
         if(i != length-1)
            refInput[i+1] = 2.0f;
@@ -1389,7 +1389,7 @@ TEST(ExclusiveScan, SerialDeviceVectorExclFloat)
     bolt::amp::device_vector< float > output( length);
     std::vector< float > refInput( length);
     std::vector< float > refOutput( length);
-    for(int i=0; i<length; i++) {
+    for(size_t i=0; i<length; i++) {
         input[i] = 2.0f;
         if(i != length-1)
            refInput[i+1] = 2.0f;
@@ -1416,7 +1416,7 @@ TEST(ExclusiveScan, MulticoreDeviceVectorExclFloat)
     bolt::amp::device_vector< float > output( length);
     std::vector< float > refInput( length);
     std::vector< float > refOutput( length);
-    for(int i=0; i<length; i++) {
+    for(size_t i=0; i<length; i++) {
         input[i] = 2.0f;
         if(i != length-1)
            refInput[i+1] = 2.0f;
