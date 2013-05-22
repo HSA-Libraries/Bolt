@@ -459,7 +459,7 @@ namespace bolt {
 
         // (2) type definitions
         completeKernelString += "\n// Type Definitions\n";
-        for (int i = 0; i < typeDefs.size(); i++)
+        for (size_t i = 0; i < typeDefs.size(); i++)
         {
             completeKernelString += "\n" + typeDefs[i] + "\n";
         }
@@ -499,7 +499,7 @@ namespace bolt {
         // retrieve kernels from program
         //std::cout << "Getting " << kts->numKernels() << " from program." << std::endl;
         ::std::vector<::cl::Kernel> kernels;
-        for (int i = 0; i < kts->numKernels() ; i++)
+        for (unsigned int i = 0; i < kts->numKernels() ; i++)
         {
             ::std::string name = kts->name(i);
             name += "Instantiated";

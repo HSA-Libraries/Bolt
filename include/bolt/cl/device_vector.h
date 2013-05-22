@@ -1419,7 +1419,7 @@ namespace cl
              *  \param value The value of the element that is replicated newSize times.
             *   \warning All previous iterators, references, and pointers are invalidated.
             */
-#if 0
+
             void assign( size_type newSize, const value_type& value )
             {
                 if( newSize > m_Size )
@@ -1444,9 +1444,17 @@ namespace cl
              *  \param end The iterator position signifying the end of the range (exclusive).
             *   \warning All previous iterators, references, and pointers are invalidated.
             */
-	        template<typename InputIterator>
+#if _MSC_VER == 1700   
+            template<typename InputIterator>
             typename std::enable_if< std::_Is_iterator<InputIterator>::value, void>::type
             assign( InputIterator begin, InputIterator end )
+#else
+            template<typename InputIterator>
+            typename std::enable_if< !std::is_same< typename std::iterator_traits<InputIterator >::value_type,
+                                       typename size_type
+                                     >::value, void>::type
+            assign( InputIterator begin, InputIterator end )
+#endif
             {
                 size_type l_Count = std::distance( begin, end );
 
@@ -1472,7 +1480,7 @@ namespace cl
                 V_OPENCL( unmapEvent.wait( ), "failed to wait for unmap event" );
             }
 
-#endif
+
             /*! \brief A get accessor function to return the encapsulated device buffer for const objects.
             *   This member function allows access to the Buffer object, which can be retrieved through a reference or an iterator.
             *   This is necessary to allow library functions to set the encapsulated buffer object as a kernel argument.

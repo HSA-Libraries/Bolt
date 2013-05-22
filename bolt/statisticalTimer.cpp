@@ -312,7 +312,7 @@ statTimer::pruneOutliers( size_t id , double multiple )
 	//	std::remove_if does not actually erase, it only copies elements, it returns new 'logical' end
 	clkVector::iterator	newEnd	= std::remove_if( clks.begin( ), clks.end( ), PruneRange< double, statTimer::ulong >( mean, multiple*stdDev ) );
 
-	clkVector::difference_type dist	= std::distance( newEnd, clks.end( ) );
+	size_t dist = std::distance( newEnd, clks.end( ) );
 
 	if( dist != 0 )
 		clks.erase( newEnd, clks.end( ) );

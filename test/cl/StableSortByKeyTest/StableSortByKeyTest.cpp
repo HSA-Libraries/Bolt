@@ -149,7 +149,7 @@ typename std::enable_if< !(std::is_same< typename C::value_type,float  >::value 
 cmpArraysSortByKey(const A& ref,const B& key, const C& value, int size)
 {
     int failures = 8;
-    for( size_t i = 0; (i < size) && (failures != 0 ); ++i )
+    for( int i = 0; (i < size) && (failures != 0 ); ++i )
     {
         if( (ref[ i ].key == key[ i ])  && (ref[ i ].value == value[ i ]) )
         {
@@ -171,7 +171,7 @@ typename std::enable_if< std::is_same< typename C::value_type,float  >::value ||
 cmpArraysSortByKey(const A& ref,const B& key, const C& value, int size)
 {
     int failures = 8;
-    for( size_t i = 0; (i < size) && (failures != 0 ); ++i )
+    for( int i = 0; (i < size) && (failures != 0 ); ++i )
     {
         if( (ref[ i ].key == key[ i ])  && (ref[ i ].value == value[ i ]) )
         {

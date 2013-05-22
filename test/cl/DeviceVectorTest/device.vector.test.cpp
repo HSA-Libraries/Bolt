@@ -940,7 +940,7 @@ TEST( DeviceVector, Swap )
     EXPECT_EQ(10, dV[0]);
 
 }
-#if 0
+#if 1
 TEST( DeviceVector, Assign )
 {
     bolt::BCKND::device_vector< int > dV( 3, 98 );

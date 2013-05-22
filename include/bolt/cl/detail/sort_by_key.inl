@@ -186,7 +186,7 @@ public:
         std::vector<KeyValuePair> KeyValuePairVector(vecSize);
         KeyValuePairFunctor functor(comp);
         //Zip the key and values iterators into a std_sort vector.
-        for (int i=0; i< vecSize; i++)
+        for (size_t i=0; i< vecSize; i++)
         {
             KeyValuePairVector[i].key   = *(keys_first + i);
             KeyValuePairVector[i].value = *(values_first + i);
@@ -194,7 +194,7 @@ public:
         //Sort the std_sort vector using std::sort
         std::sort(KeyValuePairVector.begin(), KeyValuePairVector.end(), functor);
         //Extract the keys and values from the KeyValuePair and fill the respective iterators. 
-        for (int i=0; i< vecSize; i++)
+        for (size_t i=0; i< vecSize; i++)
         {
             *(keys_first + i)   = KeyValuePairVector[i].key;
             *(values_first + i) = KeyValuePairVector[i].value;
