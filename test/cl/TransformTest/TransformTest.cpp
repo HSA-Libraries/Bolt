@@ -2205,6 +2205,7 @@ struct UnsignedStringFunctor
 };
 );
 
+
 TEST(TransformStdVect, BoltVideo)
 {
     // Initialize and print an input string
@@ -2309,18 +2310,18 @@ TEST( TransformLong, LongTests)
 #else
   int length = 1024;
 #endif
-  std::vector<long> hVectorA( length ),
+  std::vector<cl_long> hVectorA( length ),
                    hVectorB( length ),
                    hVectorO( length );
   std::fill( hVectorA.begin(), hVectorA.end(), 1024 );
   std::fill( hVectorB.begin(), hVectorB.end(), 1024 );
   std::fill( hVectorO.begin(), hVectorO.end(), 0 );
 
-  bolt::cl::plus<long> pl;
-  bolt::cl::device_vector<long> dVectorA( hVectorA.begin(), hVectorA.end() ),
+  bolt::cl::plus<cl_long> pl;
+  bolt::cl::device_vector<cl_long> dVectorA( hVectorA.begin(), hVectorA.end() ),
                                dVectorB( hVectorB.begin(), hVectorB.end() ),
                                dVectorO( hVectorO.begin(), hVectorO.end() );
-  std::transform( hVectorA.begin(), hVectorA.end(), hVectorB.begin(), hVectorO.begin(), std::plus< long >( ) );
+  std::transform( hVectorA.begin(), hVectorA.end(), hVectorB.begin(), hVectorO.begin(), std::plus< cl_long >( ) );
   bolt::cl::transform( dVectorA.begin(),
     dVectorA.end(),
     dVectorB.begin(),
@@ -2338,18 +2339,18 @@ TEST( TransformULong, ULongTests)
 #else
   int length = 1024;
 #endif
-  std::vector<unsigned long> hVectorA( length ),
+  std::vector<cl_ulong> hVectorA( length ),
                    hVectorB( length ),
                    hVectorO( length );
   std::fill( hVectorA.begin(), hVectorA.end(), 1024 );
   std::fill( hVectorB.begin(), hVectorB.end(), 1024 );
   std::fill( hVectorO.begin(), hVectorO.end(), 0 );
 
-  bolt::cl::plus<unsigned long> pl;
-  bolt::cl::device_vector<unsigned long> dVectorA( hVectorA.begin(), hVectorA.end() ),
+  bolt::cl::plus<cl_ulong> pl;
+  bolt::cl::device_vector<cl_ulong> dVectorA( hVectorA.begin(), hVectorA.end() ),
                                dVectorB( hVectorB.begin(), hVectorB.end() ),
                                dVectorO( hVectorO.begin(), hVectorO.end() );
-  std::transform( hVectorA.begin(), hVectorA.end(), hVectorB.begin(), hVectorO.begin(), std::plus< long >( ) );
+  std::transform( hVectorA.begin(), hVectorA.end(), hVectorB.begin(), hVectorO.begin(), std::plus< cl_ulong >( ) );
   bolt::cl::transform( dVectorA.begin(),
     dVectorA.end(),
     dVectorB.begin(),
@@ -2454,10 +2455,11 @@ TEST(TransformStd, OffsetTestDeviceVectorMultiCoreCPU)
 
 }
 
+
 TEST(TransformStd, OffsetTestMultiCoreCPU)
 {
   int length = 1024;
-  std::vector<int> hVectorA( length ), hVectorB( length ), hVectorO( length ), hVectorDO( length );
+  std::vector<cl_long> hVectorA( length ), hVectorB( length ), hVectorO( length ), hVectorDO( length );
   std::fill( hVectorA.begin(), hVectorA.end(), 1024 );
   std::fill( hVectorB.begin(), hVectorB.end(), 1024 );
   std::fill( hVectorO.begin(), hVectorO.end(), 0 );
@@ -2465,13 +2467,13 @@ TEST(TransformStd, OffsetTestMultiCoreCPU)
 
 
   bolt::cl::control ctl;
-  ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
-  std::transform( hVectorA.begin()+70, hVectorA.begin()+135, hVectorB.begin()+85, hVectorO.begin()+150, std::plus< int >( ) );
+  //ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+  std::transform( hVectorA.begin()+70, hVectorA.begin()+135, hVectorB.begin()+85, hVectorO.begin()+150, std::plus< cl_long >( ) );
   bolt::cl::transform( ctl,
                        hVectorA.begin()+70,
                        hVectorA.begin()+135,
                        hVectorB.begin()+85,
-                       hVectorDO.begin()+150, bolt::cl::plus<int>( ) );
+                       hVectorDO.begin()+150, bolt::cl::plus<cl_long>( ) );
 
   cmpArrays(hVectorO, hVectorDO);
 

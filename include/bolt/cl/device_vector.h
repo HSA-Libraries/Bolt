@@ -1554,23 +1554,20 @@ namespace cl
 }
 }
 
-BOLT_CREATE_TYPENAME( bolt::cl::device_vector< int >::iterator );
-BOLT_CREATE_CLCODE( bolt::cl::device_vector< int >::iterator, bolt::cl::deviceVectorIteratorTemplate );
-BOLT_CREATE_TYPENAME( bolt::cl::device_vector< char >::iterator );
-BOLT_CREATE_CLCODE( bolt::cl::device_vector< char >::iterator, bolt::cl::deviceVectorIteratorTemplate );
-BOLT_CREATE_TYPENAME( bolt::cl::device_vector< unsigned char >::iterator );
-BOLT_CREATE_CLCODE( bolt::cl::device_vector< unsigned char >::iterator, bolt::cl::deviceVectorIteratorTemplate );
-BOLT_CREATE_TYPENAME( bolt::cl::device_vector< short >::iterator );
-BOLT_CREATE_CLCODE( bolt::cl::device_vector< short >::iterator, bolt::cl::deviceVectorIteratorTemplate );
-BOLT_CREATE_TYPENAME( bolt::cl::device_vector< unsigned short >::iterator );
-BOLT_CREATE_CLCODE( bolt::cl::device_vector< unsigned short >::iterator, bolt::cl::deviceVectorIteratorTemplate );
-BOLT_CREATE_TYPENAME( bolt::cl::device_vector< long >::iterator );
-BOLT_CREATE_CLCODE( bolt::cl::device_vector< long >::iterator, bolt::cl::deviceVectorIteratorTemplate );
-BOLT_CREATE_TYPENAME( bolt::cl::device_vector< unsigned long >::iterator );
-BOLT_CREATE_CLCODE( bolt::cl::device_vector< unsigned long >::iterator, bolt::cl::deviceVectorIteratorTemplate );
+BOLT_CREATE_TYPENAME( bolt::cl::device_vector< cl_int >::iterator );
+BOLT_CREATE_CLCODE( bolt::cl::device_vector< cl_int >::iterator, bolt::cl::deviceVectorIteratorTemplate );
+/*Now derive each of the OpenCL Application data types from cl_int data type.*/
+//Visual Studio 2012 is not able to map char to cl_char. Hence this typename is added.
+BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, int, char );
 
-BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, int, unsigned int );
-BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, int, float );
-BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, int, double );
+BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, cl_int, cl_char );          
+BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, cl_int, cl_uchar );  
+BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, cl_int, cl_short );          
+BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, cl_int, cl_ushort );         
+BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, cl_int, cl_uint );           
+BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, cl_int, cl_long );           
+BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, cl_int, cl_ulong );          
+BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, cl_int, cl_float );          
+BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, cl_int, cl_double );         
 
 #endif

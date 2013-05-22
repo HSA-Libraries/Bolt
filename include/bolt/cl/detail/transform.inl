@@ -641,6 +641,7 @@ public:
         // For user-defined types, the user must create a TypeName trait which returns the name of the
         //class - note use of TypeName<>::get to retrieve the name here.
         std::vector<std::string> typeDefinitions;
+        PUSH_BACK_UNIQUE( typeDefinitions, cl_code)
         PUSH_BACK_UNIQUE( typeDefinitions, ClCode< iType1 >::get() )
         PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVInputIterator1 >::get() )
         PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVInputIterator2 >::get() )

@@ -223,247 +223,249 @@ struct logical_or
 }; // namespace cl
 }; // namespace bolt
 
-BOLT_CREATE_TYPENAME( bolt::cl::square< int > );
-BOLT_CREATE_CLCODE( bolt::cl::square< int >, bolt::cl::squareFunctor );
+BOLT_CREATE_TYPENAME( bolt::cl::square< cl_int > );
+BOLT_CREATE_CLCODE( bolt::cl::square< cl_int >, bolt::cl::squareFunctor );
 
-BOLT_CREATE_TYPENAME( bolt::cl::cube< int > );
-BOLT_CREATE_CLCODE( bolt::cl::cube< int >, bolt::cl::cubeFunctor );
+BOLT_CREATE_TYPENAME( bolt::cl::cube< cl_int > );
+BOLT_CREATE_CLCODE( bolt::cl::cube< cl_int >, bolt::cl::cubeFunctor );
 
-BOLT_CREATE_TYPENAME( bolt::cl::negate< int > );
-BOLT_CREATE_CLCODE( bolt::cl::negate< int >, bolt::cl::negateFunctor );
+BOLT_CREATE_TYPENAME( bolt::cl::negate< cl_int > );
+BOLT_CREATE_CLCODE( bolt::cl::negate< cl_int >, bolt::cl::negateFunctor );
 
-BOLT_CREATE_TYPENAME( bolt::cl::plus< int > );
-BOLT_CREATE_CLCODE( bolt::cl::plus< int >, bolt::cl::plusFunctor );
+BOLT_CREATE_TYPENAME( bolt::cl::plus< cl_int > );
+BOLT_CREATE_CLCODE( bolt::cl::plus< cl_int >, bolt::cl::plusFunctor );
 
-BOLT_CREATE_TYPENAME( bolt::cl::minus< int > );
-BOLT_CREATE_CLCODE( bolt::cl::minus< int >, bolt::cl::minusFunctor );
+BOLT_CREATE_TYPENAME( bolt::cl::minus< cl_int > );
+BOLT_CREATE_CLCODE( bolt::cl::minus< cl_int >, bolt::cl::minusFunctor );
 
-BOLT_CREATE_TYPENAME( bolt::cl::multiplies< int > );
-BOLT_CREATE_CLCODE( bolt::cl::multiplies< int >, bolt::cl::multipliesFunctor );
+BOLT_CREATE_TYPENAME( bolt::cl::multiplies< cl_int > );
+BOLT_CREATE_CLCODE( bolt::cl::multiplies< cl_int >, bolt::cl::multipliesFunctor );
 
-BOLT_CREATE_TYPENAME( bolt::cl::divides< int > );
-BOLT_CREATE_CLCODE( bolt::cl::divides< int >, bolt::cl::dividesFunctor );
+BOLT_CREATE_TYPENAME( bolt::cl::divides< cl_int > );
+BOLT_CREATE_CLCODE( bolt::cl::divides< cl_int >, bolt::cl::dividesFunctor );
 
-BOLT_CREATE_TYPENAME( bolt::cl::modulus< int > );
-BOLT_CREATE_CLCODE( bolt::cl::modulus< int >, bolt::cl::modulusFunctor );
+BOLT_CREATE_TYPENAME( bolt::cl::modulus< cl_int > );
+BOLT_CREATE_CLCODE( bolt::cl::modulus< cl_int >, bolt::cl::modulusFunctor );
 
-BOLT_CREATE_TYPENAME( bolt::cl::maximum< int > );
-BOLT_CREATE_CLCODE( bolt::cl::maximum< int >, bolt::cl::maximumFunctor );
+BOLT_CREATE_TYPENAME( bolt::cl::maximum< cl_int > );
+BOLT_CREATE_CLCODE( bolt::cl::maximum< cl_int >, bolt::cl::maximumFunctor );
 
-BOLT_CREATE_TYPENAME( bolt::cl::minimum< int > );
-BOLT_CREATE_CLCODE( bolt::cl::minimum< int >, bolt::cl::minimumFunctor );
+BOLT_CREATE_TYPENAME( bolt::cl::minimum< cl_int > );
+BOLT_CREATE_CLCODE( bolt::cl::minimum< cl_int >, bolt::cl::minimumFunctor );
 
-BOLT_CREATE_TYPENAME( bolt::cl::bit_and< int > );
-BOLT_CREATE_CLCODE( bolt::cl::bit_and< int >, bolt::cl::bit_andFunctor );
+BOLT_CREATE_TYPENAME( bolt::cl::bit_and< cl_int > );
+BOLT_CREATE_CLCODE( bolt::cl::bit_and< cl_int >, bolt::cl::bit_andFunctor );
 
-BOLT_CREATE_TYPENAME( bolt::cl::bit_or< int > );
-BOLT_CREATE_CLCODE( bolt::cl::bit_or< int >, bolt::cl::bit_orFunctor );
+BOLT_CREATE_TYPENAME( bolt::cl::bit_or< cl_int > );
+BOLT_CREATE_CLCODE( bolt::cl::bit_or< cl_int >, bolt::cl::bit_orFunctor );
 
-BOLT_CREATE_TYPENAME( bolt::cl::bit_xor< int > );
-BOLT_CREATE_CLCODE( bolt::cl::bit_xor< int >, bolt::cl::bit_xorFunctor );
+BOLT_CREATE_TYPENAME( bolt::cl::bit_xor< cl_int > );
+BOLT_CREATE_CLCODE( bolt::cl::bit_xor< cl_int >, bolt::cl::bit_xorFunctor );
 
-BOLT_CREATE_TYPENAME( bolt::cl::logical_not< int > );
-BOLT_CREATE_CLCODE( bolt::cl::logical_not< int >, bolt::cl::logical_notFunctor );
+BOLT_CREATE_TYPENAME( bolt::cl::logical_not< cl_int > );
+BOLT_CREATE_CLCODE( bolt::cl::logical_not< cl_int >, bolt::cl::logical_notFunctor );
 
-BOLT_CREATE_TYPENAME( bolt::cl::equal_to< int > );
-BOLT_CREATE_CLCODE( bolt::cl::equal_to< int >, bolt::cl::equal_toFunctor );
+BOLT_CREATE_TYPENAME( bolt::cl::equal_to< cl_int > );
+BOLT_CREATE_CLCODE( bolt::cl::equal_to< cl_int >, bolt::cl::equal_toFunctor );
 
-BOLT_CREATE_TYPENAME( bolt::cl::not_equal_to< int > );
-BOLT_CREATE_CLCODE( bolt::cl::not_equal_to< int >, bolt::cl::not_equal_toFunctor );
+BOLT_CREATE_TYPENAME( bolt::cl::not_equal_to< cl_int > );
+BOLT_CREATE_CLCODE( bolt::cl::not_equal_to< cl_int >, bolt::cl::not_equal_toFunctor );
 
-BOLT_CREATE_TYPENAME( bolt::cl::greater< int > );
-BOLT_CREATE_CLCODE( bolt::cl::greater< int >, bolt::cl::greaterFunctor );
+BOLT_CREATE_TYPENAME( bolt::cl::greater< cl_int > );
+BOLT_CREATE_CLCODE( bolt::cl::greater< cl_int >, bolt::cl::greaterFunctor );
 
-BOLT_CREATE_TYPENAME( bolt::cl::less< int > );
-BOLT_CREATE_CLCODE( bolt::cl::less< int >, bolt::cl::lessFunctor );
+BOLT_CREATE_TYPENAME( bolt::cl::less< cl_int > );
+BOLT_CREATE_CLCODE( bolt::cl::less< cl_int >, bolt::cl::lessFunctor );
 
-BOLT_CREATE_TYPENAME( bolt::cl::greater_equal< int > );
-BOLT_CREATE_CLCODE( bolt::cl::greater_equal< int >, bolt::cl::greater_equalFunctor );
+BOLT_CREATE_TYPENAME( bolt::cl::greater_equal< cl_int > );
+BOLT_CREATE_CLCODE( bolt::cl::greater_equal< cl_int >, bolt::cl::greater_equalFunctor );
 
-BOLT_CREATE_TYPENAME( bolt::cl::less_equal< int > );
-BOLT_CREATE_CLCODE( bolt::cl::less_equal< int >, bolt::cl::less_equalFunctor );
+BOLT_CREATE_TYPENAME( bolt::cl::less_equal< cl_int > );
+BOLT_CREATE_CLCODE( bolt::cl::less_equal< cl_int >, bolt::cl::less_equalFunctor );
 
-BOLT_CREATE_TYPENAME( bolt::cl::logical_and< int > );
-BOLT_CREATE_CLCODE( bolt::cl::logical_and< int >, bolt::cl::logical_andFunctor );
+BOLT_CREATE_TYPENAME( bolt::cl::logical_and< cl_int > );
+BOLT_CREATE_CLCODE( bolt::cl::logical_and< cl_int >, bolt::cl::logical_andFunctor );
 
-BOLT_CREATE_TYPENAME( bolt::cl::logical_or< int > );
-BOLT_CREATE_CLCODE( bolt::cl::logical_or< int >, bolt::cl::logical_orFunctor );
+BOLT_CREATE_TYPENAME( bolt::cl::logical_or< cl_int > );
+BOLT_CREATE_CLCODE( bolt::cl::logical_or< cl_int >, bolt::cl::logical_orFunctor );
 
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::square, int, unsigned int );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::square, int, float );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::square, int, double );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::square, int, long );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::square, int, unsigned long );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::square, int, short );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::square, int, unsigned short );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::square, int, cl_short );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::square, int, cl_ushort );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::square, int, cl_uint );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::square, int, cl_long );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::square, int, cl_ulong );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::square, int, cl_float );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::square, int, cl_double );
 
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::cube, int, unsigned int );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::cube, int, float );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::cube, int, double );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::cube, int, long );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::cube, int, unsigned long );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::cube, int, short );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::cube, int, unsigned short );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::cube, int, cl_short );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::cube, int, cl_ushort );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::cube, int, cl_uint );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::cube, int, cl_long );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::cube, int, cl_ulong );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::cube, int, cl_float );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::cube, int, cl_double );
 
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::negate, int, unsigned int );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::negate, int, float );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::negate, int, double );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::negate, int, long );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::negate, int, unsigned long );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::negate, int, short );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::negate, int, unsigned short );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::negate, int, cl_short );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::negate, int, cl_ushort );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::negate, int, cl_uint );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::negate, int, cl_long );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::negate, int, cl_ulong );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::negate, int, cl_float );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::negate, int, cl_double );
+
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::plus, int, cl_short );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::plus, int, cl_ushort );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::plus, int, cl_uint );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::plus, int, cl_long );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::plus, int, cl_ulong );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::plus, int, cl_float );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::plus, int, cl_double );
 
 
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::plus, int, unsigned int );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::plus, int, float );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::plus, int, double );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::plus, int, long );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::plus, int, unsigned long );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::plus, int, short );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::plus, int, unsigned short );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::minus, int, cl_short );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::minus, int, cl_ushort );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::minus, int, cl_uint );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::minus, int, cl_long );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::minus, int, cl_ulong );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::minus, int, cl_float );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::minus, int, cl_double );
 
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::minus, int, unsigned int );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::minus, int, float );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::minus, int, double );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::minus, int, long );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::minus, int, unsigned long );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::minus, int, short );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::minus, int, unsigned short );
 
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::multiplies, int, unsigned int );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::multiplies, int, float );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::multiplies, int, double );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::multiplies, int, long );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::multiplies, int, unsigned long );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::multiplies, int, short );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::multiplies, int, unsigned short );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::multiplies, int, cl_short );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::multiplies, int, cl_ushort );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::multiplies, int, cl_uint );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::multiplies, int, cl_long );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::multiplies, int, cl_ulong );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::multiplies, int, cl_float );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::multiplies, int, cl_double );
 
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::divides, int, unsigned int );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::divides, int, float );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::divides, int, double );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::divides, int, long );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::divides, int, unsigned long );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::divides, int, short );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::divides, int, unsigned short );
 
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::modulus, int, unsigned int );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::modulus, int, float );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::modulus, int, double );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::modulus, int, long );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::modulus, int, unsigned long );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::modulus, int, short );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::modulus, int, unsigned short );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::divides, int, cl_short );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::divides, int, cl_ushort );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::divides, int, cl_uint );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::divides, int, cl_long );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::divides, int, cl_ulong );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::divides, int, cl_float );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::divides, int, cl_double );
 
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::maximum, int, unsigned int );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::maximum, int, float );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::maximum, int, double );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::maximum, int, long );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::maximum, int, unsigned long );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::maximum, int, short );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::maximum, int, unsigned short );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::modulus, int, cl_short );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::modulus, int, cl_ushort );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::modulus, int, cl_uint );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::modulus, int, cl_long );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::modulus, int, cl_ulong );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::modulus, int, cl_float );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::modulus, int, cl_double );
 
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::minimum, int, unsigned int );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::minimum, int, float );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::minimum, int, double );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::minimum, int, long );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::minimum, int, unsigned long );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::minimum, int, short );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::minimum, int, unsigned short );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::maximum, int, cl_short );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::maximum, int, cl_ushort );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::maximum, int, cl_uint );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::maximum, int, cl_long );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::maximum, int, cl_ulong );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::maximum, int, cl_float );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::maximum, int, cl_double );
 
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::bit_and, int, unsigned int );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::bit_and, int, float );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::bit_and, int, double );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::bit_and, int, long );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::bit_and, int, unsigned long );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::bit_and, int, short );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::bit_and, int, unsigned short );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::minimum, int, cl_short );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::minimum, int, cl_ushort );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::minimum, int, cl_uint );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::minimum, int, cl_long );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::minimum, int, cl_ulong );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::minimum, int, cl_float );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::minimum, int, cl_double );
 
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::bit_or, int, unsigned int );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::bit_or, int, float );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::bit_or, int, double );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::bit_or, int, long );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::bit_or, int, unsigned long );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::bit_or, int, short );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::bit_or, int, unsigned short );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::bit_and, int, cl_short );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::bit_and, int, cl_ushort );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::bit_and, int, cl_uint );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::bit_and, int, cl_long );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::bit_and, int, cl_ulong );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::bit_and, int, cl_float );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::bit_and, int, cl_double );
 
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::bit_xor, int, unsigned int );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::bit_xor, int, float );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::bit_xor, int, double );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::bit_xor, int, long );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::bit_xor, int, unsigned long );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::bit_xor, int, short );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::bit_xor, int, unsigned short );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::bit_or, int, cl_short );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::bit_or, int, cl_ushort );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::bit_or, int, cl_uint );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::bit_or, int, cl_long );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::bit_or, int, cl_ulong );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::bit_or, int, cl_float );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::bit_or, int, cl_double );
 
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::logical_not, int, unsigned int );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::logical_not, int, float );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::logical_not, int, double );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::logical_not, int, long );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::logical_not, int, unsigned long );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::logical_not, int, short );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::logical_not, int, unsigned short );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::bit_xor, int, cl_short );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::bit_xor, int, cl_ushort );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::bit_xor, int, cl_uint );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::bit_xor, int, cl_long );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::bit_xor, int, cl_ulong );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::bit_xor, int, cl_float );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::bit_xor, int, cl_double );
 
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::equal_to, int, unsigned int );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::equal_to, int, float );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::equal_to, int, double );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::equal_to, int, long );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::equal_to, int, unsigned long );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::equal_to, int, short );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::equal_to, int, unsigned short );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::logical_not, int, cl_short );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::logical_not, int, cl_ushort );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::logical_not, int, cl_uint );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::logical_not, int, cl_long );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::logical_not, int, cl_ulong );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::logical_not, int, cl_float );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::logical_not, int, cl_double );
 
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::not_equal_to, int, unsigned int );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::not_equal_to, int, float );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::not_equal_to, int, double );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::not_equal_to, int, long );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::not_equal_to, int, unsigned long );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::not_equal_to, int, short );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::not_equal_to, int, unsigned short );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::equal_to, int, cl_short );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::equal_to, int, cl_ushort );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::equal_to, int, cl_uint );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::equal_to, int, cl_long );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::equal_to, int, cl_ulong );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::equal_to, int, cl_float );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::equal_to, int, cl_double );
 
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::greater, int, unsigned int );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::greater, int, float );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::greater, int, double );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::greater, int, long );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::greater, int, unsigned long );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::greater, int, short );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::greater, int, unsigned short );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::not_equal_to, int, cl_short );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::not_equal_to, int, cl_ushort );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::not_equal_to, int, cl_uint );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::not_equal_to, int, cl_long );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::not_equal_to, int, cl_ulong );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::not_equal_to, int, cl_float );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::not_equal_to, int, cl_double );
 
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::less, int, unsigned int );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::less, int, float );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::less, int, double );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::less, int, long );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::less, int, unsigned long );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::less, int, short );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::less, int, unsigned short );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::greater, int, cl_short );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::greater, int, cl_ushort );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::greater, int, cl_uint );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::greater, int, cl_long );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::greater, int, cl_ulong );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::greater, int, cl_float );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::greater, int, cl_double );
 
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::greater_equal, int, unsigned int );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::greater_equal, int, float );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::greater_equal, int, double );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::greater_equal, int, long );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::greater_equal, int, unsigned long );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::greater_equal, int, short );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::greater_equal, int, unsigned short );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::less, int, cl_short );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::less, int, cl_ushort );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::less, int, cl_uint );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::less, int, cl_long );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::less, int, cl_ulong );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::less, int, cl_float );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::less, int, cl_double );
 
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::less_equal, int, unsigned int );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::less_equal, int, float );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::less_equal, int, double );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::less_equal, int, long );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::less_equal, int, unsigned long );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::less_equal, int, short );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::less_equal, int, unsigned short );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::greater_equal, int, cl_short );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::greater_equal, int, cl_ushort );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::greater_equal, int, cl_uint );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::greater_equal, int, cl_long );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::greater_equal, int, cl_ulong );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::greater_equal, int, cl_float );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::greater_equal, int, cl_double );
 
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::logical_and, int, unsigned int );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::logical_and, int, float );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::logical_and, int, double );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::logical_and, int, long );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::logical_and, int, unsigned long );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::logical_and, int, short );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::logical_and, int, unsigned short );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::less_equal, int, cl_short );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::less_equal, int, cl_ushort );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::less_equal, int, cl_uint );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::less_equal, int, cl_long );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::less_equal, int, cl_ulong );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::less_equal, int, cl_float );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::less_equal, int, cl_double );
 
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::logical_or, int, unsigned int );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::logical_or, int, float );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::logical_or, int, double );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::logical_or, int, long );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::logical_or, int, unsigned long );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::logical_or, int, short );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::logical_or, int, unsigned short );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::logical_and, int, cl_short );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::logical_and, int, cl_ushort );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::logical_and, int, cl_uint );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::logical_and, int, cl_long );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::logical_and, int, cl_ulong );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::logical_and, int, cl_float );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::logical_and, int, cl_double );
+
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::logical_or, int, cl_short );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::logical_or, int, cl_ushort );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::logical_or, int, cl_uint );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::logical_or, int, cl_long );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::logical_or, int, cl_ulong );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::logical_or, int, cl_float );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::logical_or, int, cl_double );
 
 #endif

@@ -453,6 +453,22 @@ namespace bolt {
         const std::string&  options )
     {
         std::string completeKernelString;
+        /* In device vector.h functional.h and bolt.h the defintions of cl_* are given. These cl_* are typedef'd 
+         * to there corresponding types in cl_platforms.h. To the kernel Actually the cl_* are passed, But the OpenCL 
+           kernel does not understand cl_* So we need the below typdefinitions. */
+        const std::string PreprocessorDefinitions = 
+        "#define cl_int    int\n" 
+        "#define cl_uint   unsigned int\n" 
+        "#define cl_short  short\n" 
+        "#define cl_ushort unsigned int\n" 
+        "#define cl_long   long\n" 
+        "#define cl_ulong  unsigned long\n" 
+        "#define cl_float  float\n" 
+        "#define cl_double double\n"
+        "#define cl_char   char\n" 
+        "#define cl_uchar  unsigned char\n" ;
+        
+        completeKernelString = PreprocessorDefinitions;
 
         // (1) raw kernel
         completeKernelString += "\n// Raw Kernel\n\n" + kernelString;

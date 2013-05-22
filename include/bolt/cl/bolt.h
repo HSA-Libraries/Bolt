@@ -278,17 +278,19 @@ namespace bolt {
 #define ALIGNED( bound ) __attribute__ ( (aligned( bound ) ) )
 #endif
 
-BOLT_CREATE_TYPENAME( int );
-BOLT_CREATE_TYPENAME( unsigned int );
-BOLT_CREATE_TYPENAME( float );
-BOLT_CREATE_TYPENAME( double );
+//Visual Studio 2012 is not able to map char to cl_char. Hence this typename is added.
 BOLT_CREATE_TYPENAME( char );
-BOLT_CREATE_TYPENAME( unsigned char );
-BOLT_CREATE_TYPENAME( short );
-BOLT_CREATE_TYPENAME( unsigned short );
-BOLT_CREATE_TYPENAME( long );
-BOLT_CREATE_TYPENAME( unsigned long );
 
+BOLT_CREATE_TYPENAME( cl_char );   
+BOLT_CREATE_TYPENAME( cl_uchar );  
+BOLT_CREATE_TYPENAME( cl_short ); 
+BOLT_CREATE_TYPENAME( cl_ushort );
+BOLT_CREATE_TYPENAME( cl_int );   
+BOLT_CREATE_TYPENAME( cl_uint );  
+BOLT_CREATE_TYPENAME( cl_long );  
+BOLT_CREATE_TYPENAME( cl_ulong ); 
+BOLT_CREATE_TYPENAME( cl_float ); 
+BOLT_CREATE_TYPENAME( cl_double );
 
 ////  Pre-define standard primitives that are likely to be used in a variety of OpenCL kernels
 //BOLT_CREATE_TYPENAME( cl_int );
