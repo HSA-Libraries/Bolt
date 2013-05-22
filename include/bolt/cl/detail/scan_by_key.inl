@@ -1078,9 +1078,9 @@ size_t k0_stepNum, k1_stepNum, k2_stepNum;
         CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_binary_funct );
 
     control::buffPointer keySumArray  = ctl.acquireBuffer( sizeScanBuff*sizeof( kType ) );
-    control::buffPointer preSumArray  = ctl.acquireBuffer( sizeScanBuff*sizeof( oType ) );
-    control::buffPointer preSumArray1  = ctl.acquireBuffer( sizeScanBuff*sizeof( oType ) );
-    control::buffPointer postSumArray = ctl.acquireBuffer( sizeScanBuff*sizeof( oType ) );
+    control::buffPointer preSumArray  = ctl.acquireBuffer( sizeScanBuff*sizeof( vType ) );
+    control::buffPointer preSumArray1  = ctl.acquireBuffer( sizeScanBuff*sizeof( vType ) );
+    control::buffPointer postSumArray = ctl.acquireBuffer( sizeScanBuff*sizeof( vType ) );
     cl_uint ldsKeySize, ldsValueSize;
 
 
@@ -1095,7 +1095,7 @@ aProfiler.set(AsyncProfiler::getDevice, control::SerialCpu);
     try
     {
     ldsKeySize   = static_cast< cl_uint >( (kernel0_WgSize*2) * sizeof( kType ) );
-    ldsValueSize = static_cast< cl_uint >( (kernel0_WgSize*2) * sizeof( oType ) );
+    ldsValueSize = static_cast< cl_uint >( (kernel0_WgSize*2) * sizeof( vType ) );
     V_OPENCL( kernels[0].setArg( 0, firstKey.getContainer().getBuffer()), "Error setArg kernels[ 0 ]" ); // Input keys
     V_OPENCL( kernels[0].setArg( 1, firstKey.gpuPayloadSize( ), &firstKey.gpuPayload( ) ), "Error setting a kernel argument" );
     V_OPENCL( kernels[0].setArg( 2, firstValue.getContainer().getBuffer()),"Error setArg kernels[ 0 ]" ); // Input buffer
@@ -1147,7 +1147,7 @@ aProfiler.setStepName("Setup Kernel 1");
 aProfiler.set(AsyncProfiler::device, control::SerialCpu);
 #endif
     ldsKeySize   = static_cast< cl_uint >( (kernel0_WgSize) * sizeof( kType ) );
-    ldsValueSize = static_cast< cl_uint >( (kernel0_WgSize) * sizeof( oType ) );
+    ldsValueSize = static_cast< cl_uint >( (kernel0_WgSize) * sizeof( vType ) );
     cl_uint workPerThread = static_cast< cl_uint >( sizeScanBuff / kernel1_WgSize );
     workPerThread = workPerThread ? workPerThread : 1;
 
