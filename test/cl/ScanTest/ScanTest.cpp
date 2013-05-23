@@ -1587,7 +1587,7 @@ public:
     virtual void SetUp( )
     {
         size_t size = GetParam( );
-        for( int i=0; i < size; i++ )
+        for( size_t i=0; i < size; i++ )
         {
             stdInput[ i ] = 1;
             boltInput[ i ] = 1;
@@ -1617,6 +1617,7 @@ public:
 };
 
 typedef scanStdVectorWithIters ScanOffsetTest;
+typedef scanStdVectorWithIters ScanCLtypeTest;
 
 class StdVectCountingIterator :public ::testing::TestWithParam<int>{
 protected:
@@ -1625,6 +1626,124 @@ public:
     StdVectCountingIterator():mySize(GetParam()){
     }
 };
+
+
+
+TEST_P (ScanCLtypeTest, InclTestLong)
+{
+    bolt::cl::device_vector< cl_long > input( myStdVectSize, 2);
+    std::vector< cl_long > refInput( myStdVectSize, 2);
+   // call scan
+    bolt::cl::plus<cl_long> ai2;
+    bolt::cl::inclusive_scan( input.begin(),    input.end(),    input.begin(), ai2 );
+    ::std::partial_sum(refInput.begin(), refInput.end(), refInput.begin(), ai2);
+
+    cmpArrays(input, refInput);
+	 
+} 
+
+TEST_P (ScanCLtypeTest, ExclTestLong)
+{
+    bolt::cl::device_vector< cl_long > input( myStdVectSize,2);
+    std::vector< cl_long> refInput( myStdVectSize,2);
+   
+    // call scan
+    bolt::cl::plus<cl_long> ai2;
+
+    ::std::partial_sum(refInput.begin(), refInput.end(), refInput.begin(), ai2);
+    bolt::cl::exclusive_scan(input.begin(),  input.end(), input.begin(), 2, ai2  );
+
+    cmpArrays(input, refInput);
+	 
+} 
+
+TEST_P (ScanCLtypeTest, InclTestULong)
+{
+    bolt::cl::device_vector< cl_ulong > input( myStdVectSize, 2);
+    std::vector< cl_ulong > refInput( myStdVectSize, 2);
+   // call scan
+    bolt::cl::plus<cl_ulong> ai2;
+    bolt::cl::inclusive_scan( input.begin(),    input.end(),    input.begin(), ai2 );
+    ::std::partial_sum(refInput.begin(), refInput.end(), refInput.begin(), ai2);
+
+    cmpArrays(input, refInput);
+	 
+} 
+
+TEST_P (ScanCLtypeTest, ExclTestULong)
+{
+    bolt::cl::device_vector< cl_ulong > input( myStdVectSize,2);
+    std::vector< cl_ulong > refInput( myStdVectSize,2);
+
+    // call scan
+    bolt::cl::plus<cl_ulong> ai2;
+
+    ::std::partial_sum(refInput.begin(), refInput.end(), refInput.begin(), ai2);
+    bolt::cl::exclusive_scan(input.begin(),  input.end(), input.begin(), 2, ai2  );
+
+    cmpArrays(input, refInput);
+	 
+} 
+
+TEST_P (ScanCLtypeTest, InclTestShort)
+{
+    bolt::cl::device_vector< cl_short > input( myStdVectSize, 2);
+    std::vector< cl_short > refInput( myStdVectSize, 2);
+   // call scan
+    bolt::cl::plus<cl_short> ai2;
+    bolt::cl::inclusive_scan( input.begin(),    input.end(),    input.begin(), ai2 );
+    ::std::partial_sum(refInput.begin(), refInput.end(), refInput.begin(), ai2);
+
+    cmpArrays(input, refInput);
+	 
+} 
+
+TEST_P (ScanCLtypeTest, ExclTestShort)
+{
+    bolt::cl::device_vector< cl_short > input( myStdVectSize,2);
+    std::vector< cl_short > refInput( myStdVectSize,2);
+   
+    // call scan
+    bolt::cl::plus<cl_short> ai2;
+
+    ::std::partial_sum(refInput.begin(), refInput.end(), refInput.begin(), ai2);
+    bolt::cl::exclusive_scan(input.begin(),  input.end(), input.begin(), 2, ai2  );
+
+    cmpArrays(input, refInput);
+	 
+} 
+/*
+TEST_P (ScanCLtypeTest, InclTestUShort)
+{
+    bolt::cl::device_vector< cl_ushort > input( myStdVectSize, 1);
+    std::vector< cl_ushort > refInput( myStdVectSize, 1);
+   // call scan
+    bolt::cl::plus<cl_ushort> ai2;
+
+
+    bolt::cl::inclusive_scan( input.begin(),    input.end(),    input.begin(), ai2 );
+    ::std::partial_sum(refInput.begin(), refInput.end(), refInput.begin(), ai2);
+
+
+
+    cmpArrays(input, refInput);
+	 
+} 
+
+TEST_P (ScanCLtypeTest, ExclTestUShort)
+{
+    bolt::cl::device_vector< cl_ushort > input( myStdVectSize,2);
+    std::vector< cl_ushort > refInput( myStdVectSize,2);
+   
+    bolt::cl::plus<cl_ushort> ai2;
+
+    ::std::partial_sum(refInput.begin(), refInput.end(), refInput.begin(), ai2);
+    bolt::cl::exclusive_scan(input.begin(),  input.end(), input.begin(), (cl_ushort)2, ai2  );
+
+    cmpArrays(input, refInput);
+	 
+} 
+*/
 
 /*
 //Scan With Fancy iterator as destination results in Compilation Error!
@@ -1941,7 +2060,10 @@ TEST_P (scanStdVectorWithIters, doubleDefiniteValues){
 }
 #endif
 
-//INSTANTIATE_TEST_CASE_P(inclusiveScanIter, scanStdVectorWithIters, ::testing::Range(1, 1025, 1)); 
+
+////INSTANTIATE_TEST_CASE_P(inclusiveScanIter, scanStdVectorWithIters, ::testing::Range(1, 1025, 1)); 
+//INSTANTIATE_TEST_CASE_P(inclusiveScanIterIntLimit, ScanCLtypeTest, ::testing::Range(1025, 25535, 1000)); 
+INSTANTIATE_TEST_CASE_P(inclusiveScanIterIntLimit, ScanCLtypeTest, ::testing::Range( 0, 1024, 1 )); 
 INSTANTIATE_TEST_CASE_P(inclusiveScanIterIntLimit, ScanOffsetTest, ::testing::Range(1025, 65535, 1000)); 
 INSTANTIATE_TEST_CASE_P(inclusiveScanIterIntLimit, scanStdVectorWithIters, ::testing::Range(1025, 65535, 1000)); 
 INSTANTIATE_TEST_CASE_P(withCountingIterator, StdVectCountingIterator, ::testing::Range(1025, 65535, 1000));
@@ -2484,13 +2606,14 @@ TEST_P( ScanFloatVector, intSameValuesSerialInPlace )
                                                                                     stdInput.begin( ) );
     
     //  Loop through the array and compare all the values with each other
-    cmpArrays( stdInput, boltInput );
+    cmpArrays( stdInput, dvBoltInput );
 }
 
 //  Test lots of consecutive numbers, but small range, suitable for integers because they overflow easier
 INSTANTIATE_TEST_CASE_P( Inclusive, ScanIntegerVector, ::testing::Range( 0, 1024, 1 ) );
 INSTANTIATE_TEST_CASE_P( Inclusive, ScanIntegerDeviceVector, ::testing::Range( 0, 1024, 1 ) );
 INSTANTIATE_TEST_CASE_P( Inclusive, ScanIntegerNakedPointer, ::testing::Range( 0, 1024, 1 ) );
+INSTANTIATE_TEST_CASE_P( Exclusive, ScanFloatVector, ::testing::Range( 1, 1024, 1 ) );
 
 //  Test a huge range, suitable for floating point as they are less prone to overflow 
 // (but floating point loses granularity at large values)

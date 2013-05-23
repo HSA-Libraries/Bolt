@@ -856,6 +856,347 @@ TEST(InclusiveScanByKey, OffsetIncFloatSerial)
     cmpArrays(refOutput, output);
 }
 
+
+TEST(ScanByKeyCLtype, DeviceExclLong)
+{
+    //setup keys
+    int length = 1<<14;
+    std::vector< int > keys( length, 1);
+    bolt::cl::device_vector< int > device_keys( length, 1);
+    // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
+    int segmentLength = 0;
+    int segmentIndex = 0;
+    int key = 1;
+    for (int i = 0; i < length; i++)
+    {
+        // start over, i.e., begin assigning new key
+        if (segmentIndex == segmentLength)
+        {
+            segmentLength++;
+            segmentIndex = 0;
+            ++key;
+        }
+        keys[i] = key;
+        device_keys[i] = key ;
+        segmentIndex++;
+    }
+    // input and output vectors for device and reference
+    bolt::cl::device_vector< cl_long > input(  length, 2 );
+    bolt::cl::device_vector< cl_long > output( length, 0 );
+    std::vector< cl_long > refInput( length, 2 );
+    std::vector< cl_long > refOutput( length , 0);
+    // call scan
+    bolt::cl::equal_to<int> eq; 
+    bolt::cl::plus<cl_long> mM3; 
+  //  MixM3 mM3;
+  //  uddtM2_equal_to eq;
+   
+    
+    bolt::cl::exclusive_scan_by_key(device_keys.begin() , device_keys.end(), input.begin(), output.begin(), 2,eq, mM3);
+    gold_scan_by_key_exclusive(keys.begin(), keys.end(), refInput.begin(), refOutput.begin(), mM3, 2);
+    // compare results
+    cmpArrays(refOutput, output);
+}
+
+
+TEST(ScanByKeyCLtype, DeviceInclLong)
+{
+    //setup keys
+    int length = 1<<14;
+
+    std::vector< int > keys( length, 1);
+    bolt::cl::device_vector< int > device_keys( length, 1);
+    // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
+    int segmentLength = 0;
+    int segmentIndex = 0;
+    int key = 1;//identityMixM2;
+    for (int i = 0; i < length; i++)
+    {
+        // start over, i.e., begin assigning new key
+        if (segmentIndex == segmentLength)
+        {
+            segmentLength++;
+            segmentIndex = 0;
+            ++key;
+        }
+        keys[i] = key;
+        device_keys[i] = key;
+        segmentIndex++;
+    }
+    // input and output vectors for device and reference
+    bolt::cl::device_vector< cl_long > input(  length, 3 );
+    bolt::cl::device_vector< cl_long > output( length, 0 );
+    std::vector< cl_long > refInput( length, 3 );
+    std::vector< cl_long > refOutput( length,  0);
+    // call scan
+
+    bolt::cl::equal_to<int> eq; 
+    bolt::cl::plus<cl_long> mM3; 
+  //  MixM3 mM3;
+  //  uddtM2_equal_to eq;
+   
+    bolt::cl::inclusive_scan_by_key(device_keys.begin(), device_keys.end(), input.begin(), output.begin(),eq,mM3);
+    gold_scan_by_key(keys.begin(), keys.end(), refInput.begin(), refOutput.begin(), mM3);
+    // compare results
+    cmpArrays(refOutput, output);
+}
+
+
+TEST(ScanByKeyCLtype, DeviceExclUlong)
+{
+    //setup keys
+    int length = 1<<14;
+    std::vector< int > keys( length, 1);
+    bolt::cl::device_vector< int > device_keys( length, 1);
+    // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
+    int segmentLength = 0;
+    int segmentIndex = 0;
+    int key = 1;
+    for (int i = 0; i < length; i++)
+    {
+        // start over, i.e., begin assigning new key
+        if (segmentIndex == segmentLength)
+        {
+            segmentLength++;
+            segmentIndex = 0;
+            ++key;
+        }
+        keys[i] = key;
+        device_keys[i] = key ;
+        segmentIndex++;
+    }
+    // input and output vectors for device and reference
+    bolt::cl::device_vector< cl_ulong > input(  length, 2 );
+    bolt::cl::device_vector< cl_ulong > output( length, 0 );
+    std::vector< cl_ulong > refInput( length, 2 );
+    std::vector< cl_ulong > refOutput( length , 0);
+    // call scan
+    bolt::cl::equal_to<int> eq; 
+    bolt::cl::plus<cl_ulong> mM3; 
+  //  MixM3 mM3;
+  //  uddtM2_equal_to eq;
+   
+    
+    bolt::cl::exclusive_scan_by_key(device_keys.begin(), device_keys.end(), input.begin(), output.begin(), 2,eq, mM3);
+    gold_scan_by_key_exclusive(keys.begin(), keys.end(), refInput.begin(), refOutput.begin(), mM3, 2);
+    // compare results
+    cmpArrays(refOutput, output);
+}
+
+
+TEST(ScanByKeyCLtype, DeviceInclUlong)
+{
+    //setup keys
+    int length = 1<<14;
+
+    std::vector< int > keys( length, 1);
+    bolt::cl::device_vector< int > device_keys( length, 1);
+    // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
+    int segmentLength = 0;
+    int segmentIndex = 0;
+    int key = 1;//identityMixM2;
+    for (int i = 0; i < length; i++)
+    {
+        // start over, i.e., begin assigning new key
+        if (segmentIndex == segmentLength)
+        {
+            segmentLength++;
+            segmentIndex = 0;
+            ++key;
+        }
+        keys[i] = key;
+        device_keys[i] = key;
+        segmentIndex++;
+    }
+    // input and output vectors for device and reference
+    bolt::cl::device_vector< cl_ulong > input(  length, 3 );
+    bolt::cl::device_vector< cl_ulong > output( length, 0 );
+    std::vector< cl_ulong > refInput( length, 3 );
+    std::vector< cl_ulong > refOutput( length,  0);
+    // call scan
+
+    bolt::cl::equal_to<int> eq; 
+    bolt::cl::plus<cl_ulong> mM3; 
+  //  MixM3 mM3;
+  //  uddtM2_equal_to eq;
+   
+    bolt::cl::inclusive_scan_by_key(device_keys.begin(), device_keys.end(), input.begin(), output.begin(),eq,mM3);
+    gold_scan_by_key(keys.begin(), keys.end(), refInput.begin(), refOutput.begin(), mM3);
+    // compare results
+    cmpArrays(refOutput, output);
+}
+
+
+TEST(ScanByKeyCLtype, DeviceExclShort)
+{
+    //setup keys
+    int length = 1<<14;
+    std::vector< int > keys( length, 1);
+    bolt::cl::device_vector< int > device_keys( length, 1);
+    // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
+    int segmentLength = 0;
+    int segmentIndex = 0;
+    int key = 1;
+    for (int i = 0; i < length; i++)
+    {
+        // start over, i.e., begin assigning new key
+        if (segmentIndex == segmentLength)
+        {
+            segmentLength++;
+            segmentIndex = 0;
+            ++key;
+        }
+        keys[i] = key;
+        device_keys[i] = key ;
+        segmentIndex++;
+    }
+    // input and output vectors for device and reference
+    bolt::cl::device_vector< cl_short > input(  length, 2 );
+    bolt::cl::device_vector< cl_short > output( length, 0 );
+    std::vector< cl_short > refInput( length, 2 );
+    std::vector< cl_short > refOutput( length , 0);
+    // call scan
+    bolt::cl::equal_to<int> eq; 
+    bolt::cl::plus<cl_short> mM3; 
+  //  MixM3 mM3;
+  //  uddtM2_equal_to eq;
+   
+    
+    bolt::cl::exclusive_scan_by_key(device_keys.begin() , device_keys.end(), input.begin(), output.begin(), 2,eq, mM3);
+    gold_scan_by_key_exclusive(keys.begin(), keys.end(), refInput.begin(), refOutput.begin(), mM3, 2);
+    // compare results
+    cmpArrays(refOutput, output);
+}
+
+
+TEST(ScanByKeyCLtype, DeviceInclShort)
+{
+    //setup keys
+    int length = 1<<14;
+
+    std::vector< int > keys( length, 1);
+    bolt::cl::device_vector< int > device_keys( length, 1);
+    // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
+    int segmentLength = 0;
+    int segmentIndex = 0;
+    int key = 1;//identityMixM2;
+    for (int i = 0; i < length; i++)
+    {
+        // start over, i.e., begin assigning new key
+        if (segmentIndex == segmentLength)
+        {
+            segmentLength++;
+            segmentIndex = 0;
+            ++key;
+        }
+        keys[i] = key;
+        device_keys[i] = key;
+        segmentIndex++;
+    }
+    // input and output vectors for device and reference
+    bolt::cl::device_vector< cl_short > input(  length, 3 );
+    bolt::cl::device_vector< cl_short > output( length, 0 );
+    std::vector< cl_short > refInput( length, 3 );
+    std::vector< cl_short > refOutput( length,  0);
+    // call scan
+
+    bolt::cl::equal_to<int> eq; 
+    bolt::cl::plus<cl_short> mM3; 
+  //  MixM3 mM3;
+  //  uddtM2_equal_to eq;
+   
+    bolt::cl::inclusive_scan_by_key(device_keys.begin(), device_keys.end(), input.begin(), output.begin(),eq,mM3);
+    gold_scan_by_key(keys.begin(), keys.end(), refInput.begin(), refOutput.begin(), mM3);
+    // compare results
+    cmpArrays(refOutput, output);
+}
+
+/*
+TEST(ScanByKeyCLtype, DeviceExclUShort)
+{
+    //setup keys
+    int length = 1<<14;
+    std::vector< int > keys( length, 1);
+    bolt::cl::device_vector< int > device_keys( length, 1);
+    // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
+    int segmentLength = 0;
+    int segmentIndex = 0;
+    int key = 1;
+    for (int i = 0; i < length; i++)
+    {
+        // start over, i.e., begin assigning new key
+        if (segmentIndex == segmentLength)
+        {
+            segmentLength++;
+            segmentIndex = 0;
+            ++key;
+        }
+        keys[i] = key;
+        device_keys[i] = key ;
+        segmentIndex++;
+    }
+    // input and output vectors for device and reference
+    bolt::cl::device_vector< cl_ushort > input(  length, 2 );
+    bolt::cl::device_vector< cl_ushort > output( length, 0 );
+    std::vector< cl_ushort > refInput( length, 2 );
+    std::vector< cl_ushort > refOutput( length , 0);
+    // call scan
+    bolt::cl::equal_to<int> eq; 
+    bolt::cl::plus<cl_ushort> mM3; 
+  //  MixM3 mM3;
+  //  uddtM2_equal_to eq;
+   
+    
+    bolt::cl::exclusive_scan_by_key(device_keys.begin(), device_keys.end(), input.begin(), output.begin(), 2,eq, mM3);
+    gold_scan_by_key_exclusive(keys.begin(), keys.end(), refInput.begin(), refOutput.begin(), mM3, 2);
+    // compare results
+    cmpArrays(refOutput, output);
+}
+
+
+TEST(ScanByKeyCLtype, DeviceInclUShort)
+{
+    //setup keys
+    int length = 1<<14;
+
+    std::vector< int > keys( length, 1);
+    bolt::cl::device_vector< int > device_keys( length, 1);
+    // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
+    int segmentLength = 0;
+    int segmentIndex = 0;
+    int key = 1;//identityMixM2;
+    for (int i = 0; i < length; i++)
+    {
+        // start over, i.e., begin assigning new key
+        if (segmentIndex == segmentLength)
+        {
+            segmentLength++;
+            segmentIndex = 0;
+            ++key;
+        }
+        keys[i] = key;
+        device_keys[i] = key;
+        segmentIndex++;
+    }
+    // input and output vectors for device and reference
+    bolt::cl::device_vector< cl_ushort > input(  length, 3 );
+    bolt::cl::device_vector< cl_ushort > output( length, 0 );
+    std::vector< cl_ushort > refInput( length, 3 );
+    std::vector< cl_ushort > refOutput( length,  0);
+    // call scan
+
+    bolt::cl::equal_to<int> eq; 
+    bolt::cl::plus<cl_ushort> mM3; 
+  //  MixM3 mM3;
+  //  uddtM2_equal_to eq;
+   
+    bolt::cl::inclusive_scan_by_key(device_keys.begin(), device_keys.end(), input.begin(), output.begin(),eq,mM3);
+    gold_scan_by_key(keys.begin(), keys.end(), refInput.begin(), refOutput.begin(), mM3);
+    // compare results
+    cmpArrays(refOutput, output);
+}
+*/
+
 /////////////////////////Inclusive//////////////////////////////////////////////////
 #if (TEST_DOUBLE == 1)
 

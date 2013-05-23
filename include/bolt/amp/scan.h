@@ -30,10 +30,6 @@
 
 #include <bolt/amp/bolt.h>
 
-/*! \file scan.h
-*/
-
-
 namespace bolt
 {
 namespace amp
