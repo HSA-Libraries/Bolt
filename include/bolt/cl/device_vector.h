@@ -476,6 +476,7 @@ namespace cl
             *   \param init Boolean value to indicate whether to initialize device memory from host memory.
             *   \param ctl A Bolt control class for copy operations; a default is used if not supplied by the user.
             *   \warning The ::cl::CommandQueue is not an STD reserve( ) parameter.
+            *   \bug The size of the value must be a power of two. Refer section 5.2.3 in 'The OpenCL 1.2 Specification' (Khronos)
             */
             device_vector( size_type newSize, const value_type& value = value_type( ), cl_mem_flags flags = CL_MEM_READ_WRITE,
                 bool init = true, const control& ctl = control::getDefault( ) ): m_Size( newSize ), m_commQueue( ctl.getCommandQueue( ) ), m_Flags( flags )
@@ -545,6 +546,11 @@ namespace cl
                     "iterator value_type does not convert to device_vector value_type" );
                 static_assert( !std::is_polymorphic< value_type >::value, "AMD C++ template extensions do not support the virtual keyword yet" );
 
+                if ( m_Size == 0 )
+                {
+                    m_devMemory=NULL;
+                    return;
+                }
                 //  We want to use the context from the passed in commandqueue to initialize our buffer
                 cl_int l_Error = CL_SUCCESS;
                 ::cl::Context l_Context = m_commQueue.getInfo< CL_QUEUE_CONTEXT >( &l_Error );
@@ -600,6 +606,11 @@ namespace cl
                 V_OPENCL( l_Error, "device_vector failed to query for the context of the ::cl::CommandQueue object" );
 
                 m_Size = std::distance( begin, end );
+                if ( m_Size == 0 )
+                {
+                    m_devMemory=NULL;
+                    return;
+                }
                 size_t byteSize = m_Size * sizeof( value_type );
 
                 if( m_Flags & CL_MEM_USE_HOST_PTR )

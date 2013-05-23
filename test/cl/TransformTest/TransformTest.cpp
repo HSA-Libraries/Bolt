@@ -1837,7 +1837,7 @@ INSTANTIATE_TYPED_TEST_CASE_P( Float, TransformArrayTest, FloatTests );
 //INSTANTIATE_TYPED_TEST_CASE_P( Long, TransformArrayTest, LongTests );
 //INSTANTIATE_TYPED_TEST_CASE_P( ULong, TransformArrayTest, ULongTests );
 INSTANTIATE_TYPED_TEST_CASE_P( Short, TransformArrayTest, ShortTests );
-INSTANTIATE_TYPED_TEST_CASE_P( UShort, TransformArrayTest, UShortTests );
+//INSTANTIATE_TYPED_TEST_CASE_P( UShort, TransformArrayTest, UShortTests );
 #if (TEST_DOUBLE == 1)
 INSTANTIATE_TYPED_TEST_CASE_P( Double, TransformArrayTest, DoubleTests );
 #endif 
@@ -2529,6 +2529,74 @@ TEST( Transformint , KcacheTest )
     bolt::cl::transform( cpu_ctrl, cpuInput.begin(), cpuInput.end(), cpuOutput.begin() , bolt::cl::negate<int>());
 
     cmpArrays( refOutput, cpuOutput );
+}
+
+TEST( DebuggingUShort, ushortbintransfrom)
+{
+
+#if LARGE_SIZE
+  int length = 1<<21;
+#else
+  int length = 1024;
+#endif
+  std::vector<unsigned short> hVectorA( length ),
+                   hVectorB( length ),
+                   hVectorO( length );
+  std::fill( hVectorA.begin(), hVectorA.end(), 54443 );
+  std::fill( hVectorB.begin(), hVectorB.end(), 1000 );
+  std::fill( hVectorO.begin(), hVectorO.end(), 0 );
+
+  bolt::cl::plus<unsigned short> pl;
+  bolt::cl::device_vector<unsigned short> dVectorA( hVectorA.begin(), hVectorA.end() ),
+                               dVectorB( hVectorB.begin(), hVectorB.end() ),
+                               dVectorO( hVectorO.begin(), hVectorO.end() );
+  std::transform( hVectorA.begin(),
+                  hVectorA.end(),
+                  hVectorB.begin(),
+                  hVectorO.begin(),
+                  std::plus< unsigned short >( ) );
+  bolt::cl::transform( dVectorA.begin(),
+    dVectorA.end(),
+    dVectorB.begin(),
+    dVectorO.begin(), pl );
+
+  cmpArrays(hVectorO, dVectorO);
+
+
+}
+
+TEST( IntegerTests64, cl_ulongintransfrom)
+{
+
+#if LARGE_SIZE
+  int length = 1<<21;
+#else
+  int length = 1024;
+#endif
+  std::vector<cl_ulong> hVectorA( length ),
+                   hVectorB( length ),
+                   hVectorO( length );
+  std::fill( hVectorA.begin(), hVectorA.end(), 54443 );
+  std::fill( hVectorB.begin(), hVectorB.end(), 1000 );
+  std::fill( hVectorO.begin(), hVectorO.end(), 0 );
+
+  bolt::cl::plus<cl_ulong> pl;
+  bolt::cl::device_vector<cl_ulong> dVectorA( hVectorA.begin(), hVectorA.end() ),
+                               dVectorB( hVectorB.begin(), hVectorB.end() ),
+                               dVectorO( hVectorO.begin(), hVectorO.end() );
+  std::transform( hVectorA.begin(),
+                  hVectorA.end(),
+                  hVectorB.begin(),
+                  hVectorO.begin(),
+                  std::plus< cl_ulong >( ) );
+  bolt::cl::transform( dVectorA.begin(),
+    dVectorA.end(),
+    dVectorB.begin(),
+    dVectorO.begin(), pl );
+
+  cmpArrays(hVectorO, dVectorO);
+
+
 }
 
 
