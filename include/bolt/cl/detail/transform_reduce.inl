@@ -361,7 +361,7 @@ namespace  detail {
             bolt::cl::wait(ctl, l_mapEvent);
 
             oType acc = static_cast< oType >( init );
-            for(int i = 0; i < numTailReduce; ++i)
+            for(unsigned int i = 0; i < numTailReduce; ++i)
             {
                 acc = reduce_op( acc, h_result[ i ] );
             }

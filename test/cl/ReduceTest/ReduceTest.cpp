@@ -526,7 +526,7 @@ public:
         size_t size = GetParam( );
 
         std::generate(stdInput, stdInput + size, generateRandom<int>);
-        for (int i = 0; i<size; i++)
+        for (unsigned int i = 0; i<size; i++)
         {
             boltInput[i] = stdInput[i];
             boltOutput[i] = stdInput[i];
@@ -564,7 +564,7 @@ public:
         size_t size = GetParam( );
 
         std::generate(stdInput, stdInput + size, generateRandom<float>);
-        for (int i = 0; i<size; i++)
+        for (unsigned int i = 0; i<size; i++)
         {
             boltInput[i] = stdInput[i];
             boltOutput[i] = stdInput[i];

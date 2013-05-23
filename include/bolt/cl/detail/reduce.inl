@@ -441,7 +441,7 @@ namespace bolt {
                 bolt::cl::wait(ctl, l_mapEvent);
 
                 T acc = init;
-                for(int i = 0; i < numTailReduce; ++i)
+                for(unsigned int i = 0; i < numTailReduce; ++i)
                 {
                     acc =(T) binary_op(acc, h_result[i]);
                 }

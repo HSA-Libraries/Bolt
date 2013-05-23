@@ -19,6 +19,7 @@
 #if !defined( BOLT_CL_TRANSFORM_INL )
 #define BOLT_CL_TRANSFORM_INL
 #define WAVEFRONT_SIZE 64
+#define TRANSFORM_ENABLE_PROFILING 0
 
 #include <type_traits>
 
@@ -723,17 +724,20 @@ public:
 
         ::bolt::cl::wait(ctl, transformEvent);
 
+#if TRANSFORM_ENABLE_PROFILING
         if( 0 )
         {
-            cl_ulong start_time, stop_time;
+          cl_ulong start_time, stop_time;
 
-            l_Error = transformEvent.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_START, &start_time);
-            V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_QUEUED>()");
-            l_Error = transformEvent.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END, &stop_time);
-            V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_END>()");
-            size_t time = stop_time - start_time;
-            std::cout << "Global Memory Bandwidth: "<<((distVec*(2.0*sizeof(iType1)+sizeof(oType)))/time)<<std::endl;
-        }
+          l_Error = transformEvent.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_START, &start_time);
+          V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_QUEUED>()");
+          l_Error = transformEvent.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END, &stop_time);
+          V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_END>()");
+          size_t time = stop_time - start_time;
+          std::cout << "Global Memory Bandwidth: "<<((distVec*(2.0*sizeof(iType1)+sizeof(oType)))/time)<<std::endl;
+        }  
+#endif // BOLT_ENABLE_PROFILING
+
     };
 
     template< typename DVInputIterator, typename DVOutputIterator, typename UnaryFunction >
@@ -846,18 +850,21 @@ public:
 
         ::bolt::cl::wait(ctl, transformEvent);
 
+#if TRANSFORM_ENABLE_PROFILING
         if( 0 )
         {
-            cl_ulong start_time, stop_time;
+          cl_ulong start_time, stop_time;
 
-            l_Error = transformEvent.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_START, &start_time);
-            V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_QUEUED>()");
-            l_Error = transformEvent.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END, &stop_time);
-            V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_END>()");
-            size_t time = stop_time - start_time;
-            //std::cout << "Global Memory Bandwidth: "<<((distVec*(1.0*sizeof(iType)+sizeof(oType)))/time)<< std::endl;
+          l_Error = transformEvent.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_START, &start_time);
+          V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_QUEUED>()");
+          l_Error = transformEvent.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END, &stop_time);
+          V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_END>()");
+          size_t time = stop_time - start_time;
+          //std::cout << "Global Memory Bandwidth: "<<((distVec*(1.0*sizeof(iType)+sizeof(oType)))/time)<< std::endl;
 
-        }
+        }  
+#endif // BOLT_ENABLE_PROFILING
+
     };
 
 } //End of detail namespace
