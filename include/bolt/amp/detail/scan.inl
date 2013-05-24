@@ -179,13 +179,13 @@ OutputIterator exclusive_scan(
 
 template< typename InputIterator, typename OutputIterator >
 OutputIterator exclusive_scan(
-    const control &ctl,
+    control &ctl,
     InputIterator first,
     InputIterator last,
     OutputIterator result ) // assumes addition of numbers
 {
     typedef std::iterator_traits<InputIterator>::value_type iType;
-    iType init = static_cast< iType >( 0 );
+    iType init; memset(&init, 0, sizeof(iType) );
     return detail::scan_detect_random_access(
         ctl, first, last, result, init, false, plus< iType >( ),
         std::iterator_traits< InputIterator >::iterator_category( ) );

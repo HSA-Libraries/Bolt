@@ -460,7 +460,7 @@ namespace bolt {
         "#define cl_int    int\n" 
         "#define cl_uint   unsigned int\n" 
         "#define cl_short  short\n" 
-        "#define cl_ushort unsigned int\n" 
+        "#define cl_ushort unsigned short\n" 
         "#define cl_long   long\n" 
         "#define cl_ulong  unsigned long\n" 
         "#define cl_float  float\n" 

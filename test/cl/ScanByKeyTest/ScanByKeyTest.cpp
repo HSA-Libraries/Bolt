@@ -1111,7 +1111,7 @@ TEST(ScanByKeyCLtype, DeviceInclShort)
     cmpArrays(refOutput, output);
 }
 
-/*
+
 TEST(ScanByKeyCLtype, DeviceExclUShort)
 {
     //setup keys
@@ -1195,7 +1195,7 @@ TEST(ScanByKeyCLtype, DeviceInclUShort)
     // compare results
     cmpArrays(refOutput, output);
 }
-*/
+
 
 /////////////////////////Inclusive//////////////////////////////////////////////////
 #if (TEST_DOUBLE == 1)
