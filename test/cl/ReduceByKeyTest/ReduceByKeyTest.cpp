@@ -398,13 +398,13 @@ std::vector<int> vectValueIn(size);
 std::vector<int> keyBoltClDevVectOp(size);
 std::vector<int> valueBoltClDevVectOp(size);
 
-for (int i = 0; i < std::ceil(size/3); i++){
+for (int i = 0; i < std::ceil(size/3.0); i++){
 vectKeyIn[i] = (int)2;
 }
-for (int i = (int)(std::ceil(size/3) + 1); i < std::ceil((2* size)/3); i++){
+for (int i = (int)(std::ceil(size/3.0) + 1); i < std::ceil((2* size)/3.0); i++){
 vectKeyIn[i] = (int)3;
 }
-for (int i = (int)(std::ceil((2* size)/3) + 1); i < size; i++){
+for (int i = (int)(std::ceil((2* size)/3.0) + 1); i < size; i++){
 vectKeyIn[i] = (int)5;
 }
 //now elemetns in vectKeyIn are as: {2 2 2 0 3 3 0 5 5 5}
@@ -433,13 +433,13 @@ std::vector<int> vectValueIn(size);
 std::vector<int> keyBoltClDevVectOp(size);
 std::vector<int> valueBoltClDevVectOp(size);
 
-for (int i = 0; i < std::ceil(size/3); i++){
+for (int i = 0; i < std::ceil(size/3.0); i++){
 vectKeyIn[i] = (int)2;
 }
-for (int i = (int)(std::ceil(size/3) + 1); i < std::ceil((2* size)/3); i++){
+for (int i = (int)(std::ceil(size/3.0) + 1); i < std::ceil((2* size)/3.0); i++){
 vectKeyIn[i] = (int)3;
 }
-for (int i = (int)(std::ceil((2* size)/3) + 1); i < size; i++){
+for (int i = (int)(std::ceil((2* size)/3.0) + 1); i < size; i++){
 vectKeyIn[i] = (int)5;
 }
 //now elemetns in vectKeyIn are as: {2 2 2 0 3 3 0 5 5 5}
@@ -472,13 +472,13 @@ std::vector<int> vectValueIn(size);
 std::vector<int> keyBoltClDevVectOp(size);
 std::vector<int> valueBoltClDevVectOp(size);
 
-for (int i = 0; i < std::ceil(size/3); i++){
+for (int i = 0; i < std::ceil(size/3.0); i++){
 vectKeyIn[i] = (int)2;
 }
-for (int i = (int)(std::ceil(size/3) + 1); i < std::ceil((2* size)/3); i++){
+for (int i = (int)(std::ceil(size/3.0) + 1); i < std::ceil((2* size)/3.0); i++){
 vectKeyIn[i] = (int)3;
 }
-for (int i = (int)(std::ceil((2* size)/3) + 1); i < size; i++){
+for (int i = (int)(std::ceil((2* size)/3.0) + 1); i < size; i++){
 vectKeyIn[i] = (int)5;
 }
 //now elemetns in vectKeyIn are as: {2 2 2 0 3 3 0 5 5 5}
@@ -512,13 +512,13 @@ bolt::cl::device_vector<int> vectValueIn(size);
 bolt::cl::device_vector<int> keyBoltClDevVectOp(size);
 bolt::cl::device_vector<int> valueBoltClDevVectOp(size);
 
-for (int i = 0; i < std::ceil(size/3); i++){
+for (int i = 0; i < std::ceil(size/3.0); i++){
 vectKeyIn[i] = (int)2;
 }
-for (int i = (int)(std::ceil(size/3) + 1); i < std::ceil((2* size)/3); i++){
+for (int i = (int)(std::ceil(size/3.0) + 1); i < std::ceil((2* size)/3.0); i++){
 vectKeyIn[i] = (int)3;
 }
-for (int i = (int)(std::ceil((2* size)/3) + 1); i < size; i++){
+for (int i = (int)(std::ceil((2* size)/3.0) + 1); i < size; i++){
 vectKeyIn[i] = (int)5;
 }
 //now elemetns in vectKeyIn are as: {2 2 2 0 3 3 0 5 5 5}
@@ -547,13 +547,13 @@ bolt::cl::device_vector<int> vectValueIn(size);
 bolt::cl::device_vector<int> keyBoltClDevVectOp(size);
 bolt::cl::device_vector<int> valueBoltClDevVectOp(size);
 
-for (int i = 0; i < std::ceil(size/3); i++){
+for (int i = 0; i < std::ceil(size/3.0); i++){
 vectKeyIn[i] = (int)2;
 }
-for (int i = (int)(std::ceil(size/3) + 1); i < std::ceil((2* size)/3); i++){
+for (int i = (int)(std::ceil(size/3.0) + 1); i < std::ceil((2* size)/3.0); i++){
 vectKeyIn[i] = (int)3;
 }
-for (int i = (int)(std::ceil((2* size)/3) + 1); i < size; i++){
+for (int i = (int)(std::ceil((2* size)/3.0) + 1); i < size; i++){
 vectKeyIn[i] = (int)5;
 }
 //now elemetns in vectKeyIn are as: {2 2 2 0 3 3 0 5 5 5}
@@ -587,13 +587,13 @@ bolt::cl::device_vector<int> vectValueIn(size);
 bolt::cl::device_vector<int> keyBoltClDevVectOp(size);
 bolt::cl::device_vector<int> valueBoltClDevVectOp(size);
 
-for (int i = 0; i < std::ceil(size/3); i++){
+for (int i = 0; i < std::ceil(size/3.0); i++){
 vectKeyIn[i] = (int)2;
 }
-for (int i = (int)(std::ceil(size/3) + 1); i < std::ceil((2* size)/3); i++){
+for (int i = (int)(std::ceil(size/3.0) + 1); i < std::ceil((2* size)/3.0); i++){
 vectKeyIn[i] = (int)3;
 }
-for (int i = (int)(std::ceil((2* size)/3) + 1); i < size; i++){
+for (int i = (int)(std::ceil((2* size)/3.0) + 1); i < size; i++){
 vectKeyIn[i] = (int)5;
 }
 //now elemetns in vectKeyIn are as: {2 2 2 0 3 3 0 5 5 5}
