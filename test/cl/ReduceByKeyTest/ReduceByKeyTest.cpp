@@ -445,6 +445,61 @@ TEST(ReduceByKeyBasic, IntegerTest)
    // cmpArrays2(vrefOutput, voutput, refPair.second, p.second);
 }
 
+
+TEST(ReduceByKeyBasic, IntegerTestOffsetTest)
+{
+    int length = 1024;
+    std::vector< int > keys( length);
+    // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
+    int segmentLength = 0;
+    int segmentIndex = 0;
+    int key = 1;
+    std::vector< int > refInput( length );
+    std::vector< int > input( length );
+    for (int i = 0; i < length; i++)
+    {
+        if(std::rand()%3 == 1) key++;
+        keys[i] = key;
+        refInput[i] = std::rand()%4;
+        input[i] = refInput[i];
+    }
+
+    // input and output vectors for device and reference
+
+    std::vector< int > koutput( length );
+    std::vector< int > voutput( length );
+    std::vector< int > krefOutput( length );
+    std::vector< int > vrefOutput( length );
+    std::fill(krefOutput.begin(),krefOutput.end(),0);
+    std::fill(vrefOutput.begin(),vrefOutput.end(),0);
+
+
+    bolt::cl::equal_to<int> binary_predictor;
+    bolt::cl::plus<int> binary_operator;
+
+
+    // call reduce_by_key
+    auto p = bolt::cl::reduce_by_key( keys.begin() +10, keys.begin()+400, input.begin()+10, koutput.begin() +10, voutput.begin() +10,
+                                      binary_predictor, binary_operator);
+
+#if 0
+
+    for(unsigned int i = 0; i < 256 ; i++)
+    {
+      std::cout<<"Ikey "<<keys[i]<<" IValues "<<input[i]<<" -> OKeys "<<koutput[i]<<" OValues "<<voutput[i]<<std::endl;
+    }
+
+#endif
+
+    auto refPair = gold_reduce_by_key( keys.begin() +10, keys.begin() +400, refInput.begin()+10,krefOutput.begin()+10,vrefOutput.begin()+10,
+                                       std::plus<int>());
+
+    //cmpArrays2(krefOutput, koutput, refPair.first, p.first);
+    cmpArrays(krefOutput, koutput);
+    cmpArrays(vrefOutput, voutput);
+   // cmpArrays2(vrefOutput, voutput, refPair.second, p.second);
+}
+
 TEST(ReduceByKeyBasic, CPUIntegerTest)
 {
     int length = 1<<24;
@@ -1143,6 +1198,8 @@ struct uddfltint_plus
     }
 };
 );
+BOLT_CREATE_TYPENAME( bolt::cl::device_vector< uddfltint >::iterator );
+BOLT_CREATE_CLCODE( bolt::cl::device_vector< uddfltint >::iterator, bolt::cl::deviceVectorIteratorTemplate );
 
 #if UDD
 
