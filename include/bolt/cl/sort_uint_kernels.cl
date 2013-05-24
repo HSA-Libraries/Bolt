@@ -180,7 +180,8 @@ void histogramDescendingRadixNTemplate(__global uint* unsortedData,
     }
 }
 #endif
-
+#if 1 
+// Permute Unsigned
 template <int N>
 kernel
 void permuteAscendingRadixNTemplate(__global uint* unsortedData,
@@ -241,11 +242,12 @@ void permuteDescendingRadixNTemplate(__global uint* unsortedData,
     }
 }
 
-
+#endif //Permute Unsigned
 
 /****************Specialized kernels for signed integers****************/
 /*This kernel is giving good performance. With group size as groupSize*16*/
-#if 0
+#if 1
+
 template <int N>
 kernel
 void histogramSignedAscendingRadixNTemplate(__global uint* unsortedData,
@@ -255,9 +257,10 @@ void histogramSignedAscendingRadixNTemplate(__global uint* unsortedData,
     const int RADIX_T     = N;
     const int RADICES_T   = (1 << RADIX_T);
     const int NUM_OF_ELEMENTS_PER_WORK_ITEM_T = RADICES_T; 
-    const int MASK_T      = (1<<RADIX_T)  -1;
-    uint4     MASK_T_4    = (uint4)MASK_T;
-    uint4     shiftCount_4 = (uint4)shiftCount;
+    const int MASK_T      = (1<<RADIX_T -1 )  -1;//Minus 1 because we want to exclude sign bit
+    const uint4 SIGN_BIT_MASK_4 = (uint4) (1<<(RADIX_T-1) );
+    const uint4 MASK_T_4    = (uint4)MASK_T;
+    const uint4 shiftCount_4 = (uint4)shiftCount;
     int       localBuckets[16] = {0,0,0,0,0,0,0,0,
                                   0,0,0,0,0,0,0,0};
     size_t globalId    = get_global_id(0);
@@ -267,10 +270,20 @@ void histogramSignedAscendingRadixNTemplate(__global uint* unsortedData,
     value4_1 =  vload4(1, &unsortedData[globalId * NUM_OF_ELEMENTS_PER_WORK_ITEM_T]);
     value4_2 =  vload4(2, &unsortedData[globalId * NUM_OF_ELEMENTS_PER_WORK_ITEM_T]);
     value4_3 =  vload4(3, &unsortedData[globalId * NUM_OF_ELEMENTS_PER_WORK_ITEM_T]);
-    value4_0 = (value4_0 >> shiftCount_4) & MASK_T_4;
-    value4_1 = (value4_1 >> shiftCount_4) & MASK_T_4;
-    value4_2 = (value4_2 >> shiftCount_4) & MASK_T_4;
-    value4_3 = (value4_3 >> shiftCount_4) & MASK_T_4;
+    value4_0 = (value4_0 >> shiftCount_4);
+    value4_1 = (value4_1 >> shiftCount_4);
+    value4_2 = (value4_2 >> shiftCount_4);
+    value4_3 = (value4_3 >> shiftCount_4);
+
+    uint4 signBit_0 = value4_0 & SIGN_BIT_MASK_4;
+    uint4 signBit_1 = value4_1 & SIGN_BIT_MASK_4;
+    uint4 signBit_2 = value4_2 & SIGN_BIT_MASK_4;
+    uint4 signBit_3 = value4_3 & SIGN_BIT_MASK_4;
+    value4_0 = ( ( ( value4_0 & MASK_T_4 ) ^ MASK_T_4 ) & MASK_T_4 ) | signBit_0;
+    value4_1 = ( ( ( value4_1 & MASK_T_4 ) ^ MASK_T_4 ) & MASK_T_4 ) | signBit_1;
+    value4_2 = ( ( ( value4_2 & MASK_T_4 ) ^ MASK_T_4 ) & MASK_T_4 ) | signBit_2;
+    value4_3 = ( ( ( value4_3 & MASK_T_4 ) ^ MASK_T_4 ) & MASK_T_4 ) | signBit_3;
+
     localBuckets[value4_0.x]++;
     localBuckets[value4_0.y]++;
     localBuckets[value4_0.z]++;
@@ -293,8 +306,73 @@ void histogramSignedAscendingRadixNTemplate(__global uint* unsortedData,
         buckets[i * globalSize + globalId ] = localBuckets[i];
     }
 }
+
 #endif
-#if 1
+
+#if 0
+
+template <int N>
+kernel
+void histogramSignedDescendingRadixNTemplate(__global uint* unsortedData,
+               __global uint* buckets,
+               uint shiftCount)
+{
+    const int RADIX_T     = N;
+    const int RADICES_T   = (1 << RADIX_T);
+    const int NUM_OF_ELEMENTS_PER_WORK_ITEM_T = RADICES_T; 
+    const int MASK_T      = (1<<RADIX_T -1 )  -1;//Minus 1 because we want to exclude sign bit
+    const uint4 SIGN_BIT_MASK_4 = (uint4) (1<<(RADIX_T-1) );
+    const uint4 MASK_T_4    = (uint4)MASK_T;
+    const uint4 shiftCount_4 = (uint4)shiftCount;
+    int       localBuckets[16] = {0,0,0,0,0,0,0,0,
+                                  0,0,0,0,0,0,0,0};
+    size_t globalId    = get_global_id(0);
+    size_t globalSize  = get_global_size(0);
+    uint4  value4_0, value4_1, value4_2, value4_3;
+    value4_0 =  vload4(0, &unsortedData[globalId * NUM_OF_ELEMENTS_PER_WORK_ITEM_T]);
+    value4_1 =  vload4(1, &unsortedData[globalId * NUM_OF_ELEMENTS_PER_WORK_ITEM_T]);
+    value4_2 =  vload4(2, &unsortedData[globalId * NUM_OF_ELEMENTS_PER_WORK_ITEM_T]);
+    value4_3 =  vload4(3, &unsortedData[globalId * NUM_OF_ELEMENTS_PER_WORK_ITEM_T]);
+    value4_0 = (value4_0 >> shiftCount_4);
+    value4_1 = (value4_1 >> shiftCount_4);
+    value4_2 = (value4_2 >> shiftCount_4);
+    value4_3 = (value4_3 >> shiftCount_4);
+
+    uint4 signBit_0 = value4_0 & SIGN_BIT_MASK_4;
+    uint4 signBit_1 = value4_1 & SIGN_BIT_MASK_4;
+    uint4 signBit_2 = value4_2 & SIGN_BIT_MASK_4;
+    uint4 signBit_3 = value4_3 & SIGN_BIT_MASK_4;
+    value4_0 = ( ( ( value4_0 & MASK_T_4 ) ^ MASK_T_4 ) & MASK_T_4 ) | signBit_0;
+    value4_1 = ( ( ( value4_1 & MASK_T_4 ) ^ MASK_T_4 ) & MASK_T_4 ) | signBit_1;
+    value4_2 = ( ( ( value4_2 & MASK_T_4 ) ^ MASK_T_4 ) & MASK_T_4 ) | signBit_2;
+    value4_3 = ( ( ( value4_3 & MASK_T_4 ) ^ MASK_T_4 ) & MASK_T_4 ) | signBit_3;
+
+    localBuckets[value4_0.x]++;
+    localBuckets[value4_0.y]++;
+    localBuckets[value4_0.z]++;
+    localBuckets[value4_0.w]++;
+    localBuckets[value4_1.x]++;
+    localBuckets[value4_1.y]++;
+    localBuckets[value4_1.z]++;
+    localBuckets[value4_1.w]++;
+    localBuckets[value4_2.x]++;
+    localBuckets[value4_2.y]++;
+    localBuckets[value4_2.z]++;
+    localBuckets[value4_2.w]++;
+    localBuckets[value4_3.x]++;
+    localBuckets[value4_3.y]++;
+    localBuckets[value4_3.z]++;
+    localBuckets[value4_3.w]++;
+
+    for(int i = 0; i < NUM_OF_ELEMENTS_PER_WORK_ITEM_T; ++i)
+    {
+        buckets[i * globalSize + globalId ] = localBuckets[i];
+    }
+}
+
+
+#endif
+#if 0
 template <int N>
 kernel
 void histogramSignedAscendingRadixNTemplate(__global uint* unsortedData,
@@ -326,6 +404,8 @@ void histogramSignedAscendingRadixNTemplate(__global uint* unsortedData,
     }
 }
 #endif
+
+#if 1
 template <int N>
 kernel
 void histogramSignedDescendingRadixNTemplate(__global uint* unsortedData,
@@ -356,6 +436,7 @@ void histogramSignedDescendingRadixNTemplate(__global uint* unsortedData,
         buckets[i * RADICES_T * numOfGroups + globalId ] = localBuckets[i];
     }
 }
+#endif
 
 template <int N>
 kernel

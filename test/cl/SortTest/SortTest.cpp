@@ -20,7 +20,7 @@
 #define TEST_CPU_DEVICE 0
 #define TEST_MULTICORE_TBB_SORT 1
 #define TEST_LARGE_BUFFERS 0
-#define GOOGLE_TEST 1
+#define GOOGLE_TEST 0
 #define BKND cl 
 #define SORT_FUNC sort
 
