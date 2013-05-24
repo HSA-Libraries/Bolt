@@ -150,7 +150,7 @@ public:
 template <typename T>
 T generateRandom()
 {
-    float value = rand();
+    double value = rand();
     static bool negate = true;
     if (negate)
     {
