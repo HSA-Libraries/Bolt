@@ -476,8 +476,6 @@ sort_enqueue(control &ctl,
         compileOptions);
 
     size_t groupSize  = RADICES;
-    //size_t groupSize  = 256;
-    int i = 0;
     size_t mulFactor = groupSize * RADICES;
     size_t numGroups;
 
@@ -520,7 +518,6 @@ sort_enqueue(control &ctl,
 
     if(comp(2,3))
     {
-        std::cout << "Ascending Sort\n";
         /*Ascending Sort*/
         histKernel = kernels[0];
         permuteKernel = kernels[2];
@@ -537,7 +534,6 @@ sort_enqueue(control &ctl,
     }
     else
     {
-        std::cout << "Descending Sort\n";
         /*Descending Sort*/
         histKernel = kernels[1];
         permuteKernel = kernels[3];
@@ -569,7 +565,7 @@ sort_enqueue(control &ctl,
                             histKernel,
                             ::cl::NullRange,
                             ::cl::NDRange(szElements/RADICES),
-                            ::cl::NDRange(groupSize*16),
+                            ::cl::NDRange(groupSize*16), //This mul will be removed when permute is optimized
                             NULL,
                             NULL);
         //V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
@@ -676,7 +672,6 @@ sort_enqueue(control &ctl,
 
     unsigned int groupSize  = RADICES;
 
-    int i = 0;
     size_t mulFactor = groupSize * RADICES;
 
     if(orig_szElements%mulFactor != 0)
@@ -766,7 +761,7 @@ sort_enqueue(control &ctl,
                             histKernel,
                             ::cl::NullRange,
                             ::cl::NDRange(szElements/RADICES),
-                            ::cl::NDRange(groupSize),
+                            ::cl::NDRange(groupSize*16),
                             NULL,
                             NULL);
         //V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
@@ -823,7 +818,7 @@ sort_enqueue(control &ctl,
                                 histSignedKernel,
                                 ::cl::NullRange,
                                 ::cl::NDRange(szElements/RADICES),
-                                ::cl::NDRange(groupSize),
+                                ::cl::NDRange(groupSize*16),
                                 NULL,
                                 NULL);
             //V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
@@ -1078,7 +1073,6 @@ void sort_enqueue_non_powerOf2(control &ctl,
         V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for sort() kernel" );
         V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
     }
-
     return;
 #endif
 }// END of sort_enqueue_non_powerOf2
