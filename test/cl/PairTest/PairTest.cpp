@@ -42,9 +42,10 @@ class ConstructPair : public ::testing::Test {
 
     ConstructPair()
     {
-         x.first  = T(1);
-         x.second = T(2);
-         y = x;
+         x.first  = T(1.0);
+         x.second = T(2.0);
+         y.first  = T(1.0);
+         y.second = T(2.0);
     }
 
     public:
@@ -125,9 +126,11 @@ class PairOperators : public ::testing::Test
 
 
 typedef ::testing::Types<int, float, double> AllTypes;
+typedef ::testing::Types<int> Integer;
+typedef ::testing::Types<double> DoubleType;
 //typedef ::testing::Types <<int, float>, <float,int>, <int, double>> ComboTypes;
 TYPED_TEST_CASE(ValuePair, AllTypes);
-TYPED_TEST_CASE(ConstructPair, AllTypes);
+TYPED_TEST_CASE(ConstructPair, Integer);
 TYPED_TEST_CASE(PairOperators, AllTypes);
 
 TYPED_TEST(ValuePair, IntegerIntegerPair)
