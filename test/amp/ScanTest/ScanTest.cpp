@@ -911,6 +911,24 @@ TEST(InclusiveScan, MulticoreInclUdd)
     cmpArrays(refOutput, output);
 } 
 
+TEST (sanity_exclusive_scan__simple_epr377210, withIntWiCtrl)
+{
+	int myStdArray[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+	int myBoltArray[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+	
+	//TAKE_AMP_CONTROL_PATH
+	bolt::amp::control& my_amp_ctl= bolt::amp::control::getDefault();
+	my_amp_ctl.setForceRunMode(bolt::amp::control::Automatic);
+	
+	bolt::amp::exclusive_scan(my_amp_ctl, myBoltArray, myBoltArray + 10, myBoltArray);
+	::std::partial_sum(myStdArray, myStdArray + 10, myStdArray);
+
+	for (int i = 1; i < 10; i++){
+	   EXPECT_EQ (myStdArray[i-1], myBoltArray[i]);
+	}
+}
+
+
 
 TEST(InclusiveScan, InclFloat)
 {
