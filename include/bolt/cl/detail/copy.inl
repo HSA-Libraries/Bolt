@@ -210,6 +210,22 @@ OutputIterator copy_detect_random_access( const bolt::cl::control& ctrl, const I
     return (result+n);
 };
 
+template<typename InputIterator, typename Size, typename OutputIterator >
+OutputIterator copy_detect_random_access( const bolt::cl::control& ctrl, const InputIterator& first, const Size& n,
+                const OutputIterator& result, const std::string& user_code, bolt::cl::device_vector_tag )
+{
+    if (n < 0)
+    {
+        std::cout<<"\n Number of elements to copy cannot be negative! "<< std::endl;
+    }
+    if (n > 0)
+    {
+        copy_pick_iterator( ctrl, first, n, result, user_code,
+            std::iterator_traits< InputIterator >::iterator_category( ),
+            std::iterator_traits< OutputIterator >::iterator_category( ) );
+    }
+    return (result+n);
+};
 /*! \brief This template function overload is used to seperate device_vector iterators from all other iterators
                 \detail This template is called by the non-detail versions of inclusive_scan, it already assumes
              *  random access iterators.  This overload is called strictly for non-device_vector iterators
@@ -233,14 +249,21 @@ void copy_pick_iterator(const bolt::cl::control &ctrl,  const InputIterator& fir
 
      if( runMode == bolt::cl::control::SerialCpu )
      {
-         std::copy_n( first, n, result );
+         #if defined( _WIN32 )
+           std::copy_n( first, n, stdext::checked_array_iterator<oType*>(&(*result), n ) );
+         #else
+           std::copy_n( first, n, result );
+         #endif
      }
      else if( runMode == bolt::cl::control::MultiCoreCpu )
      {
-
         #ifdef ENABLE_TBB
+          #if defined( _WIN32 )
             //TODO : The MultiCoreCpu version of Copy is not Implemented yet...
+            std::copy_n( first, n, stdext::checked_array_iterator<oType*>(&(*result), n ) );
+          #else
             std::copy_n( first, n, result );
+          #endif
         #else
             throw std::exception( "The MultiCoreCpu version of Copy is not enabled to be built." );
         #endif
@@ -248,7 +271,11 @@ void copy_pick_iterator(const bolt::cl::control &ctrl,  const InputIterator& fir
      else
      {
         // A host 2 host copy operation, just fallback on the optimized std:: implementation
-        std::copy_n( first, n, result );
+        #if defined( _WIN32 )
+          std::copy_n( first, n, stdext::checked_array_iterator<oType*>(&(*result), n ) );
+        #else
+          std::copy_n( first, n, result ); 
+        #endif
      }
 }
 
@@ -274,14 +301,22 @@ void copy_pick_iterator(const bolt::cl::control &ctrl,  const InputIterator& fir
 
      if( runMode == bolt::cl::control::SerialCpu )
      {
-         std::copy_n( first, n, result );
+          #if defined( _WIN32 )
+           std::copy_n( first, n, stdext::checked_array_iterator<oType*>(&(*result), n ) );
+          #else
+           std::copy_n( first, n, result );
+          #endif
      }
      else if( runMode == bolt::cl::control::MultiCoreCpu )
      {
 
          #ifdef ENABLE_TBB
                //TODO : The MultiCoreCpu version of Copy is not Implemented yet...
-               std::copy_n( first, n, result );
+               #if defined( _WIN32 )
+                  std::copy_n( first, n, stdext::checked_array_iterator<oType*>(&(*result), n ) );
+               #else
+                  std::copy_n( first, n, result );
+               #endif
          #else
                throw std::exception( "The MultiCoreCpu version of Copy is not enabled to be built." );
          #endif
@@ -316,7 +351,11 @@ void copy_pick_iterator(const bolt::cl::control &ctrl,  const DVInputIterator& f
      {
             bolt::cl::device_vector< iType >::pointer copySrc =  first.getContainer( ).data( );
             bolt::cl::device_vector< oType >::pointer copyDest =  result.getContainer( ).data( );
+#if defined( _WIN32 )
+            std::copy_n( &copySrc[first.m_Index], n, stdext::make_checked_array_iterator( &copyDest[result.m_Index], n) );
+#else
             std::copy_n( &copySrc[first.m_Index], n, &copyDest[result.m_Index] );
+#endif
             return;
      }
      else if( runMode == bolt::cl::control::MultiCoreCpu )
@@ -326,7 +365,11 @@ void copy_pick_iterator(const bolt::cl::control &ctrl,  const DVInputIterator& f
             //TODO : The MultiCoreCpu version of Copy is not Implemented yet...
             bolt::cl::device_vector< iType >::pointer copySrc =  first.getContainer( ).data( );
             bolt::cl::device_vector< oType >::pointer copyDest =  result.getContainer( ).data( );
+#if defined( _WIN32 )
+            std::copy_n( &copySrc[first.m_Index], n, stdext::make_checked_array_iterator( &copyDest[result.m_Index], n) );
+#else
             std::copy_n( &copySrc[first.m_Index], n, &copyDest[result.m_Index] );
+#endif
             return;
          #else
                 throw std::exception( "The MultiCoreCpu version of Copy is not enabled to be built." );
@@ -335,6 +378,109 @@ void copy_pick_iterator(const bolt::cl::control &ctrl,  const DVInputIterator& f
      else
      {
          copy_enqueue( ctrl, first, n, result, user_code );
+     }
+}
+
+// This template is called by the non-detail versions of inclusive_scan, it already assumes random access iterators
+// This is called strictly for iterators that are derived from device_vector< T >::iterator
+template<typename DVInputIterator, typename Size, typename DVOutputIterator>
+void copy_pick_iterator(const bolt::cl::control &ctrl,  const DVInputIterator& first, const Size& n,
+    const DVOutputIterator& result, const std::string& user_code, std::random_access_iterator_tag,
+    bolt::cl::device_vector_tag )
+{
+    typedef std::iterator_traits<DVInputIterator>::value_type iType;
+    typedef std::iterator_traits<DVOutputIterator>::value_type oType;
+     bolt::cl::control::e_RunMode runMode = ctrl.getForceRunMode( );
+
+     if( runMode == bolt::cl::control::Automatic )
+     {
+               runMode = ctrl.getDefaultPathToRun( );
+     }
+
+     if( runMode == bolt::cl::control::SerialCpu )
+     {
+            bolt::cl::device_vector< oType >::pointer copyDest =  result.getContainer( ).data( );
+#if defined( _WIN32 )
+            std::copy_n( first, n, stdext::make_checked_array_iterator( &copyDest[result.m_Index], n) );
+#else
+            std::copy_n( first, n, &copyDest[result.m_Index] );
+#endif
+            return;
+     }
+     else if( runMode == bolt::cl::control::MultiCoreCpu )
+     {
+
+         #ifdef ENABLE_TBB
+            //TODO : The MultiCoreCpu version of Copy is not Implemented yet...
+            bolt::cl::device_vector< oType >::pointer copyDest =  result.getContainer( ).data( );
+#if defined( _WIN32 )
+            std::copy_n( first, n, stdext::make_checked_array_iterator( &copyDest[result.m_Index], n) );
+#else
+            std::copy_n( first, n, &copyDest[result.m_Index] );
+#endif
+            return;
+         #else
+                throw std::exception( "The MultiCoreCpu version of Copy is not enabled to be built." );
+         #endif
+     }
+     else
+     {
+        device_vector< iType > dvInput( first, n, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, true, ctrl );
+        //Now call the actual cl algorithm
+        copy_enqueue( ctrl, dvInput.begin(), n, result, user_code );
+        //Map the buffer back to the host
+        dvInput.data( );
+     }
+}
+
+// This template is called by the non-detail versions of inclusive_scan, it already assumes random access iterators
+// This is called strictly for iterators that are derived from device_vector< T >::iterator
+template<typename DVInputIterator, typename Size, typename DVOutputIterator>
+void copy_pick_iterator(const bolt::cl::control &ctrl,  const DVInputIterator& first, const Size& n,
+    const DVOutputIterator& result, const std::string& user_code, bolt::cl::device_vector_tag,
+    std::random_access_iterator_tag)
+{
+    typedef std::iterator_traits<DVInputIterator>::value_type iType;
+    typedef std::iterator_traits<DVOutputIterator>::value_type oType;
+     bolt::cl::control::e_RunMode runMode = ctrl.getForceRunMode( );
+
+     if( runMode == bolt::cl::control::Automatic )
+     {
+               runMode = ctrl.getDefaultPathToRun( );
+     }
+
+     if( runMode == bolt::cl::control::SerialCpu )
+     {
+         #if defined( _WIN32 )
+           std::copy_n( first, n, stdext::checked_array_iterator<oType*>(&(*result), n ) );
+         #else
+           std::copy_n( first, n, result );
+         #endif
+           return;
+     }
+     else if( runMode == bolt::cl::control::MultiCoreCpu )
+     {
+
+         #ifdef ENABLE_TBB
+            //TODO : The MultiCoreCpu version of Copy is not Implemented yet...
+           #if defined( _WIN32 )
+             std::copy_n( first, n, stdext::checked_array_iterator<oType*>(&(*result), n ) );
+           #else
+             std::copy_n( first, n, result );
+           #endif
+           return;
+
+         #else
+                throw std::exception( "The MultiCoreCpu version of Copy is not enabled to be built." );
+         #endif
+     }
+     else
+     {
+         // Use host pointers memory since these arrays are only read once - no benefit to copying.
+        // Map the output iterator to a device_vector
+        device_vector< oType > dvOutput( result, n, CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY, false, ctrl );
+        copy_enqueue( ctrl, first, n, dvOutput.begin( ), user_code );
+        dvOutput.data();
      }
 }
 
@@ -356,16 +502,24 @@ void copy_pick_iterator(const bolt::cl::control &ctrl,  const DVInputIterator& f
 
      if( runMode == bolt::cl::control::SerialCpu )
      {
-         std::copy_n( first, n, result );
+         bolt::cl::device_vector< oType >::pointer copyDest =  result.getContainer( ).data( );
+#if defined( _WIN32 )
+         std::copy_n( first, n, stdext::make_checked_array_iterator(&copyDest[result.m_Index], n) );
+#else
+         std::copy_n( first, n, &copyDest[result.m_Index] );
+#endif
      }
      else if( runMode == bolt::cl::control::MultiCoreCpu )
      {
         #ifdef ENABLE_TBB
-              //TODO : The MultiCoreCpu version of Copy is not Implemented yet...
+            //TODO : The MultiCoreCpu version of Copy is not Implemented yet...
             bolt::cl::device_vector< oType >::pointer copyDest =  result.getContainer( ).data( );
-            std::copy_n( first, n, &copyDest[result.m_Index] );
+#if defined( _WIN32 )
+         std::copy_n( first, n, stdext::make_checked_array_iterator(&copyDest[result.m_Index], n) );
+#else
+         std::copy_n( first, n, &copyDest[result.m_Index] );
+#endif
             return;
-            //std::copy_n( first, n, result );
         #else
               throw std::exception( "The MultiCoreCpu version of Copy is not enabled to be built." );
         #endif
@@ -569,7 +723,7 @@ typename std::enable_if< !(std::is_same< typename std::iterator_traits<DVInputIt
             "failed on getProfilingInfo<CL_PROFILING_COMMAND_START>()");
         V_OPENCL( kernelEvent.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END, &stop_time),
             "failed on getProfilingInfo<CL_PROFILING_COMMAND_END>()");
-        size_t time = stop_time - start_time;
+        cl_ulong time = stop_time -  start_time;
         double gb = (n*(sizeof(iType)+sizeof(oType))/1024.0/1024.0/1024.0);
         double sec = time/1000000000.0;
         std::cout << "Global Memory Bandwidth: " << ( gb / sec) << " ( "

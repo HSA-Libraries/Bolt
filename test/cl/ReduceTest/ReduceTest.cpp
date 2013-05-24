@@ -141,6 +141,7 @@ TEST( ReduceStdVectWithInit, OffsetTest)
     EXPECT_EQ( stlTransformReduce, boltTransformReduce );
 }
 
+
 TEST( ReduceStdVectWithInit, OffsetTestDeviceVectorSerialCpu)
 {
     int length = 1024;
@@ -214,6 +215,7 @@ TEST( ReduceStdVectWithInit, OffsetTestSerialCpu)
 
     EXPECT_EQ( stlTransformReduce, boltTransformReduce );
 }
+
 
 TYPED_TEST_CASE_P( ReduceArrayTest );
 

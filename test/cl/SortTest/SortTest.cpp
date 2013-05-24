@@ -99,6 +99,163 @@ uddtD4 initialAddD4  = { 1.00001, 1.000003, 1.0000005, 1.00000007 };
 BOLT_CREATE_TYPENAME( bolt::cl::device_vector< uddtD4 >::iterator );
 BOLT_CREATE_CLCODE( bolt::cl::device_vector< uddtD4 >::iterator, bolt::cl::deviceVectorIteratorTemplate );
 
+TEST(Sort, StdclLong)  
+{
+        // test length
+        int length = (1<<8);
+
+        std::vector<cl_long> bolt_source(length);
+        std::vector<cl_long> std_source(length);
+
+        // populate source vector with random ints
+        for (int j = 0; j < length; j++)
+        {
+            bolt_source[j] = (cl_long)rand();
+            std_source[j] = bolt_source[j];
+        }
+    
+        // perform sort
+        std::sort(std_source.begin(), std_source.end());
+        bolt::cl::sort(bolt_source.begin(), bolt_source.end());
+
+        // GoogleTest Comparison
+        cmpArrays(std_source, bolt_source);
+
+} 
+
+TEST(Sort, Serial_StdclLong)  
+{
+        // test length
+        int length = (1<<8);
+
+        std::vector<cl_long> bolt_source(length);
+        std::vector<cl_long> std_source(length);
+
+        // populate source vector with random ints
+        for (int j = 0; j < length; j++)
+        {
+            bolt_source[j] = (cl_long)rand();
+            std_source[j] = bolt_source[j];
+        }
+    
+        bolt::cl::control ctl = bolt::cl::control::getDefault( );
+        ctl.setForceRunMode(bolt::cl::control::SerialCpu); 
+
+        // perform sort
+        std::sort(std_source.begin(), std_source.end());
+        bolt::cl::sort(ctl, bolt_source.begin(), bolt_source.end());
+
+        // GoogleTest Comparison
+        cmpArrays(std_source, bolt_source);
+
+} 
+
+
+TEST(Sort, MultiCore_StdclLong)  
+{
+        // test length
+        int length = (1<<8);
+
+        std::vector<cl_long> bolt_source(length);
+        std::vector<cl_long> std_source(length);
+
+        // populate source vector with random ints
+        for (int j = 0; j < length; j++)
+        {
+            bolt_source[j] = (cl_long)rand();
+            std_source[j] = bolt_source[j];
+        }
+    
+        bolt::cl::control ctl = bolt::cl::control::getDefault( );
+        ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu); 
+
+        // perform sort
+        std::sort(std_source.begin(), std_source.end());
+        bolt::cl::sort(ctl, bolt_source.begin(), bolt_source.end());
+
+        // GoogleTest Comparison
+        cmpArrays(std_source, bolt_source);
+
+} 
+
+TEST(Sort, DevclLong)  
+{
+        // test length
+        int length = (1<<8);
+
+        bolt::cl::device_vector<cl_long> bolt_source(length);
+        std::vector<cl_long> std_source(length);
+
+        // populate source vector with random ints
+        for (int j = 0; j < length; j++)
+        {
+            bolt_source[j] = (cl_long)rand();
+            std_source[j] = bolt_source[j];
+        }
+    
+        // perform sort
+        std::sort(std_source.begin(), std_source.end());
+        bolt::cl::sort(bolt_source.begin(), bolt_source.end());
+
+        // GoogleTest Comparison
+        cmpArrays(std_source, bolt_source);
+
+} 
+
+TEST(Sort, Serial_DevclLong)  
+{
+        // test length
+        int length = (1<<8);
+
+        bolt::cl::device_vector<cl_long> bolt_source(length);
+        std::vector<cl_long> std_source(length);
+
+        // populate source vector with random ints
+        for (int j = 0; j < length; j++)
+        {
+            bolt_source[j] = (cl_long)rand();
+            std_source[j] = bolt_source[j];
+        }
+    
+        bolt::cl::control ctl = bolt::cl::control::getDefault( );
+        ctl.setForceRunMode(bolt::cl::control::SerialCpu); 
+
+        // perform sort
+        std::sort(std_source.begin(), std_source.end());
+        bolt::cl::sort(ctl, bolt_source.begin(), bolt_source.end());
+
+        // GoogleTest Comparison
+        cmpArrays(std_source, bolt_source);
+
+}
+
+TEST(Sort, MultiCore_DevclLong)  
+{
+        // test length
+        int length = (1<<8);
+
+        bolt::cl::device_vector<cl_long> bolt_source(length);
+        std::vector<cl_long> std_source(length);
+
+        // populate source vector with random ints
+        for (int j = 0; j < length; j++)
+        {
+            bolt_source[j] = (cl_long)rand();
+            std_source[j] = bolt_source[j];
+        }
+    
+        bolt::cl::control ctl = bolt::cl::control::getDefault( );
+        ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu); 
+
+        // perform sort
+        std::sort(std_source.begin(), std_source.end());
+        bolt::cl::sort(ctl, bolt_source.begin(), bolt_source.end());
+
+        // GoogleTest Comparison
+        cmpArrays(std_source, bolt_source);
+
+}
+
 TEST(SortUDD, AddDouble4)
 {
     //setup containers
@@ -1928,6 +2085,39 @@ INSTANTIATE_TEST_CASE_P( Sort, SortDoubleNakedPointer, ::testing::ValuesIn( Test
 #endif
 
 typedef ::testing::Types< 
+    std::tuple< cl_long, TypeValue< 1 > >,
+    std::tuple< cl_long, TypeValue< 31 > >,
+    std::tuple< cl_long, TypeValue< 32 > >,
+    std::tuple< cl_long, TypeValue< 63 > >,
+    std::tuple< cl_long, TypeValue< 64 > >,
+    std::tuple< cl_long, TypeValue< 127 > >,
+    std::tuple< cl_long, TypeValue< 128 > >,
+    std::tuple< cl_long, TypeValue< 129 > >,
+    std::tuple< cl_long, TypeValue< 1000 > >,
+    std::tuple< cl_long, TypeValue< 1053 > >,
+    std::tuple< cl_long, TypeValue< 4096 > >,
+    std::tuple< cl_long, TypeValue< 4097 > >,
+    std::tuple< cl_long, TypeValue< 8192 > >,
+    std::tuple< cl_long, TypeValue< 16384 > >,//13
+    std::tuple< cl_long, TypeValue< 32768 > >,//14
+    std::tuple< cl_long, TypeValue< 65535 > >,//15
+    std::tuple< cl_long, TypeValue< 65536 > >,//16
+    std::tuple< cl_long, TypeValue< 131072 > >,//17    
+    std::tuple< cl_long, TypeValue< 262144 > >,//18    
+    std::tuple< cl_long, TypeValue< 524288 > >,//19    
+    std::tuple< cl_long, TypeValue< 1048576 > >,//20    
+    std::tuple< cl_long, TypeValue< 2097152 > >//21    
+#if (TEST_LARGE_BUFFERS == 1)
+    , /*This coma is needed*/
+    std::tuple< cl_long, TypeValue< 4194304 > >,//22    
+    std::tuple< cl_long, TypeValue< 8388608 > >,//23
+    std::tuple< cl_long, TypeValue< 16777216 > >,//24
+    std::tuple< cl_long, TypeValue< 33554432 > >,//25
+    std::tuple< cl_long, TypeValue< 67108864 > >//26
+#endif
+> clLongTests;
+
+typedef ::testing::Types< 
     std::tuple< int, TypeValue< 1 > >,
     std::tuple< int, TypeValue< 31 > >,
     std::tuple< int, TypeValue< 32 > >,
@@ -2107,6 +2297,7 @@ typedef ::testing::Types<
 INSTANTIATE_TYPED_TEST_CASE_P( Integer, SortArrayTest, IntegerTests );
 INSTANTIATE_TYPED_TEST_CASE_P( UnsignedInteger, SortArrayTest, UnsignedIntegerTests );
 INSTANTIATE_TYPED_TEST_CASE_P( Float, SortArrayTest, FloatTests );
+INSTANTIATE_TYPED_TEST_CASE_P( clLong, SortArrayTest, clLongTests );
 #if (TEST_DOUBLE == 1)
 INSTANTIATE_TYPED_TEST_CASE_P( Double, SortArrayTest, DoubleTests );
 #endif 

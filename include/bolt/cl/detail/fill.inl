@@ -363,7 +363,7 @@ namespace bolt {
                         "failed on getProfilingInfo<CL_PROFILING_COMMAND_START>()");
                     V_OPENCL( kernelEvent.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END,    &stop_time),
                         "failed on getProfilingInfo<CL_PROFILING_COMMAND_END>()");
-                    size_t time = stop_time - start_time;
+                    cl_ulong time =stop_time - start_time;
                     double gb = (sz*(sizeof(T)+sizeof(Type))/1024.0/1024.0/1024.0);
                     double sec = time/1000000000.0;
                     std::cout << "Global Memory Bandwidth: " << ( gb / sec) << " ( "
