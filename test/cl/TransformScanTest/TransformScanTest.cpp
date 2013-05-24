@@ -689,7 +689,7 @@ TEST(TransformScanCLtypeTest, InclTestShort)
     cmpArrays(refOutput, output);
 }
 
-/*
+
 TEST(TransformScanCLtypeTest, ExclTestUShort)
 {
     //setup containers
@@ -736,7 +736,7 @@ TEST(TransformScanCLtypeTest, InclTestUShort)
     // compare results
     cmpArrays(refOutput, output);
 }
-*/
+
 #if(TEST_DOUBLE == 1)
 TEST(NegateScanUserDefined, IncMultiplyDouble4)
 {
@@ -1388,12 +1388,9 @@ TEST(SerialCPU, NegPlusInt)
 
 
     // calculate on device
-    ::cl::Context context(CL_DEVICE_TYPE_ALL);//bolt::cl::control::getDefault( ).context( ); // get context
-    std::vector< cl::Device > devices = context.getInfo< CL_CONTEXT_DEVICES >(); // get devices
-    // setup device/queue
-    ::cl::CommandQueue queue( context, devices.at( deviceNum ), CL_QUEUE_PROFILING_ENABLE); // select device;make queue
-    bolt::cl::control ctrl(queue);
+    bolt::cl::control ctrl = bolt::cl::control::getDefault( );
     ctrl.setForceRunMode(bolt::cl::control::SerialCpu);
+
     strDeviceName = ctrl.getDevice( ).getInfo< CL_DEVICE_NAME >( &err );
     bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_NAME > failed" );
     std::cout << "Testing Device[" << deviceNum << "]: " << strDeviceName << std::endl;
@@ -1435,13 +1432,9 @@ TEST(MultiCoreCPU, NegPlusInt)
     std::vector< int > output( length, identity);
 
 
-    // calculate on device
-    ::cl::Context context(CL_DEVICE_TYPE_ALL);//bolt::cl::control::getDefault( ).context( ); // get context
-    std::vector< cl::Device > devices = context.getInfo< CL_CONTEXT_DEVICES >(); // get devices
-    // setup device/queue
-    ::cl::CommandQueue queue( context, devices.at( deviceNum ), CL_QUEUE_PROFILING_ENABLE); // select device;make queue
-    bolt::cl::control ctrl(queue);
+    bolt::cl::control ctrl = bolt::cl::control::getDefault( );
     ctrl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
     strDeviceName = ctrl.getDevice( ).getInfo< CL_DEVICE_NAME >( &err );
     bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_NAME > failed" );
     std::cout << "Testing Device[" << deviceNum << "]: " << strDeviceName << std::endl;
