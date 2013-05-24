@@ -500,8 +500,11 @@ TEST_P( InnerProductCountingIterator, withCountingIterator)
     
     int stlInnerProduct = std::inner_product(input1.begin(), input1.end(), input2.begin(),init, std::multiplies<int>(),
         std::plus<int>());
-    int boltInnerProduct = bolt::cl::inner_product(first1, last1, first2, init, bolt::cl::multiplies<int>(),
-        bolt::cl::plus<int>());
+    int boltInnerProduct = bolt::cl::inner_product(  first1,
+                                                     last1,
+                                                     first2,
+                                                     init, bolt::cl::multiplies<int>(),
+                                                     bolt::cl::plus<int>());
 
     EXPECT_EQ(stlInnerProduct, boltInnerProduct);
 }
@@ -581,8 +584,10 @@ TEST_P (InnerProductTestMultFloat, multiplyWithFloats)
         myBoltArray2[i] = myArray2[i];
     }
 
-    float stlInnerProduct = std::inner_product(myArray, myArray + arraySize, myArray2,
-                                               1.0f, std::multiplies<float>(), std::plus<float>());
+    float stlInnerProduct = std::inner_product(  myArray,
+                                                 myArray + arraySize,
+                                                 myArray2,
+                                                 1.0f, std::multiplies<float>(), std::plus<float>()  );
     float boltInnerProduct = bolt::cl::inner_product(myBoltArray, myBoltArray + arraySize, myBoltArray2,
                                                      1.0f, bolt::cl::multiplies<float>(), bolt::cl::plus<float>());
 
@@ -617,8 +622,10 @@ TEST_P (InnerProductTestMultFloat, CPUmultiplyWithFloats)
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
     
-    float stlInnerProduct = std::inner_product(myArray, myArray + arraySize, myArray2,
-                                               1.0f, std::multiplies<float>(), std::plus<float>());
+    float stlInnerProduct = std::inner_product(  myArray,
+                                                 myArray + arraySize,
+                                                 myArray2,
+                                                 1.0f, std::multiplies<float>(), std::plus<float>()  );
     float boltInnerProduct = bolt::cl::inner_product(ctl, myBoltArray, myBoltArray + arraySize, myBoltArray2,
                                                      1.0f, bolt::cl::multiplies<float>(), bolt::cl::plus<float>());
 
@@ -653,8 +660,10 @@ TEST_P (InnerProductTestMultFloat, MultiCoremultiplyWithFloats)
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
     
-    float stlInnerProduct = std::inner_product(myArray, myArray + arraySize, myArray2,
-                                               1.0f, std::multiplies<float>(), std::plus<float>());
+    float stlInnerProduct = std::inner_product(  myArray,
+                                                 myArray + arraySize,
+                                                 myArray2,
+                                                 1.0f, std::multiplies<float>(), std::plus<float>()  );
     float boltInnerProduct = bolt::cl::inner_product(ctl, myBoltArray, myBoltArray + arraySize, myBoltArray2,
                                                      1.0f, bolt::cl::multiplies<float>(), bolt::cl::plus<float>());
 
@@ -1002,7 +1011,7 @@ TEST( InnerProductUDD , UDDPlusOperatorInts )
     int length = 1024;
     std::vector< UDD > refInput( length );
     std::vector< UDD > refInput2( length );
-    for( unsigned int i = 0; i < length ; i++ )
+    for( int i = 0; i < length ; i++ )
     {
       refInput[i].a = refInput2[i].a = i;
       refInput[i].b = refInput2[i].b = i+1;
@@ -1035,7 +1044,7 @@ TEST( InnerProductUDD , CPU_UDDPlusOperatorInts )
     int length = 1024;
     std::vector< UDD > refInput( length );
     std::vector< UDD > refInput2( length );
-    for( unsigned int i = 0; i < length ; i++ )
+    for( int i = 0; i < length ; i++ )
     {
       refInput[i].a = refInput2[i].a = i;
       refInput[i].b = refInput2[i].b = i+1;
@@ -1066,13 +1075,104 @@ TEST( InnerProductUDD , CPU_UDDPlusOperatorInts )
 
 }
 
+TEST( InnerProductOffset , DeviceVectorOffset )
+{
+    //setup containers
+    int length = 1024;
+    std::vector< int > refInput( length );
+    std::vector< int > refInput2( length );
+    for( int i = 0; i < length ; i++ )
+    {
+      refInput[i] = refInput2[i] = i;
+    }
+    bolt::cl::device_vector< int >input( refInput.begin(), refInput.end() );
+    bolt::cl::device_vector< int >input2( refInput2.begin(), refInput2.end() );
+
+    int stdInnerProduct =  std::inner_product( refInput.begin() + 10, refInput.end(), refInput2.begin() + 10, 
+                                               0, std::plus<int>(), std::multiplies<int>() );
+    int boltInnerProduct = bolt::cl::inner_product( input.begin() + 10, input.end(), input2.begin() + 10,
+                                                    0, bolt::cl::plus<int>() , bolt::cl::multiplies<int>() );
+
+    EXPECT_EQ(boltInnerProduct,stdInnerProduct);
+
+}
+
+TEST( InnerProductOffset , HostVectorOffset )
+{
+    //setup containers
+    int length = 1024;
+    std::vector< int > refInput( length );
+    std::vector< int > refInput2( length );
+    for( int i = 0; i < length ; i++ )
+    {
+      refInput[i] = refInput2[i] = i;
+    }
+
+    int stdInnerProduct =  std::inner_product( refInput.begin() + 60, refInput.end(), refInput2.begin() + 60, 
+                                               0, std::plus<int>(), std::multiplies<int>() );
+    int boltInnerProduct = bolt::cl::inner_product( refInput.begin() + 60, refInput.end(), refInput2.begin() + 60,
+                                                    0, bolt::cl::plus<int>() , bolt::cl::multiplies<int>() );
+
+    EXPECT_EQ(boltInnerProduct,stdInnerProduct);
+
+}
+
+TEST( InnerProductOffset , DeviceVectorOffsetSerialCpu )
+{
+    //setup containers
+    int length = 1024;
+    std::vector< int > refInput( length );
+    std::vector< int > refInput2( length );
+    for( int i = 0; i < length ; i++ )
+    {
+      refInput[i] = refInput2[i] = i;
+    }
+    bolt::cl::device_vector< int >input( refInput.begin(), refInput.end() );
+    bolt::cl::device_vector< int >input2( refInput2.begin(), refInput2.end() );
+
+    bolt::cl::control ctl;
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    int stdInnerProduct =  std::inner_product( refInput.begin() + 10, refInput.end(), refInput2.begin() + 10, 
+                                               0, std::plus<int>(), std::multiplies<int>() );
+    int boltInnerProduct = bolt::cl::inner_product( ctl, input.begin() + 10, input.end(), input2.begin() + 10,
+                                                    0, bolt::cl::plus<int>() , bolt::cl::multiplies<int>() );
+
+    EXPECT_EQ(boltInnerProduct,stdInnerProduct);
+
+}
+
+TEST( InnerProductOffset , HostVectorOffsetSerialCpu )
+{
+    //setup containers
+    int length = 1024;
+    std::vector< int > refInput( length );
+    std::vector< int > refInput2( length );
+    for( int i = 0; i < length ; i++ )
+    {
+      refInput[i] = refInput2[i] = i;
+    }
+
+    bolt::cl::control ctl;
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    int stdInnerProduct =  std::inner_product( refInput.begin() + 60, refInput.end(), refInput2.begin() + 60, 
+                                               0, std::plus<int>(), std::multiplies<int>() );
+    int boltInnerProduct = bolt::cl::inner_product( ctl, refInput.begin() + 60, refInput.end(), refInput2.begin() + 60,
+                                                    0, bolt::cl::plus<int>() , bolt::cl::multiplies<int>() );
+
+    EXPECT_EQ(boltInnerProduct,stdInnerProduct);
+
+}
+
+
 TEST( InnerProductUDD , MultiCore_UDDPlusOperatorInts )
 {
     //setup containers
     int length = 1024;
     std::vector< UDD > refInput( length );
     std::vector< UDD > refInput2( length );
-    for( unsigned int i = 0; i < length ; i++ )
+    for( int i = 0; i < length ; i++ )
     {
       refInput[i].a = refInput2[i].a = i;
       refInput[i].b = refInput2[i].b = i+1;

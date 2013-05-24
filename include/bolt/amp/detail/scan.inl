@@ -179,13 +179,13 @@ OutputIterator exclusive_scan(
 
 template< typename InputIterator, typename OutputIterator >
 OutputIterator exclusive_scan(
-    const control &ctl,
+    control &ctl,
     InputIterator first,
     InputIterator last,
     OutputIterator result ) // assumes addition of numbers
 {
     typedef std::iterator_traits<InputIterator>::value_type iType;
-    iType init = static_cast< iType >( 0 );
+    iType init; memset(&init, 0, sizeof(iType) );
     return detail::scan_detect_random_access(
         ctl, first, last, result, init, false, plus< iType >( ),
         std::iterator_traits< InputIterator >::iterator_category( ) );
@@ -269,7 +269,7 @@ Serial_scan(
     const bool Incl,
     const T &init)
 {
-    oType  sum, temp;
+    vType  sum, temp;
     if(Incl){
       *result = *values; // assign value
       sum = *values;
@@ -281,10 +281,10 @@ Serial_scan(
     }
     for ( unsigned int i= 1; i<num; i++)
     {
-        oType currentValue = *(values + i); // convertible
+        vType currentValue = *(values + i); // convertible
         if (Incl)
         {
-            oType r = binary_op( sum, currentValue);
+            vType r = binary_op( sum, currentValue);
             *(result + i) = r;
             sum = r;
         }
@@ -418,45 +418,23 @@ scan_pick_iterator(
     const bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode( );  // could be dynamic choice some day.
     if( runMode == bolt::amp::control::SerialCpu )
     {
-       std::vector<iType> scanInputBuffer(numElements);
-       std::vector<oType> scanResultBuffer(numElements);
-
-        for(unsigned int index=0; index<numElements; index++){
-            scanInputBuffer[index] = first.getContainer().getBuffer()[index];
-            scanResultBuffer[index] = result.getContainer().getBuffer()[index];
-        }
-        Serial_scan<iType, oType, BinaryFunction, T>(&(scanInputBuffer[0]), &(scanResultBuffer[0]),
-                                                     numElements, binary_op, inclusive, init);
-        for(unsigned int index=0; index<numElements; index++){
-            result.getContainer().getBuffer()[index] = scanResultBuffer[index];
-        }
+        bolt::amp::device_vector< iType >::pointer scanInputBuffer =  first.getContainer( ).data( );
+        bolt::amp::device_vector< oType >::pointer scanResultBuffer =  result.getContainer( ).data( );
+        Serial_scan<iType, oType, BinaryFunction, T>(&scanInputBuffer[first.m_Index], &scanResultBuffer[result.m_Index],
+                                                              numElements, binary_op, inclusive, init);
         return result + numElements;
     }
     else if( runMode == bolt::amp::control::MultiCoreCpu )
     {
 
 #ifdef ENABLE_TBB
-        std::vector<iType> scanInputBuffer(numElements);
-        std::vector<oType> scanResultBuffer(numElements);
-
-        //Copy the device_vector buffer to a CPU buffer
-        for(unsigned int index=0; index<numElements; index++){
-            scanInputBuffer[index] = first.getContainer().getBuffer()[index];
-            scanResultBuffer[index] = result.getContainer().getBuffer()[index];
-        }
-
+        bolt::amp::device_vector< iType >::pointer scanInputBuffer =  first.getContainer( ).data( );
+        bolt::amp::device_vector< oType >::pointer scanResultBuffer =  result.getContainer( ).data( );
         if(inclusive)
-        {
-            bolt::btbb::inclusive_scan( scanInputBuffer.begin(),  scanInputBuffer.end(), scanResultBuffer.begin(), binary_op);
-        }
+            bolt::btbb::inclusive_scan(&scanInputBuffer[first.m_Index], &scanInputBuffer[first.m_Index] + numElements, &scanResultBuffer[result.m_Index], binary_op);
         else
-        {
-            bolt::btbb::exclusive_scan(  scanInputBuffer.begin(),  scanInputBuffer.end(), scanResultBuffer.begin(), init, binary_op);
-        }
+            bolt::btbb::exclusive_scan( &scanInputBuffer[first.m_Index], &scanInputBuffer[first.m_Index] + numElements, &scanResultBuffer[result.m_Index], init, binary_op);
 
-        for(unsigned int index=0; index<numElements; index++){
-            result.getContainer().getBuffer()[index] = scanResultBuffer[index];
-        }
         return result + numElements;
 #else
 //        std::cout << "The MultiCoreCpu version of Scan with device vector is not implemented yet." << std ::endl;
@@ -547,9 +525,9 @@ size_t k0_stepNum, k1_stepNum, k2_stepNum;
     //::cl::Buffer preSumArray( ctl.context( ), CL_MEM_READ_WRITE, sizeScanBuff*sizeof(iType) );
     //::cl::Buffer postSumArray( ctl.context( ), CL_MEM_READ_WRITE, sizeScanBuff*sizeof(iType) );
 
-    concurrency::array< oType >  preSumArray( sizeScanBuff, av );
-    concurrency::array< oType >  preSumArray1( sizeScanBuff, av );
-    concurrency::array< oType > postSumArray( sizeScanBuff, av );
+    concurrency::array< iType >  preSumArray( sizeScanBuff, av );
+    concurrency::array< iType >  preSumArray1( sizeScanBuff, av );
+    concurrency::array< iType > postSumArray( sizeScanBuff, av );
 
 
     /**********************************************************************************

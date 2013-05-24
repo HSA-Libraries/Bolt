@@ -29,6 +29,7 @@
 #include <gtest/gtest.h>
 //#include <boost/shared_array.hpp>
 #define TEST_DOUBLE 0
+#define TEST_CPU_DEVICE 1
 
 template< typename T >
 ::testing::AssertionResult cmpArrays( const T ref, const T calc, size_t N )
@@ -241,6 +242,21 @@ struct GenConst2
 };
 );  // end BOLT_FUNCTOR
 
+BOLT_TEMPLATE_FUNCTOR2(GenConst3, cl_long, char,
+template< typename T >
+struct GenConst3
+{
+    // return value
+	T _a;
+
+    // constructor
+	GenConst3( T a ) : _a(a) {};
+
+    // functor
+	T operator() () { return _a; };
+};
+);  
+
 class HostUnsignedIntVector: public ::testing::TestWithParam< int >
 {
 public:
@@ -250,6 +266,28 @@ public:
 
 protected:
     std::vector< unsigned int > stdInput, boltInput;
+};
+
+class HostclLongVector: public ::testing::TestWithParam< int >
+{
+public:
+    //  Create an std and a bolt vector of requested size, and initialize all the elements to -1
+    HostclLongVector( ): stdInput( GetParam( ), -1 ), boltInput( GetParam( ), -1 )
+    {}
+
+protected:
+    std::vector< cl_long > stdInput, boltInput;
+};
+
+class HostcharVector: public ::testing::TestWithParam< int >
+{
+public:
+    //  Create an std and a bolt vector of requested size, and initialize all the elements to -1
+    HostcharVector( ): stdInput( GetParam( ), 'a' ), boltInput( GetParam( ), 'a' )
+    {}
+
+protected:
+    std::vector< char > stdInput, boltInput;
 };
 
 class HostShortVector: public ::testing::TestWithParam< int >
@@ -306,6 +344,30 @@ public:
 protected:
     std::vector< float > stdInput;
     bolt::cl::device_vector< float > boltInput;
+};
+
+class DevclLongVector: public ::testing::TestWithParam< int >
+{
+public:
+    //  Create an std and a bolt vector of requested size, and initialize all the elements to -1
+    DevclLongVector( ): stdInput( GetParam( ), -1 ), boltInput( GetParam( ), -1 )
+    {}
+
+protected:
+    std::vector< cl_long > stdInput;
+    bolt::cl::device_vector< cl_long > boltInput;
+};
+
+class DevcharVector: public ::testing::TestWithParam< int >
+{
+public:
+    //  Create an std and a bolt vector of requested size, and initialize all the elements to -1
+    DevcharVector( ): stdInput( GetParam( ), 'a' ), boltInput( GetParam( ), 'a' )
+    {}
+
+protected:
+    std::vector< char > stdInput;
+    bolt::cl::device_vector< char > boltInput;
 };
 
 class DevShortVector: public ::testing::TestWithParam< int >
@@ -386,6 +448,234 @@ public:
     GenerateConstantIterator(): mySize(GetParam()){
     }
 };
+
+
+template< size_t N >
+class TypeValue
+{
+public:
+    static const size_t value = N;
+};
+
+template< typename ArrayTuple >
+class GenerateArrayTest: public ::testing::Test
+{
+public:
+    GenerateArrayTest( ): m_Errors( 0 )
+    {}
+
+    virtual void TearDown( )
+    {};
+
+    virtual ~GenerateArrayTest( )
+    {}
+
+protected:
+    typedef typename std::tuple_element< 0, ArrayTuple >::type ArrayType;
+    static const size_t ArraySize = typename std::tuple_element< 1, ArrayTuple >::type::value;
+    std::array< ArrayType, ArraySize > stdInput, boltInput, stdOffsetIn, boltOffsetIn;
+    int m_Errors;
+};
+
+TYPED_TEST_CASE_P( GenerateArrayTest );
+
+
+#if (TEST_CPU_DEVICE == 1)
+TYPED_TEST_P( GenerateArrayTest,CPU_DeviceNormal )
+{
+    int val = 3;
+    
+    typedef std::array< ArrayType, ArraySize > ArrayCont;
+
+    GenConst<int> gen(val);
+
+    MyOclContext oclcpu = initOcl(CL_DEVICE_TYPE_CPU, 0);
+    bolt::cl::control c_cpu(oclcpu._queue);  // construct control structure from the queue.
+
+    //  Calling the actual functions under test
+    std::generate( stdInput.begin( ), stdInput.end( ), gen );
+    bolt::cl::generate( c_cpu, boltInput.begin( ), boltInput.end( ) , gen);
+
+    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
+    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
+    
+    //OFFSET Test cases
+    //  Calling the actual functions under test
+    size_t startIndex = 17; //Some aribitrary offset position
+    size_t endIndex   = ArraySize - 17; //Some aribitrary offset position
+    if( (( startIndex > ArraySize ) || ( endIndex < 0 ) )  || (startIndex > endIndex) )
+    {
+        std::cout <<"\nSkipping NormalOffset Test for size "<< ArraySize << "\n";
+    }    
+    else
+    {
+        std::generate( stdOffsetIn.begin( ) + startIndex, stdOffsetIn.begin( ) + endIndex, gen );
+        bolt::cl::generate( c_cpu, boltOffsetIn.begin( ) + startIndex, boltOffsetIn.begin( ) + endIndex, gen);
+
+        ArrayCont::difference_type stdNumElements = std::distance( stdOffsetIn.begin( ), stdOffsetIn.end( ) );
+        ArrayCont::difference_type boltNumElements = std::distance(  boltOffsetIn.begin( ),  boltOffsetIn.end( ) );
+
+        //  Both collections should have the same number of elements
+        EXPECT_EQ( stdNumElements, boltNumElements );
+
+        //  Loop through the array and compare all the values with each other
+        cmpStdArray< ArrayType, ArraySize >::cmpArrays(  stdOffsetIn,  boltOffsetIn );
+    }
+}
+
+REGISTER_TYPED_TEST_CASE_P( GenerateArrayTest, CPU_DeviceNormal);
+#endif
+
+typedef ::testing::Types< 
+    std::tuple< cl_long, TypeValue< 1 > >,
+    std::tuple< cl_long, TypeValue< 31 > >,
+    std::tuple< cl_long, TypeValue< 32 > >,
+    std::tuple< cl_long, TypeValue< 63 > >,
+    std::tuple< cl_long, TypeValue< 64 > >,
+    std::tuple< cl_long, TypeValue< 127 > >,
+    std::tuple< cl_long, TypeValue< 128 > >,
+    std::tuple< cl_long, TypeValue< 129 > >,
+    std::tuple< cl_long, TypeValue< 1000 > >,
+    std::tuple< cl_long, TypeValue< 1053 > >,
+    std::tuple< cl_long, TypeValue< 4096 > >,
+    std::tuple< cl_long, TypeValue< 4097 > >,
+    std::tuple< cl_long, TypeValue< 8192 > >,
+    std::tuple< cl_long, TypeValue< 16384 > >,//13
+    std::tuple< cl_long, TypeValue< 32768 > >,//14
+    std::tuple< cl_long, TypeValue< 65535 > >,//15
+    std::tuple< cl_long, TypeValue< 65536 > >,//16
+    std::tuple< cl_long, TypeValue< 131072 > >,//17    
+    std::tuple< cl_long, TypeValue< 262144 > >,//18    
+    std::tuple< cl_long, TypeValue< 524288 > >,//19    
+    std::tuple< cl_long, TypeValue< 1048576 > >,//20    
+    std::tuple< cl_long, TypeValue< 2097152 > >//21    
+#if (TEST_LARGE_BUFFERS == 1)
+    , /*This coma is needed*/
+    std::tuple< cl_long, TypeValue< 4194304 > >,//22    
+    std::tuple< cl_long, TypeValue< 8388608 > >,//23
+    std::tuple< cl_long, TypeValue< 16777216 > >,//24
+    std::tuple< cl_long, TypeValue< 33554432 > >,//25
+    std::tuple< cl_long, TypeValue< 67108864 > >//26
+#endif
+> clLongTests;
+
+typedef ::testing::Types< 
+    std::tuple< int, TypeValue< 1 > >,
+    std::tuple< int, TypeValue< 31 > >,
+    std::tuple< int, TypeValue< 32 > >,
+    std::tuple< int, TypeValue< 63 > >,
+    std::tuple< int, TypeValue< 64 > >,
+    std::tuple< int, TypeValue< 127 > >,
+    std::tuple< int, TypeValue< 128 > >,
+    std::tuple< int, TypeValue< 129 > >,
+    std::tuple< int, TypeValue< 1000 > >,
+    std::tuple< int, TypeValue< 1053 > >,
+    std::tuple< int, TypeValue< 4096 > >,
+    std::tuple< int, TypeValue< 4097 > >,
+    std::tuple< int, TypeValue< 8192 > >,
+    std::tuple< int, TypeValue< 16384 > >,//13
+    std::tuple< int, TypeValue< 32768 > >,//14
+    std::tuple< int, TypeValue< 65535 > >,//15
+    std::tuple< int, TypeValue< 65536 > >,//16
+    std::tuple< int, TypeValue< 131072 > >,//17    
+    std::tuple< int, TypeValue< 262144 > >,//18    
+    std::tuple< int, TypeValue< 524288 > >,//19    
+    std::tuple< int, TypeValue< 1048576 > >,//20    
+    std::tuple< int, TypeValue< 2097152 > >//21    
+#if (TEST_LARGE_BUFFERS == 1)
+    , /*This coma is needed*/
+    std::tuple< int, TypeValue< 4194304 > >,//22    
+    std::tuple< int, TypeValue< 8388608 > >,//23
+    std::tuple< int, TypeValue< 16777216 > >,//24
+    std::tuple< int, TypeValue< 33554432 > >,//25
+    std::tuple< int, TypeValue< 67108864 > >//26
+#endif
+> IntegerTests;
+
+typedef ::testing::Types< 
+    std::tuple< unsigned int, TypeValue< 1 > >,
+    std::tuple< unsigned int, TypeValue< 31 > >,
+    std::tuple< unsigned int, TypeValue< 32 > >,
+    std::tuple< unsigned int, TypeValue< 63 > >,
+    std::tuple< unsigned int, TypeValue< 64 > >,
+    std::tuple< unsigned int, TypeValue< 127 > >,
+    std::tuple< unsigned int, TypeValue< 128 > >,
+    std::tuple< unsigned int, TypeValue< 129 > >,
+    std::tuple< unsigned int, TypeValue< 1000 > >,
+    std::tuple< unsigned int, TypeValue< 1053 > >,
+    std::tuple< unsigned int, TypeValue< 4096 > >,
+    std::tuple< unsigned int, TypeValue< 4097 > >,
+    std::tuple< unsigned int, TypeValue< 8192 > >,
+    std::tuple< unsigned int, TypeValue< 16384 > >,//13
+    std::tuple< unsigned int, TypeValue< 32768 > >,//14
+    std::tuple< unsigned int, TypeValue< 65535 > >,//15
+    std::tuple< unsigned int, TypeValue< 65536 > >,//16
+    std::tuple< unsigned int, TypeValue< 131072 > >,//17    
+    std::tuple< unsigned int, TypeValue< 262144 > >,//18    
+    std::tuple< unsigned int, TypeValue< 524288 > >,//19    
+    std::tuple< unsigned int, TypeValue< 1048576 > >,//20    
+    std::tuple< unsigned int, TypeValue< 2097152 > >//21    
+#if (TEST_LARGE_BUFFERS == 1)
+    , /*This coma is needed*/
+    std::tuple< unsigned int, TypeValue< 4194304 > >,//22    
+    std::tuple< unsigned int, TypeValue< 8388608 > >,//23
+    std::tuple< unsigned int, TypeValue< 16777216 > >,//24
+    std::tuple< unsigned int, TypeValue< 33554432 > >,//25
+    std::tuple< unsigned int, TypeValue< 67108864 > >//26
+#endif
+
+> UnsignedIntegerTests;
+
+typedef ::testing::Types< 
+    std::tuple< float, TypeValue< 1 > >,
+    std::tuple< float, TypeValue< 31 > >,
+    std::tuple< float, TypeValue< 32 > >,
+    std::tuple< float, TypeValue< 63 > >,
+    std::tuple< float, TypeValue< 64 > >,
+    std::tuple< float, TypeValue< 127 > >,
+    std::tuple< float, TypeValue< 128 > >,
+    std::tuple< float, TypeValue< 129 > >,
+    std::tuple< float, TypeValue< 1000 > >,
+    std::tuple< float, TypeValue< 1053 > >,
+    std::tuple< float, TypeValue< 4096 > >,
+    std::tuple< float, TypeValue< 4097 > >,
+    std::tuple< float, TypeValue< 65535 > >,
+    std::tuple< float, TypeValue< 65536 > >
+> FloatTests;
+
+#if (TEST_DOUBLE == 1)
+typedef ::testing::Types< 
+    std::tuple< double, TypeValue< 1 > >,
+    std::tuple< double, TypeValue< 31 > >,
+    std::tuple< double, TypeValue< 32 > >,
+    std::tuple< double, TypeValue< 63 > >,
+    std::tuple< double, TypeValue< 64 > >,
+    std::tuple< double, TypeValue< 127 > >,
+    std::tuple< double, TypeValue< 128 > >,
+    std::tuple< double, TypeValue< 129 > >,
+    std::tuple< double, TypeValue< 1000 > >,
+    std::tuple< double, TypeValue< 1053 > >,
+    std::tuple< double, TypeValue< 4096 > >,
+    std::tuple< double, TypeValue< 4097 > >,
+    std::tuple< double, TypeValue< 65535 > >,
+    std::tuple< double, TypeValue< 65536 > >
+> DoubleTests;
+#endif 
+
+INSTANTIATE_TYPED_TEST_CASE_P( clLong, GenerateArrayTest, clLongTests );
+INSTANTIATE_TYPED_TEST_CASE_P( Integer, GenerateArrayTest, IntegerTests );
+INSTANTIATE_TYPED_TEST_CASE_P( UnsignedInteger, GenerateArrayTest, UnsignedIntegerTests );
+INSTANTIATE_TYPED_TEST_CASE_P( Float, GenerateArrayTest, FloatTests );
+#if (TEST_DOUBLE == 1)
+INSTANTIATE_TYPED_TEST_CASE_P( Double, GenerateArrayTest, DoubleTests );
+#endif 
+
 
 //Generate with Fancy Iterator would result in compilation error!
 /* TEST_P(GenerateConstantIterator, withConstantIterator)
@@ -558,6 +848,96 @@ TEST_P( HostUDDVector, MultiCoreGenerate )
 
     // create generator
     GenConst2<UDD> gen(val);
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    //  Calling the actual functions under test
+    std::generate(  stdInput.begin( ),  stdInput.end( ), gen );
+    bolt::cl::generate( ctl, boltInput.begin( ), boltInput.end( ), gen );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( HostcharVector, Generate )
+{
+    // create generator
+    GenConst3<char> gen('a');
+
+    //  Calling the actual functions under test
+    std::generate(  stdInput.begin( ),  stdInput.end( ), gen );
+    bolt::cl::generate( boltInput.begin( ), boltInput.end( ), gen );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( HostcharVector, SerialGenerate )
+{
+    // create generator
+    GenConst3<char> gen('a');
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    //  Calling the actual functions under test
+    std::generate(  stdInput.begin( ),  stdInput.end( ), gen );
+    bolt::cl::generate( ctl, boltInput.begin( ), boltInput.end( ), gen );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( HostcharVector, MultiCoreGenerate )
+{
+    // create generator
+    GenConst3<char> gen('a');
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    //  Calling the actual functions under test
+    std::generate(  stdInput.begin( ),  stdInput.end( ), gen );
+    bolt::cl::generate( ctl, boltInput.begin( ), boltInput.end( ), gen );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( HostclLongVector, Generate )
+{
+    // create generator
+    GenConst3<cl_long> gen(1234);
+
+    //  Calling the actual functions under test
+    std::generate(  stdInput.begin( ),  stdInput.end( ), gen );
+    bolt::cl::generate( boltInput.begin( ), boltInput.end( ), gen );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( HostclLongVector, SerialGenerate )
+{
+    // create generator
+    GenConst3<cl_long> gen(1234);
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    //  Calling the actual functions under test
+    std::generate(  stdInput.begin( ),  stdInput.end( ), gen );
+    bolt::cl::generate( ctl, boltInput.begin( ), boltInput.end( ), gen );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( HostclLongVector, MultiCoreGenerate )
+{
+    // create generator
+    GenConst3<cl_long> gen(1234);
 
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
@@ -906,6 +1286,97 @@ TEST_P( DevUDDVector, MultiCoreGenerate )
 
     // create generator
     GenConst2<UDD> gen(val);
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    //  Calling the actual functions under test
+    std::generate(  stdInput.begin( ),  stdInput.end( ), gen );
+    bolt::cl::generate( ctl, boltInput.begin( ), boltInput.end( ), gen );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( DevcharVector, Generate )
+{
+    // create generator
+    GenConst3<char> gen('a');
+
+    //  Calling the actual functions under test
+    std::generate(  stdInput.begin( ),  stdInput.end( ), gen );
+    bolt::cl::generate( boltInput.begin( ), boltInput.end( ), gen );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( DevcharVector, SerialGenerate )
+{
+    // create generator
+    GenConst3<char> gen('a');
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    //  Calling the actual functions under test
+    std::generate(  stdInput.begin( ),  stdInput.end( ), gen );
+    bolt::cl::generate( ctl, boltInput.begin( ), boltInput.end( ), gen );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( DevcharVector, MultiCoreGenerate )
+{
+    // create generator
+    GenConst3<char> gen('a');
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    //  Calling the actual functions under test
+    std::generate(  stdInput.begin( ),  stdInput.end( ), gen );
+    bolt::cl::generate( ctl, boltInput.begin( ), boltInput.end( ), gen );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+
+
+TEST_P( DevclLongVector, Generate )
+{
+    // create generator
+    GenConst3<cl_long> gen(2345);
+
+    //  Calling the actual functions under test
+    std::generate(  stdInput.begin( ),  stdInput.end( ), gen );
+    bolt::cl::generate( boltInput.begin( ), boltInput.end( ), gen );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( DevclLongVector, SerialGenerate )
+{
+    // create generator
+    GenConst3<cl_long> gen(2345);
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    //  Calling the actual functions under test
+    std::generate(  stdInput.begin( ),  stdInput.end( ), gen );
+    bolt::cl::generate( ctl, boltInput.begin( ), boltInput.end( ), gen );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( DevclLongVector, MultiCoreGenerate )
+{
+    // create generator
+    GenConst3<cl_long> gen(2345);
 
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
@@ -1468,6 +1939,16 @@ TEST_P( DevDblVector, MultiCoreGenerateN )
 #endif
 
 #endif
+
+INSTANTIATE_TEST_CASE_P( GenSmall, HostcharVector, ::testing::Range( 1, 256, 3 ) );
+INSTANTIATE_TEST_CASE_P( GenLarge, HostcharVector, ::testing::Range( 1023, 1050000, 350001 ) );
+INSTANTIATE_TEST_CASE_P( GenSmall, DevcharVector,  ::testing::Range( 2, 256, 3 ) );
+INSTANTIATE_TEST_CASE_P( GenLarge, DevcharVector,  ::testing::Range( 1024, 1050000, 350003 ) );
+
+INSTANTIATE_TEST_CASE_P( GenSmall, HostclLongVector, ::testing::Range( 1, 256, 3 ) );
+INSTANTIATE_TEST_CASE_P( GenLarge, HostclLongVector, ::testing::Range( 1023, 1050000, 350001 ) );
+INSTANTIATE_TEST_CASE_P( GenSmall, DevclLongVector,  ::testing::Range( 2, 256, 3 ) );
+INSTANTIATE_TEST_CASE_P( GenLarge, DevclLongVector,  ::testing::Range( 1024, 1050000, 350003 ) );
 
 INSTANTIATE_TEST_CASE_P( GenSmall, HostUDDVector, ::testing::Range( 1, 256, 3 ) );
 INSTANTIATE_TEST_CASE_P( GenLarge, HostUDDVector, ::testing::Range( 1023, 1050000, 350001 ) );

@@ -23,6 +23,7 @@
 #include <type_traits>
 
 #include "bolt/cl/scan.h"
+#include "bolt/cl/stablesort.h"
 #include "bolt/cl/functional.h"
 #include "bolt/cl/device_vector.h"
 #ifdef ENABLE_TBB
@@ -319,6 +320,18 @@ void sort_detect_random_access( control &ctl,
     static_assert( false, "Bolt only supports random access iterator types" );
 };
 
+// Wrapper that uses default control class, iterator interface
+template<typename RandomAccessIterator, typename StrictWeakOrdering>
+void sort_detect_random_access( control &ctl,
+                                const RandomAccessIterator& first, const RandomAccessIterator& last,
+                                const StrictWeakOrdering& comp, const std::string& cl_code,
+                                bolt::cl::fancy_iterator_tag )
+{
+    //  \TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data
+    //  to a temporary buffer.  Should we?
+    static_assert( false, "Bolt only supports random access iterator types. And does not support Fancy Iterator Tags" );
+};
+
 template<typename RandomAccessIterator, typename StrictWeakOrdering>
 void sort_detect_random_access( control &ctl,
                                 const RandomAccessIterator& first, const RandomAccessIterator& last,
@@ -370,16 +383,6 @@ void sort_pick_iterator( control &ctl,
     return;
 }
 
-//Fancy Iterator specialization
-template<typename DVRandomAccessIterator, typename StrictWeakOrdering>
-void sort_pick_iterator( control &ctl,
-                         const DVRandomAccessIterator& first, const DVRandomAccessIterator& last,
-                         const StrictWeakOrdering& comp, const std::string& cl_code,
-                         bolt::cl::fancy_iterator_tag )
-{
-    static_assert( false, "It is not possible to sort fancy iterators. They are not mutable" );
-}
-
 //Non Device Vector specialization.
 //This implementation creates a cl::Buffer and passes the cl buffer to the sort specialization
 //whichtakes the cl buffer as a parameter. In the future, Each input buffer should be mapped to the device_vector
@@ -419,10 +422,10 @@ void sort_pick_iterator( control &ctl,
     }
 }
 
+
 /****** sort_enqueue specailization for unsigned int data types. ******
  * THE FOLLOWING CODE IMPLEMENTS THE RADIX SORT ALGORITHM FOR unsigned integers
  *********************************************************************/
-
 template<typename DVRandomAccessIterator, typename StrictWeakOrdering>
 typename std::enable_if< std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type,
                                        unsigned int
@@ -453,6 +456,7 @@ sort_enqueue(control &ctl,
     typeNames[sort_StrictWeakOrdering] = TypeName< StrictWeakOrdering >::get();
 
     std::vector<std::string> typeDefinitions;
+    PUSH_BACK_UNIQUE( typeDefinitions, cl_code )
     PUSH_BACK_UNIQUE( typeDefinitions, ClCode< T >::get() )
     PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVRandomAccessIterator >::get() )
     PUSH_BACK_UNIQUE( typeDefinitions, ClCode< StrictWeakOrdering  >::get() )
@@ -472,8 +476,6 @@ sort_enqueue(control &ctl,
         compileOptions);
 
     size_t groupSize  = RADICES;
-
-    int i = 0;
     size_t mulFactor = groupSize * RADICES;
     size_t numGroups;
 
@@ -563,15 +565,14 @@ sort_enqueue(control &ctl,
                             histKernel,
                             ::cl::NullRange,
                             ::cl::NDRange(szElements/RADICES),
-                            ::cl::NDRange(groupSize),
+                            ::cl::NDRange(groupSize*16), //This mul will be removed when permute is optimized
                             NULL,
                             NULL);
         //V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
 
         //Perform a global scan
-
         detail::scan_enqueue(ctl, dvHistogramBins.begin(), dvHistogramBins.end(), dvHistogramBinsDest.begin(), 0,
-                                                                                            plus< T >( ), false);
+                                                                                                plus< T >( ), false);
 
         if (swap == 0)
             V_OPENCL( permuteKernel.setArg(0, clInputData), "Error setting kernel argument" );
@@ -648,6 +649,7 @@ sort_enqueue(control &ctl,
     typeNames[sort_StrictWeakOrdering] = TypeName< StrictWeakOrdering >::get();
 
     std::vector<std::string> typeDefinitions;
+    PUSH_BACK_UNIQUE( typeDefinitions, cl_code )
     PUSH_BACK_UNIQUE( typeDefinitions, ClCode< T >::get() )
     PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVRandomAccessIterator >::get() )
     PUSH_BACK_UNIQUE( typeDefinitions, ClCode< StrictWeakOrdering  >::get() )
@@ -670,7 +672,6 @@ sort_enqueue(control &ctl,
 
     unsigned int groupSize  = RADICES;
 
-    int i = 0;
     size_t mulFactor = groupSize * RADICES;
 
     if(orig_szElements%mulFactor != 0)
@@ -760,7 +761,7 @@ sort_enqueue(control &ctl,
                             histKernel,
                             ::cl::NullRange,
                             ::cl::NDRange(szElements/RADICES),
-                            ::cl::NDRange(groupSize),
+                            ::cl::NDRange(groupSize*16),
                             NULL,
                             NULL);
         //V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
@@ -817,7 +818,7 @@ sort_enqueue(control &ctl,
                                 histSignedKernel,
                                 ::cl::NullRange,
                                 ::cl::NDRange(szElements/RADICES),
-                                ::cl::NDRange(groupSize),
+                                ::cl::NDRange(groupSize*16),
                                 NULL,
                                 NULL);
             //V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
@@ -887,6 +888,7 @@ sort_enqueue(control &ctl,
     typeNames[sort_StrictWeakOrdering] = TypeName< StrictWeakOrdering >::get();
 
     std::vector<std::string> typeDefinitions;
+    PUSH_BACK_UNIQUE( typeDefinitions, cl_code )
     PUSH_BACK_UNIQUE( typeDefinitions, ClCode< T >::get() )
     PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVRandomAccessIterator >::get() )
     PUSH_BACK_UNIQUE( typeDefinitions, ClCode< StrictWeakOrdering  >::get() )
@@ -978,6 +980,12 @@ void sort_enqueue_non_powerOf2(control &ctl,
                                const DVRandomAccessIterator& first, const DVRandomAccessIterator& last,
                                const StrictWeakOrdering& comp, const std::string& cl_code)
 {
+    /*The selection sort algorithm is not good for GPUs Hence calling the stablesort routines.
+     *For future call a combination of selection sort and bitonic sort. To improve performance of floats
+     * doubles and UDDs*/
+    bolt::cl::detail::stablesort_enqueue(ctl, first, last, comp, cl_code);
+    return;
+#if 0
     typedef typename std::iterator_traits< DVRandomAccessIterator >::value_type T;
 
     cl_int l_Error;
@@ -992,6 +1000,7 @@ void sort_enqueue_non_powerOf2(control &ctl,
     // Note use of TypeName<>::get to retreive the name here.
 
     std::vector<std::string> typeDefinitions;
+    PUSH_BACK_UNIQUE( typeDefinitions, cl_code )
     PUSH_BACK_UNIQUE( typeDefinitions, ClCode< T >::get() )
     PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVRandomAccessIterator >::get() )
     PUSH_BACK_UNIQUE( typeDefinitions, ClCode< StrictWeakOrdering  >::get() )
@@ -1065,6 +1074,7 @@ void sort_enqueue_non_powerOf2(control &ctl,
         V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
     }
     return;
+#endif
 }// END of sort_enqueue_non_powerOf2
 
 }//namespace bolt::cl::detail

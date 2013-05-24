@@ -904,7 +904,7 @@ public:
         size_t size = GetParam( );
 
         std::generate(stdInput, stdInput + size, rand);
-        for (int i = 0; i<size; i++)
+        for (size_t i = 0; i<size; i++)
         {
             boltInput[i] = stdInput[i];
         }
@@ -934,7 +934,7 @@ public:
         size_t size = GetParam( );
 
         std::generate(stdInput, stdInput + size, rand);
-        for (int i = 0; i<size; i++)
+        for (size_t i = 0; i<size; i++)
         {
             boltInput[i] = stdInput[i];
         }
@@ -966,7 +966,7 @@ public:
 
         std::generate(stdInput, stdInput + size, rand);
 
-        for( int i=0; i < size; i++ )
+        for( size_t i=0; i < size; i++ )
         {
             boltInput[ i ] = stdInput[ i ];
         }
@@ -1928,6 +1928,39 @@ INSTANTIATE_TEST_CASE_P( StableSort, StableSortDoubleNakedPointer, ::testing::Va
 #endif
 
 typedef ::testing::Types< 
+    std::tuple< cl_long, TypeValue< 1 > >,
+    std::tuple< cl_long, TypeValue< 31 > >,
+    std::tuple< cl_long, TypeValue< 32 > >,
+    std::tuple< cl_long, TypeValue< 63 > >,
+    std::tuple< cl_long, TypeValue< 64 > >,
+    std::tuple< cl_long, TypeValue< 127 > >,
+    std::tuple< cl_long, TypeValue< 128 > >,
+    std::tuple< cl_long, TypeValue< 129 > >,
+    std::tuple< cl_long, TypeValue< 1000 > >,
+    std::tuple< cl_long, TypeValue< 1053 > >,
+    std::tuple< cl_long, TypeValue< 4096 > >,
+    std::tuple< cl_long, TypeValue< 4097 > >,
+    std::tuple< cl_long, TypeValue< 8192 > >,
+    std::tuple< cl_long, TypeValue< 16384 > >,//13
+    std::tuple< cl_long, TypeValue< 32768 > >,//14
+    std::tuple< cl_long, TypeValue< 65535 > >,//15
+    std::tuple< cl_long, TypeValue< 65536 > >,//16
+    std::tuple< cl_long, TypeValue< 131072 > >,//17    
+    std::tuple< cl_long, TypeValue< 262144 > >,//18    
+    std::tuple< cl_long, TypeValue< 524288 > >,//19    
+    std::tuple< cl_long, TypeValue< 1048576 > >,//20    
+    std::tuple< cl_long, TypeValue< 2097152 > >//21    
+#if (TEST_LARGE_BUFFERS == 1)
+    , /*This coma is needed*/
+    std::tuple< cl_long, TypeValue< 4194304 > >,//22    
+    std::tuple< cl_long, TypeValue< 8388608 > >,//23
+    std::tuple< cl_long, TypeValue< 16777216 > >,//24
+    std::tuple< cl_long, TypeValue< 33554432 > >,//25
+    std::tuple< cl_long, TypeValue< 67108864 > >//26
+#endif
+> clLongTests;
+
+typedef ::testing::Types< 
     std::tuple< int, TypeValue< 1 > >,
     std::tuple< int, TypeValue< 31 > >,
     std::tuple< int, TypeValue< 32 > >,
@@ -2104,6 +2137,7 @@ typedef ::testing::Types<
     std::tuple< UDD, TypeValue< 65536 > >
 > UDDTests;
 
+INSTANTIATE_TYPED_TEST_CASE_P( clLong, StableSortArrayTest, clLongTests );
 INSTANTIATE_TYPED_TEST_CASE_P( Integer, StableSortArrayTest, IntegerTests );
 INSTANTIATE_TYPED_TEST_CASE_P( UnsignedInteger, StableSortArrayTest, UnsignedIntegerTests );
 INSTANTIATE_TYPED_TEST_CASE_P( Float, StableSortArrayTest, FloatTests );
@@ -2192,7 +2226,7 @@ TEST (sanity_sort__withBoltClDevVectDouble_epr, floatSerial){
 	std::vector<double>  stdVect(0);
 	bolt::cl::device_vector<double>  boltVect(0);
 
-	for (int i = 0 ; i < sizeOfInputBufer; i++){
+	for (size_t i = 0 ; i < sizeOfInputBufer; i++){
 	    double dValue = rand();
         dValue = dValue/rand();
         dValue = dValue*rand();
@@ -2202,7 +2236,7 @@ TEST (sanity_sort__withBoltClDevVectDouble_epr, floatSerial){
 	std::SORT_FUNC(stdVect.begin(), stdVect.end(), std::greater<double>( ) );
 	bolt::BKND::SORT_FUNC(boltVect.begin(), boltVect.end(), bolt::cl::greater<double>( ) );
 
-	for (int i = 0 ; i < sizeOfInputBufer; i++){
+	for (size_t i = 0 ; i < sizeOfInputBufer; i++){
 	    EXPECT_DOUBLE_EQ(stdVect[i], boltVect[i]);
 	}
 }

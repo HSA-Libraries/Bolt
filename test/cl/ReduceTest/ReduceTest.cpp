@@ -141,6 +141,82 @@ TEST( ReduceStdVectWithInit, OffsetTest)
     EXPECT_EQ( stlTransformReduce, boltTransformReduce );
 }
 
+
+TEST( ReduceStdVectWithInit, OffsetTestDeviceVectorSerialCpu)
+{
+    int length = 1024;
+    std::vector<int> stdInput( length );
+    std::fill( stdInput.begin(), stdInput.end(), 1024 );
+
+    bolt::cl::device_vector<int> dVectorA( stdInput.begin(), stdInput.end() );
+
+
+    bolt::cl::control ctl;
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+    //  Calling the actual functions under test
+    int init = 0, offset = 100;
+    int stlTransformReduce = std::accumulate(  stdInput.begin( ) + offset, stdInput.end( ),
+                                               init, bolt::cl::plus<int>( ) );
+    int boltTransformReduce= bolt::cl::reduce(  ctl, dVectorA.begin( ) + offset, dVectorA.end( ),
+                                                init, bolt::cl::plus<int>( ) );
+
+    EXPECT_EQ( stlTransformReduce, boltTransformReduce );
+}
+
+TEST( ReduceStdVectWithInit, OffsetTestDeviceVectorMultiCoreCpu)
+{
+    int length = 1024;
+    std::vector<int> stdInput( length );
+    std::fill( stdInput.begin(), stdInput.end(), 1024 );
+
+    bolt::cl::device_vector<int> dVectorA( stdInput.begin(), stdInput.end() );
+
+    bolt::cl::control ctl;
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+    
+    //  Calling the actual functions under test
+    int init = 0, offset = 100;
+    int stlTransformReduce = std::accumulate(stdInput.begin( ) + offset, stdInput.end( ), init, bolt::cl::plus<int>( ) );
+    int boltTransformReduce= bolt::cl::reduce( dVectorA.begin( ) + offset, dVectorA.end( ), init, bolt::cl::plus<int>( ) );
+
+    EXPECT_EQ( stlTransformReduce, boltTransformReduce );
+}
+
+TEST( ReduceStdVectWithInit, OffsetTestMultiCoreCpu)
+{
+    int length = 1024;
+    std::vector<int> stdInput( length );
+    std::fill( stdInput.begin(), stdInput.end(), 1024 );
+
+    bolt::cl::control ctl;
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+    
+    //  Calling the actual functions under test
+    int init = 0, offset = 100;
+    int stlTransformReduce = std::accumulate(stdInput.begin( ) + offset, stdInput.end( ), init, bolt::cl::plus<int>( ) );
+    int boltTransformReduce= bolt::cl::reduce( stdInput.begin( ) + offset, stdInput.end( ), init, bolt::cl::plus<int>( ) );
+
+    EXPECT_EQ( stlTransformReduce, boltTransformReduce );
+}
+
+TEST( ReduceStdVectWithInit, OffsetTestSerialCpu)
+{
+    int length = 1024;
+    std::vector<int> stdInput( length );
+    std::fill( stdInput.begin(), stdInput.end(), 1024 );
+
+    bolt::cl::control ctl;
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+    
+    //  Calling the actual functions under test
+    int init = 0, offset = 100;
+    int stlTransformReduce = std::accumulate(stdInput.begin( ) + offset, stdInput.end( ), init, bolt::cl::plus<int>( ) );
+    int boltTransformReduce= bolt::cl::reduce( stdInput.begin( ) + offset, stdInput.end( ), init, bolt::cl::plus<int>( ) );
+
+    EXPECT_EQ( stlTransformReduce, boltTransformReduce );
+}
+
+
 TYPED_TEST_CASE_P( ReduceArrayTest );
 
 TYPED_TEST_P( ReduceArrayTest, Normal )
@@ -452,7 +528,7 @@ public:
         size_t size = GetParam( );
 
         std::generate(stdInput, stdInput + size, generateRandom<int>);
-        for (int i = 0; i<size; i++)
+        for (unsigned int i = 0; i<size; i++)
         {
             boltInput[i] = stdInput[i];
             boltOutput[i] = stdInput[i];
@@ -490,7 +566,7 @@ public:
         size_t size = GetParam( );
 
         std::generate(stdInput, stdInput + size, generateRandom<float>);
-        for (int i = 0; i<size; i++)
+        for (unsigned int i = 0; i<size; i++)
         {
             boltInput[i] = stdInput[i];
             boltOutput[i] = stdInput[i];
@@ -1399,8 +1475,8 @@ std::vector<double> vect1(sizeOfStdVect);
 vect1[0] = 5.6;
 vect1[1] = 3.8;
 vect1[2] = 4.3;
-vect1[3] = 0;
-vect1[4] = 0;
+vect1[3] = 0.0;
+vect1[4] = 0.0;
 /*
 for (int i = 0; i < sizeOfStdVect; i++){
 vect1[i] = (-1) * (i + 1.0f);

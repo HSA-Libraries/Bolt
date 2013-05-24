@@ -27,7 +27,7 @@ class AsyncProfiler
 {
 private:
     LARGE_INTEGER constructionTimeStamp;
-    size_t timerPeriodNs;
+    LONGLONG timerPeriodNs;
     size_t numThrowAwayTrials;
 
 public:

@@ -454,7 +454,7 @@ aProfiler.stopTrial();
         V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_START>()");
         l_Error = generateEvent.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END, &stop_time);
         V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_END>()");
-        size_t time = stop_time - start_time;
+        cl_ulong time = stop_time - start_time;
         double gb = (numElements*sizeof(oType))/1024.0/1024.0/1024.0;
         double sec = time/1000000000.0;
         std::cout << "Global Memory Bandwidth: " << ( gb / sec) << " ( "

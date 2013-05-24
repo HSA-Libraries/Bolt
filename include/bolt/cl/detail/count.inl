@@ -204,7 +204,7 @@ namespace bolt {
                 bolt::cl::wait(ctl, l_mapEvent);
 
                 rType count =  h_result[0] ;
-                for(int i = 1; i < numTailReduce; ++i)
+                for(unsigned int i = 1; i < numTailReduce; ++i)
                 {
 
                    count +=  h_result[i];

@@ -81,17 +81,19 @@ include_directories(
 
 add_library( ampBolt.Runtime STATIC ${ampBolt.Runtime.Files} )
 
-set_target_properties( ampBolt.Runtime PROPERTIES VERSION ${Bolt_VERSION} )
-set_target_properties( ampBolt.Runtime PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
-
-
+# Construct a meaningful name for this build of the library
+set( boltLibName "ampBolt.runtime" )
 if( MSVC_VERSION VERSION_LESS 1600 )
-    set_target_properties( ampBolt.Runtime PROPERTIES ARCHIVE_OUTPUT_NAME "ampBolt.Runtime.vc90" )
+    set( boltLibName "${boltLibName}.vc90" )
 elseif( MSVC_VERSION VERSION_LESS 1700 )
-    set_target_properties( ampBolt.Runtime PROPERTIES ARCHIVE_OUTPUT_NAME "ampBolt.Runtime.vc100" )
+    set( boltLibName "${boltLibName}.vc100" )
 elseif( MSVC_VERSION VERSION_LESS 1800 )
-    set_target_properties( ampBolt.Runtime PROPERTIES ARCHIVE_OUTPUT_NAME "ampBolt.Runtime.vc110" )
+    set( boltLibName "${boltLibName}.vc110" )
 endif( )
+
+set_target_properties( ampBolt.Runtime PROPERTIES VERSION ${Bolt_VERSION} SOVERSION ${Bolt_VERSION_MAJOR} )
+set_target_properties( ampBolt.Runtime PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
+set_target_properties( ampBolt.Runtime PROPERTIES OUTPUT_NAME ${boltLibName} IMPORT_SUFFIX ".import" DEBUG_POSTFIX ".debug" )
 
 install( FILES
             ${ampBolt.Runtime.Headers}

@@ -99,6 +99,163 @@ uddtD4 initialAddD4  = { 1.00001, 1.000003, 1.0000005, 1.00000007 };
 BOLT_CREATE_TYPENAME( bolt::cl::device_vector< uddtD4 >::iterator );
 BOLT_CREATE_CLCODE( bolt::cl::device_vector< uddtD4 >::iterator, bolt::cl::deviceVectorIteratorTemplate );
 
+TEST(Sort, StdclLong)  
+{
+        // test length
+        int length = (1<<8);
+
+        std::vector<cl_long> bolt_source(length);
+        std::vector<cl_long> std_source(length);
+
+        // populate source vector with random ints
+        for (int j = 0; j < length; j++)
+        {
+            bolt_source[j] = (cl_long)rand();
+            std_source[j] = bolt_source[j];
+        }
+    
+        // perform sort
+        std::sort(std_source.begin(), std_source.end());
+        bolt::cl::sort(bolt_source.begin(), bolt_source.end());
+
+        // GoogleTest Comparison
+        cmpArrays(std_source, bolt_source);
+
+} 
+
+TEST(Sort, Serial_StdclLong)  
+{
+        // test length
+        int length = (1<<8);
+
+        std::vector<cl_long> bolt_source(length);
+        std::vector<cl_long> std_source(length);
+
+        // populate source vector with random ints
+        for (int j = 0; j < length; j++)
+        {
+            bolt_source[j] = (cl_long)rand();
+            std_source[j] = bolt_source[j];
+        }
+    
+        bolt::cl::control ctl = bolt::cl::control::getDefault( );
+        ctl.setForceRunMode(bolt::cl::control::SerialCpu); 
+
+        // perform sort
+        std::sort(std_source.begin(), std_source.end());
+        bolt::cl::sort(ctl, bolt_source.begin(), bolt_source.end());
+
+        // GoogleTest Comparison
+        cmpArrays(std_source, bolt_source);
+
+} 
+
+
+TEST(Sort, MultiCore_StdclLong)  
+{
+        // test length
+        int length = (1<<8);
+
+        std::vector<cl_long> bolt_source(length);
+        std::vector<cl_long> std_source(length);
+
+        // populate source vector with random ints
+        for (int j = 0; j < length; j++)
+        {
+            bolt_source[j] = (cl_long)rand();
+            std_source[j] = bolt_source[j];
+        }
+    
+        bolt::cl::control ctl = bolt::cl::control::getDefault( );
+        ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu); 
+
+        // perform sort
+        std::sort(std_source.begin(), std_source.end());
+        bolt::cl::sort(ctl, bolt_source.begin(), bolt_source.end());
+
+        // GoogleTest Comparison
+        cmpArrays(std_source, bolt_source);
+
+} 
+
+TEST(Sort, DevclLong)  
+{
+        // test length
+        int length = (1<<8);
+
+        bolt::cl::device_vector<cl_long> bolt_source(length);
+        std::vector<cl_long> std_source(length);
+
+        // populate source vector with random ints
+        for (int j = 0; j < length; j++)
+        {
+            bolt_source[j] = (cl_long)rand();
+            std_source[j] = bolt_source[j];
+        }
+    
+        // perform sort
+        std::sort(std_source.begin(), std_source.end());
+        bolt::cl::sort(bolt_source.begin(), bolt_source.end());
+
+        // GoogleTest Comparison
+        cmpArrays(std_source, bolt_source);
+
+} 
+
+TEST(Sort, Serial_DevclLong)  
+{
+        // test length
+        int length = (1<<8);
+
+        bolt::cl::device_vector<cl_long> bolt_source(length);
+        std::vector<cl_long> std_source(length);
+
+        // populate source vector with random ints
+        for (int j = 0; j < length; j++)
+        {
+            bolt_source[j] = (cl_long)rand();
+            std_source[j] = bolt_source[j];
+        }
+    
+        bolt::cl::control ctl = bolt::cl::control::getDefault( );
+        ctl.setForceRunMode(bolt::cl::control::SerialCpu); 
+
+        // perform sort
+        std::sort(std_source.begin(), std_source.end());
+        bolt::cl::sort(ctl, bolt_source.begin(), bolt_source.end());
+
+        // GoogleTest Comparison
+        cmpArrays(std_source, bolt_source);
+
+}
+
+TEST(Sort, MultiCore_DevclLong)  
+{
+        // test length
+        int length = (1<<8);
+
+        bolt::cl::device_vector<cl_long> bolt_source(length);
+        std::vector<cl_long> std_source(length);
+
+        // populate source vector with random ints
+        for (int j = 0; j < length; j++)
+        {
+            bolt_source[j] = (cl_long)rand();
+            std_source[j] = bolt_source[j];
+        }
+    
+        bolt::cl::control ctl = bolt::cl::control::getDefault( );
+        ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu); 
+
+        // perform sort
+        std::sort(std_source.begin(), std_source.end());
+        bolt::cl::sort(ctl, bolt_source.begin(), bolt_source.end());
+
+        // GoogleTest Comparison
+        cmpArrays(std_source, bolt_source);
+
+}
+
 TEST(SortUDD, AddDouble4)
 {
     //setup containers
@@ -701,13 +858,29 @@ REGISTER_TYPED_TEST_CASE_P( SortArrayTest, Normal, GPU_DeviceNormal,
 //  Fixture classes are now defined to enable googletest to process value parameterized tests
 //  ::testing::TestWithParam< int > means that GetParam( ) returns int values, which i use for array size
 
+
+
 class SortIntegerVector: public ::testing::TestWithParam< int >
 {
 public:
 
+    static int gen_int_random(void)
+    {
+        int toggle = 0;
+        if(toggle == 0)
+        {
+            toggle = 1;
+            return -rand();
+        }
+        else
+        {
+            toggle = 0;
+            return rand();
+        }
+    }
     SortIntegerVector( ): stdInput( GetParam( ) ), boltInput( GetParam( ) )
     {
-        std::generate(stdInput.begin(), stdInput.end(), rand);
+        std::generate(stdInput.begin(), stdInput.end(), gen_int_random);
         boltInput = stdInput;
     }
 
@@ -719,9 +892,23 @@ protected:
 class SortFloatVector: public ::testing::TestWithParam< int >
 {
 public:
+    static float gen_float_random(void)
+    {
+        int toggle = 0;
+        if(toggle == 0)
+        {
+            toggle = 1;
+            return (float)-rand();
+        }
+        else
+        {
+            toggle = 0;
+            return (float)rand();
+        }
+    }
     SortFloatVector( ): stdInput( GetParam( ) ), boltInput( GetParam( ) )
     {
-        std::generate(stdInput.begin(), stdInput.end(), rand);
+        std::generate(stdInput.begin(), stdInput.end(), gen_float_random);
         boltInput = stdInput;    
     }
 
@@ -734,9 +921,23 @@ protected:
 class SortDoubleVector: public ::testing::TestWithParam< int >
 {
 public:
+    static double gen_double_random(void)
+    {
+        int toggle = 0;
+        if(toggle == 0)
+        {
+            toggle = 1;
+            return (double)-rand();
+        }
+        else
+        {
+            toggle = 0;
+            return (double)rand();
+        }
+    }
     SortDoubleVector( ): stdInput( GetParam( ) ), boltInput( GetParam( ) )
     {
-        std::generate(stdInput.begin(), stdInput.end(), rand);
+        std::generate(stdInput.begin(), stdInput.end(), gen_double_random);
         boltInput = stdInput;    
     }
 
@@ -749,11 +950,25 @@ protected:
 class SortIntegerDeviceVector: public ::testing::TestWithParam< int >
 {
 public:
+    static int gen_int_random(void)
+    {
+        int toggle = 0;
+        if(toggle == 0)
+        {
+            toggle = 1;
+            return -rand();
+        }
+        else
+        {
+            toggle = 0;
+            return rand();
+        }
+    }
     // Create an std and a bolt vector of requested size, and initialize all the elements to 1
     SortIntegerDeviceVector( ): stdInput( GetParam( ) ), boltInput( static_cast<size_t>( GetParam( ) ) ), 
                                 stdOffsetIn( GetParam( ) ), boltOffsetIn( static_cast<size_t>( GetParam( ) ) ), ArraySize ( GetParam( ) )
     {
-        std::generate(stdInput.begin(), stdInput.end(), rand);
+        std::generate(stdInput.begin(), stdInput.end(), gen_int_random);
         //boltInput = stdInput;      
         //FIXME - The above should work but the below loop is used. 
         for (int i=0; i< GetParam( ); i++)
@@ -774,11 +989,25 @@ protected:
 class SortFloatDeviceVector: public ::testing::TestWithParam< int >
 {
 public:
+    static float gen_float_random(void)
+    {
+        int toggle = 0;
+        if(toggle == 0)
+        {
+            toggle = 1;
+            return (float)-rand();
+        }
+        else
+        {
+            toggle = 0;
+            return (float)rand();
+        }
+    }
     // Create an std and a bolt vector of requested size, and initialize all the elements to 1
     SortFloatDeviceVector( ): stdInput( GetParam( ) ), boltInput( static_cast<size_t>( GetParam( ) ) ), 
                               stdOffsetIn( GetParam( ) ), boltOffsetIn( static_cast<size_t>( GetParam( ) ) )
     {
-        std::generate(stdInput.begin(), stdInput.end(), rand);
+        std::generate(stdInput.begin(), stdInput.end(), gen_float_random);
         //boltInput = stdInput;      
         //FIXME - The above should work but the below loop is used. 
         for (int i=0; i< GetParam( ); i++)
@@ -799,11 +1028,25 @@ protected:
 class SortDoubleDeviceVector: public ::testing::TestWithParam< int >
 {
 public:
+    static double gen_double_random(void)
+    {
+        int toggle = 0;
+        if(toggle == 0)
+        {
+            toggle = 1;
+            return (double)-rand();
+        }
+        else
+        {
+            toggle = 0;
+            return (double)rand();
+        }
+    }
     // Create an std and a bolt vector of requested size, and initialize all the elements to 1
     SortDoubleDeviceVector( ): stdInput( GetParam( ) ), boltInput( static_cast<size_t>( GetParam( ) ) ),
                                stdOffsetIn( GetParam( ) ), boltOffsetIn( static_cast<size_t>( GetParam( ) ) )
     {
-        std::generate(stdInput.begin(), stdInput.end(), rand);
+        std::generate(stdInput.begin(), stdInput.end(), gen_double_random);
         //boltInput = stdInput;      
         //FIXME - The above should work but the below loop is used. 
         for (int i=0; i< GetParam( ); i++)
@@ -871,11 +1114,30 @@ BOLT_TEMPLATE_REGISTER_NEW_ITERATOR(bolt::cl::device_vector, int, UDD);
 class SortUDDDeviceVector: public ::testing::TestWithParam< int >
 {
 public:
+    static UDD gen_UDD_random(void)
+    {
+        UDD temp;
+        int toggle = 0;
+        if(toggle == 0)
+        {
+            toggle = 1;
+            temp.a = -rand();
+            temp.b = rand();
+            return temp;
+        }
+        else
+        {
+            toggle = 0;
+            temp.a = rand();
+            temp.b = -rand();
+            return temp;
+        }
+    }
     // Create an std and a bolt vector of requested size, and initialize all the elements to 1
     SortUDDDeviceVector( ): stdInput( GetParam( ) ), boltInput( static_cast<size_t>( GetParam( ) ) ),
                             stdOffsetIn( GetParam( ) ), boltOffsetIn( static_cast<size_t>( GetParam( ) ) )
     {
-        std::generate(stdInput.begin(), stdInput.end(), rand);
+        std::generate(stdInput.begin(), stdInput.end(), gen_UDD_random);
         //boltInput = stdInput;      
         //FIXME - The above should work but the below loop is used. 
         for (int i=0; i< GetParam( ); i++)
@@ -895,6 +1157,20 @@ protected:
 class SortIntegerNakedPointer: public ::testing::TestWithParam< int >
 {
 public:
+    static int gen_int_random(void)
+    {
+        int toggle = 0;
+        if(toggle == 0)
+        {
+            toggle = 1;
+            return -rand();
+        }
+        else
+        {
+            toggle = 0;
+            return rand();
+        }
+    }
     //  Create an std and a bolt vector of requested size, and initialize all the elements to 1
     SortIntegerNakedPointer( ): stdInput( new int[ GetParam( ) ] ), boltInput( new int[ GetParam( ) ] )
     {}
@@ -903,8 +1179,8 @@ public:
     {
         size_t size = GetParam( );
 
-        std::generate(stdInput, stdInput + size, rand);
-        for (int i = 0; i<size; i++)
+        std::generate(stdInput, stdInput + size, gen_int_random);
+        for (size_t i = 0; i<size; i++)
         {
             boltInput[i] = stdInput[i];
         }
@@ -925,6 +1201,20 @@ protected:
 class SortFloatNakedPointer: public ::testing::TestWithParam< int >
 {
 public:
+    static float gen_float_random(void)
+    {
+        int toggle = 0;
+        if(toggle == 0)
+        {
+            toggle = 1;
+            return (float)-rand();
+        }
+        else
+        {
+            toggle = 0;
+            return (float)rand();
+        }
+    }
     //  Create an std and a bolt vector of requested size, and initialize all the elements to 1
     SortFloatNakedPointer( ): stdInput( new float[ GetParam( ) ] ), boltInput( new float[ GetParam( ) ] )
     {}
@@ -933,8 +1223,8 @@ public:
     {
         size_t size = GetParam( );
 
-        std::generate(stdInput, stdInput + size, rand);
-        for (int i = 0; i<size; i++)
+        std::generate(stdInput, stdInput + size, gen_float_random);
+        for (size_t i = 0; i<size; i++)
         {
             boltInput[i] = stdInput[i];
         }
@@ -956,6 +1246,20 @@ protected:
 class SortDoubleNakedPointer: public ::testing::TestWithParam< int >
 {
 public:
+    static double gen_double_random(void)
+    {
+        int toggle = 0;
+        if(toggle == 0)
+        {
+            toggle = 1;
+            return (double)-rand();
+        }
+        else
+        {
+            toggle = 0;
+            return (double)rand();
+        }
+    }
     //  Create an std and a bolt vector of requested size, and initialize all the elements to 1
     SortDoubleNakedPointer( ): stdInput( new double[ GetParam( ) ] ), boltInput( new double[ GetParam( ) ] )
     {}
@@ -964,9 +1268,9 @@ public:
     {
         size_t size = GetParam( );
 
-        std::generate(stdInput, stdInput + size, rand);
+        std::generate(stdInput, stdInput + size, gen_double_random);
 
-        for( int i=0; i < size; i++ )
+        for( size_t i=0; i < size; i++ )
         {
             boltInput[ i ] = stdInput[ i ];
         }
@@ -1928,6 +2232,39 @@ INSTANTIATE_TEST_CASE_P( Sort, SortDoubleNakedPointer, ::testing::ValuesIn( Test
 #endif
 
 typedef ::testing::Types< 
+    std::tuple< cl_long, TypeValue< 1 > >,
+    std::tuple< cl_long, TypeValue< 31 > >,
+    std::tuple< cl_long, TypeValue< 32 > >,
+    std::tuple< cl_long, TypeValue< 63 > >,
+    std::tuple< cl_long, TypeValue< 64 > >,
+    std::tuple< cl_long, TypeValue< 127 > >,
+    std::tuple< cl_long, TypeValue< 128 > >,
+    std::tuple< cl_long, TypeValue< 129 > >,
+    std::tuple< cl_long, TypeValue< 1000 > >,
+    std::tuple< cl_long, TypeValue< 1053 > >,
+    std::tuple< cl_long, TypeValue< 4096 > >,
+    std::tuple< cl_long, TypeValue< 4097 > >,
+    std::tuple< cl_long, TypeValue< 8192 > >,
+    std::tuple< cl_long, TypeValue< 16384 > >,//13
+    std::tuple< cl_long, TypeValue< 32768 > >,//14
+    std::tuple< cl_long, TypeValue< 65535 > >,//15
+    std::tuple< cl_long, TypeValue< 65536 > >,//16
+    std::tuple< cl_long, TypeValue< 131072 > >,//17    
+    std::tuple< cl_long, TypeValue< 262144 > >,//18    
+    std::tuple< cl_long, TypeValue< 524288 > >,//19    
+    std::tuple< cl_long, TypeValue< 1048576 > >,//20    
+    std::tuple< cl_long, TypeValue< 2097152 > >//21    
+#if (TEST_LARGE_BUFFERS == 1)
+    , /*This coma is needed*/
+    std::tuple< cl_long, TypeValue< 4194304 > >,//22    
+    std::tuple< cl_long, TypeValue< 8388608 > >,//23
+    std::tuple< cl_long, TypeValue< 16777216 > >,//24
+    std::tuple< cl_long, TypeValue< 33554432 > >,//25
+    std::tuple< cl_long, TypeValue< 67108864 > >//26
+#endif
+> clLongTests;
+
+typedef ::testing::Types< 
     std::tuple< int, TypeValue< 1 > >,
     std::tuple< int, TypeValue< 31 > >,
     std::tuple< int, TypeValue< 32 > >,
@@ -2104,9 +2441,47 @@ typedef ::testing::Types<
     std::tuple< UDD, TypeValue< 65536 > >
 > UDDTests;
 
+typedef ::testing::Types< 
+    std::tuple< cl_ushort, TypeValue< 1 > >,
+    std::tuple< cl_ushort, TypeValue< 31 > >,
+    std::tuple< cl_ushort, TypeValue< 32 > >,
+    std::tuple< cl_ushort, TypeValue< 63 > >,
+    std::tuple< cl_ushort, TypeValue< 64 > >,
+    std::tuple< cl_ushort, TypeValue< 127 > >,
+    std::tuple< cl_ushort, TypeValue< 128 > >,
+    std::tuple< cl_ushort, TypeValue< 129 > >,
+    std::tuple< cl_ushort, TypeValue< 1000 > >,
+    std::tuple< cl_ushort, TypeValue< 1053 > >,
+    std::tuple< cl_ushort, TypeValue< 4096 > >,
+    std::tuple< cl_ushort, TypeValue< 4097 > >,
+    std::tuple< cl_ushort, TypeValue< 65535 > >,
+    std::tuple< cl_ushort, TypeValue< 65536 > >
+> cl_ushortTests;
+
+typedef ::testing::Types< 
+    std::tuple< cl_short, TypeValue< 1 > >,
+    std::tuple< cl_short, TypeValue< 31 > >,
+    std::tuple< cl_short, TypeValue< 32 > >,
+    std::tuple< cl_short, TypeValue< 63 > >,
+    std::tuple< cl_short, TypeValue< 64 > >,
+    std::tuple< cl_short, TypeValue< 127 > >,
+    std::tuple< cl_short, TypeValue< 128 > >,
+    std::tuple< cl_short, TypeValue< 129 > >,
+    std::tuple< cl_short, TypeValue< 1000 > >,
+    std::tuple< cl_short, TypeValue< 1053 > >,
+    std::tuple< cl_short, TypeValue< 4096 > >,
+    std::tuple< cl_short, TypeValue< 4097 > >,
+    std::tuple< cl_short, TypeValue< 65535 > >,
+    std::tuple< cl_short, TypeValue< 65536 > >
+> cl_shortTests;
+
+
+INSTANTIATE_TYPED_TEST_CASE_P( cl_ushort, SortArrayTest, cl_ushortTests );
+INSTANTIATE_TYPED_TEST_CASE_P( cl_short, SortArrayTest, cl_shortTests );
 INSTANTIATE_TYPED_TEST_CASE_P( Integer, SortArrayTest, IntegerTests );
 INSTANTIATE_TYPED_TEST_CASE_P( UnsignedInteger, SortArrayTest, UnsignedIntegerTests );
 INSTANTIATE_TYPED_TEST_CASE_P( Float, SortArrayTest, FloatTests );
+INSTANTIATE_TYPED_TEST_CASE_P( clLong, SortArrayTest, clLongTests );
 #if (TEST_DOUBLE == 1)
 INSTANTIATE_TYPED_TEST_CASE_P( Double, SortArrayTest, DoubleTests );
 #endif 
@@ -2192,7 +2567,7 @@ TEST (sanity_sort__withBoltClDevVectDouble_epr, floatSerial){
 	std::vector<double>  stdVect(0);
 	bolt::cl::device_vector<double>  boltVect(0);
 
-	for (int i = 0 ; i < sizeOfInputBufer; i++){
+	for (size_t i = 0 ; i < sizeOfInputBufer; i++){
 	    double dValue = rand();
         dValue = dValue/rand();
         dValue = dValue*rand();
@@ -2202,7 +2577,7 @@ TEST (sanity_sort__withBoltClDevVectDouble_epr, floatSerial){
 	std::SORT_FUNC(stdVect.begin(), stdVect.end(), std::greater<double>( ) );
 	bolt::BKND::SORT_FUNC(boltVect.begin(), boltVect.end(), bolt::cl::greater<double>( ) );
 
-	for (int i = 0 ; i < sizeOfInputBufer; i++){
+	for (size_t i = 0 ; i < sizeOfInputBufer; i++){
 	    EXPECT_DOUBLE_EQ(stdVect[i], boltVect[i]);
 	}
 }
@@ -2286,15 +2661,26 @@ int main(int argc, char* argv[])
 #include "bolt/cl/iterator/counting_iterator.h"
 #include <bolt/cl/sort.h>
 #include <bolt/cl/functional.h>
+#undef NOMINMAX
 #include <array>
 #include <algorithm>
+#include <random>
+
+int random_gen()
+{
+    return -rand();
+}
+
 int main ()
 {
     const int ArraySize = 8192;
     typedef std::array< int, ArraySize > ArrayCont;
     ArrayCont stdOffsetIn,stdInput;
     ArrayCont boltOffsetIn,boltInput;
-    std::generate(stdInput.begin(), stdInput.end(), rand);
+    int minimum = -31000;
+    int maximum = 31000;
+    std::default_random_engine rnd;
+    std::generate(stdInput.begin(), stdInput.end(),  random_gen);
     boltInput = stdInput;
     boltOffsetIn = stdInput;
     stdOffsetIn = stdInput;
@@ -2302,7 +2688,10 @@ int main ()
     //  Calling the actual functions under test
     std::SORT_FUNC( stdInput.begin( ), stdInput.end( ) );
     bolt::BKND::SORT_FUNC( boltInput.begin( ), boltInput.end( ) );
-
+    for(int i=0;i< ArraySize;i++)
+    {
+            std::cout << stdInput[i]  << "\n";
+    }
     //  Loop through the array and compare all the values with each other
     for(int i=0;i< ArraySize;i++)
     {

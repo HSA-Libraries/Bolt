@@ -241,7 +241,7 @@ Serial_scan(
     const bool Incl,
     const T &init)
 {
-    oType  sum, temp;
+    vType  sum, temp;
     if(Incl){
       *result = *values; // assign value
       sum = *values;
@@ -253,10 +253,10 @@ Serial_scan(
     }
     for ( unsigned int i= 1; i<num; i++)
     {
-        oType currentValue = *(values + i); // convertible
+        vType currentValue = *(values + i); // convertible
         if (Incl)
         {
-            oType r = binary_op( sum, currentValue);
+            vType r = binary_op( sum, currentValue);
             *(result + i) = r;
             sum = r;
         }
@@ -515,44 +515,22 @@ aProfiler.set(AsyncProfiler::memory, numElements*sizeof(iType));
 
             if( runMode == bolt::cl::control::SerialCpu )
             {
-                ::cl::Event serialCPUEvent;
-                cl_int l_Error = CL_SUCCESS;
-                iType *scanInputBuffer = (iType*)ctrl.getCommandQueue().enqueueMapBuffer(first.getContainer().getBuffer(), false,
-                                   CL_MAP_READ, 0, sizeof(iType) * numElements, NULL, &serialCPUEvent, &l_Error );
-
-                oType *scanResultBuffer = (oType*)ctrl.getCommandQueue().enqueueMapBuffer(result.getContainer().getBuffer(), false,
-
-                                   CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(oType) * numElements, NULL, &serialCPUEvent,
-                                                                                                        &l_Error );
-                serialCPUEvent.wait();
-                Serial_scan<iType, oType, BinaryFunction, T>(scanInputBuffer, scanResultBuffer, numElements, binary_op,
-                                                                                                    inclusive, init);
-                ctrl.getCommandQueue().enqueueUnmapMemObject(first.getContainer().getBuffer(), scanInputBuffer);
-                ctrl.getCommandQueue().enqueueUnmapMemObject(result.getContainer().getBuffer(), scanResultBuffer);
-
+                bolt::cl::device_vector< iType >::pointer scanInputBuffer =  first.getContainer( ).data( );
+                bolt::cl::device_vector< oType >::pointer scanResultBuffer =  result.getContainer( ).data( );
+                Serial_scan<iType, oType, BinaryFunction, T>(&scanInputBuffer[first.m_Index], &scanResultBuffer[result.m_Index],
+                                                              numElements, binary_op, inclusive, init);
                 return result + numElements;
             }
             else if( runMode == bolt::cl::control::MultiCoreCpu )
             {
 #ifdef ENABLE_TBB
-                ::cl::Event multiCoreCPUEvent;
-                cl_int l_Error = CL_SUCCESS;
-                /*Map the device buffer to CPU*/
-                iType *scanInputBuffer = (iType*)ctrl.getCommandQueue().enqueueMapBuffer(first.getContainer().getBuffer(), false,
-                                   CL_MAP_READ, 0, sizeof(iType) * numElements, NULL, &multiCoreCPUEvent, &l_Error );
-                oType *scanResultBuffer = (oType*)ctrl.getCommandQueue().enqueueMapBuffer(result.getContainer().getBuffer(), false,
-                                   CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(oType) * numElements, NULL, &multiCoreCPUEvent, &l_Error );
-                multiCoreCPUEvent.wait();
-
-
+                bolt::cl::device_vector< iType >::pointer scanInputBuffer =  first.getContainer( ).data( );
+                bolt::cl::device_vector< oType >::pointer scanResultBuffer =  result.getContainer( ).data( );
 
                if(inclusive)
-                 bolt::btbb::inclusive_scan(scanInputBuffer, scanInputBuffer+numElements, scanResultBuffer, binary_op);
+                 bolt::btbb::inclusive_scan(&scanInputBuffer[first.m_Index], &scanInputBuffer[first.m_Index] + numElements, &scanResultBuffer[result.m_Index], binary_op);
                else
-                bolt::btbb::exclusive_scan( scanInputBuffer, scanInputBuffer+numElements, scanResultBuffer, init, binary_op);
-
-                ctrl.getCommandQueue().enqueueUnmapMemObject(result.getContainer().getBuffer(), scanResultBuffer);
-                ctrl.getCommandQueue().enqueueUnmapMemObject(first.getContainer().getBuffer(), scanInputBuffer);
+                 bolt::btbb::exclusive_scan( &scanInputBuffer[first.m_Index], &scanInputBuffer[first.m_Index] + numElements, &scanResultBuffer[result.m_Index], init, binary_op);
 
                 return result + numElements;
 #else
@@ -914,7 +892,7 @@ aProfiler.stopTrial();
     ::cl::Event kernel0Event, kernel1Event, kernel2Event, kernelAEvent;
 
                 //  Ceiling function to bump the size of the sum array to the next whole wavefront size
-    device_vector< oType >::size_type sizeScanBuff = numWorkGroupsK0;
+    device_vector< iType >::size_type sizeScanBuff = numWorkGroupsK0;
     modWgSize = (sizeScanBuff & ((kernel0_WgSize*2)-1));
                 if( modWgSize )
                 {
@@ -922,9 +900,9 @@ aProfiler.stopTrial();
                     sizeScanBuff += (kernel0_WgSize*2);
                 }
 
-    control::buffPointer preSumArray = ctrl.acquireBuffer( (sizeScanBuff)*sizeof( oType ) );
-  control::buffPointer preSumArray1 = ctrl.acquireBuffer( (sizeScanBuff)*sizeof( oType ) );
-    control::buffPointer postSumArray = ctrl.acquireBuffer( (sizeScanBuff)*sizeof( oType ) );
+    control::buffPointer preSumArray = ctrl.acquireBuffer( (sizeScanBuff)*sizeof( iType ) );
+  control::buffPointer preSumArray1 = ctrl.acquireBuffer( (sizeScanBuff)*sizeof( iType ) );
+    control::buffPointer postSumArray = ctrl.acquireBuffer( (sizeScanBuff)*sizeof( iType ) );
     //::cl::Buffer userFunctor( ctrl.context( ), CL_MEM_USE_HOST_PTR, sizeof( binary_op ), &binary_op );
     //::cl::Buffer preSumArray( ctrl.context( ), CL_MEM_READ_WRITE, sizeScanBuff*sizeof(iType) );
     //::cl::Buffer postSumArray( ctrl.context( ), CL_MEM_READ_WRITE, sizeScanBuff*sizeof(iType) );

@@ -370,7 +370,9 @@ transform_scan_pick_iterator(
     else if( runMode == bolt::cl::control::MultiCoreCpu )
     {
         #ifdef ENABLE_TBB
-                throw std::exception("Transform_scan not implemented yet for MultiCoreCpu! \n");
+            std::transform(first, last, result, unary_op);
+            Serial_Scan<oType, BinaryFunction, T>(&(*result), &(*result), numElements, binary_op,inclusive,init);
+            return result + numElements;
         #else
                 throw std::exception("The MultiCoreCpu version of Transform_scan is not enabled to be built! \n");
         #endif
@@ -437,14 +439,19 @@ transform_scan_pick_iterator(
         bolt::cl::device_vector< iType >::pointer InputBuffer =  first.getContainer( ).data( );
         bolt::cl::device_vector< oType >::pointer ResultBuffer =  result.getContainer( ).data( );
 
-        std::transform(&InputBuffer[ first.m_Index ], &InputBuffer[first.m_Index + numElements], &ResultBuffer[ result.m_Index], unary_op);
+        std::transform(&InputBuffer[ first.m_Index ], &InputBuffer[first.m_Index] + numElements, stdext::make_checked_array_iterator(&ResultBuffer[ result.m_Index], numElements), unary_op);
         Serial_Scan<oType, BinaryFunction, T>(&ResultBuffer[ result.m_Index  ], &ResultBuffer[ result.m_Index ], numElements, binary_op, inclusive, init);
         return result + numElements;
     }
     else if( runMode == bolt::cl::control::MultiCoreCpu )
     {
         #ifdef ENABLE_TBB
-                throw std::exception("Transform_scan not implemented yet for MultiCoreCpu!\n");
+            bolt::cl::device_vector< iType >::pointer InputBuffer =  first.getContainer( ).data( );
+            bolt::cl::device_vector< oType >::pointer ResultBuffer =  result.getContainer( ).data( );
+
+            std::transform(&InputBuffer[ first.m_Index ], &InputBuffer[first.m_Index] + numElements, stdext::make_checked_array_iterator(&ResultBuffer[ result.m_Index], numElements), unary_op);
+            Serial_Scan<oType, BinaryFunction, T>(&ResultBuffer[ result.m_Index  ], &ResultBuffer[ result.m_Index ], numElements, binary_op, inclusive, init);
+            return result + numElements;
         #else
                 throw std::exception("The MultiCoreCpu version of Transform_scan is not enabled to be built!\n");
         #endif
@@ -754,7 +761,7 @@ aProfiler.setArchitecture(strDeviceName);
         V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_END>()");
 
         size_t k0_start_cpu = aProfiler.get(k0_stepNum, AsyncProfiler::startTime);
-        size_t shift = k0_start - k0_start_cpu;
+        size_t shift = (size_t)k0_start - k0_start_cpu;
         //size_t shift = k0_start_cpu - k0_start;
 
         //std::cout << "setting step " << k0_stepNum << " attribute " << AsyncProfiler::stopTime << " to " ;

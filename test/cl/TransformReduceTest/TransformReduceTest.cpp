@@ -597,7 +597,7 @@ public:
         size_t size = GetParam( );
 
         std::generate(stdInput, stdInput + size, generateRandom<int>);
-        for (int i = 0; i<size; i++)
+        for (unsigned int i = 0; i<size; i++)
         {
             boltInput[i] = stdInput[i];
             boltOutput[i] = stdInput[i];
@@ -635,7 +635,7 @@ public:
         size_t size = GetParam( );
 
         std::generate(stdInput, stdInput + size, generateRandom<float>);
-        for (int i = 0; i<size; i++)
+        for (unsigned int i = 0; i<size; i++)
         {
             boltInput[i] = stdInput[i];
             boltOutput[i] = stdInput[i];
@@ -1035,7 +1035,7 @@ public:
 
         std::generate(stdInput, stdInput + size, generateRandom<double>);
 
-        for( int i=0; i < size; i++ )
+        for(unsigned int i=0; i < size; i++ )
         {
             boltInput[ i ] = stdInput[ i ];
             boltOutput[i] = stdInput[i];
@@ -1732,9 +1732,9 @@ struct tbbUDD {
         return ((lhs.a+lhs.b) > (rhs.a+rhs.b));
     } 
     tbbUDD() 
-        : a(0.f),b(0.0) { } 
+        : a(0.0f),b(0.0) { } 
     tbbUDD(int _in) 
-        : a(_in), b(_in +1)  { } 
+        : a(float(_in)), b( double(_in +1))  { } 
     bool operator == (const tbbUDD& other) const { 
         return ((double)(a+b) == (double)(other.a+other.b));
     }
@@ -2498,6 +2498,108 @@ TEST (cl_outputType_transform_reduce_sq_max, epr__all_raised){
   int result = bolt::cl::transform_reduce(my_ctl, data, data + 6, bolt::cl::square<int>(),0,bolt::cl::maximum<int>());
     
   EXPECT_EQ(9, result);
+}
+
+TEST( TransformReduceStdVectWithInit, OffsetTestDeviceVectorSerialCpu)
+{
+    int length = 1024;
+    std::vector<int> stdInput( length );
+    std::vector<int> temp( length );
+    std::fill( stdInput.begin(), stdInput.end(), 1024 );
+
+    bolt::cl::device_vector<int> dVectorA( stdInput.begin(), stdInput.end() );
+
+
+    bolt::cl::control ctl;
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+    //  Calling the actual functions under test
+    int init = 0, offset = 100;
+    // STD
+    std::transform(  stdInput.begin( ) + offset, stdInput.end( ),
+                     temp.begin() + offset, bolt::cl::negate<int>());
+    int stlTransformReduce = std::accumulate(  temp.begin() + offset, temp.end(), init, bolt::cl::plus<int>()  );
+
+    // BOLT
+    int boltTransformReduce= bolt::cl::transform_reduce(  ctl, dVectorA.begin( ) + offset, dVectorA.end( ),
+                                                          bolt::cl::negate<int>(), init, bolt::cl::plus<int>( ) );
+
+    EXPECT_EQ( stlTransformReduce, boltTransformReduce );
+}
+
+TEST( TransformReduceStdVectWithInit, OffsetTestDeviceVectorMultiCoreCpu)
+{
+    int length = 1024;
+    std::vector<int> stdInput( length );
+    std::vector<int> temp( length );
+    std::fill( stdInput.begin(), stdInput.end(), 1024 );
+
+    bolt::cl::device_vector<int> dVectorA( stdInput.begin(), stdInput.end() );
+
+
+    bolt::cl::control ctl;
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+    //  Calling the actual functions under test
+    int init = 0, offset = 100;
+    // STD
+    std::transform(  stdInput.begin( ) + offset, stdInput.end( ),
+                     temp.begin() + offset, bolt::cl::negate<int>());
+    int stlTransformReduce = std::accumulate(  temp.begin() + offset, temp.end(), init, bolt::cl::plus<int>()  );
+
+    // BOLT
+    int boltTransformReduce= bolt::cl::transform_reduce(  ctl, dVectorA.begin( ) + offset, dVectorA.end( ),
+                                                          bolt::cl::negate<int>(), init, bolt::cl::plus<int>( ) );
+
+    EXPECT_EQ( stlTransformReduce, boltTransformReduce );
+}
+
+TEST( TransformReduceStdVectWithInit, OffsetTestMultiCoreCpu)
+{
+    int length = 1024;
+    std::vector<int> stdInput( length );
+    std::vector<int> temp( length );
+    std::fill( stdInput.begin(), stdInput.end(), 1024 );
+
+
+
+    bolt::cl::control ctl;
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+    //  Calling the actual functions under test
+    int init = 0, offset = 100;
+    // STD
+    std::transform(  stdInput.begin( ) + offset, stdInput.end( ),
+                     temp.begin() + offset, bolt::cl::negate<int>());
+    int stlTransformReduce = std::accumulate(  temp.begin() + offset, temp.end(), init, bolt::cl::plus<int>()  );
+
+    // BOLT
+    int boltTransformReduce= bolt::cl::transform_reduce(  ctl, stdInput.begin( ) + offset, stdInput.end( ),
+                                                          bolt::cl::negate<int>(), init, bolt::cl::plus<int>( ) );
+
+    EXPECT_EQ( stlTransformReduce, boltTransformReduce );
+}
+
+TEST( TransformReduceStdVectWithInit, OffsetTestSerialCpu)
+{
+    int length = 1024;
+    std::vector<int> stdInput( length );
+    std::vector<int> temp( length );
+    std::fill( stdInput.begin(), stdInput.end(), 1024 );
+
+
+
+    bolt::cl::control ctl;
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+    //  Calling the actual functions under test
+    int init = 0, offset = 100;
+    // STD
+    std::transform(  stdInput.begin( ) + offset, stdInput.end( ),
+                     temp.begin() + offset, bolt::cl::negate<int>());
+    int stlTransformReduce = std::accumulate(  temp.begin() + offset, temp.end(), init, bolt::cl::plus<int>()  );
+
+    // BOLT
+    int boltTransformReduce= bolt::cl::transform_reduce(  ctl, stdInput.begin( ) + offset, stdInput.end( ),
+                                                          bolt::cl::negate<int>(), init, bolt::cl::plus<int>( ) );
+
+    EXPECT_EQ( stlTransformReduce, boltTransformReduce );
 }
 
 int main(int argc, char* argv[])
