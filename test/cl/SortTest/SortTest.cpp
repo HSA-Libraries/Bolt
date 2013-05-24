@@ -858,13 +858,29 @@ REGISTER_TYPED_TEST_CASE_P( SortArrayTest, Normal, GPU_DeviceNormal,
 //  Fixture classes are now defined to enable googletest to process value parameterized tests
 //  ::testing::TestWithParam< int > means that GetParam( ) returns int values, which i use for array size
 
+
+
 class SortIntegerVector: public ::testing::TestWithParam< int >
 {
 public:
 
+    static int gen_int_random(void)
+    {
+        int toggle = 0;
+        if(toggle == 0)
+        {
+            toggle = 1;
+            return -rand();
+        }
+        else
+        {
+            toggle = 0;
+            return rand();
+        }
+    }
     SortIntegerVector( ): stdInput( GetParam( ) ), boltInput( GetParam( ) )
     {
-        std::generate(stdInput.begin(), stdInput.end(), rand);
+        std::generate(stdInput.begin(), stdInput.end(), gen_int_random);
         boltInput = stdInput;
     }
 
@@ -876,9 +892,23 @@ protected:
 class SortFloatVector: public ::testing::TestWithParam< int >
 {
 public:
+    static float gen_float_random(void)
+    {
+        int toggle = 0;
+        if(toggle == 0)
+        {
+            toggle = 1;
+            return (float)-rand();
+        }
+        else
+        {
+            toggle = 0;
+            return (float)rand();
+        }
+    }
     SortFloatVector( ): stdInput( GetParam( ) ), boltInput( GetParam( ) )
     {
-        std::generate(stdInput.begin(), stdInput.end(), rand);
+        std::generate(stdInput.begin(), stdInput.end(), gen_float_random);
         boltInput = stdInput;    
     }
 
@@ -891,9 +921,23 @@ protected:
 class SortDoubleVector: public ::testing::TestWithParam< int >
 {
 public:
+    static double gen_double_random(void)
+    {
+        int toggle = 0;
+        if(toggle == 0)
+        {
+            toggle = 1;
+            return (double)-rand();
+        }
+        else
+        {
+            toggle = 0;
+            return (double)rand();
+        }
+    }
     SortDoubleVector( ): stdInput( GetParam( ) ), boltInput( GetParam( ) )
     {
-        std::generate(stdInput.begin(), stdInput.end(), rand);
+        std::generate(stdInput.begin(), stdInput.end(), gen_double_random);
         boltInput = stdInput;    
     }
 
@@ -906,11 +950,25 @@ protected:
 class SortIntegerDeviceVector: public ::testing::TestWithParam< int >
 {
 public:
+    static int gen_int_random(void)
+    {
+        int toggle = 0;
+        if(toggle == 0)
+        {
+            toggle = 1;
+            return -rand();
+        }
+        else
+        {
+            toggle = 0;
+            return rand();
+        }
+    }
     // Create an std and a bolt vector of requested size, and initialize all the elements to 1
     SortIntegerDeviceVector( ): stdInput( GetParam( ) ), boltInput( static_cast<size_t>( GetParam( ) ) ), 
                                 stdOffsetIn( GetParam( ) ), boltOffsetIn( static_cast<size_t>( GetParam( ) ) ), ArraySize ( GetParam( ) )
     {
-        std::generate(stdInput.begin(), stdInput.end(), rand);
+        std::generate(stdInput.begin(), stdInput.end(), gen_int_random);
         //boltInput = stdInput;      
         //FIXME - The above should work but the below loop is used. 
         for (int i=0; i< GetParam( ); i++)
@@ -931,11 +989,25 @@ protected:
 class SortFloatDeviceVector: public ::testing::TestWithParam< int >
 {
 public:
+    static float gen_float_random(void)
+    {
+        int toggle = 0;
+        if(toggle == 0)
+        {
+            toggle = 1;
+            return (float)-rand();
+        }
+        else
+        {
+            toggle = 0;
+            return (float)rand();
+        }
+    }
     // Create an std and a bolt vector of requested size, and initialize all the elements to 1
     SortFloatDeviceVector( ): stdInput( GetParam( ) ), boltInput( static_cast<size_t>( GetParam( ) ) ), 
                               stdOffsetIn( GetParam( ) ), boltOffsetIn( static_cast<size_t>( GetParam( ) ) )
     {
-        std::generate(stdInput.begin(), stdInput.end(), rand);
+        std::generate(stdInput.begin(), stdInput.end(), gen_float_random);
         //boltInput = stdInput;      
         //FIXME - The above should work but the below loop is used. 
         for (int i=0; i< GetParam( ); i++)
@@ -956,11 +1028,25 @@ protected:
 class SortDoubleDeviceVector: public ::testing::TestWithParam< int >
 {
 public:
+    static double gen_double_random(void)
+    {
+        int toggle = 0;
+        if(toggle == 0)
+        {
+            toggle = 1;
+            return (double)-rand();
+        }
+        else
+        {
+            toggle = 0;
+            return (double)rand();
+        }
+    }
     // Create an std and a bolt vector of requested size, and initialize all the elements to 1
     SortDoubleDeviceVector( ): stdInput( GetParam( ) ), boltInput( static_cast<size_t>( GetParam( ) ) ),
                                stdOffsetIn( GetParam( ) ), boltOffsetIn( static_cast<size_t>( GetParam( ) ) )
     {
-        std::generate(stdInput.begin(), stdInput.end(), rand);
+        std::generate(stdInput.begin(), stdInput.end(), gen_double_random);
         //boltInput = stdInput;      
         //FIXME - The above should work but the below loop is used. 
         for (int i=0; i< GetParam( ); i++)
@@ -1028,11 +1114,30 @@ BOLT_TEMPLATE_REGISTER_NEW_ITERATOR(bolt::cl::device_vector, int, UDD);
 class SortUDDDeviceVector: public ::testing::TestWithParam< int >
 {
 public:
+    static UDD gen_UDD_random(void)
+    {
+        UDD temp;
+        int toggle = 0;
+        if(toggle == 0)
+        {
+            toggle = 1;
+            temp.a = -rand();
+            temp.b = rand();
+            return temp;
+        }
+        else
+        {
+            toggle = 0;
+            temp.a = rand();
+            temp.b = -rand();
+            return temp;
+        }
+    }
     // Create an std and a bolt vector of requested size, and initialize all the elements to 1
     SortUDDDeviceVector( ): stdInput( GetParam( ) ), boltInput( static_cast<size_t>( GetParam( ) ) ),
                             stdOffsetIn( GetParam( ) ), boltOffsetIn( static_cast<size_t>( GetParam( ) ) )
     {
-        std::generate(stdInput.begin(), stdInput.end(), rand);
+        std::generate(stdInput.begin(), stdInput.end(), gen_UDD_random);
         //boltInput = stdInput;      
         //FIXME - The above should work but the below loop is used. 
         for (int i=0; i< GetParam( ); i++)
@@ -1052,6 +1157,20 @@ protected:
 class SortIntegerNakedPointer: public ::testing::TestWithParam< int >
 {
 public:
+    static int gen_int_random(void)
+    {
+        int toggle = 0;
+        if(toggle == 0)
+        {
+            toggle = 1;
+            return -rand();
+        }
+        else
+        {
+            toggle = 0;
+            return rand();
+        }
+    }
     //  Create an std and a bolt vector of requested size, and initialize all the elements to 1
     SortIntegerNakedPointer( ): stdInput( new int[ GetParam( ) ] ), boltInput( new int[ GetParam( ) ] )
     {}
@@ -1060,7 +1179,7 @@ public:
     {
         size_t size = GetParam( );
 
-        std::generate(stdInput, stdInput + size, rand);
+        std::generate(stdInput, stdInput + size, gen_int_random);
         for (size_t i = 0; i<size; i++)
         {
             boltInput[i] = stdInput[i];
@@ -1082,6 +1201,20 @@ protected:
 class SortFloatNakedPointer: public ::testing::TestWithParam< int >
 {
 public:
+    static float gen_float_random(void)
+    {
+        int toggle = 0;
+        if(toggle == 0)
+        {
+            toggle = 1;
+            return (float)-rand();
+        }
+        else
+        {
+            toggle = 0;
+            return (float)rand();
+        }
+    }
     //  Create an std and a bolt vector of requested size, and initialize all the elements to 1
     SortFloatNakedPointer( ): stdInput( new float[ GetParam( ) ] ), boltInput( new float[ GetParam( ) ] )
     {}
@@ -1090,7 +1223,7 @@ public:
     {
         size_t size = GetParam( );
 
-        std::generate(stdInput, stdInput + size, rand);
+        std::generate(stdInput, stdInput + size, gen_float_random);
         for (size_t i = 0; i<size; i++)
         {
             boltInput[i] = stdInput[i];
@@ -1113,6 +1246,20 @@ protected:
 class SortDoubleNakedPointer: public ::testing::TestWithParam< int >
 {
 public:
+    static double gen_double_random(void)
+    {
+        int toggle = 0;
+        if(toggle == 0)
+        {
+            toggle = 1;
+            return (double)-rand();
+        }
+        else
+        {
+            toggle = 0;
+            return (double)rand();
+        }
+    }
     //  Create an std and a bolt vector of requested size, and initialize all the elements to 1
     SortDoubleNakedPointer( ): stdInput( new double[ GetParam( ) ] ), boltInput( new double[ GetParam( ) ] )
     {}
@@ -1121,7 +1268,7 @@ public:
     {
         size_t size = GetParam( );
 
-        std::generate(stdInput, stdInput + size, rand);
+        std::generate(stdInput, stdInput + size, gen_double_random);
 
         for( size_t i=0; i < size; i++ )
         {
@@ -2294,6 +2441,43 @@ typedef ::testing::Types<
     std::tuple< UDD, TypeValue< 65536 > >
 > UDDTests;
 
+typedef ::testing::Types< 
+    std::tuple< cl_ushort, TypeValue< 1 > >,
+    std::tuple< cl_ushort, TypeValue< 31 > >,
+    std::tuple< cl_ushort, TypeValue< 32 > >,
+    std::tuple< cl_ushort, TypeValue< 63 > >,
+    std::tuple< cl_ushort, TypeValue< 64 > >,
+    std::tuple< cl_ushort, TypeValue< 127 > >,
+    std::tuple< cl_ushort, TypeValue< 128 > >,
+    std::tuple< cl_ushort, TypeValue< 129 > >,
+    std::tuple< cl_ushort, TypeValue< 1000 > >,
+    std::tuple< cl_ushort, TypeValue< 1053 > >,
+    std::tuple< cl_ushort, TypeValue< 4096 > >,
+    std::tuple< cl_ushort, TypeValue< 4097 > >,
+    std::tuple< cl_ushort, TypeValue< 65535 > >,
+    std::tuple< cl_ushort, TypeValue< 65536 > >
+> cl_ushortTests;
+
+typedef ::testing::Types< 
+    std::tuple< cl_short, TypeValue< 1 > >,
+    std::tuple< cl_short, TypeValue< 31 > >,
+    std::tuple< cl_short, TypeValue< 32 > >,
+    std::tuple< cl_short, TypeValue< 63 > >,
+    std::tuple< cl_short, TypeValue< 64 > >,
+    std::tuple< cl_short, TypeValue< 127 > >,
+    std::tuple< cl_short, TypeValue< 128 > >,
+    std::tuple< cl_short, TypeValue< 129 > >,
+    std::tuple< cl_short, TypeValue< 1000 > >,
+    std::tuple< cl_short, TypeValue< 1053 > >,
+    std::tuple< cl_short, TypeValue< 4096 > >,
+    std::tuple< cl_short, TypeValue< 4097 > >,
+    std::tuple< cl_short, TypeValue< 65535 > >,
+    std::tuple< cl_short, TypeValue< 65536 > >
+> cl_shortTests;
+
+
+INSTANTIATE_TYPED_TEST_CASE_P( cl_ushort, SortArrayTest, cl_ushortTests );
+INSTANTIATE_TYPED_TEST_CASE_P( cl_short, SortArrayTest, cl_shortTests );
 INSTANTIATE_TYPED_TEST_CASE_P( Integer, SortArrayTest, IntegerTests );
 INSTANTIATE_TYPED_TEST_CASE_P( UnsignedInteger, SortArrayTest, UnsignedIntegerTests );
 INSTANTIATE_TYPED_TEST_CASE_P( Float, SortArrayTest, FloatTests );
@@ -2477,15 +2661,26 @@ int main(int argc, char* argv[])
 #include "bolt/cl/iterator/counting_iterator.h"
 #include <bolt/cl/sort.h>
 #include <bolt/cl/functional.h>
+#undef NOMINMAX
 #include <array>
 #include <algorithm>
+#include <random>
+
+int random_gen()
+{
+    return -rand();
+}
+
 int main ()
 {
     const int ArraySize = 8192;
     typedef std::array< int, ArraySize > ArrayCont;
     ArrayCont stdOffsetIn,stdInput;
     ArrayCont boltOffsetIn,boltInput;
-    std::generate(stdInput.begin(), stdInput.end(), rand);
+    int minimum = -31000;
+    int maximum = 31000;
+    std::default_random_engine rnd;
+    std::generate(stdInput.begin(), stdInput.end(),  random_gen);
     boltInput = stdInput;
     boltOffsetIn = stdInput;
     stdOffsetIn = stdInput;
@@ -2493,7 +2688,10 @@ int main ()
     //  Calling the actual functions under test
     std::SORT_FUNC( stdInput.begin( ), stdInput.end( ) );
     bolt::BKND::SORT_FUNC( boltInput.begin( ), boltInput.end( ) );
-
+    for(int i=0;i< ArraySize;i++)
+    {
+            std::cout << stdInput[i]  << "\n";
+    }
     //  Loop through the array and compare all the values with each other
     for(int i=0;i< ArraySize;i++)
     {

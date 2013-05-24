@@ -48,7 +48,8 @@ namespace bolt {
                                        values_first,
                                        less< keys_T >( ),
                                        cl_code,
-                                       std::iterator_traits< RandomAccessIterator1 >::iterator_category( ) );
+                                       std::iterator_traits< RandomAccessIterator1 >::iterator_category( ),
+                                       std::iterator_traits< RandomAccessIterator2 >::iterator_category( ) );
             return;
         }
 
@@ -66,7 +67,8 @@ namespace bolt {
                                        values_first,
                                        comp,
                                        cl_code,
-                                       std::iterator_traits< RandomAccessIterator1 >::iterator_category( ) );
+                                       std::iterator_traits< RandomAccessIterator1 >::iterator_category( ),
+                                       std::iterator_traits< RandomAccessIterator2 >::iterator_category( ) );
             return;
         }
 
@@ -84,7 +86,8 @@ namespace bolt {
                                        values_first,
                                        less< keys_T >( ),
                                        cl_code,
-                                       std::iterator_traits< RandomAccessIterator1 >::iterator_category( ) );
+                                       std::iterator_traits< RandomAccessIterator1 >::iterator_category( ),
+                                       std::iterator_traits< RandomAccessIterator2 >::iterator_category( ) );
             return;
         }
 
@@ -103,7 +106,8 @@ namespace bolt {
                                        values_first,
                                        comp,
                                        cl_code,
-                                       std::iterator_traits< RandomAccessIterator1 >::iterator_category( ) );
+                                       std::iterator_traits< RandomAccessIterator1 >::iterator_category( ),
+                                       std::iterator_traits< RandomAccessIterator2 >::iterator_category( ) );
             return;
         }
 
@@ -202,28 +206,50 @@ public:
     }
 
 
-
-    // Wrapper that uses default control class, iterator interface
-    template<typename RandomAccessIterator1, typename RandomAccessIterator2, typename StrictWeakOrdering>
-    void sort_by_key_detect_random_access(  control &ctl, RandomAccessIterator1 keys_first,
-                                            RandomAccessIterator1 keys_last,
-                                            RandomAccessIterator2 values_first, StrictWeakOrdering comp,
-                                            const std::string& cl_code, std::input_iterator_tag )
+    template< typename RandomAccessIterator1, typename RandomAccessIterator2, typename StrictWeakOrdering >
+    void sort_by_key_detect_random_access( control &ctl, 
+                                    const RandomAccessIterator1 keys_first, const RandomAccessIterator1 keys_last, 
+                                    const RandomAccessIterator2 values_first,
+                                    const StrictWeakOrdering& comp, const std::string& cl_code, 
+                                    std::random_access_iterator_tag, std::random_access_iterator_tag )
     {
-        //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data
+        return sort_by_key_pick_iterator( ctl, keys_first, keys_last, values_first,
+                                    comp, cl_code, 
+                                    std::iterator_traits< RandomAccessIterator1 >::iterator_category( ),
+                                    std::iterator_traits< RandomAccessIterator2 >::iterator_category( ) );
+    };
+
+    template< typename RandomAccessIterator1, typename RandomAccessIterator2, typename StrictWeakOrdering >
+    void sort_by_key_detect_random_access( control &ctl, 
+                                    const RandomAccessIterator1 keys_first, const RandomAccessIterator1 keys_last, 
+                                    const RandomAccessIterator2 values_first,
+                                    const StrictWeakOrdering& comp, const std::string& cl_code, 
+                                    std::input_iterator_tag, std::input_iterator_tag )
+    {
+        //  \TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data 
         //  to a temporary buffer.  Should we?
         static_assert( false, "Bolt only supports random access iterator types" );
     };
 
-    template<typename RandomAccessIterator1, typename RandomAccessIterator2, typename StrictWeakOrdering>
-    void sort_by_key_detect_random_access(  control &ctl, RandomAccessIterator1 keys_first,
-                                            RandomAccessIterator1 keys_last,
-                                            RandomAccessIterator2 values_first, StrictWeakOrdering comp,
-                                            const std::string& cl_code, std::random_access_iterator_tag )
+    template< typename RandomAccessIterator1, typename RandomAccessIterator2, typename StrictWeakOrdering >
+    void sort_by_key_detect_random_access( control &ctl, 
+                                    const RandomAccessIterator1 keys_first, const RandomAccessIterator1 keys_last, 
+                                    const RandomAccessIterator2 values_first,
+                                    const StrictWeakOrdering& comp, const std::string& cl_code, 
+                                    bolt::cl::fancy_iterator_tag, std::input_iterator_tag ) 
     {
-        return sort_by_key_pick_iterator(ctl, keys_first, keys_last, values_first, comp, cl_code,
-                                       std::iterator_traits< RandomAccessIterator1 >::iterator_category( ) );
-    };
+        static_assert( false, "It is not possible to sort fancy iterators. They are not mutable" );
+    }
+
+    template< typename RandomAccessIterator1, typename RandomAccessIterator2, typename StrictWeakOrdering >
+    void sort_by_key_detect_random_access( control &ctl, 
+                                    const RandomAccessIterator1 keys_first, const RandomAccessIterator1 keys_last, 
+                                    const RandomAccessIterator2 values_first,
+                                    const StrictWeakOrdering& comp, const std::string& cl_code, 
+                                    std::input_iterator_tag, bolt::cl::fancy_iterator_tag ) 
+    {
+        static_assert( false, "It is not possible to sort fancy iterators. They are not mutable" );
+    }
 
     //Fancy iterator specialization
     template<typename DVRandomAccessIterator1, typename DVRandomAccessIterator2, typename StrictWeakOrdering>
@@ -238,7 +264,8 @@ public:
     template<typename DVRandomAccessIterator1, typename DVRandomAccessIterator2, typename StrictWeakOrdering>
     void sort_by_key_pick_iterator(control &ctl, DVRandomAccessIterator1 keys_first,
                                    DVRandomAccessIterator1 keys_last, DVRandomAccessIterator2 values_first,
-                                   StrictWeakOrdering comp, const std::string& cl_code, bolt::cl::device_vector_tag )
+                                   StrictWeakOrdering comp, const std::string& cl_code, 
+                                   bolt::cl::device_vector_tag, bolt::cl::device_vector_tag )
     {
         typedef typename std::iterator_traits< DVRandomAccessIterator1 >::value_type keyType;
         typedef typename std::iterator_traits< DVRandomAccessIterator2 >::value_type valueType;
@@ -287,7 +314,7 @@ public:
     void sort_by_key_pick_iterator(control &ctl, RandomAccessIterator1 keys_first,
                                    RandomAccessIterator1 keys_last, RandomAccessIterator2 values_first,
                                    StrictWeakOrdering comp, const std::string& cl_code,
-                                   std::random_access_iterator_tag )
+                                   std::random_access_iterator_tag, std::random_access_iterator_tag )
     {
 
         typedef typename std::iterator_traits<RandomAccessIterator1>::value_type T_keys;
