@@ -79,12 +79,8 @@ namespace bolt {
         *
         * int a[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
         *
-        * cl::CommandQueue myCommandQueue = bolt::cl::control::getDefaultCommandQueue();
         *
-        * bolt::cl::control ctl(myCommandQueue); //specify an OpenCL(TM) command queue to use for executing the reduce.
-        * ctl.debug(bolt::cl::control::debug::SaveCompilerTemps); // save IL and ISA files for generated kernel
-        *
-        * int sum = bolt::cl::reduce(ctl, a, a+10);
+        * int sum = bolt::cl::reduce(a, a+10);
         * // sum = 55
         *  \endcode
         * \sa http://www.sgi.com/tech/stl/accumulate.html
@@ -134,14 +130,9 @@ namespace bolt {
         *
         * int a[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
         *
-        * cl::CommandQueue myCommandQueue = ...
-        *
-        * bolt::cl::control ctl(myCommandQueue); //specify an OpenCL(TM) command queue to use for executing the reduce.
-        * ctl.debug(bolt::cl::control::debug::SaveCompilerTemps); // save IL and ISA files for generated kernel
-        *
         * int init = 10;
         *
-        * int sum = bolt::cl::reduce(ctl, a, a+10, init);
+        * int sum = bolt::cl::reduce(a, a+10, init);
         * // sum = 65
         *  \endcode
         * \sa http://www.sgi.com/tech/stl/accumulate.html
@@ -184,19 +175,13 @@ namespace bolt {
         * sequence.
         * \return The result of the reduction.
         *
-        * \details The following code example shows the use of \p reduce to find the max of 10 numbers,
-        * specifying a specific command-queue and enabling debug messages.
+        * \details The following code example shows the use of \p reduce to find the max of 10 numbers.
         \code
         #include <bolt/cl/reduce.h>
 
         int a[10] = {2, 9, 3, 7, 5, 6, 3, 8, 3, 4};
 
-        cl::CommandQueue myCommandQueue = bolt::cl::control::getDefaultCommandQueue();
-
-        bolt::cl::control ctl(myCommandQueue); // specify an OpenCL(TM) command queue to use for executing the reduce.
-        ctl.debug(bolt::cl::control::debug::SaveCompilerTemps); // save IL and ISA files for generated kernel.
-
-        int max = bolt::cl::reduce(ctl, a, a+10, -1, bolt::cl:maximum<int>());
+        int max = bolt::cl::reduce( a, a+10, -1, bolt::cl:maximum<int>());
         // max = 9
         \endcode
         * \sa http://www.sgi.com/tech/stl/accumulate.html

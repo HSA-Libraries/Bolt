@@ -78,14 +78,8 @@ namespace bolt {
         *
         * int a[8] = {2, 9, 3, 7, 5, 6, 3, 8};
         *
-        * cl::CommandQueue myCommandQueue = bolt::cl::control::getDefaultCommandQueue();
-        *
-        * bolt::cl::control ctl(myCommandQueue); //Specify an OpenCL(TM) command queue to use for executing the reduce.
-        * ctl.debug(bolt::cl::control::debug::SaveCompilerTemps); // save IL and ISA files for generated kernel.
-        *
-        *
         * // for arranging the elements in descending order, use bolt::cl::greater<int>()
-        * bolt::cl::sort(ctl, a, a+8 );
+        * bolt::cl::sort( a, a+8 );
         *
         *  \endcode
         */
