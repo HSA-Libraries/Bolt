@@ -28,6 +28,7 @@
 
 #include "bolt/cl/bolt.h"
 #include "bolt/cl/functional.h"
+#include "bolt/cl/pair.h"
 #include "bolt/cl/device_vector.h"
 
 #define BOLT_CL_STABLESORT_BY_KEY_CPU_THRESHOLD 64
@@ -89,7 +90,7 @@ namespace cl {
 namespace detail
 {
 
-    enum stableSortTypes { stableSort_by_key_KeyType, stableSort_by_key_KeyIterType, stableSort_by_key_ValueType, 
+    enum stableSort_by_keyTypes { stableSort_by_key_KeyType, stableSort_by_key_KeyIterType, stableSort_by_key_ValueType, 
         stableSort_by_key_ValueIterType, stableSort_by_key_lessFunction, stableSort_by_key_end };
 
     class StableSort_by_key_KernelTemplateSpecializer : public KernelTemplateSpecializer
@@ -136,8 +137,64 @@ namespace detail
             return templateSpecializationString;
         }
     };
+ 
+    //Serial CPU code path implementation.
+    //Class to hold the key value pair. This will be used to zip th ekey and value together in a vector. 
+    template <typename keyType, typename valueType>
+    class std_stable_sort
+    {
+    public:
+        keyType   key;
+        valueType value;
+    };
+    //This is the functor which will sort the std_stable_sort vector. 
+    template <typename keyType, typename valueType, typename StrictWeakOrdering>
+    class std_stable_sort_comp
+    {
+    public:
+        typedef std_stable_sort<keyType, valueType> KeyValueType;
+        std_stable_sort_comp(const StrictWeakOrdering &_swo):swo(_swo) 
+        {}
+        StrictWeakOrdering swo;
+        bool operator() (const KeyValueType &lhs, const KeyValueType &rhs) const
+        {
+            return swo(lhs.key, rhs.key);
+        }
+    };
 
-// Wrapper that uses default control class, iterator interface
+    //The serial CPU implementation of stable_sort_by_key routine. This routines zips the key value pair and then sorts
+    //using the std::stable_sort routine.
+    template< typename RandomAccessIterator1, typename RandomAccessIterator2, typename StrictWeakOrdering >
+    void serialCPU_stable_sort_by_key(const RandomAccessIterator1 keys_first, const RandomAccessIterator1 keys_last, 
+                                      const RandomAccessIterator2 values_first,
+                                      const StrictWeakOrdering& comp)
+    {
+        typedef typename std::iterator_traits< RandomAccessIterator1 >::value_type keyType;
+        typedef typename std::iterator_traits< RandomAccessIterator2 >::value_type valType;
+        typedef std_stable_sort<keyType, valType> KeyValuePair;
+        typedef std_stable_sort_comp<keyType, valType, StrictWeakOrdering> KeyValuePairFunctor;
+       
+        size_t vecSize = std::distance( keys_first, keys_last ); 
+        std::vector<KeyValuePair> KeyValuePairVector(vecSize);
+        KeyValuePairFunctor functor(comp);
+        //Zip the key and values iterators into a std_stable_sort vector.
+        for (size_t i=0; i< vecSize; i++)
+        {
+            KeyValuePairVector[i].key   = *(keys_first + i);
+            KeyValuePairVector[i].value = *(values_first + i);
+        }
+        //Sort the std_stable_sort vector using std::stable_sort
+        std::stable_sort(KeyValuePairVector.begin(), KeyValuePairVector.end(), functor);
+        //Extract the keys and values from the KeyValuePair and fill the respective iterators. 
+        for (size_t i=0; i< vecSize; i++)
+        {
+            *(keys_first + i)   = KeyValuePairVector[i].key;
+            *(values_first + i) = KeyValuePairVector[i].value;
+        } 
+    }
+
+
+    // Wrapper that uses default control class, iterator interface
     template< typename RandomAccessIterator1, typename RandomAccessIterator2, typename StrictWeakOrdering >
     void stablesort_by_key_detect_random_access( control &ctl, 
                                     const RandomAccessIterator1 keys_first, const RandomAccessIterator1 keys_last, 
@@ -214,23 +271,21 @@ namespace detail
 
         if( runMode == bolt::cl::control::SerialCpu )
         {
-            throw std::exception("stable_sort_by_key not implemented yet for SerialCPU! \n");
+            serialCPU_stable_sort_by_key(keys_first, keys_last, values_first, comp);
             return;
         }
         else if( runMode == bolt::cl::control::MultiCoreCpu )
         {
-            
             #ifdef ENABLE_TBB
-                    throw std::exception("stable_sort_by_key not implemented yet for MultiCoreCpu! \n");
+                //TODO - Addlog for not supporting the MultiCore CPU. Implemented using serial code paths
+                serialCPU_stable_sort_by_key(keys_first, keys_last, values_first, comp);
             #else
-                    throw std::exception("MultiCoreCPU Version of stable_sort_by_key not Enabled! \n");
+                throw std::exception("MultiCoreCPU Version of stable_sort_by_key not Enabled! \n");
             #endif
-                    
             return;
         } 
         else 
         {
-
             device_vector< keyType > dvKeys( keys_first, keys_last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctl );
             device_vector< valType > dvValues( values_first, vecSize, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, false, ctl );
 
@@ -252,9 +307,8 @@ namespace detail
                                     const StrictWeakOrdering& comp, const std::string& cl_code, 
                                     bolt::cl::device_vector_tag, bolt::cl::device_vector_tag )
     {
-
         typedef typename std::iterator_traits< DVRandomAccessIterator1 >::value_type keyType;
-
+        typedef typename std::iterator_traits< DVRandomAccessIterator2 >::value_type valueType;
         size_t vecSize = std::distance( keys_first, keys_last ); 
         if( vecSize < 2 )
             return;
@@ -268,23 +322,28 @@ namespace detail
 
         if( runMode == bolt::cl::control::SerialCpu )
         {
-            throw std::exception( "stable_sort_by_key not implemented yet for SerialCPU! \n" );
-            return;
+                bolt::cl::device_vector< keyType >::pointer   keysPtr   =  keys_first.getContainer( ).data( );
+                bolt::cl::device_vector< valueType >::pointer valuesPtr =  values_first.getContainer( ).data( );
+                serialCPU_stable_sort_by_key(&keysPtr[keys_first.m_Index], &keysPtr[keys_last.m_Index], 
+                                             &valuesPtr[values_first.m_Index], comp);
+                return;
         }
         else if( runMode == bolt::cl::control::MultiCoreCpu )
         {
-             #ifdef ENABLE_TBB
-                    throw std::exception("stable_sort_by_key not implemented yet for MultiCoreCpu! \n");
+            #ifdef ENABLE_TBB
+                bolt::cl::device_vector< keyType >::pointer   keysPtr   =  keys_first.getContainer( ).data( );
+                bolt::cl::device_vector< valueType >::pointer valuesPtr =  values_first.getContainer( ).data( );
+                serialCPU_stable_sort_by_key(&keysPtr[keys_first.m_Index], &keysPtr[keys_last.m_Index], 
+                                             &valuesPtr[values_first.m_Index], comp);
+                return;
              #else
-                    throw std::exception("MultiCoreCPU Version of stable_sort_by_key not Enabled! \n");
+                throw std::exception("MultiCoreCPU Version of stable_sort_by_key not Enabled! \n");
              #endif
-             return;
         } 
         else
         {
             stablesort_by_key_enqueue( ctl, keys_first, keys_last, values_first, comp, cl_code );
         }
-
         return;
     }
 

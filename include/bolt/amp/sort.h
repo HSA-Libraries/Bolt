@@ -20,8 +20,8 @@
 */
 
 
-#if !defined( AMP_SORT_H )
-#define AMP_SORT_H
+#if !defined( BOLT_AMP_SORT_H )
+#define BOLT_AMP_SORT_H
 #pragma once
 
 #include <bolt/amp/bolt.h>
@@ -55,7 +55,7 @@ namespace bolt {
 
         /*! \breif This version of \p sort returns the sorted result of all the elements in the \p RandomAccessIterator
         * between the the first and last elements.
-        * The routine arranges the elements in an ascending order. \p RandomAccessIterator's value_type must provide 
+        * The routine arranges the elements in an ascending order. \p RandomAccessIterator's value_type must provide
         * operator "<" overload.
 
         *
@@ -63,10 +63,10 @@ namespace bolt {
         *  \tparam RandomAccessIterator Is a model of http://www.sgi.com/tech/stl/RandomAccessIterator.html, \n
         *          \p RandomAccessIterator is mutable, \n
         *          \p RandomAccessIterator's \c value_type is convertible to \p StrictWeakOrdering's \n
-        *          \p RandomAccessIterator's \c value_type is \p LessThanComparable 
-        * http://www.sgi.com/tech/stl/LessThanComparable.html; i.e., the value _type must provide operator 
+        *          \p RandomAccessIterator's \c value_type is \p LessThanComparable
+        * http://www.sgi.com/tech/stl/LessThanComparable.html; i.e., the value _type must provide operator
         * '<' overloaded. \n
-        * 
+        *
         * \param ctl \b Optional Bolt control object, to describe the environment under which the function will run.
         * \param first The first position in the sequence to be sorted.
         * \param last  The last position in the sequence to be sorted.
@@ -96,10 +96,10 @@ namespace bolt {
         void sort(RandomAccessIterator first,
             RandomAccessIterator last);
 
-        /*! \breif  \p sort returns the sorted result of all the elements in the inputIterator between the the first 
+        /*! \breif  \p sort returns the sorted result of all the elements in the inputIterator between the the first
         * and last elements using the specified binary_op.
         * You can arrange the elements in an ascending order, where the binary_op is the less<>() operator.
-        * This version of \p sort takes a bolt::amp::control structure as a first argument and compares objects using 
+        * This version of \p sort takes a bolt::amp::control structure as a first argument and compares objects using
         * \c functor object defined by \p StrictWeakOrdering.
 
         *
@@ -107,8 +107,8 @@ namespace bolt {
         *  \tparam RandomAccessIterator Is a model of http://www.sgi.com/tech/stl/RandomAccessIterator.html, \n
         *          \p RandomAccessIterator is mutable, \n
         *          \p RandomAccessIterator's \c value_type is convertible to \p StrictWeakOrdering's \n
-        *          \p RandomAccessIterator's \c value_type is 
-        * \p LessThanComparable http://www.sgi.com/tech/stl/LessThanComparable.html i.e the value _type should provide 
+        *          \p RandomAccessIterator's \c value_type is
+        * \p LessThanComparable http://www.sgi.com/tech/stl/LessThanComparable.html i.e the value _type should provide
         * operator '<' overloaded. \n
         *  \tparam StrictWeakOrdering Is a model of http://www.sgi.com/tech/stl/StrictWeakOrdering.html. \n
 

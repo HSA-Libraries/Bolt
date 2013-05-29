@@ -15,8 +15,8 @@
 
 ***************************************************************************/
 
-#if !defined(TBB_SORT_H )
-#define TBB_SORT_H
+#if !defined(BOLT_BTBB_SORT_H )
+#define BOLT_BTBB_SORT_H
 #pragma once
 
 #include "tbb/parallel_sort.h"

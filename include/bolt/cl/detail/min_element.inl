@@ -16,8 +16,8 @@
 ***************************************************************************/
 
 
-#if !defined( REDUCE_INL )
-#define REDUCE_INL
+#if !defined( BOLT_CL_MINELEMENT_INL )
+#define BOLT_CL_MINELEMENT_INL
 #pragma once
 
 #include <algorithm>
@@ -339,28 +339,31 @@ namespace bolt {
                     runMode = ctl.getDefaultPathToRun();
                 }
 
-                if (runMode == bolt::cl::control::SerialCpu)
-                {
-                    return std::min_element(first, last, binary_op);
-                }
-                else if (runMode == bolt::cl::control::MultiCoreCpu)
-                {
 
+                switch(runMode)
+                {
+                case bolt::cl::control::OpenCL :
+                    {
+                        device_vector< iType > dvInput( first, last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, ctl );
+                        int  dvminele = min_element_enqueue( ctl, dvInput.begin(), dvInput.end(), binary_op, cl_code);
+                        return first + dvminele ;
+                    }
+
+                case bolt::cl::control::MultiCoreCpu:
                     #ifdef ENABLE_TBB
-                           throw std::exception("MultiCoreCPU Version not implemented yet! \n");
+                        return std::min_element(first, last, binary_op);
                     #else
-                           throw std::exception("MultiCoreCPU Version not Enabled! \n");
+                        throw std::exception( "The MultiCoreCpu version of Max-Min is not enabled to be built! \n" );
                     #endif
 
-                    return last;
-                }
-                else
-                {
-                    device_vector< iType > dvInput( first, last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, ctl );
-                    int  dvminele = min_element_enqueue( ctl, dvInput.begin(), dvInput.end(), binary_op, cl_code);
+                case bolt::cl::control::SerialCpu:
+                    return std::min_element(first, last, binary_op);
 
-                    return first + dvminele ;
+                default:
+                    return std::min_element(first, last, binary_op);
+
                 }
+
             };
 
             // This template is called after we detect random access iterators
@@ -383,27 +386,28 @@ namespace bolt {
                     runMode = ctl.getDefaultPathToRun();
                 }
 
-                if (runMode == bolt::cl::control::SerialCpu)
+
+                switch(runMode)
                 {
-                    return std::min_element(first, last, binary_op);
-                }
-                else if (runMode == bolt::cl::control::MultiCoreCpu)
-                {
-                   /*TODO - ASK  - should we copy the device_vector to host memory, process the result and
-                   then store back the result into the device_vector.*/
-                  //std::cout<<"The MultiCoreCpu version of min_element on device_vector is not supported."<<std::endl;
+                case bolt::cl::control::OpenCL :
+                    {
+                        int pos =  min_element_enqueue( ctl, first, last,  binary_op, cl_code);
+                        return first+pos;
+                    }
+
+                case bolt::cl::control::MultiCoreCpu:
                     #ifdef ENABLE_TBB
-                           throw std::exception("MultiCoreCPU Version on device_vector not implemented yet! \n");
+                        return std::min_element(first, last, binary_op);
                     #else
-                           throw std::exception("MultiCoreCPU Version on device_vector not Enabled! \n");
+                        throw std::exception( "The MultiCoreCpu version of Max-Min is not enabled to be built! \n" );
                     #endif
 
-                    return last;
-                }
-                else
-                {
-                    int pos =  min_element_enqueue( ctl, first, last,  binary_op, cl_code);
-                    return first+pos;
+                case bolt::cl::control::SerialCpu:
+                    return std::min_element(first, last, binary_op);
+
+                default:
+                    return std::min_element(first, last, binary_op);
+
                 }
 
             }
@@ -423,28 +427,31 @@ namespace bolt {
                 {
                     runMode = ctl.getDefaultPathToRun();
                 }
-                if (runMode == bolt::cl::control::SerialCpu)
+
+                switch(runMode)
                 {
-                     return std::min_element(first, last, binary_op);
+                case bolt::cl::control::OpenCL :
+                    {
+                        int pos =  min_element_enqueue( ctl, first, last,  binary_op, cl_code);
+                        return first+pos;
+                    }
+
+                case bolt::cl::control::MultiCoreCpu:
+                    #ifdef ENABLE_TBB
+                        return std::min_element(first, last, binary_op);
+                    #else
+                        throw std::exception( "The MultiCoreCpu version of Max-Min is not enabled to be built! \n" );
+                    #endif
+
+                case bolt::cl::control::SerialCpu:
+                    return std::min_element(first, last, binary_op);
+
+                default:
+                    return std::min_element(first, last, binary_op);
 
                 }
-                else if (runMode == bolt::cl::control::MultiCoreCpu)
-                {
-                  /*TODO - ASK  - should we copy the device_vector to host memory, process the result and
-                  then store back the result into the device_vector.*/
-                  //std::cout<<"The MultiCoreCpu version of min_element on device_vector is not supported."<<std::endl;
-                    #ifdef ENABLE_TBB
-                           throw std::exception("MultiCoreCPU Version not implemented yet! \n");
-                    #else
-                           throw std::exception("MultiCoreCPU Version not Enabled! \n");
-                    #endif
-                }
-                else
-                {
-                    int pos = min_element_enqueue( ctl, first, last,  binary_op, cl_code);
-                    return first+pos;
-                }
-            }
+
+           }
 
 
         };

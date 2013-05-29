@@ -16,7 +16,7 @@
 ############################################################################                                                                                     
 
 # List the names of common files to compile across all platforms
-set( clBolt.Bench.Sort.Source sort.cpp sort_amp.cpp )
+set( clBolt.Bench.Sort.Source sort.cpp )
 set( clBolt.Bench.Sort.Headers stdafx.h 
                                ${BOLT_INCLUDE_DIR}/bolt/cl/sort.h 
                                ${BOLT_INCLUDE_DIR}/bolt/cl/detail/sort.inl)

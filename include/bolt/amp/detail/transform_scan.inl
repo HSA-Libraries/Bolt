@@ -1,19 +1,22 @@
-/***************************************************************************                                                                                     
-*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
-*                                                                                    
-*   Licensed under the Apache License, Version 2.0 (the "License");   
-*   you may not use this file except in compliance with the License.                 
-*   You may obtain a copy of the License at                                          
-*                                                                                    
-*       http://www.apache.org/licenses/LICENSE-2.0                      
-*                                                                                    
-*   Unless required by applicable law or agreed to in writing, software              
-*   distributed under the License is distributed on an "AS IS" BASIS,              
-*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.         
-*   See the License for the specific language governing permissions and              
-*   limitations under the License.                                                   
+/***************************************************************************
+*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.
+*
+*   Licensed under the Apache License, Version 2.0 (the "License");
+*   you may not use this file except in compliance with the License.
+*   You may obtain a copy of the License at
+*
+*       http://www.apache.org/licenses/LICENSE-2.0
+*
+*   Unless required by applicable law or agreed to in writing, software
+*   distributed under the License is distributed on an "AS IS" BASIS,
+*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+*   See the License for the specific language governing permissions and
+*   limitations under the License.
 
-***************************************************************************/                                                                                     
+***************************************************************************/
+
+#if !defined( BOLT_AMP_TRANSFORM_SCAN_INL )
+#define BOLT_AMP_TRANSFORM_SCAN_INL
 
 #pragma once
 
@@ -39,7 +42,7 @@ namespace bolt {
 	//	Work routine for inclusive_scan that contains a compile time constant size
 	template< typename InputIterator, typename OutputIterator, typename BinaryFunction >
 	OutputIterator
-		inclusive_scan( const concurrency::accelerator_view& av, InputIterator first, InputIterator last, 
+		inclusive_scan( const concurrency::accelerator_view& av, InputIterator first, InputIterator last,
 		OutputIterator result, BinaryFunction binary_op )
 	{
 //		typedef seqTrait< InputIterator > Trait;
@@ -55,7 +58,7 @@ namespace bolt {
 		{
 			//	Serial CPU implementation
 			return std::partial_sum( first, last, result, binary_op);
-		} 
+		}
 		else if( numElements < scanGpuThreshold )
 		{
 			//	Implement this in TBB as tbb::parallel_scan( range, body )
@@ -65,11 +68,11 @@ namespace bolt {
 		}
 		else
 		{
-			// FIXME - determine from HSA Runtime 
+			// FIXME - determine from HSA Runtime
 			// - based on est of how many threads needed to hide memory latency.
 			static const unsigned int waveSize  = 64; // FIXME, read from device attributes.
 			static_assert( (waveSize & (waveSize-1)) == 0, "Scan depends on wavefronts being a power of 2" );
-			
+
 			//	AMP code can not read size_t as input, need to cast to int
 			//	Note: It would be nice to have 'constexpr' here, then we could use tileSize as the extent dimension
 			unsigned int tileSize = std::min(  numElements, waveSize );
@@ -113,7 +116,7 @@ namespace bolt {
 				int localID		= idx.local[ 0 ];
 				int globalID	= idx.global[ 0 ];
 
-				//	Initialize the padding to 0, for when the scan algorithm looks left.  
+				//	Initialize the padding to 0, for when the scan algorithm looks left.
 				//	Then bump the LDS pointer past the extra padding.
 				LDS[ localID ] = 0;
 				iType* pLDS = LDS + ( waveSize / 2 );
@@ -158,7 +161,7 @@ namespace bolt {
 				int globalID	= idx.global[ 0 ];
 				int mappedID	= globalID * workPerThread;
 
-				//	Initialize the padding to 0, for when the scan algorithm looks left.  
+				//	Initialize the padding to 0, for when the scan algorithm looks left.
 				//	Then bump the LDS pointer past the extra padding.
 				LDS[ localID ] = 0;
 				oType* pLDS = LDS + ( waveSize / 2 );
@@ -234,7 +237,7 @@ namespace bolt {
 	/*
 	* This version of inclusive_scan uses default accelerator
 	*/
-	template< typename InputIterator, typename OutputIterator, typename BinaryFunction > 
+	template< typename InputIterator, typename OutputIterator, typename BinaryFunction >
 	OutputIterator inclusive_scan( InputIterator first, InputIterator last, OutputIterator result, BinaryFunction binary_op )
 	{
 
@@ -257,3 +260,6 @@ namespace bolt {
 
 
 }; // end namespace bolt
+
+
+#endif

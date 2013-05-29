@@ -390,6 +390,237 @@ gold_reduce_by_key( InputIterator1 keys_first,
 }
 
 
+TEST(reduce_by_key__bolt_Std_vect, Basic_EPR377067){
+
+int size = 10;
+std::vector<int> vectKeyIn(size);
+std::vector<int> vectValueIn(size);
+std::vector<int> keyBoltClDevVectOp(size);
+std::vector<int> valueBoltClDevVectOp(size);
+
+for (int i = 0; i < std::ceil(size/3.0); i++){
+vectKeyIn[i] = (int)2;
+}
+for (int i = (int)(std::ceil(size/3.0) + 1); i < std::ceil((2* size)/3.0); i++){
+vectKeyIn[i] = (int)3;
+}
+for (int i = (int)(std::ceil((2* size)/3.0) + 1); i < size; i++){
+vectKeyIn[i] = (int)5;
+}
+//now elemetns in vectKeyIn are as: {2 2 2 0 3 3 0 5 5 5}
+
+for (int i = 0; i < size; i++){
+vectValueIn[i] = (int) i; //elements in vectValueIn are as: {0 1 2 3 4 5 6 7 8 9}
+}
+
+bolt::cl::equal_to<int> eq;
+bolt::cl::reduce_by_key(vectKeyIn.begin(), vectKeyIn.end(), vectValueIn.begin(), keyBoltClDevVectOp.begin(),
+                                                                        valueBoltClDevVectOp.begin(), eq);
+
+int eleKeyOp_Expexted[5] = {2, 0, 3, 0, 5};
+int eleValueOp_Expexted[5] = {3, 3, 9, 6, 24};
+
+for (int i = 0; i < 5; i++){
+EXPECT_EQ ( eleKeyOp_Expexted[i], keyBoltClDevVectOp[i]);
+EXPECT_EQ ( eleValueOp_Expexted[i], valueBoltClDevVectOp[i]);
+}
+}
+TEST(reduce_by_key__bolt_Std_vect, SerialBasic_EPR377067){
+
+int size = 10;
+std::vector<int> vectKeyIn(size);
+std::vector<int> vectValueIn(size);
+std::vector<int> keyBoltClDevVectOp(size);
+std::vector<int> valueBoltClDevVectOp(size);
+
+for (int i = 0; i < std::ceil(size/3.0); i++){
+vectKeyIn[i] = (int)2;
+}
+for (int i = (int)(std::ceil(size/3.0) + 1); i < std::ceil((2* size)/3.0); i++){
+vectKeyIn[i] = (int)3;
+}
+for (int i = (int)(std::ceil((2* size)/3.0) + 1); i < size; i++){
+vectKeyIn[i] = (int)5;
+}
+//now elemetns in vectKeyIn are as: {2 2 2 0 3 3 0 5 5 5}
+
+for (int i = 0; i < size; i++){
+vectValueIn[i] = (int) i; //elements in vectValueIn are as: {0 1 2 3 4 5 6 7 8 9}
+}
+
+bolt::cl::equal_to<int> eq;
+
+bolt::cl::control ctl = bolt::cl::control::getDefault( );
+ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+bolt::cl::reduce_by_key(ctl, vectKeyIn.begin(), vectKeyIn.end(), vectValueIn.begin(), keyBoltClDevVectOp.begin(),
+                                                                                valueBoltClDevVectOp.begin(), eq);
+
+int eleKeyOp_Expexted[5] = {2, 0, 3, 0, 5};
+int eleValueOp_Expexted[5] = {3, 3, 9, 6, 24};
+
+for (int i = 0; i < 5; i++){
+EXPECT_EQ ( eleKeyOp_Expexted[i], keyBoltClDevVectOp[i]);
+EXPECT_EQ ( eleValueOp_Expexted[i], valueBoltClDevVectOp[i]);
+}
+}
+TEST(reduce_by_key__bolt_Std_vect, MulticoreBasic_EPR377067){
+
+int size = 10;
+std::vector<int> vectKeyIn(size);
+std::vector<int> vectValueIn(size);
+std::vector<int> keyBoltClDevVectOp(size);
+std::vector<int> valueBoltClDevVectOp(size);
+
+for (int i = 0; i < std::ceil(size/3.0); i++){
+vectKeyIn[i] = (int)2;
+}
+for (int i = (int)(std::ceil(size/3.0) + 1); i < std::ceil((2* size)/3.0); i++){
+vectKeyIn[i] = (int)3;
+}
+for (int i = (int)(std::ceil((2* size)/3.0) + 1); i < size; i++){
+vectKeyIn[i] = (int)5;
+}
+//now elemetns in vectKeyIn are as: {2 2 2 0 3 3 0 5 5 5}
+
+for (int i = 0; i < size; i++){
+vectValueIn[i] = (int) i; //elements in vectValueIn are as: {0 1 2 3 4 5 6 7 8 9}
+}
+
+bolt::cl::equal_to<int> eq;
+
+bolt::cl::control ctl = bolt::cl::control::getDefault( );
+ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+bolt::cl::reduce_by_key(ctl, vectKeyIn.begin(), vectKeyIn.end(), vectValueIn.begin(), keyBoltClDevVectOp.begin(),
+                                                                                valueBoltClDevVectOp.begin(), eq);
+
+int eleKeyOp_Expexted[5] = {2, 0, 3, 0, 5};
+int eleValueOp_Expexted[5] = {3, 3, 9, 6, 24};
+
+for (int i = 0; i < 5; i++){
+EXPECT_EQ ( eleKeyOp_Expexted[i], keyBoltClDevVectOp[i]);
+EXPECT_EQ ( eleValueOp_Expexted[i], valueBoltClDevVectOp[i]);
+}
+}
+
+TEST(reduce_by_key__bolt_Dev_vect, Basic_EPR377067){
+
+int size = 10;
+bolt::cl::device_vector<int> vectKeyIn(size);
+bolt::cl::device_vector<int> vectValueIn(size);
+bolt::cl::device_vector<int> keyBoltClDevVectOp(size);
+bolt::cl::device_vector<int> valueBoltClDevVectOp(size);
+
+for (int i = 0; i < std::ceil(size/3.0); i++){
+vectKeyIn[i] = (int)2;
+}
+for (int i = (int)(std::ceil(size/3.0) + 1); i < std::ceil((2* size)/3.0); i++){
+vectKeyIn[i] = (int)3;
+}
+for (int i = (int)(std::ceil((2* size)/3.0) + 1); i < size; i++){
+vectKeyIn[i] = (int)5;
+}
+//now elemetns in vectKeyIn are as: {2 2 2 0 3 3 0 5 5 5}
+
+for (int i = 0; i < size; i++){
+vectValueIn[i] = (int) i; //elements in vectValueIn are as: {0 1 2 3 4 5 6 7 8 9}
+}
+
+bolt::cl::equal_to<int> eq;
+bolt::cl::reduce_by_key(vectKeyIn.begin(), vectKeyIn.end(), vectValueIn.begin(), keyBoltClDevVectOp.begin(),
+                                                                            valueBoltClDevVectOp.begin(), eq);
+
+int eleKeyOp_Expexted[5] = {2, 0, 3, 0, 5};
+int eleValueOp_Expexted[5] = {3, 3, 9, 6, 24};
+
+for (int i = 0; i < 5; i++){
+EXPECT_EQ ( eleKeyOp_Expexted[i], keyBoltClDevVectOp[i]);
+EXPECT_EQ ( eleValueOp_Expexted[i], valueBoltClDevVectOp[i]);
+}
+}
+TEST(reduce_by_key__bolt_Dev_vect, SerialBasic_EPR377067){
+
+int size = 10;
+bolt::cl::device_vector<int> vectKeyIn(size);
+bolt::cl::device_vector<int> vectValueIn(size);
+bolt::cl::device_vector<int> keyBoltClDevVectOp(size);
+bolt::cl::device_vector<int> valueBoltClDevVectOp(size);
+
+for (int i = 0; i < std::ceil(size/3.0); i++){
+vectKeyIn[i] = (int)2;
+}
+for (int i = (int)(std::ceil(size/3.0) + 1); i < std::ceil((2* size)/3.0); i++){
+vectKeyIn[i] = (int)3;
+}
+for (int i = (int)(std::ceil((2* size)/3.0) + 1); i < size; i++){
+vectKeyIn[i] = (int)5;
+}
+//now elemetns in vectKeyIn are as: {2 2 2 0 3 3 0 5 5 5}
+
+for (int i = 0; i < size; i++){
+vectValueIn[i] = (int) i; //elements in vectValueIn are as: {0 1 2 3 4 5 6 7 8 9}
+}
+
+bolt::cl::equal_to<int> eq;
+
+bolt::cl::control ctl = bolt::cl::control::getDefault( );
+ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+bolt::cl::reduce_by_key(ctl, vectKeyIn.begin(), vectKeyIn.end(), vectValueIn.begin(), keyBoltClDevVectOp.begin(), 
+                                                                                valueBoltClDevVectOp.begin(), eq);
+int eleKeyOp_Expexted[5] = {2, 0, 3, 0, 5};
+int eleValueOp_Expexted[5] = {3, 3, 9, 6, 24};
+for (int i = 0; i < 5; i++){
+EXPECT_EQ ( eleKeyOp_Expexted[i], keyBoltClDevVectOp[i]);
+EXPECT_EQ ( eleValueOp_Expexted[i], valueBoltClDevVectOp[i]);
+}
+}
+
+
+
+TEST(reduce_by_key__bolt_Dev_vect, MulticoreBasic_EPR377067){
+
+int size = 10;
+bolt::cl::device_vector<int> vectKeyIn(size);
+bolt::cl::device_vector<int> vectValueIn(size);
+bolt::cl::device_vector<int> keyBoltClDevVectOp(size);
+bolt::cl::device_vector<int> valueBoltClDevVectOp(size);
+
+for (int i = 0; i < std::ceil(size/3.0); i++){
+vectKeyIn[i] = (int)2;
+}
+for (int i = (int)(std::ceil(size/3.0) + 1); i < std::ceil((2* size)/3.0); i++){
+vectKeyIn[i] = (int)3;
+}
+for (int i = (int)(std::ceil((2* size)/3.0) + 1); i < size; i++){
+vectKeyIn[i] = (int)5;
+}
+//now elemetns in vectKeyIn are as: {2 2 2 0 3 3 0 5 5 5}
+
+for (int i = 0; i < size; i++){
+vectValueIn[i] = (int) i; //elements in vectValueIn are as: {0 1 2 3 4 5 6 7 8 9}
+}
+
+bolt::cl::equal_to<int> eq;
+
+bolt::cl::control ctl = bolt::cl::control::getDefault( );
+ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+bolt::cl::reduce_by_key(ctl, vectKeyIn.begin(), vectKeyIn.end(), vectValueIn.begin(), keyBoltClDevVectOp.begin(),
+                                                                                valueBoltClDevVectOp.begin(), eq);
+
+int eleKeyOp_Expexted[5] = {2, 0, 3, 0, 5};
+int eleValueOp_Expexted[5] = {3, 3, 9, 6, 24};
+
+for (int i = 0; i < 5; i++){
+EXPECT_EQ ( eleKeyOp_Expexted[i], keyBoltClDevVectOp[i]);
+EXPECT_EQ ( eleValueOp_Expexted[i], valueBoltClDevVectOp[i]);
+}
+}
+
+
+
 
 TEST(ReduceByKeyBasic, IntegerTest)
 {
@@ -437,6 +668,61 @@ TEST(ReduceByKeyBasic, IntegerTest)
 #endif
 
     auto refPair = gold_reduce_by_key( keys.begin(), keys.end(),refInput.begin(),krefOutput.begin(),vrefOutput.begin(),
+                                       std::plus<int>());
+
+    //cmpArrays2(krefOutput, koutput, refPair.first, p.first);
+    cmpArrays(krefOutput, koutput);
+    cmpArrays(vrefOutput, voutput);
+   // cmpArrays2(vrefOutput, voutput, refPair.second, p.second);
+}
+
+
+TEST(ReduceByKeyBasic, IntegerTestOffsetTest)
+{
+    int length = 1024;
+    std::vector< int > keys( length);
+    // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
+    int segmentLength = 0;
+    int segmentIndex = 0;
+    int key = 1;
+    std::vector< int > refInput( length );
+    std::vector< int > input( length );
+    for (int i = 0; i < length; i++)
+    {
+        if(std::rand()%3 == 1) key++;
+        keys[i] = key;
+        refInput[i] = std::rand()%4;
+        input[i] = refInput[i];
+    }
+
+    // input and output vectors for device and reference
+
+    std::vector< int > koutput( length );
+    std::vector< int > voutput( length );
+    std::vector< int > krefOutput( length );
+    std::vector< int > vrefOutput( length );
+    std::fill(krefOutput.begin(),krefOutput.end(),0);
+    std::fill(vrefOutput.begin(),vrefOutput.end(),0);
+
+
+    bolt::cl::equal_to<int> binary_predictor;
+    bolt::cl::plus<int> binary_operator;
+
+
+    // call reduce_by_key
+    auto p = bolt::cl::reduce_by_key( keys.begin() +10, keys.begin()+400, input.begin()+10, koutput.begin() +10, voutput.begin() +10,
+                                      binary_predictor, binary_operator);
+
+#if 0
+
+    for(unsigned int i = 0; i < 256 ; i++)
+    {
+      std::cout<<"Ikey "<<keys[i]<<" IValues "<<input[i]<<" -> OKeys "<<koutput[i]<<" OValues "<<voutput[i]<<std::endl;
+    }
+
+#endif
+
+    auto refPair = gold_reduce_by_key( keys.begin() +10, keys.begin() +400, refInput.begin()+10,krefOutput.begin()+10,vrefOutput.begin()+10,
                                        std::plus<int>());
 
     //cmpArrays2(krefOutput, koutput, refPair.first, p.first);
@@ -831,7 +1117,7 @@ TEST(ReduceByKeyBasic, IntegerTestOddSizes)
 {
     int length;
 
-    int num,n,i, count=0;
+    int num,i, count=0;
 
    for(num=1<<16;count<=20;num++)
    {
@@ -912,7 +1198,7 @@ TEST(ReduceByKeyBasic, CPUIntegerTestOddSizes)
 {
     int length;
 
-    int num,n,i, count=0;
+    int num,i, count=0;
 
    for(num=1<<16;count<=20;num++)
    {
@@ -989,7 +1275,7 @@ TEST(ReduceByKeyBasic, MultiCoreIntegerTestOddSizes)
 {
     int length;
 
-    int num,n,i, count=0;
+    int num,i, count=0;
 
    for(num=1<<16;count<=20;num++)
    {
@@ -1073,7 +1359,7 @@ struct uddfltint
     bool operator==(const uddfltint& rhs) const
     {
         bool equal = true;
-        float ths = 0.00001; // thresh hold single(float)
+        float ths = 0.00001f; // thresh hold single(float)
         equal = ( x == rhs.x ) ? equal : false;
         if (rhs.y < ths && rhs.y > -ths)
             equal = ( (1.0*y - rhs.y) < ths && (1.0*y - rhs.y) > -ths) ? equal : false;
@@ -1081,10 +1367,10 @@ struct uddfltint
             equal = ( (1.0*y - rhs.y)/rhs.y < ths && (1.0*y - rhs.y)/rhs.y > -ths) ? equal : false;
         return equal;
     }
-    void operator++()
+    void operator++(int)
     {
-        x += 1;
-        y += 1.0f;
+        x += (float)1.0;
+        y += 1;
     }
 
     bool operator>(int rhs) const
@@ -1098,14 +1384,14 @@ struct uddfltint
     }
     void operator=(int rhs)
     {
-      x = rhs;
+      x = (float)rhs;
       y = rhs;
     }
 
     bool operator!=(int rhs) const
     {
         bool nequal = true;
-        float ths = 0.00001; // thresh hold single(float)
+        float ths = 0.00001f; // thresh hold single(float)
         nequal = ( x != rhs ) ? nequal : false;
         if (rhs < ths && rhs > -ths)
             nequal = ( (1.0*y - rhs) < ths && (1.0*y - rhs) > -ths) ? false : nequal;
@@ -1116,7 +1402,7 @@ struct uddfltint
 
     void operator-(int rhs)
     {
-        x -= rhs;
+        x -= (float)rhs;
         y -= rhs;
     }
 };
@@ -1143,6 +1429,8 @@ struct uddfltint_plus
     }
 };
 );
+BOLT_CREATE_TYPENAME( bolt::cl::device_vector< uddfltint >::iterator );
+BOLT_CREATE_CLCODE( bolt::cl::device_vector< uddfltint >::iterator, bolt::cl::deviceVectorIteratorTemplate );
 
 #if UDD
 
@@ -1151,8 +1439,8 @@ TEST(ReduceByKeyPairUDDTest, UDDFloatIntTest)
     int length = 1024;
     std::vector< uddfltint > keys( length);
     uddfltint key;
-    key.x = 1;
-    key.y = 1.0;
+    key.x = 1.0f;
+    key.y = 1;
     std::vector< uddfltint > refInput( length );
     std::vector< uddfltint > input( length );
 
@@ -1160,7 +1448,7 @@ TEST(ReduceByKeyPairUDDTest, UDDFloatIntTest)
     {
         if(std::rand()%5 == 1) key++;
         keys[i] = key;
-        refInput[i].x = std::rand()%4;
+        refInput[i].x = float(std::rand()%4);
         refInput[i].y = std::rand()%4;
         input[i] = refInput[i];
     }
@@ -1230,8 +1518,8 @@ TEST(ReduceByKeyPairUDDTest, CPU_UDDFloatIntTest)
     int length = 1024;
     std::vector< uddfltint > keys( length);
     uddfltint key;
-    key.x = 1;
-    key.y = 1.0;
+    key.x = 1.0f;
+    key.y = 1;
     std::vector< uddfltint > refInput( length );
     std::vector< uddfltint > input( length );
 
@@ -1239,7 +1527,7 @@ TEST(ReduceByKeyPairUDDTest, CPU_UDDFloatIntTest)
     {
         if(std::rand()%5 == 1) key++;
         keys[i] = key;
-        refInput[i].x = std::rand()%4;
+        refInput[i].x = float(std::rand()%4);
         refInput[i].y = std::rand()%4;
         input[i] = refInput[i];
     }
@@ -1314,8 +1602,8 @@ TEST(ReduceByKeyPairUDDTest, MultiCore_UDDFloatIntTest)
     int length = 1024;
     std::vector< uddfltint > keys( length);
     uddfltint key;
-    key.x = 1;
-    key.y = 1.0;
+    key.x = 1.0f;
+    key.y = 1;
     std::vector< uddfltint > refInput( length );
     std::vector< uddfltint > input( length );
 
@@ -1323,7 +1611,7 @@ TEST(ReduceByKeyPairUDDTest, MultiCore_UDDFloatIntTest)
     {
         if(std::rand()%5 == 1) key++;
         keys[i] = key;
-        refInput[i].x = std::rand()%4;
+        refInput[i].x = float(std::rand()%4);
         refInput[i].y = std::rand()%4;
         input[i] = refInput[i];
     }

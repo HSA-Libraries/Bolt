@@ -15,7 +15,7 @@
 ***************************************************************************/                                                                                     
 #include <array>
 #include <vector> 
-#define BOLT_TEST_MAX_FAILURES 100
+#define BOLT_TEST_MAX_FAILURES 8
 
 #define BOLT_TEST_RESET_FAILURES \
     size_t numFailures = 0;
@@ -162,9 +162,28 @@ cmpArrays( const S& ref, const B& calc )
     return ::testing::AssertionSuccess( );
 }
 
+template< typename S, typename B >
+typename std::enable_if< std::is_same< typename std::iterator_traits<typename S::iterator >::value_type, double >::value,  
+                         ::testing::AssertionResult >::type
+cmpArrays( const S& ref, const B& calc )
+{
+    BOLT_TEST_RESET_FAILURES
+    for( size_t i = 0; i < ref.size( ); ++i )
+    {
+        BOLT_TEST_INCREMENT_FAILURES
+        //the two float values are almost equal 
+        //By "almost equal", we mean the two values are within 4 ULP's from each other. 
+        //http://code.google.com/p/googletest/wiki/AdvancedGuide#Floating-Point_Comparison
+        EXPECT_DOUBLE_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i; 
+    }
+
+    return ::testing::AssertionSuccess( );
+}
+
 //  A very generic template that takes two container, and compares their values assuming a vector interface
 template< typename S, typename B >
-typename std::enable_if< !(std::is_same< typename std::iterator_traits<typename S::iterator >::value_type, float >::value), 
+typename std::enable_if< !(std::is_same< typename std::iterator_traits<typename S::iterator >::value_type, float >::value ||
+                           std::is_same< typename std::iterator_traits<typename S::iterator >::value_type, double >::value) , 
                          ::testing::AssertionResult >::type
 //typename std::enable_if< std::is_same< typename std::iterator_traits<>::value_type >::value,  ::testing::AssertionResult >::type
  cmpArrays( const S& ref, const B& calc )

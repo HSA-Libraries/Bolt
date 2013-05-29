@@ -39,6 +39,7 @@ struct floatN
 );
 
 floatN init_floatN;
+BOLT_TEMPLATE_REGISTER_NEW_ITERATOR(bolt::cl::device_vector, int, floatN);
 
 BOLT_FUNCTOR(ConstFunctor,
 struct ConstFunctor
@@ -52,6 +53,8 @@ struct ConstFunctor
 	};
 };
 );  // end BOLT_FUNCTOR
+
+BOLT_TEMPLATE_REGISTER_NEW_ITERATOR(bolt::cl::device_vector, int, ConstFunctor);
 
 int _tmain( int argc, _TCHAR* argv[] )
 {

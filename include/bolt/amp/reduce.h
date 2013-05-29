@@ -1,26 +1,26 @@
-/***************************************************************************                                                                                     
-*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
-*                                                                                    
-*   Licensed under the Apache License, Version 2.0 (the "License");   
-*   you may not use this file except in compliance with the License.                 
-*   You may obtain a copy of the License at                                          
-*                                                                                    
-*       http://www.apache.org/licenses/LICENSE-2.0                      
-*                                                                                    
-*   Unless required by applicable law or agreed to in writing, software              
-*   distributed under the License is distributed on an "AS IS" BASIS,              
-*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.         
-*   See the License for the specific language governing permissions and              
-*   limitations under the License.                                                   
+/***************************************************************************
+*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.
+*
+*   Licensed under the Apache License, Version 2.0 (the "License");
+*   you may not use this file except in compliance with the License.
+*   You may obtain a copy of the License at
+*
+*       http://www.apache.org/licenses/LICENSE-2.0
+*
+*   Unless required by applicable law or agreed to in writing, software
+*   distributed under the License is distributed on an "AS IS" BASIS,
+*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+*   See the License for the specific language governing permissions and
+*   limitations under the License.
 
-***************************************************************************/                                                                                     
+***************************************************************************/
 
 /*! \file bolt/amp/reduce.h
     \brief Returns the result of combining all the elements in the specified range using the specified binary_op.
 */
 
-#if !defined( REDUCE_H )
-#define REDUCE_H
+#if !defined( BOLT_AMP_REDUCE_H )
+#define BOLT_AMP_REDUCE_H
 #pragma once
 
 #include <iostream>  // FIXME, remove as this is only here for debug output
@@ -46,17 +46,17 @@ namespace bolt {
         /*! \addtogroup amp-reduce
         *   \ingroup reductions
         *   \{
-        *   
+        *
         */
 
 
-        /*! \brief reduce returns the result of combining all the elements in the specified range using the specified 
-        * binary_op.  
-        * The classic example is a summation, where the binary_op is the plus operator.  By default, the initial value 
-        * is "0" 
+        /*! \brief reduce returns the result of combining all the elements in the specified range using the specified
+        * binary_op.
+        * The classic example is a summation, where the binary_op is the plus operator.  By default, the initial value
+        * is "0"
         * and the binary operator is "plus<>()".
         *
-        * \details \p reduce requires that the binary reduction op ("binary_op") is cummutative.  The order in which 
+        * \details \p reduce requires that the binary reduction op ("binary_op") is cummutative.  The order in which
         * \p reduce applies the binary_op
         * is not deterministic.
         *
@@ -66,12 +66,12 @@ namespace bolt {
         * \param first The first position in the sequence to be reduced.
         * \param last  The last position in the sequence to be reduced.
         * the generated code, before the cl_code trait.
-        * \tparam InputIterator An iterator that can be dereferenced for an object, and can be incremented to get to 
+        * \tparam InputIterator An iterator that can be dereferenced for an object, and can be incremented to get to
         * the next element in a sequence.
         * \tparam T The type of the result.
         * \return The result of the reduction.
         *
-        * \details The following code example shows the use of \p reduce to sum 10 numbers, using the default plus 
+        * \details The following code example shows the use of \p reduce to sum 10 numbers, using the default plus
         * operator.
         * \code
         * #include <bolt/amp/reduce.h>
@@ -88,23 +88,23 @@ namespace bolt {
         * \sa http://www.sgi.com/tech/stl/accumulate.html
         */
 
-        template<typename InputIterator> 
+        template<typename InputIterator>
         typename std::iterator_traits<InputIterator>::value_type
             reduce(bolt::amp::control &ctl,
-            InputIterator first, 
+            InputIterator first,
             InputIterator last);
 
-        template<typename InputIterator> 
+        template<typename InputIterator>
         typename std::iterator_traits<InputIterator>::value_type
-            reduce(InputIterator first, 
+            reduce(InputIterator first,
             InputIterator last);
 
 
-        /*! \brief \p reduce returns the result of combining all the elements in the specified range using the 
-        * specified binary_op. The classic example is a summation, where the binary_op is the plus operator.  
+        /*! \brief \p reduce returns the result of combining all the elements in the specified range using the
+        * specified binary_op. The classic example is a summation, where the binary_op is the plus operator.
         * By default, the initial value is "0" and the binary operator is "plus<>()".
         *
-        * \details \p reduce requires that the binary reduction op ("binary_op") is cummutative.  The order in which \p reduce 
+        * \details \p reduce requires that the binary reduction op ("binary_op") is cummutative.  The order in which \p reduce
         * applies the binary_op is not deterministic.
         *
         * The \p reduce operation is similar the std::accumulate function
@@ -113,13 +113,13 @@ namespace bolt {
         * \param first The first position in the sequence to be reduced.
         * \param last  The last position in the sequence to be reduced.
         * \param init  The initial value for the accumulator.
-        * \tparam InputIterator An iterator that can be dereferenced for an object, and can be incremented to get to 
+        * \tparam InputIterator An iterator that can be dereferenced for an object, and can be incremented to get to
         * the next element in a sequence.
         * \tparam T The type of the result.
         * \return The result of the reduction.
         * \sa http://www.sgi.com/tech/stl/accumulate.html
         *
-        * \details The following code example shows the use of \p reduce to sum 10 numbers, using the default plus 
+        * \details The following code example shows the use of \p reduce to sum 10 numbers, using the default plus
         * operator.
         * \code
         * #include <bolt/amp/reduce.h>
@@ -135,22 +135,22 @@ namespace bolt {
         * // sum = 55
         *  \endcode
         */
-        template<typename InputIterator, typename T> 
+        template<typename InputIterator, typename T>
             T  reduce(bolt::amp::control &ctl,
-            InputIterator first, 
-            InputIterator last, 
+            InputIterator first,
+            InputIterator last,
             T init);
 
-        template<typename InputIterator, typename T> 
-            T reduce(InputIterator first, 
-            InputIterator last, 
+        template<typename InputIterator, typename T>
+            T reduce(InputIterator first,
+            InputIterator last,
             T init);
 
-        /*! \brief reduce returns the result of combining all the elements in the specified range using the specified 
-        * binary_op. The classic example is a summation, where the binary_op is the plus operator.  By default, 
+        /*! \brief reduce returns the result of combining all the elements in the specified range using the specified
+        * binary_op. The classic example is a summation, where the binary_op is the plus operator.  By default,
         * the binary operator is "plus<>()".  The version takes a bolt::amp::control structure as a first argument.
         *
-        * \details \p reduce requires that the binary reduction op ("binary_op") is cummutative.  The order in which \p reduce 
+        * \details \p reduce requires that the binary reduction op ("binary_op") is cummutative.  The order in which \p reduce
         * applies the binary_op  is not deterministic.
         *
         * The \p reduce operation is similar the std::accumulate function.
@@ -159,15 +159,15 @@ namespace bolt {
         * \param first The first position in the sequence to be reduced.
         * \param last  The last position in the sequence to be reduced.
         * \param init  The initial value for the accumulator.
-        * \param binary_op  The binary operation used to combine two values.   By default, the binary operation is 
+        * \param binary_op  The binary operation used to combine two values.   By default, the binary operation is
         * plus<>().
-        * \tparam InputIterator An iterator that can be dereferenced for an object, and can be incremented to get to 
+        * \tparam InputIterator An iterator that can be dereferenced for an object, and can be incremented to get to
         * the next element in a sequence.
-        * \tparam BinaryFunction A function object defining an operation that is applied to consecutive elements in the 
+        * \tparam BinaryFunction A function object defining an operation that is applied to consecutive elements in the
         * sequence.
         * \return The result of the reduction.
         *
-        * \details The following code example shows the use of \p reduce to find the max of 10 numbers, 
+        * \details The following code example shows the use of \p reduce to find the max of 10 numbers,
         * specifying a specific accelerator.
         * \code
         * #include <bolt/amp/reduce.h>
@@ -183,19 +183,19 @@ namespace bolt {
         * \endcode
         * \sa http://www.sgi.com/tech/stl/accumulate.html
         */
-        template<typename InputIterator, typename T, typename BinaryFunction> 
+        template<typename InputIterator, typename T, typename BinaryFunction>
         T reduce(bolt::amp::control &ctl,
-            InputIterator first, 
-            InputIterator last,  
+            InputIterator first,
+            InputIterator last,
             T init,
             BinaryFunction binary_op=bolt::amp::plus<T>());
 
-        template<typename InputIterator, typename T, typename BinaryFunction> 
-        T reduce(InputIterator first, 
-            InputIterator last,  
+        template<typename InputIterator, typename T, typename BinaryFunction>
+        T reduce(InputIterator first,
+            InputIterator last,
             T init,
             BinaryFunction binary_op);
-        
+
         /*!   \}  */
 
     };

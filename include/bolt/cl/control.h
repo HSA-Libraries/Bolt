@@ -1,19 +1,19 @@
-/***************************************************************************                                                                                     
-*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
-*                                                                                    
-*   Licensed under the Apache License, Version 2.0 (the "License");   
-*   you may not use this file except in compliance with the License.                 
-*   You may obtain a copy of the License at                                          
-*                                                                                    
-*       http://www.apache.org/licenses/LICENSE-2.0                      
-*                                                                                    
-*   Unless required by applicable law or agreed to in writing, software              
-*   distributed under the License is distributed on an "AS IS" BASIS,              
-*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.         
-*   See the License for the specific language governing permissions and              
-*   limitations under the License.                                                   
+/***************************************************************************
+*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.
+*
+*   Licensed under the Apache License, Version 2.0 (the "License");
+*   you may not use this file except in compliance with the License.
+*   You may obtain a copy of the License at
+*
+*       http://www.apache.org/licenses/LICENSE-2.0
+*
+*   Unless required by applicable law or agreed to in writing, software
+*   distributed under the License is distributed on an "AS IS" BASIS,
+*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+*   See the License for the specific language governing permissions and
+*   limitations under the License.
 
-***************************************************************************/                                                                                     
+***************************************************************************/
 
 
 /*! \file bolt/cl/control.h
@@ -21,6 +21,9 @@
 */
 
 #pragma once
+#if !defined( BOLT_CL_CONTROL_H )
+#define BOLT_CL_CONTROL_H
+
 
 #include <bolt/cl/bolt.h>
 #include <string>
@@ -47,18 +50,18 @@ namespace bolt {
         * \{
         */
 
-        /*! The \p control class lets you control the parameters of a specific Bolt algorithm call, 
-         such as the command-queue where GPU kernels run, debug information, load-balancing with 
-         the host, and more.  Each Bolt Algorithm call accepts the 
+        /*! The \p control class lets you control the parameters of a specific Bolt algorithm call,
+         such as the command-queue where GPU kernels run, debug information, load-balancing with
+         the host, and more.  Each Bolt Algorithm call accepts the
         \p control class as an optional first argument.  Additionally, Bolt contains a global default
-        \p control structure that is used in cases where the \p control argument is not specified; also, 
+        \p control structure that is used in cases where the \p control argument is not specified; also,
         developers can modify this structure.  Some examples:
 
         * \code
         * cl::CommandQueue myCommandQueue = ...
         * bolt::cl::control myControl;
         * myControl.commandQueue(myCommandQueue);
-        * int sum = bolt::cl::reduce(myControl, ...); 
+        * int sum = bolt::cl::reduce(myControl, ...);
         * \endcode
 
 
@@ -70,9 +73,9 @@ namespace bolt {
         *      _boltControl.commandQueue(myCommandQueue);
         *   };
         *
-        *   void runIt() 
+        *   void runIt()
         *   {
-        *     int sum = bolt::cl::reduce(_boltControl, ...); 
+        *     int sum = bolt::cl::reduce(_boltControl, ...);
         *   };
         *
         *   private:
@@ -81,31 +84,31 @@ namespace bolt {
         * \endcode
 
 
-        * Sometimes, it can be useful to set the global default \p control structure used by Bolt algorithms 
+        * Sometimes, it can be useful to set the global default \p control structure used by Bolt algorithms
         * calls that do not explicitly specify
-        * a control parameter as the first argument.  For example, the application initialization routine can examine 
-        * all the available GPU devices and select the one to be used for all subsequent Bolt calls.  This can be 
+        * a control parameter as the first argument.  For example, the application initialization routine can examine
+        * all the available GPU devices and select the one to be used for all subsequent Bolt calls.  This can be
         * done by writing the global default \p control structure, i.e.:
         * \code
         * cl::CommandQueue myCommandQueue = ...
-        * bolt::cl::control::getDefault().commandQueue(myCommandQueue); 
-        * bolt::cl::control::getDefault().debug(bolt::cl::control::debug:SaveCompilerTemps);  
+        * bolt::cl::control::getDefault().commandQueue(myCommandQueue);
+        * bolt::cl::control::getDefault().debug(bolt::cl::control::debug:SaveCompilerTemps);
         * ...
         * \endcode
-        * 
+        *
          * \{
          */
         class control {
         public:
-            enum e_UseHostMode {NoUseHost, UseHost};  
+            enum e_UseHostMode {NoUseHost, UseHost};
             enum e_RunMode     {Automatic,
-                                SerialCpu,   
-                                MultiCoreCpu, 
+                                SerialCpu,
+                                MultiCoreCpu,
                                 OpenCL };
 
-            enum e_AutoTuneMode{NoAutoTune=0x0, 
-                                AutoTuneDevice=0x1, 
-                                AutoTuneWorkShape=0x2, 
+            enum e_AutoTuneMode{NoAutoTune=0x0,
+                                AutoTuneDevice=0x1,
+                                AutoTuneWorkShape=0x2,
                                 AutoTuneAll=0x3}; // FIXME, experimental
             struct debug {
                 static const unsigned None=0;
@@ -120,7 +123,7 @@ namespace bolt {
                              NiceWait,		// Use an OS semaphore to detect completion status.
                              BusyWait,		// Busy a CPU core continuously monitoring results.  Lowest-latency, but requires a dedicated core.
                              ClFinish,      // Call clFinish on the queue.
-            };		
+            };
 
         public:
 
@@ -133,7 +136,7 @@ namespace bolt {
             m_commandQueue(commandQueue),
                 m_useHost(useHost),
                 m_forceRunMode(OpenCL),   //Replaced this with automatic because the default is not MultiCoreCPU if no GPU is found
-                m_defaultRunMode(OpenCL), 
+                m_defaultRunMode(OpenCL),
                 m_debug(debug),
                 m_autoTune(getDefault().m_autoTune),
                 m_wgPerComputeUnit(getDefault().m_wgPerComputeUnit),
@@ -161,29 +164,29 @@ namespace bolt {
             };
 
             //setters:
-            //! Set the OpenCL command queue (and associated device) for Bolt algorithms to use.  
+            //! Set the OpenCL command queue (and associated device) for Bolt algorithms to use.
             //! Only one command-queue can be specified for each call; Bolt does not load-balance across
             //! multiple command queues.  Bolt also uses the specified command queue to determine the OpenCL context and
             //! device.
             void setCommandQueue(::cl::CommandQueue commandQueue) { m_commandQueue = commandQueue; };
 
             //! If enabled, Bolt can use the host CPU to run parts of the algorithm.  If false, Bolt runs the
-            //! entire algorithm using the device specified by the command-queue. This can be appropriate 
+            //! entire algorithm using the device specified by the command-queue. This can be appropriate
             //! on a discrete GPU, where the input data is located on the device memory.
             void setUseHost(e_UseHostMode useHost) { m_useHost = useHost; };
 
 
             //! Force the Bolt command to run on the specifed device.  Default is "Automatic," in which case the Bolt
             //! runtime selects the device.  Forcing the mode to SerialCpu can be useful for debugging the algorithm.
-            //! Forcing the mode can also be useful for performance comparisons, or for direct 
+            //! Forcing the mode can also be useful for performance comparisons, or for direct
             //! control over the run location (perhaps due to knowledge that the algorithm is best-suited for GPU).
             //! Please note that forcing the run modes will not change the OpenCL device in the control object. This
             //! API is designed to simplify the process of choosing the appropriate path in the Bolt API.
             void setForceRunMode(e_RunMode forceRunMode) { m_forceRunMode = forceRunMode; };
 
             /*! Enable debug messages to be printed to stdout as the algorithm is compiled, run, and tuned.  See the #debug
-            * namespace for a list of values.  Multiple debug options can be combined with the + sign, as in 
-            * following example.  Use this technique rather than separate calls to the debug() API; 
+            * namespace for a list of values.  Multiple debug options can be combined with the + sign, as in
+            * following example.  Use this technique rather than separate calls to the debug() API;
             * each call resets the debug level, rather than merging with the existing debug() setting.
             * \code
             * bolt::cl::control myControl;
@@ -197,7 +200,7 @@ namespace bolt {
                 Higher numbers can hide latency by improving the occupancy but will increase the amoutn of data that
                 has to be reduced in the final, less efficient step.  Experimentation may be required to find
                 the optimal point for a given algorithm and device; typically 8-12 will deliver good results */
-            void setWGPerComputeUnit(int wgPerComputeUnit) { m_wgPerComputeUnit = wgPerComputeUnit; }; 
+            void setWGPerComputeUnit(int wgPerComputeUnit) { m_wgPerComputeUnit = wgPerComputeUnit; };
 
             /*! Set the method used to detect completion at the end of a Bolt routine. */
             void setWaitMode(e_WaitMode waitMode) { m_waitMode = waitMode; };
@@ -205,9 +208,9 @@ namespace bolt {
             /*! unroll assignment */
             void setUnroll(int unroll) { m_unroll = unroll; };
 
-            //! 
+            //!
             //! Specify the compile options passed to the OpenCL(TM) compiler.
-            void setCompileOptions(std::string &compileOptions) { m_compileOptions = compileOptions; }; 
+            void setCompileOptions(std::string &compileOptions) { m_compileOptions = compileOptions; };
 
             // getters:
             ::cl::CommandQueue&         getCommandQueue( ) { return m_commandQueue; };
@@ -219,7 +222,7 @@ namespace bolt {
             e_RunMode                   getDefaultPathToRun() const { return m_defaultRunMode; };
             unsigned                    getDebugMode() const { return m_debug;};
             int const                   getWGPerComputeUnit() const { return m_wgPerComputeUnit; };
-            const ::std::string         getCompileOptions() const { return m_compileOptions; };  
+            const ::std::string         getCompileOptions() const { return m_compileOptions; };
             e_WaitMode                  getWaitMode() const { return m_waitMode; };
             int                         getUnroll() const { return m_unroll; };
             bool                        getCompileForAllDevices() const { return m_compileForAllDevices; };
@@ -236,24 +239,24 @@ namespace bolt {
               * bolt::cl::control myControl;  // same as last line - the constructor also copies values from the default control
               *
               * // Modify a setting in the default \p control
-              * bolt::cl::control::getDefault().compileOptions("-g"); 
+              * bolt::cl::control::getDefault().compileOptions("-g");
               * \endcode
               */
-            static control &getDefault() 
+            static control &getDefault()
             {
                 // Default control structure; this can be accessed by the bolt::cl::control::getDefault()
                 static control _defaultControl( true );
-                return _defaultControl; 
+                return _defaultControl;
             };
 
             static void printPlatforms( bool printDevices = true, cl_device_type deviceType = CL_DEVICE_TYPE_ALL );
-            static void printPlatformsRange( std::vector< ::cl::Platform >::iterator begin, std::vector< ::cl::Platform >::iterator end, 
+            static void printPlatformsRange( std::vector< ::cl::Platform >::iterator begin, std::vector< ::cl::Platform >::iterator end,
                                             bool printDevices = true, cl_device_type deviceType = CL_DEVICE_TYPE_ALL );
 
                /*! \brief Convenience method to help users create and initialize an OpenCL CommandQueue.
                 * \todo The default commandqueue is created with a context that contains all GPU devices in platform.  Since kernels
-                * are only compiled on first invocation, switching between GPU devices is OK, but switching to a CPU 
-                * device afterwards causes an exception because the kernel was not compiled for CPU.  Should we provide 
+                * are only compiled on first invocation, switching between GPU devices is OK, but switching to a CPU
+                * device afterwards causes an exception because the kernel was not compiled for CPU.  Should we provide
                 * more options and expose more intefaces to the user?
                 */
             static ::cl::CommandQueue getDefaultCommandQueue( );
@@ -290,8 +293,8 @@ namespace bolt {
                 }
                 if(dType == CL_DEVICE_TYPE_CPU || m_commandQueue() == NULL)
                 {
-                    //m_commandQueue will be NULL if no platforms are found and 
-                    //if a non AMD paltform is found but cound not enumerate any CPU device                                                  
+                    //m_commandQueue will be NULL if no platforms are found and
+                    //if a non AMD paltform is found but cound not enumerate any CPU device
 #ifdef ENABLE_TBB
                     m_forceRunMode = MultiCoreCpu;
                     m_defaultRunMode = MultiCoreCpu;
@@ -372,7 +375,7 @@ namespace bolt {
             };
 
             typedef std::multimap< descBufferKey, descBufferValue, descBufferComp > mapBufferType;
-            
+
             /*! \brief Class used with shared_ptr<> as a custom deleter, to signal to the context object when
              * a buffer is finished being used by a client.  We want to remove the ability to destroy the buffer
              * from the caller; only the context object shall control the lifetime of these scratch
@@ -393,7 +396,7 @@ namespace bolt {
 
                 void operator( )( const void* pBuff )
                 {
-                    //  TODO: I think a general mutex is overkill here; we should try to use an interlocked instruction to modify the 
+                    //  TODO: I think a general mutex is overkill here; we should try to use an interlocked instruction to modify the
                     //  inUse flag
                     boost::lock_guard< boost::mutex > lock( m_control.mapGuard );
                     m_iter->second.inUse = false;
@@ -421,7 +424,8 @@ namespace bolt {
 // bolt::control c(myCmdQueue);
 // c.debug(bolt::control::ShowCompile);
 // bolt::cl::reduce(c, a.begin(), a.end(), std::plus<int>);
-// 
 //
-// reduce (bolt::control(myCmdQueue), 
+//
+// reduce (bolt::control(myCmdQueue),
 
+#endif

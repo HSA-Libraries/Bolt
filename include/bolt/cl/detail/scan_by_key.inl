@@ -14,13 +14,15 @@
 *   limitations under the License.
 
 ***************************************************************************/
+#if !defined( BOLT_CL_SCAN_BY_KEY_INL )
+#define BOLT_CL_SCAN_BY_KEY_INL
+
 #define KERNEL02WAVES 4
 #define KERNEL1WAVES 4
 #define WAVESIZE 64
 
 
-#if !defined( SCAN_BY_KEY_INL )
-#define SCAN_BY_KEY_INL
+
 
 #ifdef ENABLE_TBB
 //TBB Includes
@@ -581,6 +583,7 @@ Serial_exclusive_scan_by_key(
 {
     // do zeroeth element
     //*result = *values; // assign value
+    oType temp = *values;
     *result = (vType)init;
     // scan oneth element and beyond
     for ( unsigned int i= 1; i<num; i++)
@@ -590,17 +593,19 @@ Serial_exclusive_scan_by_key(
         kType previousKey = *(firstKey-1 + i);
 
         // load value
-        oType currentValue = *(values + i); // convertible
+        oType currentValue = temp; // convertible
         oType previousValue = *(result-1 + i);
 
         // within segment
         if (binary_pred(currentKey,previousKey))
         {
+            temp = *(values + i);
             oType r = binary_op( previousValue, currentValue);
             *(result + i) = r;
         }
         else // new segment
         {
+             temp = *(values + i);
             *(result + i) = (vType)init;
         }
     }
@@ -617,8 +622,8 @@ namespace detail
 *   \ingroup scan
 *   \{
 */
-    enum  {scanByKey_kType, scanByKey_vType, scanByKey_oType, scanByKey_initType, scanByKey_BinaryPredicate,
-           scanByKey_BinaryFunction};
+    enum scanByKeyTypes  {scanByKey_kType, scanByKey_kIterType, scanByKey_vType, scanByKey_iIterType, scanByKey_oType, scanByKey_oIterType,
+                scanByKey_initType, scanByKey_BinaryPredicate, scanByKey_BinaryFunction, scanbykey_end};
 
 /*********************************************************************************************************************
  * Kernel Template Specializer
@@ -642,8 +647,9 @@ class ScanByKey_KernelTemplateSpecializer : public KernelTemplateSpecializer
             "__attribute__((reqd_work_group_size(KERNEL0WORKGROUPSIZE,1,1)))\n"
             "__kernel void " + name(0) + "(\n"
             "global " + typeNames[scanByKey_kType] + "* keys,\n"
+            ""        + typeNames[scanByKey_kIterType] + " keys_iter,\n"
             "global " + typeNames[scanByKey_vType] + "* vals,\n"
-            "global " + typeNames[scanByKey_oType] + "* output,\n"
+            ""        + typeNames[scanByKey_iIterType] + " vals_iter,\n"
             ""        + typeNames[scanByKey_initType] + " init,\n"
             "const uint vecSize,\n"
             "local "  + typeNames[scanByKey_kType] + "* ldsKeys,\n"
@@ -652,6 +658,7 @@ class ScanByKey_KernelTemplateSpecializer : public KernelTemplateSpecializer
             "global " + typeNames[scanByKey_BinaryFunction]  + "* binaryFunct,\n"
             "global " + typeNames[scanByKey_kType] + "* keyBuffer,\n"
             "global " + typeNames[scanByKey_oType] + "* valBuffer,\n"
+            "global " + typeNames[scanByKey_oType] + "* valBuffer1,\n"
             "int exclusive\n"
             ");\n\n"
 
@@ -676,15 +683,23 @@ class ScanByKey_KernelTemplateSpecializer : public KernelTemplateSpecializer
             "template __attribute__((mangled_name(" + name(2) + "Instantiated)))\n"
             "__attribute__((reqd_work_group_size(KERNEL2WORKGROUPSIZE,1,1)))\n"
             "__kernel void " + name(2) + "(\n"
-            "global " + typeNames[scanByKey_kType] + "* keySumArray,\n"
             "global " + typeNames[scanByKey_oType] + "* postSumArray,\n"
+            "global " + typeNames[scanByKey_oType] + "* preSumArray1,\n"
             "global " + typeNames[scanByKey_kType] + "* keys,\n"
+            ""        + typeNames[scanByKey_kIterType] + " keys_iter,\n"
+            "global " + typeNames[scanByKey_vType] + "* vals,\n"
+            ""        + typeNames[scanByKey_iIterType] + " vals_iter,\n"
             "global " + typeNames[scanByKey_oType] + "* output,\n"
+            ""        + typeNames[scanByKey_oIterType] + " output_iter,\n"
+            "local "  + typeNames[scanByKey_kType] + "* ldsKeys,\n"
+            "local "  + typeNames[scanByKey_oType] + "* ldsVals,\n"
             "const uint vecSize,\n"
             "global " + typeNames[scanByKey_BinaryPredicate] + "* binaryPred,\n"
-            "global " + typeNames[scanByKey_BinaryFunction] + "* binaryFunct\n"
+            "global " + typeNames[scanByKey_BinaryFunction] + "* binaryFunct,\n"
+            "int exclusive,\n"
+            ""        + typeNames[scanByKey_initType] + " identity\n"
             ");\n\n";
-
+    
         return templateSpecializationString;
     }
 };
@@ -887,29 +902,16 @@ scan_by_key_pick_iterator(
 
     if( runMode == bolt::cl::control::SerialCpu )
     {
-     ::cl::Event serialCPUEvent;
-     cl_int l_Error = CL_SUCCESS;
-
-     kType *scanInputkey = (kType*)ctl.getCommandQueue().enqueueMapBuffer(firstKey.getContainer().getBuffer(),false,
-                       CL_MAP_READ, 0, sizeof(kType) * numElements, NULL, &serialCPUEvent, &l_Error );
-     vType *scanInputBuffer = (vType*)ctl.getCommandQueue().enqueueMapBuffer(firstValue.getContainer().getBuffer(),
-         false, CL_MAP_READ, 0, sizeof(vType) * numElements, NULL, &serialCPUEvent, &l_Error );
-
-     oType *scanResultBuffer = (oType*)ctl.getCommandQueue().enqueueMapBuffer(result.getContainer().getBuffer(), false,
-                         CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(oType)*numElements, NULL, &serialCPUEvent, &l_Error);
-
- serialCPUEvent.wait();
+        bolt::cl::device_vector< kType >::pointer scanInputkey =  firstKey.getContainer( ).data( );
+        bolt::cl::device_vector< vType >::pointer scanInputBuffer =  firstValue.getContainer( ).data( );
+        bolt::cl::device_vector< oType >::pointer scanResultBuffer =  result.getContainer( ).data( );
 
         if(inclusive)
-            Serial_inclusive_scan_by_key<kType, vType, oType, BinaryPredicate, BinaryFunction>(scanInputkey,
-                                 scanInputBuffer, scanResultBuffer, numElements, binary_pred, binary_funct);
+            Serial_inclusive_scan_by_key<kType, vType, oType, BinaryPredicate, BinaryFunction>(&scanInputkey[ firstKey.m_Index ],
+                                 &scanInputBuffer[ firstValue.m_Index ], &scanResultBuffer[ result.m_Index ], numElements, binary_pred, binary_funct);
         else
-            Serial_exclusive_scan_by_key<kType, vType, oType, BinaryPredicate, BinaryFunction, T>(scanInputkey,
-                             scanInputBuffer, scanResultBuffer, numElements, binary_pred, binary_funct, init);
-
-        ctl.getCommandQueue().enqueueUnmapMemObject(firstKey.getContainer().getBuffer(), scanInputkey);
-        ctl.getCommandQueue().enqueueUnmapMemObject(firstValue.getContainer().getBuffer(), scanInputBuffer);
-        ctl.getCommandQueue().enqueueUnmapMemObject(result.getContainer().getBuffer(), scanResultBuffer);
+            Serial_exclusive_scan_by_key<kType, vType, oType, BinaryPredicate, BinaryFunction, T>(&scanInputkey[ firstKey.m_Index ],
+                             &scanInputBuffer[ firstValue.m_Index ], &scanResultBuffer[ result.m_Index ], numElements, binary_pred, binary_funct, init);
 
         return result + numElements;
 
@@ -917,29 +919,17 @@ scan_by_key_pick_iterator(
     else if( runMode == bolt::cl::control::MultiCoreCpu )
     {
 #ifdef ENABLE_TBB
-
-                ::cl::Event multiCoreCPUEvent;
-                cl_int l_Error = CL_SUCCESS;
-                /*Map the device buffer to CPU*/
-                kType *scanInputkey = (kType*)ctl.getCommandQueue().enqueueMapBuffer(firstKey.getContainer().getBuffer(), false,
-                                   CL_MAP_READ, 0, sizeof(kType) * numElements, NULL, &multiCoreCPUEvent, &l_Error );
-                vType *scanInputBuffer = (vType*)ctl.getCommandQueue().enqueueMapBuffer(firstValue.getContainer().getBuffer(), false,
-                                   CL_MAP_READ, 0, sizeof(vType) * numElements, NULL, &multiCoreCPUEvent, &l_Error );
-                oType *scanResultBuffer = (oType*)ctl.getCommandQueue().enqueueMapBuffer(result.getContainer().getBuffer(), false,
-                                   CL_MAP_READ|CL_MAP_WRITE, 0, sizeof(oType) * numElements, NULL, &multiCoreCPUEvent, &l_Error );
-                multiCoreCPUEvent.wait();
+		       bolt::cl::device_vector< kType >::pointer scanInputkey =  firstKey.getContainer( ).data( );
+	  		   bolt::cl::device_vector< vType >::pointer scanInputBuffer =  firstValue.getContainer( ).data( );
+			   bolt::cl::device_vector< oType >::pointer scanResultBuffer =  result.getContainer( ).data( );
 
               if (inclusive)
-                 bolt::btbb::inclusive_scan_by_key(scanInputkey,scanInputkey + numElements,scanInputBuffer,
-                 scanResultBuffer,binary_pred,binary_funct);
+                 bolt::btbb::inclusive_scan_by_key(&scanInputkey[ firstKey.m_Index ],&scanInputkey[ firstKey.m_Index ] + numElements,  &scanInputBuffer[ firstValue.m_Index ],
+                 &scanResultBuffer[ result.m_Index ], binary_pred,binary_funct);
               else
-                bolt::btbb::exclusive_scan_by_key(scanInputkey,scanInputkey + numElements,scanInputBuffer,
-                scanResultBuffer,init,binary_pred,binary_funct);
+                bolt::btbb::exclusive_scan_by_key(&scanInputkey[ firstKey.m_Index ],&scanInputkey[ firstKey.m_Index ] + numElements,  &scanInputBuffer[ firstValue.m_Index ],
+                &scanResultBuffer[ result.m_Index ],init,binary_pred,binary_funct);
 
-
-                ctl.getCommandQueue().enqueueUnmapMemObject(firstKey.getContainer().getBuffer(), scanInputkey);
-                ctl.getCommandQueue().enqueueUnmapMemObject(firstValue.getContainer().getBuffer(), scanInputBuffer);
-                ctl.getCommandQueue().enqueueUnmapMemObject(result.getContainer().getBuffer(), scanResultBuffer);
                 return result + numElements;
 #else
                 throw std::exception("The MultiCoreCpu version of scan by key is not enabled to be built! \n" );
@@ -995,10 +985,14 @@ size_t k0_stepNum, k1_stepNum, k2_stepNum;
     typedef typename std::iterator_traits< DVInputIterator1 >::value_type kType;
     typedef typename std::iterator_traits< DVInputIterator2 >::value_type vType;
     typedef typename std::iterator_traits< DVOutputIterator >::value_type oType;
-    std::vector<std::string> typeNames(6);
+    std::vector<std::string> typeNames(scanbykey_end);
+    
     typeNames[scanByKey_kType] = TypeName< kType >::get( );
+    typeNames[scanByKey_kIterType] = TypeName< DVInputIterator1 >::get( );
     typeNames[scanByKey_vType] = TypeName< vType >::get( );
+    typeNames[scanByKey_iIterType] = TypeName< DVInputIterator2 >::get( );
     typeNames[scanByKey_oType] = TypeName< oType >::get( );
+    typeNames[scanByKey_oIterType] = TypeName< DVOutputIterator >::get( );
     typeNames[scanByKey_initType] = TypeName< T >::get( );
     typeNames[scanByKey_BinaryPredicate] = TypeName< BinaryPredicate >::get( );
     typeNames[scanByKey_BinaryFunction]  = TypeName< BinaryFunction >::get( );
@@ -1008,8 +1002,11 @@ size_t k0_stepNum, k1_stepNum, k2_stepNum;
      *********************************************************************************/
     std::vector<std::string> typeDefs; // typeDefs must be unique and order does matter
     PUSH_BACK_UNIQUE( typeDefs, ClCode< kType >::get() )
+    PUSH_BACK_UNIQUE( typeDefs, ClCode< DVInputIterator1 >::get() )
     PUSH_BACK_UNIQUE( typeDefs, ClCode< vType >::get() )
+    PUSH_BACK_UNIQUE( typeDefs, ClCode< DVInputIterator2 >::get() )
     PUSH_BACK_UNIQUE( typeDefs, ClCode< oType >::get() )
+    PUSH_BACK_UNIQUE( typeDefs, ClCode< DVOutputIterator >::get() )
     PUSH_BACK_UNIQUE( typeDefs, ClCode< T >::get() )
     PUSH_BACK_UNIQUE( typeDefs, ClCode< BinaryPredicate >::get() )
     PUSH_BACK_UNIQUE( typeDefs, ClCode< BinaryFunction  >::get() )
@@ -1053,21 +1050,22 @@ size_t k0_stepNum, k1_stepNum, k2_stepNum;
     //  Ceiling function to bump the size of input to the next whole wavefront size
     cl_uint numElements = static_cast< cl_uint >( std::distance( firstKey, lastKey ) );
     device_vector< kType >::size_type sizeInputBuff = numElements;
-    size_t modWgSize = (sizeInputBuff & (kernel0_WgSize-1));
+
+    size_t modWgSize = (sizeInputBuff & ((kernel0_WgSize*2)-1));
     if( modWgSize )
     {
         sizeInputBuff &= ~modWgSize;
-        sizeInputBuff += kernel0_WgSize;
+        sizeInputBuff += (kernel0_WgSize*2);
     }
-    cl_uint numWorkGroupsK0 = static_cast< cl_uint >( sizeInputBuff / kernel0_WgSize );
+    cl_uint numWorkGroupsK0 = static_cast< cl_uint >( sizeInputBuff / (kernel0_WgSize*2) );
 
     //  Ceiling function to bump the size of the sum array to the next whole wavefront size
     device_vector< kType >::size_type sizeScanBuff = numWorkGroupsK0;
-    modWgSize = (sizeScanBuff & (kernel0_WgSize-1));
+    modWgSize = (sizeScanBuff & ((kernel0_WgSize*2)-1));
     if( modWgSize )
     {
         sizeScanBuff &= ~modWgSize;
-        sizeScanBuff += kernel0_WgSize;
+        sizeScanBuff += (kernel0_WgSize*2);
     }
 
     // Create buffer wrappers so we can access the host functors, for read or writing in the kernel
@@ -1080,8 +1078,9 @@ size_t k0_stepNum, k1_stepNum, k2_stepNum;
         CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_binary_funct );
 
     control::buffPointer keySumArray  = ctl.acquireBuffer( sizeScanBuff*sizeof( kType ) );
-    control::buffPointer preSumArray  = ctl.acquireBuffer( sizeScanBuff*sizeof( oType ) );
-    control::buffPointer postSumArray = ctl.acquireBuffer( sizeScanBuff*sizeof( oType ) );
+    control::buffPointer preSumArray  = ctl.acquireBuffer( sizeScanBuff*sizeof( vType ) );
+    control::buffPointer preSumArray1  = ctl.acquireBuffer( sizeScanBuff*sizeof( vType ) );
+    control::buffPointer postSumArray = ctl.acquireBuffer( sizeScanBuff*sizeof( vType ) );
     cl_uint ldsKeySize, ldsValueSize;
 
 
@@ -1095,21 +1094,23 @@ aProfiler.set(AsyncProfiler::getDevice, control::SerialCpu);
 #endif
     try
     {
-    ldsKeySize   = static_cast< cl_uint >( kernel0_WgSize * sizeof( kType ) );
-    ldsValueSize = static_cast< cl_uint >( kernel0_WgSize * sizeof( oType ) );
+    ldsKeySize   = static_cast< cl_uint >( (kernel0_WgSize*2) * sizeof( kType ) );
+    ldsValueSize = static_cast< cl_uint >( (kernel0_WgSize*2) * sizeof( vType ) );
     V_OPENCL( kernels[0].setArg( 0, firstKey.getContainer().getBuffer()), "Error setArg kernels[ 0 ]" ); // Input keys
-    V_OPENCL( kernels[0].setArg( 1, firstValue.getContainer().getBuffer()),"Error setArg kernels[ 0 ]" ); // Input buffer
-    V_OPENCL( kernels[0].setArg( 2, result.getContainer().getBuffer() ), "Error setArg kernels[ 0 ]" ); // Output buffer
-    V_OPENCL( kernels[0].setArg( 3, init ),                 "Error setArg kernels[ 0 ]" ); // Initial value exclusive
-    V_OPENCL( kernels[0].setArg( 4, numElements ),          "Error setArg kernels[ 0 ]" ); // Size of scratch buffer
-    V_OPENCL( kernels[0].setArg( 5, ldsKeySize, NULL ),     "Error setArg kernels[ 0 ]" ); // Scratch buffer
-    V_OPENCL( kernels[0].setArg( 6, ldsValueSize, NULL ),   "Error setArg kernels[ 0 ]" ); // Scratch buffer
-    V_OPENCL( kernels[0].setArg( 7, *binaryPredicateBuffer),"Error setArg kernels[ 0 ]" ); // User provided functor
-    V_OPENCL( kernels[0].setArg( 8, *binaryFunctionBuffer ),"Error setArg kernels[ 0 ]" ); // User provided functor
-    V_OPENCL( kernels[0].setArg( 9, *keySumArray ),         "Error setArg kernels[ 0 ]" ); // Output per block sum
-    V_OPENCL( kernels[0].setArg(10, *preSumArray ),         "Error setArg kernels[ 0 ]" ); // Output per block sum
-    V_OPENCL( kernels[0].setArg(11, doExclusiveScan ),      "Error setArg kernels[ 0 ]" ); // Exclusive scan?
-
+    V_OPENCL( kernels[0].setArg( 1, firstKey.gpuPayloadSize( ), &firstKey.gpuPayload( ) ), "Error setting a kernel argument" );
+    V_OPENCL( kernels[0].setArg( 2, firstValue.getContainer().getBuffer()),"Error setArg kernels[ 0 ]" ); // Input buffer
+    V_OPENCL( kernels[0].setArg( 3, firstValue.gpuPayloadSize( ), &firstValue.gpuPayload( ) ), "Error setting a kernel argument" );
+    V_OPENCL( kernels[0].setArg( 4, init ),                 "Error setArg kernels[ 0 ]" ); // Initial value exclusive
+    V_OPENCL( kernels[0].setArg( 5, numElements ),          "Error setArg kernels[ 0 ]" ); // Size of scratch buffer
+    V_OPENCL( kernels[0].setArg( 6, ldsKeySize, NULL ),     "Error setArg kernels[ 0 ]" ); // Scratch buffer
+    V_OPENCL( kernels[0].setArg( 7, ldsValueSize, NULL ),   "Error setArg kernels[ 0 ]" ); // Scratch buffer
+    V_OPENCL( kernels[0].setArg( 8, *binaryPredicateBuffer),"Error setArg kernels[ 0 ]" ); // User provided functor
+    V_OPENCL( kernels[0].setArg( 9, *binaryFunctionBuffer ),"Error setArg kernels[ 0 ]" ); // User provided functor
+    V_OPENCL( kernels[0].setArg(10, *keySumArray ),         "Error setArg kernels[ 0 ]" ); // Output per block sum
+    V_OPENCL( kernels[0].setArg(11, *preSumArray ),         "Error setArg kernels[ 0 ]" ); // Output per block sum
+    V_OPENCL( kernels[0].setArg(12, *preSumArray1 ),         "Error setArg kernels[ 0 ]" ); // Output per block sum
+    V_OPENCL( kernels[0].setArg(13, doExclusiveScan ),      "Error setArg kernels[ 0 ]" ); // Exclusive scan?
+    
 #ifdef BOLT_ENABLE_PROFILING
 aProfiler.nextStep();
 k0_stepNum = aProfiler.getStepNum();
@@ -1123,7 +1124,7 @@ aProfiler.set(AsyncProfiler::memory,2*numElements*(sizeof(vType)+sizeof(kType)) 
     l_Error = ctl.getCommandQueue( ).enqueueNDRangeKernel(
         kernels[0],
         ::cl::NullRange,
-        ::cl::NDRange( sizeInputBuff ),
+        ::cl::NDRange( sizeInputBuff/2 ),
         ::cl::NDRange( kernel0_WgSize ),
         NULL,
         &kernel0Event);
@@ -1145,8 +1146,11 @@ aProfiler.nextStep();
 aProfiler.setStepName("Setup Kernel 1");
 aProfiler.set(AsyncProfiler::device, control::SerialCpu);
 #endif
-
+    ldsKeySize   = static_cast< cl_uint >( (kernel0_WgSize) * sizeof( kType ) );
+    ldsValueSize = static_cast< cl_uint >( (kernel0_WgSize) * sizeof( vType ) );
     cl_uint workPerThread = static_cast< cl_uint >( sizeScanBuff / kernel1_WgSize );
+    workPerThread = workPerThread ? workPerThread : 1;
+
     V_OPENCL( kernels[1].setArg( 0, *keySumArray ),         "Error setArg kernels[ 1 ]" ); // Input keys
     V_OPENCL( kernels[1].setArg( 1, *preSumArray ),         "Error setArg kernels[ 1 ]" ); // Input buffer
     V_OPENCL( kernels[1].setArg( 2, *postSumArray ),        "Error setArg kernels[ 1 ]" ); // Output buffer
@@ -1194,13 +1198,22 @@ aProfiler.setStepName("Setup Kernel 2");
 aProfiler.set(AsyncProfiler::device, control::SerialCpu);
 #endif
 
-    V_OPENCL( kernels[2].setArg( 0, *keySumArray ),         "Error setArg kernels[ 2 ]" ); // Input buffer
-    V_OPENCL( kernels[2].setArg( 1, *postSumArray ),        "Error setArg kernels[ 2 ]" ); // Input buffer
-    V_OPENCL( kernels[2].setArg( 2, firstKey.getContainer().getBuffer()), "Error setArg kernels[ 2 ]" ); // Output buffer
-    V_OPENCL( kernels[2].setArg( 3, result.getContainer().getBuffer()),   "Error setArg kernels[ 2 ]" ); // Output buffer
-    V_OPENCL( kernels[2].setArg( 4, numElements ),          "Error setArg kernels[ 2 ]" ); // Size of scratch buffer
-    V_OPENCL( kernels[2].setArg( 5, *binaryPredicateBuffer ),"Error setArg kernels[ 2 ]" ); // User provided functor
-    V_OPENCL( kernels[2].setArg( 6, *binaryFunctionBuffer ),"Error setArg kernels[ 2 ]" ); // User provided functor
+
+    V_OPENCL( kernels[2].setArg( 0, *postSumArray ),        "Error setArg kernels[ 2 ]" ); // Input buffer
+    V_OPENCL( kernels[2].setArg( 1, *preSumArray1 ),        "Error setArg kernels[ 2 ]" ); // Input buffer
+    V_OPENCL( kernels[2].setArg( 2, firstKey.getContainer().getBuffer()), "Error setArg kernels[ 2 ]" ); // Input keys
+    V_OPENCL( kernels[2].setArg( 3, firstKey.gpuPayloadSize( ), &firstKey.gpuPayload( ) ), "Error setting a kernel argument" );
+    V_OPENCL( kernels[2].setArg( 4, firstValue.getContainer().getBuffer()),"Error setArg kernels[ 2 ]" ); // Input buffer
+    V_OPENCL( kernels[2].setArg( 5, firstValue.gpuPayloadSize( ), &firstValue.gpuPayload( ) ), "Error setting a kernel argument" );
+    V_OPENCL( kernels[2].setArg( 6, result.getContainer().getBuffer() ), "Error setArg kernels[ 2 ]" ); // Output buffer
+    V_OPENCL( kernels[2].setArg( 7, result.gpuPayloadSize( ), &result.gpuPayload( ) ), "Error setting a kernel argument" );
+    V_OPENCL( kernels[2].setArg( 8, ldsKeySize, NULL ),     "Error setArg kernels[ 2 ]" ); // Scratch buffer
+    V_OPENCL( kernels[2].setArg( 9, ldsValueSize, NULL ),   "Error setArg kernels[ 2 ]" ); // Scratch buffer
+    V_OPENCL( kernels[2].setArg(10, numElements ),          "Error setArg kernels[ 2 ]" ); // Size of scratch buffer
+    V_OPENCL( kernels[2].setArg(11, *binaryPredicateBuffer ),"Error setArg kernels[ 2 ]" ); // User provided functor
+    V_OPENCL( kernels[2].setArg(12, *binaryFunctionBuffer ),"Error setArg kernels[ 2 ]" ); // User provided functor
+    V_OPENCL( kernels[2].setArg(13, doExclusiveScan ),      "Error setArg kernels[ 2 ]" ); // Exclusive scan?
+    V_OPENCL( kernels[2].setArg(14, init ),                 "Error setArg kernels[ 2 ]" ); // Initial value exclusive
 
 #ifdef BOLT_ENABLE_PROFILING
 aProfiler.nextStep();

@@ -14,18 +14,17 @@
 *   limitations under the License.
 
 ***************************************************************************/
-
-
 #include "common/stdafx.h"
 #include "common/myocl.h"
 #include <bolt/cl/fill.h>
-
+#include <bolt/cl/device_vector.h>
 #include "bolt/cl/iterator/constant_iterator.h"
 
 #define STRUCT 1
 #define FILL_GOOGLE_TEST 1
 
 #define TEST_DOUBLE 0
+#define TEST_CPU_DEVICE 1
 
 #if FILL_GOOGLE_TEST
 #include <gtest/gtest.h>
@@ -45,6 +44,8 @@ BOLT_FUNCTOR(samp,struct samp
 
 };
 );
+BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, int, samp);
+
 
 #endif
 
@@ -208,6 +209,27 @@ struct cmpStdArray< double, N >
     }
 };
 #endif
+
+BOLT_FUNCTOR(UDD, 
+struct UDD
+{
+    int a;
+    int b;
+  
+    bool operator == (const UDD& other) const {
+        return ((a==other.a) && (b == other.b));
+    }
+    
+    UDD()
+        : a(0), b(0) { }
+    UDD(int _in)
+        : a(_in), b(_in+2){ }
+};
+);
+
+BOLT_CREATE_TYPENAME( bolt::cl::device_vector< UDD >::iterator );
+BOLT_CREATE_CLCODE( bolt::cl::device_vector< UDD >::iterator, bolt::cl::deviceVectorIteratorTemplate );
+
 template< typename T >
 ::testing::AssertionResult cmpArrays( const std::vector< T >& ref, const std::vector< T >& calc )
 {
@@ -218,6 +240,7 @@ template< typename T >
 
     return ::testing::AssertionSuccess( );
 }
+
 ::testing::AssertionResult cmpArrays( const std::vector< float >& ref, const std::vector< float >& calc )
 {
     for( size_t i = 0; i < ref.size( ); ++i )
@@ -250,6 +273,27 @@ template< typename S, typename B >
     return ::testing::AssertionSuccess( );
 }
 
+class HostclLongVector: public ::testing::TestWithParam< int >
+{
+    
+public:
+    //  Create an std and a bolt vector of requested size, and initialize all the elements to -1
+    HostclLongVector( ): stdInput( GetParam( ), -1 ), boltInput( GetParam( ), -1 )  {}
+
+protected:
+    std::vector< cl_long > stdInput, boltInput;
+};
+
+class HostShortVector: public ::testing::TestWithParam< int >
+{
+    
+public:
+    //  Create an std and a bolt vector of requested size, and initialize all the elements to -1
+    HostShortVector( ): stdInput( GetParam( ), -1 ), boltInput( GetParam( ), -1 )  {}
+
+protected:
+    std::vector< short > stdInput, boltInput;
+};
 
 class HostIntVector: public ::testing::TestWithParam< int >
 {
@@ -262,6 +306,39 @@ protected:
     std::vector< int > stdInput, boltInput;
 };
 
+class HostUnsignedIntVector: public ::testing::TestWithParam< int >
+{
+    
+public:
+    //  Create an std and a bolt vector of requested size, and initialize all the elements to 1
+    HostUnsignedIntVector( ): stdInput( GetParam( ), 1 ), boltInput( GetParam( ), 1 )  {}
+
+protected:
+    std::vector< unsigned int > stdInput, boltInput;
+};
+
+class HostFloatVector: public ::testing::TestWithParam< int >
+{
+    
+public:
+    //  Create an std and a bolt vector of requested size, and initialize all the elements to -1
+    HostFloatVector( ): stdInput( GetParam( ), -1.0 ), boltInput( GetParam( ), -1.0 )  {}
+
+protected:
+    std::vector< float > stdInput, boltInput;
+};
+
+class HostUDDVector: public ::testing::TestWithParam< int >
+{
+    
+public:
+    //  Create an std and a bolt vector of requested size, and initialize all the elements to -1
+    HostUDDVector( ): stdInput( GetParam( ), -1), boltInput( GetParam( ), -1)  {}
+
+protected:
+    std::vector< UDD > stdInput, boltInput;
+};
+
 class FillStdVectandConstantIterator :public ::testing::TestWithParam<int>{
 protected:
      int mySize;
@@ -269,6 +346,43 @@ public:
     FillStdVectandConstantIterator(): mySize(GetParam()){
     }
 };
+
+class DevShortVector: public ::testing::TestWithParam< int >
+{
+public:
+    //  Create an std and a bolt vector of requested size, and initialize all the elements to -1
+    DevShortVector( ): stdInput( GetParam( ), -1 ), boltInput( GetParam( ), -1 )
+    {}
+
+protected:
+    std::vector< short > stdInput;
+    bolt::cl::device_vector< short > boltInput;
+};
+
+class DevUDDVector: public ::testing::TestWithParam< int >
+{
+    
+public:
+    //  Create an std and a bolt vector of requested size, and initialize all the elements to -1
+    DevUDDVector( ): stdInput( GetParam( ), -1 ), boltInput( GetParam( ), -1 )  {}
+
+protected:
+    std::vector< UDD > stdInput;
+    bolt::cl::device_vector< UDD > boltInput;
+};
+
+class DevclLongVector: public ::testing::TestWithParam< int >
+{
+public:
+    //  Create an std and a bolt vector of requested size, and initialize all the elements to -1
+    DevclLongVector( ): stdInput( GetParam( ), -1 ), boltInput( GetParam( ), -1 )
+    {}
+
+protected:
+    std::vector< cl_long > stdInput;
+    bolt::cl::device_vector< cl_long > boltInput;
+};
+
 
 class DevIntVector: public ::testing::TestWithParam< int >
 {
@@ -280,6 +394,30 @@ public:
 protected:
     std::vector< int > stdInput;
     bolt::cl::device_vector< int > boltInput;
+};
+
+class DevUnsignedIntVector: public ::testing::TestWithParam< int >
+{
+public:
+    //  Create an std and a bolt vector of requested size, and initialize all the elements to -1
+    DevUnsignedIntVector( ): stdInput( GetParam( ), 1 ), boltInput( GetParam( ), 1 )
+    {}
+
+protected:
+    std::vector< unsigned int > stdInput;
+    bolt::cl::device_vector< unsigned int > boltInput;
+};
+
+class DevFloatVector: public ::testing::TestWithParam< int >
+{
+public:
+    //  Create an std and a bolt vector of requested size, and initialize all the elements to -1
+    DevFloatVector( ): stdInput( GetParam( ), -1.0 ), boltInput( GetParam( ), -1.0 )
+    {}
+
+protected:
+    std::vector< float > stdInput;
+    bolt::cl::device_vector< float > boltInput;
 };
 
 #if (TEST_DOUBLE == 1)
@@ -312,6 +450,339 @@ protected:
 //Test Cases for Fill
 //////////////////////////////////////////////////////////////////////////////////////////////
 
+template< size_t N >
+class TypeValue
+{
+public:
+    static const size_t value = N;
+};
+
+template< typename ArrayTuple>
+class FillArrayTest: public ::testing::Test
+{
+public:
+    FillArrayTest( ): m_Errors( 0 ), val(73)
+    { }
+
+    virtual void TearDown( )
+    {};
+
+    virtual ~FillArrayTest( )
+    {}
+
+protected:
+    typedef typename std::tuple_element< 0, ArrayTuple >::type ArrayType;
+    static const size_t ArraySize = typename std::tuple_element< 1, ArrayTuple >::type::value;
+    std::array< ArrayType, ArraySize > stdInput, boltInput, stdOffsetIn, boltOffsetIn;
+    int m_Errors;
+    ArrayType val;
+};
+
+TYPED_TEST_CASE_P( FillArrayTest );
+
+
+#if (TEST_CPU_DEVICE == 1)
+TYPED_TEST_P( FillArrayTest,CPU_DeviceNormal )
+{
+    typedef std::array< ArrayType, ArraySize > ArrayCont;
+
+    MyOclContext oclcpu = initOcl(CL_DEVICE_TYPE_CPU, 0);
+    bolt::cl::control c_cpu(oclcpu._queue);  // construct control structure from the queue.
+
+    //  Calling the actual functions under test
+    std::fill( stdInput.begin( ), stdInput.end( ), val );
+    bolt::cl::fill( c_cpu, boltInput.begin( ), boltInput.end( ) , val);
+
+    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
+    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
+    
+    //OFFSET Test cases
+    //  Calling the actual functions under test
+    size_t startIndex = 17; //Some aribitrary offset position
+    size_t endIndex   = ArraySize - 17; //Some aribitrary offset position
+    if( (( startIndex > ArraySize ) || ( endIndex < 0 ) )  || (startIndex > endIndex) )
+    {
+        std::cout <<"\nSkipping NormalOffset Test for size "<< ArraySize << "\n";
+    }    
+    else
+    {
+        std::fill( stdOffsetIn.begin( ) + startIndex, stdOffsetIn.begin( ) + endIndex, val );
+        bolt::cl::fill( c_cpu, boltOffsetIn.begin( ) + startIndex, boltOffsetIn.begin( ) + endIndex, val);
+
+        ArrayCont::difference_type stdNumElements = std::distance( stdOffsetIn.begin( ), stdOffsetIn.end( ) );
+        ArrayCont::difference_type boltNumElements = std::distance(  boltOffsetIn.begin( ),  boltOffsetIn.end( ) );
+
+        //  Both collections should have the same number of elements
+        EXPECT_EQ( stdNumElements, boltNumElements );
+
+        //  Loop through the array and compare all the values with each other
+        cmpStdArray< ArrayType, ArraySize >::cmpArrays(  stdOffsetIn,  boltOffsetIn );
+    }
+}
+
+REGISTER_TYPED_TEST_CASE_P( FillArrayTest, CPU_DeviceNormal);
+
+#endif
+
+typedef ::testing::Types< 
+    std::tuple< cl_long, TypeValue< 1 > >,
+    std::tuple< cl_long, TypeValue< 31 > >,
+    std::tuple< cl_long, TypeValue< 32 > >,
+    std::tuple< cl_long, TypeValue< 63 > >,
+    std::tuple< cl_long, TypeValue< 64 > >,
+    std::tuple< cl_long, TypeValue< 127 > >,
+    std::tuple< cl_long, TypeValue< 128 > >,
+    std::tuple< cl_long, TypeValue< 129 > >,
+    std::tuple< cl_long, TypeValue< 1000 > >,
+    std::tuple< cl_long, TypeValue< 1053 > >,
+    std::tuple< cl_long, TypeValue< 4096 > >,
+    std::tuple< cl_long, TypeValue< 4097 > >,
+    std::tuple< cl_long, TypeValue< 8192 > >,
+    std::tuple< cl_long, TypeValue< 16384 > >,//13
+    std::tuple< cl_long, TypeValue< 32768 > >,//14
+    std::tuple< cl_long, TypeValue< 65535 > >,//15
+    std::tuple< cl_long, TypeValue< 65536 > >,//16
+    std::tuple< cl_long, TypeValue< 131072 > >,//17    
+    std::tuple< cl_long, TypeValue< 262144 > >,//18    
+    std::tuple< cl_long, TypeValue< 524288 > >,//19    
+    std::tuple< cl_long, TypeValue< 1048576 > >,//20    
+    std::tuple< cl_long, TypeValue< 2097152 > >//21    
+#if (TEST_LARGE_BUFFERS == 1)
+    , /*This coma is needed*/
+    std::tuple< cl_long, TypeValue< 4194304 > >,//22    
+    std::tuple< cl_long, TypeValue< 8388608 > >,//23
+    std::tuple< cl_long, TypeValue< 16777216 > >,//24
+    std::tuple< cl_long, TypeValue< 33554432 > >,//25
+    std::tuple< cl_long, TypeValue< 67108864 > >//26
+#endif
+> clLongTests;
+
+typedef ::testing::Types< 
+    std::tuple< int, TypeValue< 1 > >,
+    std::tuple< int, TypeValue< 31 > >,
+    std::tuple< int, TypeValue< 32 > >,
+    std::tuple< int, TypeValue< 63 > >,
+    std::tuple< int, TypeValue< 64 > >,
+    std::tuple< int, TypeValue< 127 > >,
+    std::tuple< int, TypeValue< 128 > >,
+    std::tuple< int, TypeValue< 129 > >,
+    std::tuple< int, TypeValue< 1000 > >,
+    std::tuple< int, TypeValue< 1053 > >,
+    std::tuple< int, TypeValue< 4096 > >,
+    std::tuple< int, TypeValue< 4097 > >,
+    std::tuple< int, TypeValue< 8192 > >,
+    std::tuple< int, TypeValue< 16384 > >,//13
+    std::tuple< int, TypeValue< 32768 > >,//14
+    std::tuple< int, TypeValue< 65535 > >,//15
+    std::tuple< int, TypeValue< 65536 > >,//16
+    std::tuple< int, TypeValue< 131072 > >,//17    
+    std::tuple< int, TypeValue< 262144 > >,//18    
+    std::tuple< int, TypeValue< 524288 > >,//19    
+    std::tuple< int, TypeValue< 1048576 > >,//20    
+    std::tuple< int, TypeValue< 2097152 > >//21    
+#if (TEST_LARGE_BUFFERS == 1)
+    , /*This coma is needed*/
+    std::tuple< int, TypeValue< 4194304 > >,//22    
+    std::tuple< int, TypeValue< 8388608 > >,//23
+    std::tuple< int, TypeValue< 16777216 > >,//24
+    std::tuple< int, TypeValue< 33554432 > >,//25
+    std::tuple< int, TypeValue< 67108864 > >//26
+#endif
+> IntegerTests;
+
+typedef ::testing::Types< 
+    std::tuple< unsigned int, TypeValue< 1 > >,
+    std::tuple< unsigned int, TypeValue< 31 > >,
+    std::tuple< unsigned int, TypeValue< 32 > >,
+    std::tuple< unsigned int, TypeValue< 63 > >,
+    std::tuple< unsigned int, TypeValue< 64 > >,
+    std::tuple< unsigned int, TypeValue< 127 > >,
+    std::tuple< unsigned int, TypeValue< 128 > >,
+    std::tuple< unsigned int, TypeValue< 129 > >,
+    std::tuple< unsigned int, TypeValue< 1000 > >,
+    std::tuple< unsigned int, TypeValue< 1053 > >,
+    std::tuple< unsigned int, TypeValue< 4096 > >,
+    std::tuple< unsigned int, TypeValue< 4097 > >,
+    std::tuple< unsigned int, TypeValue< 8192 > >,
+    std::tuple< unsigned int, TypeValue< 16384 > >,//13
+    std::tuple< unsigned int, TypeValue< 32768 > >,//14
+    std::tuple< unsigned int, TypeValue< 65535 > >,//15
+    std::tuple< unsigned int, TypeValue< 65536 > >,//16
+    std::tuple< unsigned int, TypeValue< 131072 > >,//17    
+    std::tuple< unsigned int, TypeValue< 262144 > >,//18    
+    std::tuple< unsigned int, TypeValue< 524288 > >,//19    
+    std::tuple< unsigned int, TypeValue< 1048576 > >,//20    
+    std::tuple< unsigned int, TypeValue< 2097152 > >//21    
+#if (TEST_LARGE_BUFFERS == 1)
+    , /*This coma is needed*/
+    std::tuple< unsigned int, TypeValue< 4194304 > >,//22    
+    std::tuple< unsigned int, TypeValue< 8388608 > >,//23
+    std::tuple< unsigned int, TypeValue< 16777216 > >,//24
+    std::tuple< unsigned int, TypeValue< 33554432 > >,//25
+    std::tuple< unsigned int, TypeValue< 67108864 > >//26
+#endif
+
+> UnsignedIntegerTests;
+
+typedef ::testing::Types< 
+    std::tuple< float, TypeValue< 1 > >,
+    std::tuple< float, TypeValue< 31 > >,
+    std::tuple< float, TypeValue< 32 > >,
+    std::tuple< float, TypeValue< 63 > >,
+    std::tuple< float, TypeValue< 64 > >,
+    std::tuple< float, TypeValue< 127 > >,
+    std::tuple< float, TypeValue< 128 > >,
+    std::tuple< float, TypeValue< 129 > >,
+    std::tuple< float, TypeValue< 1000 > >,
+    std::tuple< float, TypeValue< 1053 > >,
+    std::tuple< float, TypeValue< 4096 > >,
+    std::tuple< float, TypeValue< 4097 > >,
+    std::tuple< float, TypeValue< 65535 > >,
+    std::tuple< float, TypeValue< 65536 > >
+> FloatTests;
+
+#if (TEST_DOUBLE == 1)
+typedef ::testing::Types< 
+    std::tuple< double, TypeValue< 1 > >,
+    std::tuple< double, TypeValue< 31 > >,
+    std::tuple< double, TypeValue< 32 > >,
+    std::tuple< double, TypeValue< 63 > >,
+    std::tuple< double, TypeValue< 64 > >,
+    std::tuple< double, TypeValue< 127 > >,
+    std::tuple< double, TypeValue< 128 > >,
+    std::tuple< double, TypeValue< 129 > >,
+    std::tuple< double, TypeValue< 1000 > >,
+    std::tuple< double, TypeValue< 1053 > >,
+    std::tuple< double, TypeValue< 4096 > >,
+    std::tuple< double, TypeValue< 4097 > >,
+    std::tuple< double, TypeValue< 65535 > >,
+    std::tuple< double, TypeValue< 65536 > >
+> DoubleTests;
+#endif 
+
+INSTANTIATE_TYPED_TEST_CASE_P( clLong, FillArrayTest, clLongTests );
+INSTANTIATE_TYPED_TEST_CASE_P( Integer, FillArrayTest, IntegerTests );
+INSTANTIATE_TYPED_TEST_CASE_P( UnsignedInteger, FillArrayTest, UnsignedIntegerTests );
+INSTANTIATE_TYPED_TEST_CASE_P( Float, FillArrayTest, FloatTests );
+#if (TEST_DOUBLE == 1)
+INSTANTIATE_TYPED_TEST_CASE_P( Double, FillArrayTest, DoubleTests );
+#endif 
+
+TEST( StdIntVector, OffsetFill )
+{
+    int length = 1024;
+
+    std::vector<int> stdInput( length );
+    std::vector<int> boltInput( length );
+    int val = 73, offset = 100;
+
+    for (int i = 0; i < 1024; ++i)
+    {
+        stdInput[i] = 1;
+        boltInput[i] = stdInput[i];
+    }
+
+    std::fill(  stdInput.begin( ) + offset,  stdInput.end( ), val );
+    bolt::cl::fill( boltInput.begin( ) + offset, boltInput.end( ), val );
+
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST( DVIntVector, OffsetFill )
+{
+    int length = 1024;
+
+    std::vector<int> stdInput( length );
+    bolt::cl::device_vector<int> boltInput( length );
+    int val = 73, offset = 100;
+
+    for (int i = 0; i < 1024; ++i)
+    {
+        stdInput[i] = 1;
+        boltInput[i] = 1;
+    }
+
+    std::fill(  stdInput.begin( ) + offset,  stdInput.end( ), val );
+    bolt::cl::fill( boltInput.begin( ) + offset, boltInput.end( ), val );
+
+    cmpArrays( stdInput, boltInput );
+}
+
+
+TEST ( StdIntVectorWithSplit, OffsetFill )
+{ 
+    int length = 1000;
+    int splitSize = 250;
+    std::vector<int> v(length);
+    int val = 3;
+
+    //Set all the elements to the expected result
+    for(int i=0;i<length/splitSize;i++)
+        for(int count=0; count < splitSize; ++count) {
+                     if(i%2 == 0 )
+                         v[i*splitSize + count] = val;
+                     else
+                         v[i*splitSize + count] = val * 3;
+        }
+    
+    std::vector<int> stdv(length);
+
+    //memcpy(stdv.data(), v.data(), splitSize * sizeof(int)); // Copy 250 elements to device vector
+    bolt::cl::fill_n(stdv.begin(), splitSize, val);
+    bolt::cl::fill(stdv.begin() + splitSize, stdv.begin() + (splitSize * 2), val * 3); // Fill 2nd set of 250 elements
+    bolt::cl::fill(stdv.begin() + (splitSize * 2), stdv.begin() + (splitSize * 3), val);// Fill 3rd set of 250 elements
+
+    bolt::cl::fill(stdv.begin() + (splitSize * 3), stdv.end(), val * 3);  // Fill 4th set of 250 elements
+    
+    for (int i = 0; i < length; ++i){ 
+        EXPECT_EQ(stdv[i], v[i]);
+    }
+} 
+
+TEST (dvIntWithSplit, OffsetFill){ 
+    int length = 1000;
+    int splitSize = 250;
+    int val = 3;
+    bolt::cl::device_vector<int> dvIn(length);
+
+    //Set all the elements
+    for(int i=0;i<length/splitSize;i++)
+        for(int count=0; count < splitSize; ++count) {
+                     if(i%2 == 0 )
+                         dvIn[i*splitSize + count] = val;
+                     else
+                         dvIn[i*splitSize + count] = val * 3;
+        }
+    
+    bolt::cl::device_vector<int> dvOut(length);
+    {
+        //Using Boost Smart Pointer
+        bolt::cl::device_vector<int>::pointer dpOut=dvOut.data();
+        bolt::cl::device_vector<int>::pointer dpIn=dvIn.data();
+        //memcpy(dpOut.get(), dpIn.get(), splitSize * sizeof(int)); // Copy 250 elements to device vector
+        bolt::cl::fill_n(dpOut.get(), splitSize, val);
+    
+       //bolt::cl::fill(dvOut.begin() + splitSize, dvOut.begin() + (splitSize*2),val*3); //Fill 2nd set of 250 elements
+       bolt::cl::fill(dpOut.get() + splitSize, dpOut.get() + (splitSize * 2), val * 3);
+       //bolt::cl::fill(dvOut.begin()+(splitSize * 2),dvOut.begin()+(splitSize*3),val); //Fill 3rd set of 250 elements
+
+       bolt::cl::fill(dpOut.get() + (splitSize * 2), dpOut.get() + (splitSize * 3), val);
+
+    }
+
+    bolt::cl::fill(dvOut.begin() + (splitSize * 3), dvOut.end(), val * 3);  // Fill 4th set of 250 elements
+    for (int i = 0; i < length; ++i){ 
+        EXPECT_EQ(dvOut[i], dvIn[i]);
+    }
+} 
+
+
 //Fill into Fancy Iterator results in compilation error!
 /* TEST_P( FillStdVectandConstantIterator, withConstantIterator)
 {
@@ -328,6 +799,143 @@ protected:
     //EXPECT_EQ(a,first);
 } */
 
+TEST_P( HostclLongVector, Fill )
+{
+    cl_long val = (cl_long) 73;
+    std::fill(  stdInput.begin( ),  stdInput.end( ), val );
+    bolt::cl::fill( boltInput.begin( ), boltInput.end( ), val );
+
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( HostclLongVector, SerialFill )
+{
+    cl_long val = (cl_long) 73;
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    std::fill(  stdInput.begin( ),  stdInput.end( ), val );
+    bolt::cl::fill( ctl, boltInput.begin( ), boltInput.end( ), val );
+
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( HostclLongVector, MultiCoreFill )
+{
+    cl_long val = (cl_long) 73;
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    std::fill(  stdInput.begin( ),  stdInput.end( ), val );
+    bolt::cl::fill( ctl, boltInput.begin( ), boltInput.end( ), val );
+
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( HostShortVector, Fill )
+{
+    short val = 73;
+    std::fill(  stdInput.begin( ),  stdInput.end( ), val );
+    bolt::cl::fill( boltInput.begin( ), boltInput.end( ), val );
+
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( HostShortVector, SerialFill )
+{
+    short val = 73;
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    std::fill(  stdInput.begin( ),  stdInput.end( ), val );
+    bolt::cl::fill( ctl, boltInput.begin( ), boltInput.end( ), val );
+
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( HostShortVector, MultiCoreFill )
+{
+    short val = 73;
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    std::fill(  stdInput.begin( ),  stdInput.end( ), val );
+    bolt::cl::fill( ctl, boltInput.begin( ), boltInput.end( ), val );
+
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( HostUDDVector, Fill )
+{
+    UDD val(73);
+    std::fill(  stdInput.begin( ),  stdInput.end( ), val );
+    bolt::cl::fill( boltInput.begin( ), boltInput.end( ), val );
+
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( HostUDDVector, SerialFill )
+{
+    UDD val(73);
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    std::fill(  stdInput.begin( ),  stdInput.end( ), val );
+    bolt::cl::fill( ctl, boltInput.begin( ), boltInput.end( ), val );
+
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( HostUDDVector, MultiCoreFill )
+{
+    UDD val(73);
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    std::fill(  stdInput.begin( ),  stdInput.end( ), val );
+    bolt::cl::fill( ctl, boltInput.begin( ), boltInput.end( ), val );
+
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( HostUnsignedIntVector, Fill )
+{
+    unsigned int val = 73;
+    std::fill(  stdInput.begin( ),  stdInput.end( ), val );
+    bolt::cl::fill( boltInput.begin( ), boltInput.end( ), val );
+
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( HostUnsignedIntVector, SerialFill )
+{
+    unsigned int val = 73;
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    std::fill(  stdInput.begin( ),  stdInput.end( ), val );
+    bolt::cl::fill( ctl, boltInput.begin( ), boltInput.end( ), val );
+
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( HostUnsignedIntVector, MultiCoreFill )
+{
+    unsigned int val = 73;
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    std::fill(  stdInput.begin( ),  stdInput.end( ), val );
+    bolt::cl::fill( ctl, boltInput.begin( ), boltInput.end( ), val );
+
+    cmpArrays( stdInput, boltInput );
+}
 
 TEST_P( HostIntVector, Fill )
 {
@@ -342,7 +950,6 @@ TEST_P( HostIntVector, AutomaticFill )
 {
     int val = 73;
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::Automatic);
 
@@ -352,11 +959,10 @@ TEST_P( HostIntVector, AutomaticFill )
     cmpArrays( stdInput, boltInput );
 }
 
-TEST_P( HostIntVector, CPUFill )
+TEST_P( HostIntVector, SerialFill )
 {
     int val = 73;
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -370,7 +976,6 @@ TEST_P( HostIntVector, MultiCoreFill )
 {
     int val = 73;
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
@@ -379,6 +984,45 @@ TEST_P( HostIntVector, MultiCoreFill )
 
     cmpArrays( stdInput, boltInput );
 }
+
+TEST_P( HostFloatVector, Fill )
+{
+    float val = (float)73.6;
+
+    std::fill(  stdInput.begin( ),  stdInput.end( ), val );
+    bolt::cl::fill( boltInput.begin( ), boltInput.end( ), val );
+
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( HostFloatVector, SerialFill )
+{
+    float val = (float)73.6;
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    std::fill(  stdInput.begin( ),  stdInput.end( ), val );
+    bolt::cl::fill(ctl, boltInput.begin( ), boltInput.end( ), val );
+
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( HostFloatVector, MultiCoreFill )
+{
+
+    float val = (float)73.6;
+
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    std::fill(  stdInput.begin( ),  stdInput.end( ), val );
+    bolt::cl::fill(ctl, boltInput.begin( ), boltInput.end( ), val );
+
+    cmpArrays( stdInput, boltInput );
+}
+
 
 #if (TEST_DOUBLE == 1)
 TEST_P( HostDblVector, Fill )
@@ -394,7 +1038,6 @@ TEST_P( HostDblVector, AutomaticFill )
 {
     double val = CL_M_E;
     
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::Automatic);
 
@@ -408,7 +1051,6 @@ TEST_P( HostDblVector, CPUFill )
 {
     double val = CL_M_E;
     
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -422,7 +1064,6 @@ TEST_P( HostDblVector, MultiCoreFill )
 {
     double val = CL_M_E;
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
@@ -432,6 +1073,146 @@ TEST_P( HostDblVector, MultiCoreFill )
     cmpArrays( stdInput, boltInput );
 }
 #endif
+
+TEST_P( DevclLongVector, Fill )
+{
+    cl_long val = (cl_long) 73;
+    std::fill(  stdInput.begin( ),  stdInput.end( ), val );
+    bolt::cl::fill( boltInput.begin( ), boltInput.end( ), val );
+
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( DevclLongVector, SerialFill )
+{
+    cl_long val = (cl_long) 73;
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    std::fill(  stdInput.begin( ),  stdInput.end( ), val );
+    bolt::cl::fill(ctl,  boltInput.begin( ), boltInput.end( ), val );
+
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( DevclLongVector, MultiCoreFill )
+{
+    cl_long val = (cl_long) 73;
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    std::fill(  stdInput.begin( ),  stdInput.end( ), val );
+    bolt::cl::fill(ctl,  boltInput.begin( ), boltInput.end( ), val );
+
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( DevShortVector, Fill )
+{
+    short val = 73;
+    std::fill(  stdInput.begin( ),  stdInput.end( ), val );
+    bolt::cl::fill( boltInput.begin( ), boltInput.end( ), val );
+
+    cmpArrays( stdInput, boltInput );
+}
+
+
+TEST_P( DevShortVector, SerialFill )
+{
+    short val = 73;
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    std::fill(  stdInput.begin( ),  stdInput.end( ), val );
+    bolt::cl::fill( ctl, boltInput.begin( ), boltInput.end( ), val );
+
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( DevShortVector, MultiCoreFill )
+{
+    short val = 73;
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    std::fill(  stdInput.begin( ),  stdInput.end( ), val );
+    bolt::cl::fill( ctl, boltInput.begin( ), boltInput.end( ), val );
+
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( DevUDDVector, Fill )
+{
+    UDD val(73);
+    std::fill(  stdInput.begin( ),  stdInput.end( ), val );
+    bolt::cl::fill( boltInput.begin( ), boltInput.end( ), val );
+
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( DevUDDVector, SerialFill )
+{
+    UDD val(73);
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    std::fill(  stdInput.begin( ),  stdInput.end( ), val );
+    bolt::cl::fill( ctl, boltInput.begin( ), boltInput.end( ), val );
+
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( DevUDDVector, MultiCoreFill )
+{
+    UDD val(73);
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    std::fill(  stdInput.begin( ),  stdInput.end( ), val );
+    bolt::cl::fill( ctl, boltInput.begin( ), boltInput.end( ), val );
+
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( DevUnsignedIntVector, Fill )
+{
+    unsigned int val = 73;
+    std::fill(  stdInput.begin( ),  stdInput.end( ), val );
+    bolt::cl::fill( boltInput.begin( ), boltInput.end( ), val );
+
+    cmpArrays( stdInput, boltInput );
+}
+
+
+TEST_P( DevUnsignedIntVector, SerialFill )
+{
+    unsigned int val = 73;
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    std::fill(  stdInput.begin( ),  stdInput.end( ), val );
+    bolt::cl::fill( ctl, boltInput.begin( ), boltInput.end( ), val );
+
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( DevUnsignedIntVector, MultiCoreFill )
+{
+    unsigned int val = 73;
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    std::fill(  stdInput.begin( ),  stdInput.end( ), val );
+    bolt::cl::fill( ctl, boltInput.begin( ), boltInput.end( ), val );
+
+    cmpArrays( stdInput, boltInput );
+}
 
 TEST_P( DevIntVector, Fill )
 {
@@ -446,7 +1227,6 @@ TEST_P( DevIntVector, AutomaticFill )
 {
     int val = 73;
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::Automatic);
 
@@ -456,11 +1236,10 @@ TEST_P( DevIntVector, AutomaticFill )
     cmpArrays( stdInput, boltInput );
 }
 
-TEST_P( DevIntVector, CPUFill )
+TEST_P( DevIntVector, SerialFill )
 {
     int val = 73;
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -474,7 +1253,46 @@ TEST_P( DevIntVector, MultiCoreFill )
 {
     int val = 73;
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    std::fill(  stdInput.begin( ),  stdInput.end( ), val );
+    bolt::cl::fill( ctl, boltInput.begin( ), boltInput.end( ), val );
+
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( DevFloatVector, Fill )
+{
+    float val = (float)73.7;
+
+    std::fill(  stdInput.begin( ),  stdInput.end( ), val );
+    bolt::cl::fill( boltInput.begin( ), boltInput.end( ), val );
+
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( DevFloatVector, SerialFill )
+{
+
+    float val = (float)73.7;
+
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    std::fill(  stdInput.begin( ),  stdInput.end( ), val );
+    bolt::cl::fill( ctl, boltInput.begin( ), boltInput.end( ), val );
+
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( DevFloatVector, MultiCoreFill )
+{
+
+    float val = (float)73.7;
+
+
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
@@ -499,7 +1317,6 @@ TEST_P(DevDblVector,  AutomaticFill )
 {
     double val = CL_M_E;
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::Automatic);
 
@@ -509,11 +1326,10 @@ TEST_P(DevDblVector,  AutomaticFill )
     cmpArrays( stdInput, boltInput );
 }
 
-TEST_P( DevDblVector, CPUFill )
+TEST_P( DevDblVector, SerialFill )
 {
     double val = CL_M_E;
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -527,7 +1343,6 @@ TEST_P(DevDblVector,  MultiCoreFill )
 {
     double val = CL_M_E;
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
@@ -544,7 +1359,161 @@ TEST_P(DevDblVector,  MultiCoreFill )
 //Test Cases for Fill_N
 //////////////////////////////////////////////////////////////////////////////////////////////
 
+TEST_P( HostclLongVector, Fill_n )
+{
+    cl_long val = (cl_long)73;
+    size_t size = stdInput.size();
 
+    std::fill_n(stdInput.begin( ),size,val);
+    bolt::cl::fill_n(boltInput.begin( ),size,val);
+
+    cmpArrays(stdInput, boltInput);
+}
+
+TEST_P( HostclLongVector, SerialFill_n )
+{
+    cl_long val = (cl_long)73;
+    size_t size = stdInput.size();
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    std::fill_n(stdInput.begin( ),size,val);
+    bolt::cl::fill_n(ctl, boltInput.begin( ),size,val);
+
+    cmpArrays(stdInput, boltInput);
+}
+
+TEST_P( HostclLongVector, MultiCoreFill_n )
+{
+    cl_long val = (cl_long)73;
+    size_t size = stdInput.size();
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    std::fill_n(stdInput.begin( ),size,val);
+    bolt::cl::fill_n(ctl, boltInput.begin( ),size,val);
+
+    cmpArrays(stdInput, boltInput);
+}
+
+TEST_P( HostShortVector, Fill_n )
+{
+    short val = 73;
+    size_t size = stdInput.size();
+
+    std::fill_n(stdInput.begin( ),size,val);
+    bolt::cl::fill_n(boltInput.begin( ),size,val);
+
+    cmpArrays(stdInput, boltInput);
+}
+
+TEST_P( HostShortVector, SerialFill_n )
+{
+    short val = 73;
+    size_t size = stdInput.size();
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    std::fill_n(stdInput.begin( ),size,val);
+    bolt::cl::fill_n(ctl, boltInput.begin( ),size,val);
+
+    cmpArrays(stdInput, boltInput);
+}
+
+TEST_P( HostShortVector, MultiCoreFill_n )
+{
+    short val = 73;
+    size_t size = stdInput.size();
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    std::fill_n(stdInput.begin( ),size,val);
+    bolt::cl::fill_n(ctl, boltInput.begin( ),size,val);
+
+    cmpArrays(stdInput, boltInput);
+}
+
+TEST_P( HostUDDVector, Fill_n )
+{
+    UDD val(73);
+    size_t size = stdInput.size();
+
+    std::fill_n(  stdInput.begin( ), size, val );
+    bolt::cl::fill_n( boltInput.begin( ), size, val );
+
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( HostUDDVector, SerialFill_n )
+{
+    UDD val(73);
+    size_t size = stdInput.size();
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    std::fill_n(  stdInput.begin( ),  size, val );
+    bolt::cl::fill_n( ctl, boltInput.begin( ), size, val );
+
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( HostUDDVector, MultiCoreFill_n )
+{
+    UDD val(73);
+    size_t size = stdInput.size();
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    std::fill_n(  stdInput.begin( ),  size, val );
+    bolt::cl::fill_n( ctl, boltInput.begin( ), size, val );
+
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( HostUnsignedIntVector, Fill_n )
+{
+    unsigned int val = 73;
+    size_t size = stdInput.size();
+
+    std::fill_n(stdInput.begin( ),size,val);
+    bolt::cl::fill_n(boltInput.begin( ),size,val);
+
+    cmpArrays(stdInput, boltInput);
+}
+
+TEST_P( HostUnsignedIntVector, SerialFill_n )
+{
+    unsigned int val = 73;
+    size_t size = stdInput.size();
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    std::fill_n(stdInput.begin( ),size,val);
+    bolt::cl::fill_n(ctl, boltInput.begin( ),size,val);
+
+    cmpArrays(stdInput, boltInput);
+}
+
+TEST_P( HostUnsignedIntVector, MultiCoreFill_n )
+{
+    unsigned int val = 73;
+    size_t size = stdInput.size();
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    std::fill_n(stdInput.begin( ),size,val);
+    bolt::cl::fill_n(ctl, boltInput.begin( ),size,val);
+
+    cmpArrays(stdInput, boltInput);
+}
 
 TEST_P( HostIntVector, Fill_n )
 {
@@ -562,7 +1531,6 @@ TEST_P( HostIntVector, AutomaticFill_n )
     int val = 73;
     size_t size = stdInput.size();
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::Automatic);
 
@@ -572,12 +1540,11 @@ TEST_P( HostIntVector, AutomaticFill_n )
     cmpArrays(stdInput, boltInput);
 }
 
-TEST_P( HostIntVector, CPUFill_n )
+TEST_P( HostIntVector, SerialFill_n )
 {
     int val = 73;
     size_t size = stdInput.size();
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -592,7 +1559,67 @@ TEST_P( HostIntVector, MultiCoreFill_n )
     int val = 73;
     size_t size = stdInput.size();
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    std::fill_n(stdInput.begin( ),size,val);
+    bolt::cl::fill_n(ctl, boltInput.begin( ),size,val);
+
+    cmpArrays(stdInput, boltInput);
+}
+
+TEST_P( HostFloatVector, Fill_n )
+{
+
+    float val = (float) 73.6;
+
+    size_t size = stdInput.size();
+    std::fill_n(stdInput.begin( ),size,val);
+    bolt::cl::fill_n(boltInput.begin( ),size,val);
+
+    cmpArrays(stdInput, boltInput);
+}
+
+                        
+TEST_P( HostFloatVector, AutomaticFill_n )
+{
+
+    float val = (float) 73.6;
+
+    size_t size = stdInput.size();
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::Automatic);
+
+    std::fill_n(stdInput.begin( ),size,val);
+    bolt::cl::fill_n(ctl, boltInput.begin( ),size,val);
+
+    cmpArrays(stdInput, boltInput);
+}
+
+TEST_P( HostFloatVector, SerialFill_n )
+{
+
+    float val = (float)73.6;
+
+    size_t size = stdInput.size();
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    std::fill_n(stdInput.begin( ),size,val);
+    bolt::cl::fill_n(ctl, boltInput.begin( ),size,val);
+
+    cmpArrays(stdInput, boltInput);
+}
+
+TEST_P( HostFloatVector, MultiCoreFill_n )
+{
+
+    float val = (float) 73.6;
+
+    size_t size = stdInput.size();
+
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
@@ -619,7 +1646,6 @@ TEST_P( HostDblVector, AutomaticFill_n )
     double val = CL_M_E;
     size_t size = stdInput.size();
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::Automatic);
 
@@ -629,12 +1655,11 @@ TEST_P( HostDblVector, AutomaticFill_n )
     cmpArrays(stdInput,boltInput);
 }
 
-TEST_P( HostDblVector, CPUFill_n )
+TEST_P( HostDblVector, SerialFill_n )
 {
     double val = CL_M_E;
     size_t size = stdInput.size();
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -649,7 +1674,6 @@ TEST_P(HostDblVector,  MultiCoreFill_n )
     double val = CL_M_E;
     size_t size = stdInput.size();
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
@@ -660,6 +1684,158 @@ TEST_P(HostDblVector,  MultiCoreFill_n )
 }
 #endif
 
+TEST_P( DevclLongVector, Fill_n )
+{
+    cl_long val = (cl_long)73;
+    size_t size = stdInput.size();
+    std::fill_n(stdInput.begin(),size,val);
+    bolt::cl::fill_n(boltInput.begin(),size,val);
+
+    cmpArrays(stdInput, boltInput);
+}
+
+TEST_P( DevclLongVector, SerialFill_n )
+{
+    cl_long val = (cl_long)73;
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    size_t size = stdInput.size();
+    std::fill_n(stdInput.begin(),size,val);
+    bolt::cl::fill_n(ctl, boltInput.begin(),size,val);
+
+    cmpArrays(stdInput, boltInput);
+}
+
+TEST_P( DevclLongVector, MultiCoreFill_n )
+{
+    cl_long val = (cl_long)73;
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    size_t size = stdInput.size();
+    std::fill_n(stdInput.begin(),size,val);
+    bolt::cl::fill_n(ctl, boltInput.begin(),size,val);
+
+    cmpArrays(stdInput, boltInput);
+}
+
+TEST_P( DevShortVector, Fill_n )
+{
+    short val = 73;
+    size_t size = stdInput.size();
+    std::fill_n(stdInput.begin(),size,val);
+    bolt::cl::fill_n(boltInput.begin(),size,val);
+
+    cmpArrays(stdInput, boltInput);
+}
+
+
+TEST_P( DevShortVector, SerialFill_n )
+{
+    short val = 73;
+    size_t size = stdInput.size();
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    std::fill_n(stdInput.begin(),size,val);
+    bolt::cl::fill_n(ctl, boltInput.begin(),size,val);
+
+    cmpArrays(stdInput, boltInput);
+}
+
+TEST_P( DevShortVector, MultiCoreFill_n )
+{
+    short val = 73;
+    size_t size = stdInput.size();
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    std::fill_n(stdInput.begin(),size,val);
+    bolt::cl::fill_n(ctl, boltInput.begin(),size,val);
+
+    cmpArrays(stdInput, boltInput);
+}
+
+TEST_P( DevUDDVector, Fill_n )
+{
+    UDD val(73);
+    size_t size = stdInput.size();
+    std::fill_n(  stdInput.begin( ),  size, val );
+    bolt::cl::fill_n( boltInput.begin( ), size, val );
+
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( DevUDDVector, SerialFill_n )
+{
+    UDD val(73);
+    size_t size = stdInput.size();
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    std::fill_n(  stdInput.begin( ),  size, val );
+    bolt::cl::fill_n( ctl, boltInput.begin( ), size, val );
+
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( DevUDDVector, MultiCoreFill_n )
+{
+    UDD val(73);
+    size_t size = stdInput.size();
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    std::fill_n(  stdInput.begin( ),  size, val );
+    bolt::cl::fill_n( ctl, boltInput.begin( ), size, val );
+
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( DevUnsignedIntVector, Fill_n )
+{
+    unsigned int val = 73;
+    size_t size = stdInput.size();
+    std::fill_n(stdInput.begin(),size,val);
+    bolt::cl::fill_n(boltInput.begin(),size,val);
+
+    cmpArrays(stdInput, boltInput);
+}
+
+
+TEST_P( DevUnsignedIntVector, SerialFill_n )
+{
+    unsigned int val = 73;
+    size_t size = stdInput.size();
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    std::fill_n(stdInput.begin(),size,val);
+    bolt::cl::fill_n(ctl, boltInput.begin(),size,val);
+
+    cmpArrays(stdInput, boltInput);
+}
+
+TEST_P( DevUnsignedIntVector, MultiCoreFill_n )
+{
+    unsigned int val = 73;
+    size_t size = stdInput.size();
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    std::fill_n(stdInput.begin(),size,val);
+    bolt::cl::fill_n(ctl, boltInput.begin(),size,val);
+
+    cmpArrays(stdInput, boltInput);
+}
 
 TEST_P( DevIntVector, Fill_n )
 {
@@ -677,7 +1853,6 @@ TEST_P( DevIntVector, AutomaticFill_n )
     int val = 73;
     size_t size = stdInput.size();
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::Automatic);
 
@@ -688,12 +1863,11 @@ TEST_P( DevIntVector, AutomaticFill_n )
 }
 
 
-TEST_P( DevIntVector, CPUFill_n )
+TEST_P( DevIntVector, SerialFill_n )
 {
     int val = 73;
     size_t size = stdInput.size();
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -708,7 +1882,68 @@ TEST_P( DevIntVector, MultiCoreFill_n )
     int val = 73;
     size_t size = stdInput.size();
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    std::fill_n(stdInput.begin(),size,val);
+    bolt::cl::fill_n(ctl, boltInput.begin(),size,val);
+
+    cmpArrays(stdInput, boltInput);
+}
+
+TEST_P( DevFloatVector, Fill_n )
+{
+
+    float val = (float) 73.7;
+
+    size_t size = stdInput.size();
+    std::fill_n(stdInput.begin(),size,val);
+    bolt::cl::fill_n(boltInput.begin(),size,val);
+
+    cmpArrays(stdInput, boltInput);
+}
+
+
+TEST_P( DevFloatVector, AutomaticFill_n )
+{
+
+    float val = (float)73.7;
+
+    size_t size = stdInput.size();
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::Automatic);
+
+    std::fill_n(stdInput.begin(),size,val);
+    bolt::cl::fill_n(ctl, boltInput.begin(),size,val);
+
+    cmpArrays(stdInput, boltInput);
+}
+
+
+TEST_P( DevFloatVector, SerialFill_n )
+{
+
+    float val = (float)73.7;
+
+    size_t size = stdInput.size();
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    std::fill_n(stdInput.begin(),size,val);
+    bolt::cl::fill_n(ctl, boltInput.begin(),size,val);
+
+    cmpArrays(stdInput, boltInput);
+}
+
+TEST_P( DevFloatVector, MultiCoreFill_n )
+{
+
+    float val = (float)73.7;
+
+    size_t size = stdInput.size();
+
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
@@ -734,7 +1969,6 @@ TEST_P( DevDblVector, AutomaticFill_n )
     double val = CL_M_E;
     size_t size = stdInput.size();
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::Automatic);
 
@@ -743,12 +1977,11 @@ TEST_P( DevDblVector, AutomaticFill_n )
     cmpArrays( stdInput, boltInput );
 }
 
-TEST_P( DevDblVector, CPUFill_n )
+TEST_P( DevDblVector, SerialFill_n )
 {
     double val = CL_M_E;
     size_t size = stdInput.size();
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -762,7 +1995,6 @@ TEST_P(DevDblVector, MultiCoreFill_n )
     double val = CL_M_E;
     size_t size = stdInput.size();
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
@@ -774,10 +2006,36 @@ TEST_P(DevDblVector, MultiCoreFill_n )
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 
+
+INSTANTIATE_TEST_CASE_P( FillSmall, HostclLongVector, ::testing::Range(1,256,3));
+INSTANTIATE_TEST_CASE_P( FillLarge, HostclLongVector, ::testing::Range(1023,1050000,350001));
+INSTANTIATE_TEST_CASE_P( FillSmall, DevclLongVector,  ::testing::Range(2,256,3));
+INSTANTIATE_TEST_CASE_P( FillLarge, DevclLongVector,  ::testing::Range(1024,1050000,350003));
+
 INSTANTIATE_TEST_CASE_P( FillSmall, HostIntVector, ::testing::Range(1,256,3));
 INSTANTIATE_TEST_CASE_P( FillLarge, HostIntVector, ::testing::Range(1023,1050000,350001));
 INSTANTIATE_TEST_CASE_P( FillSmall, DevIntVector,  ::testing::Range(2,256,3));
 INSTANTIATE_TEST_CASE_P( FillLarge, DevIntVector,  ::testing::Range(1024,1050000,350003));
+
+INSTANTIATE_TEST_CASE_P( FillSmall, HostFloatVector, ::testing::Range(1,256,3));
+INSTANTIATE_TEST_CASE_P( FillLarge, HostFloatVector, ::testing::Range(1023,1050000,350001));
+INSTANTIATE_TEST_CASE_P( FillSmall, DevFloatVector,  ::testing::Range(2,256,3));
+INSTANTIATE_TEST_CASE_P( FillLarge, DevFloatVector,  ::testing::Range(1024,1050000,350003));
+
+INSTANTIATE_TEST_CASE_P( FillSmall, HostUnsignedIntVector, ::testing::Range(1,256,3));
+INSTANTIATE_TEST_CASE_P( FillLarge, HostUnsignedIntVector, ::testing::Range(1023,1050000,350001));
+INSTANTIATE_TEST_CASE_P( FillSmall, DevUnsignedIntVector,  ::testing::Range(2,256,3));
+INSTANTIATE_TEST_CASE_P( FillLarge, DevUnsignedIntVector,  ::testing::Range(1024,1050000,350003));
+
+INSTANTIATE_TEST_CASE_P( FillSmall, HostShortVector, ::testing::Range(1,256,3));
+INSTANTIATE_TEST_CASE_P( FillLarge, HostShortVector, ::testing::Range(1023,1050000,350001));
+INSTANTIATE_TEST_CASE_P( FillSmall, DevShortVector,  ::testing::Range(2,256,3));
+INSTANTIATE_TEST_CASE_P( FillLarge, DevShortVector,  ::testing::Range(1024,1050000,350003));
+
+INSTANTIATE_TEST_CASE_P( FillSmall, HostUDDVector, ::testing::Range(1,256,3));
+INSTANTIATE_TEST_CASE_P( FillLarge, HostUDDVector, ::testing::Range(1023,1050000,350001));
+INSTANTIATE_TEST_CASE_P( FillSmall, DevUDDVector,  ::testing::Range(2,256,3));
+INSTANTIATE_TEST_CASE_P( FillLarge, DevUDDVector,  ::testing::Range(1024,1050000,350003));
 
 INSTANTIATE_TEST_CASE_P( FillSmall, FillStdVectandConstantIterator, ::testing::Range(1,256,3));
 INSTANTIATE_TEST_CASE_P( FillLarge, FillStdVectandConstantIterator, ::testing::Range(1023,1050000,350001));
@@ -804,7 +2062,9 @@ BOLT_FUNCTOR(characters,struct characters
 
 };
 );
-/*
+
+BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, int, characters);
+
 //It fills character pointers properly
 TEST( CharPointer, Fill )
 {
@@ -835,7 +2095,6 @@ TEST( AutomaticCharPointer, Fill )
     c_str.i = 10;
     std::fill(vs.begin(), vs.end(), c_str); 
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::Automatic);
 
@@ -847,7 +2106,7 @@ TEST( AutomaticCharPointer, Fill )
     }
 }
 
-TEST( CPUCharPointer, Fill )
+TEST( SerialCharPointer, Fill )
 {
     int size = 100; 
 
@@ -858,7 +2117,6 @@ TEST( CPUCharPointer, Fill )
     c_str.i = 10;
     std::fill(vs.begin(), vs.end(), c_str); 
     
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -881,7 +2139,6 @@ TEST(MultiCoreCharPointer, Fill )
     c_str.i = 10;
     std::fill(vs.begin(), vs.end(), c_str); 
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
@@ -894,32 +2151,27 @@ TEST(MultiCoreCharPointer, Fill )
 }
 
 //Uncomment this to see the string fill bug
-//char * testCharP(){ 
-//char * str = "Simple String"; 
-//return str; 
-//} 
-//
-//
+
 //std::string testString(){ 
 //std::string str = "Simple String"; 
 //return str; 
 //} 
+//
 //TEST( String, Fill )
 //{
 //    int size = 30; 
 //
 //    std::vector<std::string> vs(size);
-//    //std::vector<std::string> dvs(size);
 //    bolt::cl::device_vector<std::string> dvs(size);
 //
 //    std::fill(vs.begin(), vs.end(), testString()); 
 //    bolt::cl::fill(dvs.begin(), dvs.end(), testString()); 
-//    for (int i = 0; i < size; ++i)
-//    { 
-//        std::cout<<vs[i]<<std::endl;
-//        //EXPECT_STREQ(vs[i],dvs[i]);
-//    }
-//    //cmpArrays(vs,dvs);
+//    //for (int i = 0; i < size; ++i)
+//    //{ 
+//    //    std::cout<<vs[i]<<std::endl;
+//    //    //EXPECT_STREQ(vs[i],dvs[i]);
+//    //}
+//    cmpArrays(vs,dvs);
 //    
 //}
 
@@ -1033,7 +2285,6 @@ TEST (AutomaticsimpleTest, basicDataBoltClDevVectAutoConvertCheck)
     // No casting needed here!
     ////////////////////////////////////////////////////
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::Automatic);
 
@@ -1096,7 +2347,7 @@ TEST (AutomaticsimpleTest, basicDataBoltClDevVectAutoConvertCheck)
 
 } 
 
-TEST (CPUsimpleTest, basicDataBoltClDevVectAutoConvertCheck)
+TEST (SerialsimpleTest, basicDataBoltClDevVectAutoConvertCheck)
 { 
     size_t size =10; 
     int iValue = 48; 
@@ -1120,7 +2371,6 @@ TEST (CPUsimpleTest, basicDataBoltClDevVectAutoConvertCheck)
     // No casting needed here!
     ////////////////////////////////////////////////////
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -1208,7 +2458,6 @@ TEST (MultiCoresimpleTest, basicDataBoltClDevVectAutoConvertCheck)
     // No casting needed here!
     ////////////////////////////////////////////////////
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
@@ -1273,7 +2522,7 @@ TEST (MultiCoresimpleTest, basicDataBoltClDevVectAutoConvertCheck)
 } 
 #endif
 
-*/
+
 
 TEST(Fill, AllRunModes)
 {

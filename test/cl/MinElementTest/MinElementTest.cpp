@@ -358,6 +358,27 @@ TEST_P( MinEStdVectandCountingIterator, withCountingIterator)
     EXPECT_EQ(*stlReduce, *boltReduce);
 }
 
+TEST( MinEleDevice , DeviceVectoroffset )
+{
+    //setup containers
+    unsigned int length = 1024;
+    bolt::cl::device_vector< int > input( length );
+    for( unsigned int i = 0; i < length ; i++ )
+    {
+      input[i] = i;
+
+    }
+    
+    // call reduce
+
+    bolt::cl::device_vector< int >::iterator  boltReduce =  bolt::cl::min_element( input.begin()+20, input.end());
+    int stdReduce =  20;
+
+    EXPECT_EQ(*boltReduce,stdReduce);
+
+}
+
+
 TEST_P( MinEStdVectandCountingIterator, CPUwithCountingIterator)
 {
     bolt::cl::counting_iterator<int> first(0);

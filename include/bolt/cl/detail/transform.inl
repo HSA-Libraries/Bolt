@@ -19,6 +19,7 @@
 #if !defined( BOLT_CL_TRANSFORM_INL )
 #define BOLT_CL_TRANSFORM_INL
 #define WAVEFRONT_SIZE 64
+#define TRANSFORM_ENABLE_PROFILING 0
 
 #include <type_traits>
 
@@ -397,10 +398,11 @@ public:
             bolt::cl::device_vector< oType >::pointer resPtr =  result.getContainer( ).data( );
 
 #if defined( _WIN32 )
-            std::transform( &firstPtr[ first1.m_Index ], &firstPtr[ sz ], &secPtr[ 0 ],
-                stdext::make_checked_array_iterator( &resPtr[ 0 ], sz ), f );
+            std::transform( &firstPtr[ first1.m_Index ], &firstPtr[ last1.m_Index ], &secPtr[ first2.m_Index ],
+                stdext::make_checked_array_iterator( &resPtr[ result.m_Index ], sz ), f );
 #else
-            std::transform( &firstPtr[ first1.m_Index ], &firstPtr[ sz ], &secPtr[ 0 ], &resPtr[ 0 ], f );
+            std::transform( &firstPtr[ first1.m_Index ], &firstPtr[ last1.m_Index ],
+                &secPtr[ first2.m_Index ], &resPtr[ result.m_Index ], f );
 #endif
             return;
         }
@@ -413,7 +415,8 @@ public:
             bolt::cl::device_vector< iType2 >::pointer secPtr =  first2.getContainer( ).data( );
             bolt::cl::device_vector< oType >::pointer resPtr =  result.getContainer( ).data( );
 
-            bolt::btbb::transform(&firstPtr[ first1.m_Index ],&firstPtr[ sz ],&secPtr[ 0 ],&resPtr[ 0 ],f);
+            bolt::btbb::transform( &firstPtr[ first1.m_Index ], &firstPtr[ last1.m_Index ],
+                                   &secPtr[ first2.m_Index ],&resPtr[ result.m_Index ],f );
 
 
 #else
@@ -455,10 +458,11 @@ public:
             bolt::cl::device_vector< oType >::pointer resPtr =  result.getContainer( ).data( );
 
 #if defined( _WIN32 )
-            std::transform( &firstPtr[ first1.m_Index ], &firstPtr[ sz ], fancyIter,
-                stdext::make_checked_array_iterator( &resPtr[ 0 ], sz ), f );
+            std::transform( &firstPtr[ first1.m_Index ], &firstPtr[ last1.m_Index ], fancyIter,
+                stdext::make_checked_array_iterator( &resPtr[ result.m_Index ], sz ), f );
 #else
-            std::transform( &firstPtr[ first1.m_Index ], &firstPtr[ sz ], fancyIter, &resPtr[ 0 ], f );
+            std::transform( &firstPtr[ first1.m_Index ], &firstPtr[ last1.m_Index ],
+                            fancyIter, &resPtr[ result.m_Index ], f );
 #endif
             return;
         }
@@ -470,7 +474,8 @@ public:
             bolt::cl::device_vector< iType1 >::pointer firstPtr =  first1.getContainer( ).data( );
             bolt::cl::device_vector< oType >::pointer resPtr =  result.getContainer( ).data( );
 
-            bolt::btbb::transform(&firstPtr[ first1.m_Index ], &firstPtr[ sz ], fancyIter, &resPtr[ 0 ], f );
+            bolt::btbb::transform(  &firstPtr[ first1.m_Index ], &firstPtr[ last1.m_Index ],
+                                    fancyIter, &resPtr[ result.m_Index ], f );
 
 
 #else
@@ -570,10 +575,10 @@ public:
             bolt::cl::device_vector< oType >::pointer resPtr = result.getContainer( ).data( );
 
 #if defined( _WIN32 )
-            std::transform( &firstPtr[ first.m_Index ], &firstPtr[ sz ],
-                stdext::make_checked_array_iterator( &resPtr[ 0 ], sz ), f );
+            std::transform( &firstPtr[ first.m_Index ], &firstPtr[ last.m_Index ],
+                stdext::make_checked_array_iterator( &resPtr[ result.m_Index ], sz ), f );
 #else
-            std::transform( &firstPtr[ first.m_Index ], &firstPtr[ sz ], &resPtr[ 0 ], f );
+            std::transform( &firstPtr[ first.m_Index ], &firstPtr[ last.m_Index ], &resPtr[ result.m_Index ], f );
 #endif
             return;
         }
@@ -584,7 +589,7 @@ public:
             bolt::cl::device_vector< iType >::pointer firstPtr = first.getContainer( ).data( );
             bolt::cl::device_vector< oType >::pointer resPtr = result.getContainer( ).data( );
 
-            bolt::btbb::transform(&firstPtr[ first.m_Index ], &firstPtr[ sz ], &resPtr[ 0 ], f );
+            bolt::btbb::transform(&firstPtr[ first.m_Index ], &firstPtr[ last.m_Index ], &resPtr[ result.m_Index ], f );
 
 
 #else
@@ -637,6 +642,7 @@ public:
         // For user-defined types, the user must create a TypeName trait which returns the name of the
         //class - note use of TypeName<>::get to retrieve the name here.
         std::vector<std::string> typeDefinitions;
+        PUSH_BACK_UNIQUE( typeDefinitions, cl_code)
         PUSH_BACK_UNIQUE( typeDefinitions, ClCode< iType1 >::get() )
         PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVInputIterator1 >::get() )
         PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVInputIterator2 >::get() )
@@ -718,17 +724,20 @@ public:
 
         ::bolt::cl::wait(ctl, transformEvent);
 
+#if TRANSFORM_ENABLE_PROFILING
         if( 0 )
         {
-            cl_ulong start_time, stop_time;
+          cl_ulong start_time, stop_time;
 
-            l_Error = transformEvent.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_START, &start_time);
-            V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_QUEUED>()");
-            l_Error = transformEvent.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END, &stop_time);
-            V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_END>()");
-            size_t time = stop_time - start_time;
-            std::cout << "Global Memory Bandwidth: "<<((distVec*(2.0*sizeof(iType1)+sizeof(oType)))/time)<<std::endl;
-        }
+          l_Error = transformEvent.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_START, &start_time);
+          V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_QUEUED>()");
+          l_Error = transformEvent.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END, &stop_time);
+          V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_END>()");
+          size_t time = stop_time - start_time;
+          std::cout << "Global Memory Bandwidth: "<<((distVec*(2.0*sizeof(iType1)+sizeof(oType)))/time)<<std::endl;
+        }  
+#endif // BOLT_ENABLE_PROFILING
+
     };
 
     template< typename DVInputIterator, typename DVOutputIterator, typename UnaryFunction >
@@ -841,18 +850,21 @@ public:
 
         ::bolt::cl::wait(ctl, transformEvent);
 
+#if TRANSFORM_ENABLE_PROFILING
         if( 0 )
         {
-            cl_ulong start_time, stop_time;
+          cl_ulong start_time, stop_time;
 
-            l_Error = transformEvent.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_START, &start_time);
-            V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_QUEUED>()");
-            l_Error = transformEvent.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END, &stop_time);
-            V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_END>()");
-            size_t time = stop_time - start_time;
-            //std::cout << "Global Memory Bandwidth: "<<((distVec*(1.0*sizeof(iType)+sizeof(oType)))/time)<< std::endl;
+          l_Error = transformEvent.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_START, &start_time);
+          V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_QUEUED>()");
+          l_Error = transformEvent.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END, &stop_time);
+          V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_END>()");
+          size_t time = stop_time - start_time;
+          //std::cout << "Global Memory Bandwidth: "<<((distVec*(1.0*sizeof(iType)+sizeof(oType)))/time)<< std::endl;
 
-        }
+        }  
+#endif // BOLT_ENABLE_PROFILING
+
     };
 
 } //End of detail namespace

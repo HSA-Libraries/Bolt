@@ -31,7 +31,9 @@
 #include <boost/program_options.hpp>
 namespace po = boost::program_options;
 
-#define TEST_DOUBLE 0
+#define TEST_DOUBLE 1
+
+
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Below are helper routines to compare the results of two arrays for googletest
@@ -143,7 +145,7 @@ struct uddtM3
     bool operator==(const uddtM3& rhs) const
     {
         bool equal = true;
-        double ths = 0.00001;
+        float ths = 0.00001f;
         double thd = 0.0000000001;
         equal = ( a == rhs.a ) ? equal : false;
         if (rhs.b < ths && rhs.b > -ths)
@@ -176,7 +178,7 @@ struct MixM3
 }; 
 );
 uddtM3 identityMixM3 = { 0, 0.f, 1.0 };
-uddtM3 initialMixM3  = { 1, 1, 1.000001 };
+uddtM3 initialMixM3  = { 1, 1.f, 1.000001 };
 #endif
 
 #if 0
@@ -1585,7 +1587,7 @@ public:
     virtual void SetUp( )
     {
         size_t size = GetParam( );
-        for( int i=0; i < size; i++ )
+        for( size_t i=0; i < size; i++ )
         {
             stdInput[ i ] = 1;
             boltInput[ i ] = 1;
@@ -1614,6 +1616,9 @@ public:
     }
 };
 
+typedef scanStdVectorWithIters ScanOffsetTest;
+typedef scanStdVectorWithIters ScanCLtypeTest;
+
 class StdVectCountingIterator :public ::testing::TestWithParam<int>{
 protected:
     int mySize;
@@ -1621,6 +1626,124 @@ public:
     StdVectCountingIterator():mySize(GetParam()){
     }
 };
+
+
+
+TEST_P (ScanCLtypeTest, InclTestLong)
+{
+    bolt::cl::device_vector< cl_long > input( myStdVectSize, 2);
+    std::vector< cl_long > refInput( myStdVectSize, 2);
+   // call scan
+    bolt::cl::plus<cl_long> ai2;
+    bolt::cl::inclusive_scan( input.begin(),    input.end(),    input.begin(), ai2 );
+    ::std::partial_sum(refInput.begin(), refInput.end(), refInput.begin(), ai2);
+
+    cmpArrays(input, refInput);
+	 
+} 
+
+TEST_P (ScanCLtypeTest, ExclTestLong)
+{
+    bolt::cl::device_vector< cl_long > input( myStdVectSize,2);
+    std::vector< cl_long> refInput( myStdVectSize,2);
+   
+    // call scan
+    bolt::cl::plus<cl_long> ai2;
+
+    ::std::partial_sum(refInput.begin(), refInput.end(), refInput.begin(), ai2);
+    bolt::cl::exclusive_scan(input.begin(),  input.end(), input.begin(), 2, ai2  );
+
+    cmpArrays(input, refInput);
+	 
+} 
+
+TEST_P (ScanCLtypeTest, InclTestULong)
+{
+    bolt::cl::device_vector< cl_ulong > input( myStdVectSize, 2);
+    std::vector< cl_ulong > refInput( myStdVectSize, 2);
+   // call scan
+    bolt::cl::plus<cl_ulong> ai2;
+    bolt::cl::inclusive_scan( input.begin(),    input.end(),    input.begin(), ai2 );
+    ::std::partial_sum(refInput.begin(), refInput.end(), refInput.begin(), ai2);
+
+    cmpArrays(input, refInput);
+	 
+} 
+
+TEST_P (ScanCLtypeTest, ExclTestULong)
+{
+    bolt::cl::device_vector< cl_ulong > input( myStdVectSize,2);
+    std::vector< cl_ulong > refInput( myStdVectSize,2);
+
+    // call scan
+    bolt::cl::plus<cl_ulong> ai2;
+
+    ::std::partial_sum(refInput.begin(), refInput.end(), refInput.begin(), ai2);
+    bolt::cl::exclusive_scan(input.begin(),  input.end(), input.begin(), 2, ai2  );
+
+    cmpArrays(input, refInput);
+	 
+} 
+
+TEST_P (ScanCLtypeTest, InclTestShort)
+{
+    bolt::cl::device_vector< cl_short > input( myStdVectSize, 2);
+    std::vector< cl_short > refInput( myStdVectSize, 2);
+   // call scan
+    bolt::cl::plus<cl_short> ai2;
+    bolt::cl::inclusive_scan( input.begin(),    input.end(),    input.begin(), ai2 );
+    ::std::partial_sum(refInput.begin(), refInput.end(), refInput.begin(), ai2);
+
+    cmpArrays(input, refInput);
+	 
+} 
+
+TEST_P (ScanCLtypeTest, ExclTestShort)
+{
+    bolt::cl::device_vector< cl_short > input( myStdVectSize,2);
+    std::vector< cl_short > refInput( myStdVectSize,2);
+   
+    // call scan
+    bolt::cl::plus<cl_short> ai2;
+
+    ::std::partial_sum(refInput.begin(), refInput.end(), refInput.begin(), ai2);
+    bolt::cl::exclusive_scan(input.begin(),  input.end(), input.begin(), 2, ai2  );
+
+    cmpArrays(input, refInput);
+	 
+} 
+
+TEST_P (ScanCLtypeTest, InclTestUShort)
+{
+    bolt::cl::device_vector< cl_ushort > input( myStdVectSize, 1);
+    std::vector< cl_ushort > refInput( myStdVectSize, 1);
+   // call scan
+    bolt::cl::plus<cl_ushort> ai2;
+
+
+    bolt::cl::inclusive_scan( input.begin(),    input.end(),    input.begin(), ai2 );
+    ::std::partial_sum(refInput.begin(), refInput.end(), refInput.begin(), ai2);
+
+
+
+    cmpArrays(input, refInput);
+	 
+} 
+
+TEST_P (ScanCLtypeTest, ExclTestUShort)
+{
+    bolt::cl::device_vector< cl_ushort > input( myStdVectSize,2);
+    std::vector< cl_ushort > refInput( myStdVectSize,2);
+   
+    bolt::cl::plus<cl_ushort> ai2;
+
+    ::std::partial_sum(refInput.begin(), refInput.end(), refInput.begin(), ai2);
+    bolt::cl::exclusive_scan(input.begin(),  input.end(), input.begin(), (cl_ushort)2, ai2  );
+
+    cmpArrays(input, refInput);
+	 
+} 
+
 
 /*
 //Scan With Fancy iterator as destination results in Compilation Error!
@@ -1732,6 +1855,44 @@ TEST_P (scanStdVectorWithIters, intDefiniteValues){
     
     EXPECT_EQ((*(boltEnd-1)), (*(stdEnd-1)))<<std::endl;
 }
+TEST_P (scanStdVectorWithIters, SerialintDefiniteValues){
+    std::vector<int> stdInput( myStdVectSize);
+    std::vector<int> boltInput( myStdVectSize);
+
+    for (int i = 0; i < myStdVectSize; ++i){
+        boltInput[i] = i + 1;
+    }
+        
+    for (int i = 0; i < myStdVectSize; ++i){
+        stdInput[i] = i + 1;
+    }
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+    std::vector<int>::iterator boltEnd = bolt::cl::inclusive_scan(ctl, boltInput.begin( ), boltInput.end( ),
+                                                                                  boltInput.begin( ) );
+    std::vector<int>::iterator stdEnd  = std::partial_sum( stdInput.begin( ), stdInput.end( ), stdInput.begin( ) );
+    
+    EXPECT_EQ((*(boltEnd-1)), (*(stdEnd-1)))<<std::endl;
+}
+TEST_P (scanStdVectorWithIters, MulticoreintDefiniteValues){
+    std::vector<int> stdInput( myStdVectSize);
+    std::vector<int> boltInput( myStdVectSize);
+
+    for (int i = 0; i < myStdVectSize; ++i){
+        boltInput[i] = i + 1;
+    }
+        
+    for (int i = 0; i < myStdVectSize; ++i){
+        stdInput[i] = i + 1;
+    }
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+    std::vector<int>::iterator boltEnd = bolt::cl::inclusive_scan( boltInput.begin( ), boltInput.end( ),
+                                                                                  boltInput.begin( ) );
+    std::vector<int>::iterator stdEnd  = std::partial_sum( stdInput.begin( ), stdInput.end( ), stdInput.begin( ) );
+    
+    EXPECT_EQ((*(boltEnd-1)), (*(stdEnd-1)))<<std::endl;
+}
 
 TEST_P (scanStdVectorWithIters, floatDefiniteValues){
     
@@ -1750,8 +1911,211 @@ TEST_P (scanStdVectorWithIters, floatDefiniteValues){
     
     EXPECT_FLOAT_EQ((*(boltEnd-1)), (*(stdEnd-1)))<<std::endl;
 }
+TEST_P (scanStdVectorWithIters, SerialfloatDefiniteValues){
+    
+    std::vector<float> boltInput( myStdVectSize);
+    std::vector<float> stdInput( myStdVectSize);
+
+    for (int i = 0; i < myStdVectSize; ++i){
+        //stdInput[i] = 1.0f + ( static_cast<float>( rand( ) ) / RAND_MAX );
+        stdInput[i] = 1.5f;
+        boltInput[i] = stdInput[i];
+    }
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+    std::vector<float>::iterator boltEnd = bolt::cl::inclusive_scan(ctl, boltInput.begin( ), boltInput.end( ),
+                                                                                     boltInput.begin( ) );
+    std::vector<float>::iterator stdEnd  = std::partial_sum( stdInput.begin( ), stdInput.end( ), stdInput.begin( ) );
+    
+    EXPECT_FLOAT_EQ((*(boltEnd-1)), (*(stdEnd-1)))<<std::endl;
+}
+TEST_P (scanStdVectorWithIters, MulticorefloatDefiniteValues){
+    
+    std::vector<float> boltInput( myStdVectSize);
+    std::vector<float> stdInput( myStdVectSize);
+
+    for (int i = 0; i < myStdVectSize; ++i){
+        //stdInput[i] = 1.0f + ( static_cast<float>( rand( ) ) / RAND_MAX );
+        stdInput[i] = 1.5f;
+        boltInput[i] = stdInput[i];
+    }
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+    std::vector<float>::iterator boltEnd = bolt::cl::inclusive_scan( boltInput.begin( ), boltInput.end( ),
+                                                                                     boltInput.begin( ) );
+    std::vector<float>::iterator stdEnd  = std::partial_sum( stdInput.begin( ), stdInput.end( ), stdInput.begin( ) );
+    
+    EXPECT_FLOAT_EQ((*(boltEnd-1)), (*(stdEnd-1)))<<std::endl;
+}
+
+
+TEST_P (ScanOffsetTest, InclOffsetTestFloat)
+{
+    bolt::cl::device_vector< float > input( myStdVectSize, 2.f);
+    std::vector< float > refInput( myStdVectSize, 2.f);
+   // call scan
+    bolt::cl::plus<float> ai2;
+    bolt::cl::inclusive_scan( input.begin() + (myStdVectSize/4),    input.end() - (myStdVectSize/4),    input.begin()+ (myStdVectSize/4) , ai2 );
+    ::std::partial_sum(refInput.begin()+ (myStdVectSize/4) , refInput.end()- (myStdVectSize/4), refInput.begin()+ (myStdVectSize/4) , ai2);
+
+    cmpArrays(input, refInput);
+	  printf("\nPass for size=%d Offset=%d\n",myStdVectSize, myStdVectSize/2);
+} 
+TEST_P (ScanOffsetTest, ExclOffsetTestFloat)
+{
+    bolt::cl::device_vector< float > input( myStdVectSize,2.f);
+    std::vector< float > refInput( myStdVectSize,2.f);
+   
+	  refInput[myStdVectSize/4] = 3.0f;
+
+    // call scan
+    bolt::cl::plus<float> ai2;
+
+    ::std::partial_sum(refInput.begin()+ (myStdVectSize/4) , refInput.end()- (myStdVectSize/4), refInput.begin()+ (myStdVectSize/4) , ai2);
+    bolt::cl::exclusive_scan(input.begin() + (myStdVectSize/4),    input.end() - (myStdVectSize/4),    input.begin()+ (myStdVectSize/4) , 3.0f, ai2  );
+
+    cmpArrays(input, refInput);
+	  printf("\nPass for size=%d Offset=%d\n",myStdVectSize, myStdVectSize/4);
+} 
+
+
+TEST_P (ScanOffsetTest, InclOffsetTestFloatSerial)
+{
+    bolt::cl::device_vector< float > input( myStdVectSize, 2.f);
+    std::vector< float > refInput( myStdVectSize, 2.f);
+   
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+   // call scan
+    bolt::cl::plus<float> ai2;
+    bolt::cl::inclusive_scan( ctl, input.begin() + (myStdVectSize/4),    input.end() - (myStdVectSize/4),    input.begin()+ (myStdVectSize/4) , ai2 );
+    ::std::partial_sum(refInput.begin()+ (myStdVectSize/4) , refInput.end()- (myStdVectSize/4), refInput.begin()+ (myStdVectSize/4) , ai2);
+
+    cmpArrays(input, refInput);
+	  printf("\nPass for size=%d Offset=%d\n",myStdVectSize, myStdVectSize/4);
+} 
+TEST_P (ScanOffsetTest, ExclOffsetTestFloatSerial)
+{
+    bolt::cl::device_vector< float > input( myStdVectSize,2.f);
+    std::vector< float > refInput( myStdVectSize,2.f);
+   
+	  refInput[myStdVectSize/4] = 3.0f;
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+    // call scan
+    bolt::cl::plus<float> ai2;
+
+    ::std::partial_sum(refInput.begin()+ (myStdVectSize/4) , refInput.end()- (myStdVectSize/4), refInput.begin()+ (myStdVectSize/4) , ai2);
+    bolt::cl::exclusive_scan(ctl, input.begin() + (myStdVectSize/4),    input.end() - (myStdVectSize/4),    input.begin()+ (myStdVectSize/4) , 3.0f, ai2  );
+    cmpArrays(input, refInput);
+	  printf("\nPass for size=%d Offset=%d\n",myStdVectSize, myStdVectSize/4);
+} 
+
+
+TEST_P (ScanOffsetTest, InclOffsetTestFloatMultiCore)
+{
+    bolt::cl::device_vector< float > input( myStdVectSize, 2.f);
+    std::vector< float > refInput( myStdVectSize, 2.f);
+   
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+   // call scan
+    bolt::cl::plus<float> ai2;
+    bolt::cl::inclusive_scan( ctl, input.begin() + (myStdVectSize/4),    input.end() - (myStdVectSize/4),    input.begin()+ (myStdVectSize/4) , ai2 );
+    ::std::partial_sum(refInput.begin()+ (myStdVectSize/4) , refInput.end()- (myStdVectSize/4), refInput.begin()+ (myStdVectSize/4) , ai2);
+
+    cmpArrays(input, refInput);
+	  printf("\nPass for size=%d Offset=%d\n",myStdVectSize, myStdVectSize/4);
+} 
+TEST_P (ScanOffsetTest, ExclOffsetTestFloatMultiCore)
+{
+    bolt::cl::device_vector< float > input( myStdVectSize,2.f);
+    std::vector< float > refInput( myStdVectSize,2.f);
+   
+	  refInput[myStdVectSize/4] = 3.0f;
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+    // call scan
+    bolt::cl::plus<float> ai2;
+
+    ::std::partial_sum(refInput.begin()+ (myStdVectSize/4) , refInput.end()- (myStdVectSize/4), refInput.begin()+ (myStdVectSize/4) , ai2);
+    bolt::cl::exclusive_scan(ctl, input.begin() + (myStdVectSize/4),    input.end() - (myStdVectSize/4),    input.begin()+ (myStdVectSize/4) , 3.f, ai2  );
+
+    cmpArrays(input, refInput);
+	  printf("\nPass for size=%d Offset=%d\n",myStdVectSize, myStdVectSize/4);
+} 
 
 #if (TEST_DOUBLE == 1)
+
+TEST_P (ScanOffsetTest, InclOffsetTestDouble)
+{
+    bolt::cl::device_vector< double > input( myStdVectSize, 2.f);
+    std::vector< double > refInput( myStdVectSize, 2.f);
+   // call scan
+    bolt::cl::plus<double> ai2;
+    bolt::cl::inclusive_scan( input.begin() + (myStdVectSize/4),    input.end() - (myStdVectSize/4),    input.begin()+ (myStdVectSize/4) , ai2 );
+    ::std::partial_sum(refInput.begin()+ (myStdVectSize/4) , refInput.end()- (myStdVectSize/4), refInput.begin()+ (myStdVectSize/4) , ai2);
+
+    cmpArrays(input, refInput);
+	  printf("\nPass for size=%d Offset=%d\n",myStdVectSize, myStdVectSize/4);
+} 
+TEST_P (ScanOffsetTest, ExclOffsetTestDouble)
+{
+    bolt::cl::device_vector< double > input( myStdVectSize,2.f);
+    std::vector< double > refInput( myStdVectSize,2.f);
+   
+  	refInput[myStdVectSize/4] = 3.0f;
+
+    // call scan
+    bolt::cl::plus<double> ai2;
+
+    ::std::partial_sum(refInput.begin()+ (myStdVectSize/4) , refInput.end()- (myStdVectSize/4), refInput.begin()+ (myStdVectSize/4) , ai2);
+    bolt::cl::exclusive_scan(input.begin() + (myStdVectSize/4),    input.end() - (myStdVectSize/4),    input.begin()+ (myStdVectSize/4) , 3.0f, ai2  );
+
+	// ::std::partial_sum(refInput.begin(), refInput.end(), refInput.begin(), ai2);
+   //  bolt::cl::exclusive_scan( input.begin(),    input.end(),    input.begin(), 3.0f, ai2 );
+
+
+    cmpArrays(input, refInput);
+	  printf("\nPass for size=%d Offset=%d\n",myStdVectSize, myStdVectSize/4);
+} 
+
+TEST (ScanOffsetTest, InclOffsetTestUDD)
+{
+	
+    int length = 1<<16;
+    bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3,  CL_MEM_READ_WRITE, true  );
+    std::vector< uddtM3 > refInput( length, initialMixM3 );
+
+    // call scan
+    MixM3 ai2;
+    bolt::cl::inclusive_scan( input.begin() + (length/4),    input.end() - (length/4),    input.begin()+ (length/4) , ai2 );
+    ::std::partial_sum(refInput.begin()+ (length/4) , refInput.end()- (length/4), refInput.begin()+ (length/4) , ai2);
+
+    cmpArrays(input, refInput);
+	  printf("\nPass for size=%d Offset=%d\n",length, length/4);
+} 
+TEST (ScanOffsetTest, ExclOffsetTestUDD)
+{
+  	int length = 1<<16;
+    bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3,  CL_MEM_READ_WRITE, true  );
+    std::vector< uddtM3 > refInput( length, initialMixM3 );
+
+	  refInput[length/4] = initialMixM3;
+
+    // call scan
+    MixM3 ai2;
+    // call scan
+    ::std::partial_sum(refInput.begin()+ (length/4) , refInput.end()- (length/4), refInput.begin()+ (length/4) , ai2);
+    bolt::cl::exclusive_scan(input.begin() + (length/4),    input.end() - (length/4),    input.begin()+ (length/4) , initialMixM3, ai2  );
+
+	 cmpArrays(input, refInput);
+	 printf("\nPass for size=%d Offset=%d\n",length, length/4);
+} 
+
+
 TEST_P (scanStdVectorWithIters, doubleDefiniteValues){
     
     std::vector<double> boltInput( myStdVectSize);
@@ -1771,7 +2135,11 @@ TEST_P (scanStdVectorWithIters, doubleDefiniteValues){
 }
 #endif
 
-//INSTANTIATE_TEST_CASE_P(inclusiveScanIter, scanStdVectorWithIters, ::testing::Range(1, 1025, 1)); 
+
+////INSTANTIATE_TEST_CASE_P(inclusiveScanIter, scanStdVectorWithIters, ::testing::Range(1, 1025, 1)); 
+//INSTANTIATE_TEST_CASE_P(inclusiveScanIterIntLimit, ScanCLtypeTest, ::testing::Range(1025, 25535, 1000)); 
+INSTANTIATE_TEST_CASE_P(inclusiveScanIterIntLimit, ScanCLtypeTest, ::testing::Range( 0, 1024, 1 )); 
+INSTANTIATE_TEST_CASE_P(inclusiveScanIterIntLimit, ScanOffsetTest, ::testing::Range(1025, 65535, 1000)); 
 INSTANTIATE_TEST_CASE_P(inclusiveScanIterIntLimit, scanStdVectorWithIters, ::testing::Range(1025, 65535, 1000)); 
 INSTANTIATE_TEST_CASE_P(withCountingIterator, StdVectCountingIterator, ::testing::Range(1025, 65535, 1000));
 
@@ -2297,6 +2665,36 @@ TEST_P( ScanFloatVector, intSameValuesSerialOutPlace )
     //  Loop through the array and compare all the values with each other
     cmpArrays( stdOutput, boltOutput );
 }
+TEST_P( ScanFloatVector, SerialintSameValuesSerialOutPlace )
+{
+    bolt::cl::device_vector< float > boltInput( GetParam( ), 1.0f );
+    bolt::cl::device_vector< float > boltOutput( GetParam( ), 1.0f );
+    bolt::cl::device_vector< float >::iterator boltEnd = bolt::cl::exclusive_scan(boltInput.begin( ),boltInput.end( ),
+                                                                                                boltOutput.begin() );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+    std::vector< float > stdOutput( GetParam( ), 1.0f );
+    std::vector< float >::iterator stdEnd  = bolt::cl::exclusive_scan(ctl, stdInput.begin( ), stdInput.end( ),
+                                                                                    stdOutput.begin( ) );
+    
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdOutput, boltOutput );
+}
+TEST_P( ScanFloatVector, MulticoreintSameValuesSerialOutPlace )
+{
+    bolt::cl::device_vector< float > boltInput( GetParam( ), 1.0f );
+    bolt::cl::device_vector< float > boltOutput( GetParam( ), 1.0f );
+    bolt::cl::device_vector< float >::iterator boltEnd = bolt::cl::exclusive_scan(boltInput.begin( ),boltInput.end( ),
+                                                                                                boltOutput.begin() );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+    std::vector< float > stdOutput( GetParam( ), 1.0f );
+    std::vector< float >::iterator stdEnd  = bolt::cl::exclusive_scan(ctl, stdInput.begin( ), stdInput.end( ),
+                                                                                    stdOutput.begin( ) );
+    
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdOutput, boltOutput );
+}
 
 //tring to call in-place scan
 TEST_P( ScanFloatVector, intSameValuesSerialInPlace )
@@ -2313,6 +2711,44 @@ TEST_P( ScanFloatVector, intSameValuesSerialInPlace )
                                                                                     stdInput.begin( ) );
     
     //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, dvBoltInput );
+}
+TEST_P( ScanFloatVector, SerialintSameValuesSerialInPlace )
+{
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    bolt::cl::device_vector< float > dvBoltInput( GetParam( ), 1.0f );
+    bolt::cl::device_vector< float >::iterator boltEnd = bolt::cl::exclusive_scan(ctl, dvBoltInput.begin( ), 
+                                                                dvBoltInput.end( ), dvBoltInput.begin() );
+    {
+        bolt::cl::device_vector< float >::pointer inPlaceData      = dvBoltInput.data( );
+    }
+    
+    //std::vector< float > stdInput( 1024, 1 );
+    std::vector< float >::iterator stdEnd  = bolt::cl::exclusive_scan(ctl, stdInput.begin( ), stdInput.end( ), 
+                                                                                    stdInput.begin( ) );
+    
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+TEST_P( ScanFloatVector, MulticoreintSameValuesSerialInPlace )
+{
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+    bolt::cl::device_vector< float > dvBoltInput( GetParam( ), 1.0f );
+    bolt::cl::device_vector< float >::iterator boltEnd = bolt::cl::exclusive_scan(ctl, dvBoltInput.begin( ), 
+                                                                dvBoltInput.end( ), dvBoltInput.begin() );
+    {
+        bolt::cl::device_vector< float >::pointer inPlaceData      = dvBoltInput.data( );
+    }
+    
+    //std::vector< float > stdInput( 1024, 1 );
+    std::vector< float >::iterator stdEnd  = bolt::cl::exclusive_scan(ctl, stdInput.begin( ), stdInput.end( ), 
+                                                                                    stdInput.begin( ) );
+    
+    //  Loop through the array and compare all the values with each other
     cmpArrays( stdInput, boltInput );
 }
 
@@ -2320,6 +2756,7 @@ TEST_P( ScanFloatVector, intSameValuesSerialInPlace )
 INSTANTIATE_TEST_CASE_P( Inclusive, ScanIntegerVector, ::testing::Range( 0, 1024, 1 ) );
 INSTANTIATE_TEST_CASE_P( Inclusive, ScanIntegerDeviceVector, ::testing::Range( 0, 1024, 1 ) );
 INSTANTIATE_TEST_CASE_P( Inclusive, ScanIntegerNakedPointer, ::testing::Range( 0, 1024, 1 ) );
+INSTANTIATE_TEST_CASE_P( Exclusive, ScanFloatVector, ::testing::Range( 1, 1024, 1 ) );
 
 //  Test a huge range, suitable for floating point as they are less prone to overflow 
 // (but floating point loses granularity at large values)
@@ -2374,6 +2811,7 @@ INSTANTIATE_TYPED_TEST_CASE_P( Integer, ScanArrayTest, IntegerTests );
 INSTANTIATE_TYPED_TEST_CASE_P( Float, ScanArrayTest, FloatTests );
 //here
 
+/*
 TEST(Scan, cpuQueue)
 {
     MyOclContext ocl = initOcl(CL_DEVICE_TYPE_CPU, 0);
@@ -2389,7 +2827,43 @@ TEST(Scan, cpuQueue)
     std::vector< float >::iterator stdEnd  = std::partial_sum( stdInput.begin( ), stdInput.end( ),stdOutput.begin( ));
     cmpArrays( stdInput, boltInput );
 }
+*/
+/*
+// std::deque's iteartor is not allowed in the bolt'routines because 
+// unlike vectors, deques are not guaranteed to store all its elements in contiguous storage locations
 
+TEST (sanity_exclusive_scan__stdDeque, intSameValuesSerialRange_EP377072)
+{
+int size = 10;
+std::deque<int> boltInput( size, 1 );  
+std::deque<int> stdInput( size, 1 );
+
+//std::vector<int> boltInput( size, 1 );
+//std::vector<int> stdInput( size, 1 );
+
+std::cout<<"before exclusive_scan:\nstd input\tboltinput \n";
+for (int i = 0; i < size; i++)
+{
+std::cout<<"      "<<stdInput[i]<<"       ";
+std::cout<<"      "<<boltInput[i]<<"      \n";
+}
+
+//TAKE_THIS_CONTROL_PATH
+bolt::cl::inclusive_scan( boltInput.begin( ), boltInput.end( ), boltInput.begin( ));
+std::partial_sum( stdInput.begin( ), stdInput.end( ), stdInput.begin( ) );
+
+std::cout<<"\n\nafter exclusive_scan:\nstd input\tboltinput \n";
+for (int i = 0; i < size; i++)
+{
+std::cout<<"      "<<stdInput[i]<<"       ";
+std::cout<<"      "<<boltInput[i]<<"      \n";
+}
+
+for (int i = 0; i < size; i++){
+EXPECT_EQ(stdInput[i], boltInput[i]);
+}
+}
+*/
 int _tmain(int argc, _TCHAR* argv[])
 {
     //  Register our minidump generating logic

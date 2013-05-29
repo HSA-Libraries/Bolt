@@ -15,12 +15,16 @@
 
 ***************************************************************************/
 #pragma once
-#if !defined( CONSTANT_ITERATOR_H )
-#define CONSTANT_ITERATOR_H
+#if !defined( BOLT_CL_CONSTANT_ITERATOR_H )
+#define BOLT_CL_CONSTANT_ITERATOR_H
 #include "bolt/cl/bolt.h"
 #include "bolt/cl/iterator/iterator_traits.h"
-
 #include <boost/iterator/iterator_facade.hpp>
+
+/*! \file bolt/cl/iterator/constant_iterator.h
+    \brief Return Same Value or Constant Value on dereferencing.
+*/
+
 
 namespace bolt {
 namespace cl {

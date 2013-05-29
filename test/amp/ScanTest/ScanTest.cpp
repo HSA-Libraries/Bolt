@@ -22,7 +22,7 @@
 #include <gtest/gtest.h>
 #include <array>
 #include "bolt/amp/functional.h"
-#define TEST_DOUBLE 0
+#define TEST_DOUBLE 1
 
 #if 1
 
@@ -587,7 +587,55 @@ TEST_P( ScanFloatVector, MulticoreInclusiveInplace )
 
 
 
+TEST_P( ScanFloatVector, OffsetInclusiveInplace )
+{
+
+    int length =  (int)std::distance(stdInput.begin( ),  stdInput.end( ));
+    //  Calling the actual functions under test
+    std::vector< float >::iterator stdEnd  = std::partial_sum( stdInput.begin( ) + (length/2), stdInput.end( ) - (length/4),stdInput.begin()+ (length/2));
+    std::vector< float >::iterator boltEnd = bolt::amp::inclusive_scan(boltInput.begin()+ (length/2),boltInput.end()- (length/4),
+                                                                                    boltInput.begin()+ (length/2));
+
+    //  The returned iterator should be one past the 
+    EXPECT_EQ( stdInput.end( )- (length/4), stdEnd );
+    EXPECT_EQ( boltInput.end( )- (length/4), boltEnd );
+
+    std::vector< float >::iterator::difference_type stdNumElements = std::distance( stdInput.begin( ), stdEnd );
+    std::vector< float >::iterator::difference_type boltNumElements = std::distance( boltInput.begin( ), boltEnd );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+
+
+
 #if(TEST_DOUBLE == 1)
+TEST_P( ScanDoubleVector, OffsetInclusiveInplace )
+{
+
+    int length =  (int)std::distance(stdInput.begin( ),  stdInput.end( ));
+    //  Calling the actual functions under test
+    std::vector< double >::iterator stdEnd  = std::partial_sum( stdInput.begin( ) + (length/2), stdInput.end( )- (length/4),stdInput.begin()+ (length/2));
+    std::vector< double >::iterator boltEnd =bolt::amp::inclusive_scan(boltInput.begin()+ (length/2),boltInput.end()- (length/4),
+                                                                                    boltInput.begin()+ (length/2));
+
+    //  The returned iterator should be one past the 
+    EXPECT_EQ( stdInput.end( )- (length/4), stdEnd );
+    EXPECT_EQ( boltInput.end( )- (length/4), boltEnd );
+
+    std::vector< double >::iterator::difference_type stdNumElements = std::distance( stdInput.begin( ), stdEnd );
+    std::vector< double >::iterator::difference_type boltNumElements = std::distance( boltInput.begin( ), boltEnd );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+
 TEST_P( ScanDoubleVector, InclusiveInplace )
 {
     //  Calling the actual functions under test
@@ -787,6 +835,23 @@ uddtM3 identityMixM3 = { 0, 0.f, 1.0 };
 uddtM3 initialMixM3  = { 1, 1, 1.000001 };
 
 
+TEST(OffsetTest, ExclOffsetTestUdd)
+{
+     //setup containers
+    int length = 1<<24;
+    std::vector< uddtI2 > input( length, initialAddI2  );
+    std::vector< uddtI2 > output( length);
+    std::vector< uddtI2 > refInput( length, initialAddI2  ); refInput[0] = initialAddI2;
+    std::vector< uddtI2 > refOutput( length);
+    // call scan
+    AddI2 ai2;
+    bolt::amp::exclusive_scan( input.begin()+(length/2),    input.end()-(length/4),    output.begin()+(length/2), initialAddI2, ai2 );
+    ::std::partial_sum(refInput.begin()+(length/2), refInput.end()-(length/4), refOutput.begin()+(length/2), ai2);
+    // compare results
+    cmpArrays(refOutput, output);
+} 
+
+
 
 TEST(InclusiveScan, InclUdd)
 {
@@ -845,6 +910,24 @@ TEST(InclusiveScan, MulticoreInclUdd)
     // compare results
     cmpArrays(refOutput, output);
 } 
+
+TEST (sanity_exclusive_scan__simple_epr377210, withIntWiCtrl)
+{
+	int myStdArray[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+	int myBoltArray[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
+	
+	//TAKE_AMP_CONTROL_PATH
+	bolt::amp::control& my_amp_ctl= bolt::amp::control::getDefault();
+	my_amp_ctl.setForceRunMode(bolt::amp::control::Automatic);
+	
+	bolt::amp::exclusive_scan(my_amp_ctl, myBoltArray, myBoltArray + 10, myBoltArray);
+	::std::partial_sum(myStdArray, myStdArray + 10, myStdArray);
+
+	for (int i = 1; i < 10; i++){
+	   EXPECT_EQ (myStdArray[i-1], myBoltArray[i]);
+	}
+}
+
 
 
 TEST(InclusiveScan, InclFloat)
@@ -1166,7 +1249,7 @@ TEST(InclusiveScan, DeviceVectorInclFloat)
     std::vector< float > refInput( length);
     std::vector< float > refOutput( length);
    
-    for(int i=0; i<length; i++) {
+    for(size_t i=0; i<length; i++) {
         input[i] = 2.f;
         refInput[i] = 2.f;
     }
@@ -1190,7 +1273,7 @@ TEST(InclusiveScan, SerialDeviceVectorInclFloat)
     std::vector< float > refInput( length);
     std::vector< float > refOutput( length);
    
-    for(int i=0; i<length; i++) {
+    for(size_t i=0; i<length; i++) {
         input[i] = 2.f;
         refInput[i] = 2.f;
     }
@@ -1217,7 +1300,7 @@ TEST(InclusiveScan, MulticoreDeviceVectorInclFloat)
     std::vector< float > refInput( length);
     std::vector< float > refOutput( length);
    
-    for(int i=0; i<length; i++) {
+    for(size_t i=0; i<length; i++) {
         input[i] = 2.f;
         refInput[i] = 2.f;
     }
@@ -1299,7 +1382,7 @@ TEST(ExclusiveScan, DeviceVectorExclFloat)
     bolt::amp::device_vector< float > output( length);
     std::vector< float > refInput( length);
     std::vector< float > refOutput( length);
-    for(int i=0; i<length; i++) {
+    for(size_t i=0; i<length; i++) {
         input[i] = 2.0f;
         if(i != length-1)
            refInput[i+1] = 2.0f;
@@ -1324,7 +1407,7 @@ TEST(ExclusiveScan, SerialDeviceVectorExclFloat)
     bolt::amp::device_vector< float > output( length);
     std::vector< float > refInput( length);
     std::vector< float > refOutput( length);
-    for(int i=0; i<length; i++) {
+    for(size_t i=0; i<length; i++) {
         input[i] = 2.0f;
         if(i != length-1)
            refInput[i+1] = 2.0f;
@@ -1351,7 +1434,7 @@ TEST(ExclusiveScan, MulticoreDeviceVectorExclFloat)
     bolt::amp::device_vector< float > output( length);
     std::vector< float > refInput( length);
     std::vector< float > refOutput( length);
-    for(int i=0; i<length; i++) {
+    for(size_t i=0; i<length; i++) {
         input[i] = 2.0f;
         if(i != length-1)
            refInput[i+1] = 2.0f;

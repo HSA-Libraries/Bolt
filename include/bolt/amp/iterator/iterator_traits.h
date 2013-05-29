@@ -15,17 +15,11 @@
 
 ***************************************************************************/
 
+#pragma once
+#if !defined( BOLT_AMP_ITERATOR_TRAITS_H )
+#define BOLT_AMP_ITERATOR_TRAITS_H
 
 /*! \file bolt/amp/iterator/iterator_traits.h
-    \brief Defines new iterator_traits structures used by the Bolt runtime.
-*/
-
-
-#pragma once
-#if !defined( AMP_ITERATOR_TRAITS_H )
-#define AMP_ITERATOR_TRAITS_H
-
-/*! \file iterator_traits.h
     \brief Defines new iterator_traits structures used by the Bolt runtime to make runtime decisions on how to 
     dispatch calls to various supported backends
     \todo This is a minimal version of OpenCL iterator_traits. Needs improvement.

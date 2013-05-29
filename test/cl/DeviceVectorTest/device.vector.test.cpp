@@ -940,19 +940,75 @@ TEST( DeviceVector, Swap )
     EXPECT_EQ(10, dV[0]);
 
 }
+#if 1
+TEST( DeviceVector, Assign )
+{
+    bolt::BCKND::device_vector< int > dV( 3, 98 );
+    std::vector< int > stdV( 3, 98 );
+    EXPECT_EQ(dV[0], stdV[0]);
+    dV.assign(10, 89 );
+    stdV.assign(10, 89 );
+    for(int i=0; i<10; i++)
+    {
+        EXPECT_EQ(stdV[i], dV[i]);
+    }
+    dV.assign(5, 98 );
+    stdV.assign(5, 98 );
+    EXPECT_EQ(stdV.capacity(), dV.capacity());
+    EXPECT_EQ(stdV.size(), dV.size());
 
+    for(int i=0; i<5; i++)
+    {
+        EXPECT_EQ(stdV[i], dV[i]);
+    }
+    std::vector<float> stdFloatVect(1024);
+    for(int i=0; i<1024; i++)
+    {
+        stdFloatVect[i] = (float)i;
+    }
+    bolt::BCKND::device_vector<float> dvFloatVect(stdFloatVect.begin(), 1024);
+    for(int i=0; i<1024; i++)
+    {
+        EXPECT_FLOAT_EQ((float)i, dvFloatVect[i]);
+    }
+    dvFloatVect.assign(1022, 89 );
+    stdFloatVect.assign(1022, 89 );
+    for(int i=0; i<1022; i++)
+    {
+        /*This loop is iterating to 1022 elements only because stdFloatVect[i] throws an exception 
+        if accessing beyond 1022 elements*/
+        EXPECT_FLOAT_EQ(stdFloatVect[i], dvFloatVect[i]);
+    }
+}
 
-//// Compilation errors
-//TEST( VectorIterator, BackFront )
-//{
-//    bolt::BCKND::device_vector< int > dV( 6ul, 7 );
-//    EXPECT_EQ( 6, dV.size( ) );
-//
-//    bolt::BCKND::device_vector< int >::iterator myIter = dV.begin( );
-//
-//    EXPECT_EQ( 7, dV.front( ) );
-//    EXPECT_EQ( 7, dV.back( ) );
-//}
+TEST( DeviceVector, AssignIterator )
+{
+    bolt::BCKND::device_vector< int > dV( 1024 );
+    std::vector< int > stdV( 1024 );
+    for(int i=0; i<1024; i++)
+    {
+        stdV[i] = rand();
+    }
+    dV.assign(stdV.begin(), stdV.end() );
+    for(int i=0; i<1024; i++)
+    {
+        EXPECT_EQ(stdV[i], dV[i]);
+    }
+}
+#endif
+TEST( VectorIterator, BackFront )
+{
+    std::vector< int > stdV( 1024 );
+    for(int i=0; i<1024; i++)
+    {
+        stdV[i] = rand();
+    }
+    bolt::BCKND::device_vector< int > dV( stdV.begin(), stdV.end() );
+    EXPECT_EQ( stdV.front(), dV.front( ) );
+    EXPECT_EQ( stdV.back(),  dV.back( ) );
+        
+    std::cout << "max_size = " << stdV.max_size();
+}
 
 int _tmain(int argc, _TCHAR* argv[])
 {

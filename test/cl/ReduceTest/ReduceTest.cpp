@@ -15,8 +15,8 @@
 
 ***************************************************************************/                                                                                     
 
-// TransformTest.cpp : Defines the entry point for the console application.
-//
+// Defines the entry point for the console application.
+
 #define OCL_CONTEXT_BUG_WORKAROUND 1
 #define TEST_DOUBLE 0
 #define TEST_CPU_DEVICE 0
@@ -118,6 +118,104 @@ protected:
     typename std::array< ArrayType, ArraySize > stdInput, boltInput, stdOutput, boltOutput;
     int m_Errors;
 };
+
+TEST( ReduceStdVectWithInit, OffsetTest)
+{
+    int length = 1024;
+    std::vector<int> stdInput( length );
+    std::vector<int> stdOutput( length );
+    std::vector<int> boltInput( length );
+
+
+    for (int i = 0; i < length; ++i)
+    {
+        stdInput[i] = 1;
+        boltInput[i] = stdInput[i];
+    }
+    
+    //  Calling the actual functions under test
+    int init = 0, offset = 100;
+    int stlTransformReduce = std::accumulate(stdInput.begin( ) + offset, stdInput.end( ), init, bolt::cl::plus<int>( ) );
+    int boltTransformReduce= bolt::cl::reduce( boltInput.begin( ) + offset, boltInput.end( ), init, bolt::cl::plus<int>( ) );
+
+    EXPECT_EQ( stlTransformReduce, boltTransformReduce );
+}
+
+
+TEST( ReduceStdVectWithInit, OffsetTestDeviceVectorSerialCpu)
+{
+    int length = 1024;
+    std::vector<int> stdInput( length );
+    std::fill( stdInput.begin(), stdInput.end(), 1024 );
+
+    bolt::cl::device_vector<int> dVectorA( stdInput.begin(), stdInput.end() );
+
+
+    bolt::cl::control ctl;
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+    //  Calling the actual functions under test
+    int init = 0, offset = 100;
+    int stlTransformReduce = std::accumulate(  stdInput.begin( ) + offset, stdInput.end( ),
+                                               init, bolt::cl::plus<int>( ) );
+    int boltTransformReduce= bolt::cl::reduce(  ctl, dVectorA.begin( ) + offset, dVectorA.end( ),
+                                                init, bolt::cl::plus<int>( ) );
+
+    EXPECT_EQ( stlTransformReduce, boltTransformReduce );
+}
+
+TEST( ReduceStdVectWithInit, OffsetTestDeviceVectorMultiCoreCpu)
+{
+    int length = 1024;
+    std::vector<int> stdInput( length );
+    std::fill( stdInput.begin(), stdInput.end(), 1024 );
+
+    bolt::cl::device_vector<int> dVectorA( stdInput.begin(), stdInput.end() );
+
+    bolt::cl::control ctl;
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+    
+    //  Calling the actual functions under test
+    int init = 0, offset = 100;
+    int stlTransformReduce = std::accumulate(stdInput.begin( ) + offset, stdInput.end( ), init, bolt::cl::plus<int>( ) );
+    int boltTransformReduce= bolt::cl::reduce( dVectorA.begin( ) + offset, dVectorA.end( ), init, bolt::cl::plus<int>( ) );
+
+    EXPECT_EQ( stlTransformReduce, boltTransformReduce );
+}
+
+TEST( ReduceStdVectWithInit, OffsetTestMultiCoreCpu)
+{
+    int length = 1024;
+    std::vector<int> stdInput( length );
+    std::fill( stdInput.begin(), stdInput.end(), 1024 );
+
+    bolt::cl::control ctl;
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+    
+    //  Calling the actual functions under test
+    int init = 0, offset = 100;
+    int stlTransformReduce = std::accumulate(stdInput.begin( ) + offset, stdInput.end( ), init, bolt::cl::plus<int>( ) );
+    int boltTransformReduce= bolt::cl::reduce( stdInput.begin( ) + offset, stdInput.end( ), init, bolt::cl::plus<int>( ) );
+
+    EXPECT_EQ( stlTransformReduce, boltTransformReduce );
+}
+
+TEST( ReduceStdVectWithInit, OffsetTestSerialCpu)
+{
+    int length = 1024;
+    std::vector<int> stdInput( length );
+    std::fill( stdInput.begin(), stdInput.end(), 1024 );
+
+    bolt::cl::control ctl;
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+    
+    //  Calling the actual functions under test
+    int init = 0, offset = 100;
+    int stlTransformReduce = std::accumulate(stdInput.begin( ) + offset, stdInput.end( ), init, bolt::cl::plus<int>( ) );
+    int boltTransformReduce= bolt::cl::reduce( stdInput.begin( ) + offset, stdInput.end( ), init, bolt::cl::plus<int>( ) );
+
+    EXPECT_EQ( stlTransformReduce, boltTransformReduce );
+}
+
 
 TYPED_TEST_CASE_P( ReduceArrayTest );
 
@@ -430,7 +528,7 @@ public:
         size_t size = GetParam( );
 
         std::generate(stdInput, stdInput + size, generateRandom<int>);
-        for (int i = 0; i<size; i++)
+        for (unsigned int i = 0; i<size; i++)
         {
             boltInput[i] = stdInput[i];
             boltOutput[i] = stdInput[i];
@@ -468,7 +566,7 @@ public:
         size_t size = GetParam( );
 
         std::generate(stdInput, stdInput + size, generateRandom<float>);
-        for (int i = 0; i<size; i++)
+        for (unsigned int i = 0; i<size; i++)
         {
             boltInput[i] = stdInput[i];
             boltOutput[i] = stdInput[i];
@@ -1138,6 +1236,28 @@ TEST( ReduceUDD , UDDPlusOperatorInts )
 
 }
 
+
+TEST( ReduceDevice , DeviceVectoroffset )
+{
+    //setup containers
+    unsigned int length = 1024;
+    bolt::cl::device_vector< int > input( length );
+    for( unsigned int i = 0; i < length ; i++ )
+    {
+      input[i] = i;
+
+    }
+    
+    // call reduce
+
+    int boltReduce = bolt::cl::reduce( input.begin() + 10 , input.end(), 0, bolt::cl::plus<int>() );
+    int stdReduce =  523731;
+
+    EXPECT_EQ(boltReduce,stdReduce);
+
+}
+
+
 TEST( Reduceint , KcacheTest )
 {
     //setup containers
@@ -1347,6 +1467,33 @@ void simpleReduce_countingiterator(float start,int size)
 };
 
 
+
+TEST(sanity_reduce__reducedoubleStdVect, serialNegdoubleValuesWithPlusOp){
+int sizeOfStdVect = 5;
+std::vector<double> vect1(sizeOfStdVect);
+
+vect1[0] = 5.6;
+vect1[1] = 3.8;
+vect1[2] = 4.3;
+vect1[3] = 0.0;
+vect1[4] = 0.0;
+/*
+for (int i = 0; i < sizeOfStdVect; i++){
+vect1[i] = (-1) * (i + 1.0f);
+}*/
+
+bolt::cl::control my_ctl = bolt::cl::control::getDefault();
+
+double stlAccumulate = std::accumulate(vect1.begin(), vect1.end(), 3.0);
+double boltClReduce = bolt::cl::reduce(my_ctl, vect1.begin(), vect1.end(), 3.0, bolt::cl::plus<double>());
+// double boltClReduce = bolt::cl::reduce(my_ctl, vect1.begin(), vect1.end(), 0.0f, bolt::cl::plus());
+
+EXPECT_DOUBLE_EQ(stlAccumulate, boltClReduce);
+}
+
+
+
+
 #if 0
 // Disable test since the buffer interface is moving to device_vector.
 void reduce_TestBuffer() {
@@ -1368,7 +1515,7 @@ int _tmain(int argc, _TCHAR* argv[])
     testUDDTBB();
     testTBBDevicevector();
 #endif
-    testDeviceVector();
+  /*  testDeviceVector();
     int numIters = 100;
     simpleReduce_TestControl(1024000, numIters, 0);
     simpleReduce_TestControl(100, 1, 0);
@@ -1376,7 +1523,7 @@ int _tmain(int argc, _TCHAR* argv[])
     simpleReduce1(1024);    
     simpleReduce_TestControl(100, 1, 0);
     simpleReduce_TestSerial(1000);
-    simpleReduce_countingiterator(20.05F,10);    
+    simpleReduce_countingiterator(20.05F,10);    */
     //simpleReduce_TestControl(1024000, numIters, 1); // may fail on systems with only one GPU installed.
 
     ::testing::InitGoogleTest( &argc, &argv[ 0 ] );

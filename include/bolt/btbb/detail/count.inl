@@ -15,8 +15,8 @@
 
 ***************************************************************************/
 
-#if !defined( BTBB_COUNT_INL)
-#define BTBB_COUNT_INL
+#if !defined( BOLT_BTBB_COUNT_INL)
+#define BOLT_BTBB_COUNT_INL
 #pragma once
 
 #include "tbb/parallel_reduce.h"
@@ -31,9 +31,9 @@ namespace bolt{
              *The imperative form of parallel_reduce is used.
              *
             */
-            template <typename T, typename Predicate>
+            template <typename T, typename InputIterator,typename Predicate>
             struct Count {
-                size_t value;
+                T value;
                 Predicate predicate;
 
                 //TODO - Decide on how many threads to spawn? Usually it should be equal to th enumber of cores
@@ -43,10 +43,10 @@ namespace bolt{
                 Count (): value(0) {}
 
                 Count (Count & s, tbb::split ):predicate(s.predicate),value(0){}
-                 void operator()( const tbb::blocked_range<T*>& r )
+                 void operator()( const tbb::blocked_range<InputIterator>& r )
                  {
 
-                    for( T* a=r.begin(); a!=r.end(); ++a )
+                    for( InputIterator a=r.begin(); a!=r.end(); ++a )
                     {
                       if(predicate(*a))
                       {
@@ -85,11 +85,11 @@ namespace bolt{
             Predicate predicate)
             {
 
-           			typedef typename std::iterator_traits<InputIterator>::value_type iType;
+           			typedef typename std::iterator_traits<InputIterator>::difference_type iType;
 
                     tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
-                    Count<iType,Predicate> count_op(predicate);
-                    tbb::parallel_reduce( tbb::blocked_range<iType*>( &*first, (iType*)&*(last-1) + 1), count_op );
+                    Count<iType,InputIterator,Predicate> count_op(predicate);
+                    tbb::parallel_reduce( tbb::blocked_range<InputIterator>( first, last), count_op );
                     return count_op.value;
 
 			}

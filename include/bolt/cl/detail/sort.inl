@@ -15,14 +15,15 @@
 
 ***************************************************************************/
 
-#if !defined( OCL_SORT_INL )
-#define OCL_SORT_INL
+#if !defined( BOLT_CL_SORT_INL )
+#define BOLT_CL_SORT_INL
 #pragma once
 
 #include <algorithm>
 #include <type_traits>
 
 #include "bolt/cl/scan.h"
+#include "bolt/cl/stablesort.h"
 #include "bolt/cl/functional.h"
 #include "bolt/cl/device_vector.h"
 #ifdef ENABLE_TBB
@@ -319,6 +320,18 @@ void sort_detect_random_access( control &ctl,
     static_assert( false, "Bolt only supports random access iterator types" );
 };
 
+// Wrapper that uses default control class, iterator interface
+template<typename RandomAccessIterator, typename StrictWeakOrdering>
+void sort_detect_random_access( control &ctl,
+                                const RandomAccessIterator& first, const RandomAccessIterator& last,
+                                const StrictWeakOrdering& comp, const std::string& cl_code,
+                                bolt::cl::fancy_iterator_tag )
+{
+    //  \TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data
+    //  to a temporary buffer.  Should we?
+    static_assert( false, "Bolt only supports random access iterator types. And does not support Fancy Iterator Tags" );
+};
+
 template<typename RandomAccessIterator, typename StrictWeakOrdering>
 void sort_detect_random_access( control &ctl,
                                 const RandomAccessIterator& first, const RandomAccessIterator& last,
@@ -342,44 +355,22 @@ void sort_pick_iterator( control &ctl,
     // The code here should be in compliant with the routine following this routine.
     typedef typename std::iterator_traits<DVRandomAccessIterator>::value_type T;
     size_t szElements = static_cast< size_t >( std::distance( first, last ) );
-    if (szElements == 0 )
-            return;
+    if( szElements < 2 )
+        return;
     bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
     if(runMode == bolt::cl::control::Automatic)
     {
         runMode = ctl.getDefaultPathToRun();
     }
     if ((runMode == bolt::cl::control::SerialCpu) || (szElements < SORT_CPU_THRESHOLD)) {
-        ::cl::Event serialCPUEvent;
-        cl_int l_Error = CL_SUCCESS;
-        /*Map the device buffer to CPU*/
-        T *sortInputBuffer = (T*)ctl.getCommandQueue().enqueueMapBuffer(first.getContainer().getBuffer(), false,
-                                                                     CL_MAP_READ|CL_MAP_WRITE,
-                                                                     0, sizeof(T) * szElements,
-                                                                     NULL, &serialCPUEvent, &l_Error );
-        serialCPUEvent.wait();
-        //Compute sort using STL
-        std::sort(sortInputBuffer, sortInputBuffer + szElements, comp);
-        /*Unmap the device buffer back to device memory. This will copy the host modified buffer back to the device*/
-        ctl.getCommandQueue().enqueueUnmapMemObject(first.getContainer().getBuffer(), sortInputBuffer);
+        bolt::cl::device_vector< T >::pointer firstPtr =  first.getContainer( ).data( );
+        std::sort( &firstPtr[ first.m_Index ], &firstPtr[ last.m_Index ], comp );
         return;
     } else if (runMode == bolt::cl::control::MultiCoreCpu) {
 #ifdef ENABLE_TBB
-        //std::cout << "The MultiCoreCpu version of sort is enabled with TBB. " << std ::endl;
-        ::cl::Event multiCoreCPUEvent;
-        cl_int l_Error = CL_SUCCESS;
-        /*Map the device buffer to CPU*/
-
-        T *sortInputBuffer = (T*)ctl.getCommandQueue().enqueueMapBuffer(first.getContainer().getBuffer(), false,
-                                                                     CL_MAP_READ,
-                                                                     0, sizeof(T) * szElements,
-                                                                     NULL, &multiCoreCPUEvent, &l_Error );
-        multiCoreCPUEvent.wait();
+        bolt::cl::device_vector< T >::pointer firstPtr =  first.getContainer( ).data( );
         //Compute parallel sort using TBB
-        bolt::btbb::sort(sortInputBuffer,sortInputBuffer+szElements,comp);
-
-        /*Unmap the device buffer back to device memory. This will copy the host modified buffer back to the device*/
-        ctl.getCommandQueue().enqueueUnmapMemObject(first.getContainer().getBuffer(), sortInputBuffer);
+        bolt::btbb::sort(&firstPtr[ first.m_Index ], &firstPtr[ last.m_Index ],comp);
         return;
 #else
         //std::cout << "The MultiCoreCpu version of sort is not enabled. " << std ::endl;
@@ -390,16 +381,6 @@ void sort_pick_iterator( control &ctl,
         sort_enqueue(ctl,first,last,comp,cl_code);
     }
     return;
-}
-
-//Fancy Iterator specialization
-template<typename DVRandomAccessIterator, typename StrictWeakOrdering>
-void sort_pick_iterator( control &ctl,
-                         const DVRandomAccessIterator& first, const DVRandomAccessIterator& last,
-                         const StrictWeakOrdering& comp, const std::string& cl_code,
-                         bolt::cl::fancy_iterator_tag )
-{
-    static_assert( false, "It is not possible to sort fancy iterators. They are not mutable" );
 }
 
 //Non Device Vector specialization.
@@ -414,7 +395,7 @@ void sort_pick_iterator( control &ctl,
 {
     typedef typename std::iterator_traits<RandomAccessIterator>::value_type T;
     size_t szElements = (size_t)(last - first);
-    if (szElements == 0)
+    if( szElements < 2 )
         return;
 
     bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
@@ -427,12 +408,9 @@ void sort_pick_iterator( control &ctl,
         return;
     } else if (runMode == bolt::cl::control::MultiCoreCpu) {
 #ifdef ENABLE_TBB
-
         bolt::btbb::sort(first,last, comp);
-
 #else
         throw std::exception( "The MultiCoreCpu version of sort is not enabled to be built! \n" );
-
 #endif
     } else {
         device_vector< T > dvInputOutput( first, last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctl );
@@ -444,10 +422,10 @@ void sort_pick_iterator( control &ctl,
     }
 }
 
+
 /****** sort_enqueue specailization for unsigned int data types. ******
  * THE FOLLOWING CODE IMPLEMENTS THE RADIX SORT ALGORITHM FOR unsigned integers
  *********************************************************************/
-
 template<typename DVRandomAccessIterator, typename StrictWeakOrdering>
 typename std::enable_if< std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type,
                                        unsigned int
@@ -478,6 +456,7 @@ sort_enqueue(control &ctl,
     typeNames[sort_StrictWeakOrdering] = TypeName< StrictWeakOrdering >::get();
 
     std::vector<std::string> typeDefinitions;
+    PUSH_BACK_UNIQUE( typeDefinitions, cl_code )
     PUSH_BACK_UNIQUE( typeDefinitions, ClCode< T >::get() )
     PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVRandomAccessIterator >::get() )
     PUSH_BACK_UNIQUE( typeDefinitions, ClCode< StrictWeakOrdering  >::get() )
@@ -497,8 +476,6 @@ sort_enqueue(control &ctl,
         compileOptions);
 
     size_t groupSize  = RADICES;
-
-    int i = 0;
     size_t mulFactor = groupSize * RADICES;
     size_t numGroups;
 
@@ -588,15 +565,14 @@ sort_enqueue(control &ctl,
                             histKernel,
                             ::cl::NullRange,
                             ::cl::NDRange(szElements/RADICES),
-                            ::cl::NDRange(groupSize),
+                            ::cl::NDRange(groupSize*16), //This mul will be removed when permute is optimized
                             NULL,
                             NULL);
         //V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
 
         //Perform a global scan
-
         detail::scan_enqueue(ctl, dvHistogramBins.begin(), dvHistogramBins.end(), dvHistogramBinsDest.begin(), 0,
-                                                                                            plus< T >( ), false);
+                                                                                                plus< T >( ), false);
 
         if (swap == 0)
             V_OPENCL( permuteKernel.setArg(0, clInputData), "Error setting kernel argument" );
@@ -620,11 +596,13 @@ sort_enqueue(control &ctl,
         /*For swapping the buffers*/
         swap = swap? 0: 1;
     }
-    ::cl::Event uintRadixSortEvent;
+    //TODO this is a bug in APP SDK cl.hpp file The header file is non compliant with the khronos cl.hpp. 
+    //     Hence a finish function is added to wait for all the tasks to complete.
+    /*::cl::Event uintRadixSortEvent;
     V_OPENCL( ctl.getCommandQueue().clEnqueueBarrierWithWaitList(NULL, &uintRadixSortEvent) ,
                             "Error calling clEnqueueBarrierWithWaitList on the command queue" );
-    bolt::cl::wait(ctl, uintRadixSortEvent);
-
+    bolt::cl::wait(ctl, uintRadixSortEvent);*/
+    V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
     if(newBuffer == true)
     {
         ::cl::Event copyBackEvent;
@@ -671,6 +649,7 @@ sort_enqueue(control &ctl,
     typeNames[sort_StrictWeakOrdering] = TypeName< StrictWeakOrdering >::get();
 
     std::vector<std::string> typeDefinitions;
+    PUSH_BACK_UNIQUE( typeDefinitions, cl_code )
     PUSH_BACK_UNIQUE( typeDefinitions, ClCode< T >::get() )
     PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVRandomAccessIterator >::get() )
     PUSH_BACK_UNIQUE( typeDefinitions, ClCode< StrictWeakOrdering  >::get() )
@@ -693,7 +672,6 @@ sort_enqueue(control &ctl,
 
     unsigned int groupSize  = RADICES;
 
-    int i = 0;
     size_t mulFactor = groupSize * RADICES;
 
     if(orig_szElements%mulFactor != 0)
@@ -783,7 +761,7 @@ sort_enqueue(control &ctl,
                             histKernel,
                             ::cl::NullRange,
                             ::cl::NDRange(szElements/RADICES),
-                            ::cl::NDRange(groupSize),
+                            ::cl::NDRange(groupSize*16),
                             NULL,
                             NULL);
         //V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
@@ -840,7 +818,7 @@ sort_enqueue(control &ctl,
                                 histSignedKernel,
                                 ::cl::NullRange,
                                 ::cl::NDRange(szElements/RADICES),
-                                ::cl::NDRange(groupSize),
+                                ::cl::NDRange(groupSize*16),
                                 NULL,
                                 NULL);
             //V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
@@ -862,11 +840,14 @@ sort_enqueue(control &ctl,
                                 ::cl::NDRange(groupSize),
                                 NULL,
                                 NULL);
-
-    ::cl::Event intRadixSortEvent;
+    
+    //TODO this is a bug in APP SDK cl.hpp file The header file is non compliant with the khronos cl.hpp. 
+    //     Hence a finish function is added to wait for all the tasks to complete.
+    /*::cl::Event intRadixSortEvent;
     V_OPENCL( ctl.getCommandQueue().clEnqueueBarrierWithWaitList(NULL, &intRadixSortEvent) ,
                         "Error calling clEnqueueBarrierWithWaitList on the command queue" );
-    bolt::cl::wait(ctl, intRadixSortEvent);
+    bolt::cl::wait(ctl, intRadixSortEvent);*/
+    V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
 
     if(newBuffer == true)
     {
@@ -907,6 +888,7 @@ sort_enqueue(control &ctl,
     typeNames[sort_StrictWeakOrdering] = TypeName< StrictWeakOrdering >::get();
 
     std::vector<std::string> typeDefinitions;
+    PUSH_BACK_UNIQUE( typeDefinitions, cl_code )
     PUSH_BACK_UNIQUE( typeDefinitions, ClCode< T >::get() )
     PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVRandomAccessIterator >::get() )
     PUSH_BACK_UNIQUE( typeDefinitions, ClCode< StrictWeakOrdering  >::get() )
@@ -980,12 +962,15 @@ sort_enqueue(control &ctl,
             //V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
         }//end of for passStage = 0:stage-1
     }//end of for stage = 0:numStage-1
-    ::cl::Event bitonicSortEvent;
+    
+    //TODO this is a bug in APP SDK cl.hpp file The header file is non compliant with the khronos cl.hpp. 
+    //     Hence a finish function is added to wait for all the tasks to complete.
+    /*::cl::Event bitonicSortEvent;
     V_OPENCL( ctl.getCommandQueue().clEnqueueBarrierWithWaitList(NULL, &bitonicSortEvent) ,
                         "Error calling clEnqueueBarrierWithWaitList on the command queue" );
     l_Error = bitonicSortEvent.wait( );
-    V_OPENCL( l_Error, "bitonicSortEvent failed to wait" );
-    //V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
+    V_OPENCL( l_Error, "bitonicSortEvent failed to wait" );*/
+    V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
     return;
 }// END of sort_enqueue
 
@@ -995,6 +980,12 @@ void sort_enqueue_non_powerOf2(control &ctl,
                                const DVRandomAccessIterator& first, const DVRandomAccessIterator& last,
                                const StrictWeakOrdering& comp, const std::string& cl_code)
 {
+    /*The selection sort algorithm is not good for GPUs Hence calling the stablesort routines.
+     *For future call a combination of selection sort and bitonic sort. To improve performance of floats
+     * doubles and UDDs*/
+    bolt::cl::detail::stablesort_enqueue(ctl, first, last, comp, cl_code);
+    return;
+#if 0
     typedef typename std::iterator_traits< DVRandomAccessIterator >::value_type T;
 
     cl_int l_Error;
@@ -1009,6 +1000,7 @@ void sort_enqueue_non_powerOf2(control &ctl,
     // Note use of TypeName<>::get to retreive the name here.
 
     std::vector<std::string> typeDefinitions;
+    PUSH_BACK_UNIQUE( typeDefinitions, cl_code )
     PUSH_BACK_UNIQUE( typeDefinitions, ClCode< T >::get() )
     PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVRandomAccessIterator >::get() )
     PUSH_BACK_UNIQUE( typeDefinitions, ClCode< StrictWeakOrdering  >::get() )
@@ -1082,6 +1074,7 @@ void sort_enqueue_non_powerOf2(control &ctl,
         V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
     }
     return;
+#endif
 }// END of sort_enqueue_non_powerOf2
 
 }//namespace bolt::cl::detail

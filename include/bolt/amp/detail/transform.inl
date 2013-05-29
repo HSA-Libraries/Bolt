@@ -20,8 +20,8 @@
 //////////////////////////////////////////////////////////////////////////////
 
 #pragma once
-#if !defined( AMP_TRANSFORM_INL )
-#define AMP_TRANSFORM_INL
+#if !defined( BOLT_AMP_TRANSFORM_INL )
+#define BOLT_AMP_TRANSFORM_INL
 #define WAVEFRONT_SIZE 64
 
 #ifdef BOLT_ENABLE_PROFILING
@@ -249,7 +249,6 @@ namespace bolt
 
                     bolt::btbb::transform(first1,last1,first2,result,f);
 #else
-                    //std::cout << "The MultiCoreCpu version of Transform is not enabled. " << std ::endl;
                     throw std::exception(  "The MultiCoreCpu version of transform is not enabled to be built." );
 #endif
                     return;
@@ -320,7 +319,6 @@ namespace bolt
                   bolt::btbb::transform(&firstPtr[ first1.m_Index ],&firstPtr[ sz ],&secPtr[ 0 ],&resPtr[ 0 ],f);
 
 #else
-                 //std::cout << "The MultiCoreCpu version of Transform is not enabled. " << std ::endl;
                  throw std::exception(  "The MultiCoreCpu version of transform is not enabled to be built." );
 #endif
                  return;
@@ -365,7 +363,6 @@ namespace bolt
                     bolt::btbb::transform(first, last, result, f);
 
 #else
-                   //std::cout << "The MultiCoreCpu version of Transform is not enabled. " << std ::endl;
                    throw std::exception(  "The MultiCoreCpu version of transform is not enabled to be built." );
 #endif
                   return;
@@ -428,14 +425,13 @@ namespace bolt
              }
              else if( (runMode == bolt::amp::control::MultiCoreCpu) )
              {
-            
-#if defined( ENABLE_TBB )                 
+
+#if defined( ENABLE_TBB )
                 bolt::amp::device_vector< iType >::pointer firstPtr = first.getContainer( ).data( );
                 bolt::amp::device_vector< oType >::pointer resPtr = result.getContainer( ).data( );
 
                 bolt::btbb::transform( &firstPtr[ first.m_Index ],  &firstPtr[ sz ], &resPtr[ 0 ], f);
 #else
-                //std::cout << "The MultiCoreCpu version of Transform is not enabled. " << std ::endl;
                 throw std::exception(  "The MultiCoreCpu version of transform is not enabled to be built." );
 #endif
                 return;

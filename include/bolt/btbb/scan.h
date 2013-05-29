@@ -19,8 +19,8 @@
  * OpenCL Scan
  *****************************************************************************/
 
-#if !defined( BTBB_SCAN_H )
-#define BTBB_SCAN_H
+#if !defined( BOLT_BBTBB_SCAN_H )
+#define BOLT_BBTBB_SCAN_H
 #pragma once
 
 #include "tbb/parallel_scan.h"

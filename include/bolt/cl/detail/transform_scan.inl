@@ -14,12 +14,14 @@
 *   limitations under the License.
 
 ***************************************************************************/
+
+#if !defined( BOLT_CL_TRANSFORM_SCAN_INL )
+#define BOLT_CL_TRANSFORM_SCAN_INL
+#pragma once
+
 #define KERNEL02WAVES 4
 #define KERNEL1WAVES 4
 #define WAVESIZE 64
-
-#if !defined( TRANSFORM_SCAN_INL )
-#define TRANSFORM_SCAN_INL
 
 //#define BOLT_ENABLE_PROFILING
 
@@ -161,6 +163,47 @@ namespace cl
             std::iterator_traits< InputIterator >::iterator_category( ) );
     }
 
+    template<
+    typename oType,
+    typename BinaryFunction,
+    typename T>
+oType*
+Serial_Scan(
+    oType *values,
+    oType *result,
+    unsigned int  num,
+    const BinaryFunction binary_op,
+    const bool Incl,
+    const T &init)
+{
+    oType  sum, temp;
+    if(Incl){
+      *result = *values; // assign value
+      sum = *values;
+    }
+    else {
+        temp = *values;
+       *result = (oType)init;
+       sum = binary_op( *result, temp);
+    }
+    for ( unsigned int i= 1; i<num; i++)
+    {
+        oType currentValue = *(values + i); // convertible
+        if (Incl)
+        {
+            oType r = binary_op( sum, currentValue);
+            *(result + i) = r;
+            sum = r;
+        }
+        else // new segment
+        {
+            *(result + i) = sum;
+            sum = binary_op( sum, currentValue);
+
+        }
+    }
+    return result;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -320,16 +363,18 @@ transform_scan_pick_iterator(
 
     if( runMode == bolt::cl::control::SerialCpu )
     {
-        std::transform(first, last, first, unary_op);
-        std::partial_sum( first, last, result, binary_op );
-        return result;
+        std::transform(first, last, result, unary_op);
+        Serial_Scan<oType, BinaryFunction, T>(&(*result), &(*result), numElements, binary_op,inclusive,init);
+        return result + numElements;
     }
     else if( runMode == bolt::cl::control::MultiCoreCpu )
     {
         #ifdef ENABLE_TBB
-                throw std::exception("transform_scan not implemented yet for MultiCoreCpu! \n");
+            std::transform(first, last, result, unary_op);
+            Serial_Scan<oType, BinaryFunction, T>(&(*result), &(*result), numElements, binary_op,inclusive,init);
+            return result + numElements;
         #else
-                throw std::exception("MultiCoreCPU Version of tranform_scan not Enabled! \n");
+                throw std::exception("The MultiCoreCpu version of Transform_scan is not enabled to be built! \n");
         #endif
 
         return result;
@@ -350,8 +395,7 @@ transform_scan_pick_iterator(
         dvOutput.data( );
 
     }
-
-   return result + numElements;
+    return result + numElements;
 }
 
 /*!
@@ -383,7 +427,6 @@ transform_scan_pick_iterator(
     unsigned int numElements = static_cast< unsigned int >( std::distance( first, last ) );
     if( numElements < 1 )
         return result;
-
     bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode( );
 
     if( runMode == bolt::cl::control::Automatic )
@@ -393,20 +436,28 @@ transform_scan_pick_iterator(
 
     if( runMode == bolt::cl::control::SerialCpu )
     {
-        //  TODO:  Need access to the device_vector .data method to get a host pointer
-        throw std::exception( "Transform_Scan of device vectors on CPU device not implemented! \n" );
-        return result;
+        bolt::cl::device_vector< iType >::pointer InputBuffer =  first.getContainer( ).data( );
+        bolt::cl::device_vector< oType >::pointer ResultBuffer =  result.getContainer( ).data( );
+
+        std::transform(&InputBuffer[ first.m_Index ], &InputBuffer[first.m_Index] + numElements, stdext::make_checked_array_iterator(&ResultBuffer[ result.m_Index], numElements), unary_op);
+        Serial_Scan<oType, BinaryFunction, T>(&ResultBuffer[ result.m_Index  ], &ResultBuffer[ result.m_Index ], numElements, binary_op, inclusive, init);
+        return result + numElements;
     }
     else if( runMode == bolt::cl::control::MultiCoreCpu )
     {
-        //  TODO:  Need access to the device_vector .data method to get a host pointer
-       #ifdef ENABLE_TBB
-                throw std::exception("transform_scan not implemented yet for MultiCoreCpu! \n");
-       #else
-                throw std::exception("MultiCoreCPU Version of tranform_scan not Enabled! \n");
-       #endif
+        #ifdef ENABLE_TBB
+            bolt::cl::device_vector< iType >::pointer InputBuffer =  first.getContainer( ).data( );
+            bolt::cl::device_vector< oType >::pointer ResultBuffer =  result.getContainer( ).data( );
 
-       return result;
+            std::transform(&InputBuffer[ first.m_Index ], &InputBuffer[first.m_Index] + numElements, stdext::make_checked_array_iterator(&ResultBuffer[ result.m_Index], numElements), unary_op);
+            Serial_Scan<oType, BinaryFunction, T>(&ResultBuffer[ result.m_Index  ], &ResultBuffer[ result.m_Index ], numElements, binary_op, inclusive, init);
+            return result + numElements;
+        #else
+                throw std::exception("The MultiCoreCpu version of Transform_scan is not enabled to be built!\n");
+        #endif
+
+        return result;
+
     }
 
     else
@@ -710,7 +761,7 @@ aProfiler.setArchitecture(strDeviceName);
         V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_END>()");
 
         size_t k0_start_cpu = aProfiler.get(k0_stepNum, AsyncProfiler::startTime);
-        size_t shift = k0_start - k0_start_cpu;
+        size_t shift = (size_t)k0_start - k0_start_cpu;
         //size_t shift = k0_start_cpu - k0_start;
 
         //std::cout << "setting step " << k0_stepNum << " attribute " << AsyncProfiler::stopTime << " to " ;

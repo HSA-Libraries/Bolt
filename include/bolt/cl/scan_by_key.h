@@ -1,22 +1,22 @@
-/***************************************************************************                                                                                     
-*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
-*                                                                                    
-*   Licensed under the Apache License, Version 2.0 (the "License");   
-*   you may not use this file except in compliance with the License.                 
-*   You may obtain a copy of the License at                                          
-*                                                                                    
-*       http://www.apache.org/licenses/LICENSE-2.0                      
-*                                                                                    
-*   Unless required by applicable law or agreed to in writing, software              
-*   distributed under the License is distributed on an "AS IS" BASIS,              
-*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.         
-*   See the License for the specific language governing permissions and              
-*   limitations under the License.                                                   
+/***************************************************************************
+*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.
+*
+*   Licensed under the Apache License, Version 2.0 (the "License");
+*   you may not use this file except in compliance with the License.
+*   You may obtain a copy of the License at
+*
+*       http://www.apache.org/licenses/LICENSE-2.0
+*
+*   Unless required by applicable law or agreed to in writing, software
+*   distributed under the License is distributed on an "AS IS" BASIS,
+*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+*   See the License for the specific language governing permissions and
+*   limitations under the License.
 
-***************************************************************************/                                                                                     
+***************************************************************************/
 
-#if !defined( SCAN_BY_KEY_H )
-#define SCAN_BY_KEY_H
+#if !defined( BOLT_CL_SCAN_BY_KEY_H )
+#define BOLT_CL_SCAN_BY_KEY_H
 #pragma once
 
 #include <bolt/cl/bolt.h>
@@ -36,7 +36,7 @@ namespace cl
 
 /*! \addtogroup PrefixSums Prefix Sums
  *   \ingroup algorithms
- */ 
+ */
 
 /*! \addtogroup SegmentedPrefixSums CL-Segmented Prefix Sums
  *   \ingroup PrefixSums
@@ -47,7 +47,7 @@ namespace cl
 /*! \brief \p inclusive_scan_by_key performs, on a sequence,
  * an inclusive scan of each sub-sequence as defined by equivalent keys;
  * the BinaryFunction in this version is plus(), and the BinaryPredicate is equal_to().
- * inclusive_scan_by_key uses the associative operator binary_op to perform the parallel segmented prefix sum. 
+ * inclusive_scan_by_key uses the associative operator binary_op to perform the parallel segmented prefix sum.
  *
  * \param ctl          \b Optional Control structure to control command-queue, debug, tuning, etc.See bolt::cl::control.
  * \param first1       The first element of the key sequence.
@@ -163,7 +163,7 @@ inclusive_scan_by_key(
     InputIterator1  first1,
     InputIterator1  last1,
     InputIterator2  first2,
-    OutputIterator  result, 
+    OutputIterator  result,
     BinaryPredicate binary_pred,
     const std::string& user_code="" );
 
@@ -177,7 +177,7 @@ inclusive_scan_by_key(
     InputIterator1  first1,
     InputIterator1  last1,
     InputIterator2  first2,
-    OutputIterator  result, 
+    OutputIterator  result,
     BinaryPredicate binary_pred,
     const std::string& user_code="" );
 
@@ -240,7 +240,7 @@ inclusive_scan_by_key(
     InputIterator1  first1,
     InputIterator1  last1,
     InputIterator2  first2,
-    OutputIterator  result, 
+    OutputIterator  result,
     BinaryPredicate binary_pred,
     BinaryFunction  binary_funct,
     const std::string& user_code="" );
@@ -257,7 +257,7 @@ inclusive_scan_by_key(
     InputIterator1  first1,
     InputIterator1  last1,
     InputIterator2  first2,
-    OutputIterator  result, 
+    OutputIterator  result,
     BinaryPredicate binary_pred,
     BinaryFunction  binary_funct,
     const std::string& user_code="" );
