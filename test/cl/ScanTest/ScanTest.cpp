@@ -2730,7 +2730,7 @@ TEST_P( ScanFloatVector, SerialintSameValuesSerialInPlace )
                                                                                     stdInput.begin( ) );
     
     //  Loop through the array and compare all the values with each other
-    cmpArrays( stdInput, boltInput );
+    cmpArrays( stdInput, dvBoltInput );
 }
 TEST_P( ScanFloatVector, MulticoreintSameValuesSerialInPlace )
 {
@@ -2749,7 +2749,7 @@ TEST_P( ScanFloatVector, MulticoreintSameValuesSerialInPlace )
                                                                                     stdInput.begin( ) );
     
     //  Loop through the array and compare all the values with each other
-    cmpArrays( stdInput, boltInput );
+    cmpArrays( stdInput, dvBoltInput );
 }
 
 //  Test lots of consecutive numbers, but small range, suitable for integers because they overflow easier
