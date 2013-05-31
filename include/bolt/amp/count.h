@@ -94,7 +94,7 @@ namespace bolt {
             const EqualityComparable &value)
         {
             typedef typename std::iterator_traits<InputIterator>::value_type T;
-            return count_if(ctl, first, last, detail::CountIfEqual<T>(value));
+            return bolt::amp::count_if(ctl, first, last, detail::CountIfEqual<T>(value));
         };
 
         template<typename InputIterator, typename EqualityComparable> 
@@ -104,7 +104,7 @@ namespace bolt {
             const EqualityComparable &value)
         {
             typedef typename std::iterator_traits<InputIterator>::value_type T;
-            return count_if(first, last, detail::CountIfEqual<T>(value));
+            return bolt::amp::count_if(first, last, detail::CountIfEqual<T>(value));
         };
         
         
