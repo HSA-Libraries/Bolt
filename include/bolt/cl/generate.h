@@ -62,7 +62,7 @@ namespace bolt {
          *
          *  \code
          *  #include <bolt/cl/generate.h>
-         *  #include <bolt/device_vector.h>
+         *  #include <bolt/cl/device_vector.h>
          *  #include <stdlib.h>
          *  ...
          *
