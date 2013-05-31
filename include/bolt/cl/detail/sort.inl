@@ -475,7 +475,7 @@ sort_enqueue(control &ctl,
         sort_uint_kernels,
         compileOptions);
 
-    size_t groupSize  = RADICES;
+    size_t groupSize  = RADICES * 16;
     size_t mulFactor = groupSize * RADICES;
     size_t numGroups;
 
@@ -565,7 +565,7 @@ sort_enqueue(control &ctl,
                             histKernel,
                             ::cl::NullRange,
                             ::cl::NDRange(szElements/RADICES),
-                            ::cl::NDRange(groupSize*16), //This mul will be removed when permute is optimized
+                            ::cl::NDRange(groupSize), //This mul will be removed when permute is optimized
                             NULL,
                             NULL);
         //V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
@@ -589,7 +589,7 @@ sort_enqueue(control &ctl,
                             permuteKernel,
                             ::cl::NullRange,
                             ::cl::NDRange(szElements/RADICES),
-                            ::cl::NDRange(groupSize),
+                            ::cl::NDRange(groupSize>>4),
                             NULL,
                             NULL);
         V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
@@ -670,7 +670,7 @@ sort_enqueue(control &ctl,
         sort_uint_kernels,
         compileOptions);
 
-    unsigned int groupSize  = RADICES;
+    unsigned int groupSize  = RADICES * 16;
 
     size_t mulFactor = groupSize * RADICES;
 
@@ -761,7 +761,7 @@ sort_enqueue(control &ctl,
                             histKernel,
                             ::cl::NullRange,
                             ::cl::NDRange(szElements/RADICES),
-                            ::cl::NDRange(groupSize*16),
+                            ::cl::NDRange(groupSize),
                             NULL,
                             NULL);
         //V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
@@ -787,7 +787,7 @@ sort_enqueue(control &ctl,
                             permuteKernel,
                             ::cl::NullRange,
                             ::cl::NDRange(szElements/RADICES),
-                            ::cl::NDRange(groupSize),
+                            ::cl::NDRange(groupSize >> 4),
                             NULL,
                             NULL);
         //V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
@@ -818,7 +818,7 @@ sort_enqueue(control &ctl,
                                 histSignedKernel,
                                 ::cl::NullRange,
                                 ::cl::NDRange(szElements/RADICES),
-                                ::cl::NDRange(groupSize*16),
+                                ::cl::NDRange(groupSize),
                                 NULL,
                                 NULL);
             //V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
@@ -837,7 +837,7 @@ sort_enqueue(control &ctl,
                                 permuteSignedKernel,
                                 ::cl::NullRange,
                                 ::cl::NDRange(szElements/RADICES),
-                                ::cl::NDRange(groupSize),
+                                ::cl::NDRange(groupSize >> 4),
                                 NULL,
                                 NULL);
     
@@ -954,7 +954,7 @@ sort_enqueue(control &ctl,
                                             kernels[0],
                                             ::cl::NullRange,
                                             ::cl::NDRange(szElements/2),
-                                            ::cl::NDRange(BITONIC_SORT_WGSIZE),
+                                            ::cl::NDRange(wgSize),
                                             NULL,
                                             NULL);
 

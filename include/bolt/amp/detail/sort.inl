@@ -225,7 +225,7 @@ void AMP_RadixSortHistogramAscendingKernel(bolt::amp::control &ctl,
 
     concurrency::tiled_extent< RADICES > tileK0 = globalSizeK0.tile< RADICES >();
     concurrency::accelerator_view av = ctl.getAccelerator().default_view;
-    printf("globalSizeK0 = %d   tileK0.tile_dim0 = %d    tileK0[0]=%d\n",globalSizeK0, tileK0.tile_dim0, tileK0[0]);
+    //printf("globalSizeK0 = %d   tileK0.tile_dim0 = %d    tileK0[0]=%d\n",globalSizeK0, tileK0.tile_dim0, tileK0[0]);
     concurrency::parallel_for_each( av, tileK0,
     [
         unsortedData,
