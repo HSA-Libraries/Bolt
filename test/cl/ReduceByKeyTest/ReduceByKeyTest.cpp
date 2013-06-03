@@ -398,16 +398,19 @@ std::vector<int> vectValueIn(size);
 std::vector<int> keyBoltClDevVectOp(size);
 std::vector<int> valueBoltClDevVectOp(size);
 
-for (int i = 0; i < std::ceil(size/3.0); i++){
-vectKeyIn[i] = (int)2;
+for (int i = 0; i < std::ceil(size/3.0); i++)
+{
+    vectKeyIn[i] = (int)2;
 }
-for (int i = (int)(std::ceil(size/3.0) + 1); i < std::ceil((2* size)/3.0); i++){
+for (int i = (std::ceil(size/3.0) + 1); i < std::ceil((2* size)/3.0); i++)
+{
 vectKeyIn[i] = (int)3;
 }
-for (int i = (int)(std::ceil((2* size)/3.0) + 1); i < size; i++){
+for (int i =  (std::ceil((2* size)/3.0) + 1); i < size; i++)
+{
 vectKeyIn[i] = (int)5;
 }
-//now elemetns in vectKeyIn are as: {2 2 2 0 3 3 0 5 5 5}
+//now elemetns in vectKeyIn are as: {2 2 2 2 0 3 3 0 5 5 }
 
 for (int i = 0; i < size; i++){
 vectValueIn[i] = (int) i; //elements in vectValueIn are as: {0 1 2 3 4 5 6 7 8 9}
@@ -418,7 +421,7 @@ bolt::cl::reduce_by_key(vectKeyIn.begin(), vectKeyIn.end(), vectValueIn.begin(),
                                                                         valueBoltClDevVectOp.begin(), eq);
 
 int eleKeyOp_Expexted[5] = {2, 0, 3, 0, 5};
-int eleValueOp_Expexted[5] = {3, 3, 9, 6, 24};
+int eleValueOp_Expexted[5] = {6, 4, 11, 7, 17};
 
 for (int i = 0; i < 5; i++){
 EXPECT_EQ ( eleKeyOp_Expexted[i], keyBoltClDevVectOp[i]);
@@ -433,31 +436,33 @@ std::vector<int> vectValueIn(size);
 std::vector<int> keyBoltClDevVectOp(size);
 std::vector<int> valueBoltClDevVectOp(size);
 
-for (int i = 0; i < std::ceil(size/3.0); i++){
-vectKeyIn[i] = (int)2;
+for (int i = 0; i < std::ceil(size/3.0); i++)
+{
+    vectKeyIn[i] = (int)2;
 }
-for (int i = (int)(std::ceil(size/3.0) + 1); i < std::ceil((2* size)/3.0); i++){
+for (int i = (std::ceil(size/3.0) + 1); i < std::ceil((2* size)/3.0); i++)
+{
 vectKeyIn[i] = (int)3;
 }
-for (int i = (int)(std::ceil((2* size)/3.0) + 1); i < size; i++){
+for (int i =  (std::ceil((2* size)/3.0) + 1); i < size; i++)
+{
 vectKeyIn[i] = (int)5;
 }
-//now elemetns in vectKeyIn are as: {2 2 2 0 3 3 0 5 5 5}
+//now elemetns in vectKeyIn are as: {2 2 2 2 0 3 3 0 5 5 }
 
 for (int i = 0; i < size; i++){
 vectValueIn[i] = (int) i; //elements in vectValueIn are as: {0 1 2 3 4 5 6 7 8 9}
 }
 
-bolt::cl::equal_to<int> eq;
-
 bolt::cl::control ctl = bolt::cl::control::getDefault( );
 ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
+bolt::cl::equal_to<int> eq;
 bolt::cl::reduce_by_key(ctl, vectKeyIn.begin(), vectKeyIn.end(), vectValueIn.begin(), keyBoltClDevVectOp.begin(),
-                                                                                valueBoltClDevVectOp.begin(), eq);
+                                                                        valueBoltClDevVectOp.begin(), eq);
 
 int eleKeyOp_Expexted[5] = {2, 0, 3, 0, 5};
-int eleValueOp_Expexted[5] = {3, 3, 9, 6, 24};
+int eleValueOp_Expexted[5] = {6, 4, 11, 7, 17};
 
 for (int i = 0; i < 5; i++){
 EXPECT_EQ ( eleKeyOp_Expexted[i], keyBoltClDevVectOp[i]);
@@ -472,37 +477,41 @@ std::vector<int> vectValueIn(size);
 std::vector<int> keyBoltClDevVectOp(size);
 std::vector<int> valueBoltClDevVectOp(size);
 
-for (int i = 0; i < std::ceil(size/3.0); i++){
-vectKeyIn[i] = (int)2;
+for (int i = 0; i < std::ceil(size/3.0); i++)
+{
+    vectKeyIn[i] = (int)2;
 }
-for (int i = (int)(std::ceil(size/3.0) + 1); i < std::ceil((2* size)/3.0); i++){
+for (int i = (std::ceil(size/3.0) + 1); i < std::ceil((2* size)/3.0); i++)
+{
 vectKeyIn[i] = (int)3;
 }
-for (int i = (int)(std::ceil((2* size)/3.0) + 1); i < size; i++){
+for (int i =  (std::ceil((2* size)/3.0) + 1); i < size; i++)
+{
 vectKeyIn[i] = (int)5;
 }
-//now elemetns in vectKeyIn are as: {2 2 2 0 3 3 0 5 5 5}
+//now elemetns in vectKeyIn are as: {2 2 2 2 0 3 3 0 5 5 }
 
 for (int i = 0; i < size; i++){
 vectValueIn[i] = (int) i; //elements in vectValueIn are as: {0 1 2 3 4 5 6 7 8 9}
 }
 
-bolt::cl::equal_to<int> eq;
-
 bolt::cl::control ctl = bolt::cl::control::getDefault( );
 ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
+
+bolt::cl::equal_to<int> eq;
 bolt::cl::reduce_by_key(ctl, vectKeyIn.begin(), vectKeyIn.end(), vectValueIn.begin(), keyBoltClDevVectOp.begin(),
-                                                                                valueBoltClDevVectOp.begin(), eq);
+                                                                        valueBoltClDevVectOp.begin(), eq);
 
 int eleKeyOp_Expexted[5] = {2, 0, 3, 0, 5};
-int eleValueOp_Expexted[5] = {3, 3, 9, 6, 24};
+int eleValueOp_Expexted[5] = {6, 4, 11, 7, 17};
 
 for (int i = 0; i < 5; i++){
 EXPECT_EQ ( eleKeyOp_Expexted[i], keyBoltClDevVectOp[i]);
 EXPECT_EQ ( eleValueOp_Expexted[i], valueBoltClDevVectOp[i]);
 }
 }
+
 
 TEST(reduce_by_key__bolt_Dev_vect, Basic_EPR377067){
 
@@ -521,7 +530,7 @@ vectKeyIn[i] = (int)3;
 for (int i = (int)(std::ceil((2* size)/3.0) + 1); i < size; i++){
 vectKeyIn[i] = (int)5;
 }
-//now elemetns in vectKeyIn are as: {2 2 2 0 3 3 0 5 5 5}
+//now elemetns in vectKeyIn are as: {2 2 2 2 0 3 3 0 5 5 }
 
 for (int i = 0; i < size; i++){
 vectValueIn[i] = (int) i; //elements in vectValueIn are as: {0 1 2 3 4 5 6 7 8 9}
@@ -532,7 +541,7 @@ bolt::cl::reduce_by_key(vectKeyIn.begin(), vectKeyIn.end(), vectValueIn.begin(),
                                                                             valueBoltClDevVectOp.begin(), eq);
 
 int eleKeyOp_Expexted[5] = {2, 0, 3, 0, 5};
-int eleValueOp_Expexted[5] = {3, 3, 9, 6, 24};
+int eleValueOp_Expexted[5] = {6, 4, 11, 7, 17};
 
 for (int i = 0; i < 5; i++){
 EXPECT_EQ ( eleKeyOp_Expexted[i], keyBoltClDevVectOp[i]);
@@ -556,29 +565,27 @@ vectKeyIn[i] = (int)3;
 for (int i = (int)(std::ceil((2* size)/3.0) + 1); i < size; i++){
 vectKeyIn[i] = (int)5;
 }
-//now elemetns in vectKeyIn are as: {2 2 2 0 3 3 0 5 5 5}
+//now elemetns in vectKeyIn are as: {2 2 2 2 0 3 3 0 5 5 }
 
 for (int i = 0; i < size; i++){
 vectValueIn[i] = (int) i; //elements in vectValueIn are as: {0 1 2 3 4 5 6 7 8 9}
 }
 
-bolt::cl::equal_to<int> eq;
-
 bolt::cl::control ctl = bolt::cl::control::getDefault( );
 ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
-bolt::cl::reduce_by_key(ctl, vectKeyIn.begin(), vectKeyIn.end(), vectValueIn.begin(), keyBoltClDevVectOp.begin(), 
-                                                                                valueBoltClDevVectOp.begin(), eq);
+bolt::cl::equal_to<int> eq;
+bolt::cl::reduce_by_key(ctl, vectKeyIn.begin(), vectKeyIn.end(), vectValueIn.begin(), keyBoltClDevVectOp.begin(),
+                                                                            valueBoltClDevVectOp.begin(), eq);
+
 int eleKeyOp_Expexted[5] = {2, 0, 3, 0, 5};
-int eleValueOp_Expexted[5] = {3, 3, 9, 6, 24};
+int eleValueOp_Expexted[5] = {6, 4, 11, 7, 17};
+
 for (int i = 0; i < 5; i++){
 EXPECT_EQ ( eleKeyOp_Expexted[i], keyBoltClDevVectOp[i]);
 EXPECT_EQ ( eleValueOp_Expexted[i], valueBoltClDevVectOp[i]);
 }
 }
-
-
-
 TEST(reduce_by_key__bolt_Dev_vect, MulticoreBasic_EPR377067){
 
 int size = 10;
@@ -596,22 +603,21 @@ vectKeyIn[i] = (int)3;
 for (int i = (int)(std::ceil((2* size)/3.0) + 1); i < size; i++){
 vectKeyIn[i] = (int)5;
 }
-//now elemetns in vectKeyIn are as: {2 2 2 0 3 3 0 5 5 5}
+//now elemetns in vectKeyIn are as: {2 2 2 2 0 3 3 0 5 5 }
 
 for (int i = 0; i < size; i++){
 vectValueIn[i] = (int) i; //elements in vectValueIn are as: {0 1 2 3 4 5 6 7 8 9}
 }
 
-bolt::cl::equal_to<int> eq;
-
 bolt::cl::control ctl = bolt::cl::control::getDefault( );
 ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
+bolt::cl::equal_to<int> eq;
 bolt::cl::reduce_by_key(ctl, vectKeyIn.begin(), vectKeyIn.end(), vectValueIn.begin(), keyBoltClDevVectOp.begin(),
-                                                                                valueBoltClDevVectOp.begin(), eq);
+                                                                            valueBoltClDevVectOp.begin(), eq);
 
 int eleKeyOp_Expexted[5] = {2, 0, 3, 0, 5};
-int eleValueOp_Expexted[5] = {3, 3, 9, 6, 24};
+int eleValueOp_Expexted[5] = {6, 4, 11, 7, 17};
 
 for (int i = 0; i < 5; i++){
 EXPECT_EQ ( eleKeyOp_Expexted[i], keyBoltClDevVectOp[i]);
