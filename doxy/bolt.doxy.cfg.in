@@ -672,6 +672,7 @@ INPUT                  = @CMAKE_CURRENT_SOURCE_DIR@/mainpage.dox \
                          @CMAKE_CURRENT_SOURCE_DIR@/buildingTBB.dox \
                          @CMAKE_CURRENT_SOURCE_DIR@/distributingBoltProjects.dox \
                          @CMAKE_CURRENT_SOURCE_DIR@/buildingExamples.dox \
+						 @CMAKE_CURRENT_SOURCE_DIR@/SupportedFunction.dox \
                          @CMAKE_CURRENT_SOURCE_DIR@/../include/bolt/amp \
                          @CMAKE_CURRENT_SOURCE_DIR@/../include/bolt/amp/detail \     
 					     @CMAKE_CURRENT_SOURCE_DIR@/../include/bolt/amp/iterator \ 						 
