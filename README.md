@@ -6,7 +6,7 @@ Compared to writing the equivalent functionality in OpenCL™, you’ll find tha
 
 Here's a link to our <a href="https://github.com/HSA-Libraries/bolt/wiki">BOLT wiki page</a>.
 
-<b>Prerequisites:</b>
+## Prerequisites
 
 1.  Windows® 7/8
 2.  Visual Studio 2010 onwards (VS2012 for C++ AMP)
@@ -14,12 +14,38 @@ Here's a link to our <a href="https://github.com/HSA-Libraries/bolt/wiki">BOLT w
 4.  TBB (For Multicore CPU path, BOLT is tested with 4.1 Update 3)
 5.  APP SDK 2.7 onwards
 
-Currently BOLT is tested with AMD HD7970 TAHITI card and APU(Richland and Trinity).
+## Supported Devices
+
+<strong><em> AMD APU Family with AMD Radeon™ HD Graphics </em></strong>
++	A-Series
++	C-Series
++	E-Series
++	E2-Series
++	G-Series
++	R-Series
+
+<strong><em> AMD Radeon™ HD Graphics </em></strong>
++   7900 Series (7990, 7970, 7950)
++	7800 Series (7870, 7850)
++	7700 Series (7770, 7750)
+
+<strong><em> AMD Radeon™ HD Graphics </em></strong>
++	6900 Series (6990, 6970, 6950)
++	6800 Series (6870, 6850)
++	6700 Series (6790 , 6770, 6750)
++	6600 Series (6670)
++	6500 Series (6570)
++	6400 Series (6450)
++	6xxxM Series
+
+
+
+
 Compiled binary windows packages (zip packages) for Bolt may be downloaded from the <a href="http://developer.amd.com/tools-and-sdks/heterogeneous-computing/amd-accelerated-parallel-processing-app-sdk/bolt-c-template-library/">Bolt landing page</a> hosted on AMD's Developer Central website.
 
 *Note:* If the user has installed both Visual Studio 2012 and Visual Studio 2010, the latter should be updated to SP1.
 
-<b>Examples:</b>
+## Examples
 
 The simple example below shows how to use Bolt to sort a random array of 8192 integers.
 
@@ -63,7 +89,7 @@ The code will be familiar to programmers who have used the C++ Standard Template
 
 This example shows how Bolt simplifies management of heterogeneous memory.  The creation and destruction of device resident memory is abstracted inside of the `bolt::cl::device_vector <>` class, which provides an interface familiar to nearly all C++ programmers.  All of Bolt’s provided algorithms can take either the normal std::vector or the `bolt::cl::device_vector<>` class, which allows the user to control when and where memory is transferred between host and device to optimize performance.
 
-<b>Copyright and Licensing information:</b>
+## Copyright and Licensing information
 
 Copyright 2012 - 2013 Advanced Micro Devices, Inc.
 
