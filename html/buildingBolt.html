@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.3"/>
-<title>Bolt Beta: Building Bolt</title>
+<title>Bolt: Building Bolt</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -17,8 +17,8 @@
  <tbody>
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
-   <div id="projectname">Bolt Beta
-   &#160;<span id="projectnumber">1.0.0</span>
+   <div id="projectname">Bolt
+   &#160;<span id="projectnumber">1.0</span>
    </div>
    <div id="projectbrief">C++ template library with support for OpenCL</div>
   </td>
@@ -96,17 +96,17 @@ CMake Bolt Configuration</h1>
 <p>Once installed, the easiest interface for Windows or X-windows is the CMake GUI program 'CMake-gui'. The terminal applications CMake.exe and ccmake.exe (based on curses library) are easy to learn. CMake automates the creation of build environments in a cross-platform manner, generating native build files for each respective platform. When launched, it inspects the host computer and searches for all tools, SDKs, libraries, and code necessary to build the project.</p>
 <p><code>Bolt/superbuild</code> contains all the CMake files necesasary for configuring Bolt. In the CMake Window, enter the source code and binary URIs as given in the image below and press Configure. You can also use the 'Browse Source ...' and "Browse Build..." buttons to navigate to the <code>superbuild</code> and <code>binary</code> folder. It is better not to put the <code>bin</code> directory inside any folder which has a <code></code>.git folder as a sibling or as a parent structure. </p>
 <div class="image">
-<img src="cmake.bolt_build.blank.png" alt="cmake.bolt_build.blank.png"/>
+<img src="CMake.bolt_build.blank.png" alt="CMake.bolt_build.blank.png"/>
 <div class="caption">
 Bolt superbuild</div></div>
 <p>Then, click on the Configure button. This will ask you for your choice of generator. You can choose to use Visual Studio 10 or Visual Studio 11. In this example, 'Visual Studio 11 Win64' generator is selected. The selected bin directory should be descriptive of the generator used ; otherwise it's easy to start over (delete the binaries directory). After selecting the generator, CMake examines the system, finding all the project dependencies and properties, which appear red in the properties box. </p>
 <div class="image">
-<img src="cmake.pick.generator2.png" alt="cmake.pick.generator2.png"/>
+<img src="CMake.pick.generator2.png" alt="CMake.pick.generator2.png"/>
 <div class="caption">
 List of CMake generators</div></div>
 <p> While CMake finishes configuring the projects, it prints messages in the output log visible in the bottom textbox within the GUI; this states that CMake found the OpenCL and Bolt libraries. If not, CMake prints in red text which libraries or header files are missing. This usually means the environment variables that CMake uses to find dependencies are not set up properly (see <a class="el" href="buildingExamples.html#clDependencies">OpenCL&trade; Dependencies</a> ). </p>
 <div class="image">
-<img src="cmake.build.first.configure2.png" alt="cmake.build.first.configure2.png"/>
+<img src="CMake.build.first.configure2.png" alt="CMake.build.first.configure2.png"/>
 <div class="caption">
 Cmake system introspection</div></div>
 <p> CMake gives you some values which represent some features that you can choose to generate. In this example below, we chose not to generate BUILD_TBB (see <a class="el" href="buildingTBB.html#tbb">TBB (Intel)</a> on how to build TBB for Bolt). Now, press the Configure button again to continue, and then press Generate button to complete the generation of binaries. Now, all the project files will be generated to the specified location.</p>
@@ -132,7 +132,7 @@ Code layout</h1>
 </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Apr 12 2013 10:32:28 for Bolt Beta by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Jun 14 2013 15:22:53 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.3
 </small></address>

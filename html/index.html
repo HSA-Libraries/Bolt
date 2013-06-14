@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.3"/>
-<title>Bolt Beta: Bolt Documentation</title>
+<title>Bolt: Bolt Documentation</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -17,8 +17,8 @@
  <tbody>
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
-   <div id="projectname">Bolt Beta
-   &#160;<span id="projectnumber">1.0.0</span>
+   <div id="projectname">Bolt
+   &#160;<span id="projectnumber">1.0</span>
    </div>
    <div id="projectbrief">C++ template library with support for OpenCL</div>
   </td>
@@ -51,8 +51,10 @@
 <li class="level2"><a href="#subexample2_sec">Templatized Bolt Functor</a></li>
 </ul>
 </li>
-<li class="level1"><a href="#Paths">Bolt Code Paths</a><ul><li class="level2"><a href="#Default">Default Behaviour</a></li>
-<li class="level2"><a href="#Force">Force Behaviour</a></li>
+<li class="level1"><a href="#Function_Path">Supported Functions and Code Paths</a><ul><li class="level2"><a href="#paths">Code Path Behaviour</a><ul><li class="level3"><a href="#Default">Default Behaviour</a></li>
+<li class="level3"><a href="#Force">Force Behaviour</a></li>
+</ul>
+</li>
 </ul>
 </li>
 <li class="level1"><a href="#Requirements">Requirements</a></li>
@@ -115,7 +117,7 @@ Bolt Functor Example</h2>
 <div class="line">        : a(0) { }</div>
 <div class="line">};</div>
 <div class="line">);</div>
-</div><!-- fragment --><p>After defining the class, user need to register it with BOLT. Internally bolt algorithms will make use of the device_vector class. But these are defined only for the basic data types like int, float, unsigned int etc. For User defined datat types it’s the responsibility of the application developer to create a definition of the deveice_vector for his own defined data type. See the below example. </p>
+</div><!-- fragment --><p>After defining the class, user need to register it with BOLT. Internally bolt algorithms will make use of the device_vector class. But these are defined only for the basic data types like int, float, unsigned int etc. For User defined data types it’s the responsibility of the application developer to create a definition of the deveice_vector for his own defined data type. See the below example. </p>
 <div class="fragment"><div class="line"><a class="code" href="group__ClCode.html#ga8b9cbe9b8afde5a23262c5f25e3436c2" title="This macro specializes a template with a new type using the template definition of a previously defin...">BOLT_TEMPLATE_REGISTER_NEW_TYPE</a>( bolt::cl::greater, <span class="keywordtype">int</span>, MyType&lt; int&gt; );</div>
 <div class="line"><a class="code" href="group__ClCode.html#ga012279644d3227bf7ff71dc62c4635b7" title="This macro specializes a template iterator with a new type using the template definition of a previou...">BOLT_TEMPLATE_REGISTER_NEW_ITERATOR</a>( <a class="code" href="classbolt_1_1cl_1_1device__vector.html" title="This defines the OpenCL version of a device_vector.">bolt::cl::device_vector</a>, <span class="keywordtype">int</span>, MyType&lt; int&gt; );</div>
 </div><!-- fragment --><p> In the above example bolt::cl::greater functor is defined in <a class="el" href="cl_2functional_8h.html" title="List all the unary and binary functions.">include/bolt/cl/functional.h</a>. For the user defined data types it is the responsibility of the application developer to define as shown above for the functors which he uses from <a class="el" href="cl_2functional_8h.html" title="List all the unary and binary functions.">include/bolt/cl/functional.h</a> .</p>
@@ -158,7 +160,7 @@ Bolt Functor Example</h2>
 </div><!-- fragment --><h2><a class="anchor" id="subexample2_sec"></a>
 Templatized Bolt Functor</h2>
 <p>User can also use Templatized version of Bolt Functor with User defined data types as shown below:</p>
-<div class="fragment"><div class="line">BOLT_TEMPLATE_FUNCTOR1( MyFunctor,  <span class="keywordtype">int</span></div>
+<div class="fragment"><div class="line"><a class="code" href="group__ClCode.html#ga7f21e1fb33d54ecc5adaeca8b4a05b45">BOLT_TEMPLATE_FUNCTOR1</a>( MyFunctor,  <span class="keywordtype">int</span></div>
 <div class="line">template &lt;typename T&gt;    </div>
 <div class="line"><span class="keyword">struct</span> MyFunctor{ </div>
 <div class="line">    T a; </div>
@@ -191,19 +193,22 @@ Templatized Bolt Functor</h2>
 <div class="line">    <a class="code" href="group__CL-sort.html#ga7720660d4a8dee06ea5314d3a1db7db3" title="This version of sort returns the sorted result of all the elements in the RandomAccessIterator betwee...">bolt::cl::sort</a>( boltInput.begin( ), boltInput.end( ), bolt::cl::greater&lt;myfunctor&gt;() );</div>
 <div class="line">}</div>
 </div><!-- fragment --><p> If the user wants to use TEMPLATE_FUNCTOR for more than one datatype then he can use other variants of this like BOLT_TEMPLATE_FUNCTOR2, BOLT_TEMPLATE_FUNCTOR3 etc from <a class="el" href="clcode_8h.html" title="Defines macros to help the user create code with C++ semantics for OpenCL kernels.">include/bolt/cl/clcode.h</a> file.</p>
-<h1><a class="anchor" id="Paths"></a>
-Bolt Code Paths</h1>
-<h2><a class="anchor" id="Default"></a>
-Default Behaviour</h2>
-<p>Bolt function can be executed with three code paths(GPU, Multicore CPU and Serial). The default mode is "Automatic" which means it will go into OpenCL&trade; path first, then TBB (Intel), then SerialCpu with below mentioned order. The control will go to other paths only if the selected one not found.</p>
+<h1><a class="anchor" id="Function_Path"></a>
+Supported Functions and Code Paths</h1>
+<p>List of <a href="supportedFunction.html">Supported Functions and Code Paths</a>. </p>
+<h2><a class="anchor" id="paths"></a>
+Code Path Behaviour</h2>
+<h3><a class="anchor" id="Default"></a>
+Default Behaviour</h3>
+<p>Bolt function can be executed with three code paths(OpenCL™, Multicore CPU and Serial). The default mode is "Automatic" which means it will go into OpenCL&trade; path first, then TBB (Intel), then SerialCpu with below mentioned order. The control will go to other paths only if the selected one not found.</p>
 <p>Selection order will be: </p>
 <ul>
 <li>Run on GPU if AMD GPU is found and AMD APP SDK is installed. </li>
 <li>Run on Multicore CPU if Intel TBB is installed. </li>
 <li>Run CPU serial path.</li>
 </ul>
-<h2><a class="anchor" id="Force"></a>
-Force Behaviour</h2>
+<h3><a class="anchor" id="Force"></a>
+Force Behaviour</h3>
 <p>Forcing mode to any device will run the function on that device only. There are two ways in BOLT to force the control to specific Device.</p>
 <ol type="1">
 <li><b> Setting control to Device Globally: </b> <div class="fragment"><div class="line"><a class="code" href="classbolt_1_1cl_1_1control.html">bolt::cl::control</a>&amp; myControl = <a class="code" href="group__CL-control.html#ga59712ff5a77d3714f716d85938705289">bolt::cl::control::getDefault</a>( );</div>
@@ -220,7 +225,7 @@ Requirements</h1>
 </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Apr 12 2013 10:32:29 for Bolt Beta by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Jun 14 2013 15:22:57 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.3
 </small></address>

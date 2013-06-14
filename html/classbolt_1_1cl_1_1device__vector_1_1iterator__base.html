@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.3"/>
-<title>Bolt Beta: bolt::cl::device_vector&lt; T &gt;::iterator_base&lt; Container &gt; Class Template Reference</title>
+<title>Bolt: bolt::cl::device_vector&lt; T &gt;::iterator_base&lt; Container &gt; Class Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -17,8 +17,8 @@
  <tbody>
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
-   <div id="projectname">Bolt Beta
-   &#160;<span id="projectnumber">1.0.0</span>
+   <div id="projectname">Bolt
+   &#160;<span id="projectnumber">1.0</span>
    </div>
    <div id="projectbrief">C++ template library with support for OpenCL</div>
   </td>
@@ -103,15 +103,12 @@ template&lt;typename OtherContainer &gt; </td></tr>
 <tr class="memitem:a3a1915294cada3d036b398172983bb53"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a3a1915294cada3d036b398172983bb53"></a>
 <a class="el" href="classbolt_1_1cl_1_1device__vector_1_1iterator__base.html">iterator_base</a>&lt; Container &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator+=</b> (const typename iterator_facade::difference_type &amp;n)</td></tr>
 <tr class="separator:a3a1915294cada3d036b398172983bb53"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a038a7bce4dcb7c17be2aa011b934fe26"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a038a7bce4dcb7c17be2aa011b934fe26"></a>
+<a class="el" href="classbolt_1_1cl_1_1device__vector_1_1iterator__base.html">iterator_base</a>&lt; Container &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (const typename iterator_facade::difference_type &amp;n)</td></tr>
+<tr class="separator:a038a7bce4dcb7c17be2aa011b934fe26"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0ff55411124116eba2aabaff01f8cff2"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0ff55411124116eba2aabaff01f8cff2"></a>
 const <a class="el" href="classbolt_1_1cl_1_1device__vector_1_1iterator__base.html">iterator_base</a>&lt; Container &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>operator+</b> (const typename iterator_facade::difference_type &amp;n) const </td></tr>
 <tr class="separator:a0ff55411124116eba2aabaff01f8cff2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a66c49f0da57672da4b64852f2f78b105"><td class="memItemLeft" align="right" valign="top">const ::cl::Buffer &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classbolt_1_1cl_1_1device__vector_1_1iterator__base.html#a66c49f0da57672da4b64852f2f78b105">getBuffer</a> () const </td></tr>
-<tr class="memdesc:a66c49f0da57672da4b64852f2f78b105"><td class="mdescLeft">&#160;</td><td class="mdescRight">A get accessor function to return the encapsulated device buffer for const objects. This member function allows access to the Buffer object, which can be retrieved through a reference or an iterator. This is necessary to allow library functions to set the encapsulated buffer object as a kernel argument.  <a href="#a66c49f0da57672da4b64852f2f78b105"></a><br/></td></tr>
-<tr class="separator:a66c49f0da57672da4b64852f2f78b105"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad0aee59434f425317b87eb3d6037bc2d"><td class="memItemLeft" align="right" valign="top">::cl::Buffer &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classbolt_1_1cl_1_1device__vector_1_1iterator__base.html#ad0aee59434f425317b87eb3d6037bc2d">getBuffer</a> ()</td></tr>
-<tr class="memdesc:ad0aee59434f425317b87eb3d6037bc2d"><td class="mdescLeft">&#160;</td><td class="mdescRight">A get accessor function to return the encapsulated device buffer for non-const objects. This member function allows access to the Buffer object, which can be retrieved through a reference or an iterator. This is necessary to allow library functions to set the encapsulated buffer object as a kernel argument.  <a href="#ad0aee59434f425317b87eb3d6037bc2d"></a><br/></td></tr>
-<tr class="separator:ad0aee59434f425317b87eb3d6037bc2d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8e66302e58f14b962c6ef70ffe6d4526"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8e66302e58f14b962c6ef70ffe6d4526"></a>
 Container &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>getContainer</b> () const </td></tr>
 <tr class="separator:a8e66302e58f14b962c6ef70ffe6d4526"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -156,74 +153,13 @@ class bolt::cl::device_vector&lt; T &gt;::iterator_base&lt; Container &gt;</h3>
 <a href="http://www.sgi.com/tech/stl/RandomAccessIterator.html">http://www.sgi.com/tech/stl/RandomAccessIterator.html</a> </dd></dl>
 <dl class="bug"><dt><b><a class="el" href="bug.html#_bug000003">Bug:</a></b></dt><dd>operator[] with <a class="el" href="classbolt_1_1cl_1_1device__vector.html" title="This defines the OpenCL version of a device_vector.">device_vector</a> iterators result in a compile-time error when accessed for reading. Writing with operator[] appears to be OK. Workarounds: either use the operator[] on the <a class="el" href="classbolt_1_1cl_1_1device__vector.html" title="This defines the OpenCL version of a device_vector.">device_vector</a> container, or use iterator arithmetic instead, such as *(iter + 5) for reading from the iterator. </dd></dl>
 <dl class="section note"><dt>Note</dt><dd>The difference_type for this iterator has been explicitely set to a 32-bit int, because m_Index is used in clSetKernelArg(), which does not accept size_t parameters </dd></dl>
-</div><h2 class="groupheader">Member Function Documentation</h2>
-<a class="anchor" id="a66c49f0da57672da4b64852f2f78b105"></a>
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;typename T&gt; </div>
-<div class="memtemplate">
-template&lt;typename Container&gt; </div>
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">const ::cl::Buffer&amp; <a class="el" href="classbolt_1_1cl_1_1device__vector.html">bolt::cl::device_vector</a>&lt; T &gt;::<a class="el" href="classbolt_1_1cl_1_1device__vector_1_1iterator__base.html">iterator_base</a>&lt; Container &gt;::getBuffer </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>A get accessor function to return the encapsulated device buffer for const objects. This member function allows access to the Buffer object, which can be retrieved through a reference or an iterator. This is necessary to allow library functions to set the encapsulated buffer object as a kernel argument. </p>
-<dl class="section note"><dt>Note</dt><dd>This get function could be implemented in the iterator, but the reference object is usually a temporary rvalue, so this location seems less intrusive to the design of the vector class. </dd></dl>
-
-</div>
-</div>
-<a class="anchor" id="ad0aee59434f425317b87eb3d6037bc2d"></a>
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;typename T&gt; </div>
-<div class="memtemplate">
-template&lt;typename Container&gt; </div>
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">::cl::Buffer&amp; <a class="el" href="classbolt_1_1cl_1_1device__vector.html">bolt::cl::device_vector</a>&lt; T &gt;::<a class="el" href="classbolt_1_1cl_1_1device__vector_1_1iterator__base.html">iterator_base</a>&lt; Container &gt;::getBuffer </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td></td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>A get accessor function to return the encapsulated device buffer for non-const objects. This member function allows access to the Buffer object, which can be retrieved through a reference or an iterator. This is necessary to allow library functions to set the encapsulated buffer object as a kernel argument. </p>
-<dl class="section note"><dt>Note</dt><dd>This get function can be implemented in the iterator, but the reference object is usually a temporary rvalue, so this location seems less intrusive to the design of the vector class. </dd></dl>
-
-</div>
-</div>
-<hr/>The documentation for this class was generated from the following file:<ul>
-<li>C:/Jay_Win8/BOLT/hsa_bolt/include/bolt/cl/<a class="el" href="cl_2device__vector_8h_source.html">device_vector.h</a></li>
+</div><hr/>The documentation for this class was generated from the following file:<ul>
+<li>C:/Avinash_Bolt/Bolt_forked/Bolt/include/bolt/cl/<a class="el" href="cl_2device__vector_8h_source.html">device_vector.h</a></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Apr 12 2013 10:32:29 for Bolt Beta by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Jun 14 2013 15:22:56 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.3
 </small></address>

@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.3"/>
-<title>Bolt Beta: bolt::amp::device_vector&lt; T, CONT &gt;::iterator_base&lt; Container &gt; Class Template Reference</title>
+<title>Bolt: bolt::amp::device_vector&lt; T, CONT &gt;::iterator_base&lt; Container &gt; Class Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -17,8 +17,8 @@
  <tbody>
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
-   <div id="projectname">Bolt Beta
-   &#160;<span id="projectnumber">1.0.0</span>
+   <div id="projectname">Bolt
+   &#160;<span id="projectnumber">1.0</span>
    </div>
    <div id="projectbrief">C++ template library with support for OpenCL</div>
   </td>
@@ -98,9 +98,6 @@ Container &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>getContain
 <tr class="memitem:af921327f25402aab3d1ee39df39765f6"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af921327f25402aab3d1ee39df39765f6"></a>
 size_type&#160;</td><td class="memItemRight" valign="bottom"><b>getIndex</b> () const </td></tr>
 <tr class="separator:af921327f25402aab3d1ee39df39765f6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a748e2ae98cbc8e1aa51aa386bf4f131c"><td class="memItemLeft" align="right" valign="top">arrayview_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classbolt_1_1amp_1_1device__vector_1_1iterator__base.html#a748e2ae98cbc8e1aa51aa386bf4f131c">getBuffer</a> () const </td></tr>
-<tr class="memdesc:a748e2ae98cbc8e1aa51aa386bf4f131c"><td class="mdescLeft">&#160;</td><td class="mdescRight">A get accessor function to return the encapsulated device buffer for const objects. This member function allows access to the Buffer object, which can be retrieved through a reference or an iterator. This is necessary to allow library functions to get the encapsulated C++ AMP array object as a pass by reference argument to the C++ AMP parallel_for_each constructs.  <a href="#a748e2ae98cbc8e1aa51aa386bf4f131c"></a><br/></td></tr>
-<tr class="separator:a748e2ae98cbc8e1aa51aa386bf4f131c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a83af4b36155b0e68e08192bbc3e94914"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a83af4b36155b0e68e08192bbc3e94914"></a>
 difference_type&#160;</td><td class="memItemRight" valign="bottom"><b>distance_to</b> (const <a class="el" href="classbolt_1_1amp_1_1device__vector_1_1iterator__base.html">iterator_base</a>&lt; Container &gt; &amp;rhs) const </td></tr>
 <tr class="separator:a83af4b36155b0e68e08192bbc3e94914"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -134,44 +131,13 @@ class bolt::amp::device_vector&lt; T, CONT &gt;::iterator_base&lt; Container &gt
 <dd>
 <a href="http://www.sgi.com/tech/stl/RandomAccessIterator.html">http://www.sgi.com/tech/stl/RandomAccessIterator.html</a> </dd></dl>
 <dl class="bug"><dt><b><a class="el" href="bug.html#_bug000001">Bug:</a></b></dt><dd>operator[] with <a class="el" href="classbolt_1_1amp_1_1device__vector.html" title="This defines the AMP version of a device_vector.">device_vector</a> iterators result in a compile-time error when accessed for reading. Writing with operator[] appears to be OK. Workarounds: either use the operator[] on the <a class="el" href="classbolt_1_1amp_1_1device__vector.html" title="This defines the AMP version of a device_vector.">device_vector</a> container, or use iterator arithmetic instead, such as *(iter + 5) for reading from the iterator. </dd></dl>
-</div><h2 class="groupheader">Member Function Documentation</h2>
-<a class="anchor" id="a748e2ae98cbc8e1aa51aa386bf4f131c"></a>
-<div class="memitem">
-<div class="memproto">
-<div class="memtemplate">
-template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
-<div class="memtemplate">
-template&lt;typename Container&gt; </div>
-<table class="mlabels">
-  <tr>
-  <td class="mlabels-left">
-      <table class="memname">
-        <tr>
-          <td class="memname">arrayview_type <a class="el" href="classbolt_1_1amp_1_1device__vector.html">bolt::amp::device_vector</a>&lt; T, CONT &gt;::<a class="el" href="classbolt_1_1amp_1_1device__vector_1_1iterator__base.html">iterator_base</a>&lt; Container &gt;::getBuffer </td>
-          <td>(</td>
-          <td class="paramname"></td><td>)</td>
-          <td> const</td>
-        </tr>
-      </table>
-  </td>
-  <td class="mlabels-right">
-<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
-  </tr>
-</table>
-</div><div class="memdoc">
-
-<p>A get accessor function to return the encapsulated device buffer for const objects. This member function allows access to the Buffer object, which can be retrieved through a reference or an iterator. This is necessary to allow library functions to get the encapsulated C++ AMP array object as a pass by reference argument to the C++ AMP parallel_for_each constructs. </p>
-<dl class="section note"><dt>Note</dt><dd>This get function could be implemented in the iterator, but the reference object is usually a temporary rvalue, so this location seems less intrusive to the design of the vector class. </dd></dl>
-
-</div>
-</div>
-<hr/>The documentation for this class was generated from the following file:<ul>
-<li>C:/Jay_Win8/BOLT/hsa_bolt/include/bolt/amp/<a class="el" href="amp_2device__vector_8h_source.html">device_vector.h</a></li>
+</div><hr/>The documentation for this class was generated from the following file:<ul>
+<li>C:/Avinash_Bolt/Bolt_forked/Bolt/include/bolt/amp/<a class="el" href="amp_2device__vector_8h_source.html">device_vector.h</a></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Apr 12 2013 10:32:28 for Bolt Beta by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Jun 14 2013 15:22:54 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.3
 </small></address>

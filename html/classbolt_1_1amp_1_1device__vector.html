@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.3"/>
-<title>Bolt Beta: bolt::amp::device_vector&lt; T, CONT &gt; Class Template Reference</title>
+<title>Bolt: bolt::amp::device_vector&lt; T, CONT &gt; Class Template Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -17,8 +17,8 @@
  <tbody>
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
-   <div id="projectname">Bolt Beta
-   &#160;<span id="projectnumber">1.0.0</span>
+   <div id="projectname">Bolt
+   &#160;<span id="projectnumber">1.0</span>
    </div>
    <div id="projectbrief">C++ template library with support for OpenCL</div>
   </td>
@@ -178,6 +178,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a0292da1935161669e76adf94c8dae774"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classbolt_1_1amp_1_1device__vector.html#a0292da1935161669e76adf94c8dae774">device_vector</a> (container_type &amp;rhs, <a class="el" href="classbolt_1_1amp_1_1control.html">control</a> &amp;ctl=<a class="el" href="group__control.html#gaffa8e713ecb8bd1ee469c3565e046a62">control::getDefault</a>())</td></tr>
 <tr class="memdesc:a0292da1935161669e76adf94c8dae774"><td class="mdescLeft">&#160;</td><td class="mdescRight">A constructor that creates a new <a class="el" href="classbolt_1_1amp_1_1device__vector.html" title="This defines the AMP version of a device_vector.">device_vector</a> using a pre-initialized buffer supplied by the user.  <a href="#a0292da1935161669e76adf94c8dae774"></a><br/></td></tr>
 <tr class="separator:a0292da1935161669e76adf94c8dae774"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a966abf0b557fc8cca0bf05c356dc0ef7"><td class="memItemLeft" align="right" valign="top">arrayview_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classbolt_1_1amp_1_1device__vector.html#a966abf0b557fc8cca0bf05c356dc0ef7">getBuffer</a> () const </td></tr>
+<tr class="memdesc:a966abf0b557fc8cca0bf05c356dc0ef7"><td class="mdescLeft">&#160;</td><td class="mdescRight">A get accessor function to return the encapsulated device buffer for const objects. This member function allows access to the Buffer object, which can be retrieved through a reference or an iterator. This is necessary to allow library functions to get the encapsulated C++ AMP array object as a pass by reference argument to the C++ AMP parallel_for_each constructs.  <a href="#a966abf0b557fc8cca0bf05c356dc0ef7"></a><br/></td></tr>
+<tr class="separator:a966abf0b557fc8cca0bf05c356dc0ef7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a27f4d129c1527a037059f62ada325672"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classbolt_1_1amp_1_1device__vector.html#a27f4d129c1527a037059f62ada325672">resize</a> (size_type reqSize, const value_type &amp;val=value_type())</td></tr>
 <tr class="memdesc:a27f4d129c1527a037059f62ada325672"><td class="mdescLeft">&#160;</td><td class="mdescRight">Change the number of elements in <a class="el" href="classbolt_1_1amp_1_1device__vector.html" title="This defines the AMP version of a device_vector.">device_vector</a> to reqSize. If the new requested size is less than the original size, the data is truncated and lost. If the new size is greater than the original size, the extra paddign will be initialized with the value specified by the user.  <a href="#a27f4d129c1527a037059f62ada325672"></a><br/></td></tr>
 <tr class="separator:a27f4d129c1527a037059f62ada325672"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -284,6 +287,16 @@ void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="clas
 template&lt;typename InputIterator &gt; </td></tr>
 <tr class="memitem:a08e720d8cd4cca2bf720d45a73493d5e"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>insert</b> (<a class="el" href="classbolt_1_1amp_1_1device__vector.html#a8b8edf2443945aaefc7fc1d775b92ba3">const_iterator</a> index, InputIterator <a class="el" href="classbolt_1_1amp_1_1device__vector.html#acbfa253609dd6ac45a10a4ea2ee0baf6">begin</a>, InputIterator <a class="el" href="classbolt_1_1amp_1_1device__vector.html#ac53ab468e178a1498f692066cd75c0b0">end</a>)</td></tr>
 <tr class="separator:a08e720d8cd4cca2bf720d45a73493d5e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a800017fd2ce14e6aba91a2fbd478b485"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classbolt_1_1amp_1_1device__vector.html#a800017fd2ce14e6aba91a2fbd478b485">assign</a> (size_type newSize, const value_type &amp;value)</td></tr>
+<tr class="memdesc:a800017fd2ce14e6aba91a2fbd478b485"><td class="mdescLeft">&#160;</td><td class="mdescRight">Assigns newSize copies of element value.  <a href="#a800017fd2ce14e6aba91a2fbd478b485"></a><br/></td></tr>
+<tr class="separator:a800017fd2ce14e6aba91a2fbd478b485"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af6b78ed2bce122350633c2e75bcf14e2"><td class="memTemplParams" colspan="2">template&lt;typename InputIterator &gt; </td></tr>
+<tr class="memitem:af6b78ed2bce122350633c2e75bcf14e2"><td class="memTemplItemLeft" align="right" valign="top">std::enable_if<br class="typebreak"/>
+&lt; std::_Is_iterator<br class="typebreak"/>
+&lt; InputIterator &gt;::value, void &gt;<br class="typebreak"/>
+::type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="classbolt_1_1amp_1_1device__vector.html#af6b78ed2bce122350633c2e75bcf14e2">assign</a> (InputIterator <a class="el" href="classbolt_1_1amp_1_1device__vector.html#acbfa253609dd6ac45a10a4ea2ee0baf6">begin</a>, InputIterator <a class="el" href="classbolt_1_1amp_1_1device__vector.html#ac53ab468e178a1498f692066cd75c0b0">end</a>)</td></tr>
+<tr class="memdesc:af6b78ed2bce122350633c2e75bcf14e2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Assigns a range of values to <a class="el" href="classbolt_1_1amp_1_1device__vector.html" title="This defines the AMP version of a device_vector.">device_vector</a>, replacing all previous elements.  <a href="#af6b78ed2bce122350633c2e75bcf14e2"></a><br/></td></tr>
+<tr class="separator:af6b78ed2bce122350633c2e75bcf14e2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="friends"></a>
 Friends</h2></td></tr>
@@ -303,7 +316,7 @@ class bolt::amp::device_vector&lt; T, CONT &gt;</h3>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
       <table class="memname">
         <tr>
           <td class="memname">typedef <a class="el" href="classbolt_1_1amp_1_1device__vector_1_1const__reference__base.html">const_reference_base</a>&lt; <a class="el" href="classbolt_1_1amp_1_1device__vector.html">device_vector</a>&lt; value_type, CONT &gt; &gt; <a class="el" href="classbolt_1_1amp_1_1device__vector.html">bolt::amp::device_vector</a>&lt; T, CONT &gt;::<a class="el" href="classbolt_1_1amp_1_1device__vector.html#a929f563e6b5e3249b51b670238f17caf">const_reference</a></td>
@@ -321,7 +334,7 @@ template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = con
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -356,7 +369,7 @@ template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = con
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -417,7 +430,7 @@ template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = con
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
 <div class="memtemplate">
 template&lt;typename InputIterator &gt; </div>
 <table class="mlabels">
@@ -480,7 +493,7 @@ template&lt;typename InputIterator &gt; </div>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
 <div class="memtemplate">
 template&lt;typename InputIterator &gt; </div>
 <table class="mlabels">
@@ -549,7 +562,7 @@ template&lt;typename InputIterator &gt; </div>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
 <div class="memtemplate">
 template&lt;typename Container &gt; </div>
 <table class="mlabels">
@@ -603,7 +616,7 @@ template&lt;typename Container &gt; </div>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
 <div class="memtemplate">
 template&lt;typename InputIterator &gt; </div>
 <table class="mlabels">
@@ -664,7 +677,7 @@ template&lt;typename InputIterator &gt; </div>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
 <div class="memtemplate">
 template&lt;typename InputIterator &gt; </div>
 <table class="mlabels">
@@ -731,7 +744,7 @@ template&lt;typename InputIterator &gt; </div>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -773,11 +786,105 @@ template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = con
 </div>
 </div>
 <h2 class="groupheader">Member Function Documentation</h2>
+<a class="anchor" id="a800017fd2ce14e6aba91a2fbd478b485"></a>
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">void <a class="el" href="classbolt_1_1amp_1_1device__vector.html">bolt::amp::device_vector</a>&lt; T, CONT &gt;::assign </td>
+          <td>(</td>
+          <td class="paramtype">size_type&#160;</td>
+          <td class="paramname"><em>newSize</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const value_type &amp;&#160;</td>
+          <td class="paramname"><em>value</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Assigns newSize copies of element value. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">newSize</td><td>The new size of the <a class="el" href="classbolt_1_1amp_1_1device__vector.html" title="This defines the AMP version of a device_vector.">device_vector</a>. </td></tr>
+    <tr><td class="paramname">value</td><td>The value of the element that is replicated newSize times. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section warning"><dt>Warning</dt><dd>All previous iterators, references, and pointers are invalidated. </dd></dl>
+
+</div>
+</div>
+<a class="anchor" id="af6b78ed2bce122350633c2e75bcf14e2"></a>
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+<div class="memtemplate">
+template&lt;typename InputIterator &gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::enable_if&lt; std::_Is_iterator&lt;InputIterator&gt;::value, void&gt;::type <a class="el" href="classbolt_1_1amp_1_1device__vector.html">bolt::amp::device_vector</a>&lt; T, CONT &gt;::assign </td>
+          <td>(</td>
+          <td class="paramtype">InputIterator&#160;</td>
+          <td class="paramname"><em>begin</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">InputIterator&#160;</td>
+          <td class="paramname"><em>end</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Assigns a range of values to <a class="el" href="classbolt_1_1amp_1_1device__vector.html" title="This defines the AMP version of a device_vector.">device_vector</a>, replacing all previous elements. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">begin</td><td>The iterator position signifiying the beginning of the range. </td></tr>
+    <tr><td class="paramname">end</td><td>The iterator position signifying the end of the range (exclusive). </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section warning"><dt>Warning</dt><dd>All previous iterators, references, and pointers are invalidated. </dd></dl>
+
+</div>
+</div>
 <a class="anchor" id="ae4e2cb1d071fb534e801eaa3a99eb8eb"></a>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -806,7 +913,7 @@ template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = con
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -835,7 +942,7 @@ template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = con
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -864,7 +971,7 @@ template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = con
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -893,7 +1000,7 @@ template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = con
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -923,7 +1030,7 @@ template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = con
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -953,7 +1060,7 @@ template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = con
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -983,7 +1090,7 @@ template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = con
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1012,7 +1119,7 @@ template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = con
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1042,7 +1149,7 @@ template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = con
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1072,7 +1179,7 @@ template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = con
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1099,7 +1206,7 @@ template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = con
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1128,7 +1235,7 @@ template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = con
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1157,7 +1264,7 @@ template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = con
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1186,7 +1293,7 @@ template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = con
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1221,7 +1328,7 @@ template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = con
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1267,7 +1374,7 @@ template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = con
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1296,7 +1403,7 @@ template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = con
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1321,11 +1428,39 @@ template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = con
 
 </div>
 </div>
+<a class="anchor" id="a966abf0b557fc8cca0bf05c356dc0ef7"></a>
+<div class="memitem">
+<div class="memproto">
+<div class="memtemplate">
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">arrayview_type <a class="el" href="classbolt_1_1amp_1_1device__vector.html">bolt::amp::device_vector</a>&lt; T, CONT &gt;::getBuffer </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>A get accessor function to return the encapsulated device buffer for const objects. This member function allows access to the Buffer object, which can be retrieved through a reference or an iterator. This is necessary to allow library functions to get the encapsulated C++ AMP array object as a pass by reference argument to the C++ AMP parallel_for_each constructs. </p>
+<dl class="section note"><dt>Note</dt><dd>This get function could be implemented in the iterator, but the reference object is usually a temporary rvalue, so this location seems less intrusive to the design of the vector class. </dd></dl>
+
+</div>
+</div>
 <a class="anchor" id="a8e01f9fb9b37ffcbffde70747975fc6f"></a>
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1374,7 +1509,7 @@ If the container must grow to contain the new value, all iterators and reference
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1429,7 +1564,7 @@ If the container must grow to contain the new value, all iterators and reference
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1458,7 +1593,7 @@ template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = con
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1487,7 +1622,7 @@ template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = con
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1521,7 +1656,7 @@ template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = con
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1550,7 +1685,7 @@ template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = con
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1579,7 +1714,7 @@ template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = con
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1608,7 +1743,7 @@ template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = con
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1637,7 +1772,7 @@ template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = con
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1679,7 +1814,7 @@ The ::cl::CommandQueue is not a STD <a class="el" href="classbolt_1_1amp_1_1devi
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1728,7 +1863,7 @@ The ::cl::CommandQueue is not a STD <a class="el" href="classbolt_1_1amp_1_1devi
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1757,7 +1892,7 @@ template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = con
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1787,7 +1922,7 @@ template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = con
 <div class="memitem">
 <div class="memproto">
 <div class="memtemplate">
-template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
+template&lt;typename T, template&lt; typename, int RANK=1 &gt; class CONT = concurrency::array&gt; </div>
 <table class="mlabels">
   <tr>
   <td class="mlabels-left">
@@ -1818,12 +1953,12 @@ template&lt;typename T , template&lt; typename, int RANK=1 &gt; class CONT = con
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>C:/Jay_Win8/BOLT/hsa_bolt/include/bolt/amp/<a class="el" href="amp_2device__vector_8h_source.html">device_vector.h</a></li>
+<li>C:/Avinash_Bolt/Bolt_forked/Bolt/include/bolt/amp/<a class="el" href="amp_2device__vector_8h_source.html">device_vector.h</a></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Apr 12 2013 10:32:28 for Bolt Beta by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Jun 14 2013 15:22:54 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.3
 </small></address>

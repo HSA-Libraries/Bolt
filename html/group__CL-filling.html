@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.3"/>
-<title>Bolt Beta: CL-filling</title>
+<title>Bolt: CL-filling</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -17,8 +17,8 @@
  <tbody>
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
-   <div id="projectname">Bolt Beta
-   &#160;<span id="projectnumber">1.0.0</span>
+   <div id="projectname">Bolt
+   &#160;<span id="projectnumber">1.0</span>
    </div>
    <div id="projectbrief">C++ template library with support for OpenCL</div>
   </td>
@@ -148,11 +148,11 @@ template&lt;typename ForwardIterator , typename T &gt; </div>
 </dl>
 <p>The following code snippet demonstrates how to fill a <a class="el" href="classbolt_1_1cl_1_1device__vector.html" title="This defines the OpenCL version of a device_vector.">device_vector</a> with a float value.</p>
 <div class="fragment"><div class="line"><span class="preprocessor">#include &lt;<a class="code" href="fill_8h.html" title="Fills a range with values passed in the function.">bolt/cl/fill.h</a>&gt;</span></div>
-<div class="line"><span class="preprocessor">#include &lt;bolt/device_vector.h&gt;</span></div>
+<div class="line"><span class="preprocessor">#include &lt;<a class="code" href="cl_2device__vector_8h.html" title="Namespace that captures OpenCL related data types and functions Public header file for the device_con...">bolt/cl/device_vector.h</a>&gt;</span></div>
 <div class="line"><span class="preprocessor">#include &lt;stdlib.h&gt;</span></div>
-<div class="line">...  </div>
+<div class="line">...</div>
 <div class="line"></div>
-<div class="line"><a class="code" href="classbolt_1_1cl_1_1device__vector.html" title="This defines the OpenCL version of a device_vector.">bolt::cl::device_vector&lt;float&gt;</a> v(10);</div>
+<div class="line">bolt::cl::device_vector&lt;<span class="keywordtype">float</span>&gt; v(10);</div>
 <div class="line"></div>
 <div class="line"><span class="keywordtype">float</span> x=25.0f;</div>
 <div class="line"><a class="code" href="group__CL-filling.html#gaa00a5a7c47628a7f914121759c305454" title="Fill assigns the value of value to each element in the range [first,last].">bolt::cl::fill</a>(v.begin(), v.end(), x);</div>
@@ -228,12 +228,12 @@ template&lt;typename OutputIterator , typename Size , typename T &gt; </div>
 <dl class="section return"><dt>Returns</dt><dd>first+n.</dd></dl>
 <p>The following code snippet demonstrates how to fill a <a class="el" href="classbolt_1_1cl_1_1device__vector.html" title="This defines the OpenCL version of a device_vector.">device_vector</a> with a float value.</p>
 <div class="fragment"><div class="line"><span class="preprocessor">#include &lt;<a class="code" href="fill_8h.html" title="Fills a range with values passed in the function.">bolt/cl/fill.h</a>&gt;</span></div>
-<div class="line"><span class="preprocessor">#include &lt;bolt/device_vector.h&gt;</span></div>
+<div class="line"><span class="preprocessor">#include &lt;<a class="code" href="cl_2device__vector_8h.html" title="Namespace that captures OpenCL related data types and functions Public header file for the device_con...">bolt/cl/device_vector.h</a>&gt;</span></div>
 <div class="line"><span class="preprocessor">#include &lt;stdlib.h&gt;</span></div>
 <div class="line"></div>
-<div class="line">...  </div>
+<div class="line">...</div>
 <div class="line"></div>
-<div class="line"><a class="code" href="classbolt_1_1cl_1_1device__vector.html" title="This defines the OpenCL version of a device_vector.">bolt::cl::device_vector&lt;float&gt;</a> v(10);</div>
+<div class="line">bolt::cl::device_vector&lt;<span class="keywordtype">float</span>&gt; v(10);</div>
 <div class="line"></div>
 <div class="line"><span class="keywordtype">float</span> x=25.0f;</div>
 <div class="line"><a class="code" href="group__CL-filling.html#ga6b8d20443883e9dc0f8b92adc2d2c3f7" title="fill_n assigns the value value to every element in the range [first,first+n]. The return value is fir...">bolt::cl::fill_n</a>(v.begin(), 10, x);</div>
@@ -307,7 +307,7 @@ template&lt;typename ForwardIterator , typename Generator &gt; </div>
 </dl>
 <p>The following code snippet demonstrates how to fill a vector with a constant number.</p>
 <div class="fragment"><div class="line"><span class="preprocessor">#include &lt;<a class="code" href="generate_8h.html" title="Generate assigns to each element of a sequence [first,last].">bolt/cl/generate.h</a>&gt;</span></div>
-<div class="line"><span class="preprocessor">#include &lt;bolt/device_vector.h&gt;</span></div>
+<div class="line"><span class="preprocessor">#include &lt;<a class="code" href="cl_2device__vector_8h.html" title="Namespace that captures OpenCL related data types and functions Public header file for the device_con...">bolt/cl/device_vector.h</a>&gt;</span></div>
 <div class="line"><span class="preprocessor">#include &lt;stdlib.h&gt;</span></div>
 <div class="line">...</div>
 <div class="line"></div>
@@ -317,7 +317,7 @@ template&lt;typename ForwardIterator , typename Generator &gt; </div>
 <div class="line">    <span class="keywordtype">int</span> val;</div>
 <div class="line">    ConstFunctor(<span class="keywordtype">int</span> a) : val(a) {};</div>
 <div class="line"></div>
-<div class="line">    <span class="keywordtype">int</span> operator() () </div>
+<div class="line">    <span class="keywordtype">int</span> operator() ()</div>
 <div class="line">    {</div>
 <div class="line">        <span class="keywordflow">return</span> val;</div>
 <div class="line">    };</div>
@@ -409,7 +409,7 @@ template&lt;typename OutputIterator , typename Size , typename Generator &gt; </
 <div class="line">    <span class="keywordtype">int</span> val;</div>
 <div class="line">    ConstFunctor(<span class="keywordtype">int</span> a) : val(a) {};</div>
 <div class="line"></div>
-<div class="line">    <span class="keywordtype">int</span> operator() () </div>
+<div class="line">    <span class="keywordtype">int</span> operator() ()</div>
 <div class="line">    {</div>
 <div class="line">        <span class="keywordflow">return</span> val;</div>
 <div class="line">    };</div>
@@ -419,7 +419,7 @@ template&lt;typename OutputIterator , typename Size , typename Generator &gt; </
 <div class="line"></div>
 <div class="line">ConstFunctor cf(1);</div>
 <div class="line">std::vector&lt;int&gt; vec(1024);</div>
-<div class="line"><span class="keywordtype">int</span> n = 1024; </div>
+<div class="line"><span class="keywordtype">int</span> n = 1024;</div>
 <div class="line"><a class="code" href="group__CL-filling.html#ga6d11010a0972064ec892c6fe0fda4d2e" title="generate_n assigns to each element of a sequence [first,first+n] the value returned by gen...">bolt::cl::generate_n</a>(vec.begin(), n, cf);</div>
 <div class="line"></div>
 <div class="line"><span class="comment">// vec is now filled with 1</span></div>
@@ -430,7 +430,7 @@ template&lt;typename OutputIterator , typename Size , typename Generator &gt; </
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Apr 12 2013 10:32:28 for Bolt Beta by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Jun 14 2013 15:22:54 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.3
 </small></address>

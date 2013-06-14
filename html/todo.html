@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.3"/>
-<title>Bolt Beta: Todo List</title>
+<title>Bolt: Todo List</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -17,8 +17,8 @@
  <tbody>
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
-   <div id="projectname">Bolt Beta
-   &#160;<span id="projectnumber">1.0.0</span>
+   <div id="projectname">Bolt
+   &#160;<span id="projectnumber">1.0</span>
    </div>
    <div id="projectbrief">C++ template library with support for OpenCL</div>
   </td>
@@ -49,19 +49,21 @@
 <dd>Find a way to be able to unambiguously specify memory flags for this constructor, that is not confused with the size constructor below.  </dd>
 <dt><a class="anchor" id="_todo000002"></a>Class <a class="el" href="classbolt_1_1amp_1_1device__vector_1_1reverse__iterator__base.html">bolt::amp::device_vector&lt; T, CONT &gt;::reverse_iterator_base&lt; Container &gt;</a>  </dt>
 <dd>Need to implement base() which returns the base iterator  </dd>
-<dt><a class="anchor" id="_todo000006"></a>Member <a class="el" href="group__CL-control.html#ga5d5cf9602cdd8e3d94cf2f4627bd237c">bolt::cl::control::getDefaultCommandQueue</a>  ()</dt>
+<dt><a class="anchor" id="_todo000007"></a>Member <a class="el" href="group__CL-control.html#ga5d5cf9602cdd8e3d94cf2f4627bd237c">bolt::cl::control::getDefaultCommandQueue</a>  ()</dt>
 <dd>The default commandqueue is created with a context that contains all GPU devices in platform. Since kernels are only compiled on first invocation, switching between GPU devices is OK, but switching to a CPU device afterwards causes an exception because the kernel was not compiled for CPU. Should we provide more options and expose more intefaces to the user?  </dd>
-<dt><a class="anchor" id="_todo000008"></a>Member <a class="el" href="classbolt_1_1cl_1_1device__vector.html#a01c1f40015e9b9f8699cf92c40cfa3a0">bolt::cl::device_vector&lt; T &gt;::device_vector</a>  (const control &amp;ctl=control::getDefault())</dt>
+<dt><a class="anchor" id="_todo000009"></a>Member <a class="el" href="classbolt_1_1cl_1_1device__vector.html#a01c1f40015e9b9f8699cf92c40cfa3a0">bolt::cl::device_vector&lt; T &gt;::device_vector</a>  (const control &amp;ctl=control::getDefault())</dt>
 <dd>Find a way to be able to unambiguously specify memory flags for this constructor, that is not confused with the size constructor below.  </dd>
-<dt><a class="anchor" id="_todo000007"></a>Class <a class="el" href="classbolt_1_1cl_1_1device__vector_1_1reverse__iterator__base.html">bolt::cl::device_vector&lt; T &gt;::reverse_iterator_base&lt; Container &gt;</a>  </dt>
+<dt><a class="anchor" id="_todo000008"></a>Class <a class="el" href="classbolt_1_1cl_1_1device__vector_1_1reverse__iterator__base.html">bolt::cl::device_vector&lt; T &gt;::reverse_iterator_base&lt; Container &gt;</a>  </dt>
 <dd>Implement base()  </dd>
-<dt><a class="anchor" id="_todo000005"></a>Class <a class="el" href="structClCode.html">ClCode&lt; Type &gt;</a>  </dt>
-<dd>If this does not pan out, remove </dd>
+<dt><a class="anchor" id="_todo000006"></a>Class <a class="el" href="structClCode.html">ClCode&lt; Type &gt;</a>  </dt>
+<dd>If this does not pan out, remove  </dd>
+<dt><a class="anchor" id="_todo000004"></a>File <a class="el" href="amp_2iterator_2iterator__traits_8h.html">iterator_traits.h</a>  </dt>
+<dd>This is a minimal version of OpenCL iterator_traits. Needs improvement. </dd>
 </dl>
 </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Apr 12 2013 10:32:28 for Bolt Beta by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Jun 14 2013 15:22:53 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.3
 </small></address>

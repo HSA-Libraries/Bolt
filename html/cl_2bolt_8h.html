@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.3"/>
-<title>Bolt Beta: C:/Jay_Win8/BOLT/hsa_bolt/include/bolt/cl/bolt.h File Reference</title>
+<title>Bolt: C:/Avinash_Bolt/Bolt_forked/Bolt/include/bolt/cl/bolt.h File Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -17,8 +17,8 @@
  <tbody>
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
-   <div id="projectname">Bolt Beta
-   &#160;<span id="projectnumber">1.0.0</span>
+   <div id="projectname">Bolt
+   &#160;<span id="projectnumber">1.0</span>
    </div>
    <div id="projectbrief">C++ template library with support for OpenCL</div>
   </td>
@@ -46,7 +46,7 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="dir_9851deb669ed8df5ba5fd399e2ebe56c.html">hsa_bolt</a></li><li class="navelem"><a class="el" href="dir_958292f73b3ae70a9502decc70ac6188.html">include</a></li><li class="navelem"><a class="el" href="dir_97913691ce5893d99a5e47223e40881c.html">bolt</a></li><li class="navelem"><a class="el" href="dir_5c51b1b685f5bf528ffb07f475f4fd24.html">cl</a></li>  </ul>
+<li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_33065aeea99578d2088bdef6d41465e7.html">bolt</a></li><li class="navelem"><a class="el" href="dir_421f711f8ea929b04bc8cde87c375942.html">cl</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
@@ -98,9 +98,9 @@ Namespaces</h2></td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="define-members"></a>
 Macros</h2></td></tr>
-<tr class="memitem:afde52578681b271f3ed869a8495d2b9e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="afde52578681b271f3ed869a8495d2b9e"></a>
-#define&#160;</td><td class="memItemRight" valign="bottom"><b>OCL_BOLT_H</b></td></tr>
-<tr class="separator:afde52578681b271f3ed869a8495d2b9e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6a422aadb4d80ea4a2d42d561d277dd7"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6a422aadb4d80ea4a2d42d561d277dd7"></a>
+#define&#160;</td><td class="memItemRight" valign="bottom"><b>BOLT_CL_BOLT_H</b></td></tr>
+<tr class="separator:a6a422aadb4d80ea4a2d42d561d277dd7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af1b68fb4ba71d72d397f46a730f03f2f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af1b68fb4ba71d72d397f46a730f03f2f"></a>
 #define&#160;</td><td class="memItemRight" valign="bottom"><b>__CL_ENABLE_EXCEPTIONS</b></td></tr>
 <tr class="separator:af1b68fb4ba71d72d397f46a730f03f2f"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -148,18 +148,39 @@ std::string&#160;</td><td class="memItemRight" valign="bottom"><b>bolt::cl::file
 <tr class="memitem:aae75f86cee9f23a2c950ce732e164593"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aae75f86cee9f23a2c950ce732e164593"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>bolt::cl::wait</b> (const <a class="el" href="classbolt_1_1cl_1_1control.html">bolt::cl::control</a> &amp;ctl,::cl::Event &amp;e)</td></tr>
 <tr class="separator:aae75f86cee9f23a2c950ce732e164593"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa96242e0fa8c54712256fb48257bec56"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa96242e0fa8c54712256fb48257bec56"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>BOLT_CREATE_TYPENAME</b> (int)</td></tr>
-<tr class="separator:aa96242e0fa8c54712256fb48257bec56"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a30690c7952ed169d27590893d87a70d4"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a30690c7952ed169d27590893d87a70d4"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>BOLT_CREATE_TYPENAME</b> (unsigned int)</td></tr>
-<tr class="separator:a30690c7952ed169d27590893d87a70d4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a3d60b1e6bdde8917b857b29d593f4ac4"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a3d60b1e6bdde8917b857b29d593f4ac4"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>BOLT_CREATE_TYPENAME</b> (float)</td></tr>
-<tr class="separator:a3d60b1e6bdde8917b857b29d593f4ac4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a24c9843cfcc18f5df7f8a2bff4d7e806"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a24c9843cfcc18f5df7f8a2bff4d7e806"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>BOLT_CREATE_TYPENAME</b> (double)</td></tr>
-<tr class="separator:a24c9843cfcc18f5df7f8a2bff4d7e806"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6fbf806742aa282e44df4efc3cc11d8c"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6fbf806742aa282e44df4efc3cc11d8c"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>BOLT_CREATE_TYPENAME</b> (char)</td></tr>
+<tr class="separator:a6fbf806742aa282e44df4efc3cc11d8c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4d1879100df14a3e76e54196e17a2566"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4d1879100df14a3e76e54196e17a2566"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>BOLT_CREATE_TYPENAME</b> (cl_char)</td></tr>
+<tr class="separator:a4d1879100df14a3e76e54196e17a2566"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a08447aa111484aae75786b78b1f8408b"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a08447aa111484aae75786b78b1f8408b"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>BOLT_CREATE_TYPENAME</b> (cl_uchar)</td></tr>
+<tr class="separator:a08447aa111484aae75786b78b1f8408b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6d735895c9932fb182ed991493000b31"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6d735895c9932fb182ed991493000b31"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>BOLT_CREATE_TYPENAME</b> (cl_short)</td></tr>
+<tr class="separator:a6d735895c9932fb182ed991493000b31"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7b9240953aa6ce6f31274f24478fed50"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a7b9240953aa6ce6f31274f24478fed50"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>BOLT_CREATE_TYPENAME</b> (cl_ushort)</td></tr>
+<tr class="separator:a7b9240953aa6ce6f31274f24478fed50"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab44248f3d7c3a080df998b1e28c0418f"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab44248f3d7c3a080df998b1e28c0418f"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>BOLT_CREATE_TYPENAME</b> (cl_int)</td></tr>
+<tr class="separator:ab44248f3d7c3a080df998b1e28c0418f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9a550f45ee62c90ad044b7b6178a8e0e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9a550f45ee62c90ad044b7b6178a8e0e"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>BOLT_CREATE_TYPENAME</b> (cl_uint)</td></tr>
+<tr class="separator:a9a550f45ee62c90ad044b7b6178a8e0e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abddb2d4b7c339956ad3e709b01c97d1e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="abddb2d4b7c339956ad3e709b01c97d1e"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>BOLT_CREATE_TYPENAME</b> (cl_long)</td></tr>
+<tr class="separator:abddb2d4b7c339956ad3e709b01c97d1e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3458e94a894408b4c2524318470a82e0"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a3458e94a894408b4c2524318470a82e0"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>BOLT_CREATE_TYPENAME</b> (cl_ulong)</td></tr>
+<tr class="separator:a3458e94a894408b4c2524318470a82e0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae5304fd19c8d201ca6c4876ff73857f5"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ae5304fd19c8d201ca6c4876ff73857f5"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>BOLT_CREATE_TYPENAME</b> (cl_float)</td></tr>
+<tr class="separator:ae5304fd19c8d201ca6c4876ff73857f5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a46719417476cb7064ec53b06e27669ae"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a46719417476cb7064ec53b06e27669ae"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>BOLT_CREATE_TYPENAME</b> (cl_double)</td></tr>
+<tr class="separator:a46719417476cb7064ec53b06e27669ae"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="var-members"></a>
 Variables</h2></td></tr>
@@ -255,7 +276,7 @@ ProgramMap&#160;</td><td class="memItemRight" valign="bottom"><b>bolt::cl::progr
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Apr 12 2013 10:32:28 for Bolt Beta by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Jun 14 2013 15:22:52 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.3
 </small></address>

@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.3"/>
-<title>Bolt Beta: CL-reduce</title>
+<title>Bolt: CL-reduce</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -17,8 +17,8 @@
  <tbody>
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
-   <div id="projectname">Bolt Beta
-   &#160;<span id="projectnumber">1.0.0</span>
+   <div id="projectname">Bolt
+   &#160;<span id="projectnumber">1.0</span>
    </div>
    <div id="projectbrief">C++ template library with support for OpenCL</div>
   </td>
@@ -141,12 +141,8 @@ template&lt;typename InputIterator &gt; </div>
 <div class="line"></div>
 <div class="line"><span class="keywordtype">int</span> a[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};</div>
 <div class="line"></div>
-<div class="line">cl::CommandQueue myCommandQueue = <a class="code" href="group__CL-control.html#ga5d5cf9602cdd8e3d94cf2f4627bd237c" title="Convenience method to help users create and initialize an OpenCL CommandQueue.">bolt::cl::control::getDefaultCommandQueue</a>();</div>
 <div class="line"></div>
-<div class="line"><a class="code" href="classbolt_1_1cl_1_1control.html">bolt::cl::control</a> ctl(myCommandQueue); <span class="comment">//specify an OpenCL(TM) command queue to use for executing the reduce.</span></div>
-<div class="line">ctl.debug(bolt::cl::control::debug::SaveCompilerTemps); <span class="comment">// save IL and ISA files for generated kernel</span></div>
-<div class="line"></div>
-<div class="line"><span class="keywordtype">int</span> sum = <a class="code" href="group__CL-reduce.html#gaf0816a69e6e1ce79976e0496d7650ec9" title="reduce returns the result of combining all the elements in the specified range using the specified bi...">bolt::cl::reduce</a>(ctl, a, a+10);</div>
+<div class="line"><span class="keywordtype">int</span> sum = <a class="code" href="group__CL-reduce.html#gaf0816a69e6e1ce79976e0496d7650ec9" title="reduce returns the result of combining all the elements in the specified range using the specified bi...">bolt::cl::reduce</a>(a, a+10);</div>
 <div class="line"><span class="comment">// sum = 55</span></div>
 </div><!-- fragment --> <dl class="section see"><dt>See Also</dt><dd><a href="http://www.sgi.com/tech/stl/accumulate.html">http://www.sgi.com/tech/stl/accumulate.html</a> </dd></dl>
 
@@ -222,14 +218,9 @@ template&lt;typename InputIterator , typename T &gt; </div>
 <div class="line"></div>
 <div class="line"><span class="keywordtype">int</span> a[10] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};</div>
 <div class="line"></div>
-<div class="line">cl::CommandQueue myCommandQueue = ...</div>
-<div class="line"></div>
-<div class="line">bolt::cl::control ctl(myCommandQueue); <span class="comment">//specify an OpenCL(TM) command queue to use for executing the reduce.</span></div>
-<div class="line">ctl.debug(bolt::cl::control::debug::SaveCompilerTemps); <span class="comment">// save IL and ISA files for generated kernel</span></div>
-<div class="line"></div>
 <div class="line"><span class="keywordtype">int</span> init = 10;</div>
 <div class="line"></div>
-<div class="line"><span class="keywordtype">int</span> sum = <a class="code" href="group__CL-reduce.html#gaf0816a69e6e1ce79976e0496d7650ec9" title="reduce returns the result of combining all the elements in the specified range using the specified bi...">bolt::cl::reduce</a>(ctl, a, a+10, init);</div>
+<div class="line"><span class="keywordtype">int</span> sum = <a class="code" href="group__CL-reduce.html#gaf0816a69e6e1ce79976e0496d7650ec9" title="reduce returns the result of combining all the elements in the specified range using the specified bi...">bolt::cl::reduce</a>(a, a+10, init);</div>
 <div class="line"><span class="comment">// sum = 65</span></div>
 </div><!-- fragment --> <dl class="section see"><dt>See Also</dt><dd><a href="http://www.sgi.com/tech/stl/accumulate.html">http://www.sgi.com/tech/stl/accumulate.html</a> </dd></dl>
 
@@ -307,17 +298,12 @@ template&lt;typename InputIterator , typename T , typename BinaryFunction &gt; <
   </dd>
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>The result of the reduction.</dd></dl>
-<p>The following code example shows the use of <code>reduce</code> to find the max of 10 numbers, specifying a specific command-queue and enabling debug messages. </p>
+<p>The following code example shows the use of <code>reduce</code> to find the max of 10 numbers. </p>
 <div class="fragment"><div class="line"><span class="preprocessor">#include &lt;<a class="code" href="cl_2reduce_8h.html" title="Returns the result of combining all the elements in the specified range using the specified...">bolt/cl/reduce.h</a>&gt;</span></div>
 <div class="line"></div>
 <div class="line"><span class="keywordtype">int</span> a[10] = {2, 9, 3, 7, 5, 6, 3, 8, 3, 4};</div>
 <div class="line"></div>
-<div class="line">cl::CommandQueue myCommandQueue = <a class="code" href="group__CL-control.html#ga5d5cf9602cdd8e3d94cf2f4627bd237c" title="Convenience method to help users create and initialize an OpenCL CommandQueue.">bolt::cl::control::getDefaultCommandQueue</a>();</div>
-<div class="line"></div>
-<div class="line"><a class="code" href="classbolt_1_1cl_1_1control.html">bolt::cl::control</a> ctl(myCommandQueue); <span class="comment">// specify an OpenCL(TM) command queue to use for executing the reduce.</span></div>
-<div class="line">ctl.debug(bolt::cl::control::debug::SaveCompilerTemps); <span class="comment">// save IL and ISA files for generated kernel.</span></div>
-<div class="line"></div>
-<div class="line"><span class="keywordtype">int</span> max = <a class="code" href="group__CL-reduce.html#gaf0816a69e6e1ce79976e0496d7650ec9" title="reduce returns the result of combining all the elements in the specified range using the specified bi...">bolt::cl::reduce</a>(ctl, a, a+10, -1, bolt::cl:maximum&lt;int&gt;());</div>
+<div class="line"><span class="keywordtype">int</span> max = <a class="code" href="group__CL-reduce.html#gaf0816a69e6e1ce79976e0496d7650ec9" title="reduce returns the result of combining all the elements in the specified range using the specified bi...">bolt::cl::reduce</a>( a, a+10, -1, bolt::cl:maximum&lt;int&gt;());</div>
 <div class="line"><span class="comment">// max = 9</span></div>
 </div><!-- fragment --> <dl class="section see"><dt>See Also</dt><dd><a href="http://www.sgi.com/tech/stl/accumulate.html">http://www.sgi.com/tech/stl/accumulate.html</a> </dd></dl>
 
@@ -326,7 +312,7 @@ template&lt;typename InputIterator , typename T , typename BinaryFunction &gt; <
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Apr 12 2013 10:32:28 for Bolt Beta by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Jun 14 2013 15:22:54 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.3
 </small></address>

@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.3"/>
-<title>Bolt Beta: bolt::amp::control Class Reference</title>
+<title>Bolt: bolt::amp::control Class Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -17,8 +17,8 @@
  <tbody>
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
-   <div id="projectname">Bolt Beta
-   &#160;<span id="projectnumber">1.0.0</span>
+   <div id="projectname">Bolt
+   &#160;<span id="projectnumber">1.0</span>
    </div>
    <div id="projectbrief">C++ template library with support for OpenCL</div>
   </td>
@@ -152,7 +152,7 @@ Static Public Member Functions</h2></td></tr>
 <div class="textblock"><p>The <code>control</code> class lets you control the parameters of a specific Bolt algorithm call, such as the debug information, load-balancing with the host, and more. Each Bolt Algorithm call accepts the <code>control</code> class as an optional first argument. Additionally, Bolt contains a global default <code>control</code> structure that is used in cases where the <code>control</code> argument is not specified; also, developers can modify this structure. Some examples:</p>
 <div class="fragment"><div class="line">::Concurrency::accelerator accel(::Concurrency::accelerator::default_accelerator);</div>
 <div class="line"><a class="code" href="classbolt_1_1amp_1_1control.html">bolt::amp::control</a> myControl(accel);</div>
-<div class="line"><span class="keywordtype">int</span> sum = <a class="code" href="group__CL-reduce.html#gaf0816a69e6e1ce79976e0496d7650ec9" title="reduce returns the result of combining all the elements in the specified range using the specified bi...">bolt::cl::reduce</a>(myControl, ...); </div>
+<div class="line"><span class="keywordtype">int</span> sum = <a class="code" href="group__CL-reduce.html#gaf0816a69e6e1ce79976e0496d7650ec9" title="reduce returns the result of combining all the elements in the specified range using the specified bi...">bolt::cl::reduce</a>(myControl, ...);</div>
 </div><!-- fragment --><p>Developers also can inialize and save control structures to avoid the cost of copying the default on each function call. An example: </p>
 <div class="fragment"><div class="line"><span class="keyword">class </span>MyClass {</div>
 <div class="line">  MyClass(...) {</div>
@@ -160,21 +160,21 @@ Static Public Member Functions</h2></td></tr>
 <div class="line">     _boltControl.accelerator(accel);</div>
 <div class="line">  };</div>
 <div class="line"></div>
-<div class="line">  <span class="keywordtype">void</span> runIt() </div>
+<div class="line">  <span class="keywordtype">void</span> runIt()</div>
 <div class="line">  {</div>
-<div class="line">    <span class="keywordtype">int</span> sum = <a class="code" href="group__amp-reduce.html#ga7cc02de68696520df430df94876e1c99" title="reduce returns the result of combining all the elements in the specified range using the specified bi...">bolt::amp::reduce</a>(_boltControl, ...); </div>
+<div class="line">    <span class="keywordtype">int</span> sum = <a class="code" href="group__amp-reduce.html#ga7cc02de68696520df430df94876e1c99" title="reduce returns the result of combining all the elements in the specified range using the specified bi...">bolt::amp::reduce</a>(_boltControl, ...);</div>
 <div class="line">  };</div>
 <div class="line"></div>
 <div class="line">  <span class="keyword">private</span>:</div>
 <div class="line">      <a class="code" href="classbolt_1_1amp_1_1control.html">bolt::amp::control</a> _boltControl;</div>
 <div class="line">  }</div>
 </div><!-- fragment --> </div><hr/>The documentation for this class was generated from the following file:<ul>
-<li>C:/Jay_Win8/BOLT/hsa_bolt/include/bolt/amp/<a class="el" href="amp_2control_8h_source.html">control.h</a></li>
+<li>C:/Avinash_Bolt/Bolt_forked/Bolt/include/bolt/amp/<a class="el" href="amp_2control_8h_source.html">control.h</a></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Apr 12 2013 10:32:28 for Bolt Beta by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Jun 14 2013 15:22:54 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.3
 </small></address>

@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.3"/>
-<title>Bolt Beta: C:/Jay_Win8/BOLT/hsa_bolt/include/bolt/cl/bolt.h Source File</title>
+<title>Bolt: C:/Avinash_Bolt/Bolt_forked/Bolt/include/bolt/cl/bolt.h Source File</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -17,8 +17,8 @@
  <tbody>
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
-   <div id="projectname">Bolt Beta
-   &#160;<span id="projectnumber">1.0.0</span>
+   <div id="projectname">Bolt
+   &#160;<span id="projectnumber">1.0</span>
    </div>
    <div id="projectbrief">C++ template library with support for OpenCL</div>
   </td>
@@ -46,7 +46,7 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="dir_9851deb669ed8df5ba5fd399e2ebe56c.html">hsa_bolt</a></li><li class="navelem"><a class="el" href="dir_958292f73b3ae70a9502decc70ac6188.html">include</a></li><li class="navelem"><a class="el" href="dir_97913691ce5893d99a5e47223e40881c.html">bolt</a></li><li class="navelem"><a class="el" href="dir_5c51b1b685f5bf528ffb07f475f4fd24.html">cl</a></li>  </ul>
+<li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_33065aeea99578d2088bdef6d41465e7.html">bolt</a></li><li class="navelem"><a class="el" href="dir_421f711f8ea929b04bc8cde87c375942.html">cl</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
@@ -54,27 +54,27 @@
 <div class="title">bolt.h</div>  </div>
 </div><!--header-->
 <div class="contents">
-<a href="cl_2bolt_8h.html">Go to the documentation of this file.</a><div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;<span class="comment">/***************************************************************************                                                                                     </span></div>
-<div class="line"><a name="l00002"></a><span class="lineno">    2</span>&#160;<span class="comment">*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     </span></div>
-<div class="line"><a name="l00003"></a><span class="lineno">    3</span>&#160;<span class="comment">*                                                                                    </span></div>
-<div class="line"><a name="l00004"></a><span class="lineno">    4</span>&#160;<span class="comment">*   Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);   </span></div>
-<div class="line"><a name="l00005"></a><span class="lineno">    5</span>&#160;<span class="comment">*   you may not use this file except in compliance with the License.                 </span></div>
-<div class="line"><a name="l00006"></a><span class="lineno">    6</span>&#160;<span class="comment">*   You may obtain a copy of the License at                                          </span></div>
-<div class="line"><a name="l00007"></a><span class="lineno">    7</span>&#160;<span class="comment">*                                                                                    </span></div>
-<div class="line"><a name="l00008"></a><span class="lineno">    8</span>&#160;<span class="comment">*       http://www.apache.org/licenses/LICENSE-2.0                      </span></div>
-<div class="line"><a name="l00009"></a><span class="lineno">    9</span>&#160;<span class="comment">*                                                                                    </span></div>
-<div class="line"><a name="l00010"></a><span class="lineno">   10</span>&#160;<span class="comment">*   Unless required by applicable law or agreed to in writing, software              </span></div>
-<div class="line"><a name="l00011"></a><span class="lineno">   11</span>&#160;<span class="comment">*   distributed under the License is distributed on an &quot;AS IS&quot; BASIS,              </span></div>
-<div class="line"><a name="l00012"></a><span class="lineno">   12</span>&#160;<span class="comment">*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.         </span></div>
-<div class="line"><a name="l00013"></a><span class="lineno">   13</span>&#160;<span class="comment">*   See the License for the specific language governing permissions and              </span></div>
-<div class="line"><a name="l00014"></a><span class="lineno">   14</span>&#160;<span class="comment">*   limitations under the License.                                                   </span></div>
+<a href="cl_2bolt_8h.html">Go to the documentation of this file.</a><div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;<span class="comment">/***************************************************************************</span></div>
+<div class="line"><a name="l00002"></a><span class="lineno">    2</span>&#160;<span class="comment">*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.</span></div>
+<div class="line"><a name="l00003"></a><span class="lineno">    3</span>&#160;<span class="comment">*</span></div>
+<div class="line"><a name="l00004"></a><span class="lineno">    4</span>&#160;<span class="comment">*   Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span></div>
+<div class="line"><a name="l00005"></a><span class="lineno">    5</span>&#160;<span class="comment">*   you may not use this file except in compliance with the License.</span></div>
+<div class="line"><a name="l00006"></a><span class="lineno">    6</span>&#160;<span class="comment">*   You may obtain a copy of the License at</span></div>
+<div class="line"><a name="l00007"></a><span class="lineno">    7</span>&#160;<span class="comment">*</span></div>
+<div class="line"><a name="l00008"></a><span class="lineno">    8</span>&#160;<span class="comment">*       http://www.apache.org/licenses/LICENSE-2.0</span></div>
+<div class="line"><a name="l00009"></a><span class="lineno">    9</span>&#160;<span class="comment">*</span></div>
+<div class="line"><a name="l00010"></a><span class="lineno">   10</span>&#160;<span class="comment">*   Unless required by applicable law or agreed to in writing, software</span></div>
+<div class="line"><a name="l00011"></a><span class="lineno">   11</span>&#160;<span class="comment">*   distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span></div>
+<div class="line"><a name="l00012"></a><span class="lineno">   12</span>&#160;<span class="comment">*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span></div>
+<div class="line"><a name="l00013"></a><span class="lineno">   13</span>&#160;<span class="comment">*   See the License for the specific language governing permissions and</span></div>
+<div class="line"><a name="l00014"></a><span class="lineno">   14</span>&#160;<span class="comment">*   limitations under the License.</span></div>
 <div class="line"><a name="l00015"></a><span class="lineno">   15</span>&#160;<span class="comment"></span></div>
-<div class="line"><a name="l00016"></a><span class="lineno">   16</span>&#160;<span class="comment">***************************************************************************/</span>                                                                                     </div>
+<div class="line"><a name="l00016"></a><span class="lineno">   16</span>&#160;<span class="comment">***************************************************************************/</span></div>
 <div class="line"><a name="l00017"></a><span class="lineno">   17</span>&#160;</div>
 <div class="line"><a name="l00018"></a><span class="lineno">   18</span>&#160;</div>
 <div class="line"><a name="l00023"></a><span class="lineno">   23</span>&#160;<span class="preprocessor">#pragma once</span></div>
-<div class="line"><a name="l00024"></a><span class="lineno">   24</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#if !defined( OCL_BOLT_H )</span></div>
-<div class="line"><a name="l00025"></a><span class="lineno">   25</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#define OCL_BOLT_H</span></div>
+<div class="line"><a name="l00024"></a><span class="lineno">   24</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#if !defined( BOLT_CL_BOLT_H )</span></div>
+<div class="line"><a name="l00025"></a><span class="lineno">   25</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#define BOLT_CL_BOLT_H</span></div>
 <div class="line"><a name="l00026"></a><span class="lineno">   26</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#define __CL_ENABLE_EXCEPTIONS</span></div>
 <div class="line"><a name="l00027"></a><span class="lineno">   27</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#define CL_USE_DEPRECATED_OPENCL_1_1_APIS</span></div>
 <div class="line"><a name="l00028"></a><span class="lineno">   28</span>&#160;<span class="preprocessor"></span></div>
@@ -119,7 +119,7 @@
 <div class="line"><a name="l00089"></a><span class="lineno">   89</span>&#160;        <span class="comment">// transform_scan kernel names</span></div>
 <div class="line"><a name="l00090"></a><span class="lineno">   90</span>&#160;        <span class="comment">//static std::string transform_scan_kernel_names_array[] = { &quot;perBlockTransformScan&quot;, &quot;intraBlockInclusiveScan&quot;, &quot;perBlockAddition&quot; };</span></div>
 <div class="line"><a name="l00091"></a><span class="lineno">   91</span>&#160;        <span class="comment">//const std::vector&lt;std::string&gt; transformScanKernelNames(transform_scan_kernel_names_array, transform_scan_kernel_names_array+3);</span></div>
-<div class="line"><a name="l00092"></a><span class="lineno">   92</span>&#160;        </div>
+<div class="line"><a name="l00092"></a><span class="lineno">   92</span>&#160;</div>
 <div class="line"><a name="l00093"></a><span class="lineno">   93</span>&#160;        <span class="comment">/******************************************************************</span></div>
 <div class="line"><a name="l00094"></a><span class="lineno">   94</span>&#160;<span class="comment">         * Kernel Template Specialization</span></div>
 <div class="line"><a name="l00095"></a><span class="lineno">   95</span>&#160;<span class="comment">         *****************************************************************/</span></div>
@@ -166,7 +166,7 @@
 <div class="line"><a name="l00136"></a><span class="lineno">  136</span>&#160;            <span class="keyword">const</span> std::string&amp;  baseKernelString,</div>
 <div class="line"><a name="l00137"></a><span class="lineno">  137</span>&#160;            <span class="keyword">const</span> std::string&amp;  compileOptions = <span class="stringliteral">&quot;&quot;</span></div>
 <div class="line"><a name="l00138"></a><span class="lineno">  138</span>&#160;                 );</div>
-<div class="line"><a name="l00139"></a><span class="lineno">  139</span>&#160;        </div>
+<div class="line"><a name="l00139"></a><span class="lineno">  139</span>&#160;</div>
 <div class="line"><a name="l00146"></a><span class="lineno">  146</span>&#160;        <span class="keywordtype">void</span> <a class="code" href="namespacebolt_1_1cl.html#a20295070584d911b7849923ad8e7a13d" title="Query the Bolt library for version information.">getVersion</a>( cl_uint&amp; major, cl_uint&amp; minor, cl_uint&amp; patch );</div>
 <div class="line"><a name="l00147"></a><span class="lineno">  147</span>&#160;</div>
 <div class="line"><a name="l00152"></a><span class="lineno">  152</span>&#160;        std::string <a class="code" href="namespacebolt_1_1cl.html#af41b2bb34d37931d9c19f2759e5ab470" title="Translates an integer OpenCL error code to a std::string at runtime.">clErrorStringA</a>( <span class="keyword">const</span> cl_int&amp; status );</div>
@@ -174,7 +174,7 @@
 <div class="line"><a name="l00158"></a><span class="lineno">  158</span>&#160;        std::wstring <a class="code" href="namespacebolt_1_1cl.html#ad0959be0ccdcf86d72b259553984438c" title="Translates an integer OpenCL error code to a std::wstring at runtime.">clErrorStringW</a>( <span class="keyword">const</span> cl_int&amp; status );</div>
 <div class="line"><a name="l00159"></a><span class="lineno">  159</span>&#160;</div>
 <div class="line"><a name="l00166"></a><span class="lineno"><a class="code" href="namespacebolt_1_1cl.html#aee08a3741d7d306bccbd5f5f308c3d39">  166</a></span>&#160;        <span class="keyword">inline</span> cl_int <a class="code" href="namespacebolt_1_1cl.html#aee08a3741d7d306bccbd5f5f308c3d39" title="Helper print function to stringify OpenCL error codes.">V_OpenCL</a>( cl_int res, <span class="keyword">const</span> std::string&amp; msg, <span class="keywordtype">size_t</span> lineno )</div>
-<div class="line"><a name="l00167"></a><span class="lineno">  167</span>&#160;        { </div>
+<div class="line"><a name="l00167"></a><span class="lineno">  167</span>&#160;        {</div>
 <div class="line"><a name="l00168"></a><span class="lineno">  168</span>&#160;            <span class="keywordflow">switch</span>( res )</div>
 <div class="line"><a name="l00169"></a><span class="lineno">  169</span>&#160;            {</div>
 <div class="line"><a name="l00170"></a><span class="lineno">  170</span>&#160;                <span class="keywordflow">case</span>    CL_SUCCESS:</div>
@@ -283,55 +283,64 @@
 <div class="line"><a name="l00275"></a><span class="lineno">  275</span>&#160;<span class="preprocessor">#if defined( _WIN32 )</span></div>
 <div class="line"><a name="l00276"></a><span class="lineno">  276</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#define ALIGNED( bound ) __declspec( align( bound ) )</span></div>
 <div class="line"><a name="l00277"></a><span class="lineno">  277</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#else</span></div>
-<div class="line"><a name="l00278"></a><span class="lineno">  278</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#define ALIGNED( bound ) __attribute__ ( (aligned( bound ) ) ) </span></div>
+<div class="line"><a name="l00278"></a><span class="lineno">  278</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#define ALIGNED( bound ) __attribute__ ( (aligned( bound ) ) )</span></div>
 <div class="line"><a name="l00279"></a><span class="lineno">  279</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#endif</span></div>
 <div class="line"><a name="l00280"></a><span class="lineno">  280</span>&#160;<span class="preprocessor"></span></div>
-<div class="line"><a name="l00281"></a><span class="lineno">  281</span>&#160;<a class="code" href="group__ClCode.html#gae47f88b0e8fbb3d374821aac54c5c872">BOLT_CREATE_TYPENAME</a>( <span class="keywordtype">int</span> );</div>
-<div class="line"><a name="l00282"></a><span class="lineno">  282</span>&#160;<a class="code" href="group__ClCode.html#gae47f88b0e8fbb3d374821aac54c5c872">BOLT_CREATE_TYPENAME</a>( <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> );</div>
-<div class="line"><a name="l00283"></a><span class="lineno">  283</span>&#160;<a class="code" href="group__ClCode.html#gae47f88b0e8fbb3d374821aac54c5c872">BOLT_CREATE_TYPENAME</a>( <span class="keywordtype">float</span> );</div>
-<div class="line"><a name="l00284"></a><span class="lineno">  284</span>&#160;<a class="code" href="group__ClCode.html#gae47f88b0e8fbb3d374821aac54c5c872">BOLT_CREATE_TYPENAME</a>( <span class="keywordtype">double</span> );</div>
-<div class="line"><a name="l00285"></a><span class="lineno">  285</span>&#160;</div>
-<div class="line"><a name="l00287"></a><span class="lineno">  287</span>&#160;<span class="comment">//BOLT_CREATE_TYPENAME( cl_int );</span></div>
-<div class="line"><a name="l00288"></a><span class="lineno">  288</span>&#160;<span class="comment">//BOLT_CREATE_CLCODE( cl_int, &quot;int&quot; );</span></div>
-<div class="line"><a name="l00289"></a><span class="lineno">  289</span>&#160;<span class="comment">//</span></div>
-<div class="line"><a name="l00290"></a><span class="lineno">  290</span>&#160;<span class="comment">//BOLT_CREATE_TYPENAME( cl_int2 );</span></div>
-<div class="line"><a name="l00291"></a><span class="lineno">  291</span>&#160;<span class="comment">//BOLT_CREATE_CLCODE( cl_int2, &quot;int2&quot; );</span></div>
-<div class="line"><a name="l00292"></a><span class="lineno">  292</span>&#160;<span class="comment">//</span></div>
-<div class="line"><a name="l00293"></a><span class="lineno">  293</span>&#160;<span class="comment">//BOLT_CREATE_TYPENAME( cl_int4 );</span></div>
-<div class="line"><a name="l00294"></a><span class="lineno">  294</span>&#160;<span class="comment">//BOLT_CREATE_CLCODE( cl_int4, &quot;int4&quot; );</span></div>
-<div class="line"><a name="l00295"></a><span class="lineno">  295</span>&#160;<span class="comment">//</span></div>
-<div class="line"><a name="l00296"></a><span class="lineno">  296</span>&#160;<span class="comment">//BOLT_CREATE_TYPENAME( cl_uint );</span></div>
-<div class="line"><a name="l00297"></a><span class="lineno">  297</span>&#160;<span class="comment">//BOLT_CREATE_CLCODE( cl_uint, &quot;uint&quot; );</span></div>
+<div class="line"><a name="l00281"></a><span class="lineno">  281</span>&#160;<span class="comment">//Visual Studio 2012 is not able to map char to cl_char. Hence this typename is added.</span></div>
+<div class="line"><a name="l00282"></a><span class="lineno">  282</span>&#160;<a class="code" href="group__ClCode.html#gae47f88b0e8fbb3d374821aac54c5c872">BOLT_CREATE_TYPENAME</a>( <span class="keywordtype">char</span> );</div>
+<div class="line"><a name="l00283"></a><span class="lineno">  283</span>&#160;</div>
+<div class="line"><a name="l00284"></a><span class="lineno">  284</span>&#160;<a class="code" href="group__ClCode.html#gae47f88b0e8fbb3d374821aac54c5c872">BOLT_CREATE_TYPENAME</a>( cl_char );   </div>
+<div class="line"><a name="l00285"></a><span class="lineno">  285</span>&#160;<a class="code" href="group__ClCode.html#gae47f88b0e8fbb3d374821aac54c5c872">BOLT_CREATE_TYPENAME</a>( cl_uchar );  </div>
+<div class="line"><a name="l00286"></a><span class="lineno">  286</span>&#160;<a class="code" href="group__ClCode.html#gae47f88b0e8fbb3d374821aac54c5c872">BOLT_CREATE_TYPENAME</a>( cl_short ); </div>
+<div class="line"><a name="l00287"></a><span class="lineno">  287</span>&#160;<a class="code" href="group__ClCode.html#gae47f88b0e8fbb3d374821aac54c5c872">BOLT_CREATE_TYPENAME</a>( cl_ushort );</div>
+<div class="line"><a name="l00288"></a><span class="lineno">  288</span>&#160;<a class="code" href="group__ClCode.html#gae47f88b0e8fbb3d374821aac54c5c872">BOLT_CREATE_TYPENAME</a>( cl_int );   </div>
+<div class="line"><a name="l00289"></a><span class="lineno">  289</span>&#160;<a class="code" href="group__ClCode.html#gae47f88b0e8fbb3d374821aac54c5c872">BOLT_CREATE_TYPENAME</a>( cl_uint );  </div>
+<div class="line"><a name="l00290"></a><span class="lineno">  290</span>&#160;<a class="code" href="group__ClCode.html#gae47f88b0e8fbb3d374821aac54c5c872">BOLT_CREATE_TYPENAME</a>( cl_long );  </div>
+<div class="line"><a name="l00291"></a><span class="lineno">  291</span>&#160;<a class="code" href="group__ClCode.html#gae47f88b0e8fbb3d374821aac54c5c872">BOLT_CREATE_TYPENAME</a>( cl_ulong ); </div>
+<div class="line"><a name="l00292"></a><span class="lineno">  292</span>&#160;<a class="code" href="group__ClCode.html#gae47f88b0e8fbb3d374821aac54c5c872">BOLT_CREATE_TYPENAME</a>( cl_float ); </div>
+<div class="line"><a name="l00293"></a><span class="lineno">  293</span>&#160;<a class="code" href="group__ClCode.html#gae47f88b0e8fbb3d374821aac54c5c872">BOLT_CREATE_TYPENAME</a>( cl_double );</div>
+<div class="line"><a name="l00294"></a><span class="lineno">  294</span>&#160;</div>
+<div class="line"><a name="l00296"></a><span class="lineno">  296</span>&#160;<span class="comment">//BOLT_CREATE_TYPENAME( cl_int );</span></div>
+<div class="line"><a name="l00297"></a><span class="lineno">  297</span>&#160;<span class="comment">//BOLT_CREATE_CLCODE( cl_int, &quot;int&quot; );</span></div>
 <div class="line"><a name="l00298"></a><span class="lineno">  298</span>&#160;<span class="comment">//</span></div>
-<div class="line"><a name="l00299"></a><span class="lineno">  299</span>&#160;<span class="comment">//BOLT_CREATE_TYPENAME( cl_uint2 );</span></div>
-<div class="line"><a name="l00300"></a><span class="lineno">  300</span>&#160;<span class="comment">//BOLT_CREATE_CLCODE( cl_uint2, &quot;uint2&quot; );</span></div>
+<div class="line"><a name="l00299"></a><span class="lineno">  299</span>&#160;<span class="comment">//BOLT_CREATE_TYPENAME( cl_int2 );</span></div>
+<div class="line"><a name="l00300"></a><span class="lineno">  300</span>&#160;<span class="comment">//BOLT_CREATE_CLCODE( cl_int2, &quot;int2&quot; );</span></div>
 <div class="line"><a name="l00301"></a><span class="lineno">  301</span>&#160;<span class="comment">//</span></div>
-<div class="line"><a name="l00302"></a><span class="lineno">  302</span>&#160;<span class="comment">//BOLT_CREATE_TYPENAME( cl_uint4 );</span></div>
-<div class="line"><a name="l00303"></a><span class="lineno">  303</span>&#160;<span class="comment">//BOLT_CREATE_CLCODE( cl_uint4, &quot;uint4&quot; );</span></div>
+<div class="line"><a name="l00302"></a><span class="lineno">  302</span>&#160;<span class="comment">//BOLT_CREATE_TYPENAME( cl_int4 );</span></div>
+<div class="line"><a name="l00303"></a><span class="lineno">  303</span>&#160;<span class="comment">//BOLT_CREATE_CLCODE( cl_int4, &quot;int4&quot; );</span></div>
 <div class="line"><a name="l00304"></a><span class="lineno">  304</span>&#160;<span class="comment">//</span></div>
-<div class="line"><a name="l00305"></a><span class="lineno">  305</span>&#160;<span class="comment">//BOLT_CREATE_TYPENAME( cl_float );</span></div>
-<div class="line"><a name="l00306"></a><span class="lineno">  306</span>&#160;<span class="comment">//BOLT_CREATE_CLCODE( cl_float, &quot;float&quot; );</span></div>
+<div class="line"><a name="l00305"></a><span class="lineno">  305</span>&#160;<span class="comment">//BOLT_CREATE_TYPENAME( cl_uint );</span></div>
+<div class="line"><a name="l00306"></a><span class="lineno">  306</span>&#160;<span class="comment">//BOLT_CREATE_CLCODE( cl_uint, &quot;uint&quot; );</span></div>
 <div class="line"><a name="l00307"></a><span class="lineno">  307</span>&#160;<span class="comment">//</span></div>
-<div class="line"><a name="l00308"></a><span class="lineno">  308</span>&#160;<span class="comment">//BOLT_CREATE_TYPENAME( cl_float2 );</span></div>
-<div class="line"><a name="l00309"></a><span class="lineno">  309</span>&#160;<span class="comment">//BOLT_CREATE_CLCODE( cl_float2, &quot;float2&quot; );</span></div>
+<div class="line"><a name="l00308"></a><span class="lineno">  308</span>&#160;<span class="comment">//BOLT_CREATE_TYPENAME( cl_uint2 );</span></div>
+<div class="line"><a name="l00309"></a><span class="lineno">  309</span>&#160;<span class="comment">//BOLT_CREATE_CLCODE( cl_uint2, &quot;uint2&quot; );</span></div>
 <div class="line"><a name="l00310"></a><span class="lineno">  310</span>&#160;<span class="comment">//</span></div>
-<div class="line"><a name="l00311"></a><span class="lineno">  311</span>&#160;<span class="comment">//BOLT_CREATE_TYPENAME( cl_float4 );</span></div>
-<div class="line"><a name="l00312"></a><span class="lineno">  312</span>&#160;<span class="comment">//BOLT_CREATE_CLCODE( cl_float4, &quot;float4&quot; );</span></div>
+<div class="line"><a name="l00311"></a><span class="lineno">  311</span>&#160;<span class="comment">//BOLT_CREATE_TYPENAME( cl_uint4 );</span></div>
+<div class="line"><a name="l00312"></a><span class="lineno">  312</span>&#160;<span class="comment">//BOLT_CREATE_CLCODE( cl_uint4, &quot;uint4&quot; );</span></div>
 <div class="line"><a name="l00313"></a><span class="lineno">  313</span>&#160;<span class="comment">//</span></div>
-<div class="line"><a name="l00314"></a><span class="lineno">  314</span>&#160;<span class="comment">//BOLT_CREATE_TYPENAME( cl_double );</span></div>
-<div class="line"><a name="l00315"></a><span class="lineno">  315</span>&#160;<span class="comment">//BOLT_CREATE_CLCODE( cl_double, &quot;double&quot; );</span></div>
+<div class="line"><a name="l00314"></a><span class="lineno">  314</span>&#160;<span class="comment">//BOLT_CREATE_TYPENAME( cl_float );</span></div>
+<div class="line"><a name="l00315"></a><span class="lineno">  315</span>&#160;<span class="comment">//BOLT_CREATE_CLCODE( cl_float, &quot;float&quot; );</span></div>
 <div class="line"><a name="l00316"></a><span class="lineno">  316</span>&#160;<span class="comment">//</span></div>
-<div class="line"><a name="l00317"></a><span class="lineno">  317</span>&#160;<span class="comment">//BOLT_CREATE_TYPENAME( cl_double2 );</span></div>
-<div class="line"><a name="l00318"></a><span class="lineno">  318</span>&#160;<span class="comment">//BOLT_CREATE_CLCODE( cl_double2, &quot;double2&quot; );</span></div>
+<div class="line"><a name="l00317"></a><span class="lineno">  317</span>&#160;<span class="comment">//BOLT_CREATE_TYPENAME( cl_float2 );</span></div>
+<div class="line"><a name="l00318"></a><span class="lineno">  318</span>&#160;<span class="comment">//BOLT_CREATE_CLCODE( cl_float2, &quot;float2&quot; );</span></div>
 <div class="line"><a name="l00319"></a><span class="lineno">  319</span>&#160;<span class="comment">//</span></div>
-<div class="line"><a name="l00320"></a><span class="lineno">  320</span>&#160;<span class="comment">//BOLT_CREATE_TYPENAME( cl_double4 );</span></div>
-<div class="line"><a name="l00321"></a><span class="lineno">  321</span>&#160;<span class="comment">//BOLT_CREATE_CLCODE( cl_double4, &quot;double4&quot; );</span></div>
-<div class="line"><a name="l00322"></a><span class="lineno">  322</span>&#160;</div>
-<div class="line"><a name="l00323"></a><span class="lineno">  323</span>&#160;<span class="preprocessor">#endif</span></div>
+<div class="line"><a name="l00320"></a><span class="lineno">  320</span>&#160;<span class="comment">//BOLT_CREATE_TYPENAME( cl_float4 );</span></div>
+<div class="line"><a name="l00321"></a><span class="lineno">  321</span>&#160;<span class="comment">//BOLT_CREATE_CLCODE( cl_float4, &quot;float4&quot; );</span></div>
+<div class="line"><a name="l00322"></a><span class="lineno">  322</span>&#160;<span class="comment">//</span></div>
+<div class="line"><a name="l00323"></a><span class="lineno">  323</span>&#160;<span class="comment">//BOLT_CREATE_TYPENAME( cl_double );</span></div>
+<div class="line"><a name="l00324"></a><span class="lineno">  324</span>&#160;<span class="comment">//BOLT_CREATE_CLCODE( cl_double, &quot;double&quot; );</span></div>
+<div class="line"><a name="l00325"></a><span class="lineno">  325</span>&#160;<span class="comment">//</span></div>
+<div class="line"><a name="l00326"></a><span class="lineno">  326</span>&#160;<span class="comment">//BOLT_CREATE_TYPENAME( cl_double2 );</span></div>
+<div class="line"><a name="l00327"></a><span class="lineno">  327</span>&#160;<span class="comment">//BOLT_CREATE_CLCODE( cl_double2, &quot;double2&quot; );</span></div>
+<div class="line"><a name="l00328"></a><span class="lineno">  328</span>&#160;<span class="comment">//</span></div>
+<div class="line"><a name="l00329"></a><span class="lineno">  329</span>&#160;<span class="comment">//BOLT_CREATE_TYPENAME( cl_double4 );</span></div>
+<div class="line"><a name="l00330"></a><span class="lineno">  330</span>&#160;<span class="comment">//BOLT_CREATE_CLCODE( cl_double4, &quot;double4&quot; );</span></div>
+<div class="line"><a name="l00331"></a><span class="lineno">  331</span>&#160;</div>
+<div class="line"><a name="l00332"></a><span class="lineno">  332</span>&#160;<span class="preprocessor">#endif</span></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Apr 12 2013 10:32:27 for Bolt Beta by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Jun 14 2013 15:22:51 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.3
 </small></address>

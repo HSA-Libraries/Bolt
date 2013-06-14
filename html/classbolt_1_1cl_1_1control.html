@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.3"/>
-<title>Bolt Beta: bolt::cl::control Class Reference</title>
+<title>Bolt: bolt::cl::control Class Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -17,8 +17,8 @@
  <tbody>
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
-   <div id="projectname">Bolt Beta
-   &#160;<span id="projectnumber">1.0.0</span>
+   <div id="projectname">Bolt
+   &#160;<span id="projectnumber">1.0</span>
    </div>
    <div id="projectbrief">C++ template library with support for OpenCL</div>
   </td>
@@ -195,7 +195,7 @@ class&#160;</td><td class="memItemRight" valign="bottom"><b>UnlockBuffer</b></td
 <div class="fragment"><div class="line">cl::CommandQueue myCommandQueue = ...</div>
 <div class="line">bolt::cl::control myControl;</div>
 <div class="line">myControl.commandQueue(myCommandQueue);</div>
-<div class="line"><span class="keywordtype">int</span> sum = <a class="code" href="group__CL-reduce.html#gaf0816a69e6e1ce79976e0496d7650ec9" title="reduce returns the result of combining all the elements in the specified range using the specified bi...">bolt::cl::reduce</a>(myControl, ...); </div>
+<div class="line"><span class="keywordtype">int</span> sum = <a class="code" href="group__CL-reduce.html#gaf0816a69e6e1ce79976e0496d7650ec9" title="reduce returns the result of combining all the elements in the specified range using the specified bi...">bolt::cl::reduce</a>(myControl, ...);</div>
 </div><!-- fragment --><p>Developers also can inialize and save control structures to avoid the cost of copying the default on each function call. An example: </p>
 <div class="fragment"><div class="line"><span class="keyword">class </span>MyClass {</div>
 <div class="line">  MyClass(...) {</div>
@@ -203,9 +203,9 @@ class&#160;</td><td class="memItemRight" valign="bottom"><b>UnlockBuffer</b></td
 <div class="line">     _boltControl.commandQueue(myCommandQueue);</div>
 <div class="line">  };</div>
 <div class="line"></div>
-<div class="line">  <span class="keywordtype">void</span> runIt() </div>
+<div class="line">  <span class="keywordtype">void</span> runIt()</div>
 <div class="line">  {</div>
-<div class="line">    <span class="keywordtype">int</span> sum = <a class="code" href="group__CL-reduce.html#gaf0816a69e6e1ce79976e0496d7650ec9" title="reduce returns the result of combining all the elements in the specified range using the specified bi...">bolt::cl::reduce</a>(_boltControl, ...); </div>
+<div class="line">    <span class="keywordtype">int</span> sum = <a class="code" href="group__CL-reduce.html#gaf0816a69e6e1ce79976e0496d7650ec9" title="reduce returns the result of combining all the elements in the specified range using the specified bi...">bolt::cl::reduce</a>(_boltControl, ...);</div>
 <div class="line">  };</div>
 <div class="line"></div>
 <div class="line">  <span class="keyword">private</span>:</div>
@@ -213,16 +213,16 @@ class&#160;</td><td class="memItemRight" valign="bottom"><b>UnlockBuffer</b></td
 <div class="line">  }</div>
 </div><!-- fragment --><p>Sometimes, it can be useful to set the global default <code>control</code> structure used by Bolt algorithms calls that do not explicitly specify a control parameter as the first argument. For example, the application initialization routine can examine all the available GPU devices and select the one to be used for all subsequent Bolt calls. This can be done by writing the global default <code>control</code> structure, i.e.: </p>
 <div class="fragment"><div class="line">cl::CommandQueue myCommandQueue = ...</div>
-<div class="line">bolt::cl::control::getDefault().commandQueue(myCommandQueue); </div>
-<div class="line"><a class="code" href="group__CL-control.html#ga59712ff5a77d3714f716d85938705289">bolt::cl::control::getDefault</a>().debug(<a class="code" href="structbolt_1_1cl_1_1control_1_1debug.html">bolt::cl::control::debug</a>:SaveCompilerTemps);  </div>
+<div class="line">bolt::cl::control::getDefault().commandQueue(myCommandQueue);</div>
+<div class="line"><a class="code" href="group__CL-control.html#ga59712ff5a77d3714f716d85938705289">bolt::cl::control::getDefault</a>().debug(<a class="code" href="structbolt_1_1cl_1_1control_1_1debug.html">bolt::cl::control::debug</a>:SaveCompilerTemps);</div>
 <div class="line">...</div>
 </div><!-- fragment --> </div><hr/>The documentation for this class was generated from the following file:<ul>
-<li>C:/Jay_Win8/BOLT/hsa_bolt/include/bolt/cl/<a class="el" href="cl_2control_8h_source.html">control.h</a></li>
+<li>C:/Avinash_Bolt/Bolt_forked/Bolt/include/bolt/cl/<a class="el" href="cl_2control_8h_source.html">control.h</a></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Apr 12 2013 10:32:29 for Bolt Beta by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Jun 14 2013 15:22:55 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.3
 </small></address>

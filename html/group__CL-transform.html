@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.3"/>
-<title>Bolt Beta: CL-transform</title>
+<title>Bolt: CL-transform</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -17,8 +17,8 @@
  <tbody>
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
-   <div id="projectname">Bolt Beta
-   &#160;<span id="projectnumber">1.0.0</span>
+   <div id="projectname">Bolt
+   &#160;<span id="projectnumber">1.0</span>
    </div>
    <div id="projectbrief">C++ template library with support for OpenCL</div>
   </td>
@@ -248,10 +248,8 @@ template&lt;typename InputIterator1 , typename InputIterator2 , typename OutputI
 <div class="line"><span class="keywordtype">int</span> input2[6] = { 3,  6, -2,  1,  2,  3};</div>
 <div class="line"><span class="keywordtype">int</span> output[6];</div>
 <div class="line"></div>
-<div class="line">cl::CommandQueue myCommandQueue = ...</div>
-<div class="line">bolt::cl::control ctl(myCommandQueue); <span class="comment">// specify an OpenCL(TM) command queue.</span></div>
 <div class="line">bolt::cl::plus&lt;int&gt; op;</div>
-<div class="line"><a class="code" href="group__amp-transform.html#ga9d6bb9e4f1a01391529fe77c7b2cb2f1">bolt::cl::::transform</a>(ctl, input1, input1 + 6, input2, output, op);</div>
+<div class="line"><a class="code" href="group__amp-transform.html#ga9d6bb9e4f1a01391529fe77c7b2cb2f1">bolt::cl::::transform</a>( input1, input1 + 6, input2, output, op);</div>
 <div class="line"></div>
 <div class="line"><span class="comment">// output is now {-2,  6,  0,  4,  4,  7};</span></div>
 </div><!-- fragment --><dl class="section see"><dt>See Also</dt><dd><a href="http://www.sgi.com/tech/stl/transform.html">http://www.sgi.com/tech/stl/transform.html</a> </dd>
@@ -269,7 +267,7 @@ template&lt;typename InputIterator1 , typename InputIterator2 , typename OutputI
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Apr 12 2013 10:32:28 for Bolt Beta by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Jun 14 2013 15:22:54 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.3
 </small></address>

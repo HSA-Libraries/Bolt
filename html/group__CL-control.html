@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.3"/>
-<title>Bolt Beta: CL-control</title>
+<title>Bolt: CL-control</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -17,8 +17,8 @@
  <tbody>
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
-   <div id="projectname">Bolt Beta
-   &#160;<span id="projectnumber">1.0.0</span>
+   <div id="projectname">Bolt
+   &#160;<span id="projectnumber">1.0</span>
    </div>
    <div id="projectbrief">C++ template library with support for OpenCL</div>
   </td>
@@ -304,7 +304,7 @@ class&#160;</td><td class="memItemRight" valign="bottom"><b>bolt::cl::control::U
 <div class="line"><a class="code" href="classbolt_1_1cl_1_1control.html">bolt::cl::control</a> myControl;  <span class="comment">// same as last line - the constructor also copies values from the default control</span></div>
 <div class="line"></div>
 <div class="line"><span class="comment">// Modify a setting in the default \p control</span></div>
-<div class="line"><a class="code" href="group__CL-control.html#ga59712ff5a77d3714f716d85938705289">bolt::cl::control::getDefault</a>().compileOptions(<span class="stringliteral">&quot;-g&quot;</span>); </div>
+<div class="line"><a class="code" href="group__CL-control.html#ga59712ff5a77d3714f716d85938705289">bolt::cl::control::getDefault</a>().compileOptions(<span class="stringliteral">&quot;-g&quot;</span>);</div>
 </div><!-- fragment --> 
 </div>
 </div>
@@ -330,7 +330,7 @@ class&#160;</td><td class="memItemRight" valign="bottom"><b>bolt::cl::control::U
 </div><div class="memdoc">
 
 <p>Convenience method to help users create and initialize an OpenCL CommandQueue. </p>
-<dl class="todo"><dt><b><a class="el" href="todo.html#_todo000006">Todo:</a></b></dt><dd>The default commandqueue is created with a context that contains all GPU devices in platform. Since kernels are only compiled on first invocation, switching between GPU devices is OK, but switching to a CPU device afterwards causes an exception because the kernel was not compiled for CPU. Should we provide more options and expose more intefaces to the user? </dd></dl>
+<dl class="todo"><dt><b><a class="el" href="todo.html#_todo000007">Todo:</a></b></dt><dd>The default commandqueue is created with a context that contains all GPU devices in platform. Since kernels are only compiled on first invocation, switching between GPU devices is OK, but switching to a CPU device afterwards causes an exception because the kernel was not compiled for CPU. Should we provide more options and expose more intefaces to the user? </dd></dl>
 
 </div>
 </div>
@@ -433,7 +433,7 @@ class&#160;</td><td class="memItemRight" valign="bottom"><b>bolt::cl::control::U
   </tr>
 </table>
 </div><div class="memdoc">
-<p>Force the Bolt command to run on the specifed device. Default is "Automatic," in which case the Bolt runtime selects the device. Forcing the mode to SerialCpu can be useful for debugging the algorithm. Forcing the mode can also be useful for performance comparisons, or for direct control over the run location (perhaps due to knowledge that the algorithm is best-suited for GPU). </p>
+<p>Force the Bolt command to run on the specifed device. Default is "Automatic," in which case the Bolt runtime selects the device. Forcing the mode to SerialCpu can be useful for debugging the algorithm. Forcing the mode can also be useful for performance comparisons, or for direct control over the run location (perhaps due to knowledge that the algorithm is best-suited for GPU). Please note that forcing the run modes will not change the OpenCL device in the control object. This API is designed to simplify the process of choosing the appropriate path in the Bolt API. </p>
 
 </div>
 </div>
@@ -556,7 +556,7 @@ class&#160;</td><td class="memItemRight" valign="bottom"><b>bolt::cl::control::U
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Apr 12 2013 10:32:28 for Bolt Beta by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Jun 14 2013 15:22:54 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.3
 </small></address>

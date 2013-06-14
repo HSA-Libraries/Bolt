@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.3"/>
-<title>Bolt Beta: C:/Jay_Win8/BOLT/hsa_bolt/include/bolt/amp/parallel_iteration.h Source File</title>
+<title>Bolt: C:/Avinash_Bolt/Bolt_forked/Bolt/include/bolt/amp/parallel_iteration.h Source File</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -17,8 +17,8 @@
  <tbody>
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
-   <div id="projectname">Bolt Beta
-   &#160;<span id="projectnumber">1.0.0</span>
+   <div id="projectname">Bolt
+   &#160;<span id="projectnumber">1.0</span>
    </div>
    <div id="projectbrief">C++ template library with support for OpenCL</div>
   </td>
@@ -46,7 +46,7 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="dir_9851deb669ed8df5ba5fd399e2ebe56c.html">hsa_bolt</a></li><li class="navelem"><a class="el" href="dir_958292f73b3ae70a9502decc70ac6188.html">include</a></li><li class="navelem"><a class="el" href="dir_97913691ce5893d99a5e47223e40881c.html">bolt</a></li><li class="navelem"><a class="el" href="dir_0f6089b7f8cd65f1534cbc8cd2086175.html">amp</a></li>  </ul>
+<li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_33065aeea99578d2088bdef6d41465e7.html">bolt</a></li><li class="navelem"><a class="el" href="dir_f6c3284106388ac62c694eeba0e167e5.html">amp</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
@@ -54,92 +54,97 @@
 <div class="title">parallel_iteration.h</div>  </div>
 </div><!--header-->
 <div class="contents">
-<a href="parallel__iteration_8h.html">Go to the documentation of this file.</a><div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;<span class="comment">/***************************************************************************                                                                                     </span></div>
-<div class="line"><a name="l00002"></a><span class="lineno">    2</span>&#160;<span class="comment">*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     </span></div>
-<div class="line"><a name="l00003"></a><span class="lineno">    3</span>&#160;<span class="comment">*                                                                                    </span></div>
-<div class="line"><a name="l00004"></a><span class="lineno">    4</span>&#160;<span class="comment">*   Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);   </span></div>
-<div class="line"><a name="l00005"></a><span class="lineno">    5</span>&#160;<span class="comment">*   you may not use this file except in compliance with the License.                 </span></div>
-<div class="line"><a name="l00006"></a><span class="lineno">    6</span>&#160;<span class="comment">*   You may obtain a copy of the License at                                          </span></div>
-<div class="line"><a name="l00007"></a><span class="lineno">    7</span>&#160;<span class="comment">*                                                                                    </span></div>
-<div class="line"><a name="l00008"></a><span class="lineno">    8</span>&#160;<span class="comment">*       http://www.apache.org/licenses/LICENSE-2.0                      </span></div>
-<div class="line"><a name="l00009"></a><span class="lineno">    9</span>&#160;<span class="comment">*                                                                                    </span></div>
-<div class="line"><a name="l00010"></a><span class="lineno">   10</span>&#160;<span class="comment">*   Unless required by applicable law or agreed to in writing, software              </span></div>
-<div class="line"><a name="l00011"></a><span class="lineno">   11</span>&#160;<span class="comment">*   distributed under the License is distributed on an &quot;AS IS&quot; BASIS,              </span></div>
-<div class="line"><a name="l00012"></a><span class="lineno">   12</span>&#160;<span class="comment">*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.         </span></div>
-<div class="line"><a name="l00013"></a><span class="lineno">   13</span>&#160;<span class="comment">*   See the License for the specific language governing permissions and              </span></div>
-<div class="line"><a name="l00014"></a><span class="lineno">   14</span>&#160;<span class="comment">*   limitations under the License.                                                   </span></div>
+<a href="parallel__iteration_8h.html">Go to the documentation of this file.</a><div class="fragment"><div class="line"><a name="l00001"></a><span class="lineno">    1</span>&#160;<span class="comment">/***************************************************************************</span></div>
+<div class="line"><a name="l00002"></a><span class="lineno">    2</span>&#160;<span class="comment">*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.</span></div>
+<div class="line"><a name="l00003"></a><span class="lineno">    3</span>&#160;<span class="comment">*</span></div>
+<div class="line"><a name="l00004"></a><span class="lineno">    4</span>&#160;<span class="comment">*   Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span></div>
+<div class="line"><a name="l00005"></a><span class="lineno">    5</span>&#160;<span class="comment">*   you may not use this file except in compliance with the License.</span></div>
+<div class="line"><a name="l00006"></a><span class="lineno">    6</span>&#160;<span class="comment">*   You may obtain a copy of the License at</span></div>
+<div class="line"><a name="l00007"></a><span class="lineno">    7</span>&#160;<span class="comment">*</span></div>
+<div class="line"><a name="l00008"></a><span class="lineno">    8</span>&#160;<span class="comment">*       http://www.apache.org/licenses/LICENSE-2.0</span></div>
+<div class="line"><a name="l00009"></a><span class="lineno">    9</span>&#160;<span class="comment">*</span></div>
+<div class="line"><a name="l00010"></a><span class="lineno">   10</span>&#160;<span class="comment">*   Unless required by applicable law or agreed to in writing, software</span></div>
+<div class="line"><a name="l00011"></a><span class="lineno">   11</span>&#160;<span class="comment">*   distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span></div>
+<div class="line"><a name="l00012"></a><span class="lineno">   12</span>&#160;<span class="comment">*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span></div>
+<div class="line"><a name="l00013"></a><span class="lineno">   13</span>&#160;<span class="comment">*   See the License for the specific language governing permissions and</span></div>
+<div class="line"><a name="l00014"></a><span class="lineno">   14</span>&#160;<span class="comment">*   limitations under the License.</span></div>
 <div class="line"><a name="l00015"></a><span class="lineno">   15</span>&#160;<span class="comment"></span></div>
-<div class="line"><a name="l00016"></a><span class="lineno">   16</span>&#160;<span class="comment">***************************************************************************/</span>                                                                                     </div>
+<div class="line"><a name="l00016"></a><span class="lineno">   16</span>&#160;<span class="comment">***************************************************************************/</span></div>
 <div class="line"><a name="l00017"></a><span class="lineno">   17</span>&#160;</div>
-<div class="line"><a name="l00022"></a><span class="lineno">   22</span>&#160;<span class="preprocessor">#pragma once</span></div>
-<div class="line"><a name="l00023"></a><span class="lineno">   23</span>&#160;<span class="preprocessor"></span></div>
-<div class="line"><a name="l00024"></a><span class="lineno">   24</span>&#160;<span class="preprocessor">#include &lt;amp.h&gt;</span></div>
-<div class="line"><a name="l00025"></a><span class="lineno">   25</span>&#160;</div>
-<div class="line"><a name="l00026"></a><span class="lineno">   26</span>&#160;</div>
-<div class="line"><a name="l00027"></a><span class="lineno">   27</span>&#160;<span class="comment">//#include &lt;bolt/combineable_queue.h&gt;</span></div>
+<div class="line"><a name="l00022"></a><span class="lineno">   22</span>&#160;<span class="preprocessor">#if !defined( BOLT_AMP_PARALLEL_ITER_H )</span></div>
+<div class="line"><a name="l00023"></a><span class="lineno">   23</span>&#160;<span class="preprocessor"></span><span class="preprocessor">#define BOLT_AMP_PARALLEL_ITER_H</span></div>
+<div class="line"><a name="l00024"></a><span class="lineno">   24</span>&#160;<span class="preprocessor"></span></div>
+<div class="line"><a name="l00025"></a><span class="lineno">   25</span>&#160;<span class="preprocessor">#pragma once</span></div>
+<div class="line"><a name="l00026"></a><span class="lineno">   26</span>&#160;<span class="preprocessor"></span></div>
+<div class="line"><a name="l00027"></a><span class="lineno">   27</span>&#160;<span class="preprocessor">#include &lt;amp.h&gt;</span></div>
 <div class="line"><a name="l00028"></a><span class="lineno">   28</span>&#160;</div>
-<div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160;<span class="comment">//#define RESTRICT_AMP restrict(direct3d) </span></div>
-<div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160;</div>
+<div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160;</div>
+<div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160;<span class="comment">//#include &lt;bolt/combineable_queue.h&gt;</span></div>
 <div class="line"><a name="l00031"></a><span class="lineno">   31</span>&#160;</div>
-<div class="line"><a name="l00032"></a><span class="lineno">   32</span>&#160;<span class="keyword">namespace </span>bolt {</div>
+<div class="line"><a name="l00032"></a><span class="lineno">   32</span>&#160;<span class="comment">//#define RESTRICT_AMP restrict(direct3d)</span></div>
 <div class="line"><a name="l00033"></a><span class="lineno">   33</span>&#160;</div>
-<div class="line"><a name="l00047"></a><span class="lineno">   47</span>&#160;    <span class="keyword">template</span>&lt;<span class="keyword">typename</span> IterType, <span class="keyword">typename</span> Function&gt; </div>
-<div class="line"><a name="l00048"></a><span class="lineno"><a class="code" href="namespacebolt.html#ac9a44743c7b5bad98e121cf8175f0ef2">   48</a></span>&#160;    <span class="keywordtype">void</span> <a class="code" href="namespacebolt.html#ac9a44743c7b5bad98e121cf8175f0ef2">parallel_iteration</a>(concurrency::extent&lt;1&gt; ext, IterType Init, Function f)  {</div>
-<div class="line"><a name="l00049"></a><span class="lineno">   49</span>&#160;</div>
-<div class="line"><a name="l00050"></a><span class="lineno">   50</span>&#160;        <span class="keyword">using namespace </span>concurrency;</div>
-<div class="line"><a name="l00051"></a><span class="lineno">   51</span>&#160;</div>
-<div class="line"><a name="l00052"></a><span class="lineno">   52</span>&#160;        parallel_for_each(extent&lt;1&gt;(ext), [=] (index&lt;1&gt; idx) <span class="keyword">mutable</span> restrict(amp) {</div>
-<div class="line"><a name="l00053"></a><span class="lineno">   53</span>&#160;            IterType iter(Init);</div>
+<div class="line"><a name="l00034"></a><span class="lineno">   34</span>&#160;</div>
+<div class="line"><a name="l00035"></a><span class="lineno">   35</span>&#160;<span class="keyword">namespace </span>bolt {</div>
+<div class="line"><a name="l00036"></a><span class="lineno">   36</span>&#160;</div>
+<div class="line"><a name="l00050"></a><span class="lineno">   50</span>&#160;    <span class="keyword">template</span>&lt;<span class="keyword">typename</span> IterType, <span class="keyword">typename</span> Function&gt;</div>
+<div class="line"><a name="l00051"></a><span class="lineno"><a class="code" href="namespacebolt.html#ac9a44743c7b5bad98e121cf8175f0ef2">   51</a></span>&#160;    <span class="keywordtype">void</span> <a class="code" href="namespacebolt.html#ac9a44743c7b5bad98e121cf8175f0ef2">parallel_iteration</a>(concurrency::extent&lt;1&gt; ext, IterType Init, Function f)  {</div>
+<div class="line"><a name="l00052"></a><span class="lineno">   52</span>&#160;</div>
+<div class="line"><a name="l00053"></a><span class="lineno">   53</span>&#160;        <span class="keyword">using namespace </span>concurrency;</div>
 <div class="line"><a name="l00054"></a><span class="lineno">   54</span>&#160;</div>
-<div class="line"><a name="l00055"></a><span class="lineno">   55</span>&#160;            <span class="keywordtype">bool</span> keepGoing = <span class="keyword">true</span>;</div>
-<div class="line"><a name="l00056"></a><span class="lineno">   56</span>&#160;            </div>
-<div class="line"><a name="l00057"></a><span class="lineno">   57</span>&#160;            <span class="keywordflow">while</span> (keepGoing) {</div>
-<div class="line"><a name="l00058"></a><span class="lineno">   58</span>&#160;                keepGoing = f(idx, iter);</div>
-<div class="line"><a name="l00059"></a><span class="lineno">   59</span>&#160;            };</div>
-<div class="line"><a name="l00060"></a><span class="lineno">   60</span>&#160;        });</div>
-<div class="line"><a name="l00061"></a><span class="lineno">   61</span>&#160;</div>
-<div class="line"><a name="l00062"></a><span class="lineno">   62</span>&#160;    };</div>
-<div class="line"><a name="l00063"></a><span class="lineno">   63</span>&#160;</div>
-<div class="line"><a name="l00066"></a><span class="lineno">   66</span>&#160;    <span class="keyword">template</span>&lt;<span class="keyword">typename</span> IterType, <span class="keyword">typename</span> Function&gt; </div>
-<div class="line"><a name="l00067"></a><span class="lineno">   67</span>&#160;    <span class="keywordtype">void</span> parallel_iteration_1(concurrency::extent&lt;1&gt; ext, IterType Init, Function f)  {</div>
-<div class="line"><a name="l00068"></a><span class="lineno">   68</span>&#160;</div>
-<div class="line"><a name="l00069"></a><span class="lineno">   69</span>&#160;        <span class="keyword">using namespace </span>concurrency;</div>
-<div class="line"><a name="l00070"></a><span class="lineno">   70</span>&#160;        <span class="keywordtype">int</span> splitPoint = 3;  <span class="comment">// Iterations to run on the GPU:</span></div>
+<div class="line"><a name="l00055"></a><span class="lineno">   55</span>&#160;        parallel_for_each(extent&lt;1&gt;(ext), [=] (index&lt;1&gt; idx) <span class="keyword">mutable</span> restrict(amp) {</div>
+<div class="line"><a name="l00056"></a><span class="lineno">   56</span>&#160;            IterType iter(Init);</div>
+<div class="line"><a name="l00057"></a><span class="lineno">   57</span>&#160;</div>
+<div class="line"><a name="l00058"></a><span class="lineno">   58</span>&#160;            <span class="keywordtype">bool</span> keepGoing = <span class="keyword">true</span>;</div>
+<div class="line"><a name="l00059"></a><span class="lineno">   59</span>&#160;</div>
+<div class="line"><a name="l00060"></a><span class="lineno">   60</span>&#160;            <span class="keywordflow">while</span> (keepGoing) {</div>
+<div class="line"><a name="l00061"></a><span class="lineno">   61</span>&#160;                keepGoing = f(idx, iter);</div>
+<div class="line"><a name="l00062"></a><span class="lineno">   62</span>&#160;            };</div>
+<div class="line"><a name="l00063"></a><span class="lineno">   63</span>&#160;        });</div>
+<div class="line"><a name="l00064"></a><span class="lineno">   64</span>&#160;</div>
+<div class="line"><a name="l00065"></a><span class="lineno">   65</span>&#160;    };</div>
+<div class="line"><a name="l00066"></a><span class="lineno">   66</span>&#160;</div>
+<div class="line"><a name="l00069"></a><span class="lineno">   69</span>&#160;    <span class="keyword">template</span>&lt;<span class="keyword">typename</span> IterType, <span class="keyword">typename</span> Function&gt;</div>
+<div class="line"><a name="l00070"></a><span class="lineno">   70</span>&#160;    <span class="keywordtype">void</span> parallel_iteration_1(concurrency::extent&lt;1&gt; ext, IterType Init, Function f)  {</div>
 <div class="line"><a name="l00071"></a><span class="lineno">   71</span>&#160;</div>
-<div class="line"><a name="l00072"></a><span class="lineno">   72</span>&#160;        <span class="keyword">static</span> <span class="keyword">const</span> <span class="keywordtype">int</span> maxQSz=1024;</div>
-<div class="line"><a name="l00073"></a><span class="lineno">   73</span>&#160;        array&lt;pair&lt;index&lt;1&gt;, IterType&gt; outQueue(maxQSz);</div>
-<div class="line"><a name="l00074"></a><span class="lineno">   74</span>&#160;        array&lt;int,1&gt;  qPtr(1);</div>
-<div class="line"><a name="l00075"></a><span class="lineno">   75</span>&#160;</div>
-<div class="line"><a name="l00076"></a><span class="lineno">   76</span>&#160;        parallel_for_each(extent&lt;1&gt;(ext), [=] (index&lt;1&gt; idx) <span class="keyword">mutable</span> restrict(amp) {</div>
-<div class="line"><a name="l00077"></a><span class="lineno">   77</span>&#160;            IterType iter(Init);</div>
-<div class="line"><a name="l00078"></a><span class="lineno">   78</span>&#160;            <span class="keywordtype">int</span> iterations = splitPoint;</div>
-<div class="line"><a name="l00079"></a><span class="lineno">   79</span>&#160;</div>
-<div class="line"><a name="l00080"></a><span class="lineno">   80</span>&#160;            <span class="keywordtype">bool</span> keepGoing = <span class="keyword">true</span>;</div>
-<div class="line"><a name="l00081"></a><span class="lineno">   81</span>&#160;            <span class="keywordflow">while</span> (keepGoing &amp;&amp; --iterations) {</div>
-<div class="line"><a name="l00082"></a><span class="lineno">   82</span>&#160;                keepGoing = f(idx, iter);</div>
-<div class="line"><a name="l00083"></a><span class="lineno">   83</span>&#160;            };</div>
-<div class="line"><a name="l00084"></a><span class="lineno">   84</span>&#160;            <span class="keywordflow">if</span> (keepGoing) {</div>
-<div class="line"><a name="l00085"></a><span class="lineno">   85</span>&#160;                <span class="comment">// Enqueue for processing below - save idx and state.  </span></div>
-<div class="line"><a name="l00086"></a><span class="lineno">   86</span>&#160;                <span class="comment">//; Horrible performance due to contended atomic operations, need to combine enqueue operations.</span></div>
-<div class="line"><a name="l00087"></a><span class="lineno">   87</span>&#160;                <span class="keywordtype">int</span> lPtr = atomic_fetch_add(&amp;qPtr[0], 1);</div>
-<div class="line"><a name="l00088"></a><span class="lineno">   88</span>&#160;                <span class="comment">// FIXME - bounds check</span></div>
-<div class="line"><a name="l00089"></a><span class="lineno">   89</span>&#160;                <span class="keywordflow">if</span> (lPtr &lt; maxQSz) {</div>
-<div class="line"><a name="l00090"></a><span class="lineno">   90</span>&#160;                    outQueue[lPtr].first = idx;</div>
-<div class="line"><a name="l00091"></a><span class="lineno">   91</span>&#160;                    outQueue[lPtr].second = iter;</div>
-<div class="line"><a name="l00092"></a><span class="lineno">   92</span>&#160;                }</div>
-<div class="line"><a name="l00093"></a><span class="lineno">   93</span>&#160;            };</div>
-<div class="line"><a name="l00094"></a><span class="lineno">   94</span>&#160;        });</div>
-<div class="line"><a name="l00095"></a><span class="lineno">   95</span>&#160;    };</div>
-<div class="line"><a name="l00096"></a><span class="lineno">   96</span>&#160;};</div>
-<div class="line"><a name="l00097"></a><span class="lineno">   97</span>&#160;</div>
-<div class="line"><a name="l00098"></a><span class="lineno">   98</span>&#160;<span class="comment">// TODO: Need versions to handle more extent dimensions??</span></div>
-<div class="line"><a name="l00099"></a><span class="lineno">   99</span>&#160;</div>
-<div class="line"><a name="l00100"></a><span class="lineno">  100</span>&#160;<span class="comment">// FIXME-TODO</span></div>
-<div class="line"><a name="l00101"></a><span class="lineno">  101</span>&#160;<span class="comment">// Add Doxygen-style comments:</span></div>
+<div class="line"><a name="l00072"></a><span class="lineno">   72</span>&#160;        <span class="keyword">using namespace </span>concurrency;</div>
+<div class="line"><a name="l00073"></a><span class="lineno">   73</span>&#160;        <span class="keywordtype">int</span> splitPoint = 3;  <span class="comment">// Iterations to run on the GPU:</span></div>
+<div class="line"><a name="l00074"></a><span class="lineno">   74</span>&#160;</div>
+<div class="line"><a name="l00075"></a><span class="lineno">   75</span>&#160;        <span class="keyword">static</span> <span class="keyword">const</span> <span class="keywordtype">int</span> maxQSz=1024;</div>
+<div class="line"><a name="l00076"></a><span class="lineno">   76</span>&#160;        array&lt;pair&lt;index&lt;1&gt;, IterType&gt; outQueue(maxQSz);</div>
+<div class="line"><a name="l00077"></a><span class="lineno">   77</span>&#160;        array&lt;int,1&gt;  qPtr(1);</div>
+<div class="line"><a name="l00078"></a><span class="lineno">   78</span>&#160;</div>
+<div class="line"><a name="l00079"></a><span class="lineno">   79</span>&#160;        parallel_for_each(extent&lt;1&gt;(ext), [=] (index&lt;1&gt; idx) <span class="keyword">mutable</span> restrict(amp) {</div>
+<div class="line"><a name="l00080"></a><span class="lineno">   80</span>&#160;            IterType iter(Init);</div>
+<div class="line"><a name="l00081"></a><span class="lineno">   81</span>&#160;            <span class="keywordtype">int</span> iterations = splitPoint;</div>
+<div class="line"><a name="l00082"></a><span class="lineno">   82</span>&#160;</div>
+<div class="line"><a name="l00083"></a><span class="lineno">   83</span>&#160;            <span class="keywordtype">bool</span> keepGoing = <span class="keyword">true</span>;</div>
+<div class="line"><a name="l00084"></a><span class="lineno">   84</span>&#160;            <span class="keywordflow">while</span> (keepGoing &amp;&amp; --iterations) {</div>
+<div class="line"><a name="l00085"></a><span class="lineno">   85</span>&#160;                keepGoing = f(idx, iter);</div>
+<div class="line"><a name="l00086"></a><span class="lineno">   86</span>&#160;            };</div>
+<div class="line"><a name="l00087"></a><span class="lineno">   87</span>&#160;            <span class="keywordflow">if</span> (keepGoing) {</div>
+<div class="line"><a name="l00088"></a><span class="lineno">   88</span>&#160;                <span class="comment">// Enqueue for processing below - save idx and state.</span></div>
+<div class="line"><a name="l00089"></a><span class="lineno">   89</span>&#160;                <span class="comment">//; Horrible performance due to contended atomic operations, need to combine enqueue operations.</span></div>
+<div class="line"><a name="l00090"></a><span class="lineno">   90</span>&#160;                <span class="keywordtype">int</span> lPtr = atomic_fetch_add(&amp;qPtr[0], 1);</div>
+<div class="line"><a name="l00091"></a><span class="lineno">   91</span>&#160;                <span class="comment">// FIXME - bounds check</span></div>
+<div class="line"><a name="l00092"></a><span class="lineno">   92</span>&#160;                <span class="keywordflow">if</span> (lPtr &lt; maxQSz) {</div>
+<div class="line"><a name="l00093"></a><span class="lineno">   93</span>&#160;                    outQueue[lPtr].first = idx;</div>
+<div class="line"><a name="l00094"></a><span class="lineno">   94</span>&#160;                    outQueue[lPtr].second = iter;</div>
+<div class="line"><a name="l00095"></a><span class="lineno">   95</span>&#160;                }</div>
+<div class="line"><a name="l00096"></a><span class="lineno">   96</span>&#160;            };</div>
+<div class="line"><a name="l00097"></a><span class="lineno">   97</span>&#160;        });</div>
+<div class="line"><a name="l00098"></a><span class="lineno">   98</span>&#160;    };</div>
+<div class="line"><a name="l00099"></a><span class="lineno">   99</span>&#160;};</div>
+<div class="line"><a name="l00100"></a><span class="lineno">  100</span>&#160;</div>
+<div class="line"><a name="l00101"></a><span class="lineno">  101</span>&#160;<span class="comment">// TODO: Need versions to handle more extent dimensions??</span></div>
+<div class="line"><a name="l00102"></a><span class="lineno">  102</span>&#160;</div>
+<div class="line"><a name="l00103"></a><span class="lineno">  103</span>&#160;<span class="comment">// FIXME-TODO</span></div>
+<div class="line"><a name="l00104"></a><span class="lineno">  104</span>&#160;<span class="comment">// Add Doxygen-style comments:</span></div>
+<div class="line"><a name="l00105"></a><span class="lineno">  105</span>&#160;</div>
+<div class="line"><a name="l00106"></a><span class="lineno">  106</span>&#160;<span class="preprocessor">#endif</span></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Fri Apr 12 2013 10:32:27 for Bolt Beta by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Fri Jun 14 2013 15:22:52 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.3
 </small></address>
