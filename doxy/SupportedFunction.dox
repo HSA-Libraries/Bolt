@@ -20,14 +20,14 @@
 * \page supportedFunction List of Supported Functions
 * \tableofcontents
 * \section Functions Supported Functions and Paths
-*  Bolt function can be executed with three code paths(GPU, Multicore CPU and Serial). The default mode is "Automatic" which means it will go into OpenCL™ GPU path first, then TBB (Intel), then SerialCpu. 
-*  The control will go to other paths only if the selected one not found. Forcing mode to any code path will run the function with that code path only. All Bolt function have OpenCL™ and Serial path implementation, 
-*  However for some functions Multicore TBB path is not implemented yet, So calling those functions with MultiCoreCpu flag will actually call Serial path implementation. 
+*  Bolt function can be executed with three code paths(OpenCL™, Multicore CPU and Serial). The default mode is "Automatic" which means it will go into OpenCL™ GPU path first, then TBB (Intel), then SerialCpu. 
+*  The control will go to other paths only if the selected one is not found. Forcing mode to any code path will run the function with that code path. All Bolt function have OpenCL™ and Serial path implementation, 
+*  However for some functions Multicore TBB path is not implemented yet, So calling those functions with MultiCoreCpu flag will actually call the Serial code. 
 *
 * \subsection examples Example:
 * \subsubsection transform_scan Transform Scan:
 * Transform_inclusive_scan performs, on a sequence, the transformation defined by a unary operator, then the inclusive scan defined by a binary operator.
-* As Multicore path for transform_inclusive_scan function is not implemented yet. So forcing it to MultiCoreCpu with run Serial code path only.
+* As Multicore path for transform_inclusive_scan function is not implemented yet, forcing transform_inclusive_scan to MultiCoreCpu will run Serial code in the example below.
 *
 * \code
 * #include <bolt/cl/control.h>
@@ -48,7 +48,7 @@
 * \endcode
 *
 *
-* \subsection FunctionsSupported Below is the List of Supported Function and Code Paths
+* \subsection FunctionsSupported List of Supported Function and Code Paths
 
 <table border="6" cellpadding="10">
 <tr>
