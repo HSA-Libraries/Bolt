@@ -1254,7 +1254,26 @@ TEST_P( StableSortbyKeyDoubleNakedPointer, MultiCoreInplace )
 }
 
 #endif
-std::array<int, 15> TestValues = {2,4,8,16,32,64,128,256,512,1024,2048,4096,8192,16384,32768};
+/*Negative test to stable sort a buffer when all the input values are equal Say zero*/
+TEST( DefaultGPU, Normal )
+{
+    /*This test case was a fail only on large buffer sizes. */
+    int length = 1<<21;
+    bolt::cl::device_vector< float > boltKey(  length, 0.0, CL_MEM_READ_WRITE, true  );
+    bolt::cl::device_vector< float > boltValue(  length, 0.0, CL_MEM_READ_WRITE, true  );
+    std::vector< float > stdInput( length, 0.0 );
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+
+    //  Calling the actual functions under test
+    //std::SORT_FUNC( stdInput.begin( ), stdInput.end( ));
+    bolt::cl::stable_sort_by_key( ctl, boltKey.begin( ), boltKey.end( ), boltValue.begin() );
+
+
+}
+
+std::array<int, 16> TestValues = {2,4,8,16,32,64,128,256,512,1024,2048,4096,8192,16384,32768, 1<<22};
 
 //INSTANTIATE_TEST_CASE_P( StableSortByKeyValues, StableSortByKeyCountingIterator,
 //                        ::testing::ValuesIn( TestValues.begin(), TestValues.end() ) );
