@@ -446,6 +446,13 @@ namespace bolt {
                     acc =(T) binary_op(acc, h_result[i]);
                 }
 
+
+				::cl::Event unmapEvent;
+
+				V_OPENCL( ctl.getCommandQueue().enqueueUnmapMemObject(*result,  h_result, NULL, &unmapEvent ),
+					"shared_ptr failed to unmap host memory back to device memory" );
+				V_OPENCL( unmapEvent.wait( ), "failed to wait for unmap event" );
+
                 return acc;
             };
         }

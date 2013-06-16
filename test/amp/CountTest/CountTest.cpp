@@ -857,6 +857,24 @@ TEST(countIntegerUDD,MultiCoreDeviceCountUDD_EPR_Test){
     std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
 }
 
+TEST(count_IntValueOccuranceStdVect, intVectWithSerialvalue){
+
+        int stdVectSize = 200;
+        std::vector<int> stdVect(stdVectSize);
+        std::vector<int> boltVect(stdVectSize);
+
+        int myValue = 10;
+
+        for (int i = 0; i < stdVectSize; i++){
+        boltVect[i] = stdVect[i] = myValue;
+        }
+
+        size_t stdCount = std::count(stdVect.begin(), stdVect.end(), 10);
+        size_t boltCount = bolt::amp::count(boltVect.begin(), boltVect.end(), 10);
+
+        EXPECT_EQ (stdCount, boltCount);
+}
+
 
 
 int main(int argc, char* argv[])

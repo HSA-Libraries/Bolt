@@ -196,9 +196,11 @@ If the user wants to use TEMPLATE_FUNCTOR for more than one datatype then he can
 like BOLT_TEMPLATE_FUNCTOR2, BOLT_TEMPLATE_FUNCTOR3 etc from include/bolt/cl/clcode.h file.
 
 
- * \section Paths Bolt Code Paths
- * \subsection Default Default Behaviour
- * Bolt function can be executed with three code paths(GPU, Multicore CPU and Serial). The default mode is "Automatic" which means 
+ * \section Function_Path Supported Functions and Code Paths
+ *  List of <a href="supportedFunction.html">Supported Functions and Code Paths</a>.
+ * \subsection paths Code Path Behaviour
+ * \subsubsection Default Default Behaviour
+ * Bolt function can be executed with three code paths(OpenCL™, Multicore CPU and Serial). The default mode is "Automatic" which means 
  * it will go into OpenCL&tm; path first, then TBB (Intel), then SerialCpu with below mentioned order. The control will go to other paths only if the selected one not found.
  
  * Selection order will be: 
@@ -206,7 +208,7 @@ like BOLT_TEMPLATE_FUNCTOR2, BOLT_TEMPLATE_FUNCTOR3 etc from include/bolt/cl/clc
  * \li Run on Multicore CPU if Intel TBB is installed.
  * \li Run CPU serial path.
   
-* \subsection Force Force Behaviour
+* \subsubsection Force Force Behaviour
 * Forcing mode to any device will run the function on that device only. There are two ways in BOLT to force the control to specific Device.
 *   -# <b> Setting control to Device Globally: </b>
 *      \code bolt::cl::control& myControl = bolt::cl::control::getDefault( );

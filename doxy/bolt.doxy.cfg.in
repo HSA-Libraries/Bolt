@@ -26,13 +26,13 @@ DOXYFILE_ENCODING      = UTF-8
 # identify the project. Note that if you do not use Doxywizard you need 
 # to put quotes around the project name if it contains spaces.
 
-PROJECT_NAME           = "Bolt Beta"
+PROJECT_NAME           = "Bolt"
 
 # The PROJECT_NUMBER tag can be used to enter a project or revision number. 
 # This could be handy for archiving the generated documentation or 
 # if some version control system is used.
 
-PROJECT_NUMBER         = @Bolt_VERSION_MAJOR@.@Bolt_VERSION_MINOR@.@Bolt_VERSION_PATCH@
+PROJECT_NUMBER         = @Bolt_VERSION_MAJOR@.@Bolt_VERSION_MINOR@
 
 # Using the PROJECT_BRIEF tag one can provide an optional one line description 
 # for a project that appears at the top of each page and should give viewer 
@@ -672,6 +672,7 @@ INPUT                  = @CMAKE_CURRENT_SOURCE_DIR@/mainpage.dox \
                          @CMAKE_CURRENT_SOURCE_DIR@/buildingTBB.dox \
                          @CMAKE_CURRENT_SOURCE_DIR@/distributingBoltProjects.dox \
                          @CMAKE_CURRENT_SOURCE_DIR@/buildingExamples.dox \
+						 @CMAKE_CURRENT_SOURCE_DIR@/SupportedFunction.dox \
                          @CMAKE_CURRENT_SOURCE_DIR@/../include/bolt/amp \
                          @CMAKE_CURRENT_SOURCE_DIR@/../include/bolt/amp/detail \     
 					     @CMAKE_CURRENT_SOURCE_DIR@/../include/bolt/amp/iterator \ 						 
