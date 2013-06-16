@@ -204,11 +204,18 @@ TEST(MultiCoreCPU, MultiCoreAddDouble4)
 }
 #endif
 
+float func()
+{
+    return (float)(rand() * rand() * rand() );
+}
+
 TEST( DefaultGPU, Normal )
 {
-    int length = 1025;
-    bolt::cl::device_vector< float > boltInput(  length, 0.0, CL_MEM_READ_WRITE, true  );
+    int length = 1<<23;
     std::vector< float > stdInput( length, 0.0 );
+
+    std::generate(stdInput.begin(), stdInput.end(), func );
+    bolt::cl::device_vector< float > boltInput(  stdInput.begin(), stdInput.end()  );
 
     ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
@@ -225,7 +232,10 @@ TEST( DefaultGPU, Normal )
     EXPECT_EQ( stdNumElements, boltNumElements );
 
     //  Loop through the array and compare all the values with each other
-    cmpArrays( stdInput, boltInput );
+    
+    //cmpArrays( stdInput, boltInput );
+    for(int i=1;i<length;i= i<<1)
+        EXPECT_FLOAT_EQ( stdInput[i], boltInput[i] );
 }
 
 TEST( SerialCPU, SerialNormal )

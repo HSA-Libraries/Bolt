@@ -296,13 +296,6 @@ void stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, cons
      * Compile Options
      *********************************************************************************/
     bool cpuDevice = ctrl.getDevice( ).getInfo< CL_DEVICE_TYPE >( ) == CL_DEVICE_TYPE_CPU;
-    //std::cout << "Device is CPU: " << (cpuDevice?"TRUE":"FALSE") << std::endl;
-    //const size_t kernel0_localRange = ( cpuDevice ) ? 1 : localRange*4;
-    //std::ostringstream oss;
-    //oss << " -DKERNEL0WORKGROUPSIZE=" << kernel0_localRange;
-
-    //oss << " -DUSE_AMD_HSA=" << USE_AMD_HSA;
-    //compileOptions = oss.str();
 
     /**********************************************************************************
      * Request Compiled Kernels
@@ -384,11 +377,6 @@ void stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, cons
     size_t vecPow2 = (vecSize & (vecSize-1));
     numMerges += vecPow2? 1: 0;
 
-    //{
-    //    device_vector< iType >::pointer myData = first.getContainer( ).data( );
-    //    myData.reset( );
-    //}
-
     //  Allocate a flipflop buffer because the merge passes are out of place
     control::buffPointer tmpBuffer = ctrl.acquireBuffer( globalRange * sizeof( iType ) );
      // Size of scratch buffer
@@ -447,57 +435,6 @@ void stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, cons
             V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for mergeTemplate kernel" );
         }
 
-        ///  Debug code to examine input/output buffers on every pass
-        //myCQ.finish( );
-        //std::cout << "BlockSize[ " << srcLogicalBlockSize << " ] " << std::endl;
-        //if( pass & 0x1 )
-        //{
-        //    //  Debug mapping, to look at result vector in memory
-        //    iType* dev2Host = static_cast< iType* >( myCQ.enqueueMapBuffer( *tmpBuffer, CL_TRUE, CL_MAP_READ, 0,
-        //        globalRange * sizeof( iType ), NULL, NULL, &l_Error) );
-        //    V_OPENCL( l_Error, "Error: Mapping Device->Host Buffer." );
-
-        //    for( unsigned i = 0; i < globalRange/srcLogicalBlockSize; ++i )
-        //    {
-        //        unsigned blockIndex = i * srcLogicalBlockSize;
-        //        unsigned endIndex = bolt::cl::minimum< unsigned >()( blockIndex+(srcLogicalBlockSize-1), vecSize)-1;
-        //        for( unsigned j = blockIndex; j < endIndex; ++j )
-        //        {
-        //            if( !(comp)( dev2Host[ j ], dev2Host[ j + 1 ] ) && (dev2Host[ j ] != dev2Host[ j + 1 ]) )
-        //            {
-        //                std::cout << " Element[ " << j+1 << " ] out of sequence Block[ " << i << " ] Index[ " ;
-        //                std::cout << j+1-blockIndex << " ]" << std::endl;
-        //            }
-        //        }
-        //    }
-
-        //    myCQ.enqueueUnmapMemObject( *tmpBuffer, dev2Host );
-        //}
-        //else
-        //{
-        //    //  Debug mapping, to look at result vector in memory
-
-        //    iType* dev2Host = static_cast< iType* >( myCQ.enqueueMapBuffer( first.getContainer().getBuffer(),CL_TRUE,CL_MAP_READ,0,
-
-        //        bolt::cl::minimum< size_t >()( globalRange, vecSize ) * sizeof( iType ), NULL, NULL, &l_Error) );
-        //    V_OPENCL( l_Error, "Error: Mapping Device->Host Buffer." );
-
-        //    for( unsigned i = 0; i < globalRange/srcLogicalBlockSize; ++i )
-        //    {
-        //        unsigned blockIndex = i * srcLogicalBlockSize;
-        //        unsigned endIndex = bolt::cl::minimum< unsigned >()( blockIndex+(srcLogicalBlockSize-1), vecSize )-1;
-        //        for( unsigned j = blockIndex; j < endIndex; ++j )
-        //        {
-        //            if( !(comp)( dev2Host[ j ], dev2Host[ j + 1 ] ) && (dev2Host[ j ] != dev2Host[ j + 1 ]) )
-        //            {
-        //                std::cout << "Block[ " << i << " ] Element[ " << j << " ] out of sequence" << std::endl;
-        //            }
-        //        }
-        //    }
-
-        //    myCQ.enqueueUnmapMemObject( first.getContainer().getBuffer(), dev2Host );
-        //}
-        //std::cout << std::endl;
     }
 
     //  If there are an odd number of merges, then the output data is sitting in the temp buffer.  We need to copy
@@ -505,7 +442,7 @@ void stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, cons
     if( numMerges & 1 )
     {
         ::cl::Event copyEvent;
-
+        wait( ctrl, kernelEvent );
         l_Error = myCQ.enqueueCopyBuffer( *tmpBuffer, first.getContainer().getBuffer(), 0, first.m_Index * sizeof( iType ), 
             vecSize * sizeof( iType ), NULL, &copyEvent );
         V_OPENCL( l_Error, "device_vector failed to copy data inside of operator=()" );
