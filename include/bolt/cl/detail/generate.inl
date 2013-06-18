@@ -74,7 +74,7 @@ namespace bolt {
 namespace cl {
 namespace detail {
 
-enum typeName { gen_oType, gen_genType, generate_DVInputIterator, generate_end };
+enum GenerateTypes { gen_oType, gen_genType, generate_DVInputIterator, generate_end };
 
 /**********************************************************************************************************************
  * Kernel Template Specializer
