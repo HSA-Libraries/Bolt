@@ -1152,7 +1152,12 @@ int _tmain( int argc, _TCHAR* argv[] )
         // Platform vector contains all available platforms on system
         std::vector< ::cl::Platform > platforms;
         bolt::cl::V_OPENCL( ::cl::Platform::get( &platforms ), "Platform::get() failed" );
-        if( print_clInfo ) return 0;
+        if( print_clInfo )
+        {
+            bolt::cl::control::printPlatforms(true,deviceType);
+           //std::for_each( platforms.begin( ), platforms.end( ), printPlatformFunctor( 0 ) );
+            return 0;
+        }
 
         // Device info
         ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
