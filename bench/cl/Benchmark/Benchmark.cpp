@@ -17,6 +17,34 @@
 /******************************************************************************
  *  Benchmark Bolt Functions
  *****************************************************************************/
+#include <iostream>
+#include "bolt/cl/functional.h"
+#include "bolt/cl/device_vector.h"
+#include "bolt/cl/generate.h"
+#include "bolt/cl/copy.h"
+#include "bolt/cl/count.h"
+#include "bolt/cl/fill.h"
+#include "bolt/cl/max_element.h"
+#include "bolt/cl/min_element.h"
+#include "bolt/cl/transform.h"
+#include "bolt/cl/scan.h"
+#include "bolt/cl/sort.h"
+#include "bolt/cl/reduce.h"
+#include "bolt/cl/sort_by_key.h"
+#include "bolt/cl/stablesort.h"
+#include "bolt/cl/reduce_by_key.h"
+#include "bolt/cl/stablesort_by_key.h"
+#include "bolt/cl/transform_scan.h"
+#include "bolt/cl/scan_by_key.h"
+
+#include <fstream>
+#include <vector>
+#include <tchar.h>
+#include <algorithm>
+#include <iomanip>
+#include "bolt/unicode.h"
+#include "bolt/countof.h"
+#include <boost/program_options.hpp>
 
 
 //#define BOLT_PROFILER_ENABLED
@@ -28,7 +56,15 @@
 AsyncProfiler aProfiler("default");
 const std::streamsize colWidth = 26;
 
+
+//#define DATA_TYPE float
+//BOLT_CREATE_DEFINE(Bolt_DATA_TYPE,DATA_TYPE,float);
+
+#ifndef DATA_TYPE  
 #define DATA_TYPE unsigned int
+BOLT_CREATE_DEFINE(Bolt_DATA_TYPE,DATA_TYPE,unsigned int);
+#endif // !DATA_TYPE  
+
 
 /******************************************************************************
  *  Functions Enumerated
@@ -96,34 +132,9 @@ static char *dataTypeNames[] = {
     "vec8"
 };
 
-#include <iostream>
-#include "bolt/cl/functional.h"
-#include "bolt/cl/device_vector.h"
-#include "bolt/cl/generate.h"
-#include "bolt/cl/copy.h"
-#include "bolt/cl/count.h"
-#include "bolt/cl/fill.h"
-#include "bolt/cl/max_element.h"
-#include "bolt/cl/min_element.h"
-#include "bolt/cl/transform.h"
-#include "bolt/cl/scan.h"
-#include "bolt/cl/sort.h"
-#include "bolt/cl/reduce.h"
-#include "bolt/cl/sort_by_key.h"
-#include "bolt/cl/stablesort.h"
-#include "bolt/cl/reduce_by_key.h"
-#include "bolt/cl/stablesort_by_key.h"
-#include "bolt/cl/transform_scan.h"
-#include "bolt/cl/scan_by_key.h"
 
-#include <fstream>
-#include <vector>
-#include <tchar.h>
-#include <algorithm>
-#include <iomanip>
-#include "bolt/unicode.h"
-#include "bolt/countof.h"
-#include <boost/program_options.hpp>
+
+
 namespace po = boost::program_options;
 using namespace std;
 /******************************************************************************
@@ -133,8 +144,8 @@ using namespace std;
 BOLT_FUNCTOR(vec2,
 struct vec2
 {
-    int a, b;
-    vec2  operator =(const int inp)
+    DATA_TYPE a, b;
+    vec2  operator =(const DATA_TYPE inp)
     {
         vec2 tmp;
         a = b = tmp.a = tmp.b = inp;
@@ -167,16 +178,15 @@ struct vec2
 BOLT_CREATE_TYPENAME( bolt::cl::device_vector< vec2 >::iterator );
 BOLT_CREATE_CLCODE( bolt::cl::device_vector< vec2 >::iterator, bolt::cl::deviceVectorIteratorTemplate );
 
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::detail::CountIfEqual, int, vec2 );
-
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::detail::CountIfEqual, DATA_TYPE, vec2 );
 
 
 
 BOLT_FUNCTOR(vec4,
 struct vec4
 {
-    int a, b, c, d;
-    vec4  operator =(const int inp)
+    DATA_TYPE a, b, c, d;
+    vec4  operator =(const DATA_TYPE inp)
     {
         vec4 tmp;
         tmp.a = tmp.b = tmp.c = tmp.d = a = b = c=d=inp;
@@ -207,14 +217,14 @@ struct vec4
 BOLT_CREATE_TYPENAME( bolt::cl::device_vector< vec4 >::iterator );
 BOLT_CREATE_CLCODE( bolt::cl::device_vector< vec4 >::iterator, bolt::cl::deviceVectorIteratorTemplate );
 
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::detail::CountIfEqual, int, vec4 );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::detail::CountIfEqual, DATA_TYPE, vec4 );
 
 BOLT_FUNCTOR(vec8,
 struct vec8
 {
-    int a, b, c, d, e, f, g, h;
+    DATA_TYPE a, b, c, d, e, f, g, h;
 
-    vec8  operator =(const int inp)
+    vec8  operator =(const DATA_TYPE inp)
     {
         a = b = c=d=e=f=g=h=inp;
 
@@ -252,8 +262,8 @@ struct vec8
 
 BOLT_CREATE_TYPENAME( bolt::cl::device_vector< vec8 >::iterator );
 BOLT_CREATE_CLCODE( bolt::cl::device_vector< vec8 >::iterator, bolt::cl::deviceVectorIteratorTemplate );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::detail::CountIfEqual, int, vec8 );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::less, int, vec8 );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::detail::CountIfEqual, DATA_TYPE, vec8 );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::less, DATA_TYPE, vec8 );
 /******************************************************************************
  *  User Defined Binary Functions - vec2,4,8plus
  *****************************************************************************/
@@ -446,9 +456,9 @@ struct vec8less
 BOLT_FUNCTOR(intgen,
 struct intgen
 {
-    int operator()() const
+    DATA_TYPE operator()() const
     {
-        int v = 1;
+        DATA_TYPE v = 1;
         return v;
     };
 }; 
@@ -852,16 +862,16 @@ void executeFunction(
     if (vecType == t_int)
     {
         intgen                  generator;
-        bolt::cl::square<int>   unaryFunct;
-        bolt::cl::plus<int>     binaryFunct;
-        bolt::cl::equal_to<int> binaryPredEq;
-        bolt::cl::less<int>     binaryPredLt;
-        siz = sizeof(int);
+        bolt::cl::square<DATA_TYPE>   unaryFunct;
+        bolt::cl::plus<DATA_TYPE>     binaryFunct;
+        bolt::cl::equal_to<DATA_TYPE> binaryPredEq;
+        bolt::cl::less<DATA_TYPE>     binaryPredLt;
+        siz = sizeof(DATA_TYPE);
 
-        std::vector<int> input1(length);
-        std::vector<int> input2(length);
-        std::vector<int> input3(length);
-        std::vector<int> output(length);
+        std::vector<DATA_TYPE> input1(length);
+        std::vector<DATA_TYPE> input2(length);
+        std::vector<DATA_TYPE> input3(length);
+        std::vector<DATA_TYPE> output(length);
 
         std::generate(input1.begin(), input1.end(), rand);
         std::generate(input2.begin(), input2.end(), rand);
@@ -875,10 +885,10 @@ void executeFunction(
         }
         else
         {
-            bolt::cl::device_vector<int> binput1(input1.begin(), input1.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS,  ctrl);
-            bolt::cl::device_vector<int> binput2(input2.begin(), input2.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS,  ctrl);
-            bolt::cl::device_vector<int> binput3(input3.begin(), input3.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS,  ctrl);
-            bolt::cl::device_vector<int> boutput(output.begin(), output.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS,  ctrl);
+            bolt::cl::device_vector<DATA_TYPE> binput1(input1.begin(), input1.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS,  ctrl);
+            bolt::cl::device_vector<DATA_TYPE> binput2(input2.begin(), input2.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS,  ctrl);
+            bolt::cl::device_vector<DATA_TYPE> binput3(input3.begin(), input3.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS,  ctrl);
+            bolt::cl::device_vector<DATA_TYPE> boutput(output.begin(), output.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS,  ctrl);
             executeFunctionType( ctrl, binput1, binput2, binput3, boutput,
                 generator, unaryFunct, binaryFunct, binaryPredEq, binaryPredLt, routine, iterations,siz);
         }
@@ -891,6 +901,8 @@ void executeFunction(
         vec2equal   binaryPredEq;
         vec2less    binaryPredLt;
         siz = sizeof(vec2);
+        
+        BOLT_ADD_DEPENDENCY(vec2, Bolt_DATA_TYPE);
 
         std::vector<vec2> input1(length);
         std::vector<vec2> input2(length);
@@ -931,7 +943,7 @@ void executeFunction(
         std::vector<vec4> input2(length, v4init);
         std::vector<vec4> input3(length, v4init);
         std::vector<vec4> output(length, v4iden);
-
+        BOLT_ADD_DEPENDENCY(vec4, Bolt_DATA_TYPE);
         std::generate(input1.begin(), input1.end(), rand);
         std::generate(input2.begin(), input2.end(), rand);
         std::generate(input3.begin(), input3.end(), rand);
@@ -965,7 +977,7 @@ void executeFunction(
         std::vector<vec8> input2(length, v8init);
         std::vector<vec8> input3(length, v8init);
         std::vector<vec8> output(length, v8iden);
-
+        BOLT_ADD_DEPENDENCY(vec8, Bolt_DATA_TYPE);
         std::generate(input1.begin(), input1.end(), rand);
         std::generate(input2.begin(), input2.end(), rand);
         std::generate(input3.begin(), input3.end(), rand);
@@ -1009,7 +1021,7 @@ int _tmain( int argc, _TCHAR* argv[] )
     size_t vecType          = 0;
     size_t runMode          = 0;
     size_t routine          = f_scan;
-    size_t numThrowAway     = 5;
+    size_t numThrowAway     = 0;
      std::string function_called=functionNames[routine] ;
     std::string filename    = "bench.xml";
     cl_device_type deviceType = CL_DEVICE_TYPE_DEFAULT;
@@ -1031,7 +1043,7 @@ int _tmain( int argc, _TCHAR* argv[] )
             ( "gpu,g",          "Report only OpenCL GPU devices" )
             ( "cpu,c",          "Report only OpenCL CPU devices" )
             ( "all,a",          "Report all OpenCL devices" )
-            ( "deviceMemory",   "Allocate vectors in device memory; default is host memory" )
+            ( "deviceMemory,D",   "Allocate vectors in device memory; default is host memory" )
             ( "platform,p",     po::value< cl_uint >( &userPlatform )->default_value( userPlatform ),
                 "Specify the platform under test using the index reported by -q flag" )
             ( "device,d",       po::value< cl_uint >( &userDevice )->default_value( userDevice ),
@@ -1042,7 +1054,7 @@ int _tmain( int argc, _TCHAR* argv[] )
             ( "iterations,i",   po::value< size_t >( &iterations )->default_value( iterations ),
                 "Number of samples in timing loop" )
             ( "vecType,t",      po::value< size_t >( &vecType )->default_value( vecType ),
-                "Data Type to use: 0-int, 1-int2, 2-int4, 3-int8" )
+                "Data Type to use: 0-(1 value), 1-(2 values), 2-(3 values), 3-(4 values)" )
             ( "runMode,m",      po::value< size_t >( &runMode )->default_value( runMode ),
                 "Run Mode: 0-Auto, 1-SerialCPU, 2-MultiCoreCPU, 3-GPU" )
             ( "function,f",      po::value< std::string >( &function_called )->default_value( function_called ),
