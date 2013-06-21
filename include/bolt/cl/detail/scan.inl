@@ -463,9 +463,9 @@ aProfiler.stopTrial();
             else
             {
 #ifdef BOLT_PROFILER_ENABLED
-aProfiler.nextStep();
+aProfiler.startTrial();
 aProfiler.setStepName("Mapping Buffers to Device");
-aProfiler.set(AsyncProfiler::device, control::SerialCpu);
+aProfiler.set(AsyncProfiler::device, control::OpenCL);
 aProfiler.set(AsyncProfiler::memory, numElements*sizeof(iType));
 #endif
                 // Map the input iterator to a device_vector
@@ -475,15 +475,15 @@ aProfiler.set(AsyncProfiler::memory, numElements*sizeof(iType));
                 //Now call the actual cl algorithm
                 scan_enqueue( ctrl, dvInput.begin( ), dvInput.end( ), dvOutput.begin( ), init, binary_op, inclusive );
 
-#ifdef BOLT_PROFILER_ENABLED
-aProfiler.nextStep();
-aProfiler.setStepName("UnMapping Buffers");
-aProfiler.set(AsyncProfiler::device, control::SerialCpu);
-aProfiler.set(AsyncProfiler::memory, numElements*sizeof(iType));
-#endif
-
                 // This should immediately map/unmap the buffer
                 dvOutput.data( );
+
+#ifdef BOLT_PROFILER_ENABLED
+aProfiler.setDataSize(numElements*sizeof(iType));
+aProfiler.stopTrial();
+#endif
+
+
             }
 
             return result + numElements;

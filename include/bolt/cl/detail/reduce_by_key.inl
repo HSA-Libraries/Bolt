@@ -320,7 +320,7 @@ gold_reduce_by_key_enqueue( InputIterator1 keys_first,
     //return bolt::cl::make_pair(keys_output+1, values_output+1);
     return count;
 }
-    enum typeName {  e_kType, e_kIterType,
+    enum Reduce_By_Key_Types {  e_kType, e_kIterType,
                      e_vType, e_vIterType,
                      e_koType, e_koIterType,
                      e_voType, e_voIterType ,
