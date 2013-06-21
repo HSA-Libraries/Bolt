@@ -216,7 +216,7 @@ namespace cl
                 };
                 
                 //  Basic constructor requires a reference to the container and a positional element
-                iterator_base( ): m_Container( NULL ), m_Index( 0 )
+                iterator_base( ): m_Container( getContainer() ), m_Index( 0 )
                 {}
 
                 //  Basic constructor requires a reference to the container and a positional element
