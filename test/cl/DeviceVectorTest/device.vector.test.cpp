@@ -18,122 +18,28 @@
 #include "stdafx.h"
 #include <vector>
 #include <array>
-#include <bolt/unicode.h>
-#include <bolt/miniDump.h>
-#include <gtest/gtest.h>
+#include "bolt/unicode.h"
+#include "bolt/miniDump.h"
+#include "gtest/gtest.h"
 ///////////////////////////////////////////////////////////////////////////////////////
 //CL and AMP device_vector tests are integrated.To use AMP tests change AMP_TESTS to 1
 ///////////////////////////////////////////////////////////////////////////////////////
 //#define AMP_TESTS 0
 
 #if AMP_TESTS
-    #include <bolt/amp/functional.h>
-    #include <bolt/amp/device_vector.h>
+    #include "bolt/amp/functional.h"
+    #include "bolt/amp/device_vector.h"
     #define BCKND amp
 
 #else
 
-    #include <bolt/cl/functional.h>
-    #include <bolt/cl/device_vector.h>
-    #include <bolt/cl/fill.h>
+    #include "bolt/cl/functional.h"
+    #include "bolt/cl/device_vector.h"
+    #include "bolt/cl/fill.h"
+    #include "common/test_common.h"
     #define BCKND cl
 
 #endif
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////
-//  Below are helper routines to compare the results of two arrays for googletest
-//  They return an assertion object that googletest knows how to track
-
-template< typename T, size_t N >
-::testing::AssertionResult cmpArrays( const T (&ref)[N], const T (&calc)[N] )
-{
-    for( size_t i = 0; i < N; ++i )
-    {
-        EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-    }
-
-    return ::testing::AssertionSuccess( );
-}
-
-//  Primary class template for std::array types
-//  The struct wrapper is necessary to partially specialize the member function
-template< typename T, size_t N >
-struct cmpStdArray
-{
-    static ::testing::AssertionResult cmpArrays( const std::array< T, N >& ref, const std::array< T, N >& calc )
-    {
-        for( size_t i = 0; i < N; ++i )
-        {
-            EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-        }
-
-        return ::testing::AssertionSuccess( );
-    }
-};
-
-//  Partial template specialization for float types
-//  Partial template specializations only works for objects, not functions
-template< size_t N >
-struct cmpStdArray< float, N >
-{
-    static ::testing::AssertionResult cmpArrays( const std::array< float, N >& ref, const std::array< float, N >& calc )
-    {
-        for( size_t i = 0; i < N; ++i )
-        {
-            EXPECT_FLOAT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-        }
-
-        return ::testing::AssertionSuccess( );
-    }
-};
-
-//  Partial template specialization for float types
-//  Partial template specializations only works for objects, not functions
-template< size_t N >
-struct cmpStdArray< double, N >
-{
-    static ::testing::AssertionResult cmpArrays( const std::array< double, N >& ref, const std::array< double, N >& calc )
-    {
-        for( size_t i = 0; i < N; ++i )
-        {
-            EXPECT_DOUBLE_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-        }
-
-        return ::testing::AssertionSuccess( );
-    }
-};
-
-//  The following cmpArrays verify the correctness of std::vectors's
-template< typename T >
-::testing::AssertionResult cmpArrays( const std::vector< T >& ref, const std::vector< T >& calc )
-{
-    for( size_t i = 0; i < ref.size( ); ++i )
-    {
-        EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-    }
-
-    return ::testing::AssertionSuccess( );
-}
-
-::testing::AssertionResult cmpArrays( const std::vector< float >& ref, const std::vector< float >& calc )
-{
-    for( size_t i = 0; i < ref.size( ); ++i )
-    {
-        EXPECT_FLOAT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-    }
-
-    return ::testing::AssertionSuccess( );
-}
-
-::testing::AssertionResult cmpArrays( const std::vector< double >& ref, const std::vector< double >& calc )
-{
-    for( size_t i = 0; i < ref.size( ); ++i )
-    {
-        EXPECT_DOUBLE_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-    }
-
-    return ::testing::AssertionSuccess( );
-}
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Fixture classes are now defined to enable googletest to process type parameterized tests
@@ -1009,6 +915,420 @@ TEST( VectorIterator, BackFront )
         
     std::cout << "max_size = " << stdV.max_size();
 }
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Test fill() calls used in device_vector i.e. device_vector( ... ), resize( ), assign( )
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////
+BOLT_FUNCTOR(DUMMY,
+struct DUMMY
+{
+    float a;
+    float b;
+    float c;
+
+  bool operator == (const DUMMY &lhs) const
+  {
+    if(lhs.a == a && lhs.b == b && lhs.c == c) return true;
+    else return false;
+  }
+
+  void operator = (const DUMMY &rhs)
+  {
+    a = rhs.a;
+    b = rhs.b;
+    c = rhs.c;
+  }
+
+
+};);
+
+BOLT_FUNCTOR(Int_3,
+struct Int_3
+{
+    int a;
+    int b;
+    int c;
+
+  bool operator == (const Int_3 &lhs) const
+  {
+    if(lhs.a == a && lhs.b == b && lhs.c == c) return true;
+    else return false;
+  }
+
+  void operator = (const Int_3 &rhs)
+  {
+    a = rhs.a;
+    b = rhs.b;
+    c = rhs.c;
+  }
+
+
+};);
+
+BOLT_TEMPLATE_REGISTER_NEW_ITERATOR(bolt::cl::device_vector, int, DUMMY);
+BOLT_TEMPLATE_REGISTER_NEW_ITERATOR(bolt::cl::device_vector, int, Int_3);
+
+
+TEST(DeviceVectorFill, AssignFltUDD)
+{
+
+  DUMMY init;
+  init.a = init.b = init.c = CL_M_PI_4_F;
+
+  DUMMY glut;
+  glut.a = CL_M_PI_F;
+  glut.b = CL_M_LOG10E_F;
+  glut.c = CL_M_LOG2E_F;
+
+  bolt::cl::device_vector<DUMMY> dv(72,init);
+  std::vector<DUMMY> hv(72, init);
+
+  dv.assign(1024, glut);
+  hv.assign(1024, glut);
+
+  cmpArrays( hv, dv );
+
+}
+
+TEST(DeviceVectorFill, AssignFltUDDEmpty)
+{
+
+  DUMMY init;
+  init.a = init.b = init.c = CL_M_PI_4_F;
+
+  DUMMY glut;
+  glut.a = CL_M_PI_F;
+  glut.b = CL_M_LOG10E_F;
+  glut.c = CL_M_LOG2E_F;
+
+  bolt::cl::device_vector<DUMMY> dv;
+  std::vector<DUMMY> hv;
+
+  dv.assign(1023, glut);
+  hv.assign(1023, glut);
+
+  cmpArrays( hv, dv );
+
+}
+
+TEST(DeviceVectorFill, AssignFlt)
+{
+
+  float init;
+  init = CL_M_PI_4_F;
+
+  float glut;
+  glut = CL_M_PI_F;
+
+  bolt::cl::device_vector<float> dv(72,init);
+  std::vector<float> hv(72, init);
+
+  dv.assign(1024, glut);
+  hv.assign(1024, glut);
+
+  cmpArrays( hv, dv );
+
+}
+
+TEST(DeviceVectorFill, AssignFltEmpty)
+{
+
+  float init;
+  init = CL_M_PI_4_F;
+
+  float glut;
+  glut = CL_M_PI_F;
+
+  bolt::cl::device_vector<float> dv;
+  std::vector<float> hv;
+
+  dv.assign(1023, glut);
+  hv.assign(1023, glut);
+
+  cmpArrays( hv, dv );
+
+}
+
+TEST(DeviceVectorFill, device_vector_constructor)
+{
+
+  DUMMY init;
+  init.a = init.b = init.c = FLT_EPSILON;
+
+  bolt::cl::device_vector<DUMMY> dvec( 1024, init );
+  std::vector<DUMMY> hvec( 1024, init );
+
+  cmpArrays( hvec, dvec );
+
+
+}
+
+TEST(DeviceVectorFill, ResizeEmptyVector)
+{
+
+  bolt::cl::device_vector<DUMMY> dv;
+  std::vector<DUMMY> hv;
+  dv.resize(1000);
+  hv.resize(1000);
+
+  EXPECT_EQ( hv.size(), dv.size() );
+
+
+}
+
+
+TEST(DeviceVectorFill, ResizeEmptyVectorUDDWithValues)
+{
+  DUMMY init;
+  init.a = init.b = init.c = FLT_EPSILON;
+
+  bolt::cl::device_vector<DUMMY> dv;
+  std::vector<DUMMY> hv;
+
+  dv.resize(1000,init);
+  hv.resize(1000,init);
+
+  cmpArrays( hv, dv );
+
+
+}
+
+TEST(DeviceVectorFill, ResizeEmptyVectorFltWithValues)
+{
+  float init;
+  init = FLT_EPSILON;
+
+  bolt::cl::device_vector<float> dv;
+  std::vector<float> hv;
+
+  dv.resize(1000,init);
+  hv.resize(1000,init);
+
+  cmpArrays( hv, dv );
+
+
+}
+
+TEST(DeviceVectorFill, Resize)
+{
+
+  bolt::cl::device_vector<DUMMY> dv(10);
+  std::vector<DUMMY> hv(10);
+
+  dv.resize(1000); 
+  hv.resize(1000);
+
+  EXPECT_EQ( hv.size(), dv.size() );
+
+
+}
+
+TEST(DeviceVectorFill, ResizeFloatUDDWithValues)
+{
+  DUMMY init;
+  init.a = init.b = init.c = CL_M_PI_4_F;
+
+  DUMMY glut;
+  glut.a = CL_M_PI_F;
+  glut.b = CL_M_LOG10E_F;
+  glut.c = CL_M_LOG2E_F;
+
+  bolt::cl::device_vector<DUMMY> dv(72,init);
+  std::vector<DUMMY> hv(72, init);
+
+  dv.resize(1024, glut);
+  hv.resize(1024, glut);
+
+  cmpArrays( hv, dv );
+
+
+}
+
+TEST(DeviceVectorFill, ResizeFloatWithValues)
+{
+  float init;
+  init =  CL_M_PI_4_F;
+
+  float glut;
+  glut =  CL_M_PI_F;
+
+  bolt::cl::device_vector<float> dv(72,init);
+  std::vector<float> hv(72, init);
+
+  dv.resize(1024, glut);
+  hv.resize(1024, glut);
+
+  cmpArrays( hv, dv );
+
+
+}
+
+
+TEST(DeviceVectorFill, ResizeWithIntUDDValues)
+{
+  Int_3 init;
+  init.a = init.b = init.c = 10;
+
+  Int_3 glut;
+  glut.a = 23;
+  glut.b = 23;
+  glut.c = 23;
+
+  bolt::cl::device_vector<Int_3> dv(72,init);
+  std::vector<Int_3> hv(72, init);
+
+  dv.resize(1024, glut);
+  hv.resize(1024, glut);
+
+  {
+    bolt::cl::device_vector< Int_3 >::pointer tst =  dv.data( );
+    std::vector<Int_3> hvt(1024);
+
+    for(unsigned int i = 0; i < 1024 ; i++ ) 
+      hvt[i] = tst[i];
+
+  }
+  cmpArrays( hv, dv );
+
+
+}
+
+TEST(DeviceVectorFill, ResizeWithIntValues)
+{
+  int init;
+  init = 10;
+
+  int glut;
+  glut = 23;
+
+  bolt::cl::device_vector<int> dv(72,init);
+  std::vector<int> hv(72, init);
+
+  dv.resize(1024, glut);
+  hv.resize(1024, glut);
+
+  cmpArrays( hv, dv );
+
+
+}
+
+
+//  ::testing::TestWithParam< int > means that GetParam( ) returns int values, which i use for array size
+class FillUDDFltVector: public ::testing::TestWithParam< int >
+{
+    
+
+public:
+
+    //  Create an std and a bolt vector of requested size, and initialize all the elements to 1
+    FillUDDFltVector( ): stdInput( GetParam( ) ), boltInput( GetParam( ) )
+    {
+      DUMMY init_pi;
+      init_pi.a = init_pi.b = init_pi.c = CL_M_PI_F; 
+      std::fill(stdInput.begin(), stdInput.end(), init_pi);
+      bolt::cl::fill(boltInput.begin(), boltInput.end(), init_pi);
+    }
+
+protected:
+    std::vector< DUMMY > stdInput;
+    bolt::cl::device_vector< DUMMY > boltInput;
+};
+
+
+
+TEST_P(FillUDDFltVector, VariableSizeResizeWithValues)
+{
+
+  DUMMY glut;
+  glut.a = CL_M_PI_F;
+  glut.b = CL_M_LOG10E_F;
+  glut.c = CL_M_LOG2E_F;
+
+  boltInput.resize(1024, glut);
+  stdInput.resize(1024, glut);
+
+  cmpArrays( stdInput, boltInput );
+
+
+}
+
+TEST_P(FillUDDFltVector, VariableAssignFlt)
+{
+
+  DUMMY glut;
+  glut.a = CL_M_PI_F;
+  glut.b = CL_M_LOG10E_F;
+  glut.c = CL_M_LOG2E_F;
+
+  boltInput.assign(1024, glut);
+  stdInput.assign(1024, glut);
+
+  cmpArrays( stdInput, boltInput );
+
+}
+
+
+INSTANTIATE_TEST_CASE_P( VariableSizeResizeWithValues, FillUDDFltVector, ::testing::Range( 0, 1048576, 4096 ) );
+INSTANTIATE_TEST_CASE_P( VariableAssignFlt, FillUDDFltVector, ::testing::Range( 0, 1048576, 4096 ) );
+
+//  ::testing::TestWithParam< int > means that GetParam( ) returns int values, which i use for array size
+class FillUDDIntVector: public ::testing::TestWithParam< int >
+{
+    
+
+public:
+
+    //  Create an std and a bolt vector of requested size, and initialize all the elements to 1
+    FillUDDIntVector( ): stdInput( GetParam( ) ), boltInput( GetParam( ) )
+    {
+      Int_3 init_;
+      init_.a = init_.b = init_.c = 33; 
+      std::fill(stdInput.begin(), stdInput.end(), init_);
+      bolt::cl::fill(boltInput.begin(), boltInput.end(), init_);
+    }
+
+protected:
+    std::vector< Int_3 > stdInput;
+    bolt::cl::device_vector< Int_3  > boltInput;
+};
+
+TEST_P(FillUDDIntVector, VariableSizeResizeWithValues)
+{
+
+  Int_3 glut;
+  glut.a =9115123;
+  glut.b =9117123;
+  glut.c =112123;
+
+  boltInput.resize(1024, glut);
+  stdInput.resize(1024, glut);
+
+  cmpArrays( stdInput, boltInput );
+
+
+}
+
+TEST_P(FillUDDIntVector, VariableAssignInt)
+{
+
+  Int_3 glut;
+  glut.a =9115123;
+  glut.b =9117123;
+  glut.c =112123;
+
+  boltInput.assign(1024, glut);
+  stdInput.assign(1024, glut);
+
+  cmpArrays( stdInput, boltInput );
+
+
+}
+
+
+INSTANTIATE_TEST_CASE_P( VariableSizeResizeWithValues, FillUDDIntVector, ::testing::Range( 0, 1048576, 4096 ) );
+
+
 
 int _tmain(int argc, _TCHAR* argv[])
 {

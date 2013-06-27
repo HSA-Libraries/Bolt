@@ -476,7 +476,7 @@ namespace cl
             *   \param init Boolean value to indicate whether to initialize device memory from host memory.
             *   \param ctl A Bolt control class for copy operations; a default is used if not supplied by the user.
             *   \warning The ::cl::CommandQueue is not an STD reserve( ) parameter.
-            *   \bug The size of the value must be a power of two. Refer section 5.2.3 in 'The OpenCL 1.2 Specification' (Khronos)
+            *   \warning If the size of the value is a power of two, the buffer will be filled serially as opposed to using the OpenCL fill API. Refer section 5.2.3 in 'The OpenCL 1.2 Specification' (Khronos)
             */
             device_vector( size_type newSize, const value_type& value = value_type( ), cl_mem_flags flags = CL_MEM_READ_WRITE,
                 bool init = true, const control& ctl = control::getDefault( ) ): m_Size( newSize ), m_commQueue( ctl.getCommandQueue( ) ), m_Flags( flags )
@@ -495,14 +495,51 @@ namespace cl
                     if( init )
                     {
                         std::vector< ::cl::Event > fillEvent( 1 );
-                        //printf("Filling buffer of size %ix%i\n", newSize, sizeof(value_type));
+
+                        //
+                        // note: If the size of value is not a power of two, we fill serially. Another approach is to
+                        //       launch a templatized fill kernel, but it leads to complications.
+
                         try
                         {
-                            // \todo enqueueFillBuffer does not handle arbitrary data types.  We need to refactor
-                            //  to use the Fill API
+                           size_t sizeDS = sizeof(value_type);
+
+                           if( !( sizeDS & (sizeDS - 1 ) ) )  // 2^n data types
+                           {
                             V_OPENCL( m_commQueue.enqueueFillBuffer< value_type >( m_devMemory, value, 0,
                                 newSize * sizeof( value_type ), NULL, &fillEvent.front( ) ),
                                 "device_vector failed to fill the internal buffer with the requested pattern");
+                           }
+                           else // non 2^n data types
+                           {
+                              // Map the buffer to host
+                              ::cl::Event fill_mapEvent;
+                              value_type *host_buffer = ( value_type* )ctl.getCommandQueue( ).enqueueMapBuffer (
+                                                                                          m_devMemory,
+                                                                                          false,
+                                                                                          CL_MAP_READ | CL_MAP_WRITE,
+                                                                                          0,
+                                                                                          sizeof( value_type )*newSize,
+                                                                                          NULL,
+                                                                                          &fill_mapEvent,
+                                                                                          &l_Error );
+
+                              V_OPENCL( l_Error, "Error calling map on device_vector buffer. Fill device_vector" );
+                              bolt::cl::wait( ctl, fill_mapEvent );
+
+                              // Use serial fill_n to fill the device_vector with value
+                              std::fill_n( stdext::make_checked_array_iterator( host_buffer, newSize ),
+                                           newSize,
+                                           value );
+
+                              // Unmap the buffer
+                              l_Error = ctl.getCommandQueue( ).enqueueUnmapMemObject( m_devMemory,
+                                                                                      host_buffer,
+                                                                                      NULL,
+                                                                                      &fillEvent.front( ) );
+                              V_OPENCL( l_Error, "Error calling map on device_vector buffer. Fill device_vector" );
+
+                           }
                         }
                         catch( std::exception& e )
                         {
@@ -701,12 +738,13 @@ namespace cl
             /*! \brief Change the number of elements in device_vector to reqSize.
             *   If the new requested size is less than the original size, the data is truncated and lost.  If the
             *   new size is greater than the original
-            *   size, the extra paddign will be initialized with the value specified by the user.
+            *   size, the extra padding will be initialized with the value specified by the user.
             *   \param reqSize The requested size of the device_vector in elements.
             *   \param val All new elements are initialized with this new value.
             *   \note capacity( ) may exceed n, but is not less than n.
             *   \warning If the device_vector must reallocate, all previous iterators, references, and pointers are invalidated.
             *   \warning The ::cl::CommandQueue is not a STD reserve( ) parameter
+            *   \warning If the size of the value is a power of two, the buffer will be filled serially as opposed to using the OpenCL fill API. Refer section 5.2.3 in 'The OpenCL 1.2 Specification' (Khronos)
             */
 
             void resize( size_type reqSize, const value_type& val = value_type( ) )
@@ -743,14 +781,58 @@ namespace cl
                     if( l_reqSize > l_srcSize )
                     {
                         std::vector< ::cl::Event > copyEvent( 1 );
-                        l_Error = m_commQueue.enqueueCopyBuffer( m_devMemory, l_tmpBuffer, 0, 0, l_srcSize, NULL, &copyEvent.front( ) );
+                        l_Error = m_commQueue.enqueueCopyBuffer( m_devMemory,
+                                                                 l_tmpBuffer,
+                                                                 0,
+                                                                 0,
+                                                                 l_srcSize,
+                                                                 NULL,
+                                                                 &copyEvent.front( ) );
                         V_OPENCL( l_Error, "device_vector failed to copy data to the new ::cl::Buffer object" );
                         ::cl::Event fillEvent;
-                        // \todo enqueueFillBuffer does not handle arbitrary data types.  We need to refactor
-                        //  to use the Fill API
-                        l_Error = m_commQueue.enqueueFillBuffer< value_type >( l_tmpBuffer, val, l_srcSize, l_reqSize - l_srcSize, &copyEvent, &fillEvent );
+
+                        size_t sizeDS = sizeof(value_type);
+                        if( !( sizeDS & (sizeDS - 1 ) ) )  // 2^n data types
+                        {
+                        l_Error = m_commQueue.enqueueFillBuffer< value_type >( l_tmpBuffer,
+                                                                               val,
+                                                                               l_srcSize,
+                                                                               (l_reqSize - l_srcSize),
+                                                                               &copyEvent,
+                                                                               &fillEvent );
                         V_OPENCL( l_Error, "device_vector failed to fill the new data with the provided pattern" );
                         //  Not allowed to return until the copy operation is finished
+                        }
+                        else // non 2^n data types
+                        {
+                          // Map the buffer to host
+                          ::cl::Event fill_mapEvent;
+                          value_type *host_buffer = ( value_type* )m_commQueue.enqueueMapBuffer (
+                                                                      l_tmpBuffer,
+                                                                      false,
+                                                                      CL_MAP_READ | CL_MAP_WRITE,
+                                                                      l_srcSize,
+                                                                      (l_reqSize - l_srcSize),
+                                                                      NULL,
+                                                                      &fill_mapEvent,
+                                                                      &l_Error );
+
+                          V_OPENCL( l_Error, "Error calling map on device_vector buffer. Fill device_vector" );
+                          fill_mapEvent.wait( );
+
+                          // Use serial fill_n to fill the device_vector with value
+                          std::fill_n( stdext::make_checked_array_iterator( host_buffer, reqSize ),
+                                       (reqSize - m_Size),
+                                       val );
+
+                          // Unmap the buffer
+                          l_Error = m_commQueue.enqueueUnmapMemObject( l_tmpBuffer,
+                                                                       host_buffer,
+                                                                       NULL,
+                                                                       &fillEvent );
+                          V_OPENCL( l_Error, "Error calling map on device_vector buffer. Fill device_vector" );
+                        }
+
                         l_Error = fillEvent.wait( );
                         V_OPENCL( l_Error, "device_vector failed to wait for fill event" );
                     }
@@ -767,10 +849,42 @@ namespace cl
                 else
                 {
                     ::cl::Event fillEvent;
-                    // \todo enqueueFillBuffer does not handle arbitrary data types.  We need to refactor
-                    //  to use the Fill API
-                    l_Error = m_commQueue.enqueueFillBuffer< value_type >( l_tmpBuffer, val, 0, l_reqSize, NULL, &fillEvent );
-                    V_OPENCL( l_Error, "device_vector failed to fill the new data with the provided pattern" );
+                    size_t sizeDS = sizeof(value_type);
+                    if( !( sizeDS & (sizeDS - 1 ) ) )  // 2^n data types
+                    {
+                      l_Error = m_commQueue.enqueueFillBuffer< value_type >( l_tmpBuffer, val, 0, l_reqSize, NULL, &fillEvent );
+                      V_OPENCL( l_Error, "device_vector failed to fill the new data with the provided pattern" );
+
+                    }
+                    else // non 2^n data types
+                    {
+                       // Map the buffer to host
+                       ::cl::Event fill_mapEvent;
+                       value_type *host_buffer = ( value_type* )m_commQueue.enqueueMapBuffer (
+                                                                                 l_tmpBuffer,
+                                                                                 false,
+                                                                                 CL_MAP_READ | CL_MAP_WRITE,
+                                                                                 0,
+                                                                                 l_reqSize,
+                                                                                 NULL,
+                                                                                 &fill_mapEvent,
+                                                                                 &l_Error );
+
+                       V_OPENCL( l_Error, "Error calling map on device_vector buffer. Fill device_vector" );
+                       fill_mapEvent.wait( );
+
+                       // Use serial fill_n to fill the device_vector with value
+                       std::fill_n( stdext::make_checked_array_iterator( host_buffer , reqSize ),
+                                    reqSize,
+                                    val );
+
+                       // Unmap the buffer
+                       l_Error = m_commQueue.enqueueUnmapMemObject( l_tmpBuffer,
+                                                                    host_buffer,
+                                                                    NULL,
+                                                                    &fillEvent );
+                       V_OPENCL( l_Error, "Error calling map on device_vector buffer. Fill device_vector" );
+                    }
 
                     //  Not allowed to return until the fill operation is finished
                     l_Error = fillEvent.wait( );
@@ -1426,9 +1540,10 @@ namespace cl
             }
 
             /*! \brief Assigns newSize copies of element value.
-             *  \param newSize The new size of the device_vector.
-             *  \param value The value of the element that is replicated newSize times.
+            *  \param newSize The new size of the device_vector.
+            *  \param value The value of the element that is replicated newSize times.
             *   \warning All previous iterators, references, and pointers are invalidated.
+            *   \warning If the size of the value is a power of two, the buffer will be filled serially as opposed to using the OpenCL fill API. Refer section 5.2.3 in 'The OpenCL 1.2 Specification' (Khronos)
             */
 
             void assign( size_type newSize, const value_type& value )
@@ -1442,8 +1557,46 @@ namespace cl
                 cl_int l_Error = CL_SUCCESS;
 
                 ::cl::Event fillEvent;
-                l_Error = m_commQueue.enqueueFillBuffer< value_type >( m_devMemory, value, 0, m_Size * sizeof( value_type ), NULL, &fillEvent );
-                V_OPENCL( l_Error, "device_vector failed to fill the new data with the provided pattern" );
+                size_t sizeDS = sizeof(value_type);
+
+                if( !( sizeDS & (sizeDS - 1 ) ) )  // 2^n data types
+                {
+                  l_Error = m_commQueue.enqueueFillBuffer< value_type >( m_devMemory,
+                                                                         value,
+                                                                         0,
+                                                                         m_Size * sizeof( value_type ),
+                                                                         NULL,
+                                                                         &fillEvent );
+                  V_OPENCL( l_Error, "device_vector failed to fill the new data with the provided pattern" );
+                }
+                else
+                {
+                  // Map the buffer to host
+                  ::cl::Event fill_mapEvent;
+                  value_type *host_buffer = ( value_type* )m_commQueue.enqueueMapBuffer ( m_devMemory,
+                                                                                          false,
+                                                                                          CL_MAP_READ | CL_MAP_WRITE,
+                                                                                          0,
+                                                                                          sizeof( value_type )*newSize,
+                                                                                          NULL,
+                                                                                          &fill_mapEvent,
+                                                                                          &l_Error );
+
+                  V_OPENCL( l_Error, "Error calling map on device_vector buffer. Fill device_vector" );
+                  fill_mapEvent.wait( );
+
+                  // Use serial fill_n to fill the device_vector with value
+                  std::fill_n( stdext::make_checked_array_iterator( host_buffer, newSize ),
+                               newSize,
+                               value );
+
+                  // Unmap the buffer
+                  l_Error = m_commQueue.enqueueUnmapMemObject( m_devMemory,
+                                                               host_buffer,
+                                                               NULL,
+                                                               &fillEvent );
+                  V_OPENCL( l_Error, "Error calling map on device_vector buffer. Fill device_vector" );
+                }
 
                 //  Not allowed to return until the copy operation is finished.
                 l_Error = fillEvent.wait( );
