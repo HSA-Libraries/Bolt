@@ -53,7 +53,8 @@ namespace bolt
 		  void operator()( const tbb::blocked_range<int>& r, Tag ) {
 			  oType temp = sum, temp1;
 			  flag=FALSE;
-			  for( int i=r.begin(); i<r.end(); ++i ) {
+        int i;
+			  for( i=r.begin(); i<r.end(); ++i ) {
 				 if( Tag::is_final_scan() ) {
 					 if(!inclusive){
 						  if( i==0){
@@ -70,7 +71,6 @@ namespace bolt
                 temp1 = *(first_value + i);
 							 *(result + i) = start;
 							 temp = binary_op(start, temp1);
-							 flag = TRUE;
 						  }
 						  continue;
 					 }
@@ -81,7 +81,6 @@ namespace bolt
 						temp = binary_op(temp, *(first_value+i));
 					 }
 					 else{
-						flag = TRUE;
 						temp = *(first_value+i);
 					 }
 					 *(result + i) = temp;
@@ -89,31 +88,30 @@ namespace bolt
 				 else if(pre_flag){
 				   temp = *(first_value+i);
 				   pre_flag = FALSE;
-
 				 }
 				 else if(binary_pred(*(first_key+i), *(first_key +i - 1)))
 					 temp = binary_op(temp, *(first_value+i));
 				 else if (!inclusive){
-					 flag = TRUE;
 					 temp = binary_op(start, *(first_value+i));
 				 }
 				 else {
-					 flag = TRUE;
 					 temp = *(first_value+i);
 				 }
 			 }
+       if(!binary_pred(*(first_key+i-1), *(first_key +i )))
+				  flag = TRUE; 
 			 sum = temp;
 		  }
 		  ScanKey_tbb( ScanKey_tbb& b, tbb::split):first_key(b.first_key),result(b.result),first_value(b.first_value),
 												   inclusive(b.inclusive),start(b.start),pre_flag(TRUE){}
 		  void reverse_join( ScanKey_tbb& a ) {
-			if(!flag)
+			if(!a.flag)
 				sum = binary_op(a.sum,sum);
 		  }
 		  void assign( ScanKey_tbb& b ) {
 			 sum = b.sum;
 		  }
-	  };
+   };
 
 template<typename T>
 struct equal_to
