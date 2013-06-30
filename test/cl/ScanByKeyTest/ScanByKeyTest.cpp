@@ -2396,8 +2396,8 @@ TEST_P (ScanByKeyOffsetTest, ExclOffsetTestUShort)
 
 } 
 
-INSTANTIATE_TEST_CASE_P(incl_excl_ScanByKeyIterIntLimit, ScanByKeyCLtypeTest, ::testing::Range( 0, 1024, 23 )); 
-INSTANTIATE_TEST_CASE_P(incl_excl_ScanByKeyIterIntLimit, ScanByKeyOffsetTest, ::testing::Range(1025, 8196, 47)); 
+INSTANTIATE_TEST_CASE_P(incl_excl_ScanByKeyIterIntLimit, ScanByKeyCLtypeTest, ::testing::Range( 0, 1024, 47 )); 
+INSTANTIATE_TEST_CASE_P(incl_excl_ScanByKeyIterIntLimit, ScanByKeyOffsetTest, ::testing::Range(1025, 4096, 555)); 
 
 
 #if (TEST_DOUBLE == 1)

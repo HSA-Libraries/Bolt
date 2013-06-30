@@ -32,6 +32,7 @@
 namespace po = boost::program_options;
 
 #define TEST_DOUBLE 1
+#define SERIAL_TBB_OFFSET 0
 
 
 
@@ -1979,7 +1980,7 @@ TEST_P (ScanOffsetTest, ExclOffsetTestFloat)
     printf("\nPass for size=%d Offset=%d\n",myStdVectSize, myStdVectSize/4);
 } 
 
-
+#if (SERIAL_TBB_OFFSET == 1)
 TEST_P (ScanOffsetTest, InclOffsetTestFloatSerial)
 {
     bolt::cl::device_vector< float > input( myStdVectSize, 2.f);
@@ -2047,6 +2048,7 @@ TEST_P (ScanOffsetTest, ExclOffsetTestFloatMultiCore)
     cmpArrays(input, refInput);
     printf("\nPass for size=%d Offset=%d\n",myStdVectSize, myStdVectSize/4);
 } 
+#endif
 
 #if (TEST_DOUBLE == 1)
 
@@ -2140,9 +2142,9 @@ TEST_P (scanStdVectorWithIters, doubleDefiniteValues){
 ////INSTANTIATE_TEST_CASE_P(inclusiveScanIter, scanStdVectorWithIters, ::testing::Range(1, 1025, 1)); 
 //INSTANTIATE_TEST_CASE_P(inclusiveScanIterIntLimit, ScanCLtypeTest, ::testing::Range(1025, 25535, 1000)); 
 INSTANTIATE_TEST_CASE_P(inclusiveScanIterIntLimit, ScanCLtypeTest, ::testing::Range( 0, 1024, 47 )); 
-INSTANTIATE_TEST_CASE_P(inclusiveScanIterIntLimit, ScanOffsetTest, ::testing::Range(1025, 65535, 1000)); 
-INSTANTIATE_TEST_CASE_P(inclusiveScanIterIntLimit, scanStdVectorWithIters, ::testing::Range(1025, 65535, 1000)); 
-INSTANTIATE_TEST_CASE_P(withCountingIterator, StdVectCountingIterator, ::testing::Range(1025, 65535, 1000));
+INSTANTIATE_TEST_CASE_P(inclusiveScanIterIntLimit, ScanOffsetTest, ::testing::Range(1025, 65535, 5111)); 
+INSTANTIATE_TEST_CASE_P(inclusiveScanIterIntLimit, scanStdVectorWithIters, ::testing::Range(1025, 65535, 5111)); 
+INSTANTIATE_TEST_CASE_P(withCountingIterator, StdVectCountingIterator, ::testing::Range(1025, 65535, 5111));
 
 
 TEST_P( ScanIntegerVector, InclusiveInplace )
