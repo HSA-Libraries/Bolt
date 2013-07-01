@@ -2618,6 +2618,36 @@ TEST (rawArrayTest, floatarray){
 
 }
 
+
+class sort_withStdVectFloat_2: public ::testing::TestWithParam<int>{
+protected:
+	int sizeOfInputBuffer;
+public:
+	sort_withStdVectFloat_2():sizeOfInputBuffer(GetParam()){
+	}
+};
+TEST_P(sort_withStdVectFloat_2, floatSerial_EPR){
+		
+	std::vector <float> stdVect(sizeOfInputBuffer);
+	std::vector <float> boltVect(sizeOfInputBuffer);
+
+	for (int i = 0 ; i < sizeOfInputBuffer; i++){
+		boltVect[i] = stdVect[i] = (float)i + 1.0625f;
+		
+	}
+	std::sort(stdVect.begin(), stdVect.end(), std::greater<float>());
+
+	bolt::cl::sort(boltVect.begin(), boltVect.end(), bolt::cl::greater<float>());
+
+	for (int i = 0 ; i < sizeOfInputBuffer; ++i){
+		
+		EXPECT_FLOAT_EQ(stdVect[i], boltVect[i]);
+	}
+}
+
+INSTANTIATE_TEST_CASE_P(sortDescending, sort_withStdVectFloat_2, ::testing::Range( 1, 1129, 7));  //Passing for each iteration
+//test code ends
+
 int main(int argc, char* argv[])
 {
     ::testing::InitGoogleTest( &argc, &argv[ 0 ] );

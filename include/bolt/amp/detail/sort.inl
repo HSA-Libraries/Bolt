@@ -46,7 +46,7 @@
 #define BITONIC_SORT_WGSIZE 64
 /* \brief - SORT_CPU_THRESHOLD should be atleast 2 times the BITONIC_SORT_WGSIZE*/
 #define SORT_CPU_THRESHOLD 128
-
+#define MERGE_SORT_WAVESIZE 64
 namespace bolt {
 namespace amp {
 template<typename RandomAccessIterator>
@@ -1428,7 +1428,8 @@ const StrictWeakOrdering& comp)
 
     if(((szElements-1) & (szElements)) != 0)
     {
-        sort_enqueue_non_powerOf2(ctl,first,last,comp);
+        //sort_enqueue_non_powerOf2(ctl,first,last,comp);
+        stablesort_enqueue(ctl,first,last,comp);
         return;
     }
     /*if((szElements/2) < BITONIC_SORT_WGSIZE)
@@ -1458,97 +1459,333 @@ const StrictWeakOrdering& comp)
     return;
 }// END of sort_enqueue
 
-template<typename DVRandomAccessIterator, typename StrictWeakOrdering>
-void sort_enqueue_non_powerOf2(control &ctl, const DVRandomAccessIterator& first, const DVRandomAccessIterator& last,
-const StrictWeakOrdering& comp)
+#define max(a,b)    (((a) > (b)) ? (a) : (b))
+#define min(a,b)    (((a) < (b)) ? (a) : (b))
+
+template< typename sType, typename Container, typename StrictWeakOrdering >
+unsigned int lowerBoundBinary( Container& data, int left, int right, sType searchVal, StrictWeakOrdering& lessOp ) restrict(amp)
 {
-#if 0
-    //std::cout << "The BOLT sort routine does not support non power of 2 buffer size. Falling back to CPU std::sort" << std ::endl;
-    typedef typename std::iterator_traits< DVRandomAccessIterator >::value_type T;
-    static boost::once_flag initOnlyOnce;
-    size_t szElements = (size_t)(last - first);
-
-    //Power of 2 buffer size
-    // For user-defined types, the user must create a TypeName trait which returns the name of the class - note use of TypeName<>::get to retreive the name here.
-    static std::vector< ::cl::Kernel > sortKernels;
-
-    kernelParamsSort args( TypeName< T >::get( ), TypeName< DVRandomAccessIterator >::get( ), TypeName< T >::get( ),
-    TypeName< StrictWeakOrdering >::get( ) );
-
-    std::string typeDefinitions = cl_code + ClCode< T >::get( ) + ClCode< DVRandomAccessIterator >::get( );
-    if( !boost::is_same< T, StrictWeakOrdering >::value)
+    //  The values firstIndex and lastIndex get modified within the loop, narrowing down the potential sequence
+    int firstIndex = left;
+    int lastIndex = right;
+    
+    //  This loops through [firstIndex, lastIndex)
+    //  Since firstIndex and lastIndex will be different for every thread depending on the nested branch,
+    //  this while loop will be divergent within a wavefront
+    while( firstIndex < lastIndex )
     {
-        typeDefinitions += ClCode< StrictWeakOrdering >::get( );
+        //  midIndex is the average of first and last, rounded down
+        unsigned int midIndex = ( firstIndex + lastIndex ) / 2;
+        sType midValue = data[ midIndex ];
+        
+        //  This branch will create divergent wavefronts
+        if( lessOp( midValue, searchVal ) )
+        {
+            firstIndex = midIndex+1;
+             //printf( "lowerBound: lastIndex[ %i ]=%i\n", get_local_id( 0 ), lastIndex );
+        }
+        else
+        {
+            lastIndex = midIndex;
+             //printf( "lowerBound: firstIndex[ %i ]=%i\n", get_local_id( 0 ), firstIndex );
+        }
+    }
+    //printf("lowerBoundBinary: left=%d, right=%d, firstIndex=%d\n", left, right, firstIndex);
+    return firstIndex;
+}
+
+//  This implements a binary search routine to look for an 'insertion point' in a sequence, denoted
+//  by a base pointer and left and right index for a particular candidate value.  The comparison operator is 
+//  passed as a functor parameter lessOp
+//  This function returns an index that is the first index whos value would be greater than the searched value
+//  If the search value is not found in the sequence, upperbound returns the same result as lowerbound
+template< typename sType, typename Container, typename StrictWeakOrdering >
+unsigned int  upperBoundBinary( Container& data, unsigned int left, unsigned int right, sType searchVal, StrictWeakOrdering& lessOp ) restrict(amp)
+{
+    unsigned int upperBound = lowerBoundBinary( data, left, right, searchVal, lessOp );
+    
+     //printf( "start of upperBoundBinary: upperBound, left, right = [%d, %d, %d]\n", upperBound, left, right );
+    //  upperBound is always between left and right or equal to right
+    //  If upperBound == right, then  searchVal was not found in the sequence.  Just return.
+    if( upperBound != right )
+    {
+        //  While the values are equal i.e. !(x < y) && !(y < x) increment the index
+        int mid = 0;
+        sType upperValue = data[ upperBound ];
+        //This loop is a kind of a specialized binary search. 
+        //This will find the first index location which is not equal to searchVal.
+        while( !lessOp( upperValue, searchVal ) && !lessOp( searchVal, upperValue) && (upperBound < right))
+        {
+            mid = (upperBound + right)/2;
+            sType midValue = data[mid];
+            if( !lessOp( midValue, searchVal ) && !lessOp( searchVal, midValue) )
+            {
+                upperBound = mid + 1;
+            }   
+            else
+            {
+                right = mid;
+                upperBound++;
+            }
+            upperValue = data[ upperBound ];
+            //printf( "upperBoundBinary: upperBound, left, right = [%d, %d, %d]\n", upperBound, left, right);
+        }
+    }
+    //printf( "end of upperBoundBinary: upperBound, left, right = [%d, %d, %d]\n", upperBound, left, right);
+    return upperBound;
+}
+
+//  This kernel implements merging of blocks of sorted data.  The input to this kernel most likely is
+//  the output of blockInsertionSortTemplate.  It is expected that the source array contains multiple
+//  blocks, each block is independently sorted.  The goal is to write into the output buffer half as 
+//  many blocks, of double the size.  The even and odd blocks are stably merged together to form
+//  a new sorted block of twice the size.  The algorithm is out-of-place.
+template< typename sPtrType, typename Container, typename StrictWeakOrdering >
+void AMP_mergeTemplate( bolt::amp::control &ctl,
+                Container & source_ptr,
+                Container & result_ptr,
+                const int srcVecSize,
+                const int srcLogicalBlockSize,
+                StrictWeakOrdering& lessOp,
+                int globalRange
+            )
+{
+    //size_t globalID     = get_global_id( 0 );
+    //size_t groupID      = get_group_id( 0 );
+    //size_t localID      = get_local_id( 0 );
+    //size_t wgSize       = get_local_size( 0 );
+    concurrency::extent< 1 > globalSizeK0( globalRange );
+    concurrency::tiled_extent< MERGE_SORT_WAVESIZE > tileK0 = globalSizeK0.tile< MERGE_SORT_WAVESIZE >();
+    concurrency::accelerator_view av = ctl.getAccelerator().default_view;
+    concurrency::parallel_for_each(av, tileK0,
+        [
+            source_ptr,
+            result_ptr,
+            srcVecSize,
+            srcLogicalBlockSize,
+            tileK0,
+            lessOp
+        ]
+    ( concurrency::tiled_index< MERGE_SORT_WAVESIZE > t_idx ) restrict (amp)
+    {
+        int globalID    = t_idx.global[ 0 ];
+        int groupID     = t_idx.tile[ 0 ];
+        int localID     = t_idx.local[ 0 ];
+        int wgSize      = tileK0.tile_dim0;
+        tile_static sPtrType lds[MERGE_SORT_WAVESIZE];
+
+        //  Abort threads that are passed the end of the input vector
+        if( globalID >= srcVecSize )
+            return; // on SI this doesn't mess-up barriers
+
+        //  For an element in sequence A, find the lowerbound index for it in sequence B
+        int srcBlockNum = globalID / srcLogicalBlockSize;
+        int srcBlockIndex = globalID % srcLogicalBlockSize;
+    
+        //printf( "mergeTemplate: srcBlockNum[%i]=%i\n", srcBlockNum, srcBlockIndex );
+
+        //  Pairs of even-odd blocks will be merged together 
+        //  An even block should search for an insertion point in the next odd block, 
+        //  and the odd block should look for an insertion point in the corresponding previous even block
+        int dstLogicalBlockSize = srcLogicalBlockSize<<1;
+        int leftBlockIndex = globalID & ~(dstLogicalBlockSize - 1 );
+        //printf("mergeTemplate: leftBlockIndex=%d\n", leftBlockIndex );
+        leftBlockIndex += (srcBlockNum & 0x1) ? 0 : srcLogicalBlockSize;
+        leftBlockIndex = min( leftBlockIndex, srcVecSize );
+        int rightBlockIndex = min( leftBlockIndex + srcLogicalBlockSize, srcVecSize );
+    
+        //  For a particular element in the input array, find the lowerbound index for it in the search sequence given by leftBlockIndex & rightBlockIndex
+        // uint insertionIndex = lowerBoundLinear( source_ptr, leftBlockIndex, rightBlockIndex, source_ptr[ globalID ], lessOp ) - leftBlockIndex;
+        int insertionIndex = 0;
+        if( (srcBlockNum & 0x1) == 0 )
+        {
+            insertionIndex = lowerBoundBinary( source_ptr, leftBlockIndex, rightBlockIndex, source_ptr[ globalID ], lessOp ) - leftBlockIndex;
+        }
+        else
+        {
+            insertionIndex = upperBoundBinary( source_ptr, leftBlockIndex, rightBlockIndex, source_ptr[ globalID ], lessOp ) - leftBlockIndex;
+        }
+    
+        //  The index of an element in the result sequence is the summation of it's indixes in the two input 
+        //  sequences
+        int dstBlockIndex = srcBlockIndex + insertionIndex;
+        int dstBlockNum = srcBlockNum/2;
+    
+        result_ptr[ (dstBlockNum*dstLogicalBlockSize)+dstBlockIndex ] = source_ptr[ globalID ];
+    } );
+}
+
+
+template< typename T, typename StrictWeakOrdering, typename Container >
+void AMP_BlockInsertionSortTemplate( bolt::amp::control &ctl,
+                Container  &data_ptr,
+                int vecSize,
+                StrictWeakOrdering &lessOp,
+                int globalRange,
+                int localRange
+            )
+{
+    const int BLOCK_SORT_WAVESIZE = 64;
+    concurrency::extent< 1 > globalSizeK0( globalRange );
+    concurrency::tiled_extent< BLOCK_SORT_WAVESIZE > tileK0 = globalSizeK0.tile< BLOCK_SORT_WAVESIZE >();
+    concurrency::accelerator_view av = ctl.getAccelerator().default_view;
+    concurrency::parallel_for_each(av, tileK0,
+        [
+            data_ptr,
+            tileK0,
+            lessOp,
+            vecSize
+        ]
+    ( concurrency::tiled_index< BLOCK_SORT_WAVESIZE > t_idx ) restrict (amp)
+    {
+        int gloId    = t_idx.global[ 0 ];
+        int groId     = t_idx.tile[ 0 ];
+        int locId     = t_idx.local[ 0 ];
+        int wgSize   = tileK0.tile_dim0;
+        tile_static T lds[64];
+        // Abort threads that are passed the end of the input vector
+
+        if (gloId < vecSize) 
+            lds[ locId ] = data_ptr[ gloId ];
+
+        t_idx.barrier.wait();
+
+        //  Sorts a workgroup using a naive insertion sort
+        //  The sort uses one thread within a workgroup to sort the entire workgroup
+        if( locId == 0 )
+        {
+            //  The last workgroup may have an irregular size, so we calculate a per-block endIndex
+            //  endIndex is essentially emulating a mod operator with subtraction and multiply
+            int endIndex = vecSize - ( groId * wgSize );
+            endIndex = min( endIndex, wgSize );
+
+            //  Indices are signed because the while loop will generate a -1 index inside of the max function
+            for( int currIndex = 1; currIndex < endIndex; ++currIndex )
+            {
+                T val = lds[ currIndex ];
+                int scanIndex = currIndex;
+                T ldsVal = lds[scanIndex - 1];
+                while( scanIndex > 0 && lessOp( val, ldsVal ) )
+                {
+                    lds[ scanIndex ] = ldsVal;
+                    scanIndex = scanIndex - 1;
+                    ldsVal = lds[ max(0, scanIndex - 1) ];  // scanIndex-1 may be -1
+                }
+                lds[ scanIndex ] = val;
+            }
+        }
+        t_idx.barrier.wait();
+        if(gloId < vecSize)
+            data_ptr[ gloId ] = lds[ locId ];//In C++ AMP we don;t need to store in a local variable
+    }
+    );
+}
+
+template<typename DVRandomAccessIterator, typename StrictWeakOrdering> 
+void stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVRandomAccessIterator& last,
+             const StrictWeakOrdering& comp)
+{
+    const int STABLE_SORT_VECTOR_SIZE = 64;
+    int vecSize = static_cast< int >( std::distance( first, last ) );
+    typedef std::iterator_traits< DVRandomAccessIterator >::value_type iType;
+    concurrency::extent<1> ext( vecSize );
+    int localRange = STABLE_SORT_VECTOR_SIZE;
+    //  Make sure that globalRange is a multiple of localRange
+    int globalRange = vecSize;
+    int modlocalRange = ( globalRange & ( localRange-1 ) );
+    if( modlocalRange )
+    {
+        globalRange &= (~modlocalRange);
+        globalRange += localRange;
+    }
+    unsigned int ldsSize  = static_cast< unsigned int >( localRange * sizeof( iType ) );
+
+    auto&  inputBuffer = first.getContainer().getBuffer(); //( numElements, av );
+
+    AMP_BlockInsertionSortTemplate<iType>( ctrl,
+                inputBuffer,
+                vecSize,
+                comp,
+                globalRange,
+                localRange
+            );
+
+
+    //  Early exit for the case of no merge passes, values are already in destination vector
+    if( vecSize <= localRange )
+    {
+        return;
     }
 
-    //Power of 2 buffer size
-// For user-defined types, the user must create a TypeName trait which returns the name of the class
-//  - note use of TypeName<>::get to retreive the name here.
-    static std::vector< ::cl::Kernel > sortKernels;
-        boost::call_once( initOnlyOnce, boost::bind( CallCompiler_Sort::constructAndCompileSelectionSort, &sortKernels,
-            typeDefinitions, &args, &ctl) );
+    //  An odd number of elements requires an extra merge pass to sort
+    int numMerges = 0;
 
-    size_t wgSize  = sortKernels[0].getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.device( ), &l_Error );
-
-    size_t totalWorkGroups = (szElements + wgSize)/wgSize;
-    size_t globalSize = totalWorkGroups * wgSize;
-    V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
-
-const ::cl::Buffer& in = first.getContainer().getBuffer();
-    // ::cl::Buffer out(ctl.context(), CL_MEM_READ_WRITE, sizeof(T)*szElements);
-    control::buffPointer out = ctl.acquireBuffer( sizeof(T)*szElements );
-
-    ALIGNED( 256 ) StrictWeakOrdering aligned_comp( comp );
-// ::cl::Buffer userFunctor(ctl.context(), CL_MEM_USE_HOST_PTR, sizeof( aligned_comp ), &aligned_comp );
-control::buffPointer userFunctor = ctl.acquireBuffer( sizeof( aligned_comp ),
-                                    CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_comp );
-
-    ::cl::LocalSpaceArg loc;
-    loc.size_ = wgSize*sizeof(T);
-
-    V_OPENCL( sortKernels[0].setArg(0, in), "Error setting a kernel argument in" );
-V_OPENCL( sortKernels[0].setArg(1, first.gpuPayloadSize( ), &first.gpuPayload( ) ), "Error setting a kernel argument" );
-V_OPENCL( sortKernels[0].setArg(2, *out), "Error setting a kernel argument out" );
-V_OPENCL( sortKernels[0].setArg(3, *userFunctor), "Error setting a kernel argument userFunctor" );
-V_OPENCL( sortKernels[0].setArg(4, loc), "Error setting kernel argument loc" );
-V_OPENCL( sortKernels[0].setArg(5, static_cast<cl_uint> (szElements)), "Error setting kernel argument szElements" );
+    //  Calculate the log2 of vecSize, taking into account our block size from kernel 1 is 64
+    //  this is how many merge passes we want
+    int log2BlockSize = vecSize >> 6;
+    for( ; log2BlockSize > 1; log2BlockSize >>= 1 )
     {
-            l_Error = ctl.commandQueue().enqueueNDRangeKernel(
-                    sortKernels[0],
-                    ::cl::NullRange,
-                    ::cl::NDRange(globalSize),
-                    ::cl::NDRange(wgSize),
-                    NULL,
-                    NULL);
-            V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for sort() kernel" );
-            V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
+        ++numMerges;
     }
 
-    wgSize  = sortKernels[1].getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.device( ), &l_Error );
+    //  Check to see if the input vector size is a power of 2, if not we will need last merge pass
+    int vecPow2 = (vecSize & (vecSize-1));
+    numMerges += vecPow2? 1: 0;
 
-    V_OPENCL( sortKernels[1].setArg(0, *out), "Error setting a kernel argument in" );
-    V_OPENCL( sortKernels[1].setArg(1, in), "Error setting a kernel argument out" );
-V_OPENCL( sortKernels[1].setArg(2, first.gpuPayloadSize( ), &first.gpuPayload( ) ), "Error setting a kernel argument" );
-V_OPENCL( sortKernels[1].setArg(3, *userFunctor), "Error setting a kernel argument userFunctor" );
-V_OPENCL( sortKernels[1].setArg(4, loc), "Error setting kernel argument loc" );
-V_OPENCL( sortKernels[1].setArg(5, static_cast<cl_uint> (szElements)), "Error setting kernel argument szElements" );
+    //  Allocate a flipflop buffer because the merge passes are out of place
+    device_vector< iType, concurrency::array > tmpBufferDV(static_cast<size_t>(globalRange), 0);
+    auto& tmpBuffer = tmpBufferDV.begin( ).getContainer().getBuffer();
+
+    for( int pass = 1; pass <= numMerges; ++pass )
     {
-            l_Error = ctl.commandQueue().enqueueNDRangeKernel(
-                    sortKernels[1],
-                    ::cl::NullRange,
-                    ::cl::NDRange(globalSize),
-                    ::cl::NDRange(wgSize),
-                    NULL,
-                    NULL);
-            V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for sort() kernel" );
-            V_OPENCL( ctl.commandQueue().finish(), "Error calling finish on the command queue" );
+        //  For each pass, flip the input-output buffers 
+        int srcLogicalBlockSize =  localRange << (pass-1) ;
+        if( pass & 0x1 )
+        {   
+            AMP_mergeTemplate<iType>( ctrl,
+                first.getContainer().getBuffer(),
+                tmpBuffer,
+                vecSize,
+                srcLogicalBlockSize,
+                comp,
+                globalRange
+            );
+
+        }
+        else
+        {
+            AMP_mergeTemplate<iType>( ctrl,
+                tmpBuffer,
+                first.getContainer().getBuffer(),
+                vecSize,
+                srcLogicalBlockSize,
+                comp,
+                globalRange
+            );
+
+        }
+        //std::cout << "\nPass Num"<< pass<< std::endl;
     }
-    // Map the buffer back to the host
-    ctl.commandQueue().enqueueMapBuffer(in, true, CL_MAP_READ | CL_MAP_WRITE, 0/*offset*/, sizeof(T) * szElements, NULL, NULL, &l_Error );
-    V_OPENCL( l_Error, "Error calling map on the result buffer" );
-#endif
+
+    //  If there are an odd number of merges, then the output data is sitting in the temp buffer.  We need to copy
+    //  the results back into the input array
+    if( numMerges & 0x1 )
+    {
+        tmpBuffer.section( ext ).copy_to( first.getContainer().getBuffer() );
+        first.getContainer().getBuffer().synchronize( );
+    }
+
+    //iType * temp = inputBuffer.data();
+    //std::cout << "*********Final Sort data ********* vecSize = "<< vecSize << "\n";
+    //for(int ii=0; ii<vecSize; ii++ )
+    //{
+    //    std::cout << " " <<temp[ii];
+    //}
+
     return;
-}// END of sort_enqueue_non_powerOf2
+}// END of sort_enqueue
+
+
 
 }//namespace bolt::cl::detail
 }//namespace bolt::cl
