@@ -714,7 +714,7 @@ namespace cl
 
                 m_Flags         = rhs.m_Flags;
                 m_commQueue     = rhs.m_commQueue;
-                m_Size          = 0;
+                m_Size        = capacity( );
 
                 //  This method will set the m_Size member variable upon successful completion
                 resize( rhs.m_Size );

@@ -82,7 +82,8 @@ enum functionType {
     f_minelement,
     f_reduce,
     f_reducebykey,
-    f_scan,
+    f_exclusivescan,
+    f_inclusivescan,
     f_scanbykey,
     f_sort,
     f_sortbykey,
@@ -90,8 +91,8 @@ enum functionType {
     f_stablesortbykey,
     f_transformreduce,
     f_transformscan,
-    f_unarytransform
-
+    f_unarytransform,
+    f_end
 };
 static char *functionNames[] = {
 "binarytransform",
@@ -104,7 +105,8 @@ static char *functionNames[] = {
 "minelement",
 "reduce",
 "reducebykey",
-"scan",
+"exclusivescan",
+"inclusivescan",
 "scanbykey",
 "sort",
 "sortbykey",
@@ -584,12 +586,13 @@ switch(function)
             case f_stablesort: // fill
             {
             std::cout <<  functionNames[f_stablesort] << std::endl;
-
+                VectorType backup = input1;
                 for (size_t iter = 0; iter < iterations+1; iter++)
                 {
                     myTimer.Start( testId );
                     bolt::cl::stable_sort(ctrl, input1.begin(), input1.end(),binaryPredLt); 
                     myTimer.Stop( testId );
+                    input1 = backup;
                 }
             }
 
@@ -628,12 +631,14 @@ switch(function)
             case f_sort: // fill
             {
             std::cout <<  functionNames[f_sort] << std::endl;
-
+                VectorType backup = input1;
                 for (size_t iter = 0; iter < iterations+1; iter++)
                 {
+                    
                     myTimer.Start( testId );
                      bolt::cl::sort(ctrl, input1.begin(), input1.end(),binaryPredLt);                    
                     myTimer.Stop( testId );
+                    input1 = backup;
                 }
             }
 
@@ -783,17 +788,29 @@ switch(function)
                 }
             break;
 
-        case f_scan: // scan
-            std::cout <<  functionNames[f_scan] << std::endl;
+        case f_inclusivescan: // scan
+            std::cout <<  functionNames[f_inclusivescan] << std::endl;
 
                 for (size_t iter = 0; iter < iterations+1; iter++)
                 {
-                     myTimer.Start( testId );
-            bolt::cl::inclusive_scan(
-                ctrl, input1.begin(), input1.end(), output.begin(), binaryFunct );
+                    myTimer.Start( testId );
+                    bolt::cl::inclusive_scan(
+                        ctrl, input1.begin(), input1.end(), output.begin(), binaryFunct );
                         myTimer.Stop( testId );
                 }
             break;
+
+        /*case f_exclusivescan: // scan
+            std::cout <<  functionNames[f_exclusivescan] << std::endl;
+
+                for (size_t iter = 0; iter < iterations+1; iter++)
+                {
+                    myTimer.Start( testId );
+                    bolt::cl::exclusive_scan(
+                        ctrl, input1.begin(), input1.end(), output.begin(), DATA_TYPE(), binaryFunct );
+                        myTimer.Stop( testId );
+                }
+            break;*/
 
         case f_transformscan: // transform_scan
             std::cout <<  functionNames[f_transformscan] << std::endl;
@@ -1020,7 +1037,7 @@ int _tmain( int argc, _TCHAR* argv[] )
     size_t length           = 1<<4;
     size_t vecType          = 0;
     size_t runMode          = 0;
-    size_t routine          = f_scan;
+    size_t routine          = f_reduce;
     size_t numThrowAway     = 0;
      std::string function_called=functionNames[routine] ;
     std::string filename    = "bench.xml";
