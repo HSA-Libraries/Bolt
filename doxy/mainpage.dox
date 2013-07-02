@@ -200,8 +200,8 @@ like BOLT_TEMPLATE_FUNCTOR2, BOLT_TEMPLATE_FUNCTOR3 etc from include/bolt/cl/clc
  *  List of <a href="supportedFunction.html">Supported Functions and Code Paths</a>.
  * \subsection paths Code Path Behaviour
  * \subsubsection Default Default Behaviour
- * Bolt function can be executed with three code paths(OpenCL™, Multicore CPU and Serial). The default mode is "Automatic" which means 
- * it will go into OpenCL&tm; path first, then TBB (Intel), then SerialCpu with below mentioned order. The control will go to other paths only if the selected one not found.
+ * Bolt function can be executed with four code paths(OpenCL™, C++ AMP, Multicore CPU and Serial CPU). The default mode is "Automatic" which means it will go into GPU path first, then TBB (Intel), then SerialCpu
+ * with below mentioned order. The control will go to other paths only if the selected one not found.
  
  * Selection order will be: 
  * \li Run on GPU if AMD GPU is found and AMD APP SDK is installed.
@@ -226,7 +226,7 @@ like BOLT_TEMPLATE_FUNCTOR2, BOLT_TEMPLATE_FUNCTOR3 etc from include/bolt/cl/clc
  * \section Requirements Requirements 
  * Bolt requires an OpenCL<SUP>TM</SUP> implementation that supports the static C++ kernel
  * features; specifically, C++ template support for OpenCL<SUP>TM</SUP> kernels.  Currently,
- * the AMD OpenCL<SUP>TM</SUP> SDK 2.7 provides this support; other vendors may adopt this feature in the future. 
- * If you face any issue with any AMD HD7000 family of cards and APU(Richland and Trinity). Please log an issue in 
+ * the AMD OpenCL<SUP>TM</SUP> SDK 2.7 and above version provides this support; other vendors may adopt this feature in the future. 
+ * If you face any issue with Bolt. Please log an issue in 
  * <a href="https://github.com/HSA-Libraries/bolt/issues">BOLT Issues page</a>.
  */

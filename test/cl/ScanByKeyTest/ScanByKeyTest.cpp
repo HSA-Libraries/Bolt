@@ -26,6 +26,7 @@
 #include "bolt/miniDump.h"
 
 #define TEST_DOUBLE 1
+#define SERIAL_TBB_OFFSET 0
 
 #include <gtest/gtest.h>
 //#include <boost/shared_array.hpp>
@@ -611,46 +612,7 @@ TEST_P (ScanByKeyCLtypeTest, InclTestULong)
     cmpArrays(refOutput, output);
          
 } 
-TEST_P (ScanByKeyCLtypeTest, SerialInclTestULong)
-{
-    std::vector< int > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< int > device_keys( myStdVectSize, 1);
-    // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
-    int segmentLength = 0;
-    int segmentIndex = 0;
-    int key = 1;
-    for (int i = 0; i < myStdVectSize; i++)
-    {
-        // start over, i.e., begin assigning new key
-        if (segmentIndex == segmentLength)
-        {
-            segmentLength++;
-            segmentIndex = 0;
-            ++key;
-        }
-        keys[i] = key;
-        device_keys[i] = key ;
-        segmentIndex++;
-    }
-    
-    // input and output vectors for device and reference
-    bolt::cl::device_vector< cl_ulong > input(  myStdVectSize, 2 );
-    bolt::cl::device_vector< cl_ulong > output( myStdVectSize, 0 );
-    std::vector< cl_ulong > refInput( myStdVectSize, 2 );
-    std::vector< cl_ulong > refOutput( myStdVectSize , 0);
-    // call scan
-    bolt::cl::equal_to<int> eq; 
-    bolt::cl::plus<cl_ulong> mM3; 
-     
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
-    bolt::cl::inclusive_scan_by_key(device_keys.begin(), device_keys.end(), input.begin(), output.begin(), eq, mM3);
-    gold_scan_by_key(keys.begin(), keys.end(), refInput.begin(), refOutput.begin(), mM3);
-    // compare results
-    cmpArrays(refOutput, output);
-          
-} 
 TEST_P (ScanByKeyCLtypeTest, MulticoreInclTestULong)
 { 
     std::vector< int > keys( myStdVectSize, 1);
@@ -1079,46 +1041,7 @@ TEST_P (ScanByKeyCLtypeTest, InclTestUShort)
     cmpArrays(refOutput, output);
          
 } 
-TEST_P (ScanByKeyCLtypeTest, SerialInclTestUShort)
-{
-    std::vector< int > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< int > device_keys( myStdVectSize, 1);
-    // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
-    int segmentLength = 0;
-    int segmentIndex = 0;
-    int key = 1;
-    for (int i = 0; i < myStdVectSize; i++)
-    {
-        // start over, i.e., begin assigning new key
-        if (segmentIndex == segmentLength)
-        {
-            segmentLength++;
-            segmentIndex = 0;
-            ++key;
-        }
-        keys[i] = key;
-        device_keys[i] = key ;
-        segmentIndex++;
-    }
-    
-    // input and output vectors for device and reference
-    bolt::cl::device_vector< cl_ushort > input(  myStdVectSize, 2 );
-    bolt::cl::device_vector< cl_ushort > output( myStdVectSize, 0 );
-    std::vector< cl_ushort > refInput( myStdVectSize, 2 );
-    std::vector< cl_ushort > refOutput( myStdVectSize , 0);
-    // call scan
-    bolt::cl::equal_to<int> eq; 
-    bolt::cl::plus<cl_ushort> mM3; 
-     
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
-    bolt::cl::inclusive_scan_by_key(device_keys.begin(), device_keys.end(), input.begin(), output.begin(), eq, mM3);
-    gold_scan_by_key(keys.begin(), keys.end(), refInput.begin(), refOutput.begin(), mM3);
-    // compare results
-    cmpArrays(refOutput, output);
-          
-} 
 TEST_P (ScanByKeyCLtypeTest, MulticoreInclTestUShort)
 { 
     std::vector< int > keys( myStdVectSize, 1);
@@ -1434,6 +1357,7 @@ TEST_P (ScanByKeyOffsetTest, InclOffsetTestInt)
     printf("\nPass for size=%d Offset=%d\n",myStdVectSize, myStdVectSize/2);
 
 } 
+#if (SERIAL_TBB_OFFSET == 1)
 TEST_P (ScanByKeyOffsetTest, SerialInclOffsetTestInt)
 {        
     std::vector< int > keys( myStdVectSize, 1);
@@ -1517,47 +1441,7 @@ TEST_P (ScanByKeyOffsetTest, MulticoreInclOffsetTestInt)
 
 } 
 
-TEST_P (ScanByKeyOffsetTest, ExclOffsetTestInt)
-{
-    //bolt::cl::device_vector< float > input( myStdVectSize, 2.f);
-    //std::vector< float > refInput( myStdVectSize, 2.f);
-              
-    std::vector< int > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< int > device_keys( myStdVectSize, 1);
-    // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
-    int segmentLength = 0;
-    int segmentIndex = 0;
-    int key = 1;
-    for (int i = 0; i < myStdVectSize; i++)
-    {
-        // start over, i.e., begin assigning new key
-        if (segmentIndex == segmentLength)
-        {
-            segmentLength++;
-            segmentIndex = 0;
-            ++key;
-        }
-        keys[i] = key;
-        device_keys[i] = key ;
-        segmentIndex++;
-    }
-    
-    // input and output vectors for device and reference
-    bolt::cl::device_vector< int > input(  myStdVectSize, 2 );
-    bolt::cl::device_vector< int > output( myStdVectSize, 0 );
-    std::vector< int > refInput( myStdVectSize, 2 );
-    std::vector< int > refOutput( myStdVectSize , 0);
-    // call scan
-    bolt::cl::equal_to<int> eq; 
-    bolt::cl::plus<int> mM3; 
-    
-    bolt::cl::exclusive_scan_by_key(device_keys.begin() + (myStdVectSize/4), device_keys.end() - (myStdVectSize/4), input.begin() + (myStdVectSize/4), output.begin() + (myStdVectSize/4), 2,eq, mM3);
-    gold_scan_by_key_exclusive(keys.begin() + (myStdVectSize/4), keys.end() - (myStdVectSize/4), refInput.begin() + (myStdVectSize/4), refOutput.begin() + (myStdVectSize/4), mM3, 2);
-    // compare results
-    cmpArrays(refOutput, output);
-    printf("\nPass for size=%d Offset=%d\n",myStdVectSize, myStdVectSize/2);
 
-} 
 TEST_P (ScanByKeyOffsetTest, SerialExclOffsetTestInt)
 {
     //bolt::cl::device_vector< float > input( myStdVectSize, 2.f);
@@ -1646,46 +1530,6 @@ TEST_P (ScanByKeyOffsetTest, MulticoreExclOffsetTestInt)
     printf("\nPass for size=%d Offset=%d\n",myStdVectSize, myStdVectSize/2);
 
 } 
-
-
-TEST_P (ScanByKeyOffsetTest, InclOffsetTestFloat)
-{
-    std::vector< float > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< float > device_keys( myStdVectSize, 1);
-    // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
-    int segmentLength = 0;
-    int segmentIndex = 0;
-    float key = 1.f;
-    for (int i = 0; i < myStdVectSize; i++)
-    {
-        // start over, i.e., begin assigning new key
-        if (segmentIndex == segmentLength)
-        {
-            segmentLength++;
-            segmentIndex = 0;
-            ++key;
-        }
-        keys[i] = key;
-        device_keys[i] = key ;
-        segmentIndex++;
-    }
-    
-    // input and output vectors for device and reference
-    bolt::cl::device_vector< float > input(  myStdVectSize, 2 );
-    bolt::cl::device_vector< float > output( myStdVectSize, 0 );
-    std::vector< float > refInput( myStdVectSize, 2 );
-    std::vector< float > refOutput( myStdVectSize , 0);
-    // call scan
-    bolt::cl::equal_to<float> eq; 
-    bolt::cl::plus<float> mM3; 
-    
-    bolt::cl::inclusive_scan_by_key(device_keys.begin() + (myStdVectSize/4), device_keys.end() - (myStdVectSize/4), input.begin() + (myStdVectSize/4), output.begin() + (myStdVectSize/4), eq, mM3);
-    gold_scan_by_key(keys.begin() + (myStdVectSize/4), keys.end() - (myStdVectSize/4), refInput.begin() + (myStdVectSize/4), refOutput.begin() + (myStdVectSize/4), mM3);
-    // compare results
-    cmpArrays(refOutput, output);
-    printf("\nPass for size=%d Offset=%d\n",myStdVectSize, myStdVectSize/2);
-
-} 
 TEST_P (ScanByKeyOffsetTest, SerialInclOffsetTestFloat)
 {        
     std::vector< float > keys( myStdVectSize, 1);
@@ -1763,48 +1607,6 @@ TEST_P (ScanByKeyOffsetTest, MulticoreInclOffsetTestFloat)
 
     bolt::cl::inclusive_scan_by_key(ctl, device_keys.begin() + (myStdVectSize/4), device_keys.end() - (myStdVectSize/4), input.begin() + (myStdVectSize/4), output.begin() + (myStdVectSize/4), eq, mM3);
     gold_scan_by_key(keys.begin() + (myStdVectSize/4), keys.end() - (myStdVectSize/4), refInput.begin() + (myStdVectSize/4), refOutput.begin() + (myStdVectSize/4), mM3);
-    // compare results
-    cmpArrays(refOutput, output);
-    printf("\nPass for size=%d Offset=%d\n",myStdVectSize, myStdVectSize/2);
-
-} 
-
-TEST_P (ScanByKeyOffsetTest, ExclOffsetTestFloat)
-{
-    //bolt::cl::device_vector< float > input( myStdVectSize, 2.f);
-    //std::vector< float > refInput( myStdVectSize, 2.f);
-              
-    std::vector< float > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< float > device_keys( myStdVectSize, 1);
-    // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
-    int segmentLength = 0;
-    int segmentIndex = 0;
-    float key = 1.f;
-    for (int i = 0; i < myStdVectSize; i++)
-    {
-        // start over, i.e., begin assigning new key
-        if (segmentIndex == segmentLength)
-        {
-            segmentLength++;
-            segmentIndex = 0;
-            ++key;
-        }
-        keys[i] = key;
-        device_keys[i] = key ;
-        segmentIndex++;
-    }
-    
-    // input and output vectors for device and reference
-    bolt::cl::device_vector< float > input(  myStdVectSize, 2 );
-    bolt::cl::device_vector< float > output( myStdVectSize, 0 );
-    std::vector< float > refInput( myStdVectSize, 2 );
-    std::vector< float > refOutput( myStdVectSize , 0);
-    // call scan
-    bolt::cl::equal_to<float> eq; 
-    bolt::cl::plus<float> mM3; 
-    
-    bolt::cl::exclusive_scan_by_key(device_keys.begin() + (myStdVectSize/4), device_keys.end() - (myStdVectSize/4), input.begin() + (myStdVectSize/4), output.begin() + (myStdVectSize/4), 2.f,eq, mM3);
-    gold_scan_by_key_exclusive(keys.begin() + (myStdVectSize/4), keys.end() - (myStdVectSize/4), refInput.begin() + (myStdVectSize/4), refOutput.begin() + (myStdVectSize/4), mM3, 2.f);
     // compare results
     cmpArrays(refOutput, output);
     printf("\nPass for size=%d Offset=%d\n",myStdVectSize, myStdVectSize/2);
@@ -1898,16 +1700,19 @@ TEST_P (ScanByKeyOffsetTest, MulticoreExclOffsetTestFloat)
     printf("\nPass for size=%d Offset=%d\n",myStdVectSize, myStdVectSize/2);
 
 }
+#endif
 
-#if(TEST_DOUBLE == 1)
-TEST_P (ScanByKeyOffsetTest, InclOffsetTestDouble)
+TEST_P (ScanByKeyOffsetTest, ExclOffsetTestInt)
 {
-    std::vector< double > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< double > device_keys( myStdVectSize, 1);
+    //bolt::cl::device_vector< float > input( myStdVectSize, 2.f);
+    //std::vector< float > refInput( myStdVectSize, 2.f);
+              
+    std::vector< int > keys( myStdVectSize, 1);
+    bolt::cl::device_vector< int > device_keys( myStdVectSize, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
-    double key = 1.0;
+    int key = 1;
     for (int i = 0; i < myStdVectSize; i++)
     {
         // start over, i.e., begin assigning new key
@@ -1923,13 +1728,51 @@ TEST_P (ScanByKeyOffsetTest, InclOffsetTestDouble)
     }
     
     // input and output vectors for device and reference
-    bolt::cl::device_vector< double > input(  myStdVectSize, 2 );
-    bolt::cl::device_vector< double > output( myStdVectSize, 0 );
-    std::vector< double > refInput( myStdVectSize, 2 );
-    std::vector< double > refOutput( myStdVectSize , 0);
+    bolt::cl::device_vector< int > input(  myStdVectSize, 2 );
+    bolt::cl::device_vector< int > output( myStdVectSize, 0 );
+    std::vector< int > refInput( myStdVectSize, 2 );
+    std::vector< int > refOutput( myStdVectSize , 0);
     // call scan
-    bolt::cl::equal_to<double> eq; 
-    bolt::cl::plus<double> mM3; 
+    bolt::cl::equal_to<int> eq; 
+    bolt::cl::plus<int> mM3; 
+    
+    bolt::cl::exclusive_scan_by_key(device_keys.begin() + (myStdVectSize/4), device_keys.end() - (myStdVectSize/4), input.begin() + (myStdVectSize/4), output.begin() + (myStdVectSize/4), 2,eq, mM3);
+    gold_scan_by_key_exclusive(keys.begin() + (myStdVectSize/4), keys.end() - (myStdVectSize/4), refInput.begin() + (myStdVectSize/4), refOutput.begin() + (myStdVectSize/4), mM3, 2);
+    // compare results
+    cmpArrays(refOutput, output);
+    printf("\nPass for size=%d Offset=%d\n",myStdVectSize, myStdVectSize/2);
+
+} 
+TEST_P (ScanByKeyOffsetTest, InclOffsetTestFloat)
+{
+    std::vector< float > keys( myStdVectSize, 1);
+    bolt::cl::device_vector< float > device_keys( myStdVectSize, 1);
+    // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
+    int segmentLength = 0;
+    int segmentIndex = 0;
+    float key = 1.f;
+    for (int i = 0; i < myStdVectSize; i++)
+    {
+        // start over, i.e., begin assigning new key
+        if (segmentIndex == segmentLength)
+        {
+            segmentLength++;
+            segmentIndex = 0;
+            ++key;
+        }
+        keys[i] = key;
+        device_keys[i] = key ;
+        segmentIndex++;
+    }
+    
+    // input and output vectors for device and reference
+    bolt::cl::device_vector< float > input(  myStdVectSize, 2 );
+    bolt::cl::device_vector< float > output( myStdVectSize, 0 );
+    std::vector< float > refInput( myStdVectSize, 2 );
+    std::vector< float > refOutput( myStdVectSize , 0);
+    // call scan
+    bolt::cl::equal_to<float> eq; 
+    bolt::cl::plus<float> mM3; 
     
     bolt::cl::inclusive_scan_by_key(device_keys.begin() + (myStdVectSize/4), device_keys.end() - (myStdVectSize/4), input.begin() + (myStdVectSize/4), output.begin() + (myStdVectSize/4), eq, mM3);
     gold_scan_by_key(keys.begin() + (myStdVectSize/4), keys.end() - (myStdVectSize/4), refInput.begin() + (myStdVectSize/4), refOutput.begin() + (myStdVectSize/4), mM3);
@@ -1938,6 +1781,49 @@ TEST_P (ScanByKeyOffsetTest, InclOffsetTestDouble)
     printf("\nPass for size=%d Offset=%d\n",myStdVectSize, myStdVectSize/2);
 
 } 
+TEST_P (ScanByKeyOffsetTest, ExclOffsetTestFloat)
+{
+    //bolt::cl::device_vector< float > input( myStdVectSize, 2.f);
+    //std::vector< float > refInput( myStdVectSize, 2.f);
+              
+    std::vector< float > keys( myStdVectSize, 1);
+    bolt::cl::device_vector< float > device_keys( myStdVectSize, 1);
+    // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
+    int segmentLength = 0;
+    int segmentIndex = 0;
+    float key = 1.f;
+    for (int i = 0; i < myStdVectSize; i++)
+    {
+        // start over, i.e., begin assigning new key
+        if (segmentIndex == segmentLength)
+        {
+            segmentLength++;
+            segmentIndex = 0;
+            ++key;
+        }
+        keys[i] = key;
+        device_keys[i] = key ;
+        segmentIndex++;
+    }
+    
+    // input and output vectors for device and reference
+    bolt::cl::device_vector< float > input(  myStdVectSize, 2 );
+    bolt::cl::device_vector< float > output( myStdVectSize, 0 );
+    std::vector< float > refInput( myStdVectSize, 2 );
+    std::vector< float > refOutput( myStdVectSize , 0);
+    // call scan
+    bolt::cl::equal_to<float> eq; 
+    bolt::cl::plus<float> mM3; 
+    
+    bolt::cl::exclusive_scan_by_key(device_keys.begin() + (myStdVectSize/4), device_keys.end() - (myStdVectSize/4), input.begin() + (myStdVectSize/4), output.begin() + (myStdVectSize/4), 2.f,eq, mM3);
+    gold_scan_by_key_exclusive(keys.begin() + (myStdVectSize/4), keys.end() - (myStdVectSize/4), refInput.begin() + (myStdVectSize/4), refOutput.begin() + (myStdVectSize/4), mM3, 2.f);
+    // compare results
+    cmpArrays(refOutput, output);
+    printf("\nPass for size=%d Offset=%d\n",myStdVectSize, myStdVectSize/2);
+
+} 
+#if (SERIAL_TBB_OFFSET == 1)
+
 TEST_P (ScanByKeyOffsetTest, SerialInclOffsetTestDouble)
 {        
     std::vector< double > keys( myStdVectSize, 1);
@@ -2021,47 +1907,6 @@ TEST_P (ScanByKeyOffsetTest, MulticoreInclOffsetTestDouble)
 
 } 
 
-TEST_P (ScanByKeyOffsetTest, ExclOffsetTestDouble)
-{
-    //bolt::cl::device_vector< float > input( myStdVectSize, 2.f);
-    //std::vector< float > refInput( myStdVectSize, 2.f);
-              
-    std::vector< double > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< double > device_keys( myStdVectSize, 1);
-    // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
-    int segmentLength = 0;
-    int segmentIndex = 0;
-    double key = 1.0;
-    for (int i = 0; i < myStdVectSize; i++)
-    {
-        // start over, i.e., begin assigning new key
-        if (segmentIndex == segmentLength)
-        {
-            segmentLength++;
-            segmentIndex = 0;
-            ++key;
-        }
-        keys[i] = key;
-        device_keys[i] = key ;
-        segmentIndex++;
-    }
-    
-    // input and output vectors for device and reference
-    bolt::cl::device_vector< double > input(  myStdVectSize, 2 );
-    bolt::cl::device_vector< double > output( myStdVectSize, 0 );
-    std::vector< double > refInput( myStdVectSize, 2 );
-    std::vector< double > refOutput( myStdVectSize , 0);
-    // call scan
-    bolt::cl::equal_to<double> eq; 
-    bolt::cl::plus<double> mM3; 
-    
-    bolt::cl::exclusive_scan_by_key(device_keys.begin() + (myStdVectSize/4), device_keys.end() - (myStdVectSize/4), input.begin() + (myStdVectSize/4), output.begin() + (myStdVectSize/4), 2,eq, mM3);
-    gold_scan_by_key_exclusive(keys.begin() + (myStdVectSize/4), keys.end() - (myStdVectSize/4), refInput.begin() + (myStdVectSize/4), refOutput.begin() + (myStdVectSize/4), mM3, 2);
-    // compare results
-    cmpArrays(refOutput, output);
-    printf("\nPass for size=%d Offset=%d\n",myStdVectSize, myStdVectSize/2);
-
-} 
 TEST_P (ScanByKeyOffsetTest, SerialExclOffsetTestDouble)
 {
     //bolt::cl::device_vector< float > input( myStdVectSize, 2.f);
@@ -2151,6 +1996,89 @@ TEST_P (ScanByKeyOffsetTest, MulticoreExclOffsetTestDouble)
 
 }
 #endif
+#if(TEST_DOUBLE == 1)
+TEST_P (ScanByKeyOffsetTest, InclOffsetTestDouble)
+{
+    std::vector< double > keys( myStdVectSize, 1);
+    bolt::cl::device_vector< double > device_keys( myStdVectSize, 1);
+    // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
+    int segmentLength = 0;
+    int segmentIndex = 0;
+    double key = 1.0;
+    for (int i = 0; i < myStdVectSize; i++)
+    {
+        // start over, i.e., begin assigning new key
+        if (segmentIndex == segmentLength)
+        {
+            segmentLength++;
+            segmentIndex = 0;
+            ++key;
+        }
+        keys[i] = key;
+        device_keys[i] = key ;
+        segmentIndex++;
+    }
+    
+    // input and output vectors for device and reference
+    bolt::cl::device_vector< double > input(  myStdVectSize, 2 );
+    bolt::cl::device_vector< double > output( myStdVectSize, 0 );
+    std::vector< double > refInput( myStdVectSize, 2 );
+    std::vector< double > refOutput( myStdVectSize , 0);
+    // call scan
+    bolt::cl::equal_to<double> eq; 
+    bolt::cl::plus<double> mM3; 
+    
+    bolt::cl::inclusive_scan_by_key(device_keys.begin() + (myStdVectSize/4), device_keys.end() - (myStdVectSize/4), input.begin() + (myStdVectSize/4), output.begin() + (myStdVectSize/4), eq, mM3);
+    gold_scan_by_key(keys.begin() + (myStdVectSize/4), keys.end() - (myStdVectSize/4), refInput.begin() + (myStdVectSize/4), refOutput.begin() + (myStdVectSize/4), mM3);
+    // compare results
+    cmpArrays(refOutput, output);
+    printf("\nPass for size=%d Offset=%d\n",myStdVectSize, myStdVectSize/2);
+
+} 
+
+TEST_P (ScanByKeyOffsetTest, ExclOffsetTestDouble)
+{
+    //bolt::cl::device_vector< float > input( myStdVectSize, 2.f);
+    //std::vector< float > refInput( myStdVectSize, 2.f);
+              
+    std::vector< double > keys( myStdVectSize, 1);
+    bolt::cl::device_vector< double > device_keys( myStdVectSize, 1);
+    // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
+    int segmentLength = 0;
+    int segmentIndex = 0;
+    double key = 1.0;
+    for (int i = 0; i < myStdVectSize; i++)
+    {
+        // start over, i.e., begin assigning new key
+        if (segmentIndex == segmentLength)
+        {
+            segmentLength++;
+            segmentIndex = 0;
+            ++key;
+        }
+        keys[i] = key;
+        device_keys[i] = key ;
+        segmentIndex++;
+    }
+    
+    // input and output vectors for device and reference
+    bolt::cl::device_vector< double > input(  myStdVectSize, 2 );
+    bolt::cl::device_vector< double > output( myStdVectSize, 0 );
+    std::vector< double > refInput( myStdVectSize, 2 );
+    std::vector< double > refOutput( myStdVectSize , 0);
+    // call scan
+    bolt::cl::equal_to<double> eq; 
+    bolt::cl::plus<double> mM3; 
+    
+    bolt::cl::exclusive_scan_by_key(device_keys.begin() + (myStdVectSize/4), device_keys.end() - (myStdVectSize/4), input.begin() + (myStdVectSize/4), output.begin() + (myStdVectSize/4), 2,eq, mM3);
+    gold_scan_by_key_exclusive(keys.begin() + (myStdVectSize/4), keys.end() - (myStdVectSize/4), refInput.begin() + (myStdVectSize/4), refOutput.begin() + (myStdVectSize/4), mM3, 2);
+    // compare results
+    cmpArrays(refOutput, output);
+    printf("\nPass for size=%d Offset=%d\n",myStdVectSize, myStdVectSize/2);
+
+}
+
+#endif
 
 TEST_P (ScanByKeyOffsetTest, InclOffsetTestLong)
 {
@@ -2190,88 +2118,7 @@ TEST_P (ScanByKeyOffsetTest, InclOffsetTestLong)
     printf("\nPass for size=%d Offset=%d\n",myStdVectSize, myStdVectSize/2);
 
 } 
-TEST_P (ScanByKeyOffsetTest, SerialInclOffsetTestLong)
-{
-    std::vector< int > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< int > device_keys( myStdVectSize, 1);
-    // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
-    int segmentLength = 0;
-    int segmentIndex = 0;
-    int key = 1;
-    for (int i = 0; i < myStdVectSize; i++)
-    {
-        // start over, i.e., begin assigning new key
-        if (segmentIndex == segmentLength)
-        {
-            segmentLength++;
-            segmentIndex = 0;
-            ++key;
-        }
-        keys[i] = key;
-        device_keys[i] = key ;
-        segmentIndex++;
-    }
-    
-    // input and output vectors for device and reference
-    bolt::cl::device_vector< cl_long > input(  myStdVectSize, 2 );
-    bolt::cl::device_vector< cl_long > output( myStdVectSize, 0 );
-    std::vector< cl_long > refInput( myStdVectSize, 2 );
-    std::vector< cl_long > refOutput( myStdVectSize , 0);
-    // call scan
-    bolt::cl::equal_to<int> eq; 
-    bolt::cl::plus<cl_long> mM3; 
-    
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
-    bolt::cl::inclusive_scan_by_key(ctl, device_keys.begin() + (myStdVectSize/4), device_keys.end() - (myStdVectSize/4), input.begin() + (myStdVectSize/4), output.begin() + (myStdVectSize/4), eq, mM3);
-    gold_scan_by_key(keys.begin() + (myStdVectSize/4), keys.end() - (myStdVectSize/4), refInput.begin() + (myStdVectSize/4), refOutput.begin() + (myStdVectSize/4), mM3);
-    // compare results
-    cmpArrays(refOutput, output);
-    printf("\nPass for size=%d Offset=%d\n",myStdVectSize, myStdVectSize/2);
-
-} 
-TEST_P (ScanByKeyOffsetTest, MulticoreInclOffsetTestLong)
-{
-    std::vector< int > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< int > device_keys( myStdVectSize, 1);
-    // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
-    int segmentLength = 0;
-    int segmentIndex = 0;
-    int key = 1;
-    for (int i = 0; i < myStdVectSize; i++)
-    {
-        // start over, i.e., begin assigning new key
-        if (segmentIndex == segmentLength)
-        {
-            segmentLength++;
-            segmentIndex = 0;
-            ++key;
-        }
-        keys[i] = key;
-        device_keys[i] = key ;
-        segmentIndex++;
-    }
-    
-    // input and output vectors for device and reference
-    bolt::cl::device_vector< cl_long > input(  myStdVectSize, 2 );
-    bolt::cl::device_vector< cl_long > output( myStdVectSize, 0 );
-    std::vector< cl_long > refInput( myStdVectSize, 2 );
-    std::vector< cl_long > refOutput( myStdVectSize , 0);
-    // call scan
-    bolt::cl::equal_to<int> eq; 
-    bolt::cl::plus<cl_long> mM3; 
-    
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
-
-    bolt::cl::inclusive_scan_by_key(ctl, device_keys.begin() + (myStdVectSize/4), device_keys.end() - (myStdVectSize/4), input.begin() + (myStdVectSize/4), output.begin() + (myStdVectSize/4), eq, mM3);
-    gold_scan_by_key(keys.begin() + (myStdVectSize/4), keys.end() - (myStdVectSize/4), refInput.begin() + (myStdVectSize/4), refOutput.begin() + (myStdVectSize/4), mM3);
-    // compare results
-    cmpArrays(refOutput, output);
-    printf("\nPass for size=%d Offset=%d\n",myStdVectSize, myStdVectSize/2);
-
-} 
 
 TEST_P (ScanByKeyOffsetTest, InclOffsetTestULong)
 {
@@ -2305,88 +2152,6 @@ TEST_P (ScanByKeyOffsetTest, InclOffsetTestULong)
     bolt::cl::plus<cl_ulong> mM3; 
     
     bolt::cl::inclusive_scan_by_key(device_keys.begin() + (myStdVectSize/4), device_keys.end() - (myStdVectSize/4), input.begin() + (myStdVectSize/4), output.begin() + (myStdVectSize/4), eq, mM3);
-    gold_scan_by_key(keys.begin() + (myStdVectSize/4), keys.end() - (myStdVectSize/4), refInput.begin() + (myStdVectSize/4), refOutput.begin() + (myStdVectSize/4), mM3);
-    // compare results
-    cmpArrays(refOutput, output);
-    printf("\nPass for size=%d Offset=%d\n",myStdVectSize, myStdVectSize/2);
-
-} 
-TEST_P (ScanByKeyOffsetTest, SerialInclOffsetTestULong)
-{
-    std::vector< int > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< int > device_keys( myStdVectSize, 1);
-    // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
-    int segmentLength = 0;
-    int segmentIndex = 0;
-    int key = 1;
-    for (int i = 0; i < myStdVectSize; i++)
-    {
-        // start over, i.e., begin assigning new key
-        if (segmentIndex == segmentLength)
-        {
-            segmentLength++;
-            segmentIndex = 0;
-            ++key;
-        }
-        keys[i] = key;
-        device_keys[i] = key ;
-        segmentIndex++;
-    }
-    
-    // input and output vectors for device and reference
-    bolt::cl::device_vector< cl_ulong > input(  myStdVectSize, 2 );
-    bolt::cl::device_vector< cl_ulong > output( myStdVectSize, 0 );
-    std::vector< cl_ulong > refInput( myStdVectSize, 2 );
-    std::vector< cl_ulong > refOutput( myStdVectSize , 0);
-    // call scan
-    bolt::cl::equal_to<int> eq; 
-    bolt::cl::plus<cl_ulong> mM3; 
-    
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
-
-    bolt::cl::inclusive_scan_by_key(ctl, device_keys.begin() + (myStdVectSize/4), device_keys.end() - (myStdVectSize/4), input.begin() + (myStdVectSize/4), output.begin() + (myStdVectSize/4), eq, mM3);
-    gold_scan_by_key(keys.begin() + (myStdVectSize/4), keys.end() - (myStdVectSize/4), refInput.begin() + (myStdVectSize/4), refOutput.begin() + (myStdVectSize/4), mM3);
-    // compare results
-    cmpArrays(refOutput, output);
-    printf("\nPass for size=%d Offset=%d\n",myStdVectSize, myStdVectSize/2);
-
-} 
-TEST_P (ScanByKeyOffsetTest, MulticoreInclOffsetTestULong)
-{
-    std::vector< int > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< int > device_keys( myStdVectSize, 1);
-    // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
-    int segmentLength = 0;
-    int segmentIndex = 0;
-    int key = 1;
-    for (int i = 0; i < myStdVectSize; i++)
-    {
-        // start over, i.e., begin assigning new key
-        if (segmentIndex == segmentLength)
-        {
-            segmentLength++;
-            segmentIndex = 0;
-            ++key;
-        }
-        keys[i] = key;
-        device_keys[i] = key ;
-        segmentIndex++;
-    }
-    
-    // input and output vectors for device and reference
-    bolt::cl::device_vector< cl_ulong > input(  myStdVectSize, 2 );
-    bolt::cl::device_vector< cl_ulong > output( myStdVectSize, 0 );
-    std::vector< cl_ulong > refInput( myStdVectSize, 2 );
-    std::vector< cl_ulong > refOutput( myStdVectSize , 0);
-    // call scan
-    bolt::cl::equal_to<int> eq; 
-    bolt::cl::plus<cl_ulong> mM3; 
-    
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
-
-    bolt::cl::inclusive_scan_by_key(ctl, device_keys.begin() + (myStdVectSize/4), device_keys.end() - (myStdVectSize/4), input.begin() + (myStdVectSize/4), output.begin() + (myStdVectSize/4), eq, mM3);
     gold_scan_by_key(keys.begin() + (myStdVectSize/4), keys.end() - (myStdVectSize/4), refInput.begin() + (myStdVectSize/4), refOutput.begin() + (myStdVectSize/4), mM3);
     // compare results
     cmpArrays(refOutput, output);
@@ -2432,88 +2197,7 @@ TEST_P (ScanByKeyOffsetTest, InclOffsetTestShort)
     printf("\nPass for size=%d Offset=%d\n",myStdVectSize, myStdVectSize/2);
 
 } 
-TEST_P (ScanByKeyOffsetTest, SerialInclOffsetTestShort)
-{
-    std::vector< int > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< int > device_keys( myStdVectSize, 1);
-    // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
-    int segmentLength = 0;
-    int segmentIndex = 0;
-    int key = 1;
-    for (int i = 0; i < myStdVectSize; i++)
-    {
-        // start over, i.e., begin assigning new key
-        if (segmentIndex == segmentLength)
-        {
-            segmentLength++;
-            segmentIndex = 0;
-            ++key;
-        }
-        keys[i] = key;
-        device_keys[i] = key ;
-        segmentIndex++;
-    }
-    
-    // input and output vectors for device and reference
-    bolt::cl::device_vector< cl_short > input(  myStdVectSize, 2 );
-    bolt::cl::device_vector< cl_short > output( myStdVectSize, 0 );
-    std::vector< cl_short > refInput( myStdVectSize, 2 );
-    std::vector< cl_short > refOutput( myStdVectSize , 0);
-    // call scan
-    bolt::cl::equal_to<int> eq; 
-    bolt::cl::plus<cl_short> mM3; 
-    
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
-    bolt::cl::inclusive_scan_by_key(ctl, device_keys.begin() + (myStdVectSize/4), device_keys.end() - (myStdVectSize/4), input.begin() + (myStdVectSize/4), output.begin() + (myStdVectSize/4), eq, mM3);
-    gold_scan_by_key(keys.begin() + (myStdVectSize/4), keys.end() - (myStdVectSize/4), refInput.begin() + (myStdVectSize/4), refOutput.begin() + (myStdVectSize/4), mM3);
-    // compare results
-    cmpArrays(refOutput, output);
-    printf("\nPass for size=%d Offset=%d\n",myStdVectSize, myStdVectSize/2);
-
-} 
-TEST_P (ScanByKeyOffsetTest, MulticoreInclOffsetTestShort)
-{
-    std::vector< int > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< int > device_keys( myStdVectSize, 1);
-    // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
-    int segmentLength = 0;
-    int segmentIndex = 0;
-    int key = 1;
-    for (int i = 0; i < myStdVectSize; i++)
-    {
-        // start over, i.e., begin assigning new key
-        if (segmentIndex == segmentLength)
-        {
-            segmentLength++;
-            segmentIndex = 0;
-            ++key;
-        }
-        keys[i] = key;
-        device_keys[i] = key ;
-        segmentIndex++;
-    }
-    
-    // input and output vectors for device and reference
-    bolt::cl::device_vector< cl_short > input(  myStdVectSize, 2 );
-    bolt::cl::device_vector< cl_short > output( myStdVectSize, 0 );
-    std::vector< cl_short > refInput( myStdVectSize, 2 );
-    std::vector< cl_short > refOutput( myStdVectSize , 0);
-    // call scan
-    bolt::cl::equal_to<int> eq; 
-    bolt::cl::plus<cl_short> mM3; 
-    
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
-
-    bolt::cl::inclusive_scan_by_key(ctl, device_keys.begin() + (myStdVectSize/4), device_keys.end() - (myStdVectSize/4), input.begin() + (myStdVectSize/4), output.begin() + (myStdVectSize/4), eq, mM3);
-    gold_scan_by_key(keys.begin() + (myStdVectSize/4), keys.end() - (myStdVectSize/4), refInput.begin() + (myStdVectSize/4), refOutput.begin() + (myStdVectSize/4), mM3);
-    // compare results
-    cmpArrays(refOutput, output);
-    printf("\nPass for size=%d Offset=%d\n",myStdVectSize, myStdVectSize/2);
-
-} 
 
 TEST_P (ScanByKeyOffsetTest, InclOffsetTestUShort)
 {
@@ -2547,88 +2231,6 @@ TEST_P (ScanByKeyOffsetTest, InclOffsetTestUShort)
     bolt::cl::plus<cl_ushort> mM3; 
     
     bolt::cl::inclusive_scan_by_key(device_keys.begin() + (myStdVectSize/4), device_keys.end() - (myStdVectSize/4), input.begin() + (myStdVectSize/4), output.begin() + (myStdVectSize/4), eq, mM3);
-    gold_scan_by_key(keys.begin() + (myStdVectSize/4), keys.end() - (myStdVectSize/4), refInput.begin() + (myStdVectSize/4), refOutput.begin() + (myStdVectSize/4), mM3);
-    // compare results
-    cmpArrays(refOutput, output);
-    printf("\nPass for size=%d Offset=%d\n",myStdVectSize, myStdVectSize/2);
-
-} 
-TEST_P (ScanByKeyOffsetTest, SerialInclOffsetTestUShort)
-{
-    std::vector< int > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< int > device_keys( myStdVectSize, 1);
-    // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
-    int segmentLength = 0;
-    int segmentIndex = 0;
-    int key = 1;
-    for (int i = 0; i < myStdVectSize; i++)
-    {
-        // start over, i.e., begin assigning new key
-        if (segmentIndex == segmentLength)
-        {
-            segmentLength++;
-            segmentIndex = 0;
-            ++key;
-        }
-        keys[i] = key;
-        device_keys[i] = key ;
-        segmentIndex++;
-    }
-    
-    // input and output vectors for device and reference
-    bolt::cl::device_vector< cl_ushort > input(  myStdVectSize, 2 );
-    bolt::cl::device_vector< cl_ushort > output( myStdVectSize, 0 );
-    std::vector< cl_ushort > refInput( myStdVectSize, 2 );
-    std::vector< cl_ushort > refOutput( myStdVectSize , 0);
-    // call scan
-    bolt::cl::equal_to<int> eq; 
-    bolt::cl::plus<cl_ushort> mM3; 
-    
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
-
-    bolt::cl::inclusive_scan_by_key(ctl, device_keys.begin() + (myStdVectSize/4), device_keys.end() - (myStdVectSize/4), input.begin() + (myStdVectSize/4), output.begin() + (myStdVectSize/4), eq, mM3);
-    gold_scan_by_key(keys.begin() + (myStdVectSize/4), keys.end() - (myStdVectSize/4), refInput.begin() + (myStdVectSize/4), refOutput.begin() + (myStdVectSize/4), mM3);
-    // compare results
-    cmpArrays(refOutput, output);
-    printf("\nPass for size=%d Offset=%d\n",myStdVectSize, myStdVectSize/2);
-
-} 
-TEST_P (ScanByKeyOffsetTest, MulticoreInclOffsetTestUShort)
-{
-    std::vector< int > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< int > device_keys( myStdVectSize, 1);
-    // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
-    int segmentLength = 0;
-    int segmentIndex = 0;
-    int key = 1;
-    for (int i = 0; i < myStdVectSize; i++)
-    {
-        // start over, i.e., begin assigning new key
-        if (segmentIndex == segmentLength)
-        {
-            segmentLength++;
-            segmentIndex = 0;
-            ++key;
-        }
-        keys[i] = key;
-        device_keys[i] = key ;
-        segmentIndex++;
-    }
-    
-    // input and output vectors for device and reference
-    bolt::cl::device_vector< cl_ushort > input(  myStdVectSize, 2 );
-    bolt::cl::device_vector< cl_ushort > output( myStdVectSize, 0 );
-    std::vector< cl_ushort > refInput( myStdVectSize, 2 );
-    std::vector< cl_ushort > refOutput( myStdVectSize , 0);
-    // call scan
-    bolt::cl::equal_to<int> eq; 
-    bolt::cl::plus<cl_ushort> mM3; 
-    
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
-
-    bolt::cl::inclusive_scan_by_key(ctl, device_keys.begin() + (myStdVectSize/4), device_keys.end() - (myStdVectSize/4), input.begin() + (myStdVectSize/4), output.begin() + (myStdVectSize/4), eq, mM3);
     gold_scan_by_key(keys.begin() + (myStdVectSize/4), keys.end() - (myStdVectSize/4), refInput.begin() + (myStdVectSize/4), refOutput.begin() + (myStdVectSize/4), mM3);
     // compare results
     cmpArrays(refOutput, output);
@@ -2675,88 +2277,6 @@ TEST_P (ScanByKeyOffsetTest, ExclOffsetTestLong)
     printf("\nPass for size=%d Offset=%d\n",myStdVectSize, myStdVectSize/2);
 
 } 
-TEST_P (ScanByKeyOffsetTest, SerialExclOffsetTestLong)
-{
-    std::vector< int > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< int > device_keys( myStdVectSize, 1);
-    // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
-    int segmentLength = 0;
-    int segmentIndex = 0;
-    int key = 1;
-    for (int i = 0; i < myStdVectSize; i++)
-    {
-        // start over, i.e., begin assigning new key
-        if (segmentIndex == segmentLength)
-        {
-            segmentLength++;
-            segmentIndex = 0;
-            ++key;
-        }
-        keys[i] = key;
-        device_keys[i] = key ;
-        segmentIndex++;
-    }
-    
-    // input and output vectors for device and reference
-    bolt::cl::device_vector< cl_long > input(  myStdVectSize, 2 );
-    bolt::cl::device_vector< cl_long > output( myStdVectSize, 0 );
-    std::vector< cl_long > refInput( myStdVectSize, 2 );
-    std::vector< cl_long > refOutput( myStdVectSize , 0);
-    // call scan
-    bolt::cl::equal_to<int> eq; 
-    bolt::cl::plus<cl_long> mM3; 
-    
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
-
-    bolt::cl::exclusive_scan_by_key(ctl, device_keys.begin() + (myStdVectSize/4), device_keys.end() - (myStdVectSize/4), input.begin() + (myStdVectSize/4), output.begin() + (myStdVectSize/4), 2, eq, mM3);
-    gold_scan_by_key_exclusive(keys.begin() + (myStdVectSize/4), keys.end() - (myStdVectSize/4), refInput.begin() + (myStdVectSize/4), refOutput.begin() + (myStdVectSize/4), mM3, 2);
-    // compare results
-    cmpArrays(refOutput, output);
-    printf("\nPass for size=%d Offset=%d\n",myStdVectSize, myStdVectSize/2);
-
-} 
-TEST_P (ScanByKeyOffsetTest, MulticoreExclOffsetTestLong)
-{
-    std::vector< int > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< int > device_keys( myStdVectSize, 1);
-    // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
-    int segmentLength = 0;
-    int segmentIndex = 0;
-    int key = 1;
-    for (int i = 0; i < myStdVectSize; i++)
-    {
-        // start over, i.e., begin assigning new key
-        if (segmentIndex == segmentLength)
-        {
-            segmentLength++;
-            segmentIndex = 0;
-            ++key;
-        }
-        keys[i] = key;
-        device_keys[i] = key ;
-        segmentIndex++;
-    }
-    
-    // input and output vectors for device and reference
-    bolt::cl::device_vector< cl_long > input(  myStdVectSize, 2 );
-    bolt::cl::device_vector< cl_long > output( myStdVectSize, 0 );
-    std::vector< cl_long > refInput( myStdVectSize, 2 );
-    std::vector< cl_long > refOutput( myStdVectSize , 0);
-    // call scan
-    bolt::cl::equal_to<int> eq; 
-    bolt::cl::plus<cl_long> mM3; 
-    
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
-
-    bolt::cl::exclusive_scan_by_key(ctl, device_keys.begin() + (myStdVectSize/4), device_keys.end() - (myStdVectSize/4), input.begin() + (myStdVectSize/4), output.begin() + (myStdVectSize/4), 2, eq, mM3);
-    gold_scan_by_key_exclusive(keys.begin() + (myStdVectSize/4), keys.end() - (myStdVectSize/4), refInput.begin() + (myStdVectSize/4), refOutput.begin() + (myStdVectSize/4), mM3, 2);
-    // compare results
-    cmpArrays(refOutput, output);
-    printf("\nPass for size=%d Offset=%d\n",myStdVectSize, myStdVectSize/2);
-
-} 
 
 TEST_P (ScanByKeyOffsetTest, ExclInclOffsetTestULong)
 {
@@ -2796,88 +2316,7 @@ TEST_P (ScanByKeyOffsetTest, ExclInclOffsetTestULong)
     printf("\nPass for size=%d Offset=%d\n",myStdVectSize, myStdVectSize/2);
 
 } 
-TEST_P (ScanByKeyOffsetTest, SerialExclOffsetTestULong)
-{
-    std::vector< int > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< int > device_keys( myStdVectSize, 1);
-    // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
-    int segmentLength = 0;
-    int segmentIndex = 0;
-    int key = 1;
-    for (int i = 0; i < myStdVectSize; i++)
-    {
-        // start over, i.e., begin assigning new key
-        if (segmentIndex == segmentLength)
-        {
-            segmentLength++;
-            segmentIndex = 0;
-            ++key;
-        }
-        keys[i] = key;
-        device_keys[i] = key ;
-        segmentIndex++;
-    }
-    
-    // input and output vectors for device and reference
-    bolt::cl::device_vector< cl_ulong > input(  myStdVectSize, 2 );
-    bolt::cl::device_vector< cl_ulong > output( myStdVectSize, 0 );
-    std::vector< cl_ulong > refInput( myStdVectSize, 2 );
-    std::vector< cl_ulong > refOutput( myStdVectSize , 0);
-    // call scan
-    bolt::cl::equal_to<int> eq; 
-    bolt::cl::plus<cl_ulong> mM3; 
-    
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
-    bolt::cl::exclusive_scan_by_key(ctl, device_keys.begin() + (myStdVectSize/4), device_keys.end() - (myStdVectSize/4), input.begin() + (myStdVectSize/4), output.begin() + (myStdVectSize/4), 2, eq, mM3);
-    gold_scan_by_key_exclusive(keys.begin() + (myStdVectSize/4), keys.end() - (myStdVectSize/4), refInput.begin() + (myStdVectSize/4), refOutput.begin() + (myStdVectSize/4), mM3, 2);
-    // compare results
-    cmpArrays(refOutput, output);
-    printf("\nPass for size=%d Offset=%d\n",myStdVectSize, myStdVectSize/2);
-
-} 
-TEST_P (ScanByKeyOffsetTest, MulticoreExclOffsetTestULong)
-{
-    std::vector< int > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< int > device_keys( myStdVectSize, 1);
-    // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
-    int segmentLength = 0;
-    int segmentIndex = 0;
-    int key = 1;
-    for (int i = 0; i < myStdVectSize; i++)
-    {
-        // start over, i.e., begin assigning new key
-        if (segmentIndex == segmentLength)
-        {
-            segmentLength++;
-            segmentIndex = 0;
-            ++key;
-        }
-        keys[i] = key;
-        device_keys[i] = key ;
-        segmentIndex++;
-    }
-    
-    // input and output vectors for device and reference
-    bolt::cl::device_vector< cl_ulong > input(  myStdVectSize, 2 );
-    bolt::cl::device_vector< cl_ulong > output( myStdVectSize, 0 );
-    std::vector< cl_ulong > refInput( myStdVectSize, 2 );
-    std::vector< cl_ulong > refOutput( myStdVectSize , 0);
-    // call scan
-    bolt::cl::equal_to<int> eq; 
-    bolt::cl::plus<cl_ulong> mM3; 
-    
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
-
-    bolt::cl::exclusive_scan_by_key(ctl, device_keys.begin() + (myStdVectSize/4), device_keys.end() - (myStdVectSize/4), input.begin() + (myStdVectSize/4), output.begin() + (myStdVectSize/4), 2, eq, mM3);
-    gold_scan_by_key_exclusive(keys.begin() + (myStdVectSize/4), keys.end() - (myStdVectSize/4), refInput.begin() + (myStdVectSize/4), refOutput.begin() + (myStdVectSize/4), mM3, 2);
-    // compare results
-    cmpArrays(refOutput, output);
-    printf("\nPass for size=%d Offset=%d\n",myStdVectSize, myStdVectSize/2);
-
-} 
 
 TEST_P (ScanByKeyOffsetTest, ExclOffsetTestShort)
 {
@@ -2911,88 +2350,6 @@ TEST_P (ScanByKeyOffsetTest, ExclOffsetTestShort)
     bolt::cl::plus<cl_short> mM3; 
     
     bolt::cl::exclusive_scan_by_key(device_keys.begin() + (myStdVectSize/4), device_keys.end() - (myStdVectSize/4), input.begin() + (myStdVectSize/4), output.begin() + (myStdVectSize/4), 2, eq, mM3);
-    gold_scan_by_key_exclusive(keys.begin() + (myStdVectSize/4), keys.end() - (myStdVectSize/4), refInput.begin() + (myStdVectSize/4), refOutput.begin() + (myStdVectSize/4), mM3, 2);
-    // compare results
-    cmpArrays(refOutput, output);
-    printf("\nPass for size=%d Offset=%d\n",myStdVectSize, myStdVectSize/2);
-
-} 
-TEST_P (ScanByKeyOffsetTest, SerialExclOffsetTestShort)
-{
-    std::vector< int > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< int > device_keys( myStdVectSize, 1);
-    // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
-    int segmentLength = 0;
-    int segmentIndex = 0;
-    int key = 1;
-    for (int i = 0; i < myStdVectSize; i++)
-    {
-        // start over, i.e., begin assigning new key
-        if (segmentIndex == segmentLength)
-        {
-            segmentLength++;
-            segmentIndex = 0;
-            ++key;
-        }
-        keys[i] = key;
-        device_keys[i] = key ;
-        segmentIndex++;
-    }
-    
-    // input and output vectors for device and reference
-    bolt::cl::device_vector< cl_short > input(  myStdVectSize, 2 );
-    bolt::cl::device_vector< cl_short > output( myStdVectSize, 0 );
-    std::vector< cl_short > refInput( myStdVectSize, 2 );
-    std::vector< cl_short > refOutput( myStdVectSize , 0);
-    // call scan
-    bolt::cl::equal_to<int> eq; 
-    bolt::cl::plus<cl_short> mM3; 
-    
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
-
-    bolt::cl::exclusive_scan_by_key(ctl, device_keys.begin() + (myStdVectSize/4), device_keys.end() - (myStdVectSize/4), input.begin() + (myStdVectSize/4), output.begin() + (myStdVectSize/4), 2, eq, mM3);
-    gold_scan_by_key_exclusive(keys.begin() + (myStdVectSize/4), keys.end() - (myStdVectSize/4), refInput.begin() + (myStdVectSize/4), refOutput.begin() + (myStdVectSize/4), mM3, 2);
-    // compare results
-    cmpArrays(refOutput, output);
-    printf("\nPass for size=%d Offset=%d\n",myStdVectSize, myStdVectSize/2);
-
-} 
-TEST_P (ScanByKeyOffsetTest, MulticoreExclOffsetTestShort)
-{
-    std::vector< int > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< int > device_keys( myStdVectSize, 1);
-    // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
-    int segmentLength = 0;
-    int segmentIndex = 0;
-    int key = 1;
-    for (int i = 0; i < myStdVectSize; i++)
-    {
-        // start over, i.e., begin assigning new key
-        if (segmentIndex == segmentLength)
-        {
-            segmentLength++;
-            segmentIndex = 0;
-            ++key;
-        }
-        keys[i] = key;
-        device_keys[i] = key ;
-        segmentIndex++;
-    }
-    
-    // input and output vectors for device and reference
-    bolt::cl::device_vector< cl_short > input(  myStdVectSize, 2 );
-    bolt::cl::device_vector< cl_short > output( myStdVectSize, 0 );
-    std::vector< cl_short > refInput( myStdVectSize, 2 );
-    std::vector< cl_short > refOutput( myStdVectSize , 0);
-    // call scan
-    bolt::cl::equal_to<int> eq; 
-    bolt::cl::plus<cl_short> mM3; 
-    
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
-
-    bolt::cl::exclusive_scan_by_key(ctl, device_keys.begin() + (myStdVectSize/4), device_keys.end() - (myStdVectSize/4), input.begin() + (myStdVectSize/4), output.begin() + (myStdVectSize/4), 2, eq, mM3);
     gold_scan_by_key_exclusive(keys.begin() + (myStdVectSize/4), keys.end() - (myStdVectSize/4), refInput.begin() + (myStdVectSize/4), refOutput.begin() + (myStdVectSize/4), mM3, 2);
     // compare results
     cmpArrays(refOutput, output);
@@ -3038,93 +2395,9 @@ TEST_P (ScanByKeyOffsetTest, ExclOffsetTestUShort)
     printf("\nPass for size=%d Offset=%d\n",myStdVectSize, myStdVectSize/2);
 
 } 
-TEST_P (ScanByKeyOffsetTest, SerialExclOffsetTestUShort)
-{
-    std::vector< int > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< int > device_keys( myStdVectSize, 1);
-    // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
-    int segmentLength = 0;
-    int segmentIndex = 0;
-    int key = 1;
-    for (int i = 0; i < myStdVectSize; i++)
-    {
-        // start over, i.e., begin assigning new key
-        if (segmentIndex == segmentLength)
-        {
-            segmentLength++;
-            segmentIndex = 0;
-            ++key;
-        }
-        keys[i] = key;
-        device_keys[i] = key ;
-        segmentIndex++;
-    }
-    
-    // input and output vectors for device and reference
-    bolt::cl::device_vector< cl_ushort > input(  myStdVectSize, 2 );
-    bolt::cl::device_vector< cl_ushort > output( myStdVectSize, 0 );
-    std::vector< cl_ushort > refInput( myStdVectSize, 2 );
-    std::vector< cl_ushort > refOutput( myStdVectSize , 0);
-    // call scan
-    bolt::cl::equal_to<int> eq; 
-    bolt::cl::plus<cl_ushort> mM3; 
-    
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
-    bolt::cl::exclusive_scan_by_key(ctl, device_keys.begin() + (myStdVectSize/4), device_keys.end() - (myStdVectSize/4), input.begin() + (myStdVectSize/4), output.begin() + (myStdVectSize/4), 2, eq, mM3);
-    gold_scan_by_key_exclusive(keys.begin() + (myStdVectSize/4), keys.end() - (myStdVectSize/4), refInput.begin() + (myStdVectSize/4), refOutput.begin() + (myStdVectSize/4), mM3, 2);
-    // compare results
-    cmpArrays(refOutput, output);
-    printf("\nPass for size=%d Offset=%d\n",myStdVectSize, myStdVectSize/2);
-
-} 
-TEST_P (ScanByKeyOffsetTest, MulticoreExclOffsetTestUShort)
-{
-    std::vector< int > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< int > device_keys( myStdVectSize, 1);
-    // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
-    int segmentLength = 0;
-    int segmentIndex = 0;
-    int key = 1;
-    for (int i = 0; i < myStdVectSize; i++)
-    {
-        // start over, i.e., begin assigning new key
-        if (segmentIndex == segmentLength)
-        {
-            segmentLength++;
-            segmentIndex = 0;
-            ++key;
-        }
-        keys[i] = key;
-        device_keys[i] = key ;
-        segmentIndex++;
-    }
-    
-    // input and output vectors for device and reference
-    bolt::cl::device_vector< cl_ushort > input(  myStdVectSize, 2 );
-    bolt::cl::device_vector< cl_ushort > output( myStdVectSize, 0 );
-    std::vector< cl_ushort > refInput( myStdVectSize, 2 );
-    std::vector< cl_ushort > refOutput( myStdVectSize , 0);
-    // call scan
-    bolt::cl::equal_to<int> eq; 
-    bolt::cl::plus<cl_ushort> mM3; 
-    
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
-
-    bolt::cl::exclusive_scan_by_key(ctl, device_keys.begin() + (myStdVectSize/4), device_keys.end() - (myStdVectSize/4), input.begin() + (myStdVectSize/4), output.begin() + (myStdVectSize/4), 2, eq, mM3);
-    gold_scan_by_key_exclusive(keys.begin() + (myStdVectSize/4), keys.end() - (myStdVectSize/4), refInput.begin() + (myStdVectSize/4), refOutput.begin() + (myStdVectSize/4), mM3, 2);
-    // compare results
-    cmpArrays(refOutput, output);
-    printf("\nPass for size=%d Offset=%d\n",myStdVectSize, myStdVectSize/2);
-
-} 
-
-
-
-INSTANTIATE_TEST_CASE_P(incl_excl_ScanByKeyIterIntLimit, ScanByKeyCLtypeTest, ::testing::Range( 0, 1024, 1 )); 
-INSTANTIATE_TEST_CASE_P(incl_excl_ScanByKeyIterIntLimit, ScanByKeyOffsetTest, ::testing::Range(1025, 65535, 1000)); 
+INSTANTIATE_TEST_CASE_P(incl_excl_ScanByKeyIterIntLimit, ScanByKeyCLtypeTest, ::testing::Range( 0, 1024, 47 )); 
+INSTANTIATE_TEST_CASE_P(incl_excl_ScanByKeyIterIntLimit, ScanByKeyOffsetTest, ::testing::Range(1025, 4096, 555)); 
 
 
 #if (TEST_DOUBLE == 1)
@@ -4135,14 +3408,15 @@ TEST(InclusiveScanByKey, MultiCore_DeviceVectorInclFloat)
         segmentIndex++;
     }
     // input and output vectors for device and reference
-    bolt::cl::device_vector< float > input( length);
+    bolt::cl::device_vector< float > input( length, 2.0f);
     bolt::cl::device_vector< float > output( length);
-    std::vector< float > refInput( length);
+    std::vector< float > refInput( length, 2.0f);
     std::vector< float > refOutput( length);
-    for(int i=0; i<length; i++) {
+
+   /* for(int i=0; i<length; i++) {
         input[i] = 2.0f;
         refInput[i] = 2.0f;
-    }
+    }*/
     // call scan
     bolt::cl::equal_to<int> eq; 
     bolt::cl::plus<float> mM3; 
@@ -4573,7 +3847,7 @@ TEST(InclusiveScanByKey, MulticoreInclFloat)
             segmentIndex = 0;
             ++key;
         }
-        keys[i] = key;
+        keys[i] = 1;
         segmentIndex++;
     }
     // input and output vectors for device and reference
@@ -4727,6 +4001,72 @@ TEST(ExclusiveScanByKey, SerialExclFloat)
     // compare results
     cmpArrays(refOutput, output);
 }
+
+TEST(APPSDKInclusiveScanByKey, InclusiveIntAPPSDK)
+{
+	bool status = 1;
+	int count = 1;
+	int height = 1024;
+	int width = 1024;
+	int DataSize = height * width;
+	std::vector<int> HostKeyBuffer(DataSize);
+	std::vector<int> HostDataBuffer;
+	std::vector<int> deviceOutput(DataSize);
+	bolt::cl::device_vector<int> KeyBuffer(DataSize);
+	bolt::cl::device_vector<int> dataBuffer(DataSize);
+	// Assign key
+	for(int i=0; i<height; ++i) {
+		for(int j=0; j<width; ++j) {
+			HostKeyBuffer[(i*width) + j] = i;
+		}
+	}
+
+//	bolt::cl::control::e_RunMode specifiedRunMode = bolt::cl::control::SerialCpu;
+	bolt::cl::control::e_RunMode specifiedRunMode = bolt::cl::control::MultiCoreCpu;
+	bolt::cl::control::getDefault().setForceRunMode(specifiedRunMode);  // dissable this line, works fine with GPU/SerialCpu
+
+while(status) {
+	// Assign data
+	HostDataBuffer.assign(DataSize, 1);
+
+	// Copy key and data host to device
+	{
+		bolt::cl::device_vector<int>::pointer pk=KeyBuffer.data();
+		memcpy(pk.get(), HostKeyBuffer.data(), DataSize * sizeof(int));
+
+		bolt::cl::device_vector<int>::pointer pd=dataBuffer.data();
+		memcpy(pd.get(), HostDataBuffer.data(), DataSize * sizeof(int));
+	}
+
+	bolt::cl::inclusive_scan_by_key(KeyBuffer.begin(),
+                                    KeyBuffer.end(),
+                                    dataBuffer.begin(),
+                                    dataBuffer.begin());
+	// copy data device to host
+	{
+		bolt::cl::device_vector<int>::pointer pd=dataBuffer.data();
+		memcpy(deviceOutput.data(), pd.get(), DataSize * sizeof(int));
+	}
+
+	// CPU implementation
+	for(int i=0; i<height; ++i) {
+		for(int j=1; j<width; ++j) {
+			HostDataBuffer[(i*width) + j] = HostDataBuffer[(i*width) + j] + HostDataBuffer[(i*width) + (j-1)];
+		}
+	}
+
+	// Verify
+	for(int i=0; i<DataSize; ++i) {
+		if(HostDataBuffer[i] != deviceOutput[i]) { status = 0; break; }
+	}
+
+	std::cout << "Verify Result : " << ((status == 1) ? "PASS" : "FAIL") << std::endl;
+	if(++count > 20) break;
+}
+	
+}
+
+
 
 TEST(ExclusiveScanByKey, MulticoreExclFloat)
 {
