@@ -200,7 +200,7 @@ Supported Functions and Code Paths</h1>
 Code Path Behaviour</h2>
 <h3><a class="anchor" id="Default"></a>
 Default Behaviour</h3>
-<p>Bolt function can be executed with four code paths(OpenCL™, C++ AMP, Multicore CPU and Serial CPU). The default mode is "Automatic" which means it will go into GPU path first, then TBB (Intel), then SerialCpu with below mentioned order. The control will go to other paths only if the selected one not found.</p>
+<p>Bolt function is designed to be executed with four code paths (OpenCL™, C++ AMP, Multicore CPU and Serial CPU). The default mode is "Automatic" which means it will go into GPU path first, then TBB (Intel), then SerialCpu with below mentioned order. The control will go to other paths only if the selected one not found.</p>
 <p>Selection order will be: </p>
 <ul>
 <li>Run on GPU if AMD GPU is found and AMD APP SDK is installed. </li>
@@ -221,11 +221,11 @@ Force Behaviour</h3>
 </ol>
 <h1><a class="anchor" id="Requirements"></a>
 Requirements</h1>
-<p>Bolt requires an OpenCL<sup>TM</sup> implementation that supports the static C++ kernel features; specifically, C++ template support for OpenCL<sup>TM</sup> kernels. Currently, the AMD OpenCL<sup>TM</sup> SDK 2.7 and above version provides this support; other vendors may adopt this feature in the future. If you face any issue with Bolt. Please log an issue in <a href="https://github.com/HSA-Libraries/bolt/issues">BOLT Issues page</a>. </p>
+<p>Bolt uses an OpenCL<sup>TM</sup> implementation that supports the static C++ kernel features; specifically, C++ template support for OpenCL<sup>TM</sup> kernels. Currently, the AMD OpenCL<sup>TM</sup> SDK 2.7 and above versions are designed to provides this support; other vendors may adopt this feature in the future. If you face any issue with Bolt. Please log an issue in BOLT Issues page. <a href="https://github.com/HSA-Libraries/bolt/issues">BOLT Issues page</a>. </p>
 </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Jun 25 2013 12:42:24 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Jul 8 2013 22:38:35 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.3
 </small></address>

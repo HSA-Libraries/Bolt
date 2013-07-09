@@ -55,7 +55,7 @@
 </div>
 <div class="textblock"><h1><a class="anchor" id="Functions"></a>
 Supported Functions and Paths</h1>
-<p>Bolt function can be executed with four code paths(OpenCL™, C++ AMP, Multicore CPU and Serial CPU). The default mode is "Automatic" which means it will go into GPU path first, then TBB (Intel), then SerialCpu. The control will go to other paths only if the selected one is not found. Forcing the mode to any code path will run the function with that code path. All Bolt function have OpenCL™ and Serial path implementation, However for some functions Multicore TBB path is not implemented yet, So calling those functions with MultiCoreCpu flag will actually call the Serial code.</p>
+<p>Bolt function is designed to be executed with four code paths (OpenCL™, C++ AMP, Multicore CPU and Serial CPU). The default mode is "Automatic" which means it will go into GPU path first, then TBB (Intel), then SerialCpu. The control will go to other paths only if the selected one is not found. Forcing the mode to any code path will run the function with that code path. All Bolt functions have OpenCL™ and Serial path implementation, However for some functions Multicore TBB path is not implemented yet, So calling those functions with MultiCoreCpu flag will actually call the Serial code.</p>
 <h2><a class="anchor" id="examples"></a>
 Example:</h2>
 <h3><a class="anchor" id="transform_scan"></a>
@@ -141,7 +141,7 @@ List of Supported Function and Code Paths</h2>
 </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Jun 25 2013 12:42:20 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Jul 8 2013 22:38:33 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.3
 </small></address>

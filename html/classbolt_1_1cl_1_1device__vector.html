@@ -157,7 +157,7 @@ Public Member Functions</h2></td></tr>
 <a class="el" href="classbolt_1_1cl_1_1device__vector.html">device_vector</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>operator=</b> (const <a class="el" href="classbolt_1_1cl_1_1device__vector.html">device_vector</a> &amp;rhs)</td></tr>
 <tr class="separator:ab3b57d2921dc50f4a58217531b549f91"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a883425a12e6bb517419e14b0e4a5b912"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classbolt_1_1cl_1_1device__vector.html#a883425a12e6bb517419e14b0e4a5b912">resize</a> (size_type reqSize, const value_type &amp;val=value_type())</td></tr>
-<tr class="memdesc:a883425a12e6bb517419e14b0e4a5b912"><td class="mdescLeft">&#160;</td><td class="mdescRight">Change the number of elements in <a class="el" href="classbolt_1_1cl_1_1device__vector.html" title="This defines the OpenCL version of a device_vector.">device_vector</a> to reqSize. If the new requested size is less than the original size, the data is truncated and lost. If the new size is greater than the original size, the extra paddign will be initialized with the value specified by the user.  <a href="#a883425a12e6bb517419e14b0e4a5b912"></a><br/></td></tr>
+<tr class="memdesc:a883425a12e6bb517419e14b0e4a5b912"><td class="mdescLeft">&#160;</td><td class="mdescRight">Change the number of elements in <a class="el" href="classbolt_1_1cl_1_1device__vector.html" title="This defines the OpenCL version of a device_vector.">device_vector</a> to reqSize. If the new requested size is less than the original size, the data is truncated and lost. If the new size is greater than the original size, the extra padding will be initialized with the value specified by the user.  <a href="#a883425a12e6bb517419e14b0e4a5b912"></a><br/></td></tr>
 <tr class="separator:a883425a12e6bb517419e14b0e4a5b912"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a63f330ecc24e2d13360a365fee5a7f29"><td class="memItemLeft" align="right" valign="top">size_type&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="classbolt_1_1cl_1_1device__vector.html#a63f330ecc24e2d13360a365fee5a7f29">size</a> (void) const </td></tr>
 <tr class="memdesc:a63f330ecc24e2d13360a365fee5a7f29"><td class="mdescLeft">&#160;</td><td class="mdescRight">Return the number of known elements.  <a href="#a63f330ecc24e2d13360a365fee5a7f29"></a><br/></td></tr>
@@ -415,8 +415,9 @@ template&lt;typename T &gt; </div>
   </table>
   </dd>
 </dl>
-<dl class="section warning"><dt>Warning</dt><dd>The ::cl::CommandQueue is not an STD <a class="el" href="classbolt_1_1cl_1_1device__vector.html#a8e72f412e1f3fa0c696be0f8da38c55d" title="Request a change in the capacity of the device_vector. If reserve completes successfully, this device_vector object guarantees that the it can store the requested amount of elements without another reallocation, until the device_vector size exceeds n.">reserve( )</a> parameter. </dd></dl>
-<dl class="bug"><dt><b><a class="el" href="bug.html#_bug000005">Bug:</a></b></dt><dd>The size of the value must be a power of two. Refer section 5.2.3 in 'The OpenCL 1.2 Specification' (Khronos) </dd></dl>
+<dl class="section warning"><dt>Warning</dt><dd>The ::cl::CommandQueue is not an STD <a class="el" href="classbolt_1_1cl_1_1device__vector.html#a8e72f412e1f3fa0c696be0f8da38c55d" title="Request a change in the capacity of the device_vector. If reserve completes successfully, this device_vector object guarantees that the it can store the requested amount of elements without another reallocation, until the device_vector size exceeds n.">reserve( )</a> parameter. </dd>
+<dd>
+If the size of the value is a power of two, the buffer will be filled serially as opposed to using the OpenCL fill API. Refer section 5.2.3 in 'The OpenCL 1.2 Specification' (Khronos) </dd></dl>
 
 </div>
 </div>
@@ -651,7 +652,9 @@ template&lt;typename T &gt; </div>
   </table>
   </dd>
 </dl>
-<dl class="section warning"><dt>Warning</dt><dd>All previous iterators, references, and pointers are invalidated. </dd></dl>
+<dl class="section warning"><dt>Warning</dt><dd>All previous iterators, references, and pointers are invalidated. </dd>
+<dd>
+If the size of the value is a power of two, the buffer will be filled serially as opposed to using the OpenCL fill API. Refer section 5.2.3 in 'The OpenCL 1.2 Specification' (Khronos) </dd></dl>
 
 </div>
 </div>
@@ -1695,7 +1698,7 @@ template&lt;typename T &gt; </div>
 </table>
 </div><div class="memdoc">
 
-<p>Change the number of elements in <a class="el" href="classbolt_1_1cl_1_1device__vector.html" title="This defines the OpenCL version of a device_vector.">device_vector</a> to reqSize. If the new requested size is less than the original size, the data is truncated and lost. If the new size is greater than the original size, the extra paddign will be initialized with the value specified by the user. </p>
+<p>Change the number of elements in <a class="el" href="classbolt_1_1cl_1_1device__vector.html" title="This defines the OpenCL version of a device_vector.">device_vector</a> to reqSize. If the new requested size is less than the original size, the data is truncated and lost. If the new size is greater than the original size, the extra padding will be initialized with the value specified by the user. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">reqSize</td><td>The requested size of the <a class="el" href="classbolt_1_1cl_1_1device__vector.html" title="This defines the OpenCL version of a device_vector.">device_vector</a> in elements. </td></tr>
@@ -1706,7 +1709,9 @@ template&lt;typename T &gt; </div>
 <dl class="section note"><dt>Note</dt><dd><a class="el" href="classbolt_1_1cl_1_1device__vector.html#a49d4b3785464f0a5dfca0c2adbd00593" title="Return the maximum possible number of elements without reallocation.">capacity( )</a> may exceed n, but is not less than n. </dd></dl>
 <dl class="section warning"><dt>Warning</dt><dd>If the <a class="el" href="classbolt_1_1cl_1_1device__vector.html" title="This defines the OpenCL version of a device_vector.">device_vector</a> must reallocate, all previous iterators, references, and pointers are invalidated. </dd>
 <dd>
-The ::cl::CommandQueue is not a STD <a class="el" href="classbolt_1_1cl_1_1device__vector.html#a8e72f412e1f3fa0c696be0f8da38c55d" title="Request a change in the capacity of the device_vector. If reserve completes successfully, this device_vector object guarantees that the it can store the requested amount of elements without another reallocation, until the device_vector size exceeds n.">reserve( )</a> parameter </dd></dl>
+The ::cl::CommandQueue is not a STD <a class="el" href="classbolt_1_1cl_1_1device__vector.html#a8e72f412e1f3fa0c696be0f8da38c55d" title="Request a change in the capacity of the device_vector. If reserve completes successfully, this device_vector object guarantees that the it can store the requested amount of elements without another reallocation, until the device_vector size exceeds n.">reserve( )</a> parameter </dd>
+<dd>
+If the size of the value is a power of two, the buffer will be filled serially as opposed to using the OpenCL fill API. Refer section 5.2.3 in 'The OpenCL 1.2 Specification' (Khronos) </dd></dl>
 
 </div>
 </div>
@@ -1806,12 +1811,12 @@ template&lt;typename T &gt; </div>
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>C:/Avinash_Bolt/Bolt_forked/Bolt/include/bolt/cl/<a class="el" href="cl_2device__vector_8h_source.html">device_vector.h</a></li>
+<li>C:/Avinash_Bolt/Bolt_Forked/Bolt/include/bolt/cl/<a class="el" href="cl_2device__vector_8h_source.html">device_vector.h</a></li>
 </ul>
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Jun 25 2013 12:42:23 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Jul 8 2013 22:38:34 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.3
 </small></address>

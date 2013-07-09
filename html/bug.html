@@ -47,21 +47,19 @@
 <div class="textblock"><dl class="reflist">
 <dt><a class="anchor" id="_bug000001"></a>Class <a class="el" href="classbolt_1_1amp_1_1device__vector_1_1iterator__base.html">bolt::amp::device_vector&lt; T, CONT &gt;::iterator_base&lt; Container &gt;</a>  </dt>
 <dd>operator[] with device_vector iterators result in a compile-time error when accessed for reading. Writing with operator[] appears to be OK. Workarounds: either use the operator[] on the device_vector container, or use iterator arithmetic instead, such as *(iter + 5) for reading from the iterator.  </dd>
-<dt><a class="anchor" id="_bug000005"></a>Member <a class="el" href="classbolt_1_1cl_1_1device__vector.html#a0c551cec5c2827064d8c193b6853044c">bolt::cl::device_vector&lt; T &gt;::device_vector</a>  (size_type newSize, const value_type &amp;value=value_type(), cl_mem_flags flags=CL_MEM_READ_WRITE, bool init=true, const control &amp;ctl=control::getDefault())</dt>
-<dd>The size of the value must be a power of two. Refer section 5.2.3 in 'The OpenCL 1.2 Specification' (Khronos)  </dd>
 <dt><a class="anchor" id="_bug000003"></a>Class <a class="el" href="classbolt_1_1cl_1_1device__vector_1_1iterator__base.html">bolt::cl::device_vector&lt; T &gt;::iterator_base&lt; Container &gt;</a>  </dt>
 <dd>operator[] with device_vector iterators result in a compile-time error when accessed for reading. Writing with operator[] appears to be OK. Workarounds: either use the operator[] on the device_vector container, or use iterator arithmetic instead, such as *(iter + 5) for reading from the iterator.  </dd>
 <dt><a class="anchor" id="_bug000004"></a>Class <a class="el" href="classbolt_1_1cl_1_1device__vector_1_1reverse__iterator__base.html">bolt::cl::device_vector&lt; T &gt;::reverse_iterator_base&lt; Container &gt;</a>  </dt>
 <dd>operator[] with device_vector iterators result in a compile-time error when accessed for reading. Writing with operator[] appears to be OK. Workarounds: either use the operator[] on the device_vector container, or use iterator arithmetic instead, such as *(iter + 5) for reading from the iterator.  </dd>
 <dt><a class="anchor" id="_bug000002"></a>File <a class="el" href="cl_2device__vector_8h.html">device_vector.h</a>  </dt>
 <dd>iterator::getBuffer() returns "pointer" to beginning of array, instead of where the iterator has incremented to; may need to map a subBuffer or something simmilar  </dd>
-<dt><a class="anchor" id="_bug000006"></a>File <a class="el" href="sort__by__key_8h.html">sort_by_key.h</a>  </dt>
+<dt><a class="anchor" id="_bug000005"></a>File <a class="el" href="sort__by__key_8h.html">sort_by_key.h</a>  </dt>
 <dd><a class="el" href="group__CL-sort.html#ga0bc01fbb8672efe8581abb4d0ae3388c" title="This version of sort_by_key returns the sorted result of all the elements in the RandomAccessIterator...">bolt::cl::sort_by_key</a> does not work for non power of 2 buffer sizes. </dd>
 </dl>
 </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Tue Jun 25 2013 12:42:20 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Jul 8 2013 22:38:33 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.3
 </small></address>
