@@ -1,22 +1,22 @@
-/***************************************************************************                                                                                     
-*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
-*                                                                                    
-*   Licensed under the Apache License, Version 2.0 (the "License");   
-*   you may not use this file except in compliance with the License.                 
-*   You may obtain a copy of the License at                                          
-*                                                                                    
-*       http://www.apache.org/licenses/LICENSE-2.0                      
-*                                                                                    
-*   Unless required by applicable law or agreed to in writing, software              
-*   distributed under the License is distributed on an "AS IS" BASIS,              
-*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.         
-*   See the License for the specific language governing permissions and              
-*   limitations under the License.                                                   
+/***************************************************************************
+*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.
+*
+*   Licensed under the Apache License, Version 2.0 (the "License");
+*   you may not use this file except in compliance with the License.
+*   You may obtain a copy of the License at
+*
+*       http://www.apache.org/licenses/LICENSE-2.0
+*
+*   Unless required by applicable law or agreed to in writing, software
+*   distributed under the License is distributed on an "AS IS" BASIS,
+*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+*   See the License for the specific language governing permissions and
+*   limitations under the License.
 
-***************************************************************************/                                                                                     
+***************************************************************************/
 
-#if !defined( FILL_H )
-#define FILL_H
+#if !defined( BOLT_CL_FILL_H )
+#define BOLT_CL_FILL_H
 #pragma once
 
 #include <bolt/cl/bolt.h>
@@ -38,9 +38,9 @@ namespace bolt {
 
         /*! \addtogroup transformations
         *   \ingroup algorithms
-        *   \p Fill fills a range with values passed in the function.        
-        */ 
-        
+        *   \p Fill fills a range with values passed in the function.
+        */
+
         /*! \addtogroup CL-filling
         *   \ingroup transformations
         *   \{
@@ -48,7 +48,7 @@ namespace bolt {
 
         /*! \brief  Fill assigns the value of \c value to each element in the range [first,last].
          *
-		     *  \param ctl      \b Optional control structure to control command-queue, debug, tuning, etc.  
+		     *  \param ctl      \b Optional control structure to control command-queue, debug, tuning, etc.
          *                  See bolt::cl::control.
          *  \param first    The first element in the range of interest.
          *  \param last     The last element in the range of interest.
@@ -62,9 +62,9 @@ namespace bolt {
          *
          *  \code
          *  #include <bolt/cl/fill.h>
-         *  #include <bolt/device_vector.h>
+         *  #include <bolt/cl/device_vector.h>
          *  #include <stdlib.h>
-         *  ...  
+         *  ...
          *
          *  bolt::cl::device_vector<float> v(10);
          *
@@ -77,17 +77,17 @@ namespace bolt {
          *  \sa http://www.sgi.com/tech/stl/fill.html
          */
 
-        template<typename ForwardIterator, typename T> 
-        void fill( const bolt::cl::control &ctl, ForwardIterator first, ForwardIterator last, const T & value, 
+        template<typename ForwardIterator, typename T>
+        void fill( const bolt::cl::control &ctl, ForwardIterator first, ForwardIterator last, const T & value,
             const std::string& cl_code="");
-        
-        template<typename ForwardIterator, typename T> 
+
+        template<typename ForwardIterator, typename T>
         void fill( ForwardIterator first, ForwardIterator last, const T & value, const std::string& cl_code="");
-        
+
         /*! \brief fill_n assigns the value \c value to every element in the range [first,first+n].
          *  The return value is first + n.
-         *  
-         *  \param ctl      \b Optional control structure to control command-queue, debug, tuning, etc.  
+         *
+         *  \param ctl      \b Optional control structure to control command-queue, debug, tuning, etc.
          *                  See bolt::cl::control.
          *  \param first    The first element in the range of interest.
          *  \param n        The size of the range of interest.
@@ -104,10 +104,10 @@ namespace bolt {
          *
          *  \code
          *  #include <bolt/cl/fill.h>
-         *  #include <bolt/device_vector.h>
+         *  #include <bolt/cl/device_vector.h>
          *  #include <stdlib.h>
          *
-         *  ...  
+         *  ...
          *
          *  bolt::cl::device_vector<float> v(10);
          *
@@ -120,13 +120,13 @@ namespace bolt {
          *  \sa http://www.sgi.com/tech/stl/fill_n.html
          */
 
-        template<typename OutputIterator, typename Size, typename T> 
-        OutputIterator fill_n( const bolt::cl::control &ctl, OutputIterator first, Size n, const T & value, 
+        template<typename OutputIterator, typename Size, typename T>
+        OutputIterator fill_n( const bolt::cl::control &ctl, OutputIterator first, Size n, const T & value,
             const std::string& cl_code="");
-        
-        template<typename OutputIterator, typename Size, typename T> 
+
+        template<typename OutputIterator, typename Size, typename T>
         OutputIterator fill_n( OutputIterator first, Size n, const T & value, const std::string& cl_code="");
-        
+
         /*!   \}  */
     };
 };

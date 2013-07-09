@@ -19,6 +19,7 @@
 #define TEST_DEVICE_VECTOR 1
 #define TEST_CPU_DEVICE 0
 #define GOOGLE_TEST 1
+#define LARGE_SIZE 0
 #if (GOOGLE_TEST == 1)
 
 #include "common/stdafx.h"
@@ -167,8 +168,10 @@ TYPED_TEST_P( TransformArrayTest, Normal )
     typedef std::array< ArrayType, ArraySize > ArrayCont;
 
     //  Calling the actual functions under test
-    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), stdOutput.begin( ), bolt::cl::plus<ArrayType>());
-    bolt::cl::transform( boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), boltOutput.begin( ), bolt::cl::plus<ArrayType>());
+    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), stdOutput.begin( ),
+                    bolt::cl::plus<ArrayType>());
+    bolt::cl::transform( boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), boltOutput.begin( ),
+                    bolt::cl::plus<ArrayType>());
 
     ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
     ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
@@ -198,8 +201,10 @@ TYPED_TEST_P( TransformArrayTest, GPU_DeviceNormal )
     bolt::cl::control c_gpu( myQueue );  // construct control structure from the queue.
 
     //  Calling the actual functions under test
-    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), stdOutput.begin( ), bolt::cl::plus<ArrayType>());
-    bolt::cl::transform( c_gpu, boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), boltOutput.begin( ), bolt::cl::plus<ArrayType>());
+    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), stdOutput.begin( ),
+                    bolt::cl::plus<ArrayType>());
+    bolt::cl::transform( c_gpu, boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), boltOutput.begin( ),
+                         bolt::cl::plus<ArrayType>());
 
     ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
     ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
@@ -217,11 +222,13 @@ TYPED_TEST_P( TransformArrayTest, CPU_DeviceNormal )
 {
     typedef std::array< ArrayType, ArraySize > ArrayCont;
     MyOclContext oclcpu = initOcl(CL_DEVICE_TYPE_CPU, 0);
-	bolt::cl::control c_cpu(oclcpu._queue);  // construct control structure from the queue.
+    bolt::cl::control c_cpu(oclcpu._queue);  // construct control structure from the queue.
 
     //  Calling the actual functions under test
-    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), stdOutput.begin( ), bolt::cl::plus<ArrayType>());
-    bolt::cl::transform( c_cpu, boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), boltOutput.begin( ), bolt::cl::plus<ArrayType>());
+    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), stdOutput.begin( ),
+                    bolt::cl::plus<ArrayType>());
+    bolt::cl::transform( c_cpu, boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), boltOutput.begin( ),
+                         bolt::cl::plus<ArrayType>());
 
     ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
     ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
@@ -240,8 +247,10 @@ TYPED_TEST_P( TransformArrayTest, MultipliesFunction )
     typedef std::array< ArrayType, ArraySize > ArrayCont;
 
     //  Calling the actual functions under test
-    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), stdOutput.begin( ), bolt::cl::multiplies<ArrayType>());
-    bolt::cl::transform( boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), boltOutput.begin( ), bolt::cl::multiplies<ArrayType>());
+    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), stdOutput.begin( ), 
+                    bolt::cl::multiplies<ArrayType>());
+    bolt::cl::transform( boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), boltOutput.begin( ),
+                         bolt::cl::multiplies<ArrayType>());
 
     ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
     ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
@@ -253,6 +262,55 @@ TYPED_TEST_P( TransformArrayTest, MultipliesFunction )
     cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdOutput, boltOutput );
     
 }
+
+TYPED_TEST_P( TransformArrayTest, Serial_MultipliesFunction )
+{
+    typedef std::array< ArrayType, ArraySize > ArrayCont;
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    //  Calling the actual functions under test
+    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), stdOutput.begin( ), 
+                    bolt::cl::multiplies<ArrayType>());
+    bolt::cl::transform( ctl, boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), boltOutput.begin( ),
+                         bolt::cl::multiplies<ArrayType>());
+
+    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
+    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdOutput, boltOutput );
+    
+}
+
+TYPED_TEST_P( TransformArrayTest, MultiCore_MultipliesFunction )
+{
+    typedef std::array< ArrayType, ArraySize > ArrayCont;
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    //  Calling the actual functions under test
+    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), stdOutput.begin( ), 
+                    bolt::cl::multiplies<ArrayType>());
+    bolt::cl::transform( ctl, boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), boltOutput.begin( ),
+                         bolt::cl::multiplies<ArrayType>());
+
+    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
+    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdOutput, boltOutput );
+    
+}
+
 
 TYPED_TEST_P( TransformArrayTest, GPU_DeviceMultipliesFunction )
 {
@@ -271,7 +329,8 @@ TYPED_TEST_P( TransformArrayTest, GPU_DeviceMultipliesFunction )
     bolt::cl::control c_gpu( myQueue );  // construct control structure from the queue.
 
     //  Calling the actual functions under test
-    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), stdOutput.begin( ), bolt::cl::multiplies<ArrayType>());
+    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), stdOutput.begin( ),
+                    bolt::cl::multiplies<ArrayType>());
     bolt::cl::transform( c_gpu, boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), boltOutput.begin( ), bolt::cl::multiplies<ArrayType>());
 
     ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
@@ -289,11 +348,13 @@ TYPED_TEST_P( TransformArrayTest, CPU_DeviceMultipliesFunction )
 {
     typedef std::array< ArrayType, ArraySize > ArrayCont;
     MyOclContext oclcpu = initOcl(CL_DEVICE_TYPE_CPU, 0);
-	bolt::cl::control c_cpu(oclcpu._queue);  // construct control structure from the queue.
+    bolt::cl::control c_cpu(oclcpu._queue);  // construct control structure from the queue.
 
     //  Calling the actual functions under test
-    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), stdOutput.begin( ), bolt::cl::multiplies<ArrayType>());
-    bolt::cl::transform( c_cpu, boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), boltOutput.begin( ), bolt::cl::multiplies<ArrayType>());
+    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), stdOutput.begin( ),
+                    bolt::cl::multiplies<ArrayType>());
+    bolt::cl::transform( c_cpu, boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), boltOutput.begin( ), 
+                         bolt::cl::multiplies<ArrayType>());
 
     ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
     ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
@@ -311,8 +372,10 @@ TYPED_TEST_P( TransformArrayTest, MinusFunction )
     typedef std::array< ArrayType, ArraySize > ArrayCont;
 
     //  Calling the actual functions under test
-    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), stdOutput.begin( ), bolt::cl::minus<ArrayType>());
-    bolt::cl::transform( boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), boltOutput.begin( ), bolt::cl::minus<ArrayType>());
+    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), stdOutput.begin( ),
+                    bolt::cl::minus<ArrayType>());
+    bolt::cl::transform( boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), boltOutput.begin( ),
+                         bolt::cl::minus<ArrayType>());
 
     ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
     ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
@@ -342,8 +405,10 @@ TYPED_TEST_P( TransformArrayTest, GPU_DeviceMinusFunction )
     bolt::cl::control c_gpu( myQueue );  // construct control structure from the queue.
 
     //  Calling the actual functions under test
-    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), stdOutput.begin( ), bolt::cl::minus<ArrayType>());
-    bolt::cl::transform( c_gpu, boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), boltOutput.begin( ), bolt::cl::minus<ArrayType>());
+    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), stdOutput.begin( ), 
+                    bolt::cl::minus<ArrayType>());
+    bolt::cl::transform( c_gpu, boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), boltOutput.begin( ),
+                         bolt::cl::minus<ArrayType>());
 
     ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
     ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
@@ -360,11 +425,13 @@ TYPED_TEST_P( TransformArrayTest, CPU_DeviceMinusFunction )
 {
     typedef std::array< ArrayType, ArraySize > ArrayCont;
     MyOclContext oclcpu = initOcl(CL_DEVICE_TYPE_CPU, 0);
-	bolt::cl::control c_cpu(oclcpu._queue);  // construct control structure from the queue.
+    bolt::cl::control c_cpu(oclcpu._queue);  // construct control structure from the queue.
 
     //  Calling the actual functions under test
-    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), stdOutput.begin( ), bolt::cl::minus<ArrayType>());
-    bolt::cl::transform( c_cpu, boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), boltOutput.begin( ), bolt::cl::minus<ArrayType>());
+    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), stdOutput.begin( ), 
+                    bolt::cl::minus<ArrayType>());
+    bolt::cl::transform( c_cpu, boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), boltOutput.begin( ),
+                     bolt::cl::minus<ArrayType>());
 
     ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
     ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
@@ -386,7 +453,7 @@ TYPED_TEST_P( UnaryTransformArrayTest, Normal )
 
     //  Calling the actual functions under test
     std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), bolt::cl::negate<ArrayType>());
-    bolt::cl::transform( boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), bolt::cl::negate<ArrayType>());
+    bolt::cl::transform( boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), bolt::cl::negate<ArrayType>());    
 
     ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
     ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
@@ -397,6 +464,45 @@ TYPED_TEST_P( UnaryTransformArrayTest, Normal )
     //  Loop through the array and compare all the values with each other
     cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdOutput, boltOutput );
 }
+
+TYPED_TEST_P( UnaryTransformArrayTest, Serial )
+{
+    typedef std::array< ArrayType, ArraySize > ArrayCont;
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+    //  Calling the actual functions under test
+    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), bolt::cl::negate<ArrayType>());
+    bolt::cl::transform(ctl, boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), bolt::cl::negate<ArrayType>());
+
+    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
+    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdOutput, boltOutput );
+}
+
+TYPED_TEST_P( UnaryTransformArrayTest, MultiCoreCPU )
+{
+    typedef std::array< ArrayType, ArraySize > ArrayCont;
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+    //  Calling the actual functions under test
+    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), bolt::cl::negate<ArrayType>());
+    bolt::cl::transform(ctl, boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), bolt::cl::negate<ArrayType>());
+
+    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
+    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdOutput, boltOutput );
+}
+
 
 TYPED_TEST_P( UnaryTransformArrayTest, GPU_DeviceNormal )
 {
@@ -416,7 +522,8 @@ TYPED_TEST_P( UnaryTransformArrayTest, GPU_DeviceNormal )
 
     //  Calling the actual functions under test
     std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), bolt::cl::negate<ArrayType>());
-    bolt::cl::transform( c_gpu, boltInput.begin( ), boltInput.end( ),  boltOutput.begin( ), bolt::cl::negate<ArrayType>());
+    bolt::cl::transform( c_gpu, boltInput.begin( ), boltInput.end( ),  boltOutput.begin( ),
+                         bolt::cl::negate<ArrayType>());
 
     ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
     ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
@@ -429,16 +536,18 @@ TYPED_TEST_P( UnaryTransformArrayTest, GPU_DeviceNormal )
     // FIXME - releaseOcl(ocl);
 }
 
+
 #if (TEST_CPU_DEVICE == 1)
 TYPED_TEST_P( UnaryTransformArrayTest, CPU_DeviceNormal )
 {
     typedef std::array< ArrayType, ArraySize > ArrayCont;
     MyOclContext oclcpu = initOcl(CL_DEVICE_TYPE_CPU, 0);
-	bolt::cl::control c_cpu(oclcpu._queue);  // construct control structure from the queue.
+    bolt::cl::control c_cpu(oclcpu._queue);  // construct control structure from the queue.
 
     //  Calling the actual functions under test
     std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), bolt::cl::negate<ArrayType>());
-    bolt::cl::transform( c_cpu, boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), bolt::cl::negate<ArrayType>());
+    bolt::cl::transform( c_cpu, boltInput.begin( ), boltInput.end( ), boltOutput.begin( ),
+                         bolt::cl::negate<ArrayType>());
 
     ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
     ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
@@ -488,7 +597,8 @@ TYPED_TEST_P( UnaryTransformArrayTest, GPU_DeviceMultipliesFunction )
 
     //  Calling the actual functions under test
     std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), bolt::cl::square<ArrayType>());
-    bolt::cl::transform( c_gpu, boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), bolt::cl::square<ArrayType>());
+    bolt::cl::transform( c_gpu, boltInput.begin( ), boltInput.end( ), boltOutput.begin( ),
+                         bolt::cl::square<ArrayType>());
 
     ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
     ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
@@ -505,11 +615,12 @@ TYPED_TEST_P( UnaryTransformArrayTest, CPU_DeviceMultipliesFunction )
 {
     typedef std::array< ArrayType, ArraySize > ArrayCont;
     MyOclContext oclcpu = initOcl(CL_DEVICE_TYPE_CPU, 0);
-	bolt::cl::control c_cpu(oclcpu._queue);  // construct control structure from the queue.
+    bolt::cl::control c_cpu(oclcpu._queue);  // construct control structure from the queue.
 
     //  Calling the actual functions under test
     std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), bolt::cl::square<ArrayType>());
-    bolt::cl::transform( c_cpu, boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), bolt::cl::square<ArrayType>());
+    bolt::cl::transform( c_cpu, boltInput.begin( ), boltInput.end( ), boltOutput.begin( ),
+                         bolt::cl::square<ArrayType>());
 
     ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
     ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
@@ -559,7 +670,8 @@ TYPED_TEST_P( UnaryTransformArrayTest, GPU_DeviceMinusFunction )
 
     //  Calling the actual functions under test
     std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), bolt::cl::square<ArrayType>());
-    bolt::cl::transform( c_gpu, boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), bolt::cl::square<ArrayType>());
+    bolt::cl::transform( c_gpu, boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), 
+                         bolt::cl::square<ArrayType>());
 
     ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
     ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
@@ -576,11 +688,12 @@ TYPED_TEST_P( UnaryTransformArrayTest, CPU_DeviceMinusFunction )
 {
     typedef std::array< ArrayType, ArraySize > ArrayCont;
     MyOclContext oclcpu = initOcl(CL_DEVICE_TYPE_CPU, 0);
-	bolt::cl::control c_cpu(oclcpu._queue);  // construct control structure from the queue.
+    bolt::cl::control c_cpu(oclcpu._queue);  // construct control structure from the queue.
 
     //  Calling the actual functions under test
     std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), bolt::cl::square<ArrayType>());
-    bolt::cl::transform( c_cpu, boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), bolt::cl::square<ArrayType>());
+    bolt::cl::transform( c_cpu, boltInput.begin( ), boltInput.end( ), boltOutput.begin( ),
+                         bolt::cl::square<ArrayType>());
 
     ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
     ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
@@ -597,15 +710,20 @@ TYPED_TEST_P( UnaryTransformArrayTest, CPU_DeviceMinusFunction )
 #if (TEST_CPU_DEVICE == 1)
 REGISTER_TYPED_TEST_CASE_P( TransformArrayTest, Normal, GPU_DeviceNormal, 
                                            MultipliesFunction, GPU_DeviceMultipliesFunction,
-                                           MinusFunction, GPU_DeviceMinusFunction, CPU_DeviceNormal, CPU_DeviceMultipliesFunction, CPU_DeviceMinusFunction);
+                                           MinusFunction, GPU_DeviceMinusFunction, CPU_DeviceNormal,
+                                           CPU_DeviceMultipliesFunction, CPU_DeviceMinusFunction, 
+                                           Serial_MultipliesFunction,
+                                           MultiCore_MultipliesFunction);
 REGISTER_TYPED_TEST_CASE_P( UnaryTransformArrayTest, Normal, GPU_DeviceNormal, 
                                            MultipliesFunction, GPU_DeviceMultipliesFunction,
-                                           MinusFunction, GPU_DeviceMinusFunction, CPU_DeviceNormal, CPU_DeviceMultipliesFunction, CPU_DeviceMinusFunction);
+                                           MinusFunction, GPU_DeviceMinusFunction, CPU_DeviceNormal, 
+                                           CPU_DeviceMultipliesFunction, CPU_DeviceMinusFunction);
 #else
 REGISTER_TYPED_TEST_CASE_P( TransformArrayTest, Normal, GPU_DeviceNormal, 
                                            MultipliesFunction, GPU_DeviceMultipliesFunction,
-                                           MinusFunction, GPU_DeviceMinusFunction );
-REGISTER_TYPED_TEST_CASE_P( UnaryTransformArrayTest, Normal, GPU_DeviceNormal, 
+                                           MinusFunction, GPU_DeviceMinusFunction, Serial_MultipliesFunction,
+                                           MultiCore_MultipliesFunction );
+REGISTER_TYPED_TEST_CASE_P( UnaryTransformArrayTest, Normal,Serial, MultiCoreCPU, GPU_DeviceNormal, 
                                            MultipliesFunction, GPU_DeviceMultipliesFunction,
                                            MinusFunction, GPU_DeviceMinusFunction );
 #endif
@@ -756,7 +874,7 @@ public:
         size_t size = GetParam( );
 
         std::generate(stdInput, stdInput + size, rand);
-        for (int i = 0; i<size; i++)
+        for (unsigned int i = 0; i<size; i++)
         {
             boltInput[i] = stdInput[i];
             boltOutput[i] = stdInput[i];
@@ -794,7 +912,7 @@ public:
         size_t size = GetParam( );
 
         std::generate(stdInput, stdInput + size, rand);
-        for (int i = 0; i<size; i++)
+        for (unsigned int i = 0; i<size; i++)
         {
             boltInput[i] = stdInput[i];
             boltOutput[i] = stdInput[i];
@@ -863,10 +981,11 @@ TEST_P( TransformIntegerVector, Normal )
     //typedef std::iterator_traits<std::vector<int>::iterator>::value_type T;
     //  Calling the actual functions under test
     std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), stdOutput.begin( ), bolt::cl::plus<int>());
-    bolt::cl::transform( boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), boltOutput.begin( ), bolt::cl::plus<int>());
+    bolt::cl::transform( boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), boltOutput.begin( ), 
+                         bolt::cl::plus<int>());
 
     std::vector< int >::iterator::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end( ) );
-    std::vector< int >::iterator::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end( ) );
+    std::vector< int >::iterator::difference_type boltNumElements = std::distance( boltInput.begin( ),boltInput.end());
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
@@ -887,14 +1006,81 @@ TEST_P( TransformIntegerVector, Normal )
     cmpArrays( stdOutput, boltOutput );
 }
 
+TEST_P( TransformIntegerVector, Serial )
+{
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    //typedef std::iterator_traits<std::vector<int>::iterator>::value_type T;
+    //  Calling the actual functions under test
+    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), stdOutput.begin( ), bolt::cl::plus<int>());
+    bolt::cl::transform( ctl, boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), boltOutput.begin( ), 
+                         bolt::cl::plus<int>());
+
+    std::vector< int >::iterator::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end( ) );
+    std::vector< int >::iterator::difference_type boltNumElements = std::distance( boltInput.begin( ),boltInput.end());
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdOutput, boltOutput );
+
+    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), bolt::cl::negate<int>());
+    bolt::cl::transform( ctl, boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), bolt::cl::negate<int>());
+
+    stdNumElements = std::distance( stdInput.begin( ), stdInput.end( ) );
+    boltNumElements = std::distance( boltInput.begin( ), boltInput.end( ) );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdOutput, boltOutput );
+}
+
+TEST_P( TransformIntegerVector, MultiCoreCPU )
+{
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    //typedef std::iterator_traits<std::vector<int>::iterator>::value_type T;
+    //  Calling the actual functions under test
+    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), stdOutput.begin( ), bolt::cl::plus<int>());
+    bolt::cl::transform( ctl, boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), boltOutput.begin( ), 
+                         bolt::cl::plus<int>());
+
+    std::vector< int >::iterator::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end( ) );
+    std::vector< int >::iterator::difference_type boltNumElements = std::distance( boltInput.begin( ),boltInput.end());
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdOutput, boltOutput );
+
+    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), bolt::cl::negate<int>());
+    bolt::cl::transform( ctl, boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), bolt::cl::negate<int>());
+
+    stdNumElements = std::distance( stdInput.begin( ), stdInput.end( ) );
+    boltNumElements = std::distance( boltInput.begin( ), boltInput.end( ) );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdOutput, boltOutput );
+}
+
 TEST_P( TransformFloatVector, Normal )
 {
     //  Calling the actual functions under test
-    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), stdOutput.begin( ), bolt::cl::plus<float>());
-    bolt::cl::transform( boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), boltOutput.begin( ), bolt::cl::plus<float>());
+    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), stdOutput.begin(),bolt::cl::plus<float>());
+    bolt::cl::transform( boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), boltOutput.begin( ), 
+                         bolt::cl::plus<float>());
 
-    std::vector< float >::iterator::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end( ) );
-    std::vector< float >::iterator::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end( ) );
+    std::vector< float >::iterator::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end());
+    std::vector< float >::iterator::difference_type boltNumElements = std::distance(boltInput.begin(),boltInput.end());
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
@@ -915,15 +1101,86 @@ TEST_P( TransformFloatVector, Normal )
     cmpArrays( stdOutput, boltOutput );
 
 }
+
+TEST_P( TransformFloatVector, Serial )
+{
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    //  Calling the actual functions under test
+    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), stdOutput.begin(),bolt::cl::plus<float>());
+    bolt::cl::transform( ctl, boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), boltOutput.begin( ), 
+                         bolt::cl::plus<float>());
+
+    std::vector< float >::iterator::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end());
+    std::vector< float >::iterator::difference_type boltNumElements = std::distance(boltInput.begin(),boltInput.end());
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+
+    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), bolt::cl::negate<float>());
+    bolt::cl::transform( ctl, boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), bolt::cl::negate<float>());
+
+    stdNumElements = std::distance( stdInput.begin( ), stdInput.end( ) );
+    boltNumElements = std::distance( boltInput.begin( ), boltInput.end( ) );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdOutput, boltOutput );
+
+}
+
+TEST_P( TransformFloatVector, MultiCoreCPU )
+{
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    //  Calling the actual functions under test
+    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), stdOutput.begin(),bolt::cl::plus<float>());
+    bolt::cl::transform( ctl, boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), boltOutput.begin( ), 
+                         bolt::cl::plus<float>());
+
+    std::vector< float >::iterator::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end());
+    std::vector< float >::iterator::difference_type boltNumElements = std::distance(boltInput.begin(),boltInput.end());
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+
+    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), bolt::cl::negate<float>());
+    bolt::cl::transform( ctl, boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), bolt::cl::negate<float>());
+
+    stdNumElements = std::distance( stdInput.begin( ), stdInput.end( ) );
+    boltNumElements = std::distance( boltInput.begin( ), boltInput.end( ) );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdOutput, boltOutput );
+
+}
+
 #if (TEST_DOUBLE == 1)
 TEST_P( TransformDoubleVector, Inplace )
 {
     //  Calling the actual functions under test
-    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), stdOutput.begin( ), bolt::cl::plus<double>());
-    bolt::cl::transform( boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), boltOutput.begin( ), bolt::cl::plus<double>());
+    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), stdOutput.begin( ),
+                    bolt::cl::plus<double>());
+    bolt::cl::transform( boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), boltOutput.begin( ),
+                         bolt::cl::plus<double>());
 
-    std::vector< double >::iterator::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end( ) );
-    std::vector< double >::iterator::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end( ) );
+    std::vector< double >::iterator::difference_type stdNumElements = std::distance( stdInput.begin( ),
+                                                                                     stdInput.end( ) );
+    std::vector< double >::iterator::difference_type boltNumElements = std::distance( boltInput.begin( ),
+                                                                                      boltInput.end( ) );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
@@ -950,10 +1207,11 @@ TEST_P( TransformIntegerDeviceVector, Inplace )
 {
     //  Calling the actual functions under test
     std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), stdOutput.begin( ), bolt::cl::plus<int>());
-    bolt::cl::transform( boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), boltOutput.begin( ), bolt::cl::plus<int>());
+    bolt::cl::transform( boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), boltOutput.begin( ), 
+                         bolt::cl::plus<int>());
 
     std::vector< int >::iterator::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end( ) );
-    std::vector< int >::iterator::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end( ) );
+    std::vector< int >::iterator::difference_type boltNumElements = std::distance( boltInput.begin( ),boltInput.end());
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
@@ -975,14 +1233,84 @@ TEST_P( TransformIntegerDeviceVector, Inplace )
     //  Loop through the array and compare all the values with each other
     cmpArrays( stdOutput, boltOutput );
 }
+
+TEST_P( TransformIntegerDeviceVector, Serial )
+{
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    //  Calling the actual functions under test
+    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), stdOutput.begin( ), bolt::cl::plus<int>());
+    bolt::cl::transform( ctl, boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), boltOutput.begin( ), 
+                         bolt::cl::plus<int>());
+
+    std::vector< int >::iterator::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end( ) );
+    std::vector< int >::iterator::difference_type boltNumElements = std::distance( boltInput.begin( ),boltInput.end());
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdOutput, boltOutput );
+
+    //UNARY TRANSFORM Test
+    //  Calling the actual functions under test
+    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), bolt::cl::negate<int>());
+    bolt::cl::transform(ctl, boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), bolt::cl::negate<int>());
+
+    stdNumElements = std::distance( stdInput.begin( ), stdInput.end( ) );
+    boltNumElements = std::distance( boltInput.begin( ), boltInput.end( ) );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdOutput, boltOutput );
+}
+
+TEST_P( TransformIntegerDeviceVector, MultiCoreCPU )
+{
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    //  Calling the actual functions under test
+    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), stdOutput.begin( ), bolt::cl::plus<int>());
+    bolt::cl::transform( ctl, boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), boltOutput.begin( ), 
+                         bolt::cl::plus<int>());
+
+    std::vector< int >::iterator::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end( ) );
+    std::vector< int >::iterator::difference_type boltNumElements = std::distance( boltInput.begin( ),boltInput.end());
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdOutput, boltOutput );
+
+    //UNARY TRANSFORM Test
+    //  Calling the actual functions under test
+    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), bolt::cl::negate<int>());
+    bolt::cl::transform(ctl, boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), bolt::cl::negate<int>());
+
+    stdNumElements = std::distance( stdInput.begin( ), stdInput.end( ) );
+    boltNumElements = std::distance( boltInput.begin( ), boltInput.end( ) );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdOutput, boltOutput );
+}
+
 TEST_P( TransformFloatDeviceVector, Inplace )
 {
     //  Calling the actual functions under test
-    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), stdOutput.begin( ), bolt::cl::plus<float>());
-    bolt::cl::transform( boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), boltOutput.begin( ), bolt::cl::plus<float>());
+    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), stdOutput.begin(),bolt::cl::plus<float>());
+    bolt::cl::transform( boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), boltOutput.begin( ), 
+                         bolt::cl::plus<float>());
 
-    std::vector< float >::iterator::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end( ) );
-    std::vector< float >::iterator::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end( ) );
+    std::vector< float >::iterator::difference_type stdNumElements = std::distance( stdInput.begin( ),stdInput.end());
+    std::vector< float >::iterator::difference_type boltNumElements =std::distance(boltInput.begin(),boltInput.end());
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
@@ -1005,17 +1333,84 @@ TEST_P( TransformFloatDeviceVector, Inplace )
     cmpArrays( stdOutput, boltOutput );
 }
 
+TEST_P( TransformFloatDeviceVector, Serial )
+{
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
+    //  Calling the actual functions under test
+    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), stdOutput.begin(),bolt::cl::plus<float>());
+    bolt::cl::transform(ctl, boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), boltOutput.begin( ), 
+                         bolt::cl::plus<float>());
+
+    std::vector< float >::iterator::difference_type stdNumElements = std::distance( stdInput.begin( ),stdInput.end());
+    std::vector< float >::iterator::difference_type boltNumElements =std::distance(boltInput.begin(),boltInput.end());
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdOutput, boltOutput );
+
+    //UNARY TRANSFORM Test
+    //  Calling the actual functions under test
+    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), bolt::cl::negate<float>());
+    bolt::cl::transform(ctl,  boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), bolt::cl::negate<float>());
+
+    stdNumElements = std::distance( stdInput.begin( ), stdInput.end( ) );
+    boltNumElements = std::distance( boltInput.begin( ), boltInput.end( ) );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdOutput, boltOutput );
+}
+
+TEST_P( TransformFloatDeviceVector, MultiCoreCPU )
+{
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    //  Calling the actual functions under test
+    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), stdOutput.begin(),bolt::cl::plus<float>());
+    bolt::cl::transform(ctl, boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), boltOutput.begin( ), 
+                         bolt::cl::plus<float>());
+
+    std::vector< float >::iterator::difference_type stdNumElements = std::distance( stdInput.begin( ),stdInput.end());
+    std::vector< float >::iterator::difference_type boltNumElements =std::distance(boltInput.begin(),boltInput.end());
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdOutput, boltOutput );
+
+    //UNARY TRANSFORM Test
+    //  Calling the actual functions under test
+    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), bolt::cl::negate<float>());
+    bolt::cl::transform(ctl,  boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), bolt::cl::negate<float>());
+
+    stdNumElements = std::distance( stdInput.begin( ), stdInput.end( ) );
+    boltNumElements = std::distance( boltInput.begin( ), boltInput.end( ) );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdOutput, boltOutput );
+}
 
 #if (TEST_DOUBLE == 1)
 TEST_P( TransformDoubleDeviceVector, Inplace )
 {
     //  Calling the actual functions under test
-    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), stdOutput.begin( ), bolt::cl::plus<double>());
-    bolt::cl::transform( boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), boltOutput.begin( ), bolt::cl::plus<double>());
+    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ),stdOutput.begin(),bolt::cl::plus<double>());
+    bolt::cl::transform( boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), boltOutput.begin( ),
+                         bolt::cl::plus<double>());
 
-    std::vector< double >::iterator::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end( ) );
-    std::vector< double >::iterator::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end( ) );
+    std::vector< double >::iterator::difference_type stdNumElements = std::distance( stdInput.begin( ),stdInput.end());
+    std::vector<double>::iterator::difference_type boltNumElements = std::distance(boltInput.begin(),boltInput.end());
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
@@ -1064,6 +1459,60 @@ TEST_P( TransformIntegerNakedPointer, Inplace )
     cmpArrays( stdOutput, boltOutput, endIndex );
 }
 
+TEST_P( TransformIntegerNakedPointer, Serial )
+{
+    size_t endIndex = GetParam( );
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    //  Calling the actual functions under test
+    stdext::checked_array_iterator< int* > wrapStdInput( stdInput, endIndex );
+    stdext::checked_array_iterator< int* > wrapStdOutput( stdOutput, endIndex );
+    stdext::checked_array_iterator< int* > wrapBoltInput( boltInput, endIndex );
+    stdext::checked_array_iterator< int* > wrapBoltOutput( boltOutput, endIndex );
+
+    std::transform( wrapStdInput, wrapStdInput + endIndex, wrapStdOutput, wrapStdOutput, bolt::cl::plus<int>());
+    bolt::cl::transform( wrapBoltInput, wrapBoltInput+endIndex, wrapBoltOutput, wrapBoltOutput, bolt::cl::plus<int>());
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdOutput, boltOutput, endIndex );
+    
+    //UNARY TRANSFORM Test
+    std::transform( wrapStdInput, wrapStdInput + endIndex, wrapStdOutput, bolt::cl::negate<int>());
+    bolt::cl::transform( ctl, wrapBoltInput, wrapBoltInput+endIndex, wrapBoltOutput, bolt::cl::negate<int>());
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdOutput, boltOutput, endIndex );
+}
+
+TEST_P( TransformIntegerNakedPointer, MultiCoreCPU )
+{
+    size_t endIndex = GetParam( );
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    //  Calling the actual functions under test
+    stdext::checked_array_iterator< int* > wrapStdInput( stdInput, endIndex );
+    stdext::checked_array_iterator< int* > wrapStdOutput( stdOutput, endIndex );
+    stdext::checked_array_iterator< int* > wrapBoltInput( boltInput, endIndex );
+    stdext::checked_array_iterator< int* > wrapBoltOutput( boltOutput, endIndex );
+
+    std::transform( wrapStdInput, wrapStdInput + endIndex, wrapStdOutput, wrapStdOutput, bolt::cl::plus<int>());
+    bolt::cl::transform( wrapBoltInput, wrapBoltInput+endIndex, wrapBoltOutput, wrapBoltOutput, bolt::cl::plus<int>());
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdOutput, boltOutput, endIndex );
+    
+    //UNARY TRANSFORM Test
+    std::transform( wrapStdInput, wrapStdInput + endIndex, wrapStdOutput, bolt::cl::negate<int>());
+    bolt::cl::transform( ctl, wrapBoltInput, wrapBoltInput+endIndex, wrapBoltOutput, bolt::cl::negate<int>());
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdOutput, boltOutput, endIndex );
+}
+
 TEST_P( TransformFloatNakedPointer, Inplace )
 {
     size_t endIndex = GetParam( );
@@ -1075,7 +1524,7 @@ TEST_P( TransformFloatNakedPointer, Inplace )
     stdext::checked_array_iterator< float* > wrapBoltOutput( boltOutput, endIndex );
 
     std::transform( wrapStdInput, wrapStdInput + endIndex, wrapStdOutput, wrapStdOutput, bolt::cl::plus<float>());
-    bolt::cl::transform( wrapBoltInput, wrapBoltInput+endIndex, wrapBoltOutput, wrapBoltOutput, bolt::cl::plus<float>());
+    bolt::cl::transform( wrapBoltInput, wrapBoltInput+endIndex, wrapBoltOutput,wrapBoltOutput,bolt::cl::plus<float>());
 
     //  Loop through the array and compare all the values with each other
     cmpArrays( stdOutput, boltOutput, endIndex );
@@ -1083,6 +1532,62 @@ TEST_P( TransformFloatNakedPointer, Inplace )
     //UNARY TRANSFORM Test
     std::transform( wrapStdInput, wrapStdInput + endIndex, wrapStdOutput, bolt::cl::negate<float>());
     bolt::cl::transform( wrapBoltInput, wrapBoltInput+endIndex, wrapBoltOutput, bolt::cl::negate<float>());
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdOutput, boltOutput, endIndex );
+}
+
+TEST_P( TransformFloatNakedPointer, Serial)
+{
+    size_t endIndex = GetParam( );
+
+    //  Calling the actual functions under test
+    stdext::checked_array_iterator< float* > wrapStdInput( stdInput, endIndex );
+    stdext::checked_array_iterator< float* > wrapStdOutput( stdOutput, endIndex );
+    stdext::checked_array_iterator< float* > wrapBoltInput( boltInput, endIndex );
+    stdext::checked_array_iterator< float* > wrapBoltOutput( boltOutput, endIndex );
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    std::transform( wrapStdInput, wrapStdInput + endIndex, wrapStdOutput, wrapStdOutput, bolt::cl::plus<float>());
+    bolt::cl::transform(ctl,  wrapBoltInput, wrapBoltInput+endIndex, wrapBoltOutput,wrapBoltOutput,
+                                                                        bolt::cl::plus<float>());
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdOutput, boltOutput, endIndex );
+
+    //UNARY TRANSFORM Test
+    std::transform( wrapStdInput, wrapStdInput + endIndex, wrapStdOutput, bolt::cl::negate<float>());
+    bolt::cl::transform(ctl,  wrapBoltInput, wrapBoltInput+endIndex, wrapBoltOutput, bolt::cl::negate<float>());
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdOutput, boltOutput, endIndex );
+}
+
+TEST_P( TransformFloatNakedPointer, MultiCoreCPU)
+{
+    size_t endIndex = GetParam( );
+
+    //  Calling the actual functions under test
+    stdext::checked_array_iterator< float* > wrapStdInput( stdInput, endIndex );
+    stdext::checked_array_iterator< float* > wrapStdOutput( stdOutput, endIndex );
+    stdext::checked_array_iterator< float* > wrapBoltInput( boltInput, endIndex );
+    stdext::checked_array_iterator< float* > wrapBoltOutput( boltOutput, endIndex );
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    std::transform( wrapStdInput, wrapStdInput + endIndex, wrapStdOutput, wrapStdOutput, bolt::cl::plus<float>());
+    bolt::cl::transform(ctl,  wrapBoltInput, wrapBoltInput+endIndex, wrapBoltOutput,wrapBoltOutput,
+                                                                          bolt::cl::plus<float>());
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdOutput, boltOutput, endIndex );
+
+    //UNARY TRANSFORM Test
+    std::transform( wrapStdInput, wrapStdInput + endIndex, wrapStdOutput, bolt::cl::negate<float>());
+    bolt::cl::transform(ctl,  wrapBoltInput, wrapBoltInput+endIndex, wrapBoltOutput, bolt::cl::negate<float>());
 
     //  Loop through the array and compare all the values with each other
     cmpArrays( stdOutput, boltOutput, endIndex );
@@ -1100,7 +1605,7 @@ TEST_P( TransformDoubleNakedPointer, Inplace )
     stdext::checked_array_iterator< double* > wrapBoltOutput( boltOutput, endIndex );
 
     std::transform( wrapStdInput, wrapStdInput + endIndex, wrapStdOutput, wrapStdOutput, bolt::cl::plus<double>());
-    bolt::cl::transform( wrapBoltInput, wrapBoltInput+endIndex, wrapBoltOutput, wrapBoltOutput, bolt::cl::plus<double>());
+    bolt::cl::transform( wrapBoltInput, wrapBoltInput+endIndex,wrapBoltOutput,wrapBoltOutput,bolt::cl::plus<double>());
 
     //  Loop through the array and compare all the values with each other
     cmpArrays( stdOutput, boltOutput, endIndex );
@@ -1116,28 +1621,37 @@ TEST_P( TransformDoubleNakedPointer, Inplace )
 std::array<int, 15> TestValues = {2,4,8,16,32,64,128,256,512,1024,2048,4096,8192,16384,32768};
 //Test lots of consecutive numbers, but small range, suitable for integers because they overflow easier
 INSTANTIATE_TEST_CASE_P( TransformRange, TransformIntegerVector, ::testing::Range( 0, 1024, 7 ) );
-INSTANTIATE_TEST_CASE_P( TransformValues, TransformIntegerVector, ::testing::ValuesIn( TestValues.begin(), TestValues.end() ) );
+INSTANTIATE_TEST_CASE_P( TransformValues, TransformIntegerVector, ::testing::ValuesIn( TestValues.begin(),
+                         TestValues.end() ) );
 INSTANTIATE_TEST_CASE_P( TransformRange, TransformFloatVector, ::testing::Range( 0, 1024, 3 ) );
-INSTANTIATE_TEST_CASE_P( TransformValues, TransformFloatVector, ::testing::ValuesIn( TestValues.begin(), TestValues.end() ) );
+INSTANTIATE_TEST_CASE_P( TransformValues, TransformFloatVector, ::testing::ValuesIn( TestValues.begin(), 
+                         TestValues.end() ) );
 #if (TEST_DOUBLE == 1)
 INSTANTIATE_TEST_CASE_P( TransformRange, TransformDoubleVector, ::testing::Range( 0, 1024, 21 ) );
-INSTANTIATE_TEST_CASE_P( TransformValues, TransformDoubleVector, ::testing::ValuesIn( TestValues.begin(), TestValues.end() ) );
+INSTANTIATE_TEST_CASE_P( TransformValues, TransformDoubleVector, ::testing::ValuesIn( TestValues.begin(), 
+                         TestValues.end() ) );
 #endif
 INSTANTIATE_TEST_CASE_P( TransformRange, TransformIntegerDeviceVector, ::testing::Range( 0, 1024, 53 ) );
-INSTANTIATE_TEST_CASE_P( TransformValues, TransformIntegerDeviceVector, ::testing::ValuesIn( TestValues.begin(), TestValues.end() ) );
+INSTANTIATE_TEST_CASE_P( TransformValues, TransformIntegerDeviceVector, ::testing::ValuesIn( TestValues.begin(),
+                         TestValues.end() ) );
 INSTANTIATE_TEST_CASE_P( TransformRange, TransformFloatDeviceVector, ::testing::Range( 0, 1024, 53 ) );
-INSTANTIATE_TEST_CASE_P( TransformValues, TransformFloatDeviceVector, ::testing::ValuesIn( TestValues.begin(), TestValues.end() ) );
+INSTANTIATE_TEST_CASE_P( TransformValues, TransformFloatDeviceVector, ::testing::ValuesIn( TestValues.begin(), 
+                         TestValues.end() ) );
 #if (TEST_DOUBLE == 1)
 INSTANTIATE_TEST_CASE_P( TransformRange, TransformDoubleDeviceVector, ::testing::Range( 0, 1024, 53 ) );
-INSTANTIATE_TEST_CASE_P( TransformValues, TransformDoubleDeviceVector, ::testing::ValuesIn( TestValues.begin(), TestValues.end() ) );
+INSTANTIATE_TEST_CASE_P( TransformValues, TransformDoubleDeviceVector, ::testing::ValuesIn( TestValues.begin(),
+                         TestValues.end() ) );
 #endif
 INSTANTIATE_TEST_CASE_P( TransformRange, TransformIntegerNakedPointer, ::testing::Range( 0, 1024, 13) );
-INSTANTIATE_TEST_CASE_P( TransformValues, TransformIntegerNakedPointer, ::testing::ValuesIn( TestValues.begin(), TestValues.end() ) );
+INSTANTIATE_TEST_CASE_P( TransformValues, TransformIntegerNakedPointer, ::testing::ValuesIn( TestValues.begin(), 
+                         TestValues.end() ) );
 INSTANTIATE_TEST_CASE_P( TransformRange, TransformFloatNakedPointer, ::testing::Range( 0, 1024, 13) );
-INSTANTIATE_TEST_CASE_P( TransformValues, TransformFloatNakedPointer, ::testing::ValuesIn( TestValues.begin(), TestValues.end() ) );
+INSTANTIATE_TEST_CASE_P( TransformValues, TransformFloatNakedPointer, ::testing::ValuesIn( TestValues.begin(),
+                         TestValues.end() ) );
 #if (TEST_DOUBLE == 1)
 INSTANTIATE_TEST_CASE_P( TransformRange, TransformDoubleNakedPointer, ::testing::Range( 0, 1024, 13) );
-INSTANTIATE_TEST_CASE_P( Transform, TransformDoubleNakedPointer, ::testing::ValuesIn( TestValues.begin(), TestValues.end() ) );
+INSTANTIATE_TEST_CASE_P( Transform, TransformDoubleNakedPointer, ::testing::ValuesIn( TestValues.begin(), 
+                         TestValues.end() ) );
 #endif
 
 typedef ::testing::Types< 
@@ -1174,6 +1688,76 @@ typedef ::testing::Types<
     std::tuple< float, TypeValue< 65536 > >
 > FloatTests;
 
+typedef ::testing::Types< 
+    std::tuple< long, TypeValue< 1 > >,
+    std::tuple< long, TypeValue< 31 > >,
+    std::tuple< long, TypeValue< 32 > >,
+    std::tuple< long, TypeValue< 63 > >,
+    std::tuple< long, TypeValue< 64 > >,
+    std::tuple< long, TypeValue< 127 > >,
+    std::tuple< long, TypeValue< 128 > >,
+    std::tuple< long, TypeValue< 129 > >,
+    std::tuple< long, TypeValue< 1000 > >,
+    std::tuple< long, TypeValue< 1053 > >,
+    std::tuple< long, TypeValue< 4096 > >,
+    std::tuple< long, TypeValue< 4097 > >
+> LongTests;
+
+
+// todo: Run long with larger sizes
+
+typedef ::testing::Types< 
+    std::tuple< unsigned long, TypeValue< 1 > >,
+    std::tuple< unsigned long, TypeValue< 31 > >,
+    std::tuple< unsigned long, TypeValue< 32 > >,
+    std::tuple< unsigned long, TypeValue< 63 > >,
+    std::tuple< unsigned long, TypeValue< 64 > >,
+    std::tuple< unsigned long, TypeValue< 127 > >,
+    std::tuple< unsigned long, TypeValue< 128 > >,
+    std::tuple< unsigned long, TypeValue< 129 > >,
+    std::tuple< unsigned long, TypeValue< 1000 > >,
+    std::tuple< unsigned long, TypeValue< 1053 > >,
+    std::tuple< unsigned long, TypeValue< 4096 > >,
+    std::tuple< unsigned long, TypeValue< 4097 > >
+> ULongTests;
+
+// todo: Run ulong with larger sizes
+
+typedef ::testing::Types< 
+    std::tuple< short, TypeValue< 1 > >,
+    std::tuple< short, TypeValue< 31 > >,
+    std::tuple< short, TypeValue< 32 > >,
+    std::tuple< short, TypeValue< 63 > >,
+    std::tuple< short, TypeValue< 64 > >,
+    std::tuple< short, TypeValue< 127 > >,
+    std::tuple< short, TypeValue< 128 > >,
+    std::tuple< short, TypeValue< 129 > >,
+    std::tuple< short, TypeValue< 1000 > >,
+    std::tuple< short, TypeValue< 1053 > >,
+    std::tuple< short, TypeValue< 4096 > >,
+    std::tuple< short, TypeValue< 4097 > >,
+    std::tuple< short, TypeValue< 65535 > >,
+    std::tuple< short, TypeValue< 65536 > >
+> ShortTests;
+
+typedef ::testing::Types< 
+    std::tuple< unsigned short, TypeValue< 1 > >,
+    std::tuple< unsigned short, TypeValue< 31 > >,
+    std::tuple< unsigned short, TypeValue< 32 > >,
+    std::tuple< unsigned short, TypeValue< 63 > >,
+    std::tuple< unsigned short, TypeValue< 64 > >,
+    std::tuple< unsigned short, TypeValue< 127 > >,
+    std::tuple< unsigned short, TypeValue< 128 > >,
+    std::tuple< unsigned short, TypeValue< 129 > >,
+    std::tuple< unsigned short, TypeValue< 1000 > >,
+    std::tuple< unsigned short, TypeValue< 1053 > >,
+    std::tuple< unsigned short, TypeValue< 4096 > >,
+    std::tuple< unsigned short, TypeValue< 4097 > >,
+    std::tuple< unsigned short, TypeValue< 65535 > >,
+    std::tuple< unsigned short, TypeValue< 65536 > >
+> UShortTests;
+
+
 #if (TEST_DOUBLE == 1)
 typedef ::testing::Types< 
     std::tuple< double, TypeValue< 1 > >,
@@ -1193,31 +1777,43 @@ typedef ::testing::Types<
 > DoubleTests;
 #endif 
 BOLT_FUNCTOR(UDD,
-struct UDD { 
+struct UDD
+{
     int a; 
     int b;
 
-    bool operator() (const UDD& lhs, const UDD& rhs) { 
+    bool operator() (const UDD& lhs, const UDD& rhs) const {
         return ((lhs.a+lhs.b) > (rhs.a+rhs.b));
     } 
-    bool operator < (const UDD& other) const { 
+    bool operator < (const UDD& other) const {
         return ((a+b) < (other.a+other.b));
     }
-    bool operator > (const UDD& other) const { 
+    bool operator > (const UDD& other) const {
         return ((a+b) > (other.a+other.b));
     }
-    bool operator == (const UDD& other) const { 
+    bool operator == (const UDD& other) const {
         return ((a+b) == (other.a+other.b));
     }
-    UDD() 
-        : a(0),b(0) { } 
-    UDD(int _in) 
-        : a(_in), b(_in +1)  { } 
-}; 
+
+    UDD operator + (const UDD &rhs) const
+    {
+      UDD _result;
+      _result.a = a + rhs.a;
+      _result.b = b + rhs.b;
+      return _result;
+    }
+
+    UDD()
+        : a(0),b(0) { }
+    UDD(int _in)
+        : a(_in), b(_in +1)  { }
+};
 );
-BOLT_CREATE_TYPENAME(bolt::cl::less<UDD>);
-BOLT_CREATE_TYPENAME(bolt::cl::greater<UDD>);
-BOLT_CREATE_TYPENAME(bolt::cl::plus<UDD>);
+
+BOLT_CREATE_TYPENAME( bolt::cl::device_vector< UDD >::iterator );
+BOLT_CREATE_CLCODE( bolt::cl::device_vector< UDD >::iterator, bolt::cl::deviceVectorIteratorTemplate );
+
+BOLT_TEMPLATE_REGISTER_NEW_TYPE(bolt::cl::plus, int, UDD );
 
 typedef ::testing::Types< 
     std::tuple< UDD, TypeValue< 1 > >,
@@ -1238,6 +1834,10 @@ typedef ::testing::Types<
 
 INSTANTIATE_TYPED_TEST_CASE_P( Integer, TransformArrayTest, IntegerTests );
 INSTANTIATE_TYPED_TEST_CASE_P( Float, TransformArrayTest, FloatTests );
+//INSTANTIATE_TYPED_TEST_CASE_P( Long, TransformArrayTest, LongTests );
+//INSTANTIATE_TYPED_TEST_CASE_P( ULong, TransformArrayTest, ULongTests );
+INSTANTIATE_TYPED_TEST_CASE_P( Short, TransformArrayTest, ShortTests );
+//INSTANTIATE_TYPED_TEST_CASE_P( UShort, TransformArrayTest, UShortTests );
 #if (TEST_DOUBLE == 1)
 INSTANTIATE_TYPED_TEST_CASE_P( Double, TransformArrayTest, DoubleTests );
 #endif 
@@ -1271,6 +1871,42 @@ TEST(simple,constant)
     cmpArrays( stdOutput, boltOutput, 1024 );
 }
 
+TEST(simple,Serial)
+{
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    bolt::cl::constant_iterator<int> iter( 1 );
+    bolt::cl::constant_iterator<int> iter2 = iter + 1024;
+    std::vector<int> input1(1024);
+    std::vector<int> input2(1024);
+    std::vector<int> stdOutput(1024);
+     std::vector<int> boltOutput(1024);
+    std::generate(input1.begin(),input1.end(),gen_constant<1>);
+    input2 = input1;
+    std::transform( input1.begin(), input1.end(), input2.begin(), stdOutput.begin(), bolt::cl::plus<int>());
+    bolt::cl::transform(ctl, iter,iter2,input1.begin(),boltOutput.begin(),bolt::cl::plus<int>());
+    cmpArrays( stdOutput, boltOutput, 1024 );
+}
+
+TEST(simple,MultiCoreCPU)
+{
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    bolt::cl::constant_iterator<int> iter( 1 );
+    bolt::cl::constant_iterator<int> iter2 = iter + 1024;
+    std::vector<int> input1(1024);
+    std::vector<int> input2(1024);
+    std::vector<int> stdOutput(1024);
+     std::vector<int> boltOutput(1024);
+    std::generate(input1.begin(),input1.end(),gen_constant<1>);
+    input2 = input1;
+    std::transform( input1.begin(), input1.end(), input2.begin(), stdOutput.begin(), bolt::cl::plus<int>());
+    bolt::cl::transform(ctl, iter,iter2,input1.begin(),boltOutput.begin(),bolt::cl::plus<int>());
+    cmpArrays( stdOutput, boltOutput, 1024 );
+}
+
 //Teststotestthecountingiterator
 TEST(simple1,counting)
 {
@@ -1290,79 +1926,220 @@ TEST(simple1,counting)
     cmpArrays( stdOutput, boltOutput, 1024 );
 }
 
-TEST(cl_const_iter_transformBoltClVectFloat, addIterFloatValues){
-	int size = 10;
-	float myConstValueF = 1.125f;
-	bolt::cl::plus<float> addKaro;
-	bolt::cl::device_vector<float> myDevVect(size);
-	
-	for (int i = 0; i < size; i++){
-		myDevVect[i] = (float)i + 1.0f;
-	}
-	
-	for (int i = 0; i<size; ++i){
-		std::cout.setf(std::ios::fixed);
-		std::cout<<std::setprecision(3)<<myDevVect[i]<<" ";
-	}
-
-	bolt::cl::constant_iterator< float > constIter( myConstValueF );
-
-	bolt::cl::transform(myDevVect.begin(), myDevVect.end(), constIter, myDevVect.begin(), addKaro);
-	
-	std::cout<<std::endl<<std::endl;
-	for (int i = 0; i<size; ++i){
-		std::cout.setf(std::ios::fixed);
-		std::cout<<std::setprecision(3)<<myDevVect[i]<<" ";
-	}
-}
-
-//  Temporarily disabling this test because we have a known issue running on the CPU device with our 
-//  Bolt iterators
-TEST( Transformint ,  DISABLED_KcacheTest )
+TEST(simple1,Serial_counting)
 {
-    //setup containers
-    unsigned int length = 1024;
-    std::vector< int > refInput( length );
-    std::vector< int > refOutput( length );
-    for( unsigned int i = 0; i < length ; i++ )
-    {
-      refInput[i] = i;
-      refInput[i] = i+1;
-      refOutput[i] = 0;
-    }
+    bolt::cl::counting_iterator<int> iter(0);
+    bolt::cl::counting_iterator<int> iter2=iter+1024;
+    std::vector<int> input1(1024);
+    std::vector<int> input2(1024);
+    std::vector<int> stdOutput(1024);
+     std::vector<int> boltOutput(1024);
+     for(int i=0 ; i< 1024;i++)
+     {
+         input1[i] = i;
+     }
+    input2 = input1;
 
-    //Call reduce with GPU device because the default is a GPU device
-    bolt::cl::control ctrl = bolt::cl::control::getDefault();
-    bolt::cl::device_vector< int >gpuInput( refInput.begin(), refInput.end() );
-    bolt::cl::device_vector< int >gpuOutput( refOutput.begin(), refOutput.end() );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
-    bolt::cl::transform( ctrl, gpuInput.begin(), gpuInput.end(), gpuOutput.begin(), bolt::cl::negate<int>() );
-
-    //Call reduce with CPU device
-    ::cl::Context cpuContext(CL_DEVICE_TYPE_CPU);
-    std::vector< cl::Device > devices = cpuContext.getInfo< CL_CONTEXT_DEVICES >();
-    cl::Device selectedDevice;
-
-    for(std::vector< cl::Device >::iterator iter = devices.begin();iter < devices.end(); iter++)
-    {
-        if(iter->getInfo<CL_DEVICE_TYPE> ( ) == CL_DEVICE_TYPE_CPU)
-        {
-            selectedDevice = *iter;
-            break;
-        }
-    }
-    ::cl::CommandQueue myQueue( cpuContext, selectedDevice );
-    bolt::cl::control cpu_ctrl( myQueue );  // construct control structure from the queue.
-    bolt::cl::device_vector< int > cpuInput( refInput.begin(), refInput.end() );
-    bolt::cl::device_vector< int > cpuOutput( refOutput.begin(), refOutput.end() );
-
-    bolt::cl::transform( cpu_ctrl, cpuInput.begin(), cpuInput.end(), cpuOutput.begin() , bolt::cl::negate<int>());
-
-    //Call reference code
-    std::transform( refInput.begin(), refInput.end(), refOutput.begin(), std::negate<int>());
-    cmpArrays(cpuOutput,gpuOutput);
+    std::transform( input1.begin(), input1.end(), input2.begin(), stdOutput.begin(), bolt::cl::plus<int>());
+    bolt::cl::transform(ctl, iter,iter2,input1.begin(),boltOutput.begin(),bolt::cl::plus<int>());
+    cmpArrays( stdOutput, boltOutput, 1024 );
 }
 
+TEST(simple1,MultiCore_counting)
+{
+    bolt::cl::counting_iterator<int> iter(0);
+    bolt::cl::counting_iterator<int> iter2=iter+1024;
+    std::vector<int> input1(1024);
+    std::vector<int> input2(1024);
+    std::vector<int> stdOutput(1024);
+     std::vector<int> boltOutput(1024);
+     for(int i=0 ; i< 1024;i++)
+     {
+         input1[i] = i;
+     }
+    input2 = input1;
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    std::transform( input1.begin(), input1.end(), input2.begin(), stdOutput.begin(), bolt::cl::plus<int>());
+    bolt::cl::transform(ctl, iter,iter2,input1.begin(),boltOutput.begin(),bolt::cl::plus<int>());
+    cmpArrays( stdOutput, boltOutput, 1024 );
+}
+
+
+TEST(cl_const_iter_transformBoltClVectFloat, addIterFloatValues){
+    int size = 10;
+    float myConstValueF = 1.125f;
+    bolt::cl::plus<float> addKaro;
+    bolt::cl::device_vector<float> myDevVect(size);
+    
+    for (int i = 0; i < size; i++){
+        myDevVect[i] = (float)i + 1.0f;
+    }
+    
+    for (int i = 0; i<size; ++i){
+        std::cout.setf(std::ios::fixed);
+        std::cout<<std::setprecision(3)<<myDevVect[i]<<" ";
+    }
+
+    bolt::cl::constant_iterator< float > constIter( myConstValueF );
+
+    bolt::cl::transform(myDevVect.begin(), myDevVect.end(), constIter, myDevVect.begin(), addKaro);
+    
+    std::cout<<std::endl<<std::endl;
+    for (int i = 0; i<size; ++i){
+        std::cout.setf(std::ios::fixed);
+        std::cout<<std::setprecision(3)<<myDevVect[i]<<" ";
+    }
+}
+
+
+TEST(cl_const_iter_transformBoltClVectFloat, SerialaddIterFloatValues){
+    int size = 10;
+    float myConstValueF = 1.125f;
+    bolt::cl::plus<float> addKaro;
+    bolt::cl::device_vector<float> myDevVect(size);
+    
+    for (int i = 0; i < size; i++){
+        myDevVect[i] = (float)i + 1.0f;
+    }
+    
+    for (int i = 0; i<size; ++i){
+        std::cout.setf(std::ios::fixed);
+        std::cout<<std::setprecision(3)<<myDevVect[i]<<" ";
+    }
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    bolt::cl::constant_iterator< float > constIter( myConstValueF );
+
+    bolt::cl::transform(ctl, myDevVect.begin(), myDevVect.end(), constIter, myDevVect.begin(), addKaro);
+    
+    std::cout<<std::endl<<std::endl;
+    for (int i = 0; i<size; ++i){
+        std::cout.setf(std::ios::fixed);
+        std::cout<<std::setprecision(3)<<myDevVect[i]<<" ";
+    }
+}
+
+
+TEST(cl_const_iter_transformBoltClVectFloat, MultiCoreaddIterFloatValues){
+    int size = 10;
+    float myConstValueF = 1.125f;
+    bolt::cl::plus<float> addKaro;
+    bolt::cl::device_vector<float> myDevVect(size);
+    
+    for (int i = 0; i < size; i++){
+        myDevVect[i] = (float)i + 1.0f;
+    }
+    
+    for (int i = 0; i<size; ++i){
+        std::cout.setf(std::ios::fixed);
+        std::cout<<std::setprecision(3)<<myDevVect[i]<<" ";
+    }
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    bolt::cl::constant_iterator< float > constIter( myConstValueF );
+
+    bolt::cl::transform(ctl, myDevVect.begin(), myDevVect.end(), constIter, myDevVect.begin(), addKaro);
+    
+    std::cout<<std::endl<<std::endl;
+    for (int i = 0; i<size; ++i){
+        std::cout.setf(std::ios::fixed);
+        std::cout<<std::setprecision(3)<<myDevVect[i]<<" ";
+    }
+}
+
+TEST(cl_const_iter_transformBoltClFloat, addIterFloatValues){
+    int size = 10;
+    float myConstValueF = 1.125f;
+    bolt::cl::plus<float> addKaro;
+    std::vector<float> myVect(size);
+    
+    for (int i = 0; i < size; i++){
+        myVect[i] = (float)i + 1.0f;
+    }
+    
+    for (int i = 0; i<size; ++i){
+        std::cout.setf(std::ios::fixed);
+        std::cout<<std::setprecision(3)<<myVect[i]<<" ";
+    }
+
+    bolt::cl::constant_iterator< float > constIter( myConstValueF );
+
+    bolt::cl::transform(myVect.begin(), myVect.end(), constIter, myVect.begin(), addKaro);
+    
+    std::cout<<std::endl<<std::endl;
+    for (int i = 0; i<size; ++i){
+        std::cout.setf(std::ios::fixed);
+        std::cout<<std::setprecision(3)<<myVect[i]<<" ";
+    }
+}
+
+TEST(cl_const_iter_transformBoltClFloat, SerialaddIterFloatValues){
+    int size = 10;
+    float myConstValueF = 1.125f;
+    bolt::cl::plus<float> addKaro;
+    std::vector<float> myVect(size);
+    
+    for (int i = 0; i < size; i++){
+        myVect[i] = (float)i + 1.0f;
+    }
+    
+    for (int i = 0; i<size; ++i){
+        std::cout.setf(std::ios::fixed);
+        std::cout<<std::setprecision(3)<<myVect[i]<<" ";
+    }
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    bolt::cl::constant_iterator< float > constIter( myConstValueF );
+
+    bolt::cl::transform(ctl, myVect.begin(), myVect.end(), constIter, myVect.begin(), addKaro);
+    
+    std::cout<<std::endl<<std::endl;
+    for (int i = 0; i<size; ++i){
+        std::cout.setf(std::ios::fixed);
+        std::cout<<std::setprecision(3)<<myVect[i]<<" ";
+    }
+}
+
+TEST(cl_const_iter_transformBoltClFloat, MultiCoreaddIterFloatValues){
+    int size = 10;
+    float myConstValueF = 1.125f;
+    bolt::cl::plus<float> addKaro;
+    std::vector<float> myVect(size);
+    
+    for (int i = 0; i < size; i++){
+        myVect[i] = (float)i + 1.0f;
+    }
+    
+    for (int i = 0; i<size; ++i){
+        std::cout.setf(std::ios::fixed);
+        std::cout<<std::setprecision(3)<<myVect[i]<<" ";
+    }
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    bolt::cl::constant_iterator< float > constIter( myConstValueF );
+
+    bolt::cl::transform(ctl, myVect.begin(), myVect.end(), constIter, myVect.begin(), addKaro);
+    
+    std::cout<<std::endl<<std::endl;
+    for (int i = 0; i<size; ++i){
+        std::cout.setf(std::ios::fixed);
+        std::cout<<std::setprecision(3)<<myVect[i]<<" ";
+    }
+}
 
 TEST( TransformDeviceVector, OutOfPlaceTransform)
 {
@@ -1382,10 +2159,446 @@ TEST( TransformDeviceVector, OutOfPlaceTransform)
     dVectorBAV.begin(),
     dVectorOAV.begin(),
     bolt::cl::plus< int >( ) );
+}
 
+TEST( TransformDeviceVector, SerialOutOfPlaceTransform)
+{
+  int length = 1<<8;
+  std::vector<int> hVectorA( length ), hVectorB( length ), hVectorO( length );
+  std::fill( hVectorA.begin(), hVectorA.end(), 1024 );
+  std::fill( hVectorB.begin(), hVectorB.end(), 1024 );
+  std::fill( hVectorB.begin(), hVectorB.end(), 0 );
+
+  bolt::cl::device_vector<int> dVectorAAV(hVectorA.begin(), hVectorA.end()),
+  dVectorBAV(hVectorB.begin(), hVectorB.end()),
+  dVectorOAV(hVectorO.begin(), hVectorO.end());
+
+  bolt::cl::control ctl = bolt::cl::control::getDefault( );
+  ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+  std::transform( hVectorA.begin(), hVectorA.end(), hVectorB.begin(), hVectorO.begin(), std::plus< int >( ) );
+  bolt::cl::transform(ctl,  dVectorAAV.begin(),
+    dVectorAAV.end(),
+    dVectorBAV.begin(),
+    dVectorOAV.begin(),
+    bolt::cl::plus< int >( ) );
+}
+
+
+BOLT_FUNCTOR(StringFunctor,
+struct StringFunctor
+{
+    char operator() ( const char& in )
+    {
+        return in + 1;
+    };
+};
+);
+
+BOLT_FUNCTOR(UnsignedStringFunctor,
+struct UnsignedStringFunctor
+{
+    unsigned char operator() ( const unsigned char& in )
+    {
+        return in + 1;
+    };
+};
+);
+
+
+TEST(TransformStdVect, BoltVideo)
+{
+    // Initialize and print an input string
+    std::string inputString( "GdkknVnqkc" );
+
+    // Create input and ourput buffers
+    std::vector< char > inputVec( inputString.begin(), inputString.end() );
+    std::vector< char > outputVec( inputString.size() );
+
+    // This calls into OpenCL to do the work
+    bolt::cl::transform( inputVec.begin(), inputVec.end(), outputVec.begin(), StringFunctor() );
+
+    // transfer data to host memory from device memory.
+    std::string outputString( outputVec.data(), outputVec.size() );
+    std::string expectedString("HelloWorld");
+    EXPECT_TRUE(outputString==expectedString);
 
 
 }
+
+TEST(TransformStdVect, BoltVideoUnsignedChar)
+{
+    // Initialize and print an input string
+    std::string inputString( "GdkknVnqkc" );
+
+    // Create input and ourput buffers
+    std::vector< unsigned char > inputVec( inputString.begin(), inputString.end() );
+    std::vector< unsigned char > outputVec( inputString.size() );
+
+    // This calls into OpenCL to do the work
+    bolt::cl::transform( inputVec.begin(), inputVec.end(), outputVec.begin(), UnsignedStringFunctor() );
+
+    // transfer data to host memory from device memory.
+    std::string outputString(reinterpret_cast<const char *>(outputVec.data()), outputVec.size()  );
+    std::string expectedString("HelloWorld");
+    EXPECT_TRUE(outputString==expectedString);
+
+
+}
+
+TEST( TransformUDD, UDDTestStdVector)
+{
+
+#if LARGE_SIZE
+  int length = 1<<21;
+#else
+  int length =1024;
+#endif
+  std::vector<UDD> hVectorA( length ), hVectorB( length ), hVectorO( length ), hVectorBoltO( length );
+  std::fill( hVectorA.begin(), hVectorA.end(), 1024 );
+  std::fill( hVectorB.begin(), hVectorB.end(), 1024 );
+  std::fill( hVectorO.begin(), hVectorO.end(), 0 );
+  std::fill( hVectorBoltO.begin(), hVectorBoltO.end(), 0 );
+
+  bolt::cl::plus<UDD> pl;
+  std::transform( hVectorA.begin(), hVectorA.end(), hVectorB.begin(), hVectorO.begin(), std::plus< UDD >( ) );
+  bolt::cl::transform( hVectorA.begin(),
+    hVectorA.end(),
+    hVectorB.begin(),
+    hVectorBoltO.begin(), pl );
+
+  cmpArrays(hVectorO, hVectorBoltO);
+
+}
+
+
+TEST( TransformUDD, UDDTestDeviceVector)
+{
+
+#if LARGE_SIZE
+  int length = 1<<21;
+#else
+  int length = 1024;
+#endif
+  std::vector<UDD> hVectorA( length ),
+                   hVectorB( length ),
+                   hVectorO( length );
+  std::fill( hVectorA.begin(), hVectorA.end(), 1024 );
+  std::fill( hVectorB.begin(), hVectorB.end(), 1024 );
+  std::fill( hVectorO.begin(), hVectorO.end(), 0 );
+
+  bolt::cl::plus<UDD> pl;
+  bolt::cl::device_vector<UDD> dVectorA( hVectorA.begin(), hVectorA.end() ),
+                               dVectorB( hVectorB.begin(), hVectorB.end() ),
+                               dVectorO( hVectorO.begin(), hVectorO.end() );
+  std::transform( hVectorA.begin(), hVectorA.end(), hVectorB.begin(), hVectorO.begin(), std::plus< UDD >( ) );
+  bolt::cl::transform( dVectorA.begin(),
+    dVectorA.end(),
+    dVectorB.begin(),
+    dVectorO.begin(), pl );
+
+  cmpArrays(hVectorO, dVectorO);
+
+}
+
+
+TEST( TransformLong, LongTests)
+{
+
+#if LARGE_SIZE
+  int length = 1<<21;
+#else
+  int length = 1024;
+#endif
+  std::vector<cl_long> hVectorA( length ),
+                   hVectorB( length ),
+                   hVectorO( length );
+  std::fill( hVectorA.begin(), hVectorA.end(), 1024 );
+  std::fill( hVectorB.begin(), hVectorB.end(), 1024 );
+  std::fill( hVectorO.begin(), hVectorO.end(), 0 );
+
+  bolt::cl::plus<cl_long> pl;
+  bolt::cl::device_vector<cl_long> dVectorA( hVectorA.begin(), hVectorA.end() ),
+                               dVectorB( hVectorB.begin(), hVectorB.end() ),
+                               dVectorO( hVectorO.begin(), hVectorO.end() );
+  std::transform( hVectorA.begin(), hVectorA.end(), hVectorB.begin(), hVectorO.begin(), std::plus< cl_long >( ) );
+  bolt::cl::transform( dVectorA.begin(),
+    dVectorA.end(),
+    dVectorB.begin(),
+    dVectorO.begin(), pl );
+
+  cmpArrays(hVectorO, dVectorO);
+
+}
+
+TEST( TransformULong, ULongTests)
+{
+
+#if LARGE_SIZE
+  int length = 1<<21;
+#else
+  int length = 1024;
+#endif
+  std::vector<cl_ulong> hVectorA( length ),
+                   hVectorB( length ),
+                   hVectorO( length );
+  std::fill( hVectorA.begin(), hVectorA.end(), 1024 );
+  std::fill( hVectorB.begin(), hVectorB.end(), 1024 );
+  std::fill( hVectorO.begin(), hVectorO.end(), 0 );
+
+  bolt::cl::plus<cl_ulong> pl;
+  bolt::cl::device_vector<cl_ulong> dVectorA( hVectorA.begin(), hVectorA.end() ),
+                               dVectorB( hVectorB.begin(), hVectorB.end() ),
+                               dVectorO( hVectorO.begin(), hVectorO.end() );
+  std::transform( hVectorA.begin(), hVectorA.end(), hVectorB.begin(), hVectorO.begin(), std::plus< cl_ulong >( ) );
+  bolt::cl::transform( dVectorA.begin(),
+    dVectorA.end(),
+    dVectorB.begin(),
+    dVectorO.begin(), pl );
+
+  cmpArrays(hVectorO, dVectorO);
+
+}
+
+TEST(TransformStd, OffsetTest)
+{
+  int length = 1024;
+  std::vector<int> hVectorA( length ), hVectorB( length ), hVectorO( length ), hVectorBoltO( length );
+  std::fill( hVectorA.begin(), hVectorA.end(), 1024 );
+  std::fill( hVectorB.begin(), hVectorB.end(), 1024 );
+  std::fill( hVectorO.begin(), hVectorO.end(), 0 );
+  std::fill( hVectorBoltO.begin(), hVectorBoltO.end(), 0 );
+
+  std::transform( hVectorA.begin()+70, hVectorA.begin()+135, hVectorB.begin()+85, hVectorO.begin()+150, std::plus< int >( ) );
+  bolt::cl::transform( hVectorA.begin()+70,
+    hVectorA.begin()+135,
+    hVectorB.begin()+85,
+    hVectorBoltO.begin()+150, bolt::cl::plus<int>( ) );
+
+  cmpArrays(hVectorO, hVectorBoltO);
+
+
+}
+
+TEST(TransformStd, OffsetTestDeviceVector)
+{
+  int length = 1024;
+  std::vector<int> hVectorA( length ), hVectorB( length ), hVectorO( length );
+  std::fill( hVectorA.begin(), hVectorA.end(), 1024 );
+  std::fill( hVectorB.begin(), hVectorB.end(), 1024 );
+  std::fill( hVectorO.begin(), hVectorO.end(), 0 );
+
+  bolt::cl::device_vector<int> dVectorA( hVectorA.begin(), hVectorA.end() ),
+                                         dVectorB( hVectorB.begin(), hVectorB.end() ),
+                                         dVectorO( hVectorO.begin(), hVectorO.end() );
+
+  std::transform( hVectorA.begin()+70, hVectorA.begin()+135, hVectorB.begin()+85, hVectorO.begin()+150, std::plus< int >( ) );
+  bolt::cl::transform( dVectorA.begin()+70,
+    dVectorA.begin()+135,
+    dVectorB.begin()+85,
+    dVectorO.begin()+150, bolt::cl::plus<int>( ) );
+
+  cmpArrays(hVectorO, dVectorO);
+
+
+}
+
+TEST(TransformStd, OffsetTestDeviceVectorSerialCPU)
+{
+  int length = 1024;
+  std::vector<int> hVectorA( length ), hVectorB( length ), hVectorO( length );
+  std::fill( hVectorA.begin(), hVectorA.end(), 1024 );
+  std::fill( hVectorB.begin(), hVectorB.end(), 1024 );
+  std::fill( hVectorO.begin(), hVectorO.end(), 0 );
+
+  bolt::cl::device_vector<int> dVectorA( hVectorA.begin(), hVectorA.end() ),
+                                         dVectorB( hVectorB.begin(), hVectorB.end() ),
+                                         dVectorO( hVectorO.begin(), hVectorO.end() );
+
+  bolt::cl::control ctl;
+  ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+  std::transform( hVectorA.begin()+70, hVectorA.begin()+135, hVectorB.begin()+85, hVectorO.begin()+150, std::plus< int >( ) );
+  bolt::cl::transform( ctl,
+                       dVectorA.begin()+70,
+                       dVectorA.begin()+135,
+                       dVectorB.begin()+85,
+                       dVectorO.begin()+150, bolt::cl::plus<int>( ) );
+
+  cmpArrays(hVectorO, dVectorO);
+
+
+}
+
+TEST(TransformStd, OffsetTestDeviceVectorMultiCoreCPU)
+{
+  int length = 1024;
+  std::vector<int> hVectorA( length ), hVectorB( length ), hVectorO( length );
+  std::fill( hVectorA.begin(), hVectorA.end(), 1024 );
+  std::fill( hVectorB.begin(), hVectorB.end(), 1024 );
+  std::fill( hVectorO.begin(), hVectorO.end(), 0 );
+
+  bolt::cl::device_vector<int> dVectorA( hVectorA.begin(), hVectorA.end() ),
+                                         dVectorB( hVectorB.begin(), hVectorB.end() ),
+                                         dVectorO( hVectorO.begin(), hVectorO.end() );
+
+  bolt::cl::control ctl;
+  ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+  std::transform( hVectorA.begin()+70, hVectorA.begin()+135, hVectorB.begin()+85, hVectorO.begin()+150, std::plus< int >( ) );
+  bolt::cl::transform( ctl,
+                       dVectorA.begin()+70,
+                       dVectorA.begin()+135,
+                       dVectorB.begin()+85,
+                       dVectorO.begin()+150, bolt::cl::plus<int>( ) );
+
+  cmpArrays(hVectorO, dVectorO);
+
+
+}
+
+
+TEST(TransformStd, OffsetTestMultiCoreCPU)
+{
+  int length = 1024;
+  std::vector<cl_long> hVectorA( length ), hVectorB( length ), hVectorO( length ), hVectorDO( length );
+  std::fill( hVectorA.begin(), hVectorA.end(), 1024 );
+  std::fill( hVectorB.begin(), hVectorB.end(), 1024 );
+  std::fill( hVectorO.begin(), hVectorO.end(), 0 );
+  std::fill( hVectorDO.begin(), hVectorDO.end(), 0 );
+
+
+  bolt::cl::control ctl;
+  //ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+  std::transform( hVectorA.begin()+70, hVectorA.begin()+135, hVectorB.begin()+85, hVectorO.begin()+150, std::plus< cl_long >( ) );
+  bolt::cl::transform( ctl,
+                       hVectorA.begin()+70,
+                       hVectorA.begin()+135,
+                       hVectorB.begin()+85,
+                       hVectorDO.begin()+150, bolt::cl::plus<cl_long>( ) );
+
+  cmpArrays(hVectorO, hVectorDO);
+
+
+}
+
+
+
+//  Temporarily disabling this test because we have a known issue running on the CPU device with our 
+//  Bolt iterators
+TEST( Transformint , KcacheTest )
+{
+    //setup containers
+    unsigned int length = 1024;
+    std::vector< int > refInput( length );
+    std::vector< int > refOutput( length );
+    for( unsigned int i = 0; i < length ; i++ )
+    {
+      refInput[i] = i;
+      refInput[i] = i+1;
+      refOutput[i] = 0;
+    }
+
+    //Call reduce with GPU device because the default is a GPU device
+    bolt::cl::control ctrl = bolt::cl::control::getDefault();
+    bolt::cl::device_vector< int >gpuInput( refInput.begin(), refInput.end() );
+    bolt::cl::device_vector< int >gpuOutput( refOutput.begin(), refOutput.end() );
+
+    //Call reference code
+    std::transform( refInput.begin(), refInput.end(), refOutput.begin(), std::negate<int>());
+
+    bolt::cl::transform( ctrl, gpuInput.begin(), gpuInput.end(), gpuOutput.begin(), bolt::cl::negate<int>() );
+    cmpArrays( refOutput, gpuOutput );
+
+    //Call reduce with CPU device
+    ::cl::Context cpuContext(CL_DEVICE_TYPE_CPU);
+    std::vector< cl::Device > devices = cpuContext.getInfo< CL_CONTEXT_DEVICES >();
+    cl::Device selectedDevice;
+
+    for(std::vector< cl::Device >::iterator iter = devices.begin();iter < devices.end(); iter++)
+    {
+        if(iter->getInfo<CL_DEVICE_TYPE> ( ) == CL_DEVICE_TYPE_CPU)
+        {
+            selectedDevice = *iter;
+            break;
+        }
+    }
+    ::cl::CommandQueue myQueue( cpuContext, selectedDevice );
+    bolt::cl::control cpu_ctrl( myQueue );  // construct control structure from the queue.
+    bolt::cl::device_vector< int > cpuInput( refInput.begin( ), refInput.end( ), CL_MEM_READ_ONLY, cpu_ctrl );
+    bolt::cl::device_vector< int > cpuOutput( refOutput.begin( ), refOutput.end( ), CL_MEM_WRITE_ONLY, cpu_ctrl );
+
+    bolt::cl::transform( cpu_ctrl, cpuInput.begin(), cpuInput.end(), cpuOutput.begin() , bolt::cl::negate<int>());
+
+    cmpArrays( refOutput, cpuOutput );
+}
+
+TEST( DebuggingUShort, ushortbintransfrom)
+{
+
+#if LARGE_SIZE
+  int length = 1<<21;
+#else
+  int length = 1024;
+#endif
+  std::vector<unsigned short> hVectorA( length ),
+                   hVectorB( length ),
+                   hVectorO( length );
+  std::fill( hVectorA.begin(), hVectorA.end(), 54443 );
+  std::fill( hVectorB.begin(), hVectorB.end(), 1000 );
+  std::fill( hVectorO.begin(), hVectorO.end(), 0 );
+
+  bolt::cl::plus<unsigned short> pl;
+  bolt::cl::device_vector<unsigned short> dVectorA( hVectorA.begin(), hVectorA.end() ),
+                               dVectorB( hVectorB.begin(), hVectorB.end() ),
+                               dVectorO( hVectorO.begin(), hVectorO.end() );
+  std::transform( hVectorA.begin(),
+                  hVectorA.end(),
+                  hVectorB.begin(),
+                  hVectorO.begin(),
+                  std::plus< unsigned short >( ) );
+  bolt::cl::transform( dVectorA.begin(),
+    dVectorA.end(),
+    dVectorB.begin(),
+    dVectorO.begin(), pl );
+
+  cmpArrays(hVectorO, dVectorO);
+
+
+}
+
+TEST( IntegerTests64, cl_ulongintransfrom)
+{
+
+#if LARGE_SIZE
+  int length = 1<<21;
+#else
+  int length = 1024;
+#endif
+  std::vector<cl_ulong> hVectorA( length ),
+                   hVectorB( length ),
+                   hVectorO( length );
+  std::fill( hVectorA.begin(), hVectorA.end(), 54443 );
+  std::fill( hVectorB.begin(), hVectorB.end(), 1000 );
+  std::fill( hVectorO.begin(), hVectorO.end(), 0 );
+
+  bolt::cl::plus<cl_ulong> pl;
+  bolt::cl::device_vector<cl_ulong> dVectorA( hVectorA.begin(), hVectorA.end() ),
+                               dVectorB( hVectorB.begin(), hVectorB.end() ),
+                               dVectorO( hVectorO.begin(), hVectorO.end() );
+  std::transform( hVectorA.begin(),
+                  hVectorA.end(),
+                  hVectorB.begin(),
+                  hVectorO.begin(),
+                  std::plus< cl_ulong >( ) );
+  bolt::cl::transform( dVectorA.begin(),
+    dVectorA.end(),
+    dVectorB.begin(),
+    dVectorO.begin(), pl );
+
+  cmpArrays(hVectorO, dVectorO);
+
+
+}
+
 
 
 int main(int argc, char* argv[])
@@ -1393,14 +2606,14 @@ int main(int argc, char* argv[])
     //  Register our minidump generating logic
     bolt::miniDumpSingleton::enableMiniDumps( );
 
-    //	Define MEMORYREPORT on windows platfroms to enable debug memory heap checking
+    // Define MEMORYREPORT on windows platfroms to enable debug memory heap checking
 #if defined( MEMORYREPORT ) && defined( _WIN32 )
     TCHAR logPath[ MAX_PATH ];
     ::GetCurrentDirectory( MAX_PATH, logPath );
     ::_tcscat_s( logPath, _T( "\\MemoryReport.txt") );
 
-    //	We leak the handle to this file, on purpose, so that the ::_CrtSetReportFile() can output it's memory 
-    //	statistics on app shutdown
+    // We leak the handle to this file, on purpose, so that the ::_CrtSetReportFile() can output it's memory 
+    // statistics on app shutdown
     HANDLE hLogFile;
     hLogFile = ::CreateFile( logPath, GENERIC_WRITE, 
         FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL );
@@ -1417,11 +2630,11 @@ int main(int argc, char* argv[])
     tmp |= _CRTDBG_LEAK_CHECK_DF | _CRTDBG_ALLOC_MEM_DF | _CRTDBG_CHECK_ALWAYS_DF;
     ::_CrtSetDbgFlag( tmp );
 
-    //	By looking at the memory leak report that is generated by this debug heap, there is a number with 
-    //	{} brackets that indicates the incremental allocation number of that block.  If you wish to set
-    //	a breakpoint on that allocation number, put it in the _CrtSetBreakAlloc() call below, and the heap
-    //	will issue a bp on the request, allowing you to look at the call stack
-    //	::_CrtSetBreakAlloc( 1833 );
+    // By looking at the memory leak report that is generated by this debug heap, there is a number with 
+    // {} brackets that indicates the incremental allocation number of that block.  If you wish to set
+    // a breakpoint on that allocation number, put it in the _CrtSetBreakAlloc() call below, and the heap
+    // will issue a bp on the request, allowing you to look at the call stack
+    // ::_CrtSetBreakAlloc( 1833 );
 
 #endif /* MEMORYREPORT */
 
@@ -1484,12 +2697,13 @@ extern void readFromFileTest();
 
 // Test of a body operator which is constructed with a template argument
 // Do this using the low-level macros that require manually creating the typename
-// We can't use the ClCode trait because that requires a fully instantiated type, and we want to pass the code for a templated myplus<T>.
+// We can't use the ClCode trait because that requires a fully instantiated type, and 
+// we want to pass the code for a templated myplus<T>.
 std::string myplusStr = BOLT_CODE_STRING(
-	template<typename T>
+    template<typename T>
 struct myplus  
 {
-	T operator()(const T &lhs, const T &rhs) const {return lhs + rhs;}
+    T operator()(const T &lhs, const T &rhs) const {return lhs + rhs;}
 };
 );
 BOLT_CREATE_TYPENAME(myplus<float>);
@@ -1500,45 +2714,48 @@ BOLT_CREATE_TYPENAME(myplus<double>);
 
 void simpleTransform1(int aSize)
 {
-	std::string fName = __FUNCTION__ ;
-	fName += ":";
+    std::string fName = __FUNCTION__ ;
+    fName += ":";
 
-	std::vector<float> A(aSize), B(aSize);
-	for (int i=0; i<aSize; i++) {
-		A[i] = float(i);
-		B[i] = 10000.0f + (float)i;
-	}
+    std::vector<float> A(aSize), B(aSize);
+    for (int i=0; i<aSize; i++) {
+        A[i] = float(i);
+        B[i] = 10000.0f + (float)i;
+    }
 
 
-	{
-		// Test1: Test case where a user creates a templatized functor "myplus<float>" and passes that to customize the transformation:
-		std::vector<float> Z0(aSize), Z1(aSize);
-		std::transform(A.begin(), A.end(), B.begin(), Z0.begin(), myplus<float>());
+    {
+        // Test1: Test case where a user creates a templatized functor "myplus<float>" and passes that
+        // to customize the transformation:
 
-		bolt::cl::transform(A.begin(), A.end(), B.begin(), Z1.begin(), myplus<float>(), myplusStr);
-		checkResults(fName + "myplus<float>", Z0.begin(), Z0.end(), Z1.begin());
-	}
+        std::vector<float> Z0(aSize), Z1(aSize);
+        std::transform(A.begin(), A.end(), B.begin(), Z0.begin(), myplus<float>());
 
-	{
-		//Test2:  Use a  templatized function from the provided bolt::cl functional header.  "bolt::cl::plus<float>"
-		std::vector<float> Z0(aSize), Z1(aSize);
-		std::transform(A.begin(), A.end(), B.begin(), Z0.begin(), bolt::cl::plus<float>());
+        bolt::cl::transform(A.begin(), A.end(), B.begin(), Z1.begin(), myplus<float>(), myplusStr);
+        checkResults(fName + "myplus<float>", Z0.begin(), Z0.end(), Z1.begin());
+    }
 
-		bolt::cl::transform(A.begin(), A.end(), B.begin(), Z1.begin(), bolt::cl::plus<float>());  
-		checkResults(fName + "bolt::cl::plus<float>", Z0.begin(), Z0.end(), Z1.begin());
-	}
+    {
+        //Test2:  Use a  templatized function from the provided bolt::cl functional header.  "bolt::cl::plus<float>"   
+        std::vector<float> Z0(aSize), Z1(aSize);
+        std::transform(A.begin(), A.end(), B.begin(), Z0.begin(), bolt::cl::plus<float>());
+
+        bolt::cl::transform(A.begin(), A.end(), B.begin(), Z1.begin(), bolt::cl::plus<float>());  
+        checkResults(fName + "bolt::cl::plus<float>", Z0.begin(), Z0.end(), Z1.begin());
+    }
 
 
 #if 0
-	{
-		// Test4 : try use of a simple binary function "op_sum" created by user.
-		// This doesn't work - OpenCL generates an error that "op_sum isn't a type name.  Maybe need to create an function signature rather than "op_sum".
-		std::vector<float> Z0(aSize), Z1(aSize);
-		std::transform(A.begin(), A.end(), B.begin(), Z0.begin(), op_sum);
+    {
+        // Test4 : try use of a simple binary function "op_sum" created by user.
+        // This doesn't work - OpenCL generates an error that "op_sum isn't a type name.  Maybe need to create an
+        // function signature rather than "op_sum".
+        std::vector<float> Z0(aSize), Z1(aSize);
+        std::transform(A.begin(), A.end(), B.begin(), Z0.begin(), op_sum);
 
-		bolt::cl::transform(A.begin(), A.end(), B.begin(), Z1.begin(), op_sum, boltCode1, "op_sum");
-		checkResults(fName + "Inline Binary Function", Z0.begin(), Z0.end(), Z1.begin());
-	}
+        bolt::cl::transform(A.begin(), A.end(), B.begin(), Z1.begin(), op_sum, boltCode1, "op_sum");
+        checkResults(fName + "Inline Binary Function", Z0.begin(), Z0.end(), Z1.begin());
+    }
 #endif
 
 
@@ -1554,13 +2771,13 @@ void simpleTransform1(int aSize)
 BOLT_FUNCTOR(SaxpyFunctor,
 struct SaxpyFunctor
 {
-	float _a;
-	SaxpyFunctor(float a) : _a(a) {};
+    float _a;
+    SaxpyFunctor(float a) : _a(a) {};
 
-	float operator() (const float &xx, const float &yy) 
-	{
-		return _a * xx + yy;
-	};
+    float operator() (const float &xx, const float &yy) 
+    {
+        return _a * xx + yy;
+    };
 };
 );  // end BOLT_FUNCTOR
 
@@ -1568,155 +2785,157 @@ struct SaxpyFunctor
 
 void transformSaxpy(int aSize)
 {
-	std::string fName = __FUNCTION__ ;
-	fName += ":";
-	std::cout << fName << "(" << aSize << ")" << std::endl;
+    std::string fName = __FUNCTION__ ;
+    fName += ":";
+    std::cout << fName << "(" << aSize << ")" << std::endl;
 
-	std::vector<float> A(aSize), B(aSize), Z1(aSize), Z0(aSize);
+    std::vector<float> A(aSize), B(aSize), Z1(aSize), Z0(aSize);
 
-	for (int i=0; i<aSize; i++) {
-		A[i] = float(i);
-		B[i] = 10000.0f + (float)i;
-	}
+    for (int i=0; i<aSize; i++) {
+        A[i] = float(i);
+        B[i] = 10000.0f + (float)i;
+    }
 
-	SaxpyFunctor sb(10.0);
+    SaxpyFunctor sb(10.0);
 
 
-	std::transform(A.begin(), A.end(), B.begin(), Z0.begin(), sb);
-	bolt::cl::transform(A.begin(), A.end(), B.begin(), Z1.begin(), sb);  
+    std::transform(A.begin(), A.end(), B.begin(), Z0.begin(), sb);
+    bolt::cl::transform(A.begin(), A.end(), B.begin(), Z1.begin(), sb);  
 
-	checkResults(fName, Z0.begin(), Z0.end(), Z1.begin());
+    checkResults(fName, Z0.begin(), Z0.end(), Z1.begin());
 
 };
 
 void transformSaxpyDeviceVector(int aSize)
 {
-	std::string fName = __FUNCTION__ ;
-	fName += ":";
-	std::cout << fName << "(" << aSize << ")" << std::endl;
+    std::string fName = __FUNCTION__ ;
+    fName += ":";
+    std::cout << fName << "(" << aSize << ")" << std::endl;
 
-	std::vector<float> A(aSize), B(aSize), Z0(aSize);
+    std::vector<float> A(aSize), B(aSize), Z0(aSize);
     bolt::cl::device_vector< float > dvA(aSize), dvB(aSize), dvZ(aSize);
 
-	for (int i=0; i<aSize; i++) {
-		A[i] = float(i);
-		B[i] = 10000.0f + (float)i;
-		dvA[i] = float(i);
-		dvB[i] = 10000.0f + (float)i;
-	}
+    for (int i=0; i<aSize; i++) {
+        A[i] = float(i);
+        B[i] = 10000.0f + (float)i;
+        dvA[i] = float(i);
+        dvB[i] = 10000.0f + (float)i;
+    }
 
-	SaxpyFunctor sb(10.0);
+    SaxpyFunctor sb(10.0);
 
-	std::transform(A.begin(), A.end(), B.begin(), Z0.begin(), sb);
-	bolt::cl::transform(dvA.begin(), dvA.end(), dvB.begin(), dvZ.begin(), sb);
+    std::transform(A.begin(), A.end(), B.begin(), Z0.begin(), sb);
+    bolt::cl::transform(dvA.begin(), dvA.end(), dvB.begin(), dvZ.begin(), sb);
 
-	checkResults(fName, Z0.begin(), Z0.end(), dvZ.begin());
+    checkResults(fName, Z0.begin(), Z0.end(), dvZ.begin());
 
 };
 
 
-void singleThreadReduction(const std::vector<float> &A, const std::vector<float> &B, std::vector<float> *Zbolt, int aSize) 
+void singleThreadReduction(const std::vector<float> &A, const std::vector<float> &B, std::vector<float> *Zbolt, 
+                           int aSize) 
 {
-	bolt::cl::transform(A.begin(), A.end(), B.begin(), Zbolt->begin(), bolt::cl::multiplies<float>());
+    bolt::cl::transform(A.begin(), A.end(), B.begin(), Zbolt->begin(), bolt::cl::multiplies<float>());
 };
 
 
 void multiThreadReductions(int aSize, int iters)
 {
-	std::string fName = __FUNCTION__  ;
-	fName += ":";
+    std::string fName = __FUNCTION__  ;
+    fName += ":";
 
-	std::vector<float> A(aSize), B(aSize);
-	for (int i=0; i<aSize; i++) {
-		A[i] = float(i);
-		B[i] = 10000.0f + (float)i;
-	}
-
-
-	{
-		std::vector<float> Z0(aSize), Z1(aSize);
-		std::transform(A.begin(), A.end(), B.begin(), Z0.begin(), bolt::cl::minus<float>()); // golden answer:
-
-		// show we only compile it once:
-		for (int i=0; i<iters; i++) {
-			bolt::cl::transform(A.begin(), A.end(), B.begin(), Z1.begin(), bolt::cl::minus<float>());
-			checkResults(fName + "MultiIteration - bolt::cl::minus<float>", Z0.begin(), Z0.end(), Z1.begin());
-		};
-	}
-
-	// Now try multiple threads:
-	// FIXME - multi-thread doesn't work until we fix up the kernel to be per-thread.
-	if (0) {
-		static const int threadCount = 4;
-		std::vector<float> Z0(aSize);
-		std::transform(A.begin(), A.end(), B.begin(), Z0.begin(), bolt::cl::multiplies<float>()); // golden answer:
-
-		std::vector<float> ZBolt [threadCount];
-		for (int i=0; i< threadCount; i++){
-			ZBolt[i].resize(aSize);
-		};
-
-		boost::thread t0(singleThreadReduction, A, B, &ZBolt[0], aSize);
-		boost::thread t1(singleThreadReduction,  A, B, &ZBolt[1], aSize);
-		boost::thread t2(singleThreadReduction,  A, B, &ZBolt[2], aSize);
-		boost::thread t3(singleThreadReduction, A, B,  &ZBolt[3], aSize);
+    std::vector<float> A(aSize), B(aSize);
+    for (int i=0; i<aSize; i++) {
+        A[i] = float(i);
+        B[i] = 10000.0f + (float)i;
+    }
 
 
-		t0.join();
-		t1.join();
-		t2.join();
-		t3.join();
+    {
+        std::vector<float> Z0(aSize), Z1(aSize);
+        std::transform(A.begin(), A.end(), B.begin(), Z0.begin(), bolt::cl::minus<float>()); // golden answer:
 
-		for (int i=0; i< threadCount; i++){
-			checkResults(fName + "MultiThread", Z0.begin(), Z0.end(), ZBolt[i].begin());
-		};
-	}
+        // show we only compile it once:
+        for (int i=0; i<iters; i++) {
+            bolt::cl::transform(A.begin(), A.end(), B.begin(), Z1.begin(), bolt::cl::minus<float>());
+            checkResults(fName + "MultiIteration - bolt::cl::minus<float>", Z0.begin(), Z0.end(), Z1.begin());
+        };
+    }
+
+    // Now try multiple threads:
+    // FIXME - multi-thread doesn't work until we fix up the kernel to be per-thread.
+    if (0) {
+        static const int threadCount = 4;
+        std::vector<float> Z0(aSize);
+        std::transform(A.begin(), A.end(), B.begin(), Z0.begin(), bolt::cl::multiplies<float>()); // golden answer:
+
+        std::vector<float> ZBolt [threadCount];
+        for (int i=0; i< threadCount; i++){
+            ZBolt[i].resize(aSize);
+        };
+
+        boost::thread t0(singleThreadReduction, A, B, &ZBolt[0], aSize);
+        boost::thread t1(singleThreadReduction,  A, B, &ZBolt[1], aSize);
+        boost::thread t2(singleThreadReduction,  A, B, &ZBolt[2], aSize);
+        boost::thread t3(singleThreadReduction, A, B,  &ZBolt[3], aSize);
+
+
+        t0.join();
+        t1.join();
+        t2.join();
+        t3.join();
+
+        for (int i=0; i< threadCount; i++){
+            checkResults(fName + "MultiThread", Z0.begin(), Z0.end(), ZBolt[i].begin());
+        };
+    }
 };
 
 
 //void oclTransform(int aSize)
 //{
-//	std::vector<float> A(aSize), B(aSize);
-//	for (int i=0; i<aSize; i++) {
-//		A[i] = float(i);
-//		B[i] = 1000.0f + (float)i;
-//	}
-//	std::vector<float> Z0(aSize);
-//	std::transform(A.begin(), A.end(), B.begin(), Z0.begin(), bolt::cl::plus<float>()); // golden answer:
+// std::vector<float> A(aSize), B(aSize);
+// for (int i=0; i<aSize; i++) {
+//   A[i] = float(i);
+//   B[i] = 1000.0f + (float)i;
+// }
+// std::vector<float> Z0(aSize);
+// std::transform(A.begin(), A.end(), B.begin(), Z0.begin(), bolt::cl::plus<float>()); // golden answer:              
 //
-//	size_t bufSize = aSize * sizeof(float);
-//	cl::Buffer bufferA(CL_MEM_READ_ONLY|CL_MEM_USE_HOST_PTR, bufSize, A.data());
-//	//cl::Buffer bufferA(begin(A), end(A), true);
-//	cl::Buffer bufferB(CL_MEM_READ_ONLY|CL_MEM_USE_HOST_PTR, bufSize, B.data());
-//	cl::Buffer bufferZ(CL_MEM_WRITE_ONLY, sizeof(float) * aSize);
+// size_t bufSize = aSize * sizeof(float);
+// cl::Buffer bufferA(CL_MEM_READ_ONLY|CL_MEM_USE_HOST_PTR, bufSize, A.data());
+// //cl::Buffer bufferA(begin(A), end(A), true);
+// cl::Buffer bufferB(CL_MEM_READ_ONLY|CL_MEM_USE_HOST_PTR, bufSize, B.data());
+// cl::Buffer bufferZ(CL_MEM_WRITE_ONLY, sizeof(float) * aSize);
 //
-//	bolt::cl::transform<float>(bufferA, bufferB, bufferZ, bolt::cl::plus<float>());
+// bolt::cl::transform<float>(bufferA, bufferB, bufferZ, bolt::cl::plus<float>());
 //
-//	float * zMapped = static_cast<float*> (cl::CommandQueue::getDefault().enqueueMapBuffer(bufferZ, true, CL_MAP_READ | CL_MAP_WRITE, 0/*offset*/, bufSize));
+// float * zMapped = static_cast<float*> (cl::CommandQueue::getDefault().enqueueMapBuffer(bufferZ, true,              
+//                                         CL_MAP_READ | CL_MAP_WRITE, 0/*offset*/, bufSize)); 
 //
-//	std::string fName = __FUNCTION__ ;
-//	fName += ":";
+// std::string fName = __FUNCTION__ ;
+// fName += ":";
 //
-//	checkResults(fName + "oclBuffers", Z0.begin(), Z0.end(), zMapped);
+// checkResults(fName + "oclBuffers", Z0.begin(), Z0.end(), zMapped);
 //};
 
 
 
 int _tmain(int argc, _TCHAR* argv[])
 {
-	simpleTransform1(256); 
-	simpleTransform1(254); 
+    simpleTransform1(256); 
+    simpleTransform1(254); 
     simpleTransform1(23); 
-	transformSaxpy(256);
-	transformSaxpyDeviceVector(256);
-	transformSaxpy(1024);
-	transformSaxpyDeviceVector( 1024 );
+    transformSaxpy(256);
+    transformSaxpyDeviceVector(256);
+    transformSaxpy(1024);
+    transformSaxpyDeviceVector( 1024 );
 
-	//multiThreadReductions(1024, 10);
+    //multiThreadReductions(1024, 10);
 
-	//oclTransform(1024);
+    //oclTransform(1024);
     getchar();
-	return 0;
+    return 0;
 }
 
 #endif

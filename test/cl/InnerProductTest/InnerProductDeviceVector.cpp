@@ -35,5 +35,6 @@ void testDeviceVector()
 
     int hSum = std::inner_product(hA.begin(), hA.end(), hB.begin(), 1);
 
-	int sum = bolt::cl::inner_product(dA.begin(), dA.end(), dB.begin(), 1,bolt::cl::plus<int>(),bolt::cl::multiplies<int>());
+	int sum = bolt::cl::inner_product(  dA.begin(), dA.end(),
+                                        dB.begin(), 1, bolt::cl::plus<int>(), bolt::cl::multiplies<int>()  );
 };

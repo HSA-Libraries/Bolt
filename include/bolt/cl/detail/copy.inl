@@ -1,22 +1,22 @@
-/***************************************************************************                                                                                     
-*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
-*                                                                                    
-*   Licensed under the Apache License, Version 2.0 (the "License");   
-*   you may not use this file except in compliance with the License.                 
-*   You may obtain a copy of the License at                                          
-*                                                                                    
-*       http://www.apache.org/licenses/LICENSE-2.0                      
-*                                                                                    
-*   Unless required by applicable law or agreed to in writing, software              
-*   distributed under the License is distributed on an "AS IS" BASIS,              
-*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.         
-*   See the License for the specific language governing permissions and              
-*   limitations under the License.                                                   
+/***************************************************************************
+*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.
+*
+*   Licensed under the Apache License, Version 2.0 (the "License");
+*   you may not use this file except in compliance with the License.
+*   You may obtain a copy of the License at
+*
+*       http://www.apache.org/licenses/LICENSE-2.0
+*
+*   Unless required by applicable law or agreed to in writing, software
+*   distributed under the License is distributed on an "AS IS" BASIS,
+*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+*   See the License for the specific language governing permissions and
+*   limitations under the License.
 
-***************************************************************************/                                                                                     
+***************************************************************************/
 
-#if !defined( COPY_INL )
-#define COPY_INL
+#if !defined( BOLT_CL_COPY_INL )
+#define BOLT_CL_COPY_INL
 #pragma once
 
 #ifndef BURST_SIZE
@@ -25,7 +25,7 @@
 
 #include <boost/thread/once.hpp>
 #include <boost/bind.hpp>
-#include <type_traits> 
+#include <type_traits>
 
 #include "bolt/cl/bolt.h"
 
@@ -75,39 +75,41 @@ namespace bolt {
 namespace cl {
 
 // user control
-template<typename InputIterator, typename OutputIterator> 
-OutputIterator copy(const bolt::cl::control &ctrl,  InputIterator first, InputIterator last, OutputIterator result, 
+template<typename InputIterator, typename OutputIterator>
+OutputIterator copy(const bolt::cl::control &ctrl,  InputIterator first, InputIterator last, OutputIterator result,
             const std::string& user_code)
 {
     int n = static_cast<int>( std::distance( first, last ) );
-    return detail::copy_detect_random_access( ctrl, first, n, result, user_code, std::iterator_traits< InputIterator >::iterator_category( ) );
+    return detail::copy_detect_random_access( ctrl, first, n, result, user_code,
+        std::iterator_traits< InputIterator >::iterator_category( ) );
 }
 
 // default control
-template<typename InputIterator, typename OutputIterator> 
-OutputIterator copy( InputIterator first, InputIterator last, OutputIterator result, 
+template<typename InputIterator, typename OutputIterator>
+OutputIterator copy( InputIterator first, InputIterator last, OutputIterator result,
             const std::string& user_code)
 {
     int n = static_cast<int>( std::distance( first, last ) );
-            return detail::copy_detect_random_access( control::getDefault(), first, n, result, user_code, 
+            return detail::copy_detect_random_access( control::getDefault(), first, n, result, user_code,
                 std::iterator_traits< InputIterator >::iterator_category( ) );
 }
 
 // default control
-template<typename InputIterator, typename Size, typename OutputIterator> 
-OutputIterator copy_n(InputIterator first, Size n, OutputIterator result, 
+template<typename InputIterator, typename Size, typename OutputIterator>
+OutputIterator copy_n(InputIterator first, Size n, OutputIterator result,
             const std::string& user_code)
 {
-            return detail::copy_detect_random_access( control::getDefault(), first, n, result, user_code, 
+            return detail::copy_detect_random_access( control::getDefault(), first, n, result, user_code,
                 std::iterator_traits< InputIterator >::iterator_category( ) );
 }
 
 // user control
-template<typename InputIterator, typename Size, typename OutputIterator> 
-OutputIterator copy_n(const bolt::cl::control &ctrl, InputIterator first, Size n, OutputIterator result, 
+template<typename InputIterator, typename Size, typename OutputIterator>
+OutputIterator copy_n(const bolt::cl::control &ctrl, InputIterator first, Size n, OutputIterator result,
             const std::string& user_code)
 {
-    return detail::copy_detect_random_access( ctrl, first, n, result, user_code, std::iterator_traits< InputIterator >::iterator_category( ) );
+    return detail::copy_detect_random_access( ctrl, first, n, result, user_code,
+        std::iterator_traits< InputIterator >::iterator_category( ) );
 }
 
 }//end of cl namespace
@@ -118,11 +120,11 @@ namespace bolt {
 namespace cl {
 namespace detail {
 
-enum copyTypeName { copy_iType, copy_oType, end_copy };
+enum copyTypeName { copy_iType, copy_DVInputIterator, copy_oType, copy_DVOutputIterator, end_copy };
 
-/***********************************************************************************************************************
+/**********************************************************************************************************************
  * Kernel Template Specializer
- **********************************************************************************************************************/
+ *********************************************************************************************************************/
 class Copy_KernelTemplateSpecializer : public KernelTemplateSpecializer
 {
     public:
@@ -138,16 +140,16 @@ class Copy_KernelTemplateSpecializer : public KernelTemplateSpecializer
 
     const ::std::string operator() ( const ::std::vector<::std::string>& typeNames ) const
     {
-        const std::string templateSpecializationString = 
-            "// Dynamic specialization of generic template definition, using user supplied types\n"
+        const std::string templateSpecializationString =
+             "// Dynamic specialization of generic template definition, using user supplied types\n"
             "template __attribute__((mangled_name(" + name(0) + "Instantiated)))\n"
             "__attribute__((reqd_work_group_size(256,1,1)))\n"
             "__kernel void " + name(0) + "(\n"
             "global " + typeNames[copy_iType] + " * restrict src,\n"
+             + typeNames[copy_DVInputIterator] + " input_iter,\n"
             "global " + typeNames[copy_oType] + " * restrict dst,\n"
-            "const uint numElements,\n"
-            "const uint srcOffset,\n"
-            "const uint dstOffset\n"
+             + typeNames[copy_DVOutputIterator] + " output_iter,\n"
+            "const uint numElements"
             ");\n\n"
 
             "// Dynamic specialization of generic template definition, using user supplied types\n"
@@ -177,127 +179,393 @@ class Copy_KernelTemplateSpecializer : public KernelTemplateSpecializer
             "const uint numElements\n"
             ");\n\n"
             ;
-    
+
         return templateSpecializationString;
     }
 };
 
 // Wrapper that uses default control class, iterator interface
-template<typename InputIterator, typename Size, typename OutputIterator> 
-OutputIterator copy_detect_random_access( const bolt::cl::control& ctrl, const InputIterator& first, const Size& n, 
+template<typename InputIterator, typename Size, typename OutputIterator>
+OutputIterator copy_detect_random_access( const bolt::cl::control& ctrl, const InputIterator& first, const Size& n,
                 const OutputIterator& result, const std::string& user_code, std::input_iterator_tag )
 {
     static_assert( false, "Bolt only supports random access iterator types" );
     return NULL;
 };
 
-template<typename InputIterator, typename Size, typename OutputIterator > 
-OutputIterator copy_detect_random_access( const bolt::cl::control& ctrl, const InputIterator& first, const Size& n, 
+template<typename InputIterator, typename Size, typename OutputIterator >
+OutputIterator copy_detect_random_access( const bolt::cl::control& ctrl, const InputIterator& first, const Size& n,
                 const OutputIterator& result, const std::string& user_code, std::random_access_iterator_tag )
 {
+    if (n < 0)
+    {
+        std::cout<<"\n Number of elements to copy cannot be negative! "<< std::endl;
+    }
     if (n > 0)
     {
-        copy_pick_iterator( ctrl, first, n, result, user_code, 
+        copy_pick_iterator( ctrl, first, n, result, user_code,
             std::iterator_traits< InputIterator >::iterator_category( ),
             std::iterator_traits< OutputIterator >::iterator_category( ) );
     }
     return (result+n);
 };
 
+template<typename InputIterator, typename Size, typename OutputIterator >
+OutputIterator copy_detect_random_access( const bolt::cl::control& ctrl, const InputIterator& first, const Size& n,
+                const OutputIterator& result, const std::string& user_code, bolt::cl::device_vector_tag )
+{
+    if (n < 0)
+    {
+        std::cout<<"\n Number of elements to copy cannot be negative! "<< std::endl;
+    }
+    if (n > 0)
+    {
+        copy_pick_iterator( ctrl, first, n, result, user_code,
+            std::iterator_traits< InputIterator >::iterator_category( ),
+            std::iterator_traits< OutputIterator >::iterator_category( ) );
+    }
+    return (result+n);
+};
 /*! \brief This template function overload is used to seperate device_vector iterators from all other iterators
-                \detail This template is called by the non-detail versions of inclusive_scan, it already assumes random access
-             *  iterators.  This overload is called strictly for non-device_vector iterators
+                \detail This template is called by the non-detail versions of inclusive_scan, it already assumes
+             *  random access iterators.  This overload is called strictly for non-device_vector iterators
             */
-template<typename InputIterator, typename Size, typename OutputIterator> 
-void copy_pick_iterator(const bolt::cl::control &ctrl,  const InputIterator& first, const Size& n, 
+template<typename InputIterator, typename Size, typename OutputIterator>
+void copy_pick_iterator(const bolt::cl::control &ctrl,  const InputIterator& first, const Size& n,
         const OutputIterator& result, const std::string& user_code, std::random_access_iterator_tag,
         std::random_access_iterator_tag )
 {
+
     typedef std::iterator_traits<InputIterator>::value_type iType;
     typedef std::iterator_traits<OutputIterator>::value_type oType;
 
-    // Use host pointers memory since these arrays are only read once - no benefit to copying.
+   
+     bolt::cl::control::e_RunMode runMode = ctrl.getForceRunMode( );
 
-    //// Map the input iterator to a device_vector
-    //device_vector< iType >  dvInput( first, n, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, true, ctrl );
+     if( runMode == bolt::cl::control::Automatic )
+     {
+                runMode = ctrl.getDefaultPathToRun( );
+     }
 
-    //            // Map the output iterator to a device_vector
-    //device_vector< oType > dvOutput( result, n, CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY, false, ctrl );
-
-    //copy_enqueue( ctrl, dvInput.begin( ), n, dvOutput.begin( ), user_code );
-
-    //// This should immediately map/unmap the buffer
-    //dvOutput.data( );
-
-    // A host 2 host copy operation, just fallback on the optimized std:: implementation
-    std::copy_n( first, n, result );
+     if( runMode == bolt::cl::control::SerialCpu )
+     {
+         #if defined( _WIN32 )
+           std::copy_n( first, n, stdext::checked_array_iterator<oType*>(&(*result), n ) );
+         #else
+           std::copy_n( first, n, result );
+         #endif
+     }
+     else if( runMode == bolt::cl::control::MultiCoreCpu )
+     {
+        #ifdef ENABLE_TBB
+          #if defined( _WIN32 )
+            //TODO : The MultiCoreCpu version of Copy is not Implemented yet...
+            std::copy_n( first, n, stdext::checked_array_iterator<oType*>(&(*result), n ) );
+          #else
+            std::copy_n( first, n, result );
+          #endif
+        #else
+            throw std::exception( "The MultiCoreCpu version of Copy is not enabled to be built." );
+        #endif
+     }
+     else
+     {
+        // A host 2 host copy operation, just fallback on the optimized std:: implementation
+        #if defined( _WIN32 )
+          std::copy_n( first, n, stdext::checked_array_iterator<oType*>(&(*result), n ) );
+        #else
+          std::copy_n( first, n, result ); 
+        #endif
+     }
 }
 
 /*! \brief This template function overload is used to seperate device_vector iterators from all other iterators
-                \detail This template is called by the non-detail versions of inclusive_scan, it already assumes random access
-             *  iterators.  This overload is called strictly for non-device_vector iterators
+                \detail This template is called by the non-detail versions of inclusive_scan, it already assumes
+             *   random access iterators.  This overload is called strictly for non-device_vector iterators
             */
-template<typename InputIterator, typename Size, typename OutputIterator> 
-void copy_pick_iterator(const bolt::cl::control &ctrl,  const InputIterator& first, const Size& n, 
+template<typename InputIterator, typename Size, typename OutputIterator>
+void copy_pick_iterator(const bolt::cl::control &ctrl,  const InputIterator& first, const Size& n,
         const OutputIterator& result, const std::string& user_code, bolt::cl::fancy_iterator_tag,
         std::random_access_iterator_tag )
 {
+
     typedef std::iterator_traits<InputIterator>::value_type iType;
     typedef std::iterator_traits<OutputIterator>::value_type oType;
 
-    // Use host pointers memory since these arrays are only read once - no benefit to copying.
+     bolt::cl::control::e_RunMode runMode = ctrl.getForceRunMode( );
 
-    // Map the output iterator to a device_vector
-    device_vector< oType > dvOutput( result, n, CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY, false, ctrl );
+     if( runMode == bolt::cl::control::Automatic )
+     {
+         runMode = ctrl.getDefaultPathToRun( );
+     }
 
-    copy_enqueue( ctrl, first, n, dvOutput.begin( ), user_code );
+     if( runMode == bolt::cl::control::SerialCpu )
+     {
+          #if defined( _WIN32 )
+           std::copy_n( first, n, stdext::checked_array_iterator<oType*>(&(*result), n ) );
+          #else
+           std::copy_n( first, n, result );
+          #endif
+     }
+     else if( runMode == bolt::cl::control::MultiCoreCpu )
+     {
 
-    // This should immediately map/unmap the buffer
-    dvOutput.data( );
+         #ifdef ENABLE_TBB
+               //TODO : The MultiCoreCpu version of Copy is not Implemented yet...
+               #if defined( _WIN32 )
+                  std::copy_n( first, n, stdext::checked_array_iterator<oType*>(&(*result), n ) );
+               #else
+                  std::copy_n( first, n, result );
+               #endif
+         #else
+               throw std::exception( "The MultiCoreCpu version of Copy is not enabled to be built." );
+         #endif
+     }
+     else
+     {
+        // Use host pointers memory since these arrays are only read once - no benefit to copying.
+        // Map the output iterator to a device_vector
+        device_vector< oType > dvOutput( result, n, CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY, false, ctrl );
+        copy_enqueue( ctrl, first, n, dvOutput.begin( ), user_code );
+        dvOutput.data();
+     }
 }
 
 // This template is called by the non-detail versions of inclusive_scan, it already assumes random access iterators
 // This is called strictly for iterators that are derived from device_vector< T >::iterator
-template<typename DVInputIterator, typename Size, typename DVOutputIterator> 
+template<typename DVInputIterator, typename Size, typename DVOutputIterator>
 void copy_pick_iterator(const bolt::cl::control &ctrl,  const DVInputIterator& first, const Size& n,
     const DVOutputIterator& result, const std::string& user_code, bolt::cl::device_vector_tag,
     bolt::cl::device_vector_tag )
 {
-    copy_enqueue( ctrl, first, n, result, user_code );
+    typedef std::iterator_traits<DVInputIterator>::value_type iType;
+    typedef std::iterator_traits<DVOutputIterator>::value_type oType;
+     bolt::cl::control::e_RunMode runMode = ctrl.getForceRunMode( );
+
+     if( runMode == bolt::cl::control::Automatic )
+     {
+               runMode = ctrl.getDefaultPathToRun( );
+     }
+
+     if( runMode == bolt::cl::control::SerialCpu )
+     {
+            bolt::cl::device_vector< iType >::pointer copySrc =  first.getContainer( ).data( );
+            bolt::cl::device_vector< oType >::pointer copyDest =  result.getContainer( ).data( );
+#if defined( _WIN32 )
+            std::copy_n( &copySrc[first.m_Index], n, stdext::make_checked_array_iterator( &copyDest[result.m_Index], n) );
+#else
+            std::copy_n( &copySrc[first.m_Index], n, &copyDest[result.m_Index] );
+#endif
+            return;
+     }
+     else if( runMode == bolt::cl::control::MultiCoreCpu )
+     {
+
+         #ifdef ENABLE_TBB
+            //TODO : The MultiCoreCpu version of Copy is not Implemented yet...
+            bolt::cl::device_vector< iType >::pointer copySrc =  first.getContainer( ).data( );
+            bolt::cl::device_vector< oType >::pointer copyDest =  result.getContainer( ).data( );
+#if defined( _WIN32 )
+            std::copy_n( &copySrc[first.m_Index], n, stdext::make_checked_array_iterator( &copyDest[result.m_Index], n) );
+#else
+            std::copy_n( &copySrc[first.m_Index], n, &copyDest[result.m_Index] );
+#endif
+            return;
+         #else
+                throw std::exception( "The MultiCoreCpu version of Copy is not enabled to be built." );
+         #endif
+     }
+     else
+     {
+         copy_enqueue( ctrl, first, n, result, user_code );
+     }
 }
 
 // This template is called by the non-detail versions of inclusive_scan, it already assumes random access iterators
 // This is called strictly for iterators that are derived from device_vector< T >::iterator
-template<typename DVInputIterator, typename Size, typename DVOutputIterator> 
+template<typename DVInputIterator, typename Size, typename DVOutputIterator>
+void copy_pick_iterator(const bolt::cl::control &ctrl,  const DVInputIterator& first, const Size& n,
+    const DVOutputIterator& result, const std::string& user_code, std::random_access_iterator_tag,
+    bolt::cl::device_vector_tag )
+{
+    typedef std::iterator_traits<DVInputIterator>::value_type iType;
+    typedef std::iterator_traits<DVOutputIterator>::value_type oType;
+     bolt::cl::control::e_RunMode runMode = ctrl.getForceRunMode( );
+
+     if( runMode == bolt::cl::control::Automatic )
+     {
+               runMode = ctrl.getDefaultPathToRun( );
+     }
+
+     if( runMode == bolt::cl::control::SerialCpu )
+     {
+            bolt::cl::device_vector< oType >::pointer copyDest =  result.getContainer( ).data( );
+#if defined( _WIN32 )
+            std::copy_n( first, n, stdext::make_checked_array_iterator( &copyDest[result.m_Index], n) );
+#else
+            std::copy_n( first, n, &copyDest[result.m_Index] );
+#endif
+            return;
+     }
+     else if( runMode == bolt::cl::control::MultiCoreCpu )
+     {
+
+         #ifdef ENABLE_TBB
+            //TODO : The MultiCoreCpu version of Copy is not Implemented yet...
+            bolt::cl::device_vector< oType >::pointer copyDest =  result.getContainer( ).data( );
+#if defined( _WIN32 )
+            std::copy_n( first, n, stdext::make_checked_array_iterator( &copyDest[result.m_Index], n) );
+#else
+            std::copy_n( first, n, &copyDest[result.m_Index] );
+#endif
+            return;
+         #else
+                throw std::exception( "The MultiCoreCpu version of Copy is not enabled to be built." );
+         #endif
+     }
+     else
+     {
+        device_vector< iType > dvInput( first, n, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, true, ctrl );
+        //Now call the actual cl algorithm
+        copy_enqueue( ctrl, dvInput.begin(), n, result, user_code );
+        //Map the buffer back to the host
+        dvInput.data( );
+     }
+}
+
+// This template is called by the non-detail versions of inclusive_scan, it already assumes random access iterators
+// This is called strictly for iterators that are derived from device_vector< T >::iterator
+template<typename DVInputIterator, typename Size, typename DVOutputIterator>
+void copy_pick_iterator(const bolt::cl::control &ctrl,  const DVInputIterator& first, const Size& n,
+    const DVOutputIterator& result, const std::string& user_code, bolt::cl::device_vector_tag,
+    std::random_access_iterator_tag)
+{
+    typedef std::iterator_traits<DVInputIterator>::value_type iType;
+    typedef std::iterator_traits<DVOutputIterator>::value_type oType;
+     bolt::cl::control::e_RunMode runMode = ctrl.getForceRunMode( );
+
+     if( runMode == bolt::cl::control::Automatic )
+     {
+               runMode = ctrl.getDefaultPathToRun( );
+     }
+
+     if( runMode == bolt::cl::control::SerialCpu )
+     {
+         #if defined( _WIN32 )
+           std::copy_n( first, n, stdext::checked_array_iterator<oType*>(&(*result), n ) );
+         #else
+           std::copy_n( first, n, result );
+         #endif
+           return;
+     }
+     else if( runMode == bolt::cl::control::MultiCoreCpu )
+     {
+
+         #ifdef ENABLE_TBB
+            //TODO : The MultiCoreCpu version of Copy is not Implemented yet...
+           #if defined( _WIN32 )
+             std::copy_n( first, n, stdext::checked_array_iterator<oType*>(&(*result), n ) );
+           #else
+             std::copy_n( first, n, result );
+           #endif
+           return;
+
+         #else
+                throw std::exception( "The MultiCoreCpu version of Copy is not enabled to be built." );
+         #endif
+     }
+     else
+     {
+         // Use host pointers memory since these arrays are only read once - no benefit to copying.
+        // Map the output iterator to a device_vector
+        device_vector< oType > dvOutput( result, n, CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY, false, ctrl );
+        copy_enqueue( ctrl, first, n, dvOutput.begin( ), user_code );
+        dvOutput.data();
+     }
+}
+
+// This template is called by the non-detail versions of inclusive_scan, it already assumes random access iterators
+// This is called strictly for iterators that are derived from device_vector< T >::iterator
+template<typename DVInputIterator, typename Size, typename DVOutputIterator>
 void copy_pick_iterator(const bolt::cl::control &ctrl,  const DVInputIterator& first, const Size& n,
     const DVOutputIterator& result, const std::string& user_code, bolt::cl::fancy_iterator_tag,
     bolt::cl::device_vector_tag )
 {
-    copy_enqueue( ctrl, first, n, result, user_code );
+    typedef std::iterator_traits<DVInputIterator>::value_type iType;
+    typedef std::iterator_traits<DVOutputIterator>::value_type oType;
+     bolt::cl::control::e_RunMode runMode = ctrl.getForceRunMode( );
+
+     if( runMode == bolt::cl::control::Automatic )
+     {
+         runMode = ctrl.getDefaultPathToRun( );
+     }
+
+     if( runMode == bolt::cl::control::SerialCpu )
+     {
+         bolt::cl::device_vector< oType >::pointer copyDest =  result.getContainer( ).data( );
+#if defined( _WIN32 )
+         std::copy_n( first, n, stdext::make_checked_array_iterator(&copyDest[result.m_Index], n) );
+#else
+         std::copy_n( first, n, &copyDest[result.m_Index] );
+#endif
+     }
+     else if( runMode == bolt::cl::control::MultiCoreCpu )
+     {
+        #ifdef ENABLE_TBB
+            //TODO : The MultiCoreCpu version of Copy is not Implemented yet...
+            bolt::cl::device_vector< oType >::pointer copyDest =  result.getContainer( ).data( );
+#if defined( _WIN32 )
+         std::copy_n( first, n, stdext::make_checked_array_iterator(&copyDest[result.m_Index], n) );
+#else
+         std::copy_n( first, n, &copyDest[result.m_Index] );
+#endif
+            return;
+        #else
+              throw std::exception( "The MultiCoreCpu version of Copy is not enabled to be built." );
+        #endif
+     }
+     else
+     {
+              copy_enqueue( ctrl, first, n, result, user_code );
+     }
 }
 
-template<typename DVInputIterator, typename Size, typename DVOutputIterator> 
+template<typename DVInputIterator, typename Size, typename DVOutputIterator>
 void copy_pick_iterator(const bolt::cl::control &ctl,  const DVInputIterator& first, const Size& n,
-    const DVOutputIterator& result, const std::string& user_code, std::random_access_iterator_tag, 
+    const DVOutputIterator& result, const std::string& user_code, std::random_access_iterator_tag,
     bolt::cl::fancy_iterator_tag )
 {
     static_assert( false, "It is not possible to copy into fancy iterators. They are not mutable" );
 }
 
-template< typename DVInputIterator, typename Size, typename DVOutputIterator > 
-typename std::enable_if< std::is_same< typename std::iterator_traits<DVInputIterator >::value_type, 
-                                       typename std::iterator_traits<DVOutputIterator >::value_type 
-                                     >::value 
+template<typename DVInputIterator, typename Size, typename DVOutputIterator>
+void copy_pick_iterator(const bolt::cl::control &ctl,  const DVInputIterator& first, const Size& n,
+    const DVOutputIterator& result, const std::string& user_code, bolt::cl::device_vector_tag,
+    bolt::cl::fancy_iterator_tag )
+{
+    static_assert( false, "It is not possible to copy into fancy iterators. They are not mutable" );
+}
+
+template< typename DVInputIterator, typename Size, typename DVOutputIterator >
+typename std::enable_if< std::is_same< typename std::iterator_traits<DVInputIterator >::iterator_category,
+                                       typename std::iterator_traits<DVOutputIterator >::iterator_category
+                                     >::value
+
+                     && std::is_same< typename std::iterator_traits<DVInputIterator >::value_type,
+                                       typename std::iterator_traits<DVOutputIterator >::value_type
+                                     >::value
+
                        >::type  /*If enabled then this typename will be evaluated to void*/
-    copy_enqueue(const bolt::cl::control &ctrl, const DVInputIterator& first, const Size& n, 
+    copy_enqueue(const bolt::cl::control &ctrl, const DVInputIterator& first, const Size& n,
     const DVOutputIterator& result, const std::string& cl_code)
 {
+
     typedef std::iterator_traits<DVInputIterator>::value_type iType;
     typedef std::iterator_traits<DVOutputIterator>::value_type oType;
     ::cl::Event copyEvent;
     ctrl.getCommandQueue( ).enqueueCopyBuffer(
-                        first.getBuffer(),
-                        result.getBuffer(),
+                        first.getContainer().getBuffer(),
+                        result.getContainer().getBuffer(),
                         first.m_Index * sizeof(iType),
                         result.m_Index * sizeof(oType),
                         n*sizeof(oType),
@@ -307,35 +575,46 @@ typename std::enable_if< std::is_same< typename std::iterator_traits<DVInputIter
     bolt::cl::wait(ctrl, copyEvent);
 }
 
-template< typename DVInputIterator, typename Size, typename DVOutputIterator > 
-typename std::enable_if< !std::is_same< typename std::iterator_traits<DVInputIterator >::value_type, 
-                                       typename std::iterator_traits<DVOutputIterator >::value_type 
-                                     >::value 
+
+template< typename DVInputIterator, typename Size, typename DVOutputIterator >
+typename std::enable_if< !(std::is_same< typename std::iterator_traits<DVInputIterator >::iterator_category,
+                                       typename std::iterator_traits<DVOutputIterator >::iterator_category
+                                     >::value
+                     && std::is_same< typename std::iterator_traits<DVInputIterator >::value_type,
+                                       typename std::iterator_traits<DVOutputIterator >::value_type
+                                     >::value )                       
                        >::type  /*If enabled then this typename will be evaluated to void*/
-    copy_enqueue(const bolt::cl::control &ctrl, const DVInputIterator& first, const Size& n, 
+    copy_enqueue(const bolt::cl::control &ctrl, const DVInputIterator& first, const Size& n,
     const DVOutputIterator& result, const std::string& cl_code)
 {
+
     /**********************************************************************************
      * Type Names - used in KernelTemplateSpecializer
      *********************************************************************************/
     typedef std::iterator_traits<DVInputIterator>::value_type iType;
     typedef std::iterator_traits<DVOutputIterator>::value_type oType;
-    std::vector<std::string> typeNames(2);
+    std::vector<std::string> typeNames(end_copy);
     typeNames[copy_iType] = TypeName< iType >::get( );
-    typeNames[copy_oType] = TypeName< oType >::get( );
+    typeNames[copy_DVInputIterator] = TypeName< DVInputIterator >::get( );
+    typeNames[copy_oType] = TypeName< oType >::get( ); 
+    typeNames[copy_DVOutputIterator] = TypeName< DVOutputIterator >::get( );
 
     /**********************************************************************************
-     * Type Definitions - directrly concatenated into kernel string (order may matter)
+     * Type Definitions - directly concatenated into kernel string (order may matter)
      *********************************************************************************/
     std::vector<std::string> typeDefs;
     PUSH_BACK_UNIQUE( typeDefs, ClCode< iType >::get() )
+    PUSH_BACK_UNIQUE( typeDefs, ClCode< DVInputIterator >::get() )
     PUSH_BACK_UNIQUE( typeDefs, ClCode< oType >::get() )
+    PUSH_BACK_UNIQUE( typeDefs, ClCode< DVOutputIterator >::get() )
 
-    const size_t workGroupSize  = 256; //kernelWithBoundsCheck.getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctrl.device( ), &l_Error );
+
+    //kernelWithBoundsCheck.getWorkGroupInfo<CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctrl.device( ), &l_Error )
+    const size_t workGroupSize  = 256;
     const size_t numComputeUnits = 40; //ctrl.device( ).getInfo< CL_DEVICE_MAX_COMPUTE_UNITS >( ); // = 28
     const size_t numWorkGroupsPerComputeUnit = 10; //ctrl.wgPerComputeUnit( );
     const size_t numWorkGroups = numComputeUnits * numWorkGroupsPerComputeUnit;
-    
+
     const cl_uint numThreadsIdeal = static_cast<cl_uint>( numWorkGroups * workGroupSize );
     cl_uint numElementsPerThread = n / numThreadsIdeal;
     cl_uint numThreadsRUP = n;
@@ -394,13 +673,23 @@ typename std::enable_if< !std::is_same< typename std::iterator_traits<DVInputIte
             break;
         } // switch
 
-        //std::cout << "NumElem: " << n << "; NumThreads: " << numThreadsChosen << "; NumWorkGroups: " << numThreadsChosen/workGroupSizeChosen << std::endl;
 
-        V_OPENCL( kernels[whichKernel].setArg( 0, first.getBuffer()), "Error setArg kernels[ 0 ]" ); // Input keys
-        V_OPENCL( kernels[whichKernel].setArg( 1, result.getBuffer()),"Error setArg kernels[ 0 ]" ); // Input buffer
-        V_OPENCL( kernels[whichKernel].setArg( 2, static_cast<cl_uint>( n ) ),     "Error setArg kernels[ 0 ]" ); // Size of buffer
-        V_OPENCL( kernels[whichKernel].setArg( 3, first.m_Index ),                 "Error setArg kernels[ 0 ]" ); // Size of buffer
-        V_OPENCL( kernels[whichKernel].setArg( 4, result.m_Index ),                "Error setArg kernels[ 0 ]" ); // Size of buffer
+        //std::cout << "NumElem: " << n << "; NumThreads: " << numThreadsChosen << ";
+        //NumWorkGroups: " << numThreadsChosen/workGroupSizeChosen << std::endl;
+
+        // Input buffer
+
+        V_OPENCL( kernels[whichKernel].setArg( 0, first.getContainer().getBuffer()), "Error setArg kernels[ 0 ]" ); 
+        V_OPENCL( kernels[whichKernel].setArg( 1, first.gpuPayloadSize( ), &first.gpuPayload( ) ),
+                                                           "Error setting a kernel argument" );
+        // Output buffer
+        V_OPENCL( kernels[whichKernel].setArg( 2, result.getContainer().getBuffer()),"Error setArg kernels[ 0 ]" ); 
+        V_OPENCL( kernels[whichKernel].setArg( 3, result.gpuPayloadSize( ), &result.gpuPayload( ) ),
+                                                           "Error setting a kernel argument" );
+        //Buffer Size
+        V_OPENCL( kernels[whichKernel].setArg( 4, static_cast<cl_uint>( n ) ),"Error setArg kernels[0]" );
+
+
         l_Error = ctrl.getCommandQueue( ).enqueueNDRangeKernel(
             kernels[whichKernel],
             ::cl::NullRange,
@@ -410,6 +699,7 @@ typename std::enable_if< !std::is_same< typename std::iterator_traits<DVInputIte
             &kernelEvent);
         V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for kernel" );
     }
+
     catch( const ::cl::Error& e)
     {
         std::cerr << "::cl::enqueueNDRangeKernel( ) in bolt::cl::copy_enqueue()" << std::endl;
@@ -428,10 +718,12 @@ typename std::enable_if< !std::is_same< typename std::iterator_traits<DVInputIte
     unsigned int profilingEnabled = queueProperties&CL_QUEUE_PROFILING_ENABLE;
     if ( profilingEnabled ) {
         cl_ulong start_time, stop_time;
-        
-        V_OPENCL( kernelEvent.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_START, &start_time), "failed on getProfilingInfo<CL_PROFILING_COMMAND_START>()");
-        V_OPENCL( kernelEvent.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END,    &stop_time), "failed on getProfilingInfo<CL_PROFILING_COMMAND_END>()");
-        size_t time = stop_time - start_time;
+
+        V_OPENCL( kernelEvent.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_START, &start_time),
+            "failed on getProfilingInfo<CL_PROFILING_COMMAND_START>()");
+        V_OPENCL( kernelEvent.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END, &stop_time),
+            "failed on getProfilingInfo<CL_PROFILING_COMMAND_END>()");
+        cl_ulong time = stop_time -  start_time;
         double gb = (n*(sizeof(iType)+sizeof(oType))/1024.0/1024.0/1024.0);
         double sec = time/1000000000.0;
         std::cout << "Global Memory Bandwidth: " << ( gb / sec) << " ( "

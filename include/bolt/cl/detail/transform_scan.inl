@@ -14,12 +14,14 @@
 *   limitations under the License.
 
 ***************************************************************************/
+
+#if !defined( BOLT_CL_TRANSFORM_SCAN_INL )
+#define BOLT_CL_TRANSFORM_SCAN_INL
+#pragma once
+
 #define KERNEL02WAVES 4
 #define KERNEL1WAVES 4
 #define WAVESIZE 64
-
-#if !defined( TRANSFORM_SCAN_INL )
-#define TRANSFORM_SCAN_INL
 
 //#define BOLT_ENABLE_PROFILING
 
@@ -161,6 +163,47 @@ namespace cl
             std::iterator_traits< InputIterator >::iterator_category( ) );
     }
 
+    template<
+    typename oType,
+    typename BinaryFunction,
+    typename T>
+oType*
+Serial_Scan(
+    oType *values,
+    oType *result,
+    unsigned int  num,
+    const BinaryFunction binary_op,
+    const bool Incl,
+    const T &init)
+{
+    oType  sum, temp;
+    if(Incl){
+      *result = *values; // assign value
+      sum = *values;
+    }
+    else {
+        temp = *values;
+       *result = (oType)init;
+       sum = binary_op( *result, temp);
+    }
+    for ( unsigned int i= 1; i<num; i++)
+    {
+        oType currentValue = *(values + i); // convertible
+        if (Incl)
+        {
+            oType r = binary_op( sum, currentValue);
+            *(result + i) = r;
+            sum = r;
+        }
+        else // new segment
+        {
+            *(result + i) = sum;
+            sum = binary_op( sum, currentValue);
+
+        }
+    }
+    return result;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -172,8 +215,11 @@ namespace detail
 *   \ingroup scan
 *   \{
 */
-    enum transformScanTypes{ transformScan_iValueType, transformScan_iIterType, transformScan_oValueType, transformScan_oIterType, transformScan_initType, transformScan_UnaryFunction,
-        transformScan_BinaryFunction, transformScan_end };
+
+    enum transformScanTypes{ transformScan_iValueType, transformScan_iIterType, transformScan_oValueType,
+                             transformScan_oIterType, transformScan_initType, transformScan_UnaryFunction,
+                             transformScan_BinaryFunction, transformScan_end };
+
 
 class TransformScan_KernelTemplateSpecializer : public KernelTemplateSpecializer
 {
@@ -317,17 +363,25 @@ transform_scan_pick_iterator(
 
     if( runMode == bolt::cl::control::SerialCpu )
     {
-        // TODO fix this
-        std::partial_sum( first, last, result, binary_op );
-        return result;
+        std::transform(first, last, result, unary_op);
+        Serial_Scan<oType, BinaryFunction, T>(&(*result), &(*result), numElements, binary_op,inclusive,init);
+        return result + numElements;
     }
     else if( runMode == bolt::cl::control::MultiCoreCpu )
     {
-        throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of transform_scan function is not enabled to be built." );
+        #ifdef ENABLE_TBB
+            std::transform(first, last, result, unary_op);
+            Serial_Scan<oType, BinaryFunction, T>(&(*result), &(*result), numElements, binary_op,inclusive,init);
+            return result + numElements;
+        #else
+                throw std::exception("The MultiCoreCpu version of Transform_scan is not enabled to be built! \n");
+        #endif
+
+        return result;
+
     }
     else
     {
-
         // Map the input iterator to a device_vector
         device_vector< iType > dvInput( first, last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctl );
         device_vector< oType > dvOutput( result, numElements, CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY, false, ctl );
@@ -337,9 +391,10 @@ transform_scan_pick_iterator(
             unary_op, init, binary_op, inclusive );
 
         // This should immediately map/unmap the buffer
+        dvInput.data();
         dvOutput.data( );
-    }
 
+    }
     return result + numElements;
 }
 
@@ -372,7 +427,6 @@ transform_scan_pick_iterator(
     unsigned int numElements = static_cast< unsigned int >( std::distance( first, last ) );
     if( numElements < 1 )
         return result;
-
     bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode( );
 
     if( runMode == bolt::cl::control::Automatic )
@@ -382,20 +436,36 @@ transform_scan_pick_iterator(
 
     if( runMode == bolt::cl::control::SerialCpu )
     {
-        //  TODO:  Need access to the device_vector .data method to get a host pointer
-        throw ::cl::Error( CL_INVALID_DEVICE, "Scan device_vector CPU device not implemented" );
-        return result;
+        bolt::cl::device_vector< iType >::pointer InputBuffer =  first.getContainer( ).data( );
+        bolt::cl::device_vector< oType >::pointer ResultBuffer =  result.getContainer( ).data( );
+
+        std::transform(&InputBuffer[ first.m_Index ], &InputBuffer[first.m_Index] + numElements, stdext::make_checked_array_iterator(&ResultBuffer[ result.m_Index], numElements), unary_op);
+        Serial_Scan<oType, BinaryFunction, T>(&ResultBuffer[ result.m_Index  ], &ResultBuffer[ result.m_Index ], numElements, binary_op, inclusive, init);
+        return result + numElements;
     }
     else if( runMode == bolt::cl::control::MultiCoreCpu )
     {
-        //  TODO:  Need access to the device_vector .data method to get a host pointer
-        throw ::cl::Error( CL_INVALID_DEVICE, "Scan device_vector CPU device not implemented" );
+        #ifdef ENABLE_TBB
+            bolt::cl::device_vector< iType >::pointer InputBuffer =  first.getContainer( ).data( );
+            bolt::cl::device_vector< oType >::pointer ResultBuffer =  result.getContainer( ).data( );
+
+            std::transform(&InputBuffer[ first.m_Index ], &InputBuffer[first.m_Index] + numElements, stdext::make_checked_array_iterator(&ResultBuffer[ result.m_Index], numElements), unary_op);
+            Serial_Scan<oType, BinaryFunction, T>(&ResultBuffer[ result.m_Index  ], &ResultBuffer[ result.m_Index ], numElements, binary_op, inclusive, init);
+            return result + numElements;
+        #else
+                throw std::exception("The MultiCoreCpu version of Transform_scan is not enabled to be built!\n");
+        #endif
+
         return result;
+
     }
 
-    //Now call the actual cl algorithm
-    transform_scan_enqueue( ctl, first, last, result, unary_op, init, binary_op, inclusive );
+    else
+    {
+        //Now call the actual cl algorithm
+        transform_scan_enqueue( ctl, first, last, result, unary_op, init, binary_op, inclusive );
 
+    }
     return result + numElements;
 }
 
@@ -520,6 +590,7 @@ size_t k0_stepNum, k1_stepNum, k2_stepNum;
     control::buffPointer binaryBuffer = ctl.acquireBuffer( sizeof( aligned_binary_op ),
         CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_binary_op );
 
+
     control::buffPointer preSumArray  = ctl.acquireBuffer( sizeScanBuff*sizeof( oType ) );
     control::buffPointer postSumArray = ctl.acquireBuffer( sizeScanBuff*sizeof( oType ) );
     cl_uint ldsSize;
@@ -538,17 +609,20 @@ aProfiler.set(AsyncProfiler::device, control::SerialCpu);
 #endif
 
     ldsSize  = static_cast< cl_uint >( kernel0_WgSize * sizeof( oType ) );
-    V_OPENCL( kernels[0].setArg( 0, result.getBuffer( ) ), "Error setArg kernels[ 0 ]" ); // Output buffer
-    V_OPENCL( kernels[0].setArg( 1, result.gpuPayloadSize( ), &result.gpuPayload( ) ), "Error setting a kernel argument" );
-    V_OPENCL( kernels[0].setArg( 2, first.getBuffer( ) ),  "Error setArg kernels[ 0 ]" ); // Input buffer
-    V_OPENCL( kernels[0].setArg( 3, first.gpuPayloadSize( ), &first.gpuPayload( ) ), "Error setting a kernel argument" );
+
+    V_OPENCL( kernels[0].setArg( 0, result.getContainer().getBuffer() ), "Error setArg kernels[ 0 ]" ); // Output buffer
+    V_OPENCL( kernels[0].setArg( 1, result.gpuPayloadSize( ), &result.gpuPayload()),"Error setting a kernel argument");
+    V_OPENCL( kernels[0].setArg( 2, first.getContainer().getBuffer() ),  "Error setArg kernels[ 0 ]" ); // Input buffer
+    V_OPENCL( kernels[0].setArg( 3, first.gpuPayloadSize( ), &first.gpuPayload( ) ),"Error setting a kernel argument");
     V_OPENCL( kernels[0].setArg( 4, init_T ),               "Error setArg kernels[ 0 ]" ); // Initial value exclusive
     V_OPENCL( kernels[0].setArg( 5, numElements ),          "Error setArg kernels[ 0 ]" ); // Size of scratch buffer
     V_OPENCL( kernels[0].setArg( 6, ldsSize, NULL ),        "Error setArg kernels[ 0 ]" ); // Scratch buffer
     V_OPENCL( kernels[0].setArg( 7, *unaryBuffer ),         "Error setArg kernels[ 0 ]" ); // User provided functor
     V_OPENCL( kernels[0].setArg( 8, *binaryBuffer ),        "Error setArg kernels[ 0 ]" ); // User provided functor
     V_OPENCL( kernels[0].setArg( 9, *preSumArray ),         "Error setArg kernels[ 0 ]" ); // Output per block sum
-    V_OPENCL( kernels[0].setArg( 10, doExclusiveScan ),      "Error setArg kernels[ 0 ]" ); // Exclusive scan?
+
+    V_OPENCL( kernels[0].setArg( 10, doExclusiveScan ),     "Error setArg kernels[ 0 ]" ); // Exclusive scan?
+
 
 #ifdef BOLT_ENABLE_PROFILING
 aProfiler.nextStep();
@@ -623,8 +697,10 @@ aProfiler.setStepName("Setup Kernel 2");
 aProfiler.set(AsyncProfiler::device, control::SerialCpu);
 #endif
 
-    V_OPENCL( kernels[2].setArg( 0, result.getBuffer()),   "Error setArg kernels[ 2 ]" ); // Output buffer
-    V_OPENCL( kernels[2].setArg( 1, result.gpuPayloadSize( ), &result.gpuPayload( ) ), "Error setting a kernel argument" );
+
+    V_OPENCL( kernels[2].setArg( 0, result.getContainer().getBuffer()),   "Error setArg kernels[ 2 ]" ); // Output buffer
+    V_OPENCL( kernels[2].setArg( 1, result.gpuPayloadSize( ), &result.gpuPayload()),"Error setting a kernel argument");
+
     V_OPENCL( kernels[2].setArg( 2, *postSumArray ),        "Error setArg kernels[ 2 ]" ); // Input buffer
     V_OPENCL( kernels[2].setArg( 3, numElements ),          "Error setArg kernels[ 2 ]" ); // Size of scratch buffer
     V_OPENCL( kernels[2].setArg( 4, *binaryBuffer ),        "Error setArg kernels[ 2 ]" ); // User provided functor
@@ -685,10 +761,11 @@ aProfiler.setArchitecture(strDeviceName);
         V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_END>()");
 
         size_t k0_start_cpu = aProfiler.get(k0_stepNum, AsyncProfiler::startTime);
-        size_t shift = k0_start - k0_start_cpu;
+        size_t shift = (size_t)k0_start - k0_start_cpu;
         //size_t shift = k0_start_cpu - k0_start;
 
-        //std::cout << "setting step " << k0_stepNum << " attribute " << AsyncProfiler::stopTime << " to " << k0_stop-shift << std::endl;
+        //std::cout << "setting step " << k0_stepNum << " attribute " << AsyncProfiler::stopTime << " to " ;
+        //std::cout << k0_stop-shift << std::endl;
         aProfiler.set(k0_stepNum, AsyncProfiler::stopTime,  static_cast<size_t>(k0_stop-shift) );
 
         aProfiler.set(k1_stepNum, AsyncProfiler::startTime, static_cast<size_t>(k0_stop-shift) );

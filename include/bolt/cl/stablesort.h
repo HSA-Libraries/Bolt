@@ -20,9 +20,8 @@
 #define BOLT_CL_STABLESORT_H
 
 #include "bolt/cl/bolt.h"
-#include "bolt/cl/functional.h"
 #include <string>
-#include <iostream>
+
 
 namespace bolt {
 namespace cl {

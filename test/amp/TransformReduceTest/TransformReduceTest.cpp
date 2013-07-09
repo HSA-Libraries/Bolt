@@ -90,7 +90,8 @@
         std::transform(A.begin(), A.end(), Z.begin(), std::negate<int>());
         int stlReduce = std::accumulate(Z.begin(), Z.end(), 0);
        
-        int boltReduce = bolt::amp::transform_reduce(A.begin() ,A.end(), bolt::amp::negate<int>(), 0, bolt::amp::plus<int>());
+        int boltReduce = bolt::amp::transform_reduce(A.begin() ,A.end(), bolt::amp::negate<int>(),
+                                                                        0, bolt::amp::plus<int>());
        
         checkResult(__FUNCTION__, stlReduce, boltReduce);
        };
@@ -199,9 +200,62 @@ TYPED_TEST_P( TransformArrayTest, Normal )
     //  Loop through the array and compare all the values with each other
     cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
 }
+TYPED_TEST_P( TransformArrayTest, SerialNormal )
+{
+    typedef std::array< ArrayType, ArraySize > ArrayCont;
+    ArrayType init(0);
+    bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    ctl.setForceRunMode(bolt::amp::control::SerialCpu); 
 
+    //  Calling the actual functions under test
+    std::transform(stdInput.begin(), stdInput.end(), stdOutput.begin(), [](ArrayType x){return x*x;});
+    ArrayType stlReduce = std::accumulate(stdOutput.begin(), stdOutput.end(), init);
+
+    ArrayType boltReduce = bolt::amp::transform_reduce(ctl, boltInput.begin( ), boltInput.end( ),
+                                                       bolt::amp::square<ArrayType>(), init,
+                                                       bolt::amp::plus<ArrayType>());
+
+    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
+    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+    EXPECT_EQ( stlReduce, boltReduce );
+
+    //  Loop through the array and compare all the values with each other
+    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
+}
+TYPED_TEST_P( TransformArrayTest, MulticoreNormal )
+{
+    typedef std::array< ArrayType, ArraySize > ArrayCont;
+    ArrayType init(0);
+    bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu); 
+    //  Calling the actual functions under test
+    std::transform(stdInput.begin(), stdInput.end(), stdOutput.begin(), [](ArrayType x){return x*x;});
+    ArrayType stlReduce = std::accumulate(stdOutput.begin(), stdOutput.end(), init);
+
+    ArrayType boltReduce = bolt::amp::transform_reduce(ctl, boltInput.begin( ), boltInput.end( ),
+                                                       bolt::amp::square<ArrayType>(), init,
+                                                       bolt::amp::plus<ArrayType>());
+
+    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
+    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+    EXPECT_EQ( stlReduce, boltReduce );
+
+    //  Loop through the array and compare all the values with each other
+    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
+}
+
+ 
 TYPED_TEST_P( TransformArrayTest, GPU_DeviceNormal )
 {
+    Concurrency::accelerator accel(Concurrency::accelerator::default_accelerator);
+    bolt::amp::control c_gpu( accel );  // construct control structure from the queue.
+ 
     typedef std::array< ArrayType, ArraySize > ArrayCont;
     ArrayType init(0);
     //  Calling the actual functions under test
@@ -230,21 +284,21 @@ TYPED_TEST_P( TransformArrayTest, CPU_DeviceNormal )
     typedef std::array< ArrayType, ArraySize > ArrayCont;
 
 #if OCL_CONTEXT_BUG_WORKAROUND
-  ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
-    bolt::cl::control c_cpu( getQueueFromContext(myContext, CL_DEVICE_TYPE_CPU, 0 ));  
+    ::amp::Context myContext = bolt::cl::control::getDefault( ).context( );
+    bolt::amp::control c_cpu( getQueueFromContext(myContext, CL_DEVICE_TYPE_CPU, 0 ));  
 #else
     MyOclContext oclcpu = initOcl(CL_DEVICE_TYPE_CPU, 0);
-    bolt::cl::control c_cpu(oclcpu._queue);  // construct control structure from the queue.
+    bolt::amp::control c_cpu(oclcpu._queue);  // construct control structure from the queue.
 #endif
 
     ArrayType init(0);
     //  Calling the actual functions under test
-    std::transform(stdInput.begin(), stdInput.end(), stdOutput.begin(), bolt::cl::square<ArrayType>());
+    std::transform(stdInput.begin(), stdInput.end(), stdOutput.begin(), bolt::amp::square<ArrayType>());
     ArrayType stlReduce = std::accumulate(stdOutput.begin(), stdOutput.end(), init);
 
-    ArrayType boltReduce = bolt::cl::transform_reduce( c_cpu,boltInput.begin( ), boltInput.end( ),
-                                                       bolt::cl::square<ArrayType>(), init,
-                                                       bolt::cl::plus<ArrayType>());
+    ArrayType boltReduce = bolt::amp::transform_reduce( c_cpu,boltInput.begin( ), boltInput.end( ),
+                                                        bolt::amp::square<ArrayType>(), init,
+                                                        bolt::amp::plus<ArrayType>());
 
     ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
     ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
@@ -283,13 +337,65 @@ TYPED_TEST_P( TransformArrayTest, MultipliesFunction )
     cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );    
     // FIXME - releaseOcl(ocl);
 }
+TYPED_TEST_P( TransformArrayTest, SerialMultipliesFunction )
+{
+    typedef std::array< ArrayType, ArraySize > ArrayCont;
+
+    ArrayType init(0);
+    bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    ctl.setForceRunMode(bolt::amp::control::SerialCpu); 
+    //  Calling the actual functions under test
+    std::transform(stdInput.begin(), stdInput.end(), stdOutput.begin(), std::negate<ArrayType>());
+    ArrayType stlReduce = std::accumulate(stdOutput.begin(), stdOutput.end(), init);
+
+    ArrayType boltReduce = bolt::amp::transform_reduce(ctl, boltInput.begin( ), boltInput.end( ),
+                                                       bolt::amp::negate<ArrayType>( ), init,
+                                                       bolt::amp::plus<ArrayType>( ));
+
+    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
+    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+    EXPECT_EQ( stlReduce, boltReduce );
+
+    //  Loop through the array and compare all the values with each other
+    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );    
+    // FIXME - releaseOcl(ocl);
+}
+TYPED_TEST_P( TransformArrayTest, MulticoreMultipliesFunction )
+{
+    typedef std::array< ArrayType, ArraySize > ArrayCont;
+
+    ArrayType init(0);
+    bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu); 
+    //  Calling the actual functions under test
+    std::transform(stdInput.begin(), stdInput.end(), stdOutput.begin(), std::negate<ArrayType>());
+    ArrayType stlReduce = std::accumulate(stdOutput.begin(), stdOutput.end(), init);
+
+    ArrayType boltReduce = bolt::amp::transform_reduce(ctl, boltInput.begin( ), boltInput.end( ),
+                                                       bolt::amp::negate<ArrayType>( ), init,
+                                                       bolt::amp::plus<ArrayType>( ));
+
+    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
+    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+    EXPECT_EQ( stlReduce, boltReduce );
+
+    //  Loop through the array and compare all the values with each other
+    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );    
+    // FIXME - releaseOcl(ocl);
+}
 
 TYPED_TEST_P( TransformArrayTest, GPU_DeviceMultipliesFunction )
 {
     typedef std::array< ArrayType, ArraySize > ArrayCont;
 #if OCL_CONTEXT_BUG_WORKAROUND
-  ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
-    bolt::cl::control c_gpu( getQueueFromContext(myContext, CL_DEVICE_TYPE_GPU, 0 ));  
+    ::amp::Context myContext = bolt::cl::control::getDefault( ).context( );
+    bolt::amp::control c_gpu( getQueueFromContext(myContext, CL_DEVICE_TYPE_GPU, 0 ));  
 #else
     ::Concurrency::accelerator accel(::Concurrency::accelerator::default_accelerator);
     bolt::amp::control c_gpu(accel);
@@ -321,11 +427,11 @@ TYPED_TEST_P( TransformArrayTest, CPU_DeviceMultipliesFunction )
 {
     typedef std::array< ArrayType, ArraySize > ArrayCont;
 #if OCL_CONTEXT_BUG_WORKAROUND
-  ::cl::Context myContext = bolt::cl::control::getDefault( ).context( );
-    bolt::cl::control c_cpu( getQueueFromContext(myContext, CL_DEVICE_TYPE_CPU, 0 ));  
+    ::amp::Context myContext = bolt::cl::control::getDefault( ).context( ); 
+    bolt::amp::control c_cpu( getQueueFromContext(myContext, CL_DEVICE_TYPE_CPU, 0 ));  
 #else
     MyOclContext oclcpu = initOcl(CL_DEVICE_TYPE_CPU, 0);
-    bolt::cl::control c_cpu(oclcpu._queue);  // construct control structure from the queue.
+    bolt::amp::control c_cpu(oclcpu._queue);  // construct control structure from the queue.
 #endif
 
     ArrayType init(0);
@@ -333,7 +439,7 @@ TYPED_TEST_P( TransformArrayTest, CPU_DeviceMultipliesFunction )
     std::transform(stdInput.begin(), stdInput.end(), stdOutput.begin(), bolt::amp::negate<ArrayType>());
     ArrayType stlReduce = std::accumulate(stdOutput.begin(), stdOutput.end(), init);
 
-    ArrayType boltReduce = bolt::cl::transform_reduce( c_cpu,boltInput.begin( ), boltInput.end( ),
+    ArrayType boltReduce = bolt::amp::transform_reduce( c_cpu,boltInput.begin( ), boltInput.end( ),
                                                        bolt::amp::negate<ArrayType>(), init,
                                                        bolt::amp::plus<ArrayType>());
 
@@ -355,8 +461,9 @@ REGISTER_TYPED_TEST_CASE_P( TransformArrayTest, Normal, GPU_DeviceNormal,
                                            MultipliesFunction, GPU_DeviceMultipliesFunction,
                                            CPU_DeviceNormal, CPU_DeviceMultipliesFunction);
 #else
-REGISTER_TYPED_TEST_CASE_P( TransformArrayTest, Normal, GPU_DeviceNormal, 
-                                           MultipliesFunction, GPU_DeviceMultipliesFunction );
+REGISTER_TYPED_TEST_CASE_P( TransformArrayTest, Normal, SerialNormal, MulticoreNormal, GPU_DeviceNormal, 
+                                           MultipliesFunction, SerialMultipliesFunction, MulticoreMultipliesFunction,
+                                           GPU_DeviceMultipliesFunction );
 #endif
 
 
@@ -470,7 +577,8 @@ class TransformDoubleDeviceVector: public ::testing::TestWithParam< int >
 {
 public:
     // Create an std and a bolt vector of requested size, and initialize all the elements to 1
-    TransformDoubleDeviceVector( ): stdInput( GetParam( ) ), boltInput( static_cast<size_t>( GetParam( ) ) ), boltOutput( static_cast<size_t>( GetParam( ) ) )
+    TransformDoubleDeviceVector( ): stdInput( GetParam( ) ), boltInput( static_cast<size_t>( GetParam( ) ) ),
+                                                            boltOutput( static_cast<size_t>( GetParam( ) ) )
     {
         std::generate(stdInput.begin(), stdInput.end(), generateRandom<double>);
         stdOutput = stdInput;
@@ -485,7 +593,7 @@ public:
 
 protected:
     std::vector< double > stdInput, stdOutput;
-    bolt::cl::device_vector< double > boltInput, boltOutput;
+    bolt::amp::device_vector< double > boltInput, boltOutput;
 };
 #endif
 
@@ -586,9 +694,58 @@ TEST_P( transformReduceStdVectWithInit, withIntWdInit)
     
     //  Calling the actual functions under test
     int init = 10;
-    std::transform(stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), [](int n){return n*n;} );  //there is no std::square available
+     //there is no std::square available
+    std::transform(stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), [](int n){return n*n;} ); 
     int stlTransformReduce = std::accumulate(stdOutput.begin( ), stdOutput.end( ), init, bolt::amp::plus<int>( ) );
-    int boltTransformReduce= bolt::amp::transform_reduce( boltInput.begin( ), boltInput.end( ), bolt::amp::square<int>( ), init, bolt::amp::plus<int>( ) );
+    int boltTransformReduce= bolt::amp::transform_reduce( boltInput.begin( ), boltInput.end(),bolt::amp::square<int>(),
+                                                                                        init, bolt::amp::plus<int>());
+
+    EXPECT_EQ( stlTransformReduce, boltTransformReduce );
+}
+TEST_P( transformReduceStdVectWithInit, SerialwithIntWdInit)
+{
+    std::vector<int> stdInput( mySize );
+    std::vector<int> stdOutput( mySize );
+    std::vector<int> boltInput( mySize );
+
+    for (int i = 0; i < mySize; ++i)
+    {
+        stdInput[i] = i;
+        boltInput[i] = stdInput[i];
+    }
+    
+    bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    ctl.setForceRunMode(bolt::amp::control::SerialCpu); 
+    //  Calling the actual functions under test
+    int init = 10;
+      //there is no std::square available
+    std::transform(stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), [](int n){return n*n;} );
+    int stlTransformReduce = std::accumulate(stdOutput.begin( ), stdOutput.end( ), init, bolt::amp::plus<int>( ) );
+    int boltTransformReduce= bolt::amp::transform_reduce(ctl, boltInput.begin( ), boltInput.end( ),
+                                        bolt::amp::square<int>( ), init, bolt::amp::plus<int>( ) );
+
+    EXPECT_EQ( stlTransformReduce, boltTransformReduce );
+}
+TEST_P( transformReduceStdVectWithInit, MulticorewithIntWdInit)
+{
+    std::vector<int> stdInput( mySize );
+    std::vector<int> stdOutput( mySize );
+    std::vector<int> boltInput( mySize );
+
+    for (int i = 0; i < mySize; ++i)
+    {
+        stdInput[i] = i;
+        boltInput[i] = stdInput[i];
+    }
+    bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu); 
+    //  Calling the actual functions under test
+    int init = 10;
+     //there is no std::square available
+    std::transform(stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), [](int n){return n*n;} ); 
+    int stlTransformReduce = std::accumulate(stdOutput.begin( ), stdOutput.end( ), init, bolt::amp::plus<int>( ) );
+    int boltTransformReduce= bolt::amp::transform_reduce(ctl, boltInput.begin( ), boltInput.end( ),
+                                        bolt::amp::square<int>( ), init, bolt::amp::plus<int>( ) );
 
     EXPECT_EQ( stlTransformReduce, boltTransformReduce );
 }
@@ -612,7 +769,58 @@ TEST_P( transformReduceStdVectWithInit, withIntWdInitWithStdPlus)
     //  Calling the actual functions under test
     std::transform(stdInput.begin(), stdInput.end(), stdOutput.begin(), [](int n){return n*n;});
     int stlTransformReduce = std::accumulate(stdOutput.begin(), stdOutput.end(), init, std::plus<int>());
-    int boltTransformReduce= bolt::amp::transform_reduce( boltInput.begin( ), boltInput.end( ), bolt::amp::square<int>(), init, bolt::amp::plus<int>());
+    int boltTransformReduce= bolt::amp::transform_reduce( boltInput.begin( ), boltInput.end( ),
+                                        bolt::amp::square<int>(), init, bolt::amp::plus<int>());
+
+    EXPECT_EQ(stlTransformReduce, boltTransformReduce);
+}
+TEST_P( transformReduceStdVectWithInit, SerialwithIntWdInitWithStdPlus)
+{
+    //int mySize = 10;
+    int init = 10;
+
+    std::vector<int> stdInput (mySize);
+    std::vector<int> stdOutput (mySize);
+
+    std::vector<int> boltInput (mySize);
+    //std::vector<int> boltOutput (mySize);
+
+    for (int i = 0; i < mySize; ++i){
+        stdInput[i] = i;
+        boltInput[i] = stdInput[i];
+    }
+    bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    ctl.setForceRunMode(bolt::amp::control::SerialCpu); 
+    //  Calling the actual functions under test
+    std::transform(stdInput.begin(), stdInput.end(), stdOutput.begin(), [](int n){return n*n;});
+    int stlTransformReduce = std::accumulate(stdOutput.begin(), stdOutput.end(), init, std::plus<int>());
+    int boltTransformReduce= bolt::amp::transform_reduce(ctl, boltInput.begin( ), boltInput.end( ),
+                                            bolt::amp::square<int>(), init, bolt::amp::plus<int>());
+
+    EXPECT_EQ(stlTransformReduce, boltTransformReduce);
+}
+TEST_P( transformReduceStdVectWithInit, MulticorewithIntWdInitWithStdPlus)
+{
+    //int mySize = 10;
+    int init = 10;
+
+    std::vector<int> stdInput (mySize);
+    std::vector<int> stdOutput (mySize);
+
+    std::vector<int> boltInput (mySize);
+    //std::vector<int> boltOutput (mySize);
+
+    for (int i = 0; i < mySize; ++i){
+        stdInput[i] = i;
+        boltInput[i] = stdInput[i];
+    }
+    bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu); 
+    //  Calling the actual functions under test
+    std::transform(stdInput.begin(), stdInput.end(), stdOutput.begin(), [](int n){return n*n;});
+    int stlTransformReduce = std::accumulate(stdOutput.begin(), stdOutput.end(), init, std::plus<int>());
+    int boltTransformReduce= bolt::amp::transform_reduce(ctl, boltInput.begin( ), boltInput.end( ), 
+                                            bolt::amp::square<int>(), init, bolt::amp::plus<int>());
 
     EXPECT_EQ(stlTransformReduce, boltTransformReduce);
 }
@@ -637,7 +845,60 @@ TEST_P( transformReduceStdVectWithInit, withIntWdInitWdAnyFunctor)
     std::transform(stdInput.begin(), stdInput.end(), stdOutput.begin(), [](int x){return x*x;});
     int stlTransformReduce = std::accumulate(stdOutput.begin(), stdOutput.end(), init);
 
-    int boltTransformReduce= bolt::amp::transform_reduce( boltInput.begin( ), boltInput.end( ), bolt::amp::square<int>(), init, bolt::amp::plus<int>());
+    int boltTransformReduce= bolt::amp::transform_reduce( boltInput.begin( ), boltInput.end( ),
+                                        bolt::amp::square<int>(), init, bolt::amp::plus<int>());
+
+    EXPECT_EQ(stlTransformReduce, boltTransformReduce);
+}
+TEST_P( transformReduceStdVectWithInit, SerialwithIntWdInitWdAnyFunctor)
+{
+    //int mySize = 10;
+    int init = 10;
+
+    std::vector<int> stdInput (mySize);
+    std::vector<int> stdOutput (mySize);
+
+    std::vector<int> boltInput (mySize);
+    //std::vector<int> boltOutput (mySize);
+
+    for (int i = 0; i < mySize; ++i){
+        stdInput[i] = i;
+        boltInput[i] = stdInput[i];
+    }
+    bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    ctl.setForceRunMode(bolt::amp::control::SerialCpu); 
+    //  Calling the actual functions under test
+    std::transform(stdInput.begin(), stdInput.end(), stdOutput.begin(), [](int x){return x*x;});
+    int stlTransformReduce = std::accumulate(stdOutput.begin(), stdOutput.end(), init);
+
+    int boltTransformReduce= bolt::amp::transform_reduce(ctl, boltInput.begin( ), boltInput.end( ), 
+                                            bolt::amp::square<int>(), init, bolt::amp::plus<int>());
+
+    EXPECT_EQ(stlTransformReduce, boltTransformReduce);
+}
+TEST_P( transformReduceStdVectWithInit, MulticorewithIntWdInitWdAnyFunctor)
+{
+    //int mySize = 10;
+    int init = 10;
+
+    std::vector<int> stdInput (mySize);
+    std::vector<int> stdOutput (mySize);
+
+    std::vector<int> boltInput (mySize);
+    //std::vector<int> boltOutput (mySize);
+
+    for (int i = 0; i < mySize; ++i){
+        stdInput[i] = i;
+        boltInput[i] = stdInput[i];
+    }
+    bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu); 
+    //  Calling the actual functions under test
+    std::transform(stdInput.begin(), stdInput.end(), stdOutput.begin(), [](int x){return x*x;});
+    int stlTransformReduce = std::accumulate(stdOutput.begin(), stdOutput.end(), init);
+
+    int boltTransformReduce= bolt::amp::transform_reduce(ctl, boltInput.begin( ), boltInput.end( ),
+                                            bolt::amp::square<int>(), init, bolt::amp::plus<int>());
 
     EXPECT_EQ(stlTransformReduce, boltTransformReduce);
 }
@@ -667,14 +928,84 @@ TEST_P (transformReduceTestMultFloat, multiplyWithFloats)
     }
 
 #if defined (_WIN32 )
-    std::transform( myArray, (float *)(myArray + arraySize), stdext::make_checked_array_iterator( myArray2, arraySize ), 
+    std::transform( myArray, (float *)(myArray + arraySize), stdext::make_checked_array_iterator( myArray2,arraySize ),
         std::negate<float>( ) );
 #else
     std::transform( myArray, (float *)(myArray + arraySize), myArray2, std::negate<float>( ) );
 #endif
 
     float stlTransformReduce = std::accumulate(myArray2, myArray2 + arraySize, 1.0f, std::multiplies<float>());
-    float boltTransformReduce = bolt::amp::transform_reduce(myBoltArray, myBoltArray + arraySize, bolt::amp::negate<float>(),
+    float boltTransformReduce = bolt::amp::transform_reduce(myBoltArray, myBoltArray + arraySize, 
+                                                                        bolt::amp::negate<float>(),
+        1.0f, bolt::amp::multiplies<float>());
+
+    EXPECT_FLOAT_EQ(stlTransformReduce , boltTransformReduce )<<"Values does not match\n";
+
+    delete [] myArray;
+    delete [] myArray2;
+    delete [] myBoltArray;
+}
+TEST_P (transformReduceTestMultFloat, SerialmultiplyWithFloats)
+{
+    float* myArray = new float[ arraySize ];
+    float* myArray2 = new float[ arraySize ];
+    float* myBoltArray = new float[ arraySize ];
+
+    myArray[ 0 ] = 1.0f;
+    myBoltArray[ 0 ] = 1.0f;
+    for( int i=1; i < arraySize; i++ )
+    {
+        myArray[i] = myArray[i-1] + 0.0625f;
+        myBoltArray[i] = myArray[i];
+    }
+    bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    ctl.setForceRunMode(bolt::amp::control::SerialCpu); 
+
+#if defined (_WIN32 )
+    std::transform( myArray, (float *)(myArray + arraySize), stdext::make_checked_array_iterator(myArray2, arraySize), 
+        std::negate<float>( ) );
+#else
+    std::transform( myArray, (float *)(myArray + arraySize), myArray2, std::negate<float>( ) );
+#endif
+
+    float stlTransformReduce = std::accumulate(myArray2, myArray2 + arraySize, 1.0f, std::multiplies<float>());
+    float boltTransformReduce = bolt::amp::transform_reduce(ctl, myBoltArray, myBoltArray + arraySize, 
+                                                                            bolt::amp::negate<float>(),
+        1.0f, bolt::amp::multiplies<float>());
+
+    EXPECT_FLOAT_EQ(stlTransformReduce , boltTransformReduce )<<"Values does not match\n";
+
+    delete [] myArray;
+    delete [] myArray2;
+    delete [] myBoltArray;
+}
+TEST_P (transformReduceTestMultFloat, MulticoremultiplyWithFloats)
+{
+    float* myArray = new float[ arraySize ];
+    float* myArray2 = new float[ arraySize ];
+    float* myBoltArray = new float[ arraySize ];
+
+    myArray[ 0 ] = 1.0f;
+    myBoltArray[ 0 ] = 1.0f;
+    for( int i=1; i < arraySize; i++ )
+    {
+        myArray[i] = myArray[i-1] + 0.0625f;
+        myBoltArray[i] = myArray[i];
+    }
+
+    bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu); 
+
+#if defined (_WIN32 )
+    std::transform( myArray, (float *)(myArray + arraySize), stdext::make_checked_array_iterator(myArray2,arraySize), 
+        std::negate<float>( ) );
+#else
+    std::transform( myArray, (float *)(myArray + arraySize), myArray2, std::negate<float>( ) );
+#endif
+
+    float stlTransformReduce = std::accumulate(myArray2, myArray2 + arraySize, 1.0f, std::multiplies<float>());
+    float boltTransformReduce = bolt::amp::transform_reduce(ctl, myBoltArray, myBoltArray + arraySize, 
+                                                                            bolt::amp::negate<float>(),
         1.0f, bolt::amp::multiplies<float>());
 
     EXPECT_FLOAT_EQ(stlTransformReduce , boltTransformReduce )<<"Values does not match\n";
@@ -684,7 +1015,8 @@ TEST_P (transformReduceTestMultFloat, multiplyWithFloats)
     delete [] myBoltArray;
 }
 
-TEST_P( transformReduceTestMultFloat, serialFloatValuesWdControl )
+
+TEST_P( transformReduceTestMultFloat, addFloatValues )
 {
     std::vector<float> A( arraySize );
     std::vector<float> B( arraySize );
@@ -700,7 +1032,58 @@ TEST_P( transformReduceTestMultFloat, serialFloatValuesWdControl )
 
     std::transform(A.begin(), A.end(), B.begin(), std::negate<float>());
     float stdTransformReduceValue = std::accumulate(B.begin(), B.end(), 0.0f, std::plus<float>());
-    float boltClTransformReduce = bolt::amp::transform_reduce(boltVect.begin(), boltVect.end(), bolt::amp::negate<float>(), 0.0f, bolt::amp::plus<float>());
+    float boltClTransformReduce = bolt::amp::transform_reduce(boltVect.begin(), boltVect.end(), 
+                                    bolt::amp::negate<float>(), 0.0f, bolt::amp::plus<float>());
+
+    //compare these results with each other
+    EXPECT_FLOAT_EQ( stdTransformReduceValue, boltClTransformReduce );
+}
+TEST_P( transformReduceTestMultFloat, SerialaddFloatValues)
+{
+    std::vector<float> A( arraySize );
+    std::vector<float> B( arraySize );
+    std::vector<float> boltVect( arraySize );
+    
+    float myFloatValues = 9.0625f;
+
+    for( int i=0; i < arraySize; ++i )
+    {
+        A[i] = myFloatValues + float(i);
+        boltVect[i] = A[i];
+    }
+    
+    bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    ctl.setForceRunMode(bolt::amp::control::SerialCpu); 
+
+    std::transform(A.begin(), A.end(), B.begin(), std::negate<float>());
+    float stdTransformReduceValue = std::accumulate(B.begin(), B.end(), 0.0f, std::plus<float>());
+    float boltClTransformReduce = bolt::amp::transform_reduce(ctl, boltVect.begin(), boltVect.end(), 
+                                        bolt::amp::negate<float>(), 0.0f, bolt::amp::plus<float>());
+
+    //compare these results with each other
+    EXPECT_FLOAT_EQ( stdTransformReduceValue, boltClTransformReduce );
+}
+TEST_P( transformReduceTestMultFloat, MulticoreaddFloatValues)
+{
+    std::vector<float> A( arraySize );
+    std::vector<float> B( arraySize );
+    std::vector<float> boltVect( arraySize );
+    
+    float myFloatValues = 9.0625f;
+
+    for( int i=0; i < arraySize; ++i )
+    {
+        A[i] = myFloatValues + float(i);
+        boltVect[i] = A[i];
+    }
+    
+    bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu); 
+
+    std::transform(A.begin(), A.end(), B.begin(), std::negate<float>());
+    float stdTransformReduceValue = std::accumulate(B.begin(), B.end(), 0.0f, std::plus<float>());
+    float boltClTransformReduce = bolt::amp::transform_reduce(ctl, boltVect.begin(), boltVect.end(),
+                                        bolt::amp::negate<float>(), 0.0f, bolt::amp::plus<float>());
 
     //compare these results with each other
     EXPECT_FLOAT_EQ( stdTransformReduceValue, boltClTransformReduce );
@@ -717,7 +1100,7 @@ public:
     transformReduceTestMultDouble():arraySize(GetParam()){
     }
 };
-
+#if(TEST_DOUBLE == 1)
 TEST_P (transformReduceTestMultDouble, multiplyWithDouble)
 {
     double* myArray = new double[ arraySize ];
@@ -739,7 +1122,8 @@ TEST_P (transformReduceTestMultDouble, multiplyWithDouble)
 
     double stlTransformReduce = std::accumulate(myArray2, myArray2 + arraySize, 1.0, std::multiplies<double>());
 
-    double boltTransformReduce = bolt::amp::transform_reduce(myBoltArray, myBoltArray + arraySize, bolt::amp::negate<double>(), 1.0, bolt::amp::multiplies<double>());
+    double boltTransformReduce = bolt::amp::transform_reduce(myBoltArray, myBoltArray + arraySize, 
+                                bolt::amp::negate<double>(), 1.0, bolt::amp::multiplies<double>());
     
     EXPECT_DOUBLE_EQ(stlTransformReduce , boltTransformReduce )<<"Values does not match\n";
 
@@ -747,8 +1131,75 @@ TEST_P (transformReduceTestMultDouble, multiplyWithDouble)
     delete [] myArray2;
     delete [] myBoltArray;
 }
+TEST_P (transformReduceTestMultDouble, SerialmultiplyWithDouble)
+{
+    double* myArray = new double[ arraySize ];
+    double* myArray2 = new double[ arraySize ];
+    double* myBoltArray = new double[ arraySize ];
+    
+    for (int i=0; i < arraySize; i++)
+    {
+        myArray[i] = (double)i + 1.25;
+        myBoltArray[i] = myArray[i];
+    }
 
+#if defined (_WIN32 )
+    std::transform( myArray, myArray + arraySize, stdext::make_checked_array_iterator( myArray2, arraySize ), 
+        std::negate<double>( ) );
+#else
+    std::transform(myArray, myArray + arraySize, myArray2, std::negate<double>());
+#endif
+    bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    ctl.setForceRunMode(bolt::amp::control::SerialCpu); 
+
+    double stlTransformReduce = std::accumulate(myArray2, myArray2 + arraySize, 1.0, std::multiplies<double>());
+
+    double boltTransformReduce = bolt::amp::transform_reduce(ctl, myBoltArray, myBoltArray + arraySize,
+                                    bolt::amp::negate<double>(), 1.0, bolt::amp::multiplies<double>());
+    
+    EXPECT_DOUBLE_EQ(stlTransformReduce , boltTransformReduce )<<"Values does not match\n";
+
+    delete [] myArray;
+    delete [] myArray2;
+    delete [] myBoltArray;
+}
+TEST_P (transformReduceTestMultDouble, MulticoremultiplyWithDouble)
+{
+    double* myArray = new double[ arraySize ];
+    double* myArray2 = new double[ arraySize ];
+    double* myBoltArray = new double[ arraySize ];
+    
+    for (int i=0; i < arraySize; i++)
+    {
+        myArray[i] = (double)i + 1.25;
+        myBoltArray[i] = myArray[i];
+    }
+
+#if defined (_WIN32 )
+    std::transform( myArray, myArray + arraySize, stdext::make_checked_array_iterator( myArray2, arraySize ), 
+        std::negate<double>( ) );
+#else
+    std::transform(myArray, myArray + arraySize, myArray2, std::negate<double>());
+#endif
+    bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu); 
+
+    double stlTransformReduce = std::accumulate(myArray2, myArray2 + arraySize, 1.0, std::multiplies<double>());
+
+    double boltTransformReduce = bolt::amp::transform_reduce(ctl, myBoltArray, myBoltArray + arraySize,
+                                    bolt::amp::negate<double>(), 1.0, bolt::amp::multiplies<double>());
+    
+    EXPECT_DOUBLE_EQ(stlTransformReduce , boltTransformReduce )<<"Values does not match\n";
+
+    delete [] myArray;
+    delete [] myArray2;
+    delete [] myBoltArray;
+}
+#endif
+
+#if(TEST_DOUBLE == 1)
 INSTANTIATE_TEST_CASE_P( multiplyWithDoublePredicate, transformReduceTestMultDouble, ::testing::Range(1, 20, 1) );
+#endif
 
 #if (TEST_DOUBLE ==1 )
 //  ::testing::TestWithParam< int > means that GetParam( ) returns int values, which i use for array size
@@ -813,6 +1264,60 @@ TEST_P( TransformIntegerVector, Normal )
     cmpArrays( stdInput, boltInput );
 
 }
+TEST_P( TransformIntegerVector, SerialNormal )
+{
+
+    int init(0);
+    
+    bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    ctl.setForceRunMode(bolt::amp::control::SerialCpu); 
+
+    //  Calling the actual functions under test
+    std::transform(stdInput.begin(), stdInput.end(), stdOutput.begin(), std::negate<int>());
+    int stlReduce = std::accumulate(stdOutput.begin(), stdOutput.end(), init);
+
+    int boltReduce = bolt::amp::transform_reduce(ctl, boltInput.begin( ), boltInput.end( ),
+                                                       bolt::amp::negate<int>(), init,
+                                                       bolt::amp::plus<int>());
+
+    size_t stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
+    size_t boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+    EXPECT_EQ( stlReduce, boltReduce );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+
+}
+TEST_P( TransformIntegerVector, MulticoreNormal )
+{
+
+    int init(0);
+    
+    bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu); 
+
+    //  Calling the actual functions under test
+    std::transform(stdInput.begin(), stdInput.end(), stdOutput.begin(), std::negate<int>());
+    int stlReduce = std::accumulate(stdOutput.begin(), stdOutput.end(), init);
+
+    int boltReduce = bolt::amp::transform_reduce(ctl, boltInput.begin( ), boltInput.end( ),
+                                                       bolt::amp::negate<int>(), init,
+                                                       bolt::amp::plus<int>());
+
+    size_t stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
+    size_t boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+    EXPECT_EQ( stlReduce, boltReduce );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+
+}
 
 TEST_P( TransformFloatVector, Normal )
 {
@@ -835,6 +1340,57 @@ TEST_P( TransformFloatVector, Normal )
     //  Loop through the array and compare all the values with each other
     cmpArrays( stdInput, boltInput );
 }
+TEST_P( TransformFloatVector, SerialNormal )
+{
+    float init(0);
+    
+    bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    ctl.setForceRunMode(bolt::amp::control::SerialCpu); 
+
+    //  Calling the actual functions under test
+    std::transform(stdInput.begin(), stdInput.end(), stdOutput.begin(), std::negate<float>());
+    float stlReduce = std::accumulate(stdOutput.begin(), stdOutput.end(), init);
+
+    float boltReduce = bolt::amp::transform_reduce(ctl, boltInput.begin( ), boltInput.end( ),
+                                                       bolt::amp::negate<float>(), init,
+                                                       bolt::amp::plus<float>());
+
+    size_t stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
+    size_t boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+    EXPECT_EQ( stlReduce, boltReduce );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+TEST_P( TransformFloatVector, MulticoreNormal )
+{
+    float init(0);
+    
+    bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu); 
+
+    //  Calling the actual functions under test
+    std::transform(stdInput.begin(), stdInput.end(), stdOutput.begin(), std::negate<float>());
+    float stlReduce = std::accumulate(stdOutput.begin(), stdOutput.end(), init);
+
+    float boltReduce = bolt::amp::transform_reduce(ctl, boltInput.begin( ), boltInput.end( ),
+                                                       bolt::amp::negate<float>(), init,
+                                                       bolt::amp::plus<float>());
+
+    size_t stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
+    size_t boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+    EXPECT_EQ( stlReduce, boltReduce );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+
 #if (TEST_DOUBLE == 1)
 TEST_P( TransformDoubleVector, Inplace )
 {
@@ -843,7 +1399,59 @@ TEST_P( TransformDoubleVector, Inplace )
     std::transform(stdInput.begin(), stdInput.end(), stdOutput.begin(), bolt::amp::negate<double>());
     double stlReduce = std::accumulate(stdOutput.begin(), stdOutput.end(), init);
 
-    double boltReduce = bolt::cl::transform_reduce( boltInput.begin( ), boltInput.end( ),
+    double boltReduce = bolt::amp::transform_reduce( boltInput.begin( ), boltInput.end( ),
+                                                       bolt::amp::negate<double>(), init,
+                                                       bolt::amp::plus<double>());
+
+    size_t stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
+    size_t boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+    EXPECT_EQ( stlReduce, boltReduce );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( TransformDoubleVector, SerialInplace )
+{
+    double init(0);
+    
+    bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    ctl.setForceRunMode(bolt::amp::control::SerialCpu); 
+
+    //  Calling the actual functions under test
+    std::transform(stdInput.begin(), stdInput.end(), stdOutput.begin(), bolt::amp::negate<double>());
+    double stlReduce = std::accumulate(stdOutput.begin(), stdOutput.end(), init);
+
+    double boltReduce = bolt::amp::transform_reduce(ctl, boltInput.begin( ), boltInput.end( ),
+                                                       bolt::amp::negate<double>(), init,
+                                                       bolt::amp::plus<double>());
+
+    size_t stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
+    size_t boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+    EXPECT_EQ( stlReduce, boltReduce );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+}
+
+TEST_P( TransformDoubleVector, MulticoreInplace )
+{
+    double init(0);
+    
+    bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu); 
+
+    //  Calling the actual functions under test
+    std::transform(stdInput.begin(), stdInput.end(), stdOutput.begin(), bolt::amp::negate<double>());
+    double stlReduce = std::accumulate(stdOutput.begin(), stdOutput.end(), init);
+
+    double boltReduce = bolt::amp::transform_reduce(ctl, boltInput.begin( ), boltInput.end( ),
                                                        bolt::amp::negate<double>(), init,
                                                        bolt::amp::plus<double>());
 
@@ -866,7 +1474,7 @@ TEST_P( TransformIntegerDeviceVector, Inplace )
     std::transform(stdInput.begin(), stdInput.end(), stdOutput.begin(), bolt::amp::negate<int>());
     int stlReduce = std::accumulate(stdOutput.begin(), stdOutput.end(), init);
 
-    int boltReduce = bolt::cl::transform_reduce( boltInput.begin( ), boltInput.end( ),
+    int boltReduce = bolt::amp::transform_reduce( boltInput.begin( ), boltInput.end( ),
                                                        bolt::amp::negate<int>(), init,
                                                        bolt::amp::plus<int>());
 
@@ -880,14 +1488,18 @@ TEST_P( TransformIntegerDeviceVector, Inplace )
     //  Loop through the array and compare all the values with each other
     cmpArrays( stdInput, boltInput );
 }
-TEST_P( TransformFloatDeviceVector, Inplace )
+TEST_P( TransformFloatDeviceVector, SerialInplace )
 {
     float init(0);
+     
+    bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    ctl.setForceRunMode(bolt::amp::control::SerialCpu); 
+
     //  Calling the actual functions under test
     std::transform(stdInput.begin(), stdInput.end(), stdOutput.begin(), bolt::amp::negate<float>());
     float stlReduce = std::accumulate(stdOutput.begin(), stdOutput.end(), init);
 
-    float boltReduce = bolt::cl::transform_reduce( boltInput.begin( ), boltInput.end( ),
+    float boltReduce = bolt::cl::transform_reduce(ctl, boltInput.begin( ), boltInput.end( ),
                                                        bolt::amp::negate<float>(), init,
                                                        bolt::amp::plus<float>());
 
@@ -902,14 +1514,18 @@ TEST_P( TransformFloatDeviceVector, Inplace )
     cmpArrays( stdInput, boltInput );
 }
 #if (TEST_DOUBLE == 1)
-TEST_P( TransformDoubleDeviceVector, Inplace )
+TEST_P( TransformDoubleDeviceVector, MulticoreInplace )
 {
     double init(0);
+     
+    bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu); 
+
     //  Calling the actual functions under test
     std::transform(stdInput.begin(), stdInput.end(), stdOutput.begin(), bolt::amp::negate<double>());
     double stlReduce = std::accumulate(stdOutput.begin(), stdOutput.end(), init);
 
-    double boltReduce = bolt::cl::transform_reduce( boltInput.begin( ), boltInput.end( ),
+    double boltReduce = bolt::cl::transform_reduce(ctl, boltInput.begin( ), boltInput.end( ),
                                                        bolt::amp::negate<double>(), init,
                                                        bolt::amp::plus<double>());
 
@@ -949,6 +1565,60 @@ TEST_P( TransformIntegerNakedPointer, Inplace )
     //  Loop through the array and compare all the values with each other
     cmpArrays( stdInput, boltInput, endIndex );
 }
+TEST_P( TransformIntegerNakedPointer, SerialInplace )
+{
+    size_t endIndex = GetParam( );
+
+    //  Calling the actual functions under test
+    stdext::checked_array_iterator< int* > wrapStdInput( stdInput, endIndex );
+    stdext::checked_array_iterator< int* > wrapStdOutput( stdOutput, endIndex );
+    stdext::checked_array_iterator< int* > wrapBoltInput( boltInput, endIndex );
+
+    int init(0);
+     
+    bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    ctl.setForceRunMode(bolt::amp::control::SerialCpu); 
+
+    //  Calling the actual functions under test
+    std::transform(wrapStdInput, wrapStdInput + endIndex, wrapStdOutput, std::negate<int>());
+    int stlReduce = std::accumulate(wrapStdOutput,wrapStdOutput + endIndex, init);
+
+    int boltReduce = bolt::amp::transform_reduce(ctl, wrapBoltInput, wrapBoltInput + endIndex,
+                                                       bolt::amp::negate<int>(), init,
+                                                       bolt::amp::plus<int>());
+
+    EXPECT_EQ( stlReduce, boltReduce );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput, endIndex );
+}
+TEST_P( TransformIntegerNakedPointer, MulticoreInplace )
+{
+    size_t endIndex = GetParam( );
+
+    //  Calling the actual functions under test
+    stdext::checked_array_iterator< int* > wrapStdInput( stdInput, endIndex );
+    stdext::checked_array_iterator< int* > wrapStdOutput( stdOutput, endIndex );
+    stdext::checked_array_iterator< int* > wrapBoltInput( boltInput, endIndex );
+
+    int init(0);
+     
+    bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu); 
+
+    //  Calling the actual functions under test
+    std::transform(wrapStdInput, wrapStdInput + endIndex, wrapStdOutput, std::negate<int>());
+    int stlReduce = std::accumulate(wrapStdOutput,wrapStdOutput + endIndex, init);
+
+    int boltReduce = bolt::amp::transform_reduce(ctl, wrapBoltInput, wrapBoltInput + endIndex,
+                                                       bolt::amp::negate<int>(), init,
+                                                       bolt::amp::plus<int>());
+
+    EXPECT_EQ( stlReduce, boltReduce );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput, endIndex );
+}
 
 TEST_P( TransformFloatNakedPointer, Inplace )
 {
@@ -960,11 +1630,12 @@ TEST_P( TransformFloatNakedPointer, Inplace )
     stdext::checked_array_iterator< float* > wrapBoltInput( boltInput, endIndex );
 
     float init(0);
+      
     //  Calling the actual functions under test
     std::transform(wrapStdInput, wrapStdInput + endIndex, wrapStdOutput, std::negate<float>());
     float stlReduce = std::accumulate(wrapStdOutput,wrapStdOutput + endIndex, init);
 
-    float boltReduce = bolt::amp::transform_reduce( wrapBoltInput, wrapBoltInput + endIndex,
+    float boltReduce = bolt::amp::transform_reduce(wrapBoltInput, wrapBoltInput + endIndex,
                                                        bolt::amp::negate<float>(), init,
                                                        bolt::amp::plus<float>());
 
@@ -973,6 +1644,61 @@ TEST_P( TransformFloatNakedPointer, Inplace )
     //  Loop through the array and compare all the values with each other
     cmpArrays( stdInput, boltInput, endIndex );
 }
+TEST_P( TransformFloatNakedPointer, SerialInplace )
+{
+    size_t endIndex = GetParam( );
+ 
+    bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    ctl.setForceRunMode(bolt::amp::control::SerialCpu); 
+
+    //  Calling the actual functions under test
+    stdext::checked_array_iterator< float* > wrapStdInput( stdInput, endIndex );
+    stdext::checked_array_iterator< float* > wrapStdOutput( stdOutput, endIndex );
+    stdext::checked_array_iterator< float* > wrapBoltInput( boltInput, endIndex );
+
+    float init(0);
+      
+    //  Calling the actual functions under test
+    std::transform(wrapStdInput, wrapStdInput + endIndex, wrapStdOutput, std::negate<float>());
+    float stlReduce = std::accumulate(wrapStdOutput,wrapStdOutput + endIndex, init);
+
+    float boltReduce = bolt::amp::transform_reduce(ctl, wrapBoltInput, wrapBoltInput + endIndex,
+                                                       bolt::amp::negate<float>(), init,
+                                                       bolt::amp::plus<float>());
+
+    EXPECT_EQ( stlReduce, boltReduce );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput, endIndex );
+}
+TEST_P( TransformFloatNakedPointer, MulticoreInplace )
+{
+    size_t endIndex = GetParam( );
+
+    //  Calling the actual functions under test
+    stdext::checked_array_iterator< float* > wrapStdInput( stdInput, endIndex );
+    stdext::checked_array_iterator< float* > wrapStdOutput( stdOutput, endIndex );
+    stdext::checked_array_iterator< float* > wrapBoltInput( boltInput, endIndex );
+     
+    bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu); 
+
+    float init(0);
+      
+    //  Calling the actual functions under test
+    std::transform(wrapStdInput, wrapStdInput + endIndex, wrapStdOutput, std::negate<float>());
+    float stlReduce = std::accumulate(wrapStdOutput,wrapStdOutput + endIndex, init);
+
+    float boltReduce = bolt::amp::transform_reduce(wrapBoltInput, wrapBoltInput + endIndex,
+                                                       bolt::amp::negate<float>(), init,
+                                                       bolt::amp::plus<float>());
+
+    EXPECT_EQ( stlReduce, boltReduce );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput, endIndex );
+}
+
 
 
 #if (TEST_DOUBLE == 1)
@@ -999,32 +1725,93 @@ TEST_P( TransformDoubleNakedPointer, Inplace )
     //  Loop through the array and compare all the values with each other
     cmpArrays( stdInput, boltInput, endIndex );
 }
+TEST_P( TransformDoubleNakedPointer, SerialInplace )
+{
+    size_t endIndex = GetParam( );
+
+    //  Calling the actual functions under test
+    stdext::checked_array_iterator< double* > wrapStdInput( stdInput, endIndex );
+    stdext::checked_array_iterator< double* > wrapStdOutput( stdOutput, endIndex );
+    stdext::checked_array_iterator< double* > wrapBoltInput( boltInput, endIndex );
+     
+    bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    ctl.setForceRunMode(bolt::amp::control::SerialCpu); 
+
+    double init(0);
+    //  Calling the actual functions under test
+    std::transform(wrapStdInput, wrapStdInput + endIndex, wrapStdOutput, bolt::cl::negate<double>());
+    double stlReduce = std::accumulate(wrapStdOutput,wrapStdOutput + endIndex, init);
+
+    double boltReduce = bolt::cl::transform_reduce(ctl, wrapBoltInput, wrapBoltInput + endIndex,
+                                                       bolt::cl::negate<double>(), init,
+                                                       bolt::cl::plus<double>());
+
+    EXPECT_EQ( stlReduce, boltReduce );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput, endIndex );
+}
+TEST_P( TransformDoubleNakedPointer, MulticoreInplace )
+{
+    size_t endIndex = GetParam( );
+
+    //  Calling the actual functions under test
+    stdext::checked_array_iterator< double* > wrapStdInput( stdInput, endIndex );
+    stdext::checked_array_iterator< double* > wrapStdOutput( stdOutput, endIndex );
+    stdext::checked_array_iterator< double* > wrapBoltInput( boltInput, endIndex );
+     
+    bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu); 
+
+    double init(0);
+    //  Calling the actual functions under test
+    std::transform(wrapStdInput, wrapStdInput + endIndex, wrapStdOutput, bolt::cl::negate<double>());
+    double stlReduce = std::accumulate(wrapStdOutput,wrapStdOutput + endIndex, init);
+
+    double boltReduce = bolt::cl::transform_reduce(ctl, wrapBoltInput, wrapBoltInput + endIndex,
+                                                       bolt::cl::negate<double>(), init,
+                                                       bolt::cl::plus<double>());
+
+    EXPECT_EQ( stlReduce, boltReduce );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput, endIndex );
+}
 #endif
 std::array<int, 15> TestValues = {2,4,8,16,32,64,128,256,512,1024,2048,4096,8192,16384,32768};
 //Test lots of consecutive numbers, but small range, suitable for integers because they overflow easier
 INSTANTIATE_TEST_CASE_P( TransformRange, TransformIntegerVector, ::testing::Range( 0, 1024, 7 ) );
-INSTANTIATE_TEST_CASE_P( TransformValues, TransformIntegerVector, ::testing::ValuesIn( TestValues.begin(), TestValues.end() ) );
+INSTANTIATE_TEST_CASE_P( TransformValues, TransformIntegerVector, ::testing::ValuesIn( TestValues.begin(),
+                                                                                    TestValues.end() ) );
 INSTANTIATE_TEST_CASE_P( TransformRange, TransformFloatVector, ::testing::Range( 0, 1024, 3 ) );
-INSTANTIATE_TEST_CASE_P( TransformValues, TransformFloatVector, ::testing::ValuesIn( TestValues.begin(), TestValues.end() ) );
+INSTANTIATE_TEST_CASE_P( TransformValues, TransformFloatVector, ::testing::ValuesIn( TestValues.begin(), 
+                                                                                    TestValues.end() ) );
 #if (TEST_DOUBLE == 1)
 INSTANTIATE_TEST_CASE_P( TransformRange, TransformDoubleVector, ::testing::Range( 0, 1024, 21 ) );
-INSTANTIATE_TEST_CASE_P( TransformValues, TransformDoubleVector, ::testing::ValuesIn( TestValues.begin(), TestValues.end() ) );
+INSTANTIATE_TEST_CASE_P( TransformValues, TransformDoubleVector, ::testing::ValuesIn( TestValues.begin(),
+                                                                                    TestValues.end() ) );
 #endif
 INSTANTIATE_TEST_CASE_P( TransformRange, TransformIntegerDeviceVector, ::testing::Range( 0, 1024, 53 ) );
-INSTANTIATE_TEST_CASE_P( TransformValues, TransformIntegerDeviceVector, ::testing::ValuesIn( TestValues.begin(), TestValues.end() ) );
+INSTANTIATE_TEST_CASE_P( TransformValues, TransformIntegerDeviceVector, ::testing::ValuesIn( TestValues.begin(),
+                                                                                            TestValues.end() ) );
 INSTANTIATE_TEST_CASE_P( TransformRange, TransformFloatDeviceVector, ::testing::Range( 0, 1024, 53 ) );
-INSTANTIATE_TEST_CASE_P( TransformValues, TransformFloatDeviceVector, ::testing::ValuesIn( TestValues.begin(), TestValues.end() ) );
+INSTANTIATE_TEST_CASE_P( TransformValues, TransformFloatDeviceVector, ::testing::ValuesIn( TestValues.begin(), 
+                                                                                            TestValues.end() ) );
 #if (TEST_DOUBLE == 1)
 INSTANTIATE_TEST_CASE_P( TransformRange, TransformDoubleDeviceVector, ::testing::Range( 0, 1024, 53 ) );
-INSTANTIATE_TEST_CASE_P( TransformValues, TransformDoubleDeviceVector, ::testing::ValuesIn( TestValues.begin(), TestValues.end() ) );
+INSTANTIATE_TEST_CASE_P( TransformValues, TransformDoubleDeviceVector, ::testing::ValuesIn( TestValues.begin(),
+                                                                                            TestValues.end() ) );
 #endif
 INSTANTIATE_TEST_CASE_P( TransformRange, TransformIntegerNakedPointer, ::testing::Range( 0, 1024, 13) );
-INSTANTIATE_TEST_CASE_P( TransformValues, TransformIntegerNakedPointer, ::testing::ValuesIn( TestValues.begin(), TestValues.end() ) );
+INSTANTIATE_TEST_CASE_P( TransformValues, TransformIntegerNakedPointer, ::testing::ValuesIn( TestValues.begin(),
+                                                                                            TestValues.end() ) );
 INSTANTIATE_TEST_CASE_P( TransformRange, TransformFloatNakedPointer, ::testing::Range( 0, 1024, 13) );
-INSTANTIATE_TEST_CASE_P( TransformValues, TransformFloatNakedPointer, ::testing::ValuesIn( TestValues.begin(), TestValues.end() ) );
+INSTANTIATE_TEST_CASE_P( TransformValues, TransformFloatNakedPointer, ::testing::ValuesIn( TestValues.begin(), 
+                                                                                            TestValues.end() ) );
 #if (TEST_DOUBLE == 1)
 INSTANTIATE_TEST_CASE_P( TransformRange, TransformDoubleNakedPointer, ::testing::Range( 0, 1024, 13) );
-INSTANTIATE_TEST_CASE_P( Transform, TransformDoubleNakedPointer, ::testing::ValuesIn( TestValues.begin(), TestValues.end() ) );
+INSTANTIATE_TEST_CASE_P( Transform, TransformDoubleNakedPointer, ::testing::ValuesIn( TestValues.begin(), 
+                                                                                    TestValues.end() ) );
 #endif
 
 typedef ::testing::Types< 
@@ -1225,7 +2012,57 @@ INSTANTIATE_TYPED_TEST_CASE_P( Double, TransformArrayTest, DoubleTests );
 //INSTANTIATE_TYPED_TEST_CASE_P( UDDTest, SortArrayTest, UDDTests );
 
 
-TEST(TransformReduce, MultiCoreFloat)
+TEST(TransformReduce, Float)
+{
+     size_t length = 1<<20;
+     std::vector< float > input( length );
+     std::vector< float > refInput( length);
+     std::vector< float > refIntermediate( length );
+     for(int i=0; i<length; i++) {
+        input[i] = 2.f;
+        refInput[i] = 2.f;
+    }
+   // call transform_reduce
+    //  DivUDD ddd;
+    bolt::amp::negate<float> ddd;
+    bolt::amp::plus<float> add;
+    float boldReduce = bolt::amp::transform_reduce( input.begin(), input.end(),  ddd, 4.f, add );
+    ::std::transform(   refInput.begin(), refInput.end(),  refIntermediate.begin(), ddd); // transform in-place
+    float stdReduce = ::std::accumulate( refIntermediate.begin(), refIntermediate.end(), 4.f, add); //out-of-place scan
+
+  //  printf("%d %f %f\n", length, boldReduce, stdReduce);  
+    // compare results
+    EXPECT_FLOAT_EQ( stdReduce, boldReduce );
+  
+} 
+TEST(TransformReduce, SerialFloat)
+{
+     size_t length = 1<<20;
+     std::vector< float > input( length );
+     std::vector< float > refInput( length);
+     std::vector< float > refIntermediate( length );
+     for(int i=0; i<length; i++) {
+        input[i] = 2.f;
+        refInput[i] = 2.f;
+    }
+    
+    bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    ctl.setForceRunMode(bolt::amp::control::SerialCpu); 
+
+    // call transform_reduce
+    //  DivUDD ddd;
+    bolt::amp::negate<float> ddd;
+    bolt::amp::plus<float> add;
+    float boldReduce = bolt::amp::transform_reduce(ctl, input.begin(), input.end(),  ddd, 4.f, add );
+    ::std::transform(   refInput.begin(), refInput.end(),  refIntermediate.begin(), ddd); // transform in-place
+    float stdReduce = ::std::accumulate( refIntermediate.begin(), refIntermediate.end(), 4.f, add); //out-of-place scan
+
+  //  printf("%d %f %f\n", length, boldReduce, stdReduce);  
+    // compare results
+    EXPECT_FLOAT_EQ( stdReduce, boldReduce );
+  
+} 
+TEST(TransformReduce, MulticoreFloat)
 {
      size_t length = 1<<20;
      std::vector< float > input( length );
@@ -1236,21 +2073,43 @@ TEST(TransformReduce, MultiCoreFloat)
         refInput[i] = 2.f;
     }
     bolt::amp::control ctl = bolt::amp::control::getDefault( );
-    ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu); // tested with serial path also
+    ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu); 
     // call transform_reduce
     //  DivUDD ddd;
     bolt::amp::negate<float> ddd;
     bolt::amp::plus<float> add;
     float boldReduce = bolt::amp::transform_reduce(ctl, input.begin(), input.end(),  ddd, 4.f, add );
     ::std::transform(   refInput.begin(), refInput.end(),  refIntermediate.begin(), ddd); // transform in-place
-    float stdReduce = ::std::accumulate( refIntermediate.begin(), refIntermediate.end(), 4.f, add); // out-of-place scan
+    float stdReduce = ::std::accumulate( refIntermediate.begin(), refIntermediate.end(), 4.f, add);// out-of-place scan
 
   //  printf("%d %f %f\n", length, boldReduce, stdReduce);  
     // compare results
     EXPECT_FLOAT_EQ( stdReduce, boldReduce );
   
 } 
-TEST(TransformReduce, MultiCoreDouble)
+#if(TEST_DOUBLE == 1)
+TEST(TransformReduce, Double)
+{
+     size_t length = 1<<20;
+     std::vector< double > input( length );
+     std::vector< double > refInput( length);
+     std::vector< double > refIntermediate( length );
+     for(int i=0; i<length; i++) {
+        input[i] = 2.0;
+        refInput[i] = 2.0;
+    }
+    bolt::amp::negate<double> ddd;
+    bolt::amp::plus<double> add;
+    double boldReduce = bolt::amp::transform_reduce( input.begin(), input.end(),  ddd, 4.0, add );
+    ::std::transform(   refInput.begin(), refInput.end(),  refIntermediate.begin(), ddd); // transform in-place
+    double stdReduce = ::std::accumulate( refIntermediate.begin(), refIntermediate.end(), 4.0, add);//out-of-place scan
+
+    //printf("%d %lf %lf\n", length, boldReduce, stdReduce);  
+    // compare results
+    EXPECT_DOUBLE_EQ( stdReduce, boldReduce );
+  
+} 
+TEST(TransformReduce, SerialDouble)
 {
      size_t length = 1<<20;
      std::vector< double > input( length );
@@ -1261,22 +2120,73 @@ TEST(TransformReduce, MultiCoreDouble)
         refInput[i] = 2.0;
     }
     bolt::amp::control ctl = bolt::amp::control::getDefault( );
-    ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu); // tested with serial path also
+    ctl.setForceRunMode(bolt::amp::control::SerialCpu); 
     // call transform_reduce
     //  DivUDD ddd;
     bolt::amp::negate<double> ddd;
     bolt::amp::plus<double> add;
     double boldReduce = bolt::amp::transform_reduce(ctl, input.begin(), input.end(),  ddd, 4.0, add );
     ::std::transform(   refInput.begin(), refInput.end(),  refIntermediate.begin(), ddd); // transform in-place
-    double stdReduce = ::std::accumulate( refIntermediate.begin(), refIntermediate.end(), 4.0, add); // out-of-place scan
+    double stdReduce = ::std::accumulate( refIntermediate.begin(), refIntermediate.end(), 4.0, add);//out-of-place scan
 
     //printf("%d %lf %lf\n", length, boldReduce, stdReduce);  
     // compare results
     EXPECT_DOUBLE_EQ( stdReduce, boldReduce );
   
 } 
+TEST(TransformReduce, MulticoreDouble)
+{
+     size_t length = 1<<20;
+     std::vector< double > input( length );
+     std::vector< double > refInput( length);
+     std::vector< double > refIntermediate( length );
+     for(int i=0; i<length; i++) {
+        input[i] = 2.0;
+        refInput[i] = 2.0;
+    }
+    bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu); 
+    // call transform_reduce
+    //  DivUDD ddd;
+    bolt::amp::negate<double> ddd;
+    bolt::amp::plus<double> add;
+    double boldReduce = bolt::amp::transform_reduce(ctl, input.begin(), input.end(),  ddd, 4.0, add );
+    ::std::transform(   refInput.begin(), refInput.end(),  refIntermediate.begin(), ddd); // transform in-place
+    double stdReduce = ::std::accumulate( refIntermediate.begin(), refIntermediate.end(), 4.0, add);//out-of-place scan
 
-TEST(TransformReduce, MultiCoreUDD)
+    //printf("%d %lf %lf\n", length, boldReduce, stdReduce);  
+    // compare results
+    EXPECT_DOUBLE_EQ( stdReduce, boldReduce );
+  
+} 
+#endif
+
+TEST(TransformReduce, DefaultUDD)
+{
+    size_t length = 1<<20;
+    UDD initial;
+    initial.a = 2;
+    initial.b = 2;
+    std::vector< UDD > input( length, initial );
+    std::vector< UDD > refInput( length, initial );
+    std::vector< UDD > refIntermediate( length);
+     for(int i=0; i<length; i++) {
+        input[i].a = 2;
+        refInput[i].a = 2;
+        input[i].b = 2;
+        refInput[i].b = 2;
+    }
+    negateUDD ddd;
+    bolt::amp::plus<UDD> add;
+    UDD boldReduce = bolt::amp::transform_reduce( input.begin(), input.end(),  ddd, initial, add );
+    ::std::transform(   refInput.begin(), refInput.end(),  refIntermediate.begin(), ddd); // transform in-place
+    UDD stdReduce = ::std::accumulate( refIntermediate.begin(), refIntermediate.end(), initial,add);//out-of-place scan
+    //printf("%d %d %d %d %d\n", length, boldReduce.a, stdReduce.a, boldReduce.b, stdReduce.b);  
+    // compare results
+    EXPECT_EQ( stdReduce, boldReduce );
+    
+} 
+TEST(TransformReduce, SerialUDD)
 {
     size_t length = 1<<20;
     UDD initial;
@@ -1292,19 +2202,72 @@ TEST(TransformReduce, MultiCoreUDD)
         refInput[i].b = 2;
     }
     bolt::amp::control ctl = bolt::amp::control::getDefault( );
-    ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu); // tested with serial path also
+    ctl.setForceRunMode(bolt::amp::control::SerialCpu); 
     negateUDD ddd;
     bolt::amp::plus<UDD> add;
     UDD boldReduce = bolt::amp::transform_reduce(ctl, input.begin(), input.end(),  ddd, initial, add );
     ::std::transform(   refInput.begin(), refInput.end(),  refIntermediate.begin(), ddd); // transform in-place
-    UDD stdReduce = ::std::accumulate( refIntermediate.begin(), refIntermediate.end(), initial, add); // out-of-place scan
+    UDD stdReduce = ::std::accumulate( refIntermediate.begin(), refIntermediate.end(), initial,add);//out-of-place scan
+    //printf("%d %d %d %d %d\n", length, boldReduce.a, stdReduce.a, boldReduce.b, stdReduce.b);  
+    // compare results
+    EXPECT_EQ( stdReduce, boldReduce );
+    
+} 
+TEST(TransformReduce, MulticoreUDD)
+{
+    size_t length = 1<<20;
+    UDD initial;
+    initial.a = 2;
+    initial.b = 2;
+    std::vector< UDD > input( length, initial );
+    std::vector< UDD > refInput( length, initial );
+    std::vector< UDD > refIntermediate( length);
+     for(int i=0; i<length; i++) {
+        input[i].a = 2;
+        refInput[i].a = 2;
+        input[i].b = 2;
+        refInput[i].b = 2;
+    }
+    bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu); 
+    negateUDD ddd;
+    bolt::amp::plus<UDD> add;
+    UDD boldReduce = bolt::amp::transform_reduce(ctl, input.begin(), input.end(),  ddd, initial, add );
+    ::std::transform(   refInput.begin(), refInput.end(),  refIntermediate.begin(), ddd); // transform in-place
+    UDD stdReduce = ::std::accumulate( refIntermediate.begin(), refIntermediate.end(), initial,add);//out-of-place scan
     //printf("%d %d %d %d %d\n", length, boldReduce.a, stdReduce.a, boldReduce.b, stdReduce.b);  
     // compare results
     EXPECT_EQ( stdReduce, boldReduce );
     
 } 
 
-TEST(TransformReduce, MultiCoreDoubleUDD)
+#if(TEST_DOUBLE == 1)
+TEST(TransformReduce, DoubleUDD)
+{
+    size_t length = 1<<20;
+    tbbUDD initial;
+    initial.a = 2.f;
+    initial.b = 5.0;
+    std::vector< tbbUDD > input( length, initial );
+    std::vector< tbbUDD > refInput( length, initial );
+    std::vector< tbbUDD > refIntermediate( length);
+     for(int i=0; i<length; i++) {
+        input[i].a = 1.f;
+        refInput[i].a = 1.f;
+        input[i].b = 5.0;
+        refInput[i].b = 5.0;
+    }
+    negatetbbUDD ddd;
+    bolt::amp::plus<tbbUDD> add;
+    tbbUDD boldReduce = bolt::amp::transform_reduce(input.begin(), input.end(),  ddd, initial, add );
+    ::std::transform(   refInput.begin(), refInput.end(),  refIntermediate.begin(), ddd); // transform in-place
+    tbbUDD stdReduce = ::std::accumulate(refIntermediate.begin(),refIntermediate.end(),initial,add);//out-of-place scan
+    //printf("%d %f %f %lf %lf\n", length, boldReduce.a, stdReduce.a, boldReduce.b, stdReduce.b);  
+    // compare results
+    EXPECT_EQ( stdReduce, boldReduce );
+    
+} 
+TEST(TransformReduce, SerialDoubleUDD)
 {
     size_t length = 1<<20;
     tbbUDD initial;
@@ -1320,17 +2283,45 @@ TEST(TransformReduce, MultiCoreDoubleUDD)
         refInput[i].b = 5.0;
     }
     bolt::amp::control ctl = bolt::amp::control::getDefault( );
-    ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu); // tested with serial path also
+    ctl.setForceRunMode(bolt::amp::control::SerialCpu); 
     negatetbbUDD ddd;
     bolt::amp::plus<tbbUDD> add;
     tbbUDD boldReduce = bolt::amp::transform_reduce(ctl, input.begin(), input.end(),  ddd, initial, add );
     ::std::transform(   refInput.begin(), refInput.end(),  refIntermediate.begin(), ddd); // transform in-place
-    tbbUDD stdReduce = ::std::accumulate( refIntermediate.begin(), refIntermediate.end(), initial, add); // out-of-place scan
+    tbbUDD stdReduce = ::std::accumulate(refIntermediate.begin(),refIntermediate.end(),initial,add);//out-of-place scan
     //printf("%d %f %f %lf %lf\n", length, boldReduce.a, stdReduce.a, boldReduce.b, stdReduce.b);  
     // compare results
     EXPECT_EQ( stdReduce, boldReduce );
     
 } 
+TEST(TransformReduce, MulticoreDoubleUDD)
+{
+    size_t length = 1<<20;
+    tbbUDD initial;
+    initial.a = 2.f;
+    initial.b = 5.0;
+    std::vector< tbbUDD > input( length, initial );
+    std::vector< tbbUDD > refInput( length, initial );
+    std::vector< tbbUDD > refIntermediate( length);
+     for(int i=0; i<length; i++) {
+        input[i].a = 1.f;
+        refInput[i].a = 1.f;
+        input[i].b = 5.0;
+        refInput[i].b = 5.0;
+    }
+    bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu);
+    negatetbbUDD ddd;
+    bolt::amp::plus<tbbUDD> add;
+    tbbUDD boldReduce = bolt::amp::transform_reduce(ctl, input.begin(), input.end(),  ddd, initial, add );
+    ::std::transform(   refInput.begin(), refInput.end(),  refIntermediate.begin(), ddd); // transform in-place
+    tbbUDD stdReduce = ::std::accumulate(refIntermediate.begin(),refIntermediate.end(),initial,add);//out-of-place scan
+    //printf("%d %f %f %lf %lf\n", length, boldReduce.a, stdReduce.a, boldReduce.b, stdReduce.b);  
+    // compare results
+    EXPECT_EQ( stdReduce, boldReduce );
+    
+} 
+#endif
 
 TEST(TransformReduce, DeviceVectorInt)
 {
@@ -1343,8 +2334,58 @@ TEST(TransformReduce, DeviceVectorInt)
         refInput[i] = i;
      //   printf("%d \n", input[i]);
      }
+     bolt::amp::negate<int> ddd;
+     bolt::amp::plus<int> add;
+
+     int boldReduce = bolt::amp::transform_reduce( input.begin(), input.end(),  ddd, 0, add );
+     ::std::transform(   refInput.begin(), refInput.end(),  refIntermediate.begin(), ddd); // transform in-place
+     int stdReduce = ::std::accumulate( refIntermediate.begin(), refIntermediate.end(), 0); // out-of-place scan
+     printf("%d %d %d\n", length, boldReduce, stdReduce);  
+     // compare results
+     EXPECT_EQ( stdReduce, boldReduce );
+  
+  
+} 
+TEST(TransformReduce, SerialDeviceVectorInt)
+{
+     size_t length = 1<<16;
+     std::vector<  int > refInput( length);
+     std::vector< int > refIntermediate( length );
+     bolt::amp::device_vector< int > input(length,0);
+     for(int i=0; i<length; i++) {
+        input[i] = i;
+        refInput[i] = i;
+     //   printf("%d \n", input[i]);
+     }
      bolt::amp::control ctl = bolt::amp::control::getDefault( );
-     ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu); // tested with serial path also
+     ctl.setForceRunMode(bolt::amp::control::SerialCpu);
+     // call transform_reduce
+     //  DivUDD ddd;
+     bolt::amp::negate<int> ddd;
+     bolt::amp::plus<int> add;
+
+     int boldReduce = bolt::amp::transform_reduce(ctl, input.begin(), input.end(),  ddd, 0, add );
+     ::std::transform(   refInput.begin(), refInput.end(),  refIntermediate.begin(), ddd); // transform in-place
+     int stdReduce = ::std::accumulate( refIntermediate.begin(), refIntermediate.end(), 0); // out-of-place scan
+     printf("%d %d %d\n", length, boldReduce, stdReduce);  
+     // compare results
+     EXPECT_EQ( stdReduce, boldReduce );
+  
+  
+} 
+TEST(TransformReduce, MulticoreDeviceVectorInt)
+{
+     size_t length = 1<<16;
+     std::vector<  int > refInput( length);
+     std::vector< int > refIntermediate( length );
+     bolt::amp::device_vector< int > input(length,0);
+     for(int i=0; i<length; i++) {
+        input[i] = i;
+        refInput[i] = i;
+     //   printf("%d \n", input[i]);
+     }
+     bolt::amp::control ctl = bolt::amp::control::getDefault( );
+     ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu);
      // call transform_reduce
      //  DivUDD ddd;
      bolt::amp::negate<int> ddd;
@@ -1374,10 +2415,35 @@ TEST(TransformReduce, DeviceVectorFloat)
         refInput[i] = 2.f;
      //   printf("%d \n", input[i]);
     }
+    bolt::amp::negate<float> ddd;
+    bolt::amp::plus<float> add;
+
+    float boldReduce = bolt::amp::transform_reduce( input.begin(), input.end(),  ddd, 0.f, add );
+    ::std::transform(   refInput.begin(), refInput.end(),  refIntermediate.begin(), ddd); // transform in-place
+    float stdReduce = ::std::accumulate( refIntermediate.begin(), refIntermediate.end(), 0.f); // out-of-place scan
+
+    printf("%d %f %f\n", length, boldReduce, stdReduce);  
+    // compare results
+    EXPECT_FLOAT_EQ( stdReduce, boldReduce );
+  
+  
+} 
+TEST(TransformReduce, SerialDeviceVectorFloat)
+{
+   
+     size_t length = 1<<16;
+     
+     std::vector<  float > refInput( length);
+     std::vector< float > refIntermediate( length );
+     bolt::amp::device_vector< float > input(length,0);
+
+    for(int i=0; i<length; i++) {
+        input[i] = 2.f;
+        refInput[i] = 2.f;
+     //   printf("%d \n", input[i]);
+    }
     bolt::amp::control ctl = bolt::amp::control::getDefault( );
-    ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu); // tested with serial path also
-    // call transform_reduce
-    //  DivUDD ddd;
+    ctl.setForceRunMode(bolt::amp::control::SerialCpu);
     bolt::amp::negate<float> ddd;
     bolt::amp::plus<float> add;
 
@@ -1391,8 +2457,36 @@ TEST(TransformReduce, DeviceVectorFloat)
   
   
 } 
+TEST(TransformReduce, MulticoreDeviceVectorFloat)
+{
+   
+     size_t length = 1<<16;
+     
+     std::vector<  float > refInput( length);
+     std::vector< float > refIntermediate( length );
+     bolt::amp::device_vector< float > input(length,0);
 
+    for(int i=0; i<length; i++) {
+        input[i] = 2.f;
+        refInput[i] = 2.f;
+     //   printf("%d \n", input[i]);
+    }
+    bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu); 
+    bolt::amp::negate<float> ddd;
+    bolt::amp::plus<float> add;
 
+    float boldReduce = bolt::amp::transform_reduce(ctl, input.begin(), input.end(),  ddd, 0.f, add );
+    ::std::transform(   refInput.begin(), refInput.end(),  refIntermediate.begin(), ddd); // transform in-place
+    float stdReduce = ::std::accumulate( refIntermediate.begin(), refIntermediate.end(), 0.f); // out-of-place scan
+
+    printf("%d %f %f\n", length, boldReduce, stdReduce);  
+    // compare results
+    EXPECT_FLOAT_EQ( stdReduce, boldReduce );
+  
+  
+} 
+#if(TEST_DOUBLE == 1	)
 TEST(TransformReduce, DeviceVectorUDD)
 {
     int length = 1<<16;
@@ -1410,21 +2504,178 @@ TEST(TransformReduce, DeviceVectorUDD)
         refInput[i].b = 5.0;
     }
     */
-    bolt::amp::control ctl = bolt::amp::control::getDefault( );
-    ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu); // tested with serial path also
     negatetbbUDD ddd;
     bolt::amp::plus<tbbUDD> add;
-    tbbUDD boldReduce = bolt::amp::transform_reduce(ctl, input.begin(), input.end(),  ddd, initial, add );
+    tbbUDD boldReduce = bolt::amp::transform_reduce(input.begin(), input.end(),  ddd, initial, add );
     ::std::transform(   refInput.begin(), refInput.end(),  refIntermediate.begin(), ddd); // transform in-place
-    tbbUDD stdReduce = ::std::accumulate( refIntermediate.begin(), refIntermediate.end(), initial, add); // out-of-place scan
+    tbbUDD stdReduce = ::std::accumulate(refIntermediate.begin(),refIntermediate.end(),initial,add);//out-of-place scan
     printf("%d %f %f %lf %lf\n", length, boldReduce.a, stdReduce.a, boldReduce.b, stdReduce.b);  
     // compare results
     EXPECT_EQ( stdReduce, boldReduce );
     
 } 
+TEST(TransformReduce, SerialDeviceVectorUDD)
+{
+    int length = 1<<16;
+    tbbUDD initial;
+    initial.a = 2.f;
+    initial.b = 5.0;
+    bolt::amp::device_vector< tbbUDD > input(  length, initial,  true );
+    std::vector< tbbUDD > refInput( length, initial );
+    std::vector< tbbUDD > refIntermediate( length);
+    /*
+     for(int i=0; i<length; i++) {
+        input[i].a = 1.f;
+        refInput[i].a = 1.f;
+        input[i].b = 5.0;
+        refInput[i].b = 5.0;
+    }
+    */
+    bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    ctl.setForceRunMode(bolt::amp::control::SerialCpu);
+    negatetbbUDD ddd;
+    bolt::amp::plus<tbbUDD> add;
+    tbbUDD boldReduce = bolt::amp::transform_reduce(ctl, input.begin(), input.end(),  ddd, initial, add );
+    ::std::transform(   refInput.begin(), refInput.end(),  refIntermediate.begin(), ddd); // transform in-place
+    tbbUDD stdReduce = ::std::accumulate(refIntermediate.begin(),refIntermediate.end(),initial,add);//out-of-place scan
+    printf("%d %f %f %lf %lf\n", length, boldReduce.a, stdReduce.a, boldReduce.b, stdReduce.b);  
+    // compare results
+    EXPECT_EQ( stdReduce, boldReduce );
+    
+} 
+TEST(TransformReduce, MulticoreDeviceVectorUDD)
+{
+    int length = 1<<16;
+    tbbUDD initial;
+    initial.a = 2.f;
+    initial.b = 5.0;
+    bolt::amp::device_vector< tbbUDD > input(  length, initial,  true );
+    std::vector< tbbUDD > refInput( length, initial );
+    std::vector< tbbUDD > refIntermediate( length);
+    /*
+     for(int i=0; i<length; i++) {
+        input[i].a = 1.f;
+        refInput[i].a = 1.f;
+        input[i].b = 5.0;
+        refInput[i].b = 5.0;
+    }
+    */
+    bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu);
+    negatetbbUDD ddd;
+    bolt::amp::plus<tbbUDD> add;
+    tbbUDD boldReduce = bolt::amp::transform_reduce(ctl, input.begin(), input.end(),  ddd, initial, add );
+    ::std::transform(   refInput.begin(), refInput.end(),  refIntermediate.begin(), ddd); // transform in-place
+    tbbUDD stdReduce = ::std::accumulate(refIntermediate.begin(),refIntermediate.end(),initial,add);//out-of-place scan
+    printf("%d %f %f %lf %lf\n", length, boldReduce.a, stdReduce.a, boldReduce.b, stdReduce.b);  
+    // compare results
+    EXPECT_EQ( stdReduce, boldReduce );
+    
+} 
+#endif
+const char * bolt_code_path_adjustment = "Automatic";
+
+#define TAKE_AMP_CONTROL_PATH bolt::amp::control& my_amp_ctl= bolt::amp::control::getDefault(); \
+if (strcmp(bolt_code_path_adjustment, "Automatic") == 0 ) \
+{\
+my_amp_ctl.setWaitMode( bolt::amp::control::NiceWait );\
+my_amp_ctl.setForceRunMode(bolt::amp::control::Automatic);\
+}\
+if (strcmp(bolt_code_path_adjustment, "Gpu") == 0 )\
+{\
+my_amp_ctl.setWaitMode( bolt::amp::control::NiceWait );\
+my_amp_ctl.setForceRunMode(bolt::amp::control::Gpu);\
+}\
+if (strcmp(bolt_code_path_adjustment, "MultiCoreCpu") == 0 )\
+{\
+my_amp_ctl.setWaitMode( bolt::amp::control::NiceWait );\
+my_amp_ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu);\
+}\
+if (strcmp(bolt_code_path_adjustment, "SerialCpu") == 0 )\
+{\
+my_amp_ctl.setWaitMode( bolt::amp::control::NiceWait );\
+my_amp_ctl.setForceRunMode(bolt::amp::control::SerialCpu);\
+}
 
 
+class point{
+  public:
+  int xPoint;
+  int yPoint;
 
+  point()
+  {
+    xPoint =0;
+    yPoint =0;
+  }
+
+  point(int x, int y)
+  {
+    xPoint = x;
+    yPoint = y;
+  }
+
+  point operator + (const point &rhs) const restrict(cpu,amp)
+  {
+    point tmp = *this;
+    tmp.xPoint = tmp.xPoint + rhs.xPoint;
+    tmp.yPoint = tmp.yPoint + rhs.yPoint;
+    return tmp;
+  }
+  point operator - (const point &rhs) const
+  {
+    point tmp = *this;
+    tmp.xPoint = tmp.xPoint - rhs.xPoint;
+    tmp.yPoint = tmp.yPoint - rhs.yPoint;
+    return tmp;
+  }
+
+  point operator - () const
+  {
+    point tmp = *this;
+    tmp.xPoint = -1 * (tmp.xPoint);
+    tmp.yPoint = -1 * (tmp.yPoint);
+    return tmp;
+  }
+  point operator * (const point &rhs) const restrict(cpu,amp)
+  {
+    point tmp = *this;
+    tmp.xPoint = tmp.xPoint * rhs.xPoint;
+    tmp.yPoint = tmp.yPoint * rhs.yPoint;
+    return tmp;
+  }
+
+};
+
+
+//failed compilation
+
+TEST(Bug377748, userDefinedDataType)
+{
+
+  point pt1(12, 3);
+  point pt2(2, 5);
+  point pt(0, 0);
+  TAKE_AMP_CONTROL_PATH
+  std::vector<point> my_input_bolt_dev_vect(2);
+
+  my_input_bolt_dev_vect[0].xPoint = 12 ;
+  my_input_bolt_dev_vect[0].yPoint = 3 ; 
+
+
+  my_input_bolt_dev_vect[1].xPoint = 2 ; 
+  my_input_bolt_dev_vect[1].yPoint = 5 ; 
+
+  bolt::amp::square<point> sq;
+  bolt::amp::plus<point> pl;
+
+  point newPt = bolt::amp::transform_reduce(my_amp_ctl, my_input_bolt_dev_vect.begin(), my_input_bolt_dev_vect.end(), 
+  sq, pt, pl);
+
+  //Expected result is newPt (148, 38)
+  EXPECT_EQ (148, newPt.xPoint);
+  EXPECT_EQ (34, newPt.yPoint);
+}
 
 
 int main(int argc, char* argv[])

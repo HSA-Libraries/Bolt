@@ -20,14 +20,18 @@
  *****************************************************************************/
 template<
     typename kType,
+    typename kIterType,
     typename vType,
+    typename vIterType,
     typename oType,
     typename voType,
     typename BinaryPredicate,
     typename BinaryFunction >
 __kernel void perBlockScanByKey(
-    global kType *keys, //input keys
-    global vType *vals, //input values
+    global kType *ikeys, //input keys
+    kIterType keys,
+    global vType *ivals, //input values
+    vIterType vals,
     global voType *output, // offsetValues
     global int *output2, //offsetKeys
     const uint vecSize,
@@ -38,6 +42,10 @@ __kernel void perBlockScanByKey(
     global kType *keyBuffer,
     global oType *valBuffer)
 {
+
+    keys.init( ikeys );
+    vals.init( ivals );
+
     size_t gloId = get_global_id( 0 );
     size_t groId = get_group_id( 0 );
     size_t locId = get_local_id( 0 );
@@ -216,19 +224,22 @@ __kernel void intraBlockInclusiveScanByKey(
  *****************************************************************************/
 template<
     typename kType,
+    typename kIterType,
     typename oType,
     typename BinaryPredicate,
     typename BinaryFunction >
 __kernel void perBlockAdditionByKey(
     global kType *keySumArray, //InputBuffer
     global oType *postSumArray, //InputBuffer
-    global kType *keys, //Input keys
+    global kType *ikeys, //Input keys
+    kIterType keys,
     global int *output2, //offsetArray
     global oType *output, //offsetValArray
     const uint vecSize,
     global BinaryPredicate *binaryPred,
     global BinaryFunction *binaryFunct)
 {
+    keys.init( ikeys );
     size_t gloId = get_global_id( 0 );
     size_t groId = get_group_id( 0 );
     size_t locId = get_local_id( 0 );
@@ -256,18 +267,28 @@ __kernel void perBlockAdditionByKey(
  *****************************************************************************/
  template<
     typename kType,
+    typename kIterType,
     typename koType,
-    typename voType >
+    typename koIterType,
+    typename voType,
+    typename voIterType >
 __kernel void keyValueMapping(
-    global kType *keys,
-    global koType *keys_output,
-    global voType *vals_output,
+    global kType *ikeys,
+    kIterType keys,
+    global koType *ikeys_output,
+    koIterType keys_output,
+    global voType *ivals_output,
+    voIterType vals_output,
     global int *offsetArray,
     global koType *offsetValArray,
     const uint vecSize,
     const int numSections)
 {
-    
+    keys.init( ikeys );
+    keys_output.init( ikeys_output );
+    vals_output.init( ivals_output );
+
+
     size_t gloId = get_global_id( 0 );
 
     //  Abort threads that are passed the end of the input vector

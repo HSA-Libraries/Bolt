@@ -15,8 +15,8 @@
 
 ***************************************************************************/
 
-#if !defined( TRANSFORM_REDUCE_INL )
-#define TRANSFORM_REDUCE_INL
+#if !defined( BOLT_CL_TRANSFORM_REDUCE_INL )
+#define BOLT_CL_TRANSFORM_REDUCE_INL
 #pragma once
 
 #define WAVEFRONT_SIZE 64
@@ -29,9 +29,7 @@
 
 #ifdef ENABLE_TBB
 //TBB Includes
-#include "tbb/parallel_reduce.h"
-#include "tbb/blocked_range.h"
-#include "tbb/task_scheduler_init.h"
+#include "bolt/btbb/transform_reduce.h"
 #endif
 
 
@@ -46,7 +44,9 @@ namespace cl {
         UnaryFunction transform_op,
         T init,  BinaryFunction reduce_op, const std::string& user_code )
     {
-        return detail::transform_reduce_detect_random_access( ctl, first, last, transform_op, init, reduce_op, user_code,
+
+        return detail::transform_reduce_detect_random_access( ctl, first, last,transform_op,init,reduce_op,user_code,
+
             std::iterator_traits< InputIterator >::iterator_category( ) );
     };
 
@@ -56,8 +56,10 @@ namespace cl {
         UnaryFunction transform_op,
         T init,  BinaryFunction reduce_op, const std::string& user_code )
     {
-        return detail::transform_reduce_detect_random_access( control::getDefault(), first, last, transform_op, init, reduce_op, user_code,
-            std::iterator_traits< InputIterator >::iterator_category( ) );
+
+        return detail::transform_reduce_detect_random_access( control::getDefault(), first, last, transform_op, init,
+                                 reduce_op, user_code, std::iterator_traits< InputIterator >::iterator_category( ) );
+
     };
 
 
@@ -96,47 +98,6 @@ namespace  detail {
     };
 
 
-#ifdef ENABLE_TBB
-            /*For documentation on the reduce object see below link
-             *http://threadingbuildingblocks.org/docs/help/reference/algorithms/parallel_reduce_func.htm
-             *The imperative form of parallel_reduce is used.
-             *
-            */
-            template <typename T, typename UnaryFunction, typename BinaryFunction>
-            struct Transform_Reduce {
-                T value;
-                BinaryFunction reduce_op;
-                UnaryFunction transform_op;
-                bool flag;
-
-                //TODO - Decide on how many threads to spawn? Usually it should be equal to th enumber of cores
-                //You might need to look at the tbb::split and there there cousin's
-                //
-                Transform_Reduce(const UnaryFunction &_opt, const BinaryFunction &_opr) : transform_op(_opt), reduce_op(_opr) ,value(0){}
-                Transform_Reduce(const UnaryFunction &_opt, const BinaryFunction &_opr, const T &init) : transform_op(_opt), reduce_op(_opr), value(init), flag(FALSE){}
-
-                Transform_Reduce(): value(0) {}
-                Transform_Reduce( Transform_Reduce& s, tbb::split ):flag(TRUE),transform_op(s.transform_op),reduce_op(s.reduce_op){}
-                 void operator()( const tbb::blocked_range<T*>& r ) {
-                    T reduce_temp = value, transform_temp;
-                    for( T* a=r.begin(); a!=r.end(); ++a ) {
-                      transform_temp = transform_op(*a);
-                      if(flag){
-                        reduce_temp = transform_temp;
-                        flag = FALSE;
-                      }
-                      else
-                        reduce_temp = reduce_op(reduce_temp,transform_temp);
-                    }
-                    value = reduce_temp;
-                }
-                 //Join is called by the parent thread after the child finishes to execute.
-                void join( Transform_Reduce& rhs ) {
-                    value = reduce_op(value,rhs.value);
-                }
-            };
-#endif
-
 
         //  The following two functions disallow non-random access functions
         // Wrapper that uses default control class, iterator interface
@@ -145,7 +106,8 @@ namespace  detail {
             const UnaryFunction& transform_op,
             const T& init, const BinaryFunction& reduce_op, const std::string& user_code, std::input_iterator_tag )
         {
-            //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data
+
+            //  TODO:  It should be possible to support non-random_access_iterator_tag iterators,if we copied the data
             //  to a temporary buffer.  Should we?
             static_assert( false, "Bolt only supports random access iterator types" );
         };
@@ -154,13 +116,14 @@ namespace  detail {
         template<typename InputIterator, typename UnaryFunction, typename T, typename BinaryFunction>
         T transform_reduce_detect_random_access( control& ctl, const InputIterator& first, const InputIterator& last,
             const UnaryFunction& transform_op,
-            const T& init, const BinaryFunction& reduce_op, const std::string& user_code, std::random_access_iterator_tag )
+            const T& init,const BinaryFunction& reduce_op,const std::string& user_code,std::random_access_iterator_tag)
         {
             return transform_reduce_pick_iterator( ctl, first, last, transform_op, init, reduce_op, user_code,
                 std::iterator_traits< InputIterator >::iterator_category( ) );
         };
 
-        // This template is called by the non-detail versions of transform_reduce, it already assumes random access iterators
+        // This template is called by the non-detail versions of transform_reduce,
+        // it already assumes random access iterators
         // This is called strictly for any non-device_vector iterator
         template<typename InputIterator, typename UnaryFunction, typename oType, typename BinaryFunction>
         oType transform_reduce_pick_iterator(
@@ -178,7 +141,9 @@ namespace  detail {
             if (szElements == 0)
                     return init;
 
-			bolt::cl::control::e_RunMode runMode = c.getForceRunMode();  // could be dynamic choice some day.
+
+            bolt::cl::control::e_RunMode runMode = c.getForceRunMode();  // could be dynamic choice some day.
+
             if(runMode == bolt::cl::control::Automatic)
             {
                 runMode = c.getDefaultPathToRun();
@@ -194,23 +159,25 @@ namespace  detail {
             } else if (runMode == bolt::cl::control::MultiCoreCpu) {
 
 #ifdef ENABLE_TBB
-                    tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
-                    Transform_Reduce<oType, UnaryFunction, BinaryFunction> transform_reduce_op(transform_op, reduce_op, init);
-                    tbb::parallel_reduce( tbb::blocked_range<iType*>( &*first, (iType*)&*(last-1) + 1), transform_reduce_op );
-                    return transform_reduce_op.value;
+
+					return bolt::btbb::transform_reduce(first,last,transform_op,init,reduce_op);
 #else
                     //std::cout << "The MultiCoreCpu version of this function is not enabled." << std ::endl;
-                    throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of transform_reduce function is not enabled to be built." );
+        throw std::exception("The MultiCoreCpu version of transform_reduce function is not enabled to be built!\n");
+					return init;
 #endif
             } else {
+
                 // Map the input iterator to a device_vector
                 device_vector< iType > dvInput( first, last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, c );
 
-                return  transform_reduce_enqueue( c, dvInput.begin( ), dvInput.end( ), transform_op, init, reduce_op, user_code );
+                return  transform_reduce_enqueue( c, dvInput.begin( ), dvInput.end( ), transform_op, init, reduce_op
+                                                                                                      , user_code );
             }
         };
 
-        // This template is called by the non-detail versions of transform_reduce, it already assumes random access iterators
+        // This template is called by the non-detail versions of transform_reduce, it already assumes random
+        // access iterators
         // This is called strictly for iterators that are derived from device_vector< T >::iterator
         template<typename DVInputIterator, typename UnaryFunction, typename oType, typename BinaryFunction>
         oType transform_reduce_pick_iterator(
@@ -235,39 +202,26 @@ namespace  detail {
             }
             if (runMode == bolt::cl::control::SerialCpu)
             {
-                ::cl::Event serialCPUEvent;
-                cl_int l_Error = CL_SUCCESS;
-                oType trans_reduceResult;
-                /*Map the device buffer to CPU*/
-                iType *trans_reduceInputBuffer = (iType*)c.getCommandQueue().enqueueMapBuffer(first.getBuffer(), false,
-                                   CL_MAP_READ, 0, sizeof(iType) * szElements, NULL, &serialCPUEvent, &l_Error );
-                serialCPUEvent.wait();
-                std::vector<oType> output(szElements);
-                std::transform(trans_reduceInputBuffer, trans_reduceInputBuffer + szElements, output.begin(), transform_op);
-                trans_reduceResult = std::accumulate(output.begin(), output.end(), init, reduce_op) ;
-                /*Unmap the device buffer back to device memory. This will copy the host modified buffer back to the device*/
-                c.getCommandQueue().enqueueUnmapMemObject(first.getBuffer(), trans_reduceInputBuffer);
-                return trans_reduceResult;
+                bolt::cl::device_vector< iType >::pointer firstPtr = first.getContainer( ).data( );
+                std::vector< oType > result ( last.m_Index - first.m_Index );
+
+                std::transform( &firstPtr[ first.m_Index ], &firstPtr[ last.m_Index ], result.begin(), transform_op );
+            
+                return std::accumulate(  result.begin(), result.end(), init, reduce_op );
 
             }
             else if (runMode == bolt::cl::control::MultiCoreCpu)
             {
 #ifdef ENABLE_TBB
-                ::cl::Event multiCoreCPUEvent;
-                cl_int l_Error = CL_SUCCESS;
-                /*Map the device buffer to CPU*/
-                iType *trans_reduceInputBuffer = (iType*)c.getCommandQueue().enqueueMapBuffer(first.getBuffer(), false,
-                                   CL_MAP_READ, 0, sizeof(iType) * szElements, NULL, &multiCoreCPUEvent, &l_Error );
-                multiCoreCPUEvent.wait();
+                bolt::cl::device_vector< iType >::pointer firstPtr = first.getContainer( ).data( );
 
-                tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
-                Transform_Reduce<oType, UnaryFunction, BinaryFunction> transform_reduce_op(transform_op, reduce_op, init);
-                tbb::parallel_reduce( tbb::blocked_range<iType*>(trans_reduceInputBuffer, (trans_reduceInputBuffer + szElements)), transform_reduce_op );
-                c.getCommandQueue().enqueueUnmapMemObject(first.getBuffer(), trans_reduceInputBuffer);
-                return transform_reduce_op.value;
+				return  bolt::btbb::transform_reduce(  &firstPtr[ first.m_Index ], &firstPtr[ last.m_Index ],
+				                                       transform_op,init,reduce_op);
 #else
-                //std::cout << "The MultiCoreCpu version of this function is not enabled. " << std ::endl;
-                throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of transform_reduce function is not enabled to be built." );
+
+                throw std::exception( "The MultiCoreCpu version of transform_reduce function is not enabled to be built! \n");
+				return init;
+
 #endif
             }
 
@@ -314,8 +268,10 @@ namespace  detail {
 
             // Set up shape of launch grid and buffers:
             // FIXME, read from device attributes.
-            int computeUnits     = ctl.getDevice().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();  // round up if we don't know.
-			int wgPerComputeUnit =  ctl.getWGPerComputeUnit();
+
+            int computeUnits     = ctl.getDevice().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();// round up if we don't know.
+            int wgPerComputeUnit =  ctl.getWGPerComputeUnit();
+
             int numWG = computeUnits * wgPerComputeUnit;
 
             cl_int l_Error = CL_SUCCESS;
@@ -350,21 +306,30 @@ namespace  detail {
             ALIGNED( 256 ) UnaryFunction aligned_unary( transform_op );
             ALIGNED( 256 ) BinaryFunction aligned_binary( reduce_op );
 
-            control::buffPointer transformFunctor = ctl.acquireBuffer( sizeof( aligned_unary ), CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_unary );
-            control::buffPointer reduceFunctor = ctl.acquireBuffer( sizeof( aligned_binary ), CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_binary );
-            control::buffPointer result = ctl.acquireBuffer( sizeof( oType ) * numWG, CL_MEM_ALLOC_HOST_PTR|CL_MEM_WRITE_ONLY );
+            control::buffPointer transformFunctor = ctl.acquireBuffer( sizeof( aligned_unary ),
+                                       CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_unary );
+            control::buffPointer reduceFunctor = ctl.acquireBuffer( sizeof( aligned_binary ),
+                                      CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_binary );
+            control::buffPointer result = ctl.acquireBuffer( sizeof( oType ) * numWG,
+                                                   CL_MEM_ALLOC_HOST_PTR|CL_MEM_WRITE_ONLY );
 
             cl_uint szElements = static_cast< cl_uint >( std::distance( first, last ) );
 
             /***** This is a temporaray fix *****/
-            /*What if  requiredWorkGroups > numWG? Do you want to loop or increase the work group size or increase the per item processing?*/
+
+            /*What if  requiredWorkGroups > numWG? Do you want to loop or increase the work group size
+            or increase the per item processing?*/
+
             int requiredWorkGroups = (int)ceil((float)szElements/wgSize);
             if (requiredWorkGroups < numWG)
                 numWG = requiredWorkGroups;
             /**********************/
 
-            V_OPENCL( kernels[0].setArg( 0, first.getBuffer( ) ), "Error setting kernel argument" );
-            V_OPENCL( kernels[0].setArg( 1, first.gpuPayloadSize( ), &first.gpuPayload( ) ), "Error setting kernel argument" );
+
+            V_OPENCL( kernels[0].setArg( 0, first.getContainer().getBuffer() ), "Error setting kernel argument" );
+            V_OPENCL( kernels[0].setArg( 1, first.gpuPayloadSize( ), &first.gpuPayload( ) ),
+                                                            "Error setting kernel argument" );
+
             V_OPENCL( kernels[0].setArg( 2, szElements), "Error setting kernel argument" );
             V_OPENCL( kernels[0].setArg( 3, *transformFunctor), "Error setting kernel argument" );
             V_OPENCL( kernels[0].setArg( 4, init), "Error setting kernel argument" );
@@ -383,10 +348,12 @@ namespace  detail {
             V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for transform_reduce() kernel" );
 
             ::cl::Event l_mapEvent;
-            oType *h_result = (oType*)ctl.getCommandQueue().enqueueMapBuffer(*result, false, CL_MAP_READ, 0, sizeof(oType)*numWG, NULL, &l_mapEvent, &l_Error );
+            oType *h_result = (oType*)ctl.getCommandQueue().enqueueMapBuffer(*result, false, CL_MAP_READ, 0,
+                                                        sizeof(oType)*numWG, NULL, &l_mapEvent, &l_Error );
             V_OPENCL( l_Error, "Error calling map on the result buffer" );
 
-            //  Finish the tail end of the reduction on host side; the compute device reduces within the workgroups, with one result per workgroup
+            //  Finish the tail end of the reduction on host side; the compute device reduces within the workgroups,
+            // with one result per workgroup
             size_t ceilNumWG = static_cast< size_t >( std::ceil( static_cast< float >( szElements ) / wgSize) );
             bolt::cl::minimum< size_t >  min_size_t;
             size_t numTailReduce = min_size_t( ceilNumWG, numWG );
@@ -394,10 +361,17 @@ namespace  detail {
             bolt::cl::wait(ctl, l_mapEvent);
 
             oType acc = static_cast< oType >( init );
-            for(int i = 0; i < numTailReduce; ++i)
+            for(unsigned int i = 0; i < numTailReduce; ++i)
             {
                 acc = reduce_op( acc, h_result[ i ] );
             }
+
+
+			::cl::Event unmapEvent;
+
+			V_OPENCL( ctl.getCommandQueue().enqueueUnmapMemObject(*result,  h_result, NULL, &unmapEvent ),
+				"shared_ptr failed to unmap host memory back to device memory" );
+			V_OPENCL( unmapEvent.wait( ), "failed to wait for unmap event" );
 
             return acc;
         };

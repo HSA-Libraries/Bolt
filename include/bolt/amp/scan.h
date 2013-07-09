@@ -24,15 +24,11 @@
 */
 
 
-#if !defined( AMP_SCAN_H )
-#define AMP_SCAN_H
+#if !defined( BOLT_AMP_SCAN_H )
+#define BOLT_AMP_SCAN_H
 #pragma once
 
 #include <bolt/amp/bolt.h>
-
-/*! \file scan.h
-*/
-
 
 namespace bolt
 {
@@ -271,4 +267,4 @@ exclusive_scan(
 
 #include <bolt/amp/detail/scan.inl>
 
-#endif // AMP_SCAN_H
+#endif // BOLT_AMP_SCAN_H

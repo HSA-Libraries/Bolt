@@ -189,7 +189,7 @@ REM and TBB version 4.1 update 2.
 REM set BOOST_URL=<Enter path to Boost folder>/boost_1_52_0.zip
 REM set DOXYGEN_URL=<Enter path to Doxygen zip file>/doxygen-1.8.3.windows.bin.zip
 REM set GTEST_URL=<Enter path to GTEST folder>/gtest-1.6.0.zip
-REM set TBB_ROOT=<Enter path to Boost folder>
+REM set TBB_ROOT=<Enter path to TBB folder>
 
 REM Otherwise The above 4 variables can also be defined in the environment variable. 
 

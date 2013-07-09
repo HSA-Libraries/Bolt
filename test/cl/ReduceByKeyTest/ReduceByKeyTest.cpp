@@ -13,7 +13,7 @@
 *   See the License for the specific language governing permissions and              
 *   limitations under the License.                                                   
 
-***************************************************************************/                                                                                     
+***************************************************************************/
 
 #define ENABLE_GTEST 1
 #define ENABLE_DEBUGGING 0
@@ -23,7 +23,6 @@
 #include <vector>
 //#include <array>
 #include "bolt/cl/bolt.h"
-//#include "bolt/cl/scan.h"
 #include "bolt/cl/functional.h"
 #include "bolt/cl/reduce_by_key.h"
 #include "bolt/unicode.h"
@@ -75,7 +74,7 @@ gold_reduce_by_key(
         kType previousKey = *(key-1);
 
         // load value
-        voType currentValue = *values_first; 
+        voType currentValue = *values_first;
         voType previousValue = *values_output; //Sure?: Damn sure
 
         previousValue = *values_output;
@@ -85,13 +84,13 @@ gold_reduce_by_key(
             //std::cout << "continuing segment" << std::endl;
             voType r = binary_op( previousValue, currentValue);
             *values_output = r;
-            *keys_output = currentKey; 
-            
+            *keys_output = currentKey;
+
         }
         else // new segment
         {
             values_output++;
-            keys_output++;            
+            keys_output++;
             *values_output = currentValue;
             *keys_output = currentKey;
             count++; //To count the number of elements in the output array
@@ -101,7 +100,7 @@ gold_reduce_by_key(
 
     //return result;
     //Print values here: Temporary, things gonna change after pair()
-    
+
     //std::cout<<"Number of ele = "<<count<<std::endl;
 
     return std::make_pair(keys_output, values_output);
@@ -111,7 +110,7 @@ gold_reduce_by_key(
 
 int _tmain(int argc, _TCHAR* argv[])
 {
- 
+
     int length = 10000;
     std::vector< int > keys( length);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
@@ -129,9 +128,9 @@ int _tmain(int argc, _TCHAR* argv[])
     }
 
     // input and output vectors for device and reference
-    
-    std::vector< int > koutput( length ); 
-    std::vector< int > voutput( length ); 
+
+    std::vector< int > koutput( length );
+    std::vector< int > voutput( length );
     //std::vector< int > refInput( length );
     std::vector< int > krefOutput( length );
     std::vector< int > vrefOutput( length );
@@ -143,13 +142,15 @@ int _tmain(int argc, _TCHAR* argv[])
     bolt::cl::plus<int> binary_operator;
 
 
-    bolt::cl::reduce_by_key( keys.begin(), keys.end(), input.begin(), koutput.begin(), voutput.begin(), binary_predictor, binary_operator);
+    bolt::cl::reduce_by_key( keys.begin(), keys.end(), input.begin(), koutput.begin(), voutput.begin(),
+                             binary_predictor, binary_operator);
     //for(unsigned int i = 0; i < 256 ; i++)
     //{
-    //    std::cout<<"Ikey "<<keys[i]<<" IValues "<<input[i]<<" -> OKeys "<<koutput[i]<<" OValues "<<voutput[i]<<std::endl;
+    //std::cout<<"Ikey "<<keys[i]<<" IValues "<<input[i]<<" -> OKeys "<<koutput[i]<<" OValues "<<voutput[i]<<std::endl;
     //}
-    gold_reduce_by_key( keys.begin(), keys.end(), refInput.begin(), krefOutput.begin(), vrefOutput.begin(),std::plus<int>());
-    
+    gold_reduce_by_key( keys.begin(), keys.end(), refInput.begin(), krefOutput.begin(), vrefOutput.begin(),
+                        std::plus<int>());
+
     cmpArrays(krefOutput, koutput);
     cmpArrays(vrefOutput, voutput);
 
@@ -195,8 +196,8 @@ gold_reduce_by_key( InputIterator1 keys_first,
         kType previousKey = *(key-1);
 
         // load value
-        voType currentValue = *values_first; 
-        voType previousValue = *values_output; 
+        voType currentValue = *values_first;
+        voType previousValue = *values_output;
 
         previousValue = *values_output;
         // within segment
@@ -204,13 +205,13 @@ gold_reduce_by_key( InputIterator1 keys_first,
         {
             voType r = binary_op( previousValue, currentValue);
             *values_output = r;
-            *keys_output = currentKey; 
-            
+            *keys_output = currentKey;
+
         }
         else // new segment
         {
             values_output++;
-            keys_output++;            
+            keys_output++;
             *values_output = currentValue;
             *keys_output = currentKey;
             count++; //To count the number of elements in the output array
@@ -221,6 +222,411 @@ gold_reduce_by_key( InputIterator1 keys_first,
     std::cout<<count<<std::endl;
     return std::make_pair(keys_output+1, values_output+1);
 }
+
+//Test Case Not Executing Anything!
+
+ TEST(ReduceByKeyBasic, DeviceVectorTest)
+{
+    int length = 1<<10;
+    std::vector< int > keys(length);
+    bolt::cl::device_vector<int> device_keys(length);
+
+    int segmentLength = 0;
+    int segmentIndex = 0;
+    int key = 0;
+    std::vector<int>  refInput( length );
+    bolt::cl::device_vector<int>  input( length );
+
+    for (int i = 0; i < length; i++)
+    {
+        // start over, i.e., begin assigning new key
+        if (segmentIndex == segmentLength)
+        {
+            segmentLength++;
+            segmentIndex = 0;
+            ++key;
+        }
+        keys[i] = key;
+        device_keys[i] = key;
+        segmentIndex++;
+
+        refInput[i] = i;
+        input[i] = refInput[i];
+    }
+
+    // input and output vectors for device and reference
+
+    bolt::cl::device_vector<int>  koutput( length );
+    bolt::cl::device_vector<int>  voutput( length );
+    std::vector<int>  krefOutput( length );
+    std::vector<int>  vrefOutput( length );
+
+    bolt::cl::equal_to<int> binary_predictor;
+    bolt::cl::plus<int> binary_operator;
+
+    // call reduce_by_key
+    auto p = bolt::cl::reduce_by_key( device_keys.begin(), device_keys.end(), input.begin(), koutput.begin(), voutput.begin(),
+                                      binary_predictor, binary_operator);
+
+    auto refPair = gold_reduce_by_key( keys.begin(), keys.end(),refInput.begin(),krefOutput.begin(),vrefOutput.begin(),
+                                      std::plus<int>());
+
+
+    cmpArrays(krefOutput, koutput);
+    cmpArrays(vrefOutput, voutput);
+}
+
+
+ TEST(ReduceByKeyBasic, CPUDeviceVectorTest)
+{
+    int length = 1<<10;
+    std::vector< int > keys(length);
+    bolt::cl::device_vector<int> device_keys(length);
+
+    int segmentLength = 0;
+    int segmentIndex = 0;
+    int key = 0;
+    std::vector<int>  refInput( length );
+    bolt::cl::device_vector<int>  input( length );
+
+    for (int i = 0; i < length; i++)
+    {
+        // start over, i.e., begin assigning new key
+        if (segmentIndex == segmentLength)
+        {
+            segmentLength++;
+            segmentIndex = 0;
+            ++key;
+        }
+        keys[i] = key;
+        device_keys[i] = key;
+        segmentIndex++;
+
+        refInput[i] = i;
+        input[i] = refInput[i];
+    }
+
+    // input and output vectors for device and reference
+
+    bolt::cl::device_vector<int>  koutput( length );
+    bolt::cl::device_vector<int>  voutput( length );
+    std::vector<int>  krefOutput( length );
+    std::vector<int>  vrefOutput( length );
+
+    bolt::cl::equal_to<int> binary_predictor;
+    bolt::cl::plus<int> binary_operator;
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    // call reduce_by_key
+    auto p = bolt::cl::reduce_by_key( ctl, device_keys.begin(), device_keys.end(), input.begin(), koutput.begin(), voutput.begin(),
+                                      binary_predictor, binary_operator);
+
+    auto refPair = gold_reduce_by_key( keys.begin(), keys.end(),refInput.begin(),krefOutput.begin(),vrefOutput.begin(),
+                                      std::plus<int>());
+
+
+    cmpArrays(krefOutput, koutput);
+    cmpArrays(vrefOutput, voutput);
+}
+
+
+
+ TEST(ReduceByKeyBasic, MultiCoreCPUDeviceVectorTest)
+{
+    int length = 1<<10;
+    std::vector< int > keys(length);
+    bolt::cl::device_vector<int> device_keys(length);
+
+    int segmentLength = 0;
+    int segmentIndex = 0;
+    int key = 0;
+    std::vector<int>  refInput( length );
+    bolt::cl::device_vector<int>  input( length );
+
+    for (int i = 0; i < length; i++)
+    {
+        // start over, i.e., begin assigning new key
+        if (segmentIndex == segmentLength)
+        {
+            segmentLength++;
+            segmentIndex = 0;
+            ++key;
+        }
+        keys[i] = key;
+        device_keys[i] = key;
+        segmentIndex++;
+
+        refInput[i] = i;
+        input[i] = refInput[i];
+    }
+
+    // input and output vectors for device and reference
+
+    bolt::cl::device_vector<int>  koutput( length );
+    bolt::cl::device_vector<int>  voutput( length );
+    std::vector<int>  krefOutput( length );
+    std::vector<int>  vrefOutput( length );
+
+    bolt::cl::equal_to<int> binary_predictor;
+    bolt::cl::plus<int> binary_operator;
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    // call reduce_by_key
+    auto p = bolt::cl::reduce_by_key( ctl, device_keys.begin(), device_keys.end(), input.begin(), koutput.begin(), voutput.begin(),
+                                      binary_predictor, binary_operator);
+
+    auto refPair = gold_reduce_by_key( keys.begin(), keys.end(),refInput.begin(),krefOutput.begin(),vrefOutput.begin(),
+                                      std::plus<int>());
+
+
+    cmpArrays(krefOutput, koutput);
+    cmpArrays(vrefOutput, voutput);
+}
+
+
+TEST(reduce_by_key__bolt_Std_vect, Basic_EPR377067){
+
+int size = 10;
+std::vector<int> vectKeyIn(size);
+std::vector<int> vectValueIn(size);
+std::vector<int> keyBoltClDevVectOp(size);
+std::vector<int> valueBoltClDevVectOp(size);
+
+for (int i = 0; i < std::ceil(size/3.0); i++)
+{
+    vectKeyIn[i] = (int)2;
+}
+for (int i = (std::ceil(size/3.0) + 1); i < std::ceil((2* size)/3.0); i++)
+{
+vectKeyIn[i] = (int)3;
+}
+for (int i =  (std::ceil((2* size)/3.0) + 1); i < size; i++)
+{
+vectKeyIn[i] = (int)5;
+}
+//now elemetns in vectKeyIn are as: {2 2 2 2 0 3 3 0 5 5 }
+
+for (int i = 0; i < size; i++){
+vectValueIn[i] = (int) i; //elements in vectValueIn are as: {0 1 2 3 4 5 6 7 8 9}
+}
+
+bolt::cl::equal_to<int> eq;
+bolt::cl::reduce_by_key(vectKeyIn.begin(), vectKeyIn.end(), vectValueIn.begin(), keyBoltClDevVectOp.begin(),
+                                                                        valueBoltClDevVectOp.begin(), eq);
+
+int eleKeyOp_Expexted[5] = {2, 0, 3, 0, 5};
+int eleValueOp_Expexted[5] = {6, 4, 11, 7, 17};
+
+for (int i = 0; i < 5; i++){
+EXPECT_EQ ( eleKeyOp_Expexted[i], keyBoltClDevVectOp[i]);
+EXPECT_EQ ( eleValueOp_Expexted[i], valueBoltClDevVectOp[i]);
+}
+}
+TEST(reduce_by_key__bolt_Std_vect, SerialBasic_EPR377067){
+
+int size = 10;
+std::vector<int> vectKeyIn(size);
+std::vector<int> vectValueIn(size);
+std::vector<int> keyBoltClDevVectOp(size);
+std::vector<int> valueBoltClDevVectOp(size);
+
+for (int i = 0; i < std::ceil(size/3.0); i++)
+{
+    vectKeyIn[i] = (int)2;
+}
+for (int i = (std::ceil(size/3.0) + 1); i < std::ceil((2* size)/3.0); i++)
+{
+vectKeyIn[i] = (int)3;
+}
+for (int i =  (std::ceil((2* size)/3.0) + 1); i < size; i++)
+{
+vectKeyIn[i] = (int)5;
+}
+//now elemetns in vectKeyIn are as: {2 2 2 2 0 3 3 0 5 5 }
+
+for (int i = 0; i < size; i++){
+vectValueIn[i] = (int) i; //elements in vectValueIn are as: {0 1 2 3 4 5 6 7 8 9}
+}
+
+bolt::cl::control ctl = bolt::cl::control::getDefault( );
+ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+bolt::cl::equal_to<int> eq;
+bolt::cl::reduce_by_key(ctl, vectKeyIn.begin(), vectKeyIn.end(), vectValueIn.begin(), keyBoltClDevVectOp.begin(),
+                                                                        valueBoltClDevVectOp.begin(), eq);
+
+int eleKeyOp_Expexted[5] = {2, 0, 3, 0, 5};
+int eleValueOp_Expexted[5] = {6, 4, 11, 7, 17};
+
+for (int i = 0; i < 5; i++){
+EXPECT_EQ ( eleKeyOp_Expexted[i], keyBoltClDevVectOp[i]);
+EXPECT_EQ ( eleValueOp_Expexted[i], valueBoltClDevVectOp[i]);
+}
+}
+TEST(reduce_by_key__bolt_Std_vect, MulticoreBasic_EPR377067){
+
+int size = 10;
+std::vector<int> vectKeyIn(size);
+std::vector<int> vectValueIn(size);
+std::vector<int> keyBoltClDevVectOp(size);
+std::vector<int> valueBoltClDevVectOp(size);
+
+for (int i = 0; i < std::ceil(size/3.0); i++)
+{
+    vectKeyIn[i] = (int)2;
+}
+for (int i = (std::ceil(size/3.0) + 1); i < std::ceil((2* size)/3.0); i++)
+{
+vectKeyIn[i] = (int)3;
+}
+for (int i =  (std::ceil((2* size)/3.0) + 1); i < size; i++)
+{
+vectKeyIn[i] = (int)5;
+}
+//now elemetns in vectKeyIn are as: {2 2 2 2 0 3 3 0 5 5 }
+
+for (int i = 0; i < size; i++){
+vectValueIn[i] = (int) i; //elements in vectValueIn are as: {0 1 2 3 4 5 6 7 8 9}
+}
+
+bolt::cl::control ctl = bolt::cl::control::getDefault( );
+ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+
+bolt::cl::equal_to<int> eq;
+bolt::cl::reduce_by_key(ctl, vectKeyIn.begin(), vectKeyIn.end(), vectValueIn.begin(), keyBoltClDevVectOp.begin(),
+                                                                        valueBoltClDevVectOp.begin(), eq);
+
+int eleKeyOp_Expexted[5] = {2, 0, 3, 0, 5};
+int eleValueOp_Expexted[5] = {6, 4, 11, 7, 17};
+
+for (int i = 0; i < 5; i++){
+EXPECT_EQ ( eleKeyOp_Expexted[i], keyBoltClDevVectOp[i]);
+EXPECT_EQ ( eleValueOp_Expexted[i], valueBoltClDevVectOp[i]);
+}
+}
+
+
+TEST(reduce_by_key__bolt_Dev_vect, Basic_EPR377067){
+
+int size = 10;
+bolt::cl::device_vector<int> vectKeyIn(size);
+bolt::cl::device_vector<int> vectValueIn(size);
+bolt::cl::device_vector<int> keyBoltClDevVectOp(size);
+bolt::cl::device_vector<int> valueBoltClDevVectOp(size);
+
+for (int i = 0; i < std::ceil(size/3.0); i++){
+vectKeyIn[i] = (int)2;
+}
+for (int i = (int)(std::ceil(size/3.0) + 1); i < std::ceil((2* size)/3.0); i++){
+vectKeyIn[i] = (int)3;
+}
+for (int i = (int)(std::ceil((2* size)/3.0) + 1); i < size; i++){
+vectKeyIn[i] = (int)5;
+}
+//now elemetns in vectKeyIn are as: {2 2 2 2 0 3 3 0 5 5 }
+
+for (int i = 0; i < size; i++){
+vectValueIn[i] = (int) i; //elements in vectValueIn are as: {0 1 2 3 4 5 6 7 8 9}
+}
+
+bolt::cl::equal_to<int> eq;
+bolt::cl::reduce_by_key(vectKeyIn.begin(), vectKeyIn.end(), vectValueIn.begin(), keyBoltClDevVectOp.begin(),
+                                                                            valueBoltClDevVectOp.begin(), eq);
+
+int eleKeyOp_Expexted[5] = {2, 0, 3, 0, 5};
+int eleValueOp_Expexted[5] = {6, 4, 11, 7, 17};
+
+for (int i = 0; i < 5; i++){
+EXPECT_EQ ( eleKeyOp_Expexted[i], keyBoltClDevVectOp[i]);
+EXPECT_EQ ( eleValueOp_Expexted[i], valueBoltClDevVectOp[i]);
+}
+}
+TEST(reduce_by_key__bolt_Dev_vect, SerialBasic_EPR377067){
+
+int size = 10;
+bolt::cl::device_vector<int> vectKeyIn(size);
+bolt::cl::device_vector<int> vectValueIn(size);
+bolt::cl::device_vector<int> keyBoltClDevVectOp(size);
+bolt::cl::device_vector<int> valueBoltClDevVectOp(size);
+
+for (int i = 0; i < std::ceil(size/3.0); i++){
+vectKeyIn[i] = (int)2;
+}
+for (int i = (int)(std::ceil(size/3.0) + 1); i < std::ceil((2* size)/3.0); i++){
+vectKeyIn[i] = (int)3;
+}
+for (int i = (int)(std::ceil((2* size)/3.0) + 1); i < size; i++){
+vectKeyIn[i] = (int)5;
+}
+//now elemetns in vectKeyIn are as: {2 2 2 2 0 3 3 0 5 5 }
+
+for (int i = 0; i < size; i++){
+vectValueIn[i] = (int) i; //elements in vectValueIn are as: {0 1 2 3 4 5 6 7 8 9}
+}
+
+bolt::cl::control ctl = bolt::cl::control::getDefault( );
+ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+bolt::cl::equal_to<int> eq;
+bolt::cl::reduce_by_key(ctl, vectKeyIn.begin(), vectKeyIn.end(), vectValueIn.begin(), keyBoltClDevVectOp.begin(),
+                                                                            valueBoltClDevVectOp.begin(), eq);
+
+int eleKeyOp_Expexted[5] = {2, 0, 3, 0, 5};
+int eleValueOp_Expexted[5] = {6, 4, 11, 7, 17};
+
+for (int i = 0; i < 5; i++){
+EXPECT_EQ ( eleKeyOp_Expexted[i], keyBoltClDevVectOp[i]);
+EXPECT_EQ ( eleValueOp_Expexted[i], valueBoltClDevVectOp[i]);
+}
+}
+TEST(reduce_by_key__bolt_Dev_vect, MulticoreBasic_EPR377067){
+
+int size = 10;
+bolt::cl::device_vector<int> vectKeyIn(size);
+bolt::cl::device_vector<int> vectValueIn(size);
+bolt::cl::device_vector<int> keyBoltClDevVectOp(size);
+bolt::cl::device_vector<int> valueBoltClDevVectOp(size);
+
+for (int i = 0; i < std::ceil(size/3.0); i++){
+vectKeyIn[i] = (int)2;
+}
+for (int i = (int)(std::ceil(size/3.0) + 1); i < std::ceil((2* size)/3.0); i++){
+vectKeyIn[i] = (int)3;
+}
+for (int i = (int)(std::ceil((2* size)/3.0) + 1); i < size; i++){
+vectKeyIn[i] = (int)5;
+}
+//now elemetns in vectKeyIn are as: {2 2 2 2 0 3 3 0 5 5 }
+
+for (int i = 0; i < size; i++){
+vectValueIn[i] = (int) i; //elements in vectValueIn are as: {0 1 2 3 4 5 6 7 8 9}
+}
+
+bolt::cl::control ctl = bolt::cl::control::getDefault( );
+ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+bolt::cl::equal_to<int> eq;
+bolt::cl::reduce_by_key(ctl, vectKeyIn.begin(), vectKeyIn.end(), vectValueIn.begin(), keyBoltClDevVectOp.begin(),
+                                                                            valueBoltClDevVectOp.begin(), eq);
+
+int eleKeyOp_Expexted[5] = {2, 0, 3, 0, 5};
+int eleValueOp_Expexted[5] = {6, 4, 11, 7, 17};
+
+for (int i = 0; i < 5; i++){
+EXPECT_EQ ( eleKeyOp_Expexted[i], keyBoltClDevVectOp[i]);
+EXPECT_EQ ( eleValueOp_Expexted[i], valueBoltClDevVectOp[i]);
+}
+}
+
+
+
 
 TEST(ReduceByKeyBasic, IntegerTest)
 {
@@ -241,9 +647,9 @@ TEST(ReduceByKeyBasic, IntegerTest)
     }
 
     // input and output vectors for device and reference
-    
-    std::vector< int > koutput( length ); 
-    std::vector< int > voutput( length ); 
+
+    std::vector< int > koutput( length );
+    std::vector< int > voutput( length );
     std::vector< int > krefOutput( length );
     std::vector< int > vrefOutput( length );
     std::fill(krefOutput.begin(),krefOutput.end(),0);
@@ -255,24 +661,197 @@ TEST(ReduceByKeyBasic, IntegerTest)
 
 
     // call reduce_by_key
-    auto p = bolt::cl::reduce_by_key( keys.begin(), keys.end(), input.begin(), koutput.begin(), voutput.begin(), binary_predictor, binary_operator);
+    auto p = bolt::cl::reduce_by_key( keys.begin(), keys.end(), input.begin(), koutput.begin(), voutput.begin(),
+                                      binary_predictor, binary_operator);
 
 #if 0
 
     for(unsigned int i = 0; i < 256 ; i++)
     {
-        std::cout<<"Ikey "<<keys[i]<<" IValues "<<input[i]<<" -> OKeys "<<koutput[i]<<" OValues "<<voutput[i]<<std::endl;
+      std::cout<<"Ikey "<<keys[i]<<" IValues "<<input[i]<<" -> OKeys "<<koutput[i]<<" OValues "<<voutput[i]<<std::endl;
     }
 
 #endif
 
-    auto refPair = gold_reduce_by_key( keys.begin(), keys.end(), refInput.begin(), krefOutput.begin(), vrefOutput.begin(),std::plus<int>());
-    
+    auto refPair = gold_reduce_by_key( keys.begin(), keys.end(),refInput.begin(),krefOutput.begin(),vrefOutput.begin(),
+                                       std::plus<int>());
+
     //cmpArrays2(krefOutput, koutput, refPair.first, p.first);
     cmpArrays(krefOutput, koutput);
     cmpArrays(vrefOutput, voutput);
    // cmpArrays2(vrefOutput, voutput, refPair.second, p.second);
 }
+
+
+TEST(ReduceByKeyBasic, IntegerTestOffsetTest)
+{
+    int length = 1024;
+    std::vector< int > keys( length);
+    // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
+    int segmentLength = 0;
+    int segmentIndex = 0;
+    int key = 1;
+    std::vector< int > refInput( length );
+    std::vector< int > input( length );
+    for (int i = 0; i < length; i++)
+    {
+        if(std::rand()%3 == 1) key++;
+        keys[i] = key;
+        refInput[i] = std::rand()%4;
+        input[i] = refInput[i];
+    }
+
+    // input and output vectors for device and reference
+
+    std::vector< int > koutput( length );
+    std::vector< int > voutput( length );
+    std::vector< int > krefOutput( length );
+    std::vector< int > vrefOutput( length );
+    std::fill(krefOutput.begin(),krefOutput.end(),0);
+    std::fill(vrefOutput.begin(),vrefOutput.end(),0);
+
+
+    bolt::cl::equal_to<int> binary_predictor;
+    bolt::cl::plus<int> binary_operator;
+
+
+    // call reduce_by_key
+    auto p = bolt::cl::reduce_by_key( keys.begin() +10, keys.begin()+400, input.begin()+10, koutput.begin() +10, voutput.begin() +10,
+                                      binary_predictor, binary_operator);
+
+#if 0
+
+    for(unsigned int i = 0; i < 256 ; i++)
+    {
+      std::cout<<"Ikey "<<keys[i]<<" IValues "<<input[i]<<" -> OKeys "<<koutput[i]<<" OValues "<<voutput[i]<<std::endl;
+    }
+
+#endif
+
+    auto refPair = gold_reduce_by_key( keys.begin() +10, keys.begin() +400, refInput.begin()+10,krefOutput.begin()+10,vrefOutput.begin()+10,
+                                       std::plus<int>());
+
+    //cmpArrays2(krefOutput, koutput, refPair.first, p.first);
+    cmpArrays(krefOutput, koutput);
+    cmpArrays(vrefOutput, voutput);
+   // cmpArrays2(vrefOutput, voutput, refPair.second, p.second);
+}
+
+TEST(ReduceByKeyBasic, CPUIntegerTest)
+{
+    int length = 1<<24;
+    std::vector< int > keys( length);
+    // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
+    int segmentLength = 0;
+    int segmentIndex = 0;
+    int key = 1;
+    std::vector< int > refInput( length );
+    std::vector< int > input( length );
+    for (int i = 0; i < length; i++)
+    {
+        if(std::rand()%3 == 1) key++;
+        keys[i] = key;
+        refInput[i] = std::rand()%4;
+        input[i] = refInput[i];
+    }
+
+    // input and output vectors for device and reference
+
+    std::vector< int > koutput( length );
+    std::vector< int > voutput( length );
+    std::vector< int > krefOutput( length );
+    std::vector< int > vrefOutput( length );
+    std::fill(krefOutput.begin(),krefOutput.end(),0);
+    std::fill(vrefOutput.begin(),vrefOutput.end(),0);
+
+
+    bolt::cl::equal_to<int> binary_predictor;
+    bolt::cl::plus<int> binary_operator;
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    // call reduce_by_key
+    auto p = bolt::cl::reduce_by_key( ctl, keys.begin(), keys.end(), input.begin(), koutput.begin(), voutput.begin(),
+                                      binary_predictor, binary_operator);
+
+#if 0
+
+    for(unsigned int i = 0; i < 256 ; i++)
+    {
+     std::cout<<"Ikey "<<keys[i]<<" IValues "<<input[i]<<" -> OKeys "<<koutput[i]<<" OValues "<<voutput[i]<<std::endl;
+    }
+
+#endif
+
+    auto refPair = gold_reduce_by_key( keys.begin(), keys.end(), refInput.begin(), krefOutput.begin(),
+                                       vrefOutput.begin(),std::plus<int>());
+
+    //cmpArrays2(krefOutput, koutput, refPair.first, p.first);
+    cmpArrays(krefOutput, koutput);
+    cmpArrays(vrefOutput, voutput);
+   // cmpArrays2(vrefOutput, voutput, refPair.second, p.second);
+}
+
+TEST(ReduceByKeyBasic, MultiCoreIntegerTest)
+{
+    int length = 1<<24;
+    std::vector< int > keys( length);
+    // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
+    int segmentLength = 0;
+    int segmentIndex = 0;
+    int key = 1;
+    std::vector< int > refInput( length );
+    std::vector< int > input( length );
+    for (int i = 0; i < length; i++)
+    {
+        if(std::rand()%3 == 1) key++;
+        keys[i] = key;
+        refInput[i] = std::rand()%4;
+        input[i] = refInput[i];
+    }
+
+    // input and output vectors for device and reference
+
+    std::vector< int > koutput( length );
+    std::vector< int > voutput( length );
+    std::vector< int > krefOutput( length );
+    std::vector< int > vrefOutput( length );
+    std::fill(krefOutput.begin(),krefOutput.end(),0);
+    std::fill(vrefOutput.begin(),vrefOutput.end(),0);
+
+
+    bolt::cl::equal_to<int> binary_predictor;
+    bolt::cl::plus<int> binary_operator;
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    // call reduce_by_key
+    auto p = bolt::cl::reduce_by_key( ctl, keys.begin(), keys.end(), input.begin(), koutput.begin(), voutput.begin(),
+                                      binary_predictor, binary_operator);
+
+#if 0
+
+    for(unsigned int i = 0; i < 256 ; i++)
+    {
+     std::cout<<"Ikey "<<keys[i]<<" IValues "<<input[i]<<" -> OKeys "<<koutput[i]<<" OValues "<<voutput[i]<<std::endl;
+    }
+
+#endif
+
+    auto refPair = gold_reduce_by_key( keys.begin(), keys.end(),refInput.begin(),krefOutput.begin(),vrefOutput.begin(),
+                                       std::plus<int>());
+
+    //cmpArrays2(krefOutput, koutput, refPair.first, p.first);
+    cmpArrays(krefOutput, koutput);
+    cmpArrays(vrefOutput, voutput);
+   // cmpArrays2(vrefOutput, voutput, refPair.second, p.second);
+}
+
+
 
 TEST(ReduceByKeyPairCheck, IntegerTest2)
 {
@@ -296,8 +875,8 @@ TEST(ReduceByKeyPairCheck, IntegerTest2)
 
     // input and output vectors for device and reference
 
-    std::vector< int > koutput( length ); 
-    std::vector< int > voutput( length ); 
+    std::vector< int > koutput( length );
+    std::vector< int > voutput( length );
     std::vector< int > krefOutput( length );
     std::vector< int > vrefOutput( length );
     std::fill(krefOutput.begin(),krefOutput.end(),0);
@@ -312,8 +891,8 @@ TEST(ReduceByKeyPairCheck, IntegerTest2)
     typedef bolt::cl::pair<std::vector<int>::iterator,std::vector<int>::iterator> DevicePairIterator;
 
     // call reduce_by_key
-    DevicePairIterator dv_pair = 
-    bolt::cl::reduce_by_key( 
+    DevicePairIterator dv_pair =
+    bolt::cl::reduce_by_key(
         keys.begin(),
         keys.end(),
         input.begin(),
@@ -326,13 +905,194 @@ TEST(ReduceByKeyPairCheck, IntegerTest2)
 
     for(unsigned int i = 0; i < length ; i++)
     {
-        std::cout<<"Ikey "<<keys[i]<<" IValues "<<input[i]<<" -> OKeys "<<koutput[i]<<" OValues "<<voutput[i]<<std::endl;
+      std::cout<<"Ikey "<<keys[i]<<" IValues "<<input[i]<<" -> OKeys "<<koutput[i]<<" OValues "<<voutput[i]<<std::endl;
     }
 
 #endif
 
     DevicePairIterator gold_pair =
-    gold_reduce_by_key( keys.begin(), keys.end(), refInput.begin(), krefOutput.begin(), vrefOutput.begin(),std::plus<int>());
+    gold_reduce_by_key( keys.begin(), keys.end(), refInput.begin(), krefOutput.begin(),
+                        vrefOutput.begin(),std::plus<int>());
+
+    size_t sizeAfterCall = gold_pair.first - krefOutput.begin();
+    size_t sizeAfterDeviceCall = dv_pair.first - koutput.begin();
+
+    std::cout<<sizeAfterCall<<" Is the gold key size after call!"<<std::endl;
+    std::cout<<sizeAfterDeviceCall<<" Is the dv key size after call!"<<std::endl;
+
+    krefOutput.resize(sizeAfterCall);
+    vrefOutput.resize(sizeAfterCall);
+    koutput.resize(sizeAfterDeviceCall);
+    voutput.resize(sizeAfterDeviceCall);
+
+#if 0
+
+    for(unsigned int i = 0; i < sizeAfterDeviceCall ; i++)
+    {
+        std::cout<<" -> OKeys "<<koutput[i]<<" OValues "<<voutput[i]<<std::endl;
+    }
+
+#endif
+
+    cmpArrays(krefOutput, koutput);
+    cmpArrays(vrefOutput, voutput);
+}
+
+TEST(ReduceByKeyPairCheck, CPUIntegerTest2)
+{
+    int length = 1<<24;
+    std::vector< int > keys( length);
+    // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
+    int segmentLength = 0;
+    int segmentIndex = 0;
+    int key = 1;
+    std::vector< int > refInput( length );
+    std::vector< int > input( length );
+
+    for (int i = 0; i < length; i++)
+    {
+        if(std::rand()%3 == 1) key++;
+        keys[i] = key;
+        refInput[i] = std::rand()%4;
+        input[i] = refInput[i];
+    }keys[1] = keys[2] = keys[3] = keys[4] =1;
+    keys[5] = keys[6] = keys[7] = keys[8] =2; keys[9] = 3;
+
+    // input and output vectors for device and reference
+
+    std::vector< int > koutput( length );
+    std::vector< int > voutput( length );
+    std::vector< int > krefOutput( length );
+    std::vector< int > vrefOutput( length );
+    std::fill(krefOutput.begin(),krefOutput.end(),0);
+    std::fill(vrefOutput.begin(),vrefOutput.end(),0);
+    std::fill(koutput.begin(),koutput.end(),0);
+    std::fill(voutput.begin(),voutput.end(),0);
+
+    bolt::cl::equal_to<int> binary_predictor;
+    bolt::cl::plus<int> binary_operator;
+
+    typedef std::pair<std::vector<int>::iterator,std::vector<int>::iterator> StdPairIterator;
+    typedef bolt::cl::pair<std::vector<int>::iterator,std::vector<int>::iterator> DevicePairIterator;
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    // call reduce_by_key
+    DevicePairIterator dv_pair =
+    bolt::cl::reduce_by_key(
+        ctl,
+        keys.begin(),
+        keys.end(),
+        input.begin(),
+        koutput.begin(),
+        voutput.begin(),
+        binary_predictor,
+        binary_operator);
+
+#if 0
+
+    for(unsigned int i = 0; i < length ; i++)
+    {
+      std::cout<<"Ikey "<<keys[i]<<" IValues "<<input[i]<<" -> OKeys "<<koutput[i]<<" OValues "<<voutput[i]<<std::endl;
+    }
+
+#endif
+
+    DevicePairIterator gold_pair =
+    gold_reduce_by_key( keys.begin(), keys.end(), refInput.begin(), krefOutput.begin(),
+                        vrefOutput.begin(),std::plus<int>());
+
+    size_t sizeAfterCall = gold_pair.first - krefOutput.begin();
+    size_t sizeAfterDeviceCall = dv_pair.first - koutput.begin();
+
+    std::cout<<sizeAfterCall<<" Is the gold key size after call!"<<std::endl;
+    std::cout<<sizeAfterDeviceCall<<" Is the dv key size after call!"<<std::endl;
+
+    krefOutput.resize(sizeAfterCall);
+    vrefOutput.resize(sizeAfterCall);
+    koutput.resize(sizeAfterDeviceCall);
+    voutput.resize(sizeAfterDeviceCall);
+
+#if 0
+
+    for(unsigned int i = 0; i < sizeAfterDeviceCall ; i++)
+    {
+        std::cout<<" -> OKeys "<<koutput[i]<<" OValues "<<voutput[i]<<std::endl;
+    }
+
+#endif
+
+    cmpArrays(krefOutput, koutput);
+    cmpArrays(vrefOutput, voutput);
+}
+
+TEST(ReduceByKeyPairCheck, MultiCoreIntegerTest2)
+{
+    int length = 1<<24;
+    std::vector< int > keys( length);
+    // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
+    int segmentLength = 0;
+    int segmentIndex = 0;
+    int key = 1;
+    std::vector< int > refInput( length );
+    std::vector< int > input( length );
+
+    for (int i = 0; i < length; i++)
+    {
+        if(std::rand()%3 == 1) key++;
+        keys[i] = key;
+        refInput[i] = std::rand()%4;
+        input[i] = refInput[i];
+    }keys[1] = keys[2] = keys[3] = keys[4] =1;
+    keys[5] = keys[6] = keys[7] = keys[8] =2; keys[9] = 3;
+
+    // input and output vectors for device and reference
+
+    std::vector< int > koutput( length );
+    std::vector< int > voutput( length );
+    std::vector< int > krefOutput( length );
+    std::vector< int > vrefOutput( length );
+    std::fill(krefOutput.begin(),krefOutput.end(),0);
+    std::fill(vrefOutput.begin(),vrefOutput.end(),0);
+    std::fill(koutput.begin(),koutput.end(),0);
+    std::fill(voutput.begin(),voutput.end(),0);
+
+    bolt::cl::equal_to<int> binary_predictor;
+    bolt::cl::plus<int> binary_operator;
+
+    typedef std::pair<std::vector<int>::iterator,std::vector<int>::iterator> StdPairIterator;
+    typedef bolt::cl::pair<std::vector<int>::iterator,std::vector<int>::iterator> DevicePairIterator;
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    // call reduce_by_key
+    DevicePairIterator dv_pair =
+    bolt::cl::reduce_by_key(
+        ctl,
+        keys.begin(),
+        keys.end(),
+        input.begin(),
+        koutput.begin(),
+        voutput.begin(),
+        binary_predictor,
+        binary_operator);
+
+#if 0
+
+    for(unsigned int i = 0; i < length ; i++)
+    {
+      std::cout<<"Ikey "<<keys[i]<<" IValues "<<input[i]<<" -> OKeys "<<koutput[i]<<" OValues "<<voutput[i]<<std::endl;
+    }
+
+#endif
+
+    DevicePairIterator gold_pair =
+    gold_reduce_by_key( keys.begin(), keys.end(), refInput.begin(), krefOutput.begin(),
+                        vrefOutput.begin(),std::plus<int>());
 
     size_t sizeAfterCall = gold_pair.first - krefOutput.begin();
     size_t sizeAfterDeviceCall = dv_pair.first - koutput.begin();
@@ -363,9 +1123,9 @@ TEST(ReduceByKeyBasic, IntegerTestOddSizes)
 {
     int length;
 
-    int num,n,i, count=0;
+    int num,i, count=0;
 
-   for(num=1<<16;count<=20;num++)  
+   for(num=1<<16;count<=20;num++)
    {
       for(i=2;i<num;i++)
       {
@@ -374,8 +1134,8 @@ TEST(ReduceByKeyBasic, IntegerTestOddSizes)
       }
       if(num==i)
       {
-      //  printf("****%d\n", length); 
-        length = num; 
+      //  printf("****%d\n", length);
+        length = num;
         std::vector< int > keys( length);
         // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
         int segmentLength = 0;
@@ -392,9 +1152,9 @@ TEST(ReduceByKeyBasic, IntegerTestOddSizes)
         }
 
         // input and output vectors for device and reference
-    
-        std::vector< int > koutput( length ); 
-        std::vector< int > voutput( length ); 
+
+        std::vector< int > koutput( length );
+        std::vector< int > voutput( length );
         std::vector< int > krefOutput( length );
         std::vector< int > vrefOutput( length );
         std::fill(krefOutput.begin(),krefOutput.end(),0);
@@ -406,30 +1166,193 @@ TEST(ReduceByKeyBasic, IntegerTestOddSizes)
 
 
         // call reduce_by_key
-        auto p = bolt::cl::reduce_by_key( keys.begin(), keys.end(), input.begin(), koutput.begin(), voutput.begin(), binary_predictor, binary_operator);
+
+        auto p = bolt::cl::reduce_by_key( keys.begin(), keys.end(), input.begin(), koutput.begin(), voutput.begin(),
+                                          binary_predictor, binary_operator);
+
 
     #if 0
 
         for(unsigned int i = 0; i < 256 ; i++)
         {
-            std::cout<<"Ikey "<<keys[i]<<" IValues "<<input[i]<<" -> OKeys "<<koutput[i]<<" OValues "<<voutput[i]<<std::endl;
+
+            std::cout<<"Ikey "<<keys[i]<<" IValues "<<input[i]<<" -> OKeys "<<koutput[i];
+            std::cout<<" OValues "<<voutput[i]<<std::endl;
+
         }
 
     #endif
 
-        auto refPair = gold_reduce_by_key( keys.begin(), keys.end(), refInput.begin(), krefOutput.begin(), vrefOutput.begin(),std::plus<int>());
-    
+
+        auto refPair = gold_reduce_by_key( keys.begin(), keys.end(), refInput.begin(), krefOutput.begin(),
+                                           vrefOutput.begin(),std::plus<int>());
+
+
         //cmpArrays2(krefOutput, koutput, refPair.first, p.first);
         cmpArrays(krefOutput, koutput);
         cmpArrays(vrefOutput, voutput);
-        // cmpArrays2(vrefOutput, voutput, refPair.second, p.second);        
+        // cmpArrays2(vrefOutput, voutput, refPair.second, p.second);
         count++;
       }
    }
-  
-    
+
+
 }
 
+
+TEST(ReduceByKeyBasic, CPUIntegerTestOddSizes)
+{
+    int length;
+
+    int num,i, count=0;
+
+   for(num=1<<16;count<=20;num++)
+   {
+      for(i=2;i<num;i++)
+      {
+         if(num%i==0)
+         break;
+      }
+      if(num==i)
+      {
+      //  printf("****%d\n", length);
+        length = num;
+        std::vector< int > keys( length);
+        // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
+        int segmentLength = 0;
+        int segmentIndex = 0;
+        int key = 1;
+        std::vector< int > refInput( length );
+        std::vector< int > input( length );
+        for (int i = 0; i < length; i++)
+        {
+            if(std::rand()%3 == 1) key++;
+            keys[i] = key;
+            refInput[i] = std::rand()%4;
+            input[i] = refInput[i];
+        }
+
+        // input and output vectors for device and reference
+
+        std::vector< int > koutput( length );
+        std::vector< int > voutput( length );
+        std::vector< int > krefOutput( length );
+        std::vector< int > vrefOutput( length );
+        std::fill(krefOutput.begin(),krefOutput.end(),0);
+        std::fill(vrefOutput.begin(),vrefOutput.end(),0);
+
+
+        bolt::cl::equal_to<int> binary_predictor;
+        bolt::cl::plus<int> binary_operator;
+
+        ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+        bolt::cl::control ctl = bolt::cl::control::getDefault( );
+        ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+        // call reduce_by_key
+        auto p = bolt::cl::reduce_by_key( ctl, keys.begin(), keys.end(), input.begin(), koutput.begin(),
+                                          voutput.begin(), binary_predictor, binary_operator);
+
+    #if 0
+
+        for(unsigned int i = 0; i < 256 ; i++)
+        {
+             std::cout<<"Ikey "<<keys[i]<<" IValues "<<input[i]<<" -> OKeys "<<koutput[i];
+             std::cout<<" OValues "<<voutput[i]<<std::endl;
+        }
+
+    #endif
+
+        auto refPair = gold_reduce_by_key( keys.begin(), keys.end(), refInput.begin(), krefOutput.begin(),
+                                           vrefOutput.begin(),std::plus<int>());
+
+        //cmpArrays2(krefOutput, koutput, refPair.first, p.first);
+        cmpArrays(krefOutput, koutput);
+        cmpArrays(vrefOutput, voutput);
+        // cmpArrays2(vrefOutput, voutput, refPair.second, p.second);
+        count++;
+      }
+   }
+
+
+}
+
+TEST(ReduceByKeyBasic, MultiCoreIntegerTestOddSizes)
+{
+    int length;
+
+    int num,i, count=0;
+
+   for(num=1<<16;count<=20;num++)
+   {
+      for(i=2;i<num;i++)
+      {
+         if(num%i==0)
+         break;
+      }
+      if(num==i)
+      {
+      //  printf("****%d\n", length);
+        length = num;
+        std::vector< int > keys( length);
+        // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
+        int segmentLength = 0;
+        int segmentIndex = 0;
+        int key = 1;
+        std::vector< int > refInput( length );
+        std::vector< int > input( length );
+        for (int i = 0; i < length; i++)
+        {
+            if(std::rand()%3 == 1) key++;
+            keys[i] = key;
+            refInput[i] = std::rand()%4;
+            input[i] = refInput[i];
+        }
+
+        // input and output vectors for device and reference
+
+        std::vector< int > koutput( length );
+        std::vector< int > voutput( length );
+        std::vector< int > krefOutput( length );
+        std::vector< int > vrefOutput( length );
+        std::fill(krefOutput.begin(),krefOutput.end(),0);
+        std::fill(vrefOutput.begin(),vrefOutput.end(),0);
+
+
+        bolt::cl::equal_to<int> binary_predictor;
+        bolt::cl::plus<int> binary_operator;
+
+        ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+        bolt::cl::control ctl = bolt::cl::control::getDefault( );
+        ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+        // call reduce_by_key
+        auto p = bolt::cl::reduce_by_key( ctl, keys.begin(), keys.end(), input.begin(), koutput.begin(),
+                                          voutput.begin(), binary_predictor, binary_operator);
+
+    #if 0
+
+        for(unsigned int i = 0; i < 256 ; i++)
+        {
+            std::cout<<"Ikey "<<keys[i]<<" IValues "<<input[i]<<" -> OKeys "<<koutput[i];
+            std::cout<<" OValues "<<voutput[i]<<std::endl;
+        }
+
+    #endif
+
+        auto refPair = gold_reduce_by_key( keys.begin(), keys.end(), refInput.begin(), krefOutput.begin(),
+                                           vrefOutput.begin(),std::plus<int>());
+
+        //cmpArrays2(krefOutput, koutput, refPair.first, p.first);
+        cmpArrays(krefOutput, koutput);
+        cmpArrays(vrefOutput, voutput);
+        // cmpArrays2(vrefOutput, voutput, refPair.second, p.second);
+        count++;
+      }
+   }
+
+
+}
 
 
 
@@ -442,7 +1365,7 @@ struct uddfltint
     bool operator==(const uddfltint& rhs) const
     {
         bool equal = true;
-        float ths = 0.00001; // thresh hold single(float)
+        float ths = 0.00001f; // thresh hold single(float)
         equal = ( x == rhs.x ) ? equal : false;
         if (rhs.y < ths && rhs.y > -ths)
             equal = ( (1.0*y - rhs.y) < ths && (1.0*y - rhs.y) > -ths) ? equal : false;
@@ -450,10 +1373,10 @@ struct uddfltint
             equal = ( (1.0*y - rhs.y)/rhs.y < ths && (1.0*y - rhs.y)/rhs.y > -ths) ? equal : false;
         return equal;
     }
-    void operator++()
+    void operator++(int)
     {
-        x += 1;
-        y += 1.0f;
+        x += (float)1.0;
+        y += 1;
     }
 
     bool operator>(int rhs) const
@@ -467,14 +1390,14 @@ struct uddfltint
     }
     void operator=(int rhs)
     {
-      x = rhs;
+      x = (float)rhs;
       y = rhs;
     }
 
     bool operator!=(int rhs) const
     {
         bool nequal = true;
-        float ths = 0.00001; // thresh hold single(float)
+        float ths = 0.00001f; // thresh hold single(float)
         nequal = ( x != rhs ) ? nequal : false;
         if (rhs < ths && rhs > -ths)
             nequal = ( (1.0*y - rhs) < ths && (1.0*y - rhs) > -ths) ? false : nequal;
@@ -485,7 +1408,7 @@ struct uddfltint
 
     void operator-(int rhs)
     {
-        x -= rhs;
+        x -= (float)rhs;
         y -= rhs;
     }
 };
@@ -512,15 +1435,18 @@ struct uddfltint_plus
     }
 };
 );
+BOLT_CREATE_TYPENAME( bolt::cl::device_vector< uddfltint >::iterator );
+BOLT_CREATE_CLCODE( bolt::cl::device_vector< uddfltint >::iterator, bolt::cl::deviceVectorIteratorTemplate );
 
 #if UDD
+
 TEST(ReduceByKeyPairUDDTest, UDDFloatIntTest)
 {
     int length = 1024;
     std::vector< uddfltint > keys( length);
     uddfltint key;
-    key.x = 1;
-    key.y = 1.0;
+    key.x = 1.0f;
+    key.y = 1;
     std::vector< uddfltint > refInput( length );
     std::vector< uddfltint > input( length );
 
@@ -528,7 +1454,7 @@ TEST(ReduceByKeyPairUDDTest, UDDFloatIntTest)
     {
         if(std::rand()%5 == 1) key++;
         keys[i] = key;
-        refInput[i].x = std::rand()%4;
+        refInput[i].x = float(std::rand()%4);
         refInput[i].y = std::rand()%4;
         input[i] = refInput[i];
     }
@@ -561,8 +1487,176 @@ TEST(ReduceByKeyPairUDDTest, UDDFloatIntTest)
                         binary_operator);
 
     // call reduce_by_key
-    DevicePairIterator dv_pair = 
-    bolt::cl::reduce_by_key( 
+    DevicePairIterator dv_pair =
+    bolt::cl::reduce_by_key(
+        keys.begin(),
+        keys.end(),
+        input.begin(),
+        koutput.begin(),
+        voutput.begin(),
+        binary_predictor,
+        binary_operator);
+
+    size_t sizeAfterCall = gold_pair.first - krefOutput.begin();
+    size_t sizeAfterDeviceCall = dv_pair.first - koutput.begin();
+
+    krefOutput.resize(sizeAfterCall);
+    vrefOutput.resize(sizeAfterCall);
+    koutput.resize(sizeAfterDeviceCall);
+    voutput.resize(sizeAfterDeviceCall);
+
+#if 0
+
+    for(unsigned int i = 0; i < sizeAfterDeviceCall ; i++)
+    {
+        std::cout<<" -> OKeys "<<koutput[i].x<<" OValues "<<voutput[i].x<<std::endl;
+    }
+
+#endif
+
+    cmpArrays(krefOutput, koutput);
+    cmpArrays(vrefOutput, voutput);
+
+}
+
+TEST(ReduceByKeyPairUDDTest, CPU_UDDFloatIntTest)
+{
+    int length = 1024;
+    std::vector< uddfltint > keys( length);
+    uddfltint key;
+    key.x = 1.0f;
+    key.y = 1;
+    std::vector< uddfltint > refInput( length );
+    std::vector< uddfltint > input( length );
+
+    for (int i = 0; i < length; i++)
+    {
+        if(std::rand()%5 == 1) key++;
+        keys[i] = key;
+        refInput[i].x = float(std::rand()%4);
+        refInput[i].y = std::rand()%4;
+        input[i] = refInput[i];
+    }
+
+    std::vector< uddfltint > koutput( length );
+    std::vector< uddfltint > voutput( length );
+    std::vector< uddfltint > krefOutput( length );
+    std::vector< uddfltint > vrefOutput( length );
+
+    // Instead of using fill
+    krefOutput.clear();krefOutput.resize(length);
+    vrefOutput.clear();vrefOutput.resize(length);
+    voutput.clear();voutput.resize(length);
+    koutput.clear();koutput.resize(length);
+
+    uddfltint_equal_to binary_predictor;
+    uddfltint_plus binary_operator;
+
+    typedef std::pair<std::vector<uddfltint>::iterator,
+            std::vector<uddfltint>::iterator> StdPairIterator;
+    typedef bolt::cl::pair<std::vector<uddfltint>::iterator,
+            std::vector<uddfltint>::iterator> DevicePairIterator;
+
+    DevicePairIterator gold_pair =
+    gold_reduce_by_key( keys.begin(),
+                        keys.end(),
+                        refInput.begin(),
+                        krefOutput.begin(),
+                        vrefOutput.begin(),
+                        binary_operator);
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    // call reduce_by_key
+    DevicePairIterator dv_pair =
+    bolt::cl::reduce_by_key(
+        ctl,
+        keys.begin(),
+        keys.end(),
+        input.begin(),
+        koutput.begin(),
+        voutput.begin(),
+        binary_predictor,
+        binary_operator);
+
+    size_t sizeAfterCall = gold_pair.first - krefOutput.begin();
+    size_t sizeAfterDeviceCall = dv_pair.first - koutput.begin();
+
+    krefOutput.resize(sizeAfterCall);
+    vrefOutput.resize(sizeAfterCall);
+    koutput.resize(sizeAfterDeviceCall);
+    voutput.resize(sizeAfterDeviceCall);
+
+#if 0
+
+    for(unsigned int i = 0; i < sizeAfterDeviceCall ; i++)
+    {
+        std::cout<<" -> OKeys "<<koutput[i].x<<" OValues "<<voutput[i].x<<std::endl;
+    }
+
+#endif
+
+    cmpArrays(krefOutput, koutput);
+    cmpArrays(vrefOutput, voutput);
+
+}
+
+TEST(ReduceByKeyPairUDDTest, MultiCore_UDDFloatIntTest)
+{
+    int length = 1024;
+    std::vector< uddfltint > keys( length);
+    uddfltint key;
+    key.x = 1.0f;
+    key.y = 1;
+    std::vector< uddfltint > refInput( length );
+    std::vector< uddfltint > input( length );
+
+    for (int i = 0; i < length; i++)
+    {
+        if(std::rand()%5 == 1) key++;
+        keys[i] = key;
+        refInput[i].x = float(std::rand()%4);
+        refInput[i].y = std::rand()%4;
+        input[i] = refInput[i];
+    }
+
+    std::vector< uddfltint > koutput( length );
+    std::vector< uddfltint > voutput( length );
+    std::vector< uddfltint > krefOutput( length );
+    std::vector< uddfltint > vrefOutput( length );
+
+    // Instead of using fill
+    krefOutput.clear();krefOutput.resize(length);
+    vrefOutput.clear();vrefOutput.resize(length);
+    voutput.clear();voutput.resize(length);
+    koutput.clear();koutput.resize(length);
+
+    uddfltint_equal_to binary_predictor;
+    uddfltint_plus binary_operator;
+
+    typedef std::pair<std::vector<uddfltint>::iterator,
+            std::vector<uddfltint>::iterator> StdPairIterator;
+    typedef bolt::cl::pair<std::vector<uddfltint>::iterator,
+            std::vector<uddfltint>::iterator> DevicePairIterator;
+
+    DevicePairIterator gold_pair =
+    gold_reduce_by_key( keys.begin(),
+                        keys.end(),
+                        refInput.begin(),
+                        krefOutput.begin(),
+                        vrefOutput.begin(),
+                        binary_operator);
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    // call reduce_by_key
+    DevicePairIterator dv_pair =
+    bolt::cl::reduce_by_key(
+        ctl,
         keys.begin(),
         keys.end(),
         input.begin(),
@@ -615,8 +1709,10 @@ int _tmain(int argc, _TCHAR* argv[])
         desc.add_options()
             ( "help,h",         "produces this help message" )
             ( "queryOpenCL,q",  "Print queryable platform and device info and return" )
-            ( "platform,p",     boost::program_options::value< cl_uint >( &userPlatform )->default_value( 0 ),	"Specify the platform under test" )
-            ( "device,d",       boost::program_options::value< cl_uint >( &userDevice )->default_value( 0 ),	"Specify the device under test" )
+            ( "platform,p",     boost::program_options::value< cl_uint >( &userPlatform )->default_value( 0 ),
+                                "Specify the platform under test" )
+            ( "device,d",       boost::program_options::value< cl_uint >( &userDevice )->default_value( 0 ),
+                               "Specify the device under test" )
             ;
 
 
@@ -626,7 +1722,7 @@ int _tmain(int argc, _TCHAR* argv[])
 
         if( vm.count( "help" ) )
         {
-            //	This needs to be 'cout' as program-options does not support wcout yet
+            // This needs to be 'cout' as program-options does not support wcout yet
             std::cout << desc << std::endl;
             return 0;
         }
@@ -639,17 +1735,17 @@ int _tmain(int argc, _TCHAR* argv[])
         //  The following 3 options are not implemented yet; they are meant to be used with ::clCreateContextFromType()
         if( vm.count( "gpu" ) )
         {
-            deviceType	= CL_DEVICE_TYPE_GPU;
+            deviceType = CL_DEVICE_TYPE_GPU;
         }
-        
+
         if( vm.count( "cpu" ) )
         {
-            deviceType	= CL_DEVICE_TYPE_CPU;
+            deviceType = CL_DEVICE_TYPE_CPU;
         }
 
         if( vm.count( "all" ) )
         {
-            deviceType	= CL_DEVICE_TYPE_ALL;
+            deviceType = CL_DEVICE_TYPE_ALL;
         }
 
     }
@@ -689,7 +1785,7 @@ int _tmain(int argc, _TCHAR* argv[])
 
     // Device info
     std::vector< cl::Device > devices;
-    bolt::cl::V_OPENCL( platforms.front( ).getDevices( CL_DEVICE_TYPE_ALL, &devices ), "Platform::getDevices() failed" );
+    bolt::cl::V_OPENCL( platforms.front( ).getDevices( CL_DEVICE_TYPE_ALL, &devices ),"Platform::getDevices() failed");
 
     cl::Context myContext( devices.at( userDevice ) );
     cl::CommandQueue myQueue( myContext, devices.at( userDevice ) );

@@ -55,7 +55,7 @@ uint lowerBoundLinear( global sType* data, uint left, uint right, sType searchVa
             break;
         }
     }
-    
+
     return firstIndex;
 }
 
@@ -83,15 +83,15 @@ uint lowerBoundBinary( global sType* data, uint left, uint right, sType searchVa
         if( (*lessOp)( midValue, searchVal ) )
         {
             firstIndex = midIndex+1;
-            // printf( "lowerBound: lastIndex[ %i ]=%i\n", get_local_id( 0 ), lastIndex );
+             //printf( "lowerBound: lastIndex[ %i ]=%i\n", get_local_id( 0 ), lastIndex );
         }
         else
         {
             lastIndex = midIndex;
-            // printf( "lowerBound: firstIndex[ %i ]=%i\n", get_local_id( 0 ), firstIndex );
+             //printf( "lowerBound: firstIndex[ %i ]=%i\n", get_local_id( 0 ), firstIndex );
         }
     }
-    
+    //printf("lowerBoundBinary: left=%d, right=%d, firstIndex=%d\n", left, right, firstIndex);
     return firstIndex;
 }
 
@@ -105,19 +105,34 @@ uint upperBoundBinary( global sType* data, uint left, uint right, sType searchVa
 {
     uint upperBound = lowerBoundBinary( data, left, right, searchVal, lessOp );
     
-    // printf( "upperBoundBinary: upperBound[ %i, %i ]= %i\n", left, right, upperBound );
+     //printf( "start of upperBoundBinary: upperBound, left, right = [%d, %d, %d]\n", upperBound, left, right );
+    //  upperBound is always between left and right or equal to right
     //  If upperBound == right, then  searchVal was not found in the sequence.  Just return.
     if( upperBound != right )
     {
         //  While the values are equal i.e. !(x < y) && !(y < x) increment the index
+        uint mid = 0;
         sType upperValue = data[ upperBound ];
-        while( !(*lessOp)( upperValue, searchVal ) && !(*lessOp)( searchVal, upperValue) && (upperBound != right) )
+        //This loop is a kind of a specialized binary search. 
+        //This will find the first index location which is not equal to searchVal.
+        while( !(*lessOp)( upperValue, searchVal ) && !(*lessOp)( searchVal, upperValue) && (upperBound < right))
         {
-            upperBound++;
+            mid = (upperBound + right)/2;
+            sType midValue = data[mid];
+            if( !(*lessOp)( midValue, searchVal ) && !(*lessOp)( searchVal, midValue) )
+            {
+                upperBound = mid + 1;
+            }   
+            else
+            {
+                right = mid;
+                upperBound++;
+            }
             upperValue = data[ upperBound ];
+            //printf( "upperBoundBinary: upperBound, left, right = [%d, %d, %d]\n", upperBound, left, right);
         }
     }
-    
+    //printf( "end of upperBoundBinary: upperBound, left, right = [%d, %d, %d]\n", upperBound, left, right);
     return upperBound;
 }
 
@@ -151,21 +166,17 @@ kernel void mergeTemplate(
     uint srcBlockNum = globalID / srcLogicalBlockSize;
     uint srcBlockIndex = globalID % srcLogicalBlockSize;
     
-    // printf( "mergeTemplate: srcBlockNum[%i]=%i\n", srcBlockNum, srcBlockIndex );
+    //printf( "mergeTemplate: srcBlockNum[%i]=%i\n", srcBlockNum, srcBlockIndex );
 
     //  Pairs of even-odd blocks will be merged together 
     //  An even block should search for an insertion point in the next odd block, 
     //  and the odd block should look for an insertion point in the corresponding previous even block
     uint dstLogicalBlockSize = srcLogicalBlockSize<<1;
-    uint leftBlockIndex = globalID & ~((dstLogicalBlockSize) - 1 );
+    uint leftBlockIndex = globalID & ~(dstLogicalBlockSize - 1 );
+    //printf("mergeTemplate: leftBlockIndex=%d\n", leftBlockIndex );
     leftBlockIndex += (srcBlockNum & 0x1) ? 0 : srcLogicalBlockSize;
     leftBlockIndex = min( leftBlockIndex, srcVecSize );
     uint rightBlockIndex = min( leftBlockIndex + srcLogicalBlockSize, srcVecSize );
-    
-    // if( localID == 0 )
-    // {
-        // printf( "mergeTemplate: wavefront[ %i ] logicalBlock[ %i ] logicalIndex[ %i ] leftBlockIndex[ %i ] <=> rightBlockIndex[ %i ]\n", groupID, srcBlockNum, srcBlockIndex, leftBlockIndex, rightBlockIndex );
-    // }
     
     //  For a particular element in the input array, find the lowerbound index for it in the search sequence given by leftBlockIndex & rightBlockIndex
     // uint insertionIndex = lowerBoundLinear( source_ptr, leftBlockIndex, rightBlockIndex, source_ptr[ globalID ], lessOp ) - leftBlockIndex;
@@ -184,13 +195,7 @@ kernel void mergeTemplate(
     uint dstBlockIndex = srcBlockIndex + insertionIndex;
     uint dstBlockNum = srcBlockNum/2;
     
-    // if( (dstBlockNum*dstLogicalBlockSize)+dstBlockIndex == 395 )
-    // {
-        // printf( "mergeTemplate: (dstBlockNum[ %i ] * dstLogicalBlockSize[ %i ]) + dstBlockIndex[ %i ] = srcBlockIndex[ %i ] + insertionIndex[ %i ]\n", dstBlockNum, dstLogicalBlockSize, dstBlockIndex, srcBlockIndex, insertionIndex );
-        // printf( "mergeTemplate: dstBlockIndex[ %i ] = source_ptr[ %i ] ( %i )\n", (dstBlockNum*dstLogicalBlockSize)+dstBlockIndex, globalID, source_ptr[ globalID ] );
-    // }
     result_ptr[ (dstBlockNum*dstLogicalBlockSize)+dstBlockIndex ] = source_ptr[ globalID ];
-    // printf( "mergeTemplate: leftResultIndex[ %i ]=%i + %i\n", leftResultIndex, srcBlockIndex, leftInsertionIndex );
 }
 
 template< typename dPtrType, typename dIterType, typename StrictWeakOrdering >

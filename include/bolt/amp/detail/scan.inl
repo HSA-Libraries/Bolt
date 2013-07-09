@@ -19,6 +19,11 @@
  * AMP Scan
  *****************************************************************************/
 
+#if !defined( BOLT_AMP_SCAN_INL )
+#define BOLT_AMP_SCAN_INL
+#pragma once
+
+
 #define KERNEL02WAVES 4
 #define KERNEL1WAVES 4
 #define WAVESIZE 64
@@ -41,9 +46,6 @@
 #define PEEK_AT( ... )
 #endif
 
-#if !defined( AMP_SCAN_INL )
-#define AMP_SCAN_INL
-
 #ifdef BOLT_ENABLE_PROFILING
 #include "bolt/AsyncProfiler.h"
 //AsyncProfiler aProfiler("transform_scan");
@@ -57,9 +59,8 @@
 
 #ifdef ENABLE_TBB
 //TBB Includes
-#include "tbb/parallel_scan.h"
-#include "tbb/blocked_range.h"
-#include "tbb/task_scheduler_init.h"
+#include "bolt/btbb/scan.h"
+
 #endif
 
 
@@ -178,13 +179,13 @@ OutputIterator exclusive_scan(
 
 template< typename InputIterator, typename OutputIterator >
 OutputIterator exclusive_scan(
-    const control &ctl,
+    control &ctl,
     InputIterator first,
     InputIterator last,
     OutputIterator result ) // assumes addition of numbers
 {
     typedef std::iterator_traits<InputIterator>::value_type iType;
-    iType init = static_cast< iType >( 0 );
+    iType init; memset(&init, 0, sizeof(iType) );
     return detail::scan_detect_random_access(
         ctl, first, last, result, init, false, plus< iType >( ),
         std::iterator_traits< InputIterator >::iterator_category( ) );
@@ -268,21 +269,22 @@ Serial_scan(
     const bool Incl,
     const T &init)
 {
-    oType  sum ;
+    vType  sum, temp;
     if(Incl){
       *result = *values; // assign value
       sum = *values;
     }
     else {
+        temp = *values;
        *result = (oType)init;
-       sum = binary_op( *result, *values);
+       sum = binary_op( *result, temp);
     }
     for ( unsigned int i= 1; i<num; i++)
     {
-        oType currentValue = *(values + i); // convertible
+        vType currentValue = *(values + i); // convertible
         if (Incl)
         {
-            oType r = binary_op( sum, currentValue);
+            vType r = binary_op( sum, currentValue);
             *(result + i) = r;
             sum = r;
         }
@@ -297,67 +299,6 @@ Serial_scan(
 }
 
 
-#ifdef ENABLE_TBB
-      template <typename T, typename BinaryFunction, typename InputIterator, typename OutputIterator>
-      struct Scan_tbb{
-          T sum;
-          T start;
-          InputIterator& x;
-          OutputIterator& y;
-          BinaryFunction scan_op;
-          bool inclusive, flag;
-          public:
-          Scan_tbb() : sum(0) {}
-          Scan_tbb( InputIterator&  _x,
-                    OutputIterator& _y,
-                    const BinaryFunction &_opr,
-                    const bool &_incl ,const T &init) : x(_x), y(_y), scan_op(_opr),inclusive(_incl),start(init),flag(TRUE){}
-          T get_sum() const {return sum;}
-          template<typename Tag>
-          void operator()( const tbb::blocked_range<int>& r, Tag ) {
-             T temp = sum;
-             for(int i=r.begin(); i<r.end(); ++i ) {
-                 if(Tag::is_final_scan()){
-                     if(!inclusive){
-                        if(i==0 ) {
-                            *(y+i) = start;
-                            temp = scan_op(start, *(x+i));
-                         }
-                         else{
-                           *(y+i) = temp;
-                            temp = scan_op(temp, *(x+i));
-                         }
-                         continue;
-                     }
-                     else if(i == 0){
-                        temp = *(x+i);
-                     }
-                     else{
-                        temp = scan_op(temp, *(x+i));
-                     }
-                     *(y+i) = temp;
-                  }
-                  else{
-                     if(flag){
-                       temp = *(x+i);
-                       flag = FALSE;
-                     }
-                     else
-                        temp = scan_op(temp, *(x+i));
-                  }
-             }
-             sum = temp;
-          }
-          Scan_tbb( Scan_tbb& b, tbb::split):y(b.y),x(b.x),inclusive(b.inclusive),start(b.start),flag(TRUE){
-          }
-          void reverse_join( Scan_tbb& a ) {
-               sum = scan_op(a.sum, sum);
-          }
-          void assign( Scan_tbb& b ) {
-             sum = b.sum;
-          }
-       };
-#endif
 
 
 /*!
@@ -410,11 +351,15 @@ aProfiler.stopTrial();
     else if( runMode == bolt::amp::control::MultiCoreCpu )
     {
 #ifdef ENABLE_TBB
-          tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
-          Scan_tbb<iType, BinaryFunction, InputIterator, OutputIterator> tbb_scan((InputIterator &)first,(OutputIterator &)
-                                                                         result,binary_op,inclusive,init);
-          tbb::parallel_scan( tbb::blocked_range<int>(  0, static_cast< int >( std::distance( first, last ))), tbb_scan, tbb::auto_partitioner());
-          return result + numElements;
+
+           if(inclusive)
+               {
+                 return bolt::btbb::inclusive_scan(first, last, result, binary_op);
+               }
+               else
+               {
+                return bolt::btbb::exclusive_scan( first, last, result, init, binary_op);
+               }
 #else
 //        std::cout << "The MultiCoreCpu version of Scan is not implemented yet." << std ::endl;
         throw std::exception( "The MultiCoreCpu version of Scan is not enabled to be built." );
@@ -431,7 +376,7 @@ aProfiler.stopTrial();
         //Now call the actual cl algorithm
         scan_enqueue( ctl, dvInput.begin( ), dvInput.end( ), dvOutput.begin( ), init, binary_op, inclusive );
         //std::cout << "Peeking in pick_iterator after scan_enqueue completed." << std::endl;
-        PEEK_AT( dvOutput.begin().getBuffer())
+        PEEK_AT( dvOutput.begin().getContainer().getBuffer())
 
         // This should immediately map/unmap the buffer
         dvOutput.data( );
@@ -473,41 +418,23 @@ scan_pick_iterator(
     const bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode( );  // could be dynamic choice some day.
     if( runMode == bolt::amp::control::SerialCpu )
     {
-       std::vector<iType> scanInputBuffer(numElements);
-       std::vector<oType> scanResultBuffer(numElements);
-
-        for(unsigned int index=0; index<numElements; index++){
-            scanInputBuffer[index] = first.getBuffer()[index];
-            scanResultBuffer[index] = result.getBuffer()[index];
-        }
-        Serial_scan<iType, oType, BinaryFunction, T>(&(scanInputBuffer[0]), &(scanResultBuffer[0]),
-                                                     numElements, binary_op, inclusive, init);
-        for(unsigned int index=0; index<numElements; index++){
-            result.getBuffer()[index] = scanResultBuffer[index];
-        }
+        bolt::amp::device_vector< iType >::pointer scanInputBuffer =  first.getContainer( ).data( );
+        bolt::amp::device_vector< oType >::pointer scanResultBuffer =  result.getContainer( ).data( );
+        Serial_scan<iType, oType, BinaryFunction, T>(&scanInputBuffer[first.m_Index], &scanResultBuffer[result.m_Index],
+                                                              numElements, binary_op, inclusive, init);
         return result + numElements;
     }
     else if( runMode == bolt::amp::control::MultiCoreCpu )
     {
 
 #ifdef ENABLE_TBB
-        std::vector<iType> scanInputBuffer(numElements);
-        std::vector<oType> scanResultBuffer(numElements);
+        bolt::amp::device_vector< iType >::pointer scanInputBuffer =  first.getContainer( ).data( );
+        bolt::amp::device_vector< oType >::pointer scanResultBuffer =  result.getContainer( ).data( );
+        if(inclusive)
+            bolt::btbb::inclusive_scan(&scanInputBuffer[first.m_Index], &scanInputBuffer[first.m_Index] + numElements, &scanResultBuffer[result.m_Index], binary_op);
+        else
+            bolt::btbb::exclusive_scan( &scanInputBuffer[first.m_Index], &scanInputBuffer[first.m_Index] + numElements, &scanResultBuffer[result.m_Index], init, binary_op);
 
-        //Copy the device_vector buffer to a CPU buffer
-        for(unsigned int index=0; index<numElements; index++){
-            scanInputBuffer[index] = first.getBuffer()[index];
-            scanResultBuffer[index] = result.getBuffer()[index];
-        }
-        InputIterator input = scanInputBuffer.begin();
-        OutputIterator output = scanResultBuffer.begin();
-        tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
-        Scan_tbb<iType, BinaryFunction, InputIterator, OutputIterator> tbb_scan((InputIterator&)input,
-                                                  (OutputIterator&)output, binary_op, inclusive, init);
-        tbb::parallel_scan( tbb::blocked_range<int>(  0, numElements), tbb_scan, tbb::auto_partitioner());
-        for(unsigned int index=0; index<numElements; index++){
-            result.getBuffer()[index] = scanResultBuffer[index];
-        }
         return result + numElements;
 #else
 //        std::cout << "The MultiCoreCpu version of Scan with device vector is not implemented yet." << std ::endl;
@@ -520,7 +447,7 @@ scan_pick_iterator(
     //Now call the actual cl algorithm
         scan_enqueue( ctl, first, last, result, init, binary_op, inclusive );
         //std::cout << "Peeking in pick_iterator after scan_enqueue completed." << std::endl;
-        PEEK_AT( result.getBuffer())
+        PEEK_AT( result.getContainer().getBuffer())
     }
 
     return result + numElements;
@@ -571,20 +498,20 @@ size_t k0_stepNum, k1_stepNum, k2_stepNum;
 
     //  Ceiling function to bump the size of input to the next whole wavefront size
     unsigned int sizeInputBuff = numElements;
-    size_t modWgSize = (sizeInputBuff & (kernel0_WgSize-1));
+    size_t modWgSize = (sizeInputBuff & ((kernel0_WgSize*2)-1));
     if( modWgSize )
     {
         sizeInputBuff &= ~modWgSize;
-        sizeInputBuff += kernel0_WgSize;
+        sizeInputBuff += (kernel0_WgSize*2);
     }
-    unsigned int numWorkGroupsK0 = static_cast< unsigned int >( sizeInputBuff / kernel0_WgSize );
+    unsigned int numWorkGroupsK0 = static_cast< unsigned int >( sizeInputBuff / (kernel0_WgSize*2) );
     //  Ceiling function to bump the size of the sum array to the next whole wavefront size
     unsigned int sizeScanBuff = numWorkGroupsK0;
-    modWgSize = (sizeScanBuff & (kernel0_WgSize-1));
+    modWgSize = (sizeScanBuff & ((kernel0_WgSize*2)-1));
     if( modWgSize )
     {
         sizeScanBuff &= ~modWgSize;
-        sizeScanBuff += kernel0_WgSize;
+        sizeScanBuff += (kernel0_WgSize*2);
     }
 
 
@@ -598,8 +525,9 @@ size_t k0_stepNum, k1_stepNum, k2_stepNum;
     //::cl::Buffer preSumArray( ctl.context( ), CL_MEM_READ_WRITE, sizeScanBuff*sizeof(iType) );
     //::cl::Buffer postSumArray( ctl.context( ), CL_MEM_READ_WRITE, sizeScanBuff*sizeof(iType) );
 
-    concurrency::array< oType >  preSumArray( numWorkGroupsK0, av );
-    concurrency::array< oType > postSumArray( numWorkGroupsK0, av );
+    concurrency::array< iType >  preSumArray( sizeScanBuff, av );
+    concurrency::array< iType >  preSumArray1( sizeScanBuff, av );
+    concurrency::array< iType > postSumArray( sizeScanBuff, av );
 
 
     /**********************************************************************************
@@ -619,8 +547,8 @@ size_t k0_stepNum, k1_stepNum, k2_stepNum;
     //  Use of the auto keyword here is OK, because AMP is restricted by definition to vs11 or above
     //  The auto keyword is useful here in a polymorphic sense, because it does not care if the container
     //  is wrapping an array or an array_view
-  auto&  input = first.getBuffer(); //( numElements, av );
-    auto& output = result.getBuffer(); //( sizeInputBuff, av );
+    auto&  input = first.getContainer().getBuffer(); //( numElements, av );
+    auto& output = result.getContainer().getBuffer(); //( sizeInputBuff, av );
     input.get_extent().size();
   //hostInput.copy_to( input.section( concurrency::extent< 1 >( numElements ) ) );
 
@@ -635,7 +563,7 @@ aProfiler.set(AsyncProfiler::flops, 2*numElements);
 aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(iType) + 1*sizeScanBuff*sizeof(oType));
 #endif
 
-    concurrency::extent< 1 > globalSizeK0( sizeInputBuff );
+    concurrency::extent< 1 > globalSizeK0( sizeInputBuff/2 );
     concurrency::tiled_extent< kernel0_WgSize > tileK0 = globalSizeK0.tile< kernel0_WgSize >();
     //std::cout << "Kernel 0 Launching w/ " << sizeInputBuff << " threads for " << numElements << " elements. " << std::endl;
   concurrency::parallel_for_each( av, tileK0, //output.extent.tile< kernel0_WgSize >(),
@@ -645,6 +573,7 @@ aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(iType) + 1*sizeScanBuf
             init,
             numElements,
             &preSumArray,
+            &preSumArray1,
             binary_op,
             exclusive,
             kernel0_WgSize
@@ -655,59 +584,49 @@ aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(iType) + 1*sizeScanBuf
         unsigned int locId = t_idx.local[ 0 ];
         unsigned int wgSize = kernel0_WgSize;
 
-        tile_static oType lds[ WAVESIZE*KERNEL02WAVES ];
+        tile_static iType lds[ WAVESIZE*KERNEL02WAVES*2 ];
 
+        wgSize *=2;
         // if exclusive, load gloId=0 w/ identity, and all others shifted-1
-        oType val;
-        if (gloId < numElements)
+        if (exclusive)
         {
-            if (exclusive)
-            {
-                if (gloId > 0)
-                { // thread>0
-                    val = input[gloId-1];
-                    lds[ locId ] = val;
-                }
-                else
-                { // thread=0
-                    val = init;
-                    lds[ locId ] = val;
-                }
-            }
-            else
-            {
-                val = input[gloId];
-                lds[ locId ] = val;
-            }
+           if (gloId > 0 && groId*wgSize+locId-1 < numElements)
+              lds[locId] = input[groId*wgSize+locId-1];
+           else 
+              lds[locId] = init;
+           if(groId*wgSize +locId+ (wgSize/2) -1 < numElements)
+              lds[locId+(wgSize/2)] = input[groId*wgSize +locId+ (wgSize/2) -1];
+     
         }
+        else
+        {
+           if(groId*wgSize+locId < numElements)
+                lds[locId] = input[groId*wgSize+locId];
+           if(groId*wgSize +locId+ (wgSize/2) < numElements)
+              lds[locId+(wgSize/2)] = input[ groId*wgSize +locId+ (wgSize/2)];
+        }
+        //  Computes a scan within a workgroup with two data per element
+         unsigned int  offset = 1;
+         for (unsigned int start = wgSize>>1; start > 0; start >>= 1) 
+         {
+           t_idx.barrier.wait();
+           if (locId < start)
+           {
+              unsigned int temp1 = offset*(2*locId+1)-1;
+              unsigned int temp2 = offset*(2*locId+2)-1;
+              iType y = lds[temp2];
+              iType y1 =lds[temp1];
 
-        //  Computes a scan within a workgroup
-        oType sum = val;
-        for( unsigned int offset = 1; offset < wgSize; offset *= 2 )
-        {
-            t_idx.barrier.wait();
-            if (locId >= offset && gloId < numElements)
-            {
-                iType y = lds[ locId - offset ];
-                sum = binary_op( sum, y );
-            }
-            t_idx.barrier.wait();
-            lds[ locId ] = sum;
-        }
-
-        //  Each work item writes out its calculated scan result, relative to the beginning
-        //  of each work group
-        if (gloId < numElements)
-        {
-            output[ gloId ] = sum;
-        }
-        t_idx.barrier.wait();
-        if (locId == 0 && gloId < numElements)
-        {
-            // last work-group can be wrong b/c ignored
-            preSumArray[ groId ] = lds[ wgSize-1 ];
-        }
-
+              lds[temp2] = binary_op(y, y1);
+           }
+           offset *= 2;
+         }
+         t_idx.barrier.wait();
+         if (locId == 0)
+         {
+            preSumArray[ groId ] = lds[wgSize -1];
+            preSumArray1[ groId ] = lds[wgSize/2 -1];
+         }
   } );
     //std::cout << "Kernel 0 Done" << std::endl;
     PEEK_AT( output )
@@ -746,6 +665,8 @@ aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(iType) + 1*sizeScanBuf
 #endif
 
     unsigned int workPerThread = static_cast< unsigned int >( sizeScanBuff / kernel1_WgSize );
+    workPerThread = workPerThread ? workPerThread : 1;
+
 /*
     V_OPENCL( kernels[ 1 ].setArg( 0, *postSumArray ),  "Error setting 0th argument for kernels[ 1 ]" );          // Output buffer
     V_OPENCL( kernels[ 1 ].setArg( 1, *preSumArray ),   "Error setting 1st argument for kernels[ 1 ]" );            // Input buffer
@@ -793,31 +714,30 @@ aProfiler.set(AsyncProfiler::memory, 4*sizeScanBuff*sizeof(oType));
         unsigned int wgSize = kernel1_WgSize;
         unsigned int mapId  = gloId * workPerThread;
 
-        tile_static oType lds[ WAVESIZE*KERNEL1WAVES ];
+        tile_static iType lds[ WAVESIZE*KERNEL1WAVES ];
 
         // do offset of zero manually
         unsigned int offset;
-        oType workSum;
+        iType workSum;
         if (mapId < numWorkGroupsK0)
         {
             // accumulate zeroth value manually
             offset = 0;
             workSum = preSumArray[mapId+offset];
             postSumArray[ mapId + offset ] = workSum;
-
             //  Serial accumulation
             for( offset = offset+1; offset < workPerThread; offset += 1 )
             {
                 if (mapId+offset<numWorkGroupsK0)
                 {
-                    oType y = preSumArray[mapId+offset];
+                    iType y = preSumArray[mapId+offset];
                     workSum = binary_op( workSum, y );
                     postSumArray[ mapId + offset ] = workSum;
                 }
             }
         }
         t_idx.barrier.wait();
-        oType scanSum = workSum;
+        iType scanSum = workSum;
         offset = 1;
         // load LDS with register sums
         lds[ locId ] = workSum;
@@ -830,26 +750,44 @@ aProfiler.set(AsyncProfiler::memory, 4*sizeScanBuff*sizeof(oType));
             {
                 if (locId >= offset)
                 {
-                    oType y = lds[ locId - offset ];
+                    iType y = lds[ locId - offset ];
                     scanSum = binary_op( scanSum, y );
                 }
-            }
-		      	lds[ locId ] = scanSum;
-			      t_idx.barrier.wait();
 
+            }
+            t_idx.barrier.wait();
+            lds[ locId ] = scanSum;
         } // for offset
+        t_idx.barrier.wait();
 
         // write final scan from pre-scan and lds scan
-        for( offset = 0; offset < workPerThread; offset += 1 )
+        workSum = preSumArray[mapId];
+        if (mapId < numWorkGroupsK0 && locId > 0){
+           iType y = lds[locId-1];
+           workSum = binary_op(workSum, y);
+           postSumArray[ mapId] = workSum;
+        }
+        else if(mapId < numWorkGroupsK0 ){
+           postSumArray[ mapId] = workSum;
+        }
+        // write final scan from pre-scan and lds scan
+        for( offset = 1; offset < workPerThread; offset += 1 )
         {
-            t_idx.barrier.wait();
-            if (mapId < numWorkGroupsK0 && locId > 0)
-            {
-                oType y = postSumArray[ mapId + offset ];
-                oType y2 = lds[locId-1];
-                y = binary_op( y, y2 );
-                postSumArray[ mapId + offset ] = y;
-            } // thread in bounds
+             t_idx.barrier.wait_with_global_memory_fence();
+             if (mapId+offset < numWorkGroupsK0 && locId > 0)
+             {
+                iType y  = preSumArray[ mapId + offset ] ;
+                iType y1 = binary_op(y, workSum);
+                postSumArray[ mapId + offset ] = y1;
+                workSum = y1;
+
+             } // thread in bounds
+             else if(mapId+offset < numWorkGroupsK0 ){
+               iType y  = preSumArray[ mapId + offset ] ;
+               postSumArray[ mapId + offset ] = binary_op(y, workSum);
+               workSum = postSumArray[ mapId + offset ];
+            }
+
         } // for
 
     } );
@@ -904,10 +842,14 @@ aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(oType) + 1*sizeScanBuf
     //std::cout << "Kernel 2 Launching w/ " << sizeInputBuff << " threads for " << numElements << " elements. " << std::endl;
     concurrency::parallel_for_each( av, tileK2,
         [
+            input,
             output,
             &postSumArray,
+            &preSumArray1,
             numElements,
             binary_op,
+            init,
+            exclusive,
             kernel2_WgSize
         ] ( concurrency::tiled_index< kernel2_WgSize > t_idx ) restrict(amp)
   {
@@ -916,13 +858,69 @@ aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(oType) + 1*sizeScanBuf
         unsigned int locId = t_idx.local[ 0 ];
         unsigned int wgSize = kernel2_WgSize;
 
-        if (groId > 0 && gloId < numElements )
-        {
-            oType scanResult = output[ gloId ];
-            oType postBlockSum = postSumArray[ groId-1 ];
-            oType newResult = binary_op( scanResult, postBlockSum );
-            output[ gloId ] = newResult;
+         tile_static iType lds[ WAVESIZE*KERNEL1WAVES ];
+        // if exclusive, load gloId=0 w/ identity, and all others shifted-1
+        iType val;
+  
+        if (gloId < numElements){
+           if (exclusive)
+           {
+              if (gloId > 0)
+              { // thread>0
+                  val = input[gloId-1];
+                  lds[ locId ] = val;
+              }
+              else
+              { // thread=0
+                  val = init;
+                  lds[ locId ] = val;
+              }
+           }
+           else
+           {
+              val = input[gloId];
+              lds[ locId ] = val;
+           }
         }
+  
+        //  Computes a scan within a workgroup
+        iType sum = val;
+        unsigned int  offset = 1;
+        for( unsigned int offset = 1; offset < wgSize; offset *= 2 )
+        {
+            t_idx.barrier.wait();
+            if (locId >= offset)
+            {
+                iType y = lds[ locId - offset ];
+                sum = binary_op( sum, y );
+            }
+            t_idx.barrier.wait();
+            lds[ locId ] = sum;
+        }
+         t_idx.barrier.wait();
+    //  Abort threads that are passed the end of the input vector
+        if (gloId >= numElements) return; 
+
+        iType scanResult = sum;
+        iType postBlockSum, newResult;
+        // accumulate prefix
+        iType y, y1;
+        if(groId > 0) {
+            if(groId % 2 == 0)
+               postBlockSum = postSumArray[ groId/2 -1 ];
+            else if(groId == 1)
+               postBlockSum = preSumArray1[0];
+            else {
+                y = postSumArray[ groId/2 -1 ];
+                y1 = preSumArray1[groId/2];
+                postBlockSum = binary_op(y, y1);
+             }
+             newResult = binary_op( scanResult, postBlockSum );
+         }
+         else {
+              newResult = scanResult;
+         }
+         output[ gloId ] = newResult;
 
     } );
     //std::cout << "Kernel 2 Done" << std::endl;

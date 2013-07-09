@@ -28,6 +28,7 @@
 
 #include "bolt/cl/bolt.h"
 #include "bolt/cl/functional.h"
+#include "bolt/cl/pair.h"
 #include "bolt/cl/device_vector.h"
 
 #define BOLT_CL_STABLESORT_BY_KEY_CPU_THRESHOLD 64
@@ -89,7 +90,7 @@ namespace cl {
 namespace detail
 {
 
-    enum stableSortTypes { stableSort_by_key_KeyType, stableSort_by_key_KeyIterType, stableSort_by_key_ValueType, 
+    enum stableSort_by_keyTypes { stableSort_by_key_KeyType, stableSort_by_key_KeyIterType, stableSort_by_key_ValueType, 
         stableSort_by_key_ValueIterType, stableSort_by_key_lessFunction, stableSort_by_key_end };
 
     class StableSort_by_key_KernelTemplateSpecializer : public KernelTemplateSpecializer
@@ -136,8 +137,64 @@ namespace detail
             return templateSpecializationString;
         }
     };
+ 
+    //Serial CPU code path implementation.
+    //Class to hold the key value pair. This will be used to zip th ekey and value together in a vector. 
+    template <typename keyType, typename valueType>
+    class std_stable_sort
+    {
+    public:
+        keyType   key;
+        valueType value;
+    };
+    //This is the functor which will sort the std_stable_sort vector. 
+    template <typename keyType, typename valueType, typename StrictWeakOrdering>
+    class std_stable_sort_comp
+    {
+    public:
+        typedef std_stable_sort<keyType, valueType> KeyValueType;
+        std_stable_sort_comp(const StrictWeakOrdering &_swo):swo(_swo) 
+        {}
+        StrictWeakOrdering swo;
+        bool operator() (const KeyValueType &lhs, const KeyValueType &rhs) const
+        {
+            return swo(lhs.key, rhs.key);
+        }
+    };
 
-// Wrapper that uses default control class, iterator interface
+    //The serial CPU implementation of stable_sort_by_key routine. This routines zips the key value pair and then sorts
+    //using the std::stable_sort routine.
+    template< typename RandomAccessIterator1, typename RandomAccessIterator2, typename StrictWeakOrdering >
+    void serialCPU_stable_sort_by_key(const RandomAccessIterator1 keys_first, const RandomAccessIterator1 keys_last, 
+                                      const RandomAccessIterator2 values_first,
+                                      const StrictWeakOrdering& comp)
+    {
+        typedef typename std::iterator_traits< RandomAccessIterator1 >::value_type keyType;
+        typedef typename std::iterator_traits< RandomAccessIterator2 >::value_type valType;
+        typedef std_stable_sort<keyType, valType> KeyValuePair;
+        typedef std_stable_sort_comp<keyType, valType, StrictWeakOrdering> KeyValuePairFunctor;
+       
+        size_t vecSize = std::distance( keys_first, keys_last ); 
+        std::vector<KeyValuePair> KeyValuePairVector(vecSize);
+        KeyValuePairFunctor functor(comp);
+        //Zip the key and values iterators into a std_stable_sort vector.
+        for (size_t i=0; i< vecSize; i++)
+        {
+            KeyValuePairVector[i].key   = *(keys_first + i);
+            KeyValuePairVector[i].value = *(values_first + i);
+        }
+        //Sort the std_stable_sort vector using std::stable_sort
+        std::stable_sort(KeyValuePairVector.begin(), KeyValuePairVector.end(), functor);
+        //Extract the keys and values from the KeyValuePair and fill the respective iterators. 
+        for (size_t i=0; i< vecSize; i++)
+        {
+            *(keys_first + i)   = KeyValuePairVector[i].key;
+            *(values_first + i) = KeyValuePairVector[i].value;
+        } 
+    }
+
+
+    // Wrapper that uses default control class, iterator interface
     template< typename RandomAccessIterator1, typename RandomAccessIterator2, typename StrictWeakOrdering >
     void stablesort_by_key_detect_random_access( control &ctl, 
                                     const RandomAccessIterator1 keys_first, const RandomAccessIterator1 keys_last, 
@@ -186,6 +243,10 @@ namespace detail
     //Non Device Vector specialization.
     //This implementation creates a cl::Buffer and passes the cl buffer to the sort specialization whichtakes the cl buffer as a parameter. 
     //In the future, Each input buffer should be mapped to the device_vector and the specialization specific to device_vector should be called. 
+    //This implementation creates a cl::Buffer and passes the cl buffer to the sort specialization whichtakes 
+    //the cl buffer as a parameter. 
+    //In the future, Each input buffer should be mapped to the device_vector and the specialization specific
+    //to device_vector should be called. 
     template< typename RandomAccessIterator1, typename RandomAccessIterator2, typename StrictWeakOrdering >
     void stablesort_by_key_pick_iterator( control &ctl, 
                                 const RandomAccessIterator1 keys_first, const RandomAccessIterator1 keys_last, 
@@ -205,16 +266,22 @@ namespace detail
         if( runMode == bolt::cl::control::Automatic )
         {
             runMode = ctl.getDefaultPathToRun( );
+
         }
 
         if( runMode == bolt::cl::control::SerialCpu )
         {
-            throw ::cl::Error( CL_INVALID_OPERATION, "stable_sort_by_key not implemented yet for SerialCPU" );
+            serialCPU_stable_sort_by_key(keys_first, keys_last, values_first, comp);
             return;
         }
         else if( runMode == bolt::cl::control::MultiCoreCpu )
         {
-            throw ::cl::Error( CL_INVALID_OPERATION, "stable_sort_by_key not implemented yet for MultiCoreCpu" );
+            #ifdef ENABLE_TBB
+                //TODO - Addlog for not supporting the MultiCore CPU. Implemented using serial code paths
+                serialCPU_stable_sort_by_key(keys_first, keys_last, values_first, comp);
+            #else
+                throw std::exception("MultiCoreCPU Version of stable_sort_by_key not Enabled! \n");
+            #endif
             return;
         } 
         else 
@@ -241,8 +308,8 @@ namespace detail
                                     bolt::cl::device_vector_tag, bolt::cl::device_vector_tag )
     {
         typedef typename std::iterator_traits< DVRandomAccessIterator1 >::value_type keyType;
-
-        size_t vecSize = std::distance( first, last ); 
+        typedef typename std::iterator_traits< DVRandomAccessIterator2 >::value_type valueType;
+        size_t vecSize = std::distance( keys_first, keys_last ); 
         if( vecSize < 2 )
             return;
 
@@ -255,21 +322,41 @@ namespace detail
 
         if( runMode == bolt::cl::control::SerialCpu )
         {
-            throw ::cl::Error( CL_INVALID_OPERATION, "stable_sort_by_key not implemented yet for SerialCPU" );
-            return;
+                bolt::cl::device_vector< keyType >::pointer   keysPtr   =  keys_first.getContainer( ).data( );
+                bolt::cl::device_vector< valueType >::pointer valuesPtr =  values_first.getContainer( ).data( );
+                serialCPU_stable_sort_by_key(&keysPtr[keys_first.m_Index], &keysPtr[keys_last.m_Index], 
+                                             &valuesPtr[values_first.m_Index], comp);
+                return;
         }
         else if( runMode == bolt::cl::control::MultiCoreCpu )
         {
-            throw ::cl::Error( CL_INVALID_OPERATION, "stable_sort_by_key not implemented yet for MultiCoreCpu" );
-            return;
+            #ifdef ENABLE_TBB
+                bolt::cl::device_vector< keyType >::pointer   keysPtr   =  keys_first.getContainer( ).data( );
+                bolt::cl::device_vector< valueType >::pointer valuesPtr =  values_first.getContainer( ).data( );
+                serialCPU_stable_sort_by_key(&keysPtr[keys_first.m_Index], &keysPtr[keys_last.m_Index], 
+                                             &valuesPtr[values_first.m_Index], comp);
+                return;
+             #else
+                throw std::exception("MultiCoreCPU Version of stable_sort_by_key not Enabled! \n");
+             #endif
         } 
         else
         {
             stablesort_by_key_enqueue( ctl, keys_first, keys_last, values_first, comp, cl_code );
         }
-
         return;
     }
+
+    //Fancy iterator specialization
+    template<typename DVRandomAccessIterator1, typename DVRandomAccessIterator2, typename StrictWeakOrdering>
+    void stablesort_by_key_pick_iterator( control &ctl, 
+                                    const DVRandomAccessIterator1 keys_first, const DVRandomAccessIterator1 keys_last, 
+                                    const DVRandomAccessIterator2 values_first,
+                                    const StrictWeakOrdering& comp, const std::string& cl_code, bolt::cl::fancy_iterator_tag )
+    {
+        static_assert( false, "It is not possible to output to fancy iterators; they are not mutable! " );
+    }
+
 
     template< typename DVRandomAccessIterator1, typename DVRandomAccessIterator2, typename StrictWeakOrdering >
     void stablesort_by_key_enqueue( control& ctrl, 
@@ -307,13 +394,6 @@ namespace detail
          * Compile Options
          *********************************************************************************/
         bool cpuDevice = ctrl.getDevice( ).getInfo< CL_DEVICE_TYPE >( ) == CL_DEVICE_TYPE_CPU;
-        //std::cout << "Device is CPU: " << (cpuDevice?"TRUE":"FALSE") << std::endl;
-        //const size_t kernel0_localRange = ( cpuDevice ) ? 1 : localRange*4;
-        //std::ostringstream oss;
-        //oss << " -DKERNEL0WORKGROUPSIZE=" << kernel0_localRange;
-
-        //oss << " -DUSE_AMD_HSA=" << USE_AMD_HSA;
-        //compileOptions = oss.str();
 
         /**********************************************************************************
          * Request Compiled Kernels
@@ -330,7 +410,8 @@ namespace detail
             compileOptions );
         // kernels returned in same order as added in KernelTemplaceSpecializer constructor
 
-        size_t localRange  = kernels[ 0 ].getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctrl.getDevice( ), &l_Error );
+        size_t localRange=kernels[0].getWorkGroupInfo<CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE>(ctrl.getDevice(),
+                                                                                                    &l_Error);
         V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
 
 
@@ -344,20 +425,33 @@ namespace detail
         }
 
         ALIGNED( 256 ) StrictWeakOrdering aligned_comp( comp );
-        control::buffPointer userFunctor = ctrl.acquireBuffer( sizeof( aligned_comp ), CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, &aligned_comp );
+        control::buffPointer userFunctor = ctrl.acquireBuffer( sizeof( aligned_comp ),
+                                                              CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, &aligned_comp );
 
         //  kernels[ 0 ] sorts values within a workgroup, in parallel across the entire vector
         //  kernels[ 0 ] reads and writes to the same vector
         cl_uint keyLdsSize  = static_cast< cl_uint >( localRange * sizeof( keyType ) );
         cl_uint valueLdsSize  = static_cast< cl_uint >( localRange * sizeof( valueType ) );
-        V_OPENCL( kernels[ 0 ].setArg( 0, keys_first.getBuffer( ) ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
-        V_OPENCL( kernels[ 0 ].setArg( 1, keys_first.gpuPayloadSize( ), &keys_first.gpuPayload( ) ), "Error setting a kernel argument" );
-        V_OPENCL( kernels[ 0 ].setArg( 2, values_first.getBuffer( ) ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
-        V_OPENCL( kernels[ 0 ].setArg( 3, values_first.gpuPayloadSize( ), &values_first.gpuPayload( ) ), "Error setting a kernel argument" );
-        V_OPENCL( kernels[ 0 ].setArg( 4, vecSize ),            "Error setting argument for kernels[ 0 ]" ); // Size of scratch buffer
-        V_OPENCL( kernels[ 0 ].setArg( 5, keyLdsSize, NULL ),          "Error setting argument for kernels[ 0 ]" ); // Scratch buffer
-        V_OPENCL( kernels[ 0 ].setArg( 6, valueLdsSize, NULL ),          "Error setting argument for kernels[ 0 ]" ); // Scratch buffer
-        V_OPENCL( kernels[ 0 ].setArg( 7, *userFunctor ),           "Error setting argument for kernels[ 0 ]" ); // User provided functor class
+
+         // Input buffer
+        V_OPENCL( kernels[ 0 ].setArg( 0, keys_first.getContainer().getBuffer( ) ),    "Error setting argument for kernels[ 0 ]" );
+        V_OPENCL( kernels[ 0 ].setArg( 1, keys_first.gpuPayloadSize( ), &keys_first.gpuPayload( ) ), 
+                                       "Error setting a kernel argument" );
+         // Input buffer
+        V_OPENCL( kernels[ 0 ].setArg( 2, values_first.getContainer().getBuffer( ) ),   
+                                       "Error setting argument for kernels[ 0 ]" );
+        V_OPENCL( kernels[ 0 ].setArg( 3, values_first.gpuPayloadSize( ), &values_first.gpuPayload( ) ),
+                                       "Error setting a kernel argument" );
+         // Size of scratch buffer
+        V_OPENCL( kernels[ 0 ].setArg( 4, vecSize ),            "Error setting argument for kernels[ 0 ]" );
+         // Scratch buffer
+        V_OPENCL( kernels[ 0 ].setArg( 5, keyLdsSize, NULL ),          "Error setting argument for kernels[ 0 ]" );
+         // Scratch buffer
+        V_OPENCL( kernels[ 0 ].setArg( 6, valueLdsSize, NULL ),          "Error setting argument for kernels[ 0 ]" );
+         // User provided functor class
+        V_OPENCL( kernels[ 0 ].setArg( 7, *userFunctor ),           "Error setting argument for kernels[ 0 ]" );
+        
+        
 
         ::cl::CommandQueue& myCQ = ctrl.getCommandQueue( );
 
@@ -388,48 +482,64 @@ namespace detail
         size_t vecPow2 = (vecSize & (vecSize-1));
         numMerges += vecPow2? 1: 0;
 
-        //{
-        //    device_vector< keyType >::pointer myKeys = keys_first.getContainer( ).data( );
-        //    device_vector< valueType >::pointer myValues = values_first.getContainer( ).data( );
-        //}
-
         //  Allocate a flipflop buffer because the merge passes are out of place
         control::buffPointer tmpKeyBuffer = ctrl.acquireBuffer( globalRange * sizeof( keyType ) );
         control::buffPointer tmpValueBuffer = ctrl.acquireBuffer( globalRange * sizeof( valueType ) );
-        V_OPENCL( kernels[ 1 ].setArg( 8, vecSize ),            "Error setting argument for kernels[ 0 ]" ); // Size of scratch buffer
-        V_OPENCL( kernels[ 1 ].setArg( 10, keyLdsSize, NULL ),          "Error setting argument for kernels[ 0 ]" ); // Scratch buffer
-        V_OPENCL( kernels[ 1 ].setArg( 11, valueLdsSize, NULL ),          "Error setting argument for kernels[ 0 ]" ); // Scratch buffer
-        V_OPENCL( kernels[ 1 ].setArg( 12, *userFunctor ),           "Error setting argument for kernels[ 0 ]" ); // User provided functor class
-
+         // Size of scratch buffer
+        V_OPENCL( kernels[ 1 ].setArg( 8, vecSize ),            "Error setting argument for kernels[ 0 ]" );
+         // Scratch buffer
+        V_OPENCL( kernels[ 1 ].setArg( 10, keyLdsSize, NULL ),          "Error setting argument for kernels[ 0 ]" );
+         // Scratch buffer
+        V_OPENCL( kernels[ 1 ].setArg( 11, valueLdsSize, NULL ),          "Error setting argument for kernels[ 0 ]" );
+         // User provided functor class
+        V_OPENCL( kernels[ 1 ].setArg( 12, *userFunctor ),           "Error setting argument for kernels[ 0 ]" );
+        
         ::cl::Event kernelEvent;
         for( size_t pass = 1; pass <= numMerges; ++pass )
         {
             //  For each pass, flip the input-output buffers 
             if( pass & 0x1 )
             {
-                V_OPENCL( kernels[ 1 ].setArg( 0, keys_first.getBuffer( ) ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
-                V_OPENCL( kernels[ 1 ].setArg( 1, keys_first.gpuPayloadSize( ), &keys_first.gpuPayload( ) ), "Error setting a kernel argument" );
-                V_OPENCL( kernels[ 1 ].setArg( 2, values_first.getBuffer( ) ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
-                V_OPENCL( kernels[ 1 ].setArg( 3, values_first.gpuPayloadSize( ), &values_first.gpuPayload( ) ), "Error setting a kernel argument" );
-                V_OPENCL( kernels[ 1 ].setArg( 4, *tmpKeyBuffer ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
-                V_OPENCL( kernels[ 1 ].setArg( 5, keys_first.gpuPayloadSize( ), &keys_first.gpuPayload( ) ), "Error setting a kernel argument" );
-                V_OPENCL( kernels[ 1 ].setArg( 6, *tmpValueBuffer ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
-                V_OPENCL( kernels[ 1 ].setArg( 7, values_first.gpuPayloadSize( ), &values_first.gpuPayload( ) ), "Error setting a kernel argument" );
+                 // Input buffer
+                V_OPENCL( kernels[ 1 ].setArg( 0, keys_first.getContainer().getBuffer() ),"Error setting argument for kernels[ 0 ]");
+                V_OPENCL( kernels[ 1 ].setArg( 1, keys_first.gpuPayloadSize( ), &keys_first.gpuPayload( ) ),
+                                               "Error setting a kernel argument" );
+                 // Input buffer
+                V_OPENCL( kernels[ 1 ].setArg( 2, values_first.getContainer().getBuffer() ),"Error setting argument for kernels[0]");
+                V_OPENCL( kernels[ 1 ].setArg( 3, values_first.gpuPayloadSize( ), &values_first.gpuPayload( ) ),
+                                               "Error setting a kernel argument" );
+                 // Input buffer
+                V_OPENCL( kernels[ 1 ].setArg( 4, *tmpKeyBuffer ),"Error setting argument for kernels[0]");
+                V_OPENCL( kernels[ 1 ].setArg( 5, keys_first.gpuPayloadSize( ), &keys_first.gpuPayload( ) ),
+                                               "Error setting a kernel argument" );
+                 // Input buffer
+                V_OPENCL( kernels[ 1 ].setArg( 6, *tmpValueBuffer ),"Error setting argument for kernels[ 0 ]" );
+                V_OPENCL( kernels[ 1 ].setArg( 7, values_first.gpuPayloadSize( ), &values_first.gpuPayload( ) ), 
+                                               "Error setting a kernel argument" );
             }
             else
             {
-                V_OPENCL( kernels[ 1 ].setArg( 0, *tmpKeyBuffer ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
-                V_OPENCL( kernels[ 1 ].setArg( 1, keys_first.gpuPayloadSize( ), &keys_first.gpuPayload( ) ), "Error setting a kernel argument" );
-                V_OPENCL( kernels[ 1 ].setArg( 2, *tmpValueBuffer ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
-                V_OPENCL( kernels[ 1 ].setArg( 3, values_first.gpuPayloadSize( ), &values_first.gpuPayload( ) ), "Error setting a kernel argument" );
-                V_OPENCL( kernels[ 1 ].setArg( 4, keys_first.getBuffer( ) ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
-                V_OPENCL( kernels[ 1 ].setArg( 5, keys_first.gpuPayloadSize( ), &keys_first.gpuPayload( ) ), "Error setting a kernel argument" );
-                V_OPENCL( kernels[ 1 ].setArg( 6, values_first.getBuffer( ) ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
-                V_OPENCL( kernels[ 1 ].setArg( 7, values_first.gpuPayloadSize( ), &values_first.gpuPayload( ) ), "Error setting a kernel argument" );
+                 // Input buffer
+                V_OPENCL( kernels[ 1 ].setArg( 0, *tmpKeyBuffer ),    "Error setting argument for kernels[ 0 ]" );
+                V_OPENCL( kernels[ 1 ].setArg( 1, keys_first.gpuPayloadSize( ), &keys_first.gpuPayload( ) ), 
+                                               "Error setting a kernel argument" );
+                 // Input buffer
+                V_OPENCL( kernels[ 1 ].setArg( 2, *tmpValueBuffer ),    "Error setting argument for kernels[ 0 ]" );
+                V_OPENCL( kernels[ 1 ].setArg( 3, values_first.gpuPayloadSize( ), &values_first.gpuPayload( ) ),
+                                               "Error setting a kernel argument" );
+                V_OPENCL( kernels[ 1 ].setArg( 4, keys_first.getContainer().getBuffer() ),    
+                                               "Error setting argument for kernels[ 0 ]" ); // Input buffer
+                V_OPENCL( kernels[ 1 ].setArg( 5, keys_first.gpuPayloadSize( ), &keys_first.gpuPayload( ) ),
+                                               "Error setting a kernel argument" );
+                V_OPENCL( kernels[ 1 ].setArg( 6, values_first.getContainer().getBuffer() ),   
+                                               "Error setting argument for kernels[ 0 ]" ); // Input buffer
+                V_OPENCL( kernels[ 1 ].setArg( 7, values_first.gpuPayloadSize( ), &values_first.gpuPayload( ) ),
+                                               "Error setting a kernel argument" );
             }
             //  For each pass, the merge window doubles
             unsigned srcLogicalBlockSize = static_cast< unsigned >( localRange << (pass-1) );
-            V_OPENCL( kernels[ 1 ].setArg( 9, static_cast< unsigned >( srcLogicalBlockSize ) ),            "Error setting argument for kernels[ 0 ]" ); // Size of scratch buffer
+            V_OPENCL( kernels[ 1 ].setArg( 9, static_cast< unsigned >( srcLogicalBlockSize ) ),           
+                                           "Error setting argument for kernels[ 0 ]" ); // Size of scratch buffer
 
             if( pass == numMerges )
             {
@@ -445,54 +555,6 @@ namespace detail
                 V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for mergeTemplate kernel" );
             }
 
-            ///  Debug code to examine input/output buffers on every pass
-            //myCQ.finish( );
-            //std::cout << "BlockSize[ " << srcLogicalBlockSize << " ] " << std::endl;
-            //if( pass & 0x1 )
-            //{
-            //    //  Debug mapping, to look at result vector in memory
-            //    keyType* dev2Host = static_cast< keyType* >( myCQ.enqueueMapBuffer( *tmpBuffer, CL_TRUE, CL_MAP_READ, 0,
-            //        globalRange * sizeof( keyType ), NULL, NULL, &l_Error) );
-            //    V_OPENCL( l_Error, "Error: Mapping Device->Host Buffer." );
-
-            //    for( unsigned i = 0; i < globalRange/srcLogicalBlockSize; ++i )
-            //    {
-            //        unsigned blockIndex = i * srcLogicalBlockSize;
-            //        unsigned endIndex = bolt::cl::minimum< unsigned >()( blockIndex+(srcLogicalBlockSize-1), vecSize ) - 1;
-            //        for( unsigned j = blockIndex; j < endIndex; ++j )
-            //        {
-            //            if( !(comp)( dev2Host[ j ], dev2Host[ j + 1 ] ) && (dev2Host[ j ] != dev2Host[ j + 1 ]) )
-            //            {
-            //                std::cout << " Element[ " << j+1 << " ] out of sequence Block[ " << i << " ] Index[ " << j+1-blockIndex << " ]" << std::endl;
-            //            }
-            //        }
-            //    }
-
-            //    myCQ.enqueueUnmapMemObject( *tmpBuffer, dev2Host );
-            //}
-            //else
-            //{
-            //    //  Debug mapping, to look at result vector in memory
-            //    keyType* dev2Host = static_cast< keyType* >( myCQ.enqueueMapBuffer( first.getBuffer( ), CL_TRUE, CL_MAP_READ, 0,
-            //        bolt::cl::minimum< size_t >()( globalRange, vecSize ) * sizeof( keyType ), NULL, NULL, &l_Error) );
-            //    V_OPENCL( l_Error, "Error: Mapping Device->Host Buffer." );
-
-            //    for( unsigned i = 0; i < globalRange/srcLogicalBlockSize; ++i )
-            //    {
-            //        unsigned blockIndex = i * srcLogicalBlockSize;
-            //        unsigned endIndex = bolt::cl::minimum< unsigned >()( blockIndex+(srcLogicalBlockSize-1), vecSize ) - 1;
-            //        for( unsigned j = blockIndex; j < endIndex; ++j )
-            //        {
-            //            if( !(comp)( dev2Host[ j ], dev2Host[ j + 1 ] ) && (dev2Host[ j ] != dev2Host[ j + 1 ]) )
-            //            {
-            //                std::cout << "Block[ " << i << " ] Element[ " << j << " ] out of sequence" << std::endl;
-            //            }
-            //        }
-            //    }
-
-            //    myCQ.enqueueUnmapMemObject( first.getBuffer( ), dev2Host );
-            //}
-            //std::cout << std::endl;
         }
 
         //  If there are an odd number of merges, then the output data is sitting in the temp buffer.  We need to copy
@@ -501,12 +563,15 @@ namespace detail
         {
             ::cl::Event copyEvent;
 
-            l_Error = myCQ.enqueueCopyBuffer( *tmpKeyBuffer, keys_first.getBuffer( ), 0, keys_first.m_Index * sizeof( keyType ), 
-                vecSize * sizeof( keyType ), NULL, NULL );
+            wait( ctrl, kernelEvent );
+            l_Error = myCQ.enqueueCopyBuffer( *tmpKeyBuffer, keys_first.getContainer().getBuffer(), 0, 
+                                               keys_first.m_Index * sizeof( keyType ), 
+                                               vecSize * sizeof( keyType ), NULL, NULL );
             V_OPENCL( l_Error, "device_vector failed to copy data inside of operator=()" );
 
-            l_Error = myCQ.enqueueCopyBuffer( *tmpValueBuffer, values_first.getBuffer( ), 0, values_first.m_Index * sizeof( keyType ), 
-                vecSize * sizeof( keyType ), NULL, &copyEvent );
+            l_Error = myCQ.enqueueCopyBuffer( *tmpValueBuffer, values_first.getContainer().getBuffer(), 0,
+                                               values_first.m_Index * sizeof( keyType ), 
+                                               vecSize * sizeof( keyType ), NULL, &copyEvent );
             V_OPENCL( l_Error, "device_vector failed to copy data inside of operator=()" );
 
             wait( ctrl, copyEvent );

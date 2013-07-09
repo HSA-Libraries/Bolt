@@ -167,13 +167,16 @@ void stablesort_pick_iterator( control &ctl,
 }
 
 //Non Device Vector specialization.
-//This implementation creates a cl::Buffer and passes the cl buffer to the sort specialization whichtakes the cl buffer as a parameter. 
-//In the future, Each input buffer should be mapped to the device_vector and the specialization specific to device_vector should be called. 
+//This implementation creates a cl::Buffer and passes the cl buffer to the sort specialization whichtakes the
+//cl buffer as a parameter. 
+//In the future, Each input buffer should be mapped to the device_vector and the specialization specific to
+//device_vector should be called. 
 template< typename RandomAccessIterator, typename StrictWeakOrdering > 
 void stablesort_pick_iterator( control &ctl, const RandomAccessIterator& first, const RandomAccessIterator& last,
                             const StrictWeakOrdering& comp, const std::string& cl_code, 
                             std::random_access_iterator_tag )
 {
+
     typedef typename std::iterator_traits< RandomAccessIterator >::value_type Type;
 
     size_t vecSize = std::distance( first, last ); 
@@ -189,16 +192,24 @@ void stablesort_pick_iterator( control &ctl, const RandomAccessIterator& first, 
 
     if( (runMode == bolt::cl::control::SerialCpu) || (vecSize < BOLT_CL_STABLESORT_CPU_THRESHOLD) )
     {
+
         std::stable_sort( first, last, comp );
         return;
     }
     else if( runMode == bolt::cl::control::MultiCoreCpu )
     {
-        throw ::cl::Error( CL_INVALID_OPERATION, "stable_sort not implemented yet for MultiCoreCpu" );
+        #ifdef ENABLE_TBB
+            //TODO - Add Log for the serial CPU code path taken when multicore is called
+            std::stable_sort( first, last, comp );
+        #else
+            throw std::exception("MultiCoreCPU Version of stable_sort not Enabled! \n");
+        #endif
+        
         return;
     } 
     else 
     {
+      
         device_vector< Type > dvInputOutput( first, last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctl );
 
         //Now call the actual cl algorithm
@@ -230,20 +241,26 @@ void stablesort_pick_iterator( control &ctl,
         runMode = ctl.getDefaultPathToRun();
     }
 
-    if( runMode == bolt::cl::control::SerialCpu )
+    if( runMode == bolt::cl::control::SerialCpu || (vecSize < BOLT_CL_STABLESORT_CPU_THRESHOLD) )
     {
         bolt::cl::device_vector< Type >::pointer firstPtr =  first.getContainer( ).data( );
-
-        std::stable_sort( &firstPtr[ first.m_Index ], &firstPtr[ vecSize-1 ], comp );
+        std::stable_sort( &firstPtr[ first.m_Index ], &firstPtr[ last.m_Index ], comp );
         return;
     }
     else if( runMode == bolt::cl::control::MultiCoreCpu )
     {
-        throw ::cl::Error( CL_INVALID_OPERATION, "stable_sort not implemented yet for MultiCoreCpu" );
+        #ifdef ENABLE_TBB
+            //TODO - ADDLOG calling serial CPU code paths 
+            bolt::cl::device_vector< Type >::pointer firstPtr =  first.getContainer( ).data( );
+            std::stable_sort( &firstPtr[ first.m_Index ], &firstPtr[ last.m_Index ], comp );
+        #else
+            throw std::exception("MultiCoreCPU Version of stable_sort not Enabled! \n");
+        #endif
         return;
     } 
     else 
     {
+
         stablesort_enqueue(ctl,first,last,comp,cl_code);
     }
 
@@ -279,13 +296,6 @@ void stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, cons
      * Compile Options
      *********************************************************************************/
     bool cpuDevice = ctrl.getDevice( ).getInfo< CL_DEVICE_TYPE >( ) == CL_DEVICE_TYPE_CPU;
-    //std::cout << "Device is CPU: " << (cpuDevice?"TRUE":"FALSE") << std::endl;
-    //const size_t kernel0_localRange = ( cpuDevice ) ? 1 : localRange*4;
-    //std::ostringstream oss;
-    //oss << " -DKERNEL0WORKGROUPSIZE=" << kernel0_localRange;
-
-    //oss << " -DUSE_AMD_HSA=" << USE_AMD_HSA;
-    //compileOptions = oss.str();
 
     /**********************************************************************************
      * Request Compiled Kernels
@@ -302,7 +312,8 @@ void stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, cons
         compileOptions );
     // kernels returned in same order as added in KernelTemplaceSpecializer constructor
 
-    size_t localRange  = kernels[ 0 ].getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctrl.getDevice( ), &l_Error );
+    size_t localRange= kernels[0].getWorkGroupInfo<CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE>( ctrl.getDevice( ),
+                                                                                                  &l_Error );
     V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
 
 
@@ -316,16 +327,26 @@ void stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, cons
     }
 
     ALIGNED( 256 ) StrictWeakOrdering aligned_comp( comp );
-    control::buffPointer userFunctor = ctrl.acquireBuffer( sizeof( aligned_comp ), CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_comp );
+    control::buffPointer userFunctor = ctrl.acquireBuffer( sizeof( aligned_comp ),CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY,
+                                                           &aligned_comp );
 
     //  kernels[ 0 ] sorts values within a workgroup, in parallel across the entire vector
     //  kernels[ 0 ] reads and writes to the same vector
     cl_uint ldsSize  = static_cast< cl_uint >( localRange * sizeof( iType ) );
-    V_OPENCL( kernels[ 0 ].setArg( 0, first.getBuffer( ) ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
-    V_OPENCL( kernels[ 0 ].setArg( 1, first.gpuPayloadSize( ), &first.gpuPayload( ) ), "Error setting a kernel argument" );
-    V_OPENCL( kernels[ 0 ].setArg( 2, vecSize ),            "Error setting argument for kernels[ 0 ]" ); // Size of scratch buffer
-    V_OPENCL( kernels[ 0 ].setArg( 3, ldsSize, NULL ),          "Error setting argument for kernels[ 0 ]" ); // Scratch buffer
-    V_OPENCL( kernels[ 0 ].setArg( 4, *userFunctor ),           "Error setting argument for kernels[ 0 ]" ); // User provided functor class
+
+
+    // Input buffer
+    V_OPENCL( kernels[ 0 ].setArg( 0, first.getContainer().getBuffer() ),    "Error setting argument for kernels[ 0 ]" ); 
+    V_OPENCL( kernels[ 0 ].setArg( 1, first.gpuPayloadSize( ),&first.gpuPayload()),"Error setting a kernel argument" );
+    // Size of scratch buffer
+    V_OPENCL( kernels[ 0 ].setArg( 2, vecSize ),            "Error setting argument for kernels[ 0 ]" ); 
+     // Scratch buffer
+    V_OPENCL( kernels[ 0 ].setArg( 3, ldsSize, NULL ),          "Error setting argument for kernels[ 0 ]" );
+     // User provided functor
+    V_OPENCL( kernels[ 0 ].setArg( 4, *userFunctor ),           "Error setting argument for kernels[ 0 ]" );
+
+
+
 
     ::cl::CommandQueue& myCQ = ctrl.getCommandQueue( );
 
@@ -356,38 +377,49 @@ void stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, cons
     size_t vecPow2 = (vecSize & (vecSize-1));
     numMerges += vecPow2? 1: 0;
 
-    //{
-    //    device_vector< iType >::pointer myData = first.getContainer( ).data( );
-    //    myData.reset( );
-    //}
-
     //  Allocate a flipflop buffer because the merge passes are out of place
     control::buffPointer tmpBuffer = ctrl.acquireBuffer( globalRange * sizeof( iType ) );
-    V_OPENCL( kernels[ 1 ].setArg( 4, vecSize ),            "Error setting argument for kernels[ 0 ]" ); // Size of scratch buffer
-    V_OPENCL( kernels[ 1 ].setArg( 6, ldsSize, NULL ),          "Error setting argument for kernels[ 0 ]" ); // Scratch buffer
-    V_OPENCL( kernels[ 1 ].setArg( 7, *userFunctor ),           "Error setting argument for kernels[ 0 ]" ); // User provided functor class
+     // Size of scratch buffer
+    V_OPENCL( kernels[ 1 ].setArg( 4, vecSize ),            "Error setting argument for kernels[ 0 ]" );
+     // Scratch buffer
+    V_OPENCL( kernels[ 1 ].setArg( 6, ldsSize, NULL ),          "Error setting argument for kernels[ 0 ]" );
+     // User provided functor 
+    V_OPENCL( kernels[ 1 ].setArg( 7, *userFunctor ),           "Error setting argument for kernels[ 0 ]" );
+    
+
 
     ::cl::Event kernelEvent;
     for( size_t pass = 1; pass <= numMerges; ++pass )
     {
         //  For each pass, flip the input-output buffers 
         if( pass & 0x1 )
-        {
-            V_OPENCL( kernels[ 1 ].setArg( 0, first.getBuffer( ) ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
-            V_OPENCL( kernels[ 1 ].setArg( 1, first.gpuPayloadSize( ), &first.gpuPayload( ) ), "Error setting a kernel argument" );
-            V_OPENCL( kernels[ 1 ].setArg( 2, *tmpBuffer ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
-            V_OPENCL( kernels[ 1 ].setArg( 3, first.gpuPayloadSize( ), &first.gpuPayload( ) ), "Error setting a kernel argument" );
+
+        {   
+             // Input buffer
+            V_OPENCL( kernels[ 1 ].setArg( 0, first.getContainer().getBuffer() ),    "Error setting argument for kernels[ 0 ]" );
+            V_OPENCL( kernels[ 1 ].setArg( 1, first.gpuPayloadSize( ), &first.gpuPayload( ) ),
+                                          "Error setting a kernel argument" );
+             // Input buffer
+            V_OPENCL( kernels[ 1 ].setArg( 2, *tmpBuffer ),    "Error setting argument for kernels[ 0 ]" );
+            V_OPENCL( kernels[ 1 ].setArg( 3, first.gpuPayloadSize( ), &first.gpuPayload( ) ), 
+                                           "Error setting a kernel argument" );
         }
         else
         {
-            V_OPENCL( kernels[ 1 ].setArg( 0, *tmpBuffer ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
-            V_OPENCL( kernels[ 1 ].setArg( 1, first.gpuPayloadSize( ), &first.gpuPayload( ) ), "Error setting a kernel argument" );
-            V_OPENCL( kernels[ 1 ].setArg( 2, first.getBuffer( ) ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
-            V_OPENCL( kernels[ 1 ].setArg( 3, first.gpuPayloadSize( ), &first.gpuPayload( ) ), "Error setting a kernel argument" );
+             // Input buffer
+            V_OPENCL( kernels[ 1 ].setArg( 0, *tmpBuffer ),    "Error setting argument for kernels[ 0 ]" );
+            V_OPENCL( kernels[ 1 ].setArg( 1, first.gpuPayloadSize( ), &first.gpuPayload( ) ),
+                                           "Error setting a kernel argument" );
+             // Input buffer
+            V_OPENCL( kernels[ 1 ].setArg( 2, first.getContainer().getBuffer() ),    "Error setting argument for kernels[ 0 ]");
+            V_OPENCL( kernels[ 1 ].setArg( 3, first.gpuPayloadSize( ), &first.gpuPayload( ) ),
+                                           "Error setting a kernel argument" );
+
         }
         //  For each pass, the merge window doubles
         unsigned srcLogicalBlockSize = static_cast< unsigned >( localRange << (pass-1) );
-        V_OPENCL( kernels[ 1 ].setArg( 5, static_cast< unsigned >( srcLogicalBlockSize ) ),            "Error setting argument for kernels[ 0 ]" ); // Size of scratch buffer
+        V_OPENCL( kernels[ 1 ].setArg( 5, static_cast< unsigned >( srcLogicalBlockSize ) ),
+                                       "Error setting argument for kernels[ 0 ]" ); // Size of scratch buffer
 
         if( pass == numMerges )
         {
@@ -403,54 +435,6 @@ void stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, cons
             V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for mergeTemplate kernel" );
         }
 
-        ///  Debug code to examine input/output buffers on every pass
-        //myCQ.finish( );
-        //std::cout << "BlockSize[ " << srcLogicalBlockSize << " ] " << std::endl;
-        //if( pass & 0x1 )
-        //{
-        //    //  Debug mapping, to look at result vector in memory
-        //    iType* dev2Host = static_cast< iType* >( myCQ.enqueueMapBuffer( *tmpBuffer, CL_TRUE, CL_MAP_READ, 0,
-        //        globalRange * sizeof( iType ), NULL, NULL, &l_Error) );
-        //    V_OPENCL( l_Error, "Error: Mapping Device->Host Buffer." );
-
-        //    for( unsigned i = 0; i < globalRange/srcLogicalBlockSize; ++i )
-        //    {
-        //        unsigned blockIndex = i * srcLogicalBlockSize;
-        //        unsigned endIndex = bolt::cl::minimum< unsigned >()( blockIndex+(srcLogicalBlockSize-1), vecSize ) - 1;
-        //        for( unsigned j = blockIndex; j < endIndex; ++j )
-        //        {
-        //            if( !(comp)( dev2Host[ j ], dev2Host[ j + 1 ] ) && (dev2Host[ j ] != dev2Host[ j + 1 ]) )
-        //            {
-        //                std::cout << " Element[ " << j+1 << " ] out of sequence Block[ " << i << " ] Index[ " << j+1-blockIndex << " ]" << std::endl;
-        //            }
-        //        }
-        //    }
-
-        //    myCQ.enqueueUnmapMemObject( *tmpBuffer, dev2Host );
-        //}
-        //else
-        //{
-        //    //  Debug mapping, to look at result vector in memory
-        //    iType* dev2Host = static_cast< iType* >( myCQ.enqueueMapBuffer( first.getBuffer( ), CL_TRUE, CL_MAP_READ, 0,
-        //        bolt::cl::minimum< size_t >()( globalRange, vecSize ) * sizeof( iType ), NULL, NULL, &l_Error) );
-        //    V_OPENCL( l_Error, "Error: Mapping Device->Host Buffer." );
-
-        //    for( unsigned i = 0; i < globalRange/srcLogicalBlockSize; ++i )
-        //    {
-        //        unsigned blockIndex = i * srcLogicalBlockSize;
-        //        unsigned endIndex = bolt::cl::minimum< unsigned >()( blockIndex+(srcLogicalBlockSize-1), vecSize ) - 1;
-        //        for( unsigned j = blockIndex; j < endIndex; ++j )
-        //        {
-        //            if( !(comp)( dev2Host[ j ], dev2Host[ j + 1 ] ) && (dev2Host[ j ] != dev2Host[ j + 1 ]) )
-        //            {
-        //                std::cout << "Block[ " << i << " ] Element[ " << j << " ] out of sequence" << std::endl;
-        //            }
-        //        }
-        //    }
-
-        //    myCQ.enqueueUnmapMemObject( first.getBuffer( ), dev2Host );
-        //}
-        //std::cout << std::endl;
     }
 
     //  If there are an odd number of merges, then the output data is sitting in the temp buffer.  We need to copy
@@ -458,8 +442,8 @@ void stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, cons
     if( numMerges & 1 )
     {
         ::cl::Event copyEvent;
-
-        l_Error = myCQ.enqueueCopyBuffer( *tmpBuffer, first.getBuffer( ), 0, first.m_Index * sizeof( iType ), 
+        wait( ctrl, kernelEvent );
+        l_Error = myCQ.enqueueCopyBuffer( *tmpBuffer, first.getContainer().getBuffer(), 0, first.m_Index * sizeof( iType ), 
             vecSize * sizeof( iType ), NULL, &copyEvent );
         V_OPENCL( l_Error, "device_vector failed to copy data inside of operator=()" );
         wait( ctrl, copyEvent );

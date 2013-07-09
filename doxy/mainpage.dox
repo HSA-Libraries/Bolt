@@ -1,4 +1,4 @@
-/***************************************************************************                                                                                     
+﻿/***************************************************************************                                                                                     
 *   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                               
 *                                                                                    
 *   Licensed under the Apache License, Version 2.0 (the "License");   
@@ -103,7 +103,7 @@ struct MyType {
 \endcode
 
 After defining the class, user need to register it with BOLT. Internally bolt algorithms will make use of the device_vector class. 
-But these are defined only for the basic data types like int, float, unsigned int etc. For User defined datat types it’s the 
+But these are defined only for the basic data types like int, float, unsigned int etc. For User defined data types it’s the 
 responsibility of the application developer to create a definition of the deveice_vector for his own defined data type.
 See the below example. 
 \code
@@ -196,17 +196,19 @@ If the user wants to use TEMPLATE_FUNCTOR for more than one datatype then he can
 like BOLT_TEMPLATE_FUNCTOR2, BOLT_TEMPLATE_FUNCTOR3 etc from include/bolt/cl/clcode.h file.
 
 
- * \section Paths Bolt Code Paths
- * \subsection Default Default Behaviour
- * Bolt function can be executed with three code paths(GPU, Multicore CPU and Serial). The default mode is "Automatic" which means 
- * it will go into OpenCL&tm; path first, then TBB (Intel), then SerialCpu with below mentioned order. The control will go to other paths only if the selected one not found.
+ * \section Function_Path Supported Functions and Code Paths
+ *  List of <a href="supportedFunction.html">Supported Functions and Code Paths</a>.
+ * \subsection paths Code Path Behaviour
+ * \subsubsection Default Default Behaviour
+ * Bolt function is designed to be executed with four code paths (OpenCL™, C++ AMP, Multicore CPU and Serial CPU). The default mode is "Automatic" which means it will go into GPU path first, then TBB (Intel), then SerialCpu 
+ * with below mentioned order. The control will go to other paths only if the selected one not found.
  
  * Selection order will be: 
  * \li Run on GPU if AMD GPU is found and AMD APP SDK is installed.
  * \li Run on Multicore CPU if Intel TBB is installed.
  * \li Run CPU serial path.
   
-* \subsection Force Force Behaviour
+* \subsubsection Force Force Behaviour
 * Forcing mode to any device will run the function on that device only. There are two ways in BOLT to force the control to specific Device.
 *   -# <b> Setting control to Device Globally: </b>
 *      \code bolt::cl::control& myControl = bolt::cl::control::getDefault( );
@@ -222,9 +224,9 @@ like BOLT_TEMPLATE_FUNCTOR2, BOLT_TEMPLATE_FUNCTOR3 etc from include/bolt/cl/clc
 
 
  * \section Requirements Requirements 
- * Bolt requires an OpenCL<SUP>TM</SUP> implementation that supports the static C++ kernel
+ * Bolt uses an OpenCL<SUP>TM</SUP> implementation that supports the static C++ kernel
  * features; specifically, C++ template support for OpenCL<SUP>TM</SUP> kernels.  Currently,
- * the AMD OpenCL<SUP>TM</SUP> SDK 2.7 provides this support; other vendors may adopt this feature in the future. 
- * If you face any issue with any AMD HD7000 family of cards and APU(Richland and Trinity). Please log an issue in 
+ * the AMD OpenCL<SUP>TM</SUP> SDK 2.7 and above versions are designed to provides this support; other vendors may adopt this feature in the future. 
+ * If you face any issue with Bolt. Please log an issue in BOLT Issues page.
  * <a href="https://github.com/HSA-Libraries/bolt/issues">BOLT Issues page</a>.
  */

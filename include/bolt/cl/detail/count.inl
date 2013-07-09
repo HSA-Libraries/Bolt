@@ -15,8 +15,8 @@
 
 ***************************************************************************/
 
-#if !defined( COUNT_INL )
-#define COUNT_INL
+#if !defined( BOLT_CL_COUNT_INL )
+#define BOLT_CL_COUNT_INL
 #pragma once
 
 #include <algorithm>
@@ -28,9 +28,7 @@
 #include "bolt/cl/functional.h"
 #ifdef ENABLE_TBB
 //TBB Includes
-#include "tbb/parallel_reduce.h"
-#include "tbb/blocked_range.h"
-#include "tbb/task_scheduler_init.h"
+#include "bolt/btbb/count.h"
 #endif
 
 
@@ -71,45 +69,6 @@ namespace bolt {
     namespace cl {
         namespace detail {
 
-#ifdef ENABLE_TBB
-            /*For documentation on the reduce object see below link
-             *http://threadingbuildingblocks.org/docs/help/reference/algorithms/parallel_reduce_func.htm
-             *The imperative form of parallel_reduce is used.
-             *
-            */
-            template <typename T, typename Predicate>
-            struct Count {
-                size_t value;
-                Predicate predicate;
-
-                //TODO - Decide on how many threads to spawn? Usually it should be equal to th enumber of cores
-                //You might need to look at the tbb::split and there there cousin's
-                //
-                Count (const Predicate &_opt) : predicate(_opt),value(0){}
-                Count (): value(0) {}
-
-                Count (Count & s, tbb::split ):predicate(s.predicate),value(0){}
-                 void operator()( const tbb::blocked_range<T*>& r )
-                 {
-
-                    for( T* a=r.begin(); a!=r.end(); ++a )
-                    {
-                      if(predicate(*a))
-                      {
-                        value++;
-                      }
-                    }
-
-                }
-                 //Join is called by the parent thread after the child finishes to execute.
-                void join(Count & rhs ) {
-                    value = (value + rhs.value);
-                }
-            };
-#endif
-
-
-
         enum CountTypes {count_iValueType, count_iIterType, count_predicate, count_end };
 
         ///////////////////////////////////////////////////////////////////////
@@ -147,14 +106,15 @@ namespace bolt {
             // This is the base implementation of reduction that is called by all of the convenience wrappers below.
             // first and last must be iterators from a DeviceVector
             template<typename DVInputIterator, typename Predicate>
-            int count_enqueue(bolt::cl::control &ctl,
+            typename bolt::cl::iterator_traits<DVInputIterator>::difference_type
+                count_enqueue(bolt::cl::control &ctl,
                 const DVInputIterator& first,
                 const DVInputIterator& last,
                 const Predicate& predicate,
                 const std::string& cl_code )
             {
                 typedef typename std::iterator_traits< DVInputIterator >::value_type iType;
-
+                typedef typename bolt::cl::iterator_traits<DVInputIterator>::difference_type rType;
                 std::vector<std::string> typeNames( count_end);
                 typeNames[count_iValueType] = TypeName< iType >::get( );
                 typeNames[count_iIterType] = TypeName< DVInputIterator >::get( );
@@ -194,19 +154,26 @@ namespace bolt {
 
                 // Create buffer wrappers so we can access the host functors, for read or writing in the kernel
                 ALIGNED( 256 ) Predicate aligned_count( predicate );
-                //::cl::Buffer userFunctor(ctl.context(), CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, sizeof( aligned_count ),
+
+               //::cl::Buffer userFunctor(ctl.context(), CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, sizeof( aligned_count ),
+
                 //  &aligned_count );
                 control::buffPointer userFunctor = ctl.acquireBuffer( sizeof( aligned_count ),
                     CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_count );
 
-                // ::cl::Buffer result(ctl.context(), CL_MEM_ALLOC_HOST_PTR|CL_MEM_WRITE_ONLY, sizeof( iType ) * numWG);
+
+                //::cl::Buffer result(ctl.context(), CL_MEM_ALLOC_HOST_PTR|CL_MEM_WRITE_ONLY, sizeof( iType ) * numWG);
+
                 control::buffPointer result = ctl.acquireBuffer( sizeof( int ) * numWG,
                     CL_MEM_ALLOC_HOST_PTR|CL_MEM_WRITE_ONLY );
 
                 cl_uint szElements = static_cast< cl_uint >( first.distance_to(last ) );
 
-                V_OPENCL( kernels[0].setArg(0, first.getBuffer( ) ), "Error setting kernel argument" );
-                V_OPENCL( kernels[0].setArg(1, first.gpuPayloadSize( ), &first.gpuPayload( ) ), "Error setting a kernel argument" );
+                V_OPENCL( kernels[0].setArg(0, first.getContainer().getBuffer() ), "Error setting kernel argument" );
+
+                V_OPENCL( kernels[0].setArg(1, first.gpuPayloadSize( ), &first.gpuPayload( ) ),
+                    "Error setting a kernel argument" );
+
                 V_OPENCL( kernels[0].setArg(2, szElements), "Error setting kernel argument" );
                 V_OPENCL( kernels[0].setArg(3, *userFunctor), "Error setting kernel argument" );
                 V_OPENCL( kernels[0].setArg(4, *result), "Error setting kernel argument" );
@@ -236,33 +203,44 @@ namespace bolt {
 
                 bolt::cl::wait(ctl, l_mapEvent);
 
-                int count =  h_result[0] ;
-                for(int i = 1; i < numTailReduce; ++i)
+                rType count =  h_result[0] ;
+                for(unsigned int i = 1; i < numTailReduce; ++i)
                 {
 
                    count +=  h_result[i];
 
                 }
 
+
+				::cl::Event unmapEvent;
+
+				V_OPENCL( ctl.getCommandQueue().enqueueUnmapMemObject(*result,  h_result, NULL, &unmapEvent ),
+					"shared_ptr failed to unmap host memory back to device memory" );
+				V_OPENCL( unmapEvent.wait( ), "failed to wait for unmap event" );
+
                 return count;
             }
 
             template<typename InputIterator, typename Predicate>
-            int count_detect_random_access(bolt::cl::control &ctl,
+            typename bolt::cl::iterator_traits<InputIterator>::difference_type
+                count_detect_random_access(bolt::cl::control &ctl,
                 const InputIterator& first,
                 const InputIterator& last,
                 const Predicate& predicate,
                 const std::string& cl_code,
                 std::input_iterator_tag)
             {
-                //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data
-                //  to a temporary buffer.  Should we?
+
+                //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied
+                //   the data to a temporary buffer.  Should we?
+
                 static_assert( false, "Bolt only supports random access iterator types" );
             }
 
 
             template<typename InputIterator, typename Predicate>
-            int count_detect_random_access(bolt::cl::control &ctl,
+            typename bolt::cl::iterator_traits<InputIterator>::difference_type
+                count_detect_random_access(bolt::cl::control &ctl,
                 const InputIterator& first,
                 const InputIterator& last,
                 const Predicate& predicate,
@@ -276,7 +254,8 @@ namespace bolt {
             // This template is called after we detect random access iterators
             // This is called strictly for any non-device_vector iterator
             template<typename InputIterator, typename Predicate>
-            int count_pick_iterator(bolt::cl::control &ctl,
+             typename bolt::cl::iterator_traits<InputIterator>::difference_type
+                count_pick_iterator(bolt::cl::control &ctl,
                 const InputIterator& first,
                 const InputIterator& last,
                 const Predicate& predicate,
@@ -298,35 +277,38 @@ namespace bolt {
                 {
                     runMode = ctl.getDefaultPathToRun();
                 }
-                if (runMode == bolt::cl::control::SerialCpu)
+
+
+                switch(runMode)
                 {
-                      return (int) std::count_if(first,last,predicate);
-                }
-                else if (runMode == bolt::cl::control::MultiCoreCpu) {
-
-#ifdef ENABLE_TBB
-                    tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
-                    Count<iType,Predicate> count_op(predicate);
-                    tbb::parallel_reduce( tbb::blocked_range<iType*>( &*first, (iType*)&*(last-1) + 1), count_op );
-                    return (int)count_op.value;
-#else
-                    //std::cout << "The MultiCoreCpu version of count function is not enabled." << std ::endl;
-                    throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of count function is not enabled to be built." );
-#endif
-
-
-                } else {
+                case bolt::cl::control::OpenCL :
+                    {
                     device_vector< iType > dvInput( first, last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, ctl );
                     return count_enqueue( ctl, dvInput.begin(), dvInput.end(), predicate, cl_code);
+                    }
 
+                case bolt::cl::control::MultiCoreCpu:
+                    #ifdef ENABLE_TBB
+                     return (int)bolt::btbb::count_if(first,last,predicate);
+                    #else
+                     throw std::exception("The MultiCoreCpu version of count function is not enabled to be built! \n");
+                    #endif
+
+                case bolt::cl::control::SerialCpu:
+                    return std::count_if(first,last,predicate);
+
+                default:
+                    return  std::count_if(first,last,predicate);
 
                 }
+
             };
 
             // This template is called after we detect random access iterators
             // This is called strictly for iterators that are derived from device_vector< T >::iterator
             template<typename DVInputIterator, typename Predicate>
-            int count_pick_iterator(bolt::cl::control &ctl,
+             typename bolt::cl::iterator_traits<DVInputIterator>::difference_type
+                 count_pick_iterator(bolt::cl::control &ctl,
                 const DVInputIterator& first,
                 const DVInputIterator& last,
                 const Predicate& predicate,
@@ -335,6 +317,8 @@ namespace bolt {
             {
 
                 typedef typename std::iterator_traits<DVInputIterator>::value_type iType;
+                typedef typename bolt::cl::iterator_traits<DVInputIterator>::difference_type rType;
+
                 size_t szElements = (size_t)(last - first);
                 if (szElements == 0)
                     return 0;
@@ -344,51 +328,89 @@ namespace bolt {
                 {
                     runMode = ctl.getDefaultPathToRun();
                 }
-                if (runMode == bolt::cl::control::SerialCpu) {
-                    ::cl::Event serialCPUEvent;
-                    cl_int l_Error = CL_SUCCESS;
-                    int countResult;
-                    /*Map the device buffer to CPU*/
-                    iType *countInputBuffer = (iType*)ctl.getCommandQueue().enqueueMapBuffer(first.getBuffer(), false,
-                    CL_MAP_READ,0, sizeof(iType) * szElements, NULL, &serialCPUEvent, &l_Error );
-                    serialCPUEvent.wait();
-                    countResult = (int)std::count_if(countInputBuffer, countInputBuffer + szElements, predicate) ;
-                    /*Unmap the device buffer back to device memory. This will copy the host modified buffer back to the device*/
-                    ctl.getCommandQueue().enqueueUnmapMemObject(first.getBuffer(), countInputBuffer);
-                     return countResult;
-                } else if (runMode == bolt::cl::control::MultiCoreCpu) {
-#ifdef ENABLE_TBB
-                    ::cl::Event multiCoreCPUEvent;
-                    cl_int l_Error = CL_SUCCESS;
-                   /*Map the device buffer to CPU*/
-                   iType *countInputBuffer = (iType*)ctl.getCommandQueue().enqueueMapBuffer(first.getBuffer(), false, CL_MAP_READ,0, sizeof(iType) * szElements,
-                                               NULL, &multiCoreCPUEvent, &l_Error );
-                    multiCoreCPUEvent.wait();
-                    tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
-                    Count<iType, Predicate> count_op(predicate);
-                    tbb::parallel_reduce( tbb::blocked_range<iType*>( countInputBuffer, countInputBuffer + szElements), count_op );
-                    return (int)count_op.value;
-#else
-                    //std::cout << "The MultiCoreCpu version of count is not enabled. " << std ::endl;
-                    throw ::cl::Error( CL_INVALID_OPERATION, "The MultiCoreCpu version of count is not enabled to be built." );
-#endif
-                } else {
-                return  count_enqueue( ctl, first, last,  predicate, cl_code);
+
+
+                switch(runMode)
+                {
+                case bolt::cl::control::OpenCL :
+                        return  count_enqueue( ctl, first, last,  predicate, cl_code);
+
+                case bolt::cl::control::MultiCoreCpu:
+                    #ifdef ENABLE_TBB
+                    {
+                      bolt::cl::device_vector< iType >::pointer countInputBuffer =  first.getContainer( ).data( );
+                      return (rType) bolt::btbb::count_if(&countInputBuffer[first.m_Index],
+                          &countInputBuffer[szElements] ,predicate);
+
+                    }
+                    #else
+                    {
+                        throw std::exception( "The MultiCoreCpu version of reduce is not enabled to be built! \n" );
+                    }
+                    #endif
+
+                case bolt::cl::control::SerialCpu:
+                    {
+                      bolt::cl::device_vector< iType >::pointer countInputBuffer =  first.getContainer( ).data( );
+                      return  (rType) std::count_if(&countInputBuffer[first.m_Index],
+                          &countInputBuffer[szElements], predicate) ;
+
+                    }
+
+                default: /* Incase of runMode not set/corrupted */
+                    {
+                      bolt::cl::device_vector< iType >::pointer countInputBuffer =  first.getContainer( ).data( );
+                      return (rType)  std::count_if(&countInputBuffer[first.m_Index],
+                          &countInputBuffer[szElements], predicate) ;
+                    }
 
                 }
+
             }
 
             // This template is called after we detect random access iterators
             // This is called strictly for iterators that are derived from device_vector< T >::iterator
             template<typename DVInputIterator, typename Predicate>
-            int count_pick_iterator(bolt::cl::control &ctl,
+             typename bolt::cl::iterator_traits<DVInputIterator>::difference_type
+                 count_pick_iterator(bolt::cl::control &ctl,
                 const DVInputIterator& first,
                 const DVInputIterator& last,
                 const Predicate& predicate,
                 const std::string& cl_code,
                 bolt::cl::fancy_iterator_tag )
             {
-                return count_enqueue( ctl, first, last,  predicate, cl_code);
+
+                size_t szElements = (size_t)(last - first);
+                if (szElements == 0)
+                    return 0;
+
+                bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+                if(runMode == bolt::cl::control::Automatic)
+                {
+                    runMode = ctl.getDefaultPathToRun();
+                }
+
+                switch(runMode)
+                {
+                case bolt::cl::control::OpenCL :
+                    {
+                        return count_enqueue( ctl, first, last,  predicate, cl_code);
+                    }
+
+                case bolt::cl::control::MultiCoreCpu:
+                    #ifdef ENABLE_TBB
+                        return bolt::btbb::count_if(first,last,predicate);
+                    #else
+                     throw std::exception("The MultiCoreCpu version of count function is not enabled to be built! \n");
+                    #endif
+
+                case bolt::cl::control::SerialCpu:
+                    return std::count_if(first,last,predicate);
+
+                default:
+                    return  std::count_if(first,last,predicate);
+
+                }
 
             }
 

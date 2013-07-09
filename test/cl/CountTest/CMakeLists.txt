@@ -18,7 +18,7 @@
 # List the names of common files to compile across all platforms
 
 set( clBolt.Test.Count.Source stdafx.cpp CountTest.cpp )
-set( clBolt.Test.Count.Headers stdafx.h targetver.h ${BOLT_INCLUDE_DIR}/bolt/cl/count.h )
+set( clBolt.Test.Count.Headers stdafx.h targetver.h ${BOLT_INCLUDE_DIR}/bolt/cl/count.h ${BOLT_INCLUDE_DIR}/bolt/cl/detail/count.inl)
 
 set( clBolt.Test.Count.Files ${clBolt.Test.Count.Source} ${clBolt.Test.Count.Headers} )
 

@@ -22,8 +22,8 @@ set( clBolt.Test.Fill.Source ${BOLT_CL_TEST_DIR}/common/stdafx.cpp
 set( clBolt.Test.Fill.Headers ${BOLT_CL_TEST_DIR}/common/stdafx.h 
                                    ${BOLT_CL_TEST_DIR}/common/targetver.h 
                                    ${BOLT_CL_TEST_DIR}/common/myocl.h 
-                                   ${BOLT_INCLUDE_DIR}/bolt/cl/transform.h 
-                                   ${BOLT_INCLUDE_DIR}/bolt/cl/detail/transform.inl
+                                   ${BOLT_INCLUDE_DIR}/bolt/cl/fill.h 
+                                   ${BOLT_INCLUDE_DIR}/bolt/cl/detail/fill.inl
                                    )
 
 set( clBolt.Test.Fill.Files ${clBolt.Test.Fill.Source} ${clBolt.Test.Fill.Headers} )

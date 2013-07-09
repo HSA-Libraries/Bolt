@@ -16,19 +16,23 @@
 
 
 // 1 thread / element: 166 GB/s
-template < typename iType, typename oType >
+template < typename iType, typename iIterType, typename oType, typename oIterType >
 __kernel
 void copy_I(
     global iType * restrict src,
+	iIterType input_iter,
     global oType * restrict dst,
-    const uint numElements,
-    const uint srcOffset,
-    const uint dstOffset)
+	oIterType output_iter,
+    const uint numElements) 
 {
+    input_iter.init( src );
+    output_iter.init( dst );
+
     size_t gloIdx = get_global_id( 0 );
     if( gloIdx >= numElements) return; // on SI this doesn't mess-up barriers
 
-    dst[ dstOffset + gloIdx ] = src[ srcOffset + gloIdx ];
+	output_iter[ gloIdx ] = input_iter[ gloIdx ];
+
 };
 
 

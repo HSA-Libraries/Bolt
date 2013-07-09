@@ -18,7 +18,7 @@
 # List the names of common files to compile across all platforms
 
 set( clBolt.Test.InnerProduct.Source stdafx.cpp InnerProductTest.cpp InnerProductDeviceVector.cpp ${BOLT_CL_TEST_DIR}/common/myocl.cpp) 
-set( clBolt.Test.InnerProduct.Headers stdafx.h ${BOLT_CL_TEST_DIR}/common/myocl.h targetver.h ${BOLT_INCLUDE_DIR}/bolt/cl/inner_product.h )
+set( clBolt.Test.InnerProduct.Headers stdafx.h ${BOLT_CL_TEST_DIR}/common/myocl.h targetver.h ${BOLT_INCLUDE_DIR}/bolt/cl/inner_product.h ${BOLT_INCLUDE_DIR}/bolt/cl/detail/inner_product.inl )
 
 set( clBolt.Test.InnerProduct.Files ${clBolt.Test.InnerProduct.Source} ${clBolt.Test.InnerProduct.Headers} )
 

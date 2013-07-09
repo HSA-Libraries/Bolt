@@ -105,19 +105,34 @@ uint upperBoundBinary( global sType* data, uint left, uint right, sType searchVa
 {
     uint upperBound = lowerBoundBinary( data, left, right, searchVal, lessOp );
     
-    // printf( "upperBoundBinary: upperBound[ %i, %i ]= %i\n", left, right, upperBound );
+     //printf( "start of upperBoundBinary: upperBound, left, right = [%d, %d, %d]\n", upperBound, left, right );
+    //  upperBound is always between left and right or equal to right
     //  If upperBound == right, then  searchVal was not found in the sequence.  Just return.
     if( upperBound != right )
     {
         //  While the values are equal i.e. !(x < y) && !(y < x) increment the index
+        uint mid = 0;
         sType upperValue = data[ upperBound ];
-        while( !(*lessOp)( upperValue, searchVal ) && !(*lessOp)( searchVal, upperValue) && (upperBound != right) )
+        //This loop is a kind of a specialized binary search. 
+        //This will find the first index location which is not equal to searchVal.
+        while( !(*lessOp)( upperValue, searchVal ) && !(*lessOp)( searchVal, upperValue) && (upperBound < right))
         {
-            upperBound++;
+            mid = (upperBound + right)/2;
+            sType midValue = data[mid];
+            if( !(*lessOp)( midValue, searchVal ) && !(*lessOp)( searchVal, midValue) )
+            {
+                upperBound = mid + 1;
+            }   
+            else
+            {
+                right = mid;
+                upperBound++;
+            }
             upperValue = data[ upperBound ];
+            //printf( "upperBoundBinary: upperBound, left, right = [%d, %d, %d]\n", upperBound, left, right);
         }
     }
-    
+    //printf( "end of upperBoundBinary: upperBound, left, right = [%d, %d, %d]\n", upperBound, left, right);
     return upperBound;
 }
 

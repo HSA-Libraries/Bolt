@@ -15,9 +15,9 @@
 
 ***************************************************************************/                                                                                     
 
+#if !defined( BOLT_CL_TRANSFORM_SCAN_H )
+#define BOLT_CL_TRANSFORM_SCAN_H
 #pragma once
-#if !defined( TRANSFORM_SCAN_H )
-#define TRANSFORM_SCAN_H
 
 #include <bolt/cl/bolt.h>
 #include <bolt/cl/functional.h>
@@ -52,7 +52,7 @@ namespace cl
 * \param result  The first element of the output sequence.
 * \param unary_op Unary operator for transformation.
 * \param binary_op Binary operator for scanning transformed elements.
-* \param user_code A user-specified string that is preppended to the generated OpenCL kernel.
+* \param user_code A user-specified string that is prepended to the generated OpenCL kernel.
 *
 * \tparam InputIterator is a model of Input Iterator.
 * \tparam OutputIterator is a model of Output Iterator.
@@ -145,7 +145,7 @@ transform_inclusive_scan(
 * ...
 *
 * bolt::cl::square<int> sqInt;
-* bolt::cl::plut<int> plInt;
+* bolt::cl::plus<int> plInt;
 * bolt::cl::control ctrl = control::getDefault();
 * ...
 *
