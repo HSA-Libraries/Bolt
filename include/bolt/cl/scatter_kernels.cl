@@ -44,7 +44,6 @@ void scatterIfTemplate (
     stencil.init( stencil_naked );
     output.init( output_naked );
     
-    //iType aa = input[ gid ];
     mapType m = map[ gid ];
     stencilType s = stencil[ gid ];
 
@@ -53,4 +52,35 @@ void scatterIfTemplate (
         output [ m ] = input [ gid ] ;
     }
     
+}
+
+
+template< typename iType,
+          typename iIterType,
+          typename mapType,
+          typename mapIterType,
+          typename oType, 
+          typename oIterType >
+__kernel
+void scatterTemplate (
+            global iType *input_naked,
+            iIterType input,
+            global mapType* map_naked,
+            mapIterType map,
+            global oType* output_naked,
+            oIterType output,
+            const uint length )
+{
+    int gid = get_global_id( 0 );
+    if ( gid >= length ) return;
+
+    input.init( input_naked );
+    map.init( map_naked );
+    output.init( output_naked );
+
+    // Store in registers
+    mapType m = map[ gid ];
+
+    output [ m ] = input [ gid ] ;
+
 }

@@ -16,6 +16,7 @@
 
 #include "common/stdafx.h"
 #include "common/myocl.h"
+#include "common/test_common.h"
 
 #include "bolt/cl/functional.h"
 #include "bolt/cl/iterator/constant_iterator.h"
@@ -28,6 +29,11 @@
 #include <boost/iterator/permutation_iterator.hpp>
 #include <array>
 
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// ScatterIf tests
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 BOLT_FUNCTOR( is_even,
 struct is_even{
     bool operator () (int x)
@@ -37,7 +43,7 @@ struct is_even{
 };
 );
 
-TEST( TrivialTest, ScatterHostMemoryPredicate )
+TEST( TrivialTest, ScatterIfHostMemoryPredicate )
 {
     // VS2012 doesn't support initializer list
 
@@ -71,8 +77,7 @@ TEST( TrivialTest, ScatterHostMemoryPredicate )
     EXPECT_EQ(exp_result, result);
 }
 
-#if 1
-TEST( TrivialTest, ScatterHostMemory )
+TEST( TrivialTest, ScatterIfHostMemory )
 {
     int n_input[10] =  {0,1,2,3,4,5,6,7,8,9};
     int n_map[10] =  {9,8,7,6,5,4,3,2,1,0};
@@ -99,7 +104,61 @@ TEST( TrivialTest, ScatterHostMemory )
 
 
 }
-#endif
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// ScatterIf tests
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+TEST( TrivialTest, ScatterHostMemory )
+{
+    int n_input[10] =  {0,1,2,3,4,5,6,7,8,9};
+    int n_map[10] =  {9,8,7,6,5,4,3,2,1,0};
+
+    std::vector<int> exp_result;
+    {
+        exp_result.push_back(9);exp_result.push_back(8);
+        exp_result.push_back(7);exp_result.push_back(6);
+        exp_result.push_back(5);exp_result.push_back(4);
+        exp_result.push_back(3);exp_result.push_back(2);
+        exp_result.push_back(1);exp_result.push_back(0);
+    }
+    std::vector<int> result ( 10, 0 );
+    std::vector<int> input ( n_input, n_input + 10 );
+    std::vector<int> map ( n_map, n_map + 10 );
+
+    bolt::cl::scatter( input.begin(), input.end(), map.begin(), result.begin() );
+
+    //for(int i=0; i<10 ; i++){ std::cout<<result[ i ]<<std::endl; }
+    EXPECT_EQ(exp_result, result);
+
+
+}
+
+TEST( TrivialTest, ScatterDeviceMemory )
+{
+    int n_input[10] =  {0,1,2,3,4,5,6,7,8,9};
+    int n_map[10] =  {9,8,7,6,5,4,3,2,1,0};
+
+    bolt::cl::device_vector<int> exp_result;
+    {
+        exp_result.push_back(9);exp_result.push_back(8);
+        exp_result.push_back(7);exp_result.push_back(6);
+        exp_result.push_back(5);exp_result.push_back(4);
+        exp_result.push_back(3);exp_result.push_back(2);
+        exp_result.push_back(1);exp_result.push_back(0);
+    }
+    bolt::cl::device_vector<int> result ( 10, 0 );
+    bolt::cl::device_vector<int> input ( n_input, n_input + 10 );
+    bolt::cl::device_vector<int> map ( n_map, n_map + 10 );
+
+    bolt::cl::scatter( input.begin(), input.end(), map.begin(), result.begin() );
+
+    //for(int i=0; i<10 ; i++){ std::cout<<result[ i ]<<std::endl; }
+    cmpArrays( exp_result, result );
+
+}
+
+
 
 int main(int argc, char* argv[])
 {
