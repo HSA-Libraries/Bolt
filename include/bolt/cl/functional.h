@@ -151,6 +151,14 @@ struct logical_not
 }; 
 );
 
+static const std::string identityFunctor = BOLT_HOST_DEVICE_DEFINITION(
+template<typename T>
+struct identity
+{
+    bool operator()(const T &x) const  {return x;}
+};
+);
+
 
 /******************************************************************************
  * Binary Predicates
@@ -264,6 +272,9 @@ BOLT_CREATE_CLCODE( bolt::cl::bit_xor< cl_int >, bolt::cl::bit_xorFunctor );
 
 BOLT_CREATE_TYPENAME( bolt::cl::logical_not< cl_int > );
 BOLT_CREATE_CLCODE( bolt::cl::logical_not< cl_int >, bolt::cl::logical_notFunctor );
+
+BOLT_CREATE_TYPENAME( bolt::cl::identity< cl_int > );
+BOLT_CREATE_CLCODE( bolt::cl::identity< cl_int >, bolt::cl::identityFunctor );
 
 BOLT_CREATE_TYPENAME( bolt::cl::equal_to< cl_int > );
 BOLT_CREATE_CLCODE( bolt::cl::equal_to< cl_int >, bolt::cl::equal_toFunctor );
@@ -403,6 +414,14 @@ BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::logical_not, int, cl_long );
 BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::logical_not, int, cl_ulong );
 BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::logical_not, int, cl_float );
 BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::logical_not, int, cl_double );
+
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::identity, int, cl_short );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::identity, int, cl_ushort );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::identity, int, cl_uint );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::identity, int, cl_long );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::identity, int, cl_ulong );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::identity, int, cl_float );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::identity, int, cl_double );
 
 BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::equal_to, int, cl_short );
 BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::equal_to, int, cl_ushort );

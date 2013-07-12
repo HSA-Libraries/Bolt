@@ -39,6 +39,7 @@
 #include "bolt/reduce_by_key_kernels.hpp"
 #include "bolt/scan_kernels.hpp"
 #include "bolt/scan_by_key_kernels.hpp"
+#include "bolt/scatter_kernels.hpp"
 #include "bolt/sort_kernels.hpp"
 #include "bolt/sort_uint_kernels.hpp"
 #include "bolt/sort_by_key_kernels.hpp"
