@@ -23,6 +23,7 @@
 #define KERNEL1WAVES 4
 #define WAVESIZE 64
 
+
 //#define BOLT_ENABLE_PROFILING
 
 #ifdef BOLT_ENABLE_PROFILING
@@ -39,6 +40,10 @@
 #include "bolt/cl/transform.h"
 #include "bolt/cl/bolt.h"
 
+#ifdef ENABLE_TBB
+#include "bolt/btbb/transform.h"
+#include "bolt/btbb/scan.h"
+#endif
 namespace bolt
 {
 namespace cl
@@ -238,8 +243,6 @@ public:
             "template __attribute__((mangled_name(" + name(0) + "Instantiated)))\n"
             "__attribute__((reqd_work_group_size(KERNEL0WORKGROUPSIZE,1,1)))\n"
             "__kernel void " + name(0) + "(\n"
-            "global " + typeNames[transformScan_oValueType] + "* output_ptr,\n"
-            ""        + typeNames[transformScan_oIterType] + " output_iter,\n"
             "global " + typeNames[transformScan_iValueType] + "* input_ptr,\n"
             ""        + typeNames[transformScan_iIterType] + " input_iter,\n"
             ""        + typeNames[transformScan_initType] + " identity,\n"
@@ -248,6 +251,7 @@ public:
             "global " + typeNames[transformScan_UnaryFunction] + "* unaryOp,\n"
             "global " + typeNames[transformScan_BinaryFunction] + "* binaryOp,\n"
             "global " + typeNames[transformScan_oValueType] + "* scanBuffer,\n"
+            "global " + typeNames[transformScan_oValueType] + "* scanBuffer1,\n"
             "int exclusive\n"
             ");\n\n"
 
@@ -269,9 +273,16 @@ public:
             "__kernel void " + name(2) + "(\n"
             "global " + typeNames[transformScan_oValueType] + "* output_ptr,\n"
             ""        + typeNames[transformScan_oIterType] + " output_iter,\n"
+            "global " + typeNames[transformScan_iValueType] + "* input_ptr,\n"
+            ""        + typeNames[transformScan_iIterType] + " input_iter,\n"
             "global " + typeNames[transformScan_oValueType] + "* postSumArray,\n"
+            "global " + typeNames[transformScan_oValueType] + "* postSumArray1,\n"
+            "local "  + typeNames[transformScan_oValueType] + "* lds,\n"
             "const uint vecSize,\n"
-            "global " + typeNames[transformScan_BinaryFunction] + "* binaryOp\n"
+            "global " + typeNames[transformScan_UnaryFunction] + "* unaryOp,\n"
+            "global " + typeNames[transformScan_BinaryFunction] + "* binaryOp,\n"
+            "int exclusive,\n"
+            ""        + typeNames[transformScan_initType] + " identity\n"
             ");\n\n";
 
         return templateSpecializationString;
@@ -370,14 +381,22 @@ transform_scan_pick_iterator(
     else if( runMode == bolt::cl::control::MultiCoreCpu )
     {
         #ifdef ENABLE_TBB
-            std::transform(first, last, result, unary_op);
-            Serial_Scan<oType, BinaryFunction, T>(&(*result), &(*result), numElements, binary_op,inclusive,init);
-            return result + numElements;
+             if(inclusive)
+               {
+                  bolt::btbb::transform(first, last, result, unary_op);
+                  return bolt::btbb::inclusive_scan(result, result+numElements, result, binary_op);
+               }
+               else
+               {
+                  bolt::btbb::transform(first, last, result, unary_op);
+                  return bolt::btbb::exclusive_scan(result, result+numElements, result, init, binary_op);
+               } 
+
         #else
                 throw std::exception("The MultiCoreCpu version of Transform_scan is not enabled to be built! \n");
         #endif
 
-        return result;
+        return result + numElements;
 
     }
     else
@@ -449,14 +468,23 @@ transform_scan_pick_iterator(
             bolt::cl::device_vector< iType >::pointer InputBuffer =  first.getContainer( ).data( );
             bolt::cl::device_vector< oType >::pointer ResultBuffer =  result.getContainer( ).data( );
 
-            std::transform(&InputBuffer[ first.m_Index ], &InputBuffer[first.m_Index] + numElements, stdext::make_checked_array_iterator(&ResultBuffer[ result.m_Index], numElements), unary_op);
-            Serial_Scan<oType, BinaryFunction, T>(&ResultBuffer[ result.m_Index  ], &ResultBuffer[ result.m_Index ], numElements, binary_op, inclusive, init);
-            return result + numElements;
+            if(inclusive)
+               {
+                 bolt::btbb::transform( &InputBuffer[ first.m_Index ], &InputBuffer[ first.m_Index ]+numElements ,  &ResultBuffer[ first.m_Index ], unary_op);
+                 bolt::btbb::inclusive_scan( &ResultBuffer[ first.m_Index ],  &ResultBuffer[ first.m_Index ] + numElements, &ResultBuffer[ result.m_Index], binary_op);
+               }
+               else
+               {
+                 bolt::btbb::transform( &InputBuffer[ first.m_Index ], &InputBuffer[ first.m_Index ]+numElements ,  &ResultBuffer[ first.m_Index ], unary_op);
+                 bolt::btbb::exclusive_scan(  &ResultBuffer[ first.m_Index ],  &ResultBuffer[ first.m_Index ] + numElements, &ResultBuffer[ result.m_Index], init, binary_op);
+               } 
+
+            
         #else
                 throw std::exception("The MultiCoreCpu version of Transform_scan is not enabled to be built!\n");
         #endif
 
-        return result;
+        return result + numElements;
 
     }
 
@@ -564,22 +592,22 @@ size_t k0_stepNum, k1_stepNum, k2_stepNum;
     //  Ceiling function to bump the size of input to the next whole wavefront size
     cl_uint numElements = static_cast< cl_uint >( std::distance( first, last ) );
     device_vector< iType >::size_type sizeInputBuff = numElements;
-    size_t modWgSize = (sizeInputBuff & (kernel0_WgSize-1));
+    size_t modWgSize = (sizeInputBuff & ((kernel0_WgSize*2)-1));
     if( modWgSize )
     {
         sizeInputBuff &= ~modWgSize;
-        sizeInputBuff += kernel0_WgSize;
+        sizeInputBuff += (kernel0_WgSize*2);
     }
-    cl_uint numWorkGroupsK0 = static_cast< cl_uint >( sizeInputBuff / kernel0_WgSize );
+    cl_uint numWorkGroupsK0 = static_cast< cl_uint >( sizeInputBuff / (kernel0_WgSize*2) );
 
 
     //  Ceiling function to bump the size of the sum array to the next whole wavefront size
     device_vector< oType >::size_type sizeScanBuff = numWorkGroupsK0;
-    modWgSize = (sizeScanBuff & (kernel0_WgSize-1));
+    modWgSize = (sizeScanBuff & ((kernel0_WgSize*2)-1));
     if( modWgSize )
     {
         sizeScanBuff &= ~modWgSize;
-        sizeScanBuff += kernel0_WgSize;
+        sizeScanBuff += (kernel0_WgSize*2);
     }
 
     // Create buffer wrappers so we can access the host functors, for read or writing in the kernel
@@ -591,8 +619,9 @@ size_t k0_stepNum, k1_stepNum, k2_stepNum;
         CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_binary_op );
 
 
-    control::buffPointer preSumArray  = ctl.acquireBuffer( sizeScanBuff*sizeof( oType ) );
-    control::buffPointer postSumArray = ctl.acquireBuffer( sizeScanBuff*sizeof( oType ) );
+    control::buffPointer preSumArray  = ctl.acquireBuffer( sizeScanBuff*sizeof( iType ) );
+    control::buffPointer preSumArray1 = ctl.acquireBuffer( (sizeScanBuff)*sizeof( iType ) );
+    control::buffPointer postSumArray = ctl.acquireBuffer( sizeScanBuff*sizeof( iType ) );
     cl_uint ldsSize;
 
 
@@ -608,20 +637,18 @@ aProfiler.setStepName("Setup Kernel 0");
 aProfiler.set(AsyncProfiler::device, control::SerialCpu);
 #endif
 
-    ldsSize  = static_cast< cl_uint >( kernel0_WgSize * sizeof( oType ) );
+    ldsSize  = static_cast< cl_uint >( (kernel0_WgSize*2) * sizeof( iType ) );
 
-    V_OPENCL( kernels[0].setArg( 0, result.getContainer().getBuffer() ), "Error setArg kernels[ 0 ]" ); // Output buffer
-    V_OPENCL( kernels[0].setArg( 1, result.gpuPayloadSize( ), &result.gpuPayload()),"Error setting a kernel argument");
-    V_OPENCL( kernels[0].setArg( 2, first.getContainer().getBuffer() ),  "Error setArg kernels[ 0 ]" ); // Input buffer
-    V_OPENCL( kernels[0].setArg( 3, first.gpuPayloadSize( ), &first.gpuPayload( ) ),"Error setting a kernel argument");
-    V_OPENCL( kernels[0].setArg( 4, init_T ),               "Error setArg kernels[ 0 ]" ); // Initial value exclusive
-    V_OPENCL( kernels[0].setArg( 5, numElements ),          "Error setArg kernels[ 0 ]" ); // Size of scratch buffer
-    V_OPENCL( kernels[0].setArg( 6, ldsSize, NULL ),        "Error setArg kernels[ 0 ]" ); // Scratch buffer
-    V_OPENCL( kernels[0].setArg( 7, *unaryBuffer ),         "Error setArg kernels[ 0 ]" ); // User provided functor
-    V_OPENCL( kernels[0].setArg( 8, *binaryBuffer ),        "Error setArg kernels[ 0 ]" ); // User provided functor
-    V_OPENCL( kernels[0].setArg( 9, *preSumArray ),         "Error setArg kernels[ 0 ]" ); // Output per block sum
-
-    V_OPENCL( kernels[0].setArg( 10, doExclusiveScan ),     "Error setArg kernels[ 0 ]" ); // Exclusive scan?
+    V_OPENCL( kernels[0].setArg( 0, first.getContainer().getBuffer() ),  "Error setArg kernels[ 0 ]" ); // Input buffer
+    V_OPENCL( kernels[0].setArg( 1, first.gpuPayloadSize( ), &first.gpuPayload( ) ),"Error setting a kernel argument");
+    V_OPENCL( kernels[0].setArg( 2, init_T ),               "Error setArg kernels[ 0 ]" ); // Initial value exclusive
+    V_OPENCL( kernels[0].setArg( 3, numElements ),          "Error setArg kernels[ 0 ]" ); // Size of scratch buffer
+    V_OPENCL( kernels[0].setArg( 4, ldsSize, NULL ),        "Error setArg kernels[ 0 ]" ); // Scratch buffer
+    V_OPENCL( kernels[0].setArg( 5, *unaryBuffer ),         "Error setArg kernels[ 0 ]" ); // User provided functor
+    V_OPENCL( kernels[0].setArg( 6, *binaryBuffer ),        "Error setArg kernels[ 0 ]" ); // User provided functor
+    V_OPENCL( kernels[0].setArg( 7, *preSumArray ),         "Error setArg kernels[ 0 ]" ); // Output per block sum
+    V_OPENCL( kernels[0].setArg( 8, *preSumArray1 ),         "Error setArg kernels[ 0 ]" ); // Output per block sum
+    V_OPENCL( kernels[0].setArg( 9, doExclusiveScan ),     "Error setArg kernels[ 0 ]" ); // Exclusive scan?
 
 
 #ifdef BOLT_ENABLE_PROFILING
@@ -636,7 +663,7 @@ aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(iType) + 1*sizeScanBuf
     l_Error = ctl.getCommandQueue( ).enqueueNDRangeKernel(
         kernels[0],
         ::cl::NullRange,
-        ::cl::NDRange( sizeInputBuff ),
+        ::cl::NDRange( sizeInputBuff/2 ),
         ::cl::NDRange( kernel0_WgSize ),
         NULL,
         &kernel0Event);
@@ -660,7 +687,11 @@ aProfiler.setStepName("Setup Kernel 1");
 aProfiler.set(AsyncProfiler::device, control::SerialCpu);
 #endif
 
-    cl_uint workPerThread = static_cast< cl_uint >( sizeScanBuff / kernel1_WgSize );
+    ldsSize  = static_cast< cl_uint >( ( kernel0_WgSize ) * sizeof( iType ) );
+    cl_int workPerThread = static_cast< cl_uint >( (sizeScanBuff) / kernel1_WgSize  );
+    workPerThread = workPerThread ? workPerThread : 1;
+
+
     V_OPENCL( kernels[1].setArg( 0, *postSumArray ),        "Error setArg kernels[ 1 ]" ); // Output buffer
     V_OPENCL( kernels[1].setArg( 1, *preSumArray ),         "Error setArg kernels[ 1 ]" ); // Input buffer
     V_OPENCL( kernels[1].setArg( 2, numWorkGroupsK0 ),      "Error setArg kernels[ 1 ]" ); // Size of scratch buffer
@@ -690,20 +721,26 @@ aProfiler.set(AsyncProfiler::memory, 4*sizeScanBuff*sizeof(oType));
     /**********************************************************************************
      *  Kernel 2
      *********************************************************************************/
-
+    
 #ifdef BOLT_ENABLE_PROFILING
 aProfiler.nextStep();
 aProfiler.setStepName("Setup Kernel 2");
 aProfiler.set(AsyncProfiler::device, control::SerialCpu);
 #endif
 
-
+   
     V_OPENCL( kernels[2].setArg( 0, result.getContainer().getBuffer()),   "Error setArg kernels[ 2 ]" ); // Output buffer
     V_OPENCL( kernels[2].setArg( 1, result.gpuPayloadSize( ), &result.gpuPayload()),"Error setting a kernel argument");
-
-    V_OPENCL( kernels[2].setArg( 2, *postSumArray ),        "Error setArg kernels[ 2 ]" ); // Input buffer
-    V_OPENCL( kernels[2].setArg( 3, numElements ),          "Error setArg kernels[ 2 ]" ); // Size of scratch buffer
-    V_OPENCL( kernels[2].setArg( 4, *binaryBuffer ),        "Error setArg kernels[ 2 ]" ); // User provided functor
+    V_OPENCL( kernels[2].setArg( 2, first.getContainer().getBuffer() ),  "Error setArg kernels[ 0 ]" ); // Input buffer
+    V_OPENCL( kernels[2].setArg( 3, first.gpuPayloadSize( ), &first.gpuPayload( ) ),"Error setting a kernel argument");
+    V_OPENCL( kernels[2].setArg( 4, *postSumArray ),        "Error setArg kernels[ 2 ]" ); // Input buffer
+    V_OPENCL( kernels[2].setArg( 5, *preSumArray1 ),         "Error setArg kernels[ 0 ]" ); // Output per block sum
+    V_OPENCL( kernels[2].setArg( 6, ldsSize, NULL ),        "Error setArg kernels[ 0 ]" ); // Scratch buffer
+    V_OPENCL( kernels[2].setArg( 7, numElements ),          "Error setArg kernels[ 2 ]" ); // Size of scratch buffer
+    V_OPENCL( kernels[2].setArg( 8, *unaryBuffer ),         "Error setArg kernels[ 0 ]" ); // User provided functor
+    V_OPENCL( kernels[2].setArg( 9, *binaryBuffer ),        "Error setArg kernels[ 2 ]" ); // User provided functor
+    V_OPENCL( kernels[2].setArg( 10, doExclusiveScan ),     "Error setArg kernels[ 0 ]" ); // Exclusive scan?
+    V_OPENCL( kernels[2].setArg( 11, init_T ),               "Error setArg kernels[ 0 ]" ); // Initial value exclusive
 
 #ifdef BOLT_ENABLE_PROFILING
 aProfiler.nextStep();
