@@ -29,6 +29,13 @@
 #include <iostream>
 #include <fstream>
 
+#define ENABLE_TBB 1
+
+#ifdef ENABLE_TBB
+//TBB Includes
+#include "bolt\btbb\reduce_by_key.h"
+#endif
+
 namespace bolt
 {
 
@@ -327,6 +334,16 @@ gold_reduce_by_key_enqueue( InputIterator1 keys_first,
                      e_BinaryPredicate, e_BinaryFunction,
                      e_end };
 
+
+
+	/* "// Dynamic specialization of generic template definition, using user supplied types\n"
+            "template __attribute__((mangled_name(" + name(3) + "Instantiated)))\n"
+            "__attribute__((reqd_work_group_size(KERNEL2WORKGROUPSIZE,1,1)))\n"
+            "__kernel void " + name(3) + "(\n"
+            "global  int *h_result\n"
+            ");\n\n"*/
+
+
 /*********************************************************************************************************************
  * Kernel Template Specializer
  *********************************************************************************************************************/
@@ -395,6 +412,9 @@ class ReduceByKey_KernelTemplateSpecializer : public KernelTemplateSpecializer
             "global " + typeNames[e_BinaryFunction] + "* binaryFunct\n"
             ");\n\n"
 
+			
+
+
             "// Dynamic specialization of generic template definition, using user supplied types\n"
             "template __attribute__((mangled_name(" + name(3) + "Instantiated)))\n"
             "__attribute__((reqd_work_group_size(KERNEL0WORKGROUPSIZE,1,1)))\n"
@@ -406,9 +426,10 @@ class ReduceByKey_KernelTemplateSpecializer : public KernelTemplateSpecializer
             "global " + typeNames[e_voType] + "*ivals_output,\n"
             + typeNames[e_voIterType] + " vals_output,\n"
             "global int *offsetArray,\n"
+			"global int *offsetArrayOut,\n"
             "global " + typeNames[e_voType] + "*offsetValArray,\n"
             "const uint vecSize,\n"
-            "const int numSections\n"
+            "int numSections\n"
             ");\n\n";
 
         return templateSpecializationString;
@@ -526,9 +547,7 @@ reduce_by_key_pick_iterator(
     } else if (runMode == bolt::cl::control::MultiCoreCpu) {
 
         #ifdef ENABLE_TBB
-            unsigned int sizeOfOut = gold_reduce_by_key_enqueue( keys_first, keys_last, values_first, keys_output,
-            values_output, binary_pred, binary_op);
-
+            unsigned int sizeOfOut = bolt::btbb::reduce_by_key( keys_first, keys_last, values_first, keys_output, values_output, binary_pred, binary_op);           
             return  bolt::cl::make_pair(keys_output+sizeOfOut, values_output+sizeOfOut);
         #else
             throw std::exception("MultiCoreCPU Version of ReduceByKey not Enabled! \n");
@@ -627,7 +646,8 @@ reduce_by_key_pick_iterator(
         bolt::cl::device_vector< vType >::pointer valsPtr =  values_first.getContainer( ).data( );
         bolt::cl::device_vector< koType >::pointer oKeysPtr =  keys_output.getContainer( ).data( );
         bolt::cl::device_vector< voType >::pointer oValsPtr =  values_output.getContainer( ).data( );
-        unsigned int sizeOfOut = gold_reduce_by_key_enqueue( &keysPtr[keys_first.m_Index], &keysPtr[numElements],
+
+        unsigned int sizeOfOut = bolt::btbb::reduce_by_key( &keysPtr[keys_first.m_Index],/*&keysPtr[keys_first.m_Index]+numElements*/ &keysPtr[numElements],
                                            &valsPtr[values_first.m_Index], &oKeysPtr[keys_output.m_Index],
                                           &oValsPtr[values_output.m_Index], binary_pred, binary_op);
         return bolt::cl::make_pair(keys_output+sizeOfOut, values_output+sizeOfOut);
@@ -926,24 +946,6 @@ reduce_by_key_enqueue(
     l_Error = kernel2Event.wait( );
     V_OPENCL( l_Error, "post-kernel[2] failed wait" );
 
-    //
-    // Now take the output keys and increment each non-zero value from previous value.
-    // This is done serially. It doesn't look GPU friendly.
-    //
-
-    ::cl::Event l_mapEvent;
-    int *h_result = (int*)ctl.getCommandQueue().enqueueMapBuffer( *offsetArray,
-                                                                    false,
-                                                                    CL_MAP_READ | CL_MAP_WRITE,
-                                                                    0,
-                                                                    sizeof(int)*numElements,
-                                                                    NULL,
-                                                                    &l_mapEvent,
-                                                                    &l_Error );
-    V_OPENCL( l_Error, "Error calling map on the result buffer" );
-
-    bolt::cl::wait(ctl, l_mapEvent);
-
 #if ENABLE_PRINTS
     //delete this code -start
     ::cl::Event l_mapEvent2;
@@ -975,21 +977,15 @@ reduce_by_key_enqueue(
         result_b4_ser<<h_result[i]<<std::endl;
     }
     result_b4_ser.close();
-
 #endif
+    unsigned int count_number_of_sections = 0;//1048511;
+	control::buffPointer offsetArrayOut  = ctl.acquireBuffer( numElements *sizeof( int ) );
+	device_vector< int > OffsetArrayIn(*offsetArray);
+	device_vector< int > OffsetArrayOut(*offsetArrayOut);
+	//detail::scan_enqueue(ctl, &offsetArray, &offsetArray + numElements, &offsetArray, 0,plus< int >( ), false);
+	detail::scan_enqueue(ctl, OffsetArrayIn.begin(), OffsetArrayIn.end(), OffsetArrayOut.begin(), 0, plus< int >( ), false);
 
-    // Doing this serially; Performance killer!!
-    unsigned int count_number_of_sections = 0;
-    //h_result [ numElements - 1 ] = 1;  //This is a quick fix!
-    for( unsigned int i = 0; i < numElements; i++ )
-    {
-        if(h_result[i]>0)
-        {
-            h_result[i] = count_number_of_sections;
-            count_number_of_sections++;
-        }
-    }
-
+    
 
 #if ENABLE_PRINTS
     std::cout<<count_number_of_sections<<std::endl;
@@ -1001,32 +997,21 @@ reduce_by_key_enqueue(
     result_file.close();
 
 #endif
-    //
-    // Now unmap it. We map the indices back to keys_output using "keys_output"
-    //
-
-    ::cl::Event l_unmapEvent;
-    cl_int l_unmapError = CL_SUCCESS;
-    l_unmapError = ctl.getCommandQueue().enqueueUnmapMemObject( *offsetArray , h_result, NULL, &l_unmapEvent );
-    V_OPENCL( l_unmapError, "device_vector failed to unmap host memory back to device memory" );
-    //V_OPENCL( l_unmapEvent.wait( ), "failed to wait for unmap event" );
-
-    bolt::cl::wait(ctl, l_unmapEvent);
 
     /**********************************************************************************
      *  Kernel 3
      *********************************************************************************/
-    V_OPENCL( kernels[3].setArg( 0, keys_first.getContainer().getBuffer()),    "Error setArg kernels[ 3 ]" ); // Input buffer
-    V_OPENCL( kernels[3].setArg( 1, keys_first.gpuPayloadSize( ), &keys_first.gpuPayload( )), "Error setArg kernels[ 0 ]" );
-    V_OPENCL( kernels[3].setArg( 2, keys_output.getContainer().getBuffer() ),  "Error setArg kernels[ 3 ]" ); // Output buffer
-    V_OPENCL( kernels[3].setArg( 3, keys_output.gpuPayloadSize( ), &keys_output.gpuPayload( )), "Error setArg kernels[ 0 ]" );
-    V_OPENCL( kernels[3].setArg( 4, values_output.getContainer().getBuffer()), "Error setArg kernels[ 3 ]" ); // Output buffer
-    V_OPENCL( kernels[3].setArg( 5, values_output.gpuPayloadSize( ), &values_output.gpuPayload( )), "Error setArg kernels[ 0 ]" );
-    V_OPENCL( kernels[3].setArg( 6, *offsetArray),                "Error setArg kernels[ 3 ]" ); // Input buffer
-    V_OPENCL( kernels[3].setArg( 7, *offsetValArray),             "Error setArg kernels[ 3 ]"  );
-    V_OPENCL( kernels[3].setArg( 8, numElements ),             "Error setArg kernels[ 3 ]" ); // Size of scratch buffer
-    V_OPENCL( kernels[3].setArg( 9, count_number_of_sections), "Error setArg kernels[ 3 ]" ); // Size of scratch buffer
-
+    V_OPENCL( kernels[3].setArg( 0, keys_first.getContainer().getBuffer()),    "Error setArg kernels[ 4 ]" ); // Input buffer
+    V_OPENCL( kernels[3].setArg( 1, keys_first.gpuPayloadSize( ), &keys_first.gpuPayload( )), "Error setArg kernels[ 4 ]" );
+    V_OPENCL( kernels[3].setArg( 2, keys_output.getContainer().getBuffer() ),  "Error setArg kernels[ 4 ]" ); // Output buffer
+    V_OPENCL( kernels[3].setArg( 3, keys_output.gpuPayloadSize( ), &keys_output.gpuPayload( )), "Error setArg kernels[ 4 ]" );
+    V_OPENCL( kernels[3].setArg( 4, values_output.getContainer().getBuffer()), "Error setArg kernels[ 4 ]" ); // Output buffer
+    V_OPENCL( kernels[3].setArg( 5, values_output.gpuPayloadSize( ), &values_output.gpuPayload( )), "Error setArg kernels[ 4 ]" );
+    V_OPENCL( kernels[3].setArg( 6, *offsetArray),                "Error setArg kernels[ 4 ]" ); // Input buffer
+	V_OPENCL( kernels[3].setArg( 7, *offsetArrayOut),             "Error setArg kernels[ 4 ]"  );
+    V_OPENCL( kernels[3].setArg( 8, *offsetValArray),             "Error setArg kernels[ 4 ]"  );
+    V_OPENCL( kernels[3].setArg( 9, numElements ),             "Error setArg kernels[ 4 ]" ); // Size of scratch buffer
+    V_OPENCL( kernels[3].setArg( 10, count_number_of_sections), "Error setArg kernels[ 4 ]" ); // Size of scratch buffer
 
     try
     {
@@ -1049,6 +1034,24 @@ reduce_by_key_enqueue(
     // wait for results
     l_Error = kernel3Event.wait( );
     V_OPENCL( l_Error, "post-kernel[3] failed wait" );
+
+	::cl::Event l_mapEvent;
+    int *h_result = (int*)ctl.getCommandQueue().enqueueMapBuffer( *offsetArrayOut,
+                                                                    false,
+                                                                    CL_MAP_READ | CL_MAP_WRITE,
+                                                                    (numElements-1)*sizeof(int),
+                                                                    sizeof(int)*1,
+                                                                    NULL,
+                                                                    &l_mapEvent,
+                                                                    &l_Error );
+    V_OPENCL( l_Error, "Error calling map on the result buffer" );
+
+    bolt::cl::wait(ctl, l_mapEvent);
+	
+
+	count_number_of_sections = *(h_result);
+
+
 
 #if ENABLE_PRINTS
     //delete this code -start

@@ -55,8 +55,6 @@ __kernel void perBlockScanByKey(
     // if exclusive, load gloId=0 w/ init, and all others shifted-1
     kType key;
     oType val;
-    //vType inVal = vals[gloId];
-    //val = (oType) (*unaryOp)(inVal);
     
     if(gloId < vecSize){
       key = keys[ gloId ];
@@ -64,27 +62,29 @@ __kernel void perBlockScanByKey(
       ldsKeys[ locId ] = key;
       ldsVals[ locId ] = val;
     }
-    
+    size_t flag = 0;
     // Computes a scan within a workgroup
     // updates vals in lds but not keys
+	output2[ gloId ] = 0;
     oType sum = val;
     for( size_t offset = 1; offset < wgSize; offset *= 2 )
     {
         barrier( CLK_LOCAL_MEM_FENCE );
         kType key2 = ldsKeys[locId - offset];
         kType prevKey = ldsKeys[locId - 1];
-        if (locId >= offset && (*binaryPred)(key, key2) && (*binaryPred)(key,prevKey))
+        if (locId >= offset && (*binaryPred)(key, key2) && flag == 0)
         {
             oType y = ldsVals[ locId - offset ];
             sum = (*binaryFunct)( sum, y );
         }		
         else //This has to be optimized
         {
+		    flag = 1;
             if (offset == 1 && gloId < vecSize) //Only when you compare neighbours
             {
                     output2[ gloId ] = 1;
             }
-                
+			
         }
         barrier( CLK_LOCAL_MEM_FENCE );
         ldsVals[ locId ] = sum;
@@ -96,7 +96,6 @@ __kernel void perBlockScanByKey(
     // Each work item writes out its calculated scan result, relative to the beginning
     // of each work group
     output[ gloId ] = sum;
-    
     if (locId == 0)
     {
         keyBuffer[ groId ] = ldsKeys[ wgSize-1 ];
@@ -259,8 +258,10 @@ __kernel void perBlockAdditionByKey(
         oType newResult = (*binaryFunct)( scanResult, postBlockSum );
         output[ gloId ] = newResult;
         output2[ gloId ] = 0;
+		
     }
 }
+
 
 /******************************************************************************
  *  Kernel 3
@@ -280,9 +281,10 @@ __kernel void keyValueMapping(
     global voType *ivals_output,
     voIterType vals_output,
     global int *offsetArray,
+	global int *offsetArrayOut,
     global koType *offsetValArray,
     const uint vecSize,
-    const int numSections)
+    int numSections)
 {
     keys.init( ikeys );
     keys_output.init( ikeys_output );
@@ -290,31 +292,27 @@ __kernel void keyValueMapping(
 
 
     size_t gloId = get_global_id( 0 );
+	size_t locId = get_local_id( 0 );
 
     //  Abort threads that are passed the end of the input vector
     if( gloId >= vecSize )
         return;
-    
 
-    if(offsetArray[ gloId ] != 0)
+	if(offsetArray[vecSize-1 ] == 0)
+	  numSections = *(offsetArrayOut+vecSize-1);
+	else 
+	  numSections = *(offsetArrayOut+vecSize-1) + 1;
+    if(offsetArray[ gloId ] != 0 && gloId > 0)
     {
-        //int x = offsetArray [ gloId ] -1;
-        //int xkeys = keys[ gloId-1 ];
-        //int xvals = offsetValArray [ gloId-1 ]; 
-
-        keys_output[ offsetArray [ gloId ] -1 ] = keys[ gloId-1 ];
-        vals_output[ offsetArray [ gloId ] -1 ] = offsetValArray [ gloId-1 ];
+		keys_output[ offsetArrayOut [ gloId ] -1] = keys[ gloId-1 ];
+        vals_output[ offsetArrayOut [ gloId ] -1] = offsetValArray [ gloId-1 ];
+    }
+	
+    if( gloId == (vecSize-1) )
+    {
+        keys_output[ numSections - 1] = keys[ gloId ]; //Copying the last key directly. Works either ways
+        vals_output[ numSections - 1] = offsetValArray [ gloId ];
+	    offsetArrayOut [ gloId ] = numSections;
     }
 
-  if( gloId == (vecSize-1) )
-  {
-    //printf("ossfetarr=%d\n", offsetArray [ gloId ]);
-    //printf("keys=%d\n", keys[ gloId ]);
-    //printf("offsetval=%d\n",offsetValArray [ gloId ]);
-        keys_output[ numSections - 1 ] = keys[ gloId ]; //Copying the last key directly. Works either ways
-        vals_output[ numSections - 1 ] = offsetValArray [ gloId ];
-      
-  }
-
-    
 }
