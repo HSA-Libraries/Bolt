@@ -24,6 +24,7 @@
 #include <bolt/cl/device_vector.h>
 #include <bolt/cl/pair.h>
 #include "bolt/cl/scan.h"
+#include "bolt/cl/scan_by_key.h"
 
 /*! \file bolt/cl/reduce_by_key.h
     \brief Performs on a sequence, a reduction of each sub-sequence as defined by equivalent keys.

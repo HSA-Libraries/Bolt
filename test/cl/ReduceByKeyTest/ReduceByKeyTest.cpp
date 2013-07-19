@@ -478,7 +478,7 @@ TEST_P (ReduceByKeyTest, DifferentKeyReduceByKeyTestFloat)
     std::vector< float > input( length );
     for (int i = 0; i < length; i++)
     {
-        keys[i] = i;
+        keys[i] = (float)i;
         refInput[i] = (float)(std::rand()%4);
         input[i] = refInput[i];
     }
@@ -515,17 +515,6 @@ TEST_P (ReduceByKeyTest, DifferentKeyReduceByKeyTestFloat)
 
 
 }
-
-        
-
-
-
-
-
-
-
-
-
 
 TEST(ReduceByKeyBasic, DeviceVectorIntTest)
 {
@@ -574,7 +563,7 @@ TEST(ReduceByKeyBasic, DeviceVectorIntTest)
 }
 TEST(ReduceByKeyBasic, OffSetDeviceVectorIntTest)
 {
-    int length = 1<<10;
+    int length = 1<<15;
     std::vector< int > keys(length);
     bolt::cl::device_vector<int> device_keys(length);
 
@@ -665,7 +654,7 @@ TEST(ReduceByKeyBasic, SerialDeviceVectorIntTest)
 }
 TEST(ReduceByKeyBasic, MultiCoreDeviceVectorIntTest)
 {
-    int length = 1<<10;
+    int length = 1<<15;
     std::vector< int > keys(length);
     bolt::cl::device_vector<int> device_keys(length);
     int segmentLength = 0;
@@ -701,8 +690,7 @@ TEST(ReduceByKeyBasic, MultiCoreDeviceVectorIntTest)
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
-for(int a=0; a<100; a++)
-{
+
     auto p = bolt::cl::reduce_by_key( ctl, device_keys.begin(), device_keys.end(), input.begin(),
                                koutput.begin(), voutput.begin(), binary_predictor, binary_operator);
 
@@ -710,12 +698,12 @@ for(int a=0; a<100; a++)
                                            vrefOutput.begin(), binary_operator);
     cmpArrays(krefOutput, koutput);
     cmpArrays(vrefOutput, voutput);
-}
+
 }
 
 TEST(ReduceByKeyBasic, DeviceVectorFloatTest)
 {
-    int length = 1<<10;
+    int length = 1<<15;
     std::vector< float > keys(length);
     bolt::cl::device_vector<float> device_keys(length);
 
@@ -760,7 +748,7 @@ TEST(ReduceByKeyBasic, DeviceVectorFloatTest)
 }
 TEST(ReduceByKeyBasic, OffSetDeviceVectorFloatTest)
 {
-    int length = 1<<10;
+    int length = 1<<15;
     std::vector< float > keys(length);
     bolt::cl::device_vector<float> device_keys(length);
 
@@ -851,7 +839,7 @@ TEST(ReduceByKeyBasic, SerialDeviceVectorFloatTest)
 }
 TEST(ReduceByKeyBasic, MultiCoreDeviceVectorFloatTest)
 {
-    int length = 1<<12;
+    int length = 1<<15;
     std::vector< float > keys(length);
     bolt::cl::device_vector<float> device_keys(length);
     int segmentLength = 0;
@@ -887,7 +875,7 @@ TEST(ReduceByKeyBasic, MultiCoreDeviceVectorFloatTest)
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
-for(int a=0; a<50; a++)
+for(int a=0; a<10; a++)
 {
     auto p = bolt::cl::reduce_by_key( ctl, device_keys.begin(), device_keys.end(), input.begin(),
                                koutput.begin(), voutput.begin(), binary_predictor, binary_operator);
@@ -902,7 +890,7 @@ for(int a=0; a<50; a++)
 #if(TEST_DOUBLE == 1)
 TEST(ReduceByKeyBasic, DeviceVectorDoubleTest)
 {
-    int length = 1<<10;
+    int length = 1<<14;
     std::vector< double > keys(length);
     bolt::cl::device_vector<double> device_keys(length);
 
@@ -947,7 +935,7 @@ TEST(ReduceByKeyBasic, DeviceVectorDoubleTest)
 }
 TEST(ReduceByKeyBasic, OffSetDeviceVectorDoubleTest)
 {
-    int length = 1<<10;
+    int length = 1<<14;
     std::vector< double > keys(length);
     bolt::cl::device_vector<double> device_keys(length);
 
@@ -991,9 +979,9 @@ TEST(ReduceByKeyBasic, OffSetDeviceVectorDoubleTest)
     cmpArrays(vrefOutput, voutput);
 }
 
-TEST(ReduceByKeyBasic, CPUDeviceVectorDoubleTest)
+TEST(ReduceByKeyBasic, SerialDeviceVectorDoubleTest)
 {
-    int length = 1<<10;
+    int length = 1<<15;
     std::vector< double > keys(length);
     bolt::cl::device_vector<double> device_keys(length);
 
@@ -1039,7 +1027,7 @@ TEST(ReduceByKeyBasic, CPUDeviceVectorDoubleTest)
 }
 TEST(ReduceByKeyBasic, MultiCoreCPUDeviceVectorDoubleTest)
 {
-    int length = 1<<12;
+    int length = 1<<15;
     std::vector< double > keys(length);
     bolt::cl::device_vector<double> device_keys(length);
     int segmentLength = 0;
@@ -1075,8 +1063,7 @@ TEST(ReduceByKeyBasic, MultiCoreCPUDeviceVectorDoubleTest)
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
-for(int a=0; a<50; a++)
-{
+
     auto p = bolt::cl::reduce_by_key( ctl, device_keys.begin(), device_keys.end(), input.begin(),
                                koutput.begin(), voutput.begin(), binary_predictor, binary_operator);
 
@@ -1084,7 +1071,7 @@ for(int a=0; a<50; a++)
                                            vrefOutput.begin(), std::plus<double>());
     cmpArrays(krefOutput, koutput);
     cmpArrays(vrefOutput, voutput);
-}
+
 }
 #endif
  
@@ -1392,7 +1379,7 @@ TEST(ReduceByKeyBasic, IntegerTestOffsetTest)
 }
 TEST(ReduceByKeyBasic, SerialIntegerTest)
 {
-    int length = 1<<24;
+    int length = 1<<15;
     std::vector< int > keys( length);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
@@ -1448,7 +1435,7 @@ TEST(ReduceByKeyBasic, SerialIntegerTest)
 }
 TEST(ReduceByKeyBasic, MultiCoreIntegerTest)
 {
-    int length = 1<<10;
+    int length = 1<<15;
     std::vector< int > keys( length);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
@@ -1478,7 +1465,7 @@ TEST(ReduceByKeyBasic, MultiCoreIntegerTest)
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
-for(int i=0;i<100;i++)
+for(int i=0;i<10;i++)
 {   // call reduce_by_key
     auto p = bolt::cl::reduce_by_key( ctl, keys.begin(), keys.end(), input.begin(), koutput.begin(), voutput.begin(),
                                       binary_predictor, binary_operator);
@@ -1546,7 +1533,7 @@ TEST(ReduceByKeyBasic, FloatTest)
 }
 TEST(ReduceByKeyBasic, FloatTestOffsetTest)
 {
-    int length = 1<<15;
+    int length = 1<<18;
     std::vector< float > keys( length);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
@@ -1637,7 +1624,7 @@ TEST(ReduceByKeyBasic, SerialFloatTest)
 }
 TEST(ReduceByKeyBasic, MultiCoreFloatTest)
 {
-    int length = 1<<10;
+    int length = 1<<15;
     std::vector< float > keys( length);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
@@ -1645,6 +1632,9 @@ TEST(ReduceByKeyBasic, MultiCoreFloatTest)
     float key = 1.0f;
     std::vector< float > refInput( length );
     std::vector< float > input( length );
+
+for(int i=0;i<10;i++)
+{ 
     for (int i = 0; i < length; i++)
     {
         if(std::rand()%3 == 1) key++;
@@ -1667,8 +1657,7 @@ TEST(ReduceByKeyBasic, MultiCoreFloatTest)
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
-for(int i=0;i<100;i++)
-{   // call reduce_by_key
+  // call reduce_by_key
     auto p = bolt::cl::reduce_by_key( ctl, keys.begin(), keys.end(), input.begin(), koutput.begin(), voutput.begin(),
                                       binary_predictor, binary_operator);
 #if 0
@@ -1688,7 +1677,7 @@ for(int i=0;i<100;i++)
 
 TEST(ReduceByKeyBasic, DoubleTest)
 {
-    int length = 1<<24;
+    int length = 1<<19;
     std::vector< double > keys( length);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
@@ -1736,7 +1725,7 @@ TEST(ReduceByKeyBasic, DoubleTest)
 }
 TEST(ReduceByKeyBasic, OffSetDoubleTest)
 {
-    int length = 1<<24;
+    int length = 1<<21;
     std::vector< double > keys( length);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
@@ -1783,7 +1772,7 @@ TEST(ReduceByKeyBasic, OffSetDoubleTest)
 
 TEST(ReduceByKeyBasic, DoubleTestOffsetTest)
 {
-    int length = 1<<15;
+    int length = 1<<19;
     std::vector< double > keys( length);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
@@ -1831,7 +1820,7 @@ TEST(ReduceByKeyBasic, DoubleTestOffsetTest)
 }
 TEST(ReduceByKeyBasic, SerialDoubleTest)
 {
-    int length = 1<<24;
+    int length = 1<<16;
     std::vector< double > keys( length);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
@@ -1883,7 +1872,7 @@ TEST(ReduceByKeyBasic, SerialDoubleTest)
 }
 TEST(ReduceByKeyBasic, MultiCoreDoubleTest)
 {
-    int length = 1<<10;
+    int length = 1<<16;
     std::vector< double > keys( length);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
@@ -1891,6 +1880,9 @@ TEST(ReduceByKeyBasic, MultiCoreDoubleTest)
     double key = 1.0;
     std::vector< double > refInput( length );
     std::vector< double > input( length );
+
+for(int i=0;i<10;i++)
+{  
     for (int i = 0; i < length; i++)
     {
         if(std::rand()%3 == 1) key++;
@@ -1913,8 +1905,7 @@ TEST(ReduceByKeyBasic, MultiCoreDoubleTest)
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
-for(int i=0;i<100;i++)
-{   // call reduce_by_key
+ // call reduce_by_key
     auto p = bolt::cl::reduce_by_key( ctl, keys.begin(), keys.end(), input.begin(), koutput.begin(), voutput.begin(),
                                       binary_predictor, binary_operator);
 #if 0
@@ -1934,7 +1925,7 @@ for(int i=0;i<100;i++)
 
 TEST(ReduceByKeyPairCheck, IntegerTest2)
 {
-    int length = 1<<15;
+    int length = 1<<17;
     std::vector< int > keys( length);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
@@ -1943,7 +1934,7 @@ TEST(ReduceByKeyPairCheck, IntegerTest2)
     std::vector< int > refInput( length );
     std::vector< int > input( length );
 	
-for(int a=0; a<100; a++)
+for(int a=0; a<50; a++)
 {
 //	std::srand(a+12); 
     for (int i = 0; i < length; i++)
@@ -1975,7 +1966,7 @@ for(int a=0; a<100; a++)
     // call reduce_by_key
     DevicePairIterator dv_pair =  bolt::cl::reduce_by_key(keys.begin(), keys.end(),input.begin(),
                                    koutput.begin(), voutput.begin(), binary_predictor,binary_operator);
-#if 1
+#if 0
     for(unsigned int i = 0; i < 30 ; i++)
     {
       std::cout<<"Ikey "<<keys[i]<<" IValues "<<input[i]<<" -> OKeys "<<koutput[i]<<" OValues "<<voutput[i]<<std::endl;
@@ -2013,7 +2004,7 @@ for(int a=0; a<100; a++)
 }
 TEST(ReduceByKeyPairCheck, OffSetIntegerTest2)
 {
-    int length = 1<<10;
+    int length = 1<<19;
     std::vector< int > keys( length);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
@@ -2091,7 +2082,7 @@ TEST(ReduceByKeyPairCheck, OffSetIntegerTest2)
 }
 TEST(ReduceByKeyPairCheck, SerialIntegerTest2)
 {
-    int length = 1<<10;
+    int length = 1<<15;
     std::vector< int > keys( length);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
@@ -2180,7 +2171,7 @@ TEST(ReduceByKeyPairCheck, SerialIntegerTest2)
 }
 TEST(ReduceByKeyPairCheck, MultiCoreIntegerTest2)
 {
-    int length = 1<<10;
+    int length = 1<<15;
     std::vector< int > keys( length);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
@@ -2526,7 +2517,7 @@ TEST(ReduceByKeyPairCheck, SerialFloatTest2)
 }
 TEST(ReduceByKeyPairCheck, MultiCoreFloatTest2)
 {
-    int length = 1<<10;
+    int length = 1<<15;
     std::vector< float > keys( length);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
@@ -2627,7 +2618,7 @@ TEST(ReduceByKeyPairCheck, DoubleTest2)
 
     for (int i = 0; i < length; i++)
     {
-        if(std::rand()%3 == 1) key++;
+        if(std::rand()%4 == 1) key++;
         keys[i] = key;
         refInput[i] = (double)(std::rand()%4);
         input[i] = refInput[i];
@@ -2701,7 +2692,7 @@ TEST(ReduceByKeyPairCheck, DoubleTest2)
 
 TEST(ReduceByKeyPairCheck, OffSetDoubleTest2)
 {
-    int length = 1<<24;
+    int length = 1<<20;
     std::vector< double > keys( length);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
@@ -2786,7 +2777,7 @@ TEST(ReduceByKeyPairCheck, OffSetDoubleTest2)
 
 TEST(ReduceByKeyPairCheck, SerialDoubleTest2)
 {
-    int length = 1<<24;
+    int length = 1<<16;
     std::vector< double > keys( length);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
