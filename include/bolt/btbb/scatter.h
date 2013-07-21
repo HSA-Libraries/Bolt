@@ -15,15 +15,14 @@
 
 ***************************************************************************/
 
-#if !defined( BOLT_CL_SCATTER_H )
-#define BOLT_CL_SCATTER_H
+#if !defined( BOLT_BTBB_SCATTER_H )
+#define BOLT_BTBB_SCATTER_H
 #pragma once
 
-#include "bolt/cl/bolt.h"
-#include "bolt/cl/device_vector.h"
-
-#include <string>
-#include <iostream>
+#include "tbb/blocked_range.h"
+#include "tbb/task_scheduler_init.h"
+#include "tbb/tbb.h"
+#include "tbb/parallel_for.h"
 
 /*! \file bolt/cl/scatter.h
     \brief 
@@ -31,7 +30,7 @@
 
 
 namespace bolt {
-    namespace cl {
+    namespace btbb {
 
         /*! \addtogroup algorithms
          */
@@ -96,36 +95,14 @@ namespace bolt {
         template< typename InputIterator1,
                   typename InputIterator2,
                   typename OutputIterator >
-        void scatter( ::bolt::cl::control &ctl,
-                      InputIterator1 first,
+        void scatter( InputIterator1 first,
                       InputIterator1 last,
                       InputIterator2 map,
-                      OutputIterator result,
-                      const std::string& user_code="" );
+                      OutputIterator result);
 
-        template< typename InputIterator1,
-                  typename InputIterator2,
-                  typename OutputIterator >
-        void scatter( InputIterator1 first,
-                      InputIterator1 last1,
-                      InputIterator2 map,
-                      OutputIterator result,
-                      const std::string& user_code="" );
-
-
+       
 // scatter_if API
-        template< typename InputIterator1,
-                  typename InputIterator2,
-                  typename InputIterator3,
-                  typename OutputIterator >
-        void scatter_if( bolt::cl::control &ctl,
-                         InputIterator1 first1,
-                         InputIterator1 last1,
-                         InputIterator2 map,
-                         InputIterator3 stencil,
-                         OutputIterator result,
-                         const std::string& user_code="" );
-
+        
         template< typename InputIterator1,
                   typename InputIterator2,
                   typename InputIterator3,
@@ -134,23 +111,9 @@ namespace bolt {
                          InputIterator1 last1,
                          InputIterator2 map,
                          InputIterator3 stencil,
-                         OutputIterator result,
-                         const std::string& user_code="" );
+                         OutputIterator result);
 
-        template< typename InputIterator1,
-                  typename InputIterator2,
-                  typename InputIterator3,
-                  typename OutputIterator,
-                  typename BinaryPredicate >
-        void scatter_if( bolt::cl::control &ctl,
-                         InputIterator1 first1,
-                         InputIterator1 last1,
-                         InputIterator2 map,
-                         InputIterator3 stencil,
-                         OutputIterator result,
-                         BinaryPredicate pred,
-                         const std::string& user_code="" );
-
+     
         template< typename InputIterator1,
                   typename InputIterator2,
                   typename InputIterator3,
@@ -161,13 +124,12 @@ namespace bolt {
                          InputIterator2 map,
                          InputIterator3 stencil,
                          OutputIterator result,
-                         BinaryPredicate pred,
-                         const std::string& user_code="" );
+                         BinaryPredicate pred);
 
 
         /*!   \}  */
-    };
-};
+    }
+}
 
 #include <bolt/btbb/detail/scatter.inl>
 #endif

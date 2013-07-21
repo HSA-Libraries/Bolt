@@ -179,6 +179,65 @@ void scatter_if( InputIterator1 first1,
 }
 
 
+/* Begin-- Serial Implementation of the scatter and scatter_if routines */
+
+template<typename InputIterator1,
+         typename InputIterator2, 
+         typename OutputIterator>
+
+void gold_scatter_enqueue (InputIterator1 first1,
+                           InputIterator1 last1,
+                           InputIterator2 map,
+                           OutputIterator result)
+    {
+      // std::cout<<"Serial code ...\n";
+       size_t numElements = static_cast< unsigned int >( std::distance( first1, last1 ) );
+
+       for(int iter = 0; iter<numElements; iter++)
+                *(result+*(map + iter)) = *(first1 + iter);
+    }
+
+ template< typename InputIterator1,
+           typename InputIterator2,
+           typename InputIterator3,
+           typename OutputIterator >
+void gold_scatter_if_enqueue (InputIterator1 first1,
+                              InputIterator1 last1,
+                              InputIterator2 map,
+                              InputIterator3 stencil,
+                              OutputIterator result)
+   {  
+      // std::cout<<"Serial code ...\n";
+       size_t numElements = static_cast< unsigned int >( std::distance( first1, last1 ) );
+       for(int iter = 0; iter<numElements; iter++)
+        {
+             if(stencil[iter] == 1)
+                  result[*(map+(iter - 0))] = first1[iter];
+             }
+   }  
+
+ template< typename InputIterator1,
+           typename InputIterator2,
+           typename InputIterator3,
+           typename OutputIterator,
+           typename Predicate>
+void gold_scatter_if_enqueue (InputIterator1 first1,
+                              InputIterator1 last1,
+                              InputIterator2 map,
+                              InputIterator3 stencil,
+                              OutputIterator result,
+                              Predicate pred)
+   {  
+      // std::cout<<"Serial code ...\n";
+       size_t numElements = static_cast< unsigned int >( std::distance( first1, last1 ) );
+       for(int iter = 0; iter<numElements; iter++)
+        {
+             if(pred(stencil[iter]) != 0)
+                  result[*(map+(iter))] = first1[iter];
+             }
+   }  
+
+ /* End-- Serial Implementation of the scatter and scatter_if routines */
 
 namespace detail {
 
@@ -311,8 +370,10 @@ public:
                                  user_code,
                                  std::iterator_traits< InputIterator1 >::iterator_category( ),
                                  std::iterator_traits< InputIterator2 >::iterator_category( ),
-                                 std::iterator_traits< InputIterator3 >::iterator_category( ) );
+                                 std::iterator_traits< InputIterator3 >::iterator_category( ));
     };
+
+    
 
 ////////////////////////////////////////////////////////////////////
 // Scatter detect random access
@@ -400,18 +461,17 @@ public:
         }
         if( runMode == bolt::cl::control::SerialCpu )
         {
-            // Call serial code
-            return;
+            gold_scatter_if_enqueue(first1, last1, map, stencil, result, pred);
         }
         else if( runMode == bolt::cl::control::MultiCoreCpu )
         {
 #if defined( ENABLE_TBB )
-            // Call MultiCore CPU code
+           bolt::btbb::scatter_if(first1, last1, map, stencil, result, pred);
 #else
           throw std::exception( "The MultiCoreCpu version of scatter_if is not enabled to be built! \n" );
 
 #endif
-          return;
+          
         }
         else
         {
@@ -471,15 +531,12 @@ public:
         }
         if( runMode == bolt::cl::control::SerialCpu )
         {
-            // Call serial scatter_if
-            return;
+            gold_scatter_if_enqueue(first1, last1, map, stencilFancyIter, result, pred);
         }
         else if( runMode == bolt::cl::control::MultiCoreCpu )
         {
 #if defined( ENABLE_TBB )
-
-            // Call MC scatter_if
-
+            bolt::btbb::scatter_if(first1, last1, map, stencilFancyIter, result, pred);
 #else
             throw std::exception( "The MultiCoreCpu version of scatter is not enabled to be built! \n" );
 
@@ -491,7 +548,7 @@ public:
             // Use host pointers memory since these arrays are only read once - no benefit to copying.
             // Map the input iterator to a device_vector
             device_vector< iType1 > dvInput( first1, last1, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, ctl );
-            device_vector< iType2 > dvMap( map, sz, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, ctl );
+            device_vector< iType2 > dvMap( map, sz, CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, true,ctl );
 
             // Map the output iterator to a device_vector
             device_vector< oType > dvResult( result, sz, CL_MEM_USE_HOST_PTR|CL_MEM_WRITE_ONLY, false, ctl );
@@ -499,7 +556,7 @@ public:
             scatter_if_enqueue( ctl,
                                 dvInput.begin( ),
                                 dvInput.end( ),
-                                dvMap,
+                                dvMap.begin(),
                                 stencilFancyIter,
                                 dvResult.begin( ),
                                 pred,
@@ -520,7 +577,7 @@ public:
                                   const InputIterator1& fancyIterfirst,
                                   const InputIterator1& fancyIterlast,
                                   const InputIterator2& map,
-                                  const InputIterator2& stencil,
+                                  const InputIterator3& stencil,
                                   const OutputIterator& result,
                                   const Predicate& pred,
                                   const std::string& user_code,
@@ -531,7 +588,7 @@ public:
 
         typedef std::iterator_traits<InputIterator1>::value_type iType1;
         typedef std::iterator_traits<InputIterator2>::value_type iType2;
-        typedef std::iterator_traits<InputIterator2>::value_type iType3;
+        typedef std::iterator_traits<InputIterator3>::value_type iType3;
         typedef std::iterator_traits<OutputIterator>::value_type oType;
         size_t sz = std::distance( fancyIterfirst, fancyIterlast );
         if (sz == 0)
@@ -545,27 +602,23 @@ public:
         }
         if( runMode == bolt::cl::control::SerialCpu )
         {
-            // Call serial
-            return;
+            gold_scatter_if_enqueue(fancyIterfirst, fancyIterlast, map, stencil, result, pred);
         }
         else if( runMode == bolt::cl::control::MultiCoreCpu )
         {
 #if defined( ENABLE_TBB )
-
-            // Call MC
-
+             bolt::btbb::scatter_if(fancyIterfirst, fancyIterlast, map, stencil, result, pred);
 #else
             throw std::exception( "The MultiCoreCpu version of scatter is not enabled to be built! \n" );
 
 #endif
-            return;
         }
         else
         {
             // Use host pointers memory since these arrays are only read once - no benefit to copying.
             // Map the input iterator to a device_vector
-            device_vector< iType2 > dvMap( first2, sz, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, true, ctl );
-            device_vector< iType3 > dvStencil( first2, sz, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, true, ctl );
+            device_vector< iType2 > dvMap( map, sz, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, true, ctl );
+            device_vector< iType3 > dvStencil( stencil, sz, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, true, ctl );
 
             // Map the output iterator to a device_vector
             device_vector< oType > dvResult( result, sz, CL_MEM_USE_HOST_PTR|CL_MEM_WRITE_ONLY, false, ctl );
@@ -623,37 +676,36 @@ public:
 
         if( runMode == bolt::cl::control::SerialCpu )
         {
-            // Call Serial
             bolt::cl::device_vector< iType1 >::pointer firstPtr =  first1.getContainer( ).data( );
-            bolt::cl::device_vector< iType2 >::pointer secPtr =  first2.getContainer( ).data( );
+            bolt::cl::device_vector< iType2 >::pointer mapPtr =  map.getContainer( ).data( );
+            bolt::cl::device_vector< iType3 >::pointer stenPtr =  stencil.getContainer( ).data( );
             bolt::cl::device_vector< oType >::pointer resPtr =  result.getContainer( ).data( );
 
 #if defined( _WIN32 )
-            std::transform( &firstPtr[ first1.m_Index ], &firstPtr[ last1.m_Index ], &secPtr[ first2.m_Index ],
-                stdext::make_checked_array_iterator( &resPtr[ result.m_Index ], sz ), f );
+            gold_scatter_if_enqueue(&firstPtr[ first1.m_Index ], &firstPtr[ last1.m_Index ], &mapPtr[ map.m_Index ],
+                 &stenPtr[ map.m_Index ], stdext::make_checked_array_iterator( &resPtr[ result.m_Index ], sz ), pred );
+           
 #else
-            std::transform( &firstPtr[ first1.m_Index ], &firstPtr[ last1.m_Index ],
-                &secPtr[ first2.m_Index ], &resPtr[ result.m_Index ], f );
-#endif
-            return;
+            gold_scatter_if_enqueue( &firstPtr[ first1.m_Index ], &firstPtr[ last1.m_Index ],
+                &mapPtr[ map.m_Index ], &stenPtr[ map.m_Index ], &resPtr[ result.m_Index ], pred );
+#endif           
         }
         else if( runMode == bolt::cl::control::MultiCoreCpu )
         {
             // Call MC 
 #if defined( ENABLE_TBB )
+            {
+                bolt::cl::device_vector< iType1 >::pointer firstPtr =  first1.getContainer( ).data( );
+                bolt::cl::device_vector< iType2 >::pointer mapPtr =  map.getContainer( ).data( );
+                bolt::cl::device_vector< iType3 >::pointer stenPtr =  stencil.getContainer( ).data( );
+                bolt::cl::device_vector< oType >::pointer resPtr =  result.getContainer( ).data( );
 
-            bolt::cl::device_vector< iType1 >::pointer firstPtr =  first1.getContainer( ).data( );
-            bolt::cl::device_vector< iType2 >::pointer secPtr =  first2.getContainer( ).data( );
-            bolt::cl::device_vector< oType >::pointer resPtr =  result.getContainer( ).data( );
-
-            bolt::btbb::transform( &firstPtr[ first1.m_Index ], &firstPtr[ last1.m_Index ],
-                                   &secPtr[ first2.m_Index ],&resPtr[ result.m_Index ],f );
-
-
+                bolt::btbb::scatter_if( &firstPtr[ first1.m_Index ], &firstPtr[ last1.m_Index ],
+                &mapPtr[ map.m_Index ], &stenPtr[ map.m_Index ], &resPtr[ result.m_Index ], pred );
+            }
 #else
              throw std::exception( "The MultiCoreCpu version of scatter is not enabled to be built! \n" );
-#endif
-            return;
+#endif           
         }
         else
         {
@@ -696,19 +748,18 @@ public:
         }
         if( runMode == bolt::cl::control::SerialCpu )
         {
-            // Call serial code
-            return;
+            gold_scatter_enqueue(first1, last1, map, result);
         }
         else if( runMode == bolt::cl::control::MultiCoreCpu )
         {
-#if defined( ENABLE_TBB )
-            // Call MultiCore CPU code
-#else
-          throw std::exception( "The MultiCoreCpu version of scatter_if is not enabled to be built! \n" );
+            #if defined( ENABLE_TBB )
+                bolt::btbb::scatter(first1, last1, map, result);
+            #else
+                 throw std::exception( "The MultiCoreCpu version of scatter_if is not enabled to be built! \n" );
 
-#endif
-          return;
+            #endif
         }
+
         else
         {
           // Map the input iterator to a device_vector
@@ -757,34 +808,30 @@ public:
         }
         if( runMode == bolt::cl::control::SerialCpu )
         {
-            // Call serial scatter
-            return;
+             gold_scatter_enqueue(firstFancy, lastFancy, map, result);
+           
         }
         else if( runMode == bolt::cl::control::MultiCoreCpu )
         {
 #if defined( ENABLE_TBB )
-
-            // Call MC scatter
-
+             bolt::btbb::scatter(firstFancy, lastFancy, map, result);
 #else
             throw std::exception( "The MultiCoreCpu version of scatter is not enabled to be built! \n" );
 
 #endif
-            return;
         }
         else
         {
             // Use host pointers memory since these arrays are only read once - no benefit to copying.
             // Map the input iterator to a device_vector
-            device_vector< iType2 > dvMap( map, sz, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, ctl );
-
+            device_vector< iType2 > dvMap( map, sz, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY,true, ctl );
             // Map the output iterator to a device_vector
             device_vector< oType > dvResult( result, sz, CL_MEM_USE_HOST_PTR|CL_MEM_WRITE_ONLY, false, ctl );
 
             scatter_enqueue( ctl,
                                 firstFancy,
                                 lastFancy,
-                                dvMap,
+                                dvMap.begin(),
                                 dvResult.begin( ),
                                 user_code );
 
@@ -805,7 +852,7 @@ public:
                                 const OutputIterator& result,
                                 const std::string& user_code,
                                 std::random_access_iterator_tag,
-                                bolt::cl::fancy_iterator_tag )
+                                 bolt::cl::fancy_iterator_tag )
     {
         typedef std::iterator_traits<InputIterator1>::value_type iType1;
         typedef std::iterator_traits<InputIterator2>::value_type iType2;
@@ -822,20 +869,16 @@ public:
         }
         if( runMode == bolt::cl::control::SerialCpu )
         {
-            // Call serial scatter
-            return;
+            gold_scatter_enqueue(first1, last1, mapFancy, result);
         }
         else if( runMode == bolt::cl::control::MultiCoreCpu )
         {
 #if defined( ENABLE_TBB )
-
-            // Call MC scatter
-
+            bolt::btbb::scatter(first1, last1, mapFancy, result);
 #else
             throw std::exception( "The MultiCoreCpu version of scatter is not enabled to be built! \n" );
 
 #endif
-            return;
         }
         else
         {
@@ -888,22 +931,21 @@ public:
 
         if( runMode == bolt::cl::control::SerialCpu )
         {
-            // Serial Code
-            return;
+            bolt::cl::device_vector< iType1 >::pointer InputBuffer  =  first1.getContainer( ).data( );
+            bolt::cl::device_vector< iType2 >::pointer MapBuffer    =  map.getContainer( ).data( );
+            bolt::cl::device_vector< oType >::pointer  ResultBuffer =  result.getContainer( ).data( );
+            gold_scatter_enqueue(&InputBuffer[ first1.m_Index ], &InputBuffer[ last1.m_Index ], &MapBuffer[ map.m_Index ], &ResultBuffer[ result.m_Index ]);             
         }
         else if( runMode == bolt::cl::control::MultiCoreCpu )
         {
-            // Call MC 
+           
 #if defined( ENABLE_TBB )
-
-            bolt::cl::device_vector< iType1 >::pointer firstPtr =  first1.getContainer( ).data( );
-            bolt::cl::device_vector< iType2 >::pointer secPtr =  first2.getContainer( ).data( );
-            bolt::cl::device_vector< oType >::pointer resPtr =  result.getContainer( ).data( );
-
-            bolt::btbb::transform( &firstPtr[ first1.m_Index ], &firstPtr[ last1.m_Index ],
-                                   &secPtr[ first2.m_Index ],&resPtr[ result.m_Index ],f );
-
-
+            {
+                bolt::cl::device_vector< iType1 >::pointer InputBuffer   =  first1.getContainer( ).data( );
+                bolt::cl::device_vector< iType2 >::pointer MapBuffer     =  map.getContainer( ).data( );
+                bolt::cl::device_vector< oType >::pointer ResultBuffer   =  result.getContainer( ).data( );
+                bolt::btbb::scatter(&InputBuffer[ first1.m_Index ], &InputBuffer[ last1.m_Index ], &MapBuffer[ map.m_Index ], &ResultBuffer[ result.m_Index ]);
+            }
 #else
              throw std::exception( "The MultiCoreCpu version of scatter is not enabled to be built! \n" );
 #endif
@@ -950,26 +992,23 @@ public:
 
         if( runMode == bolt::cl::control::SerialCpu )
         {
-            // Call Serial
-            return;
+            bolt::cl::device_vector< iType2 >::pointer MapBuffer    =  map.getContainer( ).data( );
+            bolt::cl::device_vector< oType >::pointer  ResultBuffer =  result.getContainer( ).data( );
+            gold_scatter_enqueue(firstFancy, lastFancy, &MapBuffer[ map.m_Index ], &ResultBuffer[ result.m_Index ]);
         }
         else if( runMode == bolt::cl::control::MultiCoreCpu )
         {
             // Call MC 
 #if defined( ENABLE_TBB )
+            {
+                bolt::cl::device_vector< iType2 >::pointer MapBuffer =  map.getContainer( ).data( );
+                bolt::cl::device_vector< oType >::pointer ResultBuffer =  result.getContainer( ).data( );
 
-            bolt::cl::device_vector< iType1 >::pointer firstPtr =  first1.getContainer( ).data( );
-            bolt::cl::device_vector< iType2 >::pointer secPtr =  first2.getContainer( ).data( );
-            bolt::cl::device_vector< oType >::pointer resPtr =  result.getContainer( ).data( );
-
-            bolt::btbb::transform( &firstPtr[ first1.m_Index ], &firstPtr[ last1.m_Index ],
-                                   &secPtr[ first2.m_Index ],&resPtr[ result.m_Index ],f );
-
-
+                bolt::btbb::scatter(firstFancy, lastFancy, &MapBuffer[ map.m_Index ],&ResultBuffer[ result.m_Index ]);
+            }
 #else
              throw std::exception( "The MultiCoreCpu version of scatter is not enabled to be built! \n" );
-#endif
-            return;
+#endif           
         }
         else
         {
@@ -995,7 +1034,6 @@ public:
                                 bolt::cl::device_vector_tag,
                                 bolt::cl::fancy_iterator_tag )
     {
-
         typedef std::iterator_traits< DVInputIterator >::value_type iType1;
         typedef std::iterator_traits< FancyMapIterator >::value_type iType2;
         typedef std::iterator_traits< DVOutputIterator >::value_type oType;
@@ -1011,22 +1049,23 @@ public:
         }
 
         if( runMode == bolt::cl::control::SerialCpu )
-        {
-            // Call Serial
-            return;
+        {  
+            bolt::cl::device_vector< iType1 >::pointer InputBuffer    =  first1.getContainer( ).data( );
+            bolt::cl::device_vector< oType >::pointer  ResultBuffer =  result.getContainer( ).data( );
+            gold_scatter_enqueue( &InputBuffer[ first1.m_Index ], &InputBuffer[ last1.m_Index ], mapFancy, 
+                                                                         &ResultBuffer[ result.m_Index ]);
+
         }
         else if( runMode == bolt::cl::control::MultiCoreCpu )
         {
             // Call MC 
 #if defined( ENABLE_TBB )
-
-            bolt::cl::device_vector< iType1 >::pointer firstPtr =  first1.getContainer( ).data( );
-            bolt::cl::device_vector< iType2 >::pointer secPtr =  first2.getContainer( ).data( );
-            bolt::cl::device_vector< oType >::pointer resPtr =  result.getContainer( ).data( );
-
-            bolt::btbb::transform( &firstPtr[ first1.m_Index ], &firstPtr[ last1.m_Index ],
-                                   &secPtr[ first2.m_Index ],&resPtr[ result.m_Index ],f );
-
+            {
+                bolt::cl::device_vector< iType1 >::pointer InputBuffer    =  first1.getContainer( ).data( );
+                bolt::cl::device_vector< oType >::pointer  ResultBuffer =  result.getContainer( ).data( );
+                bolt::btbb::scatter( &InputBuffer[ first1.m_Index ], &InputBuffer[ last1.m_Index ], mapFancy,
+                                                                            &ResultBuffer[ result.m_Index ]);
+            }
 
 #else
              throw std::exception( "The MultiCoreCpu version of scatter is not enabled to be built! \n" );
@@ -1071,15 +1110,17 @@ public:
           runMode = ctl.getDefaultPathToRun();
         }
         if( runMode == bolt::cl::control::SerialCpu )
-        {
-            // Call serial scatter_if
-            return;
+        {            
+            bolt::cl::device_vector< iType1 >::pointer InputBuffer    =  first.getContainer( ).data( );
+            gold_scatter_enqueue( &InputBuffer[ first.m_Index ], &InputBuffer[ last.m_Index ], map,result);
         }
         else if( runMode == bolt::cl::control::MultiCoreCpu )
         {
 #if defined( ENABLE_TBB )
-
-            // Call MC scatter_if
+            {				
+                bolt::cl::device_vector< iType1 >::pointer InputBuffer    =  first.getContainer( ).data( );
+                bolt::btbb::scatter( &InputBuffer[ first.m_Index ], &InputBuffer[ last.m_Index ],  map,result);
+            }
 
 #else
             throw std::exception( "The MultiCoreCpu version of scatter is not enabled to be built! \n" );
@@ -1090,16 +1131,15 @@ public:
         else
         {
             // Use host pointers memory since these arrays are only read once - no benefit to copying.
-            // Map the input iterator to a device_vector
-            device_vector< iType2 > dvMap( map, sz, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, ctl );
-
+            // Map the map iterator to a device_vector
+            device_vector< iType2 > dvMap( map, sz, CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, true, ctl );
             // Map the output iterator to a device_vector
             device_vector< oType > dvResult( result, sz, CL_MEM_USE_HOST_PTR|CL_MEM_WRITE_ONLY, false, ctl );
 
             scatter_enqueue( ctl,
                              first,
                              last,
-                             dvMap,
+                             dvMap.begin(),
                              dvResult.begin( ),
                              user_code );
 
@@ -1136,15 +1176,16 @@ public:
         }
         if( runMode == bolt::cl::control::SerialCpu )
         {
-            // Call serial scatter
-            return;
+           bolt::cl::device_vector< iType2 >::pointer mapBuffer    =  map.getContainer( ).data( );
+           gold_scatter_enqueue(first1, last1, &mapBuffer[ map.m_Index ], result);
         }
         else if( runMode == bolt::cl::control::MultiCoreCpu )
         {
 #if defined( ENABLE_TBB )
-
-            // Call MC scatter
-
+            {
+                bolt::cl::device_vector< iType2 >::pointer mapBuffer    =  map.getContainer( ).data( );
+                bolt::btbb::scatter(first1, last1, &mapBuffer[ map.m_Index ], result);
+            }
 #else
             throw std::exception( "The MultiCoreCpu version of scatter is not enabled to be built! \n" );
 
@@ -1155,15 +1196,14 @@ public:
         {
             // Use host pointers memory since these arrays are only read once - no benefit to copying.
             // Map the input iterator to a device_vector
-            device_vector< iType2 > dvMap( map, sz, CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, true, ctl );
-
-            // Map the output iterator to a device_vector
+            device_vector< iType1 > dvInput( first1, last1, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, ctl );
+            // Map the result iterator to a device_vector
             device_vector< oType > dvResult( result, sz, CL_MEM_USE_HOST_PTR|CL_MEM_WRITE_ONLY, false, ctl );
 
             scatter_enqueue( ctl,
-                             first1,
-                             last1,
-                             dvMap,
+                             dvInput.begin(),
+                             dvInput.end(),
+                             map,
                              dvResult.begin( ),
                              user_code );
 
@@ -1255,12 +1295,12 @@ public:
             wgMultiple &= ~lowerBits;
             wgMultiple += wgSize;
         }
-        else
+       /* else
         {
             boundsCheck = 1;
         }
         if (wgMultiple/wgSize < numWorkGroups)
-            numWorkGroups = wgMultiple/wgSize;
+            numWorkGroups = wgMultiple/wgSize;*/
 
         /**********************************************************************************
          * Compile Options
@@ -1384,12 +1424,12 @@ public:
             wgMultiple &= ~lowerBits;
             wgMultiple += wgSize;
         }
-        else
+        /*else
         {
             boundsCheck = 1;
         }
         if (wgMultiple/wgSize < numWorkGroups)
-            numWorkGroups = wgMultiple/wgSize;
+            numWorkGroups = wgMultiple/wgSize;*/
 
         /**********************************************************************************
          * Compile Options
