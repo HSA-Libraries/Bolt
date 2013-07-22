@@ -155,7 +155,7 @@ static const std::string identityFunctor = BOLT_HOST_DEVICE_DEFINITION(
 template<typename T>
 struct identity
 {
-    bool operator()(const T &x) const  {return x;}
+    T operator()(const T &x) const  {return x;}
 };
 );
 

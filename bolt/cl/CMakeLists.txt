@@ -73,6 +73,7 @@ set( clBolt.Runtime.Headers
         ${clBolt.Include.Dir}/device_vector.h 
         ${clBolt.Include.Dir}/functional.h 
         ${clBolt.Include.Dir}/fill.h 
+        ${clBolt.Include.Dir}/gather.h
         ${clBolt.Include.Dir}/generate.h 
         ${clBolt.Include.Dir}/inner_product.h
         ${clBolt.Include.Dir}/max_element.h 
@@ -109,6 +110,7 @@ set( clBolt.Runtime.Headers.Detail
         ${clBolt.Include.Dir}/detail/copy.inl
         ${clBolt.Include.Dir}/detail/count.inl
         ${clBolt.Include.Dir}/detail/fill.inl
+        ${clBolt.Include.Dir}/detail/gather.inl
         ${clBolt.Include.Dir}/detail/generate.inl
         ${clBolt.Include.Dir}/detail/inner_product.inl
         ${clBolt.Include.Dir}/detail/min_element.inl        
@@ -131,6 +133,7 @@ set( clBolt.Runtime.clFiles
     fill_kernels.cl
         copy_kernels.cl 
         count_kernels.cl 
+        gather_kernels.cl
         generate_kernels.cl
         min_element_kernels.cl 
         reduce_kernels.cl 

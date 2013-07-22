@@ -15,22 +15,23 @@
 
 ***************************************************************************/
 
-#if !defined( BOLT_BTBB_SCATTER_H )
-#define BOLT_BTBB_SCATTER_H
+#if !defined( BOLT_CL_GATHER_H )
+#define BOLT_CL_GATHER_H
 #pragma once
 
-#include "tbb/blocked_range.h"
-#include "tbb/task_scheduler_init.h"
-#include "tbb/tbb.h"
-#include "tbb/parallel_for.h"
+#include "bolt/cl/bolt.h"
+#include "bolt/cl/device_vector.h"
 
-/*! \file bolt/cl/scatter.h
+#include <string>
+#include <iostream>
+
+/*! \file bolt/cl/gather.h
     \brief 
 */
 
 
 namespace bolt {
-    namespace btbb {
+    namespace cl {
 
         /*! \addtogroup algorithms
          */
@@ -91,45 +92,82 @@ namespace bolt {
          *  \sa http://www.sgi.com/tech/stl/BinaryFunction.html
          */
 
-// scatter API
+// gather API
         template< typename InputIterator1,
                   typename InputIterator2,
                   typename OutputIterator >
-        void scatter( InputIterator1 first,
-                      InputIterator1 last,
-                      InputIterator2 map,
-                      OutputIterator result);
+        void gather( ::bolt::cl::control &ctl,
+                      InputIterator1 map_first,
+                      InputIterator1 map_last,
+                      InputIterator2 input_first,
+                      OutputIterator result,
+                      const std::string& user_code="" );
 
-       
-// scatter_if API
-        
+        template< typename InputIterator1,
+                  typename InputIterator2,
+                  typename OutputIterator >
+        void gather( InputIterator1 map_first,
+                      InputIterator1 map_last,
+                      InputIterator2 input_first,
+                      OutputIterator result,
+                      const std::string& user_code="" );
+
+
+// gather_if API
         template< typename InputIterator1,
                   typename InputIterator2,
                   typename InputIterator3,
                   typename OutputIterator >
-        void scatter_if( InputIterator1 first1,
-                         InputIterator1 last1,
-                         InputIterator2 map,
-                         InputIterator3 stencil,
-                         OutputIterator result);
+        void gather_if( bolt::cl::control &ctl,
+                         InputIterator1 map_first,
+                         InputIterator1 map_last,
+                         InputIterator2 stencil,
+                         InputIterator3 input_first,
+                         OutputIterator result,
+                         const std::string& user_code="" );
 
-     
+        template< typename InputIterator1,
+                  typename InputIterator2,
+                  typename InputIterator3,
+                  typename OutputIterator >
+        void gather_if( InputIterator1 map_first,
+                         InputIterator1 map_last,
+                         InputIterator2 stencil,
+                         InputIterator3 input_first,
+                         OutputIterator result,
+                         const std::string& user_code="" );
+
         template< typename InputIterator1,
                   typename InputIterator2,
                   typename InputIterator3,
                   typename OutputIterator,
                   typename BinaryPredicate >
-        void scatter_if( InputIterator1 first1,
-                         InputIterator1 last1,
-                         InputIterator2 map,
-                         InputIterator3 stencil,
+        void gather_if( bolt::cl::control &ctl,
+                         InputIterator1 map_first,
+                         InputIterator1 map_last,
+                         InputIterator2 stencil,
+                         InputIterator3 input,
                          OutputIterator result,
-                         BinaryPredicate pred);
+                         BinaryPredicate pred,
+                         const std::string& user_code="" );
+
+        template< typename InputIterator1,
+                  typename InputIterator2,
+                  typename InputIterator3,
+                  typename OutputIterator,
+                  typename BinaryPredicate >
+        void gather_if( InputIterator1 map_first,
+                         InputIterator1 map_last,
+                         InputIterator2 stencil,
+                         InputIterator3 input,
+                         OutputIterator result,
+                         BinaryPredicate pred,
+                         const std::string& user_code="" );
 
 
         /*!   \}  */
-    }
-}
+    };
+};
 
-#include <bolt/btbb/detail/scatter.inl>
+#include <bolt/cl/detail/gather.inl>
 #endif
