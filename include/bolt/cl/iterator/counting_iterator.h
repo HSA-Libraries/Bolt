@@ -219,5 +219,6 @@ BOLT_CREATE_CLCODE( bolt::cl::counting_iterator< int >, bolt::cl::deviceCounting
 BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::counting_iterator, int, unsigned int );
 BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::counting_iterator, int, float );
 BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::counting_iterator, int, double );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::counting_iterator, int, cl_long );
 
 #endif
