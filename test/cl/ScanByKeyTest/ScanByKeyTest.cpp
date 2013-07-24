@@ -2658,7 +2658,7 @@ TEST(ExclusiveScanByKey, OffsetExclFloatSerialInplace)
 TEST(ExclusiveScanByKey, OffsetExclFloatMultiCore)
 {
     //setup keys
-    int length = 1<<14;
+    int length = 1<<16;
     std::vector< int > keys( length, 1);
     bolt::cl::device_vector< int > device_keys( length, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
@@ -3248,7 +3248,7 @@ TEST(InclusiveScanByKey, OffsetInclUdd)
 }
 
 
-TEST(InclusiveScanByKey, DeviceVectorInclUdd)
+TEST(InclusiveScanByKey, DeviceVectorInclUddMultiCoreCpu)
 {
     //setup keys
     int length = 1<<16;
@@ -3296,7 +3296,7 @@ TEST(InclusiveScanByKey, DeviceVectorInclUdd)
 
 #endif
 
-TEST(InclusiveScanByKey, DeviceVectorInclFloat)
+TEST(InclusiveScanByKey, DeviceVectorInclFloatMultiCoreCpu)
 {
     //setup keys
     int length = 1<<16;
@@ -3430,7 +3430,7 @@ TEST(InclusiveScanByKey, MultiCore_DeviceVectorInclFloat)
 }
 
 #if (TEST_DOUBLE == 1)
-TEST(InclusiveScanByKey, DeviceVectorInclDouble)
+TEST(InclusiveScanByKey, DeviceVectorInclDoubleMultiCoreCpu)
 {
     //setup keys
     int length = 1<<16;
@@ -3481,7 +3481,7 @@ TEST(InclusiveScanByKey, DeviceVectorInclDouble)
 
 /////////////////////////Exclusive//////////////////////////////////////////////////
 
-TEST(ExclusiveScanByKey, DeviceVectorExclFloat)
+TEST(ExclusiveScanByKey, DeviceVectorExclFloatMultiCoreCpu)
 {
     //setup keys
     int length = 1<<16;
@@ -3616,7 +3616,7 @@ TEST(ExclusiveScanByKey, MultiCore_DeviceVectorExclFloat)
 }
 
 #if (TEST_DOUBLE == 1)
-TEST(ExclusiveScanByKey, DeviceVectorExclDouble)
+TEST(ExclusiveScanByKey, DeviceVectorExclDoubleMultiCoreCpu)
 {
     //setup keys
     int length = 1<<16;
@@ -3659,7 +3659,7 @@ TEST(ExclusiveScanByKey, DeviceVectorExclDouble)
     cmpArrays(refOutput, output);
 }
 
-TEST(ExclusiveScanByKey, DeviceVectorExclUdd)
+TEST(ExclusiveScanByKey, DeviceVectorExclUddMultiCoreCpu)
 {
     //setup keys
     int length = 1<<16;
@@ -3703,7 +3703,7 @@ TEST(ExclusiveScanByKey, DeviceVectorExclUdd)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
-TEST(InclusiveScanByKey, MulticoreInclUdd)
+TEST(InclusiveScanByKey, MulticoreInclUddMultiCoreCpu)
 {
     //setup keys
     int length = 1<<24;
@@ -4002,7 +4002,7 @@ TEST(ExclusiveScanByKey, SerialExclFloat)
     cmpArrays(refOutput, output);
 }
 
-TEST(APPSDKInclusiveScanByKey, InclusiveIntAPPSDK)
+TEST(APPSDKInclusiveScanByKey, InclusiveIntAPPSDKMultiCoreCpu)
 {
 	bool status = 1;
 	int count = 1;
