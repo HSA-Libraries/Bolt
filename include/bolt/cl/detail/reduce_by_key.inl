@@ -29,8 +29,6 @@
 #include <iostream>
 #include <fstream>
 
-#define ENABLE_TBB 1
-
 #ifdef ENABLE_TBB
 //TBB Includes
 #include "bolt\btbb\reduce_by_key.h"

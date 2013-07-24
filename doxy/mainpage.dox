@@ -1,4 +1,4 @@
-/***************************************************************************                                                                                     
+﻿/***************************************************************************                                                                                     
 *   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                               
 *                                                                                    
 *   Licensed under the Apache License, Version 2.0 (the "License");   
@@ -200,7 +200,7 @@ like BOLT_TEMPLATE_FUNCTOR2, BOLT_TEMPLATE_FUNCTOR3 etc from include/bolt/cl/clc
  *  List of <a href="supportedFunction.html">Supported Functions and Code Paths</a>.
  * \subsection paths Code Path Behaviour
  * \subsubsection Default Default Behaviour
- * Bolt function can be executed with four code paths(OpenCL™, C++ AMP, Multicore CPU and Serial CPU). The default mode is "Automatic" which means it will go into GPU path first, then TBB (Intel), then SerialCpu
+ * Bolt function is designed to be executed with four code paths (OpenCL™, C++ AMP, Multicore CPU and Serial CPU). The default mode is "Automatic" which means it will go into GPU path first, then TBB (Intel), then SerialCpu 
  * with below mentioned order. The control will go to other paths only if the selected one not found.
  
  * Selection order will be: 
@@ -224,9 +224,9 @@ like BOLT_TEMPLATE_FUNCTOR2, BOLT_TEMPLATE_FUNCTOR3 etc from include/bolt/cl/clc
 
 
  * \section Requirements Requirements 
- * Bolt requires an OpenCL<SUP>TM</SUP> implementation that supports the static C++ kernel
+ * Bolt uses an OpenCL<SUP>TM</SUP> implementation that supports the static C++ kernel
  * features; specifically, C++ template support for OpenCL<SUP>TM</SUP> kernels.  Currently,
- * the AMD OpenCL<SUP>TM</SUP> SDK 2.7 and above version provides this support; other vendors may adopt this feature in the future. 
- * If you face any issue with Bolt. Please log an issue in 
+ * the AMD OpenCL<SUP>TM</SUP> SDK 2.7 and above versions are designed to provides this support; other vendors may adopt this feature in the future. 
+ * If you face any issue with Bolt. Please log an issue in BOLT Issues page.
  * <a href="https://github.com/HSA-Libraries/bolt/issues">BOLT Issues page</a>.
  */

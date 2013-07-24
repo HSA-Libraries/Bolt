@@ -36,7 +36,7 @@ if( NOT DEFINED Bolt.SuperBuild_VERSION_MINOR )
 endif( )
 
 if( NOT DEFINED Bolt.SuperBuild_VERSION_PATCH )
-	set( Bolt.SuperBuild_VERSION_PATCH 0 )
+	set( Bolt.SuperBuild_VERSION_PATCH 200 )
 endif( )
 
 set( Bolt.SuperBuild_VERSION "${Bolt.SuperBuild_VERSION_MAJOR}.${Bolt.SuperBuild_VERSION_MINOR}.${Bolt.SuperBuild_VERSION_PATCH}")

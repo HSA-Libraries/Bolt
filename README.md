@@ -5,14 +5,14 @@ The primary goal of Bolt is to make it easier for developers to utilize the inhe
 Compared to writing the equivalent functionality in OpenCL™, you’ll find that Bolt requires significantly fewer lines-of-code and less developer effort.  Bolt is designed to provide a standard way to develop an application that can execute on either a regular CPU, or use any available OpenCL™ capable accelerated compute unit, with a single code path.
 
 Here's a link to our <a href="https://github.com/HSA-Libraries/bolt/wiki">BOLT wiki page</a>.
-
+ 
 ## Prerequisites
 
 1.  Windows® 7/8
 2.  Visual Studio 2010 onwards (VS2012 for C++ AMP)
 3.  CMake 2.8.10
-4.  TBB (For Multicore CPU path, BOLT is tested with 4.1 Update 3)
-5.  APP SDK 2.7 onwards
+4.  TBB (For Multicore CPU path only) (4.1 Update 1 or Above) . See <a href="http://hsa-libraries.github.io/Bolt/html/buildingTBB.html">Building Bolt with TBB</a>. 
+5.  APP SDK 2.7 or onwards. 
 
 ## Supported Devices
 
