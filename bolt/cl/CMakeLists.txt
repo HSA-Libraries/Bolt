@@ -57,6 +57,8 @@ endmacro( )
 
 set( clBolt.Include.Dir ${BOLT_INCLUDE_DIR}/bolt/cl )
 
+set( tbb.Include.Dir ${BOLT_INCLUDE_DIR}/bolt/btbb )
+
 set( clBolt.Runtime.Source     
         bolt.cpp 
         control.cpp
@@ -92,7 +94,7 @@ set( clBolt.Runtime.Headers
         ${clBolt.Include.Dir}/transform_reduce.h
         ${clBolt.Include.Dir}/transform_scan.h
     )
-    
+
 set( clBolt.Runtime.Headers.Iterator
         ${clBolt.Include.Dir}/iterator/iterator_traits.h 
         ${clBolt.Include.Dir}/iterator/constant_iterator.h
@@ -130,7 +132,7 @@ set( clBolt.Runtime.Headers.Detail
     )
 
 set( clBolt.Runtime.clFiles
-    fill_kernels.cl
+    	fill_kernels.cl
         copy_kernels.cl 
         count_kernels.cl 
         gather_kernels.cl
@@ -151,6 +153,30 @@ set( clBolt.Runtime.clFiles
         sort_by_key_kernels.cl
     )
 
+set( tbb.Runtime.Headers
+	${tbb.Include.Dir}/count.h
+	${tbb.Include.Dir}/reduce.h
+	${tbb.Include.Dir}/reduce_by_key.h
+	${tbb.Include.Dir}/scan.h
+	${tbb.Include.Dir}/scan_by_key.h
+	${tbb.Include.Dir}/scatter.h
+	${tbb.Include.Dir}/sort.h
+	${tbb.Include.Dir}/transform.h
+	${tbb.Include.Dir}/transform_reduce.h
+    )
+    
+set( tbb.Runtime.Headers.Detail
+	${tbb.Include.Dir}/detail/count.inl
+	${tbb.Include.Dir}/detail/reduce.inl
+	${tbb.Include.Dir}/detail/reduce_by_key.inl
+	${tbb.Include.Dir}/detail/scan.inl
+	${tbb.Include.Dir}/detail/scan_by_key.inl
+	${tbb.Include.Dir}/detail/scatter.inl
+	${tbb.Include.Dir}/detail/sort.inl
+	${tbb.Include.Dir}/detail/transform.inl
+	${tbb.Include.Dir}/detail/transform_reduce.inl
+    )
+    
 # Create a list of .cl files that we would like to be a part of the IDE
 prependPath( clBolt.Runtime.clFiles.FullPath clBolt.Runtime.clFiles ${clBolt.Include.Dir} )
 # printList( clBolt.Runtime.clFiles.FullPath )
@@ -232,6 +258,16 @@ install( FILES
         DESTINATION
             ${INCLUDE_DIR}/bolt )
 
+install( FILES
+            ${tbb.Runtime.Headers}
+        DESTINATION
+            ${INCLUDE_DIR}/bolt/btbb )
+            
+install( FILES
+            ${tbb.Runtime.Headers.Detail}
+        DESTINATION
+            ${INCLUDE_DIR}/bolt/btbb/detail )
+            
 # Install dependent Boost header files
 set( ROOT_EXTERNAL_BOOST ${PROJECT_BINARY_DIR}/../external/boost/src/Boost/boost )
 
