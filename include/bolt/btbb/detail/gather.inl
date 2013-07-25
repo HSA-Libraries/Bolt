@@ -25,7 +25,6 @@
 #include "tbb/task_scheduler_init.h"
 #include "tbb/parallel_for.h"
 #include "tbb/blocked_range.h"
-#include <thread>
 
 namespace bolt 
 {
@@ -41,22 +40,15 @@ void gather(InputIterator1 mapfirst,
              InputIterator2 input, 
              OutputIterator result)
              { 
-                 std::cout<<"TBB code path...\n";
+                // std::cout<<"TBB code path...\n";
                  size_t numElements = static_cast< unsigned int >( std::distance( mapfirst, maplast ) );
-                 //Gets the number of concurrent threads supported by the underlying platform
-                unsigned int concurentThreadsSupported = std::thread::hardware_concurrency();
-               //This allows TBB to choose the number of threads to spawn.
-               //tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
-               //Explicitly setting the number of threads to spawn
-                 tbb::task_scheduler_init((int) concurentThreadsSupported);
-                 typedef std::iterator_traits<InputIterator1>::value_type iType1;                 
-                    tbb::parallel_for (tbb::blocked_range<size_t>(0,numElements),[&](const tbb::blocked_range<size_t>& r)
-                    {
-                          for(size_t iter = r.begin(); iter!=r.end(); iter++)
-                          { 
-                                *(result + (int)iter) = * (input + mapfirst[(int)iter]); 
-                          }
-                    });
+                //This allows TBB to choose the number of threads to spawn.               
+                 tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);       
+                 tbb::parallel_for (tbb::blocked_range<size_t>(0,numElements),[&](const tbb::blocked_range<size_t>& r)
+                  {
+                    for(size_t iter = r.begin(); iter!=r.end(); iter++)
+                        *(result + (int)iter) = * (input + mapfirst[(int)iter]); 
+                  });
              }
 
 template<typename InputIterator1,
@@ -70,15 +62,10 @@ template<typename InputIterator1,
                   InputIterator3 input,
                   OutputIterator result)
         {
-                 std::cout<<"TBB code path...\n";
+                 //std::cout<<"TBB code path...\n";
                  size_t numElements = static_cast< unsigned int >( std::distance( mapfirst, maplast ) );
-                 //Gets the number of concurrent threads supported by the underlying platform
-                unsigned int concurentThreadsSupported = std::thread::hardware_concurrency();
-               //This allows TBB to choose the number of threads to spawn.
-               //tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
-               //Explicitly setting the number of threads to spawn
-                 tbb::task_scheduler_init((int) concurentThreadsSupported);
-
+                 //This allows TBB to choose the number of threads to spawn.               
+                 tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
                  tbb::parallel_for (tbb::blocked_range<size_t>(0,numElements),[&](const tbb::blocked_range<size_t>& r)
                  {
                     for(size_t iter = r.begin(); iter!=r.end(); iter++)
@@ -103,15 +90,10 @@ template<typename InputIterator1,
                   OutputIterator result,
                   BinaryPredicate pred)
         {
-                 std::cout<<"TBB code path...\n";
+                 //std::cout<<"TBB code path...\n";
                  size_t numElements = static_cast< unsigned int >( std::distance( mapfirst, maplast) );
-                 //Gets the number of concurrent threads supported by the underlying platform
-                unsigned int concurentThreadsSupported = std::thread::hardware_concurrency();
-               //This allows TBB to choose the number of threads to spawn.
-               //tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
-               //Explicitly setting the number of threads to spawn
-                 tbb::task_scheduler_init((int) concurentThreadsSupported);
-
+                 //This allows TBB to choose the number of threads to spawn.               
+                 tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
                  tbb::parallel_for (tbb::blocked_range<size_t>(0,numElements),[&](const tbb::blocked_range<size_t>& r)
                  {
                     for(size_t iter = r.begin(); iter!=r.end(); iter++)
