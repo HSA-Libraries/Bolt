@@ -79,6 +79,7 @@ set( clBolt.Runtime.Headers
         ${clBolt.Include.Dir}/generate.h 
         ${clBolt.Include.Dir}/inner_product.h
         ${clBolt.Include.Dir}/max_element.h 
+        ${clBolt.Include.Dir}/merge.h         
         ${clBolt.Include.Dir}/min_element.h 
         ${clBolt.Include.Dir}/pair.h
         ${clBolt.Include.Dir}/reduce.h 
@@ -115,6 +116,7 @@ set( clBolt.Runtime.Headers.Detail
         ${clBolt.Include.Dir}/detail/gather.inl
         ${clBolt.Include.Dir}/detail/generate.inl
         ${clBolt.Include.Dir}/detail/inner_product.inl
+        ${clBolt.Include.Dir}/detail/merge.inl        
         ${clBolt.Include.Dir}/detail/min_element.inl        
         ${clBolt.Include.Dir}/detail/pair.inl
         ${clBolt.Include.Dir}/detail/reduce.inl
@@ -138,6 +140,7 @@ set( clBolt.Runtime.clFiles
         gather_kernels.cl
         generate_kernels.cl
         min_element_kernels.cl 
+        merge_kernels.cl 
         reduce_kernels.cl 
         reduce_by_key_kernels.cl
         transform_kernels.cl 
