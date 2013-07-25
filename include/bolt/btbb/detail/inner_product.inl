@@ -22,7 +22,7 @@
 #include "tbb/task_scheduler_init.h"
 #include "tbb/parallel_for.h"
 #include "tbb/blocked_range.h"
-#include <thread>
+//#include <thread>
 #include <iterator>
 
 namespace bolt{
@@ -74,7 +74,7 @@ namespace bolt{
             BinaryFunction1 f1, BinaryFunction2 f2 )
             {
               //Gets the number of concurrent threads supported by the underlying platform
-              unsigned int concurentThreadsSupported = std::thread::hardware_concurrency();
+              //unsigned int concurentThreadsSupported = std::thread::hardware_concurrency();
 
               //This allows TBB to choose the number of threads to spawn.
               tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);

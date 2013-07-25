@@ -22,7 +22,6 @@
 #include "tbb/task_scheduler_init.h"
 #include "tbb/parallel_for.h"
 #include "tbb/blocked_range.h"
-#include <thread>
 
 namespace bolt{
     namespace btbb {
@@ -58,10 +57,10 @@ namespace bolt{
                unsigned int concurentThreadsSupported = std::thread::hardware_concurrency();
 
                //This allows TBB to choose the number of threads to spawn.
-               //tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
+               tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
 
                //Explicitly setting the number of threads to spawn
-               tbb::task_scheduler_init((int) concurentThreadsSupported);
+               //tbb::task_scheduler_init((int) concurentThreadsSupported);
 
                Generate <ForwardIterator, Generator> generate_obj(gen);
                generate_obj(first, last, gen);

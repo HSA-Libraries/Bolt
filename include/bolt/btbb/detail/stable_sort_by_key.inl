@@ -21,7 +21,7 @@
 
 #include "tbb/task_scheduler_init.h"
 #include "tbb/parallel_invoke.h"
-#include <thread>
+//#include <thread>
 #include <iterator>
 
 #include "bolt/btbb/stable_sort.h"
@@ -186,7 +186,7 @@ namespace bolt{
            RandomAccessIterator2 values_first)
            {
                 //Gets the number of concurrent threads supported by the underlying platform
-                unsigned int concurentThreadsSupported = std::thread::hardware_concurrency();
+                //unsigned int concurentThreadsSupported = std::thread::hardware_concurrency();
 
                 //This allows TBB to choose the number of threads to spawn.
                 tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
@@ -203,13 +203,13 @@ namespace bolt{
            StrictWeakOrdering comp)
            {
                 //Gets the number of concurrent threads supported by the underlying platform
-                unsigned int concurentThreadsSupported = std::thread::hardware_concurrency();
+                //unsigned int concurentThreadsSupported = std::thread::hardware_concurrency();
 
                 //This allows TBB to choose the number of threads to spawn.
-                //tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
+                tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
 
                 //Explicitly setting the number of threads to spawn
-                tbb::task_scheduler_init((int) concurentThreadsSupported);
+                //tbb::task_scheduler_init((int) concurentThreadsSupported);
 
                 StableSortByKey_comp <RandomAccessIterator1, RandomAccessIterator2, StrictWeakOrdering > stable_sort_by_key_op;
                 stable_sort_by_key_op(keys_first, keys_last, values_first, comp);
