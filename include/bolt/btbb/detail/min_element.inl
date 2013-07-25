@@ -22,7 +22,6 @@
 #include "tbb/task_scheduler_init.h"
 #include "tbb/parallel_for.h"
 #include "tbb/blocked_range.h"
-//#include <thread>
 #include <iterator>
 
 #include<iostream>
@@ -86,7 +85,7 @@ namespace bolt{
                               for(ForwardIterator a = r.begin(); a!=r.end(); ++a)
                               {
                                      if (comp (*a, *result)) 
-                                       result = a;
+                                           result = a;
 
                               }   
                           
@@ -132,15 +131,8 @@ namespace bolt{
            template<typename ForwardIterator>
            ForwardIterator min_element(ForwardIterator first, ForwardIterator last)
            {
-             //Gets the number of concurrent threads supported by the underlying platform
-             //unsigned int concurentThreadsSupported = std::thread::hardware_concurrency();
-
              //This allows TBB to choose the number of threads to spawn.
              tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
-
-             //Explicitly setting the number of threads to spawn
-             //tbb::task_scheduler_init((int) concurentThreadsSupported);
-
              Min_Element <ForwardIterator> min_element_op(first);
              min_element_op(first, last);
 
@@ -151,15 +143,8 @@ namespace bolt{
           template<typename ForwardIterator,typename BinaryPredicate>
           ForwardIterator min_element(ForwardIterator first, ForwardIterator last, BinaryPredicate binary_op)
           {
-             //Gets the number of concurrent threads supported by the underlying platform
-             //unsigned int concurentThreadsSupported = std::thread::hardware_concurrency();
-
              //This allows TBB to choose the number of threads to spawn.
              tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
-
-             //Explicitly setting the number of threads to spawn
-             //tbb::task_scheduler_init((int) concurentThreadsSupported);
-
              Min_Element_comp <ForwardIterator, BinaryPredicate> min_element_op(first);
              min_element_op(first, last, binary_op);
 
@@ -169,21 +154,13 @@ namespace bolt{
           template<typename ForwardIterator>
           ForwardIterator max_element(ForwardIterator first, ForwardIterator last)
           {
-             //Gets the number of concurrent threads supported by the underlying platform
-             //unsigned int concurentThreadsSupported = std::thread::hardware_concurrency();
-
              //This allows TBB to choose the number of threads to spawn.
              tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
-
-             //Explicitly setting the number of threads to spawn
-             //tbb::task_scheduler_init((int) concurentThreadsSupported);
-
              Max_Element <ForwardIterator> max_element_op(first);
              max_element_op(first, last);
 
              return max_element_op.result;
-          }
- 
+          } 
     } //tbb
 } // bolt
 

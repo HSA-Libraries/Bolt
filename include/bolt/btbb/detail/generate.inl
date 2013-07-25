@@ -45,33 +45,17 @@ namespace bolt{
                                   *a = (iType) gen();
                         });
                 }
-
-            };
-       
+            };      
         
 
             template<typename ForwardIterator, typename Generator>
             void generate( ForwardIterator first, ForwardIterator last, Generator gen)
             {
-               //Gets the number of concurrent threads supported by the underlying platform
-               unsigned int concurentThreadsSupported = std::thread::hardware_concurrency();
-
                //This allows TBB to choose the number of threads to spawn.
                tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
-
-               //Explicitly setting the number of threads to spawn
-               //tbb::task_scheduler_init((int) concurentThreadsSupported);
-
                Generate <ForwardIterator, Generator> generate_obj(gen);
                generate_obj(first, last, gen);
-
-               //Generate <ForwardIterator, Generator> generate_obj_split(generate_obj);
-               //generate_obj_split(first, last, gen);
-
-        }
-
-
-       
+            }       
     } //tbb
 } // bolt
 
