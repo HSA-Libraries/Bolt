@@ -24,8 +24,8 @@
 #include "tbb/tbb.h"
 #include "tbb/parallel_for.h"
 
-/*! \file bolt/cl/gather.h
-    \brief 
+/*! \file bolt/btbb/gather.h
+    \brief gathers elements from a source array to a destination range.
 */
 
 
@@ -35,63 +35,53 @@ namespace bolt {
         /*! \addtogroup algorithms
          */
 
-        /*! \addtogroup transformations
+        /*! \addtogroup copying
         *   \ingroup algorithms
-        *   \p transform applies a specific function object to each element pair in the specified input ranges, and
-        *   writes the result into the specified output range. For common code between the host
-        *   and device, one can take a look at the ClCode and TypeName implementations. See Bolt Tools for Split-Source
-        *   for a detailed description.
+        *   \p gather APIs copy elements from a source array to a destination range (conditionally) according to a
+        *   specified map. For common code between the host and device, one can take a look at the ClCode and TypeName
+        *   implementations. See Bolt Tools for Split-Source for a detailed description.
         */
 
-        /*! \addtogroup CL-transform
-        *   \ingroup transformations
+        /*! \addtogroup TBB-gather
+        *   \ingroup algorithms
         *   \{
         */
 
 
-       /*! \brief This version of \p transform applies a unary operation on input sequences and stores the result in
-         * the  corresponding position in an output sequence.The input and output sequences can coincide, resulting in
-         * an in-place transformation.
+       /*! \brief This version of \p gather copies elements from a source array to a destination range according to a
+         * specified map. For each \p i in \p InputIterator1 in the range \p [map_first, map_last), gather copies
+         * the corresponding \p input_first[ map [ i ] ] to result[ i - map_first ]
          *
-         * \param ctl \b Optional Control structure to control command-queue, debug, tuning, etc.See bolt::cl::control.
-         *  \param first The beginning of the first input sequence.
-         *  \param last The end of the first input sequence.
-         *  \param result The beginning of the output sequence.
-         * \param op The tranformation operation.
-         * \param user_code Optional OpenCL&tm; code to be passed to the OpenCL compiler. The cl_code is inserted
-         *   first in the generated code, before the cl_code trait.
-         *  \return The end of the output sequence.
+         * \param map_first The beginning of map sequence.
+         * \param map_last The end of map sequence.
+         * \param input The beginning of the source sequence.
+         * \param result The beginning of the output sequence.
          *
          *  \tparam InputIterator1 is a model of InputIterator
-         *                        and \c InputIterator1's \c value_type is convertible to \c BinaryFunction's
-         * \c first_argument_type.
          *  \tparam InputIterator2 is a model of InputIterator
-         *                        and \c InputIterator2's \c value_type is convertible to \c BinaryFunction's
-         * \c second_argument_type.
          *  \tparam OutputIterator is a model of OutputIterator
          *
-         *  \details The following code snippet demonstrates how to use \p transform
+         *  \details The following code snippet demonstrates how to use \p gather
          *
          *  \code
-         *  #include <bolt/cl/transform.h>
+         *  #include <bolt/cl/gather.h>
          *  #include <bolt/cl/functional.h>
+         *  #include <bolt/cl/control.h>
          *
-         *  int input1[10] = {-5, 0, 2, 3, 2, 4, -2, 1, 2, 3};
+         *  int map[10] = {9, 8, 7, 6, 5, 4, 3, 2, 1, 0};
+         *  int input[10] = {0, 11, 22, 33, 44, 55, 66, 77, 88, 99};
          *  int output[10];
-         *  bolt::cl::square<int> op;
-         *  bolt::cl::::transform(input1, input1 + 10, output, op);
          *
-         *  // output is now {25, 0, 4, 9, 4, 16, 4, 1, 4, 9};
+         *  bolt::cl::control ctl;
+         *  ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+         *
+         *  bolt::cl::gather(ctl, map, map + 10, input, output);
+         *
+         *  // output is now {99, 88, 77, 66, 55, 44, 33, 22, 11, 0};
          *  \endcode
          *
-         *  \sa http://www.sgi.com/tech/stl/transform.html
-         *  \sa http://www.sgi.com/tech/stl/InputIterator.html
-         *  \sa http://www.sgi.com/tech/stl/OutputIterator.html
-         *  \sa http://www.sgi.com/tech/stl/UnaryFunction.html
-         *  \sa http://www.sgi.com/tech/stl/BinaryFunction.html
          */
 
-// scatter API
         template< typename InputIterator1,
                   typename InputIterator2,
                   typename OutputIterator >
@@ -100,9 +90,44 @@ namespace bolt {
                       InputIterator2 first,
                       OutputIterator result);
 
-       
-// scatter_if API
-        
+       /*! \brief This version of \p gather copies elements from a source array to a destination range according to a
+         * specified map. For each \p i in \p InputIterator1 in the range \p [map_first, map_last), gather copies
+         * the corresponding \p input_first[ map [ i ] ] to result[ i - map_first ] if stencil[ i - map_first ] is
+         * \p true.
+         *
+         * \param map_first The beginning of map sequence.
+         * \param map_last The end of map sequence.
+         * \param stencil The beginning of the stencil sequence.
+         * \param input The beginning of the source sequence.
+         * \param result The beginning of the output sequence.
+         *
+         *  \tparam InputIterator1 is a model of InputIterator
+         *  \tparam InputIterator2 is a model of InputIterator
+         *  \tparam InputIterator3 is a model of InputIterator
+         *  \tparam OutputIterator is a model of OutputIterator
+         *
+         *  \details The following code snippet demonstrates how to use \p gather
+         *
+         *  \code
+         *  #include <bolt/cl/gather.h>
+         *  #include <bolt/cl/functional.h>
+         *  #include <bolt/cl/control.h>
+         *
+         *  int map[10] = {9, 8, 7, 6, 5, 4, 3, 2, 1, 0};
+         *  int input[10] = {0, 11, 22, 33, 44, 55, 66, 77, 88, 99};
+         *  int stencil[10] = {0, 0, 0, 0, 0, 1, 1, 1, 1, 1};
+         *  int output[10];
+         *
+         *  bolt::cl::control ctl;
+         *  ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+         *
+         *  bolt::cl::gather(ctl, map, map + 10, stencil, input, output);
+         *
+         *  // output is now {99, 88, 77, 66, 55, 0, 0, 0, 0, 0};
+         *  \endcode
+         *
+         */
+
         template< typename InputIterator1,
                   typename InputIterator2,
                   typename InputIterator3,
@@ -112,18 +137,71 @@ namespace bolt {
                          InputIterator2 stencil,
                          InputIterator3 first,
                          OutputIterator result);
+
+       /*! \brief This version of \p gather copies elements from a source array to a destination range according to a
+         * specified map. For each \p i in \p InputIterator1 in the range \p [map_first, map_last), gather copies
+         * the corresponding \p input_first[ map [ i ] ] to result[ i - map_first ] if pred (stencil[ i - map_first ])
+         * is \p true.
+         *
+         * \param map_first The beginning of map sequence.
+         * \param map_last The end of map sequence.
+         * \param stencil The beginning of the stencil sequence.
+         * \param input The beginning of the source sequence.
+         * \param result The beginning of the output sequence.
+         * \param pred A predicate for stencil.
+         *
+         *  \tparam InputIterator1 is a model of InputIterator
+         *  \tparam InputIterator2 is a model of InputIterator
+         *  \tparam InputIterator3 is a model of InputIterator
+         *  \tparam OutputIterator is a model of OutputIterator
+         *  \tparam Predicate is a model of Predicate
+         *
+         *  \details The following code snippet demonstrates how to use \p gather
+         *
+         *  \code
+         *  #include <bolt/cl/gather.h>
+         *  #include <bolt/cl/functional.h>
+         *  #include <bolt/cl/control.h>
+         *
+         *  BOLT_FUNCTOR( greater_pred,
+         *    struct greater_pred{
+         *        bool operator () (int x)
+         *        {
+         *            return ( (x > 5)?1:0 );
+         *        }
+         *    };
+         *  );
+         * 
+         *  ...
+         *
+         *  int map[10] = {9, 8, 7, 6, 5, 4, 3, 2, 1, 0};
+         *  int input[10] = {0, 11, 22, 33, 44, 55, 66, 77, 88, 99};
+         *  int stencil[10] = {2, 3, 1, 4, 5, 10, 6, 8, 7, 9};
+         *  int output[10];
+         *
+         *  bolt::cl::control ctl;
+         *  ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+         *
+         *  greater_pred is_gt_5;
+         *  bolt::cl::gather(ctl, map, map + 10, stencil, input, output, is_gt_5);
+         *
+         *  // output is now {99, 88, 77, 66, 55, 0, 0, 0, 0, 0};
+         *  \endcode
+         *
+         */
+
      
         template< typename InputIterator1,
                   typename InputIterator2,
                   typename InputIterator3,
                   typename OutputIterator,
-                  typename BinaryPredicate >
-        void scatter_if( InputIterator1 mapfirst,
+                  typename Predicate >
+        void gather_if( InputIterator1 mapfirst,
                          InputIterator1 maplast,
                          InputIterator2 stencil,
                          InputIterator3 first,
                          OutputIterator result,
-                         BinaryPredicate pred);
+                         Predicate pred);
 
 
         /*!   \}  */
