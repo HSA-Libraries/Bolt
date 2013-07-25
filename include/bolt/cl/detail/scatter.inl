@@ -683,11 +683,11 @@ public:
 
 #if defined( _WIN32 )
             gold_scatter_if_enqueue(&firstPtr[ first1.m_Index ], &firstPtr[ last1.m_Index ], &mapPtr[ map.m_Index ],
-                 &stenPtr[ map.m_Index ], stdext::make_checked_array_iterator( &resPtr[ result.m_Index ], sz ), pred );
+                 &stenPtr[ stencil.m_Index ], stdext::make_checked_array_iterator( &resPtr[ result.m_Index ], sz ), pred );
            
 #else
             gold_scatter_if_enqueue( &firstPtr[ first1.m_Index ], &firstPtr[ last1.m_Index ],
-                &mapPtr[ map.m_Index ], &stenPtr[ map.m_Index ], &resPtr[ result.m_Index ], pred );
+                &mapPtr[ map.m_Index ], &stenPtr[ stencil.m_Index ], &resPtr[ result.m_Index ], pred );
 #endif           
         }
         else if( runMode == bolt::cl::control::MultiCoreCpu )
@@ -701,7 +701,7 @@ public:
                 bolt::cl::device_vector< oType >::pointer resPtr =  result.getContainer( ).data( );
 
                 bolt::btbb::scatter_if( &firstPtr[ first1.m_Index ], &firstPtr[ last1.m_Index ],
-                &mapPtr[ map.m_Index ], &stenPtr[ map.m_Index ], &resPtr[ result.m_Index ], pred );
+                &mapPtr[ map.m_Index ], &stenPtr[ stencil.m_Index ], &resPtr[ result.m_Index ], pred );
             }
 #else
              throw std::exception( "The MultiCoreCpu version of scatter is not enabled to be built! \n" );
@@ -934,7 +934,8 @@ public:
             bolt::cl::device_vector< iType1 >::pointer InputBuffer  =  first1.getContainer( ).data( );
             bolt::cl::device_vector< iType2 >::pointer MapBuffer    =  map.getContainer( ).data( );
             bolt::cl::device_vector< oType >::pointer  ResultBuffer =  result.getContainer( ).data( );
-            gold_scatter_enqueue(&InputBuffer[ first1.m_Index ], &InputBuffer[ last1.m_Index ], &MapBuffer[ map.m_Index ], &ResultBuffer[ result.m_Index ]);             
+            gold_scatter_enqueue(&InputBuffer[ first1.m_Index ], &InputBuffer[ last1.m_Index ], &MapBuffer[ map.m_Index ],
+            &ResultBuffer[ result.m_Index ]);             
         }
         else if( runMode == bolt::cl::control::MultiCoreCpu )
         {
@@ -944,13 +945,13 @@ public:
                 bolt::cl::device_vector< iType1 >::pointer InputBuffer   =  first1.getContainer( ).data( );
                 bolt::cl::device_vector< iType2 >::pointer MapBuffer     =  map.getContainer( ).data( );
                 bolt::cl::device_vector< oType >::pointer ResultBuffer   =  result.getContainer( ).data( );
-                bolt::btbb::scatter(&InputBuffer[ first1.m_Index ], &InputBuffer[ last1.m_Index ], &MapBuffer[ map.m_Index ], &ResultBuffer[ result.m_Index ]);
+                bolt::btbb::scatter(&InputBuffer[ first1.m_Index ], &InputBuffer[ last1.m_Index ], &MapBuffer[ map.m_Index ], 
+                &ResultBuffer[ result.m_Index ]);
             }
 #else
              throw std::exception( "The MultiCoreCpu version of scatter is not enabled to be built! \n" );
 #endif
-            return;
-        }
+         }
         else
         {
             scatter_enqueue( ctl,
@@ -997,8 +998,7 @@ public:
             gold_scatter_enqueue(firstFancy, lastFancy, &MapBuffer[ map.m_Index ], &ResultBuffer[ result.m_Index ]);
         }
         else if( runMode == bolt::cl::control::MultiCoreCpu )
-        {
-            // Call MC 
+        {           
 #if defined( ENABLE_TBB )
             {
                 bolt::cl::device_vector< iType2 >::pointer MapBuffer =  map.getContainer( ).data( );
@@ -1057,8 +1057,7 @@ public:
 
         }
         else if( runMode == bolt::cl::control::MultiCoreCpu )
-        {
-            // Call MC 
+        {         
 #if defined( ENABLE_TBB )
             {
                 bolt::cl::device_vector< iType1 >::pointer InputBuffer    =  first1.getContainer( ).data( );
@@ -1066,11 +1065,9 @@ public:
                 bolt::btbb::scatter( &InputBuffer[ first1.m_Index ], &InputBuffer[ last1.m_Index ], mapFancy,
                                                                             &ResultBuffer[ result.m_Index ]);
             }
-
 #else
              throw std::exception( "The MultiCoreCpu version of scatter is not enabled to be built! \n" );
-#endif
-            return;
+#endif            
         }
         else
         {
@@ -1119,14 +1116,12 @@ public:
 #if defined( ENABLE_TBB )
             {				
                 bolt::cl::device_vector< iType1 >::pointer InputBuffer    =  first.getContainer( ).data( );
-                bolt::btbb::scatter( &InputBuffer[ first.m_Index ], &InputBuffer[ last.m_Index ],  map,result);
+                bolt::btbb::scatter( &InputBuffer[ first.m_Index ], &InputBuffer[ last.m_Index ],map, result);
             }
-
 #else
             throw std::exception( "The MultiCoreCpu version of scatter is not enabled to be built! \n" );
 
-#endif
-            return;
+#endif          
         }
         else
         {
@@ -1189,8 +1184,7 @@ public:
 #else
             throw std::exception( "The MultiCoreCpu version of scatter is not enabled to be built! \n" );
 
-#endif
-            return;
+#endif          
         }
         else
         {
