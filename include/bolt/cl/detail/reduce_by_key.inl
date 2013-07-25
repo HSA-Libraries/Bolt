@@ -334,7 +334,7 @@ gold_reduce_by_key_enqueue( InputIterator1 keys_first,
 
 
 
-	/* "// Dynamic specialization of generic template definition, using user supplied types\n"
+    /* "// Dynamic specialization of generic template definition, using user supplied types\n"
             "template __attribute__((mangled_name(" + name(3) + "Instantiated)))\n"
             "__attribute__((reqd_work_group_size(KERNEL2WORKGROUPSIZE,1,1)))\n"
             "__kernel void " + name(3) + "(\n"
@@ -351,7 +351,7 @@ class ReduceByKey_KernelTemplateSpecializer : public KernelTemplateSpecializer
 
     ReduceByKey_KernelTemplateSpecializer() : KernelTemplateSpecializer()
     {
-		addKernelName("OffsetCalculation"); 
+        addKernelName("OffsetCalculation"); 
         addKernelName("perBlockScanByKey");
         addKernelName("intraBlockInclusiveScanByKey");
         addKernelName("perBlockAdditionByKey");
@@ -362,7 +362,7 @@ class ReduceByKey_KernelTemplateSpecializer : public KernelTemplateSpecializer
     {
         const std::string templateSpecializationString =
 
-			"// Dynamic specialization of generic template definition, using user supplied types\n"
+            "// Dynamic specialization of generic template definition, using user supplied types\n"
             "template __attribute__((mangled_name(" + name(0) + "Instantiated)))\n"
             "__attribute__((reqd_work_group_size(KERNEL0WORKGROUPSIZE,1,1)))\n"
             "__kernel void " + name(0) + "(\n"
@@ -378,7 +378,7 @@ class ReduceByKey_KernelTemplateSpecializer : public KernelTemplateSpecializer
             "template __attribute__((mangled_name(" + name(1) + "Instantiated)))\n"
             "__attribute__((reqd_work_group_size(KERNEL0WORKGROUPSIZE,1,1)))\n"
             "__kernel void " + name(1) + "(\n"
-			"global int *keys,\n"
+            "global int *keys,\n"
             "global " + typeNames[e_vType] + "* ivals,\n"
             + typeNames[e_vIterType] + " vals,\n"
             "global " + typeNames[e_voType] + "* output,\n"
@@ -386,7 +386,7 @@ class ReduceByKey_KernelTemplateSpecializer : public KernelTemplateSpecializer
             "local int * ldsKeys,\n"
             "local "  + typeNames[e_voType] + "* ldsVals,\n"
             "global " + typeNames[e_BinaryFunction]  + "* binaryFunct,\n"
-			"global int * keyBuffer,\n"
+            "global int * keyBuffer,\n"
             "global " + typeNames[e_voType] + "* valBuffer\n"
             ");\n\n"
 
@@ -411,7 +411,7 @@ class ReduceByKey_KernelTemplateSpecializer : public KernelTemplateSpecializer
             "__kernel void " + name(3) + "(\n"
             "global int * keySumArray,\n"
             "global " + typeNames[e_voType] + "* postSumArray,\n"
-			"global int *keys,\n"
+            "global int *keys,\n"
             "global " + typeNames[e_voType] + "* output,\n"
             "const uint vecSize,\n"
             "global " + typeNames[e_BinaryFunction] + "* binaryFunct\n"
@@ -805,13 +805,13 @@ reduce_by_key_enqueue(
     control::buffPointer postSumArray = ctl.acquireBuffer( sizeScanBuff*sizeof( voType ) );
     control::buffPointer offsetValArray  = ctl.acquireBuffer( numElements *sizeof( voType ) );
 
-	
-	device_vector< int > offsetArrayVec( numElements, 0, CL_MEM_READ_WRITE, false, ctl);
-	::cl::Buffer offsetArray = offsetArrayVec.begin( ).getContainer().getBuffer();
-	
+    
+    device_vector< int > offsetArrayVec( numElements, 0, CL_MEM_READ_WRITE, false, ctl);
+    ::cl::Buffer offsetArray = offsetArrayVec.begin( ).getContainer().getBuffer();
+    
 
 
-	/**********************************************************************************
+    /**********************************************************************************
      *  Kernel 0
      *********************************************************************************/
     try
@@ -839,11 +839,11 @@ reduce_by_key_enqueue(
         std::cerr << "File:         " << __FILE__ << ", line " << __LINE__ << std::endl;
         std::cerr << "Error String: " << e.what() << std::endl;
     }
-	// wait for results
+    // wait for results
     l_Error = kernel0Event.wait( );
     V_OPENCL( l_Error, "post-kernel[0] failed wait" );
 
-	detail::scan_enqueue(ctl, offsetArrayVec.begin(), offsetArrayVec.end(), offsetArrayVec.begin(), 0, plus< int >( ), true);
+    detail::scan_enqueue(ctl, offsetArrayVec.begin(), offsetArrayVec.end(), offsetArrayVec.begin(), 0, plus< int >( ), true);
 
     /**********************************************************************************
      *  Kernel 1
@@ -945,7 +945,7 @@ reduce_by_key_enqueue(
      *********************************************************************************/
     V_OPENCL( kernels[3].setArg( 0, *keySumArray ),         "Error setArg kernels[ 3 ]" ); // Input buffer
     V_OPENCL( kernels[3].setArg( 1, *postSumArray ),        "Error setArg kernels[ 3 ]" ); // Input buffer
-	V_OPENCL( kernels[3].setArg( 2, offsetArray), "Error setArg kernels[ 3 ]" ); // Input keys
+    V_OPENCL( kernels[3].setArg( 2, offsetArray), "Error setArg kernels[ 3 ]" ); // Input keys
     V_OPENCL( kernels[3].setArg( 3, *offsetValArray),   "Error setArg kernels[ 3 ]" ); // Output buffer
     V_OPENCL( kernels[3].setArg( 4, numElements ),          "Error setArg kernels[ 3 ]" ); // Size of scratch buffer
     V_OPENCL( kernels[3].setArg( 5, *binaryFunctionBuffer ),"Error setArg kernels[ 3 ]" ); // User provided functor
@@ -1016,7 +1016,7 @@ reduce_by_key_enqueue(
     result_file.close();
 
 #endif
-	unsigned int count_number_of_sections = 0;
+    unsigned int count_number_of_sections = 0;
     /**********************************************************************************
      *  Kernel 4
      *********************************************************************************/
@@ -1053,7 +1053,7 @@ reduce_by_key_enqueue(
     l_Error = kernel4Event.wait( );
     V_OPENCL( l_Error, "post-kernel[3] failed wait" );
 
-	::cl::Event l_mapEvent;
+    ::cl::Event l_mapEvent;
     int *h_result = (int*)ctl.getCommandQueue().enqueueMapBuffer( offsetArray,
                                                                     false,
                                                                     CL_MAP_READ | CL_MAP_WRITE,
@@ -1065,9 +1065,9 @@ reduce_by_key_enqueue(
     V_OPENCL( l_Error, "Error calling map on the result buffer" );
 
     bolt::cl::wait(ctl, l_mapEvent);
-	
+    
 
-	count_number_of_sections = *(h_result);
+    count_number_of_sections = *(h_result);
 
 
 
