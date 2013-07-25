@@ -26,6 +26,9 @@
 
 #include "bolt/cl/bolt.h"
 
+//TBB Includes
+#include "bolt/btbb/fill.h"
+
 namespace bolt {
     namespace cl {
 
@@ -134,7 +137,7 @@ namespace bolt {
             void fill_detect_random_access( const bolt::cl::control &ctl, ForwardIterator first, ForwardIterator last,
                 const T & value, const std::string &cl_code, std::random_access_iterator_tag )
             {
-                     fill_pick_iterator(ctl, first, last, value, cl_code,
+                    fill_pick_iterator(ctl, first, last, value, cl_code,
                     std::iterator_traits< ForwardIterator >::iterator_category( ) );
             }
 
@@ -158,7 +161,7 @@ namespace bolt {
 
                 size_t sz = (last - first);
                 if (sz < 1)
-                    return;
+                     return;
 
                 bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
                 if(runMode == bolt::cl::control::Automatic)
@@ -173,8 +176,7 @@ namespace bolt {
                 else if(runMode == bolt::cl::control::MultiCoreCpu)
                 {
                     #ifdef ENABLE_TBB
-                          //TODO : MultiCoreCPU Version of fill not implemented yet...
-                          std::fill(first, last, value );
+                          bolt::btbb::fill(first, last, value);
                     #else
                           throw std::exception("MultiCoreCPU Version of fill not Enabled! \n");
                     #endif
@@ -208,17 +210,16 @@ namespace bolt {
                 }
                 if( runMode == bolt::cl::control::SerialCpu)
                 {
-                    bolt::cl::device_vector< iType >::pointer fillInputBuffer =  first.getContainer( ).data( );
-                    std::fill(&fillInputBuffer[first.m_Index], &fillInputBuffer[last.m_Index], value );
+                     bolt::cl::device_vector< iType >::pointer fillInputBuffer =  first.getContainer( ).data( );
+                     std::fill(&fillInputBuffer[first.m_Index], &fillInputBuffer[last.m_Index], value );
                 }
                 else if(runMode == bolt::cl::control::MultiCoreCpu)
                 {
                     #ifdef ENABLE_TBB
-                           //TODO : MultiCoreCPU Version of fill not implemented yet...
                         bolt::cl::device_vector< iType >::pointer fillInputBuffer =  first.getContainer( ).data( );
-                        std::fill(first, last, value );
+                        bolt::btbb::fill(&fillInputBuffer[first.m_Index], &fillInputBuffer[last.m_Index], value );
                     #else
-                           throw std::exception("MultiCoreCPU Version of fill not Enabled! \n");
+                        throw std::exception("MultiCoreCPU Version of fill not Enabled! \n");
                     #endif
                 }
                 else

@@ -28,6 +28,9 @@
 #include "bolt/cl/bolt.h"
 #include "bolt/cl/functional.h"
 
+//TBB Includes
+#include "bolt/btbb/min_element.h"
+
 
 namespace bolt {
     namespace cl {
@@ -358,7 +361,7 @@ namespace bolt {
 
                 case bolt::cl::control::MultiCoreCpu:
                     #ifdef ENABLE_TBB
-                        return std::min_element(first, last, binary_op);
+                        return bolt::btbb::min_element(first, last, binary_op);
                     #else
                         throw std::exception( "The MultiCoreCpu version of Max-Min is not enabled to be built! \n" );
                     #endif
@@ -404,7 +407,7 @@ namespace bolt {
 
                 case bolt::cl::control::MultiCoreCpu:
                     #ifdef ENABLE_TBB
-                        return std::min_element(first, last, binary_op);
+                        return bolt::btbb::min_element(first, last, binary_op);
                     #else
                         throw std::exception( "The MultiCoreCpu version of Max-Min is not enabled to be built! \n" );
                     #endif
@@ -445,7 +448,7 @@ namespace bolt {
 
                 case bolt::cl::control::MultiCoreCpu:
                     #ifdef ENABLE_TBB
-                        return std::min_element(first, last, binary_op);
+                        return bolt::btbb::min_element(first, last, binary_op);
                     #else
                         throw std::exception( "The MultiCoreCpu version of Max-Min is not enabled to be built! \n" );
                     #endif

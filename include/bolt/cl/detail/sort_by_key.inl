@@ -30,6 +30,8 @@
 #include "bolt/cl/functional.h"
 #include "bolt/cl/device_vector.h"
 
+//TBB Includes
+#include "bolt/btbb/sort_by_key.h"
 
 #define BITONIC_SORT_WGSIZE 64
 #define DEBUG 1
@@ -290,7 +292,7 @@ public:
             #ifdef ENABLE_TBB
                 bolt::cl::device_vector< keyType >::pointer   keysPtr   =  keys_first.getContainer( ).data( );
                 bolt::cl::device_vector< valueType >::pointer valuesPtr =  values_first.getContainer( ).data( );
-                serialCPU_sort_by_key(&keysPtr[keys_first.m_Index], &keysPtr[keys_last.m_Index], 
+                bolt::btbb::sort_by_key(&keysPtr[keys_first.m_Index], &keysPtr[keys_last.m_Index], 
                                                 &valuesPtr[values_first.m_Index], comp);
                 return;
             #else
@@ -334,7 +336,7 @@ public:
         } else if (runMode == bolt::cl::control::MultiCoreCpu) {
 
             #ifdef ENABLE_TBB
-                serialCPU_sort_by_key(keys_first, keys_last, values_first, comp);
+                bolt::btbb::sort_by_key(keys_first, keys_last, values_first, comp);
                 return;
             #else
                 throw std::exception("The MultiCoreCpu Version of Sort_by_key is not enabled to be built with TBB!\n");
