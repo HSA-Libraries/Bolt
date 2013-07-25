@@ -43,14 +43,14 @@ void gatherIfTemplate (
     map.init( map_naked );
     stencil.init( stencil_naked );
     input.init( input_naked );
-    output.init( output_naked );
-    
-    iType in = input[ gid ];
+    output.init( output_naked );   
+   
+    mapType m = map[ gid ];
     stencilType s = stencil[ gid ];
 
     if ( (*pred)( s ) )
     {
-        output [ in ] = map [ gid ] ;
+        output [ gid ] = input [ m ] ;
     }
     
 }
@@ -80,8 +80,7 @@ void gatherTemplate (
     output.init( output_naked );
 
     // Store in registers
-    iType in = input[ gid ];
-
-    output [ in ] = map [ gid ] ;
+    mapType m = map[ gid ];
+    output [ gid ] = input [ m ] ;
 
 }
