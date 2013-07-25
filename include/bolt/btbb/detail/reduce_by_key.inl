@@ -20,9 +20,7 @@
 #pragma once
 
 #include "tbb/task_scheduler_init.h"
-#include <thread>
 #include <iterator>
-
 #include "tbb/blocked_range.h"
 #include "tbb/parallel_for.h"
 
