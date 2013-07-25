@@ -276,7 +276,7 @@ namespace bolt {
                 int minele_indx =  h_result[0] ;
                 iType minele =  *(first + h_result[0]) ;
 
-                for(int i = 1; i < numTailReduce; ++i)
+                for(int i = 1; i < (int)numTailReduce; ++i)
                 {
 
                     bool stat = binary_op(minele,*(first + h_result[i]));
