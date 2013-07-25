@@ -133,19 +133,6 @@ namespace bolt
           }
       };
 
-template<typename T>
-struct equal_to
-{
-    bool operator()(const T &lhs, const T &rhs) const  {return lhs == rhs;}
-};
-
-template<typename T>
-struct plus
-{
-    T operator()(const T &lhs, const T &rhs) const {return lhs + rhs;}
-};
-
-
              template<
                  typename InputIterator1,
                  typename InputIterator2,

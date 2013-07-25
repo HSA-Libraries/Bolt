@@ -193,7 +193,7 @@ void serial_gather(InputIterator1 mapfirst,
                    InputIterator2 input,
                    OutputIterator result)
 {
-    std::cout<<"Serial code path ... \n";
+    //std::cout<<"Serial code path ... \n";
    size_t numElements = static_cast< size_t >( std::distance( mapfirst, maplast ) );
    typedef std::iterator_traits<InputIterator1>::value_type iType1;
    iType1 temp;
@@ -216,7 +216,7 @@ void serial_gather_if(InputIterator1 mapfirst,
                       InputIterator3 input,
                       OutputIterator result)
 {
-    std::cout<<"Serial code path ... \n";
+    //std::cout<<"Serial code path ... \n";
    size_t numElements = static_cast< size_t >( std::distance( mapfirst, maplast ) );
    for(size_t iter = 0; iter < numElements; iter++)
    {
@@ -238,7 +238,7 @@ void serial_gather_if(InputIterator1 mapfirst,
                       OutputIterator result,
                       BinaryPredicate pred)
 {
-   std::cout<<"Serial code path ... \n";
+   //std::cout<<"Serial code path ... \n";
    unsigned int numElements = static_cast< unsigned int >( std::distance( mapfirst, maplast ) );
   // for (InputIterator1 iter = mapfirst; iter != maplast; iter++)
   // {

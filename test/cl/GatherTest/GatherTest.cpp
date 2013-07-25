@@ -2164,7 +2164,6 @@ TEST_P(DeviceMemory_IntBoltdVector, Gather)
    // for(int i=0; i<myStdVectSize ; i++)	{std::cout<<exp_result[ i ]<<"    "<<result[i]<<std::endl;}
      cmpArrays(exp_result, result);
 }
-
 TEST_P(DeviceMemory_IntBoltdVector, MulticoreGather)
 {
     bolt::cl::device_vector<int> input( myStdVectSize,0);   
@@ -3447,8 +3446,8 @@ TEST_P(HostMemory_UDDTestInt2, MulticoreGather)
 //    int n_input[10]   =  {9,8,7,6,5,4,3,2,1,0};
 //    int n_stencil[10] =  {0,1,0,1,0,1,0,1,0,1};
 //
-//    std::vector<int> exp_result(10, -100);    
-//    std::vector<int> result(10, -100 );
+//    std::vector<int> exp_result(10, -1);    
+//    std::vector<int> result(10, -1 );
 //    
 //    std::vector<int> input ( n_input, n_input + 10 );
 //    std::vector<int> map ( n_map, n_map + 10 );
@@ -3458,7 +3457,7 @@ TEST_P(HostMemory_UDDTestInt2, MulticoreGather)
 //    bolt::cl::gather_if( map.begin()+2, map.begin()+5, stencil.begin()+2, input.begin(), result.begin()+2, iepred );
 //
 //    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-//    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+//    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 //    bolt::cl::gather_if(ctl, map.begin()+2, map.begin()+5, stencil.begin()+2, input.begin(), exp_result.begin()+2, iepred );
 //
 //    for(int i=0; i<10 ; i++)
