@@ -85,7 +85,7 @@ namespace bolt{
                               for(ForwardIterator a = r.begin(); a!=r.end(); ++a)
                               {
                                      if (comp (*a, *result)) 
-                                           result = a;
+                                           this->result = a;
 
                               }   
                           

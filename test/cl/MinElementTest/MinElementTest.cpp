@@ -408,7 +408,7 @@ TEST( MinEleDevice , DeviceVectoroffset )
       input[i] = i;
 
     }
-    
+
     // call reduce
 
     bolt::cl::device_vector< int >::iterator  boltReduce =  bolt::cl::min_element( input.begin()+20, input.end());
@@ -428,7 +428,7 @@ TEST( MinEleDevice , DeviceVectorUintoffset )
       input[i] = i;
 
     }
-    
+
     // call reduce
 
     bolt::cl::device_vector< unsigned int >::iterator  boltReduce =  bolt::cl::min_element( input.begin()+20, input.end());
@@ -701,7 +701,7 @@ TEST_P( MinEFloatVector, CPU )
 
 TEST_P( MinEFloatVector, MultiCore )
 {
- 
+
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
@@ -1233,7 +1233,7 @@ TEST( Min_Element , DISABLED_MultiCore_KcacheTest )
 int _tmain(int argc, _TCHAR* argv[])
 {
     int numIters = 100;
-
+#if 0
     //NON_GTEST
     testDeviceVector();
     Minele_TestControl(1024000, numIters, 0);
@@ -1243,7 +1243,7 @@ int _tmain(int argc, _TCHAR* argv[])
     Minele_TestControl(100, 1, 0);
     simpleReduce_TestSerial(1000);
     simpleMinele_countingiterator(20,10);
-
+#endif
     //GTEST
     ::testing::InitGoogleTest( &argc, &argv[ 0 ] );
 
