@@ -115,7 +115,12 @@ __kernel void perBlockScanByKey(
 
     // Each work item writes out its calculated scan result, relative to the beginning
     // of each work group
-    output[ gloId ] = sum;
+	int key2 = -1;
+	if (gloId < vecSize -1 ) 
+		key2 = keys[gloId + 1];
+	if(key != key2)
+      output[ gloId ] = sum;
+
     if (locId == 0)
     {
         keyBuffer[ groId ] = ldsKeys[ wgSize-1 ];
@@ -257,13 +262,15 @@ __kernel void perBlockAdditionByKey(
     if( gloId >= vecSize )
         return;
         
-    oType scanResult = output[ gloId ];
-
     // accumulate prefix
     int key1 = keySumArray[ groId-1 ];
     int key2 = keys[ gloId ];
-    if (groId > 0 && key1 == key2 )
+	int key3 = -1;
+	if(gloId < vecSize -1 ) 
+	  key3 =  keys[ gloId + 1];
+    if (groId > 0 && key1 == key2 && key2 != key3)
     {
+	    oType scanResult = output[ gloId ];
         oType postBlockSum = postSumArray[ groId-1 ];
         oType newResult = (*binaryFunct)( scanResult, postBlockSum );
         output[ gloId ] = newResult;

@@ -4159,7 +4159,7 @@ TEST(ReduceByKeyPairUDDTest, MultiCoreUDDFloatIntTest)
 }
 #endif
 
-TEST(reduce_by_key, differentKeys)
+TEST(reduce_by_key, differentKeysMultiCoreCpu)
 {
     int const size = 1<<10;
     std::vector<int> vectKeyIn(size);
@@ -4191,7 +4191,7 @@ TEST(reduce_by_key, differentKeys)
         EXPECT_EQ ( eleValueOp_Expexted[i], valueBoltClDevVectOp[i]);
     }
 }
-TEST(reduce_by_key, differentKeysDeviceVector)
+TEST(reduce_by_key, differentKeysDeviceVectorMultiCoreCpu)
 {
     int const size = 1<<10;
     bolt::cl::device_vector<int> vectKeyIn(size);
@@ -4225,7 +4225,7 @@ TEST(reduce_by_key, differentKeysDeviceVector)
 
 }
 
-TEST(reduce_by_key, sameKeys)
+TEST(reduce_by_key, sameKeysMultiCoreCpu)
 {
     int const size = 1<<10;
     std::vector<int> vectKeyIn(size);
@@ -4255,7 +4255,7 @@ TEST(reduce_by_key, sameKeys)
     }
 
 }
-TEST(reduce_by_key, sameKeysDeviceVector)
+TEST(reduce_by_key, sameKeysDeviceVectorMultiCoreCpu)
 {
     int const size = 1<<10;
     bolt::cl::device_vector<int> vectKeyIn(size);
@@ -4286,7 +4286,7 @@ TEST(reduce_by_key, sameKeysDeviceVector)
 
 }
 
-TEST(reduce_by_key, different1Keys)
+TEST(reduce_by_key, different1KeysMultiCoreCpu)
 {
     int const size = 1<<10;
     std::vector<int> vectKeyIn(size);
@@ -4331,7 +4331,7 @@ TEST(reduce_by_key, different1Keys)
         EXPECT_EQ ( eleValueOp_Expexted[i], valueBoltClDevVectOp[i]);
     }
 }
-TEST(reduce_by_key, different1KeysDeviceVector)
+TEST(reduce_by_key, different1KeysDeviceVectorMultiCoreCpu)
 {
     int const size = 1<<10;
     bolt::cl::device_vector<int> vectKeyIn(size);
