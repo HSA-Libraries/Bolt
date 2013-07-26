@@ -304,7 +304,7 @@ gold_reduce_by_key_enqueue( InputIterator1 keys_first,
 
         previousValue = *values_output;
         // within segment
-        if (currentKey == previousKey)
+        if (binary_pred(currentKey, previousKey))
         {
             voType r = binary_op( previousValue, currentValue);
             *values_output = r;
