@@ -68,6 +68,7 @@
 namespace bolt {
     namespace cl {
 
+        extern const std::string binary_search_kernels;
         extern const std::string copy_kernels;
         extern const std::string count_kernels;
         extern const std::string fill_kernels;

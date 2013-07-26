@@ -70,6 +70,7 @@ set( clBolt.Runtime.Headers
         ${clBolt.Include.Dir}/bolt.h 
         ${clBolt.Include.Dir}/clcode.h 
         ${clBolt.Include.Dir}/control.h 
+		${clBolt.Include.Dir}/binary_search.h
         ${clBolt.Include.Dir}/copy.h 
         ${clBolt.Include.Dir}/count.h 
         ${clBolt.Include.Dir}/device_vector.h 
@@ -112,6 +113,7 @@ set( clBolt.Runtime.Headers.Misc
 set( clBolt.Runtime.Headers.Detail 
         ${clBolt.Include.Dir}/detail/copy.inl
         ${clBolt.Include.Dir}/detail/count.inl
+		${clBolt.Include.Dir}/detail/binary_search.inl
         ${clBolt.Include.Dir}/detail/fill.inl
         ${clBolt.Include.Dir}/detail/gather.inl
         ${clBolt.Include.Dir}/detail/generate.inl
@@ -136,6 +138,7 @@ set( clBolt.Runtime.Headers.Detail
 set( clBolt.Runtime.clFiles
     	fill_kernels.cl
         copy_kernels.cl 
+		binary_search_kernels.cl
         count_kernels.cl 
         gather_kernels.cl
         generate_kernels.cl
@@ -157,6 +160,7 @@ set( clBolt.Runtime.clFiles
     )
 
 set( tbb.Runtime.Headers
+	${tbb.Include.Dir}/binary_search.h
 	${tbb.Include.Dir}/copy.h
 	${tbb.Include.Dir}/count.h
 	${tbb.Include.Dir}/fill.h
@@ -178,6 +182,7 @@ set( tbb.Runtime.Headers
     )
 
 set( tbb.Runtime.Headers.Detail
+	${tbb.Include.Dir}/detail/binary_search.inl
 	${tbb.Include.Dir}/detail/copy.inl
 	${tbb.Include.Dir}/detail/count.inl
 	${tbb.Include.Dir}/detail/fill.inl
