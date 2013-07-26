@@ -30,8 +30,10 @@
 #include "bolt/cl/functional.h"
 #include "bolt/cl/device_vector.h"
 
+#ifdef ENABLE_TBB
 //TBB Includes
 #include "bolt/btbb/stable_sort.h"
+#endif
 
 #define BOLT_CL_STABLESORT_CPU_THRESHOLD 64
 

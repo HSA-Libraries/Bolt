@@ -27,7 +27,9 @@
 #include "bolt/cl/bolt.h"
 
 //TBB Includes
+#ifdef ENABLE_TBB
 #include "bolt/btbb/fill.h"
+#endif
 
 namespace bolt {
     namespace cl {

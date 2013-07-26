@@ -30,8 +30,10 @@
 #include "bolt/cl/functional.h"
 #include "bolt/cl/device_vector.h"
 
+#ifdef ENABLE_TBB
 //TBB Includes
 #include "bolt/btbb/sort_by_key.h"
+#endif
 
 #define BITONIC_SORT_WGSIZE 64
 #define DEBUG 1

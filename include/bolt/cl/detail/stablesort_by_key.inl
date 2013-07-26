@@ -31,8 +31,10 @@
 #include "bolt/cl/pair.h"
 #include "bolt/cl/device_vector.h"
 
+#ifdef ENABLE_TBB
 //TBB Includes
 #include "bolt/btbb/stable_sort_by_key.h"
+#endif
 
 #define BOLT_CL_STABLESORT_BY_KEY_CPU_THRESHOLD 64
 

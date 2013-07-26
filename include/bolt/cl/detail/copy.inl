@@ -29,8 +29,10 @@
 
 #include "bolt/cl/bolt.h"
 
+#ifdef ENABLE_TBB
 //TBB Includes
 #include "bolt/btbb/copy.h"
+#endif
 
 // bumps dividend up (if needed) to be evenly divisible by divisor
 // returns whether dividend changed

@@ -28,9 +28,10 @@
 #include "bolt/cl/bolt.h"
 #include "bolt/cl/functional.h"
 
+#ifdef ENABLE_TBB
 //TBB Includes
 #include "bolt/btbb/min_element.h"
-
+#endif
 
 namespace bolt {
     namespace cl {

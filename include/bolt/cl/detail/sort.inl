@@ -26,6 +26,7 @@
 #include "bolt/cl/stablesort.h"
 #include "bolt/cl/functional.h"
 #include "bolt/cl/device_vector.h"
+
 #ifdef ENABLE_TBB
 #include "bolt/btbb/sort.h"
 #endif

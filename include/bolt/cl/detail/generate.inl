@@ -24,10 +24,10 @@
 #include <type_traits>
 
 #include "bolt/cl/bolt.h"
-
+#ifdef ENABLE_TBB
 //TBB Includes
 #include "bolt/btbb/generate.h"
-
+#endif
 #define BURST 1
 
 namespace bolt {
