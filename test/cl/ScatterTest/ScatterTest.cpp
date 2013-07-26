@@ -5045,6 +5045,132 @@ TEST(UDDTestIntFloatDouble, MulticoreScatter )
 }
 #endif
 
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// OFFSET TEST CASES
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//TEST_P(HostMemory_IntStdVector, OffsetScatter_IfPredicate)
+//{
+//    size_t myStdVectSize = 512;
+//    std::vector<int> input( myStdVectSize,0);   
+//    std::vector<int> exp_result(myStdVectSize,0);    
+//    std::vector<int> result ( myStdVectSize, 0 );
+//    std::vector<int> map (myStdVectSize,0);	
+//    std::vector<int> stencil (myStdVectSize,0);	
+//    for( int i=0; i < myStdVectSize ; i++ )
+//        {
+//            map[i] = i;
+//            input[i] = i;
+//            stencil[i] = i + 5 * 1;
+//        }
+//    std::random_shuffle( map.begin(), map.end() ); 
+//
+//    is_even iepred;
+//    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+//    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+//     bolt::cl::scatter_if(ctl, input.begin(), input.end(), map.begin()+54, stencil.begin()+53, exp_result.begin(), iepred );
+//     bolt::cl::scatter_if( input.begin(), input.end(), map.begin()+54, stencil.begin()+53, result.begin(), iepred );
+//    //for(int i=0; i<10 ; i++){ std::cout<<result[ i ]<<std::endl; }
+//    EXPECT_EQ(exp_result, result);
+//}
+
+TEST(HostMemory_IntStdVector, OffsetScatterPredicate)
+{
+
+    int n_input[10] =  {0,1,2,3,4,5,6,7,8,9};
+    int n_map[10] =  {9,8,7,6,5,4,3,2,1,0};
+
+
+    std::vector<int> input( n_input, n_input+10 );   
+    std::vector<int> exp_result(10,0);
+    std::vector<int> result ( 10, 0 );
+    std::vector<int> map ( n_map, n_map +10 );
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+    bolt::cl::scatter( ctl, input.begin()+5, input.begin()+7, map.begin()+5, exp_result.begin() );
+    bolt::cl::scatter( input.begin()+5, input.begin()+7, map.begin()+5, result.begin() );
+    //for(int i=0; i<10 ; i++){ std::cout<<result[ i ]<<std::endl; }
+    EXPECT_EQ(exp_result, result);
+}
+
+TEST(HostMemory_IntStdVector, OffsetScatterIfPredicate)
+{
+
+    int n_input[10] =  {0,1,2,3,4,5,6,7,8,9};
+    int n_map[10] =  {9,8,7,6,5,4,3,2,1,0};
+    int n_stencil[10] =  {0,1,0,1,0,1,0,1,0,1};
+
+
+    std::vector<int> input( n_input, n_input+10 );   
+    std::vector<int> exp_result(10,0);
+    std::vector<int> result ( 10, 0 );
+    std::vector<int> map ( n_map, n_map +10 );
+    std::vector<int> stencil ( n_stencil, n_stencil +10 );
+
+    is_even iepred;
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+    bolt::cl::scatter_if( ctl, input.begin()+5, input.begin()+7, map.begin()+5, stencil.begin()+5, exp_result.begin(), iepred );
+    bolt::cl::scatter_if( input.begin()+5, input.begin()+7, map.begin()+5, stencil.begin()+5, result.begin(), iepred );
+    //for(int i=0; i<10 ; i++){ std::cout<<result[ i ]<<std::endl; }
+    EXPECT_EQ(exp_result, result);
+}
+
+
+TEST(HostMemory_IntStdVector, OffsetScatterPredicateMedium)
+{
+    size_t myStdVectSize = 512;
+    std::vector<int> input( myStdVectSize,0);   
+    std::vector<int> exp_result(myStdVectSize,0);    
+    std::vector<int> result ( myStdVectSize, 0 );
+    std::vector<int> map (myStdVectSize,0);	
+    std::vector<int> stencil (myStdVectSize,0);	
+    for( int i=0; i < myStdVectSize ; i++ )
+        {
+            map[i] = i;
+            input[i] =  i + 2 * i;
+            stencil[i] = i + 5 * 1;
+        }
+    std::random_shuffle( map.begin(), map.end() ); 
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+    bolt::cl::scatter( ctl, input.begin()+5, input.begin()+7, map.begin()+5, exp_result.begin() );
+    bolt::cl::scatter( input.begin()+5, input.begin()+7, map.begin()+5, result.begin() );
+    //for(int i=0; i<10 ; i++){ std::cout<<result[ i ]<<std::endl; }
+    EXPECT_EQ(exp_result, result);
+}
+
+TEST(HostMemory_IntStdVector, OffsetScatterIfPredicateMedium)
+{
+    size_t myStdVectSize = 512;
+    std::vector<int> input( myStdVectSize,0);   
+    std::vector<int> exp_result(myStdVectSize,0);    
+    std::vector<int> result ( myStdVectSize, 0 );
+    std::vector<int> map (myStdVectSize,0);	
+    std::vector<int> stencil (myStdVectSize,0);
+    for( int i=0; i < myStdVectSize ; i++ )
+        {
+            map[i] = i;
+            input[i] =  i + 2 * i;
+            stencil[i] = i + 5 * 1;
+        }
+    std::random_shuffle( map.begin(), map.end() ); 
+
+    is_even iepred;
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+    bolt::cl::scatter_if( ctl, input.begin()+57, input.begin()+400, map.begin()+57, stencil.begin()+57, exp_result.begin(), iepred );
+    bolt::cl::scatter_if( input.begin()+57, input.begin()+400, map.begin()+57, stencil.begin()+57, result.begin(), iepred );
+    //for(int i=0; i<10 ; i++){ std::cout<<result[ i ]<<std::endl; }
+    EXPECT_EQ(exp_result, result);
+}
+
+
+
+
 INSTANTIATE_TEST_CASE_P(ScatterIntLimit, HostMemory_IntStdVector, ::testing::Range(10, 2400, 23));
 INSTANTIATE_TEST_CASE_P(ScatterIntLimit, DeviceMemory_IntBoltdVector, ::testing::Range(10, 2400, 23));
 INSTANTIATE_TEST_CASE_P(ScatterUDDLimit, HostMemory_UDDTestInt2, ::testing::Range(10, 2400, 23)); 

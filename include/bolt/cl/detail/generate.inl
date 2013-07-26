@@ -24,7 +24,10 @@
 #include <type_traits>
 
 #include "bolt/cl/bolt.h"
-
+#ifdef ENABLE_TBB
+//TBB Includes
+#include "bolt/btbb/generate.h"
+#endif
 #define BURST 1
 
 namespace bolt {
@@ -176,8 +179,7 @@ void generate_detect_random_access( bolt::cl::control &ctrl, const ForwardIterat
                 else if(runMode == bolt::cl::control::MultiCoreCpu)
                 {
                     #ifdef ENABLE_TBB
-                           //TODO : MultiCoreCPU Version of generate not Implemented yet...
-                           std::generate(first, last, gen );
+                           bolt::btbb::generate(first, last, gen);
                     #else
                            throw std::exception("MultiCoreCPU Version of generate not Enabled! \n");
                     #endif
@@ -218,9 +220,8 @@ void generate_detect_random_access( bolt::cl::control &ctrl, const ForwardIterat
                 else if(runMode == bolt::cl::control::MultiCoreCpu)
                 {
                     #ifdef ENABLE_TBB
-                           //TODO : MultiCoreCPU Version of generate not implemented yet...
                         bolt::cl::device_vector< iType >::pointer generateInputBuffer =  first.getContainer( ).data( );
-                        std::generate(&generateInputBuffer[first.m_Index], &generateInputBuffer[last.m_Index], gen );
+                        bolt::btbb::generate(&generateInputBuffer[first.m_Index], &generateInputBuffer[last.m_Index], gen );
                     #else
                         throw std::exception("MultiCoreCPU Version of generate not Enabled! \n");
                     #endif

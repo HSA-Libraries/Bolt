@@ -15,17 +15,17 @@
 
 ***************************************************************************/
 
+#pragma once
 #if !defined( BOLT_BTBB_SCATTER_H )
 #define BOLT_BTBB_SCATTER_H
-#pragma once
 
 #include "tbb/blocked_range.h"
 #include "tbb/task_scheduler_init.h"
 #include "tbb/tbb.h"
 #include "tbb/parallel_for.h"
 
-/*! \file bolt/cl/scatter.h
-    \brief 
+/*! \file bolt/bttb/scatter.h
+    \brief scatters elements from a source range to a destination array.
 */
 
 
@@ -35,63 +35,52 @@ namespace bolt {
         /*! \addtogroup algorithms
          */
 
-        /*! \addtogroup transformations
+        /*! \addtogroup copying
         *   \ingroup algorithms
-        *   \p transform applies a specific function object to each element pair in the specified input ranges, and
-        *   writes the result into the specified output range. For common code between the host
-        *   and device, one can take a look at the ClCode and TypeName implementations. See Bolt Tools for Split-Source
-        *   for a detailed description.
+        *   \p scatter APIs copy elements from a source range to a destination array (conditionally) according to a
+        *   specified map. For common code between the host and device, one can take a look at the ClCode and TypeName
+        *   implementations. See Bolt Tools for Split-Source for a detailed description.
         */
 
-        /*! \addtogroup CL-transform
-        *   \ingroup transformations
+        /*! \addtogroup TBB-scatter
+        *   \ingroup algorithms
         *   \{
         */
 
 
-       /*! \brief This version of \p transform applies a unary operation on input sequences and stores the result in
-         * the  corresponding position in an output sequence.The input and output sequences can coincide, resulting in
-         * an in-place transformation.
+       /*! \brief This version of \p scatter copies elements from a source range to a destination array according to a
+         * specified map. For each \p i in \p InputIterator1 in the range \p [first, last), scatter copies
+         * the corresponding \p input_first to result[ map [ i ] ]
          *
-         * \param ctl \b Optional Control structure to control command-queue, debug, tuning, etc.See bolt::cl::control.
-         *  \param first The beginning of the first input sequence.
-         *  \param last The end of the first input sequence.
-         *  \param result The beginning of the output sequence.
-         * \param op The tranformation operation.
-         * \param user_code Optional OpenCL&tm; code to be passed to the OpenCL compiler. The cl_code is inserted
-         *   first in the generated code, before the cl_code trait.
-         *  \return The end of the output sequence.
+         * \param first The beginning of input sequence.
+         * \param last The end of input sequence.
+         * \param map The beginning of the source sequence.
+         * \param result The beginning of the output sequence.
          *
          *  \tparam InputIterator1 is a model of InputIterator
-         *                        and \c InputIterator1's \c value_type is convertible to \c BinaryFunction's
-         * \c first_argument_type.
          *  \tparam InputIterator2 is a model of InputIterator
-         *                        and \c InputIterator2's \c value_type is convertible to \c BinaryFunction's
-         * \c second_argument_type.
          *  \tparam OutputIterator is a model of OutputIterator
          *
-         *  \details The following code snippet demonstrates how to use \p transform
+         *  \details The following code snippet demonstrates how to use \p scatter
          *
          *  \code
-         *  #include <bolt/cl/transform.h>
+         *  #include <bolt/cl/scatter.h>
          *  #include <bolt/cl/functional.h>
+         *  #include <bolt/cl/control.h>
          *
-         *  int input1[10] = {-5, 0, 2, 3, 2, 4, -2, 1, 2, 3};
+         *  int input[10] = {5, 7, 2, 3, 12, 6, 9, 8, 1, 4};
+         *  int map[10] = {8, 2, 3, 9, 0, 5, 1, 7, 6, 4};
          *  int output[10];
-         *  bolt::cl::square<int> op;
-         *  bolt::cl::::transform(input1, input1 + 10, output, op);
          *
-         *  // output is now {25, 0, 4, 9, 4, 16, 4, 1, 4, 9};
+         *  bolt::cl::control ctl;
+         *  ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+         *  bolt::cl::scatter(ctl, input, input + 10, map, output);
+         *
+         *  // output is now {1, 2, 3, 4, 5, 6, 7, 8, 9, 12};
          *  \endcode
          *
-         *  \sa http://www.sgi.com/tech/stl/transform.html
-         *  \sa http://www.sgi.com/tech/stl/InputIterator.html
-         *  \sa http://www.sgi.com/tech/stl/OutputIterator.html
-         *  \sa http://www.sgi.com/tech/stl/UnaryFunction.html
-         *  \sa http://www.sgi.com/tech/stl/BinaryFunction.html
          */
 
-// scatter API
         template< typename InputIterator1,
                   typename InputIterator2,
                   typename OutputIterator >
@@ -100,9 +89,46 @@ namespace bolt {
                       InputIterator2 map,
                       OutputIterator result);
 
+       /*! \brief This version of \p scatter copies elements from a source range to a destination array according to a
+         * specified map. For each \p i in \p InputIterator1 in the range \p [first, last), scatter copies
+         * the corresponding \p input_first to result[ map [ i ] ] if stencil[ i - first ] is
+         * \p true.
+         *
+         * \param first The beginning of input sequence.
+         * \param last The end of input sequence.
+         * \param map The beginning of the map sequence.
+         * \param stencil The beginning of the stencil sequence.
+         * \param result The beginning of the output sequence.
+         *
+         *  \tparam InputIterator1 is a model of InputIterator
+         *  \tparam InputIterator2 is a model of InputIterator
+         *  \tparam InputIterator3 is a model of InputIterator
+         *  \tparam OutputIterator is a model of OutputIterator
+         *
+         *  \details The following code snippet demonstrates how to use \p scatter
+         *
+         *  \code
+         *  #include <bolt/cl/scatter.h>
+         *  #include <bolt/cl/functional.h>
+         *  #include <bolt/cl/control.h>
+         *
+         *  int input[10]   = {5, 7, 2, 3, 12, 6, 9, 8, 1, 4};
+         *  int map[10]     = {8, 2, 3, 9, 0, 5, 1, 7, 6, 4};
+         *  int stencil[10] = {0, 0, 0, 0, 0, 1, 1, 1, 1, 1};
+         *  int output[10];
+         *
+         *  bolt::cl::control ctl;
+         *  ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+         *
+         *  bolt::cl::scatter(ctl, input, input + 10, map, stencil, output);
+         *
+         *  // output is now {0, 0, 0, 0, 0, 6, 7, 8, 9, 12};
+         *  \endcode
+         *
+         */
+
+
        
-// scatter_if API
-        
         template< typename InputIterator1,
                   typename InputIterator2,
                   typename InputIterator3,
@@ -113,18 +139,71 @@ namespace bolt {
                          InputIterator3 stencil,
                          OutputIterator result);
 
+
+       /*! \brief This version of \p scatter copies elements from a source range to a destination array according to a
+         * specified map. For each \p i in \p InputIterator1 in the range \p [first, last), scatter copies
+         * the corresponding \p input_first to result[ map [ i ] ] if pred (stencil[ i - first ])
+         * is \p true.
+         *
+         * \param first The beginning of input sequence.
+         * \param last The end of input sequence.
+         * \param map The beginning of the map sequence.
+         * \param stencil The beginning of the stencil sequence.
+         * \param result The beginning of the output sequence.
+         * \param pred A predicate for stencil.
+         *
+         *  \tparam InputIterator1 is a model of InputIterator
+         *  \tparam InputIterator2 is a model of InputIterator
+         *  \tparam InputIterator3 is a model of InputIterator
+         *  \tparam OutputIterator is a model of OutputIterator
+         *  \tparam Predicate is a model of Predicate
+         *
+         *  \details The following code snippet demonstrates how to use \p scatter
+         *
+         *  \code
+         *  #include <bolt/cl/scatter.h>
+         *  #include <bolt/cl/functional.h>
+         *  #include <bolt/cl/control.h>
+         *
+         *  BOLT_FUNCTOR( greater_pred,
+         *    struct greater_pred{
+         *        bool operator () (int x)
+         *        {
+         *            return ( (x > 5)?1:0 );
+         *        }
+         *    };
+         *  );
+         * 
+         *  ...
+         *
+         *  int input[10]   = {5, 7, 2, 3, 12, 6, 9, 8, 1, 4};
+         *  int map[10]     = {8, 2, 3, 9, 0, 5, 1, 7, 6, 4};
+         *  int stencil[10] = {1, 3, 5, 2, 4, 6, 10, 9, 12, 22};
+         *  int output[10];
+         *  greater_pred is_gt_5;
+         *
+         *  bolt::cl::control ctl;
+         *  ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+         *
+         *  bolt::cl::scatter(ctl, input, input + 10, map, stencil, output, is_gt_5);
+         *
+         *  // output is now {0, 0, 0, 0, 0, 6, 7, 8, 9, 12};
+         *  \endcode
+         *
+         */
+
      
         template< typename InputIterator1,
                   typename InputIterator2,
                   typename InputIterator3,
                   typename OutputIterator,
-                  typename BinaryPredicate >
+                  typename Predicate >
         void scatter_if( InputIterator1 first1,
                          InputIterator1 last1,
                          InputIterator2 map,
                          InputIterator3 stencil,
                          OutputIterator result,
-                         BinaryPredicate pred);
+                         Predicate pred);
 
 
         /*!   \}  */

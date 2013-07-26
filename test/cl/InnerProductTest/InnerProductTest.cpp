@@ -404,6 +404,35 @@ TEST( InnerProductStdVectWithInit, withIntWdInitWithStdPlusMinus)
     EXPECT_EQ(stlInnerProduct, boltInnerProduct);
 }
 
+TEST( InnerProductStdVectWithInit, OffsetwithIntWdInitWithStdPlusMinus)
+{
+    //int mySize = 10;
+    int init = 10;
+    size_t mySize = 1<<16;
+    std::vector<int> stdInput (mySize);
+    std::vector<int> stdInput2 (mySize);
+
+    std::vector<int> boltInput (mySize);
+    std::vector<int> boltInput2 (mySize);
+
+    for (int i = 0; i < mySize; ++i){
+        stdInput[i] = i;
+        stdInput2[i] = i+1;
+        boltInput[i] = stdInput[i];
+        boltInput2[i] = stdInput2[i];
+    }
+    
+    int offset = 10;
+    //  Calling the actual functions under test
+    int stlInnerProduct = std::inner_product(stdInput.begin() + offset, stdInput.end(), stdInput2.begin(),init,
+                                             std::plus<int>(), std::minus<int>() );
+    int boltInnerProduct= bolt::cl::inner_product( boltInput.begin( ) + offset, boltInput.end( ), boltInput2.begin(), 
+                                                   init, bolt::cl::plus<int>(), bolt::cl::minus<int>());
+
+    EXPECT_EQ(stlInnerProduct, boltInnerProduct);
+}
+
+
 TEST( CPUInnerProductStdVectWithInit, withIntWdInitWithStdPlusMinus)
 {
     //int mySize = 10;
@@ -435,6 +464,38 @@ TEST( CPUInnerProductStdVectWithInit, withIntWdInitWithStdPlusMinus)
     EXPECT_EQ(stlInnerProduct, boltInnerProduct);
 }
 
+TEST( CPUInnerProductStdVectWithInit, OffsetwithIntWdInitWithStdPlusMinus)
+{
+    //int mySize = 10;
+    int init = 10;
+    size_t mySize = 1<<16;
+    std::vector<int> stdInput (mySize);
+    std::vector<int> stdInput2 (mySize);
+
+    std::vector<int> boltInput (mySize);
+    std::vector<int> boltInput2 (mySize);
+
+    for (int i = 0; i < mySize; ++i){
+        stdInput[i] = i;
+        stdInput2[i] = i+1;
+        boltInput[i] = stdInput[i];
+        boltInput2[i] = stdInput2[i];
+    }
+    
+    int offset = 10;
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+    
+    //  Calling the actual functions under test
+    int stlInnerProduct = std::inner_product(stdInput.begin() + offset,stdInput.end(), stdInput2.begin(),init, std::plus<int>(), 
+                                             std::minus<int>() );
+    int boltInnerProduct= bolt::cl::inner_product(ctl, boltInput.begin( ) + offset, boltInput.end( ), boltInput2.begin(), 
+                                                  init, bolt::cl::plus<int>(), bolt::cl::minus<int>());
+
+    EXPECT_EQ(stlInnerProduct, boltInnerProduct);
+}
+
 TEST( MultiCoreInnerProductStdVectWithInit, withIntWdInitWithStdPlusMinus)
 {
     //int mySize = 10;
@@ -453,7 +514,6 @@ TEST( MultiCoreInnerProductStdVectWithInit, withIntWdInitWithStdPlusMinus)
         boltInput2[i] = stdInput2[i];
     }
     
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
     
@@ -462,6 +522,398 @@ TEST( MultiCoreInnerProductStdVectWithInit, withIntWdInitWithStdPlusMinus)
                                               std::minus<int>() );
     int boltInnerProduct= bolt::cl::inner_product(ctl, boltInput.begin( ), boltInput.end( ), boltInput2.begin(),
                                                   init, bolt::cl::plus<int>(), bolt::cl::minus<int>());
+
+    EXPECT_EQ(stlInnerProduct, boltInnerProduct);
+}
+
+TEST( MultiCoreInnerProductStdVectWithInit, OffsetwithIntWdInitWithStdPlusMinus)
+{
+    //int mySize = 10;
+    int init = 10;
+    size_t mySize = 1<<16;
+    std::vector<int> stdInput (mySize);
+    std::vector<int> stdInput2 (mySize);
+
+    std::vector<int> boltInput (mySize);
+    std::vector<int> boltInput2 (mySize);
+
+    for (int i = 0; i < mySize; ++i){
+        stdInput[i] = i;
+        stdInput2[i] = i+1;
+        boltInput[i] = stdInput[i];
+        boltInput2[i] = stdInput2[i];
+    }
+    
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+    
+    int offset = 10;
+
+    //  Calling the actual functions under test
+    int stlInnerProduct = std::inner_product(stdInput.begin() + offset, stdInput.end(), stdInput2.begin(),init,std::plus<int>(),
+                                              std::minus<int>() );
+    int boltInnerProduct= bolt::cl::inner_product(ctl, boltInput.begin( ) + offset, boltInput.end( ), boltInput2.begin(),
+                                                  init, bolt::cl::plus<int>(), bolt::cl::minus<int>());
+
+    EXPECT_EQ(stlInnerProduct, boltInnerProduct);
+}
+
+TEST( InnerProductUStdVectWithInit, withIntWdInitWithStdPlusMinus)
+{
+    //int mySize = 10;
+    unsigned int init = 10;
+    size_t mySize = 1<<16;
+    std::vector<unsigned int> stdInput (mySize);
+    std::vector<unsigned int> stdInput2 (mySize);
+
+    std::vector<unsigned int> boltInput (mySize);
+    std::vector<unsigned int> boltInput2 (mySize);
+
+    for (int i = 0; i < mySize; ++i){
+        stdInput[i] = i;
+        stdInput2[i] = i+1;
+        boltInput[i] = stdInput[i];
+        boltInput2[i] = stdInput2[i];
+    }
+    
+    //  Calling the actual functions under test
+    unsigned int stlInnerProduct = std::inner_product(stdInput.begin(), stdInput.end(), stdInput2.begin(),init,
+                                             std::plus<unsigned int>(), std::minus<unsigned int>() );
+    unsigned int boltInnerProduct= bolt::cl::inner_product( boltInput.begin( ), boltInput.end( ), boltInput2.begin(), 
+                                                   init, bolt::cl::plus<unsigned int>(), bolt::cl::minus<unsigned int>());
+
+    EXPECT_EQ(stlInnerProduct, boltInnerProduct);
+}
+
+TEST( InnerProductUStdVectWithInit, OffsetwithIntWdInitWithStdPlusMinus)
+{
+    //int mySize = 10;
+    unsigned int init = 10;
+    size_t mySize = 1<<16;
+    std::vector<unsigned int> stdInput (mySize);
+    std::vector<unsigned int> stdInput2 (mySize);
+
+    std::vector<unsigned int> boltInput (mySize);
+    std::vector<unsigned int> boltInput2 (mySize);
+
+    for (int i = 0; i < mySize; ++i){
+        stdInput[i] = i;
+        stdInput2[i] = i+1;
+        boltInput[i] = stdInput[i];
+        boltInput2[i] = stdInput2[i];
+    }
+    
+    int offset = 10;
+    //  Calling the actual functions under test
+    unsigned int stlInnerProduct = std::inner_product(stdInput.begin()+offset, stdInput.end(), stdInput2.begin(),init,
+                                             std::plus<unsigned int>(), std::minus<unsigned int>() );
+    unsigned int boltInnerProduct= bolt::cl::inner_product( boltInput.begin( )+offset, boltInput.end( ), boltInput2.begin(), 
+                                                   init, bolt::cl::plus<unsigned int>(), bolt::cl::minus<unsigned int>());
+
+    EXPECT_EQ(stlInnerProduct, boltInnerProduct);
+}
+
+TEST( CPUInnerProductUStdVectWithInit, withIntWdInitWithStdPlusMinus)
+{
+    //int mySize = 10;
+    unsigned int init = 10;
+    size_t mySize = 1<<16;
+    std::vector<unsigned int> stdInput (mySize);
+    std::vector<unsigned int> stdInput2 (mySize);
+
+    std::vector<unsigned int> boltInput (mySize);
+    std::vector<unsigned int> boltInput2 (mySize);
+
+    for (int i = 0; i < mySize; ++i){
+        stdInput[i] = i;
+        stdInput2[i] = i+1;
+        boltInput[i] = stdInput[i];
+        boltInput2[i] = stdInput2[i];
+    }
+    
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+    
+    //  Calling the actual functions under test
+    unsigned int stlInnerProduct = std::inner_product(stdInput.begin(),stdInput.end(), stdInput2.begin(),init, std::plus<unsigned int>(), 
+                                             std::minus<unsigned int>() );
+    unsigned int boltInnerProduct= bolt::cl::inner_product(ctl, boltInput.begin( ), boltInput.end( ), boltInput2.begin(), 
+                                                  init, bolt::cl::plus<unsigned int>(), bolt::cl::minus<unsigned int>());
+
+    EXPECT_EQ(stlInnerProduct, boltInnerProduct);
+}
+
+TEST( CPUInnerProductUStdVectWithInit, OffsetwithIntWdInitWithStdPlusMinus)
+{
+    //int mySize = 10;
+    unsigned int init = 10;
+    size_t mySize = 1<<16;
+    std::vector<unsigned int> stdInput (mySize);
+    std::vector<unsigned int> stdInput2 (mySize);
+
+    std::vector<unsigned int> boltInput (mySize);
+    std::vector<unsigned int> boltInput2 (mySize);
+
+    for (int i = 0; i < mySize; ++i){
+        stdInput[i] = i;
+        stdInput2[i] = i+1;
+        boltInput[i] = stdInput[i];
+        boltInput2[i] = stdInput2[i];
+    }
+    
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+    
+    int offset = 10;
+
+    //  Calling the actual functions under test
+    unsigned int stlInnerProduct = std::inner_product(stdInput.begin()+offset,stdInput.end(), stdInput2.begin(),init, std::plus<unsigned int>(), 
+                                             std::minus<unsigned int>() );
+    unsigned int boltInnerProduct= bolt::cl::inner_product(ctl, boltInput.begin( )+offset, boltInput.end( ), boltInput2.begin(), 
+                                                  init, bolt::cl::plus<unsigned int>(), bolt::cl::minus<unsigned int>());
+
+    EXPECT_EQ(stlInnerProduct, boltInnerProduct);
+}
+
+TEST( MultiCoreInnerProductUStdVectWithInit, withIntWdInitWithStdPlusMinus)
+{
+    //int mySize = 10;
+    unsigned int init = 10;
+    size_t mySize = 1<<16;
+    std::vector<unsigned int> stdInput (mySize);
+    std::vector<unsigned int> stdInput2 (mySize);
+
+    std::vector<unsigned int> boltInput (mySize);
+    std::vector<unsigned int> boltInput2 (mySize);
+
+    for (int i = 0; i < mySize; ++i){
+        stdInput[i] = i;
+        stdInput2[i] = i+1;
+        boltInput[i] = stdInput[i];
+        boltInput2[i] = stdInput2[i];
+    }
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+    
+    //  Calling the actual functions under test
+    unsigned int stlInnerProduct = std::inner_product(stdInput.begin(), stdInput.end(), stdInput2.begin(),init,std::plus<unsigned int>(),
+                                              std::minus<unsigned int>() );
+    unsigned int boltInnerProduct= bolt::cl::inner_product(ctl, boltInput.begin( ), boltInput.end( ), boltInput2.begin(),
+                                                  init, bolt::cl::plus<unsigned int>(), bolt::cl::minus<unsigned int>());
+
+    EXPECT_EQ(stlInnerProduct, boltInnerProduct);
+}
+
+TEST( MultiCoreInnerProductUStdVectWithInit, OffsetwithIntWdInitWithStdPlusMinus)
+{
+    //int mySize = 10;
+    unsigned int init = 10;
+    size_t mySize = 1<<16;
+    std::vector<unsigned int> stdInput (mySize);
+    std::vector<unsigned int> stdInput2 (mySize);
+
+    std::vector<unsigned int> boltInput (mySize);
+    std::vector<unsigned int> boltInput2 (mySize);
+
+    for (int i = 0; i < mySize; ++i){
+        stdInput[i] = i;
+        stdInput2[i] = i+1;
+        boltInput[i] = stdInput[i];
+        boltInput2[i] = stdInput2[i];
+    }
+    
+    int offset = 10;
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+    
+    //  Calling the actual functions under test
+    unsigned int stlInnerProduct = std::inner_product(stdInput.begin() + offset, stdInput.end(), stdInput2.begin(),init,std::plus<unsigned int>(),
+                                              std::minus<unsigned int>() );
+    unsigned int boltInnerProduct= bolt::cl::inner_product(ctl, boltInput.begin( ) + offset, boltInput.end( ), boltInput2.begin(),
+                                                  init, bolt::cl::plus<unsigned int>(), bolt::cl::minus<unsigned int>());
+
+    EXPECT_EQ(stlInnerProduct, boltInnerProduct);
+}
+
+
+TEST( InnerProductFloatStdVectWithInit, withIntWdInitWithStdPlusMinus)
+{
+    //int mySize = 10;
+    float init = 10.5;
+    size_t mySize = 1<<16;
+    std::vector<float> stdInput (mySize);
+    std::vector<float> stdInput2 (mySize);
+
+    std::vector<float> boltInput (mySize);
+    std::vector<float> boltInput2 (mySize);
+
+    for (int i = 0; i < mySize; ++i){
+        stdInput[i] = (float) i;
+        stdInput2[i] = (float) i+1;
+        boltInput[i] = stdInput[i];
+        boltInput2[i] = stdInput2[i];
+    }
+    
+    //  Calling the actual functions under test
+    float stlInnerProduct = std::inner_product(stdInput.begin(), stdInput.end(), stdInput2.begin(),init,
+                                             std::plus<float>(), std::minus<float>() );
+    float boltInnerProduct= bolt::cl::inner_product( boltInput.begin( ), boltInput.end( ), boltInput2.begin(), 
+                                                   init, bolt::cl::plus< float>(), bolt::cl::minus< float>());
+
+    EXPECT_EQ(stlInnerProduct, boltInnerProduct);
+}
+
+TEST( InnerProductFloatStdVectWithInit, OffsetwithIntWdInitWithStdPlusMinus)
+{
+    //int mySize = 10;
+    float init = 10.5;
+    size_t mySize = 1<<16;
+    std::vector<float> stdInput (mySize);
+    std::vector<float> stdInput2 (mySize);
+
+    std::vector<float> boltInput (mySize);
+    std::vector<float> boltInput2 (mySize);
+
+    for (int i = 0; i < mySize; ++i){
+        stdInput[i] = (float) i;
+        stdInput2[i] = (float) i+1;
+        boltInput[i] = stdInput[i];
+        boltInput2[i] = stdInput2[i];
+    }
+    
+    int offset = 10;
+
+    //  Calling the actual functions under test
+    float stlInnerProduct = std::inner_product(stdInput.begin() + offset, stdInput.end(), stdInput2.begin(),init,
+                                             std::plus<float>(), std::minus<float>() );
+    float boltInnerProduct= bolt::cl::inner_product( boltInput.begin( ) + offset, boltInput.end( ), boltInput2.begin(), 
+                                                   init, bolt::cl::plus< float>(), bolt::cl::minus< float>());
+
+    EXPECT_EQ(stlInnerProduct, boltInnerProduct);
+}
+
+TEST( CPUInnerProductFloatStdVectWithInit, withIntWdInitWithStdPlusMinus)
+{
+    //int mySize = 10;
+    float init = 10.5;
+    size_t mySize = 1<<16;
+    std::vector<float> stdInput (mySize);
+    std::vector<float> stdInput2 (mySize);
+
+    std::vector<float> boltInput (mySize);
+    std::vector<float> boltInput2 (mySize);
+
+    for (int i = 0; i < mySize; ++i){
+        stdInput[i] = (float) i ;
+        stdInput2[i] = (float) i+1;
+        boltInput[i] = stdInput[i];
+        boltInput2[i] = stdInput2[i];
+    }
+    
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+    
+    //  Calling the actual functions under test
+    float stlInnerProduct = std::inner_product(stdInput.begin(),stdInput.end(), stdInput2.begin(),init, std::plus<float>(), 
+                                             std::minus<float>() );
+    float boltInnerProduct= bolt::cl::inner_product(ctl, boltInput.begin( ), boltInput.end( ), boltInput2.begin(), 
+                                                  init, bolt::cl::plus<float>(), bolt::cl::minus<float>());
+
+    EXPECT_EQ(stlInnerProduct, boltInnerProduct);
+}
+
+TEST( CPUInnerProductFloatStdVectWithInit, OffsetwithIntWdInitWithStdPlusMinus)
+{
+    //int mySize = 10;
+    float init = 10.5;
+    size_t mySize = 1<<16;
+    std::vector<float> stdInput (mySize);
+    std::vector<float> stdInput2 (mySize);
+
+    std::vector<float> boltInput (mySize);
+    std::vector<float> boltInput2 (mySize);
+
+    for (int i = 0; i < mySize; ++i){
+        stdInput[i] = (float) i ;
+        stdInput2[i] = (float) i+1;
+        boltInput[i] = stdInput[i];
+        boltInput2[i] = stdInput2[i];
+    }
+    
+    int offset = 10;
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+    
+    //  Calling the actual functions under test
+    float stlInnerProduct = std::inner_product(stdInput.begin() + offset,stdInput.end(), stdInput2.begin(),init, std::plus<float>(), 
+                                             std::minus<float>() );
+     float boltInnerProduct= bolt::cl::inner_product(ctl, boltInput.begin( ) + offset, boltInput.end( ), boltInput2.begin(), 
+                                                  init, bolt::cl::plus<float>(), bolt::cl::minus<float>());
+
+    EXPECT_EQ(stlInnerProduct, boltInnerProduct);
+}
+
+TEST( MultiCoreInnerProductFloatStdVectWithInit, withIntWdInitWithStdPlusMinus)
+{
+    //int mySize = 10;
+    float init = 10.5;
+    size_t mySize = 1<<16;
+    std::vector< float> stdInput (mySize);
+    std::vector< float> stdInput2 (mySize);
+
+    std::vector< float> boltInput (mySize);
+    std::vector< float> boltInput2 (mySize);
+
+    for (int i = 0; i < mySize; ++i){
+        stdInput[i] =(float) i;
+        stdInput2[i] = (float) i+1;
+        boltInput[i] = stdInput[i];
+        boltInput2[i] = stdInput2[i];
+    }
+    
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+    
+    //  Calling the actual functions under test
+    float stlInnerProduct = std::inner_product(stdInput.begin(), stdInput.end(), stdInput2.begin(),init,std::plus< float>(),
+                                              std::minus< float>() );
+    float boltInnerProduct= bolt::cl::inner_product(ctl, boltInput.begin( ), boltInput.end( ), boltInput2.begin(),
+                                                  init, bolt::cl::plus< float>(), bolt::cl::minus< float>());
+
+    EXPECT_EQ(stlInnerProduct, boltInnerProduct);
+}
+
+TEST( MultiCoreInnerProductFloatStdVectWithInit, OffsetwithIntWdInitWithStdPlusMinus)
+{
+    //int mySize = 10;
+    float init = 10.5;
+    size_t mySize = 1<<16;
+    std::vector< float> stdInput (mySize);
+    std::vector< float> stdInput2 (mySize);
+
+    std::vector< float> boltInput (mySize);
+    std::vector< float> boltInput2 (mySize);
+
+    for (int i = 0; i < mySize; ++i){
+        stdInput[i] =(float) i;
+        stdInput2[i] = (float) i+1;
+        boltInput[i] = stdInput[i];
+        boltInput2[i] = stdInput2[i];
+    }
+    
+    int offset = 10;
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+    
+    //  Calling the actual functions under test
+    float stlInnerProduct = std::inner_product(stdInput.begin() + offset, stdInput.end(), stdInput2.begin(),init,std::plus< float>(),
+                                              std::minus< float>() );
+    float boltInnerProduct= bolt::cl::inner_product(ctl, boltInput.begin( ) + offset, boltInput.end( ), boltInput2.begin(),
+                                                  init, bolt::cl::plus< float>(), bolt::cl::minus< float>());
 
     EXPECT_EQ(stlInnerProduct, boltInnerProduct);
 }
@@ -1038,6 +1490,41 @@ TEST( InnerProductUDD , UDDPlusOperatorInts )
 
 }
 
+TEST( InnerProductUDD , OffsetUDDPlusOperatorInts )
+{
+    //setup containers
+    int length = 1024;
+    std::vector< UDD > refInput( length );
+    std::vector< UDD > refInput2( length );
+    for( int i = 0; i < length ; i++ )
+    {
+      refInput[i].a = refInput2[i].a = i;
+      refInput[i].b = refInput2[i].b = i+1;
+    }
+    bolt::cl::device_vector< UDD >input( refInput.begin(), refInput.end() );
+    bolt::cl::device_vector< UDD >input2( refInput2.begin(), refInput2.end() );
+
+    UDD UDDzero;
+    UDDzero.a = 0;
+    UDDzero.b = 0;
+
+    // call InnerProduct
+    UDDmul mulOp;
+    UDDplus plusOp;
+
+    int offset = 60;
+
+    //bolt::cl::multiplies< UDD > mulOp;
+    //bolt::cl::plus< UDD > plusOp;
+    UDD stdInnerProduct =  std::inner_product( refInput.begin() + offset, refInput.end(), refInput2.begin(), 
+                                               UDDzero, plusOp, mulOp );
+    UDD boltInnerProduct = bolt::cl::inner_product( input.begin() + offset, input.end(), input2.begin(),
+                                                    UDDzero, plusOp , mulOp);
+
+    EXPECT_EQ(boltInnerProduct,stdInnerProduct);
+
+}
+
 TEST( InnerProductUDD , CPU_UDDPlusOperatorInts )
 {
     //setup containers
@@ -1060,7 +1547,6 @@ TEST( InnerProductUDD , CPU_UDDPlusOperatorInts )
     UDDmul mulOp;
     UDDplus plusOp;
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -1069,6 +1555,118 @@ TEST( InnerProductUDD , CPU_UDDPlusOperatorInts )
     UDD stdInnerProduct =  std::inner_product( refInput.begin(), refInput.end(), refInput2.begin(), 
                                                UDDzero, plusOp, mulOp );
     UDD boltInnerProduct = bolt::cl::inner_product( ctl, input.begin(), input.end(), input2.begin(),
+                                                    UDDzero, plusOp , mulOp);
+
+    EXPECT_EQ(boltInnerProduct,stdInnerProduct);
+
+}
+
+TEST( InnerProductUDD , Offset_CPU_UDDPlusOperatorInts )
+{
+    //setup containers
+    int length = 1024;
+    std::vector< UDD > refInput( length );
+    std::vector< UDD > refInput2( length );
+    for( int i = 0; i < length ; i++ )
+    {
+      refInput[i].a = refInput2[i].a = i;
+      refInput[i].b = refInput2[i].b = i+1;
+    }
+    bolt::cl::device_vector< UDD >input( refInput.begin(), refInput.end() );
+    bolt::cl::device_vector< UDD >input2( refInput2.begin(), refInput2.end() );
+
+    UDD UDDzero;
+    UDDzero.a = 0;
+    UDDzero.b = 0;
+
+    // call InnerProduct
+    UDDmul mulOp;
+    UDDplus plusOp;
+
+    int offset = 80;
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    //bolt::cl::multiplies< UDD > mulOp;
+    //bolt::cl::plus< UDD > plusOp;
+    UDD stdInnerProduct =  std::inner_product( refInput.begin() + offset, refInput.end(), refInput2.begin(), 
+                                               UDDzero, plusOp, mulOp );
+    UDD boltInnerProduct = bolt::cl::inner_product( ctl, input.begin() + offset, input.end(), input2.begin(),
+                                                    UDDzero, plusOp , mulOp);
+
+    EXPECT_EQ(boltInnerProduct,stdInnerProduct);
+
+}
+
+TEST( InnerProductUDD , MultiCore_UDDPlusOperatorInts )
+{
+    //setup containers
+    int length = 1024;
+    std::vector< UDD > refInput( length );
+    std::vector< UDD > refInput2( length );
+    for( int i = 0; i < length ; i++ )
+    {
+      refInput[i].a = refInput2[i].a = i;
+      refInput[i].b = refInput2[i].b = i+1;
+    }
+    bolt::cl::device_vector< UDD >input( refInput.begin(), refInput.end() );
+    bolt::cl::device_vector< UDD >input2( refInput2.begin(), refInput2.end() );
+
+    UDD UDDzero;
+    UDDzero.a = 0;
+    UDDzero.b = 0;
+
+    // call InnerProduct
+    UDDmul mulOp;
+    UDDplus plusOp;
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    //bolt::cl::multiplies< UDD > mulOp;
+    //bolt::cl::plus< UDD > plusOp;
+    UDD stdInnerProduct =  std::inner_product( refInput.begin(), refInput.end(), refInput2.begin(), 
+                                               UDDzero, plusOp, mulOp );
+    UDD boltInnerProduct = bolt::cl::inner_product( ctl, input.begin(), input.end(), input2.begin(),
+                                                    UDDzero, plusOp , mulOp);
+
+    EXPECT_EQ(boltInnerProduct,stdInnerProduct);
+
+}
+
+TEST( InnerProductUDD , Offset_MultiCore_UDDPlusOperatorInts )
+{
+    //setup containers
+    int length = 1024;
+    std::vector< UDD > refInput( length );
+    std::vector< UDD > refInput2( length );
+    for( int i = 0; i < length ; i++ )
+    {
+      refInput[i].a = refInput2[i].a = i;
+      refInput[i].b = refInput2[i].b = i+1;
+    }
+    bolt::cl::device_vector< UDD >input( refInput.begin(), refInput.end() );
+    bolt::cl::device_vector< UDD >input2( refInput2.begin(), refInput2.end() );
+
+    UDD UDDzero;
+    UDDzero.a = 0;
+    UDDzero.b = 0;
+
+    // call InnerProduct
+    UDDmul mulOp;
+    UDDplus plusOp;
+
+    int offset = 80;
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    //bolt::cl::multiplies< UDD > mulOp;
+    //bolt::cl::plus< UDD > plusOp;
+    UDD stdInnerProduct =  std::inner_product( refInput.begin() + offset, refInput.end(), refInput2.begin(), 
+                                               UDDzero, plusOp, mulOp );
+    UDD boltInnerProduct = bolt::cl::inner_product( ctl, input.begin() + offset, input.end(), input2.begin(),
                                                     UDDzero, plusOp , mulOp);
 
     EXPECT_EQ(boltInnerProduct,stdInnerProduct);
@@ -1160,44 +1758,6 @@ TEST( InnerProductOffset , HostVectorOffsetSerialCpu )
                                                0, std::plus<int>(), std::multiplies<int>() );
     int boltInnerProduct = bolt::cl::inner_product( ctl, refInput.begin() + 60, refInput.end(), refInput2.begin() + 60,
                                                     0, bolt::cl::plus<int>() , bolt::cl::multiplies<int>() );
-
-    EXPECT_EQ(boltInnerProduct,stdInnerProduct);
-
-}
-
-
-TEST( InnerProductUDD , MultiCore_UDDPlusOperatorInts )
-{
-    //setup containers
-    int length = 1024;
-    std::vector< UDD > refInput( length );
-    std::vector< UDD > refInput2( length );
-    for( int i = 0; i < length ; i++ )
-    {
-      refInput[i].a = refInput2[i].a = i;
-      refInput[i].b = refInput2[i].b = i+1;
-    }
-    bolt::cl::device_vector< UDD >input( refInput.begin(), refInput.end() );
-    bolt::cl::device_vector< UDD >input2( refInput2.begin(), refInput2.end() );
-
-    UDD UDDzero;
-    UDDzero.a = 0;
-    UDDzero.b = 0;
-
-    // call InnerProduct
-    UDDmul mulOp;
-    UDDplus plusOp;
-
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
-
-    //bolt::cl::multiplies< UDD > mulOp;
-    //bolt::cl::plus< UDD > plusOp;
-    UDD stdInnerProduct =  std::inner_product( refInput.begin(), refInput.end(), refInput2.begin(),
-                                               UDDzero, plusOp, mulOp );
-    UDD boltInnerProduct = bolt::cl::inner_product( ctl, input.begin(), input.end(), input2.begin(),
-                                                    UDDzero, plusOp , mulOp);
 
     EXPECT_EQ(boltInnerProduct,stdInnerProduct);
 

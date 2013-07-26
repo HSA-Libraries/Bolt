@@ -20,9 +20,7 @@
 #pragma once
 
 #include "tbb/task_scheduler_init.h"
-#include <thread>
 #include <iterator>
-
 #include "tbb/blocked_range.h"
 #include "tbb/parallel_for.h"
 
@@ -133,19 +131,6 @@ namespace bolt
           }
       };
 
-template<typename T>
-struct equal_to
-{
-    bool operator()(const T &lhs, const T &rhs) const  {return lhs == rhs;}
-};
-
-template<typename T>
-struct plus
-{
-    T operator()(const T &lhs, const T &rhs) const {return lhs + rhs;}
-};
-
-
              template<
                  typename InputIterator1,
                  typename InputIterator2,
@@ -161,10 +146,7 @@ struct plus
                             OutputIterator2 values_output,
                             BinaryPredicate binary_pred,
                             BinaryFunction binary_op )
-             {                
-               //Gets the number of concurrent threads supported by the underlying platform
-                unsigned int concurentThreadsSupported = std::thread::hardware_concurrency();
-
+             { 
                 unsigned int numElements = static_cast< int >( std::distance( keys_first, keys_last ));
                 //This allows TBB to choose the number of threads to spawn.
                 tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);

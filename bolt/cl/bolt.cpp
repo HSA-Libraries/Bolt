@@ -30,11 +30,13 @@
 
 //  Include all kernel string objects
 
+#include "bolt/binary_search_kernels.hpp"
 #include "bolt/copy_kernels.hpp"
 #include "bolt/count_kernels.hpp"
 #include "bolt/fill_kernels.hpp"
 #include "bolt/gather_kernels.hpp"
 #include "bolt/generate_kernels.hpp"
+#include "bolt/merge_kernels.hpp"
 #include "bolt/min_element_kernels.hpp"
 #include "bolt/reduce_kernels.hpp"
 #include "bolt/reduce_by_key_kernels.hpp"

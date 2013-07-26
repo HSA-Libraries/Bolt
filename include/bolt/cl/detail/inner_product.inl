@@ -34,6 +34,9 @@ TODO:
 
 #include "bolt/cl/bolt.h"
 
+//TBB Includes
+#include "bolt/btbb/inner_product.h"
+
 namespace bolt {
     namespace cl {
         // default control, two-input transform, std:: iterator
@@ -161,12 +164,16 @@ namespace bolt {
 
                 if( runMode == bolt::cl::control::SerialCpu)
                 {
-                    return std::inner_product(first1, last1, first2, init, f1, f2);
+                    #if defined( _WIN32 )
+                           return std::inner_product(first1, last1, stdext::checked_array_iterator<iType*>(&(*first2), sz ), init, f1, f2);
+                    #else
+                           return std::inner_product(first1, last1, first2, init, f1, f2);
+                    #endif
                 }
                 else if(runMode == bolt::cl::control::MultiCoreCpu)
                 {
                     #ifdef ENABLE_TBB
-                           return std::inner_product(first1, last1, first2, init, f1, f2);
+                           return bolt::btbb::inner_product(first1, last1, first2, init, f1, f2);
                     #else
                            throw std::exception("MultiCoreCPU Version of inner_product not Enabled! \n");
                     #endif
@@ -202,6 +209,9 @@ namespace bolt {
                 const BinaryFunction1&f1,const BinaryFunction2& f2, const std::string& user_code,
                 bolt::cl::device_vector_tag )
             {
+                
+                size_t sz = (last1 - first1);
+
                 typedef std::iterator_traits< DVInputIterator >::value_type iType1;
                 bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
                 if(runMode == bolt::cl::control::Automatic)
@@ -213,16 +223,24 @@ namespace bolt {
                 {
                     bolt::cl::device_vector< iType1 >::pointer firstPtr =  first1.getContainer( ).data( );
                     bolt::cl::device_vector< iType1 >::pointer first2Ptr =  first2.getContainer( ).data( );
-                    return std::inner_product(  &firstPtr[ first1.m_Index ],
+                   
+                    #if defined( _WIN32 )
+                       return std::inner_product(  &firstPtr[ first1.m_Index ],
+                                                &firstPtr[ last1.m_Index ],
+                                                stdext::make_checked_array_iterator( &first2Ptr[ first2.m_Index ], sz),
+                                                init, f1, f2);
+                    #else
+                       return std::inner_product(  &firstPtr[ first1.m_Index ],
                                                 &firstPtr[ last1.m_Index ],
                                                 &first2Ptr[ first2.m_Index ], init, f1, f2);
+                    #endif
                 }
                 else if(runMode == bolt::cl::control::MultiCoreCpu)
                 {
                 #ifdef ENABLE_TBB
                     bolt::cl::device_vector< iType1 >::pointer firstPtr =  first1.getContainer( ).data( );
                     bolt::cl::device_vector< iType1 >::pointer first2Ptr =  first2.getContainer( ).data( );
-                    return std::inner_product(  &firstPtr[ first1.m_Index ],  &firstPtr[ last1.m_Index ],
+                    return bolt::btbb::inner_product(  &firstPtr[ first1.m_Index ],  &firstPtr[ last1.m_Index ],
                                                 &first2Ptr[ first2.m_Index ], init, f1, f2);
                 #else
                            throw std::exception("MultiCoreCPU Version of inner_product not Enabled! \n");
@@ -243,7 +261,7 @@ namespace bolt {
                 const BinaryFunction1& f1, const BinaryFunction2& f2, const std::string& user_code,
                 bolt::cl::fancy_iterator_tag )
             {
-
+                typedef std::iterator_traits<DVInputIterator>::value_type iType;
                 size_t sz = std::distance( first1, last1 );
 
                 bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
@@ -254,15 +272,23 @@ namespace bolt {
 
                 if( runMode == bolt::cl::control::SerialCpu)
                 {
-                    return std::inner_product(  first1,
+                    #if defined( _WIN32 )
+                           return std::inner_product(  first1,
                                                 last1,
                                                 first2,
                                                 init, f1, f2  );
+                    #else
+                           return std::inner_product(  first1,
+                                                last1,
+                                                first2,
+                                                init, f1, f2  );
+                    #endif
+
                 }
                 else if(runMode == bolt::cl::control::MultiCoreCpu)
                 {
                     #ifdef ENABLE_TBB
-                          return std::inner_product(first1, last1, first2, init, f1, f2);
+                           return bolt::btbb::inner_product(first1, last1, first2, init, f1, f2);
                     #else
                            throw std::exception("MultiCoreCPU Version of inner_product not Enabled! \n");
                     #endif

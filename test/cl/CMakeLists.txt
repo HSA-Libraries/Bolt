@@ -47,6 +47,7 @@ include_directories(
     ${BOLT_CL_TEST_DIR} 
     ${TBB_INCLUDE_DIRS} ) 
 
+add_subdirectory( BinarySearchTest )
 add_subdirectory( ControlTest )
 add_subdirectory( CopyTest )
 add_subdirectory( CountTest )
@@ -57,6 +58,7 @@ add_subdirectory( GatherTest )
 add_subdirectory( GenerateTest )
 add_subdirectory( InnerProductTest )
 add_subdirectory( MaxElementTest )
+add_subdirectory( MergeTest )
 add_subdirectory( MinElementTest )
 add_subdirectory( PairTest )
 add_subdirectory( ReduceTest )

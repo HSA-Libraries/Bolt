@@ -31,6 +31,11 @@
 #include "bolt/cl/pair.h"
 #include "bolt/cl/device_vector.h"
 
+#ifdef ENABLE_TBB
+//TBB Includes
+#include "bolt/btbb/stable_sort_by_key.h"
+#endif
+
 #define BOLT_CL_STABLESORT_BY_KEY_CPU_THRESHOLD 64
 
 namespace bolt {
@@ -277,8 +282,7 @@ namespace detail
         else if( runMode == bolt::cl::control::MultiCoreCpu )
         {
             #ifdef ENABLE_TBB
-                //TODO - Addlog for not supporting the MultiCore CPU. Implemented using serial code paths
-                serialCPU_stable_sort_by_key(keys_first, keys_last, values_first, comp);
+                bolt::btbb::stable_sort_by_key(keys_first, keys_last, values_first, comp);
             #else
                 throw std::exception("MultiCoreCPU Version of stable_sort_by_key not Enabled! \n");
             #endif
@@ -333,7 +337,7 @@ namespace detail
             #ifdef ENABLE_TBB
                 bolt::cl::device_vector< keyType >::pointer   keysPtr   =  keys_first.getContainer( ).data( );
                 bolt::cl::device_vector< valueType >::pointer valuesPtr =  values_first.getContainer( ).data( );
-                serialCPU_stable_sort_by_key(&keysPtr[keys_first.m_Index], &keysPtr[keys_last.m_Index], 
+                bolt::btbb::stable_sort_by_key(&keysPtr[keys_first.m_Index], &keysPtr[keys_last.m_Index], 
                                              &valuesPtr[values_first.m_Index], comp);
                 return;
              #else

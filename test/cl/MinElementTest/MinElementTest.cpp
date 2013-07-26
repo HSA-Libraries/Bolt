@@ -121,7 +121,6 @@ TYPED_TEST_P( MinEArrayTest, SerialNormal )
     typedef std::array< ArrayType, ArraySize > ArrayCont;
     ArrayType init(0);
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -145,7 +144,6 @@ TYPED_TEST_P( MinEArrayTest, MultiCoreNormal )
     typedef std::array< ArrayType, ArraySize > ArrayCont;
     ArrayType init(0);
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
@@ -307,7 +305,6 @@ TEST_P( MinEStdVectWithInit, CPUwithInt)
         boltInput[i] = stdInput[i];
     }
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -329,7 +326,6 @@ TEST_P( MinEStdVectWithInit, MultiCorewithInt)
         boltInput[i] = stdInput[i];
     }
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
@@ -358,27 +354,6 @@ TEST_P( MinEStdVectandCountingIterator, withCountingIterator)
     EXPECT_EQ(*stlReduce, *boltReduce);
 }
 
-TEST( MinEleDevice , DeviceVectoroffset )
-{
-    //setup containers
-    unsigned int length = 1024;
-    bolt::cl::device_vector< int > input( length );
-    for( unsigned int i = 0; i < length ; i++ )
-    {
-      input[i] = i;
-
-    }
-    
-    // call reduce
-
-    bolt::cl::device_vector< int >::iterator  boltReduce =  bolt::cl::min_element( input.begin()+20, input.end());
-    int stdReduce =  20;
-
-    EXPECT_EQ(*boltReduce,stdReduce);
-
-}
-
-
 TEST_P( MinEStdVectandCountingIterator, CPUwithCountingIterator)
 {
     bolt::cl::counting_iterator<int> first(0);
@@ -390,7 +365,6 @@ TEST_P( MinEStdVectandCountingIterator, CPUwithCountingIterator)
         a[i] = i;
     };
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -411,7 +385,6 @@ TEST_P( MinEStdVectandCountingIterator, MultiCorewithCountingIterator)
         a[i] = i;
     };
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
@@ -425,6 +398,46 @@ TEST_P( MinEStdVectandCountingIterator, MultiCorewithCountingIterator)
 INSTANTIATE_TEST_CASE_P( withInt, MinEStdVectWithInit, ::testing::Range(1, 100, 1) );
 INSTANTIATE_TEST_CASE_P( withInt, MinEStdVectandCountingIterator, ::testing::Range(1, 100, 1) );
 
+TEST( MinEleDevice , DeviceVectoroffset )
+{
+    //setup containers
+    unsigned int length = 1024;
+    bolt::cl::device_vector< int > input( length );
+    for( unsigned int i = 0; i < length ; i++ )
+    {
+      input[i] = i;
+
+    }
+
+    // call reduce
+
+    bolt::cl::device_vector< int >::iterator  boltReduce =  bolt::cl::min_element( input.begin()+20, input.end());
+    int stdReduce =  20;
+
+    EXPECT_EQ(*boltReduce,stdReduce);
+
+}
+
+TEST( MinEleDevice , DeviceVectorUintoffset )
+{
+    //setup containers
+    unsigned int length = 1024;
+    bolt::cl::device_vector< unsigned int > input( length );
+    for( unsigned int i = 0; i < length ; i++ )
+    {
+      input[i] = i;
+
+    }
+
+    // call reduce
+
+    bolt::cl::device_vector< unsigned int >::iterator  boltReduce =  bolt::cl::min_element( input.begin()+20, input.end());
+    int stdReduce =  20;
+
+    EXPECT_EQ(*boltReduce,stdReduce);
+
+}
+
 class MinETestFloat: public ::testing::TestWithParam<int>{
 protected:
     int arraySize;
@@ -433,7 +446,7 @@ public:
     {}
 };
 
-TEST_P( MinETestFloat, serialFloatValuesWdControl )
+TEST_P( MinETestFloat, FloatValuesWdControl )
 {
     std::vector<float> A( arraySize );
     std::vector<float> boltVect( arraySize );
@@ -454,7 +467,7 @@ TEST_P( MinETestFloat, serialFloatValuesWdControl )
     EXPECT_EQ( *stdMinEValue, *boltClMinE );
 }
 
-TEST_P( MinETestFloat, CPUserialFloatValuesWdControl )
+TEST_P( MinETestFloat, serialFloatValuesWdControl )
 {
     std::vector<float> A( arraySize );
     std::vector<float> boltVect( arraySize );
@@ -467,7 +480,6 @@ TEST_P( MinETestFloat, CPUserialFloatValuesWdControl )
         boltVect[i] = A[i];
     }
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -478,7 +490,7 @@ TEST_P( MinETestFloat, CPUserialFloatValuesWdControl )
     EXPECT_EQ( *stdMinEValue, *boltClMinE );
 }
 
-TEST_P( MinETestFloat, MultiCoreserialFloatValuesWdControl )
+TEST_P( MinETestFloat, MultiCoreFloatValuesWdControl )
 {
     std::vector<float> A( arraySize );
     std::vector<float> boltVect( arraySize );
@@ -491,7 +503,6 @@ TEST_P( MinETestFloat, MultiCoreserialFloatValuesWdControl )
         boltVect[i] = A[i];
     }
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
@@ -546,7 +557,7 @@ TEST_P (MinETestDouble, CPUWithDouble)
         A[i] = myFloatValues + double(i);
         boltVect[i] = A[i];
     }
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -569,7 +580,7 @@ TEST_P (MinETestDouble, MultiCoreWithDouble)
         A[i] = myFloatValues + double(i);
         boltVect[i] = A[i];
     }
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
@@ -669,7 +680,7 @@ TEST_P( MinEFloatVector, Normal )
 
 TEST_P( MinEFloatVector, CPU )
 {
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -690,7 +701,7 @@ TEST_P( MinEFloatVector, CPU )
 
 TEST_P( MinEFloatVector, MultiCore )
 {
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
@@ -815,7 +826,6 @@ TEST( MinEUDD , CPU_UDDPlusOperatorInts )
       refInput[i].b = i+1;
     }
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -838,13 +848,75 @@ TEST( MinEUDD , MultiCore_UDDPlusOperatorInts )
       refInput[i].b = i+1;
     }
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
     // call reduce
     UDD *boltMinE =bolt::cl::min_element( ctl, refInput, refInput + length );
     UDD *stdMinE = std::min_element( refInput, refInput + length );
+
+    EXPECT_EQ(*boltMinE,*stdMinE);
+
+}
+
+TEST( MinEUDD , Offset_UDDPlusOperatorInts )
+{
+    //setup containers
+    const int length = 1024;
+    UDD refInput[ length ];
+    for( int i = 0; i < length ; i++ )
+    {
+      refInput[i].a = i;
+      refInput[i].b = i+1;
+    }
+
+    // call reduce
+    UDD *boltMinE =bolt::cl::min_element( refInput + 10, refInput + length );
+    UDD *stdMinE = std::min_element( refInput + 10, refInput + length );
+
+    EXPECT_EQ(*boltMinE,*stdMinE);
+
+}
+
+TEST( MinEUDD , Offset_CPU_UDDPlusOperatorInts )
+{
+    //setup containers
+    const int length = 1024;
+    UDD refInput[ length ];
+    for( int i = 0; i < length ; i++ )
+    {
+      refInput[i].a = i;
+      refInput[i].b = i+1;
+    }
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    // call reduce
+    UDD *boltMinE =bolt::cl::min_element( ctl, refInput + 5, refInput + length );
+    UDD *stdMinE = std::min_element( refInput + 5, refInput + length );
+
+    EXPECT_EQ(*boltMinE,*stdMinE);
+
+}
+
+TEST( MinEUDD , Offset_MultiCore_UDDPlusOperatorInts )
+{
+    //setup containers
+    const int length = 1024;
+    UDD refInput[ length ];
+    for( int i = 0; i < length ; i++ )
+    {
+      refInput[i].a = i;
+      refInput[i].b = i+1;
+    }
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    // call reduce
+    UDD *boltMinE =bolt::cl::min_element( ctl, refInput+10, refInput + length );
+    UDD *stdMinE = std::min_element( refInput+10, refInput + length );
 
     EXPECT_EQ(*boltMinE,*stdMinE);
 
@@ -1161,7 +1233,7 @@ TEST( Min_Element , DISABLED_MultiCore_KcacheTest )
 int _tmain(int argc, _TCHAR* argv[])
 {
     int numIters = 100;
-
+#if 0
     //NON_GTEST
     testDeviceVector();
     Minele_TestControl(1024000, numIters, 0);
@@ -1171,7 +1243,7 @@ int _tmain(int argc, _TCHAR* argv[])
     Minele_TestControl(100, 1, 0);
     simpleReduce_TestSerial(1000);
     simpleMinele_countingiterator(20,10);
-
+#endif
     //GTEST
     ::testing::InitGoogleTest( &argc, &argv[ 0 ] );
 

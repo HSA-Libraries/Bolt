@@ -22,8 +22,6 @@
 #define WAVESIZE 64
 
 
-
-
 #ifdef ENABLE_TBB
 //TBB Includes
 #include "bolt/btbb/scan_by_key.h"
