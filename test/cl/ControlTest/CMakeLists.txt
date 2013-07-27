@@ -16,7 +16,7 @@
 ############################################################################                                                                                     
 
 # List the names of common files to compile across all platforms
-set( clBolt.Test.Control.Source stdafx.cpp Control.test.cpp )
+set( clBolt.Test.Control.Source stdafx.cpp control.test.cpp )
 set( clBolt.Test.Control.Headers stdafx.h targetver.h ${BOLT_INCLUDE_DIR}/bolt/cl/control.h )
 
 set( clBolt.Test.Control.Files ${clBolt.Test.Control.Source} ${clBolt.Test.Control.Headers} )

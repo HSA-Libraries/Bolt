@@ -16,7 +16,7 @@
 ############################################################################                                                                                     
 
 # List the names of common files to compile across all platforms
-set( clBolt.Bench.Generate.Source stdafx.cpp Generate.cpp )
+set( clBolt.Bench.Generate.Source stdafx.cpp generate.cpp )
 set( clBolt.Bench.Generate.Headers stdafx.h targetver.h ${BOLT_INCLUDE_DIR}/bolt/cl/generate.h )
 
 set( clBolt.Bench.Generate.Files ${clBolt.Bench.Generate.Source} ${clBolt.Bench.Generate.Headers} )

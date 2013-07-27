@@ -16,7 +16,7 @@
 ############################################################################                                                                                     
 
 # List the names of common files to compile across all platforms
-set( clBolt.Bench.Reduce.Source stdafx.cpp Reduce.cpp )
+set( clBolt.Bench.Reduce.Source stdafx.cpp reduce.cpp )
 set( clBolt.Bench.Reduce.Headers stdafx.h targetver.h ${BOLT_INCLUDE_DIR}/bolt/cl/reduce.h ${BOLT_INCLUDE_DIR}/bolt/cl/detail/reduce.inl)
 
 set( clBolt.Bench.Reduce.Files ${clBolt.Bench.Reduce.Source} ${clBolt.Bench.Reduce.Headers} )

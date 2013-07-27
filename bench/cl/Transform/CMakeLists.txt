@@ -16,7 +16,7 @@
 ############################################################################                                                                                     
 
 # List the names of common files to compile across all platforms
-set( clBolt.Bench.Transform.Source stdafx.cpp Transform.cpp )
+set( clBolt.Bench.Transform.Source stdafx.cpp transform.cpp )
 set( clBolt.Bench.Transform.Headers stdafx.h targetver.h ${BOLT_INCLUDE_DIR}/bolt/cl/transform.h )
 
 set( clBolt.Bench.Transform.Files ${clBolt.Bench.Transform.Source} ${clBolt.Bench.Transform.Headers} )
