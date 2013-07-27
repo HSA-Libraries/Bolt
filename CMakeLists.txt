@@ -83,7 +83,15 @@ else()
 endif()
 
 # Various options below on configuring the build, and how to generate the solution files
-option( BUILD_ampBolt "Create a solution that compiles Bolt for AMP" ON )
+
+if ( MSVC )
+# Only Visual Studio compiler may build Bolt for AMP
+    set(Bolt_ampDefault ON)
+else ()
+    set(Bolt_ampDefault OFF)
+endif()
+
+option( BUILD_ampBolt "Create a solution that compiles Bolt for AMP" ${Bolt_ampDefault} )
 option( BUILD_clBolt "Create a solution that compiles Bolt for OpenCL" ON )
 option( BUILD_StripSymbols "When making debug builds, remove symbols and program database files" OFF )
  
