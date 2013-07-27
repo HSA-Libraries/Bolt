@@ -25,7 +25,7 @@
 #include <vector>
 #include <numeric>
 
-#define BITS_IN_UNSIGEND (8*sizeof(unsigned))
+const int BITS_IN_UNSIGNED = (8*sizeof(unsigned));
 
 template <typename T>
 void CheckAscending(T &input, size_t length)
@@ -55,14 +55,13 @@ void SerialRadixSort (const std::vector<unsigned> &input, size_t length, std::ve
     std::vector<unsigned> vBuffer0(length);
     std::vector<unsigned> vBuffer1(length);
 
-    for (int iter = 0; iter < BITS_IN_UNSIGEND; iter++)
+    for (int iter = 0; iter < BITS_IN_UNSIGNED; iter++)
     {
         int iOffsetB0 = 0;
         int iOffsetB1 = 0;
-        int i = 0;
 
         // Separate 0s and 1s to separate buffers
-        for (i = 0; i < length; i++)
+        for (int i = 0; i < length; i++)
         {
             if ((vInput[i] & (1<<iter)) == 0) // 0s
                 vBuffer0[iOffsetB0++] = vInput[i];
@@ -110,7 +109,7 @@ void BoltRadixSort (const std::vector<unsigned> &input, size_t length, std::vect
     bolt::cl::device_vector<unsigned> dvMaskedVals(length);
     bolt::cl::device_vector<unsigned> dvOffsetVals(length);
 
-    for (int iter = 0; iter < BITS_IN_UNSIGEND; iter += 2)
+    for (int iter = 0; iter < BITS_IN_UNSIGNED; iter += 2)
     {
         // iter
         // Separate 0s first
