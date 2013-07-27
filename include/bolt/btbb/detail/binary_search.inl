@@ -40,7 +40,7 @@ namespace bolt{
                     tbb::parallel_for(  tbb::blocked_range<int>(0, (int) n) ,
                         [&] (const tbb::blocked_range<int> &r) -> void
                         {
-                              
+
                               int low=r.begin();
                               int high=r.end();
                               int mid;
@@ -49,19 +49,19 @@ namespace bolt{
                               while(low<high)
                               {
                                      mid = (low + high) / 2;
-        
+
                                      midVal = first[mid];
                                      firstVal = first[low];
-  
+
                                      if( midVal == val)
                                      {
                                             result = true;
                                             break;
                                      }
-                                     else if (midVal < val) 
+                                     else if (midVal < val)
                                             low = mid + 1;
-                                     else	
-                                            high = mid;    
+                                     else
+                                            high = mid;
                               }
 
                               //result = std::binary_search(first+r.begin(), first+r.end(), val);
@@ -83,7 +83,7 @@ namespace bolt{
                     tbb::parallel_for(  tbb::blocked_range<int>(0, (int) n) ,
                         [&] (const tbb::blocked_range<int> &r) -> void
                         {
-                              
+
                               int low=r.begin();
                               int high=r.end();
                               int mid;
@@ -92,19 +92,19 @@ namespace bolt{
                               while(low<high)
                               {
                                      mid = (low + high) / 2;
-        
+
                                      midVal = first[mid];
                                      firstVal = first[low];
-  
+
                                      if( (!comp(midVal, val)) && (!comp(val, midVal)) )
                                      {
-                                            result = true;
+                                            this->result = true;
                                             break;
                                      }
-                                     else if ( comp(midVal, val) ) 
+                                     else if ( comp(midVal, val) )
                                             low = mid + 1;
-                                     else	
-                                            high = mid;    
+                                     else
+                                            high = mid;
                               }
 
                               //result = std::binary_search(first+r.begin(), first+r.end(), val, comp);
@@ -116,7 +116,7 @@ namespace bolt{
             template<typename ForwardIterator, typename T, typename StrictWeakOrdering>
             bool binary_search( ForwardIterator first, ForwardIterator last, const T & value, StrictWeakOrdering comp)
             {
-              
+
                //This allows TBB to choose the number of threads to spawn.
                tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
 
@@ -131,7 +131,7 @@ namespace bolt{
             template<typename ForwardIterator, typename T>
             bool binary_search( ForwardIterator first, ForwardIterator last, const T & value)
             {
-              
+
                //This allows TBB to choose the number of threads to spawn.
                tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
 
@@ -143,7 +143,7 @@ namespace bolt{
                return bs_op.result;
             }
 
-       
+
     } //tbb
 } // bolt
 
