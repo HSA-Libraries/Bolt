@@ -30,7 +30,17 @@ message( STATUS "ext.Boost_VERSION: " ${ext.Boost_VERSION} )
 # message( STATUS "status: " ${fileStatus} )
 # message( STATUS "log: " ${fileLog} )
 
-set( Boost.Command b2 -j 4 --with-program_options --with-thread --with-system --with-date_time --with-chrono )
+# Initialize various command names based on platform
+if ( UNIX )
+        set(Boost.B2 "./b2")
+	set(Boost.Bootstrap "./bootstrap.sh")
+else( )
+        set(Boost.B2 "b2")
+	set(Boost.Bootstrap "bootstrap.bat")
+endif( )
+
+
+set( Boost.Command ${Boost.B2} -j 4 --with-program_options --with-thread --with-system --with-date_time --with-chrono )
 
 if( Bolt_BUILD64 )
 	list( APPEND Boost.Command address-model=64 )
@@ -64,7 +74,7 @@ ExternalProject_Add(
 	PREFIX ${CMAKE_CURRENT_BINARY_DIR}/external/boost
     URL ${ext.Boost_URL}
 	URL_MD5 f310a8198318c10e5e4932a07c755a6a
-    UPDATE_COMMAND "bootstrap.bat"
+    UPDATE_COMMAND ${Boost.Bootstrap}
 #    PATCH_COMMAND ""
 	CONFIGURE_COMMAND ""
 	BUILD_COMMAND ${Boost.Command}
