@@ -185,6 +185,51 @@ TYPED_TEST_P( CopyArrayTest,CPU_DeviceNormal )
 REGISTER_TYPED_TEST_CASE_P( CopyArrayTest, CPU_DeviceNormal);
 #endif
 
+TYPED_TEST_P( CopyArrayTest,GPU_DeviceNormal )
+{
+    typedef std::array< ArrayType, ArraySize > ArrayCont;
+
+    MyOclContext oclcpu = initOcl(CL_DEVICE_TYPE_GPU, 0);
+    bolt::cl::control c_gpu(oclcpu._queue);  // construct control structure from the queue.
+
+    //  Calling the actual functions under test
+    std::copy( stdInput.begin( ), stdInput.end( ), stdOutput.begin() );
+    bolt::cl::copy( c_gpu, boltInput.begin( ), boltInput.end( ) , boltOutput.begin());
+
+    ArrayCont::difference_type stdNumElements = std::distance( stdOutput.begin( ), stdOutput.end() );
+    ArrayCont::difference_type boltNumElements = std::distance( boltOutput.begin( ), boltOutput.end() );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdOutput, boltOutput );
+
+    //OFFSET Test cases
+    //  Calling the actual functions under test
+    size_t startIndex = 17; //Some aribitrary offset position
+    size_t endIndex   = ArraySize - 17; //Some aribitrary offset position
+    if( (( startIndex > ArraySize ) || ( endIndex < 0 ) )  || (startIndex > endIndex) )
+    {
+        std::cout <<"\nSkipping NormalOffset Test for size "<< ArraySize << "\n";
+    }
+    else
+    {
+        std::copy( stdOffsetIn.begin( ) + startIndex, stdOffsetIn.begin( ) + endIndex, stdOffsetOut.begin() );
+        bolt::cl::copy( c_gpu, boltOffsetIn.begin( ) + startIndex, boltOffsetIn.begin( ) + endIndex, boltOffsetOut.begin() );
+
+        ArrayCont::difference_type stdNumElements = std::distance( stdOffsetOut.begin( ), stdOffsetOut.end( ) );
+        ArrayCont::difference_type boltNumElements = std::distance(  boltOffsetOut.begin( ),  boltOffsetOut.end( ) );
+
+        //  Both collections should have the same number of elements
+        EXPECT_EQ( stdNumElements, boltNumElements );
+
+        //  Loop through the array and compare all the values with each other
+        cmpStdArray< ArrayType, ArraySize >::cmpArrays(  stdOffsetOut,  boltOffsetOut );
+    }
+}
+REGISTER_TYPED_TEST_CASE_P( CopyArrayTest, GPU_DeviceNormal);
+
 typedef ::testing::Types<
     std::tuple< cl_long, TypeValue< 1 > >,
     std::tuple< cl_long, TypeValue< 31 > >,
