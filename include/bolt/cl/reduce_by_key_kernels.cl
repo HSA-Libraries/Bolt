@@ -40,6 +40,8 @@ __kernel void OffsetCalculation(
     size_t locId = get_local_id( 0 );
     size_t wgSize = get_local_size( 0 );
     
+	 if (gloId >= vecSize) return;
+
     kType key, prev_key;
 
     if(gloId > 0){
