@@ -189,8 +189,10 @@ TYPED_TEST_P( CopyArrayTest,GPU_DeviceNormal )
 {
     typedef std::array< ArrayType, ArraySize > ArrayCont;
 
-    MyOclContext oclcpu = initOcl(CL_DEVICE_TYPE_GPU, 0);
-    bolt::cl::control c_gpu(oclcpu._queue);  // construct control structure from the queue.
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    std::vector< cl::Device > devices = myContext.getInfo< CL_CONTEXT_DEVICES >();
+    ::cl::CommandQueue myQueue( myContext, devices[ 0 ] );
+    bolt::cl::control c_gpu( myQueue );  // construct control structure from the queue.
 
     //  Calling the actual functions under test
     std::copy( stdInput.begin( ), stdInput.end( ), stdOutput.begin() );
