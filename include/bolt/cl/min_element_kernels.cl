@@ -17,15 +17,27 @@
 
 //#pragma OPENCL EXTENSION cl_amd_printf : enable
 
-#define _REDUCE_STEP(_LENGTH, _IDX, _W) \
-    if ((_IDX < _W) && ((_IDX + _W) < _LENGTH)) {\
+#define _REDUCE_STEP(_LENGTH, _IDX, _W)\
+if ((_IDX < _W) && ((_IDX + _W) < _LENGTH)) {\
       iTypePtr mine = scratch[_IDX];\
       iTypePtr other = scratch[_IDX + _W];\
-      stat = (*userFunctor)(mine, other);\
-      scratch[_IDX] = stat ? mine : other ; \
-      scratch_index[_IDX] = stat ? scratch_index[_IDX] : scratch_index[_IDX + _W];\
-    }\
+		stat = (*userFunctor)(mine, other);\
+		scratch[_IDX] = stat ? mine : other ;\
+		scratch_index[_IDX] = stat ? scratch_index[_IDX]:scratch_index[_IDX + _W];\
+		}\
     barrier(CLK_LOCAL_MEM_FENCE);
+
+
+	#define _REDUCE_STEP_MAX(_LENGTH, _IDX, _W)\
+	if ((_IDX < _W) && ((_IDX + _W) < _LENGTH)) {\
+      iTypePtr mine = scratch[_IDX];\
+      iTypePtr other = scratch[_IDX + _W];\
+		stat = (*userFunctor)(other, mine);\
+		scratch[_IDX] = stat ? mine : other ;\
+		scratch_index[_IDX] = stat ? scratch_index[_IDX]:scratch_index[_IDX + _W];\
+		}\
+    barrier(CLK_LOCAL_MEM_FENCE);
+
 
 template< typename iTypePtr, typename iTypeIter, typename binary_function >
 kernel void min_elementTemplate(
@@ -43,7 +55,6 @@ kernel void min_elementTemplate(
     int gloId = gx;
     bool stat;
     
-
     input_iter.init( input_ptr );
 
     //  Initialize the accumulator private variable with data from the input array
@@ -59,9 +70,14 @@ kernel void min_elementTemplate(
     while (gx < length)
     {
         iTypePtr element = input_iter[gx];
-        stat =  (*userFunctor)(accumulator, element);
-        accumulator = stat ? accumulator:element;
-        igx = stat ? igx : gx;
+		#if defined(_IS_MAX_KERNEL)
+			stat =  (*userFunctor)(accumulator, element);			
+		#endif
+		#if defined(_IS_MIN_KERNEL)
+			stat =  (*userFunctor)(element,accumulator);
+		#endif
+		accumulator = stat ? element: accumulator;
+		igx = stat ? igx : gx;
         gx += get_global_size(0);
     }
 
@@ -76,12 +92,24 @@ kernel void min_elementTemplate(
 
     // Parallel reduction within a given workgroup using local data store
     // to share values between workitems
-    _REDUCE_STEP(tail, local_index, 32);
+
+ #if defined(_IS_MAX_KERNEL)
+    _REDUCE_STEP_MAX(tail, local_index, 32);
+    _REDUCE_STEP_MAX(tail, local_index, 16);
+    _REDUCE_STEP_MAX(tail, local_index,  8);
+    _REDUCE_STEP_MAX(tail, local_index,  4);
+    _REDUCE_STEP_MAX(tail, local_index,  2);
+    _REDUCE_STEP_MAX(tail, local_index,  1);	
+#endif
+#if defined(_IS_MIN_KERNEL)
+	_REDUCE_STEP(tail, local_index, 32);
     _REDUCE_STEP(tail, local_index, 16);
     _REDUCE_STEP(tail, local_index,  8);
     _REDUCE_STEP(tail, local_index,  4);
     _REDUCE_STEP(tail, local_index,  2);
     _REDUCE_STEP(tail, local_index,  1);
+#endif
+
  
     //  Abort threads that are passed the end of the input vector
     if( gloId >= length )
