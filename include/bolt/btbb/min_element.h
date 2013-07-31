@@ -19,6 +19,10 @@
 #if !defined( BOLT_BTBB_MIN_ELEMENT_H )
 #define BOLT_BTBB_MIN_ELEMENT_H
 
+#include "tbb/parallel_reduce.h"
+#include "tbb/blocked_range.h"
+#include "tbb/task_scheduler_init.h"
+
 /*! \file bolt/tbb/min_element.h
     \brief finds the minimum element in the given input vector
 */
@@ -27,15 +31,11 @@
 namespace bolt {
     namespace btbb {
 
-        template<typename ForwardIterator>
-        ForwardIterator min_element(ForwardIterator first, ForwardIterator last);
-
         template<typename ForwardIterator,typename BinaryPredicate>
         ForwardIterator min_element(ForwardIterator first, ForwardIterator last, BinaryPredicate binary_op);
 
-        template<typename ForwardIterator>
-        ForwardIterator max_element(ForwardIterator first, ForwardIterator last);
-
+        template<typename ForwardIterator,typename BinaryPredicate>
+        ForwardIterator max_element(ForwardIterator first, ForwardIterator last, BinaryPredicate binary_op);
 
     };
 };

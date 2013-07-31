@@ -28,139 +28,92 @@
 namespace bolt{
     namespace btbb {
 
-             template<typename ForwardIterator>
-             struct Min_Element 
-             {
-
-               ForwardIterator result;
-
-               Min_Element (): result(0) {}
-               Min_Element (ForwardIterator _x ): result(_x) {}
-
-               void operator()( ForwardIterator first, ForwardIterator last)
-                {
-                    if (first == last) 
-                        result = last;
-                    else
-                    {   
-                      result = first;
-
-                      tbb::parallel_for(  tbb::blocked_range<ForwardIterator>(first, last) ,
-                        [&] (const tbb::blocked_range<ForwardIterator> &r) -> void
-                        {
-                              for(ForwardIterator a = r.begin(); a!=r.end(); ++a)
-                              {
-                                   if (*a<*result)  
-                                      result = a;
-
-                              }   
-                          
-                        });
-                    }
-                }
-
-            };
-
-
             template<typename ForwardIterator, typename BinaryPredicate>
             struct Min_Element_comp 
-            {
+            {    
+                ForwardIterator value;
+                BinaryPredicate op;
+                bool flag;
 
-               ForwardIterator result;
-
-               Min_Element_comp (): result(0) {}
-               Min_Element_comp (ForwardIterator _x ): result(_x) {}
-
-               void operator()( ForwardIterator first, ForwardIterator last,BinaryPredicate comp )
-                {
-                    if (first == last) 
-                        result = last;
-                    else
-                    {    
-                      result = first;
-
-                      tbb::parallel_for(  tbb::blocked_range<ForwardIterator>(first, last) ,
-                        [&] (const tbb::blocked_range<ForwardIterator> &r) -> void
-                        {
-                              for(ForwardIterator a = r.begin(); a!=r.end(); ++a)
-                              {
-                                     if (comp (*a, *result)) 
-                                           this->result = a;
-
-                              }   
-                          
-                        });
+               
+                Min_Element_comp ( ForwardIterator &_val, BinaryPredicate &_op): op(_op), value(_val) {}
+                Min_Element_comp( Min_Element_comp& s, tbb::split ) : flag(TRUE), op(s.op), value(s.value) {}
+                void operator()( const tbb::blocked_range<ForwardIterator>& r ) {
+                    ForwardIterator temp = value;
+                    
+                    for( ForwardIterator a=r.begin(); a!=r.end(); ++a ) {
+                      if(flag){
+                        temp = a;
+                        flag = FALSE;
+                      }
+                      else{
+                         if(op(*a, *temp))
+                           temp = a;
+                      }
                     }
+                    value = temp;
                 }
-
+                void join( Min_Element_comp& rhs )
+                {
+                       if(op( *rhs.value, *value))
+                           value = rhs.value;
+                }
             };
 
-            template<typename ForwardIterator>
-            struct Max_Element 
+            template<typename ForwardIterator, typename BinaryPredicate>
+            struct Max_Element_comp 
+            {    
+                ForwardIterator value;
+                BinaryPredicate op;
+                bool flag;
+
+               
+                Max_Element_comp ( ForwardIterator &_val, BinaryPredicate &_op): op(_op), value(_val) {}
+                Max_Element_comp( Max_Element_comp& s, tbb::split ) : flag(TRUE), op(s.op), value(s.value) {}
+                void operator()( const tbb::blocked_range<ForwardIterator>& r ) {
+                    ForwardIterator temp = value;
+                    
+                    for( ForwardIterator a=r.begin(); a!=r.end(); ++a ) {
+                      if(flag){
+                        temp = a;
+                        flag = FALSE;
+                      }
+                      else{
+                         if(op(*temp, *a))
+                           temp = a;
+                      }
+                    }
+                    value = temp;
+                }
+                void join( Max_Element_comp& rhs )
+                {
+                       if(op( *value, *rhs.value))
+                           value = rhs.value;
+                }
+            };
+
+            template<typename ForwardIterator,typename BinaryPredicate>
+            ForwardIterator min_element(ForwardIterator first, ForwardIterator last, BinaryPredicate binary_op)
             {
 
-               ForwardIterator result;
+               tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
+               Min_Element_comp<ForwardIterator, BinaryPredicate> min_element_op(first, binary_op);
+               tbb::parallel_reduce( tbb::blocked_range<ForwardIterator>( first, last), min_element_op );
+               return min_element_op.value;
+             
+            }
 
-               Max_Element (): result(0) {}
-               Max_Element (ForwardIterator _x ): result(_x) {}
+            template<typename ForwardIterator,typename BinaryPredicate>
+            ForwardIterator max_element(ForwardIterator first, ForwardIterator last, BinaryPredicate binary_op)
+            {
 
-               void operator()( ForwardIterator first, ForwardIterator last)
-                {
-                    if (first == last) 
-                        result = last;
-                    else
-                    {   
-                      result = first;
-
-                      tbb::parallel_for(  tbb::blocked_range<ForwardIterator>(first, last) ,
-                        [&] (const tbb::blocked_range<ForwardIterator> &r) -> void
-                        {
-                              for(ForwardIterator a = r.begin(); a!=r.end(); ++a)
-                              {
-                                   if (*a>*result)  
-                                      result = a;
-
-                              }   
-                          
-                        });
-                    }
-                }
-
-           };
-
-           template<typename ForwardIterator>
-           ForwardIterator min_element(ForwardIterator first, ForwardIterator last)
-           {
-             //This allows TBB to choose the number of threads to spawn.
-             tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
-             Min_Element <ForwardIterator> min_element_op(first);
-             min_element_op(first, last);
-
-             return min_element_op.result;
-          }
+              tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
+              Max_Element_comp<ForwardIterator, BinaryPredicate> max_element_op(first, binary_op);
+              tbb::parallel_reduce( tbb::blocked_range<ForwardIterator>( first, last), max_element_op );
+              return max_element_op.value;  
+            }
 
 
-          template<typename ForwardIterator,typename BinaryPredicate>
-          ForwardIterator min_element(ForwardIterator first, ForwardIterator last, BinaryPredicate binary_op)
-          {
-             //This allows TBB to choose the number of threads to spawn.
-             tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
-             Min_Element_comp <ForwardIterator, BinaryPredicate> min_element_op(first);
-             min_element_op(first, last, binary_op);
-
-             return min_element_op.result;
-          }
-
-          template<typename ForwardIterator>
-          ForwardIterator max_element(ForwardIterator first, ForwardIterator last)
-          {
-             //This allows TBB to choose the number of threads to spawn.
-             tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
-             Max_Element <ForwardIterator> max_element_op(first);
-             max_element_op(first, last);
-
-             return max_element_op.result;
-          } 
     } //tbb
 } // bolt
 
