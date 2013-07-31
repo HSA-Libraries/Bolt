@@ -17,7 +17,7 @@
 
 //#pragma OPENCL EXTENSION cl_amd_printf : enable
 
-#define _REDUCE_STEP(_LENGTH, _IDX, _W)\
+#define _REDUCE_STEP_MIN(_LENGTH, _IDX, _W)\
 if ((_IDX < _W) && ((_IDX + _W) < _LENGTH)) {\
       iTypePtr mine = scratch[_IDX];\
       iTypePtr other = scratch[_IDX + _W];\
@@ -72,8 +72,7 @@ kernel void min_elementTemplate(
         iTypePtr element = input_iter[gx];
 		#if defined(_IS_MAX_KERNEL)
 			stat =  (*userFunctor)(accumulator, element);			
-		#endif
-		#if defined(_IS_MIN_KERNEL)
+		#else if
 			stat =  (*userFunctor)(element,accumulator);
 		#endif
 		accumulator = stat ? element: accumulator;
@@ -100,14 +99,13 @@ kernel void min_elementTemplate(
     _REDUCE_STEP_MAX(tail, local_index,  4);
     _REDUCE_STEP_MAX(tail, local_index,  2);
     _REDUCE_STEP_MAX(tail, local_index,  1);	
-#endif
-#if defined(_IS_MIN_KERNEL)
-	_REDUCE_STEP(tail, local_index, 32);
-    _REDUCE_STEP(tail, local_index, 16);
-    _REDUCE_STEP(tail, local_index,  8);
-    _REDUCE_STEP(tail, local_index,  4);
-    _REDUCE_STEP(tail, local_index,  2);
-    _REDUCE_STEP(tail, local_index,  1);
+#else if
+	_REDUCE_STEP_MIN(tail, local_index, 32);
+    _REDUCE_STEP_MIN(tail, local_index, 16);
+    _REDUCE_STEP_MIN(tail, local_index,  8);
+    _REDUCE_STEP_MIN(tail, local_index,  4);
+    _REDUCE_STEP_MIN(tail, local_index,  2);
+    _REDUCE_STEP_MIN(tail, local_index,  1);
 #endif
 
  
