@@ -396,6 +396,25 @@ TEST_P( MaxEStdVectandCountingIterator, withCountingIterator)
     EXPECT_EQ(*stlReduce, *boltReduce);
 }
 
+
+TEST_P( MaxEStdVectandCountingIterator, comp_withCountingIterator)
+{
+    bolt::cl::counting_iterator<int> first(0);
+    bolt::cl::counting_iterator<int> last = first +  mySize;
+
+    std::vector<int> a(mySize);
+
+    for (int i=0; i < mySize; i++) {
+        a[i] = i;
+    };
+    
+    std::vector<int>::iterator stlReduce = std::max_element(a.begin(), a.end(), std::less< int >());
+    bolt::cl::counting_iterator<int> boltReduce = bolt::cl::max_element(first, last,  bolt::cl::less< int >( ));
+
+    EXPECT_EQ(*stlReduce, *boltReduce);
+}
+
+
 TEST_P( MaxEStdVectandCountingIterator, SerialwithCountingIterator)
 {
     bolt::cl::counting_iterator<int> first(0);
@@ -415,6 +434,28 @@ TEST_P( MaxEStdVectandCountingIterator, SerialwithCountingIterator)
 
     EXPECT_EQ(*stlReduce, *boltReduce);
 }
+
+
+TEST_P( MaxEStdVectandCountingIterator, Serial_comp_withCountingIterator)
+{
+    bolt::cl::counting_iterator<int> first(0);
+    bolt::cl::counting_iterator<int> last = first +  mySize;
+
+    std::vector<int> a(mySize);
+
+    for (int i=0; i < mySize; i++) {
+        a[i] = i;
+    };
+    
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+    
+    std::vector<int>::iterator stlReduce = std::max_element(a.begin(), a.end(), std::less< int >());
+    bolt::cl::counting_iterator<int> boltReduce = bolt::cl::max_element(ctl, first, last,  bolt::cl::less< int >( ) );
+    
+    EXPECT_EQ(*stlReduce, *boltReduce);
+}
+
 
 TEST_P( MaxEStdVectandCountingIterator, MultiCorewithCountingIterator)
 {
@@ -436,6 +477,25 @@ TEST_P( MaxEStdVectandCountingIterator, MultiCorewithCountingIterator)
     EXPECT_EQ(*stlReduce, *boltReduce);
 }
 
+TEST_P( MaxEStdVectandCountingIterator, MultiCore_comp_withCountingIterator)
+{
+    bolt::cl::counting_iterator<int> first(0);
+    bolt::cl::counting_iterator<int> last = first +  mySize;
+
+    std::vector<int> a(mySize);
+
+    for (int i=0; i < mySize; i++) {
+        a[i] = i ;
+    };
+    
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+    
+    std::vector<int>::iterator stlReduce = std::max_element(a.begin(), a.end(), std::less< int >());
+    bolt::cl::counting_iterator<int> boltReduce = bolt::cl::max_element(ctl, first, last,  bolt::cl::less< int >( ) );
+
+    EXPECT_EQ(*stlReduce, *boltReduce);
+}
 
 INSTANTIATE_TEST_CASE_P( withInt, MaxEStdVectWithInit, ::testing::Range(1, 100, 1) );
 INSTANTIATE_TEST_CASE_P( withInt, MaxEStdVectandCountingIterator, ::testing::Range(1, 100, 1) );
@@ -617,6 +677,25 @@ TEST_P( MaxEIntegerVector, Normal )
 
 }
 
+TEST_P( MaxEIntegerVector, comp_Normal )
+{
+    
+    //  Calling the actual functions under test
+    std::vector<int>::iterator stlMaxE = std::max_element( stdInput.begin(), stdInput.end(), std::less<int> ());
+    std::vector<int>::iterator boltMaxE = bolt::cl::max_element( boltInput.begin( ), boltInput.end( ), bolt::cl::less<int> () );
+
+    size_t stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
+    size_t boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+    EXPECT_TRUE( *stlMaxE == *boltMaxE );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+
+}
+
 TEST_P( MaxEIntegerVector, SerialNormal )
 {
 
@@ -639,6 +718,28 @@ TEST_P( MaxEIntegerVector, SerialNormal )
 
 }
 
+TEST_P( MaxEIntegerVector, comp_SerialNormal )
+{
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+    
+    //  Calling the actual functions under test
+    std::vector<int>::iterator stlMaxE = std::max_element( stdInput.begin(), stdInput.end(), std::less<int> ());
+    std::vector<int>::iterator boltMaxE = bolt::cl::max_element(ctl, boltInput.begin( ), boltInput.end( ), bolt::cl::less<int>());
+
+    size_t stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
+    size_t boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+    EXPECT_TRUE( *stlMaxE == *boltMaxE );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+
+}
+
 TEST_P( MaxEIntegerVector, MultiCoreNormal )
 {
 
@@ -648,6 +749,28 @@ TEST_P( MaxEIntegerVector, MultiCoreNormal )
     //  Calling the actual functions under test
     std::vector<int>::iterator stlMaxE = std::max_element( stdInput.begin(), stdInput.end() );
     std::vector<int>::iterator boltMaxE = bolt::cl::max_element(ctl, boltInput.begin( ), boltInput.end( ) );
+
+    size_t stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
+    size_t boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+    EXPECT_TRUE( *stlMaxE == *boltMaxE );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArrays( stdInput, boltInput );
+
+}
+
+TEST_P( MaxEIntegerVector, comp_MultiCoreNormal )
+{
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+    
+    //  Calling the actual functions under test
+    std::vector<int>::iterator stlMaxE = std::max_element( stdInput.begin(), stdInput.end(), std::less<int>() );
+    std::vector<int>::iterator boltMaxE = bolt::cl::max_element(ctl, boltInput.begin( ), boltInput.end( ), bolt::cl::less<int>() );
 
     size_t stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
     size_t boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
@@ -792,6 +915,7 @@ struct UDD
 
 BOLT_CREATE_TYPENAME( bolt::cl::device_vector< UDD >::iterator );
 BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::greater, int, UDD );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::less, int, UDD );
 BOLT_CREATE_CLCODE( bolt::cl::device_vector< UDD >::iterator, bolt::cl::deviceVectorIteratorTemplate );
 
 TEST( MaxEUDD , UDDPlusOperatorInts )
