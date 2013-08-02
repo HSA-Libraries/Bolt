@@ -28,7 +28,9 @@
 #include "bolt/cl/device_vector.h"
 
 //TBB Includes
+#ifdef ENABLE_TBB
 #include "bolt/btbb/binary_search.h"
+#endif
 
 namespace bolt {
     namespace cl {

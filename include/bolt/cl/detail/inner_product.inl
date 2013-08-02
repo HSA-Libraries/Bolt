@@ -35,7 +35,9 @@ TODO:
 #include "bolt/cl/bolt.h"
 
 //TBB Includes
+#ifdef ENABLE_TBB
 #include "bolt/btbb/inner_product.h"
+#endif
 
 namespace bolt {
     namespace cl {
