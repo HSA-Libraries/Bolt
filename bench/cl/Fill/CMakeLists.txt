@@ -16,7 +16,7 @@
 ############################################################################                                                                                     
 
 # List the names of common files to compile across all platforms
-set( clBolt.Bench.Fill.Source stdafx.cpp Fill.cpp )
+set( clBolt.Bench.Fill.Source stdafx.cpp fill.cpp )
 set( clBolt.Bench.Fill.Headers stdafx.h targetver.h ${BOLT_INCLUDE_DIR}/bolt/cl/fill.h )
 
 set( clBolt.Bench.Fill.Files ${clBolt.Bench.Fill.Source} ${clBolt.Bench.Fill.Headers} )

@@ -71,13 +71,20 @@ else()
 	message( STATUS "32bit build - FIND_LIBRARY_USE_LIB64_PATHS FALSE" )
 endif()
 
+# Only Visual Studio may build Bolt with C++AMP as of now
+if( MSVC )
+	set(Bolt_Amp_default ON)
+else()
+	set(Bolt_Amp_default OFF)
+endif()
+
 # Various options below on configuring the build, and how to generate the solution files
 option( BUILD_Boost "Install and Compile Boost as an external dependency" ON )
 option( BUILD_Doxygen "Install Doxygen as an external dependency" ON )
 option( BUILD_Bolt "Setup Bolt to use all the external dependencies" ON )
 option( BUILD_gTest "Install googleTest as an external dependency" ON )
 option( BUILD_TBB "Install TBB as an external dependency" OFF )
-option( BUILD_AMP "Generate projects that use the AMP backend" ON )
+option( BUILD_AMP "Generate projects that use the AMP backend" ${Bolt_Amp_default} )
 option( BUILD_OpenCL "Generate projects that use the OpenCL backend" ON )
 option( BUILD_StripSymbols "When making debug builds, remove symbols and program database files" OFF )
 
