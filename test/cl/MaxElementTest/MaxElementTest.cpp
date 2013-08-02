@@ -37,7 +37,23 @@
 #include "bolt/miniDump.h"
 
 
-extern void testDeviceVector();
+void testDeviceVector()
+{
+    const int aSize = 1000;
+    std::vector<int> hA(aSize);
+    bolt::cl::device_vector<int> dA(aSize);
+
+    for(int i=0; i<aSize; i++) {
+        hA[i] = i;
+        dA[i] = i;
+    };
+
+    std::vector<int>::iterator smaxdex = std::max_element(hA.begin(), hA.end());
+     bolt::cl::device_vector<int>::iterator bmaxdex = bolt::cl::max_element(dA.begin(), dA.end(),bolt::cl::greater<int>());
+
+};
+
+
 
 /////////////////////////////////////////////////////////////////////////////////////////////
 //  GTEST CASES
@@ -67,6 +83,8 @@ T generateRandom()
         return (T)fmod(value, 10.0);
     }
 }
+
+/*
 //  Test fixture class, used for the Type-parameterized tests
 //  Namely, the tests that use std::array and TYPED_TEST_P macros
 template< typename ArrayTuple >
@@ -90,7 +108,7 @@ public:
 
 protected:
     typedef typename std::tuple_element< 0, ArrayTuple >::type ArrayType;
-    static const size_t ArraySize = typename std::tuple_element< 1, ArrayTuple >::type::value;
+    static const size_t ArraySize =  std::tuple_element< 1, ArrayTuple >::type::value;
     typename std::array< ArrayType, ArraySize > stdInput, boltInput;
     int m_Errors;
 };
@@ -121,6 +139,7 @@ TYPED_TEST_P( MaxEArrayTest, SerialNormal )
     typedef std::array< ArrayType, ArraySize > ArrayCont;
     ArrayType init(0);
     
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
     
@@ -144,6 +163,7 @@ TYPED_TEST_P( MaxEArrayTest, MultiCoreNormal )
     typedef std::array< ArrayType, ArraySize > ArrayCont;
     ArrayType init(0);
     
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
     
@@ -187,7 +207,7 @@ TYPED_TEST_P( MaxEArrayTest, GPU_DeviceGreaterFunction )
 }
 
 REGISTER_TYPED_TEST_CASE_P( MaxEArrayTest, Normal, SerialNormal, MultiCoreNormal, GPU_DeviceGreaterFunction );
-
+*/
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Fixture classes are now defined to enable googletest to process value parameterized tests
@@ -307,6 +327,7 @@ TEST_P( MaxEStdVectWithInit, SerialwithInt)
         boltInput[i] = stdInput[i];
     }
     
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
     
@@ -317,46 +338,6 @@ TEST_P( MaxEStdVectWithInit, SerialwithInt)
     EXPECT_EQ( *stlMaxE, *boltMaxE );
 }
 
-TEST_P( MaxEStdVectWithInit, MultiCorewithInt)
-{
-    std::vector<int> stdInput( mySize );
-    std::vector<int> boltInput( mySize );
-
-    for (int i = 0; i < mySize; ++i)
-    {
-        stdInput[i] = i;
-        boltInput[i] = stdInput[i];
-    }
-    
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
-    
-    //  Calling the actual functions under test
-    std::vector<int>::iterator stlMaxE = std::max_element( stdInput.begin( ), stdInput.end() );
-    std::vector<int>::iterator boltMaxE= bolt::cl::max_element( ctl, boltInput.begin( ), boltInput.end() );
-
-    EXPECT_EQ( *stlMaxE, *boltMaxE );
-}
-
-TEST( MaxEleDevice , DeviceVectoroffset_uint )
-{
-    //setup containers
-    unsigned int length = 1024;
-    bolt::cl::device_vector< unsigned int > input( length );
-    for( unsigned int i = 0; i < length ; i++ )
-    {
-      input[i] = length - i;
-
-    }
-    
-    // call reduce
-
-    bolt::cl::device_vector< unsigned int >::iterator  boltReduce =  bolt::cl::max_element( input.begin()+20, input.end());
-    int stdReduce =  1004;
-
-    EXPECT_EQ(*boltReduce,stdReduce);
-
-}
 
 TEST( MaxEleDevice , DeviceVectoroffset )
 {
@@ -378,6 +359,27 @@ TEST( MaxEleDevice , DeviceVectoroffset )
 
 }
 
+TEST_P( MaxEStdVectWithInit, MultiCorewithInt)
+{
+    std::vector<int> stdInput( mySize );
+    std::vector<int> boltInput( mySize );
+
+    for (int i = 0; i < mySize; ++i)
+    {
+        stdInput[i] = i;
+        boltInput[i] = stdInput[i];
+    }
+    
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+    
+    //  Calling the actual functions under test
+    std::vector<int>::iterator stlMaxE = std::max_element( stdInput.begin( ), stdInput.end() );
+    std::vector<int>::iterator boltMaxE= bolt::cl::max_element( ctl, boltInput.begin( ), boltInput.end() );
+
+    EXPECT_EQ( *stlMaxE, *boltMaxE );
+}
 
 TEST_P( MaxEStdVectandCountingIterator, withCountingIterator)
 {
@@ -426,6 +428,7 @@ TEST_P( MaxEStdVectandCountingIterator, SerialwithCountingIterator)
         a[i] = i;
     };
     
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
     
@@ -468,6 +471,7 @@ TEST_P( MaxEStdVectandCountingIterator, MultiCorewithCountingIterator)
         a[i] = i;
     };
     
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
     
@@ -508,7 +512,7 @@ public:
     {}
 };
 
-TEST_P( MaxETestFloat, FloatValuesWdControl )
+TEST_P( MaxETestFloat, serialFloatValuesWdControl )
 {
     std::vector<float> A( arraySize );
     std::vector<float> boltVect( arraySize );
@@ -529,7 +533,7 @@ TEST_P( MaxETestFloat, FloatValuesWdControl )
     EXPECT_EQ( *stdMaxEValue, *boltClMaxE );
 }
 
-TEST_P( MaxETestFloat, Serial_FloatValuesWdControl )
+TEST_P( MaxETestFloat, CPU_serialFloatValuesWdControl )
 {
     std::vector<float> A( arraySize );
     std::vector<float> boltVect( arraySize );
@@ -542,6 +546,7 @@ TEST_P( MaxETestFloat, Serial_FloatValuesWdControl )
         boltVect[i] = A[i];
     }
 
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
     
@@ -552,7 +557,7 @@ TEST_P( MaxETestFloat, Serial_FloatValuesWdControl )
     EXPECT_EQ( *stdMaxEValue, *boltClMaxE );
 }
 
-TEST_P( MaxETestFloat, MultiCore_FloatValuesWdControl )
+TEST_P( MaxETestFloat, MultiCore_serialFloatValuesWdControl )
 {
     std::vector<float> A( arraySize );
     std::vector<float> boltVect( arraySize );
@@ -565,6 +570,7 @@ TEST_P( MaxETestFloat, MultiCore_FloatValuesWdControl )
         boltVect[i] = A[i];
     }
 
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
     
@@ -699,6 +705,7 @@ TEST_P( MaxEIntegerVector, comp_Normal )
 TEST_P( MaxEIntegerVector, SerialNormal )
 {
 
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
     
@@ -743,6 +750,7 @@ TEST_P( MaxEIntegerVector, comp_SerialNormal )
 TEST_P( MaxEIntegerVector, MultiCoreNormal )
 {
 
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
     
@@ -803,6 +811,7 @@ TEST_P( MaxEFloatVector, Normal )
 
 TEST_P( MaxEFloatVector, SerialNormal )
 {
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
     
@@ -823,7 +832,7 @@ TEST_P( MaxEFloatVector, SerialNormal )
 
 TEST_P( MaxEFloatVector, MultiCoreNormal )
 {
-
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
     
@@ -940,155 +949,31 @@ TEST( MaxEUDD , UDDPlusOperatorInts )
     EXPECT_EQ(*boltMaxE,*stdMaxE);
 
 }
-
-TEST( MaxEUDD , Serial_UDDPlusOperatorInts )
-{
-    //setup containers
-    const int length = 1024;
-    UDD refInput[ length ];
-    for( int i = 0; i < 10 ; i++ )
-    {
-      refInput[i].a = i;
-      refInput[i].b = i+1;
-    }
-
-    UDD UDDzero;
-    UDDzero.a = 0;
-    UDDzero.b = 0;
-
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
-
-    // call reduce
-    UDD *boltMaxE = bolt::cl::max_element( ctl, refInput , refInput + length);
-    UDD *stdMaxE = std::max_element( refInput, refInput + length );
-
-    EXPECT_EQ(*boltMaxE,*stdMaxE);
-
-}
-
-TEST( MaxEUDD , MultiCore_UDDPlusOperatorInts )
-{
-    //setup containers
-    const int length = 1024;
-    UDD refInput[ length ];
-    for( int i = 0; i < 10 ; i++ )
-    {
-      refInput[i].a = i;
-      refInput[i].b = i+1;
-    }
-
-    UDD UDDzero;
-    UDDzero.a = 0;
-    UDDzero.b = 0;
-
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
-
-    // call reduce
-    UDD *boltMaxE = bolt::cl::max_element( ctl, refInput , refInput + length);
-    UDD *stdMaxE = std::max_element( refInput, refInput + length );
-
-    EXPECT_EQ(*boltMaxE,*stdMaxE);
-
-}
-
-
-TEST( MaxEUDD , Offset_UDDPlusOperatorInts )
-{
-    //setup containers
-    const int length = 1024;
-    UDD refInput[ length ];
-    for( int i = 0; i < 10 ; i++ )
-    {
-      refInput[i].a = i;
-      refInput[i].b = i+1;
-    }
-
-    UDD UDDzero;
-    UDDzero.a = 0;
-    UDDzero.b = 0;
-
-    // call reduce
-    UDD *boltMaxE = bolt::cl::max_element( refInput + 10 , refInput + length);
-    UDD *stdMaxE = std::max_element( refInput + 10, refInput + length );
-
-    EXPECT_EQ(*boltMaxE,*stdMaxE);
-
-}
-
-TEST( MaxEUDD , Serial_Offset_UDDPlusOperatorInts )
-{
-    //setup containers
-    const int length = 1024;
-    UDD refInput[ length ];
-    for( int i = 0; i < 10 ; i++ )
-    {
-      refInput[i].a = i;
-      refInput[i].b = i+1;
-    }
-
-    UDD UDDzero;
-    UDDzero.a = 0;
-    UDDzero.b = 0;
-
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
-
-    // call reduce
-    UDD *boltMaxE = bolt::cl::max_element( ctl, refInput + 10 , refInput + length);
-    UDD *stdMaxE = std::max_element( refInput + 10, refInput + length );
-
-    EXPECT_EQ(*boltMaxE,*stdMaxE);
-
-}
-
-TEST( MaxEUDD , MultiCore_Offset_UDDPlusOperatorInts )
-{
-    //setup containers
-    const int length = 1024;
-    UDD refInput[ length ];
-    for( int i = 0; i < 10 ; i++ )
-    {
-      refInput[i].a = i;
-      refInput[i].b = i+1;
-    }
-
-    UDD UDDzero;
-    UDDzero.a = 0;
-    UDDzero.b = 0;
-
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
-
-    // call reduce
-    UDD *boltMaxE = bolt::cl::max_element( ctl, refInput + 10, refInput + length);
-    UDD *stdMaxE = std::max_element( refInput + 10, refInput + length );
-
-    EXPECT_EQ(*boltMaxE,*stdMaxE);
-
-}
-
+/*
 INSTANTIATE_TYPED_TEST_CASE_P( Integer, MaxEArrayTest, IntegerTests );
 INSTANTIATE_TYPED_TEST_CASE_P( Float, MaxEArrayTest, FloatTests );
+*/
 
+#if defined(_WIN32)
 // Super-easy windows profiling interface.
 // Move to timing infrastructure when that becomes available.
-__int64 StartProfile() {
-    __int64 begin;
+
+
+long long StartProfile() {
+    long long begin;
     QueryPerformanceCounter((LARGE_INTEGER*)(&begin));
     return begin;
 };
 
-void EndProfile(__int64 start, int numTests, std::string msg) {
-    __int64 end, freq;
+void EndProfile(long long start, int numTests, std::string msg) {
+    long long end, freq;
     QueryPerformanceCounter((LARGE_INTEGER*)(&end));
     QueryPerformanceFrequency((LARGE_INTEGER*)(&freq));
     double duration = (end - start)/(double)(freq);
     printf("%s %6.2fs, numTests=%d %6.2fms/test\n", msg.c_str(), duration, numTests, duration*1000.0/numTests);
 };
 
-
+#endif
 
 template<typename T>
 void printCheckMessage(bool err, std::string msg, T  stlResult, T boltResult)
@@ -1140,7 +1025,7 @@ bool checkResult(std::string msg, T  stlResult, T boltResult, double errorThresh
 void maxeletest(int aSize)
 {
     std::vector<int> A(aSize);
-    srand(GetTickCount());
+    //srand(GetTickCount());
     for (int i=0; i < aSize; i++)
     {
                 A[i] = rand();
@@ -1185,15 +1070,24 @@ void maxele_TestControl(int aSize, int numIters, int deviceIndex)
     std::vector<int>::iterator boltReduce(A.end());
 
     char testTag[2000];
+#if defined(_WIN32)
     sprintf_s(testTag, 2000, "maxele_TestControl sz=%d iters=%d, device=%s", aSize, numIters,
         c.getDevice( ).getInfo<CL_DEVICE_NAME>( ).c_str( ) );
+#else
+    sprintf(testTag, "maxele_TestControl sz=%d iters=%d, device=%s", aSize, numIters,
+        c.getDevice( ).getInfo<CL_DEVICE_NAME>( ).c_str( ) );
+#endif
 
-    __int64 start = StartProfile();
+#if defined(_WIN32)
+    long long start = StartProfile();
+#endif
     for (int i=0; i<numIters; i++) {
         boltReduce = bolt::cl::max_element( c, A.begin(), A.end());
     }
-    EndProfile(start, numIters, testTag);
 
+#if defined(_WIN32)
+    EndProfile(start, numIters, testTag);
+#endif
     checkResult(testTag, stlReduce, boltReduce);
 };
 
@@ -1260,7 +1154,7 @@ int _tmain(int argc, _TCHAR* argv[])
     ::testing::InitGoogleTest( &argc, &argv[ 0 ] );
 
     //  Register our minidump generating logic
-    bolt::miniDumpSingleton::enableMiniDumps( );
+   // bolt::miniDumpSingleton::enableMiniDumps( );
 
     int retVal = RUN_ALL_TESTS( );
 

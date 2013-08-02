@@ -101,6 +101,7 @@ public:
     static const size_t value = N;
 };
 
+/*
 //  Test fixture class, used for the Type-parameterized tests
 //  Namely, the tests that use std::array and TYPED_TEST_P macros
 template< typename ArrayTuple >
@@ -126,7 +127,7 @@ public:
 
 protected:
     typedef typename std::tuple_element< 0, ArrayTuple >::type ArrayType;
-    static const size_t ArraySize = typename std::tuple_element< 1, ArrayTuple >::type::value;
+    static const size_t ArraySize = std::tuple_element< 1, ArrayTuple >::type::value;
     typename std::array< ArrayType, ArraySize > stdInput, boltInput, stdOutput, boltOutput;
     int m_Errors;
 };
@@ -727,7 +728,7 @@ REGISTER_TYPED_TEST_CASE_P( UnaryTransformArrayTest, Normal,Serial, MultiCoreCPU
                                            MultipliesFunction, GPU_DeviceMultipliesFunction,
                                            MinusFunction, GPU_DeviceMinusFunction );
 #endif
-
+*/
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Fixture classes are now defined to enable googletest to process value parameterized tests
@@ -1434,7 +1435,7 @@ TEST_P( TransformDoubleDeviceVector, Inplace )
 }
 #endif
 #endif
-
+/*
 TEST_P( TransformIntegerNakedPointer, Inplace )
 {
     size_t endIndex = GetParam( );
@@ -1653,7 +1654,7 @@ INSTANTIATE_TEST_CASE_P( TransformRange, TransformDoubleNakedPointer, ::testing:
 INSTANTIATE_TEST_CASE_P( Transform, TransformDoubleNakedPointer, ::testing::ValuesIn( TestValues.begin(), 
                          TestValues.end() ) );
 #endif
-
+*/
 typedef ::testing::Types< 
     std::tuple< int, TypeValue< 1 > >,
     std::tuple< int, TypeValue< 31 > >,
@@ -1831,7 +1832,7 @@ typedef ::testing::Types<
     std::tuple< UDD, TypeValue< 65535 > >,
     std::tuple< UDD, TypeValue< 65536 > >
 > UDDTests;
-
+/*
 INSTANTIATE_TYPED_TEST_CASE_P( Integer, TransformArrayTest, IntegerTests );
 INSTANTIATE_TYPED_TEST_CASE_P( Float, TransformArrayTest, FloatTests );
 //INSTANTIATE_TYPED_TEST_CASE_P( Long, TransformArrayTest, LongTests );
@@ -1849,7 +1850,7 @@ INSTANTIATE_TYPED_TEST_CASE_P( Float, UnaryTransformArrayTest, FloatTests );
 INSTANTIATE_TYPED_TEST_CASE_P( Double, UnaryTransformArrayTest, DoubleTests );
 #endif 
 //INSTANTIATE_TYPED_TEST_CASE_P( UDDTest, SortArrayTest, UDDTests );
-
+*/
 //Teststotesttheconstantiterator
 template <int N>
 int gen_constant()
@@ -2604,7 +2605,7 @@ TEST( IntegerTests64, cl_ulongintransfrom)
 int main(int argc, char* argv[])
 {
     //  Register our minidump generating logic
-    bolt::miniDumpSingleton::enableMiniDumps( );
+    //bolt::miniDumpSingleton::enableMiniDumps( );
 
     // Define MEMORYREPORT on windows platfroms to enable debug memory heap checking
 #if defined( MEMORYREPORT ) && defined( _WIN32 )

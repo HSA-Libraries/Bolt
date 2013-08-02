@@ -83,7 +83,14 @@ else()
 endif()
 
 # Various options below on configuring the build, and how to generate the solution files
-option( BUILD_ampBolt "Create a solution that compiles Bolt for AMP" ON )
+
+if ( MSVC )
+    set(Bolt_ampDefault ON)
+else ()
+    set(Bolt_ampDefault OFF)
+endif() 
+
+option( BUILD_ampBolt "Create a solution that compiles Bolt for AMP"  ${Bolt_ampDefault})
 option( BUILD_clBolt "Create a solution that compiles Bolt for OpenCL" ON )
 option( BUILD_StripSymbols "When making debug builds, remove symbols and program database files" OFF )
  
@@ -135,14 +142,15 @@ if( C_COMPILER_NAME STREQUAL "cl" )
     if( BUILD_StripSymbols )
         string( REGEX REPLACE "/Zi" "" CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}" )
     endif()
-elseif( C_COMPILER_NAME STREQUAL "gcc" )
+elseif( ( C_COMPILER_NAME STREQUAL "gcc" ) OR ( CMAKE_COMPILER_IS_GNUCXX GREATER  0 ))
     message( STATUS "Detected GNU fortran compiler." )
+    set( CMAKE_CXX_FLAGS "-std=c++0x ${CMAKE_CXX_FLAGS}" )
     
     if( Bolt_BUILD64 )
         set( CMAKE_CXX_FLAGS "-m64 ${CMAKE_CXX_FLAGS}" )
         set( CMAKE_C_FLAGS "-m64 ${CMAKE_C_FLAGS}" )
     else( )
-        set( CMAKE_CXX_FLAGS "-m32 ${CMAKE_CXX_FLAGS}" )
+        set( CMAKE_CXX_FLAGS "-std=c++0x -m32 ${CMAKE_CXX_FLAGS}" )
         set( CMAKE_C_FLAGS "-m32 ${CMAKE_C_FLAGS}" )
     endif( )
 else( )
@@ -236,7 +244,7 @@ if( BUILD_examples )
 endif( )
 
 # configure a header file to pass the CMake version settings to the source, and package the header files in the output archive
-configure_file( "${PROJECT_SOURCE_DIR}/include/bolt/boltVersion.h.in" "${PROJECT_BINARY_DIR}/include/bolt/boltVersion.h" @ONLY )
+configure_file( "${PROJECT_SOURCE_DIR}/include/bolt/BoltVersion.h.in" "${PROJECT_BINARY_DIR}/include/bolt/BoltVersion.h" @ONLY )
 install( FILES 
             "${PROJECT_BINARY_DIR}/include/bolt/boltVersion.h" 
         DESTINATION 

@@ -24,57 +24,12 @@
 #include <type_traits>
 
 #include "bolt/cl/bolt.h"
-#ifdef ENABLE_TBB
-//TBB Includes
-#include "bolt/btbb/generate.h"
-#endif
+
 #define BURST 1
 
 namespace bolt {
 namespace cl {
 
-// default control, start->stop
-template<typename ForwardIterator, typename Generator>
-void generate( ForwardIterator first, ForwardIterator last, Generator gen, const std::string& cl_code)
-{
-            detail::generate_detect_random_access( bolt::cl::control::getDefault(), first, last, gen, cl_code,
-            std::iterator_traits< ForwardIterator >::iterator_category( ) );
-}
-
-// user specified control, start->stop
-template<typename ForwardIterator, typename Generator>
-void generate( bolt::cl::control &ctl, ForwardIterator first, ForwardIterator last, Generator gen,
-              const std::string& cl_code)
-{
-            detail::generate_detect_random_access( ctl, first, last, gen, cl_code,
-            std::iterator_traits< ForwardIterator >::iterator_category( ) );
-}
-
-// default control, start-> +n
-template<typename OutputIterator, typename Size, typename Generator>
-OutputIterator generate_n( OutputIterator first, Size n, Generator gen, const std::string& cl_code)
-{
-            detail::generate_detect_random_access( bolt::cl::control::getDefault(), first, first+static_cast< const int >( n ), gen, cl_code,
-            std::iterator_traits< OutputIterator >::iterator_category( ) );
-            return (first+static_cast< const int >( n ));
-}
-
-// user specified control, start-> +n
-template<typename OutputIterator, typename Size, typename Generator>
-OutputIterator generate_n( bolt::cl::control &ctl, OutputIterator first, Size n, Generator gen,
-                          const std::string& cl_code)
-{
-            detail::generate_detect_random_access( ctl, first, first+static_cast< const int >( n ), gen, cl_code,
-            std::iterator_traits< OutputIterator >::iterator_category( ) );
-            return (first+static_cast< const int >( n ));
-}
-
-}//end of cl namespace
-};//end of bolt namespace
-
-
-namespace bolt {
-namespace cl {
 namespace detail {
 
 enum GenerateTypes { gen_oType, gen_genType, generate_DVInputIterator, generate_end };
@@ -93,7 +48,7 @@ class Generate_KernelTemplateSpecializer : public KernelTemplateSpecializer
         addKernelName( "generate_III" );
     }
 
-    const ::std::string operator() ( const ::std::vector<::std::string>& typeNames ) const
+    const ::std::string operator() ( const ::std::vector< ::std::string>& typeNames ) const
     {
         const std::string templateSpecializationString =
                         "// Host generates this instantiation string with user-specified value type and generator\n"
@@ -129,21 +84,21 @@ class Generate_KernelTemplateSpecializer : public KernelTemplateSpecializer
              * Random Access
              ****************************************************************************/
 
-// generate, not random-access
-template<typename ForwardIterator, typename Generator>
-void generate_detect_random_access( bolt::cl::control &ctrl, const ForwardIterator& first, const ForwardIterator& last,
-                        const Generator& gen, const std::string &cl_code, std::forward_iterator_tag )
-{
-                static_assert( false, "Bolt only supports random access iterator types" );
-}
-
 // generate, yes random-access
 template<typename ForwardIterator, typename Generator>
 void generate_detect_random_access( bolt::cl::control &ctrl, const ForwardIterator& first, const ForwardIterator& last,
                         const Generator& gen, const std::string &cl_code, std::random_access_iterator_tag )
 {
                 generate_pick_iterator(ctrl, first, last, gen, cl_code,
-                std::iterator_traits< ForwardIterator >::iterator_category( ) );
+                typename std::iterator_traits< ForwardIterator >::iterator_category( ) );
+}
+
+// generate, not random-access
+template<typename ForwardIterator, typename Generator>
+void generate_detect_random_access( bolt::cl::control &ctrl, const ForwardIterator& first, const ForwardIterator& last,
+                        const Generator& gen, const std::string &cl_code, std::forward_iterator_tag )
+{
+                static_assert(std::is_same< ForwardIterator, std::forward_iterator_tag   >::value, "Bolt only supports random access iterator types" );
 }
 
 
@@ -160,7 +115,7 @@ void generate_detect_random_access( bolt::cl::control &ctrl, const ForwardIterat
                 const ForwardIterator &last,
                 const Generator &gen, const std::string &user_code, std::random_access_iterator_tag )
             {
-                typedef std::iterator_traits<ForwardIterator>::value_type Type;
+                typedef typename std::iterator_traits<ForwardIterator>::value_type Type;
 
                 size_t sz = (last - first);
                 if (sz < 1)
@@ -179,9 +134,10 @@ void generate_detect_random_access( bolt::cl::control &ctrl, const ForwardIterat
                 else if(runMode == bolt::cl::control::MultiCoreCpu)
                 {
                     #ifdef ENABLE_TBB
-                           bolt::btbb::generate(first, last, gen);
+                           //TODO : MultiCoreCPU Version of generate not Implemented yet...
+                           std::generate(first, last, gen );
                     #else
-                           throw std::exception("MultiCoreCPU Version of generate not Enabled! \n");
+                           throw std::runtime_error("MultiCoreCPU Version of generate not Enabled! \n");
                     #endif
                 }
                 else
@@ -205,7 +161,7 @@ void generate_detect_random_access( bolt::cl::control &ctrl, const ForwardIterat
                 const DVForwardIterator &last,
                 const Generator &gen, const std::string& user_code, bolt::cl::device_vector_tag )
             {
-                typedef std::iterator_traits<DVForwardIterator>::value_type iType;
+                typedef typename std::iterator_traits<DVForwardIterator>::value_type iType;
                 bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
                 if(runMode == bolt::cl::control::Automatic)
                 {
@@ -214,16 +170,17 @@ void generate_detect_random_access( bolt::cl::control &ctrl, const ForwardIterat
 
                 if( runMode == bolt::cl::control::SerialCpu)
                 {
-                    bolt::cl::device_vector< iType >::pointer generateInputBuffer =  first.getContainer( ).data( );
+                    typename bolt::cl::device_vector< iType >::pointer generateInputBuffer =  first.getContainer( ).data( );
                     std::generate(&generateInputBuffer[first.m_Index], &generateInputBuffer[last.m_Index], gen );
                 }
                 else if(runMode == bolt::cl::control::MultiCoreCpu)
                 {
                     #ifdef ENABLE_TBB
-                        bolt::cl::device_vector< iType >::pointer generateInputBuffer =  first.getContainer( ).data( );
-                        bolt::btbb::generate(&generateInputBuffer[first.m_Index], &generateInputBuffer[last.m_Index], gen );
+                           //TODO : MultiCoreCPU Version of generate not implemented yet...
+                        typename bolt::cl::device_vector< iType >::pointer generateInputBuffer =  first.getContainer( ).data( );
+                        std::generate(&generateInputBuffer[first.m_Index], &generateInputBuffer[last.m_Index], gen );
                     #else
-                        throw std::exception("MultiCoreCPU Version of generate not Enabled! \n");
+                        throw std::runtime_error("MultiCoreCPU Version of generate not Enabled! \n");
                     #endif
                 }
                 else
@@ -240,8 +197,10 @@ void generate_detect_random_access( bolt::cl::control &ctrl, const ForwardIterat
                 const DVForwardIterator &last,
                 const Generator &gen, const std::string& user_code, bolt::cl::fancy_iterator_tag )
             {
-                static_assert( false, "It is not possible to generate into fancy iterators. They are not mutable! " );
+                static_assert( std::is_same< DVForwardIterator, bolt::cl::fancy_iterator_tag  >::value, "It is not possible to generate into fancy iterators. They are not mutable! " );
             }
+
+
 
 /*****************************************************************************
 * Enqueue
@@ -266,7 +225,7 @@ aProfiler.set(AsyncProfiler::device, control::SerialCpu);
     /**********************************************************************************
      * Type Names - used in KernelTemplateSpecializer
      *********************************************************************************/
-     typedef std::iterator_traits<DVForwardIterator>::value_type oType;
+     typedef typename std::iterator_traits<DVForwardIterator>::value_type oType;
     std::vector<std::string> typeNames(generate_end);
     typeNames[gen_oType] = TypeName< oType >::get( );
     typeNames[gen_genType] = TypeName< Generator >::get( );
@@ -360,7 +319,7 @@ aProfiler.set(AsyncProfiler::device, control::SerialCpu);
 
     
     V_OPENCL( kernels[whichKernel].setArg( 0, first.getContainer().getBuffer()),"Error setArg kernels[0]");//I/P Buffer
-    V_OPENCL( kernels[whichKernel].setArg( 1, first.gpuPayloadSize( ), &first.gpuPayload( ) ), 
+    V_OPENCL( kernels[whichKernel].setArg( 1, first.gpuPayloadSize( ),const_cast<typename DVForwardIterator::Payload *>(&first.gpuPayload( ) )), 
         "Error setting a kernel argument" );
     V_OPENCL( kernels[whichKernel].setArg( 2, numElements),         "Error setArg kernels[ 0 ]" ); // Size of buffer
     V_OPENCL( kernels[whichKernel].setArg( 3, *userGenerator ),     "Error setArg kernels[ 0 ]" ); // Generator
@@ -464,7 +423,47 @@ aProfiler.stopTrial();
 }; // end generate_enqueue
 
 }//End of detail namespace
-}//End of cl namespace
-}//End of bolt namespace
+
+
+// default control, start->stop
+template<typename ForwardIterator, typename Generator>
+void generate( ForwardIterator first, ForwardIterator last, Generator gen, const std::string& cl_code)
+{
+            detail::generate_detect_random_access( bolt::cl::control::getDefault(), first, last, gen, cl_code,
+            typename std::iterator_traits< ForwardIterator >::iterator_category( ) );
+}
+
+// user specified control, start->stop
+template<typename ForwardIterator, typename Generator>
+void generate( bolt::cl::control &ctl, ForwardIterator first, ForwardIterator last, Generator gen,
+              const std::string& cl_code)
+{
+            detail::generate_detect_random_access( ctl, first, last, gen, cl_code,
+            typename std::iterator_traits< ForwardIterator >::iterator_category( ) );
+}
+
+// default control, start-> +n
+template<typename OutputIterator, typename Size, typename Generator>
+OutputIterator generate_n( OutputIterator first, Size n, Generator gen, const std::string& cl_code)
+{
+            detail::generate_detect_random_access( bolt::cl::control::getDefault(), first, first+static_cast< const int >( n ), gen, cl_code,
+            typename std::iterator_traits< OutputIterator >::iterator_category( ) );
+            return (first+static_cast< const int >( n ));
+}
+
+// user specified control, start-> +n
+template<typename OutputIterator, typename Size, typename Generator>
+OutputIterator generate_n( bolt::cl::control &ctl, OutputIterator first, Size n, Generator gen,
+                          const std::string& cl_code)
+{
+            detail::generate_detect_random_access( ctl, first, first+static_cast< const int >( n ), gen, cl_code,
+            typename std::iterator_traits< OutputIterator >::iterator_category( ) );
+            return (first+static_cast< const int >( n ));
+}
+
+}//end of cl namespace
+};//end of bolt namespace
+
+
 
 #endif

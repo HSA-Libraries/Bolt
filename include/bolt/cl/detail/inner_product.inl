@@ -34,57 +34,13 @@ TODO:
 
 #include "bolt/cl/bolt.h"
 
-//TBB Includes
-#include "bolt/btbb/inner_product.h"
-
 namespace bolt {
     namespace cl {
-        // default control, two-input transform, std:: iterator
-        template<typename InputIterator, typename OutputType, typename BinaryFunction1, typename BinaryFunction2>
-         OutputType inner_product(bolt::cl::control& ctl, InputIterator first1, InputIterator last1,
-         InputIterator first2, OutputType init, BinaryFunction1 f1, BinaryFunction2 f2,
-         const std::string& user_code )
-        {
-            return detail::inner_product_detect_random_access( ctl, first1, last1, first2, init, f1, f2, user_code,
-                std::iterator_traits< InputIterator >::iterator_category( ) );
-        }
-
-        // default control, two-input transform, std:: iterator
-        template<typename InputIterator, typename OutputType, typename BinaryFunction1, typename BinaryFunction2>
-        OutputType inner_product( InputIterator first1, InputIterator last1, InputIterator first2, OutputType init,
-            BinaryFunction1 f1, BinaryFunction2 f2, const std::string& user_code )
-        {
-            return detail::inner_product_detect_random_access( control::getDefault(), first1, last1, first2, init, f1,
-                f2, user_code, std::iterator_traits< InputIterator >::iterator_category( ) );
-        }
-        template<typename InputIterator, typename OutputType>
-        OutputType inner_product(bolt::cl::control& ctl,InputIterator first1,InputIterator last1,InputIterator first2,
-            OutputType init, const std::string& user_code )
-        {
-            typedef typename std::iterator_traits<InputIterator>::value_type iType;
-            return detail::inner_product_detect_random_access(ctl, first1,last1,first2,init,bolt::cl::plus< iType >( ),
-                bolt::cl::multiplies< iType >( ), user_code, std::iterator_traits<InputIterator>::iterator_category());
-        }
-
-        // default control, two-input transform, std:: iterator
-        template<typename InputIterator, typename OutputType>
-        OutputType inner_product( InputIterator first1, InputIterator last1, InputIterator first2, OutputType init,
-            const std::string& user_code )
-        {
-            typedef typename std::iterator_traits<InputIterator>::value_type iType;
-            return detail::inner_product_detect_random_access( control::getDefault(), first1, last1, first2, init,
-                bolt::cl::plus< iType >( ), bolt::cl::multiplies< iType >( ), user_code,
-                std::iterator_traits< InputIterator >::iterator_category( ) );
-        }
 
 
-    }//end of cl namespace
-};//end of bolt namespace
 
 
-namespace bolt {
-    namespace cl {
-        namespace detail {
+namespace detail {
 
 #if USE_KERNEL
              struct CallCompiler_InnerProduct {
@@ -116,7 +72,18 @@ namespace bolt {
 
 
 #endif
-            // Wrapper that uses default control class, iterator interface
+           
+            template<typename InputIterator, typename OutputType, typename BinaryFunction1, typename BinaryFunction2>
+            OutputType inner_product_detect_random_access( bolt::cl::control& ctl, const InputIterator& first1,
+                const InputIterator& last1, const InputIterator& first2, const OutputType& init,
+                const BinaryFunction1& f1,
+                const BinaryFunction2& f2, const std::string& user_code, std::random_access_iterator_tag )
+            {
+                return inner_product_pick_iterator( ctl, first1, last1, first2, init, f1, f2, user_code,
+                typename std::iterator_traits< InputIterator >::iterator_category( ) );
+            };
+
+	    // Wrapper that uses default control class, iterator interface
             template<typename InputIterator, typename OutputType, typename BinaryFunction1, typename BinaryFunction2>
             OutputType inner_product_detect_random_access( bolt::cl::control& ctl, const InputIterator& first1,
                 const InputIterator& last1, const InputIterator& first2, const OutputType& init,
@@ -126,18 +93,9 @@ namespace bolt {
                 //  TODO:  It should be possible to support non-random_access_iterator_tag iterators,
                 //  if we copied the data
                 //  to a temporary buffer.  Should we?
-                static_assert( false, "Bolt only supports random access iterator types" );
+                static_assert(std::is_same< InputIterator, std::input_iterator_tag >::value  , "Bolt only supports random access iterator types" );
             };
 
-            template<typename InputIterator, typename OutputType, typename BinaryFunction1, typename BinaryFunction2>
-            OutputType inner_product_detect_random_access( bolt::cl::control& ctl, const InputIterator& first1,
-                const InputIterator& last1, const InputIterator& first2, const OutputType& init,
-                const BinaryFunction1& f1,
-                const BinaryFunction2& f2, const std::string& user_code, std::random_access_iterator_tag )
-            {
-                return inner_product_pick_iterator( ctl, first1, last1, first2, init, f1, f2, user_code,
-                std::iterator_traits< InputIterator >::iterator_category( ) );
-            };
 
             /*! \brief This template function overload is used to seperate device_vector iterators from all
                 other iterators
@@ -151,7 +109,7 @@ namespace bolt {
                 const BinaryFunction1& f1,
                 const BinaryFunction2& f2, const std::string& user_code, std::random_access_iterator_tag )
             {
-                typedef std::iterator_traits<InputIterator>::value_type iType;
+                typedef typename std::iterator_traits<InputIterator>::value_type iType;
                 size_t sz = (last1 - first1);
                 if (sz == 0)
                     return -1;
@@ -164,18 +122,14 @@ namespace bolt {
 
                 if( runMode == bolt::cl::control::SerialCpu)
                 {
-                    #if defined( _WIN32 )
-                           return std::inner_product(first1, last1, stdext::checked_array_iterator<iType*>(&(*first2), sz ), init, f1, f2);
-                    #else
-                           return std::inner_product(first1, last1, first2, init, f1, f2);
-                    #endif
+                    return std::inner_product(first1, last1, first2, init, f1, f2);
                 }
                 else if(runMode == bolt::cl::control::MultiCoreCpu)
                 {
                     #ifdef ENABLE_TBB
-                           return bolt::btbb::inner_product(first1, last1, first2, init, f1, f2);
+                           return std::inner_product(first1, last1, first2, init, f1, f2);
                     #else
-                           throw std::exception("MultiCoreCPU Version of inner_product not Enabled! \n");
+                           throw std::runtime_error("MultiCoreCPU Version of inner_product not Enabled! \n");
                     #endif
                 }
                 else
@@ -209,10 +163,7 @@ namespace bolt {
                 const BinaryFunction1&f1,const BinaryFunction2& f2, const std::string& user_code,
                 bolt::cl::device_vector_tag )
             {
-                
-                size_t sz = (last1 - first1);
-
-                typedef std::iterator_traits< DVInputIterator >::value_type iType1;
+                typedef typename std::iterator_traits< DVInputIterator >::value_type iType1;
                 bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
                 if(runMode == bolt::cl::control::Automatic)
                 {
@@ -221,29 +172,21 @@ namespace bolt {
 
                 if( runMode == bolt::cl::control::SerialCpu)
                 {
-                    bolt::cl::device_vector< iType1 >::pointer firstPtr =  first1.getContainer( ).data( );
-                    bolt::cl::device_vector< iType1 >::pointer first2Ptr =  first2.getContainer( ).data( );
-                   
-                    #if defined( _WIN32 )
-                       return std::inner_product(  &firstPtr[ first1.m_Index ],
-                                                &firstPtr[ last1.m_Index ],
-                                                stdext::make_checked_array_iterator( &first2Ptr[ first2.m_Index ], sz),
-                                                init, f1, f2);
-                    #else
-                       return std::inner_product(  &firstPtr[ first1.m_Index ],
+                    typename bolt::cl::device_vector< iType1 >::pointer firstPtr =  first1.getContainer( ).data( );
+                    typename bolt::cl::device_vector< iType1 >::pointer first2Ptr =  first2.getContainer( ).data( );
+                    return std::inner_product(  &firstPtr[ first1.m_Index ],
                                                 &firstPtr[ last1.m_Index ],
                                                 &first2Ptr[ first2.m_Index ], init, f1, f2);
-                    #endif
                 }
                 else if(runMode == bolt::cl::control::MultiCoreCpu)
                 {
                 #ifdef ENABLE_TBB
-                    bolt::cl::device_vector< iType1 >::pointer firstPtr =  first1.getContainer( ).data( );
-                    bolt::cl::device_vector< iType1 >::pointer first2Ptr =  first2.getContainer( ).data( );
-                    return bolt::btbb::inner_product(  &firstPtr[ first1.m_Index ],  &firstPtr[ last1.m_Index ],
+                    typename bolt::cl::device_vector< iType1 >::pointer firstPtr =  first1.getContainer( ).data( );
+                    typename bolt::cl::device_vector< iType1 >::pointer first2Ptr =  first2.getContainer( ).data( );
+                    return std::inner_product(  &firstPtr[ first1.m_Index ],  &firstPtr[ last1.m_Index ],
                                                 &first2Ptr[ first2.m_Index ], init, f1, f2);
                 #else
-                           throw std::exception("MultiCoreCPU Version of inner_product not Enabled! \n");
+                           throw std::runtime_error("MultiCoreCPU Version of inner_product not Enabled! \n");
                 #endif
                 }
                 else
@@ -261,7 +204,7 @@ namespace bolt {
                 const BinaryFunction1& f1, const BinaryFunction2& f2, const std::string& user_code,
                 bolt::cl::fancy_iterator_tag )
             {
-                typedef std::iterator_traits<DVInputIterator>::value_type iType;
+
                 size_t sz = std::distance( first1, last1 );
 
                 bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
@@ -272,25 +215,17 @@ namespace bolt {
 
                 if( runMode == bolt::cl::control::SerialCpu)
                 {
-                    #if defined( _WIN32 )
-                           return std::inner_product(  first1,
+                    return std::inner_product(  first1,
                                                 last1,
                                                 first2,
                                                 init, f1, f2  );
-                    #else
-                           return std::inner_product(  first1,
-                                                last1,
-                                                first2,
-                                                init, f1, f2  );
-                    #endif
-
                 }
                 else if(runMode == bolt::cl::control::MultiCoreCpu)
                 {
                     #ifdef ENABLE_TBB
-                           return bolt::btbb::inner_product(first1, last1, first2, init, f1, f2);
+                          return std::inner_product(first1, last1, first2, init, f1, f2);
                     #else
-                           throw std::exception("MultiCoreCPU Version of inner_product not Enabled! \n");
+                           throw std::runtime_error("MultiCoreCPU Version of inner_product not Enabled! \n");
                     #endif
                 }
                 else
@@ -392,7 +327,7 @@ namespace bolt {
 #endif
 
                 //Should we directly call transform and reduce routines or launch a separate kernel?
-                typedef std::iterator_traits<DVInputIterator>::value_type iType;
+                typedef typename std::iterator_traits<DVInputIterator>::value_type iType;
                 ::cl::Event innerproductEvent;
 
                 cl_uint distVec = static_cast< cl_uint >( std::distance( first1, last1 ) );
@@ -407,7 +342,56 @@ namespace bolt {
             };
 
         }//End OF detail namespace
-    }//End OF cl namespace
-}//End OF bolt namespace
+
+
+
+
+
+
+
+
+        // default control, two-input transform, std:: iterator
+        template<typename InputIterator, typename OutputType, typename BinaryFunction1, typename BinaryFunction2>
+         OutputType inner_product(bolt::cl::control& ctl, InputIterator first1, InputIterator last1,
+         InputIterator first2, OutputType init, BinaryFunction1 f1, BinaryFunction2 f2,
+         const std::string& user_code )
+        {
+            return detail::inner_product_detect_random_access( ctl, first1, last1, first2, init, f1, f2, user_code,
+                typename std::iterator_traits< InputIterator >::iterator_category( ) );
+        }
+
+        // default control, two-input transform, std:: iterator
+        template<typename InputIterator, typename OutputType, typename BinaryFunction1, typename BinaryFunction2>
+        OutputType inner_product( InputIterator first1, InputIterator last1, InputIterator first2, OutputType init,
+            BinaryFunction1 f1, BinaryFunction2 f2, const std::string& user_code )
+        {
+            return detail::inner_product_detect_random_access( control::getDefault(), first1, last1, first2, init, f1,
+                f2, user_code, typename std::iterator_traits< InputIterator >::iterator_category( ) );
+        }
+        template<typename InputIterator, typename OutputType>
+        OutputType inner_product(bolt::cl::control& ctl,InputIterator first1,InputIterator last1,InputIterator first2,
+            OutputType init, const std::string& user_code )
+        {
+            typedef typename std::iterator_traits<InputIterator>::value_type iType;
+            return detail::inner_product_detect_random_access(ctl, first1,last1,first2,init,bolt::cl::plus< iType >( ),
+                bolt::cl::multiplies< iType >( ), user_code, typename std::iterator_traits<InputIterator>::iterator_category());
+        }
+
+        // default control, two-input transform, std:: iterator
+        template<typename InputIterator, typename OutputType>
+        OutputType inner_product( InputIterator first1, InputIterator last1, InputIterator first2, OutputType init,
+            const std::string& user_code )
+        {
+            typedef typename std::iterator_traits<InputIterator>::value_type iType;
+            return detail::inner_product_detect_random_access( control::getDefault(), first1, last1, first2, init,
+                bolt::cl::plus< iType >( ), bolt::cl::multiplies< iType >( ), user_code,
+                typename std::iterator_traits< InputIterator >::iterator_category( ) );
+        }
+
+
+    }//end of cl namespace
+};//end of bolt namespace
+
+
 
 #endif

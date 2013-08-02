@@ -16,8 +16,14 @@
 ############################################################################                                                                                     
 
 # List the names of common files to compile across all platforms
-set( clBolt.Test.Device.Vector.Source stdafx.cpp device.vector.test.cpp )
-set( clBolt.Test.Device.Vector.Headers stdafx.h targetver.h ${BOLT_INCLUDE_DIR}/bolt/cl/device_vector.h )
+set( clBolt.Test.Device.Vector.Source ${BOLT_CL_TEST_DIR}/common/stdafx.cpp 
+                                  ${BOLT_CL_TEST_DIR}/common/myocl.cpp
+                                  device.vector.test.cpp )
+                                  
+set( clBolt.Test.Device.Vector.Headers ${BOLT_CL_TEST_DIR}/common/stdafx.h 
+                                   ${BOLT_CL_TEST_DIR}/common/targetver.h 
+                                   ${BOLT_CL_TEST_DIR}/common/myocl.h 
+                                   ${BOLT_INCLUDE_DIR}/bolt/cl/device_vector.h )
 
 set( clBolt.Test.Device.Vector.Files ${clBolt.Test.Device.Vector.Source} ${clBolt.Test.Device.Vector.Headers} )
 
@@ -42,7 +48,7 @@ set_property( TARGET clBolt.Test.Device.Vector PROPERTY FOLDER "Test/OpenCL")
 
 # CPack configuration; include the executable into the package
 install( TARGETS clBolt.Test.Device.Vector
-	RUNTIME DESTINATION ${BIN_DIR}
-	LIBRARY DESTINATION ${LIB_DIR}
-	ARCHIVE DESTINATION ${LIB_DIR}/import
-	)
+    RUNTIME DESTINATION ${BIN_DIR}
+    LIBRARY DESTINATION ${LIB_DIR}
+    ARCHIVE DESTINATION ${LIB_DIR}/import
+    )

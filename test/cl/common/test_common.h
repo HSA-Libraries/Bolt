@@ -17,6 +17,13 @@
 #define TEST_COMMON_H
 #pragma once
 
+
+
+
+
+
+#include "bolt/unicode.h"
+
 #include <array>
 #include <gtest/gtest.h>
 #if !defined( BOLT_TEST_MAX_FAILURES )

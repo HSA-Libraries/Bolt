@@ -53,7 +53,7 @@ namespace bolt {
                     addKernelName( "mergeTemplate" );
                 }
 
-            const ::std::string operator() ( const ::std::vector<::std::string>& typeNames ) const
+            const ::std::string operator() ( const ::std::vector< ::std::string>& typeNames ) const
             {
                 const std::string templateSpecializationString =
                         "// Host generates this instantiation string with user-specified value type and functor\n"
@@ -78,261 +78,35 @@ namespace bolt {
 
 
 
-            template<typename DVInputIterator1,typename DVInputIterator2,typename DVoutputIterator, 
-            typename StrictWeakCompare>
-            DVoutputIterator merge_detect_random_access(bolt::cl::control &ctl,
-                const DVInputIterator1& first1,
-                const DVInputIterator1& last1,
-                const DVInputIterator2& first2,
-                const DVInputIterator2& last2,
-                 DVoutputIterator& result,
-                const StrictWeakCompare& comp,
-                const std::string& cl_code,
-                std::random_access_iterator_tag)
-            {
-                return merge_pick_iterator( ctl, first1, last1, first2, last2,result, comp, cl_code,
-                    std::iterator_traits< DVInputIterator1 >::iterator_category( ) );
-            }
-
-            template<typename DVInputIterator1,typename DVInputIterator2,typename DVoutputIterator, 
-            typename StrictWeakCompare>
-            DVoutputIterator merge_detect_random_access(bolt::cl::control &ctl,
-                const DVInputIterator1& first1,
-                const DVInputIterator1& last1,
-                const DVInputIterator2& first2,
-                const DVInputIterator2& last2,
-                 DVoutputIterator& result,
-                const StrictWeakCompare& comp,
-                const std::string& cl_code,
-                std::input_iterator_tag)
-            {
-              //  TODO: It should be possible to support non-random_access_iterator_tag iterators,if we copied the data
-              //  to a temporary buffer.  Should we?
-                static_assert( std::is_same< DVInputIterator, bolt::cl::input_iterator_tag  >::value,
-                    "Bolt only supports random access iterator types" );
-            }
 
 
-            // This template is called after we detect random access iterators
-            // This is called strictly for any non-device_vector iterator
-            template<typename InputIterator1,typename InputIterator2,typename outputIterator, 
-            typename StrictWeakCompare>
-            outputIterator merge_pick_iterator(bolt::cl::control &ctl,
-                const InputIterator1& first1,
-                const InputIterator1& last1,
-                const InputIterator2& first2,
-                const InputIterator2& last2,
-                 outputIterator& result,
-                const StrictWeakCompare& comp,
-                const std::string& cl_code,
-                std::random_access_iterator_tag )
-            {
-                /*************/
-                typedef typename std::iterator_traits<InputIterator1>::value_type iType1;
-                typedef typename std::iterator_traits<InputIterator2>::value_type iType2;
-                typedef typename std::iterator_traits<outputIterator>::value_type oType;
 
-
-                /*TODO - probably the forceRunMode should be replaced by getRunMode and setRunMode*/
-                bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
-
-                if(runMode == bolt::cl::control::Automatic)
-                {
-                    runMode = ctl.getDefaultPathToRun();
-                }
-
-                switch(runMode)
-                {
-                case bolt::cl::control::OpenCL :
-                    {
-                        device_vector< iType1 > dvInput1( first1, last1, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, ctl );
-                        device_vector< iType2 > dvInput2( first2, last2, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, ctl );
-                        device_vector< oType >  dvresult( result, result + (last1-first1) + (last2-first2), CL_MEM_USE_HOST_PTR, ctl );
-
-                        merge_enqueue( ctl, dvInput1.begin(), dvInput1.end(), dvInput2.begin(), dvInput2.end(),
-                            dvresult.begin(), comp, cl_code);
-
-                        // This should immediately map/unmap the buffer
-                        dvresult.data( );
-                        return result + (last1 - first1) + (last2 - first2);
-                    }
-              
-                case bolt::cl::control::MultiCoreCpu: 
-                    #ifdef ENABLE_TBB
-                        return bolt::btbb::merge(first1,last1,first2,last2,result,comp);
-                    #else
-                        throw std::runtime_error( "The MultiCoreCpu version of merge is not enabled to be built! \n" );
-                    #endif
-
-                case bolt::cl::control::SerialCpu: 
-                    return std::merge(first1,last1,first2,last2,result,comp);
-
-                default:
-                   return std::merge(first1,last1,first2,last2,result,comp);
-
-                }
-
-            }
-
-            // This template is called after we detect random access iterators
-            // This is called strictly for iterators that are derived from device_vector< T >::iterator
-            template<typename DVInputIterator1,typename DVInputIterator2,typename DVoutputIterator, 
-            typename StrictWeakCompare>
-            DVoutputIterator merge_pick_iterator(bolt::cl::control &ctl,
-                const DVInputIterator1& first1,
-                const DVInputIterator1& last1,
-                const DVInputIterator2& first2,
-                const DVInputIterator2& last2,
-                 DVoutputIterator& result,
-                const StrictWeakCompare& comp,
-                const std::string& cl_code,
-                bolt::cl::device_vector_tag )
-            {
-                typedef typename std::iterator_traits<DVInputIterator1>::value_type iType1;
-                typedef typename std::iterator_traits<DVInputIterator2>::value_type iType2;
-                typedef typename std::iterator_traits<DVoutputIterator>::value_type oType;
-
-                size_t szElements = static_cast<size_t>(std::distance(first1, last1) );
-                if (szElements == 0)
-                    return result;
-
-                bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
-                if(runMode == bolt::cl::control::Automatic)
-                {
-                    runMode = ctl.getDefaultPathToRun();
-                }
-
-                switch(runMode)
-                {
-                case bolt::cl::control::OpenCL :
-                        return merge_enqueue( ctl, first1, last1,first2, last2, result, comp, cl_code);
-              
-                case bolt::cl::control::MultiCoreCpu: 
-                    #ifdef ENABLE_TBB
-                    {
-                      typename bolt::cl::device_vector< iType1 >::pointer mergeInputBuffer1 =  first1.getContainer( ).data( );
-                      typename bolt::cl::device_vector< iType2 >::pointer mergeInputBuffer2 =  first2.getContainer( ).data( );
-                      typename bolt::cl::device_vector< oType >::pointer mergeResBuffer =  result.getContainer( ).data( );
-
-                       bolt::btbb::merge(&mergeInputBuffer1[first1.m_Index],&mergeInputBuffer1[ last1.m_Index ],
-                                               &mergeInputBuffer2[first2.m_Index],&mergeInputBuffer2[ last2.m_Index ],
-                                               &mergeResBuffer[result.m_Index],comp);
-
-                         return result + (last1 - first1) + (last2 - first2);
-                    }
-                    #else
-                    {
-                        throw std::runtime_error( "The MultiCoreCpu version of merge is not enabled to be built! \n" );
-                    }
-                    #endif
-
-                case bolt::cl::control::SerialCpu: 
-                    {
-                      typename bolt::cl::device_vector< iType1 >::pointer mergeInputBuffer1 =  first1.getContainer( ).data( );
-                      typename bolt::cl::device_vector< iType2 >::pointer mergeInputBuffer2 =  first2.getContainer( ).data( );
-                      typename  bolt::cl::device_vector< oType >::pointer mergeResBuffer =  result.getContainer( ).data( );
-
-                      std::merge(&mergeInputBuffer1[first1.m_Index],&mergeInputBuffer1[ last1.m_Index ],
-                                               &mergeInputBuffer2[first2.m_Index],&mergeInputBuffer2[ last2.m_Index ],
-                                              &mergeResBuffer[result.m_Index],comp);
-                        return result + (last1 - first1) + (last2 - first2);
-                    }
-
-                default: /* Incase of runMode not set/corrupted */
-                    {
-                      typename  bolt::cl::device_vector< iType1 >::pointer mergeInputBuffer1 =  first1.getContainer( ).data( );
-                      typename  bolt::cl::device_vector< iType2 >::pointer mergeInputBuffer2 =  first2.getContainer( ).data( );
-                      typename  bolt::cl::device_vector< oType >::pointer mergeResBuffer =  result.getContainer( ).data( );
-
-                      std::merge(&mergeInputBuffer1[first1.m_Index],&mergeInputBuffer1[ last1.m_Index ],
-                                      &mergeInputBuffer2[first2.m_Index],&mergeInputBuffer2[ last2.m_Index ],
-                                      &mergeResBuffer[result.m_Index],comp);
-                        return result + (last1 - first1) + (last2 - first2);
-
-
-                    }
-
-                }
-
-            }
-
-            // This template is called after we detect random access iterators
-            // This is called strictly for iterators that are derived from device_vector< T >::iterator
-
-            template<typename DVInputIterator1,typename DVInputIterator2,typename DVoutputIterator, 
-            typename StrictWeakCompare>
-            DVoutputIterator merge_pick_iterator(bolt::cl::control &ctl,
-                const DVInputIterator1& first1,
-                const DVInputIterator1& last1,
-                const DVInputIterator2& first2,
-                const DVInputIterator2& last2,
-                 DVoutputIterator& result,
-                const StrictWeakCompare& comp,
-                const std::string& cl_code,
-                bolt::cl::fancy_iterator_tag )
-            {
-                typedef typename std::iterator_traits<DVInputIterator>::value_type iType;
-                size_t szElements = static_cast<size_t>(std::distance(first, last) );
-                if (szElements == 0)
-                    return init;
-
-                bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
-                if(runMode == bolt::cl::control::Automatic)
-                {
-                    runMode = ctl.getDefaultPathToRun();
-                }
-                
-                switch(runMode)
-                {
-                case bolt::cl::control::OpenCL :
-                        return merge_enqueue( ctl, first1, last1,first2, last2, result, comp, cl_code);
-              
-                case bolt::cl::control::MultiCoreCpu: 
-                    #ifdef ENABLE_TBB
-                    {
-                      return bolt::btbb::merge(first1, last1,first2, last2, result, comp);
-                    }
-                    #else
-                    {
-                       throw std::runtime_error( "The MultiCoreCpu version of merge is not enabled to be built! \n" );
-                    }
-                    #endif
-
-                case bolt::cl::control::SerialCpu: 
-                     return std::merge(first1, last1,first2, last2, result, comp);
-
-                default: /* Incase of runMode not set/corrupted */
-                    return std::merge(first1, last1,first2, last2, result, comp);
-
-                }
-
-            }
 
             //----
             // This is the base implementation of reduction that is called by all of the convenience wrappers below.
             // first and last must be iterators from a DeviceVector
 
-            template<typename DVInputIterator1,typename DVInputIterator2,typename DVoutputIterator, 
+            template<typename DVInputIterator1,typename DVInputIterator2,typename DVOutputIterator, 
             typename StrictWeakCompare>
-            DVoutputIterator  merge_enqueue(bolt::cl::control &ctl,
+            DVOutputIterator  merge_enqueue(bolt::cl::control &ctl,
                 const DVInputIterator1& first1,
                 const DVInputIterator1& last1,
                 const DVInputIterator2& first2,
                 const DVInputIterator2& last2,
-                 DVoutputIterator& result,
+                const DVOutputIterator& result,
                 const StrictWeakCompare& comp,
                 const std::string& cl_code )
             {
                 typedef typename std::iterator_traits< DVInputIterator1 >::value_type iType1;
                 typedef typename std::iterator_traits< DVInputIterator2 >::value_type iType2;
-                typedef typename std::iterator_traits< DVoutputIterator >::value_type rType;
+                typedef typename std::iterator_traits< DVOutputIterator >::value_type rType;
 
                 std::vector<std::string> typeNames( merge_end);
                 typeNames[merge_iVType1] = TypeName< iType1 >::get( );
                 typeNames[merge_iVType2] = TypeName< iType2 >::get( );
                 typeNames[merge_iIterType1] = TypeName< DVInputIterator1 >::get( );
                 typeNames[merge_iIterType2] = TypeName< DVInputIterator2 >::get( );
-                typeNames[merge_rIterType]= TypeName< DVoutputIterator >::get( );
+                typeNames[merge_rIterType]= TypeName< DVOutputIterator >::get( );
                 typeNames[merge_resType] = TypeName< rType >::get( );
                 typeNames[merge_StrictWeakCompare] = TypeName< StrictWeakCompare >::get();
 
@@ -343,7 +117,7 @@ namespace bolt {
                 PUSH_BACK_UNIQUE( typeDefinitions, ClCode< iType2 >::get() )
                 PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVInputIterator1 >::get() )
                 PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVInputIterator2 >::get() )
-                PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVoutputIterator  >::get() )
+                PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVOutputIterator  >::get() )
                 PUSH_BACK_UNIQUE( typeDefinitions, ClCode< rType  >::get() )
                 PUSH_BACK_UNIQUE( typeDefinitions, ClCode< StrictWeakCompare  >::get() )
 
@@ -403,7 +177,7 @@ namespace bolt {
                 V_OPENCL( kernels[0].setArg(5, szElements2), "Error setting kernel argument" );
 
                 V_OPENCL( kernels[0].setArg(6, result.getContainer().getBuffer()), "Error setting kernel argument" );
-                V_OPENCL( kernels[0].setArg(7, result.gpuPayloadSize( ),const_cast<typename DVoutputIterator::Payload*>
+                V_OPENCL( kernels[0].setArg(7, result.gpuPayloadSize( ),const_cast<typename DVOutputIterator::Payload*>
                     (&result.gpuPayload( )) ),"Error setting a kernel argument" );
                 V_OPENCL( kernels[0].setArg(8, *userFunctor), "Error setting kernel argument" );
                 
@@ -424,9 +198,234 @@ namespace bolt {
 
                 return (result + szElements1 + szElements2);
             }
-        }
+  
+
+            // This template is called after we detect random access iterators
+            // This is called strictly for any non-device_vector iterator
+            template<typename InputIterator1,typename InputIterator2,typename OutputIterator, 
+            typename StrictWeakCompare>
+            OutputIterator merge_pick_iterator(bolt::cl::control &ctl,
+                const InputIterator1& first1,
+                const InputIterator1& last1,
+                const InputIterator2& first2,
+                const InputIterator2& last2,
+                const OutputIterator& result,
+                const StrictWeakCompare& comp,
+                const std::string& cl_code,
+                std::random_access_iterator_tag )
+            {
+                /*************/
+                typedef typename std::iterator_traits<InputIterator1>::value_type iType1;
+                typedef typename std::iterator_traits<InputIterator2>::value_type iType2;
+                typedef typename std::iterator_traits<OutputIterator>::value_type oType;
 
 
+                /*TODO - probably the forceRunMode should be replaced by getRunMode and setRunMode*/
+                bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+
+                if(runMode == bolt::cl::control::Automatic)
+                {
+                    runMode = ctl.getDefaultPathToRun();
+                }
+
+                switch(runMode)
+                {
+                case bolt::cl::control::OpenCL :
+                    {
+                      size_t sz = (last1-first1) + (last2-first2);
+                      device_vector< iType1 > dvInput1( first1, last1, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, ctl );
+                      device_vector< iType2 > dvInput2( first2, last2, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, ctl );
+                      device_vector< oType >  dvresult(  result, sz, CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY, false, ctl );
+
+                       detail::merge_enqueue( ctl, dvInput1.begin(), dvInput1.end(), dvInput2.begin(), dvInput2.end(),
+                          dvresult.begin(), comp, cl_code);
+
+                        // This should immediately map/unmap the buffer
+                        dvresult.data( );
+                        return result + (last1 - first1) + (last2 - first2);
+                    }
+              
+                case bolt::cl::control::MultiCoreCpu: 
+                    #ifdef ENABLE_TBB
+                        return bolt::btbb::merge(first1,last1,first2,last2,result,comp);
+                    #else
+                        throw std::runtime_error( "The MultiCoreCpu version of merge is not enabled to be built! \n" );
+                    #endif
+
+                case bolt::cl::control::SerialCpu: 
+                    return std::merge(first1,last1,first2,last2,result,comp);
+
+                default:
+                   return std::merge(first1,last1,first2,last2,result,comp);
+
+                }
+
+            }
+
+            // This template is called after we detect random access iterators
+            // This is called strictly for iterators that are derived from device_vector< T >::iterator
+            template<typename DVInputIterator1,typename DVInputIterator2,typename DVOutputIterator, 
+            typename StrictWeakCompare>
+            DVOutputIterator merge_pick_iterator(bolt::cl::control &ctl,
+                const DVInputIterator1& first1,
+                const DVInputIterator1& last1,
+                const DVInputIterator2& first2,
+                const DVInputIterator2& last2,
+                const DVOutputIterator& result,
+                const StrictWeakCompare& comp,
+                const std::string& cl_code,
+                bolt::cl::device_vector_tag )
+            {
+                typedef typename std::iterator_traits<DVInputIterator1>::value_type iType1;
+                typedef typename std::iterator_traits<DVInputIterator2>::value_type iType2;
+                typedef typename std::iterator_traits<DVOutputIterator>::value_type oType;
+
+
+                bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+                if(runMode == bolt::cl::control::Automatic)
+                {
+                    runMode = ctl.getDefaultPathToRun();
+                }
+
+                switch(runMode)
+                {
+                case bolt::cl::control::OpenCL :
+                        return detail::merge_enqueue( ctl, first1, last1,first2, last2, result, comp, cl_code);
+              
+                case bolt::cl::control::MultiCoreCpu: 
+                    #ifdef ENABLE_TBB
+                    {
+                      typename bolt::cl::device_vector< iType1 >::pointer mergeInputBuffer1 =  first1.getContainer( ).data( );
+                      typename bolt::cl::device_vector< iType2 >::pointer mergeInputBuffer2 =  first2.getContainer( ).data( );
+                      typename bolt::cl::device_vector< oType >::pointer mergeResBuffer =  result.getContainer( ).data( );
+
+                       bolt::btbb::merge(&mergeInputBuffer1[first1.m_Index],&mergeInputBuffer1[ last1.m_Index ],
+                                               &mergeInputBuffer2[first2.m_Index],&mergeInputBuffer2[ last2.m_Index ],
+                                               &mergeResBuffer[result.m_Index],comp);
+
+                         return result + (last1 - first1) + (last2 - first2);
+                    }
+                    #else
+                    {
+                        throw std::runtime_error( "The MultiCoreCpu version of merge is not enabled to be built! \n" );
+                    }
+                    #endif
+
+                case bolt::cl::control::SerialCpu: 
+                    {
+                      typename bolt::cl::device_vector< iType1 >::pointer mergeInputBuffer1 =  first1.getContainer( ).data( );
+                      typename bolt::cl::device_vector< iType2 >::pointer mergeInputBuffer2 =  first2.getContainer( ).data( );
+                      typename  bolt::cl::device_vector< oType >::pointer mergeResBuffer =  result.getContainer( ).data( );
+
+                      std::merge(&mergeInputBuffer1[first1.m_Index],&mergeInputBuffer1[ last1.m_Index ],
+                                               &mergeInputBuffer2[first2.m_Index],&mergeInputBuffer2[ last2.m_Index ],
+                                              &mergeResBuffer[result.m_Index],comp);
+                        return result + (last1 - first1) + (last2 - first2);
+                    }
+
+                default: /* Incase of runMode not set/corrupted */
+                    {
+                      typename  bolt::cl::device_vector< iType1 >::pointer mergeInputBuffer1 =  first1.getContainer( ).data( );
+                      typename  bolt::cl::device_vector< iType2 >::pointer mergeInputBuffer2 =  first2.getContainer( ).data( );
+                      typename  bolt::cl::device_vector< oType >::pointer mergeResBuffer =  result.getContainer( ).data( );
+
+                      std::merge(&mergeInputBuffer1[first1.m_Index],&mergeInputBuffer1[ last1.m_Index ],
+                                      &mergeInputBuffer2[first2.m_Index],&mergeInputBuffer2[ last2.m_Index ],
+                                      &mergeResBuffer[result.m_Index],comp);
+                        return result + (last1 - first1) + (last2 - first2);
+
+
+                    }
+
+                }
+
+            }
+
+            // This template is called after we detect random access iterators
+            // This is called strictly for iterators that are derived from device_vector< T >::iterator
+
+            template<typename DVInputIterator1,typename DVInputIterator2,typename DVOutputIterator, 
+            typename StrictWeakCompare>
+            DVOutputIterator merge_pick_iterator(bolt::cl::control &ctl,
+                const DVInputIterator1& first1,
+                const DVInputIterator1& last1,
+                const DVInputIterator2& first2,
+                const DVInputIterator2& last2,
+                const DVOutputIterator& result,
+                const StrictWeakCompare& comp,
+                const std::string& cl_code,
+                bolt::cl::fancy_iterator_tag )
+            {
+                typedef typename std::iterator_traits<DVInputIterator1>::value_type iType;
+             
+
+                bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+                if(runMode == bolt::cl::control::Automatic)
+                {
+                    runMode = ctl.getDefaultPathToRun();
+                }
+                
+                switch(runMode)
+                {
+                case bolt::cl::control::OpenCL :
+                        return merge_enqueue( ctl, first1, last1,first2, last2, result, comp, cl_code);
+              
+                case bolt::cl::control::MultiCoreCpu: 
+                    #ifdef ENABLE_TBB
+                    {
+                      return bolt::btbb::merge(first1, last1,first2, last2, result, comp);
+                    }
+                    #else
+                    {
+                       throw std::runtime_error( "The MultiCoreCpu version of merge is not enabled to be built! \n" );
+                    }
+                    #endif
+
+                case bolt::cl::control::SerialCpu: 
+                     return std::merge(first1, last1,first2, last2, result, comp);
+
+                default: /* Incase of runMode not set/corrupted */
+                    return std::merge(first1, last1,first2, last2, result, comp);
+
+                }
+
+            }        
+            
+            template<typename DVInputIterator1,typename DVInputIterator2,typename DVOutputIterator, 
+            typename StrictWeakCompare>
+            DVOutputIterator merge_detect_random_access(bolt::cl::control &ctl,
+                const DVInputIterator1& first1,
+                const DVInputIterator1& last1,
+                const DVInputIterator2& first2,
+                const DVInputIterator2& last2,
+                const DVOutputIterator& result,
+                const StrictWeakCompare& comp,
+                const std::string& cl_code,
+                std::random_access_iterator_tag)
+            {
+                return merge_pick_iterator( ctl, first1, last1, first2, last2,result, comp, cl_code,
+                    typename std::iterator_traits< DVInputIterator1 >::iterator_category( ) );
+            }
+
+            template<typename DVInputIterator1,typename DVInputIterator2,typename DVOutputIterator, 
+            typename StrictWeakCompare>
+            DVOutputIterator merge_detect_random_access(bolt::cl::control &ctl,
+                const DVInputIterator1& first1,
+                const DVInputIterator1& last1,
+                const DVInputIterator2& first2,
+                const DVInputIterator2& last2,
+                const DVOutputIterator& result,
+                const StrictWeakCompare& comp,
+                const std::string& cl_code,
+                std::input_iterator_tag)
+            {
+              //  TODO: It should be possible to support non-random_access_iterator_tag iterators,if we copied the data
+              //  to a temporary buffer.  Should we?
+                static_assert( std::is_same< DVInputIterator1, bolt::cl::input_iterator_tag  >::value,
+                    "Bolt only supports random access iterator types" );
+            }
+            
+      }
         template<typename InputIterator1 , typename InputIterator2 , typename OutputIterator > 
         OutputIterator merge (InputIterator1 first1, InputIterator1 last1, InputIterator2 first2, 
         InputIterator2 last2, OutputIterator result,const std::string& cl_code)
@@ -468,9 +467,7 @@ namespace bolt {
             {
                   runMode = ctl.getDefaultPathToRun();
             }
-            if (runMode == bolt::cl::control::SerialCpu) {
-                return std::merge(first1, last1,first2,last2,result, comp);
-            } else {
+	  else {
 
                     return detail::merge_detect_random_access(ctl, first1, last1, first2,last2,result, comp , cl_code,
                                typename std::iterator_traits< InputIterator1 >::iterator_category( ));

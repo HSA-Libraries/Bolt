@@ -119,7 +119,7 @@ T generateRandom()
 }
 
 
-
+/*
 //  Test fixture class, used for the Type-parameterized tests
 //  Namely, the tests that use std::array and TYPED_TEST_P macros
 template< typename ArrayTuple >
@@ -145,7 +145,7 @@ public:
 
 protected:
     typedef typename std::tuple_element< 0, ArrayTuple >::type ArrayType;
-    static const size_t ArraySize = typename std::tuple_element< 1, ArrayTuple >::type::value;
+    static const size_t ArraySize = std::tuple_element< 1, ArrayTuple >::type::value;
     typename std::array< ArrayType, ArraySize > stdInput, boltInput, stdOutput, boltOutput;
     int m_Errors;
 };
@@ -449,7 +449,7 @@ REGISTER_TYPED_TEST_CASE_P( TransformArrayTest, Normal,Serial, MultiCoreCPU, GPU
                                   MulticoreMultipliesFunction, GPU_DeviceMultipliesFunction );
 #endif
 
-
+*/
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Fixture classes are now defined to enable googletest to process value parameterized tests
 //  ::testing::TestWithParam< int > means that GetParam( ) returns int values, which i use for array size
@@ -1406,7 +1406,7 @@ TEST_P( TransformDoubleDeviceVector, Inplace )
 }
 #endif
 #endif
-
+/*
 TEST_P( TransformIntegerNakedPointer, Inplace )
 {
     size_t endIndex = GetParam( );
@@ -1628,7 +1628,7 @@ INSTANTIATE_TEST_CASE_P( TransformRange, TransformDoubleNakedPointer, ::testing:
 INSTANTIATE_TEST_CASE_P( Transform, TransformDoubleNakedPointer, ::testing::ValuesIn( TestValues.begin(), 
                                                                                     TestValues.end() ) );
 #endif
-
+*/
 typedef ::testing::Types< 
     std::tuple< int, TypeValue< 1 > >,
     std::tuple< int, TypeValue< 31 > >,
@@ -1891,7 +1891,7 @@ typedef ::testing::Types<
     std::tuple< UDD, TypeValue< 65536 > >
 > UDDTests;
 
-
+/*
 INSTANTIATE_TYPED_TEST_CASE_P( Integer, TransformArrayTest, IntegerTests );
 INSTANTIATE_TYPED_TEST_CASE_P( Float, TransformArrayTest, FloatTests );
 #if (TEST_DOUBLE == 1)
@@ -1899,7 +1899,7 @@ INSTANTIATE_TYPED_TEST_CASE_P( Double, TransformArrayTest, DoubleTests );
 #endif 
 //INSTANTIATE_TYPED_TEST_CASE_P( UDDTest, SortArrayTest, UDDTests );
 
-
+*/
 //BUG 377596 reproducable program
 BOLT_FUNCTOR(PointT,
 struct PointT {
@@ -2608,7 +2608,7 @@ int main(int argc, char* argv[])
     ::testing::InitGoogleTest( &argc, &argv[ 0 ] );
 
     //  Register our minidump generating logic
-    bolt::miniDumpSingleton::enableMiniDumps( );
+    //bolt::miniDumpSingleton::enableMiniDumps( );
 
     int retVal = RUN_ALL_TESTS( );
 

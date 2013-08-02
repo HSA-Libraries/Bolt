@@ -24,7 +24,7 @@ set( clBolt.Test.Generate.Headers ${BOLT_CL_TEST_DIR}/common/stdafx.h
                                    ${BOLT_CL_TEST_DIR}/common/myocl.h 
                                    ${BOLT_INCLUDE_DIR}/bolt/cl/generate.h 
                                    ${BOLT_INCLUDE_DIR}/bolt/cl/detail/generate.inl
-                                   utils.h 
+                                   ${BOLT_CL_TEST_DIR}/common/utils.h 
                                    )
 
 set( clBolt.Test.Generate.Files ${clBolt.Test.Generate.Source} ${clBolt.Test.Generate.Headers} )

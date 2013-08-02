@@ -35,90 +35,8 @@
 namespace bolt {
     namespace cl {
 
-        template<typename InputIterator>
-        typename std::iterator_traits<InputIterator>::value_type
-            reduce(InputIterator first,
-            InputIterator last,
-            const std::string& cl_code)
-        {
-            typedef typename std::iterator_traits<InputIterator>::value_type iType;
-            return reduce(bolt::cl::control::getDefault(), first, last, iType(), bolt::cl::plus<iType>(), cl_code);
-        };
 
-        template<typename InputIterator>
-        typename std::iterator_traits<InputIterator>::value_type
-            reduce(bolt::cl::control &ctl,
-            InputIterator first,
-            InputIterator last,
-            const std::string& cl_code)
-        {
-            typedef typename std::iterator_traits<InputIterator>::value_type iType;
-            return reduce(ctl, first, last, iType(), bolt::cl::plus< iType >( ), cl_code);
-        };
-
-
-
-        template<typename InputIterator, typename T, typename BinaryFunction>
-        T reduce(InputIterator first,
-            InputIterator last,
-            T init,
-            BinaryFunction binary_op,
-            const std::string& cl_code)
-        {
-            return reduce(bolt::cl::control::getDefault(), first, last, init, binary_op, cl_code);
-        };
-
-        template<typename InputIterator, typename T>
-         T  reduce(InputIterator first,
-            InputIterator last,
-            T init,
-            const std::string& cl_code)
-        {
-            typedef typename std::iterator_traits<InputIterator>::value_type iType;
-            return reduce(bolt::cl::control::getDefault(), first, last, init, bolt::cl::plus<iType>(), cl_code);
-        };
-
-        template<typename InputIterator, typename T>
-         T  reduce(bolt::cl::control &ctl,
-            InputIterator first,
-            InputIterator last,
-            T init,
-            const std::string& cl_code)
-        {
-            typedef typename std::iterator_traits<InputIterator>::value_type iType;
-            return reduce(ctl, first, last, init, bolt::cl::plus< iType >( ), cl_code);
-        };
-        // This template is called by all other "convenience" version of reduce.
-        // It also implements the CPU-side mappings of the algorithm for SerialCpu and MultiCoreCpu
-        template<typename InputIterator, typename T, typename BinaryFunction>
-        T reduce(bolt::cl::control &ctl,
-            InputIterator first,
-            InputIterator last,
-            T init,
-            BinaryFunction binary_op,
-            const std::string& cl_code)
-        {
-            bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
-            if(runMode == bolt::cl::control::Automatic)
-            {
-                  runMode = ctl.getDefaultPathToRun();
-            }
-            if (runMode == bolt::cl::control::SerialCpu) {
-                return std::accumulate(first, last, init, binary_op);
-            } else {
-                return detail::reduce_detect_random_access(ctl, first, last, init, binary_op, cl_code,
-                    std::iterator_traits< InputIterator >::iterator_category( ) );
-            }
-        }
-
-    }
-
-};
-
-
-namespace bolt {
-    namespace cl {
-        namespace detail {
+namespace detail {
 
             ///////////////
 
@@ -136,7 +54,7 @@ namespace bolt {
                     addKernelName( "reduceTemplate" );
                 }
 
-            const ::std::string operator() ( const ::std::vector<::std::string>& typeNames ) const
+            const ::std::string operator() ( const ::std::vector< ::std::string>& typeNames ) const
             {
                 const std::string templateSpecializationString =
                         "// Host generates this instantiation string with user-specified value type and functor\n"
@@ -157,6 +75,19 @@ namespace bolt {
 
             template<typename T, typename DVInputIterator, typename BinaryFunction>
             T reduce_detect_random_access(bolt::cl::control &ctl,
+                const DVInputIterator& first,
+                const DVInputIterator& last,
+                const T& init,
+                const BinaryFunction& binary_op,
+                const std::string& cl_code,
+                std::random_access_iterator_tag)
+            {
+                return reduce_pick_iterator( ctl, first, last, init, binary_op, cl_code,
+                   typename std::iterator_traits< DVInputIterator >::iterator_category( ) );
+            }
+
+            template<typename T, typename DVInputIterator, typename BinaryFunction>
+            T reduce_detect_random_access(bolt::cl::control &ctl,
 
                 const DVInputIterator& first,
                 const DVInputIterator& last,
@@ -167,21 +98,11 @@ namespace bolt {
             {
               //  TODO: It should be possible to support non-random_access_iterator_tag iterators,if we copied the data
               //  to a temporary buffer.  Should we?
-                static_assert( false, "Bolt only supports random access iterator types" );
+                static_assert( std::is_same< DVInputIterator, std::input_iterator_tag  >::value, "Bolt only supports random access iterator types" );
             }
 
-            template<typename T, typename DVInputIterator, typename BinaryFunction>
-            T reduce_detect_random_access(bolt::cl::control &ctl,
-                const DVInputIterator& first,
-                const DVInputIterator& last,
-                const T& init,
-                const BinaryFunction& binary_op,
-                const std::string& cl_code,
-                std::random_access_iterator_tag)
-            {
-                return reduce_pick_iterator( ctl, first, last, init, binary_op, cl_code,
-                    std::iterator_traits< DVInputIterator >::iterator_category( ) );
-            }
+
+
 
             // This template is called after we detect random access iterators
             // This is called strictly for any non-device_vector iterator
@@ -219,7 +140,7 @@ namespace bolt {
                     #ifdef ENABLE_TBB
                         return bolt::btbb::reduce(first,last,init,binary_op);
                     #else
-                        throw std::exception( "The MultiCoreCpu version of reduce is not enabled to be built! \n" );
+                        throw std::runtime_error( "The MultiCoreCpu version of reduce is not enabled to be built! \n" );
                     #endif
 
                 case bolt::cl::control::SerialCpu: 
@@ -262,26 +183,26 @@ namespace bolt {
                 case bolt::cl::control::MultiCoreCpu: 
                     #ifdef ENABLE_TBB
                     {
-                      bolt::cl::device_vector< iType >::pointer reduceInputBuffer =  first.getContainer( ).data( );
+                      typename bolt::cl::device_vector< iType >::pointer reduceInputBuffer =  first.getContainer( ).data( );
                       return bolt::btbb::reduce(  &reduceInputBuffer[first.m_Index],&reduceInputBuffer[ last.m_Index ],
                                                   init, binary_op);
                     }
                     #else
                     {
-                        throw std::exception( "The MultiCoreCpu version of reduce is not enabled to be built! \n" );
+                        throw std::runtime_error( "The MultiCoreCpu version of reduce is not enabled to be built! \n" );
                     }
                     #endif
 
                 case bolt::cl::control::SerialCpu: 
                     {
-                      bolt::cl::device_vector< iType >::pointer reduceInputBuffer =  first.getContainer( ).data( );
+                       typename bolt::cl::device_vector< iType >::pointer reduceInputBuffer =  first.getContainer( ).data( );
                       return std::accumulate(  &reduceInputBuffer[first.m_Index], &reduceInputBuffer[ last.m_Index ],
                                                init, binary_op);
                     }
 
                 default: /* Incase of runMode not set/corrupted */
                     {
-                      bolt::cl::device_vector< iType >::pointer reduceInputBuffer =  first.getContainer( ).data( );
+                       typename bolt::cl::device_vector< iType >::pointer reduceInputBuffer =  first.getContainer( ).data( );
                       return std::accumulate(  &reduceInputBuffer[first.m_Index], &reduceInputBuffer[ last.m_Index ],
                                                init, binary_op);
                     }
@@ -324,7 +245,7 @@ namespace bolt {
                     }
                     #else
                     {
-                        throw std::exception( "The MultiCoreCpu version of reduce is not enabled to be built! \n" );
+                        throw std::runtime_error( "The MultiCoreCpu version of reduce is not enabled to be built! \n" );
                     }
                     #endif
 
@@ -408,7 +329,7 @@ namespace bolt {
 
 
                 V_OPENCL( kernels[0].setArg(0, first.getContainer().getBuffer() ), "Error setting kernel argument" );
-                V_OPENCL( kernels[0].setArg(1, first.gpuPayloadSize( ), &first.gpuPayload( ) ),
+                V_OPENCL( kernels[0].setArg(1, first.gpuPayloadSize( ), const_cast<typename DVInputIterator::Payload *>(&first.gpuPayload( ) )),
                                                            "Error setting a kernel argument" );
 
                 V_OPENCL( kernels[0].setArg(2, szElements), "Error setting kernel argument" );
@@ -456,7 +377,89 @@ namespace bolt {
                 return acc;
             };
         }
+
+
+
+        template<typename InputIterator>
+        typename std::iterator_traits<InputIterator>::value_type
+            reduce(InputIterator first,
+            InputIterator last,
+            const std::string& cl_code)
+        {
+            typedef typename std::iterator_traits<InputIterator>::value_type iType;
+            return reduce(bolt::cl::control::getDefault(), first, last, iType(), bolt::cl::plus<iType>(), cl_code);
+        };
+
+        template<typename InputIterator>
+        typename std::iterator_traits<InputIterator>::value_type
+            reduce(bolt::cl::control &ctl,
+            InputIterator first,
+            InputIterator last,
+            const std::string& cl_code)
+        {
+            typedef typename std::iterator_traits<InputIterator>::value_type iType;
+            return reduce(ctl, first, last, iType(), bolt::cl::plus< iType >( ), cl_code);
+        };
+
+
+
+        template<typename InputIterator, typename T, typename BinaryFunction>
+        T reduce(InputIterator first,
+            InputIterator last,
+            T init,
+            BinaryFunction binary_op,
+            const std::string& cl_code)
+        {
+            return reduce(bolt::cl::control::getDefault(), first, last, init, binary_op, cl_code);
+        };
+
+        template<typename InputIterator, typename T>
+         T  reduce(InputIterator first,
+            InputIterator last,
+            T init,
+            const std::string& cl_code)
+        {
+            typedef typename std::iterator_traits<InputIterator>::value_type iType;
+            return reduce(bolt::cl::control::getDefault(), first, last, init, bolt::cl::plus<iType>(), cl_code);
+        };
+
+        template<typename InputIterator, typename T>
+         T  reduce(bolt::cl::control &ctl,
+            InputIterator first,
+            InputIterator last,
+            T init,
+            const std::string& cl_code)
+        {
+            typedef typename std::iterator_traits<InputIterator>::value_type iType;
+            return reduce(ctl, first, last, init, bolt::cl::plus< iType >( ), cl_code);
+        };
+        // This template is called by all other "convenience" version of reduce.
+        // It also implements the CPU-side mappings of the algorithm for SerialCpu and MultiCoreCpu
+        template<typename InputIterator, typename T, typename BinaryFunction>
+        T reduce(bolt::cl::control &ctl,
+            InputIterator first,
+            InputIterator last,
+            T init,
+            BinaryFunction binary_op,
+            const std::string& cl_code)
+        {
+            bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+            if(runMode == bolt::cl::control::Automatic)
+            {
+                  runMode = ctl.getDefaultPathToRun();
+            }
+            if (runMode == bolt::cl::control::SerialCpu) {
+                return std::accumulate(first, last, init, binary_op);
+            } else {
+                return detail::reduce_detect_random_access(ctl, first, last, init, binary_op, cl_code,
+                   typename std::iterator_traits< InputIterator >::iterator_category( ) );
+            }
+        }
+
     }
-}
+
+};
+
+
 
 #endif //BOLT_CL_REDUCE_INL

@@ -35,114 +35,6 @@
 
 namespace bolt {
     namespace cl {
-
-        template<typename ForwardIterator>
-        ForwardIterator max_element(ForwardIterator first,
-            ForwardIterator last,
-            const std::string& cl_code)
-        {
-            typedef typename std::iterator_traits<ForwardIterator>::value_type T;
-            return detail::max_element_detect_random_access(bolt::cl::control::getDefault(), first, last,
-                    bolt::cl::less<T>(), cl_code,
-                    std::iterator_traits< ForwardIterator >::iterator_category( ) );
-
-        };
-
-
-        template<typename ForwardIterator,typename BinaryPredicate>
-        ForwardIterator max_element(ForwardIterator first,
-            ForwardIterator last,
-            BinaryPredicate binary_op,
-            const std::string& cl_code)
-        {
-            return detail::max_element_detect_random_access(bolt::cl::control::getDefault(), first, last,
-                    binary_op, cl_code,
-                    std::iterator_traits< ForwardIterator >::iterator_category( ) );
-        };
-
-
-
-        template<typename ForwardIterator>
-        ForwardIterator  max_element(bolt::cl::control &ctl,
-            ForwardIterator first,
-            ForwardIterator last,
-            const std::string& cl_code)
-        {
-            typedef typename std::iterator_traits<ForwardIterator>::value_type T;
-            return detail::max_element_detect_random_access(ctl, first, last,
-                    bolt::cl::less<T>(), cl_code,
-                    std::iterator_traits< ForwardIterator >::iterator_category( ) );
-        };
-
-        // This template is called by all other "convenience" version of max_element.
-        // It also implements the CPU-side mappings of the algorithm for SerialCpu and MultiCoreCpu
-        template<typename ForwardIterator, typename BinaryPredicate>
-        ForwardIterator max_element(bolt::cl::control &ctl,
-            ForwardIterator first,
-            ForwardIterator last,
-            BinaryPredicate binary_op,
-            const std::string& cl_code)
-            {
-                    return detail::max_element_detect_random_access(ctl, first, last, binary_op, cl_code,
-                    std::iterator_traits< ForwardIterator >::iterator_category( ) );
-            }
-        };
-
-  };
-
-namespace bolt {
-    namespace cl {
-
-        template<typename ForwardIterator>
-        ForwardIterator min_element(ForwardIterator first,
-            ForwardIterator last,
-            const std::string& cl_code)
-        {
-            typedef typename std::iterator_traits<ForwardIterator>::value_type T;
-            return min_element(bolt::cl::control::getDefault(), first, last, bolt::cl::less<T>(), cl_code);
-        };
-
-
-        template<typename ForwardIterator,typename BinaryPredicate>
-        ForwardIterator min_element(ForwardIterator first,
-            ForwardIterator last,
-            BinaryPredicate binary_op,
-            const std::string& cl_code)
-        {
-            return min_element(bolt::cl::control::getDefault(), first, last, binary_op, cl_code);
-        };
-
-
-
-        template<typename ForwardIterator>
-        ForwardIterator  min_element(bolt::cl::control &ctl,
-            ForwardIterator first,
-            ForwardIterator last,
-            const std::string& cl_code)
-        {
-            typedef typename std::iterator_traits<ForwardIterator>::value_type T;
-            return min_element(ctl, first, last, bolt::cl::less<T>(),cl_code);
-        };
-
-        // This template is called by all other "convenience" version of min_element.
-        // It also implements the CPU-side mappings of the algorithm for SerialCpu and MultiCoreCpu
-        template<typename ForwardIterator, typename BinaryPredicate>
-        ForwardIterator min_element(bolt::cl::control &ctl,
-            ForwardIterator first,
-            ForwardIterator last,
-            BinaryPredicate binary_op,
-            const std::string& cl_code)
-             {
-               return detail::min_element_detect_random_access(ctl, first, last, binary_op, cl_code,
-               std::iterator_traits< ForwardIterator >::iterator_category( ) );
-            }
-        };
-
-};
-
-
-namespace bolt {
-    namespace cl {
         namespace detail {
 
 
@@ -161,7 +53,7 @@ namespace bolt {
                     addKernelName( "min_elementTemplate" );
                 }
 
-            const ::std::string operator() ( const ::std::vector<::std::string>& typeNames ) const
+            const ::std::string operator() ( const ::std::vector< ::std::string >& typeNames ) const
             {
                 const std::string templateSpecializationString =
                         "// Host generates this instantiation string with user-specified value type and functor\n"
@@ -256,7 +148,8 @@ namespace bolt {
 
 
                 V_OPENCL( kernels[0].setArg(0, first.getContainer().getBuffer() ), "Error setting kernel argument" );
-                V_OPENCL( kernels[0].setArg(1,first.gpuPayloadSize(),&first.gpuPayload()),
+                V_OPENCL( kernels[0].setArg(1,first.gpuPayloadSize(),const_cast<typename DVInputIterator::Payload *>(
+                    &first.gpuPayload())),
                           "Error setting a kernel argument");
 
                 V_OPENCL( kernels[0].setArg(2, szElements), "Error setting kernel argument" );
@@ -304,9 +197,9 @@ namespace bolt {
                     }
                     else
                     {
-                        bool stat = binary_op(minele,*(first + h_result[i]));
-                        minele = stat ? minele : *(first + h_result[i]);
-                        minele_indx =  stat ? minele_indx : h_result[i];
+                    bool stat = binary_op(minele,*(first + h_result[i]));
+                    minele = stat ? minele : *(first + h_result[i]);
+                    minele_indx =  stat ? minele_indx : h_result[i];
                     }
 
                 }
@@ -331,7 +224,7 @@ namespace bolt {
             {
                 //TODO:It should be possible to support non-random_access_iterator_tag iterators,if we copied the data
                 //to a temporary buffer.  Should we?
-                static_assert( false, "Bolt only supports random access iterator types" );
+                static_assert( std::is_same< ForwardIterator, std::forward_iterator_tag   >::value, "Bolt only supports random access iterator types" );
             }
 
 
@@ -349,19 +242,6 @@ namespace bolt {
             }
 
 
-            template<typename ForwardIterator, typename BinaryPredicate>
-            ForwardIterator max_element_detect_random_access(bolt::cl::control &ctl,
-                const ForwardIterator& first,
-                const ForwardIterator& last,
-                const BinaryPredicate& binary_op,
-                const std::string& cl_code,
-                std::input_iterator_tag)
-            {
-                //TODO:It should be possible to support non-random_access_iterator_tag iterators,if we copied the data
-                //to a temporary buffer.  Should we?
-                static_assert( false, "Bolt only supports random access iterator types" );
-            }
-
 
             template<typename ForwardIterator, typename BinaryPredicate>
             ForwardIterator max_element_detect_random_access(bolt::cl::control &ctl,
@@ -373,9 +253,8 @@ namespace bolt {
             {
                 const char * str = "MAX_KERNEL";
                 return min_element_pick_iterator( ctl, first, last,  binary_op, cl_code,
-                    std::iterator_traits< ForwardIterator >::iterator_category( ), str);
+                   typename std::iterator_traits< ForwardIterator >::iterator_category( ), str);
             }
-
 
             // This template is called after we detect random access iterators
             // This is called strictly for any non-device_vector iterator
@@ -407,7 +286,7 @@ namespace bolt {
                 }
 
                 const char * str = "MAX_KERNEL";
- 
+
                 switch(runMode)
                 {
                 case bolt::cl::control::OpenCL :
@@ -424,21 +303,21 @@ namespace bolt {
                         else
                               return bolt::btbb::min_element(first, last, binary_op);
                     #else
-                        throw std::exception( "The MultiCoreCpu version of Max-Min is not enabled to be built! \n" );
+                        throw std::runtime_error( "The MultiCoreCpu version of Max-Min is not enabled to be built! \n" );
                     #endif
 
                 case bolt::cl::control::SerialCpu:
                     if(std::strcmp(min_max,str) == 0)
                        return std::max_element(first, last, binary_op);
                     else
-                       return std::min_element(first, last, binary_op);
+                    return std::min_element(first, last, binary_op);
 
                 default:
                    
                     if(std::strcmp(min_max,str) == 0)
                        return std::max_element(first, last, binary_op);
                     else
-                       return std::min_element(first, last, binary_op);
+                    return std::min_element(first, last, binary_op);
 
                 }
 
@@ -482,20 +361,20 @@ namespace bolt {
                         else
                               return bolt::btbb::min_element(first, last, binary_op);
                     #else
-                        throw std::exception( "The MultiCoreCpu version of Max-Min is not enabled to be built! \n" );
+                        throw std::runtime_error( "The MultiCoreCpu version of Max-Min is not enabled to be built! \n" );
                     #endif
 
                 case bolt::cl::control::SerialCpu:
                     if(std::strcmp(min_max,str) == 0)
                        return std::max_element(first, last, binary_op);
                     else
-                       return std::min_element(first, last, binary_op);
+                    return std::min_element(first, last, binary_op);
 
                 default:
                     if(std::strcmp(min_max,str) == 0)
                        return std::max_element(first, last, binary_op);
                     else
-                       return std::min_element(first, last, binary_op);
+                    return std::min_element(first, last, binary_op);
 
                 }
 
@@ -535,20 +414,20 @@ namespace bolt {
                         else
                               return bolt::btbb::min_element(first, last, binary_op);
                     #else
-                        throw std::exception( "The MultiCoreCpu version of Max-Min is not enabled to be built! \n" );
+                        throw std::runtime_error( "The MultiCoreCpu version of Max-Min is not enabled to be built! \n" );
                     #endif
 
                 case bolt::cl::control::SerialCpu:
                     if(std::strcmp(min_max,str) == 0)
                        return std::max_element(first, last, binary_op);
                     else
-                       return std::min_element(first, last, binary_op);
+                    return std::min_element(first, last, binary_op);
 
                 default:
                     if(std::strcmp(min_max,str) == 0)
                        return std::max_element(first, last, binary_op);
                     else
-                       return std::min_element(first, last, binary_op);
+                    return std::min_element(first, last, binary_op);
 
                 }
 
@@ -558,5 +437,111 @@ namespace bolt {
         };
     };
 };
+
+
+
+namespace bolt {
+    namespace cl {
+
+        template<typename ForwardIterator>
+      ForwardIterator max_element(ForwardIterator first,
+            ForwardIterator last,
+            const std::string& cl_code)
+        {
+            typedef typename std::iterator_traits<ForwardIterator>::value_type T;
+            return min_element(bolt::cl::control::getDefault(), first, last, bolt::cl::greater<T>(), cl_code);
+        };
+
+
+        template<typename ForwardIterator,typename BinaryPredicate>
+        ForwardIterator max_element(ForwardIterator first,
+            ForwardIterator last,
+            BinaryPredicate binary_op,
+            const std::string& cl_code)
+        {
+            return min_element(bolt::cl::control::getDefault(), first, last, binary_op, cl_code);
+        };
+
+
+
+        template<typename ForwardIterator>
+        ForwardIterator  max_element(bolt::cl::control &ctl,
+            ForwardIterator first,
+            ForwardIterator last,
+            const std::string& cl_code)
+        {
+            typedef typename std::iterator_traits<ForwardIterator>::value_type T;
+            return min_element(ctl, first, last, bolt::cl::greater<T>(),cl_code);
+        };
+
+        // This template is called by all other "convenience" version of max_element.
+        // It also implements the CPU-side mappings of the algorithm for SerialCpu and MultiCoreCpu
+        template<typename ForwardIterator, typename BinaryPredicate>
+        ForwardIterator max_element(bolt::cl::control &ctl,
+            ForwardIterator first,
+            ForwardIterator last,
+            BinaryPredicate binary_op,
+            const std::string& cl_code)
+            {
+                    return detail::min_element_detect_random_access(ctl, first, last, binary_op, cl_code,
+                    typename std::iterator_traits< ForwardIterator >::iterator_category( ) );
+            }
+        };
+
+  };
+
+namespace bolt {
+    namespace cl {
+
+        // This template is called by all other "convenience" version of min_element.
+        // It also implements the CPU-side mappings of the algorithm for SerialCpu and MultiCoreCpu
+        template<typename ForwardIterator, typename BinaryPredicate>
+        ForwardIterator min_element(bolt::cl::control &ctl,
+            ForwardIterator first,
+            ForwardIterator last,
+            BinaryPredicate binary_op,
+            const std::string& cl_code)
+             {
+               return detail::min_element_detect_random_access(ctl, first, last, binary_op, cl_code,
+               typename std::iterator_traits< ForwardIterator >::iterator_category( ) );
+            }
+ 
+
+        template<typename ForwardIterator>
+      ForwardIterator min_element(ForwardIterator first,
+            ForwardIterator last,
+            const std::string& cl_code)
+        {
+            typedef typename std::iterator_traits<ForwardIterator>::value_type T;
+            return min_element(bolt::cl::control::getDefault(), first, last, bolt::cl::less<T>(), cl_code);
+        };
+
+
+        template<typename ForwardIterator,typename BinaryPredicate>
+        ForwardIterator min_element(ForwardIterator first,
+            ForwardIterator last,
+            BinaryPredicate binary_op,
+            const std::string& cl_code)
+        {
+            return min_element(bolt::cl::control::getDefault(), first, last, binary_op, cl_code);
+        };
+
+
+
+        template<typename ForwardIterator>
+        ForwardIterator  min_element(bolt::cl::control &ctl,
+            ForwardIterator first,
+            ForwardIterator last,
+            const std::string& cl_code)
+        {
+            typedef typename std::iterator_traits<ForwardIterator>::value_type T;
+            return min_element(ctl, first, last, bolt::cl::less<T>(),cl_code);
+        };
+
+       };
+
+};
+
+
 
 #endif

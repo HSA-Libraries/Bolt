@@ -381,7 +381,7 @@ class TypeValue
 public:
     static const size_t value = N;
 };
-
+/*
 //  Test fixture class, used for the Type-parameterized tests
 //  Namely, the tests that use std::array and TYPED_TEST_P macros
 template< typename ArrayTuple >
@@ -410,13 +410,13 @@ public:
 protected:
     typedef typename std::tuple_element< 0, ArrayTuple >::type ArrayType;
     ArrayType std_val, val;
-    static const size_t ArraySize = typename std::tuple_element< 1, ArrayTuple >::type::value;
+    static const size_t ArraySize = std::tuple_element< 1, ArrayTuple >::type::value;
     std::array< ArrayType, ArraySize > std_source, bolt_source, stdOffsetIn, boltOffsetIn;
     int m_Errors;
 };
 
 TYPED_TEST_CASE_P( BSearchArrayTest );
-
+*/
 
 #if (TEST_MULTICORE_TBB_SEARCH == 1)
 
@@ -552,7 +552,7 @@ TEST( MultiCoreCPU, MultiCoreNormal )
     EXPECT_EQ( stdresult ,  boltresult);
 }
 #endif
-
+/*
 TYPED_TEST_P( BSearchArrayTest, Normal )
 {
     typedef std::array< ArrayType, ArraySize > ArrayCont;
@@ -969,7 +969,7 @@ REGISTER_TYPED_TEST_CASE_P( BSearchArrayTest, Normal, GPU_DeviceNormal,
 
 #endif
 
-
+*/
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Fixture classes are now defined to enable googletest to process value parameterized tests
 //  ::testing::TestWithParam< int > means that GetParam( ) returns int values, which i use for array size
@@ -2064,7 +2064,7 @@ TEST_P( BSearchDoubleDeviceVector, MulticoreNormal )
 
 #endif 
 #endif
-
+/*
 TEST_P( BSearchIntegerNakedPointer, Normal )
 {
     size_t endIndex = GetParam( );
@@ -2267,6 +2267,8 @@ TEST_P( BSearchDoubleNakedPointer, MulticoreNormal )
 
 
 #endif
+
+*/
 std::array<int, 10> TestValues = {2,4,8,16,32,64,128,256,512,1024};
 std::array<int, 5> TestValues2 = {2048,4096,8192,16384,32768};
 //Test lots of consecutive numbers, but small range, suitable for integers because they overflow easier
@@ -2274,7 +2276,7 @@ std::array<int, 5> TestValues2 = {2048,4096,8192,16384,32768};
 //INSTANTIATE_TEST_CASE_P( BSearchRange, BSearchStdVector_MulValues, ::testing::Range( 1, 1024, 23 ) );
 //INSTANTIATE_TEST_CASE_P( BSearchValues, BSearchStdVector_MulValues, ::testing::ValuesIn( TestValues.begin(), 
 //                                                                          TestValues.end() ) );
-
+/*
 INSTANTIATE_TEST_CASE_P( BSearchRange, BSearchIntegerVector, ::testing::Range( 1, 1024, 23 ) );
 INSTANTIATE_TEST_CASE_P( BSearchValues, BSearchIntegerVector, ::testing::ValuesIn( TestValues.begin(),
                                                                             TestValues.end() ) );
@@ -2347,7 +2349,7 @@ INSTANTIATE_TEST_CASE_P( BSearchValues, BSearchIntegerNakedPointer, ::testing::V
 INSTANTIATE_TEST_CASE_P(BSearchValues, BSearchFloatNakedPointer, ::testing::ValuesIn( TestValues2.begin(), 
                                                                                 TestValues2.end() ) );
 #endif
-
+*/
 typedef ::testing::Types< 
     std::tuple< cl_long, TypeValue< 1 > >,
     std::tuple< cl_long, TypeValue< 31 > >,
@@ -2753,7 +2755,7 @@ int main(int argc, char* argv[])
     ::testing::InitGoogleTest( &argc, &argv[ 0 ] );
 
     //  Register our minidump generating logic
-    bolt::miniDumpSingleton::enableMiniDumps( );
+    //bolt::miniDumpSingleton::enableMiniDumps( );
 
     int retVal = RUN_ALL_TESTS( );
 

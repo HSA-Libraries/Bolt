@@ -79,14 +79,14 @@ public:
 protected:
     typedef typename std::tuple_element< 0, ArrayTuple >::type ArrayType;
     // typedef typename std::tuple_element< 0, ArrayTuple >::type::value ArraySize;
-    static const size_t ArraySize = typename std::tuple_element< 1, ArrayTuple >::type::value;
+    static const size_t ArraySize =  std::tuple_element< 1, ArrayTuple >::type::value;
 
     typename std::array< ArrayType, ArraySize > stdInput, boltInput;
     int m_Errors;
 };
 
 TYPED_TEST_CASE_P( ScanArrayTest );
-
+/*
 TYPED_TEST_P( ScanArrayTest, InPlace )
 {
     typedef std::array< ArrayType, ArraySize > ArrayCont;
@@ -112,7 +112,7 @@ TYPED_TEST_P( ScanArrayTest, OutofPlace )
 }
 
 REGISTER_TYPED_TEST_CASE_P( ScanArrayTest, InPlace, InPlacePlusFunction, InPlaceMaxFunction, OutofPlace );
-
+*/
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Fixture classes are now defined to enable googletest to process value parameterized tests
 
@@ -1335,7 +1335,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	::testing::InitGoogleTest( &argc, &argv[ 0 ] );
     
     //  Register our minidump generating logic
-    bolt::miniDumpSingleton::enableMiniDumps( );
+    //bolt::miniDumpSingleton::enableMiniDumps( );
 
     int retVal = RUN_ALL_TESTS( );
 

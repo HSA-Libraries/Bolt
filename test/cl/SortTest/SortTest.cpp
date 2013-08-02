@@ -304,7 +304,7 @@ class TypeValue
 public:
     static const size_t value = N;
 };
-
+/*
 //  Test fixture class, used for the Type-parameterized tests
 //  Namely, the tests that use std::array and TYPED_TEST_P macros
 template< typename ArrayTuple >
@@ -330,14 +330,14 @@ public:
 
 protected:
     typedef typename std::tuple_element< 0, ArrayTuple >::type ArrayType;
-    static const size_t ArraySize = typename std::tuple_element< 1, ArrayTuple >::type::value;
+    static const size_t ArraySize = std::tuple_element< 1, ArrayTuple >::type::value;
     std::array< ArrayType, ArraySize > stdInput, boltInput, stdOffsetIn, boltOffsetIn;
     int m_Errors;
 };
 
 TYPED_TEST_CASE_P( SortArrayTest );
 
-
+*/
 #if (TEST_MULTICORE_TBB_SORT == 1)
 
 #if ( TEST_DOUBLE == 1)
@@ -433,7 +433,7 @@ TEST( MultiCoreCPU, MultiCoreNormal )
     cmpArrays( stdInput, boltInput );
 }
 #endif
-
+/*
 TYPED_TEST_P( SortArrayTest, Normal )
 {
     typedef std::array< ArrayType, ArraySize > ArrayCont;
@@ -853,7 +853,7 @@ REGISTER_TYPED_TEST_CASE_P( SortArrayTest, Normal, GPU_DeviceNormal,
                                            LessFunction, GPU_DeviceLessFunction );
 #endif
 
-
+*/
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Fixture classes are now defined to enable googletest to process value parameterized tests
 //  ::testing::TestWithParam< int > means that GetParam( ) returns int values, which i use for array size
@@ -2017,7 +2017,7 @@ TEST_P( SortDoubleDeviceVector, MulticoreInplace )
 
 #endif
 #endif
-
+/*
 TEST_P( SortIntegerNakedPointer, Inplace )
 {
     size_t endIndex = GetParam( );
@@ -2192,7 +2192,10 @@ TEST_P( SortDoubleNakedPointer, MulticoreInplace )
 
 
 #endif
+*/
 std::array<int, 15> TestValues = {2,4,8,16,32,64,128,256,512,1024,2048,4096,8192,16384,32768};
+
+
 //Test lots of consecutive numbers, but small range, suitable for integers because they overflow easier
 INSTANTIATE_TEST_CASE_P( SortRange, SortIntegerVector, ::testing::Range( 0, 1024, 7 ) );
 INSTANTIATE_TEST_CASE_P( SortValues, SortIntegerVector, ::testing::ValuesIn( TestValues.begin(),
@@ -2368,7 +2371,7 @@ typedef ::testing::Types<
 #endif 
 
 
-
+/*
 template< typename ArrayTuple >
 class SortUDDArrayTest: public ::testing::Test
 {
@@ -2390,7 +2393,7 @@ public:
 
 protected:
     typedef typename std::tuple_element< 0, ArrayTuple >::type ArrayType;
-    static const size_t ArraySize = typename std::tuple_element< 1, ArrayTuple >::type::value;
+    static const size_t ArraySize = std::tuple_element< 1, ArrayTuple >::type::value;
     typename std::array< ArrayType, ArraySize > stdInput, boltInput;
     int m_Errors;
 };
@@ -2423,7 +2426,7 @@ TYPED_TEST_P( SortUDDArrayTest, Normal )
     cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
 
 }
-
+*/
 typedef ::testing::Types< 
     std::tuple< UDD, TypeValue< 1 > >,
     std::tuple< UDD, TypeValue< 31 > >,
@@ -2475,7 +2478,7 @@ typedef ::testing::Types<
     std::tuple< cl_short, TypeValue< 65536 > >
 > cl_shortTests;
 
-
+/*
 INSTANTIATE_TYPED_TEST_CASE_P( cl_ushort, SortArrayTest, cl_ushortTests );
 INSTANTIATE_TYPED_TEST_CASE_P( cl_short, SortArrayTest, cl_shortTests );
 INSTANTIATE_TYPED_TEST_CASE_P( Integer, SortArrayTest, IntegerTests );
@@ -2487,7 +2490,7 @@ INSTANTIATE_TYPED_TEST_CASE_P( Double, SortArrayTest, DoubleTests );
 #endif 
 REGISTER_TYPED_TEST_CASE_P( SortUDDArrayTest,  Normal);
 INSTANTIATE_TYPED_TEST_CASE_P( UDDTest, SortUDDArrayTest, UDDTests );
-
+*/
 class withStdVect: public ::testing::TestWithParam<int>{
 protected:
     int sizeOfInputBuffer;
@@ -2653,7 +2656,7 @@ int main(int argc, char* argv[])
     ::testing::InitGoogleTest( &argc, &argv[ 0 ] );
 
     //  Register our minidump generating logic
-    bolt::miniDumpSingleton::enableMiniDumps( );
+    //bolt::miniDumpSingleton::enableMiniDumps( );
 
     int retVal = RUN_ALL_TESTS( );
 

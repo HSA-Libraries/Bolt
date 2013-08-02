@@ -29,6 +29,8 @@ if(BUILD_TBB)
 endif()
 
 if( BUILD_clBolt )
+
+if( MSVC_IDE )
     # Include standard OpenCL headers
     add_subdirectory( Benchmark )
     add_subdirectory( CopyBench )
@@ -44,4 +46,9 @@ if( BUILD_clBolt )
     add_subdirectory( StableSortByKey )
     add_subdirectory( Transform )
     add_subdirectory( TransformScanBench )
+else()
+    # Include standard OpenCL headers
+    add_subdirectory( Benchmark )
+endif()
+
 endif( )

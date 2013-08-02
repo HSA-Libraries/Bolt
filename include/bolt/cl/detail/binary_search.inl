@@ -26,67 +26,15 @@
 
 #include "bolt/cl/bolt.h"
 #include "bolt/cl/device_vector.h"
-
+#include "bolt/cl/functional.h"
 //TBB Includes
+#if defined(ENABLE_TBB)
 #include "bolt/btbb/binary_search.h"
+#endif
 
 namespace bolt {
     namespace cl {
-
-        //Default control
-        template<typename ForwardIterator, typename T>
-        bool binary_search( ForwardIterator first,
-            ForwardIterator last,
-            const T & value,
-            const std::string& cl_code)
-        {
-            return detail::binary_search_detect_random_access( bolt::cl::control::getDefault(), first, last, value,
-                less< T >( ), cl_code, std::iterator_traits< ForwardIterator >::iterator_category( ) );
-        }
-
-        //User specified control
-        template< typename ForwardIterator, typename T >
-        bool binary_search( bolt::cl::control &ctl,
-            ForwardIterator first,
-            ForwardIterator last,
-            const T & value,
-            const std::string& cl_code)
-        {
-            return detail::binary_search_detect_random_access( ctl, first, last, value, less< T >( ), cl_code,
-                std::iterator_traits< ForwardIterator >::iterator_category( ) );
-        }
-
-        //Default control
-        template<typename ForwardIterator, typename T, typename StrictWeakOrdering>
-        bool binary_search(ForwardIterator first,
-            ForwardIterator last,
-            const T & value,
-            StrictWeakOrdering comp,
-            const std::string& cl_code)
-        {
-            return detail::binary_search_detect_random_access( bolt::cl::control::getDefault(), first, last, value,
-                comp, cl_code, std::iterator_traits< ForwardIterator >::iterator_category( ) );
-        }
-
-        //User specified control
-        template<typename ForwardIterator, typename T, typename StrictWeakOrdering>
-        bool binary_search(bolt::cl::control &ctl,
-            ForwardIterator first,
-            ForwardIterator last,
-            const T & value,
-            StrictWeakOrdering comp,
-            const std::string& cl_code)
-        {
-            return detail::binary_search_detect_random_access( ctl, first, last, value, comp, cl_code,
-                std::iterator_traits< ForwardIterator >::iterator_category( ) );
-        }
-
-    }//end of cl namespace
-};//end of bolt namespace
-
-
-namespace bolt {
-    namespace cl {
+      
         namespace detail {
        
         enum binarysearchTypeName { bs_T, bs_DVForwardIterator, bs_StrictWeakOrdering, bs_end };
@@ -104,7 +52,7 @@ namespace bolt {
                 addKernelName( "binarysearch_kernel" );
             }
 
-            const ::std::string operator() ( const ::std::vector<::std::string>& typeNames ) const
+            const ::std::string operator() ( const ::std::vector< ::std::string>& typeNames ) const
             {
                 const std::string templateSpecializationString =
                     "// Dynamic specialization of generic template definition, using user supplied types\n"
@@ -128,14 +76,6 @@ namespace bolt {
              * Random Access
              ****************************************************************************/
 
-            // No support for non random access iterators
-            template<typename ForwardIterator, typename T, typename StrictWeakOrdering>
-            bool binary_search_detect_random_access( bolt::cl::control &ctl, ForwardIterator first,
-                ForwardIterator last,
-                const T & value, StrictWeakOrdering comp, const std::string &cl_code, std::forward_iterator_tag )
-            {
-                static_assert( false, "Bolt only supports random access iterator types" );
-            }
 
             // Random-access
             template<typename ForwardIterator, typename T, typename StrictWeakOrdering>
@@ -144,8 +84,18 @@ namespace bolt {
                 const T & value, StrictWeakOrdering comp, const std::string &cl_code, std::random_access_iterator_tag )
             {
                  return binary_search_pick_iterator(ctl, first, last, value, comp, cl_code,
-                 std::iterator_traits< ForwardIterator >::iterator_category( ) );
+                 typename std::iterator_traits< ForwardIterator >::iterator_category( ) );
             }
+            
+
+            // No support for non random access iterators
+            template<typename ForwardIterator, typename T, typename StrictWeakOrdering>
+            bool binary_search_detect_random_access( bolt::cl::control &ctl, ForwardIterator first,
+                ForwardIterator last,
+                const T & value, StrictWeakOrdering comp, const std::string &cl_code, std::forward_iterator_tag )
+            {
+                static_assert( std::is_same< ForwardIterator, std::forward_iterator_tag   >::value, "Bolt only supports random access iterator types" );
+            }            
 
             /*****************************************************************************
              * Pick Iterator
@@ -162,7 +112,7 @@ namespace bolt {
                 std::random_access_iterator_tag )
             {
 
-                typedef std::iterator_traits<ForwardIterator>::value_type Type;
+                typedef typename std::iterator_traits<ForwardIterator>::value_type Type;
                 size_t sz = (last - first);
                 if (sz < 1)
                      return false;
@@ -183,7 +133,7 @@ namespace bolt {
                           return bolt::btbb::binary_search(first, last, value, comp);
                           //return std::binary_search(first, last, value, comp);
                     #else
-                          throw std::exception("MultiCoreCPU Version of Binary Search not Enabled! \n");
+                          throw std::runtime_error("MultiCoreCPU Version of Binary Search not Enabled! \n");
                     #endif
                 }
                 else
@@ -207,7 +157,7 @@ namespace bolt {
                 const DVForwardIterator &last, const T & value, StrictWeakOrdering comp, const std::string& user_code,
                 bolt::cl::device_vector_tag )
             {
-                typedef std::iterator_traits<DVForwardIterator>::value_type iType;
+                typedef typename std::iterator_traits<DVForwardIterator>::value_type iType;
                 size_t szElements = static_cast<size_t>(std::distance(first, last) );
                 bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode(); // could be dynamic choice some day.
                 if(runMode == bolt::cl::control::Automatic)
@@ -216,16 +166,16 @@ namespace bolt {
                 }
                 if( runMode == bolt::cl::control::SerialCpu )
                 {
-                     bolt::cl::device_vector< iType >::pointer bsInputBuffer = first.getContainer( ).data( );
+                     typename bolt::cl::device_vector< iType >::pointer bsInputBuffer = first.getContainer( ).data( );
                      return std::binary_search(&bsInputBuffer[first.m_Index], &bsInputBuffer[last.m_Index], value, comp );
                 }
                 else if(runMode == bolt::cl::control::MultiCoreCpu)
                 {
                     #ifdef ENABLE_TBB
-                        bolt::cl::device_vector< iType >::pointer bsInputBuffer = first.getContainer( ).data( );
+                        typename bolt::cl::device_vector< iType >::pointer bsInputBuffer = first.getContainer( ).data( );
                         return bolt::btbb::binary_search(&bsInputBuffer[first.m_Index], &bsInputBuffer[last.m_Index], value, comp );
                     #else
-                        throw std::exception("MultiCoreCPU Version of Binary Search not Enabled! \n");
+                        throw std::runtime_error("MultiCoreCPU Version of Binary Search not Enabled! \n");
                     #endif
                 }
                 else
@@ -264,7 +214,7 @@ namespace bolt {
                         return bolt::btbb::binary_search(first, last, value, comp);
                         //return std::binary_search(first, last, value, comp);
                     #else
-                        throw std::exception("MultiCoreCPU Version of Binary Search not Enabled! \n");
+                        throw std::runtime_error("MultiCoreCPU Version of Binary Search not Enabled! \n");
                     #endif
                 }
                 else
@@ -313,7 +263,7 @@ namespace bolt {
                 /**********************************************************************************
                  * Type Names - used in KernelTemplateSpecializer
                  *********************************************************************************/
-                typedef std::iterator_traits<DVForwardIterator>::value_type Type;
+                typedef typename std::iterator_traits<DVForwardIterator>::value_type Type;
                 typedef T iType;
                 std::vector<std::string> typeNames(bs_end);
                 typeNames[bs_T] = TypeName< T >::get( );
@@ -362,7 +312,7 @@ namespace bolt {
                     {
                         V_OPENCL( kernels[0].setArg( 0, first.getContainer().getBuffer()),"Error setArg kernels[ 0 ]" );
                         // Input Iterator
-                        V_OPENCL( kernels[0].setArg( 1, first.gpuPayloadSize( ), &first.gpuPayload( ) ),
+                        V_OPENCL( kernels[0].setArg( 1, first.gpuPayloadSize( ), const_cast<typename DVForwardIterator::Payload * >(&first.gpuPayload( )) ),
                             "Error setting a kernel argument" );
                         V_OPENCL( kernels[0].setArg( 2, val), "Error setArg kernels[ 0 ]" );
                         V_OPENCL( kernels[0].setArg( 3, static_cast<cl_uint>(numElementsProcessedperWI) ), "Error setArg kernels[ 0 ]" );
@@ -388,7 +338,7 @@ namespace bolt {
                     {
                         V_OPENCL( kernels[0].setArg( 0, first.getContainer().getBuffer()),"Error setArg kernels[ 0 ]" );
                         // Input Iterator
-                        V_OPENCL( kernels[0].setArg( 1, first.gpuPayloadSize( ), &first.gpuPayload( ) ),
+                        V_OPENCL( kernels[0].setArg( 1, first.gpuPayloadSize( ), const_cast<typename DVForwardIterator::Payload * >(&first.gpuPayload( )) ),
                             "Error setting a kernel argument" );
                         V_OPENCL( kernels[0].setArg( 2, val), "Error setArg kernels[ 0 ]" );
                         V_OPENCL( kernels[0].setArg( 3, static_cast<cl_uint>(numElementsProcessedperWI) ), "Error setArg kernels[ 0 ]" );
@@ -442,7 +392,59 @@ namespace bolt {
             }; // end binary_search_enqueue
 
         }//End of detail namespace
-    }//End of cl namespace
-}//End of bolt namespace
+    
+
+        //Default control
+        template<typename ForwardIterator, typename T>
+        bool binary_search( ForwardIterator first,
+            ForwardIterator last,
+            const T & value,
+            const std::string& cl_code)
+        {
+            return detail::binary_search_detect_random_access( bolt::cl::control::getDefault(), first, last, value,
+                bolt::cl::less< T >( ), cl_code, typename std::iterator_traits< ForwardIterator >::iterator_category( ) );
+        }
+
+        //User specified control
+        template< typename ForwardIterator, typename T >
+        bool binary_search( bolt::cl::control &ctl,
+            ForwardIterator first,
+            ForwardIterator last,
+            const T & value,
+            const std::string& cl_code)
+        {
+            return detail::binary_search_detect_random_access( ctl, first, last, value, bolt::cl::less< T >( ), cl_code,
+                typename std::iterator_traits< ForwardIterator >::iterator_category( ) );
+        }
+
+        //Default control
+        template<typename ForwardIterator, typename T, typename StrictWeakOrdering>
+        bool binary_search(ForwardIterator first,
+            ForwardIterator last,
+            const T & value,
+            StrictWeakOrdering comp,
+            const std::string& cl_code)
+        {
+            return detail::binary_search_detect_random_access( bolt::cl::control::getDefault(), first, last, value,
+                comp, cl_code, typename std::iterator_traits< ForwardIterator >::iterator_category( ) );
+        }
+
+        //User specified control
+        template<typename ForwardIterator, typename T, typename StrictWeakOrdering>
+        bool binary_search(bolt::cl::control &ctl,
+            ForwardIterator first,
+            ForwardIterator last,
+            const T & value,
+            StrictWeakOrdering comp,
+            const std::string& cl_code)
+        {
+            return detail::binary_search_detect_random_access( ctl, first, last, value, comp, cl_code,
+                typename std::iterator_traits< ForwardIterator >::iterator_category( ) );
+        }
+
+    }//end of cl namespace
+};//end of bolt namespace
+
+
 
 #endif

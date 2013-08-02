@@ -30,7 +30,6 @@
 //#include <boost/shared_array.hpp>
 #define TEST_DOUBLE 0
 #define TEST_CPU_DEVICE 1
-#define TEST_LARGE_BUFFERS 0
 
 template< typename T >
 ::testing::AssertionResult cmpArrays( const T ref, const T calc, size_t N )
@@ -473,13 +472,13 @@ public:
 
 protected:
     typedef typename std::tuple_element< 0, ArrayTuple >::type ArrayType;
-    static const size_t ArraySize = typename std::tuple_element< 1, ArrayTuple >::type::value;
+    static const size_t ArraySize = std::tuple_element< 1, ArrayTuple >::type::value;
     std::array< ArrayType, ArraySize > stdInput, boltInput, stdOffsetIn, boltOffsetIn;
     int m_Errors;
 };
 
 TYPED_TEST_CASE_P( GenerateArrayTest );
-
+/*
 
 #if (TEST_CPU_DEVICE == 1)
 TYPED_TEST_P( GenerateArrayTest,CPU_DeviceNormal )
@@ -532,7 +531,7 @@ TYPED_TEST_P( GenerateArrayTest,CPU_DeviceNormal )
 
 REGISTER_TYPED_TEST_CASE_P( GenerateArrayTest, CPU_DeviceNormal);
 #endif
-
+*/
 typedef ::testing::Types< 
     std::tuple< cl_long, TypeValue< 1 > >,
     std::tuple< cl_long, TypeValue< 31 > >,
@@ -668,7 +667,7 @@ typedef ::testing::Types<
     std::tuple< double, TypeValue< 65536 > >
 > DoubleTests;
 #endif 
-
+/*
 INSTANTIATE_TYPED_TEST_CASE_P( clLong, GenerateArrayTest, clLongTests );
 INSTANTIATE_TYPED_TEST_CASE_P( Integer, GenerateArrayTest, IntegerTests );
 INSTANTIATE_TYPED_TEST_CASE_P( UnsignedInteger, GenerateArrayTest, UnsignedIntegerTests );
@@ -677,7 +676,7 @@ INSTANTIATE_TYPED_TEST_CASE_P( Float, GenerateArrayTest, FloatTests );
 INSTANTIATE_TYPED_TEST_CASE_P( Double, GenerateArrayTest, DoubleTests );
 #endif 
 
-
+*/
 //Generate with Fancy Iterator would result in compilation error!
 /* TEST_P(GenerateConstantIterator, withConstantIterator)
 {
@@ -766,283 +765,6 @@ TEST (dvIntWithSplit, OffsetGenerate){
     }
 } 
 
-TEST( StdFloatVector, OffsetGenerate )
-{
-    int length = 1024;
-
-    std::vector<float> stdInput( length );
-    std::vector<float> boltInput( length );
-    int offset = 100;
-    GenConst1<float> gen((float)1.2);
-
-    for (int i = 0; i < 1024; ++i)
-    {
-        stdInput[i] = 1;
-        boltInput[i] = stdInput[i];
-    }
-
-    std::generate(  stdInput.begin( ) + offset,  stdInput.end( ), gen);
-    bolt::cl::generate( boltInput.begin( ) + offset, boltInput.end( ), gen );
-
-    cmpArrays( stdInput, boltInput );
-}
-
-TEST( StdFloatVector, SerialOffsetGenerate )
-{
-    int length = 1024;
-
-    std::vector<float> stdInput( length );
-    std::vector<float> boltInput( length );
-    int offset = 100;
-    GenConst1<float> gen((float)1.2);
-
-    for (int i = 0; i < 1024; ++i)
-    {
-        stdInput[i] = 1;
-        boltInput[i] = stdInput[i];
-    }
-
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
-
-    std::generate(  stdInput.begin( ) + offset,  stdInput.end( ), gen);
-    bolt::cl::generate( ctl, boltInput.begin( ) + offset, boltInput.end( ), gen );
-
-    cmpArrays( stdInput, boltInput );
-}
-
-TEST( StdFloatVector, MultiCoreOffsetGenerate )
-{
-    int length = 1024;
-
-    std::vector<float> stdInput( length );
-    std::vector<float> boltInput( length );
-    int offset = 100;
-    GenConst1<float> gen((float)1.2);
-
-    for (int i = 0; i < 1024; ++i)
-    {
-        stdInput[i] = 1;
-        boltInput[i] = stdInput[i];
-    }
-
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
-
-    std::generate(  stdInput.begin( ) + offset,  stdInput.end( ), gen);
-    bolt::cl::generate( ctl, boltInput.begin( ) + offset, boltInput.end( ), gen );
-
-    cmpArrays( stdInput, boltInput );
-}
-
-
-TEST( DVFloatVector, OffsetGenerate )
-{
-    int length = 1024;
-
-    std::vector<float> stdInput( length );
-    bolt::cl::device_vector<float> boltInput( length );
-    int offset = 100;
-    GenConst1<float> gen((float)1.2);
-
-    for (int i = 0; i < 1024; ++i)
-    {
-        stdInput[i] = 1;
-        boltInput[i] = 1;
-    }
-
-    std::generate(  stdInput.begin( ) + offset,  stdInput.end( ), gen );
-    bolt::cl::generate( boltInput.begin( ) + offset, boltInput.end( ), gen );
-
-    cmpArrays( stdInput, boltInput );
-}
-
-TEST( DVFloatVector, SerialOffsetGenerate )
-{
-    int length = 1024;
-
-    std::vector<float> stdInput( length );
-    bolt::cl::device_vector<float> boltInput( length );
-    int offset = 100;
-    GenConst1<float> gen((float)1.2);
-
-    for (int i = 0; i < 1024; ++i)
-    {
-        stdInput[i] = 1;
-        boltInput[i] = 1;
-    }
-
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
-
-    std::generate(  stdInput.begin( ) + offset,  stdInput.end( ), gen );
-    bolt::cl::generate( ctl, boltInput.begin( ) + offset, boltInput.end( ), gen );
-
-    cmpArrays( stdInput, boltInput );
-}
-
-TEST( DVFloatVector, MultiCoreOffsetGenerate )
-{
-    int length = 1024;
-
-    std::vector<float> stdInput( length );
-    bolt::cl::device_vector<float> boltInput( length );
-    int offset = 100;
-    GenConst1<float> gen((float)1.2);
-
-    for (int i = 0; i < 1024; ++i)
-    {
-        stdInput[i] = 1;
-        boltInput[i] = 1;
-    }
-
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
-
-    std::generate(  stdInput.begin( ) + offset,  stdInput.end( ), gen );
-    bolt::cl::generate( ctl, boltInput.begin( ) + offset, boltInput.end( ), gen );
-
-    cmpArrays( stdInput, boltInput );
-}
-
-TEST( StdUIntVector, OffsetGenerate )
-{
-    int length = 1024;
-
-    std::vector<unsigned int> stdInput( length );
-    std::vector<unsigned int> boltInput( length );
-    int offset = 100;
-    GenConst1<unsigned int> gen(1234);
-
-    for (int i = 0; i < 1024; ++i)
-    {
-        stdInput[i] = 1;
-        boltInput[i] = stdInput[i];
-    }
-
-    std::generate(  stdInput.begin( ) + offset,  stdInput.end( ), gen);
-    bolt::cl::generate( boltInput.begin( ) + offset, boltInput.end( ), gen );
-
-    cmpArrays( stdInput, boltInput );
-}
-
-TEST( StdUIntVector, SerialOffsetGenerate )
-{
-    int length = 1024;
-
-    std::vector<unsigned int> stdInput( length );
-    std::vector<unsigned int> boltInput( length );
-    int offset = 100;
-    GenConst1<unsigned int> gen(1234);
-
-    for (int i = 0; i < 1024; ++i)
-    {
-        stdInput[i] = 1;
-        boltInput[i] = stdInput[i];
-    }
-
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
-
-    std::generate(  stdInput.begin( ) + offset,  stdInput.end( ), gen);
-    bolt::cl::generate( boltInput.begin( ) + offset, boltInput.end( ), gen );
-
-    cmpArrays( stdInput, boltInput );
-}
-
-TEST( StdUIntVector, MultiCoreOffsetGenerate )
-{
-    int length = 1024;
-
-    std::vector<unsigned int> stdInput( length );
-    std::vector<unsigned int> boltInput( length );
-    int offset = 100;
-    GenConst1<unsigned int> gen(1234);
-
-    for (int i = 0; i < 1024; ++i)
-    {
-        stdInput[i] = 1;
-        boltInput[i] = stdInput[i];
-    }
-
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
-
-    std::generate(  stdInput.begin( ) + offset,  stdInput.end( ), gen);
-    bolt::cl::generate( boltInput.begin( ) + offset, boltInput.end( ), gen );
-
-    cmpArrays( stdInput, boltInput );
-}
-
-TEST( DVUIntVector, OffsetGenerate )
-{
-    int length = 1024;
-
-    std::vector<unsigned int> stdInput( length );
-    bolt::cl::device_vector<unsigned int> boltInput( length );
-    int offset = 100;
-    GenConst1<unsigned int> gen(1234);
-
-    for (int i = 0; i < 1024; ++i)
-    {
-        stdInput[i] = 1;
-        boltInput[i] = 1;
-    }
-
-    std::generate(  stdInput.begin( ) + offset,  stdInput.end( ), gen );
-    bolt::cl::generate( boltInput.begin( ) + offset, boltInput.end( ), gen );
-
-    cmpArrays( stdInput, boltInput );
-}
-
-TEST( DVUIntVector, SerialOffsetGenerate )
-{
-    int length = 1024;
-
-    std::vector<unsigned int> stdInput( length );
-    bolt::cl::device_vector<unsigned int> boltInput( length );
-    int offset = 100;
-    GenConst1<unsigned int> gen(1234);
-
-    for (int i = 0; i < 1024; ++i)
-    {
-        stdInput[i] = 1;
-        boltInput[i] = 1;
-    }
-
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
-
-    std::generate(  stdInput.begin( ) + offset,  stdInput.end( ), gen );
-    bolt::cl::generate( ctl, boltInput.begin( ) + offset, boltInput.end( ), gen );
-
-    cmpArrays( stdInput, boltInput );
-}
-
-TEST( DVUIntVector, MultiCoreOffsetGenerate )
-{
-    int length = 1024;
-
-    std::vector<unsigned int> stdInput( length );
-    bolt::cl::device_vector<unsigned int> boltInput( length );
-    int offset = 100;
-    GenConst1<unsigned int> gen(1234);
-
-    for (int i = 0; i < 1024; ++i)
-    {
-        stdInput[i] = 1;
-        boltInput[i] = 1;
-    }
-
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
-
-    std::generate(  stdInput.begin( ) + offset,  stdInput.end( ), gen );
-    bolt::cl::generate( ctl, boltInput.begin( ) + offset, boltInput.end( ), gen );
-
-    cmpArrays( stdInput, boltInput );
-}
-
 
 TEST( StdIntVector, OffsetGenerate )
 {
@@ -1065,55 +787,6 @@ TEST( StdIntVector, OffsetGenerate )
     cmpArrays( stdInput, boltInput );
 }
 
-TEST( StdIntVector, SerialOffsetGenerate )
-{
-    int length = 1024;
-
-    std::vector<int> stdInput( length );
-    std::vector<int> boltInput( length );
-    int offset = 100;
-    GenConst<int> gen(1234);
-
-    for (int i = 0; i < 1024; ++i)
-    {
-        stdInput[i] = 1;
-        boltInput[i] = stdInput[i];
-    }
-
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
-
-    std::generate(  stdInput.begin( ) + offset,  stdInput.end( ), gen);
-    bolt::cl::generate( ctl, boltInput.begin( ) + offset, boltInput.end( ), gen );
-
-    cmpArrays( stdInput, boltInput );
-}
-
-TEST( StdIntVector, MultiCoreOffsetGenerate )
-{
-    int length = 1024;
-
-    std::vector<int> stdInput( length );
-    std::vector<int> boltInput( length );
-    int offset = 100;
-    GenConst<int> gen(1234);
-
-    for (int i = 0; i < 1024; ++i)
-    {
-        stdInput[i] = 1;
-        boltInput[i] = stdInput[i];
-    }
-
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
-
-    std::generate(  stdInput.begin( ) + offset,  stdInput.end( ), gen);
-    bolt::cl::generate( ctl, boltInput.begin( ) + offset, boltInput.end( ), gen );
-
-    cmpArrays( stdInput, boltInput );
-}
-
-
 TEST( DVIntVector, OffsetGenerate )
 {
     int length = 1024;
@@ -1135,53 +808,6 @@ TEST( DVIntVector, OffsetGenerate )
     cmpArrays( stdInput, boltInput );
 }
 
-TEST( DVIntVector, SerialOffsetGenerate )
-{
-    int length = 1024;
-
-    std::vector<int> stdInput( length );
-    bolt::cl::device_vector<int> boltInput( length );
-    int offset = 100;
-    GenConst<int> gen(1234);
-
-    for (int i = 0; i < 1024; ++i)
-    {
-        stdInput[i] = 1;
-        boltInput[i] = 1;
-    }
-
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
-
-    std::generate(  stdInput.begin( ) + offset,  stdInput.end( ), gen );
-    bolt::cl::generate(ctl, boltInput.begin( ) + offset, boltInput.end( ), gen );
-
-    cmpArrays( stdInput, boltInput );
-}
-
-TEST( DVIntVector, MultiCoreOffsetGenerate )
-{
-    int length = 1024;
-
-    std::vector<int> stdInput( length );
-    bolt::cl::device_vector<int> boltInput( length );
-    int offset = 100;
-    GenConst<int> gen(1234);
-
-    for (int i = 0; i < 1024; ++i)
-    {
-        stdInput[i] = 1;
-        boltInput[i] = 1;
-    }
-
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
-
-    std::generate(  stdInput.begin( ) + offset,  stdInput.end( ), gen );
-    bolt::cl::generate(ctl, boltInput.begin( ) + offset, boltInput.end( ), gen );
-
-    cmpArrays( stdInput, boltInput );
-}
 
 TEST_P( HostUDDVector, Generate )
 {
@@ -2315,45 +1941,46 @@ TEST_P( DevDblVector, MultiCoreGenerateN )
 #endif
 
 INSTANTIATE_TEST_CASE_P( GenSmall, HostcharVector, ::testing::Range( 1, 256, 3 ) );
+INSTANTIATE_TEST_CASE_P( GenLarge, HostcharVector, ::testing::Range( 1023, 1050000, 350001 ) );
 INSTANTIATE_TEST_CASE_P( GenSmall, DevcharVector,  ::testing::Range( 2, 256, 3 ) );
+INSTANTIATE_TEST_CASE_P( GenLarge, DevcharVector,  ::testing::Range( 1024, 1050000, 350003 ) );
+
 INSTANTIATE_TEST_CASE_P( GenSmall, HostclLongVector, ::testing::Range( 1, 256, 3 ) );
+INSTANTIATE_TEST_CASE_P( GenLarge, HostclLongVector, ::testing::Range( 1023, 1050000, 350001 ) );
 INSTANTIATE_TEST_CASE_P( GenSmall, DevclLongVector,  ::testing::Range( 2, 256, 3 ) );
+INSTANTIATE_TEST_CASE_P( GenLarge, DevclLongVector,  ::testing::Range( 1024, 1050000, 350003 ) );
+
 INSTANTIATE_TEST_CASE_P( GenSmall, HostUDDVector, ::testing::Range( 1, 256, 3 ) );
+INSTANTIATE_TEST_CASE_P( GenLarge, HostUDDVector, ::testing::Range( 1023, 1050000, 350001 ) );
 INSTANTIATE_TEST_CASE_P( GenSmall, DevUDDVector,  ::testing::Range( 2, 256, 3 ) );
+INSTANTIATE_TEST_CASE_P( GenLarge, DevUDDVector,  ::testing::Range( 1024, 1050000, 350003 ) );
+
 INSTANTIATE_TEST_CASE_P( GenSmall, HostUnsignedIntVector, ::testing::Range( 1, 256, 3 ) );
+INSTANTIATE_TEST_CASE_P( GenLarge, HostUnsignedIntVector, ::testing::Range( 1023, 1050000, 350001 ) );
 INSTANTIATE_TEST_CASE_P( GenSmall, DevUnsignedIntVector,  ::testing::Range( 2, 256, 3 ) );
+INSTANTIATE_TEST_CASE_P( GenLarge, DevUnsignedIntVector,  ::testing::Range( 1024, 1050000, 350003 ) );
+
 INSTANTIATE_TEST_CASE_P( GenSmall, HostIntVector, ::testing::Range( 1, 256, 3 ) );
 //INSTANTIATE_TEST_CAS_P( GenSmall, generate_n_doc_ctl, ::testing::Range( 1, 256, 3 ) );
-INSTANTIATE_TEST_CASE_P( GenSmall, DevIntVector,  ::testing::Range( 2, 256, 3 ) );
-INSTANTIATE_TEST_CASE_P( GenSmall, HostShortVector, ::testing::Range( 1, 256, 3 ) );
-INSTANTIATE_TEST_CASE_P( GenSmall, DevShortVector,  ::testing::Range( 2, 256, 3 ) );
-INSTANTIATE_TEST_CASE_P( GenSmall, HostFloatVector, ::testing::Range( 1, 256, 3 ) );
-INSTANTIATE_TEST_CASE_P( GenSmall, DevFloatVector,  ::testing::Range( 2, 256, 3 ) );
-
-#if (TEST_LARGE_BUFFERS == 1)
-INSTANTIATE_TEST_CASE_P( GenLarge, HostcharVector, ::testing::Range( 1023, 1050000, 350001 ) );
-INSTANTIATE_TEST_CASE_P( GenLarge, DevcharVector,  ::testing::Range( 1024, 1050000, 350003 ) );
-INSTANTIATE_TEST_CASE_P( GenLarge, HostclLongVector, ::testing::Range( 1023, 1050000, 350001 ) );
-INSTANTIATE_TEST_CASE_P( GenLarge, DevclLongVector,  ::testing::Range( 1024, 1050000, 350003 ) );
-INSTANTIATE_TEST_CASE_P( GenLarge, HostUDDVector, ::testing::Range( 1023, 1050000, 350001 ) );
-INSTANTIATE_TEST_CASE_P( GenLarge, DevUDDVector,  ::testing::Range( 1024, 1050000, 350003 ) );
-INSTANTIATE_TEST_CASE_P( GenLarge, HostUnsignedIntVector, ::testing::Range( 1023, 1050000, 350001 ) );
-INSTANTIATE_TEST_CASE_P( GenLarge, DevUnsignedIntVector,  ::testing::Range( 1024, 1050000, 350003 ) );
 INSTANTIATE_TEST_CASE_P( GenLarge, HostIntVector, ::testing::Range( 1023, 1050000, 350001 ) );
+INSTANTIATE_TEST_CASE_P( GenSmall, DevIntVector,  ::testing::Range( 2, 256, 3 ) );
 INSTANTIATE_TEST_CASE_P( GenLarge, DevIntVector,  ::testing::Range( 1024, 1050000, 350003 ) );
+
+INSTANTIATE_TEST_CASE_P( GenSmall, HostShortVector, ::testing::Range( 1, 256, 3 ) );
 INSTANTIATE_TEST_CASE_P( GenLarge, HostShortVector, ::testing::Range( 1023, 1050000, 350001 ) );
+INSTANTIATE_TEST_CASE_P( GenSmall, DevShortVector,  ::testing::Range( 2, 256, 3 ) );
 INSTANTIATE_TEST_CASE_P( GenLarge, DevShortVector,  ::testing::Range( 1024, 1050000, 350003 ) );
+
+INSTANTIATE_TEST_CASE_P( GenSmall, HostFloatVector, ::testing::Range( 1, 256, 3 ) );
 INSTANTIATE_TEST_CASE_P( GenLarge, HostFloatVector, ::testing::Range( 1023, 1050000, 350001 ) );
+INSTANTIATE_TEST_CASE_P( GenSmall, DevFloatVector,  ::testing::Range( 2, 256, 3 ) );
 INSTANTIATE_TEST_CASE_P( GenLarge, DevFloatVector,  ::testing::Range( 1024, 1050000, 350003 ) );
-#endif
 
 #if (TEST_DOUBLE == 1)
 INSTANTIATE_TEST_CASE_P( GenSmall, HostDblVector, ::testing::Range( 3, 256, 3 ) );
-INSTANTIATE_TEST_CASE_P( GenSmall, DevDblVector,  ::testing::Range( 4, 256, 3 ) );
-#if (TEST_LARGE_BUFFERS == 1)
 INSTANTIATE_TEST_CASE_P( GenLarge, HostDblVector, ::testing::Range( 1025, 1050000, 350007 ) );
+INSTANTIATE_TEST_CASE_P( GenSmall, DevDblVector,  ::testing::Range( 4, 256, 3 ) );
 INSTANTIATE_TEST_CASE_P( GenLarge, DevDblVector,  ::testing::Range( 1026, 1050000, 350011 ) );
-#endif
 #endif
 
 int main(int argc, char **argv)

@@ -44,7 +44,7 @@ public:
 };
 
 
-BOLT_TEMPLATE_FUNCTOR4(InRange,int,float,double,__int64,
+BOLT_TEMPLATE_FUNCTOR4(InRange,int,float,double,long long,
 template<typename T>
 // Functor for range checking.
 struct InRange {
@@ -79,7 +79,7 @@ TEST_P (testCountIfFloatWithStdVector, countFloatValueInRange)
 
   for (int i=0; i < aSize; i++) {
     A[i] = static_cast<float> (i+1);
-    B[i] = A[i];
+    B[i] = static_cast<float> (i+1);
   };
 
   size_t stdCount = std::count_if (A.begin(), A.end(), InRange<float>(6,10)) ;
@@ -96,7 +96,8 @@ TEST_P (testCountIfFloatWithStdVector, countFloatValueInRange2)
 
   for (int i=0; i < aSize; i++) {
     A[i] = static_cast<float> (i+1);
-    B[i] = A[i];
+    B[i] = static_cast<float> (i+1);
+
   };
 
   size_t stdCount = std::count_if (A.begin(), A.end(), InRange<float>(1,10)) ;
@@ -196,7 +197,7 @@ TEST_P(countFloatValueOccuranceStdVect, floatVectSearchWithSameValue){
 
   for (int i =0; i < stdVectSize; i++){
     stdVect[i] = myFloatValue;
-    boltVect[i] = stdVect[i];
+    boltVect[i] = myFloatValue ;
   }
 
   size_t stdCount = std::count(stdVect.begin(), stdVect.end(), myFloatValue);
@@ -219,7 +220,7 @@ TEST_P(countFloatValueOccuranceStdVect, Serial_floatVectSearchWithSameValue){
 
   for (int i =0; i < stdVectSize; i++){
     stdVect[i] = myFloatValue;
-    boltVect[i] = stdVect[i];
+    boltVect[i] = myFloatValue; 
   }
 
   size_t stdCount = std::count(stdVect.begin(), stdVect.end(), myFloatValue);
@@ -242,7 +243,7 @@ TEST_P(countFloatValueOccuranceStdVect, MultiCore_floatVectSearchWithSameValue){
 
   for (int i =0; i < stdVectSize; i++){
     stdVect[i] = myFloatValue;
-    boltVect[i] = stdVect[i];
+    boltVect[i] = myFloatValue;
   }
 
   size_t stdCount = std::count(stdVect.begin(), stdVect.end(), myFloatValue);
@@ -261,7 +262,7 @@ TEST_P(countFloatValueOccuranceStdVect, floatVectSearchWithSameValue2){
 
   for (int i =0; i < stdVectSize; i++){
     stdVect[i] = myFloatValue2;
-    boltVect[i] = stdVect[i];
+    boltVect[i] = myFloatValue2;
   }
 
   size_t stdCount = std::count(stdVect.begin(), stdVect.end(), myFloatValue2);
@@ -280,7 +281,8 @@ TEST_P(countFloatValueOccuranceStdVect, Serial_floatVectSearchWithSameValue2){
 
   for (int i =0; i < stdVectSize; i++){
     stdVect[i] = myFloatValue2;
-    boltVect[i] = stdVect[i];
+    boltVect[i] = myFloatValue2;
+
   }
 
   ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
@@ -303,7 +305,8 @@ TEST_P(countFloatValueOccuranceStdVect, MultiCore_floatVectSearchWithSameValue2)
 
   for (int i =0; i < stdVectSize; i++){
     stdVect[i] = myFloatValue2;
-    boltVect[i] = stdVect[i];
+    boltVect[i] = myFloatValue2;
+
   }
 
   ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
@@ -341,7 +344,8 @@ TEST_P(countDoubleValueUsedASKeyInStdVect, doubleVectSearchWithSameValue){
 
   for (int i =0; i < stdVectSize; i++){
     stdVect[i] = myDoubleValueAsKeyValue;
-    boltVect[i] = stdVect[i];
+    boltVect[i] = myDoubleValueAsKeyValue;
+
   }
 
   size_t stdCount = std::count(stdVect.begin(), stdVect.end(), myDoubleValueAsKeyValue);
@@ -360,7 +364,8 @@ TEST_P(countDoubleValueUsedASKeyInStdVect, Serial_doubleVectSearchWithSameValue)
 
   for (int i =0; i < stdVectSize; i++){
     stdVect[i] = myDoubleValueAsKeyValue;
-    boltVect[i] = stdVect[i];
+    boltVect[i] = myDoubleValueAsKeyValue;
+
   }
 
   ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
@@ -384,7 +389,8 @@ TEST_P(countDoubleValueUsedASKeyInStdVect, MultiCore_doubleVectSearchWithSameVal
 
   for (int i =0; i < stdVectSize; i++){
     stdVect[i] = myDoubleValueAsKeyValue;
-    boltVect[i] = stdVect[i];
+    boltVect[i] = myDoubleValueAsKeyValue;
+
   }
 
   ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
@@ -407,7 +413,7 @@ TEST_P(countDoubleValueUsedASKeyInStdVect, doubleVectSearchWithSameValue2){
 
   for (int i =0; i < stdVectSize; i++){
     stdVect[i] = myDoubleValueAsKeyValue2;
-    boltVect[i] = stdVect[i];
+    boltVect[i] = myDoubleValueAsKeyValue2;
   }
 
   size_t stdCount = std::count(stdVect.begin(), stdVect.end(), myDoubleValueAsKeyValue2);
@@ -426,7 +432,7 @@ TEST_P(countDoubleValueUsedASKeyInStdVect, Serial_doubleVectSearchWithSameValue2
 
   for (int i =0; i < stdVectSize; i++){
     stdVect[i] = myDoubleValueAsKeyValue2;
-    boltVect[i] = stdVect[i];
+    boltVect[i] = myDoubleValueAsKeyValue2;
   }
 
   ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
@@ -449,7 +455,7 @@ TEST_P(countDoubleValueUsedASKeyInStdVect, MultiCore_doubleVectSearchWithSameVal
 
   for (int i =0; i < stdVectSize; i++){
     stdVect[i] = myDoubleValueAsKeyValue2;
-    boltVect[i] = stdVect[i];
+    boltVect[i] = myDoubleValueAsKeyValue2;
   }
 
   ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
@@ -1107,7 +1113,7 @@ int main(int argc, char* argv[])
     ::testing::InitGoogleTest( &argc, &argv[ 0 ] );
 
     //  Register our minidump generating logic
-    bolt::miniDumpSingleton::enableMiniDumps( );
+//    bolt::miniDumpSingleton::enableMiniDumps( );
 
     int retVal = RUN_ALL_TESTS( );
 

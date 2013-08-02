@@ -41,9 +41,13 @@ namespace cl {
             constant_iterator_tag, value_type, int >
         {
         public:
+             typedef typename boost::iterator_facade< constant_iterator< value_type >, value_type, 
+            constant_iterator_tag, value_type, int >::difference_type difference_type;
+           
+
             struct Payload
             {
-                typename value_type m_Value;
+                value_type m_Value;
             };
 
             //  Basic constructor requires a reference to the container and a positional element
@@ -79,13 +83,13 @@ namespace cl {
                 return *this;
             }
                 
-            constant_iterator< value_type >& operator+= ( const typename iterator_facade::difference_type & n )
+            constant_iterator< value_type >& operator+= ( const  difference_type & n )
             {
                 advance( n );
                 return *this;
             }
                 
-            const constant_iterator< value_type > operator+ ( const typename iterator_facade::difference_type & n ) const
+            const constant_iterator< value_type > operator+ ( const difference_type & n ) const
             {
                 constant_iterator< value_type > result( *this );
                 result.advance( n );
@@ -102,13 +106,13 @@ namespace cl {
                 return *this;
             }
 
-            Payload gpuPayload( ) const
+            Payload& gpuPayload( ) const
             {
-                Payload payload = { m_constValue };
+                static Payload payload = { m_constValue };
                 return payload;
             }
 
-            const typename iterator_facade::difference_type gpuPayloadSize( ) const
+            const difference_type gpuPayloadSize( ) const
             {
                 return sizeof( Payload );
             }
@@ -120,7 +124,7 @@ namespace cl {
             }
 
             //  Public member variables
-           typename iterator_facade::difference_type m_Index;
+            difference_type m_Index;
 
         private:
             //  Implementation detail of boost.iterator
@@ -130,7 +134,7 @@ namespace cl {
             template < typename > friend class constant_iterator;
 
             //  For a constant_iterator, do nothing on an advance
-            void advance( typename iterator_facade::difference_type n )
+            void advance( difference_type n )
             {
                 m_Index += n;
             }
@@ -153,7 +157,8 @@ namespace cl {
                 return sameIndex;
             }
 
-            reference dereference( ) const
+            typename boost::iterator_facade< constant_iterator< value_type >, value_type, 
+            constant_iterator_tag, value_type, int >::reference dereference( ) const
             {
                 return m_constValue;
             }

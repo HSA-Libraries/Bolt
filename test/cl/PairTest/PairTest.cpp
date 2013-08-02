@@ -122,6 +122,8 @@ class PairOperators : public ::testing::Test
 
     }
 
+
+
 };
 
 
@@ -132,7 +134,7 @@ typedef ::testing::Types<double> DoubleType;
 TYPED_TEST_CASE(ValuePair, AllTypes);
 TYPED_TEST_CASE(ConstructPair, Integer);
 TYPED_TEST_CASE(PairOperators, AllTypes);
-
+/*
 TYPED_TEST(ValuePair, IntegerIntegerPair)
 {
     
@@ -151,6 +153,7 @@ TYPED_TEST(ValuePair, IntegerIntegerPair)
 
 
 }
+
 TYPED_TEST(ConstructPair, ConstructPair)
 {
     // Inits
@@ -176,6 +179,7 @@ TYPED_TEST(ConstructPair, ConstructPair)
     EXPECT_EQ(this->y.second, sp.second);
     
 }
+
 
 TYPED_TEST(PairOperators, OperatorTests)
 {
@@ -227,7 +231,7 @@ TYPED_TEST(PairOperators, OperatorTests)
     EXPECT_EQ(true, y >= x);
 
 }
-
+*/
 
 int _tmain(int argc, _TCHAR* argv[])
 {

@@ -15,7 +15,7 @@
 
 ***************************************************************************/                                                                                     
 
-#define TEST_DOUBLE 0
+#define TEST_DOUBLE 1
 #define TEST_DEVICE_VECTOR 1
 #define TEST_CPU_DEVICE 0
 #define TEST_MULTICORE_TBB_SORT 1
@@ -75,25 +75,6 @@ struct uddtD4
         else
             equal = ( (1.0*d - rhs.d)/rhs.d < th && (1.0*d - rhs.d)/rhs.d > -th) ? equal : false;
         return equal;
-    }
-
-    
-    bool operator<(const uddtD4& rhs) const
-    {
-
-        if((a + b + c + d) < (rhs.a + rhs.b + rhs.c + rhs.d))
-            return true;
-        else
-            return false;
-    }
-
-     bool operator<=(const uddtD4& rhs) const
-    {
-
-        if((a + b + c + d) <= (rhs.a + rhs.b + rhs.c + rhs.d))
-            return true;
-        else
-            return false;
     }
 };
 );
@@ -169,6 +150,7 @@ public:
 
 //  Test fixture class, used for the Type-parameterized tests
 //  Namely, the tests that use std::array and TYPED_TEST_P macros
+/*
 template< typename ArrayTuple >
 class StableSortArrayTest: public ::testing::Test
 {
@@ -192,13 +174,13 @@ public:
 
 protected:
     typedef typename std::tuple_element< 0, ArrayTuple >::type ArrayType;
-    static const size_t ArraySize = typename std::tuple_element< 1, ArrayTuple >::type::value;
+    static const size_t ArraySize = std::tuple_element< 1, ArrayTuple >::type::value;
     std::array< ArrayType, ArraySize > stdInput, boltInput, stdOffsetIn, boltOffsetIn;
     int m_Errors;
 };
 
 TYPED_TEST_CASE_P( StableSortArrayTest );
-
+*/
 
 #if (TEST_MULTICORE_TBB_SORT == 1)
 
@@ -228,7 +210,6 @@ float func()
     return (float)(rand() * rand() * rand() );
 }
 
-#if(TEST_LARGE_BUFFERS == 1)
 TEST( DefaultGPU, Normal )
 {
     int length = 1<<23;
@@ -257,7 +238,6 @@ TEST( DefaultGPU, Normal )
     for(int i=1;i<length;i= i<<1)
         EXPECT_FLOAT_EQ( stdInput[i], boltInput[i] );
 }
-#endif
 
 TEST( SerialCPU, SerialNormal )
 {
@@ -265,6 +245,7 @@ TEST( SerialCPU, SerialNormal )
     bolt::cl::device_vector< float > boltInput(  length, 0.0, CL_MEM_READ_WRITE, true  );
     std::vector< float > stdInput( length, 0.0 );
 
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
     //  Calling the actual functions under test
@@ -288,6 +269,7 @@ TEST( MultiCoreCPU, MultiCoreNormal )
     bolt::cl::device_vector< float > boltInput(  length, 0.0, CL_MEM_READ_WRITE, true  );
     std::vector< float > stdInput( length, 0.0 );
 
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
     //  Calling the actual functions under test
@@ -305,7 +287,7 @@ TEST( MultiCoreCPU, MultiCoreNormal )
     cmpArrays( stdInput, boltInput );
 }
 #endif
-
+/*
 TYPED_TEST_P( StableSortArrayTest, Normal )
 {
     typedef std::array< ArrayType, ArraySize > ArrayCont;
@@ -724,7 +706,7 @@ REGISTER_TYPED_TEST_CASE_P( StableSortArrayTest, Normal, GPU_DeviceNormal,
                                            GreaterFunction, GPU_DeviceGreaterFunction,
                                            LessFunction, GPU_DeviceLessFunction );
 #endif
-
+*/
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Fixture classes are now defined to enable googletest to process value parameterized tests
@@ -756,19 +738,6 @@ public:
 
 protected:
     std::vector< float > stdInput, boltInput;
-};
-
-class StableSortUintVector: public ::testing::TestWithParam< int >
-{
-public:
-    StableSortUintVector( ): stdInput( GetParam( ) ), boltInput( GetParam( ) )
-    {
-        std::generate(stdInput.begin(), stdInput.end(), rand);
-        boltInput = stdInput;    
-    }
-
-protected:
-    std::vector< unsigned int > stdInput, boltInput;
 };
 
 #if (TEST_DOUBLE == 1)
@@ -880,9 +849,6 @@ struct UDD {
     }
     bool operator == (const UDD& other) const { 
         return ((a+b) == (other.a+other.b));
-    }
-    bool operator <= (const UDD& other) const { 
-        return ((a+b) <=(other.a+other.b));
     }
     UDD() 
         : a(0),b(0) { } 
@@ -1160,60 +1126,6 @@ TEST_P( StableSortFloatVector, MultiCoreCPU)
 
     std::vector< float >::iterator::difference_type stdNumElements = std::distance( stdInput.begin( ),stdInput.end());
     std::vector< float >::iterator::difference_type boltNumElements = std::distance(boltInput.begin(),boltInput.end());
-
-    //  Both collections should have the same number of elements
-    EXPECT_EQ( stdNumElements, boltNumElements );
-
-    //  Loop through the array and compare all the values with each other
-    cmpArrays( stdInput, boltInput );
-}
-
-TEST_P( StableSortUintVector, Normal )
-{
-    //  Calling the actual functions under test
-    std::SORT_FUNC( stdInput.begin( ), stdInput.end( ) );
-    bolt::BKND::SORT_FUNC( boltInput.begin( ), boltInput.end( ) );
-
-    std::vector< unsigned int >::iterator::difference_type stdNumElements = std::distance( stdInput.begin( ),stdInput.end());
-    std::vector< unsigned int >::iterator::difference_type boltNumElements = std::distance(boltInput.begin(),boltInput.end());
-
-    //  Both collections should have the same number of elements
-    EXPECT_EQ( stdNumElements, boltNumElements );
-
-    //  Loop through the array and compare all the values with each other
-    cmpArrays( stdInput, boltInput );
-}
-
-TEST_P( StableSortUintVector, SerialCPU)
-{
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
-
-    //  Calling the actual functions under test
-    std::SORT_FUNC( stdInput.begin( ), stdInput.end( ) );
-    bolt::BKND::SORT_FUNC( ctl, boltInput.begin( ), boltInput.end( ) );
-
-    std::vector< unsigned int >::iterator::difference_type stdNumElements = std::distance( stdInput.begin( ),stdInput.end());
-    std::vector< unsigned int >::iterator::difference_type boltNumElements = std::distance(boltInput.begin(),boltInput.end());
-
-    //  Both collections should have the same number of elements
-    EXPECT_EQ( stdNumElements, boltNumElements );
-
-    //  Loop through the array and compare all the values with each other
-    cmpArrays( stdInput, boltInput );
-}
-
-TEST_P( StableSortUintVector, MultiCoreCPU)
-{
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
-
-    //  Calling the actual functions under test
-    std::SORT_FUNC( stdInput.begin( ), stdInput.end( ) );
-    bolt::BKND::SORT_FUNC( ctl, boltInput.begin( ), boltInput.end( ) );
-
-    std::vector< unsigned int >::iterator::difference_type stdNumElements = std::distance( stdInput.begin( ),stdInput.end());
-    std::vector< unsigned int >::iterator::difference_type boltNumElements = std::distance(boltInput.begin(),boltInput.end());
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
@@ -1812,7 +1724,7 @@ TEST_P( StableSortDoubleDeviceVector, MulticoreInplace )
 
 #endif
 #endif
-
+/*
 TEST_P( StableSortIntegerNakedPointer, Inplace )
 {
     size_t endIndex = GetParam( );
@@ -1987,30 +1899,18 @@ TEST_P( StableSortDoubleNakedPointer, MulticoreInplace )
 
 
 #endif
-std::array<int, 15> TestValues = {2,4,8,16,32,64,128,256,512,1024};
-std::array<int, 15> TestValues2 = {2048,4096,8192,16384,32768};
-
+std::array<int, 15> TestValues = {2,4,8,16,32,64,128,256,512,1024,2048,4096,8192,16384,32768};
 //Test lots of consecutive numbers, but small range, suitable for integers because they overflow easier
 INSTANTIATE_TEST_CASE_P( StableSortRange, StableSortIntegerVector, ::testing::Range( 0, 1024, 7 ) );
 INSTANTIATE_TEST_CASE_P( StableSortValues, StableSortIntegerVector, ::testing::ValuesIn( TestValues.begin(),
                                                                             TestValues.end() ) );
-
-INSTANTIATE_TEST_CASE_P( StableSortRange, StableSortUintVector, ::testing::Range( 0, 1024, 3 ) );
-INSTANTIATE_TEST_CASE_P( StableSortValues, StableSortUintVector, ::testing::ValuesIn( TestValues.begin(), 
-                                                                        TestValues.end() ) );
-
 INSTANTIATE_TEST_CASE_P( StableSortRange, StableSortFloatVector, ::testing::Range( 0, 1024, 3 ) );
 INSTANTIATE_TEST_CASE_P( StableSortValues, StableSortFloatVector, ::testing::ValuesIn( TestValues.begin(), 
                                                                         TestValues.end() ) );
 #if (TEST_DOUBLE == 1)
 INSTANTIATE_TEST_CASE_P( StableSortRange, StableSortDoubleVector, ::testing::Range( 0, 1024, 21 ) );
 INSTANTIATE_TEST_CASE_P( StableSortValues, StableSortDoubleVector, ::testing::ValuesIn( TestValues.begin(), 
-                                                                          TestValues.end() ) );
-#if(TEST_LARGE_BUFFERS ==1)
-INSTANTIATE_TEST_CASE_P( StableSortValues, StableSortDoubleVector, ::testing::ValuesIn( TestValues.begin(), 
                                                                             TestValues.end() ) );
-#endif
-
 #endif
 INSTANTIATE_TEST_CASE_P( StableSortRange, StableSortIntegerDeviceVector, ::testing::Range( 0, 1024, 53 ) );
 INSTANTIATE_TEST_CASE_P( StableSortValues, StableSortIntegerDeviceVector, ::testing::ValuesIn( TestValues.begin(), 
@@ -2025,10 +1925,6 @@ INSTANTIATE_TEST_CASE_P( StableSortValues, StableSortFloatDeviceVector, ::testin
 INSTANTIATE_TEST_CASE_P( StableSortRange, StableSortDoubleDeviceVector, ::testing::Range( 0, 1024, 53 ) );
 INSTANTIATE_TEST_CASE_P( StableSortValues, StableSortDoubleDeviceVector, ::testing::ValuesIn(TestValues.begin(),
                                                                                     TestValues.end()));
-#if(TEST_LARGE_BUFFERS ==1)
-INSTANTIATE_TEST_CASE_P( StableSortValues, StableSortDoubleDeviceVector, ::testing::ValuesIn(TestValues.begin(),
-                                                                                    TestValues.end()));
-#endif
 #endif
 INSTANTIATE_TEST_CASE_P( StableSortRange, StableSortIntegerNakedPointer, ::testing::Range( 0, 1024, 13) );
 INSTANTIATE_TEST_CASE_P( StableSortValues, StableSortIntegerNakedPointer, ::testing::ValuesIn( TestValues.begin(),
@@ -2040,31 +1936,8 @@ INSTANTIATE_TEST_CASE_P( StableSortValues, StableSortFloatNakedPointer, ::testin
 INSTANTIATE_TEST_CASE_P( StableSortRange, StableSortDoubleNakedPointer, ::testing::Range( 0, 1024, 13) );
 INSTANTIATE_TEST_CASE_P( StableSort, StableSortDoubleNakedPointer, ::testing::ValuesIn( TestValues.begin(),
                                                                             TestValues.end() ) );
-#if(TEST_LARGE_BUFFERS ==1)
-INSTANTIATE_TEST_CASE_P( StableSort, StableSortDoubleNakedPointer, ::testing::ValuesIn( TestValues2.begin(),
-                                                                            TestValues2.end() ) );
 #endif
-#endif
-
-#if(TEST_LARGE_BUFFERS ==1)
-INSTANTIATE_TEST_CASE_P( StableSortValues, StableSortIntegerVector, ::testing::ValuesIn( TestValues2.begin(),
-                                                                            TestValues2.end() ) );
-INSTANTIATE_TEST_CASE_P( StableSortValues, StableSortUintVector, ::testing::ValuesIn( TestValues2.begin(), 
-                                                                        TestValues2.end() ) );
-INSTANTIATE_TEST_CASE_P( StableSortValues, StableSortFloatVector, ::testing::ValuesIn( TestValues.begin(), 
-                                                                        TestValues.end() ) );
-INSTANTIATE_TEST_CASE_P( StableSortValues, StableSortIntegerDeviceVector, ::testing::ValuesIn( TestValues2.begin(), 
-                                                                                TestValues2.end() ) );
-INSTANTIATE_TEST_CASE_P( StableSortValues, StableSortUDDDeviceVector, ::testing::ValuesIn( TestValues2.begin(), 
-                                                                                TestValues2.end() ) );
-INSTANTIATE_TEST_CASE_P( StableSortValues, StableSortFloatDeviceVector, ::testing::ValuesIn( TestValues2.begin(),
-                                                                                TestValues2.end()));
-INSTANTIATE_TEST_CASE_P( StableSortValues, StableSortIntegerNakedPointer, ::testing::ValuesIn( TestValues2.begin(),
-                                                                                    TestValues2.end()));
-INSTANTIATE_TEST_CASE_P( StableSortValues, StableSortFloatNakedPointer, ::testing::ValuesIn( TestValues2.begin(), 
-                                                                                TestValues2.end() ) );
-#endif
-
+*/
 typedef ::testing::Types< 
     std::tuple< cl_long, TypeValue< 1 > >,
     std::tuple< cl_long, TypeValue< 31 > >,
@@ -2201,7 +2074,7 @@ typedef ::testing::Types<
 > DoubleTests;
 #endif 
 
-
+/*
 
 template< typename ArrayTuple >
 class StableSortUDDArrayTest: public ::testing::Test
@@ -2224,7 +2097,7 @@ public:
 
 protected:
     typedef typename std::tuple_element< 0, ArrayTuple >::type ArrayType;
-    static const size_t ArraySize = typename std::tuple_element< 1, ArrayTuple >::type::value;
+    static const size_t ArraySize = std::tuple_element< 1, ArrayTuple >::type::value;
     typename std::array< ArrayType, ArraySize > stdInput, boltInput;
     int m_Errors;
 };
@@ -2284,7 +2157,7 @@ INSTANTIATE_TYPED_TEST_CASE_P( Double, StableSortArrayTest, DoubleTests );
 #endif 
 REGISTER_TYPED_TEST_CASE_P( StableSortUDDArrayTest,  Normal);
 INSTANTIATE_TYPED_TEST_CASE_P( UDDTest, StableSortUDDArrayTest, UDDTests );
-
+*/
 class withStdVect: public ::testing::TestWithParam<int>{
 protected:
     int sizeOfInputBuffer;
@@ -2359,7 +2232,6 @@ TEST_P (withStdVect, intSerialValuesWithDefaulFunctorWithClControlGreater){
 }
 INSTANTIATE_TEST_CASE_P(sortDescending, withStdVect, ::testing::Range(50, 100, 1));
 
-#if (TEST_DOUBLE == 1)
 TEST (sanity_sort__withBoltClDevVectDouble_epr, floatSerial){
 	size_t sizeOfInputBufer = 64; //test case is failing for all values greater than 32
 	std::vector<double>  stdVect(0);
@@ -2379,7 +2251,6 @@ TEST (sanity_sort__withBoltClDevVectDouble_epr, floatSerial){
 	    EXPECT_DOUBLE_EQ(stdVect[i], boltVect[i]);
 	}
 }
-#endif
 
 TEST (rawArrayTest, floatarray){
 	const int sizeOfInputBufer = 8192; //test case is failing for all values greater than 32
@@ -2422,7 +2293,7 @@ int main(int argc, char* argv[])
     ::testing::InitGoogleTest( &argc, &argv[ 0 ] );
 
     //  Register our minidump generating logic
-    bolt::miniDumpSingleton::enableMiniDumps( );
+    //bolt::miniDumpSingleton::enableMiniDumps( );
 
     int retVal = RUN_ALL_TESTS( );
 

@@ -24,7 +24,7 @@ set( clBolt.Test.ReadFromFile.Headers ${BOLT_CL_TEST_DIR}/common/stdafx.h
                                    ${BOLT_CL_TEST_DIR}/common/myocl.h 
                                    ${BOLT_INCLUDE_DIR}/bolt/cl/transform.h 
                                    ${BOLT_INCLUDE_DIR}/bolt/cl/detail/transform.inl
-                                   utils.h 
+                                   ${BOLT_CL_TEST_DIR}/common/utils.h 
                                    saxpy_functor.h )
 
 set( clBolt.Test.ReadFromFile.Files ${clBolt.Test.ReadFromFile.Source} ${clBolt.Test.ReadFromFile.Headers} )

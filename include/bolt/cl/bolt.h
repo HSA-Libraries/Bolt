@@ -101,7 +101,7 @@ namespace bolt {
         {
             public:
                 // kernel template specializer functor
-                virtual const ::std::string operator() (const ::std::vector<::std::string>& typeNames) const
+                virtual const ::std::string operator() (const ::std::vector< ::std::string >& typeNames) const
                 { return "Error; virtual function not overloaded"; }
 
                 // add a kernel name
@@ -114,10 +114,10 @@ namespace bolt {
                 size_t numKernels() const { return kernelNames.size(); }
 
                 // kernel vector
-                const ::std::vector<::std::string> getKernelNames() const { return kernelNames; }
+                const ::std::vector< ::std::string > getKernelNames() const { return kernelNames; }
 
             public:
-                ::std::vector<std::string> kernelNames;
+                ::std::vector< ::std::string > kernelNames;
         };
 
         class control;
@@ -132,11 +132,11 @@ namespace bolt {
          * previously compiled.
          * see bolt/cl/detail/scan.inl for example usage
          **********************************************************************/
-        ::std::vector<::cl::Kernel> getKernels(
+        ::std::vector< ::cl::Kernel > getKernels(
             const control&      ctl,
-            const ::std::vector<::std::string>& typeNames,
+            const ::std::vector< ::std::string >& typeNames,
             const KernelTemplateSpecializer * const kts,
-            const ::std::vector<::std::string>& typeDefinitions,
+            const ::std::vector< ::std::string >& typeDefinitions,
             const std::string&  baseKernelString,
             const std::string&  compileOptions = ""
                  );

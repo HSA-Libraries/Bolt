@@ -26,70 +26,11 @@
 
 #include "bolt/cl/bolt.h"
 
-//TBB Includes
-#ifdef ENABLE_TBB
-#include "bolt/btbb/fill.h"
-#endif
-
 namespace bolt {
     namespace cl {
 
-        // default control, start->stop
-        template< typename ForwardIterator, typename T >
-        void fill( ForwardIterator first,
-            ForwardIterator last,
-            const T & value,
-            const std::string& cl_code )
-        {
-            detail::fill_detect_random_access( bolt::cl::control::getDefault(), first, last, value, cl_code,
-                std::iterator_traits< ForwardIterator >::iterator_category( ) );
-        }
 
-        // user specified control, start->stop
-        template< typename ForwardIterator, typename T >
-        void fill( const bolt::cl::control &ctl,
-            ForwardIterator first,
-            ForwardIterator last,
-            const T & value,
-            const std::string& cl_code )
-        {
-            detail::fill_detect_random_access( ctl, first, last, value, cl_code,
-                std::iterator_traits< ForwardIterator >::iterator_category( ) );
-        }
-
-        // default control, start-> +n
-        template< typename OutputIterator, typename Size, typename T >
-        OutputIterator fill_n( OutputIterator first,
-            Size n,
-            const T & value,
-            const std::string& cl_code )
-        {
-            detail::fill_detect_random_access( bolt::cl::control::getDefault(),
-                first, first+static_cast< const int >( n ),
-                value, cl_code, std::iterator_traits< OutputIterator >::iterator_category( ) );
-            return first+static_cast< const int >( n );
-        }
-
-        // user specified control, start-> +n
-        template<typename OutputIterator, typename Size, typename T>
-        OutputIterator fill_n( const bolt::cl::control &ctl,
-            OutputIterator first,
-            Size n,
-            const T & value,
-            const std::string& cl_code )
-        {
-            detail::fill_detect_random_access( ctl, first, first+static_cast< const int >( n ), value, cl_code,
-                std::iterator_traits< OutputIterator >::iterator_category( ) );
-            return (first+static_cast< const int >( n ));
-        }
-
-    }//end of cl namespace
-};//end of bolt namespace
-
-
-namespace bolt {
-    namespace cl {
-        namespace detail {
+namespace detail {
         enum fillTypeName { fill_T, fill_Type, fill_DVInputIterator, fill_end };
 
         ///////////////////////////////////////////////////////////////////////
@@ -104,7 +45,7 @@ namespace bolt {
                 addKernelName( "fill_kernel" );
                 }
 
-            const ::std::string operator() ( const ::std::vector<::std::string>& typeNames ) const
+            const ::std::string operator() ( const ::std::vector< ::std::string>& typeNames ) const
             {
                 const std::string templateSpecializationString =
                     "// Dynamic specialization of generic template definition, using user supplied types\n"
@@ -131,7 +72,7 @@ namespace bolt {
             void fill_detect_random_access( const bolt::cl::control &ctl, ForwardIterator first, ForwardIterator last,
                 const T & value, const std::string &cl_code, std::forward_iterator_tag )
             {
-                static_assert( false, "Bolt only supports random access iterator types" );
+                static_assert( std::is_same< ForwardIterator, std::forward_iterator_tag   >::value , "Bolt only supports random access iterator types" );
             }
 
             // fill random-access
@@ -139,8 +80,8 @@ namespace bolt {
             void fill_detect_random_access( const bolt::cl::control &ctl, ForwardIterator first, ForwardIterator last,
                 const T & value, const std::string &cl_code, std::random_access_iterator_tag )
             {
-                    fill_pick_iterator(ctl, first, last, value, cl_code,
-                    std::iterator_traits< ForwardIterator >::iterator_category( ) );
+                     fill_pick_iterator(ctl, first, last, value, cl_code,
+                    typename std::iterator_traits< ForwardIterator >::iterator_category( ) );
             }
 
 
@@ -159,11 +100,11 @@ namespace bolt {
             {
 
 
-                typedef std::iterator_traits<ForwardIterator>::value_type Type;
+                typedef typename  std::iterator_traits<ForwardIterator>::value_type Type;
 
                 size_t sz = (last - first);
                 if (sz < 1)
-                     return;
+                    return;
 
                 bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
                 if(runMode == bolt::cl::control::Automatic)
@@ -178,9 +119,10 @@ namespace bolt {
                 else if(runMode == bolt::cl::control::MultiCoreCpu)
                 {
                     #ifdef ENABLE_TBB
-                          bolt::btbb::fill(first, last, value);
+                          //TODO : MultiCoreCPU Version of fill not implemented yet...
+                          std::fill(first, last, value );
                     #else
-                          throw std::exception("MultiCoreCPU Version of fill not Enabled! \n");
+                          throw std::runtime_error("MultiCoreCPU Version of fill not Enabled! \n");
                     #endif
                 }
                 else
@@ -204,7 +146,7 @@ namespace bolt {
                 bolt::cl::device_vector_tag )
             {
 
-                typedef std::iterator_traits<DVForwardIterator>::value_type iType;
+                typedef typename std::iterator_traits<DVForwardIterator>::value_type iType;
                 bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
                 if(runMode == bolt::cl::control::Automatic)
                 {
@@ -212,16 +154,17 @@ namespace bolt {
                 }
                 if( runMode == bolt::cl::control::SerialCpu)
                 {
-                     bolt::cl::device_vector< iType >::pointer fillInputBuffer =  first.getContainer( ).data( );
-                     std::fill(&fillInputBuffer[first.m_Index], &fillInputBuffer[last.m_Index], value );
+                    typename bolt::cl::device_vector< iType >::pointer fillInputBuffer =  first.getContainer( ).data( );
+                    std::fill(&fillInputBuffer[first.m_Index], &fillInputBuffer[last.m_Index], value );
                 }
                 else if(runMode == bolt::cl::control::MultiCoreCpu)
                 {
                     #ifdef ENABLE_TBB
-                        bolt::cl::device_vector< iType >::pointer fillInputBuffer =  first.getContainer( ).data( );
-                        bolt::btbb::fill(&fillInputBuffer[first.m_Index], &fillInputBuffer[last.m_Index], value );
+                           //TODO : MultiCoreCPU Version of fill not implemented yet...
+                       typename  bolt::cl::device_vector< iType >::pointer fillInputBuffer =  first.getContainer( ).data( );
+                        std::fill(first, last, value );
                     #else
-                        throw std::exception("MultiCoreCPU Version of fill not Enabled! \n");
+                           throw std::runtime_error("MultiCoreCPU Version of fill not Enabled! \n");
                     #endif
                 }
                 else
@@ -238,7 +181,7 @@ namespace bolt {
                 bolt::cl::fancy_iterator_tag )
             {
 
-                static_assert( false, "It is not possible to fill into fancy iterators. They are not mutable! \n" );
+                static_assert( std::is_same< DVForwardIterator, bolt::cl::fancy_iterator_tag  >::value, "It is not possible to fill into fancy iterators. They are not mutable! \n" );
             }
 
             /*****************************************************************************
@@ -257,7 +200,7 @@ namespace bolt {
                 /**********************************************************************************
                  * Type Names - used in KernelTemplateSpecializer
                  *********************************************************************************/
-                typedef std::iterator_traits<DVForwardIterator>::value_type Type;
+                typedef typename std::iterator_traits<DVForwardIterator>::value_type Type;
                 typedef T iType;
                 std::vector<std::string> typeNames(fill_end);
                 typeNames[fill_T] = TypeName< T >::get( );
@@ -328,7 +271,7 @@ namespace bolt {
                     // Fill buffer
                     V_OPENCL( kernels[0].setArg( 1, first.getContainer().getBuffer()),"Error setArg kernels[ 0 ]" ); 
                     // Input Iterator
-                    V_OPENCL( kernels[0].setArg( 2, first.gpuPayloadSize( ), &first.gpuPayload( ) ),
+                    V_OPENCL( kernels[0].setArg( 2, first.gpuPayloadSize( ),const_cast<typename DVForwardIterator::Payload *>( &first.gpuPayload( )) ),
                         "Error setting a kernel argument" );
                     // Size of buffer
                     V_OPENCL( kernels[0].setArg( 3, static_cast<cl_uint>( sz) ), "Error setArg kernels[ 0 ]" ); 
@@ -375,8 +318,59 @@ namespace bolt {
 
             }; // end fill_enqueue
 
-        }//End OF detail namespace
-    }//End OF cl namespace
-}//End OF bolt namespace
+        }
+
+        // default control, start->stop
+        template< typename ForwardIterator, typename T >
+        void fill( ForwardIterator first,
+            ForwardIterator last,
+            const T & value,
+            const std::string& cl_code )
+        {
+            detail::fill_detect_random_access( bolt::cl::control::getDefault(), first, last, value, cl_code,
+                typename std::iterator_traits< ForwardIterator >::iterator_category( ) );
+        }
+
+        // user specified control, start->stop
+        template< typename ForwardIterator, typename T >
+        void fill( const bolt::cl::control &ctl,
+            ForwardIterator first,
+            ForwardIterator last,
+            const T & value,
+            const std::string& cl_code )
+        {
+            detail::fill_detect_random_access( ctl, first, last, value, cl_code,
+                typename std::iterator_traits< ForwardIterator >::iterator_category( ) );
+        }
+
+        // default control, start-> +n
+        template< typename OutputIterator, typename Size, typename T >
+        OutputIterator fill_n( OutputIterator first,
+            Size n,
+            const T & value,
+            const std::string& cl_code )
+        {
+            detail::fill_detect_random_access( bolt::cl::control::getDefault(),
+                first, first+static_cast< const int >( n ),
+                value, cl_code, typename std::iterator_traits< OutputIterator >::iterator_category( ) );
+            return first+static_cast< const int >( n );
+        }
+
+        // user specified control, start-> +n
+        template<typename OutputIterator, typename Size, typename T>
+        OutputIterator fill_n( const bolt::cl::control &ctl,
+            OutputIterator first,
+            Size n,
+            const T & value,
+            const std::string& cl_code )
+        {
+            detail::fill_detect_random_access( ctl, first, first+static_cast< const int >( n ), value, cl_code,
+                typename std::iterator_traits< OutputIterator >::iterator_category( ) );
+            return (first+static_cast< const int >( n ));
+        }
+
+    }//end of cl namespace
+};//end of bolt namespace
+
 
 #endif

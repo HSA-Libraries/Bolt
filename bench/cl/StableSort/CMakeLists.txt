@@ -20,8 +20,8 @@ set( clBolt.Bench.StableSort.Source
         StableSortBench.cpp )
 
 set( clBolt.Bench.StableSort.Headers stdafx.h 
-        ${BOLT_INCLUDE_DIR}/bolt/cl/StableSort.h 
-        ${BOLT_INCLUDE_DIR}/bolt/cl/detail/StableSort.inl)
+        ${BOLT_INCLUDE_DIR}/bolt/cl/stablesort.h 
+        ${BOLT_INCLUDE_DIR}/bolt/cl/detail/stablesort.inl)
 
 set( clBolt.Bench.StableSort.Files 
         ${clBolt.Bench.StableSort.Source} 

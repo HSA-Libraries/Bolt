@@ -1395,7 +1395,7 @@ class TypeValue
 public:
     static const size_t value = N;
 };
-
+/*
 //  Test fixture class, used for the Type-parameterized tests
 //  Namely, the tests that use std::array and TYPED_TEST_P macros
 template< typename ArrayTuple >
@@ -1423,7 +1423,7 @@ public:
 protected:
     typedef typename std::tuple_element< 0, ArrayTuple >::type ArrayType;
     // typedef typename std::tuple_element< 0, ArrayTuple >::type::value ArraySize;
-    static const size_t ArraySize = typename std::tuple_element< 1, ArrayTuple >::type::value;
+    static const size_t ArraySize = std::tuple_element< 1, ArrayTuple >::type::value;
 
     typename std::array< ArrayType, ArraySize > stdInput, boltInput;
     int m_Errors;
@@ -1523,7 +1523,7 @@ TYPED_TEST_P( ScanArrayTest, OutofPlace )
 }
 
 REGISTER_TYPED_TEST_CASE_P( ScanArrayTest, InPlace, InPlacePlusFunction, InPlaceMaxFunction, OutofPlace );
-
+*/
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Fixture classes are now defined to enable googletest to process value parameterized tests
 
@@ -2451,7 +2451,7 @@ TEST_P( ScanIntegerDeviceVector, MulticoreInclusiveInplace )
     cmpArrays( stdInput, boltInput );
 }
 
-
+/*
 TEST_P( ScanIntegerNakedPointer, InclusiveInplace )
 {
     size_t endIndex = GetParam( );
@@ -2545,7 +2545,7 @@ TEST_P( ScanIntegerNakedPointer, MultiCoreInclusiveInplace )
     cmpArrays( stdInput, boltInput, endIndex );
 }
 
-
+*/
 TEST_P( ScanIntegerVector, ExclusiveOutOfPlace )
 {
     //  Declare temporary arrays to store results for out of place computation
@@ -2817,11 +2817,11 @@ typedef ::testing::Types<
     std::tuple< float, TypeValue< 65535 > >,
     std::tuple< float, TypeValue< 65536 > >
 > FloatTests;
-
+/*
 INSTANTIATE_TYPED_TEST_CASE_P( Integer, ScanArrayTest, IntegerTests );
 INSTANTIATE_TYPED_TEST_CASE_P( Float, ScanArrayTest, FloatTests );
 //here
-
+*/
 /*
 TEST(Scan, cpuQueue)
 {
@@ -2878,7 +2878,7 @@ EXPECT_EQ(stdInput[i], boltInput[i]);
 int _tmain(int argc, _TCHAR* argv[])
 {
     //  Register our minidump generating logic
-    bolt::miniDumpSingleton::enableMiniDumps( );
+   // bolt::miniDumpSingleton::enableMiniDumps( );
 
     //  Initialize googletest; this removes googletest specific flags from command line
     ::testing::InitGoogleTest( &argc, &argv[ 0 ] );

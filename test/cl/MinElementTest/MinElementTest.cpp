@@ -28,7 +28,6 @@
 #include <type_traits>
 
 #include "bolt/cl/iterator/counting_iterator.h"
-//#include "bolt/cl/max_element.h"
 #include "bolt/cl/min_element.h"
 #include "bolt/cl/functional.h"
 #include "bolt/cl/control.h"
@@ -38,7 +37,22 @@
 #include "bolt/miniDump.h"
 
 
-extern void testDeviceVector();
+void testDeviceVector()
+{
+    const int aSize = 1000;
+    std::vector<int> hA(aSize);
+    bolt::cl::device_vector<int> dA(aSize);
+
+    for(int i=0; i<aSize; i++) {
+        hA[i] = i;
+        dA[i] = i;
+    };
+
+    std::vector<int>::iterator smindex = std::min_element(hA.begin(), hA.end());
+     bolt::cl::device_vector<int>::iterator bmindex = bolt::cl::min_element(dA.begin(), dA.end());
+    
+};
+
 
 /////////////////////////////////////////////////////////////////////////////////////////////
 //  GTEST CASES
@@ -68,6 +82,8 @@ T generateRandom()
         return (T)fmod(value, 10.0);
     }
 }
+
+/*
 //  Test fixture class, used for the Type-parameterized tests
 //  Namely, the tests that use std::array and TYPED_TEST_P macros
 template< typename ArrayTuple >
@@ -91,7 +107,7 @@ public:
 
 protected:
     typedef typename std::tuple_element< 0, ArrayTuple >::type ArrayType;
-    static const size_t ArraySize = typename std::tuple_element< 1, ArrayTuple >::type::value;
+    static const size_t ArraySize = std::tuple_element< 1, ArrayTuple >::type::value;
     typename std::array< ArrayType, ArraySize > stdInput, boltInput;
     int m_Errors;
 };
@@ -230,7 +246,6 @@ TYPED_TEST_P( MinEArrayTest, comp_MultiCoreNormal )
     cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
 }
 
-
 TYPED_TEST_P( MinEArrayTest, GPU_DeviceGreaterFunction )
 {
     typedef std::array< ArrayType, ArraySize > ArrayCont;
@@ -258,6 +273,7 @@ TYPED_TEST_P( MinEArrayTest, GPU_DeviceGreaterFunction )
 //MultiCoreNormal, comp_MultiCoreNormal, GPU_DeviceGreaterFunction );
 REGISTER_TYPED_TEST_CASE_P( MinEArrayTest, comp_Normal, comp_SerialNormal, comp_MultiCoreNormal, GPU_DeviceGreaterFunction );
 
+*/
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Fixture classes are now defined to enable googletest to process value parameterized tests
 //  ::testing::TestWithParam< int > means that GetParam( ) returns int values, which i use for array size
@@ -442,6 +458,25 @@ TEST_P( MinEStdVectandCountingIterator, comp_withCountingIterator)
     EXPECT_EQ(*stlReduce, *boltReduce);
 }
 
+TEST( MinEleDevice , DeviceVectoroffset )
+{
+    //setup containers
+    unsigned int length = 1024;
+    bolt::cl::device_vector< int > input( length );
+    for( unsigned int i = 0; i < length ; i++ )
+    {
+      input[i] = i;
+
+    }
+    
+    // call reduce
+
+    bolt::cl::device_vector< int >::iterator  boltReduce =  bolt::cl::min_element( input.begin()+20, input.end());
+    int stdReduce =  20;
+
+    EXPECT_EQ(*boltReduce,stdReduce);
+
+}
 
 //TEST_P( MinEStdVectandCountingIterator, CPUwithCountingIterator)
 //{
@@ -514,39 +549,20 @@ TEST_P( MinEStdVectandCountingIterator, MultiCore_comp_withCountingIterator)
     for (int i=0; i < mySize; i++) {
         a[i] = i;
     };
-    
+
 
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
-    
+
     std::vector<int>::iterator stlReduce = std::min_element(a.begin(), a.end(), std::less< int >());
     bolt::cl::counting_iterator<int> boltReduce = bolt::cl::min_element(ctl, first, last,  bolt::cl::less< int >( ) );
 
     EXPECT_EQ(*stlReduce, *boltReduce);
 }
 
+
 INSTANTIATE_TEST_CASE_P( withInt, MinEStdVectWithInit, ::testing::Range(1, 100, 1) );
 INSTANTIATE_TEST_CASE_P( withInt, MinEStdVectandCountingIterator, ::testing::Range(1, 100, 1) );
-
-TEST( MinEleDevice , DeviceVectoroffset )
-{
-    //setup containers
-    unsigned int length = 1024;
-    bolt::cl::device_vector< int > input( length );
-    for( unsigned int i = 0; i < length ; i++ )
-    {
-      input[i] = i;
-
-    }
-
-    // call reduce
-
-    bolt::cl::device_vector< int >::iterator  boltReduce =  bolt::cl::min_element( input.begin()+20, input.end());
-    int stdReduce =  20;
-
-    EXPECT_EQ(*boltReduce,stdReduce);
-
-}
 
 TEST( MinEleDevice , DeviceVectorUintoffset )
 {
@@ -1051,12 +1067,12 @@ TEST( MinEUDD , Offset_MultiCore_UDDPlusOperatorInts )
     EXPECT_EQ(*boltMinE,*stdMinE);
 
 }
-
+/*
 INSTANTIATE_TYPED_TEST_CASE_P( Integer, MinEArrayTest, IntegerTests );
 INSTANTIATE_TYPED_TEST_CASE_P( Float, MinEArrayTest, FloatTests );
+*/
 
-
-
+#if defined(_WIN32)
 // Super-easy windows profiling interface.
 // Move to timing infrastructure when that becomes available.
 __int64 StartProfile() {
@@ -1072,7 +1088,7 @@ void EndProfile(__int64 start, int numTests, std::string msg) {
     double duration = (end - start)/(double)(freq);
     printf("%s %6.2fs, numTests=%d %6.2fms/test\n", msg.c_str(), duration, numTests, duration*1000.0/numTests);
 };
-
+#endif
 
 
 template<typename T>
@@ -1125,7 +1141,7 @@ bool checkResult(std::string msg, T  stlResult, T boltResult, double errorThresh
 void Mineletest(int aSize)
 {
     std::vector<int> A(aSize);
-    srand(GetTickCount());
+    //srand(GetTickCount());
     for (int i=0; i < aSize; i++)
     {
                 A[i] = rand();
@@ -1170,15 +1186,26 @@ void Minele_TestControl(int aSize, int numIters, int deviceIndex)
     std::vector<int>::iterator boltReduce(A.end());
 
     char testTag[2000];
+
+#if defined(_WIN32)
     sprintf_s(testTag, 2000, "Minele_TestControl sz=%d iters=%d, device=%s", aSize, numIters,
         c.getDevice( ).getInfo<CL_DEVICE_NAME>( ).c_str( ) );
+#else
 
+    sprintf(testTag, "Minele_TestControl sz=%d iters=%d, device=%s", aSize, numIters,
+        c.getDevice( ).getInfo<CL_DEVICE_NAME>( ).c_str( ) );
+
+#endif
+
+#if defined(_WIN32)
     __int64 start = StartProfile();
+#endif
     for (int i=0; i<numIters; i++) {
         boltReduce = bolt::cl::min_element( c, A.begin(), A.end());
     }
+#if defined(_Win32)
     EndProfile(start, numIters, testTag);
-
+#endif
     checkResult(testTag, stlReduce, boltReduce);
 };
 
@@ -1378,7 +1405,7 @@ int _tmain(int argc, _TCHAR* argv[])
     ::testing::InitGoogleTest( &argc, &argv[ 0 ] );
 
     //  Register our minidump generating logic
-    bolt::miniDumpSingleton::enableMiniDumps( );
+//    bolt::miniDumpSingleton::enableMiniDumps( );
 
     int retVal = RUN_ALL_TESTS( );
 

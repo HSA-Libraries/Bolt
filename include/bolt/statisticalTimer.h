@@ -25,7 +25,9 @@
 #include <iosfwd>
 #include <vector>
 #include <algorithm>
+#include <stdexcept> 
 #include "bolt/unicode.h"
+
 
 namespace bolt
 {
