@@ -15,9 +15,9 @@
 
 ***************************************************************************/                                                                                     
 
-#define TEST_DOUBLE 0
+#define TEST_DOUBLE 1
 #define TEST_DEVICE_VECTOR 1
-#define TEST_CPU_DEVICE 0
+#define TEST_CPU_DEVICE 1
 #define TEST_MULTICORE_TBB_SEARCH 1
 #define TEST_LARGE_BUFFERS 0
 #define GOOGLE_TEST 1
@@ -78,6 +78,15 @@ struct uddtD4
             equal = ( (1.0*d - rhs.d)/rhs.d < th && (1.0*d - rhs.d)/rhs.d > -th) ? equal : false;
         return equal;
     }
+
+    bool operator<(const uddtD4 &rhs) const
+    {
+
+        if( ( a + b + c + d ) < ( rhs.a + rhs.b + rhs.c + rhs.d) )
+            return true;
+        return false;
+    }
+    
 };
 );
 // Functor for UDD. Adds all four double elements and returns true if lhs_sum > rhs_sum
@@ -90,17 +99,18 @@ struct AddD4
         if( ( lhs.a + lhs.b + lhs.c + lhs.d ) > ( rhs.a + rhs.b + rhs.c + rhs.d) )
             return true;
         return false;
-    };
+    }
 }; 
 );
 BOLT_CREATE_TYPENAME( bolt::cl::device_vector< AddD4 >::iterator );
 BOLT_CREATE_CLCODE( bolt::cl::device_vector< AddD4 >::iterator, bolt::cl::deviceVectorIteratorTemplate );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE(bolt::cl::less, int, uddtD4);
 
 uddtD4 identityAddD4 = { 1.0, 1.0, 1.0, 1.0 };
 uddtD4 initialAddD4  = { 1.00001, 1.000003, 1.0000005, 1.00000007 };
+
 BOLT_CREATE_TYPENAME( bolt::cl::device_vector< uddtD4 >::iterator );
 BOLT_CREATE_CLCODE( bolt::cl::device_vector< uddtD4 >::iterator, bolt::cl::deviceVectorIteratorTemplate );
-
 
 TEST(BSearch, StdclLong)  
 {
@@ -118,15 +128,15 @@ TEST(BSearch, StdclLong)
         }
     
         int search_index = rand()%length;
-        int val = bolt_source[search_index];
-        int std_val = std_source[search_index];
+        cl_long val = bolt_source[search_index];
+        cl_long std_val = std_source[search_index];
         bool stdresult, boltresult;
 
         //Sorting the Input
         std::sort(std_source.begin(), std_source.end());
         bolt::cl::sort(bolt_source.begin(), bolt_source.end());
 
-        // perform sort
+        // perform search
         stdresult = std::binary_search(std_source.begin(), std_source.end(), std_val);
         boltresult = bolt::cl::binary_search(bolt_source.begin(), bolt_source.end(), val);
 
@@ -158,11 +168,11 @@ TEST(BSearch, Serial_StdclLong)
         bolt::cl::sort(bolt_source.begin(), bolt_source.end());
 
         int search_index = rand()%length;
-        int val = bolt_source[search_index];
-        int std_val = std_source[search_index];
+        cl_long val = bolt_source[search_index];
+        cl_long std_val = std_source[search_index];
         bool stdresult, boltresult;
 
-        // perform sort
+        //perform search
         stdresult = std::binary_search(std_source.begin(), std_source.end(), std_val);
         boltresult = bolt::cl::binary_search(bolt_source.begin(), bolt_source.end(), val);
 
@@ -195,11 +205,11 @@ TEST(BSearch, MultiCore_StdclLong)
         bolt::cl::sort(bolt_source.begin(), bolt_source.end());
 
         int search_index = rand()%length;
-        int val = bolt_source[search_index];
-        int std_val = std_source[search_index];
+        cl_long val = bolt_source[search_index];
+        cl_long std_val = std_source[search_index];
         bool stdresult, boltresult;
 
-        // perform sort
+        // perform search
         stdresult = std::binary_search(std_source.begin(), std_source.end(), std_val);
         boltresult = bolt::cl::binary_search(bolt_source.begin(), bolt_source.end(), val);
 
@@ -228,8 +238,8 @@ TEST(BSearch, DevclLong)
         bolt::cl::sort(bolt_source.begin(), bolt_source.end());
 
         int search_index = rand()%length;
-        int val = bolt_source[search_index];
-        int std_val = std_source[search_index];
+        cl_long val = bolt_source[search_index];
+        cl_long std_val = std_source[search_index];
         bool stdresult, boltresult;
 
         // perform search
@@ -264,8 +274,8 @@ TEST(BSearch, Serial_DevclLong)
         bolt::cl::sort(bolt_source.begin(), bolt_source.end());
 
         int search_index = rand()%length;
-        int val = bolt_source[search_index];
-        int std_val = std_source[search_index];
+        cl_long val = bolt_source[search_index];
+        cl_long std_val = std_source[search_index];
         bool stdresult, boltresult;
 
         // perform search
@@ -300,8 +310,8 @@ TEST(BSearch, MultiCore_DevclLong)
         bolt::cl::sort(bolt_source.begin(), bolt_source.end());
 
         int search_index = rand()%length;
-        int val = bolt_source[search_index];
-        int std_val = std_source[search_index];
+        cl_long val = bolt_source[search_index];
+        cl_long std_val = std_source[search_index];
         bool stdresult, boltresult;
 
         // perform search
@@ -322,18 +332,19 @@ TEST(BSearchUDD, AddDouble4)
 
     // call sort
     AddD4 ad4gt;
-    bolt::BKND::SORT_FUNC(input.begin(), input.end(), ad4gt);
-    std::SORT_FUNC( refInput.begin(), refInput.end(), ad4gt );
+    bolt::BKND::sort(input.begin(), input.end(), ad4gt);
+    std::sort( refInput.begin(), refInput.end(), ad4gt );
 
     bool stdresult, boltresult;
 
     int index = rand() % length;
-    uddtD4 std_val = input[index];
-    uddtD4 val = refInput[index];
+    uddtD4 std_val = refInput[index];
+    uddtD4 val = input[index];
 
     // perform search
-    stdresult = std::binary_search(input.begin(), input.end(), std_val);
-    boltresult = bolt::cl::binary_search(refInput.begin(), refInput.end(), val);
+    stdresult = std::binary_search(refInput.begin(), refInput.end(), std_val);
+    boltresult = bolt::cl::binary_search(input.begin(), input.end(), val);
+   
 
     // compare results
     EXPECT_EQ( stdresult ,  boltresult);
@@ -353,19 +364,19 @@ TEST(BSearchUDD, GPUAddDouble4)
 
     // call sort
     AddD4 ad4gt;
-    bolt::BKND::SORT_FUNC(c_gpu, input.begin(), input.end(), ad4gt );
-    std::SORT_FUNC( refInput.begin(), refInput.end(), ad4gt );
+    bolt::BKND::sort(c_gpu, input.begin(), input.end(), ad4gt );
+    std::sort( refInput.begin(), refInput.end(), ad4gt );
 
     bool stdresult, boltresult;
 
     int index = rand() % length;
-    uddtD4 std_val = input[index];
-    uddtD4 val = refInput[index];
+    uddtD4 std_val = refInput[index];
+    uddtD4 val = input[index];
 
     // perform search
-    stdresult = std::binary_search(input.begin(), input.end(), std_val);
-    boltresult = bolt::cl::binary_search(c_gpu, refInput.begin(), refInput.end(), val);
-
+    stdresult = std::binary_search(refInput.begin(), refInput.end(), std_val);
+    boltresult = bolt::cl::binary_search(c_gpu, input.begin(), input.end(), val);
+    
     // compare results
     EXPECT_EQ( stdresult ,  boltresult);
 } 
@@ -434,18 +445,18 @@ TEST(MultiCoreCPU, MultiCoreAddDouble4)
     
     // call search
     AddD4 ad4gt;
-    bolt::BKND::SEARCH_FUNC(input.begin(), input.end(), ad4gt);
-    std::SORT_FUNC( ctl, refInput.begin(), refInput.end(), ad4gt );
+    bolt::BKND::sort(ctl, input.begin(), input.end(), ad4gt);
+    std::sort( refInput.begin(), refInput.end(), ad4gt );
 
     bool stdresult, boltresult;
 
     int index = rand() % length;
-    uddtD4 std_val = input[index];
-    uddtD4 val = refInput[index];
+    uddtD4 std_val = refInput[index];
+    uddtD4 val = input[index];
 
     // perform search
-    stdresult = std::binary_search(input.begin(), input.end(), std_val);
-    boltresult = bolt::cl::binary_search(ctl, refInput.begin(), refInput.end(), val);
+    stdresult = std::binary_search(refInput.begin(), refInput.end(), std_val);
+    boltresult = bolt::cl::binary_search(ctl, input.begin(), input.end(), val);
 
     // compare results
     EXPECT_EQ( stdresult ,  boltresult);
@@ -961,7 +972,7 @@ TYPED_TEST_P(BSearchArrayTest, CPU_DeviceLessFunction )
 REGISTER_TYPED_TEST_CASE_P( BSearchArrayTest, Normal, GPU_DeviceNormal, 
                                            GreaterFunction, GPU_DeviceGreaterFunction,
                                            LessFunction, GPU_DeviceLessFunction, CPU_DeviceNormal, 
-                                           CPU_DeviceGreaterFunction, CPU_DeviceLessFunction);BSearchArrayTest
+                                           CPU_DeviceGreaterFunction, CPU_DeviceLessFunction);
 #else
 REGISTER_TYPED_TEST_CASE_P( BSearchArrayTest, Normal, GPU_DeviceNormal, 
                                            GreaterFunction, GPU_DeviceGreaterFunction,
@@ -1967,7 +1978,11 @@ TEST_P( BSearchFloatDeviceVector, MultiCoreNormal )
 #if (TEST_DOUBLE == 1)
 TEST_P(BSearchDoubleDeviceVector, Normal )
 {
-    UDD val = gen_UDD_random();
+    typedef std::vector< double >::value_type valtype;
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    double val = (double) rand();
     bool stdresult, boltresult;
 
     //  Calling the actual functions under test
@@ -2000,7 +2015,7 @@ TEST_P( BSearchDoubleDeviceVector, SerialNormal )
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
     
-    UDD val = gen_UDD_random();
+    double val = (double) rand();
     bool stdresult, boltresult;
 
     //  Calling the actual functions under test
@@ -2034,7 +2049,7 @@ TEST_P( BSearchDoubleDeviceVector, MulticoreNormal )
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
-    UDD val = gen_UDD_random();
+    double val = (double) rand();
     bool stdresult, boltresult;
 
     //  Calling the actual functions under test
@@ -2217,7 +2232,7 @@ TEST_P( BSearchDoubleNakedPointer, Normal )
     boltresult = bolt::BKND::SEARCH_FUNC( wrapBoltInput, wrapBoltInput + endIndex, val );
 
     EXPECT_EQ( stdresult, boltresult );
-
+}
 
 TEST_P( BSearchDoubleNakedPointer, SerialNormal )
 {
@@ -2231,7 +2246,7 @@ TEST_P( BSearchDoubleNakedPointer, SerialNormal )
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
     stdext::checked_array_iterator< double* > wrapBoltInput( boltInput, endIndex );
-    bolt::BKND::sort( wrapBoltInput, wrapBoltInput + endIndex );
+    bolt::BKND::sort(ctl, wrapBoltInput, wrapBoltInput + endIndex );
 
     double val = (double) rand();
     bool stdresult, boltresult;

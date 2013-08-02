@@ -23,7 +23,7 @@
 #define STRUCT 1
 #define FILL_GOOGLE_TEST 1
 
-#define TEST_DOUBLE 0
+#define TEST_DOUBLE 1
 #define TEST_CPU_DEVICE 1
 #define TEST_LARGE_BUFFERS 0
 
@@ -2594,11 +2594,11 @@ TEST (simpleTest, basicDataBoltClDevVectAutoConvertCheck)
     ////////////////////////////////////////////////////
 
     std::fill(hv.begin(), hv.end(), static_cast< int >( dValue ) ); 
-    bolt::cl::fill(dv.begin(), dv.end(), dValue);
+    bolt::cl::fill(dv.begin(), dv.end(), static_cast< int > (dValue));
     cmpArrays(hv,dv);
 
     std::fill(hv.begin(), hv.end(), static_cast< int >( fValue ) ); 
-    bolt::cl::fill(dv.begin(), dv.end(), fValue);
+    bolt::cl::fill(dv.begin(), dv.end(), static_cast< int > (fValue));
     cmpArrays(hv,dv);
 
     bolt::cl::fill(ddv.begin(), ddv.end(),iValue);

@@ -15,9 +15,9 @@
 
 ***************************************************************************/
 
-#define TEST_DOUBLE 0
+#define TEST_DOUBLE 1
 #define TEST_DEVICE_VECTOR 1
-#define TEST_CPU_DEVICE 0
+#define TEST_CPU_DEVICE 1
 #define TEST_LARGE_BUFFERS 0
 
 #pragma warning(disable: 4244) // Disabling possible loss of data warning
@@ -182,7 +182,7 @@ TYPED_TEST_P( CopyArrayTest,CPU_DeviceNormal )
     }
 }
 
-REGISTER_TYPED_TEST_CASE_P( CopyArrayTest, CPU_DeviceNormal);
+//REGISTER_TYPED_TEST_CASE_P( CopyArrayTest, CPU_DeviceNormal);
 #endif
 
 TYPED_TEST_P( CopyArrayTest,GPU_DeviceNormal )
@@ -230,7 +230,12 @@ TYPED_TEST_P( CopyArrayTest,GPU_DeviceNormal )
         cmpStdArray< ArrayType, ArraySize >::cmpArrays(  stdOffsetOut,  boltOffsetOut );
     }
 }
-REGISTER_TYPED_TEST_CASE_P( CopyArrayTest, GPU_DeviceNormal);
+#if (TEST_CPU_DEVICE == 1)
+  REGISTER_TYPED_TEST_CASE_P( CopyArrayTest, GPU_DeviceNormal, CPU_DeviceNormal  );
+#else
+  REGISTER_TYPED_TEST_CASE_P( CopyArrayTest, GPU_DeviceNormal);
+#endif
+
 
 typedef ::testing::Types<
     std::tuple< cl_long, TypeValue< 1 > >,
