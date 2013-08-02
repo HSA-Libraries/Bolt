@@ -238,7 +238,7 @@ namespace bolt {
             {
                 const char * str = "MIN_KERNEL";
                 return min_element_pick_iterator( ctl, first, last,  binary_op, cl_code,
-                    std::iterator_traits< ForwardIterator >::iterator_category( ), str );
+                  typename  std::iterator_traits< ForwardIterator >::iterator_category( ), str );
             }
 
 
