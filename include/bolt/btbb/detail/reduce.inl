@@ -38,15 +38,15 @@ namespace bolt{
                 //You might need to look at the tbb::split and there there cousin's
                 //
                 Reduce(const T &init) : value(init) {}
-                Reduce(const BinaryFunction &_op, const T &init) : op(_op), value(init), flag(FALSE) {}
+                Reduce(const BinaryFunction &_op, const T &init) : op(_op), value(init), flag(false) {}
                 Reduce() : value(0) {}
-                Reduce( Reduce& s, tbb::split ) : flag(TRUE), op(s.op) {}
+                Reduce( Reduce& s, tbb::split ) : flag(true), op(s.op) {}
                 void operator()( const tbb::blocked_range<InputIterator>& r ) {
                     T temp = value;
                     for( InputIterator a=r.begin(); a!=r.end(); ++a ) {
                       if(flag){
                         temp = (T) *a;
-                        flag = FALSE;
+                        flag = false;
                       }
                       else
                         temp = (T)op(temp,*a);
@@ -60,35 +60,6 @@ namespace bolt{
                 }
             };
 
-        template<typename InputIterator>
-        typename std::iterator_traits<InputIterator>::value_type
-            reduce(InputIterator first,
-            InputIterator last)
-        {
-
-            typedef typename std::iterator_traits<InputIterator>::value_type iType;
-            tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
-            Reduce<T,InputIterator, BinaryFunction> reduce_op();
-            tbb::parallel_reduce( tbb::blocked_range<InputIterator>( first, last), reduce_op );
-            return reduce_op.value;
-
-        }
-
-        template<typename InputIterator, typename T>
-        T   reduce(InputIterator first,
-            InputIterator last,
-            T init)
-        {
-
-            typedef typename std::iterator_traits<InputIterator>::value_type iType;
-            tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
-            Reduce<T,InputIterator, BinaryFunction> reduce_op(init);
-            tbb::parallel_reduce( tbb::blocked_range<InputIterator>( first, last), reduce_op );
-            return reduce_op.value;
-
-        }
-
-
         template<typename InputIterator, typename T, typename BinaryFunction>
         T reduce(InputIterator first,
             InputIterator last,
@@ -101,6 +72,34 @@ namespace bolt{
             tbb::parallel_reduce( tbb::blocked_range<InputIterator>( first, last), reduce_op );
             return reduce_op.value;
         }
+
+        template<typename InputIterator, typename T>
+        T   reduce(InputIterator first,
+            InputIterator last,
+            T init)
+        {
+
+            typedef typename std::iterator_traits<InputIterator>::value_type iType;
+	    reduce(first,last,iType(),std::plus<iType>());
+
+        }
+
+
+        template<typename InputIterator>
+        typename std::iterator_traits<InputIterator>::value_type
+            reduce(InputIterator first,
+            InputIterator last)
+        {
+
+            typedef typename std::iterator_traits<InputIterator>::value_type iType;
+	    reduce(first,last,iType());
+
+        }
+
+
+
+
+
 
 
     } //tbb

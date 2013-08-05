@@ -37,14 +37,14 @@ namespace bolt{
 
                
                 Min_Element_comp ( ForwardIterator &_val, BinaryPredicate &_op): op(_op), value(_val) {}
-                Min_Element_comp( Min_Element_comp& s, tbb::split ) : flag(TRUE), op(s.op), value(s.value) {}
+                Min_Element_comp( Min_Element_comp& s, tbb::split ) : flag(true), op(s.op), value(s.value) {}
                 void operator()( const tbb::blocked_range<ForwardIterator>& r ) {
                     ForwardIterator temp = value;
                     
                     for( ForwardIterator a=r.begin(); a!=r.end(); ++a ) {
                       if(flag){
                         temp = a;
-                        flag = FALSE;
+                        flag = false;
                       }
                       else{
                          if(op(*a, *temp))
@@ -69,14 +69,14 @@ namespace bolt{
 
                
                 Max_Element_comp ( ForwardIterator &_val, BinaryPredicate &_op): op(_op), value(_val) {}
-                Max_Element_comp( Max_Element_comp& s, tbb::split ) : flag(TRUE), op(s.op), value(s.value) {}
+                Max_Element_comp( Max_Element_comp& s, tbb::split ) : flag(true), op(s.op), value(s.value) {}
                 void operator()( const tbb::blocked_range<ForwardIterator>& r ) {
                     ForwardIterator temp = value;
                     
                     for( ForwardIterator a=r.begin(); a!=r.end(); ++a ) {
                       if(flag){
                         temp = a;
-                        flag = FALSE;
+                        flag = false;
                       }
                       else{
                          if(op(*temp, *a))

@@ -48,7 +48,7 @@ namespace bolt{
                 
                 bool is_divisible() const 
                 {
-                    return (size_t) min( end1-begin1, end2-begin2 ) > grainsize;
+                    return (size_t) std::min( end1-begin1, end2-begin2 ) > grainsize;
                 }
 
 
@@ -127,7 +127,7 @@ namespace bolt{
         InputIterator2 last2, OutputIterator result)
         {
 
-			return merge(first1,last1,first2,last2,result,CompareOp<InputIterator1,InputIterator2>())
+			return merge(first1,last1,first2,last2,result,CompareOp<InputIterator1,InputIterator2>());
 
 		}
 

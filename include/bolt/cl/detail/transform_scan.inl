@@ -288,7 +288,13 @@ transform_scan_pick_iterator(
           typename bolt::cl::device_vector< iType >::pointer InputBuffer =  first.getContainer( ).data( );
           typename bolt::cl::device_vector< oType >::pointer ResultBuffer =  result.getContainer( ).data( );
 
+#if defined(_WIN32)
             std::transform(&InputBuffer[ first.m_Index ], &InputBuffer[first.m_Index] + numElements, stdext::make_checked_array_iterator(&ResultBuffer[ result.m_Index], numElements), unary_op);
+#else
+            std::transform(&InputBuffer[ first.m_Index ], &InputBuffer[first.m_Index] + numElements, &ResultBuffer[ result.m_Index], unary_op);
+
+#endif
+
             Serial_Scan<oType, BinaryFunction, T>(&ResultBuffer[ result.m_Index  ], &ResultBuffer[ result.m_Index ], numElements, binary_op, inclusive, init);
             return result + numElements;
         #else

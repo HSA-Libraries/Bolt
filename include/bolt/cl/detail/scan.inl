@@ -400,11 +400,11 @@ aProfiler.stopTrial();
 
                if(inclusive)
                {
-                 return bolt::btbb::inclusive_scan(first, last, result, binary_op);
+                 return bolt::btbb::inclusive_scan(fancyFirst, fancyLast, result, binary_op);
                }
                else
                {
-                return bolt::btbb::exclusive_scan( first, last, result, init, binary_op);
+                return bolt::btbb::exclusive_scan( fancyFirst, fancyLast, result, init, binary_op);
                }
 
 #else

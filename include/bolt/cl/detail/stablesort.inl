@@ -186,7 +186,7 @@ void stablesort_pick_iterator( control &ctl,
     {
         #ifdef ENABLE_TBB
             //TODO - ADDLOG calling serial CPU code paths 
-            bolt::cl::device_vector< Type >::pointer firstPtr =  first.getContainer( ).data( );
+            typename bolt::cl::device_vector< Type >::pointer firstPtr =  first.getContainer( ).data( );
             std::stable_sort( &firstPtr[ first.m_Index ], &firstPtr[ last.m_Index ], comp );
         #else
             throw std::runtime_error("MultiCoreCPU Version of stable_sort not Enabled! \n");

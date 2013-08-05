@@ -42,17 +42,17 @@ namespace bolt {
 				//You might need to look at the tbb::split and there there cousin's
 				//
 				Transform_Reduce(const UnaryFunction &_opt, const BinaryFunction &_opr) : transform_op(_opt), reduce_op(_opr) ,value(0){}
-				Transform_Reduce(const UnaryFunction &_opt, const BinaryFunction &_opr, const T &init) : transform_op(_opt), reduce_op(_opr), value(init), flag(FALSE){}
+				Transform_Reduce(const UnaryFunction &_opt, const BinaryFunction &_opr, const T &init) : transform_op(_opt), reduce_op(_opr), value(init), flag(false){}
 
 				Transform_Reduce(): value(0) {}
-				Transform_Reduce( Transform_Reduce& s, tbb::split ):flag(TRUE),transform_op(s.transform_op),reduce_op(s.reduce_op){}
+				Transform_Reduce( Transform_Reduce& s, tbb::split ):flag(true),transform_op(s.transform_op),reduce_op(s.reduce_op){}
 				 void operator()( const tbb::blocked_range<InputIterator>& r ) {
 					T reduce_temp = value, transform_temp;
 					for(InputIterator a=r.begin(); a!=r.end(); ++a ) {
 					  transform_temp = transform_op(*a);
 					  if(flag){
 						reduce_temp = transform_temp;
-						flag = FALSE;
+						flag = false;
 					  }
 					  else
 						reduce_temp = reduce_op(reduce_temp,transform_temp);
@@ -75,7 +75,7 @@ namespace bolt {
 			BinaryFunction reduce_op)
 		{
 
-				  typedef std::iterator_traits< InputIterator >::value_type iType;
+				  typedef typename std::iterator_traits< InputIterator >::value_type iType;
 					tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
 					Transform_Reduce<InputIterator, UnaryFunction, BinaryFunction,T> transform_reduce_op(transform_op, reduce_op, init);
 					tbb::parallel_reduce( tbb::blocked_range<InputIterator>( first, last), transform_reduce_op );

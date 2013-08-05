@@ -49,12 +49,12 @@ namespace bolt
 			const BinaryPredicate &_pred,
 			const bool& _incl,
 			const oType &init) : first_key(_first), first_value(first_val), result(_result), numElements(_numElements), binary_op(_opr), binary_pred(_pred),
-							 inclusive(_incl), start(init), flag(FALSE), pre_flag(TRUE),next_flag(FALSE){}
+							 inclusive(_incl), start(init), flag(false), pre_flag(true),next_flag(false){}
 		  oType get_sum() const {return sum;}
 		  template<typename Tag>
 		  void operator()( const tbb::blocked_range<unsigned int>& r, Tag ) {
 			  oType temp = sum, temp1;
-			  next_flag = flag = FALSE;
+			  next_flag = flag = false;
         unsigned int i;
 			  for( i=r.begin(); i<r.end(); ++i ) {
 				 if( Tag::is_final_scan() ) {
@@ -73,7 +73,7 @@ namespace bolt
                 temp1 = *(first_value + i);
 							 *(result + i) = start;
 							 temp = binary_op(start, temp1);
-                flag = TRUE; 
+                flag = true; 
 						  }
 						  continue;
 					 }
@@ -85,32 +85,32 @@ namespace bolt
 					 }
 					 else{
 						temp = *(first_value+i);
-             flag = TRUE; 
+             flag = true; 
 					 }
 					 *(result + i) = temp;
 				 }
 				 else if(pre_flag){
 				   temp = *(first_value+i);
-				   pre_flag = FALSE;
+				   pre_flag = false;
 				 }
 				 else if(binary_pred(*(first_key+i), *(first_key +i - 1)))
 					 temp = binary_op(temp, *(first_value+i));
 				 else if (!inclusive){
 					 temp = binary_op(start, *(first_value+i));
-            flag = TRUE; 
+            flag = true; 
 				 }
 				 else {
 					 temp = *(first_value+i);
-            flag = TRUE; 
+            flag = true; 
 				 }
 			 }
        if(i<numElements && !binary_pred(*(first_key+i-1), *(first_key +i ))){
-          next_flag = TRUE;     // this will check the key change at boundaries
+          next_flag = true;     // this will check the key change at boundaries
        }
 			 sum = temp;
 		  }
-		  ScanKey_tbb( ScanKey_tbb& b, tbb::split):first_key(b.first_key),result(b.result),first_value(b.first_value),
-												   numElements(b.numElements),inclusive(b.inclusive),start(b.start),pre_flag(TRUE){}
+		  ScanKey_tbb( ScanKey_tbb& b, tbb::split):first_key(b.first_key),result(b.result),
+first_value(b.first_value),numElements(b.numElements),inclusive(b.inclusive),start(b.start),pre_flag(true),binary_op(b.binary_op), binary_pred(b.binary_pred){}
 		  void reverse_join( ScanKey_tbb& a ) {
 			if(!a.next_flag && !flag)
 				sum = binary_op(a.sum,sum);
@@ -131,60 +131,6 @@ struct plus
 {
 	T operator()(const T &lhs, const T &rhs) const {return lhs + rhs;}
 };
-
-template<
-	typename InputIterator1,
-	typename InputIterator2,
-	typename OutputIterator>
-OutputIterator
-inclusive_scan_by_key(
-	InputIterator1  first1,
-	InputIterator1  last1,
-	InputIterator2  first2,
-	OutputIterator  result)
-	{
-		unsigned int numElements = static_cast< unsigned int >( std::distance( first1, last1 ) );
-		typedef typename std::iterator_traits< InputIterator2 >::value_type vType;
-		typedef std::iterator_traits<InputIterator1>::value_type kType;
-		typedef std::iterator_traits<OutputIterator>::value_type oType;
-		equal_to<kType> binary_pred;
-		plus<oType> binary_funct;
-
-		tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
-		ScanKey_tbb<InputIterator1, InputIterator2, OutputIterator, plus<oType>, equal_to<kType>,vType> tbbkey_scan((InputIterator1 &)first1,
-			(InputIterator2&) first2,(OutputIterator &)result, numElements, binary_funct, binary_pred, true, vType());
-		tbb::parallel_scan( tbb::blocked_range<unsigned int>(  0, static_cast< unsigned int >( std::distance( first1, last1 ))), tbbkey_scan, tbb::auto_partitioner());
-		return result + numElements;
-
-
-	}
-
-template<
-	typename InputIterator1,
-	typename InputIterator2,
-	typename OutputIterator,
-	typename BinaryPredicate>
-OutputIterator
-inclusive_scan_by_key(
-	InputIterator1  first1,
-	InputIterator1  last1,
-	InputIterator2  first2,
-	OutputIterator  result,
-	BinaryPredicate binary_pred)
-	{
-		unsigned int numElements = static_cast< unsigned int >( std::distance( first1, last1 ) );
-		typedef typename std::iterator_traits< InputIterator2 >::value_type vType;
-		typedef std::iterator_traits<OutputIterator>::value_type oType;
-		plus<oType> binary_funct;
-
-		tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
-		ScanKey_tbb<InputIterator1, InputIterator2, OutputIterator, plus<oType>, BinaryPredicate,vType> tbbkey_scan((InputIterator1 &)first1,
-			(InputIterator2&) first2,(OutputIterator &)result, numElements, binary_funct, binary_pred, true, vType());
-		tbb::parallel_scan( tbb::blocked_range<unsigned int>(  0, static_cast< unsigned int >( std::distance( first1, last1 ))), tbbkey_scan, tbb::auto_partitioner());
-		return result + numElements;
-
-	}
-
 
 
 
@@ -220,86 +166,36 @@ inclusive_scan_by_key(
 template<
 	typename InputIterator1,
 	typename InputIterator2,
+	typename OutputIterator,
+	typename BinaryPredicate>
+OutputIterator
+inclusive_scan_by_key(
+	InputIterator1  first1,
+	InputIterator1  last1,
+	InputIterator2  first2,
+	OutputIterator  result,
+	BinaryPredicate binary_pred)
+	{
+		typedef typename std::iterator_traits<OutputIterator>::value_type oType;
+		inclusive_scan_by_key(first1,last1,first2,result,binary_pred,plus<oType>());
+	}
+
+
+
+template<
+	typename InputIterator1,
+	typename InputIterator2,
 	typename OutputIterator>
 OutputIterator
-exclusive_scan_by_key(
+inclusive_scan_by_key(
 	InputIterator1  first1,
 	InputIterator1  last1,
 	InputIterator2  first2,
 	OutputIterator  result)
 	{
-		unsigned int numElements = static_cast< unsigned int >( std::distance( first1, last1 ) );
-		typedef typename std::iterator_traits< InputIterator2 >::value_type vType;
-		typedef std::iterator_traits<InputIterator1>::value_type kType;
-		typedef std::iterator_traits<OutputIterator>::value_type oType;
-		equal_to<kType> binary_pred;
-		plus<oType> binary_funct;
-
-		tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
-		ScanKey_tbb<InputIterator1, InputIterator2, OutputIterator, plus<oType>, equal_to<kType>,vType> tbbkey_scan((InputIterator1 &)first1,
-			(InputIterator2&) first2,(OutputIterator &)result, numElements, binary_funct, binary_pred, false, vType());
-		tbb::parallel_scan( tbb::blocked_range<unsigned int>(  0, static_cast< unsigned int >( std::distance( first1, last1 ))), tbbkey_scan, tbb::auto_partitioner());
-		return result + numElements;
-
+		typedef typename std::iterator_traits<InputIterator1>::value_type kType;
+		inclusive_scan_by_key(first1,last1,first2,result,equal_to<kType>());
 	}
-
-
-
-template<
-	typename InputIterator1,
-	typename InputIterator2,
-	typename OutputIterator,
-	typename T>
-OutputIterator
-exclusive_scan_by_key(
-	InputIterator1  first1,
-	InputIterator1  last1,
-	InputIterator2  first2,
-	OutputIterator  result,
-	T               init)
-	{
-		unsigned int numElements = static_cast< unsigned int >( std::distance( first1, last1 ) );
-		typedef std::iterator_traits<InputIterator1>::value_type kType;
-		typedef std::iterator_traits<OutputIterator>::value_type oType;
-		equal_to<kType> binary_pred;
-		plus<oType> binary_funct;
-
-		tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
-		ScanKey_tbb<InputIterator1, InputIterator2, OutputIterator, BinaryFunction, BinaryPredicate,T> tbbkey_scan((InputIterator1 &)first1,
-			(InputIterator2&) first2,(OutputIterator &)result, numElements, plus<oType> , equal_to<kType>, false, init);
-		tbb::parallel_scan( tbb::blocked_range<unsigned int>(  0, static_cast< unsigned int >( std::distance( first1, last1 ))), tbbkey_scan, tbb::auto_partitioner());
-		return result + numElements;
-	}
-
-
-
-
-template<
-	typename InputIterator1,
-	typename InputIterator2,
-	typename OutputIterator,
-	typename T,
-	typename BinaryPredicate>
-OutputIterator
-exclusive_scan_by_key(
-	InputIterator1  first1,
-	InputIterator1  last1,
-	InputIterator2  first2,
-	OutputIterator  result,
-	T               init,
-	BinaryPredicate binary_pred)
-	{
-		unsigned int numElements = static_cast< unsigned int >( std::distance( first1, last1 ) );
-		typedef std::iterator_traits<OutputIterator>::value_type oType;
-		plus<oType> binary_funct;
-
-		tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
-		ScanKey_tbb<InputIterator1, InputIterator2, OutputIterator, plus<oType>, BinaryPredicate,T> tbbkey_scan((InputIterator1 &)first1,
-			(InputIterator2&) first2,(OutputIterator &)result, numElements, binary_funct, binary_pred, false, init);
-		tbb::parallel_scan( tbb::blocked_range<unsigned int>(  0, static_cast< unsigned int >( std::distance( first1, last1 ))), tbbkey_scan, tbb::auto_partitioner());
-		return result + numElements;
-	}
-
 
 
 template<
@@ -328,6 +224,66 @@ exclusive_scan_by_key(
 		return result + numElements;
 
 	}
+
+template<
+	typename InputIterator1,
+	typename InputIterator2,
+	typename OutputIterator,
+	typename T,
+	typename BinaryPredicate>
+OutputIterator
+exclusive_scan_by_key(
+	InputIterator1  first1,
+	InputIterator1  last1,
+	InputIterator2  first2,
+	OutputIterator  result,
+	T               init,
+	BinaryPredicate binary_pred)
+	{
+
+		typedef typename std::iterator_traits<OutputIterator>::value_type oType;		
+		exclusive_scan_by_key(first1,last1, first2, result, init,binary_pred, plus<oType>());
+	}
+
+
+template<
+	typename InputIterator1,
+	typename InputIterator2,
+	typename OutputIterator,
+	typename T>
+OutputIterator
+exclusive_scan_by_key(
+	InputIterator1  first1,
+	InputIterator1  last1,
+	InputIterator2  first2,
+	OutputIterator  result,
+	T               init)
+	{
+
+		typedef typename std::iterator_traits<InputIterator1>::value_type kType;
+		exclusive_scan_by_key(first1,last1, first2, result, init,equal_to<kType>());
+	}
+
+
+template<
+	typename InputIterator1,
+	typename InputIterator2,
+	typename OutputIterator>
+OutputIterator
+exclusive_scan_by_key(
+	InputIterator1  first1,
+	InputIterator1  last1,
+	InputIterator2  first2,
+	OutputIterator  result)
+	{
+
+		typedef typename std::iterator_traits< InputIterator2 >::value_type vType;
+		exclusive_scan_by_key(first1,last1, first2, result, vType());
+
+
+	}
+
+
 
 	}
 }

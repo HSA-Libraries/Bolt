@@ -309,7 +309,7 @@ namespace detail {
                 case bolt::cl::control::MultiCoreCpu:
                     #ifdef ENABLE_TBB
                     {
-                      bolt::cl::device_vector< iType >::pointer countInputBuffer =  first.getContainer( ).data( );
+                      typename bolt::cl::device_vector< iType >::pointer countInputBuffer =  first.getContainer( ).data( );
                       return (rType) bolt::btbb::count_if(&countInputBuffer[first.m_Index],
                           &countInputBuffer[szElements] ,predicate);
 
