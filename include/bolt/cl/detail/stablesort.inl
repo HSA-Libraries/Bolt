@@ -30,6 +30,11 @@
 #include "bolt/cl/functional.h"
 #include "bolt/cl/device_vector.h"
 
+#ifdef ENABLE_TBB
+//TBB Includes
+#include "bolt/btbb/stable_sort.h"
+#endif
+
 #define BOLT_CL_STABLESORT_CPU_THRESHOLD 64
 
 namespace bolt {
@@ -134,8 +139,7 @@ void stablesort_pick_iterator( control &ctl, const RandomAccessIterator& first, 
     else if( runMode == bolt::cl::control::MultiCoreCpu )
     {
         #ifdef ENABLE_TBB
-            //TODO - Add Log for the serial CPU code path taken when multicore is called
-            std::stable_sort( first, last, comp );
+            bolt::btbb::stable_sort( first, last, comp );
         #else
             throw std::runtime_error("MultiCoreCPU Version of stable_sort not Enabled! \n");
         #endif
@@ -185,9 +189,8 @@ void stablesort_pick_iterator( control &ctl,
     else if( runMode == bolt::cl::control::MultiCoreCpu )
     {
         #ifdef ENABLE_TBB
-            //TODO - ADDLOG calling serial CPU code paths 
             typename bolt::cl::device_vector< Type >::pointer firstPtr =  first.getContainer( ).data( );
-            std::stable_sort( &firstPtr[ first.m_Index ], &firstPtr[ last.m_Index ], comp );
+            bolt::btbb::stable_sort( &firstPtr[ first.m_Index ], &firstPtr[ last.m_Index ], comp ); 
         #else
             throw std::runtime_error("MultiCoreCPU Version of stable_sort not Enabled! \n");
         #endif

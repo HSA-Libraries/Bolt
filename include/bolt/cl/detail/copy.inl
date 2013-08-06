@@ -29,6 +29,11 @@
 
 #include "bolt/cl/bolt.h"
 
+#ifdef ENABLE_TBB
+//TBB Includes
+#include "bolt/btbb/copy.h"
+#endif
+
 // bumps dividend up (if needed) to be evenly divisible by divisor
 // returns whether dividend changed
 // makeDivisible(9,4) -> 12,true
@@ -177,12 +182,7 @@ void copy_pick_iterator(const bolt::cl::control &ctrl,  const InputIterator& fir
      else if( runMode == bolt::cl::control::MultiCoreCpu )
      {
         #ifdef ENABLE_TBB
-          #if defined( _WIN32 )
-            //TODO : The MultiCoreCpu version of Copy is not Implemented yet...
-            std::copy_n( first, n, stdext::checked_array_iterator<oType*>(&(*result), n ) );
-          #else
-            std::copy_n( first, n, result );
-          #endif
+           bolt::btbb::copy_n(first, n, &(*result));
         #else
             throw std::runtime_error( "The MultiCoreCpu version of Copy is not enabled to be built." );
         #endif
@@ -230,12 +230,7 @@ void copy_pick_iterator(const bolt::cl::control &ctrl,  const InputIterator& fir
      {
 
          #ifdef ENABLE_TBB
-               //TODO : The MultiCoreCpu version of Copy is not Implemented yet...
-               #if defined( _WIN32 )
-                  std::copy_n( first, n, stdext::checked_array_iterator<oType*>(&(*result), n ) );
-               #else
-                  std::copy_n( first, n, result );
-               #endif
+             bolt::btbb::copy_n(first, n, &(*result) );
          #else
                throw std::runtime_error( "The MultiCoreCpu version of Copy is not enabled to be built." );
          #endif
@@ -281,14 +276,9 @@ void copy_pick_iterator(const bolt::cl::control &ctrl,  const DVInputIterator& f
      {
 
          #ifdef ENABLE_TBB
-            //TODO : The MultiCoreCpu version of Copy is not Implemented yet...
-            typename bolt::cl::device_vector< iType >::pointer copySrc =  first.getContainer( ).data( );
-            typename bolt::cl::device_vector< oType >::pointer copyDest =  result.getContainer( ).data( );
-#if defined( _WIN32 )
-            std::copy_n( &copySrc[first.m_Index], n, stdext::make_checked_array_iterator( &copyDest[result.m_Index], n) );
-#else
-            std::copy_n( &copySrc[first.m_Index], n, &copyDest[result.m_Index] );
-#endif
+             typename bolt::cl::device_vector< iType >::pointer copySrc =  first.getContainer( ).data( );
+             typename bolt::cl::device_vector< oType >::pointer copyDest =  result.getContainer( ).data( );
+              bolt::btbb::copy_n( &copySrc[first.m_Index], n, &copyDest[result.m_Index] );
             return;
          #else
                 throw std::runtime_error( "The MultiCoreCpu version of Copy is not enabled to be built." );
@@ -330,13 +320,8 @@ void copy_pick_iterator(const bolt::cl::control &ctrl,  const DVInputIterator& f
      {
 
          #ifdef ENABLE_TBB
-            //TODO : The MultiCoreCpu version of Copy is not Implemented yet...
-            typename bolt::cl::device_vector< oType >::pointer copyDest =  result.getContainer( ).data( );
-#if defined( _WIN32 )
-            std::copy_n( first, n, stdext::make_checked_array_iterator( &copyDest[result.m_Index], n) );
-#else
-            std::copy_n( first, n, &copyDest[result.m_Index] );
-#endif
+              typename bolt::cl::device_vector< oType >::pointer copyDest =  result.getContainer( ).data( );
+              bolt::btbb::copy_n( first, n, &copyDest[result.m_Index] );
             return;
          #else
                 throw std::runtime_error( "The MultiCoreCpu version of Copy is not enabled to be built." );
@@ -381,17 +366,11 @@ void copy_pick_iterator(const bolt::cl::control &ctrl,  const DVInputIterator& f
      {
 
          #ifdef ENABLE_TBB
-            //TODO : The MultiCoreCpu version of Copy is not Implemented yet...
-           #if defined( _WIN32 )
-             std::copy_n( first, n, stdext::checked_array_iterator<oType*>(&(*result), n ) );
+              typename bolt::cl::device_vector< iType >::pointer copySrc =  first.getContainer( ).data( );
+               bolt::btbb::copy_n( &copySrc[first.m_Index], n, result );
            #else
-             std::copy_n( first, n, result );
-           #endif
-           return;
-
-         #else
                 throw std::runtime_error( "The MultiCoreCpu version of Copy is not enabled to be built." );
-         #endif
+           #endif
      }
      else
      {
@@ -431,13 +410,8 @@ void copy_pick_iterator(const bolt::cl::control &ctrl,  const DVInputIterator& f
      else if( runMode == bolt::cl::control::MultiCoreCpu )
      {
         #ifdef ENABLE_TBB
-            //TODO : The MultiCoreCpu version of Copy is not Implemented yet...
-           typename  bolt::cl::device_vector< oType >::pointer copyDest =  result.getContainer( ).data( );
-#if defined( _WIN32 )
-         std::copy_n( first, n, stdext::make_checked_array_iterator(&copyDest[result.m_Index], n) );
-#else
-         std::copy_n( first, n, &copyDest[result.m_Index] );
-#endif
+           typename bolt::cl::device_vector< oType >::pointer copyDest =  result.getContainer( ).data( );
+            bolt::btbb::copy_n( first, n, &copyDest[result.m_Index] );
             return;
         #else
               throw std::runtime_error( "The MultiCoreCpu version of Copy is not enabled to be built." );

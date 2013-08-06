@@ -40,7 +40,7 @@ namespace bolt
 
      struct ReduceByKey
       {
-          typedef typename std::iterator_traits< OutputIterator2 >::value_type voType;          
+          //typedef typename std::iterator_traits< OutputIterator2 >::value_type voType;          
           voType sum;          
           InputIterator1& first_key;
           InputIterator1& last_key;
@@ -65,15 +65,15 @@ namespace bolt
             const BinaryPredicate &_pred, 
             const BinaryFunction &_opr) : first_key(_first),last_key(_last), first_value(first_val), 
             keys_output(_keys_output),values_output(_values_output), offset_array(_offset_array),
-            numElements(_numElements), binary_pred(_pred), binary_op(_opr), flag(FALSE), pre_flag(TRUE),
-            next_flag(FALSE){}
+            numElements(_numElements), binary_pred(_pred), binary_op(_opr), flag(false), pre_flag(true),
+            next_flag(false){}
           voType get_sum() const {return sum;}         
         
           template<typename Tag>
           void operator()( const tbb::blocked_range<unsigned int>& r, Tag ) 
           { 
               voType temp = sum;              
-              next_flag = flag = FALSE;               
+              next_flag = flag = false;               
               unsigned int i;
                strt_indx = r.begin();
                end_indx = r.end();
@@ -90,7 +90,7 @@ namespace bolt
                         offset_array[i-1]  = 1;
                         *(values_output + (i-1)) = temp;                     
                         temp = *(first_value+i);   
-                        flag = TRUE;                       
+                        flag = true;                       
                      }                     
                      if(i==numElements-1)
                      {                  
@@ -101,24 +101,24 @@ namespace bolt
                  else if(pre_flag)
                  {
                     temp = *(first_value+i);
-                    pre_flag = FALSE;
+                    pre_flag = false;
                  }
                  else if(binary_pred(*(first_key+i), *(first_key +i - 1)))
                          temp = binary_op(temp, *(first_value+i));
                  else
                  { 
                      temp = *(first_value+i);
-                     flag = TRUE;
+                     flag = true;
                  }
              }
                if(i<numElements && !binary_pred(*(first_key+i-1), *(first_key +i )))
-                   next_flag = TRUE; // this will check the key change at boundaries
+                   next_flag = true; // this will check the key change at boundaries
                sum = temp;
           }
           ReduceByKey( ReduceByKey& b, tbb::split): first_key(b.first_key),last_key(b.last_key), first_value(b.first_value),
                                                     keys_output(b.keys_output),values_output(b.values_output),
                                                     offset_array(b.offset_array),numElements(b.numElements),sum(voType()),
-                                                    pre_flag(TRUE){}
+                                                    pre_flag(true),binary_pred(b.binary_pred),binary_op(b.binary_op){}
          void reverse_join( ReduceByKey& a )
          {
              if(!a.next_flag && !flag && binary_pred(*(a.first_key +  a.end_indx),*(first_key+strt_indx))) 

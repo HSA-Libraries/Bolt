@@ -19,6 +19,7 @@
 #define BOLT_BTBB_MERGE_INL
 #pragma once
 
+
 #include "tbb/parallel_for.h"
 #include "tbb/parallel_invoke.h"
 #include "tbb/task_scheduler_init.h"
@@ -48,7 +49,10 @@ namespace bolt{
                 
                 bool is_divisible() const 
                 {
-                    return (size_t) std::min( end1-begin1, end2-begin2 ) > grainsize;
+			
+		  size_t min;
+ 		   min = end1-begin1 < end2-begin2?end1-begin1:end2-begin2;
+                    return  min > grainsize;
                 }
 
 

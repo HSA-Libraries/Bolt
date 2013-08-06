@@ -47,7 +47,7 @@ namespace bolt{
                     {  
                       int n = (int) std::distance(first1, last1);
                       std::vector<OutputType> res_vector(n);
-                      std::vector<OutputType>::iterator res = res_vector.begin();
+                      typename std::vector<OutputType>::iterator res = res_vector.begin();
 
                       tbb::parallel_for(  tbb::blocked_range<int>(0, n) ,
                         [&] (const tbb::blocked_range<int> &r) -> void

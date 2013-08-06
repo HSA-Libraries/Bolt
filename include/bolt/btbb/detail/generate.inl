@@ -36,7 +36,7 @@ namespace bolt{
 
                 void operator()( ForwardIterator first,  ForwardIterator last, Generator gen)
                 {
-                    typedef std::iterator_traits<ForwardIterator>::value_type iType;
+                    typedef typename std::iterator_traits<ForwardIterator>::value_type iType;
 
                     tbb::parallel_for(  tbb::blocked_range<ForwardIterator>(first, last) ,
                         [&] (const tbb::blocked_range<ForwardIterator> &r) -> void

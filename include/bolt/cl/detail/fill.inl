@@ -26,6 +26,11 @@
 
 #include "bolt/cl/bolt.h"
 
+//TBB Includes
+#ifdef ENABLE_TBB
+#include "bolt/btbb/fill.h"
+#endif
+
 namespace bolt {
     namespace cl {
 
@@ -119,8 +124,7 @@ namespace detail {
                 else if(runMode == bolt::cl::control::MultiCoreCpu)
                 {
                     #ifdef ENABLE_TBB
-                          //TODO : MultiCoreCPU Version of fill not implemented yet...
-                          std::fill(first, last, value );
+                          bolt::btbb::fill(first, last, value);
                     #else
                           throw std::runtime_error("MultiCoreCPU Version of fill not Enabled! \n");
                     #endif
@@ -160,9 +164,8 @@ namespace detail {
                 else if(runMode == bolt::cl::control::MultiCoreCpu)
                 {
                     #ifdef ENABLE_TBB
-                           //TODO : MultiCoreCPU Version of fill not implemented yet...
-                       typename  bolt::cl::device_vector< iType >::pointer fillInputBuffer =  first.getContainer( ).data( );
-                        std::fill(first, last, value );
+                      typename bolt::cl::device_vector< iType >::pointer fillInputBuffer =  first.getContainer( ).data( );
+                        bolt::btbb::fill(&fillInputBuffer[first.m_Index], &fillInputBuffer[last.m_Index], value );
                     #else
                            throw std::runtime_error("MultiCoreCPU Version of fill not Enabled! \n");
                     #endif

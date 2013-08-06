@@ -30,6 +30,10 @@
 #include "bolt/cl/functional.h"
 #include "bolt/cl/device_vector.h"
 
+#ifdef ENABLE_TBB
+//TBB Includes
+#include "bolt/btbb/sort_by_key.h"
+#endif
 
 #define BITONIC_SORT_WGSIZE 64
 #define DEBUG 1
@@ -215,7 +219,7 @@ public:
             #ifdef ENABLE_TBB
                 typename bolt::cl::device_vector< keyType >::pointer   keysPtr   =  keys_first.getContainer( ).data( );
                 typename bolt::cl::device_vector< valueType >::pointer valuesPtr =  values_first.getContainer( ).data( );
-                serialCPU_sort_by_key(&keysPtr[keys_first.m_Index], &keysPtr[keys_last.m_Index], 
+                bolt::btbb::sort_by_key(&keysPtr[keys_first.m_Index], &keysPtr[keys_last.m_Index], 
                                                 &valuesPtr[values_first.m_Index], comp);
                 return;
             #else
