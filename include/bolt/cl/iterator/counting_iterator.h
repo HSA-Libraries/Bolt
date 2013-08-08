@@ -188,7 +188,7 @@ namespace cl {
             {}; \n
 
             void init( global value_type* ptr ) \n
-            { \n:
+            { \n
 
                 //m_Ptr = ptr; \n
             }; \n
