@@ -1084,7 +1084,7 @@ TEST_P( StableSortbyKeyDoubleDeviceVector, MultiCoreInplace )
 
 #endif
 #endif
-/*
+#if defined(_WIN32)
 TEST_P( StableSortbyKeyIntegerNakedPointer, Inplace )
 {
     size_t endIndex = GetParam( );
@@ -1254,7 +1254,7 @@ TEST_P( StableSortbyKeyDoubleNakedPointer, MultiCoreInplace )
 }
 
 #endif
-*/
+#endif
 std::array<int, 15> TestValues = {2,4,8,16,32,64,128,256,512,1024,2048,4096,8192,16384,32768};
 
 //INSTANTIATE_TEST_CASE_P( StableSortByKeyValues, StableSortByKeyCountingIterator,

@@ -236,7 +236,7 @@ T generateRandom()
         return (T)fmod(value, 10.0);
     }
 }
-/*
+
 //  Test fixture class, used for the Type-parameterized tests
 //  Namely, the tests that use std::array and TYPED_TEST_P macros
 template< typename ArrayTuple >
@@ -369,50 +369,57 @@ TYPED_TEST_CASE_P( ReduceArrayTest );
 
 TYPED_TEST_P( ReduceArrayTest, Normal )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+
+    typedef typename ReduceArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, ReduceArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont;
     ArrayType init(0);
     //  Calling the actual functions under test
-    ArrayType stlReduce = std::accumulate(stdInput.begin(), stdInput.end(), init);
+    ArrayType stlReduce = std::accumulate(ReduceArrayTest< gtest_TypeParam_ >::stdInput.begin(),ReduceArrayTest< gtest_TypeParam_ >::stdInput.end(), init);
 
-    ArrayType boltReduce = bolt::cl::reduce( boltInput.begin( ), boltInput.end( ), init,
+    ArrayType boltReduce = bolt::cl::reduce( ReduceArrayTest< gtest_TypeParam_ >::boltInput.begin( ), ReduceArrayTest< gtest_TypeParam_ >::boltInput.end( ), init,
                                                        bolt::cl::plus<ArrayType>());
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+    typename ArrayCont::difference_type stdNumElements = std::distance( ReduceArrayTest< gtest_TypeParam_ >::stdInput.begin( ), ReduceArrayTest< gtest_TypeParam_ >::stdInput.end() );
+    typename ArrayCont::difference_type boltNumElements = std::distance( ReduceArrayTest< gtest_TypeParam_ >::boltInput.begin( ), ReduceArrayTest< gtest_TypeParam_ >::boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
     EXPECT_EQ( stlReduce, boltReduce );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
+    cmpStdArray< ArrayType, ReduceArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( ReduceArrayTest< gtest_TypeParam_ >::stdInput, ReduceArrayTest< gtest_TypeParam_ >::boltInput );
 }
 
 TYPED_TEST_P( ReduceArrayTest, GPU_DeviceNormal )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+  
+
+   typedef typename ReduceArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;  
+  
+    typedef std::array< ArrayType, ReduceArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont;
     ArrayType init(0);
     //  Calling the actual functions under test
-    ArrayType stlReduce = std::accumulate(stdInput.begin(), stdInput.end(), init);
+    ArrayType stlReduce = std::accumulate(ReduceArrayTest< gtest_TypeParam_ >::stdInput.begin(), ReduceArrayTest< gtest_TypeParam_ >::stdInput.end(), init);
 
-    ArrayType boltReduce = bolt::cl::reduce(boltInput.begin( ), boltInput.end( ), init, bolt::cl::plus<ArrayType>());
+    ArrayType boltReduce = bolt::cl::reduce(ReduceArrayTest< gtest_TypeParam_ >::boltInput.begin( ), ReduceArrayTest< gtest_TypeParam_ >::boltInput.end( ), init, bolt::cl::plus<ArrayType>());
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+    typename ArrayCont::difference_type stdNumElements = std::distance( ReduceArrayTest< gtest_TypeParam_ >::stdInput.begin( ), ReduceArrayTest< gtest_TypeParam_ >::stdInput.end() );
+    typename ArrayCont::difference_type boltNumElements = std::distance( ReduceArrayTest< gtest_TypeParam_ >::boltInput.begin( ), ReduceArrayTest< gtest_TypeParam_ >::boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
     EXPECT_EQ( stlReduce, boltReduce );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
+    cmpStdArray< ArrayType, ReduceArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( ReduceArrayTest< gtest_TypeParam_ >::stdInput, ReduceArrayTest< gtest_TypeParam_ >::boltInput );
 
 }
 
 #if (TEST_CPU_DEVICE == 1)
 TYPED_TEST_P( ReduceArrayTest, CPU_DeviceNormal )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+   typedef typename ReduceArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;    
+    typedef std::array< ArrayType, ReduceArrayTest< gtest_TypeParam_ >::ArraySize  > ArrayCont;
 
     ArrayType init(0);
     //  Calling the actual functions under test
@@ -423,49 +430,51 @@ TYPED_TEST_P( ReduceArrayTest, CPU_DeviceNormal )
     ctl.setAccelerator(cpuAccelerator);
 
 
-    ArrayType boltReduce = bolt::cl::reduce( ctl, boltInput.begin( ), boltInput.end( ),
+    ArrayType boltReduce = bolt::cl::reduce( ctl, ReduceArrayTest< gtest_TypeParam_ >::boltInput.begin( ), ReduceArrayTest< gtest_TypeParam_ >::boltInput.end( ),
                                                        bolt::cl::square<ArrayType>(), init,
                                                        bolt::cl::plus<ArrayType>());
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+    typename ArrayCont::difference_type stdNumElements = std::distance( ReduceArrayTest< gtest_TypeParam_ >::stdInput.begin( ), ReduceArrayTest< gtest_TypeParam_ >::stdInput.end() );
+    typename ArrayCont::difference_type boltNumElements = std::distance( ReduceArrayTest< gtest_TypeParam_ >::boltInput.begin( ), ReduceArrayTest< gtest_TypeParam_ >::boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
     EXPECT_EQ( stlReduce, boltReduce );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );    
+    cmpStdArray< ArrayType, ReduceArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( ReduceArrayTest< gtest_TypeParam_ >::stdInput, ReduceArrayTest< gtest_TypeParam_ >::boltInput );    
     // FIXME - releaseOcl(ocl);
 }
 #endif
 
 TYPED_TEST_P( ReduceArrayTest, MultipliesFunction )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+   typedef typename ReduceArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;    
+    typedef std::array< ArrayType, ReduceArrayTest< gtest_TypeParam_ >::ArraySize  > ArrayCont;
 
     ArrayType init(0);
     //  Calling the actual functions under test
-    ArrayType stlReduce = std::accumulate(stdInput.begin(), stdInput.end(), init);
+    ArrayType stlReduce = std::accumulate(ReduceArrayTest< gtest_TypeParam_ >::stdInput.begin(), ReduceArrayTest< gtest_TypeParam_ >::stdInput.end(), init);
 
-    ArrayType boltReduce = bolt::cl::reduce( boltInput.begin( ), boltInput.end( ), init,
+    ArrayType boltReduce = bolt::cl::reduce( ReduceArrayTest< gtest_TypeParam_ >::boltInput.begin( ), ReduceArrayTest< gtest_TypeParam_ >::boltInput.end( ), init,
                                                        bolt::cl::plus<ArrayType>( ));
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+    typename ArrayCont::difference_type stdNumElements = std::distance( ReduceArrayTest< gtest_TypeParam_ >::stdInput.begin( ), ReduceArrayTest< gtest_TypeParam_ >::stdInput.end() );
+    typename ArrayCont::difference_type boltNumElements = std::distance( ReduceArrayTest< gtest_TypeParam_ >::boltInput.begin( ), ReduceArrayTest< gtest_TypeParam_ >::boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
     EXPECT_EQ( stlReduce, boltReduce );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );    
+    cmpStdArray< ArrayType, ReduceArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( ReduceArrayTest< gtest_TypeParam_ >::stdInput, ReduceArrayTest< gtest_TypeParam_ >::boltInput );    
     // FIXME - releaseOcl(ocl);
 }
 
 TYPED_TEST_P( ReduceArrayTest, GPU_DeviceMultipliesFunction )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+   typedef typename ReduceArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;    
+    typedef std::array< ArrayType, ReduceArrayTest< gtest_TypeParam_ >::ArraySize  > ArrayCont;
 #if OCL_CONTEXT_BUG_WORKAROUND
   ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control c_gpu( getQueueFromContext(myContext, CL_DEVICE_TYPE_GPU, 0 ));  
@@ -477,26 +486,27 @@ TYPED_TEST_P( ReduceArrayTest, GPU_DeviceMultipliesFunction )
 
     ArrayType init(0);
     //  Calling the actual functions under test
-    ArrayType stlReduce = std::accumulate(stdInput.begin(), stdInput.end(), init);
+    ArrayType stlReduce = std::accumulate(ReduceArrayTest< gtest_TypeParam_ >::stdInput.begin(), ReduceArrayTest< gtest_TypeParam_ >::stdInput.end(), init);
 
-    ArrayType boltReduce = bolt::cl::reduce( c_gpu,boltInput.begin( ), boltInput.end( ), init,
+    ArrayType boltReduce = bolt::cl::reduce( c_gpu,ReduceArrayTest< gtest_TypeParam_ >::boltInput.begin( ), ReduceArrayTest< gtest_TypeParam_ >::boltInput.end( ), init,
                                                        bolt::cl::plus<ArrayType>());
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+    typename ArrayCont::difference_type stdNumElements = std::distance( ReduceArrayTest< gtest_TypeParam_ >::stdInput.begin( ), ReduceArrayTest< gtest_TypeParam_ >::stdInput.end() );
+    typename ArrayCont::difference_type boltNumElements = std::distance( ReduceArrayTest< gtest_TypeParam_ >::boltInput.begin( ), ReduceArrayTest< gtest_TypeParam_ >::boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
     EXPECT_EQ( stlReduce, boltReduce );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );    
+    cmpStdArray< ArrayType, ReduceArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( ReduceArrayTest< gtest_TypeParam_ >::stdInput, ReduceArrayTest< gtest_TypeParam_ >::boltInput );    
     // FIXME - releaseOcl(ocl);
 }
 #if (TEST_CPU_DEVICE == 1)
 TYPED_TEST_P( TransformArrayTest, CPU_DeviceMultipliesFunction )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+   typedef typename ReduceArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;    
+    typedef std::array< ArrayType, ReduceArrayTest< gtest_TypeParam_ >::ArraySize  > ArrayCont;
 
     ArrayType init(0);
     //  Calling the actual functions under test
@@ -509,15 +519,15 @@ TYPED_TEST_P( TransformArrayTest, CPU_DeviceMultipliesFunction )
     ArrayType boltReduce = bolt::cl::reduce( c_cpu,boltInput.begin( ), boltInput.end( ),init,
                                                        bolt::cl::plus<ArrayType>());
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+    typename ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
+    typename ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
     EXPECT_EQ( stlReduce, boltReduce );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );    
+    cmpStdArray< ArrayType, ReduceArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( stdInput, boltInput );    
     // FIXME - releaseOcl(ocl);
 }
 #endif
@@ -530,7 +540,7 @@ REGISTER_TYPED_TEST_CASE_P( TransformArrayTest, Normal, GPU_DeviceNormal,
 REGISTER_TYPED_TEST_CASE_P( ReduceArrayTest, Normal, GPU_DeviceNormal, 
                                            MultipliesFunction, GPU_DeviceMultipliesFunction );
 #endif
-*/
+
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Fixture classes are now defined to enable googletest to process value parameterized tests
@@ -1152,22 +1162,31 @@ TEST_P( TransformDoubleDeviceVector, Inplace )
 #endif
 #endif
 
-/*
+
 TEST_P( ReduceIntegerNakedPointer, Inplace )
 {
     size_t endIndex = GetParam( );
 
     //  Calling the actual functions under test
+#if defined(_WIN32)
     stdext::checked_array_iterator< int* > wrapStdInput( stdInput, endIndex );
-    stdext::checked_array_iterator< int* > wrapStdOutput( stdOutput, endIndex );
     stdext::checked_array_iterator< int* > wrapBoltInput( boltInput, endIndex );
-
     int init(0);
     //  Calling the actual functions under test
     int stlReduce = std::accumulate(wrapStdInput,wrapStdInput + endIndex, init);
 
     int boltReduce = bolt::cl::reduce( wrapBoltInput, wrapBoltInput + endIndex, init,
                                                        bolt::cl::plus<int>());
+#else
+
+    int init(0);
+    //  Calling the actual functions under test
+    int stlReduce = std::accumulate(stdInput,stdInput + endIndex, init);
+
+    int boltReduce = bolt::cl::reduce( boltInput, boltInput + endIndex, init,
+                                                       bolt::cl::plus<int>());
+    
+#endif    
 
     EXPECT_EQ( stlReduce, boltReduce );
 
@@ -1178,10 +1197,9 @@ TEST_P( ReduceIntegerNakedPointer, Inplace )
 TEST_P( ReduceFloatNakedPointer, Inplace )
 {
     size_t endIndex = GetParam( );
-
+#if defined(_WIN32)
     //  Calling the actual functions under test
     stdext::checked_array_iterator< float* > wrapStdInput( stdInput, endIndex );
-    stdext::checked_array_iterator< float* > wrapStdOutput( stdOutput, endIndex );
     stdext::checked_array_iterator< float* > wrapBoltInput( boltInput, endIndex );
 
     float init(0);
@@ -1190,6 +1208,15 @@ TEST_P( ReduceFloatNakedPointer, Inplace )
 
     float boltReduce = bolt::cl::reduce( wrapBoltInput, wrapBoltInput + endIndex, init,
                                                        bolt::cl::plus<float>());
+    
+#else
+    float init(0);
+    //  Calling the actual functions under test
+    float stlReduce = std::accumulate(stdInput,stdInput + endIndex, init);
+
+    float boltReduce = bolt::cl::reduce( boltInput, boltInput + endIndex, init,
+                                                       bolt::cl::plus<float>());    
+#endif    
 
     EXPECT_EQ( stlReduce, boltReduce );
 
@@ -1202,7 +1229,7 @@ TEST_P( ReduceFloatNakedPointer, Inplace )
 TEST_P( TransformDoubleNakedPointer, Inplace )
 {
     size_t endIndex = GetParam( );
-
+#if defined(_WIN32)
     //  Calling the actual functions under test
     stdext::checked_array_iterator< double* > wrapStdInput( stdInput, endIndex );
     stdext::checked_array_iterator< double* > wrapStdOutput( stdOutput, endIndex );
@@ -1216,6 +1243,15 @@ TEST_P( TransformDoubleNakedPointer, Inplace )
     double boltReduce = bolt::cl::transform_reduce( wrapBoltInput, wrapBoltInput + endIndex,
                                                        bolt::cl::negate<double>(), init,
                                                        bolt::cl::plus<double>());
+#else
+    
+    double init(0);
+    //  Calling the actual functions under test
+    double stlReduce = std::accumulate(stdInput,stdInput + endIndex, init);
+
+    double boltReduce = bolt::cl::reduce( boltInput, boltInput + endIndex, init,
+                                                       bolt::cl::plus<double>());        
+#endif    
 
     EXPECT_EQ( stlReduce, boltReduce );
 
@@ -1223,7 +1259,7 @@ TEST_P( TransformDoubleNakedPointer, Inplace )
     cmpArrays( stdInput, boltInput, endIndex );
 }
 #endif
-*/
+
 std::array<int, 15> TestValues = {2,4,8,16,32,64,128,256,512,1024,2048,4096,8192,16384,32768};
 //Test lots of consecutive numbers, but small range, suitable for integers because they overflow easier
 INSTANTIATE_TEST_CASE_P( ReduceRange, ReduceIntegerVector, ::testing::Range( 0, 1024, 7 ) );
@@ -1451,14 +1487,14 @@ TEST( Reduceint , KcacheTest )
     EXPECT_EQ(boltReduceGpu,stdReduce);
     EXPECT_EQ(boltReduceCpu,stdReduce);
 }
-/*
+
 INSTANTIATE_TYPED_TEST_CASE_P( Integer, ReduceArrayTest, IntegerTests );
 INSTANTIATE_TYPED_TEST_CASE_P( Float, ReduceArrayTest, FloatTests );
 #if (TEST_DOUBLE == 1)
 INSTANTIATE_TYPED_TEST_CASE_P( Double, ReduceArrayTest, DoubleTests );
 #endif 
 
-*/
+
 
 
 template<typename T>

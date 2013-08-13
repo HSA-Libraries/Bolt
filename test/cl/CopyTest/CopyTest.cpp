@@ -244,7 +244,7 @@ typedef ::testing::Types<
     std::tuple< double, TypeValue< 65536 > >
 > DoubleTests;
 #endif 
-/*
+
 template< typename ArrayTuple >
 class CopyArrayTest: public ::testing::Test
 {
@@ -282,45 +282,46 @@ TYPED_TEST_CASE_P( CopyArrayTest );
 TYPED_TEST_P( CopyArrayTest,CPU_DeviceNormal )
 {
 
-   typedef typename std::array< typename ArrayType, ArraySize > ArrayCont; 	
-
+    typedef typename CopyArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, CopyArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont;
+    
     MyOclContext oclcpu = initOcl(CL_DEVICE_TYPE_CPU, 0);
     bolt::cl::control c_cpu(oclcpu._queue);  // construct control structure from the queue.
 
     //  Calling the actual functions under test
-    std::copy( stdInput.begin( ), stdInput.end( ), stdOutput.begin() );
-    bolt::cl::copy( c_cpu, boltInput.begin( ), boltInput.end( ) , boltOutput.begin());
+    std::copy( CopyArrayTest< gtest_TypeParam_ >::stdInput.begin( ), CopyArrayTest< gtest_TypeParam_ >::stdInput.end( ), CopyArrayTest< gtest_TypeParam_ >::stdOutput.begin() );
+    bolt::cl::copy( c_cpu, CopyArrayTest< gtest_TypeParam_ >::boltInput.begin( ), CopyArrayTest< gtest_TypeParam_ >::boltInput.end( ) , CopyArrayTest< gtest_TypeParam_ >::boltOutput.begin());
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdOutput.begin( ), stdOutput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltOutput.begin( ), boltOutput.end() );
+    typename ArrayCont::difference_type stdNumElements = std::distance( CopyArrayTest< gtest_TypeParam_ >::stdOutput.begin( ), CopyArrayTest< gtest_TypeParam_ >::stdOutput.end() );
+     typename ArrayCont::difference_type boltNumElements = std::distance( CopyArrayTest< gtest_TypeParam_ >::boltOutput.begin( ), CopyArrayTest< gtest_TypeParam_ >::boltOutput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdOutput, boltOutput );
+    cmpStdArray< ArrayType, CopyArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( CopyArrayTest< gtest_TypeParam_ >::stdOutput, CopyArrayTest< gtest_TypeParam_ >::boltOutput );
     
     //OFFSET Test cases
     //  Calling the actual functions under test
     size_t startIndex = 17; //Some aribitrary offset position
-    size_t endIndex   = ArraySize - 17; //Some aribitrary offset position
-    if( (( startIndex > ArraySize ) || ( endIndex < 0 ) )  || (startIndex > endIndex) )
+    size_t endIndex   = CopyArrayTest< gtest_TypeParam_ >::ArraySize - 17; //Some aribitrary offset position
+    if( (( startIndex > CopyArrayTest< gtest_TypeParam_ >::ArraySize ) || ( endIndex < 0 ) )  || (startIndex > endIndex) )
     {
-        std::cout <<"\nSkipping NormalOffset Test for size "<< ArraySize << "\n";
+        std::cout <<"\nSkipping NormalOffset Test for size "<< CopyArrayTest< gtest_TypeParam_ >::ArraySize << "\n";
     }    
     else
     {
-        std::copy( stdOffsetIn.begin( ) + startIndex, stdOffsetIn.begin( ) + endIndex, stdOffsetOut.begin() );
-        bolt::cl::copy( c_cpu, boltOffsetIn.begin( ) + startIndex, boltOffsetIn.begin( ) + endIndex, boltOffsetOut.begin() );
+        std::copy( CopyArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin( ) + startIndex, CopyArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin( ) + endIndex, CopyArrayTest< gtest_TypeParam_ >::stdOffsetOut.begin() );
+        bolt::cl::copy( c_cpu, CopyArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin( ) + startIndex, CopyArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin( ) + endIndex, CopyArrayTest< gtest_TypeParam_ >::boltOffsetOut.begin() );
 
-        ArrayCont::difference_type stdNumElements = std::distance( stdOffsetOut.begin( ), stdOffsetOut.end( ) );
-        ArrayCont::difference_type boltNumElements = std::distance(  boltOffsetOut.begin( ),  boltOffsetOut.end( ) );
+         typename ArrayCont::difference_type stdNumElements = std::distance( CopyArrayTest< gtest_TypeParam_ >::stdOffsetOut.begin( ), CopyArrayTest< gtest_TypeParam_ >::stdOffsetOut.end( ) );
+         typename ArrayCont::difference_type boltNumElements = std::distance(  CopyArrayTest< gtest_TypeParam_ >::boltOffsetOut.begin( ),  CopyArrayTest< gtest_TypeParam_ >::boltOffsetOut.end( ) );
 
         //  Both collections should have the same number of elements
         EXPECT_EQ( stdNumElements, boltNumElements );
 
         //  Loop through the array and compare all the values with each other
-        cmpStdArray< ArrayType, ArraySize >::cmpArrays(  stdOffsetOut,  boltOffsetOut );
+        cmpStdArray< ArrayType, CopyArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays(  CopyArrayTest< gtest_TypeParam_ >::stdOffsetOut,  CopyArrayTest< gtest_TypeParam_ >::boltOffsetOut );
     }
 }
 
@@ -341,7 +342,7 @@ INSTANTIATE_TYPED_TEST_CASE_P( Double, CopyArrayTest, DoubleTests );
 #endif 
 
 #endif
-*/
+
 TEST( CopyStdVectWithInt, OffsetTest)
 {
     int length = 1024;

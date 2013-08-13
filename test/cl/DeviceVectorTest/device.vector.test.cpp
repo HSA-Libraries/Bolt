@@ -86,33 +86,38 @@ protected:
 };
 
 TYPED_TEST_CASE_P( ScanArrayTest );
-/*
+
 TYPED_TEST_P( ScanArrayTest, InPlace )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+   
+    typedef typename ScanArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, ScanArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont;    
 
 }
 
 TYPED_TEST_P( ScanArrayTest, InPlacePlusFunction )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+    typedef typename ScanArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, ScanArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont;        
 
 }
 
 TYPED_TEST_P( ScanArrayTest, InPlaceMaxFunction )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+    typedef typename ScanArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, ScanArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont;       
 
 }
 
 TYPED_TEST_P( ScanArrayTest, OutofPlace )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+    typedef typename ScanArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, ScanArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont;       
 
 }
 
 REGISTER_TYPED_TEST_CASE_P( ScanArrayTest, InPlace, InPlacePlusFunction, InPlaceMaxFunction, OutofPlace );
-*/
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Fixture classes are now defined to enable googletest to process value parameterized tests
 

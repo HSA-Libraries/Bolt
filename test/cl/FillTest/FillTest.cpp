@@ -480,56 +480,60 @@ protected:
 
 TYPED_TEST_CASE_P( FillArrayTest );
 
-/*
+
 #if (TEST_CPU_DEVICE == 1)
 TYPED_TEST_P( FillArrayTest,CPU_DeviceNormal )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+    
+    typedef typename FillArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;    
+    typedef std::array< ArrayType, FillArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont;
+    
+    
 
     MyOclContext oclcpu = initOcl(CL_DEVICE_TYPE_CPU, 0);
     bolt::cl::control c_cpu(oclcpu._queue);  // construct control structure from the queue.
 
     //  Calling the actual functions under test
-    std::fill( stdInput.begin( ), stdInput.end( ), val );
-    bolt::cl::fill( c_cpu, boltInput.begin( ), boltInput.end( ) , val);
+    std::fill( FillArrayTest< gtest_TypeParam_ >::stdInput.begin( ), FillArrayTest< gtest_TypeParam_ >::stdInput.end( ), FillArrayTest< gtest_TypeParam_ >::val );
+    bolt::cl::fill( c_cpu, FillArrayTest< gtest_TypeParam_ >::boltInput.begin( ), FillArrayTest< gtest_TypeParam_ >::boltInput.end( ) , FillArrayTest< gtest_TypeParam_ >::val);
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+    typename ArrayCont::difference_type stdNumElements = std::distance( FillArrayTest< gtest_TypeParam_ >::stdInput.begin( ), FillArrayTest< gtest_TypeParam_ >::stdInput.end() );
+    typename ArrayCont::difference_type boltNumElements = std::distance( FillArrayTest< gtest_TypeParam_ >::boltInput.begin( ), FillArrayTest< gtest_TypeParam_ >::boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
+    cmpStdArray< ArrayType,  FillArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( FillArrayTest< gtest_TypeParam_ >::stdInput, FillArrayTest< gtest_TypeParam_ >::boltInput );
     
     //OFFSET Test cases
     //  Calling the actual functions under test
     size_t startIndex = 17; //Some aribitrary offset position
-    size_t endIndex   = ArraySize - 17; //Some aribitrary offset position
-    if( (( startIndex > ArraySize ) || ( endIndex < 0 ) )  || (startIndex > endIndex) )
+    size_t endIndex   = FillArrayTest< gtest_TypeParam_ >::ArraySize - 17; //Some aribitrary offset position
+    if( (( startIndex > FillArrayTest< gtest_TypeParam_ >::ArraySize ) || ( endIndex < 0 ) )  || (startIndex > endIndex) )
     {
-        std::cout <<"\nSkipping NormalOffset Test for size "<< ArraySize << "\n";
+        std::cout <<"\nSkipping NormalOffset Test for size "<< FillArrayTest< gtest_TypeParam_ >::ArraySize << "\n";
     }    
     else
     {
-        std::fill( stdOffsetIn.begin( ) + startIndex, stdOffsetIn.begin( ) + endIndex, val );
-        bolt::cl::fill( c_cpu, boltOffsetIn.begin( ) + startIndex, boltOffsetIn.begin( ) + endIndex, val);
+        std::fill( FillArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin( ) + startIndex, FillArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin( ) + endIndex, FillArrayTest< gtest_TypeParam_ >::val );
+        bolt::cl::fill( c_cpu, FillArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin( ) + startIndex, FillArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin( ) + endIndex, FillArrayTest< gtest_TypeParam_ >::val);
 
-        ArrayCont::difference_type stdNumElements = std::distance( stdOffsetIn.begin( ), stdOffsetIn.end( ) );
-        ArrayCont::difference_type boltNumElements = std::distance(  boltOffsetIn.begin( ),  boltOffsetIn.end( ) );
+        typename ArrayCont::difference_type stdNumElements = std::distance( FillArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin( ), FillArrayTest< gtest_TypeParam_ >::stdOffsetIn.end( ) );
+        typename ArrayCont::difference_type boltNumElements = std::distance(  FillArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin( ),  FillArrayTest< gtest_TypeParam_ >::boltOffsetIn.end( ) );
 
         //  Both collections should have the same number of elements
         EXPECT_EQ( stdNumElements, boltNumElements );
 
         //  Loop through the array and compare all the values with each other
-        cmpStdArray< ArrayType, ArraySize >::cmpArrays(  stdOffsetIn,  boltOffsetIn );
+        cmpStdArray< ArrayType,  FillArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays(  FillArrayTest< gtest_TypeParam_ >::stdOffsetIn,  FillArrayTest< gtest_TypeParam_ >::boltOffsetIn );
     }
 }
 
 REGISTER_TYPED_TEST_CASE_P( FillArrayTest, CPU_DeviceNormal);
 
 #endif
-*/
+
 typedef ::testing::Types< 
     std::tuple< cl_long, TypeValue< 1 > >,
     std::tuple< cl_long, TypeValue< 31 > >,
@@ -666,7 +670,7 @@ typedef ::testing::Types<
 > DoubleTests;
 #endif 
 
-/*
+
 INSTANTIATE_TYPED_TEST_CASE_P( clLong, FillArrayTest, clLongTests );
 INSTANTIATE_TYPED_TEST_CASE_P( Integer, FillArrayTest, IntegerTests );
 INSTANTIATE_TYPED_TEST_CASE_P( UnsignedInteger, FillArrayTest, UnsignedIntegerTests );
@@ -674,7 +678,7 @@ INSTANTIATE_TYPED_TEST_CASE_P( Float, FillArrayTest, FloatTests );
 #if (TEST_DOUBLE == 1)
 INSTANTIATE_TYPED_TEST_CASE_P( Double, FillArrayTest, DoubleTests );
 #endif 
-*/
+
 TEST( StdIntVector, OffsetFill )
 {
     int length = 1024;

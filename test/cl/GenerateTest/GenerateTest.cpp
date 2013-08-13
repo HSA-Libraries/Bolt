@@ -478,14 +478,16 @@ protected:
 };
 
 TYPED_TEST_CASE_P( GenerateArrayTest );
-/*
+
 
 #if (TEST_CPU_DEVICE == 1)
 TYPED_TEST_P( GenerateArrayTest,CPU_DeviceNormal )
 {
     int val = 3;
     
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+    typedef typename GenerateArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, GenerateArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont;    
+
 
     GenConst<int> gen(val);
 
@@ -493,45 +495,45 @@ TYPED_TEST_P( GenerateArrayTest,CPU_DeviceNormal )
     bolt::cl::control c_cpu(oclcpu._queue);  // construct control structure from the queue.
 
     //  Calling the actual functions under test
-    std::generate( stdInput.begin( ), stdInput.end( ), gen );
-    bolt::cl::generate( c_cpu, boltInput.begin( ), boltInput.end( ) , gen);
+    std::generate(  GenerateArrayTest< gtest_TypeParam_ >::stdInput.begin( ),  GenerateArrayTest< gtest_TypeParam_ >::stdInput.end( ), gen );
+    bolt::cl::generate( c_cpu,  GenerateArrayTest< gtest_TypeParam_ >::boltInput.begin( ),  GenerateArrayTest< gtest_TypeParam_ >::boltInput.end( ) , gen);
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+    typename ArrayCont::difference_type stdNumElements = std::distance(  GenerateArrayTest< gtest_TypeParam_ >::stdInput.begin( ),  GenerateArrayTest< gtest_TypeParam_ >::stdInput.end() );
+    typename ArrayCont::difference_type boltNumElements = std::distance(  GenerateArrayTest< gtest_TypeParam_ >::boltInput.begin( ),  GenerateArrayTest< gtest_TypeParam_ >::boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
+    cmpStdArray< ArrayType,  GenerateArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays(  GenerateArrayTest< gtest_TypeParam_ >::stdInput,  GenerateArrayTest< gtest_TypeParam_ >::boltInput );
     
     //OFFSET Test cases
     //  Calling the actual functions under test
     size_t startIndex = 17; //Some aribitrary offset position
-    size_t endIndex   = ArraySize - 17; //Some aribitrary offset position
-    if( (( startIndex > ArraySize ) || ( endIndex < 0 ) )  || (startIndex > endIndex) )
+    size_t endIndex   =  GenerateArrayTest< gtest_TypeParam_ >::ArraySize - 17; //Some aribitrary offset position
+    if( (( startIndex >  GenerateArrayTest< gtest_TypeParam_ >::ArraySize ) || ( endIndex < 0 ) )  || (startIndex > endIndex) )
     {
-        std::cout <<"\nSkipping NormalOffset Test for size "<< ArraySize << "\n";
+        std::cout <<"\nSkipping NormalOffset Test for size "<<  GenerateArrayTest< gtest_TypeParam_ >::ArraySize << "\n";
     }    
     else
     {
-        std::generate( stdOffsetIn.begin( ) + startIndex, stdOffsetIn.begin( ) + endIndex, gen );
-        bolt::cl::generate( c_cpu, boltOffsetIn.begin( ) + startIndex, boltOffsetIn.begin( ) + endIndex, gen);
+        std::generate(  GenerateArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin( ) + startIndex,  GenerateArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin( ) + endIndex, gen );
+        bolt::cl::generate( c_cpu,  GenerateArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin( ) + startIndex,  GenerateArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin( ) + endIndex, gen);
 
-        ArrayCont::difference_type stdNumElements = std::distance( stdOffsetIn.begin( ), stdOffsetIn.end( ) );
-        ArrayCont::difference_type boltNumElements = std::distance(  boltOffsetIn.begin( ),  boltOffsetIn.end( ) );
+        typename ArrayCont::difference_type stdNumElements = std::distance(  GenerateArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin( ),  GenerateArrayTest< gtest_TypeParam_ >::stdOffsetIn.end( ) );
+        typename ArrayCont::difference_type boltNumElements = std::distance(   GenerateArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin( ),   GenerateArrayTest< gtest_TypeParam_ >::boltOffsetIn.end( ) );
 
         //  Both collections should have the same number of elements
         EXPECT_EQ( stdNumElements, boltNumElements );
 
         //  Loop through the array and compare all the values with each other
-        cmpStdArray< ArrayType, ArraySize >::cmpArrays(  stdOffsetIn,  boltOffsetIn );
+        cmpStdArray< ArrayType,  GenerateArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays(   GenerateArrayTest< gtest_TypeParam_ >::stdOffsetIn,   GenerateArrayTest< gtest_TypeParam_ >::boltOffsetIn );
     }
 }
 
 REGISTER_TYPED_TEST_CASE_P( GenerateArrayTest, CPU_DeviceNormal);
 #endif
-*/
+
 typedef ::testing::Types< 
     std::tuple< cl_long, TypeValue< 1 > >,
     std::tuple< cl_long, TypeValue< 31 > >,
@@ -667,7 +669,7 @@ typedef ::testing::Types<
     std::tuple< double, TypeValue< 65536 > >
 > DoubleTests;
 #endif 
-/*
+
 INSTANTIATE_TYPED_TEST_CASE_P( clLong, GenerateArrayTest, clLongTests );
 INSTANTIATE_TYPED_TEST_CASE_P( Integer, GenerateArrayTest, IntegerTests );
 INSTANTIATE_TYPED_TEST_CASE_P( UnsignedInteger, GenerateArrayTest, UnsignedIntegerTests );
@@ -676,7 +678,7 @@ INSTANTIATE_TYPED_TEST_CASE_P( Float, GenerateArrayTest, FloatTests );
 INSTANTIATE_TYPED_TEST_CASE_P( Double, GenerateArrayTest, DoubleTests );
 #endif 
 
-*/
+
 //Generate with Fancy Iterator would result in compilation error!
 /* TEST_P(GenerateConstantIterator, withConstantIterator)
 {

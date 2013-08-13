@@ -104,7 +104,7 @@ T generateRandom()
     }
 }
 
-/*
+
 //  Test fixture class, used for the Type-parameterized tests
 //  Namely, the tests that use std::array and TYPED_TEST_P macros
 template< typename ArrayTuple >
@@ -130,7 +130,7 @@ public:
 
 protected:
     typedef typename std::tuple_element< 0, ArrayTuple >::type ArrayType;
-    static const size_t ArraySize = typename std::tuple_element< 1, ArrayTuple >::type::value;
+    static const size_t ArraySize =  std::tuple_element< 1, ArrayTuple >::type::value;
     typename std::array< ArrayType, ArraySize > stdInput, boltInput, stdInput2, boltInput2;
     int m_Errors;
 };
@@ -139,74 +139,79 @@ TYPED_TEST_CASE_P( InnerProductArrayTest );
 
 TYPED_TEST_P( InnerProductArrayTest, Normal )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+    typedef typename InnerProductArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, InnerProductArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont;  
+    
     ArrayType init(0);
     //  Calling the actual functions under test
-    ArrayType stlInnerProduct = std::inner_product(stdInput.begin(), stdInput.end(), stdInput2.begin(), init,
+    ArrayType stlInnerProduct = std::inner_product( InnerProductArrayTest< gtest_TypeParam_ >::stdInput.begin(),  InnerProductArrayTest< gtest_TypeParam_ >::stdInput.end(),  InnerProductArrayTest< gtest_TypeParam_ >::stdInput2.begin(), init,
                                                    std::plus<ArrayType>(), std::multiplies<ArrayType>());
 
-    ArrayType boltInnerProduct = bolt::cl::inner_product( boltInput.begin( ),boltInput.end( ),boltInput2.begin( ),init,
+    ArrayType boltInnerProduct = bolt::cl::inner_product(  InnerProductArrayTest< gtest_TypeParam_ >::boltInput.begin( ), InnerProductArrayTest< gtest_TypeParam_ >::boltInput.end( ), InnerProductArrayTest< gtest_TypeParam_ >::boltInput2.begin( ),init,
                                                         bolt::cl::plus<ArrayType>(),bolt::cl::multiplies<ArrayType>());
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+    typename ArrayCont::difference_type stdNumElements = std::distance(  InnerProductArrayTest< gtest_TypeParam_ >::stdInput.begin( ),  InnerProductArrayTest< gtest_TypeParam_ >::stdInput.end() );
+    typename ArrayCont::difference_type boltNumElements = std::distance(  InnerProductArrayTest< gtest_TypeParam_ >::boltInput.begin( ),  InnerProductArrayTest< gtest_TypeParam_ >::boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
     EXPECT_EQ( stlInnerProduct, boltInnerProduct );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput2, boltInput2 );
+    cmpStdArray< ArrayType, InnerProductArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays(  InnerProductArrayTest< gtest_TypeParam_ >::stdInput,  InnerProductArrayTest< gtest_TypeParam_ >::boltInput );
+    cmpStdArray< ArrayType, InnerProductArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays(  InnerProductArrayTest< gtest_TypeParam_ >::stdInput2,  InnerProductArrayTest< gtest_TypeParam_ >::boltInput2 );
 }
 
 TYPED_TEST_P( InnerProductArrayTest, GPU_DeviceNormal )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+        typedef typename InnerProductArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, InnerProductArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont;  
     ArrayType init(0);
     //  Calling the actual functions under test
-    ArrayType stlInnerProduct = std::inner_product(stdInput.begin(), stdInput.end(), stdInput2.begin(), init);
-    ArrayType boltInnerProduct = bolt::cl::inner_product(boltInput.begin( ),boltInput.end( ),boltInput2.begin( ),init);
+    ArrayType stlInnerProduct = std::inner_product( InnerProductArrayTest< gtest_TypeParam_ >::stdInput.begin(),  InnerProductArrayTest< gtest_TypeParam_ >::stdInput.end(),  InnerProductArrayTest< gtest_TypeParam_ >::stdInput2.begin(), init);
+    ArrayType boltInnerProduct = bolt::cl::inner_product( InnerProductArrayTest< gtest_TypeParam_ >::boltInput.begin( ), InnerProductArrayTest< gtest_TypeParam_ >::boltInput.end( ), InnerProductArrayTest< gtest_TypeParam_ >::boltInput2.begin( ),init);
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+    typename ArrayCont::difference_type stdNumElements = std::distance(  InnerProductArrayTest< gtest_TypeParam_ >::stdInput.begin( ),  InnerProductArrayTest< gtest_TypeParam_ >::stdInput.end() );
+    typename ArrayCont::difference_type boltNumElements = std::distance(  InnerProductArrayTest< gtest_TypeParam_ >::boltInput.begin( ),  InnerProductArrayTest< gtest_TypeParam_ >::boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
     EXPECT_EQ( stlInnerProduct, boltInnerProduct );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput2, boltInput2 );
+    cmpStdArray< ArrayType, InnerProductArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays(  InnerProductArrayTest< gtest_TypeParam_ >::stdInput,  InnerProductArrayTest< gtest_TypeParam_ >::boltInput );
+    cmpStdArray< ArrayType, InnerProductArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays(  InnerProductArrayTest< gtest_TypeParam_ >::stdInput2,  InnerProductArrayTest< gtest_TypeParam_ >::boltInput2 );
 
 }
 
 TYPED_TEST_P( InnerProductArrayTest, MultipliesFunction )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+        typedef typename InnerProductArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, InnerProductArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont;  
 
     ArrayType init(0);
     //  Calling the actual functions under test
-    ArrayType stlInnerProduct = std::inner_product( stdInput.begin(), stdInput.end(), stdInput2.begin(), init);
+    ArrayType stlInnerProduct = std::inner_product(  InnerProductArrayTest< gtest_TypeParam_ >::stdInput.begin(),  InnerProductArrayTest< gtest_TypeParam_ >::stdInput.end(),  InnerProductArrayTest< gtest_TypeParam_ >::stdInput2.begin(), init);
 
-    ArrayType boltInnerProduct =bolt::cl::inner_product( boltInput.begin( ),boltInput.end( ),boltInput2.begin( ),init);
+    ArrayType boltInnerProduct =bolt::cl::inner_product(  InnerProductArrayTest< gtest_TypeParam_ >::boltInput.begin( ), InnerProductArrayTest< gtest_TypeParam_ >::boltInput.end( ), InnerProductArrayTest< gtest_TypeParam_ >::boltInput2.begin( ),init);
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+    typename ArrayCont::difference_type stdNumElements = std::distance(  InnerProductArrayTest< gtest_TypeParam_ >::stdInput.begin( ),  InnerProductArrayTest< gtest_TypeParam_ >::stdInput.end() );
+    typename ArrayCont::difference_type boltNumElements = std::distance(  InnerProductArrayTest< gtest_TypeParam_ >::boltInput.begin( ),  InnerProductArrayTest< gtest_TypeParam_ >::boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
     EXPECT_EQ( stlInnerProduct, boltInnerProduct );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput2, boltInput2 );
+    cmpStdArray< ArrayType, InnerProductArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays(  InnerProductArrayTest< gtest_TypeParam_ >::stdInput,  InnerProductArrayTest< gtest_TypeParam_ >::boltInput );
+    cmpStdArray< ArrayType, InnerProductArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays(  InnerProductArrayTest< gtest_TypeParam_ >::stdInput2,  InnerProductArrayTest< gtest_TypeParam_ >::boltInput2 );
     // FIXME - releaseOcl(ocl);
 }
 
 TYPED_TEST_P( InnerProductArrayTest, GPU_DeviceMultipliesFunction )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+        typedef typename InnerProductArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, InnerProductArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont;  
 #if OCL_CONTEXT_BUG_WORKAROUND
     ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control c_gpu( getQueueFromContext(myContext, CL_DEVICE_TYPE_GPU, 0 ));  
@@ -216,27 +221,27 @@ TYPED_TEST_P( InnerProductArrayTest, GPU_DeviceMultipliesFunction )
 #endif
     ArrayType init(0);
     //  Calling the actual functions under test
-    ArrayType stlInnerProduct = std::inner_product(stdInput.begin(), stdInput.end(), stdInput2.begin(), init,
+    ArrayType stlInnerProduct = std::inner_product( InnerProductArrayTest< gtest_TypeParam_ >::stdInput.begin(),  InnerProductArrayTest< gtest_TypeParam_ >::stdInput.end(),  InnerProductArrayTest< gtest_TypeParam_ >::stdInput2.begin(), init,
                                                     std::plus< ArrayType >(), std::multiplies< ArrayType >());
 
-    ArrayType boltInnerProduct = bolt::cl::inner_product( c_gpu,boltInput.begin( ),boltInput.end( ),boltInput2.begin(), 
+    ArrayType boltInnerProduct = bolt::cl::inner_product( c_gpu, InnerProductArrayTest< gtest_TypeParam_ >::boltInput.begin( ), InnerProductArrayTest< gtest_TypeParam_ >::boltInput.end( ), InnerProductArrayTest< gtest_TypeParam_ >::boltInput2.begin(), 
                                                 init, bolt::cl::plus<ArrayType>(), bolt::cl::multiplies<ArrayType>());
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+    typename ArrayCont::difference_type stdNumElements = std::distance(  InnerProductArrayTest< gtest_TypeParam_ >::stdInput.begin( ),  InnerProductArrayTest< gtest_TypeParam_ >::stdInput.end() );
+    typename ArrayCont::difference_type boltNumElements = std::distance(  InnerProductArrayTest< gtest_TypeParam_ >::boltInput.begin( ),  InnerProductArrayTest< gtest_TypeParam_ >::boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
     EXPECT_EQ( stlInnerProduct, boltInnerProduct );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput2, boltInput2 );
+    cmpStdArray< ArrayType, InnerProductArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays(  InnerProductArrayTest< gtest_TypeParam_ >::stdInput,  InnerProductArrayTest< gtest_TypeParam_ >::boltInput );
+    cmpStdArray< ArrayType, InnerProductArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays(  InnerProductArrayTest< gtest_TypeParam_ >::stdInput2,  InnerProductArrayTest< gtest_TypeParam_ >::boltInput2 );
     // FIXME - releaseOcl(ocl);
 }
 REGISTER_TYPED_TEST_CASE_P( InnerProductArrayTest, Normal, GPU_DeviceNormal, 
                                            MultipliesFunction, GPU_DeviceMultipliesFunction );
-*/
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Fixture classes are now defined to enable googletest to process value parameterized tests
 //  ::testing::TestWithParam< int > means that GetParam( ) returns int values, which i use for array size
@@ -1224,10 +1229,10 @@ TEST( InnerProductUDD , MultiCore_UDDPlusOperatorInts )
 }
 
 #endif
-/*
+
 INSTANTIATE_TYPED_TEST_CASE_P( Integer, InnerProductArrayTest, IntegerTests );
 INSTANTIATE_TYPED_TEST_CASE_P( Float, InnerProductArrayTest, FloatTests );
-*/
+
 
 template<typename T>
 void printCheckMessage(bool err, std::string msg, T  stlResult, T boltResult)

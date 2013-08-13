@@ -83,7 +83,7 @@ T generateRandom()
     }
 }
 
-/*
+
 //  Test fixture class, used for the Type-parameterized tests
 //  Namely, the tests that use std::array and TYPED_TEST_P macros
 template< typename ArrayTuple >
@@ -114,158 +114,165 @@ protected:
 
 TYPED_TEST_CASE_P( MinEArrayTest );
 
-//TYPED_TEST_P( MinEArrayTest, Normal )
-//{
-//    typedef std::array< ArrayType, ArraySize > ArrayCont;
-//    ArrayType init(0);
-//    //  Calling the actual functions under test
-//    ArrayCont::iterator stlMinE = std::min_element( stdInput.begin(), stdInput.end() );
-//    ArrayCont::iterator boltMinE = bolt::cl::min_element( boltInput.begin( ), boltInput.end( ) );
-//
-//    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-//    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
-//
-//    //  Both collections should have the same number of elements
-//    EXPECT_EQ( stdNumElements, boltNumElements );
-//    EXPECT_EQ( *stlMinE, *boltMinE );
-//
-//    //  Loop through the array and compare all the values with each other
-//    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
-//}
-
-TYPED_TEST_P( MinEArrayTest, comp_Normal )
+TYPED_TEST_P( MinEArrayTest, Normal )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+       typedef typename MinEArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+   typedef std::array< ArrayType, MinEArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont; 
     ArrayType init(0);
     //  Calling the actual functions under test
-    ArrayCont::iterator stlMinE = std::min_element( stdInput.begin(), stdInput.end(), std::less< ArrayType >() );
-    ArrayCont::iterator boltMinE = bolt::cl::min_element( boltInput.begin( ), boltInput.end( ), bolt::cl::less< ArrayType >() );
+   typename  ArrayCont::iterator stlMinE = std::min_element( MinEArrayTest< gtest_TypeParam_ >::stdInput.begin(), MinEArrayTest< gtest_TypeParam_ >::stdInput.end() );
+   typename  ArrayCont::iterator boltMinE = bolt::cl::min_element( MinEArrayTest< gtest_TypeParam_ >::boltInput.begin( ), MinEArrayTest< gtest_TypeParam_ >::boltInput.end( ) );
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+   typename  ArrayCont::difference_type stdNumElements = std::distance( MinEArrayTest< gtest_TypeParam_ >::stdInput.begin( ), MinEArrayTest< gtest_TypeParam_ >::stdInput.end() );
+   typename  ArrayCont::difference_type boltNumElements = std::distance( MinEArrayTest< gtest_TypeParam_ >::boltInput.begin( ), MinEArrayTest< gtest_TypeParam_ >::boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
     EXPECT_EQ( *stlMinE, *boltMinE );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
+    cmpStdArray< ArrayType, MinEArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( MinEArrayTest< gtest_TypeParam_ >::stdInput, MinEArrayTest< gtest_TypeParam_ >::boltInput );
+}
+
+TYPED_TEST_P( MinEArrayTest, comp_Normal )
+{
+       typedef typename MinEArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, MinEArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont; 
+    ArrayType init(0);
+    //  Calling the actual functions under test
+   typename  ArrayCont::iterator stlMinE = std::min_element( MinEArrayTest< gtest_TypeParam_ >::stdInput.begin(), MinEArrayTest< gtest_TypeParam_ >::stdInput.end(), std::less< ArrayType >() );
+   typename  ArrayCont::iterator boltMinE = bolt::cl::min_element( MinEArrayTest< gtest_TypeParam_ >::boltInput.begin( ), MinEArrayTest< gtest_TypeParam_ >::boltInput.end( ), bolt::cl::less< ArrayType >() );
+
+   typename  ArrayCont::difference_type stdNumElements = std::distance( MinEArrayTest< gtest_TypeParam_ >::stdInput.begin( ), MinEArrayTest< gtest_TypeParam_ >::stdInput.end() );
+   typename  ArrayCont::difference_type boltNumElements = std::distance( MinEArrayTest< gtest_TypeParam_ >::boltInput.begin( ), MinEArrayTest< gtest_TypeParam_ >::boltInput.end() );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+    EXPECT_EQ( *stlMinE, *boltMinE );
+
+    //  Loop through the array and compare all the values with each other
+    cmpStdArray< ArrayType, MinEArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( MinEArrayTest< gtest_TypeParam_ >::stdInput, MinEArrayTest< gtest_TypeParam_ >::boltInput );
 }
 
 
-//TYPED_TEST_P( MinEArrayTest, SerialNormal )
-//{
-//    typedef std::array< ArrayType, ArraySize > ArrayCont;
-//    ArrayType init(0);
-//
-//    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-//    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
-//
-//    //  Calling the actual functions under test
-//    ArrayCont::iterator stlMinE = std::min_element( stdInput.begin(), stdInput.end() );
-//    ArrayCont::iterator boltMinE = bolt::cl::min_element( ctl, boltInput.begin( ), boltInput.end( ) );
-//
-//    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-//    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
-//
-//    //  Both collections should have the same number of elements
-//    EXPECT_EQ( stdNumElements, boltNumElements );
-//    EXPECT_EQ( *stlMinE, *boltMinE );
-//
-//    //  Loop through the array and compare all the values with each other
-//    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
-//}
-
-TYPED_TEST_P( MinEArrayTest, comp_SerialNormal )
+TYPED_TEST_P( MinEArrayTest, SerialNormal )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+       typedef typename MinEArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, MinEArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont; 
     ArrayType init(0);
 
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
     //  Calling the actual functions under test
-    ArrayCont::iterator stlMinE = std::min_element( stdInput.begin(), stdInput.end(), std::less< ArrayType >() );
-    ArrayCont::iterator boltMinE = bolt::cl::min_element( ctl, boltInput.begin( ), boltInput.end( ), bolt::cl::less< ArrayType >()  );
+   typename  ArrayCont::iterator stlMinE = std::min_element( MinEArrayTest< gtest_TypeParam_ >::stdInput.begin(), MinEArrayTest< gtest_TypeParam_ >::stdInput.end() );
+   typename  ArrayCont::iterator boltMinE = bolt::cl::min_element( ctl, MinEArrayTest< gtest_TypeParam_ >::boltInput.begin( ), MinEArrayTest< gtest_TypeParam_ >::boltInput.end( ) );
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+   typename  ArrayCont::difference_type stdNumElements = std::distance( MinEArrayTest< gtest_TypeParam_ >::stdInput.begin( ), MinEArrayTest< gtest_TypeParam_ >::stdInput.end() );
+   typename  ArrayCont::difference_type boltNumElements = std::distance( MinEArrayTest< gtest_TypeParam_ >::boltInput.begin( ), MinEArrayTest< gtest_TypeParam_ >::boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
     EXPECT_EQ( *stlMinE, *boltMinE );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
+    cmpStdArray< ArrayType, MinEArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( MinEArrayTest< gtest_TypeParam_ >::stdInput, MinEArrayTest< gtest_TypeParam_ >::boltInput );
+}
+
+TYPED_TEST_P( MinEArrayTest, comp_SerialNormal )
+{
+       typedef typename MinEArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, MinEArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont; 
+    ArrayType init(0);
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    //  Calling the actual functions under test
+   typename  ArrayCont::iterator stlMinE = std::min_element( MinEArrayTest< gtest_TypeParam_ >::stdInput.begin(), MinEArrayTest< gtest_TypeParam_ >::stdInput.end(), std::less< ArrayType >() );
+   typename  ArrayCont::iterator boltMinE = bolt::cl::min_element( ctl, MinEArrayTest< gtest_TypeParam_ >::boltInput.begin( ), MinEArrayTest< gtest_TypeParam_ >::boltInput.end( ), bolt::cl::less< ArrayType >()  );
+
+   typename  ArrayCont::difference_type stdNumElements = std::distance( MinEArrayTest< gtest_TypeParam_ >::stdInput.begin( ), MinEArrayTest< gtest_TypeParam_ >::stdInput.end() );
+   typename  ArrayCont::difference_type boltNumElements = std::distance( MinEArrayTest< gtest_TypeParam_ >::boltInput.begin( ), MinEArrayTest< gtest_TypeParam_ >::boltInput.end() );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+    EXPECT_EQ( *stlMinE, *boltMinE );
+
+    //  Loop through the array and compare all the values with each other
+    cmpStdArray< ArrayType, MinEArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( MinEArrayTest< gtest_TypeParam_ >::stdInput, MinEArrayTest< gtest_TypeParam_ >::boltInput );
 }
 
 
-//TYPED_TEST_P( MinEArrayTest, MultiCoreNormal )
-//{
-//    typedef std::array< ArrayType, ArraySize > ArrayCont;
-//    ArrayType init(0);
-//
-//    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-//    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
-//
-//    //  Calling the actual functions under test
-//    ArrayCont::iterator stlMinE = std::min_element( stdInput.begin(), stdInput.end() );
-//    ArrayCont::iterator boltMinE = bolt::cl::min_element( ctl, boltInput.begin( ), boltInput.end( ) );
-//
-//    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-//    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
-//
-//    //  Both collections should have the same number of elements
-//    EXPECT_EQ( stdNumElements, boltNumElements );
-//    EXPECT_EQ( *stlMinE, *boltMinE );
-//
-//    //  Loop through the array and compare all the values with each other
-//    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
-//}
-
-TYPED_TEST_P( MinEArrayTest, comp_MultiCoreNormal )
+TYPED_TEST_P( MinEArrayTest, MultiCoreNormal )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+       typedef typename MinEArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, MinEArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont; 
     ArrayType init(0);
 
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
     //  Calling the actual functions under test
-    ArrayCont::iterator stlMinE = std::min_element( stdInput.begin(), stdInput.end(), std::less< ArrayType >() );
-    ArrayCont::iterator boltMinE = bolt::cl::min_element( ctl, boltInput.begin( ), boltInput.end( ), bolt::cl::less< ArrayType >() );
+   typename  ArrayCont::iterator stlMinE = std::min_element( MinEArrayTest< gtest_TypeParam_ >::stdInput.begin(), MinEArrayTest< gtest_TypeParam_ >::stdInput.end() );
+   typename  ArrayCont::iterator boltMinE = bolt::cl::min_element( ctl, MinEArrayTest< gtest_TypeParam_ >::boltInput.begin( ), MinEArrayTest< gtest_TypeParam_ >::boltInput.end( ) );
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+   typename  ArrayCont::difference_type stdNumElements = std::distance( MinEArrayTest< gtest_TypeParam_ >::stdInput.begin( ), MinEArrayTest< gtest_TypeParam_ >::stdInput.end() );
+   typename  ArrayCont::difference_type boltNumElements = std::distance( MinEArrayTest< gtest_TypeParam_ >::boltInput.begin( ), MinEArrayTest< gtest_TypeParam_ >::boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
     EXPECT_EQ( *stlMinE, *boltMinE );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
+    cmpStdArray< ArrayType, MinEArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( MinEArrayTest< gtest_TypeParam_ >::stdInput, MinEArrayTest< gtest_TypeParam_ >::boltInput );
+}
+
+TYPED_TEST_P( MinEArrayTest, comp_MultiCoreNormal )
+{
+       typedef typename MinEArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, MinEArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont; 
+    ArrayType init(0);
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    //  Calling the actual functions under test
+   typename  ArrayCont::iterator stlMinE = std::min_element( MinEArrayTest< gtest_TypeParam_ >::stdInput.begin(), MinEArrayTest< gtest_TypeParam_ >::stdInput.end(), std::less< ArrayType >() );
+   typename  ArrayCont::iterator boltMinE = bolt::cl::min_element( ctl, MinEArrayTest< gtest_TypeParam_ >::boltInput.begin( ), MinEArrayTest< gtest_TypeParam_ >::boltInput.end( ), bolt::cl::less< ArrayType >() );
+
+   typename  ArrayCont::difference_type stdNumElements = std::distance( MinEArrayTest< gtest_TypeParam_ >::stdInput.begin( ), MinEArrayTest< gtest_TypeParam_ >::stdInput.end() );
+   typename  ArrayCont::difference_type boltNumElements = std::distance( MinEArrayTest< gtest_TypeParam_ >::boltInput.begin( ), MinEArrayTest< gtest_TypeParam_ >::boltInput.end() );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+    EXPECT_EQ( *stlMinE, *boltMinE );
+
+    //  Loop through the array and compare all the values with each other
+    cmpStdArray< ArrayType, MinEArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( MinEArrayTest< gtest_TypeParam_ >::stdInput, MinEArrayTest< gtest_TypeParam_ >::boltInput );
 }
 
 TYPED_TEST_P( MinEArrayTest, GPU_DeviceGreaterFunction )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+       typedef typename MinEArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, MinEArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont; 
     ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control c_gpu( getQueueFromContext(myContext, CL_DEVICE_TYPE_GPU, 0 ));
 
 
     //  Calling the actual functions under test
-    ArrayCont::iterator stlMinE = std::min_element( stdInput.begin(), stdInput.end() );
-    ArrayCont::iterator boltMinE = bolt::cl::min_element( c_gpu,boltInput.begin( ), boltInput.end( ) );
+   typename  ArrayCont::iterator stlMinE = std::min_element( MinEArrayTest< gtest_TypeParam_ >::stdInput.begin(), MinEArrayTest< gtest_TypeParam_ >::stdInput.end() );
+   typename  ArrayCont::iterator boltMinE = bolt::cl::min_element( c_gpu,MinEArrayTest< gtest_TypeParam_ >::boltInput.begin( ), MinEArrayTest< gtest_TypeParam_ >::boltInput.end( ) );
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+   typename  ArrayCont::difference_type stdNumElements = std::distance( MinEArrayTest< gtest_TypeParam_ >::stdInput.begin( ), MinEArrayTest< gtest_TypeParam_ >::stdInput.end() );
+   typename  ArrayCont::difference_type boltNumElements = std::distance( MinEArrayTest< gtest_TypeParam_ >::boltInput.begin( ), MinEArrayTest< gtest_TypeParam_ >::boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
     EXPECT_EQ( *stlMinE, *boltMinE );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
+    cmpStdArray< ArrayType, MinEArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( MinEArrayTest< gtest_TypeParam_ >::stdInput, MinEArrayTest< gtest_TypeParam_ >::boltInput );
     // FIXME - releaseOcl(ocl);
 }
 
@@ -273,7 +280,7 @@ TYPED_TEST_P( MinEArrayTest, GPU_DeviceGreaterFunction )
 //MultiCoreNormal, comp_MultiCoreNormal, GPU_DeviceGreaterFunction );
 REGISTER_TYPED_TEST_CASE_P( MinEArrayTest, comp_Normal, comp_SerialNormal, comp_MultiCoreNormal, GPU_DeviceGreaterFunction );
 
-*/
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Fixture classes are now defined to enable googletest to process value parameterized tests
 //  ::testing::TestWithParam< int > means that GetParam( ) returns int values, which i use for array size
@@ -1067,10 +1074,10 @@ TEST( MinEUDD , Offset_MultiCore_UDDPlusOperatorInts )
     EXPECT_EQ(*boltMinE,*stdMinE);
 
 }
-/*
+
 INSTANTIATE_TYPED_TEST_CASE_P( Integer, MinEArrayTest, IntegerTests );
 INSTANTIATE_TYPED_TEST_CASE_P( Float, MinEArrayTest, FloatTests );
-*/
+
 
 #if defined(_WIN32)
 // Super-easy windows profiling interface.

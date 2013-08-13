@@ -84,7 +84,7 @@ T generateRandom()
     }
 }
 
-/*
+
 //  Test fixture class, used for the Type-parameterized tests
 //  Namely, the tests that use std::array and TYPED_TEST_P macros
 template< typename ArrayTuple >
@@ -117,26 +117,29 @@ TYPED_TEST_CASE_P( MaxEArrayTest );
 
 TYPED_TEST_P( MaxEArrayTest, Normal )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+    typedef typename MaxEArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType,MaxEArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont;     
+    
     ArrayType init(0);
     //  Calling the actual functions under test
-    ArrayCont::iterator stlMaxE = std::max_element( stdInput.begin(), stdInput.end() );
-    ArrayCont::iterator boltMaxE = bolt::cl::max_element( boltInput.begin( ), boltInput.end( ) );
+    typename  ArrayCont::iterator stlMaxE = std::max_element( MaxEArrayTest< gtest_TypeParam_ >::stdInput.begin(), MaxEArrayTest< gtest_TypeParam_ >::stdInput.end() );
+    typename  ArrayCont::iterator boltMaxE = bolt::cl::max_element( MaxEArrayTest< gtest_TypeParam_ >::boltInput.begin( ), MaxEArrayTest< gtest_TypeParam_ >::boltInput.end( ) );
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+    typename ArrayCont::difference_type stdNumElements = std::distance( MaxEArrayTest< gtest_TypeParam_ >::stdInput.begin( ), MaxEArrayTest< gtest_TypeParam_ >::stdInput.end() );
+    typename ArrayCont::difference_type boltNumElements = std::distance( MaxEArrayTest< gtest_TypeParam_ >::boltInput.begin( ), MaxEArrayTest< gtest_TypeParam_ >::boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
     EXPECT_EQ( *stlMaxE, *boltMaxE );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
+    cmpStdArray< ArrayType, MaxEArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( MaxEArrayTest< gtest_TypeParam_ >::stdInput, MaxEArrayTest< gtest_TypeParam_ >::boltInput );
 }
 
 TYPED_TEST_P( MaxEArrayTest, SerialNormal )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+    typedef typename MaxEArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType,MaxEArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont; 
     ArrayType init(0);
     
     ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
@@ -144,23 +147,24 @@ TYPED_TEST_P( MaxEArrayTest, SerialNormal )
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
     
     //  Calling the actual functions under test
-    ArrayCont::iterator stlMaxE = std::max_element( stdInput.begin(), stdInput.end() );
-    ArrayCont::iterator boltMaxE = bolt::cl::max_element( ctl, boltInput.begin( ), boltInput.end( ) );
+   typename  ArrayCont::iterator stlMaxE = std::max_element( MaxEArrayTest< gtest_TypeParam_ >::stdInput.begin(), MaxEArrayTest< gtest_TypeParam_ >::stdInput.end() );
+   typename  ArrayCont::iterator boltMaxE = bolt::cl::max_element( ctl, MaxEArrayTest< gtest_TypeParam_ >::boltInput.begin( ), MaxEArrayTest< gtest_TypeParam_ >::boltInput.end( ) );
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+    typename ArrayCont::difference_type stdNumElements = std::distance( MaxEArrayTest< gtest_TypeParam_ >::stdInput.begin( ), MaxEArrayTest< gtest_TypeParam_ >::stdInput.end() );
+    typename ArrayCont::difference_type boltNumElements = std::distance( MaxEArrayTest< gtest_TypeParam_ >::boltInput.begin( ), MaxEArrayTest< gtest_TypeParam_ >::boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
     EXPECT_EQ( *stlMaxE, *boltMaxE );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
+    cmpStdArray< ArrayType, MaxEArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( MaxEArrayTest< gtest_TypeParam_ >::stdInput, MaxEArrayTest< gtest_TypeParam_ >::boltInput );
 }
 
 TYPED_TEST_P( MaxEArrayTest, MultiCoreNormal )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+    typedef typename MaxEArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType,MaxEArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont; 
     ArrayType init(0);
     
     ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
@@ -168,46 +172,47 @@ TYPED_TEST_P( MaxEArrayTest, MultiCoreNormal )
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
     
     //  Calling the actual functions under test
-    ArrayCont::iterator stlMaxE = std::max_element( stdInput.begin(), stdInput.end() );
-    ArrayCont::iterator boltMaxE = bolt::cl::max_element( ctl, boltInput.begin( ), boltInput.end( ) );
+   typename  ArrayCont::iterator stlMaxE = std::max_element( MaxEArrayTest< gtest_TypeParam_ >::stdInput.begin(), MaxEArrayTest< gtest_TypeParam_ >::stdInput.end() );
+   typename  ArrayCont::iterator boltMaxE = bolt::cl::max_element( ctl, MaxEArrayTest< gtest_TypeParam_ >::boltInput.begin( ), MaxEArrayTest< gtest_TypeParam_ >::boltInput.end( ) );
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+    typename ArrayCont::difference_type stdNumElements = std::distance( MaxEArrayTest< gtest_TypeParam_ >::stdInput.begin( ), MaxEArrayTest< gtest_TypeParam_ >::stdInput.end() );
+    typename ArrayCont::difference_type boltNumElements = std::distance( MaxEArrayTest< gtest_TypeParam_ >::boltInput.begin( ), MaxEArrayTest< gtest_TypeParam_ >::boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
     EXPECT_EQ( *stlMaxE, *boltMaxE );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
+    cmpStdArray< ArrayType, MaxEArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( MaxEArrayTest< gtest_TypeParam_ >::stdInput, MaxEArrayTest< gtest_TypeParam_ >::boltInput );
 }
 
 
 TYPED_TEST_P( MaxEArrayTest, GPU_DeviceGreaterFunction )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+    typedef typename MaxEArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType,MaxEArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont; 
     ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control c_gpu( getQueueFromContext(myContext, CL_DEVICE_TYPE_GPU, 0 ));  
 
 
     //  Calling the actual functions under test
-    ArrayCont::iterator stlMaxE = std::max_element( stdInput.begin(), stdInput.end() );
-    ArrayCont::iterator boltMaxE = bolt::cl::max_element( c_gpu,boltInput.begin( ), boltInput.end( ) );
+   typename  ArrayCont::iterator stlMaxE = std::max_element( MaxEArrayTest< gtest_TypeParam_ >::stdInput.begin(), MaxEArrayTest< gtest_TypeParam_ >::stdInput.end() );
+   typename  ArrayCont::iterator boltMaxE = bolt::cl::max_element( c_gpu,MaxEArrayTest< gtest_TypeParam_ >::boltInput.begin( ), MaxEArrayTest< gtest_TypeParam_ >::boltInput.end( ) );
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+    typename ArrayCont::difference_type stdNumElements = std::distance( MaxEArrayTest< gtest_TypeParam_ >::stdInput.begin( ), MaxEArrayTest< gtest_TypeParam_ >::stdInput.end() );
+    typename ArrayCont::difference_type boltNumElements = std::distance( MaxEArrayTest< gtest_TypeParam_ >::boltInput.begin( ), MaxEArrayTest< gtest_TypeParam_ >::boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
     EXPECT_EQ( *stlMaxE, *boltMaxE );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );    
+    cmpStdArray< ArrayType, MaxEArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( MaxEArrayTest< gtest_TypeParam_ >::stdInput, MaxEArrayTest< gtest_TypeParam_ >::boltInput );    
     // FIXME - releaseOcl(ocl);
 }
 
 REGISTER_TYPED_TEST_CASE_P( MaxEArrayTest, Normal, SerialNormal, MultiCoreNormal, GPU_DeviceGreaterFunction );
-*/
+
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Fixture classes are now defined to enable googletest to process value parameterized tests
@@ -949,10 +954,10 @@ TEST( MaxEUDD , UDDPlusOperatorInts )
     EXPECT_EQ(*boltMaxE,*stdMaxE);
 
 }
-/*
+
 INSTANTIATE_TYPED_TEST_CASE_P( Integer, MaxEArrayTest, IntegerTests );
 INSTANTIATE_TYPED_TEST_CASE_P( Float, MaxEArrayTest, FloatTests );
-*/
+
 
 #if defined(_WIN32)
 // Super-easy windows profiling interface.

@@ -1084,7 +1084,7 @@ TEST_P( StableSortbyKeyDoubleDeviceVector, MultiCoreInplace )
 
 #endif
 #endif
-/*
+#if defined(_WIN32)
 TEST_P( StableSortbyKeyIntegerNakedPointer, Inplace )
 {
     size_t endIndex = GetParam( );
@@ -1254,7 +1254,7 @@ TEST_P( StableSortbyKeyDoubleNakedPointer, MultiCoreInplace )
 }
 
 #endif
-*/
+#endif
 /*Negative test to stable sort a buffer when all the input values are equal Say zero*/
 TEST( DefaultGPU, Normal )
 {
@@ -1275,7 +1275,7 @@ TEST( DefaultGPU, Normal )
 }
 
 std::array<int, 16> TestValues = {2,4,8,16,32,64,128,256,512,1024,2048,4096,8192,16384,32768, 1<<22};
-/*
+
 //INSTANTIATE_TEST_CASE_P( StableSortByKeyValues, StableSortByKeyCountingIterator,
 //                        ::testing::ValuesIn( TestValues.begin(), TestValues.end() ) );
 
@@ -1314,7 +1314,6 @@ INSTANTIATE_TEST_CASE_P( StableSortByKeyValues, StableSortbyKeyDoubleNakedPointe
                                                                                      TestValues.end() ) );
 #endif
 
-*/
 int main(int argc, char* argv[])
 {
     ::testing::InitGoogleTest( &argc, &argv[ 0 ] );

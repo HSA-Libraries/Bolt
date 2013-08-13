@@ -1395,7 +1395,7 @@ class TypeValue
 public:
     static const size_t value = N;
 };
-/*
+
 //  Test fixture class, used for the Type-parameterized tests
 //  Namely, the tests that use std::array and TYPED_TEST_P macros
 template< typename ArrayTuple >
@@ -1433,97 +1433,102 @@ TYPED_TEST_CASE_P( ScanArrayTest );
 
 TYPED_TEST_P( ScanArrayTest, InPlace )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+    typedef typename ScanArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, ScanArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont;    
 
+    
     //  Calling the actual functions under test
-    ArrayCont::iterator stdEnd  = std::partial_sum( stdInput.begin( ), stdInput.end( ), stdInput.begin( ) );
-    ArrayCont::iterator boltEnd = bolt::cl::inclusive_scan( boltInput.begin( ), boltInput.end( ), boltInput.begin( ) );
+    typename ArrayCont::iterator stdEnd  = std::partial_sum( ScanArrayTest< gtest_TypeParam_ >::stdInput.begin( ), ScanArrayTest< gtest_TypeParam_ >::stdInput.end( ), ScanArrayTest< gtest_TypeParam_ >::stdInput.begin( ) );
+    typename ArrayCont::iterator boltEnd = bolt::cl::inclusive_scan( ScanArrayTest< gtest_TypeParam_ >::boltInput.begin( ), ScanArrayTest< gtest_TypeParam_ >::boltInput.end( ), ScanArrayTest< gtest_TypeParam_ >::boltInput.begin( ) );
 
     //  The returned iterator should be at the end of the result range
-    EXPECT_EQ( stdInput.end( ), stdEnd );
-    EXPECT_EQ( boltInput.end( ), boltEnd );
+    EXPECT_EQ( ScanArrayTest< gtest_TypeParam_ >::stdInput.end( ), stdEnd );
+    EXPECT_EQ( ScanArrayTest< gtest_TypeParam_ >::boltInput.end( ), boltEnd );
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdEnd );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltEnd );
+    typename ArrayCont::difference_type stdNumElements = std::distance( ScanArrayTest< gtest_TypeParam_ >::stdInput.begin( ), stdEnd );
+    typename ArrayCont::difference_type boltNumElements = std::distance( ScanArrayTest< gtest_TypeParam_ >::boltInput.begin( ), boltEnd );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
+    cmpStdArray< ArrayType, ScanArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( ScanArrayTest< gtest_TypeParam_ >::stdInput, ScanArrayTest< gtest_TypeParam_ >::boltInput );
 }
 
 TYPED_TEST_P( ScanArrayTest, InPlacePlusFunction )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+    typedef typename ScanArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, ScanArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont;  
 
     //  Calling the actual functions under test
-    ArrayCont::iterator stdEnd  = std::partial_sum( stdInput.begin( ), stdInput.end( ), stdInput.begin( ), std::plus< ArrayType >( ) );
-    ArrayCont::iterator boltEnd = bolt::cl::inclusive_scan( boltInput.begin( ), boltInput.end( ), boltInput.begin( ), bolt::cl::plus< ArrayType >( ) );
+    typename ArrayCont::iterator stdEnd  = std::partial_sum( ScanArrayTest< gtest_TypeParam_ >::stdInput.begin( ), ScanArrayTest< gtest_TypeParam_ >::stdInput.end( ), ScanArrayTest< gtest_TypeParam_ >::stdInput.begin( ), std::plus< ArrayType >( ) );
+    typename ArrayCont::iterator boltEnd = bolt::cl::inclusive_scan( ScanArrayTest< gtest_TypeParam_ >::boltInput.begin( ), ScanArrayTest< gtest_TypeParam_ >::boltInput.end( ), ScanArrayTest< gtest_TypeParam_ >::boltInput.begin( ), bolt::cl::plus< ArrayType >( ) );
 
     //  The returned iterator should be at the end of the result range
-    EXPECT_EQ( stdInput.end( ), stdEnd );
-    EXPECT_EQ( boltInput.end( ), boltEnd );
+    EXPECT_EQ( ScanArrayTest< gtest_TypeParam_ >::stdInput.end( ), stdEnd );
+    EXPECT_EQ( ScanArrayTest< gtest_TypeParam_ >::boltInput.end( ), boltEnd );
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdEnd );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltEnd );
+    typename ArrayCont::difference_type stdNumElements = std::distance( ScanArrayTest< gtest_TypeParam_ >::stdInput.begin( ), stdEnd );
+    typename ArrayCont::difference_type boltNumElements = std::distance( ScanArrayTest< gtest_TypeParam_ >::boltInput.begin( ), boltEnd );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
+    cmpStdArray< ArrayType, ScanArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( ScanArrayTest< gtest_TypeParam_ >::stdInput, ScanArrayTest< gtest_TypeParam_ >::boltInput );
 }
 
 TYPED_TEST_P( ScanArrayTest, InPlaceMaxFunction )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+    typedef typename ScanArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, ScanArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont;  
 
     //  Calling the actual functions under test
-    ArrayCont::iterator stdEnd  = std::partial_sum( stdInput.begin( ), stdInput.end( ), stdInput.begin( ), bolt::cl::maximum< ArrayType >( ) );
-    ArrayCont::iterator boltEnd = bolt::cl::inclusive_scan( boltInput.begin( ), boltInput.end( ), boltInput.begin( ), bolt::cl::maximum< ArrayType >( ) );
+    typename ArrayCont::iterator stdEnd  = std::partial_sum( ScanArrayTest< gtest_TypeParam_ >::stdInput.begin( ), ScanArrayTest< gtest_TypeParam_ >::stdInput.end( ), ScanArrayTest< gtest_TypeParam_ >::stdInput.begin( ), bolt::cl::maximum< ArrayType >( ) );
+    typename ArrayCont::iterator boltEnd = bolt::cl::inclusive_scan( ScanArrayTest< gtest_TypeParam_ >::boltInput.begin( ), ScanArrayTest< gtest_TypeParam_ >::boltInput.end( ), ScanArrayTest< gtest_TypeParam_ >::boltInput.begin( ), bolt::cl::maximum< ArrayType >( ) );
 
     //  The returned iterator should be at the end of the result range
-    EXPECT_EQ( stdInput.end( ), stdEnd );
-    EXPECT_EQ( boltInput.end( ), boltEnd );
+    EXPECT_EQ( ScanArrayTest< gtest_TypeParam_ >::stdInput.end( ), stdEnd );
+    EXPECT_EQ( ScanArrayTest< gtest_TypeParam_ >::boltInput.end( ), boltEnd );
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdEnd );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltEnd );
+    typename ArrayCont::difference_type stdNumElements = std::distance( ScanArrayTest< gtest_TypeParam_ >::stdInput.begin( ), stdEnd );
+    typename ArrayCont::difference_type boltNumElements = std::distance( ScanArrayTest< gtest_TypeParam_ >::boltInput.begin( ), boltEnd );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
+    cmpStdArray< ArrayType, ScanArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( ScanArrayTest< gtest_TypeParam_ >::stdInput, ScanArrayTest< gtest_TypeParam_ >::boltInput );
 }
 
 TYPED_TEST_P( ScanArrayTest, OutofPlace )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+    typedef typename ScanArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, ScanArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont;  
 
     //  Declare temporary arrays to store results for out of place computation
     ArrayCont stdResult, boltResult;
 
     //  Calling the actual functions under test, out of place semantics
-    ArrayCont::iterator stdEnd  = std::partial_sum( stdInput.begin( ), stdInput.end( ), stdResult.begin( ) );
-    ArrayCont::iterator boltEnd = bolt::cl::inclusive_scan( boltInput.begin( ), boltInput.end( ), boltResult.begin( ) );
+    typename ArrayCont::iterator stdEnd  = std::partial_sum( ScanArrayTest< gtest_TypeParam_ >::stdInput.begin( ), ScanArrayTest< gtest_TypeParam_ >::stdInput.end( ), stdResult.begin( ) );
+    typename ArrayCont::iterator boltEnd = bolt::cl::inclusive_scan( ScanArrayTest< gtest_TypeParam_ >::boltInput.begin( ), ScanArrayTest< gtest_TypeParam_ >::boltInput.end( ), boltResult.begin( ) );
 
     //  The returned iterator should be one past the end of the result array
     EXPECT_EQ( stdResult.end( ), stdEnd );
     EXPECT_EQ( boltResult.end( ), boltEnd );
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdResult.begin( ), stdEnd );
-    ArrayCont::difference_type boltNumElements = std::distance( boltResult.begin( ), boltEnd );
+    typename ArrayCont::difference_type stdNumElements = std::distance( stdResult.begin( ), stdEnd );
+    typename ArrayCont::difference_type boltNumElements = std::distance( boltResult.begin( ), boltEnd );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdResult, boltResult );
+    cmpStdArray< ArrayType, ScanArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( stdResult, boltResult );
 }
 
 REGISTER_TYPED_TEST_CASE_P( ScanArrayTest, InPlace, InPlacePlusFunction, InPlaceMaxFunction, OutofPlace );
-*/
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Fixture classes are now defined to enable googletest to process value parameterized tests
 
@@ -1769,10 +1774,10 @@ TEST_P( StdVectCountingIterator, withCountingIterator)
     EXPECT_EQ((*(boltEnd-1)), (*(stdEnd-1)))<<std::endl;
 
 }
-*/
+
 
 //Scan With Fancy iterator as input results in Compilation Error! -- NEED TO DEBUG
-/*
+
 TEST_P( StdVectCountingIterator, withCountingIteratorInput) 
 {
     bolt::cl::counting_iterator<int> first(1);
@@ -1786,7 +1791,7 @@ TEST_P( StdVectCountingIterator, withCountingIteratorInput)
     }
 
 
-    std::vector<int>::iterator boltEnd = bolt::cl::inclusive_scan( first, last , boltOutput.begin());
+    std::vector<int>::iterator boltEnd = bolt::cl::inclusive_scan( first, / , boltOutput.begin());
     std::vector<int>::iterator stdEnd  = std::partial_sum( stdInput.begin( ), stdInput.end( ), stdInput.begin( ) );
     
     EXPECT_EQ((*(boltEnd-1)), (*(stdEnd-1)))<<std::endl;
@@ -2451,7 +2456,7 @@ TEST_P( ScanIntegerDeviceVector, MulticoreInclusiveInplace )
     cmpArrays( stdInput, boltInput );
 }
 
-/*
+#if defined(_WIN32)
 TEST_P( ScanIntegerNakedPointer, InclusiveInplace )
 {
     size_t endIndex = GetParam( );
@@ -2544,8 +2549,8 @@ TEST_P( ScanIntegerNakedPointer, MultiCoreInclusiveInplace )
     //  Loop through the array and compare all the values with each other
     cmpArrays( stdInput, boltInput, endIndex );
 }
+#endif
 
-*/
 TEST_P( ScanIntegerVector, ExclusiveOutOfPlace )
 {
     //  Declare temporary arrays to store results for out of place computation
@@ -2817,12 +2822,12 @@ typedef ::testing::Types<
     std::tuple< float, TypeValue< 65535 > >,
     std::tuple< float, TypeValue< 65536 > >
 > FloatTests;
-/*
+
 INSTANTIATE_TYPED_TEST_CASE_P( Integer, ScanArrayTest, IntegerTests );
 INSTANTIATE_TYPED_TEST_CASE_P( Float, ScanArrayTest, FloatTests );
 //here
-*/
-/*
+
+
 TEST(Scan, cpuQueue)
 {
     MyOclContext ocl = initOcl(CL_DEVICE_TYPE_CPU, 0);
@@ -2838,7 +2843,8 @@ TEST(Scan, cpuQueue)
     std::vector< float >::iterator stdEnd  = std::partial_sum( stdInput.begin( ), stdInput.end( ),stdOutput.begin( ));
     cmpArrays( stdInput, boltInput );
 }
-*/
+
+
 /*
 // std::deque's iteartor is not allowed in the bolt'routines because 
 // unlike vectors, deques are not guaranteed to store all its elements in contiguous storage locations
@@ -2875,6 +2881,7 @@ EXPECT_EQ(stdInput[i], boltInput[i]);
 }
 }
 */
+
 int _tmain(int argc, _TCHAR* argv[])
 {
     //  Register our minidump generating logic

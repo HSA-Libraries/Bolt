@@ -150,7 +150,7 @@ public:
 
 //  Test fixture class, used for the Type-parameterized tests
 //  Namely, the tests that use std::array and TYPED_TEST_P macros
-/*
+
 template< typename ArrayTuple >
 class StableSortArrayTest: public ::testing::Test
 {
@@ -180,7 +180,7 @@ protected:
 };
 
 TYPED_TEST_CASE_P( StableSortArrayTest );
-*/
+
 
 #if (TEST_MULTICORE_TBB_SORT == 1)
 
@@ -287,43 +287,44 @@ TEST( MultiCoreCPU, MultiCoreNormal )
     cmpArrays( stdInput, boltInput );
 }
 #endif
-/*
+
 TYPED_TEST_P( StableSortArrayTest, Normal )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+    typedef typename StableSortArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, StableSortArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont;    
     //  Calling the actual functions under test
-    std::SORT_FUNC( stdInput.begin( ), stdInput.end( ) );
-    bolt::BKND::SORT_FUNC( boltInput.begin( ), boltInput.end( ) );
+    std::SORT_FUNC( StableSortArrayTest< gtest_TypeParam_ >::stdInput.begin( ), StableSortArrayTest< gtest_TypeParam_ >::stdInput.end( ) );
+    bolt::BKND::SORT_FUNC( StableSortArrayTest< gtest_TypeParam_ >::boltInput.begin( ), StableSortArrayTest< gtest_TypeParam_ >::boltInput.end( ) );
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+    typename ArrayCont::difference_type stdNumElements = std::distance( StableSortArrayTest< gtest_TypeParam_ >::stdInput.begin( ), StableSortArrayTest< gtest_TypeParam_ >::stdInput.end() );
+    typename ArrayCont::difference_type boltNumElements = std::distance( StableSortArrayTest< gtest_TypeParam_ >::boltInput.begin( ), StableSortArrayTest< gtest_TypeParam_ >::boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
+    cmpStdArray< ArrayType, StableSortArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( StableSortArrayTest< gtest_TypeParam_ >::stdInput, StableSortArrayTest< gtest_TypeParam_ >::boltInput );
 
     //  OFFSET Calling the actual functions under test
     size_t startIndex = 17; //Some aribitrary offset position
-    size_t endIndex   = ArraySize -17; //Some aribitrary offset position
-    if( (( startIndex > ArraySize ) || ( endIndex < 0 ) )  || (startIndex > endIndex) )
+    size_t endIndex   = StableSortArrayTest< gtest_TypeParam_ >::ArraySize -17; //Some aribitrary offset position
+    if( (( startIndex > StableSortArrayTest< gtest_TypeParam_ >::ArraySize ) || ( endIndex < 0 ) )  || (startIndex > endIndex) )
     {
-        std::cout <<"\nSkipping NormalOffset Test for size "<< ArraySize << "\n";
+        std::cout <<"\nSkipping NormalOffset Test for size "<< StableSortArrayTest< gtest_TypeParam_ >::ArraySize << "\n";
     }    
     else
     {
-        std::SORT_FUNC( stdOffsetIn.begin( ) + startIndex, stdOffsetIn.begin( ) + endIndex );
-        bolt::BKND::SORT_FUNC( boltOffsetIn.begin( ) + startIndex, boltOffsetIn.begin( ) + endIndex );
+        std::SORT_FUNC( StableSortArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin( ) + startIndex, StableSortArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin( ) + endIndex );
+        bolt::BKND::SORT_FUNC( StableSortArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin( ) + startIndex, StableSortArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin( ) + endIndex );
 
-        ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end( ) );
-        ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end( ) );
+        typename ArrayCont::difference_type stdNumElements = std::distance( StableSortArrayTest< gtest_TypeParam_ >::stdInput.begin( ), StableSortArrayTest< gtest_TypeParam_ >::stdInput.end( ) );
+        typename ArrayCont::difference_type boltNumElements = std::distance( StableSortArrayTest< gtest_TypeParam_ >::boltInput.begin( ), StableSortArrayTest< gtest_TypeParam_ >::boltInput.end( ) );
 
         //  Both collections should have the same number of elements
         EXPECT_EQ( stdNumElements, boltNumElements );
 
         //  Loop through the array and compare all the values with each other
-        cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
+        cmpStdArray< ArrayType, StableSortArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( StableSortArrayTest< gtest_TypeParam_ >::stdInput, StableSortArrayTest< gtest_TypeParam_ >::boltInput );
     }
 }
 
@@ -339,41 +340,42 @@ TYPED_TEST_P( StableSortArrayTest, GPU_DeviceNormal )
     ::cl::CommandQueue myQueue( myContext, devices[ 0 ] );
     bolt::cl::control c_gpu( myQueue );  // construct control structure from the queue.
 
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+        typedef typename StableSortArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, StableSortArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont;    
 
     //  Calling the actual functions under test
-    std::SORT_FUNC( stdInput.begin( ), stdInput.end( ));
-    bolt::BKND::SORT_FUNC( c_gpu, boltInput.begin( ), boltInput.end( ) );
+    std::SORT_FUNC( StableSortArrayTest< gtest_TypeParam_ >::stdInput.begin( ), StableSortArrayTest< gtest_TypeParam_ >::stdInput.end( ));
+    bolt::BKND::SORT_FUNC( c_gpu, StableSortArrayTest< gtest_TypeParam_ >::boltInput.begin( ), StableSortArrayTest< gtest_TypeParam_ >::boltInput.end( ) );
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+    typename ArrayCont::difference_type stdNumElements = std::distance( StableSortArrayTest< gtest_TypeParam_ >::stdInput.begin( ), StableSortArrayTest< gtest_TypeParam_ >::stdInput.end() );
+    typename ArrayCont::difference_type boltNumElements = std::distance( StableSortArrayTest< gtest_TypeParam_ >::boltInput.begin( ), StableSortArrayTest< gtest_TypeParam_ >::boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
+    cmpStdArray< ArrayType, StableSortArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( StableSortArrayTest< gtest_TypeParam_ >::stdInput, StableSortArrayTest< gtest_TypeParam_ >::boltInput );
     //OFFSET TEst cases
     //  Calling the actual functions under test
     size_t startIndex = 17; //Some aribitrary offset position
-    size_t endIndex   = ArraySize -17; //Some aribitrary offset position
-    if( (( startIndex > ArraySize ) || ( endIndex < 0 ) )  || (startIndex > endIndex) )
+    size_t endIndex   = StableSortArrayTest< gtest_TypeParam_ >::ArraySize -17; //Some aribitrary offset position
+    if( (( startIndex > StableSortArrayTest< gtest_TypeParam_ >::ArraySize ) || ( endIndex < 0 ) )  || (startIndex > endIndex) )
     {
-        std::cout <<"\nSkipping NormalOffset Test for size "<< ArraySize << "\n";
+        std::cout <<"\nSkipping NormalOffset Test for size "<< StableSortArrayTest< gtest_TypeParam_ >::ArraySize << "\n";
     }    
     else
     {
-        std::SORT_FUNC( stdOffsetIn.begin( ) + startIndex, stdOffsetIn.begin( ) + endIndex );
-        bolt::BKND::SORT_FUNC( c_gpu, boltOffsetIn.begin( ) + startIndex, boltOffsetIn.begin( ) + endIndex );
+        std::SORT_FUNC( StableSortArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin( ) + startIndex, StableSortArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin( ) + endIndex );
+        bolt::BKND::SORT_FUNC( c_gpu, StableSortArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin( ) + startIndex, StableSortArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin( ) + endIndex );
 
-        ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end( ) );
-        ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end( ) );
+        typename ArrayCont::difference_type stdNumElements = std::distance( StableSortArrayTest< gtest_TypeParam_ >::stdInput.begin( ), StableSortArrayTest< gtest_TypeParam_ >::stdInput.end( ) );
+        typename ArrayCont::difference_type boltNumElements = std::distance( StableSortArrayTest< gtest_TypeParam_ >::boltInput.begin( ), StableSortArrayTest< gtest_TypeParam_ >::boltInput.end( ) );
 
         //  Both collections should have the same number of elements
         EXPECT_EQ( stdNumElements, boltNumElements );
 
         //  Loop through the array and compare all the values with each other
-        cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
+        cmpStdArray< ArrayType, StableSortArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( StableSortArrayTest< gtest_TypeParam_ >::stdInput, StableSortArrayTest< gtest_TypeParam_ >::boltInput );
     }
 
 }
@@ -381,94 +383,97 @@ TYPED_TEST_P( StableSortArrayTest, GPU_DeviceNormal )
 #if (TEST_CPU_DEVICE == 1)
 TYPED_TEST_P( StableSortArrayTest, CPU_DeviceNormal )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+        typedef typename StableSortArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, StableSortArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont;    
 
     MyOclContext oclcpu = initOcl(CL_DEVICE_TYPE_CPU, 0);
     bolt::cl::control c_cpu(oclcpu._queue);  // construct control structure from the queue.
 
     //  Calling the actual functions under test
-    std::SORT_FUNC( stdInput.begin( ), stdInput.end( ));
-    bolt::BKND::SORT_FUNC( c_cpu, boltInput.begin( ), boltInput.end( ) );
+    std::SORT_FUNC( StableSortArrayTest< gtest_TypeParam_ >::stdInput.begin( ), StableSortArrayTest< gtest_TypeParam_ >::stdInput.end( ));
+    bolt::BKND::SORT_FUNC( c_cpu, StableSortArrayTest< gtest_TypeParam_ >::boltInput.begin( ), StableSortArrayTest< gtest_TypeParam_ >::boltInput.end( ) );
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+    typename ArrayCont::difference_type stdNumElements = std::distance( StableSortArrayTest< gtest_TypeParam_ >::stdInput.begin( ), StableSortArrayTest< gtest_TypeParam_ >::stdInput.end() );
+    typename ArrayCont::difference_type boltNumElements = std::distance( StableSortArrayTest< gtest_TypeParam_ >::boltInput.begin( ), StableSortArrayTest< gtest_TypeParam_ >::boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
+    cmpStdArray< ArrayType, StableSortArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( StableSortArrayTest< gtest_TypeParam_ >::stdInput, StableSortArrayTest< gtest_TypeParam_ >::boltInput );
     
     //OFFSET Test cases
     //  Calling the actual functions under test
     size_t startIndex = 17; //Some aribitrary offset position
-    size_t endIndex   = ArraySize -17; //Some aribitrary offset position
-    if( (( startIndex > ArraySize ) || ( endIndex < 0 ) )  || (startIndex > endIndex) )
+    size_t endIndex   = StableSortArrayTest< gtest_TypeParam_ >::ArraySize -17; //Some aribitrary offset position
+    if( (( startIndex > StableSortArrayTest< gtest_TypeParam_ >::ArraySize ) || ( endIndex < 0 ) )  || (startIndex > endIndex) )
     {
-        std::cout <<"\nSkipping NormalOffset Test for size "<< ArraySize << "\n";
+        std::cout <<"\nSkipping NormalOffset Test for size "<< StableSortArrayTest< gtest_TypeParam_ >::ArraySize << "\n";
     }    
     else
     {
-        std::SORT_FUNC( stdOffsetIn.begin( ) + startIndex, stdOffsetIn.begin( ) + endIndex );
-        bolt::BKND::SORT_FUNC( c_cpu, boltOffsetIn.begin( ) + startIndex, boltOffsetIn.begin( ) + endIndex );
+        std::SORT_FUNC( StableSortArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin( ) + startIndex, StableSortArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin( ) + endIndex );
+        bolt::BKND::SORT_FUNC( c_cpu, StableSortArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin( ) + startIndex, StableSortArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin( ) + endIndex );
 
-        ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end( ) );
-        ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end( ) );
+        typename ArrayCont::difference_type stdNumElements = std::distance( StableSortArrayTest< gtest_TypeParam_ >::stdInput.begin( ), StableSortArrayTest< gtest_TypeParam_ >::stdInput.end( ) );
+        typename ArrayCont::difference_type boltNumElements = std::distance( StableSortArrayTest< gtest_TypeParam_ >::boltInput.begin( ), StableSortArrayTest< gtest_TypeParam_ >::boltInput.end( ) );
 
         //  Both collections should have the same number of elements
         EXPECT_EQ( stdNumElements, boltNumElements );
 
         //  Loop through the array and compare all the values with each other
-        cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
+        cmpStdArray< ArrayType, StableSortArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( StableSortArrayTest< gtest_TypeParam_ >::stdInput, StableSortArrayTest< gtest_TypeParam_ >::boltInput );
     }
 }
 #endif
 
 TYPED_TEST_P( StableSortArrayTest, GreaterFunction )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+        typedef typename StableSortArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, StableSortArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont;    
 
     //  Calling the actual functions under test
-    std::SORT_FUNC( stdInput.begin( ), stdInput.end( ), std::greater< ArrayType >() );
+    std::SORT_FUNC( StableSortArrayTest< gtest_TypeParam_ >::stdInput.begin( ), StableSortArrayTest< gtest_TypeParam_ >::stdInput.end( ), std::greater< ArrayType >() );
     
-    bolt::BKND::SORT_FUNC( boltInput.begin( ), boltInput.end( ), bolt::cl::greater< ArrayType >( ) );
+    bolt::BKND::SORT_FUNC( StableSortArrayTest< gtest_TypeParam_ >::boltInput.begin( ), StableSortArrayTest< gtest_TypeParam_ >::boltInput.end( ), bolt::cl::greater< ArrayType >( ) );
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+    typename ArrayCont::difference_type stdNumElements = std::distance( StableSortArrayTest< gtest_TypeParam_ >::stdInput.begin( ), StableSortArrayTest< gtest_TypeParam_ >::stdInput.end() );
+    typename ArrayCont::difference_type boltNumElements = std::distance( StableSortArrayTest< gtest_TypeParam_ >::boltInput.begin( ), StableSortArrayTest< gtest_TypeParam_ >::boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
+    cmpStdArray< ArrayType, StableSortArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( StableSortArrayTest< gtest_TypeParam_ >::stdInput, StableSortArrayTest< gtest_TypeParam_ >::boltInput );
     
     //OFFSET Test cases
     //  Calling the actual functions under test
     size_t startIndex = 17; //Some aribitrary offset position
-    size_t endIndex   = ArraySize -17; //Some aribitrary offset position
-    if( (( startIndex > ArraySize ) || ( endIndex < 0 ) )  || (startIndex > endIndex) )
+    size_t endIndex   = StableSortArrayTest< gtest_TypeParam_ >::ArraySize -17; //Some aribitrary offset position
+    if( (( startIndex > StableSortArrayTest< gtest_TypeParam_ >::ArraySize ) || ( endIndex < 0 ) )  || (startIndex > endIndex) )
     {
-        std::cout <<"\nSkipping NormalOffset Test for size "<< ArraySize << "\n";
+        std::cout <<"\nSkipping NormalOffset Test for size "<< StableSortArrayTest< gtest_TypeParam_ >::ArraySize << "\n";
     }    
     else
     {
-        std::SORT_FUNC( stdOffsetIn.begin( ) + startIndex, stdOffsetIn.begin( ) + endIndex, std::greater< ArrayType >() );
-        bolt::BKND::SORT_FUNC( boltOffsetIn.begin( ) + startIndex, boltOffsetIn.begin( ) + endIndex, bolt::cl::greater< ArrayType >( )  );
+        std::SORT_FUNC( StableSortArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin( ) + startIndex, StableSortArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin( ) + endIndex, std::greater< ArrayType >() );
+        bolt::BKND::SORT_FUNC( StableSortArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin( ) + startIndex, StableSortArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin( ) + endIndex, bolt::cl::greater< ArrayType >( )  );
 
-        ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end( ) );
-        ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end( ) );
+        typename ArrayCont::difference_type stdNumElements = std::distance( StableSortArrayTest< gtest_TypeParam_ >::stdInput.begin( ), StableSortArrayTest< gtest_TypeParam_ >::stdInput.end( ) );
+        typename ArrayCont::difference_type boltNumElements = std::distance( StableSortArrayTest< gtest_TypeParam_ >::boltInput.begin( ), StableSortArrayTest< gtest_TypeParam_ >::boltInput.end( ) );
 
         //  Both collections should have the same number of elements
         EXPECT_EQ( stdNumElements, boltNumElements );
 
         //  Loop through the array and compare all the values with each other
-        cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
+        cmpStdArray< ArrayType, StableSortArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( StableSortArrayTest< gtest_TypeParam_ >::stdInput, StableSortArrayTest< gtest_TypeParam_ >::boltInput );
     }
 }
 
 TYPED_TEST_P( StableSortArrayTest, GPU_DeviceGreaterFunction )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+        typedef typename StableSortArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, StableSortArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont;    
     //  The first time our routines get called, we compile the library kernels with a certain context
     //  OpenCL does not allow the context to change without a recompile of the kernel
 
@@ -481,129 +486,132 @@ TYPED_TEST_P( StableSortArrayTest, GPU_DeviceGreaterFunction )
     bolt::cl::control c_gpu( myQueue );  // construct control structure from the queue.
 
     //  Calling the actual functions under test
-    std::SORT_FUNC( stdInput.begin( ), stdInput.end( ), std::greater< ArrayType >( ));
-    bolt::BKND::SORT_FUNC( c_gpu, boltInput.begin( ), boltInput.end( ), bolt::cl::greater< ArrayType >( ) );
+    std::SORT_FUNC( StableSortArrayTest< gtest_TypeParam_ >::stdInput.begin( ), StableSortArrayTest< gtest_TypeParam_ >::stdInput.end( ), std::greater< ArrayType >( ));
+    bolt::BKND::SORT_FUNC( c_gpu, StableSortArrayTest< gtest_TypeParam_ >::boltInput.begin( ), StableSortArrayTest< gtest_TypeParam_ >::boltInput.end( ), bolt::cl::greater< ArrayType >( ) );
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+    typename ArrayCont::difference_type stdNumElements = std::distance( StableSortArrayTest< gtest_TypeParam_ >::stdInput.begin( ), StableSortArrayTest< gtest_TypeParam_ >::stdInput.end() );
+    typename ArrayCont::difference_type boltNumElements = std::distance( StableSortArrayTest< gtest_TypeParam_ >::boltInput.begin( ), StableSortArrayTest< gtest_TypeParam_ >::boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
+    cmpStdArray< ArrayType, StableSortArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( StableSortArrayTest< gtest_TypeParam_ >::stdInput, StableSortArrayTest< gtest_TypeParam_ >::boltInput );
 
     //OFFSET Test cases
     //  Calling the actual functions under test
     size_t startIndex = 17; //Some aribitrary offset position
-    size_t endIndex   = ArraySize -17; //Some aribitrary offset position
-    if( (( startIndex > ArraySize ) || ( endIndex < 0 ) )  || (startIndex > endIndex) )
+    size_t endIndex   = StableSortArrayTest< gtest_TypeParam_ >::ArraySize -17; //Some aribitrary offset position
+    if( (( startIndex > StableSortArrayTest< gtest_TypeParam_ >::ArraySize ) || ( endIndex < 0 ) )  || (startIndex > endIndex) )
     {
-        std::cout <<"\nSkipping NormalOffset Test for size "<< ArraySize << "\n";
+        std::cout <<"\nSkipping NormalOffset Test for size "<< StableSortArrayTest< gtest_TypeParam_ >::ArraySize << "\n";
     }    
     else
     {
-        std::SORT_FUNC( stdOffsetIn.begin( ) + startIndex, stdOffsetIn.begin( ) + endIndex, std::greater< ArrayType >() );
-        bolt::BKND::SORT_FUNC( c_gpu, boltOffsetIn.begin( ) + startIndex, boltOffsetIn.begin( ) + endIndex, bolt::cl::greater< ArrayType >( )  );
+        std::SORT_FUNC( StableSortArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin( ) + startIndex, StableSortArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin( ) + endIndex, std::greater< ArrayType >() );
+        bolt::BKND::SORT_FUNC( c_gpu, StableSortArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin( ) + startIndex, StableSortArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin( ) + endIndex, bolt::cl::greater< ArrayType >( )  );
 
-        ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end( ) );
-        ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end( ) );
+        typename ArrayCont::difference_type stdNumElements = std::distance( StableSortArrayTest< gtest_TypeParam_ >::stdInput.begin( ), StableSortArrayTest< gtest_TypeParam_ >::stdInput.end( ) );
+        typename ArrayCont::difference_type boltNumElements = std::distance( StableSortArrayTest< gtest_TypeParam_ >::boltInput.begin( ), StableSortArrayTest< gtest_TypeParam_ >::boltInput.end( ) );
 
         //  Both collections should have the same number of elements
         EXPECT_EQ( stdNumElements, boltNumElements );
 
         //  Loop through the array and compare all the values with each other
-        cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
+        cmpStdArray< ArrayType, StableSortArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( StableSortArrayTest< gtest_TypeParam_ >::stdInput, StableSortArrayTest< gtest_TypeParam_ >::boltInput );
     }
 }
 #if (TEST_CPU_DEVICE == 1)
 TYPED_TEST_P( StableSortArrayTest, CPU_DeviceGreaterFunction )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+        typedef typename StableSortArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, StableSortArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont;    
     MyOclContext oclcpu = initOcl(CL_DEVICE_TYPE_CPU, 0);
     bolt::cl::control c_cpu(oclcpu._queue);  // construct control structure from the queue.
 
     //  Calling the actual functions under test
-    std::SORT_FUNC( stdInput.begin( ), stdInput.end( ), std::greater< ArrayType >( ));
-    bolt::BKND::SORT_FUNC( c_cpu, boltInput.begin( ), boltInput.end( ), bolt::cl::greater< ArrayType >( ) );
+    std::SORT_FUNC( StableSortArrayTest< gtest_TypeParam_ >::stdInput.begin( ), StableSortArrayTest< gtest_TypeParam_ >::stdInput.end( ), std::greater< ArrayType >( ));
+    bolt::BKND::SORT_FUNC( c_cpu, StableSortArrayTest< gtest_TypeParam_ >::boltInput.begin( ), StableSortArrayTest< gtest_TypeParam_ >::boltInput.end( ), bolt::cl::greater< ArrayType >( ) );
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+    typename ArrayCont::difference_type stdNumElements = std::distance( StableSortArrayTest< gtest_TypeParam_ >::stdInput.begin( ), StableSortArrayTest< gtest_TypeParam_ >::stdInput.end() );
+    typename ArrayCont::difference_type boltNumElements = std::distance( StableSortArrayTest< gtest_TypeParam_ >::boltInput.begin( ), StableSortArrayTest< gtest_TypeParam_ >::boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
+    cmpStdArray< ArrayType, StableSortArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( StableSortArrayTest< gtest_TypeParam_ >::stdInput, StableSortArrayTest< gtest_TypeParam_ >::boltInput );
 
     //OFFSET Test cases
     //  Calling the actual functions under test
     size_t startIndex = 17; //Some aribitrary offset position
-    size_t endIndex   = ArraySize -17; //Some aribitrary offset position
-    if( (( startIndex > ArraySize ) || ( endIndex < 0 ) )  || (startIndex > endIndex) )
+    size_t endIndex   = StableSortArrayTest< gtest_TypeParam_ >::ArraySize -17; //Some aribitrary offset position
+    if( (( startIndex > StableSortArrayTest< gtest_TypeParam_ >::ArraySize ) || ( endIndex < 0 ) )  || (startIndex > endIndex) )
     {
-        std::cout <<"\nSkipping NormalOffset Test for size "<< ArraySize << "\n";
+        std::cout <<"\nSkipping NormalOffset Test for size "<< StableSortArrayTest< gtest_TypeParam_ >::ArraySize << "\n";
     }    
     else
     {
-        std::SORT_FUNC( stdOffsetIn.begin( ) + startIndex, stdOffsetIn.begin( ) + endIndex, std::greater< ArrayType >() );
-        bolt::BKND::SORT_FUNC( c_cpu, boltOffsetIn.begin( ) + startIndex, boltOffsetIn.begin( ) + endIndex, bolt::cl::greater< ArrayType >( )  );
+        std::SORT_FUNC( StableSortArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin( ) + startIndex, StableSortArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin( ) + endIndex, std::greater< ArrayType >() );
+        bolt::BKND::SORT_FUNC( c_cpu, StableSortArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin( ) + startIndex, StableSortArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin( ) + endIndex, bolt::cl::greater< ArrayType >( )  );
 
-        ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end( ) );
-        ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end( ) );
+        typename ArrayCont::difference_type stdNumElements = std::distance( StableSortArrayTest< gtest_TypeParam_ >::stdInput.begin( ), StableSortArrayTest< gtest_TypeParam_ >::stdInput.end( ) );
+        typename ArrayCont::difference_type boltNumElements = std::distance( StableSortArrayTest< gtest_TypeParam_ >::boltInput.begin( ), StableSortArrayTest< gtest_TypeParam_ >::boltInput.end( ) );
 
         //  Both collections should have the same number of elements
         EXPECT_EQ( stdNumElements, boltNumElements );
 
         //  Loop through the array and compare all the values with each other
-        cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
+        cmpStdArray< ArrayType, StableSortArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( StableSortArrayTest< gtest_TypeParam_ >::stdInput, StableSortArrayTest< gtest_TypeParam_ >::boltInput );
     }
 }
 #endif
 TYPED_TEST_P( StableSortArrayTest, LessFunction )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+        typedef typename StableSortArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, StableSortArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont;    
 
     //  Calling the actual functions under test
-    std::SORT_FUNC( stdInput.begin( ), stdInput.end( ), std::less<ArrayType>());
-    bolt::BKND::SORT_FUNC( boltInput.begin( ), boltInput.end( ), bolt::cl::less<ArrayType>() );
+    std::SORT_FUNC( StableSortArrayTest< gtest_TypeParam_ >::stdInput.begin( ), StableSortArrayTest< gtest_TypeParam_ >::stdInput.end( ), std::less<ArrayType>());
+    bolt::BKND::SORT_FUNC( StableSortArrayTest< gtest_TypeParam_ >::boltInput.begin( ), StableSortArrayTest< gtest_TypeParam_ >::boltInput.end( ), bolt::cl::less<ArrayType>() );
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+    typename ArrayCont::difference_type stdNumElements = std::distance( StableSortArrayTest< gtest_TypeParam_ >::stdInput.begin( ), StableSortArrayTest< gtest_TypeParam_ >::stdInput.end() );
+    typename ArrayCont::difference_type boltNumElements = std::distance( StableSortArrayTest< gtest_TypeParam_ >::boltInput.begin( ), StableSortArrayTest< gtest_TypeParam_ >::boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
+    cmpStdArray< ArrayType, StableSortArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( StableSortArrayTest< gtest_TypeParam_ >::stdInput, StableSortArrayTest< gtest_TypeParam_ >::boltInput );
 
     //OFFSET Test cases
     //  Calling the actual functions under test
     size_t startIndex = 17; //Some aribitrary offset position
-    size_t endIndex   = ArraySize -17; //Some aribitrary offset position
-    if( (( startIndex > ArraySize ) || ( endIndex < 0 ) )  || (startIndex > endIndex) )
+    size_t endIndex   = StableSortArrayTest< gtest_TypeParam_ >::ArraySize -17; //Some aribitrary offset position
+    if( (( startIndex > StableSortArrayTest< gtest_TypeParam_ >::ArraySize ) || ( endIndex < 0 ) )  || (startIndex > endIndex) )
     {
-        std::cout <<"\nSkipping NormalOffset Test for size "<< ArraySize << "\n";
+        std::cout <<"\nSkipping NormalOffset Test for size "<< StableSortArrayTest< gtest_TypeParam_ >::ArraySize << "\n";
     }    
     else
     {
-        std::SORT_FUNC( stdOffsetIn.begin( ) + startIndex, stdOffsetIn.begin( ) + endIndex, std::less< ArrayType >() );
-        bolt::BKND::SORT_FUNC( boltOffsetIn.begin( ) + startIndex, boltOffsetIn.begin( ) + endIndex, bolt::cl::less< ArrayType >( )  );
+        std::SORT_FUNC( StableSortArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin( ) + startIndex, StableSortArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin( ) + endIndex, std::less< ArrayType >() );
+        bolt::BKND::SORT_FUNC( StableSortArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin( ) + startIndex, StableSortArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin( ) + endIndex, bolt::cl::less< ArrayType >( )  );
 
-        ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end( ) );
-        ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end( ) );
+        typename ArrayCont::difference_type stdNumElements = std::distance( StableSortArrayTest< gtest_TypeParam_ >::stdInput.begin( ), StableSortArrayTest< gtest_TypeParam_ >::stdInput.end( ) );
+        typename ArrayCont::difference_type boltNumElements = std::distance( StableSortArrayTest< gtest_TypeParam_ >::boltInput.begin( ), StableSortArrayTest< gtest_TypeParam_ >::boltInput.end( ) );
 
         //  Both collections should have the same number of elements
         EXPECT_EQ( stdNumElements, boltNumElements );
 
         //  Loop through the array and compare all the values with each other
-        cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
+        cmpStdArray< ArrayType, StableSortArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( StableSortArrayTest< gtest_TypeParam_ >::stdInput, StableSortArrayTest< gtest_TypeParam_ >::boltInput );
     }
 }
 
 TYPED_TEST_P( StableSortArrayTest, GPU_DeviceLessFunction )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+        typedef typename StableSortArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, StableSortArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont;    
     //  The first time our routines get called, we compile the library kernels with a certain context
     //  OpenCL does not allow the context to change without a recompile of the kernel
     // MyOclContext oclgpu = initOcl(CL_DEVICE_TYPE_GPU, 0);
@@ -616,82 +624,83 @@ TYPED_TEST_P( StableSortArrayTest, GPU_DeviceLessFunction )
     ::cl::CommandQueue myQueue( myContext, devices[ 0 ] ); 
     bolt::cl::control c_gpu( myQueue );  // construct control structure from the queue.
     //  Calling the actual functions under test
-    std::SORT_FUNC( stdInput.begin( ), stdInput.end( ), std::less< ArrayType >( ));
-    bolt::BKND::SORT_FUNC( c_gpu, boltInput.begin( ), boltInput.end( ), bolt::cl::less< ArrayType >( ) );
+    std::SORT_FUNC( StableSortArrayTest< gtest_TypeParam_ >::stdInput.begin( ), StableSortArrayTest< gtest_TypeParam_ >::stdInput.end( ), std::less< ArrayType >( ));
+    bolt::BKND::SORT_FUNC( c_gpu, StableSortArrayTest< gtest_TypeParam_ >::boltInput.begin( ), StableSortArrayTest< gtest_TypeParam_ >::boltInput.end( ), bolt::cl::less< ArrayType >( ) );
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+    typename ArrayCont::difference_type stdNumElements = std::distance( StableSortArrayTest< gtest_TypeParam_ >::stdInput.begin( ), StableSortArrayTest< gtest_TypeParam_ >::stdInput.end() );
+    typename ArrayCont::difference_type boltNumElements = std::distance( StableSortArrayTest< gtest_TypeParam_ >::boltInput.begin( ), StableSortArrayTest< gtest_TypeParam_ >::boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
+    cmpStdArray< ArrayType, StableSortArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( StableSortArrayTest< gtest_TypeParam_ >::stdInput, StableSortArrayTest< gtest_TypeParam_ >::boltInput );
 
     //OFFSET Test cases
     //  Calling the actual functions under test
     size_t startIndex = 17; //Some aribitrary offset position
-    size_t endIndex   = ArraySize -17; //Some aribitrary offset position
-    if( (( startIndex > ArraySize ) || ( endIndex < 0 ) )  || (startIndex > endIndex) )
+    size_t endIndex   = StableSortArrayTest< gtest_TypeParam_ >::ArraySize -17; //Some aribitrary offset position
+    if( (( startIndex > StableSortArrayTest< gtest_TypeParam_ >::ArraySize ) || ( endIndex < 0 ) )  || (startIndex > endIndex) )
     {
-        std::cout <<"\nSkipping NormalOffset Test for size "<< ArraySize << "\n";
+        std::cout <<"\nSkipping NormalOffset Test for size "<< StableSortArrayTest< gtest_TypeParam_ >::ArraySize << "\n";
     }    
     else
     {
-        std::SORT_FUNC( stdOffsetIn.begin( ) + startIndex, stdOffsetIn.begin( ) + endIndex, std::less< ArrayType >() );
-        bolt::BKND::SORT_FUNC( c_gpu, boltOffsetIn.begin( ) + startIndex, boltOffsetIn.begin( ) + endIndex, bolt::cl::less< ArrayType >( )  );
+        std::SORT_FUNC( StableSortArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin( ) + startIndex, StableSortArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin( ) + endIndex, std::less< ArrayType >() );
+        bolt::BKND::SORT_FUNC( c_gpu, StableSortArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin( ) + startIndex, StableSortArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin( ) + endIndex, bolt::cl::less< ArrayType >( )  );
 
-        ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end( ) );
-        ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end( ) );
+        typename ArrayCont::difference_type stdNumElements = std::distance( StableSortArrayTest< gtest_TypeParam_ >::stdInput.begin( ), StableSortArrayTest< gtest_TypeParam_ >::stdInput.end( ) );
+        typename ArrayCont::difference_type boltNumElements = std::distance( StableSortArrayTest< gtest_TypeParam_ >::boltInput.begin( ), StableSortArrayTest< gtest_TypeParam_ >::boltInput.end( ) );
 
         //  Both collections should have the same number of elements
         EXPECT_EQ( stdNumElements, boltNumElements );
 
         //  Loop through the array and compare all the values with each other
-        cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
+        cmpStdArray< ArrayType, StableSortArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( StableSortArrayTest< gtest_TypeParam_ >::stdInput, StableSortArrayTest< gtest_TypeParam_ >::boltInput );
     }
 }
 #if (TEST_CPU_DEVICE == 1)
 TYPED_TEST_P( StableSortArrayTest, CPU_DeviceLessFunction )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+        typedef typename StableSortArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, StableSortArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont;    
     MyOclContext oclcpu = initOcl(CL_DEVICE_TYPE_CPU, 0);
     bolt::cl::control c_cpu(oclcpu._queue);  // construct control structure from the queue.
 
     //  Calling the actual functions under test
-    std::SORT_FUNC( stdInput.begin( ), stdInput.end( ), std::less< ArrayType >( ));
-    bolt::BKND::SORT_FUNC( c_cpu, boltInput.begin( ), boltInput.end( ), bolt::cl::less< ArrayType >( ) );
+    std::SORT_FUNC( StableSortArrayTest< gtest_TypeParam_ >::stdInput.begin( ), StableSortArrayTest< gtest_TypeParam_ >::stdInput.end( ), std::less< ArrayType >( ));
+    bolt::BKND::SORT_FUNC( c_cpu, StableSortArrayTest< gtest_TypeParam_ >::boltInput.begin( ), StableSortArrayTest< gtest_TypeParam_ >::boltInput.end( ), bolt::cl::less< ArrayType >( ) );
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+    typename ArrayCont::difference_type stdNumElements = std::distance( StableSortArrayTest< gtest_TypeParam_ >::stdInput.begin( ), StableSortArrayTest< gtest_TypeParam_ >::stdInput.end() );
+    typename ArrayCont::difference_type boltNumElements = std::distance( StableSortArrayTest< gtest_TypeParam_ >::boltInput.begin( ), StableSortArrayTest< gtest_TypeParam_ >::boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
+    cmpStdArray< ArrayType, StableSortArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( StableSortArrayTest< gtest_TypeParam_ >::stdInput, StableSortArrayTest< gtest_TypeParam_ >::boltInput );
 
     //OFFSET Test cases
     //  Calling the actual functions under test
     size_t startIndex = 17; //Some aribitrary offset position
-    size_t endIndex   = ArraySize -17; //Some aribitrary offset position
-    if( (( startIndex > ArraySize ) || ( endIndex < 0 ) )  || (startIndex > endIndex) )
+    size_t endIndex   = StableSortArrayTest< gtest_TypeParam_ >::ArraySize -17; //Some aribitrary offset position
+    if( (( startIndex > StableSortArrayTest< gtest_TypeParam_ >::ArraySize ) || ( endIndex < 0 ) )  || (startIndex > endIndex) )
     {
-        std::cout <<"\nSkipping NormalOffset Test for size "<< ArraySize << "\n";
+        std::cout <<"\nSkipping NormalOffset Test for size "<< StableSortArrayTest< gtest_TypeParam_ >::ArraySize << "\n";
     }    
     else
     {
-        std::SORT_FUNC( stdOffsetIn.begin( ) + startIndex, stdOffsetIn.begin( ) + endIndex, std::less< ArrayType >() );
-        bolt::BKND::SORT_FUNC( c_cpu, boltOffsetIn.begin( ) + startIndex, boltOffsetIn.begin( ) + endIndex, bolt::cl::less< ArrayType >( )  );
+        std::SORT_FUNC( StableSortArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin( ) + startIndex, StableSortArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin( ) + endIndex, std::less< ArrayType >() );
+        bolt::BKND::SORT_FUNC( c_cpu, StableSortArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin( ) + startIndex, StableSortArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin( ) + endIndex, bolt::cl::less< ArrayType >( )  );
 
-        ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end( ) );
-        ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end( ) );
+        typename ArrayCont::difference_type stdNumElements = std::distance( StableSortArrayTest< gtest_TypeParam_ >::stdInput.begin( ), StableSortArrayTest< gtest_TypeParam_ >::stdInput.end( ) );
+        typename ArrayCont::difference_type boltNumElements = std::distance( StableSortArrayTest< gtest_TypeParam_ >::boltInput.begin( ), StableSortArrayTest< gtest_TypeParam_ >::boltInput.end( ) );
 
         //  Both collections should have the same number of elements
         EXPECT_EQ( stdNumElements, boltNumElements );
 
         //  Loop through the array and compare all the values with each other
-        cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
+        cmpStdArray< ArrayType, StableSortArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( StableSortArrayTest< gtest_TypeParam_ >::stdInput, StableSortArrayTest< gtest_TypeParam_ >::boltInput );
     }
 }
 #endif
@@ -706,7 +715,7 @@ REGISTER_TYPED_TEST_CASE_P( StableSortArrayTest, Normal, GPU_DeviceNormal,
                                            GreaterFunction, GPU_DeviceGreaterFunction,
                                            LessFunction, GPU_DeviceLessFunction );
 #endif
-*/
+
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Fixture classes are now defined to enable googletest to process value parameterized tests
@@ -1724,7 +1733,7 @@ TEST_P( StableSortDoubleDeviceVector, MulticoreInplace )
 
 #endif
 #endif
-/*
+#if defined(_WIN32)
 TEST_P( StableSortIntegerNakedPointer, Inplace )
 {
     size_t endIndex = GetParam( );
@@ -1896,7 +1905,7 @@ TEST_P( StableSortDoubleNakedPointer, MulticoreInplace )
     //  Loop through the array and compare all the values with each other
     cmpArrays( stdInput, boltInput, endIndex );
 }
-
+#endif
 
 #endif
 std::array<int, 15> TestValues = {2,4,8,16,32,64,128,256,512,1024,2048,4096,8192,16384,32768};
@@ -1937,7 +1946,7 @@ INSTANTIATE_TEST_CASE_P( StableSortRange, StableSortDoubleNakedPointer, ::testin
 INSTANTIATE_TEST_CASE_P( StableSort, StableSortDoubleNakedPointer, ::testing::ValuesIn( TestValues.begin(),
                                                                             TestValues.end() ) );
 #endif
-*/
+
 typedef ::testing::Types< 
     std::tuple< cl_long, TypeValue< 1 > >,
     std::tuple< cl_long, TypeValue< 31 > >,
@@ -2074,7 +2083,7 @@ typedef ::testing::Types<
 > DoubleTests;
 #endif 
 
-/*
+
 
 template< typename ArrayTuple >
 class StableSortUDDArrayTest: public ::testing::Test
@@ -2106,28 +2115,29 @@ TYPED_TEST_CASE_P( StableSortUDDArrayTest );
 
 TYPED_TEST_P( StableSortUDDArrayTest, Normal )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+    typedef typename StableSortUDDArrayTest<gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, StableSortUDDArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont;    
     //  Calling the actual functions under test
 
-    std::SORT_FUNC( stdInput.begin( ), stdInput.end( ), UDD() );
-    bolt::BKND::SORT_FUNC( boltInput.begin( ), boltInput.end( ), UDD() );
+    std::SORT_FUNC( StableSortUDDArrayTest<gtest_TypeParam_ >::stdInput.begin( ), StableSortUDDArrayTest<gtest_TypeParam_ >::stdInput.end( ), UDD() );
+    bolt::BKND::SORT_FUNC( StableSortUDDArrayTest<gtest_TypeParam_ >::boltInput.begin( ), StableSortUDDArrayTest<gtest_TypeParam_ >::boltInput.end( ), UDD() );
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+    typename ArrayCont::difference_type stdNumElements = std::distance( StableSortUDDArrayTest< gtest_TypeParam_ >::stdInput.begin( ), StableSortUDDArrayTest< gtest_TypeParam_ >::stdInput.end() );
+    typename ArrayCont::difference_type boltNumElements = std::distance( StableSortUDDArrayTest< gtest_TypeParam_ >::boltInput.begin( ), StableSortUDDArrayTest< gtest_TypeParam_ >::boltInput.end() );
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
+    cmpStdArray< ArrayType, StableSortUDDArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( StableSortUDDArrayTest< gtest_TypeParam_ >::stdInput, StableSortUDDArrayTest< gtest_TypeParam_ >::boltInput );
 
-    std::SORT_FUNC( stdInput.begin( ), stdInput.end( ), sortBy_UDD_a() );
-    bolt::BKND::SORT_FUNC( boltInput.begin( ), boltInput.end( ), sortBy_UDD_a() );
+    std::SORT_FUNC( StableSortUDDArrayTest< gtest_TypeParam_ >::stdInput.begin( ), StableSortUDDArrayTest< gtest_TypeParam_ >::stdInput.end( ), sortBy_UDD_a() );
+    bolt::BKND::SORT_FUNC( StableSortUDDArrayTest< gtest_TypeParam_ >::boltInput.begin( ), StableSortUDDArrayTest< gtest_TypeParam_ >::boltInput.end( ), sortBy_UDD_a() );
 
-    stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+    stdNumElements = std::distance( StableSortUDDArrayTest< gtest_TypeParam_ >::stdInput.begin( ), StableSortUDDArrayTest< gtest_TypeParam_ >::stdInput.end() );
+    boltNumElements = std::distance( StableSortUDDArrayTest< gtest_TypeParam_ >::boltInput.begin( ), StableSortUDDArrayTest< gtest_TypeParam_ >::boltInput.end() );
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
+    cmpStdArray< ArrayType, StableSortUDDArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( StableSortUDDArrayTest< gtest_TypeParam_ >::stdInput, StableSortUDDArrayTest< gtest_TypeParam_ >::boltInput );
 
 }
 
@@ -2157,7 +2167,7 @@ INSTANTIATE_TYPED_TEST_CASE_P( Double, StableSortArrayTest, DoubleTests );
 #endif 
 REGISTER_TYPED_TEST_CASE_P( StableSortUDDArrayTest,  Normal);
 INSTANTIATE_TYPED_TEST_CASE_P( UDDTest, StableSortUDDArrayTest, UDDTests );
-*/
+
 class withStdVect: public ::testing::TestWithParam<int>{
 protected:
     int sizeOfInputBuffer;
