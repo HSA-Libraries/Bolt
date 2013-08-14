@@ -38,26 +38,43 @@
 #include "common/test_common.h"
 
 
+void testDeviceVector()
+{
+    const int aSize = 64;
+    std::vector<int> hA(aSize), hB(aSize);
+    bolt::cl::device_vector<int> dA(aSize), dB(aSize);
 
-extern void testDeviceVector();
-extern void testTBB();
+    for(int i=0; i<aSize; i++) {
+        hA[i] = i;
+         hB[i] = i;
+         dB[i] = i;
+        dA[i] = i;
+    };
+
+    int hSum = std::inner_product(hA.begin(), hA.end(), hB.begin(), 1);
+
+	int sum = bolt::cl::inner_product(  dA.begin(), dA.end(),
+                                        dB.begin(), 1, bolt::cl::plus<int>(), bolt::cl::multiplies<int>()  );
+};
+
+#if defined(_WIN32)
 // Super-easy windows profiling interface.
 // Move to timing infrastructure when that becomes available.
-__int64 StartProfile() {
-    __int64 begin;
+long long  StartProfile() {
+    long long begin;
     QueryPerformanceCounter((LARGE_INTEGER*)(&begin));
     return begin;
 };
 
-void EndProfile(__int64 start, int numTests, std::string msg) {
-    __int64 end, freq;
+void EndProfile(long long  start, int numTests, std::string msg) {
+    long long  end, freq;
     QueryPerformanceCounter((LARGE_INTEGER*)(&end));
     QueryPerformanceFrequency((LARGE_INTEGER*)(&freq));
     double duration = (end - start)/(double)(freq);
     printf("%s %6.2fs, numTests=%d %6.2fms/test\n", msg.c_str(), duration, numTests, duration*1000.0/numTests);
 };
 
-
+#endif
 /////////////////////////////////////////////////////////////////////////////////////////////
 //  GTEST CASES
 /////////////////////////////////////////////////////////////////////////////////////////////
@@ -86,6 +103,8 @@ T generateRandom()
         return (T)fmod(value, 10.0);
     }
 }
+
+
 //  Test fixture class, used for the Type-parameterized tests
 //  Namely, the tests that use std::array and TYPED_TEST_P macros
 template< typename ArrayTuple >
@@ -111,7 +130,7 @@ public:
 
 protected:
     typedef typename std::tuple_element< 0, ArrayTuple >::type ArrayType;
-    static const size_t ArraySize = typename std::tuple_element< 1, ArrayTuple >::type::value;
+    static const size_t ArraySize =  std::tuple_element< 1, ArrayTuple >::type::value;
     typename std::array< ArrayType, ArraySize > stdInput, boltInput, stdInput2, boltInput2;
     int m_Errors;
 };
@@ -120,74 +139,79 @@ TYPED_TEST_CASE_P( InnerProductArrayTest );
 
 TYPED_TEST_P( InnerProductArrayTest, Normal )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+    typedef typename InnerProductArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, InnerProductArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont;  
+    
     ArrayType init(0);
     //  Calling the actual functions under test
-    ArrayType stlInnerProduct = std::inner_product(stdInput.begin(), stdInput.end(), stdInput2.begin(), init,
+    ArrayType stlInnerProduct = std::inner_product( InnerProductArrayTest< gtest_TypeParam_ >::stdInput.begin(),  InnerProductArrayTest< gtest_TypeParam_ >::stdInput.end(),  InnerProductArrayTest< gtest_TypeParam_ >::stdInput2.begin(), init,
                                                    std::plus<ArrayType>(), std::multiplies<ArrayType>());
 
-    ArrayType boltInnerProduct = bolt::cl::inner_product( boltInput.begin( ),boltInput.end( ),boltInput2.begin( ),init,
+    ArrayType boltInnerProduct = bolt::cl::inner_product(  InnerProductArrayTest< gtest_TypeParam_ >::boltInput.begin( ), InnerProductArrayTest< gtest_TypeParam_ >::boltInput.end( ), InnerProductArrayTest< gtest_TypeParam_ >::boltInput2.begin( ),init,
                                                         bolt::cl::plus<ArrayType>(),bolt::cl::multiplies<ArrayType>());
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+    typename ArrayCont::difference_type stdNumElements = std::distance(  InnerProductArrayTest< gtest_TypeParam_ >::stdInput.begin( ),  InnerProductArrayTest< gtest_TypeParam_ >::stdInput.end() );
+    typename ArrayCont::difference_type boltNumElements = std::distance(  InnerProductArrayTest< gtest_TypeParam_ >::boltInput.begin( ),  InnerProductArrayTest< gtest_TypeParam_ >::boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
     EXPECT_EQ( stlInnerProduct, boltInnerProduct );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput2, boltInput2 );
+    cmpStdArray< ArrayType, InnerProductArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays(  InnerProductArrayTest< gtest_TypeParam_ >::stdInput,  InnerProductArrayTest< gtest_TypeParam_ >::boltInput );
+    cmpStdArray< ArrayType, InnerProductArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays(  InnerProductArrayTest< gtest_TypeParam_ >::stdInput2,  InnerProductArrayTest< gtest_TypeParam_ >::boltInput2 );
 }
 
 TYPED_TEST_P( InnerProductArrayTest, GPU_DeviceNormal )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+        typedef typename InnerProductArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, InnerProductArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont;  
     ArrayType init(0);
     //  Calling the actual functions under test
-    ArrayType stlInnerProduct = std::inner_product(stdInput.begin(), stdInput.end(), stdInput2.begin(), init);
-    ArrayType boltInnerProduct = bolt::cl::inner_product(boltInput.begin( ),boltInput.end( ),boltInput2.begin( ),init);
+    ArrayType stlInnerProduct = std::inner_product( InnerProductArrayTest< gtest_TypeParam_ >::stdInput.begin(),  InnerProductArrayTest< gtest_TypeParam_ >::stdInput.end(),  InnerProductArrayTest< gtest_TypeParam_ >::stdInput2.begin(), init);
+    ArrayType boltInnerProduct = bolt::cl::inner_product( InnerProductArrayTest< gtest_TypeParam_ >::boltInput.begin( ), InnerProductArrayTest< gtest_TypeParam_ >::boltInput.end( ), InnerProductArrayTest< gtest_TypeParam_ >::boltInput2.begin( ),init);
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+    typename ArrayCont::difference_type stdNumElements = std::distance(  InnerProductArrayTest< gtest_TypeParam_ >::stdInput.begin( ),  InnerProductArrayTest< gtest_TypeParam_ >::stdInput.end() );
+    typename ArrayCont::difference_type boltNumElements = std::distance(  InnerProductArrayTest< gtest_TypeParam_ >::boltInput.begin( ),  InnerProductArrayTest< gtest_TypeParam_ >::boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
     EXPECT_EQ( stlInnerProduct, boltInnerProduct );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput2, boltInput2 );
+    cmpStdArray< ArrayType, InnerProductArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays(  InnerProductArrayTest< gtest_TypeParam_ >::stdInput,  InnerProductArrayTest< gtest_TypeParam_ >::boltInput );
+    cmpStdArray< ArrayType, InnerProductArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays(  InnerProductArrayTest< gtest_TypeParam_ >::stdInput2,  InnerProductArrayTest< gtest_TypeParam_ >::boltInput2 );
 
 }
 
 TYPED_TEST_P( InnerProductArrayTest, MultipliesFunction )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+        typedef typename InnerProductArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, InnerProductArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont;  
 
     ArrayType init(0);
     //  Calling the actual functions under test
-    ArrayType stlInnerProduct = std::inner_product( stdInput.begin(), stdInput.end(), stdInput2.begin(), init);
+    ArrayType stlInnerProduct = std::inner_product(  InnerProductArrayTest< gtest_TypeParam_ >::stdInput.begin(),  InnerProductArrayTest< gtest_TypeParam_ >::stdInput.end(),  InnerProductArrayTest< gtest_TypeParam_ >::stdInput2.begin(), init);
 
-    ArrayType boltInnerProduct =bolt::cl::inner_product( boltInput.begin( ),boltInput.end( ),boltInput2.begin( ),init);
+    ArrayType boltInnerProduct =bolt::cl::inner_product(  InnerProductArrayTest< gtest_TypeParam_ >::boltInput.begin( ), InnerProductArrayTest< gtest_TypeParam_ >::boltInput.end( ), InnerProductArrayTest< gtest_TypeParam_ >::boltInput2.begin( ),init);
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+    typename ArrayCont::difference_type stdNumElements = std::distance(  InnerProductArrayTest< gtest_TypeParam_ >::stdInput.begin( ),  InnerProductArrayTest< gtest_TypeParam_ >::stdInput.end() );
+    typename ArrayCont::difference_type boltNumElements = std::distance(  InnerProductArrayTest< gtest_TypeParam_ >::boltInput.begin( ),  InnerProductArrayTest< gtest_TypeParam_ >::boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
     EXPECT_EQ( stlInnerProduct, boltInnerProduct );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput2, boltInput2 );
+    cmpStdArray< ArrayType, InnerProductArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays(  InnerProductArrayTest< gtest_TypeParam_ >::stdInput,  InnerProductArrayTest< gtest_TypeParam_ >::boltInput );
+    cmpStdArray< ArrayType, InnerProductArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays(  InnerProductArrayTest< gtest_TypeParam_ >::stdInput2,  InnerProductArrayTest< gtest_TypeParam_ >::boltInput2 );
     // FIXME - releaseOcl(ocl);
 }
 
 TYPED_TEST_P( InnerProductArrayTest, GPU_DeviceMultipliesFunction )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+        typedef typename InnerProductArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, InnerProductArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont;  
 #if OCL_CONTEXT_BUG_WORKAROUND
     ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control c_gpu( getQueueFromContext(myContext, CL_DEVICE_TYPE_GPU, 0 ));  
@@ -197,26 +221,27 @@ TYPED_TEST_P( InnerProductArrayTest, GPU_DeviceMultipliesFunction )
 #endif
     ArrayType init(0);
     //  Calling the actual functions under test
-    ArrayType stlInnerProduct = std::inner_product(stdInput.begin(), stdInput.end(), stdInput2.begin(), init,
+    ArrayType stlInnerProduct = std::inner_product( InnerProductArrayTest< gtest_TypeParam_ >::stdInput.begin(),  InnerProductArrayTest< gtest_TypeParam_ >::stdInput.end(),  InnerProductArrayTest< gtest_TypeParam_ >::stdInput2.begin(), init,
                                                     std::plus< ArrayType >(), std::multiplies< ArrayType >());
 
-    ArrayType boltInnerProduct = bolt::cl::inner_product( c_gpu,boltInput.begin( ),boltInput.end( ),boltInput2.begin(), 
+    ArrayType boltInnerProduct = bolt::cl::inner_product( c_gpu, InnerProductArrayTest< gtest_TypeParam_ >::boltInput.begin( ), InnerProductArrayTest< gtest_TypeParam_ >::boltInput.end( ), InnerProductArrayTest< gtest_TypeParam_ >::boltInput2.begin(), 
                                                 init, bolt::cl::plus<ArrayType>(), bolt::cl::multiplies<ArrayType>());
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+    typename ArrayCont::difference_type stdNumElements = std::distance(  InnerProductArrayTest< gtest_TypeParam_ >::stdInput.begin( ),  InnerProductArrayTest< gtest_TypeParam_ >::stdInput.end() );
+    typename ArrayCont::difference_type boltNumElements = std::distance(  InnerProductArrayTest< gtest_TypeParam_ >::boltInput.begin( ),  InnerProductArrayTest< gtest_TypeParam_ >::boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
     EXPECT_EQ( stlInnerProduct, boltInnerProduct );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput2, boltInput2 );
+    cmpStdArray< ArrayType, InnerProductArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays(  InnerProductArrayTest< gtest_TypeParam_ >::stdInput,  InnerProductArrayTest< gtest_TypeParam_ >::boltInput );
+    cmpStdArray< ArrayType, InnerProductArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays(  InnerProductArrayTest< gtest_TypeParam_ >::stdInput2,  InnerProductArrayTest< gtest_TypeParam_ >::boltInput2 );
     // FIXME - releaseOcl(ocl);
 }
 REGISTER_TYPED_TEST_CASE_P( InnerProductArrayTest, Normal, GPU_DeviceNormal, 
                                            MultipliesFunction, GPU_DeviceMultipliesFunction );
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Fixture classes are now defined to enable googletest to process value parameterized tests
 //  ::testing::TestWithParam< int > means that GetParam( ) returns int values, which i use for array size
@@ -404,35 +429,6 @@ TEST( InnerProductStdVectWithInit, withIntWdInitWithStdPlusMinus)
     EXPECT_EQ(stlInnerProduct, boltInnerProduct);
 }
 
-TEST( InnerProductStdVectWithInit, OffsetwithIntWdInitWithStdPlusMinus)
-{
-    //int mySize = 10;
-    int init = 10;
-    size_t mySize = 1<<16;
-    std::vector<int> stdInput (mySize);
-    std::vector<int> stdInput2 (mySize);
-
-    std::vector<int> boltInput (mySize);
-    std::vector<int> boltInput2 (mySize);
-
-    for (int i = 0; i < mySize; ++i){
-        stdInput[i] = i;
-        stdInput2[i] = i+1;
-        boltInput[i] = stdInput[i];
-        boltInput2[i] = stdInput2[i];
-    }
-    
-    int offset = 10;
-    //  Calling the actual functions under test
-    int stlInnerProduct = std::inner_product(stdInput.begin() + offset, stdInput.end(), stdInput2.begin(),init,
-                                             std::plus<int>(), std::minus<int>() );
-    int boltInnerProduct= bolt::cl::inner_product( boltInput.begin( ) + offset, boltInput.end( ), boltInput2.begin(), 
-                                                   init, bolt::cl::plus<int>(), bolt::cl::minus<int>());
-
-    EXPECT_EQ(stlInnerProduct, boltInnerProduct);
-}
-
-
 TEST( CPUInnerProductStdVectWithInit, withIntWdInitWithStdPlusMinus)
 {
     //int mySize = 10;
@@ -464,38 +460,6 @@ TEST( CPUInnerProductStdVectWithInit, withIntWdInitWithStdPlusMinus)
     EXPECT_EQ(stlInnerProduct, boltInnerProduct);
 }
 
-TEST( CPUInnerProductStdVectWithInit, OffsetwithIntWdInitWithStdPlusMinus)
-{
-    //int mySize = 10;
-    int init = 10;
-    size_t mySize = 1<<16;
-    std::vector<int> stdInput (mySize);
-    std::vector<int> stdInput2 (mySize);
-
-    std::vector<int> boltInput (mySize);
-    std::vector<int> boltInput2 (mySize);
-
-    for (int i = 0; i < mySize; ++i){
-        stdInput[i] = i;
-        stdInput2[i] = i+1;
-        boltInput[i] = stdInput[i];
-        boltInput2[i] = stdInput2[i];
-    }
-    
-    int offset = 10;
-
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
-    
-    //  Calling the actual functions under test
-    int stlInnerProduct = std::inner_product(stdInput.begin() + offset,stdInput.end(), stdInput2.begin(),init, std::plus<int>(), 
-                                             std::minus<int>() );
-    int boltInnerProduct= bolt::cl::inner_product(ctl, boltInput.begin( ) + offset, boltInput.end( ), boltInput2.begin(), 
-                                                  init, bolt::cl::plus<int>(), bolt::cl::minus<int>());
-
-    EXPECT_EQ(stlInnerProduct, boltInnerProduct);
-}
-
 TEST( MultiCoreInnerProductStdVectWithInit, withIntWdInitWithStdPlusMinus)
 {
     //int mySize = 10;
@@ -514,6 +478,7 @@ TEST( MultiCoreInnerProductStdVectWithInit, withIntWdInitWithStdPlusMinus)
         boltInput2[i] = stdInput2[i];
     }
     
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
     
@@ -522,398 +487,6 @@ TEST( MultiCoreInnerProductStdVectWithInit, withIntWdInitWithStdPlusMinus)
                                               std::minus<int>() );
     int boltInnerProduct= bolt::cl::inner_product(ctl, boltInput.begin( ), boltInput.end( ), boltInput2.begin(),
                                                   init, bolt::cl::plus<int>(), bolt::cl::minus<int>());
-
-    EXPECT_EQ(stlInnerProduct, boltInnerProduct);
-}
-
-TEST( MultiCoreInnerProductStdVectWithInit, OffsetwithIntWdInitWithStdPlusMinus)
-{
-    //int mySize = 10;
-    int init = 10;
-    size_t mySize = 1<<16;
-    std::vector<int> stdInput (mySize);
-    std::vector<int> stdInput2 (mySize);
-
-    std::vector<int> boltInput (mySize);
-    std::vector<int> boltInput2 (mySize);
-
-    for (int i = 0; i < mySize; ++i){
-        stdInput[i] = i;
-        stdInput2[i] = i+1;
-        boltInput[i] = stdInput[i];
-        boltInput2[i] = stdInput2[i];
-    }
-    
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
-    
-    int offset = 10;
-
-    //  Calling the actual functions under test
-    int stlInnerProduct = std::inner_product(stdInput.begin() + offset, stdInput.end(), stdInput2.begin(),init,std::plus<int>(),
-                                              std::minus<int>() );
-    int boltInnerProduct= bolt::cl::inner_product(ctl, boltInput.begin( ) + offset, boltInput.end( ), boltInput2.begin(),
-                                                  init, bolt::cl::plus<int>(), bolt::cl::minus<int>());
-
-    EXPECT_EQ(stlInnerProduct, boltInnerProduct);
-}
-
-TEST( InnerProductUStdVectWithInit, withIntWdInitWithStdPlusMinus)
-{
-    //int mySize = 10;
-    unsigned int init = 10;
-    size_t mySize = 1<<16;
-    std::vector<unsigned int> stdInput (mySize);
-    std::vector<unsigned int> stdInput2 (mySize);
-
-    std::vector<unsigned int> boltInput (mySize);
-    std::vector<unsigned int> boltInput2 (mySize);
-
-    for (int i = 0; i < mySize; ++i){
-        stdInput[i] = i;
-        stdInput2[i] = i+1;
-        boltInput[i] = stdInput[i];
-        boltInput2[i] = stdInput2[i];
-    }
-    
-    //  Calling the actual functions under test
-    unsigned int stlInnerProduct = std::inner_product(stdInput.begin(), stdInput.end(), stdInput2.begin(),init,
-                                             std::plus<unsigned int>(), std::minus<unsigned int>() );
-    unsigned int boltInnerProduct= bolt::cl::inner_product( boltInput.begin( ), boltInput.end( ), boltInput2.begin(), 
-                                                   init, bolt::cl::plus<unsigned int>(), bolt::cl::minus<unsigned int>());
-
-    EXPECT_EQ(stlInnerProduct, boltInnerProduct);
-}
-
-TEST( InnerProductUStdVectWithInit, OffsetwithIntWdInitWithStdPlusMinus)
-{
-    //int mySize = 10;
-    unsigned int init = 10;
-    size_t mySize = 1<<16;
-    std::vector<unsigned int> stdInput (mySize);
-    std::vector<unsigned int> stdInput2 (mySize);
-
-    std::vector<unsigned int> boltInput (mySize);
-    std::vector<unsigned int> boltInput2 (mySize);
-
-    for (int i = 0; i < mySize; ++i){
-        stdInput[i] = i;
-        stdInput2[i] = i+1;
-        boltInput[i] = stdInput[i];
-        boltInput2[i] = stdInput2[i];
-    }
-    
-    int offset = 10;
-    //  Calling the actual functions under test
-    unsigned int stlInnerProduct = std::inner_product(stdInput.begin()+offset, stdInput.end(), stdInput2.begin(),init,
-                                             std::plus<unsigned int>(), std::minus<unsigned int>() );
-    unsigned int boltInnerProduct= bolt::cl::inner_product( boltInput.begin( )+offset, boltInput.end( ), boltInput2.begin(), 
-                                                   init, bolt::cl::plus<unsigned int>(), bolt::cl::minus<unsigned int>());
-
-    EXPECT_EQ(stlInnerProduct, boltInnerProduct);
-}
-
-TEST( CPUInnerProductUStdVectWithInit, withIntWdInitWithStdPlusMinus)
-{
-    //int mySize = 10;
-    unsigned int init = 10;
-    size_t mySize = 1<<16;
-    std::vector<unsigned int> stdInput (mySize);
-    std::vector<unsigned int> stdInput2 (mySize);
-
-    std::vector<unsigned int> boltInput (mySize);
-    std::vector<unsigned int> boltInput2 (mySize);
-
-    for (int i = 0; i < mySize; ++i){
-        stdInput[i] = i;
-        stdInput2[i] = i+1;
-        boltInput[i] = stdInput[i];
-        boltInput2[i] = stdInput2[i];
-    }
-    
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
-    
-    //  Calling the actual functions under test
-    unsigned int stlInnerProduct = std::inner_product(stdInput.begin(),stdInput.end(), stdInput2.begin(),init, std::plus<unsigned int>(), 
-                                             std::minus<unsigned int>() );
-    unsigned int boltInnerProduct= bolt::cl::inner_product(ctl, boltInput.begin( ), boltInput.end( ), boltInput2.begin(), 
-                                                  init, bolt::cl::plus<unsigned int>(), bolt::cl::minus<unsigned int>());
-
-    EXPECT_EQ(stlInnerProduct, boltInnerProduct);
-}
-
-TEST( CPUInnerProductUStdVectWithInit, OffsetwithIntWdInitWithStdPlusMinus)
-{
-    //int mySize = 10;
-    unsigned int init = 10;
-    size_t mySize = 1<<16;
-    std::vector<unsigned int> stdInput (mySize);
-    std::vector<unsigned int> stdInput2 (mySize);
-
-    std::vector<unsigned int> boltInput (mySize);
-    std::vector<unsigned int> boltInput2 (mySize);
-
-    for (int i = 0; i < mySize; ++i){
-        stdInput[i] = i;
-        stdInput2[i] = i+1;
-        boltInput[i] = stdInput[i];
-        boltInput2[i] = stdInput2[i];
-    }
-    
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
-    
-    int offset = 10;
-
-    //  Calling the actual functions under test
-    unsigned int stlInnerProduct = std::inner_product(stdInput.begin()+offset,stdInput.end(), stdInput2.begin(),init, std::plus<unsigned int>(), 
-                                             std::minus<unsigned int>() );
-    unsigned int boltInnerProduct= bolt::cl::inner_product(ctl, boltInput.begin( )+offset, boltInput.end( ), boltInput2.begin(), 
-                                                  init, bolt::cl::plus<unsigned int>(), bolt::cl::minus<unsigned int>());
-
-    EXPECT_EQ(stlInnerProduct, boltInnerProduct);
-}
-
-TEST( MultiCoreInnerProductUStdVectWithInit, withIntWdInitWithStdPlusMinus)
-{
-    //int mySize = 10;
-    unsigned int init = 10;
-    size_t mySize = 1<<16;
-    std::vector<unsigned int> stdInput (mySize);
-    std::vector<unsigned int> stdInput2 (mySize);
-
-    std::vector<unsigned int> boltInput (mySize);
-    std::vector<unsigned int> boltInput2 (mySize);
-
-    for (int i = 0; i < mySize; ++i){
-        stdInput[i] = i;
-        stdInput2[i] = i+1;
-        boltInput[i] = stdInput[i];
-        boltInput2[i] = stdInput2[i];
-    }
-
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
-    
-    //  Calling the actual functions under test
-    unsigned int stlInnerProduct = std::inner_product(stdInput.begin(), stdInput.end(), stdInput2.begin(),init,std::plus<unsigned int>(),
-                                              std::minus<unsigned int>() );
-    unsigned int boltInnerProduct= bolt::cl::inner_product(ctl, boltInput.begin( ), boltInput.end( ), boltInput2.begin(),
-                                                  init, bolt::cl::plus<unsigned int>(), bolt::cl::minus<unsigned int>());
-
-    EXPECT_EQ(stlInnerProduct, boltInnerProduct);
-}
-
-TEST( MultiCoreInnerProductUStdVectWithInit, OffsetwithIntWdInitWithStdPlusMinus)
-{
-    //int mySize = 10;
-    unsigned int init = 10;
-    size_t mySize = 1<<16;
-    std::vector<unsigned int> stdInput (mySize);
-    std::vector<unsigned int> stdInput2 (mySize);
-
-    std::vector<unsigned int> boltInput (mySize);
-    std::vector<unsigned int> boltInput2 (mySize);
-
-    for (int i = 0; i < mySize; ++i){
-        stdInput[i] = i;
-        stdInput2[i] = i+1;
-        boltInput[i] = stdInput[i];
-        boltInput2[i] = stdInput2[i];
-    }
-    
-    int offset = 10;
-
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
-    
-    //  Calling the actual functions under test
-    unsigned int stlInnerProduct = std::inner_product(stdInput.begin() + offset, stdInput.end(), stdInput2.begin(),init,std::plus<unsigned int>(),
-                                              std::minus<unsigned int>() );
-    unsigned int boltInnerProduct= bolt::cl::inner_product(ctl, boltInput.begin( ) + offset, boltInput.end( ), boltInput2.begin(),
-                                                  init, bolt::cl::plus<unsigned int>(), bolt::cl::minus<unsigned int>());
-
-    EXPECT_EQ(stlInnerProduct, boltInnerProduct);
-}
-
-
-TEST( InnerProductFloatStdVectWithInit, withIntWdInitWithStdPlusMinus)
-{
-    //int mySize = 10;
-    float init = 10.5;
-    size_t mySize = 1<<16;
-    std::vector<float> stdInput (mySize);
-    std::vector<float> stdInput2 (mySize);
-
-    std::vector<float> boltInput (mySize);
-    std::vector<float> boltInput2 (mySize);
-
-    for (int i = 0; i < mySize; ++i){
-        stdInput[i] = (float) i;
-        stdInput2[i] = (float) i+1;
-        boltInput[i] = stdInput[i];
-        boltInput2[i] = stdInput2[i];
-    }
-    
-    //  Calling the actual functions under test
-    float stlInnerProduct = std::inner_product(stdInput.begin(), stdInput.end(), stdInput2.begin(),init,
-                                             std::plus<float>(), std::minus<float>() );
-    float boltInnerProduct= bolt::cl::inner_product( boltInput.begin( ), boltInput.end( ), boltInput2.begin(), 
-                                                   init, bolt::cl::plus< float>(), bolt::cl::minus< float>());
-
-    EXPECT_EQ(stlInnerProduct, boltInnerProduct);
-}
-
-TEST( InnerProductFloatStdVectWithInit, OffsetwithIntWdInitWithStdPlusMinus)
-{
-    //int mySize = 10;
-    float init = 10.5;
-    size_t mySize = 1<<16;
-    std::vector<float> stdInput (mySize);
-    std::vector<float> stdInput2 (mySize);
-
-    std::vector<float> boltInput (mySize);
-    std::vector<float> boltInput2 (mySize);
-
-    for (int i = 0; i < mySize; ++i){
-        stdInput[i] = (float) i;
-        stdInput2[i] = (float) i+1;
-        boltInput[i] = stdInput[i];
-        boltInput2[i] = stdInput2[i];
-    }
-    
-    int offset = 10;
-
-    //  Calling the actual functions under test
-    float stlInnerProduct = std::inner_product(stdInput.begin() + offset, stdInput.end(), stdInput2.begin(),init,
-                                             std::plus<float>(), std::minus<float>() );
-    float boltInnerProduct= bolt::cl::inner_product( boltInput.begin( ) + offset, boltInput.end( ), boltInput2.begin(), 
-                                                   init, bolt::cl::plus< float>(), bolt::cl::minus< float>());
-
-    EXPECT_EQ(stlInnerProduct, boltInnerProduct);
-}
-
-TEST( CPUInnerProductFloatStdVectWithInit, withIntWdInitWithStdPlusMinus)
-{
-    //int mySize = 10;
-    float init = 10.5;
-    size_t mySize = 1<<16;
-    std::vector<float> stdInput (mySize);
-    std::vector<float> stdInput2 (mySize);
-
-    std::vector<float> boltInput (mySize);
-    std::vector<float> boltInput2 (mySize);
-
-    for (int i = 0; i < mySize; ++i){
-        stdInput[i] = (float) i ;
-        stdInput2[i] = (float) i+1;
-        boltInput[i] = stdInput[i];
-        boltInput2[i] = stdInput2[i];
-    }
-    
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
-    
-    //  Calling the actual functions under test
-    float stlInnerProduct = std::inner_product(stdInput.begin(),stdInput.end(), stdInput2.begin(),init, std::plus<float>(), 
-                                             std::minus<float>() );
-    float boltInnerProduct= bolt::cl::inner_product(ctl, boltInput.begin( ), boltInput.end( ), boltInput2.begin(), 
-                                                  init, bolt::cl::plus<float>(), bolt::cl::minus<float>());
-
-    EXPECT_EQ(stlInnerProduct, boltInnerProduct);
-}
-
-TEST( CPUInnerProductFloatStdVectWithInit, OffsetwithIntWdInitWithStdPlusMinus)
-{
-    //int mySize = 10;
-    float init = 10.5;
-    size_t mySize = 1<<16;
-    std::vector<float> stdInput (mySize);
-    std::vector<float> stdInput2 (mySize);
-
-    std::vector<float> boltInput (mySize);
-    std::vector<float> boltInput2 (mySize);
-
-    for (int i = 0; i < mySize; ++i){
-        stdInput[i] = (float) i ;
-        stdInput2[i] = (float) i+1;
-        boltInput[i] = stdInput[i];
-        boltInput2[i] = stdInput2[i];
-    }
-    
-    int offset = 10;
-
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
-    
-    //  Calling the actual functions under test
-    float stlInnerProduct = std::inner_product(stdInput.begin() + offset,stdInput.end(), stdInput2.begin(),init, std::plus<float>(), 
-                                             std::minus<float>() );
-     float boltInnerProduct= bolt::cl::inner_product(ctl, boltInput.begin( ) + offset, boltInput.end( ), boltInput2.begin(), 
-                                                  init, bolt::cl::plus<float>(), bolt::cl::minus<float>());
-
-    EXPECT_EQ(stlInnerProduct, boltInnerProduct);
-}
-
-TEST( MultiCoreInnerProductFloatStdVectWithInit, withIntWdInitWithStdPlusMinus)
-{
-    //int mySize = 10;
-    float init = 10.5;
-    size_t mySize = 1<<16;
-    std::vector< float> stdInput (mySize);
-    std::vector< float> stdInput2 (mySize);
-
-    std::vector< float> boltInput (mySize);
-    std::vector< float> boltInput2 (mySize);
-
-    for (int i = 0; i < mySize; ++i){
-        stdInput[i] =(float) i;
-        stdInput2[i] = (float) i+1;
-        boltInput[i] = stdInput[i];
-        boltInput2[i] = stdInput2[i];
-    }
-    
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
-    
-    //  Calling the actual functions under test
-    float stlInnerProduct = std::inner_product(stdInput.begin(), stdInput.end(), stdInput2.begin(),init,std::plus< float>(),
-                                              std::minus< float>() );
-    float boltInnerProduct= bolt::cl::inner_product(ctl, boltInput.begin( ), boltInput.end( ), boltInput2.begin(),
-                                                  init, bolt::cl::plus< float>(), bolt::cl::minus< float>());
-
-    EXPECT_EQ(stlInnerProduct, boltInnerProduct);
-}
-
-TEST( MultiCoreInnerProductFloatStdVectWithInit, OffsetwithIntWdInitWithStdPlusMinus)
-{
-    //int mySize = 10;
-    float init = 10.5;
-    size_t mySize = 1<<16;
-    std::vector< float> stdInput (mySize);
-    std::vector< float> stdInput2 (mySize);
-
-    std::vector< float> boltInput (mySize);
-    std::vector< float> boltInput2 (mySize);
-
-    for (int i = 0; i < mySize; ++i){
-        stdInput[i] =(float) i;
-        stdInput2[i] = (float) i+1;
-        boltInput[i] = stdInput[i];
-        boltInput2[i] = stdInput2[i];
-    }
-    
-    int offset = 10;
-
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
-    
-    //  Calling the actual functions under test
-    float stlInnerProduct = std::inner_product(stdInput.begin() + offset, stdInput.end(), stdInput2.begin(),init,std::plus< float>(),
-                                              std::minus< float>() );
-    float boltInnerProduct= bolt::cl::inner_product(ctl, boltInput.begin( ) + offset, boltInput.end( ), boltInput2.begin(),
-                                                  init, bolt::cl::plus< float>(), bolt::cl::minus< float>());
 
     EXPECT_EQ(stlInnerProduct, boltInnerProduct);
 }
@@ -1490,41 +1063,6 @@ TEST( InnerProductUDD , UDDPlusOperatorInts )
 
 }
 
-TEST( InnerProductUDD , OffsetUDDPlusOperatorInts )
-{
-    //setup containers
-    int length = 1024;
-    std::vector< UDD > refInput( length );
-    std::vector< UDD > refInput2( length );
-    for( int i = 0; i < length ; i++ )
-    {
-      refInput[i].a = refInput2[i].a = i;
-      refInput[i].b = refInput2[i].b = i+1;
-    }
-    bolt::cl::device_vector< UDD >input( refInput.begin(), refInput.end() );
-    bolt::cl::device_vector< UDD >input2( refInput2.begin(), refInput2.end() );
-
-    UDD UDDzero;
-    UDDzero.a = 0;
-    UDDzero.b = 0;
-
-    // call InnerProduct
-    UDDmul mulOp;
-    UDDplus plusOp;
-
-    int offset = 60;
-
-    //bolt::cl::multiplies< UDD > mulOp;
-    //bolt::cl::plus< UDD > plusOp;
-    UDD stdInnerProduct =  std::inner_product( refInput.begin() + offset, refInput.end(), refInput2.begin(), 
-                                               UDDzero, plusOp, mulOp );
-    UDD boltInnerProduct = bolt::cl::inner_product( input.begin() + offset, input.end(), input2.begin(),
-                                                    UDDzero, plusOp , mulOp);
-
-    EXPECT_EQ(boltInnerProduct,stdInnerProduct);
-
-}
-
 TEST( InnerProductUDD , CPU_UDDPlusOperatorInts )
 {
     //setup containers
@@ -1547,6 +1085,7 @@ TEST( InnerProductUDD , CPU_UDDPlusOperatorInts )
     UDDmul mulOp;
     UDDplus plusOp;
 
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -1555,118 +1094,6 @@ TEST( InnerProductUDD , CPU_UDDPlusOperatorInts )
     UDD stdInnerProduct =  std::inner_product( refInput.begin(), refInput.end(), refInput2.begin(), 
                                                UDDzero, plusOp, mulOp );
     UDD boltInnerProduct = bolt::cl::inner_product( ctl, input.begin(), input.end(), input2.begin(),
-                                                    UDDzero, plusOp , mulOp);
-
-    EXPECT_EQ(boltInnerProduct,stdInnerProduct);
-
-}
-
-TEST( InnerProductUDD , Offset_CPU_UDDPlusOperatorInts )
-{
-    //setup containers
-    int length = 1024;
-    std::vector< UDD > refInput( length );
-    std::vector< UDD > refInput2( length );
-    for( int i = 0; i < length ; i++ )
-    {
-      refInput[i].a = refInput2[i].a = i;
-      refInput[i].b = refInput2[i].b = i+1;
-    }
-    bolt::cl::device_vector< UDD >input( refInput.begin(), refInput.end() );
-    bolt::cl::device_vector< UDD >input2( refInput2.begin(), refInput2.end() );
-
-    UDD UDDzero;
-    UDDzero.a = 0;
-    UDDzero.b = 0;
-
-    // call InnerProduct
-    UDDmul mulOp;
-    UDDplus plusOp;
-
-    int offset = 80;
-
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
-
-    //bolt::cl::multiplies< UDD > mulOp;
-    //bolt::cl::plus< UDD > plusOp;
-    UDD stdInnerProduct =  std::inner_product( refInput.begin() + offset, refInput.end(), refInput2.begin(), 
-                                               UDDzero, plusOp, mulOp );
-    UDD boltInnerProduct = bolt::cl::inner_product( ctl, input.begin() + offset, input.end(), input2.begin(),
-                                                    UDDzero, plusOp , mulOp);
-
-    EXPECT_EQ(boltInnerProduct,stdInnerProduct);
-
-}
-
-TEST( InnerProductUDD , MultiCore_UDDPlusOperatorInts )
-{
-    //setup containers
-    int length = 1024;
-    std::vector< UDD > refInput( length );
-    std::vector< UDD > refInput2( length );
-    for( int i = 0; i < length ; i++ )
-    {
-      refInput[i].a = refInput2[i].a = i;
-      refInput[i].b = refInput2[i].b = i+1;
-    }
-    bolt::cl::device_vector< UDD >input( refInput.begin(), refInput.end() );
-    bolt::cl::device_vector< UDD >input2( refInput2.begin(), refInput2.end() );
-
-    UDD UDDzero;
-    UDDzero.a = 0;
-    UDDzero.b = 0;
-
-    // call InnerProduct
-    UDDmul mulOp;
-    UDDplus plusOp;
-
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
-
-    //bolt::cl::multiplies< UDD > mulOp;
-    //bolt::cl::plus< UDD > plusOp;
-    UDD stdInnerProduct =  std::inner_product( refInput.begin(), refInput.end(), refInput2.begin(), 
-                                               UDDzero, plusOp, mulOp );
-    UDD boltInnerProduct = bolt::cl::inner_product( ctl, input.begin(), input.end(), input2.begin(),
-                                                    UDDzero, plusOp , mulOp);
-
-    EXPECT_EQ(boltInnerProduct,stdInnerProduct);
-
-}
-
-TEST( InnerProductUDD , Offset_MultiCore_UDDPlusOperatorInts )
-{
-    //setup containers
-    int length = 1024;
-    std::vector< UDD > refInput( length );
-    std::vector< UDD > refInput2( length );
-    for( int i = 0; i < length ; i++ )
-    {
-      refInput[i].a = refInput2[i].a = i;
-      refInput[i].b = refInput2[i].b = i+1;
-    }
-    bolt::cl::device_vector< UDD >input( refInput.begin(), refInput.end() );
-    bolt::cl::device_vector< UDD >input2( refInput2.begin(), refInput2.end() );
-
-    UDD UDDzero;
-    UDDzero.a = 0;
-    UDDzero.b = 0;
-
-    // call InnerProduct
-    UDDmul mulOp;
-    UDDplus plusOp;
-
-    int offset = 80;
-
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
-
-    //bolt::cl::multiplies< UDD > mulOp;
-    //bolt::cl::plus< UDD > plusOp;
-    UDD stdInnerProduct =  std::inner_product( refInput.begin() + offset, refInput.end(), refInput2.begin(), 
-                                               UDDzero, plusOp, mulOp );
-    UDD boltInnerProduct = bolt::cl::inner_product( ctl, input.begin() + offset, input.end(), input2.begin(),
                                                     UDDzero, plusOp , mulOp);
 
     EXPECT_EQ(boltInnerProduct,stdInnerProduct);
@@ -1758,6 +1185,44 @@ TEST( InnerProductOffset , HostVectorOffsetSerialCpu )
                                                0, std::plus<int>(), std::multiplies<int>() );
     int boltInnerProduct = bolt::cl::inner_product( ctl, refInput.begin() + 60, refInput.end(), refInput2.begin() + 60,
                                                     0, bolt::cl::plus<int>() , bolt::cl::multiplies<int>() );
+
+    EXPECT_EQ(boltInnerProduct,stdInnerProduct);
+
+}
+
+
+TEST( InnerProductUDD , MultiCore_UDDPlusOperatorInts )
+{
+    //setup containers
+    int length = 1024;
+    std::vector< UDD > refInput( length );
+    std::vector< UDD > refInput2( length );
+    for( int i = 0; i < length ; i++ )
+    {
+      refInput[i].a = refInput2[i].a = i;
+      refInput[i].b = refInput2[i].b = i+1;
+    }
+    bolt::cl::device_vector< UDD >input( refInput.begin(), refInput.end() );
+    bolt::cl::device_vector< UDD >input2( refInput2.begin(), refInput2.end() );
+
+    UDD UDDzero;
+    UDDzero.a = 0;
+    UDDzero.b = 0;
+
+    // call InnerProduct
+    UDDmul mulOp;
+    UDDplus plusOp;
+
+    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    //bolt::cl::multiplies< UDD > mulOp;
+    //bolt::cl::plus< UDD > plusOp;
+    UDD stdInnerProduct =  std::inner_product( refInput.begin(), refInput.end(), refInput2.begin(),
+                                               UDDzero, plusOp, mulOp );
+    UDD boltInnerProduct = bolt::cl::inner_product( ctl, input.begin(), input.end(), input2.begin(),
+                                                    UDDzero, plusOp , mulOp);
 
     EXPECT_EQ(boltInnerProduct,stdInnerProduct);
 
@@ -1878,7 +1343,10 @@ void InProdDV()
     bolt::cl::device_vector<int> dA(aSize), dB(aSize);
 
     for(int i=0; i<aSize; i++) {
-        hA[i] = hB[i] = dB[i] = dA[i] = i;
+        hA[i] = i;
+        hB[i] = i;
+        dB[i] = i;
+        dA[i] = i;
     };
 
     int hSum = std::inner_product(hA.begin(), hA.end(), hB.begin(), 1);
@@ -1913,7 +1381,7 @@ int _tmain(int argc, _TCHAR* argv[])
     ::testing::InitGoogleTest( &argc, &argv[ 0 ] );
 
     //  Register our minidump generating logic
-    bolt::miniDumpSingleton::enableMiniDumps( );
+    //bolt::miniDumpSingleton::enableMiniDumps( );
 
     int retVal = RUN_ALL_TESTS( );
 

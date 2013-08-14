@@ -79,12 +79,20 @@
  * Note that the TypeName trait must be defined exactly once for each functor class used
  * in a Bolt API.
  */
+/*
+template<typename T>
+struct foobar : std::false_type
+{ };
+
+*/
 template< typename TypeNameType >
 struct TypeName
 {
     static std::string get()
     {
-        static_assert( false, "Bolt< error >: Unknown typename; define missing TypeName with Bolt provided macro's" );
+        static_assert( sizeof(TypeNameType) == 0  , "Bolt< error >: Unknown typename; define missing TypeName with Bolt provided macro's" );
+//	return "";
+
     }
 };
 
@@ -144,12 +152,12 @@ struct ClCode
                                         static void addDependency(std::string s) { dependencies.push_back(s); }; \
                                         static std::string getDependingCodeString() { \
                                             std::string c;\
-                                            for (std::vector<std::string>::iterator i = dependencies.begin(); i != dependencies.end(); i++) { c = c + *i; } \
+                                            for (std::vector< std::string >::iterator i = dependencies.begin(); i != dependencies.end(); i++) { c = c + *i; } \
                                             return c; \
                                         };\
                                         static std::string getCodeString() { return CODE_STRING; }; \
                                         static std::string get() { return getDependingCodeString() + getCodeString(); }; };\
-__declspec( selectany ) std::vector<std::string> ClCode< Type >::dependencies; 
+ std::vector< std::string > ClCode< Type >::dependencies; 
 
 /*!
  * \brief This macro specializes a template with a new type using the template definition of a previously defined

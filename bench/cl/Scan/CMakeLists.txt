@@ -17,7 +17,7 @@
 
 # List the names of common files to compile across all platforms
 set( clBolt.Bench.Scan.Source stdafx.cpp Scan.cpp )
-set( clBolt.Bench.Scan.Headers stdafx.h targetver.h ${BOLT_INCLUDE_DIR}/bolt/cl/Scan.h )
+set( clBolt.Bench.Scan.Headers stdafx.h targetver.h ${BOLT_INCLUDE_DIR}/bolt/cl/scan.h )
 
 set( clBolt.Bench.Scan.Files ${clBolt.Bench.Scan.Source} ${clBolt.Bench.Scan.Headers} )
 

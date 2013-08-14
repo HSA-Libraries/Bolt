@@ -105,26 +105,27 @@ namespace cl {
         typedef const T& reference;
     };
 
+/*
     template< typename newTag, typename InputIterator >
     InputIterator retag( InputIterator )
     {
         switch( iterator_traits< InputIterator >::iterator_category( ) )
         {
-            case std::input_iterator_tag:
+            case std::input_iterator_tag :
                 return input_iterator_tag( );
-            case std::output_iterator_tag:
+            case std::output_iterator_tag :
                 return output_iterator_tag( );
-            case std::forward_iterator_tag:
+            case std::forward_iterator_tag :
                 return forward_iterator_tag( );
-            case std::bidirectional_iterator_tag:
+            case std::bidirectional_iterator_tag :
                 return bidirectional_iterator_tag( );
-            case std::random_access_iterator_tag:
+            case std::random_access_iterator_tag :
                 return random_access_iterator_tag( );
         }
 
         return iter;
     }
-
+*/
 }
 };
 

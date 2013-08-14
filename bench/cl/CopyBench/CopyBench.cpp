@@ -23,7 +23,7 @@
 #include "CL/cl.hpp"
 
 #define NOMINMAX
-#include <tchar.h>
+#include <bolt/unicode.h>
 #include <algorithm>
 #include <iomanip>
 

@@ -61,11 +61,31 @@ namespace bolt{
 
            };
 
+ template<typename RandomAccessIterator, typename StrictWeakOrdering>
+        void Parallel_Merge_Sort(RandomAccessIterator beg, RandomAccessIterator end,  StrictWeakOrdering comp)
+       {
+               if (end - beg > 1)
+               {
+                     RandomAccessIterator mid = beg + (end - beg) / 2;
+
+                      tbb::parallel_invoke(
+                        [&] { Parallel_Merge_Sort( beg, mid, comp); }, 
+                        [&] { Parallel_Merge_Sort( mid, end, comp); }  
+                      );
+
+                     std::inplace_merge(beg, mid, end, comp);
+               }
+           
+       }
+
+
            template<typename RandomAccessIterator, typename StrictWeakOrdering>
            struct StableSort_comp
            {
 
                StableSort_comp () {}  
+
+
 
                void operator() (RandomAccessIterator first, RandomAccessIterator last, StrictWeakOrdering comp )
                {
@@ -78,21 +98,7 @@ namespace bolt{
                     
                }    
 
-                void Parallel_Merge_Sort(RandomAccessIterator beg, RandomAccessIterator end,  StrictWeakOrdering comp)
-               {
-                       if (end - beg > 1)
-                       {
-                             RandomAccessIterator mid = beg + (end - beg) / 2;
 
-                              tbb::parallel_invoke(
-                                [&] { Parallel_Merge_Sort( beg, mid, comp); }, 
-                                [&] { Parallel_Merge_Sort( mid, end, comp); }  
-                              );
-
-                             std::inplace_merge(beg, mid, end, comp);
-                       }
-                   
-               }
 
            };
 

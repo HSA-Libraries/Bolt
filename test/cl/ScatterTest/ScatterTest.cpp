@@ -4019,7 +4019,7 @@ TEST( HostMemory_Int, Scatter_comp_Boost )
     std::vector<int> input ( n_input, n_input + 10 );
     std::vector<int> map ( n_map, n_map + 10 );	
 
-    boost::transform( input,boost::make_permutation_iterator( exp_result.begin(), map.begin() ),std::identity<int>( ) );
+    boost::transform( input,boost::make_permutation_iterator( exp_result.begin(), map.begin() ),bolt::cl::identity<int>( ) );
     bolt::cl::scatter( input.begin(), input.end(), map.begin(), result.begin() );
     //for(int i=0; i<10 ; i++){ std::cout<<result[ i ]<<std::endl; }
     EXPECT_EQ(exp_result, result);
@@ -4036,7 +4036,7 @@ TEST( HostMemory_Int, SerialScatter_comp_Boost )
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
     
-    boost::transform( input,boost::make_permutation_iterator( exp_result.begin(), map.begin() ),std::identity<int>( ) );
+    boost::transform( input,boost::make_permutation_iterator( exp_result.begin(), map.begin() ),bolt::cl::identity<int>( ) );
     bolt::cl::scatter(ctl, input.begin(), input.end(), map.begin(), result.begin() );
     //for(int i=0; i<10 ; i++){ std::cout<<result[ i ]<<std::endl; }
     EXPECT_EQ(exp_result, result);
@@ -4054,7 +4054,7 @@ TEST( HostMemory_Int, MulticoreScatter_comp_Boost )
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
-    boost::transform( input,boost::make_permutation_iterator( exp_result.begin(), map.begin() ),std::identity<int>( ) );
+    boost::transform( input,boost::make_permutation_iterator( exp_result.begin(), map.begin() ),bolt::cl::identity<int>( ) );
     bolt::cl::scatter( ctl, input.begin(), input.end(), map.begin(), result.begin() );
     //for(int i=0; i<10 ; i++){ std::cout<<result[ i ]<<std::endl; }
     EXPECT_EQ(exp_result, result);
@@ -4088,7 +4088,7 @@ TEST( HostMemoryRandomNo_Int, Scatter_comp_Boost )
                 }    
             }
     }
-    boost::transform( input,boost::make_permutation_iterator( exp_result.begin(), map.begin() ),std::identity<int>( ) );
+    boost::transform( input,boost::make_permutation_iterator( exp_result.begin(), map.begin() ),bolt::cl::identity<int>( ) );
     bolt::cl::scatter( input.begin(), input.end(), map.begin(), result.begin() );
     /*for(int i=0; i<length ; i++)
     { 
@@ -4127,7 +4127,7 @@ TEST( HostMemoryRandomNo_Int, SerialScatter_comp_Boost )
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
-    boost::transform( input,boost::make_permutation_iterator( exp_result.begin(), map.begin() ),std::identity<int>( ) );
+    boost::transform( input,boost::make_permutation_iterator( exp_result.begin(), map.begin() ),bolt::cl::identity<int>( ) );
     bolt::cl::scatter(ctl, input.begin(), input.end(), map.begin(), result.begin() );
     /*for(int i=0; i<length ; i++)
     { 
@@ -4166,7 +4166,7 @@ TEST( HostMemoryRandomNo_Int, MulticoreScatter_comp_Boost )
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
-    boost::transform( input,boost::make_permutation_iterator( exp_result.begin(), map.begin() ),std::identity<int>( ) );
+    boost::transform( input,boost::make_permutation_iterator( exp_result.begin(), map.begin() ),bolt::cl::identity<int>( ) );
     bolt::cl::scatter(ctl, input.begin(), input.end(), map.begin(), result.begin() );
     /*for(int i=0; i<length ; i++)
     { 
@@ -4185,7 +4185,7 @@ TEST( HostMemory_Float, Scatter_comp_Boost )
     std::vector<float> input ( n_input, n_input + 10 );
     std::vector<int> map ( n_map, n_map + 10 );	
 
-    boost::transform( input,boost::make_permutation_iterator( exp_result.begin(), map.begin() ),std::identity<float>( ) );
+    boost::transform( input,boost::make_permutation_iterator( exp_result.begin(), map.begin() ),bolt::cl::identity<float>( ) );
     bolt::cl::scatter( input.begin(), input.end(), map.begin(), result.begin() );
     //for(int i=0; i<10 ; i++){ std::cout<<result[ i ]<<std::endl; }
     EXPECT_EQ(exp_result, result);
@@ -4202,7 +4202,7 @@ TEST( HostMemory_Float, SerialScatter_comp_Boost )
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
-    boost::transform( input,boost::make_permutation_iterator( exp_result.begin(), map.begin() ),std::identity<float>( ) );
+    boost::transform( input,boost::make_permutation_iterator( exp_result.begin(), map.begin() ),bolt::cl::identity<float>( ) );
     bolt::cl::scatter( input.begin(), input.end(), map.begin(), result.begin() );
     //for(int i=0; i<10 ; i++){ std::cout<<result[ i ]<<std::endl; }
     EXPECT_EQ(exp_result, result);
@@ -4219,7 +4219,7 @@ TEST( HostMemory_Float, MulticoreScatter_comp_Boost )
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
-    boost::transform( input,boost::make_permutation_iterator( exp_result.begin(), map.begin() ),std::identity<float>( ) );
+    boost::transform( input,boost::make_permutation_iterator( exp_result.begin(), map.begin() ),bolt::cl::identity<float>( ) );
     bolt::cl::scatter( input.begin(), input.end(), map.begin(), result.begin() );
     //for(int i=0; i<10 ; i++){ std::cout<<result[ i ]<<std::endl; }
     EXPECT_EQ(exp_result, result);
@@ -4252,7 +4252,7 @@ TEST( HostMemoryRandomNo_Float, Scatter_comp_Boost )
                 }    
             }
     }
-    boost::transform( input,boost::make_permutation_iterator( exp_result.begin(), map.begin() ),std::identity<float>( ) );
+    boost::transform( input,boost::make_permutation_iterator( exp_result.begin(), map.begin() ),bolt::cl::identity<float>( ) );
     bolt::cl::scatter( input.begin(), input.end(), map.begin(), result.begin() );
     /*for(int i=0; i<length ; i++)
     { 
@@ -4290,7 +4290,7 @@ TEST( HostMemoryRandomNo_Float, SerialScatter_comp_Boost )
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
-    boost::transform( input,boost::make_permutation_iterator( exp_result.begin(), map.begin() ),std::identity<float>( ) );
+    boost::transform( input,boost::make_permutation_iterator( exp_result.begin(), map.begin() ),bolt::cl::identity<float>( ) );
     bolt::cl::scatter(ctl, input.begin(), input.end(), map.begin(), result.begin() );
     /*for(int i=0; i<length ; i++)
     { 
@@ -4328,7 +4328,7 @@ TEST( HostMemoryRandomNo_Float, MulticoreScatter_comp_Boost )
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
-    boost::transform( input,boost::make_permutation_iterator( exp_result.begin(), map.begin() ),std::identity<float>( ) );
+    boost::transform( input,boost::make_permutation_iterator( exp_result.begin(), map.begin() ),bolt::cl::identity<float>( ) );
     bolt::cl::scatter(ctl, input.begin(), input.end(), map.begin(), result.begin() );
     /*for(int i=0; i<length ; i++)
     { 
@@ -4347,7 +4347,7 @@ TEST( HostMemory_Double, Scatter_com_Boost )
     std::vector<double> input ( n_input, n_input + 10 );
     std::vector<int> map ( n_map, n_map + 10 );	
 
-    boost::transform( input,boost::make_permutation_iterator( exp_result.begin(), map.begin() ),std::identity<int>( ) );
+    boost::transform( input,boost::make_permutation_iterator( exp_result.begin(), map.begin() ),bolt::cl::identity<int>( ) );
     bolt::cl::scatter( input.begin(), input.end(), map.begin(), result.begin() );
     //for(int i=0; i<10 ; i++){ std::cout<<result[ i ]<<std::endl; }
     EXPECT_EQ(exp_result, result);
@@ -4364,7 +4364,7 @@ TEST( HostMemory_Double, SerialScatter_com_Boost )
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
-    boost::transform( input,boost::make_permutation_iterator( exp_result.begin(), map.begin() ),std::identity<int>( ) );
+    boost::transform( input,boost::make_permutation_iterator( exp_result.begin(), map.begin() ),bolt::cl::identity<int>( ) );
     bolt::cl::scatter(ctl, input.begin(), input.end(), map.begin(), result.begin() );
     //for(int i=0; i<10 ; i++){ std::cout<<result[ i ]<<std::endl; }
     EXPECT_EQ(exp_result, result);
@@ -4381,7 +4381,7 @@ TEST( HostMemory_Double, MulticoreScatter_com_Boost )
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
-    boost::transform( input,boost::make_permutation_iterator( exp_result.begin(), map.begin() ),std::identity<int>( ) );
+    boost::transform( input,boost::make_permutation_iterator( exp_result.begin(), map.begin() ),bolt::cl::identity<int>( ) );
     bolt::cl::scatter(ctl, input.begin(), input.end(), map.begin(), result.begin() );
     //for(int i=0; i<10 ; i++){ std::cout<<result[ i ]<<std::endl; }
     EXPECT_EQ(exp_result, result);
@@ -4414,7 +4414,7 @@ TEST( HostMemoryRandomNo_Double, Scatter_com_Boost )
                 }    
             }
     }
-    boost::transform( input,boost::make_permutation_iterator( exp_result.begin(), map.begin() ),std::identity<double>( ) );
+    boost::transform( input,boost::make_permutation_iterator( exp_result.begin(), map.begin() ),bolt::cl::identity<double>( ) );
     bolt::cl::scatter( input.begin(), input.end(), map.begin(), result.begin() );
     /*for(int i=0; i<length ; i++)
     { 
@@ -4452,7 +4452,7 @@ TEST( HostMemoryRandomNo_Double, SerialScatter_com_Boost )
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
-    boost::transform( input,boost::make_permutation_iterator( exp_result.begin(), map.begin() ),std::identity<double>( ) );
+    boost::transform( input,boost::make_permutation_iterator( exp_result.begin(), map.begin() ),bolt::cl::identity<double>( ) );
     bolt::cl::scatter(ctl, input.begin(), input.end(), map.begin(), result.begin() );
     /*for(int i=0; i<length ; i++)
     { 
@@ -4490,7 +4490,7 @@ TEST( HostMemoryRandomNo_Double, MulticoreScatter_com_Boost )
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
-    boost::transform( input,boost::make_permutation_iterator( exp_result.begin(), map.begin() ),std::identity<double>( ) );
+    boost::transform( input,boost::make_permutation_iterator( exp_result.begin(), map.begin() ),bolt::cl::identity<double>( ) );
     bolt::cl::scatter(ctl, input.begin(), input.end(), map.begin(), result.begin() );
     /*for(int i=0; i<length ; i++)
     { 
@@ -4816,7 +4816,7 @@ TEST(UDDTestInt2, Scatter )
     bolt::cl::scatter( input.begin(), input.end(), map.begin(), result.begin() );
     boost::transform( std_input,
                       boost::make_permutation_iterator( exp_result.begin(), std_map.begin() ),
-                      std::identity<Int2>( ) );
+                      bolt::cl::identity<Int2>( ) );
     cmpArrays( exp_result, result );
 }
 TEST(UDDTestInt2, SerialScatter )
@@ -4844,7 +4844,7 @@ TEST(UDDTestInt2, SerialScatter )
 
     bolt::cl::scatter(ctl, input.begin(), input.end(), map.begin(), result.begin() );
     boost::transform(std_input,boost::make_permutation_iterator( exp_result.begin(),std_map.begin()),
-                                                                             std::identity<Int2>());
+                                                                             bolt::cl::identity<Int2>());
     cmpArrays( exp_result, result );
 }
 TEST(UDDTestInt2, MulticoreScatter )
@@ -4872,7 +4872,7 @@ TEST(UDDTestInt2, MulticoreScatter )
 
     bolt::cl::scatter(ctl, input.begin(), input.end(), map.begin(), result.begin() );
     boost::transform(std_input,boost::make_permutation_iterator( exp_result.begin(),std_map.begin()),
-                                                                             std::identity<Int2>());
+                                                                             bolt::cl::identity<Int2>());
     cmpArrays( exp_result, result );
 }
 
@@ -4898,7 +4898,7 @@ TEST(UDDTestIntFloat, Scatter )
 
     bolt::cl::scatter( input.begin(), input.end(), map.begin(), result.begin() );
     boost::transform( std_input,boost::make_permutation_iterator( exp_result.begin(), std_map.begin() ),
-                                                                           std::identity<IntFloat>( ) );
+                                                                           bolt::cl::identity<IntFloat>( ) );
     cmpArrays( exp_result, result );
 }
 TEST(UDDTestIntFloat, SerialScatter )
@@ -4926,7 +4926,7 @@ TEST(UDDTestIntFloat, SerialScatter )
 
     bolt::cl::scatter(ctl, input.begin(), input.end(), map.begin(), result.begin() );
     boost::transform( std_input,boost::make_permutation_iterator( exp_result.begin(), std_map.begin() ),
-                                                                           std::identity<IntFloat>( ) );
+                                                                           bolt::cl::identity<IntFloat>( ) );
     cmpArrays( exp_result, result );
 }
 TEST(UDDTestIntFloat, MulticoreScatter )
@@ -4954,7 +4954,7 @@ TEST(UDDTestIntFloat, MulticoreScatter )
 
     bolt::cl::scatter(ctl, input.begin(), input.end(), map.begin(), result.begin() );
     boost::transform( std_input,boost::make_permutation_iterator( exp_result.begin(), std_map.begin() ),
-                                                                           std::identity<IntFloat>( ) );
+                                                                           bolt::cl::identity<IntFloat>( ) );
     cmpArrays( exp_result, result );
 }
 
@@ -4982,7 +4982,7 @@ TEST(UDDTestIntFloatDouble, Scatter )
 
     bolt::cl::scatter( input.begin(), input.end(), map.begin(), result.begin() );
     boost::transform( std_input,boost::make_permutation_iterator( exp_result.begin(), std_map.begin() ),
-                                                                           std::identity<IntFloatDouble>( ) );
+                                                                           bolt::cl::identity<IntFloatDouble>( ) );
     cmpArrays( exp_result, result );
 }
 TEST(UDDTestIntFloatDouble, SerialScatter )
@@ -5011,7 +5011,7 @@ TEST(UDDTestIntFloatDouble, SerialScatter )
 
     bolt::cl::scatter(ctl, input.begin(), input.end(), map.begin(), result.begin() );
     boost::transform( std_input,boost::make_permutation_iterator( exp_result.begin(), std_map.begin() ),
-                                                                           std::identity<IntFloatDouble>( ) );
+                                                                           bolt::cl::identity<IntFloatDouble>( ) );
     cmpArrays( exp_result, result );
 }
 TEST(UDDTestIntFloatDouble, MulticoreScatter )
@@ -5040,7 +5040,7 @@ TEST(UDDTestIntFloatDouble, MulticoreScatter )
 
     bolt::cl::scatter(ctl, input.begin(), input.end(), map.begin(), result.begin() );
     boost::transform( std_input,boost::make_permutation_iterator( exp_result.begin(), std_map.begin() ),
-                                                                           std::identity<IntFloatDouble>( ) );
+                                                                           bolt::cl::identity<IntFloatDouble>( ) );
     cmpArrays( exp_result, result );
 }
 #endif
@@ -5179,7 +5179,7 @@ INSTANTIATE_TEST_CASE_P(ScatterUDDLimit, HostMemory_UDDTestIntFloat, ::testing::
 int main(int argc, char* argv[])
 {
     //  Register our minidump generating logic
-    bolt::miniDumpSingleton::enableMiniDumps( );
+//    bolt::miniDumpSingleton::enableMiniDumps( );
 
     // Define MEMORYREPORT on windows platfroms to enable debug memory heap checking
 #if defined( MEMORYREPORT ) && defined( _WIN32 )

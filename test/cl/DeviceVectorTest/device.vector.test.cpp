@@ -79,7 +79,7 @@ public:
 protected:
     typedef typename std::tuple_element< 0, ArrayTuple >::type ArrayType;
     // typedef typename std::tuple_element< 0, ArrayTuple >::type::value ArraySize;
-    static const size_t ArraySize = typename std::tuple_element< 1, ArrayTuple >::type::value;
+    static const size_t ArraySize =  std::tuple_element< 1, ArrayTuple >::type::value;
 
     typename std::array< ArrayType, ArraySize > stdInput, boltInput;
     int m_Errors;
@@ -89,25 +89,30 @@ TYPED_TEST_CASE_P( ScanArrayTest );
 
 TYPED_TEST_P( ScanArrayTest, InPlace )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+   
+    typedef typename ScanArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, ScanArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont;    
 
 }
 
 TYPED_TEST_P( ScanArrayTest, InPlacePlusFunction )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+    typedef typename ScanArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, ScanArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont;        
 
 }
 
 TYPED_TEST_P( ScanArrayTest, InPlaceMaxFunction )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+    typedef typename ScanArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, ScanArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont;       
 
 }
 
 TYPED_TEST_P( ScanArrayTest, OutofPlace )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+    typedef typename ScanArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, ScanArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont;       
 
 }
 
@@ -1335,7 +1340,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	::testing::InitGoogleTest( &argc, &argv[ 0 ] );
     
     //  Register our minidump generating logic
-    bolt::miniDumpSingleton::enableMiniDumps( );
+    //bolt::miniDumpSingleton::enableMiniDumps( );
 
     int retVal = RUN_ALL_TESTS( );
 

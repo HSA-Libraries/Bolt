@@ -596,7 +596,7 @@ TEST_P(DeviceMemory_IntBoltdVector, Gather_IfPredicate)
             input[i] =  i + 2 * i;
             stencil[i] = i + 5 * 1;
         }
-    std::random_shuffle( map.begin(), map.end() ); 
+   // std::random_shuffle( map.begin(), map.end() ); 
 
     is_even iepred;
 
@@ -621,7 +621,7 @@ TEST_P(DeviceMemory_IntBoltdVector, MulticoreGather_IfPredicate)
             input[i] =  i + 2 * i;
             stencil[i] = i + 5 * 1;
         }
-    std::random_shuffle( map.begin(), map.end() ); 
+//    std::random_shuffle( map.begin(), map.end() ); 
 
     is_even iepred;
 
@@ -2155,7 +2155,8 @@ TEST_P(DeviceMemory_IntBoltdVector, Gather)
             map[i] = i;
             input[i] =  i + 2 * i;
         }
-    std::random_shuffle( map.begin(), map.end() ); 
+//    std::random_shuffle( map.begin(), map.end() ); 
+
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -2176,7 +2177,7 @@ TEST_P(DeviceMemory_IntBoltdVector, MulticoreGather)
             map[i] = i;
             input[i] =  i + 2 * i;
         }
-    std::random_shuffle( map.begin(), map.end() ); 
+//    std::random_shuffle( map.begin(), map.end() ); 
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
@@ -3541,7 +3542,7 @@ INSTANTIATE_TEST_CASE_P(ScatterUDDLimit, HostMemory_UDDTestIntFloat, ::testing::
 int main(int argc, char* argv[])
 {
     //  Register our minidump generating logic
-    bolt::miniDumpSingleton::enableMiniDumps( );
+    //bolt::miniDumpSingleton::enableMiniDumps( );
 
     // Define MEMORYREPORT on windows platfroms to enable debug memory heap checking
 #if defined( MEMORYREPORT ) && defined( _WIN32 )

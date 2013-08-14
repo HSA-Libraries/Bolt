@@ -34,6 +34,8 @@
 #include <gtest/gtest.h>
 #include <boost/shared_array.hpp>
 #include <array>
+#include <bolt/cl/functional.h>
+
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Below are helper routines to compare the results of two arrays for googletest
@@ -116,7 +118,7 @@ template< class _Type >
 inline int my_binary_search( _Type value, const _Type* a, int left, int right )
 {
 	long low  = left;
-	long high = __max( left, right + 1 );
+	long high = bolt::cl::maximum<long>( left, right + 1 );
 	while( low < high )
 	{
 		long mid = ( low + high ) / 2;
@@ -388,7 +390,7 @@ TEST( MergeUDD , UDDPlusOperatorInts )
 int main(int argc, char* argv[])
 {
     //  Register our minidump generating logic
-    bolt::miniDumpSingleton::enableMiniDumps( );
+//    bolt::miniDumpSingleton::enableMiniDumps( );
 
     ::testing::InitGoogleTest( &argc, &argv[ 0 ] );
 

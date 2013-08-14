@@ -14,7 +14,7 @@
 *   limitations under the License.
 
 ***************************************************************************/
-
+#if defined(_WIN32)
 #pragma once
 /******************************************************************************
  * Asynchronous Profiler
@@ -167,3 +167,4 @@ public:
 
 }; // class AsyncProfiler
 
+#endif

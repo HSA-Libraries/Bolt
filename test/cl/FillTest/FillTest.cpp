@@ -25,7 +25,6 @@
 
 #define TEST_DOUBLE 0
 #define TEST_CPU_DEVICE 1
-#define TEST_LARGE_BUFFERS 0
 
 #if FILL_GOOGLE_TEST
 #include <gtest/gtest.h>
@@ -473,7 +472,7 @@ public:
 
 protected:
     typedef typename std::tuple_element< 0, ArrayTuple >::type ArrayType;
-    static const size_t ArraySize = typename std::tuple_element< 1, ArrayTuple >::type::value;
+    static const size_t ArraySize =  std::tuple_element< 1, ArrayTuple >::type::value;
     std::array< ArrayType, ArraySize > stdInput, boltInput, stdOffsetIn, boltOffsetIn;
     int m_Errors;
     ArrayType val;
@@ -485,45 +484,49 @@ TYPED_TEST_CASE_P( FillArrayTest );
 #if (TEST_CPU_DEVICE == 1)
 TYPED_TEST_P( FillArrayTest,CPU_DeviceNormal )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+    
+    typedef typename FillArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;    
+    typedef std::array< ArrayType, FillArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont;
+    
+    
 
     MyOclContext oclcpu = initOcl(CL_DEVICE_TYPE_CPU, 0);
     bolt::cl::control c_cpu(oclcpu._queue);  // construct control structure from the queue.
 
     //  Calling the actual functions under test
-    std::fill( stdInput.begin( ), stdInput.end( ), val );
-    bolt::cl::fill( c_cpu, boltInput.begin( ), boltInput.end( ) , val);
+    std::fill( FillArrayTest< gtest_TypeParam_ >::stdInput.begin( ), FillArrayTest< gtest_TypeParam_ >::stdInput.end( ), FillArrayTest< gtest_TypeParam_ >::val );
+    bolt::cl::fill( c_cpu, FillArrayTest< gtest_TypeParam_ >::boltInput.begin( ), FillArrayTest< gtest_TypeParam_ >::boltInput.end( ) , FillArrayTest< gtest_TypeParam_ >::val);
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+    typename ArrayCont::difference_type stdNumElements = std::distance( FillArrayTest< gtest_TypeParam_ >::stdInput.begin( ), FillArrayTest< gtest_TypeParam_ >::stdInput.end() );
+    typename ArrayCont::difference_type boltNumElements = std::distance( FillArrayTest< gtest_TypeParam_ >::boltInput.begin( ), FillArrayTest< gtest_TypeParam_ >::boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
+    cmpStdArray< ArrayType,  FillArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( FillArrayTest< gtest_TypeParam_ >::stdInput, FillArrayTest< gtest_TypeParam_ >::boltInput );
     
     //OFFSET Test cases
     //  Calling the actual functions under test
     size_t startIndex = 17; //Some aribitrary offset position
-    size_t endIndex   = ArraySize - 17; //Some aribitrary offset position
-    if( (( startIndex > ArraySize ) || ( endIndex < 0 ) )  || (startIndex > endIndex) )
+    size_t endIndex   = FillArrayTest< gtest_TypeParam_ >::ArraySize - 17; //Some aribitrary offset position
+    if( (( startIndex > FillArrayTest< gtest_TypeParam_ >::ArraySize ) || ( endIndex < 0 ) )  || (startIndex > endIndex) )
     {
-        std::cout <<"\nSkipping NormalOffset Test for size "<< ArraySize << "\n";
+        std::cout <<"\nSkipping NormalOffset Test for size "<< FillArrayTest< gtest_TypeParam_ >::ArraySize << "\n";
     }    
     else
     {
-        std::fill( stdOffsetIn.begin( ) + startIndex, stdOffsetIn.begin( ) + endIndex, val );
-        bolt::cl::fill( c_cpu, boltOffsetIn.begin( ) + startIndex, boltOffsetIn.begin( ) + endIndex, val);
+        std::fill( FillArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin( ) + startIndex, FillArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin( ) + endIndex, FillArrayTest< gtest_TypeParam_ >::val );
+        bolt::cl::fill( c_cpu, FillArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin( ) + startIndex, FillArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin( ) + endIndex, FillArrayTest< gtest_TypeParam_ >::val);
 
-        ArrayCont::difference_type stdNumElements = std::distance( stdOffsetIn.begin( ), stdOffsetIn.end( ) );
-        ArrayCont::difference_type boltNumElements = std::distance(  boltOffsetIn.begin( ),  boltOffsetIn.end( ) );
+        typename ArrayCont::difference_type stdNumElements = std::distance( FillArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin( ), FillArrayTest< gtest_TypeParam_ >::stdOffsetIn.end( ) );
+        typename ArrayCont::difference_type boltNumElements = std::distance(  FillArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin( ),  FillArrayTest< gtest_TypeParam_ >::boltOffsetIn.end( ) );
 
         //  Both collections should have the same number of elements
         EXPECT_EQ( stdNumElements, boltNumElements );
 
         //  Loop through the array and compare all the values with each other
-        cmpStdArray< ArrayType, ArraySize >::cmpArrays(  stdOffsetIn,  boltOffsetIn );
+        cmpStdArray< ArrayType,  FillArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays(  FillArrayTest< gtest_TypeParam_ >::stdOffsetIn,  FillArrayTest< gtest_TypeParam_ >::boltOffsetIn );
     }
 }
 
@@ -667,6 +670,7 @@ typedef ::testing::Types<
 > DoubleTests;
 #endif 
 
+
 INSTANTIATE_TYPED_TEST_CASE_P( clLong, FillArrayTest, clLongTests );
 INSTANTIATE_TYPED_TEST_CASE_P( Integer, FillArrayTest, IntegerTests );
 INSTANTIATE_TYPED_TEST_CASE_P( UnsignedInteger, FillArrayTest, UnsignedIntegerTests );
@@ -674,288 +678,6 @@ INSTANTIATE_TYPED_TEST_CASE_P( Float, FillArrayTest, FloatTests );
 #if (TEST_DOUBLE == 1)
 INSTANTIATE_TYPED_TEST_CASE_P( Double, FillArrayTest, DoubleTests );
 #endif 
-
-TEST( StdFloatVector, OffsetFill )
-{
-    int length = 1024;
-
-    std::vector<float> stdInput( length );
-    std::vector<float> boltInput( length );
-    float val = 73.5;
-    int offset = 100;
-
-    for (int i = 0; i < 1024; ++i)
-    {
-        stdInput[i] = 1;
-        boltInput[i] = stdInput[i];
-    }
-
-    std::fill(  stdInput.begin( ) + offset,  stdInput.end( ), val );
-    bolt::cl::fill( boltInput.begin( ) + offset, boltInput.end( ), val );
-
-    cmpArrays( stdInput, boltInput );
-}
-
-
-TEST( StdFloatVector, SerialOffsetFill )
-{
-    int length = 1024;
-
-    std::vector<float> stdInput( length );
-    std::vector<float> boltInput( length );
-    float val = 73.5;
-    int offset = 100;
-
-    for (int i = 0; i < 1024; ++i)
-    {
-        stdInput[i] = 1;
-        boltInput[i] = stdInput[i];
-    }
-
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
-
-    std::fill(  stdInput.begin( ) + offset,  stdInput.end( ), val );
-    bolt::cl::fill(ctl, boltInput.begin( ) + offset, boltInput.end( ), val );
-
-    cmpArrays( stdInput, boltInput );
-}
-
-TEST( StdFloatVector, MultiCoreOffsetFill )
-{
-    int length = 1024;
-
-    std::vector<float> stdInput( length );
-    std::vector<float> boltInput( length );
-    float val = 73.5;
-    int offset = 100;
-
-    for (int i = 0; i < 1024; ++i)
-    {
-        stdInput[i] = 1;
-        boltInput[i] = stdInput[i];
-    }
-
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
-
-    std::fill(  stdInput.begin( ) + offset,  stdInput.end( ), val );
-    bolt::cl::fill(ctl, boltInput.begin( ) + offset, boltInput.end( ), val );
-
-    cmpArrays( stdInput, boltInput );
-}
-
-
-TEST( DVFloatVector, OffsetFill )
-{
-    int length = 1024;
-
-    std::vector<float> stdInput( length );
-    bolt::cl::device_vector<float> boltInput( length );
-    float val = 73.5;
-    int offset = 100;
-
-    for (int i = 0; i < 1024; ++i)
-    {
-        stdInput[i] = 1;
-        boltInput[i] = 1;
-    }
-
-    std::fill(  stdInput.begin( ) + offset,  stdInput.end( ), val );
-    bolt::cl::fill( boltInput.begin( ) + offset, boltInput.end( ), val );
-
-    cmpArrays( stdInput, boltInput );
-}
-
-TEST( DVFloatVector, SerialOffsetFill )
-{
-    int length = 1024;
-
-    std::vector<float> stdInput( length );
-    bolt::cl::device_vector<float> boltInput( length );
-    float val = 73.5;
-    int offset = 100;
-
-    for (int i = 0; i < 1024; ++i)
-    {
-        stdInput[i] = 1;
-        boltInput[i] = 1;
-    }
-
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
-
-    std::fill(  stdInput.begin( ) + offset,  stdInput.end( ), val );
-    bolt::cl::fill( ctl, boltInput.begin( ) + offset, boltInput.end( ), val );
-
-    cmpArrays( stdInput, boltInput );
-}
-
-TEST( DVFloatVector, MultiCoreOffsetFill )
-{
-    int length = 1024;
-
-    std::vector<float> stdInput( length );
-    bolt::cl::device_vector<float> boltInput( length );
-    float val = 73.5;
-    int offset = 100;
-
-    for (int i = 0; i < 1024; ++i)
-    {
-        stdInput[i] = 1;
-        boltInput[i] = 1;
-    }
-
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
-
-    std::fill(  stdInput.begin( ) + offset,  stdInput.end( ), val );
-    bolt::cl::fill( ctl, boltInput.begin( ) + offset, boltInput.end( ), val );
-
-    cmpArrays( stdInput, boltInput );
-}
-
-TEST( StdUIntVector, OffsetFill )
-{
-    int length = 1024;
-
-    std::vector<unsigned int> stdInput( length );
-    std::vector<unsigned int> boltInput( length );
-    unsigned int val = 73;
-    int offset = 100;
-
-    for (int i = 0; i < 1024; ++i)
-    {
-        stdInput[i] = 1;
-        boltInput[i] = stdInput[i];
-    }
-
-    std::fill(  stdInput.begin( ) + offset,  stdInput.end( ), val );
-    bolt::cl::fill( boltInput.begin( ) + offset, boltInput.end( ), val );
-
-    cmpArrays( stdInput, boltInput );
-}
-
-TEST( StdUIntVector, SerialOffsetFill )
-{
-    int length = 1024;
-
-    std::vector<unsigned int> stdInput( length );
-    std::vector<unsigned int> boltInput( length );
-    unsigned int val = 73;
-    int offset = 100;
-
-    for (int i = 0; i < 1024; ++i)
-    {
-        stdInput[i] = 1;
-        boltInput[i] = stdInput[i];
-    }
-
-    
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
-
-    std::fill(  stdInput.begin( ) + offset,  stdInput.end( ), val );
-    bolt::cl::fill( ctl, boltInput.begin( ) + offset, boltInput.end( ), val );
-
-    cmpArrays( stdInput, boltInput );
-}
-
-TEST( StdUIntVector, MultiCoreOffsetFill )
-{
-    int length = 1024;
-
-    std::vector<unsigned int> stdInput( length );
-    std::vector<unsigned int> boltInput( length );
-    unsigned int val = 73;
-    int offset = 100;
-
-    for (int i = 0; i < 1024; ++i)
-    {
-        stdInput[i] = 1;
-        boltInput[i] = stdInput[i];
-    }
-
-    
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
-
-    std::fill(  stdInput.begin( ) + offset,  stdInput.end( ), val );
-    bolt::cl::fill( ctl, boltInput.begin( ) + offset, boltInput.end( ), val );
-
-    cmpArrays( stdInput, boltInput );
-}
-
-
-TEST( DVUIntVector, OffsetFill )
-{
-    int length = 1024;
-
-    std::vector<unsigned int> stdInput( length );
-    bolt::cl::device_vector<unsigned int> boltInput( length );
-    unsigned int val = 73;
-    int offset = 100;
-
-    for (int i = 0; i < 1024; ++i)
-    {
-        stdInput[i] = 1;
-        boltInput[i] = 1;
-    }
-
-    std::fill(  stdInput.begin( ) + offset,  stdInput.end( ), val );
-    bolt::cl::fill( boltInput.begin( ) + offset, boltInput.end( ), val );
-
-    cmpArrays( stdInput, boltInput );
-}
-
-TEST( DVUIntVector, SerialOffsetFill )
-{
-    int length = 1024;
-
-    std::vector<unsigned int> stdInput( length );
-    bolt::cl::device_vector<unsigned int> boltInput( length );
-    unsigned int val = 73;
-    int offset = 100;
-
-    for (int i = 0; i < 1024; ++i)
-    {
-        stdInput[i] = 1;
-        boltInput[i] = 1;
-    }
-      
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
-
-    std::fill(  stdInput.begin( ) + offset,  stdInput.end( ), val );
-    bolt::cl::fill( ctl, boltInput.begin( ) + offset, boltInput.end( ), val );
-
-    cmpArrays( stdInput, boltInput );
-}
-
-
-TEST( DVUIntVector, MultiCoreOffsetFill )
-{
-    int length = 1024;
-
-    std::vector<unsigned int> stdInput( length );
-    bolt::cl::device_vector<unsigned int> boltInput( length );
-    unsigned int val = 73;
-    int offset = 100;
-
-    for (int i = 0; i < 1024; ++i)
-    {
-        stdInput[i] = 1;
-        boltInput[i] = 1;
-    }
-      
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
-
-    std::fill(  stdInput.begin( ) + offset,  stdInput.end( ), val );
-    bolt::cl::fill( ctl, boltInput.begin( ) + offset, boltInput.end( ), val );
-
-    cmpArrays( stdInput, boltInput );
-}
 
 TEST( StdIntVector, OffsetFill )
 {
@@ -977,53 +699,6 @@ TEST( StdIntVector, OffsetFill )
     cmpArrays( stdInput, boltInput );
 }
 
-TEST( StdIntVector, SerialOffsetFill )
-{
-    int length = 1024;
-
-    std::vector<int> stdInput( length );
-    std::vector<int> boltInput( length );
-    int val = 73, offset = 100;
-
-    for (int i = 0; i < 1024; ++i)
-    {
-        stdInput[i] = 1;
-        boltInput[i] = stdInput[i];
-    }
-
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
-
-    std::fill(  stdInput.begin( ) + offset,  stdInput.end( ), val );
-    bolt::cl::fill( ctl, boltInput.begin( ) + offset, boltInput.end( ), val );
-
-    cmpArrays( stdInput, boltInput );
-}
-
-TEST( StdIntVector, MultiCoreOffsetFill )
-{
-    int length = 1024;
-
-    std::vector<int> stdInput( length );
-    std::vector<int> boltInput( length );
-    int val = 73, offset = 100;
-
-    for (int i = 0; i < 1024; ++i)
-    {
-        stdInput[i] = 1;
-        boltInput[i] = stdInput[i];
-    }
-
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
-
-    std::fill(  stdInput.begin( ) + offset,  stdInput.end( ), val );
-    bolt::cl::fill( ctl, boltInput.begin( ) + offset, boltInput.end( ), val );
-
-    cmpArrays( stdInput, boltInput );
-}
-
-
 TEST( DVIntVector, OffsetFill )
 {
     int length = 1024;
@@ -1044,51 +719,6 @@ TEST( DVIntVector, OffsetFill )
     cmpArrays( stdInput, boltInput );
 }
 
-TEST( DVIntVector, SerialOffsetFill )
-{
-    int length = 1024;
-
-    std::vector<int> stdInput( length );
-    bolt::cl::device_vector<int> boltInput( length );
-    int val = 73, offset = 100;
-
-    for (int i = 0; i < 1024; ++i)
-    {
-        stdInput[i] = 1;
-        boltInput[i] = 1;
-    }
-
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
-
-    std::fill(  stdInput.begin( ) + offset,  stdInput.end( ), val );
-    bolt::cl::fill( ctl, boltInput.begin( ) + offset, boltInput.end( ), val );
-
-    cmpArrays( stdInput, boltInput );
-}
-
-TEST( DVIntVector, MultiCoreOffsetFill )
-{
-    int length = 1024;
-
-    std::vector<int> stdInput( length );
-    bolt::cl::device_vector<int> boltInput( length );
-    int val = 73, offset = 100;
-
-    for (int i = 0; i < 1024; ++i)
-    {
-        stdInput[i] = 1;
-        boltInput[i] = 1;
-    }
-
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
-
-    std::fill(  stdInput.begin( ) + offset,  stdInput.end( ), val );
-    bolt::cl::fill( ctl, boltInput.begin( ) + offset, boltInput.end( ), val );
-
-    cmpArrays( stdInput, boltInput );
-}
 
 TEST ( StdIntVectorWithSplit, OffsetFill )
 { 
@@ -2383,48 +2013,43 @@ TEST_P(DevDblVector, MultiCoreFill_n )
 
 
 INSTANTIATE_TEST_CASE_P( FillSmall, HostclLongVector, ::testing::Range(1,256,3));
+INSTANTIATE_TEST_CASE_P( FillLarge, HostclLongVector, ::testing::Range(1023,1050000,350001));
 INSTANTIATE_TEST_CASE_P( FillSmall, DevclLongVector,  ::testing::Range(2,256,3));
+INSTANTIATE_TEST_CASE_P( FillLarge, DevclLongVector,  ::testing::Range(1024,1050000,350003));
 
 INSTANTIATE_TEST_CASE_P( FillSmall, HostIntVector, ::testing::Range(1,256,3));
+INSTANTIATE_TEST_CASE_P( FillLarge, HostIntVector, ::testing::Range(1023,1050000,350001));
 INSTANTIATE_TEST_CASE_P( FillSmall, DevIntVector,  ::testing::Range(2,256,3));
+INSTANTIATE_TEST_CASE_P( FillLarge, DevIntVector,  ::testing::Range(1024,1050000,350003));
 
 INSTANTIATE_TEST_CASE_P( FillSmall, HostFloatVector, ::testing::Range(1,256,3));
+INSTANTIATE_TEST_CASE_P( FillLarge, HostFloatVector, ::testing::Range(1023,1050000,350001));
 INSTANTIATE_TEST_CASE_P( FillSmall, DevFloatVector,  ::testing::Range(2,256,3));
+INSTANTIATE_TEST_CASE_P( FillLarge, DevFloatVector,  ::testing::Range(1024,1050000,350003));
 
 INSTANTIATE_TEST_CASE_P( FillSmall, HostUnsignedIntVector, ::testing::Range(1,256,3));
+INSTANTIATE_TEST_CASE_P( FillLarge, HostUnsignedIntVector, ::testing::Range(1023,1050000,350001));
 INSTANTIATE_TEST_CASE_P( FillSmall, DevUnsignedIntVector,  ::testing::Range(2,256,3));
+INSTANTIATE_TEST_CASE_P( FillLarge, DevUnsignedIntVector,  ::testing::Range(1024,1050000,350003));
 
 INSTANTIATE_TEST_CASE_P( FillSmall, HostShortVector, ::testing::Range(1,256,3));
+INSTANTIATE_TEST_CASE_P( FillLarge, HostShortVector, ::testing::Range(1023,1050000,350001));
 INSTANTIATE_TEST_CASE_P( FillSmall, DevShortVector,  ::testing::Range(2,256,3));
+INSTANTIATE_TEST_CASE_P( FillLarge, DevShortVector,  ::testing::Range(1024,1050000,350003));
 
 INSTANTIATE_TEST_CASE_P( FillSmall, HostUDDVector, ::testing::Range(1,256,3));
+INSTANTIATE_TEST_CASE_P( FillLarge, HostUDDVector, ::testing::Range(1023,1050000,350001));
 INSTANTIATE_TEST_CASE_P( FillSmall, DevUDDVector,  ::testing::Range(2,256,3));
+INSTANTIATE_TEST_CASE_P( FillLarge, DevUDDVector,  ::testing::Range(1024,1050000,350003));
 
 INSTANTIATE_TEST_CASE_P( FillSmall, FillStdVectandConstantIterator, ::testing::Range(1,256,3));
-
-#if (TEST_LARGE_BUFFERS == 1)
- INSTANTIATE_TEST_CASE_P( FillLarge, HostclLongVector, ::testing::Range(1023,1050000,350001));
- INSTANTIATE_TEST_CASE_P( FillLarge, DevclLongVector,  ::testing::Range(1024,1050000,350003));
- INSTANTIATE_TEST_CASE_P( FillLarge, HostIntVector, ::testing::Range(1023,1050000,350001));
- INSTANTIATE_TEST_CASE_P( FillLarge, DevIntVector,  ::testing::Range(1024,1050000,350003));
- INSTANTIATE_TEST_CASE_P( FillLarge, HostFloatVector, ::testing::Range(1023,1050000,350001));
- INSTANTIATE_TEST_CASE_P( FillLarge, DevFloatVector,  ::testing::Range(1024,1050000,350003));
- INSTANTIATE_TEST_CASE_P( FillLarge, HostUnsignedIntVector, ::testing::Range(1023,1050000,350001));
- INSTANTIATE_TEST_CASE_P( FillLarge, DevUnsignedIntVector,  ::testing::Range(1024,1050000,350003));
- INSTANTIATE_TEST_CASE_P( FillLarge, HostShortVector, ::testing::Range(1023,1050000,350001));
- INSTANTIATE_TEST_CASE_P( FillLarge, DevShortVector,  ::testing::Range(1024,1050000,350003));
- INSTANTIATE_TEST_CASE_P( FillLarge, HostUDDVector, ::testing::Range(1023,1050000,350001));
- INSTANTIATE_TEST_CASE_P( FillLarge, DevUDDVector,  ::testing::Range(1024,1050000,350003));
- INSTANTIATE_TEST_CASE_P( FillLarge, FillStdVectandConstantIterator, ::testing::Range(1023,1050000,350001));
-#endif
+INSTANTIATE_TEST_CASE_P( FillLarge, FillStdVectandConstantIterator, ::testing::Range(1023,1050000,350001));
 
 #if (TEST_DOUBLE == 1)
 INSTANTIATE_TEST_CASE_P( FillSmall, HostDblVector, ::testing::Range(3,256,3));
-#if (TEST_LARGE_BUFFERS == 1)
 INSTANTIATE_TEST_CASE_P( FillLarge, HostDblVector, ::testing::Range(1025,1050000, 350007 ) );
-INSTANTIATE_TEST_CASE_P( FillLarge, DevDblVector,  ::testing::Range(1026, 1050000, 350011 ) );
-#endif
 INSTANTIATE_TEST_CASE_P( FillSmall, DevDblVector,  ::testing::Range(4, 256, 3 ) );
+INSTANTIATE_TEST_CASE_P( FillLarge, DevDblVector,  ::testing::Range(1026, 1050000, 350011 ) );
 #endif
 
 BOLT_FUNCTOR(characters,struct characters

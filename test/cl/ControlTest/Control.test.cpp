@@ -437,7 +437,7 @@ int _tmain(int argc, _TCHAR* argv[])
     ::testing::InitGoogleTest( &argc, &argv[ 0 ] );
 
     //  Register our minidump generating logic
-    bolt::miniDumpSingleton::enableMiniDumps( );
+    //bolt::miniDumpSingleton::enableMiniDumps( );
 
     /******************************************************************************
      * Default Benchmark Parameters

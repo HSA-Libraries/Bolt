@@ -1,17 +1,17 @@
 /***************************************************************************
-*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
-*                                                                                    
-*   Licensed under the Apache License, Version 2.0 (the "License");   
-*   you may not use this file except in compliance with the License.                 
-*   You may obtain a copy of the License at                                          
-*                                                                                    
-*       http://www.apache.org/licenses/LICENSE-2.0                      
-*                                                                                    
-*   Unless required by applicable law or agreed to in writing, software              
-*   distributed under the License is distributed on an "AS IS" BASIS,              
-*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.         
-*   See the License for the specific language governing permissions and              
-*   limitations under the License.                                                   
+*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.
+*
+*   Licensed under the Apache License, Version 2.0 (the "License");
+*   you may not use this file except in compliance with the License.
+*   You may obtain a copy of the License at
+*
+*       http://www.apache.org/licenses/LICENSE-2.0
+*
+*   Unless required by applicable law or agreed to in writing, software
+*   distributed under the License is distributed on an "AS IS" BASIS,
+*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+*   See the License for the specific language governing permissions and
+*   limitations under the License.
 ***************************************************************************/
 #pragma OPENCL EXTENSION cl_amd_printf : enable
 
@@ -39,7 +39,7 @@ __kernel void OffsetCalculation(
     size_t groId = get_group_id( 0 );
     size_t locId = get_local_id( 0 );
     size_t wgSize = get_local_size( 0 );
-    
+
 	 if (gloId >= vecSize) return;
 
     kType key, prev_key;
@@ -89,7 +89,7 @@ __kernel void perBlockScanByKey(
     // if exclusive, load gloId=0 w/ init, and all others shifted-1
     int key;
     oType val;
-    
+
     if(gloId < vecSize){
       key = keys[ gloId ];
       val = vals[ gloId ];
@@ -107,7 +107,7 @@ __kernel void perBlockScanByKey(
         {
             oType y = ldsVals[ locId - offset ];
             sum = (*binaryFunct)( sum, y );
-        }		
+        }
         barrier( CLK_LOCAL_MEM_FENCE );
         ldsVals[ locId ] = sum;
     }
@@ -118,10 +118,10 @@ __kernel void perBlockScanByKey(
     // Each work item writes out its calculated scan result, relative to the beginning
     // of each work group
 	int key2 = -1;
-	if (gloId < vecSize -1 ) 
+	if (gloId < vecSize -1 )
 		key2 = keys[gloId + 1];
 	if(key != key2)
-      output[ gloId ] = sum;
+    output[ gloId ] = sum;
 
     if (locId == 0)
     {
@@ -152,7 +152,7 @@ __kernel void intraBlockInclusiveScanByKey(
     size_t locId = get_local_id( 0 );
     size_t wgSize = get_local_size( 0 );
     uint mapId  = gloId * workPerThread;
-    
+
     // do offset of zero manually
     uint offset;
     int key;
@@ -189,7 +189,7 @@ __kernel void intraBlockInclusiveScanByKey(
         }
     }
     barrier( CLK_LOCAL_MEM_FENCE );
-   
+
     oType scanSum = workSum;
     offset = 1;
     // load LDS with register sums
@@ -213,13 +213,13 @@ __kernel void intraBlockInclusiveScanByKey(
                 else
                    scanSum = ldsVals[ locId ];
              }
-      
+
         }
         barrier( CLK_LOCAL_MEM_FENCE );
         ldsVals[ locId ] = scanSum;
     } // for offset
     barrier( CLK_LOCAL_MEM_FENCE );
-    
+
     // write final scan from pre-scan and lds scan
     for( offset = 0; offset < workPerThread; offset += 1 )
     {
@@ -237,8 +237,8 @@ __kernel void intraBlockInclusiveScanByKey(
             }
             postSumArray[ mapId+offset ] = y;
         } // thread in bounds
-    } // for 
-    
+    } // for
+
 } // end kernel
 
 
@@ -263,12 +263,12 @@ __kernel void perBlockAdditionByKey(
     //  Abort threads that are passed the end of the input vector
     if( gloId >= vecSize )
         return;
-        
+
     // accumulate prefix
     int key1 = keySumArray[ groId-1 ];
     int key2 = keys[ gloId ];
 	int key3 = -1;
-	if(gloId < vecSize -1 ) 
+	if(gloId < vecSize -1 )
 	  key3 =  keys[ gloId + 1];
     if (groId > 0 && key1 == key2 && key2 != key3)
     {
@@ -276,7 +276,7 @@ __kernel void perBlockAdditionByKey(
         oType postBlockSum = postSumArray[ groId-1 ];
         oType newResult = (*binaryFunct)( scanResult, postBlockSum );
         output[ gloId ] = newResult;
-		
+
     }
 }
 
@@ -321,12 +321,12 @@ __kernel void keyValueMapping(
 		keys_output[ offsetArray [ gloId ]] = keys[ gloId];
         vals_output[ offsetArray [ gloId ]] = offsetValArray [ gloId];
     }
-	
-    if( gloId == (vecSize-1) )
-    {
-        keys_output[ numSections - 1] = keys[ gloId ]; //Copying the last key directly. Works either ways
-        vals_output[ numSections - 1] = offsetValArray [ gloId ];
+
+  if( gloId == (vecSize-1) )
+  {
+        keys_output[ numSections - 1 ] = keys[ gloId ]; //Copying the last key directly. Works either ways
+        vals_output[ numSections - 1 ] = offsetValArray [ gloId ];
 	    offsetArray [ gloId ] = numSections;
-    }
+  }
 
 }

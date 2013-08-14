@@ -1,27 +1,28 @@
-/***************************************************************************
-*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.
-*
-*   Licensed under the Apache License, Version 2.0 (the "License");
-*   you may not use this file except in compliance with the License.
-*   You may obtain a copy of the License at
-*
-*       http://www.apache.org/licenses/LICENSE-2.0
-*
-*   Unless required by applicable law or agreed to in writing, software
-*   distributed under the License is distributed on an "AS IS" BASIS,
-*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-*   See the License for the specific language governing permissions and
-*   limitations under the License.
+/***************************************************************************                                                                                     
+*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
+*                                                                                    
+*   Licensed under the Apache License, Version 2.0 (the "License");   
+*   you may not use this file except in compliance with the License.                 
+*   You may obtain a copy of the License at                                          
+*                                                                                    
+*       http://www.apache.org/licenses/LICENSE-2.0                      
+*                                                                                    
+*   Unless required by applicable law or agreed to in writing, software              
+*   distributed under the License is distributed on an "AS IS" BASIS,              
+*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.         
+*   See the License for the specific language governing permissions and              
+*   limitations under the License.                                                   
 
-***************************************************************************/
+***************************************************************************/                                                                                     
 
-#define TEST_DOUBLE 0
+#define TEST_DOUBLE 1
 #define TEST_DEVICE_VECTOR 1
-#define TEST_CPU_DEVICE 0
-#define TEST_LARGE_BUFFERS 0
+#define TEST_CPU_DEVICE 1
 
 #pragma warning(disable: 4244) // Disabling possible loss of data warning
+#if defined (_WIN32)
 #include <xutility>
+#endif
 
 #include "bolt/cl/iterator/counting_iterator.h"
 
@@ -42,7 +43,7 @@
 
 //  Author: kfk
 //  Originally, the char b was not an array.  However, testing on my machine showed driver hangs and unit test
-//  failures.  Reading the documentation of clEnqueueFillBuffer(), OpenCL seems to like structs of certain
+//  failures.  Reading the documentation of clEnqueueFillBuffer(), OpenCL seems to like structs of certain 
 //  sizes {1, 2, 4, 8, 16, 32, 64, 128}.  Making this struct one of those magic sizes seems to make the driver
 //  resets go away.
 //  \todo:  Need to research and find a way to handle structs of arbitrary size.
@@ -98,12 +99,151 @@ static const int lengths[24] = {
 //static const int numLengths = 1;
 //static const int lengths[1] = {13};
 
+
+
 template< size_t N >
 class TypeValue
 {
 public:
     static const size_t value = N;
 };
+
+
+typedef ::testing::Types< 
+    std::tuple< cl_long, TypeValue< 1 > >,
+    std::tuple< cl_long, TypeValue< 31 > >,
+    std::tuple< cl_long, TypeValue< 32 > >,
+    std::tuple< cl_long, TypeValue< 63 > >,
+    std::tuple< cl_long, TypeValue< 64 > >,
+    std::tuple< cl_long, TypeValue< 127 > >,
+    std::tuple< cl_long, TypeValue< 128 > >,
+    std::tuple< cl_long, TypeValue< 129 > >,
+    std::tuple< cl_long, TypeValue< 1000 > >,
+    std::tuple< cl_long, TypeValue< 1053 > >,
+    std::tuple< cl_long, TypeValue< 4096 > >,
+    std::tuple< cl_long, TypeValue< 4097 > >,
+    std::tuple< cl_long, TypeValue< 8192 > >,
+    std::tuple< cl_long, TypeValue< 16384 > >,//13
+    std::tuple< cl_long, TypeValue< 32768 > >,//14
+    std::tuple< cl_long, TypeValue< 65535 > >,//15
+    std::tuple< cl_long, TypeValue< 65536 > >,//16
+    std::tuple< cl_long, TypeValue< 131072 > >,//17    
+    std::tuple< cl_long, TypeValue< 262144 > >,//18    
+    std::tuple< cl_long, TypeValue< 524288 > >,//19    
+    std::tuple< cl_long, TypeValue< 1048576 > >,//20    
+    std::tuple< cl_long, TypeValue< 2097152 > >//21    
+#if (TEST_LARGE_BUFFERS == 1)
+    , /*This coma is needed*/
+    std::tuple< cl_long, TypeValue< 4194304 > >,//22    
+    std::tuple< cl_long, TypeValue< 8388608 > >,//23
+    std::tuple< cl_long, TypeValue< 16777216 > >,//24
+    std::tuple< cl_long, TypeValue< 33554432 > >,//25
+    std::tuple< cl_long, TypeValue< 67108864 > >//26
+#endif
+> clLongTests;
+
+typedef ::testing::Types< 
+    std::tuple< int, TypeValue< 1 > >,
+    std::tuple< int, TypeValue< 31 > >,
+    std::tuple< int, TypeValue< 32 > >,
+    std::tuple< int, TypeValue< 63 > >,
+    std::tuple< int, TypeValue< 64 > >,
+    std::tuple< int, TypeValue< 127 > >,
+    std::tuple< int, TypeValue< 128 > >,
+    std::tuple< int, TypeValue< 129 > >,
+    std::tuple< int, TypeValue< 1000 > >,
+    std::tuple< int, TypeValue< 1053 > >,
+    std::tuple< int, TypeValue< 4096 > >,
+    std::tuple< int, TypeValue< 4097 > >,
+    std::tuple< int, TypeValue< 8192 > >,
+    std::tuple< int, TypeValue< 16384 > >,//13
+    std::tuple< int, TypeValue< 32768 > >,//14
+    std::tuple< int, TypeValue< 65535 > >,//15
+    std::tuple< int, TypeValue< 65536 > >,//16
+    std::tuple< int, TypeValue< 131072 > >,//17    
+    std::tuple< int, TypeValue< 262144 > >,//18    
+    std::tuple< int, TypeValue< 524288 > >,//19    
+    std::tuple< int, TypeValue< 1048576 > >,//20    
+    std::tuple< int, TypeValue< 2097152 > >//21    
+#if (TEST_LARGE_BUFFERS == 1)
+    , /*This coma is needed*/
+    std::tuple< int, TypeValue< 4194304 > >,//22    
+    std::tuple< int, TypeValue< 8388608 > >,//23
+    std::tuple< int, TypeValue< 16777216 > >,//24
+    std::tuple< int, TypeValue< 33554432 > >,//25
+    std::tuple< int, TypeValue< 67108864 > >//26
+#endif
+> IntegerTests;
+
+typedef ::testing::Types< 
+    std::tuple< unsigned int, TypeValue< 1 > >,
+    std::tuple< unsigned int, TypeValue< 31 > >,
+    std::tuple< unsigned int, TypeValue< 32 > >,
+    std::tuple< unsigned int, TypeValue< 63 > >,
+    std::tuple< unsigned int, TypeValue< 64 > >,
+    std::tuple< unsigned int, TypeValue< 127 > >,
+    std::tuple< unsigned int, TypeValue< 128 > >,
+    std::tuple< unsigned int, TypeValue< 129 > >,
+    std::tuple< unsigned int, TypeValue< 1000 > >,
+    std::tuple< unsigned int, TypeValue< 1053 > >,
+    std::tuple< unsigned int, TypeValue< 4096 > >,
+    std::tuple< unsigned int, TypeValue< 4097 > >,
+    std::tuple< unsigned int, TypeValue< 8192 > >,
+    std::tuple< unsigned int, TypeValue< 16384 > >,//13
+    std::tuple< unsigned int, TypeValue< 32768 > >,//14
+    std::tuple< unsigned int, TypeValue< 65535 > >,//15
+    std::tuple< unsigned int, TypeValue< 65536 > >,//16
+    std::tuple< unsigned int, TypeValue< 131072 > >,//17    
+    std::tuple< unsigned int, TypeValue< 262144 > >,//18    
+    std::tuple< unsigned int, TypeValue< 524288 > >,//19    
+    std::tuple< unsigned int, TypeValue< 1048576 > >,//20    
+    std::tuple< unsigned int, TypeValue< 2097152 > >//21    
+#if (TEST_LARGE_BUFFERS == 1)
+    , /*This coma is needed*/
+    std::tuple< unsigned int, TypeValue< 4194304 > >,//22    
+    std::tuple< unsigned int, TypeValue< 8388608 > >,//23
+    std::tuple< unsigned int, TypeValue< 16777216 > >,//24
+    std::tuple< unsigned int, TypeValue< 33554432 > >,//25
+    std::tuple< unsigned int, TypeValue< 67108864 > >//26
+#endif
+
+> UnsignedIntegerTests;
+
+typedef ::testing::Types< 
+    std::tuple< float, TypeValue< 1 > >,
+    std::tuple< float, TypeValue< 31 > >,
+    std::tuple< float, TypeValue< 32 > >,
+    std::tuple< float, TypeValue< 63 > >,
+    std::tuple< float, TypeValue< 64 > >,
+    std::tuple< float, TypeValue< 127 > >,
+    std::tuple< float, TypeValue< 128 > >,
+    std::tuple< float, TypeValue< 129 > >,
+    std::tuple< float, TypeValue< 1000 > >,
+    std::tuple< float, TypeValue< 1053 > >,
+    std::tuple< float, TypeValue< 4096 > >,
+    std::tuple< float, TypeValue< 4097 > >,
+    std::tuple< float, TypeValue< 65535 > >,
+    std::tuple< float, TypeValue< 65536 > >
+> FloatTests;
+
+#if (TEST_DOUBLE == 1)
+typedef ::testing::Types< 
+    std::tuple< double, TypeValue< 1 > >,
+    std::tuple< double, TypeValue< 31 > >,
+    std::tuple< double, TypeValue< 32 > >,
+    std::tuple< double, TypeValue< 63 > >,
+    std::tuple< double, TypeValue< 64 > >,
+    std::tuple< double, TypeValue< 127 > >,
+    std::tuple< double, TypeValue< 128 > >,
+    std::tuple< double, TypeValue< 129 > >,
+    std::tuple< double, TypeValue< 1000 > >,
+    std::tuple< double, TypeValue< 1053 > >,
+    std::tuple< double, TypeValue< 4096 > >,
+    std::tuple< double, TypeValue< 4097 > >,
+    std::tuple< double, TypeValue< 65535 > >,
+    std::tuple< double, TypeValue< 65536 > >
+> DoubleTests;
+#endif 
 
 template< typename ArrayTuple >
 class CopyArrayTest: public ::testing::Test
@@ -128,245 +268,70 @@ public:
 
 protected:
     typedef typename std::tuple_element< 0, ArrayTuple >::type ArrayType;
-    static const size_t ArraySize = typename std::tuple_element< 1, ArrayTuple >::type::value;
+    static const size_t ArraySize = std::tuple_element< 1, ArrayTuple >::type::value;
     std::array< ArrayType, ArraySize > stdInput, boltInput, stdOffsetIn, boltOffsetIn;
     std::array< ArrayType, ArraySize > stdOutput, boltOutput, stdOffsetOut, boltOffsetOut;
     int m_Errors;
 };
 
-TYPED_TEST_CASE_P( CopyArrayTest );
 
+
+TYPED_TEST_CASE_P( CopyArrayTest );
 
 #if (TEST_CPU_DEVICE == 1)
 TYPED_TEST_P( CopyArrayTest,CPU_DeviceNormal )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
 
+    typedef typename CopyArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, CopyArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont;
+    
     MyOclContext oclcpu = initOcl(CL_DEVICE_TYPE_CPU, 0);
     bolt::cl::control c_cpu(oclcpu._queue);  // construct control structure from the queue.
 
     //  Calling the actual functions under test
-    std::copy( stdInput.begin( ), stdInput.end( ), stdOutput.begin() );
-    bolt::cl::copy( c_cpu, boltInput.begin( ), boltInput.end( ) , boltOutput.begin());
+    std::copy( CopyArrayTest< gtest_TypeParam_ >::stdInput.begin( ), CopyArrayTest< gtest_TypeParam_ >::stdInput.end( ), CopyArrayTest< gtest_TypeParam_ >::stdOutput.begin() );
+    bolt::cl::copy( c_cpu, CopyArrayTest< gtest_TypeParam_ >::boltInput.begin( ), CopyArrayTest< gtest_TypeParam_ >::boltInput.end( ) , CopyArrayTest< gtest_TypeParam_ >::boltOutput.begin());
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdOutput.begin( ), stdOutput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltOutput.begin( ), boltOutput.end() );
+    typename ArrayCont::difference_type stdNumElements = std::distance( CopyArrayTest< gtest_TypeParam_ >::stdOutput.begin( ), CopyArrayTest< gtest_TypeParam_ >::stdOutput.end() );
+     typename ArrayCont::difference_type boltNumElements = std::distance( CopyArrayTest< gtest_TypeParam_ >::boltOutput.begin( ), CopyArrayTest< gtest_TypeParam_ >::boltOutput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdOutput, boltOutput );
-
+    cmpStdArray< ArrayType, CopyArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( CopyArrayTest< gtest_TypeParam_ >::stdOutput, CopyArrayTest< gtest_TypeParam_ >::boltOutput );
+    
     //OFFSET Test cases
     //  Calling the actual functions under test
     size_t startIndex = 17; //Some aribitrary offset position
-    size_t endIndex   = ArraySize - 17; //Some aribitrary offset position
-    if( (( startIndex > ArraySize ) || ( endIndex < 0 ) )  || (startIndex > endIndex) )
+    size_t endIndex   = CopyArrayTest< gtest_TypeParam_ >::ArraySize - 17; //Some aribitrary offset position
+    if( (( startIndex > CopyArrayTest< gtest_TypeParam_ >::ArraySize ) || ( endIndex < 0 ) )  || (startIndex > endIndex) )
     {
-        std::cout <<"\nSkipping NormalOffset Test for size "<< ArraySize << "\n";
-    }
+        std::cout <<"\nSkipping NormalOffset Test for size "<< CopyArrayTest< gtest_TypeParam_ >::ArraySize << "\n";
+    }    
     else
     {
-        std::copy( stdOffsetIn.begin( ) + startIndex, stdOffsetIn.begin( ) + endIndex, stdOffsetOut.begin() );
-        bolt::cl::copy( c_cpu, boltOffsetIn.begin( ) + startIndex, boltOffsetIn.begin( ) + endIndex, boltOffsetOut.begin() );
+        std::copy( CopyArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin( ) + startIndex, CopyArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin( ) + endIndex, CopyArrayTest< gtest_TypeParam_ >::stdOffsetOut.begin() );
+        bolt::cl::copy( c_cpu, CopyArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin( ) + startIndex, CopyArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin( ) + endIndex, CopyArrayTest< gtest_TypeParam_ >::boltOffsetOut.begin() );
 
-        ArrayCont::difference_type stdNumElements = std::distance( stdOffsetOut.begin( ), stdOffsetOut.end( ) );
-        ArrayCont::difference_type boltNumElements = std::distance(  boltOffsetOut.begin( ),  boltOffsetOut.end( ) );
+         typename ArrayCont::difference_type stdNumElements = std::distance( CopyArrayTest< gtest_TypeParam_ >::stdOffsetOut.begin( ), CopyArrayTest< gtest_TypeParam_ >::stdOffsetOut.end( ) );
+         typename ArrayCont::difference_type boltNumElements = std::distance(  CopyArrayTest< gtest_TypeParam_ >::boltOffsetOut.begin( ),  CopyArrayTest< gtest_TypeParam_ >::boltOffsetOut.end( ) );
 
         //  Both collections should have the same number of elements
         EXPECT_EQ( stdNumElements, boltNumElements );
 
         //  Loop through the array and compare all the values with each other
-        cmpStdArray< ArrayType, ArraySize >::cmpArrays(  stdOffsetOut,  boltOffsetOut );
+        cmpStdArray< ArrayType, CopyArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays(  CopyArrayTest< gtest_TypeParam_ >::stdOffsetOut,  CopyArrayTest< gtest_TypeParam_ >::boltOffsetOut );
     }
 }
+
+
+
+
+
+
 
 REGISTER_TYPED_TEST_CASE_P( CopyArrayTest, CPU_DeviceNormal);
-#endif
-
-TYPED_TEST_P( CopyArrayTest,GPU_DeviceNormal )
-{
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
-
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
-    std::vector< cl::Device > devices = myContext.getInfo< CL_CONTEXT_DEVICES >();
-    ::cl::CommandQueue myQueue( myContext, devices[ 0 ] );
-    bolt::cl::control c_gpu( myQueue );  // construct control structure from the queue.
-
-    //  Calling the actual functions under test
-    std::copy( stdInput.begin( ), stdInput.end( ), stdOutput.begin() );
-    bolt::cl::copy( c_gpu, boltInput.begin( ), boltInput.end( ) , boltOutput.begin());
-
-    ArrayCont::difference_type stdNumElements = std::distance( stdOutput.begin( ), stdOutput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltOutput.begin( ), boltOutput.end() );
-
-    //  Both collections should have the same number of elements
-    EXPECT_EQ( stdNumElements, boltNumElements );
-
-    //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdOutput, boltOutput );
-
-    //OFFSET Test cases
-    //  Calling the actual functions under test
-    size_t startIndex = 17; //Some aribitrary offset position
-    size_t endIndex   = ArraySize - 17; //Some aribitrary offset position
-    if( (( startIndex > ArraySize ) || ( endIndex < 0 ) )  || (startIndex > endIndex) )
-    {
-        std::cout <<"\nSkipping NormalOffset Test for size "<< ArraySize << "\n";
-    }
-    else
-    {
-        std::copy( stdOffsetIn.begin( ) + startIndex, stdOffsetIn.begin( ) + endIndex, stdOffsetOut.begin() );
-        bolt::cl::copy( c_gpu, boltOffsetIn.begin( ) + startIndex, boltOffsetIn.begin( ) + endIndex, boltOffsetOut.begin() );
-
-        ArrayCont::difference_type stdNumElements = std::distance( stdOffsetOut.begin( ), stdOffsetOut.end( ) );
-        ArrayCont::difference_type boltNumElements = std::distance(  boltOffsetOut.begin( ),  boltOffsetOut.end( ) );
-
-        //  Both collections should have the same number of elements
-        EXPECT_EQ( stdNumElements, boltNumElements );
-
-        //  Loop through the array and compare all the values with each other
-        cmpStdArray< ArrayType, ArraySize >::cmpArrays(  stdOffsetOut,  boltOffsetOut );
-    }
-}
-REGISTER_TYPED_TEST_CASE_P( CopyArrayTest, GPU_DeviceNormal);
-
-typedef ::testing::Types<
-    std::tuple< cl_long, TypeValue< 1 > >,
-    std::tuple< cl_long, TypeValue< 31 > >,
-    std::tuple< cl_long, TypeValue< 32 > >,
-    std::tuple< cl_long, TypeValue< 63 > >,
-    std::tuple< cl_long, TypeValue< 64 > >,
-    std::tuple< cl_long, TypeValue< 127 > >,
-    std::tuple< cl_long, TypeValue< 128 > >,
-    std::tuple< cl_long, TypeValue< 129 > >,
-    std::tuple< cl_long, TypeValue< 1000 > >,
-    std::tuple< cl_long, TypeValue< 1053 > >,
-    std::tuple< cl_long, TypeValue< 4096 > >,
-    std::tuple< cl_long, TypeValue< 4097 > >,
-    std::tuple< cl_long, TypeValue< 8192 > >,
-    std::tuple< cl_long, TypeValue< 16384 > >,//13
-    std::tuple< cl_long, TypeValue< 32768 > >,//14
-    std::tuple< cl_long, TypeValue< 65535 > >,//15
-    std::tuple< cl_long, TypeValue< 65536 > >,//16
-    std::tuple< cl_long, TypeValue< 131072 > >,//17
-    std::tuple< cl_long, TypeValue< 262144 > >,//18
-    std::tuple< cl_long, TypeValue< 524288 > >,//19
-    std::tuple< cl_long, TypeValue< 1048576 > >,//20
-    std::tuple< cl_long, TypeValue< 2097152 > >//21
-#if (TEST_LARGE_BUFFERS == 1)
-    , /*This coma is needed*/
-    std::tuple< cl_long, TypeValue< 4194304 > >,//22
-    std::tuple< cl_long, TypeValue< 8388608 > >,//23
-    std::tuple< cl_long, TypeValue< 16777216 > >,//24
-    std::tuple< cl_long, TypeValue< 33554432 > >,//25
-    std::tuple< cl_long, TypeValue< 67108864 > >//26
-#endif
-> clLongTests;
-
-typedef ::testing::Types<
-    std::tuple< int, TypeValue< 1 > >,
-    std::tuple< int, TypeValue< 31 > >,
-    std::tuple< int, TypeValue< 32 > >,
-    std::tuple< int, TypeValue< 63 > >,
-    std::tuple< int, TypeValue< 64 > >,
-    std::tuple< int, TypeValue< 127 > >,
-    std::tuple< int, TypeValue< 128 > >,
-    std::tuple< int, TypeValue< 129 > >,
-    std::tuple< int, TypeValue< 1000 > >,
-    std::tuple< int, TypeValue< 1053 > >,
-    std::tuple< int, TypeValue< 4096 > >,
-    std::tuple< int, TypeValue< 4097 > >,
-    std::tuple< int, TypeValue< 8192 > >,
-    std::tuple< int, TypeValue< 16384 > >,//13
-    std::tuple< int, TypeValue< 32768 > >,//14
-    std::tuple< int, TypeValue< 65535 > >,//15
-    std::tuple< int, TypeValue< 65536 > >,//16
-    std::tuple< int, TypeValue< 131072 > >,//17
-    std::tuple< int, TypeValue< 262144 > >,//18
-    std::tuple< int, TypeValue< 524288 > >,//19
-    std::tuple< int, TypeValue< 1048576 > >,//20
-    std::tuple< int, TypeValue< 2097152 > >//21
-#if (TEST_LARGE_BUFFERS == 1)
-    , /*This coma is needed*/
-    std::tuple< int, TypeValue< 4194304 > >,//22
-    std::tuple< int, TypeValue< 8388608 > >,//23
-    std::tuple< int, TypeValue< 16777216 > >,//24
-    std::tuple< int, TypeValue< 33554432 > >,//25
-    std::tuple< int, TypeValue< 67108864 > >//26
-#endif
-> IntegerTests;
-
-typedef ::testing::Types<
-    std::tuple< unsigned int, TypeValue< 1 > >,
-    std::tuple< unsigned int, TypeValue< 31 > >,
-    std::tuple< unsigned int, TypeValue< 32 > >,
-    std::tuple< unsigned int, TypeValue< 63 > >,
-    std::tuple< unsigned int, TypeValue< 64 > >,
-    std::tuple< unsigned int, TypeValue< 127 > >,
-    std::tuple< unsigned int, TypeValue< 128 > >,
-    std::tuple< unsigned int, TypeValue< 129 > >,
-    std::tuple< unsigned int, TypeValue< 1000 > >,
-    std::tuple< unsigned int, TypeValue< 1053 > >,
-    std::tuple< unsigned int, TypeValue< 4096 > >,
-    std::tuple< unsigned int, TypeValue< 4097 > >,
-    std::tuple< unsigned int, TypeValue< 8192 > >,
-    std::tuple< unsigned int, TypeValue< 16384 > >,//13
-    std::tuple< unsigned int, TypeValue< 32768 > >,//14
-    std::tuple< unsigned int, TypeValue< 65535 > >,//15
-    std::tuple< unsigned int, TypeValue< 65536 > >,//16
-    std::tuple< unsigned int, TypeValue< 131072 > >,//17
-    std::tuple< unsigned int, TypeValue< 262144 > >,//18
-    std::tuple< unsigned int, TypeValue< 524288 > >,//19
-    std::tuple< unsigned int, TypeValue< 1048576 > >,//20
-    std::tuple< unsigned int, TypeValue< 2097152 > >//21
-#if (TEST_LARGE_BUFFERS == 1)
-    , /*This coma is needed*/
-    std::tuple< unsigned int, TypeValue< 4194304 > >,//22
-    std::tuple< unsigned int, TypeValue< 8388608 > >,//23
-    std::tuple< unsigned int, TypeValue< 16777216 > >,//24
-    std::tuple< unsigned int, TypeValue< 33554432 > >,//25
-    std::tuple< unsigned int, TypeValue< 67108864 > >//26
-#endif
-
-> UnsignedIntegerTests;
-
-typedef ::testing::Types<
-    std::tuple< float, TypeValue< 1 > >,
-    std::tuple< float, TypeValue< 31 > >,
-    std::tuple< float, TypeValue< 32 > >,
-    std::tuple< float, TypeValue< 63 > >,
-    std::tuple< float, TypeValue< 64 > >,
-    std::tuple< float, TypeValue< 127 > >,
-    std::tuple< float, TypeValue< 128 > >,
-    std::tuple< float, TypeValue< 129 > >,
-    std::tuple< float, TypeValue< 1000 > >,
-    std::tuple< float, TypeValue< 1053 > >,
-    std::tuple< float, TypeValue< 4096 > >,
-    std::tuple< float, TypeValue< 4097 > >,
-    std::tuple< float, TypeValue< 65535 > >,
-    std::tuple< float, TypeValue< 65536 > >
-> FloatTests;
-
-#if (TEST_DOUBLE == 1)
-typedef ::testing::Types<
-    std::tuple< double, TypeValue< 1 > >,
-    std::tuple< double, TypeValue< 31 > >,
-    std::tuple< double, TypeValue< 32 > >,
-    std::tuple< double, TypeValue< 63 > >,
-    std::tuple< double, TypeValue< 64 > >,
-    std::tuple< double, TypeValue< 127 > >,
-    std::tuple< double, TypeValue< 128 > >,
-    std::tuple< double, TypeValue< 129 > >,
-    std::tuple< double, TypeValue< 1000 > >,
-    std::tuple< double, TypeValue< 1053 > >,
-    std::tuple< double, TypeValue< 4096 > >,
-    std::tuple< double, TypeValue< 4097 > >,
-    std::tuple< double, TypeValue< 65535 > >,
-    std::tuple< double, TypeValue< 65536 > >
-> DoubleTests;
-#endif
 
 INSTANTIATE_TYPED_TEST_CASE_P( clLong, CopyArrayTest, clLongTests );
 INSTANTIATE_TYPED_TEST_CASE_P( Integer, CopyArrayTest, IntegerTests );
@@ -374,161 +339,9 @@ INSTANTIATE_TYPED_TEST_CASE_P( UnsignedInteger, CopyArrayTest, UnsignedIntegerTe
 INSTANTIATE_TYPED_TEST_CASE_P( Float, CopyArrayTest, FloatTests );
 #if (TEST_DOUBLE == 1)
 INSTANTIATE_TYPED_TEST_CASE_P( Double, CopyArrayTest, DoubleTests );
+#endif 
+
 #endif
-
-TEST( CopyStdVectWithUInt, OffsetTest)
-{
-    int length = 1024;
-
-    std::vector<unsigned int> stdInput( length );
-    std::vector<unsigned int> stdOutput( length );
-    std::vector<unsigned int> boltInput( length );
-    std::vector<unsigned int> boltOutput( length );
-
-
-    for (int i = 0; i < length; ++i)
-    {
-        stdInput[i] = i;
-        boltInput[i] = stdInput[i];
-    }
-
-    //  Calling the actual functions under test
-    int offset = 80;
-    std::copy(stdInput.begin( ) + offset, stdInput.end( ), stdOutput.begin() );
-    bolt::cl::copy( boltInput.begin( ) + offset, boltInput.end( ), boltOutput.begin());
-
-    cmpArrays(stdOutput, boltOutput);
-}
-
-TEST( CopyStdVectWithUInt, SerialOffsetTest)
-{
-    int length = 1024;
-
-    std::vector<unsigned int> stdInput( length );
-    std::vector<unsigned int> stdOutput( length );
-    std::vector<unsigned int> boltInput( length );
-    std::vector<unsigned int> boltOutput( length );
-
-
-    for (int i = 0; i < length; ++i)
-    {
-        stdInput[i] = i;
-        boltInput[i] = stdInput[i];
-    }
-
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
-    //  Calling the actual functions under test
-    int offset = 80;
-    std::copy(stdInput.begin( ) + offset, stdInput.end( ), stdOutput.begin() );
-    bolt::cl::copy(ctl,  boltInput.begin( ) + offset, boltInput.end( ), boltOutput.begin());
-
-    cmpArrays(stdOutput, boltOutput);
-}
-
-TEST( CopyStdVectWithUInt, MultiCoreOffsetTest)
-{
-    int length = 1024;
-
-    std::vector<unsigned int> stdInput( length );
-    std::vector<unsigned int> stdOutput( length );
-    std::vector<unsigned int> boltInput( length );
-    std::vector<unsigned int> boltOutput( length );
-
-
-    for (int i = 0; i < length; ++i)
-    {
-        stdInput[i] = i;
-        boltInput[i] = stdInput[i];
-    }
-
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
-    //  Calling the actual functions under test
-    int offset = 80;
-    std::copy(stdInput.begin( ) + offset, stdInput.end( ), stdOutput.begin() );
-    bolt::cl::copy(ctl,  boltInput.begin( ) + offset, boltInput.end( ), boltOutput.begin());
-
-    cmpArrays(stdOutput, boltOutput);
-}
-
-TEST( CopyStdVectWithUIntFloat, OffsetTest)
-{
-    int length = 1024;
-
-    std::vector<unsigned int> stdInput( length );
-    std::vector<float> stdOutput( length );
-    std::vector<unsigned int> boltInput( length );
-    std::vector<float> boltOutput( length );
-
-
-    for (int i = 0; i < length; ++i)
-    {
-        stdInput[i] = i;
-        boltInput[i] = stdInput[i];
-    }
-
-    //  Calling the actual functions under test
-    int offset = 10;
-    std::copy(stdInput.begin( ) + offset, stdInput.end( ), stdOutput.begin() );
-    bolt::cl::copy( boltInput.begin( ) + offset, boltInput.end( ), boltOutput.begin());
-
-    cmpArrays(stdOutput, boltOutput);
-}
-
-TEST( CopyStdVectWithUIntFloat, SerialOffsetTest)
-{
-    int length = 1024;
-
-    std::vector<unsigned int> stdInput( length );
-    std::vector<float> stdOutput( length );
-    std::vector<unsigned int> boltInput( length );
-    std::vector<float> boltOutput( length );
-
-
-    for (int i = 0; i < length; ++i)
-    {
-        stdInput[i] = i;
-        boltInput[i] = stdInput[i];
-    }
-
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
-
-    //  Calling the actual functions under test
-    int offset = 10;
-    std::copy(stdInput.begin( ) + offset, stdInput.end( ), stdOutput.begin() );
-    bolt::cl::copy( ctl, boltInput.begin( ) + offset, boltInput.end( ), boltOutput.begin());
-
-    cmpArrays(stdOutput, boltOutput);
-}
-
-TEST( CopyStdVectWithUIntFloat, MultiCoreOffsetTest)
-{
-    int length = 1024;
-
-    std::vector<unsigned int> stdInput( length );
-    std::vector<float> stdOutput( length );
-    std::vector<unsigned int> boltInput( length );
-    std::vector<float> boltOutput( length );
-
-
-    for (int i = 0; i < length; ++i)
-    {
-        stdInput[i] = i;
-        boltInput[i] = stdInput[i];
-    }
-
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
-
-    //  Calling the actual functions under test
-    int offset = 10;
-    std::copy(stdInput.begin( ) + offset, stdInput.end( ), stdOutput.begin() );
-    bolt::cl::copy( ctl, boltInput.begin( ) + offset, boltInput.end( ), boltOutput.begin());
-
-    cmpArrays(stdOutput, boltOutput);
-}
 
 TEST( CopyStdVectWithInt, OffsetTest)
 {
@@ -545,7 +358,7 @@ TEST( CopyStdVectWithInt, OffsetTest)
         stdInput[i] = i;
         boltInput[i] = stdInput[i];
     }
-
+    
     //  Calling the actual functions under test
     int offset = 100;
     std::copy(stdInput.begin( ) + offset, stdInput.end( ), stdOutput.begin() );
@@ -554,59 +367,6 @@ TEST( CopyStdVectWithInt, OffsetTest)
     cmpArrays(stdOutput, boltOutput);
 }
 
-TEST( CopyStdVectWithInt, SerialOffsetTest)
-{
-    int length = 1024;
-
-    std::vector<int> stdInput( length );
-    std::vector<int> stdOutput( length );
-    std::vector<int> boltInput( length );
-    std::vector<int> boltOutput( length );
-
-
-    for (int i = 0; i < length; ++i)
-    {
-        stdInput[i] = i;
-        boltInput[i] = stdInput[i];
-    }
-
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
-
-    //  Calling the actual functions under test
-    int offset = 100;
-    std::copy(stdInput.begin( ) + offset, stdInput.end( ), stdOutput.begin() );
-    bolt::cl::copy( ctl, boltInput.begin( ) + offset, boltInput.end( ), boltOutput.begin());
-
-    cmpArrays(stdOutput, boltOutput);
-}
-
-TEST( CopyStdVectWithInt, MultiCoreOffsetTest)
-{
-    int length = 1024;
-
-    std::vector<int> stdInput( length );
-    std::vector<int> stdOutput( length );
-    std::vector<int> boltInput( length );
-    std::vector<int> boltOutput( length );
-
-
-    for (int i = 0; i < length; ++i)
-    {
-        stdInput[i] = i;
-        boltInput[i] = stdInput[i];
-    }
-
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
-
-    //  Calling the actual functions under test
-    int offset = 100;
-    std::copy(stdInput.begin( ) + offset, stdInput.end( ), stdOutput.begin() );
-    bolt::cl::copy( ctl, boltInput.begin( ) + offset, boltInput.end( ), boltOutput.begin());
-
-    cmpArrays(stdOutput, boltOutput);
-}
 
 TEST( CopyStdVectWithIntFloat, OffsetTest)
 {
@@ -623,220 +383,11 @@ TEST( CopyStdVectWithIntFloat, OffsetTest)
         stdInput[i] = i;
         boltInput[i] = stdInput[i];
     }
-
+    
     //  Calling the actual functions under test
     int offset = 100;
     std::copy(stdInput.begin( ) + offset, stdInput.end( ), stdOutput.begin() );
     bolt::cl::copy( boltInput.begin( ) + offset, boltInput.end( ), boltOutput.begin());
-
-    cmpArrays(stdOutput, boltOutput);
-}
-
-TEST( CopyStdVectWithIntFloat, SerialOffsetTest)
-{
-    int length = 1024;
-
-    std::vector<int> stdInput( length );
-    std::vector<float> stdOutput( length );
-    std::vector<int> boltInput( length );
-    std::vector<float> boltOutput( length );
-
-
-    for (int i = 0; i < length; ++i)
-    {
-        stdInput[i] = i;
-        boltInput[i] = stdInput[i];
-    }
-
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
-
-    //  Calling the actual functions under test
-    int offset = 100;
-    std::copy(stdInput.begin( ) + offset, stdInput.end( ), stdOutput.begin() );
-    bolt::cl::copy( ctl, boltInput.begin( ) + offset, boltInput.end( ), boltOutput.begin());
-
-    cmpArrays(stdOutput, boltOutput);
-}
-
-TEST( CopyStdVectWithIntFloat, MultiCoreOffsetTest)
-{
-    int length = 1024;
-
-    std::vector<int> stdInput( length );
-    std::vector<float> stdOutput( length );
-    std::vector<int> boltInput( length );
-    std::vector<float> boltOutput( length );
-
-
-    for (int i = 0; i < length; ++i)
-    {
-        stdInput[i] = i;
-        boltInput[i] = stdInput[i];
-    }
-
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
-
-    //  Calling the actual functions under test
-    int offset = 100;
-    std::copy(stdInput.begin( ) + offset, stdInput.end( ), stdOutput.begin() );
-    bolt::cl::copy( ctl, boltInput.begin( ) + offset, boltInput.end( ), boltOutput.begin());
-
-    cmpArrays(stdOutput, boltOutput);
-}
-
-TEST( CopyDevVectWithUInt, OffsetTest)
-{
-    int length = 1024;
-
-    std::vector<unsigned int> stdInput( length );
-    std::vector<unsigned int> stdOutput( length );
-    bolt::cl::device_vector<unsigned int> boltInput( length );
-    bolt::cl::device_vector<unsigned int> boltOutput( length );
-
-
-    for (int i = 0; i < length; ++i)
-    {
-        stdInput[i] = i;
-        boltInput[i] = stdInput[i];
-    }
-
-    //  Calling the actual functions under test
-    int offset = 100;
-    std::copy(stdInput.begin( ) + offset, stdInput.end( ), stdOutput.begin() );
-    bolt::cl::copy( boltInput.begin( ) + offset, boltInput.end( ), boltOutput.begin());
-
-    cmpArrays(stdOutput, boltOutput);
-}
-
-TEST( CopyDevVectWithUInt, SerialOffsetTest)
-{
-    int length = 1024;
-
-    std::vector<unsigned int> stdInput( length );
-    std::vector<unsigned int> stdOutput( length );
-    bolt::cl::device_vector<unsigned int> boltInput( length );
-    bolt::cl::device_vector<unsigned int> boltOutput( length );
-
-
-    for (int i = 0; i < length; ++i)
-    {
-        stdInput[i] = i;
-        boltInput[i] = stdInput[i];
-    }
-
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
-
-    //  Calling the actual functions under test
-    int offset = 100;
-    std::copy(stdInput.begin( ) + offset, stdInput.end( ), stdOutput.begin() );
-    bolt::cl::copy( ctl, boltInput.begin( ) + offset, boltInput.end( ), boltOutput.begin());
-
-    cmpArrays(stdOutput, boltOutput);
-}
-
-#if(TEST_LARGE_BUFFERS==1)
-TEST( CopyDevVectWithUInt, MultiCoreOffsetTest)
-{
-    int length = 1<<26;
-
-    std::vector<unsigned int> stdInput( length );
-    std::vector<unsigned int> stdOutput( length );
-    bolt::cl::device_vector<unsigned int> boltInput( length );
-    bolt::cl::device_vector<unsigned int> boltOutput( length );
-
-
-    for (int i = 0; i < length; ++i)
-    {
-        stdInput[i] = i;
-        boltInput[i] = stdInput[i];
-    }
-
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
-
-    //  Calling the actual functions under test
-    int offset = 0;
-    std::copy(stdInput.begin( ) + offset, stdInput.end( ), stdOutput.begin() );
-    bolt::cl::copy( ctl, boltInput.begin( ) + offset, boltInput.end( ), boltOutput.begin());
-
-    cmpArrays(stdOutput, boltOutput);
-}
-#endif
-
-TEST( CopyDevVectWithUIntFloat, OffsetTest)
-{
-    int length = 1024;
-
-    std::vector<unsigned int> stdInput( length );
-    std::vector<float> stdOutput( length );
-    bolt::cl::device_vector<unsigned int> boltInput( length );
-    bolt::cl::device_vector<float> boltOutput( length );
-
-    for (int i = 0; i < length; ++i)
-    {
-        stdInput[i] = i;
-        boltInput[i] = stdInput[i];
-    }
-
-    //  Calling the actual functions under test
-    int offset = 100;
-    std::copy(stdInput.begin( ) + offset, stdInput.end( ), stdOutput.begin() );
-    bolt::cl::copy( boltInput.begin( ) + offset, boltInput.end( ), boltOutput.begin());
-
-    cmpArrays(stdOutput, boltOutput);
-}
-
-TEST( CopyDevVectWithUIntFloat, SerialOffsetTest)
-{
-    int length = 1024;
-
-    std::vector<unsigned int> stdInput( length );
-    std::vector<float> stdOutput( length );
-    bolt::cl::device_vector<unsigned int> boltInput( length );
-    bolt::cl::device_vector<float> boltOutput( length );
-
-    for (int i = 0; i < length; ++i)
-    {
-        stdInput[i] = i;
-        boltInput[i] = stdInput[i];
-    }
-
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
-
-    //  Calling the actual functions under test
-    int offset = 100;
-    std::copy(stdInput.begin( ) + offset, stdInput.end( ), stdOutput.begin() );
-    bolt::cl::copy(ctl, boltInput.begin( ) + offset, boltInput.end( ), boltOutput.begin());
-
-    cmpArrays(stdOutput, boltOutput);
-}
-
-TEST( CopyDevVectWithUIntFloat, MultiCoreOffsetTest)
-{
-    int length = 1024;
-
-    std::vector<unsigned int> stdInput( length );
-    std::vector<float> stdOutput( length );
-    bolt::cl::device_vector<unsigned int> boltInput( length );
-    bolt::cl::device_vector<float> boltOutput( length );
-
-    for (int i = 0; i < length; ++i)
-    {
-        stdInput[i] = i;
-        boltInput[i] = stdInput[i];
-    }
-
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
-
-    //  Calling the actual functions under test
-    int offset = 100;
-    std::copy(stdInput.begin( ) + offset, stdInput.end( ), stdOutput.begin() );
-    bolt::cl::copy(ctl, boltInput.begin( ) + offset, boltInput.end( ), boltOutput.begin());
 
     cmpArrays(stdOutput, boltOutput);
 }
@@ -856,7 +407,7 @@ TEST( CopyDevVectWithInt, OffsetTest)
         stdInput[i] = i;
         boltInput[i] = stdInput[i];
     }
-
+    
     //  Calling the actual functions under test
     int offset = 100;
     std::copy(stdInput.begin( ) + offset, stdInput.end( ), stdOutput.begin() );
@@ -864,61 +415,6 @@ TEST( CopyDevVectWithInt, OffsetTest)
 
     cmpArrays(stdOutput, boltOutput);
 }
-
-TEST( CopyDevVectWithInt, SerialOffsetTest)
-{
-    int length = 1024;
-
-    std::vector<int> stdInput( length );
-    std::vector<int> stdOutput( length );
-    bolt::cl::device_vector<int> boltInput( length );
-    bolt::cl::device_vector<int> boltOutput( length );
-
-
-    for (int i = 0; i < length; ++i)
-    {
-        stdInput[i] = i;
-        boltInput[i] = stdInput[i];
-    }
-
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
-
-    //  Calling the actual functions under test
-    int offset = 100;
-    std::copy(stdInput.begin( ) + offset, stdInput.end( ), stdOutput.begin() );
-    bolt::cl::copy(ctl, boltInput.begin( ) + offset, boltInput.end( ), boltOutput.begin());
-
-    cmpArrays(stdOutput, boltOutput);
-}
-
-TEST( CopyDevVectWithInt, MultiCoreOffsetTest)
-{
-    int length = 1024;
-
-    std::vector<int> stdInput( length );
-    std::vector<int> stdOutput( length );
-    bolt::cl::device_vector<int> boltInput( length );
-    bolt::cl::device_vector<int> boltOutput( length );
-
-
-    for (int i = 0; i < length; ++i)
-    {
-        stdInput[i] = i;
-        boltInput[i] = stdInput[i];
-    }
-
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
-
-    //  Calling the actual functions under test
-    int offset = 100;
-    std::copy(stdInput.begin( ) + offset, stdInput.end( ), stdOutput.begin() );
-    bolt::cl::copy(ctl, boltInput.begin( ) + offset, boltInput.end( ), boltOutput.begin());
-
-    cmpArrays(stdOutput, boltOutput);
-}
-
 
 TEST( CopyDevVectWithIntFloat, OffsetTest)
 {
@@ -929,12 +425,14 @@ TEST( CopyDevVectWithIntFloat, OffsetTest)
     bolt::cl::device_vector<int> boltInput( length );
     bolt::cl::device_vector<float> boltOutput( length );
 
+
+
     for (int i = 0; i < length; ++i)
     {
         stdInput[i] = i;
         boltInput[i] = stdInput[i];
     }
-
+    
     //  Calling the actual functions under test
     int offset = 100;
     std::copy(stdInput.begin( ) + offset, stdInput.end( ), stdOutput.begin() );
@@ -943,61 +441,8 @@ TEST( CopyDevVectWithIntFloat, OffsetTest)
     cmpArrays(stdOutput, boltOutput);
 }
 
-TEST( CopyDevVectWithIntFloat, SerialOffsetTest)
-{
-    int length = 1024;
 
-    std::vector<int> stdInput( length );
-    std::vector<float> stdOutput( length );
-    bolt::cl::device_vector<int> boltInput( length );
-    bolt::cl::device_vector<float> boltOutput( length );
-
-    for (int i = 0; i < length; ++i)
-    {
-        stdInput[i] = i;
-        boltInput[i] = stdInput[i];
-    }
-
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
-
-    //  Calling the actual functions under test
-    int offset = 100;
-    std::copy(stdInput.begin( ) + offset, stdInput.end( ), stdOutput.begin() );
-    bolt::cl::copy( ctl, boltInput.begin( ) + offset, boltInput.end( ), boltOutput.begin());
-
-    cmpArrays(stdOutput, boltOutput);
-}
-
-#if(TEST_LARGE_BUFFERS==1)
-TEST( CopyDevVectWithIntFloat, MultiCoreOffsetTest)
-{
-    int length = 10000;
-
-    std::vector<int> stdInput( length );
-    std::vector<float> stdOutput( length );
-    bolt::cl::device_vector<int> boltInput( length );
-    bolt::cl::device_vector<float> boltOutput( length );
-
-    for (int i = 0; i < length; ++i)
-    {
-        stdInput[i] = i;
-        boltInput[i] = stdInput[i];
-    }
-
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
-
-    //  Calling the actual functions under test
-    int offset = 100;
-    std::copy(stdInput.begin( ) + offset, stdInput.end( ), stdOutput.begin() );
-    bolt::cl::copy( ctl, boltInput.begin( ) + offset, boltInput.end( ), boltOutput.begin());
-
-    cmpArrays(stdOutput, boltOutput);
-}
-#endif
-
-TEST(Copy, FancyDeviceIterator)
+TEST(Copy, FancyDeviceIterator) 
 {
     for (int i = 0; i < numLengths; i++)
     {
@@ -1011,7 +456,7 @@ TEST(Copy, FancyDeviceIterator)
 
         for (int i=0; i < length; i++) {
             a[i] = i;
-        };
+        }; 
 
         //STL destination vector
 
@@ -1023,14 +468,14 @@ TEST(Copy, FancyDeviceIterator)
         // perform copy
         std::copy(a.begin(), a.end(), dest.begin());
         bolt::cl::copy(first, last, destination.begin());
-
+       
         // GoogleTest Comparison
         cmpArrays(dest, destination);
     }
-}
+} 
 
 
-TEST(Copy, SerialFancyDeviceIterator)
+TEST(Copy, SerialFancyDeviceIterator) 
 {
     for (int i = 0; i < numLengths; i++)
     {
@@ -1044,7 +489,7 @@ TEST(Copy, SerialFancyDeviceIterator)
 
         for (int i=0; i < length; i++) {
             a[i] = i;
-        };
+        }; 
 
         //STL destination vector
 
@@ -1059,13 +504,13 @@ TEST(Copy, SerialFancyDeviceIterator)
         // perform copy
         std::copy(a.begin(), a.end(), dest.begin());
         bolt::cl::copy(ctl, first, last, destination.begin());
-
+       
         // GoogleTest Comparison
         cmpArrays(dest, destination);
     }
-}
+} 
 
-TEST(Copy, MultiCoreFancyDeviceIterator)
+TEST(Copy, MultiCoreFancyDeviceIterator) 
 {
     for (int i = 0; i < numLengths; i++)
     {
@@ -1079,7 +524,7 @@ TEST(Copy, MultiCoreFancyDeviceIterator)
 
         for (int i=0; i < length; i++) {
             a[i] = i;
-        };
+        }; 
 
         //STL destination vector
 
@@ -1094,13 +539,13 @@ TEST(Copy, MultiCoreFancyDeviceIterator)
         // perform copy
         std::copy(a.begin(), a.end(), dest.begin());
         bolt::cl::copy(ctl, first, last, destination.begin());
-
+       
         // GoogleTest Comparison
         cmpArrays(dest, destination);
     }
-}
+} 
 
-TEST(Copy, FancyDeviceIntFloat)
+TEST(Copy, FancyDeviceIntFloat) 
 {
     for (int i = 0; i < numLengths; i++)
     {
@@ -1114,7 +559,7 @@ TEST(Copy, FancyDeviceIntFloat)
 
         for (int i=0; i < length; i++) {
             a[i] = i;
-        };
+        }; 
 
         //STL destination vector
 
@@ -1126,13 +571,13 @@ TEST(Copy, FancyDeviceIntFloat)
         // perform copy
         std::copy(a.begin(), a.end(), dest.begin());
         bolt::cl::copy(first, last, destination.begin());
-
+       
         // GoogleTest Comparison
         cmpArrays(dest, destination);
     }
-}
+} 
 
-TEST(Copy, SerialFancyDeviceIntFloat)
+TEST(Copy, SerialFancyDeviceIntFloat) 
 {
     for (int i = 0; i < numLengths; i++)
     {
@@ -1146,7 +591,7 @@ TEST(Copy, SerialFancyDeviceIntFloat)
 
         for (int i=0; i < length; i++) {
             a[i] = i;
-        };
+        }; 
 
         bolt::cl::control ctl = bolt::cl::control::getDefault( );
         ctl.setForceRunMode(bolt::cl::control::SerialCpu);
@@ -1161,13 +606,13 @@ TEST(Copy, SerialFancyDeviceIntFloat)
         // perform copy
         std::copy(a.begin(), a.end(), dest.begin());
         bolt::cl::copy(ctl, first, last, destination.begin());
-
+       
         // GoogleTest Comparison
         cmpArrays(dest, destination);
     }
-}
+} 
 
-TEST(Copy, MultiCoreFancyDeviceIntFloat)
+TEST(Copy, MultiCoreFancyDeviceIntFloat) 
 {
     for (int i = 0; i < numLengths; i++)
     {
@@ -1181,7 +626,7 @@ TEST(Copy, MultiCoreFancyDeviceIntFloat)
 
         for (int i=0; i < length; i++) {
             a[i] = i;
-        };
+        }; 
 
         bolt::cl::control ctl = bolt::cl::control::getDefault( );
         ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
@@ -1196,13 +641,13 @@ TEST(Copy, MultiCoreFancyDeviceIntFloat)
         // perform copy
         std::copy(a.begin(), a.end(), dest.begin());
         bolt::cl::copy(ctl, first, last, destination.begin());
-
+       
         // GoogleTest Comparison
         cmpArrays(dest, destination);
     }
-}
+} 
 
-TEST(Copy, FancyRandomIterator)
+TEST(Copy, FancyRandomIterator)  
 {
     for (int i = 0; i < numLengths; i++)
     {
@@ -1216,7 +661,7 @@ TEST(Copy, FancyRandomIterator)
 
         for (int i=0; i < length; i++) {
             a[i] = i;
-        };
+        }; 
 
         //STL destination vector
         std::vector<int> dest(length);
@@ -1226,13 +671,13 @@ TEST(Copy, FancyRandomIterator)
         // perform copy
         std::copy(a.begin(), a.end(), dest.begin());
         bolt::cl::copy(first, last, destination.begin());
-
+       
         // GoogleTest Comparison
         cmpArrays(dest, destination);
     }
-}
+} 
 
-TEST(Copy, SerialFancyRandomIterator)
+TEST(Copy, SerialFancyRandomIterator)  
 {
     for (int i = 0; i < numLengths; i++)
     {
@@ -1246,7 +691,7 @@ TEST(Copy, SerialFancyRandomIterator)
 
         for (int i=0; i < length; i++) {
             a[i] = i;
-        };
+        }; 
 
         //STL destination vector
         std::vector<int> dest(length);
@@ -1259,13 +704,13 @@ TEST(Copy, SerialFancyRandomIterator)
         // perform copy
         std::copy(a.begin(), a.end(), dest.begin());
         bolt::cl::copy(ctl, first, last, destination.begin());
-
+       
         // GoogleTest Comparison
         cmpArrays(dest, destination);
     }
-}
+} 
 
-TEST(Copy, MultiCoreFancyRandomIterator)
+TEST(Copy, MultiCoreFancyRandomIterator)  
 {
     for (int i = 0; i < numLengths; i++)
     {
@@ -1279,7 +724,7 @@ TEST(Copy, MultiCoreFancyRandomIterator)
 
         for (int i=0; i < length; i++) {
             a[i] = i;
-        };
+        }; 
 
         //STL destination vector
         std::vector<int> dest(length);
@@ -1292,13 +737,13 @@ TEST(Copy, MultiCoreFancyRandomIterator)
         // perform copy
         std::copy(a.begin(), a.end(), dest.begin());
         bolt::cl::copy(ctl, first, last, destination.begin());
-
+       
         // GoogleTest Comparison
         cmpArrays(dest, destination);
     }
-}
+} 
 
-TEST(Copy, FancyRandomIntFloat)
+TEST(Copy, FancyRandomIntFloat)  
 {
     for (int i = 0; i < numLengths; i++)
     {
@@ -1312,7 +757,7 @@ TEST(Copy, FancyRandomIntFloat)
 
         for (int i=0; i < length; i++) {
             a[i] = i;
-        };
+        }; 
 
         //STL destination vector
         std::vector<float> dest(length);
@@ -1322,13 +767,13 @@ TEST(Copy, FancyRandomIntFloat)
         // perform copy
         std::copy(a.begin(), a.end(), dest.begin());
         bolt::cl::copy(first, last, destination.begin());
-
+       
         // GoogleTest Comparison
         cmpArrays(dest, destination);
     }
-}
+} 
 
-TEST(Copy, SerialFancyRandomIntFloat)
+TEST(Copy, SerialFancyRandomIntFloat)  
 {
     for (int i = 0; i < numLengths; i++)
     {
@@ -1342,7 +787,7 @@ TEST(Copy, SerialFancyRandomIntFloat)
 
         for (int i=0; i < length; i++) {
             a[i] = i;
-        };
+        }; 
 
         //STL destination vector
         std::vector<float> dest(length);
@@ -1355,13 +800,13 @@ TEST(Copy, SerialFancyRandomIntFloat)
         // perform copy
         std::copy(a.begin(), a.end(), dest.begin());
         bolt::cl::copy(ctl, first, last, destination.begin());
-
+       
         // GoogleTest Comparison
         cmpArrays(dest, destination);
     }
 }
 
-TEST(Copy, MultiCoreFancyRandomIntFloat)
+TEST(Copy, MultiCoreFancyRandomIntFloat)  
 {
     for (int i = 0; i < numLengths; i++)
     {
@@ -1375,7 +820,7 @@ TEST(Copy, MultiCoreFancyRandomIntFloat)
 
         for (int i=0; i < length; i++) {
             a[i] = i;
-        };
+        }; 
 
         //STL destination vector
         std::vector<float> dest(length);
@@ -1388,14 +833,14 @@ TEST(Copy, MultiCoreFancyRandomIntFloat)
         // perform copy
         std::copy(a.begin(), a.end(), dest.begin());
         bolt::cl::copy(ctl, first, last, destination.begin());
-
+       
         // GoogleTest Comparison
         cmpArrays(dest, destination);
     }
 }
 
 //Copy with Fancy Iterator as destination results in Complilation Failure!
-/*TEST(Copy, RandomFancyIterator)
+/*TEST(Copy, RandomFancyIterator)  
 {
     for (int i = 0; i < numLengths; i++)
     {
@@ -1410,7 +855,7 @@ TEST(Copy, MultiCoreFancyRandomIntFloat)
 
         for (int i=0; i < length; i++) {
             a[i] = i;
-        };
+        }; 
 
         //STL destination vector
         std::vector<int> dest(length);
@@ -1418,13 +863,13 @@ TEST(Copy, MultiCoreFancyRandomIntFloat)
         // perform copy
         std::copy(a.begin(), a.end(), dest.begin());
         bolt::cl::copy(a.begin(), a.end(), first); // This is logically wrong!
-
+       
         // GoogleTest Comparison
         //cmpArrays(dest, first, length);
     }
 }
 
-TEST(Copy, DeviceFancyIterator)
+TEST(Copy, DeviceFancyIterator)  
 {
     for (int i = 0; i < numLengths; i++)
     {
@@ -1441,7 +886,7 @@ TEST(Copy, DeviceFancyIterator)
         for (int i=0; i < length; i++) {
             a[i] = i;
             b[i] = a[i];
-        };
+        }; 
 
         //STL destination vector
         std::vector<int> dest(length);
@@ -1449,13 +894,13 @@ TEST(Copy, DeviceFancyIterator)
         // perform copy
         std::copy(a.begin(), a.end(), dest.begin());
         bolt::cl::copy(b.begin(), b.end(), first); // This is logically wrong!
-
+       
         // GoogleTest Comparison
         //cmpArrays(dest, first, length);
     }
 }*/
 
-TEST(Copy, DeviceRandom)
+TEST(Copy, DeviceRandom)  
 {
     for (int i = 0; i < numLengths; i++)
     {
@@ -1467,17 +912,17 @@ TEST(Copy, DeviceRandom)
 
         for (int i=0; i < length; i++) {
             src[i] = i;
-        };
+        }; 
 
         // perform copy
         bolt::cl::copy(src.begin(), src.end(), dest.begin());
-
+       
         // GoogleTest Comparison
         cmpArrays(src, dest);
     }
-}
+} 
 
-TEST(Copy, SerialDeviceRandom)
+TEST(Copy, SerialDeviceRandom)  
 {
     for (int i = 0; i < numLengths; i++)
     {
@@ -1489,20 +934,20 @@ TEST(Copy, SerialDeviceRandom)
 
         for (int i=0; i < length; i++) {
             src[i] = i;
-        };
+        }; 
 
         bolt::cl::control ctl = bolt::cl::control::getDefault( );
-        ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+        ctl.setForceRunMode(bolt::cl::control::SerialCpu); 
 
         // perform copy
         bolt::cl::copy(ctl, src.begin(), src.end(), dest.begin());
-
+       
         // GoogleTest Comparison
         cmpArrays(src, dest);
     }
-}
+} 
 
-TEST(Copy, MultiCoreDeviceRandom)
+TEST(Copy, MultiCoreDeviceRandom)  
 {
     for (int i = 0; i < numLengths; i++)
     {
@@ -1514,20 +959,20 @@ TEST(Copy, MultiCoreDeviceRandom)
 
         for (int i=0; i < length; i++) {
             src[i] = i;
-        };
+        }; 
 
         bolt::cl::control ctl = bolt::cl::control::getDefault( );
-        ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+        ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu); 
 
         // perform copy
         bolt::cl::copy(ctl, src.begin(), src.end(), dest.begin());
-
+       
         // GoogleTest Comparison
         cmpArrays(src, dest);
     }
-}
+} 
 
-TEST(Copy, DeviceRandomIntFloat)
+TEST(Copy, DeviceRandomIntFloat)  
 {
     for (int i = 0; i < numLengths; i++)
     {
@@ -1539,17 +984,17 @@ TEST(Copy, DeviceRandomIntFloat)
 
         for (int i=0; i < length; i++) {
             src[i] = i;
-        };
+        }; 
 
         // perform copy
         bolt::cl::copy(src.begin(), src.end(), dest.begin());
-
+       
         // GoogleTest Comparison
         cmpArrays(src, dest);
     }
-}
+} 
 
-TEST(Copy, SerialDeviceRandomIntFloat)
+TEST(Copy, SerialDeviceRandomIntFloat)  
 {
     for (int i = 0; i < numLengths; i++)
     {
@@ -1561,20 +1006,20 @@ TEST(Copy, SerialDeviceRandomIntFloat)
 
         for (int i=0; i < length; i++) {
             src[i] = i;
-        };
+        }; 
 
         bolt::cl::control ctl = bolt::cl::control::getDefault( );
-        ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+        ctl.setForceRunMode(bolt::cl::control::SerialCpu); 
 
         // perform copy
         bolt::cl::copy(ctl, src.begin(), src.end(), dest.begin());
-
+       
         // GoogleTest Comparison
         cmpArrays(src, dest);
     }
-}
+} 
 
-TEST(Copy, MultiCoreDeviceRandomIntFloat)
+TEST(Copy, MultiCoreDeviceRandomIntFloat)  
 {
     for (int i = 0; i < numLengths; i++)
     {
@@ -1586,20 +1031,20 @@ TEST(Copy, MultiCoreDeviceRandomIntFloat)
 
         for (int i=0; i < length; i++) {
             src[i] = i;
-        };
+        }; 
 
         bolt::cl::control ctl = bolt::cl::control::getDefault( );
-        ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+        ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu); 
 
         // perform copy
         bolt::cl::copy(ctl, src.begin(), src.end(), dest.begin());
-
+       
         // GoogleTest Comparison
         cmpArrays(src, dest);
     }
-}
+} 
 
-TEST(Copy, RandomDevice)
+TEST(Copy, RandomDevice)  
 {
     for (int i = 0; i < numLengths; i++)
     {
@@ -1611,17 +1056,17 @@ TEST(Copy, RandomDevice)
 
         for (int i=0; i < length; i++) {
             src[i] = i;
-        };
+        }; 
 
         // perform copy
         bolt::cl::copy(src.begin(), src.end(), dest.begin());
-
+       
         // GoogleTest Comparison
         cmpArrays(src, dest);
     }
-}
+} 
 
-TEST(Copy, SerialRandomDevice)
+TEST(Copy, SerialRandomDevice)  
 {
     for (int i = 0; i < numLengths; i++)
     {
@@ -1633,20 +1078,20 @@ TEST(Copy, SerialRandomDevice)
 
         for (int i=0; i < length; i++) {
             src[i] = i;
-        };
+        }; 
 
         bolt::cl::control ctl = bolt::cl::control::getDefault( );
-        ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+        ctl.setForceRunMode(bolt::cl::control::SerialCpu); 
 
         // perform copy
         bolt::cl::copy(ctl, src.begin(), src.end(), dest.begin());
-
+       
         // GoogleTest Comparison
         cmpArrays(src, dest);
     }
-}
+} 
 
-TEST(Copy, MultiCoreRandomDevice)
+TEST(Copy, MultiCoreRandomDevice)  
 {
     for (int i = 0; i < numLengths; i++)
     {
@@ -1658,20 +1103,20 @@ TEST(Copy, MultiCoreRandomDevice)
 
         for (int i=0; i < length; i++) {
             src[i] = i;
-        };
+        }; 
 
         bolt::cl::control ctl = bolt::cl::control::getDefault( );
-        ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+        ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu); 
 
         // perform copy
         bolt::cl::copy(ctl, src.begin(), src.end(), dest.begin());
-
+       
         // GoogleTest Comparison
         cmpArrays(src, dest);
     }
-}
+} 
 
-TEST(Copy, RandomDeviceIntFloat)
+TEST(Copy, RandomDeviceIntFloat)  
 {
     for (int i = 0; i < numLengths; i++)
     {
@@ -1683,17 +1128,17 @@ TEST(Copy, RandomDeviceIntFloat)
 
         for (int i=0; i < length; i++) {
             src[i] = i;
-        };
+        }; 
 
         // perform copy
         bolt::cl::copy(src.begin(), src.end(), dest.begin());
-
+       
         // GoogleTest Comparison
         cmpArrays(src, dest);
     }
-}
+} 
 
-TEST(Copy, SerialRandomDeviceIntFloat)
+TEST(Copy, SerialRandomDeviceIntFloat)  
 {
     for (int i = 0; i < numLengths; i++)
     {
@@ -1705,20 +1150,20 @@ TEST(Copy, SerialRandomDeviceIntFloat)
 
         for (int i=0; i < length; i++) {
             src[i] = i;
-        };
+        }; 
 
         bolt::cl::control ctl = bolt::cl::control::getDefault( );
-        ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+        ctl.setForceRunMode(bolt::cl::control::SerialCpu); 
 
         // perform copy
         bolt::cl::copy(ctl, src.begin(), src.end(), dest.begin());
-
+       
         // GoogleTest Comparison
         cmpArrays(src, dest);
     }
-}
+} 
 
-TEST(Copy, MultiCoreRandomDeviceIntFloat)
+TEST(Copy, MultiCoreRandomDeviceIntFloat)  
 {
     for (int i = 0; i < numLengths; i++)
     {
@@ -1730,20 +1175,20 @@ TEST(Copy, MultiCoreRandomDeviceIntFloat)
 
         for (int i=0; i < length; i++) {
             src[i] = i;
-        };
+        }; 
 
         bolt::cl::control ctl = bolt::cl::control::getDefault( );
-        ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+        ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu); 
 
         // perform copy
         bolt::cl::copy(ctl, src.begin(), src.end(), dest.begin());
-
+       
         // GoogleTest Comparison
         cmpArrays(src, dest);
     }
-}
+} 
 
-TEST(Copy, DevclLong)
+TEST(Copy, DevclLong)  
 {
     for (int i = 0; i < numLengths; i++)
     {
@@ -1765,9 +1210,9 @@ TEST(Copy, DevclLong)
         cmpArrays(source, destination);
 
     }
-}
+} 
 
-TEST(Copy, SerialDevclLong)
+TEST(Copy, SerialDevclLong)  
 {
     for (int i = 0; i < numLengths; i++)
     {
@@ -1781,7 +1226,7 @@ TEST(Copy, SerialDevclLong)
         }
 
         bolt::cl::control ctl = bolt::cl::control::getDefault( );
-        ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+        ctl.setForceRunMode(bolt::cl::control::SerialCpu); 
 
         // destination vector
         bolt::cl::device_vector<cl_long> destination(length);
@@ -1792,9 +1237,9 @@ TEST(Copy, SerialDevclLong)
         cmpArrays(source, destination);
 
     }
-}
+} 
 
-TEST(Copy, MultiCoreDevclLong)
+TEST(Copy, MultiCoreDevclLong)  
 {
     for (int i = 0; i < numLengths; i++)
     {
@@ -1808,7 +1253,7 @@ TEST(Copy, MultiCoreDevclLong)
         }
 
         bolt::cl::control ctl = bolt::cl::control::getDefault( );
-        ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+        ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu); 
 
         // destination vector
         bolt::cl::device_vector<cl_long> destination(length);
@@ -1819,9 +1264,9 @@ TEST(Copy, MultiCoreDevclLong)
         cmpArrays(source, destination);
 
     }
-}
+} 
 
-TEST(Copy, DevUnsignedInt)
+TEST(Copy, DevUnsignedInt)  
 {
     for (int i = 0; i < numLengths; i++)
     {
@@ -1843,9 +1288,9 @@ TEST(Copy, DevUnsignedInt)
         cmpArrays(source, destination);
 
     }
-}
+} 
 
-TEST(Copy, SerialDevUnsignedInt)
+TEST(Copy, SerialDevUnsignedInt)  
 {
     for (int i = 0; i < numLengths; i++)
     {
@@ -1859,7 +1304,7 @@ TEST(Copy, SerialDevUnsignedInt)
         }
 
         bolt::cl::control ctl = bolt::cl::control::getDefault( );
-        ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+        ctl.setForceRunMode(bolt::cl::control::SerialCpu); 
 
         // destination vector
         bolt::cl::device_vector<unsigned int > destination(length);
@@ -1870,9 +1315,9 @@ TEST(Copy, SerialDevUnsignedInt)
         cmpArrays(source, destination);
 
     }
-}
+} 
 
-TEST(Copy, MultiCoreDevUnsignedInt)
+TEST(Copy, MultiCoreDevUnsignedInt)  
 {
     for (int i = 0; i < numLengths; i++)
     {
@@ -1886,7 +1331,7 @@ TEST(Copy, MultiCoreDevUnsignedInt)
         }
 
         bolt::cl::control ctl = bolt::cl::control::getDefault( );
-        ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+        ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu); 
 
         // destination vector
         bolt::cl::device_vector<unsigned int > destination(length);
@@ -1897,9 +1342,9 @@ TEST(Copy, MultiCoreDevUnsignedInt)
         cmpArrays(source, destination);
 
     }
-}
+} 
 
-TEST(Copy, DevShort)
+TEST(Copy, DevShort)  
 {
     for (int i = 0; i < numLengths; i++)
     {
@@ -1921,10 +1366,10 @@ TEST(Copy, DevShort)
         cmpArrays(source, destination);
 
     }
-}
+} 
 
 
-TEST(Copy, SerialDevShort)
+TEST(Copy, SerialDevShort)  
 {
     for (int i = 0; i < numLengths; i++)
     {
@@ -1938,7 +1383,7 @@ TEST(Copy, SerialDevShort)
         }
 
         bolt::cl::control ctl = bolt::cl::control::getDefault( );
-        ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+        ctl.setForceRunMode(bolt::cl::control::SerialCpu); 
 
        // destination vector
         bolt::cl::device_vector<short> destination(length);
@@ -1949,9 +1394,9 @@ TEST(Copy, SerialDevShort)
         cmpArrays(source, destination);
 
     }
-}
+} 
 
-TEST(Copy, MultiCoreDevShort)
+TEST(Copy, MultiCoreDevShort)  
 {
     for (int i = 0; i < numLengths; i++)
     {
@@ -1965,7 +1410,7 @@ TEST(Copy, MultiCoreDevShort)
         }
 
         bolt::cl::control ctl = bolt::cl::control::getDefault( );
-        ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+        ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu); 
 
        // destination vector
         bolt::cl::device_vector<short> destination(length);
@@ -1976,7 +1421,7 @@ TEST(Copy, MultiCoreDevShort)
         cmpArrays(source, destination);
 
     }
-}
+} 
 
 
 TEST(Copy, DevPrim)  // Default code path
@@ -1999,7 +1444,7 @@ TEST(Copy, DevPrim)  // Default code path
         // GoogleTest Comparison
         cmpArrays(source, destination);
     }
-}
+} 
 
 TEST(Copy, AutomaticDevPrim) //Automatic Code Path
 {
@@ -2015,7 +1460,7 @@ TEST(Copy, AutomaticDevPrim) //Automatic Code Path
         }
 
         bolt::cl::control ctl = bolt::cl::control::getDefault( );
-        ctl.setForceRunMode(bolt::cl::control::Automatic);
+        ctl.setForceRunMode(bolt::cl::control::Automatic); 
 
         // destination vector
         bolt::cl::device_vector<int> destination(length);
@@ -2038,10 +1483,10 @@ TEST(Copy, SerialDevPrim) // Serial Code Path
         {
             source[j] = rand();
         }
-
+        
         bolt::cl::control ctl = bolt::cl::control::getDefault( );
-        ctl.setForceRunMode(bolt::cl::control::SerialCpu);
-
+        ctl.setForceRunMode(bolt::cl::control::SerialCpu); 
+        
         // destination vector
         bolt::cl::device_vector<int> destination(length);
         // perform copy
@@ -2063,10 +1508,10 @@ TEST(Copy, MultiCoreDevPrim) // MultiCore CPU - TBB Path
         {
             source[j] = rand();
         }
-
+        
         bolt::cl::control ctl = bolt::cl::control::getDefault( );
-        ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
-
+        ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu); 
+        
         // destination vector
         bolt::cl::device_vector<int> destination(length);
         // perform copy
@@ -2076,7 +1521,7 @@ TEST(Copy, MultiCoreDevPrim) // MultiCore CPU - TBB Path
     }
 }
 
-TEST(CopyN, DevclLong)
+TEST(CopyN, DevclLong)  
 {
     for (int i = 0; i < numLengths; i++)
     {
@@ -2098,9 +1543,9 @@ TEST(CopyN, DevclLong)
         cmpArrays(source, destination, length);
 
     }
-}
+} 
 
-TEST(CopyN, SerialDevclLong)
+TEST(CopyN, SerialDevclLong)  
 {
     for (int i = 0; i < numLengths; i++)
     {
@@ -2114,7 +1559,7 @@ TEST(CopyN, SerialDevclLong)
         }
 
         bolt::cl::control ctl = bolt::cl::control::getDefault( );
-        ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+        ctl.setForceRunMode(bolt::cl::control::SerialCpu); 
 
         // destination vector
         bolt::cl::device_vector<cl_long> destination(length);
@@ -2125,9 +1570,9 @@ TEST(CopyN, SerialDevclLong)
         cmpArrays(source, destination, length);
 
     }
-}
+} 
 
-TEST(CopyN, MultiCoreDevclLong)
+TEST(CopyN, MultiCoreDevclLong)  
 {
     for (int i = 0; i < numLengths; i++)
     {
@@ -2141,7 +1586,7 @@ TEST(CopyN, MultiCoreDevclLong)
         }
 
         bolt::cl::control ctl = bolt::cl::control::getDefault( );
-        ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+        ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu); 
 
         // destination vector
         bolt::cl::device_vector<cl_long> destination(length);
@@ -2152,7 +1597,7 @@ TEST(CopyN, MultiCoreDevclLong)
         cmpArrays(source, destination, length);
 
     }
-}
+} 
 
 TEST(CopyN, DevPrim)
 {
@@ -2166,7 +1611,7 @@ TEST(CopyN, DevPrim)
         {
             source[j] = rand();
         }
-
+        
         // destination vector
         bolt::cl::device_vector<int> destination(length);
         // perform copy
@@ -2177,7 +1622,7 @@ TEST(CopyN, DevPrim)
 }
 
 TEST(CopyN, AutomaticDevPrim)
-{
+{    
     for (int i = 0; i < numLengths; i++)
     {
         // test length
@@ -2188,10 +1633,10 @@ TEST(CopyN, AutomaticDevPrim)
         {
             source[j] = rand();
         }
-
+    
         bolt::cl::control ctl = bolt::cl::control::getDefault( );
-        ctl.setForceRunMode(bolt::cl::control::Automatic);
-
+        ctl.setForceRunMode(bolt::cl::control::Automatic); 
+        
         // destination vector
         bolt::cl::device_vector<int> destination(length);
         // perform copy
@@ -2202,7 +1647,7 @@ TEST(CopyN, AutomaticDevPrim)
 }
 
 TEST(CopyN, SerialDevPrim)
-{
+{    
     for (int i = 0; i < numLengths; i++)
     {
         // test length
@@ -2213,10 +1658,10 @@ TEST(CopyN, SerialDevPrim)
         {
             source[j] = rand();
         }
-
+    
         bolt::cl::control ctl = bolt::cl::control::getDefault( );
-        ctl.setForceRunMode(bolt::cl::control::SerialCpu);
-
+        ctl.setForceRunMode(bolt::cl::control::SerialCpu); 
+        
         // destination vector
         bolt::cl::device_vector<int> destination(length);
         // perform copy
@@ -2240,7 +1685,7 @@ TEST(CopyN, MultiCoreDevPrim)
         }
 
         bolt::cl::control ctl = bolt::cl::control::getDefault( );
-        ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+        ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu); 
 
         // destination vector
         bolt::cl::device_vector<int> destination(length);
@@ -2265,7 +1710,7 @@ TEST(Copy, StdPrim)
         {
             source[j] = rand();
         }
-
+      
         // destination vector
         std::vector<int> destination(length);
         // perform copy
@@ -2289,7 +1734,7 @@ TEST(Copy, AutomaticStdPrim)
         }
 
         bolt::cl::control ctl = bolt::cl::control::getDefault( );
-        ctl.setForceRunMode(bolt::cl::control::Automatic);
+        ctl.setForceRunMode(bolt::cl::control::Automatic); 
 
         // destination vector
         std::vector<int> destination(length);
@@ -2314,8 +1759,8 @@ TEST(Copy, SerialStdPrim)
         }
 
         bolt::cl::control ctl = bolt::cl::control::getDefault( );
-        ctl.setForceRunMode(bolt::cl::control::SerialCpu);
-
+        ctl.setForceRunMode(bolt::cl::control::SerialCpu); 
+        
         // destination vector
         std::vector<int> destination(length);
         // perform copy
@@ -2339,8 +1784,8 @@ TEST(Copy, MultiCoreStdPrim)
         }
 
         bolt::cl::control ctl = bolt::cl::control::getDefault( );
-        ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
-
+        ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu); 
+         
         // destination vector
         std::vector<int> destination(length);
         // perform copy
@@ -2388,8 +1833,8 @@ TEST(CopyN, AutomaticStdPrim)
         }
 
         bolt::cl::control ctl = bolt::cl::control::getDefault( );
-        ctl.setForceRunMode(bolt::cl::control::Automatic);
-
+        ctl.setForceRunMode(bolt::cl::control::Automatic); 
+        
         // destination vector
         std::vector<int> destination(length);
         // perform copy
@@ -2413,8 +1858,8 @@ TEST(CopyN, SerialStdPrim)
         }
 
         bolt::cl::control ctl = bolt::cl::control::getDefault( );
-        ctl.setForceRunMode(bolt::cl::control::SerialCpu);
-
+        ctl.setForceRunMode(bolt::cl::control::SerialCpu); 
+        
         // destination vector
         std::vector<int> destination(length);
         // perform copy
@@ -2438,8 +1883,8 @@ TEST(CopyN, MultiCoreStdPrim)
         }
 
         bolt::cl::control ctl = bolt::cl::control::getDefault( );
-        ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
-
+        ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu); 
+                
         // destination vector
         std::vector<int> destination(length);
         // perform copy
@@ -2471,7 +1916,7 @@ TEST(Copy, DevStruct)
             //us.e = (double) (1.0*rand()/rand());
             source.push_back(us);
         }
-
+                
         // destination vector
         bolt::cl::device_vector<UserStruct> destination(length, UserStruct(), CL_MEM_READ_WRITE, false);
         // perform copy
@@ -2502,10 +1947,10 @@ TEST(Copy, AutomaticDevStruct)
             //us.e = (double) (1.0*rand()/rand());
             source.push_back(us);
         }
-
+                
         bolt::cl::control ctl = bolt::cl::control::getDefault( );
         ctl.setForceRunMode(bolt::cl::control::Automatic); // tested with serial also
-
+                
         // destination vector
         bolt::cl::device_vector<UserStruct> destination(length, UserStruct(), CL_MEM_READ_WRITE, false);
         // perform copy
@@ -2536,10 +1981,10 @@ TEST(Copy, SerialDevStruct)
             //us.e = (double) (1.0*rand()/rand());
             source.push_back(us);
         }
-
+                
         bolt::cl::control ctl = bolt::cl::control::getDefault( );
-        ctl.setForceRunMode(bolt::cl::control::SerialCpu);
-
+        ctl.setForceRunMode(bolt::cl::control::SerialCpu); 
+                
         // destination vector
         bolt::cl::device_vector<UserStruct> destination(length, UserStruct(), CL_MEM_READ_WRITE, false);
         // perform copy
@@ -2570,10 +2015,10 @@ TEST(Copy, MultiCoreDevStruct)
             //us.e = (double) (1.0*rand()/rand());
             source.push_back(us);
         }
-
+                
         bolt::cl::control ctl = bolt::cl::control::getDefault( );
-        ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
-
+        ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu); 
+                
         // destination vector
         bolt::cl::device_vector<UserStruct> destination(length, UserStruct(), CL_MEM_READ_WRITE, false);
         // perform copy
@@ -2605,8 +2050,8 @@ TEST(CopyN, DevStruct)
             //us.e = (double) (1.0*rand()/rand());
             source.push_back(us);
         }
-
-
+                
+                
         // destination vector
         bolt::cl::device_vector<UserStruct> destination(length, UserStruct(), CL_MEM_READ_WRITE, false);
         // perform copy
@@ -2637,10 +2082,10 @@ TEST(CopyN, AutomaticDevStruct)
             //us.e = (double) (1.0*rand()/rand());
             source.push_back(us);
         }
-
+                
         bolt::cl::control ctl = bolt::cl::control::getDefault( );
         ctl.setForceRunMode(bolt::cl::control::Automatic);
-
+                
         // destination vector
         bolt::cl::device_vector<UserStruct> destination(length, UserStruct(), CL_MEM_READ_WRITE, false);
         // perform copy
@@ -2671,10 +2116,10 @@ TEST(CopyN, SerialDevStruct)
             //us.e = (double) (1.0*rand()/rand());
             source.push_back(us);
         }
-
+                
         bolt::cl::control ctl = bolt::cl::control::getDefault( );
-        ctl.setForceRunMode(bolt::cl::control::SerialCpu);
-
+        ctl.setForceRunMode(bolt::cl::control::SerialCpu); 
+                
         // destination vector
         bolt::cl::device_vector<UserStruct> destination(length, UserStruct(), CL_MEM_READ_WRITE, false);
         // perform copy
@@ -2705,10 +2150,10 @@ TEST(CopyN, MultiCoreDevStruct)
             //us.e = (double) (1.0*rand()/rand());
             source.push_back(us);
         }
-
+                
         bolt::cl::control ctl = bolt::cl::control::getDefault( );
-        ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
-
+        ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu); 
+                
         // destination vector
         bolt::cl::device_vector<UserStruct> destination(length, UserStruct(), CL_MEM_READ_WRITE, false);
         // perform copy
@@ -2771,10 +2216,10 @@ TEST(Copy, AutomaticStdStruct)
             //us.e = (double) (1.0*rand()/rand());
             source.push_back(us);
         }
-
+                
         bolt::cl::control ctl = bolt::cl::control::getDefault( );
-        ctl.setForceRunMode(bolt::cl::control::Automatic);
-
+        ctl.setForceRunMode(bolt::cl::control::Automatic); 
+                
         // destination vector
         std::vector<UserStruct> destination(length);
         // perform copy
@@ -2805,10 +2250,10 @@ TEST(Copy, SerialStdStruct)
             //us.e = (double) (1.0*rand()/rand());
             source.push_back(us);
         }
-
+                
         bolt::cl::control ctl = bolt::cl::control::getDefault( );
-        ctl.setForceRunMode(bolt::cl::control::SerialCpu);
-
+        ctl.setForceRunMode(bolt::cl::control::SerialCpu); 
+                
         // destination vector
         std::vector<UserStruct> destination(length);
         // perform copy
@@ -2839,10 +2284,10 @@ TEST(Copy, MultiCoreStdStruct)
             //us.e = (double) (1.0*rand()/rand());
             source.push_back(us);
         }
-
+                
         bolt::cl::control ctl = bolt::cl::control::getDefault( );
-        ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
-
+        ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu); 
+                
         // destination vector
         std::vector<UserStruct> destination(length);
         // perform copy
@@ -2874,7 +2319,7 @@ TEST(CopyN, StdStruct)
             //us.e = (double) (1.0*rand()/rand());
             source.push_back(us);
         }
-
+        
         // destination vector
         std::vector<UserStruct> destination(length);
         // perform copy
@@ -2907,8 +2352,8 @@ TEST(CopyN, AutomaticStdStruct)
         }
 
         bolt::cl::control ctl = bolt::cl::control::getDefault( );
-        ctl.setForceRunMode(bolt::cl::control::Automatic);
-
+        ctl.setForceRunMode(bolt::cl::control::Automatic); 
+    
         // destination vector
         std::vector<UserStruct> destination(length);
         // perform copy
@@ -2939,10 +2384,10 @@ TEST(CopyN, SerialStdStruct)
             //us.e = (double) (1.0*rand()/rand());
             source.push_back(us);
         }
-
+    
         bolt::cl::control ctl = bolt::cl::control::getDefault( );
-        ctl.setForceRunMode(bolt::cl::control::SerialCpu);
-
+        ctl.setForceRunMode(bolt::cl::control::SerialCpu); 
+    
         // destination vector
         std::vector<UserStruct> destination(length);
         // perform copy
@@ -2973,10 +2418,10 @@ TEST(CopyN, MultiCoreStdStruct)
             //us.e = (double) (1.0*rand()/rand());
             source.push_back(us);
         }
-
+    
          bolt::cl::control ctl = bolt::cl::control::getDefault( );
-         ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
-
+         ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu); 
+    
         // destination vector
         std::vector<UserStruct> destination(length);
         // perform copy
@@ -2990,31 +2435,31 @@ TEST(CopyN, MultiCoreStdStruct)
 TEST (copyArrWithDiffTypes, IntAndFloats)
 {
     int arraySize = 100;
-
-    int* sourceArr1;
+       
+    int* sourceArr1; 
     float *sourceFloatArr1;
 #if TEST_DOUBLE
     double *sourceDoubleArr1;
 #endif
-    int* destArr1;
+    int* destArr1; 
     float *destFloatArr1;
 #if TEST_DOUBLE
     double *destDoubleArr1;
 #endif
     sourceArr1 = (int *) malloc (arraySize* sizeof (int));
     destArr1= (int *) malloc (arraySize * sizeof (int));
-
+   
     sourceFloatArr1 = (float*) malloc (arraySize* sizeof (float));
     destFloatArr1 = (float *) malloc (arraySize * sizeof(float));
 #if TEST_DOUBLE
     sourceDoubleArr1 = (double *) malloc (arraySize * sizeof(double));
     destDoubleArr1 = (double *) malloc (arraySize * sizeof(double));
 #endif
-
+   
     for (int i = 0; i < arraySize; i++){
        sourceArr1[i] = 56535 - i;
     }
-
+   
     for (int i = 0; i < arraySize ; i++){
        sourceFloatArr1[i] = ( float )i  + 0.125f;
     }
@@ -3024,9 +2469,9 @@ TEST (copyArrWithDiffTypes, IntAndFloats)
     }
 #endif
     //using bolt::cl::control
-
+   
     bolt::cl::control useThisControl = bolt::cl::control::getDefault();
-
+    
     //copying int array as a whole to all there types of arrays :)
     bolt::cl::copy(useThisControl, sourceArr1, sourceArr1 + arraySize, destArr1);                   //no prob
     //cmpArrays(sourceArr1, destArr1, arraySize);
@@ -3036,14 +2481,14 @@ TEST (copyArrWithDiffTypes, IntAndFloats)
     bolt::cl::copy(useThisControl, sourceArr1, sourceArr1 + arraySize, destDoubleArr1);        //no prob
 #endif
     //cmpArrays(sourceArr1, destDoubleArr1, arraySize);
-
+   
     //copying float array as a whole to all there types of arrays :)
     bolt::cl::copy(useThisControl, sourceFloatArr1, sourceFloatArr1 + arraySize, destArr1);     //data loss
     bolt::cl::copy(useThisControl, sourceFloatArr1, sourceFloatArr1 + arraySize, destFloatArr1);    //no prob
 #if TEST_DOUBLE
     bolt::cl::copy(useThisControl, sourceFloatArr1, sourceFloatArr1 + arraySize, destDoubleArr1);   //no prob
 #endif
-
+   
     //copying double array as a whole to all there types of arrays :)
 #if TEST_DOUBLE
     bolt::cl::copy(useThisControl, sourceDoubleArr1, sourceDoubleArr1 + arraySize, destArr1);     //data loss
@@ -3056,31 +2501,31 @@ TEST (copyArrWithDiffTypes, IntAndFloats)
 TEST (SerialcopyArrWithDiffTypes, IntAndFloats)
 {
     int arraySize = 100;
-
-    int* sourceArr1;
+       
+    int* sourceArr1; 
     float *sourceFloatArr1;
 #if TEST_DOUBLE
     double *sourceDoubleArr1;
 #endif
-    int* destArr1;
+    int* destArr1; 
     float *destFloatArr1;
 #if TEST_DOUBLE
     double *destDoubleArr1;
 #endif
     sourceArr1 = (int *) malloc (arraySize* sizeof (int));
     destArr1= (int *) malloc (arraySize * sizeof (int));
-
+   
     sourceFloatArr1 = (float*) malloc (arraySize* sizeof (float));
     destFloatArr1 = (float *) malloc (arraySize * sizeof(float));
 #if TEST_DOUBLE
     sourceDoubleArr1 = (double *) malloc (arraySize * sizeof(double));
     destDoubleArr1 = (double *) malloc (arraySize * sizeof(double));
 #endif
-
+   
     for (int i = 0; i < arraySize; i++){
        sourceArr1[i] = 56535 - i;
     }
-
+   
     for (int i = 0; i < arraySize ; i++){
        sourceFloatArr1[i] = ( float )i  + 0.125f;
     }
@@ -3092,7 +2537,7 @@ TEST (SerialcopyArrWithDiffTypes, IntAndFloats)
     //using bolt::cl::control
 
     bolt::cl::control useThisControl = bolt::cl::control::getDefault( );
-    useThisControl.setForceRunMode(bolt::cl::control::SerialCpu);
+    useThisControl.setForceRunMode(bolt::cl::control::SerialCpu); 
 
 
     //copying int array as a whole to all there types of arrays :)
@@ -3104,14 +2549,14 @@ TEST (SerialcopyArrWithDiffTypes, IntAndFloats)
     bolt::cl::copy(useThisControl, sourceArr1, sourceArr1 + arraySize, destDoubleArr1);        //no prob
 #endif
     //cmpArrays(sourceArr1, destDoubleArr1, arraySize);
-
+   
     //copying float array as a whole to all there types of arrays :)
     bolt::cl::copy(useThisControl, sourceFloatArr1, sourceFloatArr1 + arraySize, destArr1);     //data loss
     bolt::cl::copy(useThisControl, sourceFloatArr1, sourceFloatArr1 + arraySize, destFloatArr1);    //no prob
 #if TEST_DOUBLE
     bolt::cl::copy(useThisControl, sourceFloatArr1, sourceFloatArr1 + arraySize, destDoubleArr1);   //no prob
 #endif
-
+   
     //copying double array as a whole to all there types of arrays :)
 #if TEST_DOUBLE
     bolt::cl::copy(useThisControl, sourceDoubleArr1, sourceDoubleArr1 + arraySize, destArr1);     //data loss
@@ -3124,31 +2569,31 @@ TEST (SerialcopyArrWithDiffTypes, IntAndFloats)
 TEST (MultiCorecopyArrWithDiffTypes, IntAndFloats)
 {
     int arraySize = 100;
-
-    int* sourceArr1;
+       
+    int* sourceArr1; 
     float *sourceFloatArr1;
 #if TEST_DOUBLE
     double *sourceDoubleArr1;
 #endif
-    int* destArr1;
+    int* destArr1; 
     float *destFloatArr1;
 #if TEST_DOUBLE
     double *destDoubleArr1;
 #endif
     sourceArr1 = (int *) malloc (arraySize* sizeof (int));
     destArr1= (int *) malloc (arraySize * sizeof (int));
-
+   
     sourceFloatArr1 = (float*) malloc (arraySize* sizeof (float));
     destFloatArr1 = (float *) malloc (arraySize * sizeof(float));
 #if TEST_DOUBLE
     sourceDoubleArr1 = (double *) malloc (arraySize * sizeof(double));
     destDoubleArr1 = (double *) malloc (arraySize * sizeof(double));
 #endif
-
+   
     for (int i = 0; i < arraySize; i++){
        sourceArr1[i] = 56535 - i;
     }
-
+   
     for (int i = 0; i < arraySize ; i++){
        sourceFloatArr1[i] = ( float )i  + 0.125f;
     }
@@ -3160,7 +2605,7 @@ TEST (MultiCorecopyArrWithDiffTypes, IntAndFloats)
     //using bolt::cl::control
 
     bolt::cl::control useThisControl = bolt::cl::control::getDefault( );
-    useThisControl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+    useThisControl.setForceRunMode(bolt::cl::control::MultiCoreCpu); 
 
 
     //copying int array as a whole to all there types of arrays :)
@@ -3172,14 +2617,14 @@ TEST (MultiCorecopyArrWithDiffTypes, IntAndFloats)
     bolt::cl::copy(useThisControl, sourceArr1, sourceArr1 + arraySize, destDoubleArr1);        //no prob
 #endif
     //cmpArrays(sourceArr1, destDoubleArr1, arraySize);
-
+   
     //copying float array as a whole to all there types of arrays :)
     bolt::cl::copy(useThisControl, sourceFloatArr1, sourceFloatArr1 + arraySize, destArr1);     //data loss
     bolt::cl::copy(useThisControl, sourceFloatArr1, sourceFloatArr1 + arraySize, destFloatArr1);    //no prob
 #if TEST_DOUBLE
     bolt::cl::copy(useThisControl, sourceFloatArr1, sourceFloatArr1 + arraySize, destDoubleArr1);   //no prob
 #endif
-
+   
     //copying double array as a whole to all there types of arrays :)
 #if TEST_DOUBLE
     bolt::cl::copy(useThisControl, sourceDoubleArr1, sourceDoubleArr1 + arraySize, destArr1);     //data loss
@@ -3189,76 +2634,76 @@ TEST (MultiCorecopyArrWithDiffTypes, IntAndFloats)
 }
 
 
-TEST (copyIntBoltCLDevVect, withIntAsWhole){
+TEST (copyIntBoltCLDevVect, withIntAsWhole){ 
     int devVectSize = 10;
     bolt::cl::control& ctrl = bolt::cl::control::getDefault();
-
+    
     bolt::cl::device_vector<int> sourceIntDevVect(10);//, 0, CL_MEM_READ_WRITE, false, ctrl );
-    bolt::cl::device_vector<int>   destIntDevVect(10);//, 0, CL_MEM_READ_WRITE, false, ctrl );
-
-
-    for (int i = 0; i < devVectSize; i++){
-        sourceIntDevVect[i] = 56535 - i;
-    }
-
-    //bolt::cl::control& ctrl = bolt::cl::control::getDefault();
-
-    bolt::cl::copy (ctrl, sourceIntDevVect.begin(), sourceIntDevVect.end(), destIntDevVect.begin());
-
-    for (int i = 0; i < devVectSize; ++i){
+    bolt::cl::device_vector<int>   destIntDevVect(10);//, 0, CL_MEM_READ_WRITE, false, ctrl ); 
+    
+    
+    for (int i = 0; i < devVectSize; i++){ 
+        sourceIntDevVect[i] = 56535 - i; 
+    } 
+    
+    //bolt::cl::control& ctrl = bolt::cl::control::getDefault(); 
+    
+    bolt::cl::copy (ctrl, sourceIntDevVect.begin(), sourceIntDevVect.end(), destIntDevVect.begin()); 
+    
+    for (int i = 0; i < devVectSize; ++i){ 
         EXPECT_EQ(sourceIntDevVect[i], destIntDevVect[i]);
     }
-}
+} 
 
-TEST (SerialcopyIntBoltCLDevVect, withIntAsWhole){
+TEST (SerialcopyIntBoltCLDevVect, withIntAsWhole){ 
     int devVectSize = 10;
 
     ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctrl = bolt::cl::control::getDefault( );
-    ctrl.setForceRunMode(bolt::cl::control::SerialCpu);
-
+    ctrl.setForceRunMode(bolt::cl::control::SerialCpu); 
+    
     bolt::cl::device_vector<int> sourceIntDevVect(10);//, 0, CL_MEM_READ_WRITE, false, ctrl );
-    bolt::cl::device_vector<int>   destIntDevVect(10);//, 0, CL_MEM_READ_WRITE, false, ctrl );
-
-
-    for (int i = 0; i < devVectSize; i++){
-        sourceIntDevVect[i] = 56535 - i;
-    }
-
-    //bolt::cl::control& ctrl = bolt::cl::control::getDefault();
-
-    bolt::cl::copy (ctrl, sourceIntDevVect.begin(), sourceIntDevVect.end(), destIntDevVect.begin());
-
-    for (int i = 0; i < devVectSize; ++i){
+    bolt::cl::device_vector<int>   destIntDevVect(10);//, 0, CL_MEM_READ_WRITE, false, ctrl ); 
+    
+    
+    for (int i = 0; i < devVectSize; i++){ 
+        sourceIntDevVect[i] = 56535 - i; 
+    } 
+    
+    //bolt::cl::control& ctrl = bolt::cl::control::getDefault(); 
+    
+    bolt::cl::copy (ctrl, sourceIntDevVect.begin(), sourceIntDevVect.end(), destIntDevVect.begin()); 
+    
+    for (int i = 0; i < devVectSize; ++i){ 
         EXPECT_EQ(sourceIntDevVect[i], destIntDevVect[i]);
     }
-}
+} 
 
-TEST (MultiCorecopyIntBoltCLDevVect, withIntAsWhole){
+TEST (MultiCorecopyIntBoltCLDevVect, withIntAsWhole){ 
     int devVectSize = 10;
 
     ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctrl = bolt::cl::control::getDefault( );
-    ctrl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
-
+    ctrl.setForceRunMode(bolt::cl::control::MultiCoreCpu); 
+    
     bolt::cl::device_vector<int> sourceIntDevVect(10);//, 0, CL_MEM_READ_WRITE, false, ctrl );
-    bolt::cl::device_vector<int>   destIntDevVect(10);//, 0, CL_MEM_READ_WRITE, false, ctrl );
-
-
-    for (int i = 0; i < devVectSize; i++){
-        sourceIntDevVect[i] = 56535 - i;
-    }
-
-    //bolt::cl::control& ctrl = bolt::cl::control::getDefault();
-
-    bolt::cl::copy (ctrl, sourceIntDevVect.begin(), sourceIntDevVect.end(), destIntDevVect.begin());
-
-    for (int i = 0; i < devVectSize; ++i){
+    bolt::cl::device_vector<int>   destIntDevVect(10);//, 0, CL_MEM_READ_WRITE, false, ctrl ); 
+    
+    
+    for (int i = 0; i < devVectSize; i++){ 
+        sourceIntDevVect[i] = 56535 - i; 
+    } 
+    
+    //bolt::cl::control& ctrl = bolt::cl::control::getDefault(); 
+    
+    bolt::cl::copy (ctrl, sourceIntDevVect.begin(), sourceIntDevVect.end(), destIntDevVect.begin()); 
+    
+    for (int i = 0; i < devVectSize; ++i){ 
         EXPECT_EQ(sourceIntDevVect[i], destIntDevVect[i]);
     }
-}
+} 
 
-TEST (stdIntToIntCopy, offsetCopy){
+TEST (stdIntToIntCopy, offsetCopy){ 
     int length = 100;
     int splitSize = 25;
     std::vector<int> v(length);
@@ -3267,20 +2712,20 @@ TEST (stdIntToIntCopy, offsetCopy){
         for(int count=0; count < splitSize; ++count) {
                         v[i*splitSize + count] = count+1;
         }
-
+    
     std::vector<int> stdv(length);
     memcpy(stdv.data(), v.data(), 25 * sizeof(int));      // Copy 25 elements to device vector
 
     bolt::cl::copy( stdv.begin(), stdv.begin()+25, stdv.begin()+25);//Copy 1st set of 25 eles to 2nd set of 25 eles
     bolt::cl::copy_n(stdv.begin(), 25, stdv.begin() + 50);//Copy 1st set of 25 elements to 3rd set of 25 elmnts
     bolt::cl::copy_n(stdv.begin(), 25, stdv.begin() + 75);//Copy 1st set of 25 elements to 4th set of 25 elemnts
-
-    for (int i = 0; i < length; ++i){
+    
+    for (int i = 0; i < length; ++i){ 
         EXPECT_EQ(stdv[i], v[i]);
     }
-}
+} 
 
-TEST (stdIntToIntCopy, SerialoffsetCopy){
+TEST (stdIntToIntCopy, SerialoffsetCopy){ 
     int length = 100;
     int splitSize = 25;
     std::vector<int> v(length);
@@ -3289,23 +2734,23 @@ TEST (stdIntToIntCopy, SerialoffsetCopy){
         for(int count=0; count < splitSize; ++count) {
                         v[i*splitSize + count] = count+1;
         }
-
+    
     std::vector<int> stdv(length);
     memcpy(stdv.data(), v.data(), 25 * sizeof(int)); // Copy 25 elements to device vector
 
     bolt::cl::control ctrl = bolt::cl::control::getDefault( );
-    ctrl.setForceRunMode(bolt::cl::control::SerialCpu);
+    ctrl.setForceRunMode(bolt::cl::control::SerialCpu); 
 
     bolt::cl::copy( ctrl,stdv.begin(),stdv.begin()+25,stdv.begin()+25);//Copy 1st set of 25 eles to 2nd set of 25 eles
     bolt::cl::copy_n(ctrl, stdv.begin(), 25, stdv.begin() + 50);//Copy 1st set of 25 elements to 3rd set of 25 elmnts
     bolt::cl::copy_n(ctrl, stdv.begin(), 25, stdv.begin() + 75);//Copy 1st set of 25 elements to 4th set of 25 elemnts
-
-    for (int i = 0; i < length; ++i){
+    
+    for (int i = 0; i < length; ++i){ 
         EXPECT_EQ(stdv[i], v[i]);
     }
-}
+} 
 
-TEST (stdIntToIntCopy, MultiCoreoffsetCopy){
+TEST (stdIntToIntCopy, MultiCoreoffsetCopy){ 
     int length = 100;
     int splitSize = 25;
     std::vector<int> v(length);
@@ -3314,25 +2759,25 @@ TEST (stdIntToIntCopy, MultiCoreoffsetCopy){
         for(int count=0; count < splitSize; ++count) {
                         v[i*splitSize + count] = count+1;
         }
-
+    
     std::vector<int> stdv(length);
     memcpy(stdv.data(), v.data(), 25 * sizeof(int));      // Copy 25 elements to device vector
 
     bolt::cl::control ctrl = bolt::cl::control::getDefault( );
-    ctrl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+    ctrl.setForceRunMode(bolt::cl::control::MultiCoreCpu); 
 
     bolt::cl::copy( ctrl,stdv.begin(),stdv.begin()+25,stdv.begin()+25);//Copy 1st set of 25 eles to 2nd set of 25 eles
     bolt::cl::copy_n(ctrl, stdv.begin(), 25, stdv.begin() + 50);//Copy 1st set of 25 elements to 3rd set of 25 elmnts
     bolt::cl::copy_n(ctrl, stdv.begin(), 25, stdv.begin() + 75);//Copy 1st set of 25 elements to 4th set of 25 elemnts
-
-    for (int i = 0; i < length; ++i){
+    
+    for (int i = 0; i < length; ++i){ 
         EXPECT_EQ(stdv[i], v[i]);
     }
-}
+} 
 
 
 
-TEST (dvIntToIntCopy, offsetCopy){
+TEST (dvIntToIntCopy, offsetCopy){ 
     int length = 100;
     int splitSize = 25;
     bolt::cl::device_vector<int> dvIn(length);
@@ -3341,24 +2786,24 @@ TEST (dvIntToIntCopy, offsetCopy){
         for(int count=0; count < splitSize; ++count) {
                         dvIn[i*splitSize + count] = count+1;
         }
-
+    
     bolt::cl::device_vector<int> dvOut(length);
     {
         bolt::cl::device_vector<int>::pointer dpOut=dvOut.data();
         bolt::cl::device_vector<int>::pointer dpIn=dvIn.data();
         memcpy(dpOut.get(), dpIn.get(), 25 * sizeof(int)); // Copy 25 elements to device vector
     }
-
+    
     bolt::cl::copy( dvIn.begin(), dvIn.begin()+25, dvOut.begin()+25);//Copy 1st set of 25 eles to 2nd set of 25 eles
     bolt::cl::copy_n(dvIn.begin(), 25, dvOut.begin() + 50);//Copy 1st set of 25 elements to 3rd set of 25 elmnts
     bolt::cl::copy_n(dvIn.begin(), 25, dvOut.begin() + 75);//Copy 1st set of 25 elements to 4th set of 25 elemnts
-
-    for (int i = 0; i < length; ++i){
+    
+    for (int i = 0; i < length; ++i){ 
         EXPECT_EQ(dvOut[i], dvIn[i]);
     }
-}
+} 
 
-TEST (dvIntToIntCopy, SerialoffsetCopy){
+TEST (dvIntToIntCopy, SerialoffsetCopy){ 
     int length = 100;
     int splitSize = 25;
     bolt::cl::device_vector<int> dvIn(length);
@@ -3367,9 +2812,9 @@ TEST (dvIntToIntCopy, SerialoffsetCopy){
         for(int count=0; count < splitSize; ++count) {
                         dvIn[i*splitSize + count] = count+1;
         }
-
+    
     bolt::cl::control ctrl = bolt::cl::control::getDefault( );
-    ctrl.setForceRunMode(bolt::cl::control::SerialCpu);
+    ctrl.setForceRunMode(bolt::cl::control::SerialCpu); 
 
     bolt::cl::device_vector<int> dvOut(length);
     {
@@ -3377,17 +2822,17 @@ TEST (dvIntToIntCopy, SerialoffsetCopy){
         bolt::cl::device_vector<int>::pointer dpIn=dvIn.data();
         memcpy(dpOut.get(), dpIn.get(), 25 * sizeof(int));      // Copy 25 elements to device vector
     }
-
+    
     bolt::cl::copy(ctrl,dvIn.begin(),dvIn.begin()+25,dvOut.begin()+25);//Copy 1st set of 25 eles to 2nd set of 25 eles
     bolt::cl::copy_n(ctrl, dvIn.begin(), 25, dvOut.begin() + 50);//Copy 1st set of 25 elements to 3rd set of 25 elmnts
     bolt::cl::copy_n(ctrl, dvIn.begin(), 25, dvOut.begin() + 75);//Copy 1st set of 25 elements to 4th set of 25 elemnts
-
-    for (int i = 0; i < length; ++i){
+    
+    for (int i = 0; i < length; ++i){ 
         EXPECT_EQ(dvOut[i], dvIn[i]);
     }
-}
+} 
 
-TEST (dvIntToIntCopy, MultiCoreoffsetCopy){
+TEST (dvIntToIntCopy, MultiCoreoffsetCopy){ 
     int length = 100;
     int splitSize = 25;
     bolt::cl::device_vector<int> dvIn(length);
@@ -3396,9 +2841,9 @@ TEST (dvIntToIntCopy, MultiCoreoffsetCopy){
         for(int count=0; count < splitSize; ++count) {
                         dvIn[i*splitSize + count] = count+1;
         }
-
+    
     bolt::cl::control ctrl = bolt::cl::control::getDefault( );
-    ctrl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+    ctrl.setForceRunMode(bolt::cl::control::MultiCoreCpu); 
 
     bolt::cl::device_vector<int> dvOut(length);
     {
@@ -3406,19 +2851,19 @@ TEST (dvIntToIntCopy, MultiCoreoffsetCopy){
         bolt::cl::device_vector<int>::pointer dpIn=dvIn.data();
         memcpy(dpOut.get(), dpIn.get(), 25 * sizeof(int));      // Copy 25 elements to device vector
     }
-
+    
 
     bolt::cl::copy(ctrl,dvIn.begin(),dvIn.begin()+25,dvOut.begin()+25);//Copy 1st set of 25 eles to 2nd set of 25 eles
     bolt::cl::copy_n(ctrl, dvIn.begin(), 25, dvOut.begin() + 50);//Copy 1st set of 25 elements to 3rd set of 25 elmnts
     bolt::cl::copy_n(ctrl, dvIn.begin(), 25, dvOut.begin() + 75);//Copy 1st set of 25 elements to 4th set of 25 elemnts
-
-    for (int i = 0; i < length; ++i){
+    
+    for (int i = 0; i < length; ++i){ 
         EXPECT_EQ(dvOut[i], dvIn[i]);
     }
-}
+} 
 
 
-TEST (stdIntToFloatCopy, offsetCopy){
+TEST (stdIntToFloatCopy, offsetCopy){ 
     int length = 100;
     int splitSize = 25;
     std::vector<int> v(length);
@@ -3427,24 +2872,24 @@ TEST (stdIntToFloatCopy, offsetCopy){
         for(int count=0; count < splitSize; ++count) {
                         v[i*splitSize + count] = count+1;
         }
-
+    
     bolt::cl::device_vector<float> dv(length);
-
+    
     //Copy 0- 24 elements
     bolt::cl::copy( v.begin(), v.begin()+25, dv.begin());
     //Copy 25- 49 elements
     bolt::cl::copy( v.begin()+25, v.begin()+50, dv.begin()+25);  // Copy 1st set of 25 elements to 2nd set of 25 elements
-    //Copy 50- 74 elements
+    //Copy 50- 74 elements 
     bolt::cl::copy_n(v.begin(), 25, dv.begin() + 50);  // Copy 1st set of 25 elements to 3rd set of 25 elements
-    //Copy 75- 99 elements
+    //Copy 75- 99 elements 
     bolt::cl::copy_n(v.begin()+25, 25, dv.begin() + 75);  // Copy 1st set of 25 elements to 4th set of 25 elements
-
-    for (int i = 0; i < length; ++i){
+    
+    for (int i = 0; i < length; ++i){ 
         EXPECT_FLOAT_EQ(dv[i], (float)v[i]);
     }
-}
+} 
 
-TEST (stdIntToFloatCopy, SerialoffsetCopy){
+TEST (stdIntToFloatCopy, SerialoffsetCopy){ 
     int length = 100;
     int splitSize = 25;
     std::vector<int> v(length);
@@ -3453,27 +2898,27 @@ TEST (stdIntToFloatCopy, SerialoffsetCopy){
         for(int count=0; count < splitSize; ++count) {
                         v[i*splitSize + count] = count+1;
         }
-
+    
     bolt::cl::device_vector<float> dv(length);
-
+    
     bolt::cl::control ctrl = bolt::cl::control::getDefault( );
-    ctrl.setForceRunMode(bolt::cl::control::SerialCpu);
+    ctrl.setForceRunMode(bolt::cl::control::SerialCpu); 
 
     //Copy 0- 24 elements
     bolt::cl::copy( ctrl, v.begin(), v.begin()+25, dv.begin());
     //Copy 25- 49 elements
     bolt::cl::copy( ctrl, v.begin()+25, v.begin()+50, dv.begin()+25);//Copy 1st set of 25 elmnts to 2nd set of 25 elmnts
-    //Copy 50- 74 elements
+    //Copy 50- 74 elements 
     bolt::cl::copy_n(ctrl, v.begin(), 25, dv.begin() + 50);  // Copy 1st set of 25 elements to 3rd set of 25 elements
-    //Copy 75- 99 elements
+    //Copy 75- 99 elements 
     bolt::cl::copy_n(ctrl, v.begin()+25, 25, dv.begin() + 75);  // Copy 1st set of 25 elements to 4th set of 25 elements
-
-    for (int i = 0; i < length; ++i){
+    
+    for (int i = 0; i < length; ++i){ 
         EXPECT_FLOAT_EQ(dv[i], (float)v[i]);
     }
-}
+} 
 
-TEST (stdIntToFloatCopy, MultiCoreoffsetCopy){
+TEST (stdIntToFloatCopy, MultiCoreoffsetCopy){ 
     int length = 100;
     int splitSize = 25;
     std::vector<int> v(length);
@@ -3482,28 +2927,28 @@ TEST (stdIntToFloatCopy, MultiCoreoffsetCopy){
         for(int count=0; count < splitSize; ++count) {
                         v[i*splitSize + count] = count+1;
         }
-
+    
     bolt::cl::device_vector<float> dv(length);
-
+    
     bolt::cl::control ctrl = bolt::cl::control::getDefault( );
-    ctrl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+    ctrl.setForceRunMode(bolt::cl::control::MultiCoreCpu); 
 
     //Copy 0- 24 elements
     bolt::cl::copy( ctrl, v.begin(), v.begin()+25, dv.begin());
     //Copy 25- 49 elements
     bolt::cl::copy(ctrl, v.begin()+25, v.begin()+50, dv.begin()+25);//Copy 1st set of 25 elmnts to 2nd set of 25 elmnts
-    //Copy 50- 74 elements
+    //Copy 50- 74 elements 
     bolt::cl::copy_n(ctrl, v.begin(), 25, dv.begin() + 50);  // Copy 1st set of 25 elements to 3rd set of 25 elements
-    //Copy 75- 99 elements
+    //Copy 75- 99 elements 
     bolt::cl::copy_n(ctrl, v.begin()+25, 25, dv.begin() + 75);  //Copy 1st set of 25 elements to 4th set of 25 elements
-
-    for (int i = 0; i < length; ++i){
+    
+    for (int i = 0; i < length; ++i){ 
         EXPECT_FLOAT_EQ(dv[i], (float)v[i]);
     }
-}
+} 
 
 
-TEST (dvIntToFloatCopy, offsetCopy){
+TEST (dvIntToFloatCopy, offsetCopy){ 
     int length = 100;
     int splitSize = 25;
     bolt::cl::device_vector<int> dvIn(length);
@@ -3512,30 +2957,30 @@ TEST (dvIntToFloatCopy, offsetCopy){
         for(int count=0; count < splitSize; ++count) {
                         dvIn[i*splitSize + count] = count+1;
         }
-
+    
     bolt::cl::device_vector<float> dvOut(length);
     //memcpy will copy the bit representation but std::copy will convert it.
     bolt::cl::copy(dvIn.begin(), dvIn.begin()+25, dvOut.begin());
-    for (int i = 0; i < splitSize; ++i){
+    for (int i = 0; i < splitSize; ++i){ 
         EXPECT_FLOAT_EQ(dvOut[i], (float) dvIn[i]);
     }
     bolt::cl::copy(dvIn.begin()+25,dvIn.begin()+50,dvOut.begin()+25);//Copy 1st set of 25 elmnts to 2nd set of 25 elmts
-    for (int i = 25; i < splitSize+25; ++i){
+    for (int i = 25; i < splitSize+25; ++i){ 
         EXPECT_FLOAT_EQ(dvOut[i], (float) dvIn[i]);
     }
     bolt::cl::copy_n(dvIn.begin(), 25, dvOut.begin()+50);  // Copy 1st set of 25 elements to 3rd set of 25 elements
-    for (int i = 50; i < splitSize+50; ++i){
+    for (int i = 50; i < splitSize+50; ++i){ 
         EXPECT_FLOAT_EQ(dvOut[i], (float) dvIn[i]);
     }
 
     bolt::cl::copy_n(dvIn.begin()+25, 25, dvOut.begin()+75);  // Copy 1st set of 25 elements to 4th set of 25 elements
-    for (int i = 75; i < length; ++i){
+    for (int i = 75; i < length; ++i){ 
         EXPECT_FLOAT_EQ(dvOut[i], (float) dvIn[i]);
     }
-}
+} 
 
 
-TEST (dvIntToFloatCopy, SerialoffsetCopy){
+TEST (dvIntToFloatCopy, SerialoffsetCopy){ 
     int length = 100;
     int splitSize = 25;
     bolt::cl::device_vector<int> dvIn(length);
@@ -3544,35 +2989,35 @@ TEST (dvIntToFloatCopy, SerialoffsetCopy){
         for(int count=0; count < splitSize; ++count) {
                         dvIn[i*splitSize + count] = count+1;
         }
-
-
+    
+            
     bolt::cl::control ctrl = bolt::cl::control::getDefault( );
-    ctrl.setForceRunMode(bolt::cl::control::SerialCpu);
+    ctrl.setForceRunMode(bolt::cl::control::SerialCpu); 
 
     bolt::cl::device_vector<float> dvOut(length);
     //memcpy will copy the bit representation but std::copy will convert it.
     bolt::cl::copy(ctrl, dvIn.begin(), dvIn.begin()+25, dvOut.begin());
-    for (int i = 0; i < splitSize; ++i){
+    for (int i = 0; i < splitSize; ++i){ 
         EXPECT_FLOAT_EQ(dvOut[i], (float) dvIn[i]);
     }
 
     bolt::cl::copy(ctrl,dvIn.begin()+25,dvIn.begin()+50,dvOut.begin()+25);//Copy 1st set of 25 els to 2nd set of 25 ele
 
-    for (int i = 25; i < splitSize+25; ++i){
+    for (int i = 25; i < splitSize+25; ++i){ 
         EXPECT_FLOAT_EQ(dvOut[i], (float) dvIn[i]);
     }
     bolt::cl::copy_n(ctrl, dvIn.begin(), 25, dvOut.begin()+50); //Copy 1st set of 25 elements to 3rd set of 25 elements
-    for (int i = 50; i < splitSize+50; ++i){
+    for (int i = 50; i < splitSize+50; ++i){ 
         EXPECT_FLOAT_EQ(dvOut[i], (float) dvIn[i]);
     }
 
     bolt::cl::copy_n(ctrl, dvIn.begin()+25, 25, dvOut.begin()+75);//Copy 1st set of 25 elemnts to 4th set of 25 elemnts
-    for (int i = 75; i < length; ++i){
+    for (int i = 75; i < length; ++i){ 
         EXPECT_FLOAT_EQ(dvOut[i], (float) dvIn[i]);
     }
-}
+} 
 
-TEST (dvIntToFloatCopy, MultiCoreoffsetCopy){
+TEST (dvIntToFloatCopy, MultiCoreoffsetCopy){ 
     int length = 100;
     int splitSize = 25;
     bolt::cl::device_vector<int> dvIn(length);
@@ -3581,34 +3026,34 @@ TEST (dvIntToFloatCopy, MultiCoreoffsetCopy){
         for(int count=0; count < splitSize; ++count) {
                         dvIn[i*splitSize + count] = count+1;
         }
-
-
+    
+            
     bolt::cl::control ctrl = bolt::cl::control::getDefault( );
-    ctrl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+    ctrl.setForceRunMode(bolt::cl::control::MultiCoreCpu); 
 
     bolt::cl::device_vector<float> dvOut(length);
     //memcpy will copy the bit representation but std::copy will convert it.
     bolt::cl::copy(ctrl, dvIn.begin(), dvIn.begin()+25, dvOut.begin());
-    for (int i = 0; i < splitSize; ++i){
+    for (int i = 0; i < splitSize; ++i){ 
         EXPECT_FLOAT_EQ(dvOut[i], (float) dvIn[i]);
     }
     bolt::cl::copy(ctrl,dvIn.begin()+25,dvIn.begin()+50,dvOut.begin()+25);//Copy 1st set of 25 ele to 2nd set of 25 ele
-    for (int i = 25; i < splitSize+25; ++i){
+    for (int i = 25; i < splitSize+25; ++i){ 
         EXPECT_FLOAT_EQ(dvOut[i], (float) dvIn[i]);
     }
     bolt::cl::copy_n(ctrl, dvIn.begin(), 25, dvOut.begin()+50);//Copy 1st set of 25 elements to 3rd set of 25 elements
-    for (int i = 50; i < splitSize+50; ++i){
+    for (int i = 50; i < splitSize+50; ++i){ 
         EXPECT_FLOAT_EQ(dvOut[i], (float) dvIn[i]);
     }
 
     bolt::cl::copy_n(ctrl, dvIn.begin()+25, 25, dvOut.begin()+75);//Copy 1st set of 25 elemnts to 4th set of 25 elemnts
-    for (int i = 75; i < length; ++i){
+    for (int i = 75; i < length; ++i){ 
         EXPECT_FLOAT_EQ(dvOut[i], (float) dvIn[i]);
     }
-}
+} 
 
-#if (TEST_LARGE_BUFFERS == 1)
-TEST (dvIntToFloatlargeBufferCopy, offsetCopy){
+
+TEST (dvIntToFloatlargeBufferCopy, offsetCopy){ 
     int length = 4096;
     bolt::cl::device_vector<int> dvIn(length);
     //Set all the elements to the expected result
@@ -3624,7 +3069,7 @@ TEST (dvIntToFloatlargeBufferCopy, offsetCopy){
         {
             int offset = i;
             bolt::cl::copy(dvIn.begin()+offset, dvIn.begin()+offset+copyStride, dvOut.begin()+offset);
-            for (int j = 0; j < copyStride; ++j){
+            for (int j = 0; j < copyStride; ++j){ 
                 {
                 EXPECT_FLOAT_EQ(dvOut[offset+j], (float) dvIn[offset+j]);
                 }
@@ -3632,16 +3077,16 @@ TEST (dvIntToFloatlargeBufferCopy, offsetCopy){
 
             offset = i+copyStride;
             bolt::cl::copy(dvIn.begin()+offset, dvIn.begin()+offset+copyStride, dvOut.begin()+offset);
-            for (int j = 0; j < copyStride; ++j){
+            for (int j = 0; j < copyStride; ++j){ 
                 {
                 EXPECT_FLOAT_EQ(dvOut[offset+j], (float) dvIn[offset+j]);
                 }
             }
         }
     }
-}
+} 
 
-TEST (dvIntToFloatlargeBufferCopy, SerialoffsetCopy){
+TEST (dvIntToFloatlargeBufferCopy, SerialoffsetCopy){ 
     int length = 4096;
     bolt::cl::device_vector<int> dvIn(length);
     //Set all the elements to the expected result
@@ -3651,7 +3096,7 @@ TEST (dvIntToFloatlargeBufferCopy, SerialoffsetCopy){
     }
 
     bolt::cl::control ctrl = bolt::cl::control::getDefault( );
-    ctrl.setForceRunMode(bolt::cl::control::SerialCpu);
+    ctrl.setForceRunMode(bolt::cl::control::SerialCpu); 
 
     for(int copyStride= 17; copyStride<300; copyStride+=17)
     {
@@ -3661,7 +3106,7 @@ TEST (dvIntToFloatlargeBufferCopy, SerialoffsetCopy){
         {
             int offset = i;
             bolt::cl::copy(ctrl, dvIn.begin()+offset, dvIn.begin()+offset+copyStride, dvOut.begin()+offset);
-            for (int j = 0; j < copyStride; ++j){
+            for (int j = 0; j < copyStride; ++j){ 
                 {
                 EXPECT_FLOAT_EQ(dvOut[offset+j], (float) dvIn[offset+j]);
                 }
@@ -3669,17 +3114,17 @@ TEST (dvIntToFloatlargeBufferCopy, SerialoffsetCopy){
 
             offset = i+copyStride;
             bolt::cl::copy(ctrl, dvIn.begin()+offset, dvIn.begin()+offset+copyStride, dvOut.begin()+offset);
-            for (int j = 0; j < copyStride; ++j){
+            for (int j = 0; j < copyStride; ++j){ 
                 {
                 EXPECT_FLOAT_EQ(dvOut[offset+j], (float) dvIn[offset+j]);
                 }
             }
         }
     }
-}
+} 
 
 
-TEST (dvIntToFloatlargeBufferCopy, MultiCoreoffsetCopy){
+TEST (dvIntToFloatlargeBufferCopy, MultiCoreoffsetCopy){ 
     int length = 4096;
     bolt::cl::device_vector<int> dvIn(length);
     //Set all the elements to the expected result
@@ -3689,7 +3134,7 @@ TEST (dvIntToFloatlargeBufferCopy, MultiCoreoffsetCopy){
     }
 
     bolt::cl::control ctrl = bolt::cl::control::getDefault( );
-    ctrl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+    ctrl.setForceRunMode(bolt::cl::control::MultiCoreCpu); 
 
     for(int copyStride= 17; copyStride<300; copyStride+=17)
     {
@@ -3699,9 +3144,9 @@ TEST (dvIntToFloatlargeBufferCopy, MultiCoreoffsetCopy){
         {
             int offset = i;
             bolt::cl::copy(ctrl, dvIn.begin()+offset, dvIn.begin()+offset+copyStride, dvOut.begin()+offset);
-            for (int j = 0; j < copyStride; ++j){
+            for (int j = 0; j < copyStride; ++j){ 
                 {
-
+				
                 EXPECT_FLOAT_EQ(dvOut[offset+j], (float) dvIn[offset+j]);
 
                 }
@@ -3709,7 +3154,7 @@ TEST (dvIntToFloatlargeBufferCopy, MultiCoreoffsetCopy){
 
             offset = i+copyStride;
             bolt::cl::copy(ctrl, dvIn.begin()+offset, dvIn.begin()+offset+copyStride, dvOut.begin()+offset);
-            for (int j = 0; j < copyStride; ++j){
+            for (int j = 0; j < copyStride; ++j){ 
                 {
 
                 EXPECT_FLOAT_EQ(dvOut[offset+j], (float) dvIn[offset+j]);
@@ -3718,8 +3163,8 @@ TEST (dvIntToFloatlargeBufferCopy, MultiCoreoffsetCopy){
             }
         }
     }
-}
-#endif
+} 
+
 
 BOLT_FUNCTOR(ichar,
 struct ichar
@@ -3803,7 +3248,9 @@ TEST (copyStructOdd, BufferTestHostToDevice)
 int main(int argc, char* argv[])
 {
     //  Register our minidump generating logic
+#if defined(_WIN32)
     bolt::miniDumpSingleton::enableMiniDumps( );
+#endif
 
     // Define MEMORYREPORT on windows platfroms to enable debug memory heap checking
 #if defined( MEMORYREPORT ) && defined( _WIN32 )
@@ -3811,10 +3258,10 @@ int main(int argc, char* argv[])
     ::GetCurrentDirectory( MAX_PATH, logPath );
     ::_tcscat_s( logPath, _T( "\\MemoryReport.txt") );
 
-    // We leak the handle to this file, on purpose, so that the ::_CrtSetReportFile() can output it's memory
+    // We leak the handle to this file, on purpose, so that the ::_CrtSetReportFile() can output it's memory 
     // statistics on app shutdown
     HANDLE hLogFile;
-    hLogFile = ::CreateFile( logPath, GENERIC_WRITE,
+    hLogFile = ::CreateFile( logPath, GENERIC_WRITE, 
         FILE_SHARE_READ|FILE_SHARE_WRITE, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL );
 
     ::_CrtSetReportMode( _CRT_ASSERT, _CRTDBG_MODE_FILE | _CRTDBG_MODE_WNDW | _CRTDBG_MODE_DEBUG );
@@ -3829,7 +3276,7 @@ int main(int argc, char* argv[])
     tmp |= _CRTDBG_LEAK_CHECK_DF | _CRTDBG_ALLOC_MEM_DF | _CRTDBG_CHECK_ALWAYS_DF;
     ::_CrtSetDbgFlag( tmp );
 
-    // By looking at the memory leak report that is generated by this debug heap, there is a number with
+    // By looking at the memory leak report that is generated by this debug heap, there is a number with 
     // {} brackets that indicates the incremental allocation number of that block.  If you wish to set
     // a breakpoint on that allocation number, put it in the _CrtSetBreakAlloc() call below, and the heap
     // will issue a bp on the request, allowing you to look at the call stack

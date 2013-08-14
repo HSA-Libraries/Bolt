@@ -337,9 +337,9 @@ gold_scan_by_key(
 {
     if(std::distance(firstKey,lastKey) < 1)
          return result;
-    typedef std::iterator_traits< InputIterator1 >::value_type kType;
-    typedef std::iterator_traits< InputIterator2 >::value_type vType;
-    typedef std::iterator_traits< OutputIterator >::value_type oType;
+    typedef typename std::iterator_traits< InputIterator1 >::value_type kType;
+    typedef typename std::iterator_traits< InputIterator2 >::value_type vType;
+    typedef typename std::iterator_traits< OutputIterator >::value_type oType;
 
     static_assert( std::is_convertible< vType, oType >::value,
         "InputIterator2 and OutputIterator's value types are not convertible." );
@@ -398,9 +398,9 @@ gold_scan_by_key_exclusive(
 {
     if(std::distance(firstKey,lastKey) < 1)
          return result;
-    typedef std::iterator_traits< InputIterator1 >::value_type kType;
-    typedef std::iterator_traits< InputIterator2 >::value_type vType;
-    typedef std::iterator_traits< OutputIterator >::value_type oType;
+    typedef typename std::iterator_traits< InputIterator1 >::value_type kType;
+    typedef typename std::iterator_traits< InputIterator2 >::value_type vType;
+    typedef typename std::iterator_traits< OutputIterator >::value_type oType;
     static_assert( std::is_convertible< vType, oType >::value,
         "InputIterator2 and OutputIterator's value types are not convertible." );
     // do zeroeth element
@@ -2658,7 +2658,7 @@ TEST(ExclusiveScanByKey, OffsetExclFloatSerialInplace)
 TEST(ExclusiveScanByKey, OffsetExclFloatMultiCore)
 {
     //setup keys
-    int length = 1<<16;
+    int length = 1<<14;
     std::vector< int > keys( length, 1);
     bolt::cl::device_vector< int > device_keys( length, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
@@ -3248,7 +3248,7 @@ TEST(InclusiveScanByKey, OffsetInclUdd)
 }
 
 
-TEST(InclusiveScanByKey, DeviceVectorInclUddMultiCoreCpu)
+TEST(InclusiveScanByKey, DeviceVectorInclUdd)
 {
     //setup keys
     int length = 1<<16;
@@ -3296,7 +3296,7 @@ TEST(InclusiveScanByKey, DeviceVectorInclUddMultiCoreCpu)
 
 #endif
 
-TEST(InclusiveScanByKey, DeviceVectorInclFloatMultiCoreCpu)
+TEST(InclusiveScanByKey, DeviceVectorInclFloat)
 {
     //setup keys
     int length = 1<<16;
@@ -3430,7 +3430,7 @@ TEST(InclusiveScanByKey, MultiCore_DeviceVectorInclFloat)
 }
 
 #if (TEST_DOUBLE == 1)
-TEST(InclusiveScanByKey, DeviceVectorInclDoubleMultiCoreCpu)
+TEST(InclusiveScanByKey, DeviceVectorInclDouble)
 {
     //setup keys
     int length = 1<<16;
@@ -3481,7 +3481,7 @@ TEST(InclusiveScanByKey, DeviceVectorInclDoubleMultiCoreCpu)
 
 /////////////////////////Exclusive//////////////////////////////////////////////////
 
-TEST(ExclusiveScanByKey, DeviceVectorExclFloatMultiCoreCpu)
+TEST(ExclusiveScanByKey, DeviceVectorExclFloat)
 {
     //setup keys
     int length = 1<<16;
@@ -3616,7 +3616,7 @@ TEST(ExclusiveScanByKey, MultiCore_DeviceVectorExclFloat)
 }
 
 #if (TEST_DOUBLE == 1)
-TEST(ExclusiveScanByKey, DeviceVectorExclDoubleMultiCoreCpu)
+TEST(ExclusiveScanByKey, DeviceVectorExclDouble)
 {
     //setup keys
     int length = 1<<16;
@@ -3659,7 +3659,7 @@ TEST(ExclusiveScanByKey, DeviceVectorExclDoubleMultiCoreCpu)
     cmpArrays(refOutput, output);
 }
 
-TEST(ExclusiveScanByKey, DeviceVectorExclUddMultiCoreCpu)
+TEST(ExclusiveScanByKey, DeviceVectorExclUdd)
 {
     //setup keys
     int length = 1<<16;
@@ -3703,7 +3703,7 @@ TEST(ExclusiveScanByKey, DeviceVectorExclUddMultiCoreCpu)
 
 /////////////////////////////////////////////////////////////////////////////////////////////////
 
-TEST(InclusiveScanByKey, MulticoreInclUddMultiCoreCpu)
+TEST(InclusiveScanByKey, MulticoreInclUdd)
 {
     //setup keys
     int length = 1<<24;
@@ -4002,7 +4002,7 @@ TEST(ExclusiveScanByKey, SerialExclFloat)
     cmpArrays(refOutput, output);
 }
 
-TEST(APPSDKInclusiveScanByKey, InclusiveIntAPPSDKMultiCoreCpu)
+TEST(APPSDKInclusiveScanByKey, InclusiveIntAPPSDK)
 {
 	bool status = 1;
 	int count = 1;
@@ -4481,7 +4481,7 @@ TEST(ExclusiveScanByKey, MulticoreCLscanbykeyExclUDD)
 int _tmain(int argc, _TCHAR* argv[])
 {
     //  Register our minidump generating logic
-    bolt::miniDumpSingleton::enableMiniDumps( );
+    //bolt::miniDumpSingleton::enableMiniDumps( );
 
     //  Initialize googletest; this removes googletest specific flags from command line
     ::testing::InitGoogleTest( &argc, &argv[ 0 ] );

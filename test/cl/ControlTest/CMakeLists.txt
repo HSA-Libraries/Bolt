@@ -16,8 +16,14 @@
 ############################################################################                                                                                     
 
 # List the names of common files to compile across all platforms
-set( clBolt.Test.Control.Source stdafx.cpp Control.test.cpp )
-set( clBolt.Test.Control.Headers stdafx.h targetver.h ${BOLT_INCLUDE_DIR}/bolt/cl/control.h )
+set( clBolt.Test.Control.Source  ${BOLT_CL_TEST_DIR}/common/stdafx.cpp 
+                                  ${BOLT_CL_TEST_DIR}/common/myocl.cpp 
+                                   Control.test.cpp )
+                                   
+set( clBolt.Test.Control.Headers  ${BOLT_CL_TEST_DIR}/common/stdafx.h 
+                                   ${BOLT_CL_TEST_DIR}/common/targetver.h 
+                                   ${BOLT_CL_TEST_DIR}/common/myocl.h 
+                                   ${BOLT_INCLUDE_DIR}/bolt/cl/control.h )
 
 set( clBolt.Test.Control.Files ${clBolt.Test.Control.Source} ${clBolt.Test.Control.Headers} )
 
@@ -36,7 +42,7 @@ set_property( TARGET clBolt.Test.Control PROPERTY FOLDER "Test/OpenCL")
 
 # CPack configuration; include the executable into the package
 install( TARGETS clBolt.Test.Control
-	RUNTIME DESTINATION ${BIN_DIR}
-	LIBRARY DESTINATION ${LIB_DIR}
-	ARCHIVE DESTINATION ${LIB_DIR}/import
-	)
+    RUNTIME DESTINATION ${BIN_DIR}
+    LIBRARY DESTINATION ${LIB_DIR}
+    ARCHIVE DESTINATION ${LIB_DIR}/import
+    )

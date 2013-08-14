@@ -26,24 +26,34 @@ message( STATUS "ext.Boost_VERSION: " ${ext.Boost_VERSION} )
 
 # Purely for debugging the file downloading URLs
 # file( DOWNLOAD "http://downloads.sourceforge.net/project/boost/boost/1.49.0/boost_1_49_0.7z" 
-		# "${CMAKE_CURRENT_BINARY_DIR}/download/boost-${ext.Boost_VERSION}/boost_1_49_0.7z" SHOW_PROGRESS STATUS fileStatus LOG fileLog )
+        # "${CMAKE_CURRENT_BINARY_DIR}/download/boost-${ext.Boost_VERSION}/boost_1_49_0.7z" SHOW_PROGRESS STATUS fileStatus LOG fileLog )
 # message( STATUS "status: " ${fileStatus} )
 # message( STATUS "log: " ${fileLog} )
 
-set( Boost.Command b2 -j 4 --with-program_options --with-thread --with-system --with-date_time --with-chrono )
+# Initialize various command names based on platform
+if ( UNIX )
+        set(Boost.B2 "./b2")
+  set(Boost.Bootstrap "./bootstrap.sh")
+else( )
+        set(Boost.B2 "b2")
+  set(Boost.Bootstrap "bootstrap.bat")
+endif( )
+
+set( Boost.Command ${Boost.B2} -j 4 --with-program_options --with-thread --with-system --with-date_time --with-chrono )
+
 
 if( Bolt_BUILD64 )
-	list( APPEND Boost.Command address-model=64 )
+    list( APPEND Boost.Command address-model=64 )
 else( )
-	list( APPEND Boost.Command address-model=32 )
+    list( APPEND Boost.Command address-model=32 )
 endif( )
 
 if( MSVC )
-	if( MSVC_VERSION VERSION_LESS 1700 )
-		list( APPEND Boost.Command toolset=msvc-10.0 )
-	else( )
-		list( APPEND Boost.Command toolset=msvc-11.0 )
-	endif( )
+    if( MSVC_VERSION VERSION_LESS 1700 )
+        list( APPEND Boost.Command toolset=msvc-10.0 )
+    else( )
+        list( APPEND Boost.Command toolset=msvc-11.0 )
+    endif( )
 endif( )
 
 list( APPEND Boost.Command link=static stage )
@@ -59,16 +69,17 @@ endif( )
 mark_as_advanced( ext.Boost_URL )
 
 # Below is a fancy CMake command to download, build and install Boost on the users computer
+
 ExternalProject_Add(
     Boost
-	PREFIX ${CMAKE_CURRENT_BINARY_DIR}/external/boost
+    PREFIX ${CMAKE_CURRENT_BINARY_DIR}/external/boost
     URL ${ext.Boost_URL}
-	URL_MD5 f310a8198318c10e5e4932a07c755a6a
-    UPDATE_COMMAND "bootstrap.bat"
+    URL_MD5 f310a8198318c10e5e4932a07c755a6a
+    UPDATE_COMMAND ${Boost.Bootstrap}
 #    PATCH_COMMAND ""
-	CONFIGURE_COMMAND ""
-	BUILD_COMMAND ${Boost.Command}
-	BUILD_IN_SOURCE 1
+    CONFIGURE_COMMAND ""
+    BUILD_COMMAND ${Boost.Command}
+    BUILD_IN_SOURCE 1
     INSTALL_COMMAND ""
 )
 
@@ -89,14 +100,14 @@ set( Boost_FOUND TRUE )
    # Boost
    # URL http://gitorious.org/boost/cmake/archive-tarball/cmake-${ext.Boost_VERSION}.tar.gz
    # LIST_SEPARATOR *
-   # CMAKE_ARGS 	-DENABLE_STATIC=ON 
-				# -DENABLE_SHARED=OFF 
-				# -DENABLE_DEBUG=OFF 
-				# -DENABLE_RELEASE=ON 
-				# -DENABLE_SINGLE_THREADED=OFF 
-				# -DENABLE_MULTI_THREADED=ON 
-				# -DENABLE_STATIC_RUNTIME:BOOL=OFF 
-				# -DENABLE_DYNAMIC_RUNTIME=ON 
-				# -DWITH_PYTHON:BOOL=OFF 
-				# -DBUILD_PROJECTS=${BOOST_BUILD_PROJECTS} ${CMAKE_ARGS}
+   # CMAKE_ARGS     -DENABLE_STATIC=ON 
+                # -DENABLE_SHARED=OFF 
+                # -DENABLE_DEBUG=OFF 
+                # -DENABLE_RELEASE=ON 
+                # -DENABLE_SINGLE_THREADED=OFF 
+                # -DENABLE_MULTI_THREADED=ON 
+                # -DENABLE_STATIC_RUNTIME:BOOL=OFF 
+                # -DENABLE_DYNAMIC_RUNTIME=ON 
+                # -DWITH_PYTHON:BOOL=OFF 
+                # -DBUILD_PROJECTS=${BOOST_BUILD_PROJECTS} ${CMAKE_ARGS}
 # )

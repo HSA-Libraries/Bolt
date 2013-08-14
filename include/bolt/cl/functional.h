@@ -234,6 +234,7 @@ struct logical_or
 BOLT_CREATE_TYPENAME( bolt::cl::square< cl_int > );
 BOLT_CREATE_CLCODE( bolt::cl::square< cl_int >, bolt::cl::squareFunctor );
 
+
 BOLT_CREATE_TYPENAME( bolt::cl::cube< cl_int > );
 BOLT_CREATE_CLCODE( bolt::cl::cube< cl_int >, bolt::cl::cubeFunctor );
 

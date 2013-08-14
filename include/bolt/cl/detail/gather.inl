@@ -35,229 +35,6 @@
 namespace bolt {
 namespace cl {
 
-////////////////////////////////////////////////////////////////////
-// Gather APIs
-////////////////////////////////////////////////////////////////////
-template< typename InputIterator1,
-          typename InputIterator2,
-          typename OutputIterator >
-void gather( bolt::cl::control& ctl,
-             InputIterator1 map_first,
-             InputIterator1 map_last,
-             InputIterator2 input,
-             OutputIterator result,
-             const std::string& user_code )
-{
-    detail::gather_detect_random_access( ctl,
-                                         map_first,
-                                         map_last,
-                                         input,
-                                         result,
-                                         user_code,
-                                         std::iterator_traits< InputIterator1 >::iterator_category( ),
-                                         std::iterator_traits< InputIterator2 >::iterator_category( ) );
-}
-
-template< typename InputIterator1,
-          typename InputIterator2,
-          typename OutputIterator >
-void gather( InputIterator1 map_first,
-             InputIterator1 map_last,
-             InputIterator2 input,
-             OutputIterator result,
-             const std::string& user_code )
-{
-    detail::gather_detect_random_access( control::getDefault( ),
-                                         map_first,
-                                         map_last,
-                                         input,
-                                         result,
-                                         user_code,
-                                         std::iterator_traits< InputIterator1 >::iterator_category( ),
-                                         std::iterator_traits< InputIterator2 >::iterator_category( ) );
-}
-
-
-////////////////////////////////////////////////////////////////////
-// GatherIf APIs
-////////////////////////////////////////////////////////////////////
-template< typename InputIterator1,
-          typename InputIterator2,
-          typename InputIterator3,
-          typename OutputIterator >
-void gather_if( bolt::cl::control& ctl,
-                InputIterator1 map_first,
-                InputIterator1 map_last,
-                InputIterator2 stencil,
-                InputIterator3 input,
-                OutputIterator result,
-                const std::string& user_code )
-{
-    typedef typename std::iterator_traits<InputIterator2>::value_type stencilType;
-    gather_if( ctl,
-               map_first,
-               map_last,
-               stencil,
-               input,
-               result,
-               bolt::cl::identity <stencilType> ( ),
-               user_code );
-}
-
-template< typename InputIterator1,
-          typename InputIterator2,
-          typename InputIterator3,
-          typename OutputIterator >
-void gather_if( InputIterator1 map_first,
-                InputIterator1 map_last,
-                InputIterator2 stencil,
-                InputIterator3 input,
-                OutputIterator result,
-                const std::string& user_code )
-{
-    typedef typename std::iterator_traits<InputIterator2>::value_type stencilType;
-    gather_if( map_first,
-               map_last,
-               stencil,
-               input,
-               result,
-               bolt::cl::identity <stencilType> ( ),
-               user_code );
-}
-
-template< typename InputIterator1,
-          typename InputIterator2,
-          typename InputIterator3,
-          typename OutputIterator,
-          typename BinaryPredicate >
-void gather_if( bolt::cl::control& ctl,
-                InputIterator1 map_first,
-                InputIterator1 map_last,
-                InputIterator2 stencil,
-                InputIterator3 input,
-                OutputIterator result,
-                BinaryPredicate pred,
-                const std::string& user_code )
-{
-    detail::gather_if_detect_random_access( ctl,
-                                            map_first,
-                                            map_last,
-                                            stencil,
-                                            input,
-                                            result,
-                                            pred,
-                                            user_code,
-                                            std::iterator_traits< InputIterator1 >::iterator_category( ),
-                                            std::iterator_traits< InputIterator2 >::iterator_category( ),
-                                            std::iterator_traits< InputIterator3 >::iterator_category( ) );
-}
-
-template< typename InputIterator1,
-          typename InputIterator2,
-          typename InputIterator3,
-          typename OutputIterator,
-          typename BinaryPredicate >
-void gather_if(  InputIterator1 map_first,
-                 InputIterator1 map_last,
-                 InputIterator2 stencil,
-                 InputIterator3 input,
-                 OutputIterator result,
-                 BinaryPredicate pred,
-                 const std::string& user_code )
-{
-    detail::gather_if_detect_random_access( control::getDefault( ),
-                                            map_first,
-                                            map_last,
-                                            stencil,
-                                            input,
-                                            result,
-                                            pred,
-                                            user_code,
-                                            std::iterator_traits< InputIterator1 >::iterator_category( ),
-                                            std::iterator_traits< InputIterator2 >::iterator_category( ),
-                                            std::iterator_traits< InputIterator3 >::iterator_category( ));
-}
-
-
-
-/* Begin-- Serial Implementation of the gather and gather_if routines */
-
-
-
-template< typename InputIterator1,
-          typename InputIterator2,
-          typename OutputIterator >
-
-void serial_gather(InputIterator1 mapfirst, 
-                   InputIterator1 maplast,
-                   InputIterator2 input,
-                   OutputIterator result)
-{
-    //std::cout<<"Serial code path ... \n";
-   size_t numElements = static_cast< size_t >( std::distance( mapfirst, maplast ) );
-   typedef std::iterator_traits<InputIterator1>::value_type iType1;
-   iType1 temp;
-   for(size_t iter = 0; iter < numElements; iter++)
-   {
-                   temp = *(mapfirst + (int)iter);
-                  *(result + (int)iter) = *(input + (int)temp);
-   }
-}
-
-
-template< typename InputIterator1,
-          typename InputIterator2,
-          typename InputIterator3,
-          typename OutputIterator >
-
-void serial_gather_if(InputIterator1 mapfirst,
-                      InputIterator1 maplast, 
-                      InputIterator2 stencil,
-                      InputIterator3 input,
-                      OutputIterator result)
-{
-    //std::cout<<"Serial code path ... \n";
-   size_t numElements = static_cast< size_t >( std::distance( mapfirst, maplast ) );
-   for(size_t iter = 0; iter < numElements; iter++)
-   {
-       if(stencil[(int)iter]== 1)	   
-            result[(int)iter] = *(input + mapfirst[(int)iter]);       
-   }
-}
-
-template< typename InputIterator1,
-          typename InputIterator2,
-          typename InputIterator3,
-          typename OutputIterator,
-          typename BinaryPredicate >
-
-void serial_gather_if(InputIterator1 mapfirst,
-                      InputIterator1 maplast,
-                      InputIterator2 stencil,
-                      InputIterator3 input,
-                      OutputIterator result,
-                      BinaryPredicate pred)
-{
-   //std::cout<<"Serial code path ... \n";
-   unsigned int numElements = static_cast< unsigned int >( std::distance( mapfirst, maplast ) );
-  // for (InputIterator1 iter = mapfirst; iter != maplast; iter++)
-  // {
-  //      if(pred(*(stencil + ( iter - mapfirst)))) 
-        //{
-  //          // result[(int)iter] = input[mapfirst[(int)iter]]; 
-        //	 *(result + (iter - mapfirst) )= input[*iter];
-        //}
-  // }
-      for(unsigned int iter = 0; iter < numElements; iter++)
-   {
-        if(pred(*(stencil + (int)iter)))   
-             result[(int)iter] = input[mapfirst[(int)iter]]; 
-   }
-}
-
- /* End-- Serial Implementation of the gather and gather_if routines */
-
-
 namespace detail {
 ////////////////////////////////////////////////////////////////////
 // GatherIf KTS
@@ -276,7 +53,7 @@ public:
        addKernelName("gatherIfTemplate");
     }
 
-    const ::std::string operator() ( const ::std::vector<::std::string>& gatherIfKernels ) const
+    const ::std::string operator() ( const ::std::vector< ::std::string>& gatherIfKernels ) const
     {
       const std::string templateSpecializationString =
         "// Host generates this instantiation string with user-specified value type and functor\n"
@@ -314,7 +91,7 @@ public:
        addKernelName("gatherTemplate");
     }
 
-    const ::std::string operator() ( const ::std::vector<::std::string>& gatherKernels ) const
+    const ::std::string operator() ( const ::std::vector< ::std::string>& gatherKernels ) const
     {
       const std::string templateSpecializationString =
         "// Host generates this instantiation string with user-specified value type and functor\n"
@@ -336,29 +113,7 @@ public:
 // GatherIf detect random access
 ////////////////////////////////////////////////////////////////////
 
-    // Wrapper that uses default ::bolt::cl::control class, iterator interface
-    template< typename InputIterator1,
-              typename InputIterator2,
-              typename InputIterator3,
-              typename OutputIterator,
-              typename BinaryPredicate >
-    void gather_if_detect_random_access( bolt::cl::control& ctl,
-                                         const InputIterator1& map_first,
-                                         const InputIterator1& map_last,
-                                         const InputIterator2& stencil,
-                                         const InputIterator3& input,
-                                         const OutputIterator& result,
-                                         const BinaryPredicate& pred,
-                                         const std::string& user_code,
-                                         std::input_iterator_tag,
-                                         std::input_iterator_tag,
-                                         std::input_iterator_tag )
-    {
-            // TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data
-            // to a temporary buffer.  Should we?
 
-            static_assert( false, "Bolt only supports random access iterator types" );
-    };
 
     template< typename InputIterator1,
               typename InputIterator2,
@@ -385,29 +140,16 @@ public:
                                 result,
                                 pred,
                                 user_code,
-                                std::iterator_traits< InputIterator1 >::iterator_category( ),
-                                std::iterator_traits< InputIterator2 >::iterator_category( ),
-                                std::iterator_traits< InputIterator3 >::iterator_category( ) );
+                                typename std::iterator_traits< InputIterator1 >::iterator_category( ),
+                                typename std::iterator_traits< InputIterator2 >::iterator_category( ),
+                                typename std::iterator_traits< InputIterator3 >::iterator_category( ) );
     };
 
 ////////////////////////////////////////////////////////////////////
 // Gather detect random access
 ////////////////////////////////////////////////////////////////////
 
-    template< typename InputIterator1,
-              typename InputIterator2,
-              typename OutputIterator>
-    void gather_detect_random_access( bolt::cl::control& ctl,
-                                      const InputIterator1& map_first,
-                                      const InputIterator1& map_last,
-                                      const InputIterator2& input,
-                                      const OutputIterator& result,
-                                      const std::string& user_code,
-                                      std::input_iterator_tag,
-                                      std::input_iterator_tag )
-    {
-            static_assert( false, "Bolt only supports random access iterator types" );
-    };
+
 
     template< typename InputIterator1,
               typename InputIterator2,
@@ -427,8 +169,47 @@ public:
                              input,
                              result,
                              user_code,
-                             std::iterator_traits< InputIterator1 >::iterator_category( ),
-                             std::iterator_traits< InputIterator2 >::iterator_category( ) );
+                             typename std::iterator_traits< InputIterator1 >::iterator_category( ),
+                             typename std::iterator_traits< InputIterator2 >::iterator_category( ) );
+    };
+
+    // Wrapper that uses default ::bolt::cl::control class, iterator interface
+    template< typename InputIterator1,
+              typename InputIterator2,
+              typename InputIterator3,
+              typename OutputIterator,
+              typename BinaryPredicate >
+    void gather_if_detect_random_access( bolt::cl::control& ctl,
+                                         const InputIterator1& map_first,
+                                         const InputIterator1& map_last,
+                                         const InputIterator2& stencil,
+                                         const InputIterator3& input,
+                                         const OutputIterator& result,
+                                         const BinaryPredicate& pred,
+                                         const std::string& user_code,
+                                         std::input_iterator_tag,
+                                         std::input_iterator_tag,
+                                         std::input_iterator_tag )
+    {
+            // TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data
+            // to a temporary buffer.  Should we?
+
+            static_assert( std::is_same< InputIterator1, std::input_iterator_tag >::value , "Bolt only supports random access iterator types" );
+    };
+
+    template< typename InputIterator1,
+              typename InputIterator2,
+              typename OutputIterator>
+    void gather_detect_random_access( bolt::cl::control& ctl,
+                                      const InputIterator1& map_first,
+                                      const InputIterator1& map_last,
+                                      const InputIterator2& input,
+                                      const OutputIterator& result,
+                                      const std::string& user_code,
+                                      std::input_iterator_tag,
+                                      std::input_iterator_tag )
+    {
+            static_assert( std::is_same< InputIterator1, std::input_iterator_tag >::value , "Bolt only supports random access iterator types" );
     };
 
 ////////////////////////////////////////////////////////////////////
@@ -458,10 +239,10 @@ public:
                                   std::random_access_iterator_tag,
                                   std::random_access_iterator_tag )
     {
-        typedef std::iterator_traits<InputIterator1>::value_type iType1;
-        typedef std::iterator_traits<InputIterator2>::value_type iType2;
-        typedef std::iterator_traits<InputIterator3>::value_type iType3;
-        typedef std::iterator_traits<OutputIterator>::value_type oType;
+        typedef typename std::iterator_traits<InputIterator1>::value_type iType1;
+        typedef typename std::iterator_traits<InputIterator2>::value_type iType2;
+        typedef typename std::iterator_traits<InputIterator3>::value_type iType3;
+        typedef typename std::iterator_traits<OutputIterator>::value_type oType;
 
         size_t sz = std::distance( map_first, map_last );
 
@@ -483,7 +264,7 @@ public:
 #if defined( ENABLE_TBB )
            bolt::btbb::gather_if(map_first, map_last, stencil, input, result, pred);
 #else
-          throw std::exception( "The MultiCoreCpu version of gather_if is not enabled to be built! \n" );
+          throw std::runtime_error( "The MultiCoreCpu version of gather_if is not enabled to be built! \n" );
 #endif
         }
         else
@@ -529,10 +310,10 @@ public:
                                   std::random_access_iterator_tag
                                    )
     {
-        typedef std::iterator_traits<InputIterator1>::value_type iType1;
-        typedef std::iterator_traits<InputIterator2>::value_type iType2;
-        typedef std::iterator_traits<InputIterator3>::value_type iType3;
-        typedef std::iterator_traits<OutputIterator>::value_type oType;
+        typedef typename std::iterator_traits<InputIterator1>::value_type iType1;
+        typedef typename std::iterator_traits<InputIterator2>::value_type iType2;
+        typedef typename std::iterator_traits<InputIterator3>::value_type iType3;
+        typedef typename std::iterator_traits<OutputIterator>::value_type oType;
         size_t sz = std::distance( map_first, map_last );
         if (sz == 0)
             return;
@@ -552,7 +333,7 @@ public:
 #if defined( ENABLE_TBB )
             bolt::btbb::gather_if(map_first, map_last, stencilFancyIter, input, result, pred);
 #else
-            throw std::exception( "The MultiCoreCpu version of gather is not enabled to be built! \n" );
+            throw std::runtime_error( "The MultiCoreCpu version of gather is not enabled to be built! \n" );
 #endif
         }
         else
@@ -597,10 +378,10 @@ public:
                                   std::random_access_iterator_tag )
     {
 
-        typedef std::iterator_traits<InputIterator1>::value_type iType1;
-        typedef std::iterator_traits<InputIterator2>::value_type iType2;
-        typedef std::iterator_traits<InputIterator3>::value_type iType3;
-        typedef std::iterator_traits<OutputIterator>::value_type oType;
+        typedef typename std::iterator_traits<InputIterator1>::value_type iType1;
+        typedef typename std::iterator_traits<InputIterator2>::value_type iType2;
+        typedef typename std::iterator_traits<InputIterator3>::value_type iType3;
+        typedef typename std::iterator_traits<OutputIterator>::value_type oType;
         size_t sz = std::distance( fancymapFirst, fancymapLast );
         if (sz == 0)
             return;
@@ -620,7 +401,7 @@ public:
 #if defined( ENABLE_TBB )
             bolt::btbb::gather_if( fancymapFirst, fancymapLast, stencil, input, result, pred );
 #else
-            throw std::exception( "The MultiCoreCpu version of gather is not enabled to be built! \n" );
+            throw std::runtime_error( "The MultiCoreCpu version of gather is not enabled to be built! \n" );
 #endif
         }
         else
@@ -668,10 +449,10 @@ public:
                                   bolt::cl::device_vector_tag )
     {
 
-        typedef std::iterator_traits< DVInputIterator1 >::value_type iType1;
-        typedef std::iterator_traits< DVInputIterator2 >::value_type iType2;
-        typedef std::iterator_traits< DVInputIterator3 >::value_type iType3;
-        typedef std::iterator_traits< DVOutputIterator >::value_type oType;
+        typedef typename std::iterator_traits< DVInputIterator1 >::value_type iType1;
+        typedef typename std::iterator_traits< DVInputIterator2 >::value_type iType2;
+        typedef typename std::iterator_traits< DVInputIterator3 >::value_type iType3;
+        typedef typename std::iterator_traits< DVOutputIterator >::value_type oType;
 
         size_t sz = std::distance( map_first, map_last );
         if( sz == 0 )
@@ -685,10 +466,10 @@ public:
 
         if( runMode == bolt::cl::control::SerialCpu )
         {            
-            bolt::cl::device_vector< iType1 >::pointer mapPtr =  map_first.getContainer( ).data( );
-            bolt::cl::device_vector< iType2 >::pointer stenPtr =  stencil.getContainer( ).data( );
-            bolt::cl::device_vector< iType3 >::pointer inputPtr =  input.getContainer( ).data( );
-            bolt::cl::device_vector< oType >::pointer resPtr =  result.getContainer( ).data( );
+            typename bolt::cl::device_vector< iType1 >::pointer mapPtr =  map_first.getContainer( ).data( );
+            typename bolt::cl::device_vector< iType2 >::pointer stenPtr =  stencil.getContainer( ).data( );
+            typename bolt::cl::device_vector< iType3 >::pointer inputPtr =  input.getContainer( ).data( );
+            typename bolt::cl::device_vector< oType >::pointer resPtr =  result.getContainer( ).data( );
 
           #if defined( _WIN32 )
             serial_gather_if(&mapPtr[ map_first.m_Index ], &mapPtr[ map_last.m_Index ], &stenPtr[ stencil.m_Index ],
@@ -703,16 +484,16 @@ public:
         {
 #if defined( ENABLE_TBB )
           {           
-            bolt::cl::device_vector< iType1 >::pointer mapPtr =  map_first.getContainer( ).data( );
-            bolt::cl::device_vector< iType2 >::pointer stenPtr =  stencil.getContainer( ).data( );
-            bolt::cl::device_vector< iType3 >::pointer inputPtr =  input.getContainer( ).data( );
-            bolt::cl::device_vector< oType >::pointer resPtr =  result.getContainer( ).data( );
+           typename bolt::cl::device_vector< iType1 >::pointer mapPtr =  map_first.getContainer( ).data( );
+           typename bolt::cl::device_vector< iType2 >::pointer stenPtr =  stencil.getContainer( ).data( );
+           typename bolt::cl::device_vector< iType3 >::pointer inputPtr =  input.getContainer( ).data( );
+           typename bolt::cl::device_vector< oType >::pointer resPtr =  result.getContainer( ).data( );
 
            bolt::btbb::gather_if( &mapPtr[ map_first.m_Index ], &mapPtr[ map_last.m_Index ], &stenPtr[ stencil.m_Index ],
                  &inputPtr[ input.m_Index ], &resPtr[ result.m_Index ], pred );
           }
 #else
-             throw std::exception( "The MultiCoreCpu version of gather is not enabled to be built! \n" );
+             throw std::runtime_error( "The MultiCoreCpu version of gather is not enabled to be built! \n" );
 #endif  
         }
         else
@@ -739,9 +520,9 @@ public:
                                std::random_access_iterator_tag,
                                std::random_access_iterator_tag )
     {
-        typedef std::iterator_traits<InputIterator1>::value_type iType1;
-        typedef std::iterator_traits<InputIterator2>::value_type iType2;
-        typedef std::iterator_traits<OutputIterator>::value_type oType;
+        typedef typename std::iterator_traits<InputIterator1>::value_type iType1;
+        typedef typename std::iterator_traits<InputIterator2>::value_type iType2;
+        typedef typename std::iterator_traits<OutputIterator>::value_type oType;
 
         size_t sz = std::distance( map_first, map_last );
 
@@ -763,7 +544,7 @@ public:
 #if defined( ENABLE_TBB )
            bolt::btbb::gather(map_first, map_last, input, result);
 #else
-          throw std::exception( "The MultiCoreCpu version of gather_if is not enabled to be built! \n" );
+          throw std::runtime_error( "The MultiCoreCpu version of gather_if is not enabled to be built! \n" );
 
 #endif
         }
@@ -799,9 +580,9 @@ public:
                                bolt::cl::fancy_iterator_tag,
                                std::random_access_iterator_tag )
     {
-        typedef std::iterator_traits<InputIterator1>::value_type iType1;
-        typedef std::iterator_traits<InputIterator2>::value_type iType2;
-        typedef std::iterator_traits<OutputIterator>::value_type oType;
+        typedef typename std::iterator_traits<InputIterator1>::value_type iType1;
+        typedef typename std::iterator_traits<InputIterator2>::value_type iType2;
+        typedef typename std::iterator_traits<OutputIterator>::value_type oType;
         size_t sz = std::distance( firstFancy, lastFancy );
         if (sz == 0)
             return;
@@ -821,7 +602,7 @@ public:
 #if defined( ENABLE_TBB )
             bolt::btbb::gather( firstFancy, lastFancy, input, result);
 #else
-            throw std::exception( "The MultiCoreCpu version of gather is not enabled to be built! \n" );
+            throw std::runtime_error( "The MultiCoreCpu version of gather is not enabled to be built! \n" );
 #endif
         }
         else
@@ -858,9 +639,9 @@ public:
                                std::random_access_iterator_tag,
                                bolt::cl::fancy_iterator_tag )
     {
-        typedef std::iterator_traits<InputIterator1>::value_type iType1;
-        typedef std::iterator_traits<InputIterator2>::value_type iType2;
-        typedef std::iterator_traits<OutputIterator>::value_type oType;
+        typedef typename std::iterator_traits<InputIterator1>::value_type iType1;
+        typedef typename std::iterator_traits<InputIterator2>::value_type iType2;
+        typedef typename std::iterator_traits<OutputIterator>::value_type oType;
         size_t sz = std::distance( map_first, map_last );
         if (sz == 0)
             return;
@@ -880,7 +661,7 @@ public:
 #if defined( ENABLE_TBB )
              bolt::btbb::gather(map_first, map_last, inputFancy, result);
 #else
-            throw std::exception( "The MultiCoreCpu version of gather is not enabled to be built! \n" );
+            throw std::runtime_error( "The MultiCoreCpu version of gather is not enabled to be built! \n" );
 #endif
         }
         else
@@ -917,9 +698,9 @@ public:
                                bolt::cl::device_vector_tag )
     {
 
-        typedef std::iterator_traits< DVMapIterator >::value_type iType1;
-        typedef std::iterator_traits< DVInputIterator >::value_type iType2;
-        typedef std::iterator_traits< DVOutputIterator >::value_type oType;
+        typedef typename std::iterator_traits< DVMapIterator >::value_type iType1;
+        typedef typename std::iterator_traits< DVInputIterator >::value_type iType2;
+        typedef typename std::iterator_traits< DVOutputIterator >::value_type oType;
 
         size_t sz = std::distance( map_first, map_last );
         if( sz == 0 )
@@ -933,9 +714,9 @@ public:
 
         if( runMode == bolt::cl::control::SerialCpu )
         {
-            bolt::cl::device_vector< iType1 >::pointer  MapBuffer  =  map_first.getContainer( ).data( );
-            bolt::cl::device_vector< iType2 >::pointer InputBuffer    =  input.getContainer( ).data( );
-            bolt::cl::device_vector< oType >::pointer  ResultBuffer =  result.getContainer( ).data( );
+           typename bolt::cl::device_vector< iType1 >::pointer  MapBuffer  =  map_first.getContainer( ).data( );
+           typename bolt::cl::device_vector< iType2 >::pointer InputBuffer    =  input.getContainer( ).data( );
+           typename bolt::cl::device_vector< oType >::pointer  ResultBuffer =  result.getContainer( ).data( );
             serial_gather(&MapBuffer[ map_first.m_Index ], &MapBuffer[ map_last.m_Index ], &InputBuffer[ input.m_Index ],
             &ResultBuffer[ result.m_Index ]); 
         }
@@ -943,14 +724,14 @@ public:
         {
          #if defined( ENABLE_TBB )
             {
-                bolt::cl::device_vector< iType1 >::pointer  MapBuffer  =  map_first.getContainer( ).data( );
-                bolt::cl::device_vector< iType2 >::pointer InputBuffer    =  input.getContainer( ).data( );
-                bolt::cl::device_vector< oType >::pointer  ResultBuffer =  result.getContainer( ).data( );
+               typename bolt::cl::device_vector< iType1 >::pointer  MapBuffer  =  map_first.getContainer( ).data( );
+               typename bolt::cl::device_vector< iType2 >::pointer InputBuffer    =  input.getContainer( ).data( );
+               typename bolt::cl::device_vector< oType >::pointer  ResultBuffer =  result.getContainer( ).data( );
                 bolt::btbb::gather(&MapBuffer[ map_first.m_Index ], &MapBuffer[ map_last.m_Index ], &InputBuffer[ input.m_Index ],
                 &ResultBuffer[ result.m_Index ]);
             }
 #else
-             throw std::exception( "The MultiCoreCpu version of gather is not enabled to be built! \n" );
+             throw std::runtime_error( "The MultiCoreCpu version of gather is not enabled to be built! \n" );
 #endif
         }
         else
@@ -978,9 +759,9 @@ public:
                                 bolt::cl::device_vector_tag )
     {
 
-        typedef std::iterator_traits< FancyIterator >::value_type iType1;
-        typedef std::iterator_traits< DVInputIterator >::value_type iType2;
-        typedef std::iterator_traits< DVOutputIterator >::value_type oType;
+        typedef typename std::iterator_traits< FancyIterator >::value_type iType1;
+        typedef typename std::iterator_traits< DVInputIterator >::value_type iType2;
+        typedef typename std::iterator_traits< DVOutputIterator >::value_type oType;
 
         size_t sz = std::distance( firstFancy, lastFancy );
         if( sz == 0 )
@@ -994,20 +775,20 @@ public:
 
         if( runMode == bolt::cl::control::SerialCpu )
         {
-            bolt::cl::device_vector< iType2 >::pointer InputBuffer    =  input.getContainer( ).data( );
-            bolt::cl::device_vector< oType >::pointer  ResultBuffer =  result.getContainer( ).data( );
+           typename bolt::cl::device_vector< iType2 >::pointer InputBuffer    =  input.getContainer( ).data( );
+           typename bolt::cl::device_vector< oType >::pointer  ResultBuffer =  result.getContainer( ).data( );
             serial_gather(firstFancy, lastFancy, &InputBuffer[ input.m_Index ], &ResultBuffer[ result.m_Index ]);
         }
         else if( runMode == bolt::cl::control::MultiCoreCpu )
         {
 #if defined( ENABLE_TBB )
             {
-                bolt::cl::device_vector< iType2 >::pointer InputBuffer    =  input.getContainer( ).data( );
-                bolt::cl::device_vector< oType >::pointer  ResultBuffer =  result.getContainer( ).data( );
+               typename bolt::cl::device_vector< iType2 >::pointer InputBuffer    =  input.getContainer( ).data( );
+               typename bolt::cl::device_vector< oType >::pointer  ResultBuffer =  result.getContainer( ).data( );
                 bolt::btbb::gather(firstFancy, lastFancy, &InputBuffer[ input.m_Index ], &ResultBuffer[ result.m_Index ]);
             }
 #else
-             throw std::exception( "The MultiCoreCpu version of gather is not enabled to be built! \n" );
+             throw std::runtime_error( "The MultiCoreCpu version of gather is not enabled to be built! \n" );
 #endif 
         }
         else
@@ -1035,9 +816,9 @@ public:
                                 bolt::cl::fancy_iterator_tag )
     {
 
-        typedef std::iterator_traits< DVMapIterator >::value_type iType1;
-        typedef std::iterator_traits< FancyInput >::value_type iType2;
-        typedef std::iterator_traits< DVOutputIterator >::value_type oType;
+        typedef typename std::iterator_traits< DVMapIterator >::value_type iType1;
+        typedef typename std::iterator_traits< FancyInput >::value_type iType2;
+        typedef typename std::iterator_traits< DVOutputIterator >::value_type oType;
 
         size_t sz = std::distance( mapfirst, maplast );
         if( sz == 0 )
@@ -1051,8 +832,8 @@ public:
 
         if( runMode == bolt::cl::control::SerialCpu )
         {
-            bolt::cl::device_vector< iType1 >::pointer mapBuffer    =  mapfirst.getContainer( ).data( );
-            bolt::cl::device_vector< oType >::pointer  ResultBuffer =  result.getContainer( ).data( );
+           typename bolt::cl::device_vector< iType1 >::pointer mapBuffer    =  mapfirst.getContainer( ).data( );
+           typename bolt::cl::device_vector< oType >::pointer  ResultBuffer =  result.getContainer( ).data( );
             serial_gather( &mapBuffer[ mapfirst.m_Index ], &mapBuffer[ maplast.m_Index ], fancyInpt, 
                                                                          &ResultBuffer[ result.m_Index ]);
         }
@@ -1060,14 +841,14 @@ public:
         {
 #if defined( ENABLE_TBB )
             {
-                bolt::cl::device_vector< iType1 >::pointer mapBuffer    =  mapfirst.getContainer( ).data( );
-                bolt::cl::device_vector< oType >::pointer  ResultBuffer =  result.getContainer( ).data( );
+               typename bolt::cl::device_vector< iType1 >::pointer mapBuffer    =  mapfirst.getContainer( ).data( );
+              typename  bolt::cl::device_vector< oType >::pointer  ResultBuffer =  result.getContainer( ).data( );
                 bolt::btbb::gather(  &mapBuffer[ mapfirst.m_Index ], &mapBuffer[ maplast.m_Index ], fancyInpt, 
                                                                          &ResultBuffer[ result.m_Index ]);
             }
 
 #else
-             throw std::exception( "The MultiCoreCpu version of gather is not enabled to be built! \n" );
+             throw std::runtime_error( "The MultiCoreCpu version of gather is not enabled to be built! \n" );
 #endif  
         }
         else
@@ -1094,9 +875,9 @@ public:
                                bolt::cl::device_vector_tag,
                                std::random_access_iterator_tag )
     {
-        typedef std::iterator_traits<DVInputIterator>::value_type iType1;
-        typedef std::iterator_traits<InputIterator>::value_type iType2;
-        typedef std::iterator_traits<OutputIterator>::value_type oType;
+        typedef typename std::iterator_traits<DVInputIterator>::value_type iType1;
+        typedef typename std::iterator_traits<InputIterator>::value_type iType2;
+        typedef typename std::iterator_traits<OutputIterator>::value_type oType;
         size_t sz = std::distance( map_first, map_last );
         if (sz == 0)
             return;
@@ -1115,11 +896,11 @@ public:
         {
 #if defined( ENABLE_TBB )
              {				
-                bolt::cl::device_vector< iType1 >::pointer mapBuffer    =  map_first.getContainer( ).data( );
+               typename bolt::cl::device_vector< iType1 >::pointer mapBuffer    =  map_first.getContainer( ).data( );
                 bolt::btbb::gather( &mapBuffer[ map_first.m_Index ], &mapBuffer[ map_last.m_Index ], input, result);
             }
 #else
-            throw std::exception( "The MultiCoreCpu version of gather is not enabled to be built! \n" );
+            throw std::runtime_error( "The MultiCoreCpu version of gather is not enabled to be built! \n" );
 #endif
         }
         else
@@ -1156,9 +937,9 @@ public:
                                 std::random_access_iterator_tag,
                                 bolt::cl::device_vector_tag )
     {
-        typedef std::iterator_traits<InputIterator>::value_type iType1;
-        typedef std::iterator_traits<DVInputIterator>::value_type iType2;
-        typedef std::iterator_traits<OutputIterator>::value_type oType;
+        typedef typename std::iterator_traits<InputIterator>::value_type iType1;
+        typedef typename std::iterator_traits<DVInputIterator>::value_type iType2;
+        typedef typename std::iterator_traits<OutputIterator>::value_type oType;
         size_t sz = std::distance( map_first, map_last );
         if (sz == 0)
             return;
@@ -1171,7 +952,7 @@ public:
         }
         if( runMode == bolt::cl::control::SerialCpu )
         {
-           bolt::cl::device_vector< iType2 >::pointer inputBuffer    =  input.getContainer( ).data( );
+          typename bolt::cl::device_vector< iType2 >::pointer inputBuffer    =  input.getContainer( ).data( );
            serial_gather(map_first, map_last, &inputBuffer[ input.m_Index ], result);
         }
         else if( runMode == bolt::cl::control::MultiCoreCpu )
@@ -1179,11 +960,11 @@ public:
 #if defined( ENABLE_TBB )
            bolt::btbb::gather(map_first, map_last , input, result);
             {
-                bolt::cl::device_vector< iType2 >::pointer inputBuffer    =  input.getContainer( ).data( );
+               typename bolt::cl::device_vector< iType2 >::pointer inputBuffer    =  input.getContainer( ).data( );
                 bolt::btbb::gather(map_first, map_last, &inputBuffer[ input.m_Index ], result);
             }
 #else
-            throw std::exception( "The MultiCoreCpu version of gather is not enabled to be built! \n" );
+            throw std::runtime_error( "The MultiCoreCpu version of gather is not enabled to be built! \n" );
 #endif
         }
         else
@@ -1225,10 +1006,10 @@ public:
                             const Predicate& pred,
                             const std::string& cl_code )
     {
-        typedef std::iterator_traits<DVInputIterator1>::value_type iType1;
-        typedef std::iterator_traits<DVInputIterator2>::value_type iType2;
-        typedef std::iterator_traits<DVInputIterator3>::value_type iType3;
-        typedef std::iterator_traits<DVOutputIterator>::value_type oType;
+        typedef typename std::iterator_traits<DVInputIterator1>::value_type iType1;
+        typedef typename std::iterator_traits<DVInputIterator2>::value_type iType2;
+        typedef typename std::iterator_traits<DVInputIterator3>::value_type iType3;
+        typedef typename std::iterator_traits<DVOutputIterator>::value_type oType;
 
         cl_uint distVec = static_cast< cl_uint >(  map_first.distance_to(map_last) );
         if( distVec == 0 )
@@ -1323,13 +1104,13 @@ public:
                                                                 &aligned_binary );
 
         kernels[boundsCheck].setArg( 0, map_first.getContainer().getBuffer() );
-        kernels[boundsCheck].setArg( 1, map_first.gpuPayloadSize( ), &map_first.gpuPayload( ) );
+        kernels[boundsCheck].setArg( 1, map_first.gpuPayloadSize( ), const_cast<typename DVInputIterator1::Payload * >(&map_first.gpuPayload( )) );
         kernels[boundsCheck].setArg( 2, stencil.getContainer().getBuffer() );
-        kernels[boundsCheck].setArg( 3, stencil.gpuPayloadSize( ), &stencil.gpuPayload( ) );
+        kernels[boundsCheck].setArg( 3, stencil.gpuPayloadSize( ),const_cast<typename DVInputIterator2::Payload * >( &stencil.gpuPayload( )) );
         kernels[boundsCheck].setArg( 4, input.getContainer().getBuffer() );
-        kernels[boundsCheck].setArg( 5, input.gpuPayloadSize( ), &input.gpuPayload( ) );
+        kernels[boundsCheck].setArg( 5, input.gpuPayloadSize( ), const_cast<typename DVInputIterator3::Payload * >(&input.gpuPayload( )) );
         kernels[boundsCheck].setArg( 6, result.getContainer().getBuffer() );
-        kernels[boundsCheck].setArg( 7, result.gpuPayloadSize( ), &result.gpuPayload( ) );
+        kernels[boundsCheck].setArg( 7, result.gpuPayloadSize( ),const_cast<typename DVOutputIterator::Payload * >( &result.gpuPayload( )) );
         kernels[boundsCheck].setArg( 8, distVec );
         kernels[boundsCheck].setArg( 9, *userPredicate );
 
@@ -1360,9 +1141,9 @@ public:
                          const DVOutputIterator& result,
                          const std::string& cl_code )
     {
-        typedef std::iterator_traits<DVInputIterator1>::value_type iType1;
-        typedef std::iterator_traits<DVInputIterator2>::value_type iType2;
-        typedef std::iterator_traits<DVOutputIterator>::value_type oType;
+        typedef typename std::iterator_traits<DVInputIterator1>::value_type iType1;
+        typedef typename std::iterator_traits<DVInputIterator2>::value_type iType2;
+        typedef typename std::iterator_traits<DVOutputIterator>::value_type oType;
 
         cl_uint distVec = static_cast< cl_uint >(  map_first.distance_to(map_last) );
         if( distVec == 0 )
@@ -1445,11 +1226,11 @@ public:
          // kernels returned in same order as added in KernelTemplaceSpecializer constructor
 
         kernels[boundsCheck].setArg( 0, map_first.getContainer().getBuffer() );
-        kernels[boundsCheck].setArg( 1, map_first.gpuPayloadSize( ), &map_first.gpuPayload( ) );
+        kernels[boundsCheck].setArg( 1, map_first.gpuPayloadSize( ),const_cast< typename DVInputIterator1::Payload *>( &map_first.gpuPayload( )) );
         kernels[boundsCheck].setArg( 2, input.getContainer().getBuffer() );
-        kernels[boundsCheck].setArg( 3, input.gpuPayloadSize( ), &input.gpuPayload( ) );
+        kernels[boundsCheck].setArg( 3, input.gpuPayloadSize( ),const_cast< typename DVInputIterator2::Payload *>( &input.gpuPayload( )) );
         kernels[boundsCheck].setArg( 4, result.getContainer().getBuffer() );
-        kernels[boundsCheck].setArg( 5, result.gpuPayloadSize( ), &result.gpuPayload( ) );
+        kernels[boundsCheck].setArg( 5, result.gpuPayloadSize( ), const_cast< typename DVOutputIterator::Payload *>(&result.gpuPayload( )) );
         kernels[boundsCheck].setArg( 6, distVec );
 
         ::cl::Event gatherEvent;
@@ -1472,6 +1253,231 @@ public:
 
 
 } //End of detail namespace
+
+////////////////////////////////////////////////////////////////////
+// Gather APIs
+////////////////////////////////////////////////////////////////////
+template< typename InputIterator1,
+          typename InputIterator2,
+          typename OutputIterator >
+void gather( bolt::cl::control& ctl,
+             InputIterator1 map_first,
+             InputIterator1 map_last,
+             InputIterator2 input,
+             OutputIterator result,
+             const std::string& user_code )
+{
+    detail::gather_detect_random_access( ctl,
+                                         map_first,
+                                         map_last,
+                                         input,
+                                         result,
+                                         user_code,
+                                         typename std::iterator_traits< InputIterator1 >::iterator_category( ),
+                                         typename std::iterator_traits< InputIterator2 >::iterator_category( ) );
+}
+
+template< typename InputIterator1,
+          typename InputIterator2,
+          typename OutputIterator >
+void gather( InputIterator1 map_first,
+             InputIterator1 map_last,
+             InputIterator2 input,
+             OutputIterator result,
+             const std::string& user_code )
+{
+    detail::gather_detect_random_access( control::getDefault( ),
+                                         map_first,
+                                         map_last,
+                                         input,
+                                         result,
+                                         user_code,
+                                         typename std::iterator_traits< InputIterator1 >::iterator_category( ),
+                                         typename std::iterator_traits< InputIterator2 >::iterator_category( ) );
+}
+
+
+////////////////////////////////////////////////////////////////////
+// GatherIf APIs
+////////////////////////////////////////////////////////////////////
+template< typename InputIterator1,
+          typename InputIterator2,
+          typename InputIterator3,
+          typename OutputIterator >
+void gather_if( bolt::cl::control& ctl,
+                InputIterator1 map_first,
+                InputIterator1 map_last,
+                InputIterator2 stencil,
+                InputIterator3 input,
+                OutputIterator result,
+                const std::string& user_code )
+{
+    typedef typename std::iterator_traits<InputIterator2>::value_type stencilType;
+    gather_if( ctl,
+               map_first,
+               map_last,
+               stencil,
+               input,
+               result,
+               bolt::cl::identity <stencilType> ( ),
+               user_code );
+}
+
+template< typename InputIterator1,
+          typename InputIterator2,
+          typename InputIterator3,
+          typename OutputIterator >
+void gather_if( InputIterator1 map_first,
+                InputIterator1 map_last,
+                InputIterator2 stencil,
+                InputIterator3 input,
+                OutputIterator result,
+                const std::string& user_code )
+{
+    typedef typename std::iterator_traits<InputIterator2>::value_type stencilType;
+    gather_if( map_first,
+               map_last,
+               stencil,
+               input,
+               result,
+               bolt::cl::identity <stencilType> ( ),
+               user_code );
+}
+
+template< typename InputIterator1,
+          typename InputIterator2,
+          typename InputIterator3,
+          typename OutputIterator,
+          typename BinaryPredicate >
+void gather_if( bolt::cl::control& ctl,
+                InputIterator1 map_first,
+                InputIterator1 map_last,
+                InputIterator2 stencil,
+                InputIterator3 input,
+                OutputIterator result,
+                BinaryPredicate pred,
+                const std::string& user_code )
+{
+    detail::gather_if_detect_random_access( ctl,
+                                            map_first,
+                                            map_last,
+                                            stencil,
+                                            input,
+                                            result,
+                                            pred,
+                                            user_code,
+                                            typename std::iterator_traits< InputIterator1 >::iterator_category( ),
+                                            typename std::iterator_traits< InputIterator2 >::iterator_category( ),
+                                            typename std::iterator_traits< InputIterator3 >::iterator_category( ) );
+}
+
+template< typename InputIterator1,
+          typename InputIterator2,
+          typename InputIterator3,
+          typename OutputIterator,
+          typename BinaryPredicate >
+void gather_if(  InputIterator1 map_first,
+                 InputIterator1 map_last,
+                 InputIterator2 stencil,
+                 InputIterator3 input,
+                 OutputIterator result,
+                 BinaryPredicate pred,
+                 const std::string& user_code )
+{
+    detail::gather_if_detect_random_access( control::getDefault( ),
+                                            map_first,
+                                            map_last,
+                                            stencil,
+                                            input,
+                                            result,
+                                            pred,
+                                            user_code,
+                                            typename std::iterator_traits< InputIterator1 >::iterator_category( ),
+                                            typename std::iterator_traits< InputIterator2 >::iterator_category( ),
+                                            typename std::iterator_traits< InputIterator3 >::iterator_category( ));
+}
+
+
+
+/* Begin-- Serial Implementation of the gather and gather_if routines */
+
+
+
+template< typename InputIterator1,
+          typename InputIterator2,
+          typename OutputIterator >
+
+void serial_gather(InputIterator1 mapfirst, 
+                   InputIterator1 maplast,
+                   InputIterator2 input,
+                   OutputIterator result)
+{
+    //std::cout<<"Serial code path ... \n";
+   size_t numElements = static_cast< size_t >( std::distance( mapfirst, maplast ) );
+   typedef typename  std::iterator_traits<InputIterator1>::value_type iType1;
+   iType1 temp;
+   for(size_t iter = 0; iter < numElements; iter++)
+   {
+                   temp = *(mapfirst + (int)iter);
+                  *(result + (int)iter) = *(input + (int)temp);
+   }
+}
+
+
+template< typename InputIterator1,
+          typename InputIterator2,
+          typename InputIterator3,
+          typename OutputIterator >
+
+void serial_gather_if(InputIterator1 mapfirst,
+                      InputIterator1 maplast, 
+                      InputIterator2 stencil,
+                      InputIterator3 input,
+                      OutputIterator result)
+{
+    //std::cout<<"Serial code path ... \n";
+   size_t numElements = static_cast< size_t >( std::distance( mapfirst, maplast ) );
+   for(size_t iter = 0; iter < numElements; iter++)
+   {
+       if(stencil[(int)iter]== 1)	   
+            result[(int)iter] = *(input + mapfirst[(int)iter]);       
+   }
+}
+
+template< typename InputIterator1,
+          typename InputIterator2,
+          typename InputIterator3,
+          typename OutputIterator,
+          typename BinaryPredicate >
+
+void serial_gather_if(InputIterator1 mapfirst,
+                      InputIterator1 maplast,
+                      InputIterator2 stencil,
+                      InputIterator3 input,
+                      OutputIterator result,
+                      BinaryPredicate pred)
+{
+   //std::cout<<"Serial code path ... \n";
+   unsigned int numElements = static_cast< unsigned int >( std::distance( mapfirst, maplast ) );
+  // for (InputIterator1 iter = mapfirst; iter != maplast; iter++)
+  // {
+  //      if(pred(*(stencil + ( iter - mapfirst)))) 
+        //{
+  //          // result[(int)iter] = input[mapfirst[(int)iter]]; 
+        //	 *(result + (iter - mapfirst) )= input[*iter];
+        //}
+  // }
+      for(unsigned int iter = 0; iter < numElements; iter++)
+   {
+        if(pred(*(stencil + (int)iter)))   
+             result[(int)iter] = input[mapfirst[(int)iter]]; 
+   }
+}
+
+ /* End-- Serial Implementation of the gather and gather_if routines */
+
+
+
 } //End of cl namespace
 } //End of bolt namespace
 

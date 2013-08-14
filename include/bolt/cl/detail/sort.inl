@@ -26,7 +26,6 @@
 #include "bolt/cl/stablesort.h"
 #include "bolt/cl/functional.h"
 #include "bolt/cl/device_vector.h"
-
 #ifdef ENABLE_TBB
 #include "bolt/btbb/sort.h"
 #endif
@@ -42,67 +41,7 @@
 
 namespace bolt {
 namespace cl {
-template<typename RandomAccessIterator>
-void sort(RandomAccessIterator first,
-          RandomAccessIterator last,
-          const std::string& cl_code)
-{
-    typedef std::iterator_traits< RandomAccessIterator >::value_type T;
 
-    detail::sort_detect_random_access( control::getDefault( ),
-                                       first, last,
-                                       less< T >( ), cl_code,
-                                       std::iterator_traits< RandomAccessIterator >::iterator_category( ) );
-    return;
-}
-
-template<typename RandomAccessIterator, typename StrictWeakOrdering>
-void sort(RandomAccessIterator first,
-          RandomAccessIterator last,
-          StrictWeakOrdering comp,
-          const std::string& cl_code)
-{
-    detail::sort_detect_random_access( control::getDefault( ),
-                                       first, last,
-                                       comp, cl_code,
-                                       std::iterator_traits< RandomAccessIterator >::iterator_category( ) );
-    return;
-}
-
-template<typename RandomAccessIterator>
-void sort(control &ctl,
-          RandomAccessIterator first,
-          RandomAccessIterator last,
-          const std::string& cl_code)
-{
-    typedef std::iterator_traits< RandomAccessIterator >::value_type T;
-
-    detail::sort_detect_random_access(ctl,
-                                      first, last,
-                                      less< T >( ), cl_code,
-                                      std::iterator_traits< RandomAccessIterator >::iterator_category( ) );
-    return;
-}
-
-template<typename RandomAccessIterator, typename StrictWeakOrdering>
-void sort(control &ctl,
-          RandomAccessIterator first,
-          RandomAccessIterator last,
-          StrictWeakOrdering comp,
-          const std::string& cl_code)
-{
-    detail::sort_detect_random_access(ctl,
-                                      first, last,
-                                      comp, cl_code,
-                                      std::iterator_traits< RandomAccessIterator >::iterator_category( ) );
-    return;
-}
-}
-};
-
-
-namespace bolt {
-namespace cl {
 namespace detail {
 
 enum sortTypes {sort_iValueType, sort_iIterType, sort_StrictWeakOrdering, sort_end };
@@ -115,7 +54,7 @@ public:
         addKernelName("BitonicSortTemplate");
     }
 
-    const ::std::string operator() ( const ::std::vector<::std::string>& typeNames ) const
+    const ::std::string operator() ( const ::std::vector< ::std::string >& typeNames ) const
     {
         const std::string templateSpecializationString =
 
@@ -141,7 +80,7 @@ public:
         addKernelName("selectionSortFinalTemplate");
     }
 
-    const ::std::string operator() ( const ::std::vector<::std::string>& typeNames ) const
+    const ::std::string operator() ( const ::std::vector< ::std::string>& typeNames ) const
     {
         const std::string templateSpecializationString =
 
@@ -185,7 +124,7 @@ public:
         addKernelName("permuteSignedAscendingRadixNTemplate");
     }
 
-    const ::std::string operator() ( const ::std::vector<::std::string>& typeNames ) const
+    const ::std::string operator() ( const ::std::vector< ::std::string>& typeNames ) const
     {
         std::stringstream radixStream;
         radixStream << _radix;
@@ -267,7 +206,7 @@ public:
         addKernelName("permuteDescendingRadixNTemplate");
     }
 
-    const ::std::string operator() ( const ::std::vector<::std::string>& typeNames ) const
+    const ::std::string operator() ( const ::std::vector< ::std::string>& typeNames ) const
     {
         std::stringstream radixStream;
         radixStream << _radix;
@@ -309,30 +248,6 @@ public:
     }
 };
 
-// Wrapper that uses default control class, iterator interface
-template<typename RandomAccessIterator, typename StrictWeakOrdering>
-void sort_detect_random_access( control &ctl,
-                                const RandomAccessIterator& first, const RandomAccessIterator& last,
-                                const StrictWeakOrdering& comp, const std::string& cl_code,
-                                std::input_iterator_tag )
-{
-    //  \TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data
-    //  to a temporary buffer.  Should we?
-    static_assert( false, "Bolt only supports random access iterator types" );
-};
-
-// Wrapper that uses default control class, iterator interface
-template<typename RandomAccessIterator, typename StrictWeakOrdering>
-void sort_detect_random_access( control &ctl,
-                                const RandomAccessIterator& first, const RandomAccessIterator& last,
-                                const StrictWeakOrdering& comp, const std::string& cl_code,
-                                bolt::cl::fancy_iterator_tag )
-{
-    //  \TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data
-    //  to a temporary buffer.  Should we?
-    static_assert( false, "Bolt only supports random access iterator types. And does not support Fancy Iterator Tags" );
-};
-
 template<typename RandomAccessIterator, typename StrictWeakOrdering>
 void sort_detect_random_access( control &ctl,
                                 const RandomAccessIterator& first, const RandomAccessIterator& last,
@@ -341,7 +256,7 @@ void sort_detect_random_access( control &ctl,
 {
     return sort_pick_iterator(ctl, first, last,
                               comp, cl_code,
-                              std::iterator_traits< RandomAccessIterator >::iterator_category( ) );
+                             typename std::iterator_traits< RandomAccessIterator >::iterator_category( ) );
 };
 
 
@@ -364,18 +279,18 @@ void sort_pick_iterator( control &ctl,
         runMode = ctl.getDefaultPathToRun();
     }
     if ((runMode == bolt::cl::control::SerialCpu) || (szElements < SORT_CPU_THRESHOLD)) {
-        bolt::cl::device_vector< T >::pointer firstPtr =  first.getContainer( ).data( );
+        typename bolt::cl::device_vector< T >::pointer firstPtr =  first.getContainer( ).data( );
         std::sort( &firstPtr[ first.m_Index ], &firstPtr[ last.m_Index ], comp );
         return;
     } else if (runMode == bolt::cl::control::MultiCoreCpu) {
 #ifdef ENABLE_TBB
-        bolt::cl::device_vector< T >::pointer firstPtr =  first.getContainer( ).data( );
+         typename bolt::cl::device_vector< T >::pointer firstPtr =  first.getContainer( ).data( );
         //Compute parallel sort using TBB
         bolt::btbb::sort(&firstPtr[ first.m_Index ], &firstPtr[ last.m_Index ],comp);
         return;
 #else
         //std::cout << "The MultiCoreCpu version of sort is not enabled. " << std ::endl;
-        throw std::exception( "The MultiCoreCpu version of sort is not enabled to be built! \n" );
+        throw std::runtime_error( "The MultiCoreCpu version of sort is not enabled to be built! \n" );
 #endif
 
     } else {
@@ -383,6 +298,30 @@ void sort_pick_iterator( control &ctl,
     }
     return;
 }
+// Wrapper that uses default control class, iterator interface
+template<typename RandomAccessIterator, typename StrictWeakOrdering>
+void sort_detect_random_access( control &ctl,
+                                const RandomAccessIterator& first, const RandomAccessIterator& last,
+                                const StrictWeakOrdering& comp, const std::string& cl_code,
+                                std::input_iterator_tag )
+{
+    //  \TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data
+    //  to a temporary buffer.  Should we?
+    static_assert( std::is_same< RandomAccessIterator, std::input_iterator_tag >::value , "Bolt only supports random access iterator types" );
+};
+
+// Wrapper that uses default control class, iterator interface
+template<typename RandomAccessIterator, typename StrictWeakOrdering>
+void sort_detect_random_access( control &ctl,
+                                const RandomAccessIterator& first, const RandomAccessIterator& last,
+                                const StrictWeakOrdering& comp, const std::string& cl_code,
+                                bolt::cl::fancy_iterator_tag )
+{
+    //  \TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data
+    //  to a temporary buffer.  Should we?
+    static_assert(std::is_same< RandomAccessIterator, bolt::cl::fancy_iterator_tag >::value  , "Bolt only supports random access iterator types. And does not support Fancy Iterator Tags" );
+};
+
 
 //Non Device Vector specialization.
 //This implementation creates a cl::Buffer and passes the cl buffer to the sort specialization
@@ -411,7 +350,7 @@ void sort_pick_iterator( control &ctl,
 #ifdef ENABLE_TBB
         bolt::btbb::sort(first,last, comp);
 #else
-        throw std::exception( "The MultiCoreCpu version of sort is not enabled to be built! \n" );
+        throw std::runtime_error( "The MultiCoreCpu version of sort is not enabled to be built! \n" );
 #endif
     } else {
         device_vector< T > dvInputOutput( first, last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctl );
@@ -934,7 +873,8 @@ sort_enqueue(control &ctl,
 
 
     V_OPENCL( kernels[0].setArg(0, first.getContainer().getBuffer()), "Error setting 0th kernel argument" );
-    V_OPENCL( kernels[0].setArg(1, first.gpuPayloadSize( ), &first.gpuPayload( )),
+    V_OPENCL( kernels[0].setArg(1, first.gpuPayloadSize( ), const_cast<typename DVRandomAccessIterator::Payload *>(
+       &first.gpuPayload( ))),
                                                 "Error setting 1st kernel argument" );
 
     V_OPENCL( kernels[0].setArg(4, *userFunctor), "Error setting 4th kernel argument" );
@@ -1079,7 +1019,65 @@ void sort_enqueue_non_powerOf2(control &ctl,
 }// END of sort_enqueue_non_powerOf2
 
 }//namespace bolt::cl::detail
-}//namespace bolt::cl
-}//namespace bolt
+
+template<typename RandomAccessIterator>
+void sort(RandomAccessIterator first,
+          RandomAccessIterator last,
+          const std::string& cl_code)
+{
+    typedef typename std::iterator_traits< RandomAccessIterator >::value_type T;
+
+    detail::sort_detect_random_access( control::getDefault( ),
+                                       first, last,
+                                       less< T >( ), cl_code,
+                                       typename std::iterator_traits< RandomAccessIterator >::iterator_category( ) );
+    return;
+}
+
+template<typename RandomAccessIterator, typename StrictWeakOrdering>
+void sort(RandomAccessIterator first,
+          RandomAccessIterator last,
+          StrictWeakOrdering comp,
+          const std::string& cl_code)
+{
+    detail::sort_detect_random_access( control::getDefault( ),
+                                       first, last,
+                                       comp, cl_code,
+                                       typename std::iterator_traits< RandomAccessIterator >::iterator_category( ) );
+    return;
+}
+
+template<typename RandomAccessIterator>
+void sort(control &ctl,
+          RandomAccessIterator first,
+          RandomAccessIterator last,
+          const std::string& cl_code)
+{
+    typedef typename std::iterator_traits< RandomAccessIterator >::value_type T;
+
+    detail::sort_detect_random_access(ctl,
+                                      first, last,
+                                      less< T >( ), cl_code,
+                                      typename std::iterator_traits< RandomAccessIterator >::iterator_category( ) );
+    return;
+}
+
+template<typename RandomAccessIterator, typename StrictWeakOrdering>
+void sort(control &ctl,
+          RandomAccessIterator first,
+          RandomAccessIterator last,
+          StrictWeakOrdering comp,
+          const std::string& cl_code)
+{
+    detail::sort_detect_random_access(ctl,
+                                      first, last,
+                                      comp, cl_code,
+                                      typename std::iterator_traits< RandomAccessIterator >::iterator_category( ) );
+    return;
+}
+}
+};
+
+
 
 #endif

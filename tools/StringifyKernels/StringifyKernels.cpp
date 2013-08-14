@@ -77,7 +77,11 @@ void writeHeaderFile( const std::string& inputFileName, const std::string& destD
         //  1) multi-line strings keeping syntax highlighting, with minimal per-line string mangling
         //  2) properly handles single line c++ comments //
         //  3) C macro preprocessor strips out all comments from the text
+#if defined(_WIN32)
         const std::string startLine = "#include <string>\n#include \"bolt/cl/clcode.h\"\n\n const std::string bolt::cl::" + baseName + " = STRINGIFY_CODE(";
+#else
+        const std::string startLine = "#include <string>\n#include \"bolt/cl/clcode.h\"\n\n const std::string bolt::cl::" + baseName + " = \"\\";
+#endif
         //const std::string startLine = "#include <string>\n#include \"bolt/cl/clcode.h\"\n\n const char* const bolt::cl::" + baseName + " = STRINGIFY_CODE(";
         f_dest << startLine << std::endl;
 
@@ -92,7 +96,9 @@ void writeHeaderFile( const std::string& inputFileName, const std::string& destD
             //std::cout << substLine << std::endl << std::endl;
 
             //  Escape the \ and " characters, except for printf statements
+#if defined(_WIN32)
             if( line.find( "printf" ) == std::string::npos )
+#endif
             {
                 boost::replace_all( line, "\\", "\\\\" );
                 boost::replace_all( line, "\"", "\\\"" );
@@ -100,10 +106,18 @@ void writeHeaderFile( const std::string& inputFileName, const std::string& destD
 
             //  For every line of code, we append a '\n' that will be preserved in the string passed into the ::clBuildProgram API
             //  This makes debugging kernels in debuggers easier
+#if defined(_WIN32)
             f_dest << line << " \\n" << std::endl;
+#else
+            f_dest << line << " \\n\\" << std::endl;
+#endif
         }
 
+#if defined(_WIN32)
         const std::string endLine = ");";
+#else
+        const std::string endLine = "\";";
+#endif
         f_dest << endLine;
     }
     else

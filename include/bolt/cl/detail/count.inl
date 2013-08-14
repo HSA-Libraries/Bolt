@@ -35,39 +35,8 @@
 namespace bolt {
     namespace cl {
 
-       template<typename InputIterator, typename Predicate>
-        typename bolt::cl::iterator_traits<InputIterator>::difference_type
-            count_if(control& ctl, InputIterator first,
-            InputIterator last,
-            Predicate predicate,
-            const std::string& cl_code)
-        {
-              return detail::count_detect_random_access(ctl, first, last, predicate, cl_code,
-                std::iterator_traits< InputIterator >::iterator_category( ) );
 
-        }
-
-       template<typename InputIterator, typename Predicate>
-        typename bolt::cl::iterator_traits<InputIterator>::difference_type
-            count_if( InputIterator first,
-            InputIterator last,
-            Predicate predicate,
-            const std::string& cl_code)
-        {
-
-         return count_if(bolt::cl::control::getDefault(), first, last, predicate, cl_code);
-
-        }
-
-
-    }
-
-};
-
-
-namespace bolt {
-    namespace cl {
-        namespace detail {
+namespace detail {
 
         enum CountTypes {count_iValueType, count_iIterType, count_predicate, count_end };
 
@@ -83,7 +52,7 @@ namespace bolt {
                     addKernelName( "count_Template" );
                 }
 
-            const ::std::string operator() ( const ::std::vector<::std::string>& typeNames ) const
+            const ::std::string operator() ( const ::std::vector< ::std::string>& typeNames ) const
             {
                 const std::string templateSpecializationString =
                         "// Host generates this instantiation string with user-specified value type and functor\n"
@@ -171,8 +140,7 @@ namespace bolt {
 
                 V_OPENCL( kernels[0].setArg(0, first.getContainer().getBuffer() ), "Error setting kernel argument" );
 
-                V_OPENCL( kernels[0].setArg(1, first.gpuPayloadSize( ), &first.gpuPayload( ) ),
-                    "Error setting a kernel argument" );
+                V_OPENCL( kernels[0].setArg(1, first.gpuPayloadSize( ),const_cast< typename DVInputIterator::Payload *>(&first.gpuPayload( )) ),                    "Error setting a kernel argument" );
 
                 V_OPENCL( kernels[0].setArg(2, szElements), "Error setting kernel argument" );
                 V_OPENCL( kernels[0].setArg(3, *userFunctor), "Error setting kernel argument" );
@@ -228,13 +196,10 @@ namespace bolt {
                 const InputIterator& last,
                 const Predicate& predicate,
                 const std::string& cl_code,
-                std::input_iterator_tag)
+                std::random_access_iterator_tag)
             {
-
-                //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied
-                //   the data to a temporary buffer.  Should we?
-
-                static_assert( false, "Bolt only supports random access iterator types" );
+                return count_pick_iterator( ctl, first, last,  predicate, cl_code,
+                    typename std::iterator_traits< InputIterator >::iterator_category( ) );
             }
 
 
@@ -245,11 +210,17 @@ namespace bolt {
                 const InputIterator& last,
                 const Predicate& predicate,
                 const std::string& cl_code,
-                std::random_access_iterator_tag)
+                std::input_iterator_tag)
             {
-                return count_pick_iterator( ctl, first, last,  predicate, cl_code,
-                    std::iterator_traits< InputIterator >::iterator_category( ) );
+
+                //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied
+                //   the data to a temporary buffer.  Should we?
+
+                static_assert(std::is_same< InputIterator, std::input_iterator_tag >::value , "Bolt only supports random access iterator types" );
             }
+
+
+
 
             // This template is called after we detect random access iterators
             // This is called strictly for any non-device_vector iterator
@@ -291,7 +262,7 @@ namespace bolt {
                     #ifdef ENABLE_TBB
                      return (int)bolt::btbb::count_if(first,last,predicate);
                     #else
-                     throw std::exception("The MultiCoreCpu version of count function is not enabled to be built! \n");
+                     throw std::runtime_error("The MultiCoreCpu version of count function is not enabled to be built! \n");
                     #endif
 
                 case bolt::cl::control::SerialCpu:
@@ -338,20 +309,20 @@ namespace bolt {
                 case bolt::cl::control::MultiCoreCpu:
                     #ifdef ENABLE_TBB
                     {
-                      bolt::cl::device_vector< iType >::pointer countInputBuffer =  first.getContainer( ).data( );
+                      typename bolt::cl::device_vector< iType >::pointer countInputBuffer =  first.getContainer( ).data( );
                       return (rType) bolt::btbb::count_if(&countInputBuffer[first.m_Index],
                           &countInputBuffer[szElements] ,predicate);
 
                     }
                     #else
                     {
-                        throw std::exception( "The MultiCoreCpu version of reduce is not enabled to be built! \n" );
+                        throw std::runtime_error( "The MultiCoreCpu version of reduce is not enabled to be built! \n" );
                     }
                     #endif
 
                 case bolt::cl::control::SerialCpu:
                     {
-                      bolt::cl::device_vector< iType >::pointer countInputBuffer =  first.getContainer( ).data( );
+                      typename bolt::cl::device_vector< iType >::pointer countInputBuffer =  first.getContainer( ).data( );
                       return  (rType) std::count_if(&countInputBuffer[first.m_Index],
                           &countInputBuffer[szElements], predicate) ;
 
@@ -359,7 +330,7 @@ namespace bolt {
 
                 default: /* Incase of runMode not set/corrupted */
                     {
-                      bolt::cl::device_vector< iType >::pointer countInputBuffer =  first.getContainer( ).data( );
+                      typename bolt::cl::device_vector< iType >::pointer countInputBuffer =  first.getContainer( ).data( );
                       return (rType)  std::count_if(&countInputBuffer[first.m_Index],
                           &countInputBuffer[szElements], predicate) ;
                     }
@@ -401,7 +372,7 @@ namespace bolt {
                     #ifdef ENABLE_TBB
                         return bolt::btbb::count_if(first,last,predicate);
                     #else
-                     throw std::exception("The MultiCoreCpu version of count function is not enabled to be built! \n");
+                     throw std::runtime_error("The MultiCoreCpu version of count function is not enabled to be built! \n");
                     #endif
 
                 case bolt::cl::control::SerialCpu:
@@ -416,7 +387,37 @@ namespace bolt {
 
 
         }
+
+       template<typename InputIterator, typename Predicate>
+        typename bolt::cl::iterator_traits<InputIterator>::difference_type
+            count_if(control& ctl, InputIterator first,
+            InputIterator last,
+            Predicate predicate,
+            const std::string& cl_code)
+        {
+              return detail::count_detect_random_access(ctl, first, last, predicate, cl_code,
+                typename std::iterator_traits< InputIterator >::iterator_category( ) );
+
+        }
+
+       template<typename InputIterator, typename Predicate>
+        typename bolt::cl::iterator_traits<InputIterator>::difference_type
+            count_if( InputIterator first,
+            InputIterator last,
+            Predicate predicate,
+            const std::string& cl_code)
+        {
+
+         return count_if(bolt::cl::control::getDefault(), first, last, predicate, cl_code);
+
+        }
+
+
     }
-}
+
+};
+
+
+        
 
 #endif //COUNT_INL
