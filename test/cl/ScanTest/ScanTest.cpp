@@ -1441,9 +1441,12 @@ TYPED_TEST_P( ScanArrayTest, InPlace )
     typename ArrayCont::iterator stdEnd  = std::partial_sum( ScanArrayTest< gtest_TypeParam_ >::stdInput.begin( ), ScanArrayTest< gtest_TypeParam_ >::stdInput.end( ), ScanArrayTest< gtest_TypeParam_ >::stdInput.begin( ) );
     typename ArrayCont::iterator boltEnd = bolt::cl::inclusive_scan( ScanArrayTest< gtest_TypeParam_ >::boltInput.begin( ), ScanArrayTest< gtest_TypeParam_ >::boltInput.end( ), ScanArrayTest< gtest_TypeParam_ >::boltInput.begin( ) );
 
+
+	typename ArrayCont::iterator istdEnd = ScanArrayTest< gtest_TypeParam_ >::stdInput.end( );
+	typename ArrayCont::iterator iboltEnd = ScanArrayTest< gtest_TypeParam_ >::boltInput.end( );
     //  The returned iterator should be at the end of the result range
-    EXPECT_EQ( ScanArrayTest< gtest_TypeParam_ >::stdInput.end( ), stdEnd );
-    EXPECT_EQ( ScanArrayTest< gtest_TypeParam_ >::boltInput.end( ), boltEnd );
+    EXPECT_EQ( istdEnd, stdEnd );
+    EXPECT_EQ( iboltEnd, boltEnd );
 
     typename ArrayCont::difference_type stdNumElements = std::distance( ScanArrayTest< gtest_TypeParam_ >::stdInput.begin( ), stdEnd );
     typename ArrayCont::difference_type boltNumElements = std::distance( ScanArrayTest< gtest_TypeParam_ >::boltInput.begin( ), boltEnd );
@@ -1464,9 +1467,11 @@ TYPED_TEST_P( ScanArrayTest, InPlacePlusFunction )
     typename ArrayCont::iterator stdEnd  = std::partial_sum( ScanArrayTest< gtest_TypeParam_ >::stdInput.begin( ), ScanArrayTest< gtest_TypeParam_ >::stdInput.end( ), ScanArrayTest< gtest_TypeParam_ >::stdInput.begin( ), std::plus< ArrayType >( ) );
     typename ArrayCont::iterator boltEnd = bolt::cl::inclusive_scan( ScanArrayTest< gtest_TypeParam_ >::boltInput.begin( ), ScanArrayTest< gtest_TypeParam_ >::boltInput.end( ), ScanArrayTest< gtest_TypeParam_ >::boltInput.begin( ), bolt::cl::plus< ArrayType >( ) );
 
+	typename ArrayCont::iterator istdEnd = ScanArrayTest< gtest_TypeParam_ >::stdInput.end( );
+	typename ArrayCont::iterator iboltEnd = ScanArrayTest< gtest_TypeParam_ >::boltInput.end( );
     //  The returned iterator should be at the end of the result range
-    EXPECT_EQ( ScanArrayTest< gtest_TypeParam_ >::stdInput.end( ), stdEnd );
-    EXPECT_EQ( ScanArrayTest< gtest_TypeParam_ >::boltInput.end( ), boltEnd );
+    EXPECT_EQ( istdEnd, stdEnd );
+    EXPECT_EQ( iboltEnd, boltEnd );
 
     typename ArrayCont::difference_type stdNumElements = std::distance( ScanArrayTest< gtest_TypeParam_ >::stdInput.begin( ), stdEnd );
     typename ArrayCont::difference_type boltNumElements = std::distance( ScanArrayTest< gtest_TypeParam_ >::boltInput.begin( ), boltEnd );
@@ -1487,9 +1492,11 @@ TYPED_TEST_P( ScanArrayTest, InPlaceMaxFunction )
     typename ArrayCont::iterator stdEnd  = std::partial_sum( ScanArrayTest< gtest_TypeParam_ >::stdInput.begin( ), ScanArrayTest< gtest_TypeParam_ >::stdInput.end( ), ScanArrayTest< gtest_TypeParam_ >::stdInput.begin( ), bolt::cl::maximum< ArrayType >( ) );
     typename ArrayCont::iterator boltEnd = bolt::cl::inclusive_scan( ScanArrayTest< gtest_TypeParam_ >::boltInput.begin( ), ScanArrayTest< gtest_TypeParam_ >::boltInput.end( ), ScanArrayTest< gtest_TypeParam_ >::boltInput.begin( ), bolt::cl::maximum< ArrayType >( ) );
 
+	typename ArrayCont::iterator istdEnd = ScanArrayTest< gtest_TypeParam_ >::stdInput.end( );
+	typename ArrayCont::iterator iboltEnd = ScanArrayTest< gtest_TypeParam_ >::boltInput.end( );
     //  The returned iterator should be at the end of the result range
-    EXPECT_EQ( ScanArrayTest< gtest_TypeParam_ >::stdInput.end( ), stdEnd );
-    EXPECT_EQ( ScanArrayTest< gtest_TypeParam_ >::boltInput.end( ), boltEnd );
+    EXPECT_EQ( istdEnd, stdEnd );
+    EXPECT_EQ( iboltEnd, boltEnd );
 
     typename ArrayCont::difference_type stdNumElements = std::distance( ScanArrayTest< gtest_TypeParam_ >::stdInput.begin( ), stdEnd );
     typename ArrayCont::difference_type boltNumElements = std::distance( ScanArrayTest< gtest_TypeParam_ >::boltInput.begin( ), boltEnd );
