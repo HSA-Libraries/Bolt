@@ -150,7 +150,7 @@ elseif( ( C_COMPILER_NAME STREQUAL "gcc" ) OR ( CMAKE_COMPILER_IS_GNUCXX GREATER
         set( CMAKE_CXX_FLAGS "-m64 ${CMAKE_CXX_FLAGS}" )
         set( CMAKE_C_FLAGS "-m64 ${CMAKE_C_FLAGS}" )
     else( )
-        set( CMAKE_CXX_FLAGS "-std=c++0x -m32 ${CMAKE_CXX_FLAGS}" )
+        set( CMAKE_CXX_FLAGS "-m32 ${CMAKE_CXX_FLAGS}" )
         set( CMAKE_C_FLAGS "-m32 ${CMAKE_C_FLAGS}" )
     endif( )
 else( )
