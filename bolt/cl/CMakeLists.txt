@@ -251,14 +251,20 @@ add_library( clBolt.Runtime STATIC ${clBolt.Runtime.Files} ${clBolt.Runtime.hppF
 target_link_libraries( clBolt.Runtime ${OPENCL_LIBRARIES} ${Boost_LIBRARIES} )
 
 # Construct a meaningful name for this build of the library
+
+
 set( boltLibName "clBolt.runtime" )
-if( MSVC_VERSION VERSION_LESS 1600 )
-    set( boltLibName "${boltLibName}.vc90" )
-elseif( MSVC_VERSION VERSION_LESS 1700 )
-    set( boltLibName "${boltLibName}.vc100" )
-elseif( MSVC_VERSION VERSION_LESS 1800 )
-    set( boltLibName "${boltLibName}.vc110" )
-endif( )
+if( MSVC )
+    if( MSVC_VERSION VERSION_LESS 1600 )
+        set( boltLibName "${boltLibName}.vc90" )
+    elseif( MSVC_VERSION VERSION_LESS 1700 )
+        set( boltLibName "${boltLibName}.vc100" )
+    elseif( MSVC_VERSION VERSION_LESS 1800 )
+        set( boltLibName "${boltLibName}.vc110" )
+    endif( )
+else()
+    set( boltLibName "${boltLibName}.gcc" )
+endif()
 
 set_target_properties( clBolt.Runtime PROPERTIES VERSION ${Bolt_VERSION} SOVERSION ${Bolt_VERSION_MAJOR} )
 set_target_properties( clBolt.Runtime PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
