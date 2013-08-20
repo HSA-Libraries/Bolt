@@ -1102,15 +1102,19 @@ public:
         control::buffPointer userPredicate = ctl.acquireBuffer( sizeof( aligned_binary ),
                                                                 CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY,
                                                                 &aligned_binary );
+       typename DVInputIterator1::Payload   map_payload = map_first.gpuPayload( );
+       typename DVInputIterator2::Payload   stencil_payload = stencil.gpuPayload( ); 
+       typename DVInputIterator3::Payload   input_payload = input.gpuPayload( );
+       typename DVOutputIterator::Payload   result_payload = result.gpuPayload( ); 
 
         kernels[boundsCheck].setArg( 0, map_first.getContainer().getBuffer() );
-        kernels[boundsCheck].setArg( 1, map_first.gpuPayloadSize( ), const_cast<typename DVInputIterator1::Payload * >(&map_first.gpuPayload( )) );
+        kernels[boundsCheck].setArg( 1, map_first.gpuPayloadSize( ), &map_payload);
         kernels[boundsCheck].setArg( 2, stencil.getContainer().getBuffer() );
-        kernels[boundsCheck].setArg( 3, stencil.gpuPayloadSize( ),const_cast<typename DVInputIterator2::Payload * >( &stencil.gpuPayload( )) );
+        kernels[boundsCheck].setArg( 3, stencil.gpuPayloadSize( ),&stencil_payload );
         kernels[boundsCheck].setArg( 4, input.getContainer().getBuffer() );
-        kernels[boundsCheck].setArg( 5, input.gpuPayloadSize( ), const_cast<typename DVInputIterator3::Payload * >(&input.gpuPayload( )) );
+        kernels[boundsCheck].setArg( 5, input.gpuPayloadSize( ), &input_payload );
         kernels[boundsCheck].setArg( 6, result.getContainer().getBuffer() );
-        kernels[boundsCheck].setArg( 7, result.gpuPayloadSize( ),const_cast<typename DVOutputIterator::Payload * >( &result.gpuPayload( )) );
+        kernels[boundsCheck].setArg( 7, result.gpuPayloadSize( ),&result_payload );
         kernels[boundsCheck].setArg( 8, distVec );
         kernels[boundsCheck].setArg( 9, *userPredicate );
 
@@ -1225,12 +1229,16 @@ public:
              compileOptions);
          // kernels returned in same order as added in KernelTemplaceSpecializer constructor
 
+       typename DVInputIterator1::Payload   map_payload = map_first.gpuPayload( );
+       typename DVInputIterator2::Payload   input_payload = input.gpuPayload( ); 
+       typename DVOutputIterator::Payload   result_payload = result.gpuPayload( ); 
+
         kernels[boundsCheck].setArg( 0, map_first.getContainer().getBuffer() );
-        kernels[boundsCheck].setArg( 1, map_first.gpuPayloadSize( ),const_cast< typename DVInputIterator1::Payload *>( &map_first.gpuPayload( )) );
+        kernels[boundsCheck].setArg( 1, map_first.gpuPayloadSize( ),&map_payload );
         kernels[boundsCheck].setArg( 2, input.getContainer().getBuffer() );
-        kernels[boundsCheck].setArg( 3, input.gpuPayloadSize( ),const_cast< typename DVInputIterator2::Payload *>( &input.gpuPayload( )) );
+        kernels[boundsCheck].setArg( 3, input.gpuPayloadSize( ),&input_payload );
         kernels[boundsCheck].setArg( 4, result.getContainer().getBuffer() );
-        kernels[boundsCheck].setArg( 5, result.gpuPayloadSize( ), const_cast< typename DVOutputIterator::Payload *>(&result.gpuPayload( )) );
+        kernels[boundsCheck].setArg( 5, result.gpuPayloadSize( ), &result_payload );
         kernels[boundsCheck].setArg( 6, distVec );
 
         ::cl::Event gatherEvent;

@@ -664,12 +664,16 @@ public:
         control::buffPointer userFunctor = ctl.acquireBuffer( sizeof( aligned_binary ),
         CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_binary );
 
+        typename DVInputIterator1::Payload first1_payload = first1.gpuPayload( ); 
+        typename DVInputIterator2::Payload first2_payload = first2.gpuPayload( );
+        typename DVOutputIterator::Payload result_payload = result.gpuPayload( ); 
+
         kernels[boundsCheck].setArg( 0, first1.getContainer().getBuffer() );
-        kernels[boundsCheck].setArg( 1, first1.gpuPayloadSize( ),const_cast< typename DVInputIterator1::Payload *>(&first1.gpuPayload( )) );
+        kernels[boundsCheck].setArg( 1, first1.gpuPayloadSize( ),&first1_payload);
         kernels[boundsCheck].setArg( 2, first2.getContainer().getBuffer() );
-        kernels[boundsCheck].setArg( 3, first2.gpuPayloadSize( ),const_cast<typename DVInputIterator2::Payload *>( &first2.gpuPayload( ) ));
+        kernels[boundsCheck].setArg( 3, first2.gpuPayloadSize( ),&first2_payload);
         kernels[boundsCheck].setArg( 4, result.getContainer().getBuffer() );
-        kernels[boundsCheck].setArg( 5, result.gpuPayloadSize( ),const_cast<typename DVOutputIterator::Payload *>( &result.gpuPayload( )) );
+        kernels[boundsCheck].setArg( 5, result.gpuPayloadSize( ),&result_payload);
         kernels[boundsCheck].setArg( 6, distVec );
         kernels[boundsCheck].setArg( 7, *userFunctor);
 
@@ -790,13 +794,13 @@ public:
         control::buffPointer userFunctor = ctl.acquireBuffer( sizeof( aligned_binary ),
         CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_binary );
 
+        typename DVInputIterator::Payload first_payload = first.gpuPayload( );
+        typename DVOutputIterator::Payload result_payload = result.gpuPayload( );
 
         kernels[boundsCheck].setArg(0, first.getContainer().getBuffer() );
-        kernels[boundsCheck].setArg(1, first.gpuPayloadSize( ),const_cast<typename DVInputIterator::Payload *>(
-            &first.gpuPayload( ) ));
+        kernels[boundsCheck].setArg(1, first.gpuPayloadSize( ),&first_payload);
         kernels[boundsCheck].setArg(2, result.getContainer().getBuffer() );
-        kernels[boundsCheck].setArg(3, result.gpuPayloadSize( ),const_cast<typename DVOutputIterator::Payload *>(
-            &result.gpuPayload( ) ));
+        kernels[boundsCheck].setArg(3, result.gpuPayloadSize( ),&result_payload);
         kernels[boundsCheck].setArg(4, distVec );
         kernels[boundsCheck].setArg(5, *userFunctor);
         //k.setArg(3, numElementsPerThread );

@@ -1210,7 +1210,7 @@ void Minele_TestControl(int aSize, int numIters, int deviceIndex)
     for (int i=0; i<numIters; i++) {
         boltReduce = bolt::cl::min_element( c, A.begin(), A.end());
     }
-#if defined(_Win32)
+#if defined(_WIN32)
     EndProfile(start, numIters, testTag);
 #endif
     checkResult(testTag, stlReduce, boltReduce);

@@ -1194,12 +1194,12 @@ int _tmain( int argc, _TCHAR* argv[] )
     /******************************************************************************
      * Print Results
      ******************************************************************************/
-#if defined(_Win32)
+#if defined(_WIN32)
     aProfiler.end();
 #endif
     std::ofstream outFile( filename.c_str() );
 
-#if defined(_Win32)
+#if defined(_WIN32)
     aProfiler.writeSum( outFile );
 #endif
     outFile.close();

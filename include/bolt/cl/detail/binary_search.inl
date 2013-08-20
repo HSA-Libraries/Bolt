@@ -308,11 +308,13 @@ namespace bolt {
                     // Input buffer
                     int startIndex = 0;
                     int endIndex = static_cast< cl_uint >( numElementsProcessedperWI*globalThreads );
+                    typename DVForwardIterator::Payload  bin_payload = first.gpuPayload( );
                     if(globalThreads != 0 )
                     {
+
                         V_OPENCL( kernels[0].setArg( 0, first.getContainer().getBuffer()),"Error setArg kernels[ 0 ]" );
                         // Input Iterator
-                        V_OPENCL( kernels[0].setArg( 1, first.gpuPayloadSize( ), const_cast<typename DVForwardIterator::Payload * >(&first.gpuPayload( )) ),
+                        V_OPENCL( kernels[0].setArg( 1, first.gpuPayloadSize( ),&bin_payload  ),
                             "Error setting a kernel argument" );
                         V_OPENCL( kernels[0].setArg( 2, val), "Error setArg kernels[ 0 ]" );
                         V_OPENCL( kernels[0].setArg( 3, static_cast<cl_uint>(numElementsProcessedperWI) ), "Error setArg kernels[ 0 ]" );
@@ -338,7 +340,7 @@ namespace bolt {
                     {
                         V_OPENCL( kernels[0].setArg( 0, first.getContainer().getBuffer()),"Error setArg kernels[ 0 ]" );
                         // Input Iterator
-                        V_OPENCL( kernels[0].setArg( 1, first.gpuPayloadSize( ), const_cast<typename DVForwardIterator::Payload * >(&first.gpuPayload( )) ),
+                        V_OPENCL( kernels[0].setArg( 1, first.gpuPayloadSize( ), &bin_payload ),
                             "Error setting a kernel argument" );
                         V_OPENCL( kernels[0].setArg( 2, val), "Error setArg kernels[ 0 ]" );
                         V_OPENCL( kernels[0].setArg( 3, static_cast<cl_uint>(numElementsProcessedperWI) ), "Error setArg kernels[ 0 ]" );

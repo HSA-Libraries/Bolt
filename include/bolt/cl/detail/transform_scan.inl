@@ -521,8 +521,10 @@ aProfiler.set(AsyncProfiler::device, control::SerialCpu);
 
     ldsSize  = static_cast< cl_uint >( (kernel0_WgSize*2) * sizeof( iType ) );
 
+   typename DVInputIterator::Payload firs_payload = first.gpuPayload( );
+
     V_OPENCL( kernels[0].setArg( 0, first.getContainer().getBuffer() ),  "Error setArg kernels[ 0 ]" ); // Input buffer
-    V_OPENCL( kernels[0].setArg( 1, first.gpuPayloadSize( ), const_cast<typename DVInputIterator::Payload *>(&first.gpuPayload( )) ),"Error setting a kernel argument");
+    V_OPENCL( kernels[0].setArg( 1, first.gpuPayloadSize( ),&firs_payload  ),"Error setting a kernel argument");
     V_OPENCL( kernels[0].setArg( 2, init_T ),               "Error setArg kernels[ 0 ]" ); // Initial value exclusive
     V_OPENCL( kernels[0].setArg( 3, numElements ),          "Error setArg kernels[ 0 ]" ); // Size of scratch buffer
     V_OPENCL( kernels[0].setArg( 4, ldsSize, NULL ),        "Error setArg kernels[ 0 ]" ); // Scratch buffer
@@ -610,11 +612,13 @@ aProfiler.setStepName("Setup Kernel 2");
 aProfiler.set(AsyncProfiler::device, control::SerialCpu);
 #endif
 
+    typename DVOutputIterator::Payload result_payload = result.gpuPayload();
+    typename DVInputIterator::Payload   first_payload = first.gpuPayload();
 
     V_OPENCL( kernels[2].setArg( 0, result.getContainer().getBuffer()),   "Error setArg kernels[ 2 ]" ); // Output buffer
-    V_OPENCL( kernels[2].setArg( 1, result.gpuPayloadSize( ), const_cast<typename DVOutputIterator::Payload *>(&result.gpuPayload())),"Error setting a kernel argument");
+    V_OPENCL( kernels[2].setArg( 1, result.gpuPayloadSize( ),&result_payload),"Error setting a kernel argument");
     V_OPENCL( kernels[2].setArg( 2, first.getContainer().getBuffer() ),  "Error setArg kernels[ 0 ]" ); // Input buffer
-    V_OPENCL( kernels[2].setArg( 3, first.gpuPayloadSize( ), const_cast<typename DVInputIterator::Payload *>(&first.gpuPayload( )) ),"Error setting a kernel argument");
+    V_OPENCL( kernels[2].setArg( 3, first.gpuPayloadSize( ),&first_payload  ),"Error setting a kernel argument");
     V_OPENCL( kernels[2].setArg( 4, *postSumArray ),        "Error setArg kernels[ 2 ]" ); // Input buffer
     V_OPENCL( kernels[2].setArg( 5, *preSumArray1 ),         "Error setArg kernels[ 0 ]" ); // Output per block sum
     V_OPENCL( kernels[2].setArg( 6, ldsSize, NULL ),        "Error setArg kernels[ 0 ]" ); // Scratch buffer

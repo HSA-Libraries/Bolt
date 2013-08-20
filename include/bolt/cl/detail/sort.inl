@@ -870,11 +870,10 @@ sort_enqueue(control &ctl,
     ALIGNED( 256 ) StrictWeakOrdering aligned_comp( comp );
     control::buffPointer userFunctor = ctl.acquireBuffer( sizeof( aligned_comp ),
                                                           CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_comp );
-
+   typename DVRandomAccessIterator::Payload first_payload = first.gpuPayload( );
 
     V_OPENCL( kernels[0].setArg(0, first.getContainer().getBuffer()), "Error setting 0th kernel argument" );
-    V_OPENCL( kernels[0].setArg(1, first.gpuPayloadSize( ), const_cast<typename DVRandomAccessIterator::Payload *>(
-       &first.gpuPayload( ))),
+    V_OPENCL( kernels[0].setArg(1, first.gpuPayloadSize( ),&first_payload ),
                                                 "Error setting 1st kernel argument" );
 
     V_OPENCL( kernels[0].setArg(4, *userFunctor), "Error setting 4th kernel argument" );

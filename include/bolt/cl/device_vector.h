@@ -272,9 +272,9 @@ namespace cl
 
                 //  This method initializes the payload of the iterator for the cl device; the contents of the pointer is 0 as it has no relevance
                 //  on the host
-                const Payload&  gpuPayload( ) const
+                const Payload  gpuPayload( ) const
                 {
-                    static const Payload payload = { m_Index, { 0, 0, 0 } };
+                    Payload payload = { m_Index, { 0, 0, 0 } };
                     return payload;
                 }
 

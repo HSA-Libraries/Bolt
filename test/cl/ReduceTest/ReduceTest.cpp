@@ -189,7 +189,7 @@ void testTBBDevicevector()
 
 
 };
-#if defined(_Win32)
+#if defined(_WIN32)
 // Super-easy windows profiling interface.
 // Move to timing infrastructure when that becomes available.
 __int64 StartProfile() {
@@ -1595,7 +1595,7 @@ void simpleReduce_TestControl(int aSize, int numIters, int deviceIndex)
     int boltReduce = 0;
 
     char testTag[2000];
-#if defined(_Win32)
+#if defined(_WIN32)
     sprintf_s(testTag, 2000, "simpleReduce_TestControl sz=%d iters=%d, device=%s", aSize, numIters, 
         c.getDevice( ).getInfo<CL_DEVICE_NAME>( ).c_str( ) );
 #else
@@ -1605,13 +1605,13 @@ void simpleReduce_TestControl(int aSize, int numIters, int deviceIndex)
 #endif
 
 
-#if defined(_Win32)
+#if defined(_WIN32)
     __int64 start = StartProfile();
 #endif
     for (int i=0; i<numIters; i++) {
         boltReduce = bolt::cl::reduce( c, A.begin(), A.end(), 0);
     }
-#if defined(_Win32)
+#if defined(_WIN32)
     EndProfile(start, numIters, testTag);
 #endif
 

@@ -737,10 +737,11 @@ aProfiler.nextStep();
 aProfiler.setStepName("Setup Kernel 0");
 aProfiler.set(AsyncProfiler::device, control::SerialCpu);
 #endif
+     typename DVInputIterator::Payload first_payload = first.gpuPayload( );
 
     ldsSize  = static_cast< cl_uint >( ( kernel0_WgSize *2 ) * sizeof( iType ) );
     V_OPENCL( kernels[ 0 ].setArg( 0, first.getContainer().getBuffer() ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
-    V_OPENCL( kernels[ 0 ].setArg( 1, first.gpuPayloadSize( ), const_cast<typename DVInputIterator::Payload *>(&first.gpuPayload( ))), "Error setting a kernel argument" );
+    V_OPENCL( kernels[ 0 ].setArg( 1, first.gpuPayloadSize( ),&first_payload ), "Error setting a kernel argument" );
 
     V_OPENCL( kernels[ 0 ].setArg( 2, init_T ),                 "Error setting argument for kernels[ 0 ]" ); // Initial value used for exclusive scan
     V_OPENCL( kernels[ 0 ].setArg( 3, numElements ),            "Error setting argument for kernels[ 0 ]" ); // Size of scratch buffer
@@ -816,11 +817,13 @@ aProfiler.set(AsyncProfiler::memory, 4*sizeScanBuff*sizeof(oType));
     /**********************************************************************************
      *  Kernel 2
      *********************************************************************************/
+    typename DVOutputIterator::Payload result_payload = result.gpuPayload( ); 
+    typename DVInputIterator::Payload first2_payload = first.gpuPayload( );
 
     V_OPENCL( kernels[ 2 ].setArg( 0, result.getContainer().getBuffer()), "Error setting 0th argument for scanKernels[ 2 ]" );          // Output buffer
-    V_OPENCL( kernels[ 2 ].setArg( 1, result.gpuPayloadSize( ),const_cast<typename DVOutputIterator::Payload *>( &result.gpuPayload( )) ), "Error setting a kernel argument" );
+    V_OPENCL( kernels[ 2 ].setArg( 1, result.gpuPayloadSize( ),&result_payload), "Error setting a kernel argument" );
     V_OPENCL( kernels[ 2 ].setArg( 2, first.getContainer().getBuffer() ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
-    V_OPENCL( kernels[ 2 ].setArg( 3, first.gpuPayloadSize( ),const_cast<typename DVInputIterator::Payload *>( &first.gpuPayload( )) ), "Error setting a kernel argument" );
+    V_OPENCL( kernels[ 2 ].setArg( 3, first.gpuPayloadSize( ),&first2_payload ), "Error setting a kernel argument" );
     V_OPENCL( kernels[ 2 ].setArg( 4, *postSumArray ), "Error setting 1st argument for scanKernels[ 2 ]" );            // Input buffer
     V_OPENCL( kernels[ 2 ].setArg( 5, *preSumArray1 ),           "Error setting argument for kernels[ 0 ]" ); // Output per block
     V_OPENCL( kernels[ 2 ].setArg( 6, ldsSize, NULL ),          "Error setting argument for kernels[ 0 ]" ); // Scratch buffer

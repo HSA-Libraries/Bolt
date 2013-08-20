@@ -319,9 +319,9 @@ aProfiler.set(AsyncProfiler::device, control::SerialCpu);
         break;
     } // switch kernel
 
-    
+    typename DVForwardIterator::Payload first_payload = first.gpuPayload( ) ;
     V_OPENCL( kernels[whichKernel].setArg( 0, first.getContainer().getBuffer()),"Error setArg kernels[0]");//I/P Buffer
-    V_OPENCL( kernels[whichKernel].setArg( 1, first.gpuPayloadSize( ),const_cast<typename DVForwardIterator::Payload *>(&first.gpuPayload( ) )), 
+    V_OPENCL( kernels[whichKernel].setArg( 1, first.gpuPayloadSize( ),&first_payload), 
         "Error setting a kernel argument" );
     V_OPENCL( kernels[whichKernel].setArg( 2, numElements),         "Error setArg kernels[ 0 ]" ); // Size of buffer
     V_OPENCL( kernels[whichKernel].setArg( 3, *userGenerator ),     "Error setArg kernels[ 0 ]" ); // Generator

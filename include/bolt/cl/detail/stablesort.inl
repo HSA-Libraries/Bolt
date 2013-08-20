@@ -284,11 +284,10 @@ void stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, cons
     //  kernels[ 0 ] reads and writes to the same vector
     cl_uint ldsSize  = static_cast< cl_uint >( localRange * sizeof( iType ) );
 
-
+    typename DVRandomAccessIterator::Payload first_payload = first.gpuPayload();
     // Input buffer
     V_OPENCL( kernels[ 0 ].setArg( 0, first.getContainer().getBuffer() ),    "Error setting argument for kernels[ 0 ]" ); 
-    V_OPENCL( kernels[ 0 ].setArg( 1, first.gpuPayloadSize( ),const_cast<typename DVRandomAccessIterator::Payload *>(
-        &first.gpuPayload())),"Error setting a kernel argument" );
+    V_OPENCL( kernels[ 0 ].setArg( 1, first.gpuPayloadSize( ),&first_payload),"Error setting a kernel argument" );
     // Size of scratch buffer
     V_OPENCL( kernels[ 0 ].setArg( 2, vecSize ),            "Error setting argument for kernels[ 0 ]" ); 
      // Scratch buffer
@@ -343,31 +342,30 @@ void stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, cons
     for( size_t pass = 1; pass <= numMerges; ++pass )
     {
         //  For each pass, flip the input-output buffers 
+       typename DVRandomAccessIterator::Payload first1 = first.gpuPayload( );
+       typename DVRandomAccessIterator::Payload first2 = first.gpuPayload( );
+
         if( pass & 0x1 )
 
         {   
              // Input buffer
             V_OPENCL( kernels[ 1 ].setArg( 0, first.getContainer().getBuffer() ),    "Error setting argument for kernels[ 0 ]" );
-            V_OPENCL( kernels[ 1 ].setArg( 1, first.gpuPayloadSize( ),const_cast<typename DVRandomAccessIterator::Payload *>(
-                &first.gpuPayload( )) ),
+            V_OPENCL( kernels[ 1 ].setArg( 1, first.gpuPayloadSize( ),&first1 ),
                                           "Error setting a kernel argument" );
              // Input buffer
             V_OPENCL( kernels[ 1 ].setArg( 2, *tmpBuffer ),    "Error setting argument for kernels[ 0 ]" );
-            V_OPENCL( kernels[ 1 ].setArg( 3, first.gpuPayloadSize( ), const_cast<typename DVRandomAccessIterator::Payload *>(
-                &first.gpuPayload( ) )), 
+            V_OPENCL( kernels[ 1 ].setArg( 3, first.gpuPayloadSize( ),&first2 ), 
                                            "Error setting a kernel argument" );
         }
         else
         {
              // Input buffer
             V_OPENCL( kernels[ 1 ].setArg( 0, *tmpBuffer ),    "Error setting argument for kernels[ 0 ]" );
-            V_OPENCL( kernels[ 1 ].setArg( 1, first.gpuPayloadSize( ), const_cast<typename DVRandomAccessIterator::Payload *>(
-                &first.gpuPayload( )) ),
+            V_OPENCL( kernels[ 1 ].setArg( 1, first.gpuPayloadSize( ), &first1 ),
                                            "Error setting a kernel argument" );
              // Input buffer
             V_OPENCL( kernels[ 1 ].setArg( 2, first.getContainer().getBuffer() ),    "Error setting argument for kernels[ 0 ]");
-            V_OPENCL( kernels[ 1 ].setArg( 3, first.gpuPayloadSize( ),const_cast<typename DVRandomAccessIterator::Payload *>(
-                &first.gpuPayload( )) ),
+            V_OPENCL( kernels[ 1 ].setArg( 3, first.gpuPayloadSize( ),&first2 ),
                                            "Error setting a kernel argument" );
 
         }

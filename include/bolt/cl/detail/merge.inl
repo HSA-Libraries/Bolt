@@ -164,21 +164,21 @@ namespace bolt {
 
                 cl_uint szElements1 = static_cast< cl_uint >( first1.distance_to(last1 ) );
                 cl_uint szElements2 = static_cast< cl_uint >( first2.distance_to(last2 ) );
+                typename DVInputIterator1::Payload first1_payload = first1.gpuPayload( );
+                typename DVInputIterator2::Payload first2_payload = first2.gpuPayload( );
+                typename DVOutputIterator::Payload result_payload = result.gpuPayload( );
 
 
                 V_OPENCL( kernels[0].setArg(0, first1.getContainer().getBuffer() ), "Error setting kernel argument" );
-                V_OPENCL( kernels[0].setArg(1, first1.gpuPayloadSize( ),const_cast<typename DVInputIterator1::Payload*>
-                   (&first1.gpuPayload( )) ), "Error setting a kernel argument" );
+                V_OPENCL( kernels[0].setArg(1, first1.gpuPayloadSize( ),&first1_payload), "Error setting a kernel argument" );
                 V_OPENCL( kernels[0].setArg(2, szElements1), "Error setting kernel argument" );
 
                 V_OPENCL( kernels[0].setArg(3, first2.getContainer().getBuffer() ), "Error setting kernel argument" );
-                V_OPENCL( kernels[0].setArg(4, first2.gpuPayloadSize( ),const_cast<typename DVInputIterator2::Payload*>
-                    (&first2.gpuPayload( )) ),"Error setting a kernel argument" );
+                V_OPENCL( kernels[0].setArg(4, first2.gpuPayloadSize( ),&first2_payload ),"Error setting a kernel argument" );
                 V_OPENCL( kernels[0].setArg(5, szElements2), "Error setting kernel argument" );
 
                 V_OPENCL( kernels[0].setArg(6, result.getContainer().getBuffer()), "Error setting kernel argument" );
-                V_OPENCL( kernels[0].setArg(7, result.gpuPayloadSize( ),const_cast<typename DVOutputIterator::Payload*>
-                    (&result.gpuPayload( )) ),"Error setting a kernel argument" );
+                V_OPENCL( kernels[0].setArg(7, result.gpuPayloadSize( ),&result_payload ),"Error setting a kernel argument" );
                 V_OPENCL( kernels[0].setArg(8, *userFunctor), "Error setting kernel argument" );
                 
         //        ::cl::LocalSpaceArg loc;

@@ -260,6 +260,7 @@ namespace detail {
                  *  Kernel
                  *********************************************************************************/
                 ::cl::Event kernelEvent;
+                typename DVForwardIterator::Payload  first_payload = first.gpuPayload( );
                 try
                 {
                     cl_uint numThreadsChosen;
@@ -268,13 +269,13 @@ namespace detail {
 
                     //std::cout << "NumElem: " << sz<< "; NumThreads: " << numThreadsChosen << ";
                     //NumWorkGroups: " << numThreadsChosen/workGroupSizeChosen << std::endl;
-                    
+          
                     // Input Value
                     V_OPENCL( kernels[0].setArg( 0, val), "Error setArg kernels[ 0 ]" ); 
                     // Fill buffer
                     V_OPENCL( kernels[0].setArg( 1, first.getContainer().getBuffer()),"Error setArg kernels[ 0 ]" ); 
                     // Input Iterator
-                    V_OPENCL( kernels[0].setArg( 2, first.gpuPayloadSize( ),const_cast<typename DVForwardIterator::Payload *>( &first.gpuPayload( )) ),
+                    V_OPENCL( kernels[0].setArg( 2, first.gpuPayloadSize( ),&first_payload ),
                         "Error setting a kernel argument" );
                     // Size of buffer
                     V_OPENCL( kernels[0].setArg( 3, static_cast<cl_uint>( sz) ), "Error setArg kernels[ 0 ]" ); 

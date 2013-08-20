@@ -571,12 +571,13 @@ typename std::enable_if< !(std::is_same< typename std::iterator_traits<DVInputIt
         //NumWorkGroups: " << numThreadsChosen/workGroupSizeChosen << std::endl;
 
         // Input buffer
-
+         typename DVInputIterator::Payload first_payload = first.gpuPayload( );
+         typename DVOutputIterator::Payload  result_payload = result.gpuPayload( );
         V_OPENCL( kernels[whichKernel].setArg( 0, first.getContainer().getBuffer()), "Error setArg kernels[ 0 ]" ); 
-        V_OPENCL( kernels[whichKernel].setArg( 1, first.gpuPayloadSize( ),const_cast< typename DVInputIterator::Payload *>(&first.gpuPayload( ))), "Error setting a kernel argument" );
+        V_OPENCL( kernels[whichKernel].setArg( 1, first.gpuPayloadSize( ),&first_payload), "Error setting a kernel argument" );
         // Output buffer
         V_OPENCL( kernels[whichKernel].setArg( 2, result.getContainer().getBuffer()),"Error setArg kernels[ 0 ]" ); 
-        V_OPENCL( kernels[whichKernel].setArg( 3, result.gpuPayloadSize( ), const_cast<typename DVOutputIterator::Payload *>(&result.gpuPayload( )) ), "Error setting a kernel argument" );
+        V_OPENCL( kernels[whichKernel].setArg( 3, result.gpuPayloadSize( ),&result_payload  ), "Error setting a kernel argument" );
         //Buffer Size
         V_OPENCL( kernels[whichKernel].setArg( 4, static_cast<cl_uint>( n ) ),"Error setArg kernels[0]" );
 

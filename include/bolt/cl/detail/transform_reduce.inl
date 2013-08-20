@@ -303,9 +303,10 @@ namespace  detail {
                 numWG = requiredWorkGroups;
             /**********************/
 
-
+            typename  DVInputIterator::Payload first_payload = first.gpuPayload( ) ;
+    
             V_OPENCL( kernels[0].setArg( 0, first.getContainer().getBuffer() ), "Error setting kernel argument" );
-            V_OPENCL( kernels[0].setArg( 1, first.gpuPayloadSize( ), const_cast<typename  DVInputIterator::Payload *>(&first.gpuPayload( )) ),
+            V_OPENCL( kernels[0].setArg( 1, first.gpuPayloadSize( ),&first_payload),
                                                             "Error setting kernel argument" );
 
             V_OPENCL( kernels[0].setArg( 2, szElements), "Error setting kernel argument" );

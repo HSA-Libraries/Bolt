@@ -602,10 +602,11 @@ reduce_by_key_enqueue(
     /**********************************************************************************
      *  Kernel 0
      *********************************************************************************/
+    typename DVInputIterator1::Payload keys_first_payload = keys_first.gpuPayload( );
     try
     {
     V_OPENCL( kernels[0].setArg( 0, keys_first.getContainer().getBuffer()), "Error setArg kernels[ 0 ]" ); // Input keys
-    V_OPENCL( kernels[0].setArg( 1, keys_first.gpuPayloadSize( ), const_cast<typename DVInputIterator1::Payload *>(&keys_first.gpuPayload( ))), "Error setArg kernels[ 0 ]" );
+    V_OPENCL( kernels[0].setArg( 1, keys_first.gpuPayloadSize( ),&keys_first_payload ), "Error setArg kernels[ 0 ]" );
     V_OPENCL( kernels[0].setArg( 2, offsetArray ), "Error setArg kernels[ 0 ]" ); // Output keys
     V_OPENCL( kernels[0].setArg( 3, numElements ), "Error setArg kernels[ 0 ]" ); // vecSize
     V_OPENCL( kernels[0].setArg( 4, *binaryPredicateBuffer),"Error setArg kernels[ 0 ]" ); // User provided functor
@@ -637,13 +638,14 @@ reduce_by_key_enqueue(
      *  Kernel 1
      *********************************************************************************/
     cl_uint ldsKeySize, ldsValueSize;
+    typename DVInputIterator2::Payload values_first_payload = values_first.gpuPayload( );
     try
     {
     ldsKeySize   = static_cast< cl_uint >( kernel0_WgSize * sizeof( int ) );
     ldsValueSize = static_cast< cl_uint >( kernel0_WgSize * sizeof( voType ) );
     V_OPENCL( kernels[1].setArg( 0, offsetArray), "Error setArg kernels[ 1 ]" ); // Input keys
     V_OPENCL( kernels[1].setArg( 1, values_first.getContainer().getBuffer()),"Error setArg kernels[ 1 ]" ); // Input values
-    V_OPENCL( kernels[1].setArg( 2, values_first.gpuPayloadSize( ), const_cast<typename DVInputIterator2::Payload *>(&values_first.gpuPayload( ))), "Error setArg kernels[ 1 ]" ); // Input values
+    V_OPENCL( kernels[1].setArg( 2, values_first.gpuPayloadSize( ),&values_first_payload ), "Error setArg kernels[ 1 ]" ); // Input values
     V_OPENCL( kernels[1].setArg( 3, *offsetValArray ), "Error setArg kernels[ 1 ]" ); // Output values
     V_OPENCL( kernels[1].setArg( 4, numElements ), "Error setArg kernels[ 1 ]" ); // vecSize
     V_OPENCL( kernels[1].setArg( 5, ldsKeySize, NULL ),     "Error setArg kernels[ 1 ]" ); // Scratch buffer
@@ -808,12 +810,16 @@ reduce_by_key_enqueue(
     /**********************************************************************************
      *  Kernel 4
      *********************************************************************************/
+    typename DVInputIterator2::Payload keys_first1_payload = keys_first.gpuPayload( );
+    typename DVOutputIterator1::Payload keys_output_payload = keys_output.gpuPayload( );
+    typename DVOutputIterator2::Payload values_output_payload = values_output.gpuPayload( );
+
     V_OPENCL( kernels[4].setArg( 0, keys_first.getContainer().getBuffer()),    "Error setArg kernels[ 4 ]" ); // Input buffer
-    V_OPENCL( kernels[4].setArg( 1, keys_first.gpuPayloadSize( ), const_cast<typename DVInputIterator2::Payload *>(&keys_first.gpuPayload( ))), "Error setArg kernels[ 4 ]" );
+    V_OPENCL( kernels[4].setArg( 1, keys_first.gpuPayloadSize( ), &keys_first1_payload), "Error setArg kernels[ 4 ]" );
     V_OPENCL( kernels[4].setArg( 2, keys_output.getContainer().getBuffer() ),  "Error setArg kernels[ 4 ]" ); // Output buffer
-    V_OPENCL( kernels[4].setArg( 3, keys_output.gpuPayloadSize( ), const_cast<typename DVOutputIterator1::Payload *> (&keys_output.gpuPayload( ))), "Error setArg kernels[ 4 ]" );
+    V_OPENCL( kernels[4].setArg( 3, keys_output.gpuPayloadSize( ),&keys_output_payload ), "Error setArg kernels[ 4 ]" );
     V_OPENCL( kernels[4].setArg( 4, values_output.getContainer().getBuffer()), "Error setArg kernels[ 4 ]" ); // Output buffer
-    V_OPENCL( kernels[4].setArg( 5, values_output.gpuPayloadSize( ), const_cast<typename DVOutputIterator2::Payload *> (&values_output.gpuPayload( ))), "Error setArg kernels[ 4 ]" );
+    V_OPENCL( kernels[4].setArg( 5, values_output.gpuPayloadSize( ),&values_output_payload ), "Error setArg kernels[ 4 ]" );
     V_OPENCL( kernels[4].setArg( 6, offsetArray),                "Error setArg kernels[ 4 ]" ); // Input buffer
     V_OPENCL( kernels[4].setArg( 7, *offsetValArray),             "Error setArg kernels[ 4 ]"  );
     V_OPENCL( kernels[4].setArg( 8, numElements ),             "Error setArg kernels[ 4 ]" ); // Size of scratch buffer
