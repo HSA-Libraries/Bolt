@@ -126,7 +126,9 @@ if( BUILD_gTest )
     list( APPEND Bolt.Cmake.Args -DBUILD_tests=TRUE -DGTEST_ROOT=${GTEST_ROOT} -DGTEST_MSVC_SEARCH=MT )
 endif( )
 
-
+if(UNIX)
+    list( APPEND Bolt.Cmake.Args -DBolt_BUILD64=${Bolt_BUILD64})
+endif()
 # Build TBB library
 if( BUILD_TBB )
     #find_package( TBB REQUIRED )

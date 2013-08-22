@@ -28,7 +28,6 @@ message( STATUS "ext.gTest_Version: " ${ext.gTest_Version} )
 		# "${CMAKE_CURRENT_BINARY_DIR}/download/boost-${ext.gTest_Version}/boost_1_49_0.7z" SHOW_PROGRESS STATUS fileStatus LOG fileLog )
 # message( STATUS "status: " ${fileStatus} )
 # message( STATUS "log: " ${fileLog} )
-
 if( Bolt_BUILD64 )
     set( LIB_DIR lib64 )
 else( )
@@ -40,6 +39,12 @@ if( WIN32 )
 	set( gTest.Generator "NMake Makefiles" )
 else( )
 	set( gTest.Generator "Unix Makefiles" )
+	if(Bolt_BUILD64)
+		set( BUILD_BITNESS "-m64")
+	else()
+		set( BUILD_BITNESS "-m32")
+	endif()
+
 endif( )
 
 set( gTest.Cmake.Args 	-Dgtest_force_shared_crt=ON
@@ -65,7 +70,7 @@ ExternalProject_Add(
 	URL_MD5 4577b49f2973c90bf9ba69aa8166b786
 	CMAKE_GENERATOR ${gTest.Generator}
 	PATCH_COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/internal_utils.gTest.vs11.patch.cmake" <SOURCE_DIR>/cmake/internal_utils.cmake
-	CMAKE_ARGS ${gTest.Cmake.Args} -DCMAKE_BUILD_TYPE=Debug -DCMAKE_ARCHIVE_OUTPUT_DIRECTORY_DEBUG:PATH=${LIB_DIR} -DCMAKE_DEBUG_POSTFIX=d
+	CMAKE_ARGS -DCMAKE_CXX_FLAGS=${BUILD_BITNESS} ${gTest.Cmake.Args} -DCMAKE_BUILD_TYPE=Debug -DCMAKE_ARCHIVE_OUTPUT_DIRECTORY_DEBUG:PATH=${LIB_DIR} -DCMAKE_DEBUG_POSTFIX=d
     INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_directory <BINARY_DIR>/${LIB_DIR} <BINARY_DIR>/../staging/${LIB_DIR}
 )
 
@@ -85,9 +90,11 @@ ExternalProject_Add(
 	URL_MD5 4577b49f2973c90bf9ba69aa8166b786
 	CMAKE_GENERATOR ${gTest.Generator}
 	PATCH_COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_CURRENT_SOURCE_DIR}/internal_utils.gTest.vs11.patch.cmake" <SOURCE_DIR>/cmake/internal_utils.cmake
-	CMAKE_ARGS ${gTest.Cmake.Args} -DCMAKE_BUILD_TYPE=Release -DCMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE:PATH=${LIB_DIR}
+	CMAKE_ARGS  -DCMAKE_CXX_FLAGS=${BUILD_BITNESS}  ${gTest.Cmake.Args} -DCMAKE_BUILD_TYPE=Release -DCMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE:PATH=${LIB_DIR}
     INSTALL_COMMAND ${CMAKE_COMMAND} -E copy_directory <BINARY_DIR>/${LIB_DIR} <BINARY_DIR>/../staging/${LIB_DIR}
 )
+
+
 
 set_property( TARGET gTestDebug PROPERTY FOLDER "Externals")
 set_property( TARGET gTestRelease PROPERTY FOLDER "Externals")
