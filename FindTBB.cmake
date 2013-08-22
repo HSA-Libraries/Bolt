@@ -60,8 +60,10 @@ if( MSVC )
         set(TBB_COMPILER "vc10")
     else( )
         set(TBB_COMPILER "vc11")
-    endif( )
-endif( )
+    endif()	
+elseif(UNIX)
+	set(TBB_COMPILER "gcc4.4")
+endif()
 
 if ( NOT TBB_ROOT )
     set(TBB_ROOT $ENV{TBB_ROOT})
@@ -79,6 +81,7 @@ else ( )
         set(TBB_ARCH_PLATFORM ia32)
     endif( )    
     
+    message ( STATUS "TBB_LIB: " ${LIB64} )
 
     #Find TBB header files
     find_path( TBB_INCLUDE_DIRS 
