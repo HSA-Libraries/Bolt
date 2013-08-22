@@ -2510,7 +2510,7 @@ TEST(TransformStd, OffsetTestMultiCoreCPU)
 
 //  Temporarily disabling this test because we have a known issue running on the CPU device with our 
 //  Bolt iterators
-TEST( Transformint , KcacheTest )
+/*TEST( Transformint , KcacheTest )
 {
     //setup containers
     unsigned int length = 1024;
@@ -2555,7 +2555,7 @@ TEST( Transformint , KcacheTest )
     bolt::cl::transform( cpu_ctrl, cpuInput.begin(), cpuInput.end(), cpuOutput.begin() , bolt::cl::negate<int>());
 
     cmpArrays( refOutput, cpuOutput );
-}
+}*/
 
 TEST( DebuggingUShort, ushortbintransfrom)
 {

@@ -1444,7 +1444,7 @@ TEST( ReduceDevice , DeviceVectoroffset )
 }
 
 
-TEST( Reduceint , KcacheTest )
+/* TEST( Reduceint , KcacheTest )
 {
     //setup containers
     unsigned int length = 1024;
@@ -1486,7 +1486,7 @@ TEST( Reduceint , KcacheTest )
 
     EXPECT_EQ(boltReduceGpu,stdReduce);
     EXPECT_EQ(boltReduceCpu,stdReduce);
-}
+} */
 
 INSTANTIATE_TYPED_TEST_CASE_P( Integer, ReduceArrayTest, IntegerTests );
 INSTANTIATE_TYPED_TEST_CASE_P( Float, ReduceArrayTest, FloatTests );
