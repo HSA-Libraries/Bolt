@@ -114,7 +114,7 @@ protected:
 
 TYPED_TEST_CASE_P( MinEArrayTest );
 
-TYPED_TEST_P( MinEArrayTest, Normal )
+/*TYPED_TEST_P( MinEArrayTest, Normal )
 {
        typedef typename MinEArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
    typedef std::array< ArrayType, MinEArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont; 
@@ -132,7 +132,7 @@ TYPED_TEST_P( MinEArrayTest, Normal )
 
     //  Loop through the array and compare all the values with each other
     cmpStdArray< ArrayType, MinEArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( MinEArrayTest< gtest_TypeParam_ >::stdInput, MinEArrayTest< gtest_TypeParam_ >::boltInput );
-}
+}*/
 
 TYPED_TEST_P( MinEArrayTest, comp_Normal )
 {
@@ -155,7 +155,7 @@ TYPED_TEST_P( MinEArrayTest, comp_Normal )
 }
 
 
-TYPED_TEST_P( MinEArrayTest, SerialNormal )
+/*TYPED_TEST_P( MinEArrayTest, SerialNormal )
 {
        typedef typename MinEArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
     typedef std::array< ArrayType, MinEArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont; 
@@ -177,7 +177,7 @@ TYPED_TEST_P( MinEArrayTest, SerialNormal )
 
     //  Loop through the array and compare all the values with each other
     cmpStdArray< ArrayType, MinEArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( MinEArrayTest< gtest_TypeParam_ >::stdInput, MinEArrayTest< gtest_TypeParam_ >::boltInput );
-}
+}*/
 
 TYPED_TEST_P( MinEArrayTest, comp_SerialNormal )
 {
@@ -278,7 +278,7 @@ TYPED_TEST_P( MinEArrayTest, GPU_DeviceGreaterFunction )
 
 //REGISTER_TYPED_TEST_CASE_P( MinEArrayTest, Normal, comp_Normal, SerialNormal, comp_SerialNormal, 
 //MultiCoreNormal, comp_MultiCoreNormal, GPU_DeviceGreaterFunction );
-REGISTER_TYPED_TEST_CASE_P( MinEArrayTest, comp_Normal, comp_SerialNormal, comp_MultiCoreNormal, GPU_DeviceGreaterFunction );
+REGISTER_TYPED_TEST_CASE_P( MinEArrayTest, comp_Normal, comp_SerialNormal, comp_MultiCoreNormal, GPU_DeviceGreaterFunction, MultiCoreNormal);
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
