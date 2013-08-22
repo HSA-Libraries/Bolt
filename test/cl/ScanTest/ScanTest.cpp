@@ -2835,7 +2835,7 @@ INSTANTIATE_TYPED_TEST_CASE_P( Float, ScanArrayTest, FloatTests );
 //here
 
 
-TEST(Scan, cpuQueue)
+/* TEST(Scan, cpuQueue)
 {
     MyOclContext ocl = initOcl(CL_DEVICE_TYPE_CPU, 0);
     bolt::cl::control c(ocl._queue);  // construct control structure from the queue.
@@ -2849,7 +2849,7 @@ TEST(Scan, cpuQueue)
     std::cout << "Doing STD scan\n";
     std::vector< float >::iterator stdEnd  = std::partial_sum( stdInput.begin( ), stdInput.end( ),stdOutput.begin( ));
     cmpArrays( stdInput, boltInput );
-}
+} */
 
 
 /*
