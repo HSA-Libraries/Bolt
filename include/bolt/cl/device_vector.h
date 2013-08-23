@@ -394,7 +394,7 @@ namespace cl
                     result.advance(-n);
                     return result;
                 }
-#if !defined(_WIN32)
+#if !defined(_WIN32) && defined(__x86_64__)
                const reverse_iterator_base< Container > operator+ ( const int & n ) const
                 {
                     reverse_iterator_base< Container > result(*this);
