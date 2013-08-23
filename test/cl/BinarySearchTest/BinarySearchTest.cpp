@@ -421,17 +421,16 @@ public:
 protected:
     typedef typename std::tuple_element< 0, ArrayTuple >::type ArrayType;
     ArrayType std_val, val;
-    static const size_t ArraySize = typename std::tuple_element< 1, ArrayTuple >::type::value;
+    static const size_t ArraySize = std::tuple_element< 1, ArrayTuple >::type::value;
     std::array< ArrayType, ArraySize > std_source, bolt_source, stdOffsetIn, boltOffsetIn;
     int m_Errors;
 };
 
 TYPED_TEST_CASE_P( BSearchArrayTest );
 
+#if ( TEST_DOUBLE == 1)
 
 #if (TEST_MULTICORE_TBB_SEARCH == 1)
-
-#if ( TEST_DOUBLE == 1)
 TEST(MultiCoreCPU, MultiCoreAddDouble4)
 {
     //setup containers
@@ -530,6 +529,7 @@ TEST( SerialCPU, SerialNormal )
     EXPECT_EQ( stdresult ,  boltresult);
 }
 
+#if (TEST_MULTICORE_TBB_SEARCH == 1)
 TEST( MultiCoreCPU, MultiCoreNormal )
 {
     int length = 1025;
@@ -563,34 +563,44 @@ TEST( MultiCoreCPU, MultiCoreNormal )
     EXPECT_EQ( stdresult ,  boltresult);
 }
 #endif
+#endif
 
 TYPED_TEST_P( BSearchArrayTest, Normal )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+    typedef typename BSearchArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, BSearchArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont; 
 
-    size_t index = rand()%ArraySize;
-    std_val = std_source[index];
-    val = bolt_source[index];
+    size_t index = rand()%BSearchArrayTest< gtest_TypeParam_ >::ArraySize;
+    BSearchArrayTest< gtest_TypeParam_ >::std_val = BSearchArrayTest< gtest_TypeParam_ >::std_source[index];
+    BSearchArrayTest< gtest_TypeParam_ >::val = BSearchArrayTest< gtest_TypeParam_ >::bolt_source[index];
     bool stdresult, boltresult;
 
-    stdresult = std::SEARCH_FUNC(std_source.begin(), std_source.end(), std_val);
-    boltresult = bolt::BKND::SEARCH_FUNC(bolt_source.begin(), bolt_source.end(), val);
+    stdresult = std::SEARCH_FUNC(BSearchArrayTest< gtest_TypeParam_ >::std_source.begin(), 
+      BSearchArrayTest< gtest_TypeParam_ >::std_source.end(), BSearchArrayTest< gtest_TypeParam_ >::std_val);
+    boltresult = bolt::BKND::SEARCH_FUNC(BSearchArrayTest< gtest_TypeParam_ >::bolt_source.begin(), 
+      BSearchArrayTest< gtest_TypeParam_ >::bolt_source.end(), BSearchArrayTest< gtest_TypeParam_ >::val);
  
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdresult ,  boltresult );
 
     //  OFFSET Calling the actual functions under test
     size_t startIndex = 17; //Some arbitrary offset position
-    size_t endIndex   = ArraySize -17; //Some arbitrary offset position
-    if( (( startIndex > ArraySize ) || ( endIndex < 0 ) )  || (startIndex > endIndex) )
+    size_t endIndex   = BSearchArrayTest< gtest_TypeParam_ >::ArraySize -17; //Some arbitrary offset position
+    if( (( startIndex > BSearchArrayTest< gtest_TypeParam_ >::ArraySize ) || ( endIndex < 0 ) )  || (startIndex > endIndex) )
     {
-        std::cout <<"\nSkipping NormalOffset Test for size "<< ArraySize << "\n";
+        std::cout <<"\nSkipping NormalOffset Test for size "<< BSearchArrayTest< gtest_TypeParam_ >::ArraySize << "\n";
     }    
     else
     {   
+        index = startIndex + rand()%BSearchArrayTest< gtest_TypeParam_ >::ArraySize;
+        BSearchArrayTest< gtest_TypeParam_ >::std_val = BSearchArrayTest< gtest_TypeParam_ >::std_source[index];
+        BSearchArrayTest< gtest_TypeParam_ >::val = BSearchArrayTest< gtest_TypeParam_ >::bolt_source[index];
+
         // perform search
-        stdresult = std::SEARCH_FUNC(stdOffsetIn.begin( ) + startIndex, stdOffsetIn.begin( ) + endIndex , std_val);
-        boltresult = bolt::BKND::SEARCH_FUNC(boltOffsetIn.begin( ) + startIndex, boltOffsetIn.begin( ) + endIndex, val);
+        stdresult = std::SEARCH_FUNC(BSearchArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin( ) + startIndex, 
+          BSearchArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin( ) + endIndex , BSearchArrayTest< gtest_TypeParam_ >::std_val);
+        boltresult = bolt::BKND::SEARCH_FUNC(BSearchArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin( ) + startIndex,
+          BSearchArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin( ) + endIndex, BSearchArrayTest< gtest_TypeParam_ >::val);
 
         // GoogleTest Comparison
         EXPECT_EQ( stdresult ,  boltresult);
@@ -610,32 +620,41 @@ TYPED_TEST_P( BSearchArrayTest, GPU_DeviceNormal )
     ::cl::CommandQueue myQueue( myContext, devices[ 0 ] );
     bolt::cl::control c_gpu( myQueue );  // construct control structure from the queue.
 
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+    typedef typename BSearchArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, BSearchArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont; 
 
-    size_t index = rand()%ArraySize;
-    std_val = std_source[index];
-    val = bolt_source[index];
+    size_t index = rand()%BSearchArrayTest< gtest_TypeParam_ >::ArraySize;
+    BSearchArrayTest< gtest_TypeParam_ >::std_val = BSearchArrayTest< gtest_TypeParam_ >::std_source[index];
+    BSearchArrayTest< gtest_TypeParam_ >::val = BSearchArrayTest< gtest_TypeParam_ >::bolt_source[index];
     bool stdresult, boltresult;
 
     //  Calling the actual functions under test
-    stdresult = std::SEARCH_FUNC( std_source.begin( ), std_source.end( ), std_val);
-    boltresult = bolt::BKND::SEARCH_FUNC( c_gpu, bolt_source.begin( ), bolt_source.end( ), val );
+    stdresult = std::SEARCH_FUNC( BSearchArrayTest< gtest_TypeParam_ >::std_source.begin( ), 
+      BSearchArrayTest< gtest_TypeParam_ >::std_source.end( ), BSearchArrayTest< gtest_TypeParam_ >::std_val);
+    boltresult = bolt::BKND::SEARCH_FUNC( c_gpu, BSearchArrayTest< gtest_TypeParam_ >::bolt_source.begin( ), 
+      BSearchArrayTest< gtest_TypeParam_ >::bolt_source.end( ), BSearchArrayTest< gtest_TypeParam_ >::val );
 
     EXPECT_EQ( stdresult, boltresult );
 
     //OFFSET TEst cases
     //  Calling the actual functions under test
     size_t startIndex = 17; //Some aribitrary offset position
-    size_t endIndex   = ArraySize -17; //Some aribitrary offset position
-    if( (( startIndex > ArraySize ) || ( endIndex < 0 ) )  || (startIndex > endIndex) )
+    size_t endIndex   = BSearchArrayTest< gtest_TypeParam_ >::ArraySize -17; //Some aribitrary offset position
+    if( (( startIndex > BSearchArrayTest< gtest_TypeParam_ >::ArraySize ) || ( endIndex < 0 ) )  || (startIndex > endIndex) )
     {
-        std::cout <<"\nSkipping NormalOffset Test for size "<< ArraySize << "\n";
+        std::cout <<"\nSkipping NormalOffset Test for size "<< BSearchArrayTest< gtest_TypeParam_ >::ArraySize << "\n";
     }    
     else
     {
+        index = startIndex + rand()%BSearchArrayTest< gtest_TypeParam_ >::ArraySize;
+        BSearchArrayTest< gtest_TypeParam_ >::std_val = BSearchArrayTest< gtest_TypeParam_ >::std_source[index];
+        BSearchArrayTest< gtest_TypeParam_ >::val = BSearchArrayTest< gtest_TypeParam_ >::bolt_source[index];
+
          // perform search
-        stdresult = std::SEARCH_FUNC(stdOffsetIn.begin( ) + startIndex, stdOffsetIn.begin( ) + endIndex , std_val);
-        boltresult = bolt::BKND::SEARCH_FUNC(c_gpu, boltOffsetIn.begin( ) + startIndex, boltOffsetIn.begin( ) + endIndex, val);
+        stdresult = std::SEARCH_FUNC(BSearchArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin( ) + startIndex, 
+          BSearchArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin( ) + endIndex , BSearchArrayTest< gtest_TypeParam_ >::std_val);
+        boltresult = bolt::BKND::SEARCH_FUNC(c_gpu, BSearchArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin( ) + startIndex, 
+          BSearchArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin( ) + endIndex, BSearchArrayTest< gtest_TypeParam_ >::val);
 
         // GoogleTest Comparison
         EXPECT_EQ( stdresult ,  boltresult);
@@ -647,35 +666,44 @@ TYPED_TEST_P( BSearchArrayTest, GPU_DeviceNormal )
 #if (TEST_CPU_DEVICE == 1)
 TYPED_TEST_P( BSearchArrayTest, CPU_DeviceNormal )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+    typedef typename BSearchArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, BSearchArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont; 
 
     MyOclContext oclcpu = initOcl(CL_DEVICE_TYPE_CPU, 0);
     bolt::cl::control c_cpu(oclcpu._queue);  // construct control structure from the queue.
 
-    size_t index = rand()%ArraySize;
-    std_val = std_source[index];
-    val = bolt_source[index];
+    size_t index = rand()%BSearchArrayTest< gtest_TypeParam_ >::ArraySize;
+    BSearchArrayTest< gtest_TypeParam_ >::std_val = BSearchArrayTest< gtest_TypeParam_ >::std_source[index];
+    BSearchArrayTest< gtest_TypeParam_ >::val = BSearchArrayTest< gtest_TypeParam_ >::bolt_source[index];
     bool stdresult, boltresult;
 
     //  Calling the actual functions under test
-    stdresult = std::SEARCH_FUNC( stdInput.begin( ), stdInput.end( ), std_val);
-    boltresult = bolt::BKND::SEARCH_FUNC( c_gpu, boltInput.begin( ), boltInput.end( ), val );
+    stdresult = std::SEARCH_FUNC( BSearchArrayTest< gtest_TypeParam_ >::stdInput.begin( ), 
+      BSearchArrayTest< gtest_TypeParam_ >::stdInput.end( ), BSearchArrayTest< gtest_TypeParam_ >::std_val);
+    boltresult = bolt::BKND::SEARCH_FUNC( c_cpu, BSearchArrayTest< gtest_TypeParam_ >::boltInput.begin( ), 
+      BSearchArrayTest< gtest_TypeParam_ >::boltInput.end( ), BSearchArrayTest< gtest_TypeParam_ >::val );
 
     EXPECT_EQ( stdresult, boltresult );
     
     //OFFSET Test cases
     //  Calling the actual functions under test
     size_t startIndex = 17; //Some aribitrary offset position
-    size_t endIndex   = ArraySize -17; //Some aribitrary offset position
-    if( (( startIndex > ArraySize ) || ( endIndex < 0 ) )  || (startIndex > endIndex) )
+    size_t endIndex   = BSearchArrayTest< gtest_TypeParam_ >::ArraySize -17; //Some aribitrary offset position
+    if( (( startIndex > BSearchArrayTest< gtest_TypeParam_ >::ArraySize ) || ( endIndex < 0 ) )  || (startIndex > endIndex) )
     {
-        std::cout <<"\nSkipping NormalOffset Test for size "<< ArraySize << "\n";
+        std::cout <<"\nSkipping NormalOffset Test for size "<< BSearchArrayTest< gtest_TypeParam_ >::ArraySize << "\n";
     }    
     else
     {
+        index = startIndex + rand()%BSearchArrayTest< gtest_TypeParam_ >::ArraySize;
+        BSearchArrayTest< gtest_TypeParam_ >::std_val = BSearchArrayTest< gtest_TypeParam_ >::std_source[index];
+        BSearchArrayTest< gtest_TypeParam_ >::val = BSearchArrayTest< gtest_TypeParam_ >::bolt_source[index];
+
          // perform search
-        stdresult = std::SEARCH_FUNC(stdOffsetIn.begin( ) + startIndex, stdOffsetIn.begin( ) + endIndex , std_val);
-        boltresult = bolt::BKND::SEARCH_FUNC(c_cpu, boltOffsetIn.begin( ) + startIndex, boltOffsetIn.begin( ) + endIndex, val);
+        stdresult = std::SEARCH_FUNC(BSearchArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin( ) + startIndex, 
+         BSearchArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin( ) + endIndex , BSearchArrayTest< gtest_TypeParam_ >::std_val);
+        boltresult = bolt::BKND::SEARCH_FUNC(c_cpu, BSearchArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin( ) + startIndex,
+         BSearchArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin( ) + endIndex, BSearchArrayTest< gtest_TypeParam_ >::val);
 
         // GoogleTest Comparison
         EXPECT_EQ( stdresult ,  boltresult);
@@ -686,41 +714,48 @@ TYPED_TEST_P( BSearchArrayTest, CPU_DeviceNormal )
 
 TYPED_TEST_P( BSearchArrayTest, GreaterFunction )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+    typedef typename BSearchArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, BSearchArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont; 
 
-    size_t index = rand()%ArraySize;
-    std_val = std_source[index];
-    val = bolt_source[index];
+    size_t index = rand()%BSearchArrayTest< gtest_TypeParam_ >::ArraySize;
+    BSearchArrayTest< gtest_TypeParam_ >::std_val = BSearchArrayTest< gtest_TypeParam_ >::std_source[index];
+    BSearchArrayTest< gtest_TypeParam_ >::val = BSearchArrayTest< gtest_TypeParam_ >::bolt_source[index];
     bool stdresult, boltresult;
 
-    std::sort(std_source.begin(), std_source.end(), std::greater< ArrayType >()); 
-    bolt::cl::sort(bolt_source.begin(), bolt_source.end(), bolt::cl::greater< ArrayType >());
+    std::sort(BSearchArrayTest< gtest_TypeParam_ >::std_source.begin(), BSearchArrayTest< gtest_TypeParam_ >::std_source.end(), 
+      std::greater< ArrayType >()); 
+    bolt::cl::sort(BSearchArrayTest< gtest_TypeParam_ >::bolt_source.begin(), BSearchArrayTest< gtest_TypeParam_ >::bolt_source.end(),
+      bolt::cl::greater< ArrayType >());
     
     //  Calling the actual functions under test
-    stdresult = std::SEARCH_FUNC( std_source.begin( ), std_source.end( ), std_val, std::greater< ArrayType >() ); 
-    boltresult = bolt::BKND::SEARCH_FUNC( bolt_source.begin( ), bolt_source.end( ), val, bolt::cl::greater< ArrayType >( ) );
+    stdresult = std::SEARCH_FUNC( BSearchArrayTest< gtest_TypeParam_ >::std_source.begin( ), BSearchArrayTest< gtest_TypeParam_ >::std_source.end( ),
+      BSearchArrayTest< gtest_TypeParam_ >::std_val, std::greater< ArrayType >() ); 
+    boltresult = bolt::BKND::SEARCH_FUNC( BSearchArrayTest< gtest_TypeParam_ >::bolt_source.begin( ), BSearchArrayTest< gtest_TypeParam_ >::bolt_source.end( ),
+      BSearchArrayTest< gtest_TypeParam_ >::val, bolt::cl::greater< ArrayType >( ) );
 
     EXPECT_EQ(  stdresult, boltresult );
     
     //OFFSET Test cases
     //  Calling the actual functions under test
     size_t startIndex = 17; //Some aribitrary offset position
-    size_t endIndex   = ArraySize -17; //Some aribitrary offset position
-    if( (( startIndex > ArraySize ) || ( endIndex < 0 ) )  || (startIndex > endIndex) )
+    size_t endIndex   = BSearchArrayTest< gtest_TypeParam_ >::ArraySize -17; //Some aribitrary offset position
+    if( (( startIndex > BSearchArrayTest< gtest_TypeParam_ >::ArraySize ) || ( endIndex < 0 ) )  || (startIndex > endIndex) )
     {
-        std::cout <<"\nSkipping NormalOffset Test for size "<< ArraySize << "\n";
+        std::cout <<"\nSkipping NormalOffset Test for size "<< BSearchArrayTest< gtest_TypeParam_ >::ArraySize << "\n";
     }    
     else
     {
-        index = rand()%ArraySize;
-        std_val = std_source[index];
-        val = bolt_source[index];
+        index = startIndex + rand()%BSearchArrayTest< gtest_TypeParam_ >::ArraySize;
+        BSearchArrayTest< gtest_TypeParam_ >::std_val = BSearchArrayTest< gtest_TypeParam_ >::std_source[index];
+        BSearchArrayTest< gtest_TypeParam_ >::val = BSearchArrayTest< gtest_TypeParam_ >::bolt_source[index];
 
-        std::sort(stdOffsetIn.begin(), stdOffsetIn.end(), std::greater< ArrayType >()); 
-        bolt::cl::sort(boltOffsetIn.begin(), boltOffsetIn.end(), bolt::cl::greater< ArrayType >());
+        std::sort(BSearchArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin(), BSearchArrayTest< gtest_TypeParam_ >::stdOffsetIn.end(), std::greater< ArrayType >()); 
+        bolt::cl::sort(BSearchArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin(), BSearchArrayTest< gtest_TypeParam_ >::boltOffsetIn.end(), bolt::cl::greater< ArrayType >());
 
-        stdresult = std::SEARCH_FUNC( stdOffsetIn.begin( ) + startIndex, stdOffsetIn.begin( ) + endIndex, std_val, std::greater< ArrayType >() );
-        boltresult = bolt::BKND::SEARCH_FUNC( boltOffsetIn.begin( ) + startIndex, boltOffsetIn.begin( ) + endIndex, val, bolt::cl::greater< ArrayType >( )  );
+        stdresult = std::SEARCH_FUNC( BSearchArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin( ) + startIndex, BSearchArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin( ) + endIndex,
+          BSearchArrayTest< gtest_TypeParam_ >::std_val, std::greater< ArrayType >() );
+        boltresult = bolt::BKND::SEARCH_FUNC( BSearchArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin( ) + startIndex, BSearchArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin( ) + endIndex, 
+          BSearchArrayTest< gtest_TypeParam_ >::val, bolt::cl::greater< ArrayType >( )  );
 
         EXPECT_EQ( stdresult, boltresult );
     }
@@ -728,7 +763,8 @@ TYPED_TEST_P( BSearchArrayTest, GreaterFunction )
 
 TYPED_TEST_P( BSearchArrayTest, GPU_DeviceGreaterFunction )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+    typedef typename BSearchArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, BSearchArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont; 
     //  The first time our routines get called, we compile the library kernels with a certain context
     //  OpenCL does not allow the context to change without a recompile of the kernel
 
@@ -740,39 +776,43 @@ TYPED_TEST_P( BSearchArrayTest, GPU_DeviceGreaterFunction )
     ::cl::CommandQueue myQueue( myContext, devices[ 0 ] );
     bolt::cl::control c_gpu( myQueue );  // construct control structure from the queue.
 
-    size_t index = rand()%ArraySize;
-    std_val = std_source[index];
-    val = bolt_source[index];
+    size_t index = rand()%BSearchArrayTest< gtest_TypeParam_ >::ArraySize;
+    BSearchArrayTest< gtest_TypeParam_ >::std_val = BSearchArrayTest< gtest_TypeParam_ >::std_source[index];
+    BSearchArrayTest< gtest_TypeParam_ >::val = BSearchArrayTest< gtest_TypeParam_ >::bolt_source[index];
     bool stdresult, boltresult;
 
-    std::sort(std_source.begin(), std_source.end(), std::greater< ArrayType >()); 
-    bolt::cl::sort(bolt_source.begin(), bolt_source.end(), bolt::cl::greater< ArrayType >());
+    std::sort(BSearchArrayTest< gtest_TypeParam_ >::std_source.begin(), BSearchArrayTest< gtest_TypeParam_ >::std_source.end(), std::greater< ArrayType >()); 
+    bolt::cl::sort(BSearchArrayTest< gtest_TypeParam_ >::bolt_source.begin(), BSearchArrayTest< gtest_TypeParam_ >::bolt_source.end(), bolt::cl::greater< ArrayType >());
 
     //  Calling the actual functions under test
-    stdresult = std::SEARCH_FUNC( std_source.begin( ), std_source.end( ), std_val, std::greater< ArrayType >() ); 
-    boltresult = bolt::BKND::SEARCH_FUNC( c_gpu, bolt_source.begin( ), bolt_source.end( ), val, bolt::cl::greater< ArrayType >( ) );
+    BSearchArrayTest< gtest_TypeParam_ >::stdresult = std::SEARCH_FUNC( BSearchArrayTest< gtest_TypeParam_ >::std_source.begin( ), BSearchArrayTest< gtest_TypeParam_ >::std_source.end( ),
+      BSearchArrayTest< gtest_TypeParam_ >::std_val, std::greater< ArrayType >() ); 
+    BSearchArrayTest< gtest_TypeParam_ >::boltresult = bolt::BKND::SEARCH_FUNC( c_gpu, BSearchArrayTest< gtest_TypeParam_ >::bolt_source.begin( ), BSearchArrayTest< gtest_TypeParam_ >::bolt_source.end( ),     
+      BSearchArrayTest< gtest_TypeParam_ >::val, bolt::cl::greater< ArrayType >( ) );
 
     EXPECT_EQ(  stdresult, boltresult );
 
     //OFFSET Test cases
     //  Calling the actual functions under test
     size_t startIndex = 17; //Some aribitrary offset position
-    size_t endIndex   = ArraySize -17; //Some aribitrary offset position
-    if( (( startIndex > ArraySize ) || ( endIndex < 0 ) )  || (startIndex > endIndex) )
+    size_t endIndex   = BSearchArrayTest< gtest_TypeParam_ >::ArraySize -17; //Some aribitrary offset position
+    if( (( startIndex > BSearchArrayTest< gtest_TypeParam_ >::ArraySize ) || ( endIndex < 0 ) )  || (startIndex > endIndex) )
     {
-        std::cout <<"\nSkipping NormalOffset Test for size "<< ArraySize << "\n";
+        std::cout <<"\nSkipping NormalOffset Test for size "<< BSearchArrayTest< gtest_TypeParam_ >::ArraySize << "\n";
     }    
     else
     {
-        index = rand()%ArraySize;
-        std_val = std_source[index];
-        val = bolt_source[index];
+        index = startIndex + rand()%BSearchArrayTest< gtest_TypeParam_ >::ArraySize;
+        BSearchArrayTest< gtest_TypeParam_ >::std_val = BSearchArrayTest< gtest_TypeParam_ >::std_source[index];
+        BSearchArrayTest< gtest_TypeParam_ >::val = BSearchArrayTest< gtest_TypeParam_ >::bolt_source[index];
 
-        std::sort(stdOffsetIn.begin(), stdOffsetIn.end(), std::greater< ArrayType >()); 
-        bolt::cl::sort(boltOffsetIn.begin(), boltOffsetIn.end(), bolt::cl::greater< ArrayType >());
+        std::sort(BSearchArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin(), BSearchArrayTest< gtest_TypeParam_ >::stdOffsetIn.end(), std::greater< ArrayType >()); 
+        bolt::cl::sort(BSearchArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin(), BSearchArrayTest< gtest_TypeParam_ >::boltOffsetIn.end(), bolt::cl::greater< ArrayType >());
 
-        stdresult = std::SEARCH_FUNC( stdOffsetIn.begin( ) + startIndex, stdOffsetIn.begin( ) + endIndex, std_val, std::greater< ArrayType >() );
-        boltresult = bolt::BKND::SEARCH_FUNC( c_gpu, boltOffsetIn.begin( ) + startIndex, boltOffsetIn.begin( ) + endIndex, val, bolt::cl::greater< ArrayType >( )  );
+        stdresult = std::SEARCH_FUNC( BSearchArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin( ) + startIndex, BSearchArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin( ) + endIndex, 
+           BSearchArrayTest< gtest_TypeParam_ >::std_val, std::greater< ArrayType >() );
+        boltresult = bolt::BKND::SEARCH_FUNC( c_gpu, BSearchArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin( ) + startIndex, BSearchArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin( ) + endIndex, 
+           BSearchArrayTest< gtest_TypeParam_ >::val, bolt::cl::greater< ArrayType >( )  );
 
         EXPECT_EQ( stdresult, boltresult );
 
@@ -782,85 +822,97 @@ TYPED_TEST_P( BSearchArrayTest, GPU_DeviceGreaterFunction )
 #if (TEST_CPU_DEVICE == 1)
 TYPED_TEST_P( BSearchArrayTest, CPU_DeviceGreaterFunction )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+    typedef typename BSearchArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, BSearchArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont; 
+
     MyOclContext oclcpu = initOcl(CL_DEVICE_TYPE_CPU, 0);
     bolt::cl::control c_cpu(oclcpu._queue);  // construct control structure from the queue.
 
-    size_t index = rand()%ArraySize;
-    std_val = std_source[index];
-    val = bolt_source[index];
+    size_t index = rand()%BSearchArrayTest< gtest_TypeParam_ >::ArraySize;
+    BSearchArrayTest< gtest_TypeParam_ >::std_val = BSearchArrayTest< gtest_TypeParam_ >::std_source[index];
+    BSearchArrayTest< gtest_TypeParam_ >::val = BSearchArrayTest< gtest_TypeParam_ >::bolt_source[index];
     bool stdresult, boltresult;
 
-    std::sort(std_source.begin(), std_source.end(), std::greater< ArrayType >()); 
-    bolt::cl::sort(ctl, bolt_source.begin(), bolt_source.end(), bolt::cl::greater< ArrayType >());
+    std::sort(BSearchArrayTest< gtest_TypeParam_ >::std_source.begin(), BSearchArrayTest< gtest_TypeParam_ >::std_source.end(), std::greater< ArrayType >()); 
+    bolt::cl::sort(c_cpu, BSearchArrayTest< gtest_TypeParam_ >::bolt_source.begin(), BSearchArrayTest< gtest_TypeParam_ >::bolt_source.end(), bolt::cl::greater< ArrayType >());
 
     //  Calling the actual functions under test
-    stdresult = std::SEARCH_FUNC( stdInput.begin( ), stdInput.end( ), std_val, std::greater< ArrayType >() ); 
-    boltresult = bolt::BKND::SEARCH_FUNC( c_cpu, boltInput.begin( ), boltInput.end( ), val, bolt::cl::greater< ArrayType >( ) );
+    stdresult = std::SEARCH_FUNC( BSearchArrayTest< gtest_TypeParam_ >::stdInput.begin( ), BSearchArrayTest< gtest_TypeParam_ >::stdInput.end( ),
+      BSearchArrayTest< gtest_TypeParam_ >::std_val, std::greater< ArrayType >() ); 
+    boltresult = bolt::BKND::SEARCH_FUNC( c_cpu, BSearchArrayTest< gtest_TypeParam_ >::boltInput.begin( ), BSearchArrayTest< gtest_TypeParam_ >::boltInput.end( ), 
+      BSearchArrayTest< gtest_TypeParam_ >::val, bolt::cl::greater< ArrayType >( ) );
 
     EXPECT_EQ(  stdresult, boltresult );
 
     //OFFSET Test cases
     //  Calling the actual functions under test
     size_t startIndex = 17; //Some aribitrary offset position
-    size_t endIndex   = ArraySize -17; //Some aribitrary offset position
-    if( (( startIndex > ArraySize ) || ( endIndex < 0 ) )  || (startIndex > endIndex) )
+    size_t endIndex   = BSearchArrayTest< gtest_TypeParam_ >::ArraySize -17; //Some aribitrary offset position
+    if( (( startIndex > BSearchArrayTest< gtest_TypeParam_ >::ArraySize ) || ( endIndex < 0 ) )  || (startIndex > endIndex) )
     {
-        std::cout <<"\nSkipping NormalOffset Test for size "<< ArraySize << "\n";
+        std::cout <<"\nSkipping NormalOffset Test for size "<< BSearchArrayTest< gtest_TypeParam_ >::ArraySize << "\n";
     }    
     else
     {
-        index = rand()%ArraySize;
-        std_val = std_source[index];
-        val = bolt_source[index];
+        index = startIndex + rand()%BSearchArrayTest< gtest_TypeParam_ >::ArraySize;
+        BSearchArrayTest< gtest_TypeParam_ >::std_val = BSearchArrayTest< gtest_TypeParam_ >::std_source[index];
+        BSearchArrayTest< gtest_TypeParam_ >::val = BSearchArrayTest< gtest_TypeParam_ >::bolt_source[index];
 
-        std::sort(stdOffsetIn.begin(), stdOffsetIn.end(), std::greater< ArrayType >()); 
-        bolt::cl::sort(boltOffsetIn.begin(), boltOffsetIn.end(), bolt::cl::greater< ArrayType >());
+        std::sort(BSearchArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin(), BSearchArrayTest< gtest_TypeParam_ >::stdOffsetIn.end(), std::greater< ArrayType >()); 
+        bolt::cl::sort(BSearchArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin(), BSearchArrayTest< gtest_TypeParam_ >::boltOffsetIn.end(), bolt::cl::greater< ArrayType >());
 
-        stdresult = std::SEARCH_FUNC( stdOffsetIn.begin( ) + startIndex, stdOffsetIn.begin( ) + endIndex, std_val, std::greater< ArrayType >() );
-        boltresult = bolt::BKND::SEARCH_FUNC( c_cpu, boltOffsetIn.begin( ) + startIndex, boltOffsetIn.begin( ) + endIndex, val, bolt::cl::greater< ArrayType >( )  );
+        stdresult = std::SEARCH_FUNC( BSearchArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin( ) + startIndex, BSearchArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin( ) + endIndex,
+           BSearchArrayTest< gtest_TypeParam_ >::std_val, std::greater< ArrayType >() );
+        boltresult = bolt::BKND::SEARCH_FUNC( c_cpu, BSearchArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin( ) + startIndex, BSearchArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin( ) + endIndex,
+           BSearchArrayTest< gtest_TypeParam_ >::val, bolt::cl::greater< ArrayType >( )  );
 
         EXPECT_EQ( stdresult, boltresult );
     }
 }
 #endif
+
 TYPED_TEST_P( BSearchArrayTest, LessFunction )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+    typedef typename BSearchArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, BSearchArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont; 
 
-    size_t index = rand()%ArraySize;
-    std_val = std_source[index];
-    val = bolt_source[index];
+    size_t index = rand()%BSearchArrayTest< gtest_TypeParam_ >::ArraySize;
+    BSearchArrayTest< gtest_TypeParam_ >::std_val = BSearchArrayTest< gtest_TypeParam_ >::std_source[index];
+    BSearchArrayTest< gtest_TypeParam_ >::val = BSearchArrayTest< gtest_TypeParam_ >::bolt_source[index];
     bool stdresult, boltresult;
 
-    std::sort(std_source.begin(), std_source.end(), std::less< ArrayType >()); 
-    bolt::cl::sort(bolt_source.begin(), bolt_source.end(), bolt::cl::less< ArrayType >());
+    std::sort(BSearchArrayTest< gtest_TypeParam_ >::std_source.begin(), BSearchArrayTest< gtest_TypeParam_ >::std_source.end(), std::less< ArrayType >()); 
+    bolt::cl::sort(BSearchArrayTest< gtest_TypeParam_ >::bolt_source.begin(), BSearchArrayTest< gtest_TypeParam_ >::bolt_source.end(), bolt::cl::less< ArrayType >());
 
     //  Calling the actual functions under test
-    stdresult = std::SEARCH_FUNC( std_source.begin( ), std_source.end( ), std_val, std::less< ArrayType >() ); 
-    boltresult = bolt::BKND::SEARCH_FUNC( bolt_source.begin( ), bolt_source.end( ), val, bolt::cl::less< ArrayType >( ) );
+    stdresult = std::SEARCH_FUNC( BSearchArrayTest< gtest_TypeParam_ >::std_source.begin( ), BSearchArrayTest< gtest_TypeParam_ >::std_source.end( ), 
+      BSearchArrayTest< gtest_TypeParam_ >::std_val, std::less< ArrayType >() ); 
+    boltresult = bolt::BKND::SEARCH_FUNC( BSearchArrayTest< gtest_TypeParam_ >::bolt_source.begin( ), BSearchArrayTest< gtest_TypeParam_ >::bolt_source.end( ), 
+      BSearchArrayTest< gtest_TypeParam_ >::val, bolt::cl::less< ArrayType >( ) );
 
     EXPECT_EQ(  stdresult, boltresult );
 
     //OFFSET Test cases
     //  Calling the actual functions under test
     size_t startIndex = 17; //Some aribitrary offset position
-    size_t endIndex   = ArraySize -17; //Some aribitrary offset position
-    if( (( startIndex > ArraySize ) || ( endIndex < 0 ) )  || (startIndex > endIndex) )
+    size_t endIndex   = BSearchArrayTest< gtest_TypeParam_ >::ArraySize -17; //Some aribitrary offset position
+    if( (( startIndex > BSearchArrayTest< gtest_TypeParam_ >::ArraySize ) || ( endIndex < 0 ) )  || (startIndex > endIndex) )
     {
-        std::cout <<"\nSkipping NormalOffset Test for size "<< ArraySize << "\n";
+        std::cout <<"\nSkipping NormalOffset Test for size "<< BSearchArrayTest< gtest_TypeParam_ >::ArraySize << "\n";
     }    
     else
     {
-        index = rand()%ArraySize;
-        std_val = std_source[index];
-        val = bolt_source[index];
+        index = startIndex + rand()%BSearchArrayTest< gtest_TypeParam_ >::ArraySize;
+        BSearchArrayTest< gtest_TypeParam_ >::std_val = BSearchArrayTest< gtest_TypeParam_ >::std_source[index];
+        BSearchArrayTest< gtest_TypeParam_ >::val = BSearchArrayTest< gtest_TypeParam_ >::bolt_source[index];
 
-        std::sort(stdOffsetIn.begin(), stdOffsetIn.end(), std::less< ArrayType >()); 
-        bolt::cl::sort(boltOffsetIn.begin(), boltOffsetIn.end(), bolt::cl::less< ArrayType >());
+        std::sort(BSearchArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin(), BSearchArrayTest< gtest_TypeParam_ >::stdOffsetIn.end(), std::less< ArrayType >()); 
+        bolt::cl::sort(BSearchArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin(), BSearchArrayTest< gtest_TypeParam_ >::boltOffsetIn.end(), bolt::cl::less< ArrayType >());
 
-        stdresult = std::SEARCH_FUNC( stdOffsetIn.begin( ) + startIndex, stdOffsetIn.begin( ) + endIndex, std_val,  std::less< ArrayType >() );
-        boltresult = bolt::BKND::SEARCH_FUNC( boltOffsetIn.begin( ) + startIndex, boltOffsetIn.begin( ) + endIndex, val, bolt::cl::less< ArrayType >( )  );
+        stdresult = std::SEARCH_FUNC( BSearchArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin( ) + startIndex, BSearchArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin( ) + endIndex, 
+           BSearchArrayTest< gtest_TypeParam_ >::std_val,  std::less< ArrayType >() );
+        boltresult = bolt::BKND::SEARCH_FUNC( BSearchArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin( ) + startIndex, BSearchArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin( ) + endIndex, 
+           BSearchArrayTest< gtest_TypeParam_ >::val, bolt::cl::less< ArrayType >( )  );
 
         EXPECT_EQ( stdresult, boltresult );
     }
@@ -868,7 +920,9 @@ TYPED_TEST_P( BSearchArrayTest, LessFunction )
 
 TYPED_TEST_P( BSearchArrayTest, GPU_DeviceLessFunction )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+    typedef typename BSearchArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, BSearchArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont; 
+
     //  The first time our routines get called, we compile the library kernels with a certain context
     //  OpenCL does not allow the context to change without a recompile of the kernel
     // MyOclContext oclgpu = initOcl(CL_DEVICE_TYPE_GPU, 0);
@@ -881,42 +935,44 @@ TYPED_TEST_P( BSearchArrayTest, GPU_DeviceLessFunction )
     ::cl::CommandQueue myQueue( myContext, devices[ 0 ] ); 
     bolt::cl::control c_gpu( myQueue );  // construct control structure from the queue.
    
-    size_t index = rand()%ArraySize;
-    std_val = std_source[index];
-    val = bolt_source[index];
+    size_t index = rand()%BSearchArrayTest< gtest_TypeParam_ >::ArraySize;
+    BSearchArrayTest< gtest_TypeParam_ >::std_val = BSearchArrayTest< gtest_TypeParam_ >::std_source[index];
+    BSearchArrayTest< gtest_TypeParam_ >::val = BSearchArrayTest< gtest_TypeParam_ >::bolt_source[index];
     bool stdresult, boltresult;
 
-    std::sort(std_source.begin(), std_source.end(), std::less< ArrayType >()); 
-    bolt::cl::sort(bolt_source.begin(), bolt_source.end(), bolt::cl::less< ArrayType >());
+    std::sort(BSearchArrayTest< gtest_TypeParam_ >::std_source.begin(), BSearchArrayTest< gtest_TypeParam_ >::std_source.end(), std::less< ArrayType >()); 
+    bolt::cl::sort(BSearchArrayTest< gtest_TypeParam_ >::bolt_source.begin(), BSearchArrayTest< gtest_TypeParam_ >::bolt_source.end(), bolt::cl::less< ArrayType >());
 
     //  Calling the actual functions under test
-    stdresult = std::SEARCH_FUNC( std_source.begin( ), std_source.end( ), std_val, std::less< ArrayType >() ); 
-    boltresult = bolt::BKND::SEARCH_FUNC( c_gpu, bolt_source.begin( ), bolt_source.end( ), val, bolt::cl::less< ArrayType >( ) );
+    stdresult = std::SEARCH_FUNC( BSearchArrayTest< gtest_TypeParam_ >::std_source.begin( ), BSearchArrayTest< gtest_TypeParam_ >::std_source.end( ), 
+       BSearchArrayTest< gtest_TypeParam_ >::std_val, std::less< ArrayType >() ); 
+    boltresult = bolt::BKND::SEARCH_FUNC( c_gpu, BSearchArrayTest< gtest_TypeParam_ >::bolt_source.begin( ), BSearchArrayTest< gtest_TypeParam_ >::bolt_source.end( ), 
+       BSearchArrayTest< gtest_TypeParam_ >::val, bolt::cl::less< ArrayType >( ) );
 
     EXPECT_EQ(  stdresult, boltresult );
 
-    //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( std_source, bolt_source );
 
     //OFFSET Test cases
     //  Calling the actual functions under test
     size_t startIndex = 17; //Some aribitrary offset position
-    size_t endIndex   = ArraySize -17; //Some aribitrary offset position
-    if( (( startIndex > ArraySize ) || ( endIndex < 0 ) )  || (startIndex > endIndex) )
+    size_t endIndex   = BSearchArrayTest< gtest_TypeParam_ >::ArraySize -17; //Some aribitrary offset position
+    if( (( startIndex > BSearchArrayTest< gtest_TypeParam_ >::ArraySize ) || ( endIndex < 0 ) )  || (startIndex > endIndex) )
     {
-        std::cout <<"\nSkipping NormalOffset Test for size "<< ArraySize << "\n";
+        std::cout <<"\nSkipping NormalOffset Test for size "<< BSearchArrayTest< gtest_TypeParam_ >::ArraySize << "\n";
     }    
     else
     {
-        index = rand()%ArraySize;
-        std_val = std_source[index];
-        val = bolt_source[index];
+        index = startIndex + rand()%BSearchArrayTest< gtest_TypeParam_ >::ArraySize;
+        BSearchArrayTest< gtest_TypeParam_ >::std_val = BSearchArrayTest< gtest_TypeParam_ >::std_source[index];
+        BSearchArrayTest< gtest_TypeParam_ >::val = BSearchArrayTest< gtest_TypeParam_ >::bolt_source[index];
 
-        std::sort(stdOffsetIn.begin(), stdOffsetIn.end(), std::less< ArrayType >()); 
-        bolt::cl::sort(boltOffsetIn.begin(), boltOffsetIn.end(), bolt::cl::less< ArrayType >());
+        std::sort(BSearchArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin(), BSearchArrayTest< gtest_TypeParam_ >::stdOffsetIn.end(), std::less< ArrayType >()); 
+        bolt::cl::sort(BSearchArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin(), BSearchArrayTest< gtest_TypeParam_ >::boltOffsetIn.end(), bolt::cl::less< ArrayType >());
 
-        stdresult = std::SEARCH_FUNC( stdOffsetIn.begin( ) + startIndex, stdOffsetIn.begin( ) + endIndex, std_val, std::less< ArrayType >() );
-        boltresult = bolt::BKND::SEARCH_FUNC(c_gpu, boltOffsetIn.begin( ) + startIndex, boltOffsetIn.begin( ) + endIndex, val, bolt::cl::less< ArrayType >( )  );
+        stdresult = std::SEARCH_FUNC( BSearchArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin( ) + startIndex, BSearchArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin( ) + endIndex, 
+           BSearchArrayTest< gtest_TypeParam_ >::std_val, std::less< ArrayType >() );
+        boltresult = bolt::BKND::SEARCH_FUNC(c_gpu, BSearchArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin( ) + startIndex, BSearchArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin( ) + endIndex,
+           BSearchArrayTest< gtest_TypeParam_ >::val, bolt::cl::less< ArrayType >( )  );
 
         EXPECT_EQ( stdresult, boltresult );
     }
@@ -925,43 +981,49 @@ TYPED_TEST_P( BSearchArrayTest, GPU_DeviceLessFunction )
 #if (TEST_CPU_DEVICE == 1)
 TYPED_TEST_P(BSearchArrayTest, CPU_DeviceLessFunction )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+    typedef typename BSearchArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, BSearchArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont; 
+
     MyOclContext oclcpu = initOcl(CL_DEVICE_TYPE_CPU, 0);
     bolt::cl::control c_cpu(oclcpu._queue);  // construct control structure from the queue.
 
-    size_t index = rand()%ArraySize;
-    std_val = std_source[index];
-    val = bolt_source[index];
+    size_t index = rand()%BSearchArrayTest< gtest_TypeParam_ >::ArraySize;
+    BSearchArrayTest< gtest_TypeParam_ >::std_val = BSearchArrayTest< gtest_TypeParam_ >::std_source[index];
+    BSearchArrayTest< gtest_TypeParam_ >::val = BSearchArrayTest< gtest_TypeParam_ >::bolt_source[index];
     bool stdresult, boltresult;
 
-    std::sort(stdInput.begin(), stdInput.end(), std::less< ArrayType >()); 
-    bolt::cl::sort(ctl, boltInput.begin(), boltInput.end(), bolt::cl::less< ArrayType >());
+    std::sort(BSearchArrayTest< gtest_TypeParam_ >::stdInput.begin(), BSearchArrayTest< gtest_TypeParam_ >::stdInput.end(), std::less< ArrayType >()); 
+    bolt::cl::sort(c_cpu, BSearchArrayTest< gtest_TypeParam_ >::sboltInput.begin(), BSearchArrayTest< gtest_TypeParam_ >::boltInput.end(), bolt::cl::less< ArrayType >());
 
     //  Calling the actual functions under test
-    stdresult = std::SEARCH_FUNC( stdInput.begin( ), stdInput.end( ), std_val); //, std::less< ArrayType >() ); 
-    boltresult = bolt::BKND::SEARCH_FUNC( boltInput.begin( ), boltInput.end( ), val); //, bolt::cl::less< ArrayType >( ) );
+    stdresult = std::SEARCH_FUNC( BSearchArrayTest< gtest_TypeParam_ >::stdInput.begin( ), BSearchArrayTest< gtest_TypeParam_ >::stdInput.end( ), 
+      BSearchArrayTest< gtest_TypeParam_ >::std_val); //, std::less< ArrayType >() ); 
+    boltresult = bolt::BKND::SEARCH_FUNC( BSearchArrayTest< gtest_TypeParam_ >::boltInput.begin( ), BSearchArrayTest< gtest_TypeParam_ >::boltInput.end( ),
+      BSearchArrayTest< gtest_TypeParam_ >::val); //, bolt::cl::less< ArrayType >( ) );
 
     EXPECT_EQ( stdresult, boltresult );
 
     //OFFSET Test cases
     //  Calling the actual functions under test
     size_t startIndex = 17; //Some aribitrary offset position
-    size_t endIndex   = ArraySize -17; //Some aribitrary offset position
-    if( (( startIndex > ArraySize ) || ( endIndex < 0 ) )  || (startIndex > endIndex) )
+    size_t endIndex   = BSearchArrayTest< gtest_TypeParam_ >::ArraySize -17; //Some aribitrary offset position
+    if( (( startIndex > BSearchArrayTest< gtest_TypeParam_ >::ArraySize ) || ( endIndex < 0 ) )  || (startIndex > endIndex) )
     {
-        std::cout <<"\nSkipping NormalOffset Test for size "<< ArraySize << "\n";
+        std::cout <<"\nSkipping NormalOffset Test for size "<< BSearchArrayTest< gtest_TypeParam_ >::ArraySize << "\n";
     }    
     else
     {
-        index = startIndex + rand()%ArraySize;
-        std_val = std_source[index];
-        val = bolt_source[index];
+        index = startIndex + rand()%BSearchArrayTest< gtest_TypeParam_ >::ArraySize;
+        BSearchArrayTest< gtest_TypeParam_ >::std_val = BSearchArrayTest< gtest_TypeParam_ >::std_source[index];
+        BSearchArrayTest< gtest_TypeParam_ >::val = BSearchArrayTest< gtest_TypeParam_ >::bolt_source[index];
 
-        std::sort(stdOffsetIn.begin(), stdOffsetIn.end(), std::less< ArrayType >()); 
-        bolt::cl::sort(boltOffsetIn.begin(), boltOffsetIn.end(), bolt::cl::less< ArrayType >());
+        std::sort(BSearchArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin(), BSearchArrayTest< gtest_TypeParam_ >::stdOffsetIn.end(), std::less< ArrayType >()); 
+        bolt::cl::sort(BSearchArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin(), BSearchArrayTest< gtest_TypeParam_ >::boltOffsetIn.end(), bolt::cl::less< ArrayType >());
 
-        stdresult = std::SEARCH_FUNC( stdOffsetIn.begin( ) + startIndex, stdOffsetIn.begin( ) + endIndex, std_val); //, std::less< ArrayType >() );
-        boltresult = bolt::BKND::SEARCH_FUNC( boltOffsetIn.begin( ) + startIndex, boltOffsetIn.begin( ) + endIndex, val); //, bolt::cl::less< ArrayType >( )  );
+        stdresult = std::SEARCH_FUNC( BSearchArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin( ) + startIndex, 
+           BSearchArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin( ) + endIndex, BSearchArrayTest< gtest_TypeParam_ >::std_val); //, std::less< ArrayType >() );
+        boltresult = bolt::BKND::SEARCH_FUNC( BSearchArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin( ) + startIndex, 
+           BSearchArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin( ) + endIndex, BSearchArrayTest< gtest_TypeParam_ >::val); //, bolt::cl::less< ArrayType >( )  );
 
         EXPECT_EQ( stdresult, boltresult );
     }
@@ -2080,7 +2142,7 @@ TEST_P( BSearchDoubleDeviceVector, MulticoreNormal )
 #endif 
 #endif
 
-TEST_P( BSearchIntegerNakedPointer, Normal )
+/*TEST_P( BSearchIntegerNakedPointer, Normal )
 {
     size_t endIndex = GetParam( );
 
@@ -2282,6 +2344,8 @@ TEST_P( BSearchDoubleNakedPointer, MulticoreNormal )
 
 
 #endif
+*/
+
 std::array<int, 10> TestValues = {2,4,8,16,32,64,128,256,512,1024};
 std::array<int, 5> TestValues2 = {2048,4096,8192,16384,32768};
 //Test lots of consecutive numbers, but small range, suitable for integers because they overflow easier
@@ -2343,6 +2407,7 @@ INSTANTIATE_TEST_CASE_P( BSearch, BSearchDoubleNakedPointer, ::testing::ValuesIn
                                                                      TestValues2.end() ) );
 #endif
 #endif
+
 
 #if (TEST_LARGE_BUFFERS == 1)
 INSTANTIATE_TEST_CASE_P( BSearchValues, BSearchIntegerVector, ::testing::ValuesIn( TestValues2.begin(),
@@ -2768,7 +2833,7 @@ int main(int argc, char* argv[])
     ::testing::InitGoogleTest( &argc, &argv[ 0 ] );
 
     //  Register our minidump generating logic
-    bolt::miniDumpSingleton::enableMiniDumps( );
+    //bolt::miniDumpSingleton::enableMiniDumps( );
 
     int retVal = RUN_ALL_TESTS( );
 
@@ -2831,8 +2896,8 @@ int main ()
     stdOffsetIn = stdInput;
 
     //  Calling the actual functions under test
-    std::SORT_FUNC( stdInput.begin( ), stdInput.end( ) );
-    bolt::BKND::SORT_FUNC( boltInput.begin( ), boltInput.end( ) );
+    std::sort( stdInput.begin( ), stdInput.end( ) );
+    bolt::BKND::sort( boltInput.begin( ), boltInput.end( ) );
     for(int i=0;i< ArraySize;i++)
     {
             std::cout << stdInput[i]  << "\n";
