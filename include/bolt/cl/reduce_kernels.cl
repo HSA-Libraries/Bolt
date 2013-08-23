@@ -65,7 +65,9 @@ kernel void reduceTemplate(
     uint tail = length - (get_group_id(0) * get_local_size(0));
 
     // Parallel reduction within a given workgroup using local data store
-    // to share values between workitems
+    // to share values between workitems - 256 is good to achieve high occupancy
+    _REDUCE_STEP(tail, local_index, 128);
+    _REDUCE_STEP(tail, local_index, 64);
     _REDUCE_STEP(tail, local_index, 32);
     _REDUCE_STEP(tail, local_index, 16);
     _REDUCE_STEP(tail, local_index,  8);

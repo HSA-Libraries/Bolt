@@ -38,8 +38,6 @@ namespace bolt {
 
 namespace detail {
 
-            ///////////////
-
         enum ReduceTypes {reduce_iValueType, reduce_iIterType, reduce_BinaryFunction,reduce_resType, reduce_end };
 
         ///////////////////////////////////////////////////////////////////////
@@ -59,7 +57,7 @@ namespace detail {
                 const std::string templateSpecializationString =
                         "// Host generates this instantiation string with user-specified value type and functor\n"
                         "template __attribute__((mangled_name(" + name(0) + "Instantiated)))\n"
-                        "__attribute__((reqd_work_group_size(64,1,1)))\n"
+                        "__attribute__((reqd_work_group_size(256,1,1)))\n"
                         "kernel void reduceTemplate(\n"
                         "global " + typeNames[reduce_iValueType] + "* input_ptr,\n"
                          + typeNames[reduce_iIterType] + " output_iter,\n"
@@ -272,14 +270,12 @@ namespace detail {
             {
                 typedef typename std::iterator_traits< DVInputIterator >::value_type iType;
 
-
                 std::vector<std::string> typeNames( reduce_end);
                 typeNames[reduce_iValueType] = TypeName< iType >::get( );
                 typeNames[reduce_iIterType] = TypeName< DVInputIterator >::get( );
                 typeNames[reduce_BinaryFunction] = TypeName< BinaryFunction >::get();
                 typeNames[reduce_resType] = TypeName< T >::get( );
                 
-
                 std::vector<std::string> typeDefinitions;
                 PUSH_BACK_UNIQUE( typeDefinitions, ClCode< iType >::get() )
                 PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVInputIterator >::get() )
@@ -304,13 +300,14 @@ namespace detail {
 
                 // Set up shape of launch grid and buffers:
                 cl_uint computeUnits     = ctl.getDevice().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
-                int wgPerComputeUnit =  ctl.getWGPerComputeUnit();
+                int wgPerComputeUnit =  64; //ctl.getWGPerComputeUnit();  // This boosts up the performance
                 size_t numWG = computeUnits * wgPerComputeUnit;
 
                 cl_int l_Error = CL_SUCCESS;
 
-                const size_t wgSize  = kernels[0].getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >(
-                    ctl.getDevice( ), &l_Error );
+				// Bumped up wgSize to achieve higher ALU usage and occupancy
+                const size_t wgSize  = 256 ;//kernels[0].getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >(  
+                    //ctl.getDevice( ), &l_Error );
 
                 V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
 
