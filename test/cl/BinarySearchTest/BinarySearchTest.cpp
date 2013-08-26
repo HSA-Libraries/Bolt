@@ -222,16 +222,14 @@ TEST(BSearch, DevclLong)
 {
         // test length
         int length = (1<<8);
-
-        bolt::cl::device_vector<cl_long> bolt_source(length);
         std::vector<cl_long> std_source(length);
-
         // populate source vector with random ints
         for (int j = 0; j < length; j++)
         {
-            bolt_source[j] = (cl_long)rand();
-            std_source[j] = bolt_source[j];
+            std_source[j] = (cl_long)rand();
         }
+        bolt::cl::device_vector<cl_long> bolt_source(std_source.begin(),std_source.end());
+
     
          //Sorting the Input
         std::sort(std_source.begin(), std_source.end());
@@ -256,15 +254,14 @@ TEST(BSearch, Serial_DevclLong)
         // test length
         int length = (1<<8);
 
-        bolt::cl::device_vector<cl_long> bolt_source(length);
         std::vector<cl_long> std_source(length);
 
-        // populate source vector with random ints
         for (int j = 0; j < length; j++)
         {
-            bolt_source[j] = (cl_long)rand();
-            std_source[j] = bolt_source[j];
+            std_source[j] = (cl_long)rand();
         }
+        bolt::cl::device_vector<cl_long> bolt_source(std_source.begin(),std_source.end());
+
     
         bolt::cl::control ctl = bolt::cl::control::getDefault( );
         ctl.setForceRunMode(bolt::cl::control::SerialCpu); 
@@ -292,15 +289,13 @@ TEST(BSearch, MultiCore_DevclLong)
         // test length
         int length = (1<<8);
 
-        bolt::cl::device_vector<cl_long> bolt_source(length);
         std::vector<cl_long> std_source(length);
 
-        // populate source vector with random ints
         for (int j = 0; j < length; j++)
         {
-            bolt_source[j] = (cl_long)rand();
-            std_source[j] = bolt_source[j];
+            std_source[j] = (cl_long)rand();
         }
+        bolt::cl::device_vector<cl_long> bolt_source(std_source.begin(),std_source.end());
     
         bolt::cl::control ctl = bolt::cl::control::getDefault( );
         ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu); 
@@ -2861,8 +2856,7 @@ int main(int argc, char* argv[])
         bolt::tout << _T( "\t--gtest_break_on_failure to debug interactively with debugger" ) << std::endl;
         bolt::tout << _T( "\t    (only on googletest assertion failures, not SEH exceptions)" ) << std::endl;
     }
-    std::cout << "Test Completed. Press Enter to exit.\n .... ";
-    //getchar();
+
     return retVal;
 }
 
