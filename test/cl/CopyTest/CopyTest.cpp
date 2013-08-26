@@ -255,9 +255,11 @@ public:
     virtual void SetUp( )
     {
         std::generate(stdInput.begin(), stdInput.end(), rand);
+        std::generate(stdOffsetOut.begin(), stdOffsetOut.end(), rand);
         boltInput = stdInput;
         stdOffsetIn = stdInput;
         boltOffsetIn = stdInput;
+        boltOffsetOut =  stdOffsetOut;
     };
 
     virtual void TearDown( )
@@ -311,6 +313,11 @@ TYPED_TEST_P( CopyArrayTest,CPU_DeviceNormal )
     }    
     else
     {
+
+        //std::copy( CopyArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin( ) , CopyArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin( ) + startIndex, CopyArrayTest< gtest_TypeParam_ >::stdOffsetOut.begin() + endIndex);
+      //  std::copy( CopyArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin( ), CopyArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin( )+ startIndex, CopyArrayTest< gtest_TypeParam_ >::boltOffsetOut.begin( )+ endIndex);
+
+
         std::copy( CopyArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin( ) + startIndex, CopyArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin( ) + endIndex, CopyArrayTest< gtest_TypeParam_ >::stdOffsetOut.begin() );
         bolt::cl::copy( c_cpu, CopyArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin( ) + startIndex, CopyArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin( ) + endIndex, CopyArrayTest< gtest_TypeParam_ >::boltOffsetOut.begin() );
 
@@ -453,7 +460,7 @@ TEST(Copy, FancyDeviceIterator)
         bolt::cl::counting_iterator<int> last = first + length;
 
         std::vector<int> a(length);
-
+        
         for (int i=0; i < length; i++) {
             a[i] = i;
         }; 

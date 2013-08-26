@@ -1255,6 +1255,11 @@ namespace cl
 
             pointer data( void )
             {
+                if(0 == size())
+                {
+                    pointer sp;
+                    return sp;
+                }
                 cl_int l_Error = CL_SUCCESS;
 
                 naked_pointer ptrBuff = reinterpret_cast< naked_pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ | CL_MAP_WRITE,
