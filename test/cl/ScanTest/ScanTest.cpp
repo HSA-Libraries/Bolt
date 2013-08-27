@@ -310,31 +310,31 @@ template< typename S, typename B >
  *****************************************************************************/
 TEST(InclusiveScan, normalArrayTest)
 {
-
-    float input[10000] ;
+    const int length=10000;
+    float input[length] ;
    
-    float refInput[10000];
+    float refInput[length];
    
-    for(int i=0; i<10000; i++) {
+    for(int i=0; i<length; i++) {
         input[i] = 2.f;
         refInput[i] = 2.f;
     }
     // call scan
     bolt::cl::plus<float> ai2;
-    bolt::cl::inclusive_scan( input,    input + 10000,    input, ai2 );
-    ::std::partial_sum(refInput, refInput + 10000, refInput, ai2);
+    bolt::cl::inclusive_scan( input,    input + length,    input, ai2 );
+    ::std::partial_sum(refInput, refInput + length, refInput, ai2);
     // compare results
-    cmpArrays(input, refInput);
+    cmpArrays<float,length>(input, refInput);
 } 
 
 TEST(InclusiveScan, SerialnormalArrayTest)
 {
-
-    float input[10000] ;
+    const int length=10000;
+    float input[length] ;
    
-    float refInput[10000];
+    float refInput[length];
    
-    for(int i=0; i<10000; i++) {
+    for(int i=0; i<length; i++) {
         input[i] = 2.f;
         refInput[i] = 2.f;
     }
@@ -345,21 +345,21 @@ TEST(InclusiveScan, SerialnormalArrayTest)
 
     // call scan
     bolt::cl::plus<float> ai2;
-    bolt::cl::inclusive_scan( ctl, input,    input + 10000,    input, ai2 );
-    ::std::partial_sum(refInput, refInput + 10000, refInput, ai2);
+    bolt::cl::inclusive_scan( ctl, input,    input + length,    input, ai2 );
+    ::std::partial_sum(refInput, refInput + length, refInput, ai2);
     // compare results
-    cmpArrays(input, refInput);
+    cmpArrays<float,length>(input, refInput);
         
 } 
 
 TEST(InclusiveScan, MulticorenormalArrayTest)
 {
-
-    float input[10000] ;
+    const int length=10000;
+    float input[length] ;
    
-    float refInput[10000];
+    float refInput[length];
    
-    for(int i=0; i<10000; i++) {
+    for(int i=0; i<length; i++) {
         input[i] = 2.f;
         refInput[i] = 2.f;
     }
@@ -370,10 +370,10 @@ TEST(InclusiveScan, MulticorenormalArrayTest)
 
     // call scan
     bolt::cl::plus<float> ai2;
-    bolt::cl::inclusive_scan( ctl, input,    input + 10000,    input, ai2 );
-    ::std::partial_sum(refInput, refInput + 10000, refInput, ai2);
+    bolt::cl::inclusive_scan( ctl, input,    input + length,    input, ai2 );
+    ::std::partial_sum(refInput, refInput + length, refInput, ai2);
     // compare results
-    cmpArrays(input, refInput);
+    cmpArrays<float,length>(input, refInput);
     
     
 } 

@@ -1418,7 +1418,7 @@ TEST( ReduceUDD , UDDPlusOperatorInts )
     UDD boltReduce = bolt::cl::reduce( input.begin(), input.end(), UDDzero, plusOp );
     UDD stdReduce =  std::accumulate( refInput.begin(), refInput.end(), UDDzero, plusOp );
 
-    EXPECT_EQ(boltReduce,stdReduce);
+    EXPECT_EQ(stdReduce,boltReduce);
 
 }
 

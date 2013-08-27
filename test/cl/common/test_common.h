@@ -23,7 +23,7 @@
 
 
 #include "bolt/unicode.h"
-
+#include "bolt/cl/device_vector.h"
 #include <array>
 #include <gtest/gtest.h>
 #if !defined( BOLT_TEST_MAX_FAILURES )
@@ -33,7 +33,7 @@
 #define BOLT_TEST_RESET_FAILURES \
     size_t numFailures = 0;
 
-#define BOLT_TEST_INCREMENT_FAILURES \
+#define BOLT_TEST_INCREMENT_FAILURES(ref,calc) \
     if ( !(ref[ i ] == calc[ i ]) ) { \
         numFailures++; \
         /* std::cout << "i=" << i << ": " << ref[i] << " != " << calc[i] << std::endl;*/ \
@@ -46,46 +46,77 @@
 size_t numFailures;
 bool resetNumFailures = true;
 
-template< typename T1,typename T2 >
-::testing::AssertionResult cmpArrays( const T1 &ref,  T2 &calc )
-{
-
-    typename T2::pointer copySrc =  calc.data( );
-    BOLT_TEST_RESET_FAILURES
-    for( size_t i = 0; i < ref.size(); ++i )
-    {
-        BOLT_TEST_INCREMENT_FAILURES
-        EXPECT_EQ( ref[ i ], copySrc[ i ] ) << _T( "Where i = " ) << i;
-    }
-    return ::testing::AssertionSuccess( );
-
-}
-
-template< typename T1,typename T2 >
-::testing::AssertionResult cmpArrays( const T1 &ref,  T2 &calc, size_t N )
-{
-    BOLT_TEST_RESET_FAILURES
-    typename T2::pointer copySrc =  calc.data( );
-    for( size_t i = 0; i < N; ++i )
-    {
-        BOLT_TEST_INCREMENT_FAILURES
-        EXPECT_EQ( ref[ i ], copySrc[ i ] ) << _T( "Where i = " ) << i;
-    }
-
-    return ::testing::AssertionSuccess( );
-}
-
 template< typename T, size_t N >
 ::testing::AssertionResult cmpArrays( const T (&ref)[N], const T (&calc)[N] )
 {
     BOLT_TEST_RESET_FAILURES
     for( size_t i = 0; i < N; ++i )
     {
-        BOLT_TEST_INCREMENT_FAILURES
+        BOLT_TEST_INCREMENT_FAILURES(ref,calc)
         EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
     }
 
     return ::testing::AssertionSuccess( );
+}
+
+template< typename T1,typename T2>
+::testing::AssertionResult cmpArrays( const T1 &ref, typename bolt::cl::device_vector<T2> &calc)
+{
+
+        typename bolt::cl::device_vector<T2>::pointer copySrc =  calc.data( );
+
+        BOLT_TEST_RESET_FAILURES
+        for( size_t i = 0; i < ref.size(); ++i )
+        {
+            BOLT_TEST_INCREMENT_FAILURES(ref,copySrc)
+            EXPECT_EQ( ref[ i ], copySrc[ i ] ) << _T( "Where i = " ) << i;
+        }
+      return ::testing::AssertionSuccess( );
+}
+
+
+template< typename T1,typename T2 >
+::testing::AssertionResult cmpArrays( const T1 &ref,  T2 &calc )
+{
+
+        BOLT_TEST_RESET_FAILURES
+        for( size_t i = 0; i < ref.size(); ++i )
+        {
+            BOLT_TEST_INCREMENT_FAILURES(ref,calc)
+            EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
+        }
+
+        return ::testing::AssertionSuccess( );
+
+}
+
+template< typename T1,typename T2>
+::testing::AssertionResult 
+cmpArrays( const T1 &ref, typename bolt::cl::device_vector<T2> &calc, size_t N )
+{
+
+        typename bolt::cl::device_vector<T2>::pointer copySrc =  calc.data( );
+
+        BOLT_TEST_RESET_FAILURES
+        for( size_t i = 0; i < N; ++i )
+        {
+            BOLT_TEST_INCREMENT_FAILURES(ref,copySrc)
+            EXPECT_EQ( ref[ i ], copySrc[ i ] ) << _T( "Where i = " ) << i;
+        }
+      return ::testing::AssertionSuccess( );
+}
+
+
+template< typename T1,typename T2 >
+::testing::AssertionResult   cmpArrays( const T1 &ref,  T2 &calc, size_t N )
+{
+        BOLT_TEST_RESET_FAILURES
+        for( size_t i = 0; i < N; ++i )
+        {
+            BOLT_TEST_INCREMENT_FAILURES(ref,calc)
+            EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
+        }
+      return ::testing::AssertionSuccess( );
 }
 
 template< typename T, size_t N >
@@ -96,7 +127,7 @@ struct cmpStdArray
         BOLT_TEST_RESET_FAILURES
         for( size_t i = 0; i < N; ++i )
         {
-            BOLT_TEST_INCREMENT_FAILURES
+            BOLT_TEST_INCREMENT_FAILURES(ref,calc)
             EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
         }
 
@@ -104,92 +135,7 @@ struct cmpStdArray
     }
 };
 
-template< size_t N >
-struct cmpStdArray< float, N >
-{
-    static ::testing::AssertionResult cmpArrays( const std::array< float, N >& ref, const std::array< float, N >& calc )
-    {
-        BOLT_TEST_RESET_FAILURES
-        for( size_t i = 0; i < N; ++i )
-        {
-            BOLT_TEST_INCREMENT_FAILURES
-            EXPECT_FLOAT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-        }
 
-        return ::testing::AssertionSuccess( );
-    }
-};
 
-template< size_t N >
-struct cmpStdArray< double, N >
-{
-    static ::testing::AssertionResult cmpArrays( const std::array< double, N >& ref, const std::array< double, N >& calc )
-    {
-        BOLT_TEST_RESET_FAILURES
-        for( size_t i = 0; i < N; ++i )
-        {
-            BOLT_TEST_INCREMENT_FAILURES
-            EXPECT_DOUBLE_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-        }
-
-        return ::testing::AssertionSuccess( );
-    }
-};
-
-//  The following cmpArrays verify the correctness of std::vectors's
-/*
-template< typename T >
-::testing::AssertionResult cmpArrays( const std::vector< T >& ref, const std::vector< T >& calc )
-{
-    BOLT_TEST_RESET_FAILURES
-    for( size_t i = 0; i < ref.size( ); ++i )
-    {
-        BOLT_TEST_INCREMENT_FAILURES
-        EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-    }
-
-    return ::testing::AssertionSuccess( );
-}*/
-
-::testing::AssertionResult cmpArrays( const std::vector< float >& ref, const std::vector< float >& calc )
-{
-    BOLT_TEST_RESET_FAILURES
-    for( size_t i = 0; i < ref.size( ); ++i )
-    {
-        BOLT_TEST_INCREMENT_FAILURES
-        EXPECT_FLOAT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-    }
-
-    return ::testing::AssertionSuccess( );
-}
-
-#if TEST_DOUBLE
-::testing::AssertionResult cmpArrays( const std::vector< double >& ref, const std::vector< double >& calc )
-{
-    BOLT_TEST_RESET_FAILURES
-    for( size_t i = 0; i < ref.size( ); ++i )
-    {
-        BOLT_TEST_INCREMENT_FAILURES
-        EXPECT_DOUBLE_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-    }
-
-    return ::testing::AssertionSuccess( );
-}
-#endif
-
-//  A very generic template that takes two container, and compares their values assuming a vector interface
-/*template< typename S, typename B >
-::testing::AssertionResult cmpArrays( const S& ref, const B& calc )
-{
-    BOLT_TEST_RESET_FAILURES
-    for( size_t i = 0; i < ref.size( ); ++i )
-    {
-        BOLT_TEST_INCREMENT_FAILURES
-        EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-    }
-
-    return ::testing::AssertionSuccess( );
-}
-*/
 
 #endif
