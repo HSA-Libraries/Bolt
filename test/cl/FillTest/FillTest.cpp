@@ -613,7 +613,7 @@ TEST( DVIntVector, OffsetFill )
     std::fill(  stdInput.begin( ) + offset,  stdInput.end( ), val );
     bolt::cl::fill( boltInput.begin( ) + offset, boltInput.end( ), val );
 
-    cmpArrays( stdInput, boltInput);
+    cmpArrays( stdInput, boltInput,10);
 }
 
 

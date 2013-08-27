@@ -2573,7 +2573,7 @@ TEST( equalValMult, iValues )
     int arrToMatch[11] = { 2, 2, 4, 2, 4, 8, 2, 4, 8, 16, 2 };
 
     // compare results
-    cmpArrays( arrToMatch, out );
+    cmpArrays<int,11>( arrToMatch, out );
 }
 
 TEST( equalValMult, Serial_iValues )
@@ -2593,7 +2593,7 @@ TEST( equalValMult, Serial_iValues )
     int arrToMatch[11] = { 2, 2, 4, 2, 4, 8, 2, 4, 8, 16, 2 };
 
     // compare results
-    cmpArrays( arrToMatch, out );
+    cmpArrays<int,11>( arrToMatch, out );
 }
 
 TEST( equalValMult, MultiCore_iValues )
@@ -2613,7 +2613,7 @@ TEST( equalValMult, MultiCore_iValues )
     int arrToMatch[11] = { 2, 2, 4, 2, 4, 8, 2, 4, 8, 16, 2 };
 
     // compare results
-    cmpArrays( arrToMatch, out );
+    cmpArrays<int,11>( arrToMatch, out );
 }
 
 TEST(ExclusiveScanByKey, OffsetExclFloatSerialInplace)
