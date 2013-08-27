@@ -74,13 +74,15 @@ struct InRange {
 
 TEST_P (testCountIfFloatWithStdVector, countFloatValueInRange)
 {
-  bolt::cl::device_vector<float> A(aSize);
-  bolt::cl::device_vector<float> B(aSize);
+   std::vector<float> s(aSize);
 
   for (int i=0; i < aSize; i++) {
-    A[i] = static_cast<float> (i+1);
-    B[i] = static_cast<float> (i+1);
+    s[i] = static_cast<float> (i+1);
   };
+
+  bolt::cl::device_vector<float> A(s.begin(),s.end());
+  bolt::cl::device_vector<float> B(s.begin(),s.end());
+
 
   size_t stdCount = std::count_if (A.begin(), A.end(), InRange<float>(6,10)) ;
   size_t boltCount = bolt::cl::count_if (B.begin(), B.end(), InRange<float>(6,10)) ;
@@ -91,14 +93,14 @@ TEST_P (testCountIfFloatWithStdVector, countFloatValueInRange)
 
 TEST_P (testCountIfFloatWithStdVector, countFloatValueInRange2)
 {
-  bolt::cl::device_vector<float> A(aSize);
-  bolt::cl::device_vector<float> B(aSize);
+   std::vector<float> s(aSize);
 
   for (int i=0; i < aSize; i++) {
-    A[i] = static_cast<float> (i+1);
-    B[i] = static_cast<float> (i+1);
-
+    s[i] = static_cast<float> (i+1);
   };
+
+  bolt::cl::device_vector<float> A(s.begin(),s.end());
+  bolt::cl::device_vector<float> B(s.begin(),s.end());
 
   size_t stdCount = std::count_if (A.begin(), A.end(), InRange<float>(1,10)) ;
   size_t boltCount = bolt::cl::count_if (B.begin(), B.end(), InRange<float>(1,10)) ;
@@ -190,15 +192,10 @@ TEST_P( StdVectCountingIterator, MultiCorewithCountingIterator)
 }
 
 TEST_P(countFloatValueOccuranceStdVect, floatVectSearchWithSameValue){
-  bolt::cl::device_vector<float> stdVect(stdVectSize);
-  bolt::cl::device_vector<float> boltVect(stdVectSize);
-
-  float myFloatValue = 1.23f;
-
-  for (int i =0; i < stdVectSize; i++){
-    stdVect[i] = myFloatValue;
-    boltVect[i] = myFloatValue ;
-  }
+ 
+    float myFloatValue = 1.23f;
+    std::vector<float> stdVect(stdVectSize,myFloatValue);
+    bolt::cl::device_vector<float> boltVect(stdVect.begin(), stdVect.end());
 
   size_t stdCount = std::count(stdVect.begin(), stdVect.end(), myFloatValue);
   size_t boltCount = bolt::cl::count(boltVect.begin(), boltVect.end(), myFloatValue);
@@ -209,19 +206,15 @@ TEST_P(countFloatValueOccuranceStdVect, floatVectSearchWithSameValue){
 }
 
 TEST_P(countFloatValueOccuranceStdVect, Serial_floatVectSearchWithSameValue){
-  bolt::cl::device_vector<float> stdVect(stdVectSize);
-  bolt::cl::device_vector<float> boltVect(stdVectSize);
+
+    float myFloatValue = 1.23f;
+    std::vector<float> stdVect(stdVectSize,myFloatValue);
+    bolt::cl::device_vector<float> boltVect(stdVect.begin(), stdVect.end());
+
 
   ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
   bolt::cl::control ctl = bolt::cl::control::getDefault( );
   ctl.setForceRunMode(bolt::cl::control::SerialCpu);
-
-  float myFloatValue = 1.23f;
-
-  for (int i =0; i < stdVectSize; i++){
-    stdVect[i] = myFloatValue;
-    boltVect[i] = myFloatValue; 
-  }
 
   size_t stdCount = std::count(stdVect.begin(), stdVect.end(), myFloatValue);
   size_t boltCount = bolt::cl::count(ctl, boltVect.begin(), boltVect.end(), myFloatValue);
@@ -232,19 +225,16 @@ TEST_P(countFloatValueOccuranceStdVect, Serial_floatVectSearchWithSameValue){
 }
 
 TEST_P(countFloatValueOccuranceStdVect, MultiCore_floatVectSearchWithSameValue){
-  bolt::cl::device_vector<float> stdVect(stdVectSize);
-  bolt::cl::device_vector<float> boltVect(stdVectSize);
+    float myFloatValue = 1.23f;
+    std::vector<float> stdVect(stdVectSize,myFloatValue);
+    bolt::cl::device_vector<float> boltVect(stdVect.begin(), stdVect.end());
+
 
   ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
   bolt::cl::control ctl = bolt::cl::control::getDefault( );
   ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
-  float myFloatValue = 1.23f;
 
-  for (int i =0; i < stdVectSize; i++){
-    stdVect[i] = myFloatValue;
-    boltVect[i] = myFloatValue;
-  }
 
   size_t stdCount = std::count(stdVect.begin(), stdVect.end(), myFloatValue);
   size_t boltCount = bolt::cl::count(ctl, boltVect.begin(), boltVect.end(), myFloatValue);
@@ -255,15 +245,9 @@ TEST_P(countFloatValueOccuranceStdVect, MultiCore_floatVectSearchWithSameValue){
 }
 
 TEST_P(countFloatValueOccuranceStdVect, floatVectSearchWithSameValue2){
-  bolt::cl::device_vector<float> stdVect(stdVectSize);
-  bolt::cl::device_vector<float> boltVect(stdVectSize);
-
-  float myFloatValue2 = 9.87f;
-
-  for (int i =0; i < stdVectSize; i++){
-    stdVect[i] = myFloatValue2;
-    boltVect[i] = myFloatValue2;
-  }
+    float myFloatValue2 = 9.87f;
+    std::vector<float> stdVect(stdVectSize,myFloatValue2);
+    bolt::cl::device_vector<float> boltVect(stdVect.begin(), stdVect.end());
 
   size_t stdCount = std::count(stdVect.begin(), stdVect.end(), myFloatValue2);
   size_t boltCount = bolt::cl::count(boltVect.begin(), boltVect.end(), myFloatValue2);
@@ -274,16 +258,9 @@ TEST_P(countFloatValueOccuranceStdVect, floatVectSearchWithSameValue2){
 }
 
 TEST_P(countFloatValueOccuranceStdVect, Serial_floatVectSearchWithSameValue2){
-  bolt::cl::device_vector<float> stdVect(stdVectSize);
-  bolt::cl::device_vector<float> boltVect(stdVectSize);
-
-  float myFloatValue2 = 9.87f;
-
-  for (int i =0; i < stdVectSize; i++){
-    stdVect[i] = myFloatValue2;
-    boltVect[i] = myFloatValue2;
-
-  }
+    float myFloatValue2 = 9.87f;
+    std::vector<float> stdVect(stdVectSize,myFloatValue2);
+    bolt::cl::device_vector<float> boltVect(stdVect.begin(), stdVect.end());
 
   ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
   bolt::cl::control ctl = bolt::cl::control::getDefault( );
@@ -298,16 +275,9 @@ TEST_P(countFloatValueOccuranceStdVect, Serial_floatVectSearchWithSameValue2){
 }
 
 TEST_P(countFloatValueOccuranceStdVect, MultiCore_floatVectSearchWithSameValue2){
-  bolt::cl::device_vector<float> stdVect(stdVectSize);
-  bolt::cl::device_vector<float> boltVect(stdVectSize);
-
-  float myFloatValue2 = 9.87f;
-
-  for (int i =0; i < stdVectSize; i++){
-    stdVect[i] = myFloatValue2;
-    boltVect[i] = myFloatValue2;
-
-  }
+    float myFloatValue2 = 9.87f;
+    std::vector<float> stdVect(stdVectSize,myFloatValue2);
+    bolt::cl::device_vector<float> boltVect(stdVect.begin(), stdVect.end());
 
   ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
   bolt::cl::control ctl = bolt::cl::control::getDefault( );
@@ -337,16 +307,10 @@ public:
 
 
 TEST_P(countDoubleValueUsedASKeyInStdVect, doubleVectSearchWithSameValue){
-  bolt::cl::device_vector<double> stdVect(stdVectSize);
-  bolt::cl::device_vector<double> boltVect(stdVectSize);
-
   double myDoubleValueAsKeyValue = 1.23456789l;
+   std::vector<double> stdVect(stdVectSize,myDoubleValueAsKeyValue);
+  bolt::cl::device_vector<double> boltVect(stdVect.begin(), stdVect.end());
 
-  for (int i =0; i < stdVectSize; i++){
-    stdVect[i] = myDoubleValueAsKeyValue;
-    boltVect[i] = myDoubleValueAsKeyValue;
-
-  }
 
   size_t stdCount = std::count(stdVect.begin(), stdVect.end(), myDoubleValueAsKeyValue);
   size_t boltCount = bolt::cl::count(boltVect.begin(), boltVect.end(), myDoubleValueAsKeyValue);
@@ -357,16 +321,10 @@ TEST_P(countDoubleValueUsedASKeyInStdVect, doubleVectSearchWithSameValue){
 }
 
 TEST_P(countDoubleValueUsedASKeyInStdVect, Serial_doubleVectSearchWithSameValue){
-  bolt::cl::device_vector<double> stdVect(stdVectSize);
-  bolt::cl::device_vector<double> boltVect(stdVectSize);
-
   double myDoubleValueAsKeyValue = 1.23456789l;
+   std::vector<double> stdVect(stdVectSize,myDoubleValueAsKeyValue);
+  bolt::cl::device_vector<double> boltVect(stdVect.begin(), stdVect.end());
 
-  for (int i =0; i < stdVectSize; i++){
-    stdVect[i] = myDoubleValueAsKeyValue;
-    boltVect[i] = myDoubleValueAsKeyValue;
-
-  }
 
   ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
   bolt::cl::control ctl = bolt::cl::control::getDefault( );
@@ -382,16 +340,11 @@ TEST_P(countDoubleValueUsedASKeyInStdVect, Serial_doubleVectSearchWithSameValue)
 
 
 TEST_P(countDoubleValueUsedASKeyInStdVect, MultiCore_doubleVectSearchWithSameValue){
-  bolt::cl::device_vector<double> stdVect(stdVectSize);
-  bolt::cl::device_vector<double> boltVect(stdVectSize);
 
   double myDoubleValueAsKeyValue = 1.23456789l;
+   std::vector<double> stdVect(stdVectSize,myDoubleValueAsKeyValue);
+  bolt::cl::device_vector<double> boltVect(stdVect.begin(), stdVect.end());
 
-  for (int i =0; i < stdVectSize; i++){
-    stdVect[i] = myDoubleValueAsKeyValue;
-    boltVect[i] = myDoubleValueAsKeyValue;
-
-  }
 
   ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
   bolt::cl::control ctl = bolt::cl::control::getDefault( );
@@ -406,15 +359,9 @@ TEST_P(countDoubleValueUsedASKeyInStdVect, MultiCore_doubleVectSearchWithSameVal
 }
 
 TEST_P(countDoubleValueUsedASKeyInStdVect, doubleVectSearchWithSameValue2){
-  bolt::cl::device_vector<double> stdVect(stdVectSize);
-  bolt::cl::device_vector<double> boltVect(stdVectSize);
-
   double myDoubleValueAsKeyValue2 = 9.876543210123456789l;
-
-  for (int i =0; i < stdVectSize; i++){
-    stdVect[i] = myDoubleValueAsKeyValue2;
-    boltVect[i] = myDoubleValueAsKeyValue2;
-  }
+   std::vector<double> stdVect(stdVectSize,myDoubleValueAsKeyValue2);
+  bolt::cl::device_vector<double> boltVect(stdVect.begin(), stdVect.end());
 
   size_t stdCount = std::count(stdVect.begin(), stdVect.end(), myDoubleValueAsKeyValue2);
   size_t boltCount = bolt::cl::count(boltVect.begin(), boltVect.end(), myDoubleValueAsKeyValue2);
@@ -425,15 +372,10 @@ TEST_P(countDoubleValueUsedASKeyInStdVect, doubleVectSearchWithSameValue2){
 }
 
 TEST_P(countDoubleValueUsedASKeyInStdVect, Serial_doubleVectSearchWithSameValue2){
-  bolt::cl::device_vector<double> stdVect(stdVectSize);
-  bolt::cl::device_vector<double> boltVect(stdVectSize);
-
   double myDoubleValueAsKeyValue2 = 9.876543210123456789l;
+   std::vector<double> stdVect(stdVectSize,myDoubleValueAsKeyValue2);
+  bolt::cl::device_vector<double> boltVect(stdVect.begin(), stdVect.end());
 
-  for (int i =0; i < stdVectSize; i++){
-    stdVect[i] = myDoubleValueAsKeyValue2;
-    boltVect[i] = myDoubleValueAsKeyValue2;
-  }
 
   ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
   bolt::cl::control ctl = bolt::cl::control::getDefault( );
@@ -448,15 +390,10 @@ TEST_P(countDoubleValueUsedASKeyInStdVect, Serial_doubleVectSearchWithSameValue2
 }
 
 TEST_P(countDoubleValueUsedASKeyInStdVect, MultiCore_doubleVectSearchWithSameValue2){
-  bolt::cl::device_vector<double> stdVect(stdVectSize);
-  bolt::cl::device_vector<double> boltVect(stdVectSize);
-
   double myDoubleValueAsKeyValue2 = 9.876543210123456789l;
+   std::vector<double> stdVect(stdVectSize,myDoubleValueAsKeyValue2);
+  bolt::cl::device_vector<double> boltVect(stdVect.begin(), stdVect.end());
 
-  for (int i =0; i < stdVectSize; i++){
-    stdVect[i] = myDoubleValueAsKeyValue2;
-    boltVect[i] = myDoubleValueAsKeyValue2;
-  }
 
   ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
   bolt::cl::control ctl = bolt::cl::control::getDefault( );
@@ -474,11 +411,13 @@ TEST_P(countDoubleValueUsedASKeyInStdVect, MultiCore_doubleVectSearchWithSameVal
 TEST (testCountIf, intBtwRange)
 {
   int aSize = 1024;
-  bolt::cl::device_vector<int> A(aSize);
-
+  std::vector<int> s(aSize);
   for (int i=0; i < aSize; i++) {
-    A[i] = rand() % 10 + 1;
+    s[i] = rand() % 10 + 1;
   }
+
+  bolt::cl::device_vector<int> A(s.begin(),s.end());
+
 
   std::iterator_traits<bolt::cl::device_vector<int>::iterator>::difference_type stdInRangeCount = std::count_if
       (A.begin(), A.end(), InRange<int>(1,10)) ;
@@ -491,11 +430,12 @@ TEST (testCountIf, intBtwRange)
 TEST (testCountIf, Serial_intBtwRange)
 {
   int aSize = 1024;
-  bolt::cl::device_vector<int> A(aSize);
-
+  std::vector<int> s(aSize);
   for (int i=0; i < aSize; i++) {
-    A[i] = rand() % 10 + 1;
+    s[i] = rand() % 10 + 1;
   }
+
+  bolt::cl::device_vector<int> A(s.begin(),s.end());
 
   ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
   bolt::cl::control ctl = bolt::cl::control::getDefault( );
@@ -512,11 +452,13 @@ TEST (testCountIf, Serial_intBtwRange)
 TEST (testCountIf, MultiCore_intBtwRange)
 {
   int aSize = 1024;
-  bolt::cl::device_vector<int> A(aSize);
-
+  std::vector<int> s(aSize);
   for (int i=0; i < aSize; i++) {
-    A[i] = rand() % 10 + 1;
+    s[i] = rand() % 10 + 1;
   }
+
+  bolt::cl::device_vector<int> A(s.begin(),s.end());
+
 
   ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
   bolt::cl::control ctl = bolt::cl::control::getDefault( );
@@ -1141,8 +1083,6 @@ int main(int argc, char* argv[])
         bolt::tout << _T( "\t--gtest_break_on_failure to debug interactively with debugger" ) << std::endl;
         bolt::tout << _T( "\t    (only on googletest assertion failures, not SEH exceptions)" ) << std::endl;
     }
-    std::cout << "Test Completed. Press Enter to exit.\n .... ";
-    getchar();
   return retVal;
 }
 

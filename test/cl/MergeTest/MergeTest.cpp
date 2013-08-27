@@ -198,14 +198,14 @@ TEST( Merge, IntTest)
 
   bolt::cl::less<int> pl;
 
- /*std::vector<int> dVectorA( hVectorA.begin(), hVectorA.end() ),
+ std::vector<int> dVectorA( hVectorA.begin(), hVectorA.end() ),
                                dVectorB( hVectorB.begin(), hVectorB.end() ),
-                               dVectorO( hVectorO.begin(), hVectorO.end() );*/
+                               dVectorO( hVectorO.begin(), hVectorO.end() );
 
-
+ /*
  bolt::cl::device_vector<int> dVectorA( hVectorA.begin(), hVectorA.end() ),
                                dVectorB( hVectorB.begin(), hVectorB.end() ),
-                               dVectorO( hVectorO.begin(), hVectorO.end() );  
+                               dVectorO( hVectorO.begin(), hVectorO.end() );  */
 
  std::merge( hVectorA.begin(),
                   hVectorA.end(),
@@ -382,7 +382,37 @@ TEST( MergeUDD , UDDPlusOperatorInts )
 
 }
 
+TEST(sanity_merge__dev_vect_2, wi_ctrl_floats){
+	int stdVectSize1 = 10;
+	int stdVectSize2 = 20;
+	//bolt::cl::device_vector<float> stdVect(stdVectSize);
+	//bolt::cl::device_vector<float> boltVect(stdVectSize);
+	//bolt::cl::device_vector<float> stdmerge(stdVectSize);
+	//bolt::cl::device_vector<float> boltmerge(stdVectSize);
 
+	std::vector<int> A(stdVectSize1);
+	std::vector<int> B(stdVectSize1);
+	std::vector<int> stdmerge(stdVectSize2);
+	std::vector<int> boltmerge(stdVectSize2);
+	
+	//float myFloatValue = 1.125f;
+	//int Value = 10 ;
+
+	for (int i = 0; i < stdVectSize1; i++){
+		//boltVect[i] = stdVect[i] = myFloatValue;
+		A[i] = 10 ;
+        B[i] = 20 ;
+	}
+
+	std::merge(A.begin(), A.end(), B.begin(), B.end(), stdmerge.begin());
+	bolt::cl::merge(A.begin(), A.end(), B.begin(), B.end(), boltmerge.begin());
+
+
+	for(int i = 0; i < stdVectSize2; i++) {
+	EXPECT_EQ(boltmerge[i],stdmerge[i]);
+	}
+		
+}
 
 
 

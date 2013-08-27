@@ -19,6 +19,7 @@
 #include <bolt/cl/fill.h>
 #include <bolt/cl/device_vector.h>
 #include "bolt/cl/iterator/constant_iterator.h"
+#include "common/test_common.h"
 
 #define STRUCT 1
 #define FILL_GOOGLE_TEST 1
@@ -147,69 +148,6 @@ int teststruct_n( int length )
 
 #endif
 
-template< typename T >
-::testing::AssertionResult cmpArrays( const T ref, const T calc, size_t N )
-{
-    for( size_t i = 0; i < N; ++i )
-    {
-        EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-    }
-
-    return ::testing::AssertionSuccess( );
-}
-template< typename T, size_t N >
-::testing::AssertionResult cmpArrays( const T (&ref)[N], const T (&calc)[N] )
-{
-    for( size_t i = 0; i < N; ++i )
-    {
-        EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-    }
-
-    return ::testing::AssertionSuccess( );
-}
-template< typename T, size_t N >
-struct cmpStdArray
-{
-    static ::testing::AssertionResult cmpArrays( const std::array< T, N >& ref, const std::array< T, N >& calc )
-    {
-        for( size_t i = 0; i < N; ++i )
-        {
-            EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-        }
-
-        return ::testing::AssertionSuccess( );
-    }
-};
-template< size_t N >
-struct cmpStdArray< float, N >
-{
-    static ::testing::AssertionResult cmpArrays( const std::array< float, N >& ref, const std::array< float, N >& calc)
-    {
-        for( size_t i = 0; i < N; ++i )
-        {
-            EXPECT_FLOAT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-        }
-
-        return ::testing::AssertionSuccess( );
-    }
-};
-
-#if (TEST_DOUBLE == 1)
-template< size_t N >
-struct cmpStdArray< double, N >
-{
-    static ::testing::AssertionResult cmpArrays( const std::array< double,N>& ref,const std::array< double, N >& calc)
-    {
-        for( size_t i = 0; i < N; ++i )
-        {
-            EXPECT_DOUBLE_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-        }
-
-        return ::testing::AssertionSuccess( );
-    }
-};
-#endif
-
 BOLT_FUNCTOR(UDD, 
 struct UDD
 {
@@ -229,49 +167,6 @@ struct UDD
 
 BOLT_CREATE_TYPENAME( bolt::cl::device_vector< UDD >::iterator );
 BOLT_CREATE_CLCODE( bolt::cl::device_vector< UDD >::iterator, bolt::cl::deviceVectorIteratorTemplate );
-
-template< typename T >
-::testing::AssertionResult cmpArrays( const std::vector< T >& ref, const std::vector< T >& calc )
-{
-    for( size_t i = 0; i < ref.size( ); ++i )
-    {
-        EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-    }
-
-    return ::testing::AssertionSuccess( );
-}
-
-::testing::AssertionResult cmpArrays( const std::vector< float >& ref, const std::vector< float >& calc )
-{
-    for( size_t i = 0; i < ref.size( ); ++i )
-    {
-        EXPECT_FLOAT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-    }
-
-    return ::testing::AssertionSuccess( );
-}
-#if (TEST_DOUBLE == 1)
-::testing::AssertionResult cmpArrays( const std::vector< double >& ref, const std::vector< double >& calc )
-{
-    for( size_t i = 0; i < ref.size( ); ++i )
-    {
-        EXPECT_DOUBLE_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-    }
-
-    return ::testing::AssertionSuccess( );
-}
-#endif
-
-template< typename S, typename B >
-::testing::AssertionResult cmpArrays( const S& ref, const B& calc )
-{
-    for( size_t i = 0; i < ref.size( ); ++i )
-    {
-        EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-    }
-
-    return ::testing::AssertionSuccess( );
-}
 
 class HostclLongVector: public ::testing::TestWithParam< int >
 {
@@ -504,7 +399,7 @@ TYPED_TEST_P( FillArrayTest,CPU_DeviceNormal )
     EXPECT_EQ( stdNumElements, boltNumElements );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType,  FillArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( FillArrayTest< gtest_TypeParam_ >::stdInput, FillArrayTest< gtest_TypeParam_ >::boltInput );
+    //cmpStdArray< ArrayType,  FillArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( FillArrayTest< gtest_TypeParam_ >::stdInput, FillArrayTest< gtest_TypeParam_ >::boltInput );
     
     //OFFSET Test cases
     //  Calling the actual functions under test
@@ -516,6 +411,14 @@ TYPED_TEST_P( FillArrayTest,CPU_DeviceNormal )
     }    
     else
     {
+        std::fill( FillArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin( ) , FillArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin( ) + startIndex, FillArrayTest< gtest_TypeParam_ >::val + 2);
+        std::fill( FillArrayTest< gtest_TypeParam_ >::stdOffsetIn.end( ) - startIndex, FillArrayTest< gtest_TypeParam_ >::stdOffsetIn.end( ), FillArrayTest< gtest_TypeParam_ >::val + 2);
+
+        std::fill( FillArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin( ) , FillArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin( ) + startIndex, FillArrayTest< gtest_TypeParam_ >::val + 2);
+        std::fill( FillArrayTest< gtest_TypeParam_ >::boltOffsetIn.end( ) - startIndex, FillArrayTest< gtest_TypeParam_ >::boltOffsetIn.end( ), FillArrayTest< gtest_TypeParam_ >::val + 2);
+
+
+
         std::fill( FillArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin( ) + startIndex, FillArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin( ) + endIndex, FillArrayTest< gtest_TypeParam_ >::val );
         bolt::cl::fill( c_cpu, FillArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin( ) + startIndex, FillArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin( ) + endIndex, FillArrayTest< gtest_TypeParam_ >::val);
 
@@ -684,14 +587,14 @@ TEST( StdIntVector, OffsetFill )
     int length = 1024;
 
     std::vector<int> stdInput( length );
-    std::vector<int> boltInput( length );
-    int val = 73, offset = 100;
-
     for (int i = 0; i < 1024; ++i)
     {
         stdInput[i] = 1;
-        boltInput[i] = stdInput[i];
     }
+
+    std::vector<int> boltInput( stdInput.begin(),stdInput.end() );
+    int val = 73, offset = 100;
+
 
     std::fill(  stdInput.begin( ) + offset,  stdInput.end( ), val );
     bolt::cl::fill( boltInput.begin( ) + offset, boltInput.end( ), val );
@@ -701,22 +604,16 @@ TEST( StdIntVector, OffsetFill )
 
 TEST( DVIntVector, OffsetFill )
 {
-    int length = 1024;
+    int length = 1<<20;
 
-    std::vector<int> stdInput( length );
-    bolt::cl::device_vector<int> boltInput( length );
+    std::vector<int> stdInput( length ,1);
+    bolt::cl::device_vector<int> boltInput(stdInput.begin(),stdInput.end());
     int val = 73, offset = 100;
-
-    for (int i = 0; i < 1024; ++i)
-    {
-        stdInput[i] = 1;
-        boltInput[i] = 1;
-    }
 
     std::fill(  stdInput.begin( ) + offset,  stdInput.end( ), val );
     bolt::cl::fill( boltInput.begin( ) + offset, boltInput.end( ), val );
 
-    cmpArrays( stdInput, boltInput );
+    cmpArrays( stdInput, boltInput);
 }
 
 

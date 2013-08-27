@@ -46,14 +46,30 @@
 size_t numFailures;
 bool resetNumFailures = true;
 
-template< typename T >
-::testing::AssertionResult cmpArrays( const T ref, const T calc, size_t N )
+template< typename T1,typename T2 >
+::testing::AssertionResult cmpArrays( const T1 &ref,  T2 &calc )
+{
+
+    typename T2::pointer copySrc =  calc.data( );
+    BOLT_TEST_RESET_FAILURES
+    for( size_t i = 0; i < ref.size(); ++i )
+    {
+        BOLT_TEST_INCREMENT_FAILURES
+        EXPECT_EQ( ref[ i ], copySrc[ i ] ) << _T( "Where i = " ) << i;
+    }
+    return ::testing::AssertionSuccess( );
+
+}
+
+template< typename T1,typename T2 >
+::testing::AssertionResult cmpArrays( const T1 &ref,  T2 &calc, size_t N )
 {
     BOLT_TEST_RESET_FAILURES
+    typename T2::pointer copySrc =  calc.data( );
     for( size_t i = 0; i < N; ++i )
     {
         BOLT_TEST_INCREMENT_FAILURES
-        EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
+        EXPECT_EQ( ref[ i ], copySrc[ i ] ) << _T( "Where i = " ) << i;
     }
 
     return ::testing::AssertionSuccess( );
@@ -121,6 +137,7 @@ struct cmpStdArray< double, N >
 };
 
 //  The following cmpArrays verify the correctness of std::vectors's
+/*
 template< typename T >
 ::testing::AssertionResult cmpArrays( const std::vector< T >& ref, const std::vector< T >& calc )
 {
@@ -132,7 +149,7 @@ template< typename T >
     }
 
     return ::testing::AssertionSuccess( );
-}
+}*/
 
 ::testing::AssertionResult cmpArrays( const std::vector< float >& ref, const std::vector< float >& calc )
 {
@@ -161,7 +178,7 @@ template< typename T >
 #endif
 
 //  A very generic template that takes two container, and compares their values assuming a vector interface
-template< typename S, typename B >
+/*template< typename S, typename B >
 ::testing::AssertionResult cmpArrays( const S& ref, const B& calc )
 {
     BOLT_TEST_RESET_FAILURES
@@ -173,6 +190,6 @@ template< typename S, typename B >
 
     return ::testing::AssertionSuccess( );
 }
-
+*/
 
 #endif
