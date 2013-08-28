@@ -117,54 +117,274 @@ public:
             }
         };
 
-    template< typename InputIterator1, typename InputIterator2, typename OutputIterator, typename BinaryFunction >
 
-    void transform_detect_random_access( bolt::cl::control& ctl, const InputIterator1& first1,
-            const InputIterator1& last1, const InputIterator2& first2, const OutputIterator& result,
-            const BinaryFunction& f, const std::string& user_code, std::random_access_iterator_tag,
-            std::random_access_iterator_tag )
+    template<typename DVInputIterator1, typename DVInputIterator2, typename DVOutputIterator, typename BinaryFunction>
+    void transform_enqueue( bolt::cl::control &ctl, const DVInputIterator1& first1, const DVInputIterator1& last1,
+        const DVInputIterator2& first2, const DVOutputIterator& result,
+        const BinaryFunction& f, const std::string& cl_code)
     {
-            transform_pick_iterator( ctl, first1, last1, first2, result, f, user_code,
-            typename std::iterator_traits< InputIterator1 >::iterator_category( ),
-            typename std::iterator_traits< InputIterator2 >::iterator_category( ) );
-    };
+        typedef typename std::iterator_traits<DVInputIterator1>::value_type iType1;
+        typedef typename std::iterator_traits<DVInputIterator2>::value_type iType2;
+        typedef typename std::iterator_traits<DVOutputIterator>::value_type oType;
 
-    // Wrapper that uses default ::bolt::cl::control class, iterator interface
-    template< typename InputIterator1, typename InputIterator2, typename OutputIterator, typename BinaryFunction >
-    void transform_detect_random_access( bolt::cl::control& ctl, const InputIterator1& first1,
-            const InputIterator1& last1, const InputIterator2& first2, const OutputIterator& result,
-            const BinaryFunction& f,const std::string& user_code, std::input_iterator_tag, std::input_iterator_tag )
+        cl_uint distVec = static_cast< cl_uint >(  first1.distance_to(last1) );
+        if( distVec == 0 )
+            return;
+
+        const size_t numComputeUnits = ctl.getDevice( ).getInfo< CL_DEVICE_MAX_COMPUTE_UNITS >( );
+        const size_t numWorkGroupsPerComputeUnit = ctl.getWGPerComputeUnit( );
+        size_t numWorkGroups = numComputeUnits * numWorkGroupsPerComputeUnit;
+
+        /**********************************************************************************
+         * Type Names - used in KernelTemplateSpecializer
+         *********************************************************************************/
+
+        std::vector<std::string> binaryTransformKernels(transform_endB);
+        binaryTransformKernels[transform_iType1] = TypeName< iType1 >::get( );
+        binaryTransformKernels[transform_iType2] = TypeName< iType2 >::get( );
+        binaryTransformKernels[transform_DVInputIterator1] = TypeName< DVInputIterator1 >::get( );
+        binaryTransformKernels[transform_DVInputIterator2] = TypeName< DVInputIterator2 >::get( );
+        binaryTransformKernels[transform_oTypeB] = TypeName< oType >::get( );
+        binaryTransformKernels[transform_DVOutputIteratorB] = TypeName< DVOutputIterator >::get( );
+        binaryTransformKernels[transform_BinaryFunction] = TypeName< BinaryFunction >::get();
+
+       /**********************************************************************************
+        * Type Definitions - directrly concatenated into kernel string
+        *********************************************************************************/
+
+        // For user-defined types, the user must create a TypeName trait which returns the name of the
+        //class - note use of TypeName<>::get to retrieve the name here.
+        std::vector<std::string> typeDefinitions;
+        PUSH_BACK_UNIQUE( typeDefinitions, cl_code)
+        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< iType1 >::get() )
+        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVInputIterator1 >::get() )
+        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVInputIterator2 >::get() )
+        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< oType >::get() )
+        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVOutputIterator >::get() )
+        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< BinaryFunction  >::get() )
+        /**********************************************************************************
+         * Calculate WG Size
+         *********************************************************************************/
+
+        cl_int l_Error = CL_SUCCESS;
+        const size_t wgSize  = WAVEFRONT_SIZE;
+        V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
+        assert( (wgSize & (wgSize-1) ) == 0 ); // The bitwise &,~ logic below requires wgSize to be a power of 2
+
+        int boundsCheck = 0;
+        size_t wgMultiple = distVec;
+        size_t lowerBits = ( distVec & (wgSize-1) );
+        if( lowerBits )
         {
-            // TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data
-            // to a temporary buffer.  Should we?
+            //  Bump the workitem count to the next multiple of wgSize
+            wgMultiple &= ~lowerBits;
+            wgMultiple += wgSize;
+        }
+        else
+        {
+            boundsCheck = 1;
+        }
+        if (wgMultiple/wgSize < numWorkGroups)
+            numWorkGroups = wgMultiple/wgSize;
 
-            static_assert( std::is_same< InputIterator1, std::input_iterator_tag >::value, "Bolt only supports random access iterator types" );
-        };
+        /**********************************************************************************
+         * Compile Options
+         *********************************************************************************/
+        bool cpuDevice = ctl.getDevice().getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_CPU;
+        //std::cout << "Device is CPU: " << (cpuDevice?"TRUE":"FALSE") << std::endl;
+        const size_t kernel_WgSize = (cpuDevice) ? 1 : wgSize;
+        std::string compileOptions;
+        std::ostringstream oss;
+        oss << " -DKERNELWORKGROUPSIZE=" << kernel_WgSize;
+        compileOptions = oss.str();
+
+        /**********************************************************************************
+          * Request Compiled Kernels
+          *********************************************************************************/
+         Transform_KernelTemplateSpecializer ts_kts;
+         std::vector< ::cl::Kernel > kernels = bolt::cl::getKernels(
+             ctl,
+             binaryTransformKernels,
+             &ts_kts,
+             typeDefinitions,
+             transform_kernels,
+             compileOptions);
+         // kernels returned in same order as added in KernelTemplaceSpecializer constructor
 
 
+        ALIGNED( 256 ) BinaryFunction aligned_binary( f );
+        control::buffPointer userFunctor = ctl.acquireBuffer( sizeof( aligned_binary ),
+        CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_binary );
 
-        template<typename InputIterator, typename OutputIterator, typename UnaryFunction>
-    void transform_unary_detect_random_access( ::bolt::cl::control& ctl, const InputIterator& first1,
-        const InputIterator& last1,const OutputIterator& result, const UnaryFunction& f,
-        const std::string& user_code, std::random_access_iterator_tag )
+        typename DVInputIterator1::Payload first1_payload = first1.gpuPayload( );
+        typename DVInputIterator2::Payload first2_payload = first2.gpuPayload( );
+        typename DVOutputIterator::Payload result_payload = result.gpuPayload( );
 
-    {
-        transform_unary_pick_iterator( ctl, first1, last1, result, f, user_code,
-            typename  std::iterator_traits< InputIterator >::iterator_category( ) );
+        kernels[boundsCheck].setArg( 0, first1.getContainer().getBuffer() );
+        kernels[boundsCheck].setArg( 1, first1.gpuPayloadSize( ),&first1_payload);
+        kernels[boundsCheck].setArg( 2, first2.getContainer().getBuffer() );
+        kernels[boundsCheck].setArg( 3, first2.gpuPayloadSize( ),&first2_payload);
+        kernels[boundsCheck].setArg( 4, result.getContainer().getBuffer() );
+        kernels[boundsCheck].setArg( 5, result.gpuPayloadSize( ),&result_payload);
+        kernels[boundsCheck].setArg( 6, distVec );
+        kernels[boundsCheck].setArg( 7, *userFunctor);
+
+        ::cl::Event transformEvent;
+        l_Error = ctl.getCommandQueue().enqueueNDRangeKernel(
+          kernels[boundsCheck],
+            ::cl::NullRange,
+            ::cl::NDRange(wgMultiple), // numWorkGroups*wgSize
+            ::cl::NDRange(wgSize),
+            NULL,
+            &transformEvent );
+        V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for transform() kernel" );
+
+        ::bolt::cl::wait(ctl, transformEvent);
+
+#if TRANSFORM_ENABLE_PROFILING
+        if( 0 )
+        {
+          cl_ulong start_time, stop_time;
+
+          l_Error = transformEvent.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_START, &start_time);
+          V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_QUEUED>()");
+          l_Error = transformEvent.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END, &stop_time);
+          V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_END>()");
+          size_t time = stop_time - start_time;
+          std::cout << "Global Memory Bandwidth: "<<((distVec*(2.0*sizeof(iType1)+sizeof(oType)))/time)<<std::endl;
+        }
+#endif // BOLT_ENABLE_PROFILING
+
     };
 
-// Wrapper that uses default ::bolt::cl::control class, iterator interface
-    template<typename InputIterator, typename OutputIterator, typename UnaryFunction>
-    void transform_unary_detect_random_access( ::bolt::cl::control& ctl, const InputIterator& first1,
-        const InputIterator& last1, const OutputIterator& result, const UnaryFunction& f,
-        const std::string& user_code, std::input_iterator_tag )
-
+    template< typename DVInputIterator, typename DVOutputIterator, typename UnaryFunction >
+    void transform_unary_enqueue( ::bolt::cl::control &ctl, const DVInputIterator& first, const DVInputIterator& last,
+        const DVOutputIterator& result, const UnaryFunction& f, const std::string& cl_code)
     {
-        //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data
-        //  to a temporary buffer.  Should we?
-        static_assert( std::is_same< InputIterator, std::input_iterator_tag >::value , "Bolt only supports random access iterator types" );
-    };
+        typedef typename std::iterator_traits<DVInputIterator>::value_type iType;
+        typedef typename std::iterator_traits<DVOutputIterator>::value_type oType;
 
+        cl_uint distVec = static_cast< cl_uint >( std::distance( first, last ) );
+        if( distVec == 0 )
+            return;
+
+        const size_t numComputeUnits = ctl.getDevice( ).getInfo< CL_DEVICE_MAX_COMPUTE_UNITS >( );
+        const size_t numWorkGroupsPerComputeUnit = ctl.getWGPerComputeUnit( );
+        const size_t numWorkGroups = numComputeUnits * numWorkGroupsPerComputeUnit;
+
+        /**********************************************************************************
+         * Type Names - used in KernelTemplateSpecializer
+         *********************************************************************************/
+
+        std::vector<std::string> unaryTransformKernels( transform_endU );
+        unaryTransformKernels[transform_iType] = TypeName< iType >::get( );
+        unaryTransformKernels[transform_DVInputIterator] = TypeName< DVInputIterator >::get( );
+        unaryTransformKernels[transform_oTypeU] = TypeName< oType >::get( );
+        unaryTransformKernels[transform_DVOutputIteratorU] = TypeName< DVOutputIterator >::get( );
+        unaryTransformKernels[transform_UnaryFunction] = TypeName< UnaryFunction >::get();
+
+        /**********************************************************************************
+         * Type Definitions - directrly concatenated into kernel string
+         *********************************************************************************/
+        std::vector<std::string> typeDefinitions;
+        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< iType >::get() )
+        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVInputIterator >::get() )
+        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< oType >::get() )
+        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVOutputIterator >::get() )
+        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< UnaryFunction  >::get() )
+
+
+        /**********************************************************************************
+         * Calculate WG Size
+         *********************************************************************************/
+        cl_int l_Error = CL_SUCCESS;
+        const size_t wgSize  = WAVEFRONT_SIZE;
+        int boundsCheck = 0;
+
+        V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
+        assert( (wgSize & (wgSize-1) ) == 0 ); // The bitwise &,~ logic below requires wgSize to be a power of 2
+
+        size_t wgMultiple = distVec;
+        size_t lowerBits = ( distVec & (wgSize-1) );
+        if( lowerBits )
+        {
+            //  Bump the workitem count to the next multiple of wgSize
+            wgMultiple &= ~lowerBits;
+            wgMultiple += wgSize;
+        }
+        else
+        {
+            boundsCheck = 1;
+        }
+
+        /**********************************************************************************
+         * Compile Options
+         *********************************************************************************/
+        bool cpuDevice = ctl.getDevice().getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_CPU;
+        //std::cout << "Device is CPU: " << (cpuDevice?"TRUE":"FALSE") << std::endl;
+        const size_t kernel_WgSize = (cpuDevice) ? 1 : wgSize;
+        std::string compileOptions;
+        std::ostringstream oss;
+        oss << " -DKERNELWORKGROUPSIZE=" << kernel_WgSize;
+        compileOptions = oss.str();
+
+        /**********************************************************************************
+         * Request Compiled Kernels
+         *********************************************************************************/
+        TransformUnary_KernelTemplateSpecializer ts_kts;
+        std::vector< ::cl::Kernel > kernels = bolt::cl::getKernels(
+            ctl,
+            unaryTransformKernels,
+            &ts_kts,
+            typeDefinitions,
+            transform_kernels,
+            compileOptions);
+        // kernels returned in same order as added in KernelTemplaceSpecializer constructor
+
+        // Create buffer wrappers so we can access the host functors, for read or writing in the kernel
+        ALIGNED( 256 ) UnaryFunction aligned_binary( f );
+        control::buffPointer userFunctor = ctl.acquireBuffer( sizeof( aligned_binary ),
+        CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_binary );
+
+        typename DVInputIterator::Payload first_payload = first.gpuPayload( );
+        typename DVOutputIterator::Payload result_payload = result.gpuPayload( );
+
+        kernels[boundsCheck].setArg(0, first.getContainer().getBuffer() );
+        kernels[boundsCheck].setArg(1, first.gpuPayloadSize( ),&first_payload);
+        kernels[boundsCheck].setArg(2, result.getContainer().getBuffer() );
+        kernels[boundsCheck].setArg(3, result.gpuPayloadSize( ),&result_payload);
+        kernels[boundsCheck].setArg(4, distVec );
+        kernels[boundsCheck].setArg(5, *userFunctor);
+        //k.setArg(3, numElementsPerThread );
+
+        ::cl::Event transformEvent;
+        l_Error = ctl.getCommandQueue().enqueueNDRangeKernel(
+            kernels[boundsCheck],
+            ::cl::NullRange,
+            ::cl::NDRange( wgMultiple ), // numThreads
+            ::cl::NDRange( wgSize ),
+            NULL,
+            &transformEvent );
+        V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for transform() kernel" );
+
+        ::bolt::cl::wait(ctl, transformEvent);
+
+#if TRANSFORM_ENABLE_PROFILING
+        if( 0 )
+        {
+          cl_ulong start_time, stop_time;
+
+          l_Error = transformEvent.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_START, &start_time);
+          V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_QUEUED>()");
+          l_Error = transformEvent.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END, &stop_time);
+          V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_END>()");
+          size_t time = stop_time - start_time;
+          //std::cout << "Global Memory Bandwidth: "<<((distVec*(1.0*sizeof(iType)+sizeof(oType)))/time)<< std::endl;
+
+        }
+#endif // BOLT_ENABLE_PROFILING
+
+    };
 
     /*! \brief This template function overload is used to seperate device_vector iterators from all other iterators
         \detail This template is called by the non-detail versions of inclusive_scan, it already assumes random access
@@ -369,7 +589,7 @@ public:
         }
         else if( runMode == bolt::cl::control::MultiCoreCpu )
         {
- 
+
 #if defined( ENABLE_TBB )
 
             typename bolt::cl::device_vector< iType1 >::pointer firstPtr =  first1.getContainer( ).data( );
@@ -429,7 +649,7 @@ public:
         }
         else if( runMode == bolt::cl::control::MultiCoreCpu )
         {
- 
+
 #if defined( ENABLE_TBB )
 
             typename bolt::cl::device_vector< iType1 >::pointer firstPtr =  first1.getContainer( ).data( );
@@ -566,273 +786,55 @@ public:
         }
     }
 
-    template<typename DVInputIterator1, typename DVInputIterator2, typename DVOutputIterator, typename BinaryFunction>
-    void transform_enqueue( bolt::cl::control &ctl, const DVInputIterator1& first1, const DVInputIterator1& last1,
-        const DVInputIterator2& first2, const DVOutputIterator& result,
-        const BinaryFunction& f, const std::string& cl_code)
+
+    template< typename InputIterator1, typename InputIterator2, typename OutputIterator, typename BinaryFunction >
+    void transform_detect_random_access( bolt::cl::control& ctl, const InputIterator1& first1,
+            const InputIterator1& last1, const InputIterator2& first2, const OutputIterator& result,
+            const BinaryFunction& f, const std::string& user_code, std::random_access_iterator_tag,
+            std::random_access_iterator_tag )
     {
-        typedef typename std::iterator_traits<DVInputIterator1>::value_type iType1;
-        typedef typename std::iterator_traits<DVInputIterator2>::value_type iType2;
-        typedef typename std::iterator_traits<DVOutputIterator>::value_type oType;
-
-        cl_uint distVec = static_cast< cl_uint >(  first1.distance_to(last1) );
-        if( distVec == 0 )
-            return;
-
-        const size_t numComputeUnits = ctl.getDevice( ).getInfo< CL_DEVICE_MAX_COMPUTE_UNITS >( );
-        const size_t numWorkGroupsPerComputeUnit = ctl.getWGPerComputeUnit( );
-        size_t numWorkGroups = numComputeUnits * numWorkGroupsPerComputeUnit;
-
-        /**********************************************************************************
-         * Type Names - used in KernelTemplateSpecializer
-         *********************************************************************************/
-
-        std::vector<std::string> binaryTransformKernels(transform_endB);
-        binaryTransformKernels[transform_iType1] = TypeName< iType1 >::get( );
-        binaryTransformKernels[transform_iType2] = TypeName< iType2 >::get( );
-        binaryTransformKernels[transform_DVInputIterator1] = TypeName< DVInputIterator1 >::get( );
-        binaryTransformKernels[transform_DVInputIterator2] = TypeName< DVInputIterator2 >::get( );
-        binaryTransformKernels[transform_oTypeB] = TypeName< oType >::get( );
-        binaryTransformKernels[transform_DVOutputIteratorB] = TypeName< DVOutputIterator >::get( );
-        binaryTransformKernels[transform_BinaryFunction] = TypeName< BinaryFunction >::get();
-
-       /**********************************************************************************
-        * Type Definitions - directrly concatenated into kernel string
-        *********************************************************************************/
-
-        // For user-defined types, the user must create a TypeName trait which returns the name of the
-        //class - note use of TypeName<>::get to retrieve the name here.
-        std::vector<std::string> typeDefinitions;
-        PUSH_BACK_UNIQUE( typeDefinitions, cl_code)
-        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< iType1 >::get() )
-        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVInputIterator1 >::get() )
-        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVInputIterator2 >::get() )
-        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< oType >::get() )
-        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVOutputIterator >::get() )
-        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< BinaryFunction  >::get() )
-        /**********************************************************************************
-         * Calculate WG Size
-         *********************************************************************************/
-
-        cl_int l_Error = CL_SUCCESS;
-        const size_t wgSize  = WAVEFRONT_SIZE;
-        V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
-        assert( (wgSize & (wgSize-1) ) == 0 ); // The bitwise &,~ logic below requires wgSize to be a power of 2
-
-        int boundsCheck = 0;
-        size_t wgMultiple = distVec;
-        size_t lowerBits = ( distVec & (wgSize-1) );
-        if( lowerBits )
-        {
-            //  Bump the workitem count to the next multiple of wgSize
-            wgMultiple &= ~lowerBits;
-            wgMultiple += wgSize;
-        }
-        else
-        {
-            boundsCheck = 1;
-        }
-        if (wgMultiple/wgSize < numWorkGroups)
-            numWorkGroups = wgMultiple/wgSize;
-
-        /**********************************************************************************
-         * Compile Options
-         *********************************************************************************/
-        bool cpuDevice = ctl.getDevice().getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_CPU;
-        //std::cout << "Device is CPU: " << (cpuDevice?"TRUE":"FALSE") << std::endl;
-        const size_t kernel_WgSize = (cpuDevice) ? 1 : wgSize;
-        std::string compileOptions;
-        std::ostringstream oss;
-        oss << " -DKERNELWORKGROUPSIZE=" << kernel_WgSize;
-        compileOptions = oss.str();
-
-        /**********************************************************************************
-          * Request Compiled Kernels
-          *********************************************************************************/
-         Transform_KernelTemplateSpecializer ts_kts;
-         std::vector< ::cl::Kernel > kernels = bolt::cl::getKernels(
-             ctl,
-             binaryTransformKernels,
-             &ts_kts,
-             typeDefinitions,
-             transform_kernels,
-             compileOptions);
-         // kernels returned in same order as added in KernelTemplaceSpecializer constructor
-
-
-        ALIGNED( 256 ) BinaryFunction aligned_binary( f );
-        control::buffPointer userFunctor = ctl.acquireBuffer( sizeof( aligned_binary ),
-        CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_binary );
-
-        typename DVInputIterator1::Payload first1_payload = first1.gpuPayload( ); 
-        typename DVInputIterator2::Payload first2_payload = first2.gpuPayload( );
-        typename DVOutputIterator::Payload result_payload = result.gpuPayload( ); 
-
-        kernels[boundsCheck].setArg( 0, first1.getContainer().getBuffer() );
-        kernels[boundsCheck].setArg( 1, first1.gpuPayloadSize( ),&first1_payload);
-        kernels[boundsCheck].setArg( 2, first2.getContainer().getBuffer() );
-        kernels[boundsCheck].setArg( 3, first2.gpuPayloadSize( ),&first2_payload);
-        kernels[boundsCheck].setArg( 4, result.getContainer().getBuffer() );
-        kernels[boundsCheck].setArg( 5, result.gpuPayloadSize( ),&result_payload);
-        kernels[boundsCheck].setArg( 6, distVec );
-        kernels[boundsCheck].setArg( 7, *userFunctor);
-
-        ::cl::Event transformEvent;
-        l_Error = ctl.getCommandQueue().enqueueNDRangeKernel(
-          kernels[boundsCheck],
-            ::cl::NullRange,
-            ::cl::NDRange(wgMultiple), // numWorkGroups*wgSize
-            ::cl::NDRange(wgSize),
-            NULL,
-            &transformEvent );
-        V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for transform() kernel" );
-
-        ::bolt::cl::wait(ctl, transformEvent);
-
-#if TRANSFORM_ENABLE_PROFILING
-        if( 0 )
-        {
-          cl_ulong start_time, stop_time;
-
-          l_Error = transformEvent.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_START, &start_time);
-          V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_QUEUED>()");
-          l_Error = transformEvent.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END, &stop_time);
-          V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_END>()");
-          size_t time = stop_time - start_time;
-          std::cout << "Global Memory Bandwidth: "<<((distVec*(2.0*sizeof(iType1)+sizeof(oType)))/time)<<std::endl;
-        }  
-#endif // BOLT_ENABLE_PROFILING
-
+            transform_pick_iterator( ctl, first1, last1, first2, result, f, user_code,
+            typename std::iterator_traits< InputIterator1 >::iterator_category( ),
+            typename std::iterator_traits< InputIterator2 >::iterator_category( ) );
     };
 
-    template< typename DVInputIterator, typename DVOutputIterator, typename UnaryFunction >
-    void transform_unary_enqueue( ::bolt::cl::control &ctl, const DVInputIterator& first, const DVInputIterator& last,
-        const DVOutputIterator& result, const UnaryFunction& f, const std::string& cl_code)
+    // Wrapper that uses default ::bolt::cl::control class, iterator interface
+    template< typename InputIterator1, typename InputIterator2, typename OutputIterator, typename BinaryFunction >
+    void transform_detect_random_access( bolt::cl::control& ctl, const InputIterator1& first1,
+            const InputIterator1& last1, const InputIterator2& first2, const OutputIterator& result,
+            const BinaryFunction& f,const std::string& user_code, std::input_iterator_tag, std::input_iterator_tag )
+        {
+            // TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data
+            // to a temporary buffer.  Should we?
+
+            static_assert( std::is_same< InputIterator1, std::input_iterator_tag >::value, "Bolt only supports random access iterator types" );
+        };
+
+
+
+        template<typename InputIterator, typename OutputIterator, typename UnaryFunction>
+    void transform_unary_detect_random_access( ::bolt::cl::control& ctl, const InputIterator& first1,
+        const InputIterator& last1,const OutputIterator& result, const UnaryFunction& f,
+        const std::string& user_code, std::random_access_iterator_tag )
+
     {
-        typedef typename std::iterator_traits<DVInputIterator>::value_type iType;
-        typedef typename std::iterator_traits<DVOutputIterator>::value_type oType;
-
-        cl_uint distVec = static_cast< cl_uint >( std::distance( first, last ) );
-        if( distVec == 0 )
-            return;
-
-        const size_t numComputeUnits = ctl.getDevice( ).getInfo< CL_DEVICE_MAX_COMPUTE_UNITS >( );
-        const size_t numWorkGroupsPerComputeUnit = ctl.getWGPerComputeUnit( );
-        const size_t numWorkGroups = numComputeUnits * numWorkGroupsPerComputeUnit;
-
-        /**********************************************************************************
-         * Type Names - used in KernelTemplateSpecializer
-         *********************************************************************************/
-
-        std::vector<std::string> unaryTransformKernels( transform_endU );
-        unaryTransformKernels[transform_iType] = TypeName< iType >::get( );
-        unaryTransformKernels[transform_DVInputIterator] = TypeName< DVInputIterator >::get( );
-        unaryTransformKernels[transform_oTypeU] = TypeName< oType >::get( );
-        unaryTransformKernels[transform_DVOutputIteratorU] = TypeName< DVOutputIterator >::get( );
-        unaryTransformKernels[transform_UnaryFunction] = TypeName< UnaryFunction >::get();
-
-        /**********************************************************************************
-         * Type Definitions - directrly concatenated into kernel string
-         *********************************************************************************/
-        std::vector<std::string> typeDefinitions;
-        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< iType >::get() )
-        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVInputIterator >::get() )
-        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< oType >::get() )
-        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVOutputIterator >::get() )
-        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< UnaryFunction  >::get() )
-
-
-        /**********************************************************************************
-         * Calculate WG Size
-         *********************************************************************************/
-        cl_int l_Error = CL_SUCCESS;
-        const size_t wgSize  = WAVEFRONT_SIZE;
-        int boundsCheck = 0;
-
-        V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
-        assert( (wgSize & (wgSize-1) ) == 0 ); // The bitwise &,~ logic below requires wgSize to be a power of 2
-
-        size_t wgMultiple = distVec;
-        size_t lowerBits = ( distVec & (wgSize-1) );
-        if( lowerBits )
-        {
-            //  Bump the workitem count to the next multiple of wgSize
-            wgMultiple &= ~lowerBits;
-            wgMultiple += wgSize;
-        }
-        else
-        {
-            boundsCheck = 1;
-        }
-
-        /**********************************************************************************
-         * Compile Options
-         *********************************************************************************/
-        bool cpuDevice = ctl.getDevice().getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_CPU;
-        //std::cout << "Device is CPU: " << (cpuDevice?"TRUE":"FALSE") << std::endl;
-        const size_t kernel_WgSize = (cpuDevice) ? 1 : wgSize;
-        std::string compileOptions;
-        std::ostringstream oss;
-        oss << " -DKERNELWORKGROUPSIZE=" << kernel_WgSize;
-        compileOptions = oss.str();
-
-        /**********************************************************************************
-         * Request Compiled Kernels
-         *********************************************************************************/
-        TransformUnary_KernelTemplateSpecializer ts_kts;
-        std::vector< ::cl::Kernel > kernels = bolt::cl::getKernels(
-            ctl,
-            unaryTransformKernels,
-            &ts_kts,
-            typeDefinitions,
-            transform_kernels,
-            compileOptions);
-        // kernels returned in same order as added in KernelTemplaceSpecializer constructor
-
-        // Create buffer wrappers so we can access the host functors, for read or writing in the kernel
-        ALIGNED( 256 ) UnaryFunction aligned_binary( f );
-        control::buffPointer userFunctor = ctl.acquireBuffer( sizeof( aligned_binary ),
-        CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_binary );
-
-        typename DVInputIterator::Payload first_payload = first.gpuPayload( );
-        typename DVOutputIterator::Payload result_payload = result.gpuPayload( );
-
-        kernels[boundsCheck].setArg(0, first.getContainer().getBuffer() );
-        kernels[boundsCheck].setArg(1, first.gpuPayloadSize( ),&first_payload);
-        kernels[boundsCheck].setArg(2, result.getContainer().getBuffer() );
-        kernels[boundsCheck].setArg(3, result.gpuPayloadSize( ),&result_payload);
-        kernels[boundsCheck].setArg(4, distVec );
-        kernels[boundsCheck].setArg(5, *userFunctor);
-        //k.setArg(3, numElementsPerThread );
-
-        ::cl::Event transformEvent;
-        l_Error = ctl.getCommandQueue().enqueueNDRangeKernel(
-            kernels[boundsCheck],
-            ::cl::NullRange,
-            ::cl::NDRange( wgMultiple ), // numThreads
-            ::cl::NDRange( wgSize ),
-            NULL,
-            &transformEvent );
-        V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for transform() kernel" );
-
-        ::bolt::cl::wait(ctl, transformEvent);
-
-#if TRANSFORM_ENABLE_PROFILING
-        if( 0 )
-        {
-          cl_ulong start_time, stop_time;
-
-          l_Error = transformEvent.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_START, &start_time);
-          V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_QUEUED>()");
-          l_Error = transformEvent.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END, &stop_time);
-          V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_END>()");
-          size_t time = stop_time - start_time;
-          //std::cout << "Global Memory Bandwidth: "<<((distVec*(1.0*sizeof(iType)+sizeof(oType)))/time)<< std::endl;
-
-        }  
-#endif // BOLT_ENABLE_PROFILING
-
+        transform_unary_pick_iterator( ctl, first1, last1, result, f, user_code,
+            typename  std::iterator_traits< InputIterator >::iterator_category( ) );
     };
+
+// Wrapper that uses default ::bolt::cl::control class, iterator interface
+    template<typename InputIterator, typename OutputIterator, typename UnaryFunction>
+    void transform_unary_detect_random_access( ::bolt::cl::control& ctl, const InputIterator& first1,
+        const InputIterator& last1, const OutputIterator& result, const UnaryFunction& f,
+        const std::string& user_code, std::input_iterator_tag )
+
+    {
+        //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data
+        //  to a temporary buffer.  Should we?
+        static_assert( std::is_same< InputIterator, std::input_iterator_tag >::value , "Bolt only supports random access iterator types" );
+    };
+
+
 
 } //End of detail namespace
 

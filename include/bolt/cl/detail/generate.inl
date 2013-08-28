@@ -82,128 +82,6 @@ class Generate_KernelTemplateSpecializer : public KernelTemplateSpecializer
 };
 
 
-
-/*****************************************************************************
-             * Random Access
-             ****************************************************************************/
-
-// generate, yes random-access
-template<typename ForwardIterator, typename Generator>
-void generate_detect_random_access( bolt::cl::control &ctrl, const ForwardIterator& first, const ForwardIterator& last,
-                        const Generator& gen, const std::string &cl_code, std::random_access_iterator_tag )
-{
-                generate_pick_iterator(ctrl, first, last, gen, cl_code,
-                typename std::iterator_traits< ForwardIterator >::iterator_category( ) );
-}
-
-// generate, not random-access
-template<typename ForwardIterator, typename Generator>
-void generate_detect_random_access( bolt::cl::control &ctrl, const ForwardIterator& first, const ForwardIterator& last,
-                        const Generator& gen, const std::string &cl_code, std::forward_iterator_tag )
-{
-                static_assert(std::is_same< ForwardIterator, std::forward_iterator_tag   >::value, "Bolt only supports random access iterator types" );
-}
-
-
-/*****************************************************************************
-             * Pick Iterator
-             ****************************************************************************/
-
-/*! \brief This template function overload is used to seperate device_vector iterators from all other iterators
-               \detail This template is called by the non-detail versions of generate, it already assumes random access
-             *  iterators.  This overload is called strictly for non-device_vector iterators
-            */
-            template<typename ForwardIterator, typename Generator>
-            void generate_pick_iterator(bolt::cl::control &ctl,  const ForwardIterator &first,
-                const ForwardIterator &last,
-                const Generator &gen, const std::string &user_code, std::random_access_iterator_tag )
-            {
-                typedef typename std::iterator_traits<ForwardIterator>::value_type Type;
-
-                size_t sz = (last - first);
-                if (sz < 1)
-                    return;
-
-                bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
-                if(runMode == bolt::cl::control::Automatic)
-                {
-                     runMode = ctl.getDefaultPathToRun();
-                }
-
-                if( runMode == bolt::cl::control::SerialCpu)
-                {
-                    std::generate(first, last, gen );
-                }
-                else if(runMode == bolt::cl::control::MultiCoreCpu)
-                {
-                    #ifdef ENABLE_TBB
-                           //TODO : MultiCoreCPU Version of generate not Implemented yet...
-                           std::generate(first, last, gen );
-                    #else
-                           throw std::runtime_error("MultiCoreCPU Version of generate not Enabled! \n");
-                    #endif
-                }
-                else
-                {
-                    // Use host pointers memory since these arrays are only write once - no benefit to copying.
-                    // Map the forward iterator to a device_vector
-                    device_vector< Type > range( first, sz, CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY, false, ctl );
-
-                    generate_enqueue( ctl, range.begin( ), range.end( ), gen, user_code );
-
-                    // This should immediately map/unmap the buffer
-                    range.data( );
-                }
-}
-
-            // This template is called by the non-detail versions of generate,
-            // it already assumes random access iterators
-            // This is called strictly for iterators that are derived from device_vector< T >::iterator
-            template<typename DVForwardIterator, typename Generator>
-            void generate_pick_iterator(bolt::cl::control &ctl, const DVForwardIterator &first,
-                const DVForwardIterator &last,
-                const Generator &gen, const std::string& user_code, bolt::cl::device_vector_tag )
-            {
-                typedef typename std::iterator_traits<DVForwardIterator>::value_type iType;
-                bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
-                if(runMode == bolt::cl::control::Automatic)
-                {
-                     runMode = ctl.getDefaultPathToRun();
-                }
-
-                if( runMode == bolt::cl::control::SerialCpu)
-                {
-                    typename bolt::cl::device_vector< iType >::pointer generateInputBuffer =  first.getContainer( ).data( );
-                    std::generate(&generateInputBuffer[first.m_Index], &generateInputBuffer[last.m_Index], gen );
-                }
-                else if(runMode == bolt::cl::control::MultiCoreCpu)
-                {
-                    #ifdef ENABLE_TBB
-                      typename bolt::cl::device_vector< iType >::pointer generateInputBuffer =  first.getContainer( ).data( );
-                      bolt::btbb::generate(&generateInputBuffer[first.m_Index], &generateInputBuffer[last.m_Index], gen );
-                    #else
-                        throw std::runtime_error("MultiCoreCPU Version of generate not Enabled! \n");
-                    #endif
-                }
-                else
-                {
-                    generate_enqueue( ctl, first, last, gen, user_code );
-                }
-            }
-
-            // This template is called by the non-detail versions of generate,
-            // it already assumes random access iterators
-            // This is called strictly for iterators that are derived from device_vector< T >::iterator
-            template<typename DVForwardIterator, typename Generator>
-            void generate_pick_iterator(bolt::cl::control &ctl,  const DVForwardIterator &first,
-                const DVForwardIterator &last,
-                const Generator &gen, const std::string& user_code, bolt::cl::fancy_iterator_tag )
-            {
-                static_assert( std::is_same< DVForwardIterator, bolt::cl::fancy_iterator_tag  >::value, "It is not possible to generate into fancy iterators. They are not mutable! " );
-            }
-
-
-
 /*****************************************************************************
 * Enqueue
 ****************************************************************************/
@@ -321,7 +199,7 @@ aProfiler.set(AsyncProfiler::device, control::SerialCpu);
 
     typename DVForwardIterator::Payload first_payload = first.gpuPayload( ) ;
     V_OPENCL( kernels[whichKernel].setArg( 0, first.getContainer().getBuffer()),"Error setArg kernels[0]");//I/P Buffer
-    V_OPENCL( kernels[whichKernel].setArg( 1, first.gpuPayloadSize( ),&first_payload), 
+    V_OPENCL( kernels[whichKernel].setArg( 1, first.gpuPayloadSize( ),&first_payload),
         "Error setting a kernel argument" );
     V_OPENCL( kernels[whichKernel].setArg( 2, numElements),         "Error setArg kernels[ 0 ]" ); // Size of buffer
     V_OPENCL( kernels[whichKernel].setArg( 3, *userGenerator ),     "Error setArg kernels[ 0 ]" ); // Generator
@@ -423,6 +301,131 @@ aProfiler.stopTrial();
           << time/1000000.0 << " ms)" << std::endl;
     }
 }; // end generate_enqueue
+
+
+/*****************************************************************************
+             * Pick Iterator
+****************************************************************************/
+
+/*! \brief This template function overload is used to seperate device_vector iterators from all other iterators
+               \detail This template is called by the non-detail versions of generate, it already assumes random access
+             *  iterators.  This overload is called strictly for non-device_vector iterators
+            */
+            template<typename ForwardIterator, typename Generator>
+            void generate_pick_iterator(bolt::cl::control &ctl,  const ForwardIterator &first,
+                const ForwardIterator &last,
+                const Generator &gen, const std::string &user_code, std::random_access_iterator_tag )
+            {
+                typedef typename std::iterator_traits<ForwardIterator>::value_type Type;
+
+                size_t sz = (last - first);
+                if (sz < 1)
+                    return;
+
+                bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+                if(runMode == bolt::cl::control::Automatic)
+                {
+                     runMode = ctl.getDefaultPathToRun();
+                }
+
+                if( runMode == bolt::cl::control::SerialCpu)
+                {
+                    std::generate(first, last, gen );
+                }
+                else if(runMode == bolt::cl::control::MultiCoreCpu)
+                {
+                    #ifdef ENABLE_TBB
+                           //TODO : MultiCoreCPU Version of generate not Implemented yet...
+                           std::generate(first, last, gen );
+                    #else
+                           throw std::runtime_error("MultiCoreCPU Version of generate not Enabled! \n");
+                    #endif
+                }
+                else
+                {
+                    // Use host pointers memory since these arrays are only write once - no benefit to copying.
+                    // Map the forward iterator to a device_vector
+                    device_vector< Type > range( first, sz, CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY, false, ctl );
+
+                    generate_enqueue( ctl, range.begin( ), range.end( ), gen, user_code );
+
+                    // This should immediately map/unmap the buffer
+                    range.data( );
+                }
+}
+
+            // This template is called by the non-detail versions of generate,
+            // it already assumes random access iterators
+            // This is called strictly for iterators that are derived from device_vector< T >::iterator
+            template<typename DVForwardIterator, typename Generator>
+            void generate_pick_iterator(bolt::cl::control &ctl, const DVForwardIterator &first,
+                const DVForwardIterator &last,
+                const Generator &gen, const std::string& user_code, bolt::cl::device_vector_tag )
+            {
+                typedef typename std::iterator_traits<DVForwardIterator>::value_type iType;
+                bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+                if(runMode == bolt::cl::control::Automatic)
+                {
+                     runMode = ctl.getDefaultPathToRun();
+                }
+
+                if( runMode == bolt::cl::control::SerialCpu)
+                {
+                    typename bolt::cl::device_vector< iType >::pointer generateInputBuffer =  first.getContainer( ).data( );
+                    std::generate(&generateInputBuffer[first.m_Index], &generateInputBuffer[last.m_Index], gen );
+                }
+                else if(runMode == bolt::cl::control::MultiCoreCpu)
+                {
+                    #ifdef ENABLE_TBB
+                      typename bolt::cl::device_vector< iType >::pointer generateInputBuffer =  first.getContainer( ).data( );
+                      bolt::btbb::generate(&generateInputBuffer[first.m_Index], &generateInputBuffer[last.m_Index], gen );
+                    #else
+                        throw std::runtime_error("MultiCoreCPU Version of generate not Enabled! \n");
+                    #endif
+                }
+                else
+                {
+                    generate_enqueue( ctl, first, last, gen, user_code );
+                }
+            }
+
+            // This template is called by the non-detail versions of generate,
+            // it already assumes random access iterators
+            // This is called strictly for iterators that are derived from device_vector< T >::iterator
+            template<typename DVForwardIterator, typename Generator>
+            void generate_pick_iterator(bolt::cl::control &ctl,  const DVForwardIterator &first,
+                const DVForwardIterator &last,
+                const Generator &gen, const std::string& user_code, bolt::cl::fancy_iterator_tag )
+            {
+                static_assert( std::is_same< DVForwardIterator, bolt::cl::fancy_iterator_tag  >::value, "It is not possible to generate into fancy iterators. They are not mutable! " );
+            }
+
+
+
+
+
+/*****************************************************************************
+             * Random Access
+****************************************************************************/
+
+// generate, yes random-access
+template<typename ForwardIterator, typename Generator>
+void generate_detect_random_access( bolt::cl::control &ctrl, const ForwardIterator& first, const ForwardIterator& last,
+                        const Generator& gen, const std::string &cl_code, std::random_access_iterator_tag )
+{
+                generate_pick_iterator(ctrl, first, last, gen, cl_code,
+                typename std::iterator_traits< ForwardIterator >::iterator_category( ) );
+}
+
+// generate, not random-access
+template<typename ForwardIterator, typename Generator>
+void generate_detect_random_access( bolt::cl::control &ctrl, const ForwardIterator& first, const ForwardIterator& last,
+                        const Generator& gen, const std::string &cl_code, std::forward_iterator_tag )
+{
+                static_assert(std::is_same< ForwardIterator, std::forward_iterator_tag   >::value, "Bolt only supports random access iterator types" );
+}
+
+
 
 }//End of detail namespace
 

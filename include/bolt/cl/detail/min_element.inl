@@ -103,11 +103,11 @@ namespace bolt {
 
                 const char * str = "MAX_KERNEL";
 
-                if(std::strcmp(min_max,str) == 0)      
+                if(std::strcmp(min_max,str) == 0)
                     compileOptions = "-D_IS_MAX_KERNEL";
                 else
                     compileOptions = "-D_IS_MIN_KERNEL";
-              
+
                 //std::ostringstream oss;
                 //oss << " -DKERNEL0WORKGROUPSIZE=" << kernel0_WgSize;
 
@@ -212,59 +212,7 @@ namespace bolt {
                 return minele_indx;
             }
 
-            template<typename ForwardIterator, typename BinaryPredicate>
-            ForwardIterator min_element_detect_random_access(bolt::cl::control &ctl,
-                const ForwardIterator& first,
-                const ForwardIterator& last,
-                const BinaryPredicate& binary_op,
-                const std::string& cl_code,
-                std::input_iterator_tag)
-            {
-                //TODO:It should be possible to support non-random_access_iterator_tag iterators,if we copied the data
-                //to a temporary buffer.  Should we?
-                static_assert( std::is_same< ForwardIterator, std::forward_iterator_tag   >::value, "Bolt only supports random access iterator types" );
-            }
 
-			 template<typename ForwardIterator, typename BinaryPredicate>
-             ForwardIterator max_element_detect_random_access(bolt::cl::control &ctl,
-                 const ForwardIterator& first,
-                 const ForwardIterator& last,
-                 const BinaryPredicate& binary_op,
-                 const std::string& cl_code,
-                 std::input_iterator_tag)
-             {
-                 //TODO:It should be possible to support non-random_access_iterator_tag iterators,if we copied the data
-                 //to a temporary buffer.  Should we?
-                 static_assert( std::is_same< ForwardIterator, std::forward_iterator_tag   >::value, "Bolt only supports random access iterator types" );
-             } 
-
-            template<typename ForwardIterator, typename BinaryPredicate>
-            ForwardIterator min_element_detect_random_access(bolt::cl::control &ctl,
-                const ForwardIterator& first,
-                const ForwardIterator& last,
-                const BinaryPredicate& binary_op,
-                const std::string& cl_code,
-                std::random_access_iterator_tag)
-            {
-                const char * str = "MIN_KERNEL";
-                return min_element_pick_iterator( ctl, first, last,  binary_op, cl_code,
-                  typename  std::iterator_traits< ForwardIterator >::iterator_category( ), str );
-            }
-
-
-
-            template<typename ForwardIterator, typename BinaryPredicate>
-            ForwardIterator max_element_detect_random_access(bolt::cl::control &ctl,
-                const ForwardIterator& first,
-                const ForwardIterator& last,
-                const BinaryPredicate& binary_op,
-                const std::string& cl_code,
-                std::random_access_iterator_tag)
-            {
-                const char * str = "MAX_KERNEL";
-                return min_element_pick_iterator( ctl, first, last,  binary_op, cl_code,
-                   typename std::iterator_traits< ForwardIterator >::iterator_category( ), str);
-            }
 
             // This template is called after we detect random access iterators
             // This is called strictly for any non-device_vector iterator
@@ -323,7 +271,7 @@ namespace bolt {
                     return std::min_element(first, last, binary_op);
 
                 default:
-                   
+
                     if(std::strcmp(min_max,str) == 0)
                        return std::max_element(first, last, binary_op);
                     else
@@ -443,15 +391,63 @@ namespace bolt {
 
            }
 
+            template<typename ForwardIterator, typename BinaryPredicate>
+            ForwardIterator min_element_detect_random_access(bolt::cl::control &ctl,
+                const ForwardIterator& first,
+                const ForwardIterator& last,
+                const BinaryPredicate& binary_op,
+                const std::string& cl_code,
+                std::input_iterator_tag)
+            {
+                //TODO:It should be possible to support non-random_access_iterator_tag iterators,if we copied the data
+                //to a temporary buffer.  Should we?
+                static_assert( std::is_same< ForwardIterator, std::forward_iterator_tag   >::value, "Bolt only supports random access iterator types" );
+            }
+
+			 template<typename ForwardIterator, typename BinaryPredicate>
+             ForwardIterator max_element_detect_random_access(bolt::cl::control &ctl,
+                 const ForwardIterator& first,
+                 const ForwardIterator& last,
+                 const BinaryPredicate& binary_op,
+                 const std::string& cl_code,
+                 std::input_iterator_tag)
+             {
+                 //TODO:It should be possible to support non-random_access_iterator_tag iterators,if we copied the data
+                 //to a temporary buffer.  Should we?
+                 static_assert( std::is_same< ForwardIterator, std::forward_iterator_tag   >::value, "Bolt only supports random access iterator types" );
+             }
+
+            template<typename ForwardIterator, typename BinaryPredicate>
+            ForwardIterator min_element_detect_random_access(bolt::cl::control &ctl,
+                const ForwardIterator& first,
+                const ForwardIterator& last,
+                const BinaryPredicate& binary_op,
+                const std::string& cl_code,
+                std::random_access_iterator_tag)
+            {
+                const char * str = "MIN_KERNEL";
+                return min_element_pick_iterator( ctl, first, last,  binary_op, cl_code,
+                  typename  std::iterator_traits< ForwardIterator >::iterator_category( ), str );
+            }
+
+
+
+            template<typename ForwardIterator, typename BinaryPredicate>
+            ForwardIterator max_element_detect_random_access(bolt::cl::control &ctl,
+                const ForwardIterator& first,
+                const ForwardIterator& last,
+                const BinaryPredicate& binary_op,
+                const std::string& cl_code,
+                std::random_access_iterator_tag)
+            {
+                const char * str = "MAX_KERNEL";
+                return min_element_pick_iterator( ctl, first, last,  binary_op, cl_code,
+                   typename std::iterator_traits< ForwardIterator >::iterator_category( ), str);
+            }
+
 
         };
-    };
-};
 
-
-
-namespace bolt {
-    namespace cl {
 
         template<typename ForwardIterator>
         ForwardIterator max_element(ForwardIterator first,
@@ -460,7 +456,7 @@ namespace bolt {
         {
             typedef typename std::iterator_traits<ForwardIterator>::value_type T;
             return detail::max_element_detect_random_access(bolt::cl::control::getDefault(), first, last, bolt::cl::less<T>(), cl_code,
-                   typename std::iterator_traits< ForwardIterator >::iterator_category( ) ); 
+                   typename std::iterator_traits< ForwardIterator >::iterator_category( ) );
         };
 
 
@@ -484,7 +480,7 @@ namespace bolt {
         {
             typedef typename std::iterator_traits<ForwardIterator>::value_type T;
             return detail::max_element_detect_random_access(ctl, first, last, bolt::cl::less<T>(), cl_code,
-                   typename std::iterator_traits< ForwardIterator >::iterator_category( ) ); 
+                   typename std::iterator_traits< ForwardIterator >::iterator_category( ) );
         };
 
         // This template is called by all other "convenience" version of max_element.
@@ -499,12 +495,7 @@ namespace bolt {
                     return detail::max_element_detect_random_access(ctl, first, last, binary_op, cl_code,
                     typename std::iterator_traits< ForwardIterator >::iterator_category( ) );
             }
-        };
 
-  };
-
-namespace bolt {
-    namespace cl {
 
         // This template is called by all other "convenience" version of min_element.
         // It also implements the CPU-side mappings of the algorithm for SerialCpu and MultiCoreCpu
@@ -518,7 +509,7 @@ namespace bolt {
                return detail::min_element_detect_random_access(ctl, first, last, binary_op, cl_code,
                typename std::iterator_traits< ForwardIterator >::iterator_category( ) );
             }
- 
+
 
         template<typename ForwardIterator>
       ForwardIterator min_element(ForwardIterator first,

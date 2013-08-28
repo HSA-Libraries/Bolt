@@ -1,19 +1,19 @@
-/*************************************************************************** 
-*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                              
-*                                                                            
-*   Licensed under the Apache License, Version 2.0 (the "License");   
-*   you may not use this file except in compliance with the License.         
-*   You may obtain a copy of the License at                                  
-*                                                                            
-*       http://www.apache.org/licenses/LICENSE-2.0                      
-*                                                                            
-*   Unless required by applicable law or agreed to in writing, software      
-*   distributed under the License is distributed on an "AS IS" BASIS,        
-*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
-*   See the License for the specific language governing permissions and      
-*   limitations under the License.                                           
+/***************************************************************************
+*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.
+*
+*   Licensed under the Apache License, Version 2.0 (the "License");
+*   you may not use this file except in compliance with the License.
+*   You may obtain a copy of the License at
+*
+*       http://www.apache.org/licenses/LICENSE-2.0
+*
+*   Unless required by applicable law or agreed to in writing, software
+*   distributed under the License is distributed on an "AS IS" BASIS,
+*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+*   See the License for the specific language governing permissions and
+*   limitations under the License.
 
-***************************************************************************/ 
+***************************************************************************/
 
 #pragma once
 #if !defined( BOLT_CL_STABLESORT_BY_KEY_INL )
@@ -43,7 +43,7 @@ namespace cl {
 namespace detail
 {
 
-    enum stableSort_by_keyTypes { stableSort_by_key_KeyType, stableSort_by_key_KeyIterType, stableSort_by_key_ValueType, 
+    enum stableSort_by_keyTypes { stableSort_by_key_KeyType, stableSort_by_key_KeyIterType, stableSort_by_key_ValueType,
         stableSort_by_key_ValueIterType, stableSort_by_key_lessFunction, stableSort_by_key_end };
 
     class StableSort_by_key_KernelTemplateSpecializer : public KernelTemplateSpecializer
@@ -57,7 +57,7 @@ namespace detail
 
         const ::std::string operator( ) ( const ::std::vector< ::std::string >& typeNames ) const
         {
-            const std::string templateSpecializationString = 
+            const std::string templateSpecializationString =
                 "template __attribute__((mangled_name(" + name( 0 ) + "Instantiated)))\n"
                 "kernel void " + name( 0 ) + "Template(\n"
                 "global " + typeNames[stableSort_by_key_KeyType] + "* data_ptr,\n"
@@ -90,9 +90,9 @@ namespace detail
             return templateSpecializationString;
         }
     };
- 
+
     //Serial CPU code path implementation.
-    //Class to hold the key value pair. This will be used to zip th ekey and value together in a vector. 
+    //Class to hold the key value pair. This will be used to zip th ekey and value together in a vector.
     template <typename keyType, typename valueType>
     class std_stable_sort
     {
@@ -100,13 +100,13 @@ namespace detail
         keyType   key;
         valueType value;
     };
-    //This is the functor which will sort the std_stable_sort vector. 
+    //This is the functor which will sort the std_stable_sort vector.
     template <typename keyType, typename valueType, typename StrictWeakOrdering>
     class std_stable_sort_comp
     {
     public:
         typedef std_stable_sort<keyType, valueType> KeyValueType;
-        std_stable_sort_comp(const StrictWeakOrdering &_swo):swo(_swo) 
+        std_stable_sort_comp(const StrictWeakOrdering &_swo):swo(_swo)
         {}
         StrictWeakOrdering swo;
         bool operator() (const KeyValueType &lhs, const KeyValueType &rhs) const
@@ -118,7 +118,7 @@ namespace detail
     //The serial CPU implementation of stable_sort_by_key routine. This routines zips the key value pair and then sorts
     //using the std::stable_sort routine.
     template< typename RandomAccessIterator1, typename RandomAccessIterator2, typename StrictWeakOrdering >
-    void serialCPU_stable_sort_by_key(const RandomAccessIterator1 keys_first, const RandomAccessIterator1 keys_last, 
+    void serialCPU_stable_sort_by_key(const RandomAccessIterator1 keys_first, const RandomAccessIterator1 keys_last,
                                       const RandomAccessIterator2 values_first,
                                       const StrictWeakOrdering& comp)
     {
@@ -126,8 +126,8 @@ namespace detail
         typedef typename std::iterator_traits< RandomAccessIterator2 >::value_type valType;
         typedef std_stable_sort<keyType, valType> KeyValuePair;
         typedef std_stable_sort_comp<keyType, valType, StrictWeakOrdering> KeyValuePairFunctor;
-       
-        size_t vecSize = std::distance( keys_first, keys_last ); 
+
+        size_t vecSize = std::distance( keys_first, keys_last );
         std::vector<KeyValuePair> KeyValuePairVector(vecSize);
         KeyValuePairFunctor functor(comp);
         //Zip the key and values iterators into a std_stable_sort vector.
@@ -138,188 +138,18 @@ namespace detail
         }
         //Sort the std_stable_sort vector using std::stable_sort
         std::stable_sort(KeyValuePairVector.begin(), KeyValuePairVector.end(), functor);
-        //Extract the keys and values from the KeyValuePair and fill the respective iterators. 
+        //Extract the keys and values from the KeyValuePair and fill the respective iterators.
         for (size_t i=0; i< vecSize; i++)
         {
             *(keys_first + i)   = KeyValuePairVector[i].key;
             *(values_first + i) = KeyValuePairVector[i].value;
-        } 
-    }
-
-
-    template< typename RandomAccessIterator1, typename RandomAccessIterator2, typename StrictWeakOrdering >
-    void stablesort_by_key_detect_random_access( control &ctl, 
-                                    const RandomAccessIterator1 keys_first, const RandomAccessIterator1 keys_last, 
-                                    const RandomAccessIterator2 values_first,
-                                    const StrictWeakOrdering& comp, const std::string& cl_code, 
-                                    std::random_access_iterator_tag, std::random_access_iterator_tag )
-    {
-        return stablesort_by_key_pick_iterator( ctl, keys_first, keys_last, values_first,
-                                    comp, cl_code, 
-                                    typename std::iterator_traits< RandomAccessIterator1 >::iterator_category( ),
-                                    typename std::iterator_traits< RandomAccessIterator2 >::iterator_category( ) );
-    };
-
-    template< typename RandomAccessIterator1, typename RandomAccessIterator2, typename StrictWeakOrdering >
-    void stablesort_by_key_detect_random_access( control &ctl, 
-                                    const RandomAccessIterator1 keys_first, const RandomAccessIterator1 keys_last, 
-                                    const RandomAccessIterator2 values_first,
-                                    const StrictWeakOrdering& comp, const std::string& cl_code, 
-                                    bolt::cl::fancy_iterator_tag, std::input_iterator_tag ) 
-    {
-        static_assert(std::is_same< RandomAccessIterator1, bolt::cl::fancy_iterator_tag>::value, "It is not possible to sort fancy iterators. They are not mutable" );
-        static_assert(std::is_same< RandomAccessIterator2,std::input_iterator_tag >::value  , "It is not possible to sort fancy iterators. They are not mutable" );
-    }
-    // Wrapper that uses default control class, iterator interface
-    template< typename RandomAccessIterator1, typename RandomAccessIterator2, typename StrictWeakOrdering >
-    void stablesort_by_key_detect_random_access( control &ctl, 
-                                    const RandomAccessIterator1 keys_first, const RandomAccessIterator1 keys_last, 
-                                    const RandomAccessIterator2 values_first,
-                                    const StrictWeakOrdering& comp, const std::string& cl_code, 
-                                    std::input_iterator_tag, std::input_iterator_tag )
-    {
-        //  \TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data 
-        //  to a temporary buffer.  Should we?
-        static_assert(std::is_same< RandomAccessIterator1,std::input_iterator_tag>::value  , "Bolt only supports random access iterator types" );
-        static_assert(std::is_same< RandomAccessIterator2,std::input_iterator_tag>::value  , "Bolt only supports random access iterator types" );
-    };
-
-
-    template< typename RandomAccessIterator1, typename RandomAccessIterator2, typename StrictWeakOrdering >
-    void stablesort_by_key_detect_random_access( control &ctl, 
-                                    const RandomAccessIterator1 keys_first, const RandomAccessIterator1 keys_last, 
-                                    const RandomAccessIterator2 values_first,
-                                    const StrictWeakOrdering& comp, const std::string& cl_code, 
-                                    std::input_iterator_tag, bolt::cl::fancy_iterator_tag ) 
-    {
-
-
-        static_assert(std::is_same< RandomAccessIterator2, bolt::cl::fancy_iterator_tag>::value, "It is not possible to sort fancy iterators. They are not mutable" );
-        static_assert(std::is_same< RandomAccessIterator1,std::input_iterator_tag >::value  , "It is not possible to sort fancy iterators. They are not mutable" );
-
-    }
-
-    //Non Device Vector specialization.
-    //This implementation creates a cl::Buffer and passes the cl buffer to the sort specialization whichtakes the cl buffer as a parameter. 
-    //In the future, Each input buffer should be mapped to the device_vector and the specialization specific to device_vector should be called. 
-    //This implementation creates a cl::Buffer and passes the cl buffer to the sort specialization whichtakes 
-    //the cl buffer as a parameter. 
-    //In the future, Each input buffer should be mapped to the device_vector and the specialization specific
-    //to device_vector should be called. 
-    template< typename RandomAccessIterator1, typename RandomAccessIterator2, typename StrictWeakOrdering >
-    void stablesort_by_key_pick_iterator( control &ctl, 
-                                const RandomAccessIterator1 keys_first, const RandomAccessIterator1 keys_last, 
-                                const RandomAccessIterator2 values_first,
-                                const StrictWeakOrdering& comp, const std::string& cl_code, 
-                                std::random_access_iterator_tag, std::random_access_iterator_tag )
-    {
-        typedef typename std::iterator_traits< RandomAccessIterator1 >::value_type keyType;
-        typedef typename std::iterator_traits< RandomAccessIterator2 >::value_type valType;
-
-        size_t vecSize = std::distance( keys_first, keys_last ); 
-        if( vecSize < 2 )
-            return;
-
-        bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();
-
-        if( runMode == bolt::cl::control::Automatic )
-        {
-            runMode = ctl.getDefaultPathToRun( );
-
         }
-
-        if( runMode == bolt::cl::control::SerialCpu )
-        {
-            serialCPU_stable_sort_by_key(keys_first, keys_last, values_first, comp);
-            return;
-        }
-        else if( runMode == bolt::cl::control::MultiCoreCpu )
-        {
-            #ifdef ENABLE_TBB
-                //TODO - Addlog for not supporting the MultiCore CPU. Implemented using serial code paths
-                serialCPU_stable_sort_by_key(keys_first, keys_last, values_first, comp);
-            #else
-                throw std::runtime_error("MultiCoreCPU Version of stable_sort_by_key not Enabled! \n");
-            #endif
-            return;
-        } 
-        else 
-        {
-            device_vector< keyType > dvKeys( keys_first, keys_last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctl );
-            device_vector< valType > dvValues( values_first, vecSize, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, false, ctl );
-
-            //Now call the actual cl algorithm
-            stablesort_by_key_enqueue( ctl, dvKeys.begin(), dvKeys.end(), dvValues.begin( ), comp, cl_code );
-
-            //Map the buffer back to the host
-            dvKeys.data( );
-            dvValues.data( );
-            return;
-        }
-    }
-
-    //Device Vector specialization
-    template< typename DVRandomAccessIterator1, typename DVRandomAccessIterator2, typename StrictWeakOrdering >
-    void stablesort_by_key_pick_iterator( control &ctl, 
-                                    const DVRandomAccessIterator1 keys_first, const DVRandomAccessIterator1 keys_last, 
-                                    const DVRandomAccessIterator2 values_first,
-                                    const StrictWeakOrdering& comp, const std::string& cl_code, 
-                                    bolt::cl::device_vector_tag, bolt::cl::device_vector_tag )
-    {
-        typedef typename std::iterator_traits< DVRandomAccessIterator1 >::value_type keyType;
-        typedef typename std::iterator_traits< DVRandomAccessIterator2 >::value_type valueType;
-        size_t vecSize = std::distance( keys_first, keys_last ); 
-        if( vecSize < 2 )
-            return;
-
-        bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();
-
-        if( runMode == bolt::cl::control::Automatic )
-        {
-            runMode = ctl.getDefaultPathToRun( );
-        }
-
-        if( runMode == bolt::cl::control::SerialCpu )
-        {
-                typename bolt::cl::device_vector< keyType >::pointer   keysPtr   =  keys_first.getContainer( ).data( );
-                typename bolt::cl::device_vector< valueType >::pointer valuesPtr =  values_first.getContainer( ).data( );
-                serialCPU_stable_sort_by_key(&keysPtr[keys_first.m_Index], &keysPtr[keys_last.m_Index], 
-                                             &valuesPtr[values_first.m_Index], comp);
-                return;
-        }
-        else if( runMode == bolt::cl::control::MultiCoreCpu )
-        {
-            #ifdef ENABLE_TBB
-                typename bolt::cl::device_vector< keyType >::pointer   keysPtr   =  keys_first.getContainer( ).data( );
-                typename bolt::cl::device_vector< valueType >::pointer valuesPtr =  values_first.getContainer( ).data( );
-                bolt::btbb::stable_sort_by_key(&keysPtr[keys_first.m_Index], &keysPtr[keys_last.m_Index], 
-                                             &valuesPtr[values_first.m_Index], comp);
-                return;
-             #else
-                throw std::runtime_error("MultiCoreCPU Version of stable_sort_by_key not Enabled! \n");
-             #endif
-        } 
-        else
-        {
-            stablesort_by_key_enqueue( ctl, keys_first, keys_last, values_first, comp, cl_code );
-        }
-        return;
-    }
-
-    //Fancy iterator specialization
-    template<typename DVRandomAccessIterator1, typename DVRandomAccessIterator2, typename StrictWeakOrdering>
-    void stablesort_by_key_pick_iterator( control &ctl, 
-                                    const DVRandomAccessIterator1 keys_first, const DVRandomAccessIterator1 keys_last, 
-                                    const DVRandomAccessIterator2 values_first,
-                                    const StrictWeakOrdering& comp, const std::string& cl_code, bolt::cl::fancy_iterator_tag )
-    {
-        static_assert(std::is_same< DVRandomAccessIterator1, bolt::cl::fancy_iterator_tag >::value  , "It is not possible to output to fancy iterators; they are not mutable! " );
     }
 
 
     template< typename DVRandomAccessIterator1, typename DVRandomAccessIterator2, typename StrictWeakOrdering >
-    void stablesort_by_key_enqueue( control& ctrl, 
-                                    const DVRandomAccessIterator1 keys_first, const DVRandomAccessIterator1 keys_last, 
+    void stablesort_by_key_enqueue( control& ctrl,
+                                    const DVRandomAccessIterator1 keys_first, const DVRandomAccessIterator1 keys_last,
                                     const DVRandomAccessIterator2 values_first,
                                     const StrictWeakOrdering& comp, const std::string& cl_code )
     {
@@ -395,12 +225,12 @@ namespace detail
         typename  DVRandomAccessIterator2::Payload values_first_payload  = values_first.gpuPayload( ) ;
          // Input buffer
         V_OPENCL( kernels[ 0 ].setArg( 0, keys_first.getContainer().getBuffer( ) ),    "Error setting argument for kernels[ 0 ]" );
-        V_OPENCL( kernels[ 0 ].setArg( 1, keys_first.gpuPayloadSize( ),&keys_first_payload ), 
+        V_OPENCL( kernels[ 0 ].setArg( 1, keys_first.gpuPayloadSize( ),&keys_first_payload ),
                                        "Error setting a kernel argument" );
          // Input buffer
-        V_OPENCL( kernels[ 0 ].setArg( 2, values_first.getContainer().getBuffer( ) ),   
+        V_OPENCL( kernels[ 0 ].setArg( 2, values_first.getContainer().getBuffer( ) ),
                                        "Error setting argument for kernels[ 0 ]" );
-        
+
         V_OPENCL( kernels[ 0 ].setArg( 3, values_first.gpuPayloadSize( ),&values_first_payload),
                                        "Error setting a kernel argument" );
          // Size of scratch buffer
@@ -411,8 +241,8 @@ namespace detail
         V_OPENCL( kernels[ 0 ].setArg( 6, valueLdsSize, NULL ),          "Error setting argument for kernels[ 0 ]" );
          // User provided functor class
         V_OPENCL( kernels[ 0 ].setArg( 7, *userFunctor ),           "Error setting argument for kernels[ 0 ]" );
-        
-        
+
+
 
         ::cl::CommandQueue& myCQ = ctrl.getCommandQueue( );
 
@@ -454,16 +284,16 @@ namespace detail
         V_OPENCL( kernels[ 1 ].setArg( 11, valueLdsSize, NULL ),          "Error setting argument for kernels[ 0 ]" );
          // User provided functor class
         V_OPENCL( kernels[ 1 ].setArg( 12, *userFunctor ),           "Error setting argument for kernels[ 0 ]" );
-        
+
         ::cl::Event kernelEvent;
         for( size_t pass = 1; pass <= numMerges; ++pass )
         {
         typename DVRandomAccessIterator1::Payload  keys_first_payload = keys_first.gpuPayload( );
         typename DVRandomAccessIterator2::Payload  values_first_payload = values_first.gpuPayload( );
-        typename DVRandomAccessIterator1::Payload  keys_first1_payload = keys_first.gpuPayload( ); 
-        typename DVRandomAccessIterator2::Payload  values_first1_payload = values_first.gpuPayload( ); 
+        typename DVRandomAccessIterator1::Payload  keys_first1_payload = keys_first.gpuPayload( );
+        typename DVRandomAccessIterator2::Payload  values_first1_payload = values_first.gpuPayload( );
 
-            //  For each pass, flip the input-output buffers 
+            //  For each pass, flip the input-output buffers
             if( pass & 0x1 )
             {
                  // Input buffer
@@ -480,31 +310,31 @@ namespace detail
                                                "Error setting a kernel argument" );
                  // Input buffer
                 V_OPENCL( kernels[ 1 ].setArg( 6, *tmpValueBuffer ),"Error setting argument for kernels[ 0 ]" );
-                V_OPENCL( kernels[ 1 ].setArg( 7, values_first.gpuPayloadSize( ),&values_first1_payload ), 
+                V_OPENCL( kernels[ 1 ].setArg( 7, values_first.gpuPayloadSize( ),&values_first1_payload ),
                                                "Error setting a kernel argument" );
             }
             else
             {
                  // Input buffer
                 V_OPENCL( kernels[ 1 ].setArg( 0, *tmpKeyBuffer ),    "Error setting argument for kernels[ 0 ]" );
-                V_OPENCL( kernels[ 1 ].setArg( 1, keys_first.gpuPayloadSize( ),&keys_first_payload), 
+                V_OPENCL( kernels[ 1 ].setArg( 1, keys_first.gpuPayloadSize( ),&keys_first_payload),
                                                "Error setting a kernel argument" );
                  // Input buffer
                 V_OPENCL( kernels[ 1 ].setArg( 2, *tmpValueBuffer ),    "Error setting argument for kernels[ 0 ]" );
                 V_OPENCL( kernels[ 1 ].setArg( 3, values_first.gpuPayloadSize( ),&values_first_payload ),
                                                "Error setting a kernel argument" );
-                V_OPENCL( kernels[ 1 ].setArg( 4, keys_first.getContainer().getBuffer() ),    
+                V_OPENCL( kernels[ 1 ].setArg( 4, keys_first.getContainer().getBuffer() ),
                                                "Error setting argument for kernels[ 0 ]" ); // Input buffer
                 V_OPENCL( kernels[ 1 ].setArg( 5, keys_first.gpuPayloadSize( ),&keys_first1_payload),
                                                "Error setting a kernel argument" );
-                V_OPENCL( kernels[ 1 ].setArg( 6, values_first.getContainer().getBuffer() ),   
+                V_OPENCL( kernels[ 1 ].setArg( 6, values_first.getContainer().getBuffer() ),
                                                "Error setting argument for kernels[ 0 ]" ); // Input buffer
                 V_OPENCL( kernels[ 1 ].setArg( 7, values_first.gpuPayloadSize( ),&values_first1_payload ),
                                                "Error setting a kernel argument" );
             }
             //  For each pass, the merge window doubles
             unsigned srcLogicalBlockSize = static_cast< unsigned >( localRange << (pass-1) );
-            V_OPENCL( kernels[ 1 ].setArg( 9, static_cast< unsigned >( srcLogicalBlockSize ) ),           
+            V_OPENCL( kernels[ 1 ].setArg( 9, static_cast< unsigned >( srcLogicalBlockSize ) ),
                                            "Error setting argument for kernels[ 0 ]" ); // Size of scratch buffer
 
             if( pass == numMerges )
@@ -530,13 +360,13 @@ namespace detail
             ::cl::Event copyEvent;
 
             wait( ctrl, kernelEvent );
-            l_Error = myCQ.enqueueCopyBuffer( *tmpKeyBuffer, keys_first.getContainer().getBuffer(), 0, 
-                                               keys_first.m_Index * sizeof( keyType ), 
+            l_Error = myCQ.enqueueCopyBuffer( *tmpKeyBuffer, keys_first.getContainer().getBuffer(), 0,
+                                               keys_first.m_Index * sizeof( keyType ),
                                                vecSize * sizeof( keyType ), NULL, NULL );
             V_OPENCL( l_Error, "device_vector failed to copy data inside of operator=()" );
 
             l_Error = myCQ.enqueueCopyBuffer( *tmpValueBuffer, values_first.getContainer().getBuffer(), 0,
-                                               values_first.m_Index * sizeof( keyType ), 
+                                               values_first.m_Index * sizeof( keyType ),
                                                vecSize * sizeof( keyType ), NULL, &copyEvent );
             V_OPENCL( l_Error, "device_vector failed to copy data inside of operator=()" );
 
@@ -550,56 +380,229 @@ namespace detail
         return;
     }// END of sort_enqueue
 
+
+    //Non Device Vector specialization.
+    //This implementation creates a cl::Buffer and passes the cl buffer to the sort specialization whichtakes the cl buffer as a parameter.
+    //In the future, Each input buffer should be mapped to the device_vector and the specialization specific to device_vector should be called.
+    //This implementation creates a cl::Buffer and passes the cl buffer to the sort specialization whichtakes
+    //the cl buffer as a parameter.
+    //In the future, Each input buffer should be mapped to the device_vector and the specialization specific
+    //to device_vector should be called.
+    template< typename RandomAccessIterator1, typename RandomAccessIterator2, typename StrictWeakOrdering >
+    void stablesort_by_key_pick_iterator( control &ctl,
+                                const RandomAccessIterator1 keys_first, const RandomAccessIterator1 keys_last,
+                                const RandomAccessIterator2 values_first,
+                                const StrictWeakOrdering& comp, const std::string& cl_code,
+                                std::random_access_iterator_tag, std::random_access_iterator_tag )
+    {
+        typedef typename std::iterator_traits< RandomAccessIterator1 >::value_type keyType;
+        typedef typename std::iterator_traits< RandomAccessIterator2 >::value_type valType;
+
+        size_t vecSize = std::distance( keys_first, keys_last );
+        if( vecSize < 2 )
+            return;
+
+        bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();
+
+        if( runMode == bolt::cl::control::Automatic )
+        {
+            runMode = ctl.getDefaultPathToRun( );
+
+        }
+
+        if( runMode == bolt::cl::control::SerialCpu )
+        {
+            serialCPU_stable_sort_by_key(keys_first, keys_last, values_first, comp);
+            return;
+        }
+        else if( runMode == bolt::cl::control::MultiCoreCpu )
+        {
+            #ifdef ENABLE_TBB
+                //TODO - Addlog for not supporting the MultiCore CPU. Implemented using serial code paths
+                serialCPU_stable_sort_by_key(keys_first, keys_last, values_first, comp);
+            #else
+                throw std::runtime_error("MultiCoreCPU Version of stable_sort_by_key not Enabled! \n");
+            #endif
+            return;
+        }
+        else
+        {
+            device_vector< keyType > dvKeys( keys_first, keys_last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctl );
+            device_vector< valType > dvValues( values_first, vecSize, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, false, ctl );
+
+            //Now call the actual cl algorithm
+            stablesort_by_key_enqueue( ctl, dvKeys.begin(), dvKeys.end(), dvValues.begin( ), comp, cl_code );
+
+            //Map the buffer back to the host
+            dvKeys.data( );
+            dvValues.data( );
+            return;
+        }
+    }
+
+    //Device Vector specialization
+    template< typename DVRandomAccessIterator1, typename DVRandomAccessIterator2, typename StrictWeakOrdering >
+    void stablesort_by_key_pick_iterator( control &ctl,
+                                    const DVRandomAccessIterator1 keys_first, const DVRandomAccessIterator1 keys_last,
+                                    const DVRandomAccessIterator2 values_first,
+                                    const StrictWeakOrdering& comp, const std::string& cl_code,
+                                    bolt::cl::device_vector_tag, bolt::cl::device_vector_tag )
+    {
+        typedef typename std::iterator_traits< DVRandomAccessIterator1 >::value_type keyType;
+        typedef typename std::iterator_traits< DVRandomAccessIterator2 >::value_type valueType;
+        size_t vecSize = std::distance( keys_first, keys_last );
+        if( vecSize < 2 )
+            return;
+
+        bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();
+
+        if( runMode == bolt::cl::control::Automatic )
+        {
+            runMode = ctl.getDefaultPathToRun( );
+        }
+
+        if( runMode == bolt::cl::control::SerialCpu )
+        {
+                typename bolt::cl::device_vector< keyType >::pointer   keysPtr   =  keys_first.getContainer( ).data( );
+                typename bolt::cl::device_vector< valueType >::pointer valuesPtr =  values_first.getContainer( ).data( );
+                serialCPU_stable_sort_by_key(&keysPtr[keys_first.m_Index], &keysPtr[keys_last.m_Index],
+                                             &valuesPtr[values_first.m_Index], comp);
+                return;
+        }
+        else if( runMode == bolt::cl::control::MultiCoreCpu )
+        {
+            #ifdef ENABLE_TBB
+                typename bolt::cl::device_vector< keyType >::pointer   keysPtr   =  keys_first.getContainer( ).data( );
+                typename bolt::cl::device_vector< valueType >::pointer valuesPtr =  values_first.getContainer( ).data( );
+                bolt::btbb::stable_sort_by_key(&keysPtr[keys_first.m_Index], &keysPtr[keys_last.m_Index],
+                                             &valuesPtr[values_first.m_Index], comp);
+                return;
+             #else
+                throw std::runtime_error("MultiCoreCPU Version of stable_sort_by_key not Enabled! \n");
+             #endif
+        }
+        else
+        {
+            stablesort_by_key_enqueue( ctl, keys_first, keys_last, values_first, comp, cl_code );
+        }
+        return;
+    }
+
+    //Fancy iterator specialization
+    template<typename DVRandomAccessIterator1, typename DVRandomAccessIterator2, typename StrictWeakOrdering>
+    void stablesort_by_key_pick_iterator( control &ctl,
+                                    const DVRandomAccessIterator1 keys_first, const DVRandomAccessIterator1 keys_last,
+                                    const DVRandomAccessIterator2 values_first,
+                                    const StrictWeakOrdering& comp, const std::string& cl_code, bolt::cl::fancy_iterator_tag )
+    {
+        static_assert(std::is_same< DVRandomAccessIterator1, bolt::cl::fancy_iterator_tag >::value  , "It is not possible to output to fancy iterators; they are not mutable! " );
+    }
+
+
+    template< typename RandomAccessIterator1, typename RandomAccessIterator2, typename StrictWeakOrdering >
+    void stablesort_by_key_detect_random_access( control &ctl,
+                                    const RandomAccessIterator1 keys_first, const RandomAccessIterator1 keys_last,
+                                    const RandomAccessIterator2 values_first,
+                                    const StrictWeakOrdering& comp, const std::string& cl_code,
+                                    std::random_access_iterator_tag, std::random_access_iterator_tag )
+    {
+        return stablesort_by_key_pick_iterator( ctl, keys_first, keys_last, values_first,
+                                    comp, cl_code,
+                                    typename std::iterator_traits< RandomAccessIterator1 >::iterator_category( ),
+                                    typename std::iterator_traits< RandomAccessIterator2 >::iterator_category( ) );
+    };
+
+    template< typename RandomAccessIterator1, typename RandomAccessIterator2, typename StrictWeakOrdering >
+    void stablesort_by_key_detect_random_access( control &ctl,
+                                    const RandomAccessIterator1 keys_first, const RandomAccessIterator1 keys_last,
+                                    const RandomAccessIterator2 values_first,
+                                    const StrictWeakOrdering& comp, const std::string& cl_code,
+                                    bolt::cl::fancy_iterator_tag, std::input_iterator_tag )
+    {
+        static_assert(std::is_same< RandomAccessIterator1, bolt::cl::fancy_iterator_tag>::value, "It is not possible to sort fancy iterators. They are not mutable" );
+        static_assert(std::is_same< RandomAccessIterator2,std::input_iterator_tag >::value  , "It is not possible to sort fancy iterators. They are not mutable" );
+    }
+    // Wrapper that uses default control class, iterator interface
+    template< typename RandomAccessIterator1, typename RandomAccessIterator2, typename StrictWeakOrdering >
+    void stablesort_by_key_detect_random_access( control &ctl,
+                                    const RandomAccessIterator1 keys_first, const RandomAccessIterator1 keys_last,
+                                    const RandomAccessIterator2 values_first,
+                                    const StrictWeakOrdering& comp, const std::string& cl_code,
+                                    std::input_iterator_tag, std::input_iterator_tag )
+    {
+        //  \TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data
+        //  to a temporary buffer.  Should we?
+        static_assert(std::is_same< RandomAccessIterator1,std::input_iterator_tag>::value  , "Bolt only supports random access iterator types" );
+        static_assert(std::is_same< RandomAccessIterator2,std::input_iterator_tag>::value  , "Bolt only supports random access iterator types" );
+    };
+
+
+    template< typename RandomAccessIterator1, typename RandomAccessIterator2, typename StrictWeakOrdering >
+    void stablesort_by_key_detect_random_access( control &ctl,
+                                    const RandomAccessIterator1 keys_first, const RandomAccessIterator1 keys_last,
+                                    const RandomAccessIterator2 values_first,
+                                    const StrictWeakOrdering& comp, const std::string& cl_code,
+                                    std::input_iterator_tag, bolt::cl::fancy_iterator_tag )
+    {
+
+
+        static_assert(std::is_same< RandomAccessIterator2, bolt::cl::fancy_iterator_tag>::value, "It is not possible to sort fancy iterators. They are not mutable" );
+        static_assert(std::is_same< RandomAccessIterator1,std::input_iterator_tag >::value  , "It is not possible to sort fancy iterators. They are not mutable" );
+
+    }
+
+
+
 }//namespace bolt::cl::detail
 
 
-    template< typename RandomAccessIterator1, typename RandomAccessIterator2 > 
-    void stable_sort_by_key( RandomAccessIterator1 keys_first, RandomAccessIterator1 keys_last, 
+    template< typename RandomAccessIterator1, typename RandomAccessIterator2 >
+    void stable_sort_by_key( RandomAccessIterator1 keys_first, RandomAccessIterator1 keys_last,
         RandomAccessIterator2 values_first, const std::string& cl_code )
     {
         typedef typename std::iterator_traits< RandomAccessIterator1 >::value_type T;
 
-        detail::stablesort_by_key_detect_random_access( control::getDefault( ), 
+        detail::stablesort_by_key_detect_random_access( control::getDefault( ),
                                            keys_first, keys_last, values_first,
-                                           less< T >( ), cl_code, 
+                                           less< T >( ), cl_code,
                                            typename std::iterator_traits< RandomAccessIterator1 >::iterator_category( ),
                                            typename std::iterator_traits< RandomAccessIterator2 >::iterator_category( ) );
         return;
     }
 
     template< typename RandomAccessIterator1, typename RandomAccessIterator2, typename StrictWeakOrdering >
-    void stable_sort_by_key( RandomAccessIterator1 keys_first, RandomAccessIterator1 keys_last, 
+    void stable_sort_by_key( RandomAccessIterator1 keys_first, RandomAccessIterator1 keys_last,
         RandomAccessIterator2 values_first, StrictWeakOrdering comp, const std::string& cl_code )
     {
-        detail::stablesort_by_key_detect_random_access( control::getDefault( ), 
+        detail::stablesort_by_key_detect_random_access( control::getDefault( ),
                                            keys_first, keys_last, values_first,
-                                           comp, cl_code, 
+                                           comp, cl_code,
                                            typename std::iterator_traits< RandomAccessIterator1 >::iterator_category( ),
                                            typename std::iterator_traits< RandomAccessIterator2 >::iterator_category( ) );
         return;
     }
 
-    template< typename RandomAccessIterator1, typename RandomAccessIterator2 > 
-    void stable_sort_by_key( control &ctl, RandomAccessIterator1 keys_first, RandomAccessIterator1 keys_last, 
+    template< typename RandomAccessIterator1, typename RandomAccessIterator2 >
+    void stable_sort_by_key( control &ctl, RandomAccessIterator1 keys_first, RandomAccessIterator1 keys_last,
         RandomAccessIterator2 values_first, const std::string& cl_code)
     {
         typedef typename std::iterator_traits< RandomAccessIterator1 >::value_type T;
 
-        detail::stablesort_by_key_detect_random_access(ctl, 
+        detail::stablesort_by_key_detect_random_access(ctl,
                                            keys_first, keys_last, values_first,
-                                          less< T >( ), cl_code, 
+                                          less< T >( ), cl_code,
                                            typename std::iterator_traits< RandomAccessIterator1 >::iterator_category( ),
                                            typename std::iterator_traits< RandomAccessIterator2 >::iterator_category( ) );
         return;
     }
 
     template< typename RandomAccessIterator1, typename RandomAccessIterator2, typename StrictWeakOrdering >
-    void stable_sort_by_key( control &ctl, RandomAccessIterator1 keys_first, RandomAccessIterator1 keys_last, 
+    void stable_sort_by_key( control &ctl, RandomAccessIterator1 keys_first, RandomAccessIterator1 keys_last,
         RandomAccessIterator2 values_first, StrictWeakOrdering comp, const std::string& cl_code )
     {
-        detail::stablesort_by_key_detect_random_access(ctl, 
+        detail::stablesort_by_key_detect_random_access(ctl,
                                            keys_first, keys_last, values_first,
-                                          comp, cl_code, 
+                                          comp, cl_code,
                                            typename std::iterator_traits< RandomAccessIterator1 >::iterator_category( ),
                                            typename std::iterator_traits< RandomAccessIterator2 >::iterator_category( ) );
         return;

@@ -77,190 +77,7 @@ namespace detail {
 
 
 #endif
-           
-            template<typename InputIterator, typename OutputType, typename BinaryFunction1, typename BinaryFunction2>
-            OutputType inner_product_detect_random_access( bolt::cl::control& ctl, const InputIterator& first1,
-                const InputIterator& last1, const InputIterator& first2, const OutputType& init,
-                const BinaryFunction1& f1,
-                const BinaryFunction2& f2, const std::string& user_code, std::random_access_iterator_tag )
-            {
-                return inner_product_pick_iterator( ctl, first1, last1, first2, init, f1, f2, user_code,
-                typename std::iterator_traits< InputIterator >::iterator_category( ) );
-            };
 
-	    // Wrapper that uses default control class, iterator interface
-            template<typename InputIterator, typename OutputType, typename BinaryFunction1, typename BinaryFunction2>
-            OutputType inner_product_detect_random_access( bolt::cl::control& ctl, const InputIterator& first1,
-                const InputIterator& last1, const InputIterator& first2, const OutputType& init,
-                const BinaryFunction1& f1, const BinaryFunction2& f2, const std::string& user_code,
-                std::input_iterator_tag )
-            {
-                //  TODO:  It should be possible to support non-random_access_iterator_tag iterators,
-                //  if we copied the data
-                //  to a temporary buffer.  Should we?
-                static_assert(std::is_same< InputIterator, std::input_iterator_tag >::value  , "Bolt only supports random access iterator types" );
-            };
-
-
-            /*! \brief This template function overload is used to seperate device_vector iterators from all
-                other iterators
-                \detail This template is called by the non-detail versions of inclusive_scan,
-                it already assumes random access
-             *  iterators.  This overload is called strictly for non-device_vector iterators
-            */
-            template<typename InputIterator, typename OutputType, typename BinaryFunction1,typename BinaryFunction2>
-            OutputType inner_product_pick_iterator(bolt::cl::control &ctl,  const InputIterator& first1,
-                const InputIterator& last1, const InputIterator& first2, const OutputType& init,
-                const BinaryFunction1& f1,
-                const BinaryFunction2& f2, const std::string& user_code, std::random_access_iterator_tag )
-            {
-                typedef typename std::iterator_traits<InputIterator>::value_type iType;
-                size_t sz = (last1 - first1);
-                if (sz == 0)
-                    return -1;
-
-                bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
-                if(runMode == bolt::cl::control::Automatic)
-                {
-                     runMode = ctl.getDefaultPathToRun();
-                }
-
-                if( runMode == bolt::cl::control::SerialCpu)
-                {
-                    #if defined( _WIN32 )
-                           return std::inner_product(first1, last1, stdext::checked_array_iterator<iType*>(&(*first2), sz ), init, f1, f2);
-                    #else
-                    return std::inner_product(first1, last1, first2, init, f1, f2);
-                    #endif
-                }
-                else if(runMode == bolt::cl::control::MultiCoreCpu)
-                {
-                    #ifdef ENABLE_TBB
-                           return bolt::btbb::inner_product(first1, last1, first2, init, f1, f2);
-                    #else
-                           throw std::runtime_error("MultiCoreCPU Version of inner_product not Enabled! \n");
-                    #endif
-                }
-                else
-                {
-
-                    // Use host pointers memory since these arrays are only read once - no benefit to copying.
-
-                    // Map the input iterator to a device_vector
-                    device_vector< iType > dvInput( first1, last1, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, ctl );
-                    device_vector< iType > dvInput2( first2, sz, CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, true, ctl );
-
-                    // Map the output iterator to a device_vector
-                    //Make the fourth argument as true; We will use it as a temporary buffer
-                    //for copying the transform result to reduce
-                    //device_vector< iType > dvOutput( result, sz, CL_MEM_USE_HOST_PTR|CL_MEM_READ_WRITE, false, ctl );
-
-                    return inner_product_enqueue( ctl, dvInput.begin( ), dvInput.end( ), dvInput2.begin( ),
-                                                   init, f1, f2, user_code );
-
-                    // This should immediately map/unmap the buffer
-                    //dvOutput.data( );
-                }
-            }
-
-            // This template is called by the non-detail versions of inclusive_scan,
-            // it already assumes random access iterators
-            // This is called strictly for iterators that are derived from device_vector< T >::iterator
-            template<typename DVInputIterator, typename OutputType, typename BinaryFunction1, typename BinaryFunction2>
-            OutputType inner_product_pick_iterator(bolt::cl::control &ctl,  const DVInputIterator& first1,
-                const DVInputIterator& last1,const DVInputIterator& first2,const OutputType& init,
-                const BinaryFunction1&f1,const BinaryFunction2& f2, const std::string& user_code,
-                bolt::cl::device_vector_tag )
-            {
-                
-                size_t sz = (last1 - first1);
-
-                typedef typename std::iterator_traits< DVInputIterator >::value_type iType1;
-                bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
-                if(runMode == bolt::cl::control::Automatic)
-                {
-                     runMode = ctl.getDefaultPathToRun();
-                }
-
-                if( runMode == bolt::cl::control::SerialCpu)
-                {
-                    typename bolt::cl::device_vector< iType1 >::pointer firstPtr =  first1.getContainer( ).data( );
-                    typename bolt::cl::device_vector< iType1 >::pointer first2Ptr =  first2.getContainer( ).data( );
-                   
-                    #if defined( _WIN32 )
-                       return std::inner_product(  &firstPtr[ first1.m_Index ],
-                                                &firstPtr[ last1.m_Index ],
-                                                stdext::make_checked_array_iterator( &first2Ptr[ first2.m_Index ], sz),
-                                                init, f1, f2);
-                    #else
-                    return std::inner_product(  &firstPtr[ first1.m_Index ],
-                                                &firstPtr[ last1.m_Index ],
-                                                &first2Ptr[ first2.m_Index ], init, f1, f2);
-                    #endif
-                }
-                else if(runMode == bolt::cl::control::MultiCoreCpu)
-                {
-                #ifdef ENABLE_TBB
-                   typename bolt::cl::device_vector< iType1 >::pointer firstPtr =  first1.getContainer( ).data( );
-                   typename bolt::cl::device_vector< iType1 >::pointer first2Ptr =  first2.getContainer( ).data( );
-                    return bolt::btbb::inner_product(  &firstPtr[ first1.m_Index ],  &firstPtr[ last1.m_Index ],
-                                                &first2Ptr[ first2.m_Index ], init, f1, f2);
-                #else
-                           throw std::runtime_error("MultiCoreCPU Version of inner_product not Enabled! \n");
-                #endif
-                }
-                else
-                {
-                    return inner_product_enqueue( ctl, first1, last1, first2, init, f1, f2, user_code );
-                }
-            }
-
-            // This template is called by the non-detail versions of inclusive_scan,
-            // it already assumes random access iterators
-            // This is called strictly for iterators that are derived from device_vector< T >::iterator
-            template<typename DVInputIterator, typename OutputType, typename BinaryFunction1,typename BinaryFunction2>
-            OutputType inner_product_pick_iterator(bolt::cl::control &ctl,  const DVInputIterator& first1,
-                const DVInputIterator& last1, const DVInputIterator& first2, const OutputType& init,
-                const BinaryFunction1& f1, const BinaryFunction2& f2, const std::string& user_code,
-                bolt::cl::fancy_iterator_tag )
-            {
-                typedef typename std::iterator_traits<DVInputIterator>::value_type iType;
-                size_t sz = std::distance( first1, last1 );
-
-                bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
-                if(runMode == bolt::cl::control::Automatic)
-                {
-                     runMode = ctl.getDefaultPathToRun();
-                }
-
-                if( runMode == bolt::cl::control::SerialCpu)
-                {
-                    #if defined( _WIN32 )
-                    return std::inner_product(  first1,
-                                                last1,
-                                                first2,
-                                                init, f1, f2  );
-                    #else
-                           return std::inner_product(  first1,
-                                                last1,
-                                                first2,
-                                                init, f1, f2  );
-                    #endif
-
-                }
-                else if(runMode == bolt::cl::control::MultiCoreCpu)
-                {
-                    #ifdef ENABLE_TBB
-                           return bolt::btbb::inner_product(first1, last1, first2, init, f1, f2);
-                    #else
-                           throw std::runtime_error("MultiCoreCPU Version of inner_product not Enabled! \n");
-                    #endif
-                }
-                else
-                {
-                    return inner_product_enqueue( ctl, first1, last1, first2, init, f1, f2, user_code );
-                }
-            }
 
             template< typename DVInputIterator, typename OutputType, typename BinaryFunction1,typename BinaryFunction2>
             OutputType inner_product_enqueue(bolt::cl::control &ctl, const DVInputIterator& first1,
@@ -368,6 +185,196 @@ namespace detail {
                 bolt::cl::wait(ctl, innerproductEvent);
 
             };
+
+
+
+            /*! \brief This template function overload is used to seperate device_vector iterators from all
+                other iterators
+                \detail This template is called by the non-detail versions of inclusive_scan,
+                it already assumes random access
+             *  iterators.  This overload is called strictly for non-device_vector iterators
+            */
+            template<typename InputIterator, typename OutputType, typename BinaryFunction1,typename BinaryFunction2>
+            OutputType inner_product_pick_iterator(bolt::cl::control &ctl,  const InputIterator& first1,
+                const InputIterator& last1, const InputIterator& first2, const OutputType& init,
+                const BinaryFunction1& f1,
+                const BinaryFunction2& f2, const std::string& user_code, std::random_access_iterator_tag )
+            {
+                typedef typename std::iterator_traits<InputIterator>::value_type iType;
+                size_t sz = (last1 - first1);
+                if (sz == 0)
+                    return -1;
+
+                bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+                if(runMode == bolt::cl::control::Automatic)
+                {
+                     runMode = ctl.getDefaultPathToRun();
+                }
+
+                if( runMode == bolt::cl::control::SerialCpu)
+                {
+                    #if defined( _WIN32 )
+                           return std::inner_product(first1, last1, stdext::checked_array_iterator<iType*>(&(*first2), sz ), init, f1, f2);
+                    #else
+                    return std::inner_product(first1, last1, first2, init, f1, f2);
+                    #endif
+                }
+                else if(runMode == bolt::cl::control::MultiCoreCpu)
+                {
+                    #ifdef ENABLE_TBB
+                           return bolt::btbb::inner_product(first1, last1, first2, init, f1, f2);
+                    #else
+                           throw std::runtime_error("MultiCoreCPU Version of inner_product not Enabled! \n");
+                    #endif
+                }
+                else
+                {
+
+                    // Use host pointers memory since these arrays are only read once - no benefit to copying.
+
+                    // Map the input iterator to a device_vector
+                    device_vector< iType > dvInput( first1, last1, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, ctl );
+                    device_vector< iType > dvInput2( first2, sz, CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, true, ctl );
+
+                    // Map the output iterator to a device_vector
+                    //Make the fourth argument as true; We will use it as a temporary buffer
+                    //for copying the transform result to reduce
+                    //device_vector< iType > dvOutput( result, sz, CL_MEM_USE_HOST_PTR|CL_MEM_READ_WRITE, false, ctl );
+
+                    return inner_product_enqueue( ctl, dvInput.begin( ), dvInput.end( ), dvInput2.begin( ),
+                                                   init, f1, f2, user_code );
+
+                    // This should immediately map/unmap the buffer
+                    //dvOutput.data( );
+                }
+            }
+
+            // This template is called by the non-detail versions of inclusive_scan,
+            // it already assumes random access iterators
+            // This is called strictly for iterators that are derived from device_vector< T >::iterator
+            template<typename DVInputIterator, typename OutputType, typename BinaryFunction1, typename BinaryFunction2>
+            OutputType inner_product_pick_iterator(bolt::cl::control &ctl,  const DVInputIterator& first1,
+                const DVInputIterator& last1,const DVInputIterator& first2,const OutputType& init,
+                const BinaryFunction1&f1,const BinaryFunction2& f2, const std::string& user_code,
+                bolt::cl::device_vector_tag )
+            {
+
+                size_t sz = (last1 - first1);
+
+                typedef typename std::iterator_traits< DVInputIterator >::value_type iType1;
+                bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+                if(runMode == bolt::cl::control::Automatic)
+                {
+                     runMode = ctl.getDefaultPathToRun();
+                }
+
+                if( runMode == bolt::cl::control::SerialCpu)
+                {
+                    typename bolt::cl::device_vector< iType1 >::pointer firstPtr =  first1.getContainer( ).data( );
+                    typename bolt::cl::device_vector< iType1 >::pointer first2Ptr =  first2.getContainer( ).data( );
+
+                    #if defined( _WIN32 )
+                       return std::inner_product(  &firstPtr[ first1.m_Index ],
+                                                &firstPtr[ last1.m_Index ],
+                                                stdext::make_checked_array_iterator( &first2Ptr[ first2.m_Index ], sz),
+                                                init, f1, f2);
+                    #else
+                    return std::inner_product(  &firstPtr[ first1.m_Index ],
+                                                &firstPtr[ last1.m_Index ],
+                                                &first2Ptr[ first2.m_Index ], init, f1, f2);
+                    #endif
+                }
+                else if(runMode == bolt::cl::control::MultiCoreCpu)
+                {
+                #ifdef ENABLE_TBB
+                   typename bolt::cl::device_vector< iType1 >::pointer firstPtr =  first1.getContainer( ).data( );
+                   typename bolt::cl::device_vector< iType1 >::pointer first2Ptr =  first2.getContainer( ).data( );
+                    return bolt::btbb::inner_product(  &firstPtr[ first1.m_Index ],  &firstPtr[ last1.m_Index ],
+                                                &first2Ptr[ first2.m_Index ], init, f1, f2);
+                #else
+                           throw std::runtime_error("MultiCoreCPU Version of inner_product not Enabled! \n");
+                #endif
+                }
+                else
+                {
+                    return inner_product_enqueue( ctl, first1, last1, first2, init, f1, f2, user_code );
+                }
+            }
+
+            // This template is called by the non-detail versions of inclusive_scan,
+            // it already assumes random access iterators
+            // This is called strictly for iterators that are derived from device_vector< T >::iterator
+            template<typename DVInputIterator, typename OutputType, typename BinaryFunction1,typename BinaryFunction2>
+            OutputType inner_product_pick_iterator(bolt::cl::control &ctl,  const DVInputIterator& first1,
+                const DVInputIterator& last1, const DVInputIterator& first2, const OutputType& init,
+                const BinaryFunction1& f1, const BinaryFunction2& f2, const std::string& user_code,
+                bolt::cl::fancy_iterator_tag )
+            {
+                typedef typename std::iterator_traits<DVInputIterator>::value_type iType;
+                size_t sz = std::distance( first1, last1 );
+
+                bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+                if(runMode == bolt::cl::control::Automatic)
+                {
+                     runMode = ctl.getDefaultPathToRun();
+                }
+
+                if( runMode == bolt::cl::control::SerialCpu)
+                {
+                    #if defined( _WIN32 )
+                    return std::inner_product(  first1,
+                                                last1,
+                                                first2,
+                                                init, f1, f2  );
+                    #else
+                           return std::inner_product(  first1,
+                                                last1,
+                                                first2,
+                                                init, f1, f2  );
+                    #endif
+
+                }
+                else if(runMode == bolt::cl::control::MultiCoreCpu)
+                {
+                    #ifdef ENABLE_TBB
+                           return bolt::btbb::inner_product(first1, last1, first2, init, f1, f2);
+                    #else
+                           throw std::runtime_error("MultiCoreCPU Version of inner_product not Enabled! \n");
+                    #endif
+                }
+                else
+                {
+                    return inner_product_enqueue( ctl, first1, last1, first2, init, f1, f2, user_code );
+                }
+            }
+
+
+
+
+            template<typename InputIterator, typename OutputType, typename BinaryFunction1, typename BinaryFunction2>
+            OutputType inner_product_detect_random_access( bolt::cl::control& ctl, const InputIterator& first1,
+                const InputIterator& last1, const InputIterator& first2, const OutputType& init,
+                const BinaryFunction1& f1,
+                const BinaryFunction2& f2, const std::string& user_code, std::random_access_iterator_tag )
+            {
+                return inner_product_pick_iterator( ctl, first1, last1, first2, init, f1, f2, user_code,
+                typename std::iterator_traits< InputIterator >::iterator_category( ) );
+            };
+
+	    // Wrapper that uses default control class, iterator interface
+            template<typename InputIterator, typename OutputType, typename BinaryFunction1, typename BinaryFunction2>
+            OutputType inner_product_detect_random_access( bolt::cl::control& ctl, const InputIterator& first1,
+                const InputIterator& last1, const InputIterator& first2, const OutputType& init,
+                const BinaryFunction1& f1, const BinaryFunction2& f2, const std::string& user_code,
+                std::input_iterator_tag )
+            {
+                //  TODO:  It should be possible to support non-random_access_iterator_tag iterators,
+                //  if we copied the data
+                //  to a temporary buffer.  Should we?
+                static_assert(std::is_same< InputIterator, std::input_iterator_tag >::value  , "Bolt only supports random access iterator types" );
+            };
+
+
 
         }//End OF detail namespace
 

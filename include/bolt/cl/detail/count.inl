@@ -189,40 +189,7 @@ namespace detail {
                 return count;
             }
 
-            template<typename InputIterator, typename Predicate>
-            typename bolt::cl::iterator_traits<InputIterator>::difference_type
-                count_detect_random_access(bolt::cl::control &ctl,
-                const InputIterator& first,
-                const InputIterator& last,
-                const Predicate& predicate,
-                const std::string& cl_code,
-                std::random_access_iterator_tag)
-            {
-                return count_pick_iterator( ctl, first, last,  predicate, cl_code,
-                    typename std::iterator_traits< InputIterator >::iterator_category( ) );
-            }
-
-
-            template<typename InputIterator, typename Predicate>
-            typename bolt::cl::iterator_traits<InputIterator>::difference_type
-                count_detect_random_access(bolt::cl::control &ctl,
-                const InputIterator& first,
-                const InputIterator& last,
-                const Predicate& predicate,
-                const std::string& cl_code,
-                std::input_iterator_tag)
-            {
-
-                //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied
-                //   the data to a temporary buffer.  Should we?
-
-                static_assert(std::is_same< InputIterator, std::input_iterator_tag >::value , "Bolt only supports random access iterator types" );
-            }
-
-
-
-
-            // This template is called after we detect random access iterators
+           // This template is called after we detect random access iterators
             // This is called strictly for any non-device_vector iterator
             template<typename InputIterator, typename Predicate>
              typename bolt::cl::iterator_traits<InputIterator>::difference_type
@@ -386,6 +353,42 @@ namespace detail {
             }
 
 
+            template<typename InputIterator, typename Predicate>
+            typename bolt::cl::iterator_traits<InputIterator>::difference_type
+                count_detect_random_access(bolt::cl::control &ctl,
+                const InputIterator& first,
+                const InputIterator& last,
+                const Predicate& predicate,
+                const std::string& cl_code,
+                std::random_access_iterator_tag)
+            {
+                return count_pick_iterator( ctl, first, last,  predicate, cl_code,
+                    typename std::iterator_traits< InputIterator >::iterator_category( ) );
+            }
+
+
+            template<typename InputIterator, typename Predicate>
+            typename bolt::cl::iterator_traits<InputIterator>::difference_type
+                count_detect_random_access(bolt::cl::control &ctl,
+                const InputIterator& first,
+                const InputIterator& last,
+                const Predicate& predicate,
+                const std::string& cl_code,
+                std::input_iterator_tag)
+            {
+
+                //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied
+                //   the data to a temporary buffer.  Should we?
+
+                static_assert(std::is_same< InputIterator, std::input_iterator_tag >::value , "Bolt only supports random access iterator types" );
+            }
+
+
+
+
+
+
+
         }
 
        template<typename InputIterator, typename Predicate>
@@ -418,6 +421,6 @@ namespace detail {
 };
 
 
-        
+
 
 #endif //COUNT_INL

@@ -248,119 +248,110 @@ public:
     }
 };
 
-template<typename RandomAccessIterator, typename StrictWeakOrdering>
-void sort_detect_random_access( control &ctl,
-                                const RandomAccessIterator& first, const RandomAccessIterator& last,
-                                const StrictWeakOrdering& comp, const std::string& cl_code,
-                                std::random_access_iterator_tag )
-{
-    return sort_pick_iterator(ctl, first, last,
-                              comp, cl_code,
-                             typename std::iterator_traits< RandomAccessIterator >::iterator_category( ) );
-};
 
-
-//Device Vector specialization
 template<typename DVRandomAccessIterator, typename StrictWeakOrdering>
-void sort_pick_iterator( control &ctl,
-                         const DVRandomAccessIterator& first, const DVRandomAccessIterator& last,
-                         const StrictWeakOrdering& comp, const std::string& cl_code,
-                         bolt::cl::device_vector_tag )
+void sort_enqueue_non_powerOf2(control &ctl,
+                               const DVRandomAccessIterator& first, const DVRandomAccessIterator& last,
+                               const StrictWeakOrdering& comp, const std::string& cl_code)
 {
-    // User defined Data types are not supported with device_vector. Hence we have a static assert here.
-    // The code here should be in compliant with the routine following this routine.
-    typedef typename std::iterator_traits<DVRandomAccessIterator>::value_type T;
-    size_t szElements = static_cast< size_t >( std::distance( first, last ) );
-    if( szElements < 2 )
-        return;
-    bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
-    if(runMode == bolt::cl::control::Automatic)
-    {
-        runMode = ctl.getDefaultPathToRun();
-    }
-    if ((runMode == bolt::cl::control::SerialCpu) || (szElements < SORT_CPU_THRESHOLD)) {
-        typename bolt::cl::device_vector< T >::pointer firstPtr =  first.getContainer( ).data( );
-        std::sort( &firstPtr[ first.m_Index ], &firstPtr[ last.m_Index ], comp );
-        return;
-    } else if (runMode == bolt::cl::control::MultiCoreCpu) {
-#ifdef ENABLE_TBB
-         typename bolt::cl::device_vector< T >::pointer firstPtr =  first.getContainer( ).data( );
-        //Compute parallel sort using TBB
-        bolt::btbb::sort(&firstPtr[ first.m_Index ], &firstPtr[ last.m_Index ],comp);
-        return;
-#else
-        //std::cout << "The MultiCoreCpu version of sort is not enabled. " << std ::endl;
-        throw std::runtime_error( "The MultiCoreCpu version of sort is not enabled to be built! \n" );
-#endif
+    /*The selection sort algorithm is not good for GPUs Hence calling the stablesort routines.
+     *For future call a combination of selection sort and bitonic sort. To improve performance of floats
+     * doubles and UDDs*/
+    bolt::cl::detail::stablesort_enqueue(ctl, first, last, comp, cl_code);
+    return;
+#if 0
+    typedef typename std::iterator_traits< DVRandomAccessIterator >::value_type T;
 
-    } else {
-        sort_enqueue(ctl,first,last,comp,cl_code);
+    cl_int l_Error;
+    size_t szElements = (size_t)(last - first);
+
+    std::vector<std::string> typeNames( sort_end );
+    typeNames[sort_iValueType] = TypeName< T >::get( );
+    typeNames[sort_iIterType] = TypeName< DVRandomAccessIterator >::get( );
+    typeNames[sort_StrictWeakOrdering] = TypeName< StrictWeakOrdering >::get();
+    // Power of 2 buffer size
+    // For user-defined types, the user must create a TypeName trait which returns the name of the class -
+    // Note use of TypeName<>::get to retreive the name here.
+
+    std::vector<std::string> typeDefinitions;
+    PUSH_BACK_UNIQUE( typeDefinitions, cl_code )
+    PUSH_BACK_UNIQUE( typeDefinitions, ClCode< T >::get() )
+    PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVRandomAccessIterator >::get() )
+    PUSH_BACK_UNIQUE( typeDefinitions, ClCode< StrictWeakOrdering  >::get() )
+
+    bool cpuDevice = ctl.getDevice().getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_CPU;
+    /*\TODO - Do CPU specific kernel work group size selection here*/
+    //const size_t kernel0_WgSize = (cpuDevice) ? 1 : WAVESIZE*KERNEL02WAVES;
+    std::string compileOptions;
+    //std::ostringstream oss;
+    //oss << " -DKERNEL0WORKGROUPSIZE=" << kernel0_WgSize;
+
+    SelectionSort_KernelTemplateSpecializer ts_kts;
+    std::vector< ::cl::Kernel > kernels = bolt::cl::getKernels(
+        ctl,
+        typeNames,
+        &ts_kts,
+        typeDefinitions,
+        sort_kernels,
+        compileOptions);
+
+    size_t wgSize  = kernels[0].getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.getDevice( ),
+                                                                                                        &l_Error );
+
+    size_t totalWorkGroups = (szElements + wgSize)/wgSize;
+    size_t globalSize = totalWorkGroups * wgSize;
+    V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
+
+    const ::cl::Buffer& in = first.getContainer().getBuffer();
+    control::buffPointer out = ctl.acquireBuffer( sizeof(T)*szElements );
+
+    ALIGNED( 256 ) StrictWeakOrdering aligned_comp( comp );
+    control::buffPointer userFunctor = ctl.acquireBuffer( sizeof( aligned_comp ),
+                                                          CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_comp );
+
+    ::cl::LocalSpaceArg loc;
+    loc.size_ = wgSize*sizeof(T);
+
+    V_OPENCL( kernels[0].setArg(0, in), "Error setting a kernel argument in" );
+    V_OPENCL( kernels[0].setArg(1, *out), "Error setting a kernel argument out" );
+    V_OPENCL( kernels[0].setArg(2, *userFunctor), "Error setting a kernel argument userFunctor" );
+    V_OPENCL( kernels[0].setArg(3, loc), "Error setting kernel argument loc" );
+    V_OPENCL( kernels[0].setArg(4, static_cast<cl_uint> (szElements)), "Error setting kernel argument szElements" );
+    {
+        l_Error = ctl.getCommandQueue().enqueueNDRangeKernel(
+                                        kernels[0],
+                                        ::cl::NullRange,
+                                        ::cl::NDRange(globalSize),
+                                        ::cl::NDRange(wgSize),
+                                        NULL,
+                                        NULL);
+        V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for sort() kernel" );
+        V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
+    }
+
+    wgSize  = kernels[1].getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.getDevice( ),&l_Error);
+
+    V_OPENCL( kernels[1].setArg(0, *out), "Error setting a kernel argument in" );
+    V_OPENCL( kernels[1].setArg(1, in), "Error setting a kernel argument out" );
+    V_OPENCL( kernels[1].setArg(2, *userFunctor), "Error setting a kernel argument userFunctor" );
+    V_OPENCL( kernels[1].setArg(3, loc), "Error setting kernel argument loc" );
+    V_OPENCL( kernels[1].setArg(4, static_cast<cl_uint> (szElements)), "Error setting kernel argument szElements" );
+    {
+        l_Error = ctl.getCommandQueue().enqueueNDRangeKernel(
+                                        kernels[1],
+                                        ::cl::NullRange,
+                                        ::cl::NDRange(globalSize),
+                                        ::cl::NDRange(wgSize),
+                                        NULL,
+                                        NULL);
+        V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for sort() kernel" );
+        V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
     }
     return;
-}
-// Wrapper that uses default control class, iterator interface
-template<typename RandomAccessIterator, typename StrictWeakOrdering>
-void sort_detect_random_access( control &ctl,
-                                const RandomAccessIterator& first, const RandomAccessIterator& last,
-                                const StrictWeakOrdering& comp, const std::string& cl_code,
-                                std::input_iterator_tag )
-{
-    //  \TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data
-    //  to a temporary buffer.  Should we?
-    static_assert( std::is_same< RandomAccessIterator, std::input_iterator_tag >::value , "Bolt only supports random access iterator types" );
-};
-
-// Wrapper that uses default control class, iterator interface
-template<typename RandomAccessIterator, typename StrictWeakOrdering>
-void sort_detect_random_access( control &ctl,
-                                const RandomAccessIterator& first, const RandomAccessIterator& last,
-                                const StrictWeakOrdering& comp, const std::string& cl_code,
-                                bolt::cl::fancy_iterator_tag )
-{
-    //  \TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data
-    //  to a temporary buffer.  Should we?
-    static_assert(std::is_same< RandomAccessIterator, bolt::cl::fancy_iterator_tag >::value  , "Bolt only supports random access iterator types. And does not support Fancy Iterator Tags" );
-};
-
-
-//Non Device Vector specialization.
-//This implementation creates a cl::Buffer and passes the cl buffer to the sort specialization
-//whichtakes the cl buffer as a parameter. In the future, Each input buffer should be mapped to the device_vector
-//and the specialization specific to device_vector should be called.
-template<typename RandomAccessIterator, typename StrictWeakOrdering>
-void sort_pick_iterator( control &ctl,
-                         const RandomAccessIterator& first, const RandomAccessIterator& last,
-                         const StrictWeakOrdering& comp, const std::string& cl_code,
-                         std::random_access_iterator_tag )
-{
-    typedef typename std::iterator_traits<RandomAccessIterator>::value_type T;
-    size_t szElements = (size_t)(last - first);
-    if( szElements < 2 )
-        return;
-
-    bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
-    if(runMode == bolt::cl::control::Automatic)
-    {
-        runMode = ctl.getDefaultPathToRun();
-    }
-    if ((runMode == bolt::cl::control::SerialCpu) || (szElements < BITONIC_SORT_WGSIZE)) {
-        std::sort(first, last, comp);
-        return;
-    } else if (runMode == bolt::cl::control::MultiCoreCpu) {
-#ifdef ENABLE_TBB
-        bolt::btbb::sort(first,last, comp);
-#else
-        throw std::runtime_error( "The MultiCoreCpu version of sort is not enabled to be built! \n" );
 #endif
-    } else {
-        device_vector< T > dvInputOutput( first, last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctl );
-        //Now call the actual cl algorithm
-        sort_enqueue(ctl,dvInputOutput.begin(),dvInputOutput.end(),comp,cl_code);
-        //Map the buffer back to the host
-        dvInputOutput.data( );
-        return;
-    }
-}
+
+}// END of sort_enqueue_non_powerOf2
+
 
 
 /****** sort_enqueue specailization for unsigned int data types. ******
@@ -536,7 +527,7 @@ sort_enqueue(control &ctl,
         /*For swapping the buffers*/
         swap = swap? 0: 1;
     }
-    //TODO this is a bug in APP SDK cl.hpp file The header file is non compliant with the khronos cl.hpp. 
+    //TODO this is a bug in APP SDK cl.hpp file The header file is non compliant with the khronos cl.hpp.
     //     Hence a finish function is added to wait for all the tasks to complete.
     /*::cl::Event uintRadixSortEvent;
     V_OPENCL( ctl.getCommandQueue().clEnqueueBarrierWithWaitList(NULL, &uintRadixSortEvent) ,
@@ -780,8 +771,8 @@ sort_enqueue(control &ctl,
                                 ::cl::NDRange(groupSize >> 4),
                                 NULL,
                                 NULL);
-    
-    //TODO this is a bug in APP SDK cl.hpp file The header file is non compliant with the khronos cl.hpp. 
+
+    //TODO this is a bug in APP SDK cl.hpp file The header file is non compliant with the khronos cl.hpp.
     //     Hence a finish function is added to wait for all the tasks to complete.
     /*::cl::Event intRadixSortEvent;
     V_OPENCL( ctl.getCommandQueue().clEnqueueBarrierWithWaitList(NULL, &intRadixSortEvent) ,
@@ -902,8 +893,8 @@ sort_enqueue(control &ctl,
             //V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
         }//end of for passStage = 0:stage-1
     }//end of for stage = 0:numStage-1
-    
-    //TODO this is a bug in APP SDK cl.hpp file The header file is non compliant with the khronos cl.hpp. 
+
+    //TODO this is a bug in APP SDK cl.hpp file The header file is non compliant with the khronos cl.hpp.
     //     Hence a finish function is added to wait for all the tasks to complete.
     /*::cl::Event bitonicSortEvent;
     V_OPENCL( ctl.getCommandQueue().clEnqueueBarrierWithWaitList(NULL, &bitonicSortEvent) ,
@@ -915,107 +906,124 @@ sort_enqueue(control &ctl,
 }// END of sort_enqueue
 
 
+
+
+
+
+//Device Vector specialization
 template<typename DVRandomAccessIterator, typename StrictWeakOrdering>
-void sort_enqueue_non_powerOf2(control &ctl,
-                               const DVRandomAccessIterator& first, const DVRandomAccessIterator& last,
-                               const StrictWeakOrdering& comp, const std::string& cl_code)
+void sort_pick_iterator( control &ctl,
+                         const DVRandomAccessIterator& first, const DVRandomAccessIterator& last,
+                         const StrictWeakOrdering& comp, const std::string& cl_code,
+                         bolt::cl::device_vector_tag )
 {
-    /*The selection sort algorithm is not good for GPUs Hence calling the stablesort routines.
-     *For future call a combination of selection sort and bitonic sort. To improve performance of floats
-     * doubles and UDDs*/
-    bolt::cl::detail::stablesort_enqueue(ctl, first, last, comp, cl_code);
-    return;
-#if 0
-    typedef typename std::iterator_traits< DVRandomAccessIterator >::value_type T;
-
-    cl_int l_Error;
-    size_t szElements = (size_t)(last - first);
-
-    std::vector<std::string> typeNames( sort_end );
-    typeNames[sort_iValueType] = TypeName< T >::get( );
-    typeNames[sort_iIterType] = TypeName< DVRandomAccessIterator >::get( );
-    typeNames[sort_StrictWeakOrdering] = TypeName< StrictWeakOrdering >::get();
-    // Power of 2 buffer size
-    // For user-defined types, the user must create a TypeName trait which returns the name of the class -
-    // Note use of TypeName<>::get to retreive the name here.
-
-    std::vector<std::string> typeDefinitions;
-    PUSH_BACK_UNIQUE( typeDefinitions, cl_code )
-    PUSH_BACK_UNIQUE( typeDefinitions, ClCode< T >::get() )
-    PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVRandomAccessIterator >::get() )
-    PUSH_BACK_UNIQUE( typeDefinitions, ClCode< StrictWeakOrdering  >::get() )
-
-    bool cpuDevice = ctl.getDevice().getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_CPU;
-    /*\TODO - Do CPU specific kernel work group size selection here*/
-    //const size_t kernel0_WgSize = (cpuDevice) ? 1 : WAVESIZE*KERNEL02WAVES;
-    std::string compileOptions;
-    //std::ostringstream oss;
-    //oss << " -DKERNEL0WORKGROUPSIZE=" << kernel0_WgSize;
-
-    SelectionSort_KernelTemplateSpecializer ts_kts;
-    std::vector< ::cl::Kernel > kernels = bolt::cl::getKernels(
-        ctl,
-        typeNames,
-        &ts_kts,
-        typeDefinitions,
-        sort_kernels,
-        compileOptions);
-
-    size_t wgSize  = kernels[0].getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.getDevice( ),
-                                                                                                        &l_Error );
-
-    size_t totalWorkGroups = (szElements + wgSize)/wgSize;
-    size_t globalSize = totalWorkGroups * wgSize;
-    V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
-
-    const ::cl::Buffer& in = first.getContainer().getBuffer();
-    control::buffPointer out = ctl.acquireBuffer( sizeof(T)*szElements );
-
-    ALIGNED( 256 ) StrictWeakOrdering aligned_comp( comp );
-    control::buffPointer userFunctor = ctl.acquireBuffer( sizeof( aligned_comp ),
-                                                          CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_comp );
-
-    ::cl::LocalSpaceArg loc;
-    loc.size_ = wgSize*sizeof(T);
-
-    V_OPENCL( kernels[0].setArg(0, in), "Error setting a kernel argument in" );
-    V_OPENCL( kernels[0].setArg(1, *out), "Error setting a kernel argument out" );
-    V_OPENCL( kernels[0].setArg(2, *userFunctor), "Error setting a kernel argument userFunctor" );
-    V_OPENCL( kernels[0].setArg(3, loc), "Error setting kernel argument loc" );
-    V_OPENCL( kernels[0].setArg(4, static_cast<cl_uint> (szElements)), "Error setting kernel argument szElements" );
+    // User defined Data types are not supported with device_vector. Hence we have a static assert here.
+    // The code here should be in compliant with the routine following this routine.
+    typedef typename std::iterator_traits<DVRandomAccessIterator>::value_type T;
+    size_t szElements = static_cast< size_t >( std::distance( first, last ) );
+    if( szElements < 2 )
+        return;
+    bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+    if(runMode == bolt::cl::control::Automatic)
     {
-        l_Error = ctl.getCommandQueue().enqueueNDRangeKernel(
-                                        kernels[0],
-                                        ::cl::NullRange,
-                                        ::cl::NDRange(globalSize),
-                                        ::cl::NDRange(wgSize),
-                                        NULL,
-                                        NULL);
-        V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for sort() kernel" );
-        V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
+        runMode = ctl.getDefaultPathToRun();
     }
-
-    wgSize  = kernels[1].getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctl.getDevice( ),&l_Error);
-
-    V_OPENCL( kernels[1].setArg(0, *out), "Error setting a kernel argument in" );
-    V_OPENCL( kernels[1].setArg(1, in), "Error setting a kernel argument out" );
-    V_OPENCL( kernels[1].setArg(2, *userFunctor), "Error setting a kernel argument userFunctor" );
-    V_OPENCL( kernels[1].setArg(3, loc), "Error setting kernel argument loc" );
-    V_OPENCL( kernels[1].setArg(4, static_cast<cl_uint> (szElements)), "Error setting kernel argument szElements" );
-    {
-        l_Error = ctl.getCommandQueue().enqueueNDRangeKernel(
-                                        kernels[1],
-                                        ::cl::NullRange,
-                                        ::cl::NDRange(globalSize),
-                                        ::cl::NDRange(wgSize),
-                                        NULL,
-                                        NULL);
-        V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for sort() kernel" );
-        V_OPENCL( ctl.getCommandQueue().finish(), "Error calling finish on the command queue" );
-    }
-    return;
+    if ((runMode == bolt::cl::control::SerialCpu) || (szElements < SORT_CPU_THRESHOLD)) {
+        typename bolt::cl::device_vector< T >::pointer firstPtr =  first.getContainer( ).data( );
+        std::sort( &firstPtr[ first.m_Index ], &firstPtr[ last.m_Index ], comp );
+        return;
+    } else if (runMode == bolt::cl::control::MultiCoreCpu) {
+#ifdef ENABLE_TBB
+         typename bolt::cl::device_vector< T >::pointer firstPtr =  first.getContainer( ).data( );
+        //Compute parallel sort using TBB
+        bolt::btbb::sort(&firstPtr[ first.m_Index ], &firstPtr[ last.m_Index ],comp);
+        return;
+#else
+        //std::cout << "The MultiCoreCpu version of sort is not enabled. " << std ::endl;
+        throw std::runtime_error( "The MultiCoreCpu version of sort is not enabled to be built! \n" );
 #endif
-}// END of sort_enqueue_non_powerOf2
+
+    } else {
+        sort_enqueue(ctl,first,last,comp,cl_code);
+    }
+    return;
+}
+
+
+//Non Device Vector specialization.
+//This implementation creates a cl::Buffer and passes the cl buffer to the sort specialization
+//whichtakes the cl buffer as a parameter. In the future, Each input buffer should be mapped to the device_vector
+//and the specialization specific to device_vector should be called.
+template<typename RandomAccessIterator, typename StrictWeakOrdering>
+void sort_pick_iterator( control &ctl,
+                         const RandomAccessIterator& first, const RandomAccessIterator& last,
+                         const StrictWeakOrdering& comp, const std::string& cl_code,
+                         std::random_access_iterator_tag )
+{
+    typedef typename std::iterator_traits<RandomAccessIterator>::value_type T;
+    size_t szElements = (size_t)(last - first);
+    if( szElements < 2 )
+        return;
+
+    bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+    if(runMode == bolt::cl::control::Automatic)
+    {
+        runMode = ctl.getDefaultPathToRun();
+    }
+    if ((runMode == bolt::cl::control::SerialCpu) || (szElements < BITONIC_SORT_WGSIZE)) {
+        std::sort(first, last, comp);
+        return;
+    } else if (runMode == bolt::cl::control::MultiCoreCpu) {
+#ifdef ENABLE_TBB
+        bolt::btbb::sort(first,last, comp);
+#else
+        throw std::runtime_error( "The MultiCoreCpu version of sort is not enabled to be built! \n" );
+#endif
+    } else {
+        device_vector< T > dvInputOutput( first, last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctl );
+        //Now call the actual cl algorithm
+        sort_enqueue(ctl,dvInputOutput.begin(),dvInputOutput.end(),comp,cl_code);
+        //Map the buffer back to the host
+        dvInputOutput.data( );
+        return;
+    }
+}
+
+
+template<typename RandomAccessIterator, typename StrictWeakOrdering>
+void sort_detect_random_access( control &ctl,
+                                const RandomAccessIterator& first, const RandomAccessIterator& last,
+                                const StrictWeakOrdering& comp, const std::string& cl_code,
+                                std::random_access_iterator_tag )
+{
+    return sort_pick_iterator(ctl, first, last,
+                              comp, cl_code,
+                             typename std::iterator_traits< RandomAccessIterator >::iterator_category( ) );
+};
+
+// Wrapper that uses default control class, iterator interface
+template<typename RandomAccessIterator, typename StrictWeakOrdering>
+void sort_detect_random_access( control &ctl,
+                                const RandomAccessIterator& first, const RandomAccessIterator& last,
+                                const StrictWeakOrdering& comp, const std::string& cl_code,
+                                std::input_iterator_tag )
+{
+    //  \TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data
+    //  to a temporary buffer.  Should we?
+    static_assert( std::is_same< RandomAccessIterator, std::input_iterator_tag >::value , "Bolt only supports random access iterator types" );
+};
+
+// Wrapper that uses default control class, iterator interface
+template<typename RandomAccessIterator, typename StrictWeakOrdering>
+void sort_detect_random_access( control &ctl,
+                                const RandomAccessIterator& first, const RandomAccessIterator& last,
+                                const StrictWeakOrdering& comp, const std::string& cl_code,
+                                bolt::cl::fancy_iterator_tag )
+{
+    //  \TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data
+    //  to a temporary buffer.  Should we?
+    static_assert(std::is_same< RandomAccessIterator, bolt::cl::fancy_iterator_tag >::value  , "Bolt only supports random access iterator types. And does not support Fancy Iterator Tags" );
+};
 
 }//namespace bolt::cl::detail
 
