@@ -148,6 +148,189 @@ class Copy_KernelTemplateSpecializer : public KernelTemplateSpecializer
 
 
 
+template< typename DVInputIterator, typename Size, typename DVOutputIterator >
+typename std::enable_if< std::is_same< typename std::iterator_traits<DVInputIterator >::iterator_category,
+                                       typename std::iterator_traits<DVOutputIterator >::iterator_category
+                                     >::value
+
+                     && std::is_same< typename std::iterator_traits<DVInputIterator >::value_type,
+                                       typename std::iterator_traits<DVOutputIterator >::value_type
+                                     >::value
+
+                       >::type  /*If enabled then this typename will be evaluated to void*/
+    copy_enqueue(const bolt::cl::control &ctrl, const DVInputIterator& first, const Size& n,
+    const DVOutputIterator& result, const std::string& cl_code)
+{
+
+    typedef typename std::iterator_traits<DVInputIterator>::value_type iType;
+    typedef typename std::iterator_traits<DVOutputIterator>::value_type oType;
+    ::cl::Event copyEvent;
+    ctrl.getCommandQueue( ).enqueueCopyBuffer(
+                        first.getContainer().getBuffer(),
+                        result.getContainer().getBuffer(),
+                        first.m_Index * sizeof(iType),
+                        result.m_Index * sizeof(oType),
+                        n*sizeof(oType),
+                        NULL,
+                        &copyEvent);
+    // wait for results
+    bolt::cl::wait(ctrl, copyEvent);
+}
+
+
+template< typename DVInputIterator, typename Size, typename DVOutputIterator >
+typename std::enable_if< !(std::is_same< typename std::iterator_traits<DVInputIterator >::iterator_category,
+                                       typename std::iterator_traits<DVOutputIterator >::iterator_category
+                                     >::value
+                     && std::is_same< typename std::iterator_traits<DVInputIterator >::value_type,
+                                       typename std::iterator_traits<DVOutputIterator >::value_type
+                                     >::value )
+                       >::type  /*If enabled then this typename will be evaluated to void*/
+    copy_enqueue(const bolt::cl::control &ctrl, const DVInputIterator& first, const Size& n,
+    const DVOutputIterator& result, const std::string& cl_code)
+{
+
+    /**********************************************************************************
+     * Type Names - used in KernelTemplateSpecializer
+     *********************************************************************************/
+    typedef typename std::iterator_traits<DVInputIterator>::value_type iType;
+    typedef typename std::iterator_traits<DVOutputIterator>::value_type oType;
+    std::vector<std::string> typeNames(end_copy);
+    typeNames[copy_iType] = TypeName< iType >::get( );
+    typeNames[copy_DVInputIterator] = TypeName< DVInputIterator >::get( );
+    typeNames[copy_oType] = TypeName< oType >::get( );
+    typeNames[copy_DVOutputIterator] = TypeName< DVOutputIterator >::get( );
+
+    /**********************************************************************************
+     * Type Definitions - directly concatenated into kernel string (order may matter)
+     *********************************************************************************/
+    std::vector<std::string> typeDefs;
+    PUSH_BACK_UNIQUE( typeDefs, ClCode< iType >::get() )
+    PUSH_BACK_UNIQUE( typeDefs, ClCode< DVInputIterator >::get() )
+    PUSH_BACK_UNIQUE( typeDefs, ClCode< oType >::get() )
+    PUSH_BACK_UNIQUE( typeDefs, ClCode< DVOutputIterator >::get() )
+
+
+    //kernelWithBoundsCheck.getWorkGroupInfo<CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctrl.device( ), &l_Error )
+    const size_t workGroupSize  = 256;
+    const size_t numComputeUnits = 40; //ctrl.device( ).getInfo< CL_DEVICE_MAX_COMPUTE_UNITS >( ); // = 28
+    const size_t numWorkGroupsPerComputeUnit = 10; //ctrl.wgPerComputeUnit( );
+    const size_t numWorkGroups = numComputeUnits * numWorkGroupsPerComputeUnit;
+
+    const cl_uint numThreadsIdeal = static_cast<cl_uint>( numWorkGroups * workGroupSize );
+    cl_uint numElementsPerThread = n / numThreadsIdeal;
+    cl_uint numThreadsRUP = n;
+    size_t mod = (n & (workGroupSize-1));
+    int doBoundaryCheck = 0;
+    if( mod )
+            {
+        numThreadsRUP &= ~mod;
+        numThreadsRUP += workGroupSize;
+        doBoundaryCheck = 1;
+            }
+
+    /**********************************************************************************
+     * Compile Options
+     *********************************************************************************/
+    std::string compileOptions;
+    std::ostringstream oss;
+    oss << " -DBURST_SIZE=" << BURST_SIZE;
+    oss << " -DBOUNDARY_CHECK=" << doBoundaryCheck;
+    compileOptions = oss.str();
+
+    /**********************************************************************************
+     * Request Compiled Kernels
+     *********************************************************************************/
+    Copy_KernelTemplateSpecializer c_kts;
+    std::vector< ::cl::Kernel > kernels = bolt::cl::getKernels(
+        ctrl,
+        typeNames,
+        &c_kts,
+        typeDefs,
+        copy_kernels,
+        compileOptions);
+
+    /**********************************************************************************
+     *  Kernel
+     *********************************************************************************/
+    ::cl::Event kernelEvent;
+    cl_int l_Error;
+    try
+    {
+        int whichKernel = 0;
+        cl_uint numThreadsChosen;
+        cl_uint workGroupSizeChosen = workGroupSize;
+        switch( whichKernel )
+            {
+        case 0: // I: 1 thread per element
+            numThreadsChosen = numThreadsRUP;
+            break;
+        case 1: // II: 1 element per thread / BURST_SIZE
+            numThreadsChosen = numThreadsRUP / BURST_SIZE;
+            break;
+        case 2: // III: ideal threads
+        case 3: // IV: ideal threads w/ BURST
+        case 4: // V: ideal threads unrolled BURST
+            numThreadsChosen = numThreadsIdeal;
+            break;
+        } // switch
+
+
+        //std::cout << "NumElem: " << n << "; NumThreads: " << numThreadsChosen << ";
+        //NumWorkGroups: " << numThreadsChosen/workGroupSizeChosen << std::endl;
+
+        // Input buffer
+         typename DVInputIterator::Payload first_payload = first.gpuPayload( );
+         typename DVOutputIterator::Payload  result_payload = result.gpuPayload( );
+        V_OPENCL( kernels[whichKernel].setArg( 0, first.getContainer().getBuffer()), "Error setArg kernels[ 0 ]" );
+        V_OPENCL( kernels[whichKernel].setArg( 1, first.gpuPayloadSize( ),&first_payload), "Error setting a kernel argument" );
+        // Output buffer
+        V_OPENCL( kernels[whichKernel].setArg( 2, result.getContainer().getBuffer()),"Error setArg kernels[ 0 ]" );
+        V_OPENCL( kernels[whichKernel].setArg( 3, result.gpuPayloadSize( ),&result_payload  ), "Error setting a kernel argument" );
+        //Buffer Size
+        V_OPENCL( kernels[whichKernel].setArg( 4, static_cast<cl_uint>( n ) ),"Error setArg kernels[0]" );
+
+
+        l_Error = ctrl.getCommandQueue( ).enqueueNDRangeKernel(
+            kernels[whichKernel],
+            ::cl::NullRange,
+            ::cl::NDRange( numThreadsChosen ),
+            ::cl::NDRange( workGroupSizeChosen ),
+            NULL,
+            &kernelEvent);
+        V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for kernel" );
+    }
+
+    catch( const ::cl::Error& e)
+    {
+        std::cerr << "::cl::enqueueNDRangeKernel( ) in bolt::cl::copy_enqueue()" << std::endl;
+        std::cerr << "Error Code:   " << clErrorStringA(e.err()) << " (" << e.err() << ")" << std::endl;
+        std::cerr << "File:         " << __FILE__ << ", line " << __LINE__ << std::endl;
+        std::cerr << "Error String: " << e.what() << std::endl;
+    }
+
+    // wait for results
+    bolt::cl::wait(ctrl, kernelEvent);
+
+
+    // profiling
+    cl_command_queue_properties queueProperties;
+    l_Error = ctrl.getCommandQueue().getInfo<cl_command_queue_properties>(CL_QUEUE_PROPERTIES, &queueProperties);
+    unsigned int profilingEnabled = queueProperties&CL_QUEUE_PROFILING_ENABLE;
+    if ( profilingEnabled ) {
+        cl_ulong start_time, stop_time;
+
+        V_OPENCL( kernelEvent.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_START, &start_time),
+            "failed on getProfilingInfo<CL_PROFILING_COMMAND_START>()");
+        V_OPENCL( kernelEvent.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END, &stop_time),
+            "failed on getProfilingInfo<CL_PROFILING_COMMAND_END>()");
+        cl_ulong time = stop_time -  start_time;
+        double gb = (n*(sizeof(iType)+sizeof(oType))/1024.0/1024.0/1024.0);
+        double sec = time/1000000000.0;
+        std::cout << "Global Memory Bandwidth: " << ( gb / sec) << " ( "
+          << time/1000000.0 << " ms)" << std::endl;
+    }
+}
 
 
 /*! \brief This template function overload is used to seperate device_vector iterators from all other iterators
@@ -163,7 +346,7 @@ void copy_pick_iterator(const bolt::cl::control &ctrl,  const InputIterator& fir
     typedef typename  std::iterator_traits<InputIterator>::value_type iType;
     typedef typename std::iterator_traits<OutputIterator>::value_type oType;
 
-   
+
      bolt::cl::control::e_RunMode runMode = ctrl.getForceRunMode( );
 
      if( runMode == bolt::cl::control::Automatic )
@@ -193,7 +376,7 @@ void copy_pick_iterator(const bolt::cl::control &ctrl,  const InputIterator& fir
         #if defined( _WIN32 )
           std::copy_n( first, n, stdext::checked_array_iterator<oType*>(&(*result), n ) );
         #else
-          std::copy_n( first, n, result ); 
+          std::copy_n( first, n, result );
         #endif
      }
 }
@@ -439,189 +622,7 @@ void copy_pick_iterator(const bolt::cl::control &ctl,  const DVInputIterator& fi
     static_assert(std::is_same< DVInputIterator, bolt::cl::fancy_iterator_tag  >::value , "It is not possible to copy into fancy iterators. They are not mutable" );
 }
 
-template< typename DVInputIterator, typename Size, typename DVOutputIterator >
-typename std::enable_if< std::is_same< typename std::iterator_traits<DVInputIterator >::iterator_category,
-                                       typename std::iterator_traits<DVOutputIterator >::iterator_category
-                                     >::value
 
-                     && std::is_same< typename std::iterator_traits<DVInputIterator >::value_type,
-                                       typename std::iterator_traits<DVOutputIterator >::value_type
-                                     >::value
-
-                       >::type  /*If enabled then this typename will be evaluated to void*/
-    copy_enqueue(const bolt::cl::control &ctrl, const DVInputIterator& first, const Size& n,
-    const DVOutputIterator& result, const std::string& cl_code)
-{
-
-    typedef typename std::iterator_traits<DVInputIterator>::value_type iType;
-    typedef typename std::iterator_traits<DVOutputIterator>::value_type oType;
-    ::cl::Event copyEvent;
-    ctrl.getCommandQueue( ).enqueueCopyBuffer(
-                        first.getContainer().getBuffer(),
-                        result.getContainer().getBuffer(),
-                        first.m_Index * sizeof(iType),
-                        result.m_Index * sizeof(oType),
-                        n*sizeof(oType),
-                        NULL,
-                        &copyEvent);
-    // wait for results
-    bolt::cl::wait(ctrl, copyEvent);
-}
-
-
-template< typename DVInputIterator, typename Size, typename DVOutputIterator >
-typename std::enable_if< !(std::is_same< typename std::iterator_traits<DVInputIterator >::iterator_category,
-                                       typename std::iterator_traits<DVOutputIterator >::iterator_category
-                                     >::value
-                     && std::is_same< typename std::iterator_traits<DVInputIterator >::value_type,
-                                       typename std::iterator_traits<DVOutputIterator >::value_type
-                                     >::value )                       
-                       >::type  /*If enabled then this typename will be evaluated to void*/
-    copy_enqueue(const bolt::cl::control &ctrl, const DVInputIterator& first, const Size& n,
-    const DVOutputIterator& result, const std::string& cl_code)
-{
-
-    /**********************************************************************************
-     * Type Names - used in KernelTemplateSpecializer
-     *********************************************************************************/
-    typedef typename std::iterator_traits<DVInputIterator>::value_type iType;
-    typedef typename std::iterator_traits<DVOutputIterator>::value_type oType;
-    std::vector<std::string> typeNames(end_copy);
-    typeNames[copy_iType] = TypeName< iType >::get( );
-    typeNames[copy_DVInputIterator] = TypeName< DVInputIterator >::get( );
-    typeNames[copy_oType] = TypeName< oType >::get( ); 
-    typeNames[copy_DVOutputIterator] = TypeName< DVOutputIterator >::get( );
-
-    /**********************************************************************************
-     * Type Definitions - directly concatenated into kernel string (order may matter)
-     *********************************************************************************/
-    std::vector<std::string> typeDefs;
-    PUSH_BACK_UNIQUE( typeDefs, ClCode< iType >::get() )
-    PUSH_BACK_UNIQUE( typeDefs, ClCode< DVInputIterator >::get() )
-    PUSH_BACK_UNIQUE( typeDefs, ClCode< oType >::get() )
-    PUSH_BACK_UNIQUE( typeDefs, ClCode< DVOutputIterator >::get() )
-
-
-    //kernelWithBoundsCheck.getWorkGroupInfo<CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >( ctrl.device( ), &l_Error )
-    const size_t workGroupSize  = 256;
-    const size_t numComputeUnits = 40; //ctrl.device( ).getInfo< CL_DEVICE_MAX_COMPUTE_UNITS >( ); // = 28
-    const size_t numWorkGroupsPerComputeUnit = 10; //ctrl.wgPerComputeUnit( );
-    const size_t numWorkGroups = numComputeUnits * numWorkGroupsPerComputeUnit;
-
-    const cl_uint numThreadsIdeal = static_cast<cl_uint>( numWorkGroups * workGroupSize );
-    cl_uint numElementsPerThread = n / numThreadsIdeal;
-    cl_uint numThreadsRUP = n;
-    size_t mod = (n & (workGroupSize-1));
-    int doBoundaryCheck = 0;
-    if( mod )
-            {
-        numThreadsRUP &= ~mod;
-        numThreadsRUP += workGroupSize;
-        doBoundaryCheck = 1;
-            }
-
-    /**********************************************************************************
-     * Compile Options
-     *********************************************************************************/
-    std::string compileOptions;
-    std::ostringstream oss;
-    oss << " -DBURST_SIZE=" << BURST_SIZE;
-    oss << " -DBOUNDARY_CHECK=" << doBoundaryCheck;
-    compileOptions = oss.str();
-
-    /**********************************************************************************
-     * Request Compiled Kernels
-     *********************************************************************************/
-    Copy_KernelTemplateSpecializer c_kts;
-    std::vector< ::cl::Kernel > kernels = bolt::cl::getKernels(
-        ctrl,
-        typeNames,
-        &c_kts,
-        typeDefs,
-        copy_kernels,
-        compileOptions);
-
-    /**********************************************************************************
-     *  Kernel
-     *********************************************************************************/
-    ::cl::Event kernelEvent;
-    cl_int l_Error;
-    try
-    {
-        int whichKernel = 0;
-        cl_uint numThreadsChosen;
-        cl_uint workGroupSizeChosen = workGroupSize;
-        switch( whichKernel )
-            {
-        case 0: // I: 1 thread per element
-            numThreadsChosen = numThreadsRUP;
-            break;
-        case 1: // II: 1 element per thread / BURST_SIZE
-            numThreadsChosen = numThreadsRUP / BURST_SIZE;
-            break;
-        case 2: // III: ideal threads
-        case 3: // IV: ideal threads w/ BURST
-        case 4: // V: ideal threads unrolled BURST
-            numThreadsChosen = numThreadsIdeal;
-            break;
-        } // switch
-
-
-        //std::cout << "NumElem: " << n << "; NumThreads: " << numThreadsChosen << ";
-        //NumWorkGroups: " << numThreadsChosen/workGroupSizeChosen << std::endl;
-
-        // Input buffer
-         typename DVInputIterator::Payload first_payload = first.gpuPayload( );
-         typename DVOutputIterator::Payload  result_payload = result.gpuPayload( );
-        V_OPENCL( kernels[whichKernel].setArg( 0, first.getContainer().getBuffer()), "Error setArg kernels[ 0 ]" ); 
-        V_OPENCL( kernels[whichKernel].setArg( 1, first.gpuPayloadSize( ),&first_payload), "Error setting a kernel argument" );
-        // Output buffer
-        V_OPENCL( kernels[whichKernel].setArg( 2, result.getContainer().getBuffer()),"Error setArg kernels[ 0 ]" ); 
-        V_OPENCL( kernels[whichKernel].setArg( 3, result.gpuPayloadSize( ),&result_payload  ), "Error setting a kernel argument" );
-        //Buffer Size
-        V_OPENCL( kernels[whichKernel].setArg( 4, static_cast<cl_uint>( n ) ),"Error setArg kernels[0]" );
-
-
-        l_Error = ctrl.getCommandQueue( ).enqueueNDRangeKernel(
-            kernels[whichKernel],
-            ::cl::NullRange,
-            ::cl::NDRange( numThreadsChosen ),
-            ::cl::NDRange( workGroupSizeChosen ),
-            NULL,
-            &kernelEvent);
-        V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for kernel" );
-    }
-
-    catch( const ::cl::Error& e)
-    {
-        std::cerr << "::cl::enqueueNDRangeKernel( ) in bolt::cl::copy_enqueue()" << std::endl;
-        std::cerr << "Error Code:   " << clErrorStringA(e.err()) << " (" << e.err() << ")" << std::endl;
-        std::cerr << "File:         " << __FILE__ << ", line " << __LINE__ << std::endl;
-        std::cerr << "Error String: " << e.what() << std::endl;
-    }
-
-    // wait for results
-    bolt::cl::wait(ctrl, kernelEvent);
-
-
-    // profiling
-    cl_command_queue_properties queueProperties;
-    l_Error = ctrl.getCommandQueue().getInfo<cl_command_queue_properties>(CL_QUEUE_PROPERTIES, &queueProperties);
-    unsigned int profilingEnabled = queueProperties&CL_QUEUE_PROFILING_ENABLE;
-    if ( profilingEnabled ) {
-        cl_ulong start_time, stop_time;
-
-        V_OPENCL( kernelEvent.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_START, &start_time),
-            "failed on getProfilingInfo<CL_PROFILING_COMMAND_START>()");
-        V_OPENCL( kernelEvent.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END, &stop_time),
-            "failed on getProfilingInfo<CL_PROFILING_COMMAND_END>()");
-        cl_ulong time = stop_time -  start_time;
-        double gb = (n*(sizeof(iType)+sizeof(oType))/1024.0/1024.0/1024.0);
-        double sec = time/1000000000.0;
-        std::cout << "Global Memory Bandwidth: " << ( gb / sec) << " ( "
-          << time/1000000.0 << " ms)" << std::endl;
-    }
-}
 
 template<typename InputIterator, typename Size, typename OutputIterator >
 OutputIterator copy_detect_random_access( const bolt::cl::control& ctrl, const InputIterator& first, const Size& n,

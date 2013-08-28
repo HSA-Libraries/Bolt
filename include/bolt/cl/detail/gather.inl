@@ -36,6 +36,84 @@ namespace bolt {
 namespace cl {
 
 namespace detail {
+
+/* Begin-- Serial Implementation of the gather and gather_if routines */
+
+
+
+template< typename InputIterator1,
+          typename InputIterator2,
+          typename OutputIterator >
+
+void serial_gather(InputIterator1 mapfirst,
+                   InputIterator1 maplast,
+                   InputIterator2 input,
+                   OutputIterator result)
+{
+    //std::cout<<"Serial code path ... \n";
+   size_t numElements = static_cast< size_t >( std::distance( mapfirst, maplast ) );
+   typedef typename  std::iterator_traits<InputIterator1>::value_type iType1;
+   iType1 temp;
+   for(size_t iter = 0; iter < numElements; iter++)
+   {
+                   temp = *(mapfirst + (int)iter);
+                  *(result + (int)iter) = *(input + (int)temp);
+   }
+}
+
+
+template< typename InputIterator1,
+          typename InputIterator2,
+          typename InputIterator3,
+          typename OutputIterator >
+
+void serial_gather_if(InputIterator1 mapfirst,
+                      InputIterator1 maplast,
+                      InputIterator2 stencil,
+                      InputIterator3 input,
+                      OutputIterator result)
+{
+    //std::cout<<"Serial code path ... \n";
+   size_t numElements = static_cast< size_t >( std::distance( mapfirst, maplast ) );
+   for(size_t iter = 0; iter < numElements; iter++)
+   {
+       if(stencil[(int)iter]== 1)
+            result[(int)iter] = *(input + mapfirst[(int)iter]);
+   }
+}
+
+template< typename InputIterator1,
+          typename InputIterator2,
+          typename InputIterator3,
+          typename OutputIterator,
+          typename BinaryPredicate >
+
+void serial_gather_if(InputIterator1 mapfirst,
+                      InputIterator1 maplast,
+                      InputIterator2 stencil,
+                      InputIterator3 input,
+                      OutputIterator result,
+                      BinaryPredicate pred)
+{
+   //std::cout<<"Serial code path ... \n";
+   unsigned int numElements = static_cast< unsigned int >( std::distance( mapfirst, maplast ) );
+  // for (InputIterator1 iter = mapfirst; iter != maplast; iter++)
+  // {
+  //      if(pred(*(stencil + ( iter - mapfirst))))
+        //{
+  //          // result[(int)iter] = input[mapfirst[(int)iter]];
+        //	 *(result + (iter - mapfirst) )= input[*iter];
+        //}
+  // }
+      for(unsigned int iter = 0; iter < numElements; iter++)
+   {
+        if(pred(*(stencil + (int)iter)))
+             result[(int)iter] = input[mapfirst[(int)iter]];
+   }
+}
+
+ /* End-- Serial Implementation of the gather and gather_if routines */
+
 ////////////////////////////////////////////////////////////////////
 // GatherIf KTS
 ////////////////////////////////////////////////////////////////////
@@ -109,108 +187,277 @@ public:
     }
 };
 
+
 ////////////////////////////////////////////////////////////////////
-// GatherIf detect random access
+// GatherIf enqueue
 ////////////////////////////////////////////////////////////////////
 
-
-
-    template< typename InputIterator1,
-              typename InputIterator2,
-              typename InputIterator3,
-              typename OutputIterator,
-              typename BinaryPredicate >
-    void gather_if_detect_random_access( bolt::cl::control& ctl,
-                                         const InputIterator1& map_first,
-                                         const InputIterator1& map_last,
-                                         const InputIterator2& stencil,
-                                         const InputIterator3& input,
-                                         const OutputIterator& result,
-                                         const BinaryPredicate& pred,
-                                         const std::string& user_code,
-                                         std::random_access_iterator_tag,
-                                         std::random_access_iterator_tag,
-                                         std::random_access_iterator_tag )
+    template< typename DVInputIterator1,
+              typename DVInputIterator2,
+              typename DVInputIterator3,
+              typename DVOutputIterator,
+              typename Predicate >
+    void gather_if_enqueue( bolt::cl::control &ctl,
+                            const DVInputIterator1& map_first,
+                            const DVInputIterator1& map_last,
+                            const DVInputIterator2& stencil,
+                            const DVInputIterator3& input,
+                            const DVOutputIterator& result,
+                            const Predicate& pred,
+                            const std::string& cl_code )
     {
-       gather_if_pick_iterator( ctl,
-                                map_first,
-                                map_last,
-                                stencil,
-                                input,
-                                result,
-                                pred,
-                                user_code,
-                                typename std::iterator_traits< InputIterator1 >::iterator_category( ),
-                                typename std::iterator_traits< InputIterator2 >::iterator_category( ),
-                                typename std::iterator_traits< InputIterator3 >::iterator_category( ) );
+        typedef typename std::iterator_traits<DVInputIterator1>::value_type iType1;
+        typedef typename std::iterator_traits<DVInputIterator2>::value_type iType2;
+        typedef typename std::iterator_traits<DVInputIterator3>::value_type iType3;
+        typedef typename std::iterator_traits<DVOutputIterator>::value_type oType;
+
+        cl_uint distVec = static_cast< cl_uint >(  map_first.distance_to(map_last) );
+        if( distVec == 0 )
+            return;
+
+        const size_t numComputeUnits = ctl.getDevice( ).getInfo< CL_DEVICE_MAX_COMPUTE_UNITS >( );
+        const size_t numWorkGroupsPerComputeUnit = ctl.getWGPerComputeUnit( );
+        size_t numWorkGroups = numComputeUnits * numWorkGroupsPerComputeUnit;
+
+        /**********************************************************************************
+         * Type Names - used in KernelTemplateSpecializer
+         *********************************************************************************/
+
+        std::vector<std::string> gatherIfKernels(gather_if_endB);
+        gatherIfKernels[gather_if_mapType] = TypeName< iType1 >::get( );
+        gatherIfKernels[gather_if_stencilType] = TypeName< iType2 >::get( );
+        gatherIfKernels[gather_if_iType] = TypeName< iType3 >::get( );
+        gatherIfKernels[gather_if_DVMapType] = TypeName< DVInputIterator1 >::get( );
+        gatherIfKernels[gather_if_DVStencilType] = TypeName< DVInputIterator2 >::get( );
+        gatherIfKernels[gather_if_DVInputIterator] = TypeName< DVInputIterator3 >::get( );
+        gatherIfKernels[gather_if_resultType] = TypeName< oType >::get( );
+        gatherIfKernels[gather_if_DVResultType] = TypeName< DVOutputIterator >::get( );
+        gatherIfKernels[gather_if_Predicate] = TypeName< Predicate >::get();
+
+       /**********************************************************************************
+        * Type Definitions - directrly concatenated into kernel string
+        *********************************************************************************/
+
+        // For user-defined types, the user must create a TypeName trait which returns the name of the
+        //class - note use of TypeName<>::get to retrieve the name here.
+        std::vector<std::string> typeDefinitions;
+        PUSH_BACK_UNIQUE( typeDefinitions, cl_code)
+        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< iType1 >::get() )
+        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< iType2 >::get() )
+        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< iType3 >::get() )
+        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVInputIterator1 >::get() )
+        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVInputIterator2 >::get() )
+        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVInputIterator3 >::get() )
+        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< oType >::get() )
+        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVOutputIterator >::get() )
+        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< Predicate >::get() )
+        /**********************************************************************************
+         * Calculate WG Size
+         *********************************************************************************/
+
+        cl_int l_Error = CL_SUCCESS;
+        const size_t wgSize  = WAVEFRONT_SIZE;
+        V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
+        assert( (wgSize & (wgSize-1) ) == 0 ); // The bitwise &,~ logic below requires wgSize to be a power of 2
+
+        int boundsCheck = 0;
+        size_t wgMultiple = distVec;
+
+        size_t lowerBits = ( distVec & (wgSize-1) );
+        if( lowerBits )
+        {
+            //  Bump the workitem count to the next multiple of wgSize
+            wgMultiple &= ~lowerBits;
+            wgMultiple += wgSize;
+        }
+
+        //if (wgMultiple/wgSize < numWorkGroups)
+        //    numWorkGroups = wgMultiple/wgSize;
+
+        /**********************************************************************************
+         * Compile Options
+         *********************************************************************************/
+        bool cpuDevice = ctl.getDevice().getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_CPU;
+        //std::cout << "Device is CPU: " << (cpuDevice?"TRUE":"FALSE") << std::endl;
+        const size_t kernel_WgSize = (cpuDevice) ? 1 : wgSize;
+        std::string compileOptions;
+        std::ostringstream oss;
+        oss << " -DKERNELWORKGROUPSIZE=" << kernel_WgSize;
+        compileOptions = oss.str();
+
+        /**********************************************************************************
+          * Request Compiled Kernels
+          *********************************************************************************/
+         GatherIf_KernelTemplateSpecializer s_if_kts;
+         std::vector< ::cl::Kernel > kernels = bolt::cl::getKernels(
+             ctl,
+             gatherIfKernels,
+             &s_if_kts,
+             typeDefinitions,
+             gather_kernels,
+             compileOptions);
+         // kernels returned in same order as added in KernelTemplaceSpecializer constructor
+
+        ALIGNED( 256 ) Predicate aligned_binary( pred );
+        control::buffPointer userPredicate = ctl.acquireBuffer( sizeof( aligned_binary ),
+                                                                CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY,
+                                                                &aligned_binary );
+       typename DVInputIterator1::Payload   map_payload = map_first.gpuPayload( );
+       typename DVInputIterator2::Payload   stencil_payload = stencil.gpuPayload( );
+       typename DVInputIterator3::Payload   input_payload = input.gpuPayload( );
+       typename DVOutputIterator::Payload   result_payload = result.gpuPayload( );
+
+        kernels[boundsCheck].setArg( 0, map_first.getContainer().getBuffer() );
+        kernels[boundsCheck].setArg( 1, map_first.gpuPayloadSize( ), &map_payload);
+        kernels[boundsCheck].setArg( 2, stencil.getContainer().getBuffer() );
+        kernels[boundsCheck].setArg( 3, stencil.gpuPayloadSize( ),&stencil_payload );
+        kernels[boundsCheck].setArg( 4, input.getContainer().getBuffer() );
+        kernels[boundsCheck].setArg( 5, input.gpuPayloadSize( ), &input_payload );
+        kernels[boundsCheck].setArg( 6, result.getContainer().getBuffer() );
+        kernels[boundsCheck].setArg( 7, result.gpuPayloadSize( ),&result_payload );
+        kernels[boundsCheck].setArg( 8, distVec );
+        kernels[boundsCheck].setArg( 9, *userPredicate );
+
+        ::cl::Event gatherIfEvent;
+        l_Error = ctl.getCommandQueue().enqueueNDRangeKernel(
+            kernels[boundsCheck],
+            ::cl::NullRange,
+            ::cl::NDRange(wgMultiple), // numWorkGroups*wgSize
+            ::cl::NDRange(wgSize),
+            NULL,
+            &gatherIfEvent );
+        V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for gather_if() kernel" );
+
+        ::bolt::cl::wait(ctl, gatherIfEvent);
+
     };
 
 ////////////////////////////////////////////////////////////////////
-// Gather detect random access
+// Gather enqueue
 ////////////////////////////////////////////////////////////////////
-
-
-
-    template< typename InputIterator1,
-              typename InputIterator2,
-              typename OutputIterator >
-    void gather_detect_random_access( bolt::cl::control& ctl,
-                                      const InputIterator1& map_first,
-                                      const InputIterator1& map_last,
-                                      const InputIterator2& input,
-                                      const OutputIterator& result,
-                                      const std::string& user_code,
-                                      std::random_access_iterator_tag,
-                                      std::random_access_iterator_tag )
+    template< typename DVInputIterator1,
+              typename DVInputIterator2,
+              typename DVOutputIterator >
+    void gather_enqueue( bolt::cl::control &ctl,
+                         const DVInputIterator1& map_first,
+                         const DVInputIterator1& map_last,
+                         const DVInputIterator2& input,
+                         const DVOutputIterator& result,
+                         const std::string& cl_code )
     {
-       gather_pick_iterator( ctl,
-                             map_first,
-                             map_last,
-                             input,
-                             result,
-                             user_code,
-                             typename std::iterator_traits< InputIterator1 >::iterator_category( ),
-                             typename std::iterator_traits< InputIterator2 >::iterator_category( ) );
+        typedef typename std::iterator_traits<DVInputIterator1>::value_type iType1;
+        typedef typename std::iterator_traits<DVInputIterator2>::value_type iType2;
+        typedef typename std::iterator_traits<DVOutputIterator>::value_type oType;
+
+        cl_uint distVec = static_cast< cl_uint >(  map_first.distance_to(map_last) );
+        if( distVec == 0 )
+            return;
+
+        const size_t numComputeUnits = ctl.getDevice( ).getInfo< CL_DEVICE_MAX_COMPUTE_UNITS >( );
+        const size_t numWorkGroupsPerComputeUnit = ctl.getWGPerComputeUnit( );
+        size_t numWorkGroups = numComputeUnits * numWorkGroupsPerComputeUnit;
+
+        /**********************************************************************************
+         * Type Names - used in KernelTemplateSpecializer
+         *********************************************************************************/
+        std::vector<std::string> gatherKernels(gather_endB);
+        gatherKernels[gather_mapType] = TypeName< iType1 >::get( );
+        gatherKernels[gather_iType] = TypeName< iType2 >::get( );
+        gatherKernels[gather_DVMapType] = TypeName< DVInputIterator1 >::get( );
+        gatherKernels[gather_DVInputIterator] = TypeName< DVInputIterator2 >::get( );
+        gatherKernels[gather_resultType] = TypeName< oType >::get( );
+        gatherKernels[gather_DVResultType] = TypeName< DVOutputIterator >::get( );
+
+       /**********************************************************************************
+        * Type Definitions - directrly concatenated into kernel string
+        *********************************************************************************/
+
+        // For user-defined types, the user must create a TypeName trait which returns the name of the
+        //class - note use of TypeName<>::get to retrieve the name here.
+        std::vector<std::string> typeDefinitions;
+        PUSH_BACK_UNIQUE( typeDefinitions, cl_code)
+        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< iType1 >::get() )
+        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< iType2 >::get() )
+        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVInputIterator1 >::get() )
+        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVInputIterator2 >::get() )
+        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< oType >::get() )
+        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVOutputIterator >::get() )
+        /**********************************************************************************
+         * Calculate WG Size
+         *********************************************************************************/
+
+        cl_int l_Error = CL_SUCCESS;
+        const size_t wgSize  = WAVEFRONT_SIZE;
+        V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
+        assert( (wgSize & (wgSize-1) ) == 0 ); // The bitwise &,~ logic below requires wgSize to be a power of 2
+
+        int boundsCheck = 0;
+        size_t wgMultiple = distVec;
+
+        size_t lowerBits = ( distVec & (wgSize-1) );
+        if( lowerBits )
+        {
+            //  Bump the workitem count to the next multiple of wgSize
+            wgMultiple &= ~lowerBits;
+            wgMultiple += wgSize;
+        }
+
+        //if (wgMultiple/wgSize < numWorkGroups)
+        //    numWorkGroups = wgMultiple/wgSize;
+
+        /**********************************************************************************
+         * Compile Options
+         *********************************************************************************/
+        bool cpuDevice = ctl.getDevice().getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_CPU;
+        //std::cout << "Device is CPU: " << (cpuDevice?"TRUE":"FALSE") << std::endl;
+        const size_t kernel_WgSize = (cpuDevice) ? 1 : wgSize;
+        std::string compileOptions;
+        std::ostringstream oss;
+        oss << " -DKERNELWORKGROUPSIZE=" << kernel_WgSize;
+        compileOptions = oss.str();
+
+        /**********************************************************************************
+          * Request Compiled Kernels
+          *********************************************************************************/
+         GatherKernelTemplateSpecializer s_kts;
+         std::vector< ::cl::Kernel > kernels = bolt::cl::getKernels(
+             ctl,
+             gatherKernels,
+             &s_kts,
+             typeDefinitions,
+             gather_kernels,
+             compileOptions);
+         // kernels returned in same order as added in KernelTemplaceSpecializer constructor
+
+       typename DVInputIterator1::Payload   map_payload = map_first.gpuPayload( );
+       typename DVInputIterator2::Payload   input_payload = input.gpuPayload( );
+       typename DVOutputIterator::Payload   result_payload = result.gpuPayload( );
+
+        kernels[boundsCheck].setArg( 0, map_first.getContainer().getBuffer() );
+        kernels[boundsCheck].setArg( 1, map_first.gpuPayloadSize( ),&map_payload );
+        kernels[boundsCheck].setArg( 2, input.getContainer().getBuffer() );
+        kernels[boundsCheck].setArg( 3, input.gpuPayloadSize( ),&input_payload );
+        kernels[boundsCheck].setArg( 4, result.getContainer().getBuffer() );
+        kernels[boundsCheck].setArg( 5, result.gpuPayloadSize( ), &result_payload );
+        kernels[boundsCheck].setArg( 6, distVec );
+
+        ::cl::Event gatherEvent;
+        l_Error = ctl.getCommandQueue().enqueueNDRangeKernel(
+            kernels[boundsCheck],
+            ::cl::NullRange,
+            ::cl::NDRange(wgMultiple), // numWorkGroups*wgSize
+            ::cl::NDRange(wgSize),
+            NULL,
+            &gatherEvent );
+        V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for gather_if() kernel" );
+
+        ::bolt::cl::wait(ctl, gatherEvent);
+
     };
 
-    // Wrapper that uses default ::bolt::cl::control class, iterator interface
-    template< typename InputIterator1,
-              typename InputIterator2,
-              typename InputIterator3,
-              typename OutputIterator,
-              typename BinaryPredicate >
-    void gather_if_detect_random_access( bolt::cl::control& ctl,
-                                         const InputIterator1& map_first,
-                                         const InputIterator1& map_last,
-                                         const InputIterator2& stencil,
-                                         const InputIterator3& input,
-                                         const OutputIterator& result,
-                                         const BinaryPredicate& pred,
-                                         const std::string& user_code,
-                                         std::input_iterator_tag,
-                                         std::input_iterator_tag,
-                                         std::input_iterator_tag )
-    {
-            // TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data
-            // to a temporary buffer.  Should we?
-
-            static_assert( std::is_same< InputIterator1, std::input_iterator_tag >::value , "Bolt only supports random access iterator types" );
-    };
-
-    template< typename InputIterator1,
-              typename InputIterator2,
-              typename OutputIterator>
-    void gather_detect_random_access( bolt::cl::control& ctl,
-                                      const InputIterator1& map_first,
-                                      const InputIterator1& map_last,
-                                      const InputIterator2& input,
-                                      const OutputIterator& result,
-                                      const std::string& user_code,
-                                      std::input_iterator_tag,
-                                      std::input_iterator_tag )
-    {
-            static_assert( std::is_same< InputIterator1, std::input_iterator_tag >::value , "Bolt only supports random access iterator types" );
-    };
+////////////////////////////////////////////////////////////////////
+// Enqueue ends
+////////////////////////////////////////////////////////////////////
 
 ////////////////////////////////////////////////////////////////////
 // GatherIf pick iterator
@@ -273,7 +520,7 @@ public:
           device_vector< iType1 > dvMap( map_first, map_last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, ctl );
           device_vector< iType2 > dvStencil( stencil, sz, CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, true, ctl );
           device_vector< iType3 > dvInput( input, sz, CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, true, ctl );
-          
+
           // Map the output iterator to a device_vector
           device_vector< oType > dvResult( result, sz, CL_MEM_USE_HOST_PTR|CL_MEM_WRITE_ONLY, false, ctl );
           gather_if_enqueue( ctl,
@@ -284,7 +531,7 @@ public:
                               dvResult.begin( ),
                               pred,
                               user_code );
-          
+
           // This should immediately map/unmap the buffer
           dvResult.data( );
         }
@@ -465,7 +712,7 @@ public:
         }
 
         if( runMode == bolt::cl::control::SerialCpu )
-        {            
+        {
             typename bolt::cl::device_vector< iType1 >::pointer mapPtr =  map_first.getContainer( ).data( );
             typename bolt::cl::device_vector< iType2 >::pointer stenPtr =  stencil.getContainer( ).data( );
             typename bolt::cl::device_vector< iType3 >::pointer inputPtr =  input.getContainer( ).data( );
@@ -474,7 +721,7 @@ public:
           #if defined( _WIN32 )
             serial_gather_if(&mapPtr[ map_first.m_Index ], &mapPtr[ map_last.m_Index ], &stenPtr[ stencil.m_Index ],
                  &inputPtr[ input.m_Index ], stdext::make_checked_array_iterator( &resPtr[ result.m_Index ], sz ), pred );
-           
+
          #else
             serial_gather_if( &mapPtr[ map_first.m_Index ], &mapPtr[ map_last.m_Index ], &stenPtr[ stencil.m_Index ],
                  &inputPtr[ input.m_Index ], &resPtr[ result.m_Index ], pred );
@@ -483,7 +730,7 @@ public:
         else if( runMode == bolt::cl::control::MultiCoreCpu )
         {
 #if defined( ENABLE_TBB )
-          {           
+          {
            typename bolt::cl::device_vector< iType1 >::pointer mapPtr =  map_first.getContainer( ).data( );
            typename bolt::cl::device_vector< iType2 >::pointer stenPtr =  stencil.getContainer( ).data( );
            typename bolt::cl::device_vector< iType3 >::pointer inputPtr =  input.getContainer( ).data( );
@@ -494,7 +741,7 @@ public:
           }
 #else
              throw std::runtime_error( "The MultiCoreCpu version of gather is not enabled to be built! \n" );
-#endif  
+#endif
         }
         else
         {
@@ -718,7 +965,7 @@ public:
            typename bolt::cl::device_vector< iType2 >::pointer InputBuffer    =  input.getContainer( ).data( );
            typename bolt::cl::device_vector< oType >::pointer  ResultBuffer =  result.getContainer( ).data( );
             serial_gather(&MapBuffer[ map_first.m_Index ], &MapBuffer[ map_last.m_Index ], &InputBuffer[ input.m_Index ],
-            &ResultBuffer[ result.m_Index ]); 
+            &ResultBuffer[ result.m_Index ]);
         }
         else if( runMode == bolt::cl::control::MultiCoreCpu )
         {
@@ -789,7 +1036,7 @@ public:
             }
 #else
              throw std::runtime_error( "The MultiCoreCpu version of gather is not enabled to be built! \n" );
-#endif 
+#endif
         }
         else
         {
@@ -834,7 +1081,7 @@ public:
         {
            typename bolt::cl::device_vector< iType1 >::pointer mapBuffer    =  mapfirst.getContainer( ).data( );
            typename bolt::cl::device_vector< oType >::pointer  ResultBuffer =  result.getContainer( ).data( );
-            serial_gather( &mapBuffer[ mapfirst.m_Index ], &mapBuffer[ maplast.m_Index ], fancyInpt, 
+            serial_gather( &mapBuffer[ mapfirst.m_Index ], &mapBuffer[ maplast.m_Index ], fancyInpt,
                                                                          &ResultBuffer[ result.m_Index ]);
         }
         else if( runMode == bolt::cl::control::MultiCoreCpu )
@@ -843,13 +1090,13 @@ public:
             {
                typename bolt::cl::device_vector< iType1 >::pointer mapBuffer    =  mapfirst.getContainer( ).data( );
               typename  bolt::cl::device_vector< oType >::pointer  ResultBuffer =  result.getContainer( ).data( );
-                bolt::btbb::gather(  &mapBuffer[ mapfirst.m_Index ], &mapBuffer[ maplast.m_Index ], fancyInpt, 
+                bolt::btbb::gather(  &mapBuffer[ mapfirst.m_Index ], &mapBuffer[ maplast.m_Index ], fancyInpt,
                                                                          &ResultBuffer[ result.m_Index ]);
             }
 
 #else
              throw std::runtime_error( "The MultiCoreCpu version of gather is not enabled to be built! \n" );
-#endif  
+#endif
         }
         else
         {
@@ -895,7 +1142,7 @@ public:
         else if( runMode == bolt::cl::control::MultiCoreCpu )
         {
 #if defined( ENABLE_TBB )
-             {				
+             {
                typename bolt::cl::device_vector< iType1 >::pointer mapBuffer    =  map_first.getContainer( ).data( );
                 bolt::btbb::gather( &mapBuffer[ map_first.m_Index ], &mapBuffer[ map_last.m_Index ], input, result);
             }
@@ -986,278 +1233,113 @@ public:
             dvResult.data( );
         }
     }
-    
+
+
 
 ////////////////////////////////////////////////////////////////////
-// GatherIf enqueue
+// GatherIf detect random access
 ////////////////////////////////////////////////////////////////////
 
-    template< typename DVInputIterator1,
-              typename DVInputIterator2,
-              typename DVInputIterator3,
-              typename DVOutputIterator,
-              typename Predicate >
-    void gather_if_enqueue( bolt::cl::control &ctl,
-                            const DVInputIterator1& map_first,
-                            const DVInputIterator1& map_last,
-                            const DVInputIterator2& stencil,
-                            const DVInputIterator3& input,
-                            const DVOutputIterator& result,
-                            const Predicate& pred,
-                            const std::string& cl_code )
+
+
+    template< typename InputIterator1,
+              typename InputIterator2,
+              typename InputIterator3,
+              typename OutputIterator,
+              typename BinaryPredicate >
+    void gather_if_detect_random_access( bolt::cl::control& ctl,
+                                         const InputIterator1& map_first,
+                                         const InputIterator1& map_last,
+                                         const InputIterator2& stencil,
+                                         const InputIterator3& input,
+                                         const OutputIterator& result,
+                                         const BinaryPredicate& pred,
+                                         const std::string& user_code,
+                                         std::random_access_iterator_tag,
+                                         std::random_access_iterator_tag,
+                                         std::random_access_iterator_tag )
     {
-        typedef typename std::iterator_traits<DVInputIterator1>::value_type iType1;
-        typedef typename std::iterator_traits<DVInputIterator2>::value_type iType2;
-        typedef typename std::iterator_traits<DVInputIterator3>::value_type iType3;
-        typedef typename std::iterator_traits<DVOutputIterator>::value_type oType;
-
-        cl_uint distVec = static_cast< cl_uint >(  map_first.distance_to(map_last) );
-        if( distVec == 0 )
-            return;
-
-        const size_t numComputeUnits = ctl.getDevice( ).getInfo< CL_DEVICE_MAX_COMPUTE_UNITS >( );
-        const size_t numWorkGroupsPerComputeUnit = ctl.getWGPerComputeUnit( );
-        size_t numWorkGroups = numComputeUnits * numWorkGroupsPerComputeUnit;
-
-        /**********************************************************************************
-         * Type Names - used in KernelTemplateSpecializer
-         *********************************************************************************/
-
-        std::vector<std::string> gatherIfKernels(gather_if_endB);
-        gatherIfKernels[gather_if_mapType] = TypeName< iType1 >::get( );
-        gatherIfKernels[gather_if_stencilType] = TypeName< iType2 >::get( );
-        gatherIfKernels[gather_if_iType] = TypeName< iType3 >::get( );
-        gatherIfKernels[gather_if_DVMapType] = TypeName< DVInputIterator1 >::get( );
-        gatherIfKernels[gather_if_DVStencilType] = TypeName< DVInputIterator2 >::get( );
-        gatherIfKernels[gather_if_DVInputIterator] = TypeName< DVInputIterator3 >::get( );
-        gatherIfKernels[gather_if_resultType] = TypeName< oType >::get( );
-        gatherIfKernels[gather_if_DVResultType] = TypeName< DVOutputIterator >::get( );
-        gatherIfKernels[gather_if_Predicate] = TypeName< Predicate >::get();
-
-       /**********************************************************************************
-        * Type Definitions - directrly concatenated into kernel string
-        *********************************************************************************/
-
-        // For user-defined types, the user must create a TypeName trait which returns the name of the
-        //class - note use of TypeName<>::get to retrieve the name here.
-        std::vector<std::string> typeDefinitions;
-        PUSH_BACK_UNIQUE( typeDefinitions, cl_code)
-        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< iType1 >::get() )
-        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< iType2 >::get() )
-        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< iType3 >::get() )
-        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVInputIterator1 >::get() )
-        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVInputIterator2 >::get() )
-        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVInputIterator3 >::get() )
-        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< oType >::get() )
-        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVOutputIterator >::get() )
-        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< Predicate >::get() )
-        /**********************************************************************************
-         * Calculate WG Size
-         *********************************************************************************/
-
-        cl_int l_Error = CL_SUCCESS;
-        const size_t wgSize  = WAVEFRONT_SIZE;
-        V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
-        assert( (wgSize & (wgSize-1) ) == 0 ); // The bitwise &,~ logic below requires wgSize to be a power of 2
-
-        int boundsCheck = 0;
-        size_t wgMultiple = distVec;
-
-        size_t lowerBits = ( distVec & (wgSize-1) );
-        if( lowerBits )
-        {
-            //  Bump the workitem count to the next multiple of wgSize
-            wgMultiple &= ~lowerBits;
-            wgMultiple += wgSize;
-        }
-
-        //if (wgMultiple/wgSize < numWorkGroups)
-        //    numWorkGroups = wgMultiple/wgSize;
-
-        /**********************************************************************************
-         * Compile Options
-         *********************************************************************************/
-        bool cpuDevice = ctl.getDevice().getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_CPU;
-        //std::cout << "Device is CPU: " << (cpuDevice?"TRUE":"FALSE") << std::endl;
-        const size_t kernel_WgSize = (cpuDevice) ? 1 : wgSize;
-        std::string compileOptions;
-        std::ostringstream oss;
-        oss << " -DKERNELWORKGROUPSIZE=" << kernel_WgSize;
-        compileOptions = oss.str();
-
-        /**********************************************************************************
-          * Request Compiled Kernels
-          *********************************************************************************/
-         GatherIf_KernelTemplateSpecializer s_if_kts;
-         std::vector< ::cl::Kernel > kernels = bolt::cl::getKernels(
-             ctl,
-             gatherIfKernels,
-             &s_if_kts,
-             typeDefinitions,
-             gather_kernels,
-             compileOptions);
-         // kernels returned in same order as added in KernelTemplaceSpecializer constructor
-
-        ALIGNED( 256 ) Predicate aligned_binary( pred );
-        control::buffPointer userPredicate = ctl.acquireBuffer( sizeof( aligned_binary ),
-                                                                CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY,
-                                                                &aligned_binary );
-       typename DVInputIterator1::Payload   map_payload = map_first.gpuPayload( );
-       typename DVInputIterator2::Payload   stencil_payload = stencil.gpuPayload( ); 
-       typename DVInputIterator3::Payload   input_payload = input.gpuPayload( );
-       typename DVOutputIterator::Payload   result_payload = result.gpuPayload( ); 
-
-        kernels[boundsCheck].setArg( 0, map_first.getContainer().getBuffer() );
-        kernels[boundsCheck].setArg( 1, map_first.gpuPayloadSize( ), &map_payload);
-        kernels[boundsCheck].setArg( 2, stencil.getContainer().getBuffer() );
-        kernels[boundsCheck].setArg( 3, stencil.gpuPayloadSize( ),&stencil_payload );
-        kernels[boundsCheck].setArg( 4, input.getContainer().getBuffer() );
-        kernels[boundsCheck].setArg( 5, input.gpuPayloadSize( ), &input_payload );
-        kernels[boundsCheck].setArg( 6, result.getContainer().getBuffer() );
-        kernels[boundsCheck].setArg( 7, result.gpuPayloadSize( ),&result_payload );
-        kernels[boundsCheck].setArg( 8, distVec );
-        kernels[boundsCheck].setArg( 9, *userPredicate );
-
-        ::cl::Event gatherIfEvent;
-        l_Error = ctl.getCommandQueue().enqueueNDRangeKernel(
-            kernels[boundsCheck],
-            ::cl::NullRange,
-            ::cl::NDRange(wgMultiple), // numWorkGroups*wgSize
-            ::cl::NDRange(wgSize),
-            NULL,
-            &gatherIfEvent );
-        V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for gather_if() kernel" );
-
-        ::bolt::cl::wait(ctl, gatherIfEvent);
-
+       gather_if_pick_iterator( ctl,
+                                map_first,
+                                map_last,
+                                stencil,
+                                input,
+                                result,
+                                pred,
+                                user_code,
+                                typename std::iterator_traits< InputIterator1 >::iterator_category( ),
+                                typename std::iterator_traits< InputIterator2 >::iterator_category( ),
+                                typename std::iterator_traits< InputIterator3 >::iterator_category( ) );
     };
 
-////////////////////////////////////////////////////////////////////
-// Gather enqueue
-////////////////////////////////////////////////////////////////////
-    template< typename DVInputIterator1,
-              typename DVInputIterator2,
-              typename DVOutputIterator >
-    void gather_enqueue( bolt::cl::control &ctl,
-                         const DVInputIterator1& map_first,
-                         const DVInputIterator1& map_last,
-                         const DVInputIterator2& input,
-                         const DVOutputIterator& result,
-                         const std::string& cl_code )
+
+    // Wrapper that uses default ::bolt::cl::control class, iterator interface
+    template< typename InputIterator1,
+              typename InputIterator2,
+              typename InputIterator3,
+              typename OutputIterator,
+              typename BinaryPredicate >
+    void gather_if_detect_random_access( bolt::cl::control& ctl,
+                                         const InputIterator1& map_first,
+                                         const InputIterator1& map_last,
+                                         const InputIterator2& stencil,
+                                         const InputIterator3& input,
+                                         const OutputIterator& result,
+                                         const BinaryPredicate& pred,
+                                         const std::string& user_code,
+                                         std::input_iterator_tag,
+                                         std::input_iterator_tag,
+                                         std::input_iterator_tag )
     {
-        typedef typename std::iterator_traits<DVInputIterator1>::value_type iType1;
-        typedef typename std::iterator_traits<DVInputIterator2>::value_type iType2;
-        typedef typename std::iterator_traits<DVOutputIterator>::value_type oType;
+            // TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data
+            // to a temporary buffer.  Should we?
 
-        cl_uint distVec = static_cast< cl_uint >(  map_first.distance_to(map_last) );
-        if( distVec == 0 )
-            return;
-
-        const size_t numComputeUnits = ctl.getDevice( ).getInfo< CL_DEVICE_MAX_COMPUTE_UNITS >( );
-        const size_t numWorkGroupsPerComputeUnit = ctl.getWGPerComputeUnit( );
-        size_t numWorkGroups = numComputeUnits * numWorkGroupsPerComputeUnit;
-
-        /**********************************************************************************
-         * Type Names - used in KernelTemplateSpecializer
-         *********************************************************************************/
-        std::vector<std::string> gatherKernels(gather_endB);
-        gatherKernels[gather_mapType] = TypeName< iType1 >::get( );
-        gatherKernels[gather_iType] = TypeName< iType2 >::get( );
-        gatherKernels[gather_DVMapType] = TypeName< DVInputIterator1 >::get( );
-        gatherKernels[gather_DVInputIterator] = TypeName< DVInputIterator2 >::get( );
-        gatherKernels[gather_resultType] = TypeName< oType >::get( );
-        gatherKernels[gather_DVResultType] = TypeName< DVOutputIterator >::get( );
-
-       /**********************************************************************************
-        * Type Definitions - directrly concatenated into kernel string
-        *********************************************************************************/
-
-        // For user-defined types, the user must create a TypeName trait which returns the name of the
-        //class - note use of TypeName<>::get to retrieve the name here.
-        std::vector<std::string> typeDefinitions;
-        PUSH_BACK_UNIQUE( typeDefinitions, cl_code)
-        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< iType1 >::get() )
-        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< iType2 >::get() )
-        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVInputIterator1 >::get() )
-        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVInputIterator2 >::get() )
-        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< oType >::get() )
-        PUSH_BACK_UNIQUE( typeDefinitions, ClCode< DVOutputIterator >::get() )
-        /**********************************************************************************
-         * Calculate WG Size
-         *********************************************************************************/
-
-        cl_int l_Error = CL_SUCCESS;
-        const size_t wgSize  = WAVEFRONT_SIZE;
-        V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
-        assert( (wgSize & (wgSize-1) ) == 0 ); // The bitwise &,~ logic below requires wgSize to be a power of 2
-
-        int boundsCheck = 0;
-        size_t wgMultiple = distVec;
-
-        size_t lowerBits = ( distVec & (wgSize-1) );
-        if( lowerBits )
-        {
-            //  Bump the workitem count to the next multiple of wgSize
-            wgMultiple &= ~lowerBits;
-            wgMultiple += wgSize;
-        }
-
-        //if (wgMultiple/wgSize < numWorkGroups)
-        //    numWorkGroups = wgMultiple/wgSize;
-
-        /**********************************************************************************
-         * Compile Options
-         *********************************************************************************/
-        bool cpuDevice = ctl.getDevice().getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_CPU;
-        //std::cout << "Device is CPU: " << (cpuDevice?"TRUE":"FALSE") << std::endl;
-        const size_t kernel_WgSize = (cpuDevice) ? 1 : wgSize;
-        std::string compileOptions;
-        std::ostringstream oss;
-        oss << " -DKERNELWORKGROUPSIZE=" << kernel_WgSize;
-        compileOptions = oss.str();
-
-        /**********************************************************************************
-          * Request Compiled Kernels
-          *********************************************************************************/
-         GatherKernelTemplateSpecializer s_kts;
-         std::vector< ::cl::Kernel > kernels = bolt::cl::getKernels(
-             ctl,
-             gatherKernels,
-             &s_kts,
-             typeDefinitions,
-             gather_kernels,
-             compileOptions);
-         // kernels returned in same order as added in KernelTemplaceSpecializer constructor
-
-       typename DVInputIterator1::Payload   map_payload = map_first.gpuPayload( );
-       typename DVInputIterator2::Payload   input_payload = input.gpuPayload( ); 
-       typename DVOutputIterator::Payload   result_payload = result.gpuPayload( ); 
-
-        kernels[boundsCheck].setArg( 0, map_first.getContainer().getBuffer() );
-        kernels[boundsCheck].setArg( 1, map_first.gpuPayloadSize( ),&map_payload );
-        kernels[boundsCheck].setArg( 2, input.getContainer().getBuffer() );
-        kernels[boundsCheck].setArg( 3, input.gpuPayloadSize( ),&input_payload );
-        kernels[boundsCheck].setArg( 4, result.getContainer().getBuffer() );
-        kernels[boundsCheck].setArg( 5, result.gpuPayloadSize( ), &result_payload );
-        kernels[boundsCheck].setArg( 6, distVec );
-
-        ::cl::Event gatherEvent;
-        l_Error = ctl.getCommandQueue().enqueueNDRangeKernel(
-            kernels[boundsCheck],
-            ::cl::NullRange,
-            ::cl::NDRange(wgMultiple), // numWorkGroups*wgSize
-            ::cl::NDRange(wgSize),
-            NULL,
-            &gatherEvent );
-        V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for gather_if() kernel" );
-
-        ::bolt::cl::wait(ctl, gatherEvent);
-
+            static_assert( std::is_same< InputIterator1, std::input_iterator_tag >::value , "Bolt only supports random access iterator types" );
     };
 
+    template< typename InputIterator1,
+              typename InputIterator2,
+              typename OutputIterator>
+    void gather_detect_random_access( bolt::cl::control& ctl,
+                                      const InputIterator1& map_first,
+                                      const InputIterator1& map_last,
+                                      const InputIterator2& input,
+                                      const OutputIterator& result,
+                                      const std::string& user_code,
+                                      std::input_iterator_tag,
+                                      std::input_iterator_tag )
+    {
+            static_assert( std::is_same< InputIterator1, std::input_iterator_tag >::value , "Bolt only supports random access iterator types" );
+    };
+
+
 ////////////////////////////////////////////////////////////////////
-// Enqueue ends
+// Gather detect random access
 ////////////////////////////////////////////////////////////////////
+
+
+
+    template< typename InputIterator1,
+              typename InputIterator2,
+              typename OutputIterator >
+    void gather_detect_random_access( bolt::cl::control& ctl,
+                                      const InputIterator1& map_first,
+                                      const InputIterator1& map_last,
+                                      const InputIterator2& input,
+                                      const OutputIterator& result,
+                                      const std::string& user_code,
+                                      std::random_access_iterator_tag,
+                                      std::random_access_iterator_tag )
+    {
+       gather_pick_iterator( ctl,
+                             map_first,
+                             map_last,
+                             input,
+                             result,
+                             user_code,
+                             typename std::iterator_traits< InputIterator1 >::iterator_category( ),
+                             typename std::iterator_traits< InputIterator2 >::iterator_category( ) );
+    };
 
 
 } //End of detail namespace
@@ -1404,86 +1486,6 @@ void gather_if(  InputIterator1 map_first,
                                             typename std::iterator_traits< InputIterator2 >::iterator_category( ),
                                             typename std::iterator_traits< InputIterator3 >::iterator_category( ));
 }
-
-
-
-/* Begin-- Serial Implementation of the gather and gather_if routines */
-
-
-
-template< typename InputIterator1,
-          typename InputIterator2,
-          typename OutputIterator >
-
-void serial_gather(InputIterator1 mapfirst, 
-                   InputIterator1 maplast,
-                   InputIterator2 input,
-                   OutputIterator result)
-{
-    //std::cout<<"Serial code path ... \n";
-   size_t numElements = static_cast< size_t >( std::distance( mapfirst, maplast ) );
-   typedef typename  std::iterator_traits<InputIterator1>::value_type iType1;
-   iType1 temp;
-   for(size_t iter = 0; iter < numElements; iter++)
-   {
-                   temp = *(mapfirst + (int)iter);
-                  *(result + (int)iter) = *(input + (int)temp);
-   }
-}
-
-
-template< typename InputIterator1,
-          typename InputIterator2,
-          typename InputIterator3,
-          typename OutputIterator >
-
-void serial_gather_if(InputIterator1 mapfirst,
-                      InputIterator1 maplast, 
-                      InputIterator2 stencil,
-                      InputIterator3 input,
-                      OutputIterator result)
-{
-    //std::cout<<"Serial code path ... \n";
-   size_t numElements = static_cast< size_t >( std::distance( mapfirst, maplast ) );
-   for(size_t iter = 0; iter < numElements; iter++)
-   {
-       if(stencil[(int)iter]== 1)	   
-            result[(int)iter] = *(input + mapfirst[(int)iter]);       
-   }
-}
-
-template< typename InputIterator1,
-          typename InputIterator2,
-          typename InputIterator3,
-          typename OutputIterator,
-          typename BinaryPredicate >
-
-void serial_gather_if(InputIterator1 mapfirst,
-                      InputIterator1 maplast,
-                      InputIterator2 stencil,
-                      InputIterator3 input,
-                      OutputIterator result,
-                      BinaryPredicate pred)
-{
-   //std::cout<<"Serial code path ... \n";
-   unsigned int numElements = static_cast< unsigned int >( std::distance( mapfirst, maplast ) );
-  // for (InputIterator1 iter = mapfirst; iter != maplast; iter++)
-  // {
-  //      if(pred(*(stencil + ( iter - mapfirst)))) 
-        //{
-  //          // result[(int)iter] = input[mapfirst[(int)iter]]; 
-        //	 *(result + (iter - mapfirst) )= input[*iter];
-        //}
-  // }
-      for(unsigned int iter = 0; iter < numElements; iter++)
-   {
-        if(pred(*(stencil + (int)iter)))   
-             result[(int)iter] = input[mapfirst[(int)iter]]; 
-   }
-}
-
- /* End-- Serial Implementation of the gather and gather_if routines */
-
 
 
 } //End of cl namespace

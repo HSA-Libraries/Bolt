@@ -219,10 +219,376 @@ class ScanByKey_KernelTemplateSpecializer : public KernelTemplateSpecializer
             "int exclusive,\n"
             ""        + typeNames[scanByKey_initType] + " identity\n"
             ");\n\n";
-    
+
         return templateSpecializationString;
     }
 };
+
+
+
+
+//  All calls to scan_by_key end up here, unless an exception was thrown
+//  This is the function that sets up the kernels to compile (once only) and execute
+template<
+    typename DVInputIterator1,
+    typename DVInputIterator2,
+    typename DVOutputIterator,
+    typename T,
+    typename BinaryPredicate,
+    typename BinaryFunction >
+void
+scan_by_key_enqueue(
+    control& ctl,
+    const DVInputIterator1& firstKey,
+    const DVInputIterator1& lastKey,
+    const DVInputIterator2& firstValue,
+    const DVOutputIterator& result,
+    const T& init,
+    const BinaryPredicate& binary_pred,
+    const BinaryFunction& binary_funct,
+    const std::string& user_code,
+    const bool& inclusive )
+{
+    cl_int l_Error;
+#ifdef BOLT_ENABLE_PROFILING
+aProfiler.setName("scan_by_key");
+aProfiler.startTrial();
+aProfiler.setStepName("Setup");
+aProfiler.set(AsyncProfiler::device, control::SerialCpu);
+
+size_t k0_stepNum, k1_stepNum, k2_stepNum;
+#endif
+
+    /**********************************************************************************
+     * Type Names - used in KernelTemplateSpecializer
+     *********************************************************************************/
+    typedef typename std::iterator_traits< DVInputIterator1 >::value_type kType;
+    typedef typename std::iterator_traits< DVInputIterator2 >::value_type vType;
+    typedef typename std::iterator_traits< DVOutputIterator >::value_type oType;
+    std::vector<std::string> typeNames(scanbykey_end);
+
+    typeNames[scanByKey_kType] = TypeName< kType >::get( );
+    typeNames[scanByKey_kIterType] = TypeName< DVInputIterator1 >::get( );
+    typeNames[scanByKey_vType] = TypeName< vType >::get( );
+    typeNames[scanByKey_iIterType] = TypeName< DVInputIterator2 >::get( );
+    typeNames[scanByKey_oType] = TypeName< oType >::get( );
+    typeNames[scanByKey_oIterType] = TypeName< DVOutputIterator >::get( );
+    typeNames[scanByKey_initType] = TypeName< T >::get( );
+    typeNames[scanByKey_BinaryPredicate] = TypeName< BinaryPredicate >::get( );
+    typeNames[scanByKey_BinaryFunction]  = TypeName< BinaryFunction >::get( );
+
+    /**********************************************************************************
+     * Type Definitions - directly concatenated into kernel string
+     *********************************************************************************/
+    std::vector<std::string> typeDefs; // typeDefs must be unique and order does matter
+    PUSH_BACK_UNIQUE( typeDefs, ClCode< kType >::get() )
+    PUSH_BACK_UNIQUE( typeDefs, ClCode< DVInputIterator1 >::get() )
+    PUSH_BACK_UNIQUE( typeDefs, ClCode< vType >::get() )
+    PUSH_BACK_UNIQUE( typeDefs, ClCode< DVInputIterator2 >::get() )
+    PUSH_BACK_UNIQUE( typeDefs, ClCode< oType >::get() )
+    PUSH_BACK_UNIQUE( typeDefs, ClCode< DVOutputIterator >::get() )
+    PUSH_BACK_UNIQUE( typeDefs, ClCode< T >::get() )
+    PUSH_BACK_UNIQUE( typeDefs, ClCode< BinaryPredicate >::get() )
+    PUSH_BACK_UNIQUE( typeDefs, ClCode< BinaryFunction  >::get() )
+
+    /**********************************************************************************
+     * Compile Options
+     *********************************************************************************/
+    bool cpuDevice = ctl.getDevice().getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_CPU;
+    //std::cout << "Device is CPU: " << (cpuDevice?"TRUE":"FALSE") << std::endl;
+    const size_t kernel0_WgSize = (cpuDevice) ? 1 : WAVESIZE*KERNEL02WAVES;
+    const size_t kernel1_WgSize = (cpuDevice) ? 1 : WAVESIZE*KERNEL1WAVES;
+    const size_t kernel2_WgSize = (cpuDevice) ? 1 : WAVESIZE*KERNEL02WAVES;
+    std::string compileOptions;
+    std::ostringstream oss;
+    oss << " -DKERNEL0WORKGROUPSIZE=" << kernel0_WgSize;
+    oss << " -DKERNEL1WORKGROUPSIZE=" << kernel1_WgSize;
+    oss << " -DKERNEL2WORKGROUPSIZE=" << kernel2_WgSize;
+    compileOptions = oss.str();
+
+    /**********************************************************************************
+     * Request Compiled Kernels
+     *********************************************************************************/
+    ScanByKey_KernelTemplateSpecializer ts_kts;
+    std::vector< ::cl::Kernel > kernels = bolt::cl::getKernels(
+        ctl,
+        typeNames,
+        &ts_kts,
+        typeDefs,
+        scan_by_key_kernels,
+        compileOptions);
+    // kernels returned in same order as added in KernelTemplaceSpecializer constructor
+
+    // for profiling
+    ::cl::Event kernel0Event, kernel1Event, kernel2Event, kernelAEvent;
+    cl_uint doExclusiveScan = inclusive ? 0 : 1;
+    // Set up shape of launch grid and buffers:
+    int computeUnits     = ctl.getDevice( ).getInfo< CL_DEVICE_MAX_COMPUTE_UNITS >( );
+    int wgPerComputeUnit =  ctl.getWGPerComputeUnit( );
+    int resultCnt = computeUnits * wgPerComputeUnit;
+
+    //  Ceiling function to bump the size of input to the next whole wavefront size
+    cl_uint numElements = static_cast< cl_uint >( std::distance( firstKey, lastKey ) );
+    typename device_vector< kType >::size_type sizeInputBuff = numElements;
+
+    size_t modWgSize = (sizeInputBuff & ((kernel0_WgSize*2)-1));
+    if( modWgSize )
+    {
+        sizeInputBuff &= ~modWgSize;
+        sizeInputBuff += (kernel0_WgSize*2);
+    }
+    cl_uint numWorkGroupsK0 = static_cast< cl_uint >( sizeInputBuff / (kernel0_WgSize*2) );
+
+    //  Ceiling function to bump the size of the sum array to the next whole wavefront size
+    typename device_vector< kType >::size_type sizeScanBuff = numWorkGroupsK0;
+    modWgSize = (sizeScanBuff & ((kernel0_WgSize*2)-1));
+    if( modWgSize )
+    {
+        sizeScanBuff &= ~modWgSize;
+        sizeScanBuff += (kernel0_WgSize*2);
+    }
+
+    // Create buffer wrappers so we can access the host functors, for read or writing in the kernel
+
+    ALIGNED( 256 ) BinaryPredicate aligned_binary_pred( binary_pred );
+    control::buffPointer binaryPredicateBuffer = ctl.acquireBuffer( sizeof( aligned_binary_pred ),
+        CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_binary_pred );
+     ALIGNED( 256 ) BinaryFunction aligned_binary_funct( binary_funct );
+    control::buffPointer binaryFunctionBuffer = ctl.acquireBuffer( sizeof( aligned_binary_funct ),
+        CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_binary_funct );
+
+    control::buffPointer keySumArray  = ctl.acquireBuffer( sizeScanBuff*sizeof( kType ) );
+    control::buffPointer preSumArray  = ctl.acquireBuffer( sizeScanBuff*sizeof( vType ) );
+    control::buffPointer preSumArray1  = ctl.acquireBuffer( sizeScanBuff*sizeof( vType ) );
+    control::buffPointer postSumArray = ctl.acquireBuffer( sizeScanBuff*sizeof( vType ) );
+    cl_uint ldsKeySize, ldsValueSize;
+
+
+    /**********************************************************************************
+     *  Kernel 0
+     *********************************************************************************/
+#ifdef BOLT_ENABLE_PROFILING
+aProfiler.nextStep();
+aProfiler.setStepName("Setup Kernel 0");
+aProfiler.set(AsyncProfiler::getDevice, control::SerialCpu);
+#endif
+    typename DVInputIterator1::Payload firstKey_payload = firstKey.gpuPayload( );
+    typename DVInputIterator2::Payload firstValue_payload = firstValue.gpuPayload( );
+    try
+    {
+    ldsKeySize   = static_cast< cl_uint >( (kernel0_WgSize*2) * sizeof( kType ) );
+    ldsValueSize = static_cast< cl_uint >( (kernel0_WgSize*2) * sizeof( vType ) );
+    V_OPENCL( kernels[0].setArg( 0, firstKey.getContainer().getBuffer()), "Error setArg kernels[ 0 ]" ); // Input keys
+    V_OPENCL( kernels[0].setArg( 1, firstKey.gpuPayloadSize( ), &firstKey_payload ), "Error setting a kernel argument" );
+    V_OPENCL( kernels[0].setArg( 2, firstValue.getContainer().getBuffer()),"Error setArg kernels[ 0 ]" ); // Input buffer
+    V_OPENCL( kernels[0].setArg( 3, firstValue.gpuPayloadSize( ), &firstValue_payload ), "Error setting a kernel argument" );
+    V_OPENCL( kernels[0].setArg( 4, init ),                 "Error setArg kernels[ 0 ]" ); // Initial value exclusive
+    V_OPENCL( kernels[0].setArg( 5, numElements ),          "Error setArg kernels[ 0 ]" ); // Size of scratch buffer
+    V_OPENCL( kernels[0].setArg( 6, ldsKeySize, NULL ),     "Error setArg kernels[ 0 ]" ); // Scratch buffer
+    V_OPENCL( kernels[0].setArg( 7, ldsValueSize, NULL ),   "Error setArg kernels[ 0 ]" ); // Scratch buffer
+    V_OPENCL( kernels[0].setArg( 8, *binaryPredicateBuffer),"Error setArg kernels[ 0 ]" ); // User provided functor
+    V_OPENCL( kernels[0].setArg( 9, *binaryFunctionBuffer ),"Error setArg kernels[ 0 ]" ); // User provided functor
+    V_OPENCL( kernels[0].setArg(10, *keySumArray ),         "Error setArg kernels[ 0 ]" ); // Output per block sum
+    V_OPENCL( kernels[0].setArg(11, *preSumArray ),         "Error setArg kernels[ 0 ]" ); // Output per block sum
+    V_OPENCL( kernels[0].setArg(12, *preSumArray1 ),         "Error setArg kernels[ 0 ]" ); // Output per block sum
+    V_OPENCL( kernels[0].setArg(13, doExclusiveScan ),      "Error setArg kernels[ 0 ]" ); // Exclusive scan?
+
+#ifdef BOLT_ENABLE_PROFILING
+aProfiler.nextStep();
+k0_stepNum = aProfiler.getStepNum();
+aProfiler.setStepName("Kernel 0");
+aProfiler.set(AsyncProfiler::getDevice, ctl.forceRunMode());
+aProfiler.set(AsyncProfiler::flops, 2*numElements);
+aProfiler.set(AsyncProfiler::memory,2*numElements*(sizeof(vType)+sizeof(kType)) +
+                                  1*sizeScanBuff*(sizeof(vType)+sizeof(kType)) );
+#endif
+
+    l_Error = ctl.getCommandQueue( ).enqueueNDRangeKernel(
+        kernels[0],
+        ::cl::NullRange,
+        ::cl::NDRange( sizeInputBuff/2 ),
+        ::cl::NDRange( kernel0_WgSize ),
+        NULL,
+        &kernel0Event);
+    V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for kernel[0]" );
+    }
+    catch( const ::cl::Error& e)
+    {
+        std::cerr << "::cl::enqueueNDRangeKernel( 0 ) in bolt::cl::scan_by_key_enqueue()" << std::endl;
+        std::cerr << "Error Code:   " << clErrorStringA(e.err()) << " (" << e.err() << ")" << std::endl;
+        std::cerr << "File:         " << __FILE__ << ", line " << __LINE__ << std::endl;
+        std::cerr << "Error String: " << e.what() << std::endl;
+    }
+
+    /**********************************************************************************
+     *  Kernel 1
+     *********************************************************************************/
+#ifdef BOLT_ENABLE_PROFILING
+aProfiler.nextStep();
+aProfiler.setStepName("Setup Kernel 1");
+aProfiler.set(AsyncProfiler::device, control::SerialCpu);
+#endif
+    ldsKeySize   = static_cast< cl_uint >( (kernel0_WgSize) * sizeof( kType ) );
+    ldsValueSize = static_cast< cl_uint >( (kernel0_WgSize) * sizeof( vType ) );
+    cl_uint workPerThread = static_cast< cl_uint >( sizeScanBuff / kernel1_WgSize );
+    workPerThread = workPerThread ? workPerThread : 1;
+
+    V_OPENCL( kernels[1].setArg( 0, *keySumArray ),         "Error setArg kernels[ 1 ]" ); // Input keys
+    V_OPENCL( kernels[1].setArg( 1, *preSumArray ),         "Error setArg kernels[ 1 ]" ); // Input buffer
+    V_OPENCL( kernels[1].setArg( 2, *postSumArray ),        "Error setArg kernels[ 1 ]" ); // Output buffer
+    V_OPENCL( kernels[1].setArg( 3, numWorkGroupsK0 ),      "Error setArg kernels[ 1 ]" ); // Size of scratch buffer
+    V_OPENCL( kernels[1].setArg( 4, ldsKeySize, NULL ),     "Error setArg kernels[ 1 ]" ); // Scratch buffer
+    V_OPENCL( kernels[1].setArg( 5, ldsValueSize, NULL ),   "Error setArg kernels[ 1 ]" ); // Scratch buffer
+    V_OPENCL( kernels[1].setArg( 6, workPerThread ),        "Error setArg kernels[ 1 ]" ); // User provided functor
+    V_OPENCL( kernels[1].setArg( 7, *binaryPredicateBuffer ),"Error setArg kernels[ 1 ]" ); // User provided functor
+    V_OPENCL( kernels[1].setArg( 8, *binaryFunctionBuffer ),"Error setArg kernels[ 1 ]" ); // User provided functor
+
+#ifdef BOLT_ENABLE_PROFILING
+aProfiler.nextStep();
+k1_stepNum = aProfiler.getStepNum();
+aProfiler.setStepName("Kernel 1");
+aProfiler.set(AsyncProfiler::device, ctl.forceRunMode());
+aProfiler.set(AsyncProfiler::flops, 2*sizeScanBuff);
+aProfiler.set(AsyncProfiler::memory, 4*sizeScanBuff*(sizeof(kType)+sizeof(vType)));
+#endif
+
+    try
+    {
+    l_Error = ctl.getCommandQueue( ).enqueueNDRangeKernel(
+        kernels[1],
+        ::cl::NullRange,
+        ::cl::NDRange( kernel1_WgSize ), // only 1 work-group
+        ::cl::NDRange( kernel1_WgSize ),
+        NULL,
+        &kernel1Event);
+    V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for kernel[1]" );
+    }
+    catch( const ::cl::Error& e)
+    {
+        std::cerr << "::cl::enqueueNDRangeKernel( 1 ) in bolt::cl::scan_by_key_enqueue()" << std::endl;
+        std::cerr << "Error Code:   " << clErrorStringA(e.err()) << " (" << e.err() << ")" << std::endl;
+        std::cerr << "File:         " << __FILE__ << ", line " << __LINE__ << std::endl;
+        std::cerr << "Error String: " << e.what() << std::endl;
+    }
+
+    /**********************************************************************************
+     *  Kernel 2
+     *********************************************************************************/
+#ifdef BOLT_ENABLE_PROFILING
+aProfiler.nextStep();
+aProfiler.setStepName("Setup Kernel 2");
+aProfiler.set(AsyncProfiler::device, control::SerialCpu);
+#endif
+    typename DVInputIterator1::Payload firstKey1_payload = firstKey.gpuPayload( );
+    typename DVInputIterator2::Payload firstValue1_payload = firstValue.gpuPayload( );
+    typename DVOutputIterator::Payload result1_payload = result.gpuPayload( );
+
+
+    V_OPENCL( kernels[2].setArg( 0, *postSumArray ),        "Error setArg kernels[ 2 ]" ); // Input buffer
+    V_OPENCL( kernels[2].setArg( 1, *preSumArray1 ),        "Error setArg kernels[ 2 ]" ); // Input buffer
+    V_OPENCL( kernels[2].setArg( 2, firstKey.getContainer().getBuffer()), "Error setArg kernels[ 2 ]" ); // Input keys
+    V_OPENCL( kernels[2].setArg( 3, firstKey.gpuPayloadSize( ),&firstKey1_payload ), "Error setting a kernel argument" );
+    V_OPENCL( kernels[2].setArg( 4, firstValue.getContainer().getBuffer()),"Error setArg kernels[ 2 ]" ); // Input buffer
+    V_OPENCL( kernels[2].setArg( 5, firstValue.gpuPayloadSize( ),&firstValue1_payload  ), "Error setting a kernel argument" );
+    V_OPENCL( kernels[2].setArg( 6, result.getContainer().getBuffer() ), "Error setArg kernels[ 2 ]" ); // Output buffer
+    V_OPENCL( kernels[2].setArg( 7, result.gpuPayloadSize( ), &result1_payload ), "Error setting a kernel argument" );
+    V_OPENCL( kernels[2].setArg( 8, ldsKeySize, NULL ),     "Error setArg kernels[ 2 ]" ); // Scratch buffer
+    V_OPENCL( kernels[2].setArg( 9, ldsValueSize, NULL ),   "Error setArg kernels[ 2 ]" ); // Scratch buffer
+    V_OPENCL( kernels[2].setArg(10, numElements ),          "Error setArg kernels[ 2 ]" ); // Size of scratch buffer
+    V_OPENCL( kernels[2].setArg(11, *binaryPredicateBuffer ),"Error setArg kernels[ 2 ]" ); // User provided functor
+    V_OPENCL( kernels[2].setArg(12, *binaryFunctionBuffer ),"Error setArg kernels[ 2 ]" ); // User provided functor
+    V_OPENCL( kernels[2].setArg(13, doExclusiveScan ),      "Error setArg kernels[ 2 ]" ); // Exclusive scan?
+    V_OPENCL( kernels[2].setArg(14, init ),                 "Error setArg kernels[ 2 ]" ); // Initial value exclusive
+
+#ifdef BOLT_ENABLE_PROFILING
+aProfiler.nextStep();
+k2_stepNum = aProfiler.getStepNum();
+aProfiler.setStepName("Kernel 2");
+aProfiler.set(AsyncProfiler::device, ctl.forceRunMode());
+aProfiler.set(AsyncProfiler::flops, numElements);
+aProfiler.set(
+    AsyncProfiler::memory,
+    2*numElements*sizeof(vType)+numElements*sizeof(kType)+1*sizeScanBuff*(sizeof(kType)+sizeof(vType)));
+#endif
+
+    try
+    {
+    l_Error = ctl.getCommandQueue( ).enqueueNDRangeKernel(
+        kernels[2],
+        ::cl::NullRange,
+        ::cl::NDRange( sizeInputBuff ),
+        ::cl::NDRange( kernel2_WgSize ),
+        NULL,
+        &kernel2Event );
+    V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for kernel[2]" );
+    }
+    catch( const ::cl::Error& e)
+    {
+        std::cerr << "::cl::enqueueNDRangeKernel( 2 ) in bolt::cl::scan_by_key_enqueue()" << std::endl;
+        std::cerr << "Error Code:   " << clErrorStringA(e.err()) << " (" << e.err() << ")" << std::endl;
+        std::cerr << "File:         " << __FILE__ << ", line " << __LINE__ << std::endl;
+        std::cerr << "Error String: " << e.what() << std::endl;
+    }
+
+    // wait for results
+    l_Error = kernel2Event.wait( );
+    V_OPENCL( l_Error, "post-kernel[2] failed wait" );
+
+#ifdef BOLT_ENABLE_PROFILING
+aProfiler.nextStep();
+aProfiler.setStepName("Querying Kernel Times");
+aProfiler.set(AsyncProfiler::device, control::SerialCpu);
+
+aProfiler.setDataSize(numElements*sizeof(oType));
+std::string strDeviceName = ctl.getDevice().getInfo< CL_DEVICE_NAME >( &l_Error );
+bolt::cl::V_OPENCL( l_Error, "Device::getInfo< CL_DEVICE_NAME > failed" );
+aProfiler.setArchitecture(strDeviceName);
+
+    try
+    {
+        cl_ulong k0_start, k0_stop, k1_stop, k2_stop;
+
+        l_Error = kernel0Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_START, &k0_start);
+        V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_QUEUED>()");
+        l_Error = kernel0Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END, &k0_stop);
+        V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_END>()");
+
+        //l_Error = kernel1Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_START, &k1_start);
+        //V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_START>()");
+        l_Error = kernel1Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END, &k1_stop);
+        V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_END>()");
+
+        //l_Error = kernel2Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_START, &k2_start);
+        //V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_START>()");
+        l_Error = kernel2Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END, &k2_stop);
+        V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_END>()");
+
+        size_t k0_start_cpu = aProfiler.get(k0_stepNum, AsyncProfiler::startTime);
+        size_t shift = k0_start - k0_start_cpu;
+        //size_t shift = k0_start_cpu - k0_start;
+
+        //std::cout << "setting step " << k0_stepNum << " attribute " << AsyncProfiler::stopTime;
+        //std::cout << " to " << k0_stop-shift << std::endl;
+        aProfiler.set(k0_stepNum, AsyncProfiler::stopTime,  static_cast<size_t>(k0_stop-shift) );
+
+        aProfiler.set(k1_stepNum, AsyncProfiler::startTime, static_cast<size_t>(k0_stop-shift) );
+        aProfiler.set(k1_stepNum, AsyncProfiler::stopTime,  static_cast<size_t>(k1_stop-shift) );
+
+        aProfiler.set(k2_stepNum, AsyncProfiler::startTime, static_cast<size_t>(k1_stop-shift) );
+        aProfiler.set(k2_stepNum, AsyncProfiler::stopTime,  static_cast<size_t>(k2_stop-shift) );
+
+    }
+    catch( ::cl::Error& e )
+    {
+        std::cout << ( "Scan Benchmark error condition reported:" ) << std::endl << e.what() << std::endl;
+        return;
+    }
+
+aProfiler.stopTrial();
+
+#endif
+
+}   //end of scan_by_key_enqueue( )
 
 
 /*!
@@ -467,368 +833,6 @@ scan_by_key_detect_random_access(
 };
 
 
-//  All calls to scan_by_key end up here, unless an exception was thrown
-//  This is the function that sets up the kernels to compile (once only) and execute
-template<
-    typename DVInputIterator1,
-    typename DVInputIterator2,
-    typename DVOutputIterator,
-    typename T,
-    typename BinaryPredicate,
-    typename BinaryFunction >
-void
-scan_by_key_enqueue(
-    control& ctl,
-    const DVInputIterator1& firstKey,
-    const DVInputIterator1& lastKey,
-    const DVInputIterator2& firstValue,
-    const DVOutputIterator& result,
-    const T& init,
-    const BinaryPredicate& binary_pred,
-    const BinaryFunction& binary_funct,
-    const std::string& user_code,
-    const bool& inclusive )
-{
-    cl_int l_Error;
-#ifdef BOLT_ENABLE_PROFILING
-aProfiler.setName("scan_by_key");
-aProfiler.startTrial();
-aProfiler.setStepName("Setup");
-aProfiler.set(AsyncProfiler::device, control::SerialCpu);
-
-size_t k0_stepNum, k1_stepNum, k2_stepNum;
-#endif
-
-    /**********************************************************************************
-     * Type Names - used in KernelTemplateSpecializer
-     *********************************************************************************/
-    typedef typename std::iterator_traits< DVInputIterator1 >::value_type kType;
-    typedef typename std::iterator_traits< DVInputIterator2 >::value_type vType;
-    typedef typename std::iterator_traits< DVOutputIterator >::value_type oType;
-    std::vector<std::string> typeNames(scanbykey_end);
-    
-    typeNames[scanByKey_kType] = TypeName< kType >::get( );
-    typeNames[scanByKey_kIterType] = TypeName< DVInputIterator1 >::get( );
-    typeNames[scanByKey_vType] = TypeName< vType >::get( );
-    typeNames[scanByKey_iIterType] = TypeName< DVInputIterator2 >::get( );
-    typeNames[scanByKey_oType] = TypeName< oType >::get( );
-    typeNames[scanByKey_oIterType] = TypeName< DVOutputIterator >::get( );
-    typeNames[scanByKey_initType] = TypeName< T >::get( );
-    typeNames[scanByKey_BinaryPredicate] = TypeName< BinaryPredicate >::get( );
-    typeNames[scanByKey_BinaryFunction]  = TypeName< BinaryFunction >::get( );
-
-    /**********************************************************************************
-     * Type Definitions - directly concatenated into kernel string
-     *********************************************************************************/
-    std::vector<std::string> typeDefs; // typeDefs must be unique and order does matter
-    PUSH_BACK_UNIQUE( typeDefs, ClCode< kType >::get() )
-    PUSH_BACK_UNIQUE( typeDefs, ClCode< DVInputIterator1 >::get() )
-    PUSH_BACK_UNIQUE( typeDefs, ClCode< vType >::get() )
-    PUSH_BACK_UNIQUE( typeDefs, ClCode< DVInputIterator2 >::get() )
-    PUSH_BACK_UNIQUE( typeDefs, ClCode< oType >::get() )
-    PUSH_BACK_UNIQUE( typeDefs, ClCode< DVOutputIterator >::get() )
-    PUSH_BACK_UNIQUE( typeDefs, ClCode< T >::get() )
-    PUSH_BACK_UNIQUE( typeDefs, ClCode< BinaryPredicate >::get() )
-    PUSH_BACK_UNIQUE( typeDefs, ClCode< BinaryFunction  >::get() )
-
-    /**********************************************************************************
-     * Compile Options
-     *********************************************************************************/
-    bool cpuDevice = ctl.getDevice().getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_CPU;
-    //std::cout << "Device is CPU: " << (cpuDevice?"TRUE":"FALSE") << std::endl;
-    const size_t kernel0_WgSize = (cpuDevice) ? 1 : WAVESIZE*KERNEL02WAVES;
-    const size_t kernel1_WgSize = (cpuDevice) ? 1 : WAVESIZE*KERNEL1WAVES;
-    const size_t kernel2_WgSize = (cpuDevice) ? 1 : WAVESIZE*KERNEL02WAVES;
-    std::string compileOptions;
-    std::ostringstream oss;
-    oss << " -DKERNEL0WORKGROUPSIZE=" << kernel0_WgSize;
-    oss << " -DKERNEL1WORKGROUPSIZE=" << kernel1_WgSize;
-    oss << " -DKERNEL2WORKGROUPSIZE=" << kernel2_WgSize;
-    compileOptions = oss.str();
-
-    /**********************************************************************************
-     * Request Compiled Kernels
-     *********************************************************************************/
-    ScanByKey_KernelTemplateSpecializer ts_kts;
-    std::vector< ::cl::Kernel > kernels = bolt::cl::getKernels(
-        ctl,
-        typeNames,
-        &ts_kts,
-        typeDefs,
-        scan_by_key_kernels,
-        compileOptions);
-    // kernels returned in same order as added in KernelTemplaceSpecializer constructor
-
-    // for profiling
-    ::cl::Event kernel0Event, kernel1Event, kernel2Event, kernelAEvent;
-    cl_uint doExclusiveScan = inclusive ? 0 : 1;
-    // Set up shape of launch grid and buffers:
-    int computeUnits     = ctl.getDevice( ).getInfo< CL_DEVICE_MAX_COMPUTE_UNITS >( );
-    int wgPerComputeUnit =  ctl.getWGPerComputeUnit( );
-    int resultCnt = computeUnits * wgPerComputeUnit;
-
-    //  Ceiling function to bump the size of input to the next whole wavefront size
-    cl_uint numElements = static_cast< cl_uint >( std::distance( firstKey, lastKey ) );
-    typename device_vector< kType >::size_type sizeInputBuff = numElements;
-
-    size_t modWgSize = (sizeInputBuff & ((kernel0_WgSize*2)-1));
-    if( modWgSize )
-    {
-        sizeInputBuff &= ~modWgSize;
-        sizeInputBuff += (kernel0_WgSize*2);
-    }
-    cl_uint numWorkGroupsK0 = static_cast< cl_uint >( sizeInputBuff / (kernel0_WgSize*2) );
-
-    //  Ceiling function to bump the size of the sum array to the next whole wavefront size
-    typename device_vector< kType >::size_type sizeScanBuff = numWorkGroupsK0;
-    modWgSize = (sizeScanBuff & ((kernel0_WgSize*2)-1));
-    if( modWgSize )
-    {
-        sizeScanBuff &= ~modWgSize;
-        sizeScanBuff += (kernel0_WgSize*2);
-    }
-
-    // Create buffer wrappers so we can access the host functors, for read or writing in the kernel
-
-    ALIGNED( 256 ) BinaryPredicate aligned_binary_pred( binary_pred );
-    control::buffPointer binaryPredicateBuffer = ctl.acquireBuffer( sizeof( aligned_binary_pred ),
-        CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_binary_pred );
-     ALIGNED( 256 ) BinaryFunction aligned_binary_funct( binary_funct );
-    control::buffPointer binaryFunctionBuffer = ctl.acquireBuffer( sizeof( aligned_binary_funct ),
-        CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, &aligned_binary_funct );
-
-    control::buffPointer keySumArray  = ctl.acquireBuffer( sizeScanBuff*sizeof( kType ) );
-    control::buffPointer preSumArray  = ctl.acquireBuffer( sizeScanBuff*sizeof( vType ) );
-    control::buffPointer preSumArray1  = ctl.acquireBuffer( sizeScanBuff*sizeof( vType ) );
-    control::buffPointer postSumArray = ctl.acquireBuffer( sizeScanBuff*sizeof( vType ) );
-    cl_uint ldsKeySize, ldsValueSize;
-
-
-    /**********************************************************************************
-     *  Kernel 0
-     *********************************************************************************/
-#ifdef BOLT_ENABLE_PROFILING
-aProfiler.nextStep();
-aProfiler.setStepName("Setup Kernel 0");
-aProfiler.set(AsyncProfiler::getDevice, control::SerialCpu);
-#endif
-    typename DVInputIterator1::Payload firstKey_payload = firstKey.gpuPayload( );
-    typename DVInputIterator2::Payload firstValue_payload = firstValue.gpuPayload( );
-    try
-    {
-    ldsKeySize   = static_cast< cl_uint >( (kernel0_WgSize*2) * sizeof( kType ) );
-    ldsValueSize = static_cast< cl_uint >( (kernel0_WgSize*2) * sizeof( vType ) );
-    V_OPENCL( kernels[0].setArg( 0, firstKey.getContainer().getBuffer()), "Error setArg kernels[ 0 ]" ); // Input keys
-    V_OPENCL( kernels[0].setArg( 1, firstKey.gpuPayloadSize( ), &firstKey_payload ), "Error setting a kernel argument" );
-    V_OPENCL( kernels[0].setArg( 2, firstValue.getContainer().getBuffer()),"Error setArg kernels[ 0 ]" ); // Input buffer
-    V_OPENCL( kernels[0].setArg( 3, firstValue.gpuPayloadSize( ), &firstValue_payload ), "Error setting a kernel argument" );
-    V_OPENCL( kernels[0].setArg( 4, init ),                 "Error setArg kernels[ 0 ]" ); // Initial value exclusive
-    V_OPENCL( kernels[0].setArg( 5, numElements ),          "Error setArg kernels[ 0 ]" ); // Size of scratch buffer
-    V_OPENCL( kernels[0].setArg( 6, ldsKeySize, NULL ),     "Error setArg kernels[ 0 ]" ); // Scratch buffer
-    V_OPENCL( kernels[0].setArg( 7, ldsValueSize, NULL ),   "Error setArg kernels[ 0 ]" ); // Scratch buffer
-    V_OPENCL( kernels[0].setArg( 8, *binaryPredicateBuffer),"Error setArg kernels[ 0 ]" ); // User provided functor
-    V_OPENCL( kernels[0].setArg( 9, *binaryFunctionBuffer ),"Error setArg kernels[ 0 ]" ); // User provided functor
-    V_OPENCL( kernels[0].setArg(10, *keySumArray ),         "Error setArg kernels[ 0 ]" ); // Output per block sum
-    V_OPENCL( kernels[0].setArg(11, *preSumArray ),         "Error setArg kernels[ 0 ]" ); // Output per block sum
-    V_OPENCL( kernels[0].setArg(12, *preSumArray1 ),         "Error setArg kernels[ 0 ]" ); // Output per block sum
-    V_OPENCL( kernels[0].setArg(13, doExclusiveScan ),      "Error setArg kernels[ 0 ]" ); // Exclusive scan?
-    
-#ifdef BOLT_ENABLE_PROFILING
-aProfiler.nextStep();
-k0_stepNum = aProfiler.getStepNum();
-aProfiler.setStepName("Kernel 0");
-aProfiler.set(AsyncProfiler::getDevice, ctl.forceRunMode());
-aProfiler.set(AsyncProfiler::flops, 2*numElements);
-aProfiler.set(AsyncProfiler::memory,2*numElements*(sizeof(vType)+sizeof(kType)) +
-                                  1*sizeScanBuff*(sizeof(vType)+sizeof(kType)) );
-#endif
-
-    l_Error = ctl.getCommandQueue( ).enqueueNDRangeKernel(
-        kernels[0],
-        ::cl::NullRange,
-        ::cl::NDRange( sizeInputBuff/2 ),
-        ::cl::NDRange( kernel0_WgSize ),
-        NULL,
-        &kernel0Event);
-    V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for kernel[0]" );
-    }
-    catch( const ::cl::Error& e)
-    {
-        std::cerr << "::cl::enqueueNDRangeKernel( 0 ) in bolt::cl::scan_by_key_enqueue()" << std::endl;
-        std::cerr << "Error Code:   " << clErrorStringA(e.err()) << " (" << e.err() << ")" << std::endl;
-        std::cerr << "File:         " << __FILE__ << ", line " << __LINE__ << std::endl;
-        std::cerr << "Error String: " << e.what() << std::endl;
-    }
-
-    /**********************************************************************************
-     *  Kernel 1
-     *********************************************************************************/
-#ifdef BOLT_ENABLE_PROFILING
-aProfiler.nextStep();
-aProfiler.setStepName("Setup Kernel 1");
-aProfiler.set(AsyncProfiler::device, control::SerialCpu);
-#endif
-    ldsKeySize   = static_cast< cl_uint >( (kernel0_WgSize) * sizeof( kType ) );
-    ldsValueSize = static_cast< cl_uint >( (kernel0_WgSize) * sizeof( vType ) );
-    cl_uint workPerThread = static_cast< cl_uint >( sizeScanBuff / kernel1_WgSize );
-    workPerThread = workPerThread ? workPerThread : 1;
-
-    V_OPENCL( kernels[1].setArg( 0, *keySumArray ),         "Error setArg kernels[ 1 ]" ); // Input keys
-    V_OPENCL( kernels[1].setArg( 1, *preSumArray ),         "Error setArg kernels[ 1 ]" ); // Input buffer
-    V_OPENCL( kernels[1].setArg( 2, *postSumArray ),        "Error setArg kernels[ 1 ]" ); // Output buffer
-    V_OPENCL( kernels[1].setArg( 3, numWorkGroupsK0 ),      "Error setArg kernels[ 1 ]" ); // Size of scratch buffer
-    V_OPENCL( kernels[1].setArg( 4, ldsKeySize, NULL ),     "Error setArg kernels[ 1 ]" ); // Scratch buffer
-    V_OPENCL( kernels[1].setArg( 5, ldsValueSize, NULL ),   "Error setArg kernels[ 1 ]" ); // Scratch buffer
-    V_OPENCL( kernels[1].setArg( 6, workPerThread ),        "Error setArg kernels[ 1 ]" ); // User provided functor
-    V_OPENCL( kernels[1].setArg( 7, *binaryPredicateBuffer ),"Error setArg kernels[ 1 ]" ); // User provided functor
-    V_OPENCL( kernels[1].setArg( 8, *binaryFunctionBuffer ),"Error setArg kernels[ 1 ]" ); // User provided functor
-
-#ifdef BOLT_ENABLE_PROFILING
-aProfiler.nextStep();
-k1_stepNum = aProfiler.getStepNum();
-aProfiler.setStepName("Kernel 1");
-aProfiler.set(AsyncProfiler::device, ctl.forceRunMode());
-aProfiler.set(AsyncProfiler::flops, 2*sizeScanBuff);
-aProfiler.set(AsyncProfiler::memory, 4*sizeScanBuff*(sizeof(kType)+sizeof(vType)));
-#endif
-
-    try
-    {
-    l_Error = ctl.getCommandQueue( ).enqueueNDRangeKernel(
-        kernels[1],
-        ::cl::NullRange,
-        ::cl::NDRange( kernel1_WgSize ), // only 1 work-group
-        ::cl::NDRange( kernel1_WgSize ),
-        NULL,
-        &kernel1Event);
-    V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for kernel[1]" );
-    }
-    catch( const ::cl::Error& e)
-    {
-        std::cerr << "::cl::enqueueNDRangeKernel( 1 ) in bolt::cl::scan_by_key_enqueue()" << std::endl;
-        std::cerr << "Error Code:   " << clErrorStringA(e.err()) << " (" << e.err() << ")" << std::endl;
-        std::cerr << "File:         " << __FILE__ << ", line " << __LINE__ << std::endl;
-        std::cerr << "Error String: " << e.what() << std::endl;
-    }
-
-    /**********************************************************************************
-     *  Kernel 2
-     *********************************************************************************/
-#ifdef BOLT_ENABLE_PROFILING
-aProfiler.nextStep();
-aProfiler.setStepName("Setup Kernel 2");
-aProfiler.set(AsyncProfiler::device, control::SerialCpu);
-#endif
-    typename DVInputIterator1::Payload firstKey1_payload = firstKey.gpuPayload( );
-    typename DVInputIterator2::Payload firstValue1_payload = firstValue.gpuPayload( );
-    typename DVOutputIterator::Payload result1_payload = result.gpuPayload( );
-
-
-    V_OPENCL( kernels[2].setArg( 0, *postSumArray ),        "Error setArg kernels[ 2 ]" ); // Input buffer
-    V_OPENCL( kernels[2].setArg( 1, *preSumArray1 ),        "Error setArg kernels[ 2 ]" ); // Input buffer
-    V_OPENCL( kernels[2].setArg( 2, firstKey.getContainer().getBuffer()), "Error setArg kernels[ 2 ]" ); // Input keys
-    V_OPENCL( kernels[2].setArg( 3, firstKey.gpuPayloadSize( ),&firstKey1_payload ), "Error setting a kernel argument" );
-    V_OPENCL( kernels[2].setArg( 4, firstValue.getContainer().getBuffer()),"Error setArg kernels[ 2 ]" ); // Input buffer
-    V_OPENCL( kernels[2].setArg( 5, firstValue.gpuPayloadSize( ),&firstValue1_payload  ), "Error setting a kernel argument" );
-    V_OPENCL( kernels[2].setArg( 6, result.getContainer().getBuffer() ), "Error setArg kernels[ 2 ]" ); // Output buffer
-    V_OPENCL( kernels[2].setArg( 7, result.gpuPayloadSize( ), &result1_payload ), "Error setting a kernel argument" );
-    V_OPENCL( kernels[2].setArg( 8, ldsKeySize, NULL ),     "Error setArg kernels[ 2 ]" ); // Scratch buffer
-    V_OPENCL( kernels[2].setArg( 9, ldsValueSize, NULL ),   "Error setArg kernels[ 2 ]" ); // Scratch buffer
-    V_OPENCL( kernels[2].setArg(10, numElements ),          "Error setArg kernels[ 2 ]" ); // Size of scratch buffer
-    V_OPENCL( kernels[2].setArg(11, *binaryPredicateBuffer ),"Error setArg kernels[ 2 ]" ); // User provided functor
-    V_OPENCL( kernels[2].setArg(12, *binaryFunctionBuffer ),"Error setArg kernels[ 2 ]" ); // User provided functor
-    V_OPENCL( kernels[2].setArg(13, doExclusiveScan ),      "Error setArg kernels[ 2 ]" ); // Exclusive scan?
-    V_OPENCL( kernels[2].setArg(14, init ),                 "Error setArg kernels[ 2 ]" ); // Initial value exclusive
-
-#ifdef BOLT_ENABLE_PROFILING
-aProfiler.nextStep();
-k2_stepNum = aProfiler.getStepNum();
-aProfiler.setStepName("Kernel 2");
-aProfiler.set(AsyncProfiler::device, ctl.forceRunMode());
-aProfiler.set(AsyncProfiler::flops, numElements);
-aProfiler.set(
-    AsyncProfiler::memory,
-    2*numElements*sizeof(vType)+numElements*sizeof(kType)+1*sizeScanBuff*(sizeof(kType)+sizeof(vType)));
-#endif
-
-    try
-    {
-    l_Error = ctl.getCommandQueue( ).enqueueNDRangeKernel(
-        kernels[2],
-        ::cl::NullRange,
-        ::cl::NDRange( sizeInputBuff ),
-        ::cl::NDRange( kernel2_WgSize ),
-        NULL,
-        &kernel2Event );
-    V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for kernel[2]" );
-    }
-    catch( const ::cl::Error& e)
-    {
-        std::cerr << "::cl::enqueueNDRangeKernel( 2 ) in bolt::cl::scan_by_key_enqueue()" << std::endl;
-        std::cerr << "Error Code:   " << clErrorStringA(e.err()) << " (" << e.err() << ")" << std::endl;
-        std::cerr << "File:         " << __FILE__ << ", line " << __LINE__ << std::endl;
-        std::cerr << "Error String: " << e.what() << std::endl;
-    }
-
-    // wait for results
-    l_Error = kernel2Event.wait( );
-    V_OPENCL( l_Error, "post-kernel[2] failed wait" );
-
-#ifdef BOLT_ENABLE_PROFILING
-aProfiler.nextStep();
-aProfiler.setStepName("Querying Kernel Times");
-aProfiler.set(AsyncProfiler::device, control::SerialCpu);
-
-aProfiler.setDataSize(numElements*sizeof(oType));
-std::string strDeviceName = ctl.getDevice().getInfo< CL_DEVICE_NAME >( &l_Error );
-bolt::cl::V_OPENCL( l_Error, "Device::getInfo< CL_DEVICE_NAME > failed" );
-aProfiler.setArchitecture(strDeviceName);
-
-    try
-    {
-        cl_ulong k0_start, k0_stop, k1_stop, k2_stop;
-
-        l_Error = kernel0Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_START, &k0_start);
-        V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_QUEUED>()");
-        l_Error = kernel0Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END, &k0_stop);
-        V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_END>()");
-
-        //l_Error = kernel1Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_START, &k1_start);
-        //V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_START>()");
-        l_Error = kernel1Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END, &k1_stop);
-        V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_END>()");
-
-        //l_Error = kernel2Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_START, &k2_start);
-        //V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_START>()");
-        l_Error = kernel2Event.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END, &k2_stop);
-        V_OPENCL( l_Error, "failed on getProfilingInfo<CL_PROFILING_COMMAND_END>()");
-
-        size_t k0_start_cpu = aProfiler.get(k0_stepNum, AsyncProfiler::startTime);
-        size_t shift = k0_start - k0_start_cpu;
-        //size_t shift = k0_start_cpu - k0_start;
-
-        //std::cout << "setting step " << k0_stepNum << " attribute " << AsyncProfiler::stopTime;
-        //std::cout << " to " << k0_stop-shift << std::endl;
-        aProfiler.set(k0_stepNum, AsyncProfiler::stopTime,  static_cast<size_t>(k0_stop-shift) );
-
-        aProfiler.set(k1_stepNum, AsyncProfiler::startTime, static_cast<size_t>(k0_stop-shift) );
-        aProfiler.set(k1_stepNum, AsyncProfiler::stopTime,  static_cast<size_t>(k1_stop-shift) );
-
-        aProfiler.set(k2_stepNum, AsyncProfiler::startTime, static_cast<size_t>(k1_stop-shift) );
-        aProfiler.set(k2_stepNum, AsyncProfiler::stopTime,  static_cast<size_t>(k2_stop-shift) );
-
-    }
-    catch( ::cl::Error& e )
-    {
-        std::cout << ( "Scan Benchmark error condition reported:" ) << std::endl << e.what() << std::endl;
-        return;
-    }
-
-aProfiler.stopTrial();
-
-#endif
-
-}   //end of scan_by_key_enqueue( )
 
     /*!   \}  */
 } //namespace detail

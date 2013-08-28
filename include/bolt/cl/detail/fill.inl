@@ -67,27 +67,141 @@ namespace detail {
             }
         };
 
-
             /*****************************************************************************
-             * Random Access
+             * Fill Enqueue
              ****************************************************************************/
 
-            // fill no support
-            template<typename ForwardIterator, typename T>
-            void fill_detect_random_access( const bolt::cl::control &ctl, ForwardIterator first, ForwardIterator last,
-                const T & value, const std::string &cl_code, std::forward_iterator_tag )
+            template< typename DVForwardIterator, typename T >
+            void fill_enqueue(const bolt::cl::control &ctl, const DVForwardIterator &first,
+                const DVForwardIterator &last, const T & val, const std::string& cl_code)
             {
-                static_assert( std::is_same< ForwardIterator, std::forward_iterator_tag   >::value , "Bolt only supports random access iterator types" );
-            }
+                // how many elements to fill
+                cl_uint sz = static_cast< cl_uint >( std::distance( first, last ) );
+                if (sz < 1)
+                    return;
 
-            // fill random-access
-            template<typename ForwardIterator, typename T>
-            void fill_detect_random_access( const bolt::cl::control &ctl, ForwardIterator first, ForwardIterator last,
-                const T & value, const std::string &cl_code, std::random_access_iterator_tag )
-            {
-                     fill_pick_iterator(ctl, first, last, value, cl_code,
-                    typename std::iterator_traits< ForwardIterator >::iterator_category( ) );
-            }
+                /**********************************************************************************
+                 * Type Names - used in KernelTemplateSpecializer
+                 *********************************************************************************/
+                typedef typename std::iterator_traits<DVForwardIterator>::value_type Type;
+                typedef T iType;
+                std::vector<std::string> typeNames(fill_end);
+                typeNames[fill_T] = TypeName< T >::get( );
+                typeNames[fill_Type] = TypeName< Type >::get( );
+                typeNames[fill_DVInputIterator] = TypeName< DVForwardIterator >::get( );
+
+                /**********************************************************************************
+                 * Type Definitions - directrly concatenated into kernel string (order may matter)
+                 *********************************************************************************/
+                std::vector<std::string> typeDefs;
+                PUSH_BACK_UNIQUE( typeDefs, ClCode< iType >::get() )
+                PUSH_BACK_UNIQUE( typeDefs, ClCode< Type >::get() )
+                PUSH_BACK_UNIQUE( typeDefs, ClCode< DVForwardIterator >::get() )
+
+                cl_int l_Error = CL_SUCCESS;
+                const size_t workGroupSize  = WAVEFRONT_SIZE;
+                const size_t numComputeUnits = ctl.getDevice( ).getInfo< CL_DEVICE_MAX_COMPUTE_UNITS >( ); // = 28
+                const size_t numWorkGroupsPerComputeUnit = ctl.getWGPerComputeUnit( );
+                const size_t numWorkGroups = numComputeUnits * numWorkGroupsPerComputeUnit;
+
+                const cl_uint numThreadsIdeal = static_cast<cl_uint>( numWorkGroups * workGroupSize );
+                cl_uint numElementsPerThread = sz/ numThreadsIdeal;
+                cl_uint numThreadsRUP = sz;
+                size_t mod = (sz& (workGroupSize-1));
+                int doBoundaryCheck = 0;
+                if( mod )
+                {
+                  numThreadsRUP &= ~mod;
+                  numThreadsRUP += workGroupSize;
+                  doBoundaryCheck = 1;
+                }
+
+                /**********************************************************************************
+                 * Compile Options
+                 *********************************************************************************/
+                std::string compileOptions;
+                std::ostringstream oss;
+                oss << " -DBOUNDARY_CHECK=" << doBoundaryCheck;
+                compileOptions = oss.str();
+
+                /**********************************************************************************
+                 * Request Compiled Kernels
+                 *********************************************************************************/
+                Fill_KernelTemplateSpecializer c_kts;
+                std::vector< ::cl::Kernel > kernels = bolt::cl::getKernels(
+                    ctl,
+                    typeNames,
+                    &c_kts,
+                    typeDefs,
+                    fill_kernels,
+                    compileOptions);
+
+                /**********************************************************************************
+                 *  Kernel
+                 *********************************************************************************/
+                ::cl::Event kernelEvent;
+                typename DVForwardIterator::Payload  first_payload = first.gpuPayload( );
+                try
+                {
+                    cl_uint numThreadsChosen;
+                    cl_uint workGroupSizeChosen = workGroupSize;
+                    numThreadsChosen = numThreadsRUP;
+
+                    //std::cout << "NumElem: " << sz<< "; NumThreads: " << numThreadsChosen << ";
+                    //NumWorkGroups: " << numThreadsChosen/workGroupSizeChosen << std::endl;
+
+                    // Input Value
+                    V_OPENCL( kernels[0].setArg( 0, val), "Error setArg kernels[ 0 ]" );
+                    // Fill buffer
+                    V_OPENCL( kernels[0].setArg( 1, first.getContainer().getBuffer()),"Error setArg kernels[ 0 ]" );
+                    // Input Iterator
+                    V_OPENCL( kernels[0].setArg( 2, first.gpuPayloadSize( ),&first_payload ),
+                        "Error setting a kernel argument" );
+                    // Size of buffer
+                    V_OPENCL( kernels[0].setArg( 3, static_cast<cl_uint>( sz) ), "Error setArg kernels[ 0 ]" );
+
+                    l_Error = ctl.getCommandQueue( ).enqueueNDRangeKernel(
+                        kernels[0],
+                        ::cl::NullRange,
+                        ::cl::NDRange( numThreadsChosen ),
+                        ::cl::NDRange( workGroupSizeChosen ),
+                        NULL,
+                        &kernelEvent);
+                    V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for kernel" );
+                }
+                catch( const ::cl::Error& e)
+                {
+                    std::cerr << "::cl::enqueueNDRangeKernel( ) in bolt::cl::copy_enqueue()" << std::endl;
+                    std::cerr << "Error Code:   " << clErrorStringA(e.err()) << " (" << e.err() << ")" << std::endl;
+                    std::cerr << "File:         " << __FILE__ << ", line " << __LINE__ << std::endl;
+                    std::cerr << "Error String: " << e.what() << std::endl;
+                }
+
+                // wait for results
+                bolt::cl::wait(ctl, kernelEvent);
+
+
+                // profiling
+                cl_command_queue_properties queueProperties;
+                l_Error = ctl.getCommandQueue().getInfo<cl_command_queue_properties>(CL_QUEUE_PROPERTIES,
+                    &queueProperties);
+                unsigned int profilingEnabled = queueProperties&CL_QUEUE_PROFILING_ENABLE;
+                if ( profilingEnabled ) {
+                    cl_ulong start_time, stop_time;
+
+                    V_OPENCL( kernelEvent.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_START, &start_time),
+                        "failed on getProfilingInfo<CL_PROFILING_COMMAND_START>()");
+                    V_OPENCL( kernelEvent.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END,    &stop_time),
+                        "failed on getProfilingInfo<CL_PROFILING_COMMAND_END>()");
+                    cl_ulong time =stop_time - start_time;
+                    double gb = (sz*(sizeof(T)+sizeof(Type))/1024.0/1024.0/1024.0);
+                    double sec = time/1000000000.0;
+                    std::cout << "Global Memory Bandwidth: " << ( gb / sec) << " ( "
+                      << time/1000000.0 << " ms)" << std::endl;
+                }
+
+            }; // end fill_enqueue
+
 
 
             /*****************************************************************************
@@ -187,140 +301,29 @@ namespace detail {
                 static_assert( std::is_same< DVForwardIterator, bolt::cl::fancy_iterator_tag  >::value, "It is not possible to fill into fancy iterators. They are not mutable! \n" );
             }
 
+
+
             /*****************************************************************************
-             * Fill Enqueue
+             * Random Access
              ****************************************************************************/
 
-            template< typename DVForwardIterator, typename T >
-            void fill_enqueue(const bolt::cl::control &ctl, const DVForwardIterator &first,
-                const DVForwardIterator &last, const T & val, const std::string& cl_code)
+            // fill no support
+            template<typename ForwardIterator, typename T>
+            void fill_detect_random_access( const bolt::cl::control &ctl, ForwardIterator first, ForwardIterator last,
+                const T & value, const std::string &cl_code, std::forward_iterator_tag )
             {
-                // how many elements to fill
-                cl_uint sz = static_cast< cl_uint >( std::distance( first, last ) );
-                if (sz < 1)
-                    return;
+                static_assert( std::is_same< ForwardIterator, std::forward_iterator_tag   >::value , "Bolt only supports random access iterator types" );
+            }
 
-                /**********************************************************************************
-                 * Type Names - used in KernelTemplateSpecializer
-                 *********************************************************************************/
-                typedef typename std::iterator_traits<DVForwardIterator>::value_type Type;
-                typedef T iType;
-                std::vector<std::string> typeNames(fill_end);
-                typeNames[fill_T] = TypeName< T >::get( );
-                typeNames[fill_Type] = TypeName< Type >::get( );
-                typeNames[fill_DVInputIterator] = TypeName< DVForwardIterator >::get( );
-            
-                /**********************************************************************************
-                 * Type Definitions - directrly concatenated into kernel string (order may matter)
-                 *********************************************************************************/
-                std::vector<std::string> typeDefs;
-                PUSH_BACK_UNIQUE( typeDefs, ClCode< iType >::get() )
-                PUSH_BACK_UNIQUE( typeDefs, ClCode< Type >::get() )
-                PUSH_BACK_UNIQUE( typeDefs, ClCode< DVForwardIterator >::get() )
-            
-                cl_int l_Error = CL_SUCCESS;
-                const size_t workGroupSize  = WAVEFRONT_SIZE;
-                const size_t numComputeUnits = ctl.getDevice( ).getInfo< CL_DEVICE_MAX_COMPUTE_UNITS >( ); // = 28
-                const size_t numWorkGroupsPerComputeUnit = ctl.getWGPerComputeUnit( );
-                const size_t numWorkGroups = numComputeUnits * numWorkGroupsPerComputeUnit;
+            // fill random-access
+            template<typename ForwardIterator, typename T>
+            void fill_detect_random_access( const bolt::cl::control &ctl, ForwardIterator first, ForwardIterator last,
+                const T & value, const std::string &cl_code, std::random_access_iterator_tag )
+            {
+                     fill_pick_iterator(ctl, first, last, value, cl_code,
+                    typename std::iterator_traits< ForwardIterator >::iterator_category( ) );
+            }
 
-                const cl_uint numThreadsIdeal = static_cast<cl_uint>( numWorkGroups * workGroupSize );
-                cl_uint numElementsPerThread = sz/ numThreadsIdeal;
-                cl_uint numThreadsRUP = sz;
-                size_t mod = (sz& (workGroupSize-1));
-                int doBoundaryCheck = 0;
-                if( mod )
-                {
-                  numThreadsRUP &= ~mod;
-                  numThreadsRUP += workGroupSize;
-                  doBoundaryCheck = 1;
-                }
-
-                /**********************************************************************************
-                 * Compile Options
-                 *********************************************************************************/
-                std::string compileOptions;
-                std::ostringstream oss;
-                oss << " -DBOUNDARY_CHECK=" << doBoundaryCheck;
-                compileOptions = oss.str();
-
-                /**********************************************************************************
-                 * Request Compiled Kernels
-                 *********************************************************************************/
-                Fill_KernelTemplateSpecializer c_kts;
-                std::vector< ::cl::Kernel > kernels = bolt::cl::getKernels(
-                    ctl,
-                    typeNames,
-                    &c_kts,
-                    typeDefs,
-                    fill_kernels,
-                    compileOptions);
-
-                /**********************************************************************************
-                 *  Kernel
-                 *********************************************************************************/
-                ::cl::Event kernelEvent;
-                typename DVForwardIterator::Payload  first_payload = first.gpuPayload( );
-                try
-                {
-                    cl_uint numThreadsChosen;
-                    cl_uint workGroupSizeChosen = workGroupSize;
-                    numThreadsChosen = numThreadsRUP;
-
-                    //std::cout << "NumElem: " << sz<< "; NumThreads: " << numThreadsChosen << ";
-                    //NumWorkGroups: " << numThreadsChosen/workGroupSizeChosen << std::endl;
-          
-                    // Input Value
-                    V_OPENCL( kernels[0].setArg( 0, val), "Error setArg kernels[ 0 ]" ); 
-                    // Fill buffer
-                    V_OPENCL( kernels[0].setArg( 1, first.getContainer().getBuffer()),"Error setArg kernels[ 0 ]" ); 
-                    // Input Iterator
-                    V_OPENCL( kernels[0].setArg( 2, first.gpuPayloadSize( ),&first_payload ),
-                        "Error setting a kernel argument" );
-                    // Size of buffer
-                    V_OPENCL( kernels[0].setArg( 3, static_cast<cl_uint>( sz) ), "Error setArg kernels[ 0 ]" ); 
-            
-                    l_Error = ctl.getCommandQueue( ).enqueueNDRangeKernel(
-                        kernels[0],
-                        ::cl::NullRange,
-                        ::cl::NDRange( numThreadsChosen ),
-                        ::cl::NDRange( workGroupSizeChosen ),
-                        NULL,
-                        &kernelEvent);
-                    V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for kernel" );
-                }
-                catch( const ::cl::Error& e)
-                {
-                    std::cerr << "::cl::enqueueNDRangeKernel( ) in bolt::cl::copy_enqueue()" << std::endl;
-                    std::cerr << "Error Code:   " << clErrorStringA(e.err()) << " (" << e.err() << ")" << std::endl;
-                    std::cerr << "File:         " << __FILE__ << ", line " << __LINE__ << std::endl;
-                    std::cerr << "Error String: " << e.what() << std::endl;
-                }
-
-                // wait for results
-                bolt::cl::wait(ctl, kernelEvent);
-
-
-                // profiling
-                cl_command_queue_properties queueProperties;
-                l_Error = ctl.getCommandQueue().getInfo<cl_command_queue_properties>(CL_QUEUE_PROPERTIES,
-                    &queueProperties);
-                unsigned int profilingEnabled = queueProperties&CL_QUEUE_PROFILING_ENABLE;
-                if ( profilingEnabled ) {
-                    cl_ulong start_time, stop_time;
-
-                    V_OPENCL( kernelEvent.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_START, &start_time),
-                        "failed on getProfilingInfo<CL_PROFILING_COMMAND_START>()");
-                    V_OPENCL( kernelEvent.getProfilingInfo<cl_ulong>(CL_PROFILING_COMMAND_END,    &stop_time),
-                        "failed on getProfilingInfo<CL_PROFILING_COMMAND_END>()");
-                    cl_ulong time =stop_time - start_time;
-                    double gb = (sz*(sizeof(T)+sizeof(Type))/1024.0/1024.0/1024.0);
-                    double sec = time/1000000000.0;
-                    std::cout << "Global Memory Bandwidth: " << ( gb / sec) << " ( "
-                      << time/1000000.0 << " ms)" << std::endl;
-                }
-
-            }; // end fill_enqueue
 
         }
 
