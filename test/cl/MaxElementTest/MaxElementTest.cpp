@@ -19,7 +19,7 @@
 //
 #define OCL_CONTEXT_BUG_WORKAROUND 1
 
-#define TEST_DOUBLE 0
+#define TEST_DOUBLE 1
 
 #include <iostream>
 #include <algorithm>  // for testing against STL functions.
@@ -41,15 +41,15 @@ void testDeviceVector()
 {
     const int aSize = 1000;
     std::vector<int> hA(aSize);
-    bolt::cl::device_vector<int> dA(aSize);
+    
 
     for(int i=0; i<aSize; i++) {
         hA[i] = i;
-        dA[i] = i;
     };
-
+	
+    bolt::cl::device_vector<int> dA(hA.begin(), hA.end());
     std::vector<int>::iterator smaxdex = std::max_element(hA.begin(), hA.end());
-     bolt::cl::device_vector<int>::iterator bmaxdex = bolt::cl::max_element(dA.begin(), dA.end(),bolt::cl::greater<int>());
+    bolt::cl::device_vector<int>::iterator bmaxdex = bolt::cl::max_element(dA.begin(), dA.end(),bolt::cl::greater<int>());
 
 };
 
@@ -251,18 +251,18 @@ class MaxEIntegerDeviceVector: public ::testing::TestWithParam< int >
 {
 public:
     // Create an std and a bolt vector of requested size, and initialize all the elements to 1
-    MaxEIntegerDeviceVector( ): stdInput( GetParam( ) ), boltInput( static_cast<size_t>( GetParam( ) ) )
+    MaxEIntegerDeviceVector( ): stdInput( GetParam( ) )
     {
         std::generate(stdInput.begin(), stdInput.end(), generateRandom<int>);
-        for (int i=0; i< GetParam( ); i++)
+        /*for (int i=0; i< GetParam( ); i++)
         {
             boltInput[i] = stdInput[i];
-        }
+        }*/
     }
 
 protected:
     std::vector< int > stdInput;
-    bolt::cl::device_vector< int > boltInput;
+    //bolt::cl::device_vector< int > boltInput;
 };
 
 //  ::testing::TestWithParam< int > means that GetParam( ) returns int values, which i use for array size
@@ -270,18 +270,18 @@ class MaxEFloatDeviceVector: public ::testing::TestWithParam< int >
 {
 public:
     // Create an std and a bolt vector of requested size, and initialize all the elements to 1
-    MaxEFloatDeviceVector( ): stdInput( GetParam( ) ), boltInput( GetParam( ) )
+    MaxEFloatDeviceVector( ): stdInput( GetParam( ) )
     {
         std::generate(stdInput.begin(), stdInput.end(), generateRandom<float>);
-        for (int i=0; i< GetParam( ); i++)
+        /*for (int i=0; i< GetParam( ); i++)
         {
             boltInput[i] = stdInput[i];
-        }
+        }*/
     }
 
 protected:
     std::vector< float > stdInput;
-    bolt::cl::device_vector< float > boltInput;
+    //bolt::cl::device_vector< float > boltInput;
 };
 
 
@@ -348,15 +348,15 @@ TEST( MaxEleDevice , DeviceVectoroffset )
 {
     //setup containers
     unsigned int length = 1024;
-    bolt::cl::device_vector< int > input( length );
+	std::vector<int> stdinput( length);
+    
     for( unsigned int i = 0; i < length ; i++ )
     {
-      input[i] = length - i;
-
+      stdinput[i] = length - i;
     }
-    
+	
+    bolt::cl::device_vector< int > input( stdinput.begin(), stdinput.end() );
     // call reduce
-
     bolt::cl::device_vector< int >::iterator  boltReduce =  bolt::cl::max_element( input.begin()+20, input.end());
     int stdReduce =  1004;
 
@@ -375,7 +375,6 @@ TEST_P( MaxEStdVectWithInit, MultiCorewithInt)
         boltInput[i] = stdInput[i];
     }
     
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
     
@@ -476,7 +475,6 @@ TEST_P( MaxEStdVectandCountingIterator, MultiCorewithCountingIterator)
         a[i] = i;
     };
     
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
     
@@ -551,7 +549,6 @@ TEST_P( MaxETestFloat, CPU_serialFloatValuesWdControl )
         boltVect[i] = A[i];
     }
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
     
@@ -575,7 +572,6 @@ TEST_P( MaxETestFloat, MultiCore_serialFloatValuesWdControl )
         boltVect[i] = A[i];
     }
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
     
@@ -632,7 +628,6 @@ TEST_P (MaxETestDouble, SerialWithDouble)
         A[i] = myFloatValues + double(i);
         boltVect[i] = A[i];
     }
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -655,7 +650,6 @@ TEST_P (MaxETestDouble, MultiCoreWithDouble)
         A[i] = myFloatValues + double(i);
         boltVect[i] = A[i];
     }
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
@@ -816,7 +810,6 @@ TEST_P( MaxEFloatVector, Normal )
 
 TEST_P( MaxEFloatVector, SerialNormal )
 {
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
     
@@ -837,7 +830,7 @@ TEST_P( MaxEFloatVector, SerialNormal )
 
 TEST_P( MaxEFloatVector, MultiCoreNormal )
 {
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
     

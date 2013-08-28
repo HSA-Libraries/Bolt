@@ -588,7 +588,6 @@ TEST_P( StableSortbyKeyIntegerVector, Normal )
 
 TEST_P( StableSortbyKeyIntegerVector, Serial )
 {
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -628,7 +627,6 @@ TEST_P( StableSortbyKeyIntegerVector, Serial )
 
 TEST_P( StableSortbyKeyIntegerVector, MultiCoreCPU )
 {
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
@@ -704,7 +702,6 @@ TEST_P( StableSortbyKeyFloatVector, Normal )
 
 TEST_P( StableSortbyKeyFloatVector, Serial )
 {
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -743,7 +740,6 @@ TEST_P( StableSortbyKeyFloatVector, Serial )
 
 TEST_P( StableSortbyKeyFloatVector, MultiCoreCPU )
 {
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
@@ -818,7 +814,6 @@ TEST_P( StableSortbyKeyDoubleVector, Normal )
 
 TEST_P( StableSortbyKeyDoubleVector, Serial)
 {
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -857,7 +852,6 @@ TEST_P( StableSortbyKeyDoubleVector, Serial)
 
 TEST_P( StableSortbyKeyDoubleVector, MultiCoreCPU)
 {
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
@@ -916,7 +910,6 @@ TEST_P( StableSortbyKeyIntegerDeviceVector, Inplace )
 
 TEST_P( StableSortbyKeyIntegerDeviceVector, SerialInplace )
 {
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -938,7 +931,6 @@ TEST_P( StableSortbyKeyIntegerDeviceVector, SerialInplace )
 
 TEST_P( StableSortbyKeyIntegerDeviceVector, MultiCoreInplace )
 {
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
@@ -977,7 +969,6 @@ TEST_P( StableSortbyKeyFloatDeviceVector, Inplace )
 
 TEST_P( StableSortbyKeyFloatDeviceVector, SerialInplace )
 {
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -999,7 +990,6 @@ TEST_P( StableSortbyKeyFloatDeviceVector, SerialInplace )
 
 TEST_P( StableSortbyKeyFloatDeviceVector, MultiCoreInplace )
 {
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
@@ -1040,7 +1030,6 @@ TEST_P( StableSortbyKeyDoubleDeviceVector, Inplace )
 
 TEST_P( StableSortbyKeyDoubleDeviceVector, SerialInplace )
 {
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -1062,7 +1051,6 @@ TEST_P( StableSortbyKeyDoubleDeviceVector, SerialInplace )
 
 TEST_P( StableSortbyKeyDoubleDeviceVector, MultiCoreInplace )
 {
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
@@ -1105,7 +1093,6 @@ TEST_P( StableSortbyKeyIntegerNakedPointer, SerialInplace )
 {
     size_t endIndex = GetParam( );
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -1125,7 +1112,6 @@ TEST_P( StableSortbyKeyIntegerNakedPointer, MultiCoreInplace )
 {
     size_t endIndex = GetParam( );
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
@@ -1159,7 +1145,6 @@ TEST_P( StableSortbyKeyFloatNakedPointer, Inplace )
 
 TEST_P( StableSortbyKeyFloatNakedPointer, SerialInplace )
 {
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -1179,7 +1164,6 @@ TEST_P( StableSortbyKeyFloatNakedPointer, SerialInplace )
 
 TEST_P( StableSortbyKeyFloatNakedPointer, MultiCoreInplace )
 {
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
@@ -1217,7 +1201,6 @@ TEST_P( StableSortbyKeyDoubleNakedPointer, Inplace )
 
 TEST_P( StableSortbyKeyDoubleNakedPointer, SerialInplace )
 {
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -1236,7 +1219,7 @@ TEST_P( StableSortbyKeyDoubleNakedPointer, SerialInplace )
 
 TEST_P( StableSortbyKeyDoubleNakedPointer, MultiCoreInplace )
 {
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 

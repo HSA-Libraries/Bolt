@@ -42,13 +42,12 @@ void testDeviceVector()
 {
     const int aSize = 1000;
     std::vector<int> hA(aSize);
-    bolt::cl::device_vector<int> dA(aSize);
 
     for(int i=0; i<aSize; i++) {
         hA[i] = i;
-        dA[i] = i;
     };
-
+	
+    bolt::cl::device_vector<int> dA(hA.begin(), hA.end());
     int hSum = std::accumulate(hA.begin(), hA.end(), 0);
     int sum = bolt::cl::reduce(dA.begin(), dA.end(), 0);
     
@@ -170,14 +169,12 @@ void testTBBDevicevector()
 {
     const int aSize = 1024;
     std::vector<int> stdInput(aSize);
-    bolt::cl::device_vector<int> tbbInput(aSize, 0);
-
 
     for(int i=0; i<aSize; i++) {
         stdInput[i] = i;
-        tbbInput[i] = i;
     };
-
+	
+    bolt::cl::device_vector<int> tbbInput(stdInput.begin(), stdInput.end());
     int hSum = std::accumulate(stdInput.begin(), stdInput.end(), 0);
     bolt::cl::control ctl = bolt::cl::control::getDefault();
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
@@ -604,23 +601,23 @@ class ReduceIntegerDeviceVector: public ::testing::TestWithParam< int >
 {
 public:
     // Create an std and a bolt vector of requested size, and initialize all the elements to 1
-    ReduceIntegerDeviceVector( ): stdInput( GetParam( ) ), boltInput( static_cast<size_t>( GetParam( ) ) ),
-                                     stdOutput( GetParam( ) ), boltOutput( static_cast<size_t>( GetParam( ) ) )
+    ReduceIntegerDeviceVector( ): stdInput( GetParam( ) ),
+                                     stdOutput( GetParam( ) )
     {
         std::generate(stdInput.begin(), stdInput.end(), generateRandom<int>);
         //boltInput = stdInput;      
         //FIXME - The above should work but the below loop is used. 
         for (int i=0; i< GetParam( ); i++)
         {
-            boltInput[i] = stdInput[i];
-            boltOutput[i] = stdInput[i];
+            //boltInput[i] = stdInput[i];
+            //boltOutput[i] = stdInput[i];
             stdOutput[i] = stdInput[i];
         }
     }
 
 protected:
     std::vector< int > stdInput, stdOutput;
-    bolt::cl::device_vector< int > boltInput, boltOutput;
+    //bolt::cl::device_vector< int > boltInput, boltOutput;
 };
 
 //  ::testing::TestWithParam< int > means that GetParam( ) returns int values, which i use for array size
@@ -628,22 +625,22 @@ class ReduceFloatDeviceVector: public ::testing::TestWithParam< int >
 {
 public:
     // Create an std and a bolt vector of requested size, and initialize all the elements to 1
-    ReduceFloatDeviceVector( ): stdInput( GetParam( ) ), boltInput( GetParam( ) ), boltOutput( GetParam( ) )
+    ReduceFloatDeviceVector( ): stdInput( GetParam( ) )
     {
         std::generate(stdInput.begin(), stdInput.end(), generateRandom<float>);
         stdOutput = stdInput;
 
         //FIXME - The above should work but the below loop is used. 
-        for (int i=0; i< GetParam( ); i++)
+        /*for (int i=0; i< GetParam( ); i++)
         {
             boltInput[i] = stdInput[i];
             boltOutput[i] = stdInput[i];
-        }
+        }*/
     }
 
 protected:
     std::vector< float > stdInput, stdOutput;
-    bolt::cl::device_vector< float > boltInput, boltOutput;
+    //bolt::cl::device_vector< float > boltInput, boltOutput;
 };
 
 #if (TEST_DOUBLE == 1)
@@ -652,23 +649,23 @@ class ReduceDoubleDeviceVector: public ::testing::TestWithParam< int >
 {
 public:
     // Create an std and a bolt vector of requested size, and initialize all the elements to 1
-    ReduceDoubleDeviceVector( ): stdInput( GetParam( ) ), boltInput( static_cast<size_t>( GetParam( ) ) ),
-                                                         boltOutput( static_cast<size_t>( GetParam( ) ) )
+    ReduceDoubleDeviceVector( ): stdInput( GetParam( ) )
+                                                         
     {
         std::generate(stdInput.begin(), stdInput.end(), generateRandom<double>);
         stdOutput = stdInput;
 
         //FIXME - The above should work but the below loop is used. 
-        for (int i=0; i< GetParam( ); i++)
+        /*for (int i=0; i< GetParam( ); i++)
         {
             boltInput[i] = stdInput[i];
             boltOutput[i] = stdInput[i];
-        }
+        }*/
     }
 
 protected:
     std::vector< double > stdInput, stdOutput;
-    bolt::cl::device_vector< double > boltInput, boltOutput;
+    //bolt::cl::device_vector< double > boltInput, boltOutput;
 };
 #endif
 
@@ -1097,6 +1094,9 @@ TEST_P( ReduceDoubleVector, Inplace )
 #if (TEST_DEVICE_VECTOR == 1)
 TEST_P( TransformIntegerDeviceVector, Inplace )
 {
+    bolt::cl::device_vector< int > boltInput(stdInput.begin(), stdInput.end());
+	bolt::cl::device_vector< int > boltOutput(stdOutput.begin(), stdOutput.end());
+
     int init(0);
     //  Calling the actual functions under test
     std::transform(stdInput.begin(), stdInput.end(), stdOutput.begin(), bolt::cl::negate<int>());
@@ -1118,6 +1118,9 @@ TEST_P( TransformIntegerDeviceVector, Inplace )
 }
 TEST_P( TransformFloatDeviceVector, Inplace )
 {
+    bolt::cl::device_vector< float > boltInput(stdInput.begin(), stdInput.end());
+	bolt::cl::device_vector< float > boltOutput(stdOutput.begin(), stdOutput.end());
+	
     float init(0);
     //  Calling the actual functions under test
     std::transform(stdInput.begin(), stdInput.end(), stdOutput.begin(), bolt::cl::negate<float>());
@@ -1140,6 +1143,9 @@ TEST_P( TransformFloatDeviceVector, Inplace )
 #if (TEST_DOUBLE == 1)
 TEST_P( TransformDoubleDeviceVector, Inplace )
 {
+    bolt::cl::device_vector< double > boltInput(stdInput.begin(), stdInput.end());
+	bolt::cl::device_vector< double > boltOutput(stdOutput.begin(), stdOutput.end());
+	
     double init(0);
     //  Calling the actual functions under test
     std::transform(stdInput.begin(), stdInput.end(), stdOutput.begin(), bolt::cl::negate<double>());
@@ -1427,13 +1433,12 @@ TEST( ReduceDevice , DeviceVectoroffset )
 {
     //setup containers
     unsigned int length = 1024;
-    bolt::cl::device_vector< int > input( length );
+    std::vector< int > stdinput( length );
     for( unsigned int i = 0; i < length ; i++ )
     {
-      input[i] = i;
-
+      stdinput[i] = i;
     }
-    
+    bolt::cl::device_vector< int > input( stdinput.begin(), stdinput.end() );
     // call reduce
 
     int boltReduce = bolt::cl::reduce( input.begin() + 10 , input.end(), 0, bolt::cl::plus<int>() );

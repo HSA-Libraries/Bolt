@@ -183,13 +183,12 @@ TEST(Sort, DevclLong)
         // test length
         int length = (1<<8);
 
-        bolt::cl::device_vector<cl_long> bolt_source(length);
+        bolt::cl::device_vector<cl_long> bolt_source(length, (cl_long)rand());
         std::vector<cl_long> std_source(length);
 
         // populate source vector with random ints
         for (int j = 0; j < length; j++)
         {
-            bolt_source[j] = (cl_long)rand();
             std_source[j] = bolt_source[j];
         }
     
@@ -207,13 +206,12 @@ TEST(Sort, Serial_DevclLong)
         // test length
         int length = (1<<8);
 
-        bolt::cl::device_vector<cl_long> bolt_source(length);
+        bolt::cl::device_vector<cl_long> bolt_source(length,(cl_long)rand());
         std::vector<cl_long> std_source(length);
 
         // populate source vector with random ints
         for (int j = 0; j < length; j++)
         {
-            bolt_source[j] = (cl_long)rand();
             std_source[j] = bolt_source[j];
         }
     
@@ -234,13 +232,12 @@ TEST(Sort, MultiCore_DevclLong)
         // test length
         int length = (1<<8);
 
-        bolt::cl::device_vector<cl_long> bolt_source(length);
+        bolt::cl::device_vector<cl_long> bolt_source(length, (cl_long)rand());
         std::vector<cl_long> std_source(length);
 
         // populate source vector with random ints
         for (int j = 0; j < length; j++)
         {
-            bolt_source[j] = (cl_long)rand();
             std_source[j] = bolt_source[j];
         }
     
@@ -345,7 +342,6 @@ TEST(MultiCoreCPU, MultiCoreAddDouble4)
 {
     //setup containers
     int length = (1<<8);
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
     bolt::cl::device_vector< uddtD4 > input(  length, initialAddD4, CL_MEM_READ_WRITE, true  );
@@ -367,7 +363,6 @@ TEST( DefaultGPU, Normal )
     bolt::cl::device_vector< float > boltInput(  length, 0.0, CL_MEM_READ_WRITE, true  );
     std::vector< float > stdInput( length, 0.0 );
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
 
     //  Calling the actual functions under test
@@ -391,7 +386,6 @@ TEST( SerialCPU, SerialNormal )
     bolt::cl::device_vector< float > boltInput(  length, 0.0, CL_MEM_READ_WRITE, true  );
     std::vector< float > stdInput( length, 0.0 );
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
     //  Calling the actual functions under test
@@ -415,7 +409,6 @@ TEST( MultiCoreCPU, MultiCoreNormal )
     bolt::cl::device_vector< float > boltInput(  length, 0.0, CL_MEM_READ_WRITE, true  );
     std::vector< float > stdInput( length, 0.0 );
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
     //  Calling the actual functions under test

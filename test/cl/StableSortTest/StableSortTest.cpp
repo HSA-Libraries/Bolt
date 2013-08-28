@@ -189,7 +189,6 @@ TEST(MultiCoreCPU, MultiCoreAddDouble4)
 {
     //setup containers
     int length = (1<<8);
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
     bolt::cl::device_vector< uddtD4 > input(  length, initialAddD4, CL_MEM_READ_WRITE, true  );
@@ -269,7 +268,6 @@ TEST( MultiCoreCPU, MultiCoreNormal )
     bolt::cl::device_vector< float > boltInput(  length, 0.0, CL_MEM_READ_WRITE, true  );
     std::vector< float > stdInput( length, 0.0 );
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
     //  Calling the actual functions under test
@@ -770,23 +768,23 @@ class StableSortIntegerDeviceVector: public ::testing::TestWithParam< int >
 {
 public:
     // Create an std and a bolt vector of requested size, and initialize all the elements to 1
-    StableSortIntegerDeviceVector( ): stdInput( GetParam( ) ), boltInput( static_cast<size_t>( GetParam( ) ) ), 
-                                stdOffsetIn( GetParam( ) ), boltOffsetIn( static_cast<size_t>( GetParam( ) ) ), ArraySize ( GetParam( ) )
+    StableSortIntegerDeviceVector( ): stdInput( GetParam( ) ), 
+                                stdOffsetIn( GetParam( ) ), ArraySize ( GetParam( ) )
     {
         std::generate(stdInput.begin(), stdInput.end(), rand);
         //boltInput = stdInput;      
         //FIXME - The above should work but the below loop is used. 
         for (int i=0; i< GetParam( ); i++)
         {
-            boltInput[i] = stdInput[i];
-            boltOffsetIn[i] = stdInput[i];
+            //boltInput[i] = stdInput[i];
+            //boltOffsetIn[i] = stdInput[i];
             stdOffsetIn[i] = stdInput[i];
         }
     }
 
 protected:
     std::vector< int > stdInput, stdOffsetIn;
-    bolt::cl::device_vector< int > boltInput, boltOffsetIn;
+    //bolt::cl::device_vector< int > boltInput, boltOffsetIn;
     const int ArraySize;
 };
 
@@ -795,23 +793,23 @@ class StableSortFloatDeviceVector: public ::testing::TestWithParam< int >
 {
 public:
     // Create an std and a bolt vector of requested size, and initialize all the elements to 1
-    StableSortFloatDeviceVector( ): stdInput( GetParam( ) ), boltInput( static_cast<size_t>( GetParam( ) ) ), 
-                              stdOffsetIn( GetParam( ) ), boltOffsetIn( static_cast<size_t>( GetParam( ) ) )
+    StableSortFloatDeviceVector( ): stdInput( GetParam( ) ), 
+                              stdOffsetIn( GetParam( ) )
     {
         std::generate(stdInput.begin(), stdInput.end(), rand);
         //boltInput = stdInput;      
         //FIXME - The above should work but the below loop is used. 
         for (int i=0; i< GetParam( ); i++)
         {
-            boltInput[i] = stdInput[i];
-            boltOffsetIn[i] = stdInput[i];
+            //boltInput[i] = stdInput[i];
+            //boltOffsetIn[i] = stdInput[i];
             stdOffsetIn[i] = stdInput[i];
         }
     }
 
 protected:
     std::vector< float > stdInput, stdOffsetIn;
-    bolt::cl::device_vector< float > boltInput, boltOffsetIn;
+    //bolt::cl::device_vector< float > boltInput, boltOffsetIn;
 };
 
 #if (TEST_DOUBLE == 1)
@@ -820,23 +818,23 @@ class StableSortDoubleDeviceVector: public ::testing::TestWithParam< int >
 {
 public:
     // Create an std and a bolt vector of requested size, and initialize all the elements to 1
-    StableSortDoubleDeviceVector( ): stdInput( GetParam( ) ), boltInput( static_cast<size_t>( GetParam( ) ) ),
-                               stdOffsetIn( GetParam( ) ), boltOffsetIn( static_cast<size_t>( GetParam( ) ) )
+    StableSortDoubleDeviceVector( ): stdInput( GetParam( ) ) ,
+                               stdOffsetIn( GetParam( ) ) 
     {
         std::generate(stdInput.begin(), stdInput.end(), rand);
         //boltInput = stdInput;      
         //FIXME - The above should work but the below loop is used. 
         for (int i=0; i< GetParam( ); i++)
         {
-            boltInput[i] = stdInput[i];
-            boltOffsetIn[i] = stdInput[i];
+            //boltInput[i] = stdInput[i];
+            //boltOffsetIn[i] = stdInput[i];
             stdOffsetIn[i] = stdInput[i];
         }
     }
 
 protected:
     std::vector< double > stdInput, stdOffsetIn;
-    bolt::cl::device_vector< double > boltInput, boltOffsetIn;
+    //bolt::cl::device_vector< double > boltInput, boltOffsetIn;
 };
 #endif
 
@@ -892,23 +890,23 @@ class StableSortUDDDeviceVector: public ::testing::TestWithParam< int >
 {
 public:
     // Create an std and a bolt vector of requested size, and initialize all the elements to 1
-    StableSortUDDDeviceVector( ): stdInput( GetParam( ) ), boltInput( static_cast<size_t>( GetParam( ) ) ),
-                            stdOffsetIn( GetParam( ) ), boltOffsetIn( static_cast<size_t>( GetParam( ) ) )
+    StableSortUDDDeviceVector( ): stdInput( GetParam( ) ),
+                            stdOffsetIn( GetParam( ) )
     {
         std::generate(stdInput.begin(), stdInput.end(), rand);
         //boltInput = stdInput;      
         //FIXME - The above should work but the below loop is used. 
         for (int i=0; i< GetParam( ); i++)
         {
-            boltInput[i] = stdInput[i];
-            boltOffsetIn[i] = stdInput[i];
+            //boltInput[i] = stdInput[i];
+            //boltOffsetIn[i] = stdInput[i];
             stdOffsetIn[i] = stdInput[i];
         }
     }
 
 protected:
     std::vector< UDD > stdInput,stdOffsetIn;
-    bolt::cl::device_vector< UDD > boltInput,boltOffsetIn;
+    //bolt::cl::device_vector< UDD > boltInput,boltOffsetIn;
 };
 
 //  ::testing::TestWithParam< int > means that GetParam( ) returns int values, which i use for array size
@@ -1202,6 +1200,9 @@ TEST_P( StableSortDoubleVector, MulticoreInplace )
 #if (TEST_DEVICE_VECTOR == 1)
 TEST_P( StableSortIntegerDeviceVector, Inplace )
 {
+    bolt::cl::device_vector< int > boltInput(stdInput.begin( ), stdInput.end( ) );
+	bolt::cl::device_vector< int > boltOffsetIn (stdOffsetIn.begin( ), stdOffsetIn.end( ) );
+	 
     //  Calling the actual functions under test
     std::SORT_FUNC( stdInput.begin( ), stdInput.end( ) );
     bolt::BKND::SORT_FUNC( boltInput.begin( ), boltInput.end( ) );
@@ -1244,6 +1245,9 @@ TEST_P( StableSortIntegerDeviceVector, Inplace )
 
 TEST_P( StableSortIntegerDeviceVector, SerialInplace )
 {
+    bolt::cl::device_vector< int > boltInput(stdInput.begin( ), stdInput.end( ) );
+	bolt::cl::device_vector< int > boltOffsetIn (stdOffsetIn.begin( ), stdOffsetIn.end( ) );
+	
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -1289,6 +1293,9 @@ TEST_P( StableSortIntegerDeviceVector, SerialInplace )
 
 TEST_P( StableSortIntegerDeviceVector, MultiCoreInplace )
 {
+    bolt::cl::device_vector< int > boltInput(stdInput.begin( ), stdInput.end( ) );
+	bolt::cl::device_vector< int > boltOffsetIn (stdOffsetIn.begin( ), stdOffsetIn.end( ) );
+	
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
@@ -1334,6 +1341,9 @@ TEST_P( StableSortIntegerDeviceVector, MultiCoreInplace )
 
 TEST_P( StableSortUDDDeviceVector, Inplace )
 {
+    bolt::cl::device_vector< UDD > boltInput(stdInput.begin( ), stdInput.end( ) );
+	bolt::cl::device_vector< UDD > boltOffsetIn (stdOffsetIn.begin( ), stdOffsetIn.end( ) );
+	
     typedef std::vector< UDD >::value_type valtype;
     //  Calling the actual functions under test
     std::SORT_FUNC( stdInput.begin( ), stdInput.end( ) );
@@ -1377,6 +1387,9 @@ TEST_P( StableSortUDDDeviceVector, Inplace )
 
 TEST_P( StableSortUDDDeviceVector, SerialInplace )
 {
+    bolt::cl::device_vector< UDD > boltInput(stdInput.begin( ), stdInput.end( ) );
+	bolt::cl::device_vector< UDD > boltOffsetIn (stdOffsetIn.begin( ), stdOffsetIn.end( ) );
+	
     typedef std::vector< UDD >::value_type valtype;
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
@@ -1423,6 +1436,9 @@ TEST_P( StableSortUDDDeviceVector, SerialInplace )
 
 TEST_P( StableSortUDDDeviceVector, MultiCoreInplace )
 {
+    bolt::cl::device_vector< UDD > boltInput(stdInput.begin( ), stdInput.end( ) );
+	bolt::cl::device_vector< UDD > boltOffsetIn (stdOffsetIn.begin( ), stdOffsetIn.end( ) );
+	
     typedef std::vector< UDD >::value_type valtype;
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
@@ -1468,6 +1484,9 @@ TEST_P( StableSortUDDDeviceVector, MultiCoreInplace )
 
 TEST_P( StableSortFloatDeviceVector, Inplace )
 {
+    bolt::cl::device_vector< float > boltInput(stdInput.begin( ), stdInput.end( ) );
+	bolt::cl::device_vector< float > boltOffsetIn (stdOffsetIn.begin( ), stdOffsetIn.end( ) );
+	
     typedef std::vector< float >::value_type valtype;
     //  Calling the actual functions under test
     std::SORT_FUNC( stdInput.begin( ), stdInput.end( ) );
@@ -1511,6 +1530,9 @@ TEST_P( StableSortFloatDeviceVector, Inplace )
 
 TEST_P( StableSortFloatDeviceVector, SerialInplace )
 {
+    bolt::cl::device_vector< float > boltInput(stdInput.begin( ), stdInput.end( ) );
+	bolt::cl::device_vector< float > boltOffsetIn (stdOffsetIn.begin( ), stdOffsetIn.end( ) );
+	
     typedef std::vector< float >::value_type valtype;
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
@@ -1557,6 +1579,9 @@ TEST_P( StableSortFloatDeviceVector, SerialInplace )
 
 TEST_P( StableSortFloatDeviceVector, MultiCoreInplace )
 {
+    bolt::cl::device_vector< float > boltInput(stdInput.begin( ), stdInput.end( ) );
+	bolt::cl::device_vector< float > boltOffsetIn (stdOffsetIn.begin( ), stdOffsetIn.end( ) );
+	
     typedef std::vector< float >::value_type valtype;
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
@@ -1603,7 +1628,10 @@ TEST_P( StableSortFloatDeviceVector, MultiCoreInplace )
 #if (TEST_DOUBLE == 1)
 TEST_P( StableSortDoubleDeviceVector, Inplace )
 {
-    typedef std::vector< double >::value_type valtype;
+    bolt::cl::device_vector< double > boltInput(stdInput.begin( ), stdInput.end( ) );
+	bolt::cl::device_vector< double > boltOffsetIn (stdOffsetIn.begin( ), stdOffsetIn.end( ) );
+	
+	typedef std::vector< double >::value_type valtype;
     //  Calling the actual functions under test
     std::SORT_FUNC( stdInput.begin( ), stdInput.end( ) );
     bolt::BKND::SORT_FUNC( boltInput.begin( ), boltInput.end( ) );
@@ -1645,6 +1673,9 @@ TEST_P( StableSortDoubleDeviceVector, Inplace )
 
 TEST_P( StableSortDoubleDeviceVector, SerialInplace )
 {
+    bolt::cl::device_vector< double > boltInput(stdInput.begin( ), stdInput.end( ) );
+	bolt::cl::device_vector< double > boltOffsetIn (stdOffsetIn.begin( ), stdOffsetIn.end( ) );
+	 
     typedef std::vector< double >::value_type valtype;
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
@@ -1689,6 +1720,9 @@ TEST_P( StableSortDoubleDeviceVector, SerialInplace )
 
 TEST_P( StableSortDoubleDeviceVector, MulticoreInplace )
 {
+    bolt::cl::device_vector< double > boltInput(stdInput.begin( ), stdInput.end( ) );
+	bolt::cl::device_vector< double > boltOffsetIn (stdOffsetIn.begin( ), stdOffsetIn.end( ) );
+	 
     typedef std::vector< double >::value_type valtype;
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);

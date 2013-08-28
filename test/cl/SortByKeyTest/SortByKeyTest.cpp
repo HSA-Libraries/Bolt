@@ -1105,7 +1105,6 @@ TEST_P( StableSortbyKeyIntegerNakedPointer, SerialInplace )
 {
     size_t endIndex = GetParam( );
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -1124,8 +1123,7 @@ TEST_P( StableSortbyKeyIntegerNakedPointer, SerialInplace )
 TEST_P( StableSortbyKeyIntegerNakedPointer, MultiCoreInplace )
 {
     size_t endIndex = GetParam( );
-
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+	
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
@@ -1159,7 +1157,6 @@ TEST_P( StableSortbyKeyFloatNakedPointer, Inplace )
 
 TEST_P( StableSortbyKeyFloatNakedPointer, SerialInplace )
 {
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -1179,7 +1176,6 @@ TEST_P( StableSortbyKeyFloatNakedPointer, SerialInplace )
 
 TEST_P( StableSortbyKeyFloatNakedPointer, MultiCoreInplace )
 {
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
@@ -1217,7 +1213,6 @@ TEST_P( StableSortbyKeyDoubleNakedPointer, Inplace )
 
 TEST_P( StableSortbyKeyDoubleNakedPointer, SerialInplace )
 {
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -1236,7 +1231,6 @@ TEST_P( StableSortbyKeyDoubleNakedPointer, SerialInplace )
 
 TEST_P( StableSortbyKeyDoubleNakedPointer, MultiCoreInplace )
 {
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
