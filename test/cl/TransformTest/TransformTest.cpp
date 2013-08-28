@@ -15,7 +15,7 @@
 
 ***************************************************************************/                                                                                     
 
-#define TEST_DOUBLE 0
+#define TEST_DOUBLE 1
 #define TEST_DEVICE_VECTOR 1
 #define TEST_CPU_DEVICE 0
 #define GOOGLE_TEST 1
@@ -815,23 +815,23 @@ class TransformIntegerDeviceVector: public ::testing::TestWithParam< int >
 {
 public:
     // Create an std and a bolt vector of requested size, and initialize all the elements to 1
-    TransformIntegerDeviceVector( ): stdInput( GetParam( ) ), boltInput( GetParam( ) ),
-                                     stdOutput( GetParam( ) ), boltOutput( GetParam( ) )
+    TransformIntegerDeviceVector( ): stdInput( GetParam( ) ),
+                                     stdOutput( GetParam( ) )
     {
         std::generate(stdInput.begin(), stdInput.end(), rand);
         //boltInput = stdInput;      
         //FIXME - The above should work but the below loop is used. 
         for (int i=0; i< GetParam( ); i++)
         {
-            boltInput[i] = stdInput[i];
-            boltOutput[i] = stdInput[i];
+            //boltInput[i] = stdInput[i];
+            //boltOutput[i] = stdInput[i];
             stdOutput[i] = stdInput[i];
         }
     }
 
 protected:
     std::vector< int > stdInput, stdOutput;
-    bolt::cl::device_vector< int > boltInput, boltOutput;
+    //bolt::cl::device_vector< int > boltInput, boltOutput;
 };
 
 //  ::testing::TestWithParam< int > means that GetParam( ) returns int values, which i use for array size
@@ -839,23 +839,23 @@ class TransformFloatDeviceVector: public ::testing::TestWithParam< int >
 {
 public:
     // Create an std and a bolt vector of requested size, and initialize all the elements to 1
-    TransformFloatDeviceVector( ): stdInput( GetParam( ) ), boltInput( static_cast<size_t>( GetParam( ) ) ),
-                                   stdOutput( GetParam( ) ), boltOutput( GetParam( ) )
+    TransformFloatDeviceVector( ): stdInput( GetParam( ) ), 
+                                   stdOutput( GetParam( ) )
     {
         std::generate(stdInput.begin(), stdInput.end(), rand);
         //boltInput = stdInput;      
         //FIXME - The above should work but the below loop is used. 
         for (int i=0; i< GetParam( ); i++)
         {
-            boltInput[i] = stdInput[i];
-            boltOutput[i] = stdInput[i];
+            //boltInput[i] = stdInput[i];
+            //boltOutput[i] = stdInput[i];
             stdOutput[i] = stdInput[i];
         }
     }
 
 protected:
     std::vector< float > stdInput, stdOutput;
-    bolt::cl::device_vector< float > boltInput, boltOutput;
+    //bolt::cl::device_vector< float > boltInput, boltOutput;
 };
 
 #if (TEST_DOUBLE == 1)
@@ -864,22 +864,22 @@ class TransformDoubleDeviceVector: public ::testing::TestWithParam< int >
 {
 public:
     // Create an std and a bolt vector of requested size, and initialize all the elements to 1
-    TransformDoubleDeviceVector( ): stdInput( GetParam( ) ), boltInput( static_cast<size_t>( GetParam( ) ) )
+    TransformDoubleDeviceVector( ): stdInput( GetParam( ) )
     {
         std::generate(stdInput.begin(), stdInput.end(), rand);
         //boltInput = stdInput;      
         //FIXME - The above should work but the below loop is used. 
         for (int i=0; i< GetParam( ); i++)
         {
-            boltInput[i] = stdInput[i];
-            boltOutput[i] = stdInput[i];
+            //boltInput[i] = stdInput[i];
+            //boltOutput[i] = stdInput[i];
             stdOutput[i] = stdInput[i];
         }
     }
 
 protected:
     std::vector< double > stdInput, stdOutput;
-    bolt::cl::device_vector< double > boltInput, boltOutput;
+    //bolt::cl::device_vector< double > boltInput, boltOutput;
 };
 #endif
 
@@ -1228,6 +1228,10 @@ TEST_P( TransformDoubleVector, Inplace )
 #if (TEST_DEVICE_VECTOR == 1)
 TEST_P( TransformIntegerDeviceVector, Inplace )
 {
+    bolt::cl::device_vector< int > boltInput(stdInput.begin(), stdInput.end());
+	bolt::cl::device_vector< int > boltOutput(stdOutput.begin(), stdOutput.end());
+
+	
     //  Calling the actual functions under test
     std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), stdOutput.begin( ), bolt::cl::plus<int>());
     bolt::cl::transform( boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), boltOutput.begin( ), 
@@ -1259,6 +1263,9 @@ TEST_P( TransformIntegerDeviceVector, Inplace )
 
 TEST_P( TransformIntegerDeviceVector, Serial )
 {
+    bolt::cl::device_vector< int > boltInput(stdInput.begin(), stdInput.end());
+	bolt::cl::device_vector< int > boltOutput(stdOutput.begin(), stdOutput.end());
+	
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -1293,6 +1300,9 @@ TEST_P( TransformIntegerDeviceVector, Serial )
 
 TEST_P( TransformIntegerDeviceVector, MultiCoreCPU )
 {
+    bolt::cl::device_vector< int > boltInput(stdInput.begin(), stdInput.end());
+	bolt::cl::device_vector< int > boltOutput(stdOutput.begin(), stdOutput.end());
+	
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
@@ -1327,6 +1337,9 @@ TEST_P( TransformIntegerDeviceVector, MultiCoreCPU )
 
 TEST_P( TransformFloatDeviceVector, Inplace )
 {
+    bolt::cl::device_vector< float > boltInput(stdInput.begin(), stdInput.end());
+	bolt::cl::device_vector< float > boltOutput(stdOutput.begin(), stdOutput.end());
+	
     //  Calling the actual functions under test
     std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), stdOutput.begin(),bolt::cl::plus<float>());
     bolt::cl::transform( boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), boltOutput.begin( ), 
@@ -1358,6 +1371,9 @@ TEST_P( TransformFloatDeviceVector, Inplace )
 
 TEST_P( TransformFloatDeviceVector, Serial )
 {
+    bolt::cl::device_vector< float > boltInput(stdInput.begin(), stdInput.end());
+	bolt::cl::device_vector< float > boltOutput(stdOutput.begin(), stdOutput.end());
+	
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -1392,6 +1408,9 @@ TEST_P( TransformFloatDeviceVector, Serial )
 
 TEST_P( TransformFloatDeviceVector, MultiCoreCPU )
 {
+    bolt::cl::device_vector< float > boltInput(stdInput.begin(), stdInput.end());
+	bolt::cl::device_vector< float > boltOutput(stdOutput.begin(), stdOutput.end());
+	
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
@@ -1427,6 +1446,9 @@ TEST_P( TransformFloatDeviceVector, MultiCoreCPU )
 #if (TEST_DOUBLE == 1)
 TEST_P( TransformDoubleDeviceVector, Inplace )
 {
+    bolt::cl::device_vector< double > boltInput(stdInput.begin(), stdInput.end());
+	bolt::cl::device_vector< double > boltOutput(stdOutput.begin(), stdOutput.end());
+	
     //  Calling the actual functions under test
     std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ),stdOutput.begin(),bolt::cl::plus<double>());
     bolt::cl::transform( boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), boltOutput.begin( ),
@@ -2001,12 +2023,13 @@ TEST(cl_const_iter_transformBoltClVectFloat, addIterFloatValues){
     int size = 10;
     float myConstValueF = 1.125f;
     bolt::cl::plus<float> addKaro;
-    bolt::cl::device_vector<float> myDevVect(size);
+    std::vector<float> stdVect(size);
     
     for (int i = 0; i < size; i++){
-        myDevVect[i] = (float)i + 1.0f;
+        stdVect[i] = (float)i + 1.0f;
     }
-    
+    bolt::cl::device_vector<float> myDevVect(stdVect.begin(), stdVect.end());
+	
     for (int i = 0; i<size; ++i){
         std::cout.setf(std::ios::fixed);
         std::cout<<std::setprecision(3)<<myDevVect[i]<<" ";
@@ -2028,12 +2051,12 @@ TEST(cl_const_iter_transformBoltClVectFloat, SerialaddIterFloatValues){
     int size = 10;
     float myConstValueF = 1.125f;
     bolt::cl::plus<float> addKaro;
-    bolt::cl::device_vector<float> myDevVect(size);
+    std::vector<float> stdVect(size);
     
     for (int i = 0; i < size; i++){
-        myDevVect[i] = (float)i + 1.0f;
+        stdVect[i] = (float)i + 1.0f;
     }
-    
+    bolt::cl::device_vector<float> myDevVect(stdVect.begin(), stdVect.end());
     for (int i = 0; i<size; ++i){
         std::cout.setf(std::ios::fixed);
         std::cout<<std::setprecision(3)<<myDevVect[i]<<" ";
@@ -2058,12 +2081,12 @@ TEST(cl_const_iter_transformBoltClVectFloat, MultiCoreaddIterFloatValues){
     int size = 10;
     float myConstValueF = 1.125f;
     bolt::cl::plus<float> addKaro;
-    bolt::cl::device_vector<float> myDevVect(size);
-    
+    std::vector<float> stdVect(size);
+	
     for (int i = 0; i < size; i++){
-        myDevVect[i] = (float)i + 1.0f;
+        stdVect[i] = (float)i + 1.0f;
     }
-    
+    bolt::cl::device_vector<float> myDevVect(stdVect.begin(), stdVect.end());
     for (int i = 0; i<size; ++i){
         std::cout.setf(std::ios::fixed);
         std::cout<<std::setprecision(3)<<myDevVect[i]<<" ";

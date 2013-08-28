@@ -19,7 +19,7 @@
 //
 #define OCL_CONTEXT_BUG_WORKAROUND 1
 
-#define TEST_DOUBLE 0
+#define TEST_DOUBLE 1
 
 #include <iostream>
 #include <algorithm>  // for testing against STL functions.
@@ -40,16 +40,15 @@
 void testDeviceVector()
 {
     const int aSize = 1000;
-    std::vector<int> hA(aSize);
-    bolt::cl::device_vector<int> dA(aSize);
+    std::vector<int> hA(aSize);  
 
     for(int i=0; i<aSize; i++) {
         hA[i] = i;
-        dA[i] = i;
     };
-
+	
+    bolt::cl::device_vector<int> dA(hA.begin(), hA.end());
     std::vector<int>::iterator smindex = std::min_element(hA.begin(), hA.end());
-     bolt::cl::device_vector<int>::iterator bmindex = bolt::cl::min_element(dA.begin(), dA.end());
+    bolt::cl::device_vector<int>::iterator bmindex = bolt::cl::min_element(dA.begin(), dA.end());
     
 };
 
@@ -318,18 +317,18 @@ class MinEIntegerDeviceVector: public ::testing::TestWithParam< int >
 {
 public:
     // Create an std and a bolt vector of requested size, and initialize all the elements to 1
-    MinEIntegerDeviceVector( ): stdInput( GetParam( ) ), boltInput( static_cast<size_t>( GetParam( ) ) )
+    MinEIntegerDeviceVector( ): stdInput( GetParam( ) )
     {
         std::generate(stdInput.begin(), stdInput.end(), generateRandom<int>);
-        for (int i=0; i< GetParam( ); i++)
+        /*for (int i=0; i< GetParam( ); i++)
         {
             boltInput[i] = stdInput[i];
-        }
+        }*/
     }
 
 protected:
     std::vector< int > stdInput;
-    bolt::cl::device_vector< int > boltInput;
+    //bolt::cl::device_vector< int > boltInput;
 };
 
 //  ::testing::TestWithParam< int > means that GetParam( ) returns int values, which i use for array size
@@ -337,18 +336,18 @@ class MinEFloatDeviceVector: public ::testing::TestWithParam< int >
 {
 public:
     // Create an std and a bolt vector of requested size, and initialize all the elements to 1
-    MinEFloatDeviceVector( ): stdInput( GetParam( ) ), boltInput( GetParam( ) )
+    MinEFloatDeviceVector( ): stdInput( GetParam( ) )
     {
         std::generate(stdInput.begin(), stdInput.end(), generateRandom<float>);
-        for (int i=0; i< GetParam( ); i++)
+        /*for (int i=0; i< GetParam( ); i++)
         {
             boltInput[i] = stdInput[i];
-        }
+        }*/
     }
 
 protected:
     std::vector< float > stdInput;
-    bolt::cl::device_vector< float > boltInput;
+    //bolt::cl::device_vector< float > boltInput;
 };
 
 
@@ -469,13 +468,15 @@ TEST( MinEleDevice , DeviceVectoroffset )
 {
     //setup containers
     unsigned int length = 1024;
-    bolt::cl::device_vector< int > input( length );
+    std::vector< int > stdinput( length );
     for( unsigned int i = 0; i < length ; i++ )
     {
-      input[i] = i;
+      stdinput[i] = i;
 
     }
     
+	bolt::cl::device_vector< int > input( stdinput.begin(), stdinput.end() );
+	
     // call reduce
 
     bolt::cl::device_vector< int >::iterator  boltReduce =  bolt::cl::min_element( input.begin()+20, input.end());
@@ -575,13 +576,14 @@ TEST( MinEleDevice , DeviceVectorUintoffset )
 {
     //setup containers
     unsigned int length = 1024;
-    bolt::cl::device_vector< unsigned int > input( length );
+    std::vector< unsigned int > stdinput( length );
     for( unsigned int i = 0; i < length ; i++ )
     {
-      input[i] = i;
+      stdinput[i] = i;
 
     }
-
+    bolt::cl::device_vector< unsigned int > input( stdinput.begin(), stdinput.end() );
+	
     // call reduce
 
     bolt::cl::device_vector< unsigned int >::iterator  boltReduce =  bolt::cl::min_element( input.begin()+20, input.end());
@@ -771,7 +773,6 @@ TEST_P( MinEIntegerVector, Normal )
 TEST_P( MinEIntegerVector,CPU )
 {
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -794,7 +795,6 @@ TEST_P( MinEIntegerVector,CPU )
 TEST_P( MinEIntegerVector,MultiCore )
 {
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 

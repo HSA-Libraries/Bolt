@@ -229,14 +229,13 @@ gold_reduce_by_key( InputIterator1 keys_first,
 {
     int length = 1<<10;
     std::vector< int > keys(length);
-    bolt::cl::device_vector<int> device_keys(length);
+    
 
     int segmentLength = 0;
     int segmentIndex = 0;
     int key = 0;
     std::vector<int>  refInput( length );
-    bolt::cl::device_vector<int>  input( length );
-
+    
     for (int i = 0; i < length; i++)
     {
         // start over, i.e., begin assigning new key
@@ -247,13 +246,14 @@ gold_reduce_by_key( InputIterator1 keys_first,
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key;
         segmentIndex++;
 
         refInput[i] = i;
-        input[i] = refInput[i];
     }
 
+	bolt::cl::device_vector<int>  input( refInput.begin(), refInput.end() );
+	bolt::cl::device_vector<int> device_keys(keys.begin(), keys.end());
+	
     // input and output vectors for device and reference
 
     bolt::cl::device_vector<int>  koutput( length );
@@ -281,13 +281,13 @@ gold_reduce_by_key( InputIterator1 keys_first,
 {
     int length = 1<<10;
     std::vector< int > keys(length);
-    bolt::cl::device_vector<int> device_keys(length);
+
 
     int segmentLength = 0;
     int segmentIndex = 0;
     int key = 0;
     std::vector<int>  refInput( length );
-    bolt::cl::device_vector<int>  input( length );
+    
 
     for (int i = 0; i < length; i++)
     {
@@ -299,13 +299,14 @@ gold_reduce_by_key( InputIterator1 keys_first,
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key;
         segmentIndex++;
 
         refInput[i] = i;
-        input[i] = refInput[i];
     }
 
+    bolt::cl::device_vector<int>  input( refInput.begin(), refInput.end() );
+	bolt::cl::device_vector<int> device_keys(keys.begin(), keys.end());
+	
     // input and output vectors for device and reference
 
     bolt::cl::device_vector<int>  koutput( length );
@@ -338,13 +339,11 @@ gold_reduce_by_key( InputIterator1 keys_first,
 {
     int length = 1<<10;
     std::vector< int > keys(length);
-    bolt::cl::device_vector<int> device_keys(length);
 
     int segmentLength = 0;
     int segmentIndex = 0;
     int key = 0;
     std::vector<int>  refInput( length );
-    bolt::cl::device_vector<int>  input( length );
 
     for (int i = 0; i < length; i++)
     {
@@ -356,15 +355,16 @@ gold_reduce_by_key( InputIterator1 keys_first,
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key;
         segmentIndex++;
 
         refInput[i] = i;
-        input[i] = refInput[i];
     }
 
     // input and output vectors for device and reference
 
+    bolt::cl::device_vector<int>  input( refInput.begin(), refInput.end() );
+	bolt::cl::device_vector<int> device_keys(keys.begin(), keys.end());
+	
     bolt::cl::device_vector<int>  koutput( length );
     bolt::cl::device_vector<int>  voutput( length );
     std::vector<int>  krefOutput( length );
@@ -516,25 +516,28 @@ EXPECT_EQ ( eleValueOp_Expexted[i], valueBoltClDevVectOp[i]);
 TEST(reduce_by_key__bolt_Dev_vect, Basic_EPR377067){
 
 int size = 10;
-bolt::cl::device_vector<int> vectKeyIn(size);
-bolt::cl::device_vector<int> vectValueIn(size);
+std::vector<int> KeyIn(size);
+std::vector<int> ValueIn(size);
 bolt::cl::device_vector<int> keyBoltClDevVectOp(size);
 bolt::cl::device_vector<int> valueBoltClDevVectOp(size);
 
 for (int i = 0; i < std::ceil(size/3.0); i++){
-vectKeyIn[i] = (int)2;
+KeyIn[i] = (int)2;
 }
 for (int i = (int)(std::ceil(size/3.0) + 1); i < std::ceil((2* size)/3.0); i++){
-vectKeyIn[i] = (int)3;
+KeyIn[i] = (int)3;
 }
 for (int i = (int)(std::ceil((2* size)/3.0) + 1); i < size; i++){
-vectKeyIn[i] = (int)5;
+KeyIn[i] = (int)5;
 }
 //now elemetns in vectKeyIn are as: {2 2 2 2 0 3 3 0 5 5 }
 
 for (int i = 0; i < size; i++){
-vectValueIn[i] = (int) i; //elements in vectValueIn are as: {0 1 2 3 4 5 6 7 8 9}
+ValueIn[i] = (int) i; //elements in vectValueIn are as: {0 1 2 3 4 5 6 7 8 9}
 }
+
+bolt::cl::device_vector<int> vectKeyIn(KeyIn.begin(), KeyIn.end());
+bolt::cl::device_vector<int> vectValueIn(ValueIn.begin(), ValueIn.end());
 
 bolt::cl::equal_to<int> eq;
 bolt::cl::reduce_by_key(vectKeyIn.begin(), vectKeyIn.end(), vectValueIn.begin(), keyBoltClDevVectOp.begin(),
@@ -551,25 +554,28 @@ EXPECT_EQ ( eleValueOp_Expexted[i], valueBoltClDevVectOp[i]);
 TEST(reduce_by_key__bolt_Dev_vect, SerialBasic_EPR377067){
 
 int size = 10;
-bolt::cl::device_vector<int> vectKeyIn(size);
-bolt::cl::device_vector<int> vectValueIn(size);
+std::vector<int> KeyIn(size);
+std::vector<int> ValueIn(size);
 bolt::cl::device_vector<int> keyBoltClDevVectOp(size);
 bolt::cl::device_vector<int> valueBoltClDevVectOp(size);
 
 for (int i = 0; i < std::ceil(size/3.0); i++){
-vectKeyIn[i] = (int)2;
+KeyIn[i] = (int)2;
 }
 for (int i = (int)(std::ceil(size/3.0) + 1); i < std::ceil((2* size)/3.0); i++){
-vectKeyIn[i] = (int)3;
+KeyIn[i] = (int)3;
 }
 for (int i = (int)(std::ceil((2* size)/3.0) + 1); i < size; i++){
-vectKeyIn[i] = (int)5;
+KeyIn[i] = (int)5;
 }
 //now elemetns in vectKeyIn are as: {2 2 2 2 0 3 3 0 5 5 }
 
 for (int i = 0; i < size; i++){
-vectValueIn[i] = (int) i; //elements in vectValueIn are as: {0 1 2 3 4 5 6 7 8 9}
+ValueIn[i] = (int) i; //elements in vectValueIn are as: {0 1 2 3 4 5 6 7 8 9}
 }
+
+bolt::cl::device_vector<int> vectKeyIn(KeyIn.begin(), KeyIn.end());
+bolt::cl::device_vector<int> vectValueIn(ValueIn.begin(), ValueIn.end());
 
 bolt::cl::control ctl = bolt::cl::control::getDefault( );
 ctl.setForceRunMode(bolt::cl::control::SerialCpu);
@@ -589,25 +595,28 @@ EXPECT_EQ ( eleValueOp_Expexted[i], valueBoltClDevVectOp[i]);
 TEST(reduce_by_key__bolt_Dev_vect, MulticoreBasic_EPR377067){
 
 int size = 10;
-bolt::cl::device_vector<int> vectKeyIn(size);
-bolt::cl::device_vector<int> vectValueIn(size);
+std::vector<int> KeyIn(size);
+std::vector<int> ValueIn(size);
 bolt::cl::device_vector<int> keyBoltClDevVectOp(size);
 bolt::cl::device_vector<int> valueBoltClDevVectOp(size);
 
 for (int i = 0; i < std::ceil(size/3.0); i++){
-vectKeyIn[i] = (int)2;
+KeyIn[i] = (int)2;
 }
 for (int i = (int)(std::ceil(size/3.0) + 1); i < std::ceil((2* size)/3.0); i++){
-vectKeyIn[i] = (int)3;
+KeyIn[i] = (int)3;
 }
 for (int i = (int)(std::ceil((2* size)/3.0) + 1); i < size; i++){
-vectKeyIn[i] = (int)5;
+KeyIn[i] = (int)5;
 }
 //now elemetns in vectKeyIn are as: {2 2 2 2 0 3 3 0 5 5 }
 
 for (int i = 0; i < size; i++){
-vectValueIn[i] = (int) i; //elements in vectValueIn are as: {0 1 2 3 4 5 6 7 8 9}
+ValueIn[i] = (int) i; //elements in vectValueIn are as: {0 1 2 3 4 5 6 7 8 9}
 }
+
+bolt::cl::device_vector<int> vectKeyIn(KeyIn.begin(), KeyIn.end());
+bolt::cl::device_vector<int> vectValueIn(ValueIn.begin(), ValueIn.end());
 
 bolt::cl::control ctl = bolt::cl::control::getDefault( );
 ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);

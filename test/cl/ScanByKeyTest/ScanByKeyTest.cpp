@@ -462,7 +462,6 @@ public:
 TEST_P (ScanByKeyCLtypeTest, InclTestLong)
 {
     std::vector< int > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< int > device_keys( myStdVectSize, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -477,9 +476,11 @@ TEST_P (ScanByKeyCLtypeTest, InclTestLong)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key ;
         segmentIndex++;
     }
+	
+	bolt::cl::device_vector< int > device_keys( keys.begin(), keys.end());
+	
     // input and output vectors for device and reference
     bolt::cl::device_vector< cl_long > input(  myStdVectSize, 2 );
     bolt::cl::device_vector< cl_long > output( myStdVectSize, 0 );
@@ -498,7 +499,6 @@ TEST_P (ScanByKeyCLtypeTest, InclTestLong)
 TEST_P (ScanByKeyCLtypeTest, SerialInclTestLong)
 {
     std::vector< int > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< int > device_keys( myStdVectSize, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -513,10 +513,11 @@ TEST_P (ScanByKeyCLtypeTest, SerialInclTestLong)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key ;
         segmentIndex++;
     }
     
+	bolt::cl::device_vector< int > device_keys( keys.begin(), keys.end());
+	
     // input and output vectors for device and reference
     bolt::cl::device_vector< cl_long > input(  myStdVectSize, 2 );
     bolt::cl::device_vector< cl_long > output( myStdVectSize, 0 );
@@ -538,7 +539,6 @@ TEST_P (ScanByKeyCLtypeTest, SerialInclTestLong)
 TEST_P (ScanByKeyCLtypeTest, MulticoreInclTestLong)
 { 
     std::vector< int > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< int > device_keys( myStdVectSize, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -553,10 +553,10 @@ TEST_P (ScanByKeyCLtypeTest, MulticoreInclTestLong)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key ;
         segmentIndex++;
     }
-    
+    bolt::cl::device_vector< int > device_keys( keys.begin(), keys.end());
+	
     // input and output vectors for device and reference
     bolt::cl::device_vector< cl_long > input(  myStdVectSize, 2 );
     bolt::cl::device_vector< cl_long > output( myStdVectSize, 0 );
@@ -579,7 +579,6 @@ TEST_P (ScanByKeyCLtypeTest, MulticoreInclTestLong)
 TEST_P (ScanByKeyCLtypeTest, InclTestULong)
 {
     std::vector< int > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< int > device_keys( myStdVectSize, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -594,9 +593,10 @@ TEST_P (ScanByKeyCLtypeTest, InclTestULong)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key ;
         segmentIndex++;
     }
+	bolt::cl::device_vector< int > device_keys( keys.begin(), keys.end());
+	
     // input and output vectors for device and reference
     bolt::cl::device_vector< cl_ulong > input(  myStdVectSize, 2 );
     bolt::cl::device_vector< cl_ulong > output( myStdVectSize, 0 );
@@ -616,7 +616,6 @@ TEST_P (ScanByKeyCLtypeTest, InclTestULong)
 TEST_P (ScanByKeyCLtypeTest, MulticoreInclTestULong)
 { 
     std::vector< int > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< int > device_keys( myStdVectSize, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -631,10 +630,9 @@ TEST_P (ScanByKeyCLtypeTest, MulticoreInclTestULong)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key ;
         segmentIndex++;
     }
-    
+    bolt::cl::device_vector< int > device_keys( keys.begin(), keys.end());
     // input and output vectors for device and reference
     bolt::cl::device_vector< cl_ulong > input(  myStdVectSize, 2 );
     bolt::cl::device_vector< cl_ulong > output( myStdVectSize, 0 );
@@ -657,7 +655,6 @@ TEST_P (ScanByKeyCLtypeTest, MulticoreInclTestULong)
 TEST_P (ScanByKeyCLtypeTest, ExclTestLong)
 {
     std::vector< int > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< int > device_keys( myStdVectSize, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -672,9 +669,10 @@ TEST_P (ScanByKeyCLtypeTest, ExclTestLong)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key ;
         segmentIndex++;
     }
+	bolt::cl::device_vector< int > device_keys( keys.begin(), keys.end());
+	
     // input and output vectors for device and reference
     bolt::cl::device_vector< cl_long > input(  myStdVectSize, 2 );
     bolt::cl::device_vector< cl_long > output( myStdVectSize, 0 );
@@ -693,7 +691,6 @@ TEST_P (ScanByKeyCLtypeTest, ExclTestLong)
 TEST_P (ScanByKeyCLtypeTest, SerialExclTestLong)
 {
     std::vector< int > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< int > device_keys( myStdVectSize, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -708,10 +705,9 @@ TEST_P (ScanByKeyCLtypeTest, SerialExclTestLong)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key ;
         segmentIndex++;
     }
-    
+    bolt::cl::device_vector< int > device_keys( keys.begin(), keys.end());
     // input and output vectors for device and reference
     bolt::cl::device_vector< cl_long > input(  myStdVectSize, 2 );
     bolt::cl::device_vector< cl_long > output( myStdVectSize, 0 );
@@ -733,7 +729,6 @@ TEST_P (ScanByKeyCLtypeTest, SerialExclTestLong)
 TEST_P (ScanByKeyCLtypeTest, MulticoreExclTestLong)
 { 
     std::vector< int > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< int > device_keys( myStdVectSize, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -748,10 +743,9 @@ TEST_P (ScanByKeyCLtypeTest, MulticoreExclTestLong)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key ;
         segmentIndex++;
     }
-    
+    bolt::cl::device_vector< int > device_keys( keys.begin(), keys.end());
     // input and output vectors for device and reference
     bolt::cl::device_vector< cl_long > input(  myStdVectSize, 2 );
     bolt::cl::device_vector< cl_long > output( myStdVectSize, 0 );
@@ -774,7 +768,6 @@ TEST_P (ScanByKeyCLtypeTest, MulticoreExclTestLong)
 TEST_P (ScanByKeyCLtypeTest, ExclTestULong)
 {
     std::vector< int > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< int > device_keys( myStdVectSize, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -789,9 +782,10 @@ TEST_P (ScanByKeyCLtypeTest, ExclTestULong)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key ;
         segmentIndex++;
     }
+	bolt::cl::device_vector< int > device_keys( keys.begin(), keys.end());
+	
     // input and output vectors for device and reference
     bolt::cl::device_vector< cl_ulong > input(  myStdVectSize, 2 );
     bolt::cl::device_vector< cl_ulong > output( myStdVectSize, 0 );
@@ -810,7 +804,6 @@ TEST_P (ScanByKeyCLtypeTest, ExclTestULong)
 TEST_P (ScanByKeyCLtypeTest, SerialExclTestULong)
 {
     std::vector< int > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< int > device_keys( myStdVectSize, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -825,10 +818,10 @@ TEST_P (ScanByKeyCLtypeTest, SerialExclTestULong)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key ;
         segmentIndex++;
     }
-    
+    bolt::cl::device_vector< int > device_keys( keys.begin(), keys.end());
+	
     // input and output vectors for device and reference
     bolt::cl::device_vector< cl_ulong > input(  myStdVectSize, 2 );
     bolt::cl::device_vector< cl_ulong > output( myStdVectSize, 0 );
@@ -850,7 +843,6 @@ TEST_P (ScanByKeyCLtypeTest, SerialExclTestULong)
 TEST_P (ScanByKeyCLtypeTest, MulticoreExclTestULong)
 { 
     std::vector< int > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< int > device_keys( myStdVectSize, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -865,10 +857,9 @@ TEST_P (ScanByKeyCLtypeTest, MulticoreExclTestULong)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key ;
         segmentIndex++;
     }
-    
+    bolt::cl::device_vector< int > device_keys( keys.begin(), keys.end());
     // input and output vectors for device and reference
     bolt::cl::device_vector< cl_ulong > input(  myStdVectSize, 2 );
     bolt::cl::device_vector< cl_ulong > output( myStdVectSize, 0 );
@@ -891,7 +882,6 @@ TEST_P (ScanByKeyCLtypeTest, MulticoreExclTestULong)
 TEST_P (ScanByKeyCLtypeTest, InclTestShort)
 {
     std::vector< int > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< int > device_keys( myStdVectSize, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -906,9 +896,10 @@ TEST_P (ScanByKeyCLtypeTest, InclTestShort)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key ;
         segmentIndex++;
     }
+	bolt::cl::device_vector< int > device_keys( keys.begin(), keys.end());
+	
     // input and output vectors for device and reference
     bolt::cl::device_vector< cl_short > input(  myStdVectSize, 2 );
     bolt::cl::device_vector< cl_short > output( myStdVectSize, 0 );
@@ -927,7 +918,6 @@ TEST_P (ScanByKeyCLtypeTest, InclTestShort)
 TEST_P (ScanByKeyCLtypeTest, SerialInclTestShort)
 {
     std::vector< int > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< int > device_keys( myStdVectSize, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -942,10 +932,10 @@ TEST_P (ScanByKeyCLtypeTest, SerialInclTestShort)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key ;
         segmentIndex++;
     }
-    
+    bolt::cl::device_vector< int > device_keys( keys.begin(), keys.end());
+	
     // input and output vectors for device and reference
     bolt::cl::device_vector< cl_short > input(  myStdVectSize, 2 );
     bolt::cl::device_vector< cl_short > output( myStdVectSize, 0 );
@@ -967,7 +957,6 @@ TEST_P (ScanByKeyCLtypeTest, SerialInclTestShort)
 TEST_P (ScanByKeyCLtypeTest, MulticoreInclTestShort)
 { 
     std::vector< int > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< int > device_keys( myStdVectSize, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -982,10 +971,10 @@ TEST_P (ScanByKeyCLtypeTest, MulticoreInclTestShort)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key ;
         segmentIndex++;
     }
-    
+    bolt::cl::device_vector< int > device_keys( keys.begin(), keys.end());
+	
     // input and output vectors for device and reference
     bolt::cl::device_vector< cl_short > input(  myStdVectSize, 2 );
     bolt::cl::device_vector< cl_short > output( myStdVectSize, 0 );
@@ -1008,7 +997,6 @@ TEST_P (ScanByKeyCLtypeTest, MulticoreInclTestShort)
 TEST_P (ScanByKeyCLtypeTest, InclTestUShort)
 {
     std::vector< int > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< int > device_keys( myStdVectSize, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -1023,9 +1011,10 @@ TEST_P (ScanByKeyCLtypeTest, InclTestUShort)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key ;
         segmentIndex++;
     }
+	bolt::cl::device_vector< int > device_keys( keys.begin(), keys.end());
+	
     // input and output vectors for device and reference
     bolt::cl::device_vector< cl_ushort > input(  myStdVectSize, 2 );
     bolt::cl::device_vector< cl_ushort > output( myStdVectSize, 0 );
@@ -1045,7 +1034,6 @@ TEST_P (ScanByKeyCLtypeTest, InclTestUShort)
 TEST_P (ScanByKeyCLtypeTest, MulticoreInclTestUShort)
 { 
     std::vector< int > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< int > device_keys( myStdVectSize, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -1060,10 +1048,9 @@ TEST_P (ScanByKeyCLtypeTest, MulticoreInclTestUShort)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key ;
         segmentIndex++;
     }
-    
+    bolt::cl::device_vector< int > device_keys( keys.begin(), keys.end());
     // input and output vectors for device and reference
     bolt::cl::device_vector< cl_ushort > input(  myStdVectSize, 2 );
     bolt::cl::device_vector< cl_ushort > output( myStdVectSize, 0 );
@@ -1086,7 +1073,6 @@ TEST_P (ScanByKeyCLtypeTest, MulticoreInclTestUShort)
 TEST_P (ScanByKeyCLtypeTest, ExclTestShort)
 {
     std::vector< int > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< int > device_keys( myStdVectSize, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -1101,9 +1087,10 @@ TEST_P (ScanByKeyCLtypeTest, ExclTestShort)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key ;
         segmentIndex++;
     }
+	bolt::cl::device_vector< int > device_keys( keys.begin(), keys.end());
+	
     // input and output vectors for device and reference
     bolt::cl::device_vector< cl_short > input(  myStdVectSize, 2 );
     bolt::cl::device_vector< cl_short > output( myStdVectSize, 0 );
@@ -1122,7 +1109,6 @@ TEST_P (ScanByKeyCLtypeTest, ExclTestShort)
 TEST_P (ScanByKeyCLtypeTest, SerialExclTestShort)
 {
     std::vector< int > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< int > device_keys( myStdVectSize, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -1137,10 +1123,10 @@ TEST_P (ScanByKeyCLtypeTest, SerialExclTestShort)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key ;
         segmentIndex++;
     }
-    
+    bolt::cl::device_vector< int > device_keys( keys.begin(), keys.end());
+	
     // input and output vectors for device and reference
     bolt::cl::device_vector< cl_long > input(  myStdVectSize, 2 );
     bolt::cl::device_vector< cl_long > output( myStdVectSize, 0 );
@@ -1162,7 +1148,6 @@ TEST_P (ScanByKeyCLtypeTest, SerialExclTestShort)
 TEST_P (ScanByKeyCLtypeTest, MulticoreExclTestShort)
 { 
     std::vector< int > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< int > device_keys( myStdVectSize, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -1177,10 +1162,10 @@ TEST_P (ScanByKeyCLtypeTest, MulticoreExclTestShort)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key ;
         segmentIndex++;
     }
-    
+    bolt::cl::device_vector< int > device_keys( keys.begin(), keys.end());
+	
     // input and output vectors for device and reference
     bolt::cl::device_vector< cl_long > input(  myStdVectSize, 2 );
     bolt::cl::device_vector< cl_long > output( myStdVectSize, 0 );
@@ -1203,7 +1188,6 @@ TEST_P (ScanByKeyCLtypeTest, MulticoreExclTestShort)
 TEST_P (ScanByKeyCLtypeTest, ExclTestUShort)
 {
     std::vector< int > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< int > device_keys( myStdVectSize, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -1218,9 +1202,10 @@ TEST_P (ScanByKeyCLtypeTest, ExclTestUShort)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key ;
         segmentIndex++;
     }
+	bolt::cl::device_vector< int > device_keys( keys.begin(), keys.end());
+	
     // input and output vectors for device and reference
     bolt::cl::device_vector< cl_ushort > input(  myStdVectSize, 2 );
     bolt::cl::device_vector< cl_ushort > output( myStdVectSize, 0 );
@@ -1239,7 +1224,6 @@ TEST_P (ScanByKeyCLtypeTest, ExclTestUShort)
 TEST_P (ScanByKeyCLtypeTest, SerialExclTestUShort)
 {
     std::vector< int > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< int > device_keys( myStdVectSize, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -1254,10 +1238,10 @@ TEST_P (ScanByKeyCLtypeTest, SerialExclTestUShort)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key ;
         segmentIndex++;
     }
-    
+    bolt::cl::device_vector< int > device_keys( keys.begin(), keys.end());
+	
     // input and output vectors for device and reference
     bolt::cl::device_vector< cl_ushort > input(  myStdVectSize, 2 );
     bolt::cl::device_vector< cl_ushort > output( myStdVectSize, 0 );
@@ -1279,7 +1263,6 @@ TEST_P (ScanByKeyCLtypeTest, SerialExclTestUShort)
 TEST_P (ScanByKeyCLtypeTest, MulticoreExclTestUShort)
 { 
     std::vector< int > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< int > device_keys( myStdVectSize, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -1294,10 +1277,10 @@ TEST_P (ScanByKeyCLtypeTest, MulticoreExclTestUShort)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key ;
         segmentIndex++;
     }
-    
+    bolt::cl::device_vector< int > device_keys( keys.begin(), keys.end());
+	
     // input and output vectors for device and reference
     bolt::cl::device_vector< cl_ushort > input(  myStdVectSize, 2 );
     bolt::cl::device_vector< cl_ushort > output( myStdVectSize, 0 );
@@ -1322,7 +1305,6 @@ TEST_P (ScanByKeyCLtypeTest, MulticoreExclTestUShort)
 TEST_P (ScanByKeyOffsetTest, InclOffsetTestInt)
 {
     std::vector< int > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< int > device_keys( myStdVectSize, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -1337,10 +1319,10 @@ TEST_P (ScanByKeyOffsetTest, InclOffsetTestInt)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key ;
         segmentIndex++;
     }
-    
+    bolt::cl::device_vector< int > device_keys( keys.begin(), keys.end());
+	
     // input and output vectors for device and reference
     bolt::cl::device_vector< int > input(  myStdVectSize, 2 );
     bolt::cl::device_vector< int > output( myStdVectSize, 0 );
@@ -1361,7 +1343,7 @@ TEST_P (ScanByKeyOffsetTest, InclOffsetTestInt)
 TEST_P (ScanByKeyOffsetTest, SerialInclOffsetTestInt)
 {        
     std::vector< int > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< int > device_keys( myStdVectSize, 1);
+
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -1376,10 +1358,10 @@ TEST_P (ScanByKeyOffsetTest, SerialInclOffsetTestInt)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key ;
         segmentIndex++;
     }
-    
+    bolt::cl::device_vector< int > device_keys( keys.begin(), keys.end());
+	
     // input and output vectors for device and reference
     bolt::cl::device_vector< int > input(  myStdVectSize, 2 );
     bolt::cl::device_vector< int > output( myStdVectSize, 0 );
@@ -1402,7 +1384,6 @@ TEST_P (ScanByKeyOffsetTest, SerialInclOffsetTestInt)
 TEST_P (ScanByKeyOffsetTest, MulticoreInclOffsetTestInt)
 {          
     std::vector< int > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< int > device_keys( myStdVectSize, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -1417,10 +1398,10 @@ TEST_P (ScanByKeyOffsetTest, MulticoreInclOffsetTestInt)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key ;
         segmentIndex++;
     }
-    
+    bolt::cl::device_vector< int > device_keys( keys.begin(), keys.end());
+	
     // input and output vectors for device and reference
     bolt::cl::device_vector< int > input(  myStdVectSize, 2 );
     bolt::cl::device_vector< int > output( myStdVectSize, 0 );
@@ -1448,7 +1429,6 @@ TEST_P (ScanByKeyOffsetTest, SerialExclOffsetTestInt)
     //std::vector< float > refInput( myStdVectSize, 2.f);
               
     std::vector< int > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< int > device_keys( myStdVectSize, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -1463,10 +1443,10 @@ TEST_P (ScanByKeyOffsetTest, SerialExclOffsetTestInt)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key ;
         segmentIndex++;
     }
-    
+    bolt::cl::device_vector< int > device_keys( keys.begin(), keys.end());
+	
     // input and output vectors for device and reference
     bolt::cl::device_vector< int > input(  myStdVectSize, 2 );
     bolt::cl::device_vector< int > output( myStdVectSize, 0 );
@@ -1492,7 +1472,6 @@ TEST_P (ScanByKeyOffsetTest, MulticoreExclOffsetTestInt)
     //std::vector< float > refInput( myStdVectSize, 2.f);
               
     std::vector< int > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< int > device_keys( myStdVectSize, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -1507,10 +1486,11 @@ TEST_P (ScanByKeyOffsetTest, MulticoreExclOffsetTestInt)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key ;
         segmentIndex++;
     }
     
+	bolt::cl::device_vector< int > device_keys( keys.begin(), keys.end());
+	
     // input and output vectors for device and reference
     bolt::cl::device_vector< int > input(  myStdVectSize, 2 );
     bolt::cl::device_vector< int > output( myStdVectSize, 0 );
@@ -1533,7 +1513,6 @@ TEST_P (ScanByKeyOffsetTest, MulticoreExclOffsetTestInt)
 TEST_P (ScanByKeyOffsetTest, SerialInclOffsetTestFloat)
 {        
     std::vector< float > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< float > device_keys( myStdVectSize, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -1548,10 +1527,11 @@ TEST_P (ScanByKeyOffsetTest, SerialInclOffsetTestFloat)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key ;
         segmentIndex++;
     }
     
+	bolt::cl::device_vector< float > device_keys( keys.begin(), keys.end());
+	
     // input and output vectors for device and reference
     bolt::cl::device_vector< float > input(  myStdVectSize, 2 );
     bolt::cl::device_vector< float > output( myStdVectSize, 0 );
@@ -1574,7 +1554,6 @@ TEST_P (ScanByKeyOffsetTest, SerialInclOffsetTestFloat)
 TEST_P (ScanByKeyOffsetTest, MulticoreInclOffsetTestFloat)
 {          
     std::vector< float > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< float > device_keys( myStdVectSize, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -1589,10 +1568,11 @@ TEST_P (ScanByKeyOffsetTest, MulticoreInclOffsetTestFloat)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key ;
         segmentIndex++;
     }
     
+	bolt::cl::device_vector< float > device_keys( keys.begin(), keys.end());
+	
     // input and output vectors for device and reference
     bolt::cl::device_vector< float > input(  myStdVectSize, 2 );
     bolt::cl::device_vector< float > output( myStdVectSize, 0 );
@@ -1618,7 +1598,6 @@ TEST_P (ScanByKeyOffsetTest, SerialExclOffsetTestFloat)
     //std::vector< float > refInput( myStdVectSize, 2.f);
               
     std::vector< float > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< float > device_keys( myStdVectSize, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -1633,10 +1612,11 @@ TEST_P (ScanByKeyOffsetTest, SerialExclOffsetTestFloat)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key ;
         segmentIndex++;
     }
     
+	bolt::cl::device_vector< float > device_keys( keys.begin(), keys.end());
+	
     // input and output vectors for device and reference
     bolt::cl::device_vector< float > input(  myStdVectSize, 2 );
     bolt::cl::device_vector< float > output( myStdVectSize, 0 );
@@ -1662,7 +1642,6 @@ TEST_P (ScanByKeyOffsetTest, MulticoreExclOffsetTestFloat)
     //std::vector< float > refInput( myStdVectSize, 2.f);
               
     std::vector< float > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< float > device_keys( myStdVectSize, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -1677,10 +1656,10 @@ TEST_P (ScanByKeyOffsetTest, MulticoreExclOffsetTestFloat)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key ;
         segmentIndex++;
     }
-    
+    bolt::cl::device_vector< float > device_keys( keys.begin(), keys.end());
+	
     // input and output vectors for device and reference
     bolt::cl::device_vector< float > input(  myStdVectSize, 2 );
     bolt::cl::device_vector< float > output( myStdVectSize, 0 );
@@ -1708,7 +1687,6 @@ TEST_P (ScanByKeyOffsetTest, ExclOffsetTestInt)
     //std::vector< float > refInput( myStdVectSize, 2.f);
               
     std::vector< int > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< int > device_keys( myStdVectSize, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -1723,10 +1701,11 @@ TEST_P (ScanByKeyOffsetTest, ExclOffsetTestInt)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key ;
         segmentIndex++;
     }
     
+	bolt::cl::device_vector< int > device_keys( keys.begin(), keys.end());
+	
     // input and output vectors for device and reference
     bolt::cl::device_vector< int > input(  myStdVectSize, 2 );
     bolt::cl::device_vector< int > output( myStdVectSize, 0 );
@@ -1746,7 +1725,6 @@ TEST_P (ScanByKeyOffsetTest, ExclOffsetTestInt)
 TEST_P (ScanByKeyOffsetTest, InclOffsetTestFloat)
 {
     std::vector< float > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< float > device_keys( myStdVectSize, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -1761,10 +1739,11 @@ TEST_P (ScanByKeyOffsetTest, InclOffsetTestFloat)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key ;
         segmentIndex++;
     }
     
+	bolt::cl::device_vector< float > device_keys( keys.begin(), keys.end());
+	
     // input and output vectors for device and reference
     bolt::cl::device_vector< float > input(  myStdVectSize, 2 );
     bolt::cl::device_vector< float > output( myStdVectSize, 0 );
@@ -1787,7 +1766,6 @@ TEST_P (ScanByKeyOffsetTest, ExclOffsetTestFloat)
     //std::vector< float > refInput( myStdVectSize, 2.f);
               
     std::vector< float > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< float > device_keys( myStdVectSize, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -1802,10 +1780,10 @@ TEST_P (ScanByKeyOffsetTest, ExclOffsetTestFloat)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key ;
         segmentIndex++;
     }
-    
+    bolt::cl::device_vector< float > device_keys( keys.begin(), keys.end());
+	
     // input and output vectors for device and reference
     bolt::cl::device_vector< float > input(  myStdVectSize, 2 );
     bolt::cl::device_vector< float > output( myStdVectSize, 0 );
@@ -1827,7 +1805,6 @@ TEST_P (ScanByKeyOffsetTest, ExclOffsetTestFloat)
 TEST_P (ScanByKeyOffsetTest, SerialInclOffsetTestDouble)
 {        
     std::vector< double > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< double > device_keys( myStdVectSize, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -1842,10 +1819,10 @@ TEST_P (ScanByKeyOffsetTest, SerialInclOffsetTestDouble)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key ;
         segmentIndex++;
     }
-    
+    bolt::cl::device_vector< double  > device_keys( keys.begin(), keys.end());
+	
     // input and output vectors for device and reference
     bolt::cl::device_vector< double > input(  myStdVectSize, 2 );
     bolt::cl::device_vector< double > output( myStdVectSize, 0 );
@@ -1868,7 +1845,6 @@ TEST_P (ScanByKeyOffsetTest, SerialInclOffsetTestDouble)
 TEST_P (ScanByKeyOffsetTest, MulticoreInclOffsetTestDouble)
 {          
     std::vector< double > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< double > device_keys( myStdVectSize, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -1883,10 +1859,10 @@ TEST_P (ScanByKeyOffsetTest, MulticoreInclOffsetTestDouble)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key ;
         segmentIndex++;
     }
-    
+    bolt::cl::device_vector< double  > device_keys( keys.begin(), keys.end());
+	
     // input and output vectors for device and reference
     bolt::cl::device_vector< double > input(  myStdVectSize, 2 );
     bolt::cl::device_vector< double > output( myStdVectSize, 0 );
@@ -1913,7 +1889,6 @@ TEST_P (ScanByKeyOffsetTest, SerialExclOffsetTestDouble)
     //std::vector< float > refInput( myStdVectSize, 2.f);
               
     std::vector< double > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< double > device_keys( myStdVectSize, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -1928,10 +1903,10 @@ TEST_P (ScanByKeyOffsetTest, SerialExclOffsetTestDouble)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key ;
         segmentIndex++;
     }
-    
+    bolt::cl::device_vector< double > device_keys( keys.begin(), keys.end());
+	
     // input and output vectors for device and reference
     bolt::cl::device_vector< double > input(  myStdVectSize, 2 );
     bolt::cl::device_vector< double > output( myStdVectSize, 0 );
@@ -1957,7 +1932,6 @@ TEST_P (ScanByKeyOffsetTest, MulticoreExclOffsetTestDouble)
     //std::vector< float > refInput( myStdVectSize, 2.f);
               
     std::vector< double > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< double > device_keys( myStdVectSize, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -1972,10 +1946,11 @@ TEST_P (ScanByKeyOffsetTest, MulticoreExclOffsetTestDouble)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key ;
         segmentIndex++;
     }
     
+	bolt::cl::device_vector<double > device_keys( keys.begin(), keys.end());
+	
     // input and output vectors for device and reference
     bolt::cl::device_vector< double > input(  myStdVectSize, 2 );
     bolt::cl::device_vector< double > output( myStdVectSize, 0 );
@@ -2000,7 +1975,6 @@ TEST_P (ScanByKeyOffsetTest, MulticoreExclOffsetTestDouble)
 TEST_P (ScanByKeyOffsetTest, InclOffsetTestDouble)
 {
     std::vector< double > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< double > device_keys( myStdVectSize, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -2015,10 +1989,11 @@ TEST_P (ScanByKeyOffsetTest, InclOffsetTestDouble)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key ;
         segmentIndex++;
     }
     
+	bolt::cl::device_vector<double > device_keys( keys.begin(), keys.end());
+		
     // input and output vectors for device and reference
     bolt::cl::device_vector< double > input(  myStdVectSize, 2 );
     bolt::cl::device_vector< double > output( myStdVectSize, 0 );
@@ -2042,7 +2017,6 @@ TEST_P (ScanByKeyOffsetTest, ExclOffsetTestDouble)
     //std::vector< float > refInput( myStdVectSize, 2.f);
               
     std::vector< double > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< double > device_keys( myStdVectSize, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -2057,10 +2031,10 @@ TEST_P (ScanByKeyOffsetTest, ExclOffsetTestDouble)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key ;
         segmentIndex++;
     }
-    
+    bolt::cl::device_vector<double > device_keys( keys.begin(), keys.end());
+		
     // input and output vectors for device and reference
     bolt::cl::device_vector< double > input(  myStdVectSize, 2 );
     bolt::cl::device_vector< double > output( myStdVectSize, 0 );
@@ -2083,7 +2057,6 @@ TEST_P (ScanByKeyOffsetTest, ExclOffsetTestDouble)
 TEST_P (ScanByKeyOffsetTest, InclOffsetTestLong)
 {
     std::vector< int > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< int > device_keys( myStdVectSize, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -2098,10 +2071,11 @@ TEST_P (ScanByKeyOffsetTest, InclOffsetTestLong)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key ;
         segmentIndex++;
     }
     
+	bolt::cl::device_vector<int> device_keys( keys.begin(), keys.end());
+		
     // input and output vectors for device and reference
     bolt::cl::device_vector< cl_long > input(  myStdVectSize, 2 );
     bolt::cl::device_vector< cl_long > output( myStdVectSize, 0 );
@@ -2123,7 +2097,6 @@ TEST_P (ScanByKeyOffsetTest, InclOffsetTestLong)
 TEST_P (ScanByKeyOffsetTest, InclOffsetTestULong)
 {
     std::vector< int > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< int > device_keys( myStdVectSize, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -2138,10 +2111,11 @@ TEST_P (ScanByKeyOffsetTest, InclOffsetTestULong)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key ;
         segmentIndex++;
     }
     
+	bolt::cl::device_vector<int> device_keys( keys.begin(), keys.end());
+		
     // input and output vectors for device and reference
     bolt::cl::device_vector< cl_ulong > input(  myStdVectSize, 2 );
     bolt::cl::device_vector< cl_ulong > output( myStdVectSize, 0 );
@@ -2162,7 +2136,7 @@ TEST_P (ScanByKeyOffsetTest, InclOffsetTestULong)
 TEST_P (ScanByKeyOffsetTest, InclOffsetTestShort)
 {
     std::vector< int > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< int > device_keys( myStdVectSize, 1);
+
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -2177,10 +2151,11 @@ TEST_P (ScanByKeyOffsetTest, InclOffsetTestShort)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key ;
         segmentIndex++;
     }
     
+	bolt::cl::device_vector<int> device_keys( keys.begin(), keys.end());
+	
     // input and output vectors for device and reference
     bolt::cl::device_vector< cl_short > input(  myStdVectSize, 2 );
     bolt::cl::device_vector< cl_short > output( myStdVectSize, 0 );
@@ -2202,7 +2177,6 @@ TEST_P (ScanByKeyOffsetTest, InclOffsetTestShort)
 TEST_P (ScanByKeyOffsetTest, InclOffsetTestUShort)
 {
     std::vector< int > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< int > device_keys( myStdVectSize, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -2217,10 +2191,11 @@ TEST_P (ScanByKeyOffsetTest, InclOffsetTestUShort)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key ;
         segmentIndex++;
     }
     
+	bolt::cl::device_vector<int> device_keys( keys.begin(), keys.end());
+	
     // input and output vectors for device and reference
     bolt::cl::device_vector< cl_ushort > input(  myStdVectSize, 2 );
     bolt::cl::device_vector< cl_ushort > output( myStdVectSize, 0 );
@@ -2242,7 +2217,6 @@ TEST_P (ScanByKeyOffsetTest, InclOffsetTestUShort)
 TEST_P (ScanByKeyOffsetTest, ExclOffsetTestLong)
 {
     std::vector< int > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< int > device_keys( myStdVectSize, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -2257,10 +2231,10 @@ TEST_P (ScanByKeyOffsetTest, ExclOffsetTestLong)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key ;
         segmentIndex++;
     }
-    
+    bolt::cl::device_vector<int> device_keys( keys.begin(), keys.end());
+	
     // input and output vectors for device and reference
     bolt::cl::device_vector< cl_long > input(  myStdVectSize, 2 );
     bolt::cl::device_vector< cl_long > output( myStdVectSize, 0 );
@@ -2281,7 +2255,6 @@ TEST_P (ScanByKeyOffsetTest, ExclOffsetTestLong)
 TEST_P (ScanByKeyOffsetTest, ExclInclOffsetTestULong)
 {
     std::vector< int > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< int > device_keys( myStdVectSize, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -2296,10 +2269,9 @@ TEST_P (ScanByKeyOffsetTest, ExclInclOffsetTestULong)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key ;
         segmentIndex++;
     }
-    
+    bolt::cl::device_vector<int> device_keys( keys.begin(), keys.end());
     // input and output vectors for device and reference
     bolt::cl::device_vector< cl_ulong > input(  myStdVectSize, 2 );
     bolt::cl::device_vector< cl_ulong > output( myStdVectSize, 0 );
@@ -2321,7 +2293,6 @@ TEST_P (ScanByKeyOffsetTest, ExclInclOffsetTestULong)
 TEST_P (ScanByKeyOffsetTest, ExclOffsetTestShort)
 {
     std::vector< int > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< int > device_keys( myStdVectSize, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -2336,10 +2307,10 @@ TEST_P (ScanByKeyOffsetTest, ExclOffsetTestShort)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key ;
         segmentIndex++;
     }
-    
+    bolt::cl::device_vector<int> device_keys( keys.begin(), keys.end());
+	
     // input and output vectors for device and reference
     bolt::cl::device_vector< cl_short > input(  myStdVectSize, 2 );
     bolt::cl::device_vector< cl_short > output( myStdVectSize, 0 );
@@ -2360,7 +2331,6 @@ TEST_P (ScanByKeyOffsetTest, ExclOffsetTestShort)
 TEST_P (ScanByKeyOffsetTest, ExclOffsetTestUShort)
 {
     std::vector< int > keys( myStdVectSize, 1);
-    bolt::cl::device_vector< int > device_keys( myStdVectSize, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -2375,10 +2345,9 @@ TEST_P (ScanByKeyOffsetTest, ExclOffsetTestUShort)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key ;
         segmentIndex++;
     }
-    
+    bolt::cl::device_vector<int> device_keys( keys.begin(), keys.end());
     // input and output vectors for device and reference
     bolt::cl::device_vector< cl_ushort > input(  myStdVectSize, 2 );
     bolt::cl::device_vector< cl_ushort > output( myStdVectSize, 0 );
@@ -2621,7 +2590,6 @@ TEST(ExclusiveScanByKey, OffsetExclFloatSerialInplace)
     //setup keys
     int length = 1<<14;
     std::vector< int > keys( length, 1);
-    bolt::cl::device_vector< int > device_keys( length, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -2636,9 +2604,11 @@ TEST(ExclusiveScanByKey, OffsetExclFloatSerialInplace)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key ;
+
         segmentIndex++;
     }
+	bolt::cl::device_vector<int> device_keys( keys.begin(), keys.end());
+	
     // input and output vectors for device and reference
     bolt::cl::device_vector< float > input(  length, 2 );
     std::vector< float > refInput( length, 2 );
@@ -2660,7 +2630,6 @@ TEST(ExclusiveScanByKey, OffsetExclFloatMultiCore)
     //setup keys
     int length = 1<<14;
     std::vector< int > keys( length, 1);
-    bolt::cl::device_vector< int > device_keys( length, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -2675,9 +2644,10 @@ TEST(ExclusiveScanByKey, OffsetExclFloatMultiCore)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key ;
         segmentIndex++;
     }
+	bolt::cl::device_vector<int> device_keys( keys.begin(), keys.end());
+	
     // input and output vectors for device and reference
     bolt::cl::device_vector< float > input(  length, 2 );
     std::vector< float > refInput( length, 2 );
@@ -2700,7 +2670,6 @@ TEST(InclusiveScanByKey, OffsetIncFloatMultiCore)
     int length = 1<<16;
 
     std::vector< int > keys( length, 1);
-    bolt::cl::device_vector< int > device_keys( length, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -2715,9 +2684,10 @@ TEST(InclusiveScanByKey, OffsetIncFloatMultiCore)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key;
         segmentIndex++;
     }
+	bolt::cl::device_vector<int> device_keys( keys.begin(), keys.end());
+	
     // input and output vectors for device and reference
     bolt::cl::device_vector< float > input(  length, 3 );
     bolt::cl::device_vector< float > output( length, 0 );
@@ -2744,7 +2714,7 @@ TEST(ExclusiveScanByKey, OffsetExclFloatSerial)
     //setup keys
     int length = 1<<16;
     std::vector< int > keys( length, 1);
-    bolt::cl::device_vector< int > device_keys( length, 1);
+
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -2759,9 +2729,10 @@ TEST(ExclusiveScanByKey, OffsetExclFloatSerial)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key ;
         segmentIndex++;
     }
+	bolt::cl::device_vector<int> device_keys( keys.begin(), keys.end());
+	
     // input and output vectors for device and reference
     bolt::cl::device_vector< float > input(  length, 2 );
     bolt::cl::device_vector< float > output( length, 0 );
@@ -2788,7 +2759,7 @@ TEST(InclusiveScanByKey, OffsetIncFloatSerial)
     int length = 1<<16;
 
     std::vector< int > keys( length, 1);
-    bolt::cl::device_vector< int > device_keys( length, 1);
+
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -2803,9 +2774,10 @@ TEST(InclusiveScanByKey, OffsetIncFloatSerial)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key;
         segmentIndex++;
     }
+	bolt::cl::device_vector<int> device_keys( keys.begin(), keys.end());
+	
     // input and output vectors for device and reference
     bolt::cl::device_vector< float > input(  length, 3 );
     bolt::cl::device_vector< float > output( length, 0 );
@@ -2831,7 +2803,6 @@ TEST(ScanByKeyCLtype, DeviceExclLong)
     //setup keys
     int length = 1<<14;
     std::vector< int > keys( length, 1);
-    bolt::cl::device_vector< int > device_keys( length, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -2846,9 +2817,10 @@ TEST(ScanByKeyCLtype, DeviceExclLong)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key ;
         segmentIndex++;
     }
+	bolt::cl::device_vector<int> device_keys( keys.begin(), keys.end());
+	
     // input and output vectors for device and reference
     bolt::cl::device_vector< cl_long > input(  length, 2 );
     bolt::cl::device_vector< cl_long > output( length, 0 );
@@ -2874,7 +2846,6 @@ TEST(ScanByKeyCLtype, DeviceInclLong)
     int length = 1<<14;
 
     std::vector< int > keys( length, 1);
-    bolt::cl::device_vector< int > device_keys( length, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -2889,9 +2860,10 @@ TEST(ScanByKeyCLtype, DeviceInclLong)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key;
         segmentIndex++;
     }
+	bolt::cl::device_vector<int> device_keys( keys.begin(), keys.end());
+	
     // input and output vectors for device and reference
     bolt::cl::device_vector< cl_long > input(  length, 3 );
     bolt::cl::device_vector< cl_long > output( length, 0 );
@@ -2916,7 +2888,6 @@ TEST(ScanByKeyCLtype, DeviceExclUlong)
     //setup keys
     int length = 1<<14;
     std::vector< int > keys( length, 1);
-    bolt::cl::device_vector< int > device_keys( length, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -2931,9 +2902,10 @@ TEST(ScanByKeyCLtype, DeviceExclUlong)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key ;
         segmentIndex++;
     }
+	bolt::cl::device_vector<int> device_keys( keys.begin(), keys.end());
+	
     // input and output vectors for device and reference
     bolt::cl::device_vector< cl_ulong > input(  length, 2 );
     bolt::cl::device_vector< cl_ulong > output( length, 0 );
@@ -2959,7 +2931,6 @@ TEST(ScanByKeyCLtype, DeviceInclUlong)
     int length = 1<<14;
 
     std::vector< int > keys( length, 1);
-    bolt::cl::device_vector< int > device_keys( length, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -2974,9 +2945,10 @@ TEST(ScanByKeyCLtype, DeviceInclUlong)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key;
         segmentIndex++;
     }
+	bolt::cl::device_vector<int> device_keys( keys.begin(), keys.end());
+	
     // input and output vectors for device and reference
     bolt::cl::device_vector< cl_ulong > input(  length, 3 );
     bolt::cl::device_vector< cl_ulong > output( length, 0 );
@@ -3001,7 +2973,6 @@ TEST(ScanByKeyCLtype, DeviceExclShort)
     //setup keys
     int length = 1<<14;
     std::vector< int > keys( length, 1);
-    bolt::cl::device_vector< int > device_keys( length, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -3016,9 +2987,10 @@ TEST(ScanByKeyCLtype, DeviceExclShort)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key ;
         segmentIndex++;
     }
+	bolt::cl::device_vector<int> device_keys( keys.begin(), keys.end());
+	
     // input and output vectors for device and reference
     bolt::cl::device_vector< cl_short > input(  length, 2 );
     bolt::cl::device_vector< cl_short > output( length, 0 );
@@ -3044,7 +3016,6 @@ TEST(ScanByKeyCLtype, DeviceInclShort)
     int length = 1<<14;
 
     std::vector< int > keys( length, 1);
-    bolt::cl::device_vector< int > device_keys( length, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -3059,9 +3030,10 @@ TEST(ScanByKeyCLtype, DeviceInclShort)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key;
         segmentIndex++;
     }
+	bolt::cl::device_vector<int> device_keys( keys.begin(), keys.end());
+	
     // input and output vectors for device and reference
     bolt::cl::device_vector< cl_short > input(  length, 3 );
     bolt::cl::device_vector< cl_short > output( length, 0 );
@@ -3086,7 +3058,6 @@ TEST(ScanByKeyCLtype, DeviceExclUShort)
     //setup keys
     int length = 1<<14;
     std::vector< int > keys( length, 1);
-    bolt::cl::device_vector< int > device_keys( length, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -3101,9 +3072,10 @@ TEST(ScanByKeyCLtype, DeviceExclUShort)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key ;
         segmentIndex++;
     }
+	bolt::cl::device_vector<int> device_keys( keys.begin(), keys.end());
+	
     // input and output vectors for device and reference
     bolt::cl::device_vector< cl_ushort > input(  length, 2 );
     bolt::cl::device_vector< cl_ushort > output( length, 0 );
@@ -3129,7 +3101,6 @@ TEST(ScanByKeyCLtype, DeviceInclUShort)
     int length = 1<<14;
 
     std::vector< int > keys( length, 1);
-    bolt::cl::device_vector< int > device_keys( length, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -3144,9 +3115,10 @@ TEST(ScanByKeyCLtype, DeviceInclUShort)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key;
         segmentIndex++;
     }
+	bolt::cl::device_vector<int> device_keys( keys.begin(), keys.end());
+	
     // input and output vectors for device and reference
     bolt::cl::device_vector< cl_ushort > input(  length, 3 );
     bolt::cl::device_vector< cl_ushort > output( length, 0 );
@@ -3175,7 +3147,7 @@ TEST(ExclusiveScanByKey, OffsetExclUdd)
     //setup keys
     int length = 1<<16;
     std::vector< uddtM2 > keys( length, identityMixM2);
-    bolt::cl::device_vector< uddtM2 > device_keys( length, identityMixM2);
+    
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -3190,9 +3162,10 @@ TEST(ExclusiveScanByKey, OffsetExclUdd)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key ;
         segmentIndex++;
     }
+	bolt::cl::device_vector< uddtM2 > device_keys( keys.begin(), keys.end());
+	
     // input and output vectors for device and reference
     bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3 );
     bolt::cl::device_vector< uddtM3 > output( length, identityMixM3 );
@@ -3215,7 +3188,6 @@ TEST(InclusiveScanByKey, OffsetInclUdd)
     int length = 1<<16;
 
     std::vector< uddtM2 > keys( length, identityMixM2);
-    bolt::cl::device_vector< uddtM2 > device_keys( length, identityMixM2);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -3230,9 +3202,10 @@ TEST(InclusiveScanByKey, OffsetInclUdd)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key;
         segmentIndex++;
     }
+	bolt::cl::device_vector< uddtM2 > device_keys( keys.begin(), keys.end());
+	
     // input and output vectors for device and reference
     bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3 );
     bolt::cl::device_vector< uddtM3 > output( length, identityMixM3 );
@@ -3254,7 +3227,6 @@ TEST(InclusiveScanByKey, DeviceVectorInclUdd)
     int length = 1<<16;
 
     std::vector< uddtM2 > keys( length, identityMixM2);
-    bolt::cl::device_vector< uddtM2 > device_keys( length, identityMixM2);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -3270,11 +3242,11 @@ TEST(InclusiveScanByKey, DeviceVectorInclUdd)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key;
         segmentIndex++;
     }
 
-
+    bolt::cl::device_vector< uddtM2 > device_keys( keys.begin(), keys.end());
+	
     // input and output vectors for device and reference
     bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3 );
     bolt::cl::device_vector< uddtM3 > output( length, identityMixM3 );
@@ -3301,7 +3273,7 @@ TEST(InclusiveScanByKey, DeviceVectorInclFloat)
     //setup keys
     int length = 1<<16;
     std::vector< int > keys( length);
-    bolt::cl::device_vector< int > device_keys( length);
+
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -3316,9 +3288,10 @@ TEST(InclusiveScanByKey, DeviceVectorInclFloat)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key;
         segmentIndex++;
     }
+	bolt::cl::device_vector< int > device_keys( keys.begin(), keys.end());
+	
     // input and output vectors for device and reference
     bolt::cl::device_vector< float > input( length);
     bolt::cl::device_vector< float > output( length);
@@ -3345,7 +3318,6 @@ TEST(InclusiveScanByKey, Serial_DeviceVectorInclFloat)
     //setup keys
     int length = 1<<16;
     std::vector< int > keys( length);
-    bolt::cl::device_vector< int > device_keys( length);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -3360,9 +3332,10 @@ TEST(InclusiveScanByKey, Serial_DeviceVectorInclFloat)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key;
         segmentIndex++;
     }
+	bolt::cl::device_vector< int > device_keys( keys.begin(), keys.end());
+	
     // input and output vectors for device and reference
     bolt::cl::device_vector< float > input( length);
     bolt::cl::device_vector< float > output( length);
@@ -3389,7 +3362,6 @@ TEST(InclusiveScanByKey, MultiCore_DeviceVectorInclFloat)
     //setup keys
     int length = 1<<16;
     std::vector< int > keys( length);
-    bolt::cl::device_vector< int > device_keys( length);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -3404,9 +3376,10 @@ TEST(InclusiveScanByKey, MultiCore_DeviceVectorInclFloat)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key;
         segmentIndex++;
     }
+	bolt::cl::device_vector< int > device_keys( keys.begin(), keys.end());
+	
     // input and output vectors for device and reference
     bolt::cl::device_vector< float > input( length, 2.0f);
     bolt::cl::device_vector< float > output( length);
@@ -3435,7 +3408,6 @@ TEST(InclusiveScanByKey, DeviceVectorInclDouble)
     //setup keys
     int length = 1<<16;
     std::vector< int > keys( length);
-    bolt::cl::device_vector< int > device_keys( length);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -3450,9 +3422,10 @@ TEST(InclusiveScanByKey, DeviceVectorInclDouble)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key;
         segmentIndex++;
     }
+	bolt::cl::device_vector< int > device_keys( keys.begin(), keys.end());
+	
     // input and output vectors for device and reference
     bolt::cl::device_vector< double > input( length);
     bolt::cl::device_vector< double > output( length);
@@ -3486,7 +3459,6 @@ TEST(ExclusiveScanByKey, DeviceVectorExclFloat)
     //setup keys
     int length = 1<<16;
     std::vector< int > keys( length);
-    bolt::cl::device_vector< int > device_keys( length);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -3500,9 +3472,10 @@ TEST(ExclusiveScanByKey, DeviceVectorExclFloat)
             ++key;
         }
         keys[i] = key; // tested with key = 1 also which is actually scan
-        device_keys[i] = key;
         segmentIndex++;
     }
+	bolt::cl::device_vector< int > device_keys( keys.begin(), keys.end());
+	
     // input and output vectors for device and reference
     bolt::cl::device_vector< float > input( length);
     bolt::cl::device_vector< float > output( length);
@@ -3530,7 +3503,7 @@ TEST(ExclusiveScanByKey, Serial_DeviceVectorExclFloat)
     //setup keys
     int length = 1<<16;
     std::vector< int > keys( length);
-    bolt::cl::device_vector< int > device_keys( length);
+
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -3544,9 +3517,10 @@ TEST(ExclusiveScanByKey, Serial_DeviceVectorExclFloat)
             ++key;
         }
         keys[i] = key; // tested with key = 1 also which is actually scan
-        device_keys[i] = key;
         segmentIndex++;
     }
+	bolt::cl::device_vector< int > device_keys( keys.begin(), keys.end());
+	
     // input and output vectors for device and reference
     bolt::cl::device_vector< float > input( length);
     bolt::cl::device_vector< float > output( length);
@@ -3575,7 +3549,6 @@ TEST(ExclusiveScanByKey, MultiCore_DeviceVectorExclFloat)
     //setup keys
     int length = 1<<16;
     std::vector< int > keys( length);
-    bolt::cl::device_vector< int > device_keys( length);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -3589,9 +3562,10 @@ TEST(ExclusiveScanByKey, MultiCore_DeviceVectorExclFloat)
             ++key;
         }
         keys[i] = key; // tested with key = 1 also which is actually scan
-        device_keys[i] = key;
         segmentIndex++;
     }
+	bolt::cl::device_vector< int > device_keys( keys.begin(), keys.end());
+	
     // input and output vectors for device and reference
     bolt::cl::device_vector< float > input( length);
     bolt::cl::device_vector< float > output( length);
@@ -3621,7 +3595,6 @@ TEST(ExclusiveScanByKey, DeviceVectorExclDouble)
     //setup keys
     int length = 1<<16;
     std::vector< int > keys( length);
-    bolt::cl::device_vector< int > device_keys( length);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -3635,9 +3608,10 @@ TEST(ExclusiveScanByKey, DeviceVectorExclDouble)
             ++key;
         }
         keys[i] = key; // tested with key = 1 also which is just scan
-        device_keys[i] = key;
         segmentIndex++;
     }
+	bolt::cl::device_vector< int > device_keys( keys.begin(), keys.end());
+	
     // input and output vectors for device and reference
     bolt::cl::device_vector< double > input( length);
     bolt::cl::device_vector< double > output( length);
@@ -3664,7 +3638,7 @@ TEST(ExclusiveScanByKey, DeviceVectorExclUdd)
     //setup keys
     int length = 1<<16;
     std::vector< uddtM2 > keys( length, identityMixM2);
-    bolt::cl::device_vector< uddtM2 > device_keys( length, identityMixM2);
+    
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
     int segmentIndex = 0;
@@ -3679,9 +3653,9 @@ TEST(ExclusiveScanByKey, DeviceVectorExclUdd)
             ++key;
         }
         keys[i] = key;
-        device_keys[i] = key ;
         segmentIndex++;
     }
+	bolt::cl::device_vector< uddtM2 > device_keys( keys.begin(), keys.end());
     // input and output vectors for device and reference
     bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3 );
     bolt::cl::device_vector< uddtM3 > output( length, identityMixM3 );

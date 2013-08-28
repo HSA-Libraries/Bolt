@@ -793,16 +793,10 @@ TEST( DVIntVector, OffsetGenerate )
 {
     int length = 1024;
 
-    std::vector<int> stdInput( length );
-    bolt::cl::device_vector<int> boltInput( length );
+    std::vector<int> stdInput( length, 1 );
+    bolt::cl::device_vector<int> boltInput( stdInput.begin(),stdInput.end() );
     int offset = 100;
     GenConst<int> gen(1234);
-
-    for (int i = 0; i < 1024; ++i)
-    {
-        stdInput[i] = 1;
-        boltInput[i] = 1;
-    }
 
     std::generate(  stdInput.begin( ) + offset,  stdInput.end( ), gen );
     bolt::cl::generate( boltInput.begin( ) + offset, boltInput.end( ), gen );
