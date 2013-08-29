@@ -18,7 +18,7 @@
 // InnerProductTest.cpp : Defines the entry point for the console application.
 //
 #define OCL_CONTEXT_BUG_WORKAROUND 1
-#define TEST_DOUBLE 0
+#define TEST_DOUBLE 1
 
 #include <iostream>
 #include <algorithm>  // for testing against STL functions.
@@ -42,15 +42,15 @@ void testDeviceVector()
 {
     const int aSize = 64;
     std::vector<int> hA(aSize), hB(aSize);
-    bolt::cl::device_vector<int> dA(aSize), dB(aSize);
 
     for(int i=0; i<aSize; i++) {
         hA[i] = i;
          hB[i] = i;
-         dB[i] = i;
-        dA[i] = i;
     };
 
+	bolt::cl::device_vector<int> dA(hA.begin(),hA.end()); 
+	bolt::cl::device_vector<int> dB(hB.begin(),hB.end()); 
+	
     int hSum = std::inner_product(hA.begin(), hA.end(), hB.begin(), 1);
 
 	int sum = bolt::cl::inner_product(  dA.begin(), dA.end(),
@@ -285,23 +285,23 @@ class InnerProductIntegerDeviceVector: public ::testing::TestWithParam< int >
 {
 public:
     // Create an std and a bolt vector of requested size, and initialize all the elements to 1
-    InnerProductIntegerDeviceVector( ): stdInput( GetParam( ) ), boltInput( static_cast<size_t>( GetParam( ) ) ),
-                                        stdInput2( GetParam( ) ), boltInput2( static_cast<size_t>( GetParam( ) ) )
+    InnerProductIntegerDeviceVector( ): stdInput( GetParam( ) ),
+                                        stdInput2( GetParam( ) )
     {
         std::generate(stdInput.begin(), stdInput.end(), generateRandom<int>);
         std::generate(stdInput2.begin(), stdInput2.end(), generateRandom<int>);
         //boltInput = stdInput;      
         //FIXME - The above should work but the below loop is used. 
-        for (int i=0; i< GetParam( ); i++)
+        /*for (int i=0; i< GetParam( ); i++)
         {
             boltInput[i] = stdInput[i];
             boltInput2[i] = stdInput2[i];
-        }
+        }*/
     }
 
 protected:
     std::vector< int > stdInput, stdInput2;
-    bolt::cl::device_vector< int > boltInput, boltInput2;
+    //bolt::cl::device_vector< int > boltInput, boltInput2; 
 };
 
 //  ::testing::TestWithParam< int > means that GetParam( ) returns int values, which i use for array size
@@ -309,22 +309,22 @@ class InnerProductFloatDeviceVector: public ::testing::TestWithParam< int >
 {
 public:
     // Create an std and a bolt vector of requested size, and initialize all the elements to 1
-    InnerProductFloatDeviceVector( ): stdInput( GetParam( ) ), boltInput( GetParam( ) ),
-                                      stdInput2( GetParam( ) ),boltInput2( GetParam( ) )
+    InnerProductFloatDeviceVector( ): stdInput( GetParam( ) ), 
+                                      stdInput2( GetParam( ) )
     {
         std::generate(stdInput.begin(), stdInput.end(), generateRandom<float>);
         std::generate(stdInput2.begin(), stdInput2.end(), generateRandom<float>);
         //FIXME - The above should work but the below loop is used. 
-        for (int i=0; i< GetParam( ); i++)
+        /*for (int i=0; i< GetParam( ); i++)
         {
             boltInput[i] = stdInput[i];
             boltInput2[i] = stdInput2[i];
-        }
+        }*/
     }
 
 protected:
     std::vector< float > stdInput, stdInput2;
-    bolt::cl::device_vector< float > boltInput, boltInput2;
+    //bolt::cl::device_vector< float > boltInput, boltInput2;
 };
 
 //  ::testing::TestWithParam< int > means that GetParam( ) returns int values, which i use for array size
@@ -681,7 +681,6 @@ TEST_P (InnerProductTestMultFloat, MultiCoremultiplyWithFloats)
         myBoltArray2[i] = myArray2[i];
     }
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
     
@@ -877,7 +876,6 @@ TEST_P (InnerProductTestMultDouble, MultiCoremultiplyWithDouble)
         myBoltArray2[i] = myArray2[i];
     }
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
     
@@ -1213,7 +1211,6 @@ TEST( InnerProductUDD , MultiCore_UDDPlusOperatorInts )
     UDDmul mulOp;
     UDDplus plusOp;
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
@@ -1340,15 +1337,14 @@ void InProdDV()
 {
     const int aSize = 32;
     std::vector<int> hA(aSize), hB(aSize);
-    bolt::cl::device_vector<int> dA(aSize), dB(aSize);
-
+    
     for(int i=0; i<aSize; i++) {
         hA[i] = i;
         hB[i] = i;
-        dB[i] = i;
-        dA[i] = i;
     };
-
+    bolt::cl::device_vector<int> dA(hA.begin(), hA.end());
+	bolt::cl::device_vector<int> dB(hB.begin(), hB.end());
+	
     int hSum = std::inner_product(hA.begin(), hA.end(), hB.begin(), 1);
 
     int sum = bolt::cl::inner_product(dA.begin(), dA.end(), dB.begin(), 1,bolt::cl::plus<int>(),

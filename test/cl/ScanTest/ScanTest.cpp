@@ -383,14 +383,16 @@ TEST(InclusiveScan, MulticorenormalArrayTest)
 TEST(InclusiveScan, DeviceVectorInclFloat)
 {
     int length = 1<<10;
-    bolt::cl::device_vector< float > input( length);
+   
     bolt::cl::device_vector< float > output( length);
     std::vector< float > refInput( length);
     std::vector< float > refOutput( length);
     for(int i=0; i<length; i++) {
-        input[i] = 2.f;
         refInput[i] = 2.f;
     }
+	
+	bolt::cl::device_vector< float > input( refInput.begin(), refInput.end());
+	 
     // call scan
     bolt::cl::plus<float> ai2;
     bolt::cl::inclusive_scan( input.begin(),    input.end(),    output.begin(), ai2 );
@@ -404,14 +406,14 @@ TEST(InclusiveScan, DeviceVectorInclFloat)
 TEST(InclusiveScan, SerialDeviceVectorInclFloat)
 {
     int length = 1<<10;
-    bolt::cl::device_vector< float > input( length);
     bolt::cl::device_vector< float > output( length);
     std::vector< float > refInput( length);
     std::vector< float > refOutput( length);
     for(int i=0; i<length; i++) {
-        input[i] = 2.f;
         refInput[i] = 2.f;
     }
+	bolt::cl::device_vector< float > input( refInput.begin(), refInput.end());
+	
     ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu); 
@@ -428,14 +430,14 @@ TEST(InclusiveScan, SerialDeviceVectorInclFloat)
 TEST(InclusiveScan, MulticoreDeviceVectorInclFloat)
 {
     int length = 1<<10;
-    bolt::cl::device_vector< float > input( length);
     bolt::cl::device_vector< float > output( length);
     std::vector< float > refInput( length);
     std::vector< float > refOutput( length);
     for(int i=0; i<length; i++) {
-        input[i] = 2.f;
         refInput[i] = 2.f;
     }
+	bolt::cl::device_vector< float > input( refInput.begin(), refInput.end());
+	
     ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu); 
@@ -516,17 +518,18 @@ TEST(ExclusiveScan, DeviceVectorExclFloat)
 {
     //setup containers
     int length = 1<<10;
-    bolt::cl::device_vector< float > input( length);
+    std::vector< float > stdinput( length);
     bolt::cl::device_vector< float > output( length);
     std::vector< float > refInput( length);
     std::vector< float > refOutput( length);
     for(int i=0; i<length; i++) {
-        input[i] = 2.0f;
+        stdinput[i] = 2.0f;
         if(i != length-1)
            refInput[i+1] = 2.0f;
         //refInput[i] = 2.0f;
     }
     refInput[0] = 3.0f;
+	bolt::cl::device_vector< float > input( stdinput.begin(), stdinput.end());
     // call scan
     bolt::cl::plus<float> ai2;
     ::std::partial_sum(refInput.begin(), refInput.end(), refOutput.begin(), ai2);
@@ -540,18 +543,19 @@ TEST(ExclusiveScan, SerialDeviceVectorExclFloat)
 {
     //setup containers
     int length = 1<<10;
-    bolt::cl::device_vector< float > input( length);
+    std::vector< float > stdinput( length);
     bolt::cl::device_vector< float > output( length);
     std::vector< float > refInput( length);
     std::vector< float > refOutput( length);
     for(int i=0; i<length; i++) {
-        input[i] = 2.0f;
+        stdinput[i] = 2.0f;
         if(i != length-1)
            refInput[i+1] = 2.0f;
         //refInput[i] = 2.0f;
     }
     refInput[0] = 3.0f;
-
+    bolt::cl::device_vector< float > input( stdinput.begin(), stdinput.end());
+	
     ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
@@ -568,18 +572,18 @@ TEST(ExclusiveScan, MulticoreDeviceVectorExclFloat)
 {
     //setup containers
     int length = 1<<10;
-    bolt::cl::device_vector< float > input( length);
+    std::vector< float > stdinput( length);
     bolt::cl::device_vector< float > output( length);
     std::vector< float > refInput( length);
     std::vector< float > refOutput( length);
     for(int i=0; i<length; i++) {
-        input[i] = 2.0f;
+        stdinput[i] = 2.0f;
         if(i != length-1)
            refInput[i+1] = 2.0f;
         //refInput[i] = 2.0f;
     }
     refInput[0] = 3.0f;
-
+     bolt::cl::device_vector< float > input( stdinput.begin(), stdinput.end());
     ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu); 
@@ -2273,7 +2277,6 @@ TEST_P( ScanFloatVector, InclusiveInplace )
 
 TEST_P( ScanFloatVector, SerialInclusiveInplace )
 {
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
     //  Calling the actual functions under test
@@ -2297,7 +2300,7 @@ TEST_P( ScanFloatVector, SerialInclusiveInplace )
 
 TEST_P( ScanFloatVector, MulticoreInclusiveInplace )
 {
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+  
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
     //  Calling the actual functions under test
@@ -2345,7 +2348,6 @@ TEST_P( ScanDoubleVector, InclusiveInplace )
 
 TEST_P( ScanDoubleVector, SerialInclusiveInplace )
 {
-     ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
     //  Calling the actual functions under test
@@ -2369,7 +2371,6 @@ TEST_P( ScanDoubleVector, SerialInclusiveInplace )
 
 TEST_P( ScanDoubleVector, MulticoreInclusiveInplace )
 {
-     ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
     //  Calling the actual functions under test
@@ -2417,7 +2418,6 @@ TEST_P( ScanIntegerDeviceVector, InclusiveInplace )
 
 TEST_P( ScanIntegerDeviceVector, SerialInclusiveInplace )
 {
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
     //  Calling the actual functions under test
@@ -2441,7 +2441,7 @@ TEST_P( ScanIntegerDeviceVector, SerialInclusiveInplace )
 
 TEST_P( ScanIntegerDeviceVector, MulticoreInclusiveInplace )
 {
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
     //  Calling the actual functions under test
@@ -2496,7 +2496,6 @@ TEST_P( ScanIntegerNakedPointer, InclusiveInplace )
 TEST_P( ScanIntegerNakedPointer, SerialInclusiveInplace )
 {
     size_t endIndex = GetParam( );
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -2528,7 +2527,6 @@ TEST_P( ScanIntegerNakedPointer, SerialInclusiveInplace )
 TEST_P( ScanIntegerNakedPointer, MultiCoreInclusiveInplace )
 {
     size_t endIndex = GetParam( );
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
@@ -2642,7 +2640,6 @@ TEST_P( ScanIntegerVector, MultiCoreExclusiveOutOfPlace )
     stdEnd = std::transform( stdResult.begin( ), stdResult.end( ), stdInput.begin( ), stdResult.begin( ), 
                                                                                   std::minus< int >( ) );
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 

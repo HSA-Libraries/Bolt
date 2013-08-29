@@ -308,6 +308,7 @@ struct MixM3
 );
 uddtM3 identityMixM3 = { 0, 0.f, 1.0 };
 uddtM3 initialMixM3  = { 2, 3, 1.000001 };
+uddtM3 zeroMixM3  = { 0, 0.f, 0.000000 };
 
 BOLT_FUNCTOR(NegateM3,
     struct NegateM3
@@ -1101,7 +1102,7 @@ TEST(NegateScanUserDefined, SerialExclOffsetTest)
     bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3,  CL_MEM_READ_WRITE, true  );
     bolt::cl::device_vector< uddtM3 > output( length, identityMixM3, CL_MEM_READ_WRITE, false );
     std::vector< uddtM3 > refInput( length, initialMixM3 );// refInput[0] = identityMixM3;
-    std::vector< uddtM3 > refOutput( length );
+    std::vector< uddtM3 > refOutput( length, zeroMixM3 );
 
     ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
@@ -1127,7 +1128,7 @@ TEST(NegateScanUserDefined, CLExclOffsetTest)
     bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3,  CL_MEM_READ_WRITE, true  );
     bolt::cl::device_vector< uddtM3 > output( length, identityMixM3, CL_MEM_READ_WRITE, false );
     std::vector< uddtM3 > refInput( length, initialMixM3 );// refInput[0] = identityMixM3;
-    std::vector< uddtM3 > refOutput( length );
+    std::vector< uddtM3 > refOutput( length, zeroMixM3 );
 
     // call scan
     MixM3 mM3;
@@ -1148,7 +1149,7 @@ TEST(NegateScanUserDefined, SerialInclOffsetTest)
     bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3,  CL_MEM_READ_WRITE, true  );
     bolt::cl::device_vector< uddtM3 > output( length, identityMixM3, CL_MEM_READ_WRITE, false );
     std::vector< uddtM3 > refInput( length, initialMixM3 );
-    std::vector< uddtM3 > refOutput( length );
+    std::vector< uddtM3 > refOutput( length, zeroMixM3 );
 
     ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
@@ -1172,7 +1173,7 @@ TEST(NegateScanUserDefined, CLInclOffsetTest)
     bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3,  CL_MEM_READ_WRITE, true  );
     bolt::cl::device_vector< uddtM3 > output( length, identityMixM3, CL_MEM_READ_WRITE, false );
     std::vector< uddtM3 > refInput( length, initialMixM3 );
-    std::vector< uddtM3 > refOutput( length );
+    std::vector< uddtM3 > refOutput( length, zeroMixM3 );
 
     // call scan
      MixM3 mM3;
