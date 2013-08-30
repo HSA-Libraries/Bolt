@@ -2095,7 +2095,7 @@ TEST (ScanOffsetTest, InclOffsetTestUDD)
 {
 
     int length = 1<<16;
-    bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3,  CL_MEM_READ_WRITE, true  );
+    bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3); //,  CL_MEM_READ_WRITE, true  );
     std::vector< uddtM3 > refInput( length, initialMixM3 );
 
     // call scan
@@ -2109,7 +2109,7 @@ TEST (ScanOffsetTest, InclOffsetTestUDD)
 TEST (ScanOffsetTest, ExclOffsetTestUDD)
 {
     int length = 1<<16;
-    bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3,  CL_MEM_READ_WRITE, true  );
+    bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3); //,  CL_MEM_READ_WRITE, true  );
     std::vector< uddtM3 > refInput( length, initialMixM3 );
 
     refInput[length/4] = initialMixM3;
