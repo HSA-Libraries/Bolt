@@ -121,7 +121,7 @@ __kernel void perBlockScanByKey(
 	if (gloId < vecSize -1 )
 		key2 = keys[gloId + 1];
 	if(key != key2)
-    output[ gloId ] = sum;
+       output[ gloId ] = sum;
 
     if (locId == 0)
     {

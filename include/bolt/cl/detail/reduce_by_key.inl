@@ -141,6 +141,7 @@ class ReduceByKey_KernelTemplateSpecializer : public KernelTemplateSpecializer
 
     ReduceByKey_KernelTemplateSpecializer() : KernelTemplateSpecializer()
     {
+		addKernelName("OffsetCalculation");
         addKernelName("perBlockScanByKey");
         addKernelName("intraBlockInclusiveScanByKey");
         addKernelName("perBlockAdditionByKey");
