@@ -48,12 +48,12 @@ void testDeviceVector()
          hB[i] = i;
     };
 
-	bolt::cl::device_vector<int> dA(hA.begin(),hA.end()); 
-	bolt::cl::device_vector<int> dB(hB.begin(),hB.end()); 
-	
+    bolt::cl::device_vector<int> dA(hA.begin(),hA.end()); 
+    bolt::cl::device_vector<int> dB(hB.begin(),hB.end()); 
+    
     int hSum = std::inner_product(hA.begin(), hA.end(), hB.begin(), 1);
 
-	int sum = bolt::cl::inner_product(  dA.begin(), dA.end(),
+    int sum = bolt::cl::inner_product(  dA.begin(), dA.end(),
                                         dB.begin(), 1, bolt::cl::plus<int>(), bolt::cl::multiplies<int>()  );
 };
 
@@ -1343,8 +1343,8 @@ void InProdDV()
         hB[i] = i;
     };
     bolt::cl::device_vector<int> dA(hA.begin(), hA.end());
-	bolt::cl::device_vector<int> dB(hB.begin(), hB.end());
-	
+    bolt::cl::device_vector<int> dB(hB.begin(), hB.end());
+    
     int hSum = std::inner_product(hA.begin(), hA.end(), hB.begin(), 1);
 
     int sum = bolt::cl::inner_product(dA.begin(), dA.end(), dB.begin(), 1,bolt::cl::plus<int>(),
