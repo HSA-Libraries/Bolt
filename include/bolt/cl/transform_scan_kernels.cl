@@ -249,7 +249,7 @@ __kernel void perBlockAddition(
     }
     barrier( CLK_LOCAL_MEM_FENCE );
   //  Abort threads that are passed the end of the input vector
-    
+    if (gloId >= vecSize) return; 
 
     oValueType scanResult = sum;
     oValueType postBlockSum, newResult;
