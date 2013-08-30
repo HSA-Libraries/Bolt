@@ -2585,7 +2585,7 @@ TEST( equalValMult, MultiCore_iValues )
     cmpArrays<int,11>( arrToMatch, out );
 }
 
-TEST(ExclusiveScanByKey, OffsetExclFloatSerialInplace)
+TEST(ExclusiveScanByKey, Serial_OffsetExclFloatInplace)
 {
     //setup keys
     int length = 1<<14;
@@ -2625,7 +2625,7 @@ TEST(ExclusiveScanByKey, OffsetExclFloatSerialInplace)
 }
 
 
-TEST(ExclusiveScanByKey, OffsetExclFloatMultiCore)
+TEST(ExclusiveScanByKey, MultiCore_OffsetExclFloat)
 {
     //setup keys
     int length = 1<<14;
@@ -2664,7 +2664,7 @@ TEST(ExclusiveScanByKey, OffsetExclFloatMultiCore)
 }
 
 
-TEST(InclusiveScanByKey, OffsetIncFloatMultiCore)
+TEST(InclusiveScanByKey, MultiCore_OffsetIncFloat)
 {
     //setup keys
     int length = 1<<16;
@@ -2709,7 +2709,7 @@ TEST(InclusiveScanByKey, OffsetIncFloatMultiCore)
 
 
 
-TEST(ExclusiveScanByKey, OffsetExclFloatSerial)
+TEST(ExclusiveScanByKey, Serial_OffsetExclFloat)
 {
     //setup keys
     int length = 1<<16;
@@ -2753,7 +2753,7 @@ TEST(ExclusiveScanByKey, OffsetExclFloatSerial)
 }
 
 
-TEST(InclusiveScanByKey, OffsetIncFloatSerial)
+TEST(InclusiveScanByKey, Serial_OffsetIncFloat)
 {
     //setup keys
     int length = 1<<16;
@@ -3221,7 +3221,7 @@ TEST(InclusiveScanByKey, OffsetInclUdd)
 }
 
 
-TEST(InclusiveScanByKey, DeviceVectorInclUdd)
+TEST(InclusiveScanByKey, Multicore_DeviceVectorInclUdd)
 {
     //setup keys
     int length = 1<<16;
@@ -3268,7 +3268,7 @@ TEST(InclusiveScanByKey, DeviceVectorInclUdd)
 
 #endif
 
-TEST(InclusiveScanByKey, DeviceVectorInclFloat)
+TEST(InclusiveScanByKey, Multicore_DeviceVectorInclFloat)
 {
     //setup keys
     int length = 1<<16;
@@ -3403,7 +3403,7 @@ TEST(InclusiveScanByKey, MultiCore_DeviceVectorInclFloat)
 }
 
 #if (TEST_DOUBLE == 1)
-TEST(InclusiveScanByKey, DeviceVectorInclDouble)
+TEST(InclusiveScanByKey, Multicore_DeviceVectorInclDouble)
 {
     //setup keys
     int length = 1<<16;
@@ -3454,7 +3454,7 @@ TEST(InclusiveScanByKey, DeviceVectorInclDouble)
 
 /////////////////////////Exclusive//////////////////////////////////////////////////
 
-TEST(ExclusiveScanByKey, DeviceVectorExclFloat)
+TEST(ExclusiveScanByKey, Multicore_DeviceVectorExclFloat)
 {
     //setup keys
     int length = 1<<16;
@@ -3589,7 +3589,7 @@ TEST(ExclusiveScanByKey, MultiCore_DeviceVectorExclFloat)
 }
 
 #if (TEST_DOUBLE == 1)
-TEST(ExclusiveScanByKey, DeviceVectorExclDouble)
+TEST(ExclusiveScanByKey, Multicore_DeviceVectorExclDouble)
 {
     //setup keys
     int length = 1<<16;
@@ -3631,7 +3631,7 @@ TEST(ExclusiveScanByKey, DeviceVectorExclDouble)
     cmpArrays(refOutput, output);
 }
 
-TEST(ExclusiveScanByKey, DeviceVectorExclUdd)
+TEST(ExclusiveScanByKey, Multicore_DeviceVectorExclUdd)
 {
     //setup keys
     int length = 1<<16;
@@ -3972,7 +3972,7 @@ TEST(ExclusiveScanByKey, SerialExclFloat)
     cmpArrays(refOutput, output);
 }
 
-TEST(APPSDKInclusiveScanByKey, InclusiveIntAPPSDK)
+TEST(APPSDKInclusiveScanByKey, Multicore_InclusiveIntAPPSDK)
 {
 	bool status = 1;
 	int count = 1;
