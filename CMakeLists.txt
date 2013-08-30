@@ -252,7 +252,7 @@ endif( )
 # configure a header file to pass the CMake version settings to the source, and package the header files in the output archive
 configure_file( "${PROJECT_SOURCE_DIR}/include/bolt/BoltVersion.h.in" "${PROJECT_BINARY_DIR}/include/bolt/BoltVersion.h" @ONLY )
 install( FILES 
-            "${PROJECT_BINARY_DIR}/include/bolt/boltVersion.h" 
+            "${PROJECT_BINARY_DIR}/include/bolt/BoltVersion.h" 
         DESTINATION 
             ${INCLUDE_DIR}/bolt )
 
