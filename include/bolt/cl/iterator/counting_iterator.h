@@ -106,9 +106,9 @@ namespace cl {
                 return *this;
             }
 
-            Payload& gpuPayload( ) const
+            Payload gpuPayload( ) const
             {
-                static Payload payload = { m_initValue };
+                Payload payload = { m_initValue };
                 return payload;
             }
 

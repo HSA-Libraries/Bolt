@@ -46,7 +46,7 @@ void testDeviceVector()
     for(int i=0; i<aSize; i++) {
         hA[i] = i;
     };
-	
+    
     bolt::cl::device_vector<int> dA(hA.begin(), hA.end());
     int hSum = std::accumulate(hA.begin(), hA.end(), 0);
     int sum = bolt::cl::reduce(dA.begin(), dA.end(), 0);
@@ -91,7 +91,11 @@ BOLT_CREATE_TYPENAME(bolt::cl::plus<DUDD>);
 
 void testTBB()
 {
-    const int aSize = 1<<24;
+#ifdef LARGE_SIZE
+     const int aSize = 1<<24;
+#else
+     const int aSize = 1<<16;
+#endif
     std::vector<int> stdInput(aSize);
     std::vector<int> tbbInput(aSize);
 
@@ -115,7 +119,11 @@ void testTBB()
 };
 void testdoubleTBB()
 {
-  const int aSize = 1<<24;
+#ifdef LARGE_SIZE
+     const int aSize = 1<<24;
+#else
+     const int aSize = 1<<16;
+#endif
     std::vector<double> stdInput(aSize);
     std::vector<double> tbbInput(aSize);
 
@@ -173,7 +181,7 @@ void testTBBDevicevector()
     for(int i=0; i<aSize; i++) {
         stdInput[i] = i;
     };
-	
+    
     bolt::cl::device_vector<int> tbbInput(stdInput.begin(), stdInput.end());
     int hSum = std::accumulate(stdInput.begin(), stdInput.end(), 0);
     bolt::cl::control ctl = bolt::cl::control::getDefault();
@@ -1095,7 +1103,7 @@ TEST_P( ReduceDoubleVector, Inplace )
 TEST_P( TransformIntegerDeviceVector, Inplace )
 {
     bolt::cl::device_vector< int > boltInput(stdInput.begin(), stdInput.end());
-	bolt::cl::device_vector< int > boltOutput(stdOutput.begin(), stdOutput.end());
+    bolt::cl::device_vector< int > boltOutput(stdOutput.begin(), stdOutput.end());
 
     int init(0);
     //  Calling the actual functions under test
@@ -1119,8 +1127,8 @@ TEST_P( TransformIntegerDeviceVector, Inplace )
 TEST_P( TransformFloatDeviceVector, Inplace )
 {
     bolt::cl::device_vector< float > boltInput(stdInput.begin(), stdInput.end());
-	bolt::cl::device_vector< float > boltOutput(stdOutput.begin(), stdOutput.end());
-	
+    bolt::cl::device_vector< float > boltOutput(stdOutput.begin(), stdOutput.end());
+    
     float init(0);
     //  Calling the actual functions under test
     std::transform(stdInput.begin(), stdInput.end(), stdOutput.begin(), bolt::cl::negate<float>());
@@ -1144,8 +1152,8 @@ TEST_P( TransformFloatDeviceVector, Inplace )
 TEST_P( TransformDoubleDeviceVector, Inplace )
 {
     bolt::cl::device_vector< double > boltInput(stdInput.begin(), stdInput.end());
-	bolt::cl::device_vector< double > boltOutput(stdOutput.begin(), stdOutput.end());
-	
+    bolt::cl::device_vector< double > boltOutput(stdOutput.begin(), stdOutput.end());
+    
     double init(0);
     //  Calling the actual functions under test
     std::transform(stdInput.begin(), stdInput.end(), stdOutput.begin(), bolt::cl::negate<double>());

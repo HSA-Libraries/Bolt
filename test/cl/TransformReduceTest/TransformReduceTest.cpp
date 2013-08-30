@@ -1985,7 +1985,11 @@ int pointsInCircle = bolt::cl::transform_reduce(boltInputPoints.begin(), boltInp
 
 TEST(TransformReduce, Float)
 {
+#ifdef LARGE_SIZE
      int length = 1<<24;
+#else
+     int length = 1<<16;
+#endif
      std::vector< float > input( length );
      std::vector< float > refInput( length);
      std::vector< float > refIntermediate( length );
@@ -2011,7 +2015,11 @@ TEST(TransformReduce, Float)
 
 TEST(TransformReduce, SerialFloat)
 {
+#ifdef LARGE_SIZE
      int length = 1<<24;
+#else
+     int length = 1<<16;
+#endif
      std::vector< float > input( length );
      std::vector< float > refInput( length);
      std::vector< float > refIntermediate( length );
@@ -2037,7 +2045,11 @@ TEST(TransformReduce, SerialFloat)
 
 TEST(TransformReduce, MultiCoreFloat)
 {
+#ifdef LARGE_SIZE
      int length = 1<<24;
+#else
+     int length = 1<<16;
+#endif
      std::vector< float > input( length );
      std::vector< float > refInput( length);
      std::vector< float > refIntermediate( length );
@@ -2179,7 +2191,11 @@ TEST(TransformReduce, MultiCoreUDD)
 #if (TEST_DOUBLE == 1)
 TEST(TransformReduce, MultiCoreDoubleUDD)
 {
-    int length = 1<<24;
+#ifdef LARGE_SIZE
+     int length = 1<<24;
+#else
+     int length = 1<<16;
+#endif
     tbbUDD initial;
     initial.a = 2.f;
     initial.b = 5.0;

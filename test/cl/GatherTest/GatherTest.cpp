@@ -366,7 +366,7 @@ TEST( DeviceMemory_int, GatherIfPredicate )
     int n_input[10]   =  {9,8,7,6,5,4,3,2,1,0};
     int n_stencil[10] =  {0,1,0,1,0,1,0,1,0,1};
 
-    bolt::cl::device_vector<int> exp_result;
+    std::vector<int> exp_result;
     {
         exp_result.push_back(9);exp_result.push_back(-1);
         exp_result.push_back(7);exp_result.push_back(-1);
@@ -380,7 +380,6 @@ TEST( DeviceMemory_int, GatherIfPredicate )
     bolt::cl::device_vector<int> stencil ( n_stencil, n_stencil + 10 );    
     is_even iepred;
     bolt::cl::gather_if( map.begin(), map.end(), stencil.begin(), input.begin(), result.begin(), iepred );
-    //for(int i=0; i<10 ; i++){ std::cout<<result[ i ]<<std::endl; }
 
     cmpArrays(exp_result, result);
 }
@@ -390,7 +389,7 @@ TEST( DeviceMemory_int, SerialGatherIfPredicate )
     int n_input[10]   =  {9,8,7,6,5,4,3,2,1,0};
     int n_stencil[10] =  {0,1,0,1,0,1,0,1,0,1};
 
-    bolt::cl::device_vector<int> exp_result;
+    std::vector<int> exp_result;
     {
         exp_result.push_back(9);exp_result.push_back(-1);
         exp_result.push_back(7);exp_result.push_back(-1);
@@ -417,7 +416,7 @@ TEST( DeviceMemory_int, MulticoreGatherIfPredicate )
     int n_input[10]   =  {9,8,7,6,5,4,3,2,1,0};
     int n_stencil[10] =  {0,1,0,1,0,1,0,1,0,1};
 
-    bolt::cl::device_vector<int> exp_result;
+    std::vector<int> exp_result;
     {
         exp_result.push_back(9);exp_result.push_back(-1);
         exp_result.push_back(7);exp_result.push_back(-1);
@@ -585,17 +584,23 @@ TEST_P(HostMemory_IntStdVector, MulticoreGather_IfPredicate_Fancy_map)
 
 TEST_P(DeviceMemory_IntBoltdVector, Gather_IfPredicate)
 {
-    bolt::cl::device_vector<int> input( myStdVectSize,0);   
+    std::vector<int> h_input( myStdVectSize,0);   
+    std::vector<int> h_map (myStdVectSize,0);	
+    std::vector<int> h_stencil (myStdVectSize,0);
+
+    for( int i=0; i < myStdVectSize ; i++ )
+    {
+        h_map[i] = i;
+        h_input[i] =  i + 2 * i;
+        h_stencil[i] = i + 5 * 1;
+    }
+
+    bolt::cl::device_vector<int> input( h_input.begin(), h_input.end() );   
     bolt::cl::device_vector<int> exp_result(myStdVectSize,0);    
     bolt::cl::device_vector<int> result ( myStdVectSize, 0 );
-    bolt::cl::device_vector<int> map (myStdVectSize,0);	
-    bolt::cl::device_vector<int> stencil (myStdVectSize,0);	
-    for( int i=0; i < myStdVectSize ; i++ )
-        {
-            map[i] = i;
-            input[i] =  i + 2 * i;
-            stencil[i] = i + 5 * 1;
-        }
+    bolt::cl::device_vector<int> map ( h_map.begin(), h_map.end() );	
+    bolt::cl::device_vector<int> stencil ( h_stencil.begin(), h_stencil.end() );	
+
    // std::random_shuffle( map.begin(), map.end() ); 
 
     is_even iepred;
@@ -605,23 +610,26 @@ TEST_P(DeviceMemory_IntBoltdVector, Gather_IfPredicate)
 
      bolt::cl::gather_if(ctl, map.begin(), map.end(),  stencil.begin(), input.begin(), result.begin(), iepred );
      bolt::cl::gather_if( map.begin(), map.end(),  stencil.begin(), input.begin(), exp_result.begin(), iepred );
-   // for(int i=0; i<myStdVectSize ; i++)	{std::cout<<exp_result[ i ]<<"    "<<result[i]<<std::endl;}
     cmpArrays(exp_result, result);
 }
 TEST_P(DeviceMemory_IntBoltdVector, MulticoreGather_IfPredicate)
 {
-    bolt::cl::device_vector<int> input( myStdVectSize,0);   
+    std::vector<int> h_input( myStdVectSize,0);   
+    std::vector<int> h_map (myStdVectSize,0);	
+    std::vector<int> h_stencil (myStdVectSize,0);
+
+    for( int i=0; i < myStdVectSize ; i++ )
+    {
+        h_map[i] = i;
+        h_input[i] =  i + 2 * i;
+        h_stencil[i] = i + 5 * 1;
+    }
+
+    bolt::cl::device_vector<int> input( h_input.begin(), h_input.end() );   
     bolt::cl::device_vector<int> exp_result(myStdVectSize,0);    
     bolt::cl::device_vector<int> result ( myStdVectSize, 0 );
-    bolt::cl::device_vector<int> map (myStdVectSize,0);	
-    bolt::cl::device_vector<int> stencil (myStdVectSize,0);	
-    for( int i=0; i < myStdVectSize ; i++ )
-        {
-            map[i] = i;
-            input[i] =  i + 2 * i;
-            stencil[i] = i + 5 * 1;
-        }
-//    std::random_shuffle( map.begin(), map.end() ); 
+    bolt::cl::device_vector<int> map ( h_map.begin(), h_map.end() );	
+    bolt::cl::device_vector<int> stencil ( h_stencil.begin(), h_stencil.end() );
 
     is_even iepred;
 
@@ -885,7 +893,7 @@ TEST( DeviceMemory_Float, GatherIfPredicate )
     float n_input[10]   =  {9.5f,8.5f,7.5f,6.5f,5.5f,4.5f,3.5f,2.5f,1.5f,0.5f};
     int n_stencil[10] =  {0,1,0,1,0,1,0,1,0,1};
 
-    bolt::cl::device_vector<float> exp_result;
+    std::vector<float> exp_result;
     {
         exp_result.push_back(9.5f);exp_result.push_back(-1.5f);
         exp_result.push_back(7.5f);exp_result.push_back(-1.5f);
@@ -909,7 +917,7 @@ TEST( DeviceMemory_Float, SerialGatherIfPredicate )
     float n_input[10]   =  {9.5f,8.5f,7.5f,6.5f,5.5f,4.5f,3.5f,2.5f,1.5f,0.5f};
     int n_stencil[10] =  {0,1,0,1,0,1,0,1,0,1};
 
-    bolt::cl::device_vector<float> exp_result;
+    std::vector<float> exp_result;
     {
         exp_result.push_back(9.5f);exp_result.push_back(-1.5f);
         exp_result.push_back(7.5f);exp_result.push_back(-1.5f);
@@ -937,7 +945,7 @@ TEST( DeviceMemory_Float, MulticoreGatherIfPredicate )
     float n_input[10]   =  {9.5f,8.5f,7.5f,6.5f,5.5f,4.5f,3.5f,2.5f,1.5f,0.5f};
     int n_stencil[10] =  {0,1,0,1,0,1,0,1,0,1};
 
-    bolt::cl::device_vector<float> exp_result;
+    std::vector<float> exp_result;
     {
         exp_result.push_back(9.5f);exp_result.push_back(-1.5f);
         exp_result.push_back(7.5f);exp_result.push_back(-1.5f);
@@ -1370,7 +1378,7 @@ TEST( DeviceMemory_Double, GatherIfPredicate )
     double n_input[10]   =  {9.5,8.5,7.5,6.5,5.5,4.5,3.5,2.5,1.5,0.5};
     int n_stencil[10] =  {0,1,0,1,0,1,0,1,0,1};
 
-    bolt::cl::device_vector<double> exp_result;
+    std::vector<double> exp_result;
     {
         exp_result.push_back(9.5);exp_result.push_back(-1.5);
         exp_result.push_back(7.5);exp_result.push_back(-1.5);
@@ -1394,7 +1402,7 @@ TEST( DeviceMemory_Double, SerialGatherIfPredicate )
     double n_input[10]   =  {9.5,8.5,7.5,6.5,5.5,4.5,3.5,2.5,1.5,0.5};
     int n_stencil[10] =  {0,1,0,1,0,1,0,1,0,1};
 
-    bolt::cl::device_vector<double> exp_result;
+    std::vector<double> exp_result;
     {
         exp_result.push_back(9.5);exp_result.push_back(-1.5);
         exp_result.push_back(7.5);exp_result.push_back(-1.5);
@@ -1422,7 +1430,7 @@ TEST( DeviceMemory_Double, MulticoreGatherIfPredicate )
     double n_input[10]   =  {9.5,8.5,7.5,6.5,5.5,4.5,3.5,2.5,1.5,0.5};
     int n_stencil[10] =  {0,1,0,1,0,1,0,1,0,1};
 
-    bolt::cl::device_vector<double> exp_result;
+    std::vector<double> exp_result;
     {
         exp_result.push_back(9.5);exp_result.push_back(-1.5);
         exp_result.push_back(7.5);exp_result.push_back(-1.5);
@@ -1736,7 +1744,7 @@ TEST(DeviceMemory_Int, Gather )
     int n_map[10] =  {0,1,2,3,4,5,6,7,8,9};
     int n_input[10] =  {9,8,7,6,5,4,3,2,1,0};
 
-    bolt::cl::device_vector<int> exp_result;
+    std::vector<int> exp_result;
     {
         exp_result.push_back(9);exp_result.push_back(8);
         exp_result.push_back(7);exp_result.push_back(6);
@@ -1759,7 +1767,7 @@ TEST(DeviceMemory_Int, SerialGather )
     int n_map[10] =  {0,1,2,3,4,5,6,7,8,9};
     int n_input[10] =  {9,8,7,6,5,4,3,2,1,0};
 
-    bolt::cl::device_vector<int> exp_result;
+    std::vector<int> exp_result;
     {
         exp_result.push_back(9);exp_result.push_back(8);
         exp_result.push_back(7);exp_result.push_back(6);
@@ -1785,7 +1793,7 @@ TEST(DeviceMemory_Int, MulticoreGather )
     int n_map[10] =  {0,1,2,3,4,5,6,7,8,9};
     int n_input[10] =  {9,8,7,6,5,4,3,2,1,0};
 
-    bolt::cl::device_vector<int> exp_result;
+    std::vector<int> exp_result;
     {
         exp_result.push_back(9);exp_result.push_back(8);
         exp_result.push_back(7);exp_result.push_back(6);
@@ -1812,7 +1820,7 @@ TEST(DeviceMemory_Int, Gather_Fancy_map )
     bolt::cl::counting_iterator<int> map(0); 
     int n_input[10] =  {9,8,7,6,5,4,3,2,1,0};
 
-    bolt::cl::device_vector<int> exp_result;
+    std::vector<int> exp_result;
     {
         exp_result.push_back(9);exp_result.push_back(8);
         exp_result.push_back(7);exp_result.push_back(6);
@@ -1832,7 +1840,7 @@ TEST(DeviceMemory_Int, SerialGather_Fancy_map )
     bolt::cl::counting_iterator<int> map(0); 
     int n_input[10] =  {9,8,7,6,5,4,3,2,1,0};
 
-    bolt::cl::device_vector<int> exp_result;
+    std::vector<int> exp_result;
     {
         exp_result.push_back(9);exp_result.push_back(8);
         exp_result.push_back(7);exp_result.push_back(6);
@@ -1855,7 +1863,7 @@ TEST(DeviceMemory_Int, MulticoreGather_Fancy_map )
     bolt::cl::counting_iterator<int> map(0); 
     int n_input[10] =  {9,8,7,6,5,4,3,2,1,0};
 
-    bolt::cl::device_vector<int> exp_result;
+    std::vector<int> exp_result;
     {
         exp_result.push_back(9);exp_result.push_back(8);
         exp_result.push_back(7);exp_result.push_back(6);
@@ -1879,7 +1887,7 @@ TEST(DeviceMemory_Int, Gather_Fancy_Input )
     int n_map[10] =  {0,1,2,3,4,5,6,7,8,9};
     bolt::cl::counting_iterator<int> input(0); 
 
-    bolt::cl::device_vector<int> exp_result;
+    std::vector<int> exp_result;
     {
         exp_result.push_back(0);exp_result.push_back(1);
         exp_result.push_back(2);exp_result.push_back(3);
@@ -1901,7 +1909,7 @@ TEST(DeviceMemory_Int, SerialGather_Fancy_Input )
     int n_map[10] =  {0,1,2,3,4,5,6,7,8,9};
     bolt::cl::counting_iterator<int> input(0); 
 
-    bolt::cl::device_vector<int> exp_result;
+    std::vector<int> exp_result;
     {
         exp_result.push_back(0);exp_result.push_back(1);
         exp_result.push_back(2);exp_result.push_back(3);
@@ -1926,7 +1934,7 @@ TEST(DeviceMemory_Int, MulticoreGather_Fancy_Input )
     int n_map[10] =  {0,1,2,3,4,5,6,7,8,9};
     bolt::cl::counting_iterator<int> input(0); 
 
-    bolt::cl::device_vector<int> exp_result;
+    std::vector<int> exp_result;
     {
         exp_result.push_back(0);exp_result.push_back(1);
         exp_result.push_back(2);exp_result.push_back(3);
@@ -2145,17 +2153,19 @@ TEST_P(HostMemory_IntStdVector, MulticoreGather_Fancy_Input)
 
 TEST_P(DeviceMemory_IntBoltdVector, Gather)
 {
-    bolt::cl::device_vector<int> input( myStdVectSize,0);   
+    std::vector<int> h_input( myStdVectSize,0);   
+    std::vector<int> h_map (myStdVectSize,0);	
+
+    for( int i=0; i < myStdVectSize ; i++ )
+    {
+        h_map[i] = i;
+        h_input[i] =  i + 2 * i;
+    }
+
+    bolt::cl::device_vector<int> input( h_input.begin(), h_input.end() );   
     bolt::cl::device_vector<int> exp_result(myStdVectSize,0);    
     bolt::cl::device_vector<int> result ( myStdVectSize, 0 );
-    bolt::cl::device_vector<int> map (myStdVectSize,0);	
-    bolt::cl::device_vector<int> stencil (myStdVectSize,0);	
-    for( int i=0; i < myStdVectSize ; i++ )
-        {
-            map[i] = i;
-            input[i] =  i + 2 * i;
-        }
-//    std::random_shuffle( map.begin(), map.end() ); 
+    bolt::cl::device_vector<int> map ( h_map.begin(), h_map.end() );	
 
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
@@ -2167,16 +2177,19 @@ TEST_P(DeviceMemory_IntBoltdVector, Gather)
 }
 TEST_P(DeviceMemory_IntBoltdVector, MulticoreGather)
 {
-    bolt::cl::device_vector<int> input( myStdVectSize,0);   
+    std::vector<int> h_input( myStdVectSize,0);   
+    std::vector<int> h_map (myStdVectSize,0);	
+
+    for( int i=0; i < myStdVectSize ; i++ )
+    {
+        h_map[i] = i;
+        h_input[i] =  i + 2 * i;
+    }
+
+    bolt::cl::device_vector<int> input( h_input.begin(), h_input.end() );   
     bolt::cl::device_vector<int> exp_result(myStdVectSize,0);    
     bolt::cl::device_vector<int> result ( myStdVectSize, 0 );
-    bolt::cl::device_vector<int> map (myStdVectSize,0);	
-    bolt::cl::device_vector<int> stencil (myStdVectSize,0);	
-    for( int i=0; i < myStdVectSize ; i++ )
-        {
-            map[i] = i;
-            input[i] =  i + 2 * i;
-        }
+    bolt::cl::device_vector<int> map ( h_map.begin(), h_map.end() );	
 //    std::random_shuffle( map.begin(), map.end() ); 
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
@@ -2476,7 +2489,7 @@ TEST(DeviceMemory_Float, Gather )
     int n_map[10] =  {0,1,2,3,4,5,6,7,8,9};
     float n_input[10] =  {9.5f,8.5f,7.5f,6.5f,5.5f,4.5f,3.5f,2.5f,1.5f,0.5f};
 
-    bolt::cl::device_vector<float> exp_result;
+    std::vector<float> exp_result;
     {
         exp_result.push_back(9.5f);exp_result.push_back(8.5f);
         exp_result.push_back(7.5f);exp_result.push_back(6.5f);
@@ -2497,7 +2510,7 @@ TEST(DeviceMemory_Float, SerialGather )
     int n_map[10] =  {0,1,2,3,4,5,6,7,8,9};
     float n_input[10] =  {9.5f,8.5f,7.5f,6.5f,5.5f,4.5f,3.5f,2.5f,1.5f,0.5f};
 
-    bolt::cl::device_vector<float> exp_result;
+   std::vector<float> exp_result;
     {
         exp_result.push_back(9.5f);exp_result.push_back(8.5f);
         exp_result.push_back(7.5f);exp_result.push_back(6.5f);
@@ -2521,7 +2534,7 @@ TEST(DeviceMemory_Float, MulticoreGather )
     int n_map[10] =  {0,1,2,3,4,5,6,7,8,9};
     float n_input[10] =  {9.5f,8.5f,7.5f,6.5f,5.5f,4.5f,3.5f,2.5f,1.5f,0.5f};
 
-    bolt::cl::device_vector<float> exp_result;
+    std::vector<float> exp_result;
     {
         exp_result.push_back(9.5f);exp_result.push_back(8.5f);
         exp_result.push_back(7.5f);exp_result.push_back(6.5f);
@@ -2546,7 +2559,7 @@ TEST(DeviceMemory_Float, Gather_Fancy_map )
     bolt::cl::counting_iterator<int> map(0); 
     float n_input[10] =  {9.5f,8.5f,7.5f,6.5f,5.5f,4.5f,3.5f,2.5f,1.5f,0.5f};
 
-    bolt::cl::device_vector<float> exp_result;
+    std::vector<float> exp_result;
     {
         exp_result.push_back(9.5f);exp_result.push_back(8.5f);
         exp_result.push_back(7.5f);exp_result.push_back(6.5f);
@@ -2566,7 +2579,7 @@ TEST(DeviceMemory_Float, SerialGather_Fancy_map )
     bolt::cl::counting_iterator<int> map(0); 
     float n_input[10] =  {9.5f,8.5f,7.5f,6.5f,5.5f,4.5f,3.5f,2.5f,1.5f,0.5f};
 
-    bolt::cl::device_vector<float> exp_result;
+    std::vector<float> exp_result;
     {
         exp_result.push_back(9.5f);exp_result.push_back(8.5f);
         exp_result.push_back(7.5f);exp_result.push_back(6.5f);
@@ -2589,7 +2602,7 @@ TEST(DeviceMemory_Float, MulticoreGather_Fancy_map )
     bolt::cl::counting_iterator<int> map(0); 
     float n_input[10] =  {9.5f,8.5f,7.5f,6.5f,5.5f,4.5f,3.5f,2.5f,1.5f,0.5f};
 
-    bolt::cl::device_vector<float> exp_result;
+    std::vector<float> exp_result;
     {
         exp_result.push_back(9.5f);exp_result.push_back(8.5f);
         exp_result.push_back(7.5f);exp_result.push_back(6.5f);
@@ -2613,7 +2626,7 @@ TEST(DeviceMemory_Float, Gather_Fancy_Input )
     int n_map[10] =  {0,1,2,3,4,5,6,7,8,9};
     bolt::cl::counting_iterator<float> input(0.5f); 
 
-    bolt::cl::device_vector<float> exp_result;
+    std::vector<float> exp_result;
     {
         exp_result.push_back(0.5f);exp_result.push_back(1.5f);
         exp_result.push_back(2.5f);exp_result.push_back(3.5f);
@@ -2633,7 +2646,7 @@ TEST(DeviceMemory_Float, SerialGather_Fancy_Input )
     int n_map[10] =  {0,1,2,3,4,5,6,7,8,9};
     bolt::cl::counting_iterator<float> input(0.5f); 
 
-    bolt::cl::device_vector<float> exp_result;
+    std::vector<float> exp_result;
     {
         exp_result.push_back(0.5f);exp_result.push_back(1.5f);
         exp_result.push_back(2.5f);exp_result.push_back(3.5f);
@@ -2656,7 +2669,7 @@ TEST(DeviceMemory_Float, MulticoreGather_Fancy_Input )
     int n_map[10] =  {0,1,2,3,4,5,6,7,8,9};
     bolt::cl::counting_iterator<float> input(0.5f); 
 
-    bolt::cl::device_vector<float> exp_result;
+    std::vector<float> exp_result;
     {
         exp_result.push_back(0.5f);exp_result.push_back(1.5f);
         exp_result.push_back(2.5f);exp_result.push_back(3.5f);
@@ -3467,25 +3480,29 @@ TEST( HostMemory_int, OffsetGatherIfPredicate )
 TEST( HostMemory_int, OffsetGatherIfPredicateMedium )
 {
     size_t myStdVectSize = 1024;
+    int s_offset = 27;
+    int e_offset = 515;
+    size_t distance = e_offset - s_offset;
+
     std::vector<int> input( myStdVectSize,0);   
     std::vector<int> exp_result(myStdVectSize,0);    
     std::vector<int> result ( myStdVectSize, 0 );
     std::vector<int> map (myStdVectSize,0);
     std::vector<int> stencil (myStdVectSize,0);
-    for( int i=0; i < myStdVectSize ; i++ )
+    for( int i=0; i < distance ; i++ )
     {
-        map[i] = i;
+        map[i] = s_offset + i;
         input[i] =  i + 2 * i;
         stencil[i] =  i + 5 * i;
     }
     std::random_shuffle( map.begin(), map.end() );   
     is_even iepred;
 
-    bolt::cl::gather_if( map.begin()+27, map.begin()+515, stencil.begin()+56, input.begin(), result.begin()+25, iepred );
+    bolt::cl::gather_if( map.begin()+s_offset, map.begin()+e_offset, stencil.begin()+56, input.begin(), result.begin(), iepred );
 
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
-    bolt::cl::gather_if(ctl, map.begin()+27, map.begin()+515, stencil.begin()+56, input.begin(), exp_result.begin()+25, iepred );
+    bolt::cl::gather_if(ctl, map.begin()+s_offset, map.begin()+e_offset, stencil.begin()+56, input.begin(), exp_result.begin(), iepred );
 
     EXPECT_EQ(exp_result, result);
 }
@@ -3514,29 +3531,33 @@ TEST( HostMemory_int, OffsetGatherPredicate )
 TEST( HostMemory_int, OffsetGatherPredicateMedium )
 {
     size_t myStdVectSize = 1024;
+
+    int s_offset = 27;
+    int e_offset = 567;
+    size_t distance = e_offset - s_offset;
     std::vector<int> input( myStdVectSize,0);   
     std::vector<int> exp_result(myStdVectSize,0);    
     std::vector<int> result ( myStdVectSize, 0 );
     std::vector<int> map (myStdVectSize,0);	
-    for( int i=0; i < myStdVectSize ; i++ )
+    for( int i=0; i < distance ; i++ )
     {
-        map[i] = i;
+        map[i] = s_offset + i;
         input[i] =  i + 2 * i;
     }
     std::random_shuffle( map.begin(), map.end() ); 
 
-    bolt::cl::gather( map.begin()+27, map.begin()+567, input.begin(), result.begin()+2 );
+    bolt::cl::gather( map.begin() + s_offset, map.begin() + e_offset, input.begin(), result.begin()+2 );
 
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
-    bolt::cl::gather(ctl, map.begin()+27, map.begin()+567, input.begin(), exp_result.begin()+2 );
+    bolt::cl::gather(ctl, map.begin() + s_offset, map.begin() + e_offset, input.begin(), exp_result.begin()+2 );
 
     EXPECT_EQ(exp_result, result);
 }
-INSTANTIATE_TEST_CASE_P(ScatterIntLimit, HostMemory_IntStdVector, ::testing::Range(10, 2400, 23));
-INSTANTIATE_TEST_CASE_P(ScatterIntLimit, DeviceMemory_IntBoltdVector, ::testing::Range(10, 2400, 23));
-INSTANTIATE_TEST_CASE_P(ScatterUDDLimit, HostMemory_UDDTestInt2, ::testing::Range(10, 2400, 23)); 
-INSTANTIATE_TEST_CASE_P(ScatterUDDLimit, HostMemory_UDDTestIntFloat, ::testing::Range(10, 2400, 23)); 
+INSTANTIATE_TEST_CASE_P(GatherIntLimit, HostMemory_IntStdVector, ::testing::Range(10, 2400, 23));
+INSTANTIATE_TEST_CASE_P(GatherIntLimit, DeviceMemory_IntBoltdVector, ::testing::Range(10, 2400, 23));
+INSTANTIATE_TEST_CASE_P(GatherUDDLimit, HostMemory_UDDTestInt2, ::testing::Range(10, 2400, 23)); 
+INSTANTIATE_TEST_CASE_P(GatherUDDLimit, HostMemory_UDDTestIntFloat, ::testing::Range(10, 2400, 23)); 
 
 
 int main(int argc, char* argv[])
