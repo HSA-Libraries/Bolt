@@ -16,11 +16,8 @@
 ############################################################################                                                                                     
 
 # List the names of common files to compile across all platforms
-set( clBolt.Example.StdDev.Source stdafx.cpp StdDev.cpp )
-set( clBolt.Example.StdDev.Headers 	stdafx.h 
-								targetver.h 
-								${BOLT_INCLUDE_DIRS}/bolt/cl/scan.h 
-								${BOLT_INCLUDE_DIRS}/bolt/cl/detail/scan.inl )
+set( clBolt.Example.StdDev.Source  StdDev.cpp )
+set( clBolt.Example.StdDev.Headers ${BOLT_INCLUDE_DIRS}/bolt/cl/scan.h)
 
 set( clBolt.Example.StdDev.Files ${clBolt.Example.StdDev.Source} ${clBolt.Example.StdDev.Headers} )
 

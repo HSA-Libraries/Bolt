@@ -15,7 +15,7 @@
 
 ***************************************************************************/                                                                                     
 
-#include "stdafx.h"
+#include <bolt/unicode.h>
 
 #include "bolt/cl/reduce.h"
 #include "bolt/cl/transform_reduce.h"

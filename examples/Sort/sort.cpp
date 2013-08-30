@@ -15,9 +15,8 @@
 
 ***************************************************************************/
 
-
+#include <bolt/unicode.h>
 #include <bolt/cl/sort.h>
-#include "myocl.h"
 
 #include <vector>
 #include <numeric>

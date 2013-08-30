@@ -62,7 +62,7 @@ get_property( LIB64 GLOBAL PROPERTY FIND_LIBRARY_USE_LIB64_PATHS )
 if( NOT BOLT_FIND_COMPONENTS )
 	set( BOLT_FIND_COMPONENTS CL )
 endif( )
-
+if(WIN32)
 if( MSVC_VERSION VERSION_LESS 1600 )
     set( myMSVCVer "vc90" )
 elseif( MSVC_VERSION VERSION_LESS 1700 )
@@ -70,17 +70,28 @@ elseif( MSVC_VERSION VERSION_LESS 1700 )
 elseif( MSVC_VERSION VERSION_LESS 1800 )
     set( myMSVCVer "vc110" )
 endif( )
+else()
+	set( myMSVCVer "gcc" )
+endif()
+
+if(WIN32)
+ set( BoltLibName "clBolt.runtime.${myMSVCVer}") 
+ set( LIB_EXT ".lib")	
+else()
+ set( BoltLibName "libclBolt.runtime.${myMSVCVer}")
+ set( LIB_EXT ".a")	
+endif()
 
 # Eventually, Bolt may support multiple backends, but for now it only supports CL
 list( FIND BOLT_FIND_COMPONENTS CL find_CL )
 if( NOT find_CL EQUAL -1 )
-	set( BOLT_LIBNAME_BASE clBolt.runtime.${myMSVCVer} )
+	set( BOLT_LIBNAME_BASE ${BoltLibName} )
 endif( )
 
 if( NOT find_CL EQUAL -1 )
 	# Find and set the location of main BOLT static lib file
 	find_library( BOLT_LIBRARY_STATIC_RELEASE
-		NAMES ${BOLT_LIBNAME_BASE}.lib
+		NAMES ${BOLT_LIBNAME_BASE}${LIB_EXT}
 		HINTS
 			${BOLT_ROOT}
 			ENV BOLT_ROOT
@@ -91,7 +102,7 @@ if( NOT find_CL EQUAL -1 )
 
 	# Find and set the location of main BOLT static lib file
 	find_library( BOLT_LIBRARY_STATIC_DEBUG
-		NAMES ${BOLT_LIBNAME_BASE}.debug.lib
+		NAMES ${BOLT_LIBNAME_BASE}.debug${LIB_EXT}
 		HINTS
 			${BOLT_ROOT}
 			ENV BOLT_ROOT

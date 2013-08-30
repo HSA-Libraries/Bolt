@@ -16,8 +16,8 @@
 ############################################################################                                                                                     
 
 # List the names of common files to compile across all platforms
-set( clBolt.Example.Sort.Source sort.cpp myocl.cpp )
-set( clBolt.Example.Sort.Headers ${BOLT_INCLUDE_DIRS}/bolt/cl/sort.h ${BOLT_INCLUDE_DIRS}/bolt/cl/detail/sort.inl )
+set( clBolt.Example.Sort.Source sort.cpp )
+set( clBolt.Example.Sort.Headers ${BOLT_INCLUDE_DIRS}/bolt/cl/sort.h)
 
 set( clBolt.Example.Sort.Files ${clBolt.Example.Sort.Source} ${clBolt.Example.Sort.Headers} )
 
