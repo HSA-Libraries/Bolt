@@ -530,7 +530,7 @@ TEST_P (ScanByKeyCLtypeTest, SerialInclTestLong)
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
-    bolt::cl::inclusive_scan_by_key(device_keys.begin(), device_keys.end(), input.begin(), output.begin(), eq, mM3);
+    bolt::cl::inclusive_scan_by_key(ctl, device_keys.begin(), device_keys.end(), input.begin(), output.begin(), eq, mM3);
     gold_scan_by_key(keys.begin(), keys.end(), refInput.begin(), refOutput.begin(), mM3);
     // compare results
     cmpArrays(refOutput, output);
@@ -569,7 +569,7 @@ TEST_P (ScanByKeyCLtypeTest, MulticoreInclTestLong)
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
-    bolt::cl::inclusive_scan_by_key(device_keys.begin(), device_keys.end(), input.begin(), output.begin(), eq, mM3);
+    bolt::cl::inclusive_scan_by_key(ctl, device_keys.begin(), device_keys.end(), input.begin(), output.begin(), eq, mM3);
     gold_scan_by_key(keys.begin(), keys.end(), refInput.begin(), refOutput.begin(), mM3);
     // compare results
     cmpArrays(refOutput, output);
@@ -645,7 +645,7 @@ TEST_P (ScanByKeyCLtypeTest, MulticoreInclTestULong)
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
-    bolt::cl::inclusive_scan_by_key(device_keys.begin(), device_keys.end(), input.begin(), output.begin(), eq, mM3);
+    bolt::cl::inclusive_scan_by_key(ctl, device_keys.begin(), device_keys.end(), input.begin(), output.begin(), eq, mM3);
     gold_scan_by_key(keys.begin(), keys.end(), refInput.begin(), refOutput.begin(), mM3);
     // compare results
     cmpArrays(refOutput, output);
@@ -720,7 +720,7 @@ TEST_P (ScanByKeyCLtypeTest, SerialExclTestLong)
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
-    bolt::cl::exclusive_scan_by_key(device_keys.begin(), device_keys.end(), input.begin(), output.begin(), 2, eq, mM3);
+    bolt::cl::exclusive_scan_by_key(ctl, device_keys.begin(), device_keys.end(), input.begin(), output.begin(), 2, eq, mM3);
     gold_scan_by_key_exclusive(keys.begin(), keys.end(), refInput.begin(), refOutput.begin(), mM3, 2);
     // compare results
     cmpArrays(refOutput, output);
@@ -758,7 +758,7 @@ TEST_P (ScanByKeyCLtypeTest, MulticoreExclTestLong)
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
-    bolt::cl::exclusive_scan_by_key(device_keys.begin(), device_keys.end(), input.begin(), output.begin(), 2, eq, mM3);
+    bolt::cl::exclusive_scan_by_key(ctl, device_keys.begin(), device_keys.end(), input.begin(), output.begin(), 2, eq, mM3);
     gold_scan_by_key_exclusive(keys.begin(), keys.end(), refInput.begin(), refOutput.begin(), mM3, 2);
     // compare results
     cmpArrays(refOutput, output);
@@ -834,7 +834,7 @@ TEST_P (ScanByKeyCLtypeTest, SerialExclTestULong)
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
-    bolt::cl::exclusive_scan_by_key(device_keys.begin(), device_keys.end(), input.begin(), output.begin(), 2, eq, mM3);
+    bolt::cl::exclusive_scan_by_key(ctl, device_keys.begin(), device_keys.end(), input.begin(), output.begin(), 2, eq, mM3);
     gold_scan_by_key_exclusive(keys.begin(), keys.end(), refInput.begin(), refOutput.begin(), mM3, 2);
     // compare results
     cmpArrays(refOutput, output);
@@ -872,7 +872,7 @@ TEST_P (ScanByKeyCLtypeTest, MulticoreExclTestULong)
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
-    bolt::cl::exclusive_scan_by_key(device_keys.begin(), device_keys.end(), input.begin(), output.begin(), 2, eq, mM3);
+    bolt::cl::exclusive_scan_by_key(ctl, device_keys.begin(), device_keys.end(), input.begin(), output.begin(), 2, eq, mM3);
     gold_scan_by_key_exclusive(keys.begin(), keys.end(), refInput.begin(), refOutput.begin(), mM3, 2);
     // compare results
     cmpArrays(refOutput, output);
@@ -948,7 +948,7 @@ TEST_P (ScanByKeyCLtypeTest, SerialInclTestShort)
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
-    bolt::cl::inclusive_scan_by_key(device_keys.begin(), device_keys.end(), input.begin(), output.begin(), eq, mM3);
+    bolt::cl::inclusive_scan_by_key(ctl, device_keys.begin(), device_keys.end(), input.begin(), output.begin(), eq, mM3);
     gold_scan_by_key(keys.begin(), keys.end(), refInput.begin(), refOutput.begin(), mM3);
     // compare results
     cmpArrays(refOutput, output);
@@ -987,7 +987,7 @@ TEST_P (ScanByKeyCLtypeTest, MulticoreInclTestShort)
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
-    bolt::cl::inclusive_scan_by_key(device_keys.begin(), device_keys.end(), input.begin(), output.begin(), eq, mM3);
+    bolt::cl::inclusive_scan_by_key(ctl, device_keys.begin(), device_keys.end(), input.begin(), output.begin(), eq, mM3);
     gold_scan_by_key(keys.begin(), keys.end(), refInput.begin(), refOutput.begin(), mM3);
     // compare results
     cmpArrays(refOutput, output);
@@ -1063,7 +1063,7 @@ TEST_P (ScanByKeyCLtypeTest, MulticoreInclTestUShort)
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
-    bolt::cl::inclusive_scan_by_key(device_keys.begin(), device_keys.end(), input.begin(), output.begin(), eq, mM3);
+    bolt::cl::inclusive_scan_by_key(ctl, device_keys.begin(), device_keys.end(), input.begin(), output.begin(), eq, mM3);
     gold_scan_by_key(keys.begin(), keys.end(), refInput.begin(), refOutput.begin(), mM3);
     // compare results
     cmpArrays(refOutput, output);
@@ -1139,7 +1139,7 @@ TEST_P (ScanByKeyCLtypeTest, SerialExclTestShort)
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
-    bolt::cl::exclusive_scan_by_key(device_keys.begin(), device_keys.end(), input.begin(), output.begin(), 2, eq, mM3);
+    bolt::cl::exclusive_scan_by_key(ctl, device_keys.begin(), device_keys.end(), input.begin(), output.begin(), 2, eq, mM3);
     gold_scan_by_key_exclusive(keys.begin(), keys.end(), refInput.begin(), refOutput.begin(), mM3, 2);
     // compare results
     cmpArrays(refOutput, output);
@@ -1178,7 +1178,7 @@ TEST_P (ScanByKeyCLtypeTest, MulticoreExclTestShort)
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
-    bolt::cl::exclusive_scan_by_key(device_keys.begin(), device_keys.end(), input.begin(), output.begin(), 2, eq, mM3);
+    bolt::cl::exclusive_scan_by_key(ctl, device_keys.begin(), device_keys.end(), input.begin(), output.begin(), 2, eq, mM3);
     gold_scan_by_key_exclusive(keys.begin(), keys.end(), refInput.begin(), refOutput.begin(), mM3, 2);
     // compare results
     cmpArrays(refOutput, output);
@@ -1254,7 +1254,7 @@ TEST_P (ScanByKeyCLtypeTest, SerialExclTestUShort)
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
-    bolt::cl::exclusive_scan_by_key(device_keys.begin(), device_keys.end(), input.begin(), output.begin(), 2, eq, mM3);
+    bolt::cl::exclusive_scan_by_key(ctl, device_keys.begin(), device_keys.end(), input.begin(), output.begin(), 2, eq, mM3);
     gold_scan_by_key_exclusive(keys.begin(), keys.end(), refInput.begin(), refOutput.begin(), mM3, 2);
     // compare results
     cmpArrays(refOutput, output);
@@ -1293,7 +1293,7 @@ TEST_P (ScanByKeyCLtypeTest, MulticoreExclTestUShort)
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
-    bolt::cl::exclusive_scan_by_key(device_keys.begin(), device_keys.end(), input.begin(), output.begin(), 2, eq, mM3);
+    bolt::cl::exclusive_scan_by_key(ctl, device_keys.begin(), device_keys.end(), input.begin(), output.begin(), 2, eq, mM3);
     gold_scan_by_key_exclusive(keys.begin(), keys.end(), refInput.begin(), refOutput.begin(), mM3, 2);
     // compare results
     cmpArrays(refOutput, output);
@@ -3304,7 +3304,7 @@ TEST(InclusiveScanByKey, DeviceVectorInclFloat)
     // call scan
     bolt::cl::equal_to<int> eq; 
     bolt::cl::plus<float> mM3; 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu); // tested for serial cpu also
     bolt::cl::inclusive_scan_by_key(ctl, device_keys.begin(), device_keys.end(), input.begin(), output.begin(), eq, mM3);
@@ -3348,7 +3348,7 @@ TEST(InclusiveScanByKey, Serial_DeviceVectorInclFloat)
     // call scan
     bolt::cl::equal_to<int> eq; 
     bolt::cl::plus<float> mM3; 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu); 
     bolt::cl::inclusive_scan_by_key(ctl, device_keys.begin(), device_keys.end(), input.begin(), output.begin(),eq,mM3);
@@ -3393,7 +3393,7 @@ TEST(InclusiveScanByKey, MultiCore_DeviceVectorInclFloat)
     // call scan
     bolt::cl::equal_to<int> eq; 
     bolt::cl::plus<float> mM3; 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu); 
     bolt::cl::inclusive_scan_by_key(ctl, device_keys.begin(), device_keys.end(), input.begin(), output.begin(),eq,mM3);
@@ -3440,7 +3440,7 @@ TEST(InclusiveScanByKey, DeviceVectorInclDouble)
     bolt::cl::plus<double> mM3; 
     // MixM3 mM3;
     // uddtM2_equal_to eq;
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu); // tested for serial cpu also
     bolt::cl::inclusive_scan_by_key(ctl, device_keys.begin(), device_keys.end(), input.begin(), output.begin(), eq, mM3);
@@ -3489,7 +3489,7 @@ TEST(ExclusiveScanByKey, DeviceVectorExclFloat)
     bolt::cl::equal_to<int> eq; 
     bolt::cl::plus<float> mM3; 
   
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu); // tested for serial cpu also
     bolt::cl::exclusive_scan_by_key(ctl, device_keys.begin(), device_keys.end(), input.begin(), output.begin(), 4.0f,eq, mM3);
@@ -3534,7 +3534,7 @@ TEST(ExclusiveScanByKey, Serial_DeviceVectorExclFloat)
     bolt::cl::equal_to<int> eq; 
     bolt::cl::plus<float> mM3; 
   
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu); 
     bolt::cl::exclusive_scan_by_key(ctl, device_keys.begin(), device_keys.end(), input.begin(), output.begin(),
@@ -3579,7 +3579,6 @@ TEST(ExclusiveScanByKey, MultiCore_DeviceVectorExclFloat)
     bolt::cl::equal_to<int> eq; 
     bolt::cl::plus<float> mM3; 
   
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
     bolt::cl::exclusive_scan_by_key(ctl, device_keys.begin(), device_keys.end(), input.begin(), output.begin(),
@@ -3624,7 +3623,6 @@ TEST(ExclusiveScanByKey, DeviceVectorExclDouble)
     // call scan
     bolt::cl::equal_to<int> eq; 
     bolt::cl::plus<double> mM3; 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu); // tested for serial cpu also
     bolt::cl::exclusive_scan_by_key(ctl, device_keys.begin(), device_keys.end(), input.begin(), output.begin(), 4.0,eq, mM3);
@@ -3664,7 +3662,7 @@ TEST(ExclusiveScanByKey, DeviceVectorExclUdd)
     // call scan
     MixM3 mM3;
     uddtM2_equal_to eq;
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu); // tested for serial cpu also
     bolt::cl::exclusive_scan_by_key(ctl, device_keys.begin(), device_keys.end(), input.begin(), output.begin(), initialMixM3,eq, mM3);
@@ -3706,7 +3704,7 @@ TEST(InclusiveScanByKey, MulticoreInclUdd)
     // call scan
     MixM3 mM3;
     uddtM2_equal_to eq;
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
     bolt::cl::inclusive_scan_by_key(ctl, keys.begin(), keys.end(), input.begin(), output.begin(), eq, mM3);
@@ -3793,7 +3791,7 @@ TEST(InclusiveScanByKey,SerialInclFloat)
     // call scan
     bolt::cl::equal_to<int> eq; 
     bolt::cl::plus<float> mM3; 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu); 
     bolt::cl::inclusive_scan_by_key(ctl, keys.begin(), keys.end(), input.begin(), output.begin(), eq, mM3);
@@ -3836,7 +3834,7 @@ TEST(InclusiveScanByKey, MulticoreInclFloat)
     // call scan
     bolt::cl::equal_to<int> eq; 
     bolt::cl::plus<float> mM3; 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu); // tested for serial cpu also
     bolt::cl::inclusive_scan_by_key(ctl, keys.begin(), keys.end(), input.begin(), output.begin(), eq, mM3);
@@ -3881,7 +3879,7 @@ TEST(InclusiveScanByKey, MulticoreInclDouble)
     bolt::cl::plus<double> mM3; 
     // MixM3 mM3;
     // uddtM2_equal_to eq;
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu); // tested for serial cpu also
     bolt::cl::inclusive_scan_by_key(ctl, keys.begin(), keys.end(), input.begin(), output.begin(), eq, mM3);
@@ -3925,7 +3923,6 @@ TEST(ExclusiveScanByKey, ExclFloat)
     bolt::cl::equal_to<int> eq; 
     bolt::cl::plus<float> mM3; 
   
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
 
     bolt::cl::exclusive_scan_by_key(ctl, keys.begin(), keys.end(), input.begin(), output.begin(), 4.0f,eq, mM3);
@@ -3967,7 +3964,6 @@ TEST(ExclusiveScanByKey, SerialExclFloat)
     bolt::cl::equal_to<int> eq; 
     bolt::cl::plus<float> mM3; 
   
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu); 
     bolt::cl::exclusive_scan_by_key(ctl, keys.begin(), keys.end(), input.begin(), output.begin(), 4.0f,eq, mM3);
@@ -4075,7 +4071,6 @@ TEST(ExclusiveScanByKey, MulticoreExclFloat)
     bolt::cl::equal_to<int> eq; 
     bolt::cl::plus<float> mM3; 
   
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu); // tested for serial cpu also
     bolt::cl::exclusive_scan_by_key(ctl, keys.begin(), keys.end(), input.begin(), output.begin(), 4.0f,eq, mM3);
@@ -4117,7 +4112,7 @@ TEST(ExclusiveScanByKey, MulticoreExclDouble)
     // call scan
     bolt::cl::equal_to<int> eq; 
     bolt::cl::plus<double> mM3; 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu); // tested for serial cpu also
     bolt::cl::exclusive_scan_by_key(ctl, keys.begin(), keys.end(), input.begin(), output.begin(), 4.0,eq, mM3);
@@ -4156,7 +4151,7 @@ TEST(ExclusiveScanByKey, MulticoreExclUdd)
     // call scan
     MixM3 mM3;
     uddtM2_equal_to eq;
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+   
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu); // tested for serial cpu also
     bolt::cl::exclusive_scan_by_key(ctl, keys.begin(), keys.end(), input.begin(), output.begin(), initialMixM3,eq, mM3);
@@ -4240,7 +4235,6 @@ TEST(ExclusiveScanByKey, SerialCLscanbykeyExclFloat)
     bolt::cl::equal_to<int> eq; 
     bolt::cl::plus<float> mM3; 
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu); 
   
@@ -4283,7 +4277,6 @@ TEST(ExclusiveScanByKey, MultiCoreCLscanbykeyExclFloat)
     bolt::cl::equal_to<int> eq; 
     bolt::cl::plus<float> mM3; 
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu); 
   
@@ -4398,7 +4391,6 @@ TEST(ExclusiveScanByKey, SerialCLscanbykeyExclUDD)
     MixM2 mM2;
     uddtM2_equal_to eq;
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu); 
   
@@ -4439,7 +4431,6 @@ TEST(ExclusiveScanByKey, MulticoreCLscanbykeyExclUDD)
     MixM2 mM2;
     uddtM2_equal_to eq;
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu); 
   
