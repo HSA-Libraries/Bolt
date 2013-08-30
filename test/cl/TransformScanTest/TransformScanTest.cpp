@@ -306,9 +306,8 @@ struct MixM3
     };
 };
 );
-uddtM3 identityMixM3 = { 0, 0.f, 1.0 };
-uddtM3 initialMixM3  = { 2, 3, 1.000001 };
-uddtM3 zeroMixM3  = { 0, 0.f, 0.000000 };
+uddtM3 identityMixM3 = { 0, 0.f, 0.0 };
+uddtM3 initialMixM3  = { 2, 3.f, 1.000001 };
 
 BOLT_FUNCTOR(NegateM3,
     struct NegateM3
@@ -500,8 +499,8 @@ TEST(NegateScanUserDefined, IncAddInt2)
     //setup containers
     int length = (1<<16)+23;
 //    bolt::cl::negate< uddtI2 > nI2;
-    bolt::cl::device_vector< uddtI2 > input(  length, initialAddI2,  CL_MEM_READ_WRITE, true  );
-    bolt::cl::device_vector< uddtI2 > output( length, identityAddI2, CL_MEM_READ_WRITE, false );
+    bolt::cl::device_vector< uddtI2 > input(  length, initialAddI2); //,  CL_MEM_READ_WRITE, true  );
+    bolt::cl::device_vector< uddtI2 > output( length, identityAddI2); //, CL_MEM_READ_WRITE, false );
     std::vector< uddtI2 > refInput( length, initialAddI2 );
     std::vector< uddtI2 > refOutput( length );
 
@@ -520,12 +519,11 @@ TEST(NegateScanUserDefined, SerialIncAddInt2)
     //setup containers
     int length = (1<<16)+23;
 //    bolt::cl::negate< uddtI2 > nI2;
-    bolt::cl::device_vector< uddtI2 > input(  length, initialAddI2,  CL_MEM_READ_WRITE, true  );
-    bolt::cl::device_vector< uddtI2 > output( length, identityAddI2, CL_MEM_READ_WRITE, false );
+    bolt::cl::device_vector< uddtI2 > input(  length, initialAddI2); //,  CL_MEM_READ_WRITE, true  );
+    bolt::cl::device_vector< uddtI2 > output( length, identityAddI2); //, CL_MEM_READ_WRITE, false );
     std::vector< uddtI2 > refInput( length, initialAddI2 );
     std::vector< uddtI2 > refOutput( length );
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -546,12 +544,11 @@ TEST(NegateScanUserDefined, MultiCoreIncAddInt2)
     //setup containers
     int length = (1<<16)+23;
 //    bolt::cl::negate< uddtI2 > nI2;
-    bolt::cl::device_vector< uddtI2 > input(  length, initialAddI2,  CL_MEM_READ_WRITE, true  );
-    bolt::cl::device_vector< uddtI2 > output( length, identityAddI2, CL_MEM_READ_WRITE, false );
+    bolt::cl::device_vector< uddtI2 > input(  length, initialAddI2); //,  CL_MEM_READ_WRITE, true  );
+    bolt::cl::device_vector< uddtI2 > output( length, identityAddI2); //, CL_MEM_READ_WRITE, false );
     std::vector< uddtI2 > refInput( length, initialAddI2 );
     std::vector< uddtI2 > refOutput( length );
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
@@ -744,8 +741,8 @@ TEST(NegateScanUserDefined, IncMultiplyDouble4)
     //setup containers
     int length = (1<<16)+11;
 //    bolt::cl::negate< uddtD4 > nD4;
-    bolt::cl::device_vector< uddtD4 > input(  length, initialMultD4,  CL_MEM_READ_WRITE, true  );
-    bolt::cl::device_vector< uddtD4 > output( length, identityMultD4, CL_MEM_READ_WRITE, false );
+    bolt::cl::device_vector< uddtD4 > input(  length, initialMultD4); //,  CL_MEM_READ_WRITE, true  );
+    bolt::cl::device_vector< uddtD4 > output( length, identityMultD4); //, CL_MEM_READ_WRITE, false );
     std::vector< uddtD4 > refInput( length, initialMultD4 );
     std::vector< uddtD4 > refOutput( length );
 
@@ -764,12 +761,12 @@ TEST(NegateScanUserDefined, SerialIncMultiplyDouble4)
     //setup containers
     int length = (1<<16)+11;
 //    bolt::cl::negate< uddtD4 > nD4;
-    bolt::cl::device_vector< uddtD4 > input(  length, initialMultD4,  CL_MEM_READ_WRITE, true  );
-    bolt::cl::device_vector< uddtD4 > output( length, identityMultD4, CL_MEM_READ_WRITE, false );
+    bolt::cl::device_vector< uddtD4 > input(  length, initialMultD4); //,  CL_MEM_READ_WRITE, true  );
+    bolt::cl::device_vector< uddtD4 > output( length, identityMultD4); //, CL_MEM_READ_WRITE, false );
     std::vector< uddtD4 > refInput( length, initialMultD4 );
     std::vector< uddtD4 > refOutput( length );
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+   
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -788,12 +785,12 @@ TEST(NegateScanUserDefined, MultiCoreIncMultiplyDouble4)
     //setup containers
     int length = (1<<16)+11;
 //    bolt::cl::negate< uddtD4 > nD4;
-    bolt::cl::device_vector< uddtD4 > input(  length, initialMultD4,  CL_MEM_READ_WRITE, true  );
-    bolt::cl::device_vector< uddtD4 > output( length, identityMultD4, CL_MEM_READ_WRITE, false );
+    bolt::cl::device_vector< uddtD4 > input(  length, initialMultD4); //,  CL_MEM_READ_WRITE, true  );
+    bolt::cl::device_vector< uddtD4 > output( length, identityMultD4); //, CL_MEM_READ_WRITE, false );
     std::vector< uddtD4 > refInput( length, initialMultD4 );
     std::vector< uddtD4 > refOutput( length );
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
@@ -813,8 +810,8 @@ TEST(NegateScanUserDefined, IncMixedM3)
     //setup containers
     int length = (1<<16)+57;
 //    bolt::cl::negate< uddtM3 > nM3;
-    bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3,  CL_MEM_READ_WRITE, true  );
-    bolt::cl::device_vector< uddtM3 > output( length, identityMixM3, CL_MEM_READ_WRITE, false );
+    bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3); //,  CL_MEM_READ_WRITE, true  );
+    bolt::cl::device_vector< uddtM3 > output( length, identityMixM3); //, CL_MEM_READ_WRITE, false );
     std::vector< uddtM3 > refInput( length, initialMixM3 );
     std::vector< uddtM3 > refOutput( length );
 
@@ -833,12 +830,12 @@ TEST(NegateScanUserDefined, SerialIncMixedM3)
     //setup containers
     int length = (1<<16)+57;
 //    bolt::cl::negate< uddtM3 > nM3;
-    bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3,  CL_MEM_READ_WRITE, true  );
-    bolt::cl::device_vector< uddtM3 > output( length, identityMixM3, CL_MEM_READ_WRITE, false );
+    bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3); //,  CL_MEM_READ_WRITE, true  );
+    bolt::cl::device_vector< uddtM3 > output( length, identityMixM3); //, CL_MEM_READ_WRITE, false );
     std::vector< uddtM3 > refInput( length, initialMixM3 );
     std::vector< uddtM3 > refOutput( length );
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -857,12 +854,11 @@ TEST(NegateScanUserDefined, MultiCoreIncMixedM3)
     //setup containers
     int length = (1<<16)+57;
 //    bolt::cl::negate< uddtM3 > nM3;
-    bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3,  CL_MEM_READ_WRITE, true  );
-    bolt::cl::device_vector< uddtM3 > output( length, identityMixM3, CL_MEM_READ_WRITE, false );
+    bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3); //,  CL_MEM_READ_WRITE, true  );
+    bolt::cl::device_vector< uddtM3 > output( length, identityMixM3); //, CL_MEM_READ_WRITE, false );
     std::vector< uddtM3 > refInput( length, initialMixM3 );
     std::vector< uddtM3 > refOutput( length );
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
@@ -885,8 +881,8 @@ TEST(NegateScanUserDefined, ExclAddInt2)
     //setup containers
     int length = (1<<16)+23;
 //    bolt::cl::negate< uddtI2 > nI2;
-    bolt::cl::device_vector< uddtI2 > input(  length, initialAddI2,  CL_MEM_READ_WRITE, true  );
-    bolt::cl::device_vector< uddtI2 > output( length, identityAddI2, CL_MEM_READ_WRITE, false );
+    bolt::cl::device_vector< uddtI2 > input(  length, initialAddI2); //,  CL_MEM_READ_WRITE, true  );
+    bolt::cl::device_vector< uddtI2 > output( length, identityAddI2); //, CL_MEM_READ_WRITE, false );
     std::vector< uddtI2 > refInput( length, initialAddI2 ); //refInput[0] = identityAddI2;
     std::vector< uddtI2 > refOutput( length );
 
@@ -906,12 +902,11 @@ TEST(NegateScanUserDefined, SerialExclAddInt2)
     //setup containers
     int length = (1<<16)+23;
 //    bolt::cl::negate< uddtI2 > nI2;
-    bolt::cl::device_vector< uddtI2 > input(  length, initialAddI2,  CL_MEM_READ_WRITE, true  );
-    bolt::cl::device_vector< uddtI2 > output( length, identityAddI2, CL_MEM_READ_WRITE, false );
+    bolt::cl::device_vector< uddtI2 > input(  length, initialAddI2); //,  CL_MEM_READ_WRITE, true  );
+    bolt::cl::device_vector< uddtI2 > output( length, identityAddI2); //, CL_MEM_READ_WRITE, false );
     std::vector< uddtI2 > refInput( length, initialAddI2 );// refInput[0] = identityAddI2;
     std::vector< uddtI2 > refOutput( length );
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -931,12 +926,11 @@ TEST(NegateScanUserDefined, MultiCoreExclAddInt2)
     //setup containers
     int length = (1<<16)+23;
 //    bolt::cl::negate< uddtI2 > nI2;
-    bolt::cl::device_vector< uddtI2 > input(  length, initialAddI2,  CL_MEM_READ_WRITE, true  );
-    bolt::cl::device_vector< uddtI2 > output( length, identityAddI2, CL_MEM_READ_WRITE, false );
+    bolt::cl::device_vector< uddtI2 > input(  length, initialAddI2); //,  CL_MEM_READ_WRITE, true  );
+    bolt::cl::device_vector< uddtI2 > output( length, identityAddI2); //, CL_MEM_READ_WRITE, false );
     std::vector< uddtI2 > refInput( length, initialAddI2 ); //refInput[0] = identityAddI2;
     std::vector< uddtI2 > refOutput( length );
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
@@ -957,8 +951,8 @@ TEST(NegateScanUserDefined, ExclMultiplyDouble4)
     //setup containers
     int length = (1<<16)+11;
 //    bolt::cl::negate< uddtD4 > nD4;
-    bolt::cl::device_vector< uddtD4 > input(  length, initialMultD4,  CL_MEM_READ_WRITE, true  );
-    bolt::cl::device_vector< uddtD4 > output( length, identityMultD4, CL_MEM_READ_WRITE, false );
+    bolt::cl::device_vector< uddtD4 > input(  length, initialMultD4); //,  CL_MEM_READ_WRITE, true  );
+    bolt::cl::device_vector< uddtD4 > output( length, identityMultD4); //, CL_MEM_READ_WRITE, false );
     std::vector< uddtD4 > refInput( length, initialMultD4 );// refInput[0] = identityMultD4;
     std::vector< uddtD4 > refOutput( length );
 
@@ -979,12 +973,11 @@ TEST(NegateScanUserDefined, SerialExclMultiplyDouble4)
     //setup containers
     int length = (1<<16)+11;
 //    bolt::cl::negate< uddtD4 > nD4;
-    bolt::cl::device_vector< uddtD4 > input(  length, initialMultD4,  CL_MEM_READ_WRITE, true  );
-    bolt::cl::device_vector< uddtD4 > output( length, identityMultD4, CL_MEM_READ_WRITE, false );
+    bolt::cl::device_vector< uddtD4 > input(  length, initialMultD4); //,  CL_MEM_READ_WRITE, true  );
+    bolt::cl::device_vector< uddtD4 > output( length, identityMultD4); //, CL_MEM_READ_WRITE, false );
     std::vector< uddtD4 > refInput( length, initialMultD4 );// refInput[0] = identityMultD4;
     std::vector< uddtD4 > refOutput( length );
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -1003,12 +996,11 @@ TEST(NegateScanUserDefined, MultiCoreExclMultiplyDouble4)
     //setup containers
     int length = (1<<16)+11;
 //    bolt::cl::negate< uddtD4 > nD4;
-    bolt::cl::device_vector< uddtD4 > input(  length, initialMultD4,  CL_MEM_READ_WRITE, true  );
-    bolt::cl::device_vector< uddtD4 > output( length, identityMultD4, CL_MEM_READ_WRITE, false );
+    bolt::cl::device_vector< uddtD4 > input(  length, initialMultD4); //,  CL_MEM_READ_WRITE, true  );
+    bolt::cl::device_vector< uddtD4 > output( length, identityMultD4); //, CL_MEM_READ_WRITE, false );
     std::vector< uddtD4 > refInput( length, initialMultD4 );// refInput[0] = identityMultD4;
     std::vector< uddtD4 > refOutput( length );
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
@@ -1029,8 +1021,8 @@ TEST(NegateScanUserDefined, ExclMixedM3)
     //setup containers
     int length = (1<<16)+57;
 //    bolt::cl::negate< uddtM3 > nM3;
-    bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3,  CL_MEM_READ_WRITE, true  );
-    bolt::cl::device_vector< uddtM3 > output( length, identityMixM3, CL_MEM_READ_WRITE, false );
+    bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3); //,  CL_MEM_READ_WRITE, true  );
+    bolt::cl::device_vector< uddtM3 > output( length, identityMixM3); //, CL_MEM_READ_WRITE, false );
     std::vector< uddtM3 > refInput( length, initialMixM3 ); //refInput[0] = identityMixM3;
     std::vector< uddtM3 > refOutput( length );
 
@@ -1050,12 +1042,11 @@ TEST(NegateScanUserDefined, SerialExclMixedM3)
     //setup containers
     int length = (1<<16)+57;
 //    bolt::cl::negate< uddtM3 > nM3;
-    bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3,  CL_MEM_READ_WRITE, true  );
-    bolt::cl::device_vector< uddtM3 > output( length, identityMixM3, CL_MEM_READ_WRITE, false );
+    bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3); //,  CL_MEM_READ_WRITE, true  );
+    bolt::cl::device_vector< uddtM3 > output( length, identityMixM3); //, CL_MEM_READ_WRITE, false );
     std::vector< uddtM3 > refInput( length, initialMixM3 ); //refInput[0] = identityMixM3;
     std::vector< uddtM3 > refOutput( length );
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -1074,12 +1065,11 @@ TEST(NegateScanUserDefined, MultiCoreExclMixedM3)
     //setup containers
     int length = (1<<16)+57;
 //    bolt::cl::negate< uddtM3 > nM3;
-    bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3,  CL_MEM_READ_WRITE, true  );
-    bolt::cl::device_vector< uddtM3 > output( length, identityMixM3, CL_MEM_READ_WRITE, false );
+    bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3); //,  CL_MEM_READ_WRITE, true  );
+    bolt::cl::device_vector< uddtM3 > output( length, identityMixM3); //, CL_MEM_READ_WRITE, false );
     std::vector< uddtM3 > refInput( length, initialMixM3 );// refInput[0] = identityMixM3;
     std::vector< uddtM3 > refOutput( length );
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
@@ -1097,14 +1087,13 @@ TEST(NegateScanUserDefined, MultiCoreExclMixedM3)
 TEST(NegateScanUserDefined, SerialExclOffsetTest)
 {
     //setup containers
-    int length = (1<<16);
+    int length = (1<<15);
 //    bolt::cl::negate< uddtM3 > nM3;
-    bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3,  CL_MEM_READ_WRITE, true  );
-    bolt::cl::device_vector< uddtM3 > output( length, identityMixM3, CL_MEM_READ_WRITE, false );
+    bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3);
+    bolt::cl::device_vector< uddtM3 > output( length, identityMixM3);
     std::vector< uddtM3 > refInput( length, initialMixM3 );// refInput[0] = identityMixM3;
-    std::vector< uddtM3 > refOutput( length, zeroMixM3 );
+    std::vector< uddtM3 > refOutput( length,identityMixM3);
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -1119,16 +1108,45 @@ TEST(NegateScanUserDefined, SerialExclOffsetTest)
     cmpArrays(refOutput, output);
 }
 
+TEST(NegateScanFloatDefined, CLExclOffsetTestFloat)
+{
+    //setup containers1ost
+    int length = (1<<18);
+
+
+    bolt::cl::device_vector< float > input( length, 1.f );// refInput[0] = identityMixM3;
+    bolt::cl::device_vector< float > output( length,0.f);
+    std::vector< float > refInput( length, 1.f );// refInput[0] = identityMixM3;
+    std::vector< float > refOutput( length, 0.f);
+	
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::OpenCL);
+
+    // call scan
+
+    bolt::cl::transform_exclusive_scan( ctl, input.begin()+(length/2), input.end()-(length/4), output.begin()+(length/2), bolt::cl::negate<float>(), 3.f, bolt::cl::plus<float>() );
+
+
+    std::transform(   refInput.begin()+(length/2), refInput.end()-(length/4),  refOutput.begin()+(length/2), bolt::cl::negate<float>());
+    Serial_scan<float, bolt::cl::plus<float>, float>(&refOutput[(length/2)], &refOutput[(length/2)], length-(length/2)-(length/4), bolt::cl::plus<float>(), false, 3.f);
+
+    // compare results
+    cmpArrays(refOutput, output);
+}
+
+
+
+
 
 TEST(NegateScanUserDefined, CLExclOffsetTest)
 {
     //setup containers
     int length = (1<<16);
 //    bolt::cl::negate< uddtM3 > nM3;
-    bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3,  CL_MEM_READ_WRITE, true  );
-    bolt::cl::device_vector< uddtM3 > output( length, identityMixM3, CL_MEM_READ_WRITE, false );
+    bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3);
+    bolt::cl::device_vector< uddtM3 > output( length, identityMixM3);
     std::vector< uddtM3 > refInput( length, initialMixM3 );// refInput[0] = identityMixM3;
-    std::vector< uddtM3 > refOutput( length, zeroMixM3 );
+    std::vector< uddtM3 > refOutput( length, identityMixM3 );
 
     // call scan
     MixM3 mM3;
@@ -1141,19 +1159,18 @@ TEST(NegateScanUserDefined, CLExclOffsetTest)
     cmpArrays(refOutput, output);
 }
 
-TEST(NegateScanUserDefined, SerialInclOffsetTest)
+TEST(NegateScanUserDefined, MulticoreInclOffsetTest)
 {
     //setup containers
     int length = (1<<16);
 //    bolt::cl::negate< uddtM3 > nM3;
-    bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3,  CL_MEM_READ_WRITE, true  );
-    bolt::cl::device_vector< uddtM3 > output( length, identityMixM3, CL_MEM_READ_WRITE, false );
+    bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3);
+    bolt::cl::device_vector< uddtM3 > output( length, identityMixM3);
     std::vector< uddtM3 > refInput( length, initialMixM3 );
-    std::vector< uddtM3 > refOutput( length, zeroMixM3 );
+    std::vector< uddtM3 > refOutput( length, identityMixM3);
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
     // call scan
     MixM3 mM3;
@@ -1170,10 +1187,10 @@ TEST(NegateScanUserDefined, CLInclOffsetTest)
     //setup containers
     int length = (1<<16);
 //    bolt::cl::negate< uddtM3 > nM3;
-    bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3,  CL_MEM_READ_WRITE, true  );
-    bolt::cl::device_vector< uddtM3 > output( length, identityMixM3, CL_MEM_READ_WRITE, false );
+    bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3);
+    bolt::cl::device_vector< uddtM3 > output( length, identityMixM3);
     std::vector< uddtM3 > refInput( length, initialMixM3 );
-    std::vector< uddtM3 > refOutput( length, zeroMixM3 );
+    std::vector< uddtM3 > refOutput( length, identityMixM3 );
 
     // call scan
      MixM3 mM3;
@@ -1190,8 +1207,8 @@ TEST(Mixed, IncAddInt2)
     int length = (1<<16)+23;
 //    bolt::cl::negate< uddtI2 > nI2;
     uddtD4 initialD4 = {1.234, 2.345, 3.456, 4.567};
-    bolt::cl::device_vector< uddtD4 > input(  length, initialD4,  CL_MEM_READ_WRITE, true  );
-    bolt::cl::device_vector< uddtI2 > output( length, identityAddI2, CL_MEM_READ_WRITE, false );
+    bolt::cl::device_vector< uddtD4 > input(  length, initialD4); //,  CL_MEM_READ_WRITE, true  );
+    bolt::cl::device_vector< uddtI2 > output( length, identityAddI2); //, CL_MEM_READ_WRITE, false );
     std::vector< uddtD4 > refInput( length, initialD4 );
     std::vector< uddtI2 > refIntermediate( length, identityAddI2 );
     std::vector< uddtI2 > refOutput( length, identityAddI2 );
@@ -1212,8 +1229,8 @@ TEST(Mixed, SerialIncAddInt2)
     int length = (1<<16)+23;
 //    bolt::cl::negate< uddtI2 > nI2;
     uddtD4 initialD4 = {1.234, 2.345, 3.456, 4.567};
-    bolt::cl::device_vector< uddtD4 > input(  length, initialD4,  CL_MEM_READ_WRITE, true  );
-    bolt::cl::device_vector< uddtI2 > output( length, identityAddI2, CL_MEM_READ_WRITE, false );
+    bolt::cl::device_vector< uddtD4 > input(  length, initialD4); //,  CL_MEM_READ_WRITE, true  );
+    bolt::cl::device_vector< uddtI2 > output( length, identityAddI2); //, CL_MEM_READ_WRITE, false );
     std::vector< uddtD4 > refInput( length, initialD4 );
     std::vector< uddtI2 > refIntermediate( length, identityAddI2 );
     std::vector< uddtI2 > refOutput( length, identityAddI2 );
@@ -1238,8 +1255,8 @@ TEST(Mixed, MultiCoreIncAddInt2)
     int length = (1<<16)+23;
 //    bolt::cl::negate< uddtI2 > nI2;
     uddtD4 initialD4 = {1.234, 2.345, 3.456, 4.567};
-    bolt::cl::device_vector< uddtD4 > input(  length, initialD4,  CL_MEM_READ_WRITE, true  );
-    bolt::cl::device_vector< uddtI2 > output( length, identityAddI2, CL_MEM_READ_WRITE, false );
+    bolt::cl::device_vector< uddtD4 > input(  length, initialD4); //,  CL_MEM_READ_WRITE, true  );
+    bolt::cl::device_vector< uddtI2 > output( length, identityAddI2); //, CL_MEM_READ_WRITE, false );
     std::vector< uddtD4 > refInput( length, initialD4 );
     std::vector< uddtI2 > refIntermediate( length, identityAddI2 );
     std::vector< uddtI2 > refOutput( length, identityAddI2 );

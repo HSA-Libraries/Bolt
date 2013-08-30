@@ -34,7 +34,7 @@ namespace bolt
 		  InputIterator1& first_key;
 		  InputIterator2& first_value;
 		  OutputIterator& result;
-      unsigned int numElements;
+		  unsigned int numElements, strt_indx, end_indx;
 		  const BinaryFunction binary_op;
 		  const BinaryPredicate binary_pred;
 		  const bool inclusive;
@@ -44,7 +44,7 @@ namespace bolt
 		  ScanKey_tbb( InputIterator1&  _first,
 			InputIterator2& first_val,
 			OutputIterator& _result,
-      unsigned int _numElements,
+		    unsigned int _numElements,
 			const BinaryFunction &_opr,
 			const BinaryPredicate &_pred,
 			const bool& _incl,
@@ -55,25 +55,27 @@ namespace bolt
 		  void operator()( const tbb::blocked_range<unsigned int>& r, Tag ) {
 			  oType temp = sum, temp1;
 			  next_flag = flag = false;
-        unsigned int i;
+              unsigned int i;
+			  strt_indx = r.begin();
+              end_indx = r.end();
 			  for( i=r.begin(); i<r.end(); ++i ) {
 				 if( Tag::is_final_scan() ) {
 					 if(!inclusive){
 						  if( i==0){
-                temp1 = *(first_value + i);
+							 temp1 = *(first_value + i);
 							 *(result + i) = start;
 							 temp = binary_op(start, temp1);
 						  }
 						  else if(binary_pred(*(first_key+i), *(first_key +i- 1))){
-                temp1 = *(first_value + i);
+							 temp1 = *(first_value + i);
 							 *(result + i) = temp;
 							 temp = binary_op(temp, temp1);
 						  }
 						  else{
-                temp1 = *(first_value + i);
+							 temp1 = *(first_value + i);
 							 *(result + i) = start;
 							 temp = binary_op(start, temp1);
-                flag = true; 
+							 flag = true; 
 						  }
 						  continue;
 					 }
@@ -85,35 +87,35 @@ namespace bolt
 					 }
 					 else{
 						temp = *(first_value+i);
-             flag = true; 
+						flag = true; 
 					 }
 					 *(result + i) = temp;
 				 }
 				 else if(pre_flag){
-				   temp = *(first_value+i);
-				   pre_flag = false;
+					 temp = *(first_value+i);
+					 pre_flag = false;
 				 }
 				 else if(binary_pred(*(first_key+i), *(first_key +i - 1)))
 					 temp = binary_op(temp, *(first_value+i));
 				 else if (!inclusive){
 					 temp = binary_op(start, *(first_value+i));
-            flag = true; 
+					 flag = true; 
 				 }
 				 else {
 					 temp = *(first_value+i);
-            flag = true; 
+					 flag = true; 
 				 }
 			 }
-       if(i<numElements && !binary_pred(*(first_key+i-1), *(first_key +i ))){
-          next_flag = true;     // this will check the key change at boundaries
-       }
+			 if(i<numElements && !binary_pred(*(first_key+i-1), *(first_key +i ))){
+				next_flag = true;     // this will check the key change at boundaries
+			 }
 			 sum = temp;
 		  }
 		  ScanKey_tbb( ScanKey_tbb& b, tbb::split):first_key(b.first_key),result(b.result),
 first_value(b.first_value),numElements(b.numElements),inclusive(b.inclusive),start(b.start),pre_flag(true),binary_op(b.binary_op), binary_pred(b.binary_pred){}
 		  void reverse_join( ScanKey_tbb& a ) {
-			if(!a.next_flag && !flag)
-				sum = binary_op(a.sum,sum);
+			if(!a.next_flag && !flag && binary_pred(*(a.first_key +  a.end_indx),*(first_key+strt_indx))) 
+                  sum = binary_op(a.sum,sum);
 		  }
 		  void assign( ScanKey_tbb& b ) {
 			 sum = b.sum;
