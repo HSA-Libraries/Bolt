@@ -18,7 +18,7 @@
 #define ENABLE_GTEST 1
 #define ENABLE_DEBUGGING 0
 #define UDD 1
-
+#define TEST_DOUBLE 1
 //#include "common/stdafx.h"
 #include <vector>
 //#include <array>
@@ -222,6 +222,948 @@ gold_reduce_by_key( InputIterator1 keys_first,
     std::cout<<count<<std::endl;
     return std::make_pair(keys_output+1, values_output+1);
 }
+
+class reduceStdVectorWithIters:public ::testing::TestWithParam<int>
+{
+protected:
+    int myStdVectSize;
+public:
+    reduceStdVectorWithIters():myStdVectSize(GetParam()){
+    }
+};
+
+typedef reduceStdVectorWithIters ReduceByKeyTest;
+TEST_P (ReduceByKeyTest, ReduceByKeyTestFloat)
+{
+
+    int length = myStdVectSize;
+    std::vector< float > keys( length);
+    // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
+    int segmentLength = 0;
+    int segmentIndex = 0;
+    float key = 1.0f;
+    std::vector< float > refInput( length );
+    std::vector< float > input( length );
+    for (int i = 0; i < length; i++)
+    {
+        if(std::rand()%4 == 1) key++;
+        keys[i] = key;
+        refInput[i] = (float)(std::rand()%4);
+        input[i] = refInput[i];
+    }
+
+    // input and output vectors for device and reference
+
+    std::vector< float > koutput( length );
+    std::vector< float > voutput( length );
+    std::vector< float > krefOutput( length );
+    std::vector< float > vrefOutput( length );
+    std::fill(krefOutput.begin(),krefOutput.end(),0.0f);
+    std::fill(vrefOutput.begin(),vrefOutput.end(),0.0f);
+    
+    bolt::cl::equal_to<float> binary_predictor;
+    bolt::cl::plus<float> binary_operator;
+
+    // call reduce_by_key
+    auto p = bolt::cl::reduce_by_key( keys.begin(), keys.end(), input.begin(), koutput.begin(), voutput.begin(),
+                                      binary_predictor, binary_operator);
+
+#if 0
+
+    for(unsigned int i = 0; i < 256 ; i++)
+    {
+      std::cout<<"Ikey "<<keys[i]<<" IValues "<<input[i]<<" -> OKeys "<<koutput[i]<<" OValues "<<voutput[i]<<std::endl;
+    }
+
+#endif
+
+    auto refPair = gold_reduce_by_key( keys.begin(), keys.end(),refInput.begin(),krefOutput.begin(),vrefOutput.begin(),
+                                       std::plus<float>());
+    cmpArrays(krefOutput, koutput);
+    cmpArrays(vrefOutput, voutput);
+
+
+}
+
+TEST_P (ReduceByKeyTest, ReduceByKeyTestFloatIncreasingKeys)
+{
+
+    int length = myStdVectSize;
+    std::vector< float > keys( length);
+    // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
+    int segmentLength = 0;
+    int segmentIndex = 0;
+    float key = 0.0f;
+    std::vector<float>  refInput( length );
+    std::vector<float>  input( length );
+    //std::vector<int>  input( length );
+
+    for (int i = 0; i < length; i++)
+    { // start over, i.e., begin assigning new key
+        if (segmentIndex == segmentLength)
+        {
+            segmentLength++;
+            segmentIndex = 0;
+            ++key;
+        }
+        keys[i] = key;
+        //device_keys[i] = key;
+        segmentIndex++;
+
+        refInput[i] = 3.0f;
+        input[i] = refInput[i];
+    }
+
+    // input and output vectors for device and reference
+
+    std::vector< float > koutput( length );
+    std::vector< float > voutput( length );
+    std::vector< float > krefOutput( length );
+    std::vector< float > vrefOutput( length );
+    std::fill(krefOutput.begin(),krefOutput.end(),0.0f);
+    std::fill(vrefOutput.begin(),vrefOutput.end(),0.0f);
+    
+    bolt::cl::equal_to<float> binary_predictor;
+    bolt::cl::plus<float> binary_operator;
+
+    // call reduce_by_key
+    auto p = bolt::cl::reduce_by_key( keys.begin(), keys.end(), input.begin(), koutput.begin(), voutput.begin(),
+                                      binary_predictor, binary_operator);
+
+#if 0
+
+    for(unsigned int i = 0; i < 256 ; i++)
+    {
+      std::cout<<"Ikey "<<keys[i]<<" IValues "<<input[i]<<" -> OKeys "<<koutput[i]<<" OValues "<<voutput[i]<<std::endl;
+    }
+
+#endif
+
+    auto refPair = gold_reduce_by_key( keys.begin(), keys.end(),refInput.begin(),krefOutput.begin(),vrefOutput.begin(),
+                                       std::plus<float>());
+    cmpArrays(krefOutput, koutput);
+    cmpArrays(vrefOutput, voutput);
+
+
+}
+
+
+TEST_P (ReduceByKeyTest, ReduceByKeyTestFloat3)
+{
+
+    int length = myStdVectSize;
+    std::vector< float > keys( length);
+    // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
+    int segmentLength = 0;
+    int segmentIndex = 0;
+    float key = 1.0f;
+    std::vector< float > refInput( length );
+    std::vector< float > input( length );
+    for (int i = 0; i < length; i++)
+    {
+        if(std::rand()%3 == 1) key++;
+        keys[i] = key;
+        refInput[i] = (float)(std::rand()%4);
+        input[i] = refInput[i];
+    }
+
+    // input and output vectors for device and reference
+
+    std::vector< float > koutput( length );
+    std::vector< float > voutput( length );
+    std::vector< float > krefOutput( length );
+    std::vector< float > vrefOutput( length );
+    std::fill(krefOutput.begin(),krefOutput.end(),0.0f);
+    std::fill(vrefOutput.begin(),vrefOutput.end(),0.0f);
+    
+    bolt::cl::equal_to<float> binary_predictor;
+    bolt::cl::plus<float> binary_operator;
+
+    // call reduce_by_key
+    auto p = bolt::cl::reduce_by_key( keys.begin(), keys.end(), input.begin(), koutput.begin(), voutput.begin(),
+                                      binary_predictor, binary_operator);
+
+#if 0
+
+    for(unsigned int i = 0; i < 256 ; i++)
+    {
+      std::cout<<"Ikey "<<keys[i]<<" IValues "<<input[i]<<" -> OKeys "<<koutput[i]<<" OValues "<<voutput[i]<<std::endl;
+    }
+
+#endif
+
+    auto refPair = gold_reduce_by_key( keys.begin(), keys.end(),refInput.begin(),krefOutput.begin(),vrefOutput.begin(),
+                                       std::plus<float>());
+    cmpArrays(krefOutput, koutput);
+    cmpArrays(vrefOutput, voutput);
+
+
+}
+
+
+TEST_P (ReduceByKeyTest, SameKeyReduceByKeyTestFloat)
+{
+
+    int length = myStdVectSize;
+    std::vector< float > keys( length);
+    // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
+    int segmentLength = 0;
+    int segmentIndex = 0;
+    float key = 1.0f;
+    std::vector< float > refInput( length );
+    std::vector< float > input( length );
+    for (int i = 0; i < length; i++)
+    {
+        keys[i] = 1;
+        refInput[i] = (float)(std::rand()%4);
+        input[i] = refInput[i];
+    }
+
+    // input and output vectors for device and reference
+
+    std::vector< float > koutput( length );
+    std::vector< float > voutput( length );
+    std::vector< float > krefOutput( length );
+    std::vector< float > vrefOutput( length );
+    std::fill(krefOutput.begin(),krefOutput.end(),0.0f);
+    std::fill(vrefOutput.begin(),vrefOutput.end(),0.0f);
+    
+    bolt::cl::equal_to<float> binary_predictor;
+    bolt::cl::plus<float> binary_operator;
+
+    // call reduce_by_key
+    auto p = bolt::cl::reduce_by_key( keys.begin(), keys.end(), input.begin(), koutput.begin(), voutput.begin(),
+                                      binary_predictor, binary_operator);
+
+#if 0
+
+    for(unsigned int i = 0; i < 256 ; i++)
+    {
+      std::cout<<"Ikey "<<keys[i]<<" IValues "<<input[i]<<" -> OKeys "<<koutput[i]<<" OValues "<<voutput[i]<<std::endl;
+    }
+
+#endif
+
+    auto refPair = gold_reduce_by_key( keys.begin(), keys.end(),refInput.begin(),krefOutput.begin(),vrefOutput.begin(),
+                                       std::plus<float>());
+    cmpArrays(krefOutput, koutput);
+    cmpArrays(vrefOutput, voutput);
+
+
+}
+
+
+TEST_P (ReduceByKeyTest, DifferentKeyReduceByKeyTestFloat)
+{
+
+    int length = myStdVectSize;
+    std::vector< float > keys( length);
+    // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
+    int segmentLength = 0;
+    int segmentIndex = 0;
+    float key = 1.0f;
+    std::vector< float > refInput( length );
+    std::vector< float > input( length );
+    for (int i = 0; i < length; i++)
+    {
+        keys[i] = (float)i;
+        refInput[i] = (float)(std::rand()%4);
+        input[i] = refInput[i];
+    }
+
+    // input and output vectors for device and reference
+
+    std::vector< float > koutput( length );
+    std::vector< float > voutput( length );
+    std::vector< float > krefOutput( length );
+    std::vector< float > vrefOutput( length );
+    std::fill(krefOutput.begin(),krefOutput.end(),0.0f);
+    std::fill(vrefOutput.begin(),vrefOutput.end(),0.0f);
+    
+    bolt::cl::equal_to<float> binary_predictor;
+    bolt::cl::plus<float> binary_operator;
+
+    // call reduce_by_key
+    auto p = bolt::cl::reduce_by_key( keys.begin(), keys.end(), input.begin(), koutput.begin(), voutput.begin(),
+                                      binary_predictor, binary_operator);
+
+#if 0
+
+    for(unsigned int i = 0; i < 256 ; i++)
+    {
+      std::cout<<"Ikey "<<keys[i]<<" IValues "<<input[i]<<" -> OKeys "<<koutput[i]<<" OValues "<<voutput[i]<<std::endl;
+    }
+
+#endif
+
+    auto refPair = gold_reduce_by_key( keys.begin(), keys.end(),refInput.begin(),krefOutput.begin(),vrefOutput.begin(),
+                                       std::plus<float>());
+    cmpArrays(krefOutput, koutput);
+    cmpArrays(vrefOutput, voutput);
+
+
+}
+
+#if(TEST_DOUBLE==1)
+
+TEST_P (ReduceByKeyTest, ReduceByKeyTestDouble)
+{
+
+    int length = myStdVectSize;
+    std::vector< double > keys( length);
+    // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
+    int segmentLength = 0;
+    int segmentIndex = 0;
+    double key = 1.0;
+    std::vector< double > refInput( length );
+    std::vector< double > input( length );
+    for (int i = 0; i < length; i++)
+    {
+        if(std::rand()%4 == 1) key++;
+        keys[i] = key;
+        refInput[i] = (double)(std::rand()%4);
+        input[i] = refInput[i];
+    }
+
+    // input and output vectors for device and reference
+
+    std::vector< double > koutput( length );
+    std::vector< double > voutput( length );
+    std::vector< double > krefOutput( length );
+    std::vector< double > vrefOutput( length );
+    std::fill(krefOutput.begin(),krefOutput.end(),0.0);
+    std::fill(vrefOutput.begin(),vrefOutput.end(),0.0);
+    
+    bolt::cl::equal_to<double> binary_predictor;
+    bolt::cl::plus<double> binary_operator;
+
+    // call reduce_by_key
+    auto p = bolt::cl::reduce_by_key( keys.begin(), keys.end(), input.begin(), koutput.begin(), voutput.begin(),
+                                      binary_predictor, binary_operator);
+
+#if 0
+
+    for(unsigned int i = 0; i < 256 ; i++)
+    {
+      std::cout<<"Ikey "<<keys[i]<<" IValues "<<input[i]<<" -> OKeys "<<koutput[i]<<" OValues "<<voutput[i]<<std::endl;
+    }
+
+#endif
+
+    auto refPair = gold_reduce_by_key( keys.begin(), keys.end(),refInput.begin(),krefOutput.begin(),vrefOutput.begin(),
+                                       std::plus<double>());
+    cmpArrays(krefOutput, koutput);
+    cmpArrays(vrefOutput, voutput);
+
+
+}
+
+TEST_P (ReduceByKeyTest, ReduceByKeyTestDoubleIncreasingKeys)
+{
+
+    int length = myStdVectSize;
+    std::vector< double > keys( length);
+    // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
+    int segmentLength = 0;
+    int segmentIndex = 0;
+    double key = 0.0;
+    std::vector<double>  refInput( length );
+    std::vector<double>  input( length );
+    //std::vector<int>  input( length );
+
+    for (int i = 0; i < length; i++)
+    { // start over, i.e., begin assigning new key
+        if (segmentIndex == segmentLength)
+        {
+            segmentLength++;
+            segmentIndex = 0;
+            ++key;
+        }
+        keys[i] = key;
+        //device_keys[i] = key;
+        segmentIndex++;
+
+        refInput[i] = 3.0;
+        input[i] = refInput[i];
+    }
+
+    // input and output vectors for device and reference
+
+    std::vector< double > koutput( length );
+    std::vector< double > voutput( length );
+    std::vector< double > krefOutput( length );
+    std::vector< double > vrefOutput( length );
+    std::fill(krefOutput.begin(),krefOutput.end(),0.0);
+    std::fill(vrefOutput.begin(),vrefOutput.end(),0.0);
+    
+    bolt::cl::equal_to<double> binary_predictor;
+    bolt::cl::plus<double> binary_operator;
+
+    // call reduce_by_key
+    auto p = bolt::cl::reduce_by_key( keys.begin(), keys.end(), input.begin(), koutput.begin(), voutput.begin(),
+                                      binary_predictor, binary_operator);
+
+#if 0
+
+    for(unsigned int i = 0; i < 256 ; i++)
+    {
+      std::cout<<"Ikey "<<keys[i]<<" IValues "<<input[i]<<" -> OKeys "<<koutput[i]<<" OValues "<<voutput[i]<<std::endl;
+    }
+
+#endif
+
+    auto refPair = gold_reduce_by_key( keys.begin(), keys.end(),refInput.begin(),krefOutput.begin(),vrefOutput.begin(),
+                                       std::plus<double>());
+    cmpArrays(krefOutput, koutput);
+    cmpArrays(vrefOutput, voutput);
+
+
+}
+
+
+TEST_P (ReduceByKeyTest, ReduceByKeyTestDouble3)
+{
+
+    int length = myStdVectSize;
+    std::vector< double > keys( length);
+    // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
+    int segmentLength = 0;
+    int segmentIndex = 0;
+    double key = 1.0f;
+    std::vector< double > refInput( length );
+    std::vector< double > input( length );
+    for (int i = 0; i < length; i++)
+    {
+        if(std::rand()%3 == 1) key++;
+        keys[i] = key;
+        refInput[i] = (double)(std::rand()%4);
+        input[i] = refInput[i];
+    }
+
+    // input and output vectors for device and reference
+
+    std::vector< double > koutput( length );
+    std::vector< double > voutput( length );
+    std::vector< double > krefOutput( length );
+    std::vector< double > vrefOutput( length );
+    std::fill(krefOutput.begin(),krefOutput.end(),0.0);
+    std::fill(vrefOutput.begin(),vrefOutput.end(),0.0);
+    
+    bolt::cl::equal_to<double> binary_predictor;
+    bolt::cl::plus<double> binary_operator;
+
+    // call reduce_by_key
+    auto p = bolt::cl::reduce_by_key( keys.begin(), keys.end(), input.begin(), koutput.begin(), voutput.begin(),
+                                      binary_predictor, binary_operator);
+
+#if 0
+
+    for(unsigned int i = 0; i < 256 ; i++)
+    {
+      std::cout<<"Ikey "<<keys[i]<<" IValues "<<input[i]<<" -> OKeys "<<koutput[i]<<" OValues "<<voutput[i]<<std::endl;
+    }
+
+#endif
+
+    auto refPair = gold_reduce_by_key( keys.begin(), keys.end(),refInput.begin(),krefOutput.begin(),vrefOutput.begin(),
+                                       std::plus<double>());
+    cmpArrays(krefOutput, koutput);
+    cmpArrays(vrefOutput, voutput);
+
+
+}
+
+
+TEST_P (ReduceByKeyTest, SameKeyReduceByKeyTestDouble)
+{
+
+    int length = myStdVectSize;
+    std::vector< double > keys( length);
+    // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
+    int segmentLength = 0;
+    int segmentIndex = 0;
+    double key = 1.0;
+    std::vector< double > refInput( length );
+    std::vector< double > input( length );
+    for (int i = 0; i < length; i++)
+    {
+        keys[i] = 1;
+        refInput[i] = (double)(std::rand()%4);
+        input[i] = refInput[i];
+    }
+
+    // input and output vectors for device and reference
+
+    std::vector< double > koutput( length );
+    std::vector< double > voutput( length );
+    std::vector< double > krefOutput( length );
+    std::vector< double > vrefOutput( length );
+    std::fill(krefOutput.begin(),krefOutput.end(),0.0);
+    std::fill(vrefOutput.begin(),vrefOutput.end(),0.0);
+    
+    bolt::cl::equal_to<double> binary_predictor;
+    bolt::cl::plus<double> binary_operator;
+
+    // call reduce_by_key
+    auto p = bolt::cl::reduce_by_key( keys.begin(), keys.end(), input.begin(), koutput.begin(), voutput.begin(),
+                                      binary_predictor, binary_operator);
+
+#if 0
+
+    for(unsigned int i = 0; i < 256 ; i++)
+    {
+      std::cout<<"Ikey "<<keys[i]<<" IValues "<<input[i]<<" -> OKeys "<<koutput[i]<<" OValues "<<voutput[i]<<std::endl;
+    }
+
+#endif
+
+    auto refPair = gold_reduce_by_key( keys.begin(), keys.end(),refInput.begin(),krefOutput.begin(),vrefOutput.begin(),
+                                       std::plus<double>());
+    cmpArrays(krefOutput, koutput);
+    cmpArrays(vrefOutput, voutput);
+
+
+}
+
+
+TEST_P (ReduceByKeyTest, DifferentKeyReduceByKeyTestDouble)
+{
+
+    int length = myStdVectSize;
+    std::vector< double > keys( length);
+    // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
+    int segmentLength = 0;
+    int segmentIndex = 0;
+    double key = 1.0;
+    std::vector< double > refInput( length );
+    std::vector< double > input( length );
+    for (int i = 0; i < length; i++)
+    {
+        keys[i] = (double)i;
+        refInput[i] = (double)(std::rand()%4);
+        input[i] = refInput[i];
+    }
+
+    // input and output vectors for device and reference
+
+    std::vector< double > koutput( length );
+    std::vector< double > voutput( length );
+    std::vector< double > krefOutput( length );
+    std::vector< double > vrefOutput( length );
+    std::fill(krefOutput.begin(),krefOutput.end(),0.0);
+    std::fill(vrefOutput.begin(),vrefOutput.end(),0.0);
+    
+    bolt::cl::equal_to<double> binary_predictor;
+    bolt::cl::plus<double> binary_operator;
+
+    // call reduce_by_key
+    auto p = bolt::cl::reduce_by_key( keys.begin(), keys.end(), input.begin(), koutput.begin(), voutput.begin(),
+                                      binary_predictor, binary_operator);
+
+#if 0
+
+    for(unsigned int i = 0; i < 256 ; i++)
+    {
+      std::cout<<"Ikey "<<keys[i]<<" IValues "<<input[i]<<" -> OKeys "<<koutput[i]<<" OValues "<<voutput[i]<<std::endl;
+    }
+
+#endif
+
+    auto refPair = gold_reduce_by_key( keys.begin(), keys.end(),refInput.begin(),krefOutput.begin(),vrefOutput.begin(),
+                                       std::plus<double>());
+    cmpArrays(krefOutput, koutput);
+    cmpArrays(vrefOutput, voutput);
+
+
+}
+
+#endif
+
+BOLT_FUNCTOR(uddfltint,
+struct uddfltint
+{
+    float x;
+    int y;
+
+    bool operator==(const uddfltint& rhs) const
+    {
+        bool equal = true;
+        float ths = 0.00001f; // thresh hold single(float)
+        equal = ( x == rhs.x ) ? equal : false;
+        if (rhs.y < ths && rhs.y > -ths)
+            equal = ( (1.0*y - rhs.y) < ths && (1.0*y - rhs.y) > -ths) ? equal : false;
+        else
+            equal = ( (1.0*y - rhs.y)/rhs.y < ths && (1.0*y - rhs.y)/rhs.y > -ths) ? equal : false;
+        return equal;
+    }
+    void operator++(int)
+    {
+        x += (float)1.0;
+        y += 1;
+    }
+
+    bool operator>(int rhs) const
+    {
+
+      bool greater = true;
+      greater = ( x > rhs ) ? greater : false;
+      greater = ( y > rhs ) ? greater : false;
+      return greater;
+
+    }
+    void operator=(int rhs)
+    {
+      x = (float)rhs;
+      y = rhs;
+    }
+
+    bool operator!=(int rhs) const
+    {
+        bool nequal = true;
+        float ths = 0.00001f; // thresh hold single(float)
+        nequal = ( x != rhs ) ? nequal : false;
+        if (rhs < ths && rhs > -ths)
+            nequal = ( (1.0*y - rhs) < ths && (1.0*y - rhs) > -ths) ? false : nequal;
+        else
+            nequal = ( (1.0*y - rhs)/rhs < ths && (1.0*y - rhs)/rhs > -ths) ? false : nequal;
+        return nequal;
+    }
+
+    void operator-(int rhs)
+    {
+        x -= (float)rhs;
+        y -= rhs;
+    }
+};
+);
+
+BOLT_FUNCTOR(uddfltint_equal_to,
+struct uddfltint_equal_to
+{
+    bool operator()(const uddfltint& lhs, const uddfltint& rhs) const
+    {
+        return lhs == rhs;
+    };
+};);
+
+BOLT_FUNCTOR(uddfltint_plus,
+struct uddfltint_plus
+{
+    uddfltint operator()(const uddfltint &lhs, const uddfltint &rhs) const
+    {
+        uddfltint _result;
+        _result.x = lhs.x+rhs.x;
+        _result.y = lhs.y+rhs.y;
+        return _result;
+    }
+};
+);
+BOLT_CREATE_TYPENAME( bolt::cl::device_vector< uddfltint >::iterator );
+BOLT_CREATE_CLCODE( bolt::cl::device_vector< uddfltint >::iterator, bolt::cl::deviceVectorIteratorTemplate );
+
+#if UDD
+
+TEST_P (ReduceByKeyTest, ReduceByKeyTestUDD)
+{
+
+    int length = myStdVectSize;
+
+    std::vector< uddfltint > keys( length);
+    // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
+    int segmentLength = 0;
+    int segmentIndex = 0;
+    uddfltint key;
+    key.x = 1.0f;
+    key.y = 1;
+    std::vector< uddfltint > refInput( length );
+    std::vector< uddfltint > input( length );
+
+    for (int i = 0; i < length; i++)
+    {
+        if(std::rand()%5 == 1) key++;
+        keys[i] = key;
+        refInput[i].x = float(std::rand()%4);
+        refInput[i].y = std::rand()%4;
+        input[i] = refInput[i];
+    }
+
+    // input and output vectors for device and reference
+
+    std::vector< uddfltint > koutput( length );
+    std::vector< uddfltint > voutput( length );
+    std::vector< uddfltint > krefOutput( length );
+    std::vector< uddfltint > vrefOutput( length );
+
+    krefOutput.clear();krefOutput.resize(length);
+    vrefOutput.clear();vrefOutput.resize(length);
+    voutput.clear();voutput.resize(length);
+    koutput.clear();koutput.resize(length);
+
+    uddfltint_equal_to binary_predictor;
+    uddfltint_plus binary_operator;
+
+    // call reduce_by_key
+    auto p = bolt::cl::reduce_by_key( keys.begin(), keys.end(), input.begin(), koutput.begin(), voutput.begin(),
+                                      binary_predictor, binary_operator);
+
+#if 0
+
+    for(unsigned int i = 0; i < 256 ; i++)
+    {
+      std::cout<<"Ikey "<<keys[i]<<" IValues "<<input[i]<<" -> OKeys "<<koutput[i]<<" OValues "<<voutput[i]<<std::endl;
+    }
+
+#endif
+
+    auto refPair = gold_reduce_by_key( keys.begin(), keys.end(),refInput.begin(),krefOutput.begin(),vrefOutput.begin(),
+                                       binary_operator);
+    cmpArrays(krefOutput, koutput);
+    cmpArrays(vrefOutput, voutput);
+
+
+}
+
+TEST_P (ReduceByKeyTest, ReduceByKeyTestUDDIncreasingKeys)
+{
+
+    int length = myStdVectSize;
+
+    std::vector< uddfltint > keys( length);
+    // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
+    int segmentLength = 0;
+    int segmentIndex = 0;
+    uddfltint key;
+    key.x = 1.0f;
+    key.y = 1;
+    
+    std::vector< uddfltint > refInput( length );
+    std::vector< uddfltint > input( length );
+
+    for (int i = 0; i < length; i++)
+    { // start over, i.e., begin assigning new key
+        if (segmentIndex == segmentLength)
+        {
+            segmentLength++;
+            segmentIndex = 0;
+            ++key.x;
+            ++key.y;
+        }
+        keys[i] = key;
+        //device_keys[i] = key;
+        segmentIndex++;
+
+        refInput[i].x = 3.0;
+        refInput[i].y = 3.0;
+        input[i] = refInput[i];
+    }
+
+    // input and output vectors for device and reference
+
+    std::vector< uddfltint > koutput( length );
+    std::vector< uddfltint > voutput( length );
+    std::vector< uddfltint > krefOutput( length );
+    std::vector< uddfltint > vrefOutput( length );
+
+    krefOutput.clear();krefOutput.resize(length);
+    vrefOutput.clear();vrefOutput.resize(length);
+    voutput.clear();voutput.resize(length);
+    koutput.clear();koutput.resize(length);
+
+    uddfltint_equal_to binary_predictor;
+    uddfltint_plus binary_operator;
+
+    // call reduce_by_key
+    auto p = bolt::cl::reduce_by_key( keys.begin(), keys.end(), input.begin(), koutput.begin(), voutput.begin(),
+                                      binary_predictor, binary_operator);
+
+#if 0
+
+    for(unsigned int i = 0; i < 256 ; i++)
+    {
+      std::cout<<"Ikey "<<keys[i]<<" IValues "<<input[i]<<" -> OKeys "<<koutput[i]<<" OValues "<<voutput[i]<<std::endl;
+    }
+
+#endif
+
+    auto refPair = gold_reduce_by_key( keys.begin(), keys.end(),refInput.begin(),krefOutput.begin(),vrefOutput.begin(),
+                                       binary_operator);
+    cmpArrays(krefOutput, koutput);
+    cmpArrays(vrefOutput, voutput);
+
+
+}
+
+TEST_P (ReduceByKeyTest, ReduceByKeyTestUDD3)
+{
+
+    int length = myStdVectSize;
+
+     std::vector< uddfltint > keys( length);
+    // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
+    int segmentLength = 0;
+    int segmentIndex = 0;
+    uddfltint key;
+    key.x = 1.0f;
+    key.y = 1;
+    std::vector< uddfltint > refInput( length );
+    std::vector< uddfltint > input( length );
+
+    for (int i = 0; i < length; i++)
+    {
+        if(std::rand()%3 == 1) key++;
+        keys[i] = key;
+        refInput[i].x = float(std::rand()%4);
+        refInput[i].y = std::rand()%4;
+        input[i] = refInput[i];
+    }
+
+    // input and output vectors for device and reference
+
+    std::vector< uddfltint > koutput( length );
+    std::vector< uddfltint > voutput( length );
+    std::vector< uddfltint > krefOutput( length );
+    std::vector< uddfltint > vrefOutput( length );
+
+    krefOutput.clear();krefOutput.resize(length);
+    vrefOutput.clear();vrefOutput.resize(length);
+    voutput.clear();voutput.resize(length);
+    koutput.clear();koutput.resize(length);
+
+    uddfltint_equal_to binary_predictor;
+    uddfltint_plus binary_operator;
+
+   
+    // call reduce_by_key
+    auto p = bolt::cl::reduce_by_key( keys.begin(), keys.end(), input.begin(), koutput.begin(), voutput.begin(),
+                                      binary_predictor, binary_operator);
+
+#if 0
+
+    for(unsigned int i = 0; i < 256 ; i++)
+    {
+      std::cout<<"Ikey "<<keys[i]<<" IValues "<<input[i]<<" -> OKeys "<<koutput[i]<<" OValues "<<voutput[i]<<std::endl;
+    }
+
+#endif
+
+    auto refPair = gold_reduce_by_key( keys.begin(), keys.end(),refInput.begin(),krefOutput.begin(),vrefOutput.begin(),
+                                       binary_operator);
+    cmpArrays(krefOutput, koutput);
+    cmpArrays(vrefOutput, voutput);
+
+
+}
+
+TEST_P (ReduceByKeyTest, SameKeyReduceByKeyTestUDD)
+{
+
+    int length = myStdVectSize;
+
+    std::vector< uddfltint > keys( length);
+    // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
+    int segmentLength = 0;
+    int segmentIndex = 0;
+    uddfltint key;
+    key.x = 1.0f;
+    key.y = 1;
+    std::vector< uddfltint > refInput( length );
+    std::vector< uddfltint > input( length );
+
+    for (int i = 0; i < length; i++)
+    {
+        keys[i] = key;
+        refInput[i].x = float(std::rand()%4);
+        refInput[i].y = std::rand()%4;
+        input[i] = refInput[i];
+    }
+
+    // input and output vectors for device and reference
+
+    std::vector< uddfltint > koutput( length );
+    std::vector< uddfltint > voutput( length );
+    std::vector< uddfltint > krefOutput( length );
+    std::vector< uddfltint > vrefOutput( length );
+
+    krefOutput.clear();krefOutput.resize(length);
+    vrefOutput.clear();vrefOutput.resize(length);
+    voutput.clear();voutput.resize(length);
+    koutput.clear();koutput.resize(length);
+
+    uddfltint_equal_to binary_predictor;
+    uddfltint_plus binary_operator;
+
+    // call reduce_by_key
+    auto p = bolt::cl::reduce_by_key( keys.begin(), keys.end(), input.begin(), koutput.begin(), voutput.begin(),
+                                      binary_predictor, binary_operator);
+
+
+    auto refPair = gold_reduce_by_key( keys.begin(), keys.end(),refInput.begin(),krefOutput.begin(),vrefOutput.begin(),
+                                       binary_operator);
+    cmpArrays(krefOutput, koutput);
+    cmpArrays(vrefOutput, voutput);
+
+
+}
+
+
+TEST_P (ReduceByKeyTest, DifferentKeyReduceByKeyTestUDD)
+{
+
+    int length = myStdVectSize;
+
+    
+    std::vector< uddfltint > keys( length);
+    // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
+    int segmentLength = 0;
+    int segmentIndex = 0;
+  
+    std::vector< uddfltint > refInput( length );
+    std::vector< uddfltint > input( length );
+
+    for (int i = 0; i < length; i++)
+    {
+        keys[i].x = (float)i;
+        keys[i].y = i;
+        refInput[i].x = float(std::rand()%4);
+        refInput[i].y = std::rand()%4;
+        input[i] = refInput[i];
+    }
+
+    // input and output vectors for device and reference
+
+    std::vector< uddfltint > koutput( length );
+    std::vector< uddfltint > voutput( length );
+    std::vector< uddfltint > krefOutput( length );
+    std::vector< uddfltint > vrefOutput( length );
+
+    krefOutput.clear();krefOutput.resize(length);
+    vrefOutput.clear();vrefOutput.resize(length);
+    voutput.clear();voutput.resize(length);
+    koutput.clear();koutput.resize(length);
+
+    uddfltint_equal_to binary_predictor;
+    uddfltint_plus binary_operator;
+
+
+    // call reduce_by_key
+    auto p = bolt::cl::reduce_by_key( keys.begin(), keys.end(), input.begin(), koutput.begin(), voutput.begin(),
+                                      binary_predictor, binary_operator);
+
+
+    auto refPair = gold_reduce_by_key( keys.begin(), keys.end(),refInput.begin(),krefOutput.begin(),vrefOutput.begin(),
+                                        binary_operator);
+    cmpArrays(krefOutput, koutput);
+    cmpArrays(vrefOutput, voutput);
+
+
+}
+
+
+#endif
+
+
+
+INSTANTIATE_TEST_CASE_P(ReduceByKeyIterLimit, ReduceByKeyTest, ::testing::Range(1025, 65535, 2111)); 
 
 //Test Case Not Executing Anything!
 
@@ -926,8 +1868,8 @@ TEST(ReduceByKeyPairCheck, IntegerTest2)
     size_t sizeAfterCall = gold_pair.first - krefOutput.begin();
     size_t sizeAfterDeviceCall = dv_pair.first - koutput.begin();
 
-    std::cout<<sizeAfterCall<<" Is the gold key size after call!"<<std::endl;
-    std::cout<<sizeAfterDeviceCall<<" Is the dv key size after call!"<<std::endl;
+    //std::cout<<sizeAfterCall<<" Is the gold key size after call!"<<std::endl;
+    //std::cout<<sizeAfterDeviceCall<<" Is the dv key size after call!"<<std::endl;
 
     krefOutput.resize(sizeAfterCall);
     vrefOutput.resize(sizeAfterCall);
@@ -1016,8 +1958,8 @@ TEST(ReduceByKeyPairCheck, CPUIntegerTest2)
     size_t sizeAfterCall = gold_pair.first - krefOutput.begin();
     size_t sizeAfterDeviceCall = dv_pair.first - koutput.begin();
 
-    std::cout<<sizeAfterCall<<" Is the gold key size after call!"<<std::endl;
-    std::cout<<sizeAfterDeviceCall<<" Is the dv key size after call!"<<std::endl;
+    //std::cout<<sizeAfterCall<<" Is the gold key size after call!"<<std::endl;
+    //std::cout<<sizeAfterDeviceCall<<" Is the dv key size after call!"<<std::endl;
 
     krefOutput.resize(sizeAfterCall);
     vrefOutput.resize(sizeAfterCall);
@@ -1106,8 +2048,8 @@ TEST(ReduceByKeyPairCheck, MultiCoreIntegerTest2)
     size_t sizeAfterCall = gold_pair.first - krefOutput.begin();
     size_t sizeAfterDeviceCall = dv_pair.first - koutput.begin();
 
-    std::cout<<sizeAfterCall<<" Is the gold key size after call!"<<std::endl;
-    std::cout<<sizeAfterDeviceCall<<" Is the dv key size after call!"<<std::endl;
+    //std::cout<<sizeAfterCall<<" Is the gold key size after call!"<<std::endl;
+    //std::cout<<sizeAfterDeviceCall<<" Is the dv key size after call!"<<std::endl;
 
     krefOutput.resize(sizeAfterCall);
     vrefOutput.resize(sizeAfterCall);
@@ -1363,89 +2305,6 @@ TEST(ReduceByKeyBasic, MultiCoreIntegerTestOddSizes)
 
 }
 
-
-
-BOLT_FUNCTOR(uddfltint,
-struct uddfltint
-{
-    float x;
-    int y;
-
-    bool operator==(const uddfltint& rhs) const
-    {
-        bool equal = true;
-        float ths = 0.00001f; // thresh hold single(float)
-        equal = ( x == rhs.x ) ? equal : false;
-        if (rhs.y < ths && rhs.y > -ths)
-            equal = ( (1.0*y - rhs.y) < ths && (1.0*y - rhs.y) > -ths) ? equal : false;
-        else
-            equal = ( (1.0*y - rhs.y)/rhs.y < ths && (1.0*y - rhs.y)/rhs.y > -ths) ? equal : false;
-        return equal;
-    }
-    void operator++(int)
-    {
-        x += (float)1.0;
-        y += 1;
-    }
-
-    bool operator>(int rhs) const
-    {
-
-      bool greater = true;
-      greater = ( x > rhs ) ? greater : false;
-      greater = ( y > rhs ) ? greater : false;
-      return greater;
-
-    }
-    void operator=(int rhs)
-    {
-      x = (float)rhs;
-      y = rhs;
-    }
-
-    bool operator!=(int rhs) const
-    {
-        bool nequal = true;
-        float ths = 0.00001f; // thresh hold single(float)
-        nequal = ( x != rhs ) ? nequal : false;
-        if (rhs < ths && rhs > -ths)
-            nequal = ( (1.0*y - rhs) < ths && (1.0*y - rhs) > -ths) ? false : nequal;
-        else
-            nequal = ( (1.0*y - rhs)/rhs < ths && (1.0*y - rhs)/rhs > -ths) ? false : nequal;
-        return nequal;
-    }
-
-    void operator-(int rhs)
-    {
-        x -= (float)rhs;
-        y -= rhs;
-    }
-};
-);
-
-BOLT_FUNCTOR(uddfltint_equal_to,
-struct uddfltint_equal_to
-{
-    bool operator()(const uddfltint& lhs, const uddfltint& rhs) const
-    {
-        return lhs == rhs;
-    };
-};);
-
-BOLT_FUNCTOR(uddfltint_plus,
-struct uddfltint_plus
-{
-    uddfltint operator()(const uddfltint &lhs, const uddfltint &rhs) const
-    {
-        uddfltint _result;
-        _result.x = lhs.x+rhs.x;
-        _result.y = lhs.y+rhs.y;
-        return _result;
-    }
-};
-);
-BOLT_CREATE_TYPENAME( bolt::cl::device_vector< uddfltint >::iterator );
-BOLT_CREATE_CLCODE( bolt::cl::device_vector< uddfltint >::iterator, bolt::cl::deviceVectorIteratorTemplate );
 
 #if UDD
 
