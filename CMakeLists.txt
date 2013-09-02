@@ -61,19 +61,20 @@ if( CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT )
 endif( )
 
 # Set the default of CMAKE_BUILD_TYPE to be release, unless user specifies with -D.  MSVC_IDE does not use CMAKE_BUILD_TYPE
-if( NOT MSVC_IDE AND NOT CMAKE_BUILD_TYPE )
-  set( CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel." FORCE )
-endif()
+#if( NOT MSVC_IDE AND NOT CMAKE_BUILD_TYPE )
+#  set( CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel." FORCE )
+#endif()
 
 set_property( GLOBAL PROPERTY USE_FOLDERS TRUE )
 
 if( MSVC_IDE )
     set( Bolt_BUILD64 ${CMAKE_CL_64} )
-#else()
+else()
 #    option( Bolt_BUILD64 "Build a 64-bit product" ON )
+ set( CMAKE_BUILD_TYPE ${BOLT_BUILD_TYPE} CACHE STRING "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel." FORCE )	
 endif()
-
  message( STATUS "64bit build :" ${Bolt_BUILD64} )
+ message( STATUS "Build Type R/D:" ${CMAKE_BUILD_TYPE} )
 
 # Modify the global find property to help us find libraries like Boost in the correct paths for 64-bit
 # Essentially, find_library calls will look for /lib64 instead of /lib; works for windows and linux

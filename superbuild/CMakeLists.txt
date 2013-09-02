@@ -50,15 +50,17 @@ if( CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT )
 endif( )
 
 # Set the default of CMAKE_BUILD_TYPE to be release, unless user specifies with -D.  MSVC_IDE does not use CMAKE_BUILD_TYPE
-if( NOT MSVC_IDE AND NOT CMAKE_BUILD_TYPE )
-  set( CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel." FORCE )
-endif()
+#if( NOT MSVC_IDE AND NOT CMAKE_BUILD_TYPE )
+#  set( CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build, options are: None Debug Release RelWithDebInfo MinSizeRel." FORCE )
+#endif()
 
 if( MSVC_IDE )
     set( Bolt_BUILD64 ${CMAKE_CL_64} )
     set_property( GLOBAL PROPERTY USE_FOLDERS TRUE )
 else()
     option( Bolt_BUILD64 "Build a 64-bit product" ON )
+    set( BOLT_BUILD_TYPE "RELEASE" CACHE STRING "Build a RELESAE/DEBUG  product" )
+
 endif()
 
 # Modify the global find property to help us find libraries like Boost in the correct paths for 64-bit
@@ -127,7 +129,7 @@ if( BUILD_gTest )
 endif( )
 
 if(UNIX)
-    list( APPEND Bolt.Cmake.Args -DBolt_BUILD64=${Bolt_BUILD64})
+    list( APPEND Bolt.Cmake.Args -DBolt_BUILD64=${Bolt_BUILD64} -DBOLT_BUILD_TYPE=${BOLT_BUILD_TYPE} )
 endif()
 # Build TBB library
 if( BUILD_TBB )
