@@ -1193,9 +1193,9 @@ INSTANTIATE_TEST_CASE_P(ReduceByKeyIterLimit, ReduceByKeyTest, ::testing::Range(
         refInput[i] = i;
     }
 
-	bolt::cl::device_vector<int>  input( refInput.begin(), refInput.end() );
-	bolt::cl::device_vector<int> device_keys(keys.begin(), keys.end());
-	
+    bolt::cl::device_vector<int>  input( refInput.begin(), refInput.end() );
+    bolt::cl::device_vector<int> device_keys(keys.begin(), keys.end());
+    
     // input and output vectors for device and reference
 
     bolt::cl::device_vector<int>  koutput( length );
@@ -1247,8 +1247,8 @@ INSTANTIATE_TEST_CASE_P(ReduceByKeyIterLimit, ReduceByKeyTest, ::testing::Range(
     }
 
     bolt::cl::device_vector<int>  input( refInput.begin(), refInput.end() );
-	bolt::cl::device_vector<int> device_keys(keys.begin(), keys.end());
-	
+    bolt::cl::device_vector<int> device_keys(keys.begin(), keys.end());
+    
     // input and output vectors for device and reference
 
     bolt::cl::device_vector<int>  koutput( length );
@@ -1305,8 +1305,8 @@ INSTANTIATE_TEST_CASE_P(ReduceByKeyIterLimit, ReduceByKeyTest, ::testing::Range(
     // input and output vectors for device and reference
 
     bolt::cl::device_vector<int>  input( refInput.begin(), refInput.end() );
-	bolt::cl::device_vector<int> device_keys(keys.begin(), keys.end());
-	
+    bolt::cl::device_vector<int> device_keys(keys.begin(), keys.end());
+    
     bolt::cl::device_vector<int>  koutput( length );
     bolt::cl::device_vector<int>  voutput( length );
     std::vector<int>  krefOutput( length );
@@ -1344,11 +1344,11 @@ for (int i = 0; i < std::ceil(size/3.0); i++)
 {
     vectKeyIn[i] = (int)2;
 }
-for (int i = (std::ceil(size/3.0) + 1); i < std::ceil((2* size)/3.0); i++)
+for (int i = int(std::ceil(size/3.0) + 1); i < std::ceil((2* size)/3.0); i++)
 {
 vectKeyIn[i] = (int)3;
 }
-for (int i =  (std::ceil((2* size)/3.0) + 1); i < size; i++)
+for (int i =  int(std::ceil((2* size)/3.0) + 1); i < size; i++)
 {
 vectKeyIn[i] = (int)5;
 }
@@ -1382,11 +1382,11 @@ for (int i = 0; i < std::ceil(size/3.0); i++)
 {
     vectKeyIn[i] = (int)2;
 }
-for (int i = (std::ceil(size/3.0) + 1); i < std::ceil((2* size)/3.0); i++)
+for (int i = int(std::ceil(size/3.0) + 1); i < std::ceil((2* size)/3.0); i++)
 {
 vectKeyIn[i] = (int)3;
 }
-for (int i =  (std::ceil((2* size)/3.0) + 1); i < size; i++)
+for (int i =  int(std::ceil((2* size)/3.0) + 1); i < size; i++)
 {
 vectKeyIn[i] = (int)5;
 }
@@ -1423,11 +1423,11 @@ for (int i = 0; i < std::ceil(size/3.0); i++)
 {
     vectKeyIn[i] = (int)2;
 }
-for (int i = (std::ceil(size/3.0) + 1); i < std::ceil((2* size)/3.0); i++)
+for (int i = int(std::ceil(size/3.0) + 1); i < std::ceil((2* size)/3.0); i++)
 {
 vectKeyIn[i] = (int)3;
 }
-for (int i =  (std::ceil((2* size)/3.0) + 1); i < size; i++)
+for (int i =  int(std::ceil((2* size)/3.0) + 1); i < size; i++)
 {
 vectKeyIn[i] = (int)5;
 }
