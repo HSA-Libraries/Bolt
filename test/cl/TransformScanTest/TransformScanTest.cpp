@@ -488,7 +488,257 @@ template< typename S, typename B >
     return ::testing::AssertionSuccess( );
 }
 
+class scanStdVectorWithIters:public ::testing::TestWithParam<int>
+{
+protected:
+    int myStdVectSize;
+public:
+    scanStdVectorWithIters():myStdVectSize(GetParam()){
+    }
+};
 
+typedef scanStdVectorWithIters TransformScan;
+typedef scanStdVectorWithIters TransformScanMultiCore;
+TEST_P (TransformScan, InclTransformScanTestFloat)
+{
+    bolt::cl::device_vector< float > input( myStdVectSize, 2.f);
+    bolt::cl::device_vector< float > output( myStdVectSize, 2.f);
+    std::vector< float > refInput( myStdVectSize, 2.f);
+   // call scan
+    bolt::cl::plus<float> aI2;
+    bolt::cl::negate<float> nI2;
+
+
+    bolt::cl::transform_inclusive_scan( input.begin(), input.end(), output.begin(), nI2, aI2 );
+    ::std::transform(   refInput.begin(), refInput.end(),  refInput.begin(), nI2); // transform in-place
+    ::std::partial_sum( refInput.begin(), refInput.end(), refInput.begin(), aI2); // out-of-place scan
+   
+    cmpArrays(output, refInput);
+    
+}
+
+TEST_P (TransformScan, ExclTransformScanTestFloat)
+{
+    bolt::cl::device_vector< float > input( myStdVectSize, 2.f);
+    bolt::cl::device_vector< float > output( myStdVectSize, 2.f);
+    std::vector< float > refInput( myStdVectSize, 2.f);
+   // call scan
+    
+    bolt::cl::negate<float> nI2;
+    bolt::cl::plus< float > mM3;
+    bolt::cl::transform_exclusive_scan( input.begin(), input.end(), output.begin(), nI2, 3.0f, mM3 );
+    std::transform(   refInput.begin(), refInput.end(),  refInput.begin(), nI2);
+    Serial_scan<float,  bolt::cl::plus< float >, float>(&refInput[0], &refInput[0], myStdVectSize, mM3, false, 3.0f);
+
+    cmpArrays(output, refInput);
+    
+} 
+
+TEST_P (TransformScanMultiCore, InclTransformScanTestFloat)
+{
+    bolt::cl::device_vector< float > input( myStdVectSize, 2.f);
+    bolt::cl::device_vector< float > output( myStdVectSize, 2.f);
+    std::vector< float > refInput( myStdVectSize, 2.f);
+   // call scan
+    bolt::cl::plus<float> aI2;
+    bolt::cl::negate<float> nI2;
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    bolt::cl::transform_inclusive_scan(ctl, input.begin(), input.end(), output.begin(), nI2, aI2 );
+    ::std::transform(   refInput.begin(), refInput.end(),  refInput.begin(), nI2); // transform in-place
+    ::std::partial_sum( refInput.begin(), refInput.end(), refInput.begin(), aI2); // out-of-place scan
+   
+    cmpArrays(output, refInput);
+    
+} 
+
+TEST_P (TransformScanMultiCore, ExclTransformScanTestFloat)
+{
+    bolt::cl::device_vector< float > input( myStdVectSize, 2.f);
+    bolt::cl::device_vector< float > output( myStdVectSize, 2.f);
+    std::vector< float > refInput( myStdVectSize, 2.f);
+   // call scan
+    
+    bolt::cl::negate<float> nI2;
+    bolt::cl::plus< float > mM3;
+
+     bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    bolt::cl::transform_exclusive_scan( ctl, input.begin(), input.end(), output.begin(), nI2, 3.0f, mM3 );
+    std::transform(   refInput.begin(), refInput.end(),  refInput.begin(), nI2);
+    Serial_scan<float,  bolt::cl::plus< float >, float>(&refInput[0], &refInput[0], myStdVectSize, mM3, false, 3.0f);
+
+    cmpArrays(output, refInput);
+    
+} 
+
+//INSTANTIATE_TEST_CASE_P(TransformScanIterFloatLimit, TransformScan, ::testing::Range(1025, 65535, 5111)); 
+//INSTANTIATE_TEST_CASE_P(TransformScanIterFloatLimit, TransformScanMultiCore, ::testing::Range(1025, 65535, 5111));
+
+#if(TEST_DOUBLE == 1)
+TEST_P (TransformScan, InclTransformScanTestDouble)
+{
+    bolt::cl::device_vector< double > input( myStdVectSize, 2.5);
+    bolt::cl::device_vector< double > output( myStdVectSize, 2.5);
+    std::vector< double > refInput( myStdVectSize, 2.5);
+   // call scan
+    bolt::cl::plus<double> aI2;
+    bolt::cl::negate<double> nI2;
+
+
+    bolt::cl::transform_inclusive_scan( input.begin(), input.end(), output.begin(), nI2, aI2 );
+    ::std::transform(   refInput.begin(), refInput.end(),  refInput.begin(), nI2); // transform in-place
+    ::std::partial_sum( refInput.begin(), refInput.end(), refInput.begin(), aI2); // out-of-place scan
+   
+    cmpArrays(output, refInput);
+    
+}
+
+TEST_P (TransformScan, ExclTransformScanTestDouble)
+{
+    bolt::cl::device_vector< double > input( myStdVectSize, 2.5);
+    bolt::cl::device_vector< double > output( myStdVectSize, 2.5);
+    std::vector< double > refInput( myStdVectSize, 2.5);
+   // call scan
+    
+    bolt::cl::negate<double> nI2;
+    bolt::cl::plus< double> mM3;
+    bolt::cl::transform_exclusive_scan( input.begin(), input.end(), output.begin(), nI2, 3.0, mM3 );
+    std::transform(   refInput.begin(), refInput.end(),  refInput.begin(), nI2);
+    Serial_scan<double,  bolt::cl::plus< double >, double>(&refInput[0], &refInput[0], myStdVectSize, mM3, false, 3.0);
+
+    cmpArrays(output, refInput);
+    
+} 
+
+TEST_P (TransformScanMultiCore, InclTransformScanTestDouble)
+{
+    bolt::cl::device_vector< double > input( myStdVectSize, 2.5);
+    bolt::cl::device_vector< double > output( myStdVectSize, 2.5);
+    std::vector< double > refInput( myStdVectSize, 2.5);
+   // call scan
+    bolt::cl::plus<double> aI2;
+    bolt::cl::negate<double> nI2;
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    bolt::cl::transform_inclusive_scan(ctl, input.begin(), input.end(), output.begin(), nI2, aI2 );
+    ::std::transform(   refInput.begin(), refInput.end(),  refInput.begin(), nI2); // transform in-place
+    ::std::partial_sum( refInput.begin(), refInput.end(), refInput.begin(), aI2); // out-of-place scan
+   
+    cmpArrays(output, refInput);
+    
+} 
+
+TEST_P (TransformScanMultiCore, ExclTransformScanTestDouble)
+{
+    bolt::cl::device_vector< double > input( myStdVectSize, 2.5);
+    bolt::cl::device_vector< double > output( myStdVectSize, 2.5);
+    std::vector< double > refInput( myStdVectSize, 2.5);
+   // call scan
+    
+    bolt::cl::negate<double> nI2;
+    bolt::cl::plus< double > mM3;
+
+     bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    bolt::cl::transform_exclusive_scan( ctl, input.begin(), input.end(), output.begin(), nI2, 3.0f, mM3 );
+    std::transform(   refInput.begin(), refInput.end(),  refInput.begin(), nI2);
+    Serial_scan<double,  bolt::cl::plus< double >, double>(&refInput[0], &refInput[0], myStdVectSize, mM3, false, 3.0f);
+
+    cmpArrays(output, refInput);
+    
+} 
+
+//INSTANTIATE_TEST_CASE_P(TransformScanIterDoubleLimit, TransformScan, ::testing::Range(1025, 65535, 5111)); 
+//INSTANTIATE_TEST_CASE_P(TransformScanIterDoubleLimit, TransformScanMultiCore, ::testing::Range(1025, 65535, 5111));
+
+#endif
+
+TEST_P (TransformScan, InclTransformScanTestUDD)
+{
+    bolt::cl::device_vector< uddtI2  > input( myStdVectSize, initialAddI2);
+    bolt::cl::device_vector< uddtI2  > output( myStdVectSize, initialAddI2);
+    std::vector< uddtI2 > refInput( myStdVectSize, initialAddI2);
+    // call scan
+    AddI2 aI2;
+    //bolt::cl::negate<uddtI2>  nI2;
+
+
+    bolt::cl::transform_inclusive_scan( input.begin(), input.end(), output.begin(), nI2, aI2 );
+    ::std::transform(   refInput.begin(), refInput.end(),  refInput.begin(), nI2); // transform in-place
+    ::std::partial_sum( refInput.begin(), refInput.end(), refInput.begin(), aI2); // out-of-place scan
+   
+    cmpArrays(output, refInput);
+    
+}
+
+TEST_P (TransformScan, ExclTransformScanTestUDD)
+{
+    bolt::cl::device_vector< uddtI2 > input( myStdVectSize, initialAddI2);
+    bolt::cl::device_vector< uddtI2 > output( myStdVectSize, initialAddI2);
+    std::vector< uddtI2 > refInput( myStdVectSize, initialAddI2);
+    // call scan
+    
+    AddI2 aI2;
+
+    bolt::cl::transform_exclusive_scan( input.begin(), input.end(), output.begin(), nI2, initialAddI2, aI2 );
+    std::transform(   refInput.begin(), refInput.end(),  refInput.begin(), nI2);
+    Serial_scan<uddtI2,  AddI2, uddtI2>(&refInput[0], &refInput[0], myStdVectSize, aI2, false, initialAddI2);
+
+    cmpArrays(output, refInput);
+    
+} 
+
+TEST_P (TransformScanMultiCore, InclTransformScanTestUDD)
+{
+    
+    bolt::cl::device_vector< uddtI2  > input( myStdVectSize, initialAddI2);
+    bolt::cl::device_vector< uddtI2  > output( myStdVectSize, initialAddI2);
+    std::vector< uddtI2 > refInput( myStdVectSize, initialAddI2);
+    // call scan
+    AddI2 aI2;
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    bolt::cl::transform_inclusive_scan( ctl, input.begin(), input.end(), output.begin(), nI2, aI2 );
+    ::std::transform(   refInput.begin(), refInput.end(),  refInput.begin(), nI2); // transform in-place
+    ::std::partial_sum( refInput.begin(), refInput.end(), refInput.begin(), aI2); // out-of-place scan
+   
+    cmpArrays(output, refInput);
+    
+} 
+
+TEST_P (TransformScanMultiCore, ExclTransformScanTestUDD)
+{
+    bolt::cl::device_vector< uddtI2 > input( myStdVectSize, initialAddI2);
+    bolt::cl::device_vector< uddtI2 > output( myStdVectSize, initialAddI2);
+    std::vector< uddtI2 > refInput( myStdVectSize, initialAddI2);
+    // call scan
+    
+    AddI2 aI2;
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    bolt::cl::transform_exclusive_scan( ctl, input.begin(), input.end(), output.begin(), nI2, initialAddI2, aI2 );
+    std::transform(   refInput.begin(), refInput.end(),  refInput.begin(), nI2);
+    Serial_scan<uddtI2,  AddI2, uddtI2>(&refInput[0], &refInput[0], myStdVectSize, aI2, false, initialAddI2);
+
+    //Serial_scan<double,  bolt::cl::plus< double >, double>(&refInput[0], &refInput[0], myStdVectSize, mM3, false, 3.0);
+
+    cmpArrays(output, refInput);
+    
+} 
+
+INSTANTIATE_TEST_CASE_P(TransformScanIterUDDLimit, TransformScan, ::testing::Range(1025, 65535, 5111)); 
+INSTANTIATE_TEST_CASE_P(TransformScanIterUDDLimit, TransformScanMultiCore, ::testing::Range(1025, 65535, 5111));
 
 /******************************************************************************
  *  Scan with User Defined Data Types and Operators
