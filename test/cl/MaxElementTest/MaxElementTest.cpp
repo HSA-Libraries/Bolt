@@ -849,15 +849,15 @@ TEST_P( MaxEFloatVector, MultiCoreNormal )
     cmpArrays( stdInput, boltInput );
 }
 
-std::array<int, 15> TestValues = {2,4,8,16,32,64,128,256,512,1024,2048,4096,8192,16384,32768};
+std::array<int, 16> TestValues = {2,4,8,16,32,64,128,256,512,1024,2048,4096,8192,16384,32768, 65535};
 //Test lots of consecutive numbers, but small range, suitable for integers because they overflow easier
-INSTANTIATE_TEST_CASE_P( MaxERange, MaxEIntegerVector, ::testing::Range( 1, 1024, 7 ) );
+INSTANTIATE_TEST_CASE_P( MaxERange, MaxEIntegerVector, ::testing::Range( 1, 65535, 177 ) );
 INSTANTIATE_TEST_CASE_P( MaxEValues, MaxEIntegerVector, ::testing::ValuesIn( TestValues.begin(), TestValues.end() ) );
-INSTANTIATE_TEST_CASE_P( MaxERange, MaxEFloatVector, ::testing::Range( 1, 1024, 3 ) );
+INSTANTIATE_TEST_CASE_P( MaxERange, MaxEFloatVector, ::testing::Range( 1, 65535, 137 ) );
 INSTANTIATE_TEST_CASE_P( MaxEValues, MaxEFloatVector, ::testing::ValuesIn( TestValues.begin(), TestValues.end() ) );
-INSTANTIATE_TEST_CASE_P( MaxERange, MaxEIntegerDeviceVector, ::testing::Range( 0, 1024, 53 ) );
+INSTANTIATE_TEST_CASE_P( MaxERange, MaxEIntegerDeviceVector, ::testing::Range( 0, 65535, 153 ) );
 INSTANTIATE_TEST_CASE_P( MaxEValues,MaxEIntegerDeviceVector,::testing::ValuesIn( TestValues.begin(),TestValues.end()));
-INSTANTIATE_TEST_CASE_P( MaxERange, MaxEFloatDeviceVector, ::testing::Range( 0, 1024, 53 ) );
+INSTANTIATE_TEST_CASE_P( MaxERange, MaxEFloatDeviceVector, ::testing::Range( 0, 65535, 153 ) );
 INSTANTIATE_TEST_CASE_P( MaxEValues, MaxEFloatDeviceVector, ::testing::ValuesIn( TestValues.begin(),TestValues.end()));
 
 typedef ::testing::Types< 
