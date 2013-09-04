@@ -184,22 +184,22 @@ namespace bolt {
                 int minele_indx =  h_result[0] ;
                 iType minele =  *(first + h_result[0]) ;
 
-                for(int i = 1; i < (int)numTailReduce; ++i)
+
+				if(std::strcmp(min_max,str) == 0)
                 {
-
-                    if(std::strcmp(min_max,str) == 0)
-                    {
-                        bool stat = binary_op(*(first + h_result[i]), minele);
-                        minele = stat ? minele : *(first + h_result[i]);
-                        minele_indx =  stat ? minele_indx : h_result[i];
-                    }
-                    else
-                    {
-                    bool stat = binary_op(minele,*(first + h_result[i]));
-                    minele = stat ? minele : *(first + h_result[i]);
-                    minele_indx =  stat ? minele_indx : h_result[i];
-                    }
-
+					for(int i = 1; i < (int)numTailReduce; ++i){
+                       bool stat = binary_op(*(first + h_result[i]), minele);
+                       minele = stat ? minele : *(first + h_result[i]);
+                       minele_indx =  stat ? minele_indx : h_result[i];
+					}
+                }
+                else
+                {
+					for(int i = 1; i < (int)numTailReduce; ++i){
+                       bool stat = binary_op(minele,*(first + h_result[i]));
+                       minele = stat ? minele : *(first + h_result[i]);
+                       minele_indx =  stat ? minele_indx : h_result[i];
+					}
                 }
 
 				::cl::Event unmapEvent;

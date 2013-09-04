@@ -71,11 +71,11 @@ kernel void min_elementTemplate(
     {
         iTypePtr element = input_iter[gx];
 		#if defined(_IS_MAX_KERNEL)
-			stat =  (*userFunctor)(accumulator, element);			
+			stat =  (*userFunctor)(element, accumulator);			
 		#else if
-			stat =  (*userFunctor)(element,accumulator);
+			stat =  (*userFunctor)(accumulator, element);
 		#endif
-		accumulator = stat ? element: accumulator;
+		accumulator = stat ? accumulator : element;
 		igx = stat ? igx : gx;
         gx += get_global_size(0);
     }
