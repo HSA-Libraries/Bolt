@@ -20,7 +20,7 @@
 #define OCL_CONTEXT_BUG_WORKAROUND 1
 #define TEST_DOUBLE 0
 #define TEST_CPU_DEVICE 0
-
+#define BOLT_DEBUG_LOG
 #include "stdafx.h"
 #include <bolt/cl/iterator/counting_iterator.h>
 #include <bolt/cl/reduce.h>
@@ -37,6 +37,7 @@
 #include "common/myocl.h"
 #include "bolt/miniDump.h"
 
+#include "bolt/BoltLog.h"
 
 void testDeviceVector()
 {
@@ -86,7 +87,9 @@ struct DUDD {
 );
 BOLT_CREATE_TYPENAME( bolt::cl::device_vector< DUDD >::iterator );
 BOLT_CREATE_CLCODE( bolt::cl::device_vector< DUDD >::iterator, bolt::cl::deviceVectorIteratorTemplate );
-BOLT_CREATE_TYPENAME(bolt::cl::plus<DUDD>);
+//BOLT_CREATE_TYPENAME(bolt::cl::plus<DUDD>);
+
+BOLT_TEMPLATE_REGISTER_NEW_TYPE(bolt::cl::plus, int, DUDD );
 
 
 void testTBB()
@@ -161,16 +164,32 @@ void testDUDDTBB()
         tbbInput[i].b = 3;
 
     };
+
+    BOLTLOG::CaptureLog *xyz =  BOLTLOG::CaptureLog::getInstance();
+    xyz->Initialize();
+    std::vector< BOLTLOG::FunPaths> paths;
+
     bolt::cl::plus<DUDD> add;
     DUDD hSum = std::accumulate(stdInput.begin(), stdInput.end(), initial,add);
     bolt::cl::control ctl = bolt::cl::control::getDefault();
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
     DUDD sum = bolt::cl::reduce(ctl, tbbInput.begin(), tbbInput.end(), initial, add);
+    DUDD sum1 = bolt::cl::reduce(tbbInput.begin(), tbbInput.end(), initial, add);
+
     if(hSum == sum)
         printf ("\nDUDDTBB Test case PASSED %d %d %d %d\n", hSum.a, sum.a, hSum.b, sum.b);
     else
         printf ("\nDUDDTBB Test case FAILED\n");
         
+
+    xyz->WhatPathTaken(paths);
+    for(std::vector< BOLTLOG::FunPaths>::iterator parse=paths.begin(); parse!=paths.end(); parse++)
+    {
+	    std::cout<<(*parse).fun;
+	    std::cout<<(*parse).path;
+        std::cout<<(*parse).msg;
+    }
+
 }
 
 void testTBBDevicevector()
@@ -1720,10 +1739,10 @@ void reduce_TestBuffer() {
 int _tmain(int argc, _TCHAR* argv[])
 {
 #if defined( ENABLE_TBB )
-    testTBB( );
-    testdoubleTBB();
+   // testTBB( );
+  //  testdoubleTBB();
     testDUDDTBB();
-    testTBBDevicevector();
+   // testTBBDevicevector();
 #endif
   /*  testDeviceVector();
     int numIters = 100;

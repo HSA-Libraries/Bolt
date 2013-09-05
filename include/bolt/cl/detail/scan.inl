@@ -784,9 +784,15 @@ aProfiler.setArchitecture(strDeviceName);
             {
                 runMode = ctrl.getDefaultPathToRun( );
             }
-
+            #if defined(BOLT_DEBUG_LOG)
+            BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+            #endif
             if( runMode == bolt::cl::control::SerialCpu )
             {
+			     #if defined(BOLT_DEBUG_LOG)
+                 dblog->CodePathTaken(BOLTLOG::BOLT_SCAN,BOLTLOG::BOLT_SERIAL_CPU,"::Scan::SERIAL_CPU");
+                 #endif
+						
 #ifdef BOLT_PROFILER_ENABLED
 aProfiler.startTrial();
 aProfiler.setStepName("serial");
@@ -805,7 +811,9 @@ aProfiler.stopTrial();
             else if( runMode == bolt::cl::control::MultiCoreCpu )
             {
 #ifdef ENABLE_TBB
-
+               #if defined(BOLT_DEBUG_LOG)
+               dblog->CodePathTaken(BOLTLOG::BOLT_SCAN,BOLTLOG::BOLT_MULTICORE_CPU,"::Scan::MULTICORE_CPU");
+               #endif
                if(inclusive)
                {
                  return bolt::btbb::inclusive_scan(first, last, result, binary_op);
@@ -823,6 +831,10 @@ aProfiler.stopTrial();
             }
             else
             {
+			    #if defined(BOLT_DEBUG_LOG)
+                dblog->CodePathTaken(BOLTLOG::BOLT_SCAN,BOLTLOG::BOLT_OPENCL_GPU,"::Scan::OPENCL_GPU");
+                #endif
+						
 #ifdef BOLT_PROFILER_ENABLED
 aProfiler.startTrial();
 aProfiler.setStepName("Mapping Buffers to Device");
@@ -873,9 +885,16 @@ aProfiler.stopTrial();
             {
                 runMode = ctrl.getDefaultPathToRun( );
             }
-
+            #if defined(BOLT_DEBUG_LOG)
+            BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+            #endif
+			
             if( runMode == bolt::cl::control::SerialCpu )
             {
+			    #if defined(BOLT_DEBUG_LOG)
+                dblog->CodePathTaken(BOLTLOG::BOLT_SCAN,BOLTLOG::BOLT_SERIAL_CPU,"::Scan::SERIAL_CPU");
+                #endif
+				 
                 typename bolt::cl::device_vector< iType >::pointer scanInputBuffer =  first.getContainer( ).data( );
                 typename bolt::cl::device_vector< oType >::pointer scanResultBuffer =  result.getContainer( ).data( );
                 Serial_scan<iType, oType, BinaryFunction, T>(&scanInputBuffer[first.m_Index], &scanResultBuffer[result.m_Index],
@@ -885,6 +904,10 @@ aProfiler.stopTrial();
             else if( runMode == bolt::cl::control::MultiCoreCpu )
             {
 #ifdef ENABLE_TBB
+                #if defined(BOLT_DEBUG_LOG)
+                dblog->CodePathTaken(BOLTLOG::BOLT_SCAN,BOLTLOG::BOLT_MULTICORE_CPU,"::Scan::MULTICORE_CPU");
+                #endif
+			   
                 typename bolt::cl::device_vector< iType >::pointer scanInputBuffer =  first.getContainer( ).data( );
                 typename bolt::cl::device_vector< oType >::pointer scanResultBuffer =  result.getContainer( ).data( );
 
@@ -901,7 +924,10 @@ aProfiler.stopTrial();
 #endif
             }
             else{
-            //Now call the actual cl algorithm
+			   #if defined(BOLT_DEBUG_LOG)
+               dblog->CodePathTaken(BOLTLOG::BOLT_SCAN,BOLTLOG::BOLT_OPENCL_GPU,"::Scan::OPENCL_GPU");
+               #endif
+               //Now call the actual cl algorithm
                scan_enqueue( ctrl, first, last, result, init, binary_op, inclusive );
             }
 
@@ -931,9 +957,16 @@ aProfiler.stopTrial();
             {
                 runMode = ctrl.getDefaultPathToRun( );
             }
-
+            #if defined(BOLT_DEBUG_LOG)
+            BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+            #endif
+			
             if( runMode == bolt::cl::control::SerialCpu )
             {
+			    #if defined(BOLT_DEBUG_LOG)
+                dblog->CodePathTaken(BOLTLOG::BOLT_SCAN,BOLTLOG::BOLT_SERIAL_CPU,"::Scan::SERIAL_CPU");
+                #endif
+				 
                 Serial_scan<iType, oType, BinaryFunction,T>(&(*fancyFirst), &(*result), numElements, binary_op,
                                                                                             inclusive, init);
                 return result + numElements;
@@ -941,7 +974,9 @@ aProfiler.stopTrial();
             else if( runMode == bolt::cl::control::MultiCoreCpu )
             {
 #ifdef ENABLE_TBB
-
+               #if defined(BOLT_DEBUG_LOG)
+               dblog->CodePathTaken(BOLTLOG::BOLT_SCAN,BOLTLOG::BOLT_MULTICORE_CPU,"::Scan::MULTICORE_CPU");
+               #endif
                if(inclusive)
                {
                  return bolt::btbb::inclusive_scan(fancyFirst, fancyLast, result, binary_op);
@@ -959,7 +994,9 @@ aProfiler.stopTrial();
             }
             else
             {
-
+                #if defined(BOLT_DEBUG_LOG)
+                dblog->CodePathTaken(BOLTLOG::BOLT_SCAN,BOLTLOG::BOLT_OPENCL_GPU,"::Scan::OPENCL_GPU");
+                #endif
                 //Now call the actual cl algorithm
                 scan_enqueue( ctrl, fancyFirst, fancyLast, result /*dvOutput.begin( )*/, init, binary_op, inclusive );
 

@@ -327,22 +327,35 @@ aProfiler.stopTrial();
                 {
                      runMode = ctl.getDefaultPathToRun();
                 }
-
+                #if defined(BOLT_DEBUG_LOG)
+                BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+                #endif
+				
                 if( runMode == bolt::cl::control::SerialCpu)
                 {
+				    #if defined(BOLT_DEBUG_LOG)
+                    dblog->CodePathTaken(BOLTLOG::BOLT_GENERATE,BOLTLOG::BOLT_SERIAL_CPU,"::Generate::SERIAL_CPU");
+                    #endif
+						
                     std::generate(first, last, gen );
                 }
                 else if(runMode == bolt::cl::control::MultiCoreCpu)
                 {
-                    #ifdef ENABLE_TBB
-                           //TODO : MultiCoreCPU Version of generate not Implemented yet...
-                           std::generate(first, last, gen );
+                    #ifdef ENABLE_TBB   
+                           #if defined(BOLT_DEBUG_LOG)
+                           dblog->CodePathTaken(BOLTLOG::BOLT_GENERATE,BOLTLOG::BOLT_MULTICORE_CPU,"::Generate::MULTICORE_CPU");
+                           #endif				
+                           bolt::btbb::generate(first, last, gen );
                     #else
                            throw std::runtime_error("MultiCoreCPU Version of generate not Enabled! \n");
                     #endif
                 }
                 else
                 {
+				    #if defined(BOLT_DEBUG_LOG)
+                    dblog->CodePathTaken(BOLTLOG::BOLT_GENERATE,BOLTLOG::BOLT_OPENCL_GPU,"::Generate::OPENCL_GPU");
+                    #endif
+						
                     // Use host pointers memory since these arrays are only write once - no benefit to copying.
                     // Map the forward iterator to a device_vector
                     device_vector< Type > range( first, sz, CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY, false, ctl );
@@ -368,15 +381,24 @@ aProfiler.stopTrial();
                 {
                      runMode = ctl.getDefaultPathToRun();
                 }
-
+                #if defined(BOLT_DEBUG_LOG)
+                BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+                #endif
+				
                 if( runMode == bolt::cl::control::SerialCpu)
                 {
+				    #if defined(BOLT_DEBUG_LOG)
+                    dblog->CodePathTaken(BOLTLOG::BOLT_GENERATE,BOLTLOG::BOLT_SERIAL_CPU,"::Generate::SERIAL_CPU");
+                    #endif
                     typename bolt::cl::device_vector< iType >::pointer generateInputBuffer =  first.getContainer( ).data( );
                     std::generate(&generateInputBuffer[first.m_Index], &generateInputBuffer[last.m_Index], gen );
                 }
                 else if(runMode == bolt::cl::control::MultiCoreCpu)
                 {
                     #ifdef ENABLE_TBB
+					  #if defined(BOLT_DEBUG_LOG)
+                      dblog->CodePathTaken(BOLTLOG::BOLT_GENERATE,BOLTLOG::BOLT_MULTICORE_CPU,"::Generate::MULTICORE_CPU");
+                      #endif	
                       typename bolt::cl::device_vector< iType >::pointer generateInputBuffer =  first.getContainer( ).data( );
                       bolt::btbb::generate(&generateInputBuffer[first.m_Index], &generateInputBuffer[last.m_Index], gen );
                     #else
@@ -385,6 +407,9 @@ aProfiler.stopTrial();
                 }
                 else
                 {
+				    #if defined(BOLT_DEBUG_LOG)
+                    dblog->CodePathTaken(BOLTLOG::BOLT_GENERATE,BOLTLOG::BOLT_OPENCL_GPU,"::Generate::OPENCL_GPU");
+                    #endif
                     generate_enqueue( ctl, first, last, gen, user_code );
                 }
             }

@@ -299,16 +299,23 @@ void stablesort_pick_iterator( control &ctl, const RandomAccessIterator& first, 
     {
         runMode = ctl.getDefaultPathToRun();
     }
-
+    #if defined(BOLT_DEBUG_LOG)
+    BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+    #endif
     if( (runMode == bolt::cl::control::SerialCpu) || (vecSize < BOLT_CL_STABLESORT_CPU_THRESHOLD) )
     {
-
+        #if defined(BOLT_DEBUG_LOG)
+        dblog->CodePathTaken(BOLTLOG::BOLT_STABLESORT,BOLTLOG::BOLT_SERIAL_CPU,"::Stable_Sort::SERIAL_CPU");
+        #endif
         std::stable_sort( first, last, comp );
         return;
     }
     else if( runMode == bolt::cl::control::MultiCoreCpu )
     {
         #ifdef ENABLE_TBB
+		    #if defined(BOLT_DEBUG_LOG)
+            dblog->CodePathTaken(BOLTLOG::BOLT_STABLESORT,BOLTLOG::BOLT_MULTICORE_CPU,"::Stable_Sort::MULTICORE_CPU");
+            #endif
             bolt::btbb::stable_sort( first, last, comp );
         #else
             throw std::runtime_error("MultiCoreCPU Version of stable_sort not Enabled! \n");
@@ -318,7 +325,10 @@ void stablesort_pick_iterator( control &ctl, const RandomAccessIterator& first, 
     }
     else
     {
-
+        #if defined(BOLT_DEBUG_LOG)
+        dblog->CodePathTaken(BOLTLOG::BOLT_STABLESORT,BOLTLOG::BOLT_OPENCL_GPU,"::Stable_Sort::OPENCL_GPU");
+        #endif
+						
         device_vector< Type > dvInputOutput( first, last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctl );
 
         //Now call the actual cl algorithm
@@ -349,9 +359,14 @@ void stablesort_pick_iterator( control &ctl,
     {
         runMode = ctl.getDefaultPathToRun();
     }
-
+    #if defined(BOLT_DEBUG_LOG)
+    BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+    #endif
     if( runMode == bolt::cl::control::SerialCpu || (vecSize < BOLT_CL_STABLESORT_CPU_THRESHOLD) )
     {
+	    #if defined(BOLT_DEBUG_LOG)
+        dblog->CodePathTaken(BOLTLOG::BOLT_STABLESORT,BOLTLOG::BOLT_SERIAL_CPU,"::Stable_Sort::SERIAL_CPU");
+        #endif
         typename bolt::cl::device_vector< Type >::pointer firstPtr =  first.getContainer( ).data( );
         std::stable_sort( &firstPtr[ first.m_Index ], &firstPtr[ last.m_Index ], comp );
         return;
@@ -359,6 +374,9 @@ void stablesort_pick_iterator( control &ctl,
     else if( runMode == bolt::cl::control::MultiCoreCpu )
     {
         #ifdef ENABLE_TBB
+		    #if defined(BOLT_DEBUG_LOG)
+            dblog->CodePathTaken(BOLTLOG::BOLT_STABLESORT,BOLTLOG::BOLT_MULTICORE_CPU,"::Stable_Sort::MULTICORE_CPU");
+            #endif
             typename bolt::cl::device_vector< Type >::pointer firstPtr =  first.getContainer( ).data( );
             bolt::btbb::stable_sort( &firstPtr[ first.m_Index ], &firstPtr[ last.m_Index ], comp );
         #else
@@ -368,7 +386,9 @@ void stablesort_pick_iterator( control &ctl,
     }
     else
     {
-
+        #if defined(BOLT_DEBUG_LOG)
+        dblog->CodePathTaken(BOLTLOG::BOLT_STABLESORT,BOLTLOG::BOLT_OPENCL_GPU,"::Stable_Sort::OPENCL_GPU");
+        #endif
         stablesort_enqueue(ctl,first,last,comp,cl_code);
     }
 

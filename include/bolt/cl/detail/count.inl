@@ -216,26 +216,41 @@ namespace detail {
                     runMode = ctl.getDefaultPathToRun();
                 }
 
-
+                #if defined(BOLT_DEBUG_LOG)
+                BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+                #endif
+				
                 switch(runMode)
                 {
                 case bolt::cl::control::OpenCL :
                     {
+				    #if defined(BOLT_DEBUG_LOG)
+                    dblog->CodePathTaken(BOLTLOG::BOLT_COUNT,BOLTLOG::BOLT_OPENCL_GPU,"::Count::OPENCL_GPU");
+                    #endif
                     device_vector< iType > dvInput( first, last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, ctl );
                     return count_enqueue( ctl, dvInput.begin(), dvInput.end(), predicate, cl_code);
                     }
 
                 case bolt::cl::control::MultiCoreCpu:
                     #ifdef ENABLE_TBB
+					 #if defined(BOLT_DEBUG_LOG)
+                     dblog->CodePathTaken(BOLTLOG::BOLT_COUNT,BOLTLOG::BOLT_MULTICORE_CPU,"::Count::MULTICORE_CPU");
+                     #endif
                      return (int)bolt::btbb::count_if(first,last,predicate);
                     #else
                      throw std::runtime_error("The MultiCoreCpu version of count function is not enabled to be built! \n");
                     #endif
 
                 case bolt::cl::control::SerialCpu:
+				    #if defined(BOLT_DEBUG_LOG)
+                    dblog->CodePathTaken(BOLTLOG::BOLT_COUNT,BOLTLOG::BOLT_SERIAL_CPU,"::Count::SERIAL_CPU");
+                    #endif
                     return std::count_if(first,last,predicate);
 
                 default:
+				    #if defined(BOLT_DEBUG_LOG)
+                    dblog->CodePathTaken(BOLTLOG::BOLT_COUNT,BOLTLOG::BOLT_SERIAL_CPU,"::Count::SERIAL_CPU");
+                    #endif	
                     return  std::count_if(first,last,predicate);
 
                 }
@@ -266,16 +281,24 @@ namespace detail {
                 {
                     runMode = ctl.getDefaultPathToRun();
                 }
-
+                #if defined(BOLT_DEBUG_LOG)
+                BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+                #endif
 
                 switch(runMode)
                 {
                 case bolt::cl::control::OpenCL :
-                        return  count_enqueue( ctl, first, last,  predicate, cl_code);
+				      #if defined(BOLT_DEBUG_LOG)
+                      dblog->CodePathTaken(BOLTLOG::BOLT_COUNT,BOLTLOG::BOLT_OPENCL_GPU,"::Count::OPENCL_GPU");
+                      #endif 
+                      return  count_enqueue( ctl, first, last,  predicate, cl_code);
 
                 case bolt::cl::control::MultiCoreCpu:
                     #ifdef ENABLE_TBB
                     {
+					  #if defined(BOLT_DEBUG_LOG)
+                      dblog->CodePathTaken(BOLTLOG::BOLT_COUNT,BOLTLOG::BOLT_MULTICORE_CPU,"::Count::MULTICORE_CPU");
+                      #endif
                       typename bolt::cl::device_vector< iType >::pointer countInputBuffer =  first.getContainer( ).data( );
                       return (rType) bolt::btbb::count_if(&countInputBuffer[first.m_Index],
                           &countInputBuffer[szElements] ,predicate);
@@ -289,6 +312,10 @@ namespace detail {
 
                 case bolt::cl::control::SerialCpu:
                     {
+					  #if defined(BOLT_DEBUG_LOG)
+                      dblog->CodePathTaken(BOLTLOG::BOLT_COUNT,BOLTLOG::BOLT_SERIAL_CPU,"::Count::SERIAL_CPU");
+                      #endif
+					
                       typename bolt::cl::device_vector< iType >::pointer countInputBuffer =  first.getContainer( ).data( );
                       return  (rType) std::count_if(&countInputBuffer[first.m_Index],
                           &countInputBuffer[szElements], predicate) ;
@@ -297,6 +324,10 @@ namespace detail {
 
                 default: /* Incase of runMode not set/corrupted */
                     {
+					  #if defined(BOLT_DEBUG_LOG)
+                      dblog->CodePathTaken(BOLTLOG::BOLT_COUNT,BOLTLOG::BOLT_SERIAL_CPU,"::Count::SERIAL_CPU");
+                      #endif	
+					
                       typename bolt::cl::device_vector< iType >::pointer countInputBuffer =  first.getContainer( ).data( );
                       return (rType)  std::count_if(&countInputBuffer[first.m_Index],
                           &countInputBuffer[szElements], predicate) ;
@@ -327,25 +358,41 @@ namespace detail {
                 {
                     runMode = ctl.getDefaultPathToRun();
                 }
-
+                #if defined(BOLT_DEBUG_LOG)
+                BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+                #endif
+				
                 switch(runMode)
                 {
                 case bolt::cl::control::OpenCL :
                     {
+					    #if defined(BOLT_DEBUG_LOG)
+                        dblog->CodePathTaken(BOLTLOG::BOLT_COUNT,BOLTLOG::BOLT_OPENCL_GPU,"::Count::OPENCL_GPU");
+                        #endif 
+					  
                         return count_enqueue( ctl, first, last,  predicate, cl_code);
                     }
 
                 case bolt::cl::control::MultiCoreCpu:
                     #ifdef ENABLE_TBB
+					    #if defined(BOLT_DEBUG_LOG)
+                        dblog->CodePathTaken(BOLTLOG::BOLT_COUNT,BOLTLOG::BOLT_MULTICORE_CPU,"::Count::MULTICORE_CPU");
+                        #endif
                         return bolt::btbb::count_if(first,last,predicate);
                     #else
                      throw std::runtime_error("The MultiCoreCpu version of count function is not enabled to be built! \n");
                     #endif
 
                 case bolt::cl::control::SerialCpu:
+				    #if defined(BOLT_DEBUG_LOG)
+                    dblog->CodePathTaken(BOLTLOG::BOLT_COUNT,BOLTLOG::BOLT_SERIAL_CPU,"::Count::SERIAL_CPU");
+                    #endif
                     return std::count_if(first,last,predicate);
 
                 default:
+				    #if defined(BOLT_DEBUG_LOG)
+                    dblog->CodePathTaken(BOLTLOG::BOLT_COUNT,BOLTLOG::BOLT_SERIAL_CPU,"::Count::SERIAL_CPU");
+                    #endif
                     return  std::count_if(first,last,predicate);
 
                 }

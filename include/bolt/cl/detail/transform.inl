@@ -408,15 +408,24 @@ public:
         {
            runMode = ctl.getDefaultPathToRun();
         }
+		#if defined(BOLT_DEBUG_LOG)
+        BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+        #endif
+		
         if( runMode == bolt::cl::control::SerialCpu )
         {
+		    #if defined(BOLT_DEBUG_LOG)
+            dblog->CodePathTaken(BOLTLOG::BOLT_TRANSFORM,BOLTLOG::BOLT_SERIAL_CPU,"::Transform::SERIAL_CPU");
+            #endif
             std::transform( first1, last1, first2, result, f );
             return;
         }
         else if( runMode == bolt::cl::control::MultiCoreCpu )
         {
 #if defined( ENABLE_TBB )
-
+                #if defined(BOLT_DEBUG_LOG)
+                dblog->CodePathTaken(BOLTLOG::BOLT_TRANSFORM,BOLTLOG::BOLT_MULTICORE_CPU,"::Transform::MULTICORE_CPU");
+                #endif
                 bolt::btbb::transform(first1,last1,first2,result,f);
 
 #else
@@ -428,6 +437,10 @@ public:
         }
         else
         {
+		    #if defined(BOLT_DEBUG_LOG)
+            dblog->CodePathTaken(BOLTLOG::BOLT_TRANSFORM,BOLTLOG::BOLT_OPENCL_GPU,"::Transform::OPENCL_GPU");
+            #endif
+			
             // Map the input iterator to a device_vector
             device_vector< iType1 > dvInput( first1, last1, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, ctl );
             device_vector< iType2 > dvInput2( first2, sz, CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, true, ctl );
@@ -460,15 +473,24 @@ public:
         {
            runMode = ctl.getDefaultPathToRun();
         }
+		#if defined(BOLT_DEBUG_LOG)
+        BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+        #endif
+		
         if( runMode == bolt::cl::control::SerialCpu )
         {
+		    #if defined(BOLT_DEBUG_LOG)
+            dblog->CodePathTaken(BOLTLOG::BOLT_TRANSFORM,BOLTLOG::BOLT_SERIAL_CPU,"::Transform::SERIAL_CPU");
+            #endif
             std::transform( first1, last1, fancyIter, result, f );
             return;
         }
         else if( runMode == bolt::cl::control::MultiCoreCpu )
         {
 #if defined( ENABLE_TBB )
-
+                #if defined(BOLT_DEBUG_LOG)
+                dblog->CodePathTaken(BOLTLOG::BOLT_TRANSFORM,BOLTLOG::BOLT_MULTICORE_CPU,"::Transform::MULTICORE_CPU");
+                #endif
                 bolt::btbb::transform(first1,last1,fancyIter,result,f);
 
 #else
@@ -480,6 +502,10 @@ public:
         }
         else
         {
+		    #if defined(BOLT_DEBUG_LOG)
+            dblog->CodePathTaken(BOLTLOG::BOLT_TRANSFORM,BOLTLOG::BOLT_OPENCL_GPU,"::Transform::OPENCL_GPU");
+            #endif
+			
             // Use host pointers memory since these arrays are only read once - no benefit to copying.
             // Map the input iterator to a device_vector
             device_vector< iType1 > dvInput( first1, last1, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, ctl );
@@ -515,15 +541,24 @@ public:
         {
            runMode = ctl.getDefaultPathToRun();
         }
+		#if defined(BOLT_DEBUG_LOG)
+        BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+        #endif
+		
         if( runMode == bolt::cl::control::SerialCpu )
         {
+		    #if defined(BOLT_DEBUG_LOG)
+            dblog->CodePathTaken(BOLTLOG::BOLT_TRANSFORM,BOLTLOG::BOLT_SERIAL_CPU,"::Transform::SERIAL_CPU");
+            #endif
             std::transform( fancyIterfirst, fancyIterlast, first2, result, f );
             return;
         }
         else if( runMode == bolt::cl::control::MultiCoreCpu )
         {
 #if defined( ENABLE_TBB )
-
+                #if defined(BOLT_DEBUG_LOG)
+                dblog->CodePathTaken(BOLTLOG::BOLT_TRANSFORM,BOLTLOG::BOLT_MULTICORE_CPU,"::Transform::MULTICORE_CPU");
+                #endif
                 bolt::btbb::transform(fancyIterfirst,fancyIterlast,first2,result,f);
 
 #else
@@ -535,6 +570,9 @@ public:
         }
         else
         {
+		    #if defined(BOLT_DEBUG_LOG)
+            dblog->CodePathTaken(BOLTLOG::BOLT_TRANSFORM,BOLTLOG::BOLT_OPENCL_GPU,"::Transform::OPENCL_GPU");
+            #endif
             // Use host pointers memory since these arrays are only read once - no benefit to copying.
             // Map the input iterator to a device_vector
             device_vector< iType2 > dvInput( first2, sz, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, true, ctl );
@@ -571,9 +609,15 @@ public:
         {
              runMode = ctl.getDefaultPathToRun();
         }
-
+        #if defined(BOLT_DEBUG_LOG)
+        BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+        #endif
         if( runMode == bolt::cl::control::SerialCpu )
         {
+		    #if defined(BOLT_DEBUG_LOG)
+            dblog->CodePathTaken(BOLTLOG::BOLT_TRANSFORM,BOLTLOG::BOLT_SERIAL_CPU,"::Transform::SERIAL_CPU");
+            #endif
+			
             typename bolt::cl::device_vector< iType1 >::pointer firstPtr =  first1.getContainer( ).data( );
             typename bolt::cl::device_vector< iType2 >::pointer secPtr =  first2.getContainer( ).data( );
             typename bolt::cl::device_vector< oType >::pointer resPtr =  result.getContainer( ).data( );
@@ -591,7 +635,10 @@ public:
         {
 
 #if defined( ENABLE_TBB )
-
+            #if defined(BOLT_DEBUG_LOG)
+            dblog->CodePathTaken(BOLTLOG::BOLT_TRANSFORM,BOLTLOG::BOLT_MULTICORE_CPU,"::Transform::MULTICORE_CPU");
+            #endif
+				
             typename bolt::cl::device_vector< iType1 >::pointer firstPtr =  first1.getContainer( ).data( );
             typename bolt::cl::device_vector< iType2 >::pointer secPtr =  first2.getContainer( ).data( );
             typename bolt::cl::device_vector< oType >::pointer resPtr =  result.getContainer( ).data( );
@@ -608,6 +655,9 @@ public:
         }
         else
         {
+		    #if defined(BOLT_DEBUG_LOG)
+            dblog->CodePathTaken(BOLTLOG::BOLT_TRANSFORM,BOLTLOG::BOLT_OPENCL_GPU,"::Transform::OPENCL_GPU");
+            #endif
             transform_enqueue( ctl, first1, last1, first2, result, f, user_code );
         }
     }
@@ -632,9 +682,15 @@ public:
         {
            runMode = ctl.getDefaultPathToRun();
         }
-
+        #if defined(BOLT_DEBUG_LOG)
+        BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+        #endif
         if( runMode == bolt::cl::control::SerialCpu )
         {
+		    #if defined(BOLT_DEBUG_LOG)
+            dblog->CodePathTaken(BOLTLOG::BOLT_TRANSFORM,BOLTLOG::BOLT_SERIAL_CPU,"::Transform::SERIAL_CPU");
+            #endif
+			
             typename bolt::cl::device_vector< iType1 >::pointer firstPtr =  first1.getContainer( ).data( );
             typename bolt::cl::device_vector< oType >::pointer resPtr =  result.getContainer( ).data( );
 
@@ -651,7 +707,10 @@ public:
         {
 
 #if defined( ENABLE_TBB )
-
+            #if defined(BOLT_DEBUG_LOG)
+            dblog->CodePathTaken(BOLTLOG::BOLT_TRANSFORM,BOLTLOG::BOLT_MULTICORE_CPU,"::Transform::MULTICORE_CPU");
+            #endif
+			
             typename bolt::cl::device_vector< iType1 >::pointer firstPtr =  first1.getContainer( ).data( );
             typename bolt::cl::device_vector< oType >::pointer resPtr =  result.getContainer( ).data( );
 
@@ -668,6 +727,9 @@ public:
         }
         else
         {
+		    #if defined(BOLT_DEBUG_LOG)
+            dblog->CodePathTaken(BOLTLOG::BOLT_TRANSFORM,BOLTLOG::BOLT_OPENCL_GPU,"::Transform::OPENCL_GPU");
+            #endif
             transform_enqueue( ctl, first1, last1, fancyIter, result, f, user_code );
         }
     }
@@ -693,8 +755,14 @@ public:
         {
            runMode = ctl.getDefaultPathToRun();
         }
+	    #if defined(BOLT_DEBUG_LOG)
+        BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+        #endif
         if( runMode == bolt::cl::control::SerialCpu )
         {
+		    #if defined(BOLT_DEBUG_LOG)
+            dblog->CodePathTaken(BOLTLOG::BOLT_TRANSFORM,BOLTLOG::BOLT_SERIAL_CPU,"::Transform::SERIAL_CPU");
+            #endif
             std::transform( first, last, result, f );
             return;
         }
@@ -702,7 +770,9 @@ public:
         {
 #if defined( ENABLE_TBB )
 
-
+                #if defined(BOLT_DEBUG_LOG)
+                dblog->CodePathTaken(BOLTLOG::BOLT_TRANSFORM,BOLTLOG::BOLT_MULTICORE_CPU,"::Transform::MULTICORE_CPU");
+                #endif
                 bolt::btbb::transform(first, last, result, f);
 
 #else
@@ -714,6 +784,10 @@ public:
         }
         else
         {
+		    #if defined(BOLT_DEBUG_LOG)
+            dblog->CodePathTaken(BOLTLOG::BOLT_TRANSFORM,BOLTLOG::BOLT_OPENCL_GPU,"::Transform::OPENCL_GPU");
+            #endif
+			
             // Use host pointers memory since these arrays are only read once - no benefit to copying.
 
             // Map the input iterator to a device_vector
@@ -748,10 +822,17 @@ public:
         {
              runMode = ctl.getDefaultPathToRun();
         }
-
+        #if defined(BOLT_DEBUG_LOG)
+        BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+        #endif
+		
         //  TBB does not have an equivalent for two input iterator std::transform
         if( (runMode == bolt::cl::control::SerialCpu) )
         {
+		    #if defined(BOLT_DEBUG_LOG)
+            dblog->CodePathTaken(BOLTLOG::BOLT_TRANSFORM,BOLTLOG::BOLT_SERIAL_CPU,"::Transform::SERIAL_CPU");
+            #endif
+			
             typename bolt::cl::device_vector< iType >::pointer firstPtr = first.getContainer( ).data( );
             typename bolt::cl::device_vector< oType >::pointer resPtr = result.getContainer( ).data( );
 
@@ -767,6 +848,10 @@ public:
         {
 
 #if defined( ENABLE_TBB )
+            #if defined(BOLT_DEBUG_LOG)
+            dblog->CodePathTaken(BOLTLOG::BOLT_TRANSFORM,BOLTLOG::BOLT_MULTICORE_CPU,"::Transform::MULTICORE_CPU");
+            #endif
+				
             typename bolt::cl::device_vector< iType >::pointer firstPtr = first.getContainer( ).data( );
             typename bolt::cl::device_vector< oType >::pointer resPtr = result.getContainer( ).data( );
 
@@ -782,6 +867,9 @@ public:
         }
         else
         {
+		    #if defined(BOLT_DEBUG_LOG)
+            dblog->CodePathTaken(BOLTLOG::BOLT_TRANSFORM,BOLTLOG::BOLT_OPENCL_GPU,"::Transform::OPENCL_GPU");
+            #endif
             transform_unary_enqueue( ctl, first, last, result, f, user_code );
         }
     }

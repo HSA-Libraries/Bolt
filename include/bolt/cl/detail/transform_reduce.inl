@@ -249,8 +249,15 @@ namespace  detail {
             {
                 runMode = c.getDefaultPathToRun();
             }
+			#if defined(BOLT_DEBUG_LOG)
+            BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+            #endif
             if (runMode == bolt::cl::control::SerialCpu)
             {
+			    #if defined(BOLT_DEBUG_LOG)
+                dblog->CodePathTaken(BOLTLOG::BOLT_TRANSFORMREDUCE,BOLTLOG::BOLT_SERIAL_CPU,"::Transform_Reduce::SERIAL_CPU");
+                #endif
+						
                 //Create a temporary array to store the transform result;
                 std::vector<oType> output(szElements);
 
@@ -260,7 +267,9 @@ namespace  detail {
             } else if (runMode == bolt::cl::control::MultiCoreCpu) {
 
 #ifdef ENABLE_TBB
-
+                    #if defined(BOLT_DEBUG_LOG)
+                    dblog->CodePathTaken(BOLTLOG::BOLT_TRANSFORMREDUCE,BOLTLOG::BOLT_MULTICORE_CPU,"::Transform_Reduce::MULTICORE_CPU");
+                    #endif
 					return bolt::btbb::transform_reduce(first,last,transform_op,init,reduce_op);
 #else
                     //std::cout << "The MultiCoreCpu version of this function is not enabled." << std ::endl;
@@ -268,7 +277,9 @@ namespace  detail {
 					return init;
 #endif
             } else {
-
+                #if defined(BOLT_DEBUG_LOG)
+                dblog->CodePathTaken(BOLTLOG::BOLT_TRANSFORMREDUCE,BOLTLOG::BOLT_OPENCL_GPU,"::Transform_Reduce::OPENCL_GPU");
+                #endif
                 // Map the input iterator to a device_vector
                 device_vector< iType > dvInput( first, last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, c );
 
@@ -301,8 +312,15 @@ namespace  detail {
             {
                 runMode = c.getDefaultPathToRun();
             }
+			#if defined(BOLT_DEBUG_LOG)
+            BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+            #endif
             if (runMode == bolt::cl::control::SerialCpu)
             {
+			    #if defined(BOLT_DEBUG_LOG)
+                dblog->CodePathTaken(BOLTLOG::BOLT_TRANSFORMREDUCE,BOLTLOG::BOLT_SERIAL_CPU,"::Transform_Reduce::SERIAL_CPU");
+                #endif
+				
                 typename bolt::cl::device_vector< iType >::pointer firstPtr = first.getContainer( ).data( );
                 std::vector< oType > result ( last.m_Index - first.m_Index );
 
@@ -314,7 +332,10 @@ namespace  detail {
             else if (runMode == bolt::cl::control::MultiCoreCpu)
             {
 #ifdef ENABLE_TBB
-               typename  bolt::cl::device_vector< iType >::pointer firstPtr = first.getContainer( ).data( );
+                #if defined(BOLT_DEBUG_LOG)
+                dblog->CodePathTaken(BOLTLOG::BOLT_TRANSFORMREDUCE,BOLTLOG::BOLT_MULTICORE_CPU,"::Transform_Reduce::MULTICORE_CPU");
+                #endif
+                typename  bolt::cl::device_vector< iType >::pointer firstPtr = first.getContainer( ).data( );
 
 				return  bolt::btbb::transform_reduce(  &firstPtr[ first.m_Index ], &firstPtr[ last.m_Index ],
 				                                       transform_op,init,reduce_op);
@@ -325,7 +346,9 @@ namespace  detail {
 
 #endif
             }
-
+            #if defined(BOLT_DEBUG_LOG)
+            dblog->CodePathTaken(BOLTLOG::BOLT_TRANSFORMREDUCE,BOLTLOG::BOLT_OPENCL_GPU,"::Transform_Reduce::OPENCL_GPU");
+            #endif
             return  transform_reduce_enqueue( c, first, last, transform_op, init, reduce_op, user_code );
         };
 

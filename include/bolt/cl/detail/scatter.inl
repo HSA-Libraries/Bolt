@@ -487,13 +487,22 @@ public:
         {
            runMode = ctl.getDefaultPathToRun();
         }
+		#if defined(BOLT_DEBUG_LOG)
+        BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+        #endif
         if( runMode == bolt::cl::control::SerialCpu )
         {
+		    #if defined(BOLT_DEBUG_LOG)
+            dblog->CodePathTaken(BOLTLOG::BOLT_SCATTER,BOLTLOG::BOLT_SERIAL_CPU,"::Scatter_If::SERIAL_CPU");
+            #endif
             gold_scatter_if_enqueue(first1, last1, map, stencil, result, pred);
         }
         else if( runMode == bolt::cl::control::MultiCoreCpu )
         {
 #if defined( ENABLE_TBB )
+           #if defined(BOLT_DEBUG_LOG)
+           dblog->CodePathTaken(BOLTLOG::BOLT_SCATTER,BOLTLOG::BOLT_MULTICORE_CPU,"::Scatter_If::MULTICORE_CPU");
+           #endif
            bolt::btbb::scatter_if(first1, last1, map, stencil, result, pred);
 #else
           throw std::runtime_error( "The MultiCoreCpu version of scatter_if is not enabled to be built! \n" );
@@ -503,6 +512,9 @@ public:
         }
         else
         {
+		  #if defined(BOLT_DEBUG_LOG)
+          dblog->CodePathTaken(BOLTLOG::BOLT_SCATTER,BOLTLOG::BOLT_OPENCL_GPU,"::Scatter_If::OPENCL_GPU");
+          #endif
           // Map the input iterator to a device_vector
           device_vector< iType1 > dvInput( first1, last1, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, ctl );
           device_vector< iType2 > dvMap( map, sz, CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, true, ctl );
@@ -557,13 +569,22 @@ public:
         {
           runMode = ctl.getDefaultPathToRun();
         }
+		#if defined(BOLT_DEBUG_LOG)
+        BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+        #endif
         if( runMode == bolt::cl::control::SerialCpu )
         {
+		    #if defined(BOLT_DEBUG_LOG)
+            dblog->CodePathTaken(BOLTLOG::BOLT_SCATTER,BOLTLOG::BOLT_SERIAL_CPU,"::Scatter_If::SERIAL_CPU");
+            #endif
             gold_scatter_if_enqueue(first1, last1, map, stencilFancyIter, result, pred);
         }
         else if( runMode == bolt::cl::control::MultiCoreCpu )
         {
 #if defined( ENABLE_TBB )
+            #if defined(BOLT_DEBUG_LOG)
+            dblog->CodePathTaken(BOLTLOG::BOLT_SCATTER,BOLTLOG::BOLT_MULTICORE_CPU,"::Scatter_If::MULTICORE_CPU");
+            #endif
             bolt::btbb::scatter_if(first1, last1, map, stencilFancyIter, result, pred);
 #else
             throw std::runtime_error( "The MultiCoreCpu version of scatter is not enabled to be built! \n" );
@@ -573,6 +594,9 @@ public:
         }
         else
         {
+		    #if defined(BOLT_DEBUG_LOG)
+            dblog->CodePathTaken(BOLTLOG::BOLT_SCATTER,BOLTLOG::BOLT_OPENCL_GPU,"::Scatter_If::OPENCL_GPU");
+            #endif
             // Use host pointers memory since these arrays are only read once - no benefit to copying.
             // Map the input iterator to a device_vector
             device_vector< iType1 > dvInput( first1, last1, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, ctl );
@@ -628,14 +652,23 @@ public:
         {
            runMode = ctl.getDefaultPathToRun();
         }
+		#if defined(BOLT_DEBUG_LOG)
+        BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+        #endif
         if( runMode == bolt::cl::control::SerialCpu )
         {
+		    #if defined(BOLT_DEBUG_LOG)
+            dblog->CodePathTaken(BOLTLOG::BOLT_SCATTER,BOLTLOG::BOLT_SERIAL_CPU,"::Scatter_If::SERIAL_CPU");
+            #endif
             gold_scatter_if_enqueue(fancyIterfirst, fancyIterlast, map, stencil, result, pred);
         }
         else if( runMode == bolt::cl::control::MultiCoreCpu )
         {
 #if defined( ENABLE_TBB )
-             bolt::btbb::scatter_if(fancyIterfirst, fancyIterlast, map, stencil, result, pred);
+            #if defined(BOLT_DEBUG_LOG)
+            dblog->CodePathTaken(BOLTLOG::BOLT_SCATTER,BOLTLOG::BOLT_MULTICORE_CPU,"::Scatter_If::MULTICORE_CPU");
+            #endif
+            bolt::btbb::scatter_if(fancyIterfirst, fancyIterlast, map, stencil, result, pred);
 #else
             throw std::runtime_error( "The MultiCoreCpu version of scatter is not enabled to be built! \n" );
 
@@ -643,6 +676,9 @@ public:
         }
         else
         {
+		    #if defined(BOLT_DEBUG_LOG)
+            dblog->CodePathTaken(BOLTLOG::BOLT_SCATTER,BOLTLOG::BOLT_OPENCL_GPU,"::Scatter_If::OPENCL_GPU");
+            #endif
             // Use host pointers memory since these arrays are only read once - no benefit to copying.
             // Map the input iterator to a device_vector
             device_vector< iType2 > dvMap( map, sz, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, true, ctl );
@@ -701,9 +737,15 @@ public:
         {
              runMode = ctl.getDefaultPathToRun();
         }
-
+        #if defined(BOLT_DEBUG_LOG)
+        BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+        #endif
         if( runMode == bolt::cl::control::SerialCpu )
         {
+		    #if defined(BOLT_DEBUG_LOG)
+            dblog->CodePathTaken(BOLTLOG::BOLT_SCATTER,BOLTLOG::BOLT_SERIAL_CPU,"::Scatter_If::SERIAL_CPU");
+            #endif
+			
             typename bolt::cl::device_vector< iType1 >::pointer firstPtr =  first1.getContainer( ).data( );
             typename bolt::cl::device_vector< iType2 >::pointer mapPtr =  map.getContainer( ).data( );
             typename bolt::cl::device_vector< iType3 >::pointer stenPtr =  stencil.getContainer( ).data( );
@@ -720,9 +762,14 @@ public:
         }
         else if( runMode == bolt::cl::control::MultiCoreCpu )
         {
+		   	
             // Call MC
 #if defined( ENABLE_TBB )
             {
+			    #if defined(BOLT_DEBUG_LOG)
+                dblog->CodePathTaken(BOLTLOG::BOLT_SCATTER,BOLTLOG::BOLT_MULTICORE_CPU,"::Scatter_If::MULTICORE_CPU");
+                #endif
+			
                 typename bolt::cl::device_vector< iType1 >::pointer firstPtr =  first1.getContainer( ).data( );
                 typename bolt::cl::device_vector< iType2 >::pointer mapPtr =  map.getContainer( ).data( );
                 typename bolt::cl::device_vector< iType3 >::pointer stenPtr =  stencil.getContainer( ).data( );
@@ -737,6 +784,10 @@ public:
         }
         else
         {
+		    #if defined(BOLT_DEBUG_LOG)
+            dblog->CodePathTaken(BOLTLOG::BOLT_SCATTER,BOLTLOG::BOLT_OPENCL_GPU,"::Scatter_If::OPENCL_GPU");
+            #endif
+			
             scatter_if_enqueue( ctl, first1, last1, map, stencil, result, pred, user_code );
         }
     }
@@ -774,13 +825,23 @@ public:
         {
            runMode = ctl.getDefaultPathToRun();
         }
+		#if defined(BOLT_DEBUG_LOG)
+        BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+        #endif
+		
         if( runMode == bolt::cl::control::SerialCpu )
         {
+		    #if defined(BOLT_DEBUG_LOG)
+            dblog->CodePathTaken(BOLTLOG::BOLT_SCATTER,BOLTLOG::BOLT_SERIAL_CPU,"::Scatter::SERIAL_CPU");
+            #endif
             gold_scatter_enqueue(first1, last1, map, result);
         }
         else if( runMode == bolt::cl::control::MultiCoreCpu )
         {
             #if defined( ENABLE_TBB )
+			    #if defined(BOLT_DEBUG_LOG)
+                dblog->CodePathTaken(BOLTLOG::BOLT_SCATTER,BOLTLOG::BOLT_MULTICORE_CPU,"::Scatter::MULTICORE_CPU");
+                #endif
                 bolt::btbb::scatter(first1, last1, map, result);
             #else
                  throw std::runtime_error( "The MultiCoreCpu version of scatter_if is not enabled to be built! \n" );
@@ -790,6 +851,10 @@ public:
 
         else
         {
+		  #if defined(BOLT_DEBUG_LOG)
+          dblog->CodePathTaken(BOLTLOG::BOLT_SCATTER,BOLTLOG::BOLT_OPENCL_GPU,"::Scatter::OPENCL_GPU");
+          #endif
+			
           // Map the input iterator to a device_vector
           device_vector< iType1 > dvInput( first1, last1, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, ctl );
           device_vector< iType2 > dvMap( map, sz, CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, true, ctl );
@@ -834,15 +899,25 @@ public:
         {
           runMode = ctl.getDefaultPathToRun();
         }
+		#if defined(BOLT_DEBUG_LOG)
+        BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+        #endif
+		
         if( runMode == bolt::cl::control::SerialCpu )
         {
+		     #if defined(BOLT_DEBUG_LOG)
+             dblog->CodePathTaken(BOLTLOG::BOLT_SCATTER,BOLTLOG::BOLT_SERIAL_CPU,"::Scatter::SERIAL_CPU");
+             #endif
              gold_scatter_enqueue(firstFancy, lastFancy, map, result);
 
         }
         else if( runMode == bolt::cl::control::MultiCoreCpu )
         {
 #if defined( ENABLE_TBB )
-             bolt::btbb::scatter(firstFancy, lastFancy, map, result);
+            #if defined(BOLT_DEBUG_LOG)
+            dblog->CodePathTaken(BOLTLOG::BOLT_SCATTER,BOLTLOG::BOLT_MULTICORE_CPU,"::Scatter::MULTICORE_CPU");
+            #endif
+            bolt::btbb::scatter(firstFancy, lastFancy, map, result);
 #else
             throw std::runtime_error( "The MultiCoreCpu version of scatter is not enabled to be built! \n" );
 
@@ -850,6 +925,10 @@ public:
         }
         else
         {
+		    #if defined(BOLT_DEBUG_LOG)
+            dblog->CodePathTaken(BOLTLOG::BOLT_SCATTER,BOLTLOG::BOLT_OPENCL_GPU,"::Scatter::OPENCL_GPU");
+            #endif
+		  
             // Use host pointers memory since these arrays are only read once - no benefit to copying.
             // Map the input iterator to a device_vector
             device_vector< iType2 > dvMap( map, sz, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY,true, ctl );
@@ -895,13 +974,23 @@ public:
         {
           runMode = ctl.getDefaultPathToRun();
         }
+	    #if defined(BOLT_DEBUG_LOG)
+        BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+        #endif
+		
         if( runMode == bolt::cl::control::SerialCpu )
         {
+		    #if defined(BOLT_DEBUG_LOG)
+            dblog->CodePathTaken(BOLTLOG::BOLT_SCATTER,BOLTLOG::BOLT_SERIAL_CPU,"::Scatter::SERIAL_CPU");
+            #endif
             gold_scatter_enqueue(first1, last1, mapFancy, result);
         }
         else if( runMode == bolt::cl::control::MultiCoreCpu )
         {
 #if defined( ENABLE_TBB )
+            #if defined(BOLT_DEBUG_LOG)
+            dblog->CodePathTaken(BOLTLOG::BOLT_SCATTER,BOLTLOG::BOLT_MULTICORE_CPU,"::Scatter::MULTICORE_CPU");
+            #endif
             bolt::btbb::scatter(first1, last1, mapFancy, result);
 #else
             throw std::runtime_error( "The MultiCoreCpu version of scatter is not enabled to be built! \n" );
@@ -910,6 +999,10 @@ public:
         }
         else
         {
+		    #if defined(BOLT_DEBUG_LOG)
+            dblog->CodePathTaken(BOLTLOG::BOLT_SCATTER,BOLTLOG::BOLT_OPENCL_GPU,"::Scatter::OPENCL_GPU");
+            #endif
+			
             // Use host pointers memory since these arrays are only read once - no benefit to copying.
             // Map the input iterator to a device_vector
             device_vector< iType1 > dvInput( first1, last1, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, ctl );
@@ -956,9 +1049,16 @@ public:
         {
              runMode = ctl.getDefaultPathToRun();
         }
-
+        #if defined(BOLT_DEBUG_LOG)
+        BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+        #endif
+		
         if( runMode == bolt::cl::control::SerialCpu )
         {
+		    #if defined(BOLT_DEBUG_LOG)
+            dblog->CodePathTaken(BOLTLOG::BOLT_SCATTER,BOLTLOG::BOLT_SERIAL_CPU,"::Scatter::SERIAL_CPU");
+            #endif
+			
             typename bolt::cl::device_vector< iType1 >::pointer InputBuffer  =  first1.getContainer( ).data( );
             typename bolt::cl::device_vector< iType2 >::pointer MapBuffer    =  map.getContainer( ).data( );
             typename bolt::cl::device_vector< oType >::pointer  ResultBuffer =  result.getContainer( ).data( );
@@ -970,6 +1070,9 @@ public:
 
 #if defined( ENABLE_TBB )
             {
+			  #if defined(BOLT_DEBUG_LOG)
+              dblog->CodePathTaken(BOLTLOG::BOLT_SCATTER,BOLTLOG::BOLT_MULTICORE_CPU,"::Scatter::MULTICORE_CPU");
+              #endif
               typename bolt::cl::device_vector< iType1 >::pointer InputBuffer   =  first1.getContainer( ).data( );
               typename bolt::cl::device_vector< iType2 >::pointer MapBuffer     =  map.getContainer( ).data( );
               typename bolt::cl::device_vector< oType >::pointer ResultBuffer   =  result.getContainer( ).data( );
@@ -982,6 +1085,10 @@ public:
          }
         else
         {
+		    #if defined(BOLT_DEBUG_LOG)
+            dblog->CodePathTaken(BOLTLOG::BOLT_SCATTER,BOLTLOG::BOLT_OPENCL_GPU,"::Scatter::OPENCL_GPU");
+            #endif
+			
             scatter_enqueue( ctl,
                              first1,
                              last1,
@@ -1018,9 +1125,15 @@ public:
         {
              runMode = ctl.getDefaultPathToRun();
         }
-
+        #if defined(BOLT_DEBUG_LOG)
+        BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+        #endif
         if( runMode == bolt::cl::control::SerialCpu )
         {
+		    #if defined(BOLT_DEBUG_LOG)
+            dblog->CodePathTaken(BOLTLOG::BOLT_SCATTER,BOLTLOG::BOLT_SERIAL_CPU,"::Scatter::SERIAL_CPU");
+            #endif
+			
             typename bolt::cl::device_vector< iType2 >::pointer MapBuffer    =  map.getContainer( ).data( );
             typename bolt::cl::device_vector< oType >::pointer  ResultBuffer =  result.getContainer( ).data( );
             gold_scatter_enqueue(firstFancy, lastFancy, &MapBuffer[ map.m_Index ], &ResultBuffer[ result.m_Index ]);
@@ -1029,6 +1142,10 @@ public:
         {
 #if defined( ENABLE_TBB )
             {
+			    #if defined(BOLT_DEBUG_LOG)
+                dblog->CodePathTaken(BOLTLOG::BOLT_SCATTER,BOLTLOG::BOLT_MULTICORE_CPU,"::Scatter::MULTICORE_CPU");
+                #endif
+			  
                 typename bolt::cl::device_vector< iType2 >::pointer MapBuffer =  map.getContainer( ).data( );
                 typename bolt::cl::device_vector< oType >::pointer ResultBuffer =  result.getContainer( ).data( );
 
@@ -1040,6 +1157,10 @@ public:
         }
         else
         {
+		    #if defined(BOLT_DEBUG_LOG)
+            dblog->CodePathTaken(BOLTLOG::BOLT_SCATTER,BOLTLOG::BOLT_OPENCL_GPU,"::Scatter::OPENCL_GPU");
+            #endif
+			
             scatter_enqueue( ctl,
                              firstFancy,
                              lastFancy,
@@ -1075,9 +1196,15 @@ public:
         {
              runMode = ctl.getDefaultPathToRun();
         }
-
+        #if defined(BOLT_DEBUG_LOG)
+        BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+        #endif
         if( runMode == bolt::cl::control::SerialCpu )
         {
+		    #if defined(BOLT_DEBUG_LOG)
+            dblog->CodePathTaken(BOLTLOG::BOLT_SCATTER,BOLTLOG::BOLT_SERIAL_CPU,"::Scatter::SERIAL_CPU");
+            #endif
+			
             typename bolt::cl::device_vector< iType1 >::pointer InputBuffer    =  first1.getContainer( ).data( );
             typename bolt::cl::device_vector< oType >::pointer  ResultBuffer =  result.getContainer( ).data( );
             gold_scatter_enqueue( &InputBuffer[ first1.m_Index ], &InputBuffer[ last1.m_Index ], mapFancy,
@@ -1088,6 +1215,10 @@ public:
         {
 #if defined( ENABLE_TBB )
             {
+			    #if defined(BOLT_DEBUG_LOG)
+                dblog->CodePathTaken(BOLTLOG::BOLT_SCATTER,BOLTLOG::BOLT_MULTICORE_CPU,"::Scatter::MULTICORE_CPU");
+                #endif
+				
                 typename bolt::cl::device_vector< iType1 >::pointer InputBuffer    =  first1.getContainer( ).data( );
                 typename bolt::cl::device_vector< oType >::pointer  ResultBuffer =  result.getContainer( ).data( );
                 bolt::btbb::scatter( &InputBuffer[ first1.m_Index ], &InputBuffer[ last1.m_Index ], mapFancy,
@@ -1099,6 +1230,10 @@ public:
         }
         else
         {
+		    #if defined(BOLT_DEBUG_LOG)
+            dblog->CodePathTaken(BOLTLOG::BOLT_SCATTER,BOLTLOG::BOLT_OPENCL_GPU,"::Scatter::OPENCL_GPU");
+            #endif
+			
             scatter_enqueue( ctl,
                              first1,
                              last1,
@@ -1134,8 +1269,14 @@ public:
         {
           runMode = ctl.getDefaultPathToRun();
         }
+		#if defined(BOLT_DEBUG_LOG)
+        BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+        #endif
         if( runMode == bolt::cl::control::SerialCpu )
         {
+		    #if defined(BOLT_DEBUG_LOG)
+            dblog->CodePathTaken(BOLTLOG::BOLT_SCATTER,BOLTLOG::BOLT_SERIAL_CPU,"::Scatter::SERIAL_CPU");
+            #endif
             typename bolt::cl::device_vector< iType1 >::pointer InputBuffer    =  first.getContainer( ).data( );
             gold_scatter_enqueue( &InputBuffer[ first.m_Index ], &InputBuffer[ last.m_Index ], map,result);
         }
@@ -1143,6 +1284,9 @@ public:
         {
 #if defined( ENABLE_TBB )
             {
+			    #if defined(BOLT_DEBUG_LOG)
+                dblog->CodePathTaken(BOLTLOG::BOLT_SCATTER,BOLTLOG::BOLT_MULTICORE_CPU,"::Scatter::MULTICORE_CPU");
+                #endif
                 typename bolt::cl::device_vector< iType1 >::pointer InputBuffer    =  first.getContainer( ).data( );
                 bolt::btbb::scatter( &InputBuffer[ first.m_Index ], &InputBuffer[ last.m_Index ],map, result);
             }
@@ -1153,6 +1297,10 @@ public:
         }
         else
         {
+		    #if defined(BOLT_DEBUG_LOG)
+            dblog->CodePathTaken(BOLTLOG::BOLT_SCATTER,BOLTLOG::BOLT_OPENCL_GPU,"::Scatter::OPENCL_GPU");
+            #endif
+			
             // Use host pointers memory since these arrays are only read once - no benefit to copying.
             // Map the map iterator to a device_vector
             device_vector< iType2 > dvMap( map, sz, CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY, true, ctl );
@@ -1197,8 +1345,14 @@ public:
         {
           runMode = ctl.getDefaultPathToRun();
         }
+	    #if defined(BOLT_DEBUG_LOG)
+        BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+        #endif
         if( runMode == bolt::cl::control::SerialCpu )
         {
+		   #if defined(BOLT_DEBUG_LOG)
+           dblog->CodePathTaken(BOLTLOG::BOLT_SCATTER,BOLTLOG::BOLT_SERIAL_CPU,"::Scatter::SERIAL_CPU");
+           #endif
            typename bolt::cl::device_vector< iType2 >::pointer mapBuffer    =  map.getContainer( ).data( );
            gold_scatter_enqueue(first1, last1, &mapBuffer[ map.m_Index ], result);
         }
@@ -1206,6 +1360,9 @@ public:
         {
 #if defined( ENABLE_TBB )
             {
+			    #if defined(BOLT_DEBUG_LOG)
+                dblog->CodePathTaken(BOLTLOG::BOLT_SCATTER,BOLTLOG::BOLT_MULTICORE_CPU,"::Scatter::MULTICORE_CPU");
+                #endif
                 typename bolt::cl::device_vector< iType2 >::pointer mapBuffer    =  map.getContainer( ).data( );
                 bolt::btbb::scatter(first1, last1, &mapBuffer[ map.m_Index ], result);
             }
@@ -1216,6 +1373,10 @@ public:
         }
         else
         {
+		     #if defined(BOLT_DEBUG_LOG)
+            dblog->CodePathTaken(BOLTLOG::BOLT_SCATTER,BOLTLOG::BOLT_OPENCL_GPU,"::Scatter::OPENCL_GPU");
+            #endif
+				
             // Use host pointers memory since these arrays are only read once - no benefit to copying.
             // Map the input iterator to a device_vector
             device_vector< iType1 > dvInput( first1, last1, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, ctl );

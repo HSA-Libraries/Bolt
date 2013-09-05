@@ -211,26 +211,40 @@ namespace detail {
                 {
                     runMode = ctl.getDefaultPathToRun();
                 }
-
+                #if defined(BOLT_DEBUG_LOG)
+                BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+                #endif
                 switch(runMode)
                 {
                 case bolt::cl::control::OpenCL :
                     {
+                        #if defined(BOLT_DEBUG_LOG)
+                        dblog->CodePathTaken(BOLTLOG::BOLT_REDUCE,BOLTLOG::BOLT_OPENCL_GPU,"::Reduce::OPENCL_GPU");
+                        #endif
                         device_vector< iType > dvInput( first, last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, ctl );
                         return reduce_enqueue( ctl, dvInput.begin(), dvInput.end(), init, binary_op, cl_code);
                     }
 
                 case bolt::cl::control::MultiCoreCpu:
                     #ifdef ENABLE_TBB
+                        #if defined(BOLT_DEBUG_LOG)
+                        dblog->CodePathTaken(BOLTLOG::BOLT_REDUCE,BOLTLOG::BOLT_MULTICORE_CPU,"::Reduce::MULTICORE_CPU");
+                        #endif
                         return bolt::btbb::reduce(first,last,init,binary_op);
                     #else
                         throw std::runtime_error( "The MultiCoreCpu version of reduce is not enabled to be built! \n" );
                     #endif
 
                 case bolt::cl::control::SerialCpu:
-                    return std::accumulate(first, last, init,binary_op);
+                        #if defined(BOLT_DEBUG_LOG)
+                        dblog->CodePathTaken(BOLTLOG::BOLT_REDUCE,BOLTLOG::BOLT_SERIAL_CPU,"::Reduce::SERIAL_CPU");
+                        #endif
+                        return std::accumulate(first, last, init,binary_op);
 
                 default:
+                        #if defined(BOLT_DEBUG_LOG)
+                        dblog->CodePathTaken(BOLTLOG::BOLT_REDUCE,BOLTLOG::BOLT_SERIAL_CPU,"::Reduce::SERIAL_CPU");
+                        #endif
                     return std::accumulate(first, last, init,binary_op);
 
                 }
@@ -250,6 +264,10 @@ namespace detail {
             {
                 typedef typename std::iterator_traits<DVInputIterator>::value_type iType;
                 size_t szElements = static_cast<size_t>(std::distance(first, last) );
+                #if defined(BOLT_DEBUG_LOG)
+                BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+                #endif
+
                 if (szElements == 0)
                     return init;
 
@@ -262,11 +280,18 @@ namespace detail {
                 switch(runMode)
                 {
                 case bolt::cl::control::OpenCL :
+                    #if defined(BOLT_DEBUG_LOG)
+                         dblog->CodePathTaken(BOLTLOG::BOLT_REDUCE,BOLTLOG::BOLT_OPENCL_GPU,"::Reduce::OPENCL_GPU");
+                    #endif
                         return reduce_enqueue( ctl, first, last, init, binary_op, cl_code);
+
 
                 case bolt::cl::control::MultiCoreCpu:
                     #ifdef ENABLE_TBB
                     {
+                        #if defined(BOLT_DEBUG_LOG)
+                        dblog->CodePathTaken(BOLTLOG::BOLT_REDUCE,BOLTLOG::BOLT_MULTICORE_CPU,"::Reduce::MULTICORE_CPU");
+                        #endif
                       typename bolt::cl::device_vector< iType >::pointer reduceInputBuffer =  first.getContainer( ).data( );
                       return bolt::btbb::reduce(  &reduceInputBuffer[first.m_Index],&reduceInputBuffer[ last.m_Index ],
                                                   init, binary_op);
@@ -279,6 +304,9 @@ namespace detail {
 
                 case bolt::cl::control::SerialCpu:
                     {
+                        #if defined(BOLT_DEBUG_LOG)
+                        dblog->CodePathTaken(BOLTLOG::BOLT_REDUCE,BOLTLOG::BOLT_SERIAL_CPU,"::Reduce::SERIAL_CPU");
+                        #endif
                        typename bolt::cl::device_vector< iType >::pointer reduceInputBuffer =  first.getContainer( ).data( );
                       return std::accumulate(  &reduceInputBuffer[first.m_Index], &reduceInputBuffer[ last.m_Index ],
                                                init, binary_op);
@@ -286,6 +314,9 @@ namespace detail {
 
                 default: /* Incase of runMode not set/corrupted */
                     {
+                        #if defined(BOLT_DEBUG_LOG)
+                        dblog->CodePathTaken(BOLTLOG::BOLT_REDUCE,BOLTLOG::BOLT_SERIAL_CPU,"::Reduce::SERIAL_CPU");
+                        #endif
                        typename bolt::cl::device_vector< iType >::pointer reduceInputBuffer =  first.getContainer( ).data( );
                       return std::accumulate(  &reduceInputBuffer[first.m_Index], &reduceInputBuffer[ last.m_Index ],
                                                init, binary_op);
@@ -316,15 +347,23 @@ namespace detail {
                 {
                     runMode = ctl.getDefaultPathToRun();
                 }
-
+                #if defined(BOLT_DEBUG_LOG)
+                BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+                #endif
                 switch(runMode)
                 {
                 case bolt::cl::control::OpenCL :
+                    #if defined(BOLT_DEBUG_LOG)
+                    dblog->CodePathTaken(BOLTLOG::BOLT_REDUCE,BOLTLOG::BOLT_OPENCL_GPU,"::Reduce::OPENCL_GPU");
+                    #endif
                         return reduce_enqueue( ctl, first, last, init, binary_op, cl_code);
 
                 case bolt::cl::control::MultiCoreCpu:
                     #ifdef ENABLE_TBB
                     {
+                        #if defined(BOLT_DEBUG_LOG)
+                        dblog->CodePathTaken(BOLTLOG::BOLT_REDUCE,BOLTLOG::BOLT_MULTICORE_CPU,"::Reduce::MULTICORE_CPU");
+                        #endif
                       return bolt::btbb::reduce(first,last,init,binary_op);
                     }
                     #else
@@ -334,9 +373,15 @@ namespace detail {
                     #endif
 
                 case bolt::cl::control::SerialCpu:
+                    #if defined(BOLT_DEBUG_LOG)
+                    dblog->CodePathTaken(BOLTLOG::BOLT_REDUCE,BOLTLOG::BOLT_SERIAL_CPU,"::Reduce::SERIAL_CPU");
+                    #endif
                      return std::accumulate(first,last, init, binary_op);
 
                 default: /* Incase of runMode not set/corrupted */
+                    #if defined(BOLT_DEBUG_LOG)
+                    dblog->CodePathTaken(BOLTLOG::BOLT_REDUCE,BOLTLOG::BOLT_SERIAL_CPU,"::Reduce::SERIAL_CPU");
+                    #endif
                     return std::accumulate(first,last, init, binary_op);
 
                 }
@@ -448,9 +493,10 @@ namespace detail {
             {
                   runMode = ctl.getDefaultPathToRun();
             }
-            if (runMode == bolt::cl::control::SerialCpu) {
+            /*if (runMode == bolt::cl::control::SerialCpu) {
                 return std::accumulate(first, last, init, binary_op);
-            } else {
+            }*/
+			else {
                 return detail::reduce_detect_random_access(ctl, first, last, init, binary_op, cl_code,
                    typename std::iterator_traits< InputIterator >::iterator_category( ) );
             }

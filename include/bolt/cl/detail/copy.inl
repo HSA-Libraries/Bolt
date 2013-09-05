@@ -353,9 +353,15 @@ void copy_pick_iterator(const bolt::cl::control &ctrl,  const InputIterator& fir
      {
                 runMode = ctrl.getDefaultPathToRun( );
      }
-
+     #if defined(BOLT_DEBUG_LOG)
+     BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+     #endif
+				
      if( runMode == bolt::cl::control::SerialCpu )
      {
+	     #if defined(BOLT_DEBUG_LOG)
+         dblog->CodePathTaken(BOLTLOG::BOLT_COPY,BOLTLOG::BOLT_SERIAL_CPU,"::Copy::SERIAL_CPU");
+         #endif
          #if defined( _WIN32 )
            std::copy_n( first, n, stdext::checked_array_iterator<oType*>(&(*result), n ) );
          #else
@@ -365,6 +371,9 @@ void copy_pick_iterator(const bolt::cl::control &ctrl,  const InputIterator& fir
      else if( runMode == bolt::cl::control::MultiCoreCpu )
      {
         #ifdef ENABLE_TBB
+		   #if defined(BOLT_DEBUG_LOG)
+           dblog->CodePathTaken(BOLTLOG::BOLT_COPY,BOLTLOG::BOLT_MULTICORE_CPU,"::Copy::MULTICORE_CPU");
+           #endif
            bolt::btbb::copy_n(first, n, &(*result));
         #else
             throw std::runtime_error( "The MultiCoreCpu version of Copy is not enabled to be built." );
@@ -372,6 +381,10 @@ void copy_pick_iterator(const bolt::cl::control &ctrl,  const InputIterator& fir
      }
      else
      {
+	    #if defined(BOLT_DEBUG_LOG)
+        dblog->CodePathTaken(BOLTLOG::BOLT_COPY,BOLTLOG::BOLT_OPENCL_GPU,"::Copy::OPENCL_GPU");
+        #endif
+		
         // A host 2 host copy operation, just fallback on the optimized std:: implementation
         #if defined( _WIN32 )
           std::copy_n( first, n, stdext::checked_array_iterator<oType*>(&(*result), n ) );
@@ -400,9 +413,16 @@ void copy_pick_iterator(const bolt::cl::control &ctrl,  const InputIterator& fir
      {
          runMode = ctrl.getDefaultPathToRun( );
      }
-
+     #if defined(BOLT_DEBUG_LOG)
+     BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+     #endif
+	 
      if( runMode == bolt::cl::control::SerialCpu )
      {
+	      #if defined(BOLT_DEBUG_LOG)
+          dblog->CodePathTaken(BOLTLOG::BOLT_COPY,BOLTLOG::BOLT_SERIAL_CPU,"::Copy::SERIAL_CPU");
+          #endif
+		 
           #if defined( _WIN32 )
            std::copy_n( first, n, stdext::checked_array_iterator<oType*>(&(*result), n ) );
           #else
@@ -413,6 +433,9 @@ void copy_pick_iterator(const bolt::cl::control &ctrl,  const InputIterator& fir
      {
 
          #ifdef ENABLE_TBB
+		     #if defined(BOLT_DEBUG_LOG)
+             dblog->CodePathTaken(BOLTLOG::BOLT_COPY,BOLTLOG::BOLT_MULTICORE_CPU,"::Copy::MULTICORE_CPU");
+             #endif
              bolt::btbb::copy_n(first, n, &(*result) );
          #else
                throw std::runtime_error( "The MultiCoreCpu version of Copy is not enabled to be built." );
@@ -420,6 +443,10 @@ void copy_pick_iterator(const bolt::cl::control &ctrl,  const InputIterator& fir
      }
      else
      {
+	    #if defined(BOLT_DEBUG_LOG)
+        dblog->CodePathTaken(BOLTLOG::BOLT_COPY,BOLTLOG::BOLT_OPENCL_GPU,"::Copy::OPENCL_GPU");
+        #endif
+		
         // Use host pointers memory since these arrays are only read once - no benefit to copying.
         // Map the output iterator to a device_vector
         device_vector< oType > dvOutput( result, n, CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY, false, ctrl );
@@ -444,8 +471,16 @@ void copy_pick_iterator(const bolt::cl::control &ctrl,  const DVInputIterator& f
                runMode = ctrl.getDefaultPathToRun( );
      }
 
+	 #if defined(BOLT_DEBUG_LOG)
+     BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+     #endif
+	 
      if( runMode == bolt::cl::control::SerialCpu )
      {
+	        #if defined(BOLT_DEBUG_LOG)
+            dblog->CodePathTaken(BOLTLOG::BOLT_COPY,BOLTLOG::BOLT_SERIAL_CPU,"::Copy::SERIAL_CPU");
+            #endif
+		  
             typename bolt::cl::device_vector< iType >::pointer copySrc =  first.getContainer( ).data( );
             typename bolt::cl::device_vector< oType >::pointer copyDest =  result.getContainer( ).data( );
 #if defined( _WIN32 )
@@ -459,9 +494,12 @@ void copy_pick_iterator(const bolt::cl::control &ctrl,  const DVInputIterator& f
      {
 
          #ifdef ENABLE_TBB
+		     #if defined(BOLT_DEBUG_LOG)
+             dblog->CodePathTaken(BOLTLOG::BOLT_COPY,BOLTLOG::BOLT_MULTICORE_CPU,"::Copy::MULTICORE_CPU");
+             #endif
              typename bolt::cl::device_vector< iType >::pointer copySrc =  first.getContainer( ).data( );
              typename bolt::cl::device_vector< oType >::pointer copyDest =  result.getContainer( ).data( );
-              bolt::btbb::copy_n( &copySrc[first.m_Index], n, &copyDest[result.m_Index] );
+             bolt::btbb::copy_n( &copySrc[first.m_Index], n, &copyDest[result.m_Index] );
             return;
          #else
                 throw std::runtime_error( "The MultiCoreCpu version of Copy is not enabled to be built." );
@@ -469,6 +507,10 @@ void copy_pick_iterator(const bolt::cl::control &ctrl,  const DVInputIterator& f
      }
      else
      {
+	     #if defined(BOLT_DEBUG_LOG)
+         dblog->CodePathTaken(BOLTLOG::BOLT_COPY,BOLTLOG::BOLT_OPENCL_GPU,"::Copy::OPENCL_GPU");
+         #endif
+		
          copy_enqueue( ctrl, first, n, result, user_code );
      }
 }
@@ -489,8 +531,16 @@ void copy_pick_iterator(const bolt::cl::control &ctrl,  const DVInputIterator& f
                runMode = ctrl.getDefaultPathToRun( );
      }
 
+	 #if defined(BOLT_DEBUG_LOG)
+     BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+     #endif
+	 
      if( runMode == bolt::cl::control::SerialCpu )
      {
+	        #if defined(BOLT_DEBUG_LOG)
+            dblog->CodePathTaken(BOLTLOG::BOLT_COPY,BOLTLOG::BOLT_SERIAL_CPU,"::Copy::SERIAL_CPU");
+            #endif
+			
             typename bolt::cl::device_vector< oType >::pointer copyDest =  result.getContainer( ).data( );
 #if defined( _WIN32 )
             std::copy_n( first, n, stdext::make_checked_array_iterator( &copyDest[result.m_Index], n) );
@@ -503,6 +553,10 @@ void copy_pick_iterator(const bolt::cl::control &ctrl,  const DVInputIterator& f
      {
 
          #ifdef ENABLE_TBB
+		      #if defined(BOLT_DEBUG_LOG)
+              dblog->CodePathTaken(BOLTLOG::BOLT_COPY,BOLTLOG::BOLT_MULTICORE_CPU,"::Copy::MULTICORE_CPU");
+              #endif
+			 
               typename bolt::cl::device_vector< oType >::pointer copyDest =  result.getContainer( ).data( );
               bolt::btbb::copy_n( first, n, &copyDest[result.m_Index] );
             return;
@@ -512,6 +566,10 @@ void copy_pick_iterator(const bolt::cl::control &ctrl,  const DVInputIterator& f
      }
      else
      {
+	    #if defined(BOLT_DEBUG_LOG)
+        dblog->CodePathTaken(BOLTLOG::BOLT_COPY,BOLTLOG::BOLT_OPENCL_GPU,"::Copy::OPENCL_GPU");
+        #endif
+		 
         device_vector< iType > dvInput( first, n, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, true, ctrl );
         //Now call the actual cl algorithm
         copy_enqueue( ctrl, dvInput.begin(), n, result, user_code );
@@ -536,8 +594,16 @@ void copy_pick_iterator(const bolt::cl::control &ctrl,  const DVInputIterator& f
                runMode = ctrl.getDefaultPathToRun( );
      }
 
+	 #if defined(BOLT_DEBUG_LOG)
+     BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+     #endif
+	 
      if( runMode == bolt::cl::control::SerialCpu )
      {
+	     #if defined(BOLT_DEBUG_LOG)
+         dblog->CodePathTaken(BOLTLOG::BOLT_COPY,BOLTLOG::BOLT_SERIAL_CPU,"::Copy::SERIAL_CPU");
+         #endif
+			
          #if defined( _WIN32 )
            std::copy_n( first, n, stdext::checked_array_iterator<oType*>(&(*result), n ) );
          #else
@@ -548,8 +614,11 @@ void copy_pick_iterator(const bolt::cl::control &ctrl,  const DVInputIterator& f
      else if( runMode == bolt::cl::control::MultiCoreCpu )
      {
 
-         #ifdef ENABLE_TBB
-              typename bolt::cl::device_vector< iType >::pointer copySrc =  first.getContainer( ).data( );
+           #ifdef ENABLE_TBB
+		       #if defined(BOLT_DEBUG_LOG)
+               dblog->CodePathTaken(BOLTLOG::BOLT_COPY,BOLTLOG::BOLT_MULTICORE_CPU,"::Copy::MULTICORE_CPU");
+               #endif
+               typename bolt::cl::device_vector< iType >::pointer copySrc =  first.getContainer( ).data( );
                bolt::btbb::copy_n( &copySrc[first.m_Index], n, result );
            #else
                 throw std::runtime_error( "The MultiCoreCpu version of Copy is not enabled to be built." );
@@ -557,7 +626,11 @@ void copy_pick_iterator(const bolt::cl::control &ctrl,  const DVInputIterator& f
      }
      else
      {
-         // Use host pointers memory since these arrays are only read once - no benefit to copying.
+	    #if defined(BOLT_DEBUG_LOG)
+        dblog->CodePathTaken(BOLTLOG::BOLT_COPY,BOLTLOG::BOLT_OPENCL_GPU,"::Copy::OPENCL_GPU");
+        #endif
+		
+        // Use host pointers memory since these arrays are only read once - no benefit to copying.
         // Map the output iterator to a device_vector
         device_vector< oType > dvOutput( result, n, CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY, false, ctrl );
         copy_enqueue( ctrl, first, n, dvOutput.begin( ), user_code );
@@ -572,17 +645,25 @@ void copy_pick_iterator(const bolt::cl::control &ctrl,  const DVInputIterator& f
     const DVOutputIterator& result, const std::string& user_code, bolt::cl::fancy_iterator_tag,
     bolt::cl::device_vector_tag )
 {
-    typedef typename std::iterator_traits<DVInputIterator>::value_type iType;
-    typedef typename std::iterator_traits<DVOutputIterator>::value_type oType;
+     typedef typename std::iterator_traits<DVInputIterator>::value_type iType;
+     typedef typename std::iterator_traits<DVOutputIterator>::value_type oType;
      bolt::cl::control::e_RunMode runMode = ctrl.getForceRunMode( );
 
      if( runMode == bolt::cl::control::Automatic )
      {
          runMode = ctrl.getDefaultPathToRun( );
      }
-
+     
+	 #if defined(BOLT_DEBUG_LOG)
+     BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+     #endif
+	 
      if( runMode == bolt::cl::control::SerialCpu )
      {
+	     #if defined(BOLT_DEBUG_LOG)
+         dblog->CodePathTaken(BOLTLOG::BOLT_COPY,BOLTLOG::BOLT_SERIAL_CPU,"::Copy::SERIAL_CPU");
+         #endif
+		 
          typename bolt::cl::device_vector< oType >::pointer copyDest =  result.getContainer( ).data( );
 #if defined( _WIN32 )
          std::copy_n( first, n, stdext::make_checked_array_iterator(&copyDest[result.m_Index], n) );
@@ -593,7 +674,11 @@ void copy_pick_iterator(const bolt::cl::control &ctrl,  const DVInputIterator& f
      else if( runMode == bolt::cl::control::MultiCoreCpu )
      {
         #ifdef ENABLE_TBB
-           typename bolt::cl::device_vector< oType >::pointer copyDest =  result.getContainer( ).data( );
+		    #if defined(BOLT_DEBUG_LOG)
+            dblog->CodePathTaken(BOLTLOG::BOLT_COPY,BOLTLOG::BOLT_MULTICORE_CPU,"::Copy::MULTICORE_CPU");
+            #endif
+			   
+            typename bolt::cl::device_vector< oType >::pointer copyDest =  result.getContainer( ).data( );
             bolt::btbb::copy_n( first, n, &copyDest[result.m_Index] );
             return;
         #else
@@ -602,6 +687,10 @@ void copy_pick_iterator(const bolt::cl::control &ctrl,  const DVInputIterator& f
      }
      else
      {
+	          #if defined(BOLT_DEBUG_LOG)
+              dblog->CodePathTaken(BOLTLOG::BOLT_COPY,BOLTLOG::BOLT_OPENCL_GPU,"::Copy::OPENCL_GPU");
+              #endif
+		
               copy_enqueue( ctrl, first, n, result, user_code );
      }
 }

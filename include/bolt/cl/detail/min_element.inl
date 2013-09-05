@@ -245,10 +245,21 @@ namespace bolt {
 
                 const char * str = "MAX_KERNEL";
 
+				#if defined(BOLT_DEBUG_LOG)
+                BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+                #endif
+				
                 switch(runMode)
                 {
                 case bolt::cl::control::OpenCL :
                     {
+					    #if defined(BOLT_DEBUG_LOG)
+						if(std::strcmp(min_max,str) == 0)
+                           dblog->CodePathTaken(BOLTLOG::BOLT_MAXELEMENT,BOLTLOG::BOLT_OPENCL_GPU,"::Max_Element::OPENCL_GPU");
+						else
+						   dblog->CodePathTaken(BOLTLOG::BOLT_MINELEMENT,BOLTLOG::BOLT_OPENCL_GPU,"::Min_Element::OPENCL_GPU");
+                        #endif
+						
                         device_vector< iType > dvInput( first, last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, ctl );
                         int  dvminele = min_element_enqueue( ctl, dvInput.begin(), dvInput.end(), binary_op, cl_code, min_max);
                         return first + dvminele ;
@@ -256,6 +267,12 @@ namespace bolt {
 
                 case bolt::cl::control::MultiCoreCpu:
                     #ifdef ENABLE_TBB
+					    #if defined(BOLT_DEBUG_LOG)
+						if(std::strcmp(min_max,str) == 0)
+                          dblog->CodePathTaken(BOLTLOG::BOLT_MAXELEMENT,BOLTLOG::BOLT_MULTICORE_CPU,"::Max_Element::MULTICORE_CPU");
+						else
+						  dblog->CodePathTaken(BOLTLOG::BOLT_MINELEMENT,BOLTLOG::BOLT_MULTICORE_CPU,"::Min_Element::MULTICORE_CPU");
+                        #endif
                         if(std::strcmp(min_max,str) == 0)
                               return bolt::btbb::max_element(first, last, binary_op);
                         else
@@ -265,13 +282,24 @@ namespace bolt {
                     #endif
 
                 case bolt::cl::control::SerialCpu:
+				    #if defined(BOLT_DEBUG_LOG)
+					if(std::strcmp(min_max,str) == 0)
+					  dblog->CodePathTaken(BOLTLOG::BOLT_MAXELEMENT,BOLTLOG::BOLT_SERIAL_CPU,"::Max_Element::SERIAL_CPU");
+					else
+                      dblog->CodePathTaken(BOLTLOG::BOLT_MINELEMENT,BOLTLOG::BOLT_SERIAL_CPU,"::Min_Element::SERIAL_CPU");
+                    #endif
                     if(std::strcmp(min_max,str) == 0)
                        return std::max_element(first, last, binary_op);
                     else
                     return std::min_element(first, last, binary_op);
 
                 default:
-
+                    #if defined(BOLT_DEBUG_LOG)
+					if(std::strcmp(min_max,str) == 0)
+					  dblog->CodePathTaken(BOLTLOG::BOLT_MAXELEMENT,BOLTLOG::BOLT_SERIAL_CPU,"::Max_Element::SERIAL_CPU");
+					else
+                      dblog->CodePathTaken(BOLTLOG::BOLT_MINELEMENT,BOLTLOG::BOLT_SERIAL_CPU,"::Min_Element::SERIAL_CPU");
+                    #endif
                     if(std::strcmp(min_max,str) == 0)
                        return std::max_element(first, last, binary_op);
                     else
@@ -303,17 +331,34 @@ namespace bolt {
                 }
 
                 const char * str = "MAX_KERNEL";
-
+            
+			    #if defined(BOLT_DEBUG_LOG)
+                BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+                #endif
+				
                 switch(runMode)
                 {
                 case bolt::cl::control::OpenCL :
                     {
+					    #if defined(BOLT_DEBUG_LOG)
+						if(std::strcmp(min_max,str) == 0)
+                           dblog->CodePathTaken(BOLTLOG::BOLT_MAXELEMENT,BOLTLOG::BOLT_OPENCL_GPU,"::Max_Element::OPENCL_GPU");
+						else
+						   dblog->CodePathTaken(BOLTLOG::BOLT_MINELEMENT,BOLTLOG::BOLT_OPENCL_GPU,"::Min_Element::OPENCL_GPU");
+                        #endif
+						
                         int pos =  min_element_enqueue( ctl, first, last,  binary_op, cl_code, min_max);
                         return first+pos;
                     }
 
                 case bolt::cl::control::MultiCoreCpu:
                     #ifdef ENABLE_TBB
+					    #if defined(BOLT_DEBUG_LOG)
+						if(std::strcmp(min_max,str) == 0)
+                          dblog->CodePathTaken(BOLTLOG::BOLT_MAXELEMENT,BOLTLOG::BOLT_MULTICORE_CPU,"::Max_Element::MULTICORE_CPU");
+						else
+						  dblog->CodePathTaken(BOLTLOG::BOLT_MINELEMENT,BOLTLOG::BOLT_MULTICORE_CPU,"::Min_Element::MULTICORE_CPU");
+                        #endif
                         if(std::strcmp(min_max,str) == 0)
                               return bolt::btbb::max_element(first, last, binary_op);
                         else
@@ -323,12 +368,24 @@ namespace bolt {
                     #endif
 
                 case bolt::cl::control::SerialCpu:
+				    #if defined(BOLT_DEBUG_LOG)
+					if(std::strcmp(min_max,str) == 0)
+					  dblog->CodePathTaken(BOLTLOG::BOLT_MAXELEMENT,BOLTLOG::BOLT_SERIAL_CPU,"::Max_Element::SERIAL_CPU");
+					else
+                      dblog->CodePathTaken(BOLTLOG::BOLT_MINELEMENT,BOLTLOG::BOLT_SERIAL_CPU,"::Min_Element::SERIAL_CPU");
+                    #endif
                     if(std::strcmp(min_max,str) == 0)
                        return std::max_element(first, last, binary_op);
                     else
                     return std::min_element(first, last, binary_op);
 
                 default:
+				    #if defined(BOLT_DEBUG_LOG)
+					if(std::strcmp(min_max,str) == 0)
+					  dblog->CodePathTaken(BOLTLOG::BOLT_MAXELEMENT,BOLTLOG::BOLT_SERIAL_CPU,"::Max_Element::SERIAL_CPU");
+					else
+                      dblog->CodePathTaken(BOLTLOG::BOLT_MINELEMENT,BOLTLOG::BOLT_SERIAL_CPU,"::Min_Element::SERIAL_CPU");
+                    #endif
                     if(std::strcmp(min_max,str) == 0)
                        return std::max_element(first, last, binary_op);
                     else
@@ -357,16 +414,33 @@ namespace bolt {
 
                 const char * str = "MAX_KERNEL";
 
+				#if defined(BOLT_DEBUG_LOG)
+                BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+                #endif
+				
                 switch(runMode)
                 {
                 case bolt::cl::control::OpenCL :
                     {
+					    #if defined(BOLT_DEBUG_LOG)
+						if(std::strcmp(min_max,str) == 0)
+                           dblog->CodePathTaken(BOLTLOG::BOLT_MAXELEMENT,BOLTLOG::BOLT_OPENCL_GPU,"::Max_Element::OPENCL_GPU");
+						else
+						   dblog->CodePathTaken(BOLTLOG::BOLT_MINELEMENT,BOLTLOG::BOLT_OPENCL_GPU,"::Min_Element::OPENCL_GPU");
+                        #endif
+						
                         int pos =  min_element_enqueue( ctl, first, last,  binary_op, cl_code, min_max);
                         return first+pos;
                     }
 
                 case bolt::cl::control::MultiCoreCpu:
                     #ifdef ENABLE_TBB
+					    #if defined(BOLT_DEBUG_LOG)
+						if(std::strcmp(min_max,str) == 0)
+                          dblog->CodePathTaken(BOLTLOG::BOLT_MAXELEMENT,BOLTLOG::BOLT_MULTICORE_CPU,"::Max_Element::MULTICORE_CPU");
+						else
+						  dblog->CodePathTaken(BOLTLOG::BOLT_MINELEMENT,BOLTLOG::BOLT_MULTICORE_CPU,"::Min_Element::MULTICORE_CPU");
+                        #endif
                         if(std::strcmp(min_max,str) == 0)
                               return bolt::btbb::max_element(first, last, binary_op);
                         else
@@ -376,12 +450,24 @@ namespace bolt {
                     #endif
 
                 case bolt::cl::control::SerialCpu:
+				    #if defined(BOLT_DEBUG_LOG)
+					if(std::strcmp(min_max,str) == 0)
+					  dblog->CodePathTaken(BOLTLOG::BOLT_MAXELEMENT,BOLTLOG::BOLT_SERIAL_CPU,"::Max_Element::SERIAL_CPU");
+					else
+                      dblog->CodePathTaken(BOLTLOG::BOLT_MINELEMENT,BOLTLOG::BOLT_SERIAL_CPU,"::Min_Element::SERIAL_CPU");
+                    #endif
                     if(std::strcmp(min_max,str) == 0)
                        return std::max_element(first, last, binary_op);
                     else
                     return std::min_element(first, last, binary_op);
 
                 default:
+				    #if defined(BOLT_DEBUG_LOG)
+					if(std::strcmp(min_max,str) == 0)
+					  dblog->CodePathTaken(BOLTLOG::BOLT_MAXELEMENT,BOLTLOG::BOLT_SERIAL_CPU,"::Max_Element::SERIAL_CPU");
+					else
+                      dblog->CodePathTaken(BOLTLOG::BOLT_MINELEMENT,BOLTLOG::BOLT_SERIAL_CPU,"::Min_Element::SERIAL_CPU");
+                    #endif
                     if(std::strcmp(min_max,str) == 0)
                        return std::max_element(first, last, binary_op);
                     else

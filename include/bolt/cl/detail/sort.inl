@@ -928,13 +928,23 @@ void sort_pick_iterator( control &ctl,
     {
         runMode = ctl.getDefaultPathToRun();
     }
+	#if defined(BOLT_DEBUG_LOG)
+    BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+    #endif
+	
     if ((runMode == bolt::cl::control::SerialCpu) || (szElements < SORT_CPU_THRESHOLD)) {
+	    #if defined(BOLT_DEBUG_LOG)
+        dblog->CodePathTaken(BOLTLOG::BOLT_SORT,BOLTLOG::BOLT_SERIAL_CPU,"::Sort::SERIAL_CPU");
+        #endif
         typename bolt::cl::device_vector< T >::pointer firstPtr =  first.getContainer( ).data( );
         std::sort( &firstPtr[ first.m_Index ], &firstPtr[ last.m_Index ], comp );
         return;
     } else if (runMode == bolt::cl::control::MultiCoreCpu) {
 #ifdef ENABLE_TBB
-         typename bolt::cl::device_vector< T >::pointer firstPtr =  first.getContainer( ).data( );
+        #if defined(BOLT_DEBUG_LOG)
+        dblog->CodePathTaken(BOLTLOG::BOLT_SORT,BOLTLOG::BOLT_MULTICORE_CPU,"::Sort::MULTICORE_CPU");
+        #endif
+        typename bolt::cl::device_vector< T >::pointer firstPtr =  first.getContainer( ).data( );
         //Compute parallel sort using TBB
         bolt::btbb::sort(&firstPtr[ first.m_Index ], &firstPtr[ last.m_Index ],comp);
         return;
@@ -944,6 +954,9 @@ void sort_pick_iterator( control &ctl,
 #endif
 
     } else {
+	    #if defined(BOLT_DEBUG_LOG)
+        dblog->CodePathTaken(BOLTLOG::BOLT_SORT,BOLTLOG::BOLT_OPENCL_GPU,"::Sort::OPENCL_GPU");
+        #endif
         sort_enqueue(ctl,first,last,comp,cl_code);
     }
     return;
@@ -970,16 +983,30 @@ void sort_pick_iterator( control &ctl,
     {
         runMode = ctl.getDefaultPathToRun();
     }
+	#if defined(BOLT_DEBUG_LOG)
+    BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+    #endif
+	
     if ((runMode == bolt::cl::control::SerialCpu) || (szElements < BITONIC_SORT_WGSIZE)) {
+	    #if defined(BOLT_DEBUG_LOG)
+        dblog->CodePathTaken(BOLTLOG::BOLT_SORT,BOLTLOG::BOLT_SERIAL_CPU,"::Sort::SERIAL_CPU");
+        #endif
         std::sort(first, last, comp);
         return;
     } else if (runMode == bolt::cl::control::MultiCoreCpu) {
 #ifdef ENABLE_TBB
+        #if defined(BOLT_DEBUG_LOG)
+        dblog->CodePathTaken(BOLTLOG::BOLT_SORT,BOLTLOG::BOLT_MULTICORE_CPU,"::Sort::MULTICORE_CPU");
+        #endif
         bolt::btbb::sort(first,last, comp);
 #else
         throw std::runtime_error( "The MultiCoreCpu version of sort is not enabled to be built! \n" );
 #endif
     } else {
+	    #if defined(BOLT_DEBUG_LOG)
+        dblog->CodePathTaken(BOLTLOG::BOLT_SORT,BOLTLOG::BOLT_OPENCL_GPU,"::Sort::OPENCL_GPU");
+        #endif
+		
         device_vector< T > dvInputOutput( first, last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctl );
         //Now call the actual cl algorithm
         sort_enqueue(ctl,dvInputOutput.begin(),dvInputOutput.end(),comp,cl_code);

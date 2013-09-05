@@ -279,7 +279,14 @@ public:
         {
             runMode = ctl.getDefaultPathToRun( );
         }
+		#if defined(BOLT_DEBUG_LOG)
+        BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+        #endif
         if (runMode == bolt::cl::control::SerialCpu) {
+		    #if defined(BOLT_DEBUG_LOG)
+            dblog->CodePathTaken(BOLTLOG::BOLT_SORTBYKEY,BOLTLOG::BOLT_SERIAL_CPU,"::Sort_By_Key::SERIAL_CPU");
+            #endif
+						
             typename bolt::cl::device_vector< keyType >::pointer   keysPtr   =  keys_first.getContainer( ).data( );
             typename bolt::cl::device_vector< valueType >::pointer valuesPtr =  values_first.getContainer( ).data( );
             serialCPU_sort_by_key(&keysPtr[keys_first.m_Index], &keysPtr[keys_last.m_Index],
@@ -288,6 +295,9 @@ public:
         } else if (runMode == bolt::cl::control::MultiCoreCpu) {
 
             #ifdef ENABLE_TBB
+			    #if defined(BOLT_DEBUG_LOG)
+                dblog->CodePathTaken(BOLTLOG::BOLT_SORTBYKEY,BOLTLOG::BOLT_MULTICORE_CPU,"::Sort_By_Key::MULTICORE_CPU");
+                #endif
                 typename bolt::cl::device_vector< keyType >::pointer   keysPtr   =  keys_first.getContainer( ).data( );
                 typename bolt::cl::device_vector< valueType >::pointer valuesPtr =  values_first.getContainer( ).data( );
                 bolt::btbb::sort_by_key(&keysPtr[keys_first.m_Index], &keysPtr[keys_last.m_Index],
@@ -299,7 +309,9 @@ public:
         }
 
         else {
-
+            #if defined(BOLT_DEBUG_LOG)
+            dblog->CodePathTaken(BOLTLOG::BOLT_SORTBYKEY,BOLTLOG::BOLT_OPENCL_GPU,"::Sort_By_Key::OPENCL_GPU");
+            #endif
             sort_by_key_enqueue(ctl, keys_first, keys_last, values_first, comp, cl_code);
         }
         return;
@@ -328,19 +340,31 @@ public:
         {
             runMode = ctl.getDefaultPathToRun( );
         }
+	    #if defined(BOLT_DEBUG_LOG)
+        BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+        #endif
         if ((runMode == bolt::cl::control::SerialCpu) /*|| (szElements < WGSIZE) */) {
+		    #if defined(BOLT_DEBUG_LOG)
+            dblog->CodePathTaken(BOLTLOG::BOLT_SORTBYKEY,BOLTLOG::BOLT_SERIAL_CPU,"::Sort_By_Key::SERIAL_CPU");
+            #endif
             serialCPU_sort_by_key(keys_first, keys_last, values_first, comp);
             return;
         } else if (runMode == bolt::cl::control::MultiCoreCpu) {
 
             #ifdef ENABLE_TBB
+			    #if defined(BOLT_DEBUG_LOG)
+                dblog->CodePathTaken(BOLTLOG::BOLT_SORTBYKEY,BOLTLOG::BOLT_MULTICORE_CPU,"::Sort_By_Key::MULTICORE_CPU");
+                #endif
                 serialCPU_sort_by_key(keys_first, keys_last, values_first, comp);
                 return;
             #else
                 throw std::runtime_error("The MultiCoreCpu Version of Sort_by_key is not enabled to be built with TBB!\n");
             #endif
         } else {
-
+            #if defined(BOLT_DEBUG_LOG)
+            dblog->CodePathTaken(BOLTLOG::BOLT_SORTBYKEY,BOLTLOG::BOLT_OPENCL_GPU,"::Sort_By_Key::OPENCL_GPU");
+            #endif
+			
             device_vector< T_values > dvInputValues( values_first, szElements,
                                                      CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, true, ctl );
             device_vector< T_keys > dvInputKeys( keys_first, keys_last,

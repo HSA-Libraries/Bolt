@@ -532,9 +532,15 @@ transform_scan_pick_iterator(
     {
         runMode = ctl.getDefaultPathToRun();
     }
-
+    #if defined(BOLT_DEBUG_LOG)
+    BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+    #endif
+	
     if( runMode == bolt::cl::control::SerialCpu )
     {
+	    #if defined(BOLT_DEBUG_LOG)
+        dblog->CodePathTaken(BOLTLOG::BOLT_TRANSFORMSCAN,BOLTLOG::BOLT_SERIAL_CPU,"::Transform_Scan::SERIAL_CPU");
+        #endif
         std::transform(first, last, result, unary_op);
         Serial_Scan<oType, BinaryFunction, T>(&(*result), &(*result), numElements, binary_op,inclusive,init);
         return result + numElements;
@@ -542,6 +548,9 @@ transform_scan_pick_iterator(
     else if( runMode == bolt::cl::control::MultiCoreCpu )
     {
         #ifdef ENABLE_TBB
+		     #if defined(BOLT_DEBUG_LOG)
+             dblog->CodePathTaken(BOLTLOG::BOLT_TRANSFORMSCAN,BOLTLOG::BOLT_MULTICORE_CPU,"::Transform_Scan::MULTICORE_CPU");
+             #endif
              if(inclusive)
                {
                   bolt::btbb::transform(first, last, result, unary_op);
@@ -562,6 +571,10 @@ transform_scan_pick_iterator(
     }
     else
     {
+	    #if defined(BOLT_DEBUG_LOG)
+        dblog->CodePathTaken(BOLTLOG::BOLT_TRANSFORMSCAN,BOLTLOG::BOLT_OPENCL_GPU,"::Transform_Scan::OPENCL_GPU");
+        #endif
+		
         // Map the input iterator to a device_vector
         device_vector< iType > dvInput( first, last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctl );
         device_vector< oType > dvOutput( result, numElements, CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY, false, ctl );
@@ -613,10 +626,17 @@ transform_scan_pick_iterator(
     {
         runMode = ctl.getDefaultPathToRun();
     }
-
+    #if defined(BOLT_DEBUG_LOG)
+    BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+    #endif
+	
     if( runMode == bolt::cl::control::SerialCpu )
     {
-       typename bolt::cl::device_vector< iType >::pointer InputBuffer =  first.getContainer( ).data( );
+	    #if defined(BOLT_DEBUG_LOG)
+        dblog->CodePathTaken(BOLTLOG::BOLT_TRANSFORMSCAN,BOLTLOG::BOLT_SERIAL_CPU,"::Transform_Scan::SERIAL_CPU");
+        #endif
+		
+        typename bolt::cl::device_vector< iType >::pointer InputBuffer =  first.getContainer( ).data( );
         typename bolt::cl::device_vector< oType >::pointer ResultBuffer =  result.getContainer( ).data( );
 
 #if defined(_WIn32)
@@ -631,6 +651,10 @@ transform_scan_pick_iterator(
     else if( runMode == bolt::cl::control::MultiCoreCpu )
     {
         #ifdef ENABLE_TBB
+		     #if defined(BOLT_DEBUG_LOG)
+             dblog->CodePathTaken(BOLTLOG::BOLT_TRANSFORMSCAN,BOLTLOG::BOLT_MULTICORE_CPU,"::Transform_Scan::MULTICORE_CPU");
+             #endif
+			 
             typename bolt::cl::device_vector< iType >::pointer InputBuffer =  first.getContainer( ).data( );
             typename bolt::cl::device_vector< oType >::pointer ResultBuffer =  result.getContainer( ).data( );
 
@@ -656,6 +680,10 @@ transform_scan_pick_iterator(
 
     else
     {
+	    #if defined(BOLT_DEBUG_LOG)
+        dblog->CodePathTaken(BOLTLOG::BOLT_TRANSFORMSCAN,BOLTLOG::BOLT_OPENCL_GPU,"::Transform_Scan::OPENCL_GPU");
+        #endif
+		
         //Now call the actual cl algorithm
         transform_scan_enqueue( ctl, first, last, result, unary_op, init, binary_op, inclusive );
 

@@ -270,28 +270,39 @@ namespace bolt {
                      runMode = ctl.getDefaultPathToRun();
                 }
 
+				#if defined(BOLT_DEBUG_LOG)
+                BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+                #endif
+				
                 if( runMode == bolt::cl::control::SerialCpu )
                 {
+				     #if defined(BOLT_DEBUG_LOG)
+                     dblog->CodePathTaken(BOLTLOG::BOLT_BINARYSEARCH,BOLTLOG::BOLT_SERIAL_CPU,"::Binary_Search::SERIAL_CPU");
+                     #endif
                      return std::binary_search(first, last, value, comp );
                 }
                 else if(runMode == bolt::cl::control::MultiCoreCpu)
                 {
                     #ifdef ENABLE_TBB
+					      #if defined(BOLT_DEBUG_LOG)
+                          dblog->CodePathTaken(BOLTLOG::BOLT_BINARYSEARCH,BOLTLOG::BOLT_MULTICORE_CPU,"::Binary_Search::MULTICORE_CPU");
+                          #endif
                           return bolt::btbb::binary_search(first, last, value, comp);
-                          //return std::binary_search(first, last, value, comp);
                     #else
                           throw std::runtime_error("MultiCoreCPU Version of Binary Search not Enabled! \n");
                     #endif
                 }
                 else
                 {
+				        #if defined(BOLT_DEBUG_LOG)
+                        dblog->CodePathTaken(BOLTLOG::BOLT_BINARYSEARCH,BOLTLOG::BOLT_OPENCL_GPU,"::Binary_Search::OPENCL_GPU");
+                        #endif
                         // Use host pointers memory since these arrays are only write once - no benefit to copying.
                         // Map the forward iterator to a device_vector
                         device_vector< Type > range( first, sz, CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY, false, ctl );
 
                         return binary_search_enqueue( ctl, range.begin( ), range.end( ), value, comp, user_code );
 
-                        //range.data( );
                 }
 
             }
@@ -311,13 +322,24 @@ namespace bolt {
                 {
                      runMode = ctl.getDefaultPathToRun();
                 }
+				
+				#if defined(BOLT_DEBUG_LOG)
+                BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+                #endif
+				
                 if( runMode == bolt::cl::control::SerialCpu )
                 {
+				     #if defined(BOLT_DEBUG_LOG)
+                     dblog->CodePathTaken(BOLTLOG::BOLT_BINARYSEARCH,BOLTLOG::BOLT_SERIAL_CPU,"::Binary_Search::SERIAL_CPU");
+                     #endif
                      typename bolt::cl::device_vector< iType >::pointer bsInputBuffer = first.getContainer( ).data( );
                      return std::binary_search(&bsInputBuffer[first.m_Index], &bsInputBuffer[last.m_Index], value, comp );
                 }
                 else if(runMode == bolt::cl::control::MultiCoreCpu)
                 {
+				    #if defined(BOLT_DEBUG_LOG)
+                    dblog->CodePathTaken(BOLTLOG::BOLT_BINARYSEARCH,BOLTLOG::BOLT_MULTICORE_CPU,"::Binary_Search::MULTICORE_CPU");
+                    #endif
                     #ifdef ENABLE_TBB
                         typename bolt::cl::device_vector< iType >::pointer bsInputBuffer = first.getContainer( ).data( );
                         return bolt::btbb::binary_search(&bsInputBuffer[first.m_Index], &bsInputBuffer[last.m_Index], value, comp );
@@ -327,6 +349,9 @@ namespace bolt {
                 }
                 else
                 {
+				    #if defined(BOLT_DEBUG_LOG)
+                    dblog->CodePathTaken(BOLTLOG::BOLT_BINARYSEARCH,BOLTLOG::BOLT_OPENCL_GPU,"::Binary_Search::OPENCL_GPU");
+                    #endif
                     return binary_search_enqueue( ctl, first, last, value, comp, user_code );
                 }
             }
@@ -351,12 +376,23 @@ namespace bolt {
                     runMode = ctl.getDefaultPathToRun();
                 }
 
+				#if defined(BOLT_DEBUG_LOG)
+                BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+                #endif
+				
                 if( runMode == bolt::cl::control::SerialCpu )
                 {
+				     #if defined(BOLT_DEBUG_LOG)
+                     dblog->CodePathTaken(BOLTLOG::BOLT_BINARYSEARCH,BOLTLOG::BOLT_SERIAL_CPU,"::Binary_Search::SERIAL_CPU");
+                     #endif
                      return std::binary_search(first, last, value, comp);
                 }
                 else if(runMode == bolt::cl::control::MultiCoreCpu)
                 {
+				    #if defined(BOLT_DEBUG_LOG)
+                    dblog->CodePathTaken(BOLTLOG::BOLT_BINARYSEARCH,BOLTLOG::BOLT_MULTICORE_CPU,"::Binary_Search::MULTICORE_CPU");
+                    #endif
+					
                     #ifdef ENABLE_TBB
                         return bolt::btbb::binary_search(first, last, value, comp);
                         //return std::binary_search(first, last, value, comp);
@@ -366,6 +402,9 @@ namespace bolt {
                 }
                 else
                 {
+				    #if defined(BOLT_DEBUG_LOG)
+                    dblog->CodePathTaken(BOLTLOG::BOLT_BINARYSEARCH,BOLTLOG::BOLT_OPENCL_GPU,"::Binary_Search::OPENCL_GPU");
+                    #endif
                     return binary_search_enqueue( ctl, first, last, value, comp, user_code );
                 }
 

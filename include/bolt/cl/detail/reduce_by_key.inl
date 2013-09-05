@@ -714,8 +714,14 @@ reduce_by_key_pick_iterator(
     if(runMode == bolt::cl::control::Automatic) {
         runMode = ctl.getDefaultPathToRun();
     }
+	#if defined(BOLT_DEBUG_LOG)
+    BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+    #endif
+				
     if (runMode == bolt::cl::control::SerialCpu) {
-
+            #if defined(BOLT_DEBUG_LOG)
+            dblog->CodePathTaken(BOLTLOG::BOLT_REDUCEBYKEY,BOLTLOG::BOLT_SERIAL_CPU,"::Reduce_By_Key::SERIAL_CPU");
+            #endif
             unsigned int sizeOfOut = gold_reduce_by_key_enqueue( keys_first, keys_last, values_first, keys_output,
             values_output, binary_pred, binary_op);
 
@@ -724,6 +730,9 @@ reduce_by_key_pick_iterator(
     } else if (runMode == bolt::cl::control::MultiCoreCpu) {
 
         #ifdef ENABLE_TBB
+		    #if defined(BOLT_DEBUG_LOG)
+            dblog->CodePathTaken(BOLTLOG::BOLT_REDUCEBYKEY,BOLTLOG::BOLT_MULTICORE_CPU,"::Reduce_By_Key::MULTICORE_CPU");
+            #endif
             unsigned int sizeOfOut = bolt::btbb::reduce_by_key( keys_first, keys_last, values_first, keys_output, values_output, binary_pred, binary_op);
             return  bolt::cl::make_pair(keys_output+sizeOfOut, values_output+sizeOfOut);
         #else
@@ -731,7 +740,9 @@ reduce_by_key_pick_iterator(
         #endif
     }
     else {
-
+     #if defined(BOLT_DEBUG_LOG)
+     dblog->CodePathTaken(BOLTLOG::BOLT_REDUCEBYKEY,BOLTLOG::BOLT_OPENCL_GPU,"::Reduce_By_Key::OPENCL_GPU");
+     #endif
     unsigned int sizeOfOut;
     {
 
@@ -803,9 +814,16 @@ reduce_by_key_pick_iterator(
     {
         runMode = ctl.getDefaultPathToRun();
     }
-
+    #if defined(BOLT_DEBUG_LOG)
+    BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+    #endif
+	
     if( runMode == bolt::cl::control::SerialCpu )
     {
+	    #if defined(BOLT_DEBUG_LOG)
+        dblog->CodePathTaken(BOLTLOG::BOLT_REDUCEBYKEY,BOLTLOG::BOLT_SERIAL_CPU,"::Reduce_By_Key::SERIAL_CPU");
+        #endif
+			
         typename bolt::cl::device_vector< kType >::pointer keysPtr =  keys_first.getContainer( ).data( );
         typename bolt::cl::device_vector< vType >::pointer valsPtr =  values_first.getContainer( ).data( );
         typename bolt::cl::device_vector< koType >::pointer oKeysPtr =  keys_output.getContainer( ).data( );
@@ -819,6 +837,9 @@ reduce_by_key_pick_iterator(
     else if( runMode == bolt::cl::control::MultiCoreCpu )
     {
         #ifdef ENABLE_TBB
+		#if defined(BOLT_DEBUG_LOG)
+        dblog->CodePathTaken(BOLTLOG::BOLT_REDUCEBYKEY,BOLTLOG::BOLT_MULTICORE_CPU,"::Reduce_By_Key::MULTICORE_CPU");
+        #endif
         typename bolt::cl::device_vector< kType >::pointer keysPtr =  keys_first.getContainer( ).data( );
         typename bolt::cl::device_vector< vType >::pointer valsPtr =  values_first.getContainer( ).data( );
         typename bolt::cl::device_vector< koType >::pointer oKeysPtr =  keys_output.getContainer( ).data( );
@@ -834,6 +855,9 @@ reduce_by_key_pick_iterator(
     }
     else
     {
+	        #if defined(BOLT_DEBUG_LOG)
+            dblog->CodePathTaken(BOLTLOG::BOLT_REDUCEBYKEY,BOLTLOG::BOLT_OPENCL_GPU,"::Reduce_By_Key::OPENCL_GPU");
+            #endif
             //Now call the actual cl algorithm
             unsigned int sizeOfOut = reduce_by_key_enqueue( ctl, keys_first, keys_last, values_first, keys_output,
             values_output, binary_pred, binary_op, user_code);

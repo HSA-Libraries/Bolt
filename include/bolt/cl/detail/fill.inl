@@ -230,14 +230,25 @@ namespace detail {
                 {
                      runMode = ctl.getDefaultPathToRun();
                 }
-
+      
+	            #if defined(BOLT_DEBUG_LOG)
+                BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+                #endif
+				
                 if( runMode == bolt::cl::control::SerialCpu)
                 {
+				     #if defined(BOLT_DEBUG_LOG)
+                     dblog->CodePathTaken(BOLTLOG::BOLT_FILL,BOLTLOG::BOLT_SERIAL_CPU,"::Fill::SERIAL_CPU");
+                     #endif
+						
                      std::fill(first, last, value );
                 }
                 else if(runMode == bolt::cl::control::MultiCoreCpu)
                 {
                     #ifdef ENABLE_TBB
+					      #if defined(BOLT_DEBUG_LOG)
+                          dblog->CodePathTaken(BOLTLOG::BOLT_FILL,BOLTLOG::BOLT_MULTICORE_CPU,"::Fill::MULTICORE_CPU");
+                          #endif
                           bolt::btbb::fill(first, last, value);
                     #else
                           throw std::runtime_error("MultiCoreCPU Version of fill not Enabled! \n");
@@ -245,6 +256,9 @@ namespace detail {
                 }
                 else
                 {
+				        #if defined(BOLT_DEBUG_LOG)
+                        dblog->CodePathTaken(BOLTLOG::BOLT_FILL,BOLTLOG::BOLT_OPENCL_GPU,"::Fill::OPENCL_GPU");
+                        #endif
                         // Use host pointers memory since these arrays are only write once - no benefit to copying.
                         // Map the forward iterator to a device_vector
                         device_vector< Type > range( first, sz, CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY, false, ctl );
@@ -270,15 +284,25 @@ namespace detail {
                 {
                      runMode = ctl.getDefaultPathToRun();
                 }
+				#if defined(BOLT_DEBUG_LOG)
+                BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+                #endif
+				
                 if( runMode == bolt::cl::control::SerialCpu)
                 {
+				    #if defined(BOLT_DEBUG_LOG)
+                    dblog->CodePathTaken(BOLTLOG::BOLT_FILL,BOLTLOG::BOLT_SERIAL_CPU,"::Fill::SERIAL_CPU");
+                    #endif
                     typename bolt::cl::device_vector< iType >::pointer fillInputBuffer =  first.getContainer( ).data( );
                     std::fill(&fillInputBuffer[first.m_Index], &fillInputBuffer[last.m_Index], value );
                 }
                 else if(runMode == bolt::cl::control::MultiCoreCpu)
                 {
                     #ifdef ENABLE_TBB
-                      typename bolt::cl::device_vector< iType >::pointer fillInputBuffer =  first.getContainer( ).data( );
+					    #if defined(BOLT_DEBUG_LOG)
+                        dblog->CodePathTaken(BOLTLOG::BOLT_FILL,BOLTLOG::BOLT_MULTICORE_CPU,"::Fill::MULTICORE_CPU");
+                        #endif
+                        typename bolt::cl::device_vector< iType >::pointer fillInputBuffer =  first.getContainer( ).data( );
                         bolt::btbb::fill(&fillInputBuffer[first.m_Index], &fillInputBuffer[last.m_Index], value );
                     #else
                            throw std::runtime_error("MultiCoreCPU Version of fill not Enabled! \n");
@@ -286,6 +310,9 @@ namespace detail {
                 }
                 else
                 {
+				    #if defined(BOLT_DEBUG_LOG)
+                    dblog->CodePathTaken(BOLTLOG::BOLT_FILL,BOLTLOG::BOLT_OPENCL_GPU,"::Fill::OPENCL_GPU");
+                    #endif
                     fill_enqueue( ctl, first, last, value, user_code );
                 }
             }

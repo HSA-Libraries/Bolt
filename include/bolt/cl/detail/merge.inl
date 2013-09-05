@@ -228,10 +228,17 @@ namespace bolt {
                     runMode = ctl.getDefaultPathToRun();
                 }
 
+				#if defined(BOLT_DEBUG_LOG)
+                BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+                #endif
+				
                 switch(runMode)
                 {
                 case bolt::cl::control::OpenCL :
                     {
+					  #if defined(BOLT_DEBUG_LOG)
+                      dblog->CodePathTaken(BOLTLOG::BOLT_MERGE,BOLTLOG::BOLT_OPENCL_GPU,"::Merge::OPENCL_GPU");
+                      #endif
                       size_t sz = (last1-first1) + (last2-first2);
                       device_vector< iType1 > dvInput1( first1, last1, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, ctl );
                       device_vector< iType2 > dvInput2( first2, last2, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, ctl );
@@ -247,15 +254,24 @@ namespace bolt {
               
                 case bolt::cl::control::MultiCoreCpu: 
                     #ifdef ENABLE_TBB
+					    #if defined(BOLT_DEBUG_LOG)
+                        dblog->CodePathTaken(BOLTLOG::BOLT_MERGE,BOLTLOG::BOLT_MULTICORE_CPU,"::Merge::MULTICORE_CPU");
+                        #endif
                         return bolt::btbb::merge(first1,last1,first2,last2,result,comp);
                     #else
                         throw std::runtime_error( "The MultiCoreCpu version of merge is not enabled to be built! \n" );
                     #endif
 
                 case bolt::cl::control::SerialCpu: 
+				    #if defined(BOLT_DEBUG_LOG)
+                    dblog->CodePathTaken(BOLTLOG::BOLT_MERGE,BOLTLOG::BOLT_SERIAL_CPU,"::Merge::SERIAL_CPU");
+                    #endif
                     return std::merge(first1,last1,first2,last2,result,comp);
 
                 default:
+				   #if defined(BOLT_DEBUG_LOG)
+                   dblog->CodePathTaken(BOLTLOG::BOLT_MERGE,BOLTLOG::BOLT_SERIAL_CPU,"::Merge::SERIAL_CPU");
+                   #endif
                    return std::merge(first1,last1,first2,last2,result,comp);
 
                 }
@@ -286,15 +302,24 @@ namespace bolt {
                 {
                     runMode = ctl.getDefaultPathToRun();
                 }
-
+                #if defined(BOLT_DEBUG_LOG)
+                BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+                #endif
+				
                 switch(runMode)
                 {
                 case bolt::cl::control::OpenCL :
+				        #if defined(BOLT_DEBUG_LOG)
+                        dblog->CodePathTaken(BOLTLOG::BOLT_MERGE,BOLTLOG::BOLT_OPENCL_GPU,"::Merge::OPENCL_GPU");
+                        #endif
                         return detail::merge_enqueue( ctl, first1, last1,first2, last2, result, comp, cl_code);
               
                 case bolt::cl::control::MultiCoreCpu: 
                     #ifdef ENABLE_TBB
                     {
+					  #if defined(BOLT_DEBUG_LOG)
+                      dblog->CodePathTaken(BOLTLOG::BOLT_MERGE,BOLTLOG::BOLT_MULTICORE_CPU,"::Merge::MULTICORE_CPU");
+                      #endif
                       typename bolt::cl::device_vector< iType1 >::pointer mergeInputBuffer1 =  first1.getContainer( ).data( );
                       typename bolt::cl::device_vector< iType2 >::pointer mergeInputBuffer2 =  first2.getContainer( ).data( );
                       typename bolt::cl::device_vector< oType >::pointer mergeResBuffer =  result.getContainer( ).data( );
@@ -313,6 +338,9 @@ namespace bolt {
 
                 case bolt::cl::control::SerialCpu: 
                     {
+					  #if defined(BOLT_DEBUG_LOG)
+                      dblog->CodePathTaken(BOLTLOG::BOLT_REDUCE,BOLTLOG::BOLT_SERIAL_CPU,"::Reduce::SERIAL_CPU");
+                      #endif
                       typename bolt::cl::device_vector< iType1 >::pointer mergeInputBuffer1 =  first1.getContainer( ).data( );
                       typename bolt::cl::device_vector< iType2 >::pointer mergeInputBuffer2 =  first2.getContainer( ).data( );
                       typename  bolt::cl::device_vector< oType >::pointer mergeResBuffer =  result.getContainer( ).data( );
@@ -325,6 +353,10 @@ namespace bolt {
 
                 default: /* Incase of runMode not set/corrupted */
                     {
+					  #if defined(BOLT_DEBUG_LOG)
+                      dblog->CodePathTaken(BOLTLOG::BOLT_REDUCE,BOLTLOG::BOLT_SERIAL_CPU,"::Reduce::SERIAL_CPU");
+                      #endif
+					  
                       typename  bolt::cl::device_vector< iType1 >::pointer mergeInputBuffer1 =  first1.getContainer( ).data( );
                       typename  bolt::cl::device_vector< iType2 >::pointer mergeInputBuffer2 =  first2.getContainer( ).data( );
                       typename  bolt::cl::device_vector< oType >::pointer mergeResBuffer =  result.getContainer( ).data( );
@@ -364,15 +396,24 @@ namespace bolt {
                 {
                     runMode = ctl.getDefaultPathToRun();
                 }
+				#if defined(BOLT_DEBUG_LOG)
+                BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+                #endif
                 
                 switch(runMode)
                 {
                 case bolt::cl::control::OpenCL :
+				        #if defined(BOLT_DEBUG_LOG)
+                        dblog->CodePathTaken(BOLTLOG::BOLT_MERGE,BOLTLOG::BOLT_OPENCL_GPU,"::Merge::OPENCL_GPU");
+                        #endif
                         return merge_enqueue( ctl, first1, last1,first2, last2, result, comp, cl_code);
               
                 case bolt::cl::control::MultiCoreCpu: 
                     #ifdef ENABLE_TBB
                     {
+					  #if defined(BOLT_DEBUG_LOG)
+                      dblog->CodePathTaken(BOLTLOG::BOLT_MERGE,BOLTLOG::BOLT_MULTICORE_CPU,"::Merge::MULTICORE_CPU");
+                      #endif
                       return bolt::btbb::merge(first1, last1,first2, last2, result, comp);
                     }
                     #else
@@ -382,9 +423,15 @@ namespace bolt {
                     #endif
 
                 case bolt::cl::control::SerialCpu: 
+				     #if defined(BOLT_DEBUG_LOG)
+                     dblog->CodePathTaken(BOLTLOG::BOLT_REDUCE,BOLTLOG::BOLT_SERIAL_CPU,"::Reduce::SERIAL_CPU");
+                     #endif
                      return std::merge(first1, last1,first2, last2, result, comp);
 
                 default: /* Incase of runMode not set/corrupted */
+				    #if defined(BOLT_DEBUG_LOG)
+                    dblog->CodePathTaken(BOLTLOG::BOLT_REDUCE,BOLTLOG::BOLT_SERIAL_CPU,"::Reduce::SERIAL_CPU");
+                    #endif
                     return std::merge(first1, last1,first2, last2, result, comp);
 
                 }
