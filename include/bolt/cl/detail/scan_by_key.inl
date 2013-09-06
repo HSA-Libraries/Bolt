@@ -641,10 +641,10 @@ scan_by_key_pick_iterator(
     #if defined(BOLT_DEBUG_LOG)
     BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
     #endif
-				
+                
   if( runMode == bolt::cl::control::SerialCpu )
     {
-	      #if defined(BOLT_DEBUG_LOG)
+          #if defined(BOLT_DEBUG_LOG)
           dblog->CodePathTaken(BOLTLOG::BOLT_SCANBYKEY,BOLTLOG::BOLT_SERIAL_CPU,"::Scan_By_Key::SERIAL_CPU");
           #endif
           if(inclusive){
@@ -679,7 +679,7 @@ scan_by_key_pick_iterator(
         #if defined(BOLT_DEBUG_LOG)
         dblog->CodePathTaken(BOLTLOG::BOLT_SCANBYKEY,BOLTLOG::BOLT_OPENCL_GPU,"::Scan_By_Key::OPENCL_GPU");
         #endif
-		
+        
         // Map the input iterator to a device_vector
         device_vector< kType > dvKeys( firstKey, lastKey, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctl );
         device_vector< vType > dvValues( firstValue, numElements, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, true, ctl );
@@ -744,16 +744,16 @@ scan_by_key_pick_iterator(
         runMode = ctl.getDefaultPathToRun( );
     }
 
-	#if defined(BOLT_DEBUG_LOG)
+    #if defined(BOLT_DEBUG_LOG)
     BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
     #endif
-	
+    
     if( runMode == bolt::cl::control::SerialCpu )
     {
-	    #if defined(BOLT_DEBUG_LOG)
+        #if defined(BOLT_DEBUG_LOG)
         dblog->CodePathTaken(BOLTLOG::BOLT_SCANBYKEY,BOLTLOG::BOLT_SERIAL_CPU,"::Scan_By_Key::SERIAL_CPU");
         #endif
-		  
+          
         typename bolt::cl::device_vector< kType >::pointer scanInputkey =  firstKey.getContainer( ).data( );
         typename bolt::cl::device_vector< vType >::pointer scanInputBuffer =  firstValue.getContainer( ).data( );
         typename bolt::cl::device_vector< oType >::pointer scanResultBuffer =  result.getContainer( ).data( );
@@ -775,10 +775,10 @@ scan_by_key_pick_iterator(
             #if defined(BOLT_DEBUG_LOG)
             dblog->CodePathTaken(BOLTLOG::BOLT_SCANBYKEY,BOLTLOG::BOLT_MULTICORE_CPU,"::Scan_By_Key::MULTICORE_CPU");
             #endif
-	  
-		       typename bolt::cl::device_vector< kType >::pointer scanInputkey =  firstKey.getContainer( ).data( );
-	  		typename    bolt::cl::device_vector< vType >::pointer scanInputBuffer =  firstValue.getContainer( ).data( );
-			 typename   bolt::cl::device_vector< oType >::pointer scanResultBuffer =  result.getContainer( ).data( );
+      
+               typename bolt::cl::device_vector< kType >::pointer scanInputkey =  firstKey.getContainer( ).data( );
+            typename    bolt::cl::device_vector< vType >::pointer scanInputBuffer =  firstValue.getContainer( ).data( );
+             typename   bolt::cl::device_vector< oType >::pointer scanResultBuffer =  result.getContainer( ).data( );
 
               if (inclusive)
                  bolt::btbb::inclusive_scan_by_key(&scanInputkey[ firstKey.m_Index ],&scanInputkey[ firstKey.m_Index ] + numElements,  &scanInputBuffer[ firstValue.m_Index ],
@@ -795,7 +795,7 @@ scan_by_key_pick_iterator(
 
      }
      else{
-	 #if defined(BOLT_DEBUG_LOG)
+     #if defined(BOLT_DEBUG_LOG)
      dblog->CodePathTaken(BOLTLOG::BOLT_SCANBYKEY,BOLTLOG::BOLT_OPENCL_GPU,"::Scan_By_Key::OPENCL_GPU");
      #endif
      //Now call the actual cl algorithm
