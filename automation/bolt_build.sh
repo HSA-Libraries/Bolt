@@ -258,12 +258,13 @@ cd Bolt-build/doxy
 make Bolt.Documentation
 cd ..
 make package
-cd ../..
 
 #REM Rename the package that we just built
 #REM I do this here because I can not figure out how to get cpack to append the configuration string
-echo "python $BOLT_BUILD_SOURCE_PATH/automation/filename.append.py *.zip -debug -debug -release"
-python $BOLT_BUILD_SOURCE_PATH/automation/filename.append.py *.zip -debug -debug -release
+echo "python $BOLT_BUILD_SOURCE_PATH/automation/filename.append.py *.tar.gz -debug -debug -release"
+python $BOLT_BUILD_SOURCE_PATH/automation/filename.append.py *.tar.gz -debug -debug -release
+
+cd ../..
 
 ################################################################################################
 # Super Build -- Release
@@ -276,13 +277,14 @@ cd Bolt-build/doxy
 make Bolt.Documentation
 cd ..
 make package
-cd ../..
 
 
 #REM Rename the package that we just built
 #REM I do this here because I can not figure out how to get cpack to append the configuration string
-echo "python $BOLT_BUILD_SOURCE_PATH/automation/filename.append.py *.zip -release -debug -release"
-python $BOLT_BUILD_SOURCE_PATH/automation/filename.append.py *.zip -release -debug -release
+echo "python $BOLT_BUILD_SOURCE_PATH/automation/filename.append.py *.tar.gz -release -debug -release"
+python $BOLT_BUILD_SOURCE_PATH/automation/filename.append.py *.tar.gz -release -debug -release
+
+cd ../..
 
 echo $HR
 endtime=`date`
