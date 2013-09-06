@@ -106,6 +106,7 @@ set( clBolt.Runtime.Headers.Iterator
 set( clBolt.Runtime.Headers.Misc
         ${clBolt.Include.Dir}/../countof.h
         ${clBolt.Include.Dir}/../unicode.h
+        ${clBolt.Include.Dir}/../BoltLog.h
         ${clBolt.Include.Dir}/../statisticalTimer.h
         ${clBolt.Include.Dir}/../AsyncProfiler.h
     )

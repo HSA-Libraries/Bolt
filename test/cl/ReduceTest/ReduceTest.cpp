@@ -21,6 +21,8 @@
 #define TEST_DOUBLE 0
 #define TEST_CPU_DEVICE 0
 #define BOLT_DEBUG_LOG
+
+#include "bolt/BoltLog.h"
 #include "stdafx.h"
 #include <bolt/cl/iterator/counting_iterator.h>
 #include <bolt/cl/reduce.h>
@@ -37,7 +39,6 @@
 #include "common/myocl.h"
 #include "bolt/miniDump.h"
 
-#include "bolt/BoltLog.h"
 
 void testDeviceVector()
 {

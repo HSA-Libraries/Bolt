@@ -19,7 +19,7 @@
 #if !defined( BOLT_LOG )
 #define BOLT_LOG
 #include <vector>
-
+#include <string>
 #pragma once
 
 namespace BOLTLOG{
