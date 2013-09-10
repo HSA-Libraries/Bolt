@@ -284,7 +284,6 @@ TEST_P (ReduceByKeyTest, ReduceByKeyTestFloat)
 
 
 }
-
 TEST_P (ReduceByKeyTest, ReduceByKeyTestFloatIncreasingKeys)
 {
 
@@ -346,8 +345,6 @@ TEST_P (ReduceByKeyTest, ReduceByKeyTestFloatIncreasingKeys)
 
 
 }
-
-
 TEST_P (ReduceByKeyTest, ReduceByKeyTestFloat3)
 {
 
@@ -399,8 +396,6 @@ TEST_P (ReduceByKeyTest, ReduceByKeyTestFloat3)
 
 
 }
-
-
 TEST_P (ReduceByKeyTest, SameKeyReduceByKeyTestFloat)
 {
 
@@ -451,8 +446,6 @@ TEST_P (ReduceByKeyTest, SameKeyReduceByKeyTestFloat)
 
 
 }
-
-
 TEST_P (ReduceByKeyTest, DifferentKeyReduceByKeyTestFloat)
 {
 
@@ -505,7 +498,6 @@ TEST_P (ReduceByKeyTest, DifferentKeyReduceByKeyTestFloat)
 }
 
 #if(TEST_DOUBLE==1)
-
 TEST_P (ReduceByKeyTest, ReduceByKeyTestDouble)
 {
 
@@ -557,7 +549,6 @@ TEST_P (ReduceByKeyTest, ReduceByKeyTestDouble)
 
 
 }
-
 TEST_P (ReduceByKeyTest, ReduceByKeyTestDoubleIncreasingKeys)
 {
 
@@ -619,8 +610,6 @@ TEST_P (ReduceByKeyTest, ReduceByKeyTestDoubleIncreasingKeys)
 
 
 }
-
-
 TEST_P (ReduceByKeyTest, ReduceByKeyTestDouble3)
 {
 
@@ -672,8 +661,6 @@ TEST_P (ReduceByKeyTest, ReduceByKeyTestDouble3)
 
 
 }
-
-
 TEST_P (ReduceByKeyTest, SameKeyReduceByKeyTestDouble)
 {
 
@@ -724,8 +711,6 @@ TEST_P (ReduceByKeyTest, SameKeyReduceByKeyTestDouble)
 
 
 }
-
-
 TEST_P (ReduceByKeyTest, DifferentKeyReduceByKeyTestDouble)
 {
 
@@ -776,7 +761,6 @@ TEST_P (ReduceByKeyTest, DifferentKeyReduceByKeyTestDouble)
 
 
 }
-
 #endif
 
 BOLT_FUNCTOR(uddfltint,
@@ -862,7 +846,6 @@ BOLT_CREATE_TYPENAME( bolt::cl::device_vector< uddfltint >::iterator );
 BOLT_CREATE_CLCODE( bolt::cl::device_vector< uddfltint >::iterator, bolt::cl::deviceVectorIteratorTemplate );
 
 #if UDD
-
 TEST_P (ReduceByKeyTest, ReduceByKeyTestUDD)
 {
 
@@ -922,7 +905,6 @@ TEST_P (ReduceByKeyTest, ReduceByKeyTestUDD)
 
 
 }
-
 TEST_P (ReduceByKeyTest, ReduceByKeyTestUDDIncreasingKeys)
 {
 
@@ -952,8 +934,8 @@ TEST_P (ReduceByKeyTest, ReduceByKeyTestUDDIncreasingKeys)
         //device_keys[i] = key;
         segmentIndex++;
 
-        refInput[i].x = 3.0;
-        refInput[i].y = 3.0;
+        refInput[i].x = 3.0f;
+        refInput[i].y = 3;
         input[i] = refInput[i];
     }
 
@@ -992,7 +974,6 @@ TEST_P (ReduceByKeyTest, ReduceByKeyTestUDDIncreasingKeys)
 
 
 }
-
 TEST_P (ReduceByKeyTest, ReduceByKeyTestUDD3)
 {
 
@@ -1053,7 +1034,6 @@ TEST_P (ReduceByKeyTest, ReduceByKeyTestUDD3)
 
 
 }
-
 TEST_P (ReduceByKeyTest, SameKeyReduceByKeyTestUDD)
 {
 
@@ -1104,8 +1084,6 @@ TEST_P (ReduceByKeyTest, SameKeyReduceByKeyTestUDD)
 
 
 }
-
-
 TEST_P (ReduceByKeyTest, DifferentKeyReduceByKeyTestUDD)
 {
 
@@ -1157,11 +1135,7 @@ TEST_P (ReduceByKeyTest, DifferentKeyReduceByKeyTestUDD)
 
 
 }
-
-
 #endif
-
-
 
 INSTANTIATE_TEST_CASE_P(ReduceByKeyIterLimit, ReduceByKeyTest, ::testing::Range(1025, 65535, 2111)); 
 
@@ -1169,7 +1143,7 @@ INSTANTIATE_TEST_CASE_P(ReduceByKeyIterLimit, ReduceByKeyTest, ::testing::Range(
 
  TEST(ReduceByKeyBasic, DeviceVectorTest)
 {
-    int length = 1<<10;
+    int length = 10;
     std::vector< int > keys(length);
     
 
@@ -1216,9 +1190,7 @@ INSTANTIATE_TEST_CASE_P(ReduceByKeyIterLimit, ReduceByKeyTest, ::testing::Range(
 
     cmpArrays(krefOutput, koutput);
     cmpArrays(vrefOutput, voutput);
-}
-
-
+} 
  TEST(ReduceByKeyBasic, CPUDeviceVectorTest)
 {
     int length = 1<<10;
@@ -1274,9 +1246,6 @@ INSTANTIATE_TEST_CASE_P(ReduceByKeyIterLimit, ReduceByKeyTest, ::testing::Range(
     cmpArrays(krefOutput, koutput);
     cmpArrays(vrefOutput, voutput);
 }
-
-
-
  TEST(ReduceByKeyBasic, MultiCoreCPUDeviceVectorTest)
 {
     int length = 1<<10;
@@ -1330,8 +1299,7 @@ INSTANTIATE_TEST_CASE_P(ReduceByKeyIterLimit, ReduceByKeyTest, ::testing::Range(
     cmpArrays(krefOutput, koutput);
     cmpArrays(vrefOutput, voutput);
 }
-
-
+ 
 TEST(reduce_by_key__bolt_Std_vect, Basic_EPR377067){
 
 int size = 10;
@@ -1454,7 +1422,6 @@ EXPECT_EQ ( eleValueOp_Expexted[i], valueBoltClDevVectOp[i]);
 }
 }
 
-
 TEST(reduce_by_key__bolt_Dev_vect, Basic_EPR377067){
 
 int size = 10;
@@ -1576,9 +1543,6 @@ EXPECT_EQ ( eleValueOp_Expexted[i], valueBoltClDevVectOp[i]);
 }
 }
 
-
-
-
 TEST(ReduceByKeyBasic, IntegerTest)
 {
     int length = 1<<24;
@@ -1632,8 +1596,6 @@ TEST(ReduceByKeyBasic, IntegerTest)
     cmpArrays(vrefOutput, voutput);
    // cmpArrays2(vrefOutput, voutput, refPair.second, p.second);
 }
-
-
 TEST(ReduceByKeyBasic, IntegerTestOffsetTest)
 {
     int length = 1024;
@@ -1687,7 +1649,6 @@ TEST(ReduceByKeyBasic, IntegerTestOffsetTest)
     cmpArrays(vrefOutput, voutput);
    // cmpArrays2(vrefOutput, voutput, refPair.second, p.second);
 }
-
 TEST(ReduceByKeyBasic, CPUIntegerTest)
 {
     int length = 1<<24;
@@ -1744,10 +1705,9 @@ TEST(ReduceByKeyBasic, CPUIntegerTest)
     cmpArrays(vrefOutput, voutput);
    // cmpArrays2(vrefOutput, voutput, refPair.second, p.second);
 }
-
 TEST(ReduceByKeyBasic, MultiCoreIntegerTest)
 {
-    int length = 1<<24;
+    int length = 1<<10;
     std::vector< int > keys( length);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
@@ -1776,7 +1736,6 @@ TEST(ReduceByKeyBasic, MultiCoreIntegerTest)
     bolt::cl::equal_to<int> binary_predictor;
     bolt::cl::plus<int> binary_operator;
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
@@ -1801,8 +1760,6 @@ TEST(ReduceByKeyBasic, MultiCoreIntegerTest)
     cmpArrays(vrefOutput, voutput);
    // cmpArrays2(vrefOutput, voutput, refPair.second, p.second);
 }
-
-
 
 TEST(ReduceByKeyPairCheck, IntegerTest2)
 {
@@ -1888,7 +1845,6 @@ TEST(ReduceByKeyPairCheck, IntegerTest2)
     cmpArrays(krefOutput, koutput);
     cmpArrays(vrefOutput, voutput);
 }
-
 TEST(ReduceByKeyPairCheck, CPUIntegerTest2)
 {
     int length = 1<<24;
@@ -1978,10 +1934,9 @@ TEST(ReduceByKeyPairCheck, CPUIntegerTest2)
     cmpArrays(krefOutput, koutput);
     cmpArrays(vrefOutput, voutput);
 }
-
 TEST(ReduceByKeyPairCheck, MultiCoreIntegerTest2)
 {
-    int length = 1<<24;
+    int length = 1<<10;
     std::vector< int > keys( length);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
     int segmentLength = 0;
@@ -2069,7 +2024,6 @@ TEST(ReduceByKeyPairCheck, MultiCoreIntegerTest2)
     cmpArrays(vrefOutput, voutput);
 }
 
-
 TEST(ReduceByKeyBasic, IntegerTestOddSizes)
 {
     int length;
@@ -2149,8 +2103,6 @@ TEST(ReduceByKeyBasic, IntegerTestOddSizes)
 
 
 }
-
-
 TEST(ReduceByKeyBasic, CPUIntegerTestOddSizes)
 {
     int length;
@@ -2227,7 +2179,6 @@ TEST(ReduceByKeyBasic, CPUIntegerTestOddSizes)
 
 
 }
-
 TEST(ReduceByKeyBasic, MultiCoreIntegerTestOddSizes)
 {
     int length;
@@ -2305,9 +2256,7 @@ TEST(ReduceByKeyBasic, MultiCoreIntegerTestOddSizes)
 
 }
 
-
 #if UDD
-
 TEST(ReduceByKeyPairUDDTest, UDDFloatIntTest)
 {
     int length = 1024;
@@ -2386,7 +2335,6 @@ TEST(ReduceByKeyPairUDDTest, UDDFloatIntTest)
     cmpArrays(vrefOutput, voutput);
 
 }
-
 TEST(ReduceByKeyPairUDDTest, CPU_UDDFloatIntTest)
 {
     int length = 1024;
@@ -2470,7 +2418,6 @@ TEST(ReduceByKeyPairUDDTest, CPU_UDDFloatIntTest)
     cmpArrays(vrefOutput, voutput);
 
 }
-
 TEST(ReduceByKeyPairUDDTest, MultiCore_UDDFloatIntTest)
 {
     int length = 1024;
@@ -2554,7 +2501,6 @@ TEST(ReduceByKeyPairUDDTest, MultiCore_UDDFloatIntTest)
     cmpArrays(vrefOutput, voutput);
 
 }
-
 #endif
 
 int _tmain(int argc, _TCHAR* argv[])
@@ -2693,6 +2639,5 @@ int _tmain(int argc, _TCHAR* argv[])
 
   return retVal;
 }
-
 
 #endif
