@@ -147,6 +147,7 @@ struct ClCode
  * Another approach is to define the code string in a file (so host and string are identical), then
  * pass the string read from the file to BOLT_CREATE_CLCODE. (See \ref clCodeFromFile)
  */
+#if defined(WIN32)
 #define BOLT_CREATE_CLCODE(Type,CODE_STRING) \
     template<> struct ClCode< Type > {	static std::vector< std::string > dependencies;\
                                         static void addDependency(std::string s) { dependencies.push_back(s); }; \
@@ -157,8 +158,22 @@ struct ClCode
                                         };\
                                         static std::string getCodeString() { return CODE_STRING; }; \
                                         static std::string get() { return getDependingCodeString() + getCodeString(); }; };\
- std::vector< std::string > ClCode< Type >::dependencies; 
+ __declspec( selectany ) std::vector< std::string > ClCode< Type >::dependencies; 
+#else
+#define BOLT_CREATE_CLCODE(Type,CODE_STRING) \
+    template<> struct ClCode< Type > {	static std::vector< std::string > dependencies;\
+                                        static void addDependency(std::string s) { dependencies.push_back(s); }; \
+                                        static std::string getDependingCodeString() { \
+                                            std::string c;\
+                                            for (std::vector< std::string >::iterator i = dependencies.begin(); i != dependencies.end(); i++) { c = c + *i; } \
+                                            return c; \
+                                        };\
+                                        static std::string getCodeString() { return CODE_STRING; }; \
+                                        static std::string get() { return getDependingCodeString() + getCodeString(); }; };\
+__attribute__((weak))  std::vector< std::string > ClCode< Type >::dependencies; 
 
+
+#endif
 /*!
  * \brief This macro specializes a template with a new type using the template definition of a previously defined
  * type
