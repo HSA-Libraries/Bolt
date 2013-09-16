@@ -6,7 +6,7 @@ buildStartTime=`date`
 #save and restore PATH else infinitely lengthened
 OLD_SYSTEM_PATH=$PATH
 CMAKE=cmake
-MAKE_THREADS=2 
+MAKE_THREADS=4 
 ################################################################################################
 # File Paths
 
