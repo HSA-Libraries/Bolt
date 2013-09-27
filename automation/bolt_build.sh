@@ -22,6 +22,13 @@ BOLT_BUILD_VERSION_MAJOR=
 BOLT_BUILD_VERSION_MINOR=
 BOLT_BUILD_VERSION_PATCH=
 
+################################################################################################
+# BUILD TYPES
+BUILD_RELEASE=false
+BUILD_RELEASE=false
+###############################################################################################
+
+
 if test -s  $BOLT_BUILD_VERSION_MAJOR_FILE
 then
 BOLT_BUILD_VERSION_MAJOR=`<$BOLT_BUILD_VERSION_MAJOR_FILE`
@@ -68,7 +75,9 @@ do
 	echo "Build script for Bolt"
 	echo "Command line options:" 
 	echo "-h    ) Print help"	
-	echo "-bit=32 ) Build a 32bit (default: 64bit)"
+	echo "--bit 32 ) Build a 32bit (default: 64bit)"
+	echo "--release ) Build release Builds"
+	echo "--debug   ) Build debug   Builds"
 
 	if test -s  $BOLT_BUILD_PATH/success 
         then 
@@ -132,7 +141,13 @@ do
   shift
   fi
 
+  if [ "$1" == "--release" ]; then
+   BUILD_RELEASE=true
+  fi
 
+  if [ "$1" == "--debug" ]; then
+   BUILD_DEBUG=true
+  fi
 
 shift
 done
@@ -184,7 +199,6 @@ echo Building with : $MAKE_THREADS threads
 ################################################################################################
 #REM Echo a blank line into a file called success; the existence of success determines whether we built successfully
 
-echo . > $BOLT_BUILD_INSTALL_PATH/success
 
 #REM Specify the location of a local image of boost, Google test and doxygen. 
 #REM Currently BOLT uses Boost 1.52.0, Doxygen 1.8.3.windows, Google Test 1.6.0 versions
@@ -202,6 +216,12 @@ echo . > $BOLT_BUILD_INSTALL_PATH/success
 
 ################################################################################################
 # Cmake
+
+if [ "$BUILD_RELEASE" = "true" ]; then
+
+
+echo . > $BOLT_BUILD_INSTALL_PATH/success
+
 mkdir release
 cd release
 echo .
@@ -223,8 +243,36 @@ if [ "$?" != "0" ]; then
   exit 
 fi
 cd ..
+
+################################################################################################
+# Super Build -- Release
+echo .
+echo $HR
+echo Info: Running Make for Release SuperBuild.
+cd release
+make -j$MAKE_THREADS 
+cd Bolt-build/doxy
+make Bolt.Documentation
+cd ..
+make package
+
+
+#REM Rename the package that we just built
+#REM I do this here because I can not figure out how to get cpack to append the configuration string
+echo "python $BOLT_BUILD_SOURCE_PATH/automation/filename.append.py *.tar.gz -release -debug -release"
+python $BOLT_BUILD_SOURCE_PATH/automation/filename.append.py *.tar.gz -release -debug -release
+
+cd ../..
+
+fi
 ################################################################################################
 # Cmake
+
+
+if [ "$BUILD_DEBUG" = "true" ]; then
+
+echo . > $BOLT_BUILD_INSTALL_PATH/success
+
 mkdir debug
 cd debug
 echo .
@@ -266,28 +314,11 @@ python $BOLT_BUILD_SOURCE_PATH/automation/filename.append.py *.tar.gz -debug -de
 
 cd ../..
 
-################################################################################################
-# Super Build -- Release
-echo .
-echo $HR
-echo Info: Running Make for Release SuperBuild.
-cd release
-make -j$MAKE_THREADS 
-cd Bolt-build/doxy
-make Bolt.Documentation
-cd ..
-make package
-
-
-#REM Rename the package that we just built
-#REM I do this here because I can not figure out how to get cpack to append the configuration string
-echo "python $BOLT_BUILD_SOURCE_PATH/automation/filename.append.py *.tar.gz -release -debug -release"
-python $BOLT_BUILD_SOURCE_PATH/automation/filename.append.py *.tar.gz -release -debug -release
-
-cd ../..
+fi
 
 echo $HR
 endtime=`date`
 echo "Done. StartTime={$buildStartTime} StopTime={$endtime}"
 echo $HR
+
 
