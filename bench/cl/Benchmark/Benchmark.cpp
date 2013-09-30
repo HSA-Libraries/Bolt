@@ -45,6 +45,7 @@
 #include "bolt/unicode.h"
 #include "bolt/countof.h"
 #include <boost/program_options.hpp>
+#include<random>
 
 
 //#define BOLT_PROFILER_ENABLED
@@ -67,6 +68,14 @@ const std::streamsize colWidth = 26;
 BOLT_CREATE_DEFINE(Bolt_DATA_TYPE,DATA_TYPE,unsigned int);
 #endif // !DATA_TYPE  
 
+// function generator:
+unsigned int RandomNumber() 
+{
+    std::default_random_engine gen;
+    std::uniform_int_distribution<unsigned int> distr(10,1<<31);
+    unsigned int dice_roll = distr(gen);  // generates number in the range 10..1<<31 
+    return (dice_roll); 
+}
 
 /******************************************************************************
  *  Functions Enumerated
@@ -117,6 +126,7 @@ static char *functionNames[] = {
 "unarytransform"
 
 };
+
 
 /******************************************************************************
  *  Data Types Enumerated
@@ -848,6 +858,7 @@ switch(function)
 }
 
 
+
 /******************************************************************************
  *
  *  Determine types
@@ -876,10 +887,10 @@ void executeFunction(
         std::vector<DATA_TYPE> input3(length);
         std::vector<DATA_TYPE> output(length);
 
-        std::generate(input1.begin(), input1.end(), rand);
-        std::generate(input2.begin(), input2.end(), rand);
-        std::generate(input3.begin(), input3.end(), rand);
-        std::generate(output.begin(), output.end(), rand);
+        std::generate(input1.begin(), input1.end(), RandomNumber);
+        std::generate(input2.begin(), input2.end(), RandomNumber);
+        std::generate(input3.begin(), input3.end(), RandomNumber);
+        std::generate(output.begin(), output.end(), RandomNumber);
 
         if (hostMemory) {
 
@@ -913,10 +924,10 @@ void executeFunction(
         std::vector<vec2> output(length);
 
 
-        std::generate(input1.begin(), input1.end(), rand);
-        std::generate(input2.begin(), input2.end(), rand);
-        std::generate(input3.begin(), input3.end(), rand);
-        std::generate(output.begin(), output.end(), rand);
+        std::generate(input1.begin(), input1.end(),RandomNumber);
+        std::generate(input2.begin(), input2.end(),RandomNumber);
+        std::generate(input3.begin(), input3.end(),RandomNumber);
+        std::generate(output.begin(), output.end(),RandomNumber);
 
         if (hostMemory) {
 
@@ -947,10 +958,10 @@ void executeFunction(
         std::vector<vec4> input3(length, v4init);
         std::vector<vec4> output(length, v4iden);
         BOLT_ADD_DEPENDENCY(vec4, Bolt_DATA_TYPE);
-        std::generate(input1.begin(), input1.end(), rand);
-        std::generate(input2.begin(), input2.end(), rand);
-        std::generate(input3.begin(), input3.end(), rand);
-        std::generate(output.begin(), output.end(), rand);
+        std::generate(input1.begin(), input1.end(),RandomNumber);
+        std::generate(input2.begin(), input2.end(),RandomNumber);
+        std::generate(input3.begin(), input3.end(),RandomNumber);
+        std::generate(output.begin(), output.end(),RandomNumber);
 
         if (hostMemory) {
 
@@ -981,10 +992,10 @@ void executeFunction(
         std::vector<vec8> input3(length, v8init);
         std::vector<vec8> output(length, v8iden);
         BOLT_ADD_DEPENDENCY(vec8, Bolt_DATA_TYPE);
-        std::generate(input1.begin(), input1.end(), rand);
-        std::generate(input2.begin(), input2.end(), rand);
-        std::generate(input3.begin(), input3.end(), rand);
-        std::generate(output.begin(), output.end(), rand);
+        std::generate(input1.begin(), input1.end(),RandomNumber);
+        std::generate(input2.begin(), input2.end(),RandomNumber);
+        std::generate(input3.begin(), input3.end(),RandomNumber);
+        std::generate(output.begin(), output.end(),RandomNumber);
 
         if (hostMemory) {
 
@@ -1057,7 +1068,7 @@ int _tmain( int argc, _TCHAR* argv[] )
             ( "iterations,i",   po::value< size_t >( &iterations )->default_value( iterations ),
                 "Number of samples in timing loop" )
             ( "vecType,t",      po::value< size_t >( &vecType )->default_value( vecType ),
-                "Data Type to use: 0-(1 value), 1-(2 values), 2-(3 values), 3-(4 values)" )
+                "Data Type to use: 0-(1 value), 1-(2 values), 2-(4 values), 3-(8 values)" )
             ( "runMode,m",      po::value< size_t >( &runMode )->default_value( runMode ),
                 "Run Mode: 0-Auto, 1-SerialCPU, 2-MultiCoreCPU, 3-GPU" )
             ( "function,f",      po::value< std::string >( &function_called )->default_value( function_called ),
