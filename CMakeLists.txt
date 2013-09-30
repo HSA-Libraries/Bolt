@@ -153,7 +153,7 @@ elseif( ( C_COMPILER_NAME STREQUAL "gcc" ) OR ( CMAKE_COMPILER_IS_GNUCXX GREATER
     if( Bolt_BUILD64 )
         set( CMAKE_CXX_FLAGS "-m64 ${CMAKE_CXX_FLAGS}" )
         set( CMAKE_C_FLAGS "-m64 ${CMAKE_C_FLAGS}" )
-        set( CMAKE_EXE_LINKER_FLAGS "-lpthread -m64 ${CMAKE_EXE_LINKER_FLAGS}" )
+        set( CMAKE_EXE_LINKER_FLAGS " -m64 ${CMAKE_EXE_LINKER_FLAGS}" )
         set( CMAKE_SHARED_LINKER_FLAGS "-lpthread -m64 ${CMAKE_SHARED_LINKER_FLAGS}" )
     else( )
         set( CMAKE_CXX_FLAGS "-m32 ${CMAKE_CXX_FLAGS}" )

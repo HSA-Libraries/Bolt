@@ -5086,7 +5086,7 @@ TEST(HostMemory_IntStdVector, OffsetScatterPredicate)
 {
 
     int n_input[10] =  {0,1,2,3,4,5,6,7,8,9};
-    int n_map[10] =  {9,8,7,6,5,4,3,2,1,0};
+    int n_map[10] =  {3,2,1,0,4,5,8,7,6,9};
 
 
     std::vector<int> input( n_input, n_input+10 );   
@@ -5096,8 +5096,8 @@ TEST(HostMemory_IntStdVector, OffsetScatterPredicate)
 
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
-    bolt::cl::scatter( ctl, input.begin()+5, input.begin()+7, map.begin()+5, exp_result.begin() );
-    bolt::cl::scatter( input.begin()+5, input.begin()+7, map.begin()+5, result.begin() );
+    bolt::cl::scatter( ctl, input.begin()+5, input.end(), map.begin(), exp_result.begin() );
+    bolt::cl::scatter( input.begin()+5, input.end(), map.begin(), result.begin() );
     //for(int i=0; i<10 ; i++){ std::cout<<result[ i ]<<std::endl; }
     EXPECT_EQ(exp_result, result);
 }
@@ -5106,7 +5106,7 @@ TEST(HostMemory_IntStdVector, OffsetScatterIfPredicate)
 {
 
     int n_input[10] =  {0,1,2,3,4,5,6,7,8,9};
-    int n_map[10] =  {9,8,7,6,5,4,3,2,1,0};
+    int n_map[10] =  {3,2,1,0,4,5,8,7,6,9};
     int n_stencil[10] =  {0,1,0,1,0,1,0,1,0,1};
 
 
@@ -5119,8 +5119,8 @@ TEST(HostMemory_IntStdVector, OffsetScatterIfPredicate)
     is_even iepred;
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
-    bolt::cl::scatter_if( ctl, input.begin()+5, input.begin()+7, map.begin()+5, stencil.begin()+5, exp_result.begin(), iepred );
-    bolt::cl::scatter_if( input.begin()+5, input.begin()+7, map.begin()+5, stencil.begin()+5, result.begin(), iepred );
+    bolt::cl::scatter_if( ctl, input.begin()+5, input.end(), map.begin(), stencil.begin()+5, exp_result.begin(), iepred );
+    bolt::cl::scatter_if( input.begin()+5, input.end(), map.begin(), stencil.begin()+5, result.begin(), iepred );
     //for(int i=0; i<10 ; i++){ std::cout<<result[ i ]<<std::endl; }
     EXPECT_EQ(exp_result, result);
 }

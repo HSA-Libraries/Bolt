@@ -3456,7 +3456,7 @@ TEST_P(HostMemory_UDDTestInt2, MulticoreGather)
 ///////////////////////////////////
 TEST( HostMemory_int, OffsetGatherIfPredicate )
 {
-    int n_map[10]     =  {0,1,2,3,4,5,6,7,8,9};
+    int n_map[10]     =  {4,3,1,2,0,5,6,7,8,9};
     int n_input[10]   =  {9,8,7,6,5,4,3,2,1,0};
     int n_stencil[10] =  {0,1,0,1,0,1,0,1,0,1};
 
@@ -3468,11 +3468,11 @@ TEST( HostMemory_int, OffsetGatherIfPredicate )
     std::vector<int> stencil ( n_stencil, n_stencil + 10 );    
     is_even iepred;
 
-    bolt::cl::gather_if( map.begin()+2, map.begin()+5, stencil.begin()+2, input.begin(), result.begin()+2, iepred );
+    bolt::cl::gather_if( map.begin(), map.begin()+5, stencil.begin()+2, input.begin(), result.begin(), iepred );
 
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
-    bolt::cl::gather_if(ctl, map.begin()+2, map.begin()+5, stencil.begin()+2, input.begin(), exp_result.begin()+2, iepred );
+    bolt::cl::gather_if(ctl, map.begin(), map.begin()+5, stencil.begin()+2, input.begin(), exp_result.begin(), iepred );
 
     EXPECT_EQ(exp_result, result);
 }
@@ -3480,7 +3480,7 @@ TEST( HostMemory_int, OffsetGatherIfPredicate )
 TEST( HostMemory_int, OffsetGatherIfPredicateMedium )
 {
     size_t myStdVectSize = 1024;
-    int s_offset = 27;
+    int s_offset = 0;
     int e_offset = 515;
     size_t distance = e_offset - s_offset;
 
@@ -3498,11 +3498,11 @@ TEST( HostMemory_int, OffsetGatherIfPredicateMedium )
     std::random_shuffle( map.begin(), map.end() );   
     is_even iepred;
 
-    bolt::cl::gather_if( map.begin()+s_offset, map.begin()+e_offset, stencil.begin()+56, input.begin(), result.begin(), iepred );
+    bolt::cl::gather_if( map.begin(), map.begin()+e_offset, stencil.begin()+56, input.begin(), result.begin(), iepred );
 
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
-    bolt::cl::gather_if(ctl, map.begin()+s_offset, map.begin()+e_offset, stencil.begin()+56, input.begin(), exp_result.begin(), iepred );
+    bolt::cl::gather_if(ctl, map.begin(), map.begin()+e_offset, stencil.begin()+56, input.begin(), exp_result.begin(), iepred );
 
     EXPECT_EQ(exp_result, result);
 }
@@ -3519,11 +3519,11 @@ TEST( HostMemory_int, OffsetGatherPredicate )
     std::vector<int> input ( n_input, n_input + 10 );
     std::vector<int> map ( n_map, n_map + 10 );
 
-    bolt::cl::gather( map.begin()+2, map.begin()+5, input.begin(), result.begin()+2 );
+    bolt::cl::gather( map.begin(), map.begin()+5, input.begin(), result.begin() );
 
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
-    bolt::cl::gather(ctl, map.begin()+2, map.begin()+5, input.begin(), exp_result.begin()+2 );
+    bolt::cl::gather(ctl, map.begin(), map.begin()+5, input.begin(), exp_result.begin() );
 
     EXPECT_EQ(exp_result, result);
 }
@@ -3532,7 +3532,7 @@ TEST( HostMemory_int, OffsetGatherPredicateMedium )
 {
     size_t myStdVectSize = 1024;
 
-    int s_offset = 27;
+    int s_offset = 0;
     int e_offset = 567;
     size_t distance = e_offset - s_offset;
     std::vector<int> input( myStdVectSize,0);   
@@ -3546,11 +3546,11 @@ TEST( HostMemory_int, OffsetGatherPredicateMedium )
     }
     std::random_shuffle( map.begin(), map.end() ); 
 
-    bolt::cl::gather( map.begin() + s_offset, map.begin() + e_offset, input.begin(), result.begin()+2 );
+    bolt::cl::gather( map.begin(), map.begin() + e_offset, input.begin(), result.begin() );
 
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
-    bolt::cl::gather(ctl, map.begin() + s_offset, map.begin() + e_offset, input.begin(), exp_result.begin()+2 );
+    bolt::cl::gather(ctl, map.begin(), map.begin() + e_offset, input.begin(), exp_result.begin() );
 
     EXPECT_EQ(exp_result, result);
 }
