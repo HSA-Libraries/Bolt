@@ -21,6 +21,7 @@
 #include "bolt/cl/functional.h"
 #include "bolt/cl/device_vector.h"
 #include "bolt/cl/generate.h"
+#include "bolt/cl/binary_search.h"
 #include "bolt/cl/copy.h"
 #include "bolt/cl/count.h"
 #include "bolt/cl/fill.h"
@@ -80,10 +81,11 @@ unsigned int RandomNumber()
 /******************************************************************************
  *  Functions Enumerated
  *****************************************************************************/
-static const size_t FList = 19;
+static const size_t FList = 20;
 
 enum functionType {
     f_binarytransform,
+    f_binarysearch,
     f_copy,
     f_count,
     f_fill,
@@ -106,6 +108,7 @@ enum functionType {
 };
 static char *functionNames[] = {
 "binarytransform",
+"binarysearch",
 "copy",
 "count",
 "fill",
@@ -573,6 +576,33 @@ void executeFunctionType(
 switch(function)
 {
 
+            case f_binarysearch: 
+            {
+
+            bool tmp;
+  
+            typename VectorType::value_type val;
+
+            std::cout <<  functionNames[f_binarysearch] << std::endl;
+
+            bolt::cl::sort( ctrl, input1.begin( ), input1.end( ), binaryPredLt);
+            
+                for (size_t iter = 0; iter < iterations+1; iter++)
+                {
+               
+                    int index = 0;
+                    if(iter!=0)
+                        index = rand()%iter;
+
+                    val = input1[index];
+
+                    myTimer.Start( testId );
+                    tmp = bolt::cl::binary_search( ctrl,input1.begin( ),input1.end( ),val,binaryPredLt); 
+
+                    myTimer.Stop( testId );
+                }
+            } 
+            break;
 
 
             case f_transformreduce: // fill
@@ -591,7 +621,7 @@ switch(function)
                     myTimer.Stop( testId );
                 }
             }
-
+            break;
 
             case f_stablesort: // fill
             {

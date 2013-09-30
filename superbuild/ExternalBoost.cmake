@@ -88,7 +88,12 @@ set_property( TARGET Boost PROPERTY FOLDER "Externals")
 ExternalProject_Get_Property( Boost source_dir )
 ExternalProject_Get_Property( Boost binary_dir )
 set( Boost_INCLUDE_DIRS ${source_dir} )
+
+if( MSVC )
 set( Boost_LIBRARIES debug;${binary_dir}/stage/lib/libboost_program_options-vc110-mt-gd-1_50.lib;optimized;${binary_dir}/stage/lib/libboost_program_options-vc110-mt-1_50.lib )
+else()
+set( Boost_LIBRARIES debug;${binary_dir}/stage/lib/libboost_program_options.a;optimized;${binary_dir}/stage/lib/libboost_program_options.a )
+endif()
 
 set( Boost_FOUND TRUE )
 
