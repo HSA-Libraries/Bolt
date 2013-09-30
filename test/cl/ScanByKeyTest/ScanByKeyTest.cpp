@@ -26,7 +26,7 @@
 #include "bolt/miniDump.h"
 
 #define TEST_DOUBLE 1
-#define SERIAL_TBB_OFFSET 0
+#define SERIAL_TBB_OFFSET 1
 
 #include <gtest/gtest.h>
 //#include <boost/shared_array.hpp>
