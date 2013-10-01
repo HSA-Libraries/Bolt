@@ -583,7 +583,10 @@ switch(function)
             {
 
             std::cout <<  functionNames[f_merge] << std::endl;
-            
+
+            bolt::cl::sort( ctrl, input1.begin( ), input1.end( ), binaryPredLt);
+            bolt::cl::sort( ctrl, input2.begin( ), input2.end( ), binaryPredLt);
+
                 for (size_t iter = 0; iter < iterations+1; iter++)
                 {
               
