@@ -27,6 +27,7 @@
 #include "bolt/cl/fill.h"
 #include "bolt/cl/max_element.h"
 #include "bolt/cl/min_element.h"
+#include "bolt/cl/merge.h"
 #include "bolt/cl/transform.h"
 #include "bolt/cl/scan.h"
 #include "bolt/cl/sort.h"
@@ -81,7 +82,7 @@ unsigned int RandomNumber()
 /******************************************************************************
  *  Functions Enumerated
  *****************************************************************************/
-static const size_t FList = 20;
+static const size_t FList = 21;
 
 enum functionType {
     f_binarytransform,
@@ -93,6 +94,7 @@ enum functionType {
     f_innerproduct,
     f_maxelement,
     f_minelement,
+    f_merge,
     f_reduce,
     f_reducebykey,
     f_scan,
@@ -116,6 +118,7 @@ static char *functionNames[] = {
 "innerproduct",
 "maxelement",
 "minelement",
+"merge",
 "reduce",
 "reducebykey",
 "scan",
@@ -576,6 +579,22 @@ void executeFunctionType(
 switch(function)
 {
 
+            case f_merge: 
+            {
+
+            std::cout <<  functionNames[f_merge] << std::endl;
+            
+                for (size_t iter = 0; iter < iterations+1; iter++)
+                {
+              
+                    myTimer.Start( testId );
+                    bolt::cl::merge( ctrl,input1.begin( ),input1.end( ),input2.begin( ),input2.end( ),output.begin( ),binaryPredLt); 
+
+                    myTimer.Stop( testId );
+                }
+            } 
+            break; 
+
             case f_binarysearch: 
             {
 
@@ -915,7 +934,7 @@ void executeFunction(
         std::vector<DATA_TYPE> input1(length);
         std::vector<DATA_TYPE> input2(length);
         std::vector<DATA_TYPE> input3(length);
-        std::vector<DATA_TYPE> output(length);
+        std::vector<DATA_TYPE> output(length * 2);
 
         std::generate(input1.begin(), input1.end(), RandomNumber);
         std::generate(input2.begin(), input2.end(), RandomNumber);
