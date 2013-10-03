@@ -561,6 +561,7 @@ void executeFunctionType(
     VectorType &input2,
     VectorType &input3,
     VectorType &output,
+    VectorType &output_merge,
     Generator generator,
     UnaryFunction unaryFunct,
     BinaryFunction binaryFunct,
@@ -591,7 +592,7 @@ switch(function)
                 {
               
                     myTimer.Start( testId );
-                    bolt::cl::merge( ctrl,input1.begin( ),input1.end( ),input2.begin( ),input2.end( ),output.begin( ),binaryPredLt); 
+                    bolt::cl::merge( ctrl,input1.begin( ),input1.end( ),input2.begin( ),input2.end( ),output_merge.begin( ),binaryPredLt); 
 
                     myTimer.Stop( testId );
                 }
@@ -937,16 +938,18 @@ void executeFunction(
         std::vector<DATA_TYPE> input1(length);
         std::vector<DATA_TYPE> input2(length);
         std::vector<DATA_TYPE> input3(length);
-        std::vector<DATA_TYPE> output(length * 2);
+        std::vector<DATA_TYPE> output(length);
+        std::vector<DATA_TYPE> output_merge(length*2) ;
 
         std::generate(input1.begin(), input1.end(), RandomNumber);
         std::generate(input2.begin(), input2.end(), RandomNumber);
         std::generate(input3.begin(), input3.end(), RandomNumber);
         std::generate(output.begin(), output.end(), RandomNumber);
+        std::generate(output_merge.begin(), output_merge.end(), RandomNumber);
 
         if (hostMemory) {
 
-            executeFunctionType( ctrl, input1, input2, input3, output,
+            executeFunctionType( ctrl, input1, input2, input3, output, output_merge, 
                 generator, unaryFunct, binaryFunct, binaryPredEq, binaryPredLt, routine, iterations,siz);
         }
         else
@@ -954,8 +957,9 @@ void executeFunction(
             bolt::cl::device_vector<DATA_TYPE> binput1(input1.begin(), input1.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS,  ctrl);
             bolt::cl::device_vector<DATA_TYPE> binput2(input2.begin(), input2.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS,  ctrl);
             bolt::cl::device_vector<DATA_TYPE> binput3(input3.begin(), input3.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS,  ctrl);
-            bolt::cl::device_vector<DATA_TYPE> boutput(output.begin(), output.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS,  ctrl);
-            executeFunctionType( ctrl, binput1, binput2, binput3, boutput,
+            bolt::cl::device_vector<DATA_TYPE> boutput(output.begin(), output.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS,  ctrl); 
+            bolt::cl::device_vector<DATA_TYPE> boutput_merge(output.begin(), output.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS,  ctrl);    
+            executeFunctionType( ctrl, binput1, binput2, binput3, boutput, boutput_merge,
                 generator, unaryFunct, binaryFunct, binaryPredEq, binaryPredLt, routine, iterations,siz);
         }
     }
@@ -974,16 +978,19 @@ void executeFunction(
         std::vector<vec2> input2(length);
         std::vector<vec2> input3(length);
         std::vector<vec2> output(length);
+        std::vector<vec2> output_merge(length*2) ;
 
 
         std::generate(input1.begin(), input1.end(),RandomNumber);
         std::generate(input2.begin(), input2.end(),RandomNumber);
         std::generate(input3.begin(), input3.end(),RandomNumber);
         std::generate(output.begin(), output.end(),RandomNumber);
+        std::generate(output_merge.begin(), output_merge.end(), RandomNumber);
+
 
         if (hostMemory) {
 
-            executeFunctionType( ctrl, input1, input2, input3, output,
+            executeFunctionType( ctrl, input1, input2, input3, output, output_merge,
                 generator, unaryFunct, binaryFunct, binaryPredEq, binaryPredLt, routine, iterations,siz);
         }
         else
@@ -992,7 +999,8 @@ void executeFunction(
             bolt::cl::device_vector<vec2> binput2(input2.begin(), input2.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS,  ctrl);
             bolt::cl::device_vector<vec2> binput3(input3.begin(), input3.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS,  ctrl);
             bolt::cl::device_vector<vec2> boutput(output.begin(), output.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS,  ctrl);
-            executeFunctionType( ctrl, binput1, binput2,binput3, boutput,
+            bolt::cl::device_vector<vec2> boutput_merge(output.begin(), output.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS,  ctrl); 
+            executeFunctionType( ctrl, binput1, binput2,binput3, boutput, boutput_merge,
                 generator, unaryFunct, binaryFunct, binaryPredEq, binaryPredLt, routine, iterations,siz);
         }
     }
@@ -1009,15 +1017,17 @@ void executeFunction(
         std::vector<vec4> input2(length, v4init);
         std::vector<vec4> input3(length, v4init);
         std::vector<vec4> output(length, v4iden);
+        std::vector<vec4> output_merge(length * 2, v4iden);
         BOLT_ADD_DEPENDENCY(vec4, Bolt_DATA_TYPE);
         std::generate(input1.begin(), input1.end(),RandomNumber);
         std::generate(input2.begin(), input2.end(),RandomNumber);
         std::generate(input3.begin(), input3.end(),RandomNumber);
         std::generate(output.begin(), output.end(),RandomNumber);
+        std::generate(output_merge.begin(), output_merge.end(), RandomNumber);
 
         if (hostMemory) {
 
-            executeFunctionType( ctrl, input1, input2, input3, output,
+            executeFunctionType( ctrl, input1, input2, input3, output, output_merge,
                 generator, unaryFunct, binaryFunct, binaryPredEq, binaryPredLt, routine, iterations,siz);
         }
         else
@@ -1026,7 +1036,8 @@ void executeFunction(
             bolt::cl::device_vector<vec4> binput2(input2.begin(), input2.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS,  ctrl);
             bolt::cl::device_vector<vec4> binput3(input3.begin(), input3.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS,  ctrl);
             bolt::cl::device_vector<vec4> boutput(output.begin(), output.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS,  ctrl);
-            executeFunctionType( ctrl, input1, input2, input3, output,
+            bolt::cl::device_vector<vec4> boutput_merge(output_merge.begin(), output_merge.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS,  ctrl);
+            executeFunctionType( ctrl, input1, input2, input3, output, output_merge,
                 generator, unaryFunct, binaryFunct, binaryPredEq, binaryPredLt, routine, iterations,siz);
         }
     }
@@ -1043,15 +1054,17 @@ void executeFunction(
         std::vector<vec8> input2(length, v8init);
         std::vector<vec8> input3(length, v8init);
         std::vector<vec8> output(length, v8iden);
+        std::vector<vec8> output_merge(length*2, v8iden);
         BOLT_ADD_DEPENDENCY(vec8, Bolt_DATA_TYPE);
         std::generate(input1.begin(), input1.end(),RandomNumber);
         std::generate(input2.begin(), input2.end(),RandomNumber);
         std::generate(input3.begin(), input3.end(),RandomNumber);
         std::generate(output.begin(), output.end(),RandomNumber);
+        std::generate(output_merge.begin(), output_merge.end(),RandomNumber);
 
         if (hostMemory) {
 
-            executeFunctionType( ctrl, input1, input2, input3, output,
+            executeFunctionType( ctrl, input1, input2, input3, output, output_merge,
                 generator, unaryFunct, binaryFunct, binaryPredEq, binaryPredLt, routine, iterations,siz);
         }
         else
@@ -1060,7 +1073,8 @@ void executeFunction(
             bolt::cl::device_vector<vec8> binput2(input2.begin(), input2.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS,  ctrl);
             bolt::cl::device_vector<vec8> binput3(input3.begin(), input3.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS,  ctrl);
             bolt::cl::device_vector<vec8> boutput(output.begin(), output.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS,  ctrl);
-            executeFunctionType( ctrl, input1, input2, input3, output,
+            bolt::cl::device_vector<vec8> boutput_merge(output_merge.begin(), output_merge.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS,  ctrl);
+            executeFunctionType( ctrl, input1, input2, input3, output, output_merge,
                 generator, unaryFunct, binaryFunct, binaryPredEq, binaryPredLt, routine, iterations,siz);
         }
     }
