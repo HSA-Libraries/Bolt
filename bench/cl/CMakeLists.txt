@@ -46,6 +46,8 @@ if( MSVC_IDE )
     # add_subdirectory( StableSortByKey )
     # add_subdirectory( Transform )
     # add_subdirectory( TransformScanBench )
+	# add_subdirectory( Gather )
+	# add_subdirectory( Scatter )
 else()
     # Include standard OpenCL headers
     add_subdirectory( Benchmark )

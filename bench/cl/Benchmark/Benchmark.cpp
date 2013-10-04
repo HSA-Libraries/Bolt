@@ -37,12 +37,14 @@
 #include "bolt/cl/stablesort_by_key.h"
 #include "bolt/cl/transform_scan.h"
 #include "bolt/cl/scan_by_key.h"
+#include "bolt/cl/gather.h"
+#include "bolt/cl/scatter.h"
 
 #include <fstream>
 #include <vector>
 #include <bolt/unicode.h>
 #include <algorithm>
-#include <iomanip>
+#include <iomanip> 
 #include "bolt/unicode.h"
 #include "bolt/countof.h"
 #include <boost/program_options.hpp>
@@ -81,7 +83,7 @@ unsigned int RandomNumber()
 /******************************************************************************
  *  Functions Enumerated
  *****************************************************************************/
-static const size_t FList = 20;
+static const size_t FList = 22;
 
 enum functionType {
     f_binarytransform,
@@ -103,7 +105,9 @@ enum functionType {
     f_stablesortbykey,
     f_transformreduce,
     f_transformscan,
-    f_unarytransform
+    f_unarytransform,
+    f_gather,
+    f_scatter
 
 };
 static char *functionNames[] = {
@@ -126,7 +130,9 @@ static char *functionNames[] = {
 "stablesortbykey",
 "transformreduce",
 "transformscan",
-"unarytransform"
+"unarytransform",
+"gather",
+"scatter"
 
 };
 
@@ -147,9 +153,6 @@ static char *dataTypeNames[] = {
     "vec8"
 };
 
-
-
-
 namespace po = boost::program_options;
 using namespace std;
 /******************************************************************************
@@ -165,9 +168,6 @@ struct vec2
         vec2 tmp;
         a = b = tmp.a = tmp.b = inp;
         return tmp;
-
-
-
     }
     bool operator==(const vec2& rhs) const
     {
@@ -176,10 +176,7 @@ struct vec2
         l_equal = ( b == rhs.b ) ? l_equal : false;
         return l_equal;
     }
-
   //friend ostream& operator<<(ostream& os, const vec2& dt);
-
-
 };
 );
 
@@ -188,14 +185,10 @@ struct vec2
         os<<dt.a<<" "<<dt.b;
         return os;
     }
-
-
+  
 BOLT_CREATE_TYPENAME( bolt::cl::device_vector< vec2 >::iterator );
 BOLT_CREATE_CLCODE( bolt::cl::device_vector< vec2 >::iterator, bolt::cl::deviceVectorIteratorTemplate );
-
 BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::detail::CountIfEqual, DATA_TYPE, vec2 );
-
-
 
 BOLT_FUNCTOR(vec4,
 struct vec4
@@ -216,9 +209,7 @@ struct vec4
         l_equal = ( d == rhs.d ) ? l_equal : false;
         return l_equal;
     }
-
    // friend ostream& operator<<(ostream& os, const vec4& dt);
-
 };
 );
 
@@ -601,6 +592,42 @@ switch(function)
 
                     myTimer.Stop( testId );
                 }
+            } 
+            break;
+
+             case f_gather: 
+            {            
+
+                std::cout <<  functionNames[f_gather] << std::endl;
+                bolt::cl::device_vector<DATA_TYPE> Map(input1.size());
+                for( int i=0; i < input1.size() ; i++ )
+                   {
+                        Map[i] = i;
+                   }
+                for (size_t iter = 0; iter < iterations+1; iter++)
+                    {
+                        myTimer.Start( testId );
+                        bolt::cl::gather( ctrl,Map.begin( ), Map.end( ),input1.begin( ),output.begin()); 
+                        myTimer.Stop( testId );
+                    }
+            } 
+            break;
+
+			 case f_scatter: 
+            {            
+
+                std::cout <<  functionNames[f_scatter] << std::endl;
+                bolt::cl::device_vector<DATA_TYPE> Map(input1.size());
+                for( int i=0; i < input1.size() ; i++ )
+                   {
+                        Map[i] = i;
+                   }
+                for (size_t iter = 0; iter < iterations+1; iter++)
+                    {
+                        myTimer.Start( testId );
+                        bolt::cl::scatter( ctrl, input1.begin( ),input1.end( ), Map.begin(), output.begin()); 
+                        myTimer.Stop( testId );
+                    }
             } 
             break;
 
