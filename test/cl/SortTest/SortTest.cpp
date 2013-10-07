@@ -15,7 +15,7 @@
 
 ***************************************************************************/                                                                                     
 
-#define TEST_DOUBLE 0
+#define TEST_DOUBLE 1
 #define TEST_DEVICE_VECTOR 1
 #define TEST_CPU_DEVICE 0
 #define TEST_MULTICORE_TBB_SORT 1
