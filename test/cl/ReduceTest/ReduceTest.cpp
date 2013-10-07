@@ -1721,6 +1721,22 @@ double boltClReduce = bolt::cl::reduce(my_ctl, vect1.begin(), vect1.end(), 3.0, 
 EXPECT_DOUBLE_EQ(stlAccumulate, boltClReduce);
 }
 
+TEST(ReduceAuto, Reduce386717)
+{
+  std::vector<int> vect1(100);
+  std::fill(vect1.begin(), vect1.end(), 1);
+
+  bolt::cl::control my_ctl;
+  my_ctl.setForceRunMode( bolt::cl::control::Automatic );
+
+  int stlAccumulate = 0;
+  int boltClReduce = 0;
+
+  stlAccumulate = std::accumulate(vect1.begin(), vect1.end(), 0);
+  boltClReduce = bolt::cl::reduce(my_ctl, vect1.begin(), vect1.end());
+
+  EXPECT_EQ(stlAccumulate, boltClReduce);
+}
 
 
 

@@ -493,13 +493,8 @@ namespace detail {
             {
                   runMode = ctl.getDefaultPathToRun();
             }
-            /*if (runMode == bolt::cl::control::SerialCpu) {
-                return std::accumulate(first, last, init, binary_op);
-            }*/
-			else {
-                return detail::reduce_detect_random_access(ctl, first, last, init, binary_op, cl_code,
+            return detail::reduce_detect_random_access(ctl, first, last, init, binary_op, cl_code,
                    typename std::iterator_traits< InputIterator >::iterator_category( ) );
-            }
         }
 
     }
