@@ -2630,86 +2630,89 @@ TEST_P (withStdVect, intSerialValuesWithDefaulFunctorWithClControlGreater){
 INSTANTIATE_TEST_CASE_P(sortDescending, withStdVect, ::testing::Range(50, 100, 1));
 
 TEST (sanity_sort__withBoltClDevVectDouble_epr, floatSerial){
-	size_t sizeOfInputBufer = 64; //test case is failing for all values greater than 32
-	std::vector<double>  stdVect(0);
-	bolt::cl::device_vector<double>  boltVect(0);
+    size_t sizeOfInputBufer = 64; //test case is failing for all values greater than 32
+    std::vector<double>  stdVect(0);
+    bolt::cl::device_vector<double>  boltVect(0);
 
-	for (size_t i = 0 ; i < sizeOfInputBufer; i++){
-	    double dValue = rand();
+    for (size_t i = 0 ; i < sizeOfInputBufer; i++){
+        double dValue = rand();
         dValue = dValue/rand();
         dValue = dValue*rand();
-	    stdVect.push_back(dValue);
-	    boltVect.push_back(dValue);
-	}
-	std::SORT_FUNC(stdVect.begin(), stdVect.end(), std::greater<double>( ) );
-	bolt::BKND::SORT_FUNC(boltVect.begin(), boltVect.end(), bolt::cl::greater<double>( ) );
+        stdVect.push_back(dValue);
+        boltVect.push_back(dValue);
+    }
+    std::SORT_FUNC(stdVect.begin(), stdVect.end(), std::greater<double>( ) );
+    bolt::BKND::SORT_FUNC(boltVect.begin(), boltVect.end(), bolt::cl::greater<double>( ) );
 
-	for (size_t i = 0 ; i < sizeOfInputBufer; i++){
-	    EXPECT_DOUBLE_EQ(stdVect[i], boltVect[i]);
-	}
+    for (size_t i = 0 ; i < sizeOfInputBufer; i++){
+        EXPECT_DOUBLE_EQ(stdVect[i], boltVect[i]);
+    }
 }
 
 TEST (rawArrayTest, floatarray){
-	const int sizeOfInputBufer = 8192; //test case is failing for all values greater than 32
-	float  stdArray[sizeOfInputBufer];
+    const int sizeOfInputBufer = 8192; //test case is failing for all values greater than 32
+    float  stdArray[sizeOfInputBufer];
     float  boltArray[sizeOfInputBufer];
     float  backupArray[sizeOfInputBufer];
 
-	for (int i = 0 ; i < sizeOfInputBufer; i++){
-	    float fValue = (float)rand();
+    for (int i = 0 ; i < sizeOfInputBufer; i++){
+        float fValue = (float)rand();
         fValue = fValue/rand();
         fValue = fValue*rand()*rand();
         stdArray[i] = boltArray[i] = fValue;
-	}
-	std::SORT_FUNC( stdArray, stdArray+sizeOfInputBufer, std::greater<float>( ) );
-	bolt::BKND::SORT_FUNC( boltArray, boltArray+sizeOfInputBufer, bolt::cl::greater<float>( ) );
+    }
+    std::SORT_FUNC( stdArray, stdArray+sizeOfInputBufer, std::greater<float>( ) );
+    bolt::BKND::SORT_FUNC( boltArray, boltArray+sizeOfInputBufer, bolt::cl::greater<float>( ) );
 
-	for (int i = 0 ; i < sizeOfInputBufer; i++)
+    for (int i = 0 ; i < sizeOfInputBufer; i++)
     {
-	    EXPECT_FLOAT_EQ(stdArray[i], boltArray[i]);
-	}
+        EXPECT_FLOAT_EQ(stdArray[i], boltArray[i]);
+    }
 
     //Offset tests 
-	for (int i = 0 ; i < sizeOfInputBufer; i++)
+    for (int i = 0 ; i < sizeOfInputBufer; i++)
     {
-	   stdArray[i] = boltArray[i] = backupArray[i];
-	}
+        float fValue = (float)rand();
+        fValue = fValue/rand();
+        fValue = fValue*rand()*rand();
+        stdArray[i] = boltArray[i] = backupArray[i] = fValue;
+    }
 
-	std::SORT_FUNC( stdArray+17, stdArray+sizeOfInputBufer-129, std::greater<float>( ) );
-	bolt::BKND::SORT_FUNC( boltArray, boltArray+sizeOfInputBufer, bolt::cl::greater<float>( ) );
+    std::SORT_FUNC( stdArray+17, stdArray+sizeOfInputBufer-129, std::greater<float>( ) );
+    bolt::BKND::SORT_FUNC( boltArray+17, boltArray+sizeOfInputBufer-129, bolt::cl::greater<float>( ) );
 
-	for (int i = 0 ; i < sizeOfInputBufer; i++)
+    for (int i = 0 ; i < sizeOfInputBufer; i++)
     {
-	    EXPECT_FLOAT_EQ(stdArray[i], boltArray[i]);
-	}
+        EXPECT_FLOAT_EQ(stdArray[i], boltArray[i]);
+    }
 
 }
 
 
 class sort_withStdVectFloat_2: public ::testing::TestWithParam<int>{
 protected:
-	int sizeOfInputBuffer;
+    int sizeOfInputBuffer;
 public:
-	sort_withStdVectFloat_2():sizeOfInputBuffer(GetParam()){
-	}
+    sort_withStdVectFloat_2():sizeOfInputBuffer(GetParam()){
+    }
 };
 TEST_P(sort_withStdVectFloat_2, floatSerial_EPR){
-		
-	std::vector <float> stdVect(sizeOfInputBuffer);
-	std::vector <float> boltVect(sizeOfInputBuffer);
+        
+    std::vector <float> stdVect(sizeOfInputBuffer);
+    std::vector <float> boltVect(sizeOfInputBuffer);
 
-	for (int i = 0 ; i < sizeOfInputBuffer; i++){
-		boltVect[i] = stdVect[i] = (float)i + 1.0625f;
-		
-	}
-	std::sort(stdVect.begin(), stdVect.end(), std::greater<float>());
+    for (int i = 0 ; i < sizeOfInputBuffer; i++){
+        boltVect[i] = stdVect[i] = (float)i + 1.0625f;
+        
+    }
+    std::sort(stdVect.begin(), stdVect.end(), std::greater<float>());
 
-	bolt::cl::sort(boltVect.begin(), boltVect.end(), bolt::cl::greater<float>());
+    bolt::cl::sort(boltVect.begin(), boltVect.end(), bolt::cl::greater<float>());
 
-	for (int i = 0 ; i < sizeOfInputBuffer; ++i){
-		
-		EXPECT_FLOAT_EQ(stdVect[i], boltVect[i]);
-	}
+    for (int i = 0 ; i < sizeOfInputBuffer; ++i){
+        
+        EXPECT_FLOAT_EQ(stdVect[i], boltVect[i]);
+    }
 }
 
 INSTANTIATE_TEST_CASE_P(sortDescending, sort_withStdVectFloat_2, ::testing::Range( 1, 1129, 7));  //Passing for each iteration
