@@ -388,9 +388,9 @@ TEST(InclusiveScan, DeviceVectorInclFloat)
     for(int i=0; i<length; i++) {
         refInput[i] = 2.f;
     }
-	
-	bolt::cl::device_vector< float > input( refInput.begin(), refInput.end());
-	 
+    
+    bolt::cl::device_vector< float > input( refInput.begin(), refInput.end());
+     
     // call scan
     bolt::cl::plus<float> ai2;
     bolt::cl::inclusive_scan( input.begin(),    input.end(),    output.begin(), ai2 );
@@ -410,8 +410,8 @@ TEST(InclusiveScan, SerialDeviceVectorInclFloat)
     for(int i=0; i<length; i++) {
         refInput[i] = 2.f;
     }
-	bolt::cl::device_vector< float > input( refInput.begin(), refInput.end());
-	
+    bolt::cl::device_vector< float > input( refInput.begin(), refInput.end());
+    
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu); 
     // call scan
@@ -433,8 +433,8 @@ TEST(InclusiveScan, MulticoreDeviceVectorInclFloat)
     for(int i=0; i<length; i++) {
         refInput[i] = 2.f;
     }
-	bolt::cl::device_vector< float > input( refInput.begin(), refInput.end());
-	
+    bolt::cl::device_vector< float > input( refInput.begin(), refInput.end());
+    
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu); 
     // call scan
@@ -523,7 +523,7 @@ TEST(ExclusiveScan, DeviceVectorExclFloat)
         //refInput[i] = 2.0f;
     }
     refInput[0] = 3.0f;
-	bolt::cl::device_vector< float > input( stdinput.begin(), stdinput.end());
+    bolt::cl::device_vector< float > input( stdinput.begin(), stdinput.end());
     // call scan
     bolt::cl::plus<float> ai2;
     ::std::partial_sum(refInput.begin(), refInput.end(), refOutput.begin(), ai2);
@@ -549,7 +549,7 @@ TEST(ExclusiveScan, SerialDeviceVectorExclFloat)
     }
     refInput[0] = 3.0f;
     bolt::cl::device_vector< float > input( stdinput.begin(), stdinput.end());
-	
+    
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
     // call scan
@@ -1435,8 +1435,8 @@ TYPED_TEST_P( ScanArrayTest, InPlace )
     typename ArrayCont::iterator boltEnd = bolt::cl::inclusive_scan( ScanArrayTest< gtest_TypeParam_ >::boltInput.begin( ), ScanArrayTest< gtest_TypeParam_ >::boltInput.end( ), ScanArrayTest< gtest_TypeParam_ >::boltInput.begin( ) );
 
 
-	typename ArrayCont::iterator istdEnd = ScanArrayTest< gtest_TypeParam_ >::stdInput.end( );
-	typename ArrayCont::iterator iboltEnd = ScanArrayTest< gtest_TypeParam_ >::boltInput.end( );
+    typename ArrayCont::iterator istdEnd = ScanArrayTest< gtest_TypeParam_ >::stdInput.end( );
+    typename ArrayCont::iterator iboltEnd = ScanArrayTest< gtest_TypeParam_ >::boltInput.end( );
     //  The returned iterator should be at the end of the result range
     EXPECT_EQ( istdEnd, stdEnd );
     EXPECT_EQ( iboltEnd, boltEnd );
@@ -1460,8 +1460,8 @@ TYPED_TEST_P( ScanArrayTest, InPlacePlusFunction )
     typename ArrayCont::iterator stdEnd  = std::partial_sum( ScanArrayTest< gtest_TypeParam_ >::stdInput.begin( ), ScanArrayTest< gtest_TypeParam_ >::stdInput.end( ), ScanArrayTest< gtest_TypeParam_ >::stdInput.begin( ), std::plus< ArrayType >( ) );
     typename ArrayCont::iterator boltEnd = bolt::cl::inclusive_scan( ScanArrayTest< gtest_TypeParam_ >::boltInput.begin( ), ScanArrayTest< gtest_TypeParam_ >::boltInput.end( ), ScanArrayTest< gtest_TypeParam_ >::boltInput.begin( ), bolt::cl::plus< ArrayType >( ) );
 
-	typename ArrayCont::iterator istdEnd = ScanArrayTest< gtest_TypeParam_ >::stdInput.end( );
-	typename ArrayCont::iterator iboltEnd = ScanArrayTest< gtest_TypeParam_ >::boltInput.end( );
+    typename ArrayCont::iterator istdEnd = ScanArrayTest< gtest_TypeParam_ >::stdInput.end( );
+    typename ArrayCont::iterator iboltEnd = ScanArrayTest< gtest_TypeParam_ >::boltInput.end( );
     //  The returned iterator should be at the end of the result range
     EXPECT_EQ( istdEnd, stdEnd );
     EXPECT_EQ( iboltEnd, boltEnd );
@@ -1485,8 +1485,8 @@ TYPED_TEST_P( ScanArrayTest, InPlaceMaxFunction )
     typename ArrayCont::iterator stdEnd  = std::partial_sum( ScanArrayTest< gtest_TypeParam_ >::stdInput.begin( ), ScanArrayTest< gtest_TypeParam_ >::stdInput.end( ), ScanArrayTest< gtest_TypeParam_ >::stdInput.begin( ), bolt::cl::maximum< ArrayType >( ) );
     typename ArrayCont::iterator boltEnd = bolt::cl::inclusive_scan( ScanArrayTest< gtest_TypeParam_ >::boltInput.begin( ), ScanArrayTest< gtest_TypeParam_ >::boltInput.end( ), ScanArrayTest< gtest_TypeParam_ >::boltInput.begin( ), bolt::cl::maximum< ArrayType >( ) );
 
-	typename ArrayCont::iterator istdEnd = ScanArrayTest< gtest_TypeParam_ >::stdInput.end( );
-	typename ArrayCont::iterator iboltEnd = ScanArrayTest< gtest_TypeParam_ >::boltInput.end( );
+    typename ArrayCont::iterator istdEnd = ScanArrayTest< gtest_TypeParam_ >::stdInput.end( );
+    typename ArrayCont::iterator iboltEnd = ScanArrayTest< gtest_TypeParam_ >::boltInput.end( );
     //  The returned iterator should be at the end of the result range
     EXPECT_EQ( istdEnd, stdEnd );
     EXPECT_EQ( iboltEnd, boltEnd );
@@ -1873,7 +1873,7 @@ TEST_P (scanStdVectorWithIters, SerialintDefiniteValues){
     for (int i = 0; i < myStdVectSize; ++i){
         stdInput[i] = i + 1;
     }
-	
+    
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
     std::vector<int>::iterator boltEnd = bolt::cl::inclusive_scan(ctl, boltInput.begin( ), boltInput.end( ),
