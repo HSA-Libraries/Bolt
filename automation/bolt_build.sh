@@ -289,8 +289,9 @@ $CMAKE\
   -D BOLT_BUILD_TYPE=DEBUG\
   -D Bolt.SuperBuild_VERSION_PATCH=$BOLT_BUILD_VERSION_PATCH\
   -D Bolt.SuperBuild_VERSION_MAJOR=$BOLT_BUILD_VERSION_MAJOR\
-  -D Bolt.SuperBuild_VERSION_MINOR=$BOLT_BUILD_VERSION_MINOR\  
+  -D Bolt.SuperBuild_VERSION_MINOR=$BOLT_BUILD_VERSION_MINOR\
   $BOLT_BUILD_SOURCE_PATH/superbuild
+
 if [ "$?" != "0" ]; then
   echo Info: CMake failed.
   rm -rf $BOLT_BUILD_INSTALL_PATH/success
