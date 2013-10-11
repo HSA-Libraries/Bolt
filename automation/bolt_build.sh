@@ -66,30 +66,30 @@ args=$#
 for((i=0;i<$args;i++))
 do
   if [ "$1" == "" ]; then
-	break
+    break
   fi
-	
+    
   if [ "$1" == "-h" ]; then
-	################################################################################################
-	# Help
-	echo "Build script for Bolt"
-	echo "Command line options:" 
-	echo "-h    ) Print help"	
-	echo "--bit 32 ) Build a 32bit (default: 64bit)"
-	echo "--release ) Build release Builds"
-	echo "--debug   ) Build debug   Builds"
+    ################################################################################################
+    # Help
+    echo "Build script for Bolt"
+    echo "Command line options:" 
+    echo "-h    ) Print help"   
+    echo "--bit 32 ) Build a 32bit (default: 64bit)"
+    echo "--release ) Build release Builds"
+    echo "--debug   ) Build debug   Builds"
 
-	if test -s  $BOLT_BUILD_PATH/success 
+    if test -s  $BOLT_BUILD_PATH/success 
         then 
-	 rm -rf %BOLT_BUILD_PATH%\success
-	fi
-	exit	
+     rm -rf %BOLT_BUILD_PATH%\success
+    fi
+    exit    
   fi
   
   if [ "$1" == "--source" ]; then
    BOLT_BUILD_SOURCE_PATH=$2
   shift 
-  fi	
+  fi    
   
   if [ "$1" == "--install" ]; then
   BOLT_BUILD_INSTALL_PATH=$2
@@ -235,6 +235,8 @@ $CMAKE\
   -D Bolt_BUILD64=$BOLT_X64\
   -D BOLT_BUILD_TYPE=RELEASE\
   -D Bolt.SuperBuild_VERSION_PATCH=$BOLT_BUILD_VERSION_PATCH\
+  -D Bolt.SuperBuild_VERSION_MAJOR=$BOLT_BUILD_VERSION_MAJOR\
+  -D Bolt.SuperBuild_VERSION_MINOR=$BOLT_BUILD_VERSION_MINOR\
   $BOLT_BUILD_SOURCE_PATH/superbuild
   
 if [ "$?" != "0" ]; then
@@ -286,6 +288,8 @@ $CMAKE\
   -D Bolt_BUILD64=$BOLT_X64\
   -D BOLT_BUILD_TYPE=DEBUG\
   -D Bolt.SuperBuild_VERSION_PATCH=$BOLT_BUILD_VERSION_PATCH\
+  -D Bolt.SuperBuild_VERSION_MAJOR=$BOLT_BUILD_VERSION_MAJOR\
+  -D Bolt.SuperBuild_VERSION_MINOR=$BOLT_BUILD_VERSION_MINOR\  
   $BOLT_BUILD_SOURCE_PATH/superbuild
 if [ "$?" != "0" ]; then
   echo Info: CMake failed.
