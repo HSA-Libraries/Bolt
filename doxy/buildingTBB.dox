@@ -32,13 +32,13 @@
 * \subsection install Setting up TBB (Intel) with Bolt.
 * To start using high performance MultiCore routines with Bolt. Install TBB (Intel) from
 * <a href="http://threadingbuildingblocks.org/download"> here </a>
-* On Windows, add TBB_ROOT to your environment variable list.
+* On Windows &reg;, add TBB_ROOT to your environment variable list.
 * e.g. \c TBB_ROOT=<path-to-tbb-root>. Run the batch file \c tbbvars.bat (e.g. \c tbbvars.bat intel64 vs2012) 
 * which is in \c %TBB_ROOT%\\bin\\directory. This batch file takes 2 arguments. <arch> = [32|64] and <vs> - version of Visual Studio.
 * If you want to set it globally then append the TBB (Intel) dll path e.g. \c %TBB_ROOT%\bin\\intel64\\vc11 in “PATH” Environment variable. This will set all the
 * paths required for TBB (Intel). 
 *
-* <b> NOTE: </b> On Linux, set the <b> TBB_ROOT </b>, <b> PATH </b> and <b> LD_LIBRARY_PATH </b> variables.
+* <b> NOTE: </b> On <b> Linux &reg;</b>, set the <b> TBB_ROOT </b>, <b> PATH </b> and <b> LD_LIBRARY_PATH </b> variables.
 * <br> E.g. <tt> 'export TBB_ROOT=<path-to-tbb-root>' </tt>
 * <br> <tt> 'export LD_LIBRARY_PATH = <path-to-tbb-root>/lib/intel64/gcc-4.4:$LD_LIBRARY_PATH' </tt>
 * <br> <tt> 'export PATH = <path-to-tbb-root>/include:$PATH' </tt>
