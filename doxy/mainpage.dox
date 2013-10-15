@@ -229,4 +229,48 @@ like BOLT_TEMPLATE_FUNCTOR2, BOLT_TEMPLATE_FUNCTOR3 etc from include/bolt/cl/clc
  * the AMD OpenCL<SUP>TM</SUP> SDK 2.7 and above versions are designed to provides this support; other vendors may adopt this feature in the future. 
  * If you face any issue with Bolt. Please log an issue in BOLT Issues page.
  * <a href="https://github.com/HSA-Libraries/bolt/issues">BOLT Issues page</a>.
- */
+ 
+* \subsection Prerequisites Prerequisites
+* \subsubsection Windows Windows
+* -# Windows® 7/8
+* -# Visual Studio 2010 onwards (VS2012 for C++ AMP)
+* -# CMake 2.8.10
+* -# TBB (For Multicore CPU path only) (4.1 Update 1 or Above) . See Building Bolt with TBB.
+* -# APP SDK 2.7 or onwards.
+
+* <b>Note:</b> If the user has installed both Visual Studio 2012 and Visual Studio 2010, the latter should be updated to SP1.
+
+* \subsubsection Linux Linux
+* -# GCC 4.6.3 and above 
+* -# Tested with OpenSuse 12.3, RHEL 6.4 64bit, RHEL 6.3 32bit, Ubuntu 13.4
+* -# CMake 2.8.10
+* -# TBB (For Multicore CPU path only) (4.1 Update 1 or Above) . See Building Bolt with TBB.
+* -# APP SDK 2.8 or onwards.
+
+
+* \subsection Support Supported Devices
+
+*<b>AMD APU Family with AMD Radeon™ HD Graphics</b>
+* -# A-Series
+* -# C-Series
+* -# E-Series
+* -# E2-Series
+* -# G-Series
+* -# R-Series
+
+*<b>AMD Radeon™ HD Graphics</b>
+* -# 7900 Series (7990, 7970, 7950)
+* -# 7800 Series (7870, 7850)
+* -# 7700 Series (7770, 7750)
+
+*<b>AMD Radeon™ HD Graphics</b>
+* -# 6900 Series (6990, 6970, 6950)
+* -# 6800 Series (6870, 6850)
+* -# 6700 Series (6790 , 6770, 6750)
+* -# 6600 Series (6670)
+* -# 6500 Series (6570)
+* -# 6400 Series (6450)
+* -# 6xxxM Series
+
+* Compiled binary windows packages (zip packages) for Bolt may be downloaded from the Bolt landing page hosted on AMD's Developer Central website.
+*/

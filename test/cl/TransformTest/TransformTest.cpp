@@ -864,7 +864,8 @@ class TransformDoubleDeviceVector: public ::testing::TestWithParam< int >
 {
 public:
     // Create an std and a bolt vector of requested size, and initialize all the elements to 1
-    TransformDoubleDeviceVector( ): stdInput( GetParam( ) )
+    TransformDoubleDeviceVector( ): stdInput( GetParam( ) ),
+		                            stdOutput( GetParam( ) ) 
     {
         std::generate(stdInput.begin(), stdInput.end(), rand);
         //boltInput = stdInput;      

@@ -27,8 +27,8 @@
 * \subsection Q1 Does Bolt depend on any other libraries?
 * Yes, Bolt contains dependencies on Boost.  All dependent header files and pre-compiled libraries
 * are available in the Bolt SDK.
-* \subsection Q2 What algorithms does Bolt currently support?
-* Transform, reduce, transform_reduce, count, count_if, inclusive_scan, exclusive_scan, and sort.
+* \subsection Q2 What algorithm family does Bolt currently support?
+* Sort, Scan, Transform, Reduce, Transform reduce, Copy, Count, Fill, Generate, inner_product, Min, Max, Binary search, Merge, Scatter and Gather.
 * \subsection Q3 What version of OpenCL does Bolt currently require?
 * OpenCL Programming Specification version 1.2.
 * \subsection Q4 Does Bolt require the AMD OpenCL runtime?
