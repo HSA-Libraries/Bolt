@@ -52,15 +52,40 @@
 * \subsection bolt_tbb TBB (Intel) routines in Bolt
 * These are the Bolt routines with TBB (Intel) support for MultiCore path enlisted along with the backend:
 *   - Transform - OpenCL/AMP
-*   - Transform_reduce - OpenCL/AMP
-*   - Inclusive_scan - OpenCL/AMP
-*   - Exclusive_scan - OpenCL/AMP
+*   - Transform_Reduce - OpenCL/AMP
+*   - Inclusive_Scan - OpenCL/AMP
+*   - Exclusive_Scan - OpenCL/AMP
 *   - Count - OpenCL/AMP
 *   - Count_if - OpenCL/AMP
 *   - Reduce - OpenCL/AMP
 *   - Sort - OpenCL/AMP
-*   - Inclusive_scan_by_key - OpenCL
-*   - Exclusive_scan_by_key - OpenCL
+*   - Device_Vector - OpenCL/AMP
+*   - Count - OpenCL/AMP
+*   - Count_if - OpenCL/AMP
+*   - Copy - OpenCL
+*   - Copy_n - OpenCL
+*   - Fill - OpenCL
+*   - Fill_n - OpenCL
+*   - Generate - OpenCL
+*   - Generate_n - OpenCL
+*   - Counting_Iterator - OpenCL
+*   - Constant_Iterator - OpenCL
+*   - Inclusive_Scan_by_key - OpenCL
+*   - Exclusive_Scan_by_key - OpenCL
+*   - Inner_Product - OpenCL
+*   - Max_Element - OpenCL
+*   - Min_Element - OpenCL
+*   - Reduce_By_Key - OpenCL
+*   - Sort_By_Key - OpenCL
+*   - StableSort_By_Key - OpenCL
+*   - Transform_Exclusive_Scan - OpenCL
+*   - Transform_Inclusive_Scan - OpenCL
+*   - Scatter - OpenCL
+*   - Scatter_if - OpenCL
+*   - Gather - OpenCL
+*   - Gather_if - OpenCL
+*   - Merge - OpenCL
+*   - Binary_Search - OpenCL
 *   
 * \section using_tbb Running TBB (Intel) routines in Bolt
 * \subsection tbb_control Control object
