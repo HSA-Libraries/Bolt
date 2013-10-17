@@ -61,6 +61,12 @@
 *   - Sort - OpenCL/AMP
 *   - Inclusive_scan_by_key - OpenCL
 *   - Exclusive_scan_by_key - OpenCL
+*   - Scatter - OpenCL
+*   - Scatter_if - OpenCL
+*   - Gather - OpenCL
+*   - Gather_if - OpenCL
+*   - Merge - OpenCL
+*   - Binary_Search - OpenCL
 *   
 * \section using_tbb Running TBB (Intel) routines in Bolt
 * \subsection tbb_control Control object
