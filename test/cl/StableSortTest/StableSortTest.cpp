@@ -1204,8 +1204,8 @@ TEST_P( StableSortDoubleVector, MulticoreInplace )
 TEST_P( StableSortIntegerDeviceVector, Inplace )
 {
     bolt::cl::device_vector< int > boltInput(stdInput.begin( ), stdInput.end( ) );
-	bolt::cl::device_vector< int > boltOffsetIn (stdOffsetIn.begin( ), stdOffsetIn.end( ) );
-	 
+    bolt::cl::device_vector< int > boltOffsetIn (stdOffsetIn.begin( ), stdOffsetIn.end( ) );
+     
     //  Calling the actual functions under test
     std::SORT_FUNC( stdInput.begin( ), stdInput.end( ) );
     bolt::BKND::SORT_FUNC( boltInput.begin( ), boltInput.end( ) );
@@ -1249,8 +1249,8 @@ TEST_P( StableSortIntegerDeviceVector, Inplace )
 TEST_P( StableSortIntegerDeviceVector, SerialInplace )
 {
     bolt::cl::device_vector< int > boltInput(stdInput.begin( ), stdInput.end( ) );
-	bolt::cl::device_vector< int > boltOffsetIn (stdOffsetIn.begin( ), stdOffsetIn.end( ) );
-	
+    bolt::cl::device_vector< int > boltOffsetIn (stdOffsetIn.begin( ), stdOffsetIn.end( ) );
+    
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -1297,8 +1297,8 @@ TEST_P( StableSortIntegerDeviceVector, SerialInplace )
 TEST_P( StableSortIntegerDeviceVector, MultiCoreInplace )
 {
     bolt::cl::device_vector< int > boltInput(stdInput.begin( ), stdInput.end( ) );
-	bolt::cl::device_vector< int > boltOffsetIn (stdOffsetIn.begin( ), stdOffsetIn.end( ) );
-	
+    bolt::cl::device_vector< int > boltOffsetIn (stdOffsetIn.begin( ), stdOffsetIn.end( ) );
+    
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
@@ -1345,8 +1345,8 @@ TEST_P( StableSortIntegerDeviceVector, MultiCoreInplace )
 TEST_P( StableSortUDDDeviceVector, Inplace )
 {
     bolt::cl::device_vector< UDD > boltInput(stdInput.begin( ), stdInput.end( ) );
-	bolt::cl::device_vector< UDD > boltOffsetIn (stdOffsetIn.begin( ), stdOffsetIn.end( ) );
-	
+    bolt::cl::device_vector< UDD > boltOffsetIn (stdOffsetIn.begin( ), stdOffsetIn.end( ) );
+    
     typedef std::vector< UDD >::value_type valtype;
     //  Calling the actual functions under test
     std::SORT_FUNC( stdInput.begin( ), stdInput.end( ) );
@@ -1391,8 +1391,8 @@ TEST_P( StableSortUDDDeviceVector, Inplace )
 TEST_P( StableSortUDDDeviceVector, SerialInplace )
 {
     bolt::cl::device_vector< UDD > boltInput(stdInput.begin( ), stdInput.end( ) );
-	bolt::cl::device_vector< UDD > boltOffsetIn (stdOffsetIn.begin( ), stdOffsetIn.end( ) );
-	
+    bolt::cl::device_vector< UDD > boltOffsetIn (stdOffsetIn.begin( ), stdOffsetIn.end( ) );
+    
     typedef std::vector< UDD >::value_type valtype;
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
@@ -1440,8 +1440,8 @@ TEST_P( StableSortUDDDeviceVector, SerialInplace )
 TEST_P( StableSortUDDDeviceVector, MultiCoreInplace )
 {
     bolt::cl::device_vector< UDD > boltInput(stdInput.begin( ), stdInput.end( ) );
-	bolt::cl::device_vector< UDD > boltOffsetIn (stdOffsetIn.begin( ), stdOffsetIn.end( ) );
-	
+    bolt::cl::device_vector< UDD > boltOffsetIn (stdOffsetIn.begin( ), stdOffsetIn.end( ) );
+    
     typedef std::vector< UDD >::value_type valtype;
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
@@ -1488,8 +1488,8 @@ TEST_P( StableSortUDDDeviceVector, MultiCoreInplace )
 TEST_P( StableSortFloatDeviceVector, Inplace )
 {
     bolt::cl::device_vector< float > boltInput(stdInput.begin( ), stdInput.end( ) );
-	bolt::cl::device_vector< float > boltOffsetIn (stdOffsetIn.begin( ), stdOffsetIn.end( ) );
-	
+    bolt::cl::device_vector< float > boltOffsetIn (stdOffsetIn.begin( ), stdOffsetIn.end( ) );
+    
     typedef std::vector< float >::value_type valtype;
     //  Calling the actual functions under test
     std::SORT_FUNC( stdInput.begin( ), stdInput.end( ) );
@@ -1534,8 +1534,8 @@ TEST_P( StableSortFloatDeviceVector, Inplace )
 TEST_P( StableSortFloatDeviceVector, SerialInplace )
 {
     bolt::cl::device_vector< float > boltInput(stdInput.begin( ), stdInput.end( ) );
-	bolt::cl::device_vector< float > boltOffsetIn (stdOffsetIn.begin( ), stdOffsetIn.end( ) );
-	
+    bolt::cl::device_vector< float > boltOffsetIn (stdOffsetIn.begin( ), stdOffsetIn.end( ) );
+    
     typedef std::vector< float >::value_type valtype;
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
@@ -1583,8 +1583,8 @@ TEST_P( StableSortFloatDeviceVector, SerialInplace )
 TEST_P( StableSortFloatDeviceVector, MultiCoreInplace )
 {
     bolt::cl::device_vector< float > boltInput(stdInput.begin( ), stdInput.end( ) );
-	bolt::cl::device_vector< float > boltOffsetIn (stdOffsetIn.begin( ), stdOffsetIn.end( ) );
-	
+    bolt::cl::device_vector< float > boltOffsetIn (stdOffsetIn.begin( ), stdOffsetIn.end( ) );
+    
     typedef std::vector< float >::value_type valtype;
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
@@ -1632,9 +1632,9 @@ TEST_P( StableSortFloatDeviceVector, MultiCoreInplace )
 TEST_P( StableSortDoubleDeviceVector, Inplace )
 {
     bolt::cl::device_vector< double > boltInput(stdInput.begin( ), stdInput.end( ) );
-	bolt::cl::device_vector< double > boltOffsetIn (stdOffsetIn.begin( ), stdOffsetIn.end( ) );
-	
-	typedef std::vector< double >::value_type valtype;
+    bolt::cl::device_vector< double > boltOffsetIn (stdOffsetIn.begin( ), stdOffsetIn.end( ) );
+    
+    typedef std::vector< double >::value_type valtype;
     //  Calling the actual functions under test
     std::SORT_FUNC( stdInput.begin( ), stdInput.end( ) );
     bolt::BKND::SORT_FUNC( boltInput.begin( ), boltInput.end( ) );
@@ -1677,8 +1677,8 @@ TEST_P( StableSortDoubleDeviceVector, Inplace )
 TEST_P( StableSortDoubleDeviceVector, SerialInplace )
 {
     bolt::cl::device_vector< double > boltInput(stdInput.begin( ), stdInput.end( ) );
-	bolt::cl::device_vector< double > boltOffsetIn (stdOffsetIn.begin( ), stdOffsetIn.end( ) );
-	 
+    bolt::cl::device_vector< double > boltOffsetIn (stdOffsetIn.begin( ), stdOffsetIn.end( ) );
+     
     typedef std::vector< double >::value_type valtype;
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
@@ -1724,8 +1724,8 @@ TEST_P( StableSortDoubleDeviceVector, SerialInplace )
 TEST_P( StableSortDoubleDeviceVector, MulticoreInplace )
 {
     bolt::cl::device_vector< double > boltInput(stdInput.begin( ), stdInput.end( ) );
-	bolt::cl::device_vector< double > boltOffsetIn (stdOffsetIn.begin( ), stdOffsetIn.end( ) );
-	 
+    bolt::cl::device_vector< double > boltOffsetIn (stdOffsetIn.begin( ), stdOffsetIn.end( ) );
+     
     typedef std::vector< double >::value_type valtype;
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
@@ -1956,7 +1956,7 @@ INSTANTIATE_TEST_CASE_P( StableSortValues, StableSortIntegerVector, ::testing::V
 INSTANTIATE_TEST_CASE_P( StableSortValues, StableSortIntegerVector, ::testing::ValuesIn( TestValues2.begin(),
                                                                             TestValues2.end() ) );
 #endif
-																			
+                                                                            
 INSTANTIATE_TEST_CASE_P( StableSortRange, StableSortFloatVector, ::testing::Range( 0, 1024, 3 ) );
 INSTANTIATE_TEST_CASE_P( StableSortValues, StableSortFloatVector, ::testing::ValuesIn( TestValues.begin(), 
                                                                         TestValues.end() ) );
@@ -1964,7 +1964,7 @@ INSTANTIATE_TEST_CASE_P( StableSortValues, StableSortFloatVector, ::testing::Val
 INSTANTIATE_TEST_CASE_P( StableSortValues, StableSortFloatVector, ::testing::ValuesIn( TestValues2.begin(), 
                                                                         TestValues2.end() ) );
 #endif																		
-																		
+                                                                        
 #if (TEST_DOUBLE == 1)
 INSTANTIATE_TEST_CASE_P( StableSortRange, StableSortDoubleVector, ::testing::Range( 0, 1024, 21 ) );
 INSTANTIATE_TEST_CASE_P( StableSortValues, StableSortDoubleVector, ::testing::ValuesIn( TestValues.begin(), 
@@ -1981,7 +1981,7 @@ INSTANTIATE_TEST_CASE_P( StableSortValues, StableSortIntegerDeviceVector, ::test
 INSTANTIATE_TEST_CASE_P( StableSortValues, StableSortIntegerDeviceVector, ::testing::ValuesIn( TestValues2.begin(), 
                                                                                 TestValues2.end() ) );
 #endif
-																				
+                                                                                
 INSTANTIATE_TEST_CASE_P( StableSortRange, StableSortUDDDeviceVector, ::testing::Range( 0, 1024, 53 ) );
 INSTANTIATE_TEST_CASE_P( StableSortValues, StableSortUDDDeviceVector, ::testing::ValuesIn( TestValues.begin(), 
                                                                                 TestValues.end() ) );
@@ -1989,7 +1989,7 @@ INSTANTIATE_TEST_CASE_P( StableSortValues, StableSortUDDDeviceVector, ::testing:
 INSTANTIATE_TEST_CASE_P( StableSortValues, StableSortUDDDeviceVector, ::testing::ValuesIn( TestValues2.begin(), 
                                                                                 TestValues2.end() ) );
 #endif
-																				
+                                                                                
 INSTANTIATE_TEST_CASE_P( StableSortRange, StableSortFloatDeviceVector, ::testing::Range( 0, 1024, 53 ) );
 INSTANTIATE_TEST_CASE_P( StableSortValues, StableSortFloatDeviceVector, ::testing::ValuesIn( TestValues.begin(),
                                                                                 TestValues.end()));
@@ -1997,7 +1997,7 @@ INSTANTIATE_TEST_CASE_P( StableSortValues, StableSortFloatDeviceVector, ::testin
 INSTANTIATE_TEST_CASE_P( StableSortValues, StableSortFloatDeviceVector, ::testing::ValuesIn( TestValues2.begin(),
                                                                                 TestValues2.end()));
 #endif
-																				
+                                                                                
 #if (TEST_DOUBLE == 1)
 INSTANTIATE_TEST_CASE_P( StableSortRange, StableSortDoubleDeviceVector, ::testing::Range( 0, 1024, 53 ) );
 INSTANTIATE_TEST_CASE_P( StableSortValues, StableSortDoubleDeviceVector, ::testing::ValuesIn(TestValues.begin(),
@@ -2014,7 +2014,7 @@ INSTANTIATE_TEST_CASE_P( StableSortValues, StableSortIntegerNakedPointer, ::test
 INSTANTIATE_TEST_CASE_P( StableSortValues, StableSortIntegerNakedPointer, ::testing::ValuesIn( TestValues2.begin(),
                                                                                     TestValues2.end()));
 #endif
-																					
+                                                                                    
 INSTANTIATE_TEST_CASE_P( StableSortRange, StableSortFloatNakedPointer, ::testing::Range( 0, 1024, 13) );
 INSTANTIATE_TEST_CASE_P( StableSortValues, StableSortFloatNakedPointer, ::testing::ValuesIn( TestValues.begin(), 
                                                                                 TestValues.end() ) );
@@ -2022,7 +2022,7 @@ INSTANTIATE_TEST_CASE_P( StableSortValues, StableSortFloatNakedPointer, ::testin
 INSTANTIATE_TEST_CASE_P( StableSortValues, StableSortFloatNakedPointer, ::testing::ValuesIn( TestValues2.begin(), 
                                                                                 TestValues2.end() ) );
 #endif
-																				
+                                                                                
 #if (TEST_DOUBLE == 1)
 INSTANTIATE_TEST_CASE_P( StableSortRange, StableSortDoubleNakedPointer, ::testing::Range( 0, 1024, 13) );
 INSTANTIATE_TEST_CASE_P( StableSort, StableSortDoubleNakedPointer, ::testing::ValuesIn( TestValues.begin(),
@@ -2046,7 +2046,7 @@ typedef ::testing::Types<
     std::tuple< cl_long, TypeValue< 1053 > >,
     std::tuple< cl_long, TypeValue< 4096 > >,
     std::tuple< cl_long, TypeValue< 4097 > >
-	#if (TEST_LARGE_BUFFERS == 1)
+    #if (TEST_LARGE_BUFFERS == 1)
     , /*This coma is needed*/
     std::tuple< cl_long, TypeValue< 8192 > >,
     std::tuple< cl_long, TypeValue< 16384 > >,//13
@@ -2079,7 +2079,7 @@ typedef ::testing::Types<
     std::tuple< int, TypeValue< 1053 > >,
     std::tuple< int, TypeValue< 4096 > >,
     std::tuple< int, TypeValue< 4097 > >
-	#if (TEST_LARGE_BUFFERS == 1)
+    #if (TEST_LARGE_BUFFERS == 1)
     , /*This coma is needed*/
     std::tuple< int, TypeValue< 8192 > >,
     std::tuple< int, TypeValue< 16384 > >,//13
@@ -2112,7 +2112,7 @@ typedef ::testing::Types<
     std::tuple< unsigned int, TypeValue< 1053 > >,
     std::tuple< unsigned int, TypeValue< 4096 > >,
     std::tuple< unsigned int, TypeValue< 4097 > >
-	#if (TEST_LARGE_BUFFERS == 1)
+    #if (TEST_LARGE_BUFFERS == 1)
     , /*This coma is needed*/
     std::tuple< unsigned int, TypeValue< 8192 > >,
     std::tuple< unsigned int, TypeValue< 16384 > >,//13
@@ -2146,11 +2146,11 @@ typedef ::testing::Types<
     std::tuple< float, TypeValue< 1053 > >,
     std::tuple< float, TypeValue< 4096 > >,
     std::tuple< float, TypeValue< 4097 > >
-	#if (TEST_LARGE_BUFFERS == 1)
+    #if (TEST_LARGE_BUFFERS == 1)
     , /*This coma is needed*/
     std::tuple< float, TypeValue< 65535 > >,
     std::tuple< float, TypeValue< 65536 > >
-	#endif
+    #endif
 > FloatTests;
 
 #if (TEST_DOUBLE == 1)
@@ -2167,11 +2167,11 @@ typedef ::testing::Types<
     std::tuple< double, TypeValue< 1053 > >,
     std::tuple< double, TypeValue< 4096 > >,
     std::tuple< double, TypeValue< 4097 > >
-	#if (TEST_LARGE_BUFFERS == 1)
+    #if (TEST_LARGE_BUFFERS == 1)
     , /*This coma is needed*/
     std::tuple< double, TypeValue< 65535 > >,
     std::tuple< double, TypeValue< 65536 > >
-	#endif
+    #endif
 > DoubleTests;
 #endif 
 
@@ -2246,11 +2246,11 @@ typedef ::testing::Types<
     std::tuple< UDD, TypeValue< 1053 > >,
     std::tuple< UDD, TypeValue< 4096 > >,
     std::tuple< UDD, TypeValue< 4097 > >
-	#if (TEST_LARGE_BUFFERS == 1)
+    #if (TEST_LARGE_BUFFERS == 1)
     , /*This coma is needed*/
     std::tuple< UDD, TypeValue< 65535 > >,
     std::tuple< UDD, TypeValue< 65536 > >
-	#endif
+    #endif
 > UDDTests;
 
 INSTANTIATE_TYPED_TEST_CASE_P( clLong, StableSortArrayTest, clLongTests );
@@ -2338,58 +2338,58 @@ TEST_P (withStdVect, intSerialValuesWithDefaulFunctorWithClControlGreater){
 INSTANTIATE_TEST_CASE_P(sortDescending, withStdVect, ::testing::Range(50, 100, 1));
 
 TEST (sanity_sort__withBoltClDevVectDouble_epr, floatSerial){
-	size_t sizeOfInputBufer = 64; //test case is failing for all values greater than 32
-	std::vector<double>  stdVect(0);
-	bolt::cl::device_vector<double>  boltVect(0);
+    size_t sizeOfInputBufer = 64; //test case is failing for all values greater than 32
+    std::vector<double>  stdVect(0);
+    bolt::cl::device_vector<double>  boltVect(0);
 
-	for (size_t i = 0 ; i < sizeOfInputBufer; i++){
-	    double dValue = rand();
+    for (size_t i = 0 ; i < sizeOfInputBufer; i++){
+        double dValue = rand();
         dValue = dValue/rand();
         dValue = dValue*rand();
-	    stdVect.push_back(dValue);
-	    boltVect.push_back(dValue);
-	}
-	std::SORT_FUNC(stdVect.begin(), stdVect.end(), std::greater<double>( ) );
-	bolt::BKND::SORT_FUNC(boltVect.begin(), boltVect.end(), bolt::cl::greater<double>( ) );
+        stdVect.push_back(dValue);
+        boltVect.push_back(dValue);
+    }
+    std::SORT_FUNC(stdVect.begin(), stdVect.end(), std::greater<double>( ) );
+    bolt::BKND::SORT_FUNC(boltVect.begin(), boltVect.end(), bolt::cl::greater<double>( ) );
 
-	for (size_t i = 0 ; i < sizeOfInputBufer; i++){
-	    EXPECT_DOUBLE_EQ(stdVect[i], boltVect[i]);
-	}
+    for (size_t i = 0 ; i < sizeOfInputBufer; i++){
+        EXPECT_DOUBLE_EQ(stdVect[i], boltVect[i]);
+    }
 }
 
 TEST (rawArrayTest, floatarray){
-	const int sizeOfInputBufer = 8192; //test case is failing for all values greater than 32
-	float  stdArray[sizeOfInputBufer];
+    const int sizeOfInputBufer = 8192; //test case is failing for all values greater than 32
+    float  stdArray[sizeOfInputBufer];
     float  boltArray[sizeOfInputBufer];
     float  backupArray[sizeOfInputBufer];
 
-	for (int i = 0 ; i < sizeOfInputBufer; i++){
-	    float fValue = (float)rand();
+    for (int i = 0 ; i < sizeOfInputBufer; i++){
+        float fValue = (float)rand();
         fValue = fValue/rand();
         fValue = fValue*rand()*rand();
         stdArray[i] = boltArray[i] = fValue;
-	}
-	std::SORT_FUNC( stdArray, stdArray+sizeOfInputBufer, std::greater<float>( ) );
-	bolt::BKND::SORT_FUNC( boltArray, boltArray+sizeOfInputBufer, bolt::cl::greater<float>( ) );
+    }
+    std::SORT_FUNC( stdArray, stdArray+sizeOfInputBufer, std::greater<float>( ) );
+    bolt::BKND::SORT_FUNC( boltArray, boltArray+sizeOfInputBufer, bolt::cl::greater<float>( ) );
 
-	for (int i = 0 ; i < sizeOfInputBufer; i++)
+    for (int i = 0 ; i < sizeOfInputBufer; i++)
     {
-	    EXPECT_FLOAT_EQ(stdArray[i], boltArray[i]);
-	}
+        EXPECT_FLOAT_EQ(stdArray[i], boltArray[i]);
+    }
 
     //Offset tests 
-	for (int i = 0 ; i < sizeOfInputBufer; i++)
+    for (int i = 0 ; i < sizeOfInputBufer; i++)
     {
-	   stdArray[i] = boltArray[i] = backupArray[i];
-	}
+       stdArray[i] = boltArray[i] = backupArray[i];
+    }
 
-	std::SORT_FUNC( stdArray+17, stdArray+sizeOfInputBufer-129, std::greater<float>( ) );
-	bolt::BKND::SORT_FUNC( boltArray, boltArray+sizeOfInputBufer, bolt::cl::greater<float>( ) );
+    std::SORT_FUNC( stdArray+17, stdArray+sizeOfInputBufer-129, std::greater<float>( ) );
+    bolt::BKND::SORT_FUNC( boltArray, boltArray+sizeOfInputBufer, bolt::cl::greater<float>( ) );
 
-	for (int i = 0 ; i < sizeOfInputBufer; i++)
+    for (int i = 0 ; i < sizeOfInputBufer; i++)
     {
-	    EXPECT_FLOAT_EQ(stdArray[i], boltArray[i]);
-	}
+        EXPECT_FLOAT_EQ(stdArray[i], boltArray[i]);
+    }
 
 }
 

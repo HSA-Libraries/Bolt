@@ -24,7 +24,7 @@
 #define STRUCT 1
 #define FILL_GOOGLE_TEST 1
 
-#define TEST_DOUBLE 0
+#define TEST_DOUBLE 1
 #define TEST_CPU_DEVICE 1
 
 #if FILL_GOOGLE_TEST
@@ -573,11 +573,12 @@ typedef ::testing::Types<
 > DoubleTests;
 #endif 
 
-
+#if (TEST_CPU_DEVICE == 1)
 INSTANTIATE_TYPED_TEST_CASE_P( clLong, FillArrayTest, clLongTests );
 INSTANTIATE_TYPED_TEST_CASE_P( Integer, FillArrayTest, IntegerTests );
 INSTANTIATE_TYPED_TEST_CASE_P( UnsignedInteger, FillArrayTest, UnsignedIntegerTests );
 INSTANTIATE_TYPED_TEST_CASE_P( Float, FillArrayTest, FloatTests );
+#endif
 #if (TEST_DOUBLE == 1)
 INSTANTIATE_TYPED_TEST_CASE_P( Double, FillArrayTest, DoubleTests );
 #endif 

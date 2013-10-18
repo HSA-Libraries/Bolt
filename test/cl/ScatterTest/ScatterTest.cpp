@@ -33,7 +33,7 @@
 #include <boost/iterator/counting_iterator.hpp>
 #include <boost/config.hpp>
 
-#define TEST_DOUBLE 0
+#define TEST_DOUBLE 1
 
 BOLT_FUNCTOR( is_even,				  
 struct is_even{

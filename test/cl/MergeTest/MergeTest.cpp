@@ -15,7 +15,7 @@
 
 ***************************************************************************/                                                                                     
 
-#define TEST_DOUBLE 0
+#define TEST_DOUBLE 1
 #define TEST_DEVICE_VECTOR 1
 #define TEST_CPU_DEVICE 0
 #define GOOGLE_TEST 1
@@ -117,25 +117,25 @@ T generateRandom()
 template< class _Type >
 inline int my_binary_search( _Type value, const _Type* a, int left, int right )
 {
-	long low  = left;
-	long high = bolt::cl::maximum<long>( left, right + 1 );
-	while( low < high )
-	{
-		long mid = ( low + high ) / 2;
-		if ( value <= a[ mid ] )	high = mid;
-		else						low  = mid + 1;	
-													
-													
-	}
-	return high;
+    long low  = left;
+    long high = bolt::cl::maximum<long>( left, right + 1 );
+    while( low < high )
+    {
+        long mid = ( low + high ) / 2;
+        if ( value <= a[ mid ] )	high = mid;
+        else						low  = mid + 1;	
+                                                    
+                                                    
+    }
+    return high;
 }
 
 template < class Item >
 inline void exchange( Item& A, Item& B )
 {
-	Item t = A;
-	A = B;
-	B = t;
+    Item t = A;
+    A = B;
+    B = t;
 }
 
 
@@ -143,22 +143,22 @@ inline void exchange( Item& A, Item& B )
 template< class _Type >
 inline void merge_dac( const _Type* t, int p1, int r1, int p2, int r2, _Type* a, int p3 )
 {
-	int length1 = r1 - p1 + 1;
-	int length2 = r2 - p2 + 1;
-	if ( length1 < length2 )
-	{
-		exchange(      p1,      p2 );
-		exchange(      r1,      r2 );
-		exchange( length1, length2 );
-	}
-	if ( length1 == 0 )	return;
-	int q1 = ( p1 + r1 ) / 2;
-	int q2 = my_binary_search( t[q1],t,p2,r2);
+    int length1 = r1 - p1 + 1;
+    int length2 = r2 - p2 + 1;
+    if ( length1 < length2 )
+    {
+        exchange(      p1,      p2 );
+        exchange(      r1,      r2 );
+        exchange( length1, length2 );
+    }
+    if ( length1 == 0 )	return;
+    int q1 = ( p1 + r1 ) / 2;
+    int q2 = my_binary_search( t[q1],t,p2,r2);
 
-	int q3 = p3 + ( q1 - p1 ) + ( q2 - p2 );
-	a[ q3 ] = t[ q1 ];
-	merge_dac( t, p1,     q1 - 1, p2, q2 - 1, a, p3     );
-	merge_dac( t, q1 + 1, r1,     q2, r2,     a, q3 + 1 );
+    int q3 = p3 + ( q1 - p1 ) + ( q2 - p2 );
+    a[ q3 ] = t[ q1 ];
+    merge_dac( t, p1,     q1 - 1, p2, q2 - 1, a, p3     );
+    merge_dac( t, q1 + 1, r1,     q2, r2,     a, q3 + 1 );
 }
 
 
@@ -383,35 +383,35 @@ TEST( MergeUDD , UDDPlusOperatorInts )
 }
 
 TEST(sanity_merge__dev_vect_2, wi_ctrl_floats){
-	int stdVectSize1 = 10;
-	int stdVectSize2 = 20;
-	//bolt::cl::device_vector<float> stdVect(stdVectSize);
-	//bolt::cl::device_vector<float> boltVect(stdVectSize);
-	//bolt::cl::device_vector<float> stdmerge(stdVectSize);
-	//bolt::cl::device_vector<float> boltmerge(stdVectSize);
+    int stdVectSize1 = 10;
+    int stdVectSize2 = 20;
+    //bolt::cl::device_vector<float> stdVect(stdVectSize);
+    //bolt::cl::device_vector<float> boltVect(stdVectSize);
+    //bolt::cl::device_vector<float> stdmerge(stdVectSize);
+    //bolt::cl::device_vector<float> boltmerge(stdVectSize);
 
-	std::vector<int> A(stdVectSize1);
-	std::vector<int> B(stdVectSize1);
-	std::vector<int> stdmerge(stdVectSize2);
-	std::vector<int> boltmerge(stdVectSize2);
-	
-	//float myFloatValue = 1.125f;
-	//int Value = 10 ;
+    std::vector<int> A(stdVectSize1);
+    std::vector<int> B(stdVectSize1);
+    std::vector<int> stdmerge(stdVectSize2);
+    std::vector<int> boltmerge(stdVectSize2);
+    
+    //float myFloatValue = 1.125f;
+    //int Value = 10 ;
 
-	for (int i = 0; i < stdVectSize1; i++){
-		//boltVect[i] = stdVect[i] = myFloatValue;
-		A[i] = 10 ;
+    for (int i = 0; i < stdVectSize1; i++){
+        //boltVect[i] = stdVect[i] = myFloatValue;
+        A[i] = 10 ;
         B[i] = 20 ;
-	}
+    }
 
-	std::merge(A.begin(), A.end(), B.begin(), B.end(), stdmerge.begin());
-	bolt::cl::merge(A.begin(), A.end(), B.begin(), B.end(), boltmerge.begin());
+    std::merge(A.begin(), A.end(), B.begin(), B.end(), stdmerge.begin());
+    bolt::cl::merge(A.begin(), A.end(), B.begin(), B.end(), boltmerge.begin());
 
 
-	for(int i = 0; i < stdVectSize2; i++) {
-	EXPECT_EQ(boltmerge[i],stdmerge[i]);
-	}
-		
+    for(int i = 0; i < stdVectSize2; i++) {
+    EXPECT_EQ(boltmerge[i],stdmerge[i]);
+    }
+        
 }
 
 

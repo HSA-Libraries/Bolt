@@ -29,7 +29,7 @@
 #include <boost/range/algorithm/transform.hpp>
 #include <boost/iterator/permutation_iterator.hpp>
 #include <array>
-#define TEST_DOUBLE 0
+#define TEST_DOUBLE 1
 
 BOLT_FUNCTOR( is_even,
 struct is_even{

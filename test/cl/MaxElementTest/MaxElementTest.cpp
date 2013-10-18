@@ -46,7 +46,7 @@ void testDeviceVector()
     for(int i=0; i<aSize; i++) {
         hA[i] = i;
     };
-	
+    
     bolt::cl::device_vector<int> dA(hA.begin(), hA.end());
     std::vector<int>::iterator smaxdex = std::max_element(hA.begin(), hA.end());
     bolt::cl::device_vector<int>::iterator bmaxdex = bolt::cl::max_element(dA.begin(), dA.end(),bolt::cl::greater<int>());
@@ -348,13 +348,13 @@ TEST( MaxEleDevice , DeviceVectoroffset )
 {
     //setup containers
     unsigned int length = 1024;
-	std::vector<int> stdinput( length);
+    std::vector<int> stdinput( length);
     
     for( unsigned int i = 0; i < length ; i++ )
     {
       stdinput[i] = length - i;
     }
-	
+    
     bolt::cl::device_vector< int > input( stdinput.begin(), stdinput.end() );
     // call reduce
     bolt::cl::device_vector< int >::iterator  boltReduce =  bolt::cl::max_element( input.begin()+20, input.end());
