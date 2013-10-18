@@ -18,7 +18,7 @@
 // Defines the entry point for the console application.
 
 #define OCL_CONTEXT_BUG_WORKAROUND 1
-#define TEST_DOUBLE 0
+#define TEST_DOUBLE 1
 #define TEST_CPU_DEVICE 0
 #define BOLT_DEBUG_LOG
 
@@ -186,8 +186,8 @@ void testDUDDTBB()
     xyz->WhatPathTaken(paths);
     for(std::vector< BOLTLOG::FunPaths>::iterator parse=paths.begin(); parse!=paths.end(); parse++)
     {
-	    std::cout<<(*parse).fun;
-	    std::cout<<(*parse).path;
+        std::cout<<(*parse).fun;
+        std::cout<<(*parse).path;
         std::cout<<(*parse).msg;
     }
 
@@ -1101,12 +1101,10 @@ TEST_P( ReduceDoubleVector, Inplace )
 {
     double init(0);
     //  Calling the actual functions under test
-    std::transform(stdInput.begin(), stdInput.end(), stdOutput.begin(), bolt::cl::negate<double>());
     double stlReduce = std::accumulate(stdOutput.begin(), stdOutput.end(), init);
 
-    double boltReduce = bolt::cl::transform_reduce( boltInput.begin( ), boltInput.end( ),
-                                                       bolt::cl::negate<double>(), init,
-                                                       bolt::cl::plus<double>());
+    double boltReduce = bolt::cl::reduce( boltInput.begin( ), boltInput.end( ),init,
+                                                          bolt::cl::plus<double>());
 
     size_t stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
     size_t boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
@@ -1274,8 +1272,7 @@ TEST_P( TransformDoubleNakedPointer, Inplace )
     std::transform(wrapStdInput, wrapStdInput + endIndex, wrapStdOutput, bolt::cl::negate<double>());
     double stlReduce = std::accumulate(wrapStdOutput,wrapStdOutput + endIndex, init);
 
-    double boltReduce = bolt::cl::transform_reduce( wrapBoltInput, wrapBoltInput + endIndex,
-                                                       bolt::cl::negate<double>(), init,
+    double boltReduce = bolt::cl::reduce( wrapBoltInput, wrapBoltInput + endIndex, init,
                                                        bolt::cl::plus<double>());
 #else
     
@@ -1321,10 +1318,6 @@ INSTANTIATE_TEST_CASE_P( ReduceValues, ReduceIntegerNakedPointer, ::testing::Val
 INSTANTIATE_TEST_CASE_P( ReduceRange, ReduceFloatNakedPointer, ::testing::Range( 0, 1024, 13) );
 INSTANTIATE_TEST_CASE_P( ReduceValues, ReduceFloatNakedPointer, ::testing::ValuesIn( TestValues.begin(), 
                                                                                    TestValues.end() ) );
-#if (TEST_DOUBLE == 1)
-INSTANTIATE_TEST_CASE_P( ReduceRange, ReduceDoubleNakedPointer, ::testing::Range( 0, 1024, 13) );
-INSTANTIATE_TEST_CASE_P( Reduce, ReduceDoubleNakedPointer, ::testing::ValuesIn( TestValues.begin(),TestValues.end())); 
-#endif
 
 typedef ::testing::Types< 
     std::tuple< int, TypeValue< 1 > >,

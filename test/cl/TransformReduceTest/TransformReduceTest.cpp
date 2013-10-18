@@ -1248,8 +1248,8 @@ TEST_P( TransformDoubleVector, Inplace )
 TEST_P( TransformIntegerDeviceVector, Inplace )
 {
     bolt::cl::device_vector< int > boltInput(stdInput.begin(), stdInput.end());
-	bolt::cl::device_vector< int > boltOutput(stdOutput.begin(), stdOutput.end());
-	
+    bolt::cl::device_vector< int > boltOutput(stdOutput.begin(), stdOutput.end());
+    
     int init(0);
     //  Calling the actual functions under test
     std::transform(stdInput.begin(), stdInput.end(), stdOutput.begin(), bolt::cl::negate<int>());
@@ -1273,8 +1273,8 @@ TEST_P( TransformIntegerDeviceVector, Inplace )
 TEST_P( TransformIntegerDeviceVector, SerialInplace )
 {
     bolt::cl::device_vector< int > boltInput(stdInput.begin(), stdInput.end());
-	bolt::cl::device_vector< int > boltOutput(stdOutput.begin(), stdOutput.end());
-	
+    bolt::cl::device_vector< int > boltOutput(stdOutput.begin(), stdOutput.end());
+    
     int init(0);
 
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
@@ -1302,8 +1302,8 @@ TEST_P( TransformIntegerDeviceVector, SerialInplace )
 TEST_P( TransformIntegerDeviceVector, MultiCoreInplace )
 {
     bolt::cl::device_vector< int > boltInput(stdInput.begin(), stdInput.end());
-	bolt::cl::device_vector< int > boltOutput(stdOutput.begin(), stdOutput.end());
-	
+    bolt::cl::device_vector< int > boltOutput(stdOutput.begin(), stdOutput.end());
+    
     int init(0);
 
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
@@ -1332,8 +1332,8 @@ TEST_P( TransformIntegerDeviceVector, MultiCoreInplace )
 TEST_P( TransformFloatDeviceVector, Inplace )
 {
     bolt::cl::device_vector< float > boltInput(stdInput.begin(), stdInput.end());
-	bolt::cl::device_vector< float > boltOutput(stdOutput.begin(), stdOutput.end());
-	
+    bolt::cl::device_vector< float > boltOutput(stdOutput.begin(), stdOutput.end());
+    
     float init(0);
     //  Calling the actual functions under test
     std::transform(stdInput.begin(), stdInput.end(), stdOutput.begin(), bolt::cl::negate<float>());
@@ -1357,8 +1357,8 @@ TEST_P( TransformFloatDeviceVector, Inplace )
 TEST_P( TransformFloatDeviceVector, SerialInplace )
 {
     bolt::cl::device_vector< float > boltInput(stdInput.begin(), stdInput.end());
-	bolt::cl::device_vector< float > boltOutput(stdOutput.begin(), stdOutput.end());
-	
+    bolt::cl::device_vector< float > boltOutput(stdOutput.begin(), stdOutput.end());
+    
     float init(0);
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
@@ -1385,8 +1385,8 @@ TEST_P( TransformFloatDeviceVector, SerialInplace )
 TEST_P( TransformFloatDeviceVector, MultiCoreInplace )
 {
     bolt::cl::device_vector< float > boltInput(stdInput.begin(), stdInput.end());
-	bolt::cl::device_vector< float > boltOutput(stdOutput.begin(), stdOutput.end());
-	
+    bolt::cl::device_vector< float > boltOutput(stdOutput.begin(), stdOutput.end());
+    
     float init(0);
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
@@ -1414,8 +1414,8 @@ TEST_P( TransformFloatDeviceVector, MultiCoreInplace )
 TEST_P( TransformDoubleDeviceVector, Inplace )
 {
     bolt::cl::device_vector< double > boltInput(stdInput.begin(), stdInput.end());
-	bolt::cl::device_vector< double > boltOutput(stdOutput.begin(), stdOutput.end());
-	
+    bolt::cl::device_vector< double > boltOutput(stdOutput.begin(), stdOutput.end());
+    
     double init(0);
     //  Calling the actual functions under test
     std::transform(stdInput.begin(), stdInput.end(), stdOutput.begin(), bolt::cl::negate<double>());
@@ -2232,9 +2232,9 @@ TEST(TransformReduce, DeviceVectorInt)
         refInput[i] = i;
      //   printf("%d \n", input[i]);
      }
-	 
-	 bolt::cl::device_vector< int > input(refInput.begin(), refInput.end());
-	 
+     
+     bolt::cl::device_vector< int > input(refInput.begin(), refInput.end());
+     
      bolt::cl::control ctl = bolt::cl::control::getDefault( );
 
      // call transform_reduce
@@ -2261,8 +2261,8 @@ TEST(TransformReduce, SerialDeviceVectorInt)
         refInput[i] = i;
      //   printf("%d \n", input[i]);
      }
-	 bolt::cl::device_vector< int > input(refInput.begin(), refInput.end());
-	 
+     bolt::cl::device_vector< int > input(refInput.begin(), refInput.end());
+     
      bolt::cl::control ctl = bolt::cl::control::getDefault( );
      ctl.setForceRunMode(bolt::cl::control::SerialCpu);
      // call transform_reduce
@@ -2289,7 +2289,7 @@ TEST(TransformReduce, MultiCoreDeviceVectorInt)
         refInput[i] = i;
      //   printf("%d \n", input[i]);
      }
-	 bolt::cl::device_vector< int > input(refInput.begin(), refInput.end());
+     bolt::cl::device_vector< int > input(refInput.begin(), refInput.end());
      bolt::cl::control ctl = bolt::cl::control::getDefault( );
      ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
      // call transform_reduce
@@ -2320,8 +2320,8 @@ TEST(TransformReduce, DeviceVectorFloat)
         refInput[i] = 2.f;
      //   printf("%d \n", input[i]);
     }
-	bolt::cl::device_vector< float> input(refInput.begin(), refInput.end());
-	
+    bolt::cl::device_vector< float> input(refInput.begin(), refInput.end());
+    
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
 
     // call transform_reduce
@@ -2384,7 +2384,7 @@ TEST(TransformReduce, MultiCoreDeviceVectorFloat)
      //   printf("%d \n", input[i]);
     }
     bolt::cl::device_vector< float> input(refInput.begin(), refInput.end());
-		
+        
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
     // call transform_reduce

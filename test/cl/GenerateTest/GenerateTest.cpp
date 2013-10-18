@@ -28,8 +28,8 @@
 
 #include <gtest/gtest.h>
 //#include <boost/shared_array.hpp>
-#define TEST_DOUBLE 0
-#define TEST_CPU_DEVICE 1
+#define TEST_DOUBLE 1
+#define TEST_CPU_DEVICE 0
 
 template< typename T >
 ::testing::AssertionResult cmpArrays( const T ref, const T calc, size_t N )
@@ -217,13 +217,13 @@ template< typename T >
 struct GenConst1
 {
     // return value
-	T _a;
+    T _a;
 
     // constructor
-	GenConst1( T a ) : _a(a) {};
+    GenConst1( T a ) : _a(a) {};
 
     // functor
-	T operator() () { return _a; };
+    T operator() () { return _a; };
 };
 );  // end BOLT_FUNCTOR
 
@@ -232,13 +232,13 @@ template< typename T >
 struct GenConst2
 {
     // return value
-	T _a;
+    T _a;
 
     // constructor
-	GenConst2( T a ) : _a(a) {};
+    GenConst2( T a ) : _a(a) {};
 
     // functor
-	T operator() () { return _a; };
+    T operator() () { return _a; };
 };
 );  // end BOLT_FUNCTOR
 
@@ -247,13 +247,13 @@ template< typename T >
 struct GenConst3
 {
     // return value
-	T _a;
+    T _a;
 
     // constructor
-	GenConst3( T a ) : _a(a) {};
+    GenConst3( T a ) : _a(a) {};
 
     // functor
-	T operator() () { return _a; };
+    T operator() () { return _a; };
 };
 );  
 
@@ -534,6 +534,7 @@ TYPED_TEST_P( GenerateArrayTest,CPU_DeviceNormal )
 REGISTER_TYPED_TEST_CASE_P( GenerateArrayTest, CPU_DeviceNormal);
 #endif
 
+#if(TEST_CPU_DEVICE == 1)
 typedef ::testing::Types< 
     std::tuple< cl_long, TypeValue< 1 > >,
     std::tuple< cl_long, TypeValue< 31 > >,
@@ -651,6 +652,8 @@ typedef ::testing::Types<
     std::tuple< float, TypeValue< 65536 > >
 > FloatTests;
 
+#endif
+
 #if (TEST_DOUBLE == 1)
 typedef ::testing::Types< 
     std::tuple< double, TypeValue< 1 > >,
@@ -670,13 +673,16 @@ typedef ::testing::Types<
 > DoubleTests;
 #endif 
 
+#if(TEST_CPU_DEVICE == 1 )
 INSTANTIATE_TYPED_TEST_CASE_P( clLong, GenerateArrayTest, clLongTests );
 INSTANTIATE_TYPED_TEST_CASE_P( Integer, GenerateArrayTest, IntegerTests );
 INSTANTIATE_TYPED_TEST_CASE_P( UnsignedInteger, GenerateArrayTest, UnsignedIntegerTests );
 INSTANTIATE_TYPED_TEST_CASE_P( Float, GenerateArrayTest, FloatTests );
+
 #if (TEST_DOUBLE == 1)
 INSTANTIATE_TYPED_TEST_CASE_P( Double, GenerateArrayTest, DoubleTests );
 #endif 
+#endif
 
 
 //Generate with Fancy Iterator would result in compilation error!

@@ -1368,7 +1368,7 @@ TEST(NegateScanFloatDefined, CLExclOffsetTestFloat)
     bolt::cl::device_vector< float > output( length,0.f);
     std::vector< float > refInput( length, 1.f );// refInput[0] = identityMixM3;
     std::vector< float > refOutput( length, 0.f);
-	
+    
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::OpenCL);
 
