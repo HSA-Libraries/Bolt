@@ -28,6 +28,12 @@ set( clBolt.Test.Reduce.Headers ${BOLT_CL_TEST_DIR}/common/stdafx.h
 
 set( clBolt.Test.Reduce.Files ${clBolt.Test.Reduce.Source} ${clBolt.Test.Reduce.Headers} )
 
+# Set project specific compile and link options
+if( MSVC )
+    set( CMAKE_CXX_FLAGS "-bigobj ${CMAKE_CXX_FLAGS}" )
+    set( CMAKE_C_FLAGS "-bigobj ${CMAKE_C_FLAGS}" )
+endif()
+
 add_executable( clBolt.Test.Reduce ${clBolt.Test.Reduce.Files} )
 
 if(BUILD_TBB)

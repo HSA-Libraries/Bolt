@@ -26,6 +26,9 @@
 
 #define TEST_DOUBLE 1
 #define TEST_CPU_DEVICE 1
+#ifndef WIN32
+#define _FPCLASS_ND  0x0010 // Linux negative denormal Value
+#endif
 
 #if FILL_GOOGLE_TEST
 #include <gtest/gtest.h>
@@ -2132,7 +2135,6 @@ TEST (simpleTest, basicDataBoltClDevVectAutoConvertCheck)
     bolt::cl::fill(ddv.begin(), ddv.end(), fValue); 
     cmpArrays(dhv,ddv);
 
-
     converter.y =_FPCLASS_ND;
 
     ////////////////////////////////////////////////////
@@ -2219,8 +2221,8 @@ TEST (AutomaticsimpleTest, basicDataBoltClDevVectAutoConvertCheck)
     bolt::cl::fill(ctl, ddv.begin(), ddv.end(), fValue); 
     cmpArrays(dhv,ddv);
 
-
     converter.y =_FPCLASS_ND;
+
 
     ////////////////////////////////////////////////////
     // This verifies that it works with Denormals 
@@ -2305,8 +2307,8 @@ TEST (SerialsimpleTest, basicDataBoltClDevVectAutoConvertCheck)
     bolt::cl::fill(ctl, ddv.begin(), ddv.end(), fValue); 
     cmpArrays(dhv,ddv);
 
-
     converter.y =_FPCLASS_ND;
+
 
     ////////////////////////////////////////////////////
     // This verifies that it works with Denormals 
@@ -2392,8 +2394,8 @@ TEST (MultiCoresimpleTest, basicDataBoltClDevVectAutoConvertCheck)
     bolt::cl::fill(ctl, ddv.begin(), ddv.end(), fValue); 
     cmpArrays(dhv,ddv);
 
-
     converter.y =_FPCLASS_ND;
+
 
     ////////////////////////////////////////////////////
     // This verifies that it works with Denormals 
