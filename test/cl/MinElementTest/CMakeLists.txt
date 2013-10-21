@@ -22,6 +22,12 @@ set( clBolt.Test.MinElement.Headers ${BOLT_CL_TEST_DIR}/common/myocl.h ${BOLT_IN
 
 set( clBolt.Test.MinElement.Files ${clBolt.Test.MinElement.Source} ${clBolt.Test.MinElement.Headers} )
 
+# Set project specific compile and link options
+if( MSVC )
+    set( CMAKE_CXX_FLAGS "-bigobj ${CMAKE_CXX_FLAGS}" )
+    set( CMAKE_C_FLAGS "-bigobj ${CMAKE_C_FLAGS}" )
+endif()
+
 add_executable( clBolt.Test.MinElement ${clBolt.Test.MinElement.Files} )
 target_link_libraries( clBolt.Test.MinElement clBolt.Runtime ${OPENCL_LIBRARIES} ${GTEST_LIBRARIES} ${Boost_LIBRARIES} ${TBB_LIBRARIES} )
 
