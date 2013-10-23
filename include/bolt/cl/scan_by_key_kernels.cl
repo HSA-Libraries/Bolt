@@ -54,39 +54,53 @@ __kernel void perBlockScanByKey(
     size_t offset = 1;
 
    // load input into shared memory
+    
     if (exclusive)
     {
-       if (gloId > 0 && groId*wgSize+locId < vecSize){
+       if (gloId > 0 && groId*wgSize+locId < vecSize)
+	   {
           kType key1 = keys_iter[ groId*wgSize+locId];
           kType key2 = keys_iter[ groId*wgSize+locId-1];
+		  
           if( (*binaryPred)( key1, key2 )  )
-             ldsVals[locId] = vals_iter[groId*wgSize+locId-1];
+             ldsVals[locId] = vals_iter[groId*wgSize+locId];
           else 
-             ldsVals[locId] = init;
+		  {
+		     vType start_val = vals_iter[groId*wgSize+locId]; 
+             ldsVals[locId] = (*binaryFunct)(init, start_val);
+          }
           ldsKeys[locId] = keys_iter[groId*wgSize+locId];
        }
        else{ 
-          ldsVals[locId] = init;
+	      vType start_val = vals_iter[0];
+          ldsVals[locId] = (*binaryFunct)(init, start_val);
           ldsKeys[locId] = keys_iter[0];
        }
-       if(groId*wgSize +locId+ (wgSize/2) < vecSize){
+       if(groId*wgSize +locId+ (wgSize/2) < vecSize)
+	   {
           kType key1 = keys_iter[ groId*wgSize +locId+ (wgSize/2)];
           kType key2 = keys_iter[groId*wgSize +locId+ (wgSize/2) -1];
+		 
           if( (*binaryPred)( key1, key2 )  )
-             ldsVals[locId+(wgSize/2)] = vals_iter[groId*wgSize +locId+ (wgSize/2)-1];
+             ldsVals[locId+(wgSize/2)] = vals_iter[groId*wgSize +locId+ (wgSize/2)];
           else 
-             ldsVals[locId+(wgSize/2)] = init;
+		  {
+		     vType start_val = vals_iter[groId*wgSize +locId+ (wgSize/2)]; 
+             ldsVals[locId+(wgSize/2)] = (*binaryFunct)(init, start_val);
+          } 
           ldsKeys[locId+(wgSize/2)] = keys_iter[groId*wgSize +locId+ (wgSize/2)];
        }
      
     }
     else
     {
-       if(groId*wgSize+locId < vecSize){
+       if(groId*wgSize+locId < vecSize)
+	   {
            ldsVals[locId] = vals_iter[groId*wgSize+locId];
            ldsKeys[locId] = keys_iter[groId*wgSize+locId];
        }
-       if(groId*wgSize +locId+ (wgSize/2) < vecSize){
+       if(groId*wgSize +locId+ (wgSize/2) < vecSize)
+	   {
            ldsVals[locId+(wgSize/2)] = vals_iter[ groId*wgSize +locId+ (wgSize/2)];
            ldsKeys[locId+(wgSize/2)] = keys_iter[ groId*wgSize +locId+ (wgSize/2)];
        }
@@ -103,7 +117,8 @@ __kernel void perBlockScanByKey(
        
           kType key = ldsKeys[temp2]; 
           kType key1 = ldsKeys[temp1];
-          if((*binaryPred)( key, key1 )) {
+          if((*binaryPred)( key, key1 )) 
+		  {
              oType y = ldsVals[temp2];
              oType y1 =ldsVals[temp1];
              ldsVals[temp2] = (*binaryFunct)(y, y1);
@@ -312,9 +327,52 @@ __kernel void perBlockAdditionByKey(
           ldsVals[ locId ] = val;
        }
      }
+	 // Each work item writes out its calculated scan result, relative to the beginning
+    // of each work group
+    vType scanResult = ldsVals[ locId ];
+
+    vType postBlockSum, newResult;
+    vType y, y1, sum;
+    kType key1, key2, key3, key4;
+    if(locId == 0 && gloId < vecSize)
+    {
+        if(groId > 0) {
+           key1 = keys_iter[gloId];
+           key2 = keys_iter[groId*wgSize -1 ];
+           if(groId % 2 == 0)
+              postBlockSum = postSumArray[ groId/2 -1 ];
+           else if(groId == 1)
+              postBlockSum = preSumArray1[0];
+           else {
+              key3 = keys_iter[groId*wgSize -1];
+              key4 = keys_iter[(groId-1)*wgSize -1];
+              if((*binaryPred)(key3 ,key4)){
+                 y = postSumArray[ groId/2 -1 ];
+                 y1 = preSumArray1[groId/2];
+                 postBlockSum = (*binaryFunct)(y, y1);
+              }
+              else
+                 postBlockSum = preSumArray1[groId/2];
+           }
+           if (!exclusive)
+	          if((*binaryPred)( key1, key2))
+                 newResult = (*binaryFunct)( scanResult, postBlockSum );
+              else
+		         newResult = scanResult;
+	       else
+	          if((*binaryPred)( key1, key2)) 
+		         newResult = postBlockSum;
+              else
+		         newResult = init;  
+        }
+        else {
+             newResult = scanResult;
+        }
+	    ldsVals[ locId ] = newResult;
+    }
     // Computes a scan within a workgroup
     // updates vals in lds but not keys
-    oType sum = val;
+    sum = ldsVals[ locId ];
     for( size_t offset = 1; offset < wgSize; offset *= 2 )
     {
         barrier( CLK_LOCAL_MEM_FENCE );
@@ -326,7 +384,6 @@ __kernel void perBlockAdditionByKey(
                 oType y = ldsVals[ locId - offset];
                 sum = (*binaryFunct)( sum, y );
             }
-           
         }
         barrier( CLK_LOCAL_MEM_FENCE );
         ldsVals[ locId ] = sum;
@@ -335,44 +392,6 @@ __kernel void perBlockAdditionByKey(
     //  Abort threads that are passed the end of the input vector
     if (gloId >= vecSize) return; 
 
-
-    // Each work item writes out its calculated scan result, relative to the beginning
-    // of each work group
-    kType curkey, prekey;
-    vType scanResult;
-    scanResult = sum;
-
-
-    vType postBlockSum, newResult;
-    vType y, y1;
-    kType key1, key2, key3, key4;
-    if(groId > 0) {
-       key1 = keys_iter[gloId];
-       key2 = keys_iter[groId*wgSize -1 ];
-       if(groId % 2 == 0)
-          postBlockSum = postSumArray[ groId/2 -1 ];
-       else if(groId == 1)
-          postBlockSum = preSumArray1[0];
-       else {
-          key3 = keys_iter[groId*wgSize -1];
-          key4 = keys_iter[(groId-1)*wgSize -1];
-          if((*binaryPred)(key3 ,key4)){
-             y = postSumArray[ groId/2 -1 ];
-             y1 = preSumArray1[groId/2];
-             postBlockSum = (*binaryFunct)(y, y1);
-          }
-          else
-             postBlockSum = preSumArray1[groId/2];
-       }
-       if((*binaryPred)( key1, key2)){
-          newResult = (*binaryFunct)( scanResult, postBlockSum );
-       }
-       else 
-          newResult = scanResult;
-    }
-    else {
-         newResult = scanResult;
-    }
-    output_iter[ gloId ] = newResult;
+    output_iter[ gloId ] = sum;
     
 }
