@@ -20,17 +20,17 @@
  *****************************************************************************/
 
 //__attribute__((reqd_work_group_size(KERNEL0WORKGROUPSIZE,1,1)))
-template< typename iValueType, typename iIterType, typename initType, typename UnaryFunction, typename BinaryFunction >
+template< typename iValueType, typename iIterType, typename oValueType, typename initType, typename UnaryFunction, typename BinaryFunction >
 __kernel void perBlockTransformScan(
                 global iValueType* input_ptr,
                 iIterType input_iter,
                 initType identity,
                 const uint vecSize,
-                local iValueType* lds,
+                local oValueType* lds,
                 global UnaryFunction* unaryOp,
                 global BinaryFunction* binaryOp,
-                global iValueType* scanBuffer,
-                global iValueType* scanBuffer1,
+                global oValueType* scanBuffer,
+                global oValueType* scanBuffer1,
                 int exclusive) // do exclusive scan ?
 {
     // 2 thread per element
@@ -43,7 +43,7 @@ __kernel void perBlockTransformScan(
     input_iter.init( input_ptr );
     size_t offset = 1;
 
-    iValueType val;
+    oValueType val;
 
    // load input into shared memory
     if(groId*wgSize+locId < vecSize){
@@ -70,8 +70,8 @@ __kernel void perBlockTransformScan(
        {
           size_t temp1 = offset*(2*locId+1)-1;
           size_t temp2 = offset*(2*locId+2)-1;
-          iValueType y = lds[temp2];
-          iValueType y1 =lds[temp1];
+          oValueType y = lds[temp2];
+          oValueType y1 =lds[temp1];
           lds[temp2] = (*binaryOp)(y, y1);
        }
        offset *= 2;
@@ -175,9 +175,9 @@ __kernel void perBlockAddition(
                 oIterType output_iter,
                 global iValueType* input_ptr,
                 iIterType input_iter,
-                global iValueType* postSumArray,
-                global iValueType* preSumArray1,
-                local iValueType* lds,
+                global oValueType* postSumArray,
+                global oValueType* preSumArray1,
+                local oValueType* lds,
                 const uint vecSize,
                 global UnaryFunction* unaryOp,
                 global BinaryFunction* binaryOp,
@@ -193,7 +193,7 @@ __kernel void perBlockAddition(
     input_iter.init( input_ptr );
 
   // if exclusive, load gloId=0 w/ identity, and all others shifted-1
-    iValueType val;
+    oValueType val;
     if (gloId < vecSize){
        if (exclusive)
        {
@@ -216,10 +216,10 @@ __kernel void perBlockAddition(
           lds[ locId ] = val;
        }
     }
-    iValueType scanResult = lds[ locId ];
-    iValueType postBlockSum, newResult;
+    oValueType scanResult = lds[ locId ];
+    oValueType postBlockSum, newResult;
     // accumulate prefix
-    iValueType y, y1, sum;
+    oValueType y, y1, sum;
     if(locId == 0 && gloId < vecSize)
     {
        if(groId > 0) {
@@ -249,7 +249,7 @@ __kernel void perBlockAddition(
         barrier( CLK_LOCAL_MEM_FENCE );
         if (locId >= offset)
         {
-            iValueType y = lds[ locId - offset ];
+            oValueType y = lds[ locId - offset ];
             sum = (*binaryOp)( sum, y );
         }
         barrier( CLK_LOCAL_MEM_FENCE );
