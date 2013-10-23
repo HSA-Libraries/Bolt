@@ -104,7 +104,7 @@ kernel void perBlockAddition(
     iPtrType val;
   
     if (gloId < vecSize){
-       if (exclusive)
+	   if (exclusive)
        {
           if (gloId > 0)
           { // thread>0
@@ -124,9 +124,35 @@ kernel void perBlockAddition(
        }
     }
   
-    //  Computes a scan within a workgroup
-    iPtrType sum = val;
+   iPtrType scanResult = lds[locId];
+   iPtrType postBlockSum, newResult;
+   iPtrType y, y1, sum;
 
+   if(locId == 0 && gloId < vecSize)
+   {
+      if(groId > 0) {
+         if(groId % 2 == 0)
+             postBlockSum = postSumArray_ptr[ groId/2 -1 ];
+         else if(groId == 1)
+             postBlockSum = preSumArray_ptr1[0];
+         else {
+              y = postSumArray_ptr[ groId/2 -1 ];
+              y1 = preSumArray_ptr1[groId/2];
+              postBlockSum = (*binaryOp)(y, y1);
+         }
+         if (!exclusive)
+            newResult = (*binaryOp)( scanResult, postBlockSum );
+		 else 
+		    newResult =  postBlockSum;
+     }
+     else {
+       newResult = scanResult;
+     }
+	 lds[ locId ] = newResult;
+   }
+  
+    //  Computes a scan within a workgroup
+    sum = lds[ locId ];
     for( size_t offset = 1; offset < wgSize; offset *= 2 )
     {
         barrier( CLK_LOCAL_MEM_FENCE );
@@ -139,29 +165,10 @@ kernel void perBlockAddition(
         lds[ locId ] = sum;
     }
     barrier( CLK_LOCAL_MEM_FENCE );
-  //  Abort threads that are passed the end of the input vector
+    //  Abort threads that are passed the end of the input vector
     if (gloId >= vecSize) return; 
-
-    iPtrType scanResult = sum;
-    iPtrType postBlockSum, newResult;
-    // accumulate prefix
-    iPtrType y, y1;
-    if(groId > 0) {
-        if(groId % 2 == 0)
-            postBlockSum = postSumArray_ptr[ groId/2 -1 ];
-        else if(groId == 1)
-            postBlockSum = preSumArray_ptr1[0];
-        else {
-             y = postSumArray_ptr[ groId/2 -1 ];
-             y1 = preSumArray_ptr1[groId/2];
-             postBlockSum = (*binaryOp)(y, y1);
-        }
-        newResult = (*binaryOp)( scanResult, postBlockSum );
-    }
-    else {
-      newResult = scanResult;
-    }
-    output_iter[ gloId ] = newResult;
+   
+    output_iter[ gloId ] = sum;
     
 }
 
@@ -286,24 +293,19 @@ kernel void perBlockInclusiveScan(
     size_t offset = 1;
 
    // load input into shared memory
-    if (exclusive)
-    {
-       if (gloId > 0 && groId*wgSize+locId-1 < vecSize)
-          lds[locId] = input_iter[groId*wgSize+locId-1];
-       else 
-          lds[locId] = identity;
-       if(groId*wgSize +locId+ (wgSize/2) -1 < vecSize)
-          lds[locId+(wgSize/2)] = input_iter[groId*wgSize +locId+ (wgSize/2) -1];
-     
-    }
-    else
-    {
-     if(groId*wgSize+locId < vecSize)
-          lds[locId] = input_iter[groId*wgSize+locId];
-     if(groId*wgSize +locId+ (wgSize/2) < vecSize)
+   
+	if(groId*wgSize+locId < vecSize)
+       lds[locId] = input_iter[groId*wgSize+locId];
+    if(groId*wgSize +locId+ (wgSize/2) < vecSize)
         lds[locId+(wgSize/2)] = input_iter[ groId*wgSize +locId+ (wgSize/2)];
+    
+	// Exclusive case
+    if(exclusive && gloId == 0)
+	{
+	    iPtrType start_val = input_iter[0];
+		lds[locId] = (*binaryOp)(identity, start_val);
     }
-  
+	
     for (size_t start = wgSize>>1; start > 0; start >>= 1) 
     {
        barrier( CLK_LOCAL_MEM_FENCE );
