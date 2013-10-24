@@ -78,7 +78,7 @@ public:
         for( int i=0; i < ArraySize; i++ )
         {
             stdInput[ i ] = 1;
-            boltInput[ i ] = 1;
+            boltInput[ i ] =  stdInput[i];
         }
     };
 
@@ -840,15 +840,20 @@ TEST(OffsetTest, ExclOffsetTestUdd)
      //setup containers
     int length = 1<<24;
     std::vector< uddtI2 > input( length, initialAddI2  );
-    std::vector< uddtI2 > output( length);
+    //std::vector< uddtI2 > output( length);
     std::vector< uddtI2 > refInput( length, initialAddI2  ); refInput[0] = initialAddI2;
-    std::vector< uddtI2 > refOutput( length);
+    //std::vector< uddtI2 > refOutput( length);
     // call scan
     AddI2 ai2;
-    bolt::amp::exclusive_scan( input.begin()+(length/2),    input.end()-(length/4),    output.begin()+(length/2), initialAddI2, ai2 );
-    ::std::partial_sum(refInput.begin()+(length/2), refInput.end()-(length/4), refOutput.begin()+(length/2), ai2);
+    //bolt::amp::exclusive_scan( input.begin()+(length/2),    input.end()-(length/4),    output.begin()+(length/2), initialAddI2, ai2 );
+    //::std::partial_sum(refInput.begin()+(length/2), refInput.end()-(length/4), refOutput.begin()+(length/2), ai2);
+    //// compare results
+    //cmpArrays(refOutput, output);
+
+	bolt::amp::exclusive_scan( input.begin()+(length/2),    input.end()-(length/4),    input.begin()+(length/2), initialAddI2, ai2 );
+    ::std::partial_sum(refInput.begin()+(length/2), refInput.end()-(length/4), refInput.begin()+(length/2), ai2);
     // compare results
-    cmpArrays(refOutput, output);
+    cmpArrays(refInput, input);
 } 
 
 
@@ -859,16 +864,21 @@ TEST(InclusiveScan, InclUdd)
     int length = 1<<10;
   
     std::vector< uddtI2 > input( length, initialAddI2  );
-    std::vector< uddtI2 > output( length);
+    //std::vector< uddtI2 > output( length);
     std::vector< uddtI2 > refInput( length, initialAddI2  );
-    std::vector< uddtI2 > refOutput( length);
+    //std::vector< uddtI2 > refOutput( length);
 
     // call scan
     AddI2 ai2;
-    bolt::amp::inclusive_scan( input.begin(), input.end(), output.begin(), ai2 );
-    ::std::partial_sum(refInput.begin(), refInput.end(), refOutput.begin(), ai2);
+    //bolt::amp::inclusive_scan( input.begin(), input.end(), output.begin(), ai2 );
+    //::std::partial_sum(refInput.begin(), refInput.end(), refOutput.begin(), ai2);
+    //// compare results
+    //cmpArrays(refOutput, output);
+
+	bolt::amp::inclusive_scan( input.begin(), input.end(), input.begin(), ai2 );
+    ::std::partial_sum(refInput.begin(), refInput.end(), refInput.begin(), ai2);
     // compare results
-    cmpArrays(refOutput, output);
+    cmpArrays(refInput, input);
 } 
 
 TEST(InclusiveScan, SerialInclUdd)
@@ -877,18 +887,23 @@ TEST(InclusiveScan, SerialInclUdd)
     int length = 1<<10;
   
     std::vector< uddtI2 > input( length, initialAddI2  );
-    std::vector< uddtI2 > output( length);
+    //std::vector< uddtI2 > output( length);
     std::vector< uddtI2 > refInput( length, initialAddI2  );
-    std::vector< uddtI2 > refOutput( length);
+    //std::vector< uddtI2 > refOutput( length);
  
     bolt::amp::control ctl = bolt::amp::control::getDefault( );
     ctl.setForceRunMode(bolt::amp::control::SerialCpu);
     // call scan
     AddI2 ai2;
-    bolt::amp::inclusive_scan( ctl,  input.begin(),    input.end(),    output.begin(), ai2 );
-    ::std::partial_sum(refInput.begin(), refInput.end(), refOutput.begin(), ai2);
+    //bolt::amp::inclusive_scan( ctl,  input.begin(),    input.end(),    output.begin(), ai2 );
+    //::std::partial_sum(refInput.begin(), refInput.end(), refOutput.begin(), ai2);
+    //// compare results
+    //cmpArrays(refOutput, output);
+
+	bolt::amp::inclusive_scan(ctl, input.begin(), input.end(), input.begin(), ai2 );
+    ::std::partial_sum(refInput.begin(), refInput.end(), refInput.begin(), ai2);
     // compare results
-    cmpArrays(refOutput, output);
+    cmpArrays(refInput, input);
 } 
 
 TEST(InclusiveScan, MulticoreInclUdd)
@@ -897,18 +912,23 @@ TEST(InclusiveScan, MulticoreInclUdd)
     int length = 1<<10;
   
     std::vector< uddtI2 > input( length, initialAddI2  );
-    std::vector< uddtI2 > output( length);
+    //std::vector< uddtI2 > output( length);
     std::vector< uddtI2 > refInput( length, initialAddI2  );
-    std::vector< uddtI2 > refOutput( length);
+    //std::vector< uddtI2 > refOutput( length);
  
     bolt::amp::control ctl = bolt::amp::control::getDefault( );
     ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu);
     // call scan
     AddI2 ai2;
-    bolt::amp::inclusive_scan( ctl,  input.begin(),    input.end(),    output.begin(), ai2 );
-    ::std::partial_sum(refInput.begin(), refInput.end(), refOutput.begin(), ai2);
+    //bolt::amp::inclusive_scan( ctl,  input.begin(),    input.end(),    output.begin(), ai2 );
+    //::std::partial_sum(refInput.begin(), refInput.end(), refOutput.begin(), ai2);
+    //// compare results
+    //cmpArrays(refOutput, output);
+
+	bolt::amp::inclusive_scan(ctl, input.begin(), input.end(), input.begin(), ai2 );
+    ::std::partial_sum(refInput.begin(), refInput.end(), refInput.begin(), ai2);
     // compare results
-    cmpArrays(refOutput, output);
+    cmpArrays(refInput, input);
 } 
 
 TEST (sanity_exclusive_scan__simple_epr377210, withIntWiCtrl)
@@ -928,7 +948,68 @@ TEST (sanity_exclusive_scan__simple_epr377210, withIntWiCtrl)
 	}
 }
 
+TEST (sanity_exclusive_scan__dev_vector, intsWo_Ctrl){
 
+bolt::amp::device_vector< int > boltInput( 1024, 1 );
+std::vector< int > stdInput( 1024, 1 );
+
+//TAKE_AMP_CONTROL_PATH
+
+bolt::amp::exclusive_scan( boltInput.begin( ), boltInput.end( ), boltInput.begin( ));
+std::partial_sum( stdInput.begin( ), stdInput.end( ), stdInput.begin( ) );
+
+for (int i = 1; i < 1024; i++){
+EXPECT_EQ(stdInput[i-1], boltInput[i]);
+}
+
+}
+
+TEST (sanity_exclusive_scan__diff_cont2, unsigInt){
+//TAKE_AMP_CONTROL_PATH
+bolt::amp::control& my_amp_ctl= bolt::amp::control::getDefault();
+my_amp_ctl.setForceRunMode(bolt::amp::control::Automatic);
+
+size_t size = 1024;
+bolt::amp::device_vector< unsigned int > boltInput( size, 5 );
+bolt::amp::device_vector< unsigned int >::iterator boltEnd = bolt::amp::exclusive_scan( my_amp_ctl, boltInput.begin( ), boltInput.end( ), boltInput.begin( ), 2);
+
+std::vector< unsigned int > stdInput( size, 5);
+std::vector< unsigned int >::iterator stdEnd = bolt::amp::exclusive_scan( stdInput.begin( ), stdInput.end( ), stdInput.begin( ), 2);
+
+EXPECT_EQ((*(boltEnd-1)), (*(stdEnd-1)));	
+}
+
+TEST (sanity_exclusive_scan__diff_cont, floatSameValuesSerialRange){
+//TAKE_AMP_CONTROL_PATH
+bolt::amp::control& my_amp_ctl= bolt::amp::control::getDefault();
+my_amp_ctl.setForceRunMode(bolt::amp::control::Automatic);
+
+size_t size = 1024;
+bolt::amp::device_vector< float > boltInput( size, 1.125f );
+bolt::amp::device_vector< float >::iterator boltEnd = bolt::amp::exclusive_scan( my_amp_ctl, boltInput.begin( ), boltInput.end( ), boltInput.begin( ), 2.0f);
+
+std::vector< float > stdInput( size, 1.125f);
+std::vector< float >::iterator stdEnd = bolt::amp::exclusive_scan( stdInput.begin( ), stdInput.end( ), stdInput.begin( ), 2.0f );
+
+EXPECT_FLOAT_EQ((*(boltEnd-1)), (*(stdEnd-1)));	
+}
+
+#if (TEST_DOUBLE==1)
+TEST (sanity_exclusive_scan___stdVectVsDeviceVectWithIters_d, floatSameValuesSerialRange){
+//TAKE_AMP_CONTROL_PATH
+bolt::amp::control& my_amp_ctl= bolt::amp::control::getDefault();
+my_amp_ctl.setForceRunMode(bolt::amp::control::Automatic);
+
+size_t size = 1024;
+bolt::amp::device_vector< double > boltInput( size, 6.0625 );
+bolt::amp::device_vector< double >::iterator boltEnd = bolt::amp::exclusive_scan( my_amp_ctl, boltInput.begin( ), boltInput.end( ), boltInput.begin( ), 1.125 );
+
+std::vector< double > stdInput( size, 6.0625);
+std::vector< double >::iterator stdEnd = bolt::amp::exclusive_scan( stdInput.begin( ), stdInput.end( ), stdInput.begin( ), 1.125);
+
+EXPECT_DOUBLE_EQ((*(boltEnd-1)), (*(stdEnd-1)));	
+} 
+#endif
 
 TEST(InclusiveScan, InclFloat)
 {
@@ -936,19 +1017,24 @@ TEST(InclusiveScan, InclFloat)
 
     int length = 1<<10;
     std::vector< float > input( length);
-    std::vector< float > output( length);
+    //std::vector< float > output( length);
     std::vector< float > refInput( length);
-    std::vector< float > refOutput( length);
+    //std::vector< float > refOutput( length);
     for(int i=0; i<length; i++) {
-        input[i] = 1;
-        refInput[i] = 1;
+        input[i] = 1.0f+rand()%3;
+        refInput[i] = input[i];
     }
     // call scan
     bolt::amp::plus<float> ai2;
-    bolt::amp::inclusive_scan( input.begin(),    input.end(),    output.begin(), ai2 );
-    ::std::partial_sum(refInput.begin(), refInput.end(), refOutput.begin(), ai2);
+    //bolt::amp::inclusive_scan( input.begin(),    input.end(),    output.begin(), ai2 );
+    //::std::partial_sum(refInput.begin(), refInput.end(), refOutput.begin(), ai2);
+    //// compare results
+    //cmpArrays(refOutput, output);
+
+	bolt::amp::inclusive_scan( input.begin(),    input.end(),    input.begin(), ai2 );
+    ::std::partial_sum(refInput.begin(), refInput.end(), refInput.begin(), ai2);
     // compare results
-    cmpArrays(refOutput, output);
+    cmpArrays(refInput, input);
 } 
 
 TEST(InclusiveScan, SerialInclFloat)
@@ -957,21 +1043,26 @@ TEST(InclusiveScan, SerialInclFloat)
 
     int length = 1<<10;
     std::vector< float > input( length);
-    std::vector< float > output( length);
+    //std::vector< float > output( length);
     std::vector< float > refInput( length);
-    std::vector< float > refOutput( length);
+    //std::vector< float > refOutput( length);
     for(int i=0; i<length; i++) {
-        input[i] = 1;
-        refInput[i] = 1;
+        input[i] = 1.0f+rand()%3;
+        refInput[i] = input[i];
     }
     bolt::amp::control ctl = bolt::amp::control::getDefault( );
     ctl.setForceRunMode(bolt::amp::control::SerialCpu); 
     // call scan
     bolt::amp::plus<float> ai2;
-    bolt::amp::inclusive_scan( ctl,  input.begin(),    input.end(),    output.begin(), ai2 );
-    ::std::partial_sum(refInput.begin(), refInput.end(), refOutput.begin(), ai2);
+    //bolt::amp::inclusive_scan( ctl,  input.begin(),    input.end(),    output.begin(), ai2 );
+    //::std::partial_sum(refInput.begin(), refInput.end(), refOutput.begin(), ai2);
+    //// compare results
+    //cmpArrays(refOutput, output);
+
+	bolt::amp::inclusive_scan( ctl, input.begin(),    input.end(),    input.begin(), ai2 );
+    ::std::partial_sum(refInput.begin(), refInput.end(), refInput.begin(), ai2);
     // compare results
-    cmpArrays(refOutput, output);
+    cmpArrays(refInput, input);
 } 
 
 TEST(InclusiveScan, MulticoreInclFloat)
@@ -980,20 +1071,25 @@ TEST(InclusiveScan, MulticoreInclFloat)
 
     int length = 1<<10;
     std::vector< float > input( length);
-    std::vector< float > output( length);
+    //std::vector< float > output( length);
     std::vector< float > refInput( length);
-    std::vector< float > refOutput( length);
+    //std::vector< float > refOutput( length);
     for(int i=0; i<length; i++) {
-        input[i] = 1;
-        refInput[i] = 1;
+        input[i] = 1.0f+rand()%3;
+        refInput[i] = input[i];
     }
     bolt::amp::control ctl = bolt::amp::control::getDefault( );
     ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu); 
     bolt::amp::plus<float> ai2;
-    bolt::amp::inclusive_scan( ctl,  input.begin(),    input.end(),    output.begin(), ai2 );
-    ::std::partial_sum(refInput.begin(), refInput.end(), refOutput.begin(), ai2);
+    //bolt::amp::inclusive_scan( ctl,  input.begin(),    input.end(),    output.begin(), ai2 );
+    //::std::partial_sum(refInput.begin(), refInput.end(), refOutput.begin(), ai2);
+    //// compare results
+    //cmpArrays(refOutput, output);
+
+	bolt::amp::inclusive_scan( input.begin(),    input.end(),    input.begin(), ai2 );
+    ::std::partial_sum(refInput.begin(), refInput.end(), refInput.begin(), ai2);
     // compare results
-    cmpArrays(refOutput, output);
+    cmpArrays(refInput, input);
 } 
 
 #if(TEST_DOUBLE ==1)
@@ -1002,15 +1098,19 @@ TEST(InclusiveScan, IncluddtM3)
     //setup containers
     int length = 1<<10;
     std::vector< uddtM3 > input( length, initialMixM3  );
-    std::vector< uddtM3 > output( length);
+    //std::vector< uddtM3 > output( length);
     std::vector< uddtM3 > refInput( length, initialMixM3  );
-    std::vector< uddtM3 > refOutput( length);
+    //std::vector< uddtM3 > refOutput( length);
     // call scan
     MixM3 M3;
-    bolt::amp::inclusive_scan( input.begin(),    input.end(),    output.begin(), M3 );
+   /* bolt::amp::inclusive_scan( input.begin(),    input.end(),    output.begin(), M3 );
     ::std::partial_sum(refInput.begin(), refInput.end(), refOutput.begin(), M3);
     
-    cmpArrays(refOutput, output);  
+    cmpArrays(refOutput, output);  */
+
+	bolt::amp::inclusive_scan( input.begin(),    input.end(),    input.begin(), M3 );
+    ::std::partial_sum(refInput.begin(), refInput.end(), refInput.begin(), M3);
+    cmpArrays(refInput, input);  
 } 
 
 TEST(InclusiveScan, SerialIncluddtM3)
@@ -1018,17 +1118,21 @@ TEST(InclusiveScan, SerialIncluddtM3)
     //setup containers
     int length = 1<<10;
     std::vector< uddtM3 > input( length, initialMixM3  );
-    std::vector< uddtM3 > output( length);
+    //std::vector< uddtM3 > output( length);
     std::vector< uddtM3 > refInput( length, initialMixM3  );
-    std::vector< uddtM3 > refOutput( length);
+    //std::vector< uddtM3 > refOutput( length);
     bolt::amp::control ctl = bolt::amp::control::getDefault( );
     ctl.setForceRunMode(bolt::amp::control::SerialCpu);
     // call scan
     MixM3 M3;
-    bolt::amp::inclusive_scan( ctl,  input.begin(),    input.end(),    output.begin(), M3 );
+   /* bolt::amp::inclusive_scan( ctl,  input.begin(),    input.end(),    output.begin(), M3 );
     ::std::partial_sum(refInput.begin(), refInput.end(), refOutput.begin(), M3);
     
-    cmpArrays(refOutput, output);  
+    cmpArrays(refOutput, output);  */
+
+	bolt::amp::inclusive_scan( ctl, input.begin(),    input.end(),    input.begin(), M3 );
+    ::std::partial_sum(refInput.begin(), refInput.end(), refInput.begin(), M3);
+    cmpArrays(refInput, input);  
 } 
 
 TEST(InclusiveScan, MulticoreIncluddtM3)
@@ -1036,17 +1140,21 @@ TEST(InclusiveScan, MulticoreIncluddtM3)
     //setup containers
     int length = 1<<10;
     std::vector< uddtM3 > input( length, initialMixM3  );
-    std::vector< uddtM3 > output( length);
+    //std::vector< uddtM3 > output( length);
     std::vector< uddtM3 > refInput( length, initialMixM3  );
-    std::vector< uddtM3 > refOutput( length);
+    //std::vector< uddtM3 > refOutput( length);
     bolt::amp::control ctl = bolt::amp::control::getDefault( );
     ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu); // tested with serial also
     // call scan
     MixM3 M3;
-    bolt::amp::inclusive_scan( ctl,  input.begin(),    input.end(),    output.begin(), M3 );
+   /* bolt::amp::inclusive_scan( ctl,  input.begin(),    input.end(),    output.begin(), M3 );
     ::std::partial_sum(refInput.begin(), refInput.end(), refOutput.begin(), M3);
     
-    cmpArrays(refOutput, output);  
+    cmpArrays(refOutput, output);  */
+
+	bolt::amp::inclusive_scan( ctl, input.begin(),    input.end(),    input.begin(), M3 );
+    ::std::partial_sum(refInput.begin(), refInput.end(), refInput.begin(), M3);
+    cmpArrays(refInput, input);  
 } 
 #endif
 
@@ -1055,16 +1163,20 @@ TEST(ExclusiveScan, ExclUdd)
     //setup containers
     int length = 1<<10;
     std::vector< uddtI2 > input( length, initialAddI2  );
-    std::vector< uddtI2 > output( length);
+    //std::vector< uddtI2 > output( length);
     std::vector< uddtI2 > refInput( length, initialAddI2  ); refInput[0] = initialAddI2;
-    std::vector< uddtI2 > refOutput( length);
+    //std::vector< uddtI2 > refOutput( length);
     // call scan
     AddI2 ai2;
-    bolt::amp::exclusive_scan( input.begin(),    input.end(),    output.begin(), initialAddI2, ai2 );
-   // bolt::cl::exclusive_scan(refInput.begin(),    refInput.end(),    refOutput.begin(), initialAddI2, ai2 );
-    ::std::partial_sum(refInput.begin(), refInput.end(), refOutput.begin(), ai2);
+    //bolt::amp::exclusive_scan( input.begin(),    input.end(),    output.begin(), initialAddI2, ai2 );
+    //::std::partial_sum(refInput.begin(), refInput.end(), refOutput.begin(), ai2);
+    //// compare results
+    //cmpArrays(refOutput, output);
+
+	bolt::amp::exclusive_scan( input.begin(),    input.end(),    input.begin(), initialAddI2, ai2 );
+    ::std::partial_sum(refInput.begin(), refInput.end(), refInput.begin(), ai2);
     // compare results
-    cmpArrays(refOutput, output);
+    cmpArrays(refInput, input);
 }
 
 TEST(ExclusiveScan, SerialExclUdd)
@@ -1072,18 +1184,22 @@ TEST(ExclusiveScan, SerialExclUdd)
     //setup containers
     int length = 1<<10;
     std::vector< uddtI2 > input( length, initialAddI2  );
-    std::vector< uddtI2 > output( length);
+    //std::vector< uddtI2 > output( length);
     std::vector< uddtI2 > refInput( length, initialAddI2  ); refInput[0] = initialAddI2;
-    std::vector< uddtI2 > refOutput( length);
+    //std::vector< uddtI2 > refOutput( length);
     bolt::amp::control ctl = bolt::amp::control::getDefault( );
     ctl.setForceRunMode(bolt::amp::control::SerialCpu); 
     // call scan
     AddI2 ai2;
-    bolt::amp::exclusive_scan( ctl,  input.begin(),    input.end(),    output.begin(), initialAddI2, ai2 );
-   // bolt::cl::exclusive_scan(refInput.begin(),    refInput.end(),    refOutput.begin(), initialAddI2, ai2 );
-    ::std::partial_sum(refInput.begin(), refInput.end(), refOutput.begin(), ai2);
+    //bolt::amp::exclusive_scan( ctl,  input.begin(),    input.end(),    output.begin(), initialAddI2, ai2 );
+    //::std::partial_sum(refInput.begin(), refInput.end(), refOutput.begin(), ai2);
+    //// compare results
+    //cmpArrays(refOutput, output);
+
+	bolt::amp::exclusive_scan( ctl, input.begin(),    input.end(),    input.begin(), initialAddI2, ai2 );
+    ::std::partial_sum(refInput.begin(), refInput.end(), refInput.begin(), ai2);
     // compare results
-    cmpArrays(refOutput, output);
+    cmpArrays(refInput, input);
 }
 
 TEST(ExclusiveScan, MulticoreExclUdd)
@@ -1091,17 +1207,21 @@ TEST(ExclusiveScan, MulticoreExclUdd)
     //setup containers
     int length = 1<<10;
     std::vector< uddtI2 > input( length, initialAddI2  );
-    std::vector< uddtI2 > output( length);
+    //std::vector< uddtI2 > output( length);
     std::vector< uddtI2 > refInput( length, initialAddI2  ); refInput[0] = initialAddI2;
-    std::vector< uddtI2 > refOutput( length);
+    //std::vector< uddtI2 > refOutput( length);
     bolt::amp::control ctl = bolt::amp::control::getDefault( );
     ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu);
     AddI2 ai2;
-    bolt::amp::exclusive_scan( ctl,  input.begin(),    input.end(),    output.begin(), initialAddI2, ai2 );
-   // bolt::cl::exclusive_scan(refInput.begin(),    refInput.end(),    refOutput.begin(), initialAddI2, ai2 );
-    ::std::partial_sum(refInput.begin(), refInput.end(), refOutput.begin(), ai2);
+    //bolt::amp::exclusive_scan( ctl,  input.begin(),    input.end(),    output.begin(), initialAddI2, ai2 );
+    //::std::partial_sum(refInput.begin(), refInput.end(), refOutput.begin(), ai2);
+    //// compare results
+    //cmpArrays(refOutput, output);
+
+	bolt::amp::exclusive_scan( ctl, input.begin(),    input.end(),    input.begin(), initialAddI2, ai2 );
+    ::std::partial_sum(refInput.begin(), refInput.end(), refInput.begin(), ai2);
     // compare results
-    cmpArrays(refOutput, output);
+    cmpArrays(refInput, input);
 }
 
 
@@ -1110,23 +1230,27 @@ TEST(ExclusiveScan, ExclFloat)
     //setup containers
     int length = 1<<10;
     std::vector< float > input( length);
-    std::vector< float > output( length);
+    //std::vector< float > output( length);
     std::vector< float > refInput( length);
-    std::vector< float > refOutput( length);
+    //std::vector< float > refOutput( length);
     for(int i=0; i<length; i++) {
-        input[i] = 2.0f;
+        input[i] = 1.0f+rand()%3;
         if(i != length-1)
-           refInput[i+1] = 2.0f;
+           refInput[i+1] = input[i];
         //refInput[i] = 2.0f;
     }
     refInput[0] = 3.0f;
     // call scan
     bolt::amp::plus<float> ai2;
-    ::std::partial_sum(refInput.begin(), refInput.end(), refOutput.begin(), ai2);
-    bolt::amp::exclusive_scan( input.begin(),    input.end(),    output.begin(), 3.0f, ai2 );
+    //::std::partial_sum(refInput.begin(), refInput.end(), refOutput.begin(), ai2);
+    //bolt::amp::exclusive_scan( input.begin(),    input.end(),    output.begin(), 3.0f, ai2 );
+    //// compare results
+    //cmpArrays(refOutput, output);
 
+	::std::partial_sum(refInput.begin(), refInput.end(), refInput.begin(), ai2);
+    bolt::amp::exclusive_scan( input.begin(),    input.end(),    input.begin(), 3.0f, ai2 );
     // compare results
-    cmpArrays(refOutput, output);
+    cmpArrays(refInput, input);
 } 
 
 TEST(ExclusiveScan, SerialExclFloat)
@@ -1134,13 +1258,13 @@ TEST(ExclusiveScan, SerialExclFloat)
     //setup containers
     int length = 1<<10;
     std::vector< float > input( length);
-    std::vector< float > output( length);
+    //std::vector< float > output( length);
     std::vector< float > refInput( length);
-    std::vector< float > refOutput( length);
+    //std::vector< float > refOutput( length);
     for(int i=0; i<length; i++) {
-        input[i] = 2.0f;
+        input[i] = 1.0f+rand()%3;
         if(i != length-1)
-           refInput[i+1] = 2.0f;
+           refInput[i+1] = input[i];
         //refInput[i] = 2.0f;
     }
     refInput[0] = 3.0f;
@@ -1149,11 +1273,15 @@ TEST(ExclusiveScan, SerialExclFloat)
     ctl.setForceRunMode(bolt::amp::control::SerialCpu);
     // call scan
     bolt::amp::plus<float> ai2;
-    ::std::partial_sum(refInput.begin(), refInput.end(), refOutput.begin(), ai2);
-    bolt::amp::exclusive_scan( ctl,  input.begin(),    input.end(),    output.begin(), 3.0f, ai2 );
+    //::std::partial_sum(refInput.begin(), refInput.end(), refOutput.begin(), ai2);
+    //bolt::amp::exclusive_scan( ctl,  input.begin(),    input.end(),    output.begin(), 3.0f, ai2 );
+    //// compare results
+    //cmpArrays(refOutput, output);
 
+	::std::partial_sum(refInput.begin(), refInput.end(), refInput.begin(), ai2);
+    bolt::amp::exclusive_scan( ctl, input.begin(),    input.end(),    input.begin(), 3.0f, ai2 );
     // compare results
-    cmpArrays(refOutput, output);
+    cmpArrays(refInput, input);
 } 
 
 TEST(ExclusiveScan, MulticoreExclFloat)
@@ -1161,13 +1289,13 @@ TEST(ExclusiveScan, MulticoreExclFloat)
     //setup containers
     int length = 1<<10;
     std::vector< float > input( length);
-    std::vector< float > output( length);
+    //std::vector< float > output( length);
     std::vector< float > refInput( length);
-    std::vector< float > refOutput( length);
+    //std::vector< float > refOutput( length);
     for(int i=0; i<length; i++) {
-        input[i] = 2.0f;
+        input[i] = 1.0f+rand()%3;
         if(i != length-1)
-           refInput[i+1] = 2.0f;
+           refInput[i+1] = input[i];
         //refInput[i] = 2.0f;
     }
     refInput[0] = 3.0f;
@@ -1175,11 +1303,15 @@ TEST(ExclusiveScan, MulticoreExclFloat)
     bolt::amp::control ctl = bolt::amp::control::getDefault( );
     ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu); 
     bolt::amp::plus<float> ai2;
-    ::std::partial_sum(refInput.begin(), refInput.end(), refOutput.begin(), ai2);
-    bolt::amp::exclusive_scan( ctl,  input.begin(),    input.end(),    output.begin(), 3.0f, ai2 );
+    //::std::partial_sum(refInput.begin(), refInput.end(), refOutput.begin(), ai2);
+    //bolt::amp::exclusive_scan( ctl,  input.begin(),    input.end(),    output.begin(), 3.0f, ai2 );
+    //// compare results
+    //cmpArrays(refOutput, output);
 
+	::std::partial_sum(refInput.begin(), refInput.end(), refInput.begin(), ai2);
+    bolt::amp::exclusive_scan( ctl,  input.begin(),    input.end(),    input.begin(), 3.0f, ai2 );
     // compare results
-    cmpArrays(refOutput, output);
+    cmpArrays(refInput, input);
 } 
 
 #if(TEST_DOUBLE ==1)
@@ -1189,15 +1321,19 @@ TEST(ExclusiveScan, ExcluddtM3)
     int length = 1<<10;
   
     std::vector< uddtM3 > input( length, initialMixM3  );
-    std::vector< uddtM3 > output( length);
+    //std::vector< uddtM3 > output( length);
     std::vector< uddtM3 > refInput( length, initialMixM3  ); refInput[0] = initialMixM3;
-    std::vector< uddtM3 > refOutput( length);
+    //std::vector< uddtM3 > refOutput( length);
     // call scan
     MixM3 M3;
-    bolt::amp::exclusive_scan(  input.begin(),    input.end(),    output.begin(), initialMixM3, M3 );
+   /* bolt::amp::exclusive_scan(  input.begin(),    input.end(),    output.begin(), initialMixM3, M3 );
     ::std::partial_sum(refInput.begin(), refInput.end(), refOutput.begin(), M3);
     
-    cmpArrays(refOutput, output);  
+    cmpArrays(refOutput, output);  */
+
+	bolt::amp::exclusive_scan(  input.begin(),    input.end(),    input.begin(), initialMixM3, M3 );
+    ::std::partial_sum(refInput.begin(), refInput.end(), refInput.begin(), M3);  
+    cmpArrays(refInput, input);  
 } 
 
 TEST(ExclusiveScan, SerialExcluddtM3)
@@ -1206,17 +1342,20 @@ TEST(ExclusiveScan, SerialExcluddtM3)
     int length = 1<<10;
   
     std::vector< uddtM3 > input( length, initialMixM3  );
-    std::vector< uddtM3 > output( length);
+    //std::vector< uddtM3 > output( length);
     std::vector< uddtM3 > refInput( length, initialMixM3  ); refInput[0] = initialMixM3;
-    std::vector< uddtM3 > refOutput( length);
+    //std::vector< uddtM3 > refOutput( length);
     bolt::amp::control ctl = bolt::amp::control::getDefault( );
     ctl.setForceRunMode(bolt::amp::control::SerialCpu);
     // call scan
     MixM3 M3;
-    bolt::amp::exclusive_scan( ctl,  input.begin(),    input.end(),    output.begin(), initialMixM3, M3 );
+    /*bolt::amp::exclusive_scan( ctl,  input.begin(),    input.end(),    output.begin(), initialMixM3, M3 );
     ::std::partial_sum(refInput.begin(), refInput.end(), refOutput.begin(), M3);
-    
-    cmpArrays(refOutput, output);  
+    cmpArrays(refOutput, output);  */
+
+	bolt::amp::exclusive_scan(  ctl, input.begin(),    input.end(),    input.begin(), initialMixM3, M3 );
+    ::std::partial_sum(refInput.begin(), refInput.end(), refInput.begin(), M3);  
+    cmpArrays(refInput, input);  
 } 
 
 TEST(ExclusiveScan, MulticoreExcluddtM3)
@@ -1225,16 +1364,19 @@ TEST(ExclusiveScan, MulticoreExcluddtM3)
     int length = 1<<10;
   
     std::vector< uddtM3 > input( length, initialMixM3  );
-    std::vector< uddtM3 > output( length);
+    //std::vector< uddtM3 > output( length);
     std::vector< uddtM3 > refInput( length, initialMixM3  ); refInput[0] = initialMixM3;
-    std::vector< uddtM3 > refOutput( length);
+    //std::vector< uddtM3 > refOutput( length);
     bolt::amp::control ctl = bolt::amp::control::getDefault( );
     ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu); 
     MixM3 M3;
-    bolt::amp::exclusive_scan( ctl,  input.begin(),    input.end(),    output.begin(), initialMixM3, M3 );
-    ::std::partial_sum(refInput.begin(), refInput.end(), refOutput.begin(), M3);
-    
-    cmpArrays(refOutput, output);  
+    /*bolt::amp::exclusive_scan( ctl,  input.begin(),    input.end(),    output.begin(), initialMixM3, M3 );
+    ::std::partial_sum(refInput.begin(), refInput.end(), refOutput.begin(), M3);  
+    cmpArrays(refOutput, output);  */
+
+	bolt::amp::exclusive_scan(  ctl, input.begin(),    input.end(),    input.begin(), initialMixM3, M3 );
+    ::std::partial_sum(refInput.begin(), refInput.end(), refInput.begin(), M3);  
+    cmpArrays(refInput, input);  
 } 
 #endif
 ///////////////////////////////////////////////Device vectorTBB and serial path test///////////////////
@@ -1244,39 +1386,45 @@ TEST(InclusiveScan, DeviceVectorInclFloat)
 {
     size_t length = 1<<10;
    
-    bolt::amp::device_vector< float > input(length);
-    bolt::amp::device_vector< float > output(length);
+    //bolt::amp::device_vector< float > input(length);
+    //bolt::amp::device_vector< float > output(length);
     std::vector< float > refInput( length);
-    std::vector< float > refOutput( length);
+    //std::vector< float > refOutput( length);
    
-    for(size_t i=0; i<length; i++) {
-        input[i] = 2.f;
-        refInput[i] = 2.f;
+   for(size_t i=0; i<length; i++) {
+        refInput[i] = 1.0f + rand()%3;
     }
+	bolt::amp::device_vector< float > input(refInput.begin(), refInput.end());
    //  bolt::amp::device_vector< float > input(refInput.begin(), length);
    //  bolt::amp::device_vector< float > output( refOutput.begin(), length);
 
     // call scan
     bolt::amp::plus<float> ai2;
-    bolt::amp::inclusive_scan( input.begin(),    input.end(),    output.begin(), ai2 );
-    ::std::partial_sum(refInput.begin(), refInput.end(), refOutput.begin(), ai2);
+    //bolt::amp::inclusive_scan( input.begin(),    input.end(),    output.begin(), ai2 );
+    //::std::partial_sum(refInput.begin(), refInput.end(), refOutput.begin(), ai2);
+    //// compare results
+    //cmpArrays(refOutput, output);
+
+	bolt::amp::inclusive_scan( input.begin(),    input.end(),    input.begin(), ai2 );
+    ::std::partial_sum(refInput.begin(), refInput.end(), refInput.begin(), ai2);
     // compare results
-    cmpArrays(refOutput, output);
+    cmpArrays(refInput, input);
 } 
 
 TEST(InclusiveScan, SerialDeviceVectorInclFloat)
 {
     size_t length = 1<<10;
    
-    bolt::amp::device_vector< float > input(length);
-    bolt::amp::device_vector< float > output(length);
+    //bolt::amp::device_vector< float > input(length);
+    //bolt::amp::device_vector< float > output(length);
     std::vector< float > refInput( length);
-    std::vector< float > refOutput( length);
+    //std::vector< float > refOutput( length);
    
     for(size_t i=0; i<length; i++) {
-        input[i] = 2.f;
-        refInput[i] = 2.f;
+        refInput[i] = 1.0f + rand()%3;
     }
+	bolt::amp::device_vector< float > input(refInput.begin(), refInput.end());
+
   //  bolt::amp::device_vector< float > input(refInput.begin(), length);
   //  bolt::amp::device_vector< float > output( refOutput.begin(), length);
 
@@ -1285,25 +1433,30 @@ TEST(InclusiveScan, SerialDeviceVectorInclFloat)
     ctl.setForceRunMode(bolt::amp::control::SerialCpu);
     // call scan
     bolt::amp::plus<float> ai2;
-    bolt::amp::inclusive_scan( ctl,  input.begin(),    input.end(),    output.begin(), ai2 );
-    ::std::partial_sum(refInput.begin(), refInput.end(), refOutput.begin(), ai2);
+    //bolt::amp::inclusive_scan( ctl,  input.begin(),    input.end(),    output.begin(), ai2 );
+    //::std::partial_sum(refInput.begin(), refInput.end(), refOutput.begin(), ai2);
+    //// compare results
+    //cmpArrays(refOutput, output);
+
+	bolt::amp::inclusive_scan( ctl, input.begin(),    input.end(),    input.begin(), ai2 );
+    ::std::partial_sum(refInput.begin(), refInput.end(), refInput.begin(), ai2);
     // compare results
-    cmpArrays(refOutput, output);
+    cmpArrays(refInput, input);
 } 
 
 TEST(InclusiveScan, MulticoreDeviceVectorInclFloat)
 {
     size_t length = 1<<10;
    
-    bolt::amp::device_vector< float > input(length);
-    bolt::amp::device_vector< float > output(length);
+    //bolt::amp::device_vector< float > output(length);
     std::vector< float > refInput( length);
-    std::vector< float > refOutput( length);
+    //std::vector< float > refOutput( length);
    
     for(size_t i=0; i<length; i++) {
-        input[i] = 2.f;
-        refInput[i] = 2.f;
+        refInput[i] = 1.0f + rand()%3;
     }
+	bolt::amp::device_vector< float > input(refInput.begin(), refInput.end());
+
   // bolt::amp::device_vector< float > input(refInput.begin(), length);
   //  bolt::amp::device_vector< float > output( refOutput.begin(), length);
 
@@ -1311,10 +1464,15 @@ TEST(InclusiveScan, MulticoreDeviceVectorInclFloat)
     bolt::amp::control ctl = bolt::amp::control::getDefault( );
     ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu); 
     bolt::amp::plus<float> ai2;
-    bolt::amp::inclusive_scan( ctl,  input.begin(),    input.end(),    output.begin(), ai2 );
-    ::std::partial_sum(refInput.begin(), refInput.end(), refOutput.begin(), ai2);
+    //bolt::amp::inclusive_scan( ctl,  input.begin(),    input.end(),    output.begin(), ai2 );
+    //::std::partial_sum(refInput.begin(), refInput.end(), refOutput.begin(), ai2);
+    //// compare results
+    //cmpArrays(refOutput, output);
+
+	bolt::amp::inclusive_scan( input.begin(),    input.end(),    input.begin(), ai2 );
+    ::std::partial_sum(refInput.begin(), refInput.end(), refInput.begin(), ai2);
     // compare results
-    cmpArrays(refOutput, output);
+    cmpArrays(refInput, input);
 } 
 
 
@@ -1324,15 +1482,19 @@ TEST(InclusiveScan, DeviceVectorIncluddtM3)
     //setup containers
     size_t length = 1<<10;
     bolt::amp::device_vector< uddtM3 > input( length, initialMixM3  );
-    bolt::amp::device_vector< uddtM3 > output( length);
+    //bolt::amp::device_vector< uddtM3 > output( length);
     std::vector< uddtM3 > refInput( length, initialMixM3  );
-    std::vector< uddtM3 > refOutput( length);
+    //std::vector< uddtM3 > refOutput( length);
     // call scan
     MixM3 M3;
-    bolt::amp::inclusive_scan( input.begin(),    input.end(),    output.begin(), M3 );
+    /*bolt::amp::inclusive_scan( input.begin(),    input.end(),    output.begin(), M3 );
     ::std::partial_sum(refInput.begin(), refInput.end(), refOutput.begin(), M3);
     
-    cmpArrays(refOutput, output);  
+    cmpArrays(refOutput, output);  */
+
+	bolt::amp::inclusive_scan( input.begin(),    input.end(),    input.begin(), M3 );
+    ::std::partial_sum(refInput.begin(), refInput.end(), refInput.begin(), M3);
+    cmpArrays(refInput, input);  
 } 
 
 TEST(InclusiveScan, SerialDeviceVectorIncluddtM3)
@@ -1340,18 +1502,21 @@ TEST(InclusiveScan, SerialDeviceVectorIncluddtM3)
     //setup containers
     size_t length = 1<<10;
     bolt::amp::device_vector< uddtM3 > input( length, initialMixM3  );
-    bolt::amp::device_vector< uddtM3 > output( length);
+    //bolt::amp::device_vector< uddtM3 > output( length);
     std::vector< uddtM3 > refInput( length, initialMixM3  );
-    std::vector< uddtM3 > refOutput( length);
+    //std::vector< uddtM3 > refOutput( length);
 
     bolt::amp::control ctl = bolt::amp::control::getDefault( );
     ctl.setForceRunMode(bolt::amp::control::SerialCpu);
     // call scan
     MixM3 M3;
-    bolt::amp::inclusive_scan( ctl,  input.begin(),    input.end(),    output.begin(), M3 );
-    ::std::partial_sum(refInput.begin(), refInput.end(), refOutput.begin(), M3);
-    
-    cmpArrays(refOutput, output);  
+/*    bolt::amp::inclusive_scan( ctl,  input.begin(),    input.end(),    output.begin(), M3 );
+    ::std::partial_sum(refInput.begin(), refInput.end(), refOutput.begin(), M3); 
+    cmpArrays(refOutput, output); */ 
+
+	bolt::amp::inclusive_scan( ctl, input.begin(),    input.end(),    input.begin(), M3 );
+    ::std::partial_sum(refInput.begin(), refInput.end(), refInput.begin(), M3);
+    cmpArrays(refInput, input);
 } 
 
 TEST(InclusiveScan, MulticoreDeviceVectorIncluddtM3)
@@ -1359,17 +1524,20 @@ TEST(InclusiveScan, MulticoreDeviceVectorIncluddtM3)
     //setup containers
     size_t length = 1<<10;
     bolt::amp::device_vector< uddtM3 > input( length, initialMixM3  );
-    bolt::amp::device_vector< uddtM3 > output( length);
+    //bolt::amp::device_vector< uddtM3 > output( length);
     std::vector< uddtM3 > refInput( length, initialMixM3  );
-    std::vector< uddtM3 > refOutput( length);
+    //std::vector< uddtM3 > refOutput( length);
 
     bolt::amp::control ctl = bolt::amp::control::getDefault( );
     ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu); 
     MixM3 M3;
-    bolt::amp::inclusive_scan( ctl,  input.begin(),    input.end(),    output.begin(), M3 );
-    ::std::partial_sum(refInput.begin(), refInput.end(), refOutput.begin(), M3);
-    
-    cmpArrays(refOutput, output);  
+   /* bolt::amp::inclusive_scan( ctl,  input.begin(),    input.end(),    output.begin(), M3 );
+    ::std::partial_sum(refInput.begin(), refInput.end(), refOutput.begin(), M3); 
+    cmpArrays(refOutput, output);  */
+
+	bolt::amp::inclusive_scan( ctl, input.begin(),    input.end(),    input.begin(), M3 );
+    ::std::partial_sum(refInput.begin(), refInput.end(), refInput.begin(), M3);
+    cmpArrays(refInput, input);
 } 
 
 
@@ -1379,24 +1547,30 @@ TEST(ExclusiveScan, DeviceVectorExclFloat)
     //setup containers
     size_t length = 1<<10;
     bolt::amp::device_vector< float > input( length);
-    bolt::amp::device_vector< float > output( length);
+    //bolt::amp::device_vector< float > output( length);
     std::vector< float > refInput( length);
-    std::vector< float > refOutput( length);
+    //std::vector< float > refOutput( length);
     for(size_t i=0; i<length; i++) {
-        input[i] = 2.0f;
+        input[i] = 1.0f + rand()%3;
         if(i != length-1)
-           refInput[i+1] = 2.0f;
+           refInput[i+1] = input[i];
         //refInput[i] = 2.0f;
     }
     refInput[0] = 3.0f;
 
     // call scan
     bolt::amp::plus<float> ai2;
-    ::std::partial_sum(refInput.begin(), refInput.end(), refOutput.begin(), ai2);
-    bolt::amp::exclusive_scan( input.begin(),    input.end(),    output.begin(), 3.0f, ai2 );
+    //::std::partial_sum(refInput.begin(), refInput.end(), refOutput.begin(), ai2);
+    //bolt::amp::exclusive_scan( input.begin(),    input.end(),    output.begin(), 3.0f, ai2 );
+
+    //// compare results
+    //cmpArrays(refOutput, output);
+
+	::std::partial_sum(refInput.begin(), refInput.end(), refInput.begin(), ai2);
+    bolt::amp::exclusive_scan( input.begin(),    input.end(),    input.begin(), 3.0f, ai2 );
 
     // compare results
-    cmpArrays(refOutput, output);
+    cmpArrays(refInput, input);
 }
 
 TEST(ExclusiveScan, SerialDeviceVectorExclFloat)
@@ -1404,13 +1578,13 @@ TEST(ExclusiveScan, SerialDeviceVectorExclFloat)
     //setup containers
     size_t length = 1<<10;
     bolt::amp::device_vector< float > input( length);
-    bolt::amp::device_vector< float > output( length);
+    //bolt::amp::device_vector< float > output( length);
     std::vector< float > refInput( length);
-    std::vector< float > refOutput( length);
+    //std::vector< float > refOutput( length);
     for(size_t i=0; i<length; i++) {
-        input[i] = 2.0f;
+        input[i] = 1.0f + rand()%3;
         if(i != length-1)
-           refInput[i+1] = 2.0f;
+           refInput[i+1] = input[i];
         //refInput[i] = 2.0f;
     }
     refInput[0] = 3.0f;
@@ -1419,11 +1593,17 @@ TEST(ExclusiveScan, SerialDeviceVectorExclFloat)
     ctl.setForceRunMode(bolt::amp::control::SerialCpu); 
     // call scan
     bolt::amp::plus<float> ai2;
-    ::std::partial_sum(refInput.begin(), refInput.end(), refOutput.begin(), ai2);
-    bolt::amp::exclusive_scan( ctl,  input.begin(),    input.end(),    output.begin(), 3.0f, ai2 );
+    //::std::partial_sum(refInput.begin(), refInput.end(), refOutput.begin(), ai2);
+    //bolt::amp::exclusive_scan( ctl,  input.begin(),    input.end(),    output.begin(), 3.0f, ai2 );
+
+    //// compare results
+    //cmpArrays(refOutput, output);
+
+	::std::partial_sum(refInput.begin(), refInput.end(), refInput.begin(), ai2);
+    bolt::amp::exclusive_scan(ctl, input.begin(),    input.end(),    input.begin(), 3.0f, ai2 );
 
     // compare results
-    cmpArrays(refOutput, output);
+    cmpArrays(refInput, input);
 }
 
 TEST(ExclusiveScan, MulticoreDeviceVectorExclFloat)
@@ -1431,13 +1611,13 @@ TEST(ExclusiveScan, MulticoreDeviceVectorExclFloat)
     //setup containers
     size_t length = 1<<10;
     bolt::amp::device_vector< float > input( length);
-    bolt::amp::device_vector< float > output( length);
+    //bolt::amp::device_vector< float > output( length);
     std::vector< float > refInput( length);
-    std::vector< float > refOutput( length);
+   // std::vector< float > refOutput( length);
     for(size_t i=0; i<length; i++) {
-        input[i] = 2.0f;
+        input[i] = 1.0f + rand()%3;
         if(i != length-1)
-           refInput[i+1] = 2.0f;
+           refInput[i+1] = input[i];
         //refInput[i] = 2.0f;
     }
     refInput[0] = 3.0f;
@@ -1446,11 +1626,18 @@ TEST(ExclusiveScan, MulticoreDeviceVectorExclFloat)
     ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu);
     // call scan
     bolt::amp::plus<float> ai2;
-    ::std::partial_sum(refInput.begin(), refInput.end(), refOutput.begin(), ai2);
-    bolt::amp::exclusive_scan( ctl,  input.begin(),    input.end(),    output.begin(), 3.0f, ai2 );
+    //::std::partial_sum(refInput.begin(), refInput.end(), refOutput.begin(), ai2);
+    //bolt::amp::exclusive_scan( ctl,  input.begin(),    input.end(),    output.begin(), 3.0f, ai2 );
+
+    //// compare results
+    //cmpArrays(refOutput, output);
+
+	
+	::std::partial_sum(refInput.begin(), refInput.end(), refInput.begin(), ai2);
+    bolt::amp::exclusive_scan(ctl, input.begin(),    input.end(),    input.begin(), 3.0f, ai2 );
 
     // compare results
-    cmpArrays(refOutput, output);
+    cmpArrays(refInput, input);
 }
 
 
@@ -1461,15 +1648,20 @@ TEST(ExclusiveScan, DeviceVectorExcluddtM3)
     size_t length = 1<<10;
   
     bolt::amp::device_vector< uddtM3 > input( length, initialMixM3  );
-    bolt::amp::device_vector< uddtM3 > output( length);
+    //bolt::amp::device_vector< uddtM3 > output( length);
     std::vector< uddtM3 > refInput( length, initialMixM3  ); refInput[0] = initialMixM3;
-    std::vector< uddtM3 > refOutput( length);
+    //std::vector< uddtM3 > refOutput( length);
     // call scan
     MixM3 M3;
-    bolt::amp::exclusive_scan( input.begin(),    input.end(),    output.begin(), initialMixM3, M3 );
+   /* bolt::amp::exclusive_scan( input.begin(),    input.end(),    output.begin(), initialMixM3, M3 );
     ::std::partial_sum(refInput.begin(), refInput.end(), refOutput.begin(), M3);
     
-    cmpArrays(refOutput, output);  
+    cmpArrays(refOutput, output);  */
+
+	bolt::amp::exclusive_scan( input.begin(),    input.end(),    input.begin(), initialMixM3, M3 );
+    ::std::partial_sum(refInput.begin(), refInput.end(), refInput.begin(), M3);
+    
+    cmpArrays(refInput, input);  
 } 
 
 TEST(ExclusiveScan, SerialDeviceVectorExcluddtM3)
@@ -1478,17 +1670,22 @@ TEST(ExclusiveScan, SerialDeviceVectorExcluddtM3)
     size_t length = 1<<10;
   
     bolt::amp::device_vector< uddtM3 > input( length, initialMixM3  );
-    bolt::amp::device_vector< uddtM3 > output( length);
+    //bolt::amp::device_vector< uddtM3 > output( length);
     std::vector< uddtM3 > refInput( length, initialMixM3  ); refInput[0] = initialMixM3;
-    std::vector< uddtM3 > refOutput( length);
+    //std::vector< uddtM3 > refOutput( length);
     bolt::amp::control ctl = bolt::amp::control::getDefault( );
     ctl.setForceRunMode(bolt::amp::control::SerialCpu); 
     // call scan
     MixM3 M3;
-    bolt::amp::exclusive_scan( ctl,  input.begin(),    input.end(),    output.begin(), initialMixM3, M3 );
+    /*bolt::amp::exclusive_scan( ctl,  input.begin(),    input.end(),    output.begin(), initialMixM3, M3 );
     ::std::partial_sum(refInput.begin(), refInput.end(), refOutput.begin(), M3);
     
-    cmpArrays(refOutput, output);  
+    cmpArrays(refOutput, output);  */
+
+	bolt::amp::exclusive_scan( ctl, input.begin(),    input.end(),    input.begin(), initialMixM3, M3 );
+    ::std::partial_sum(refInput.begin(), refInput.end(), refInput.begin(), M3);
+    
+    cmpArrays(refInput, input);  
 } 
 
 TEST(ExclusiveScan, MulticoreDeviceVectorExcluddtM3)
@@ -1497,16 +1694,21 @@ TEST(ExclusiveScan, MulticoreDeviceVectorExcluddtM3)
     size_t length = 1<<10;
   
     bolt::amp::device_vector< uddtM3 > input( length, initialMixM3  );
-    bolt::amp::device_vector< uddtM3 > output( length);
+    //bolt::amp::device_vector< uddtM3 > output( length);
     std::vector< uddtM3 > refInput( length, initialMixM3  ); refInput[0] = initialMixM3;
-    std::vector< uddtM3 > refOutput( length);
+    //std::vector< uddtM3 > refOutput( length);
     bolt::amp::control ctl = bolt::amp::control::getDefault( );
     ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu);
     MixM3 M3;
-    bolt::amp::exclusive_scan( ctl,  input.begin(),    input.end(),    output.begin(), initialMixM3, M3 );
+    /*bolt::amp::exclusive_scan( ctl,  input.begin(),    input.end(),    output.begin(), initialMixM3, M3 );
     ::std::partial_sum(refInput.begin(), refInput.end(), refOutput.begin(), M3);
     
-    cmpArrays(refOutput, output);  
+    cmpArrays(refOutput, output); */ 
+
+	bolt::amp::exclusive_scan( ctl, input.begin(),    input.end(),    input.begin(), initialMixM3, M3 );
+    ::std::partial_sum(refInput.begin(), refInput.end(), refInput.begin(), M3);
+    
+    cmpArrays(refInput, input);  
 } 
 
 
