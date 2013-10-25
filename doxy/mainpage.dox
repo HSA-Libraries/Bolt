@@ -211,16 +211,41 @@ like BOLT_TEMPLATE_FUNCTOR2, BOLT_TEMPLATE_FUNCTOR3 etc from include/bolt/cl/clc
 * \subsubsection Force Force Behaviour
 * Forcing mode to any device will run the function on that device only. There are two ways in BOLT to force the control to specific Device.
 *   -# <b> Setting control to Device Globally: </b>
-*      \code bolt::cl::control& myControl = bolt::cl::control::getDefault( );
-*  myControl.waitMode( bolt::cl::control::NiceWait );
-*  myControl.setForceRunMode( bolt::cl::control::OpenCL );
+*      \code 
+*       bolt::cl::control& myControl = bolt::cl::control::getDefault( );
+*       myControl.waitMode( bolt::cl::control::NiceWait );
+*       myControl.setForceRunMode( bolt::cl::control::OpenCL );
 *      \endcode
 *   -# <b> Setting control to Device locally </b>
-*       \code bolt::amp::control ctl = bolt::amp::control::getDefault( );
-* ctl.setForceRunMode(bolt::amp::control::OpenCL);
+*       \code 
+*       bolt::cl::control ctl = bolt::cl::control::getDefault( );
+*       ctl.setForceRunMode(bolt::cl::control::OpenCL);
 *       \endcode
 * This will set the control to specified device locally, passing this control object to BOLT function enables specified device 
 * path only for that function, so reference to any BOLT function will always run specified device path.
+
+* \section Debug Debug Log Facility
+* If Debug log is enabled, we record the actual code path taken for execution. It could be OpenCL™ GPU/CPU, Multicore TBB or Serial.
+* User just need to initialize Log object before the bolt call and a query after the call to know which all paths have been executed.
+*   -# <b> Initialization </b>
+*   \code 
+*         #define BOLT_DEBUG_LOG
+*	      #include "bolt/BoltLog.h"
+*         BOLTLOG::CaptureLog *xyz =  BOLTLOG::CaptureLog::getInstance();
+*         xyz->Initialize();
+*         std::vector< BOLTLOG::FunPaths> paths;
+*  \endcode
+*   -# <b> Querying </b>
+*       \code
+*       xyz->WhatPathTaken(paths);
+*       for(std::vector< BOLTLOG::FunPaths>::iterator parse=paths.begin(); parse!=paths.end(); parse++)
+*        {
+*           std::cout<<(*parse).fun<<”\n”;  // prints function number as defined in Boltlog.h
+*           std::cout<<(*parse).path<<”\n”;  // prints the path number – 0 for Multicore TBB, 1 for OpenCL™ GPU, 2 for OpenCL™ CPU and 3 for Serial.
+*           std::cout<<(*parse).msg<<”\n”;  // prints the Path taken
+*        }
+*       \endcode
+* When multiple functions are called, they are logged in the order invoked. E.g. sort & then search.
 
 
  * \section Requirements Requirements 
@@ -232,11 +257,11 @@ like BOLT_TEMPLATE_FUNCTOR2, BOLT_TEMPLATE_FUNCTOR3 etc from include/bolt/cl/clc
  
 * \subsection Prerequisites Prerequisites
 * \subsubsection Windows Windows
-* -# Windows® 7/8
 * -# Visual Studio 2010 onwards (VS2012 for C++ AMP)
+* -# Tested with 32/64 bit Windows® 7/8 and Windows® Blue
 * -# CMake 2.8.10
 * -# TBB (For Multicore CPU path only) (4.1 Update 1 or Above) . See Building Bolt with TBB.
-* -# APP SDK 2.7 or onwards.
+* -# APP SDK 2.8 or onwards.
 
 * <b>Note:</b> If the user has installed both Visual Studio 2012 and Visual Studio 2010, the latter should be updated to SP1.
 
@@ -247,7 +272,15 @@ like BOLT_TEMPLATE_FUNCTOR2, BOLT_TEMPLATE_FUNCTOR3 etc from include/bolt/cl/clc
 * -# TBB (For Multicore CPU path only) (4.1 Update 1 or Above) . See Building Bolt with TBB.
 * -# APP SDK 2.8 or onwards.
 
+* <b>Note:</b> Bolt pre-built binaries for Linux are build with GCC 4.7.3, same version should be used for Application(using Bolt) building else used has to build Bolt from source with GCC 4.6.3 or higher.
 
+* \subsection Package Catalyst™ package
+* The latest Catalyst package contains the most recent OpenCL runtime. Recommended Catalyst package is 13.11 Beta V1. 
+
+* 13.4 and higher is supported.
+
+* <b>Note:</b> 13.9 in not supported. 
+ 
 * \subsection Support Supported Devices
 
 *<b>AMD APU Family with AMD Radeon™ HD Graphics</b>
