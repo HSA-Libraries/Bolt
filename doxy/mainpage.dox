@@ -272,7 +272,7 @@ like BOLT_TEMPLATE_FUNCTOR2, BOLT_TEMPLATE_FUNCTOR3 etc from include/bolt/cl/clc
 * -# TBB (For Multicore CPU path only) (4.1 Update 1 or Above) . See Building Bolt with TBB.
 * -# APP SDK 2.8 or onwards.
 
-* <b>Note:</b> Bolt pre-built binaries for Linux are build with GCC 4.7.3, same version should be used for Application(using Bolt) building else used has to build Bolt from source with GCC 4.6.3 or higher.
+* <b>Note:</b> Bolt pre-built binaries for Linux are build with GCC 4.7.3, same version should be used for Application building else user has to build Bolt from source with GCC 4.6.3 or higher.
 
 * \subsection Package Catalyst™ package
 * The latest Catalyst package contains the most recent OpenCL runtime. Recommended Catalyst package is 13.11 Beta V1. 
