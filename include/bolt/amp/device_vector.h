@@ -46,9 +46,10 @@ namespace amp
 /*! \addtogroup Containers
  */
 
-/*! \addtogroup Device
+/*! \addtogroup AMP-Device
 *   \ingroup Containers
-*   Containers that guarantee sequential and linear access to memory "close" to the device
+*   Containers that guarantee random access to a flat, sequential region of memory that is performant
+*   for the device.
 */
 
 
@@ -59,7 +60,7 @@ namespace amp
         };
 
 /*! \brief This defines the AMP version of a device_vector
-*   \ingroup Device
+*   \ingroup AMP-Device
 *   \details A device_vector is an abstract data type that provides random access to a flat, sequential region of memory that is performant
 *   for the device.  This can imply different memories for different devices.  For discrete class graphics,
 *   devices, this is most likely video memory; for APU devices, this can imply zero-copy memory; for CPU devices, this can imply
