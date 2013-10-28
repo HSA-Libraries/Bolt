@@ -382,6 +382,30 @@ TEST( MergeUDD , UDDPlusOperatorInts )
 
 }
 
+TEST(MergeEPR, MergeAuto388613){
+    int stdVectSize1 = 10;
+    int stdVectSize2 = 20;
+
+    std::vector<int> A(stdVectSize1);
+    std::vector<int> B(stdVectSize1);
+    std::vector<int> stdmerge(stdVectSize2);
+    std::vector<int> boltmerge(stdVectSize2);
+
+    for (int i = 0; i < stdVectSize1; i++){
+        A[i] = 10 ;
+        B[i] = 20 ;
+    }
+
+    std::merge(A.begin(), A.end(), B.begin(), B.end(), stdmerge.begin());
+    bolt::cl::control ctl;
+    ctl.setForceRunMode(bolt::cl::control::Automatic);
+    bolt::cl::merge(ctl, A.begin(), A.end(), B.begin(), B.end(), boltmerge.begin());
+
+    for(int i = 0; i < stdVectSize2; i++) {
+      EXPECT_EQ(boltmerge[i],stdmerge[i]);
+    }
+}
+
 TEST(sanity_merge__dev_vect_2, wi_ctrl_floats){
     int stdVectSize1 = 10;
     int stdVectSize2 = 20;
@@ -405,7 +429,7 @@ TEST(sanity_merge__dev_vect_2, wi_ctrl_floats){
     }
 
     std::merge(A.begin(), A.end(), B.begin(), B.end(), stdmerge.begin());
-    bolt::cl::merge(A.begin(), A.end(), B.begin(), B.end(), boltmerge.begin());
+    bolt::cl::merge( A.begin(), A.end(), B.begin(), B.end(), boltmerge.begin());
 
 
     for(int i = 0; i < stdVectSize2; i++) {
