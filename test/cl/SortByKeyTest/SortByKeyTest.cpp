@@ -216,6 +216,33 @@ protected:
     int VectorSize;
 };
 
+class StableSortbyKeyUnsignedIntegerVector: public ::testing::TestWithParam< int >
+{
+    public:
+
+    StableSortbyKeyUnsignedIntegerVector( ): stdValues( GetParam( ) ), boltValues( GetParam( ) ), boltKeys( GetParam( ) ),
+                                    stdOffsetValues( GetParam( ) ), boltOffsetValues( GetParam( ) ), boltOffsetKeys( GetParam( ) ), VectorSize(GetParam( ))
+    {
+        for (int i=0;i<GetParam( );i++)
+        {
+            stdValues[i].key = rand();
+            stdValues[i].value = i+3;
+            boltValues[i] = stdValues[i].value;
+            boltKeys[i] = stdValues[i].key;
+
+            stdOffsetValues[i].key = rand();
+            stdOffsetValues[i].value = i+3;
+            boltOffsetValues[i] = stdOffsetValues[i].value;
+            boltOffsetKeys[i] = stdOffsetValues[i].key;
+        }
+    }
+
+protected:
+    std::vector< stdSortData<unsigned int> > stdValues, stdOffsetValues;
+    std::vector< unsigned int > boltValues, boltKeys, boltOffsetValues, boltOffsetKeys;
+    int VectorSize;
+};
+
 //  ::testing::TestWithParam< int > means that GetParam( ) returns int values, which i use for array size
 class StableSortbyKeyFloatVector: public ::testing::TestWithParam< int >
 {
@@ -292,8 +319,8 @@ public:
     }
 
 protected:
-    std::vector< stdSortData<int> > stdValues;
-    bolt::cl::device_vector< int > boltValues, boltKeys;
+    std::vector< stdSortData<unsigned int> > stdValues;
+    bolt::cl::device_vector< unsigned int > boltValues, boltKeys;
     int VectorSize;
 };
 
@@ -551,6 +578,41 @@ TEST_P(StableSortByKeyCountingIterator, DVwithCountingIterator)
     cmpArraysSortByKey( stdValues, key_first, value, mySize);
 
 } */
+
+TEST_P( StableSortbyKeyUnsignedIntegerVector, Normal )
+{
+    //  Calling the actual functions under test
+    std::sort( stdValues.begin( ), stdValues.end( ));
+    bolt::BKND::STABLE_SORT_FUNC( boltKeys.begin( ), boltKeys.end( ), boltValues.begin( ) );
+
+    std::vector< stdSortData< unsigned int> >::iterator::difference_type stdValueElements = std::distance( stdValues.begin( ),
+                                                                                                 stdValues.end() );
+    std::vector< unsigned int >::iterator::difference_type boltValueElements = std::distance( boltValues.begin( ),
+                                                                                     boltValues.end() );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdValueElements, boltValueElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpArraysSortByKey( stdValues, boltKeys, boltValues,  VectorSize);
+
+    //  OFFSET Calling the actual functions under test
+    //int startIndex = 17; //Some aribitrary offset position
+    //int endIndex   = VectorSize -17; //Some aribitrary offset position
+
+    //if( (( startIndex > VectorSize ) || ( endIndex < 0 ) )  || (startIndex > endIndex) )
+    //{
+    //    std::cout <<"\nSkipping NormalOffset Test for size "<< VectorSize << "\n";
+    //}
+    //else
+    //{
+    //    std::sort( stdOffsetValues.begin( ) + startIndex, stdOffsetValues.begin( ) + endIndex );
+    //    bolt::BKND::STABLE_SORT_FUNC( boltOffsetKeys.begin( ) + startIndex, boltOffsetKeys.begin( ) + endIndex, boltOffsetValues.begin( ) );
+
+    //    //  Loop through the array and compare all the values with each other
+    //    cmpArraysSortByKey( stdOffsetValues, boltOffsetKeys, boltOffsetValues,  VectorSize );
+    //}
+}
 
 TEST_P( StableSortbyKeyIntegerVector, Normal )
 {
@@ -1250,7 +1312,7 @@ TEST_P( StableSortbyKeyDoubleNakedPointer, MultiCoreInplace )
 
 #endif
 #endif
-std::array<int, 15> TestValues = {2,4,8,16,32,64,128,256,512,1024};
+std::array<int, 15> TestValues = {2,4,8,16,32,64,128,256,512,1024,2048};
 std::array<int, 15> TestValues2 = {2048,4096,8192,16384,32768};
 
 //INSTANTIATE_TEST_CASE_P( StableSortByKeyValues, StableSortByKeyCountingIterator,
@@ -1259,6 +1321,8 @@ std::array<int, 15> TestValues2 = {2048,4096,8192,16384,32768};
 //Test lots of consecutive numbers, but small range, suitable for integers because they overflow easier
 INSTANTIATE_TEST_CASE_P( StableSortByKeyRange, StableSortbyKeyIntegerVector, ::testing::Range( 0, 1024, 97 ) ); //7
 INSTANTIATE_TEST_CASE_P( StableSortByKeyValues, StableSortbyKeyIntegerVector, ::testing::ValuesIn( TestValues.begin(),
+                                                                                      TestValues.end() ) );
+INSTANTIATE_TEST_CASE_P( StableSortByKeyValues, StableSortbyKeyUnsignedIntegerVector, ::testing::ValuesIn( TestValues.begin(),
                                                                                       TestValues.end() ) );
 #if(TEST_LARGE_BUFFERS == 1)
 INSTANTIATE_TEST_CASE_P( StableSortByKeyValues, StableSortbyKeyIntegerVector, ::testing::ValuesIn( TestValues2.begin(),

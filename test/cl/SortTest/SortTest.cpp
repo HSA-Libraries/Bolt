@@ -304,6 +304,12 @@ public:
 
 //  Test fixture class, used for the Type-parameterized tests
 //  Namely, the tests that use std::array and TYPED_TEST_P macros
+
+unsigned int random_data()
+{
+    return (unsigned int)(rand() * rand() * rand());
+}
+
 template< typename ArrayTuple >
 class SortArrayTest: public ::testing::Test
 {
@@ -311,9 +317,10 @@ public:
     SortArrayTest( ): m_Errors( 0 )
     {}
 
+
     virtual void SetUp( )
     {
-        std::generate(stdInput.begin(), stdInput.end(), rand);
+        std::generate(stdInput.begin(), stdInput.end(), random_data);
         boltInput = stdInput;
         stdOffsetIn = stdInput;
         boltOffsetIn = stdInput;
@@ -872,12 +879,12 @@ public:
         if(toggle == 0)
         {
             toggle = 1;
-            return -rand();
+            return -(rand()*rand()*rand());
         }
         else
         {
             toggle = 0;
-            return rand();
+            return (rand()*rand()*rand());
         }
     }
     SortIntegerVector( ): stdInput( GetParam( ) ), boltInput( GetParam( ) )
@@ -2195,12 +2202,12 @@ TEST_P( SortDoubleNakedPointer, MulticoreInplace )
 
 #endif
 */
-std::array<int, 15> TestValues = {2,4,8,16,32,64,128,256,512,1024};
+std::array<int, 15> TestValues = {2,4,8,16,32,64,128,256,512,1024, 32768};
 std::array<int, 15> TestValues2 = {2048,4096,8192,16384,32768};
 
 
 //Test lots of consecutive numbers, but small range, suitable for integers because they overflow easier
-INSTANTIATE_TEST_CASE_P( SortRange, SortIntegerVector, ::testing::Range( 0, 1024, 7 ) );
+INSTANTIATE_TEST_CASE_P( SortRange, SortIntegerVector, ::testing::Range( 0, 67183, 1013 ) );
 INSTANTIATE_TEST_CASE_P( SortValues, SortIntegerVector, ::testing::ValuesIn( TestValues.begin(),
                                                                             TestValues.end() ) );
 #if(TEST_LARGE_BUFFERS == 1)																			
@@ -2361,7 +2368,7 @@ typedef ::testing::Types<
     std::tuple< unsigned int, TypeValue< 1000 > >,
     std::tuple< unsigned int, TypeValue< 1053 > >,
     std::tuple< unsigned int, TypeValue< 4096 > >,
-    std::tuple< unsigned int, TypeValue< 4097 > >
+    std::tuple< unsigned int, TypeValue< 4097 > >,
 #if (TEST_LARGE_BUFFERS == 1)
     , /*This coma is needed*/
     std::tuple< unsigned int, TypeValue< 8192 > >,
@@ -2542,6 +2549,7 @@ typedef ::testing::Types<
 #endif
 > cl_shortTests;
 
+INSTANTIATE_TYPED_TEST_CASE_P( UnsignedInteger, SortArrayTest, UnsignedIntegerTests );
 /*
 INSTANTIATE_TYPED_TEST_CASE_P( cl_ushort, SortArrayTest, cl_ushortTests );
 INSTANTIATE_TYPED_TEST_CASE_P( cl_short, SortArrayTest, cl_shortTests );

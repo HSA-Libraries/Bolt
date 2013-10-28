@@ -27,6 +27,7 @@
 #include <boost/shared_array.hpp>
 
 #include "bolt/cl/bolt.h"
+#include "bolt/cl/sort.h"
 #include "bolt/cl/functional.h"
 #include "bolt/cl/device_vector.h"
 
@@ -85,7 +86,11 @@ namespace detail
 
 
 template<typename DVRandomAccessIterator, typename StrictWeakOrdering>
-void stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVRandomAccessIterator& last,
+typename std::enable_if<
+    !(std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type, unsigned int >::value || 
+      std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type, int >::value  )
+                       >::type
+stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVRandomAccessIterator& last,
              const StrictWeakOrdering& comp, const std::string& cl_code)
 {
     cl_int l_Error;
@@ -275,6 +280,33 @@ void stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, cons
 
     return;
 }// END of sort_enqueue
+
+
+template<typename DVRandomAccessIterator, typename StrictWeakOrdering>
+typename std::enable_if< std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type,
+                                       unsigned int
+                                     >::value
+                       >::type  /*If enabled then this typename will be evaluated to void*/
+stablesort_enqueue(control &ctl,
+             DVRandomAccessIterator first, DVRandomAccessIterator last,
+             StrictWeakOrdering comp, const std::string& cl_code)
+{
+    bolt::cl::detail::sort_enqueue(ctl, first, last, comp, cl_code);
+    return;
+}
+
+template<typename DVRandomAccessIterator, typename StrictWeakOrdering>
+typename std::enable_if< std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type,
+                                       int
+                                     >::value
+                       >::type  /*If enabled then this typename will be evaluated to void*/
+stablesort_enqueue(control &ctl,
+             DVRandomAccessIterator first, DVRandomAccessIterator last,
+             StrictWeakOrdering comp, const std::string& cl_code)
+{
+    bolt::cl::detail::sort_enqueue(ctl, first, last, comp, cl_code);
+    return;
+}
 
 //Non Device Vector specialization.
 //This implementation creates a cl::Buffer and passes the cl buffer to the sort specialization whichtakes the

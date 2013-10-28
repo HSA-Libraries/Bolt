@@ -46,12 +46,9 @@ typedef unsigned int u32;
 #define m_nBlocksPerWG  w
 
 #define WG_SIZE 256
-//#define ELEMENTS_PER_WORK_ITEM (1024/WG_SIZE)
 #define BITS_PER_PASS 4
 #define NUM_BUCKET (1<<BITS_PER_PASS)
 
-
-    // __attribute__((reqd_work_group_size((powers of 2),1,1)))
 uint scanLocalMemAndTotal(uint val, __local uint* lmem, uint *totalSum, int exclusive)
 {
     // Set first half of local memory to zero to make room for scanning
@@ -63,7 +60,6 @@ uint scanLocalMemAndTotal(uint val, __local uint* lmem, uint *totalSum, int excl
     lmem[l_id] = val;
     barrier(CLK_LOCAL_MEM_FENCE);
     
-    // Now, perform Kogge-Stone scan
     uint t;
     for (int i = 1; i < l_size; i *= 2)
     {
@@ -94,7 +90,6 @@ uint prefixScanVectorEx( uint4* data )
     return sum;
 }
 
-//__attribute__((reqd_work_group_size(256,1,1)))
 uint4 localPrefixSum256V( uint4 pData, uint lIdx, uint* totalSum, __local u32* sorterSharedMemory )
 {
     u32 s4 = prefixScanVectorEx( &pData );
@@ -102,40 +97,40 @@ uint4 localPrefixSum256V( uint4 pData, uint lIdx, uint* totalSum, __local u32* s
     return pData + make_uint4( rank, rank, rank, rank );
 }
 
-
-void sort4BitsAscending(u32 sortData[4], int startBit, int lIdx, __local u32* ldsSortData)
+template<typename Values>
+void sort4BitsKeyValueAscending(u32 sortData[4],  Values sortVal[4], const int startBit, int lIdx, __local u32* ldsSortData, __local Values *ldsSortVal)
 {
-    //printf("before sort lid = %d - %x %x %x %x \n", lIdx, sortData[0], sortData[1], sortData[2], sortData[3]);
     for(int bitIdx=0; bitIdx<BITS_PER_PASS; bitIdx++)
     {
         u32 mask = (1<<bitIdx);
         uint4 cmpResult = make_uint4( (sortData[0]>>startBit) & mask, (sortData[1]>>startBit) & mask, (sortData[2]>>startBit) & mask, (sortData[3]>>startBit) & mask );
-        //printf("cmpResult        lid = %d - %x %x %x %x \n",lIdx, cmpResult.x, cmpResult.y, cmpResult.z, cmpResult.w);
 #if defined(DESCENDING)
         uint4 prefixSum = SELECT_UINT4( make_uint4(1,1,1,1), make_uint4(0,0,0,0), cmpResult != make_uint4(mask,mask,mask,mask) );
 #else
         uint4 prefixSum = SELECT_UINT4( make_uint4(1,1,1,1), make_uint4(0,0,0,0), cmpResult != make_uint4(0,0,0,0) );
 #endif
-        //printf("Before prefixSum lid = %d - %x %x %x %x \n",lIdx, prefixSum.x, prefixSum.y, prefixSum.z, prefixSum.w);
         u32 total;
         prefixSum = localPrefixSum256V( prefixSum, lIdx, &total, ldsSortData );
-        //printf("total = %d\n", total);
-        //printf("After  prefixSum lid = %d - %x %x %x %x \n\n",lIdx, prefixSum.x, prefixSum.y, prefixSum.z, prefixSum.w);
         {
             uint4 localAddr = make_uint4(lIdx*4+0,lIdx*4+1,lIdx*4+2,lIdx*4+3);
             uint4 dstAddr = localAddr - prefixSum + make_uint4( total, total, total, total );
 #if defined(DESCENDING)
-            dstAddr = SELECT_UINT4( prefixSum, dstAddr, cmpResult != make_uint4(mask,mask,mask,mask) );
+            dstAddr = SELECT_UINT4( prefixSum, dstAddr, cmpResult != make_uint4( mask,mask,mask,mask ) );
 #else
             dstAddr = SELECT_UINT4( prefixSum, dstAddr, cmpResult != make_uint4(0,0,0,0) );
 #endif
-        //printf("dstAddr          lid = %d - %x %x %x %x \n\n",lIdx, dstAddr.x, dstAddr.y, dstAddr.z, dstAddr.w);
-            GROUP_LDS_BARRIER;
 
+            GROUP_LDS_BARRIER;
+        
             ldsSortData[dstAddr.x] = sortData[0];
             ldsSortData[dstAddr.y] = sortData[1];
             ldsSortData[dstAddr.z] = sortData[2];
             ldsSortData[dstAddr.w] = sortData[3];
+
+            ldsSortVal[dstAddr.x] = sortVal[0];
+            ldsSortVal[dstAddr.y] = sortVal[1];
+            ldsSortVal[dstAddr.z] = sortVal[2];
+            ldsSortVal[dstAddr.w] = sortVal[3];
 
             GROUP_LDS_BARRIER;
 
@@ -144,18 +139,27 @@ void sort4BitsAscending(u32 sortData[4], int startBit, int lIdx, __local u32* ld
             sortData[2] = ldsSortData[localAddr.z];
             sortData[3] = ldsSortData[localAddr.w];
 
+            sortVal[0] = ldsSortVal[localAddr.x];
+            sortVal[1] = ldsSortVal[localAddr.y];
+            sortVal[2] = ldsSortVal[localAddr.z];
+            sortVal[3] = ldsSortVal[localAddr.w];
+
             GROUP_LDS_BARRIER;
         }
     }
-    //printf("After sort lid = %d - %x %x %x %x \n", lIdx, sortData[0], sortData[1], sortData[2], sortData[3]);
-
 }
 
+template<typename Values>
 __kernel
-__attribute__((reqd_work_group_size(256,1,1)))
-void permuteAscInstantiated( __global const u32* restrict gSrc, __global const u32* rHistogram, __global u32* restrict gDst, int4  cb )
+void permuteByKeyAscTemplate( __global const u32* restrict gKeys, 
+                   __global const Values* restrict gValues, 
+                   __global const u32* rHistogram, 
+                   __global u32* restrict gDstKeys, 
+                   __global Values* restrict gDstValues, 
+                   int4 cb)
 {
-    __local u32 ldsSortData[WG_SIZE*ELEMENTS_PER_WORK_ITEM+WG_SIZE];
+    __local u32 ldsSortData[WG_SIZE*ELEMENTS_PER_WORK_ITEM+16];
+    __local Values ldsSortVal[WG_SIZE*ELEMENTS_PER_WORK_ITEM+16];
     __local u32 localHistogramToCarry[NUM_BUCKET];
     __local u32 localHistogram[NUM_BUCKET*2];
 
@@ -163,12 +167,13 @@ void permuteAscInstantiated( __global const u32* restrict gSrc, __global const u
     u32 lIdx = GET_LOCAL_IDX;
     u32 wgIdx = GET_GROUP_IDX;
     u32 wgSize = GET_GROUP_SIZE;
+
     const int dataAlignment = 1024;
     const int n = cb.m_n;
     const int w_n = n + dataAlignment-(n%dataAlignment);
 
     const int nWGs = cb.m_nWGs;
-    const int startBit     = cb.m_startBit;
+    const int startBit = cb.m_startBit;
     const int nBlocksPerWG = cb.m_nBlocksPerWG;
 
     if( lIdx < (NUM_BUCKET) )
@@ -178,10 +183,10 @@ void permuteAscInstantiated( __global const u32* restrict gSrc, __global const u
 #else
         localHistogramToCarry[lIdx] = rHistogram[lIdx*nWGs + wgIdx];
 #endif
-        
     }
 
     GROUP_LDS_BARRIER;
+    
 
     const int blockSize = ELEMENTS_PER_WORK_ITEM*WG_SIZE;
 
@@ -191,38 +196,38 @@ void permuteAscInstantiated( __global const u32* restrict gSrc, __global const u
 
     for(int iblock=0; iblock<min(nBlocksPerWG, nBlocks); iblock++, addr+=blockSize)
     {
+
         u32 myHistogram = 0;
 
         u32 sortData[ELEMENTS_PER_WORK_ITEM];
+        Values sortVal[ELEMENTS_PER_WORK_ITEM];
+
         for(int i=0; i<ELEMENTS_PER_WORK_ITEM; i++)
 #if defined(CHECK_BOUNDARY)
+        {
 #if defined(DESCENDING)
-            sortData[i] = ( addr+i < n )? gSrc[ addr+i ] : 0x0;
+            sortData[i] = ( addr+i < n )? gKeys[ addr+i ] : 0x0;
+            sortVal[i]  = ( addr+i < n )? gValues[ addr+i ] : 0x0;
 #else
-            sortData[i] = ( addr+i < n )? gSrc[ addr+i ] : 0xffffffff;
+            sortData[i] = ( addr+i < n )? gKeys[ addr+i ] : 0xffffffff;
+            sortVal[i]  = ( addr+i < n )? gValues[ addr+i ] : 0xffffffff;
 #endif
+        }
 #else
-            sortData[i] = gSrc[ addr+i ];
+        {
+            sortData[i] = gKeys[ addr+i ];
+            sortVal[i] = gValues[ addr+i ];
+        }
 #endif
-        //printf("before sort lid = %d - %x %x %x %x \n", lIdx, sortData[0], sortData[1], sortData[2], sortData[3]);
-#if defined(DESCENDING)
-        sort4BitsDescending(sortData, startBit, lIdx, ldsSortData);
-#else
-        sort4BitsAscending(sortData, startBit, lIdx, ldsSortData);
-#endif
-        ////printf("Before sort lid = %d - %x %x %x %x \n", lIdx, sortData[0], sortData[1], sortData[2], sortData[3]);
-        //printf("After sort lid = %d - %x %x %x %x \n", lIdx, ldsSortData[lIdx*ELEMENTS_PER_WORK_ITEM], 
-        //                                                     ldsSortData[lIdx*ELEMENTS_PER_WORK_ITEM+1], 
-        //                                                     ldsSortData[lIdx*ELEMENTS_PER_WORK_ITEM+2], 
-        //                                                     ldsSortData[lIdx*ELEMENTS_PER_WORK_ITEM+3] );
+        //printf("Before sort lid = %d - %x %x %x %x \n", lIdx, sortData[0], sortData[1], sortData[2], sortData[3]);
+        //sort4Bits1KeyValue(sortData, sortVal, startBit, lIdx, ldsSortData, ldsSortVal);
+        sort4BitsKeyValueAscending(sortData, sortVal, startBit, lIdx, ldsSortData, ldsSortVal);
+        //printf("After sort lid = %d - %x %x %x %x \n", lIdx, sortData[0], sortData[1], sortData[2], sortData[3]);
         u32 keys[ELEMENTS_PER_WORK_ITEM];
         for(int i=0; i<ELEMENTS_PER_WORK_ITEM; i++)
-        {
             keys[i] = (sortData[i]>>startBit) & 0xf;
-        }
-        //printf("After sort lid = %d - %x %x %x %x \n", lIdx, sortData[0], sortData[1], sortData[2], sortData[3]);
 
-        {	//	create histogram
+        {	
             u32 setIdx = lIdx/16;
             if( lIdx < NUM_BUCKET )
             {
@@ -235,6 +240,7 @@ void permuteAscInstantiated( __global const u32* restrict gSrc, __global const u
 #if defined(CHECK_BOUNDARY)
                 if( addr+i < n )
 #endif
+
 #if defined(NV_GPU)
                 SET_HISTOGRAM( setIdx, keys[i] )++;
 #else
@@ -244,9 +250,9 @@ void permuteAscInstantiated( __global const u32* restrict gSrc, __global const u
                 AtomInc( SET_HISTOGRAM( setIdx, keys[i] ) );
 #endif
 #endif
-
+            
             GROUP_LDS_BARRIER;
-
+            
             uint hIdx = NUM_BUCKET+lIdx;
             if( lIdx < NUM_BUCKET )
             {
@@ -307,15 +313,19 @@ void permuteAscInstantiated( __global const u32* restrict gSrc, __global const u
                 int binIdx = keys[ie];
                 int groupOffset = localHistogramToCarry[binIdx];
 #endif
-                //printf("gid = %d , binIdx=%d,  hist = %d\n", gIdx, binIdx, groupOffset);
-                int myIdx = dataIdx - localHistogram[NUM_BUCKET+binIdx];
 
+                int myIdx = dataIdx - localHistogram[NUM_BUCKET+binIdx];
 #if defined(CHECK_BOUNDARY)
                 if( addr+ie < n )
 #endif
-                    gDst[ groupOffset + myIdx ] = sortData[ie];
-                    //printf ( "(addr+ie)=%d, sortData[ie]=%d, groupOffset = %d, binIdx=%d, myIdx=%d, dataIdx=%d, localHistogram[NUM_BUCKET+binIdx]=%d,  (groupOffset + myIdx) = %d\n", 
-                    //      addr+ie, sortData[ie], groupOffset, binIdx,  myIdx, dataIdx, localHistogram[NUM_BUCKET+binIdx], groupOffset + myIdx );
+                {
+                    if ((groupOffset + myIdx)<n)
+                    {
+                        gDstKeys[ groupOffset + myIdx ] = sortData[ie];
+                        gDstValues[ groupOffset + myIdx ] = sortVal[ie];
+                        
+                    }
+                }
             }
         }
 
@@ -336,39 +346,40 @@ void permuteAscInstantiated( __global const u32* restrict gSrc, __global const u
 
 #define DESCENDING
 
-void sort4BitsDescending(u32 sortData[4], int startBit, int lIdx, __local u32* ldsSortData)
+template<typename Values>
+void sort4BitsKeyValueDescending(u32 sortData[4],  Values sortVal[4], const int startBit, int lIdx, __local u32* ldsSortData, __local Values *ldsSortVal)
 {
-    //printf("before sort lid = %d - %x %x %x %x \n", lIdx, sortData[0], sortData[1], sortData[2], sortData[3]);
     for(int bitIdx=0; bitIdx<BITS_PER_PASS; bitIdx++)
     {
         u32 mask = (1<<bitIdx);
         uint4 cmpResult = make_uint4( (sortData[0]>>startBit) & mask, (sortData[1]>>startBit) & mask, (sortData[2]>>startBit) & mask, (sortData[3]>>startBit) & mask );
-        //printf("cmpResult        lid = %d - %x %x %x %x \n",lIdx, cmpResult.x, cmpResult.y, cmpResult.z, cmpResult.w);
 #if defined(DESCENDING)
         uint4 prefixSum = SELECT_UINT4( make_uint4(1,1,1,1), make_uint4(0,0,0,0), cmpResult != make_uint4(mask,mask,mask,mask) );
 #else
         uint4 prefixSum = SELECT_UINT4( make_uint4(1,1,1,1), make_uint4(0,0,0,0), cmpResult != make_uint4(0,0,0,0) );
 #endif
-        //printf("Before prefixSum lid = %d - %x %x %x %x \n",lIdx, prefixSum.x, prefixSum.y, prefixSum.z, prefixSum.w);
         u32 total;
         prefixSum = localPrefixSum256V( prefixSum, lIdx, &total, ldsSortData );
-        //printf("total = %d\n", total);
-        //printf("After  prefixSum lid = %d - %x %x %x %x \n\n",lIdx, prefixSum.x, prefixSum.y, prefixSum.z, prefixSum.w);
         {
             uint4 localAddr = make_uint4(lIdx*4+0,lIdx*4+1,lIdx*4+2,lIdx*4+3);
             uint4 dstAddr = localAddr - prefixSum + make_uint4( total, total, total, total );
 #if defined(DESCENDING)
-            dstAddr = SELECT_UINT4( prefixSum, dstAddr, cmpResult != make_uint4(mask,mask,mask,mask) );
+            dstAddr = SELECT_UINT4( prefixSum, dstAddr, cmpResult != make_uint4( mask,mask,mask,mask ) );
 #else
             dstAddr = SELECT_UINT4( prefixSum, dstAddr, cmpResult != make_uint4(0,0,0,0) );
 #endif
-        //printf("dstAddr          lid = %d - %x %x %x %x \n\n",lIdx, dstAddr.x, dstAddr.y, dstAddr.z, dstAddr.w);
-            GROUP_LDS_BARRIER;
 
+            GROUP_LDS_BARRIER;
+        
             ldsSortData[dstAddr.x] = sortData[0];
             ldsSortData[dstAddr.y] = sortData[1];
             ldsSortData[dstAddr.z] = sortData[2];
             ldsSortData[dstAddr.w] = sortData[3];
+
+            ldsSortVal[dstAddr.x] = sortVal[0];
+            ldsSortVal[dstAddr.y] = sortVal[1];
+            ldsSortVal[dstAddr.z] = sortVal[2];
+            ldsSortVal[dstAddr.w] = sortVal[3];
 
             GROUP_LDS_BARRIER;
 
@@ -377,18 +388,27 @@ void sort4BitsDescending(u32 sortData[4], int startBit, int lIdx, __local u32* l
             sortData[2] = ldsSortData[localAddr.z];
             sortData[3] = ldsSortData[localAddr.w];
 
+            sortVal[0] = ldsSortVal[localAddr.x];
+            sortVal[1] = ldsSortVal[localAddr.y];
+            sortVal[2] = ldsSortVal[localAddr.z];
+            sortVal[3] = ldsSortVal[localAddr.w];
+
             GROUP_LDS_BARRIER;
         }
     }
-    //printf("After sort lid = %d - %x %x %x %x \n", lIdx, sortData[0], sortData[1], sortData[2], sortData[3]);
-
 }
 
-        __kernel
-__attribute__((reqd_work_group_size(256,1,1)))
-void permuteDescInstantiated( __global const u32* restrict gSrc, __global const u32* rHistogram, __global u32* restrict gDst, int4  cb )
+template<typename Values>
+__kernel
+void permuteByKeyDescTemplate( __global const u32* restrict gKeys, 
+                   __global const Values* restrict gValues, 
+                   __global const u32* rHistogram, 
+                   __global u32* restrict gDstKeys, 
+                   __global Values* restrict gDstValues, 
+                   int4 cb)
 {
-    __local u32 ldsSortData[WG_SIZE*ELEMENTS_PER_WORK_ITEM+WG_SIZE];
+    __local u32 ldsSortData[WG_SIZE*ELEMENTS_PER_WORK_ITEM+16];
+    __local Values ldsSortVal[WG_SIZE*ELEMENTS_PER_WORK_ITEM+16];
     __local u32 localHistogramToCarry[NUM_BUCKET];
     __local u32 localHistogram[NUM_BUCKET*2];
 
@@ -396,12 +416,13 @@ void permuteDescInstantiated( __global const u32* restrict gSrc, __global const 
     u32 lIdx = GET_LOCAL_IDX;
     u32 wgIdx = GET_GROUP_IDX;
     u32 wgSize = GET_GROUP_SIZE;
+
     const int dataAlignment = 1024;
     const int n = cb.m_n;
     const int w_n = n + dataAlignment-(n%dataAlignment);
 
     const int nWGs = cb.m_nWGs;
-    const int startBit     = cb.m_startBit;
+    const int startBit = cb.m_startBit;
     const int nBlocksPerWG = cb.m_nBlocksPerWG;
 
     if( lIdx < (NUM_BUCKET) )
@@ -411,10 +432,10 @@ void permuteDescInstantiated( __global const u32* restrict gSrc, __global const 
 #else
         localHistogramToCarry[lIdx] = rHistogram[lIdx*nWGs + wgIdx];
 #endif
-        //printf("gid = %d , hist = %d\n", gIdx, localHistogramToCarry[lIdx]);
     }
 
     GROUP_LDS_BARRIER;
+    
 
     const int blockSize = ELEMENTS_PER_WORK_ITEM*WG_SIZE;
 
@@ -424,38 +445,38 @@ void permuteDescInstantiated( __global const u32* restrict gSrc, __global const 
 
     for(int iblock=0; iblock<min(nBlocksPerWG, nBlocks); iblock++, addr+=blockSize)
     {
+
         u32 myHistogram = 0;
 
         u32 sortData[ELEMENTS_PER_WORK_ITEM];
+        Values sortVal[ELEMENTS_PER_WORK_ITEM];
+
         for(int i=0; i<ELEMENTS_PER_WORK_ITEM; i++)
 #if defined(CHECK_BOUNDARY)
+        {
 #if defined(DESCENDING)
-            sortData[i] = ( addr+i < n )? gSrc[ addr+i ] : 0x0;
+            sortData[i] = ( addr+i < n )? gKeys[ addr+i ] : 0x0;
+            sortVal[i]  = ( addr+i < n )? gValues[ addr+i ] : 0x0;
 #else
-            sortData[i] = ( addr+i < n )? gSrc[ addr+i ] : 0xffffffff;
+            sortData[i] = ( addr+i < n )? gKeys[ addr+i ] : 0xffffffff;
+            sortVal[i]  = ( addr+i < n )? gValues[ addr+i ] : 0xffffffff;
 #endif
+        }
 #else
-            sortData[i] = gSrc[ addr+i ];
+        {
+            sortData[i] = gKeys[ addr+i ];
+            sortVal[i] = gValues[ addr+i ];
+        }
 #endif
-        //printf("before sort lid = %d - %x %x %x %x \n", lIdx, sortData[0], sortData[1], sortData[2], sortData[3]);
-#if defined(DESCENDING)
-        sort4BitsDescending(sortData, startBit, lIdx, ldsSortData);
-#else
-        sort4BitsAscending(sortData, startBit, lIdx, ldsSortData);
-#endif
-        ////printf("Before sort lid = %d - %x %x %x %x \n", lIdx, sortData[0], sortData[1], sortData[2], sortData[3]);
-        //printf("After sort lid = %d - %x %x %x %x \n", lIdx, ldsSortData[lIdx*ELEMENTS_PER_WORK_ITEM], 
-        //                                                     ldsSortData[lIdx*ELEMENTS_PER_WORK_ITEM+1], 
-        //                                                     ldsSortData[lIdx*ELEMENTS_PER_WORK_ITEM+2], 
-        //                                                     ldsSortData[lIdx*ELEMENTS_PER_WORK_ITEM+3] );
+        //printf("Before sort lid = %d - %x %x %x %x \n", lIdx, sortData[0], sortData[1], sortData[2], sortData[3]);
+        //sort4Bits1KeyValue(sortData, sortVal, startBit, lIdx, ldsSortData, ldsSortVal);
+        sort4BitsKeyValueDescending(sortData, sortVal, startBit, lIdx, ldsSortData, ldsSortVal);
+        //printf("After sort lid = %d - %x %x %x %x \n", lIdx, sortData[0], sortData[1], sortData[2], sortData[3]);
         u32 keys[ELEMENTS_PER_WORK_ITEM];
         for(int i=0; i<ELEMENTS_PER_WORK_ITEM; i++)
-        {
             keys[i] = (sortData[i]>>startBit) & 0xf;
-        }
-        //printf("After sort lid = %d - %x %x %x %x \n", lIdx, sortData[0], sortData[1], sortData[2], sortData[3]);
 
-        {	//	create histogram
+        {	
             u32 setIdx = lIdx/16;
             if( lIdx < NUM_BUCKET )
             {
@@ -468,6 +489,7 @@ void permuteDescInstantiated( __global const u32* restrict gSrc, __global const 
 #if defined(CHECK_BOUNDARY)
                 if( addr+i < n )
 #endif
+
 #if defined(NV_GPU)
                 SET_HISTOGRAM( setIdx, keys[i] )++;
 #else
@@ -477,9 +499,9 @@ void permuteDescInstantiated( __global const u32* restrict gSrc, __global const 
                 AtomInc( SET_HISTOGRAM( setIdx, keys[i] ) );
 #endif
 #endif
-
+            
             GROUP_LDS_BARRIER;
-
+            
             uint hIdx = NUM_BUCKET+lIdx;
             if( lIdx < NUM_BUCKET )
             {
@@ -540,15 +562,19 @@ void permuteDescInstantiated( __global const u32* restrict gSrc, __global const 
                 int binIdx = keys[ie];
                 int groupOffset = localHistogramToCarry[binIdx];
 #endif
-                //printf("gid = %d , binIdx=%d,  hist = %d\n", gIdx, binIdx, groupOffset);
-                int myIdx = dataIdx - localHistogram[NUM_BUCKET+binIdx];
 
+                int myIdx = dataIdx - localHistogram[NUM_BUCKET+binIdx];
 #if defined(CHECK_BOUNDARY)
                 if( addr+ie < n )
 #endif
-                    gDst[ groupOffset + myIdx ] = sortData[ie];
-                    //printf ( "(addr+ie)=%d, sortData[ie]=%d, groupOffset = %d, binIdx=%d, myIdx=%d, dataIdx=%d, localHistogram[NUM_BUCKET+binIdx]=%d,  (groupOffset + myIdx) = %d\n", 
-                    //      addr+ie, sortData[ie], groupOffset, binIdx,  myIdx, dataIdx, localHistogram[NUM_BUCKET+binIdx], groupOffset + myIdx );
+                {
+                    if ((groupOffset + myIdx)<n)
+                    {
+                        gDstKeys[ groupOffset + myIdx ] = sortData[ie];
+                        gDstValues[ groupOffset + myIdx ] = sortVal[ie];
+                        
+                    }
+                }
             }
         }
 
@@ -565,4 +591,5 @@ void permuteDescInstantiated( __global const u32* restrict gSrc, __global const 
         GROUP_LDS_BARRIER;
     }
 }
+
 

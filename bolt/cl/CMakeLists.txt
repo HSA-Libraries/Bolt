@@ -1,19 +1,19 @@
-############################################################################                                                                                     
-#   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
-#                                                                                    
-#   Licensed under the Apache License, Version 2.0 (the "License");   
-#   you may not use this file except in compliance with the License.                 
-#   You may obtain a copy of the License at                                          
-#                                                                                    
-#       http://www.apache.org/licenses/LICENSE-2.0                      
-#                                                                                    
-#   Unless required by applicable law or agreed to in writing, software              
-#   distributed under the License is distributed on an "AS IS" BASIS,              
-#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.         
-#   See the License for the specific language governing permissions and              
-#   limitations under the License.                                                   
+############################################################################
+#   Copyright 2012 - 2013 Advanced Micro Devices, Inc.
+#
+#   Licensed under the Apache License, Version 2.0 (the "License");
+#   you may not use this file except in compliance with the License.
+#   You may obtain a copy of the License at
+#
+#       http://www.apache.org/licenses/LICENSE-2.0
+#
+#   Unless required by applicable law or agreed to in writing, software
+#   distributed under the License is distributed on an "AS IS" BASIS,
+#   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#   See the License for the specific language governing permissions and
+#   limitations under the License.
 
-############################################################################                                                                                     
+############################################################################
 
 # List the names of common files to compile across all platforms
 
@@ -28,7 +28,7 @@ if( BOOST_ROOT )
     find_package( Boost ${Boost.VERSION} COMPONENTS thread system date_time chrono REQUIRED )
     # This will define Boost_FOUND
 else( )
-    message( "Configure Bolt in <BOLT_ROOT>/bin to build the SuperBuild which will download and build Boost automatically" )    
+    message( "Configure Bolt in <BOLT_ROOT>/bin to build the SuperBuild which will download and build Boost automatically" )
     message( SEND_ERROR "The OpenCL Bolt library requires BOOST_ROOT to be defined" )
 endif( )
 
@@ -59,50 +59,50 @@ set( clBolt.Include.Dir ${BOLT_INCLUDE_DIR}/bolt/cl )
 
 set( tbb.Include.Dir ${BOLT_INCLUDE_DIR}/bolt/btbb )
 
-set( clBolt.Runtime.Source     
-        bolt.cpp 
+set( clBolt.Runtime.Source
+        bolt.cpp
         control.cpp
         ${BOLT_LIBRARY_DIR}/statisticalTimer.cpp
         ${BOLT_LIBRARY_DIR}/AsyncProfiler.cpp
     )
 
-set( clBolt.Runtime.Headers 
-        ${clBolt.Include.Dir}/bolt.h 
-        ${clBolt.Include.Dir}/clcode.h 
-        ${clBolt.Include.Dir}/control.h 
+set( clBolt.Runtime.Headers
+        ${clBolt.Include.Dir}/bolt.h
+        ${clBolt.Include.Dir}/clcode.h
+        ${clBolt.Include.Dir}/control.h
         ${clBolt.Include.Dir}/binary_search.h
-        ${clBolt.Include.Dir}/copy.h 
-        ${clBolt.Include.Dir}/count.h 
-        ${clBolt.Include.Dir}/device_vector.h 
-        ${clBolt.Include.Dir}/functional.h 
-        ${clBolt.Include.Dir}/fill.h 
+        ${clBolt.Include.Dir}/copy.h
+        ${clBolt.Include.Dir}/count.h
+        ${clBolt.Include.Dir}/device_vector.h
+        ${clBolt.Include.Dir}/functional.h
+        ${clBolt.Include.Dir}/fill.h
         ${clBolt.Include.Dir}/gather.h
-        ${clBolt.Include.Dir}/generate.h 
+        ${clBolt.Include.Dir}/generate.h
         ${clBolt.Include.Dir}/inner_product.h
-        ${clBolt.Include.Dir}/max_element.h 
-        ${clBolt.Include.Dir}/merge.h         
-        ${clBolt.Include.Dir}/min_element.h 
+        ${clBolt.Include.Dir}/max_element.h
+        ${clBolt.Include.Dir}/merge.h
+        ${clBolt.Include.Dir}/min_element.h
         ${clBolt.Include.Dir}/pair.h
-        ${clBolt.Include.Dir}/reduce.h 
-        ${clBolt.Include.Dir}/reduce_by_key.h 
-        ${clBolt.Include.Dir}/scan.h 
-        ${clBolt.Include.Dir}/scan_by_key.h 
+        ${clBolt.Include.Dir}/reduce.h
+        ${clBolt.Include.Dir}/reduce_by_key.h
+        ${clBolt.Include.Dir}/scan.h
+        ${clBolt.Include.Dir}/scan_by_key.h
         ${clBolt.Include.Dir}/scatter.h
-        ${clBolt.Include.Dir}/sort.h 
-        ${clBolt.Include.Dir}/sort_by_key.h 
-        ${clBolt.Include.Dir}/stablesort.h 
-        ${clBolt.Include.Dir}/stablesort_by_key.h 
-        ${clBolt.Include.Dir}/transform.h 
+        ${clBolt.Include.Dir}/sort.h
+        ${clBolt.Include.Dir}/sort_by_key.h
+        ${clBolt.Include.Dir}/stablesort.h
+        ${clBolt.Include.Dir}/stablesort_by_key.h
+        ${clBolt.Include.Dir}/transform.h
         ${clBolt.Include.Dir}/transform_reduce.h
         ${clBolt.Include.Dir}/transform_scan.h
     )
 
 set( clBolt.Runtime.Headers.Iterator
-        ${clBolt.Include.Dir}/iterator/iterator_traits.h 
+        ${clBolt.Include.Dir}/iterator/iterator_traits.h
         ${clBolt.Include.Dir}/iterator/constant_iterator.h
         ${clBolt.Include.Dir}/iterator/counting_iterator.h
     )
-    
+
 set( clBolt.Runtime.Headers.Misc
         ${clBolt.Include.Dir}/../countof.h
         ${clBolt.Include.Dir}/../unicode.h
@@ -110,8 +110,8 @@ set( clBolt.Runtime.Headers.Misc
         ${clBolt.Include.Dir}/../statisticalTimer.h
         ${clBolt.Include.Dir}/../AsyncProfiler.h
     )
-        
-set( clBolt.Runtime.Headers.Detail 
+
+set( clBolt.Runtime.Headers.Detail
         ${clBolt.Include.Dir}/detail/copy.inl
         ${clBolt.Include.Dir}/detail/count.inl
         ${clBolt.Include.Dir}/detail/binary_search.inl
@@ -119,8 +119,8 @@ set( clBolt.Runtime.Headers.Detail
         ${clBolt.Include.Dir}/detail/gather.inl
         ${clBolt.Include.Dir}/detail/generate.inl
         ${clBolt.Include.Dir}/detail/inner_product.inl
-        ${clBolt.Include.Dir}/detail/merge.inl        
-        ${clBolt.Include.Dir}/detail/min_element.inl        
+        ${clBolt.Include.Dir}/detail/merge.inl
+        ${clBolt.Include.Dir}/detail/min_element.inl
         ${clBolt.Include.Dir}/detail/pair.inl
         ${clBolt.Include.Dir}/detail/reduce.inl
         ${clBolt.Include.Dir}/detail/reduce_by_key.inl
@@ -138,16 +138,16 @@ set( clBolt.Runtime.Headers.Detail
 
 set( clBolt.Runtime.clFiles
         fill_kernels.cl
-        copy_kernels.cl 
+        copy_kernels.cl
         binary_search_kernels.cl
-        count_kernels.cl 
+        count_kernels.cl
         gather_kernels.cl
         generate_kernels.cl
-        min_element_kernels.cl 
-        merge_kernels.cl 
-        reduce_kernels.cl 
+        min_element_kernels.cl
+        merge_kernels.cl
+        reduce_kernels.cl
         reduce_by_key_kernels.cl
-        transform_kernels.cl 
+        transform_kernels.cl
         transform_reduce_kernels.cl
         transform_scan_kernels.cl
         scan_kernels.cl
@@ -156,7 +156,11 @@ set( clBolt.Runtime.clFiles
         sort_kernels.cl
         stablesort_kernels.cl
         stablesort_by_key_kernels.cl
+        sort_common_kernels.cl
         sort_uint_kernels.cl
+        sort_by_key_uint_kernels.cl
+        sort_int_kernels.cl
+        sort_by_key_int_kernels.cl
         sort_by_key_kernels.cl
     )
 
@@ -168,7 +172,7 @@ set( tbb.Runtime.Headers
     ${tbb.Include.Dir}/gather.h
     ${tbb.Include.Dir}/generate.h
     ${tbb.Include.Dir}/inner_product.h
-    ${tbb.Include.Dir}/merge.h    
+    ${tbb.Include.Dir}/merge.h
     ${tbb.Include.Dir}/min_element.h
     ${tbb.Include.Dir}/reduce.h
     ${tbb.Include.Dir}/reduce_by_key.h
@@ -191,7 +195,7 @@ set( tbb.Runtime.Headers.Detail
     ${tbb.Include.Dir}/detail/gather.inl
     ${tbb.Include.Dir}/detail/generate.inl
     ${tbb.Include.Dir}/detail/inner_product.inl
-    ${tbb.Include.Dir}/detail/merge.inl    
+    ${tbb.Include.Dir}/detail/merge.inl
     ${tbb.Include.Dir}/detail/min_element.inl
     ${tbb.Include.Dir}/detail/reduce.inl
     ${tbb.Include.Dir}/detail/reduce_by_key.inl
@@ -277,7 +281,7 @@ install( FILES
             ${clBolt.Runtime.Headers}
         DESTINATION
             ${INCLUDE_DIR}/bolt/cl )
-            
+
 install( FILES
             ${clBolt.Runtime.Headers.Iterator}
         DESTINATION
@@ -297,17 +301,17 @@ install( FILES
             ${tbb.Runtime.Headers}
         DESTINATION
             ${INCLUDE_DIR}/bolt/btbb )
-            
+
 install( FILES
             ${tbb.Runtime.Headers.Detail}
         DESTINATION
             ${INCLUDE_DIR}/bolt/btbb/detail )
-            
+
 # Install dependent Boost header files
 set( ROOT_EXTERNAL_BOOST ${PROJECT_BINARY_DIR}/../external/boost/src/Boost/boost )
 
 # smart_ptr library
-install( DIRECTORY 
+install( DIRECTORY
             ${ROOT_EXTERNAL_BOOST}/smart_ptr
             ${ROOT_EXTERNAL_BOOST}/detail
         DESTINATION
@@ -331,7 +335,7 @@ install( FILES
             ${INCLUDE_DIR}/boost )
 
 # iterator library
-install( DIRECTORY 
+install( DIRECTORY
             ${ROOT_EXTERNAL_BOOST}/iterator
             ${ROOT_EXTERNAL_BOOST}/pending
             ${ROOT_EXTERNAL_BOOST}/config
@@ -362,7 +366,7 @@ install( FILES
             ${INCLUDE_DIR}/boost )
 
 # thread library
-install( DIRECTORY 
+install( DIRECTORY
             ${ROOT_EXTERNAL_BOOST}/thread
             ${ROOT_EXTERNAL_BOOST}/system
             ${ROOT_EXTERNAL_BOOST}/bind
@@ -391,10 +395,10 @@ install( FILES
 
 # Copy over our Boost static library dependencies
 install( FILES
-    ${Boost_SYSTEM_LIBRARY_DEBUG} 
-    ${Boost_THREAD_LIBRARY_DEBUG} 
-    ${Boost_DATE_TIME_LIBRARY_DEBUG} 
-    ${Boost_CHRONO_LIBRARY_DEBUG} 
+    ${Boost_SYSTEM_LIBRARY_DEBUG}
+    ${Boost_THREAD_LIBRARY_DEBUG}
+    ${Boost_DATE_TIME_LIBRARY_DEBUG}
+    ${Boost_CHRONO_LIBRARY_DEBUG}
     DESTINATION ${LIB_DIR}
     CONFIGURATIONS Debug
     )
