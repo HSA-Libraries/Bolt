@@ -13,9 +13,9 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 ***************************************************************************/
-template < typename T, typename iIterType, typename StrictWeakOrdering >
+template < typename iType, typename T, typename iIterType, typename StrictWeakOrdering >
 __kernel void binarysearch_kernel(
- global T * src,
+ global iType * src,
  iIterType input_iter,
  const T val,
  const uint numElements,
@@ -42,8 +42,8 @@ __kernel void binarysearch_kernel(
     {	
         mid = (low + high) / 2;
         
-        T midVal = input_iter[mid];
-        T firstVal = input_iter[low];
+        iType midVal = input_iter[mid];
+        iType firstVal = input_iter[low];
         //printf("\nlow = %d, high = %d midVal=%d val =%d", low, high, midVal, val);
         if( (!(*comp)(midVal, val)) && (!(*comp)(val, midVal)) )
         {

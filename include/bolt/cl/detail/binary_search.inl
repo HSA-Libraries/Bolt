@@ -37,7 +37,7 @@ namespace bolt {
 
         namespace detail {
 
-        enum binarysearchTypeName { bs_T, bs_DVForwardIterator, bs_StrictWeakOrdering, bs_end };
+        enum binarysearchTypeName { bs_iType, bs_T, bs_DVForwardIterator, bs_StrictWeakOrdering, bs_end };
 
         ///////////////////////////////////////////////////////////////////////
         //Kernel Template Specializer
@@ -58,7 +58,7 @@ namespace bolt {
                     "// Dynamic specialization of generic template definition, using user supplied types\n"
                     "template __attribute__((mangled_name(" + name(0) + "Instantiated)))\n"
                     "__kernel void " + name(0) + "(\n"
-                    "global " + typeNames[bs_T] + " * src,\n"
+                    "global " + typeNames[bs_iType] + " * src,\n"
                     + typeNames[bs_DVForwardIterator] + " input_iter,\n"
                     "const " + typeNames[bs_T] + " val,\n"
                     "const uint numElements,\n"
@@ -113,9 +113,10 @@ namespace bolt {
                 /**********************************************************************************
                  * Type Names - used in KernelTemplateSpecializer
                  *********************************************************************************/
-                typedef typename std::iterator_traits<DVForwardIterator>::value_type Type;
-                typedef T iType;
+                typedef typename std::iterator_traits<DVForwardIterator>::value_type iType;
+
                 std::vector<std::string> typeNames(bs_end);
+				typeNames[bs_iType] = TypeName< iType >::get( );
                 typeNames[bs_T] = TypeName< T >::get( );
                 typeNames[bs_DVForwardIterator] = TypeName< DVForwardIterator >::get( );
                 typeNames[bs_StrictWeakOrdering] = TypeName< StrictWeakOrdering >::get( );
@@ -125,6 +126,7 @@ namespace bolt {
                  *********************************************************************************/
                 std::vector<std::string> typeDefs;
                 PUSH_BACK_UNIQUE( typeDefs, ClCode< iType >::get() )
+				PUSH_BACK_UNIQUE( typeDefs, ClCode< T >::get() )
                 PUSH_BACK_UNIQUE( typeDefs, ClCode< DVForwardIterator >::get() )
                 PUSH_BACK_UNIQUE( typeDefs, ClCode< StrictWeakOrdering >::get() )
 
