@@ -514,11 +514,8 @@ namespace bolt {
             {
                   runMode = ctl.getDefaultPathToRun();
             }
-	  else {
-
-                    return detail::merge_detect_random_access(ctl, first1, last1, first2,last2,result, comp , cl_code,
+            return detail::merge_detect_random_access(ctl, first1, last1, first2,last2,result, comp , cl_code,
                                typename std::iterator_traits< InputIterator1 >::iterator_category( ));
-            }
 
         };
  
