@@ -2368,7 +2368,7 @@ typedef ::testing::Types<
     std::tuple< unsigned int, TypeValue< 1000 > >,
     std::tuple< unsigned int, TypeValue< 1053 > >,
     std::tuple< unsigned int, TypeValue< 4096 > >,
-    std::tuple< unsigned int, TypeValue< 4097 > >,
+    std::tuple< unsigned int, TypeValue< 4097 > >
 #if (TEST_LARGE_BUFFERS == 1)
     , /*This coma is needed*/
     std::tuple< unsigned int, TypeValue< 8192 > >,
