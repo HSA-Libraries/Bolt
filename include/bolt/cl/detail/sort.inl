@@ -22,13 +22,13 @@
 #include <algorithm>
 #include <type_traits>
 
-#include "bolt/cl/stablesort.h"
 #include "bolt/cl/functional.h"
 #include "bolt/cl/device_vector.h"
 #ifdef ENABLE_TBB
 #include "bolt/btbb/sort.h"
 #endif
 
+#include "bolt/cl/stablesort.h"
 #define BOLT_UINT_MAX 0xFFFFFFFFU
 #define BOLT_UINT_MIN 0x0U
 #define BOLT_INT_MAX 0x7FFFFFFF
@@ -42,6 +42,32 @@ namespace bolt {
 namespace cl {
 
 namespace detail {
+
+template< typename DVRandomAccessIterator, typename StrictWeakOrdering >
+typename std::enable_if< std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type,
+                                       unsigned int
+                                     >::value
+                       >::type  /*If enabled then this typename will be evaluated to void*/
+stablesort_enqueue(control &ctl,
+             DVRandomAccessIterator first, DVRandomAccessIterator last,
+             StrictWeakOrdering comp, const std::string& cl_code);
+
+template< typename DVRandomAccessIterator, typename StrictWeakOrdering >
+typename std::enable_if< std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type,
+                                       int
+                                     >::value
+                       >::type  /*If enabled then this typename will be evaluated to void*/
+stablesort_enqueue(control &ctl,
+             DVRandomAccessIterator first, DVRandomAccessIterator last,
+             StrictWeakOrdering comp, const std::string& cl_code);
+
+template<typename DVRandomAccessIterator, typename StrictWeakOrdering>
+typename std::enable_if<
+    !(std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type, unsigned int >::value || 
+      std::is_same< typename std::iterator_traits<DVRandomAccessIterator >::value_type, int >::value  )
+                       >::type
+stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVRandomAccessIterator& last,
+             const StrictWeakOrdering& comp, const std::string& cl_code);
 
 enum sortTypes {sort_iValueType, sort_iIterType, sort_StrictWeakOrdering, sort_end };
 

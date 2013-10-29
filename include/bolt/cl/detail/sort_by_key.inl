@@ -41,7 +41,7 @@ namespace bolt {
 namespace cl {
 
 namespace detail {
-
+ 
 enum sortByKeyTypes {sort_by_key_keyValueType, sort_by_key_keyIterType,
                      sort_by_key_valueValueType, sort_by_key_valueIterType,
                      sort_by_key_StrictWeakOrdering, sort_by_key_end };
