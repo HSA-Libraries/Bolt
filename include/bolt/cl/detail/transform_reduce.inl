@@ -19,7 +19,7 @@
 #define BOLT_CL_TRANSFORM_REDUCE_INL
 #pragma once
 
-#define WAVEFRONT_SIZE 64
+#define WAVEFRONT_SIZE 256
 
 #include <string>
 #include <iostream>
@@ -57,7 +57,7 @@ namespace  detail {
             const std::string templateSpecializationString =
                 "// Host generates this instantiation string with user-specified value type and functor\n"
                 "template __attribute__((mangled_name("+name(0)+"Instantiated)))\n"
-                "__attribute__((reqd_work_group_size(64,1,1)))\n"
+                "__attribute__((reqd_work_group_size(256,1,1)))\n"
                 "kernel void "+name(0)+"(\n"
                 "global " + typeNames[tr_iType] + "* input_ptr,\n"
                 + typeNames[tr_iIterType] + " iIter,\n"
@@ -114,7 +114,7 @@ namespace  detail {
             // FIXME, read from device attributes.
 
             int computeUnits     = ctl.getDevice().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();// round up if we don't know.
-            int wgPerComputeUnit =  ctl.getWGPerComputeUnit();
+            int wgPerComputeUnit =  64;//ctl.getWGPerComputeUnit();
 
             int numWG = computeUnits * wgPerComputeUnit;
 

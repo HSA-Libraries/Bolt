@@ -93,6 +93,8 @@ kernel void min_elementTemplate(
     // to share values between workitems
 
  #if defined(_IS_MAX_KERNEL)
+    _REDUCE_STEP_MAX(tail, local_index, 128);
+    _REDUCE_STEP_MAX(tail, local_index, 64);
     _REDUCE_STEP_MAX(tail, local_index, 32);
     _REDUCE_STEP_MAX(tail, local_index, 16);
     _REDUCE_STEP_MAX(tail, local_index,  8);
@@ -100,7 +102,9 @@ kernel void min_elementTemplate(
     _REDUCE_STEP_MAX(tail, local_index,  2);
     _REDUCE_STEP_MAX(tail, local_index,  1);	
 #else if
-	_REDUCE_STEP_MIN(tail, local_index, 32);
+    _REDUCE_STEP_MIN(tail, local_index, 128);
+    _REDUCE_STEP_MIN(tail, local_index, 64);      
+	  _REDUCE_STEP_MIN(tail, local_index, 32);
     _REDUCE_STEP_MIN(tail, local_index, 16);
     _REDUCE_STEP_MIN(tail, local_index,  8);
     _REDUCE_STEP_MIN(tail, local_index,  4);

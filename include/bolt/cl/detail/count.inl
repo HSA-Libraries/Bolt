@@ -57,7 +57,7 @@ namespace detail {
                 const std::string templateSpecializationString =
                         "// Host generates this instantiation string with user-specified value type and functor\n"
                         "template __attribute__((mangled_name(" + name(0) + "Instantiated)))\n"
-                        "__attribute__((reqd_work_group_size(64,1,1)))\n"
+                        "__attribute__((reqd_work_group_size(256,1,1)))\n"
                         "kernel void " + name(0) + "(\n"
                         "global " + typeNames[count_iValueType] + "* input_ptr,\n"
                          + typeNames[count_iIterType] + " output_iter,\n"
@@ -113,12 +113,12 @@ namespace detail {
 
                 // Set up shape of launch grid and buffers:
                 cl_uint computeUnits     = ctl.getDevice().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
-                int wgPerComputeUnit =  ctl.getWGPerComputeUnit();
+                int wgPerComputeUnit =  64; //ctl.getWGPerComputeUnit();
                 size_t numWG = computeUnits * wgPerComputeUnit;
 
                 cl_int l_Error = CL_SUCCESS;
-                const size_t wgSize  = kernels[0].getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >(
-                    ctl.getDevice( ), &l_Error );
+                const size_t wgSize  = 256; // kernels[0].getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >(
+                    //ctl.getDevice( ), &l_Error );
                 V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
 
                 // Create buffer wrappers so we can access the host functors, for read or writing in the kernel
