@@ -8,11 +8,33 @@ Here's a link to our <a href="https://github.com/HSA-Libraries/bolt/wiki">BOLT w
  
 ## Prerequisites
 
-1.  Windows® 7/8
-2.  Visual Studio 2010 onwards (VS2012 for C++ AMP)
-3.  CMake 2.8.10
-4.  TBB (For Multicore CPU path only) (4.1 Update 1 or Above) . See <a href="http://hsa-libraries.github.io/Bolt/html/buildingTBB.html">Building Bolt with TBB</a>. 
-5.  APP SDK 2.7 or onwards. 
+### Windows
+
+1. Visual Studio 2010 onwards (VS2012 for C++ AMP)
+2. Tested with 32/64 bit Windows® 7/8 and Windows® Blue
+3. CMake 2.8.10
+4. TBB (For Multicore CPU path only) (4.1 Update 1 or Above) . See Building Bolt with TBB.
+5. APP SDK 2.8 or onwards.
+
+*Note:* If the user has installed both Visual Studio 2012 and Visual Studio 2010, the latter should be updated to SP1.
+
+### Linux
+
+1. GCC 4.6.3 and above
+2. Tested with OpenSuse 12.3, RHEL 6.4 64bit, RHEL 6.3 32bit, Ubuntu 13.4
+3. CMake 2.8.10
+4. TBB (For Multicore CPU path only) (4.1 Update 1 or Above) . See Building Bolt with TBB.
+5. APP SDK 2.8 or onwards.
+
+*Note:* Bolt pre-built binaries for Linux are build with GCC 4.7.3, same version should be used for Application building else user has to build Bolt from source with GCC 4.6.3 or higher.
+
+### Catalyst™ package
+
+The latest Catalyst package contains the most recent OpenCL runtime. Recommended Catalyst package is 13.11 Beta V1.
+
+13.4 and higher is supported.
+
+*Note:* 13.9 in not supported.
 
 ## Supported Devices
 
@@ -43,7 +65,6 @@ Here's a link to our <a href="https://github.com/HSA-Libraries/bolt/wiki">BOLT w
 
 Compiled binary windows packages (zip packages) for Bolt may be downloaded from the <a href="http://developer.amd.com/tools-and-sdks/heterogeneous-computing/amd-accelerated-parallel-processing-app-sdk/bolt-c-template-library/">Bolt landing page</a> hosted on AMD's Developer Central website.
 
-*Note:* If the user has installed both Visual Studio 2012 and Visual Studio 2010, the latter should be updated to SP1.
 
 ## Examples
 
