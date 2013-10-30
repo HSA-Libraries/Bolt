@@ -21,9 +21,8 @@
 * \tableofcontents
 * \section Functions Supported Functions and Paths
 *  Bolt function is designed to be executed with four code paths (OpenCL™, C++ AMP, Multicore CPU and Serial CPU). The default mode is "Automatic" which means it will go into 
-*  GPU path first, then TBB (Intel), then SerialCpu. The control will go to other paths only if the selected one is not found. Forcing the mode to any code path will run the
-*  function with that code path. All Bolt functions have OpenCL™ and Serial path implementation, However for some functions Multicore TBB path is not implemented yet, So calling
-*  those functions with MultiCoreCpu flag will actually call the Serial code.   
+*  GPU path first, then Multicore CPU (Intel TBB), then SerialCpu, control will go to other paths only if the selected one is not found. Forcing the mode to any code path will run the
+*  function with that code path. All Bolt functions have OpenCL™, Multicore CPU and Serial path implementation.
 *
 * \subsection examples Example:
 * \subsubsection transform_scan Transform Scan:
