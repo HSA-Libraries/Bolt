@@ -509,11 +509,6 @@ namespace bolt {
         InputIterator2 last2, OutputIterator result,StrictWeakCompare comp,const std::string& cl_code)
         {
 
-            bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
-            if(runMode == bolt::cl::control::Automatic)
-            {
-                  runMode = ctl.getDefaultPathToRun();
-            }
             return detail::merge_detect_random_access(ctl, first1, last1, first2,last2,result, comp , cl_code,
                                typename std::iterator_traits< InputIterator1 >::iterator_category( ));
 
