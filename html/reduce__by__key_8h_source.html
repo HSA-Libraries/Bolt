@@ -4,7 +4,7 @@
 <meta http-equiv="Content-Type" content="text/xhtml;charset=UTF-8"/>
 <meta http-equiv="X-UA-Compatible" content="IE=9"/>
 <meta name="generator" content="Doxygen 1.8.3"/>
-<title>Bolt: C:/Avinash_Bolt/Bolt_Forked/Bolt/include/bolt/cl/reduce_by_key.h Source File</title>
+<title>Bolt: D:/Jenkins_FS_Root/workspace/Bolt_Clone_master/include/bolt/cl/reduce_by_key.h Source File</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -18,7 +18,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">Bolt
-   &#160;<span id="projectnumber">1.0</span>
+   &#160;<span id="projectnumber">1.1</span>
    </div>
    <div id="projectbrief">C++ template library with support for OpenCL</div>
   </td>
@@ -46,7 +46,7 @@
   </div>
 <div id="nav-path" class="navpath">
   <ul>
-<li class="navelem"><a class="el" href="dir_d44c64559bbebec7f509842c48db8b23.html">include</a></li><li class="navelem"><a class="el" href="dir_33065aeea99578d2088bdef6d41465e7.html">bolt</a></li><li class="navelem"><a class="el" href="dir_421f711f8ea929b04bc8cde87c375942.html">cl</a></li>  </ul>
+<li class="navelem"><a class="el" href="dir_088ee0bb765f16a0241a3922f262663f.html">Bolt_Clone_master</a></li><li class="navelem"><a class="el" href="dir_ab60c108fb05608d5d94f823ef24c96e.html">include</a></li><li class="navelem"><a class="el" href="dir_410cc9248f9a37596ab60907133a429a.html">bolt</a></li><li class="navelem"><a class="el" href="dir_8f5fb271328b164d479a60be30ed6ac3.html">cl</a></li>  </ul>
 </div>
 </div><!-- top -->
 <div class="header">
@@ -79,124 +79,126 @@
 <div class="line"><a name="l00023"></a><span class="lineno">   23</span>&#160;<span class="preprocessor">#include &lt;<a class="code" href="cl_2functional_8h.html" title="List all the unary and binary functions.">bolt/cl/functional.h</a>&gt;</span></div>
 <div class="line"><a name="l00024"></a><span class="lineno">   24</span>&#160;<span class="preprocessor">#include &lt;<a class="code" href="cl_2device__vector_8h.html" title="Namespace that captures OpenCL related data types and functions Public header file for the device_con...">bolt/cl/device_vector.h</a>&gt;</span></div>
 <div class="line"><a name="l00025"></a><span class="lineno">   25</span>&#160;<span class="preprocessor">#include &lt;<a class="code" href="pair_8h.html" title="A type encapsulating a heterogeneous pair of elements.">bolt/cl/pair.h</a>&gt;</span></div>
-<div class="line"><a name="l00026"></a><span class="lineno">   26</span>&#160;</div>
-<div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160;<span class="keyword">namespace </span>bolt</div>
-<div class="line"><a name="l00031"></a><span class="lineno">   31</span>&#160;{</div>
-<div class="line"><a name="l00032"></a><span class="lineno">   32</span>&#160;     <span class="keyword">namespace </span>cl</div>
-<div class="line"><a name="l00033"></a><span class="lineno">   33</span>&#160;        {</div>
-<div class="line"><a name="l00034"></a><span class="lineno">   34</span>&#160;</div>
-<div class="line"><a name="l00086"></a><span class="lineno">   86</span>&#160;            <span class="keyword">template</span>&lt;</div>
-<div class="line"><a name="l00087"></a><span class="lineno">   87</span>&#160;                <span class="keyword">typename</span> InputIterator1,</div>
-<div class="line"><a name="l00088"></a><span class="lineno">   88</span>&#160;                <span class="keyword">typename</span> InputIterator2,</div>
-<div class="line"><a name="l00089"></a><span class="lineno">   89</span>&#160;                <span class="keyword">typename</span> OutputIterator1,</div>
-<div class="line"><a name="l00090"></a><span class="lineno">   90</span>&#160;                <span class="keyword">typename</span> OutputIterator2&gt;</div>
-<div class="line"><a name="l00091"></a><span class="lineno">   91</span>&#160;                pair&lt;OutputIterator1, OutputIterator2&gt;</div>
-<div class="line"><a name="l00092"></a><span class="lineno">   92</span>&#160;                <a class="code" href="group__CL-reduce__by__key.html#ga4888ea4262ff8d48ee9f29a08aa60005" title="reduce_by_key performs, on a sequence, a reduction of each sub-sequence as defined by equivalent keys...">reduce_by_key</a>(</div>
-<div class="line"><a name="l00093"></a><span class="lineno">   93</span>&#160;                control &amp;ctl,</div>
-<div class="line"><a name="l00094"></a><span class="lineno">   94</span>&#160;                InputIterator1  keys_first,</div>
-<div class="line"><a name="l00095"></a><span class="lineno">   95</span>&#160;                InputIterator1  keys_last,</div>
-<div class="line"><a name="l00096"></a><span class="lineno">   96</span>&#160;                InputIterator2  values_first,</div>
-<div class="line"><a name="l00097"></a><span class="lineno">   97</span>&#160;                OutputIterator1  keys_output,</div>
-<div class="line"><a name="l00098"></a><span class="lineno">   98</span>&#160;                OutputIterator2  values_output,</div>
-<div class="line"><a name="l00099"></a><span class="lineno">   99</span>&#160;                <span class="keyword">const</span> std::string&amp; user_code=<span class="stringliteral">&quot;&quot;</span> );</div>
-<div class="line"><a name="l00100"></a><span class="lineno">  100</span>&#160;</div>
-<div class="line"><a name="l00101"></a><span class="lineno">  101</span>&#160;            <span class="keyword">template</span>&lt;</div>
-<div class="line"><a name="l00102"></a><span class="lineno">  102</span>&#160;                <span class="keyword">typename</span> InputIterator1,</div>
-<div class="line"><a name="l00103"></a><span class="lineno">  103</span>&#160;                <span class="keyword">typename</span> InputIterator2,</div>
-<div class="line"><a name="l00104"></a><span class="lineno">  104</span>&#160;                <span class="keyword">typename</span> OutputIterator1,</div>
-<div class="line"><a name="l00105"></a><span class="lineno">  105</span>&#160;                <span class="keyword">typename</span> OutputIterator2&gt;</div>
-<div class="line"><a name="l00106"></a><span class="lineno">  106</span>&#160;                pair&lt;OutputIterator1, OutputIterator2&gt;</div>
-<div class="line"><a name="l00107"></a><span class="lineno">  107</span>&#160;                <a class="code" href="group__CL-reduce__by__key.html#ga4888ea4262ff8d48ee9f29a08aa60005" title="reduce_by_key performs, on a sequence, a reduction of each sub-sequence as defined by equivalent keys...">reduce_by_key</a>(</div>
-<div class="line"><a name="l00108"></a><span class="lineno">  108</span>&#160;                InputIterator1  keys_first,</div>
-<div class="line"><a name="l00109"></a><span class="lineno">  109</span>&#160;                InputIterator1  keys_last,</div>
-<div class="line"><a name="l00110"></a><span class="lineno">  110</span>&#160;                InputIterator2  values_first,</div>
-<div class="line"><a name="l00111"></a><span class="lineno">  111</span>&#160;                OutputIterator1  keys_output,</div>
-<div class="line"><a name="l00112"></a><span class="lineno">  112</span>&#160;                OutputIterator2  values_output,</div>
-<div class="line"><a name="l00113"></a><span class="lineno">  113</span>&#160;                <span class="keyword">const</span> std::string&amp; user_code=<span class="stringliteral">&quot;&quot;</span> );</div>
-<div class="line"><a name="l00114"></a><span class="lineno">  114</span>&#160;</div>
-<div class="line"><a name="l00155"></a><span class="lineno">  155</span>&#160;            <span class="keyword">template</span>&lt;</div>
-<div class="line"><a name="l00156"></a><span class="lineno">  156</span>&#160;                <span class="keyword">typename</span> InputIterator1,</div>
-<div class="line"><a name="l00157"></a><span class="lineno">  157</span>&#160;                <span class="keyword">typename</span> InputIterator2,</div>
-<div class="line"><a name="l00158"></a><span class="lineno">  158</span>&#160;                <span class="keyword">typename</span> OutputIterator1,</div>
-<div class="line"><a name="l00159"></a><span class="lineno">  159</span>&#160;                <span class="keyword">typename</span> OutputIterator2,</div>
-<div class="line"><a name="l00160"></a><span class="lineno">  160</span>&#160;                <span class="keyword">typename</span> BinaryPredicate&gt;</div>
-<div class="line"><a name="l00161"></a><span class="lineno">  161</span>&#160;                pair&lt;OutputIterator1, OutputIterator2&gt;</div>
-<div class="line"><a name="l00162"></a><span class="lineno">  162</span>&#160;                <a class="code" href="group__CL-reduce__by__key.html#ga4888ea4262ff8d48ee9f29a08aa60005" title="reduce_by_key performs, on a sequence, a reduction of each sub-sequence as defined by equivalent keys...">reduce_by_key</a>(</div>
-<div class="line"><a name="l00163"></a><span class="lineno">  163</span>&#160;                control &amp;ctl,</div>
-<div class="line"><a name="l00164"></a><span class="lineno">  164</span>&#160;                InputIterator1  keys_first,</div>
-<div class="line"><a name="l00165"></a><span class="lineno">  165</span>&#160;                InputIterator1  keys_last,</div>
-<div class="line"><a name="l00166"></a><span class="lineno">  166</span>&#160;                InputIterator2  values_first,</div>
-<div class="line"><a name="l00167"></a><span class="lineno">  167</span>&#160;                OutputIterator1  keys_output,</div>
-<div class="line"><a name="l00168"></a><span class="lineno">  168</span>&#160;                OutputIterator2  values_output,</div>
-<div class="line"><a name="l00169"></a><span class="lineno">  169</span>&#160;                BinaryPredicate binary_pred,</div>
-<div class="line"><a name="l00170"></a><span class="lineno">  170</span>&#160;                <span class="keyword">const</span> std::string&amp; user_code=<span class="stringliteral">&quot;&quot;</span> );</div>
-<div class="line"><a name="l00171"></a><span class="lineno">  171</span>&#160;</div>
-<div class="line"><a name="l00172"></a><span class="lineno">  172</span>&#160;            <span class="keyword">template</span>&lt;</div>
-<div class="line"><a name="l00173"></a><span class="lineno">  173</span>&#160;                <span class="keyword">typename</span> InputIterator1,</div>
-<div class="line"><a name="l00174"></a><span class="lineno">  174</span>&#160;                <span class="keyword">typename</span> InputIterator2,</div>
-<div class="line"><a name="l00175"></a><span class="lineno">  175</span>&#160;                <span class="keyword">typename</span> OutputIterator1,</div>
-<div class="line"><a name="l00176"></a><span class="lineno">  176</span>&#160;                <span class="keyword">typename</span> OutputIterator2,</div>
-<div class="line"><a name="l00177"></a><span class="lineno">  177</span>&#160;                <span class="keyword">typename</span> BinaryPredicate&gt;</div>
-<div class="line"><a name="l00178"></a><span class="lineno">  178</span>&#160;                pair&lt;OutputIterator1, OutputIterator2&gt;</div>
-<div class="line"><a name="l00179"></a><span class="lineno">  179</span>&#160;                <a class="code" href="group__CL-reduce__by__key.html#ga4888ea4262ff8d48ee9f29a08aa60005" title="reduce_by_key performs, on a sequence, a reduction of each sub-sequence as defined by equivalent keys...">reduce_by_key</a>(</div>
-<div class="line"><a name="l00180"></a><span class="lineno">  180</span>&#160;                InputIterator1  keys_first,</div>
-<div class="line"><a name="l00181"></a><span class="lineno">  181</span>&#160;                InputIterator1  keys_last,</div>
-<div class="line"><a name="l00182"></a><span class="lineno">  182</span>&#160;                InputIterator2  values_first,</div>
-<div class="line"><a name="l00183"></a><span class="lineno">  183</span>&#160;                OutputIterator1  keys_output,</div>
-<div class="line"><a name="l00184"></a><span class="lineno">  184</span>&#160;                OutputIterator2  values_output,</div>
-<div class="line"><a name="l00185"></a><span class="lineno">  185</span>&#160;                BinaryPredicate binary_pred,</div>
-<div class="line"><a name="l00186"></a><span class="lineno">  186</span>&#160;                <span class="keyword">const</span> std::string&amp; user_code=<span class="stringliteral">&quot;&quot;</span> );</div>
-<div class="line"><a name="l00187"></a><span class="lineno">  187</span>&#160;</div>
-<div class="line"><a name="l00188"></a><span class="lineno">  188</span>&#160;</div>
-<div class="line"><a name="l00230"></a><span class="lineno">  230</span>&#160;            <span class="keyword">template</span>&lt;</div>
-<div class="line"><a name="l00231"></a><span class="lineno">  231</span>&#160;                <span class="keyword">typename</span> InputIterator1,</div>
-<div class="line"><a name="l00232"></a><span class="lineno">  232</span>&#160;                <span class="keyword">typename</span> InputIterator2,</div>
-<div class="line"><a name="l00233"></a><span class="lineno">  233</span>&#160;                <span class="keyword">typename</span> OutputIterator1,</div>
-<div class="line"><a name="l00234"></a><span class="lineno">  234</span>&#160;                <span class="keyword">typename</span> OutputIterator2,</div>
-<div class="line"><a name="l00235"></a><span class="lineno">  235</span>&#160;                <span class="keyword">typename</span> BinaryPredicate,</div>
-<div class="line"><a name="l00236"></a><span class="lineno">  236</span>&#160;                <span class="keyword">typename</span> BinaryFunction&gt;</div>
-<div class="line"><a name="l00237"></a><span class="lineno">  237</span>&#160;                pair&lt;OutputIterator1, OutputIterator2&gt;</div>
-<div class="line"><a name="l00238"></a><span class="lineno">  238</span>&#160;                <a class="code" href="group__CL-reduce__by__key.html#ga4888ea4262ff8d48ee9f29a08aa60005" title="reduce_by_key performs, on a sequence, a reduction of each sub-sequence as defined by equivalent keys...">reduce_by_key</a>(</div>
-<div class="line"><a name="l00239"></a><span class="lineno">  239</span>&#160;                control &amp;ctl,</div>
-<div class="line"><a name="l00240"></a><span class="lineno">  240</span>&#160;                InputIterator1  keys_first,</div>
-<div class="line"><a name="l00241"></a><span class="lineno">  241</span>&#160;                InputIterator1  keys_last,</div>
-<div class="line"><a name="l00242"></a><span class="lineno">  242</span>&#160;                InputIterator2  values_first,</div>
-<div class="line"><a name="l00243"></a><span class="lineno">  243</span>&#160;                OutputIterator1  keys_output,</div>
-<div class="line"><a name="l00244"></a><span class="lineno">  244</span>&#160;                OutputIterator2  values_output,</div>
-<div class="line"><a name="l00245"></a><span class="lineno">  245</span>&#160;                BinaryPredicate binary_pred,</div>
-<div class="line"><a name="l00246"></a><span class="lineno">  246</span>&#160;                BinaryFunction binary_op,</div>
-<div class="line"><a name="l00247"></a><span class="lineno">  247</span>&#160;                <span class="keyword">const</span> std::string&amp; user_code=<span class="stringliteral">&quot;&quot;</span> );</div>
-<div class="line"><a name="l00248"></a><span class="lineno">  248</span>&#160;</div>
-<div class="line"><a name="l00249"></a><span class="lineno">  249</span>&#160;            <span class="keyword">template</span>&lt;</div>
-<div class="line"><a name="l00250"></a><span class="lineno">  250</span>&#160;                <span class="keyword">typename</span> InputIterator1,</div>
-<div class="line"><a name="l00251"></a><span class="lineno">  251</span>&#160;                <span class="keyword">typename</span> InputIterator2,</div>
-<div class="line"><a name="l00252"></a><span class="lineno">  252</span>&#160;                <span class="keyword">typename</span> OutputIterator1,</div>
-<div class="line"><a name="l00253"></a><span class="lineno">  253</span>&#160;                <span class="keyword">typename</span> OutputIterator2,</div>
-<div class="line"><a name="l00254"></a><span class="lineno">  254</span>&#160;                <span class="keyword">typename</span> BinaryPredicate,</div>
-<div class="line"><a name="l00255"></a><span class="lineno">  255</span>&#160;                <span class="keyword">typename</span> BinaryFunction&gt;</div>
-<div class="line"><a name="l00256"></a><span class="lineno">  256</span>&#160;                pair&lt;OutputIterator1, OutputIterator2&gt;</div>
-<div class="line"><a name="l00257"></a><span class="lineno">  257</span>&#160;                <a class="code" href="group__CL-reduce__by__key.html#ga4888ea4262ff8d48ee9f29a08aa60005" title="reduce_by_key performs, on a sequence, a reduction of each sub-sequence as defined by equivalent keys...">reduce_by_key</a>(</div>
-<div class="line"><a name="l00258"></a><span class="lineno">  258</span>&#160;                InputIterator1  keys_first,</div>
-<div class="line"><a name="l00259"></a><span class="lineno">  259</span>&#160;                InputIterator1  keys_last,</div>
-<div class="line"><a name="l00260"></a><span class="lineno">  260</span>&#160;                InputIterator2  values_first,</div>
-<div class="line"><a name="l00261"></a><span class="lineno">  261</span>&#160;                OutputIterator1  keys_output,</div>
-<div class="line"><a name="l00262"></a><span class="lineno">  262</span>&#160;                OutputIterator2  values_output,</div>
-<div class="line"><a name="l00263"></a><span class="lineno">  263</span>&#160;                BinaryPredicate binary_pred,</div>
-<div class="line"><a name="l00264"></a><span class="lineno">  264</span>&#160;                BinaryFunction binary_op,</div>
-<div class="line"><a name="l00265"></a><span class="lineno">  265</span>&#160;                <span class="keyword">const</span> std::string&amp; user_code=<span class="stringliteral">&quot;&quot;</span> );</div>
-<div class="line"><a name="l00266"></a><span class="lineno">  266</span>&#160;</div>
-<div class="line"><a name="l00267"></a><span class="lineno">  267</span>&#160;</div>
+<div class="line"><a name="l00026"></a><span class="lineno">   26</span>&#160;<span class="preprocessor">#include &quot;<a class="code" href="cl_2scan_8h.html" title="Scan calculates a running sum over a range of values, inclusive or exclusive.">bolt/cl/scan.h</a>&quot;</span></div>
+<div class="line"><a name="l00027"></a><span class="lineno">   27</span>&#160;<span class="preprocessor">#include &quot;<a class="code" href="scan__by__key_8h.html" title="Performs, on a sequence, scan of each sub-sequence as defined by equivalent keys inclusive or exclusi...">bolt/cl/scan_by_key.h</a>&quot;</span></div>
+<div class="line"><a name="l00028"></a><span class="lineno">   28</span>&#160;</div>
+<div class="line"><a name="l00032"></a><span class="lineno">   32</span>&#160;<span class="keyword">namespace </span>bolt</div>
+<div class="line"><a name="l00033"></a><span class="lineno">   33</span>&#160;{</div>
+<div class="line"><a name="l00034"></a><span class="lineno">   34</span>&#160;     <span class="keyword">namespace </span>cl</div>
+<div class="line"><a name="l00035"></a><span class="lineno">   35</span>&#160;        {</div>
+<div class="line"><a name="l00036"></a><span class="lineno">   36</span>&#160;</div>
+<div class="line"><a name="l00088"></a><span class="lineno">   88</span>&#160;            <span class="keyword">template</span>&lt;</div>
+<div class="line"><a name="l00089"></a><span class="lineno">   89</span>&#160;                <span class="keyword">typename</span> InputIterator1,</div>
+<div class="line"><a name="l00090"></a><span class="lineno">   90</span>&#160;                <span class="keyword">typename</span> InputIterator2,</div>
+<div class="line"><a name="l00091"></a><span class="lineno">   91</span>&#160;                <span class="keyword">typename</span> OutputIterator1,</div>
+<div class="line"><a name="l00092"></a><span class="lineno">   92</span>&#160;                <span class="keyword">typename</span> OutputIterator2&gt;</div>
+<div class="line"><a name="l00093"></a><span class="lineno">   93</span>&#160;                pair&lt;OutputIterator1, OutputIterator2&gt;</div>
+<div class="line"><a name="l00094"></a><span class="lineno">   94</span>&#160;                <a class="code" href="group__CL-reduce__by__key.html#ga4888ea4262ff8d48ee9f29a08aa60005" title="reduce_by_key performs, on a sequence, a reduction of each sub-sequence as defined by equivalent keys...">reduce_by_key</a>(</div>
+<div class="line"><a name="l00095"></a><span class="lineno">   95</span>&#160;                control &amp;ctl,</div>
+<div class="line"><a name="l00096"></a><span class="lineno">   96</span>&#160;                InputIterator1  keys_first,</div>
+<div class="line"><a name="l00097"></a><span class="lineno">   97</span>&#160;                InputIterator1  keys_last,</div>
+<div class="line"><a name="l00098"></a><span class="lineno">   98</span>&#160;                InputIterator2  values_first,</div>
+<div class="line"><a name="l00099"></a><span class="lineno">   99</span>&#160;                OutputIterator1  keys_output,</div>
+<div class="line"><a name="l00100"></a><span class="lineno">  100</span>&#160;                OutputIterator2  values_output,</div>
+<div class="line"><a name="l00101"></a><span class="lineno">  101</span>&#160;                <span class="keyword">const</span> std::string&amp; user_code=<span class="stringliteral">&quot;&quot;</span> );</div>
+<div class="line"><a name="l00102"></a><span class="lineno">  102</span>&#160;</div>
+<div class="line"><a name="l00103"></a><span class="lineno">  103</span>&#160;            <span class="keyword">template</span>&lt;</div>
+<div class="line"><a name="l00104"></a><span class="lineno">  104</span>&#160;                <span class="keyword">typename</span> InputIterator1,</div>
+<div class="line"><a name="l00105"></a><span class="lineno">  105</span>&#160;                <span class="keyword">typename</span> InputIterator2,</div>
+<div class="line"><a name="l00106"></a><span class="lineno">  106</span>&#160;                <span class="keyword">typename</span> OutputIterator1,</div>
+<div class="line"><a name="l00107"></a><span class="lineno">  107</span>&#160;                <span class="keyword">typename</span> OutputIterator2&gt;</div>
+<div class="line"><a name="l00108"></a><span class="lineno">  108</span>&#160;                pair&lt;OutputIterator1, OutputIterator2&gt;</div>
+<div class="line"><a name="l00109"></a><span class="lineno">  109</span>&#160;                <a class="code" href="group__CL-reduce__by__key.html#ga4888ea4262ff8d48ee9f29a08aa60005" title="reduce_by_key performs, on a sequence, a reduction of each sub-sequence as defined by equivalent keys...">reduce_by_key</a>(</div>
+<div class="line"><a name="l00110"></a><span class="lineno">  110</span>&#160;                InputIterator1  keys_first,</div>
+<div class="line"><a name="l00111"></a><span class="lineno">  111</span>&#160;                InputIterator1  keys_last,</div>
+<div class="line"><a name="l00112"></a><span class="lineno">  112</span>&#160;                InputIterator2  values_first,</div>
+<div class="line"><a name="l00113"></a><span class="lineno">  113</span>&#160;                OutputIterator1  keys_output,</div>
+<div class="line"><a name="l00114"></a><span class="lineno">  114</span>&#160;                OutputIterator2  values_output,</div>
+<div class="line"><a name="l00115"></a><span class="lineno">  115</span>&#160;                <span class="keyword">const</span> std::string&amp; user_code=<span class="stringliteral">&quot;&quot;</span> );</div>
+<div class="line"><a name="l00116"></a><span class="lineno">  116</span>&#160;</div>
+<div class="line"><a name="l00157"></a><span class="lineno">  157</span>&#160;            <span class="keyword">template</span>&lt;</div>
+<div class="line"><a name="l00158"></a><span class="lineno">  158</span>&#160;                <span class="keyword">typename</span> InputIterator1,</div>
+<div class="line"><a name="l00159"></a><span class="lineno">  159</span>&#160;                <span class="keyword">typename</span> InputIterator2,</div>
+<div class="line"><a name="l00160"></a><span class="lineno">  160</span>&#160;                <span class="keyword">typename</span> OutputIterator1,</div>
+<div class="line"><a name="l00161"></a><span class="lineno">  161</span>&#160;                <span class="keyword">typename</span> OutputIterator2,</div>
+<div class="line"><a name="l00162"></a><span class="lineno">  162</span>&#160;                <span class="keyword">typename</span> BinaryPredicate&gt;</div>
+<div class="line"><a name="l00163"></a><span class="lineno">  163</span>&#160;                pair&lt;OutputIterator1, OutputIterator2&gt;</div>
+<div class="line"><a name="l00164"></a><span class="lineno">  164</span>&#160;                <a class="code" href="group__CL-reduce__by__key.html#ga4888ea4262ff8d48ee9f29a08aa60005" title="reduce_by_key performs, on a sequence, a reduction of each sub-sequence as defined by equivalent keys...">reduce_by_key</a>(</div>
+<div class="line"><a name="l00165"></a><span class="lineno">  165</span>&#160;                control &amp;ctl,</div>
+<div class="line"><a name="l00166"></a><span class="lineno">  166</span>&#160;                InputIterator1  keys_first,</div>
+<div class="line"><a name="l00167"></a><span class="lineno">  167</span>&#160;                InputIterator1  keys_last,</div>
+<div class="line"><a name="l00168"></a><span class="lineno">  168</span>&#160;                InputIterator2  values_first,</div>
+<div class="line"><a name="l00169"></a><span class="lineno">  169</span>&#160;                OutputIterator1  keys_output,</div>
+<div class="line"><a name="l00170"></a><span class="lineno">  170</span>&#160;                OutputIterator2  values_output,</div>
+<div class="line"><a name="l00171"></a><span class="lineno">  171</span>&#160;                BinaryPredicate binary_pred,</div>
+<div class="line"><a name="l00172"></a><span class="lineno">  172</span>&#160;                <span class="keyword">const</span> std::string&amp; user_code=<span class="stringliteral">&quot;&quot;</span> );</div>
+<div class="line"><a name="l00173"></a><span class="lineno">  173</span>&#160;</div>
+<div class="line"><a name="l00174"></a><span class="lineno">  174</span>&#160;            <span class="keyword">template</span>&lt;</div>
+<div class="line"><a name="l00175"></a><span class="lineno">  175</span>&#160;                <span class="keyword">typename</span> InputIterator1,</div>
+<div class="line"><a name="l00176"></a><span class="lineno">  176</span>&#160;                <span class="keyword">typename</span> InputIterator2,</div>
+<div class="line"><a name="l00177"></a><span class="lineno">  177</span>&#160;                <span class="keyword">typename</span> OutputIterator1,</div>
+<div class="line"><a name="l00178"></a><span class="lineno">  178</span>&#160;                <span class="keyword">typename</span> OutputIterator2,</div>
+<div class="line"><a name="l00179"></a><span class="lineno">  179</span>&#160;                <span class="keyword">typename</span> BinaryPredicate&gt;</div>
+<div class="line"><a name="l00180"></a><span class="lineno">  180</span>&#160;                pair&lt;OutputIterator1, OutputIterator2&gt;</div>
+<div class="line"><a name="l00181"></a><span class="lineno">  181</span>&#160;                <a class="code" href="group__CL-reduce__by__key.html#ga4888ea4262ff8d48ee9f29a08aa60005" title="reduce_by_key performs, on a sequence, a reduction of each sub-sequence as defined by equivalent keys...">reduce_by_key</a>(</div>
+<div class="line"><a name="l00182"></a><span class="lineno">  182</span>&#160;                InputIterator1  keys_first,</div>
+<div class="line"><a name="l00183"></a><span class="lineno">  183</span>&#160;                InputIterator1  keys_last,</div>
+<div class="line"><a name="l00184"></a><span class="lineno">  184</span>&#160;                InputIterator2  values_first,</div>
+<div class="line"><a name="l00185"></a><span class="lineno">  185</span>&#160;                OutputIterator1  keys_output,</div>
+<div class="line"><a name="l00186"></a><span class="lineno">  186</span>&#160;                OutputIterator2  values_output,</div>
+<div class="line"><a name="l00187"></a><span class="lineno">  187</span>&#160;                BinaryPredicate binary_pred,</div>
+<div class="line"><a name="l00188"></a><span class="lineno">  188</span>&#160;                <span class="keyword">const</span> std::string&amp; user_code=<span class="stringliteral">&quot;&quot;</span> );</div>
+<div class="line"><a name="l00189"></a><span class="lineno">  189</span>&#160;</div>
+<div class="line"><a name="l00190"></a><span class="lineno">  190</span>&#160;</div>
+<div class="line"><a name="l00232"></a><span class="lineno">  232</span>&#160;            <span class="keyword">template</span>&lt;</div>
+<div class="line"><a name="l00233"></a><span class="lineno">  233</span>&#160;                <span class="keyword">typename</span> InputIterator1,</div>
+<div class="line"><a name="l00234"></a><span class="lineno">  234</span>&#160;                <span class="keyword">typename</span> InputIterator2,</div>
+<div class="line"><a name="l00235"></a><span class="lineno">  235</span>&#160;                <span class="keyword">typename</span> OutputIterator1,</div>
+<div class="line"><a name="l00236"></a><span class="lineno">  236</span>&#160;                <span class="keyword">typename</span> OutputIterator2,</div>
+<div class="line"><a name="l00237"></a><span class="lineno">  237</span>&#160;                <span class="keyword">typename</span> BinaryPredicate,</div>
+<div class="line"><a name="l00238"></a><span class="lineno">  238</span>&#160;                <span class="keyword">typename</span> BinaryFunction&gt;</div>
+<div class="line"><a name="l00239"></a><span class="lineno">  239</span>&#160;                pair&lt;OutputIterator1, OutputIterator2&gt;</div>
+<div class="line"><a name="l00240"></a><span class="lineno">  240</span>&#160;                <a class="code" href="group__CL-reduce__by__key.html#ga4888ea4262ff8d48ee9f29a08aa60005" title="reduce_by_key performs, on a sequence, a reduction of each sub-sequence as defined by equivalent keys...">reduce_by_key</a>(</div>
+<div class="line"><a name="l00241"></a><span class="lineno">  241</span>&#160;                control &amp;ctl,</div>
+<div class="line"><a name="l00242"></a><span class="lineno">  242</span>&#160;                InputIterator1  keys_first,</div>
+<div class="line"><a name="l00243"></a><span class="lineno">  243</span>&#160;                InputIterator1  keys_last,</div>
+<div class="line"><a name="l00244"></a><span class="lineno">  244</span>&#160;                InputIterator2  values_first,</div>
+<div class="line"><a name="l00245"></a><span class="lineno">  245</span>&#160;                OutputIterator1  keys_output,</div>
+<div class="line"><a name="l00246"></a><span class="lineno">  246</span>&#160;                OutputIterator2  values_output,</div>
+<div class="line"><a name="l00247"></a><span class="lineno">  247</span>&#160;                BinaryPredicate binary_pred,</div>
+<div class="line"><a name="l00248"></a><span class="lineno">  248</span>&#160;                BinaryFunction binary_op,</div>
+<div class="line"><a name="l00249"></a><span class="lineno">  249</span>&#160;                <span class="keyword">const</span> std::string&amp; user_code=<span class="stringliteral">&quot;&quot;</span> );</div>
+<div class="line"><a name="l00250"></a><span class="lineno">  250</span>&#160;</div>
+<div class="line"><a name="l00251"></a><span class="lineno">  251</span>&#160;            <span class="keyword">template</span>&lt;</div>
+<div class="line"><a name="l00252"></a><span class="lineno">  252</span>&#160;                <span class="keyword">typename</span> InputIterator1,</div>
+<div class="line"><a name="l00253"></a><span class="lineno">  253</span>&#160;                <span class="keyword">typename</span> InputIterator2,</div>
+<div class="line"><a name="l00254"></a><span class="lineno">  254</span>&#160;                <span class="keyword">typename</span> OutputIterator1,</div>
+<div class="line"><a name="l00255"></a><span class="lineno">  255</span>&#160;                <span class="keyword">typename</span> OutputIterator2,</div>
+<div class="line"><a name="l00256"></a><span class="lineno">  256</span>&#160;                <span class="keyword">typename</span> BinaryPredicate,</div>
+<div class="line"><a name="l00257"></a><span class="lineno">  257</span>&#160;                <span class="keyword">typename</span> BinaryFunction&gt;</div>
+<div class="line"><a name="l00258"></a><span class="lineno">  258</span>&#160;                pair&lt;OutputIterator1, OutputIterator2&gt;</div>
+<div class="line"><a name="l00259"></a><span class="lineno">  259</span>&#160;                <a class="code" href="group__CL-reduce__by__key.html#ga4888ea4262ff8d48ee9f29a08aa60005" title="reduce_by_key performs, on a sequence, a reduction of each sub-sequence as defined by equivalent keys...">reduce_by_key</a>(</div>
+<div class="line"><a name="l00260"></a><span class="lineno">  260</span>&#160;                InputIterator1  keys_first,</div>
+<div class="line"><a name="l00261"></a><span class="lineno">  261</span>&#160;                InputIterator1  keys_last,</div>
+<div class="line"><a name="l00262"></a><span class="lineno">  262</span>&#160;                InputIterator2  values_first,</div>
+<div class="line"><a name="l00263"></a><span class="lineno">  263</span>&#160;                OutputIterator1  keys_output,</div>
+<div class="line"><a name="l00264"></a><span class="lineno">  264</span>&#160;                OutputIterator2  values_output,</div>
+<div class="line"><a name="l00265"></a><span class="lineno">  265</span>&#160;                BinaryPredicate binary_pred,</div>
+<div class="line"><a name="l00266"></a><span class="lineno">  266</span>&#160;                BinaryFunction binary_op,</div>
+<div class="line"><a name="l00267"></a><span class="lineno">  267</span>&#160;                <span class="keyword">const</span> std::string&amp; user_code=<span class="stringliteral">&quot;&quot;</span> );</div>
 <div class="line"><a name="l00268"></a><span class="lineno">  268</span>&#160;</div>
-<div class="line"><a name="l00269"></a><span class="lineno">  269</span>&#160;        };<span class="comment">// end of bolt::cl</span></div>
-<div class="line"><a name="l00270"></a><span class="lineno">  270</span>&#160;};<span class="comment">// end of bolt namespace</span></div>
-<div class="line"><a name="l00271"></a><span class="lineno">  271</span>&#160;</div>
-<div class="line"><a name="l00272"></a><span class="lineno">  272</span>&#160;<span class="preprocessor">#include &lt;bolt/cl/detail/reduce_by_key.inl&gt;</span></div>
+<div class="line"><a name="l00269"></a><span class="lineno">  269</span>&#160;</div>
+<div class="line"><a name="l00270"></a><span class="lineno">  270</span>&#160;</div>
+<div class="line"><a name="l00271"></a><span class="lineno">  271</span>&#160;        };<span class="comment">// end of bolt::cl</span></div>
+<div class="line"><a name="l00272"></a><span class="lineno">  272</span>&#160;};<span class="comment">// end of bolt namespace</span></div>
 <div class="line"><a name="l00273"></a><span class="lineno">  273</span>&#160;</div>
-<div class="line"><a name="l00274"></a><span class="lineno">  274</span>&#160;<span class="preprocessor">#endif</span></div>
+<div class="line"><a name="l00274"></a><span class="lineno">  274</span>&#160;<span class="preprocessor">#include &lt;bolt/cl/detail/reduce_by_key.inl&gt;</span></div>
+<div class="line"><a name="l00275"></a><span class="lineno">  275</span>&#160;</div>
+<div class="line"><a name="l00276"></a><span class="lineno">  276</span>&#160;<span class="preprocessor">#endif</span></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Jul 8 2013 22:38:33 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Nov 11 2013 14:17:19 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.3
 </small></address>

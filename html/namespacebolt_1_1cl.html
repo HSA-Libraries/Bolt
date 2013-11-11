@@ -18,7 +18,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">Bolt
-   &#160;<span id="projectnumber">1.0</span>
+   &#160;<span id="projectnumber">1.1</span>
    </div>
    <div id="projectbrief">C++ template library with support for OpenCL</div>
   </td>
@@ -127,12 +127,28 @@ typedef ::std::map<br class="typebreak"/>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions</h2></td></tr>
+<tr class="memitem:gad6c527dbd10501c966f044346dc23675"><td class="memTemplParams" colspan="2">template&lt;typename ForwardIterator , typename T &gt; </td></tr>
+<tr class="memitem:gad6c527dbd10501c966f044346dc23675"><td class="memTemplItemLeft" align="right" valign="top">bool&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__CL-search.html#gad6c527dbd10501c966f044346dc23675">binary_search</a> (<a class="el" href="classbolt_1_1cl_1_1control.html">bolt::cl::control</a> &amp;ctl, ForwardIterator first, ForwardIterator last, const T &amp;value, const std::string &amp;cl_code=&quot;&quot;)</td></tr>
+<tr class="memdesc:gad6c527dbd10501c966f044346dc23675"><td class="mdescLeft">&#160;</td><td class="mdescRight">This version of binary search returns true if the search value is present within the given input range and false otherwise. The routine requires the elements to be arranged in ascending/descending order. It returns true iff there exists an iterator i in [first, last) such that *i &lt; value and value &lt; *i are both false.  <a href="group__CL-search.html#gad6c527dbd10501c966f044346dc23675"></a><br/></td></tr>
+<tr class="separator:gad6c527dbd10501c966f044346dc23675"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga07ddf553b47dd906b8498609ee66e8f5"><td class="memTemplParams" colspan="2"><a class="anchor" id="ga07ddf553b47dd906b8498609ee66e8f5"></a>
+template&lt;typename ForwardIterator , typename T &gt; </td></tr>
+<tr class="memitem:ga07ddf553b47dd906b8498609ee66e8f5"><td class="memTemplItemLeft" align="right" valign="top">bool&#160;</td><td class="memTemplItemRight" valign="bottom"><b>binary_search</b> (ForwardIterator first, ForwardIterator last, const T &amp;value, const std::string &amp;cl_code=&quot;&quot;)</td></tr>
+<tr class="separator:ga07ddf553b47dd906b8498609ee66e8f5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga690fb357f69afab31e836e09f1805823"><td class="memTemplParams" colspan="2">template&lt;typename ForwardIterator , typename T , typename StrictWeakOrdering &gt; </td></tr>
+<tr class="memitem:ga690fb357f69afab31e836e09f1805823"><td class="memTemplItemLeft" align="right" valign="top">bool&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__CL-search.html#ga690fb357f69afab31e836e09f1805823">binary_search</a> (<a class="el" href="classbolt_1_1cl_1_1control.html">bolt::cl::control</a> &amp;ctl, ForwardIterator first, ForwardIterator last, const T &amp;value, StrictWeakOrdering comp, const std::string &amp;cl_code=&quot;&quot;)</td></tr>
+<tr class="memdesc:ga690fb357f69afab31e836e09f1805823"><td class="mdescLeft">&#160;</td><td class="mdescRight">This version of binary search returns true if the search value is present within the given input range and false otherwise. The routine requires the elements to be arranged in ascending/descending order. It returns true iff there exists an iterator i in [first, last) such that comp(*i, value) and comp(value, *i) are both false.  <a href="group__CL-search.html#ga690fb357f69afab31e836e09f1805823"></a><br/></td></tr>
+<tr class="separator:ga690fb357f69afab31e836e09f1805823"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gac20e58fb75093b24127c58551561392c"><td class="memTemplParams" colspan="2"><a class="anchor" id="gac20e58fb75093b24127c58551561392c"></a>
+template&lt;typename ForwardIterator , typename T , typename StrictWeakOrdering &gt; </td></tr>
+<tr class="memitem:gac20e58fb75093b24127c58551561392c"><td class="memTemplItemLeft" align="right" valign="top">bool&#160;</td><td class="memTemplItemRight" valign="bottom"><b>binary_search</b> (ForwardIterator first, ForwardIterator last, const T &amp;value, StrictWeakOrdering comp, const std::string &amp;cl_code=&quot;&quot;)</td></tr>
+<tr class="separator:gac20e58fb75093b24127c58551561392c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aade091adb63b2a27ed450ce201dd4e96"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aade091adb63b2a27ed450ce201dd4e96"></a>
 std::string&#160;</td><td class="memItemRight" valign="bottom"><b>fileToString</b> (const std::string &amp;fileName)</td></tr>
 <tr class="separator:aade091adb63b2a27ed450ce201dd4e96"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa42c40bdb2f68e1ee17e84ac36ec84a1"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="aa42c40bdb2f68e1ee17e84ac36ec84a1"></a>
-::std::vector&lt;::cl::Kernel &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>getKernels</b> (const <a class="el" href="classbolt_1_1cl_1_1control.html">control</a> &amp;ctl, const ::std::vector&lt;::std::string &gt; &amp;typeNames, const <a class="el" href="classbolt_1_1cl_1_1KernelTemplateSpecializer.html">KernelTemplateSpecializer</a> *const kts, const ::std::vector&lt;::std::string &gt; &amp;typeDefinitions, const std::string &amp;baseKernelString, const std::string &amp;compileOptions=&quot;&quot;)</td></tr>
-<tr class="separator:aa42c40bdb2f68e1ee17e84ac36ec84a1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4f8f60e211cf1262683d281251954613"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a4f8f60e211cf1262683d281251954613"></a>
+::std::vector&lt; ::cl::Kernel &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>getKernels</b> (const <a class="el" href="classbolt_1_1cl_1_1control.html">control</a> &amp;ctl, const ::std::vector&lt; ::std::string &gt; &amp;typeNames, const <a class="el" href="classbolt_1_1cl_1_1KernelTemplateSpecializer.html">KernelTemplateSpecializer</a> *const kts, const ::std::vector&lt; ::std::string &gt; &amp;typeDefinitions, const std::string &amp;baseKernelString, const std::string &amp;compileOptions=&quot;&quot;)</td></tr>
+<tr class="separator:a4f8f60e211cf1262683d281251954613"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a20295070584d911b7849923ad8e7a13d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="namespacebolt_1_1cl.html#a20295070584d911b7849923ad8e7a13d">getVersion</a> (cl_uint &amp;major, cl_uint &amp;minor, cl_uint &amp;patch)</td></tr>
 <tr class="memdesc:a20295070584d911b7849923ad8e7a13d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Query the Bolt library for version information.  <a href="#a20295070584d911b7849923ad8e7a13d"></a><br/></td></tr>
 <tr class="separator:a20295070584d911b7849923ad8e7a13d"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -162,18 +178,6 @@ template&lt;typename InputIterator , typename OutputIterator &gt; </td></tr>
 template&lt;typename InputIterator , typename Size , typename OutputIterator &gt; </td></tr>
 <tr class="memitem:gaf0d49ae5178c42e1d25d13145931f1e5"><td class="memTemplItemLeft" align="right" valign="top">OutputIterator&#160;</td><td class="memTemplItemRight" valign="bottom"><b>copy_n</b> (InputIterator first, Size n, OutputIterator result, const std::string &amp;user_code=&quot;&quot;)</td></tr>
 <tr class="separator:gaf0d49ae5178c42e1d25d13145931f1e5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ga435aec45805217f60fdb0d9fa1d27bb7"><td class="memTemplParams" colspan="2">template&lt;typename InputIterator , typename EqualityComparable &gt; </td></tr>
-<tr class="memitem:ga435aec45805217f60fdb0d9fa1d27bb7"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="structbolt_1_1cl_1_1iterator__traits.html">bolt::cl::iterator_traits</a><br class="typebreak"/>
-&lt; InputIterator &gt;<br class="typebreak"/>
-::difference_type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__CL-counting.html#ga435aec45805217f60fdb0d9fa1d27bb7">count</a> (<a class="el" href="classbolt_1_1cl_1_1control.html">control</a> &amp;ctl, InputIterator first, InputIterator last, const EqualityComparable &amp;value, const std::string &amp;cl_code=&quot;&quot;)</td></tr>
-<tr class="memdesc:ga435aec45805217f60fdb0d9fa1d27bb7"><td class="mdescLeft">&#160;</td><td class="mdescRight"><code>count</code> counts the number of elements in the specified range which compare equal to the specified <code>value</code>.  <a href="group__CL-counting.html#ga435aec45805217f60fdb0d9fa1d27bb7"></a><br/></td></tr>
-<tr class="separator:ga435aec45805217f60fdb0d9fa1d27bb7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:gacccaf6da628e6dfaec6e27a5bae9f501"><td class="memTemplParams" colspan="2"><a class="anchor" id="gacccaf6da628e6dfaec6e27a5bae9f501"></a>
-template&lt;typename InputIterator , typename EqualityComparable &gt; </td></tr>
-<tr class="memitem:gacccaf6da628e6dfaec6e27a5bae9f501"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="structbolt_1_1cl_1_1iterator__traits.html">bolt::cl::iterator_traits</a><br class="typebreak"/>
-&lt; InputIterator &gt;<br class="typebreak"/>
-::difference_type&#160;</td><td class="memTemplItemRight" valign="bottom"><b>count</b> (InputIterator first, InputIterator last, const EqualityComparable &amp;value, const std::string &amp;cl_code=&quot;&quot;)</td></tr>
-<tr class="separator:gacccaf6da628e6dfaec6e27a5bae9f501"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga662cd6dc9ea399244a2cd8c2f764c611"><td class="memTemplParams" colspan="2">template&lt;typename InputIterator , typename Predicate &gt; </td></tr>
 <tr class="memitem:ga662cd6dc9ea399244a2cd8c2f764c611"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="structbolt_1_1cl_1_1iterator__traits.html">bolt::cl::iterator_traits</a><br class="typebreak"/>
 &lt; InputIterator &gt;<br class="typebreak"/>
@@ -186,6 +190,18 @@ template&lt;typename InputIterator , typename Predicate &gt; </td></tr>
 &lt; InputIterator &gt;<br class="typebreak"/>
 ::difference_type&#160;</td><td class="memTemplItemRight" valign="bottom"><b>count_if</b> (InputIterator first, InputIterator last, Predicate predicate, const std::string &amp;cl_code=&quot;&quot;)</td></tr>
 <tr class="separator:gafce53579e10b38526c0a5db0fdb0d7be"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga435aec45805217f60fdb0d9fa1d27bb7"><td class="memTemplParams" colspan="2">template&lt;typename InputIterator , typename EqualityComparable &gt; </td></tr>
+<tr class="memitem:ga435aec45805217f60fdb0d9fa1d27bb7"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="structbolt_1_1cl_1_1iterator__traits.html">bolt::cl::iterator_traits</a><br class="typebreak"/>
+&lt; InputIterator &gt;<br class="typebreak"/>
+::difference_type&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__CL-counting.html#ga435aec45805217f60fdb0d9fa1d27bb7">count</a> (<a class="el" href="classbolt_1_1cl_1_1control.html">control</a> &amp;ctl, InputIterator first, InputIterator last, const EqualityComparable &amp;value, const std::string &amp;cl_code=&quot;&quot;)</td></tr>
+<tr class="memdesc:ga435aec45805217f60fdb0d9fa1d27bb7"><td class="mdescLeft">&#160;</td><td class="mdescRight"><code>count</code> counts the number of elements in the specified range which compare equal to the specified <code>value</code>.  <a href="group__CL-counting.html#ga435aec45805217f60fdb0d9fa1d27bb7"></a><br/></td></tr>
+<tr class="separator:ga435aec45805217f60fdb0d9fa1d27bb7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gacccaf6da628e6dfaec6e27a5bae9f501"><td class="memTemplParams" colspan="2"><a class="anchor" id="gacccaf6da628e6dfaec6e27a5bae9f501"></a>
+template&lt;typename InputIterator , typename EqualityComparable &gt; </td></tr>
+<tr class="memitem:gacccaf6da628e6dfaec6e27a5bae9f501"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="structbolt_1_1cl_1_1iterator__traits.html">bolt::cl::iterator_traits</a><br class="typebreak"/>
+&lt; InputIterator &gt;<br class="typebreak"/>
+::difference_type&#160;</td><td class="memTemplItemRight" valign="bottom"><b>count</b> (InputIterator first, InputIterator last, const EqualityComparable &amp;value, const std::string &amp;cl_code=&quot;&quot;)</td></tr>
+<tr class="separator:gacccaf6da628e6dfaec6e27a5bae9f501"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gaa00a5a7c47628a7f914121759c305454"><td class="memTemplParams" colspan="2">template&lt;typename ForwardIterator , typename T &gt; </td></tr>
 <tr class="memitem:gaa00a5a7c47628a7f914121759c305454"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__CL-filling.html#gaa00a5a7c47628a7f914121759c305454">fill</a> (const <a class="el" href="classbolt_1_1cl_1_1control.html">bolt::cl::control</a> &amp;ctl, ForwardIterator first, ForwardIterator last, const T &amp;value, const std::string &amp;cl_code=&quot;&quot;)</td></tr>
 <tr class="memdesc:gaa00a5a7c47628a7f914121759c305454"><td class="mdescLeft">&#160;</td><td class="mdescRight">Fill assigns the value of <code>value</code> to each element in the range [first,last].  <a href="group__CL-filling.html#gaa00a5a7c47628a7f914121759c305454"></a><br/></td></tr>
@@ -202,6 +218,30 @@ template&lt;typename ForwardIterator , typename T &gt; </td></tr>
 template&lt;typename OutputIterator , typename Size , typename T &gt; </td></tr>
 <tr class="memitem:gae28898823abfc4653ec277cbc12ff203"><td class="memTemplItemLeft" align="right" valign="top">OutputIterator&#160;</td><td class="memTemplItemRight" valign="bottom"><b>fill_n</b> (OutputIterator first, Size n, const T &amp;value, const std::string &amp;cl_code=&quot;&quot;)</td></tr>
 <tr class="separator:gae28898823abfc4653ec277cbc12ff203"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga02579433e19378526a0cc6a2ebc0169c"><td class="memTemplParams" colspan="2">template&lt;typename InputIterator1 , typename InputIterator2 , typename OutputIterator &gt; </td></tr>
+<tr class="memitem:ga02579433e19378526a0cc6a2ebc0169c"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__CL-gather.html#ga02579433e19378526a0cc6a2ebc0169c">gather</a> (::<a class="el" href="classbolt_1_1cl_1_1control.html">bolt::cl::control</a> &amp;ctl, InputIterator1 map_first, InputIterator1 map_last, InputIterator2 input_first, OutputIterator result, const std::string &amp;user_code=&quot;&quot;)</td></tr>
+<tr class="memdesc:ga02579433e19378526a0cc6a2ebc0169c"><td class="mdescLeft">&#160;</td><td class="mdescRight">This version of <code>gather</code> copies elements from a source array to a destination range according to a specified map. For each <code>i</code> in <code>InputIterator1</code> in the range <code></code>[map_first, map_last), gather copies the corresponding <code>input_first</code>[ map [ i ] ] to result[ i - map_first ].  <a href="group__CL-gather.html#ga02579433e19378526a0cc6a2ebc0169c"></a><br/></td></tr>
+<tr class="separator:ga02579433e19378526a0cc6a2ebc0169c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga9f1af03b43219b56914059cdcba77e03"><td class="memTemplParams" colspan="2"><a class="anchor" id="ga9f1af03b43219b56914059cdcba77e03"></a>
+template&lt;typename InputIterator1 , typename InputIterator2 , typename OutputIterator &gt; </td></tr>
+<tr class="memitem:ga9f1af03b43219b56914059cdcba77e03"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>gather</b> (InputIterator1 map_first, InputIterator1 map_last, InputIterator2 input_first, OutputIterator result, const std::string &amp;user_code=&quot;&quot;)</td></tr>
+<tr class="separator:ga9f1af03b43219b56914059cdcba77e03"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga845d1270d4425c9623b09f513a3a020b"><td class="memTemplParams" colspan="2">template&lt;typename InputIterator1 , typename InputIterator2 , typename InputIterator3 , typename OutputIterator &gt; </td></tr>
+<tr class="memitem:ga845d1270d4425c9623b09f513a3a020b"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__CL-gather.html#ga845d1270d4425c9623b09f513a3a020b">gather_if</a> (<a class="el" href="classbolt_1_1cl_1_1control.html">bolt::cl::control</a> &amp;ctl, InputIterator1 map_first, InputIterator1 map_last, InputIterator2 stencil, InputIterator3 input_first, OutputIterator result, const std::string &amp;user_code=&quot;&quot;)</td></tr>
+<tr class="memdesc:ga845d1270d4425c9623b09f513a3a020b"><td class="mdescLeft">&#160;</td><td class="mdescRight">This version of <code>gather</code> copies elements from a source array to a destination range according to a specified map. For each <code>i</code> in <code>InputIterator1</code> in the range <code></code>[map_first, map_last), gather copies the corresponding <code>input_first</code>[ map [ i ] ] to result[ i - map_first ] if stencil[ i - map_first ] is <code>true</code>.  <a href="group__CL-gather.html#ga845d1270d4425c9623b09f513a3a020b"></a><br/></td></tr>
+<tr class="separator:ga845d1270d4425c9623b09f513a3a020b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga72c1dd667fce1e3513ad983e4ecbb54e"><td class="memTemplParams" colspan="2"><a class="anchor" id="ga72c1dd667fce1e3513ad983e4ecbb54e"></a>
+template&lt;typename InputIterator1 , typename InputIterator2 , typename InputIterator3 , typename OutputIterator &gt; </td></tr>
+<tr class="memitem:ga72c1dd667fce1e3513ad983e4ecbb54e"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>gather_if</b> (InputIterator1 map_first, InputIterator1 map_last, InputIterator2 stencil, InputIterator3 input_first, OutputIterator result, const std::string &amp;user_code=&quot;&quot;)</td></tr>
+<tr class="separator:ga72c1dd667fce1e3513ad983e4ecbb54e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gab06f2c244ff2a50637b9c4506e984f19"><td class="memTemplParams" colspan="2">template&lt;typename InputIterator1 , typename InputIterator2 , typename InputIterator3 , typename OutputIterator , typename Predicate &gt; </td></tr>
+<tr class="memitem:gab06f2c244ff2a50637b9c4506e984f19"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__CL-gather.html#gab06f2c244ff2a50637b9c4506e984f19">gather_if</a> (<a class="el" href="classbolt_1_1cl_1_1control.html">bolt::cl::control</a> &amp;ctl, InputIterator1 map_first, InputIterator1 map_last, InputIterator2 stencil, InputIterator3 input, OutputIterator result, Predicate pred, const std::string &amp;user_code=&quot;&quot;)</td></tr>
+<tr class="memdesc:gab06f2c244ff2a50637b9c4506e984f19"><td class="mdescLeft">&#160;</td><td class="mdescRight">This version of <code>gather</code> copies elements from a source array to a destination range according to a specified map. For each <code>i</code> in <code>InputIterator1</code> in the range <code></code>[map_first, map_last), gather copies the corresponding <code>input_first</code>[ map [ i ] ] to result[ i - map_first ] if pred (stencil[ i - map_first ]) is <code>true</code>.  <a href="group__CL-gather.html#gab06f2c244ff2a50637b9c4506e984f19"></a><br/></td></tr>
+<tr class="separator:gab06f2c244ff2a50637b9c4506e984f19"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga827b2cde48aef8f832c7f65e27845ce0"><td class="memTemplParams" colspan="2"><a class="anchor" id="ga827b2cde48aef8f832c7f65e27845ce0"></a>
+template&lt;typename InputIterator1 , typename InputIterator2 , typename InputIterator3 , typename OutputIterator , typename Predicate &gt; </td></tr>
+<tr class="memitem:ga827b2cde48aef8f832c7f65e27845ce0"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>gather_if</b> (InputIterator1 map_first, InputIterator1 map_last, InputIterator2 stencil, InputIterator3 input, OutputIterator result, Predicate pred, const std::string &amp;user_code=&quot;&quot;)</td></tr>
+<tr class="separator:ga827b2cde48aef8f832c7f65e27845ce0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gaab817673f478a5e719a3b960e9dad4ea"><td class="memTemplParams" colspan="2">template&lt;typename ForwardIterator , typename Generator &gt; </td></tr>
 <tr class="memitem:gaab817673f478a5e719a3b960e9dad4ea"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__CL-filling.html#gaab817673f478a5e719a3b960e9dad4ea">generate</a> (<a class="el" href="classbolt_1_1cl_1_1control.html">bolt::cl::control</a> &amp;ctl, ForwardIterator first, ForwardIterator last, Generator gen, const std::string &amp;cl_code=&quot;&quot;)</td></tr>
 <tr class="memdesc:gaab817673f478a5e719a3b960e9dad4ea"><td class="mdescLeft">&#160;</td><td class="mdescRight"><code>generate</code> assigns to each element of a sequence [first,last] the value returned by gen.  <a href="group__CL-filling.html#gaab817673f478a5e719a3b960e9dad4ea"></a><br/></td></tr>
@@ -250,6 +290,22 @@ template&lt;typename ForwardIterator &gt; </td></tr>
 template&lt;typename ForwardIterator , typename BinaryPredicate &gt; </td></tr>
 <tr class="memitem:ga1ee04a4b1addf3a16b556ac45628edd9"><td class="memTemplItemLeft" align="right" valign="top">ForwardIterator&#160;</td><td class="memTemplItemRight" valign="bottom"><b>max_element</b> (ForwardIterator first, ForwardIterator last, BinaryPredicate binary_op, const std::string &amp;cl_code=&quot;&quot;)</td></tr>
 <tr class="separator:ga1ee04a4b1addf3a16b556ac45628edd9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gafc5f2b18120c4f812dad717d874373b2"><td class="memTemplParams" colspan="2">template&lt;typename InputIterator1 , typename InputIterator2 , typename OutputIterator &gt; </td></tr>
+<tr class="memitem:gafc5f2b18120c4f812dad717d874373b2"><td class="memTemplItemLeft" align="right" valign="top">OutputIterator&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__CL-merge.html#gafc5f2b18120c4f812dad717d874373b2">merge</a> (InputIterator1 first1, InputIterator1 last1, InputIterator2 first2, InputIterator2 last2, OutputIterator result, const std::string &amp;cl_code=&quot;&quot;)</td></tr>
+<tr class="memdesc:gafc5f2b18120c4f812dad717d874373b2"><td class="mdescLeft">&#160;</td><td class="mdescRight"><code>merge</code> returns the result of combining the two sorted range [first1, last1] and [first2, last2] in to a single sorted range [result , result + (last1-first1) + ( last2-first2)]  <a href="group__CL-merge.html#gafc5f2b18120c4f812dad717d874373b2"></a><br/></td></tr>
+<tr class="separator:gafc5f2b18120c4f812dad717d874373b2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gafdd963e7a0abc7afcbc48de5d75d11a0"><td class="memTemplParams" colspan="2"><a class="anchor" id="gafdd963e7a0abc7afcbc48de5d75d11a0"></a>
+template&lt;typename InputIterator1 , typename InputIterator2 , typename OutputIterator &gt; </td></tr>
+<tr class="memitem:gafdd963e7a0abc7afcbc48de5d75d11a0"><td class="memTemplItemLeft" align="right" valign="top">OutputIterator&#160;</td><td class="memTemplItemRight" valign="bottom"><b>merge</b> (<a class="el" href="classbolt_1_1cl_1_1control.html">bolt::cl::control</a> &amp;ctl, InputIterator1 first1, InputIterator1 last1, InputIterator2 first2, InputIterator2 last2, OutputIterator result, const std::string &amp;cl_code=&quot;&quot;)</td></tr>
+<tr class="separator:gafdd963e7a0abc7afcbc48de5d75d11a0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gaf290af93844e7985a4bd637b1be24c3d"><td class="memTemplParams" colspan="2">template&lt;typename InputIterator1 , typename InputIterator2 , typename OutputIterator , typename StrictWeakCompare &gt; </td></tr>
+<tr class="memitem:gaf290af93844e7985a4bd637b1be24c3d"><td class="memTemplItemLeft" align="right" valign="top">OutputIterator&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__CL-merge.html#gaf290af93844e7985a4bd637b1be24c3d">merge</a> (InputIterator1 first1, InputIterator1 last1, InputIterator2 first2, InputIterator2 last2, OutputIterator result, StrictWeakCompare comp, const std::string &amp;cl_code=&quot;&quot;)</td></tr>
+<tr class="memdesc:gaf290af93844e7985a4bd637b1be24c3d"><td class="mdescLeft">&#160;</td><td class="mdescRight"><code>merge</code> returns the result of combining the two sorted range [first1, last1] and [first2, last2] in to a single sorted range [result , result + (last1-first1) + ( last2-first2)]  <a href="group__CL-merge.html#gaf290af93844e7985a4bd637b1be24c3d"></a><br/></td></tr>
+<tr class="separator:gaf290af93844e7985a4bd637b1be24c3d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gac413163a140e22645bd2cf4ff8f55088"><td class="memTemplParams" colspan="2"><a class="anchor" id="gac413163a140e22645bd2cf4ff8f55088"></a>
+template&lt;typename InputIterator1 , typename InputIterator2 , typename OutputIterator , typename StrictWeakCompare &gt; </td></tr>
+<tr class="memitem:gac413163a140e22645bd2cf4ff8f55088"><td class="memTemplItemLeft" align="right" valign="top">OutputIterator&#160;</td><td class="memTemplItemRight" valign="bottom"><b>merge</b> (<a class="el" href="classbolt_1_1cl_1_1control.html">bolt::cl::control</a> &amp;ctl, InputIterator1 first1, InputIterator1 last1, InputIterator2 first2, InputIterator2 last2, OutputIterator result, StrictWeakCompare comp, const std::string &amp;cl_code=&quot;&quot;)</td></tr>
+<tr class="separator:gac413163a140e22645bd2cf4ff8f55088"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:gaafbe4d4085fbd3458724aa27806a6457"><td class="memTemplParams" colspan="2">template&lt;typename ForwardIterator &gt; </td></tr>
 <tr class="memitem:gaafbe4d4085fbd3458724aa27806a6457"><td class="memTemplItemLeft" align="right" valign="top">ForwardIterator&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__CL-min__element.html#gaafbe4d4085fbd3458724aa27806a6457">min_element</a> (<a class="el" href="classbolt_1_1cl_1_1control.html">bolt::cl::control</a> &amp;ctl, ForwardIterator first, ForwardIterator last, const std::string &amp;cl_code=&quot;&quot;)</td></tr>
 <tr class="memdesc:gaafbe4d4085fbd3458724aa27806a6457"><td class="mdescLeft">&#160;</td><td class="mdescRight">The min_element returns the location of the first minimum element in the specified range.  <a href="group__CL-min__element.html#gaafbe4d4085fbd3458724aa27806a6457"></a><br/></td></tr>
@@ -439,6 +495,30 @@ template&lt;typename InputIterator1 , typename InputIterator2 , typename OutputI
 template&lt;typename InputIterator1 , typename InputIterator2 , typename OutputIterator , typename T , typename BinaryPredicate , typename BinaryFunction &gt; </td></tr>
 <tr class="memitem:ga412311d56a6afbeef49c3e7c3859683f"><td class="memTemplItemLeft" align="right" valign="top">OutputIterator&#160;</td><td class="memTemplItemRight" valign="bottom"><b>exclusive_scan_by_key</b> (InputIterator1 first1, InputIterator1 last1, InputIterator2 first2, OutputIterator result, T init, BinaryPredicate binary_pred, BinaryFunction binary_funct, const std::string &amp;user_code=&quot;&quot;)</td></tr>
 <tr class="separator:ga412311d56a6afbeef49c3e7c3859683f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga26e5e63bb7e5d823a2b52ef6968dd629"><td class="memTemplParams" colspan="2">template&lt;typename InputIterator1 , typename InputIterator2 , typename OutputIterator &gt; </td></tr>
+<tr class="memitem:ga26e5e63bb7e5d823a2b52ef6968dd629"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__CL-scatter.html#ga26e5e63bb7e5d823a2b52ef6968dd629">scatter</a> (::<a class="el" href="classbolt_1_1cl_1_1control.html">bolt::cl::control</a> &amp;ctl, InputIterator1 first, InputIterator1 last, InputIterator2 map, OutputIterator result, const std::string &amp;user_code=&quot;&quot;)</td></tr>
+<tr class="memdesc:ga26e5e63bb7e5d823a2b52ef6968dd629"><td class="mdescLeft">&#160;</td><td class="mdescRight">This version of <code>scatter</code> copies elements from a source range to a destination array according to a specified map. For each <code>i</code> in <code>InputIterator1</code> in the range <code></code>[first, last), scatter copies the corresponding <code>input_first</code> to result[ map [ i ] ].  <a href="group__CL-scatter.html#ga26e5e63bb7e5d823a2b52ef6968dd629"></a><br/></td></tr>
+<tr class="separator:ga26e5e63bb7e5d823a2b52ef6968dd629"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gab07ef162e0bcf725626a60c01ffe8b01"><td class="memTemplParams" colspan="2"><a class="anchor" id="gab07ef162e0bcf725626a60c01ffe8b01"></a>
+template&lt;typename InputIterator1 , typename InputIterator2 , typename OutputIterator &gt; </td></tr>
+<tr class="memitem:gab07ef162e0bcf725626a60c01ffe8b01"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>scatter</b> (InputIterator1 first, InputIterator1 last1, InputIterator2 map, OutputIterator result, const std::string &amp;user_code=&quot;&quot;)</td></tr>
+<tr class="separator:gab07ef162e0bcf725626a60c01ffe8b01"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga158cea93758cd23b4e1e4cb290dd0900"><td class="memTemplParams" colspan="2">template&lt;typename InputIterator1 , typename InputIterator2 , typename InputIterator3 , typename OutputIterator &gt; </td></tr>
+<tr class="memitem:ga158cea93758cd23b4e1e4cb290dd0900"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__CL-scatter.html#ga158cea93758cd23b4e1e4cb290dd0900">scatter_if</a> (<a class="el" href="classbolt_1_1cl_1_1control.html">bolt::cl::control</a> &amp;ctl, InputIterator1 first1, InputIterator1 last1, InputIterator2 map, InputIterator3 stencil, OutputIterator result, const std::string &amp;user_code=&quot;&quot;)</td></tr>
+<tr class="memdesc:ga158cea93758cd23b4e1e4cb290dd0900"><td class="mdescLeft">&#160;</td><td class="mdescRight">This version of <code>scatter</code> copies elements from a source range to a destination array according to a specified map. For each <code>i</code> in <code>InputIterator1</code> in the range <code></code>[first, last), scatter copies the corresponding <code>input_first</code> to result[ map [ i ] ] if stencil[ i - first ] is <code>true</code>.  <a href="group__CL-scatter.html#ga158cea93758cd23b4e1e4cb290dd0900"></a><br/></td></tr>
+<tr class="separator:ga158cea93758cd23b4e1e4cb290dd0900"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gad10e9ffededb6a5360749d2d453f66e4"><td class="memTemplParams" colspan="2"><a class="anchor" id="gad10e9ffededb6a5360749d2d453f66e4"></a>
+template&lt;typename InputIterator1 , typename InputIterator2 , typename InputIterator3 , typename OutputIterator &gt; </td></tr>
+<tr class="memitem:gad10e9ffededb6a5360749d2d453f66e4"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>scatter_if</b> (InputIterator1 first1, InputIterator1 last1, InputIterator2 map, InputIterator3 stencil, OutputIterator result, const std::string &amp;user_code=&quot;&quot;)</td></tr>
+<tr class="separator:gad10e9ffededb6a5360749d2d453f66e4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:gae738794015adf10347e4e0102318e157"><td class="memTemplParams" colspan="2">template&lt;typename InputIterator1 , typename InputIterator2 , typename InputIterator3 , typename OutputIterator , typename BinaryPredicate &gt; </td></tr>
+<tr class="memitem:gae738794015adf10347e4e0102318e157"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__CL-scatter.html#gae738794015adf10347e4e0102318e157">scatter_if</a> (<a class="el" href="classbolt_1_1cl_1_1control.html">bolt::cl::control</a> &amp;ctl, InputIterator1 first1, InputIterator1 last1, InputIterator2 map, InputIterator3 stencil, OutputIterator result, BinaryPredicate pred, const std::string &amp;user_code=&quot;&quot;)</td></tr>
+<tr class="memdesc:gae738794015adf10347e4e0102318e157"><td class="mdescLeft">&#160;</td><td class="mdescRight">This version of <code>scatter</code> copies elements from a source range to a destination array according to a specified map. For each <code>i</code> in <code>InputIterator1</code> in the range <code></code>[first, last), scatter copies the corresponding <code>input_first</code> to result[ map [ i ] ] if pred (stencil[ i - first ]) is <code>true</code>.  <a href="group__CL-scatter.html#gae738794015adf10347e4e0102318e157"></a><br/></td></tr>
+<tr class="separator:gae738794015adf10347e4e0102318e157"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ga98256f29f4462c65cd4739848054de60"><td class="memTemplParams" colspan="2"><a class="anchor" id="ga98256f29f4462c65cd4739848054de60"></a>
+template&lt;typename InputIterator1 , typename InputIterator2 , typename InputIterator3 , typename OutputIterator , typename BinaryPredicate &gt; </td></tr>
+<tr class="memitem:ga98256f29f4462c65cd4739848054de60"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>scatter_if</b> (InputIterator1 first1, InputIterator1 last1, InputIterator2 map, InputIterator3 stencil, OutputIterator result, BinaryPredicate pred, const std::string &amp;user_code=&quot;&quot;)</td></tr>
+<tr class="separator:ga98256f29f4462c65cd4739848054de60"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ga7720660d4a8dee06ea5314d3a1db7db3"><td class="memTemplParams" colspan="2">template&lt;typename RandomAccessIterator &gt; </td></tr>
 <tr class="memitem:ga7720660d4a8dee06ea5314d3a1db7db3"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><a class="el" href="group__CL-sort.html#ga7720660d4a8dee06ea5314d3a1db7db3">sort</a> (<a class="el" href="classbolt_1_1cl_1_1control.html">bolt::cl::control</a> &amp;ctl, RandomAccessIterator first, RandomAccessIterator last, const std::string &amp;cl_code=&quot;&quot;)</td></tr>
 <tr class="memdesc:ga7720660d4a8dee06ea5314d3a1db7db3"><td class="mdescLeft">&#160;</td><td class="mdescRight">This version of <code>sort</code> returns the sorted result of all the elements in the <code>RandomAccessIterator</code> between the the first and last elements. The routine arranges the elements in an ascending order. <code>RandomAccessIterator's</code> value_type must provide operator &lt; overload.  <a href="group__CL-sort.html#ga7720660d4a8dee06ea5314d3a1db7db3"></a><br/></td></tr>
@@ -535,6 +615,18 @@ template&lt;typename InputIterator , typename OutputIterator , typename UnaryFun
 template&lt;typename InputIterator , typename OutputIterator , typename UnaryFunction , typename T , typename BinaryFunction &gt; </td></tr>
 <tr class="memitem:ga81aa67f992e0ccabe48df3edead06f61"><td class="memTemplItemLeft" align="right" valign="top">OutputIterator&#160;</td><td class="memTemplItemRight" valign="bottom"><b>transform_exclusive_scan</b> (InputIterator first, InputIterator last, OutputIterator result, UnaryFunction unary_op, T init, BinaryFunction binary_op, const std::string &amp;user_code=&quot;&quot;)</td></tr>
 <tr class="separator:ga81aa67f992e0ccabe48df3edead06f61"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5d0ec2dc325263aa0e921a53601159a7"><td class="memTemplParams" colspan="2"><a class="anchor" id="a5d0ec2dc325263aa0e921a53601159a7"></a>
+template&lt;typename InputIterator1 , typename InputIterator2 , typename OutputIterator &gt; </td></tr>
+<tr class="memitem:a5d0ec2dc325263aa0e921a53601159a7"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>gather</b> (<a class="el" href="classbolt_1_1cl_1_1control.html">bolt::cl::control</a> &amp;ctl, InputIterator1 map_first, InputIterator1 map_last, InputIterator2 input, OutputIterator result, const std::string &amp;user_code)</td></tr>
+<tr class="separator:a5d0ec2dc325263aa0e921a53601159a7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab9f68d516515549dde67a421bf48bde2"><td class="memTemplParams" colspan="2"><a class="anchor" id="ab9f68d516515549dde67a421bf48bde2"></a>
+template&lt;typename InputIterator1 , typename InputIterator2 , typename InputIterator3 , typename OutputIterator , typename BinaryPredicate &gt; </td></tr>
+<tr class="memitem:ab9f68d516515549dde67a421bf48bde2"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>gather_if</b> (<a class="el" href="classbolt_1_1cl_1_1control.html">bolt::cl::control</a> &amp;ctl, InputIterator1 map_first, InputIterator1 map_last, InputIterator2 stencil, InputIterator3 input, OutputIterator result, BinaryPredicate pred, const std::string &amp;user_code)</td></tr>
+<tr class="separator:ab9f68d516515549dde67a421bf48bde2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae21d4f2cab93ed42c18a2b90aa79b2f8"><td class="memTemplParams" colspan="2"><a class="anchor" id="ae21d4f2cab93ed42c18a2b90aa79b2f8"></a>
+template&lt;typename InputIterator1 , typename InputIterator2 , typename InputIterator3 , typename OutputIterator , typename BinaryPredicate &gt; </td></tr>
+<tr class="memitem:ae21d4f2cab93ed42c18a2b90aa79b2f8"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>gather_if</b> (InputIterator1 map_first, InputIterator1 map_last, InputIterator2 stencil, InputIterator3 input, OutputIterator result, BinaryPredicate pred, const std::string &amp;user_code)</td></tr>
+<tr class="separator:ae21d4f2cab93ed42c18a2b90aa79b2f8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a86291cccf40a283b3d8606abdace8cb9"><td class="memTemplParams" colspan="2"><a class="anchor" id="a86291cccf40a283b3d8606abdace8cb9"></a>
 template&lt;unsigned int N, typename T1 , typename T2 &gt; </td></tr>
 <tr class="memitem:a86291cccf40a283b3d8606abdace8cb9"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="structtuple__element.html">tuple_element</a>&lt; N, <a class="el" href="structbolt_1_1cl_1_1pair.html">pair</a>&lt; T1, T2 &gt;<br class="typebreak"/>
@@ -545,22 +637,18 @@ template&lt;unsigned int N, typename T1 , typename T2 &gt; </td></tr>
 <tr class="memitem:af75a9b16cecf4ade8c29c924048ba779"><td class="memTemplItemLeft" align="right" valign="top">const <a class="el" href="structtuple__element.html">tuple_element</a>&lt; N, <a class="el" href="structbolt_1_1cl_1_1pair.html">pair</a><br class="typebreak"/>
 &lt; T1, T2 &gt; &gt;::type &amp;&#160;</td><td class="memTemplItemRight" valign="bottom"><b>get</b> (const <a class="el" href="structbolt_1_1cl_1_1pair.html">pair</a>&lt; T1, T2 &gt; &amp;p)</td></tr>
 <tr class="separator:af75a9b16cecf4ade8c29c924048ba779"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7f56887fe0a6d62262dc805ed20c1f13"><td class="memTemplParams" colspan="2"><a class="anchor" id="a7f56887fe0a6d62262dc805ed20c1f13"></a>
-template&lt;typename vType , typename oType , typename BinaryFunction , typename T &gt; </td></tr>
-<tr class="memitem:a7f56887fe0a6d62262dc805ed20c1f13"><td class="memTemplItemLeft" align="right" valign="top">oType *&#160;</td><td class="memTemplItemRight" valign="bottom"><b>Serial_scan</b> (vType *values, oType *result, unsigned int num, const BinaryFunction binary_op, const bool Incl, const T &amp;init)</td></tr>
-<tr class="separator:a7f56887fe0a6d62262dc805ed20c1f13"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af2d527bd2e984401407ee3d40810f4e0"><td class="memTemplParams" colspan="2"><a class="anchor" id="af2d527bd2e984401407ee3d40810f4e0"></a>
-template&lt;typename kType , typename vType , typename oType , typename BinaryPredicate , typename BinaryFunction &gt; </td></tr>
-<tr class="memitem:af2d527bd2e984401407ee3d40810f4e0"><td class="memTemplItemLeft" align="right" valign="top">oType *&#160;</td><td class="memTemplItemRight" valign="bottom"><b>Serial_inclusive_scan_by_key</b> (kType *firstKey, vType *values, oType *result, unsigned int num, const BinaryPredicate binary_pred, const BinaryFunction binary_op)</td></tr>
-<tr class="separator:af2d527bd2e984401407ee3d40810f4e0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa86c3995c339304caf707523cf242b4a"><td class="memTemplParams" colspan="2"><a class="anchor" id="aa86c3995c339304caf707523cf242b4a"></a>
-template&lt;typename kType , typename vType , typename oType , typename BinaryPredicate , typename BinaryFunction , typename T &gt; </td></tr>
-<tr class="memitem:aa86c3995c339304caf707523cf242b4a"><td class="memTemplItemLeft" align="right" valign="top">oType *&#160;</td><td class="memTemplItemRight" valign="bottom"><b>Serial_exclusive_scan_by_key</b> (kType *firstKey, vType *values, oType *result, unsigned int num, const BinaryPredicate binary_pred, const BinaryFunction binary_op, const T &amp;init)</td></tr>
-<tr class="separator:aa86c3995c339304caf707523cf242b4a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aabcb504ddf08588dd782383e65cdb43f"><td class="memTemplParams" colspan="2"><a class="anchor" id="aabcb504ddf08588dd782383e65cdb43f"></a>
-template&lt;typename oType , typename BinaryFunction , typename T &gt; </td></tr>
-<tr class="memitem:aabcb504ddf08588dd782383e65cdb43f"><td class="memTemplItemLeft" align="right" valign="top">oType *&#160;</td><td class="memTemplItemRight" valign="bottom"><b>Serial_Scan</b> (oType *values, oType *result, unsigned int num, const BinaryFunction binary_op, const bool Incl, const T &amp;init)</td></tr>
-<tr class="separator:aabcb504ddf08588dd782383e65cdb43f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ade503711adc7cc16e7f7582a1b348ead"><td class="memTemplParams" colspan="2"><a class="anchor" id="ade503711adc7cc16e7f7582a1b348ead"></a>
+template&lt;typename InputIterator1 , typename InputIterator2 , typename OutputIterator &gt; </td></tr>
+<tr class="memitem:ade503711adc7cc16e7f7582a1b348ead"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>scatter</b> (<a class="el" href="classbolt_1_1cl_1_1control.html">bolt::cl::control</a> &amp;ctl, InputIterator1 first1, InputIterator1 last1, InputIterator2 map, OutputIterator result, const std::string &amp;user_code)</td></tr>
+<tr class="separator:ade503711adc7cc16e7f7582a1b348ead"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a07fc45ad6bc589a6e51172844e7e10ab"><td class="memTemplParams" colspan="2"><a class="anchor" id="a07fc45ad6bc589a6e51172844e7e10ab"></a>
+template&lt;typename InputIterator1 , typename InputIterator2 , typename InputIterator3 , typename OutputIterator , typename Predicate &gt; </td></tr>
+<tr class="memitem:a07fc45ad6bc589a6e51172844e7e10ab"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>scatter_if</b> (<a class="el" href="classbolt_1_1cl_1_1control.html">bolt::cl::control</a> &amp;ctl, InputIterator1 first1, InputIterator1 last1, InputIterator2 map, InputIterator3 stencil, OutputIterator result, Predicate pred, const std::string &amp;user_code)</td></tr>
+<tr class="separator:a07fc45ad6bc589a6e51172844e7e10ab"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aafdecfbf621641d9925ee381b5211a50"><td class="memTemplParams" colspan="2"><a class="anchor" id="aafdecfbf621641d9925ee381b5211a50"></a>
+template&lt;typename InputIterator1 , typename InputIterator2 , typename InputIterator3 , typename OutputIterator , typename Predicate &gt; </td></tr>
+<tr class="memitem:aafdecfbf621641d9925ee381b5211a50"><td class="memTemplItemLeft" align="right" valign="top">void&#160;</td><td class="memTemplItemRight" valign="bottom"><b>scatter_if</b> (InputIterator1 first1, InputIterator1 last1, InputIterator2 map, InputIterator3 stencil, OutputIterator result, Predicate pred, const std::string &amp;user_code)</td></tr>
+<tr class="separator:aafdecfbf621641d9925ee381b5211a50"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8a00fb0cc2a6f5ba19a88e523d9a8aa8"><td class="memTemplParams" colspan="2"><a class="anchor" id="a8a00fb0cc2a6f5ba19a88e523d9a8aa8"></a>
 template&lt;typename Type &gt; </td></tr>
 <tr class="memitem:a8a00fb0cc2a6f5ba19a88e523d9a8aa8"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classbolt_1_1cl_1_1constant__iterator.html">constant_iterator</a>&lt; Type &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><b>make_constant_iterator</b> (Type constValue)</td></tr>
@@ -569,13 +657,12 @@ template&lt;typename Type &gt; </td></tr>
 template&lt;typename Type &gt; </td></tr>
 <tr class="memitem:ac57869128d40833c59fb53f6c29097c8"><td class="memTemplItemLeft" align="right" valign="top"><a class="el" href="classbolt_1_1cl_1_1counting__iterator.html">counting_iterator</a>&lt; Type &gt;&#160;</td><td class="memTemplItemRight" valign="bottom"><b>make_counting_iterator</b> (Type constValue)</td></tr>
 <tr class="separator:ac57869128d40833c59fb53f6c29097c8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a51df5e7dd9fec075a2d9837a21c9db1a"><td class="memTemplParams" colspan="2"><a class="anchor" id="a51df5e7dd9fec075a2d9837a21c9db1a"></a>
-template&lt;typename newTag , typename InputIterator &gt; </td></tr>
-<tr class="memitem:a51df5e7dd9fec075a2d9837a21c9db1a"><td class="memTemplItemLeft" align="right" valign="top">InputIterator&#160;</td><td class="memTemplItemRight" valign="bottom"><b>retag</b> (InputIterator)</td></tr>
-<tr class="separator:a51df5e7dd9fec075a2d9837a21c9db1a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="var-members"></a>
 Variables</h2></td></tr>
+<tr class="memitem:a85a8a852315bfbcfa1e425a3a7c1fe65"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a85a8a852315bfbcfa1e425a3a7c1fe65"></a>
+const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>binary_search_kernels</b></td></tr>
+<tr class="separator:a85a8a852315bfbcfa1e425a3a7c1fe65"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab45d44a2e56b3aa8b8675a1dbfadd5bd"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="ab45d44a2e56b3aa8b8675a1dbfadd5bd"></a>
 const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>copy_kernels</b></td></tr>
 <tr class="separator:ab45d44a2e56b3aa8b8675a1dbfadd5bd"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -585,9 +672,15 @@ const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>count_ke
 <tr class="memitem:a8219f5111819373f53f2708ce3d25369"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a8219f5111819373f53f2708ce3d25369"></a>
 const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>fill_kernels</b></td></tr>
 <tr class="separator:a8219f5111819373f53f2708ce3d25369"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6638c3efbab6ee6c9ef6712926489c50"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a6638c3efbab6ee6c9ef6712926489c50"></a>
+const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>gather_kernels</b></td></tr>
+<tr class="separator:a6638c3efbab6ee6c9ef6712926489c50"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a28080e6d9738acbf029f8e65ab69deeb"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a28080e6d9738acbf029f8e65ab69deeb"></a>
 const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>generate_kernels</b></td></tr>
 <tr class="separator:a28080e6d9738acbf029f8e65ab69deeb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a70c4c31a4cb99a490db70d3f16a02af5"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a70c4c31a4cb99a490db70d3f16a02af5"></a>
+const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>merge_kernels</b></td></tr>
+<tr class="separator:a70c4c31a4cb99a490db70d3f16a02af5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9e858b609f4d963d88e4b4a9a5c2455e"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9e858b609f4d963d88e4b4a9a5c2455e"></a>
 const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>min_element_kernels</b></td></tr>
 <tr class="separator:a9e858b609f4d963d88e4b4a9a5c2455e"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -603,6 +696,9 @@ const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>scan_ker
 <tr class="memitem:a9adf520f40afcdc97e47d5c6b256fdd5"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9adf520f40afcdc97e47d5c6b256fdd5"></a>
 const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>scan_by_key_kernels</b></td></tr>
 <tr class="separator:a9adf520f40afcdc97e47d5c6b256fdd5"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a68e447f24eec24da41886d62348b5345"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a68e447f24eec24da41886d62348b5345"></a>
+const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>scatter_kernels</b></td></tr>
+<tr class="separator:a68e447f24eec24da41886d62348b5345"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af8b9ccf37615e025f95d15c8047d7eb2"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="af8b9ccf37615e025f95d15c8047d7eb2"></a>
 const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>sort_kernels</b></td></tr>
 <tr class="separator:af8b9ccf37615e025f95d15c8047d7eb2"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -615,9 +711,21 @@ const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>stableso
 <tr class="memitem:a04f441dea14bb83c16a6e31a7f3f8fd9"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a04f441dea14bb83c16a6e31a7f3f8fd9"></a>
 const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>sort_uint_kernels</b></td></tr>
 <tr class="separator:a04f441dea14bb83c16a6e31a7f3f8fd9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adc6ef2f02ee67253ff1f1b9dc0d89aab"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="adc6ef2f02ee67253ff1f1b9dc0d89aab"></a>
+const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>sort_int_kernels</b></td></tr>
+<tr class="separator:adc6ef2f02ee67253ff1f1b9dc0d89aab"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9495a9c2ed4641391b5ffaaae231a853"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a9495a9c2ed4641391b5ffaaae231a853"></a>
+const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>sort_common_kernels</b></td></tr>
+<tr class="separator:a9495a9c2ed4641391b5ffaaae231a853"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a97626283d8bb81b8c43e9dbd1623ea3d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a97626283d8bb81b8c43e9dbd1623ea3d"></a>
 const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>sort_by_key_kernels</b></td></tr>
 <tr class="separator:a97626283d8bb81b8c43e9dbd1623ea3d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0eda7c064bb5c7018bb8722108d7ce50"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a0eda7c064bb5c7018bb8722108d7ce50"></a>
+const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>sort_by_key_int_kernels</b></td></tr>
+<tr class="separator:a0eda7c064bb5c7018bb8722108d7ce50"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a919d37436cf67c6c0702bc67e0fdd5ca"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a919d37436cf67c6c0702bc67e0fdd5ca"></a>
+const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>sort_by_key_uint_kernels</b></td></tr>
+<tr class="separator:a919d37436cf67c6c0702bc67e0fdd5ca"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a360ef4d9d091f44f6b208ce53c47516d"><td class="memItemLeft" align="right" valign="top"><a class="anchor" id="a360ef4d9d091f44f6b208ce53c47516d"></a>
 const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>transform_kernels</b></td></tr>
 <tr class="separator:a360ef4d9d091f44f6b208ce53c47516d"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -784,7 +892,7 @@ ProgramMap&#160;</td><td class="memItemRight" valign="bottom"><b>programMap</b><
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Jul 8 2013 22:38:34 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Nov 11 2013 14:17:21 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.3
 </small></address>

@@ -18,7 +18,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">Bolt
-   &#160;<span id="projectnumber">1.0</span>
+   &#160;<span id="projectnumber">1.1</span>
    </div>
    <div id="projectbrief">C++ template library with support for OpenCL</div>
   </td>
@@ -57,7 +57,15 @@
 </li>
 </ul>
 </li>
-<li class="level1"><a href="#Requirements">Requirements</a></li>
+<li class="level1"><a href="#Debug">Debug Log Facility</a></li>
+<li class="level1"><a href="#Requirements">Requirements</a><ul><li class="level2"><a href="#Prerequisites">Prerequisites</a><ul><li class="level3"><a href="#Windows">Windows</a></li>
+<li class="level3"><a href="#Linux">Linux</a></li>
+</ul>
+</li>
+<li class="level2"><a href="#Package">Catalyst™ package</a></li>
+<li class="level2"><a href="#Support">Supported Devices</a></li>
+</ul>
+</li>
 </ul>
 </div>
 <div class="textblock"><div class="image">
@@ -78,7 +86,7 @@ Simple Example</h2>
 <div class="line"><span class="preprocessor">#include &lt;vector&gt;</span></div>
 <div class="line"><span class="preprocessor">#include &lt;algorithm&gt;</span></div>
 <div class="line"> </div>
-<div class="line"><span class="keywordtype">void</span> main()</div>
+<div class="line"><span class="keywordtype">int</span> main()</div>
 <div class="line">{</div>
 <div class="line">    <span class="comment">// generate random data (on host)</span></div>
 <div class="line">    std::vector&lt;int&gt; a(8192);</div>
@@ -86,6 +94,7 @@ Simple Example</h2>
 <div class="line"></div>
 <div class="line">    <span class="comment">// sort, run on best device in the platform</span></div>
 <div class="line">    <a class="code" href="group__CL-sort.html#ga7720660d4a8dee06ea5314d3a1db7db3" title="This version of sort returns the sorted result of all the elements in the RandomAccessIterator betwee...">bolt::cl::sort</a>(a.begin(), a.end());</div>
+<div class="line">    <span class="keywordflow">return</span> 0;</div>
 <div class="line">}</div>
 </div><!-- fragment --><p>The code will be familiar to the programmers who have used the C++ Standard Template Library; the difference is the include file (<a class="el" href="cl_2sort_8h.html" title="Returns the sorted result of all the elements in input.">bolt/cl/sort.h</a>) and the <code><a class="el" href="namespacebolt_1_1cl.html" title="Namespace containing OpenCL related data types and functions.">bolt::cl</a></code> namespace before the <code>sort</code> call. Bolt developers do not need to learn a new device-specific programming model to leverage the power and performance advantages of GPU computing.</p>
 <p>The example demonstrates two important features of Bolt: </p>
@@ -95,7 +104,7 @@ Simple Example</h2>
 </ul>
 <h2><a class="anchor" id="subexample_sec"></a>
 Bolt Functor Example</h2>
-<p>Below example shows how to use Functors with BOLT. For user defined datatypes to work with BOLT functor, user has to wrap his data type around a macro BOLT_FUNCTOR. This enables the user defined class to be available as a string to the OpenCL Compiler which is invoked during a call to clBuildProgram(). Consider the following example. </p>
+<p>Below example shows how to use functors with BOLT. For user defined datatypes to work with Bolt functor, user has to wrap his data type around a macro BOLT_FUNCTOR. This enables the user defined class to be available as a string to the OpenCL compiler which is invoked during a call to clBuildProgram(). Consider the following example. </p>
 <div class="fragment"><div class="line"><a class="code" href="group__ClCode.html#ga2478d544fdd6b2cb0b1104ee5378a177">BOLT_FUNCTOR</a>(MyType&lt;int&gt;,</div>
 <div class="line">template &lt;typename T&gt;</div>
 <div class="line"><span class="keyword">struct</span> MyType {</div>
@@ -117,16 +126,17 @@ Bolt Functor Example</h2>
 <div class="line">        : a(0) { }</div>
 <div class="line">};</div>
 <div class="line">);</div>
-</div><!-- fragment --><p>After defining the class, user need to register it with BOLT. Internally bolt algorithms will make use of the device_vector class. But these are defined only for the basic data types like int, float, unsigned int etc. For User defined data types it’s the responsibility of the application developer to create a definition of the deveice_vector for his own defined data type. See the below example. </p>
+</div><!-- fragment --><p>After defining the class, user need to register it with Bolt. Internally Bolt algorithms will make use of the device_vector class. But these are defined only for the basic data types like int, float, unsigned int etc. For user defined data types it’s the responsibility of the application developer to create a definition of the deveice_vector for his own defined data type. See the below example. </p>
 <div class="fragment"><div class="line"><a class="code" href="group__ClCode.html#ga8b9cbe9b8afde5a23262c5f25e3436c2" title="This macro specializes a template with a new type using the template definition of a previously defin...">BOLT_TEMPLATE_REGISTER_NEW_TYPE</a>( bolt::cl::greater, <span class="keywordtype">int</span>, MyType&lt; int&gt; );</div>
 <div class="line"><a class="code" href="group__ClCode.html#ga012279644d3227bf7ff71dc62c4635b7" title="This macro specializes a template iterator with a new type using the template definition of a previou...">BOLT_TEMPLATE_REGISTER_NEW_ITERATOR</a>( <a class="code" href="classbolt_1_1cl_1_1device__vector.html" title="This defines the OpenCL version of a device_vector.">bolt::cl::device_vector</a>, <span class="keywordtype">int</span>, MyType&lt; int&gt; );</div>
 </div><!-- fragment --><p> In the above example bolt::cl::greater functor is defined in <a class="el" href="cl_2functional_8h.html" title="List all the unary and binary functions.">include/bolt/cl/functional.h</a>. For the user defined data types it is the responsibility of the application developer to define as shown above for the functors which he uses from <a class="el" href="cl_2functional_8h.html" title="List all the unary and binary functions.">include/bolt/cl/functional.h</a> .</p>
 <p>Stitching it all together with a below sample code for Sort: </p>
-<div class="fragment"><div class="line"><span class="keywordtype">void</span> main()</div>
+<div class="fragment"><div class="line"><span class="keywordtype">int</span> main()</div>
 <div class="line">{</div>
 <div class="line">    <span class="keyword">typedef</span> MyType&lt;int&gt; mytype;</div>
 <div class="line">    std::vector&lt;mytype&gt; myTypeBoltInput(length);</div>
 <div class="line">    <a class="code" href="group__CL-sort.html#ga7720660d4a8dee06ea5314d3a1db7db3" title="This version of sort returns the sorted result of all the elements in the RandomAccessIterator betwee...">bolt::cl::sort</a>(myTypeBoltInput.begin(), myTypeBoltInput.end(),bolt::cl::greater&lt;mytype&gt;());</div>
+<div class="line">    <span class="keywordflow">return</span> 0;</div>
 <div class="line">}</div>
 </div><!-- fragment --><p>User can also work with his own defined Functor as shown below: </p>
 <div class="fragment"><div class="line"><a class="code" href="group__ClCode.html#ga2478d544fdd6b2cb0b1104ee5378a177">BOLT_FUNCTOR</a>(uddtD4,</div>
@@ -152,10 +162,11 @@ Bolt Functor Example</h2>
 <div class="line">    };</div>
 <div class="line">}; </div>
 <div class="line">);</div>
-<div class="line"><span class="keywordtype">void</span> main()</div>
+<div class="line"><span class="keywordtype">int</span> main()</div>
 <div class="line">{</div>
 <div class="line">    std::vector &lt;uddtD4&gt; boltInput(sizeOfInputBuffer);</div>
 <div class="line">    <a class="code" href="group__CL-sort.html#ga7720660d4a8dee06ea5314d3a1db7db3" title="This version of sort returns the sorted result of all the elements in the RandomAccessIterator betwee...">bolt::cl::sort</a>( boltInput.begin( ), boltInput.end( ), AddD4() );</div>
+<div class="line">    <span class="keywordflow">return</span> 0;</div>
 <div class="line">}</div>
 </div><!-- fragment --><h2><a class="anchor" id="subexample2_sec"></a>
 Templatized Bolt Functor</h2>
@@ -186,11 +197,12 @@ Templatized Bolt Functor</h2>
 <div class="line"><a class="code" href="group__ClCode.html#ga8b9cbe9b8afde5a23262c5f25e3436c2" title="This macro specializes a template with a new type using the template definition of a previously defin...">BOLT_TEMPLATE_REGISTER_NEW_TYPE</a>( bolt::cl::greater, <span class="keywordtype">int</span>, MyFunctor&lt; int&gt; );</div>
 <div class="line"><a class="code" href="group__ClCode.html#ga012279644d3227bf7ff71dc62c4635b7" title="This macro specializes a template iterator with a new type using the template definition of a previou...">BOLT_TEMPLATE_REGISTER_NEW_ITERATOR</a>( <a class="code" href="classbolt_1_1cl_1_1device__vector.html" title="This defines the OpenCL version of a device_vector.">bolt::cl::device_vector</a>, <span class="keywordtype">int</span>, MyFunctor&lt; int&gt; );</div>
 <div class="line"></div>
-<div class="line"><span class="keywordtype">void</span> main()</div>
+<div class="line"><span class="keywordtype">int</span> main()</div>
 <div class="line">{</div>
 <div class="line">    <span class="keyword">typedef</span> MyFunctor&lt;int&gt; myfunctor;</div>
 <div class="line">    std::vector &lt;myfunctor&gt; boltInput(sizeOfInputBuffer);</div>
 <div class="line">    <a class="code" href="group__CL-sort.html#ga7720660d4a8dee06ea5314d3a1db7db3" title="This version of sort returns the sorted result of all the elements in the RandomAccessIterator betwee...">bolt::cl::sort</a>( boltInput.begin( ), boltInput.end( ), bolt::cl::greater&lt;myfunctor&gt;() );</div>
+<div class="line">    <span class="keywordflow">return</span> 0;</div>
 <div class="line">}</div>
 </div><!-- fragment --><p> If the user wants to use TEMPLATE_FUNCTOR for more than one datatype then he can use other variants of this like BOLT_TEMPLATE_FUNCTOR2, BOLT_TEMPLATE_FUNCTOR3 etc from <a class="el" href="clcode_8h.html" title="Defines macros to help the user create code with C++ semantics for OpenCL kernels.">include/bolt/cl/clcode.h</a> file.</p>
 <h1><a class="anchor" id="Function_Path"></a>
@@ -200,7 +212,7 @@ Supported Functions and Code Paths</h1>
 Code Path Behaviour</h2>
 <h3><a class="anchor" id="Default"></a>
 Default Behaviour</h3>
-<p>Bolt function is designed to be executed with four code paths (OpenCL™, C++ AMP, Multicore CPU and Serial CPU). The default mode is "Automatic" which means it will go into GPU path first, then TBB (Intel), then SerialCpu with below mentioned order. The control will go to other paths only if the selected one not found.</p>
+<p>Bolt function is designed to be executed with four code paths (OpenCL™, C++ AMP, Multicore CPU and Serial CPU). The default mode is "Automatic" which means it will go into GPU path first, then Multicore CPU (Intel TBB), then SerialCpu with below mentioned order, control will go to other paths only if the selected one not found.</p>
 <p>Selection order will be: </p>
 <ul>
 <li>Run on GPU if AMD GPU is found and AMD APP SDK is installed. </li>
@@ -212,20 +224,94 @@ Force Behaviour</h3>
 <p>Forcing mode to any device will run the function on that device only. There are two ways in BOLT to force the control to specific Device.</p>
 <ol type="1">
 <li><b> Setting control to Device Globally: </b> <div class="fragment"><div class="line"><a class="code" href="classbolt_1_1cl_1_1control.html">bolt::cl::control</a>&amp; myControl = <a class="code" href="group__CL-control.html#ga59712ff5a77d3714f716d85938705289">bolt::cl::control::getDefault</a>( );</div>
-<div class="line">  myControl.waitMode( bolt::cl::control::NiceWait );</div>
-<div class="line">  myControl.<a class="code" href="group__CL-control.html#gab2ae4ea074dd26814f6356d884cc2146">setForceRunMode</a>( bolt::cl::control::OpenCL );</div>
+<div class="line">myControl.waitMode( bolt::cl::control::NiceWait );</div>
+<div class="line">myControl.<a class="code" href="group__CL-control.html#gab2ae4ea074dd26814f6356d884cc2146">setForceRunMode</a>( bolt::cl::control::OpenCL );</div>
 </div><!-- fragment --></li>
-<li><b> Setting control to Device locally </b> <div class="fragment"><div class="line"><a class="code" href="classbolt_1_1amp_1_1control.html">bolt::amp::control</a> ctl = <a class="code" href="group__control.html#gaffa8e713ecb8bd1ee469c3565e046a62">bolt::amp::control::getDefault</a>( );</div>
-<div class="line"> ctl.<a class="code" href="group__control.html#ga3e51894078b4d33db3aa97fc30ac24b4">setForceRunMode</a>(bolt::amp::control::OpenCL);</div>
+<li><b> Setting control to Device locally </b> <div class="fragment"><div class="line"><a class="code" href="classbolt_1_1cl_1_1control.html">bolt::cl::control</a> ctl = <a class="code" href="group__CL-control.html#ga59712ff5a77d3714f716d85938705289">bolt::cl::control::getDefault</a>( );</div>
+<div class="line">ctl.<a class="code" href="group__CL-control.html#gab2ae4ea074dd26814f6356d884cc2146">setForceRunMode</a>(bolt::cl::control::OpenCL);</div>
 </div><!-- fragment --> This will set the control to specified device locally, passing this control object to BOLT function enables specified device path only for that function, so reference to any BOLT function will always run specified device path.</li>
+</ol>
+<h1><a class="anchor" id="Debug"></a>
+Debug Log Facility</h1>
+<p>If Debug Log is enabled, we record the actual code path taken for execution. It could be OpenCL™ GPU/CPU, Multicore TBB or Serial. Users need to initialize the log object before the bolt call and a query after the call to know which all paths have been executed.</p>
+<ol type="1">
+<li><b> Initialization </b> <div class="fragment"><div class="line"><span class="preprocessor">#define BOLT_DEBUG_LOG</span></div>
+<div class="line"><span class="preprocessor"></span><span class="preprocessor">#include &quot;bolt/BoltLog.h&quot;</span></div>
+<div class="line">BOLTLOG::CaptureLog *xyz =  BOLTLOG::CaptureLog::getInstance();</div>
+<div class="line">xyz-&gt;Initialize();</div>
+<div class="line">std::vector&lt; BOLTLOG::FunPaths&gt; paths;</div>
+</div><!-- fragment --></li>
+<li><b> Querying </b> <div class="fragment"><div class="line">xyz-&gt;WhatPathTaken(paths);</div>
+<div class="line"><span class="keywordflow">for</span>(std::vector&lt; BOLTLOG::FunPaths&gt;::iterator parse=paths.begin(); parse!=paths.end(); parse++)</div>
+<div class="line"> {</div>
+<div class="line">    std::cout&lt;&lt;(*parse).fun&lt;&lt;”\n”;  <span class="comment">// prints function number as defined in Boltlog.h</span></div>
+<div class="line">    std::cout&lt;&lt;(*parse).path&lt;&lt;”\n”;  <span class="comment">// prints the path number – 0 for Multicore TBB, 1 for OpenCL™ GPU, 2 for OpenCL™ CPU and 3 for Serial.</span></div>
+<div class="line">    std::cout&lt;&lt;(*parse).msg&lt;&lt;”\n”;  <span class="comment">// prints the Path taken</span></div>
+<div class="line"> }</div>
+</div><!-- fragment --> When multiple functions are called, they are logged in the order invoked. E.g. sort &amp; then search.</li>
 </ol>
 <h1><a class="anchor" id="Requirements"></a>
 Requirements</h1>
-<p>Bolt uses an OpenCL<sup>TM</sup> implementation that supports the static C++ kernel features; specifically, C++ template support for OpenCL<sup>TM</sup> kernels. Currently, the AMD OpenCL<sup>TM</sup> SDK 2.7 and above versions are designed to provides this support; other vendors may adopt this feature in the future. If you face any issue with Bolt. Please log an issue in BOLT Issues page. <a href="https://github.com/HSA-Libraries/bolt/issues">BOLT Issues page</a>. </p>
+<p>Bolt uses an OpenCL<sup>TM</sup> implementation that supports the static C++ kernel features; specifically, C++ template support for OpenCL<sup>TM</sup> kernels. Currently, the AMD OpenCL<sup>TM</sup> SDK 2.7 and above versions are designed to provides this support; other vendors may adopt this feature in the future. If you face any issue with Bolt. Please log an issue in Bolt Issues page. <a href="https://github.com/HSA-Libraries/bolt/issues">Bolt Issues page</a>.</p>
+<h2><a class="anchor" id="Prerequisites"></a>
+Prerequisites</h2>
+<h3><a class="anchor" id="Windows"></a>
+Windows</h3>
+<ol type="1">
+<li>Visual Studio 2010 onwards (VS2012 for C++ AMP)</li>
+<li>Tested with 32/64 bit Windows® 7/8 and Windows® Blue</li>
+<li>CMake 2.8.10</li>
+<li>TBB (For Multicore CPU path only) (4.1 Update 1 or Above) . See Building Bolt with TBB.</li>
+<li>APP SDK 2.8 or onwards.</li>
+</ol>
+<p><b>Note:</b> If the user has installed both Visual Studio 2012 and Visual Studio 2010, the latter should be updated to SP1.</p>
+<h3><a class="anchor" id="Linux"></a>
+Linux</h3>
+<ol type="1">
+<li>GCC 4.6.3 and above</li>
+<li>Tested with OpenSuse 12.3, RHEL 6.4 64bit, RHEL 6.3 32bit, Ubuntu 13.4</li>
+<li>CMake 2.8.10</li>
+<li>TBB (For Multicore CPU path only) (4.1 Update 1 or Above) . See Building Bolt with TBB.</li>
+<li>APP SDK 2.8 or onwards.</li>
+</ol>
+<p><b>Note:</b> Bolt pre-built binaries for Linux are build with GCC 4.7.3, same version should be used for Application building else user has to build Bolt from source with GCC 4.6.3 or higher.</p>
+<h2><a class="anchor" id="Package"></a>
+Catalyst™ package</h2>
+<p>The latest Catalyst package contains the most recent OpenCL runtime. Recommended Catalyst package is 13.11 Beta V1.</p>
+<p>13.4 and higher is supported.</p>
+<p><b>Note:</b> 13.9 in not supported.</p>
+<h2><a class="anchor" id="Support"></a>
+Supported Devices</h2>
+<p><b>AMD APU Family with AMD Radeon™ HD Graphics</b></p>
+<ol type="1">
+<li>A-Series</li>
+<li>C-Series</li>
+<li>E-Series</li>
+<li>E2-Series</li>
+<li>G-Series</li>
+<li>R-Series</li>
+</ol>
+<p><b>AMD Radeon™ HD Graphics</b></p>
+<ol type="1">
+<li>7900 Series (7990, 7970, 7950)</li>
+<li>7800 Series (7870, 7850)</li>
+<li>7700 Series (7770, 7750)</li>
+</ol>
+<p><b>AMD Radeon™ HD Graphics</b></p>
+<ol type="1">
+<li>6900 Series (6990, 6970, 6950)</li>
+<li>6800 Series (6870, 6850)</li>
+<li>6700 Series (6790 , 6770, 6750)</li>
+<li>6600 Series (6670)</li>
+<li>6500 Series (6570)</li>
+<li>6400 Series (6450)</li>
+<li>6xxxM Series</li>
+</ol>
+<p>Compiled binary windows packages (zip packages) for Bolt may be downloaded from the Bolt landing page hosted on AMD's Developer Central website. </p>
 </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Jul 8 2013 22:38:35 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Nov 11 2013 14:17:21 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.3
 </small></address>

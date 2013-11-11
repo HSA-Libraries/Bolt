@@ -18,7 +18,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">Bolt
-   &#160;<span id="projectnumber">1.0</span>
+   &#160;<span id="projectnumber">1.1</span>
    </div>
    <div id="projectbrief">C++ template library with support for OpenCL</div>
   </td>
@@ -52,14 +52,12 @@
 <dt><a class="anchor" id="_bug000004"></a>Class <a class="el" href="classbolt_1_1cl_1_1device__vector_1_1reverse__iterator__base.html">bolt::cl::device_vector&lt; T &gt;::reverse_iterator_base&lt; Container &gt;</a>  </dt>
 <dd>operator[] with device_vector iterators result in a compile-time error when accessed for reading. Writing with operator[] appears to be OK. Workarounds: either use the operator[] on the device_vector container, or use iterator arithmetic instead, such as *(iter + 5) for reading from the iterator.  </dd>
 <dt><a class="anchor" id="_bug000002"></a>File <a class="el" href="cl_2device__vector_8h.html">device_vector.h</a>  </dt>
-<dd>iterator::getBuffer() returns "pointer" to beginning of array, instead of where the iterator has incremented to; may need to map a subBuffer or something simmilar  </dd>
-<dt><a class="anchor" id="_bug000005"></a>File <a class="el" href="sort__by__key_8h.html">sort_by_key.h</a>  </dt>
-<dd><a class="el" href="group__CL-sort.html#ga0bc01fbb8672efe8581abb4d0ae3388c" title="This version of sort_by_key returns the sorted result of all the elements in the RandomAccessIterator...">bolt::cl::sort_by_key</a> does not work for non power of 2 buffer sizes. </dd>
+<dd>iterator::getBuffer() returns "pointer" to beginning of array, instead of where the iterator has incremented to; may need to map a subBuffer or something simmilar </dd>
 </dl>
 </div></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Jul 8 2013 22:38:33 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Nov 11 2013 14:17:20 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.3
 </small></address>

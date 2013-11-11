@@ -18,7 +18,7 @@
  <tr style="height: 56px;">
   <td style="padding-left: 0.5em;">
    <div id="projectname">Bolt
-   &#160;<span id="projectnumber">1.0</span>
+   &#160;<span id="projectnumber">1.1</span>
    </div>
    <div id="projectbrief">C++ template library with support for OpenCL</div>
   </td>
@@ -186,12 +186,12 @@ static std::string&#160;</td><td class="memItemRight" valign="bottom"><b>ClCode&
 <div class="line">                                        static <span class="keywordtype">void</span> addDependency(std::string s) { dependencies.push_back(s); }; \</div>
 <div class="line">                                        static std::string getDependingCodeString() { \</div>
 <div class="line">                                            std::string c;\</div>
-<div class="line">                                            for (std::vector&lt;std::string&gt;::iterator i = dependencies.begin(); i != dependencies.end(); i++) { c = c + *i; } \</div>
+<div class="line">                                            for (std::vector&lt; std::string &gt;::iterator i = dependencies.begin(); i != dependencies.end(); i++) { c = c + *i; } \</div>
 <div class="line">                                            return c; \</div>
 <div class="line">                                        };\</div>
 <div class="line">                                        static std::string getCodeString() { <span class="keywordflow">return</span> CODE_STRING; }; \</div>
 <div class="line">                                        static std::string <span class="keyword">get</span>() { <span class="keywordflow">return</span> getDependingCodeString() + getCodeString(); }; };\</div>
-<div class="line">__declspec( selectany ) std::vector&lt;std::<span class="keywordtype">string</span>&gt; <a class="code" href="structClCode.html" title="The definition of a type trait for the definition of a type, which could be arbitrarily complex...">ClCode</a>&lt; Type &gt;::dependencies;</div>
+<div class="line">__attribute__((weak))  std::vector&lt; std::<span class="keywordtype">string</span> &gt; <a class="code" href="structClCode.html" title="The definition of a type trait for the definition of a type, which could be arbitrarily complex...">ClCode</a>&lt; Type &gt;::dependencies;</div>
 </div><!-- fragment --><p>Creates the <a class="el" href="structClCode.html" title="The definition of a type trait for the definition of a type, which could be arbitrarily complex...">ClCode</a> trait that associates the specified type <code>T</code> with the string <code>CODE_STRING</code>. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
@@ -703,7 +703,7 @@ static std::string&#160;</td><td class="memItemRight" valign="bottom"><b>ClCode&
 </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
-Generated on Mon Jul 8 2013 22:38:33 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
+Generated on Mon Nov 11 2013 14:17:20 for Bolt by &#160;<a href="http://www.doxygen.org/index.html">
 <img class="footer" src="doxygen.png" alt="doxygen"/>
 </a> 1.8.3
 </small></address>
