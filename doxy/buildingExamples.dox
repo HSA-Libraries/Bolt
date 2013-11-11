@@ -32,26 +32,28 @@
 * <a class="external" href="http://www.cmake.org/">http://www.cmake.org/</a>
 
 * \subsection clDependencies OpenCL&tm; Dependencies
-* Bolt's OpenCL&tm; projects have a dependency on the AMD APP SDK and the AMD OpenCL runtime provided by the Catalyst drivers.  
-* OpenCL is regarded as a cross-platform, vendor-neutral API and AMD is using C++ kernel template
-* features found in the AMD OpenCL implementation that to date are not found in other vendor implementations.  
-* During its configuration, CMake requires an environment variable to find the root of the OpenCL installation.   
+* Bolt's OpenCL&tm; projects have a dependency on the AMD APP SDK and the AMD OpenCL&tm; runtime provided by the Catalyst &tm; drivers.  
+* OpenCL&tm; is regarded as a cross-platform, vendor-neutral API and AMD is using C++ kernel template
+* features found in the AMD OpenCL&tm; implementation that to date are not found in other vendor implementations.  
+* During its configuration, CMake requires an environment variable to find the root of the OpenCL&tm; installation.   
 * Provide this by defining the environment variable <b>AMDAPPSDKROOT</b> with the path to the root 
-* of the OpenCL SDK, typically <tt>'C:/Program Files (x86)/AMD APP'</tt> on Windows 64-bit machines.  This environment
-* variable is automatically defined by the Catalyst installer; so, in most circumstances, no additional work is needed.  
+* of the OpenCL&tm; SDK, typically <tt>'C:/Program Files (x86)/AMD APP'</tt> on Windows &reg; 64-bit machines.  This environment
+* variable is automatically defined by the Catalyst &tm; installer; so, in most circumstances, no additional work is needed.  
 * A more vendor-neutral environment variable is <b>OPENCL_ROOT</b>, but it is not defined by the 
-* Catalyst installer.
+* Catalyst &tm; installer.
+* \image html opencl_environment_variable2.png "Environment variable setup screen"
 * \image html opencl_environment_variable.png "Environment variable setup screen"
+* <br> <b> NOTE </b>: On <b> Linux &reg; </b>, set the environment variable by <tt> 'export OPENCL_ROOT = /opt/AMDAPP/' </tt>
 
-* CMake ships with several interfaces to help a developer generate native build files.  For Windows-based systems, 
-* CMake has a GUI interface called CMake-gui that incorporates the traditional point-and-click conventions of buttons, 
-* list boxes, and search boxes.  For CLI-based sytems (including CMD from Windows), CMake has a native command-line 
+* CMake ships with several interfaces to help a developer generate native build files.
+* CMake has a GUI interface called cmake-gui that incorporates the traditional point-and-click conventions of buttons, 
+* list boxes, and search boxes.  For CLI-based sytems (including CMD from Windows &reg;), CMake has a native command-line 
 * executable (the GUI is just a wrapper around the command line).  The command line 
-* executable is useful, even in Windows, for scripting purposes, such as might be used with automated and continuous 
+* executable is useful, even in Windows &reg;, for scripting purposes, such as might be used with automated and continuous 
 * build systems.
 
 * \section config CMake Bolt Configuration
-* Once installed, the easiest interface for Windows or X-windows is the CMake GUI program 'cmake-gui'.
+* Once installed, the easiest interface for Linux &reg; or Windows &reg; or X-windows &reg; is the CMake GUI program <b> 'cmake-gui' </b>.
 * The terminal applications cmake.exe and ccmake.exe (based on curses library) are  
 * easy to learn.  CMake automates the creation of build
 * environments in a cross-platform manner, generating native build files for each respective platform.
@@ -78,6 +80,7 @@
 
 * In the example above, 'Visual Studio 11 Win64' generator is selected.  The selected build directory should be
 * descriptive of the generator used; otherwise, it is easy to start over (delete the binaries directory).  
+* <b> On Linux &reg;</b>, choose the Unix Makefiles option as generator.
 * After selecting the generator, CMake examines the system, finding all project dependencies and properties, 
 * which appear red in the properties box.
 * \image html cmake.examples.first.configure.png "Cmake system introspection"
@@ -88,14 +91,17 @@
 * dependencies are not set up properly (see \ref clDependencies ).
 *
 * \subsection startup Startup projects
-* After a successful configuration pass, the directory specified initially in the <tt>'Where to build the binaries:'</tt>
+* <b> On Windows &reg; </b>, after a successful configuration pass, the directory specified initially in the <tt>'Where to build the binaries:'</tt>
 * textbox contains an 'Examples.sln' file, which can be opened in the appropriate version of Visual Studio.
-* At this point, selecting the 'Build Solution' menu item builds all the samples.is selected.  By default, Visual
+* At this point, selecting the 'Build Solution' menu item builds all the samples selected.  By default, Visual
 * Studio will have the 'ALL_BUILD' project selected as the \c 'Startup' project.  If a particular sample must be run
 * under a debugger, mark it \c 'Startup' by first right-clicking on the project, then selecting 
 * <tt>'Set as Startup Project'</tt>.  Debugging then proceeds normally.
 *
+* <b> On Linux &reg;</b>, open the terminal and change the directory to the one specified initially in the <tt>'Where to build the binaries:'</tt>
+* Run make in that directory to build all samples. Indivisual samples can also be built by running make in the corresponding sample directory.
+*
 * \subsection compDependency Supported compilers
-* Bolt currently uses type traits introduced in Visual Studio 2010.  We hope to support additional compilers at some time.  
-* We also hope to add GCC/MinGW support at some time.
+* On <b> Windows &reg; </b>, Bolt currently uses type traits introduced in Visual Studio 2010.  We hope to support additional compilers at some time.  
+* On <b> Linux &reg; </b>, GCC is supported. We also hope to add MinGW support in future.
 */

@@ -40,9 +40,13 @@ namespace cl {
             counting_iterator_tag, value_type, int >
         {
         public:
+
+	    typedef typename boost::iterator_facade< counting_iterator< value_type >, value_type, 
+            counting_iterator_tag, value_type, int >::difference_type  difference_type;
+
             struct Payload
             {
-                typename value_type m_Value;
+                value_type m_Value;
             };
 
             //  Basic constructor requires a reference to the container and a positional element
@@ -79,13 +83,13 @@ namespace cl {
                 return *this;
             }
                 
-            counting_iterator< value_type >& operator+= ( const typename iterator_facade::difference_type & n )
+            counting_iterator< value_type >& operator+= ( const difference_type & n )
             {
                 advance( n );
                 return *this;
             }
                 
-            const counting_iterator< value_type > operator+ ( const typename iterator_facade::difference_type & n ) const
+            const counting_iterator< value_type > operator+ ( const difference_type & n ) const
             {
                 counting_iterator< value_type > result( *this );
                 result.advance( n );
@@ -108,7 +112,7 @@ namespace cl {
                 return payload;
             }
 
-            const typename iterator_facade::difference_type gpuPayloadSize( ) const
+            const difference_type gpuPayloadSize( ) const
             {
                 return sizeof( Payload );
             }
@@ -121,7 +125,7 @@ namespace cl {
             }
 
             //  Public member variables
-            typename iterator_facade::difference_type m_Index;
+            difference_type m_Index;
 
         private:
             //  Implementation detail of boost.iterator
@@ -131,7 +135,7 @@ namespace cl {
             template < typename > friend class counting_iterator;
 
             //  For a counting_iterator, do nothing on an advance
-            void advance( typename iterator_facade::difference_type n )
+            void advance(difference_type n )
             {
                 m_Index += n;
             }
@@ -154,7 +158,8 @@ namespace cl {
                 return sameIndex;
             }
 
-            reference dereference( ) const
+            typename boost::iterator_facade< counting_iterator< value_type >, value_type, 
+            counting_iterator_tag, value_type, int >::reference  dereference( ) const
             {
                 return m_initValue + m_Index;
             }
@@ -184,6 +189,7 @@ namespace cl {
 
             void init( global value_type* ptr ) \n
             { \n
+
                 //m_Ptr = ptr; \n
             }; \n
 
@@ -219,5 +225,6 @@ BOLT_CREATE_CLCODE( bolt::cl::counting_iterator< int >, bolt::cl::deviceCounting
 BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::counting_iterator, int, unsigned int );
 BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::counting_iterator, int, float );
 BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::counting_iterator, int, double );
+BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::counting_iterator, int, cl_long );
 
 #endif

@@ -15,10 +15,11 @@
 
 ***************************************************************************/                                                                                     
 
-#include "stdafx.h"
-
-#include <bolt/boltVersion.h>
+#include <bolt/unicode.h>
+#include <bolt/BoltVersion.h>
 #include <bolt/cl/bolt.h>
+#include <iostream>
+#include <iomanip>
 
 int _tmain( int argc, _TCHAR* argv[ ] )
 {

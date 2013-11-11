@@ -19,12 +19,16 @@
 #include <bolt/cl/fill.h>
 #include <bolt/cl/device_vector.h>
 #include "bolt/cl/iterator/constant_iterator.h"
+#include "common/test_common.h"
 
 #define STRUCT 1
 #define FILL_GOOGLE_TEST 1
 
-#define TEST_DOUBLE 0
+#define TEST_DOUBLE 1
 #define TEST_CPU_DEVICE 1
+#ifndef WIN32
+#define _FPCLASS_ND  0x0010 // Linux negative denormal Value
+#endif
 
 #if FILL_GOOGLE_TEST
 #include <gtest/gtest.h>
@@ -147,69 +151,6 @@ int teststruct_n( int length )
 
 #endif
 
-template< typename T >
-::testing::AssertionResult cmpArrays( const T ref, const T calc, size_t N )
-{
-    for( size_t i = 0; i < N; ++i )
-    {
-        EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-    }
-
-    return ::testing::AssertionSuccess( );
-}
-template< typename T, size_t N >
-::testing::AssertionResult cmpArrays( const T (&ref)[N], const T (&calc)[N] )
-{
-    for( size_t i = 0; i < N; ++i )
-    {
-        EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-    }
-
-    return ::testing::AssertionSuccess( );
-}
-template< typename T, size_t N >
-struct cmpStdArray
-{
-    static ::testing::AssertionResult cmpArrays( const std::array< T, N >& ref, const std::array< T, N >& calc )
-    {
-        for( size_t i = 0; i < N; ++i )
-        {
-            EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-        }
-
-        return ::testing::AssertionSuccess( );
-    }
-};
-template< size_t N >
-struct cmpStdArray< float, N >
-{
-    static ::testing::AssertionResult cmpArrays( const std::array< float, N >& ref, const std::array< float, N >& calc)
-    {
-        for( size_t i = 0; i < N; ++i )
-        {
-            EXPECT_FLOAT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-        }
-
-        return ::testing::AssertionSuccess( );
-    }
-};
-
-#if (TEST_DOUBLE == 1)
-template< size_t N >
-struct cmpStdArray< double, N >
-{
-    static ::testing::AssertionResult cmpArrays( const std::array< double,N>& ref,const std::array< double, N >& calc)
-    {
-        for( size_t i = 0; i < N; ++i )
-        {
-            EXPECT_DOUBLE_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-        }
-
-        return ::testing::AssertionSuccess( );
-    }
-};
-#endif
-
 BOLT_FUNCTOR(UDD, 
 struct UDD
 {
@@ -229,49 +170,6 @@ struct UDD
 
 BOLT_CREATE_TYPENAME( bolt::cl::device_vector< UDD >::iterator );
 BOLT_CREATE_CLCODE( bolt::cl::device_vector< UDD >::iterator, bolt::cl::deviceVectorIteratorTemplate );
-
-template< typename T >
-::testing::AssertionResult cmpArrays( const std::vector< T >& ref, const std::vector< T >& calc )
-{
-    for( size_t i = 0; i < ref.size( ); ++i )
-    {
-        EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-    }
-
-    return ::testing::AssertionSuccess( );
-}
-
-::testing::AssertionResult cmpArrays( const std::vector< float >& ref, const std::vector< float >& calc )
-{
-    for( size_t i = 0; i < ref.size( ); ++i )
-    {
-        EXPECT_FLOAT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-    }
-
-    return ::testing::AssertionSuccess( );
-}
-#if (TEST_DOUBLE == 1)
-::testing::AssertionResult cmpArrays( const std::vector< double >& ref, const std::vector< double >& calc )
-{
-    for( size_t i = 0; i < ref.size( ); ++i )
-    {
-        EXPECT_DOUBLE_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-    }
-
-    return ::testing::AssertionSuccess( );
-}
-#endif
-
-template< typename S, typename B >
-::testing::AssertionResult cmpArrays( const S& ref, const B& calc )
-{
-    for( size_t i = 0; i < ref.size( ); ++i )
-    {
-        EXPECT_EQ( ref[ i ], calc[ i ] ) << _T( "Where i = " ) << i;
-    }
-
-    return ::testing::AssertionSuccess( );
-}
 
 class HostclLongVector: public ::testing::TestWithParam< int >
 {
@@ -472,7 +370,7 @@ public:
 
 protected:
     typedef typename std::tuple_element< 0, ArrayTuple >::type ArrayType;
-    static const size_t ArraySize = typename std::tuple_element< 1, ArrayTuple >::type::value;
+    static const size_t ArraySize =  std::tuple_element< 1, ArrayTuple >::type::value;
     std::array< ArrayType, ArraySize > stdInput, boltInput, stdOffsetIn, boltOffsetIn;
     int m_Errors;
     ArrayType val;
@@ -484,45 +382,57 @@ TYPED_TEST_CASE_P( FillArrayTest );
 #if (TEST_CPU_DEVICE == 1)
 TYPED_TEST_P( FillArrayTest,CPU_DeviceNormal )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+    
+    typedef typename FillArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;    
+    typedef std::array< ArrayType, FillArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont;
+    
+    
 
     MyOclContext oclcpu = initOcl(CL_DEVICE_TYPE_CPU, 0);
     bolt::cl::control c_cpu(oclcpu._queue);  // construct control structure from the queue.
 
     //  Calling the actual functions under test
-    std::fill( stdInput.begin( ), stdInput.end( ), val );
-    bolt::cl::fill( c_cpu, boltInput.begin( ), boltInput.end( ) , val);
+    std::fill( FillArrayTest< gtest_TypeParam_ >::stdInput.begin( ), FillArrayTest< gtest_TypeParam_ >::stdInput.end( ), FillArrayTest< gtest_TypeParam_ >::val );
+    bolt::cl::fill( c_cpu, FillArrayTest< gtest_TypeParam_ >::boltInput.begin( ), FillArrayTest< gtest_TypeParam_ >::boltInput.end( ) , FillArrayTest< gtest_TypeParam_ >::val);
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+    typename ArrayCont::difference_type stdNumElements = std::distance( FillArrayTest< gtest_TypeParam_ >::stdInput.begin( ), FillArrayTest< gtest_TypeParam_ >::stdInput.end() );
+    typename ArrayCont::difference_type boltNumElements = std::distance( FillArrayTest< gtest_TypeParam_ >::boltInput.begin( ), FillArrayTest< gtest_TypeParam_ >::boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
+    //cmpStdArray< ArrayType,  FillArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( FillArrayTest< gtest_TypeParam_ >::stdInput, FillArrayTest< gtest_TypeParam_ >::boltInput );
     
     //OFFSET Test cases
     //  Calling the actual functions under test
     size_t startIndex = 17; //Some aribitrary offset position
-    size_t endIndex   = ArraySize - 17; //Some aribitrary offset position
-    if( (( startIndex > ArraySize ) || ( endIndex < 0 ) )  || (startIndex > endIndex) )
+    size_t endIndex   = FillArrayTest< gtest_TypeParam_ >::ArraySize - 17; //Some aribitrary offset position
+    if( (( startIndex > FillArrayTest< gtest_TypeParam_ >::ArraySize ) || ( endIndex < 0 ) )  || (startIndex > endIndex) )
     {
-        std::cout <<"\nSkipping NormalOffset Test for size "<< ArraySize << "\n";
+        std::cout <<"\nSkipping NormalOffset Test for size "<< FillArrayTest< gtest_TypeParam_ >::ArraySize << "\n";
     }    
     else
     {
-        std::fill( stdOffsetIn.begin( ) + startIndex, stdOffsetIn.begin( ) + endIndex, val );
-        bolt::cl::fill( c_cpu, boltOffsetIn.begin( ) + startIndex, boltOffsetIn.begin( ) + endIndex, val);
+        std::fill( FillArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin( ) , FillArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin( ) + startIndex, FillArrayTest< gtest_TypeParam_ >::val + 2);
+        std::fill( FillArrayTest< gtest_TypeParam_ >::stdOffsetIn.end( ) - startIndex, FillArrayTest< gtest_TypeParam_ >::stdOffsetIn.end( ), FillArrayTest< gtest_TypeParam_ >::val + 2);
 
-        ArrayCont::difference_type stdNumElements = std::distance( stdOffsetIn.begin( ), stdOffsetIn.end( ) );
-        ArrayCont::difference_type boltNumElements = std::distance(  boltOffsetIn.begin( ),  boltOffsetIn.end( ) );
+        std::fill( FillArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin( ) , FillArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin( ) + startIndex, FillArrayTest< gtest_TypeParam_ >::val + 2);
+        std::fill( FillArrayTest< gtest_TypeParam_ >::boltOffsetIn.end( ) - startIndex, FillArrayTest< gtest_TypeParam_ >::boltOffsetIn.end( ), FillArrayTest< gtest_TypeParam_ >::val + 2);
+
+
+
+        std::fill( FillArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin( ) + startIndex, FillArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin( ) + endIndex, FillArrayTest< gtest_TypeParam_ >::val );
+        bolt::cl::fill( c_cpu, FillArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin( ) + startIndex, FillArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin( ) + endIndex, FillArrayTest< gtest_TypeParam_ >::val);
+
+        typename ArrayCont::difference_type stdNumElements = std::distance( FillArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin( ), FillArrayTest< gtest_TypeParam_ >::stdOffsetIn.end( ) );
+        typename ArrayCont::difference_type boltNumElements = std::distance(  FillArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin( ),  FillArrayTest< gtest_TypeParam_ >::boltOffsetIn.end( ) );
 
         //  Both collections should have the same number of elements
         EXPECT_EQ( stdNumElements, boltNumElements );
 
         //  Loop through the array and compare all the values with each other
-        cmpStdArray< ArrayType, ArraySize >::cmpArrays(  stdOffsetIn,  boltOffsetIn );
+        cmpStdArray< ArrayType,  FillArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays(  FillArrayTest< gtest_TypeParam_ >::stdOffsetIn,  FillArrayTest< gtest_TypeParam_ >::boltOffsetIn );
     }
 }
 
@@ -666,10 +576,12 @@ typedef ::testing::Types<
 > DoubleTests;
 #endif 
 
+#if (TEST_CPU_DEVICE == 1)
 INSTANTIATE_TYPED_TEST_CASE_P( clLong, FillArrayTest, clLongTests );
 INSTANTIATE_TYPED_TEST_CASE_P( Integer, FillArrayTest, IntegerTests );
 INSTANTIATE_TYPED_TEST_CASE_P( UnsignedInteger, FillArrayTest, UnsignedIntegerTests );
 INSTANTIATE_TYPED_TEST_CASE_P( Float, FillArrayTest, FloatTests );
+#endif
 #if (TEST_DOUBLE == 1)
 INSTANTIATE_TYPED_TEST_CASE_P( Double, FillArrayTest, DoubleTests );
 #endif 
@@ -679,14 +591,14 @@ TEST( StdIntVector, OffsetFill )
     int length = 1024;
 
     std::vector<int> stdInput( length );
-    std::vector<int> boltInput( length );
-    int val = 73, offset = 100;
-
     for (int i = 0; i < 1024; ++i)
     {
         stdInput[i] = 1;
-        boltInput[i] = stdInput[i];
     }
+
+    std::vector<int> boltInput( stdInput.begin(),stdInput.end() );
+    int val = 73, offset = 100;
+
 
     std::fill(  stdInput.begin( ) + offset,  stdInput.end( ), val );
     bolt::cl::fill( boltInput.begin( ) + offset, boltInput.end( ), val );
@@ -696,22 +608,16 @@ TEST( StdIntVector, OffsetFill )
 
 TEST( DVIntVector, OffsetFill )
 {
-    int length = 1024;
+    int length = 1<<20;
 
-    std::vector<int> stdInput( length );
-    bolt::cl::device_vector<int> boltInput( length );
+    std::vector<int> stdInput( length ,1);
+    bolt::cl::device_vector<int> boltInput(stdInput.begin(),stdInput.end());
     int val = 73, offset = 100;
-
-    for (int i = 0; i < 1024; ++i)
-    {
-        stdInput[i] = 1;
-        boltInput[i] = 1;
-    }
 
     std::fill(  stdInput.begin( ) + offset,  stdInput.end( ), val );
     bolt::cl::fill( boltInput.begin( ) + offset, boltInput.end( ), val );
 
-    cmpArrays( stdInput, boltInput );
+    cmpArrays( stdInput, boltInput,10);
 }
 
 
@@ -2229,7 +2135,6 @@ TEST (simpleTest, basicDataBoltClDevVectAutoConvertCheck)
     bolt::cl::fill(ddv.begin(), ddv.end(), fValue); 
     cmpArrays(dhv,ddv);
 
-
     converter.y =_FPCLASS_ND;
 
     ////////////////////////////////////////////////////
@@ -2316,8 +2221,8 @@ TEST (AutomaticsimpleTest, basicDataBoltClDevVectAutoConvertCheck)
     bolt::cl::fill(ctl, ddv.begin(), ddv.end(), fValue); 
     cmpArrays(dhv,ddv);
 
-
     converter.y =_FPCLASS_ND;
+
 
     ////////////////////////////////////////////////////
     // This verifies that it works with Denormals 
@@ -2402,8 +2307,8 @@ TEST (SerialsimpleTest, basicDataBoltClDevVectAutoConvertCheck)
     bolt::cl::fill(ctl, ddv.begin(), ddv.end(), fValue); 
     cmpArrays(dhv,ddv);
 
-
     converter.y =_FPCLASS_ND;
+
 
     ////////////////////////////////////////////////////
     // This verifies that it works with Denormals 
@@ -2489,8 +2394,8 @@ TEST (MultiCoresimpleTest, basicDataBoltClDevVectAutoConvertCheck)
     bolt::cl::fill(ctl, ddv.begin(), ddv.end(), fValue); 
     cmpArrays(dhv,ddv);
 
-
     converter.y =_FPCLASS_ND;
+
 
     ////////////////////////////////////////////////////
     // This verifies that it works with Denormals 

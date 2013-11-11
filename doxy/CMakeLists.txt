@@ -36,7 +36,13 @@ else( )
     message( SEND_ERROR "The Documentation project for Bolt requires DOXYGEN_ROOT to be defined" )	
 endif( )
 
+
+
+if(UNIX)
+configure_file( "${PROJECT_SOURCE_DIR}/doxy/bolt.doxy.lin.cfg.in" "${PROJECT_BINARY_DIR}/doxy/bolt.doxy.cfg" @ONLY )
+else()
 configure_file( "${PROJECT_SOURCE_DIR}/doxy/bolt.doxy.cfg.in" "${PROJECT_BINARY_DIR}/doxy/bolt.doxy.cfg" @ONLY )
+endif()
 
 add_custom_target( 	Bolt.Documentation
                     COMMAND ${DOXYGEN_EXECUTABLE} bolt.doxy.cfg
@@ -52,7 +58,9 @@ install( DIRECTORY
         PATTERN "*.chm" EXCLUDE )
 
 # Copy over the generated chm documentation into the install location
+if(WIN32)
 install( FILES 
             ${CMAKE_CURRENT_BINARY_DIR}/doxy.out/html/bolt.chm
         DESTINATION 
             docs/chm )
+endif()

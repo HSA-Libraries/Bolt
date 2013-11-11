@@ -306,8 +306,8 @@ struct MixM3
     };
 };
 );
-uddtM3 identityMixM3 = { 0, 0.f, 1.0 };
-uddtM3 initialMixM3  = { 2, 3, 1.000001 };
+uddtM3 identityMixM3 = { 0, 0.f, 0.0 };
+uddtM3 initialMixM3  = { 2, 3.f, 1.000001 };
 
 BOLT_FUNCTOR(NegateM3,
     struct NegateM3
@@ -488,7 +488,295 @@ template< typename S, typename B >
     return ::testing::AssertionSuccess( );
 }
 
+class scanStdVectorWithIters:public ::testing::TestWithParam<int>
+{
+protected:
+    int myStdVectSize;
+public:
+    scanStdVectorWithIters():myStdVectSize(GetParam()){
+    }
+};
 
+typedef scanStdVectorWithIters TransformScan;
+typedef scanStdVectorWithIters TransformScanMultiCore;
+TEST_P (TransformScan, InclTransformScanTestFloat)
+{
+
+	std::vector< float> refInput( myStdVectSize);
+	for(int i=0; i<myStdVectSize; i++)
+		refInput[i] = 1.f + rand()%3;
+	bolt::cl::device_vector< float > input( refInput.begin(), refInput.end() );
+
+   // call scan
+    bolt::cl::plus<float> aI2;
+    bolt::cl::negate<float> nI2;
+
+
+    /*bolt::cl::transform_inclusive_scan( input.begin(), input.end(), output.begin(), nI2, aI2 );*/
+	bolt::cl::transform_inclusive_scan( input.begin(), input.end(), input.begin(), nI2, aI2 );
+    ::std::transform(   refInput.begin(), refInput.end(),  refInput.begin(), nI2); // transform in-place
+    ::std::partial_sum( refInput.begin(), refInput.end(), refInput.begin(), aI2); // out-of-place scan
+   
+    /*cmpArrays(output, refInput);*/
+	cmpArrays(input, refInput);
+    
+}
+
+TEST_P (TransformScan, ExclTransformScanTestFloat)
+{
+	float n = 1.f + rand()%3;
+
+    std::vector< float> refInput( myStdVectSize);
+	for(int i=0; i<myStdVectSize; i++)
+		refInput[i] = 1.f + rand()%3;
+	bolt::cl::device_vector< float > input( refInput.begin(), refInput.end() );
+
+   // call scan
+    
+    bolt::cl::negate<float> nI2;
+    bolt::cl::plus< float > mM3;
+    /*bolt::cl::transform_exclusive_scan( input.begin(), input.end(), output.begin(), nI2, 3.0f, mM3 );*/
+	bolt::cl::transform_exclusive_scan( input.begin(), input.end(), input.begin(), nI2, n, mM3 );
+    std::transform(   refInput.begin(), refInput.end(),  refInput.begin(), nI2);
+    Serial_scan<float,  bolt::cl::plus< float >, float>(&refInput[0], &refInput[0], myStdVectSize, mM3, false, n);
+
+    cmpArrays(input, refInput);
+    
+} 
+
+TEST_P (TransformScanMultiCore, InclTransformScanTestFloat)
+{
+	std::vector< float> refInput( myStdVectSize);
+	for(int i=0; i<myStdVectSize; i++)
+		refInput[i] = 1.f + rand()%3;
+	bolt::cl::device_vector< float > input( refInput.begin(), refInput.end() );
+
+   // call scan
+    bolt::cl::plus<float> aI2;
+    bolt::cl::negate<float> nI2;
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    /*bolt::cl::transform_inclusive_scan(ctl, input.begin(), input.end(), output.begin(), nI2, aI2 );*/
+	bolt::cl::transform_inclusive_scan(ctl, input.begin(), input.end(), input.begin(), nI2, aI2 );
+    ::std::transform(   refInput.begin(), refInput.end(),  refInput.begin(), nI2); // transform in-place
+    ::std::partial_sum( refInput.begin(), refInput.end(), refInput.begin(), aI2); // out-of-place scan
+   
+    cmpArrays(input, refInput);
+    
+} 
+
+TEST_P (TransformScanMultiCore, ExclTransformScanTestFloat)
+{
+	float n = 1.f + rand()%3;
+
+	std::vector< float> refInput( myStdVectSize);
+	for(int i=0; i<myStdVectSize; i++)
+		refInput[i] = 1.f + rand()%3;
+	bolt::cl::device_vector< float > input( refInput.begin(), refInput.end() );
+
+   // call scan
+    
+    bolt::cl::negate<float> nI2;
+    bolt::cl::plus< float > mM3;
+
+     bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    /*bolt::cl::transform_exclusive_scan( ctl, input.begin(), input.end(), output.begin(), nI2, 3.0f, mM3 );*/
+	bolt::cl::transform_exclusive_scan( ctl, input.begin(), input.end(), input.begin(), nI2, n, mM3 );
+    std::transform(   refInput.begin(), refInput.end(),  refInput.begin(), nI2);
+    Serial_scan<float,  bolt::cl::plus< float >, float>(&refInput[0], &refInput[0], myStdVectSize, mM3, false, n);
+
+    cmpArrays(input, refInput);
+    
+} 
+
+//INSTANTIATE_TEST_CASE_P(TransformScanIterFloatLimit, TransformScan, ::testing::Range(1025, 65535, 5111)); 
+//INSTANTIATE_TEST_CASE_P(TransformScanIterFloatLimit, TransformScanMultiCore, ::testing::Range(1025, 65535, 5111));
+
+#if(TEST_DOUBLE == 1)
+TEST_P (TransformScan, InclTransformScanTestDouble)
+{
+	std::vector< double> refInput( myStdVectSize);
+	for(int i=0; i<myStdVectSize; i++)
+		refInput[i] = 1.0 + rand()%3;
+	bolt::cl::device_vector< double > input( refInput.begin(), refInput.end() );
+
+   // call scan
+    bolt::cl::plus<double> aI2;
+    bolt::cl::negate<double> nI2;
+
+
+    /*bolt::cl::transform_inclusive_scan( input.begin(), input.end(), output.begin(), nI2, aI2 );*/
+	bolt::cl::transform_inclusive_scan( input.begin(), input.end(), input.begin(), nI2, aI2 );
+    ::std::transform(   refInput.begin(), refInput.end(),  refInput.begin(), nI2); // transform in-place
+    ::std::partial_sum( refInput.begin(), refInput.end(), refInput.begin(), aI2); // out-of-place scan
+   
+    cmpArrays(input, refInput);
+    
+}
+
+TEST_P (TransformScan, ExclTransformScanTestDouble)
+{
+	double n = 1.0 + rand()%3;
+
+	std::vector< double> refInput( myStdVectSize);
+	for(int i=0; i<myStdVectSize; i++)
+		refInput[i] = 1.0 + rand()%3;
+	bolt::cl::device_vector< double > input( refInput.begin(), refInput.end() );
+
+   // call scan
+    
+    bolt::cl::negate<double> nI2;
+    bolt::cl::plus< double> mM3;
+    //bolt::cl::transform_exclusive_scan( input.begin(), input.end(), output.begin(), nI2, n, mM3 );
+	bolt::cl::transform_exclusive_scan( input.begin(), input.end(), input.begin(), nI2, n, mM3 );
+    std::transform(   refInput.begin(), refInput.end(),  refInput.begin(), nI2);
+    Serial_scan<double,  bolt::cl::plus< double >, double>(&refInput[0], &refInput[0], myStdVectSize, mM3, false, n);
+
+    cmpArrays(input, refInput);
+    
+} 
+
+TEST_P (TransformScanMultiCore, InclTransformScanTestDouble)
+{
+	std::vector< double> refInput( myStdVectSize);
+	for(int i=0; i<myStdVectSize; i++)
+		refInput[i] = 1.0 + rand()%3;
+	bolt::cl::device_vector< double > input( refInput.begin(), refInput.end() );
+
+   // call scan
+    bolt::cl::plus<double> aI2;
+    bolt::cl::negate<double> nI2;
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+   /* bolt::cl::transform_inclusive_scan(ctl, input.begin(), input.end(), output.begin(), nI2, aI2 );*/
+	 bolt::cl::transform_inclusive_scan(ctl, input.begin(), input.end(), input.begin(), nI2, aI2 );
+    ::std::transform(   refInput.begin(), refInput.end(),  refInput.begin(), nI2); // transform in-place
+    ::std::partial_sum( refInput.begin(), refInput.end(), refInput.begin(), aI2); // out-of-place scan
+   
+    cmpArrays(input, refInput);
+    
+} 
+
+TEST_P (TransformScanMultiCore, ExclTransformScanTestDouble)
+{
+	double n = 1.0 + rand()%3;
+
+	std::vector< double> refInput( myStdVectSize);
+	for(int i=0; i<myStdVectSize; i++)
+		refInput[i] = 1.0 + rand()%3;
+	bolt::cl::device_vector< double > input( refInput.begin(), refInput.end() );
+
+   // call scan
+    
+    bolt::cl::negate<double> nI2;
+    bolt::cl::plus< double > mM3;
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    /*bolt::cl::transform_exclusive_scan( ctl, input.begin(), input.end(), output.begin(), nI2, 3.0f, mM3 );*/
+	bolt::cl::transform_exclusive_scan( ctl, input.begin(), input.end(), input.begin(), nI2, n, mM3 );
+    std::transform(   refInput.begin(), refInput.end(),  refInput.begin(), nI2);
+    Serial_scan<double,  bolt::cl::plus< double >, double>(&refInput[0], &refInput[0], myStdVectSize, mM3, false, n);
+
+    cmpArrays(input, refInput);
+    
+} 
+
+//INSTANTIATE_TEST_CASE_P(TransformScanIterDoubleLimit, TransformScan, ::testing::Range(1025, 65535, 5111)); 
+//INSTANTIATE_TEST_CASE_P(TransformScanIterDoubleLimit, TransformScanMultiCore, ::testing::Range(1025, 65535, 5111));
+
+#endif
+
+TEST_P (TransformScan, InclTransformScanTestUDD)
+{
+    bolt::cl::device_vector< uddtI2  > input( myStdVectSize, initialAddI2);
+    //bolt::cl::device_vector< uddtI2  > output( myStdVectSize, initialAddI2);
+    std::vector< uddtI2 > refInput( myStdVectSize, initialAddI2);
+    // call scan
+    AddI2 aI2;
+    //bolt::cl::negate<uddtI2>  nI2;
+
+
+    //bolt::cl::transform_inclusive_scan( input.begin(), input.end(), output.begin(), nI2, aI2 );
+	bolt::cl::transform_inclusive_scan( input.begin(), input.end(), input.begin(), nI2, aI2 );
+    ::std::transform(   refInput.begin(), refInput.end(),  refInput.begin(), nI2); // transform in-place
+    ::std::partial_sum( refInput.begin(), refInput.end(), refInput.begin(), aI2); // out-of-place scan
+   
+    cmpArrays(input, refInput);
+    
+}
+
+TEST_P (TransformScan, ExclTransformScanTestUDD)
+{
+    bolt::cl::device_vector< uddtI2 > input( myStdVectSize, initialAddI2);
+    //bolt::cl::device_vector< uddtI2 > output( myStdVectSize, initialAddI2);
+    std::vector< uddtI2 > refInput( myStdVectSize, initialAddI2);
+    // call scan
+    
+    AddI2 aI2;
+
+    /*bolt::cl::transform_exclusive_scan( input.begin(), input.end(), output.begin(), nI2, initialAddI2, aI2 );*/
+	bolt::cl::transform_exclusive_scan( input.begin(), input.end(), input.begin(), nI2, initialAddI2, aI2 );
+    std::transform(   refInput.begin(), refInput.end(),  refInput.begin(), nI2);
+    Serial_scan<uddtI2,  AddI2, uddtI2>(&refInput[0], &refInput[0], myStdVectSize, aI2, false, initialAddI2);
+
+    cmpArrays(input, refInput);
+    
+} 
+
+TEST_P (TransformScanMultiCore, InclTransformScanTestUDD)
+{
+    
+    bolt::cl::device_vector< uddtI2  > input( myStdVectSize, initialAddI2);
+    //bolt::cl::device_vector< uddtI2  > output( myStdVectSize, initialAddI2);
+    std::vector< uddtI2 > refInput( myStdVectSize, initialAddI2);
+    // call scan
+    AddI2 aI2;
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    /*bolt::cl::transform_inclusive_scan( ctl, input.begin(), input.end(), output.begin(), nI2, aI2 );*/
+	bolt::cl::transform_inclusive_scan( ctl, input.begin(), input.end(), input.begin(), nI2, aI2 );
+    ::std::transform(   refInput.begin(), refInput.end(),  refInput.begin(), nI2); // transform in-place
+    ::std::partial_sum( refInput.begin(), refInput.end(), refInput.begin(), aI2); // out-of-place scan
+   
+    cmpArrays(input, refInput);
+    
+} 
+
+TEST_P (TransformScanMultiCore, ExclTransformScanTestUDD)
+{
+    bolt::cl::device_vector< uddtI2 > input( myStdVectSize, initialAddI2);
+    //bolt::cl::device_vector< uddtI2 > output( myStdVectSize, initialAddI2);
+    std::vector< uddtI2 > refInput( myStdVectSize, initialAddI2);
+    // call scan
+    
+    AddI2 aI2;
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    /*bolt::cl::transform_exclusive_scan( ctl, input.begin(), input.end(), output.begin(), nI2, initialAddI2, aI2 );*/
+	bolt::cl::transform_exclusive_scan( ctl, input.begin(), input.end(), input.begin(), nI2, initialAddI2, aI2 );
+    std::transform(   refInput.begin(), refInput.end(),  refInput.begin(), nI2);
+    Serial_scan<uddtI2,  AddI2, uddtI2>(&refInput[0], &refInput[0], myStdVectSize, aI2, false, initialAddI2);
+
+    //Serial_scan<double,  bolt::cl::plus< double >, double>(&refInput[0], &refInput[0], myStdVectSize, mM3, false, 3.0);
+
+    cmpArrays(input, refInput);
+    
+} 
+
+INSTANTIATE_TEST_CASE_P(TransformScanIterUDDLimit, TransformScan, ::testing::Range(1025, 65535, 5111)); 
+INSTANTIATE_TEST_CASE_P(TransformScanIterUDDLimit, TransformScanMultiCore, ::testing::Range(1025, 65535, 5111));
 
 /******************************************************************************
  *  Scan with User Defined Data Types and Operators
@@ -499,19 +787,23 @@ TEST(NegateScanUserDefined, IncAddInt2)
     //setup containers
     int length = (1<<16)+23;
 //    bolt::cl::negate< uddtI2 > nI2;
-    bolt::cl::device_vector< uddtI2 > input(  length, initialAddI2,  CL_MEM_READ_WRITE, true  );
-    bolt::cl::device_vector< uddtI2 > output( length, identityAddI2, CL_MEM_READ_WRITE, false );
+    bolt::cl::device_vector< uddtI2 > input(  length, initialAddI2); //,  CL_MEM_READ_WRITE, true  );
+    //bolt::cl::device_vector< uddtI2 > output( length, identityAddI2); //, CL_MEM_READ_WRITE, false );
     std::vector< uddtI2 > refInput( length, initialAddI2 );
-    std::vector< uddtI2 > refOutput( length );
+   // std::vector< uddtI2 > refOutput( length );
 
     // call transform_scan
     AddI2 aI2;
-    bolt::cl::transform_inclusive_scan( input.begin(), input.end(), output.begin(), nI2, aI2 );
+    /*bolt::cl::transform_inclusive_scan( input.begin(), input.end(), output.begin(), nI2, aI2 );*/
+	bolt::cl::transform_inclusive_scan( input.begin(), input.end(), input.begin(), nI2, aI2 );
+
     ::std::transform(   refInput.begin(), refInput.end(),  refInput.begin(), nI2); // transform in-place
-    ::std::partial_sum( refInput.begin(), refInput.end(), refOutput.begin(), aI2); // out-of-place scan
+    //::std::partial_sum( refInput.begin(), refInput.end(), refOutput.begin(), aI2); // out-of-place scan
+	::std::partial_sum( refInput.begin(), refInput.end(), refInput.begin(), aI2); // in-place scan
 
     // compare results
-    cmpArrays(refOutput, output);
+    /*cmpArrays(refOutput, output);*/
+	cmpArrays(refInput, input);
 }
 
 TEST(NegateScanUserDefined, SerialIncAddInt2)
@@ -519,23 +811,25 @@ TEST(NegateScanUserDefined, SerialIncAddInt2)
     //setup containers
     int length = (1<<16)+23;
 //    bolt::cl::negate< uddtI2 > nI2;
-    bolt::cl::device_vector< uddtI2 > input(  length, initialAddI2,  CL_MEM_READ_WRITE, true  );
-    bolt::cl::device_vector< uddtI2 > output( length, identityAddI2, CL_MEM_READ_WRITE, false );
+    bolt::cl::device_vector< uddtI2 > input(  length, initialAddI2); //,  CL_MEM_READ_WRITE, true  );
+    //bolt::cl::device_vector< uddtI2 > output( length, identityAddI2); //, CL_MEM_READ_WRITE, false );
     std::vector< uddtI2 > refInput( length, initialAddI2 );
-    std::vector< uddtI2 > refOutput( length );
+    //std::vector< uddtI2 > refOutput( length );
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
     // call transform_scan
     AddI2 aI2;
-    bolt::cl::transform_inclusive_scan( ctl, input.begin(), input.end(), output.begin(), nI2, aI2 );
+    //bolt::cl::transform_inclusive_scan( ctl, input.begin(), input.end(), output.begin(), nI2, aI2 );
+	bolt::cl::transform_inclusive_scan( ctl, input.begin(), input.end(), input.begin(), nI2, aI2 );
+
     ::std::transform(   refInput.begin(), refInput.end(),  refInput.begin(), nI2); // transform in-place
-    ::std::partial_sum( refInput.begin(), refInput.end(), refOutput.begin(), aI2); // out-of-place scan
+    //::std::partial_sum( refInput.begin(), refInput.end(), refOutput.begin(), aI2); // out-of-place scan
+	::std::partial_sum( refInput.begin(), refInput.end(), refInput.begin(), aI2); // in-place scan
 
     // compare results
-    cmpArrays(refOutput, output);
+    cmpArrays(refInput, input);
 }
 
 
@@ -545,160 +839,199 @@ TEST(NegateScanUserDefined, MultiCoreIncAddInt2)
     //setup containers
     int length = (1<<16)+23;
 //    bolt::cl::negate< uddtI2 > nI2;
-    bolt::cl::device_vector< uddtI2 > input(  length, initialAddI2,  CL_MEM_READ_WRITE, true  );
-    bolt::cl::device_vector< uddtI2 > output( length, identityAddI2, CL_MEM_READ_WRITE, false );
+    bolt::cl::device_vector< uddtI2 > input(  length, initialAddI2); //,  CL_MEM_READ_WRITE, true  );
+    //bolt::cl::device_vector< uddtI2 > output( length, identityAddI2); //, CL_MEM_READ_WRITE, false );
     std::vector< uddtI2 > refInput( length, initialAddI2 );
-    std::vector< uddtI2 > refOutput( length );
+    //std::vector< uddtI2 > refOutput( length );
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
     // call transform_scan
     AddI2 aI2;
-    bolt::cl::transform_inclusive_scan( ctl, input.begin(), input.end(), output.begin(), nI2, aI2 );
+    //bolt::cl::transform_inclusive_scan( ctl, input.begin(), input.end(), output.begin(), nI2, aI2 );
+	bolt::cl::transform_inclusive_scan( ctl, input.begin(), input.end(), input.begin(), nI2, aI2 );
+
     ::std::transform(   refInput.begin(), refInput.end(),  refInput.begin(), nI2); // transform in-place
-    ::std::partial_sum( refInput.begin(), refInput.end(), refOutput.begin(), aI2); // out-of-place scan
+    //::std::partial_sum( refInput.begin(), refInput.end(), refOutput.begin(), aI2); // out-of-place scan
+	::std::partial_sum( refInput.begin(), refInput.end(), refInput.begin(), aI2); // in-place scan
 
     // compare results
-    cmpArrays(refOutput, output);
+    cmpArrays(refInput, input);
 }
 
 
 
 TEST(TransformScanCLtypeTest, ExclTestLong)
 {
+	cl_long n = 1 + rand()%3;
+
     //setup containers
     int length = (1<<14);
     bolt::cl::negate< cl_long > nM3;
-    bolt::cl::device_vector< cl_long > input(  length, 3 );
-    bolt::cl::device_vector< cl_long > output( length, 0);
-    std::vector< cl_long > refInput( length, 3 ); 
-    std::vector< cl_long > refOutput( length, 0 );
+
+	std::vector< cl_long > refInput( length);
+	for(int i=0; i<length; i++)
+		refInput[i] = 1 + rand()%3;
+	bolt::cl::device_vector< cl_long > input( refInput.begin(), refInput.end() );
 
     // call scan
     bolt::cl::multiplies< cl_long > mM3;
-    bolt::cl::transform_exclusive_scan( input.begin(), input.end(), output.begin(), nM3, 3, mM3 );
-    std::transform(   refInput.begin(), refInput.end(),  refOutput.begin(), nM3);
-    Serial_scan<cl_long,  bolt::cl::multiplies< cl_long >, cl_long>(&refOutput[0], &refOutput[0], length, mM3, false, 3);
+
+	bolt::cl::transform_exclusive_scan( input.begin(), input.end(), input.begin(), nM3, n, mM3 );
+	std::transform(   refInput.begin(), refInput.end(),  refInput.begin(), nM3);
+	Serial_scan<cl_long,  bolt::cl::multiplies< cl_long >, cl_long>(&refInput[0], &refInput[0], length, mM3, false, n);
 
     // compare results
-    cmpArrays(refOutput, output);
+    cmpArrays(refInput, input);
 }
 
 TEST(TransformScanCLtypeTest, InclTestLong)
 {
+
     //setup containers
     int length = (1<<14);
     bolt::cl::negate< cl_long > nM3;
-    bolt::cl::device_vector< cl_long > input(  length, 3 );
-    bolt::cl::device_vector< cl_long > output( length, 0);
-    std::vector< cl_long > refInput( length, 3 ); 
-    std::vector< cl_long > refOutput(length, 0 );
+
+    std::vector< cl_long > refInput( length);
+	for(int i=0; i<length; i++)
+		refInput[i] = 1 + rand()%3;
+	bolt::cl::device_vector< cl_long > input( refInput.begin(), refInput.end() );
 
     // call scan
     bolt::cl::multiplies< cl_long > mM3;
-    bolt::cl::transform_inclusive_scan( input.begin(), input.end(), output.begin(), nM3, mM3 );
+   /* bolt::cl::transform_inclusive_scan( input.begin(), input.end(), output.begin(), nM3, mM3 );
     ::std::transform(   refInput.begin(), refInput.end(),  refOutput.begin(), nM3);
-    ::std::partial_sum( refOutput.begin(), refOutput.end(), refOutput.begin(), mM3);
+    ::std::partial_sum( refOutput.begin(), refOutput.end(), refOutput.begin(), mM3);*/
+
+	 bolt::cl::transform_inclusive_scan( input.begin(), input.end(), input.begin(), nM3, mM3 );
+    ::std::transform(   refInput.begin(), refInput.end(),  refInput.begin(), nM3);
+    ::std::partial_sum( refInput.begin(), refInput.end(), refInput.begin(), mM3);
 
     // compare results
-    cmpArrays(refOutput, output);
+    cmpArrays(refInput, input);
 }
 
 
 TEST(TransformScanCLtypeTest, ExclTestULong)
 {
+	cl_ulong n = 1 + rand()%3;
+
     //setup containers
     int length = (1<<14);
     bolt::cl::square< cl_ulong > nM3;
-    bolt::cl::device_vector< cl_ulong > input(  length, 3 );
-    bolt::cl::device_vector< cl_ulong > output( length, 0);
-    std::vector< cl_ulong > refInput( length, 3 ); 
-    std::vector< cl_ulong > refOutput( length, 0 );
+   
+	std::vector< cl_ulong > refInput( length);
+	for(int i=0; i<length; i++)
+		refInput[i] = 1 + rand()%3;
+	bolt::cl::device_vector< cl_ulong > input( refInput.begin(), refInput.end() );
 
     // call scan
     bolt::cl::multiplies< cl_ulong > mM3;
-    bolt::cl::transform_exclusive_scan( input.begin(), input.end(), output.begin(), nM3, 3, mM3 );
-    std::transform(   refInput.begin(), refInput.end(),  refOutput.begin(), nM3);
-    Serial_scan<cl_ulong,  bolt::cl::multiplies< cl_ulong >, cl_ulong>(&refOutput[0], &refOutput[0], length, mM3, false, 3);
+
+	bolt::cl::transform_exclusive_scan( input.begin(), input.end(), input.begin(), nM3, n, mM3 );
+    std::transform(   refInput.begin(), refInput.end(),  refInput.begin(), nM3);
+    Serial_scan<cl_ulong,  bolt::cl::multiplies< cl_ulong >, cl_ulong>(&refInput[0], &refInput[0], length, mM3, false, n);
 
     // compare results
-    cmpArrays(refOutput, output);
+     cmpArrays(refInput, input);
 }
 
 TEST(TransformScanCLtypeTest, InclTestULong)
 {
+
     //setup containers
     int length = (1<<14);
     bolt::cl::square< cl_ulong > nM3;
-    bolt::cl::device_vector< cl_ulong > input(  length, 3 );
-    bolt::cl::device_vector< cl_ulong > output( length, 0);
-    std::vector< cl_ulong > refInput( length, 3 ); 
-    std::vector< cl_ulong > refOutput(length, 0 );
+
+    std::vector< cl_ulong > refInput( length);
+	for(int i=0; i<length; i++)
+		refInput[i] = 1 + rand()%3;
+	bolt::cl::device_vector< cl_ulong > input( refInput.begin(), refInput.end() );
 
     // call scan
     bolt::cl::multiplies< cl_ulong > mM3;
-    bolt::cl::transform_inclusive_scan( input.begin(), input.end(), output.begin(), nM3, mM3 );
+  /*  bolt::cl::transform_inclusive_scan( input.begin(), input.end(), output.begin(), nM3, mM3 );
     ::std::transform(   refInput.begin(), refInput.end(),  refOutput.begin(), nM3);
-    ::std::partial_sum( refOutput.begin(), refOutput.end(), refOutput.begin(), mM3);
+    ::std::partial_sum( refOutput.begin(), refOutput.end(), refOutput.begin(), mM3);*/
+
+	bolt::cl::transform_inclusive_scan( input.begin(), input.end(), input.begin(), nM3, mM3 );
+    ::std::transform(   refInput.begin(), refInput.end(),  refInput.begin(), nM3);
+    ::std::partial_sum( refInput.begin(), refInput.end(), refInput.begin(), mM3);
 
     // compare results
-    cmpArrays(refOutput, output);
+    cmpArrays(refInput, input);
 }
 
 
 
 TEST(TransformScanCLtypeTest, ExclTestShort)
 {
+	cl_short n = 1 + rand()%3;
+
     //setup containers
     int length = (1<<14);
     bolt::cl::negate< cl_short > nM3;
-    bolt::cl::device_vector< cl_short > input(  length, 3 );
-    bolt::cl::device_vector< cl_short > output( length, 0);
-    std::vector< cl_short > refInput( length, 3 ); 
-    std::vector< cl_short > refOutput( length, 0 );
+  
+	std::vector< cl_short > refInput( length);
+	for(int i=0; i<length; i++)
+		refInput[i] = 1 + rand()%3;
+	bolt::cl::device_vector< cl_short > input( refInput.begin(), refInput.end() );
 
     // call scan
     bolt::cl::multiplies< cl_short > mM3;
-    bolt::cl::transform_exclusive_scan( input.begin(), input.end(), output.begin(), nM3, 3, mM3 );
+    /*bolt::cl::transform_exclusive_scan( input.begin(), input.end(), output.begin(), nM3, 3, mM3 );
     std::transform(   refInput.begin(), refInput.end(),  refOutput.begin(), nM3);
-    Serial_scan<cl_short,  bolt::cl::multiplies< cl_short >, cl_short>(&refOutput[0], &refOutput[0], length, mM3, false, 3);
+    Serial_scan<cl_short,  bolt::cl::multiplies< cl_short >, cl_short>(&refOutput[0], &refOutput[0], length, mM3, false, 3);*/
+
+	bolt::cl::transform_exclusive_scan( input.begin(), input.end(), input.begin(), nM3,  n, mM3 );
+    std::transform(   refInput.begin(), refInput.end(),  refInput.begin(), nM3);
+    Serial_scan<cl_short,  bolt::cl::multiplies< cl_short >, cl_short>(&refInput[0], &refInput[0], length, mM3, false,  n);
 
     // compare results
-    cmpArrays(refOutput, output);
+    cmpArrays(refInput, input);
 }
 
 TEST(TransformScanCLtypeTest, InclTestShort)
 {
+	
+
     //setup containers
     int length = (1<<14);
     bolt::cl::negate< cl_short > nM3;
-    bolt::cl::device_vector< cl_short > input(  length, 3 );
-    bolt::cl::device_vector< cl_short > output( length, 0);
-    std::vector< cl_short > refInput( length, 3 ); 
-    std::vector< cl_short > refOutput(length, 0 );
+   
+	std::vector< cl_short > refInput( length);
+	for(int i=0; i<length; i++)
+		refInput[i] = 1 + rand()%3;
+	bolt::cl::device_vector< cl_short > input( refInput.begin(), refInput.end() );
 
     // call scan
     bolt::cl::multiplies< cl_short > mM3;
-    bolt::cl::transform_inclusive_scan( input.begin(), input.end(), output.begin(), nM3, mM3 );
+   /* bolt::cl::transform_inclusive_scan( input.begin(), input.end(), output.begin(), nM3, mM3 );
     ::std::transform(   refInput.begin(), refInput.end(),  refOutput.begin(), nM3);
-    ::std::partial_sum( refOutput.begin(), refOutput.end(), refOutput.begin(), mM3);
+    ::std::partial_sum( refOutput.begin(), refOutput.end(), refOutput.begin(), mM3);*/
+
+	bolt::cl::transform_inclusive_scan( input.begin(), input.end(), input.begin(), nM3, mM3 );
+    ::std::transform(   refInput.begin(), refInput.end(),  refInput.begin(), nM3);
+    ::std::partial_sum( refInput.begin(), refInput.end(), refInput.begin(), mM3);
 
     // compare results
-    cmpArrays(refOutput, output);
+    cmpArrays(refInput, input);
 }
 
 
 TEST(TransformScanCLtypeTest, ExclTestUShort)
 {
+	cl_ushort n = 1 + rand()%3;
+
     //setup containers
     int length = 1024;
     bolt::cl::square< cl_ushort > nM3;
-    bolt::cl::device_vector< cl_ushort > input(  length, 1 );
-    bolt::cl::device_vector< cl_ushort > output( length, 0);
-    std::vector< cl_ushort> refInput( length, 1 ); 
-    std::vector< cl_ushort > refOutput( length, 0 );
+    
+	std::vector< cl_ushort > refInput( length);
+	for(int i=0; i<length; i++)
+		refInput[i] = 1 + rand()%3;
+	bolt::cl::device_vector< cl_ushort > input( refInput.begin(), refInput.end() );
 
     // call scan
 
@@ -707,34 +1040,46 @@ TEST(TransformScanCLtypeTest, ExclTestUShort)
 
 
     bolt::cl::plus< cl_ushort > mM3;
-    bolt::cl::transform_exclusive_scan( input.begin(), input.end(), output.begin(), nM3, 1, mM3 );
+    //bolt::cl::transform_exclusive_scan( input.begin(), input.end(), output.begin(), nM3, 1, mM3 );
+    //std::transform(   refInput.begin(), refInput.end(),  refOutput.begin(), nM3);
+    //Serial_scan<cl_ushort,  bolt::cl::plus< cl_ushort >,cl_ushort>(&refOutput[0], &refOutput[0], length, mM3, false, 1);
+    //// compare results
+    //cmpArrays(refOutput, output);
 
-    std::transform(   refInput.begin(), refInput.end(),  refOutput.begin(), nM3);
-    Serial_scan<cl_ushort,  bolt::cl::plus< cl_ushort >,cl_ushort>(&refOutput[0], &refOutput[0], length, mM3, false, 1);
-
+	bolt::cl::transform_exclusive_scan( input.begin(), input.end(), input.begin(), nM3, n, mM3 );
+    std::transform(   refInput.begin(), refInput.end(),  refInput.begin(), nM3);
+    Serial_scan<cl_ushort,  bolt::cl::plus< cl_ushort >,cl_ushort>(&refInput[0], &refInput[0], length, mM3, false, n);
     // compare results
-    cmpArrays(refOutput, output);
+    cmpArrays(refInput, input);
 }
 
 TEST(TransformScanCLtypeTest, InclTestUShort)
 {
+
     //setup containers
     int length = 1024;
     bolt::cl::square< unsigned short > nM3;
-    bolt::cl::device_vector< unsigned short > input(  length, 1 );
-    bolt::cl::device_vector< unsigned short > output( length, 0);
-    std::vector< unsigned short > refInput( length, 1 ); 
-    std::vector< unsigned short > refOutput(length, 0 );
+   
+	std::vector< cl_ushort > refInput( length);
+	for(int i=0; i<length; i++)
+		refInput[i] = 1 + rand()%3;
+	bolt::cl::device_vector< cl_ushort > input( refInput.begin(), refInput.end() );
 
     // call scan
     bolt::cl::plus< unsigned short > mM3;
-    bolt::cl::transform_inclusive_scan( input.begin(), input.end(), output.begin(), nM3, mM3 );
+    //bolt::cl::transform_inclusive_scan( input.begin(), input.end(), output.begin(), nM3, mM3 );
 
-    ::std::transform(   refInput.begin(), refInput.end(),  refOutput.begin(), nM3);
-    ::std::partial_sum( refOutput.begin(), refOutput.end(), refOutput.begin(), mM3);
+    //::std::transform(   refInput.begin(), refInput.end(),  refOutput.begin(), nM3);
+    //::std::partial_sum( refOutput.begin(), refOutput.end(), refOutput.begin(), mM3);
 
+    //// compare results
+    //cmpArrays(refOutput, output);
+
+	bolt::cl::transform_inclusive_scan( input.begin(), input.end(), input.begin(), nM3, mM3 );
+    ::std::transform(   refInput.begin(), refInput.end(),  refInput.begin(), nM3);
+    ::std::partial_sum( refInput.begin(), refInput.end(), refInput.begin(), mM3);
     // compare results
-    cmpArrays(refOutput, output);
+    cmpArrays(refInput, input);
 }
 
 #if(TEST_DOUBLE == 1)
@@ -743,19 +1088,21 @@ TEST(NegateScanUserDefined, IncMultiplyDouble4)
     //setup containers
     int length = (1<<16)+11;
 //    bolt::cl::negate< uddtD4 > nD4;
-    bolt::cl::device_vector< uddtD4 > input(  length, initialMultD4,  CL_MEM_READ_WRITE, true  );
-    bolt::cl::device_vector< uddtD4 > output( length, identityMultD4, CL_MEM_READ_WRITE, false );
+    bolt::cl::device_vector< uddtD4 > input(  length, initialMultD4); //,  CL_MEM_READ_WRITE, true  );
+    //bolt::cl::device_vector< uddtD4 > output( length, identityMultD4); //, CL_MEM_READ_WRITE, false );
     std::vector< uddtD4 > refInput( length, initialMultD4 );
-    std::vector< uddtD4 > refOutput( length );
+    //std::vector< uddtD4 > refOutput( length );
 
     // call transform_scan
     MultD4 mD4;
-    bolt::cl::transform_inclusive_scan( input.begin(), input.end(), output.begin(), nD4, mD4 );
+    /*bolt::cl::transform_inclusive_scan( input.begin(), input.end(), output.begin(), nD4, mD4 );*/
+	bolt::cl::transform_inclusive_scan( input.begin(), input.end(), input.begin(), nD4, mD4 );
     ::std::transform(   refInput.begin(), refInput.end(),  refInput.begin(), nD4); // transform in-place
-    ::std::partial_sum( refInput.begin(), refInput.end(), refOutput.begin(), mD4); // out-of-place scan
+    //::std::partial_sum( refInput.begin(), refInput.end(), refOutput.begin(), mD4); // out-of-place scan
+	 ::std::partial_sum( refInput.begin(), refInput.end(), refInput.begin(), mD4); // in-place scan
 
     // compare results
-    cmpArrays(refOutput, output);
+    cmpArrays(refInput, input);
 }
 
 TEST(NegateScanUserDefined, SerialIncMultiplyDouble4)
@@ -763,23 +1110,25 @@ TEST(NegateScanUserDefined, SerialIncMultiplyDouble4)
     //setup containers
     int length = (1<<16)+11;
 //    bolt::cl::negate< uddtD4 > nD4;
-    bolt::cl::device_vector< uddtD4 > input(  length, initialMultD4,  CL_MEM_READ_WRITE, true  );
-    bolt::cl::device_vector< uddtD4 > output( length, identityMultD4, CL_MEM_READ_WRITE, false );
+    bolt::cl::device_vector< uddtD4 > input(  length, initialMultD4); //,  CL_MEM_READ_WRITE, true  );
+    //bolt::cl::device_vector< uddtD4 > output( length, identityMultD4); //, CL_MEM_READ_WRITE, false );
     std::vector< uddtD4 > refInput( length, initialMultD4 );
-    std::vector< uddtD4 > refOutput( length );
+    //std::vector< uddtD4 > refOutput( length );
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+   
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
     // call transform_scan
     MultD4 mD4;
-    bolt::cl::transform_inclusive_scan( ctl, input.begin(), input.end(), output.begin(), nD4, mD4 );
+    //bolt::cl::transform_inclusive_scan( ctl, input.begin(), input.end(), output.begin(), nD4, mD4 );
+	bolt::cl::transform_inclusive_scan(ctl, input.begin(), input.end(), input.begin(), nD4, mD4 );
     ::std::transform(   refInput.begin(), refInput.end(),  refInput.begin(), nD4); // transform in-place
-    ::std::partial_sum( refInput.begin(), refInput.end(), refOutput.begin(), mD4); // out-of-place scan
+    //::std::partial_sum( refInput.begin(), refInput.end(), refOutput.begin(), mD4); // out-of-place scan
+	 ::std::partial_sum( refInput.begin(), refInput.end(), refInput.begin(), mD4); // in-place scan
 
     // compare results
-    cmpArrays(refOutput, output);
+    cmpArrays(refInput, input);
 }
 
 TEST(NegateScanUserDefined, MultiCoreIncMultiplyDouble4)
@@ -787,23 +1136,25 @@ TEST(NegateScanUserDefined, MultiCoreIncMultiplyDouble4)
     //setup containers
     int length = (1<<16)+11;
 //    bolt::cl::negate< uddtD4 > nD4;
-    bolt::cl::device_vector< uddtD4 > input(  length, initialMultD4,  CL_MEM_READ_WRITE, true  );
-    bolt::cl::device_vector< uddtD4 > output( length, identityMultD4, CL_MEM_READ_WRITE, false );
+    bolt::cl::device_vector< uddtD4 > input(  length, initialMultD4); //,  CL_MEM_READ_WRITE, true  );
+    //bolt::cl::device_vector< uddtD4 > output( length, identityMultD4); //, CL_MEM_READ_WRITE, false );
     std::vector< uddtD4 > refInput( length, initialMultD4 );
-    std::vector< uddtD4 > refOutput( length );
+    //std::vector< uddtD4 > refOutput( length );
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
     // call transform_scan
     MultD4 mD4;
-    bolt::cl::transform_inclusive_scan( ctl, input.begin(), input.end(), output.begin(), nD4, mD4 );
+    //bolt::cl::transform_inclusive_scan( ctl, input.begin(), input.end(), output.begin(), nD4, mD4 );
+	bolt::cl::transform_inclusive_scan(ctl, input.begin(), input.end(), input.begin(), nD4, mD4 );
     ::std::transform(   refInput.begin(), refInput.end(),  refInput.begin(), nD4); // transform in-place
-    ::std::partial_sum( refInput.begin(), refInput.end(), refOutput.begin(), mD4); // out-of-place scan
+    //::std::partial_sum( refInput.begin(), refInput.end(), refOutput.begin(), mD4); // out-of-place scan
+	::std::partial_sum( refInput.begin(), refInput.end(), refInput.begin(), mD4); // in-place scan
 
     // compare results
-    cmpArrays(refOutput, output);
+    cmpArrays(refInput, input);
 }
 
 
@@ -812,19 +1163,21 @@ TEST(NegateScanUserDefined, IncMixedM3)
     //setup containers
     int length = (1<<16)+57;
 //    bolt::cl::negate< uddtM3 > nM3;
-    bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3,  CL_MEM_READ_WRITE, true  );
-    bolt::cl::device_vector< uddtM3 > output( length, identityMixM3, CL_MEM_READ_WRITE, false );
+    bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3); //,  CL_MEM_READ_WRITE, true  );
+    //bolt::cl::device_vector< uddtM3 > output( length, identityMixM3); //, CL_MEM_READ_WRITE, false );
     std::vector< uddtM3 > refInput( length, initialMixM3 );
-    std::vector< uddtM3 > refOutput( length );
+    //std::vector< uddtM3 > refOutput( length );
 
     // call scan
     MixM3 mM3;
-    bolt::cl::transform_inclusive_scan( input.begin(), input.end(), output.begin(), nM3, mM3 );
+    /*bolt::cl::transform_inclusive_scan( input.begin(), input.end(), output.begin(), nM3, mM3 );*/
+	bolt::cl::transform_inclusive_scan( input.begin(), input.end(), input.begin(), nM3, mM3 );
     ::std::transform(   refInput.begin(), refInput.end(),  refInput.begin(), nM3);
-    ::std::partial_sum( refInput.begin(), refInput.end(), refOutput.begin(), mM3);
+    /*::std::partial_sum( refInput.begin(), refInput.end(), refOutput.begin(), mM3);*/
+    ::std::partial_sum( refInput.begin(), refInput.end(), refInput.begin(), mM3);
 
     // compare results
-    cmpArrays(refOutput, output);
+    cmpArrays(refInput, input);
 }
 
 TEST(NegateScanUserDefined, SerialIncMixedM3)
@@ -832,23 +1185,25 @@ TEST(NegateScanUserDefined, SerialIncMixedM3)
     //setup containers
     int length = (1<<16)+57;
 //    bolt::cl::negate< uddtM3 > nM3;
-    bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3,  CL_MEM_READ_WRITE, true  );
-    bolt::cl::device_vector< uddtM3 > output( length, identityMixM3, CL_MEM_READ_WRITE, false );
+    bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3); //,  CL_MEM_READ_WRITE, true  );
+    //bolt::cl::device_vector< uddtM3 > output( length, identityMixM3); //, CL_MEM_READ_WRITE, false );
     std::vector< uddtM3 > refInput( length, initialMixM3 );
-    std::vector< uddtM3 > refOutput( length );
+    //std::vector< uddtM3 > refOutput( length );
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
     // call scan
     MixM3 mM3;
-    bolt::cl::transform_inclusive_scan( ctl, input.begin(), input.end(), output.begin(), nM3, mM3 );
+    //bolt::cl::transform_inclusive_scan( ctl, input.begin(), input.end(), output.begin(), nM3, mM3 );
+	bolt::cl::transform_inclusive_scan(ctl,  input.begin(), input.end(), input.begin(), nM3, mM3 );
     ::std::transform(   refInput.begin(), refInput.end(),  refInput.begin(), nM3);
-    ::std::partial_sum( refInput.begin(), refInput.end(), refOutput.begin(), mM3);
+    //::std::partial_sum( refInput.begin(), refInput.end(), refOutput.begin(), mM3);
+	::std::partial_sum( refInput.begin(), refInput.end(), refInput.begin(), mM3);
 
     // compare results
-    cmpArrays(refOutput, output);
+    cmpArrays(refInput, input);
 }
 
 TEST(NegateScanUserDefined, MultiCoreIncMixedM3)
@@ -856,48 +1211,52 @@ TEST(NegateScanUserDefined, MultiCoreIncMixedM3)
     //setup containers
     int length = (1<<16)+57;
 //    bolt::cl::negate< uddtM3 > nM3;
-    bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3,  CL_MEM_READ_WRITE, true  );
-    bolt::cl::device_vector< uddtM3 > output( length, identityMixM3, CL_MEM_READ_WRITE, false );
+    bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3); //,  CL_MEM_READ_WRITE, true  );
+    //bolt::cl::device_vector< uddtM3 > output( length, identityMixM3); //, CL_MEM_READ_WRITE, false );
     std::vector< uddtM3 > refInput( length, initialMixM3 );
-    std::vector< uddtM3 > refOutput( length );
+    //std::vector< uddtM3 > refOutput( length );
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
     // call scan
     MixM3 mM3;
-    bolt::cl::transform_inclusive_scan( ctl, input.begin(), input.end(), output.begin(), nM3, mM3 );
+    //bolt::cl::transform_inclusive_scan( ctl, input.begin(), input.end(), output.begin(), nM3, mM3 );
+	bolt::cl::transform_inclusive_scan(ctl,  input.begin(), input.end(), input.begin(), nM3, mM3 );
     ::std::transform(   refInput.begin(), refInput.end(),  refInput.begin(), nM3);
-    ::std::partial_sum( refInput.begin(), refInput.end(), refOutput.begin(), mM3);
+    //::std::partial_sum( refInput.begin(), refInput.end(), refOutput.begin(), mM3);
+	::std::partial_sum( refInput.begin(), refInput.end(), refInput.begin(), mM3);
 
     // compare results
-    cmpArrays(refOutput, output);
+    cmpArrays(refInput, input);
 }
 
 #endif
 
-/////////////////////////////////////////////////  Exclusive  ///////////////////////////
+/////////////////////////////////////////////////  Tra  ///////////////////////////
 
 TEST(NegateScanUserDefined, ExclAddInt2)
 {
     //setup containers
     int length = (1<<16)+23;
 //    bolt::cl::negate< uddtI2 > nI2;
-    bolt::cl::device_vector< uddtI2 > input(  length, initialAddI2,  CL_MEM_READ_WRITE, true  );
-    bolt::cl::device_vector< uddtI2 > output( length, identityAddI2, CL_MEM_READ_WRITE, false );
+    bolt::cl::device_vector< uddtI2 > input(  length, initialAddI2); //,  CL_MEM_READ_WRITE, true  );
+    //bolt::cl::device_vector< uddtI2 > output( length, identityAddI2); //, CL_MEM_READ_WRITE, false );
     std::vector< uddtI2 > refInput( length, initialAddI2 ); //refInput[0] = identityAddI2;
-    std::vector< uddtI2 > refOutput( length );
+    //std::vector< uddtI2 > refOutput( length );
 
     // call scan
     AddI2 aI2;
-    bolt::cl::transform_exclusive_scan( input.begin(), input.end(), output.begin(), nI2, identityAddI2, aI2 );
-
+    /*bolt::cl::transform_exclusive_scan( input.begin(), input.end(), output.begin(), nI2, identityAddI2, aI2 );
     std::transform(   refInput.begin(), refInput.end(),  refOutput.begin(), nI2);
-    Serial_scan<uddtI2, AddI2, uddtI2>(&refOutput[0], &refOutput[0], length, aI2, false, identityAddI2);
+    Serial_scan<uddtI2, AddI2, uddtI2>(&refOutput[0], &refOutput[0], length, aI2, false, identityAddI2);*/
+
+	bolt::cl::transform_exclusive_scan( input.begin(), input.end(), input.begin(), nI2, identityAddI2, aI2 );
+	std::transform(   refInput.begin(), refInput.end(),  refInput.begin(), nI2);
+    Serial_scan<uddtI2, AddI2, uddtI2>(&refInput[0], &refInput[0], length, aI2, false, identityAddI2);
 
     // compare results
-    cmpArrays(refOutput, output);
+    cmpArrays(refInput, input);
 }
 
 TEST(NegateScanUserDefined, SerialExclAddInt2)
@@ -905,24 +1264,27 @@ TEST(NegateScanUserDefined, SerialExclAddInt2)
     //setup containers
     int length = (1<<16)+23;
 //    bolt::cl::negate< uddtI2 > nI2;
-    bolt::cl::device_vector< uddtI2 > input(  length, initialAddI2,  CL_MEM_READ_WRITE, true  );
-    bolt::cl::device_vector< uddtI2 > output( length, identityAddI2, CL_MEM_READ_WRITE, false );
+    bolt::cl::device_vector< uddtI2 > input(  length, initialAddI2); //,  CL_MEM_READ_WRITE, true  );
+    //bolt::cl::device_vector< uddtI2 > output( length, identityAddI2); //, CL_MEM_READ_WRITE, false );
     std::vector< uddtI2 > refInput( length, initialAddI2 );// refInput[0] = identityAddI2;
-    std::vector< uddtI2 > refOutput( length );
+    //std::vector< uddtI2 > refOutput( length );
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
     // call scan
     AddI2 aI2;
-    bolt::cl::transform_exclusive_scan( ctl, input.begin(), input.end(), output.begin(), nI2, identityAddI2, aI2 );
+    //bolt::cl::transform_exclusive_scan( ctl, input.begin(), input.end(), output.begin(), nI2, identityAddI2, aI2 );
+    //std::transform(   refInput.begin(), refInput.end(),  refOutput.begin(), nI2);
+    //Serial_scan<uddtI2, AddI2, uddtI2>(&refOutput[0], &refOutput[0], length, aI2, false, identityAddI2)
+    //// compare results
+    //cmpArrays(refOutput, output);
 
-    std::transform(   refInput.begin(), refInput.end(),  refOutput.begin(), nI2);
-    Serial_scan<uddtI2, AddI2, uddtI2>(&refOutput[0], &refOutput[0], length, aI2, false, identityAddI2);
-
+	bolt::cl::transform_exclusive_scan( ctl, input.begin(), input.end(), input.begin(), nI2, identityAddI2, aI2 );
+    std::transform(   refInput.begin(), refInput.end(),  refInput.begin(), nI2);
+    Serial_scan<uddtI2, AddI2, uddtI2>(&refInput[0], &refInput[0], length, aI2, false, identityAddI2);
     // compare results
-    cmpArrays(refOutput, output);
+    cmpArrays(refInput, input);
 }
 
 TEST(NegateScanUserDefined, MultiCoreExclAddInt2)
@@ -930,24 +1292,27 @@ TEST(NegateScanUserDefined, MultiCoreExclAddInt2)
     //setup containers
     int length = (1<<16)+23;
 //    bolt::cl::negate< uddtI2 > nI2;
-    bolt::cl::device_vector< uddtI2 > input(  length, initialAddI2,  CL_MEM_READ_WRITE, true  );
-    bolt::cl::device_vector< uddtI2 > output( length, identityAddI2, CL_MEM_READ_WRITE, false );
+    bolt::cl::device_vector< uddtI2 > input(  length, initialAddI2); //,  CL_MEM_READ_WRITE, true  );
+    //bolt::cl::device_vector< uddtI2 > output( length, identityAddI2); //, CL_MEM_READ_WRITE, false );
     std::vector< uddtI2 > refInput( length, initialAddI2 ); //refInput[0] = identityAddI2;
-    std::vector< uddtI2 > refOutput( length );
+    //std::vector< uddtI2 > refOutput( length );
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
     // call scan
     AddI2 aI2;
-    bolt::cl::transform_exclusive_scan( ctl, input.begin(), input.end(), output.begin(), nI2, identityAddI2, aI2 );
+    //bolt::cl::transform_exclusive_scan( ctl, input.begin(), input.end(), output.begin(), nI2, identityAddI2, aI2 );
+    //std::transform(   refInput.begin(), refInput.end(),  refOutput.begin(), nI2);
+    //Serial_scan<uddtI2, AddI2, uddtI2>(&refOutput[0], &refOutput[0], length, aI2, false, identityAddI2);
+    //// compare results
+    //cmpArrays(refOutput, output);
 
-    std::transform(   refInput.begin(), refInput.end(),  refOutput.begin(), nI2);
-    Serial_scan<uddtI2, AddI2, uddtI2>(&refOutput[0], &refOutput[0], length, aI2, false, identityAddI2);
-
+	bolt::cl::transform_exclusive_scan( ctl, input.begin(), input.end(), input.begin(), nI2, identityAddI2, aI2 );
+    std::transform(   refInput.begin(), refInput.end(),  refInput.begin(), nI2);
+    Serial_scan<uddtI2, AddI2, uddtI2>(&refInput[0], &refInput[0], length, aI2, false, identityAddI2);
     // compare results
-    cmpArrays(refOutput, output);
+    cmpArrays(refInput, input);
 }
 
 #if (TEST_DOUBLE == 1)
@@ -956,21 +1321,24 @@ TEST(NegateScanUserDefined, ExclMultiplyDouble4)
     //setup containers
     int length = (1<<16)+11;
 //    bolt::cl::negate< uddtD4 > nD4;
-    bolt::cl::device_vector< uddtD4 > input(  length, initialMultD4,  CL_MEM_READ_WRITE, true  );
-    bolt::cl::device_vector< uddtD4 > output( length, identityMultD4, CL_MEM_READ_WRITE, false );
+    bolt::cl::device_vector< uddtD4 > input(  length, initialMultD4); //,  CL_MEM_READ_WRITE, true  );
+    //bolt::cl::device_vector< uddtD4 > output( length, identityMultD4); //, CL_MEM_READ_WRITE, false );
     std::vector< uddtD4 > refInput( length, initialMultD4 );// refInput[0] = identityMultD4;
-    std::vector< uddtD4 > refOutput( length );
+    //std::vector< uddtD4 > refOutput( length );
 
     // call scan
     MultD4 mD4;
-    bolt::cl::transform_exclusive_scan( input.begin(), input.end(), output.begin(), nD4, identityMultD4, mD4 );
+    //bolt::cl::transform_exclusive_scan( input.begin(), input.end(), output.begin(), nD4, identityMultD4, mD4 );
+    //std::transform(   refInput.begin(), refInput.end(),  refOutput.begin(), nD4);
+    //Serial_scan<uddtD4, MultD4, uddtD4>(&refOutput[0], &refOutput[0], length, mD4, false, identityMultD4);
+    //// compare results
+    //cmpArrays(refOutput, output);
 
-    std::transform(   refInput.begin(), refInput.end(),  refOutput.begin(), nD4);
-    Serial_scan<uddtD4, MultD4, uddtD4>(&refOutput[0], &refOutput[0], length, mD4, false, identityMultD4);
-
-
+	bolt::cl::transform_exclusive_scan( input.begin(), input.end(), input.begin(), nD4, identityMultD4, mD4 );
+    std::transform(   refInput.begin(), refInput.end(),  refInput.begin(), nD4);
+    Serial_scan<uddtD4, MultD4, uddtD4>(&refInput[0], &refInput[0], length, mD4, false, identityMultD4);
     // compare results
-    cmpArrays(refOutput, output);
+    cmpArrays(refInput, input);
 }
 
 TEST(NegateScanUserDefined, SerialExclMultiplyDouble4)
@@ -978,23 +1346,27 @@ TEST(NegateScanUserDefined, SerialExclMultiplyDouble4)
     //setup containers
     int length = (1<<16)+11;
 //    bolt::cl::negate< uddtD4 > nD4;
-    bolt::cl::device_vector< uddtD4 > input(  length, initialMultD4,  CL_MEM_READ_WRITE, true  );
-    bolt::cl::device_vector< uddtD4 > output( length, identityMultD4, CL_MEM_READ_WRITE, false );
+    bolt::cl::device_vector< uddtD4 > input(  length, initialMultD4); //,  CL_MEM_READ_WRITE, true  );
+    //bolt::cl::device_vector< uddtD4 > output( length, identityMultD4); //, CL_MEM_READ_WRITE, false );
     std::vector< uddtD4 > refInput( length, initialMultD4 );// refInput[0] = identityMultD4;
-    std::vector< uddtD4 > refOutput( length );
+    //std::vector< uddtD4 > refOutput( length );
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
     // call scan
     MultD4 mD4;
-    bolt::cl::transform_exclusive_scan( ctl, input.begin(), input.end(), output.begin(), nD4, identityMultD4, mD4 );
+    //bolt::cl::transform_exclusive_scan( ctl, input.begin(), input.end(), output.begin(), nD4, identityMultD4, mD4 );
+    //std::transform(   refInput.begin(), refInput.end(),  refOutput.begin(), nD4);
+    //Serial_scan<uddtD4, MultD4, uddtD4>(&refOutput[0], &refOutput[0], length, mD4, false, identityMultD4);
+    //// compare results
+    //cmpArrays(refOutput, output);
 
-    std::transform(   refInput.begin(), refInput.end(),  refOutput.begin(), nD4);
-    Serial_scan<uddtD4, MultD4, uddtD4>(&refOutput[0], &refOutput[0], length, mD4, false, identityMultD4);
+	bolt::cl::transform_exclusive_scan( ctl, input.begin(), input.end(), input.begin(), nD4, identityMultD4, mD4 );
+    std::transform(   refInput.begin(), refInput.end(),  refInput.begin(), nD4);
+    Serial_scan<uddtD4, MultD4, uddtD4>(&refInput[0], &refInput[0], length, mD4, false, identityMultD4);
     // compare results
-    cmpArrays(refOutput, output);
+    cmpArrays(refInput, input);
 }
 
 TEST(NegateScanUserDefined, MultiCoreExclMultiplyDouble4)
@@ -1002,24 +1374,27 @@ TEST(NegateScanUserDefined, MultiCoreExclMultiplyDouble4)
     //setup containers
     int length = (1<<16)+11;
 //    bolt::cl::negate< uddtD4 > nD4;
-    bolt::cl::device_vector< uddtD4 > input(  length, initialMultD4,  CL_MEM_READ_WRITE, true  );
-    bolt::cl::device_vector< uddtD4 > output( length, identityMultD4, CL_MEM_READ_WRITE, false );
+    bolt::cl::device_vector< uddtD4 > input(  length, initialMultD4); //,  CL_MEM_READ_WRITE, true  );
+    //bolt::cl::device_vector< uddtD4 > output( length, identityMultD4); //, CL_MEM_READ_WRITE, false );
     std::vector< uddtD4 > refInput( length, initialMultD4 );// refInput[0] = identityMultD4;
-    std::vector< uddtD4 > refOutput( length );
+    //std::vector< uddtD4 > refOutput( length );
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
     // call scan
     MultD4 mD4;
-    bolt::cl::transform_exclusive_scan( ctl, input.begin(), input.end(), output.begin(), nD4, identityMultD4, mD4 );
+    //bolt::cl::transform_exclusive_scan( ctl, input.begin(), input.end(), output.begin(), nD4, identityMultD4, mD4 );
+    //std::transform(   refInput.begin(), refInput.end(),  refOutput.begin(), nD4);
+    //Serial_scan<uddtD4, MultD4, uddtD4>(&refOutput[0], &refOutput[0], length, mD4, false, identityMultD4);
+    //// compare results
+    //cmpArrays(refOutput, output);
 
-    std::transform(   refInput.begin(), refInput.end(),  refOutput.begin(), nD4);
-    Serial_scan<uddtD4, MultD4, uddtD4>(&refOutput[0], &refOutput[0], length, mD4, false, identityMultD4);
-
+	bolt::cl::transform_exclusive_scan( ctl, input.begin(), input.end(), input.begin(), nD4, identityMultD4, mD4 );
+    std::transform(   refInput.begin(), refInput.end(),  refInput.begin(), nD4);
+    Serial_scan<uddtD4, MultD4, uddtD4>(&refInput[0], &refInput[0], length, mD4, false, identityMultD4);
     // compare results
-    cmpArrays(refOutput, output);
+    cmpArrays(refInput, input);
 }
 
 
@@ -1028,20 +1403,20 @@ TEST(NegateScanUserDefined, ExclMixedM3)
     //setup containers
     int length = (1<<16)+57;
 //    bolt::cl::negate< uddtM3 > nM3;
-    bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3,  CL_MEM_READ_WRITE, true  );
-    bolt::cl::device_vector< uddtM3 > output( length, identityMixM3, CL_MEM_READ_WRITE, false );
+    bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3); //,  CL_MEM_READ_WRITE, true  );
+    //bolt::cl::device_vector< uddtM3 > output( length, identityMixM3); //, CL_MEM_READ_WRITE, false );
     std::vector< uddtM3 > refInput( length, initialMixM3 ); //refInput[0] = identityMixM3;
     std::vector< uddtM3 > refOutput( length );
 
     // call scan
     MixM3 mM3;
-    bolt::cl::transform_exclusive_scan( input.begin(), input.end(), output.begin(), nM3, identityMixM3, mM3 );
-
+    //bolt::cl::transform_exclusive_scan( input.begin(), input.end(), output.begin(), nM3, identityMixM3, mM3 );
+	bolt::cl::transform_exclusive_scan( input.begin(), input.end(), input.begin(), nM3, identityMixM3, mM3 );
     std::transform(   refInput.begin(), refInput.end(),  refOutput.begin(), nM3);
     Serial_scan<uddtM3, MixM3, uddtM3>(&refOutput[0], &refOutput[0], length, mM3, false, identityMixM3);
-
     // compare results
-    cmpArrays(refOutput, output);
+    cmpArrays(refOutput, input);
+  
 }
 
 TEST(NegateScanUserDefined, SerialExclMixedM3)
@@ -1049,23 +1424,22 @@ TEST(NegateScanUserDefined, SerialExclMixedM3)
     //setup containers
     int length = (1<<16)+57;
 //    bolt::cl::negate< uddtM3 > nM3;
-    bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3,  CL_MEM_READ_WRITE, true  );
-    bolt::cl::device_vector< uddtM3 > output( length, identityMixM3, CL_MEM_READ_WRITE, false );
+    bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3); //,  CL_MEM_READ_WRITE, true  );
+    //bolt::cl::device_vector< uddtM3 > output( length, identityMixM3); //, CL_MEM_READ_WRITE, false );
     std::vector< uddtM3 > refInput( length, initialMixM3 ); //refInput[0] = identityMixM3;
     std::vector< uddtM3 > refOutput( length );
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
     // call scan
     MixM3 mM3;
-    bolt::cl::transform_exclusive_scan( ctl, input.begin(), input.end(), output.begin(), nM3, identityMixM3, mM3 );
-
+    //bolt::cl::transform_exclusive_scan( ctl, input.begin(), input.end(), output.begin(), nM3, identityMixM3, mM3 );
+	bolt::cl::transform_exclusive_scan(ctl, input.begin(), input.end(), input.begin(), nM3, identityMixM3, mM3 );
     std::transform(   refInput.begin(), refInput.end(),  refOutput.begin(), nM3);
     Serial_scan<uddtM3, MixM3, uddtM3>(&refOutput[0], &refOutput[0], length, mM3, false, identityMixM3);
     // compare results
-    cmpArrays(refOutput, output);
+    cmpArrays(refOutput, input);
 }
 
 TEST(NegateScanUserDefined, MultiCoreExclMixedM3)
@@ -1073,50 +1447,91 @@ TEST(NegateScanUserDefined, MultiCoreExclMixedM3)
     //setup containers
     int length = (1<<16)+57;
 //    bolt::cl::negate< uddtM3 > nM3;
-    bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3,  CL_MEM_READ_WRITE, true  );
-    bolt::cl::device_vector< uddtM3 > output( length, identityMixM3, CL_MEM_READ_WRITE, false );
+    bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3); //,  CL_MEM_READ_WRITE, true  );
+    //bolt::cl::device_vector< uddtM3 > output( length, identityMixM3); //, CL_MEM_READ_WRITE, false );
     std::vector< uddtM3 > refInput( length, initialMixM3 );// refInput[0] = identityMixM3;
     std::vector< uddtM3 > refOutput( length );
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
     // call scan
     MixM3 mM3;
-    bolt::cl::transform_exclusive_scan( ctl, input.begin(), input.end(), output.begin(), nM3, identityMixM3, mM3 );
-
+    //bolt::cl::transform_exclusive_scan( ctl, input.begin(), input.end(), output.begin(), nM3, identityMixM3, mM3 );
+	bolt::cl::transform_exclusive_scan( ctl, input.begin(), input.end(), input.begin(), nM3, identityMixM3, mM3 );
     std::transform(   refInput.begin(), refInput.end(),  refOutput.begin(), nM3);
     Serial_scan<uddtM3, MixM3, uddtM3>(&refOutput[0], &refOutput[0], length, mM3, false, identityMixM3);
-
     // compare results
-    cmpArrays(refOutput, output);
+    cmpArrays(refOutput, input);
+
 }
 
 TEST(NegateScanUserDefined, SerialExclOffsetTest)
 {
     //setup containers
-    int length = (1<<16);
+    int length = (1<<15);
 //    bolt::cl::negate< uddtM3 > nM3;
-    bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3,  CL_MEM_READ_WRITE, true  );
-    bolt::cl::device_vector< uddtM3 > output( length, identityMixM3, CL_MEM_READ_WRITE, false );
+    bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3);
+    //bolt::cl::device_vector< uddtM3 > output( length, identityMixM3);
     std::vector< uddtM3 > refInput( length, initialMixM3 );// refInput[0] = identityMixM3;
-    std::vector< uddtM3 > refOutput( length );
+    //std::vector< uddtM3 > refOutput( length,identityMixM3);
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
     // call scan
     MixM3 mM3;
-    bolt::cl::transform_exclusive_scan( ctl, input.begin()+(length/2), input.end()-(length/4), output.begin()+(length/2), nM3, identityMixM3, mM3 );
+    //bolt::cl::transform_exclusive_scan( ctl, input.begin()+(length/2), input.end()-(length/4), output.begin()+(length/2), nM3, identityMixM3, mM3 );
 
-    std::transform(   refInput.begin()+(length/2), refInput.end()-(length/4),  refOutput.begin()+(length/2), nM3);
-    Serial_scan<uddtM3, MixM3, uddtM3>(&refOutput[(length/2)], &refOutput[(length/2)], length-(length/2)-(length/4), mM3, false, identityMixM3);
+    //std::transform(   refInput.begin()+(length/2), refInput.end()-(length/4),  refOutput.begin()+(length/2), nM3);
+    //Serial_scan<uddtM3, MixM3, uddtM3>(&refOutput[(length/2)], &refOutput[(length/2)], length-(length/2)-(length/4), mM3, false, identityMixM3);
+
+    //// compare results
+    //cmpArrays(refOutput, output);
+
+	bolt::cl::transform_exclusive_scan( ctl, input.begin()+(length/2), input.end()-(length/4), input.begin()+(length/2), nM3, identityMixM3, mM3 );
+
+    std::transform(   refInput.begin()+(length/2), refInput.end()-(length/4),  refInput.begin()+(length/2), nM3);
+    Serial_scan<uddtM3, MixM3, uddtM3>(&refInput[(length/2)], &refInput[(length/2)], length-(length/2)-(length/4), mM3, false, identityMixM3);
 
     // compare results
-    cmpArrays(refOutput, output);
+    cmpArrays(refInput, input);
 }
+
+TEST(NegateScanFloatDefined, CLExclOffsetTestFloat)
+{
+    //setup containers1ost
+    int length = (1<<18);
+
+
+    bolt::cl::device_vector< float > input( length, 1.f );// refInput[0] = identityMixM3;
+    //bolt::cl::device_vector< float > output( length,0.f);
+    std::vector< float > refInput( length, 1.f );// refInput[0] = identityMixM3;
+    //std::vector< float > refOutput( length, 0.f);
+    
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::OpenCL);
+
+    // call scan
+
+    //bolt::cl::transform_exclusive_scan( ctl, input.begin()+(length/2), input.end()-(length/4), output.begin()+(length/2), bolt::cl::negate<float>(), 3.f, bolt::cl::plus<float>() );
+
+
+    //std::transform(   refInput.begin()+(length/2), refInput.end()-(length/4),  refOutput.begin()+(length/2), bolt::cl::negate<float>());
+    //Serial_scan<float, bolt::cl::plus<float>, float>(&refOutput[(length/2)], &refOutput[(length/2)], length-(length/2)-(length/4), bolt::cl::plus<float>(), false, 3.f);
+
+    //// compare results
+    //cmpArrays(refOutput, output);
+
+	bolt::cl::transform_exclusive_scan( ctl, input.begin()+(length/2), input.end()-(length/4), input.begin()+(length/2), bolt::cl::negate<float>(), 3.f, bolt::cl::plus<float>() );
+    std::transform(   refInput.begin()+(length/2), refInput.end()-(length/4),  refInput.begin()+(length/2), bolt::cl::negate<float>());
+    Serial_scan<float, bolt::cl::plus<float>, float>(&refInput[(length/2)], &refInput[(length/2)], length-(length/2)-(length/4), bolt::cl::plus<float>(), false, 3.f);
+    // compare results
+    cmpArrays(refInput, input);
+}
+
+
+
 
 
 TEST(NegateScanUserDefined, CLExclOffsetTest)
@@ -1124,44 +1539,53 @@ TEST(NegateScanUserDefined, CLExclOffsetTest)
     //setup containers
     int length = (1<<16);
 //    bolt::cl::negate< uddtM3 > nM3;
-    bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3,  CL_MEM_READ_WRITE, true  );
-    bolt::cl::device_vector< uddtM3 > output( length, identityMixM3, CL_MEM_READ_WRITE, false );
+    bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3);
+    //bolt::cl::device_vector< uddtM3 > output( length, identityMixM3);
     std::vector< uddtM3 > refInput( length, initialMixM3 );// refInput[0] = identityMixM3;
-    std::vector< uddtM3 > refOutput( length );
+    //std::vector< uddtM3 > refOutput( length, identityMixM3 );
 
     // call scan
     MixM3 mM3;
-    bolt::cl::transform_exclusive_scan( input.begin()+(length/2), input.end()-(length/4), output.begin()+(length/2), nM3, identityMixM3, mM3 );
+    //bolt::cl::transform_exclusive_scan( input.begin()+(length/2), input.end()-(length/4), output.begin()+(length/2), nM3, identityMixM3, mM3 );
+    //std::transform(   refInput.begin()+(length/2), refInput.end()-(length/4),  refOutput.begin()+(length/2), nM3);
+    //Serial_scan<uddtM3, MixM3, uddtM3>(&refOutput[(length/2)], &refOutput[(length/2)], length-(length/2)-(length/4), mM3, false, identityMixM3);
+    //// compare results
+    //cmpArrays(refOutput, output);
 
-    std::transform(   refInput.begin()+(length/2), refInput.end()-(length/4),  refOutput.begin()+(length/2), nM3);
-    Serial_scan<uddtM3, MixM3, uddtM3>(&refOutput[(length/2)], &refOutput[(length/2)], length-(length/2)-(length/4), mM3, false, identityMixM3);
-
+	bolt::cl::transform_exclusive_scan( input.begin()+(length/2), input.end()-(length/4), input.begin()+(length/2), nM3, identityMixM3, mM3 );
+    std::transform(   refInput.begin()+(length/2), refInput.end()-(length/4),  refInput.begin()+(length/2), nM3);
+    Serial_scan<uddtM3, MixM3, uddtM3>(&refInput[(length/2)], &refInput[(length/2)], length-(length/2)-(length/4), mM3, false, identityMixM3);
     // compare results
-    cmpArrays(refOutput, output);
+    cmpArrays(refInput, input);
 }
 
-TEST(NegateScanUserDefined, SerialInclOffsetTest)
+TEST(NegateScanUserDefined, MulticoreInclOffsetTest)
 {
     //setup containers
     int length = (1<<16);
 //    bolt::cl::negate< uddtM3 > nM3;
-    bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3,  CL_MEM_READ_WRITE, true  );
-    bolt::cl::device_vector< uddtM3 > output( length, identityMixM3, CL_MEM_READ_WRITE, false );
+    bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3);
+    //bolt::cl::device_vector< uddtM3 > output( length, identityMixM3);
     std::vector< uddtM3 > refInput( length, initialMixM3 );
-    std::vector< uddtM3 > refOutput( length );
+    //std::vector< uddtM3 > refOutput( length, identityMixM3);
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
     // call scan
     MixM3 mM3;
-    bolt::cl::transform_inclusive_scan( ctl, input.begin()+(length/2), input.end()-(length/4), output.begin()+(length/2), nM3, mM3 );
-    ::std::transform(   refInput.begin()+(length/2), refInput.end()-(length/4),  refInput.begin()+(length/2), nM3);
-    ::std::partial_sum( refInput.begin()+(length/2), refInput.end()-(length/4), refOutput.begin()+(length/2), mM3);
+    //bolt::cl::transform_inclusive_scan( ctl, input.begin()+(length/2), input.end()-(length/4), output.begin()+(length/2), nM3, mM3 );
+    //::std::transform(   refInput.begin()+(length/2), refInput.end()-(length/4),  refInput.begin()+(length/2), nM3);
+    //::std::partial_sum( refInput.begin()+(length/2), refInput.end()-(length/4), refOutput.begin()+(length/2), mM3);
 
+    //// compare results
+    //cmpArrays(refOutput, output);
+
+	bolt::cl::transform_inclusive_scan( ctl, input.begin()+(length/2), input.end()-(length/4), input.begin()+(length/2), nM3, mM3 );
+    ::std::transform(   refInput.begin()+(length/2), refInput.end()-(length/4),  refInput.begin()+(length/2), nM3);
+    ::std::partial_sum( refInput.begin()+(length/2), refInput.end()-(length/4), refInput.begin()+(length/2), mM3);
     // compare results
-    cmpArrays(refOutput, output);
+    cmpArrays(refInput, input);
 }
 
 TEST(NegateScanUserDefined, CLInclOffsetTest)
@@ -1169,18 +1593,24 @@ TEST(NegateScanUserDefined, CLInclOffsetTest)
     //setup containers
     int length = (1<<16);
 //    bolt::cl::negate< uddtM3 > nM3;
-    bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3,  CL_MEM_READ_WRITE, true  );
-    bolt::cl::device_vector< uddtM3 > output( length, identityMixM3, CL_MEM_READ_WRITE, false );
+    bolt::cl::device_vector< uddtM3 > input(  length, initialMixM3);
+    //bolt::cl::device_vector< uddtM3 > output( length, identityMixM3);
     std::vector< uddtM3 > refInput( length, initialMixM3 );
-    std::vector< uddtM3 > refOutput( length );
+    //std::vector< uddtM3 > refOutput( length, identityMixM3 );
 
     // call scan
      MixM3 mM3;
-    bolt::cl::transform_inclusive_scan( input.begin()+(length/2), input.end()-(length/4), output.begin()+(length/2), nM3, mM3 );
+    //bolt::cl::transform_inclusive_scan( input.begin()+(length/2), input.end()-(length/4), output.begin()+(length/2), nM3, mM3 );
+    //::std::transform(   refInput.begin()+(length/2), refInput.end()-(length/4),  refInput.begin()+(length/2), nM3);
+    //::std::partial_sum( refInput.begin()+(length/2), refInput.end()-(length/4), refOutput.begin()+(length/2), mM3);
+    //// compare results
+    //cmpArrays(refOutput, output);
+
+	bolt::cl::transform_inclusive_scan( input.begin()+(length/2), input.end()-(length/4), input.begin()+(length/2), nM3, mM3 );
     ::std::transform(   refInput.begin()+(length/2), refInput.end()-(length/4),  refInput.begin()+(length/2), nM3);
-    ::std::partial_sum( refInput.begin()+(length/2), refInput.end()-(length/4), refOutput.begin()+(length/2), mM3);
+    ::std::partial_sum( refInput.begin()+(length/2), refInput.end()-(length/4), refInput.begin()+(length/2), mM3);
     // compare results
-    cmpArrays(refOutput, output);
+    cmpArrays(refInput, input);
 }
 
 TEST(Mixed, IncAddInt2)
@@ -1189,8 +1619,8 @@ TEST(Mixed, IncAddInt2)
     int length = (1<<16)+23;
 //    bolt::cl::negate< uddtI2 > nI2;
     uddtD4 initialD4 = {1.234, 2.345, 3.456, 4.567};
-    bolt::cl::device_vector< uddtD4 > input(  length, initialD4,  CL_MEM_READ_WRITE, true  );
-    bolt::cl::device_vector< uddtI2 > output( length, identityAddI2, CL_MEM_READ_WRITE, false );
+    bolt::cl::device_vector< uddtD4 > input(  length, initialD4); //,  CL_MEM_READ_WRITE, true  );
+    bolt::cl::device_vector< uddtI2 > output( length, identityAddI2); //, CL_MEM_READ_WRITE, false );
     std::vector< uddtD4 > refInput( length, initialD4 );
     std::vector< uddtI2 > refIntermediate( length, identityAddI2 );
     std::vector< uddtI2 > refOutput( length, identityAddI2 );
@@ -1198,11 +1628,13 @@ TEST(Mixed, IncAddInt2)
     // call transform_scan
     AddI2 aI2;
     bolt::cl::transform_inclusive_scan( input.begin(), input.end(), output.begin(), sD4I2, aI2 );
+
     ::std::transform(   refInput.begin(), refInput.end(),  refIntermediate.begin(), sD4I2); // transform in-place
     ::std::partial_sum( refIntermediate.begin(), refIntermediate.end(), refOutput.begin(), aI2); // out-of-place scan
-
     // compare results
     cmpArrays(refOutput, output);
+
+
 }
 
 TEST(Mixed, SerialIncAddInt2)
@@ -1211,8 +1643,8 @@ TEST(Mixed, SerialIncAddInt2)
     int length = (1<<16)+23;
 //    bolt::cl::negate< uddtI2 > nI2;
     uddtD4 initialD4 = {1.234, 2.345, 3.456, 4.567};
-    bolt::cl::device_vector< uddtD4 > input(  length, initialD4,  CL_MEM_READ_WRITE, true  );
-    bolt::cl::device_vector< uddtI2 > output( length, identityAddI2, CL_MEM_READ_WRITE, false );
+    bolt::cl::device_vector< uddtD4 > input(  length, initialD4); //,  CL_MEM_READ_WRITE, true  );
+    bolt::cl::device_vector< uddtI2 > output( length, identityAddI2); //, CL_MEM_READ_WRITE, false );
     std::vector< uddtD4 > refInput( length, initialD4 );
     std::vector< uddtI2 > refIntermediate( length, identityAddI2 );
     std::vector< uddtI2 > refOutput( length, identityAddI2 );
@@ -1224,11 +1656,14 @@ TEST(Mixed, SerialIncAddInt2)
     // call transform_scan
     AddI2 aI2;
     bolt::cl::transform_inclusive_scan( ctl, input.begin(), input.end(), output.begin(), sD4I2, aI2 );
+	
     ::std::transform(   refInput.begin(), refInput.end(),  refIntermediate.begin(), sD4I2); // transform in-place
     ::std::partial_sum( refIntermediate.begin(), refIntermediate.end(), refOutput.begin(), aI2); // out-of-place scan
 
     // compare results
     cmpArrays(refOutput, output);
+
+
 }
 
 TEST(Mixed, MultiCoreIncAddInt2)
@@ -1237,8 +1672,8 @@ TEST(Mixed, MultiCoreIncAddInt2)
     int length = (1<<16)+23;
 //    bolt::cl::negate< uddtI2 > nI2;
     uddtD4 initialD4 = {1.234, 2.345, 3.456, 4.567};
-    bolt::cl::device_vector< uddtD4 > input(  length, initialD4,  CL_MEM_READ_WRITE, true  );
-    bolt::cl::device_vector< uddtI2 > output( length, identityAddI2, CL_MEM_READ_WRITE, false );
+    bolt::cl::device_vector< uddtD4 > input(  length, initialD4); //,  CL_MEM_READ_WRITE, true  );
+    bolt::cl::device_vector< uddtI2 > output( length, identityAddI2); //, CL_MEM_READ_WRITE, false );
     std::vector< uddtD4 > refInput( length, initialD4 );
     std::vector< uddtI2 > refIntermediate( length, identityAddI2 );
     std::vector< uddtI2 > refOutput( length, identityAddI2 );
@@ -1250,11 +1685,13 @@ TEST(Mixed, MultiCoreIncAddInt2)
     // call transform_scan
     AddI2 aI2;
     bolt::cl::transform_inclusive_scan( ctl, input.begin(), input.end(), output.begin(), sD4I2, aI2 );
+	
     ::std::transform(   refInput.begin(), refInput.end(),  refIntermediate.begin(), sD4I2); // transform in-place
     ::std::partial_sum( refIntermediate.begin(), refIntermediate.end(), refOutput.begin(), aI2); // out-of-place scan
 
     // compare results
     cmpArrays(refOutput, output);
+
 }
 
 
@@ -1376,15 +1813,16 @@ TEST(SerialCPU, NegPlusInt)
     // reference data
     std::vector< int > refInput( length, init );
     std::vector< int > refIntermediate( length, identity );
-    std::vector< int > refOutput( length, identity );
+    //std::vector< int > refOutput( length, identity );
 
     // perform reference CPU calculation
     ::std::transform(   refInput.begin(), refInput.end(),  refIntermediate.begin(), unary_op); // transform in-place
-    ::std::partial_sum( refIntermediate.begin(), refIntermediate.end(),refOutput.begin(),binary_op);//out-of-place scan
+    //::std::partial_sum( refIntermediate.begin(), refIntermediate.end(),refOutput.begin(),binary_op);//out-of-place scan
+	::std::partial_sum( refIntermediate.begin(), refIntermediate.end(),refInput.begin(),binary_op);//in-place scan
 
     // device data
     std::vector< int > input( length, init);
-    std::vector< int > output( length, identity);
+    //std::vector< int > output( length, identity);
 
 
     // calculate on device
@@ -1394,11 +1832,12 @@ TEST(SerialCPU, NegPlusInt)
     strDeviceName = ctrl.getDevice( ).getInfo< CL_DEVICE_NAME >( &err );
     bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_NAME > failed" );
     std::cout << "Testing Device[" << deviceNum << "]: " << strDeviceName << std::endl;
-    bolt::cl::transform_inclusive_scan( ctrl, input.begin(), input.end(), output.begin(), unary_op, binary_op );
-
+    //bolt::cl::transform_inclusive_scan( ctrl, input.begin(), input.end(), output.begin(), unary_op, binary_op );
+	bolt::cl::transform_inclusive_scan( ctrl, input.begin(), input.end(), input.begin(), unary_op, binary_op );
 
     // compare results
-    cmpArrays(refOutput, output);
+    //cmpArrays(refOutput, output);
+	cmpArrays(refInput, input);
 }
 
 
@@ -1421,15 +1860,16 @@ TEST(MultiCoreCPU, NegPlusInt)
     // reference data
     std::vector< int > refInput( length, init );
     std::vector< int > refIntermediate( length, identity );
-    std::vector< int > refOutput( length, identity );
+    //std::vector< int > refOutput( length, identity );
 
     // perform reference CPU calculation
     ::std::transform(   refInput.begin(), refInput.end(),  refIntermediate.begin(), unary_op); // transform in-place
-    ::std::partial_sum( refIntermediate.begin(), refIntermediate.end(),refOutput.begin(),binary_op);//out-of-place scan
+    //::std::partial_sum( refIntermediate.begin(), refIntermediate.end(),refOutput.begin(),binary_op);//out-of-place scan
+	::std::partial_sum( refIntermediate.begin(), refIntermediate.end(),refInput.begin(),binary_op);//in-place scan
 
     // device data
     std::vector< int > input( length, init);
-    std::vector< int > output( length, identity);
+    //std::vector< int > output( length, identity);
 
 
     bolt::cl::control ctrl = bolt::cl::control::getDefault( );
@@ -1438,18 +1878,20 @@ TEST(MultiCoreCPU, NegPlusInt)
     strDeviceName = ctrl.getDevice( ).getInfo< CL_DEVICE_NAME >( &err );
     bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_NAME > failed" );
     std::cout << "Testing Device[" << deviceNum << "]: " << strDeviceName << std::endl;
-    bolt::cl::transform_inclusive_scan( ctrl, input.begin(), input.end(), output.begin(), unary_op, binary_op );
+    //bolt::cl::transform_inclusive_scan( ctrl, input.begin(), input.end(), output.begin(), unary_op, binary_op );
+	bolt::cl::transform_inclusive_scan( ctrl, input.begin(), input.end(), input.begin(), unary_op, binary_op );
 
 
     // compare results
-    cmpArrays(refOutput, output);
+    //cmpArrays(refOutput, output);
+	cmpArrays(refInput, input);
 }
 
 
 int _tmain(int argc, _TCHAR* argv[])
 {
     //  Register our minidump generating logic
-    bolt::miniDumpSingleton::enableMiniDumps( );
+    //bolt::miniDumpSingleton::enableMiniDumps( );
 
     //  Initialize googletest; this removes googletest specific flags from command line
     ::testing::InitGoogleTest( &argc, &argv[ 0 ] );

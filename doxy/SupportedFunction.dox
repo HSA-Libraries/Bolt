@@ -21,9 +21,8 @@
 * \tableofcontents
 * \section Functions Supported Functions and Paths
 *  Bolt function is designed to be executed with four code paths (OpenCL™, C++ AMP, Multicore CPU and Serial CPU). The default mode is "Automatic" which means it will go into 
-*  GPU path first, then TBB (Intel), then SerialCpu. The control will go to other paths only if the selected one is not found. Forcing the mode to any code path will run the
-*  function with that code path. All Bolt functions have OpenCL™ and Serial path implementation, However for some functions Multicore TBB path is not implemented yet, So calling
-*  those functions with MultiCoreCpu flag will actually call the Serial code.   
+*  GPU path first, then Multicore CPU (Intel TBB), then SerialCpu, control will go to other paths only if the selected one is not found. Forcing the mode to any code path will run the
+*  function with that code path. All Bolt functions have OpenCL™, Multicore CPU and Serial path implementation.
 *
 * \subsection examples Example:
 * \subsubsection transform_scan Transform Scan:
@@ -70,14 +69,14 @@
 <td align="center">copy</td>
 <td align="center">YES</td>
 <td align="center">NO</td>
-<td align="center">Calling Serial</td>
+<td align="center">YES</td>
 <td align="center">YES</td>
 </tr>
 <tr>
 <td align="center">copy_n</td>
 <td align="center">YES</td>
 <td align="center">NO</td>
-<td align="center">Calling Serial</td>
+<td align="center">YES</td>
 <td align="center">YES</td>
 </tr>
 <tr>
@@ -126,28 +125,28 @@
 <td align="center">fill</td>
 <td align="center">YES</td>
 <td align="center">NO</td>
-<td align="center">Calling Serial</td>
+<td align="center">YES</td>
 <td align="center">YES</td>
 </tr>
 <tr>
 <td align="center">fill_n</td>
 <td align="center">YES</td>
 <td align="center">NO</td>
-<td align="center">Calling Serial</td>
+<td align="center">YES</td>
 <td align="center">YES</td>
 </tr>
 <tr>
 <td align="center">generate</td>
 <td align="center">YES</td>
 <td align="center">NO</td>
-<td align="center">Calling Serial</td>
+<td align="center">YES</td>
 <td align="center">YES</td>
 </tr>
 <tr>
 <td align="center">generate_n</td>
 <td align="center">YES</td>
 <td align="center">NO</td>
-<td align="center">Calling Serial</td>
+<td align="center">YES</td>
 <td align="center">YES</td>
 </tr>
 <tr>
@@ -168,21 +167,21 @@
 <td align="center">inner_product</td>
 <td align="center">YES</td>
 <td align="center">NO</td>
-<td align="center">Calling Serial</td>
+<td align="center">YES</td>
 <td align="center">YES</td>
 </tr>
 <tr>
 <td align="center">max_element</td>
 <td align="center">YES</td>
 <td align="center">NO</td>
-<td align="center">Calling Serial</td>
+<td align="center">YES</td>
 <td align="center">YES</td>
 </tr>
 <tr>
 <td align="center">min_element</td>
 <td align="center">YES</td>
 <td align="center">NO</td>
-<td align="center">Calling Serial</td>
+<td align="center">YES</td>
 <td align="center">YES</td>
 </tr>
 <tr>
@@ -196,7 +195,7 @@
 <td align="center">reduce_by_key</td>
 <td align="center">YES</td>
 <td align="center">NO</td>
-<td align="center">Calling Serial</td>
+<td align="center">YES</td>
 <td align="center">YES</td>
 </tr>
 <tr>
@@ -210,21 +209,21 @@
 <td align="center">sort_by_key</td>
 <td align="center">YES</td>
 <td align="center">NO</td>
-<td align="center">Calling Serial</td>
+<td align="center">YES</td>
 <td align="center">YES</td>
 </tr>
 <tr>
 <td align="center">stable_sort</td>
 <td align="center">YES</td>
 <td align="center">NO</td>
-<td align="center">Calling Serial</td>
+<td align="center">YES</td>
 <td align="center">YES</td>
 </tr>
 <tr>
 <td align="center">stable_sort_by_key</td>
 <td align="center">YES</td>
 <td align="center">NO</td>
-<td align="center">Calling Serial</td>
+<td align="center">YES</td>
 <td align="center">YES</td>
 </tr>
 <tr>
@@ -238,14 +237,14 @@
 <td align="center">transform_exclusive_scan</td>
 <td align="center">YES</td>
 <td align="center">NO</td>
-<td align="center">Calling Serial</td>
+<td align="center">YES</td>
 <td align="center">YES</td>
 </tr>
 <tr>
 <td align="center">transform_inclusive_scan</td>
 <td align="center">YES</td>
 <td align="center">NO</td>
-<td align="center">Calling Serial</td>
+<td align="center">YES</td>
 <td align="center">YES</td>
 </tr>
 <tr>
@@ -255,5 +254,50 @@
 <td align="center">YES</td>
 <td align="center">YES</td>
 </tr>
+<tr>
+<td align="center">binary_search</td>
+<td align="center">YES</td>
+<td align="center">NO</td>
+<td align="center">YES</td>
+<td align="center">YES</td>
+</tr>
+<tr>
+<td align="center">merge</td>
+<td align="center">YES</td>
+<td align="center">NO</td>
+<td align="center">YES</td>
+<td align="center">YES</td>
+</tr>
+<tr>
+<td align="center">scatter</td>
+<td align="center">YES</td>
+<td align="center">NO</td>
+<td align="center">YES</td>
+<td align="center">YES</td>
+</tr>
+<tr>
+<td align="center">scatter_if</td>
+<td align="center">YES</td>
+<td align="center">NO</td>
+<td align="center">YES</td>
+<td align="center">YES</td>
+</tr>
+<tr>
+<td align="center">gather</td>
+<td align="center">YES</td>
+<td align="center">NO</td>
+<td align="center">YES</td>
+<td align="center">YES</td>
+</tr>
+<tr>
+<td align="center">gather_if</td>
+<td align="center">YES</td>
+<td align="center">NO</td>
+<td align="center">YES</td>
+<td align="center">YES</td>
+</tr>
+
+
+
 </table>
 */

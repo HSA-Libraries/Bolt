@@ -18,6 +18,7 @@
 /******************************************************************************
  * Asynchronous Profiler
  *****************************************************************************/
+#if defined(_WIN32)
 #include "bolt/AsyncProfiler.h"
 #include <iostream>
 #include <sstream>
@@ -688,3 +689,5 @@ void AsyncProfiler::throwAway( size_t n)
     writeSum(os);
     return os;
 }
+
+#endif

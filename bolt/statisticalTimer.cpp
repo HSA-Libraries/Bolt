@@ -37,6 +37,7 @@
 	#include <windows.h>
 #else
 	#include <sys/time.h>
+typedef unsigned long cl_ulong;	
 #endif
 
 namespace bolt

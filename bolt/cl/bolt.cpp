@@ -1,26 +1,28 @@
-/***************************************************************************                                                                                     
-*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.                                     
-*                                                                                    
-*   Licensed under the Apache License, Version 2.0 (the "License");   
-*   you may not use this file except in compliance with the License.                 
-*   You may obtain a copy of the License at                                          
-*                                                                                    
-*       http://www.apache.org/licenses/LICENSE-2.0                      
-*                                                                                    
-*   Unless required by applicable law or agreed to in writing, software              
-*   distributed under the License is distributed on an "AS IS" BASIS,              
-*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.         
-*   See the License for the specific language governing permissions and              
-*   limitations under the License.                                                   
+/***************************************************************************
+*   Copyright 2012 - 2013 Advanced Micro Devices, Inc.
+*
+*   Licensed under the Apache License, Version 2.0 (the "License");
+*   you may not use this file except in compliance with the License.
+*   You may obtain a copy of the License at
+*
+*       http://www.apache.org/licenses/LICENSE-2.0
+*
+*   Unless required by applicable law or agreed to in writing, software
+*   distributed under the License is distributed on an "AS IS" BASIS,
+*   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+*   See the License for the specific language governing permissions and
+*   limitations under the License.
 
-***************************************************************************/                                                                                     
+***************************************************************************/
 
 
 #include <iostream>
 #include <fstream>
 #include <streambuf>
+#if defined( _WIN32 )
 #include <direct.h>  //windows CWD for error message
-#include <tchar.h>
+#endif
+#include <bolt/unicode.h>
 #include <algorithm>
 #include <vector>
 #include <set>
@@ -30,18 +32,26 @@
 
 //  Include all kernel string objects
 
+#include "bolt/binary_search_kernels.hpp"
 #include "bolt/copy_kernels.hpp"
 #include "bolt/count_kernels.hpp"
 #include "bolt/fill_kernels.hpp"
+#include "bolt/gather_kernels.hpp"
 #include "bolt/generate_kernels.hpp"
+#include "bolt/merge_kernels.hpp"
 #include "bolt/min_element_kernels.hpp"
 #include "bolt/reduce_kernels.hpp"
 #include "bolt/reduce_by_key_kernels.hpp"
 #include "bolt/scan_kernels.hpp"
 #include "bolt/scan_by_key_kernels.hpp"
+#include "bolt/scatter_kernels.hpp"
 #include "bolt/sort_kernels.hpp"
 #include "bolt/sort_uint_kernels.hpp"
+#include "bolt/sort_int_kernels.hpp"
+#include "bolt/sort_common_kernels.hpp"
 #include "bolt/sort_by_key_kernels.hpp"
+#include "bolt/sort_by_key_int_kernels.hpp"
+#include "bolt/sort_by_key_uint_kernels.hpp"
 #include "bolt/stablesort_kernels.hpp"
 #include "bolt/stablesort_by_key_kernels.hpp"
 #include "bolt/transform_kernels.hpp"
@@ -320,14 +330,14 @@ namespace bolt {
 
     std::string fileToString(const std::string &fileName)
     {
-        std::ifstream infile (fileName);
+        std::ifstream infile (fileName.c_str());
         if (infile.fail() ) {
 #if defined( _WIN32 )
             TCHAR osPath[ MAX_PATH ];
 
             //	If loading the .cl file fails from the specified path, then make a last ditch attempt (purely for convenience) to find the .cl file right to the executable,
             //	regardless of what the CWD is
-            //	::GetModuleFileName( ) returns TCHAR's (and we define _UNICODE for windows); but the fileName string is char's, 
+            //	::GetModuleFileName( ) returns TCHAR's (and we define _UNICODE for windows); but the fileName string is char's,
             //	so we needed to create an abstraction for string/wstring
             if( ::GetModuleFileName( NULL, osPath, MAX_PATH ) )
             {
@@ -355,7 +365,7 @@ namespace bolt {
                 //};
                 std::cout << "error: failed to open file: " << fileName << std::endl;
                 throw;
-            } 
+            }
         }
 
         std::string str((std::istreambuf_iterator<char>(infile)),
@@ -394,7 +404,7 @@ namespace bolt {
         cl_int * err = NULL);
 
 
-    void wait(const bolt::cl::control &ctl, ::cl::Event &e) 
+    void wait(const bolt::cl::control &ctl, ::cl::Event &e)
     {
         const bolt::cl::control::e_WaitMode waitMode = ctl.getWaitMode();
         if (waitMode == bolt::cl::control::BusyWait) {
@@ -417,7 +427,7 @@ namespace bolt {
      * Compile Kernel from primitive information
      *************************************************************************/
     void printKernels(
-        const ::std::vector<::std::string>& kernelNames,
+        const ::std::vector< ::std::string >& kernelNames,
         const ::std::string& completeKernelString,
         const ::std::string& compileOptions)
     {
@@ -444,7 +454,7 @@ namespace bolt {
     * - takes into account control
     * - requests program/kernel from ProgramMap
     **************************************************************************/
-    ::std::vector<::cl::Kernel> getKernels(
+    ::std::vector< ::cl::Kernel > getKernels(
         const control&      ctl,
         const std::vector<std::string>& typeNames,
         const KernelTemplateSpecializer * const kts,
@@ -453,21 +463,21 @@ namespace bolt {
         const std::string&  options )
     {
         std::string completeKernelString;
-        /* In device vector.h functional.h and bolt.h the defintions of cl_* are given. These cl_* are typedef'd 
-         * to there corresponding types in cl_platforms.h. To the kernel Actually the cl_* are passed, But the OpenCL 
+        /* In device vector.h functional.h and bolt.h the defintions of cl_* are given. These cl_* are typedef'd
+         * to there corresponding types in cl_platforms.h. To the kernel Actually the cl_* are passed, But the OpenCL
            kernel does not understand cl_* So we need the below typdefinitions. */
-        const std::string PreprocessorDefinitions = 
-        "#define cl_int    int\n" 
-        "#define cl_uint   unsigned int\n" 
-        "#define cl_short  short\n" 
-        "#define cl_ushort unsigned short\n" 
-        "#define cl_long   long\n" 
-        "#define cl_ulong  unsigned long\n" 
-        "#define cl_float  float\n" 
+        const std::string PreprocessorDefinitions =
+        "#define cl_int    int\n"
+        "#define cl_uint   unsigned int\n"
+        "#define cl_short  short\n"
+        "#define cl_ushort unsigned short\n"
+        "#define cl_long   long\n"
+        "#define cl_ulong  unsigned long\n"
+        "#define cl_float  float\n"
         "#define cl_double double\n"
-        "#define cl_char   char\n" 
+        "#define cl_char   char\n"
         "#define cl_uchar  unsigned char\n" ;
-        
+
         completeKernelString = PreprocessorDefinitions;
 
         // (1) raw kernel
@@ -514,7 +524,7 @@ namespace bolt {
 
         // retrieve kernels from program
         //std::cout << "Getting " << kts->numKernels() << " from program." << std::endl;
-        ::std::vector<::cl::Kernel> kernels;
+        ::std::vector< ::cl::Kernel > kernels;
         for (unsigned int i = 0; i < kts->numKernels() ; i++)
         {
             ::std::string name = kts->name(i);
@@ -539,7 +549,7 @@ namespace bolt {
                 std::cerr << hr << std::endl;
             }
         }
-            
+
         return kernels;
     }
 
@@ -567,7 +577,7 @@ namespace bolt {
         ::cl::Program program;
 
         // map does not yet contain desired program
-        if( iter == programMap.end( ) ) 
+        if( iter == programMap.end( ) )
         {
             program = ::bolt::cl::compileProgram(context, device, options, source, &l_err);
             V_OPENCL( l_err, "bolt::cl::compileProgram() failed" );
@@ -598,7 +608,7 @@ namespace bolt {
         if (err != NULL) *err = l_err;
         try
         {
-            std::vector<::cl::Device> devices;
+            std::vector< ::cl::Device > devices;
             devices.push_back(device);
             l_err = program.build(devices, options.c_str());
             V_OPENCL( l_err, "Program::build() failed" );
@@ -632,7 +642,7 @@ namespace bolt {
         // externed in bolt.h
         boost::mutex programMapMutex;
         ProgramMap programMap;
-        
+
 
     }; //namespace bolt::cl
 }; // namespace bolt

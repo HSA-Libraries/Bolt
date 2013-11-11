@@ -15,8 +15,7 @@
 
 ***************************************************************************/                                                                                     
 
-#include "stdafx.h"
-
+#include <bolt/unicode.h>
 #include <bolt/cl/scan.h>
 
 #include <vector>

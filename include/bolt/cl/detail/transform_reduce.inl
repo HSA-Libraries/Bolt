@@ -19,14 +19,14 @@
 #define BOLT_CL_TRANSFORM_REDUCE_INL
 #pragma once
 
-#define WAVEFRONT_SIZE 64
+#define WAVEFRONT_SIZE 256
 
 #include <string>
 #include <iostream>
 #include <numeric>
 
 #include "bolt/cl/bolt.h"
-
+#include "bolt/cl/functional.h"
 #ifdef ENABLE_TBB
 //TBB Includes
 #include "bolt/btbb/transform_reduce.h"
@@ -36,31 +36,6 @@
 
 namespace bolt {
 namespace cl {
-
-    // The following two functions are visible in .h file
-    // Wrapper that user passes a control class
-    template<typename InputIterator, typename UnaryFunction, typename T, typename BinaryFunction>
-    T transform_reduce( control& ctl, InputIterator first, InputIterator last,
-        UnaryFunction transform_op,
-        T init,  BinaryFunction reduce_op, const std::string& user_code )
-    {
-
-        return detail::transform_reduce_detect_random_access( ctl, first, last,transform_op,init,reduce_op,user_code,
-
-            std::iterator_traits< InputIterator >::iterator_category( ) );
-    };
-
-    // Wrapper that generates default control class
-    template<typename InputIterator, typename UnaryFunction, typename T, typename BinaryFunction>
-    T transform_reduce(InputIterator first, InputIterator last,
-        UnaryFunction transform_op,
-        T init,  BinaryFunction reduce_op, const std::string& user_code )
-    {
-
-        return detail::transform_reduce_detect_random_access( control::getDefault(), first, last, transform_op, init,
-                                 reduce_op, user_code, std::iterator_traits< InputIterator >::iterator_category( ) );
-
-    };
 
 
 namespace  detail {
@@ -76,13 +51,13 @@ namespace  detail {
             addKernelName("transform_reduceTemplate");
         }
 
-        const ::std::string operator() ( const ::std::vector<::std::string>& typeNames ) const
+        const ::std::string operator() ( const ::std::vector< ::std::string>& typeNames ) const
         {
 
             const std::string templateSpecializationString =
                 "// Host generates this instantiation string with user-specified value type and functor\n"
                 "template __attribute__((mangled_name("+name(0)+"Instantiated)))\n"
-                "__attribute__((reqd_work_group_size(64,1,1)))\n"
+                "__attribute__((reqd_work_group_size(256,1,1)))\n"
                 "kernel void "+name(0)+"(\n"
                 "global " + typeNames[tr_iType] + "* input_ptr,\n"
                 + typeNames[tr_iIterType] + " iIter,\n"
@@ -97,137 +72,6 @@ namespace  detail {
         }
     };
 
-
-
-        //  The following two functions disallow non-random access functions
-        // Wrapper that uses default control class, iterator interface
-        template<typename InputIterator, typename UnaryFunction, typename T, typename BinaryFunction>
-        T transform_reduce_detect_random_access( control &ctl, const InputIterator& first, const InputIterator& last,
-            const UnaryFunction& transform_op,
-            const T& init, const BinaryFunction& reduce_op, const std::string& user_code, std::input_iterator_tag )
-        {
-
-            //  TODO:  It should be possible to support non-random_access_iterator_tag iterators,if we copied the data
-            //  to a temporary buffer.  Should we?
-            static_assert( false, "Bolt only supports random access iterator types" );
-        };
-
-        // Wrapper that uses default control class, iterator interface
-        template<typename InputIterator, typename UnaryFunction, typename T, typename BinaryFunction>
-        T transform_reduce_detect_random_access( control& ctl, const InputIterator& first, const InputIterator& last,
-            const UnaryFunction& transform_op,
-            const T& init,const BinaryFunction& reduce_op,const std::string& user_code,std::random_access_iterator_tag)
-        {
-            return transform_reduce_pick_iterator( ctl, first, last, transform_op, init, reduce_op, user_code,
-                std::iterator_traits< InputIterator >::iterator_category( ) );
-        };
-
-        // This template is called by the non-detail versions of transform_reduce,
-        // it already assumes random access iterators
-        // This is called strictly for any non-device_vector iterator
-        template<typename InputIterator, typename UnaryFunction, typename oType, typename BinaryFunction>
-        oType transform_reduce_pick_iterator(
-            control &c,
-            const InputIterator& first,
-            const InputIterator& last,
-            const UnaryFunction& transform_op,
-            const oType& init,
-            const BinaryFunction& reduce_op,
-            const std::string& user_code,
-            std::random_access_iterator_tag )
-        {
-            typedef std::iterator_traits<InputIterator>::value_type iType;
-            size_t szElements = (last - first);
-            if (szElements == 0)
-                    return init;
-
-
-            bolt::cl::control::e_RunMode runMode = c.getForceRunMode();  // could be dynamic choice some day.
-
-            if(runMode == bolt::cl::control::Automatic)
-            {
-                runMode = c.getDefaultPathToRun();
-            }
-            if (runMode == bolt::cl::control::SerialCpu)
-            {
-                //Create a temporary array to store the transform result;
-                std::vector<oType> output(szElements);
-
-                std::transform(first, last, output.begin(),transform_op);
-                return std::accumulate(output.begin(), output.end(), init, reduce_op);
-
-            } else if (runMode == bolt::cl::control::MultiCoreCpu) {
-
-#ifdef ENABLE_TBB
-
-					return bolt::btbb::transform_reduce(first,last,transform_op,init,reduce_op);
-#else
-                    //std::cout << "The MultiCoreCpu version of this function is not enabled." << std ::endl;
-        throw std::exception("The MultiCoreCpu version of transform_reduce function is not enabled to be built!\n");
-					return init;
-#endif
-            } else {
-
-                // Map the input iterator to a device_vector
-                device_vector< iType > dvInput( first, last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, c );
-
-                return  transform_reduce_enqueue( c, dvInput.begin( ), dvInput.end( ), transform_op, init, reduce_op
-                                                                                                      , user_code );
-            }
-        };
-
-        // This template is called by the non-detail versions of transform_reduce, it already assumes random
-        // access iterators
-        // This is called strictly for iterators that are derived from device_vector< T >::iterator
-        template<typename DVInputIterator, typename UnaryFunction, typename oType, typename BinaryFunction>
-        oType transform_reduce_pick_iterator(
-            control &c,
-            const DVInputIterator& first,
-            const DVInputIterator& last,
-            const UnaryFunction& transform_op,
-            const oType& init,
-            const BinaryFunction& reduce_op,
-            const std::string& user_code,
-            bolt::cl::device_vector_tag )
-        {
-            typedef std::iterator_traits<DVInputIterator>::value_type iType;
-            size_t szElements = static_cast<size_t>(std::distance(first, last) );
-            if (szElements == 0)
-                    return init;
-
-            bolt::cl::control::e_RunMode runMode = c.getForceRunMode();  // could be dynamic choice some day.
-            if(runMode == bolt::cl::control::Automatic)
-            {
-                runMode = c.getDefaultPathToRun();
-            }
-            if (runMode == bolt::cl::control::SerialCpu)
-            {
-                bolt::cl::device_vector< iType >::pointer firstPtr = first.getContainer( ).data( );
-                std::vector< oType > result ( last.m_Index - first.m_Index );
-
-                std::transform( &firstPtr[ first.m_Index ], &firstPtr[ last.m_Index ], result.begin(), transform_op );
-            
-                return std::accumulate(  result.begin(), result.end(), init, reduce_op );
-
-            }
-            else if (runMode == bolt::cl::control::MultiCoreCpu)
-            {
-#ifdef ENABLE_TBB
-                bolt::cl::device_vector< iType >::pointer firstPtr = first.getContainer( ).data( );
-
-				return  bolt::btbb::transform_reduce(  &firstPtr[ first.m_Index ], &firstPtr[ last.m_Index ],
-				                                       transform_op,init,reduce_op);
-#else
-
-                throw std::exception( "The MultiCoreCpu version of transform_reduce function is not enabled to be built! \n");
-				return init;
-
-#endif
-            }
-
-            return  transform_reduce_enqueue( c, first, last, transform_op, init, reduce_op, user_code );
-        };
-
         template<typename DVInputIterator, typename UnaryFunction, typename oType, typename BinaryFunction>
         oType transform_reduce_enqueue(
             control& ctl,
@@ -240,7 +84,7 @@ namespace  detail {
         {
             unsigned debugMode = 0; //FIXME, use control
 
-            typedef std::iterator_traits< DVInputIterator  >::value_type iType;
+            typedef typename std::iterator_traits< DVInputIterator  >::value_type iType;
 
             /**********************************************************************************
              * Type Names - used in KernelTemplateSpecializer
@@ -270,7 +114,7 @@ namespace  detail {
             // FIXME, read from device attributes.
 
             int computeUnits     = ctl.getDevice().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();// round up if we don't know.
-            int wgPerComputeUnit =  ctl.getWGPerComputeUnit();
+            int wgPerComputeUnit =  64;//ctl.getWGPerComputeUnit();
 
             int numWG = computeUnits * wgPerComputeUnit;
 
@@ -325,9 +169,10 @@ namespace  detail {
                 numWG = requiredWorkGroups;
             /**********************/
 
+            typename  DVInputIterator::Payload first_payload = first.gpuPayload( ) ;
 
             V_OPENCL( kernels[0].setArg( 0, first.getContainer().getBuffer() ), "Error setting kernel argument" );
-            V_OPENCL( kernels[0].setArg( 1, first.gpuPayloadSize( ), &first.gpuPayload( ) ),
+            V_OPENCL( kernels[0].setArg( 1, first.gpuPayloadSize( ),&first_payload),
                                                             "Error setting kernel argument" );
 
             V_OPENCL( kernels[0].setArg( 2, szElements), "Error setting kernel argument" );
@@ -376,7 +221,200 @@ namespace  detail {
             return acc;
         };
 
+
+
+        // This template is called by the non-detail versions of transform_reduce,
+        // it already assumes random access iterators
+        // This is called strictly for any non-device_vector iterator
+        template<typename InputIterator, typename UnaryFunction, typename oType, typename BinaryFunction>
+        oType transform_reduce_pick_iterator(
+            control &c,
+            const InputIterator& first,
+            const InputIterator& last,
+            const UnaryFunction& transform_op,
+            const oType& init,
+            const BinaryFunction& reduce_op,
+            const std::string& user_code,
+            std::random_access_iterator_tag )
+        {
+            typedef typename std::iterator_traits<InputIterator>::value_type iType;
+            size_t szElements = (last - first);
+            if (szElements == 0)
+                    return init;
+
+
+            bolt::cl::control::e_RunMode runMode = c.getForceRunMode();  // could be dynamic choice some day.
+
+            if(runMode == bolt::cl::control::Automatic)
+            {
+                runMode = c.getDefaultPathToRun();
+            }
+			#if defined(BOLT_DEBUG_LOG)
+            BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+            #endif
+            if (runMode == bolt::cl::control::SerialCpu)
+            {
+			    #if defined(BOLT_DEBUG_LOG)
+                dblog->CodePathTaken(BOLTLOG::BOLT_TRANSFORMREDUCE,BOLTLOG::BOLT_SERIAL_CPU,"::Transform_Reduce::SERIAL_CPU");
+                #endif
+						
+                //Create a temporary array to store the transform result;
+                std::vector<oType> output(szElements);
+
+                std::transform(first, last, output.begin(),transform_op);
+                return std::accumulate(output.begin(), output.end(), init, reduce_op);
+
+            } else if (runMode == bolt::cl::control::MultiCoreCpu) {
+
+#ifdef ENABLE_TBB
+                    #if defined(BOLT_DEBUG_LOG)
+                    dblog->CodePathTaken(BOLTLOG::BOLT_TRANSFORMREDUCE,BOLTLOG::BOLT_MULTICORE_CPU,"::Transform_Reduce::MULTICORE_CPU");
+                    #endif
+					return bolt::btbb::transform_reduce(first,last,transform_op,init,reduce_op);
+#else
+                    //std::cout << "The MultiCoreCpu version of this function is not enabled." << std ::endl;
+        throw std::runtime_error("The MultiCoreCpu version of transform_reduce function is not enabled to be built!\n");
+					return init;
+#endif
+            } else {
+                #if defined(BOLT_DEBUG_LOG)
+                dblog->CodePathTaken(BOLTLOG::BOLT_TRANSFORMREDUCE,BOLTLOG::BOLT_OPENCL_GPU,"::Transform_Reduce::OPENCL_GPU");
+                #endif
+                // Map the input iterator to a device_vector
+                device_vector< iType > dvInput( first, last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, c );
+
+                return  transform_reduce_enqueue( c, dvInput.begin( ), dvInput.end( ), transform_op, init, reduce_op
+                                                                                                      , user_code );
+            }
+        };
+
+        // This template is called by the non-detail versions of transform_reduce, it already assumes random
+        // access iterators
+        // This is called strictly for iterators that are derived from device_vector< T >::iterator
+        template<typename DVInputIterator, typename UnaryFunction, typename oType, typename BinaryFunction>
+        oType transform_reduce_pick_iterator(
+            control &c,
+            const DVInputIterator& first,
+            const DVInputIterator& last,
+            const UnaryFunction& transform_op,
+            const oType& init,
+            const BinaryFunction& reduce_op,
+            const std::string& user_code,
+            bolt::cl::device_vector_tag )
+        {
+            typedef typename std::iterator_traits<DVInputIterator>::value_type iType;
+            size_t szElements = static_cast<size_t>(std::distance(first, last) );
+            if (szElements == 0)
+                    return init;
+
+            bolt::cl::control::e_RunMode runMode = c.getForceRunMode();  // could be dynamic choice some day.
+            if(runMode == bolt::cl::control::Automatic)
+            {
+                runMode = c.getDefaultPathToRun();
+            }
+			#if defined(BOLT_DEBUG_LOG)
+            BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+            #endif
+            if (runMode == bolt::cl::control::SerialCpu)
+            {
+			    #if defined(BOLT_DEBUG_LOG)
+                dblog->CodePathTaken(BOLTLOG::BOLT_TRANSFORMREDUCE,BOLTLOG::BOLT_SERIAL_CPU,"::Transform_Reduce::SERIAL_CPU");
+                #endif
+				
+                typename bolt::cl::device_vector< iType >::pointer firstPtr = first.getContainer( ).data( );
+                std::vector< oType > result ( last.m_Index - first.m_Index );
+
+                std::transform( &firstPtr[ first.m_Index ], &firstPtr[ last.m_Index ], result.begin(), transform_op );
+
+                return std::accumulate(  result.begin(), result.end(), init, reduce_op );
+
+            }
+            else if (runMode == bolt::cl::control::MultiCoreCpu)
+            {
+#ifdef ENABLE_TBB
+                #if defined(BOLT_DEBUG_LOG)
+                dblog->CodePathTaken(BOLTLOG::BOLT_TRANSFORMREDUCE,BOLTLOG::BOLT_MULTICORE_CPU,"::Transform_Reduce::MULTICORE_CPU");
+                #endif
+                typename  bolt::cl::device_vector< iType >::pointer firstPtr = first.getContainer( ).data( );
+
+				return  bolt::btbb::transform_reduce(  &firstPtr[ first.m_Index ], &firstPtr[ last.m_Index ],
+				                                       transform_op,init,reduce_op);
+#else
+
+                throw std::runtime_error( "The MultiCoreCpu version of transform_reduce function is not enabled to be built! \n");
+				return init;
+
+#endif
+            }
+            #if defined(BOLT_DEBUG_LOG)
+            dblog->CodePathTaken(BOLTLOG::BOLT_TRANSFORMREDUCE,BOLTLOG::BOLT_OPENCL_GPU,"::Transform_Reduce::OPENCL_GPU");
+            #endif
+            return  transform_reduce_enqueue( c, first, last, transform_op, init, reduce_op, user_code );
+        };
+
+
+
+
+        // Wrapper that uses default control class, iterator interface
+        template<typename InputIterator, typename UnaryFunction, typename T, typename BinaryFunction>
+        T transform_reduce_detect_random_access( control& ctl, const InputIterator& first, const InputIterator& last,
+            const UnaryFunction& transform_op,
+            const T& init,const BinaryFunction& reduce_op,const std::string& user_code,std::random_access_iterator_tag)
+        {
+            return transform_reduce_pick_iterator( ctl, first, last, transform_op, init, reduce_op, user_code,
+                typename std::iterator_traits< InputIterator >::iterator_category( ) );
+        };
+
+
+        //  The following two functions disallow non-random access functions
+        // Wrapper that uses default control class, iterator interface
+        template<typename InputIterator, typename UnaryFunction, typename T, typename BinaryFunction>
+        T transform_reduce_detect_random_access( control &ctl, const InputIterator& first, const InputIterator& last,
+            const UnaryFunction& transform_op,
+            const T& init, const BinaryFunction& reduce_op, const std::string& user_code, std::input_iterator_tag )
+        {
+
+            //  TODO:  It should be possible to support non-random_access_iterator_tag iterators,if we copied the data
+            //  to a temporary buffer.  Should we?
+            static_assert(std::is_same< InputIterator, std::input_iterator_tag >::value  , "Bolt only supports random access iterator types" );
+        };
+
+
+
+
 }// end of namespace detail
+
+
+
+
+
+
+    // The following two functions are visible in .h file
+    // Wrapper that user passes a control class
+    template<typename InputIterator, typename UnaryFunction, typename T, typename BinaryFunction>
+    T transform_reduce( control& ctl, InputIterator first, InputIterator last,
+        UnaryFunction transform_op,
+        T init,  BinaryFunction reduce_op, const std::string& user_code )
+    {
+
+        return detail::transform_reduce_detect_random_access( ctl, first, last,transform_op,init,reduce_op,user_code,
+
+            typename std::iterator_traits< InputIterator >::iterator_category( ) );
+    };
+
+    // Wrapper that generates default control class
+    template<typename InputIterator, typename UnaryFunction, typename T, typename BinaryFunction>
+    T transform_reduce(InputIterator first, InputIterator last,
+        UnaryFunction transform_op,
+        T init,  BinaryFunction reduce_op, const std::string& user_code )
+    {
+
+        return detail::transform_reduce_detect_random_access( control::getDefault(), first, last, transform_op, init,
+                                 reduce_op, user_code, typename std::iterator_traits< InputIterator >::iterator_category( ) );
+
+    };
+
+
 }// end of namespace cl
 }// end of namespace bolt
 

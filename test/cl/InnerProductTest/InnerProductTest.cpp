@@ -18,7 +18,7 @@
 // InnerProductTest.cpp : Defines the entry point for the console application.
 //
 #define OCL_CONTEXT_BUG_WORKAROUND 1
-#define TEST_DOUBLE 0
+#define TEST_DOUBLE 1
 
 #include <iostream>
 #include <algorithm>  // for testing against STL functions.
@@ -38,26 +38,43 @@
 #include "common/test_common.h"
 
 
+void testDeviceVector()
+{
+    const int aSize = 64;
+    std::vector<int> hA(aSize), hB(aSize);
 
-extern void testDeviceVector();
-extern void testTBB();
+    for(int i=0; i<aSize; i++) {
+        hA[i] = i;
+         hB[i] = i;
+    };
+
+    bolt::cl::device_vector<int> dA(hA.begin(),hA.end()); 
+    bolt::cl::device_vector<int> dB(hB.begin(),hB.end()); 
+    
+    int hSum = std::inner_product(hA.begin(), hA.end(), hB.begin(), 1);
+
+    int sum = bolt::cl::inner_product(  dA.begin(), dA.end(),
+                                        dB.begin(), 1, bolt::cl::plus<int>(), bolt::cl::multiplies<int>()  );
+};
+
+#if defined(_WIN32)
 // Super-easy windows profiling interface.
 // Move to timing infrastructure when that becomes available.
-__int64 StartProfile() {
-    __int64 begin;
+long long  StartProfile() {
+    long long begin;
     QueryPerformanceCounter((LARGE_INTEGER*)(&begin));
     return begin;
 };
 
-void EndProfile(__int64 start, int numTests, std::string msg) {
-    __int64 end, freq;
+void EndProfile(long long  start, int numTests, std::string msg) {
+    long long  end, freq;
     QueryPerformanceCounter((LARGE_INTEGER*)(&end));
     QueryPerformanceFrequency((LARGE_INTEGER*)(&freq));
     double duration = (end - start)/(double)(freq);
     printf("%s %6.2fs, numTests=%d %6.2fms/test\n", msg.c_str(), duration, numTests, duration*1000.0/numTests);
 };
 
-
+#endif
 /////////////////////////////////////////////////////////////////////////////////////////////
 //  GTEST CASES
 /////////////////////////////////////////////////////////////////////////////////////////////
@@ -86,6 +103,8 @@ T generateRandom()
         return (T)fmod(value, 10.0);
     }
 }
+
+
 //  Test fixture class, used for the Type-parameterized tests
 //  Namely, the tests that use std::array and TYPED_TEST_P macros
 template< typename ArrayTuple >
@@ -111,7 +130,7 @@ public:
 
 protected:
     typedef typename std::tuple_element< 0, ArrayTuple >::type ArrayType;
-    static const size_t ArraySize = typename std::tuple_element< 1, ArrayTuple >::type::value;
+    static const size_t ArraySize =  std::tuple_element< 1, ArrayTuple >::type::value;
     typename std::array< ArrayType, ArraySize > stdInput, boltInput, stdInput2, boltInput2;
     int m_Errors;
 };
@@ -120,74 +139,79 @@ TYPED_TEST_CASE_P( InnerProductArrayTest );
 
 TYPED_TEST_P( InnerProductArrayTest, Normal )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+    typedef typename InnerProductArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, InnerProductArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont;  
+    
     ArrayType init(0);
     //  Calling the actual functions under test
-    ArrayType stlInnerProduct = std::inner_product(stdInput.begin(), stdInput.end(), stdInput2.begin(), init,
+    ArrayType stlInnerProduct = std::inner_product( InnerProductArrayTest< gtest_TypeParam_ >::stdInput.begin(),  InnerProductArrayTest< gtest_TypeParam_ >::stdInput.end(),  InnerProductArrayTest< gtest_TypeParam_ >::stdInput2.begin(), init,
                                                    std::plus<ArrayType>(), std::multiplies<ArrayType>());
 
-    ArrayType boltInnerProduct = bolt::cl::inner_product( boltInput.begin( ),boltInput.end( ),boltInput2.begin( ),init,
+    ArrayType boltInnerProduct = bolt::cl::inner_product(  InnerProductArrayTest< gtest_TypeParam_ >::boltInput.begin( ), InnerProductArrayTest< gtest_TypeParam_ >::boltInput.end( ), InnerProductArrayTest< gtest_TypeParam_ >::boltInput2.begin( ),init,
                                                         bolt::cl::plus<ArrayType>(),bolt::cl::multiplies<ArrayType>());
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+    typename ArrayCont::difference_type stdNumElements = std::distance(  InnerProductArrayTest< gtest_TypeParam_ >::stdInput.begin( ),  InnerProductArrayTest< gtest_TypeParam_ >::stdInput.end() );
+    typename ArrayCont::difference_type boltNumElements = std::distance(  InnerProductArrayTest< gtest_TypeParam_ >::boltInput.begin( ),  InnerProductArrayTest< gtest_TypeParam_ >::boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
     EXPECT_EQ( stlInnerProduct, boltInnerProduct );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput2, boltInput2 );
+    cmpStdArray< ArrayType, InnerProductArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays(  InnerProductArrayTest< gtest_TypeParam_ >::stdInput,  InnerProductArrayTest< gtest_TypeParam_ >::boltInput );
+    cmpStdArray< ArrayType, InnerProductArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays(  InnerProductArrayTest< gtest_TypeParam_ >::stdInput2,  InnerProductArrayTest< gtest_TypeParam_ >::boltInput2 );
 }
 
 TYPED_TEST_P( InnerProductArrayTest, GPU_DeviceNormal )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+        typedef typename InnerProductArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, InnerProductArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont;  
     ArrayType init(0);
     //  Calling the actual functions under test
-    ArrayType stlInnerProduct = std::inner_product(stdInput.begin(), stdInput.end(), stdInput2.begin(), init);
-    ArrayType boltInnerProduct = bolt::cl::inner_product(boltInput.begin( ),boltInput.end( ),boltInput2.begin( ),init);
+    ArrayType stlInnerProduct = std::inner_product( InnerProductArrayTest< gtest_TypeParam_ >::stdInput.begin(),  InnerProductArrayTest< gtest_TypeParam_ >::stdInput.end(),  InnerProductArrayTest< gtest_TypeParam_ >::stdInput2.begin(), init);
+    ArrayType boltInnerProduct = bolt::cl::inner_product( InnerProductArrayTest< gtest_TypeParam_ >::boltInput.begin( ), InnerProductArrayTest< gtest_TypeParam_ >::boltInput.end( ), InnerProductArrayTest< gtest_TypeParam_ >::boltInput2.begin( ),init);
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+    typename ArrayCont::difference_type stdNumElements = std::distance(  InnerProductArrayTest< gtest_TypeParam_ >::stdInput.begin( ),  InnerProductArrayTest< gtest_TypeParam_ >::stdInput.end() );
+    typename ArrayCont::difference_type boltNumElements = std::distance(  InnerProductArrayTest< gtest_TypeParam_ >::boltInput.begin( ),  InnerProductArrayTest< gtest_TypeParam_ >::boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
     EXPECT_EQ( stlInnerProduct, boltInnerProduct );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput2, boltInput2 );
+    cmpStdArray< ArrayType, InnerProductArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays(  InnerProductArrayTest< gtest_TypeParam_ >::stdInput,  InnerProductArrayTest< gtest_TypeParam_ >::boltInput );
+    cmpStdArray< ArrayType, InnerProductArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays(  InnerProductArrayTest< gtest_TypeParam_ >::stdInput2,  InnerProductArrayTest< gtest_TypeParam_ >::boltInput2 );
 
 }
 
 TYPED_TEST_P( InnerProductArrayTest, MultipliesFunction )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+        typedef typename InnerProductArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, InnerProductArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont;  
 
     ArrayType init(0);
     //  Calling the actual functions under test
-    ArrayType stlInnerProduct = std::inner_product( stdInput.begin(), stdInput.end(), stdInput2.begin(), init);
+    ArrayType stlInnerProduct = std::inner_product(  InnerProductArrayTest< gtest_TypeParam_ >::stdInput.begin(),  InnerProductArrayTest< gtest_TypeParam_ >::stdInput.end(),  InnerProductArrayTest< gtest_TypeParam_ >::stdInput2.begin(), init);
 
-    ArrayType boltInnerProduct =bolt::cl::inner_product( boltInput.begin( ),boltInput.end( ),boltInput2.begin( ),init);
+    ArrayType boltInnerProduct =bolt::cl::inner_product(  InnerProductArrayTest< gtest_TypeParam_ >::boltInput.begin( ), InnerProductArrayTest< gtest_TypeParam_ >::boltInput.end( ), InnerProductArrayTest< gtest_TypeParam_ >::boltInput2.begin( ),init);
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+    typename ArrayCont::difference_type stdNumElements = std::distance(  InnerProductArrayTest< gtest_TypeParam_ >::stdInput.begin( ),  InnerProductArrayTest< gtest_TypeParam_ >::stdInput.end() );
+    typename ArrayCont::difference_type boltNumElements = std::distance(  InnerProductArrayTest< gtest_TypeParam_ >::boltInput.begin( ),  InnerProductArrayTest< gtest_TypeParam_ >::boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
     EXPECT_EQ( stlInnerProduct, boltInnerProduct );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput2, boltInput2 );
+    cmpStdArray< ArrayType, InnerProductArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays(  InnerProductArrayTest< gtest_TypeParam_ >::stdInput,  InnerProductArrayTest< gtest_TypeParam_ >::boltInput );
+    cmpStdArray< ArrayType, InnerProductArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays(  InnerProductArrayTest< gtest_TypeParam_ >::stdInput2,  InnerProductArrayTest< gtest_TypeParam_ >::boltInput2 );
     // FIXME - releaseOcl(ocl);
 }
 
 TYPED_TEST_P( InnerProductArrayTest, GPU_DeviceMultipliesFunction )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+        typedef typename InnerProductArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, InnerProductArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont;  
 #if OCL_CONTEXT_BUG_WORKAROUND
     ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control c_gpu( getQueueFromContext(myContext, CL_DEVICE_TYPE_GPU, 0 ));  
@@ -197,26 +221,27 @@ TYPED_TEST_P( InnerProductArrayTest, GPU_DeviceMultipliesFunction )
 #endif
     ArrayType init(0);
     //  Calling the actual functions under test
-    ArrayType stlInnerProduct = std::inner_product(stdInput.begin(), stdInput.end(), stdInput2.begin(), init,
+    ArrayType stlInnerProduct = std::inner_product( InnerProductArrayTest< gtest_TypeParam_ >::stdInput.begin(),  InnerProductArrayTest< gtest_TypeParam_ >::stdInput.end(),  InnerProductArrayTest< gtest_TypeParam_ >::stdInput2.begin(), init,
                                                     std::plus< ArrayType >(), std::multiplies< ArrayType >());
 
-    ArrayType boltInnerProduct = bolt::cl::inner_product( c_gpu,boltInput.begin( ),boltInput.end( ),boltInput2.begin(), 
+    ArrayType boltInnerProduct = bolt::cl::inner_product( c_gpu, InnerProductArrayTest< gtest_TypeParam_ >::boltInput.begin( ), InnerProductArrayTest< gtest_TypeParam_ >::boltInput.end( ), InnerProductArrayTest< gtest_TypeParam_ >::boltInput2.begin(), 
                                                 init, bolt::cl::plus<ArrayType>(), bolt::cl::multiplies<ArrayType>());
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+    typename ArrayCont::difference_type stdNumElements = std::distance(  InnerProductArrayTest< gtest_TypeParam_ >::stdInput.begin( ),  InnerProductArrayTest< gtest_TypeParam_ >::stdInput.end() );
+    typename ArrayCont::difference_type boltNumElements = std::distance(  InnerProductArrayTest< gtest_TypeParam_ >::boltInput.begin( ),  InnerProductArrayTest< gtest_TypeParam_ >::boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
     EXPECT_EQ( stlInnerProduct, boltInnerProduct );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput2, boltInput2 );
+    cmpStdArray< ArrayType, InnerProductArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays(  InnerProductArrayTest< gtest_TypeParam_ >::stdInput,  InnerProductArrayTest< gtest_TypeParam_ >::boltInput );
+    cmpStdArray< ArrayType, InnerProductArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays(  InnerProductArrayTest< gtest_TypeParam_ >::stdInput2,  InnerProductArrayTest< gtest_TypeParam_ >::boltInput2 );
     // FIXME - releaseOcl(ocl);
 }
 REGISTER_TYPED_TEST_CASE_P( InnerProductArrayTest, Normal, GPU_DeviceNormal, 
                                            MultipliesFunction, GPU_DeviceMultipliesFunction );
+
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
 //  Fixture classes are now defined to enable googletest to process value parameterized tests
 //  ::testing::TestWithParam< int > means that GetParam( ) returns int values, which i use for array size
@@ -260,23 +285,23 @@ class InnerProductIntegerDeviceVector: public ::testing::TestWithParam< int >
 {
 public:
     // Create an std and a bolt vector of requested size, and initialize all the elements to 1
-    InnerProductIntegerDeviceVector( ): stdInput( GetParam( ) ), boltInput( static_cast<size_t>( GetParam( ) ) ),
-                                        stdInput2( GetParam( ) ), boltInput2( static_cast<size_t>( GetParam( ) ) )
+    InnerProductIntegerDeviceVector( ): stdInput( GetParam( ) ),
+                                        stdInput2( GetParam( ) )
     {
         std::generate(stdInput.begin(), stdInput.end(), generateRandom<int>);
         std::generate(stdInput2.begin(), stdInput2.end(), generateRandom<int>);
         //boltInput = stdInput;      
         //FIXME - The above should work but the below loop is used. 
-        for (int i=0; i< GetParam( ); i++)
+        /*for (int i=0; i< GetParam( ); i++)
         {
             boltInput[i] = stdInput[i];
             boltInput2[i] = stdInput2[i];
-        }
+        }*/
     }
 
 protected:
     std::vector< int > stdInput, stdInput2;
-    bolt::cl::device_vector< int > boltInput, boltInput2;
+    //bolt::cl::device_vector< int > boltInput, boltInput2; 
 };
 
 //  ::testing::TestWithParam< int > means that GetParam( ) returns int values, which i use for array size
@@ -284,22 +309,22 @@ class InnerProductFloatDeviceVector: public ::testing::TestWithParam< int >
 {
 public:
     // Create an std and a bolt vector of requested size, and initialize all the elements to 1
-    InnerProductFloatDeviceVector( ): stdInput( GetParam( ) ), boltInput( GetParam( ) ),
-                                      stdInput2( GetParam( ) ),boltInput2( GetParam( ) )
+    InnerProductFloatDeviceVector( ): stdInput( GetParam( ) ), 
+                                      stdInput2( GetParam( ) )
     {
         std::generate(stdInput.begin(), stdInput.end(), generateRandom<float>);
         std::generate(stdInput2.begin(), stdInput2.end(), generateRandom<float>);
         //FIXME - The above should work but the below loop is used. 
-        for (int i=0; i< GetParam( ); i++)
+        /*for (int i=0; i< GetParam( ); i++)
         {
             boltInput[i] = stdInput[i];
             boltInput2[i] = stdInput2[i];
-        }
+        }*/
     }
 
 protected:
     std::vector< float > stdInput, stdInput2;
-    bolt::cl::device_vector< float > boltInput, boltInput2;
+    //bolt::cl::device_vector< float > boltInput, boltInput2;
 };
 
 //  ::testing::TestWithParam< int > means that GetParam( ) returns int values, which i use for array size
@@ -656,7 +681,6 @@ TEST_P (InnerProductTestMultFloat, MultiCoremultiplyWithFloats)
         myBoltArray2[i] = myArray2[i];
     }
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
     
@@ -852,7 +876,6 @@ TEST_P (InnerProductTestMultDouble, MultiCoremultiplyWithDouble)
         myBoltArray2[i] = myArray2[i];
     }
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
     
@@ -1188,7 +1211,6 @@ TEST( InnerProductUDD , MultiCore_UDDPlusOperatorInts )
     UDDmul mulOp;
     UDDplus plusOp;
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
@@ -1315,12 +1337,14 @@ void InProdDV()
 {
     const int aSize = 32;
     std::vector<int> hA(aSize), hB(aSize);
-    bolt::cl::device_vector<int> dA(aSize), dB(aSize);
-
+    
     for(int i=0; i<aSize; i++) {
-        hA[i] = hB[i] = dB[i] = dA[i] = i;
+        hA[i] = i;
+        hB[i] = i;
     };
-
+    bolt::cl::device_vector<int> dA(hA.begin(), hA.end());
+    bolt::cl::device_vector<int> dB(hB.begin(), hB.end());
+    
     int hSum = std::inner_product(hA.begin(), hA.end(), hB.begin(), 1);
 
     int sum = bolt::cl::inner_product(dA.begin(), dA.end(), dB.begin(), 1,bolt::cl::plus<int>(),
@@ -1353,7 +1377,7 @@ int _tmain(int argc, _TCHAR* argv[])
     ::testing::InitGoogleTest( &argc, &argv[ 0 ] );
 
     //  Register our minidump generating logic
-    bolt::miniDumpSingleton::enableMiniDumps( );
+    //bolt::miniDumpSingleton::enableMiniDumps( );
 
     int retVal = RUN_ALL_TESTS( );
 

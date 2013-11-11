@@ -23,8 +23,8 @@ set( clBolt.Test.StableSort.Source
 
 set( clBolt.Test.StableSort.Headers   
         ${BOLT_CL_TEST_DIR}/common/myocl.h
-        ${BOLT_INCLUDE_DIR}/bolt/cl/StableSort.h
-        ${BOLT_INCLUDE_DIR}/bolt/cl/detail/StableSort.inl )
+        ${BOLT_INCLUDE_DIR}/bolt/cl/stablesort.h
+        ${BOLT_INCLUDE_DIR}/bolt/cl/detail/stablesort.inl )
 
 set( clBolt.Test.StableSort.Files 
         ${clBolt.Test.StableSort.Source} 

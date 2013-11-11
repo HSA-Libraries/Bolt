@@ -588,25 +588,20 @@ aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(iType) + 1*sizeScanBuf
 
         wgSize *=2;
         // if exclusive, load gloId=0 w/ identity, and all others shifted-1
-        if (exclusive)
-        {
-           if (gloId > 0 && groId*wgSize+locId-1 < numElements)
-              lds[locId] = input[groId*wgSize+locId-1];
-           else 
-              lds[locId] = init;
-           if(groId*wgSize +locId+ (wgSize/2) -1 < numElements)
-              lds[locId+(wgSize/2)] = input[groId*wgSize +locId+ (wgSize/2) -1];
-     
+		if(groId*wgSize+locId < numElements)
+            lds[locId] = input[groId*wgSize+locId];
+        if(groId*wgSize +locId+ (wgSize/2) < numElements)
+            lds[locId+(wgSize/2)] = input[ groId*wgSize +locId+ (wgSize/2)];
+
+		// Exclusive case
+        if(exclusive && gloId == 0)
+	    {
+	        iType start_val = input[0];
+		    lds[locId] = binary_op(init, start_val);
         }
-        else
-        {
-           if(groId*wgSize+locId < numElements)
-                lds[locId] = input[groId*wgSize+locId];
-           if(groId*wgSize +locId+ (wgSize/2) < numElements)
-              lds[locId+(wgSize/2)] = input[ groId*wgSize +locId+ (wgSize/2)];
-        }
+        unsigned int  offset = 1;
         //  Computes a scan within a workgroup with two data per element
-         unsigned int  offset = 1;
+
          for (unsigned int start = wgSize>>1; start > 0; start >>= 1) 
          {
            t_idx.barrier.wait();
@@ -883,8 +878,34 @@ aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(oType) + 1*sizeScanBuf
            }
         }
   
+		iType scanResult = lds[locId];
+        iType postBlockSum, newResult;
+        // accumulate prefix
+        iType y, y1, sum;
+        if(locId == 0 && gloId < numElements)
+        {
+            if(groId > 0) {
+                if(groId % 2 == 0)
+                   postBlockSum = postSumArray[ groId/2 -1 ];
+                else if(groId == 1)
+                   postBlockSum = preSumArray1[0];
+                else {
+                   y = postSumArray[ groId/2 -1 ];
+                   y1 = preSumArray1[groId/2];
+                   postBlockSum = binary_op(y, y1);
+                }
+			    if (!exclusive)
+                   newResult = binary_op( scanResult, postBlockSum );
+			    else 
+				   newResult =  postBlockSum;
+            }
+            else {
+               newResult = scanResult;
+            }
+		    lds[ locId ] = newResult;
+        } 
         //  Computes a scan within a workgroup
-        iType sum = val;
+        sum = lds[ locId ];
         unsigned int  offset = 1;
         for( unsigned int offset = 1; offset < wgSize; offset *= 2 )
         {
@@ -901,26 +922,7 @@ aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(oType) + 1*sizeScanBuf
     //  Abort threads that are passed the end of the input vector
         if (gloId >= numElements) return; 
 
-        iType scanResult = sum;
-        iType postBlockSum, newResult;
-        // accumulate prefix
-        iType y, y1;
-        if(groId > 0) {
-            if(groId % 2 == 0)
-               postBlockSum = postSumArray[ groId/2 -1 ];
-            else if(groId == 1)
-               postBlockSum = preSumArray1[0];
-            else {
-                y = postSumArray[ groId/2 -1 ];
-                y1 = preSumArray1[groId/2];
-                postBlockSum = binary_op(y, y1);
-             }
-             newResult = binary_op( scanResult, postBlockSum );
-         }
-         else {
-              newResult = scanResult;
-         }
-         output[ gloId ] = newResult;
+        output[ gloId ] = sum;
 
     } );
     //std::cout << "Kernel 2 Done" << std::endl;

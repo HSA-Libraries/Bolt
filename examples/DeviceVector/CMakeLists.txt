@@ -16,10 +16,8 @@
 ############################################################################                                                                                     
 
 # List the names of common files to compile across all platforms
-set( clBolt.Example.Device.Vector.Source stdafx.cpp deviceVector.cpp )
-set( clBolt.Example.Device.Vector.Headers 	stdafx.h 
-								targetver.h 
-								${BOLT_INCLUDE_DIRS}/bolt/cl/device_Vector.h )
+set( clBolt.Example.Device.Vector.Source  deviceVector.cpp )
+set( clBolt.Example.Device.Vector.Headers ${BOLT_INCLUDE_DIRS}/bolt/cl/device_vector.h )
 
 set( clBolt.Example.Device.Vector.Files ${clBolt.Example.Device.Vector.Source} ${clBolt.Example.Device.Vector.Headers} )
 

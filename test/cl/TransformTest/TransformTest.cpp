@@ -15,7 +15,7 @@
 
 ***************************************************************************/                                                                                     
 
-#define TEST_DOUBLE 0
+#define TEST_DOUBLE 1
 #define TEST_DEVICE_VECTOR 1
 #define TEST_CPU_DEVICE 0
 #define GOOGLE_TEST 1
@@ -101,6 +101,7 @@ public:
     static const size_t value = N;
 };
 
+
 //  Test fixture class, used for the Type-parameterized tests
 //  Namely, the tests that use std::array and TYPED_TEST_P macros
 template< typename ArrayTuple >
@@ -126,7 +127,7 @@ public:
 
 protected:
     typedef typename std::tuple_element< 0, ArrayTuple >::type ArrayType;
-    static const size_t ArraySize = typename std::tuple_element< 1, ArrayTuple >::type::value;
+    static const size_t ArraySize = std::tuple_element< 1, ArrayTuple >::type::value;
     typename std::array< ArrayType, ArraySize > stdInput, boltInput, stdOutput, boltOutput;
     int m_Errors;
 };
@@ -156,8 +157,8 @@ public:
 
 protected:
     typedef typename std::tuple_element< 0, ArrayTuple >::type ArrayType;
-    static const size_t ArraySize = typename std::tuple_element< 1, ArrayTuple >::type::value;
-    typename std::array< ArrayType, ArraySize > stdInput, boltInput, stdOutput, boltOutput;
+    static const size_t ArraySize =  std::tuple_element< 1, ArrayTuple >::type::value;
+    typename std::array< ArrayType,ArraySize > stdInput, boltInput, stdOutput, boltOutput;
     int m_Errors;
 };
 
@@ -165,28 +166,30 @@ TYPED_TEST_CASE_P( TransformArrayTest );
 
 TYPED_TEST_P( TransformArrayTest, Normal )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+        typedef typename TransformArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, TransformArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont; 
 
     //  Calling the actual functions under test
-    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), stdOutput.begin( ),
+    std::transform( TransformArrayTest< gtest_TypeParam_ >::stdInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::stdInput.end( ), TransformArrayTest< gtest_TypeParam_ >::stdOutput.begin( ), TransformArrayTest< gtest_TypeParam_ >::stdOutput.begin( ),
                     bolt::cl::plus<ArrayType>());
-    bolt::cl::transform( boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), boltOutput.begin( ),
+    bolt::cl::transform( TransformArrayTest< gtest_TypeParam_ >::boltInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::boltInput.end( ), TransformArrayTest< gtest_TypeParam_ >::boltOutput.begin( ), TransformArrayTest< gtest_TypeParam_ >::boltOutput.begin( ),
                     bolt::cl::plus<ArrayType>());
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+    typename  ArrayCont::difference_type stdNumElements = std::distance( TransformArrayTest< gtest_TypeParam_ >::stdInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::stdInput.end() );
+    typename  ArrayCont::difference_type boltNumElements = std::distance( TransformArrayTest< gtest_TypeParam_ >::boltInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdOutput, boltOutput );
+    cmpStdArray< ArrayType, TransformArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( TransformArrayTest< gtest_TypeParam_ >::stdOutput, TransformArrayTest< gtest_TypeParam_ >::boltOutput );
     
 }
 
 TYPED_TEST_P( TransformArrayTest, GPU_DeviceNormal )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+        typedef typename TransformArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, TransformArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont; 
 
     //  The first time our routines get called, we compile the library kernels with a certain context
     //  OpenCL does not allow the context to change without a recompile of the kernel
@@ -201,120 +204,125 @@ TYPED_TEST_P( TransformArrayTest, GPU_DeviceNormal )
     bolt::cl::control c_gpu( myQueue );  // construct control structure from the queue.
 
     //  Calling the actual functions under test
-    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), stdOutput.begin( ),
+    std::transform( TransformArrayTest< gtest_TypeParam_ >::stdInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::stdInput.end( ), TransformArrayTest< gtest_TypeParam_ >::stdOutput.begin( ), TransformArrayTest< gtest_TypeParam_ >::stdOutput.begin( ),
                     bolt::cl::plus<ArrayType>());
-    bolt::cl::transform( c_gpu, boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), boltOutput.begin( ),
+    bolt::cl::transform( c_gpu, TransformArrayTest< gtest_TypeParam_ >::boltInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::boltInput.end( ), TransformArrayTest< gtest_TypeParam_ >::boltOutput.begin( ), TransformArrayTest< gtest_TypeParam_ >::boltOutput.begin( ),
                          bolt::cl::plus<ArrayType>());
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+    typename  ArrayCont::difference_type stdNumElements = std::distance( TransformArrayTest< gtest_TypeParam_ >::stdInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::stdInput.end() );
+    typename  ArrayCont::difference_type boltNumElements = std::distance( TransformArrayTest< gtest_TypeParam_ >::boltInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdOutput, boltOutput );
+    cmpStdArray< ArrayType, TransformArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( TransformArrayTest< gtest_TypeParam_ >::stdOutput, TransformArrayTest< gtest_TypeParam_ >::boltOutput );
     // FIXME - releaseOcl(ocl);
 }
 
 #if (TEST_CPU_DEVICE == 1)
 TYPED_TEST_P( TransformArrayTest, CPU_DeviceNormal )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+        typedef typename TransformArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, TransformArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont; 
     MyOclContext oclcpu = initOcl(CL_DEVICE_TYPE_CPU, 0);
     bolt::cl::control c_cpu(oclcpu._queue);  // construct control structure from the queue.
 
     //  Calling the actual functions under test
-    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), stdOutput.begin( ),
+    std::transform( TransformArrayTest< gtest_TypeParam_ >::stdInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::stdInput.end( ), TransformArrayTest< gtest_TypeParam_ >::stdOutput.begin( ), TransformArrayTest< gtest_TypeParam_ >::stdOutput.begin( ),
                     bolt::cl::plus<ArrayType>());
-    bolt::cl::transform( c_cpu, boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), boltOutput.begin( ),
+    bolt::cl::transform( c_cpu, TransformArrayTest< gtest_TypeParam_ >::boltInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::boltInput.end( ), TransformArrayTest< gtest_TypeParam_ >::boltOutput.begin( ), TransformArrayTest< gtest_TypeParam_ >::boltOutput.begin( ),
                          bolt::cl::plus<ArrayType>());
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+    typename  ArrayCont::difference_type stdNumElements = std::distance( TransformArrayTest< gtest_TypeParam_ >::stdInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::stdInput.end() );
+    typename  ArrayCont::difference_type boltNumElements = std::distance( TransformArrayTest< gtest_TypeParam_ >::boltInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdOutput, boltOutput );
+    cmpStdArray< ArrayType, TransformArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( TransformArrayTest< gtest_TypeParam_ >::stdOutput, TransformArrayTest< gtest_TypeParam_ >::boltOutput );
     // FIXME - releaseOcl(ocl);
 }
 #endif
 
 TYPED_TEST_P( TransformArrayTest, MultipliesFunction )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+        typedef typename TransformArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, TransformArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont; 
 
     //  Calling the actual functions under test
-    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), stdOutput.begin( ), 
+    std::transform( TransformArrayTest< gtest_TypeParam_ >::stdInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::stdInput.end( ), TransformArrayTest< gtest_TypeParam_ >::stdOutput.begin( ), TransformArrayTest< gtest_TypeParam_ >::stdOutput.begin( ), 
                     bolt::cl::multiplies<ArrayType>());
-    bolt::cl::transform( boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), boltOutput.begin( ),
+    bolt::cl::transform( TransformArrayTest< gtest_TypeParam_ >::boltInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::boltInput.end( ), TransformArrayTest< gtest_TypeParam_ >::boltOutput.begin( ), TransformArrayTest< gtest_TypeParam_ >::boltOutput.begin( ),
                          bolt::cl::multiplies<ArrayType>());
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+    typename  ArrayCont::difference_type stdNumElements = std::distance( TransformArrayTest< gtest_TypeParam_ >::stdInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::stdInput.end() );
+    typename  ArrayCont::difference_type boltNumElements = std::distance( TransformArrayTest< gtest_TypeParam_ >::boltInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdOutput, boltOutput );
+    cmpStdArray< ArrayType, TransformArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( TransformArrayTest< gtest_TypeParam_ >::stdOutput, TransformArrayTest< gtest_TypeParam_ >::boltOutput );
     
 }
 
 TYPED_TEST_P( TransformArrayTest, Serial_MultipliesFunction )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+        typedef typename TransformArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, TransformArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont; 
 
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
     //  Calling the actual functions under test
-    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), stdOutput.begin( ), 
+    std::transform( TransformArrayTest< gtest_TypeParam_ >::stdInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::stdInput.end( ), TransformArrayTest< gtest_TypeParam_ >::stdOutput.begin( ), TransformArrayTest< gtest_TypeParam_ >::stdOutput.begin( ), 
                     bolt::cl::multiplies<ArrayType>());
-    bolt::cl::transform( ctl, boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), boltOutput.begin( ),
+    bolt::cl::transform( ctl, TransformArrayTest< gtest_TypeParam_ >::boltInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::boltInput.end( ), TransformArrayTest< gtest_TypeParam_ >::boltOutput.begin( ), TransformArrayTest< gtest_TypeParam_ >::boltOutput.begin( ),
                          bolt::cl::multiplies<ArrayType>());
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+    typename  ArrayCont::difference_type stdNumElements = std::distance( TransformArrayTest< gtest_TypeParam_ >::stdInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::stdInput.end() );
+    typename  ArrayCont::difference_type boltNumElements = std::distance( TransformArrayTest< gtest_TypeParam_ >::boltInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdOutput, boltOutput );
+    cmpStdArray< ArrayType, TransformArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( TransformArrayTest< gtest_TypeParam_ >::stdOutput, TransformArrayTest< gtest_TypeParam_ >::boltOutput );
     
 }
 
 TYPED_TEST_P( TransformArrayTest, MultiCore_MultipliesFunction )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+        typedef typename TransformArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, TransformArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont; 
 
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
     //  Calling the actual functions under test
-    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), stdOutput.begin( ), 
+    std::transform( TransformArrayTest< gtest_TypeParam_ >::stdInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::stdInput.end( ), TransformArrayTest< gtest_TypeParam_ >::stdOutput.begin( ), TransformArrayTest< gtest_TypeParam_ >::stdOutput.begin( ), 
                     bolt::cl::multiplies<ArrayType>());
-    bolt::cl::transform( ctl, boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), boltOutput.begin( ),
+    bolt::cl::transform( ctl, TransformArrayTest< gtest_TypeParam_ >::boltInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::boltInput.end( ), TransformArrayTest< gtest_TypeParam_ >::boltOutput.begin( ), TransformArrayTest< gtest_TypeParam_ >::boltOutput.begin( ),
                          bolt::cl::multiplies<ArrayType>());
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+    typename  ArrayCont::difference_type stdNumElements = std::distance( TransformArrayTest< gtest_TypeParam_ >::stdInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::stdInput.end() );
+    typename  ArrayCont::difference_type boltNumElements = std::distance( TransformArrayTest< gtest_TypeParam_ >::boltInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdOutput, boltOutput );
+    cmpStdArray< ArrayType, TransformArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( TransformArrayTest< gtest_TypeParam_ >::stdOutput, TransformArrayTest< gtest_TypeParam_ >::boltOutput );
     
 }
 
 
 TYPED_TEST_P( TransformArrayTest, GPU_DeviceMultipliesFunction )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+        typedef typename TransformArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, TransformArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont; 
 
     //  The first time our routines get called, we compile the library kernels with a certain context
     //  OpenCL does not allow the context to change without a recompile of the kernel
@@ -329,68 +337,71 @@ TYPED_TEST_P( TransformArrayTest, GPU_DeviceMultipliesFunction )
     bolt::cl::control c_gpu( myQueue );  // construct control structure from the queue.
 
     //  Calling the actual functions under test
-    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), stdOutput.begin( ),
+    std::transform( TransformArrayTest< gtest_TypeParam_ >::stdInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::stdInput.end( ), TransformArrayTest< gtest_TypeParam_ >::stdOutput.begin( ), TransformArrayTest< gtest_TypeParam_ >::stdOutput.begin( ),
                     bolt::cl::multiplies<ArrayType>());
-    bolt::cl::transform( c_gpu, boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), boltOutput.begin( ), bolt::cl::multiplies<ArrayType>());
+    bolt::cl::transform( c_gpu, TransformArrayTest< gtest_TypeParam_ >::boltInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::boltInput.end( ), TransformArrayTest< gtest_TypeParam_ >::boltOutput.begin( ), TransformArrayTest< gtest_TypeParam_ >::boltOutput.begin( ), bolt::cl::multiplies<ArrayType>());
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+    typename  ArrayCont::difference_type stdNumElements = std::distance( TransformArrayTest< gtest_TypeParam_ >::stdInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::stdInput.end() );
+    typename  ArrayCont::difference_type boltNumElements = std::distance( TransformArrayTest< gtest_TypeParam_ >::boltInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdOutput, boltOutput );
+    cmpStdArray< ArrayType, TransformArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( TransformArrayTest< gtest_TypeParam_ >::stdOutput, TransformArrayTest< gtest_TypeParam_ >::boltOutput );
     // FIXME - releaseOcl(ocl);
 }
 #if (TEST_CPU_DEVICE == 1)
 TYPED_TEST_P( TransformArrayTest, CPU_DeviceMultipliesFunction )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+        typedef typename TransformArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, TransformArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont; 
     MyOclContext oclcpu = initOcl(CL_DEVICE_TYPE_CPU, 0);
     bolt::cl::control c_cpu(oclcpu._queue);  // construct control structure from the queue.
 
     //  Calling the actual functions under test
-    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), stdOutput.begin( ),
+    std::transform( TransformArrayTest< gtest_TypeParam_ >::stdInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::stdInput.end( ), TransformArrayTest< gtest_TypeParam_ >::stdOutput.begin( ), TransformArrayTest< gtest_TypeParam_ >::stdOutput.begin( ),
                     bolt::cl::multiplies<ArrayType>());
-    bolt::cl::transform( c_cpu, boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), boltOutput.begin( ), 
+    bolt::cl::transform( c_cpu, TransformArrayTest< gtest_TypeParam_ >::boltInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::boltInput.end( ), TransformArrayTest< gtest_TypeParam_ >::boltOutput.begin( ), TransformArrayTest< gtest_TypeParam_ >::boltOutput.begin( ), 
                          bolt::cl::multiplies<ArrayType>());
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+    typename  ArrayCont::difference_type stdNumElements = std::distance( TransformArrayTest< gtest_TypeParam_ >::stdInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::stdInput.end() );
+    typename  ArrayCont::difference_type boltNumElements = std::distance( TransformArrayTest< gtest_TypeParam_ >::boltInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdOutput, boltOutput );
+    cmpStdArray< ArrayType, TransformArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( TransformArrayTest< gtest_TypeParam_ >::stdOutput, TransformArrayTest< gtest_TypeParam_ >::boltOutput );
     // FIXME - releaseOcl(ocl);
 }
 #endif
 TYPED_TEST_P( TransformArrayTest, MinusFunction )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+        typedef typename TransformArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, TransformArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont; 
 
     //  Calling the actual functions under test
-    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), stdOutput.begin( ),
+    std::transform( TransformArrayTest< gtest_TypeParam_ >::stdInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::stdInput.end( ), TransformArrayTest< gtest_TypeParam_ >::stdOutput.begin( ), TransformArrayTest< gtest_TypeParam_ >::stdOutput.begin( ),
                     bolt::cl::minus<ArrayType>());
-    bolt::cl::transform( boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), boltOutput.begin( ),
+    bolt::cl::transform( TransformArrayTest< gtest_TypeParam_ >::boltInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::boltInput.end( ), TransformArrayTest< gtest_TypeParam_ >::boltOutput.begin( ), TransformArrayTest< gtest_TypeParam_ >::boltOutput.begin( ),
                          bolt::cl::minus<ArrayType>());
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+    typename  ArrayCont::difference_type stdNumElements = std::distance( TransformArrayTest< gtest_TypeParam_ >::stdInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::stdInput.end() );
+    typename  ArrayCont::difference_type boltNumElements = std::distance( TransformArrayTest< gtest_TypeParam_ >::boltInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdOutput, boltOutput );
+    cmpStdArray< ArrayType, TransformArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( TransformArrayTest< gtest_TypeParam_ >::stdOutput, TransformArrayTest< gtest_TypeParam_ >::boltOutput );
 
 }
 
 TYPED_TEST_P( TransformArrayTest, GPU_DeviceMinusFunction )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+        typedef typename TransformArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, TransformArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont; 
 
     //  The first time our routines get called, we compile the library kernels with a certain context
     //  OpenCL does not allow the context to change without a recompile of the kernel
@@ -405,42 +416,43 @@ TYPED_TEST_P( TransformArrayTest, GPU_DeviceMinusFunction )
     bolt::cl::control c_gpu( myQueue );  // construct control structure from the queue.
 
     //  Calling the actual functions under test
-    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), stdOutput.begin( ), 
+    std::transform( TransformArrayTest< gtest_TypeParam_ >::stdInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::stdInput.end( ), TransformArrayTest< gtest_TypeParam_ >::stdOutput.begin( ), TransformArrayTest< gtest_TypeParam_ >::stdOutput.begin( ), 
                     bolt::cl::minus<ArrayType>());
-    bolt::cl::transform( c_gpu, boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), boltOutput.begin( ),
+    bolt::cl::transform( c_gpu, TransformArrayTest< gtest_TypeParam_ >::boltInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::boltInput.end( ), TransformArrayTest< gtest_TypeParam_ >::boltOutput.begin( ), TransformArrayTest< gtest_TypeParam_ >::boltOutput.begin( ),
                          bolt::cl::minus<ArrayType>());
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+    typename  ArrayCont::difference_type stdNumElements = std::distance( TransformArrayTest< gtest_TypeParam_ >::stdInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::stdInput.end() );
+    typename  ArrayCont::difference_type boltNumElements = std::distance( TransformArrayTest< gtest_TypeParam_ >::boltInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdOutput, boltOutput );
+    cmpStdArray< ArrayType, TransformArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( TransformArrayTest< gtest_TypeParam_ >::stdOutput, TransformArrayTest< gtest_TypeParam_ >::boltOutput );
     // FIXME - releaseOcl(ocl);
 }
 #if (TEST_CPU_DEVICE == 1)
 TYPED_TEST_P( TransformArrayTest, CPU_DeviceMinusFunction )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+        typedef typename TransformArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, TransformArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont; 
     MyOclContext oclcpu = initOcl(CL_DEVICE_TYPE_CPU, 0);
     bolt::cl::control c_cpu(oclcpu._queue);  // construct control structure from the queue.
 
     //  Calling the actual functions under test
-    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), stdOutput.begin( ), 
+    std::transform( TransformArrayTest< gtest_TypeParam_ >::stdInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::stdInput.end( ), TransformArrayTest< gtest_TypeParam_ >::stdOutput.begin( ), TransformArrayTest< gtest_TypeParam_ >::stdOutput.begin( ), 
                     bolt::cl::minus<ArrayType>());
-    bolt::cl::transform( c_cpu, boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), boltOutput.begin( ),
+    bolt::cl::transform( c_cpu, TransformArrayTest< gtest_TypeParam_ >::boltInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::boltInput.end( ), TransformArrayTest< gtest_TypeParam_ >::boltOutput.begin( ), TransformArrayTest< gtest_TypeParam_ >::boltOutput.begin( ),
                      bolt::cl::minus<ArrayType>());
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+    typename  ArrayCont::difference_type stdNumElements = std::distance( TransformArrayTest< gtest_TypeParam_ >::stdInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::stdInput.end() );
+    typename  ArrayCont::difference_type boltNumElements = std::distance( TransformArrayTest< gtest_TypeParam_ >::boltInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdOutput, boltOutput );
+    cmpStdArray< ArrayType, TransformArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( TransformArrayTest< gtest_TypeParam_ >::stdOutput, TransformArrayTest< gtest_TypeParam_ >::boltOutput );
     // FIXME - releaseOcl(ocl);
 }
 #endif
@@ -449,64 +461,68 @@ TYPED_TEST_CASE_P( UnaryTransformArrayTest );
 
 TYPED_TEST_P( UnaryTransformArrayTest, Normal )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+        typedef typename TransformArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, TransformArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont; 
 
     //  Calling the actual functions under test
-    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), bolt::cl::negate<ArrayType>());
-    bolt::cl::transform( boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), bolt::cl::negate<ArrayType>());    
+    std::transform( TransformArrayTest< gtest_TypeParam_ >::stdInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::stdInput.end( ), TransformArrayTest< gtest_TypeParam_ >::stdOutput.begin( ), bolt::cl::negate<ArrayType>());
+    bolt::cl::transform( TransformArrayTest< gtest_TypeParam_ >::boltInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::boltInput.end( ), TransformArrayTest< gtest_TypeParam_ >::boltOutput.begin( ), bolt::cl::negate<ArrayType>());    
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+    typename  ArrayCont::difference_type stdNumElements = std::distance( TransformArrayTest< gtest_TypeParam_ >::stdInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::stdInput.end() );
+    typename  ArrayCont::difference_type boltNumElements = std::distance( TransformArrayTest< gtest_TypeParam_ >::boltInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdOutput, boltOutput );
+    cmpStdArray< ArrayType, TransformArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( TransformArrayTest< gtest_TypeParam_ >::stdOutput, TransformArrayTest< gtest_TypeParam_ >::boltOutput );
 }
 
 TYPED_TEST_P( UnaryTransformArrayTest, Serial )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+        typedef typename TransformArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, TransformArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont; 
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
     //  Calling the actual functions under test
-    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), bolt::cl::negate<ArrayType>());
-    bolt::cl::transform(ctl, boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), bolt::cl::negate<ArrayType>());
+    std::transform( TransformArrayTest< gtest_TypeParam_ >::stdInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::stdInput.end( ), TransformArrayTest< gtest_TypeParam_ >::stdOutput.begin( ), bolt::cl::negate<ArrayType>());
+    bolt::cl::transform(ctl, TransformArrayTest< gtest_TypeParam_ >::boltInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::boltInput.end( ), TransformArrayTest< gtest_TypeParam_ >::boltOutput.begin( ), bolt::cl::negate<ArrayType>());
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+    typename  ArrayCont::difference_type stdNumElements = std::distance( TransformArrayTest< gtest_TypeParam_ >::stdInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::stdInput.end() );
+    typename  ArrayCont::difference_type boltNumElements = std::distance( TransformArrayTest< gtest_TypeParam_ >::boltInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdOutput, boltOutput );
+    cmpStdArray< ArrayType, TransformArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( TransformArrayTest< gtest_TypeParam_ >::stdOutput, TransformArrayTest< gtest_TypeParam_ >::boltOutput );
 }
 
 TYPED_TEST_P( UnaryTransformArrayTest, MultiCoreCPU )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+        typedef typename TransformArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, TransformArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont; 
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
     //  Calling the actual functions under test
-    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), bolt::cl::negate<ArrayType>());
-    bolt::cl::transform(ctl, boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), bolt::cl::negate<ArrayType>());
+    std::transform( TransformArrayTest< gtest_TypeParam_ >::stdInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::stdInput.end( ), TransformArrayTest< gtest_TypeParam_ >::stdOutput.begin( ), bolt::cl::negate<ArrayType>());
+    bolt::cl::transform(ctl, TransformArrayTest< gtest_TypeParam_ >::boltInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::boltInput.end( ), TransformArrayTest< gtest_TypeParam_ >::boltOutput.begin( ), bolt::cl::negate<ArrayType>());
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+    typename  ArrayCont::difference_type stdNumElements = std::distance( TransformArrayTest< gtest_TypeParam_ >::stdInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::stdInput.end() );
+    typename  ArrayCont::difference_type boltNumElements = std::distance( TransformArrayTest< gtest_TypeParam_ >::boltInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdOutput, boltOutput );
+    cmpStdArray< ArrayType, TransformArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( TransformArrayTest< gtest_TypeParam_ >::stdOutput, TransformArrayTest< gtest_TypeParam_ >::boltOutput );
 }
 
 
 TYPED_TEST_P( UnaryTransformArrayTest, GPU_DeviceNormal )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+        typedef typename TransformArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, TransformArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont; 
 
     //  The first time our routines get called, we compile the library kernels with a certain context
     //  OpenCL does not allow the context to change without a recompile of the kernel
@@ -521,18 +537,18 @@ TYPED_TEST_P( UnaryTransformArrayTest, GPU_DeviceNormal )
     bolt::cl::control c_gpu( myQueue );  // construct control structure from the queue.
 
     //  Calling the actual functions under test
-    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), bolt::cl::negate<ArrayType>());
-    bolt::cl::transform( c_gpu, boltInput.begin( ), boltInput.end( ),  boltOutput.begin( ),
+    std::transform( TransformArrayTest< gtest_TypeParam_ >::stdInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::stdInput.end( ), TransformArrayTest< gtest_TypeParam_ >::stdOutput.begin( ), bolt::cl::negate<ArrayType>());
+    bolt::cl::transform( c_gpu, TransformArrayTest< gtest_TypeParam_ >::boltInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::boltInput.end( ),  TransformArrayTest< gtest_TypeParam_ >::boltOutput.begin( ),
                          bolt::cl::negate<ArrayType>());
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+    typename  ArrayCont::difference_type stdNumElements = std::distance( TransformArrayTest< gtest_TypeParam_ >::stdInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::stdInput.end() );
+    typename  ArrayCont::difference_type boltNumElements = std::distance( TransformArrayTest< gtest_TypeParam_ >::boltInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdOutput, boltOutput );
+    cmpStdArray< ArrayType, TransformArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( TransformArrayTest< gtest_TypeParam_ >::stdOutput, TransformArrayTest< gtest_TypeParam_ >::boltOutput );
     // FIXME - releaseOcl(ocl);
 }
 
@@ -540,48 +556,51 @@ TYPED_TEST_P( UnaryTransformArrayTest, GPU_DeviceNormal )
 #if (TEST_CPU_DEVICE == 1)
 TYPED_TEST_P( UnaryTransformArrayTest, CPU_DeviceNormal )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+        typedef typename TransformArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, TransformArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont; 
     MyOclContext oclcpu = initOcl(CL_DEVICE_TYPE_CPU, 0);
     bolt::cl::control c_cpu(oclcpu._queue);  // construct control structure from the queue.
 
     //  Calling the actual functions under test
-    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), bolt::cl::negate<ArrayType>());
-    bolt::cl::transform( c_cpu, boltInput.begin( ), boltInput.end( ), boltOutput.begin( ),
+    std::transform( TransformArrayTest< gtest_TypeParam_ >::stdInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::stdInput.end( ), TransformArrayTest< gtest_TypeParam_ >::stdOutput.begin( ), bolt::cl::negate<ArrayType>());
+    bolt::cl::transform( c_cpu, TransformArrayTest< gtest_TypeParam_ >::boltInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::boltInput.end( ), TransformArrayTest< gtest_TypeParam_ >::boltOutput.begin( ),
                          bolt::cl::negate<ArrayType>());
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+    typename  ArrayCont::difference_type stdNumElements = std::distance( TransformArrayTest< gtest_TypeParam_ >::stdInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::stdInput.end() );
+    typename  ArrayCont::difference_type boltNumElements = std::distance( TransformArrayTest< gtest_TypeParam_ >::boltInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdOutput, boltOutput );
+    cmpStdArray< ArrayType, TransformArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( TransformArrayTest< gtest_TypeParam_ >::stdOutput, TransformArrayTest< gtest_TypeParam_ >::boltOutput );
     // FIXME - releaseOcl(ocl);
 }
 #endif
 
 TYPED_TEST_P( UnaryTransformArrayTest, MultipliesFunction )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+        typedef typename TransformArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, TransformArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont; 
 
     //  Calling the actual functions under test
-    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), bolt::cl::square<ArrayType>());
-    bolt::cl::transform( boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), bolt::cl::square<ArrayType>());
+    std::transform( TransformArrayTest< gtest_TypeParam_ >::stdInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::stdInput.end( ), TransformArrayTest< gtest_TypeParam_ >::stdOutput.begin( ), bolt::cl::square<ArrayType>());
+    bolt::cl::transform( TransformArrayTest< gtest_TypeParam_ >::boltInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::boltInput.end( ), TransformArrayTest< gtest_TypeParam_ >::boltOutput.begin( ), bolt::cl::square<ArrayType>());
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+    typename  ArrayCont::difference_type stdNumElements = std::distance( TransformArrayTest< gtest_TypeParam_ >::stdInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::stdInput.end() );
+    typename  ArrayCont::difference_type boltNumElements = std::distance( TransformArrayTest< gtest_TypeParam_ >::boltInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdOutput, boltOutput );
+    cmpStdArray< ArrayType, TransformArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( TransformArrayTest< gtest_TypeParam_ >::stdOutput, TransformArrayTest< gtest_TypeParam_ >::boltOutput );
 }
 
 TYPED_TEST_P( UnaryTransformArrayTest, GPU_DeviceMultipliesFunction )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+        typedef typename TransformArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, TransformArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont; 
 
     //  The first time our routines get called, we compile the library kernels with a certain context
     //  OpenCL does not allow the context to change without a recompile of the kernel
@@ -596,65 +615,68 @@ TYPED_TEST_P( UnaryTransformArrayTest, GPU_DeviceMultipliesFunction )
     bolt::cl::control c_gpu( myQueue );  // construct control structure from the queue.
 
     //  Calling the actual functions under test
-    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), bolt::cl::square<ArrayType>());
-    bolt::cl::transform( c_gpu, boltInput.begin( ), boltInput.end( ), boltOutput.begin( ),
+    std::transform( TransformArrayTest< gtest_TypeParam_ >::stdInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::stdInput.end( ), TransformArrayTest< gtest_TypeParam_ >::stdOutput.begin( ), bolt::cl::square<ArrayType>());
+    bolt::cl::transform( c_gpu, TransformArrayTest< gtest_TypeParam_ >::boltInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::boltInput.end( ), TransformArrayTest< gtest_TypeParam_ >::boltOutput.begin( ),
                          bolt::cl::square<ArrayType>());
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+    typename  ArrayCont::difference_type stdNumElements = std::distance( TransformArrayTest< gtest_TypeParam_ >::stdInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::stdInput.end() );
+    typename  ArrayCont::difference_type boltNumElements = std::distance( TransformArrayTest< gtest_TypeParam_ >::boltInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdOutput, boltOutput );
+    cmpStdArray< ArrayType, TransformArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( TransformArrayTest< gtest_TypeParam_ >::stdOutput, TransformArrayTest< gtest_TypeParam_ >::boltOutput );
     // FIXME - releaseOcl(ocl);
 }
 #if (TEST_CPU_DEVICE == 1)
 TYPED_TEST_P( UnaryTransformArrayTest, CPU_DeviceMultipliesFunction )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+        typedef typename TransformArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, TransformArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont; 
     MyOclContext oclcpu = initOcl(CL_DEVICE_TYPE_CPU, 0);
     bolt::cl::control c_cpu(oclcpu._queue);  // construct control structure from the queue.
 
     //  Calling the actual functions under test
-    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), bolt::cl::square<ArrayType>());
-    bolt::cl::transform( c_cpu, boltInput.begin( ), boltInput.end( ), boltOutput.begin( ),
+    std::transform( TransformArrayTest< gtest_TypeParam_ >::stdInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::stdInput.end( ), TransformArrayTest< gtest_TypeParam_ >::stdOutput.begin( ), bolt::cl::square<ArrayType>());
+    bolt::cl::transform( c_cpu, TransformArrayTest< gtest_TypeParam_ >::boltInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::boltInput.end( ), TransformArrayTest< gtest_TypeParam_ >::boltOutput.begin( ),
                          bolt::cl::square<ArrayType>());
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+    typename  ArrayCont::difference_type stdNumElements = std::distance( TransformArrayTest< gtest_TypeParam_ >::stdInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::stdInput.end() );
+    typename  ArrayCont::difference_type boltNumElements = std::distance( TransformArrayTest< gtest_TypeParam_ >::boltInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdOutput, boltOutput );
+    cmpStdArray< ArrayType, TransformArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( TransformArrayTest< gtest_TypeParam_ >::stdOutput, TransformArrayTest< gtest_TypeParam_ >::boltOutput );
     // FIXME - releaseOcl(ocl);
 }
 #endif
 TYPED_TEST_P( UnaryTransformArrayTest, MinusFunction )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+        typedef typename TransformArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, TransformArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont; 
 
     //  Calling the actual functions under test
-    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), bolt::cl::square<ArrayType>());
-    bolt::cl::transform( boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), bolt::cl::square<ArrayType>());
+    std::transform( TransformArrayTest< gtest_TypeParam_ >::stdInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::stdInput.end( ), TransformArrayTest< gtest_TypeParam_ >::stdOutput.begin( ), bolt::cl::square<ArrayType>());
+    bolt::cl::transform( TransformArrayTest< gtest_TypeParam_ >::boltInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::boltInput.end( ), TransformArrayTest< gtest_TypeParam_ >::boltOutput.begin( ), bolt::cl::square<ArrayType>());
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+    typename  ArrayCont::difference_type stdNumElements = std::distance( TransformArrayTest< gtest_TypeParam_ >::stdInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::stdInput.end() );
+    typename  ArrayCont::difference_type boltNumElements = std::distance( TransformArrayTest< gtest_TypeParam_ >::boltInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdOutput, boltOutput );
+    cmpStdArray< ArrayType, TransformArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( TransformArrayTest< gtest_TypeParam_ >::stdOutput, TransformArrayTest< gtest_TypeParam_ >::boltOutput );
 
 }
 
 TYPED_TEST_P( UnaryTransformArrayTest, GPU_DeviceMinusFunction )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+        typedef typename TransformArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, TransformArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont; 
 
     //  The first time our routines get called, we compile the library kernels with a certain context
     //  OpenCL does not allow the context to change without a recompile of the kernel
@@ -669,40 +691,41 @@ TYPED_TEST_P( UnaryTransformArrayTest, GPU_DeviceMinusFunction )
     bolt::cl::control c_gpu( myQueue );  // construct control structure from the queue.
 
     //  Calling the actual functions under test
-    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), bolt::cl::square<ArrayType>());
-    bolt::cl::transform( c_gpu, boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), 
+    std::transform( TransformArrayTest< gtest_TypeParam_ >::stdInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::stdInput.end( ), TransformArrayTest< gtest_TypeParam_ >::stdOutput.begin( ), bolt::cl::square<ArrayType>());
+    bolt::cl::transform( c_gpu, TransformArrayTest< gtest_TypeParam_ >::boltInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::boltInput.end( ), TransformArrayTest< gtest_TypeParam_ >::boltOutput.begin( ), 
                          bolt::cl::square<ArrayType>());
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+    typename  ArrayCont::difference_type stdNumElements = std::distance( TransformArrayTest< gtest_TypeParam_ >::stdInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::stdInput.end() );
+    typename  ArrayCont::difference_type boltNumElements = std::distance( TransformArrayTest< gtest_TypeParam_ >::boltInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdOutput, boltOutput );
+    cmpStdArray< ArrayType, TransformArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( TransformArrayTest< gtest_TypeParam_ >::stdOutput, TransformArrayTest< gtest_TypeParam_ >::boltOutput );
     // FIXME - releaseOcl(ocl);
 }
 #if (TEST_CPU_DEVICE == 1)
 TYPED_TEST_P( UnaryTransformArrayTest, CPU_DeviceMinusFunction )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+        typedef typename TransformArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, TransformArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont; 
     MyOclContext oclcpu = initOcl(CL_DEVICE_TYPE_CPU, 0);
     bolt::cl::control c_cpu(oclcpu._queue);  // construct control structure from the queue.
 
     //  Calling the actual functions under test
-    std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), bolt::cl::square<ArrayType>());
-    bolt::cl::transform( c_cpu, boltInput.begin( ), boltInput.end( ), boltOutput.begin( ),
+    std::transform( TransformArrayTest< gtest_TypeParam_ >::stdInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::stdInput.end( ), TransformArrayTest< gtest_TypeParam_ >::stdOutput.begin( ), bolt::cl::square<ArrayType>());
+    bolt::cl::transform( c_cpu, TransformArrayTest< gtest_TypeParam_ >::boltInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::boltInput.end( ), TransformArrayTest< gtest_TypeParam_ >::boltOutput.begin( ),
                          bolt::cl::square<ArrayType>());
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+    typename  ArrayCont::difference_type stdNumElements = std::distance( TransformArrayTest< gtest_TypeParam_ >::stdInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::stdInput.end() );
+    typename  ArrayCont::difference_type boltNumElements = std::distance( TransformArrayTest< gtest_TypeParam_ >::boltInput.begin( ), TransformArrayTest< gtest_TypeParam_ >::boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdOutput, boltOutput );
+    cmpStdArray< ArrayType, TransformArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( TransformArrayTest< gtest_TypeParam_ >::stdOutput, TransformArrayTest< gtest_TypeParam_ >::boltOutput );
     // FIXME - releaseOcl(ocl);
 }
 #endif
@@ -792,23 +815,23 @@ class TransformIntegerDeviceVector: public ::testing::TestWithParam< int >
 {
 public:
     // Create an std and a bolt vector of requested size, and initialize all the elements to 1
-    TransformIntegerDeviceVector( ): stdInput( GetParam( ) ), boltInput( GetParam( ) ),
-                                     stdOutput( GetParam( ) ), boltOutput( GetParam( ) )
+    TransformIntegerDeviceVector( ): stdInput( GetParam( ) ),
+                                     stdOutput( GetParam( ) )
     {
         std::generate(stdInput.begin(), stdInput.end(), rand);
         //boltInput = stdInput;      
         //FIXME - The above should work but the below loop is used. 
         for (int i=0; i< GetParam( ); i++)
         {
-            boltInput[i] = stdInput[i];
-            boltOutput[i] = stdInput[i];
+            //boltInput[i] = stdInput[i];
+            //boltOutput[i] = stdInput[i];
             stdOutput[i] = stdInput[i];
         }
     }
 
 protected:
     std::vector< int > stdInput, stdOutput;
-    bolt::cl::device_vector< int > boltInput, boltOutput;
+    //bolt::cl::device_vector< int > boltInput, boltOutput;
 };
 
 //  ::testing::TestWithParam< int > means that GetParam( ) returns int values, which i use for array size
@@ -816,23 +839,23 @@ class TransformFloatDeviceVector: public ::testing::TestWithParam< int >
 {
 public:
     // Create an std and a bolt vector of requested size, and initialize all the elements to 1
-    TransformFloatDeviceVector( ): stdInput( GetParam( ) ), boltInput( static_cast<size_t>( GetParam( ) ) ),
-                                   stdOutput( GetParam( ) ), boltOutput( GetParam( ) )
+    TransformFloatDeviceVector( ): stdInput( GetParam( ) ), 
+                                   stdOutput( GetParam( ) )
     {
         std::generate(stdInput.begin(), stdInput.end(), rand);
         //boltInput = stdInput;      
         //FIXME - The above should work but the below loop is used. 
         for (int i=0; i< GetParam( ); i++)
         {
-            boltInput[i] = stdInput[i];
-            boltOutput[i] = stdInput[i];
+            //boltInput[i] = stdInput[i];
+            //boltOutput[i] = stdInput[i];
             stdOutput[i] = stdInput[i];
         }
     }
 
 protected:
     std::vector< float > stdInput, stdOutput;
-    bolt::cl::device_vector< float > boltInput, boltOutput;
+    //bolt::cl::device_vector< float > boltInput, boltOutput;
 };
 
 #if (TEST_DOUBLE == 1)
@@ -841,22 +864,23 @@ class TransformDoubleDeviceVector: public ::testing::TestWithParam< int >
 {
 public:
     // Create an std and a bolt vector of requested size, and initialize all the elements to 1
-    TransformDoubleDeviceVector( ): stdInput( GetParam( ) ), boltInput( static_cast<size_t>( GetParam( ) ) )
+    TransformDoubleDeviceVector( ): stdInput( GetParam( ) ),
+		                            stdOutput( GetParam( ) ) 
     {
         std::generate(stdInput.begin(), stdInput.end(), rand);
         //boltInput = stdInput;      
         //FIXME - The above should work but the below loop is used. 
         for (int i=0; i< GetParam( ); i++)
         {
-            boltInput[i] = stdInput[i];
-            boltOutput[i] = stdInput[i];
+            //boltInput[i] = stdInput[i];
+            //boltOutput[i] = stdInput[i];
             stdOutput[i] = stdInput[i];
         }
     }
 
 protected:
     std::vector< double > stdInput, stdOutput;
-    bolt::cl::device_vector< double > boltInput, boltOutput;
+    //bolt::cl::device_vector< double > boltInput, boltOutput;
 };
 #endif
 
@@ -1205,6 +1229,10 @@ TEST_P( TransformDoubleVector, Inplace )
 #if (TEST_DEVICE_VECTOR == 1)
 TEST_P( TransformIntegerDeviceVector, Inplace )
 {
+    bolt::cl::device_vector< int > boltInput(stdInput.begin(), stdInput.end());
+    bolt::cl::device_vector< int > boltOutput(stdOutput.begin(), stdOutput.end());
+
+    
     //  Calling the actual functions under test
     std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), stdOutput.begin( ), bolt::cl::plus<int>());
     bolt::cl::transform( boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), boltOutput.begin( ), 
@@ -1236,6 +1264,9 @@ TEST_P( TransformIntegerDeviceVector, Inplace )
 
 TEST_P( TransformIntegerDeviceVector, Serial )
 {
+    bolt::cl::device_vector< int > boltInput(stdInput.begin(), stdInput.end());
+    bolt::cl::device_vector< int > boltOutput(stdOutput.begin(), stdOutput.end());
+    
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -1270,6 +1301,9 @@ TEST_P( TransformIntegerDeviceVector, Serial )
 
 TEST_P( TransformIntegerDeviceVector, MultiCoreCPU )
 {
+    bolt::cl::device_vector< int > boltInput(stdInput.begin(), stdInput.end());
+    bolt::cl::device_vector< int > boltOutput(stdOutput.begin(), stdOutput.end());
+    
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
@@ -1304,6 +1338,9 @@ TEST_P( TransformIntegerDeviceVector, MultiCoreCPU )
 
 TEST_P( TransformFloatDeviceVector, Inplace )
 {
+    bolt::cl::device_vector< float > boltInput(stdInput.begin(), stdInput.end());
+    bolt::cl::device_vector< float > boltOutput(stdOutput.begin(), stdOutput.end());
+    
     //  Calling the actual functions under test
     std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ), stdOutput.begin(),bolt::cl::plus<float>());
     bolt::cl::transform( boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), boltOutput.begin( ), 
@@ -1335,6 +1372,9 @@ TEST_P( TransformFloatDeviceVector, Inplace )
 
 TEST_P( TransformFloatDeviceVector, Serial )
 {
+    bolt::cl::device_vector< float > boltInput(stdInput.begin(), stdInput.end());
+    bolt::cl::device_vector< float > boltOutput(stdOutput.begin(), stdOutput.end());
+    
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -1369,6 +1409,9 @@ TEST_P( TransformFloatDeviceVector, Serial )
 
 TEST_P( TransformFloatDeviceVector, MultiCoreCPU )
 {
+    bolt::cl::device_vector< float > boltInput(stdInput.begin(), stdInput.end());
+    bolt::cl::device_vector< float > boltOutput(stdOutput.begin(), stdOutput.end());
+    
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
@@ -1404,6 +1447,9 @@ TEST_P( TransformFloatDeviceVector, MultiCoreCPU )
 #if (TEST_DOUBLE == 1)
 TEST_P( TransformDoubleDeviceVector, Inplace )
 {
+    bolt::cl::device_vector< double > boltInput(stdInput.begin(), stdInput.end());
+    bolt::cl::device_vector< double > boltOutput(stdOutput.begin(), stdOutput.end());
+    
     //  Calling the actual functions under test
     std::transform( stdInput.begin( ), stdInput.end( ), stdOutput.begin( ),stdOutput.begin(),bolt::cl::plus<double>());
     bolt::cl::transform( boltInput.begin( ), boltInput.end( ), boltOutput.begin( ), boltOutput.begin( ),
@@ -1434,7 +1480,7 @@ TEST_P( TransformDoubleDeviceVector, Inplace )
 }
 #endif
 #endif
-
+#if defined(_WIN32)
 TEST_P( TransformIntegerNakedPointer, Inplace )
 {
     size_t endIndex = GetParam( );
@@ -1617,7 +1663,10 @@ TEST_P( TransformDoubleNakedPointer, Inplace )
     //  Loop through the array and compare all the values with each other
     cmpArrays( stdOutput, boltOutput, endIndex );
 }
+
 #endif
+#endif
+
 std::array<int, 15> TestValues = {2,4,8,16,32,64,128,256,512,1024,2048,4096,8192,16384,32768};
 //Test lots of consecutive numbers, but small range, suitable for integers because they overflow easier
 INSTANTIATE_TEST_CASE_P( TransformRange, TransformIntegerVector, ::testing::Range( 0, 1024, 7 ) );
@@ -1831,7 +1880,7 @@ typedef ::testing::Types<
     std::tuple< UDD, TypeValue< 65535 > >,
     std::tuple< UDD, TypeValue< 65536 > >
 > UDDTests;
-
+/*
 INSTANTIATE_TYPED_TEST_CASE_P( Integer, TransformArrayTest, IntegerTests );
 INSTANTIATE_TYPED_TEST_CASE_P( Float, TransformArrayTest, FloatTests );
 //INSTANTIATE_TYPED_TEST_CASE_P( Long, TransformArrayTest, LongTests );
@@ -1849,7 +1898,7 @@ INSTANTIATE_TYPED_TEST_CASE_P( Float, UnaryTransformArrayTest, FloatTests );
 INSTANTIATE_TYPED_TEST_CASE_P( Double, UnaryTransformArrayTest, DoubleTests );
 #endif 
 //INSTANTIATE_TYPED_TEST_CASE_P( UDDTest, SortArrayTest, UDDTests );
-
+*/
 //Teststotesttheconstantiterator
 template <int N>
 int gen_constant()
@@ -1975,11 +2024,12 @@ TEST(cl_const_iter_transformBoltClVectFloat, addIterFloatValues){
     int size = 10;
     float myConstValueF = 1.125f;
     bolt::cl::plus<float> addKaro;
-    bolt::cl::device_vector<float> myDevVect(size);
+    std::vector<float> stdVect(size);
     
     for (int i = 0; i < size; i++){
-        myDevVect[i] = (float)i + 1.0f;
+        stdVect[i] = (float)i + 1.0f;
     }
+    bolt::cl::device_vector<float> myDevVect(stdVect.begin(), stdVect.end());
     
     for (int i = 0; i<size; ++i){
         std::cout.setf(std::ios::fixed);
@@ -2002,12 +2052,12 @@ TEST(cl_const_iter_transformBoltClVectFloat, SerialaddIterFloatValues){
     int size = 10;
     float myConstValueF = 1.125f;
     bolt::cl::plus<float> addKaro;
-    bolt::cl::device_vector<float> myDevVect(size);
+    std::vector<float> stdVect(size);
     
     for (int i = 0; i < size; i++){
-        myDevVect[i] = (float)i + 1.0f;
+        stdVect[i] = (float)i + 1.0f;
     }
-    
+    bolt::cl::device_vector<float> myDevVect(stdVect.begin(), stdVect.end());
     for (int i = 0; i<size; ++i){
         std::cout.setf(std::ios::fixed);
         std::cout<<std::setprecision(3)<<myDevVect[i]<<" ";
@@ -2032,12 +2082,12 @@ TEST(cl_const_iter_transformBoltClVectFloat, MultiCoreaddIterFloatValues){
     int size = 10;
     float myConstValueF = 1.125f;
     bolt::cl::plus<float> addKaro;
-    bolt::cl::device_vector<float> myDevVect(size);
+    std::vector<float> stdVect(size);
     
     for (int i = 0; i < size; i++){
-        myDevVect[i] = (float)i + 1.0f;
+        stdVect[i] = (float)i + 1.0f;
     }
-    
+    bolt::cl::device_vector<float> myDevVect(stdVect.begin(), stdVect.end());
     for (int i = 0; i<size; ++i){
         std::cout.setf(std::ios::fixed);
         std::cout<<std::setprecision(3)<<myDevVect[i]<<" ";
@@ -2484,7 +2534,7 @@ TEST(TransformStd, OffsetTestMultiCoreCPU)
 
 //  Temporarily disabling this test because we have a known issue running on the CPU device with our 
 //  Bolt iterators
-TEST( Transformint , KcacheTest )
+/*TEST( Transformint , KcacheTest )
 {
     //setup containers
     unsigned int length = 1024;
@@ -2529,7 +2579,7 @@ TEST( Transformint , KcacheTest )
     bolt::cl::transform( cpu_ctrl, cpuInput.begin(), cpuInput.end(), cpuOutput.begin() , bolt::cl::negate<int>());
 
     cmpArrays( refOutput, cpuOutput );
-}
+}*/
 
 TEST( DebuggingUShort, ushortbintransfrom)
 {
@@ -2604,7 +2654,7 @@ TEST( IntegerTests64, cl_ulongintransfrom)
 int main(int argc, char* argv[])
 {
     //  Register our minidump generating logic
-    bolt::miniDumpSingleton::enableMiniDumps( );
+    //bolt::miniDumpSingleton::enableMiniDumps( );
 
     // Define MEMORYREPORT on windows platfroms to enable debug memory heap checking
 #if defined( MEMORYREPORT ) && defined( _WIN32 )

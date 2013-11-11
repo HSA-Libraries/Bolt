@@ -19,7 +19,7 @@
 //
 #define OCL_CONTEXT_BUG_WORKAROUND 1
 
-#define TEST_DOUBLE 0
+#define TEST_DOUBLE 1
 
 #include <iostream>
 #include <algorithm>  // for testing against STL functions.
@@ -37,7 +37,21 @@
 #include "bolt/miniDump.h"
 
 
-extern void testDeviceVector();
+void testDeviceVector()
+{
+    const int aSize = 1000;
+    std::vector<int> hA(aSize);  
+
+    for(int i=0; i<aSize; i++) {
+        hA[i] = i;
+    };
+	
+    bolt::cl::device_vector<int> dA(hA.begin(), hA.end());
+    std::vector<int>::iterator smindex = std::min_element(hA.begin(), hA.end());
+    bolt::cl::device_vector<int>::iterator bmindex = bolt::cl::min_element(dA.begin(), dA.end());
+    
+};
+
 
 /////////////////////////////////////////////////////////////////////////////////////////////
 //  GTEST CASES
@@ -67,6 +81,8 @@ T generateRandom()
         return (T)fmod(value, 10.0);
     }
 }
+
+
 //  Test fixture class, used for the Type-parameterized tests
 //  Namely, the tests that use std::array and TYPED_TEST_P macros
 template< typename ArrayTuple >
@@ -90,104 +106,178 @@ public:
 
 protected:
     typedef typename std::tuple_element< 0, ArrayTuple >::type ArrayType;
-    static const size_t ArraySize = typename std::tuple_element< 1, ArrayTuple >::type::value;
+    static const size_t ArraySize = std::tuple_element< 1, ArrayTuple >::type::value;
     typename std::array< ArrayType, ArraySize > stdInput, boltInput;
     int m_Errors;
 };
 
 TYPED_TEST_CASE_P( MinEArrayTest );
 
-TYPED_TEST_P( MinEArrayTest, Normal )
+/*TYPED_TEST_P( MinEArrayTest, Normal )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+       typedef typename MinEArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+   typedef std::array< ArrayType, MinEArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont; 
     ArrayType init(0);
     //  Calling the actual functions under test
-    ArrayCont::iterator stlMinE = std::min_element( stdInput.begin(), stdInput.end() );
-    ArrayCont::iterator boltMinE = bolt::cl::min_element( boltInput.begin( ), boltInput.end( ) );
+   typename  ArrayCont::iterator stlMinE = std::min_element( MinEArrayTest< gtest_TypeParam_ >::stdInput.begin(), MinEArrayTest< gtest_TypeParam_ >::stdInput.end() );
+   typename  ArrayCont::iterator boltMinE = bolt::cl::min_element( MinEArrayTest< gtest_TypeParam_ >::boltInput.begin( ), MinEArrayTest< gtest_TypeParam_ >::boltInput.end( ) );
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+   typename  ArrayCont::difference_type stdNumElements = std::distance( MinEArrayTest< gtest_TypeParam_ >::stdInput.begin( ), MinEArrayTest< gtest_TypeParam_ >::stdInput.end() );
+   typename  ArrayCont::difference_type boltNumElements = std::distance( MinEArrayTest< gtest_TypeParam_ >::boltInput.begin( ), MinEArrayTest< gtest_TypeParam_ >::boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
     EXPECT_EQ( *stlMinE, *boltMinE );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
+    cmpStdArray< ArrayType, MinEArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( MinEArrayTest< gtest_TypeParam_ >::stdInput, MinEArrayTest< gtest_TypeParam_ >::boltInput );
+}*/
+
+TYPED_TEST_P( MinEArrayTest, comp_Normal )
+{
+       typedef typename MinEArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, MinEArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont; 
+    ArrayType init(0);
+    //  Calling the actual functions under test
+   typename  ArrayCont::iterator stlMinE = std::min_element( MinEArrayTest< gtest_TypeParam_ >::stdInput.begin(), MinEArrayTest< gtest_TypeParam_ >::stdInput.end(), std::less< ArrayType >() );
+   typename  ArrayCont::iterator boltMinE = bolt::cl::min_element( MinEArrayTest< gtest_TypeParam_ >::boltInput.begin( ), MinEArrayTest< gtest_TypeParam_ >::boltInput.end( ), bolt::cl::less< ArrayType >() );
+
+   typename  ArrayCont::difference_type stdNumElements = std::distance( MinEArrayTest< gtest_TypeParam_ >::stdInput.begin( ), MinEArrayTest< gtest_TypeParam_ >::stdInput.end() );
+   typename  ArrayCont::difference_type boltNumElements = std::distance( MinEArrayTest< gtest_TypeParam_ >::boltInput.begin( ), MinEArrayTest< gtest_TypeParam_ >::boltInput.end() );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+    EXPECT_EQ( *stlMinE, *boltMinE );
+
+    //  Loop through the array and compare all the values with each other
+    cmpStdArray< ArrayType, MinEArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( MinEArrayTest< gtest_TypeParam_ >::stdInput, MinEArrayTest< gtest_TypeParam_ >::boltInput );
 }
 
-TYPED_TEST_P( MinEArrayTest, SerialNormal )
+
+/*TYPED_TEST_P( MinEArrayTest, SerialNormal )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+       typedef typename MinEArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, MinEArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont; 
     ArrayType init(0);
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
     //  Calling the actual functions under test
-    ArrayCont::iterator stlMinE = std::min_element( stdInput.begin(), stdInput.end() );
-    ArrayCont::iterator boltMinE = bolt::cl::min_element( ctl, boltInput.begin( ), boltInput.end( ) );
+   typename  ArrayCont::iterator stlMinE = std::min_element( MinEArrayTest< gtest_TypeParam_ >::stdInput.begin(), MinEArrayTest< gtest_TypeParam_ >::stdInput.end() );
+   typename  ArrayCont::iterator boltMinE = bolt::cl::min_element( ctl, MinEArrayTest< gtest_TypeParam_ >::boltInput.begin( ), MinEArrayTest< gtest_TypeParam_ >::boltInput.end( ) );
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+   typename  ArrayCont::difference_type stdNumElements = std::distance( MinEArrayTest< gtest_TypeParam_ >::stdInput.begin( ), MinEArrayTest< gtest_TypeParam_ >::stdInput.end() );
+   typename  ArrayCont::difference_type boltNumElements = std::distance( MinEArrayTest< gtest_TypeParam_ >::boltInput.begin( ), MinEArrayTest< gtest_TypeParam_ >::boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
     EXPECT_EQ( *stlMinE, *boltMinE );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
+    cmpStdArray< ArrayType, MinEArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( MinEArrayTest< gtest_TypeParam_ >::stdInput, MinEArrayTest< gtest_TypeParam_ >::boltInput );
+}*/
+
+TYPED_TEST_P( MinEArrayTest, comp_SerialNormal )
+{
+       typedef typename MinEArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, MinEArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont; 
+    ArrayType init(0);
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    //  Calling the actual functions under test
+   typename  ArrayCont::iterator stlMinE = std::min_element( MinEArrayTest< gtest_TypeParam_ >::stdInput.begin(), MinEArrayTest< gtest_TypeParam_ >::stdInput.end(), std::less< ArrayType >() );
+   typename  ArrayCont::iterator boltMinE = bolt::cl::min_element( ctl, MinEArrayTest< gtest_TypeParam_ >::boltInput.begin( ), MinEArrayTest< gtest_TypeParam_ >::boltInput.end( ), bolt::cl::less< ArrayType >()  );
+
+   typename  ArrayCont::difference_type stdNumElements = std::distance( MinEArrayTest< gtest_TypeParam_ >::stdInput.begin( ), MinEArrayTest< gtest_TypeParam_ >::stdInput.end() );
+   typename  ArrayCont::difference_type boltNumElements = std::distance( MinEArrayTest< gtest_TypeParam_ >::boltInput.begin( ), MinEArrayTest< gtest_TypeParam_ >::boltInput.end() );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+    EXPECT_EQ( *stlMinE, *boltMinE );
+
+    //  Loop through the array and compare all the values with each other
+    cmpStdArray< ArrayType, MinEArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( MinEArrayTest< gtest_TypeParam_ >::stdInput, MinEArrayTest< gtest_TypeParam_ >::boltInput );
 }
+
 
 TYPED_TEST_P( MinEArrayTest, MultiCoreNormal )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+       typedef typename MinEArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, MinEArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont; 
     ArrayType init(0);
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
     //  Calling the actual functions under test
-    ArrayCont::iterator stlMinE = std::min_element( stdInput.begin(), stdInput.end() );
-    ArrayCont::iterator boltMinE = bolt::cl::min_element( ctl, boltInput.begin( ), boltInput.end( ) );
+   typename  ArrayCont::iterator stlMinE = std::min_element( MinEArrayTest< gtest_TypeParam_ >::stdInput.begin(), MinEArrayTest< gtest_TypeParam_ >::stdInput.end() );
+   typename  ArrayCont::iterator boltMinE = bolt::cl::min_element( ctl, MinEArrayTest< gtest_TypeParam_ >::boltInput.begin( ), MinEArrayTest< gtest_TypeParam_ >::boltInput.end( ) );
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+   typename  ArrayCont::difference_type stdNumElements = std::distance( MinEArrayTest< gtest_TypeParam_ >::stdInput.begin( ), MinEArrayTest< gtest_TypeParam_ >::stdInput.end() );
+   typename  ArrayCont::difference_type boltNumElements = std::distance( MinEArrayTest< gtest_TypeParam_ >::boltInput.begin( ), MinEArrayTest< gtest_TypeParam_ >::boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
     EXPECT_EQ( *stlMinE, *boltMinE );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
+    cmpStdArray< ArrayType, MinEArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( MinEArrayTest< gtest_TypeParam_ >::stdInput, MinEArrayTest< gtest_TypeParam_ >::boltInput );
+}
+
+TYPED_TEST_P( MinEArrayTest, comp_MultiCoreNormal )
+{
+       typedef typename MinEArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, MinEArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont; 
+    ArrayType init(0);
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    //  Calling the actual functions under test
+   typename  ArrayCont::iterator stlMinE = std::min_element( MinEArrayTest< gtest_TypeParam_ >::stdInput.begin(), MinEArrayTest< gtest_TypeParam_ >::stdInput.end(), std::less< ArrayType >() );
+   typename  ArrayCont::iterator boltMinE = bolt::cl::min_element( ctl, MinEArrayTest< gtest_TypeParam_ >::boltInput.begin( ), MinEArrayTest< gtest_TypeParam_ >::boltInput.end( ), bolt::cl::less< ArrayType >() );
+
+   typename  ArrayCont::difference_type stdNumElements = std::distance( MinEArrayTest< gtest_TypeParam_ >::stdInput.begin( ), MinEArrayTest< gtest_TypeParam_ >::stdInput.end() );
+   typename  ArrayCont::difference_type boltNumElements = std::distance( MinEArrayTest< gtest_TypeParam_ >::boltInput.begin( ), MinEArrayTest< gtest_TypeParam_ >::boltInput.end() );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+    EXPECT_EQ( *stlMinE, *boltMinE );
+
+    //  Loop through the array and compare all the values with each other
+    cmpStdArray< ArrayType, MinEArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( MinEArrayTest< gtest_TypeParam_ >::stdInput, MinEArrayTest< gtest_TypeParam_ >::boltInput );
 }
 
 TYPED_TEST_P( MinEArrayTest, GPU_DeviceGreaterFunction )
 {
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
+       typedef typename MinEArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, MinEArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont; 
     ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control c_gpu( getQueueFromContext(myContext, CL_DEVICE_TYPE_GPU, 0 ));
 
 
     //  Calling the actual functions under test
-    ArrayCont::iterator stlMinE = std::min_element( stdInput.begin(), stdInput.end() );
-    ArrayCont::iterator boltMinE = bolt::cl::min_element( c_gpu,boltInput.begin( ), boltInput.end( ) );
+   typename  ArrayCont::iterator stlMinE = std::min_element( MinEArrayTest< gtest_TypeParam_ >::stdInput.begin(), MinEArrayTest< gtest_TypeParam_ >::stdInput.end() );
+   typename  ArrayCont::iterator boltMinE = bolt::cl::min_element( c_gpu,MinEArrayTest< gtest_TypeParam_ >::boltInput.begin( ), MinEArrayTest< gtest_TypeParam_ >::boltInput.end( ) );
 
-    ArrayCont::difference_type stdNumElements = std::distance( stdInput.begin( ), stdInput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltInput.begin( ), boltInput.end() );
+   typename  ArrayCont::difference_type stdNumElements = std::distance( MinEArrayTest< gtest_TypeParam_ >::stdInput.begin( ), MinEArrayTest< gtest_TypeParam_ >::stdInput.end() );
+   typename  ArrayCont::difference_type boltNumElements = std::distance( MinEArrayTest< gtest_TypeParam_ >::boltInput.begin( ), MinEArrayTest< gtest_TypeParam_ >::boltInput.end() );
 
     //  Both collections should have the same number of elements
     EXPECT_EQ( stdNumElements, boltNumElements );
     EXPECT_EQ( *stlMinE, *boltMinE );
 
     //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdInput, boltInput );
+    cmpStdArray< ArrayType, MinEArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( MinEArrayTest< gtest_TypeParam_ >::stdInput, MinEArrayTest< gtest_TypeParam_ >::boltInput );
     // FIXME - releaseOcl(ocl);
 }
 
-REGISTER_TYPED_TEST_CASE_P( MinEArrayTest, Normal,SerialNormal, MultiCoreNormal, GPU_DeviceGreaterFunction );
+//REGISTER_TYPED_TEST_CASE_P( MinEArrayTest, Normal, comp_Normal, SerialNormal, comp_SerialNormal, 
+//MultiCoreNormal, comp_MultiCoreNormal, GPU_DeviceGreaterFunction );
+REGISTER_TYPED_TEST_CASE_P( MinEArrayTest, comp_Normal, comp_SerialNormal, comp_MultiCoreNormal, GPU_DeviceGreaterFunction, MultiCoreNormal);
 
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -227,18 +317,18 @@ class MinEIntegerDeviceVector: public ::testing::TestWithParam< int >
 {
 public:
     // Create an std and a bolt vector of requested size, and initialize all the elements to 1
-    MinEIntegerDeviceVector( ): stdInput( GetParam( ) ), boltInput( static_cast<size_t>( GetParam( ) ) )
+    MinEIntegerDeviceVector( ): stdInput( GetParam( ) )
     {
         std::generate(stdInput.begin(), stdInput.end(), generateRandom<int>);
-        for (int i=0; i< GetParam( ); i++)
+        /*for (int i=0; i< GetParam( ); i++)
         {
             boltInput[i] = stdInput[i];
-        }
+        }*/
     }
 
 protected:
     std::vector< int > stdInput;
-    bolt::cl::device_vector< int > boltInput;
+    //bolt::cl::device_vector< int > boltInput;
 };
 
 //  ::testing::TestWithParam< int > means that GetParam( ) returns int values, which i use for array size
@@ -246,18 +336,18 @@ class MinEFloatDeviceVector: public ::testing::TestWithParam< int >
 {
 public:
     // Create an std and a bolt vector of requested size, and initialize all the elements to 1
-    MinEFloatDeviceVector( ): stdInput( GetParam( ) ), boltInput( GetParam( ) )
+    MinEFloatDeviceVector( ): stdInput( GetParam( ) )
     {
         std::generate(stdInput.begin(), stdInput.end(), generateRandom<float>);
-        for (int i=0; i< GetParam( ); i++)
+        /*for (int i=0; i< GetParam( ); i++)
         {
             boltInput[i] = stdInput[i];
-        }
+        }*/
     }
 
 protected:
     std::vector< float > stdInput;
-    bolt::cl::device_vector< float > boltInput;
+    //bolt::cl::device_vector< float > boltInput;
 };
 
 
@@ -307,7 +397,6 @@ TEST_P( MinEStdVectWithInit, CPUwithInt)
         boltInput[i] = stdInput[i];
     }
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -329,7 +418,6 @@ TEST_P( MinEStdVectWithInit, MultiCorewithInt)
         boltInput[i] = stdInput[i];
     }
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
@@ -341,7 +429,25 @@ TEST_P( MinEStdVectWithInit, MultiCorewithInt)
 }
 
 
-TEST_P( MinEStdVectandCountingIterator, withCountingIterator)
+//TEST_P( MinEStdVectandCountingIterator, withCountingIterator)
+//{
+//    bolt::cl::counting_iterator<int> first(0);
+//    bolt::cl::counting_iterator<int> last = first +  mySize;
+//
+//    std::vector<int> a(mySize);
+//
+//    for (int i=0; i < mySize; i++) {
+//        a[i] = i;
+//    };
+//
+//    std::vector<int>::iterator stlReduce = std::min_element(a.begin(), a.end());
+//    bolt::cl::counting_iterator<int> boltReduce = bolt::cl::min_element(first, last);
+//
+//    EXPECT_EQ(*stlReduce, *boltReduce);
+//}
+
+
+TEST_P( MinEStdVectandCountingIterator, comp_withCountingIterator)
 {
     bolt::cl::counting_iterator<int> first(0);
     bolt::cl::counting_iterator<int> last = first +  mySize;
@@ -352,8 +458,8 @@ TEST_P( MinEStdVectandCountingIterator, withCountingIterator)
         a[i] = i;
     };
 
-    std::vector<int>::iterator stlReduce = std::min_element(a.begin(), a.end());
-    bolt::cl::counting_iterator<int> boltReduce = bolt::cl::min_element(first, last);
+    std::vector<int>::iterator stlReduce = std::min_element(a.begin(), a.end(), std::less< int >());
+    bolt::cl::counting_iterator<int> boltReduce = bolt::cl::min_element(first, last, bolt::cl::less< int >( ));
 
     EXPECT_EQ(*stlReduce, *boltReduce);
 }
@@ -362,13 +468,15 @@ TEST( MinEleDevice , DeviceVectoroffset )
 {
     //setup containers
     unsigned int length = 1024;
-    bolt::cl::device_vector< int > input( length );
+    std::vector< int > stdinput( length );
     for( unsigned int i = 0; i < length ; i++ )
     {
-      input[i] = i;
+      stdinput[i] = i;
 
     }
     
+	bolt::cl::device_vector< int > input( stdinput.begin(), stdinput.end() );
+	
     // call reduce
 
     bolt::cl::device_vector< int >::iterator  boltReduce =  bolt::cl::min_element( input.begin()+20, input.end());
@@ -378,8 +486,27 @@ TEST( MinEleDevice , DeviceVectoroffset )
 
 }
 
+//TEST_P( MinEStdVectandCountingIterator, CPUwithCountingIterator)
+//{
+//    bolt::cl::counting_iterator<int> first(0);
+//    bolt::cl::counting_iterator<int> last = first +  mySize;
+//
+//    std::vector<int> a(mySize);
+//
+//    for (int i=0; i < mySize; i++) {
+//        a[i] = i;
+//    };
+//
+//    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+//    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+//
+//    std::vector<int>::iterator stlReduce = std::min_element(a.begin(), a.end());
+//    bolt::cl::counting_iterator<int> boltReduce = bolt::cl::min_element(ctl, first, last);
+//
+//    EXPECT_EQ(*stlReduce, *boltReduce);
+//}
 
-TEST_P( MinEStdVectandCountingIterator, CPUwithCountingIterator)
+TEST_P( MinEStdVectandCountingIterator, CPU_compwithCountingIterator)
 {
     bolt::cl::counting_iterator<int> first(0);
     bolt::cl::counting_iterator<int> last = first +  mySize;
@@ -390,17 +517,37 @@ TEST_P( MinEStdVectandCountingIterator, CPUwithCountingIterator)
         a[i] = i;
     };
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
-    std::vector<int>::iterator stlReduce = std::min_element(a.begin(), a.end());
-    bolt::cl::counting_iterator<int> boltReduce = bolt::cl::min_element(ctl, first, last);
+    std::vector<int>::iterator stlReduce = std::min_element(a.begin(), a.end(), std::less< int >());
+    bolt::cl::counting_iterator<int> boltReduce = bolt::cl::min_element(ctl, first, last,  bolt::cl::less< int >( ));
 
     EXPECT_EQ(*stlReduce, *boltReduce);
 }
 
-TEST_P( MinEStdVectandCountingIterator, MultiCorewithCountingIterator)
+//TEST_P( MinEStdVectandCountingIterator, MultiCorewithCountingIterator)
+//{
+//    bolt::cl::counting_iterator<int> first(0);
+//    bolt::cl::counting_iterator<int> last = first +  mySize;
+//
+//    std::vector<int> a(mySize);
+//
+//    for (int i=0; i < mySize; i++) {
+//        a[i] = i;
+//    };
+//
+//    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+//    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+//
+//    std::vector<int>::iterator stlReduce = std::min_element(a.begin(), a.end());
+//    bolt::cl::counting_iterator<int> boltReduce = bolt::cl::min_element(ctl, first, last);
+//
+//    EXPECT_EQ(*stlReduce, *boltReduce);
+//}
+
+
+TEST_P( MinEStdVectandCountingIterator, MultiCore_comp_withCountingIterator)
 {
     bolt::cl::counting_iterator<int> first(0);
     bolt::cl::counting_iterator<int> last = first +  mySize;
@@ -411,12 +558,12 @@ TEST_P( MinEStdVectandCountingIterator, MultiCorewithCountingIterator)
         a[i] = i;
     };
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
-    std::vector<int>::iterator stlReduce = std::min_element(a.begin(), a.end());
-    bolt::cl::counting_iterator<int> boltReduce = bolt::cl::min_element(ctl, first, last);
+    std::vector<int>::iterator stlReduce = std::min_element(a.begin(), a.end(), std::less< int >());
+    bolt::cl::counting_iterator<int> boltReduce = bolt::cl::min_element(ctl, first, last,  bolt::cl::less< int >( ) );
 
     EXPECT_EQ(*stlReduce, *boltReduce);
 }
@@ -424,6 +571,27 @@ TEST_P( MinEStdVectandCountingIterator, MultiCorewithCountingIterator)
 
 INSTANTIATE_TEST_CASE_P( withInt, MinEStdVectWithInit, ::testing::Range(1, 100, 1) );
 INSTANTIATE_TEST_CASE_P( withInt, MinEStdVectandCountingIterator, ::testing::Range(1, 100, 1) );
+
+TEST( MinEleDevice , DeviceVectorUintoffset )
+{
+    //setup containers
+    unsigned int length = 1024;
+    std::vector< unsigned int > stdinput( length );
+    for( unsigned int i = 0; i < length ; i++ )
+    {
+      stdinput[i] = i;
+
+    }
+    bolt::cl::device_vector< unsigned int > input( stdinput.begin(), stdinput.end() );
+	
+    // call reduce
+
+    bolt::cl::device_vector< unsigned int >::iterator  boltReduce =  bolt::cl::min_element( input.begin()+20, input.end());
+    int stdReduce =  20;
+
+    EXPECT_EQ(*boltReduce,stdReduce);
+
+}
 
 class MinETestFloat: public ::testing::TestWithParam<int>{
 protected:
@@ -433,7 +601,7 @@ public:
     {}
 };
 
-TEST_P( MinETestFloat, serialFloatValuesWdControl )
+TEST_P( MinETestFloat, FloatValuesWdControl )
 {
     std::vector<float> A( arraySize );
     std::vector<float> boltVect( arraySize );
@@ -454,7 +622,7 @@ TEST_P( MinETestFloat, serialFloatValuesWdControl )
     EXPECT_EQ( *stdMinEValue, *boltClMinE );
 }
 
-TEST_P( MinETestFloat, CPUserialFloatValuesWdControl )
+TEST_P( MinETestFloat, serialFloatValuesWdControl )
 {
     std::vector<float> A( arraySize );
     std::vector<float> boltVect( arraySize );
@@ -467,7 +635,6 @@ TEST_P( MinETestFloat, CPUserialFloatValuesWdControl )
         boltVect[i] = A[i];
     }
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -478,7 +645,7 @@ TEST_P( MinETestFloat, CPUserialFloatValuesWdControl )
     EXPECT_EQ( *stdMinEValue, *boltClMinE );
 }
 
-TEST_P( MinETestFloat, MultiCoreserialFloatValuesWdControl )
+TEST_P( MinETestFloat, MultiCoreFloatValuesWdControl )
 {
     std::vector<float> A( arraySize );
     std::vector<float> boltVect( arraySize );
@@ -491,7 +658,6 @@ TEST_P( MinETestFloat, MultiCoreserialFloatValuesWdControl )
         boltVect[i] = A[i];
     }
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
@@ -546,7 +712,7 @@ TEST_P (MinETestDouble, CPUWithDouble)
         A[i] = myFloatValues + double(i);
         boltVect[i] = A[i];
     }
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -569,7 +735,7 @@ TEST_P (MinETestDouble, MultiCoreWithDouble)
         A[i] = myFloatValues + double(i);
         boltVect[i] = A[i];
     }
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
@@ -607,7 +773,6 @@ TEST_P( MinEIntegerVector, Normal )
 TEST_P( MinEIntegerVector,CPU )
 {
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -630,7 +795,6 @@ TEST_P( MinEIntegerVector,CPU )
 TEST_P( MinEIntegerVector,MultiCore )
 {
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
@@ -669,7 +833,7 @@ TEST_P( MinEFloatVector, Normal )
 
 TEST_P( MinEFloatVector, CPU )
 {
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -690,7 +854,7 @@ TEST_P( MinEFloatVector, CPU )
 
 TEST_P( MinEFloatVector, MultiCore )
 {
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
@@ -709,15 +873,15 @@ TEST_P( MinEFloatVector, MultiCore )
     cmpArrays( stdInput, boltInput );
 }
 
-std::array<int, 15> TestValues = {2,4,8,16,32,64,128,256,512,1024,2048,4096,8192,16384,32768};
+std::array<int, 16> TestValues = {2,4,8,16,32,64,128,256,512,1024,2048,4096,8192,16384,32768, 65535};
 //Test lots of consecutive numbers, but small range, suitable for integers because they overflow easier
-INSTANTIATE_TEST_CASE_P( MinERange, MinEIntegerVector, ::testing::Range( 1, 1024, 7 ) );
+INSTANTIATE_TEST_CASE_P( MinERange, MinEIntegerVector, ::testing::Range( 1, 65535, 177 ) );
 INSTANTIATE_TEST_CASE_P( MinEValues, MinEIntegerVector, ::testing::ValuesIn( TestValues.begin(), TestValues.end()));
-INSTANTIATE_TEST_CASE_P( MinERange, MinEFloatVector, ::testing::Range( 1, 1024, 3 ) );
+INSTANTIATE_TEST_CASE_P( MinERange, MinEFloatVector, ::testing::Range( 1, 65535, 133 ) );
 INSTANTIATE_TEST_CASE_P( MinEValues, MinEFloatVector, ::testing::ValuesIn(TestValues.begin(),TestValues.end()));
-INSTANTIATE_TEST_CASE_P( MinERange,MinEIntegerDeviceVector,::testing::Range(0,1024,53));
+INSTANTIATE_TEST_CASE_P( MinERange,MinEIntegerDeviceVector,::testing::Range(0,65535,153));
 INSTANTIATE_TEST_CASE_P( MinEValues,MinEIntegerDeviceVector,::testing::ValuesIn(TestValues.begin(),TestValues.end()));
-INSTANTIATE_TEST_CASE_P( MinERange, MinEFloatDeviceVector, ::testing::Range( 0, 1024, 53 ) );
+INSTANTIATE_TEST_CASE_P( MinERange, MinEFloatDeviceVector, ::testing::Range( 0, 65535, 153 ) );
 INSTANTIATE_TEST_CASE_P( MinEValues, MinEFloatDeviceVector, ::testing::ValuesIn(TestValues.begin(),TestValues.end()));
 
 typedef ::testing::Types<
@@ -815,7 +979,6 @@ TEST( MinEUDD , CPU_UDDPlusOperatorInts )
       refInput[i].b = i+1;
     }
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -838,7 +1001,6 @@ TEST( MinEUDD , MultiCore_UDDPlusOperatorInts )
       refInput[i].b = i+1;
     }
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
@@ -850,11 +1012,74 @@ TEST( MinEUDD , MultiCore_UDDPlusOperatorInts )
 
 }
 
+TEST( MinEUDD , Offset_UDDPlusOperatorInts )
+{
+    //setup containers
+    const int length = 1024;
+    UDD refInput[ length ];
+    for( int i = 0; i < length ; i++ )
+    {
+      refInput[i].a = i;
+      refInput[i].b = i+1;
+    }
+
+    // call reduce
+    UDD *boltMinE =bolt::cl::min_element( refInput + 10, refInput + length );
+    UDD *stdMinE = std::min_element( refInput + 10, refInput + length );
+
+    EXPECT_EQ(*boltMinE,*stdMinE);
+
+}
+
+TEST( MinEUDD , Offset_CPU_UDDPlusOperatorInts )
+{
+    //setup containers
+    const int length = 1024;
+    UDD refInput[ length ];
+    for( int i = 0; i < length ; i++ )
+    {
+      refInput[i].a = i;
+      refInput[i].b = i+1;
+    }
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    // call reduce
+    UDD *boltMinE =bolt::cl::min_element( ctl, refInput + 5, refInput + length );
+    UDD *stdMinE = std::min_element( refInput + 5, refInput + length );
+
+    EXPECT_EQ(*boltMinE,*stdMinE);
+
+}
+
+TEST( MinEUDD , Offset_MultiCore_UDDPlusOperatorInts )
+{
+    //setup containers
+    const int length = 1024;
+    UDD refInput[ length ];
+    for( int i = 0; i < length ; i++ )
+    {
+      refInput[i].a = i;
+      refInput[i].b = i+1;
+    }
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    // call reduce
+    UDD *boltMinE =bolt::cl::min_element( ctl, refInput+10, refInput + length );
+    UDD *stdMinE = std::min_element( refInput+10, refInput + length );
+
+    EXPECT_EQ(*boltMinE,*stdMinE);
+
+}
+
 INSTANTIATE_TYPED_TEST_CASE_P( Integer, MinEArrayTest, IntegerTests );
 INSTANTIATE_TYPED_TEST_CASE_P( Float, MinEArrayTest, FloatTests );
 
 
-
+#if defined(_WIN32)
 // Super-easy windows profiling interface.
 // Move to timing infrastructure when that becomes available.
 __int64 StartProfile() {
@@ -870,7 +1095,7 @@ void EndProfile(__int64 start, int numTests, std::string msg) {
     double duration = (end - start)/(double)(freq);
     printf("%s %6.2fs, numTests=%d %6.2fms/test\n", msg.c_str(), duration, numTests, duration*1000.0/numTests);
 };
-
+#endif
 
 
 template<typename T>
@@ -923,7 +1148,7 @@ bool checkResult(std::string msg, T  stlResult, T boltResult, double errorThresh
 void Mineletest(int aSize)
 {
     std::vector<int> A(aSize);
-    srand(GetTickCount());
+    //srand(GetTickCount());
     for (int i=0; i < aSize; i++)
     {
                 A[i] = rand();
@@ -968,15 +1193,26 @@ void Minele_TestControl(int aSize, int numIters, int deviceIndex)
     std::vector<int>::iterator boltReduce(A.end());
 
     char testTag[2000];
+
+#if defined(_WIN32)
     sprintf_s(testTag, 2000, "Minele_TestControl sz=%d iters=%d, device=%s", aSize, numIters,
         c.getDevice( ).getInfo<CL_DEVICE_NAME>( ).c_str( ) );
+#else
 
+    sprintf(testTag, "Minele_TestControl sz=%d iters=%d, device=%s", aSize, numIters,
+        c.getDevice( ).getInfo<CL_DEVICE_NAME>( ).c_str( ) );
+
+#endif
+
+#if defined(_WIN32)
     __int64 start = StartProfile();
+#endif
     for (int i=0; i<numIters; i++) {
         boltReduce = bolt::cl::min_element( c, A.begin(), A.end());
     }
+#if defined(_WIN32)
     EndProfile(start, numIters, testTag);
-
+#endif
     checkResult(testTag, stlReduce, boltReduce);
 };
 
@@ -1025,143 +1261,143 @@ void simpleMinele_countingiterator(int start,int size)
     checkResult("TestSerial", *stlReduce, *boltReduce);
 };
 
-TEST( Min_Element , KcacheTest )
-{
-    //setup containers
-    unsigned int length = 1024;
-    std::vector< int > refInput( length );
-    for( unsigned int i = 0; i < length ; i++ )
-    {
-      refInput[i] = rand();
-    }
+//TEST( Min_Element , KcacheTest )
+//{
+//    //setup containers
+//    unsigned int length = 1024;
+//    std::vector< int > refInput( length );
+//    for( unsigned int i = 0; i < length ; i++ )
+//    {
+//      refInput[i] = rand();
+//    }
+//
+//    //Call reduce with GPU device because the default is a GPU device
+//    bolt::cl::control ctrl = bolt::cl::control::getDefault();
+//    bolt::cl::device_vector< int > gpuInput( refInput.begin(), refInput.end() );
+//
+//    bolt::cl::device_vector< int >::iterator boltGpuMin = bolt::cl::min_element(ctrl,gpuInput.begin(),gpuInput.end());
+//
+//    //Call reduce with CPU device
+//    ::cl::Context cpuContext(CL_DEVICE_TYPE_CPU);
+//    std::vector< cl::Device > devices = cpuContext.getInfo< CL_CONTEXT_DEVICES >();
+//    cl::Device selectedDevice;
+//
+//    for(std::vector< cl::Device >::iterator iter = devices.begin();iter < devices.end(); iter++)
+//    {
+//        if(iter->getInfo<CL_DEVICE_TYPE> ( ) == CL_DEVICE_TYPE_CPU)
+//        {
+//            selectedDevice = *iter;
+//            break;
+//        }
+//    }
+//    ::cl::CommandQueue myQueue( cpuContext, selectedDevice );
+//    bolt::cl::control cpu_ctrl( myQueue );  // construct control structure from the queue.
+//    bolt::cl::device_vector< int > cpuInput( refInput.begin(), refInput.end() );
+//    bolt::cl::device_vector<int>::iterator boltCpuMin=bolt::cl::min_element(cpu_ctrl,cpuInput.begin(),cpuInput.end());
+//
+//    std::vector< int >::iterator stdCpuMin;
+//    //Call reference code
+//    stdCpuMin =  std::min_element( refInput.begin(), refInput.end());
+//
+//
+//    EXPECT_EQ(*boltGpuMin,*stdCpuMin);
+//    EXPECT_EQ(*boltCpuMin,*stdCpuMin);
+//}
 
-    //Call reduce with GPU device because the default is a GPU device
-    bolt::cl::control ctrl = bolt::cl::control::getDefault();
-    bolt::cl::device_vector< int > gpuInput( refInput.begin(), refInput.end() );
-
-    bolt::cl::device_vector< int >::iterator boltGpuMin = bolt::cl::min_element(ctrl,gpuInput.begin(),gpuInput.end());
-
-    //Call reduce with CPU device
-    ::cl::Context cpuContext(CL_DEVICE_TYPE_CPU);
-    std::vector< cl::Device > devices = cpuContext.getInfo< CL_CONTEXT_DEVICES >();
-    cl::Device selectedDevice;
-
-    for(std::vector< cl::Device >::iterator iter = devices.begin();iter < devices.end(); iter++)
-    {
-        if(iter->getInfo<CL_DEVICE_TYPE> ( ) == CL_DEVICE_TYPE_CPU)
-        {
-            selectedDevice = *iter;
-            break;
-        }
-    }
-    ::cl::CommandQueue myQueue( cpuContext, selectedDevice );
-    bolt::cl::control cpu_ctrl( myQueue );  // construct control structure from the queue.
-    bolt::cl::device_vector< int > cpuInput( refInput.begin(), refInput.end() );
-    bolt::cl::device_vector<int>::iterator boltCpuMin=bolt::cl::min_element(cpu_ctrl,cpuInput.begin(),cpuInput.end());
-
-    std::vector< int >::iterator stdCpuMin;
-    //Call reference code
-    stdCpuMin =  std::min_element( refInput.begin(), refInput.end());
-
-
-    EXPECT_EQ(*boltGpuMin,*stdCpuMin);
-    EXPECT_EQ(*boltCpuMin,*stdCpuMin);
-}
-
-TEST( Min_Element , DISABLED_CPU_KcacheTest )
-{
-    //setup containers
-    unsigned int length = 1024;
-    std::vector< int > refInput( length );
-    for( unsigned int i = 0; i < length ; i++ )
-    {
-      refInput[i] = rand();
-    }
-
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
-
-    bolt::cl::device_vector< int > gpuInput( refInput.begin(), refInput.end() );
-    bolt::cl::device_vector< int >::iterator boltGpuMin=bolt::cl::min_element(ctl,gpuInput.begin(),gpuInput.end());
-
-    //Call reduce with CPU device
-    ::cl::Context cpuContext(CL_DEVICE_TYPE_CPU);
-    std::vector< cl::Device > devices = cpuContext.getInfo< CL_CONTEXT_DEVICES >();
-    cl::Device selectedDevice;
-
-    for(std::vector< cl::Device >::iterator iter = devices.begin();iter < devices.end(); iter++)
-    {
-        if(iter->getInfo<CL_DEVICE_TYPE> ( ) == CL_DEVICE_TYPE_CPU)
-        {
-            selectedDevice = *iter;
-            break;
-        }
-    }
-    ::cl::CommandQueue myQueue( cpuContext, selectedDevice );
-    bolt::cl::control cpu_ctrl( myQueue );  // construct control structure from the queue.
-    bolt::cl::device_vector< int > cpuInput( refInput.begin(), refInput.end() );
-    bolt::cl::device_vector<int>::iterator boltCpuMin=bolt::cl::min_element(cpu_ctrl,cpuInput.begin(),cpuInput.end());
-
-    std::vector< int >::iterator stdCpuMin;
-    //Call reference code
-    stdCpuMin =  std::min_element( refInput.begin(), refInput.end());
-
-
-    EXPECT_EQ(*boltGpuMin,*stdCpuMin);
-    EXPECT_EQ(*boltCpuMin,*stdCpuMin);
-}
-
-TEST( Min_Element , DISABLED_MultiCore_KcacheTest )
-{
-    //setup containers
-    unsigned int length = 1024;
-    std::vector< int > refInput( length );
-    for( unsigned int i = 0; i < length ; i++ )
-    {
-      refInput[i] = rand();
-    }
-
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
-
-    bolt::cl::device_vector< int > gpuInput( refInput.begin(), refInput.end() );
-    bolt::cl::device_vector< int >::iterator   boltGpuMin = bolt::cl::min_element(ctl,gpuInput.begin(),gpuInput.end());
-
-
-    //Call reduce with CPU device
-    ::cl::Context cpuContext(CL_DEVICE_TYPE_CPU);
-    std::vector< cl::Device > devices = cpuContext.getInfo< CL_CONTEXT_DEVICES >();
-    cl::Device selectedDevice;
-
-    for(std::vector< cl::Device >::iterator iter = devices.begin();iter < devices.end(); iter++)
-    {
-        if(iter->getInfo<CL_DEVICE_TYPE> ( ) == CL_DEVICE_TYPE_CPU)
-        {
-            selectedDevice = *iter;
-            break;
-        }
-    }
-    ::cl::CommandQueue myQueue( cpuContext, selectedDevice );
-    bolt::cl::control cpu_ctrl( myQueue );  // construct control structure from the queue.
-
-    bolt::cl::device_vector< int > cpuInput( refInput.begin(), refInput.end() );
-    bolt::cl::device_vector<int>::iterator boltCpuMin=bolt::cl::min_element(cpu_ctrl,cpuInput.begin(),cpuInput.end());
-
-
-    //Call reference code
-    std::vector< int >::iterator stdCpuMin =  std::min_element( refInput.begin(), refInput.end());
-
-    EXPECT_EQ(*boltGpuMin,*stdCpuMin);
-    EXPECT_EQ(*boltCpuMin,*stdCpuMin);
-}
+//TEST( Min_Element , DISABLED_CPU_KcacheTest )
+//{
+//    //setup containers
+//    unsigned int length = 1024;
+//    std::vector< int > refInput( length );
+//    for( unsigned int i = 0; i < length ; i++ )
+//    {
+//      refInput[i] = rand();
+//    }
+//
+//    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+//    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+//    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+//
+//    bolt::cl::device_vector< int > gpuInput( refInput.begin(), refInput.end() );
+//    bolt::cl::device_vector< int >::iterator boltGpuMin=bolt::cl::min_element(ctl,gpuInput.begin(),gpuInput.end());
+//
+//    //Call reduce with CPU device
+//    ::cl::Context cpuContext(CL_DEVICE_TYPE_CPU);
+//    std::vector< cl::Device > devices = cpuContext.getInfo< CL_CONTEXT_DEVICES >();
+//    cl::Device selectedDevice;
+//
+//    for(std::vector< cl::Device >::iterator iter = devices.begin();iter < devices.end(); iter++)
+//    {
+//        if(iter->getInfo<CL_DEVICE_TYPE> ( ) == CL_DEVICE_TYPE_CPU)
+//        {
+//            selectedDevice = *iter;
+//            break;
+//        }
+//    }
+//    ::cl::CommandQueue myQueue( cpuContext, selectedDevice );
+//    bolt::cl::control cpu_ctrl( myQueue );  // construct control structure from the queue.
+//    bolt::cl::device_vector< int > cpuInput( refInput.begin(), refInput.end() );
+//    bolt::cl::device_vector<int>::iterator boltCpuMin=bolt::cl::min_element(cpu_ctrl,cpuInput.begin(),cpuInput.end());
+//
+//    std::vector< int >::iterator stdCpuMin;
+//    //Call reference code
+//    stdCpuMin =  std::min_element( refInput.begin(), refInput.end());
+//
+//
+//    EXPECT_EQ(*boltGpuMin,*stdCpuMin);
+//    EXPECT_EQ(*boltCpuMin,*stdCpuMin);
+//}
+//
+//TEST( Min_Element , DISABLED_MultiCore_KcacheTest )
+//{
+//    //setup containers
+//    unsigned int length = 1024;
+//    std::vector< int > refInput( length );
+//    for( unsigned int i = 0; i < length ; i++ )
+//    {
+//      refInput[i] = rand();
+//    }
+//
+//    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+//    bolt::cl::control ctl = bolt::cl::control::getDefault( );
+//    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+//
+//    bolt::cl::device_vector< int > gpuInput( refInput.begin(), refInput.end() );
+//    bolt::cl::device_vector< int >::iterator   boltGpuMin = bolt::cl::min_element(ctl,gpuInput.begin(),gpuInput.end());
+//
+//
+//    //Call reduce with CPU device
+//    ::cl::Context cpuContext(CL_DEVICE_TYPE_CPU);
+//    std::vector< cl::Device > devices = cpuContext.getInfo< CL_CONTEXT_DEVICES >();
+//    cl::Device selectedDevice;
+//
+//    for(std::vector< cl::Device >::iterator iter = devices.begin();iter < devices.end(); iter++)
+//    {
+//        if(iter->getInfo<CL_DEVICE_TYPE> ( ) == CL_DEVICE_TYPE_CPU)
+//        {
+//            selectedDevice = *iter;
+//            break;
+//        }
+//    }
+//    ::cl::CommandQueue myQueue( cpuContext, selectedDevice );
+//    bolt::cl::control cpu_ctrl( myQueue );  // construct control structure from the queue.
+//
+//    bolt::cl::device_vector< int > cpuInput( refInput.begin(), refInput.end() );
+//    bolt::cl::device_vector<int>::iterator boltCpuMin=bolt::cl::min_element(cpu_ctrl,cpuInput.begin(),cpuInput.end());
+//
+//
+//    //Call reference code
+//    std::vector< int >::iterator stdCpuMin =  std::min_element( refInput.begin(), refInput.end());
+//
+//    EXPECT_EQ(*boltGpuMin,*stdCpuMin);
+//    EXPECT_EQ(*boltCpuMin,*stdCpuMin);
+//}
 
 
 int _tmain(int argc, _TCHAR* argv[])
 {
     int numIters = 100;
-
+#if 0
     //NON_GTEST
     testDeviceVector();
     Minele_TestControl(1024000, numIters, 0);
@@ -1171,12 +1407,12 @@ int _tmain(int argc, _TCHAR* argv[])
     Minele_TestControl(100, 1, 0);
     simpleReduce_TestSerial(1000);
     simpleMinele_countingiterator(20,10);
-
+#endif
     //GTEST
     ::testing::InitGoogleTest( &argc, &argv[ 0 ] );
 
     //  Register our minidump generating logic
-    bolt::miniDumpSingleton::enableMiniDumps( );
+//    bolt::miniDumpSingleton::enableMiniDumps( );
 
     int retVal = RUN_ALL_TESTS( );
 

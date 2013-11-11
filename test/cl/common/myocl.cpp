@@ -18,9 +18,10 @@
 #include <iostream>
 #include <fstream>
 #include <algorithm>
-#include <tchar.h>
 
+#include <bolt/unicode.h>
 #include "myocl.h"
+
 
 void  CHECK_OPENCL_ERROR(cl_int err, const char * name)
 {
@@ -149,12 +150,18 @@ cl::Kernel compileKernelCpp(const MyOclContext &ocl, const char *kernelFile, con
 		std::ifstream infile(kernelFile);
 		if (infile.fail()) {
 			TCHAR cCurrentPath[FILENAME_MAX];
-			if (_tgetcwd(cCurrentPath, sizeof(cCurrentPath) / sizeof(TCHAR))) {
+#if defined(_WIN32)
+			if (_tgetcwd(cCurrentPath, sizeof(cCurrentPath) / sizeof(TCHAR)))
+#else
+			if (getcwd(cCurrentPath, sizeof(cCurrentPath) / sizeof(TCHAR))) 
+#endif
+			{
 				std::wcout <<  _T( "CWD=" ) << cCurrentPath << std::endl;
 			};
 			std::cout << "ERROR: can't open file '" << kernelFile << std::endl;
 			throw;
 		};
+
 		std::string str((std::istreambuf_iterator<char>(infile)), std::istreambuf_iterator<char>());
 
 		const char* kStr = str.c_str();

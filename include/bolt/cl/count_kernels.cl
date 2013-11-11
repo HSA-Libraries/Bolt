@@ -66,6 +66,8 @@ kernel void count_Template(
 
     // Parallel reduction within a given workgroup using local data store
     // to share values between workitems
+    _REDUCE_STEP(tail, local_index, 128);
+    _REDUCE_STEP(tail, local_index, 64);
     _REDUCE_STEP(tail, local_index, 32);
     _REDUCE_STEP(tail, local_index, 16);
     _REDUCE_STEP(tail, local_index,  8);

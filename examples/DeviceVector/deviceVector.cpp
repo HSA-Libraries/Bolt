@@ -15,8 +15,7 @@
 
 ***************************************************************************/                                                                                     
 
-#include "stdafx.h"
-
+#include <bolt/unicode.h>
 #include <bolt/cl/device_vector.h>
 
 int _tmain( int argc, _TCHAR* argv[ ] )

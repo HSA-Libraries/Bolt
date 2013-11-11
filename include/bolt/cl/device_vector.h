@@ -27,7 +27,7 @@
 #include <numeric>
 #include "bolt/cl/bolt.h"
 #include "bolt/cl/iterator/iterator_traits.h"
-
+#include <iostream>
 #include <boost/iterator/iterator_facade.hpp>
 #include <boost/iterator/reverse_iterator.hpp>
 #include <boost/shared_array.hpp>
@@ -51,7 +51,8 @@ namespace cl
 
         /*! \addtogroup CL-Device
         *   \ingroup Containers
-        *   Containers that guarantee sequential and linear access to memory "close" to the device
+        *   Containers that guarantee random access to a flat, sequential region of memory that is performant
+        *   for the device.
         */
 
     struct device_vector_tag
@@ -60,7 +61,7 @@ namespace cl
         };
 
         /*! \brief This defines the OpenCL version of a device_vector
-        *   \ingroup Device
+        *   \ingroup CL-Device
         *   \details A device_vector is an abstract data type that provides random access to a flat, sequential region of memory that is performant
         *   for the device.  This can imply different memories for different devices.  For discrete class graphics,
         *   devices, this is most likely video memory; for APU devices, this can imply zero-copy memory; for CPU devices, this can imply
@@ -118,8 +119,10 @@ namespace cl
             class reference_base
             {
             public:
-                reference_base( Container& rhs, size_type index ): m_Container( rhs ), m_Index( index )
+                reference_base(Container &rhs, size_type index ): m_Container( rhs ), m_Index( index )
                 {}
+
+
 
                 //  Automatic type conversion operator to turn the reference object into a value_type
                 operator value_type( ) const
@@ -173,17 +176,17 @@ namespace cl
 
             /*! \brief Typedef to create the non-constant reference.
             */
-            typedef typename reference_base< device_vector< value_type > > reference;
+            typedef  reference_base< device_vector< value_type > > reference;
 
             /*! \brief A non-writeable copy of an element of the container.
             *   Constant references are optimized to return a value_type, since it is certain that
             *   the value will not be modified
             *   \note A const_reference actually returns a value, not a reference.
             */
-            typedef typename const value_type const_reference;
+            typedef const value_type const_reference;
 
             //  Handy for the reference class to get at the wrapped ::cl objects
-            friend class reference;
+            //friend class reference;
 
             /*! \brief Base class provided to encapsulate all the common functionality for constant
             *   and non-constant iterators.
@@ -200,7 +203,11 @@ namespace cl
             typename device_vector::reference, int >
             {
             public:
-                typedef typename iterator_facade::difference_type difference_type;
+            typedef typename boost::iterator_facade< iterator_base< Container >, value_type, device_vector_tag, 
+            typename device_vector::reference, int >::difference_type difference_type;
+
+
+                //typedef iterator_facade::difference_type difference_type;
 
                 //  This class represents the iterator data transferred to the openCL device.  Transferring pointers is tricky,
                 //  the only reason we allocate space for a pointer in this payload is because the openCl clSetKernelArg() checks the
@@ -211,16 +218,17 @@ namespace cl
                 //  sizeof( 64bit device payload ) = 32bit index & 64bit aligned pointer = 16 bytes
                 struct Payload
                 {
-                    typename iterator_facade::difference_type m_Index;
-                    typename iterator_facade::difference_type m_Ptr1[ 3 ];  // Represents device pointer, big enough for 32 or 64bit
+                    difference_type m_Index;
+                    difference_type m_Ptr1[ 3 ];  // Represents device pointer, big enough for 32 or 64bit
                 };
+
                 
                 //  Basic constructor requires a reference to the container and a positional element
                 iterator_base( ): m_Container( getContainer() ), m_Index( 0 )
                 {}
 
                 //  Basic constructor requires a reference to the container and a positional element
-                iterator_base( Container& rhs, typename iterator_facade::difference_type index ): m_Container( rhs ), m_Index( index )
+                iterator_base( Container& rhs, difference_type index ): m_Container( rhs ), m_Index( index )
                 {}
 
                 //  This copy constructor allows an iterator to convert into a const_iterator, but not vica versa
@@ -230,20 +238,20 @@ namespace cl
 
                 //  This copy constructor allows an iterator to convert into a const_iterator, but not vica versa
                 //template< typename Container >
-                iterator_base< Container >& operator= ( const iterator_base< Container >& rhs )
+                iterator_base< Container >& operator = ( const iterator_base< Container >& rhs )
                 {
                     m_Container = rhs.m_Container;
                     m_Index = rhs.m_Index;
                     return *this;
                 }
     
-                iterator_base< Container >& operator+= ( const typename iterator_facade::difference_type & n )
+                iterator_base< Container > & operator+= ( const difference_type & n )
                 {
                     advance( n );
                     return *this;
                 }
 
-                iterator_base< Container >& operator= ( const typename iterator_facade::difference_type & n )
+                iterator_base< Container >& operator = ( const difference_type & n )
                 {
                     advance( n );
                     return *this;
@@ -251,7 +259,7 @@ namespace cl
                 
 
                 
-                const iterator_base< Container > operator+ ( const typename iterator_facade::difference_type & n ) const
+                const iterator_base< Container > operator + ( const difference_type & n ) const
                 {
                     iterator_base< Container > result(*this);
                     result.advance(n);
@@ -265,7 +273,7 @@ namespace cl
 
                 //  This method initializes the payload of the iterator for the cl device; the contents of the pointer is 0 as it has no relevance
                 //  on the host
-                Payload gpuPayload( ) const
+                const Payload  gpuPayload( ) const
                 {
                     Payload payload = { m_Index, { 0, 0, 0 } };
                     return payload;
@@ -274,13 +282,16 @@ namespace cl
                 //  Calculates the size of payload for the cl device.  The bitness of the device is independant of the host and must be 
                 //  queried.  The bitness of the device determines the size of the pointer contained in the payload.  64bit pointers must
                 //  be 8 byte aligned, so 
-                const typename iterator_facade::difference_type gpuPayloadSize( ) const
+                const difference_type gpuPayloadSize( ) const
                 {
                     cl_int l_Error = CL_SUCCESS;
-                    cl_uint deviceBits = m_Container.m_commQueue.getInfo< CL_QUEUE_DEVICE >( &l_Error ).getInfo< CL_DEVICE_ADDRESS_BITS >( );
+		    ::cl::Device which_device;
+		   l_Error  = m_Container.m_commQueue.getInfo(CL_QUEUE_DEVICE,&which_device );	
+                   
+		  cl_uint deviceBits = which_device.getInfo< CL_DEVICE_ADDRESS_BITS >( );
 
                     //  Size of index and pointer
-                    typename iterator_facade::difference_type payloadSize = sizeof( iterator_facade::difference_type ) + ( deviceBits >> 3 );
+                    difference_type payloadSize = sizeof( difference_type ) + ( deviceBits >> 3 );
 
                     //  64bit devices need to add padding for 8 byte aligned pointer
                     if( deviceBits == 64 )
@@ -290,12 +301,15 @@ namespace cl
 
                 }
 
-                typename iterator_facade::difference_type m_Index;
+                difference_type m_Index;
                 difference_type distance_to( const iterator_base< Container >& rhs ) const
                 {
-                    return static_cast< typename iterator_facade::difference_type >( rhs.m_Index - m_Index );
+                    return static_cast< difference_type >( rhs.m_Index - m_Index );
                 }
             private:
+
+		
+                //  Payload payload;
                 //  Implementation detail of boost.iterator
                 friend class boost::iterator_core_access;
 
@@ -305,7 +319,7 @@ namespace cl
                 //  Used for templatized copy constructor and the templatized equal operator
                 template < typename > friend class iterator_base;
 
-                void advance( typename iterator_facade::difference_type n )
+                void advance( difference_type n )
                 {
                     m_Index += n;
                 }
@@ -381,6 +395,16 @@ namespace cl
                     result.advance(-n);
                     return result;
                 }
+#if !defined(_WIN32) && defined(__x86_64__)
+               const reverse_iterator_base< Container > operator+ ( const int & n ) const
+                {
+                    reverse_iterator_base< Container > result(*this);
+                    result.advance(-n);
+                    return result;
+                }
+#endif
+
+
 
                 int getIndex() const
                 {
@@ -528,9 +552,16 @@ namespace cl
                               bolt::cl::wait( ctl, fill_mapEvent );
 
                               // Use serial fill_n to fill the device_vector with value
+#if defined(_WIN32)
                               std::fill_n( stdext::make_checked_array_iterator( host_buffer, newSize ),
                                            newSize,
                                            value );
+#else
+                              std::fill_n( host_buffer,
+                                           newSize,
+                                           value );
+#endif
+
 
                               // Unmap the buffer
                               l_Error = ctl.getCommandQueue( ).enqueueUnmapMemObject( m_devMemory,
@@ -612,7 +643,7 @@ namespace cl
                             m_devMemory, CL_TRUE, CL_MEM_WRITE_ONLY, 0, byteSize, 0, 0, &l_Error) );
                         V_OPENCL( l_Error, "enqueueMapBuffer failed in device_vector constructor" );
 #if (_WIN32)
-                        std::copy( begin, begin + m_Size, stdext::checked_array_iterator< naked_pointer >( pointer, m_Size ) );
+                        std::copy( begin, begin + m_Size,  stdext::checked_array_iterator< naked_pointer >( pointer, m_Size )  );
 #else
                         std::copy( begin, begin + m_Size, pointer );
 #endif
@@ -665,7 +696,7 @@ namespace cl
                         m_devMemory, CL_TRUE, CL_MEM_WRITE_ONLY, 0, byteSize, 0, 0, &l_Error) );
                     V_OPENCL( l_Error, "enqueueMapBuffer failed in device_vector constructor" );
 #if (_WIN32)
-                    std::copy( begin, end, stdext::checked_array_iterator< naked_pointer >( pointer, m_Size ) );
+                    std::copy( begin, end,  stdext::checked_array_iterator< naked_pointer >( pointer, m_Size ) );
 #else
                     std::copy( begin, end, pointer );
 #endif
@@ -714,7 +745,7 @@ namespace cl
 
                 m_Flags         = rhs.m_Flags;
                 m_commQueue     = rhs.m_commQueue;
-                m_Size          = 0;
+                m_Size        = capacity( );
 
                 //  This method will set the m_Size member variable upon successful completion
                 resize( rhs.m_Size );
@@ -821,9 +852,16 @@ namespace cl
                           fill_mapEvent.wait( );
 
                           // Use serial fill_n to fill the device_vector with value
-                          std::fill_n( stdext::make_checked_array_iterator( host_buffer, reqSize ),
+#if defined(_WIN32)
+                       std::fill_n( stdext::make_checked_array_iterator( host_buffer , reqSize ),
+                                    reqSize,
+                                    val );
+#else
+                          std::fill_n( host_buffer,
                                        (reqSize - m_Size),
                                        val );
+#endif
+
 
                           // Unmap the buffer
                           l_Error = m_commQueue.enqueueUnmapMemObject( l_tmpBuffer,
@@ -874,9 +912,15 @@ namespace cl
                        fill_mapEvent.wait( );
 
                        // Use serial fill_n to fill the device_vector with value
+#if defined(_WIN32)
                        std::fill_n( stdext::make_checked_array_iterator( host_buffer , reqSize ),
                                     reqSize,
                                     val );
+#else
+                       std::fill_n(  host_buffer,
+                                    reqSize,
+                                    val );
+#endif
 
                        // Unmap the buffer
                        l_Error = m_commQueue.enqueueUnmapMemObject( l_tmpBuffer,
@@ -1212,6 +1256,11 @@ namespace cl
 
             pointer data( void )
             {
+                if(0 == size())
+                {
+                    pointer sp;
+                    return sp;
+                }
                 cl_int l_Error = CL_SUCCESS;
 
                 naked_pointer ptrBuff = reinterpret_cast< naked_pointer >( m_commQueue.enqueueMapBuffer( m_devMemory, true, CL_MAP_READ | CL_MAP_WRITE,
@@ -1355,7 +1404,7 @@ namespace cl
                 --m_Size;
 
             size_type newIndex = (m_Size < index.m_Index) ? m_Size : index.m_Index;
-                return iterator( *this, static_cast< iterator::difference_type >( newIndex ) );
+                return iterator( *this, static_cast< difference_type >( newIndex ) );
             }
 
             /*! \brief Removes a range of elements.
@@ -1526,7 +1575,7 @@ namespace cl
                 ::memmove( ptrBuff + n, ptrBuff, (sizeMap - n)*sizeof( value_type ) );
 
 #if( _WIN32 )
-                std::copy( begin, end, stdext::checked_array_iterator< naked_pointer >( ptrBuff, n ) );
+                std::copy( begin, end, stdext::checked_array_iterator< naked_pointer >( ptrBuff, n )  );
 #else
                 std::copy( begin, end, ptrBuff );
 #endif
@@ -1586,7 +1635,7 @@ namespace cl
                   fill_mapEvent.wait( );
 
                   // Use serial fill_n to fill the device_vector with value
-                  std::fill_n( stdext::make_checked_array_iterator( host_buffer, newSize ),
+                  std::fill_n(  host_buffer ,
                                newSize,
                                value );
 
@@ -1615,8 +1664,7 @@ namespace cl
 #else
             template<typename InputIterator>
             typename std::enable_if< !std::is_same< typename std::iterator_traits<InputIterator >::value_type,
-                                       typename size_type
-                                     >::value, void>::type
+                                       size_type >::value, void>::type
             assign( InputIterator begin, InputIterator end )
 #endif
             {
@@ -1634,7 +1682,7 @@ namespace cl
                 V_OPENCL( l_Error, "device_vector failed map device memory to host memory for push_back" );
 
 #if( _WIN32 )
-                std::copy( begin, end, stdext::checked_array_iterator< naked_pointer >( ptrBuffer, m_Size ) );
+                std::copy( begin, end,  stdext::checked_array_iterator< naked_pointer >( ptrBuffer, m_Size ) );
 #else
                 std::copy( begin, end, ptrBuffer );
 #endif

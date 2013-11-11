@@ -31,7 +31,13 @@ message( STATUS "Doxygen_Version: " ${Doxygen_Version} )
 if( DEFINED ENV{DOXYGEN_URL} )
     set( ext.Doxygen_URL "$ENV{DOXYGEN_URL}" CACHE STRING "URL to download Doxygen from" )
 else( )
-    set( ext.Doxygen_URL "http://ftp.stack.nl/pub/users/dimitri/doxygen-${Doxygen_Version}.windows.bin.zip" CACHE STRING "URL to download Doxygen from" )
+   if( UNIX)
+	  set( ext.Doxygen_URL "http://ftp.stack.nl/pub/users/dimitri/doxygen-${Doxygen_Version}.linux.bin.tar.gz" CACHE STRING "URL to download Doxygen from" )	
+	set( MD5_VAL 0459371bf621ffaaaafb6d0f35848317)
+   else()	
+	    set( ext.Doxygen_URL "http://ftp.stack.nl/pub/users/dimitri/doxygen-${Doxygen_Version}.windows.bin.zip" CACHE STRING "URL to download Doxygen from" )
+	set( MD5_VAL 6cad0f8af783eb92b64aae3da8a7be35)	 	
+   endif()
 endif( )
 
 mark_as_advanced( ext.Doxygen_URL )
@@ -41,7 +47,7 @@ ExternalProject_Add(
     Doxygen
 	PREFIX ${CMAKE_CURRENT_BINARY_DIR}/external/Doxygen
     URL ${ext.Doxygen_URL}
-	URL_MD5 6cad0f8af783eb92b64aae3da8a7be35
+	URL_MD5 ${MD5_VAL}
     UPDATE_COMMAND ""
 #    PATCH_COMMAND ""
 	CONFIGURE_COMMAND ""
@@ -55,6 +61,10 @@ set_property( TARGET Doxygen PROPERTY FOLDER "Externals")
 ExternalProject_Get_Property( Doxygen source_dir )
 ExternalProject_Get_Property( Doxygen binary_dir )
 
+if(UNIX)
+set( DOXYGEN_EXECUTABLE ${binary_dir}/doxygen )
+else()
 set( DOXYGEN_EXECUTABLE ${binary_dir}/doxygen.exe )
+endif()
 # set( Doxygen_INCLUDE_DIRS ${source_dir} )
 # set( Doxygen_LIBRARIES debug;${binary_dir}/stage/lib/libDoxygen_program_options-vc110-mt-gd-1_49.lib;optimized;${binary_dir}/stage/lib/libDoxygen_program_options-vc110-mt-1_49.lib )

@@ -17,10 +17,16 @@
 
 # List the names of common files to compile across all platforms
 
-set( clBolt.Test.MinElement.Source MinElementTest.cpp MinElementDeviceVector.cpp ${BOLT_CL_TEST_DIR}/common/myocl.cpp) 
+set( clBolt.Test.MinElement.Source MinElementTest.cpp  ${BOLT_CL_TEST_DIR}/common/myocl.cpp) 
 set( clBolt.Test.MinElement.Headers ${BOLT_CL_TEST_DIR}/common/myocl.h ${BOLT_INCLUDE_DIR}/bolt/cl/min_element.h ${BOLT_INCLUDE_DIR}/bolt/cl/detail/min_element.inl)
 
 set( clBolt.Test.MinElement.Files ${clBolt.Test.MinElement.Source} ${clBolt.Test.MinElement.Headers} )
+
+# Set project specific compile and link options
+if( MSVC )
+    set( CMAKE_CXX_FLAGS "-bigobj ${CMAKE_CXX_FLAGS}" )
+    set( CMAKE_C_FLAGS "-bigobj ${CMAKE_C_FLAGS}" )
+endif()
 
 add_executable( clBolt.Test.MinElement ${clBolt.Test.MinElement.Files} )
 target_link_libraries( clBolt.Test.MinElement clBolt.Runtime ${OPENCL_LIBRARIES} ${GTEST_LIBRARIES} ${Boost_LIBRARIES} ${TBB_LIBRARIES} )

@@ -208,6 +208,8 @@ echo Info: Running CMake to generate build files.
   -D BUILD_StripSymbols=ON ^
   -D BUILD_TBB=ON ^
   -D Bolt.SuperBuild_VERSION_PATCH=%BOLT_BUILD_VERSION_PATCH% ^
+  -D Bolt.SuperBuild_VERSION_MAJOR=%BOLT_BUILD_VERSION_MAJOR% ^
+  -D Bolt.SuperBuild_VERSION_MINOR=%BOLT_BUILD_VERSION_MINOR% ^
   %BOLT_BUILD_SOURCE_PATH%\superbuild
 if errorlevel 1 (
   echo Info: CMake failed.

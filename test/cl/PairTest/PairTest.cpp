@@ -122,6 +122,8 @@ class PairOperators : public ::testing::Test
 
     }
 
+
+
 };
 
 
@@ -147,10 +149,11 @@ TYPED_TEST(ValuePair, IntegerIntegerPair)
     //!= op
     EXPECT_EQ(true, this->y.second != this->x.first);
 
-    EXPECT_EQ(this->x, ValueMakePair(10,20));
+    EXPECT_EQ(this->x, ValuePair< gtest_TypeParam_ >::ValueMakePair(10,20));
 
 
 }
+
 TYPED_TEST(ConstructPair, ConstructPair)
 {
     // Inits
@@ -171,11 +174,12 @@ TYPED_TEST(ConstructPair, ConstructPair)
 
     sp.first = 10;
     sp.second = 20;
-    DoPair(sp);
+    ConstructPair< gtest_TypeParam_ >::DoPair(sp);
     EXPECT_EQ(this->x.first,  sp.first );
     EXPECT_EQ(this->y.second, sp.second);
     
 }
+
 
 TYPED_TEST(PairOperators, OperatorTests)
 {
@@ -188,12 +192,12 @@ TYPED_TEST(PairOperators, OperatorTests)
     EXPECT_EQ(false, this->y < this->x);
     
     
-    MakeXLess();
+    PairOperators< gtest_TypeParam_ >::MakeXLess();
     //std::cout<<(this->x<this->y)<<" Here"<<std::endl;
     EXPECT_EQ(true,  this->x < this->y);
     EXPECT_EQ(false, this->y < this->x);
     
-    MakeYLess();
+    PairOperators< gtest_TypeParam_ >::MakeYLess();
     //std::cout<<(this->x<this->y)<<" Here"<<std::endl;
     EXPECT_EQ(true,  this->x > this->y);
     EXPECT_EQ(false, this->y > this->x);
@@ -203,28 +207,28 @@ TYPED_TEST(PairOperators, OperatorTests)
     EXPECT_EQ(true, this->y != this->x);
 
     // <=
-    MakeXYEqual();
+    PairOperators< gtest_TypeParam_ >::MakeXYEqual();
     EXPECT_EQ(true, this->x <= this->y);
     EXPECT_EQ(true, this->y <= this->x);
 
-    MakeYLess();
-    EXPECT_EQ(false, this->x <= y);
+    PairOperators< gtest_TypeParam_ >::MakeYLess();
+    EXPECT_EQ(false, this->x <= PairOperators< gtest_TypeParam_ >::y);
 
     EXPECT_EQ(false, this-> x <= this->y);
     EXPECT_EQ(true,  this-> y <= this->x);
 
     // >=
-    MakeXYEqual();
+   PairOperators< gtest_TypeParam_ >::MakeXYEqual();
     EXPECT_EQ(true, this-> x >=  this->y);
     EXPECT_EQ(true, this-> y >=  this->x);
 
-    MakeYLess();
-    EXPECT_EQ(true,  x >= y);
-    EXPECT_EQ(false, y >= x);
+    PairOperators< gtest_TypeParam_ >::MakeYLess();
+    EXPECT_EQ(true,  PairOperators< gtest_TypeParam_ >::x >= PairOperators< gtest_TypeParam_ >::y);
+    EXPECT_EQ(false, PairOperators< gtest_TypeParam_ >::y >= PairOperators< gtest_TypeParam_ >::x);
 
-    MakeXLess();
-    EXPECT_EQ(false,  x >= y);
-    EXPECT_EQ(true, y >= x);
+    PairOperators< gtest_TypeParam_ >::MakeXLess();
+    EXPECT_EQ(false,  PairOperators< gtest_TypeParam_ >::x >= PairOperators< gtest_TypeParam_ >::y);
+    EXPECT_EQ(true, PairOperators< gtest_TypeParam_ >::y >= PairOperators< gtest_TypeParam_ >::x);
 
 }
 

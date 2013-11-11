@@ -17,7 +17,7 @@
 
 # List the names of common files to compile across all platforms
 set( clBolt.Example.Transform.Source Transform.cpp )
-set( clBolt.Example.Transform.Headers ${BOLT_INCLUDE_DIRS}/bolt/cl/transform.h ${BOLT_INCLUDE_DIRS}/bolt/cl/detail/transform.inl )
+set( clBolt.Example.Transform.Headers ${BOLT_INCLUDE_DIRS}/bolt/cl/transform.h)
 
 set( clBolt.Example.Transform.Files ${clBolt.Example.Transform.Source} ${clBolt.Example.Transform.Headers} )
 

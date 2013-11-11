@@ -25,7 +25,7 @@
 #define NOMINMAX
 #include "targetver.h"
 
-#include <tchar.h>
+#include <bolt/unicode.h>
 #include <algorithm>
 #include <iomanip>
 

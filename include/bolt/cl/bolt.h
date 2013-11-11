@@ -68,20 +68,28 @@
 namespace bolt {
     namespace cl {
 
+        extern const std::string binary_search_kernels;
         extern const std::string copy_kernels;
         extern const std::string count_kernels;
         extern const std::string fill_kernels;
+        extern const std::string gather_kernels;
         extern const std::string generate_kernels;
+        extern const std::string merge_kernels;
         extern const std::string min_element_kernels;
         extern const std::string reduce_kernels;
         extern const std::string reduce_by_key_kernels;
         extern const std::string scan_kernels;
         extern const std::string scan_by_key_kernels;
+        extern const std::string scatter_kernels;
         extern const std::string sort_kernels;
         extern const std::string stablesort_kernels;
         extern const std::string stablesort_by_key_kernels;
         extern const std::string sort_uint_kernels;
+        extern const std::string sort_int_kernels;
+        extern const std::string sort_common_kernels;
         extern const std::string sort_by_key_kernels;
+        extern const std::string sort_by_key_int_kernels;
+        extern const std::string sort_by_key_uint_kernels;
         extern const std::string transform_kernels;
         extern const std::string transform_reduce_kernels;
         extern const std::string transform_scan_kernels;
@@ -97,7 +105,7 @@ namespace bolt {
         {
             public:
                 // kernel template specializer functor
-                virtual const ::std::string operator() (const ::std::vector<::std::string>& typeNames) const
+                virtual const ::std::string operator() (const ::std::vector< ::std::string >& typeNames) const
                 { return "Error; virtual function not overloaded"; }
 
                 // add a kernel name
@@ -110,10 +118,10 @@ namespace bolt {
                 size_t numKernels() const { return kernelNames.size(); }
 
                 // kernel vector
-                const ::std::vector<::std::string> getKernelNames() const { return kernelNames; }
+                const ::std::vector< ::std::string > getKernelNames() const { return kernelNames; }
 
             public:
-                ::std::vector<std::string> kernelNames;
+                ::std::vector< ::std::string > kernelNames;
         };
 
         class control;
@@ -128,11 +136,11 @@ namespace bolt {
          * previously compiled.
          * see bolt/cl/detail/scan.inl for example usage
          **********************************************************************/
-        ::std::vector<::cl::Kernel> getKernels(
+        ::std::vector< ::cl::Kernel > getKernels(
             const control&      ctl,
-            const ::std::vector<::std::string>& typeNames,
+            const ::std::vector< ::std::string >& typeNames,
             const KernelTemplateSpecializer * const kts,
-            const ::std::vector<::std::string>& typeDefinitions,
+            const ::std::vector< ::std::string >& typeDefinitions,
             const std::string&  baseKernelString,
             const std::string&  compileOptions = ""
                  );

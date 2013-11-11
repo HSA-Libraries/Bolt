@@ -20,7 +20,9 @@
 #define TEST_CPU_DEVICE 1
 
 #pragma warning(disable: 4244) // Disabling possible loss of data warning
+#if defined (_WIN32)
 #include <xutility>
+#endif
 
 #include "bolt/cl/iterator/counting_iterator.h"
 
@@ -97,6 +99,8 @@ static const int lengths[24] = {
 //static const int numLengths = 1;
 //static const int lengths[1] = {13};
 
+
+
 template< size_t N >
 class TypeValue
 {
@@ -104,85 +108,6 @@ public:
     static const size_t value = N;
 };
 
-template< typename ArrayTuple >
-class CopyArrayTest: public ::testing::Test
-{
-public:
-    CopyArrayTest( ): m_Errors( 0 )
-    {}
-
-    virtual void SetUp( )
-    {
-        std::generate(stdInput.begin(), stdInput.end(), rand);
-        boltInput = stdInput;
-        stdOffsetIn = stdInput;
-        boltOffsetIn = stdInput;
-    };
-
-    virtual void TearDown( )
-    {};
-
-    virtual ~CopyArrayTest( )
-    {}
-
-protected:
-    typedef typename std::tuple_element< 0, ArrayTuple >::type ArrayType;
-    static const size_t ArraySize = typename std::tuple_element< 1, ArrayTuple >::type::value;
-    std::array< ArrayType, ArraySize > stdInput, boltInput, stdOffsetIn, boltOffsetIn;
-    std::array< ArrayType, ArraySize > stdOutput, boltOutput, stdOffsetOut, boltOffsetOut;
-    int m_Errors;
-};
-
-TYPED_TEST_CASE_P( CopyArrayTest );
-
-
-#if (TEST_CPU_DEVICE == 1)
-TYPED_TEST_P( CopyArrayTest,CPU_DeviceNormal )
-{
-    typedef std::array< ArrayType, ArraySize > ArrayCont;
-
-    MyOclContext oclcpu = initOcl(CL_DEVICE_TYPE_CPU, 0);
-    bolt::cl::control c_cpu(oclcpu._queue);  // construct control structure from the queue.
-
-    //  Calling the actual functions under test
-    std::copy( stdInput.begin( ), stdInput.end( ), stdOutput.begin() );
-    bolt::cl::copy( c_cpu, boltInput.begin( ), boltInput.end( ) , boltOutput.begin());
-
-    ArrayCont::difference_type stdNumElements = std::distance( stdOutput.begin( ), stdOutput.end() );
-    ArrayCont::difference_type boltNumElements = std::distance( boltOutput.begin( ), boltOutput.end() );
-
-    //  Both collections should have the same number of elements
-    EXPECT_EQ( stdNumElements, boltNumElements );
-
-    //  Loop through the array and compare all the values with each other
-    cmpStdArray< ArrayType, ArraySize >::cmpArrays( stdOutput, boltOutput );
-    
-    //OFFSET Test cases
-    //  Calling the actual functions under test
-    size_t startIndex = 17; //Some aribitrary offset position
-    size_t endIndex   = ArraySize - 17; //Some aribitrary offset position
-    if( (( startIndex > ArraySize ) || ( endIndex < 0 ) )  || (startIndex > endIndex) )
-    {
-        std::cout <<"\nSkipping NormalOffset Test for size "<< ArraySize << "\n";
-    }    
-    else
-    {
-        std::copy( stdOffsetIn.begin( ) + startIndex, stdOffsetIn.begin( ) + endIndex, stdOffsetOut.begin() );
-        bolt::cl::copy( c_cpu, boltOffsetIn.begin( ) + startIndex, boltOffsetIn.begin( ) + endIndex, boltOffsetOut.begin() );
-
-        ArrayCont::difference_type stdNumElements = std::distance( stdOffsetOut.begin( ), stdOffsetOut.end( ) );
-        ArrayCont::difference_type boltNumElements = std::distance(  boltOffsetOut.begin( ),  boltOffsetOut.end( ) );
-
-        //  Both collections should have the same number of elements
-        EXPECT_EQ( stdNumElements, boltNumElements );
-
-        //  Loop through the array and compare all the values with each other
-        cmpStdArray< ArrayType, ArraySize >::cmpArrays(  stdOffsetOut,  boltOffsetOut );
-    }
-}
-
-REGISTER_TYPED_TEST_CASE_P( CopyArrayTest, CPU_DeviceNormal);
-#endif
 
 typedef ::testing::Types< 
     std::tuple< cl_long, TypeValue< 1 > >,
@@ -320,6 +245,101 @@ typedef ::testing::Types<
 > DoubleTests;
 #endif 
 
+template< typename ArrayTuple >
+class CopyArrayTest: public ::testing::Test
+{
+public:
+    CopyArrayTest( ): m_Errors( 0 )
+    {}
+
+    virtual void SetUp( )
+    {
+        std::generate(stdInput.begin(), stdInput.end(), rand);
+        std::generate(stdOffsetOut.begin(), stdOffsetOut.end(), rand);
+        boltInput = stdInput;
+        stdOffsetIn = stdInput;
+        boltOffsetIn = stdInput;
+        boltOffsetOut =  stdOffsetOut;
+    };
+
+    virtual void TearDown( )
+    {};
+
+    virtual ~CopyArrayTest( )
+    {}
+
+protected:
+    typedef typename std::tuple_element< 0, ArrayTuple >::type ArrayType;
+    static const size_t ArraySize = std::tuple_element< 1, ArrayTuple >::type::value;
+    std::array< ArrayType, ArraySize > stdInput, boltInput, stdOffsetIn, boltOffsetIn;
+    std::array< ArrayType, ArraySize > stdOutput, boltOutput, stdOffsetOut, boltOffsetOut;
+    int m_Errors;
+};
+
+
+
+TYPED_TEST_CASE_P( CopyArrayTest );
+
+#if (TEST_CPU_DEVICE == 1)
+TYPED_TEST_P( CopyArrayTest,CPU_DeviceNormal )
+{
+
+    typedef typename CopyArrayTest< gtest_TypeParam_ >::ArrayType ArrayType;
+    typedef std::array< ArrayType, CopyArrayTest< gtest_TypeParam_ >::ArraySize > ArrayCont;
+    
+    MyOclContext oclcpu = initOcl(CL_DEVICE_TYPE_CPU, 0);
+    bolt::cl::control c_cpu(oclcpu._queue);  // construct control structure from the queue.
+
+    //  Calling the actual functions under test
+    std::copy( CopyArrayTest< gtest_TypeParam_ >::stdInput.begin( ), CopyArrayTest< gtest_TypeParam_ >::stdInput.end( ), CopyArrayTest< gtest_TypeParam_ >::stdOutput.begin() );
+    bolt::cl::copy( c_cpu, CopyArrayTest< gtest_TypeParam_ >::boltInput.begin( ), CopyArrayTest< gtest_TypeParam_ >::boltInput.end( ) , CopyArrayTest< gtest_TypeParam_ >::boltOutput.begin());
+
+    typename ArrayCont::difference_type stdNumElements = std::distance( CopyArrayTest< gtest_TypeParam_ >::stdOutput.begin( ), CopyArrayTest< gtest_TypeParam_ >::stdOutput.end() );
+     typename ArrayCont::difference_type boltNumElements = std::distance( CopyArrayTest< gtest_TypeParam_ >::boltOutput.begin( ), CopyArrayTest< gtest_TypeParam_ >::boltOutput.end() );
+
+    //  Both collections should have the same number of elements
+    EXPECT_EQ( stdNumElements, boltNumElements );
+
+    //  Loop through the array and compare all the values with each other
+    cmpStdArray< ArrayType, CopyArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays( CopyArrayTest< gtest_TypeParam_ >::stdOutput, CopyArrayTest< gtest_TypeParam_ >::boltOutput );
+    
+    //OFFSET Test cases
+    //  Calling the actual functions under test
+    size_t startIndex = 17; //Some aribitrary offset position
+    size_t endIndex   = CopyArrayTest< gtest_TypeParam_ >::ArraySize - 17; //Some aribitrary offset position
+    if( (( startIndex > CopyArrayTest< gtest_TypeParam_ >::ArraySize ) || ( endIndex < 0 ) )  || (startIndex > endIndex) )
+    {
+        std::cout <<"\nSkipping NormalOffset Test for size "<< CopyArrayTest< gtest_TypeParam_ >::ArraySize << "\n";
+    }    
+    else
+    {
+
+        //std::copy( CopyArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin( ) , CopyArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin( ) + startIndex, CopyArrayTest< gtest_TypeParam_ >::stdOffsetOut.begin() + endIndex);
+      //  std::copy( CopyArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin( ), CopyArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin( )+ startIndex, CopyArrayTest< gtest_TypeParam_ >::boltOffsetOut.begin( )+ endIndex);
+
+
+        std::copy( CopyArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin( ) + startIndex, CopyArrayTest< gtest_TypeParam_ >::stdOffsetIn.begin( ) + endIndex, CopyArrayTest< gtest_TypeParam_ >::stdOffsetOut.begin() );
+        bolt::cl::copy( c_cpu, CopyArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin( ) + startIndex, CopyArrayTest< gtest_TypeParam_ >::boltOffsetIn.begin( ) + endIndex, CopyArrayTest< gtest_TypeParam_ >::boltOffsetOut.begin() );
+
+         typename ArrayCont::difference_type stdNumElements = std::distance( CopyArrayTest< gtest_TypeParam_ >::stdOffsetOut.begin( ), CopyArrayTest< gtest_TypeParam_ >::stdOffsetOut.end( ) );
+         typename ArrayCont::difference_type boltNumElements = std::distance(  CopyArrayTest< gtest_TypeParam_ >::boltOffsetOut.begin( ),  CopyArrayTest< gtest_TypeParam_ >::boltOffsetOut.end( ) );
+
+        //  Both collections should have the same number of elements
+        EXPECT_EQ( stdNumElements, boltNumElements );
+
+        //  Loop through the array and compare all the values with each other
+        cmpStdArray< ArrayType, CopyArrayTest< gtest_TypeParam_ >::ArraySize >::cmpArrays(  CopyArrayTest< gtest_TypeParam_ >::stdOffsetOut,  CopyArrayTest< gtest_TypeParam_ >::boltOffsetOut );
+    }
+}
+
+
+
+
+
+
+
+REGISTER_TYPED_TEST_CASE_P( CopyArrayTest, CPU_DeviceNormal);
+
 INSTANTIATE_TYPED_TEST_CASE_P( clLong, CopyArrayTest, clLongTests );
 INSTANTIATE_TYPED_TEST_CASE_P( Integer, CopyArrayTest, IntegerTests );
 INSTANTIATE_TYPED_TEST_CASE_P( UnsignedInteger, CopyArrayTest, UnsignedIntegerTests );
@@ -327,6 +347,8 @@ INSTANTIATE_TYPED_TEST_CASE_P( Float, CopyArrayTest, FloatTests );
 #if (TEST_DOUBLE == 1)
 INSTANTIATE_TYPED_TEST_CASE_P( Double, CopyArrayTest, DoubleTests );
 #endif 
+
+#endif
 
 TEST( CopyStdVectWithInt, OffsetTest)
 {
@@ -438,7 +460,7 @@ TEST(Copy, FancyDeviceIterator)
         bolt::cl::counting_iterator<int> last = first + length;
 
         std::vector<int> a(length);
-
+        
         for (int i=0; i < length; i++) {
             a[i] = i;
         }; 
@@ -3233,7 +3255,9 @@ TEST (copyStructOdd, BufferTestHostToDevice)
 int main(int argc, char* argv[])
 {
     //  Register our minidump generating logic
+#if defined(_WIN32)
     bolt::miniDumpSingleton::enableMiniDumps( );
+#endif
 
     // Define MEMORYREPORT on windows platfroms to enable debug memory heap checking
 #if defined( MEMORYREPORT ) && defined( _WIN32 )

@@ -17,8 +17,14 @@
 
 # List the names of common files to compile across all platforms
 
-set( clBolt.Test.Pair.Source stdafx.cpp PairTest.cpp ${BOLT_CL_TEST_DIR}/common/myocl.cpp) 
-set( clBolt.Test.Pair.Headers stdafx.h ${BOLT_CL_TEST_DIR}/common/myocl.h targetver.h ${BOLT_INCLUDE_DIR}/bolt/cl/pair.h )
+set( clBolt.Test.Pair.Source ${BOLT_CL_TEST_DIR}/common/stdafx.cpp 
+                                  ${BOLT_CL_TEST_DIR}/common/myocl.cpp
+                                  PairTest.cpp ) 
+                                  
+set( clBolt.Test.Pair.Headers ${BOLT_CL_TEST_DIR}/common/stdafx.h 
+                              ${BOLT_CL_TEST_DIR}/common/targetver.h 
+                              ${BOLT_CL_TEST_DIR}/common/myocl.h 
+                              ${BOLT_INCLUDE_DIR}/bolt/cl/pair.h )
 
 set( clBolt.Test.Pair.Files ${clBolt.Test.Pair.Source} ${clBolt.Test.Pair.Headers} )
 
@@ -29,10 +35,10 @@ set_target_properties( clBolt.Test.Pair PROPERTIES VERSION ${Bolt_VERSION} )
 set_target_properties( clBolt.Test.Pair PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
 
 set_property( TARGET clBolt.Test.Pair PROPERTY FOLDER "Test/OpenCL")
-		
+        
 # CPack configuration; include the executable into the package
 install( TARGETS clBolt.Test.Pair
-	RUNTIME DESTINATION ${BIN_DIR}
-	LIBRARY DESTINATION ${LIB_DIR}
-	ARCHIVE DESTINATION ${LIB_DIR}/import
-	)
+    RUNTIME DESTINATION ${BIN_DIR}
+    LIBRARY DESTINATION ${LIB_DIR}
+    ARCHIVE DESTINATION ${LIB_DIR}/import
+    )

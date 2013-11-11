@@ -41,7 +41,7 @@ namespace   btbb {
           Scan_tbb( InputIterator&  _x,
                     OutputIterator& _y,
                     const BinaryFunction &_opr,
-                    const bool &_incl ,const T &init) : x(_x), y(_y), scan_op(_opr),inclusive(_incl),start(init),flag(TRUE){}
+                    const bool &_incl ,const T &init) : x(_x), y(_y), scan_op(_opr),inclusive(_incl),start(init),flag(true){}
           T get_sum() const {return sum;}
           template<typename Tag>
           void operator()( const tbb::blocked_range<int>& r, Tag ) {
@@ -72,7 +72,7 @@ namespace   btbb {
                   else{
                      if(flag){
                        temp = *(x+i);
-                       flag = FALSE;
+                       flag = false;
                      }
                      else
                         temp = scan_op(temp, *(x+i));
@@ -80,7 +80,7 @@ namespace   btbb {
              }
              sum = temp;
           }
-          Scan_tbb( Scan_tbb& b, tbb::split):y(b.y),x(b.x),inclusive(b.inclusive),start(b.start),flag(TRUE){
+          Scan_tbb( Scan_tbb& b, tbb::split):y(b.y),x(b.x),inclusive(b.inclusive),start(b.start),flag(true){
           }
           void reverse_join( Scan_tbb& a ) {
                sum = scan_op(a.sum, sum);
@@ -90,26 +90,6 @@ namespace   btbb {
           }
        };
 
-
-
-
-template< typename InputIterator, typename OutputIterator >
-OutputIterator
-inclusive_scan(
-    InputIterator first,
-    InputIterator last,
-    OutputIterator result)
-    {
-                unsigned int numElements = static_cast< unsigned int >( std::distance( first, last ) );
-                unsigned int numElements = static_cast< unsigned int >( std::distance( first, last ) );
-               typedef typename std::iterator_traits< InputIterator >::value_type iType;
-               tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
-               Scan_tbb<InputIterator, OutputIterator, BinaryFunction, iType> tbb_scan((InputIterator &)first,(OutputIterator &)
-                                                                         result,plus< iType >( ),true,iType());
-               tbb::parallel_scan( tbb::blocked_range<int>(  0, static_cast< int >( std::distance( first, last ))), tbb_scan, tbb::auto_partitioner());
-               return result + numElements;
-
-    }
 
 
 
@@ -130,35 +110,15 @@ inclusive_scan(
                return result + numElements;
     }
 
-
-
-
 template< typename InputIterator, typename OutputIterator >
 OutputIterator
-    exclusive_scan( InputIterator first, InputIterator last, OutputIterator result )
+inclusive_scan(
+    InputIterator first,
+    InputIterator last,
+    OutputIterator result)
     {
-               unsigned int numElements = static_cast< unsigned int >( std::distance( first, last ) );
-               typedef typename std::iterator_traits< InputIterator >::value_type iType;
-               tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
-               Scan_tbb<InputIterator, OutputIterator, BinaryFunction, iType> tbb_scan((InputIterator &)first,(OutputIterator &)
-                                                                         result,plus< iType >( ),false,iType());
-               tbb::parallel_scan( tbb::blocked_range<int>(  0, static_cast< int >( std::distance( first, last ))), tbb_scan, tbb::auto_partitioner());
-               return result + numElements;
-    }
-
-
-
-template< typename InputIterator, typename OutputIterator, typename T >
-OutputIterator
-    exclusive_scan( InputIterator first, InputIterator last, OutputIterator result, T init )
-    {
-               unsigned int numElements = static_cast< unsigned int >( std::distance( first, last ) );
-               typedef typename std::iterator_traits< InputIterator >::value_type iType;
-               tbb::task_scheduler_init initialize(tbb::task_scheduler_init::automatic);
-               Scan_tbb<InputIterator, OutputIterator, BinaryFunction, iType> tbb_scan((InputIterator &)first,(OutputIterator &)
-                                                                         result,plus< iType >( ),false,init);
-               tbb::parallel_scan( tbb::blocked_range<int>(  0, static_cast< int >( std::distance( first, last ))), tbb_scan, tbb::auto_partitioner());
-               return result + numElements;
+		typedef typename std::iterator_traits< InputIterator >::value_type iType;
+		inclusive_scan(first,last,result,std::plus< iType >( ));
     }
 
 
@@ -176,6 +136,24 @@ OutputIterator
                return result + numElements;
     }
 
+    }
+
+
+
+template< typename InputIterator, typename OutputIterator, typename T >
+OutputIterator
+    exclusive_scan( InputIterator first, InputIterator last, OutputIterator result, T init )
+    {
+	typedef typename std::iterator_traits< InputIterator >::value_type iType;
+	exclusive_scan( first, last, result, init,std::plus< iType >( ));
+    }
+
+template< typename InputIterator, typename OutputIterator >
+OutputIterator
+    exclusive_scan( InputIterator first, InputIterator last, OutputIterator result )
+    {
+		typedef typename std::iterator_traits< InputIterator >::value_type iType;
+		exclusive_scan( first, last, result, iType());
     }
 
 }

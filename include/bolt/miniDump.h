@@ -14,6 +14,7 @@
 *   limitations under the License.                                                   
 
 ***************************************************************************/                                                                                     
+#if defined(_WIN32)
 
 #ifndef MINIDUMP_H_
 #define MINIDUMP_H_
@@ -75,3 +76,5 @@ namespace bolt
 }
 
 #endif /* CLAMDBLAS_H_ */
+#endif
+

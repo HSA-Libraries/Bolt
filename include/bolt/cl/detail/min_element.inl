@@ -28,107 +28,10 @@
 #include "bolt/cl/bolt.h"
 #include "bolt/cl/functional.h"
 
-
-namespace bolt {
-    namespace cl {
-
-        template<typename ForwardIterator>
-      ForwardIterator max_element(ForwardIterator first,
-            ForwardIterator last,
-            const std::string& cl_code)
-        {
-            typedef typename std::iterator_traits<ForwardIterator>::value_type T;
-            return min_element(bolt::cl::control::getDefault(), first, last, bolt::cl::greater<T>(), cl_code);
-        };
-
-
-        template<typename ForwardIterator,typename BinaryPredicate>
-        ForwardIterator max_element(ForwardIterator first,
-            ForwardIterator last,
-            BinaryPredicate binary_op,
-            const std::string& cl_code)
-        {
-            return min_element(bolt::cl::control::getDefault(), first, last, binary_op, cl_code);
-        };
-
-
-
-        template<typename ForwardIterator>
-        ForwardIterator  max_element(bolt::cl::control &ctl,
-            ForwardIterator first,
-            ForwardIterator last,
-            const std::string& cl_code)
-        {
-            typedef typename std::iterator_traits<ForwardIterator>::value_type T;
-            return min_element(ctl, first, last, bolt::cl::greater<T>(),cl_code);
-        };
-
-        // This template is called by all other "convenience" version of max_element.
-        // It also implements the CPU-side mappings of the algorithm for SerialCpu and MultiCoreCpu
-        template<typename ForwardIterator, typename BinaryPredicate>
-        ForwardIterator max_element(bolt::cl::control &ctl,
-            ForwardIterator first,
-            ForwardIterator last,
-            BinaryPredicate binary_op,
-            const std::string& cl_code)
-            {
-                    return detail::min_element_detect_random_access(ctl, first, last, binary_op, cl_code,
-                    std::iterator_traits< ForwardIterator >::iterator_category( ) );
-            }
-        };
-
-  };
-
-namespace bolt {
-    namespace cl {
-
-        template<typename ForwardIterator>
-      ForwardIterator min_element(ForwardIterator first,
-            ForwardIterator last,
-            const std::string& cl_code)
-        {
-            typedef typename std::iterator_traits<ForwardIterator>::value_type T;
-            return min_element(bolt::cl::control::getDefault(), first, last, bolt::cl::less<T>(), cl_code);
-        };
-
-
-        template<typename ForwardIterator,typename BinaryPredicate>
-        ForwardIterator min_element(ForwardIterator first,
-            ForwardIterator last,
-            BinaryPredicate binary_op,
-            const std::string& cl_code)
-        {
-            return min_element(bolt::cl::control::getDefault(), first, last, binary_op, cl_code);
-        };
-
-
-
-        template<typename ForwardIterator>
-        ForwardIterator  min_element(bolt::cl::control &ctl,
-            ForwardIterator first,
-            ForwardIterator last,
-            const std::string& cl_code)
-        {
-            typedef typename std::iterator_traits<ForwardIterator>::value_type T;
-            return min_element(ctl, first, last, bolt::cl::less<T>(),cl_code);
-        };
-
-        // This template is called by all other "convenience" version of min_element.
-        // It also implements the CPU-side mappings of the algorithm for SerialCpu and MultiCoreCpu
-        template<typename ForwardIterator, typename BinaryPredicate>
-        ForwardIterator min_element(bolt::cl::control &ctl,
-            ForwardIterator first,
-            ForwardIterator last,
-            BinaryPredicate binary_op,
-            const std::string& cl_code)
-             {
-               return detail::min_element_detect_random_access(ctl, first, last, binary_op, cl_code,
-               std::iterator_traits< ForwardIterator >::iterator_category( ) );
-            }
-        };
-
-};
-
+#ifdef ENABLE_TBB
+//TBB Includes
+#include "bolt/btbb/min_element.h"
+#endif
 
 namespace bolt {
     namespace cl {
@@ -150,12 +53,12 @@ namespace bolt {
                     addKernelName( "min_elementTemplate" );
                 }
 
-            const ::std::string operator() ( const ::std::vector<::std::string>& typeNames ) const
+            const ::std::string operator() ( const ::std::vector< ::std::string >& typeNames ) const
             {
                 const std::string templateSpecializationString =
                         "// Host generates this instantiation string with user-specified value type and functor\n"
                         "template __attribute__((mangled_name(" + name(0) + "Instantiated)))\n"
-                        "__attribute__((reqd_work_group_size(64,1,1)))\n"
+                        "__attribute__((reqd_work_group_size(256,1,1)))\n"
                         "kernel void " + name(0) + "(\n"
                         "global " + typeNames[min_iValueType] + "* input_ptr,\n"
                          + typeNames[min_iIterType] + " output_iter,\n"
@@ -178,7 +81,8 @@ namespace bolt {
                 const DVInputIterator& first,
                 const DVInputIterator& last,
                 const BinaryPredicate& binary_op,
-                const std::string& cl_code )
+                const std::string& cl_code,
+                const char * min_max )
             {
                 typedef typename std::iterator_traits< DVInputIterator >::value_type iType;
 
@@ -195,7 +99,15 @@ namespace bolt {
                 //bool cpuDevice = ctl.device().getInfo<CL_DEVICE_TYPE>() == CL_DEVICE_TYPE_CPU;
                 /*\TODO - Do CPU specific kernel work group size selection here*/
                 //const size_t kernel0_WgSize = (cpuDevice) ? 1 : WAVESIZE*KERNEL02WAVES;
-                std::string compileOptions;
+                std::string compileOptions="";
+
+                const char * str = "MAX_KERNEL";
+
+                if(std::strcmp(min_max,str) == 0)
+                    compileOptions = "-D_IS_MAX_KERNEL";
+                else
+                    compileOptions = "-D_IS_MIN_KERNEL";
+
                 //std::ostringstream oss;
                 //oss << " -DKERNEL0WORKGROUPSIZE=" << kernel0_WgSize;
 
@@ -211,13 +123,13 @@ namespace bolt {
 
                 // Set up shape of launch grid and buffers:
                 cl_uint computeUnits     = ctl.getDevice().getInfo<CL_DEVICE_MAX_COMPUTE_UNITS>();
-                int wgPerComputeUnit =  ctl.getWGPerComputeUnit();
+                int wgPerComputeUnit =  64 ;//ctl.getWGPerComputeUnit();
                 size_t numWG = computeUnits * wgPerComputeUnit;
 
                 cl_int l_Error = CL_SUCCESS;
 
-                const size_t wgSize  = kernels[0].getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >(
-                    ctl.getDevice( ), &l_Error );
+                const size_t wgSize  = 256;//kernels[0].getWorkGroupInfo< CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE >(
+                    //ctl.getDevice( ), &l_Error );
 
                 V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
 
@@ -233,11 +145,10 @@ namespace bolt {
                     CL_MEM_ALLOC_HOST_PTR|CL_MEM_WRITE_ONLY );
 
                 cl_uint szElements = static_cast< cl_uint >( first.distance_to(last ) );
-
+                typename DVInputIterator::Payload first_payload = first.gpuPayload();
 
                 V_OPENCL( kernels[0].setArg(0, first.getContainer().getBuffer() ), "Error setting kernel argument" );
-                V_OPENCL( kernels[0].setArg(1,first.gpuPayloadSize(),&first.gpuPayload()),
-                          "Error setting a kernel argument");
+                V_OPENCL( kernels[0].setArg(1,first.gpuPayloadSize(),&first_payload),"Error setting a kernel argument");
 
                 V_OPENCL( kernels[0].setArg(2, szElements), "Error setting kernel argument" );
                 V_OPENCL( kernels[0].setArg(3, *userFunctor), "Error setting kernel argument" );
@@ -273,13 +184,22 @@ namespace bolt {
                 int minele_indx =  h_result[0] ;
                 iType minele =  *(first + h_result[0]) ;
 
-                for(int i = 1; i < numTailReduce; ++i)
+
+				if(std::strcmp(min_max,str) == 0)
                 {
-
-                    bool stat = binary_op(minele,*(first + h_result[i]));
-                    minele = stat ? minele : *(first + h_result[i]);
-                    minele_indx =  stat ? minele_indx : h_result[i];
-
+					for(int i = 1; i < (int)numTailReduce; ++i){
+                       bool stat = binary_op(*(first + h_result[i]), minele);
+                       minele = stat ? minele : *(first + h_result[i]);
+                       minele_indx =  stat ? minele_indx : h_result[i];
+					}
+                }
+                else
+                {
+					for(int i = 1; i < (int)numTailReduce; ++i){
+                       bool stat = binary_op(minele,*(first + h_result[i]));
+                       minele = stat ? minele : *(first + h_result[i]);
+                       minele_indx =  stat ? minele_indx : h_result[i];
+					}
                 }
 
 				::cl::Event unmapEvent;
@@ -292,31 +212,7 @@ namespace bolt {
                 return minele_indx;
             }
 
-            template<typename ForwardIterator, typename BinaryPredicate>
-            ForwardIterator min_element_detect_random_access(bolt::cl::control &ctl,
-                const ForwardIterator& first,
-                const ForwardIterator& last,
-                const BinaryPredicate& binary_op,
-                const std::string& cl_code,
-                std::input_iterator_tag)
-            {
-                //TODO:It should be possible to support non-random_access_iterator_tag iterators,if we copied the data
-                //to a temporary buffer.  Should we?
-                static_assert( false, "Bolt only supports random access iterator types" );
-            }
 
-
-            template<typename ForwardIterator, typename BinaryPredicate>
-            ForwardIterator min_element_detect_random_access(bolt::cl::control &ctl,
-                const ForwardIterator& first,
-                const ForwardIterator& last,
-                const BinaryPredicate& binary_op,
-                const std::string& cl_code,
-                std::random_access_iterator_tag)
-            {
-                return min_element_pick_iterator( ctl, first, last,  binary_op, cl_code,
-                    std::iterator_traits< ForwardIterator >::iterator_category( ) );
-            }
 
             // This template is called after we detect random access iterators
             // This is called strictly for any non-device_vector iterator
@@ -326,7 +222,8 @@ namespace bolt {
                 const ForwardIterator& last,
                 const BinaryPredicate& binary_op,
                 const std::string& cl_code,
-                std::random_access_iterator_tag )
+                std::random_access_iterator_tag,
+                const char * min_max)
             {
                 /*************/
 
@@ -346,27 +243,66 @@ namespace bolt {
                     runMode = ctl.getDefaultPathToRun();
                 }
 
+                const char * str = "MAX_KERNEL";
 
+				#if defined(BOLT_DEBUG_LOG)
+                BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+                #endif
+				
                 switch(runMode)
                 {
                 case bolt::cl::control::OpenCL :
                     {
+					    #if defined(BOLT_DEBUG_LOG)
+						if(std::strcmp(min_max,str) == 0)
+                           dblog->CodePathTaken(BOLTLOG::BOLT_MAXELEMENT,BOLTLOG::BOLT_OPENCL_GPU,"::Max_Element::OPENCL_GPU");
+						else
+						   dblog->CodePathTaken(BOLTLOG::BOLT_MINELEMENT,BOLTLOG::BOLT_OPENCL_GPU,"::Min_Element::OPENCL_GPU");
+                        #endif
+						
                         device_vector< iType > dvInput( first, last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, ctl );
-                        int  dvminele = min_element_enqueue( ctl, dvInput.begin(), dvInput.end(), binary_op, cl_code);
+                        int  dvminele = min_element_enqueue( ctl, dvInput.begin(), dvInput.end(), binary_op, cl_code, min_max);
                         return first + dvminele ;
                     }
 
                 case bolt::cl::control::MultiCoreCpu:
                     #ifdef ENABLE_TBB
-                        return std::min_element(first, last, binary_op);
+					    #if defined(BOLT_DEBUG_LOG)
+						if(std::strcmp(min_max,str) == 0)
+                          dblog->CodePathTaken(BOLTLOG::BOLT_MAXELEMENT,BOLTLOG::BOLT_MULTICORE_CPU,"::Max_Element::MULTICORE_CPU");
+						else
+						  dblog->CodePathTaken(BOLTLOG::BOLT_MINELEMENT,BOLTLOG::BOLT_MULTICORE_CPU,"::Min_Element::MULTICORE_CPU");
+                        #endif
+                        if(std::strcmp(min_max,str) == 0)
+                              return bolt::btbb::max_element(first, last, binary_op);
+                        else
+                              return bolt::btbb::min_element(first, last, binary_op);
                     #else
-                        throw std::exception( "The MultiCoreCpu version of Max-Min is not enabled to be built! \n" );
+                        throw std::runtime_error( "The MultiCoreCpu version of Max-Min is not enabled to be built! \n" );
                     #endif
 
                 case bolt::cl::control::SerialCpu:
+				    #if defined(BOLT_DEBUG_LOG)
+					if(std::strcmp(min_max,str) == 0)
+					  dblog->CodePathTaken(BOLTLOG::BOLT_MAXELEMENT,BOLTLOG::BOLT_SERIAL_CPU,"::Max_Element::SERIAL_CPU");
+					else
+                      dblog->CodePathTaken(BOLTLOG::BOLT_MINELEMENT,BOLTLOG::BOLT_SERIAL_CPU,"::Min_Element::SERIAL_CPU");
+                    #endif
+                    if(std::strcmp(min_max,str) == 0)
+                       return std::max_element(first, last, binary_op);
+                    else
                     return std::min_element(first, last, binary_op);
 
                 default:
+                    #if defined(BOLT_DEBUG_LOG)
+					if(std::strcmp(min_max,str) == 0)
+					  dblog->CodePathTaken(BOLTLOG::BOLT_MAXELEMENT,BOLTLOG::BOLT_SERIAL_CPU,"::Max_Element::SERIAL_CPU");
+					else
+                      dblog->CodePathTaken(BOLTLOG::BOLT_MINELEMENT,BOLTLOG::BOLT_SERIAL_CPU,"::Min_Element::SERIAL_CPU");
+                    #endif
+                    if(std::strcmp(min_max,str) == 0)
+                       return std::max_element(first, last, binary_op);
+                    else
                     return std::min_element(first, last, binary_op);
 
                 }
@@ -381,7 +317,8 @@ namespace bolt {
                 const DVInputIterator& last,
                 const BinaryPredicate& binary_op,
                 const std::string& cl_code,
-                bolt::cl::device_vector_tag )
+                bolt::cl::device_vector_tag,
+                const char * min_max )
             {
                 size_t szElements = (size_t)(last - first);
                 if (szElements == 0)
@@ -393,26 +330,65 @@ namespace bolt {
                     runMode = ctl.getDefaultPathToRun();
                 }
 
-
+                const char * str = "MAX_KERNEL";
+            
+			    #if defined(BOLT_DEBUG_LOG)
+                BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+                #endif
+				
                 switch(runMode)
                 {
                 case bolt::cl::control::OpenCL :
                     {
-                        int pos =  min_element_enqueue( ctl, first, last,  binary_op, cl_code);
+					    #if defined(BOLT_DEBUG_LOG)
+						if(std::strcmp(min_max,str) == 0)
+                           dblog->CodePathTaken(BOLTLOG::BOLT_MAXELEMENT,BOLTLOG::BOLT_OPENCL_GPU,"::Max_Element::OPENCL_GPU");
+						else
+						   dblog->CodePathTaken(BOLTLOG::BOLT_MINELEMENT,BOLTLOG::BOLT_OPENCL_GPU,"::Min_Element::OPENCL_GPU");
+                        #endif
+						
+                        int pos =  min_element_enqueue( ctl, first, last,  binary_op, cl_code, min_max);
                         return first+pos;
                     }
 
                 case bolt::cl::control::MultiCoreCpu:
                     #ifdef ENABLE_TBB
-                        return std::min_element(first, last, binary_op);
+					    #if defined(BOLT_DEBUG_LOG)
+						if(std::strcmp(min_max,str) == 0)
+                          dblog->CodePathTaken(BOLTLOG::BOLT_MAXELEMENT,BOLTLOG::BOLT_MULTICORE_CPU,"::Max_Element::MULTICORE_CPU");
+						else
+						  dblog->CodePathTaken(BOLTLOG::BOLT_MINELEMENT,BOLTLOG::BOLT_MULTICORE_CPU,"::Min_Element::MULTICORE_CPU");
+                        #endif
+                        if(std::strcmp(min_max,str) == 0)
+                              return bolt::btbb::max_element(first, last, binary_op);
+                        else
+                              return bolt::btbb::min_element(first, last, binary_op);
                     #else
-                        throw std::exception( "The MultiCoreCpu version of Max-Min is not enabled to be built! \n" );
+                        throw std::runtime_error( "The MultiCoreCpu version of Max-Min is not enabled to be built! \n" );
                     #endif
 
                 case bolt::cl::control::SerialCpu:
+				    #if defined(BOLT_DEBUG_LOG)
+					if(std::strcmp(min_max,str) == 0)
+					  dblog->CodePathTaken(BOLTLOG::BOLT_MAXELEMENT,BOLTLOG::BOLT_SERIAL_CPU,"::Max_Element::SERIAL_CPU");
+					else
+                      dblog->CodePathTaken(BOLTLOG::BOLT_MINELEMENT,BOLTLOG::BOLT_SERIAL_CPU,"::Min_Element::SERIAL_CPU");
+                    #endif
+                    if(std::strcmp(min_max,str) == 0)
+                       return std::max_element(first, last, binary_op);
+                    else
                     return std::min_element(first, last, binary_op);
 
                 default:
+				    #if defined(BOLT_DEBUG_LOG)
+					if(std::strcmp(min_max,str) == 0)
+					  dblog->CodePathTaken(BOLTLOG::BOLT_MAXELEMENT,BOLTLOG::BOLT_SERIAL_CPU,"::Max_Element::SERIAL_CPU");
+					else
+                      dblog->CodePathTaken(BOLTLOG::BOLT_MINELEMENT,BOLTLOG::BOLT_SERIAL_CPU,"::Min_Element::SERIAL_CPU");
+                    #endif
+                    if(std::strcmp(min_max,str) == 0)
+                       return std::max_element(first, last, binary_op);
+                    else
                     return std::min_element(first, last, binary_op);
 
                 }
@@ -427,7 +403,8 @@ namespace bolt {
                 const DVInputIterator& last,
                 const BinaryPredicate& binary_op,
                 const std::string& cl_code,
-                bolt::cl::fancy_iterator_tag )
+                bolt::cl::fancy_iterator_tag,
+                const char * min_max )
             {
                 bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
                 if(runMode == bolt::cl::control::Automatic)
@@ -435,34 +412,226 @@ namespace bolt {
                     runMode = ctl.getDefaultPathToRun();
                 }
 
+                const char * str = "MAX_KERNEL";
+
+				#if defined(BOLT_DEBUG_LOG)
+                BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+                #endif
+				
                 switch(runMode)
                 {
                 case bolt::cl::control::OpenCL :
                     {
-                        int pos =  min_element_enqueue( ctl, first, last,  binary_op, cl_code);
+					    #if defined(BOLT_DEBUG_LOG)
+						if(std::strcmp(min_max,str) == 0)
+                           dblog->CodePathTaken(BOLTLOG::BOLT_MAXELEMENT,BOLTLOG::BOLT_OPENCL_GPU,"::Max_Element::OPENCL_GPU");
+						else
+						   dblog->CodePathTaken(BOLTLOG::BOLT_MINELEMENT,BOLTLOG::BOLT_OPENCL_GPU,"::Min_Element::OPENCL_GPU");
+                        #endif
+						
+                        int pos =  min_element_enqueue( ctl, first, last,  binary_op, cl_code, min_max);
                         return first+pos;
                     }
 
                 case bolt::cl::control::MultiCoreCpu:
                     #ifdef ENABLE_TBB
-                        return std::min_element(first, last, binary_op);
+					    #if defined(BOLT_DEBUG_LOG)
+						if(std::strcmp(min_max,str) == 0)
+                          dblog->CodePathTaken(BOLTLOG::BOLT_MAXELEMENT,BOLTLOG::BOLT_MULTICORE_CPU,"::Max_Element::MULTICORE_CPU");
+						else
+						  dblog->CodePathTaken(BOLTLOG::BOLT_MINELEMENT,BOLTLOG::BOLT_MULTICORE_CPU,"::Min_Element::MULTICORE_CPU");
+                        #endif
+                        if(std::strcmp(min_max,str) == 0)
+                              return bolt::btbb::max_element(first, last, binary_op);
+                        else
+                              return bolt::btbb::min_element(first, last, binary_op);
                     #else
-                        throw std::exception( "The MultiCoreCpu version of Max-Min is not enabled to be built! \n" );
+                        throw std::runtime_error( "The MultiCoreCpu version of Max-Min is not enabled to be built! \n" );
                     #endif
 
                 case bolt::cl::control::SerialCpu:
+				    #if defined(BOLT_DEBUG_LOG)
+					if(std::strcmp(min_max,str) == 0)
+					  dblog->CodePathTaken(BOLTLOG::BOLT_MAXELEMENT,BOLTLOG::BOLT_SERIAL_CPU,"::Max_Element::SERIAL_CPU");
+					else
+                      dblog->CodePathTaken(BOLTLOG::BOLT_MINELEMENT,BOLTLOG::BOLT_SERIAL_CPU,"::Min_Element::SERIAL_CPU");
+                    #endif
+                    if(std::strcmp(min_max,str) == 0)
+                       return std::max_element(first, last, binary_op);
+                    else
                     return std::min_element(first, last, binary_op);
 
                 default:
+				    #if defined(BOLT_DEBUG_LOG)
+					if(std::strcmp(min_max,str) == 0)
+					  dblog->CodePathTaken(BOLTLOG::BOLT_MAXELEMENT,BOLTLOG::BOLT_SERIAL_CPU,"::Max_Element::SERIAL_CPU");
+					else
+                      dblog->CodePathTaken(BOLTLOG::BOLT_MINELEMENT,BOLTLOG::BOLT_SERIAL_CPU,"::Min_Element::SERIAL_CPU");
+                    #endif
+                    if(std::strcmp(min_max,str) == 0)
+                       return std::max_element(first, last, binary_op);
+                    else
                     return std::min_element(first, last, binary_op);
 
                 }
 
            }
 
+            template<typename ForwardIterator, typename BinaryPredicate>
+            ForwardIterator min_element_detect_random_access(bolt::cl::control &ctl,
+                const ForwardIterator& first,
+                const ForwardIterator& last,
+                const BinaryPredicate& binary_op,
+                const std::string& cl_code,
+                std::input_iterator_tag)
+            {
+                //TODO:It should be possible to support non-random_access_iterator_tag iterators,if we copied the data
+                //to a temporary buffer.  Should we?
+                static_assert( std::is_same< ForwardIterator, std::forward_iterator_tag   >::value, "Bolt only supports random access iterator types" );
+            }
+
+			 template<typename ForwardIterator, typename BinaryPredicate>
+             ForwardIterator max_element_detect_random_access(bolt::cl::control &ctl,
+                 const ForwardIterator& first,
+                 const ForwardIterator& last,
+                 const BinaryPredicate& binary_op,
+                 const std::string& cl_code,
+                 std::input_iterator_tag)
+             {
+                 //TODO:It should be possible to support non-random_access_iterator_tag iterators,if we copied the data
+                 //to a temporary buffer.  Should we?
+                 static_assert( std::is_same< ForwardIterator, std::forward_iterator_tag   >::value, "Bolt only supports random access iterator types" );
+             }
+
+            template<typename ForwardIterator, typename BinaryPredicate>
+            ForwardIterator min_element_detect_random_access(bolt::cl::control &ctl,
+                const ForwardIterator& first,
+                const ForwardIterator& last,
+                const BinaryPredicate& binary_op,
+                const std::string& cl_code,
+                std::random_access_iterator_tag)
+            {
+                const char * str = "MIN_KERNEL";
+                return min_element_pick_iterator( ctl, first, last,  binary_op, cl_code,
+                  typename  std::iterator_traits< ForwardIterator >::iterator_category( ), str );
+            }
+
+
+
+            template<typename ForwardIterator, typename BinaryPredicate>
+            ForwardIterator max_element_detect_random_access(bolt::cl::control &ctl,
+                const ForwardIterator& first,
+                const ForwardIterator& last,
+                const BinaryPredicate& binary_op,
+                const std::string& cl_code,
+                std::random_access_iterator_tag)
+            {
+                const char * str = "MAX_KERNEL";
+                return min_element_pick_iterator( ctl, first, last,  binary_op, cl_code,
+                   typename std::iterator_traits< ForwardIterator >::iterator_category( ), str);
+            }
+
 
         };
-    };
+
+
+        template<typename ForwardIterator>
+        ForwardIterator max_element(ForwardIterator first,
+            ForwardIterator last,
+            const std::string& cl_code)
+        {
+            typedef typename std::iterator_traits<ForwardIterator>::value_type T;
+            return detail::max_element_detect_random_access(bolt::cl::control::getDefault(), first, last, bolt::cl::less<T>(), cl_code,
+                   typename std::iterator_traits< ForwardIterator >::iterator_category( ) );
+        };
+
+
+        template<typename ForwardIterator,typename BinaryPredicate>
+        ForwardIterator max_element(ForwardIterator first,
+            ForwardIterator last,
+            BinaryPredicate binary_op,
+            const std::string& cl_code)
+        {
+            return detail::max_element_detect_random_access(bolt::cl::control::getDefault(), first, last, binary_op, cl_code,
+                    typename std::iterator_traits< ForwardIterator >::iterator_category( ) );
+        };
+
+
+
+        template<typename ForwardIterator>
+        ForwardIterator  max_element(bolt::cl::control &ctl,
+            ForwardIterator first,
+            ForwardIterator last,
+            const std::string& cl_code)
+        {
+            typedef typename std::iterator_traits<ForwardIterator>::value_type T;
+            return detail::max_element_detect_random_access(ctl, first, last, bolt::cl::less<T>(), cl_code,
+                   typename std::iterator_traits< ForwardIterator >::iterator_category( ) );
+        };
+
+        // This template is called by all other "convenience" version of max_element.
+        // It also implements the CPU-side mappings of the algorithm for SerialCpu and MultiCoreCpu
+        template<typename ForwardIterator, typename BinaryPredicate>
+        ForwardIterator max_element(bolt::cl::control &ctl,
+            ForwardIterator first,
+            ForwardIterator last,
+            BinaryPredicate binary_op,
+            const std::string& cl_code)
+            {
+                    return detail::max_element_detect_random_access(ctl, first, last, binary_op, cl_code,
+                    typename std::iterator_traits< ForwardIterator >::iterator_category( ) );
+            }
+
+
+        // This template is called by all other "convenience" version of min_element.
+        // It also implements the CPU-side mappings of the algorithm for SerialCpu and MultiCoreCpu
+        template<typename ForwardIterator, typename BinaryPredicate>
+        ForwardIterator min_element(bolt::cl::control &ctl,
+            ForwardIterator first,
+            ForwardIterator last,
+            BinaryPredicate binary_op,
+            const std::string& cl_code)
+             {
+               return detail::min_element_detect_random_access(ctl, first, last, binary_op, cl_code,
+               typename std::iterator_traits< ForwardIterator >::iterator_category( ) );
+            }
+
+
+        template<typename ForwardIterator>
+      ForwardIterator min_element(ForwardIterator first,
+            ForwardIterator last,
+            const std::string& cl_code)
+        {
+            typedef typename std::iterator_traits<ForwardIterator>::value_type T;
+            return min_element(bolt::cl::control::getDefault(), first, last, bolt::cl::less<T>(), cl_code);
+        };
+
+
+        template<typename ForwardIterator,typename BinaryPredicate>
+        ForwardIterator min_element(ForwardIterator first,
+            ForwardIterator last,
+            BinaryPredicate binary_op,
+            const std::string& cl_code)
+        {
+            return min_element(bolt::cl::control::getDefault(), first, last, binary_op, cl_code);
+        };
+
+
+
+        template<typename ForwardIterator>
+        ForwardIterator  min_element(bolt::cl::control &ctl,
+            ForwardIterator first,
+            ForwardIterator last,
+            const std::string& cl_code)
+        {
+            typedef typename std::iterator_traits<ForwardIterator>::value_type T;
+            return min_element(ctl, first, last, bolt::cl::less<T>(),cl_code);
+        };
+
+       };
+
 };
+
+
 
 #endif

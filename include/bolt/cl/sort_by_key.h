@@ -26,7 +26,6 @@
 
 /*! \file bolt/cl/sort_by_key.h
     \brief Returns the sorted result of all the elements in input based on equivalent keys.
-    \bug bolt::cl::sort_by_key does not work for non power of 2 buffer sizes.
 */
 
 namespace bolt {

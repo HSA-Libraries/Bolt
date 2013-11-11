@@ -18,6 +18,7 @@
 #define TEST_DOUBLE 1
 #define TEST_DEVICE_VECTOR 1
 #define TEST_CPU_DEVICE 0
+#define TEST_LARGE_BUFFERS 0
 #define GOOGLE_TEST 1
 #define BKND cl
 #define STABLE_SORT_FUNC stable_sort_by_key
@@ -566,7 +567,7 @@ TEST_P( StableSortbyKeyIntegerVector, Normal )
     EXPECT_EQ( stdValueElements, boltValueElements );
 
     //  Loop through the array and compare all the values with each other
-	cmpArraysSortByKey( stdValues, boltKeys, boltValues,  VectorSize);
+    cmpArraysSortByKey( stdValues, boltKeys, boltValues,  VectorSize);
 
     //  OFFSET Calling the actual functions under test
     int startIndex = 17; //Some aribitrary offset position
@@ -588,7 +589,6 @@ TEST_P( StableSortbyKeyIntegerVector, Normal )
 
 TEST_P( StableSortbyKeyIntegerVector, Serial )
 {
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -628,7 +628,6 @@ TEST_P( StableSortbyKeyIntegerVector, Serial )
 
 TEST_P( StableSortbyKeyIntegerVector, MultiCoreCPU )
 {
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
@@ -704,7 +703,6 @@ TEST_P( StableSortbyKeyFloatVector, Normal )
 
 TEST_P( StableSortbyKeyFloatVector, Serial )
 {
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -743,7 +741,6 @@ TEST_P( StableSortbyKeyFloatVector, Serial )
 
 TEST_P( StableSortbyKeyFloatVector, MultiCoreCPU )
 {
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
@@ -818,7 +815,6 @@ TEST_P( StableSortbyKeyDoubleVector, Normal )
 
 TEST_P( StableSortbyKeyDoubleVector, Serial)
 {
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -857,7 +853,6 @@ TEST_P( StableSortbyKeyDoubleVector, Serial)
 
 TEST_P( StableSortbyKeyDoubleVector, MultiCoreCPU)
 {
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
@@ -916,7 +911,6 @@ TEST_P( StableSortbyKeyIntegerDeviceVector, Inplace )
 
 TEST_P( StableSortbyKeyIntegerDeviceVector, SerialInplace )
 {
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -938,7 +932,6 @@ TEST_P( StableSortbyKeyIntegerDeviceVector, SerialInplace )
 
 TEST_P( StableSortbyKeyIntegerDeviceVector, MultiCoreInplace )
 {
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
@@ -977,7 +970,6 @@ TEST_P( StableSortbyKeyFloatDeviceVector, Inplace )
 
 TEST_P( StableSortbyKeyFloatDeviceVector, SerialInplace )
 {
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -999,7 +991,6 @@ TEST_P( StableSortbyKeyFloatDeviceVector, SerialInplace )
 
 TEST_P( StableSortbyKeyFloatDeviceVector, MultiCoreInplace )
 {
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
@@ -1040,7 +1031,6 @@ TEST_P( StableSortbyKeyDoubleDeviceVector, Inplace )
 
 TEST_P( StableSortbyKeyDoubleDeviceVector, SerialInplace )
 {
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -1062,7 +1052,6 @@ TEST_P( StableSortbyKeyDoubleDeviceVector, SerialInplace )
 
 TEST_P( StableSortbyKeyDoubleDeviceVector, MultiCoreInplace )
 {
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
@@ -1084,7 +1073,7 @@ TEST_P( StableSortbyKeyDoubleDeviceVector, MultiCoreInplace )
 
 #endif
 #endif
-
+#if defined(_WIN32)
 TEST_P( StableSortbyKeyIntegerNakedPointer, Inplace )
 {
     size_t endIndex = GetParam( );
@@ -1105,7 +1094,6 @@ TEST_P( StableSortbyKeyIntegerNakedPointer, SerialInplace )
 {
     size_t endIndex = GetParam( );
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -1125,7 +1113,6 @@ TEST_P( StableSortbyKeyIntegerNakedPointer, MultiCoreInplace )
 {
     size_t endIndex = GetParam( );
 
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
@@ -1159,7 +1146,6 @@ TEST_P( StableSortbyKeyFloatNakedPointer, Inplace )
 
 TEST_P( StableSortbyKeyFloatNakedPointer, SerialInplace )
 {
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -1179,7 +1165,6 @@ TEST_P( StableSortbyKeyFloatNakedPointer, SerialInplace )
 
 TEST_P( StableSortbyKeyFloatNakedPointer, MultiCoreInplace )
 {
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
@@ -1217,7 +1202,6 @@ TEST_P( StableSortbyKeyDoubleNakedPointer, Inplace )
 
 TEST_P( StableSortbyKeyDoubleNakedPointer, SerialInplace )
 {
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::SerialCpu);
 
@@ -1236,7 +1220,7 @@ TEST_P( StableSortbyKeyDoubleNakedPointer, SerialInplace )
 
 TEST_P( StableSortbyKeyDoubleNakedPointer, MultiCoreInplace )
 {
-    ::cl::Context myContext = bolt::cl::control::getDefault( ).getContext( );
+
     bolt::cl::control ctl = bolt::cl::control::getDefault( );
     ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
 
@@ -1254,6 +1238,9 @@ TEST_P( StableSortbyKeyDoubleNakedPointer, MultiCoreInplace )
 }
 
 #endif
+#endif
+
+#if(TEST_LARGE_BUFFERS == 1)
 /*Negative test to stable sort a buffer when all the input values are equal Say zero*/
 TEST( DefaultGPU, Normal )
 {
@@ -1272,54 +1259,98 @@ TEST( DefaultGPU, Normal )
 
 
 }
+#endif
 
-std::array<int, 16> TestValues = {2,4,8,16,32,64,128,256,512,1024,2048,4096,8192,16384,32768, 1<<22};
+std::array<int, 16> TestValues = {2,4,8,16,32,64,128,256,512,1024};
+std::array<int, 16> TestValues2 = {2048, 4096,8192,16384,32768, 1<<22};
 
 //INSTANTIATE_TEST_CASE_P( StableSortByKeyValues, StableSortByKeyCountingIterator,
 //                        ::testing::ValuesIn( TestValues.begin(), TestValues.end() ) );
 
 //Test lots of consecutive numbers, but small range, suitable for integers because they overflow easier
-INSTANTIATE_TEST_CASE_P( StableSortByKeyRange, StableSortbyKeyIntegerVector, ::testing::Range( 0, 1024, 7 ) );
+INSTANTIATE_TEST_CASE_P( StableSortByKeyRange, StableSortbyKeyIntegerVector, ::testing::Range( 0, 1024, 93 ) ); //7
 INSTANTIATE_TEST_CASE_P( StableSortByKeyValues, StableSortbyKeyIntegerVector, ::testing::ValuesIn( TestValues.begin(),
                                                                                       TestValues.end() ) );
-INSTANTIATE_TEST_CASE_P( StableSortByKeyRange, StableSortbyKeyFloatVector, ::testing::Range( 0, 1024, 3 ) );
+#if(TEST_LARGE_BUFFERS == 1)																					  
+INSTANTIATE_TEST_CASE_P( StableSortByKeyValues, StableSortbyKeyIntegerVector, ::testing::ValuesIn( TestValues2.begin(),
+                                                                                      TestValues2.end() ) );
+#endif																					  
+                                                                                      
+INSTANTIATE_TEST_CASE_P( StableSortByKeyRange, StableSortbyKeyFloatVector, ::testing::Range( 0, 1024, 93 ) ); // 3
 INSTANTIATE_TEST_CASE_P( StableSortByKeyValues, StableSortbyKeyFloatVector, ::testing::ValuesIn( TestValues.begin(),
                                                                                       TestValues.end() ) );
+#if(TEST_LARGE_BUFFERS == 1)																					  
+INSTANTIATE_TEST_CASE_P( StableSortByKeyValues, StableSortbyKeyFloatVector, ::testing::ValuesIn( TestValues2.begin(),
+                                                                                      TestValues2.end() ) );
+#endif																					  
+                                                                                      
 #if (TEST_DOUBLE == 1)
-INSTANTIATE_TEST_CASE_P( StableSortByKeyRange, StableSortbyKeyDoubleVector, ::testing::Range( 0, 1024, 21 ) );
+INSTANTIATE_TEST_CASE_P( StableSortByKeyRange, StableSortbyKeyDoubleVector, ::testing::Range( 0, 1024, 93 ) ); //21
 INSTANTIATE_TEST_CASE_P( StableSortByKeyValues, StableSortbyKeyDoubleVector, ::testing::ValuesIn( TestValues.begin(),
                                                                                        TestValues.end() ) );
+#if(TEST_LARGE_BUFFERS == 1)																					   
+INSTANTIATE_TEST_CASE_P( StableSortByKeyValues, StableSortbyKeyDoubleVector, ::testing::ValuesIn( TestValues2.begin(),
+                                                                                       TestValues2.end() ) );
 #endif
-INSTANTIATE_TEST_CASE_P( StableSortByKeyRange, StableSortbyKeyIntegerDeviceVector, ::testing::Range( 0, 1024, 53 ) );
+                                                                                       
+#endif
+INSTANTIATE_TEST_CASE_P( StableSortByKeyRange, StableSortbyKeyIntegerDeviceVector, ::testing::Range( 0, 1024, 93 ) );
 INSTANTIATE_TEST_CASE_P( StableSortByKeyValues, StableSortbyKeyIntegerDeviceVector,::testing::ValuesIn(TestValues.begin(),
                                                                                             TestValues.end()));
-INSTANTIATE_TEST_CASE_P( StableSortByKeyRange, StableSortbyKeyFloatDeviceVector, ::testing::Range( 0, 1024, 53 ) );
+#if(TEST_LARGE_BUFFERS == 1)																							
+INSTANTIATE_TEST_CASE_P( StableSortByKeyValues, StableSortbyKeyIntegerDeviceVector,::testing::ValuesIn(TestValues2.begin(),
+                                                                                            TestValues2.end()));
+#endif																							
+                                                                                            
+INSTANTIATE_TEST_CASE_P( StableSortByKeyRange, StableSortbyKeyFloatDeviceVector, ::testing::Range( 0, 1024, 93 ) );
 INSTANTIATE_TEST_CASE_P( StableSortByKeyValues, StableSortbyKeyFloatDeviceVector,::testing::ValuesIn(TestValues.begin(),
                                                                                           TestValues.end()));
+#if(TEST_LARGE_BUFFERS == 1)																						  
+INSTANTIATE_TEST_CASE_P( StableSortByKeyValues, StableSortbyKeyFloatDeviceVector,::testing::ValuesIn(TestValues2.begin(),
+                                                                                          TestValues2.end()));
+#endif																						  
+                                                                                          
 #if (TEST_DOUBLE == 1)
-INSTANTIATE_TEST_CASE_P( StableSortByKeyRange, StableSortbyKeyDoubleDeviceVector, ::testing::Range( 0, 1024, 53 ) );
+INSTANTIATE_TEST_CASE_P( StableSortByKeyRange, StableSortbyKeyDoubleDeviceVector, ::testing::Range( 0, 1024, 93 ) );
 INSTANTIATE_TEST_CASE_P( StableSortByKeyValues, StableSortbyKeyDoubleDeviceVector,::testing::ValuesIn(TestValues.begin(),
                                                                                            TestValues.end()));
+#if(TEST_LARGE_BUFFERS == 1)																						   
+INSTANTIATE_TEST_CASE_P( StableSortByKeyValues, StableSortbyKeyDoubleDeviceVector,::testing::ValuesIn(TestValues2.begin(),
+                                                                                           TestValues2.end()));	
 #endif
-INSTANTIATE_TEST_CASE_P( StableSortByKeyRange, StableSortbyKeyIntegerNakedPointer, ::testing::Range( 0, 1024, 13) );
+#endif
+INSTANTIATE_TEST_CASE_P( StableSortByKeyRange, StableSortbyKeyIntegerNakedPointer, ::testing::Range( 0, 1024, 93) ); //13
 INSTANTIATE_TEST_CASE_P( StableSortByKeyValues, StableSortbyKeyIntegerNakedPointer,::testing::ValuesIn(TestValues.begin(),
                                                                                             TestValues.end()));
-INSTANTIATE_TEST_CASE_P( StableSortByKeyRange, StableSortbyKeyFloatNakedPointer, ::testing::Range( 0, 1024, 13) );
+#if(TEST_LARGE_BUFFERS == 1)																							
+INSTANTIATE_TEST_CASE_P( StableSortByKeyValues, StableSortbyKeyIntegerNakedPointer,::testing::ValuesIn(TestValues2.begin(),
+                                                                                            TestValues2.end()));
+#endif																							
+                                                                                            
+INSTANTIATE_TEST_CASE_P( StableSortByKeyRange, StableSortbyKeyFloatNakedPointer, ::testing::Range( 0, 1024, 93) ); //13
 INSTANTIATE_TEST_CASE_P( StableSortByKeyValues, StableSortbyKeyFloatNakedPointer, ::testing::ValuesIn(TestValues.begin(),
                                                                                            TestValues.end()));
+#if(TEST_LARGE_BUFFERS == 1)																						   
+INSTANTIATE_TEST_CASE_P( StableSortByKeyValues, StableSortbyKeyFloatNakedPointer, ::testing::ValuesIn(TestValues2.begin(),
+                                                                                           TestValues2.end()));
+#endif																						   
+                                                                                           
 #if (TEST_DOUBLE == 1)
-INSTANTIATE_TEST_CASE_P( StableSortByKeyRange, StableSortbyKeyDoubleNakedPointer, ::testing::Range( 0, 1024, 13) );
+INSTANTIATE_TEST_CASE_P( StableSortByKeyRange, StableSortbyKeyDoubleNakedPointer, ::testing::Range( 0, 1024, 93) );  //13
 INSTANTIATE_TEST_CASE_P( StableSortByKeyValues, StableSortbyKeyDoubleNakedPointer,::testing::ValuesIn(TestValues.begin(),
                                                                                      TestValues.end() ) );
+#if(TEST_LARGE_BUFFERS == 1)																					 
+INSTANTIATE_TEST_CASE_P( StableSortByKeyValues, StableSortbyKeyDoubleNakedPointer,::testing::ValuesIn(TestValues2.begin(),
+                                                                                     TestValues2.end() ) );		
+#endif																					 
 #endif
-
 
 int main(int argc, char* argv[])
 {
     ::testing::InitGoogleTest( &argc, &argv[ 0 ] );
 
     //  Register our minidump generating logic
-    bolt::miniDumpSingleton::enableMiniDumps( );
+  //  bolt::miniDumpSingleton::enableMiniDumps( );
 
     int retVal = RUN_ALL_TESTS( );
 

@@ -17,13 +17,22 @@
 
 # List the names of common files to compile across all platforms
 
-set( clBolt.Test.Reduce.Source stdafx.cpp ReduceTest.cpp ReduceDeviceVector.cpp ${BOLT_CL_TEST_DIR}/common/myocl.cpp) 
-set( clBolt.Test.Reduce.Headers stdafx.h ${BOLT_CL_TEST_DIR}/common/myocl.h 
-                                         targetver.h 
-                                         ${BOLT_INCLUDE_DIR}/bolt/cl/reduce.h
-                                         ${BOLT_INCLUDE_DIR}/bolt/cl/detail/reduce.inl )
+set( clBolt.Test.Reduce.Source ${BOLT_CL_TEST_DIR}/common/stdafx.cpp 
+                                  ${BOLT_CL_TEST_DIR}/common/myocl.cpp
+                                  ReduceTest.cpp  ) 
+set( clBolt.Test.Reduce.Headers ${BOLT_CL_TEST_DIR}/common/stdafx.h 
+                                   ${BOLT_CL_TEST_DIR}/common/targetver.h 
+                                   ${BOLT_CL_TEST_DIR}/common/myocl.h 
+                                   ${BOLT_INCLUDE_DIR}/bolt/cl/reduce.h
+                                   ${BOLT_INCLUDE_DIR}/bolt/cl/detail/reduce.inl )
 
 set( clBolt.Test.Reduce.Files ${clBolt.Test.Reduce.Source} ${clBolt.Test.Reduce.Headers} )
+
+# Set project specific compile and link options
+if( MSVC )
+    set( CMAKE_CXX_FLAGS "-bigobj ${CMAKE_CXX_FLAGS}" )
+    set( CMAKE_C_FLAGS "-bigobj ${CMAKE_C_FLAGS}" )
+endif()
 
 add_executable( clBolt.Test.Reduce ${clBolt.Test.Reduce.Files} )
 
@@ -37,10 +46,10 @@ set_target_properties( clBolt.Test.Reduce PROPERTIES VERSION ${Bolt_VERSION} )
 set_target_properties( clBolt.Test.Reduce PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
 
 set_property( TARGET clBolt.Test.Reduce PROPERTY FOLDER "Test/OpenCL")
-		
+        
 # CPack configuration; include the executable into the package
 install( TARGETS clBolt.Test.Reduce
-	RUNTIME DESTINATION ${BIN_DIR}
-	LIBRARY DESTINATION ${LIB_DIR}
-	ARCHIVE DESTINATION ${LIB_DIR}/import
-	)
+    RUNTIME DESTINATION ${BIN_DIR}
+    LIBRARY DESTINATION ${LIB_DIR}
+    ARCHIVE DESTINATION ${LIB_DIR}/import
+    )

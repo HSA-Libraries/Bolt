@@ -49,7 +49,7 @@
 #include <vector>
 #include <algorithm>
  
-void main()
+int main()
 {
     // generate random data (on host)
     std::vector<int> a(8192);
@@ -57,6 +57,7 @@ void main()
 
     // sort, run on best device in the platform
     bolt::cl::sort(a.begin(), a.end());
+	return 0;
 }
 \endcode
 
@@ -74,9 +75,9 @@ void main()
 
 
  * \subsection subexample_sec Bolt Functor Example
- * Below example shows how to use Functors with BOLT. 
- * For user defined datatypes to work with BOLT functor, user has to wrap his data type around a macro BOLT_FUNCTOR.
- * This enables the user defined class to be available as a string to the OpenCL Compiler which is invoked during a call to 
+ * Below example shows how to use functors with BOLT. 
+ * For user defined datatypes to work with Bolt functor, user has to wrap his data type around a macro BOLT_FUNCTOR.
+ * This enables the user defined class to be available as a string to the OpenCL compiler which is invoked during a call to 
  * clBuildProgram(). Consider the following example.    
  \code
 BOLT_FUNCTOR(MyType<int>,
@@ -102,8 +103,8 @@ struct MyType {
 );
 \endcode
 
-After defining the class, user need to register it with BOLT. Internally bolt algorithms will make use of the device_vector class. 
-But these are defined only for the basic data types like int, float, unsigned int etc. For User defined data types it’s the 
+After defining the class, user need to register it with Bolt. Internally Bolt algorithms will make use of the device_vector class. 
+But these are defined only for the basic data types like int, float, unsigned int etc. For user defined data types it’s the 
 responsibility of the application developer to create a definition of the deveice_vector for his own defined data type.
 See the below example. 
 \code
@@ -115,11 +116,12 @@ the responsibility of the application developer to define as shown above for the
 
 Stitching it all together with a below sample code for Sort:
 \code
-void main()
+int main()
 {
     typedef MyType<int> mytype;
     std::vector<mytype> myTypeBoltInput(length);
     bolt::cl::sort(myTypeBoltInput.begin(), myTypeBoltInput.end(),bolt::cl::greater<mytype>());
+	return 0;
 }
 \endcode
 
@@ -148,10 +150,11 @@ struct AddD4
     };
 }; 
 );
-void main()
+int main()
 {
     std::vector <uddtD4> boltInput(sizeOfInputBuffer);
     bolt::cl::sort( boltInput.begin( ), boltInput.end( ), AddD4() );
+	return 0;
 }
 \endcode
 
@@ -185,11 +188,12 @@ struct MyFunctor{
 BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::greater, int, MyFunctor< int> );
 BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, int, MyFunctor< int> );
 
-void main()
+int main()
 {
     typedef MyFunctor<int> myfunctor;
     std::vector <myfunctor> boltInput(sizeOfInputBuffer);
     bolt::cl::sort( boltInput.begin( ), boltInput.end( ), bolt::cl::greater<myfunctor>() );
+	return 0;
 }
 \endcode
 If the user wants to use TEMPLATE_FUNCTOR for more than one datatype then he can use other variants of this
@@ -200,8 +204,8 @@ like BOLT_TEMPLATE_FUNCTOR2, BOLT_TEMPLATE_FUNCTOR3 etc from include/bolt/cl/clc
  *  List of <a href="supportedFunction.html">Supported Functions and Code Paths</a>.
  * \subsection paths Code Path Behaviour
  * \subsubsection Default Default Behaviour
- * Bolt function is designed to be executed with four code paths (OpenCL™, C++ AMP, Multicore CPU and Serial CPU). The default mode is "Automatic" which means it will go into GPU path first, then TBB (Intel), then SerialCpu 
- * with below mentioned order. The control will go to other paths only if the selected one not found.
+ * Bolt function is designed to be executed with four code paths (OpenCL™, C++ AMP, Multicore CPU and Serial CPU). The default mode is "Automatic" which means it will go into GPU path first, then Multicore CPU (Intel TBB), then SerialCpu 
+ * with below mentioned order, control will go to other paths only if the selected one not found.
  
  * Selection order will be: 
  * \li Run on GPU if AMD GPU is found and AMD APP SDK is installed.
@@ -211,22 +215,99 @@ like BOLT_TEMPLATE_FUNCTOR2, BOLT_TEMPLATE_FUNCTOR3 etc from include/bolt/cl/clc
 * \subsubsection Force Force Behaviour
 * Forcing mode to any device will run the function on that device only. There are two ways in BOLT to force the control to specific Device.
 *   -# <b> Setting control to Device Globally: </b>
-*      \code bolt::cl::control& myControl = bolt::cl::control::getDefault( );
-*  myControl.waitMode( bolt::cl::control::NiceWait );
-*  myControl.setForceRunMode( bolt::cl::control::OpenCL );
+*      \code 
+*       bolt::cl::control& myControl = bolt::cl::control::getDefault( );
+*       myControl.waitMode( bolt::cl::control::NiceWait );
+*       myControl.setForceRunMode( bolt::cl::control::OpenCL );
 *      \endcode
 *   -# <b> Setting control to Device locally </b>
-*       \code bolt::amp::control ctl = bolt::amp::control::getDefault( );
-* ctl.setForceRunMode(bolt::amp::control::OpenCL);
+*       \code 
+*       bolt::cl::control ctl = bolt::cl::control::getDefault( );
+*       ctl.setForceRunMode(bolt::cl::control::OpenCL);
 *       \endcode
 * This will set the control to specified device locally, passing this control object to BOLT function enables specified device 
 * path only for that function, so reference to any BOLT function will always run specified device path.
+
+* \section Debug Debug Log Facility
+* If Debug Log is enabled, we record the actual code path taken for execution. It could be OpenCL™ GPU/CPU, Multicore TBB or Serial.
+* Users need to initialize the log object before the bolt call and a query after the call to know which all paths have been executed.
+*   -# <b> Initialization </b>
+*   \code 
+*         #define BOLT_DEBUG_LOG
+*	      #include "bolt/BoltLog.h"
+*         BOLTLOG::CaptureLog *xyz =  BOLTLOG::CaptureLog::getInstance();
+*         xyz->Initialize();
+*         std::vector< BOLTLOG::FunPaths> paths;
+*  \endcode
+*   -# <b> Querying </b>
+*       \code
+*       xyz->WhatPathTaken(paths);
+*       for(std::vector< BOLTLOG::FunPaths>::iterator parse=paths.begin(); parse!=paths.end(); parse++)
+*        {
+*           std::cout<<(*parse).fun<<”\n”;  // prints function number as defined in Boltlog.h
+*           std::cout<<(*parse).path<<”\n”;  // prints the path number – 0 for Multicore TBB, 1 for OpenCL™ GPU, 2 for OpenCL™ CPU and 3 for Serial.
+*           std::cout<<(*parse).msg<<”\n”;  // prints the Path taken
+*        }
+*       \endcode
+* When multiple functions are called, they are logged in the order invoked. E.g. sort & then search.
 
 
  * \section Requirements Requirements 
  * Bolt uses an OpenCL<SUP>TM</SUP> implementation that supports the static C++ kernel
  * features; specifically, C++ template support for OpenCL<SUP>TM</SUP> kernels.  Currently,
  * the AMD OpenCL<SUP>TM</SUP> SDK 2.7 and above versions are designed to provides this support; other vendors may adopt this feature in the future. 
- * If you face any issue with Bolt. Please log an issue in BOLT Issues page.
- * <a href="https://github.com/HSA-Libraries/bolt/issues">BOLT Issues page</a>.
- */
+ * If you face any issue with Bolt. Please log an issue in Bolt Issues page.
+ * <a href="https://github.com/HSA-Libraries/bolt/issues">Bolt Issues page</a>.
+ 
+* \subsection Prerequisites Prerequisites
+* \subsubsection Windows Windows
+* -# Visual Studio 2010 onwards (VS2012 for C++ AMP)
+* -# Tested with 32/64 bit Windows® 7/8 and Windows® Blue
+* -# CMake 2.8.10
+* -# TBB (For Multicore CPU path only) (4.1 Update 1 or Above) . See Building Bolt with TBB.
+* -# APP SDK 2.8 or onwards.
+
+* <b>Note:</b> If the user has installed both Visual Studio 2012 and Visual Studio 2010, the latter should be updated to SP1.
+
+* \subsubsection Linux Linux
+* -# GCC 4.6.3 and above 
+* -# Tested with OpenSuse 12.3, RHEL 6.4 64bit, RHEL 6.3 32bit, Ubuntu 13.4
+* -# CMake 2.8.10
+* -# TBB (For Multicore CPU path only) (4.1 Update 1 or Above) . See Building Bolt with TBB.
+* -# APP SDK 2.8 or onwards.
+
+* <b>Note:</b> Bolt pre-built binaries for Linux are build with GCC 4.7.3, same version should be used for Application building else user has to build Bolt from source with GCC 4.6.3 or higher.
+
+* \subsection Package Catalyst™ package
+* The latest Catalyst package contains the most recent OpenCL runtime. Recommended Catalyst package is 13.11 Beta V1. 
+
+* 13.4 and higher is supported.
+
+* <b>Note:</b> 13.9 in not supported. 
+ 
+* \subsection Support Supported Devices
+
+*<b>AMD APU Family with AMD Radeon™ HD Graphics</b>
+* -# A-Series
+* -# C-Series
+* -# E-Series
+* -# E2-Series
+* -# G-Series
+* -# R-Series
+
+*<b>AMD Radeon™ HD Graphics</b>
+* -# 7900 Series (7990, 7970, 7950)
+* -# 7800 Series (7870, 7850)
+* -# 7700 Series (7770, 7750)
+
+*<b>AMD Radeon™ HD Graphics</b>
+* -# 6900 Series (6990, 6970, 6950)
+* -# 6800 Series (6870, 6850)
+* -# 6700 Series (6790 , 6770, 6750)
+* -# 6600 Series (6670)
+* -# 6500 Series (6570)
+* -# 6400 Series (6450)
+* -# 6xxxM Series
+
+* Compiled binary windows packages (zip packages) for Bolt may be downloaded from the Bolt landing page hosted on AMD's Developer Central website.
+*/
