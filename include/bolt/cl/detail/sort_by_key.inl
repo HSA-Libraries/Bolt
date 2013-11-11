@@ -15,6 +15,25 @@
 
 ***************************************************************************/
 
+/***************************************************************************
+* The Radix sort algorithm implementation in BOLT library is a derived work from 
+* the radix sort sample which is provided in the Book. "Heterogeneous Computing with OpenCL"
+* Link: http://www.heterogeneouscompute.org/?page_id=7
+* The original Authors are: Takahiro Harada and Lee Howes. A detailed explanation of 
+* the algorithm is given in the publication linked here. 
+* http://www.heterogeneouscompute.org/wordpress/wp-content/uploads/2011/06/RadixSort.pdf
+* 
+* The derived work adds support for descending sort and signed integers. 
+* Performance optimizations were provided for the AMD GCN architecture. 
+* 
+*  Besides this following publications were referred: 
+*  1. "Parallel Scan For Stream Architectures"  
+*     Technical Report CS2009-14Department of Computer Science, University of Virginia. *     Duane Merrill and Andrew Grimshaw*    https://sites.google.com/site/duanemerrill/ScanTR2.pdf*  2. "Revisiting Sorting for GPGPU Stream Architectures" *     Duane Merrill and Andrew Grimshaw*    https://sites.google.com/site/duanemerrill/RadixSortTR.pdf
+*  3. The SHOC Benchmark Suite 
+*     https://github.com/vetter/shoc
+*
+***************************************************************************/
+
 #pragma once
 #if !defined( BOLT_CL_SORT_BY_KEY_INL )
 #define BOLT_CL_SORT_BY_KEY_INL

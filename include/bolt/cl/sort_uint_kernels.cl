@@ -51,29 +51,31 @@ typedef unsigned int u32;
 #define NUM_BUCKET (1<<BITS_PER_PASS)
 
 
-    // __attribute__((reqd_work_group_size((powers of 2),1,1)))
-uint scanLocalMemAndTotal(uint val, __local uint* lmem, uint *totalSum, int exclusive)
+    // Now, perform Kogge-Stone scan
+    // Refer: https://sites.google.com/site/duanemerrill/ScanTR2.pdf
+    // Section 3.1.5 for an explanation of this algorithm.
+// __attribute__((reqd_work_group_size((powers of 2),1,1)))
+uint scanLocalAndReduce(uint val, __local uint* lmem, uint *totalSum, int exclusive)
 {
     // Set first half of local memory to zero to make room for scanning
-    int l_id = get_local_id(0);
-    int l_size = get_local_size(0);
-    lmem[l_id] = 0;
+    int lIdx = get_local_id(0);
+    int wgSize = get_local_size(0);
+    lmem[lIdx] = 0;
     
-    l_id += l_size;
-    lmem[l_id] = val;
+    lIdx += wgSize;
+    lmem[lIdx] = val;
     barrier(CLK_LOCAL_MEM_FENCE);
-    
-    // Now, perform Kogge-Stone scan
+
     uint t;
-    for (int i = 1; i < l_size; i *= 2)
+    for (int i = 1; i < wgSize; i *= 2)
     {
-        t = lmem[l_id -  i]; 
+        t = lmem[lIdx -  i]; 
         barrier(CLK_LOCAL_MEM_FENCE);
-        lmem[l_id] += t;     
+        lmem[lIdx] += t;     
         barrier(CLK_LOCAL_MEM_FENCE);
     }
-    *totalSum = lmem[l_size*2 - 1];
-    return lmem[l_id-exclusive];
+    *totalSum = lmem[wgSize*2 - 1];
+    return lmem[lIdx-exclusive];
 }
 
 uint prefixScanVectorEx( uint4* data )
@@ -98,7 +100,7 @@ uint prefixScanVectorEx( uint4* data )
 uint4 localPrefixSum256V( uint4 pData, uint lIdx, uint* totalSum, __local u32* sorterSharedMemory )
 {
     u32 s4 = prefixScanVectorEx( &pData );
-    u32 rank = scanLocalMemAndTotal( s4, sorterSharedMemory, totalSum,  1 );
+    u32 rank = scanLocalAndReduce( s4, sorterSharedMemory, totalSum,  1 );
     return pData + make_uint4( rank, rank, rank, rank );
 }
 
@@ -333,6 +335,8 @@ void permuteAscInstantiated( __global const u32* restrict gSrc, __global const u
     }
 }
 
+//The code above and the code below are the same. 
+//Only difference is that DESCENDING is defined here.
 
 #define DESCENDING
 

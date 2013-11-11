@@ -15,6 +15,26 @@
 
 ***************************************************************************/
 
+/***************************************************************************
+* The Radix sort algorithm implementation in BOLT library is a derived work from 
+* the radix sort sample which is provided in the Book. "Heterogeneous Computing with OpenCL"
+* Link: http://www.heterogeneouscompute.org/?page_id=7
+* The original Authors are: Takahiro Harada and Lee Howes. A detailed explanation of 
+* the algorithm is given in the publication linked here. 
+* http://www.heterogeneouscompute.org/wordpress/wp-content/uploads/2011/06/RadixSort.pdf
+* 
+* The derived work adds support for descending sort and signed integers. 
+* Performance optimizations were provided for the AMD GCN architecture. 
+* 
+*  Besides this following publications were referred: 
+*  1. "Parallel Scan For Stream Architectures"  
+*     Technical Report CS2009-14Department of Computer Science, University of Virginia. *     Duane Merrill and Andrew Grimshaw*    https://sites.google.com/site/duanemerrill/ScanTR2.pdf*  2. "Revisiting Sorting for GPGPU Stream Architectures" *     Duane Merrill and Andrew Grimshaw*    https://sites.google.com/site/duanemerrill/RadixSortTR.pdf
+*  3. The SHOC Benchmark Suite 
+*     https://github.com/vetter/shoc
+*
+***************************************************************************/
+
+
 #if !defined( BOLT_CL_SORT_INL )
 #define BOLT_CL_SORT_INL
 #pragma once
@@ -95,41 +115,6 @@ public:
             return templateSpecializationString;
         }
 };
-
-//class SelectionSort_KernelTemplateSpecializer : public KernelTemplateSpecializer
-//{
-//public:
-//    SelectionSort_KernelTemplateSpecializer() : KernelTemplateSpecializer()
-//    {
-//        addKernelName("selectionSortLocalTemplate");
-//        addKernelName("selectionSortFinalTemplate");
-//    }
-//
-//    const ::std::string operator() ( const ::std::vector< ::std::string>& typeNames ) const
-//    {
-//        const std::string templateSpecializationString =
-//
-//            "\n// Host generates this instantiation string with user-specified value type and functor\n"
-//            "template __attribute__((mangled_name(" + name(0) + "Instantiated)))\n"
-//            "kernel void selectionSortLocalTemplate(\n"
-//            "global const " + typeNames[sort_iValueType] + " * in,\n"
-//            "global " + typeNames[sort_iValueType] + " * out,\n"
-//            "global " + typeNames[sort_StrictWeakOrdering] + " * userComp,\n"
-//            "local  " + typeNames[sort_iValueType] + " * scratch,\n"
-//            "const int buffSize\n"
-//            ");\n\n"
-//            "\n// Host generates this instantiation string with user-specified value type and functor\n"
-//            "template __attribute__((mangled_name(" + name(1) + "Instantiated)))\n"
-//            "kernel void selectionSortFinalTemplate(\n"
-//            "global const " + typeNames[sort_iValueType] + " * in,\n"
-//            "global " + typeNames[sort_iValueType] + " * out,\n"
-//            "global " + typeNames[sort_StrictWeakOrdering] + " * userComp,\n"
-//            "local  " + typeNames[sort_iValueType] + " * scratch,\n"
-//            "const int buffSize\n"
-//            ");\n\n";
-//        return templateSpecializationString;
-//    }
-//};
 
 class RadixSort_Int_KernelTemplateSpecializer : public KernelTemplateSpecializer
 {
