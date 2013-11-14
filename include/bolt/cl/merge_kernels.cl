@@ -80,7 +80,7 @@ __kernel void mergeTemplate(
     {
         iTypePtr1 val = input_iter1[gx];
         pos1 = binary_search1(val , input_iter2,input_iter2.m_StartIndex, length2, userFunctor);
-        if (input_iter2[pos1 -1] == val)
+        if (input_iter2[pos1 -1] == val  && pos1 !=0 )
              riter[pos1 + gx -1] = val;
         else
             riter[pos1 + gx] = val;

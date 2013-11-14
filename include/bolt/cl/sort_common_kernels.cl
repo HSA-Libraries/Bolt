@@ -28,27 +28,27 @@
 #define CHECK_BOUNDARY
 
 
-uint scanLocalMem(uint val, __local uint* lmem, int exclusive)
+uint scanlMemPrivData(uint val, __local uint* lmem, int exclusive)
 {
     // Set first half of local memory to zero to make room for scanning
-    int l_id = get_local_id(0);
-    int l_size = get_local_size(0);
-    lmem[l_id] = 0;
+    int lIdx = get_local_id(0);
+    int wgSize = get_local_size(0);
+    lmem[lIdx] = 0;
     
-    l_id += l_size;
-    lmem[l_id] = val;
+    lIdx += wgSize;
+    lmem[lIdx] = val;
     barrier(CLK_LOCAL_MEM_FENCE);
     
     // Now, perform Kogge-Stone scan
     uint t;
-    for (int i = 1; i < l_size; i *= 2)
+    for (int i = 1; i < wgSize; i *= 2)
     {
-        t = lmem[l_id -  i]; 
+        t = lmem[lIdx -  i]; 
         barrier(CLK_LOCAL_MEM_FENCE);
-        lmem[l_id] += t;     
+        lmem[lIdx] += t;     
         barrier(CLK_LOCAL_MEM_FENCE);
     }
-    return lmem[l_id-exclusive];
+    return lmem[lIdx-exclusive];
 }
 
 __kernel 
@@ -73,7 +73,7 @@ scanInstantiated(__global uint * isums,
             val = isums[(n * d) + get_local_id(0)];
         }
         // Exclusive scan the counts in local memory
-        uint res = scanLocalMem(val, lmem, 1);
+        uint res = scanlMemPrivData(val, lmem, 1);
         // Write scanned value out to global
         if (get_local_id(0) < n)
         {

@@ -8,11 +8,33 @@ Here's a link to our <a href="https://github.com/HSA-Libraries/bolt/wiki">BOLT w
  
 ## Prerequisites
 
-1.  Windows® 7/8
-2.  Visual Studio 2010 onwards (VS2012 for C++ AMP)
-3.  CMake 2.8.10
-4.  TBB (For Multicore CPU path only) (4.1 Update 1 or Above) . See <a href="http://hsa-libraries.github.io/Bolt/html/buildingTBB.html">Building Bolt with TBB</a>. 
-5.  APP SDK 2.7 or onwards. 
+### Windows
+
+1. Visual Studio 2010 onwards (VS2012 for C++ AMP)
+2. Tested with 32/64 bit Windows® 7/8 and Windows® Blue
+3. CMake 2.8.10
+4. TBB (For Multicore CPU path only) (4.1 Update 1 or Above) . See Building Bolt with TBB.
+5. APP SDK 2.8 or onwards.
+
+*Note:* If the user has installed both Visual Studio 2012 and Visual Studio 2010, the latter should be updated to SP1.
+
+### Linux
+
+1. GCC 4.6.3 and above
+2. Tested with OpenSuse 12.3, RHEL 6.4 64bit, RHEL 6.3 32bit, Ubuntu 13.4
+3. CMake 2.8.10
+4. TBB (For Multicore CPU path only) (4.1 Update 1 or Above) . See Building Bolt with TBB.
+5. APP SDK 2.8 or onwards.
+
+*Note:* Bolt pre-built binaries for Linux are build with GCC 4.7.3, same version should be used for Application building else user has to build Bolt from source with GCC 4.6.3 or higher.
+
+### Catalyst™ package
+
+The latest Catalyst driver contains the most recent OpenCL runtime. Recommended Catalyst package is latest 13.11 Beta Driver.
+
+13.4 and higher is supported.
+
+*Note:* 13.9 in not supported.
 
 ## Supported Devices
 
@@ -43,7 +65,6 @@ Here's a link to our <a href="https://github.com/HSA-Libraries/bolt/wiki">BOLT w
 
 Compiled binary windows packages (zip packages) for Bolt may be downloaded from the <a href="http://developer.amd.com/tools-and-sdks/heterogeneous-computing/amd-accelerated-parallel-processing-app-sdk/bolt-c-template-library/">Bolt landing page</a> hosted on AMD's Developer Central website.
 
-*Note:* If the user has installed both Visual Studio 2012 and Visual Studio 2010, the latter should be updated to SP1.
 
 ## Examples
 
@@ -62,6 +83,7 @@ The simple example below shows how to use Bolt to sort a random array of 8192 in
     
         // sort, run on best device in the platform
         bolt::cl::sort(a.begin(), a.end());
+        return 0;
     }
 
 The code will be familiar to programmers who have used the C++ Standard Template Library; the difference is the include file (bolt/cl/sort.h) and the bolt::cl namespace before the sort call. Bolt developers do not need to learn a new device-specific programming model to leverage the power and performance advantages of heterogeneous computing.
@@ -85,6 +107,7 @@ The code will be familiar to programmers who have used the C++ Standard Template
      
       // Calculate the inclusive_scan of the std vector
       bolt::cl::inclusive_scan(stdInput.begin( ),stdInput.end( ),stdInput.begin( ) );
+      return 0;
     }
 
 This example shows how Bolt simplifies management of heterogeneous memory.  The creation and destruction of device resident memory is abstracted inside of the `bolt::cl::device_vector <>` class, which provides an interface familiar to nearly all C++ programmers.  All of Bolt’s provided algorithms can take either the normal std::vector or the `bolt::cl::device_vector<>` class, which allows the user to control when and where memory is transferred between host and device to optimize performance.
