@@ -64,8 +64,8 @@
 * <a class="external" href="http://www.cmake.org/">http://www.cmake.org/</a>
 * \subsection cl_dependencies OpenCL&tm; Dependencies
 * Bolt's OpenCL&tm; projects have a dependency on the AMD APP SDK and the AMD OpenCL &tm; runtime provided by the Catalyst &tm;
-* drivers. OpenCL &tm; is regarded as a cross-platform, vendor-neutral API and AMD is using C++ kernel template
-* features found in the AMD OpenCL &tm; implementation that to date are not found in other vendor implementations.  
+* drivers. OpenCL &tm; is regarded as a cross-platform, vendor-neutral API and BOLT uses the C++ static kernel template
+* extension available in the AMD OpenCL &tm; implementation that to date are not found in other vendor implementations.  
 * During its configuration, CMake requires an environment variable to find the root of the OpenCL &tm; installation.   
 * Provide this by defining the environment variable <b>AMDAPPSDKROOT</b> with the path to the root 
 * of the OpenCL &tm; SDK, typically <tt>'C:/Program Files (x86)/AMD APP'</tt> on Windows &reg; 64-bit machines.
@@ -81,7 +81,7 @@
 * even in Windows &reg;, for scripting purposes, such as might be used with automated and continuous build systems.
 
 * \section config CMake Bolt Configuration
-* Once installed, the easiest interface for Linux &reg; or Windows &reg; or X-windows &reg; is the CMake GUI program <b>'cmake-gui' </b>.
+* Once installed, the easiest interface for Linux &reg; or Windows &reg; is the CMake GUI program <b>'cmake-gui' </b>.
 * The terminal applications CMake.exe and ccmake.exe (based on curses library) are  
 * easy to learn.  CMake automates the creation of build environments in a cross-platform manner,
 * generating native build files for each respective platform. When launched, it inspects the host computer and searches

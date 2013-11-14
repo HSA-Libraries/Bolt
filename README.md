@@ -30,7 +30,7 @@ Here's a link to our <a href="https://github.com/HSA-Libraries/bolt/wiki">BOLT w
 
 ### Catalyst™ package
 
-The latest Catalyst package contains the most recent OpenCL runtime. Recommended Catalyst package is 13.11 Beta V1.
+The latest Catalyst driver contains the most recent OpenCL runtime. Recommended Catalyst package is latest 13.11 Beta Driver.
 
 13.4 and higher is supported.
 
@@ -83,6 +83,7 @@ The simple example below shows how to use Bolt to sort a random array of 8192 in
     
         // sort, run on best device in the platform
         bolt::cl::sort(a.begin(), a.end());
+        return 0;
     }
 
 The code will be familiar to programmers who have used the C++ Standard Template Library; the difference is the include file (bolt/cl/sort.h) and the bolt::cl namespace before the sort call. Bolt developers do not need to learn a new device-specific programming model to leverage the power and performance advantages of heterogeneous computing.
@@ -106,6 +107,7 @@ The code will be familiar to programmers who have used the C++ Standard Template
      
       // Calculate the inclusive_scan of the std vector
       bolt::cl::inclusive_scan(stdInput.begin( ),stdInput.end( ),stdInput.begin( ) );
+      return 0;
     }
 
 This example shows how Bolt simplifies management of heterogeneous memory.  The creation and destruction of device resident memory is abstracted inside of the `bolt::cl::device_vector <>` class, which provides an interface familiar to nearly all C++ programmers.  All of Bolt’s provided algorithms can take either the normal std::vector or the `bolt::cl::device_vector<>` class, which allows the user to control when and where memory is transferred between host and device to optimize performance.

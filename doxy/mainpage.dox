@@ -49,7 +49,7 @@
 #include <vector>
 #include <algorithm>
  
-void main()
+int main()
 {
     // generate random data (on host)
     std::vector<int> a(8192);
@@ -57,6 +57,7 @@ void main()
 
     // sort, run on best device in the platform
     bolt::cl::sort(a.begin(), a.end());
+	return 0;
 }
 \endcode
 
@@ -74,9 +75,9 @@ void main()
 
 
  * \subsection subexample_sec Bolt Functor Example
- * Below example shows how to use Functors with BOLT. 
- * For user defined datatypes to work with BOLT functor, user has to wrap his data type around a macro BOLT_FUNCTOR.
- * This enables the user defined class to be available as a string to the OpenCL Compiler which is invoked during a call to 
+ * Below example shows how to use functors with BOLT. 
+ * For user defined datatypes to work with Bolt functor, user has to wrap his data type around a macro BOLT_FUNCTOR.
+ * This enables the user defined class to be available as a string to the OpenCL compiler which is invoked during a call to 
  * clBuildProgram(). Consider the following example.    
  \code
 BOLT_FUNCTOR(MyType<int>,
@@ -102,8 +103,8 @@ struct MyType {
 );
 \endcode
 
-After defining the class, user need to register it with BOLT. Internally bolt algorithms will make use of the device_vector class. 
-But these are defined only for the basic data types like int, float, unsigned int etc. For User defined data types it’s the 
+After defining the class, user need to register it with Bolt. Internally Bolt algorithms will make use of the device_vector class. 
+But these are defined only for the basic data types like int, float, unsigned int etc. For user defined data types it’s the 
 responsibility of the application developer to create a definition of the deveice_vector for his own defined data type.
 See the below example. 
 \code
@@ -115,11 +116,12 @@ the responsibility of the application developer to define as shown above for the
 
 Stitching it all together with a below sample code for Sort:
 \code
-void main()
+int main()
 {
     typedef MyType<int> mytype;
     std::vector<mytype> myTypeBoltInput(length);
     bolt::cl::sort(myTypeBoltInput.begin(), myTypeBoltInput.end(),bolt::cl::greater<mytype>());
+	return 0;
 }
 \endcode
 
@@ -148,10 +150,11 @@ struct AddD4
     };
 }; 
 );
-void main()
+int main()
 {
     std::vector <uddtD4> boltInput(sizeOfInputBuffer);
     bolt::cl::sort( boltInput.begin( ), boltInput.end( ), AddD4() );
+	return 0;
 }
 \endcode
 
@@ -185,11 +188,12 @@ struct MyFunctor{
 BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::greater, int, MyFunctor< int> );
 BOLT_TEMPLATE_REGISTER_NEW_ITERATOR( bolt::cl::device_vector, int, MyFunctor< int> );
 
-void main()
+int main()
 {
     typedef MyFunctor<int> myfunctor;
     std::vector <myfunctor> boltInput(sizeOfInputBuffer);
     bolt::cl::sort( boltInput.begin( ), boltInput.end( ), bolt::cl::greater<myfunctor>() );
+	return 0;
 }
 \endcode
 If the user wants to use TEMPLATE_FUNCTOR for more than one datatype then he can use other variants of this
@@ -225,8 +229,8 @@ like BOLT_TEMPLATE_FUNCTOR2, BOLT_TEMPLATE_FUNCTOR3 etc from include/bolt/cl/clc
 * path only for that function, so reference to any BOLT function will always run specified device path.
 
 * \section Debug Debug Log Facility
-* If Debug log is enabled, we record the actual code path taken for execution. It could be OpenCL™ GPU/CPU, Multicore TBB or Serial.
-* User just need to initialize Log object before the bolt call and a query after the call to know which all paths have been executed.
+* If Debug Log is enabled, we record the actual code path taken for execution. It could be OpenCL™ GPU/CPU, Multicore TBB or Serial.
+* Users need to initialize the log object before the bolt call and a query after the call to know which all paths have been executed.
 *   -# <b> Initialization </b>
 *   \code 
 *         #define BOLT_DEBUG_LOG
@@ -252,8 +256,8 @@ like BOLT_TEMPLATE_FUNCTOR2, BOLT_TEMPLATE_FUNCTOR3 etc from include/bolt/cl/clc
  * Bolt uses an OpenCL<SUP>TM</SUP> implementation that supports the static C++ kernel
  * features; specifically, C++ template support for OpenCL<SUP>TM</SUP> kernels.  Currently,
  * the AMD OpenCL<SUP>TM</SUP> SDK 2.7 and above versions are designed to provides this support; other vendors may adopt this feature in the future. 
- * If you face any issue with Bolt. Please log an issue in BOLT Issues page.
- * <a href="https://github.com/HSA-Libraries/bolt/issues">BOLT Issues page</a>.
+ * If you face any issue with Bolt. Please log an issue in Bolt Issues page.
+ * <a href="https://github.com/HSA-Libraries/bolt/issues">Bolt Issues page</a>.
  
 * \subsection Prerequisites Prerequisites
 * \subsubsection Windows Windows
