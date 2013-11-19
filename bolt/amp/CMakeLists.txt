@@ -22,7 +22,6 @@ set( ampBolt.Include.Dir ${BOLT_INCLUDE_DIR}/bolt/amp )
 set( ampBolt.Runtime.Source
         bolt.cpp
         control.cpp
-        ${BOLT_LIBRARY_DIR}/statisticalTimer.cpp 
    )
 
 set( ampBolt.Runtime.Headers 
