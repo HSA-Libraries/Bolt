@@ -62,7 +62,6 @@ set( tbb.Include.Dir ${BOLT_INCLUDE_DIR}/bolt/btbb )
 set( clBolt.Runtime.Source
         bolt.cpp
         control.cpp
-        ${BOLT_LIBRARY_DIR}/statisticalTimer.cpp
         ${BOLT_LIBRARY_DIR}/AsyncProfiler.cpp
     )
 
@@ -107,7 +106,6 @@ set( clBolt.Runtime.Headers.Misc
         ${clBolt.Include.Dir}/../countof.h
         ${clBolt.Include.Dir}/../unicode.h
         ${clBolt.Include.Dir}/../BoltLog.h
-        ${clBolt.Include.Dir}/../statisticalTimer.h
         ${clBolt.Include.Dir}/../AsyncProfiler.h
     )
 
