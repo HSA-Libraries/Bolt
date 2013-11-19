@@ -18,6 +18,20 @@
  *  Benchmark Bolt Functions
  *****************************************************************************/
 #include <iostream>
+#include <iomanip> 
+
+#include <fstream>
+#include <vector>
+
+#include <algorithm>
+#include <boost/program_options.hpp>
+
+#define Bolt_Benchmark 1
+#include <bolt/unicode.h>
+#include "bolt/unicode.h"
+#include <CL/cl.h>
+
+#if (Bolt_Benchmark == 1)
 #include "bolt/cl/functional.h"
 #include "bolt/cl/device_vector.h"
 #include "bolt/cl/generate.h"
@@ -41,22 +55,35 @@
 #include "bolt/cl/gather.h"
 #include "bolt/cl/scatter.h"
 
-#include <fstream>
-#include <vector>
-#include <bolt/unicode.h>
-#include <algorithm>
-#include <iomanip> 
-#include "bolt/unicode.h"
-#include "bolt/countof.h"
-#include <boost/program_options.hpp>
-#include<random>
-
-
+#include <random>
 //#define BOLT_PROFILER_ENABLED
 #define BOLT_BENCH_DEVICE_VECTOR_FLAGS CL_MEM_READ_WRITE
-
 #include "bolt/AsyncProfiler.h"
 #include "bolt/statisticalTimer.h"
+#include "bolt/countof.h"
+//#include "bolt/cl/clcode.h"
+
+#else
+
+#include <thrust/device_vector.h>
+#include <thrust/transform.h>
+#include <thrust/merge.h>
+#include <thrust/sort.h>
+#include <thrust/binary_search.h>
+#include <thrust/transform_reduce.h>
+#include <thrust/reduce.h>
+#include <thrust/generate.h>
+#include <thrust/extrema.h>
+#include <thrust/fill.h>
+#include <thrust/count.h>
+#include <thrust/scan.h>
+#include <thrust/transform_scan.h>
+#include <thrust/gather.h>
+#include <thrust/random.h>
+#include <iomanip>
+#include "PerformanceCounter.h"
+
+#endif
 
 #if defined(_WIN32)
 AsyncProfiler aProfiler("default");
@@ -69,17 +96,31 @@ const std::streamsize colWidth = 26;
 
 #ifndef DATA_TYPE  
 #define DATA_TYPE unsigned int
+#if (Bolt_Benchmark == 1)
 BOLT_CREATE_DEFINE(Bolt_DATA_TYPE,DATA_TYPE,unsigned int);
+#endif
 #endif // !DATA_TYPE  
 
 // function generator:
-unsigned int RandomNumber() 
+#if (Bolt_Benchmark == 1)
+DATA_TYPE RandomNumber() 
 {
     std::default_random_engine gen;
-    std::uniform_int_distribution<unsigned int> distr(10,1<<31);
+    std::uniform_int_distribution<DATA_TYPE> distr(10,1<<31);
+    DATA_TYPE dice_roll = distr(gen);  // generates number in the range 10..1<<31 
+    return (dice_roll); 
+}
+#else
+unsigned int RandomNumber() 
+{
+    thrust::default_random_engine gen;
+    thrust::uniform_int_distribution<unsigned int> distr(10,1<<31);
     unsigned int dice_roll = distr(gen);  // generates number in the range 10..1<<31 
     return (dice_roll); 
 }
+#endif
+
+
 
 /******************************************************************************
  *  Functions Enumerated
@@ -111,7 +152,6 @@ enum functionType {
     f_unarytransform,
     f_gather,
     f_scatter
-
 };
 static char *functionNames[] = {
 "binarytransform",
@@ -137,7 +177,6 @@ static char *functionNames[] = {
 "unarytransform",
 "gather",
 "scatter"
-
 };
 
 
@@ -163,79 +202,82 @@ using namespace std;
  *  User Defined Data Types - vec2,4,8
  *****************************************************************************/
 
-BOLT_FUNCTOR(vec2,
-struct vec2
-{
-    DATA_TYPE a, b;
-    vec2  operator =(const DATA_TYPE inp)
+#if (Bolt_Benchmark == 1)
+    BOLT_FUNCTOR(vec2,
+    struct vec2
     {
+        DATA_TYPE a, b;
+        vec2  operator =(const DATA_TYPE inp)
+        {
         vec2 tmp;
         a = b = tmp.a = tmp.b = inp;
         return tmp;
-    }
-    bool operator==(const vec2& rhs) const
-    {
+        }
+        bool operator==(const vec2& rhs) const
+        {
         bool l_equal = true;
         l_equal = ( a == rhs.a ) ? l_equal : false;
         l_equal = ( b == rhs.b ) ? l_equal : false;
         return l_equal;
-    }
-  //friend ostream& operator<<(ostream& os, const vec2& dt);
-};
-);
+        }
+      //friend ostream& operator<<(ostream& os, const vec2& dt);
+    };
+    );
 
-  ostream& operator<<(ostream& os, const vec2& dt)
-    {
+    BOLT_CREATE_TYPENAME( bolt::cl::device_vector< vec2 >::iterator );
+    BOLT_CREATE_CLCODE( bolt::cl::device_vector< vec2 >::iterator, bolt::cl::deviceVectorIteratorTemplate );
+    BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::detail::CountIfEqual, DATA_TYPE, vec2 );
+
+
+      ostream& operator<<(ostream& os, const vec2& dt)
+        {
         os<<dt.a<<" "<<dt.b;
         return os;
-    }
-  
-BOLT_CREATE_TYPENAME( bolt::cl::device_vector< vec2 >::iterator );
-BOLT_CREATE_CLCODE( bolt::cl::device_vector< vec2 >::iterator, bolt::cl::deviceVectorIteratorTemplate );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::detail::CountIfEqual, DATA_TYPE, vec2 );
+        }
 
-BOLT_FUNCTOR(vec4,
-struct vec4
-{
-    DATA_TYPE a, b, c, d;
-    vec4  operator =(const DATA_TYPE inp)
+
+    BOLT_FUNCTOR(vec4,
+    struct vec4
     {
+        DATA_TYPE a, b, c, d;
+        vec4  operator =(const DATA_TYPE inp)
+        {
         vec4 tmp;
         tmp.a = tmp.b = tmp.c = tmp.d = a = b = c=d=inp;
         return tmp;
-    }
-    bool operator==(const vec4& rhs) const
-    {
+        }
+        bool operator==(const vec4& rhs) const
+        {
         bool l_equal = true;
         l_equal = ( a == rhs.a ) ? l_equal : false;
         l_equal = ( b == rhs.b ) ? l_equal : false;
         l_equal = ( c == rhs.c ) ? l_equal : false;
         l_equal = ( d == rhs.d ) ? l_equal : false;
         return l_equal;
-    }
-   // friend ostream& operator<<(ostream& os, const vec4& dt);
-};
-);
+        }
+       // friend ostream& operator<<(ostream& os, const vec4& dt);
+    };
+    );
 
 
-    ostream& operator<<(ostream& os, const vec4& dt)
-    {
+        ostream& operator<<(ostream& os, const vec4& dt)
+        {
         os<<dt.a<<" "<<dt.b<<" "<<dt.c<<" "<<dt.d;
         return os;
-    }
+        }
 
-BOLT_CREATE_TYPENAME( bolt::cl::device_vector< vec4 >::iterator );
-BOLT_CREATE_CLCODE( bolt::cl::device_vector< vec4 >::iterator, bolt::cl::deviceVectorIteratorTemplate );
+    BOLT_CREATE_TYPENAME( bolt::cl::device_vector< vec4 >::iterator );
+    BOLT_CREATE_CLCODE( bolt::cl::device_vector< vec4 >::iterator, bolt::cl::deviceVectorIteratorTemplate );
+    BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::detail::CountIfEqual, DATA_TYPE, vec4 );
 
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::detail::CountIfEqual, DATA_TYPE, vec4 );
 
-BOLT_FUNCTOR(vec8,
-struct vec8
-{
-    DATA_TYPE a, b, c, d, e, f, g, h;
-
-    vec8  operator =(const DATA_TYPE inp)
+    BOLT_FUNCTOR(vec8,
+    struct vec8
     {
+        DATA_TYPE a, b, c, d, e, f, g, h;
+
+        vec8  operator =(const DATA_TYPE inp)
+        {
         a = b = c=d=e=f=g=h=inp;
 
         vec8 tmp;
@@ -243,10 +285,10 @@ struct vec8
         tmp.e = tmp.f = tmp.g = tmp.h = inp;
         return tmp;
 
-    }
+        }
 
-    bool operator==(const vec8& rhs) const
-    {
+        bool operator==(const vec8& rhs) const
+        {
         bool l_equal = true;
         l_equal = ( a == rhs.a ) ? l_equal : false;
         l_equal = ( b == rhs.b ) ? l_equal : false;
@@ -257,60 +299,154 @@ struct vec8
         l_equal = ( g == rhs.g ) ? l_equal : false;
         l_equal = ( h == rhs.h ) ? l_equal : false;
         return l_equal;
-    }
-   // friend ostream& operator<<(ostream& os, const vec8& dt);
+        }
+       // friend ostream& operator<<(ostream& os, const vec8& dt);
 
 
-};
-);
-    ostream& operator<<(ostream& os, const vec8& dt)
-    {
+    };
+    );
+        ostream& operator<<(ostream& os, const vec8& dt)
+        {
         os<<dt.a<<" "<<dt.b<<" "<<dt.c<<" "<<dt.d<<" "<<dt.e<<" "<<dt.f<<" "<<dt.g<<" "<<dt.h;
         return os;
-    }
+        }
 
 
-BOLT_CREATE_TYPENAME( bolt::cl::device_vector< vec8 >::iterator );
-BOLT_CREATE_CLCODE( bolt::cl::device_vector< vec8 >::iterator, bolt::cl::deviceVectorIteratorTemplate );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::detail::CountIfEqual, DATA_TYPE, vec8 );
-BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::less, DATA_TYPE, vec8 );
+        BOLT_CREATE_TYPENAME( bolt::cl::device_vector< vec8 >::iterator );
+        BOLT_CREATE_CLCODE( bolt::cl::device_vector< vec8 >::iterator, bolt::cl::deviceVectorIteratorTemplate );
+        BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::detail::CountIfEqual, DATA_TYPE, vec8 );
+        BOLT_TEMPLATE_REGISTER_NEW_TYPE( bolt::cl::less, DATA_TYPE, vec8 );
+
+#else
+
+    struct vec2
+        {
+            DATA_TYPE a, b;
+            __host__ __device__
+            vec2  operator =(const DATA_TYPE inp)
+            {
+            vec2 tmp;
+            a = b = tmp.a = tmp.b = inp;
+            return tmp;
+            }
+            bool operator==(const vec2& rhs) const
+            {
+            bool l_equal = true;
+            l_equal = ( a == rhs.a ) ? l_equal : false;
+            l_equal = ( b == rhs.b ) ? l_equal : false;
+            return l_equal;
+            }
+        };
+
+    struct vec4
+        {
+            DATA_TYPE a, b, c, d;
+            __host__ __device__
+            vec4  operator =(const DATA_TYPE inp)
+            {
+            vec4 tmp;
+            tmp.a = tmp.b = tmp.c = tmp.d = a = b = c=d=inp;
+            return tmp;
+            }
+            bool operator==(const vec4& rhs) const
+            {
+            bool l_equal = true;
+            l_equal = ( a == rhs.a ) ? l_equal : false;
+            l_equal = ( b == rhs.b ) ? l_equal : false;
+            l_equal = ( c == rhs.c ) ? l_equal : false;
+            l_equal = ( d == rhs.d ) ? l_equal : false;
+            return l_equal;
+            }
+        };
+
+    struct vec8
+        {
+            DATA_TYPE a, b, c, d, e, f, g, h;
+            __host__ __device__
+
+            vec8  operator =(const DATA_TYPE inp)
+            {
+            a = b = c=d=e=f=g=h=inp;
+
+            vec8 tmp;
+            tmp.a = tmp.b = tmp.c = tmp.d = a = b = c=d=e=f=g=h=inp;
+            tmp.e = tmp.f = tmp.g = tmp.h = inp;
+            return tmp;
+
+            }
+
+            bool operator==(const vec8& rhs) const
+            {
+            bool l_equal = true;
+            l_equal = ( a == rhs.a ) ? l_equal : false;
+            l_equal = ( b == rhs.b ) ? l_equal : false;
+            l_equal = ( c == rhs.c ) ? l_equal : false;
+            l_equal = ( d == rhs.d ) ? l_equal : false;
+            l_equal = ( e == rhs.e ) ? l_equal : false;
+            l_equal = ( f == rhs.f ) ? l_equal : false;
+            l_equal = ( g == rhs.g ) ? l_equal : false;
+            l_equal = ( h == rhs.h ) ? l_equal : false;
+            return l_equal;
+            }
+        };
+
+#endif
+
+
+
+/******************************************************************************
+ *  User Defined Binary Functions - DATA_TYPE plus Only for thrust usage
+ *****************************************************************************/
+#if (Bolt_Benchmark == 0)
+    struct vec1plus
+        {
+                    __host__ __device__
+            DATA_TYPE operator()(const DATA_TYPE &lhs, const DATA_TYPE &rhs) const
+            {
+            DATA_TYPE l_result;
+            l_result = lhs + rhs;
+            return l_result;
+            };
+        }; 
+#endif
+
 /******************************************************************************
  *  User Defined Binary Functions - vec2,4,8plus
  *****************************************************************************/
-
-BOLT_FUNCTOR(vec2plus,
-struct vec2plus
-{
-    vec2 operator()(const vec2 &lhs, const vec2 &rhs) const
+#if (Bolt_Benchmark == 1)
+    BOLT_FUNCTOR(vec2plus,
+    struct vec2plus
     {
+        vec2 operator()(const vec2 &lhs, const vec2 &rhs) const
+        {
         vec2 l_result;
         l_result.a = lhs.a+rhs.a;
         l_result.b = lhs.b+rhs.b;
         return l_result;
-    };
-}; 
-);
+        };
+    }; 
+    );
 
-BOLT_FUNCTOR(vec4plus,
-struct vec4plus
-{
-    vec4 operator()(const vec4 &lhs, const vec4 &rhs) const
+    BOLT_FUNCTOR(vec4plus,
+    struct vec4plus
     {
+        vec4 operator()(const vec4 &lhs, const vec4 &rhs) const
+        {
         vec4 l_result;
         l_result.a = lhs.a+rhs.a;
         l_result.b = lhs.b+rhs.b;
         l_result.c = lhs.c+rhs.c;
         l_result.d = lhs.d+rhs.d;
         return l_result;
-    };
-}; 
-);
+        };
+    }; 
+    );
 
-BOLT_FUNCTOR(vec8plus,
-struct vec8plus
-{
-    vec8 operator()(const vec8 &lhs, const vec8 &rhs) const
+    BOLT_FUNCTOR(vec8plus,
+    struct vec8plus
     {
+        vec8 operator()(const vec8 &lhs, const vec8 &rhs) const
+        {
         vec8 l_result;
         l_result.a = lhs.a+rhs.a;
         l_result.b = lhs.b+rhs.b;
@@ -321,48 +457,111 @@ struct vec8plus
         l_result.g = lhs.g+rhs.g;
         l_result.h = lhs.h+rhs.h;
         return l_result;
-    };
+        };
+    }; 
+    );
+#else
+    struct vec2plus
+    {
+        __host__ __device__
+        vec2 operator()(const vec2 &lhs, const vec2 &rhs) const
+        {
+        vec2 l_result;
+        l_result.a = lhs.a+rhs.a;
+        l_result.b = lhs.b+rhs.b;
+        return l_result;
+        }
+    }; 
+
+    struct vec4plus
+    {
+        __host__ __device__
+        vec4 operator()(const vec4 &lhs, const vec4 &rhs) const
+        {
+        vec4 l_result;
+        l_result.a = lhs.a+rhs.a;
+        l_result.b = lhs.b+rhs.b;
+        l_result.c = lhs.c+rhs.c;
+        l_result.d = lhs.d+rhs.d;
+        return l_result;
+        };
+    }; 
+
+    struct vec8plus
+    {
+        __host__ __device__
+        vec8 operator()(const vec8 &lhs, const vec8 &rhs) const
+        {
+        vec8 l_result;
+        l_result.a = lhs.a+rhs.a;
+        l_result.b = lhs.b+rhs.b;
+        l_result.c = lhs.c+rhs.c;
+        l_result.d = lhs.d+rhs.d;
+        l_result.e = lhs.e+rhs.e;
+        l_result.f = lhs.f+rhs.f;
+        l_result.g = lhs.g+rhs.g;
+        l_result.h = lhs.h+rhs.h;
+        return l_result;
+        };
 }; 
-);
+#endif
 
 
 /******************************************************************************
- *  User Defined Unary Functions vec2,4,8square
+ *  User Defined Unary Functions-  DATA_TYPE square for thrust usage
+ *****************************************************************************/
+#if (Bolt_Benchmark == 0)
+    struct vec1square
+    {
+            __host__ __device__
+        DATA_TYPE operator()(const DATA_TYPE &rhs) const
+        {
+        DATA_TYPE l_result;
+        l_result = rhs * rhs;
+        return l_result;
+        };
+    }; 
+#endif
+
+/******************************************************************************
+ *  User Defined Unary Functions-  vec2,4,8square
  *****************************************************************************/
 
-BOLT_FUNCTOR(vec2square,
-struct vec2square
-{
-    vec2 operator()(const vec2 &rhs) const
+#if (Bolt_Benchmark == 1)
+
+    BOLT_FUNCTOR(vec2square,
+    struct vec2square
     {
+        vec2 operator()(const vec2 &rhs) const
+        {
         vec2 l_result;
         l_result.a = rhs.a*rhs.a;
         l_result.b = rhs.b*rhs.b;
         return l_result;
-    };
-}; 
-);
+        };
+    }; 
+    );
 
-BOLT_FUNCTOR(vec4square,
-struct vec4square
-{
-    vec4 operator()(const vec4 &rhs) const
+    BOLT_FUNCTOR(vec4square,
+    struct vec4square
     {
+        vec4 operator()(const vec4 &rhs) const
+        {
         vec4 l_result;
         l_result.a = rhs.a*rhs.a;
         l_result.b = rhs.b*rhs.b;
         l_result.c = rhs.c*rhs.c;
         l_result.d = rhs.d*rhs.d;
         return l_result;
-    };
-}; 
-);
+        };
+    }; 
+    );
 
-BOLT_FUNCTOR(vec8square,
-struct vec8square
-{
-    vec8 operator()(const vec8 &rhs) const
+    BOLT_FUNCTOR(vec8square,
+    struct vec8square
     {
+        vec8 operator()(const vec8 &rhs) const
+        {
         vec8 l_result;
         l_result.a = rhs.a*rhs.a;
         l_result.b = rhs.b*rhs.b;
@@ -373,79 +572,186 @@ struct vec8square
         l_result.g = rhs.g*rhs.g;
         l_result.h = rhs.h*rhs.h;
         return l_result;
-    };
-}; 
-);
+        };
+    }; 
+    );
+#else
+    struct vec2square
+    {
+            __host__ __device__
+        vec2 operator()(const vec2 &rhs) const
+        {
+        vec2 l_result;
+        l_result.a = rhs.a*rhs.a;
+        l_result.b = rhs.b*rhs.b;
+        return l_result;
+        };
+    }; 
 
+    struct vec4square
+    {
+            __host__ __device__
+        vec4 operator()(const vec4 &rhs) const
+        {
+        vec4 l_result;
+        l_result.a = rhs.a*rhs.a;
+        l_result.b = rhs.b*rhs.b;
+        l_result.c = rhs.c*rhs.c;
+        l_result.d = rhs.d*rhs.d;
+        return l_result;
+        };
+    }; 
+
+    struct vec8square
+    {
+            __host__ __device__
+        vec8 operator()(const vec8 &rhs) const
+        {
+        vec8 l_result;
+        l_result.a = rhs.a*rhs.a;
+        l_result.b = rhs.b*rhs.b;
+        l_result.c = rhs.c*rhs.c;
+        l_result.d = rhs.d*rhs.d;
+        l_result.e = rhs.e*rhs.e;
+        l_result.f = rhs.f*rhs.f;
+        l_result.g = rhs.g*rhs.g;
+        l_result.h = rhs.h*rhs.h;
+        return l_result;
+        };
+    }; 
+
+#endif
+
+#if (Bolt_Benchmark == 0)
 /******************************************************************************
- *  User Defined Binary Predicates equal
+ *  User Defined Binary Predicates-  DATA_TYPE equal for thrust usage
  *****************************************************************************/
 
-BOLT_FUNCTOR(vec2equal,
-struct vec2equal
-{
-    bool operator()(const vec2 &lhs, const vec2 &rhs) const
+    struct vec1equal
     {
+            __host__ __device__
+        bool operator()(const DATA_TYPE &lhs, const DATA_TYPE &rhs) const
+        {
         return lhs == rhs;
-    };
-}; 
-);
-
-BOLT_FUNCTOR(vec4equal,
-struct vec4equal
-{
-    bool operator()(const vec4 &lhs, const vec4 &rhs) const
-    {
-        return lhs == rhs;
-    };
-}; 
-);
-
-BOLT_FUNCTOR(vec8equal,
-struct vec8equal
-{
-    bool operator()(const vec8 &lhs, const vec8 &rhs) const
-    {
-        return lhs == rhs;
-    };
-}; 
-);
+        };
+    }; 
+#endif
 
 /******************************************************************************
- *  User Defined Binary Predicates less than
+ *  User Defined Binary Predicates- vec2,4,8equal   
  *****************************************************************************/
 
-BOLT_FUNCTOR(vec2less,
-struct vec2less
-{
-    bool operator()(const vec2 &lhs, const vec2 &rhs) const
+#if (Bolt_Benchmark == 1)
+
+    BOLT_FUNCTOR(vec2equal,
+    struct vec2equal
     {
+        bool operator()(const vec2 &lhs, const vec2 &rhs) const
+        {
+        return lhs == rhs;
+        };
+    }; 
+    );
+
+    BOLT_FUNCTOR(vec4equal,
+    struct vec4equal
+    {
+        bool operator()(const vec4 &lhs, const vec4 &rhs) const
+        {
+        return lhs == rhs;
+        };
+    }; 
+    );
+
+    BOLT_FUNCTOR(vec8equal,
+    struct vec8equal
+    {
+        bool operator()(const vec8 &lhs, const vec8 &rhs) const
+        {
+        return lhs == rhs;
+        };
+    }; 
+    );
+#else
+    struct vec2equal
+    {
+            __host__ __device__
+        bool operator()(const vec2 &lhs, const vec2 &rhs) const
+        {
+        return lhs == rhs;
+        };
+        }; 
+
+    struct vec4equal
+    {
+            __host__ __device__
+        bool operator()(const vec4 &lhs, const vec4 &rhs) const
+        {
+        return lhs == rhs;
+        };
+    }; 
+    struct vec8equal
+    {
+            __host__ __device__
+        bool operator()(const vec8 &lhs, const vec8 &rhs) const
+        {
+        return lhs == rhs;
+        };
+    }; 
+
+#endif
+
+#if (Bolt_Benchmark == 0)
+/******************************************************************************
+ *  User Defined Binary Predicates DATA_TYPE less than for thrust usage
+ *****************************************************************************/
+    struct vec1less
+    {
+            __host__ __device__
+        bool operator()(const DATA_TYPE &lhs, const DATA_TYPE &rhs) const
+        {
+        if (lhs < rhs) return true;
+        };
+    }; 
+#endif
+
+/******************************************************************************
+ *  User Defined Binary Predicates- vec2,4,8 less than  
+ *****************************************************************************/
+
+#if (Bolt_Benchmark == 1)
+
+    BOLT_FUNCTOR(vec2less,
+    struct vec2less
+    {
+        bool operator()(const vec2 &lhs, const vec2 &rhs) const
+        {
         if (lhs.a < rhs.a) return true;
         if (lhs.b < rhs.b) return true;
         return false;
-    };
-}; 
-);
+        };
+    }; 
+    );
 
-BOLT_FUNCTOR(vec4less,
-struct vec4less
-{
-    bool operator()(const vec4 &lhs, const vec4 &rhs) const
+    BOLT_FUNCTOR(vec4less,
+    struct vec4less
     {
+        bool operator()(const vec4 &lhs, const vec4 &rhs) const
+        {
         if (lhs.a < rhs.a) return true;
         if (lhs.b < rhs.b) return true;
         if (lhs.c < rhs.c) return true;
         if (lhs.d < rhs.d) return true;
         return false;
-    };
-}; 
-);
+        };
+    }; 
+    );
 
-BOLT_FUNCTOR(vec8less,
-struct vec8less
-{
-    bool operator()(const vec8 &lhs, const vec8 &rhs) const
+    BOLT_FUNCTOR(vec8less,
+    struct vec8less
     {
+        bool operator()(const vec8 &lhs, const vec8 &rhs) const
+        {
         if (lhs.a < rhs.a) return true;
         if (lhs.b < rhs.b) return true;
         if (lhs.c < rhs.c) return true;
@@ -455,58 +761,146 @@ struct vec8less
         if (lhs.g < rhs.g) return true;
         if (lhs.h < rhs.h) return true;
         return false;
-    };
-}; 
-);
+        };
+    }; 
+    );
+#else
+    struct vec2less
+    {
+            __host__ __device__
+        bool operator()(const vec2 &lhs, const vec2 &rhs) const
+        {
+        if (lhs.a < rhs.a) return true;
+        if (lhs.b < rhs.b) return true;
+        return false;
+        };
+    }; 
+
+    struct vec4less
+    {
+            __host__ __device__
+        bool operator()(const vec4 &lhs, const vec4 &rhs) const
+        {
+        if (lhs.a < rhs.a) return true;
+        if (lhs.b < rhs.b) return true;
+        if (lhs.c < rhs.c) return true;
+        if (lhs.d < rhs.d) return true;
+        return false;
+        };
+    }; 
+
+    struct vec8less
+    {
+            __host__ __device__
+        bool operator()(const vec8 &lhs, const vec8 &rhs) const
+        {
+        if (lhs.a < rhs.a) return true;
+        if (lhs.b < rhs.b) return true;
+        if (lhs.c < rhs.c) return true;
+        if (lhs.d < rhs.d) return true;
+        if (lhs.e < rhs.e) return true;
+        if (lhs.f < rhs.f) return true;
+        if (lhs.g < rhs.g) return true;
+        if (lhs.h < rhs.h) return true;
+        return false;
+        };
+    }; 
+
+#endif
 
 /******************************************************************************
- *  User Defined Binary Predicates vec2,4,8square
+ *  User Defined generator-  DATATYPE and vec2,4,8
  *****************************************************************************/
 
-BOLT_FUNCTOR(intgen,
-struct intgen
-{
-    DATA_TYPE operator()() const
+#if (Bolt_Benchmark == 1)
+
+    BOLT_FUNCTOR(intgen,
+    struct intgen
     {
+        DATA_TYPE operator()() const
+        {
         DATA_TYPE v = 1;
         return v;
-    };
-}; 
-);
+        };
+    }; 
+    );
 
-BOLT_FUNCTOR(vec2gen,
-struct vec2gen
-{
-    vec2 operator()() const
+    BOLT_FUNCTOR(vec2gen,
+    struct vec2gen
     {
+        vec2 operator()() const
+        {
         vec2 v = { 2, 3 };
         return v;
-    };
-}; 
-);
+        };
+    }; 
+    );
 
-BOLT_FUNCTOR(vec4gen,
-struct vec4gen
-{
-    vec4 operator()() const
+    BOLT_FUNCTOR(vec4gen,
+    struct vec4gen
     {
+        vec4 operator()() const
+        {
         vec4 v = { 4, 5, 6, 7 };
         return v;
-    };
-}; 
-);
+        };
+    }; 
+    );
 
-BOLT_FUNCTOR(vec8gen,
-struct vec8gen
-{
-    vec8 operator()() const
+    BOLT_FUNCTOR(vec8gen,
+    struct vec8gen
     {
+        vec8 operator()() const
+        {
         vec8 v = { 8, 9, 10, 11, 12, 13, 14, 15 };
         return v;
-    };
-}; 
-);
+        };
+    }; 
+    );
 
+#else
+    
+    struct intgen
+    {
+            __host__ __device__
+        DATA_TYPE operator()() const
+        {
+        DATA_TYPE v = 1;
+        return v;
+        };
+    }; 
+
+    struct vec2gen
+    {
+            __host__ __device__
+        vec2 operator()() const
+        {
+        vec2 v = { 2, 3 };
+        return v;
+        };
+    }; 
+
+    struct vec4gen
+    {
+            __host__ __device__
+        vec4 operator()() const
+        {
+        vec4 v = { 4, 5, 6, 7 };
+        return v;
+        };
+    }; 
+
+    struct vec8gen
+    {
+            __host__ __device__
+        vec8 operator()() const
+        {
+        vec8 v = { 8, 9, 10, 11, 12, 13, 14, 15 };
+        return v;
+        };
+    }; 
+
+#endif
 /******************************************************************************
  *  Initializers
  *****************************************************************************/
@@ -530,7 +924,7 @@ functionType get_functionindex(std::string &fun)
         if(fun.compare(functionNames[i]) == 0)
             return (functionType)i;
     }
-    std::cout<< "Specified Function not listed for Benchmar. exiting";
+    std::cout<< "Specified Function not listed for Benchmark. exiting";
     exit(0);
 }
 
@@ -547,6 +941,7 @@ template<
     typename BinaryFunction,
     typename BinaryPredEq,
     typename BinaryPredLt >
+#if (Bolt_Benchmark == 1)
 void executeFunctionType(
     bolt::cl::control& ctrl,
     VectorType &input1,
@@ -563,11 +958,32 @@ void executeFunctionType(
     size_t iterations,
     size_t siz
     )
+#else
+void executeFunctionType(
+    VectorType &input1,
+    VectorType &input2,
+    VectorType &input3,
+    VectorType &output,
+    VectorType &output_merge,
+    Generator generator,
+    UnaryFunction unaryFunct,
+    BinaryFunction binaryFunct,
+    BinaryPredEq binaryPredEq,
+    BinaryPredLt binaryPredLt,
+    size_t function,
+    size_t iterations,
+    size_t siz
+    )
+#endif
 {
 
+#if (Bolt_Benchmark == 1)
     bolt::statTimer& myTimer = bolt::statTimer::getInstance( );
     myTimer.Reserve( 1, iterations );
     size_t testId	= myTimer.getUniqueID( _T( "test" ), 0 );
+#else
+    HPTimer timer;
+#endif
     
 switch(function)
 {
@@ -576,21 +992,28 @@ switch(function)
             {
 
             std::cout <<  functionNames[f_merge] << std::endl;
-
+            #if (Bolt_Benchmark == 1)
             bolt::cl::sort( ctrl, input1.begin( ), input1.end( ), binaryPredLt);
             bolt::cl::sort( ctrl, input2.begin( ), input2.end( ), binaryPredLt);
-
+        #else
+            thrust::sort( input1.begin( ), input1.end( ), binaryPredLt);
+            thrust::sort( input2.begin( ), input2.end( ), binaryPredLt);
+            #endif
                 for (size_t iter = 0; iter < iterations+1; iter++)
                 {
-              
+                    #if (Bolt_Benchmark == 1)
                     myTimer.Start( testId );
                     bolt::cl::merge( ctrl,input1.begin( ),input1.end( ),input2.begin( ),input2.end( ),output_merge.begin( ),binaryPredLt); 
-
                     myTimer.Stop( testId );
+           #else
+                    timer.start();
+                    thrust::merge( input1.begin( ),input1.end( ),input2.begin( ),input2.end( ),output_merge.begin( ),binaryPredLt); 
+                    timer.stop(); 
+                   #endif
                 }
             } 
             break; 
-
+          
             case f_binarysearch: 
             {
 
@@ -599,9 +1022,11 @@ switch(function)
             typename VectorType::value_type val;
 
             std::cout <<  functionNames[f_binarysearch] << std::endl;
-
-            bolt::cl::sort( ctrl, input1.begin( ), input1.end( ), binaryPredLt);
-            
+            #if (Bolt_Benchmark == 1)
+                bolt::cl::sort( ctrl, input1.begin( ), input1.end( ), binaryPredLt);
+            #else
+                thrust::sort( input1.begin( ), input1.end( ), binaryPredLt);
+        #endif
                 for (size_t iter = 0; iter < iterations+1; iter++)
                 {
                
@@ -610,33 +1035,410 @@ switch(function)
                         index = rand()%iter;
 
                     val = input1[index];
-
+                   #if (Bolt_Benchmark == 1)
                     myTimer.Start( testId );
                     tmp = bolt::cl::binary_search( ctrl,input1.begin( ),input1.end( ),val,binaryPredLt); 
-
-                    myTimer.Stop( testId );
+                            myTimer.Stop( testId );
+          #else
+                    timer.start();
+                    tmp = thrust::binary_search( input1.begin( ),input1.end( ),val,binaryPredLt); 
+                            timer.stop();
+          #endif
                 }
             } 
+            break;	    
+                  
+            case f_transformreduce: 
+            {
+
+            typename VectorType::value_type tmp;
+            tmp=0;
+            std::cout <<  functionNames[f_transformreduce] << std::endl;
+
+                for (size_t iter = 0; iter < iterations+1; iter++)
+                {
+                   #if (Bolt_Benchmark == 1)
+                    myTimer.Start( testId );
+                    tmp = bolt::cl::transform_reduce( ctrl,input1.begin( ), input1.end( ),
+                                                       unaryFunct, tmp,
+                                                       binaryFunct);
+                    myTimer.Stop( testId );
+                   #else
+                    timer.start();
+                    tmp = thrust::transform_reduce( input1.begin( ), input1.end( ),
+                                                       unaryFunct, tmp,
+                                                       binaryFunct);
+                    timer.stop();
+                   #endif
+                }
+            }
+            break;
+ 
+            case f_stablesort:
+            {
+            std::cout <<  functionNames[f_stablesort] << std::endl;
+
+                for (size_t iter = 0; iter < iterations+1; iter++)
+                {
+                  #if (Bolt_Benchmark == 1)
+                    myTimer.Start( testId );
+                    bolt::cl::stable_sort(ctrl, input1.begin(), input1.end(),binaryPredLt); 
+                    myTimer.Stop( testId );
+                  #else
+                    timer.start();
+                    thrust::stable_sort( input1.begin(), input1.end(),binaryPredLt); 
+                    timer.stop();
+                  #endif
+                }
+            }
+
+             break;
+
+            case f_stablesortbykey:
+            {
+            std::cout <<  functionNames[f_stablesortbykey] << std::endl;
+
+                for (size_t iter = 0; iter < iterations+1; iter++)
+                {
+                  #if (Bolt_Benchmark == 1)
+                    myTimer.Start( testId );
+                    bolt::cl::stable_sort_by_key(ctrl, input1.begin(), input1.end(),input2.begin(),binaryPredLt); 
+                    myTimer.Stop( testId );
+                  #else
+                timer.start();
+                    thrust::stable_sort_by_key( input1.begin(), input1.end(),input2.begin(),binaryPredLt); 
+                    timer.stop();
+                  #endif
+                }
+            }
+
+             break;
+
+            case f_reducebykey: 
+            {
+            std::cout <<  functionNames[f_reducebykey] << std::endl;
+
+                for (size_t iter = 0; iter < iterations+1; iter++)
+                {
+                  #if (Bolt_Benchmark == 1)
+                   myTimer.Start( testId );
+                   bolt::cl::reduce_by_key(ctrl, input1.begin(), input1.end(),input2.begin(),input3.begin(),
+                       output.begin(),binaryPredEq, binaryFunct);
+                    myTimer.Stop( testId );
+                  #else
+                   timer.start();
+                   thrust::reduce_by_key( input1.begin(), input1.end(),input2.begin(),input3.begin(),
+                       output.begin(),binaryPredEq, binaryFunct);
+                    timer.stop();
+                  #endif
+                }
+            }
+             break;
+
+
+            case f_sort: 
+            {
+            std::cout <<  functionNames[f_sort] << std::endl;
+
+                for (size_t iter = 0; iter < iterations+1; iter++)
+                {
+                  #if (Bolt_Benchmark == 1)
+                    myTimer.Start( testId );
+                    bolt::cl::sort(ctrl, input1.begin(), input1.end(),binaryPredLt);                    
+                    myTimer.Stop( testId );
+                  #else
+                    timer.start();
+                    thrust::sort( input1.begin(), input1.end(),binaryPredLt);                    
+                    timer.stop();
+                  #endif
+                }
+            }
+
+             break;      
+
+            case f_sortbykey: 
+            {
+            std::cout <<  functionNames[f_sortbykey] << std::endl;
+
+                for (size_t iter = 0; iter < iterations+1; iter++)
+                {
+                  #if (Bolt_Benchmark == 1)
+                    myTimer.Start( testId );
+                    bolt::cl::sort_by_key(ctrl, input1.begin(), input1.end(), input2.begin( ),binaryPredLt );
+                    myTimer.Stop( testId );
+                  #else
+                    timer.start();
+                    thrust::sort_by_key( input1.begin(), input1.end(), input2.begin( ),binaryPredLt );
+                    timer.stop();
+                  #endif 
+                }
+            }
+
+             break;
+
+            case f_reduce:
+            {
+            typename VectorType::value_type tmp;
+            tmp=0;
+            std::cout <<  functionNames[f_reduce] << std::endl;
+
+          
+                for (size_t iter = 0; iter < iterations+1; iter++)
+                {
+                  #if (Bolt_Benchmark == 1)
+                    myTimer.Start( testId );
+                    tmp = bolt::cl::reduce(ctrl, input1.begin(), input1.end(),tmp,binaryFunct);                    
+                    myTimer.Stop( testId );
+                  #else
+                    timer.start();
+                    tmp = thrust::reduce( input1.begin(), input1.end(),tmp,binaryFunct);                    
+                    timer.stop();
+                  #endif
+
+                }
+            }
+
+             break;
+
+        case f_maxelement: 
+            {
+
+            std::cout <<  functionNames[f_maxelement] << std::endl;
+
+                for (size_t iter = 0; iter < iterations+1; iter++)
+                {
+                  #if (Bolt_Benchmark == 1)
+                    myTimer.Start( testId );
+                    typename VectorType::iterator itr = bolt::cl::max_element(ctrl, input1.begin(), input1.end(),binaryPredLt);                    
+                    myTimer.Stop( testId );
+                  #else
+                    timer.start();
+                    typename VectorType::iterator itr = thrust::max_element( input1.begin(), input1.end(),binaryPredLt);                    
+                    timer.stop();
+                  #endif 
+                }
+            }
+
+             break;
+
+        case f_minelement: 
+            {
+            
+            std::cout <<  functionNames[f_minelement] << std::endl;
+
+                for (size_t iter = 0; iter < iterations+1; iter++)
+                {
+                  #if (Bolt_Benchmark == 1)
+                    myTimer.Start( testId );
+                    typename VectorType::iterator itr = bolt::cl::min_element(ctrl, input1.begin(), input1.end(),binaryPredLt);                    
+                    myTimer.Stop( testId );
+                  #else
+                    timer.start();
+                    typename VectorType::iterator itr = thrust::min_element( input1.begin(), input1.end(),binaryPredLt);                    
+                    timer.stop();
+                  #endif 
+                }
+
+            }
+             break;
+
+
+        case f_fill: 
+            {
+
+            typename VectorType::value_type tmp;
+
+            std::cout <<  functionNames[f_fill] << std::endl;
+
+
+                for (size_t iter = 0; iter < iterations+1; iter++)
+                {
+                  #if (Bolt_Benchmark == 1)
+                    myTimer.Start( testId );
+                    bolt::cl::fill(ctrl, input1.begin(), input1.end(),tmp);
+                    myTimer.Stop( testId );
+                  #else
+                    timer.start();
+                    thrust::fill( input1.begin(), input1.end(),tmp);
+                    timer.stop();
+                  #endif
+                }
+            }
+
             break;
 
-             case f_gather: 
-            {            
+        case f_count: 
+            {
+             typename VectorType::value_type tmp;
+            std::cout <<  functionNames[f_count] << std::endl;
 
-                std::cout <<  functionNames[f_gather] << std::endl;
-                bolt::cl::device_vector<DATA_TYPE> Map(input1.size());
+
+                for (size_t iter = 0; iter < iterations+1; iter++)
+                {
+                  #if (Bolt_Benchmark == 1)
+                    myTimer.Start( testId );
+                    bolt::cl::count(ctrl, input1.begin(), input1.end(),tmp);
+                    myTimer.Stop( testId );
+                  #else
+                    timer.start();
+                    thrust::count( input1.begin(), input1.end(),tmp);
+                    timer.start();
+                  #endif
+                }
+            }
+            break;
+
+
+        case f_generate: 
+            std::cout <<  functionNames[f_generate] << std::endl;
+
+                for (size_t iter = 0; iter < iterations+1; iter++)
+                {
+                  #if (Bolt_Benchmark == 1)
+                    myTimer.Start( testId );
+                    bolt::cl::generate(ctrl, input1.begin(), input1.end(), generator );
+                    myTimer.Stop( testId );
+                  #else
+                    timer.start();
+                    thrust::generate( input1.begin(), input1.end(), generator );
+                    timer.stop();
+                  #endif 
+                }
+            break;
+
+        case f_copy:
+            std::cout <<  functionNames[f_copy] << std::endl;
+                for (size_t iter = 0; iter < iterations+1; iter++)
+                {
+                  #if (Bolt_Benchmark == 1)
+                    myTimer.Start( testId );
+                    bolt::cl::copy(ctrl, input1.begin(), input1.end(), output.begin() );
+                    myTimer.Stop( testId );
+                  #else
+                    timer.start();
+                    thrust::copy( input1.begin(), input1.end(), output.begin() );
+                    timer.stop();
+                  #endif 
+                }
+            break;
+
+        case f_unarytransform:
+            std::cout <<  functionNames[f_unarytransform] << std::endl;
+
+                for (size_t iter = 0; iter < iterations+1; iter++)
+                {
+                  #if (Bolt_Benchmark == 1)
+                    myTimer.Start( testId );
+                    bolt::cl::transform(ctrl, input1.begin(), input1.end(), output.begin(), unaryFunct );
+                    myTimer.Stop( testId );
+                  #else
+                    timer.start();
+                    thrust::transform( input1.begin(), input1.end(), output.begin(), unaryFunct );
+                    timer.stop();
+                  #endif 
+                }
+            break;
+
+        case f_binarytransform: 
+            std::cout <<  functionNames[f_binarytransform] << std::endl;
+                for (size_t iter = 0; iter < iterations+1; iter++)
+                {
+                  #if (Bolt_Benchmark == 1)
+                    myTimer.Start( testId );
+                    bolt::cl::transform(ctrl, input1.begin(), input1.end(), input2.begin(), output.begin(), binaryFunct );
+                    myTimer.Stop( testId );
+                  #else
+                    timer.start();
+                    thrust::transform( input1.begin(), input1.end(), input2.begin(), output.begin(), binaryFunct );
+                    timer.stop();
+                  #endif 
+                }
+            break;
+
+        case f_scan: 
+            std::cout <<  functionNames[f_scan] << std::endl;
+
+                for (size_t iter = 0; iter < iterations+1; iter++)
+                {
+                  #if (Bolt_Benchmark == 1)
+                     myTimer.Start( testId );
+                     bolt::cl::inclusive_scan(ctrl, input1.begin(), input1.end(), output.begin(), binaryFunct );
+                     myTimer.Stop( testId );
+                  #else
+                     timer.start();
+                     thrust::inclusive_scan( input1.begin(), input1.end(), output.begin(), binaryFunct );
+                     timer.stop();
+                  #endif 
+                }
+            break;
+
+        case f_transformscan: 
+            std::cout <<  functionNames[f_transformscan] << std::endl;
+
+                for (size_t iter = 0; iter < iterations+1; iter++)
+                {
+                  #if (Bolt_Benchmark == 1)
+                    myTimer.Start( testId );
+                    bolt::cl::transform_inclusive_scan(ctrl, input1.begin(), input1.end(), output.begin(),
+                                                                                unaryFunct, binaryFunct );
+                    myTimer.Stop( testId );
+                  #else
+                    timer.start();
+                    thrust::transform_inclusive_scan( input1.begin(), input1.end(), output.begin(), 
+                                                                          unaryFunct, binaryFunct );
+                    timer.stop();
+                  #endif
+                }
+            break;
+
+        case f_scanbykey: 
+            std::cout <<  functionNames[f_scanbykey] << std::endl;
+
+                for (size_t iter = 0; iter < iterations+1; iter++)
+                {
+                  #if (Bolt_Benchmark == 1)
+                    myTimer.Start( testId );
+                    bolt::cl::inclusive_scan_by_key(ctrl, input1.begin(), input1.end(), input2.begin(), 
+                                                           output.begin(), binaryPredEq, binaryFunct );
+                    myTimer.Stop( testId );
+                  #else
+                    timer.start();
+                    thrust::inclusive_scan_by_key( input1.begin(), input1.end(), input2.begin(),
+                                                      output.begin(), binaryPredEq, binaryFunct );
+                    timer.stop();
+                  #endif
+                }
+            break;
+      /*
+            case f_gather: 
+            {           
+
+                std::cout <<  functionNames[f_gather] << std::endl; 
+               #if (Bolt_Benchmark == 1)
+                    bolt::cl::device_vector<DATA_TYPE> Map(input1.size());
+               #else
+                    thrust::device_vector<DATA_TYPE> Map(input1.size());
+               #endif
+                 
                 for( int i=0; i < input1.size() ; i++ )
                    {
                         Map[i] = i;
                    }
                 for (size_t iter = 0; iter < iterations+1; iter++)
                     {
+               #if (Bolt_Benchmark == 1)
                         myTimer.Start( testId );
                         bolt::cl::gather( ctrl,Map.begin( ), Map.end( ),input1.begin( ),output.begin()); 
                         myTimer.Stop( testId );
+               #else
+                    timer.start();
+                        thrust::gather( Map.begin( ), Map.end( ),input1.begin( ),output.begin()); 
+                    timer.stop();
+           #endif
                     }
             } 
             break;
-
+    
              case f_scatter: 
             {            
 
@@ -644,7 +1446,7 @@ switch(function)
                 bolt::cl::device_vector<DATA_TYPE> Map(input1.size());
                 for( int i=0; i < input1.size() ; i++ )
                    {
-                        Map[i] = i;
+                        Map[i] = i;d
                    }
                 for (size_t iter = 0; iter < iterations+1; iter++)
                     {
@@ -654,280 +1456,30 @@ switch(function)
                     }
             } 
             break;
-
-
-            case f_transformreduce: // fill
-            {
-
-            typename VectorType::value_type tmp;
-            tmp=0;
-            std::cout <<  functionNames[f_transformreduce] << std::endl;
-
-                for (size_t iter = 0; iter < iterations+1; iter++)
-                {
-                    myTimer.Start( testId );
-                    tmp = bolt::cl::transform_reduce( ctrl,input1.begin( ), input1.end( ),
-                                                       unaryFunct, tmp,
-                                                       binaryFunct);
-                    myTimer.Stop( testId );
-                }
-            }
-            break;
-
-            case f_stablesort: // fill
-            {
-            std::cout <<  functionNames[f_stablesort] << std::endl;
-
-                for (size_t iter = 0; iter < iterations+1; iter++)
-                {
-                    myTimer.Start( testId );
-                    bolt::cl::stable_sort(ctrl, input1.begin(), input1.end(),binaryPredLt); 
-                    myTimer.Stop( testId );
-                }
-            }
-
-             break;
-            case f_stablesortbykey: // fill
-            {
-            std::cout <<  functionNames[f_stablesortbykey] << std::endl;
-
-                for (size_t iter = 0; iter < iterations+1; iter++)
-                {
-                    myTimer.Start( testId );
-                    bolt::cl::stable_sort_by_key(ctrl, input1.begin(), input1.end(),input2.begin(),binaryPredLt); 
-                    myTimer.Stop( testId );
-                }
-            }
-
-             break;
-
-
-            case f_reducebykey: // fill
-            {
-            std::cout <<  functionNames[f_reducebykey] << std::endl;
-
-                for (size_t iter = 0; iter < iterations+1; iter++)
-                {
-                    myTimer.Start( testId );
-                   bolt::cl::reduce_by_key(ctrl, input1.begin(), input1.end(),input2.begin(),input3.begin(),
-                       output.begin(),binaryPredEq, binaryFunct);
-                    myTimer.Stop( testId );
-                }
-            }
-             break;
-
-
-
-            case f_sort: // fill
-            {
-            std::cout <<  functionNames[f_sort] << std::endl;
-
-                for (size_t iter = 0; iter < iterations+1; iter++)
-                {
-                    myTimer.Start( testId );
-                     bolt::cl::sort(ctrl, input1.begin(), input1.end(),binaryPredLt);                    
-                    myTimer.Stop( testId );
-                }
-            }
-
-             break;
-
-            
-
-
-            case f_sortbykey: // fill
-            {
-            std::cout <<  functionNames[f_sortbykey] << std::endl;
-
-                for (size_t iter = 0; iter < iterations+1; iter++)
-                {
-                    myTimer.Start( testId );
-                    bolt::cl::sort_by_key( input1.begin(), input1.end(), input2.begin( ),binaryPredLt );
-                    myTimer.Stop( testId );
-                }
-            }
-
-             break;
-
-            case f_reduce: // fill
-            {
-            typename VectorType::value_type tmp;
-            tmp=0;
-            std::cout <<  functionNames[f_reduce] << std::endl;
-
-          /*  for(VectorType::iterator itr = input1.begin();   itr  !=input1.end(); itr++)
-            {
-                std::cout<<*itr<<std::endl;
-            }*/
-                for (size_t iter = 0; iter < iterations+1; iter++)
-                {
-                    myTimer.Start( testId );
-                    tmp = bolt::cl::reduce(ctrl, input1.begin(), input1.end(),tmp,binaryFunct);                    
-                    myTimer.Stop( testId );
-                }
-            }
-
-             break;
-
-        case f_maxelement: // fill
-            {
-
-            std::cout <<  functionNames[f_maxelement] << std::endl;
-
-                for (size_t iter = 0; iter < iterations+1; iter++)
-                {
-                    myTimer.Start( testId );
-                    typename VectorType::iterator itr = bolt::cl::max_element(ctrl, input1.begin(), input1.end(),binaryPredLt);                    
-                    myTimer.Stop( testId );
-                }
-            }
-
-             break;
-
-        case f_minelement: // fill
-            {
-            
-            std::cout <<  functionNames[f_minelement] << std::endl;
-
-/*                for (size_t iter = 0; iter < iterations+1; iter++)
-                {
-                    myTimer.Start( testId );
-                    typename VectorType::iterator itr = bolt::cl::min_element(ctrl, input1.begin(), input1.end(),binaryPredLt);                    
-                    myTimer.Stop( testId );
-                }
-*/
-            }
-
-             break;
-
-
-        case f_fill: // fill
-            {
-
-            typename VectorType::value_type tmp;
-
-            std::cout <<  functionNames[f_count] << std::endl;
-
-
-                for (size_t iter = 0; iter < iterations+1; iter++)
-                {
-                    myTimer.Start( testId );
-                    bolt::cl::fill(ctrl, input1.begin(), input1.end(),tmp);
-                    myTimer.Stop( testId );
-                }
-            }
-            break;
-
-
-        case f_count: // Count
-            {
-             typename VectorType::value_type tmp;
-            std::cout <<  functionNames[f_count] << std::endl;
-
-
-                for (size_t iter = 0; iter < iterations+1; iter++)
-                {
-                    myTimer.Start( testId );
-                    bolt::cl::count(ctrl, input1.begin(), input1.end(),tmp);
-                    myTimer.Stop( testId );
-                }
-            }
-            break;
-
-
-        case f_generate: // generate
-            std::cout <<  functionNames[f_generate] << std::endl;
-
-                for (size_t iter = 0; iter < iterations+1; iter++)
-                {
-                    myTimer.Start( testId );
-                    bolt::cl::generate(ctrl, input1.begin(), input1.end(), generator );
-                    myTimer.Stop( testId );
-                }
-            break;
-
-        case f_copy: // copy
-            std::cout <<  functionNames[f_copy] << std::endl;
-                for (size_t iter = 0; iter < iterations+1; iter++)
-                {
-                    myTimer.Start( testId );
-                    bolt::cl::copy(ctrl, input1.begin(), input1.end(), output.begin() );
-                    myTimer.Stop( testId );
-                }
-            break;
-
-        case f_unarytransform: // unary transform
-            std::cout <<  functionNames[f_unarytransform] << std::endl;
-
-                for (size_t iter = 0; iter < iterations+1; iter++)
-                {
-                    myTimer.Start( testId );
-                    bolt::cl::transform(ctrl, input1.begin(), input1.end(), output.begin(), unaryFunct );
-                    myTimer.Stop( testId );
-                }
-            break;
-
-        case f_binarytransform: // binary transform
-            std::cout <<  functionNames[f_binarytransform] << std::endl;
-                for (size_t iter = 0; iter < iterations+1; iter++)
-                {
-                    myTimer.Start( testId );
-                    bolt::cl::transform(ctrl, input1.begin(), input1.end(), input2.begin(), output.begin(), binaryFunct );
-                    myTimer.Stop( testId );
-                }
-            break;
-
-        case f_scan: // scan
-            std::cout <<  functionNames[f_scan] << std::endl;
-
-                for (size_t iter = 0; iter < iterations+1; iter++)
-                {
-                     myTimer.Start( testId );
-            bolt::cl::inclusive_scan(
-                ctrl, input1.begin(), input1.end(), output.begin(), binaryFunct );
-                        myTimer.Stop( testId );
-                }
-            break;
-
-        case f_transformscan: // transform_scan
-            std::cout <<  functionNames[f_transformscan] << std::endl;
-
-                for (size_t iter = 0; iter < iterations+1; iter++)
-                {
-                    myTimer.Start( testId );
-                    bolt::cl::transform_inclusive_scan(
-                    ctrl, input1.begin(), input1.end(), output.begin(), unaryFunct, binaryFunct );
-                    myTimer.Stop( testId );
-                }
-            break;
-
-        case f_scanbykey: // scan_by_key
-            std::cout <<  functionNames[f_scanbykey] << std::endl;
-
-                for (size_t iter = 0; iter < iterations+1; iter++)
-                {
-                    myTimer.Start( testId );
-                    bolt::cl::inclusive_scan_by_key(
-                    ctrl, input1.begin(), input1.end(), input2.begin(), output.begin(), binaryPredEq, binaryFunct );
-                    myTimer.Stop( testId );
-                }
-            break;
-        
+        */
         default:
-            //std::cout << "Unsupported function=" << function << std::endl;
+            std::cout << "\nUnsupported function = " << function <<"\n"<< std::endl;
             break;
    } // switch
 
 
     size_t length = input1.size();
     double MKeys = length / ( 1024.0 * 1024.0 );
+#if (Bolt_Benchmark == 1)
     size_t pruned = myTimer.pruneOutliers( 1.0 );
     double sortTime = myTimer.getAverageTime( testId );
+#else    
+    double sortTime = (timer.TimeInMs()/1000)/(iterations+1);
+#endif
     double testMB = MKeys*siz;
     double testGB = testMB/ 1024.0;
 
     bolt::tout << std::left;
+#if (Bolt_Benchmark == 1)
     bolt::tout << std::setw( colWidth ) << _T( "Test profile: " ) << _T( "[" ) << iterations-pruned << _T( "] samples" ) << std::endl;
+#else
+    bolt::tout << std::setw( colWidth ) << _T( "Test profile: " ) << _T( "[" ) << iterations << _T( "] samples" ) << std::endl;
+#endif
     bolt::tout << std::setw( colWidth ) << _T( "    Size (MKeys): " ) << MKeys << std::endl;
     bolt::tout << std::setw( colWidth ) << _T( "    Size (GB): " ) << testGB << std::endl;
     bolt::tout << std::setw( colWidth ) << _T( "    Time (s): " ) << sortTime << std::endl;
@@ -945,6 +1497,7 @@ switch(function)
  *  Determine types
  *
  *****************************************************************************/
+#if (Bolt_Benchmark == 1)
 void executeFunction(
     bolt::cl::control& ctrl,
     size_t vecType,
@@ -952,17 +1505,33 @@ void executeFunction(
     size_t length,
     size_t routine,
     size_t iterations )
+#else
+void executeFunction(
+    size_t vecType,
+    bool hostMemory,
+    size_t length,
+    size_t routine,
+    size_t iterations )
+#endif
 {
     size_t siz;
     if (vecType == t_int)
     {
-        intgen                  generator;
+        #if (Bolt_Benchmark == 1)
+            intgen                    generator;       
         bolt::cl::square<DATA_TYPE>   unaryFunct;
         bolt::cl::plus<DATA_TYPE>     binaryFunct;
         bolt::cl::equal_to<DATA_TYPE> binaryPredEq;
         bolt::cl::less<DATA_TYPE>     binaryPredLt;
+       #else
+                intgen     generator; 
+                vec1square unaryFunct;
+                vec1plus   binaryFunct;
+                vec1equal  binaryPredEq;;
+                vec1less   binaryPredLt;
+       #endif  
         siz = sizeof(DATA_TYPE);
-
+        
         std::vector<DATA_TYPE> input1(length);
         std::vector<DATA_TYPE> input2(length);
         std::vector<DATA_TYPE> input3(length);
@@ -976,19 +1545,35 @@ void executeFunction(
         std::generate(output_merge.begin(), output_merge.end(), RandomNumber);
 
         if (hostMemory) {
-
+    #if (Bolt_Benchmark == 1)
             executeFunctionType( ctrl, input1, input2, input3, output, output_merge, 
                 generator, unaryFunct, binaryFunct, binaryPredEq, binaryPredLt, routine, iterations,siz);
+    #else
+            executeFunctionType( input1, input2, input3, output, output_merge, 
+                generator, unaryFunct, binaryFunct, binaryPredEq, binaryPredLt, routine, iterations,siz);
+    #endif
         }
         else
         {
+    #if (Bolt_Benchmark == 1)
             bolt::cl::device_vector<DATA_TYPE> binput1(input1.begin(), input1.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS,  ctrl);
             bolt::cl::device_vector<DATA_TYPE> binput2(input2.begin(), input2.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS,  ctrl);
             bolt::cl::device_vector<DATA_TYPE> binput3(input3.begin(), input3.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS,  ctrl);
             bolt::cl::device_vector<DATA_TYPE> boutput(output.begin(), output.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS,  ctrl); 
-            bolt::cl::device_vector<DATA_TYPE> boutput_merge(output.begin(), output.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS,  ctrl);    
+            bolt::cl::device_vector<DATA_TYPE> boutput_merge(output.begin(), output.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS,  ctrl); 
+   
             executeFunctionType( ctrl, binput1, binput2, binput3, boutput, boutput_merge,
                 generator, unaryFunct, binaryFunct, binaryPredEq, binaryPredLt, routine, iterations,siz);
+    #else
+            thrust::device_vector<DATA_TYPE> binput1(input1.begin(), input1.end());
+            thrust::device_vector<DATA_TYPE> binput2(input2.begin(), input2.end());
+            thrust::device_vector<DATA_TYPE> binput3(input3.begin(), input3.end());
+            thrust::device_vector<DATA_TYPE> boutput(output.begin(), output.end()); 
+            thrust::device_vector<DATA_TYPE> boutput_merge(output.begin(), output.end()); 
+   
+            executeFunctionType( binput1, binput2, binput3, boutput, boutput_merge,
+                generator, unaryFunct, binaryFunct, binaryPredEq, binaryPredLt, routine, iterations,siz);
+    #endif
         }
     }
     else if (vecType == t_vec2)
@@ -1000,7 +1585,9 @@ void executeFunction(
         vec2less    binaryPredLt;
         siz = sizeof(vec2);
         
+    #if (Bolt_Benchmark == 1)
         BOLT_ADD_DEPENDENCY(vec2, Bolt_DATA_TYPE);
+        #endif
 
         std::vector<vec2> input1(length);
         std::vector<vec2> input2(length);
@@ -1017,19 +1604,36 @@ void executeFunction(
 
 
         if (hostMemory) {
-
+    #if (Bolt_Benchmark == 1)
             executeFunctionType( ctrl, input1, input2, input3, output, output_merge,
                 generator, unaryFunct, binaryFunct, binaryPredEq, binaryPredLt, routine, iterations,siz);
+    #else
+            executeFunctionType( input1, input2, input3, output, output_merge,
+                generator, unaryFunct, binaryFunct, binaryPredEq, binaryPredLt, routine, iterations,siz);
+    #endif
+
         }
         else
         {
+    #if (Bolt_Benchmark == 1)
             bolt::cl::device_vector<vec2> binput1(input1.begin(), input1.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS,  ctrl);
             bolt::cl::device_vector<vec2> binput2(input2.begin(), input2.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS,  ctrl);
             bolt::cl::device_vector<vec2> binput3(input3.begin(), input3.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS,  ctrl);
             bolt::cl::device_vector<vec2> boutput(output.begin(), output.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS,  ctrl);
             bolt::cl::device_vector<vec2> boutput_merge(output.begin(), output.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS,  ctrl); 
+
             executeFunctionType( ctrl, binput1, binput2,binput3, boutput, boutput_merge,
                 generator, unaryFunct, binaryFunct, binaryPredEq, binaryPredLt, routine, iterations,siz);
+    #else
+            thrust::device_vector<vec2> binput1(input1.begin(), input1.end() );
+            thrust::device_vector<vec2> binput2(input2.begin(), input2.end() );
+            thrust::device_vector<vec2> binput3(input3.begin(), input3.end() );
+            thrust::device_vector<vec2> boutput(output.begin(), output.end() );
+            thrust::device_vector<vec2> boutput_merge(output.begin(), output.end() ); 
+
+            executeFunctionType( binput1, binput2,binput3, boutput, boutput_merge,
+                generator, unaryFunct, binaryFunct, binaryPredEq, binaryPredLt, routine, iterations,siz);
+    #endif
         }
     }
     else if (vecType == t_vec4)
@@ -1046,7 +1650,11 @@ void executeFunction(
         std::vector<vec4> input3(length, v4init);
         std::vector<vec4> output(length, v4iden);
         std::vector<vec4> output_merge(length * 2, v4iden);
+
+    #if (Bolt_Benchmark == 1)
         BOLT_ADD_DEPENDENCY(vec4, Bolt_DATA_TYPE);
+    #endif
+
         std::generate(input1.begin(), input1.end(),RandomNumber);
         std::generate(input2.begin(), input2.end(),RandomNumber);
         std::generate(input3.begin(), input3.end(),RandomNumber);
@@ -1054,19 +1662,35 @@ void executeFunction(
         std::generate(output_merge.begin(), output_merge.end(), RandomNumber);
 
         if (hostMemory) {
-
+    #if (Bolt_Benchmark == 1)
             executeFunctionType( ctrl, input1, input2, input3, output, output_merge,
                 generator, unaryFunct, binaryFunct, binaryPredEq, binaryPredLt, routine, iterations,siz);
+    #else
+            executeFunctionType( input1, input2, input3, output, output_merge,
+                generator, unaryFunct, binaryFunct, binaryPredEq, binaryPredLt, routine, iterations,siz);
+    #endif
         }
         else
         {
+    #if (Bolt_Benchmark == 1)
             bolt::cl::device_vector<vec4> binput1(input1.begin(), input1.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS,  ctrl);
             bolt::cl::device_vector<vec4> binput2(input2.begin(), input2.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS,  ctrl);
             bolt::cl::device_vector<vec4> binput3(input3.begin(), input3.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS,  ctrl);
             bolt::cl::device_vector<vec4> boutput(output.begin(), output.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS,  ctrl);
             bolt::cl::device_vector<vec4> boutput_merge(output_merge.begin(), output_merge.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS,  ctrl);
+
             executeFunctionType( ctrl, input1, input2, input3, output, output_merge,
                 generator, unaryFunct, binaryFunct, binaryPredEq, binaryPredLt, routine, iterations,siz);
+    #else
+            thrust::device_vector<vec4> binput1(input1.begin(), input1.end() );
+            thrust::device_vector<vec4> binput2(input2.begin(), input2.end() );
+            thrust::device_vector<vec4> binput3(input3.begin(), input3.end() );
+            thrust::device_vector<vec4> boutput(output.begin(), output.end() );
+            thrust::device_vector<vec4> boutput_merge(output_merge.begin(), output_merge.end() );
+
+            executeFunctionType( input1, input2, input3, output, output_merge,
+                generator, unaryFunct, binaryFunct, binaryPredEq, binaryPredLt, routine, iterations,siz);
+    #endif
         }
     }
     else if (vecType == t_vec8)
@@ -1076,14 +1700,17 @@ void executeFunction(
         vec8plus    binaryFunct;
         vec8equal   binaryPredEq;
         vec8less    binaryPredLt;
-       siz = sizeof(vec8);
+        siz = sizeof(vec8);
 
         std::vector<vec8> input1(length, v8init);
         std::vector<vec8> input2(length, v8init);
         std::vector<vec8> input3(length, v8init);
         std::vector<vec8> output(length, v8iden);
         std::vector<vec8> output_merge(length*2, v8iden);
+    #if (Bolt_Benchmark == 1)
         BOLT_ADD_DEPENDENCY(vec8, Bolt_DATA_TYPE);
+    #endif
+
         std::generate(input1.begin(), input1.end(),RandomNumber);
         std::generate(input2.begin(), input2.end(),RandomNumber);
         std::generate(input3.begin(), input3.end(),RandomNumber);
@@ -1091,19 +1718,35 @@ void executeFunction(
         std::generate(output_merge.begin(), output_merge.end(),RandomNumber);
 
         if (hostMemory) {
-
+    #if (Bolt_Benchmark == 1)
             executeFunctionType( ctrl, input1, input2, input3, output, output_merge,
                 generator, unaryFunct, binaryFunct, binaryPredEq, binaryPredLt, routine, iterations,siz);
+    #else
+            executeFunctionType( input1, input2, input3, output, output_merge,
+                generator, unaryFunct, binaryFunct, binaryPredEq, binaryPredLt, routine, iterations,siz);
+        #endif
         }
         else
         {
+    #if (Bolt_Benchmark == 1)
             bolt::cl::device_vector<vec8> binput1(input1.begin(), input1.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS,  ctrl);
             bolt::cl::device_vector<vec8> binput2(input2.begin(), input2.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS,  ctrl);
             bolt::cl::device_vector<vec8> binput3(input3.begin(), input3.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS,  ctrl);
             bolt::cl::device_vector<vec8> boutput(output.begin(), output.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS,  ctrl);
             bolt::cl::device_vector<vec8> boutput_merge(output_merge.begin(), output_merge.end(), BOLT_BENCH_DEVICE_VECTOR_FLAGS,  ctrl);
+
             executeFunctionType( ctrl, input1, input2, input3, output, output_merge,
                 generator, unaryFunct, binaryFunct, binaryPredEq, binaryPredLt, routine, iterations,siz);
+    #else
+            thrust::device_vector<vec8> binput1(input1.begin(), input1.end() );
+            thrust::device_vector<vec8> binput2(input2.begin(), input2.end() );
+            thrust::device_vector<vec8> binput3(input3.begin(), input3.end() );
+            thrust::device_vector<vec8> boutput(output.begin(), output.end() );
+            thrust::device_vector<vec8> boutput_merge(output_merge.begin(), output_merge.end() );
+
+            executeFunctionType( input1, input2, input3, output, output_merge,
+                generator, unaryFunct, binaryFunct, binaryPredEq, binaryPredLt, routine, iterations,siz);
+    #endif
         }
     }
     else
@@ -1125,12 +1768,12 @@ int _tmain( int argc, _TCHAR* argv[] )
     cl_uint userPlatform    = 0;
     cl_uint userDevice      = 0;
     size_t iterations       = 10;
-    size_t length           = 1<<4;
+    size_t length           = 8*(1<<10);
     size_t vecType          = 0;
     size_t runMode          = 0;
-    size_t routine          = f_scan;
+    size_t routine          = f_binarytransform;
     size_t numThrowAway     = 0;
-     std::string function_called=functionNames[routine] ;
+    std::string function_called=functionNames[routine] ;
     std::string filename    = "bench.xml";
     cl_device_type deviceType = CL_DEVICE_TYPE_DEFAULT;
     bool defaultDevice      = true;
@@ -1146,11 +1789,17 @@ int _tmain( int argc, _TCHAR* argv[] )
         po::options_description desc( "OpenCL Scan command line options" );
         desc.add_options()
             ( "help,h",			"produces this help message" )
+
+        #if (Bolt_Benchmark == 1)
             ( "version,v",		"Print queryable version information from the Bolt CL library" )
             ( "queryOpenCL,q",  "Print queryable platform and device info and return" )
             ( "gpu,g",          "Report only OpenCL GPU devices" )
             ( "cpu,c",          "Report only OpenCL CPU devices" )
             ( "all,a",          "Report all OpenCL devices" )
+        #endif
+
+            ( "queryCuda,q",    "Print queryable platform and device info and return" )
+            
             ( "deviceMemory,D",   "Allocate vectors in device memory; default is host memory" )
             ( "platform,p",     po::value< cl_uint >( &userPlatform )->default_value( userPlatform ),
                 "Specify the platform under test using the index reported by -q flag" )
@@ -1188,6 +1837,7 @@ int _tmain( int argc, _TCHAR* argv[] )
         routine = get_functionindex(function_called);
 
 
+    #if (Bolt_Benchmark == 1)
         if( vm.count( "version" ) )
         {
             cl_uint libMajor, libMinor, libPatch;
@@ -1198,13 +1848,6 @@ int _tmain( int argc, _TCHAR* argv[] )
                 << libMajor << _T( "." )
                 << libMinor << _T( "." )
                 << libPatch << std::endl;
-        }
-
-        if( vm.count( "help" ) )
-        {
-            //	This needs to be 'cout' as program-options does not support wcout yet
-            std::cout << desc << std::endl;
-            return 0;
         }
 
         if( vm.count( "queryOpenCL" ) )
@@ -1227,6 +1870,17 @@ int _tmain( int argc, _TCHAR* argv[] )
             deviceType	= CL_DEVICE_TYPE_ALL;
         }
 
+      #endif
+
+        if( vm.count( "help" ) )
+        {
+            //	This needs to be 'cout' as program-options does not support wcout yet
+            std::cout << desc << std::endl;
+            return 0;
+        }     
+
+        
+
         if( vm.count( "deviceMemory" ) )
         {
             hostMemory = false;
@@ -1244,6 +1898,8 @@ int _tmain( int argc, _TCHAR* argv[] )
 #if defined(_WIN32)
     aProfiler.throwAway( numThrowAway );
 #endif
+
+#if (Bolt_Benchmark == 1)
     bolt::cl::control ctrl = bolt::cl::control::getDefault();
     
     std::string strDeviceName;
@@ -1282,12 +1938,14 @@ int _tmain( int argc, _TCHAR* argv[] )
         strDeviceName = ctrl.getDevice( ).getInfo< CL_DEVICE_NAME >( &err );
         bolt::cl::V_OPENCL( err, "Device::getInfo< CL_DEVICE_NAME > failed" );
     }
-    std::cout << "Device: " << strDeviceName << std::endl;
+#endif
+    //std::cout << "Device: " << strDeviceName << std::endl;
 
     /******************************************************************************
      * Select then Execute Function
      ******************************************************************************/
-    executeFunction(
+#if (Bolt_Benchmark == 1)
+        executeFunction(
         ctrl,
         vecType,
         hostMemory,
@@ -1295,7 +1953,15 @@ int _tmain( int argc, _TCHAR* argv[] )
         routine,
         iterations + numThrowAway
         );
-
+#else
+    executeFunction(
+        vecType,
+        hostMemory,
+        length,
+        routine,
+        iterations + numThrowAway
+        );
+#endif
     /******************************************************************************
      * Print Results
      ******************************************************************************/
