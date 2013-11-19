@@ -1657,7 +1657,7 @@ namespace cl
              *  \param end The iterator position signifying the end of the range (exclusive).
             *   \warning All previous iterators, references, and pointers are invalidated.
             */
-#if _MSC_VER == 1700   
+#if _MSC_VER >  1700   
             template<typename InputIterator>
             typename std::enable_if< std::_Is_iterator<InputIterator>::value, void>::type
             assign( InputIterator begin, InputIterator end )

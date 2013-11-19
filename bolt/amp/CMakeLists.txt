@@ -89,6 +89,8 @@ elseif( MSVC_VERSION VERSION_LESS 1700 )
     set( boltLibName "${boltLibName}.vc100" )
 elseif( MSVC_VERSION VERSION_LESS 1800 )
     set( boltLibName "${boltLibName}.vc110" )
+else()
+    set( boltLibName "${boltLibName}.vc120" )
 endif( )
 
 set_target_properties( ampBolt.Runtime PROPERTIES VERSION ${Bolt_VERSION} SOVERSION ${Bolt_VERSION_MAJOR} )
