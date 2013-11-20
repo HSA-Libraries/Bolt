@@ -26,6 +26,8 @@
 #include <bolt/unicode.h>
 #include "bolt/unicode.h"
 #include <CL/cl.h>
+#include "statisticalTimer.h"
+
 #if (Bolt_Benchmark == 1)
 #include "bolt/cl/functional.h"
 #include "bolt/cl/device_vector.h"
@@ -53,7 +55,6 @@
 //#define BOLT_PROFILER_ENABLED
 #define BOLT_BENCH_DEVICE_VECTOR_FLAGS CL_MEM_READ_WRITE
 #include "bolt/AsyncProfiler.h"
-#include "statisticalTimer.h"
 #include "bolt/countof.h"
 //#include "bolt/cl/clcode.h"
 #else
@@ -92,18 +93,12 @@ BOLT_CREATE_DEFINE(Bolt_DATA_TYPE,DATA_TYPE,unsigned int);
 #if (Bolt_Benchmark == 1)
 DATA_TYPE RandomNumber() 
 {
-    std::default_random_engine gen;
-    std::uniform_int_distribution<DATA_TYPE> distr(10,1<<31);
-    DATA_TYPE dice_roll = distr(gen);  // generates number in the range 10..1<<31 
-    return (dice_roll); 
+    return rand()*rand()*rand();
 }
 #else
-unsigned int RandomNumber() 
-{
-    thrust::default_random_engine gen;
-    thrust::uniform_int_distribution<unsigned int> distr(10,1<<31);
-    unsigned int dice_roll = distr(gen);  // generates number in the range 10..1<<31 
-    return (dice_roll); 
+DATA_TYPE RandomNumber() 
+{    
+     return /*1*/rand()*rand()*rand();
 }
 #endif
 
@@ -200,7 +195,7 @@ using namespace std;
         l_equal = ( b == rhs.b ) ? l_equal : false;
         return l_equal;
         }
-      //friend ostream& operator<<(ostream& os, const vec2& dt);
+      friend ostream& operator<<(ostream& os, const vec2& dt);
     };
     );
     BOLT_CREATE_TYPENAME( bolt::cl::device_vector< vec2 >::iterator );
@@ -232,7 +227,7 @@ using namespace std;
         l_equal = ( d == rhs.d ) ? l_equal : false;
         return l_equal;
         }
-       // friend ostream& operator<<(ostream& os, const vec4& dt);
+        friend ostream& operator<<(ostream& os, const vec4& dt);
     };
     );
 
@@ -270,7 +265,7 @@ using namespace std;
         l_equal = ( h == rhs.h ) ? l_equal : false;
         return l_equal;
         }
-       // friend ostream& operator<<(ostream& os, const vec8& dt);
+        friend ostream& operator<<(ostream& os, const vec8& dt);
 
     };
     );
@@ -888,13 +883,10 @@ void executeFunctionType(
     )
 #endif
 {
-#if (Bolt_Benchmark == 1)
+
     bolt::statTimer& myTimer = bolt::statTimer::getInstance( );
     myTimer.Reserve( 1, iterations );
     size_t testId	= myTimer.getUniqueID( _T( "test" ), 0 );
-#else
-    HPTimer timer;
-#endif
     switch(function)
     {
     case f_merge: 
@@ -1024,7 +1016,8 @@ void executeFunctionType(
 #if (Bolt_Benchmark == 1)
                 bolt::cl::sort(ctrl, inputBackup.begin(), inputBackup.end(),binaryPredLt);                    
 #else
-                thrust::sort( inputBackup.begin(), inputBackup.end(),binaryPredLt);                    
+                thrust::sort( inputBackup.begin(), inputBackup.end(),binaryPredLt); 
+                //thrust::sort( inputBackup.begin(), inputBackup.end());                    
 #endif
                 myTimer.Stop( testId );
             }
@@ -1189,7 +1182,8 @@ void executeFunctionType(
 #if (Bolt_Benchmark == 1)
             bolt::cl::inclusive_scan(ctrl, input1.begin(), input1.end(), output.begin(), binaryFunct );
 #else
-            thrust::inclusive_scan( input1.begin(), input1.end(), output.begin(), binaryFunct );
+             thrust::inclusive_scan( input1.begin(), input1.end(), output.begin(), binaryFunct );
+             //thrust::inclusive_scan( input1.begin(), input1.end(), output.begin() );
 #endif
             myTimer.Stop( testId ); 
         }
@@ -1378,6 +1372,7 @@ void executeFunction(
 #endif
         }
     }
+#if 1
     else if (vecType == t_vec2)
     {
         vec2gen     generator;
@@ -1534,10 +1529,12 @@ void executeFunction(
     #endif
         }
     }
+#endif
     else
     {
         std::cerr << "Unsupported vecType=" << vecType << std::endl;
     }
+
 }
 
 /******************************************************************************
@@ -1550,8 +1547,8 @@ int _tmain( int argc, _TCHAR* argv[] )
     cl_int err = CL_SUCCESS;
     cl_uint userPlatform    = 0;
     cl_uint userDevice      = 0;
-    size_t iterations       = 10;
-    size_t length           = 8*(1<<10);
+    size_t iterations       = 100;
+    size_t length           = 1024;
     size_t vecType          = 0;
     size_t runMode          = 0;
     size_t routine          = f_binarytransform;
