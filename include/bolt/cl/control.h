@@ -30,6 +30,7 @@
 #include <map>
 
 #include <boost/thread/mutex.hpp>
+#include <boost/thread/locks.hpp>
 #include <boost/shared_ptr.hpp>
 
 /*! \file control.h

@@ -18,7 +18,7 @@
 message( STATUS "Configuring Boost SuperBuild..." )
 include( ExternalProject )
 
-set( ext.Boost_VERSION "1.52.0" CACHE STRING "Boost version to download/use" )
+set( ext.Boost_VERSION "1.55.0" CACHE STRING "Boost version to download/use" )
 mark_as_advanced( ext.Boost_VERSION )
 string( REPLACE "." "_" ext.Boost_Version_Underscore ${ext.Boost_VERSION} )
 
@@ -51,8 +51,10 @@ endif( )
 if( MSVC )
     if( MSVC_VERSION VERSION_LESS 1700 )
         list( APPEND Boost.Command toolset=msvc-10.0 )
-    else( )
+    elseif( MSVC_VERSION VERSION_LESS 1800 )
         list( APPEND Boost.Command toolset=msvc-11.0 )
+    else()    
+        list( APPEND Boost.Command toolset=msvc-12.0 )    
     endif( )
 endif( )
 
@@ -74,7 +76,8 @@ ExternalProject_Add(
     Boost
     PREFIX ${CMAKE_CURRENT_BINARY_DIR}/external/boost
     URL ${ext.Boost_URL}
-    URL_MD5 f310a8198318c10e5e4932a07c755a6a
+#    URL_MD5 f310a8198318c10e5e4932a07c755a6a
+    URL_MD5 8aca361a4713a1f491b0a5e33fee0f1f
     UPDATE_COMMAND ${Boost.Bootstrap}
 #    PATCH_COMMAND ""
     CONFIGURE_COMMAND ""
@@ -90,7 +93,11 @@ ExternalProject_Get_Property( Boost binary_dir )
 set( Boost_INCLUDE_DIRS ${source_dir} )
 
 if( MSVC )
-set( Boost_LIBRARIES debug;${binary_dir}/stage/lib/libboost_program_options-vc110-mt-gd-1_50.lib;optimized;${binary_dir}/stage/lib/libboost_program_options-vc110-mt-1_50.lib )
+#    if( MSVC_VERSION VERSION_LESS 1700 )
+#        set( Boost_LIBRARIES debug;${binary_dir}/stage/lib/libboost_program_options-vc110-mt-gd-1_50.lib;optimized;${binary_dir}/stage/lib/libboost_program_options-vc110-mt-1_50.lib )
+#    else()
+#        set( Boost_LIBRARIES debug;${binary_dir}/stage/lib/libboost_program_options-vc120-mt-gd-1_50.lib;optimized;${binary_dir}/stage/lib/libboost_program_options-vc120-mt-1_50.lib )
+#    endif()    
 else()
 set( Boost_LIBRARIES debug;${binary_dir}/stage/lib/libboost_program_options.a;optimized;${binary_dir}/stage/lib/libboost_program_options.a )
 endif()
