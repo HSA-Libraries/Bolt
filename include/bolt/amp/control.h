@@ -225,7 +225,11 @@ private:
         m_wgPerComputeUnit(8),
         m_waitMode(BusyWait),
         m_unroll(1)
-    {};
+    {
+	
+	
+	
+	};
 
     //::cl::CommandQueue  m_commandQueue;
     ::Concurrency::accelerator m_accelerator;

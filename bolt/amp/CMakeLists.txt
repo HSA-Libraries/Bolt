@@ -31,6 +31,7 @@ set( ampBolt.Runtime.Headers
         ${ampBolt.Include.Dir}/count.h
         ${ampBolt.Include.Dir}/device_vector.h 
         ${ampBolt.Include.Dir}/functional.h 
+        ${ampBolt.Include.Dir}/merge.h         
         ${ampBolt.Include.Dir}/parallel_iteration.h 
         ${ampBolt.Include.Dir}/pool_alloc.h 
         ${ampBolt.Include.Dir}/reduce.h 
@@ -48,6 +49,7 @@ set( ampBolt.Runtime.Headers.Iterator
 set( ampBolt.Runtime.Headers.Detail
         ${ampBolt.Include.Dir}/detail/count.inl
         ${ampBolt.Include.Dir}/detail/reduce.inl
+        ${ampBolt.Include.Dir}/detail/merge.inl        
         ${ampBolt.Include.Dir}/detail/scan.inl
         ${ampBolt.Include.Dir}/detail/scan_by_key.inl
         ${ampBolt.Include.Dir}/detail/sort.inl        
