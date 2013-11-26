@@ -226,7 +226,19 @@ private:
         m_waitMode(BusyWait),
         m_unroll(1)
     {
-	
+
+		if(m_accelerator.default_accelerator == NULL)
+        {
+#ifdef ENABLE_TBB
+            m_forceRunMode = MultiCoreCpu;
+#else
+            m_forceRunMode = SerialCpu;
+#endif
+        }
+        else
+        {
+            m_forceRunMode   = Gpu;
+        }
 	
 	
 	};

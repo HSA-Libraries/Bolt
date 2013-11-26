@@ -93,7 +93,7 @@ namespace bolt {
                 unsigned int ceilNumElements = tileSize * ceilNumTiles;
 
 
-                concurrency::array_view< iType, 1 > inputV (first.getContainer().getBuffer());
+                concurrency::array_view< iType, 1 > inputV (first.getContainer().getBuffer(first));
 
                 //Now create a staging array ; May support zero-copy in the future?!
 

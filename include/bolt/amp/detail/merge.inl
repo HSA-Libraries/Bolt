@@ -98,9 +98,9 @@ namespace bolt {
 				const unsigned int length2 = static_cast< unsigned int >(std::distance(first2, last2));
 
 		
-				concurrency::array_view<iType1, 1> inputV1(first1.getContainer().getBuffer());
-				concurrency::array_view<iType2, 1> inputV2(first2.getContainer().getBuffer());
-				concurrency::array_view<rType, 1> resultV(result.getContainer().getBuffer());
+				concurrency::array_view<iType1, 1> inputV1(first1.getContainer().getBuffer(first1));
+				concurrency::array_view<iType2, 1> inputV2(first2.getContainer().getBuffer(first2));
+				concurrency::array_view<rType, 1> resultV(result.getContainer().getBuffer(result));
 				int wgSize = 64;
 
 
