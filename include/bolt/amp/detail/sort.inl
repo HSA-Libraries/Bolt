@@ -812,13 +812,13 @@ sort_enqueue(bolt::amp::control &ctl,
         pLocalArray     = new concurrency::array<T>( modified_ext );
         pLocalArrayView = new concurrency::array_view<T>(pLocalArray->view_as(modified_ext));
         concurrency::array_view<T> dest = pLocalArrayView->section( ext );
-        first.getContainer().getBuffer().copy_to( dest );
+        first.getContainer().getBuffer(first).copy_to( dest );
         dest.synchronize( );
         newBuffer = true;
     }
     else
     {
-        pLocalArrayView = new concurrency::array_view<T>( first.getContainer().getBuffer() );
+        pLocalArrayView = new concurrency::array_view<T>( first.getContainer().getBuffer(first) );
     }
 
     unsigned int numGroups = szElements / mulFactor;
@@ -829,9 +829,9 @@ sort_enqueue(bolt::amp::control &ctl,
     device_vector< T, concurrency::array > dvHistogramScanBuffer(static_cast<size_t>(numGroups* RADICES + 10), 0 );
 
     auto& clInputData = *pLocalArrayView;
-    auto& clSwapData = dvSwapInputData.begin( ).getContainer().getBuffer();
-    auto& clHistData = dvHistogramBins.begin( ).getContainer().getBuffer();
-    auto& clHistScanData = dvHistogramScanBuffer.begin( ).getContainer().getBuffer();
+    auto& clSwapData = dvSwapInputData.begin( ).getContainer().getBuffer(dvSwapInputData.begin( ));
+    auto& clHistData = dvHistogramBins.begin( ).getContainer().getBuffer(dvHistogramBins.begin( ));
+    auto& clHistScanData = dvHistogramScanBuffer.begin( ).getContainer().getBuffer(dvHistogramScanBuffer.begin( ));
     int swap = 0;
     if(comp(2,3))
     {
@@ -1029,8 +1029,8 @@ else
     {
         //std::cout << "New buffer was allocated So copying back the buffer\n";
         //dest = clInputData.section( ext );
-        clInputData.section( ext ).copy_to( first.getContainer().getBuffer() );
-        first.getContainer().getBuffer().synchronize( );
+        clInputData.section( ext ).copy_to( first.getContainer().getBuffer(first) );
+        first.getContainer().getBuffer(first).synchronize( );
         delete pLocalArray;
     }
     delete pLocalArrayView;
@@ -1066,13 +1066,13 @@ sort_enqueue(bolt::amp::control &ctl,
         pLocalArray     = new concurrency::array<T>( modified_ext );
         pLocalArrayView = new concurrency::array_view<T>(pLocalArray->view_as( modified_ext ) );
         concurrency::array_view<T> dest = pLocalArrayView->section( ext );
-        first.getContainer().getBuffer().copy_to( dest );
+        first.getContainer().getBuffer(first).copy_to( dest );
         dest.synchronize( );
         newBuffer = true;
     }
     else
     {
-        pLocalArrayView = new concurrency::array_view<T>( first.getContainer().getBuffer() );
+        pLocalArrayView = new concurrency::array_view<T>( first.getContainer().getBuffer(first) );
     }
 
     unsigned int numGroups = szElements / mulFactor;
@@ -1083,9 +1083,9 @@ sort_enqueue(bolt::amp::control &ctl,
     device_vector< T, concurrency::array > dvHistogramScanBuffer(static_cast<size_t>(numGroups* RADICES + 10), 0 );
 
     auto& clInputData = *pLocalArrayView;
-    auto& clSwapData = dvSwapInputData.begin( ).getContainer().getBuffer();
-    auto& clHistData = dvHistogramBins.begin( ).getContainer().getBuffer();
-    auto& clHistScanData = dvHistogramScanBuffer.begin( ).getContainer().getBuffer();
+    auto& clSwapData = dvSwapInputData.begin( ).getContainer().getBuffer(dvSwapInputData.begin( ));
+    auto& clHistData = dvHistogramBins.begin( ).getContainer().getBuffer(dvHistogramBins.begin( ));
+    auto& clHistScanData = dvHistogramScanBuffer.begin( ).getContainer().getBuffer(dvHistogramScanBuffer.begin( ));
     int swap = 0;
     if(comp(2,3))
     {
@@ -1338,8 +1338,8 @@ else
     {
         //std::cout << "New buffer was allocated So copying back the buffer\n";
         //dest = clInputData.section( ext );
-        clInputData.section( ext ).copy_to( first.getContainer().getBuffer() );
-        first.getContainer().getBuffer().synchronize( );
+        clInputData.section( ext ).copy_to( first.getContainer().getBuffer(first) );
+        first.getContainer().getBuffer(first).synchronize( );
         delete pLocalArray;
     }
     delete pLocalArrayView;
@@ -1436,7 +1436,7 @@ const StrictWeakOrdering& comp)
     {
         wgSize = (int)szElements/2;
     }*/
-    auto&  A = first.getContainer().getBuffer(); //( numElements, av );
+    auto&  A = first.getContainer().getBuffer(first); //( numElements, av );
 
     numStages = 0;
     for(temp = szElements; temp > 1; temp >>= 1)
@@ -1700,7 +1700,7 @@ void stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, cons
     }
     unsigned int ldsSize  = static_cast< unsigned int >( localRange * sizeof( iType ) );
 
-    auto&  inputBuffer = first.getContainer().getBuffer(); //( numElements, av );
+    auto&  inputBuffer = first.getContainer().getBuffer(first); //( numElements, av );
 
     AMP_BlockInsertionSortTemplate<iType>( ctrl,
                 inputBuffer,
@@ -1734,7 +1734,7 @@ void stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, cons
 
     //  Allocate a flipflop buffer because the merge passes are out of place
     device_vector< iType, concurrency::array > tmpBufferDV(static_cast<size_t>(globalRange), 0);
-    auto& tmpBuffer = tmpBufferDV.begin( ).getContainer().getBuffer();
+    auto& tmpBuffer = tmpBufferDV.begin( ).getContainer().getBuffer(tmpBufferDV.begin( ));
 
     for( int pass = 1; pass <= numMerges; ++pass )
     {
@@ -1743,7 +1743,7 @@ void stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, cons
         if( pass & 0x1 )
         {   
             AMP_mergeTemplate<iType>( ctrl,
-                first.getContainer().getBuffer(),
+                first.getContainer().getBuffer(first),
                 tmpBuffer,
                 vecSize,
                 srcLogicalBlockSize,
@@ -1756,7 +1756,7 @@ void stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, cons
         {
             AMP_mergeTemplate<iType>( ctrl,
                 tmpBuffer,
-                first.getContainer().getBuffer(),
+                first.getContainer().getBuffer(first),
                 vecSize,
                 srcLogicalBlockSize,
                 comp,
@@ -1771,8 +1771,8 @@ void stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, cons
     //  the results back into the input array
     if( numMerges & 0x1 )
     {
-        tmpBuffer.section( ext ).copy_to( first.getContainer().getBuffer() );
-        first.getContainer().getBuffer().synchronize( );
+        tmpBuffer.section( ext ).copy_to( first.getContainer().getBuffer(first) );
+        first.getContainer().getBuffer(first).synchronize( );
     }
 
     //iType * temp = inputBuffer.data();
