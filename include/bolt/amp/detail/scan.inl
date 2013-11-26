@@ -547,8 +547,8 @@ size_t k0_stepNum, k1_stepNum, k2_stepNum;
     //  Use of the auto keyword here is OK, because AMP is restricted by definition to vs11 or above
     //  The auto keyword is useful here in a polymorphic sense, because it does not care if the container
     //  is wrapping an array or an array_view
-    auto&  input = first.getContainer().getBuffer(); //( numElements, av );
-    auto& output = result.getContainer().getBuffer(); //( sizeInputBuff, av );
+    auto&  input = first.getContainer().getBuffer(first); //( numElements, av );
+    auto& output = result.getContainer().getBuffer(result); //( sizeInputBuff, av );
     input.get_extent().size();
   //hostInput.copy_to( input.section( concurrency::extent< 1 >( numElements ) ) );
 

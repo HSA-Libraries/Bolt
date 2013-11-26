@@ -1450,6 +1450,38 @@ TEST( TransformStdVector, MulticoreOutOfPlaceTransform)
   cmpArrays(hVectorO, SVectorO);
  }
 
+TEST( DVIntVector, OffsetIntTest )
+{
+	int length = 1024;
+
+    std::vector<int> stdInput( length ,1);
+    bolt::amp::device_vector<int> boltInput(stdInput.begin(),stdInput.end());
+
+	int offset = 100;
+
+    std::transform(  stdInput.begin( ) + offset,  stdInput.end( ), stdInput.begin() + offset, std::negate<int>() );
+    bolt::amp::transform( boltInput.begin( ) + offset, boltInput.end( ), boltInput.begin( ) + offset, bolt::amp::negate<int>() );
+
+    cmpArrays( stdInput, boltInput);
+	
+}
+
+TEST( DVIntVector, OffsetDoubleTest )
+{
+	int length = 1024;
+
+    std::vector<double> stdInput( length ,4.0);
+    bolt::amp::device_vector<double> boltInput(stdInput.begin(),stdInput.end());
+
+	int offset = 100;
+
+    std::transform(  stdInput.begin( ) + offset,  stdInput.end( ), stdInput.begin() + offset, std::negate<double>() );
+    bolt::amp::transform( boltInput.begin( ) + offset, boltInput.end( ), boltInput.begin( ) + offset, bolt::amp::negate<double>() );
+
+    cmpArrays( stdInput, boltInput);
+	
+}
+
 
 //  Test lots of consecutive numbers, but small range, suitable for integers because they overflow easier
 INSTANTIATE_TEST_CASE_P( TransformInPlace, TransformIntegerVector, ::testing::Range( 0, 1024, 1 ) );

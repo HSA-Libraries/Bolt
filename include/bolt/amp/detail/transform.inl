@@ -464,9 +464,9 @@ namespace bolt
                    wavefrontMultiple += WAVEFRONT_SIZE;
                }
 
-               concurrency::array_view<iType1,1> inputV1 (first1.getContainer().getBuffer());
-               concurrency::array_view<iType2,1> inputV2 (first2.getContainer().getBuffer());
-               concurrency::array_view<oType,1> resultV(result.getContainer().getBuffer());
+               concurrency::array_view<iType1,1> inputV1 (first1.getContainer().getBuffer(first1));
+               concurrency::array_view<iType2,1> inputV2 (first2.getContainer().getBuffer(first2));
+               concurrency::array_view<oType,1> resultV(result.getContainer().getBuffer(result));
                concurrency::extent< 1 > inputExtent( wavefrontMultiple );
 
                concurrency::parallel_for_each(ctl.getAccelerator().default_view, inputExtent, [=](concurrency::index<1> idx) mutable restrict(amp)
@@ -500,8 +500,8 @@ namespace bolt
                    wavefrontMultiple += WAVEFRONT_SIZE;
                }
 
-               concurrency::array_view<iType,1> inputV (first.getContainer().getBuffer());
-               concurrency::array_view<oType,1> resultV(result.getContainer().getBuffer());
+               concurrency::array_view<iType,1> inputV (first.getContainer().getBuffer(first));
+               concurrency::array_view<oType,1> resultV(result.getContainer().getBuffer(result));
                concurrency::extent< 1 > inputExtent( wavefrontMultiple );
 
                concurrency::parallel_for_each(ctl.getAccelerator().default_view, inputExtent, [=](concurrency::index<1> idx) mutable restrict(amp)
