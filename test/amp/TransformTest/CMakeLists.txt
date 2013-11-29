@@ -16,8 +16,8 @@
 ############################################################################                                                                                     
 
 # List the names of common files to compile across all platforms
-set( ampBolt.Test.Transform.Source stdafx.cpp TransformTest.cpp )
-set( ampBolt.Test.Transform.Headers stdafx.h targetver.h ${BOLT_INCLUDE_DIR}/bolt/amp/transform.h )
+set( ampBolt.Test.Transform.Source  TransformTest.cpp )
+set( ampBolt.Test.Transform.Headers ${BOLT_INCLUDE_DIR}/bolt/amp/transform.h ${BOLT_INCLUDE_DIR}/bolt/amp/detail/transform.inl)
 
 set( ampBolt.Test.Transform.Files ${ampBolt.Test.Transform.Source} ${ampBolt.Test.Transform.Headers} )
 

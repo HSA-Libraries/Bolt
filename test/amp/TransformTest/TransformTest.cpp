@@ -216,7 +216,8 @@ public:
     virtual ~TransformArrayTest( )
     {}
 
-protected:
+//protected:
+
     typedef typename std::tuple_element< 0, ArrayTuple >::type ArrayType;
     static const size_t ArraySize = typename std::tuple_element< 1, ArrayTuple >::type::value;
 
@@ -628,6 +629,38 @@ TYPED_TEST_P( TransformOutPlaceArrayTest, MulticoreOutPlaceSquareTransform )
 }
 
 
+struct UDD
+{
+    int a; 
+    int b;
+
+    bool operator() (const UDD& lhs, const UDD& rhs) const restrict(amp,cpu){
+        return ((lhs.a+lhs.b) > (rhs.a+rhs.b));
+    } 
+    bool operator < (const UDD& other) const restrict(amp,cpu){
+        return ((a+b) < (other.a+other.b));
+    }
+    bool operator > (const UDD& other) const restrict(amp,cpu){
+        return ((a+b) > (other.a+other.b));
+    }
+    bool operator == (const UDD& other) const restrict(amp,cpu) {
+        return ((a+b) == (other.a+other.b));
+    }
+
+    UDD operator + (const UDD &rhs) const restrict(amp,cpu)
+    {
+      UDD _result;
+      _result.a = a + rhs.a;
+      _result.b = b + rhs.b;
+      return _result;
+    }
+
+
+    UDD() restrict(amp,cpu)
+        : a(0),b(0) { }
+    UDD(int _in) restrict(amp,cpu)
+        : a(_in), b(_in +1)  { }
+};
 
 
 
@@ -745,6 +778,115 @@ protected:
     bolt::amp::device_vector< double > boltInput;
 };
 #endif
+
+
+TEST( HostIntVector, OffsetTransform )
+{
+	int length = 1024;
+
+    std::vector<int> stdInput( length ,1);
+    std::vector<int> boltInput(stdInput.begin(),stdInput.end());
+
+	int offset = 100;
+
+    std::transform(  stdInput.begin( ) + offset,  stdInput.end( ), stdInput.begin() + offset, std::negate<int>() );
+    bolt::amp::transform( boltInput.begin( ) + offset, boltInput.end( ), boltInput.begin( ) + offset, bolt::amp::negate<int>() );
+
+    cmpArrays( stdInput, boltInput);
+
+}
+
+TEST( HostIntVector, SerialOffsetTransform  )
+{
+	int length = 1024;
+
+    std::vector<int> stdInput( length ,1);
+    std::vector<int> boltInput(stdInput.begin(),stdInput.end());
+
+	int offset = 100;
+
+	bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    ctl.setForceRunMode(bolt::amp::control::SerialCpu); 
+
+    std::transform(  stdInput.begin( ) + offset,  stdInput.end( ), stdInput.begin() + offset, std::negate<int>() );
+    bolt::amp::transform(ctl, boltInput.begin( ) + offset, boltInput.end( ), boltInput.begin( ) + offset, bolt::amp::negate<int>() );
+
+    cmpArrays( stdInput, boltInput);
+
+}
+
+TEST( HostIntVector, MulticoreOffsetTransform  )
+{
+	int length = 1024;
+
+    std::vector<int> stdInput( length ,1);
+    std::vector<int> boltInput(stdInput.begin(),stdInput.end());
+
+	int offset = 100;
+
+	bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu); 
+
+    std::transform(  stdInput.begin( ) + offset,  stdInput.end( ), stdInput.begin() + offset, std::negate<int>() );
+    bolt::amp::transform(ctl, boltInput.begin( ) + offset, boltInput.end( ), boltInput.begin( ) + offset, bolt::amp::negate<int>() );
+
+    cmpArrays( stdInput, boltInput);
+
+}
+
+TEST( DVIntVector, OffsetTransform  )
+{
+	int length = 1024;
+
+    std::vector<int> stdInput( length ,1);
+    bolt::amp::device_vector<int> boltInput(stdInput.begin(),stdInput.end());
+
+	int offset = 100;
+
+    std::transform(  stdInput.begin( ) + offset,  stdInput.end( ), stdInput.begin() + offset, std::negate<int>() );
+    bolt::amp::transform( boltInput.begin( ) + offset, boltInput.end( ), boltInput.begin( ) + offset, bolt::amp::negate<int>() );
+
+    cmpArrays( stdInput, boltInput);
+	
+}
+
+TEST( DVIntVector, SerialOffsetTransform  )
+{
+	int length = 1024;
+
+    std::vector<int> stdInput( length ,1);
+    bolt::amp::device_vector<int> boltInput(stdInput.begin(),stdInput.end());
+
+	int offset = 100;
+
+	bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    ctl.setForceRunMode(bolt::amp::control::SerialCpu); 
+
+    std::transform(  stdInput.begin( ) + offset,  stdInput.end( ), stdInput.begin() + offset, std::negate<int>() );
+    bolt::amp::transform( ctl, boltInput.begin( ) + offset, boltInput.end( ), boltInput.begin( ) + offset, bolt::amp::negate<int>() );
+
+    cmpArrays( stdInput, boltInput);
+	
+}
+
+TEST( DVIntVector, MulticoreOffsetTransform  )
+{
+	int length = 1024;
+
+    std::vector<int> stdInput( length ,1);
+    bolt::amp::device_vector<int> boltInput(stdInput.begin(),stdInput.end());
+
+	int offset = 100;
+
+	bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu); 
+
+    std::transform(  stdInput.begin( ) + offset,  stdInput.end( ), stdInput.begin() + offset, std::negate<int>() );
+    bolt::amp::transform( ctl, boltInput.begin( ) + offset, boltInput.end( ), boltInput.begin( ) + offset, bolt::amp::negate<int>() );
+
+    cmpArrays( stdInput, boltInput);
+	
+}
 
 TEST_P( TransformIntegerVector, InplaceTransform )
 {
@@ -1304,6 +1446,83 @@ TEST_P( TransformDoubleDeviceVector, MulticoreInplaceTransform )
 
 #endif
 
+TEST( TransformDeviceVector, UDDOutOfPlaceTransform)
+{
+  int length = 1<<8;
+  std::vector<UDD> hVectorA( length ), hVectorB( length ), hVectorO( length );
+  std::fill( hVectorA.begin(), hVectorA.end(), 1024 );
+  std::fill( hVectorB.begin(), hVectorB.end(), 1024 );
+  std::fill( hVectorB.begin(), hVectorB.end(), 0 );
+
+  bolt::amp::device_vector<UDD, concurrency::array> dVectorA(hVectorA.begin(), hVectorA.end()),
+    dVectorB(hVectorB.begin(), hVectorB.end()),
+    dVectorO(hVectorO.begin(), hVectorO.end());
+
+  std::transform( hVectorA.begin(), hVectorA.end(), hVectorB.begin(), hVectorO.begin(), std::plus< UDD >( ) );
+  bolt::amp::transform( dVectorA.begin(),
+    dVectorA.end(),
+    dVectorB.begin(),
+    dVectorO.begin(),
+    bolt::amp::plus< UDD >( ) );
+  
+  cmpArrays(hVectorO, dVectorO);
+
+}
+
+TEST( TransformDeviceVector, SerialUDDOutOfPlaceTransform)
+{
+  int length = 1<<8;
+  std::vector<UDD> hVectorA( length ), hVectorB( length ), hVectorO( length );
+  std::fill( hVectorA.begin(), hVectorA.end(), 1024 );
+  std::fill( hVectorB.begin(), hVectorB.end(), 1024 );
+  std::fill( hVectorB.begin(), hVectorB.end(), 0 );
+
+  bolt::amp::device_vector<UDD, concurrency::array> dVectorA(hVectorA.begin(), hVectorA.end()),
+    dVectorB(hVectorB.begin(), hVectorB.end()),
+    dVectorO(hVectorO.begin(), hVectorO.end());
+
+  bolt::amp::control ctl = bolt::amp::control::getDefault( );
+  ctl.setForceRunMode(bolt::amp::control::SerialCpu); 
+
+  std::transform( hVectorA.begin(), hVectorA.end(), hVectorB.begin(), hVectorO.begin(), std::plus< UDD >( ) );
+  bolt::amp::transform( ctl, dVectorA.begin(),
+    dVectorA.end(),
+    dVectorB.begin(),
+    dVectorO.begin(),
+    bolt::amp::plus< UDD >( ) );
+  
+  cmpArrays(hVectorO, dVectorO);
+
+}
+
+
+TEST( TransformDeviceVector, MulticoreUDDOutOfPlaceTransform)
+{
+  int length = 1<<8;
+  std::vector<UDD> hVectorA( length ), hVectorB( length ), hVectorO( length );
+  std::fill( hVectorA.begin(), hVectorA.end(), 1024 );
+  std::fill( hVectorB.begin(), hVectorB.end(), 1024 );
+  std::fill( hVectorB.begin(), hVectorB.end(), 0 );
+
+  bolt::amp::device_vector<UDD, concurrency::array> dVectorA(hVectorA.begin(), hVectorA.end()),
+    dVectorB(hVectorB.begin(), hVectorB.end()),
+    dVectorO(hVectorO.begin(), hVectorO.end());
+
+  bolt::amp::control ctl = bolt::amp::control::getDefault( );
+  ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu); 
+
+  std::transform( hVectorA.begin(), hVectorA.end(), hVectorB.begin(), hVectorO.begin(), std::plus< UDD >( ) );
+  bolt::amp::transform( ctl, dVectorA.begin(),
+    dVectorA.end(),
+    dVectorB.begin(),
+    dVectorO.begin(),
+    bolt::amp::plus< UDD >( ) );
+  
+  cmpArrays(hVectorO, dVectorO);
+
+}
+
+
 TEST( TransformDeviceVector, OutOfPlaceTransform)
 {
   int length = 1<<8;
@@ -1325,9 +1544,8 @@ TEST( TransformDeviceVector, OutOfPlaceTransform)
   
   cmpArrays(hVectorO, dVectorO);
 
-
-
 }
+
 TEST( TransformDeviceVector, SerialOutOfPlaceTransform)
 {
   int length = 1<<8;
@@ -1540,6 +1758,26 @@ typedef ::testing::Types<
     std::tuple< float, TypeValue< 65536 > >
 > FloatTests;
 
+
+//typedef ::testing::Types< 
+//    std::tuple< UDD, TypeValue< 1 > >,
+//    std::tuple< UDD, TypeValue< 31 > >,
+//    std::tuple< UDD, TypeValue< 32 > >,
+//    std::tuple< UDD, TypeValue< 63 > >,
+//    std::tuple< UDD, TypeValue< 64 > >,
+//    std::tuple< UDD, TypeValue< 127 > >,
+//    std::tuple< UDD, TypeValue< 128 > >,
+//    std::tuple< UDD, TypeValue< 129 > >,
+//    std::tuple< UDD, TypeValue< 1000 > >,
+//    std::tuple< UDD, TypeValue< 1053 > >,
+//    std::tuple< UDD, TypeValue< 4096 > >,
+//    std::tuple< UDD, TypeValue< 4097 > >,
+//    std::tuple< UDD, TypeValue< 65535 > >,
+//    std::tuple< UDD, TypeValue< 65536 > >
+//> UDDTests;
+
+
+
 INSTANTIATE_TYPED_TEST_CASE_P( Integer, TransformArrayTest, IntegerTests );
 INSTANTIATE_TYPED_TEST_CASE_P( Float, TransformArrayTest, FloatTests );
 INSTANTIATE_TYPED_TEST_CASE_P( Integer, TransformBinaryArrayTest, IntegerTests );
@@ -1547,6 +1785,8 @@ INSTANTIATE_TYPED_TEST_CASE_P( Float, TransformBinaryArrayTest, FloatTests );
 INSTANTIATE_TYPED_TEST_CASE_P( Integer, TransformOutPlaceArrayTest, IntegerTests );
 INSTANTIATE_TYPED_TEST_CASE_P( Float, TransformOutPlaceArrayTest, FloatTests );
 
+
+//INSTANTIATE_TYPED_TEST_CASE_P( UDDTest, TransformArrayTest, UDDTests );
 
 int main(int argc, char* argv[])
 {

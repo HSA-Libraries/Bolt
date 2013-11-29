@@ -363,6 +363,75 @@ TEST_P(countDoubleValueUsedASKeyInStdVect, doubleVectSearchWithSameValue2){
 
 //test case: 1, test: 1
 
+TEST (testCountIf, OffsetintBtwRange)
+{
+    int aSize = 1024;
+    std::vector<int> A(aSize);
+
+    for (int i=0; i < aSize; i++) {
+        A[i] = rand() % 10 + 1;
+    }
+  bolt::amp::device_vector< int > dA(A.begin(), aSize);
+  int intVal = 1;
+
+  int offset = 1+rand()%(aSize-1);
+
+    bolt::amp::iterator_traits<bolt::amp::device_vector<int>::iterator>::difference_type stdInRangeCount =
+                                                                std::count( A.begin()+offset, A.end(), intVal ) ;
+    bolt::amp::iterator_traits<bolt::amp::device_vector<int>::iterator>::difference_type boltInRangeCount =
+                                                        bolt::amp::count( dA.begin()+offset, dA.end(), intVal ) ;
+
+    EXPECT_EQ(stdInRangeCount, boltInRangeCount);
+}
+
+TEST (testCountIf, SerialOffsetintBtwRange)
+{
+    int aSize = 1024;
+    std::vector<int> A(aSize);
+
+    for (int i=0; i < aSize; i++) {
+        A[i] = rand() % 10 + 1;
+    }
+    bolt::amp::device_vector< int > dA(A.begin(), aSize);
+    int intVal = 1;
+
+    bolt::amp::control ctl = bolt::amp::control::getDefault();
+    ctl.setForceRunMode(bolt::amp::control::SerialCpu);
+
+    int offset = 1+rand()%(aSize-1);
+
+    bolt::amp::iterator_traits<bolt::amp::device_vector<int>::iterator>::difference_type stdInRangeCount =
+                                                                std::count( A.begin()+offset, A.end(), intVal ) ;
+    bolt::amp::iterator_traits<bolt::amp::device_vector<int>::iterator>::difference_type boltInRangeCount =
+                                                        bolt::amp::count( ctl, dA.begin()+offset, dA.end(), intVal ) ;
+
+    EXPECT_EQ(stdInRangeCount, boltInRangeCount);
+}
+
+TEST (testCountIf, MultiCoreOffsetintBtwRange)
+{
+    int aSize = 1024;
+    std::vector<int> A(aSize);
+
+    for (int i=0; i < aSize; i++) {
+        A[i] = rand() % 10 + 1;
+    }
+    bolt::amp::device_vector< int > dA(A.begin(), aSize);
+    int intVal = 1;
+
+    bolt::amp::control ctl = bolt::amp::control::getDefault();
+    ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu);
+
+    int offset = 1+rand()%(aSize-1);
+
+    bolt::amp::iterator_traits<bolt::amp::device_vector<int>::iterator>::difference_type stdInRangeCount =
+                                                                std::count( A.begin()+offset, A.end(), intVal ) ;
+    bolt::amp::iterator_traits<bolt::amp::device_vector<int>::iterator>::difference_type boltInRangeCount =
+                                                        bolt::amp::count( ctl, dA.begin()+offset, dA.end(), intVal ) ;
+
+    EXPECT_EQ(stdInRangeCount, boltInRangeCount);
+}
+
 TEST (testCountIf, intBtwRange)
 {
     int aSize = 1024;
