@@ -38,12 +38,13 @@ namespace bolt{
 
                 void operator()( ForwardIterator first,  ForwardIterator last, T val)
                 {
-                    
+                    typedef typename std::iterator_traits<ForwardIterator>::value_type iType;
+
                     tbb::parallel_for(  tbb::blocked_range<ForwardIterator>(first, last) ,
                         [=] (const tbb::blocked_range<ForwardIterator> &r) -> void
                         {
                               for(ForwardIterator a = r.begin(); a!=r.end(); a++)
-                                 *a = val;
+                                 *a = (iType) val;
                         });
                 }
 

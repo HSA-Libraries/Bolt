@@ -16,12 +16,13 @@
 ############################################################################                                                                                     
 
 # List the names of common files to compile across all platforms
-set( ampBolt.Test.TransformReduce.Source TransformReduceTest.cpp )
-set( ampBolt.Test.TransformReduce.Headers ${BOLT_INCLUDE_DIR}/bolt/amp/transform_reduce.h ${BOLT_INCLUDE_DIR}/bolt/amp/detail/transform_reduce.inl)
+set( ampBolt.Test.MinElement.Source MinElementTest.cpp )
+set( ampBolt.Test.MinElement.Headers ${BOLT_INCLUDE_DIR}/bolt/amp/min_element.h ${BOLT_INCLUDE_DIR}/bolt/amp/detail/min_element.inl )
 
-set( ampBolt.Test.TransformReduce.Files ${ampBolt.Test.TransformReduce.Source} ${ampBolt.Test.TransformReduce.Headers} )
+set( ampBolt.Test.MinElement.Files ${ampBolt.Test.MinElement.Source} ${ampBolt.Test.MinElement.Headers} )
 
-add_executable( ampBolt.Test.TransformReduce ${ampBolt.Test.TransformReduce.Files} )
+add_executable( ampBolt.Test.MinElement ${ampBolt.Test.MinElement.Files} )
+
 
 if( MSVC )
     set( CMAKE_CXX_FLAGS "-bigobj ${CMAKE_CXX_FLAGS}" )
@@ -30,22 +31,21 @@ endif()
 
 
 if(BUILD_TBB)
-    target_link_libraries( ampBolt.Test.TransformReduce ampBolt.Runtime ${GTEST_LIBRARIES} ${Boost_LIBRARIES}  ${TBB_LIBRARIES} )
+    target_link_libraries( ampBolt.Test.MinElement ampBolt.Runtime ${GTEST_LIBRARIES} ${Boost_LIBRARIES}  ${TBB_LIBRARIES} )
 else (BUILD_TBB)
-    target_link_libraries( ampBolt.Test.TransformReduce ampBolt.Runtime ${GTEST_LIBRARIES} ${Boost_LIBRARIES}  )
+    target_link_libraries( ampBolt.Test.MinElement ampBolt.Runtime ${GTEST_LIBRARIES} ${Boost_LIBRARIES}  )
 endif()
 
 
 
 
-set_target_properties( ampBolt.Test.TransformReduce PROPERTIES VERSION ${Bolt_VERSION} )
-set_target_properties( ampBolt.Test.TransformReduce PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
+set_target_properties( ampBolt.Test.MinElement PROPERTIES VERSION ${Bolt_VERSION} )
+set_target_properties( ampBolt.Test.MinElement PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
 
-
-set_property( TARGET ampBolt.Test.TransformReduce PROPERTY FOLDER "Test/AMP")
+set_property( TARGET ampBolt.Test.MinElement PROPERTY FOLDER "Test/AMP")
 
 # CPack configuration; include the executable into the package
-install( TARGETS ampBolt.Test.TransformReduce
+install( TARGETS ampBolt.Test.MinElement
 	RUNTIME DESTINATION ${BIN_DIR}
 	LIBRARY DESTINATION ${LIB_DIR}
 	ARCHIVE DESTINATION ${LIB_DIR}/import

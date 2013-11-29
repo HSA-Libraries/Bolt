@@ -19,7 +19,7 @@
 
 #define ENABLE_GTESTS 1
 #if !ENABLE_GTESTS
-    #include "stdafx.h"
+    #include "common/stdafx.h"
     #include <stdio.h>
 
     #include <numeric>
@@ -2011,6 +2011,151 @@ INSTANTIATE_TYPED_TEST_CASE_P( Double, TransformArrayTest, DoubleTests );
 #endif 
 //INSTANTIATE_TYPED_TEST_CASE_P( UDDTest, SortArrayTest, UDDTests );
 
+TEST( TransformReduceStdVectWithInit, OffsetTestDeviceVector)
+{
+    int length = 1024;
+    std::vector<int> stdInput( length );
+    std::vector<int> temp( length );
+    std::fill( stdInput.begin(), stdInput.end(), 1024 );
+
+    bolt::amp::device_vector<int> dVectorA( stdInput.begin(), stdInput.end() );
+
+    //  Calling the actual functions under test
+    int init = 0, offset = 100;
+    // STD
+    std::transform(  stdInput.begin( ) + offset, stdInput.end( ),
+                     temp.begin() + offset, bolt::amp::negate<int>());
+    int stlTransformReduce = std::accumulate(  temp.begin() + offset, temp.end(), init, bolt::amp::plus<int>()  );
+
+    // BOLT
+    int boltTransformReduce= bolt::amp::transform_reduce(  dVectorA.begin( ) + offset, dVectorA.end( ),
+                                                          bolt::amp::negate<int>(), init, bolt::amp::plus<int>( ) );
+
+    EXPECT_EQ( stlTransformReduce, boltTransformReduce );
+}
+
+TEST( TransformReduceStdVectWithInit, OffsetTestDeviceVectorSerialCpu)
+{
+    int length = 1024;
+    std::vector<int> stdInput( length );
+    std::vector<int> temp( length );
+    std::fill( stdInput.begin(), stdInput.end(), 1024 );
+
+    bolt::amp::device_vector<int> dVectorA( stdInput.begin(), stdInput.end() );
+
+
+    bolt::amp::control ctl;
+    ctl.setForceRunMode(bolt::amp::control::SerialCpu);
+    //  Calling the actual functions under test
+    int init = 0, offset = 100;
+    // STD
+    std::transform(  stdInput.begin( ) + offset, stdInput.end( ),
+                     temp.begin() + offset, bolt::amp::negate<int>());
+    int stlTransformReduce = std::accumulate(  temp.begin() + offset, temp.end(), init, bolt::amp::plus<int>()  );
+
+    // BOLT
+    int boltTransformReduce= bolt::amp::transform_reduce(  ctl, dVectorA.begin( ) + offset, dVectorA.end( ),
+                                                          bolt::amp::negate<int>(), init, bolt::amp::plus<int>( ) );
+
+    EXPECT_EQ( stlTransformReduce, boltTransformReduce );
+}
+
+TEST( TransformReduceStdVectWithInit, OffsetTestDeviceVectorMultiCoreCpu)
+{
+    int length = 1024;
+    std::vector<int> stdInput( length );
+    std::vector<int> temp( length );
+    std::fill( stdInput.begin(), stdInput.end(), 1024 );
+
+    bolt::amp::device_vector<int> dVectorA( stdInput.begin(), stdInput.end() );
+
+
+    bolt::amp::control ctl;
+    ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu);
+    //  Calling the actual functions under test
+    int init = 0, offset = 100;
+    // STD
+    std::transform(  stdInput.begin( ) + offset, stdInput.end( ),
+                     temp.begin() + offset, bolt::amp::negate<int>());
+    int stlTransformReduce = std::accumulate(  temp.begin() + offset, temp.end(), init, bolt::amp::plus<int>()  );
+
+    // BOLT
+    int boltTransformReduce= bolt::amp::transform_reduce(  ctl, dVectorA.begin( ) + offset, dVectorA.end( ),
+                                                          bolt::amp::negate<int>(), init, bolt::amp::plus<int>( ) );
+
+    EXPECT_EQ( stlTransformReduce, boltTransformReduce );
+}
+
+TEST( TransformReduceStdVectWithInit, OffsetTest)
+{
+    int length = 1024;
+    std::vector<int> stdInput( length );
+    std::vector<int> temp( length );
+    std::fill( stdInput.begin(), stdInput.end(), 1024 );
+
+    //  Calling the actual functions under test
+    int init = 0, offset = 100;
+    // STD
+    std::transform(  stdInput.begin( ) + offset, stdInput.end( ),
+                     temp.begin() + offset, bolt::amp::negate<int>());
+    int stlTransformReduce = std::accumulate(  temp.begin() + offset, temp.end(), init, bolt::amp::plus<int>()  );
+
+    // BOLT
+    int boltTransformReduce= bolt::amp::transform_reduce(  stdInput.begin( ) + offset, stdInput.end( ),
+                                                          bolt::amp::negate<int>(), init, bolt::amp::plus<int>( ) );
+
+    EXPECT_EQ( stlTransformReduce, boltTransformReduce );
+}
+
+TEST( TransformReduceStdVectWithInit, OffsetTestMultiCoreCpu)
+{
+    int length = 1024;
+    std::vector<int> stdInput( length );
+    std::vector<int> temp( length );
+    std::fill( stdInput.begin(), stdInput.end(), 1024 );
+
+
+
+    bolt::amp::control ctl;
+    ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu);
+    //  Calling the actual functions under test
+    int init = 0, offset = 100;
+    // STD
+    std::transform(  stdInput.begin( ) + offset, stdInput.end( ),
+                     temp.begin() + offset, bolt::amp::negate<int>());
+    int stlTransformReduce = std::accumulate(  temp.begin() + offset, temp.end(), init, bolt::amp::plus<int>()  );
+
+    // BOLT
+    int boltTransformReduce= bolt::amp::transform_reduce(  ctl, stdInput.begin( ) + offset, stdInput.end( ),
+                                                          bolt::amp::negate<int>(), init, bolt::amp::plus<int>( ) );
+
+    EXPECT_EQ( stlTransformReduce, boltTransformReduce );
+}
+
+TEST( TransformReduceStdVectWithInit, OffsetTestSerialCpu)
+{
+    int length = 1024;
+    std::vector<int> stdInput( length );
+    std::vector<int> temp( length );
+    std::fill( stdInput.begin(), stdInput.end(), 1024 );
+
+
+
+    bolt::amp::control ctl;
+    ctl.setForceRunMode(bolt::amp::control::SerialCpu);
+    //  Calling the actual functions under test
+    int init = 0, offset = 100;
+    // STD
+    std::transform(  stdInput.begin( ) + offset, stdInput.end( ),
+                     temp.begin() + offset, bolt::amp::negate<int>());
+    int stlTransformReduce = std::accumulate(  temp.begin() + offset, temp.end(), init, bolt::amp::plus<int>()  );
+
+    // BOLT
+    int boltTransformReduce= bolt::amp::transform_reduce(  ctl, stdInput.begin( ) + offset, stdInput.end( ),
+                                                          bolt::amp::negate<int>(), init, bolt::amp::plus<int>( ) );
+
+    EXPECT_EQ( stlTransformReduce, boltTransformReduce );
+}
 
 TEST(TransformReduce, Float)
 {

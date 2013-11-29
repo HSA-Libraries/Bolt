@@ -19,7 +19,8 @@
 set( ampBolt.Test.Merge.Source  MergeTest.cpp )
 set( ampBolt.Test.Merge.Headers ${BOLT_AMP_TEST_DIR}/common/stdafx.h 
                                 ${BOLT_AMP_TEST_DIR}/common/targetver.h 
-                                ${BOLT_INCLUDE_DIR}/bolt/amp/merge.h )
+                                ${BOLT_INCLUDE_DIR}/bolt/amp/merge.h 
+								${BOLT_INCLUDE_DIR}/bolt/amp/detail/merge.inl)
 
 set( ampBolt.Test.Merge.Files ${ampBolt.Test.Merge.Source} ${ampBolt.Test.Merge.Headers} )
 add_executable( ampBolt.Test.Merge ${ampBolt.Test.Merge.Files} )

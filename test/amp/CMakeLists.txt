@@ -47,8 +47,15 @@ include_directories(
     ${OPENCL_INCLUDE_DIRS}) 
 # include_directories( ${BOLT_CL_TEST_DIR} )
 
-add_subdirectory( CountTest )
+
+add_subdirectory( GenerateTest )
+add_subdirectory( FillTest )
+add_subdirectory( InnerProductTest )
+add_subdirectory( CopyTest )
+add_subdirectory( MinElementTest )
 add_subdirectory( MergeTest )
+add_subdirectory( MaxElementTest )
+add_subdirectory( CountTest )
 add_subdirectory( ReduceTest )
 add_subdirectory( ScanTest )
 add_subdirectory( SortTest )
