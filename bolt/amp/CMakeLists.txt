@@ -42,6 +42,7 @@ set( ampBolt.Runtime.Headers
         ${ampBolt.Include.Dir}/pool_alloc.h 
         ${ampBolt.Include.Dir}/reduce.h 
         ${ampBolt.Include.Dir}/scan.h 
+		${ampBolt.Include.Dir}/scan_by_key.h 
         ${ampBolt.Include.Dir}/sort.h         
         ${ampBolt.Include.Dir}/synchronized_view.h 
         ${ampBolt.Include.Dir}/transform.h 
