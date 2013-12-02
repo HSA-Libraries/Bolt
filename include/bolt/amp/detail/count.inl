@@ -39,37 +39,6 @@
 
 namespace bolt {
     namespace amp {
-
-       template<typename InputIterator, typename Predicate>
-        typename bolt::amp::iterator_traits<InputIterator>::difference_type
-            count_if(control& ctl, InputIterator first,
-            InputIterator last,
-            Predicate predicate)
-        {
-              return detail::count_detect_random_access(ctl, first, last, predicate,
-                std::iterator_traits< InputIterator >::iterator_category( ) );
-
-        }
-
-       template<typename InputIterator, typename Predicate>
-        typename bolt::amp::iterator_traits<InputIterator>::difference_type
-            count_if( InputIterator first,
-            InputIterator last,
-            Predicate predicate)
-        {
-
-         return count_if(bolt::amp::control::getDefault(), first, last, predicate);
-
-        }
-
-
-    }
-
-};
-
-
-namespace bolt {
-    namespace amp {
         namespace detail {
 
             //----
@@ -278,11 +247,15 @@ namespace bolt {
                 if (runMode == bolt::amp::control::SerialCpu)
                     {
 
-                     std::vector<iType> InputBuffer(szElements);
+                     /*std::vector<iType> InputBuffer(szElements);
                      for(unsigned int index=0; index<szElements; index++){
-                         InputBuffer[index] = first.getContainer().getBuffer()[index];
+                         InputBuffer[index] = first.getContainer().getBuffer()[index + first.m_Index];
                      }
-                     return (int) std::count_if(InputBuffer.begin(),InputBuffer.end() ,predicate);
+                     return (int) std::count_if(InputBuffer.begin(),InputBuffer.end() ,predicate);*/
+
+					 typename bolt::amp::device_vector< iType >::pointer countInputBuffer =  first.getContainer( ).data( );
+                      return  (int) std::count_if(&countInputBuffer[first.m_Index],
+                          &countInputBuffer[first.m_Index + szElements], predicate) ;
 
 
                 }
@@ -290,12 +263,16 @@ namespace bolt {
                 else if (runMode == bolt::amp::control::MultiCoreCpu)
                 {
 #ifdef ENABLE_TBB
-                    std::vector<iType> InputBuffer(szElements);
+                    /*std::vector<iType> InputBuffer(szElements);
                     for(unsigned int index=0; index<szElements; index++){
-                        InputBuffer[index] = first.getContainer().getBuffer()[index];
+                        InputBuffer[index] = first.getContainer().getBuffer()[index + first.m_Index];
                     }
 
-                    return bolt::btbb::count_if(InputBuffer.begin(),InputBuffer.end(),predicate);
+                    return bolt::btbb::count_if(InputBuffer.begin(),InputBuffer.end(),predicate);*/
+
+					typename bolt::amp::device_vector< iType >::pointer countInputBuffer =  first.getContainer( ).data( );
+                      return  bolt::btbb::count_if(&countInputBuffer[first.m_Index],
+                          &countInputBuffer[first.m_Index + szElements] ,predicate);
 #else
                     throw std::exception( "The MultiCoreCpu version of count function is not enabled to be built." );
 
@@ -310,8 +287,31 @@ namespace bolt {
             }
 
 
+        } //end of detail
+
+		template<typename InputIterator, typename Predicate>
+        typename bolt::amp::iterator_traits<InputIterator>::difference_type
+            count_if(control& ctl, InputIterator first,
+            InputIterator last,
+            Predicate predicate)
+        {
+              return detail::count_detect_random_access(ctl, first, last, predicate,
+                std::iterator_traits< InputIterator >::iterator_category( ) );
+
         }
-    }
-}
+
+       template<typename InputIterator, typename Predicate>
+        typename bolt::amp::iterator_traits<InputIterator>::difference_type
+            count_if( InputIterator first,
+            InputIterator last,
+            Predicate predicate)
+        {
+
+         return count_if(bolt::amp::control::getDefault(), first, last, predicate);
+
+        }
+
+    } //end of amp
+}//end of bolt
 
 #endif //COUNT_INL

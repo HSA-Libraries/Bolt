@@ -17,7 +17,7 @@
 
 # List the names of common files to compile across all platforms
 set( ampBolt.Test.Count.Source CountTest.cpp )
-set( ampBolt.Test.Count.Headers ${BOLT_INCLUDE_DIR}/bolt/amp/count.h )
+set( ampBolt.Test.Count.Headers ${BOLT_INCLUDE_DIR}/bolt/amp/count.h  ${BOLT_INCLUDE_DIR}/bolt/amp/detail/count.inl)
 
 set( ampBolt.Test.Count.Files ${ampBolt.Test.Count.Source} ${ampBolt.Test.Count.Headers} )
 
