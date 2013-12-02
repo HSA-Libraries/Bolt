@@ -14,252 +14,1385 @@
 *   limitations under the License.
 
 ***************************************************************************/
-
 #if !defined( BOLT_AMP_SCAN_BY_KEY_INL )
 #define BOLT_AMP_SCAN_BY_KEY_INL
 
-#pragma once
+#define KERNEL02WAVES 4
+#define KERNEL1WAVES 4
+#define WAVESIZE 64
 
-#include <vector>
-#include <array>
-#include <stdexcept>
-#include <numeric>
+#ifdef ENABLE_TBB
+//TBB Includes
+#include "bolt/btbb/scan_by_key.h"
 
-#include <amp.h>
+#endif
+#ifdef BOLT_ENABLE_PROFILING
+#include "bolt/AsyncProfiler.h"
+//AsyncProfiler aProfiler("transform_scan");
+#endif
 
-#include <bolt/AMP/functional.h>
-#include <bolt/countof.h>
-// #include <bolt/AMP/sequentialTrait.h>
 
-namespace bolt {
+#if 0
+#define NUM_PEEK 128
+#define PEEK_AT( ... ) \
+    { \
+        unsigned int numPeek = NUM_PEEK; \
+        numPeek = (__VA_ARGS__.get_extent().size() < numPeek) ? __VA_ARGS__.get_extent().size() : numPeek; \
+        std::vector< oType > hostMem( numPeek ); \
+        concurrency::array_view< oType > peekOutput( static_cast< int >( numPeek ), (oType *)&hostMem.begin()[ 0 ] ); \
+        __VA_ARGS__.section( Concurrency::extent< 1 >( numPeek ) ).copy_to( peekOutput ); \
+        for ( unsigned int i = 0; i < numPeek; i++) \
+        { \
+            std::cout << #__VA_ARGS__ << "[ " << i << " ] = " << peekOutput[ i ] << std::endl; \
+        } \
+    }
+#else
+#define PEEK_AT( ... )
+#endif
 
-	const int scanMultiCpuThreshold	= 4; // FIXME, artificially low to force use of GPU
-	const int scanGpuThreshold		= 8; // FIXME, artificially low to force use of GPU
-	const int maxThreadsInTile		= 1024;
-	const int maxTilesPerDim		= 65535;
-	const int maxTilesPerPFE		= maxThreadsInTile*maxTilesPerDim;
 
-	//	Work routine for inclusive_scan that contains a compile time constant size
-	template< typename InputIterator, typename OutputIterator, typename BinaryFunction >
-	OutputIterator
-		inclusive_scan( const concurrency::accelerator_view& av, InputIterator first, InputIterator last,
-		OutputIterator result, BinaryFunction binary_op )
-	{
-//		typedef seqTrait< InputIterator > Trait;
-		//typedef seqTrait< std::vector< int > > Trait;
-		//if( !Trait::seqPointer )
-		//{
-		//	throw std::domain_error( "Scan requires iterators that guarantee values in sequential memory layout" );
-		//}
 
-		unsigned int numElements = static_cast< unsigned int >( std::distance( first, last ) );
+namespace bolt
+{
+namespace amp
+{
 
-		if( numElements < scanMultiCpuThreshold )
+namespace detail
+{
+/*!
+*   \internal
+*   \addtogroup detail
+*   \ingroup scan
+*   \{
+*/
+
+template<
+    typename kType,
+    typename vType,
+    typename oType,
+    typename BinaryPredicate,
+    typename BinaryFunction>
+oType*
+Serial_inclusive_scan_by_key(
+    kType *firstKey,
+    vType *values,
+    oType *result,
+    unsigned int  num,
+    const BinaryPredicate binary_pred,
+    const BinaryFunction binary_op)
+{
+    // do zeroeth element
+    *result = *values; // assign value
+    // scan oneth element and beyond
+    for ( unsigned int i=1; i< num;  i++)
+    {
+        // load keys
+        kType currentKey  = *(firstKey+i);
+        kType previousKey = *(firstKey-1 + i);
+        // load value
+        oType currentValue = *(values+i); // convertible
+        oType previousValue = *(result-1+i);
+
+        // within segment
+        if (binary_pred(currentKey, previousKey))
+        {
+            oType r = binary_op( previousValue, currentValue);
+            *(result+i) = r;
+        }
+        else // new segment
+        {
+            *(result + i) = currentValue;
+        }
+    }
+
+    return result;
+}
+
+template<
+    typename kType,
+    typename vType,
+    typename oType,
+    typename BinaryPredicate,
+    typename BinaryFunction,
+    typename T>
+oType*
+Serial_exclusive_scan_by_key(
+    kType *firstKey,
+    vType *values,
+    oType *result,
+    unsigned int  num,
+    const BinaryPredicate binary_pred,
+    const BinaryFunction binary_op,
+    const T &init)
+{
+
+    // do zeroeth element
+    //*result = *values; // assign value
+    oType temp = *values;
+    *result = (vType)init;
+    // scan oneth element and beyond
+    for ( unsigned int i= 1; i<num; i++)
+    {
+        // load keys
+        kType currentKey  = *(firstKey + i);
+        kType previousKey = *(firstKey-1 + i);
+
+        // load value
+        oType currentValue = temp; // convertible
+        oType previousValue = *(result-1 + i);
+
+        // within segment
+        if (binary_pred(currentKey,previousKey))
+        {
+            temp = *(values + i);
+            oType r = binary_op( previousValue, currentValue);
+            *(result + i) = r;
+        }
+        else // new segment
+        {
+             temp = *(values + i);
+            *(result + i) = (vType)init;
+        }
+    }
+
+    return result;
+}
+
+
+//  All calls to scan_by_key end up here, unless an exception was thrown
+//  This is the function that sets up the kernels to compile (once only) and execute
+template<
+    typename DVInputIterator1,
+    typename DVInputIterator2,
+    typename DVOutputIterator,
+    typename T,
+    typename BinaryPredicate,
+    typename BinaryFunction >
+void
+scan_by_key_enqueue(
+    control& ctl,
+    const DVInputIterator1& firstKey,
+    const DVInputIterator1& lastKey,
+    const DVInputIterator2& firstValue,
+    const DVOutputIterator& result,
+    const T& init,
+    const BinaryPredicate& binary_pred,
+    const BinaryFunction& binary_funct,
+    const std::string& user_code,
+    const bool& inclusive )
+{
+    concurrency::accelerator_view av = ctl.getAccelerator().default_view;
+
+    /**********************************************************************************
+     * Type Names - used in KernelTemplateSpecializer
+     *********************************************************************************/
+    typedef std::iterator_traits< DVInputIterator1 >::value_type kType;
+    typedef std::iterator_traits< DVInputIterator2 >::value_type vType;
+	typedef std::iterator_traits< DVOutputIterator >::value_type oType;
+
+    int exclusive = inclusive ? 0 : 1;
+
+    unsigned int numElements = static_cast< unsigned int >( std::distance( firstKey, lastKey ) );
+    const unsigned int kernel0_WgSize = WAVESIZE*KERNEL02WAVES;
+    const unsigned int kernel1_WgSize = WAVESIZE*KERNEL1WAVES ;
+    const unsigned int kernel2_WgSize = WAVESIZE*KERNEL02WAVES;
+
+    //  Ceiling function to bump the size of input to the next whole wavefront size
+    unsigned int sizeInputBuff = numElements;
+    size_t modWgSize = (sizeInputBuff & ((kernel0_WgSize*2)-1));
+    if( modWgSize )
+    {
+        sizeInputBuff &= ~modWgSize;
+        sizeInputBuff += (kernel0_WgSize*2);
+    }
+    unsigned int numWorkGroupsK0 = static_cast< unsigned int >( sizeInputBuff / (kernel0_WgSize*2) );
+    //  Ceiling function to bump the size of the sum array to the next whole wavefront size
+    unsigned int sizeScanBuff = numWorkGroupsK0;
+    modWgSize = (sizeScanBuff & ((kernel0_WgSize*2)-1));
+    if( modWgSize )
+    {
+        sizeScanBuff &= ~modWgSize;
+        sizeScanBuff += (kernel0_WgSize*2);
+    }
+
+	concurrency::array< kType >  keySumArray( sizeScanBuff, av );
+    concurrency::array< vType >  preSumArray( sizeScanBuff, av );
+    concurrency::array< vType >  preSumArray1( sizeScanBuff, av );
+    concurrency::array< vType >  postSumArray( sizeScanBuff, av );
+
+
+    /**********************************************************************************
+     *  Kernel 0
+     *********************************************************************************/
+  //	Wrap our output data in an array_view, and discard input data so it is not transferred to device
+    //  Use of the auto keyword here is OK, because AMP is restricted by definition to vs11 or above
+    //  The auto keyword is useful here in a polymorphic sense, because it does not care if the container
+    //  is wrapping an array or an array_view
+	auto&  keyBuffer   =  firstKey.getContainer().getBuffer(firstKey); 
+    auto&  inputBuffer =  firstValue.getContainer().getBuffer(firstValue); 
+    auto&  outputBuffer=  result.getContainer().getBuffer(result); 
+  //	Loop to calculate the inclusive scan of each individual tile, and output the block sums of every tile
+  //	This loop is inherently parallel; every tile is independant with potentially many wavefronts
+
+	concurrency::extent< 1 > globalSizeK0( sizeInputBuff/2 );
+    concurrency::tiled_extent< kernel0_WgSize > tileK0 = globalSizeK0.tile< kernel0_WgSize >();
+	concurrency::parallel_for_each( av, tileK0,
+        [
+            keyBuffer,
+            inputBuffer,
+            init,
+            numElements,
+			&keySumArray,
+            &preSumArray,
+            &preSumArray1,
+			binary_pred,
+            exclusive,
+			binary_funct,
+            kernel0_WgSize
+        ] ( concurrency::tiled_index< kernel0_WgSize > t_idx ) restrict(amp)
+  {
+
+    unsigned int gloId = t_idx.global[ 0 ];
+    unsigned int groId = t_idx.tile[ 0 ];
+    unsigned int locId = t_idx.local[ 0 ];
+    unsigned int wgSize = kernel0_WgSize;
+
+    tile_static vType ldsVals[ WAVESIZE*KERNEL02WAVES*2 ];
+	tile_static kType ldsKeys[ WAVESIZE*KERNEL02WAVES*2 ];
+	wgSize *=2;
+
+	unsigned int  offset = 1;
+    // load input into shared memory
+    if (exclusive)
+    {
+       if (gloId > 0 && groId*wgSize+locId < numElements)
+	   {
+          kType key1 = keyBuffer[ groId*wgSize+locId];
+          kType key2 = keyBuffer[ groId*wgSize+locId-1];
+          if( binary_pred( key1, key2 )  )
+		  {
+             ldsVals[locId] = inputBuffer[groId*wgSize+locId];
+		  }
+          else 
+		  {
+		     vType start_val = inputBuffer[groId*wgSize+locId]; 
+             ldsVals[locId] = binary_funct(init, start_val);
+          }
+          ldsKeys[locId] = keyBuffer[groId*wgSize+locId];
+       }
+       else{ 
+	      vType start_val = inputBuffer[0];
+          ldsVals[locId] = binary_funct(init, start_val);
+          ldsKeys[locId] = keyBuffer[0];
+       }
+       if(groId*wgSize +locId+ (wgSize/2) < numElements)
+	   {
+          kType key1 = keyBuffer[ groId*wgSize +locId+ (wgSize/2)];
+          kType key2 = keyBuffer[groId*wgSize +locId+ (wgSize/2) -1];
+          if( binary_pred( key1, key2 )  )
+		  {
+             ldsVals[locId+(wgSize/2)] = inputBuffer[groId*wgSize +locId+ (wgSize/2)];
+		  }
+          else 
+		  {
+		     vType start_val = inputBuffer[groId*wgSize +locId+ (wgSize/2)]; 
+             ldsVals[locId+(wgSize/2)] = binary_funct(init, start_val);
+          } 
+          ldsKeys[locId+(wgSize/2)] = keyBuffer[groId*wgSize +locId+ (wgSize/2)];
+       }
+    }
+    else
+    {
+       if(groId*wgSize+locId < numElements)
+	   {
+           ldsVals[locId] = inputBuffer[groId*wgSize+locId];
+           ldsKeys[locId] = keyBuffer[groId*wgSize+locId];
+       }
+       if(groId*wgSize +locId+ (wgSize/2) < numElements)
+	   {
+           ldsVals[locId+(wgSize/2)] = inputBuffer[ groId*wgSize +locId+ (wgSize/2)];
+           ldsKeys[locId+(wgSize/2)] = keyBuffer[ groId*wgSize +locId+ (wgSize/2)];
+       }
+    }
+    for (unsigned int start = wgSize>>1; start > 0; start >>= 1) 
+    {
+       t_idx.barrier.wait();
+       if (locId < start)
+       {
+          unsigned int temp1 = offset*(2*locId+1)-1;
+          unsigned int temp2 = offset*(2*locId+2)-1;
+       
+          kType key = ldsKeys[temp2]; 
+          kType key1 = ldsKeys[temp1];
+          if(binary_pred( key, key1 )) 
+		  {
+             oType y = ldsVals[temp2];
+             oType y1 =ldsVals[temp1];
+             ldsVals[temp2] = binary_funct(y, y1);
+          }
+       }
+       offset *= 2;
+    }
+    t_idx.barrier.wait();
+    if (locId == 0)
+    {
+        keySumArray[ groId ] = ldsKeys[ wgSize-1 ];
+        preSumArray[ groId ] = ldsVals[wgSize -1];
+        preSumArray1[ groId ] = ldsVals[wgSize/2 -1];
+    }
+	
+
+  } );
+
+	PEEK_AT( output )
+
+   /**********************************************************************************
+     *  Kernel 1
+     *********************************************************************************/
+    unsigned int workPerThread = static_cast< unsigned int >( sizeScanBuff / kernel1_WgSize );
+    workPerThread = workPerThread ? workPerThread : 1;
+
+	concurrency::extent< 1 > globalSizeK1( sizeScanBuff );
+    concurrency::tiled_extent< kernel1_WgSize > tileK1 = globalSizeK1.tile< kernel1_WgSize >();
+    //std::cout << "Kernel 1 Launching w/" << sizeScanBuff << " threads for " << numWorkGroupsK0 << " elements. " << std::endl;
+  concurrency::parallel_for_each( av, tileK1,
+        [
+			&keySumArray, 
+            &postSumArray,
+            &preSumArray,
+            numWorkGroupsK0,
+            workPerThread,
+			binary_pred,
+			numElements,
+            binary_funct,
+		    kernel1_WgSize
+        ] ( concurrency::tiled_index< kernel1_WgSize > t_idx ) restrict(amp)
+  {
+
+	unsigned int gloId = t_idx.global[ 0 ];
+    unsigned int groId = t_idx.tile[ 0 ];
+    unsigned int locId = t_idx.local[ 0 ];
+    unsigned int wgSize = kernel1_WgSize;
+    unsigned int mapId  = gloId * workPerThread;
+
+    tile_static kType ldsKeys[ WAVESIZE*KERNEL1WAVES ];
+	tile_static vType ldsVals[ WAVESIZE*KERNEL1WAVES ];
+
+	// do offset of zero manually
+    unsigned int offset;
+    kType key;
+    vType workSum;
+    if (mapId < numElements)
+    {
+        kType prevKey;
+
+        // accumulate zeroth value manually
+        offset = 0;
+        key = keySumArray[ mapId+offset ];
+        workSum = preSumArray[ mapId+offset ];
+        postSumArray[ mapId+offset ] = workSum;
+
+        //  Serial accumulation
+        for( offset = offset+1; offset < workPerThread; offset += 1 )
+        {
+            prevKey = key;
+            key = keySumArray[ mapId+offset ];
+            if (mapId+offset<numElements )
+            {
+                vType y = preSumArray[ mapId+offset ];
+                if ( binary_pred(key, prevKey ) )
+                {
+                    workSum = binary_funct( workSum, y );
+                }
+                else
+                {
+                    workSum = y;
+                }
+                postSumArray[ mapId+offset ] = workSum;
+            }
+        }
+    }
+    t_idx.barrier.wait();
+    vType scanSum = workSum;
+    offset = 1;
+    // load LDS with register sums
+    ldsVals[ locId ] = workSum;
+    ldsKeys[ locId ] = key;
+    // scan in lds
+	
+    for( offset = offset*1; offset < wgSize; offset *= 2 )
+    {
+        t_idx.barrier.wait();
+        if (mapId < numElements)
+        {
+            if (locId >= offset  )
+            {
+                vType y = ldsVals[ locId - offset ];
+                kType key1 = ldsKeys[ locId ];
+                kType key2 = ldsKeys[ locId-offset ];
+                if ( binary_pred( key1, key2 ) )
+                {
+                    scanSum = binary_funct( scanSum, y );
+                }
+                else
+                    scanSum = ldsVals[ locId ];
+            }
+      
+        }
+        t_idx.barrier.wait();
+        ldsVals[ locId ] = scanSum;
+    } // for offset
+    t_idx.barrier.wait();
+    
+    // write final scan from pre-scan and lds scan
+    for( offset = 0; offset < workPerThread; offset += 1 )
+    {
+       t_idx.barrier.wait();
+
+        if (mapId < numElements && locId > 0)
+        {
+            vType y = postSumArray[ mapId+offset ];
+            kType key1 = keySumArray[ mapId+offset ]; // change me
+            kType key2 = ldsKeys[ locId-1 ];
+            if ( binary_pred( key1, key2 ) )
+            {
+                vType y2 = ldsVals[locId-1];
+                y = binary_funct( y, y2 );
+            }
+            postSumArray[ mapId+offset ] = y;
+        } // thread in bounds
+    } // for 
+	
+	
+
+  });
+
+   PEEK_AT( postSumArray )
+
+ /**********************************************************************************
+     *  Kernel 2
+ *********************************************************************************/
+
+  concurrency::extent< 1 > globalSizeK2( sizeInputBuff );
+  concurrency::tiled_extent< kernel2_WgSize > tileK2 = globalSizeK2.tile< kernel2_WgSize >();
+    //std::cout << "Kernel 2 Launching w/ " << sizeInputBuff << " threads for " << numElements << " elements. " << std::endl;
+    concurrency::parallel_for_each( av, tileK2,
+        [
+			keyBuffer,
+            inputBuffer,
+            outputBuffer,
+            &postSumArray,
+            &preSumArray1,
+            binary_pred,
+			exclusive,
+			numElements,
+            init,
+			binary_funct,
+            kernel2_WgSize
+        ] ( concurrency::tiled_index< kernel2_WgSize > t_idx ) restrict(amp)
+  {
+
+	unsigned int gloId = t_idx.global[ 0 ];
+    unsigned int groId = t_idx.tile[ 0 ];
+    unsigned int locId = t_idx.local[ 0 ];
+    unsigned int wgSize = kernel2_WgSize;
+
+    tile_static kType ldsKeys[ WAVESIZE*KERNEL1WAVES ];
+	tile_static vType ldsVals[ WAVESIZE*KERNEL1WAVES ];
+	
+		 // if exclusive, load gloId=0 w/ init, and all others shifted-1
+    kType key;
+    oType val;
+    if (gloId < numElements){
+       if (exclusive)
+       {
+          if (gloId > 0)
+          { // thread>0
+              key = keyBuffer[ gloId];
+              kType key1 = keyBuffer[ gloId];
+              kType key2 = keyBuffer[ gloId-1];
+              if( binary_pred( key1, key2 )  )
+                  val = inputBuffer[ gloId-1 ];
+              else 
+                  val = init;
+              ldsKeys[ locId ] = key;
+              ldsVals[ locId ] = val;
+          }
+          else
+          { // thread=0
+              val = init;
+              ldsVals[ locId ] = val;
+              ldsKeys[ locId ] = keyBuffer[gloId];
+            // key stays null, this thread should never try to compare it's key
+            // nor should any thread compare it's key to ldsKey[ 0 ]
+            // I could put another key into lds just for whatevs
+            // for now ignore this
+          }
+       }
+       else
+       {
+          key = keyBuffer[ gloId ];
+          val = inputBuffer[ gloId ];
+          ldsKeys[ locId ] = key;
+          ldsVals[ locId ] = val;
+       }
+     }
+	
+	 // Each work item writes out its calculated scan result, relative to the beginning
+    // of each work group
+    vType scanResult = ldsVals[ locId ];
+    vType postBlockSum, newResult;
+    vType y, y1, sum;
+    kType key1, key2, key3, key4;
+	
+    if(locId == 0 && gloId < numElements)
+    {
+        if(groId > 0)
 		{
-			//	Serial CPU implementation
-			return std::partial_sum( first, last, result, binary_op);
-		}
-		else if( numElements < scanGpuThreshold )
+           key1 = keyBuffer[gloId];
+           key2 = keyBuffer[groId*wgSize -1 ];
+
+           if(groId % 2 == 0)
+		   {
+              postBlockSum = postSumArray[ groId/2 -1 ];
+		   }
+           else if(groId == 1)
+		   {
+              postBlockSum = preSumArray1[0];
+		   }
+           else
+		   {
+              key3 = keyBuffer[groId*wgSize -1];
+              key4 = keyBuffer[(groId-1)*wgSize -1];
+              if(binary_pred(key3 ,key4))
+			  {
+                 y = postSumArray[ groId/2 -1 ];
+                 y1 = preSumArray1[groId/2];
+                 postBlockSum = binary_funct(y, y1);
+              }
+              else
+			  {
+                 postBlockSum = preSumArray1[groId/2];
+			  }
+           }
+           if (!exclusive)
+		   {
+	          if(binary_pred( key1, key2))
+			  {
+                 newResult = binary_funct( scanResult, postBlockSum );
+			  }
+              else
+			  {
+		         newResult = scanResult;
+			  }
+		   }
+	       else
+		   {
+	          if(binary_pred( key1, key2)) 
+		         newResult = postBlockSum;
+              else
+		         newResult = init;  
+		   }
+        }
+        else
 		{
-			//	Implement this in TBB as tbb::parallel_scan( range, body )
-			//	Does not appear to have an implementation in PPL
-			//	TODO: Bring in the dependency to TBB and replace this STD call
-			return std::partial_sum( first, last, result, binary_op);
-		}
-		else
-		{
-			// FIXME - determine from HSA Runtime
-			// - based on est of how many threads needed to hide memory latency.
-			static const unsigned int waveSize  = 64; // FIXME, read from device attributes.
-			static_assert( (waveSize & (waveSize-1)) == 0, "Scan depends on wavefronts being a power of 2" );
+             newResult = scanResult;
+        }
+	    ldsVals[ locId ] = newResult;
+    }
+	
+    // Computes a scan within a workgroup
+    // updates vals in lds but not keys
+    sum = ldsVals[ locId ];
+    for( unsigned int offset = 1; offset < wgSize; offset *= 2 )
+    {
+        t_idx.barrier.wait();
+        if (locId >= offset )
+        {
+            kType key2 = ldsKeys[ locId - offset];
+            if( binary_pred( key, key2 )  )
+            {
+                oType y = ldsVals[ locId - offset];
+                sum = binary_funct( sum, y );
+            }
+        }
+        t_idx.barrier.wait();
+        ldsVals[ locId ] = sum;
+    }
+     t_idx.barrier.wait(); // needed for large data types
+    //  Abort threads that are passed the end of the input vector
+    if (gloId >= numElements) return; 
+    outputBuffer[ gloId ] = sum;
+	
+	
+  } );
 
-			//	AMP code can not read size_t as input, need to cast to int
-			//	Note: It would be nice to have 'constexpr' here, then we could use tileSize as the extent dimension
-			unsigned int tileSize = std::min(  numElements, waveSize );
+  PEEK_AT( output )
 
-			//int computeUnits		= 10; // FIXME - determine from HSA Runtime
-			//int wgPerComputeUnit	=  6;
-			unsigned int sizeDeviceBuff = numElements;
-			size_t modWaveFront = (numElements & (waveSize-1));
-			if( modWaveFront )
-			{
-				sizeDeviceBuff &= ~modWaveFront;
-				sizeDeviceBuff += waveSize;
-			}
-			unsigned int numWorkGroups = sizeDeviceBuff / waveSize;
-			unsigned int sizeScanBuff = numWorkGroups;
-			modWaveFront = (sizeScanBuff & (waveSize-1));
-			if( modWaveFront )
-			{
-				sizeScanBuff &= ~modWaveFront;
-				sizeScanBuff += waveSize;
-			}
-
-			//	Wrap our input data in an array_view, and mark it const so data is not read back from device
-			typedef std::iterator_traits< InputIterator >::value_type iType;
-			typedef std::iterator_traits< OutputIterator >::value_type oType;
-			concurrency::array_view< const iType > hostInput( static_cast< int >( numElements ), &first[ 0 ] );
-
-			//	Wrap our output data in an array_view, and discard input data so it is not transferred to device
-			concurrency::array< iType > deviceInput( sizeDeviceBuff, av );
-			hostInput.copy_to( deviceInput.section( concurrency::extent< 1 >( numElements ) ) );
-
-			concurrency::array< oType > deviceOutput( sizeDeviceBuff, av );
-			concurrency::array< oType > scanBuffer( sizeScanBuff, av );
-
-			//	Loop to calculate the inclusive scan of each individual tile, and output the block sums of every tile
-			//	This loop is inherently parallel; every tile is independant with potentially many wavefronts
-			concurrency::parallel_for_each( av, deviceOutput.extent.tile< waveSize >(), [&deviceOutput, &deviceInput, &scanBuffer, tileSize, binary_op]( concurrency::tiled_index< waveSize > idx ) restrict(amp)
-			{
-				tile_static iType LDS[ waveSize + ( waveSize / 2 ) ];
-
-				int localID		= idx.local[ 0 ];
-				int globalID	= idx.global[ 0 ];
-
-				//	Initialize the padding to 0, for when the scan algorithm looks left.
-				//	Then bump the LDS pointer past the extra padding.
-				LDS[ localID ] = 0;
-				iType* pLDS = LDS + ( waveSize / 2 );
-
-				iType val = deviceInput[ globalID ];
-				pLDS[ localID ] = val;
-
-				//	This loop essentially computes a scan within a tile, read from global memory.  No communication with other tiles yet.
-				iType sum = val;
-				for( unsigned int offset = 1; offset < tileSize; offset *= 2 )
-				{
-					iType y = pLDS[ localID - offset ];
-					sum = binary_op( sum, y );
-					pLDS[ localID ] = sum;
-				}
-
-				//	Write out the values of the per-tile scan
-				deviceOutput[ globalID ] = sum;
-
-				//	Take the very last thread in a tile, and save its value into a buffer for further processing
-				if( localID == (waveSize-1) )
-				{
-					scanBuffer[ idx.tile[ 0 ] ] = pLDS[ localID ];
-				}
-			} );
-
-			std::vector< oType > scanData( sizeScanBuff );
-			scanData = scanBuffer;
-			concurrency::array< oType > exclusiveBuffer( sizeScanBuff, av );
-
-			//	Loop to calculate the exclusive scan of the block sums buffer
-			//	This loop is inherently serial; we need to calculate the exclusive scan of a single 'array'
-			//	This loop serves as a 'reduction' in spirit, and is calculated in a single wavefront
-			//	NOTE: TODO:  On an APU, it might be more efficient to calculate this on CPU
-			tileSize = static_cast< unsigned int >( std::min( numWorkGroups, waveSize ) );
-			unsigned int workPerThread = sizeScanBuff / waveSize;
-			concurrency::parallel_for_each( av, concurrency::extent<1>( waveSize ).tile< waveSize >(), [&scanBuffer, &exclusiveBuffer, tileSize, workPerThread, binary_op]( concurrency::tiled_index< waveSize > idx ) restrict(amp)
-			{
-				tile_static oType LDS[ waveSize + ( waveSize / 2 ) ];
-
-				int localID		= idx.local[ 0 ];
-				int globalID	= idx.global[ 0 ];
-				int mappedID	= globalID * workPerThread;
-
-				//	Initialize the padding to 0, for when the scan algorithm looks left.
-				//	Then bump the LDS pointer past the extra padding.
-				LDS[ localID ] = 0;
-				oType* pLDS = LDS + ( waveSize / 2 );
-
-				//	Begin the loop reduction
-				oType workSum = 0;
-				for( unsigned int offset = 0; offset < workPerThread; offset += 1 )
-				{
-					oType y = scanBuffer[ mappedID + offset ];
-					workSum = binary_op( workSum, y );
-					exclusiveBuffer[ mappedID + offset ] = workSum;
-				}
-				pLDS[ localID ] = workSum;
-
-				//	This loop essentially computes an exclusive scan within a tile, writing 0 out for first element.
-				oType scanSum = workSum;
-				for( unsigned int offset = 1; offset < tileSize; offset *= 2 )
-				{
-					oType y = pLDS[ localID - offset ];
-					scanSum = binary_op( scanSum, y );
-					pLDS[ localID ] = scanSum;
-				}
-
-				idx.barrier.wait( );
-
-				//	Write out the values of the per-tile scan
-				scanSum -= workSum;
-//				scanBuffer[ mappedID ] = scanSum;
-				for( unsigned int offset = 0; offset < workPerThread; offset += 1 )
-				{
-					oType y = exclusiveBuffer[ mappedID + offset ];
-					y = binary_op( y, scanSum );
-					y -= scanBuffer[ mappedID + offset ];
-					exclusiveBuffer[ mappedID + offset ] = y;
-				}
-			} );
-			scanData = exclusiveBuffer;
-
-			//	Loop through the entire output array and add the exclusive scan back into the output array
-			concurrency::parallel_for_each( av, deviceOutput.extent.tile< waveSize >(), [&deviceOutput, &exclusiveBuffer, binary_op]( concurrency::tiled_index< waveSize > idx ) restrict(amp)
-			{
-				int globalID	= idx.global[ 0 ];
-				int tileID		= idx.tile[ 0 ];
-
-				//	Even though each wavefront threads access the same bank, it's the same location so there should not be bank conflicts
-				oType val = exclusiveBuffer[ tileID ];
-
-				//	Write out the values of the per-tile scan
-				oType y = deviceOutput[ globalID ];
-				deviceOutput[ globalID ] = binary_op( y, val );
-			} );
-
-			concurrency::array_view< oType > hostOutput( static_cast< int >( numElements ), &result[ 0 ] );
-			hostOutput.discard_data( );
-
-			deviceOutput.section( Concurrency::extent< 1 >( numElements ) ).copy_to( hostOutput );
-
-		};
-
-		return result + numElements;
-	};
-
-	/*
-	* This version of inclusive_scan defaults to disallow the use of iterators, unless a specialization exists below
-	*/
-	template< typename InputIterator, typename OutputIterator, typename BinaryFunction >
-	OutputIterator inclusive_scan( InputIterator begin, InputIterator end, OutputIterator result,
-		BinaryFunction binary_op, std::input_iterator_tag )
-	{
-		return inclusive_scan( concurrency::accelerator().default_view, begin, end, result, binary_op);
-	};
-
-	/*
-	* This version of inclusive_scan uses default accelerator
-	*/
-	template< typename InputIterator, typename OutputIterator, typename BinaryFunction >
-	OutputIterator inclusive_scan( InputIterator first, InputIterator last, OutputIterator result, BinaryFunction binary_op )
-	{
-
-		return inclusive_scan( first, last, result, binary_op, std::iterator_traits< InputIterator >::iterator_category( ) );
-	};
-
-	/*
-	* This version of inclusive_scan uses a default plus<> as default argument.
-	*/
-	template< typename InputIterator, typename OutputIterator >
-	OutputIterator inclusive_scan( InputIterator first, InputIterator last, OutputIterator result )
-	{
-		typedef std::iterator_traits<InputIterator>::value_type T;
-
-		return inclusive_scan( first, last, result, bolt::plus< T >( ), std::iterator_traits< InputIterator >::iterator_category( ) );
-	};
+}   //end of scan_by_key_enqueue( )
 
 
-	// still need more versions that take accelerator as first argument.
+/*!
+* \brief This overload is called strictly for non-device_vector iterators
+* \details This template function overload is used to seperate device_vector iterators from all other iterators
+*/
+template<
+    typename InputIterator1,
+    typename InputIterator2,
+    typename OutputIterator,
+    typename T,
+    typename BinaryPredicate,
+    typename BinaryFunction >
+typename std::enable_if<
+             !(std::is_base_of<typename device_vector<typename
+               std::iterator_traits<InputIterator1>::value_type>::iterator,InputIterator1>::value &&
+               std::is_base_of<typename device_vector<typename
+               std::iterator_traits<InputIterator2>::value_type>::iterator,InputIterator2>::value &&
+               std::is_base_of<typename device_vector<typename
+               std::iterator_traits<OutputIterator>::value_type>::iterator,OutputIterator>::value),
+         OutputIterator >::type
+scan_by_key_pick_iterator(
+    control& ctl,
+    const InputIterator1& firstKey,
+    const InputIterator1& lastKey,
+    const InputIterator2& firstValue,
+    const OutputIterator& result,
+    const T& init,
+    const BinaryPredicate& binary_pred,
+    const BinaryFunction& binary_funct,
+    const std::string& user_code,
+    const bool& inclusive )
+{
+    typedef typename std::iterator_traits< InputIterator1 >::value_type kType;
+    typedef typename std::iterator_traits< InputIterator2 >::value_type vType;
+    typedef typename std::iterator_traits< OutputIterator >::value_type oType;
+    static_assert( std::is_convertible< vType, oType >::value, "InputValue and Output iterators are incompatible" );
+
+    unsigned int numElements = static_cast< unsigned int >( std::distance( firstKey, lastKey ) );
+    if( numElements < 1 )
+        return result;
 
 
-}; // end namespace bolt
+    bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode( );
+/*
+    if( runMode == bolt::amp::control::Automatic )
+    {
+        runMode = ctl.getDefaultPathToRun( );
+    }
+*/
+    #if defined(BOLT_DEBUG_LOG)
+    BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+    #endif
+                
+    if( runMode == bolt::amp::control::SerialCpu )
+    {
+          #if defined(BOLT_DEBUG_LOG)
+          dblog->CodePathTaken(BOLTLOG::BOLT_SCANBYKEY,BOLTLOG::BOLT_SERIAL_CPU,"::Scan_By_Key::SERIAL_CPU");
+          #endif
+          if(inclusive){
+          Serial_inclusive_scan_by_key<kType, vType, oType, BinaryPredicate, BinaryFunction>(&(*firstKey),
+                                      &(*firstValue), &(*result), numElements, binary_pred, binary_funct);
+       }
+       else{
+          Serial_exclusive_scan_by_key<kType, vType, oType, BinaryPredicate, BinaryFunction, T>(&(*firstKey),
+                                   &(*firstValue), &(*result), numElements, binary_pred, binary_funct, init);
+       }
+       return result + numElements;
+    }
+    else if(runMode == bolt::amp::control::MultiCoreCpu)
+    {
+#ifdef ENABLE_TBB
+      #if defined(BOLT_DEBUG_LOG)
+      dblog->CodePathTaken(BOLTLOG::BOLT_SCANBYKEY,BOLTLOG::BOLT_MULTICORE_CPU,"::Scan_By_Key::MULTICORE_CPU");
+      #endif
+      if (inclusive)
+        return bolt::btbb::inclusive_scan_by_key(firstKey,lastKey,firstValue,result,binary_pred,binary_funct);
+      else
+        return bolt::btbb::exclusive_scan_by_key(firstKey,lastKey,firstValue,result,init,binary_pred,binary_funct);
 
+#else
+        //std::cout << "The MultiCoreCpu version of Scan by key is not enabled." << std ::endl;
+        throw std::runtime_error( "The MultiCoreCpu version of scan by key is not enabled to be built! \n" );
+
+#endif
+    }
+    else
+    {
+        #if defined(BOLT_DEBUG_LOG)
+        dblog->CodePathTaken(BOLTLOG::BOLT_SCANBYKEY,BOLTLOG::BOLT_OPENCL_GPU,"::Scan_By_Key::OPENCL_GPU");
+        #endif
+        
+        device_vector< kType, concurrency::array_view > dvKeys( firstKey, lastKey, false, ctl );
+        device_vector< vType, concurrency::array_view > dvValues( firstValue, numElements, false, ctl );
+	    device_vector< oType, concurrency::array_view > dvOutput( result, numElements, true, ctl );
+
+
+        //Now call the actual cl algorithm
+        scan_by_key_enqueue( ctl, dvKeys.begin( ), dvKeys.end( ), dvValues.begin(), dvOutput.begin( ),
+            init, binary_pred, binary_funct, user_code, inclusive );
+
+		PEEK_AT( dvOutput.begin().getContainer().getBuffer())
+
+        // This should immediately map/unmap the buffer
+        dvOutput.data( );
+      }
+
+    return result + numElements;
+}
+
+/*!
+* \brief This overload is called strictly for device_vector iterators
+* \details This template function overload is used to seperate device_vector iterators from all other iterators
+*/
+
+    template<
+    typename DVInputIterator1,
+    typename DVInputIterator2,
+    typename DVOutputIterator,
+    typename T,
+    typename BinaryPredicate,
+    typename BinaryFunction >
+typename std::enable_if<
+             (std::is_base_of<typename device_vector<typename
+               std::iterator_traits<DVInputIterator1>::value_type>::iterator,DVInputIterator1>::value &&
+               std::is_base_of<typename device_vector<typename
+               std::iterator_traits<DVInputIterator2>::value_type>::iterator,DVInputIterator2>::value &&
+               std::is_base_of<typename device_vector<typename
+               std::iterator_traits<DVOutputIterator>::value_type>::iterator,DVOutputIterator>::value),
+         DVOutputIterator >::type
+scan_by_key_pick_iterator(
+    control& ctl,
+    const DVInputIterator1& firstKey,
+    const DVInputIterator1& lastKey,
+    const DVInputIterator2& firstValue,
+    const DVOutputIterator& result,
+    const T& init,
+    const BinaryPredicate& binary_pred,
+    const BinaryFunction& binary_funct,
+    const std::string& user_code,
+    const bool& inclusive )
+{
+    typedef typename std::iterator_traits< DVInputIterator1 >::value_type kType;
+    typedef typename std::iterator_traits< DVInputIterator2 >::value_type vType;
+    typedef typename std::iterator_traits< DVOutputIterator >::value_type oType;
+    static_assert( std::is_convertible< vType, oType >::value, "InputValue and Output iterators are incompatible" );
+
+    unsigned int numElements = static_cast< unsigned int >( std::distance( firstKey, lastKey ) );
+    if( numElements < 1 )
+        return result;
+
+    bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode( );
+/*
+    if( runMode == bolt::amp::control::Automatic )
+    {
+        runMode = ctl.getDefaultPathToRun( );
+    }
+*/
+    #if defined(BOLT_DEBUG_LOG)
+    BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
+    #endif
+    
+    if( runMode == bolt::amp::control::SerialCpu )
+    {
+        #if defined(BOLT_DEBUG_LOG)
+        dblog->CodePathTaken(BOLTLOG::BOLT_SCANBYKEY,BOLTLOG::BOLT_SERIAL_CPU,"::Scan_By_Key::SERIAL_CPU");
+        #endif
+          
+		bolt::amp::device_vector< kType >::pointer scanInputkey =  firstKey.getContainer( ).data( );
+		bolt::amp::device_vector< vType >::pointer scanInputBuffer =  firstValue.getContainer( ).data( );
+        bolt::amp::device_vector< oType >::pointer scanResultBuffer =  result.getContainer( ).data( );
+
+        if(inclusive)
+            Serial_inclusive_scan_by_key<kType, vType, oType, BinaryPredicate, BinaryFunction>(&scanInputkey[ firstKey.m_Index ],
+                                 &scanInputBuffer[ firstValue.m_Index ], &scanResultBuffer[ result.m_Index ], numElements, binary_pred, binary_funct);
+        else
+            Serial_exclusive_scan_by_key<kType, vType, oType, BinaryPredicate, BinaryFunction, T>(&scanInputkey[ firstKey.m_Index ],
+                             &scanInputBuffer[ firstValue.m_Index ], &scanResultBuffer[ result.m_Index ], numElements, binary_pred, binary_funct, init);
+
+        return result + numElements;
+
+    }
+    else if( runMode == bolt::amp::control::MultiCoreCpu )
+    {
+#ifdef ENABLE_TBB
+
+            #if defined(BOLT_DEBUG_LOG)
+            dblog->CodePathTaken(BOLTLOG::BOLT_SCANBYKEY,BOLTLOG::BOLT_MULTICORE_CPU,"::Scan_By_Key::MULTICORE_CPU");
+            #endif
+      
+            bolt::amp::device_vector< kType >::pointer scanInputkey =  firstKey.getContainer( ).data( );
+		    bolt::amp::device_vector< vType >::pointer scanInputBuffer =  firstValue.getContainer( ).data( );
+            bolt::amp::device_vector< oType >::pointer scanResultBuffer =  result.getContainer( ).data( );
+
+            if (inclusive)
+               bolt::btbb::inclusive_scan_by_key(&scanInputkey[ firstKey.m_Index ],&scanInputkey[ firstKey.m_Index ] + numElements,  &scanInputBuffer[ firstValue.m_Index ],
+               &scanResultBuffer[ result.m_Index ], binary_pred,binary_funct);
+            else
+               bolt::btbb::exclusive_scan_by_key(&scanInputkey[ firstKey.m_Index ],&scanInputkey[ firstKey.m_Index ] + numElements,  &scanInputBuffer[ firstValue.m_Index ],
+                &scanResultBuffer[ result.m_Index ],init,binary_pred,binary_funct);
+
+            return result + numElements;
+#else
+                throw std::runtime_error("The MultiCoreCpu version of scan by key is not enabled to be built! \n" );
+
+#endif
+
+     }
+     else{
+     #if defined(BOLT_DEBUG_LOG)
+     dblog->CodePathTaken(BOLTLOG::BOLT_SCANBYKEY,BOLTLOG::BOLT_OPENCL_GPU,"::Scan_By_Key::OPENCL_GPU");
+     #endif
+     //Now call the actual cl algorithm
+              scan_by_key_enqueue( ctl, firstKey, lastKey, firstValue, result,
+                       init, binary_pred, binary_funct, user_code, inclusive );
+     }
+    return result + numElements;
+}
+
+/***********************************************************************************************************************
+ * Detect Random Access
+ ********************************************************************************************************************/
+
+template<
+    typename InputIterator1,
+    typename InputIterator2,
+    typename OutputIterator,
+    typename T,
+    typename BinaryPredicate,
+    typename BinaryFunction >
+OutputIterator
+scan_by_key_detect_random_access(
+    control& ctl,
+    const InputIterator1& firstKey,
+    const InputIterator1& lastKey,
+    const InputIterator2& firstValue,
+    const OutputIterator& result,
+    const T& init,
+    const BinaryPredicate& binary_pred,
+    const BinaryFunction& binary_funct,
+    const std::string& user_code,
+    const bool& inclusive,
+    std::random_access_iterator_tag )
+{
+    return detail::scan_by_key_pick_iterator( ctl, firstKey, lastKey, firstValue, result, init,
+        binary_pred, binary_funct, user_code, inclusive );
+}
+template<
+    typename InputIterator1,
+    typename InputIterator2,
+    typename OutputIterator,
+    typename T,
+    typename BinaryPredicate,
+    typename BinaryFunction >
+OutputIterator
+scan_by_key_detect_random_access(
+    control& ctl,
+    const InputIterator1& firstKey,
+    const InputIterator1& lastKey,
+    const InputIterator2& firstValue,
+    const OutputIterator& result,
+    const T& init,
+    const BinaryPredicate& binary_pred,
+    const BinaryFunction& binary_funct,
+    const std::string& user_code,
+    const bool& inclusive,
+    std::input_iterator_tag )
+{
+    //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data
+    //  to a temporary buffer.  Should we?
+    static_assert(std::is_same< InputIterator1, std::input_iterator_tag >::value  , "Bolt only supports random access iterator types" );
+};
+
+
+
+    /*!   \}  */
+} //namespace detail
+
+
+/*********************************************************************************************************************
+ * Inclusive Segmented Scan
+ ********************************************************************************************************************/
+template<
+    typename InputIterator1,
+    typename InputIterator2,
+    typename OutputIterator,
+    typename BinaryPredicate,
+    typename BinaryFunction>
+OutputIterator
+inclusive_scan_by_key(
+    InputIterator1  first1,
+    InputIterator1  last1,
+    InputIterator2  first2,
+    OutputIterator  result,
+    BinaryPredicate binary_pred,
+    BinaryFunction  binary_funct,
+    const std::string& user_code )
+{
+    typedef typename std::iterator_traits<OutputIterator>::value_type oType;
+    control& ctl = control::getDefault();
+    oType init; memset(&init, 0, sizeof(oType) );
+    return detail::scan_by_key_detect_random_access(
+        ctl,
+        first1,
+        last1,
+        first2,
+        result,
+        init,
+        binary_pred,
+        binary_funct,
+        user_code,
+        true, // inclusive
+        typename std::iterator_traits< InputIterator1 >::iterator_category( )
+    ); // return
+}
+
+template<
+    typename InputIterator1,
+    typename InputIterator2,
+    typename OutputIterator,
+    typename BinaryPredicate>
+OutputIterator
+inclusive_scan_by_key(
+    InputIterator1  first1,
+    InputIterator1  last1,
+    InputIterator2  first2,
+    OutputIterator  result,
+    BinaryPredicate binary_pred,
+    const std::string& user_code )
+{
+    typedef typename std::iterator_traits<OutputIterator>::value_type oType;
+    control& ctl = control::getDefault();
+    oType init; memset(&init, 0, sizeof(oType) );
+    plus<oType> binary_funct;
+    return detail::scan_by_key_detect_random_access(
+        ctl,
+        first1,
+        last1,
+        first2,
+        result,
+        init,
+        binary_pred,
+        binary_funct,
+        user_code,
+        true, // inclusive
+        typename std::iterator_traits< InputIterator1 >::iterator_category( )
+    ); // return
+}
+
+template<
+    typename InputIterator1,
+    typename InputIterator2,
+    typename OutputIterator>
+OutputIterator
+inclusive_scan_by_key(
+    InputIterator1  first1,
+    InputIterator1  last1,
+    InputIterator2  first2,
+    OutputIterator  result,
+    const std::string& user_code )
+{
+    typedef typename std::iterator_traits<InputIterator1>::value_type kType;
+    typedef typename std::iterator_traits<OutputIterator>::value_type oType;
+    control& ctl = control::getDefault();
+    oType init; memset(&init, 0, sizeof(oType) );
+    equal_to<kType> binary_pred;
+    plus<oType> binary_funct;
+    return detail::scan_by_key_detect_random_access(
+        ctl,
+        first1,
+        last1,
+        first2,
+        result,
+        init,
+        binary_pred,
+        binary_funct,
+        user_code,
+        true, // inclusive
+        typename std::iterator_traits< InputIterator1 >::iterator_category( )
+    ); // return
+}
+
+///////////////////////////// CTRL ////////////////////////////////////////////
+
+template<
+    typename InputIterator1,
+    typename InputIterator2,
+    typename OutputIterator,
+    typename BinaryPredicate,
+    typename BinaryFunction>
+OutputIterator
+inclusive_scan_by_key(
+    control &ctl,
+    InputIterator1  first1,
+    InputIterator1  last1,
+    InputIterator2  first2,
+    OutputIterator  result,
+    BinaryPredicate binary_pred,
+    BinaryFunction  binary_funct,
+    const std::string& user_code )
+{
+    typedef typename std::iterator_traits<OutputIterator>::value_type oType;
+    oType init; memset(&init, 0, sizeof(oType) );
+    return detail::scan_by_key_detect_random_access(
+        ctl,
+        first1,
+        last1,
+        first2,
+        result,
+        init,
+        binary_pred,
+        binary_funct,
+        user_code,
+        true, // inclusive
+       typename  std::iterator_traits< InputIterator1 >::iterator_category( )
+    ); // return
+}
+
+template<
+    typename InputIterator1,
+    typename InputIterator2,
+    typename OutputIterator,
+    typename BinaryPredicate>
+OutputIterator
+inclusive_scan_by_key(
+    control &ctl,
+    InputIterator1  first1,
+    InputIterator1  last1,
+    InputIterator2  first2,
+    OutputIterator  result,
+    BinaryPredicate binary_pred,
+    const std::string& user_code )
+{
+    typedef typename std::iterator_traits<OutputIterator>::value_type oType;
+    oType init; memset(&init, 0, sizeof(oType) );
+    plus<oType> binary_funct;
+    return detail::scan_by_key_detect_random_access(
+        ctl,
+        first1,
+        last1,
+        first2,
+        result,
+        init,
+        binary_pred,
+        binary_funct,
+        user_code,
+        true, // inclusive
+       typename  std::iterator_traits< InputIterator1 >::iterator_category( )
+    ); // return
+}
+
+template<
+    typename InputIterator1,
+    typename InputIterator2,
+    typename OutputIterator>
+OutputIterator
+inclusive_scan_by_key(
+    control &ctl,
+    InputIterator1  first1,
+    InputIterator1  last1,
+    InputIterator2  first2,
+    OutputIterator  result,
+    const std::string& user_code )
+{
+    typedef typename std::iterator_traits<InputIterator1>::value_type kType;
+    typedef typename std::iterator_traits<OutputIterator>::value_type oType;
+    oType init; memset(&init, 0, sizeof(oType) );
+    equal_to<kType> binary_pred;
+    plus<oType> binary_funct;
+    return detail::scan_by_key_detect_random_access(
+        ctl,
+        first1,
+        last1,
+        first2,
+        result,
+        init,
+        binary_pred,
+        binary_funct,
+        user_code,
+        true, // inclusive
+        typename std::iterator_traits< InputIterator1 >::iterator_category( )
+    ); // return
+}
+
+
+
+
+/*********************************************************************************************************************
+ * Exclusive Segmented Scan
+ ********************************************************************************************************************/
+
+template<
+    typename InputIterator1,
+    typename InputIterator2,
+    typename OutputIterator,
+    typename T,
+    typename BinaryPredicate,
+    typename BinaryFunction>
+OutputIterator
+exclusive_scan_by_key(
+    InputIterator1  first1,
+    InputIterator1  last1,
+    InputIterator2  first2,
+    OutputIterator  result,
+    T               init,
+    BinaryPredicate binary_pred,
+    BinaryFunction  binary_funct,
+    const std::string& user_code )
+{
+    control& ctl = control::getDefault();
+    return detail::scan_by_key_detect_random_access(
+        ctl,
+        first1,
+        last1,
+        first2,
+        result,
+        init,
+        binary_pred,
+        binary_funct,
+        user_code,
+        false, // exclusive
+       typename  std::iterator_traits< InputIterator1 >::iterator_category( )
+    ); // return
+}
+
+template<
+    typename InputIterator1,
+    typename InputIterator2,
+    typename OutputIterator,
+    typename T,
+    typename BinaryPredicate>
+OutputIterator
+exclusive_scan_by_key(
+    InputIterator1  first1,
+    InputIterator1  last1,
+    InputIterator2  first2,
+    OutputIterator  result,
+    T               init,
+    BinaryPredicate binary_pred,
+    const std::string& user_code )
+{
+    typedef typename std::iterator_traits<OutputIterator>::value_type oType;
+    control& ctl = control::getDefault();
+    plus<oType> binary_funct;
+    return detail::scan_by_key_detect_random_access(
+        ctl,
+        first1,
+        last1,
+        first2,
+        result,
+        init,
+        binary_pred,
+        binary_funct,
+        user_code,
+        false, // exclusive
+        typename std::iterator_traits< InputIterator1 >::iterator_category( )
+    ); // return
+}
+
+template<
+    typename InputIterator1,
+    typename InputIterator2,
+    typename OutputIterator,
+    typename T>
+OutputIterator
+exclusive_scan_by_key(
+    InputIterator1  first1,
+    InputIterator1  last1,
+    InputIterator2  first2,
+    OutputIterator  result,
+    T               init,
+    const std::string& user_code )
+{
+    typedef typename std::iterator_traits<InputIterator1>::value_type kType;
+    typedef typename std::iterator_traits<OutputIterator>::value_type oType;
+    control& ctl = control::getDefault();
+    equal_to<kType> binary_pred;
+    plus<oType> binary_funct;
+    return detail::scan_by_key_detect_random_access(
+        ctl,
+        first1,
+        last1,
+        first2,
+        result,
+        init,
+        binary_pred,
+        binary_funct,
+        user_code,
+        false, // exclusive
+        typename std::iterator_traits< InputIterator1 >::iterator_category( )
+    ); // return
+}
+
+template<
+    typename InputIterator1,
+    typename InputIterator2,
+    typename OutputIterator>
+OutputIterator
+exclusive_scan_by_key(
+    InputIterator1  first1,
+    InputIterator1  last1,
+    InputIterator2  first2,
+    OutputIterator  result,
+    const std::string& user_code )
+{
+    typedef typename std::iterator_traits<InputIterator1>::value_type kType;
+    typedef typename std::iterator_traits<OutputIterator>::value_type oType;
+    control& ctl = control::getDefault();
+    equal_to<kType> binary_pred;
+    plus<oType> binary_funct;
+    return detail::scan_by_key_detect_random_access(
+        ctl,
+        first1,
+        last1,
+        first2,
+        result,
+        0,
+        binary_pred,
+        binary_funct,
+        user_code,
+        false, // exclusive
+        typename std::iterator_traits< InputIterator1 >::iterator_category( )
+    ); // return
+}
+
+///////////////////////////// CTRL ////////////////////////////////////////////
+
+template<
+    typename InputIterator1,
+    typename InputIterator2,
+    typename OutputIterator,
+    typename T,
+    typename BinaryPredicate,
+    typename BinaryFunction>
+OutputIterator
+exclusive_scan_by_key(
+    control &ctl,
+    InputIterator1  first1,
+    InputIterator1  last1,
+    InputIterator2  first2,
+    OutputIterator  result,
+    T               init,
+    BinaryPredicate binary_pred,
+    BinaryFunction  binary_funct,
+    const std::string& user_code )
+{
+    return detail::scan_by_key_detect_random_access(
+        ctl,
+        first1,
+        last1,
+        first2,
+        result,
+        init,
+        binary_pred,
+        binary_funct,
+        user_code,
+        false, // exclusive
+       typename  std::iterator_traits< InputIterator1 >::iterator_category( )
+    ); // return
+}
+
+template<
+    typename InputIterator1,
+    typename InputIterator2,
+    typename OutputIterator,
+    typename T,
+    typename BinaryPredicate>
+OutputIterator
+exclusive_scan_by_key(
+    control &ctl,
+    InputIterator1  first1,
+    InputIterator1  last1,
+    InputIterator2  first2,
+    OutputIterator  result,
+    T               init,
+    BinaryPredicate binary_pred,
+    const std::string& user_code )
+{
+    typedef typename std::iterator_traits<OutputIterator>::value_type oType;
+    plus<oType> binary_funct;
+    return detail::scan_by_key_detect_random_access(
+        ctl,
+        first1,
+        last1,
+        first2,
+        result,
+        init,
+        binary_pred,
+        binary_funct,
+        user_code,
+        false, // exclusive
+       typename  std::iterator_traits< InputIterator1 >::iterator_category( )
+    ); // return
+}
+
+template<
+    typename InputIterator1,
+    typename InputIterator2,
+    typename OutputIterator,
+    typename T>
+OutputIterator
+exclusive_scan_by_key(
+    control &ctl,
+    InputIterator1  first1,
+    InputIterator1  last1,
+    InputIterator2  first2,
+    OutputIterator  result,
+    T               init,
+    const std::string& user_code )
+{
+    typedef typename std::iterator_traits<InputIterator1>::value_type kType;
+    typedef typename std::iterator_traits<OutputIterator>::value_type oType;
+    equal_to<kType> binary_pred;
+    plus<oType> binary_funct;
+    return detail::scan_by_key_detect_random_access(
+        ctl,
+        first1,
+        last1,
+        first2,
+        result,
+        init,
+        binary_pred,
+        binary_funct,
+        user_code,
+        false, // exclusive
+        typename std::iterator_traits< InputIterator1 >::iterator_category( )
+    ); // return
+}
+
+template<
+    typename InputIterator1,
+    typename InputIterator2,
+    typename OutputIterator>
+OutputIterator
+exclusive_scan_by_key(
+    control &ctl,
+    InputIterator1  first1,
+    InputIterator1  last1,
+    InputIterator2  first2,
+    OutputIterator  result,
+    const std::string& user_code )
+{
+    typedef typename std::iterator_traits<InputIterator1>::value_type kType;
+    typedef typename std::iterator_traits<OutputIterator>::value_type oType;
+    equal_to<kType> binary_pred;
+    plus<oType> binary_funct;
+    return detail::scan_by_key_detect_random_access(
+        ctl,
+        first1,
+        last1,
+        first2,
+        result,
+        0,
+        binary_pred,
+        binary_funct,
+        user_code,
+        false, // exclusive
+      typename   std::iterator_traits< InputIterator1 >::iterator_category( )
+    ); // return
+}
+
+
+} //namespace cl
+} //namespace bolt
 
 #endif
