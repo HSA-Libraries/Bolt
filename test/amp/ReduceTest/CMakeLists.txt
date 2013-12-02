@@ -16,8 +16,8 @@
 ############################################################################                                                                                     
 
 # List the names of common files to compile across all platforms
-set( ampBolt.Test.Reduce.Source stdafx.cpp ReduceTest.cpp )
-set( ampBolt.Test.Reduce.Headers stdafx.h targetver.h ${BOLT_INCLUDE_DIR}/bolt/amp/reduce.h )
+set( ampBolt.Test.Reduce.Source ReduceTest.cpp )
+set( ampBolt.Test.Reduce.Headers  ${BOLT_INCLUDE_DIR}/bolt/amp/reduce.h ${BOLT_INCLUDE_DIR}/bolt/amp/detail/reduce.inl )
 
 set( ampBolt.Test.Reduce.Files ${ampBolt.Test.Reduce.Source} ${ampBolt.Test.Reduce.Headers} )
 add_executable( ampBolt.Test.Reduce ${ampBolt.Test.Reduce.Files} )

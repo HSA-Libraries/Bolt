@@ -22,7 +22,7 @@
 #pragma once
 #if !defined( BOLT_AMP_TRANSFORM_INL )
 #define BOLT_AMP_TRANSFORM_INL
-#define WAVEFRONT_SIZE 64
+#define WAVEFRNT_SIZE 64
 
 #ifdef BOLT_ENABLE_PROFILING
 #include "bolt/AsyncProfiler.h"
@@ -40,84 +40,6 @@
 
 
 
-
-namespace bolt
-{
-    namespace amp
-    {
-        //////////////////////////////////////////
-        //  Transform overloads
-        //////////////////////////////////////////
-        // default control, two-input transform, std:: iterator
-        template<typename InputIterator1, typename InputIterator2, typename OutputIterator, typename BinaryFunction>
-        void transform( bolt::amp::control& ctl,
-                       InputIterator1 first1,
-                       InputIterator1 last1,
-                       InputIterator2 first2,
-                       OutputIterator result,
-                       BinaryFunction f )
-        {
-            detail::transform_detect_random_access( ctl,
-                                                   first1,
-                                                   last1,
-                                                   first2,
-                                                   result,
-                                                   f,
-                                                   std::iterator_traits< InputIterator1 >::iterator_category( ),
-                                                   std::iterator_traits< InputIterator2 >::iterator_category( ));
-        };
-
-        // default control, two-input transform, std:: iterator
-        template<typename InputIterator1, typename InputIterator2, typename OutputIterator, typename BinaryFunction>
-        void transform( InputIterator1 first1,
-                        InputIterator1 last1,
-                        InputIterator2 first2,
-                        OutputIterator result,
-                        BinaryFunction f )
-        {
-            detail::transform_detect_random_access( control::getDefault(),
-                                                    first1,
-                                                    last1,
-                                                    first2,
-                                                    result,
-                                                    f,
-                                                    std::iterator_traits< InputIterator1 >::iterator_category( ),
-                                                    std::iterator_traits< InputIterator2 >::iterator_category( ) );
-        };
-
-        // default control, two-input transform, std:: iterator
-        template<typename InputIterator, typename OutputIterator, typename UnaryFunction>
-        void transform( bolt::amp::control& ctl,
-                        InputIterator first1,
-                        InputIterator last1,
-                        OutputIterator result,
-                        UnaryFunction f )
-        {
-            detail::transform_unary_detect_random_access( ctl,
-                                                          first1,
-                                                          last1,
-                                                          result,
-                                                          f,
-                                                          std::iterator_traits< InputIterator >::iterator_category( ) );
-        };
-
-        // default control, two-input transform, std:: iterator
-        template<typename InputIterator, typename OutputIterator, typename UnaryFunction>
-        void transform( InputIterator first1,
-                        InputIterator last1,
-                        OutputIterator result,
-                        UnaryFunction f )
-        {
-            detail::transform_unary_detect_random_access( control::getDefault(),
-                                                          first1,
-                                                          last1,
-                                                          result,
-                                                          f,
-                                                          std::iterator_traits< InputIterator >::iterator_category( ) );
-        };
-
-    };//end of namespace amp
-};//end of namespace bolt
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 namespace bolt
@@ -126,94 +48,94 @@ namespace bolt
     {
         namespace detail
         {
-            // Wrapper that uses default control class, iterator interface
-            template<typename InputIterator1, typename InputIterator2, typename OutputIterator, typename BinaryFunction>
-            void transform_detect_random_access( bolt::amp::control& ctl,
-                                                 const InputIterator1& first1,
-                                                 const InputIterator1& last1,
-                                                 const InputIterator2& first2,
-                                                 const OutputIterator& result,
-                                                 const BinaryFunction& f,
-                                                 std::input_iterator_tag,
-                                                 std::input_iterator_tag)
+           
+            template< typename DVInputIterator1, typename DVInputIterator2, typename DVOutputIterator, typename BinaryFunction >
+            void transform_enqueue( bolt::amp::control &ctl,
+                                    const DVInputIterator1& first1,
+                                    const DVInputIterator1& last1,
+                                    const DVInputIterator2& first2,
+                                    const DVOutputIterator& result,
+                                    const BinaryFunction& f)
             {
-                //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data
-                //  to a temporary buffer.  Should we?
-                static_assert( false, "Bolt only supports random access iterator types" );
+               typedef std::iterator_traits< DVInputIterator1 >::value_type iType1;
+               typedef std::iterator_traits< DVInputIterator2 >::value_type iType2;
+               typedef std::iterator_traits< DVOutputIterator >::value_type oType;
+
+               const unsigned int arraySize =  static_cast< unsigned int >( std::distance( first1, last1 ) );
+               unsigned int wavefrontMultiple = arraySize;
+               const unsigned int lowerBits = ( arraySize & ( WAVEFRNT_SIZE -1 ) );
+
+			   int boundsCheck = 0;
+
+               if( lowerBits )
+               {
+                   wavefrontMultiple &= ~lowerBits;
+                   wavefrontMultiple += WAVEFRNT_SIZE;
+			   }
+			   else
+				    boundsCheck = 1;
+
+			   concurrency::array_view<iType1,1> inputV1 (first1.getContainer().getBuffer(first1));
+               concurrency::array_view<iType2,1> inputV2 (first2.getContainer().getBuffer(first2));
+               concurrency::array_view<oType,1> resultV(result.getContainer().getBuffer(result));
+               concurrency::extent< 1 > inputExtent( wavefrontMultiple );
+
+               concurrency::parallel_for_each(ctl.getAccelerator().default_view, inputExtent, [=](concurrency::index<1> idx) restrict(amp)
+               {
+                   unsigned int globalId = idx[0];
+				   if(boundsCheck == 0)
+				   {
+					 if( globalId >= arraySize )
+                       return;
+				   }
+                   resultV[idx[0]] = f(inputV1[globalId], inputV2[globalId]);
+               });
+            };
+
+            template< typename DVInputIterator, typename DVOutputIterator, typename UnaryFunction >
+            void transform_unary_enqueue(bolt::amp::control &ctl,
+                                         const DVInputIterator& first,
+                                         const DVInputIterator& last,
+                                         const DVOutputIterator& result,
+                                         const UnaryFunction& f)
+            {
+
+               typedef std::iterator_traits< DVInputIterator >::value_type iType;
+               typedef std::iterator_traits< DVOutputIterator >::value_type oType;
+
+               const unsigned int arraySize =  static_cast< unsigned int >( std::distance( first, last ) );
+               unsigned int wavefrontMultiple = arraySize;
+               const unsigned int lowerBits = ( arraySize & ( WAVEFRNT_SIZE -1 ) );
+
+			   int boundsCheck = 0;
+
+               if( lowerBits )
+               {
+                   wavefrontMultiple &= ~lowerBits;
+                   wavefrontMultiple += WAVEFRNT_SIZE;
+               }
+			   else
+				    boundsCheck = 1;
+
+			   concurrency::array_view<iType,1> inputV (first.getContainer().getBuffer(first));
+               concurrency::array_view<oType,1> resultV(result.getContainer().getBuffer(result));
+               concurrency::extent< 1 > inputExtent( wavefrontMultiple );
+
+               concurrency::parallel_for_each(ctl.getAccelerator().default_view, inputExtent, [=](concurrency::index<1> idx) restrict(amp)
+               {
+                   unsigned int globalId = idx[0];
+				   if(boundsCheck == 0)
+				   {
+					 if( globalId >= arraySize )
+                       return;
+				   }
+                   resultV[globalId] = f(inputV[globalId]);
+               });
+
             }
 
-            // Wrapper that uses default control class, iterator interface
-            template<typename InputIterator1, typename InputIterator2, typename OutputIterator, typename BinaryFunction>
-            void transform_detect_random_access( bolt::amp::control& ctl,
-                                                 const InputIterator1& first1,
-                                                 const InputIterator1& last1,
-                                                 const InputIterator2& first2,
-                                                 const OutputIterator& result,
-                                                 const BinaryFunction& f,
-                                                 std::input_iterator_tag,
-                                                 std::random_access_iterator_tag)
-            {
-                //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data
-                //  to a temporary buffer.  Should we?
-                static_assert( false, "Bolt only supports random access iterator types" );
-            }
 
-            // Wrapper that uses default control class, iterator interface
-            template<typename InputIterator1, typename InputIterator2, typename OutputIterator, typename BinaryFunction>
-            void transform_detect_random_access( bolt::amp::control& ctl,
-                                                 const InputIterator1& first1,
-                                                 const InputIterator1& last1,
-                                                 const InputIterator2& first2,
-                                                 const OutputIterator& result,
-                                                 const BinaryFunction& f,
-                                                 std::random_access_iterator_tag,
-                                                 std::input_iterator_tag)
-            {
-                //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data
-                //  to a temporary buffer.  Should we?
-                static_assert( false, "Bolt only supports random access iterator types" );
-            }
-
-            template<typename InputIterator1, typename InputIterator2, typename OutputIterator, typename BinaryFunction>
-            void transform_detect_random_access( bolt::amp::control& ctl,
-                                                 const InputIterator1& first1,
-                                                 const InputIterator1& last1,
-                                                 const InputIterator2& first2,
-                                                 const OutputIterator& result,
-                                                 const BinaryFunction& f,
-                                                 std::random_access_iterator_tag,
-                                                 std::random_access_iterator_tag)
-            {
-                transform_pick_iterator( ctl, first1, last1, first2, result, f  );
-            }
-
-            // Wrapper that uses default control class, iterator interface
-            template<typename InputIterator, typename OutputIterator, typename UnaryFunction>
-            void transform_unary_detect_random_access( bolt::amp::control& ctl,
-                                                       const InputIterator& first1,
-                                                       const InputIterator& last1,
-                                                       const OutputIterator& result,
-                                                       const UnaryFunction& f,
-                                                       std::input_iterator_tag )
-            {
-                //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data
-                //  to a temporary buffer.  Should we?
-                static_assert( false, "Bolt only supports random access iterator types" );
-            }
-
-            template<typename InputIterator, typename OutputIterator, typename UnaryFunction>
-            void transform_unary_detect_random_access( bolt::amp::control& ctl,
-                                                       const InputIterator& first1,
-                                                       const InputIterator& last1,
-                                                       const OutputIterator& result,
-                                                       const UnaryFunction& f,
-                                                       std::random_access_iterator_tag )
-            {
-                transform_unary_pick_iterator( ctl, first1, last1, result, f  );
-            }
-
-
-            /*! \brief This template function overload is used to seperate device_vector iterators from all other iterators
+			 /*! \brief This template function overload is used to seperate device_vector iterators from all other iterators
                 \detail This template is called by the non-detail versions of transform, it already assumes random access
              *  iterators.  This overload is called strictly for non-device_vector iterators
             */
@@ -302,10 +224,10 @@ namespace bolt
                    bolt::amp::device_vector< oType >::pointer resPtr =  result.getContainer( ).data( );
 
 #if defined( _WIN32 )
-                  std::transform( &firstPtr[ first1.m_Index ], &firstPtr[ sz ], &secPtr[ 0 ],
-                  stdext::make_checked_array_iterator( &resPtr[ 0 ], sz ), f );
+                  std::transform( &firstPtr[ first1.m_Index ], &firstPtr[first1.m_Index +  sz ], &secPtr[ first2.m_Index ],
+                  stdext::make_checked_array_iterator( &resPtr[ result.m_Index ], sz ), f );
 #else
-                   std::transform( &firstPtr[ first1.m_Index ], &firstPtr[ sz ], &secPtr[ 0 ], &resPtr[ 0 ], f );
+                   std::transform( &firstPtr[ first1.m_Index ], &firstPtr[ first1.m_Index + sz ], &secPtr[ first2.m_Index ], &resPtr[ result.m_Index ], f );
 #endif
                    return;
               }
@@ -316,7 +238,7 @@ namespace bolt
                   bolt::amp::device_vector< iType1 >::pointer firstPtr =  first1.getContainer( ).data( );
                   bolt::amp::device_vector< iType2 >::pointer secPtr =  first2.getContainer( ).data( );
                   bolt::amp::device_vector< oType >::pointer resPtr =  result.getContainer( ).data( );
-                  bolt::btbb::transform(&firstPtr[ first1.m_Index ],&firstPtr[ sz ],&secPtr[ 0 ],&resPtr[ 0 ],f);
+                  bolt::btbb::transform(&firstPtr[ first1.m_Index ],&firstPtr[ first1.m_Index + sz ],&secPtr[ first2.m_Index ],&resPtr[ result.m_Index ],f);
 
 #else
                  throw std::exception(  "The MultiCoreCpu version of transform is not enabled to be built." );
@@ -416,10 +338,11 @@ namespace bolt
                  bolt::amp::device_vector< oType >::pointer resPtr = result.getContainer( ).data( );
 
 #if defined( _WIN32 )
-                std::transform( &firstPtr[ first.m_Index ], &firstPtr[ sz ],
-                stdext::make_checked_array_iterator( &resPtr[ 0 ], sz ), f );
+
+                std::transform( &firstPtr[ first.m_Index ], &firstPtr[ first.m_Index + sz ],
+                stdext::make_checked_array_iterator( &resPtr[ result.m_Index ], sz ), f );
 #else
-                std::transform( &firstPtr[ first.m_Index ], &firstPtr[ sz ], &resPtr[ 0 ], f );
+                std::transform( &firstPtr[ first.m_Index ], &firstPtr[ first1.m_Index + sz ], &resPtr[ result.m_Index ], f );
 #endif
                 return;
              }
@@ -430,7 +353,7 @@ namespace bolt
                 bolt::amp::device_vector< iType >::pointer firstPtr = first.getContainer( ).data( );
                 bolt::amp::device_vector< oType >::pointer resPtr = result.getContainer( ).data( );
 
-                bolt::btbb::transform( &firstPtr[ first.m_Index ],  &firstPtr[ sz ], &resPtr[ 0 ], f);
+                bolt::btbb::transform( &firstPtr[ first.m_Index ],  &firstPtr[ first.m_Index  + sz ], &resPtr[ result.m_Index], f);
 #else
                 throw std::exception(  "The MultiCoreCpu version of transform is not enabled to be built." );
 #endif
@@ -442,80 +365,170 @@ namespace bolt
              }
          };
 
-            template< typename DVInputIterator1, typename DVInputIterator2, typename DVOutputIterator, typename BinaryFunction >
-            void transform_enqueue( bolt::amp::control &ctl,
-                                    const DVInputIterator1& first1,
-                                    const DVInputIterator1& last1,
-                                    const DVInputIterator2& first2,
-                                    const DVOutputIterator& result,
-                                    const BinaryFunction& f)
+
+			 // Wrapper that uses default control class, iterator interface
+            template<typename InputIterator1, typename InputIterator2, typename OutputIterator, typename BinaryFunction>
+            void transform_detect_random_access( bolt::amp::control& ctl,
+                                                 const InputIterator1& first1,
+                                                 const InputIterator1& last1,
+                                                 const InputIterator2& first2,
+                                                 const OutputIterator& result,
+                                                 const BinaryFunction& f,
+                                                 std::input_iterator_tag,
+                                                 std::input_iterator_tag)
             {
-               typedef std::iterator_traits< DVInputIterator1 >::value_type iType1;
-               typedef std::iterator_traits< DVInputIterator2 >::value_type iType2;
-               typedef std::iterator_traits< DVOutputIterator >::value_type oType;
+                //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data
+                //  to a temporary buffer.  Should we?
+                static_assert( false, "Bolt only supports random access iterator types" );
+            }
 
-               const unsigned int arraySize =  static_cast< unsigned int >( std::distance( first1, last1 ) );
-               unsigned int wavefrontMultiple = arraySize;
-               const unsigned int lowerBits = ( arraySize & ( WAVEFRONT_SIZE -1 ) );
-
-               if( lowerBits )
-               {
-                   wavefrontMultiple &= ~lowerBits;
-                   wavefrontMultiple += WAVEFRONT_SIZE;
-               }
-
-               concurrency::array_view<iType1,1> inputV1 (first1.getContainer().getBuffer(first1));
-               concurrency::array_view<iType2,1> inputV2 (first2.getContainer().getBuffer(first2));
-               concurrency::array_view<oType,1> resultV(result.getContainer().getBuffer(result));
-               concurrency::extent< 1 > inputExtent( wavefrontMultiple );
-
-               concurrency::parallel_for_each(ctl.getAccelerator().default_view, inputExtent, [=](concurrency::index<1> idx) mutable restrict(amp)
-               {
-                   unsigned int globalId = idx[0];
-                   if( globalId >= wavefrontMultiple )
-                       return;
-                   resultV[idx[0]] = f(inputV1[globalId], inputV2[globalId]);
-               });
-
-            };
-
-            template< typename DVInputIterator, typename DVOutputIterator, typename UnaryFunction >
-            void transform_unary_enqueue(bolt::amp::control &ctl,
-                                         const DVInputIterator& first,
-                                         const DVInputIterator& last,
-                                         const DVOutputIterator& result,
-                                         const UnaryFunction& f)
+            // Wrapper that uses default control class, iterator interface
+            template<typename InputIterator1, typename InputIterator2, typename OutputIterator, typename BinaryFunction>
+            void transform_detect_random_access( bolt::amp::control& ctl,
+                                                 const InputIterator1& first1,
+                                                 const InputIterator1& last1,
+                                                 const InputIterator2& first2,
+                                                 const OutputIterator& result,
+                                                 const BinaryFunction& f,
+                                                 std::input_iterator_tag,
+                                                 std::random_access_iterator_tag)
             {
+                //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data
+                //  to a temporary buffer.  Should we?
+                static_assert( false, "Bolt only supports random access iterator types" );
+            }
 
-               typedef std::iterator_traits< DVInputIterator >::value_type iType;
-               typedef std::iterator_traits< DVOutputIterator >::value_type oType;
+            // Wrapper that uses default control class, iterator interface
+            template<typename InputIterator1, typename InputIterator2, typename OutputIterator, typename BinaryFunction>
+            void transform_detect_random_access( bolt::amp::control& ctl,
+                                                 const InputIterator1& first1,
+                                                 const InputIterator1& last1,
+                                                 const InputIterator2& first2,
+                                                 const OutputIterator& result,
+                                                 const BinaryFunction& f,
+                                                 std::random_access_iterator_tag,
+                                                 std::input_iterator_tag)
+            {
+                //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data
+                //  to a temporary buffer.  Should we?
+                static_assert( false, "Bolt only supports random access iterator types" );
+            }
 
-               const unsigned int arraySize =  static_cast< unsigned int >( std::distance( first, last ) );
-               unsigned int wavefrontMultiple = arraySize;
-               const unsigned int lowerBits = ( arraySize & ( WAVEFRONT_SIZE -1 ) );
 
-               if( lowerBits )
-               {
-                   wavefrontMultiple &= ~lowerBits;
-                   wavefrontMultiple += WAVEFRONT_SIZE;
-               }
+            template<typename InputIterator1, typename InputIterator2, typename OutputIterator, typename BinaryFunction>
+            void transform_detect_random_access( bolt::amp::control& ctl,
+                                                 const InputIterator1& first1,
+                                                 const InputIterator1& last1,
+                                                 const InputIterator2& first2,
+                                                 const OutputIterator& result,
+                                                 const BinaryFunction& f,
+                                                 std::random_access_iterator_tag,
+                                                 std::random_access_iterator_tag)
+            {
+                transform_pick_iterator( ctl, first1, last1, first2, result, f  );
+            }
 
-               concurrency::array_view<iType,1> inputV (first.getContainer().getBuffer(first));
-               concurrency::array_view<oType,1> resultV(result.getContainer().getBuffer(result));
-               concurrency::extent< 1 > inputExtent( wavefrontMultiple );
+            // Wrapper that uses default control class, iterator interface
+            template<typename InputIterator, typename OutputIterator, typename UnaryFunction>
+            void transform_unary_detect_random_access( bolt::amp::control& ctl,
+                                                       const InputIterator& first1,
+                                                       const InputIterator& last1,
+                                                       const OutputIterator& result,
+                                                       const UnaryFunction& f,
+                                                       std::input_iterator_tag )
+            {
+                //  TODO:  It should be possible to support non-random_access_iterator_tag iterators, if we copied the data
+                //  to a temporary buffer.  Should we?
+                static_assert( false, "Bolt only supports random access iterator types" );
+            }
 
-               concurrency::parallel_for_each(ctl.getAccelerator().default_view, inputExtent, [=](concurrency::index<1> idx) mutable restrict(amp)
-               {
-                   unsigned int globalId = idx[0];
-                   if( globalId >= wavefrontMultiple )
-                       return;
-                   resultV[globalId] = f(inputV[globalId]);
-               });
-
+            template<typename InputIterator, typename OutputIterator, typename UnaryFunction>
+            void transform_unary_detect_random_access( bolt::amp::control& ctl,
+                                                       const InputIterator& first1,
+                                                       const InputIterator& last1,
+                                                       const OutputIterator& result,
+                                                       const UnaryFunction& f,
+                                                       std::random_access_iterator_tag )
+            {
+                transform_unary_pick_iterator( ctl, first1, last1, result, f  );
             }
 
 
         };//end of namespace detail
+
+
+		//////////////////////////////////////////
+        //  Transform overloads
+        //////////////////////////////////////////
+        // default control, two-input transform, std:: iterator
+        template<typename InputIterator1, typename InputIterator2, typename OutputIterator, typename BinaryFunction>
+        void transform( bolt::amp::control& ctl,
+                       InputIterator1 first1,
+                       InputIterator1 last1,
+                       InputIterator2 first2,
+                       OutputIterator result,
+                       BinaryFunction f )
+        {
+            detail::transform_detect_random_access( ctl,
+                                                   first1,
+                                                   last1,
+                                                   first2,
+                                                   result,
+                                                   f,
+                                                   std::iterator_traits< InputIterator1 >::iterator_category( ),
+                                                   std::iterator_traits< InputIterator2 >::iterator_category( ));
+        };
+
+
+        // default control, two-input transform, std:: iterator
+        template<typename InputIterator1, typename InputIterator2, typename OutputIterator, typename BinaryFunction>
+        void transform( InputIterator1 first1,
+                        InputIterator1 last1,
+                        InputIterator2 first2,
+                        OutputIterator result,
+                        BinaryFunction f )
+        {
+            detail::transform_detect_random_access( control::getDefault(),
+                                                    first1,
+                                                    last1,
+                                                    first2,
+                                                    result,
+                                                    f,
+                                                    std::iterator_traits< InputIterator1 >::iterator_category( ),
+                                                    std::iterator_traits< InputIterator2 >::iterator_category( ) );
+        };
+
+        // default control, two-input transform, std:: iterator
+        template<typename InputIterator, typename OutputIterator, typename UnaryFunction>
+        void transform( bolt::amp::control& ctl,
+                        InputIterator first1,
+                        InputIterator last1,
+                        OutputIterator result,
+                        UnaryFunction f )
+        {
+            detail::transform_unary_detect_random_access( ctl,
+                                                          first1,
+                                                          last1,
+                                                          result,
+                                                          f,
+                                                          std::iterator_traits< InputIterator >::iterator_category( ) );
+        };
+
+        // default control, two-input transform, std:: iterator
+        template<typename InputIterator, typename OutputIterator, typename UnaryFunction>
+        void transform( InputIterator first1,
+                        InputIterator last1,
+                        OutputIterator result,
+                        UnaryFunction f )
+        {
+            detail::transform_unary_detect_random_access( control::getDefault(),
+                                                          first1,
+                                                          last1,
+                                                          result,
+                                                          f,
+                                                          std::iterator_traits< InputIterator >::iterator_category( ) );
+        };
+
     }; //end of namespace amp
 }; //end of namespace bolt
 

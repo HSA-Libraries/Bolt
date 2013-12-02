@@ -74,7 +74,7 @@ int _tmain( int argc, _TCHAR* argv[] )
 	try
 	{
 		// Declare the supported options.
-		po::options_description desc( "AMP Scan command line options" );
+		po::options_description desc( "AMP Reduce command line options" );
 		desc.add_options()
 			( "help,h",			"produces this help message" )
 			( "version,v",		"Print queryable version information from the Bolt AMP library" )
