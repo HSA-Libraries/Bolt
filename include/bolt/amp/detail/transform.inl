@@ -159,7 +159,11 @@ namespace bolt
                 if (sz == 0)
                     return;
                 // Use host pointers memory since these arrays are only read once - no benefit to copying.
-               const bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+               bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+			   if (runMode == bolt::amp::control::Automatic)
+			   {
+				   runMode = ctl.getDefaultPathToRun();
+			   }
                if( runMode == bolt::amp::control::SerialCpu )
                {
                     std::transform( first1, last1, first2, result, f );
@@ -215,7 +219,11 @@ namespace bolt
                if( sz == 0 )
                     return;
 
-               const bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+               bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+			   if (runMode == bolt::amp::control::Automatic)
+			   {
+				   runMode = ctl.getDefaultPathToRun();
+			   }
 
                if( runMode == bolt::amp::control::SerialCpu )
                {
@@ -272,7 +280,11 @@ namespace bolt
                 size_t sz = (last - first);
                 if (sz == 0)
                     return;
-                const bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();
+                bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();
+				if (runMode == bolt::amp::control::Automatic)
+				{
+					runMode = ctl.getDefaultPathToRun();
+				}
                 if( runMode == bolt::amp::control::SerialCpu )
                 {
                    std::transform( first, last, result, f );
@@ -329,7 +341,11 @@ namespace bolt
               if( sz == 0 )
                   return;
 
-              const bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+              bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+			  if (runMode == bolt::amp::control::Automatic)
+			  {
+				  runMode = ctl.getDefaultPathToRun();
+			  }
 
               //  TBB does not have an equivalent for two input iterator std::transform
              if( (runMode == bolt::amp::control::SerialCpu) )

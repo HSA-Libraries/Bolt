@@ -180,7 +180,12 @@ namespace bolt {
             if (szElements == 0)
                     return init;
 
-            const bolt::amp::control::e_RunMode runMode = c.getForceRunMode();  // could be dynamic choice some day.
+            bolt::amp::control::e_RunMode runMode = c.getForceRunMode();  // could be dynamic choice some day.
+			if (runMode == bolt::amp::control::Automatic)
+			{
+				runMode = c.getDefaultPathToRun();
+			}
+
             if (runMode == bolt::amp::control::SerialCpu)
             {
                 //Create a temporary array to store the transform result;
@@ -229,7 +234,11 @@ namespace bolt {
             if (szElements == 0)
                     return init;
 
-            const bolt::amp::control::e_RunMode runMode = c.getForceRunMode();  // could be dynamic choice some day.
+            bolt::amp::control::e_RunMode runMode = c.getForceRunMode();  // could be dynamic choice some day.
+			if (runMode == bolt::amp::control::Automatic)
+			{
+				runMode = c.getDefaultPathToRun();
+			}
             if (runMode == bolt::amp::control::SerialCpu)
             {
 

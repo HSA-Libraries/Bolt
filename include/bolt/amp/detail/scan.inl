@@ -629,7 +629,11 @@ scan_pick_iterator(
     if( numElements < 1 )
         return result;
 
-    const bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode( );  // could be dynamic choice some day.
+    bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode( );  // could be dynamic choice some day.
+	if (runMode == bolt::amp::control::Automatic)
+	{
+		runMode = ctl.getDefaultPathToRun();
+	}
     if( runMode == bolt::amp::control::SerialCpu )
     {
 #ifdef BOLT_ENABLE_PROFILING
@@ -714,7 +718,11 @@ scan_pick_iterator(
     if( numElements < 1 )
         return result;
 
-    const bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode( );  // could be dynamic choice some day.
+    bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode( );  // could be dynamic choice some day.
+	if (runMode == bolt::amp::control::Automatic)
+	{
+		runMode = ctl.getDefaultPathToRun();
+	}
     if( runMode == bolt::amp::control::SerialCpu )
     {
         bolt::amp::device_vector< iType >::pointer scanInputBuffer =  first.getContainer( ).data( );

@@ -191,7 +191,11 @@ namespace bolt
                 //Need to look at how to control the number of threads spawned.
 
 
-                const bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();
+                bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();
+				if (runMode == bolt::amp::control::Automatic)
+				{
+					runMode = ctl.getDefaultPathToRun();
+				}
                 if (runMode == bolt::amp::control::SerialCpu)
                 {
                     return std::accumulate(first, last, init, binary_op);
@@ -230,7 +234,11 @@ namespace bolt
                 if (szElements == 0)
                     return init;
 
-                const bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();
+                 bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();
+				if (runMode == bolt::amp::control::Automatic)
+				{
+					runMode = ctl.getDefaultPathToRun();
+				}
                 if (runMode == bolt::amp::control::SerialCpu)
                 {
 					 typename bolt::amp::device_vector< iType >::pointer reduceInputBuffer =  first.getContainer( ).data( );

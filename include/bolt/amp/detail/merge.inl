@@ -164,7 +164,7 @@ namespace bolt {
 
                 if(runMode == bolt::amp::control::Automatic)
                 {
-					runMode = ctl.getForceRunMode();
+					runMode = ctl.getDefaultPathToRun();
                 }
 
 				#if defined(BOLT_DEBUG_LOG)
@@ -179,9 +179,9 @@ namespace bolt {
                       dblog->CodePathTaken(BOLTLOG::BOLT_MERGE,BOLTLOG::BOLT_GPU,"::Merge::GPU");
                       #endif
                       size_t sz = (last1-first1) + (last2-first2);
-                      device_vector< iType1 > dvInput1( first1, last1, ctl );
-                      device_vector< iType2 > dvInput2( first2, last2, ctl );
-                      device_vector< oType >  dvresult(  result, sz, ctl );
+					  device_vector< iType1, concurrency::array_view  > dvInput1(first1, last1, false, ctl);
+					  device_vector< iType2, concurrency::array_view  > dvInput2(first2, last2, false, ctl);
+					  device_vector< oType, concurrency::array_view  >  dvresult(result, sz, true, ctl);
 
                        detail::merge_enqueue( ctl, dvInput1.begin(), dvInput1.end(), dvInput2.begin(), dvInput2.end(),
                           dvresult.begin(), comp);
@@ -316,71 +316,7 @@ namespace bolt {
             // This is called strictly for iterators that are derived from device_vector< T >::iterator
 
 
-#if 0
-			template<typename DVInputIterator1,typename DVInputIterator2,typename DVOutputIterator, 
-            typename StrictWeakCompare>
-            DVOutputIterator merge_pick_iterator(bolt::amp::control &ctl,
-                const DVInputIterator1& first1,
-                const DVInputIterator1& last1,
-                const DVInputIterator2& first2,
-                const DVInputIterator2& last2,
-                const DVOutputIterator& result,
-                const StrictWeakCompare& comp,
-                const std::string& cl_code,
-                bolt::amp::fancy_iterator_tag )
-            {
-                typedef typename std::iterator_traits<DVInputIterator1>::value_type iType;
-             
 
-                bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
-                if(runMode == bolt::amp::control::Automatic)
-                {
-                    runMode = ctl.getDefaultPathToRun();
-                }
-				#if defined(BOLT_DEBUG_LOG)
-                BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
-                #endif
-                
-                switch(runMode)
-                {
-                case bolt::amp::control::Gpu :
-				        #if defined(BOLT_DEBUG_LOG)
-                        dblog->CodePathTaken(BOLTLOG::BOLT_MERGE,BOLTLOG::BOLT_GPU,"::Merge::GPU");
-                        #endif
-                        return merge_enqueue( ctl, first1, last1,first2, last2, result, comp);
-              
-                case bolt::amp::control::MultiCoreCpu: 
-                    #ifdef ENABLE_TBB
-                    {
-					  #if defined(BOLT_DEBUG_LOG)
-                      dblog->CodePathTaken(BOLTLOG::BOLT_MERGE,BOLTLOG::BOLT_MULTICORE_CPU,"::Merge::MULTICORE_CPU");
-                      #endif
-                      return bolt::btbb::merge(first1, last1,first2, last2, result, comp);
-                    }
-                    #else
-                    {
-                       throw std::runtime_error( "The MultiCoreCpu version of merge is not enabled to be built! \n" );
-                    }
-                    #endif
-
-                case bolt::amp::control::SerialCpu: 
-				     #if defined(BOLT_DEBUG_LOG)
-                     dblog->CodePathTaken(BOLTLOG::BOLT_REDUCE,BOLTLOG::BOLT_SERIAL_CPU,"::Merge::SERIAL_CPU");
-                     #endif
-                     return std::merge(first1, last1,first2, last2, result, comp);
-
-                default: /* Incase of runMode not set/corrupted */
-				    #if defined(BOLT_DEBUG_LOG)
-                    dblog->CodePathTaken(BOLTLOG::BOLT_REDUCE,BOLTLOG::BOLT_SERIAL_CPU,"::Merge::SERIAL_CPU");
-                    #endif
-                    return std::merge(first1, last1,first2, last2, result, comp);
-
-                }
-
-            }        
-            
-
-#endif
             template<typename DVInputIterator1,typename DVInputIterator2,typename DVOutputIterator, 
             typename StrictWeakCompare>
             DVOutputIterator merge_detect_random_access(bolt::amp::control &ctl,

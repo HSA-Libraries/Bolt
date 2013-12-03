@@ -118,7 +118,10 @@ namespace detail {
                     return;
 
                 bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
-	          
+				if (runMode == bolt::amp::control::Automatic)
+				{
+					runMode = ctl.getDefaultPathToRun();
+				}
 	
                 if( runMode == bolt::amp::control::SerialCpu)
 				{  			
@@ -154,6 +157,10 @@ namespace detail {
 
                 typedef typename std::iterator_traits<DVForwardIterator>::value_type iType;
                 bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+				if (runMode == bolt::amp::control::Automatic)
+				{
+					runMode = ctl.getDefaultPathToRun();
+				}
 				
                 if( runMode == bolt::amp::control::SerialCpu)
                 {				

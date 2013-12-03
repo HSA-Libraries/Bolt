@@ -114,6 +114,11 @@ copy_pick_iterator(bolt::amp::control &ctrl,  const InputIterator& first, const 
 
 
      bolt::amp::control::e_RunMode runMode = ctrl.getForceRunMode( );
+	 if (runMode == bolt::amp::control::Automatic)
+	 {
+		 runMode = ctrl.getDefaultPathToRun();
+	 }
+
 
      if( runMode == bolt::amp::control::SerialCpu )
      {
@@ -158,7 +163,10 @@ copy_pick_iterator(bolt::amp::control &ctrl,  const DVInputIterator& first, cons
     typedef typename std::iterator_traits<DVInputIterator>::value_type iType;
     typedef typename std::iterator_traits<DVOutputIterator>::value_type oType;
      bolt::amp::control::e_RunMode runMode = ctrl.getForceRunMode( );
-
+	 if (runMode == bolt::amp::control::Automatic)
+	 {
+		 runMode = ctrl.getDefaultPathToRun();
+	 }
 	 
      if( runMode == bolt::amp::control::SerialCpu )
      {
@@ -205,6 +213,11 @@ copy_pick_iterator( bolt::amp::control &ctrl,  const DVInputIterator& first, con
     typedef typename std::iterator_traits<DVInputIterator>::value_type iType;
     typedef typename std::iterator_traits<DVOutputIterator>::value_type oType;
      bolt::amp::control::e_RunMode runMode = ctrl.getForceRunMode( );
+
+	 if (runMode == bolt::amp::control::Automatic)
+	 {
+		 runMode = ctrl.getDefaultPathToRun();
+	 }
 
    
      if( runMode == bolt::amp::control::SerialCpu )
@@ -257,6 +270,10 @@ copy_pick_iterator(bolt::amp::control &ctrl,  const DVInputIterator& first, cons
     typedef typename std::iterator_traits<DVOutputIterator>::value_type oType;
 
     bolt::amp::control::e_RunMode runMode = ctrl.getForceRunMode( );
+	if (runMode == bolt::amp::control::Automatic)
+	{
+		runMode = ctrl.getDefaultPathToRun();
+	}
 	 
      if( runMode == bolt::amp::control::SerialCpu )
      {

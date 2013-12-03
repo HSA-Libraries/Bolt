@@ -115,6 +115,10 @@ void generate_enqueue(
                     return;
 
                 bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+				if (runMode == bolt::amp::control::Automatic)
+				{
+					runMode = ctl.getDefaultPathToRun();
+				}
 				
                 if( runMode == bolt::amp::control::SerialCpu)
                 {
@@ -153,6 +157,10 @@ void generate_enqueue(
             {
                 typedef typename std::iterator_traits<DVForwardIterator>::value_type iType;
                 bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+				if (runMode == bolt::amp::control::Automatic)
+				{
+					runMode = ctl.getDefaultPathToRun();
+				}
               
                 if( runMode == bolt::amp::control::SerialCpu)
                 {

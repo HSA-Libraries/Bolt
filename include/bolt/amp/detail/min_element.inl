@@ -290,6 +290,10 @@ namespace bolt {
                 //Need to look at how to control the number of threads spawned.
 
                 bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+				if (runMode == bolt::amp::control::Automatic)
+				{
+					runMode = ctl.getDefaultPathToRun();
+				}
             
                 const char * str = "MAX_KERNEL";
 
@@ -340,6 +344,10 @@ namespace bolt {
                     return last;
 
                 bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+				if (runMode == bolt::amp::control::Automatic)
+				{
+					runMode = ctl.getDefaultPathToRun();
+				}
          
                 const char * str = "MAX_KERNEL";
             

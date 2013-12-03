@@ -674,12 +674,13 @@ scan_by_key_pick_iterator(
 
 
     bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode( );
-/*
+
+
     if( runMode == bolt::amp::control::Automatic )
     {
         runMode = ctl.getDefaultPathToRun( );
     }
-*/
+
     #if defined(BOLT_DEBUG_LOG)
     BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
     #endif
@@ -782,12 +783,12 @@ scan_by_key_pick_iterator(
         return result;
 
     bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode( );
-/*
+
     if( runMode == bolt::amp::control::Automatic )
     {
         runMode = ctl.getDefaultPathToRun( );
     }
-*/
+
     #if defined(BOLT_DEBUG_LOG)
     BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
     #endif

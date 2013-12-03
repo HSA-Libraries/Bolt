@@ -629,7 +629,12 @@ void sort_pick_iterator( bolt::amp::control &ctl,
     }
     if (szElements == 0 )
         return;
-    const bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+    bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+	if (runMode == bolt::amp::control::Automatic)
+	{
+		runMode = ctl.getDefaultPathToRun();
+	}
+
     if ((runMode == bolt::amp::control::SerialCpu) || (szElements < SORT_CPU_THRESHOLD)) {
         bolt::amp::device_vector< T >::pointer firstPtr =  first.getContainer( ).data( );
         std::sort(&firstPtr[ first.m_Index ], &firstPtr[ last.m_Index ], comp);
@@ -673,7 +678,12 @@ void sort_pick_iterator( bolt::amp::control &ctl,
     if (szElements == 0)
         return;
 
-    const bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+    bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+	if (runMode == bolt::amp::control::Automatic)
+	{
+		runMode = ctl.getDefaultPathToRun();
+	}
+
     if ((runMode == bolt::amp::control::SerialCpu) || (szElements < SORT_CPU_THRESHOLD)) {
         std::sort(first, last, comp);
         return;
