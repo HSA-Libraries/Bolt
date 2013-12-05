@@ -186,7 +186,7 @@ namespace bolt {
          //       V_OPENCL( kernels[0].setArg(5, loc), "Error setting kernel argument" );
                 
                 int leng = szElements1 > szElements2 ? szElements1 : szElements2;
-                leng = leng + 64 - (leng % wgSize);
+				leng = leng + wgSize - (leng % wgSize);
 
                 l_Error = ctl.getCommandQueue().enqueueNDRangeKernel(
                     kernels[0],

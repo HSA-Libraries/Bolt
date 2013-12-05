@@ -30,10 +30,18 @@ set( ampBolt.Runtime.Headers
         ${ampBolt.Include.Dir}/count.h
         ${ampBolt.Include.Dir}/device_vector.h 
         ${ampBolt.Include.Dir}/functional.h 
+        ${ampBolt.Include.Dir}/merge.h	
+        ${ampBolt.Include.Dir}/min_element.h
+        ${ampBolt.Include.Dir}/max_element.h	
+        ${ampBolt.Include.Dir}/copy.h
+        ${ampBolt.Include.Dir}/fill.h	
+        ${ampBolt.Include.Dir}/generate.h
+        ${ampBolt.Include.Dir}/inner_product.h		
         ${ampBolt.Include.Dir}/parallel_iteration.h 
         ${ampBolt.Include.Dir}/pool_alloc.h 
         ${ampBolt.Include.Dir}/reduce.h 
         ${ampBolt.Include.Dir}/scan.h 
+		${ampBolt.Include.Dir}/scan_by_key.h 
         ${ampBolt.Include.Dir}/sort.h         
         ${ampBolt.Include.Dir}/synchronized_view.h 
         ${ampBolt.Include.Dir}/transform.h 
@@ -46,7 +54,13 @@ set( ampBolt.Runtime.Headers.Iterator
     
 set( ampBolt.Runtime.Headers.Detail
         ${ampBolt.Include.Dir}/detail/count.inl
-        ${ampBolt.Include.Dir}/detail/reduce.inl
+        ${ampBolt.Include.Dir}/detail/reduce.inl  
+        ${ampBolt.Include.Dir}/detail/merge.inl 
+        ${ampBolt.Include.Dir}/detail/min_element.inl
+        ${ampBolt.Include.Dir}/detail/copy.inl
+        ${ampBolt.Include.Dir}/detail/fill.inl	
+        ${ampBolt.Include.Dir}/detail/generate.inl
+        ${ampBolt.Include.Dir}/detail/inner_product.inl				
         ${ampBolt.Include.Dir}/detail/scan.inl
         ${ampBolt.Include.Dir}/detail/scan_by_key.inl
         ${ampBolt.Include.Dir}/detail/sort.inl        

@@ -16,8 +16,8 @@
 ############################################################################                                                                                     
 
 # List the names of common files to compile across all platforms
-set( ampBolt.Test.TransformReduce.Source stdafx.cpp TransformReduceTest.cpp )
-set( ampBolt.Test.TransformReduce.Headers stdafx.h targetver.h ${BOLT_INCLUDE_DIR}/bolt/amp/transform_reduce.h)
+set( ampBolt.Test.TransformReduce.Source TransformReduceTest.cpp )
+set( ampBolt.Test.TransformReduce.Headers ${BOLT_INCLUDE_DIR}/bolt/amp/transform_reduce.h ${BOLT_INCLUDE_DIR}/bolt/amp/detail/transform_reduce.inl)
 
 set( ampBolt.Test.TransformReduce.Files ${ampBolt.Test.TransformReduce.Source} ${ampBolt.Test.TransformReduce.Headers} )
 
