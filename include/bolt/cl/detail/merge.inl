@@ -181,20 +181,24 @@ namespace bolt {
                 V_OPENCL( kernels[0].setArg(7, result.gpuPayloadSize( ),&result_payload ),"Error setting a kernel argument" );
                 V_OPENCL( kernels[0].setArg(8, *userFunctor), "Error setting kernel argument" );
                 
-        //        ::cl::LocalSpaceArg loc;
+         //       ::cl::LocalSpaceArg loc;
          //       loc.size_ = wgSize*sizeof(T);
          //       V_OPENCL( kernels[0].setArg(5, loc), "Error setting kernel argument" );
                 
                 int leng = szElements1 > szElements2 ? szElements1 : szElements2;
 				leng = leng + wgSize - (leng % wgSize);
-
+                
+                ::cl::Event mergeEvent;
                 l_Error = ctl.getCommandQueue().enqueueNDRangeKernel(
                     kernels[0],
                     ::cl::NullRange,
                     ::cl::NDRange(leng),
-                    ::cl::NDRange(wgSize));
+                    ::cl::NDRange(wgSize), 
+                    NULL, 
+                    &mergeEvent);
 
                 V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for merge() kernel" );
+                bolt::cl::wait(ctl, mergeEvent);
 
                 return (result + szElements1 + szElements2);
             }
