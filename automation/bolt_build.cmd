@@ -159,27 +159,21 @@ if "%BOLT_BUILD_COMP_VER%" == "10" (
   ) else (
     goto :error_no_VSCOMNTOOLS
   )
-) else (
-  if "%BOLT_BUILD_COMP_VER%" == "11" ( 
+) else if "%BOLT_BUILD_COMP_VER%" == "11" ( 
     if not "%VS110COMNTOOLS%" == "" ( 
       set VCVARSALL="%VS110COMNTOOLS%..\..\VC\vcvarsall.bat"
     ) else (
       goto :error_no_VSCOMNTOOLS
     )
-  ) 
-  else (
-  if "%BOLT_BUILD_COMP_VER%" == "12" ( 
-      if not "%VS120COMNTOOLS%" == "" ( 
-        set VCVARSALL="%VS120COMNTOOLS%..\..\VC\vcvarsall.bat"
-      ) else (
-        goto :error_no_VSCOMNTOOLS
-      )
-  )
-  else (
-    echo Unrecognized BOLT_BUILD_COMP_VER=%BOLT_BUILD_COMP_VER%
-  )
-)
-)
+) else if "%BOLT_BUILD_COMP_VER%" == "12" ( 
+		if not "%VS120COMNTOOLS%" == "" ( 
+			set VCVARSALL="%VS120COMNTOOLS%..\..\VC\vcvarsall.bat"
+		) else (
+			goto :error_no_VSCOMNTOOLS
+		)
+	) else (
+		echo Unrecognized BOLT_BUILD_COMP_VER=%BOLT_BUILD_COMP_VER%
+  	)
 
 
 
