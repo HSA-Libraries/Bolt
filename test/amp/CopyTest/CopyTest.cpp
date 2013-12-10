@@ -1215,221 +1215,217 @@ TEST(CopyN, MultiCoreStdPrim)
 }
 
 
-//TEST(Copy, DevStruct)
-//{
-//    for (int i = 0; i < numLengths; i++)
-//    {
-//        // test length
-//        int length = lengths[i];
-//        // populate source vector with random ints
-//		//std::vector<UserStruct> source(length);
-//        bolt::amp::device_vector<UserStruct> source;
-//		
-//        for (int j = 0; j < length; j++)
-//        {
-//            UserStruct us;
-//            us.a = (bool) (rand()%2 ? true : false);
-//            us.c = (int)  (rand());
-//            us.d = (float) (1.f*rand());
-//            //us.e = (double) (1.0*rand()/rand());
-//            source.push_back(us);
-//        }
-//                
-//        // destination vector
-//        bolt::amp::device_vector<UserStruct> destination(length, UserStruct(), true);
-//        // perform copy
-//        bolt::amp::copy(source.begin(), source.end(), destination.begin());
-//        // GoogleTest Comparison
-//
-//        cmpArrays(source, destination);
-//
-//    }
-//}
+TEST(Copy, DevStruct)
+{
+    for (int i = 0; i < numLengths; i++)
+    {
+        // test length
+        int length = lengths[i];
+        // populate source vector with random ints
+		//std::vector<UserStruct> source(length);
+        bolt::amp::device_vector<UserStruct> source;
+		
+        for (int j = 0; j < length; j++)
+        {
+            UserStruct us;
+            us.a = (bool) (rand()%2 ? true : false);
+            us.c = (int)  (rand());
+            us.d = (float) (1.f*rand());
+            //us.e = (double) (1.0*rand()/rand());
+            source.push_back(us);
+        }
+                
+        // destination vector
+        bolt::amp::device_vector<UserStruct> destination(length, UserStruct(), true);
+        // perform copy
+        bolt::amp::copy(source.begin(), source.end(), destination.begin());
+        // GoogleTest Comparison
 
-//TEST(Copy, SerialDevStruct)
-//{
-//        for (int i = 0; i < numLengths; i++)
-//    {
-//        // test length
-//        int length = lengths[i];
-//        // populate source vector with random ints
-//        bolt::amp::device_vector<UserStruct> source;
-//        for (int j = 0; j < length; j++)
-//        {
-//            UserStruct us;
-//            us.a = (bool) (rand()%2 ? true : false);
-//           /* us.b[0] = (char) (rand()%128);
-//            us.b[1] = (char) (rand()%128);
-//            us.b[2] = (char) (rand()%128);
-//            us.b[3] = (char) (rand()%128);*/
-//            us.c = (int)  (rand());
-//            us.d = (float) (1.f*rand());
-//            //us.e = (double) (1.0*rand()/rand());
-//            source.push_back(us);
-//        }
-//                
-//        bolt::amp::control ctl = bolt::amp::control::getDefault( );
-//        ctl.setForceRunMode(bolt::amp::control::SerialCpu); 
-//                
-//        // destination vector
-//        bolt::amp::device_vector<UserStruct> destination(length, UserStruct(), false, ctl);
-//        // perform copy
-//        bolt::amp::copy(ctl, source.begin(), source.end(), destination.begin());
-//        // GoogleTest Comparison
-//        //cmpArrays(source, destination, length);
-//		for (int i = 0; i < length; ++i){ 
-//          EXPECT_EQ(source[i], destination[i]);
-//		}
-//    }
-//}
-//
-//TEST(Copy, MultiCoreDevStruct)
-//{
-//    for (int i = 0; i < numLengths; i++)
-//    {
-//        // test length
-//        int length = lengths[i];
-//        // populate source vector with random ints
-//        bolt::amp::device_vector<UserStruct> source;
-//        for (int j = 0; j < length; j++)
-//        {
-//            UserStruct us;
-//            us.a = (bool) (rand()%2 ? true : false);
-//           /* us.b[0] = (char) (rand()%128);
-//            us.b[1] = (char) (rand()%128);
-//            us.b[2] = (char) (rand()%128);
-//            us.b[3] = (char) (rand()%128);*/
-//            us.c = (int)  (rand());
-//            us.d = (float) (1.f*rand());
-//            //us.e = (double) (1.0*rand()/rand());
-//            source.push_back(us);
-//        }
-//                
-//        bolt::amp::control ctl = bolt::amp::control::getDefault( );
-//        ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu); 
-//                
-//        // destination vector
-//        bolt::amp::device_vector<UserStruct> destination(length, UserStruct(), false, ctl);
-//        // perform copy
-//        bolt::amp::copy(ctl, source.begin(), source.end(), destination.begin());
-//        // GoogleTest Comparison
-//        //cmpArrays(source, destination, length);
-//		for (int i = 0; i < length; ++i){ 
-//          EXPECT_EQ(source[i], destination[i]);
-//		}
-//    }
-//}
+		/* bolt::amp::device_vector<UserStruct>::pointer refptr =  source.data( );
+		 bolt::amp::device_vector<UserStruct>::pointer calcptr =   destination.data( );
+		 for( size_t i = 0; i < length; ++i )
+        {
+            EXPECT_EQ( refptr[ i ], calcptr[ i ] ) << _T( "Where i = " ) << i;
+        }*/
+        cmpArrays(source, destination);
+
+    }
+}
+
+TEST(Copy, SerialDevStruct)
+{
+        for (int i = 0; i < numLengths; i++)
+    {
+        // test length
+        int length = lengths[i];
+        // populate source vector with random ints
+        bolt::amp::device_vector<UserStruct> source;
+        for (int j = 0; j < length; j++)
+        {
+            UserStruct us;
+            us.a = (bool) (rand()%2 ? true : false);
+           /* us.b[0] = (char) (rand()%128);
+            us.b[1] = (char) (rand()%128);
+            us.b[2] = (char) (rand()%128);
+            us.b[3] = (char) (rand()%128);*/
+            us.c = (int)  (rand());
+            us.d = (float) (1.f*rand());
+            //us.e = (double) (1.0*rand()/rand());
+            source.push_back(us);
+        }
+                
+        bolt::amp::control ctl = bolt::amp::control::getDefault( );
+        ctl.setForceRunMode(bolt::amp::control::SerialCpu); 
+                
+        // destination vector
+        bolt::amp::device_vector<UserStruct> destination(length, UserStruct(), false, ctl);
+        // perform copy
+        bolt::amp::copy(ctl, source.begin(), source.end(), destination.begin());
+        // GoogleTest Comparison
+        cmpArrays(source, destination);
+		
+    }
+}
+
+TEST(Copy, MultiCoreDevStruct)
+{
+    for (int i = 0; i < numLengths; i++)
+    {
+        // test length
+        int length = lengths[i];
+        // populate source vector with random ints
+        bolt::amp::device_vector<UserStruct> source;
+        for (int j = 0; j < length; j++)
+        {
+            UserStruct us;
+            us.a = (bool) (rand()%2 ? true : false);
+           /* us.b[0] = (char) (rand()%128);
+            us.b[1] = (char) (rand()%128);
+            us.b[2] = (char) (rand()%128);
+            us.b[3] = (char) (rand()%128);*/
+            us.c = (int)  (rand());
+            us.d = (float) (1.f*rand());
+            //us.e = (double) (1.0*rand()/rand());
+            source.push_back(us);
+        }
+                
+        bolt::amp::control ctl = bolt::amp::control::getDefault( );
+        ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu); 
+                
+        // destination vector
+        bolt::amp::device_vector<UserStruct> destination(length, UserStruct(), false, ctl);
+        // perform copy
+        bolt::amp::copy(ctl, source.begin(), source.end(), destination.begin());
+        // GoogleTest Comparison
+        cmpArrays(source, destination);
+		
+    }
+}
 
 
-//TEST(CopyN, DevStruct)
-//{
-//    for (int i = 0; i < numLengths; i++)
-//    {
-//        // test length
-//        int length = lengths[i];
-//        // populate source vector with random ints
-//        bolt::amp::device_vector<UserStruct> source;
-//        for (int j = 0; j < length; j++)
-//        {
-//            UserStruct us;
-//            us.a = (bool) (rand()%2 ? true : false);
-//           /* us.b[0] = (char) (rand()%128);
-//            us.b[1] = (char) (rand()%128);
-//            us.b[2] = (char) (rand()%128);
-//            us.b[3] = (char) (rand()%128);*/
-//            us.c = (int)  (rand());
-//            us.d = (float) (1.f*rand());
-//            //us.e = (double) (1.0*rand()/rand());
-//            source.push_back(us);
-//        }
-//                
-//                
-//        // destination vector
-//        bolt::amp::device_vector<UserStruct> destination(length, UserStruct(), false);
-//        // perform copy
-//        bolt::amp::copy_n(source.begin(), length, destination.begin());
-//        // GoogleTest Comparison
-//        //cmpArrays(source, destination, length);
-//		for (int i = 0; i < length; ++i){ 
-//          EXPECT_EQ(source[i], destination[i]);
-//		}
-//    }
-//}
-//
-//
-//TEST(CopyN, SerialDevStruct)
-//{
-//    for (int i = 0; i < numLengths; i++)
-//    {
-//        // test length
-//        int length = lengths[i];
-//        // populate source vector with random ints
-//        bolt::amp::device_vector<UserStruct> source;
-//        for (int j = 0; j < length; j++)
-//        {
-//            UserStruct us;
-//            us.a = (bool) (rand()%2 ? true : false);
-//          /*  us.b[0] = (char) (rand()%128);
-//            us.b[1] = (char) (rand()%128);
-//            us.b[2] = (char) (rand()%128);
-//            us.b[3] = (char) (rand()%128);*/
-//            us.c = (int)  (rand());
-//            us.d = (float) (1.f*rand());
-//            //us.e = (double) (1.0*rand()/rand());
-//            source.push_back(us);
-//        }
-//                
-//        bolt::amp::control ctl = bolt::amp::control::getDefault( );
-//        ctl.setForceRunMode(bolt::amp::control::SerialCpu); 
-//                
-//        // destination vector
-//        bolt::amp::device_vector<UserStruct> destination(length, UserStruct(), false, ctl);
-//        // perform copy
-//        bolt::amp::copy_n(ctl, source.begin(), length, destination.begin());
-//        // GoogleTest Comparison
-//        //cmpArrays(source, destination, length);
-//		for (int i = 0; i < length; ++i){ 
-//          EXPECT_EQ(source[i], destination[i]);
-//		}
-//    }
-//}
-//
-//TEST(CopyN, MultiCoreDevStruct)
-//{
-//    for (int i = 0; i < numLengths; i++)
-//    {
-//        // test length
-//        int length = lengths[i];
-//        // populate source vector with random ints
-//        bolt::amp::device_vector<UserStruct> source;
-//        for (int j = 0; j < length; j++)
-//        {
-//            UserStruct us;
-//            us.a = (bool) (rand()%2 ? true : false);
-//           /* us.b[0] = (char) (rand()%128);
-//            us.b[1] = (char) (rand()%128);
-//            us.b[2] = (char) (rand()%128);
-//            us.b[3] = (char) (rand()%128);*/
-//            us.c = (int)  (rand());
-//            us.d = (float) (1.f*rand());
-//            //us.e = (double) (1.0*rand()/rand());
-//            source.push_back(us);
-//        }
-//                
-//        bolt::amp::control ctl = bolt::amp::control::getDefault( );
-//        ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu); 
-//                
-//        // destination vector
-//        bolt::amp::device_vector<UserStruct> destination(length, UserStruct(), false, ctl);
-//        // perform copy
-//        bolt::amp::copy_n(ctl, source.begin(), length, destination.begin());
-//        // GoogleTest Comparison
-//        //cmpArrays(source, destination, length);
-//		for (int i = 0; i < length; ++i){ 
-//          EXPECT_EQ(source[i], destination[i]);
-//		}
-//    }
-//}
+TEST(CopyN, DevStruct)
+{
+    for (int i = 0; i < numLengths; i++)
+    {
+        // test length
+        int length = lengths[i];
+        // populate source vector with random ints
+        bolt::amp::device_vector<UserStruct> source;
+        for (int j = 0; j < length; j++)
+        {
+            UserStruct us;
+            us.a = (bool) (rand()%2 ? true : false);
+           /* us.b[0] = (char) (rand()%128);
+            us.b[1] = (char) (rand()%128);
+            us.b[2] = (char) (rand()%128);
+            us.b[3] = (char) (rand()%128);*/
+            us.c = (int)  (rand());
+            us.d = (float) (1.f*rand());
+            //us.e = (double) (1.0*rand()/rand());
+            source.push_back(us);
+        }
+                
+                
+        // destination vector
+        bolt::amp::device_vector<UserStruct> destination(length, UserStruct(), false);
+        // perform copy
+        bolt::amp::copy_n(source.begin(), length, destination.begin());
+        // GoogleTest Comparison
+        cmpArrays(source, destination);
+		
+    }
+}
+
+
+TEST(CopyN, SerialDevStruct)
+{
+    for (int i = 0; i < numLengths; i++)
+    {
+        // test length
+        int length = lengths[i];
+        // populate source vector with random ints
+        bolt::amp::device_vector<UserStruct> source;
+        for (int j = 0; j < length; j++)
+        {
+            UserStruct us;
+            us.a = (bool) (rand()%2 ? true : false);
+          /*  us.b[0] = (char) (rand()%128);
+            us.b[1] = (char) (rand()%128);
+            us.b[2] = (char) (rand()%128);
+            us.b[3] = (char) (rand()%128);*/
+            us.c = (int)  (rand());
+            us.d = (float) (1.f*rand());
+            //us.e = (double) (1.0*rand()/rand());
+            source.push_back(us);
+        }
+                
+        bolt::amp::control ctl = bolt::amp::control::getDefault( );
+        ctl.setForceRunMode(bolt::amp::control::SerialCpu); 
+                
+        // destination vector
+        bolt::amp::device_vector<UserStruct> destination(length, UserStruct(), false, ctl);
+        // perform copy
+        bolt::amp::copy_n(ctl, source.begin(), length, destination.begin());
+        // GoogleTest Comparison
+        cmpArrays(source, destination);
+		
+    }
+}
+
+TEST(CopyN, MultiCoreDevStruct)
+{
+    for (int i = 0; i < numLengths; i++)
+    {
+        // test length
+        int length = lengths[i];
+        // populate source vector with random ints
+        bolt::amp::device_vector<UserStruct> source;
+        for (int j = 0; j < length; j++)
+        {
+            UserStruct us;
+            us.a = (bool) (rand()%2 ? true : false);
+           /* us.b[0] = (char) (rand()%128);
+            us.b[1] = (char) (rand()%128);
+            us.b[2] = (char) (rand()%128);
+            us.b[3] = (char) (rand()%128);*/
+            us.c = (int)  (rand());
+            us.d = (float) (1.f*rand());
+            //us.e = (double) (1.0*rand()/rand());
+            source.push_back(us);
+        }
+                
+        bolt::amp::control ctl = bolt::amp::control::getDefault( );
+        ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu); 
+                
+        // destination vector
+        bolt::amp::device_vector<UserStruct> destination(length, UserStruct(), false, ctl);
+        // perform copy
+        bolt::amp::copy_n(ctl, source.begin(), length, destination.begin());
+        // GoogleTest Comparison
+        cmpArrays(source, destination);
+		
+    }
+}
 
 
 
