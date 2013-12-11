@@ -47,7 +47,30 @@ IAM = 'Bolt'
 precisionvalues = ['single', 'double']
 libraryvalues = ['STL','BOLT','TBB', 'null']
 memoryvalues = ['device','host', 'null']
-routinevalues = ['copy','scan','sort', 'stablesort', 'inclusivescan', 'transform', 'reduce','null']
+routinevalues = ['binarytransform',
+'binarysearch',
+'copy',
+'count',
+'fill',
+'generate',
+'innerproduct',
+'maxelement',
+'minelement',
+'merge',
+'reduce',
+'reducebykey',
+'scan',
+'scanbykey',
+'sort',
+'sortbykey',
+'stablesort',
+'stablesortbykey',
+'transformreduce',
+'transformscan',
+'unarytransform',
+'gather',
+'scatter','null']
+
 backEndValues = ['cl','amp']
 
 parser = argparse.ArgumentParser(description='Measure performance of a Bolt library')
@@ -90,6 +113,7 @@ parser.add_argument('--test',
 parser.add_argument('--backend',
     dest='backend', default='cl', choices=backEndValues,
     help='Which Bolt backend to use')
+parser.add_argument("-i","--iteration", help="number of iteration per routine");
 
 args = parser.parse_args()
 
@@ -322,14 +346,12 @@ for params in test_combinations:
     if params.device == 'default':
         arguments = ['clBolt.Bench.Benchmark.exe',
                      '-l', lengthx,
-                     '-i', '50',
                      '-f', args.routine]
     else:
         arguments = ['clBolt.Bench.Benchmark.exe',
                      '-a', # Enumerate all devices in system, so that we can benchmark any device on command line
                      '-d', device,
                      '-l', lengthx,
-                     '-i', '50'
                      '-f', args.routine]
     if args.library == 'TBB':
         arguments.append( '-m' )
@@ -346,14 +368,18 @@ for params in test_combinations:
         
     if args.memory == 'device':
         arguments.append( '-D' )
-    
+	if args.iteration:
+		arguments.append( '-i' )
+		arguments.append( args.iteration )
+		
     writeline = True
     try:
         printLog('Executing Command: '+ str(arguments))
         output = checkTimeOutPut(arguments)
         output = output.split(os.linesep);
         printLog('Execution Successfull---------------\n')
-
+		
+		
     except errorHandler.ApplicationException as ae:
         writeline = False
         printLog('ERROR: Command is taking too much of time '+ae.message+'\n'+'Command: \n'+str(arguments))
@@ -384,7 +410,9 @@ for params in test_combinations:
     #    speedStr = 'MKeys/s'
     #if args.routine == 'sort':
     #    speedStr = 'MKeys/s'
-    speedStr = 'GB/s'
+	
+    #speedStr = 'GB/s'
+	speedStr = 'MKeys/s'
     if writeline:
         try:
             output = itertools.ifilter( lambda x: x.count( speedStr ), output)
