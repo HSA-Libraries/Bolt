@@ -34,7 +34,7 @@ args = parser.parse_args()
 if (args.iteration and args.iteration and args.routine):
 
 	txtpdf_files = glob.glob('*.txt*')
-	print txtpdf_files
+	##print txtpdf_files
 	deleteFile = raw_input("Would you like to delete all .txt and .pdf files?(yes/no) ")
 	if deleteFile == "yes":
 		# need to loop through txtpdf_files and use os.remove
