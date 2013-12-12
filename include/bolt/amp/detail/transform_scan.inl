@@ -496,7 +496,7 @@ transform_scan_pick_iterator(
     {
 		
 		 // Map the input iterator to a device_vector
-        device_vector< iType, concurrency::array_view > dvInput( first, last, true, ctl );
+        device_vector< iType, concurrency::array_view > dvInput( first, last, false, ctl );
         device_vector< oType, concurrency::array_view > dvOutput( result, numElements, true, ctl );
 
         //Now call the actual AMP algorithm
