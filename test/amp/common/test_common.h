@@ -14,6 +14,7 @@
 *   limitations under the License.                                         
 ***************************************************************************/                                                                                     
 #include <array>
+#include "bolt/amp/device_vector.h"
 
 #define BOLT_TEST_MAX_FAILURES 8
 
