@@ -14,7 +14,7 @@
 *   limitations under the License.                                         
 ***************************************************************************/                                                                                     
 #include <array>
-#include <vector> 
+
 #define BOLT_TEST_MAX_FAILURES 8
 
 #define BOLT_TEST_RESET_FAILURES \
@@ -22,6 +22,12 @@
 
 #define BOLT_TEST_INCREMENT_FAILURES \
     if ( !(ref[ i ] == calc[ i ]) ) numFailures++; \
+    if ( numFailures > BOLT_TEST_MAX_FAILURES ) { \
+        break; \
+    }
+
+#define BOLT_TEST_INCREMENT_FAILURES_PTR \
+    if ( !(refptr[ i ] == calcptr[ i ]) ) numFailures++; \
     if ( numFailures > BOLT_TEST_MAX_FAILURES ) { \
         break; \
     }
@@ -70,6 +76,7 @@ struct cmpStdArray
         return ::testing::AssertionSuccess( );
     }
 };
+
 
 template< size_t N >
 struct cmpStdArray< float, N >
@@ -199,4 +206,38 @@ typename std::enable_if< !(std::is_same< typename std::iterator_traits<typename 
     }
 
     return ::testing::AssertionSuccess( );
+}
+
+template< typename T1,typename T2>
+::testing::AssertionResult 
+cmpArrays( typename bolt::amp::device_vector<T1> &ref, typename bolt::amp::device_vector<T2> &calc )
+{
+
+        typename bolt::amp::device_vector<T1>::pointer refptr =  ref.data( );
+		typename bolt::amp::device_vector<T2>::pointer calcptr =  calc.data( );
+
+        BOLT_TEST_RESET_FAILURES
+        for( size_t i = 0; i < ref.size(); ++i )
+        {
+            BOLT_TEST_INCREMENT_FAILURES_PTR
+            EXPECT_EQ( refptr[ i ], calcptr[ i ] ) << _T( "Where i = " ) << i;
+        }
+      return ::testing::AssertionSuccess( );
+}
+
+template< typename T1,typename T2>
+::testing::AssertionResult 
+cmpArrays( typename bolt::amp::device_vector<T1> &ref, typename bolt::amp::device_vector<T2> &calc, size_t N )
+{
+
+        typename bolt::amp::device_vector<T1>::pointer refptr =  ref.data( );
+		typename bolt::amp::device_vector<T2>::pointer calcptr =  calc.data( );
+
+        BOLT_TEST_RESET_FAILURES
+        for( size_t i = 0; i < N; ++i )
+        {
+            BOLT_TEST_INCREMENT_FAILURES_PTR
+            EXPECT_EQ( refptr[ i ], calcptr[ i ] ) << _T( "Where i = " ) << i;
+        }
+      return ::testing::AssertionSuccess( );
 }
