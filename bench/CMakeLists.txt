@@ -40,9 +40,9 @@ if( BUILD_TBB )
     set( TBB_LIBRARIES debug;${TBB_LIBRARY_DEBUG};${TBB_LIBRARY_MALLOC_DEBUG};optimized;${TBB_LIBRARY};${TBB_LIBRARY_MALLOC} )
 endif()
 
-if( BUILD_ampBolt AND Boost_FOUND )
-	add_subdirectory( AMP )
-endif( )
+#if( BUILD_ampBolt AND Boost_FOUND )
+#	add_subdirectory( AMP )
+#endif( )
 
 if( BUILD_clBolt AND Boost_FOUND )
 	add_subdirectory( cl )
