@@ -47,6 +47,7 @@ set( ampBolt.Runtime.Headers
         ${ampBolt.Include.Dir}/transform.h 
         ${ampBolt.Include.Dir}/transform_reduce.h 
         ${ampBolt.Include.Dir}/transform_reduce_range.h
+		${ampBolt.Include.Dir}/transform_scan.h
     )
 set( ampBolt.Runtime.Headers.Iterator
         ${ampBolt.Include.Dir}/iterator/iterator_traits.h 
