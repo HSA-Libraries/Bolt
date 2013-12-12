@@ -27,8 +27,7 @@
 #include <gtest/gtest.h>
 #include "common/stdafx.h"
 #include "common/test_common.h"
-#include "bolt/amp/BinarySearch.h"
-#include "bolt/amp/sort.h"
+#include <bolt/amp/BinarySearch.h>
 
 #include <bolt/amp/sort.h>
 #include <bolt/miniDump.h>

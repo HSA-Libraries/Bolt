@@ -16,8 +16,8 @@
 ############################################################################                                                                                     
 
 # List the names of common files to compile across all platforms
-set( ampBolt.Test.BinarySearch.Source stdafx.cpp BinarySearch.cpp )
-set( ampBolt.Test.BinarySearch.Headers stdafx.h targetver.h ${BOLT_INCLUDE_DIR}/bolt/amp/BinarySearch.h )
+set( ampBolt.Test.BinarySearch.Source BinarySearch.cpp )
+set( ampBolt.Test.BinarySearch.Headers ${BOLT_INCLUDE_DIR}/bolt/amp/BinarySearch.h ${BOLT_INCLUDE_DIR}/bolt/amp/detail/binary_search.inl)
 
 set( ampBolt.Test.BinarySearch.Files ${ampBolt.Test.BinarySearch.Source} ${ampBolt.Test.BinarySearch.Headers} )
 
