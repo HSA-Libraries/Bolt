@@ -16,9 +16,8 @@ print("### Installed all these required useful package as well - \n\
  		  \t\tpyparsing-2.0.1.win32-py2.7.exe\n\
  		  \t\tsix-1.4.1.win32-py2.7.exe")
  
-print("### Default value of Iterator = 50, to change the no. of iteration, please go to line no. 325 of file commonPeformance.py")
-print("### In command-line-arguments -l a1-a1:x2  --> means for each iteration double the length of buffer w.r.t. previous length.\n\
-					\t-l a1-a2:a3  --> means for each iteration increase the buffer size by a3.")
+print("### In command-line-arguments -l a1-a1:x2  --> means for each iteration double the length of buffer w.r.t. previous length.");
+print("                              -l a1-a2:a3  --> means for each iteration increase the buffer size by a3.");
 
 import os
 import sys

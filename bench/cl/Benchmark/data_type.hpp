@@ -1,4 +1,4 @@
-
+using namespace std;
 /******************************************************************************
  *  User Defined Data Types - vec2,4,8
  *****************************************************************************/
@@ -637,3 +637,37 @@
         };
     }; 
 #endif
+
+    int ValidateBenchmarkKey(const char *par_instr,std::string keys [],int len)
+    {
+    int loc_mid,
+        loc_high,
+        loc_low;
+
+    loc_low = 0;
+    loc_high = len-1;
+    /*
+     *Binary search.
+     */
+    while(loc_low <= loc_high)
+    {
+        loc_mid =((loc_low + loc_high) / 2);
+
+        if(strcmp((const char  *)keys[loc_mid].c_str(),(const char  *)par_instr) < 0 )
+        {
+            loc_low = (loc_mid + 1);
+        }
+        else if (strcmp((const char  *)keys[loc_mid].c_str(),(const char  *)par_instr) > 0 )
+        {
+            loc_high = (loc_mid - 1);
+        }
+        else
+        { 
+            return loc_mid;									
+
+        }
+    }
+
+       /* Not a key word */
+    return -1;
+}

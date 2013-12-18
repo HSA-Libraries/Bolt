@@ -21,11 +21,8 @@
 #include <fstream>
 #include <vector>
 #include <algorithm>
-#include <boost/program_options.hpp>
 #define Bolt_Benchmark 1
-#include <bolt/unicode.h>
 #include "bolt/unicode.h"
-#include <CL/cl.h>
 #include "statisticalTimer.h"
 
 #if (Bolt_Benchmark == 1)
@@ -73,8 +70,9 @@
 #include <thrust/gather.h>
 #include <thrust/random.h>
 #include <iomanip>
-#include "PerformanceCounter.h"
+//#include "PerformanceCounter.h"
 #endif
+
 #if defined(_WIN32)
 AsyncProfiler aProfiler("default");
 #endif
@@ -88,13 +86,17 @@ const std::streamsize colWidth = 26;
 BOLT_CREATE_DEFINE(Bolt_DATA_TYPE,DATA_TYPE,unsigned int);
 #endif
 #endif 
-//user defined data types and functions and predicates are dedined
+#define BENCHMARK_OPTIONS_SIZE 30
 #include "data_type.hpp"
-
+//user defined data types and functions and predicates are dedined
 // function generator:
+std::default_random_engine gen;
+std::uniform_int_distribution<DATA_TYPE> distr(10,1<<20);
 DATA_TYPE RandomNumber() 
-{
-    return rand()*rand()*rand();
+{    
+    DATA_TYPE dice_roll = distr(gen); // generates number in the range 10..1<<31
+    //std::cout<<dice_roll<<"\n";
+    return (dice_roll); 
 }
 
 /******************************************************************************
@@ -152,6 +154,72 @@ static char *functionNames[] = {
 "scatter"
 };
 
+enum benchmarkType {
+bm_all,
+bm_cpu,
+bm_gpu,
+bm_device,
+bm_deviceMemory,
+bm_function,
+bm_help,
+bm_iterations,
+bm_length,
+bm_platform,
+bm_queryOpenCL,
+bm_runMode,
+bm_vecType,
+bm_version,
+bm_ALL,
+bm_CPU,
+bm_GPU,
+bm_DEVICE,
+bm_DEVICEMEMORY,
+bm_FUNCTION,
+bm_HELP,
+bm_ITERATIONS,
+bm_LENGTH,
+bm_PLATFORM,
+bm_QUERYOPENCL,
+bm_RUNMODE,
+bm_VECTYPE,
+bm_VERSION,
+bm_filename,
+bm_throwaway
+};
+
+std::string benchmark_options[]={
+"--all",
+"--cpu",
+"--gpu",
+"--device",
+"--deviceMemory",
+"--function",
+"--help",
+"--iterations",
+"--length",
+"--platform",
+"--queryOpenCL",
+"--runMode",
+"--vecType",
+"--version",
+"-a",
+"-c",
+"-g",
+"-d",
+"-D",
+"-f",
+"-h",
+"-i",
+"-l",
+"-p",
+"-q",
+"-m",
+"-t",
+"-v",
+"--filename",
+"--throw-away"
+};
+
 /******************************************************************************
  *  Data Types Enumerated
  *****************************************************************************/
@@ -167,7 +235,6 @@ static char *dataTypeNames[] = {
     "vec4",
     "vec8"
 };
-namespace po = boost::program_options;
 using namespace std;
 
 /******************************************************************************
@@ -586,7 +653,7 @@ void executeFunctionType(
         #if (Bolt_Benchmark == 1)
         bolt::cl::device_vector<unsigned int> Map(input1.size());
         #else
-        thrust::device_vector<DATA_TYPE> Map(input1.size());
+        thrust::device_vector<unsigned in> Map(input1.size());
         #endif
         myTimer.Stop( testId );
         for( int i=0; i < input1.size() ; i++ )
@@ -605,17 +672,28 @@ void executeFunctionType(
         }
         } 
         break;
+
         case f_scatter: 
-        {            
+        { 		
         std::cout <<  functionNames[f_scatter] << std::endl;
+        myTimer.Start( testId );
+        #if (Bolt_Benchmark == 1)
         bolt::cl::device_vector<unsigned int> Map(input1.size());
+        #else
+        thrust::device_vector<unsigned in> Map(input1.size());
+        #endif
         for( int i=0; i < input1.size() ; i++ )
         {
         Map[i] = i;
         }
         for (size_t iter = 0; iter < iterations+1; iter++)
         {
+        myTimer.Start( testId );
+        #if (Bolt_Benchmark == 1)
         bolt::cl::scatter( ctrl, input1.begin( ),input1.end( ), Map.begin(), output.begin()); 
+        #else
+        thrust::scatter(  input1.begin( ),input1.end( ), Map.begin(), output.begin()); 
+        #endif
         }
         } 
         break;
@@ -897,12 +975,36 @@ void executeFunction(
 
 }
 
+void PrintHelp()
+{
+        cout<<"OpenCL command line options: \n";
+            cout<<"-h [ --help ]"<<"\n\t\t\t\tproduces this help message\n";
+        #if (Bolt_Benchmark == 1)
+            cout<<"-v [ --version ]"<<"\n\t\t\t\tPrint queryable version information from the Bolt CL library\n";
+            cout<<"-q [ --queryOpenCL ]"<<"\n\t\t\t\tPrint queryable platform and device info and return\n";
+            cout<<"-g [ --gpu ]"<<"\n\t\t\t\tReport only OpenCL GPU devices\n";
+            cout<<"-c [ --cpu ]"<<"\n\t\t\t\tReport only OpenCL CPU devices\n";
+            cout<<"-a [ --all ]"<<"\n\t\t\t\tReport all OpenCL devices\n";			
+            cout<<"-m [ --runMode] arg"<<"\n\t\t\t\tRun Mode: 0-Auto, 1-SerialCPU, 2-MultiCoreCPU, 3-GPU\n";
+        #endif
+            cout<<"-q [ --queryCuda ]"<<"\n\t\t\t\tPrint queryable platform and device info and return\n";
+            cout<<"-D [ --deviceMemory ]"<<"\n\t\t\t\tAllocate vectors in device memory; default is host memory\n";
+            cout<<"-p [ --platform ]  arg"<<"\n\t\t\t\tSpecify the platform under test using the index reported by -q flag\n";  
+            cout<<"-d [ --device ] arg"<<"\n\t\t\t\tSpecify the device under test using the index reported by the -q flag. Index is relative with respect to -g, -c or -a flags\n";
+            cout<<"-l [ --length ] arg"<<"\n\t\t\t\tLength of scan array\n";
+            cout<<"-i [ --iterations ] arg"<<"\n\t\t\t\tNumber of samples in timing loop\n";
+            cout<<"-t [ --vecType ] arg"<<"\n\t\t\t\tData Type to use: 0-(1 value), 1-(2 values),2-(4 values), 3-(8 values)\n";
+            cout<<"-f [ --function] arg"<<"\n\t\t\t\tFunction or routine called for Benchmark\n";
+            cout<<"--filename arg"<<"\n\t\t\t\tName of output file\n";
+            cout<<"--throw-away arg"<<"\n\t\t\t\tNumber of trials to skip averaging\n";
+}
+
 /******************************************************************************
  *
  *  Main
  *
  *****************************************************************************/
-int _tmain( int argc, _TCHAR* argv[] )
+int main( int argc, char* argv[] )
 {
     cl_int err = CL_SUCCESS;
     cl_uint userPlatform    = 0;
@@ -918,96 +1020,220 @@ int _tmain( int argc, _TCHAR* argv[] )
     cl_device_type deviceType = CL_DEVICE_TYPE_DEFAULT;
     bool defaultDevice      = true;
     bool print_clInfo       = false;
-    bool hostMemory         = true;
+    bool hostMemory         = false;
     /******************************************************************************
      * Parse Command-line Parameters
      ******************************************************************************/
     try
-    {
-        // Declare the supported options.
-        po::options_description desc( "OpenCL Scan command line options" );
-        desc.add_options()
-            ( "help,h",			"produces this help message" )
-        #if (Bolt_Benchmark == 1)
-            ( "version,v",		"Print queryable version information from the Bolt CL library" )
-            ( "queryOpenCL,q",  "Print queryable platform and device info and return" )
-            ( "gpu,g",          "Report only OpenCL GPU devices" )
-            ( "cpu,c",          "Report only OpenCL CPU devices" )
-            ( "all,a",          "Report all OpenCL devices" )
-        #endif
-            ( "queryCuda,q",    "Print queryable platform and device info and return" )
-            
-            ( "deviceMemory,D",   "Allocate vectors in device memory; default is host memory" )
-            ( "platform,p",     po::value< cl_uint >( &userPlatform )->default_value( userPlatform ),
-                "Specify the platform under test using the index reported by -q flag" )
-            ( "device,d",       po::value< cl_uint >( &userDevice )->default_value( userDevice ),
-                "Specify the device under test using the index reported by the -q flag.  "
-                "Index is relative with respect to -g, -c or -a flags" )
-            ( "length,l",       po::value< size_t >( &length )->default_value( length ),
-                "Length of scan array" )
-            ( "iterations,i",   po::value< size_t >( &iterations )->default_value( iterations ),
-                "Number of samples in timing loop" )
-            ( "vecType,t",      po::value< size_t >( &vecType )->default_value( vecType ),
-                "Data Type to use: 0-(1 value), 1-(2 values), 2-(4 values), 3-(8 values)" )
-            ( "runMode,m",      po::value< size_t >( &runMode )->default_value( runMode ),
-                "Run Mode: 0-Auto, 1-SerialCPU, 2-MultiCoreCPU, 3-GPU" )
-            ( "function,f",      po::value< std::string >( &function_called )->default_value( function_called ),
-                "Number of samples in timing loop" )
-            ( "filename",     po::value< std::string >( &filename )->default_value( filename ),
-                "Name of output file" )
-            ( "throw-away",   po::value< size_t >( &numThrowAway )->default_value( numThrowAway ),
-                "Number of trials to skip averaging" )
-            ;
-
-        po::variables_map vm;
+    {  
         if(argc <= 1)
         {
-            std::cout << desc << std::endl;
+            PrintHelp();
             return 0;
         }
-        po::store( po::parse_command_line( argc, argv, desc ), vm );
-        po::notify( vm );
-        routine = get_functionindex(function_called);
+        else
+        {
+          for(int loop = 1; loop<argc; loop++)
+          {
+           switch(ValidateBenchmarkKey(argv[loop],benchmark_options,BENCHMARK_OPTIONS_SIZE))
+           {
+               #if (Bolt_Benchmark == 1)
+               case bm_version:
+               case bm_VERSION:
+                    { 
+                        cl_uint libMajor, libMinor, libPatch;
+                        bolt::cl::getVersion( libMajor, libMinor, libPatch );
+                        const int indent = countOf( "Bolt version: " );
+                        bolt::tout << std::left << std::setw( indent ) << _T( "Bolt version: " )
+                            << libMajor << _T( "." )
+                            << libMinor << _T( "." )
+                            << libPatch << std::endl;
+                    }
+                    break;
+               case bm_queryOpenCL:
+               case bm_QUERYOPENCL:
+                    {
+                        print_clInfo = true;
+                    }
+                    break;
+               case bm_gpu:
+               case bm_GPU:
+                    {
+                        deviceType	= CL_DEVICE_TYPE_GPU;
+                    }
+                    break;
+               case bm_cpu:
+               case bm_CPU:
+                    {
+                        deviceType	= CL_DEVICE_TYPE_CPU;
+                    }
+                    break;
+               case bm_all:
+               case bm_ALL:
+                    {
+                        deviceType	= CL_DEVICE_TYPE_ALL;
+                    }
+                    break;
 
-    #if (Bolt_Benchmark == 1)
-        if( vm.count( "version" ) )
-        {
-            cl_uint libMajor, libMinor, libPatch;
-            bolt::cl::getVersion( libMajor, libMinor, libPatch );
-            const int indent = countOf( "Bolt version: " );
-            bolt::tout << std::left << std::setw( indent ) << _T( "Bolt version: " )
-                << libMajor << _T( "." )
-                << libMinor << _T( "." )
-                << libPatch << std::endl;
-        }
-        if( vm.count( "queryOpenCL" ) )
-        {
-            print_clInfo = true;
-        }
-        if( vm.count( "gpu" ) )
-        {
-            deviceType	= CL_DEVICE_TYPE_GPU;
-        }
-        
-        if( vm.count( "cpu" ) )
-        {
-            deviceType	= CL_DEVICE_TYPE_CPU;
-        }
-        if( vm.count( "all" ) )
-        {
-            deviceType	= CL_DEVICE_TYPE_ALL;
-        }
-      #endif
-        if( vm.count( "help" ) )
-        {
-            //	This needs to be 'cout' as program-options does not support wcout yet
-            std::cout << desc << std::endl;
-            return 0;
-        }     
-        
-        if( vm.count( "deviceMemory" ) )
-        {
-            hostMemory = false;
+                #endif
+               case bm_help:
+               case bm_HELP:
+                    {
+                        PrintHelp();
+                        return 0;
+                    }
+                    break;
+               case bm_deviceMemory:
+               case bm_DEVICEMEMORY:
+                    {
+                        hostMemory = false;
+                    }
+                    break;
+
+               case bm_platform:
+               case bm_PLATFORM:
+                    { 
+                        if((loop+1)<argc)
+                        {
+                            userPlatform = atoi(argv[loop+1]);                    
+                        }
+                        else
+                        {
+                            std::cerr << "-p [ --platform ]   option requires one integer argument." << std::endl;
+                            PrintHelp();
+                            return 1;
+                        }
+                    }
+                    break;
+               case bm_device:
+               case bm_DEVICE:
+                    { 
+                        if((loop+1)<argc)
+                        {
+                            userDevice = atoi(argv[loop+1]);                    
+                        }
+                        else
+                        {
+                            std::cerr << "-d [ --device ]   option requires one integer argument\
+                                         (index reported by the -q flag.)" << std::endl;
+                            PrintHelp();
+                            return 1;
+                        }
+                    }
+                    break;
+               case bm_length:
+               case bm_LENGTH:
+                    { 
+                        if((loop+1)<argc)
+                        {
+                            length = atoi(argv[loop+1]);                    
+                        }
+                        else
+                        {
+                            std::cerr << "-l [ --length ]   option requires one integer argument\
+                                         (length of array.)" << std::endl;
+                            PrintHelp();
+                            return 1;
+                        }
+                    }
+                    break;
+               case bm_iterations:
+               case bm_ITERATIONS:
+                    { 
+                        if((loop+1)<argc)
+                        {
+                            iterations = atoi(argv[loop+1]);                    
+                        }
+                        else
+                        {
+                            std::cerr << "-i [ --iterations ]   option requires one integer argument(number of iterations.)" << std::endl;
+                            PrintHelp();
+                            return 1;
+                        }
+                    }
+                    break;
+               case bm_vecType:
+               case bm_VECTYPE:
+                    { 
+                        if((loop+1)<argc)
+                        {
+                            vecType = atoi(argv[loop+1]);                    
+                        }
+                        else
+                        {
+                            std::cerr << "-t [ --vecType ]   option requires one integer argument(Data Type to use.)" << std::endl;
+                            PrintHelp();
+                            return 1;
+                        }
+                    }
+                    break;
+               case bm_runMode:
+               case bm_RUNMODE:
+                    { 
+                        if((loop+1)<argc)
+                        {
+                            runMode = atoi(argv[loop+1]);                    
+                        }
+                        else
+                        {
+                            std::cerr << "-m [ --runMode ]   option requires one integer argument(Run Mode.)" << std::endl;
+                            PrintHelp();
+                            return 1;
+                        }
+                    }
+                    break;
+               case bm_function:
+               case bm_FUNCTION:
+                     { 
+                        if((loop+1)<argc)
+                        {
+                            function_called = argv[loop+1]; 
+                            routine = get_functionindex(function_called);
+                        }
+                        else
+                        {
+                            std::cerr << "-f [ --function ]   option requires one string argument\
+                                         (Function or routine called for Benchmark.)" << std::endl;
+                            PrintHelp();
+                            return 1;
+                        }
+                    }
+                     break;
+               case bm_filename:
+                     { 
+                        if((loop+1)<argc)
+                        {
+                            filename = argv[loop+1];
+                        }
+                        else
+                        {
+                            std::cerr << "[ --filename ]   option requires one string argument\
+                                         (Name of output file.)" << std::endl;
+                            PrintHelp();
+                            return 1;
+                        }
+                    }  
+                     break;
+               case bm_throwaway:
+                     { 
+                        if((loop+1)<argc)
+                        {
+                            numThrowAway = atoi(argv[loop+1]);
+                        }
+                        else
+                        {
+                            std::cerr << "[ --throw-away ]   option requires one integer argument\
+                                         ( Number of trials to skip averaging.)" << std::endl;
+                            PrintHelp();
+                            return 1;
+                        }
+                    }
+                     break;
+               default:
+                   {
+                   }
+                 }
+             }
         }
     }
     catch( std::exception& e )

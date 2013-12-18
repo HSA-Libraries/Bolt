@@ -17,7 +17,7 @@
 
 # List the names of common files to compile across all platforms
 set( clBolt.Bench.Benchmark.Source Benchmark.cpp statisticalTimer.cpp )
-set( clBolt.Bench.Benchmark.Headers statisticalTimer.h )
+set( clBolt.Bench.Benchmark.Headers statisticalTimer.h data_type.hpp )
 
 set( clBolt.Bench.Benchmark.Files
   ${clBolt.Bench.Benchmark.Source}
@@ -29,7 +29,7 @@ add_executable( clBolt.Bench.Benchmark ${clBolt.Bench.Benchmark.Files} )
 # Set project specific compile and link options
 if( MSVC )
 set( CMAKE_CXX_FLAGS "-bigobj ${CMAKE_CXX_FLAGS}" )
-                set( CMAKE_C_FLAGS "-bigobj ${CMAKE_C_FLAGS}" )
+set( CMAKE_C_FLAGS "-bigobj ${CMAKE_C_FLAGS}" )
 endif()
 
 if(BUILD_TBB)

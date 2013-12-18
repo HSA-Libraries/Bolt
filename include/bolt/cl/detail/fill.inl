@@ -231,22 +231,22 @@ namespace detail {
                      runMode = ctl.getDefaultPathToRun();
                 }
       
-	            #if defined(BOLT_DEBUG_LOG)
+                #if defined(BOLT_DEBUG_LOG)
                 BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
                 #endif
-				
+                
                 if( runMode == bolt::cl::control::SerialCpu)
                 {
-				     #if defined(BOLT_DEBUG_LOG)
+                     #if defined(BOLT_DEBUG_LOG)
                      dblog->CodePathTaken(BOLTLOG::BOLT_FILL,BOLTLOG::BOLT_SERIAL_CPU,"::Fill::SERIAL_CPU");
                      #endif
-						
+                        
                      std::fill(first, last, value );
                 }
                 else if(runMode == bolt::cl::control::MultiCoreCpu)
                 {
                     #ifdef ENABLE_TBB
-					      #if defined(BOLT_DEBUG_LOG)
+                          #if defined(BOLT_DEBUG_LOG)
                           dblog->CodePathTaken(BOLTLOG::BOLT_FILL,BOLTLOG::BOLT_MULTICORE_CPU,"::Fill::MULTICORE_CPU");
                           #endif
                           bolt::btbb::fill(first, last, value);
@@ -256,7 +256,7 @@ namespace detail {
                 }
                 else
                 {
-				        #if defined(BOLT_DEBUG_LOG)
+                        #if defined(BOLT_DEBUG_LOG)
                         dblog->CodePathTaken(BOLTLOG::BOLT_FILL,BOLTLOG::BOLT_OPENCL_GPU,"::Fill::OPENCL_GPU");
                         #endif
                         // Use host pointers memory since these arrays are only write once - no benefit to copying.
@@ -284,13 +284,13 @@ namespace detail {
                 {
                      runMode = ctl.getDefaultPathToRun();
                 }
-				#if defined(BOLT_DEBUG_LOG)
+                #if defined(BOLT_DEBUG_LOG)
                 BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
                 #endif
-				
+                
                 if( runMode == bolt::cl::control::SerialCpu)
                 {
-				    #if defined(BOLT_DEBUG_LOG)
+                    #if defined(BOLT_DEBUG_LOG)
                     dblog->CodePathTaken(BOLTLOG::BOLT_FILL,BOLTLOG::BOLT_SERIAL_CPU,"::Fill::SERIAL_CPU");
                     #endif
                     typename bolt::cl::device_vector< iType >::pointer fillInputBuffer =  first.getContainer( ).data( );
@@ -299,7 +299,7 @@ namespace detail {
                 else if(runMode == bolt::cl::control::MultiCoreCpu)
                 {
                     #ifdef ENABLE_TBB
-					    #if defined(BOLT_DEBUG_LOG)
+                        #if defined(BOLT_DEBUG_LOG)
                         dblog->CodePathTaken(BOLTLOG::BOLT_FILL,BOLTLOG::BOLT_MULTICORE_CPU,"::Fill::MULTICORE_CPU");
                         #endif
                         typename bolt::cl::device_vector< iType >::pointer fillInputBuffer =  first.getContainer( ).data( );
@@ -310,7 +310,7 @@ namespace detail {
                 }
                 else
                 {
-				    #if defined(BOLT_DEBUG_LOG)
+                    #if defined(BOLT_DEBUG_LOG)
                     dblog->CodePathTaken(BOLTLOG::BOLT_FILL,BOLTLOG::BOLT_OPENCL_GPU,"::Fill::OPENCL_GPU");
                     #endif
                     fill_enqueue( ctl, first, last, value, user_code );

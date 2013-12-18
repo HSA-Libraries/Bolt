@@ -460,6 +460,8 @@ TEST(MultiCoreCPU, MultiCoreAddDouble4)
 TEST( DefaultGPU, Normal )
 {
     int length = 1025;
+    cl_uint rk = 0;
+    std::cout<<"rk = "<<rk;
     bolt::cl::device_vector< float > boltInput(  length, 0.0, CL_MEM_READ_WRITE, true  );
     std::vector< float > stdInput( length, 0.0 );
 
@@ -2770,24 +2772,24 @@ TEST (withStdVect_Greater, intSerialValuesWithDefaulFunctorWithClControlGreater)
 
 #if (TEST_LARGE_BUFFERS == 1)
 TEST (rawArrayTest, floatarray){
-	const int sizeOfInputBufer = 8192; 
-	float  stdArray[sizeOfInputBufer];
+    const int sizeOfInputBufer = 8192; 
+    float  stdArray[sizeOfInputBufer];
     float  boltArray[sizeOfInputBufer];
     float  backupArray[sizeOfInputBufer];
 
-	for (int i = 0 ; i < sizeOfInputBufer; i++){
-	    float fValue = (float)rand();
+    for (int i = 0 ; i < sizeOfInputBufer; i++){
+        float fValue = (float)rand();
         fValue = fValue/rand();
         fValue = fValue*rand()*rand();
         stdArray[i] = boltArray[i] = fValue;
-	}
-	std::sort( stdArray, stdArray+sizeOfInputBufer, std::greater<float>( ) );
-	bolt::BKND::sort( boltArray, boltArray+sizeOfInputBufer, bolt::cl::greater<float>( ) );
+    }
+    std::sort( stdArray, stdArray+sizeOfInputBufer, std::greater<float>( ) );
+    bolt::BKND::sort( boltArray, boltArray+sizeOfInputBufer, bolt::cl::greater<float>( ) );
 
     bool stdresult, myresult;
     float my_val, std_val;
 
-	for (int i = 0 ; i < sizeOfInputBufer; i++)
+    for (int i = 0 ; i < sizeOfInputBufer; i++)
     {
         my_val = boltArray[i];
         std_val = stdArray[i];
@@ -2797,18 +2799,18 @@ TEST (rawArrayTest, floatarray){
 
         EXPECT_FLOAT_EQ(stdresult, myresult)<<"Failed at i = "<<i<<std::endl;
 
-	}
+    }
 
     //Offset tests 
-	for (int i = 0 ; i < sizeOfInputBufer; i++)
+    for (int i = 0 ; i < sizeOfInputBufer; i++)
     {
-	   stdArray[i] = boltArray[i] = backupArray[i];
-	}
+       stdArray[i] = boltArray[i] = backupArray[i];
+    }
 
-	std::sort( stdArray+17, stdArray+sizeOfInputBufer-129, std::greater<float>( ) );
-	bolt::BKND::sort( boltArray+17, boltArray+sizeOfInputBufer-129, bolt::cl::greater<float>( ) );
+    std::sort( stdArray+17, stdArray+sizeOfInputBufer-129, std::greater<float>( ) );
+    bolt::BKND::sort( boltArray+17, boltArray+sizeOfInputBufer-129, bolt::cl::greater<float>( ) );
 
-	for (int i = 0 ; i < sizeOfInputBufer; i++)
+    for (int i = 0 ; i < sizeOfInputBufer; i++)
     {
         my_val = boltArray[i];
         std_val = stdArray[i];
@@ -2818,7 +2820,7 @@ TEST (rawArrayTest, floatarray){
 
         EXPECT_FLOAT_EQ(stdresult, myresult)<<"Offset Test Failed at i = "<<i<<std::endl;
 
-	}
+    }
 
 }
 #endif
