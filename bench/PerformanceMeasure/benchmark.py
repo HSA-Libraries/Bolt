@@ -1,12 +1,12 @@
 
-print("###Copy the clBolt.Bench.Benchmark.exe to a separate folder along with all python scripts and run this batch script")  
+print("###IMPORTANT###: Copy the clBolt.Bench.Benchmark.exe to a separate folder along with all python scripts and run this batch script")  
 
-print("### This will benchmark the Routines for DATA_TYPE which is a MACRO in the Benchmark.cpp file. Set it to the Appropriate\n\
+print("# This will benchmark the Routines for DATA_TYPE which is a MACRO in the Benchmark.cpp file. Set it to the Appropriate\n\
 \tdata type for which you wan to Benchmark. ie unsigned int, float, double etc.\n\
 \tAnd build Benchmark project to get the Required clBolt.Bench.Benchmark.exe")
-print("### This will create the some comparison graphs ")
-print("### BUT Before Running this script make sure your system must have PYTHON installed ( python-2.7.3.msi )")
-print("### Installed all these required useful package as well - \n\
+print("# This will create the some comparison graphs ")
+print("# BUT Before Running this script make sure your system must have PYTHON installed ( python-2.7.3.msi )")
+print("# Installed all these required useful package as well - \n\
           \t\t\tnumpy-1.8.0-win32-superpack-python2.7.exe\n\
 		  \t\tscipy-0.13.1-win32-superpack-python2.7.exe\n\
  		  \t\twxPython2.8-win32-unicode-2.8.12.1-py27.exe\n\
@@ -16,8 +16,8 @@ print("### Installed all these required useful package as well - \n\
  		  \t\tpyparsing-2.0.1.win32-py2.7.exe\n\
  		  \t\tsix-1.4.1.win32-py2.7.exe")
  
-print("### In command-line-arguments -l a1-a1:x2  --> means for each iteration double the length of buffer w.r.t. previous length.");
-print("                              -l a1-a2:a3  --> means for each iteration increase the buffer size by a3.");
+print("# In command-line-arguments -l a1-a1:x2  --> means for each iteration double the length of buffer w.r.t. previous length.");
+print("                            -l a1-a2:a3  --> means for each iteration increase the buffer size by a3.");
 
 import os
 import sys
