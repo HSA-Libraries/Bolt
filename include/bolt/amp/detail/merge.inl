@@ -228,7 +228,6 @@ namespace bolt {
                 const DVInputIterator2& last2,
                 const DVOutputIterator& result,
                 const StrictWeakCompare& comp,
-                const std::string& cl_code,
                 bolt::amp::device_vector_tag )
             {
                 typedef typename std::iterator_traits<DVInputIterator1>::value_type iType1;

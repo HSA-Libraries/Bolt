@@ -13,8 +13,16 @@
 *   See the License for the specific language governing permissions and              
 *   limitations under the License.                                         
 ***************************************************************************/                                                                                     
+#if !defined( TEST_COMMON_AMP_H )
+#define TEST_COMMON_AMP_H
+#pragma once
+
 #include <array>
-#include "bolt/amp/device_vector.h"
+#include <gtest/gtest.h>
+
+size_t numFailures;
+bool resetNumFailures = true;
+
 
 #define BOLT_TEST_MAX_FAILURES 8
 
@@ -33,8 +41,7 @@
         break; \
     }
 
-size_t numFailures;
-bool resetNumFailures = true;
+
 
 template< typename T >
 ::testing::AssertionResult cmpArrays( const T ref, const T calc, size_t N )
@@ -242,3 +249,5 @@ cmpArrays( typename bolt::amp::device_vector<T1> &ref, typename bolt::amp::devic
         }
       return ::testing::AssertionSuccess( );
 }
+
+#endif
