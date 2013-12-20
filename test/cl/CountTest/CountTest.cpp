@@ -72,6 +72,75 @@ struct InRange {
 //BOLT_CREATE_CLCODE(InRange<__int64>, InRange_CodeString);
 //
 
+TEST (testCountIf, OffsetintBtwRange)
+{
+    int aSize = 1024;
+    std::vector<int> A(aSize);
+
+    for (int i=0; i < aSize; i++) {
+        A[i] = rand() % 10 + 1;
+    }
+  bolt::cl::device_vector< int > dA(A.begin(), aSize);
+  int intVal = 1;
+
+  int offset =  1+ rand()%(aSize-1);
+
+    bolt::cl::iterator_traits<bolt::cl::device_vector<int>::iterator>::difference_type stdInRangeCount =
+                                                                std::count( A.begin()+offset, A.end(), intVal ) ;
+    bolt::cl::iterator_traits<bolt::cl::device_vector<int>::iterator>::difference_type boltInRangeCount =
+                                                        bolt::cl::count( dA.begin()+offset, dA.end(), intVal ) ;
+
+    EXPECT_EQ(stdInRangeCount, boltInRangeCount);
+}
+
+TEST (testCountIf, SerialOffsetintBtwRange)
+{
+    int aSize = 1024;
+    std::vector<int> A(aSize);
+
+    for (int i=0; i < aSize; i++) {
+        A[i] = rand() % 10 + 1;
+    }
+    bolt::cl::device_vector< int > dA(A.begin(), aSize);
+    int intVal = 1;
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault();
+    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+
+    int offset = 1+rand()%(aSize-1);
+
+    bolt::cl::iterator_traits<bolt::cl::device_vector<int>::iterator>::difference_type stdInRangeCount =
+                                                                std::count( A.begin()+offset, A.end(), intVal ) ;
+    bolt::cl::iterator_traits<bolt::cl::device_vector<int>::iterator>::difference_type boltInRangeCount =
+                                                        bolt::cl::count( ctl, dA.begin()+offset, dA.end(), intVal ) ;
+
+    EXPECT_EQ(stdInRangeCount, boltInRangeCount);
+}
+
+TEST (testCountIf, MultiCoreOffsetintBtwRange)
+{
+    int aSize = 1024;
+    std::vector<int> A(aSize);
+
+    for (int i=0; i < aSize; i++) {
+        A[i] = rand() % 10 + 1;
+    }
+    bolt::cl::device_vector< int > dA(A.begin(), aSize);
+    int intVal = 1;
+
+    bolt::cl::control ctl = bolt::cl::control::getDefault();
+    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+
+    int offset = 1+rand()%(aSize-1);
+
+    bolt::cl::iterator_traits<bolt::cl::device_vector<int>::iterator>::difference_type stdInRangeCount =
+                                                                std::count( A.begin()+offset, A.end(), intVal ) ;
+    bolt::cl::iterator_traits<bolt::cl::device_vector<int>::iterator>::difference_type boltInRangeCount =
+                                                        bolt::cl::count( ctl, dA.begin()+offset, dA.end(), intVal ) ;
+
+    EXPECT_EQ(stdInRangeCount, boltInRangeCount);
+}
+
 TEST_P (testCountIfFloatWithStdVector, countFloatValueInRange)
 {
    std::vector<float> s(aSize);

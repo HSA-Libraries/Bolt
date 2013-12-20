@@ -17,13 +17,13 @@
 
 //#pragma OPENCL EXTENSION cl_amd_printf : enable
 
-#define _REDUCE_STEP(_LENGTH, _IDX, _W) \
-    if ((_IDX < _W) && ((_IDX + _W) < _LENGTH)) {\
-      T mine = scratch[_IDX];\
-      T other = scratch[_IDX + _W];\
-      scratch[_IDX] = (*userFunctor)(mine, other); \
-    }\
-    barrier(CLK_LOCAL_MEM_FENCE);
+#define _REDUCE_STEP(_LENGTH, _IDX, _W)\
+if ((_IDX < _W) && ((_IDX + _W) < _LENGTH)) {\
+	T mine = scratch[_IDX];\
+	T other = scratch[_IDX + _W];\
+	scratch[_IDX] = (*userFunctor)(mine, other); \
+	}\
+	barrier(CLK_LOCAL_MEM_FENCE);
 
 template< typename iTypePtr, typename iTypeIter, typename binary_function,typename T >
 kernel void reduceTemplate(
@@ -83,4 +83,66 @@ kernel void reduceTemplate(
     if (local_index == 0) {
         result[get_group_id(0)] = scratch[0];
     }
+};
+
+template< typename binary_function,typename T >
+kernel void reduceTemplate_res(
+    global T* result,
+	const int length,
+    global binary_function* userFunctor,
+	global T* final_result,
+	T init,
+	local T* scratch
+)
+{
+    int gx = get_global_id (0);
+    int gloId = gx;
+
+    //  Initialize the accumulator private variable with data from the input array
+    //  This essentially unrolls the loop below at least once
+    T accumulator;
+    if(gloId < length){
+       accumulator = result[gx];
+       gx += get_global_size(0);
+    }
+
+    // Loop sequentially over chunks of input vector, reducing an arbitrary size input
+    // length into a length related to the number of workgroups
+    while (gx < length)
+    {
+        T element = result[gx];
+        accumulator = (*userFunctor)(accumulator, element);
+        gx += get_global_size(0);
+    }
+
+	accumulator = (*userFunctor)(accumulator, init);
+
+    //  Initialize local data store
+    int local_index = get_local_id(0);
+    scratch[local_index] = accumulator;
+    barrier(CLK_LOCAL_MEM_FENCE);
+
+    //  Tail stops the last workgroup from reading past the end of the input vector
+    uint tail = length - (get_group_id(0) * get_local_size(0));
+
+    // Parallel reduction within a given workgroup using local data store
+    // to share values between workitems - 256 is good to achieve high occupancy
+    _REDUCE_STEP(tail, local_index, 128);
+    _REDUCE_STEP(tail, local_index, 64);
+    _REDUCE_STEP(tail, local_index, 32);
+    _REDUCE_STEP(tail, local_index, 16);
+    _REDUCE_STEP(tail, local_index,  8);
+    _REDUCE_STEP(tail, local_index,  4);
+    _REDUCE_STEP(tail, local_index,  2);
+    _REDUCE_STEP(tail, local_index,  1);
+ 
+    //  Abort threads that have passed the end of the input vector
+    if( gloId >= length )
+        return;
+
+    //  Write only the final single reduced value
+    if (local_index == 0) {
+        final_result[0] = scratch[0];
+    }
+
 };

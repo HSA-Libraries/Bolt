@@ -16,12 +16,13 @@
 ############################################################################                                                                                     
 
 # List the names of common files to compile across all platforms
-set( ampBolt.Test.ScanByKey.Source ScanByKeyTest.cpp )
-set( ampBolt.Test.ScanByKey.Headers ${BOLT_INCLUDE_DIR}/bolt/amp/scan_by_key.h ${BOLT_INCLUDE_DIR}/bolt/amp/detail/scan_by_key.inl)
+set( ampBolt.Test.ReduceByKey.Source  ReduceByKeyTest.cpp )
+set( ampBolt.Test.ReduceByKey.Headers ${BOLT_INCLUDE_DIR}/bolt/amp/reduce_by_key.h ${BOLT_INCLUDE_DIR}/bolt/amp/detail/reduce_by_key.inl)
 
-set( ampBolt.Test.ScanByKey.Files ${ampBolt.Test.ScanByKey.Source} ${ampBolt.Test.ScanByKey.Headers} )
+set( ampBolt.Test.ReduceByKey.Files ${ampBolt.Test.ReduceByKey.Source} ${ampBolt.Test.ReduceByKey.Headers} )
 
-add_executable( ampBolt.Test.ScanByKey ${ampBolt.Test.ScanByKey.Files} )
+add_executable( ampBolt.Test.ReduceByKey ${ampBolt.Test.ReduceByKey.Files} )
+
 
 if( MSVC )
     set( CMAKE_CXX_FLAGS "-bigobj ${CMAKE_CXX_FLAGS}" )
@@ -30,19 +31,20 @@ endif()
 
 
 if(BUILD_TBB)
-    target_link_libraries( ampBolt.Test.ScanByKey ampBolt.Runtime ${GTEST_LIBRARIES} ${Boost_LIBRARIES}  ${TBB_LIBRARIES} )
+    target_link_libraries( ampBolt.Test.ReduceByKey ampBolt.Runtime ${GTEST_LIBRARIES} ${Boost_LIBRARIES}  ${TBB_LIBRARIES} )
 else (BUILD_TBB)
-    target_link_libraries( ampBolt.Test.ScanByKey ampBolt.Runtime ${GTEST_LIBRARIES} ${Boost_LIBRARIES}  )
+    target_link_libraries( ampBolt.Test.ReduceByKey ampBolt.Runtime ${GTEST_LIBRARIES} ${Boost_LIBRARIES}  )
 endif()
 
 
-set_target_properties( ampBolt.Test.ScanByKey PROPERTIES VERSION ${Bolt_VERSION} )
-set_target_properties( ampBolt.Test.ScanByKey PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
 
-set_property( TARGET ampBolt.Test.ScanByKey PROPERTY FOLDER "Test/AMP")
+set_target_properties( ampBolt.Test.ReduceByKey PROPERTIES VERSION ${Bolt_VERSION} )
+set_target_properties( ampBolt.Test.ReduceByKey PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
+
+set_property( TARGET ampBolt.Test.ReduceByKey PROPERTY FOLDER "Test/AMP")
 
 # CPack configuration; include the executable into the package
-install( TARGETS ampBolt.Test.ScanByKey
+install( TARGETS ampBolt.Test.ReduceByKey
 	RUNTIME DESTINATION ${BIN_DIR}
 	LIBRARY DESTINATION ${LIB_DIR}
 	ARCHIVE DESTINATION ${LIB_DIR}/import
