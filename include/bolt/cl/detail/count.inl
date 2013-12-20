@@ -301,7 +301,7 @@ namespace detail {
                       #endif
                       typename bolt::cl::device_vector< iType >::pointer countInputBuffer =  first.getContainer( ).data( );
                       return (rType) bolt::btbb::count_if(&countInputBuffer[first.m_Index],
-                          &countInputBuffer[szElements] ,predicate);
+                          &countInputBuffer[first.m_Index+szElements] ,predicate);
 
                     }
                     #else
@@ -318,7 +318,7 @@ namespace detail {
 					
                       typename bolt::cl::device_vector< iType >::pointer countInputBuffer =  first.getContainer( ).data( );
                       return  (rType) std::count_if(&countInputBuffer[first.m_Index],
-                          &countInputBuffer[szElements], predicate) ;
+                          &countInputBuffer[first.m_Index+szElements], predicate) ;
 
                     }
 

@@ -31,6 +31,7 @@
 #include "bolt/btbb/reduce.h"
 #endif
 
+#include<iostream>
 
 namespace bolt {
     namespace cl {
@@ -50,6 +51,7 @@ namespace detail {
             Reduce_KernelTemplateSpecializer() : KernelTemplateSpecializer()
                 {
                     addKernelName( "reduceTemplate" );
+					addKernelName( "reduceTemplate_res" );
                 }
 
             const ::std::string operator() ( const ::std::vector< ::std::string>& typeNames ) const
@@ -60,12 +62,25 @@ namespace detail {
                         "__attribute__((reqd_work_group_size(256,1,1)))\n"
                         "kernel void reduceTemplate(\n"
                         "global " + typeNames[reduce_iValueType] + "* input_ptr,\n"
-                         + typeNames[reduce_iIterType] + " output_iter,\n"
+                         + typeNames[reduce_iIterType] + " input_iter,\n"
                         "const int length,\n"
                         "global " + typeNames[reduce_BinaryFunction] + "* userFunctor,\n"
                         "global " + typeNames[reduce_resType] + "* result,\n"
                         "local " + typeNames[reduce_resType] + "* scratch\n"
-                        ");\n\n";
+                        ");\n\n"
+						
+						"// Host generates this instantiation string with user-specified value type and functor\n"
+                        "template __attribute__((mangled_name(" + name(1) + "Instantiated)))\n"
+                        "__attribute__((reqd_work_group_size(256,1,1)))\n"
+                        "kernel void reduceTemplate_res(\n"
+						"global " + typeNames[reduce_resType] + "* result,\n"
+						"const int length,\n"
+                        "global " + typeNames[reduce_BinaryFunction] + "* userFunctor,\n"
+						"global "+ typeNames[reduce_resType] + " *final_result,\n"
+						+ typeNames[reduce_resType] + " init,\n"
+					    "local " + typeNames[reduce_resType] + "* scratch\n"
+                        ");\n\n"
+						;
 
                 return templateSpecializationString;
             }
@@ -135,20 +150,20 @@ namespace detail {
 
                 // ::cl::Buffer result(ctl.context(), CL_MEM_ALLOC_HOST_PTR|CL_MEM_WRITE_ONLY, sizeof( iType )*numWG);
                 control::buffPointer result = ctl.acquireBuffer( sizeof( T ) * numWG,
-                    CL_MEM_ALLOC_HOST_PTR|CL_MEM_WRITE_ONLY );
+                    CL_MEM_ALLOC_HOST_PTR|CL_MEM_READ_WRITE);
 
                 cl_uint szElements = static_cast< cl_uint >( first.distance_to(last ) );
                 typename DVInputIterator::Payload first_payload = first.gpuPayload( ) ;
 
-                V_OPENCL( kernels[0].setArg(0, first.getContainer().getBuffer() ), "Error setting kernel argument" );
-                V_OPENCL( kernels[0].setArg(1, first.gpuPayloadSize( ),&first_payload),"Error setting a kernel argument" );
-                V_OPENCL( kernels[0].setArg(2, szElements), "Error setting kernel argument" );
-                V_OPENCL( kernels[0].setArg(3, *userFunctor), "Error setting kernel argument" );
-                V_OPENCL( kernels[0].setArg(4, *result), "Error setting kernel argument" );
+                V_OPENCL( kernels[0].setArg(0, first.getContainer().getBuffer() ), "Error setting kernel 1 argument" );
+                V_OPENCL( kernels[0].setArg(1, first.gpuPayloadSize( ),&first_payload),"Error setting a kernel 1 argument" );
+                V_OPENCL( kernels[0].setArg(2, szElements), "Error setting kernel 1 argument" );
+                V_OPENCL( kernels[0].setArg(3, *userFunctor), "Error setting kernel 1 argument" );
+                V_OPENCL( kernels[0].setArg(4, *result), "Error setting kernel 1 argument" );
 
                 ::cl::LocalSpaceArg loc;
                 loc.size_ = wgSize*sizeof(T);
-                V_OPENCL( kernels[0].setArg(5, loc), "Error setting kernel argument" );
+                V_OPENCL( kernels[0].setArg(5, loc), "Error setting kernel 1 argument" );
 
                 l_Error = ctl.getCommandQueue().enqueueNDRangeKernel(
                     kernels[0],
@@ -156,31 +171,46 @@ namespace detail {
                     ::cl::NDRange(numWG * wgSize),
                     ::cl::NDRange(wgSize));
 
-                V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for reduce() kernel" );
+                V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for reduce() kernel 1" );
+
+				control::buffPointer final_res = ctl.acquireBuffer( sizeof( T ) * 1,
+                CL_MEM_ALLOC_HOST_PTR|CL_MEM_WRITE_ONLY );
+
+				size_t ceilNumWG1 = static_cast< size_t >( std::ceil( static_cast< float >( szElements ) / wgSize) );
+                bolt::cl::minimum<size_t>  min_size_t1;
+                size_t numTailReduce1 = min_size_t1( ceilNumWG1, numWG );
+				cl_uint szElements2 = static_cast< cl_uint >( numTailReduce1 );
+
+
+                V_OPENCL( kernels[1].setArg(0, *result ), "Error setting kernel 2 argument" );
+				V_OPENCL( kernels[1].setArg(1, szElements2 ), "Error setting kernel 2 argument" );
+                V_OPENCL( kernels[1].setArg(2, *userFunctor), "Error setting kernel 2 argument" );
+                V_OPENCL( kernels[1].setArg(3, *final_res), "Error setting kernel 2 argument" );
+				V_OPENCL( kernels[1].setArg(4, init), "Error setting kernel 2 argument" );
+                ::cl::LocalSpaceArg loc1;
+                loc1.size_ = wgSize*sizeof(T);
+                V_OPENCL( kernels[1].setArg(5, loc1), "Error setting kernel 2 argument" );
+
+
+                l_Error = ctl.getCommandQueue().enqueueNDRangeKernel(
+                    kernels[1],
+                    ::cl::NullRange,
+                    ::cl::NDRange(wgSize),
+                    ::cl::NDRange(wgSize));
+
+                V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for reduce() kernel 2" );
+
 
                 ::cl::Event l_mapEvent;
-                T *h_result = (T*)ctl.getCommandQueue().enqueueMapBuffer(*result, false, CL_MAP_READ, 0,
-                    sizeof(T)*numWG, NULL, &l_mapEvent, &l_Error );
+                T *h_result = (T*)ctl.getCommandQueue().enqueueMapBuffer(*final_res, true, CL_MAP_READ, 0,
+                    sizeof(T)*1, NULL, &l_mapEvent, &l_Error );
                 V_OPENCL( l_Error, "Error calling map on the result buffer" );
 
-                //  Finish the tail end of the reduction on host side;the compute device reduces within the workgroups,
-                //  with one result per workgroup
-                size_t ceilNumWG = static_cast< size_t >( std::ceil( static_cast< float >( szElements ) / wgSize) );
-                bolt::cl::minimum<size_t>  min_size_t;
-                size_t numTailReduce = min_size_t( ceilNumWG, numWG );
-
-                bolt::cl::wait(ctl, l_mapEvent);
-
-                T acc = init;
-                for(unsigned int i = 0; i < numTailReduce; ++i)
-                {
-                    acc =(T) binary_op(acc, h_result[i]);
-                }
-
+				T acc = h_result[0];
 
 				::cl::Event unmapEvent;
 
-				V_OPENCL( ctl.getCommandQueue().enqueueUnmapMemObject(*result,  h_result, NULL, &unmapEvent ),
+				V_OPENCL( ctl.getCommandQueue().enqueueUnmapMemObject(*final_res,  h_result, NULL, &unmapEvent ),
 					"shared_ptr failed to unmap host memory back to device memory" );
 				V_OPENCL( unmapEvent.wait( ), "failed to wait for unmap event" );
 

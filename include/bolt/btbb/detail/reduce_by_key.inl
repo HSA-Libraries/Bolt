@@ -19,8 +19,8 @@
 #define BOLT_BTBB_REDUCE_BY_KEY_INL
 #pragma once
 
-#include "bolt/cl/scan.h"
-#include "bolt/cl/scan_by_key.h"
+#include "bolt/btbb/scan.h"
+#include "bolt/btbb/scan_by_key.h"
 #include "tbb/task_scheduler_init.h"
 #include <iterator>
 #include "tbb/blocked_range.h"
@@ -75,14 +75,14 @@ namespace bolt
                         }
                   }); 
        
-                   bolt::cl::control ctl = bolt::cl::control::getDefault( );
-                   ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu); 
+                   //bolt::cl::control ctl = bolt::cl::control::getDefault( );
+                   //ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu); 
 
-                   bolt::cl::inclusive_scan(ctl, temKeyOutput,  temKeyOutput  + numElements , temKeyOutput,
-					                                                               bolt::cl::plus<int>() );
+                 bolt::btbb::inclusive_scan(temKeyOutput,  temKeyOutput  + numElements , temKeyOutput,
+					                                                               bolt::btbb::plus<int>() );
 
-                   bolt::cl::inclusive_scan_by_key(ctl, temKeyOutput, temKeyOutput  + numElements,
-					          values_first, temValueOutput, bolt::cl::equal_to<int>(), binary_op);
+                 bolt::btbb::inclusive_scan_by_key(temKeyOutput, temKeyOutput  + numElements,
+					          values_first, temValueOutput, bolt::btbb::equal_to<int>(), binary_op);
 
                  tbb::parallel_for (tbb::blocked_range<size_t>(0,numElements),[&](const tbb::blocked_range<size_t>& s)
                   {
