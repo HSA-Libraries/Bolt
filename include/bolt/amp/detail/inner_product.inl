@@ -50,12 +50,12 @@ namespace detail {
 
                 typedef typename std::iterator_traits<DVInputIterator>::value_type iType;
 
-				const int distVec = static_cast< unsigned int >( std::distance( first1, last1 ) );
+                const int distVec = static_cast< unsigned int >( std::distance( first1, last1 ) );
 
                 if( distVec == 0 )
                     return -1;
 
-				device_vector< iType> tempDV( distVec, 0, true, ctl);
+                device_vector< iType> tempDV( distVec, 0, true, ctl);
 
                 detail::transform_enqueue( ctl, first1, last1, first2, tempDV.begin() ,f2);
                 return detail::reduce_enqueue( ctl, tempDV.begin(), tempDV.end(), init, f1);
@@ -71,12 +71,12 @@ namespace detail {
              *  iterators.  This overload is called strictly for non-device_vector iterators
             */
             template<typename InputIterator, typename OutputType, typename BinaryFunction1,typename BinaryFunction2>
-			typename std::enable_if<
-                   !(std::is_base_of<typename device_vector<typename std::iterator_traits<InputIterator>::value_type>::iterator,InputIterator>::value),OutputType >::type
-            inner_product_pick_iterator(bolt::amp::control &ctl,  const InputIterator& first1,
-                const InputIterator& last1, const InputIterator& first2, const OutputType& init,
-                const BinaryFunction1& f1,
-                const BinaryFunction2& f2)
+            OutputType
+            inner_product_pick_iterator( bolt::amp::control &ctl,  const InputIterator& first1,
+                                       const InputIterator& last1, const InputIterator& first2, const OutputType& init,
+                                       const BinaryFunction1& f1,
+                                       const BinaryFunction2& f2,
+                                       std::random_access_iterator_tag )
             {
                 typedef typename std::iterator_traits<InputIterator>::value_type iType;
                 size_t sz = (last1 - first1);
@@ -84,11 +84,11 @@ namespace detail {
                     return -1;
 
                 bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
-				if (runMode == bolt::amp::control::Automatic)
-				{
-					runMode = ctl.getDefaultPathToRun();
-				}
-				
+                if (runMode == bolt::amp::control::Automatic)
+                {
+                    runMode = ctl.getDefaultPathToRun();
+                }
+                
                 if( runMode == bolt::amp::control::SerialCpu)
                 {
                     #if defined( _WIN32 )
@@ -112,8 +112,8 @@ namespace detail {
 
                     // Map the input iterator to a device_vector
 
-					device_vector< iType, concurrency::array_view> dvInput( first1, last1, true, ctl);
-					device_vector< iType, concurrency::array_view> dvInput2( first2, sz, true, ctl);
+                    device_vector< iType, concurrency::array_view> dvInput( first1, last1, true, ctl);
+                    device_vector< iType, concurrency::array_view> dvInput2( first2, sz, true, ctl);
 
                     return inner_product_enqueue( ctl, dvInput.begin( ), dvInput.end( ), dvInput2.begin( ),
                                                    init, f1, f2);
@@ -125,25 +125,25 @@ namespace detail {
             // it already assumes random access iterators
             // This is called strictly for iterators that are derived from device_vector< T >::iterator
             template<typename DVInputIterator, typename OutputType, typename BinaryFunction1, typename BinaryFunction2>
-	        typename std::enable_if<
-                   (std::is_base_of<typename device_vector<typename std::iterator_traits<DVInputIterator>::value_type>::iterator,DVInputIterator>::value),OutputType >::type
-            inner_product_pick_iterator(bolt::amp::control &ctl,  const DVInputIterator& first1,
-                const DVInputIterator& last1,const DVInputIterator& first2,const OutputType& init,
-                const BinaryFunction1&f1,const BinaryFunction2& f2)
+            OutputType
+            inner_product_pick_iterator( bolt::amp::control &ctl,  const DVInputIterator& first1,
+                                         const DVInputIterator& last1,const DVInputIterator& first2,
+                                         const OutputType& init, const BinaryFunction1&f1, const BinaryFunction2& f2,
+                                         bolt::amp::device_vector_tag )
             {
 
                 size_t sz = (last1 - first1);
 
                 typedef typename std::iterator_traits< DVInputIterator >::value_type iType1;
                 bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
-				if (runMode == bolt::amp::control::Automatic)
-				{
-					runMode = ctl.getDefaultPathToRun();
-				}
-				
+                if (runMode == bolt::amp::control::Automatic)
+                {
+                    runMode = ctl.getDefaultPathToRun();
+                }
+                
                 if( runMode == bolt::amp::control::SerialCpu)
                 {
-				    
+                    
                     typename bolt::amp::device_vector< iType1 >::pointer firstPtr =  first1.getContainer( ).data( );
                     typename bolt::amp::device_vector< iType1 >::pointer first2Ptr =  first2.getContainer( ).data( );
 
@@ -175,6 +175,46 @@ namespace detail {
                 }
             }
 
+            template<typename InputIterator, typename OutputType, typename BinaryFunction1,typename BinaryFunction2>
+            OutputType
+            inner_product_pick_iterator( bolt::amp::control &ctl,  const InputIterator& first1,
+                                       const InputIterator& last1, const InputIterator& first2, const OutputType& init,
+                                       const BinaryFunction1& f1,
+                                       const BinaryFunction2& f2,
+                                       bolt::amp::fancy_iterator_tag )
+            {
+                typedef typename std::iterator_traits<InputIterator>::value_type iType;
+                size_t sz = (last1 - first1);
+                if (sz == 0)
+                    return -1;
+
+                bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+                if (runMode == bolt::amp::control::Automatic)
+                {
+                    runMode = ctl.getDefaultPathToRun();
+                }
+                
+                if( runMode == bolt::amp::control::SerialCpu)
+                {
+                    return std::inner_product(first1, last1, first2, init, f1, f2);
+                }
+                else if(runMode == bolt::amp::control::MultiCoreCpu)
+                {
+                    #ifdef ENABLE_TBB
+                           return bolt::btbb::inner_product(first1, last1, first2, init, f1, f2);
+                    #else
+                           throw std::runtime_error("MultiCoreCPU Version of inner_product not Enabled! \n");
+                    #endif
+                }
+                else
+                {
+
+                    // Use host pointers memory since these arrays are only read once - no benefit to copying.
+                    return inner_product_enqueue( ctl, first1, last1, first2, init, f1, f2);
+
+                }
+            }
+
           
 
             template<typename InputIterator, typename OutputType, typename BinaryFunction1, typename BinaryFunction2>
@@ -183,10 +223,22 @@ namespace detail {
                 const BinaryFunction1& f1,
                 const BinaryFunction2& f2, std::random_access_iterator_tag )
             {
-                return inner_product_pick_iterator( ctl, first1, last1, first2, init, f1, f2);
+                return inner_product_pick_iterator( ctl, first1, last1, first2, init, f1, f2,
+                                                 typename std::iterator_traits< InputIterator >::iterator_category( ));
             };
 
-	        // Wrapper that uses default control class, iterator interface
+
+            template<typename InputIterator, typename OutputType, typename BinaryFunction1, typename BinaryFunction2>
+            OutputType inner_product_detect_random_access( bolt::amp::control& ctl, const InputIterator& first1,
+                const InputIterator& last1, const InputIterator& first2, const OutputType& init,
+                const BinaryFunction1& f1,
+                const BinaryFunction2& f2, bolt::amp::fancy_iterator_tag )
+            {
+                return inner_product_pick_iterator( ctl, first1, last1, first2, init, f1, f2,
+                                                 typename std::iterator_traits< InputIterator >::iterator_category( ));
+            };
+
+            // Wrapper that uses default control class, iterator interface
             template<typename InputIterator, typename OutputType, typename BinaryFunction1, typename BinaryFunction2>
             OutputType inner_product_detect_random_access( bolt::amp::control& ctl, const InputIterator& first1,
                 const InputIterator& last1, const InputIterator& first2, const OutputType& init,

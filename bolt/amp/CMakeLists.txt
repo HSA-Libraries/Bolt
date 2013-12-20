@@ -51,6 +51,8 @@ set( ampBolt.Runtime.Headers
 		${ampBolt.Include.Dir}/transform_scan.h
     )
 set( ampBolt.Runtime.Headers.Iterator
+		${ampBolt.Include.Dir}/iterator/constant_iterator.h
+		${ampBolt.Include.Dir}/iterator/counting_iterator.h
         ${ampBolt.Include.Dir}/iterator/iterator_traits.h 
    )
     

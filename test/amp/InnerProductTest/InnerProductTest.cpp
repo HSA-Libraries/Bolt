@@ -32,6 +32,7 @@
 #include "bolt/amp/functional.h"
 #include "bolt/amp/device_vector.h"
 #include "bolt/amp/control.h"
+#include "bolt/amp/iterator/counting_iterator.h"
 #include "bolt/miniDump.h"
 #include "common/test_common.h"
 
@@ -1360,6 +1361,97 @@ void InProdDV()
     cmpArrays(hB, dB);
     
 };
+
+
+class InnerProductCountingIterator :public ::testing::TestWithParam<int>{
+protected:
+    int mySize;
+public:
+    InnerProductCountingIterator():mySize(GetParam()){
+    }
+};
+
+TEST_P( InnerProductCountingIterator, withCountingIterator)
+{
+    bolt::amp::counting_iterator<int> first1(0);
+    bolt::amp::counting_iterator<int> last1 = first1 +  mySize;
+    bolt::amp::counting_iterator<int> first2(1);
+    int init = 10;
+
+    std::vector<int> input1(mySize);
+    std::vector<int> input2(mySize);
+   
+
+    for (int i=0; i < mySize; i++) {
+        input1[i] = i;
+        input2[i] = i+1;
+    };
+    
+    int stlInnerProduct = std::inner_product(input1.begin(), input1.end(), input2.begin(),init, std::multiplies<int>(),
+        std::plus<int>());
+    int boltInnerProduct = bolt::amp::inner_product( first1,
+                                                     last1,
+                                                     first2,
+                                                     init, bolt::amp::multiplies<int>(),
+                                                     bolt::amp::plus<int>());
+
+    EXPECT_EQ(stlInnerProduct, boltInnerProduct);
+}
+
+TEST_P( InnerProductCountingIterator, SerialwithCountingIterator)
+{
+    bolt::amp::counting_iterator<int> first1(0);
+    bolt::amp::counting_iterator<int> last1 = first1 +  mySize;
+    bolt::amp::counting_iterator<int> first2(1);
+    int init = 10;
+
+    std::vector<int> input1(mySize);
+    std::vector<int> input2(mySize);
+   
+
+    for (int i=0; i < mySize; i++) {
+        input1[i] = i;
+        input2[i] = i+1;
+    };
+    
+    bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    ctl.setForceRunMode(bolt::amp::control::SerialCpu);
+
+    int stlInnerProduct = std::inner_product(input1.begin(), input1.end(),input2.begin(),init, std::multiplies<int>(),
+        std::plus<int>());
+    int boltInnerProduct = bolt::amp::inner_product(ctl, first1, last1, first2, init, bolt::amp::multiplies<int>(),
+        bolt::amp::plus<int>());
+
+    EXPECT_EQ(stlInnerProduct, boltInnerProduct);
+}
+
+TEST_P( InnerProductCountingIterator, MultiCorewithCountingIterator)
+{
+    bolt::amp::counting_iterator<int> first1(0);
+    bolt::amp::counting_iterator<int> last1 = first1 +  mySize;
+    bolt::amp::counting_iterator<int> first2(1);
+    int init = 10;
+
+    std::vector<int> input1(mySize);
+    std::vector<int> input2(mySize);
+   
+
+    for (int i=0; i < mySize; i++) {
+        input1[i] = i;
+        input2[i] = i+1;
+    };
+    
+    bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu);
+
+    int stlInnerProduct = std::inner_product(input1.begin(), input1.end(), input2.begin(),init, std::multiplies<int>(),
+        std::plus<int>());
+    int boltInnerProduct = bolt::amp::inner_product(ctl, first1, last1, first2, init, bolt::amp::multiplies<int>(),
+        bolt::amp::plus<int>());
+
+    EXPECT_EQ(stlInnerProduct, boltInnerProduct);
+}
+
 
 int _tmain(int argc, _TCHAR* argv[])
 {

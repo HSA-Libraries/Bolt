@@ -46,6 +46,7 @@
 #include <type_traits>
 #include "bolt/amp/bolt.h"
 #include "bolt/amp/device_vector.h"
+#include "bolt/amp/iterator/iterator_traits.h"
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -75,7 +76,7 @@ namespace bolt
                 unsigned int ceilNumElements = tileSize * ceilNumTiles;
 
 
-                concurrency::array_view< iType, 1 > inputV (first.getContainer().getBuffer(first));
+                auto inputV =  first.getContainer().getBuffer(first);
 
                 //Now create a staging array ; May support zero-copy in the future?!
                 concurrency::accelerator cpuAccelerator = concurrency::
@@ -103,7 +104,7 @@ namespace bolt
                                                    ( concurrency::tiled_index<tileSize> t_idx ) restrict(amp)
                     {
                       int globalId = t_idx.global[ 0 ];
-					  int gx = globalId;
+                      int gx = globalId;
                       int tileIndex = t_idx.local[ 0 ];
 
                       //  Initialize local data store
@@ -115,7 +116,7 @@ namespace bolt
                        //  Initialize the accumulator private variable with data from the input array
                        //  This essentially unrolls the loop below at least once
                        iType accumulator = inputV[globalId];
-				       scratch[tileIndex] = accumulator;         
+                       scratch[tileIndex] = accumulator;         
                       }
 
                       t_idx.barrier.wait();
@@ -125,7 +126,7 @@ namespace bolt
                       // Parallel reduction within a given workgroup using local data store
                       // to share values between workitems
 
-					  _REDUCE_STEP(tail, tileIndex, 128);
+                      _REDUCE_STEP(tail, tileIndex, 128);
                       _REDUCE_STEP(tail, tileIndex, 64);
                       _REDUCE_STEP(tail, tileIndex, 32);
                       _REDUCE_STEP(tail, tileIndex, 16);
@@ -166,18 +167,17 @@ namespace bolt
 
             };
 
-			  // This template is called after we detect random access iterators
+              // This template is called after we detect random access iterators
             // This is called strictly for any non-device_vector iterator
             template< typename T,
                       typename InputIterator,
                       typename BinaryFunction >
-            typename std::enable_if< !std::is_base_of<typename device_vector<typename std::
-                iterator_traits<InputIterator>::value_type>::iterator,InputIterator>::value, T >::type
-            reduce_pick_iterator( bolt::amp::control &ctl,
+            T reduce_pick_iterator( bolt::amp::control &ctl,
                                   const InputIterator& first,
                                   const InputIterator& last,
                                   const T& init,
-                                  const BinaryFunction& binary_op)
+                                  const BinaryFunction& binary_op,
+                                  std::random_access_iterator_tag)
             {
                 /*************/
                 typedef typename std::iterator_traits<InputIterator>::value_type iType;
@@ -192,10 +192,10 @@ namespace bolt
 
 
                 bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();
-				if (runMode == bolt::amp::control::Automatic)
-				{
-					runMode = ctl.getDefaultPathToRun();
-				}
+                if (runMode == bolt::amp::control::Automatic)
+                {
+                    runMode = ctl.getDefaultPathToRun();
+                }
                 if (runMode == bolt::amp::control::SerialCpu)
                 {
                     return std::accumulate(first, last, init, binary_op);
@@ -221,13 +221,12 @@ namespace bolt
             // This template is called after we detect random access iterators
             // This is called strictly for iterators that are derived from device_vector< T >::iterator
             template<typename T, typename DVInputIterator, typename BinaryFunction>
-            typename std::enable_if< std::is_base_of<typename device_vector<typename std::
-                iterator_traits<DVInputIterator>::value_type>::iterator,DVInputIterator>::value, T >::type
-            reduce_pick_iterator( bolt::amp::control &ctl,
+            T reduce_pick_iterator( bolt::amp::control &ctl,
                                   const DVInputIterator& first,
                                   const DVInputIterator& last,
                                   const T& init,
-                                  const BinaryFunction& binary_op )
+                                  const BinaryFunction& binary_op,
+                                  bolt::amp::device_vector_tag)
             {
                 typedef typename std::iterator_traits<DVInputIterator>::value_type iType;
                 size_t szElements = (size_t) (last - first);
@@ -235,13 +234,13 @@ namespace bolt
                     return init;
 
                  bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();
-				if (runMode == bolt::amp::control::Automatic)
-				{
-					runMode = ctl.getDefaultPathToRun();
-				}
+                if (runMode == bolt::amp::control::Automatic)
+                {
+                    runMode = ctl.getDefaultPathToRun();
+                }
                 if (runMode == bolt::amp::control::SerialCpu)
                 {
-					 typename bolt::amp::device_vector< iType >::pointer reduceInputBuffer =  first.getContainer( ).data( );
+                     typename bolt::amp::device_vector< iType >::pointer reduceInputBuffer =  first.getContainer( ).data( );
                      return std::accumulate(  &reduceInputBuffer[first.m_Index], &reduceInputBuffer[ last.m_Index ],
                                                init, binary_op);
                 }
@@ -249,7 +248,7 @@ namespace bolt
                 {
 #ifdef ENABLE_TBB
 
-					typename bolt::amp::device_vector< iType >::pointer reduceInputBuffer =  first.getContainer( ).data( );
+                    typename bolt::amp::device_vector< iType >::pointer reduceInputBuffer =  first.getContainer( ).data( );
                     return bolt::btbb::reduce(  &reduceInputBuffer[first.m_Index],&reduceInputBuffer[ last.m_Index ],
                                                   init, binary_op);
 
@@ -262,7 +261,55 @@ namespace bolt
                 }
             }
 
-			
+
+            template< typename T,
+                      typename InputIterator,
+                      typename BinaryFunction >
+            T reduce_pick_iterator( bolt::amp::control &ctl,
+                                  const InputIterator& first,
+                                  const InputIterator& last,
+                                  const T& init,
+                                  const BinaryFunction& binary_op,
+                                  bolt::amp::fancy_iterator_tag )
+            {
+                /*************/
+                typedef typename std::iterator_traits<InputIterator>::value_type iType;
+                size_t szElements = (size_t)(last - first);
+                if (szElements == 0)
+                    return init;
+                /*TODO - probably the forceRunMode should be replaced by getRunMode and setRunMode*/
+                // Its a dynamic choice. See the reduce Test Code
+                // What should we do if the run mode is automatic. Currently it goes to the last else statement
+                //How many threads we should spawn?
+                //Need to look at how to control the number of threads spawned.
+
+
+                bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();
+                if (runMode == bolt::amp::control::Automatic)
+                {
+                    runMode = ctl.getDefaultPathToRun();
+                }
+                if (runMode == bolt::amp::control::SerialCpu)
+                {
+                    return std::accumulate(first, last, init, binary_op);
+
+                } else if (runMode == bolt::amp::control::MultiCoreCpu) {
+
+#ifdef ENABLE_TBB
+
+                    return bolt::btbb::reduce(first,last,init,binary_op);
+#else
+                    throw std::exception( "The MultiCoreCpu version of reduce is not enabled to be built." );
+                    return init;
+#endif
+                }
+                else
+                {
+                    return reduce_enqueue( ctl, first, last, init, binary_op);
+                }
+            };
+
+            
             template< typename T,
                       typename DVInputIterator,
                       typename BinaryFunction >
@@ -289,13 +336,14 @@ namespace bolt
                                            const BinaryFunction& binary_op,
                                            std::random_access_iterator_tag )
             {
-                return reduce_pick_iterator( ctl, first, last, init, binary_op );
+                return reduce_pick_iterator( ctl, first, last, init, binary_op,
+                                             std::iterator_traits< DVInputIterator >::iterator_category( ) );
             }
 
 
         };//end of namespace detail
 
-		//////////////////////////////////////////
+        //////////////////////////////////////////
         //  Reduce overloads
         //////////////////////////////////////////
         // default control, two-input transform, std:: iterator
