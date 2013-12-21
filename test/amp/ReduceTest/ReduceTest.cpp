@@ -15,117 +15,12 @@
 
 ***************************************************************************/                                                                                     
 
-#define ENABLE_GTEST 1
-
-#if !ENABLE_GTEST
-
-    #include "common/stdafx.h"
-    #include <stdio.h>
-
-    #include <numeric>
-    #include <limits>
-    #include <bolt/AMP/functional.h>
-    #include <bolt/AMP/reduce.h>
-
-    #include <list> // For debugging purposes, to prove that we can reject lists
-
-    template<typename T>
-    void printCheckMessage(bool err, std::string msg, T  stlResult, T boltResult)
-    {
-      if (err) {
-        std::cout << "*ERROR ";
-      } else {
-        std::cout << "PASSED ";
-      }
-
-      std::cout << msg << "  STL=" << stlResult << " BOLT=" << boltResult << std::endl;
-    };
-
-    template<typename T>
-    bool checkResult(std::string msg, T  stlResult, T boltResult)
-    {
-      bool err =  (stlResult != boltResult);
-      printCheckMessage(err, msg, stlResult, boltResult);
-
-      return err;
-    };
-
-
-    // For comparing floating point values:
-    template<typename T>
-    bool checkResult(std::string msg, T  stlResult, T boltResult, double errorThresh)
-    {
-      bool err;
-      if ((errorThresh != 0.0) && stlResult) {
-        double ratio = (double)(boltResult) / (double)(stlResult) - 1.0;
-        err = abs(ratio) > errorThresh;
-      } else {
-        // Avoid div-by-zero, check for exact match.
-        err = (stlResult != boltResult);
-      }
-
-      printCheckMessage(err, msg, stlResult, boltResult);
-      return err;
-    };
-
-    // Simple test case for bolt::reduce:
-    // Sum together specified numbers, compare against STL::accumulate function.
-    // Demonstrates:
-    //    * use of bolt with STL::array iterators
-    //    * use of bolt with default plus 
-    //    * use of bolt with explicit plus argument
-    void simpleReduceArray( )
-    {
-      const unsigned int arraySize = 961;
-
-        std::vector< int > A(arraySize);
-
-      for (int i=0; i < arraySize; i++) {
-        A[i(= 1;
-      };
-
-      int stlReduce = std::accumulate(A.begin(), A.end(), 0);
-
-        for (int i=0; i < arraySize; i++) {
-        A[i] = 1;
-      };
-
-      int boltReduce = bolt::amp::reduce(A.begin(), A.end(), 0, bolt::plus<int>());
-      //int boltReduce2 = bolt::amp::reduce(A.begin(), A.end(), 0);  // same as above...
-      //int boltReduce3 = bolt::amp::reduce(A.rbegin(), A.rend(), 0);  // reverse iterators should not be supported
-
-      printf ("Sum: stl=%d,  bolt=%d\n", stlReduce, boltReduce);
-    };
-
-
-
-    // Test driver function
-    void simpleReduce()
-    {
-      simpleReduceArray( );
-      //simpleReduce1(1024);
-      //simpleReduce1(1024000);
-      //simpleReduce2();
-        //
-      //simpleReduce3<float> ("sum", bolt::plus<float>(), 1000000, .0001/*errorThresh*/);
-      //simpleReduce3<float> ("min", bolt::minimum<float>(), 1000000);
-      //simpleReduce3<float> ("max", bolt::maximum<float>(), 1000000);
-
-      //simpleReduce4();
-    };
-
-
-    int _tmain(int argc, _TCHAR* argv[])
-    {
-      simpleReduce();
-      return 0;
-    }
-#else
-
 #include "common/stdafx.h"
 
 #include "bolt/amp/reduce.h"
 #include "bolt/amp/functional.h"
+#include "bolt/amp/iterator/iterator_traits.h"
+#include "bolt/amp/iterator/counting_iterator.h"
 #include "bolt/miniDump.h"
 #include <gtest/gtest.h>
 #include <boost/shared_array.hpp>
@@ -1016,8 +911,82 @@ TEST_P( ReduceStdVectWithInit, MultiCorewithIntWdInitWdAnyFunctor)
     EXPECT_EQ(stlTransformReduce, boltTransformReduce);
 }
 
+class StdVectCountingIterator :public ::testing::TestWithParam<int>{
+protected:
+    int mySize;
+public:
+    StdVectCountingIterator():mySize(GetParam()){
+    }
+};
+
+
+
+TEST_P( StdVectCountingIterator, withCountingIterator)
+{
+    std::vector<int> stdInput( mySize );
+    bolt::amp::counting_iterator<int> first(0);
+    bolt::amp::counting_iterator<int> last = first +  mySize;
+
+    for (int i = 0; i < mySize; ++i)
+    {
+        stdInput[i] = i;
+    }
+    
+    //  Calling the actual functions under test
+    int init = 10;
+    int stlTransformReduce = std::accumulate(stdInput.begin( ), stdInput.end( ), init, bolt::amp::plus<int>( ) );
+    int boltTransformReduce= bolt::amp::reduce( first, last, init, bolt::amp::plus<int>( ) );
+
+    EXPECT_EQ( stlTransformReduce, boltTransformReduce );
+}
+
+TEST_P( StdVectCountingIterator, SerialwithCountingIterator)
+{
+    std::vector<int> stdInput( mySize );
+    bolt::amp::counting_iterator<int> first(0);
+    bolt::amp::counting_iterator<int> last = first +  mySize;
+    
+    for (int i = 0; i < mySize; ++i)
+    {
+        stdInput[i] = i;
+    }
+    
+    bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    ctl.setForceRunMode(bolt::amp::control::SerialCpu);
+
+    //  Calling the actual functions under test
+    int init = 10;
+    int stlTransformReduce = std::accumulate(stdInput.begin( ), stdInput.end( ), init, bolt::amp::plus<int>( ) );
+    int boltTransformReduce= bolt::amp::reduce( ctl, first, last, init, bolt::amp::plus<int>( ) );
+
+    EXPECT_EQ( stlTransformReduce, boltTransformReduce );
+}
+
+TEST_P( StdVectCountingIterator, MultiCorewithCountingIterator)
+{
+    std::vector<int> stdInput( mySize );
+    bolt::amp::counting_iterator<int> first(0);
+    bolt::amp::counting_iterator<int> last = first +  mySize;
+
+    for (int i = 0; i < mySize; ++i)
+    {
+        stdInput[i] = i;
+    }
+    
+     bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu);
+
+    //  Calling the actual functions under test
+    int init = 10;
+    int stlTransformReduce = std::accumulate(stdInput.begin( ), stdInput.end( ), init, bolt::amp::plus<int>( ) );
+    int boltTransformReduce= bolt::amp::reduce( ctl, first, last, init, bolt::amp::plus<int>( ) );
+
+    EXPECT_EQ( stlTransformReduce, boltTransformReduce );
+}
+
 
 INSTANTIATE_TEST_CASE_P( withIntWithInitValue, ReduceStdVectWithInit, ::testing::Range(1, 100, 1) );
+INSTANTIATE_TEST_CASE_P( withCountingIterator, StdVectCountingIterator, ::testing::Range(1, 100, 1) );
 
 class ReduceTestMultFloat: public ::testing::TestWithParam<int>{
 protected:
@@ -2045,6 +2014,9 @@ TEST( ReduceFunctor, MultiCoreLambdaFunctor )
     //EXPECT_EQ( stlReduce, boltReduce );
 }
 
+
+
+
 void testTBBDevicevector()
 {
     size_t aSize = 1<<16;
@@ -2120,4 +2092,3 @@ int main(int argc, char* argv[])
     return retVal;
 }
 
-#endif

@@ -24,6 +24,7 @@
 #include "bolt/amp/bolt.h"
 #include "bolt/amp/functional.h"
 #include "bolt/amp/device_vector.h"
+#include "bolt/amp/iterator/iterator_traits.h"
 #ifdef ENABLE_TBB
 //TBB Includes
 #include "bolt/btbb/count.h"
@@ -62,7 +63,7 @@ namespace bolt {
                 unsigned int ceilNumElements = tileSize * ceilNumTiles;
 
 
-                concurrency::array_view< iType, 1 > inputV (first.getContainer().getBuffer(first));
+                auto inputV = (first.getContainer().getBuffer(first));
 
                 //Now create a staging array ; May support zero-copy in the future?!
 
@@ -178,20 +179,19 @@ namespace bolt {
                 const Predicate& predicate,
                 std::random_access_iterator_tag)
             {
-                return count_pick_iterator( ctl, first, last, predicate );
+                return count_pick_iterator( ctl, first, last, predicate,
+                                            std::iterator_traits< InputIterator >::iterator_category( ) );
             }
 
             // This template is called after we detect random access iterators
             // This is called strictly for any non-device_vector iterator
             template<typename InputIterator, typename Predicate>
-
-            typename std::enable_if< !std::is_base_of<typename device_vector<typename std::
-                    iterator_traits<InputIterator>::value_type>::iterator,InputIterator>::value, int >::type
-
+            typename bolt::amp::iterator_traits<InputIterator>::difference_type
             count_pick_iterator(bolt::amp::control &ctl,
                 const InputIterator& first,
                 const InputIterator& last,
-                const Predicate& predicate )
+                const Predicate& predicate,
+                std::random_access_iterator_tag )
 
             {
                 /*************/
@@ -207,10 +207,10 @@ namespace bolt {
 
                 bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
 
-				if (runMode == bolt::amp::control::Automatic)
-				{
-					runMode = ctl.getDefaultPathToRun();
-				}
+                if (runMode == bolt::amp::control::Automatic)
+                {
+                    runMode = ctl.getDefaultPathToRun();
+                }
                 if (runMode == bolt::amp::control::SerialCpu)
                 {
                       return (int) std::count_if(first,last,predicate);
@@ -236,12 +236,12 @@ namespace bolt {
             // This template is called after we detect random access iterators
             // This is called strictly for iterators that are derived from device_vector< T >::iterator
             template<typename DVInputIterator, typename Predicate>
-            typename std::enable_if< std::is_base_of<typename device_vector<typename std::
-                iterator_traits<DVInputIterator>::value_type>::iterator,DVInputIterator>::value, int >::type
-            count_pick_iterator(bolt::amp::control &ctl,
-                const DVInputIterator& first,
-                const DVInputIterator& last,
-                const Predicate& predicate )
+            typename bolt::amp::iterator_traits<DVInputIterator>::difference_type
+            count_pick_iterator( bolt::amp::control &ctl,
+                                 const DVInputIterator& first,
+                                 const DVInputIterator& last,
+                                 const Predicate& predicate,
+                                 bolt::amp::device_vector_tag )
             {
                 typedef typename std::iterator_traits<DVInputIterator>::value_type iType;
                 size_t szElements = (size_t) (last - first);
@@ -250,43 +250,73 @@ namespace bolt {
 
                 bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
 
-				if (runMode == bolt::amp::control::Automatic)
-				{
-					runMode = ctl.getDefaultPathToRun();
-				}
+                if (runMode == bolt::amp::control::Automatic)
+                {
+                    runMode = ctl.getDefaultPathToRun();
+                }
                 if (runMode == bolt::amp::control::SerialCpu)
-                    {
-
-                     /*std::vector<iType> InputBuffer(szElements);
-                     for(unsigned int index=0; index<szElements; index++){
-                         InputBuffer[index] = first.getContainer().getBuffer()[index + first.m_Index];
-                     }
-                     return (int) std::count_if(InputBuffer.begin(),InputBuffer.end() ,predicate);*/
-
-					 typename bolt::amp::device_vector< iType >::pointer countInputBuffer =  first.getContainer( ).data( );
-                      return  (int) std::count_if(&countInputBuffer[first.m_Index],
-                          &countInputBuffer[first.m_Index + szElements], predicate) ;
-
+                {
+                  typename bolt::amp::device_vector< iType >::pointer countInputBuffer = first.getContainer( ).data( );
+                   return  (int) std::count_if(&countInputBuffer[first.m_Index],
+                       &countInputBuffer[first.m_Index + szElements], predicate) ;
 
                 }
 
                 else if (runMode == bolt::amp::control::MultiCoreCpu)
                 {
 #ifdef ENABLE_TBB
-                    /*std::vector<iType> InputBuffer(szElements);
-                    for(unsigned int index=0; index<szElements; index++){
-                        InputBuffer[index] = first.getContainer().getBuffer()[index + first.m_Index];
-                    }
+                   
+                   typename bolt::amp::device_vector< iType >::pointer countInputBuffer =  first.getContainer( ).data( );
+                     return  bolt::btbb::count_if(&countInputBuffer[first.m_Index],
+                         &countInputBuffer[first.m_Index + szElements] ,predicate);
+#else              
+                   throw std::exception( "The MultiCoreCpu version of count function is not enabled to be built." );
+                   
+                   return 0;
+#endif
 
-                    return bolt::btbb::count_if(InputBuffer.begin(),InputBuffer.end(),predicate);*/
+                }
+                else
+                {
+                  return  count_enqueue( ctl, first, last, predicate );
+                }
+            }
 
-					typename bolt::amp::device_vector< iType >::pointer countInputBuffer =  first.getContainer( ).data( );
-                      return  bolt::btbb::count_if(&countInputBuffer[first.m_Index],
-                          &countInputBuffer[first.m_Index + szElements] ,predicate);
-#else
-                    throw std::exception( "The MultiCoreCpu version of count function is not enabled to be built." );
-
+            // This template is called after we detect random access iterators
+            // This is called strictly for iterators that are derived from fancy_iterator
+            template<typename DVInputIterator, typename Predicate>
+            typename bolt::amp::iterator_traits<DVInputIterator>::difference_type
+            count_pick_iterator( bolt::amp::control &ctl,
+                                 const DVInputIterator& first,
+                                 const DVInputIterator& last,
+                                 const Predicate& predicate,
+                                 bolt::amp::fancy_iterator_tag )
+            {
+                typedef typename std::iterator_traits<DVInputIterator>::value_type iType;
+                size_t szElements = (size_t) (last - first);
+                if (szElements == 0)
                     return 0;
+
+                bolt::amp::control::e_RunMode runMode = ctl.getForceRunMode();  // could be dynamic choice some day.
+
+                if (runMode == bolt::amp::control::Automatic)
+                {
+                    runMode = ctl.getDefaultPathToRun();
+                }
+                if (runMode == bolt::amp::control::SerialCpu)
+                {
+                  return  (int) std::count_if(first, last, predicate) ;
+
+                }
+
+                else if (runMode == bolt::amp::control::MultiCoreCpu)
+                {
+#ifdef ENABLE_TBB
+                   
+                   return  bolt::btbb::count_if(first, last,predicate);
+#else              
+                   throw std::exception( "The MultiCoreCpu version of count function is not enabled to be built." );
+                   return 0;
 #endif
 
                 }
@@ -299,7 +329,7 @@ namespace bolt {
 
         } //end of detail
 
-		template<typename InputIterator, typename Predicate>
+        template<typename InputIterator, typename Predicate>
         typename bolt::amp::iterator_traits<InputIterator>::difference_type
             count_if(control& ctl, InputIterator first,
             InputIterator last,

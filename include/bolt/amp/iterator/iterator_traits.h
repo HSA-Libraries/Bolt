@@ -59,6 +59,10 @@ namespace amp {
         typedef const T& reference;
     };
 
+    struct fancy_iterator_tag : public std::random_access_iterator_tag
+    {
+    };
+
 }
 };
 

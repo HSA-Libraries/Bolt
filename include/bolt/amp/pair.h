@@ -17,23 +17,22 @@
 
 
 
-/*! \file bolt/cl/pair.h
+/*! \file bolt/amp/pair.h
  *  \brief A type encapsulating a heterogeneous pair of elements
  */
 
 #pragma once
-#if !defined( BOLT_CL_PAIR_H )
-#define BOLT_CL_PAIR_H
+#if !defined( BOLT_AMP_PAIR_H )
+#define BOLT_AMP_PAIR_H
 
 #include <iterator>
 #include <type_traits>
 #include <numeric>
-//#include "bolt/cl/bolt.h"
 
 namespace bolt
 {
 
-    namespace cl
+    namespace amp
     {
 /*! \addtogroup Miscellaneous
  *  \{
@@ -233,6 +232,6 @@ template<typename Pair> struct tuple_size;
     } //end cl
 } // end bolt
 
-#include <bolt/cl/detail/pair.inl>
+#include <bolt/amp/detail/pair.inl>
 
 #endif

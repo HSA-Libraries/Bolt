@@ -30,6 +30,7 @@
 #include <array>
 #include <algorithm>
 #include "bolt/amp/device_vector.h"
+#include "bolt/amp/iterator/counting_iterator.h"
 
 class testCountIfFloatWithStdVector: public ::testing::TestWithParam<int>{
 protected:
@@ -945,6 +946,79 @@ TEST(count_IntValueOccuranceStdVect, intVectWithSerialvalue){
 }
 
 
+
+class StdVectCountingIterator :public ::testing::TestWithParam<int>{
+protected:
+    int mySize;
+public:
+    StdVectCountingIterator():mySize(GetParam()){
+    }
+};
+
+TEST_P( StdVectCountingIterator, withCountingIterator)
+{
+    bolt::amp::counting_iterator<int> first(0);
+    bolt::amp::counting_iterator<int> last = first +  mySize;
+
+    std::vector<int> a(mySize);
+
+    int myValue = 3;
+
+    for (int i=0; i < mySize; i++) {
+        a[i] = i;
+    };
+
+    size_t stdCount = std::count(a.begin(), a.end(), myValue);
+    size_t boltCount = bolt::amp::count(first, last, myValue);
+
+    EXPECT_EQ(stdCount, boltCount);
+}
+
+
+//TEST_P( StdVectCountingIterator, SerialwithCountingIterator)
+//{
+//    bolt::amp::counting_iterator<int> first(0);
+//    bolt::amp::counting_iterator<int> last = first +  mySize;
+//
+//    std::vector<int> a(mySize);
+//
+//    int myValue = 3;
+//
+//    for (int i=0; i < mySize; i++) {
+//        a[i] = i;
+//    };
+//
+//    bolt::amp::control ctl = bolt::amp::control::getDefault( );
+//    ctl.setForceRunMode(bolt::amp::control::SerialCpu);
+//
+//    size_t stdCount = std::count(a.begin(), a.end(), myValue);
+//    size_t boltCount = bolt::amp::count(ctl, first, last, myValue);
+//
+//    EXPECT_EQ(stdCount, boltCount);
+//}
+
+TEST_P( StdVectCountingIterator, MultiCorewithCountingIterator)
+{
+    bolt::amp::counting_iterator<int> first(0);
+    bolt::amp::counting_iterator<int> last = first +  mySize;
+
+    std::vector<int> a(mySize);
+
+    int myValue = 3;
+    for (int i=0; i < mySize; i++) {
+        a[i] = i;
+    };
+
+    bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu);
+
+    size_t stdCount = std::count(a.begin(), a.end(), myValue);
+    size_t boltCount = bolt::amp::count(ctl, first, last, myValue);
+
+    EXPECT_EQ(stdCount, boltCount);
+}
+INSTANTIATE_TEST_CASE_P (useStdVectWithIntValues, StdVectCountingIterator,
+                         ::testing::Values(1, 100, 1000, 10000, 100000));
 
 int main(int argc, char* argv[])
 {

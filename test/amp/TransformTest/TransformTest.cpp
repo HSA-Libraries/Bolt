@@ -23,6 +23,8 @@
 #include <array>
 #include "bolt/amp/functional.h"
 #include "common/test_common.h"
+#include <bolt/amp/iterator/constant_iterator.h>
+#include <bolt/amp/iterator/counting_iterator.h>
 #define TEST_DOUBLE 0
 #define GTEST_TESTS 1
 #if !GTEST_TESTS
@@ -782,12 +784,12 @@ protected:
 
 TEST( HostIntVector, OffsetTransform )
 {
-	int length = 1024;
+    int length = 1024;
 
     std::vector<int> stdInput( length ,1);
     std::vector<int> boltInput(stdInput.begin(),stdInput.end());
 
-	int offset = 100;
+    int offset = 100;
 
     std::transform(  stdInput.begin( ) + offset,  stdInput.end( ), stdInput.begin() + offset, std::negate<int>() );
     bolt::amp::transform( boltInput.begin( ) + offset, boltInput.end( ), boltInput.begin( ) + offset, bolt::amp::negate<int>() );
@@ -798,14 +800,14 @@ TEST( HostIntVector, OffsetTransform )
 
 TEST( HostIntVector, SerialOffsetTransform  )
 {
-	int length = 1024;
+    int length = 1024;
 
     std::vector<int> stdInput( length ,1);
     std::vector<int> boltInput(stdInput.begin(),stdInput.end());
 
-	int offset = 100;
+    int offset = 100;
 
-	bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    bolt::amp::control ctl = bolt::amp::control::getDefault( );
     ctl.setForceRunMode(bolt::amp::control::SerialCpu); 
 
     std::transform(  stdInput.begin( ) + offset,  stdInput.end( ), stdInput.begin() + offset, std::negate<int>() );
@@ -817,14 +819,14 @@ TEST( HostIntVector, SerialOffsetTransform  )
 
 TEST( HostIntVector, MulticoreOffsetTransform  )
 {
-	int length = 1024;
+    int length = 1024;
 
     std::vector<int> stdInput( length ,1);
     std::vector<int> boltInput(stdInput.begin(),stdInput.end());
 
-	int offset = 100;
+    int offset = 100;
 
-	bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    bolt::amp::control ctl = bolt::amp::control::getDefault( );
     ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu); 
 
     std::transform(  stdInput.begin( ) + offset,  stdInput.end( ), stdInput.begin() + offset, std::negate<int>() );
@@ -836,56 +838,56 @@ TEST( HostIntVector, MulticoreOffsetTransform  )
 
 TEST( DVIntVector, OffsetTransform  )
 {
-	int length = 1024;
+    int length = 1024;
 
     std::vector<int> stdInput( length ,1);
     bolt::amp::device_vector<int> boltInput(stdInput.begin(),stdInput.end());
 
-	int offset = 100;
+    int offset = 100;
 
     std::transform(  stdInput.begin( ) + offset,  stdInput.end( ), stdInput.begin() + offset, std::negate<int>() );
     bolt::amp::transform( boltInput.begin( ) + offset, boltInput.end( ), boltInput.begin( ) + offset, bolt::amp::negate<int>() );
 
     cmpArrays( stdInput, boltInput);
-	
+    
 }
 
 TEST( DVIntVector, SerialOffsetTransform  )
 {
-	int length = 1024;
+    int length = 1024;
 
     std::vector<int> stdInput( length ,1);
     bolt::amp::device_vector<int> boltInput(stdInput.begin(),stdInput.end());
 
-	int offset = 100;
+    int offset = 100;
 
-	bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    bolt::amp::control ctl = bolt::amp::control::getDefault( );
     ctl.setForceRunMode(bolt::amp::control::SerialCpu); 
 
     std::transform(  stdInput.begin( ) + offset,  stdInput.end( ), stdInput.begin() + offset, std::negate<int>() );
     bolt::amp::transform( ctl, boltInput.begin( ) + offset, boltInput.end( ), boltInput.begin( ) + offset, bolt::amp::negate<int>() );
 
     cmpArrays( stdInput, boltInput);
-	
+    
 }
 
 TEST( DVIntVector, MulticoreOffsetTransform  )
 {
-	int length = 1024;
+    int length = 1024;
 
     std::vector<int> stdInput( length ,1);
     bolt::amp::device_vector<int> boltInput(stdInput.begin(),stdInput.end());
 
-	int offset = 100;
+    int offset = 100;
 
-	bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    bolt::amp::control ctl = bolt::amp::control::getDefault( );
     ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu); 
 
     std::transform(  stdInput.begin( ) + offset,  stdInput.end( ), stdInput.begin() + offset, std::negate<int>() );
     bolt::amp::transform( ctl, boltInput.begin( ) + offset, boltInput.end( ), boltInput.begin( ) + offset, bolt::amp::negate<int>() );
 
     cmpArrays( stdInput, boltInput);
-	
+    
 }
 
 TEST_P( TransformIntegerVector, InplaceTransform )
@@ -1670,34 +1672,327 @@ TEST( TransformStdVector, MulticoreOutOfPlaceTransform)
 
 TEST( DVIntVector, OffsetIntTest )
 {
-	int length = 1024;
+    int length = 1024;
 
     std::vector<int> stdInput( length ,1);
     bolt::amp::device_vector<int> boltInput(stdInput.begin(),stdInput.end());
 
-	int offset = 100;
+    int offset = 100;
 
     std::transform(  stdInput.begin( ) + offset,  stdInput.end( ), stdInput.begin() + offset, std::negate<int>() );
     bolt::amp::transform( boltInput.begin( ) + offset, boltInput.end( ), boltInput.begin( ) + offset, bolt::amp::negate<int>() );
 
     cmpArrays( stdInput, boltInput);
-	
+    
 }
 
 TEST( DVIntVector, OffsetDoubleTest )
 {
-	int length = 1024;
+    int length = 1024;
 
     std::vector<double> stdInput( length ,4.0);
     bolt::amp::device_vector<double> boltInput(stdInput.begin(),stdInput.end());
 
-	int offset = 100;
+    int offset = 100;
 
     std::transform(  stdInput.begin( ) + offset,  stdInput.end( ), stdInput.begin() + offset, std::negate<double>() );
     bolt::amp::transform( boltInput.begin( ) + offset, boltInput.end( ), boltInput.begin( ) + offset, bolt::amp::negate<double>() );
 
     cmpArrays( stdInput, boltInput);
-	
+    
+}
+
+//Teststotestthecountingiterator
+TEST(simple1,counting)
+{
+    bolt::amp::counting_iterator<int> iter(0);
+    bolt::amp::counting_iterator<int> iter2=iter+1024;
+    std::vector<int> input1(1024);
+    std::vector<int> input2(1024);
+    std::vector<int> stdOutput(1024);
+     std::vector<int> boltOutput(1024);
+     for(int i=0 ; i< 1024;i++)
+     {
+         input1[i] = i;
+     }
+    input2 = input1;
+    std::transform( input1.begin(), input1.end(), input2.begin(), stdOutput.begin(), bolt::amp::plus<int>());
+    bolt::amp::transform(iter,iter2,input1.begin(),boltOutput.begin(),bolt::amp::plus<int>());
+    cmpArrays( stdOutput, boltOutput, 1024 );
+}
+
+TEST(simple1,Serial_counting)
+{
+    bolt::amp::counting_iterator<int> iter(0);
+    bolt::amp::counting_iterator<int> iter2=iter+1024;
+    std::vector<int> input1(1024);
+    std::vector<int> input2(1024);
+    std::vector<int> stdOutput(1024);
+     std::vector<int> boltOutput(1024);
+     for(int i=0 ; i< 1024;i++)
+     {
+         input1[i] = i;
+     }
+    input2 = input1;
+
+    bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    ctl.setForceRunMode(bolt::amp::control::SerialCpu);
+
+    std::transform( input1.begin(), input1.end(), input2.begin(), stdOutput.begin(), bolt::amp::plus<int>());
+    bolt::amp::transform(ctl, iter,iter2,input1.begin(),boltOutput.begin(),bolt::amp::plus<int>());
+    cmpArrays( stdOutput, boltOutput, 1024 );
+}
+
+TEST(simple1,MultiCore_counting)
+{
+    bolt::amp::counting_iterator<int> iter(0);
+    bolt::amp::counting_iterator<int> iter2=iter+1024;
+    std::vector<int> input1(1024);
+    std::vector<int> input2(1024);
+    std::vector<int> stdOutput(1024);
+     std::vector<int> boltOutput(1024);
+     for(int i=0 ; i< 1024;i++)
+     {
+         input1[i] = i;
+     }
+    input2 = input1;
+
+    bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu);
+
+    std::transform( input1.begin(), input1.end(), input2.begin(), stdOutput.begin(), bolt::amp::plus<int>());
+    bolt::amp::transform(ctl, iter,iter2,input1.begin(),boltOutput.begin(),bolt::amp::plus<int>());
+    cmpArrays( stdOutput, boltOutput, 1024 );
+}
+
+
+//TEST(amp_const_iter_transformBoltampVectFloat, addIterFloatValues){
+//    int size = 10;
+//    float myConstValueF = 1.125f;
+//    bolt::amp::plus<float> addKaro;
+//    std::vector<float> stdVect(size);
+//    
+//    for (int i = 0; i < size; i++){
+//        stdVect[i] = (float)i + 1.0f;
+//    }
+//    bolt::amp::device_vector<float> myDevVect(stdVect.begin(), stdVect.end());
+//    
+//    for (int i = 0; i<size; ++i){
+//        std::cout.setf(std::ios::fixed);
+//        std::cout<<std::setprecision(3)<<myDevVect[i]<<" ";
+//    }
+//
+//    bolt::amp::constant_iterator< float > constIter( myConstValueF );
+//
+//    bolt::amp::transform(myDevVect.begin(), myDevVect.end(), constIter, myDevVect.begin(), addKaro);
+//    
+//    std::cout<<std::endl<<std::endl;
+//    for (int i = 0; i<size; ++i){
+//        std::cout.setf(std::ios::fixed);
+//        std::cout<<std::setprecision(3)<<myDevVect[i]<<" ";
+//    }
+//}
+
+
+//TEST(amp_const_iter_transformBoltampVectFloat, SerialaddIterFloatValues){
+//    int size = 10;
+//    float myConstValueF = 1.125f;
+//    bolt::amp::plus<float> addKaro;
+//    std::vector<float> stdVect(size);
+//    
+//    for (int i = 0; i < size; i++){
+//        stdVect[i] = (float)i + 1.0f;
+//    }
+//    bolt::amp::device_vector<float> myDevVect(stdVect.begin(), stdVect.end());
+//    for (int i = 0; i<size; ++i){
+//        std::cout.setf(std::ios::fixed);
+//        std::cout<<std::setprecision(3)<<myDevVect[i]<<" ";
+//    }
+//
+//    bolt::amp::control ctl = bolt::amp::control::getDefault( );
+//    ctl.setForceRunMode(bolt::amp::control::SerialCpu);
+//
+//    bolt::amp::constant_iterator< float > constIter( myConstValueF );
+//
+//    bolt::amp::transform(ctl, myDevVect.begin(), myDevVect.end(), constIter, myDevVect.begin(), addKaro);
+//    
+//    std::cout<<std::endl<<std::endl;
+//    for (int i = 0; i<size; ++i){
+//        std::cout.setf(std::ios::fixed);
+//        std::cout<<std::setprecision(3)<<myDevVect[i]<<" ";
+//    }
+//}
+//
+//
+//TEST(amp_const_iter_transformBoltampVectFloat, MultiCoreaddIterFloatValues){
+//    int size = 10;
+//    float myConstValueF = 1.125f;
+//    bolt::amp::plus<float> addKaro;
+//    std::vector<float> stdVect(size);
+//    
+//    for (int i = 0; i < size; i++){
+//        stdVect[i] = (float)i + 1.0f;
+//    }
+//    bolt::amp::device_vector<float> myDevVect(stdVect.begin(), stdVect.end());
+//    for (int i = 0; i<size; ++i){
+//        std::cout.setf(std::ios::fixed);
+//        std::cout<<std::setprecision(3)<<myDevVect[i]<<" ";
+//    }
+//
+//    bolt::amp::control ctl = bolt::amp::control::getDefault( );
+//    ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu);
+//
+//    bolt::amp::constant_iterator< float > constIter( myConstValueF );
+//
+//    bolt::amp::transform(ctl, myDevVect.begin(), myDevVect.end(), constIter, myDevVect.begin(), addKaro);
+//    
+//    std::cout<<std::endl<<std::endl;
+//    for (int i = 0; i<size; ++i){
+//        std::cout.setf(std::ios::fixed);
+//        std::cout<<std::setprecision(3)<<myDevVect[i]<<" ";
+//    }
+//}
+
+TEST(amp_const_iter_transformBoltampFloat, addIterFloatValues){
+    int size = 10;
+    float myConstValueF = 1.125f;
+    bolt::amp::plus<float> addKaro;
+    std::vector<float> myVect(size);
+    
+    for (int i = 0; i < size; i++){
+        myVect[i] = (float)i + 1.0f;
+    }
+    
+    for (int i = 0; i<size; ++i){
+        std::cout.setf(std::ios::fixed);
+        std::cout<<std::setprecision(3)<<myVect[i]<<" ";
+    }
+
+    bolt::amp::constant_iterator< float > constIter( myConstValueF );
+
+    bolt::amp::transform(myVect.begin(), myVect.end(), constIter, myVect.begin(), addKaro);
+    
+    std::cout<<std::endl<<std::endl;
+    for (int i = 0; i<size; ++i){
+        std::cout.setf(std::ios::fixed);
+        std::cout<<std::setprecision(3)<<myVect[i]<<" ";
+    }
+}
+
+TEST(amp_const_iter_transformBoltampFloat, SerialaddIterFloatValues){
+    int size = 10;
+    float myConstValueF = 1.125f;
+    bolt::amp::plus<float> addKaro;
+    std::vector<float> myVect(size);
+    
+    for (int i = 0; i < size; i++){
+        myVect[i] = (float)i + 1.0f;
+    }
+    
+    for (int i = 0; i<size; ++i){
+        std::cout.setf(std::ios::fixed);
+        std::cout<<std::setprecision(3)<<myVect[i]<<" ";
+    }
+
+    bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    ctl.setForceRunMode(bolt::amp::control::SerialCpu);
+
+    bolt::amp::constant_iterator< float > constIter( myConstValueF );
+
+    bolt::amp::transform(ctl, myVect.begin(), myVect.end(), constIter, myVect.begin(), addKaro);
+    
+    std::cout<<std::endl<<std::endl;
+    for (int i = 0; i<size; ++i){
+        std::cout.setf(std::ios::fixed);
+        std::cout<<std::setprecision(3)<<myVect[i]<<" ";
+    }
+}
+
+TEST(amp_const_iter_transformBoltampFloat, MultiCoreaddIterFloatValues){
+    int size = 10;
+    float myConstValueF = 1.125f;
+    bolt::amp::plus<float> addKaro;
+    std::vector<float> myVect(size);
+    
+    for (int i = 0; i < size; i++){
+        myVect[i] = (float)i + 1.0f;
+    }
+    
+    for (int i = 0; i<size; ++i){
+        std::cout.setf(std::ios::fixed);
+        std::cout<<std::setprecision(3)<<myVect[i]<<" ";
+    }
+
+    bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu);
+
+    bolt::amp::constant_iterator< float > constIter( myConstValueF );
+
+    bolt::amp::transform(ctl, myVect.begin(), myVect.end(), constIter, myVect.begin(), addKaro);
+    
+    std::cout<<std::endl<<std::endl;
+    for (int i = 0; i<size; ++i){
+        std::cout.setf(std::ios::fixed);
+        std::cout<<std::setprecision(3)<<myVect[i]<<" ";
+    }
+}
+
+
+TEST(TransformStdVector, ConstantIterator)
+{
+  int length = 1 << 8;
+  std::vector<int> hVectorA(length), hVectorO(length), hVectorB(length);
+  bolt::amp::constant_iterator<int> hB(100);
+  bolt::amp::constant_iterator<int> hB2 = hB + length;
+
+  std::fill(hVectorA.begin(), hVectorA.end(), 1024);
+  std::fill(hVectorB.begin(), hVectorB.end(), 100);
+
+  std::vector<int> SVectorA(hVectorA.begin(), hVectorA.end()),
+    SVectorO(hVectorO.begin(), hVectorO.end());
+
+  //bolt::amp::device_vector<int> hB(hVectorA.begin(), hVectorA.end());
+
+  std::transform(hVectorB.begin(), hVectorB.end(), hVectorA.begin(),  hVectorO.begin(), std::plus< int >());
+//  std::transform(hB.begin(), hB.end(), hVectorA.begin(), hVectorO.begin(), std::plus<int>());
+  bolt::amp::transform(hB,
+                       hB2,
+                       SVectorA.begin(),    
+                       SVectorO.begin(),
+                       bolt::amp::plus< int >());
+
+  cmpArrays(hVectorO, SVectorO);
+}
+
+
+
+TEST(TransformStdVector, CountingIterator)
+{
+  int length = 1 << 8;
+  std::vector<int> hVectorA(length), hVectorO(length), hVectorB(length);
+  bolt::amp::counting_iterator<int> hB(100);
+  bolt::amp::counting_iterator<int> hB2 = hB + length;
+
+  std::fill(hVectorA.begin(), hVectorA.end(), 1024);
+
+  for( int i = 0; i < length ; i++ )
+  {
+      hVectorB[i] = 100 + i;
+  }
+
+  std::vector<int> SVectorA(hVectorA.begin(), hVectorA.end()),
+    SVectorO(hVectorO.begin(), hVectorO.end());
+
+
+  std::transform(hVectorB.begin(), hVectorB.end(), hVectorA.begin(),  hVectorO.begin(), std::plus< int >());
+
+  bolt::amp::transform(hB,
+                       hB2,
+                       SVectorA.begin(),    
+                       SVectorO.begin(),
+                       bolt::amp::plus< int >());
+
+  cmpArrays(hVectorO, SVectorO);
 }
 
 

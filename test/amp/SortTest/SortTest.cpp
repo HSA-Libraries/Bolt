@@ -28,13 +28,11 @@
 #if (GOOGLE_TEST == 1)
 #include <gtest/gtest.h>
 #include "common/stdafx.h"
-#include "common/test_common.h"
-
 #include <bolt/amp/sort.h>
 #include <bolt/miniDump.h>
 //#include <bolt/unicode.h>
 #include <bolt/amp/functional.h>
-
+#include "common/test_common.h"
 //#include <boost/shared_array.hpp>
 #include <array>
 #include <algorithm>

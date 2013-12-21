@@ -21,21 +21,12 @@
 
 #include "common/stdafx.h"
 #include "bolt/amp/merge.h"
+#include "bolt/amp/sort.h"
+#include "common/test_common.h"
 #include "bolt/unicode.h"
 #include <gtest/gtest.h>
 #include <array>
 
-//  A very generic template that takes two container, and compares their values assuming a vector interface
-template< typename S, typename B >
-::testing::AssertionResult cmpArrays(const S& ref, const B& calc)
-{
-	for (size_t i = 0; i < ref.size(); ++i)
-	{
-		EXPECT_EQ(ref[i], calc[i]) << _T("Where i = ") << i;
-	}
-
-	return ::testing::AssertionSuccess();
-}
 
 struct UDD
 {
@@ -82,6 +73,35 @@ struct UDDless
 	}
 
 };
+
+
+
+// .........sanity test cases without controls.....//
+
+TEST(sanity_merge_amp_doc_arrays_, wo_ctrl_ints){
+	int A[10] = { 0, 10, 42, 55, -60, 60, 0, -77, 0, 37 };
+	int B[10] = { 2, 6, 23, -34, 40, 43, 0, 55, -42, 0 };
+	int stdmerge[20];
+	int boltmerge[20];
+
+	//for(int i = 0; i < 10; i++) {
+	//std::cout << "Before val is " << A[i] <<" " << B[i] << " " << "\n";
+	//	}
+
+	bolt::amp::sort(A, A + 10);
+	bolt::amp::sort(B, B + 10);
+	std::merge(A, A + 10, B, B + 10, stdmerge);
+	bolt::amp::merge(A, A + 10, B, B + 10, boltmerge);
+
+
+	for(int i = 0; i < 20; i++) {
+		std::cout << "val is " << stdmerge[i] << " " << boltmerge[i] << " " << "\n";
+	}
+
+	cmpArrays(stdmerge,boltmerge,20);
+}
+
+
 
 
 TEST(MergeUDD, UDDPlusOperatorInts)
@@ -148,6 +168,193 @@ TEST(MergeTest, MergeAuto)
 	}
 }
 
+
+TEST(sanity_merge_amp_doc_std_arrays_, wo_ctrl_ints){
+	int A[10] = { 8, 10, 42, 55, 60, 60, 75, 77, 99, 37 };
+	int B[10] = { 2, 6, 23, 34, 40, 43, 55, 55, 42, 80 };
+	int stdmerge[20];
+	int boltmerge[20];
+
+	//for (int i = 0; i < 10; i++) {
+	//std::cout << "Before val is " << A[i] <<" " << B[i] << " " << "\n";
+	//	}
+
+	std::sort(A, A + 10);
+	std::sort(B, B + 10);
+	std::merge(A, A + 10, B, B + 10, stdmerge);
+
+
+	bolt::amp::sort(A, A + 10);
+	bolt::amp::sort(B, B + 10);
+	bolt::amp::merge(A, A + 10, B, B + 10, boltmerge);
+
+	
+
+	for (int i = 0; i < 20; i++) {
+		EXPECT_EQ(boltmerge[i], stdmerge[i]);
+	}
+
+}
+
+TEST(sanity_merge_amp_ArrWithDiffTypes, WithInt){
+	int arraySize = 100;
+	int arraySize1 = 200;
+
+	int* InArr1;
+	int* InArr2;
+
+	int* outArr1;
+	int* outArr2;
+
+	InArr1 = (int *)malloc(arraySize* sizeof (int));
+	InArr2 = (int *)malloc(arraySize* sizeof (int));
+	outArr1 = (int *)malloc(arraySize1 * sizeof (int));
+	outArr2 = (int *)malloc(arraySize1 * sizeof (int));
+
+
+	for (int i = 0; i < arraySize; i++){
+		InArr1[i] = 56535 - i;
+	}
+
+	for (int i = 0; i < arraySize; i++){
+		InArr2[i] = i;
+	}
+
+	std::sort(InArr1, InArr1 + arraySize);
+	std::sort(InArr2, InArr2 + arraySize);
+	std::merge(InArr1, InArr1 + arraySize, InArr2, InArr2 + arraySize, outArr1);
+
+	bolt::amp::sort(InArr1, InArr1 + arraySize);
+	bolt::amp::sort(InArr2, InArr2 + arraySize);
+	bolt::amp::merge(InArr1, InArr1 + arraySize, InArr2, InArr2 + arraySize, outArr2);
+
+
+
+	for (int i = 0; i < arraySize1; i++) {
+		EXPECT_EQ(outArr2[i], outArr1[i]);
+	}
+
+	free(InArr1);
+	free(InArr2);
+	free(outArr1);
+	free(outArr2);
+
+}
+
+
+TEST(sanity_merge_amp_ArrWithDiffTypes1, WithFloats){
+	int arraySize = 100;
+	int arraySize1 = 200;
+
+	float *InFloatArr1;
+	float *InFloatArr2;
+
+	float* outArr1;
+	float* outArr2;
+
+	InFloatArr1 = (float *)malloc(arraySize* sizeof (float));
+	InFloatArr2 = (float *)malloc(arraySize* sizeof (float));
+	outArr1 = (float *)malloc(arraySize1 * sizeof (float));
+	outArr2 = (float *)malloc(arraySize1 * sizeof (float));
+
+	for (int i = 0; i < arraySize; i++){
+		InFloatArr1[i] = (float)i + 0.125f;
+		InFloatArr2[i] = (float)i + 0.15f;
+	}
+
+
+	//copying float array as a whole to all there types of arrays :) 
+	std::sort(InFloatArr1, InFloatArr1 + arraySize);
+	std::sort(InFloatArr2, InFloatArr2 + arraySize);
+	std::merge(InFloatArr1, InFloatArr1 + arraySize, InFloatArr2, InFloatArr2 + arraySize, outArr1);
+
+	bolt::amp::sort(InFloatArr1, InFloatArr1 + arraySize);
+	bolt::amp::sort(InFloatArr2, InFloatArr2 + arraySize);
+	bolt::amp::merge(InFloatArr1, InFloatArr1 + arraySize, InFloatArr2, InFloatArr2 + arraySize, outArr2);
+
+
+	for (int i = 0; i < arraySize1; i++) {
+		EXPECT_EQ(outArr2[i], outArr1[i]);
+	}
+
+	free(InFloatArr1);
+	free(InFloatArr2);
+	free(outArr1);
+	free(outArr2);
+
+}
+
+
+TEST(sanity_merge_amp_ArrWithDiffTypes2, WithDouble){
+	int arraySize = 100;
+	int arraySize1 = 200;
+
+	double *InDoubleArr1;
+	double *InDoubleArr2;
+
+	double* outArr1;
+	double* outArr2;
+
+	InDoubleArr1 = (double *)malloc(arraySize* sizeof (double));
+	InDoubleArr2 = (double *)malloc(arraySize* sizeof (double));
+	outArr1 = (double *)malloc(arraySize1 * sizeof (double));
+	outArr2 = (double *)malloc(arraySize1 * sizeof (double));
+
+	for (int i = 0; i < arraySize; i++){
+		InDoubleArr1[i] = InDoubleArr2[i] = (double)i + 0.0009765625;
+	}
+
+	//copying double array as a whole to all there types of arrays :) 
+	std::sort(InDoubleArr1, InDoubleArr1 + arraySize);
+	std::sort(InDoubleArr2, InDoubleArr2 + arraySize);
+	std::merge(InDoubleArr1, InDoubleArr1 + arraySize, InDoubleArr2, InDoubleArr2 + arraySize, outArr1);
+
+	std::sort(InDoubleArr1, InDoubleArr1 + arraySize);
+	std::sort(InDoubleArr2, InDoubleArr2 + arraySize);
+	bolt::amp::merge(InDoubleArr1, InDoubleArr1 + arraySize, InDoubleArr2, InDoubleArr2 + arraySize, outArr2);
+
+	//for(int i = 0; i < arraySize1; i++ ) {
+	//	std::cout << "Val After merge is " << outArr1[i] << " " << outArr2[i] << "\n" ;
+	//}	
+
+	for (int i = 0; i < arraySize1; i++) {
+		EXPECT_EQ(outArr2[i], outArr1[i]);
+	}
+
+	free(InDoubleArr1);
+	free(InDoubleArr2);
+	free(outArr1);
+	free(outArr2);
+}
+
+
+
+TEST(sanity_merge_bolt_vect, wo_control_ints)
+{
+	size_t aSize = 10;
+	size_t Size = 20;
+
+	std::vector<int> A(aSize);
+	std::vector<int> B(aSize);
+	std::vector<int>   stdmerge(Size);
+
+	for (int i = 0; i < aSize; i++) {
+		B[i] = A[i] = i;
+	}
+
+	std::sort(A.begin(), A.end());
+	std::sort(B.begin(), B.end());
+
+
+	bolt::amp::device_vector<int> A1(A.begin(),A.end());
+	bolt::amp::device_vector<int> B1(B.begin(),B.end());
+	bolt::amp::device_vector<int> boltmerge(Size);
+
+	std::merge(A.begin(), A.end(), B.begin(), B.end(), stdmerge.begin());
+	bolt::amp::merge(A1.begin(), A1.end(), B1.begin(), B1.end(), boltmerge.begin());
+
+	cmpArrays(stdmerge, boltmerge);
+}
 
 
 

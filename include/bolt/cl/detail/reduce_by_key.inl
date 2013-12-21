@@ -828,7 +828,7 @@ reduce_by_key_pick_iterator(
         typename bolt::cl::device_vector< vType >::pointer valsPtr =  values_first.getContainer( ).data( );
         typename bolt::cl::device_vector< koType >::pointer oKeysPtr =  keys_output.getContainer( ).data( );
         typename bolt::cl::device_vector< voType >::pointer oValsPtr =  values_output.getContainer( ).data( );
-        unsigned int sizeOfOut = gold_reduce_by_key_enqueue( &keysPtr[keys_first.m_Index], &keysPtr[numElements],
+        unsigned int sizeOfOut = gold_reduce_by_key_enqueue( &keysPtr[keys_first.m_Index], &keysPtr[keys_first.m_Index+numElements],
                                            &valsPtr[values_first.m_Index], &oKeysPtr[keys_output.m_Index],
                                           &oValsPtr[values_output.m_Index], binary_pred, binary_op);
         return bolt::cl::make_pair(keys_output+sizeOfOut, values_output+sizeOfOut);
@@ -845,7 +845,7 @@ reduce_by_key_pick_iterator(
         typename bolt::cl::device_vector< koType >::pointer oKeysPtr =  keys_output.getContainer( ).data( );
         typename bolt::cl::device_vector< voType >::pointer oValsPtr =  values_output.getContainer( ).data( );
 
-        unsigned int sizeOfOut = bolt::btbb::reduce_by_key( &keysPtr[keys_first.m_Index],/*&keysPtr[keys_first.m_Index]+numElements*/ &keysPtr[numElements],
+        unsigned int sizeOfOut = bolt::btbb::reduce_by_key( &keysPtr[keys_first.m_Index],&keysPtr[keys_first.m_Index]+numElements,
                                            &valsPtr[values_first.m_Index], &oKeysPtr[keys_output.m_Index],
                                           &oValsPtr[values_output.m_Index], binary_pred, binary_op);
         return bolt::cl::make_pair(keys_output+sizeOfOut, values_output+sizeOfOut);

@@ -29,6 +29,7 @@
 #include "bolt/amp/max_element.h"
 #include "bolt/amp/functional.h"
 #include "bolt/amp/device_vector.h"
+#include "bolt/amp/iterator/counting_iterator.h"
 
 #include "stdafx.h"
 #include "common/test_common.h"
@@ -45,7 +46,7 @@ void testDeviceVector()
     for(int i=0; i<aSize; i++) {
         hA[i] = i;
     };
-	
+    
     bolt::amp::device_vector<int> dA(hA.begin(), hA.end());
     std::vector<int>::iterator smindex = std::min_element(hA.begin(), hA.end());
     bolt::amp::device_vector<int>::iterator bmindex = bolt::amp::min_element(dA.begin(), dA.end());
@@ -360,13 +361,13 @@ public:
 };
 
 
-//class MinEStdVectandCountingIterator :public ::testing::TestWithParam<int>{
-//protected:
-//    int mySize;
-//public:
-//    MaxEStdVectandCountingIterator():mySize(GetParam()){
-//    }
-//};
+class MinEStdVectandCountingIterator :public ::testing::TestWithParam<int>{
+protected:
+    int mySize;
+public:
+    MinEStdVectandCountingIterator():mySize(GetParam()){
+    }
+};
 
 TEST_P( MaxEStdVectWithInit, withInt)
 {
@@ -429,28 +430,28 @@ TEST_P( MaxEStdVectWithInit, MultiCorewithInt)
 }
 
 
-//TEST_P( MinEStdVectandCountingIterator, withCountingIterator)
-//{
-//    bolt::cl::counting_iterator<int> first(0);
-//    bolt::cl::counting_iterator<int> last = first +  mySize;
-//
-//    std::vector<int> a(mySize);
-//
-//    for (int i=0; i < mySize; i++) {
-//        a[i] = i;
-//    };
-//
-//    std::vector<int>::iterator stlReduce = std::min_element(a.begin(), a.end());
-//    bolt::cl::counting_iterator<int> boltReduce = bolt::cl::min_element(first, last);
-//
-//    EXPECT_EQ(*stlReduce, *boltReduce);
-//}
-
-
-/* TEST_P( MinEStdVectandCountingIterator, comp_withCountingIterator)
+TEST_P( MinEStdVectandCountingIterator, withCountingIterator)
 {
-    bolt::cl::counting_iterator<int> first(0);
-    bolt::cl::counting_iterator<int> last = first +  mySize;
+    bolt::amp::counting_iterator<int> first(0);
+    bolt::amp::counting_iterator<int> last = first +  mySize;
+
+    std::vector<int> a(mySize);
+
+    for (int i=0; i < mySize; i++) {
+        a[i] = i;
+    };
+
+    std::vector<int>::iterator stlReduce = std::min_element(a.begin(), a.end());
+    bolt::amp::counting_iterator<int> boltReduce = bolt::amp::min_element(first, last);
+
+    EXPECT_EQ(*stlReduce, *boltReduce);
+}
+
+
+ TEST_P( MinEStdVectandCountingIterator, comp_withCountingIterator)
+{
+    bolt::amp::counting_iterator<int> first(0);
+    bolt::amp::counting_iterator<int> last = first +  mySize;
 
     std::vector<int> a(mySize);
 
@@ -459,10 +460,11 @@ TEST_P( MaxEStdVectWithInit, MultiCorewithInt)
     };
 
     std::vector<int>::iterator stlReduce = std::min_element(a.begin(), a.end(), std::less< int >());
-    bolt::amp::counting_iterator<int> boltReduce = bolt::cl::min_element(first, last, bolt::cl::less< int >( ));
+    bolt::amp::counting_iterator<int> boltReduce = bolt::amp::min_element(first, last, bolt::amp::less< int >( ));
 
     EXPECT_EQ(*stlReduce, *boltReduce);
-} */
+
+} 
 
 TEST( MaxEleDevice , DeviceVectoroffset )
 {
@@ -475,8 +477,8 @@ TEST( MaxEleDevice , DeviceVectoroffset )
 
     }
     
-	bolt::amp::device_vector< int > input( stdinput.begin(), stdinput.end() );
-	
+    bolt::amp::device_vector< int > input( stdinput.begin(), stdinput.end() );
+    
     // call reduce
 
     bolt::amp::device_vector< int >::iterator  boltReduce =  bolt::amp::max_element( input.begin()+20, input.end());
@@ -497,9 +499,9 @@ TEST( MaxEleDevice , SerialDeviceVectoroffset )
 
     }
     
-	bolt::amp::device_vector< int > input( stdinput.begin(), stdinput.end() );
-	
-	bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    bolt::amp::device_vector< int > input( stdinput.begin(), stdinput.end() );
+    
+    bolt::amp::control ctl = bolt::amp::control::getDefault( );
     ctl.setForceRunMode(bolt::amp::control::SerialCpu);
 
     bolt::amp::device_vector< int >::iterator  boltReduce =  bolt::amp::max_element( ctl, input.begin()+20, input.end());
@@ -520,9 +522,9 @@ TEST( MaxEleDevice , MultiCoreDeviceVectoroffset )
 
     }
     
-	bolt::amp::device_vector< int > input( stdinput.begin(), stdinput.end() );
-	
-	bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    bolt::amp::device_vector< int > input( stdinput.begin(), stdinput.end() );
+    
+    bolt::amp::control ctl = bolt::amp::control::getDefault( );
     ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu);
 
     bolt::amp::device_vector< int >::iterator  boltReduce =  bolt::amp::max_element( ctl, input.begin()+20, input.end());
@@ -534,8 +536,8 @@ TEST( MaxEleDevice , MultiCoreDeviceVectoroffset )
 
 //TEST_P( MinEStdVectandCountingIterator, CPUwithCountingIterator)
 //{
-//    bolt::cl::counting_iterator<int> first(0);
-//    bolt::cl::counting_iterator<int> last = first +  mySize;
+//    bolt::amp::counting_iterator<int> first(0);
+//    bolt::amp::counting_iterator<int> last = first +  mySize;
 //
 //    std::vector<int> a(mySize);
 //
@@ -543,39 +545,19 @@ TEST( MaxEleDevice , MultiCoreDeviceVectoroffset )
 //        a[i] = i;
 //    };
 //
-//    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-//    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
+//    bolt::amp::control ctl = bolt::amp::control::getDefault( );
+//    ctl.setForceRunMode(bolt::amp::control::SerialCpu);
 //
 //    std::vector<int>::iterator stlReduce = std::min_element(a.begin(), a.end());
-//    bolt::cl::counting_iterator<int> boltReduce = bolt::cl::min_element(ctl, first, last);
+//    bolt::amp::counting_iterator<int> boltReduce = bolt::amp::min_element(ctl, first, last);
 //
 //    EXPECT_EQ(*stlReduce, *boltReduce);
 //}
-
-/* TEST_P( MinEStdVectandCountingIterator, CPU_compwithCountingIterator)
-{
-    bolt::cl::counting_iterator<int> first(0);
-    bolt::cl::counting_iterator<int> last = first +  mySize;
-
-    std::vector<int> a(mySize);
-
-    for (int i=0; i < mySize; i++) {
-        a[i] = i;
-    };
-
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::SerialCpu);
-
-    std::vector<int>::iterator stlReduce = std::min_element(a.begin(), a.end(), std::less< int >());
-    bolt::cl::counting_iterator<int> boltReduce = bolt::cl::min_element(ctl, first, last,  bolt::cl::less< int >( ));
-
-    EXPECT_EQ(*stlReduce, *boltReduce);
-} */
-
-//TEST_P( MinEStdVectandCountingIterator, MultiCorewithCountingIterator)
+//
+// TEST_P( MinEStdVectandCountingIterator, CPU_compwithCountingIterator)
 //{
-//    bolt::cl::counting_iterator<int> first(0);
-//    bolt::cl::counting_iterator<int> last = first +  mySize;
+//    bolt::amp::counting_iterator<int> first(0);
+//    bolt::amp::counting_iterator<int> last = first +  mySize;
 //
 //    std::vector<int> a(mySize);
 //
@@ -583,20 +565,40 @@ TEST( MaxEleDevice , MultiCoreDeviceVectoroffset )
 //        a[i] = i;
 //    };
 //
-//    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-//    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+//    bolt::amp::control ctl = bolt::amp::control::getDefault( );
+//    ctl.setForceRunMode(bolt::amp::control::SerialCpu);
 //
-//    std::vector<int>::iterator stlReduce = std::min_element(a.begin(), a.end());
-//    bolt::cl::counting_iterator<int> boltReduce = bolt::cl::min_element(ctl, first, last);
+//    std::vector<int>::iterator stlReduce = std::min_element(a.begin(), a.end(), std::less< int >());
+//    bolt::amp::counting_iterator<int> boltReduce = bolt::amp::min_element(ctl, first, last,  bolt::amp::less< int >( ));
 //
 //    EXPECT_EQ(*stlReduce, *boltReduce);
-//}
+//} 
 
-
-/* TEST_P( MinEStdVectandCountingIterator, MultiCore_comp_withCountingIterator)
+TEST_P( MinEStdVectandCountingIterator, MultiCorewithCountingIterator)
 {
-    bolt::cl::counting_iterator<int> first(0);
-    bolt::cl::counting_iterator<int> last = first +  mySize;
+    bolt::amp::counting_iterator<int> first(0);
+    bolt::amp::counting_iterator<int> last = first +  mySize;
+
+    std::vector<int> a(mySize);
+
+    for (int i=0; i < mySize; i++) {
+        a[i] = i;
+    };
+
+    bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu);
+
+    std::vector<int>::iterator stlReduce = std::min_element(a.begin(), a.end());
+    bolt::amp::counting_iterator<int> boltReduce = bolt::amp::min_element(ctl, first, last);
+
+    EXPECT_EQ(*stlReduce, *boltReduce);
+}
+
+
+ TEST_P( MinEStdVectandCountingIterator, MultiCore_comp_withCountingIterator)
+{
+    bolt::amp::counting_iterator<int> first(0);
+    bolt::amp::counting_iterator<int> last = first +  mySize;
 
     std::vector<int> a(mySize);
 
@@ -605,18 +607,18 @@ TEST( MaxEleDevice , MultiCoreDeviceVectoroffset )
     };
 
 
-    bolt::cl::control ctl = bolt::cl::control::getDefault( );
-    ctl.setForceRunMode(bolt::cl::control::MultiCoreCpu);
+    bolt::amp::control ctl = bolt::amp::control::getDefault( );
+    ctl.setForceRunMode(bolt::amp::control::MultiCoreCpu);
 
     std::vector<int>::iterator stlReduce = std::min_element(a.begin(), a.end(), std::less< int >());
-    bolt::cl::counting_iterator<int> boltReduce = bolt::cl::min_element(ctl, first, last,  bolt::cl::less< int >( ) );
+    bolt::amp::counting_iterator<int> boltReduce = bolt::amp::min_element(ctl, first, last,  bolt::amp::less< int >( ) );
 
     EXPECT_EQ(*stlReduce, *boltReduce);
-} */
+} 
 
 
 INSTANTIATE_TEST_CASE_P( withInt, MaxEStdVectWithInit, ::testing::Range(1, 100, 1) );
-//INSTANTIATE_TEST_CASE_P( withInt, MinEStdVectandCountingIterator, ::testing::Range(1, 100, 1) );
+INSTANTIATE_TEST_CASE_P( withInt, MinEStdVectandCountingIterator, ::testing::Range(1, 100, 1) );
 
 TEST( MaxEleDevice , DeviceVectorUintoffset )
 {
@@ -629,7 +631,7 @@ TEST( MaxEleDevice , DeviceVectorUintoffset )
 
     }
     bolt::amp::device_vector< unsigned int > input( stdinput.begin(), stdinput.end() );
-	
+    
     // call reduce
 
     bolt::amp::device_vector< unsigned int >::iterator  boltReduce =  bolt::amp::max_element( input.begin()+20, input.end());
