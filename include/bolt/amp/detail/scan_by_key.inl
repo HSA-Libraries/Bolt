@@ -188,7 +188,7 @@ scan_by_key_enqueue(
      *********************************************************************************/
     typedef std::iterator_traits< DVInputIterator1 >::value_type kType;
     typedef std::iterator_traits< DVInputIterator2 >::value_type vType;
-	typedef std::iterator_traits< DVOutputIterator >::value_type oType;
+  	typedef std::iterator_traits< DVOutputIterator >::value_type oType;
 
     int exclusive = inclusive ? 0 : 1;
 
@@ -215,7 +215,7 @@ scan_by_key_enqueue(
         sizeScanBuff += (kernel0_WgSize*2);
     }
 
-	concurrency::array< kType >  keySumArray( sizeScanBuff, av );
+  	concurrency::array< kType >  keySumArray( sizeScanBuff, av );
     concurrency::array< vType >  preSumArray( sizeScanBuff, av );
     concurrency::array< vType >  preSumArray1( sizeScanBuff, av );
     concurrency::array< vType >  postSumArray( sizeScanBuff, av );
@@ -224,30 +224,30 @@ scan_by_key_enqueue(
     /**********************************************************************************
      *  Kernel 0
      *********************************************************************************/
-  //	Wrap our output data in an array_view, and discard input data so it is not transferred to device
+   //	Wrap our output data in an array_view, and discard input data so it is not transferred to device
     //  Use of the auto keyword here is OK, because AMP is restricted by definition to vs11 or above
     //  The auto keyword is useful here in a polymorphic sense, because it does not care if the container
     //  is wrapping an array or an array_view
-	auto&  keyBuffer   =  firstKey.getContainer().getBuffer(firstKey); 
+	  auto&  keyBuffer   =  firstKey.getContainer().getBuffer(firstKey); 
     auto&  inputBuffer =  firstValue.getContainer().getBuffer(firstValue); 
     auto&  outputBuffer=  result.getContainer().getBuffer(result); 
   //	Loop to calculate the inclusive scan of each individual tile, and output the block sums of every tile
   //	This loop is inherently parallel; every tile is independant with potentially many wavefronts
 
-	concurrency::extent< 1 > globalSizeK0( sizeInputBuff/2 );
+	  concurrency::extent< 1 > globalSizeK0( sizeInputBuff/2 );
     concurrency::tiled_extent< kernel0_WgSize > tileK0 = globalSizeK0.tile< kernel0_WgSize >();
-	concurrency::parallel_for_each( av, tileK0,
+	  concurrency::parallel_for_each( av, tileK0,
         [
             keyBuffer,
             inputBuffer,
             init,
             numElements,
-			&keySumArray,
+			      &keySumArray,
             &preSumArray,
             &preSumArray1,
-			binary_pred,
+		      	binary_pred,
             exclusive,
-			binary_funct,
+		      	binary_funct,
             kernel0_WgSize
         ] ( concurrency::tiled_index< kernel0_WgSize > t_idx ) restrict(amp)
   {
@@ -258,10 +258,10 @@ scan_by_key_enqueue(
     unsigned int wgSize = kernel0_WgSize;
 
     tile_static vType ldsVals[ WAVESIZE*KERNEL02WAVES*2 ];
-	tile_static kType ldsKeys[ WAVESIZE*KERNEL02WAVES*2 ];
-	wgSize *=2;
+	  tile_static kType ldsKeys[ WAVESIZE*KERNEL02WAVES*2 ];
+   	wgSize *=2;
 
-	unsigned int  offset = 1;
+  	unsigned int  offset = 1;
     // load input into shared memory
     if (exclusive)
     {
@@ -352,31 +352,31 @@ scan_by_key_enqueue(
     unsigned int workPerThread = static_cast< unsigned int >( sizeScanBuff / kernel1_WgSize );
     workPerThread = workPerThread ? workPerThread : 1;
 
-	concurrency::extent< 1 > globalSizeK1( sizeScanBuff );
+	  concurrency::extent< 1 > globalSizeK1( sizeScanBuff );
     concurrency::tiled_extent< kernel1_WgSize > tileK1 = globalSizeK1.tile< kernel1_WgSize >();
     //std::cout << "Kernel 1 Launching w/" << sizeScanBuff << " threads for " << numWorkGroupsK0 << " elements. " << std::endl;
-  concurrency::parallel_for_each( av, tileK1,
+    concurrency::parallel_for_each( av, tileK1,
         [
-			&keySumArray, 
+		      	&keySumArray, 
             &postSumArray,
             &preSumArray,
             numWorkGroupsK0,
             workPerThread,
-			binary_pred,
-			numElements,
+			      binary_pred,
+			      numElements,
             binary_funct,
-		    kernel1_WgSize
+		        kernel1_WgSize
         ] ( concurrency::tiled_index< kernel1_WgSize > t_idx ) restrict(amp)
   {
 
-	unsigned int gloId = t_idx.global[ 0 ];
+	  unsigned int gloId = t_idx.global[ 0 ];
     unsigned int groId = t_idx.tile[ 0 ];
     unsigned int locId = t_idx.local[ 0 ];
     unsigned int wgSize = kernel1_WgSize;
     unsigned int mapId  = gloId * workPerThread;
 
     tile_static kType ldsKeys[ WAVESIZE*KERNEL1WAVES ];
-	tile_static vType ldsVals[ WAVESIZE*KERNEL1WAVES ];
+	  tile_static vType ldsVals[ WAVESIZE*KERNEL1WAVES ];
 
 	// do offset of zero manually
     unsigned int offset;
@@ -473,32 +473,32 @@ scan_by_key_enqueue(
      *  Kernel 2
  *********************************************************************************/
 
-  concurrency::extent< 1 > globalSizeK2( sizeInputBuff );
-  concurrency::tiled_extent< kernel2_WgSize > tileK2 = globalSizeK2.tile< kernel2_WgSize >();
+    concurrency::extent< 1 > globalSizeK2( sizeInputBuff );
+    concurrency::tiled_extent< kernel2_WgSize > tileK2 = globalSizeK2.tile< kernel2_WgSize >();
     //std::cout << "Kernel 2 Launching w/ " << sizeInputBuff << " threads for " << numElements << " elements. " << std::endl;
     concurrency::parallel_for_each( av, tileK2,
         [
-			keyBuffer,
+		      	keyBuffer,
             inputBuffer,
             outputBuffer,
             &postSumArray,
             &preSumArray1,
             binary_pred,
-			exclusive,
-			numElements,
+			      exclusive,
+			      numElements,
             init,
-			binary_funct,
+			      binary_funct,
             kernel2_WgSize
         ] ( concurrency::tiled_index< kernel2_WgSize > t_idx ) restrict(amp)
   {
 
-	unsigned int gloId = t_idx.global[ 0 ];
+	  unsigned int gloId = t_idx.global[ 0 ];
     unsigned int groId = t_idx.tile[ 0 ];
     unsigned int locId = t_idx.local[ 0 ];
     unsigned int wgSize = kernel2_WgSize;
 
     tile_static kType ldsKeys[ WAVESIZE*KERNEL1WAVES ];
-	tile_static vType ldsVals[ WAVESIZE*KERNEL1WAVES ];
+	  tile_static vType ldsVals[ WAVESIZE*KERNEL1WAVES ];
 	
 		 // if exclusive, load gloId=0 w/ init, and all others shifted-1
     kType key;
@@ -725,20 +725,20 @@ scan_by_key_pick_iterator(
         
         device_vector< kType, concurrency::array_view > dvKeys( firstKey, lastKey, false, ctl );
         device_vector< vType, concurrency::array_view > dvValues( firstValue, numElements, false, ctl );
-	    device_vector< oType, concurrency::array_view > dvOutput( result, numElements, true, ctl );
+	      device_vector< oType, concurrency::array_view > dvOutput( result, numElements, true, ctl );
 
 
         //Now call the actual cl algorithm
         scan_by_key_enqueue( ctl, dvKeys.begin( ), dvKeys.end( ), dvValues.begin(), dvOutput.begin( ),
             init, binary_pred, binary_funct, user_code, inclusive );
 
-		PEEK_AT( dvOutput.begin().getContainer().getBuffer())
+		    PEEK_AT( dvOutput.begin().getContainer().getBuffer())
 
         // This should immediately map/unmap the buffer
         dvOutput.data( );
       }
 
-    return result + numElements;
+      return result + numElements;
 }
 
 /*!
@@ -799,8 +799,8 @@ scan_by_key_pick_iterator(
         dblog->CodePathTaken(BOLTLOG::BOLT_SCANBYKEY,BOLTLOG::BOLT_SERIAL_CPU,"::Scan_By_Key::SERIAL_CPU");
         #endif
           
-		bolt::amp::device_vector< kType >::pointer scanInputkey =  firstKey.getContainer( ).data( );
-		bolt::amp::device_vector< vType >::pointer scanInputBuffer =  firstValue.getContainer( ).data( );
+	  	  bolt::amp::device_vector< kType >::pointer scanInputkey =  firstKey.getContainer( ).data( );
+		    bolt::amp::device_vector< vType >::pointer scanInputBuffer =  firstValue.getContainer( ).data( );
         bolt::amp::device_vector< oType >::pointer scanResultBuffer =  result.getContainer( ).data( );
 
         if(inclusive)
@@ -822,15 +822,15 @@ scan_by_key_pick_iterator(
             #endif
       
             bolt::amp::device_vector< kType >::pointer scanInputkey =  firstKey.getContainer( ).data( );
-		    bolt::amp::device_vector< vType >::pointer scanInputBuffer =  firstValue.getContainer( ).data( );
+		        bolt::amp::device_vector< vType >::pointer scanInputBuffer =  firstValue.getContainer( ).data( );
             bolt::amp::device_vector< oType >::pointer scanResultBuffer =  result.getContainer( ).data( );
 
             if (inclusive)
-               bolt::btbb::inclusive_scan_by_key(&scanInputkey[ firstKey.m_Index ],&scanInputkey[ firstKey.m_Index ] + numElements,  &scanInputBuffer[ firstValue.m_Index ],
-               &scanResultBuffer[ result.m_Index ], binary_pred,binary_funct);
+               bolt::btbb::inclusive_scan_by_key(&scanInputkey[ firstKey.m_Index ],&scanInputkey[ firstKey.m_Index + numElements],  &scanInputBuffer[ firstValue.m_Index ],
+                                                 &scanResultBuffer[ result.m_Index ], binary_pred,binary_funct);
             else
-               bolt::btbb::exclusive_scan_by_key(&scanInputkey[ firstKey.m_Index ],&scanInputkey[ firstKey.m_Index ] + numElements,  &scanInputBuffer[ firstValue.m_Index ],
-                &scanResultBuffer[ result.m_Index ],init,binary_pred,binary_funct);
+               bolt::btbb::exclusive_scan_by_key(&scanInputkey[ firstKey.m_Index ],&scanInputkey[ firstKey.m_Index + numElements],  &scanInputBuffer[ firstValue.m_Index ],
+                                                 &scanResultBuffer[ result.m_Index ],init,binary_pred,binary_funct);
 
             return result + numElements;
 #else
