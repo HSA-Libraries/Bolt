@@ -45,7 +45,7 @@ def log(filename, txt):
 IAM = 'Bolt'
 
 precisionvalues = ['single', 'double']
-libraryvalues = ['STL','BOLT','TBB', 'null']
+libraryvalues = ['STL','BOLT','TBB', 'THRUST','null']
 memoryvalues = ['device','host', 'null']
 routinevalues = ['binarytransform',
 'binarysearch',
@@ -151,7 +151,7 @@ def checkTimeOutPut(args):
         except:
             printLog("ERROR: UNKNOWN Exception - +checkWinTimeOutPut()::executeCommand()")
 
-    currCommandProcess = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    currCommandProcess = subprocess.Popen(args,stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     thread = Thread(target=executeCommand)
     thread.start()
     thread.join(TIMOUT_VAL) #wait for the thread to complete 
@@ -344,7 +344,7 @@ for params in test_combinations:
 
     #set up arguments here
     if params.device == 'default':
-        arguments = ['clBolt.Bench.Benchmark.exe',
+        arguments = ['./clBolt.Bench.Benchmark.exe',
                      '-l', lengthx,
                      '-f', args.routine]
     else:
@@ -353,31 +353,33 @@ for params in test_combinations:
                      '-d', device,
                      '-l', lengthx,
                      '-f', args.routine]
-    if args.library == 'TBB':
-        arguments.append( '-m' )
-        arguments.append( '2' )        
-    elif args.library == 'BOLT':
-        arguments.append( '-m' )
-        arguments.append( '3' )    
-    elif args.library == 'STL':
-        arguments.append( '-m' )
-        arguments.append( '1' )                
-    else:
-    	arguments.append( '-m' )
-        arguments.append( '0' )     
+	if args.library == 'TBB':
+		arguments.append( '-m' )
+		arguments.append( '2' )        
+	elif args.library == 'BOLT':
+		arguments.append( '-m' )
+		arguments.append( '3' )    
+	elif args.library == 'STL':
+		arguments.append( '-m' )
+		arguments.append( '1' )   
+	elif args.library == 'THRUST':
+		print ''
+	else:
+		arguments.append( '-m' )
+		arguments.append( '0' )		
         
     if args.memory == 'device':
-        arguments.append( '-D' )
-	if args.iteration:
+		arguments.append( '-D' )
+    if args.iteration:
 		arguments.append( '-i' )
-		arguments.append( args.iteration )
+		arguments.append( args.iteration )	
 		
     writeline = True
     try:
         printLog('Executing Command: '+ str(arguments))
         output = checkTimeOutPut(arguments)
         output = output.split(os.linesep);
-        printLog('Execution Successfull---------------\n')
+	printLog('Execution Successfull---------------\n')
 		
 		
     except errorHandler.ApplicationException as ae:

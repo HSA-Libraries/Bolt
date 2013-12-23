@@ -484,7 +484,7 @@ namespace detail
         #endif
         if( runMode == bolt::cl::control::SerialCpu )
         { 
-		    #if defined(BOLT_DEBUG_LOG)
+            #if defined(BOLT_DEBUG_LOG)
             dblog->CodePathTaken(BOLTLOG::BOLT_STABLESORTBYKEY,BOLTLOG::BOLT_SERIAL_CPU,"::Stable_Sort_By_Key::SERIAL_CPU");
             #endif
             serialCPU_stable_sort_by_key(keys_first, keys_last, values_first, comp);
@@ -504,10 +504,10 @@ namespace detail
         }
         else
         {
-		    #if defined(BOLT_DEBUG_LOG)
+            #if defined(BOLT_DEBUG_LOG)
             dblog->CodePathTaken(BOLTLOG::BOLT_STABLESORTBYKEY,BOLTLOG::BOLT_OPENCL_GPU,"::Stable_Sort_By_Key::OPENCL_GPU");
             #endif
-			
+            
             device_vector< keyType > dvKeys( keys_first, keys_last, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, ctl );
             device_vector< valType > dvValues( values_first, vecSize, CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE, false, ctl );
 
@@ -544,10 +544,10 @@ namespace detail
         #if defined(BOLT_DEBUG_LOG)
         BOLTLOG::CaptureLog *dblog = BOLTLOG::CaptureLog::getInstance();
         #endif
-		
+        
         if( runMode == bolt::cl::control::SerialCpu )
         {
-		        #if defined(BOLT_DEBUG_LOG)
+                #if defined(BOLT_DEBUG_LOG)
                 dblog->CodePathTaken(BOLTLOG::BOLT_STABLESORTBYKEY,BOLTLOG::BOLT_SERIAL_CPU,"::Stable_Sort_By_Key::SERIAL_CPU");
                 #endif
                 typename bolt::cl::device_vector< keyType >::pointer   keysPtr   =  keys_first.getContainer( ).data( );
@@ -559,7 +559,7 @@ namespace detail
         else if( runMode == bolt::cl::control::MultiCoreCpu )
         {
             #ifdef ENABLE_TBB
-			    #if defined(BOLT_DEBUG_LOG)
+                #if defined(BOLT_DEBUG_LOG)
                 dblog->CodePathTaken(BOLTLOG::BOLT_STABLESORTBYKEY,BOLTLOG::BOLT_MULTICORE_CPU,"::Stable_Sort_By_Key::MULTICORE_CPU");
                 #endif
                 typename bolt::cl::device_vector< keyType >::pointer   keysPtr   =  keys_first.getContainer( ).data( );
@@ -573,7 +573,7 @@ namespace detail
         }
         else
         {
-		    #if defined(BOLT_DEBUG_LOG)
+            #if defined(BOLT_DEBUG_LOG)
             dblog->CodePathTaken(BOLTLOG::BOLT_STABLESORTBYKEY,BOLTLOG::BOLT_OPENCL_GPU,"::Stable_Sort_By_Key::OPENCL_GPU");
             #endif
             stablesort_by_key_enqueue( ctl, keys_first, keys_last, values_first, comp, cl_code );
