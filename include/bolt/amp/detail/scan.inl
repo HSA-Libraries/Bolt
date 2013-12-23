@@ -100,8 +100,6 @@ size_t k0_stepNum, k1_stepNum, k2_stepNum;
     typedef std::iterator_traits< DVInputIterator >::value_type iType;
     typedef std::iterator_traits< DVOutputIterator >::value_type oType;
 
-
-
     int exclusive = inclusive ? 0 : 1;
 
     unsigned int numElements = static_cast< unsigned int >( std::distance( first, last ) );
@@ -131,29 +129,16 @@ size_t k0_stepNum, k1_stepNum, k2_stepNum;
     concurrency::array< iType >  preSumArray1( sizeScanBuff, av );
     concurrency::array< iType > postSumArray( sizeScanBuff, av );
 
-
     /**********************************************************************************
      *  Kernel 0
      *********************************************************************************/
-#ifdef BOLT_ENABLE_PROFILING
-//aProfiler.nextStep();
-//aProfiler.setStepName("Setup Kernel 0");
-//aProfiler.set(AsyncProfiler::device, control::SerialCpu);
-#endif
-    //iType *inputPtr = (iType *)&first[0];
-    //oType *outputPtr = (oType *)&result[0];
-    //concurrency::array_view< const iType >  hostInput( numElements, (iType *)&first[0] );
-    //concurrency::array_view< const oType > hostOutput( numElements, (oType *)&result[0] );
-
-  //	Wrap our output data in an array_view, and discard input data so it is not transferred to device
+    //	Wrap our output data in an array_view, and discard input data so it is not transferred to device
     //  Use of the auto keyword here is OK, because AMP is restricted by definition to vs11 or above
     //  The auto keyword is useful here in a polymorphic sense, because it does not care if the container
     //  is wrapping an array or an array_view
-    auto&  input = first.getContainer().getBuffer(first); //( numElements, av );
-    auto& output = result.getContainer().getBuffer(result); //( sizeInputBuff, av );
-    input.get_extent().size();
-  //hostInput.copy_to( input.section( concurrency::extent< 1 >( numElements ) ) );
-
+    auto&  input = first.getContainer().getBuffer(first); 
+    auto& output = result.getContainer().getBuffer(result); 
+     
   //	Loop to calculate the inclusive scan of each individual tile, and output the block sums of every tile
   //	This loop is inherently parallel; every tile is independant with potentially many wavefronts
 #ifdef BOLT_ENABLE_PROFILING
@@ -168,7 +153,7 @@ aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(iType) + 1*sizeScanBuf
     concurrency::extent< 1 > globalSizeK0( sizeInputBuff/2 );
     concurrency::tiled_extent< kernel0_WgSize > tileK0 = globalSizeK0.tile< kernel0_WgSize >();
     //std::cout << "Kernel 0 Launching w/ " << sizeInputBuff << " threads for " << numElements << " elements. " << std::endl;
-  concurrency::parallel_for_each( av, tileK0, //output.extent.tile< kernel0_WgSize >(),
+  concurrency::parallel_for_each( av, tileK0, 
         [
             output,
             input,
@@ -190,16 +175,16 @@ aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(iType) + 1*sizeScanBuf
 
         wgSize *=2;
         // if exclusive, load gloId=0 w/ identity, and all others shifted-1
-		if(groId*wgSize+locId < numElements)
+		    if(groId*wgSize+locId < numElements)
             lds[locId] = input[groId*wgSize+locId];
         if(groId*wgSize +locId+ (wgSize/2) < numElements)
             lds[locId+(wgSize/2)] = input[ groId*wgSize +locId+ (wgSize/2)];
 
-		// Exclusive case
+	    	// Exclusive case
         if(exclusive && gloId == 0)
-	    {
+	      {
 	        iType start_val = input[0];
-		    lds[locId] = binary_op(init, start_val);
+		      lds[locId] = binary_op(init, start_val);
         }
         unsigned int  offset = 1;
         //  Computes a scan within a workgroup with two data per element
@@ -228,30 +213,6 @@ aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(iType) + 1*sizeScanBuf
     //std::cout << "Kernel 0 Done" << std::endl;
     PEEK_AT( output )
 
-/*
-    ldsSize  = static_cast< cl_uint >( ( kernel0_WgSize + ( kernel0_WgSize / 2 ) ) * sizeof( iType ) );
-    V_OPENCL( kernels[ 0 ].setArg( 0, result->getBuffer( ) ),   "Error setting argument for kernels[ 0 ]" ); // Output buffer
-    V_OPENCL( kernels[ 0 ].setArg( 1, first->getBuffer( ) ),    "Error setting argument for kernels[ 0 ]" ); // Input buffer
-    V_OPENCL( kernels[ 0 ].setArg( 2, init_T ),                 "Error setting argument for kernels[ 0 ]" ); // Initial value used for exclusive scan
-    V_OPENCL( kernels[ 0 ].setArg( 3, numElements ),            "Error setting argument for kernels[ 0 ]" ); // Size of scratch buffer
-    V_OPENCL( kernels[ 0 ].setArg( 4, ldsSize, NULL ),          "Error setting argument for kernels[ 0 ]" ); // Scratch buffer
-    V_OPENCL( kernels[ 0 ].setArg( 5, *userFunctor ),           "Error setting argument for kernels[ 0 ]" ); // User provided functor class
-    V_OPENCL( kernels[ 0 ].setArg( 6, *preSumArray ),           "Error setting argument for kernels[ 0 ]" ); // Output per block sum buffer
-    V_OPENCL( kernels[ 0 ].setArg( 7, doExclusiveScan ),        "Error setting argument for scanKernels[ 0 ]" ); // Exclusive scan?
-
-
-
-    l_Error = ctl.commandQueue( ).enqueueNDRangeKernel(
-        kernels[ 0 ],
-        ::cl::NullRange,
-        ::cl::NDRange( sizeInputBuff ),
-        ::cl::NDRange( kernel0_WgSize ),
-        NULL,
-        &kernel0Event);
-    V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for perBlockInclusiveScan kernel" );
-    */
-
-
     /**********************************************************************************
      *  Kernel 1
      *********************************************************************************/
@@ -264,15 +225,7 @@ aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(iType) + 1*sizeScanBuf
     unsigned int workPerThread = static_cast< unsigned int >( sizeScanBuff / kernel1_WgSize );
     workPerThread = workPerThread ? workPerThread : 1;
 
-/*
-    V_OPENCL( kernels[ 1 ].setArg( 0, *postSumArray ),  "Error setting 0th argument for kernels[ 1 ]" );          // Output buffer
-    V_OPENCL( kernels[ 1 ].setArg( 1, *preSumArray ),   "Error setting 1st argument for kernels[ 1 ]" );            // Input buffer
-    V_OPENCL( kernels[ 1 ].setArg( 2, init_T ),         "Error setting     argument for kernels[ 1 ]" );   // Initial value used for exclusive scan
-    V_OPENCL( kernels[ 1 ].setArg( 3, numWorkGroupsK0 ),"Error setting 2nd argument for kernels[ 1 ]" );            // Size of scratch buffer
-    V_OPENCL( kernels[ 1 ].setArg( 4, ldsSize, NULL ),  "Error setting 3rd argument for kernels[ 1 ]" );  // Scratch buffer
-    V_OPENCL( kernels[ 1 ].setArg( 5, workPerThread ),  "Error setting 4th argument for kernels[ 1 ]" );           // User provided functor class
-    V_OPENCL( kernels[ 1 ].setArg( 6, *userFunctor ),   "Error setting 5th argument for kernels[ 1 ]" );           // User provided functor class
-*/
+
 #ifdef BOLT_ENABLE_PROFILING
 aProfiler.nextStep();
 k1_stepNum = aProfiler.getStepNum();
@@ -282,16 +235,6 @@ aProfiler.set(AsyncProfiler::flops, 2*sizeScanBuff);
 aProfiler.set(AsyncProfiler::memory, 4*sizeScanBuff*sizeof(oType));
 #endif
 
-/*
-    l_Error = ctl.commandQueue( ).enqueueNDRangeKernel(
-        kernels[ 1 ],
-        ::cl::NullRange,
-        ::cl::NDRange( kernel1_WgSize ),
-        ::cl::NDRange( kernel1_WgSize ),
-        NULL,
-        &kernel1Event);
-    V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for perBlockInclusiveScan kernel" );
-*/
     concurrency::extent< 1 > globalSizeK1( sizeScanBuff );
     concurrency::tiled_extent< kernel1_WgSize > tileK1 = globalSizeK1.tile< kernel1_WgSize >();
     //std::cout << "Kernel 1 Launching w/" << sizeScanBuff << " threads for " << numWorkGroupsK0 << " elements. " << std::endl;
@@ -398,15 +341,6 @@ aProfiler.set(AsyncProfiler::memory, 4*sizeScanBuff*sizeof(oType));
 //aProfiler.nextStep();
 //aProfiler.setStepName("Setup Kernel 2");
 //aProfiler.set(AsyncProfiler::device, control::SerialCpu);
-#endif
-
-/*
-    V_OPENCL( kernels[ 2 ].setArg( 0, result->getBuffer( ) ), "Error setting 0th argument for scanKernels[ 2 ]" );          // Output buffer
-    V_OPENCL( kernels[ 2 ].setArg( 1, *postSumArray ), "Error setting 1st argument for scanKernels[ 2 ]" );            // Input buffer
-    V_OPENCL( kernels[ 2 ].setArg( 2, numElements ), "Error setting 2nd argument for scanKernels[ 2 ]" );   // Size of scratch buffer
-    V_OPENCL( kernels[ 2 ].setArg( 3, *userFunctor ), "Error setting 3rd argument for scanKernels[ 2 ]" );           // User provided functor class
-*/
-#ifdef BOLT_ENABLE_PROFILING
 aProfiler.nextStep();
 k2_stepNum = aProfiler.getStepNum();
 aProfiler.setStepName("Kernel 2");
@@ -414,26 +348,6 @@ aProfiler.set(AsyncProfiler::device, ctl.forceRunMode());
 aProfiler.set(AsyncProfiler::flops, numElements);
 aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(oType) + 1*sizeScanBuff*sizeof(oType));
 #endif
-/*
-    try
-    {
-    l_Error = ctl.commandQueue( ).enqueueNDRangeKernel(
-        kernels[ 2 ],
-        ::cl::NullRange,
-        ::cl::NDRange( sizeInputBuff ),
-        ::cl::NDRange( kernel2_WgSize ),
-        NULL,
-        &kernel2Event );
-    V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for perBlockInclusiveScan kernel" );
-    }
-    catch ( ::cl::Error& e )
-    {
-        std::cout << ( "Kernel 3 enqueueNDRangeKernel error condition reported:" ) << std::endl << e.what() << std::endl;
-        return;
-    }
-    l_Error = kernel2Event.wait( );
-    V_OPENCL( l_Error, "perBlockInclusiveScan failed to wait" );
-*/
     concurrency::extent< 1 > globalSizeK2( sizeInputBuff );
     concurrency::tiled_extent< kernel2_WgSize > tileK2 = globalSizeK2.tile< kernel2_WgSize >();
     //std::cout << "Kernel 2 Launching w/ " << sizeInputBuff << " threads for " << numElements << " elements. " << std::endl;
@@ -480,7 +394,7 @@ aProfiler.set(AsyncProfiler::memory, 2*numElements*sizeof(oType) + 1*sizeScanBuf
            }
         }
   
-		iType scanResult = lds[locId];
+	    	iType scanResult = lds[locId];
         iType postBlockSum, newResult;
         // accumulate prefix
         iType y, y1, sum;
@@ -535,21 +449,6 @@ aProfiler.nextStep();
 aProfiler.setStepName("Copy Results Back");
 aProfiler.set(AsyncProfiler::device, control::SerialCpu);
 aProfiler.setDataSize(numElements*sizeof(oType));
-#endif
-
-    // concurrency::array_view< oType > hostOutput( static_cast< int >( numElements ), (oType *)&result[ 0 ] );
-  // hostOutput.discard_data( );
-    // output.section( Concurrency::extent< 1 >( numElements ) ).copy_to( hostOutput );
-    // output.copy_to( hostOutput.section( concurrency::extent< 1 >( numElements ) ) );
-
-#ifdef BOLT_ENABLE_PROFILING
-aProfiler.nextStep();
-aProfiler.setStepName("Querying Kernel Times");
-aProfiler.set(AsyncProfiler::device, control::SerialCpu);
-aProfiler.setDataSize(numElements*sizeof(iType));
-//std::string strDeviceName = ctl.device().getInfo< CL_DEVICE_NAME >( &l_Error );
-//aProfiler.setArchitecture(strDeviceName);
-aProfiler.stopTrial();
 #endif
 
 }   //end of inclusive_scan_enqueue( )
@@ -738,9 +637,9 @@ scan_pick_iterator(
         bolt::amp::device_vector< iType >::pointer scanInputBuffer =  first.getContainer( ).data( );
         bolt::amp::device_vector< oType >::pointer scanResultBuffer =  result.getContainer( ).data( );
         if(inclusive)
-            bolt::btbb::inclusive_scan(&scanInputBuffer[first.m_Index], &scanInputBuffer[first.m_Index] + numElements, &scanResultBuffer[result.m_Index], binary_op);
+            bolt::btbb::inclusive_scan(&scanInputBuffer[first.m_Index], &scanInputBuffer[first.m_Index + numElements], &scanResultBuffer[result.m_Index], binary_op);
         else
-            bolt::btbb::exclusive_scan( &scanInputBuffer[first.m_Index], &scanInputBuffer[first.m_Index] + numElements, &scanResultBuffer[result.m_Index], init, binary_op);
+            bolt::btbb::exclusive_scan( &scanInputBuffer[first.m_Index], &scanInputBuffer[first.m_Index + numElements], &scanResultBuffer[result.m_Index], init, binary_op);
 
         return result + numElements;
 #else

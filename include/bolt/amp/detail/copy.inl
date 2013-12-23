@@ -45,6 +45,8 @@ template< typename DVInputIterator, typename Size, typename DVOutputIterator >
     const DVOutputIterator& result)
 {
 
+	  concurrency::accelerator_view av = ctrl.getAccelerator().default_view;
+
       typedef typename std::iterator_traits<DVInputIterator>::value_type iType;
       typedef typename std::iterator_traits<DVOutputIterator>::value_type oType;
     
@@ -56,7 +58,14 @@ template< typename DVInputIterator, typename Size, typename DVOutputIterator >
       unsigned int wavefrontMultiple = szElements;
       const unsigned int lowerBits = ( szElements & ( WAVEFRONT_SIZE -1 ) );
 
-      concurrency::extent< 1 > inputExtent( wavefrontMultiple );
+	  const unsigned int tileSize = WAVEFRONT_SIZE;
+      unsigned int numTiles = (szElements/tileSize);
+      const unsigned int ceilNumTiles = static_cast< size_t >( std::ceil( static_cast< float >( szElements )
+                                                                                                    / tileSize) );
+      unsigned int ceilNumElements = tileSize * ceilNumTiles;
+
+      concurrency::extent< 1 > inputExtent( ceilNumElements );
+	  concurrency::tiled_extent<  tileSize  > tileK = inputExtent.tile< tileSize  >();
 
       int boundsCheck = 0;
 
@@ -71,9 +80,9 @@ template< typename DVInputIterator, typename Size, typename DVOutputIterator >
       try
       {
 
-         concurrency::parallel_for_each(ctrl.getAccelerator().default_view, inputExtent, [=](concurrency::index<1> idx) restrict(amp)
+         concurrency::parallel_for_each(av, tileK, [=](concurrency::tiled_index< tileSize  > t_idx ) restrict(amp)
          {
-             unsigned int globalId = idx[0];
+             unsigned int globalId = t_idx.global[ 0 ];
 
              if(boundsCheck == 0)
              {

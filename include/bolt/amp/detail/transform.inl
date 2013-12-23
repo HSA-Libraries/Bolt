@@ -22,7 +22,7 @@
 #pragma once
 #if !defined( BOLT_AMP_TRANSFORM_INL )
 #define BOLT_AMP_TRANSFORM_INL
-#define WAVEFRNT_SIZE 64
+#define WAVEFRNT_SIZE 256
 
 #ifdef BOLT_ENABLE_PROFILING
 #include "bolt/AsyncProfiler.h"
@@ -58,6 +58,8 @@ namespace bolt
                                     const DVOutputIterator& result,
                                     const BinaryFunction& f)
             {
+			   concurrency::accelerator_view av = ctl.getAccelerator().default_view;
+
                typedef std::iterator_traits< DVInputIterator1 >::value_type iType1;
                typedef std::iterator_traits< DVInputIterator2 >::value_type iType2;
                typedef std::iterator_traits< DVOutputIterator >::value_type oType;
@@ -76,21 +78,40 @@ namespace bolt
                else
                     boundsCheck = 1;
 
+			   const unsigned int tileSize = WAVEFRNT_SIZE;
+               unsigned int numTiles = (arraySize/tileSize);
+               const unsigned int ceilNumTiles=static_cast<size_t>(std::ceil(static_cast<float>
+                                                                        (arraySize)/tileSize));
+               unsigned int ceilNumElements = tileSize * ceilNumTiles;
+
                auto inputV1 = first1.getContainer().getBuffer(first1);
                auto inputV2 = first2.getContainer().getBuffer(first2);
                auto resultV = result.getContainer().getBuffer(result);
-               concurrency::extent< 1 > inputExtent( wavefrontMultiple );
 
-               concurrency::parallel_for_each(ctl.getAccelerator().default_view, inputExtent, [=](concurrency::index<1> idx) restrict(amp)
+               concurrency::extent< 1 > inputExtent( ceilNumElements );
+               concurrency::tiled_extent< tileSize > tiledExtentTransform = inputExtent.tile< tileSize >();
+
+			   try
+			   {
+               concurrency::parallel_for_each(av, tiledExtentTransform, [=](concurrency::tiled_index<tileSize> t_idx) restrict(amp)
                {
-                   unsigned int globalId = idx[0];
+                   unsigned int globalId = t_idx.global[ 0 ];
                    if(boundsCheck == 0)
                    {
                      if( globalId >= arraySize )
                        return;
                    }
-                   resultV[idx[0]] = f(inputV1[globalId], inputV2[globalId]);
+                   resultV[globalId] = f(inputV1[globalId], inputV2[globalId]);
                });
+			   }
+
+			    catch(std::exception &e)
+                {
+
+                      std::cout << "Exception while calling bolt::amp::transform parallel_for_each"<<e.what()<<std::endl;
+
+                      return;
+                }
             };
 
             template< typename DVInputIterator, typename DVOutputIterator, typename UnaryFunction >
