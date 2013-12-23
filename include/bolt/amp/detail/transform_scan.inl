@@ -154,6 +154,9 @@ transform_scan_enqueue(
     concurrency::extent< 1 > globalSizeK0( sizeInputBuff/2 );
     concurrency::tiled_extent< kernel0_WgSize > tileK0 = globalSizeK0.tile< kernel0_WgSize >();
     //std::cout << "Kernel 0 Launching w/ " << sizeInputBuff << " threads for " << numElements << " elements. " << std::endl;
+
+	try
+	{
     concurrency::parallel_for_each( av, tileK0, //output.extent.tile< kernel0_WgSize >(),
        [
             input,
@@ -221,6 +224,15 @@ transform_scan_enqueue(
             preSumArray1[ groId ] = lds[wgSize/2 -1];
          }
   } );
+
+	}
+
+	catch(std::exception &e)
+    {
+        std::cout << "Exception while calling bolt::amp::transform_scan parallel_for_each " ;
+        std::cout<< e.what() << std::endl;
+        throw std::exception();
+    }	
     //std::cout << "Kernel 0 Done" << std::endl;
  
 
@@ -234,6 +246,8 @@ transform_scan_enqueue(
     concurrency::extent< 1 > globalSizeK1( sizeScanBuff );
     concurrency::tiled_extent< kernel1_WgSize > tileK1 = globalSizeK1.tile< kernel1_WgSize >();
     //std::cout << "Kernel 1 Launching w/" << sizeScanBuff << " threads for " << numWorkGroupsK0 << " elements. " << std::endl;
+	try
+	{
     concurrency::parallel_for_each( av, tileK1,
         [
             &postSumArray,
@@ -313,6 +327,15 @@ transform_scan_enqueue(
         } // for
 
     } );
+	}
+
+	catch(std::exception &e)
+    {
+        std::cout << "Exception while calling bolt::amp::transform_scan parallel_for_each " ;
+        std::cout<< e.what() << std::endl;
+        throw std::exception();
+    }
+
     //std::cout << "Kernel 1 Done" << std::endl;
    
 
@@ -324,6 +347,8 @@ transform_scan_enqueue(
     concurrency::extent< 1 > globalSizeK2( sizeInputBuff );
     concurrency::tiled_extent< kernel2_WgSize > tileK2 = globalSizeK2.tile< kernel2_WgSize >();
     //std::cout << "Kernel 2 Launching w/ " << sizeInputBuff << " threads for " << numElements << " elements. " << std::endl;
+	try
+	{
     concurrency::parallel_for_each( av, tileK2,
         [
             input,
@@ -418,6 +443,14 @@ transform_scan_enqueue(
         output[ gloId ] = sum;
 
     } );
+	}
+
+	catch(std::exception &e)
+    {
+        std::cout << "Exception while calling bolt::amp::transform_scan parallel_for_each " ;
+        std::cout<< e.what() << std::endl;
+        throw std::exception();
+    }
     //std::cout << "Kernel 2 Done" << std::endl;
    
 

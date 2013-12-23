@@ -18,7 +18,7 @@
 #pragma once
 #if !defined( BOLT_AMP_FILL_INL )
 #define BOLT_AMP_FILL_INL
-#define WAVEFRONT_SIZE 64
+#define WAVEFRONT_SIZE 256
 
 #include <algorithm>
 #include <type_traits>
@@ -48,7 +48,8 @@ namespace detail {
                 const DVForwardIterator &last, const T & val)
             {
                 
-			
+			   concurrency::accelerator_view av = ctl.getAccelerator().default_view;
+
 			   typedef typename std::iterator_traits<DVForwardIterator>::value_type Type;
 
                const unsigned int arraySize =  static_cast< unsigned int >( std::distance( first, last ) );
@@ -75,11 +76,14 @@ namespace detail {
 
                concurrency::array_view<Type,1> inputV (first.getContainer().getBuffer(first));
 
-               concurrency::extent< 1 > inputExtent( wavefrontMultiple );
+               concurrency::extent< 1 > inputExtent( ceilNumElements );
+	           concurrency::tiled_extent<  tileSize  > tileK = inputExtent.tile< tileSize  >();
 
-               concurrency::parallel_for_each(ctl.getAccelerator().default_view, inputExtent, [=](concurrency::index<1> idx) restrict(amp)
+			   try
+			   {
+               concurrency::parallel_for_each(av, tileK, [=](concurrency::tiled_index< tileSize  > t_idx ) restrict(amp)
                {
-                   unsigned int globalId = idx[0];
+                   unsigned int globalId = t_idx.global[ 0 ];
 				   if(boundsCheck == 0)
 				   {
                      if( globalId >= arraySize )
@@ -88,8 +92,15 @@ namespace detail {
 				   
                    inputV [globalId] = (Type) val;
                });
+			   }
 
-										         
+			   catch(std::exception &e)
+               {
+                   std::cout << "Exception while calling bolt::amp::fill parallel_for_each " ;
+                   std::cout<< e.what() << std::endl;
+                   throw std::exception();
+               }	
+									         
 			     
             }; // end fill_enqueue
 

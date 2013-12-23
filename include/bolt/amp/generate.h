@@ -68,7 +68,7 @@ namespace bolt {
 	     *      int val;
 	     *      ConstFunctor(int a) : val(a) {};
          *
-	     *      int operator() ()
+	     *      int operator() () const restrict(amp,cpu)
 	     *      {
 		 *          return val;
 	     *      };
@@ -121,7 +121,7 @@ namespace bolt {
 	     *      int val;
 	     *      ConstFunctor(int a) : val(a) {};
          *
-	     *      int operator() ()
+	     *      int operator() () const restrict(amp,cpu)
 	     *      {
 		 *          return val;
 	     *      };

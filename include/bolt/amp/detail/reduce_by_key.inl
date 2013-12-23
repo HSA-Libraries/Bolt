@@ -137,7 +137,7 @@ reduce_by_key_enqueue(
     const BinaryFunction& binary_op)
 {
 
-	concurrency::accelerator_view av = ctl.getAccelerator().default_view;
+    concurrency::accelerator_view av = ctl.getAccelerator().default_view;
 
     /**********************************************************************************
      * Type Names - used in KernelTemplateSpecializer
@@ -154,11 +154,11 @@ reduce_by_key_enqueue(
 
     //  Ceiling function to bump the size of input to the next whole wavefront size
     unsigned int sizeInputBuff = numElements;
-    size_t modWgSize = (sizeInputBuff & ((kernel0_WgSize*2)-1));
+    size_t modWgSize = (sizeInputBuff & (kernel0_WgSize-1));
     if( modWgSize )
     {
         sizeInputBuff &= ~modWgSize;
-        sizeInputBuff += (kernel0_WgSize*2);
+        sizeInputBuff += kernel0_WgSize;
     }
     unsigned int numWorkGroupsK0 = static_cast< unsigned int >( sizeInputBuff / (kernel0_WgSize) );
     //  Ceiling function to bump the size of the sum array to the next whole wavefront size
@@ -170,33 +170,35 @@ reduce_by_key_enqueue(
         sizeScanBuff += kernel0_WgSize;
     }
 
-	concurrency::array< int >  keySumArray( sizeScanBuff, av );
+    concurrency::array< int >  keySumArray( sizeScanBuff, av );
     concurrency::array< voType >  preSumArray( sizeScanBuff, av );
     concurrency::array< voType >  postSumArray( sizeScanBuff, av );
-	concurrency::array< voType >  offsetValArray( numElements, av );
-	
+    concurrency::array< voType >  offsetValArray( numElements, av );
+    
 
-	std::vector<int> stdoffset(numElements, 0);
-	device_vector<int, concurrency::array_view > offsetArrayVec(stdoffset.begin(), stdoffset.end(), true, ctl );
+    std::vector<int> stdoffset(numElements, 0);
+    device_vector<int, concurrency::array_view > offsetArrayVec(stdoffset.begin(), stdoffset.end(), true, ctl );
 
-	auto&  offsetArray   =  offsetArrayVec.begin().getContainer().getBuffer(offsetArrayVec.begin()); 
-	auto&  keyBuffer   =  keys_first.getContainer().getBuffer(keys_first); 
+    auto&  offsetArray   =  offsetArrayVec.begin().getContainer().getBuffer(offsetArrayVec.begin()); 
+    auto&  keyBuffer   =  keys_first.getContainer().getBuffer(keys_first); 
     auto&  inputBuffer =  values_first.getContainer().getBuffer(values_first); 
     auto&  outputBuffer=  values_output.getContainer().getBuffer(values_output); 
-	auto&  keysoutputBuffer=  keys_output.getContainer().getBuffer(keys_output);
-	
+    auto&  keysoutputBuffer=  keys_output.getContainer().getBuffer(keys_output);
+    
  
 
     /**********************************************************************************
      *  Kernel 0
      *********************************************************************************/
-	
+    
     concurrency::extent< 1 > globalSizeK0( sizeInputBuff );
     concurrency::tiled_extent< kernel0_WgSize > tileK0 = globalSizeK0.tile< kernel0_WgSize >();
-	concurrency::parallel_for_each( av, tileK0,
+	try
+	{
+    concurrency::parallel_for_each( av, tileK0,
         [
             keyBuffer,
-			binary_pred,
+            binary_pred,
             numElements,
             offsetArray,	
             kernel0_WgSize
@@ -214,17 +216,24 @@ reduce_by_key_enqueue(
 
     if(gloId > 0){
       key = keyBuffer[ gloId ];
-	  prev_key = keyBuffer[ gloId - 1];
-	  if(binary_pred(key, prev_key))
-	    offsetArray[ gloId ] = 0;
-	  else
-		offsetArray[ gloId ] = 1;
-	}
-	else{
-		offsetArray[ gloId ] = 0;
-	}
-	
+      prev_key = keyBuffer[ gloId - 1];
+      if(binary_pred(key, prev_key))
+        offsetArray[ gloId ] = 0;
+      else
+        offsetArray[ gloId ] = 1;
+    }
+    else{
+        offsetArray[ gloId ] = 0;
+    }
+    
   } );
+	}
+	 catch(std::exception &e)
+      {
+        std::cout << "Exception while calling bolt::amp::reduce_by_key parallel_for_each " ;
+        std::cout<< e.what() << std::endl;
+        throw std::exception();
+      }	
 
   detail::scan_enqueue(ctl, offsetArrayVec.begin(), offsetArrayVec.end(), offsetArrayVec.begin(), 0, plus< int >( ), true);
 
@@ -234,18 +243,20 @@ reduce_by_key_enqueue(
 
    //	This loop is inherently parallel; every tile is independant with potentially many wavefronts
 
-	concurrency::extent< 1 > globalSizeK1( sizeInputBuff);
+    concurrency::extent< 1 > globalSizeK1( sizeInputBuff);
     concurrency::tiled_extent< kernel0_WgSize > tileK1 = globalSizeK1.tile< kernel0_WgSize >();
 
-	concurrency::parallel_for_each( av, tileK0,
+	try
+	{
+    concurrency::parallel_for_each( av, tileK1,
         [
             offsetArray,
             inputBuffer,
-			&offsetValArray,
+            &offsetValArray,
             numElements,
-			&keySumArray,
+            &keySumArray,
             &preSumArray,
-			binary_op,
+            binary_op,
             kernel0_WgSize
         ] ( concurrency::tiled_index< kernel0_WgSize > t_idx )  restrict(amp)
   {
@@ -255,10 +266,10 @@ reduce_by_key_enqueue(
     unsigned int locId = t_idx.local[ 0 ];
     unsigned int wgSize = kernel0_WgSize;
 
-    tile_static vType ldsVals[ WAVESIZE*KERNEL1WAVES ];
-	tile_static int ldsKeys[ WAVESIZE*KERNEL1WAVES ];
+    tile_static vType ldsVals[ WAVESIZE*KERNEL02WAVES ];
+    tile_static int ldsKeys[ WAVESIZE*KERNEL02WAVES ];
 
-	int key; 
+    int key; 
     voType val; 
 
     if(gloId < numElements){
@@ -270,10 +281,10 @@ reduce_by_key_enqueue(
     // Computes a scan within a workgroup
     // updates vals in lds but not keys
     voType sum = val; 
-	unsigned int  offset = 1;
+    unsigned int  offset = 1;
     // load input into shared memory
    
-	for( offset = 1; offset < wgSize; offset *= 2 )
+    for( offset = 1; offset < wgSize; offset *= 2 )
     {
         t_idx.barrier.wait();
         int key2 = ldsKeys[locId - offset];
@@ -286,16 +297,16 @@ reduce_by_key_enqueue(
         ldsVals[ locId ] = sum;
     }
 
-	t_idx.barrier.wait(); // needed for large data types
+    t_idx.barrier.wait(); // needed for large data types
     //  Abort threads that are passed the end of the input vector
     if (gloId >= numElements) return;
 
     // Each work item writes out its calculated scan result, relative to the beginning
     // of each work group
-	int key2 = -1;
-	if (gloId < numElements -1 )
-		key2 = offsetArray[gloId + 1];
-	if(key != key2)
+    int key2 = -1;
+    if (gloId < numElements -1 )
+        key2 = offsetArray[gloId + 1];
+    if(key != key2)
        offsetValArray[ gloId ] = sum;
 
     if (locId == 0)
@@ -305,7 +316,14 @@ reduce_by_key_enqueue(
     }
 
   } );
+	}
 
+	 catch(std::exception &e)
+      {
+        std::cout << "Exception while calling bolt::amp::reduce_by_key parallel_for_each " ;
+        std::cout<< e.what() << std::endl;
+        throw std::exception();
+      }	
 
     /**********************************************************************************
      *  Kernel 2
@@ -315,15 +333,18 @@ reduce_by_key_enqueue(
     concurrency::extent< 1 > globalSizeK2( kernel1_WgSize );
     concurrency::tiled_extent< kernel1_WgSize > tileK2 = globalSizeK2.tile< kernel1_WgSize >();
     //std::cout << "Kernel 2 Launching w/ " << sizeInputBuff << " threads for " << numElements << " elements. " << std::endl;
+
+	try
+	{
     concurrency::parallel_for_each( av, tileK2,
         [
-			&keySumArray,
+            &keySumArray,
             &postSumArray,
             &preSumArray,
-			numElements,
-			binary_op,
+            numElements,
+            binary_op,
             kernel1_WgSize,
-			workPerThread
+            workPerThread
         ] ( concurrency::tiled_index< kernel1_WgSize > t_idx ) restrict(amp)
   {
 
@@ -331,13 +352,13 @@ reduce_by_key_enqueue(
     unsigned int groId = t_idx.tile[ 0 ];
     unsigned int locId = t_idx.local[ 0 ];
     unsigned int wgSize = kernel1_WgSize;
-	unsigned int mapId  = gloId * workPerThread;
+    unsigned int mapId  = gloId * workPerThread;
 
     tile_static vType ldsVals[ WAVESIZE*KERNEL02WAVES ];
-	tile_static int ldsKeys[ WAVESIZE*KERNEL02WAVES ];
-	
+    tile_static int ldsKeys[ WAVESIZE*KERNEL02WAVES ];
+    
 
-	// do offset of zero manually
+    // do offset of zero manually
     unsigned int offset;
     int key;
     voType workSum;
@@ -423,7 +444,14 @@ reduce_by_key_enqueue(
         } // thread in bounds
     } // for
   } );
+   }
 
+    catch(std::exception &e)
+    {
+        std::cout << "Exception while calling bolt::amp::reduce_by_key parallel_for_each " ;
+        std::cout<< e.what() << std::endl;
+        throw std::exception();
+    }	
 
     /**********************************************************************************
      *  Kernel 3
@@ -431,15 +459,17 @@ reduce_by_key_enqueue(
     concurrency::extent< 1 > globalSizeK3( sizeInputBuff );
     concurrency::tiled_extent< kernel2_WgSize > tileK3 = globalSizeK3.tile< kernel2_WgSize >();
     //std::cout << "Kernel 3 Launching w/ " << sizeInputBuff << " threads for " << numElements << " elements. " << std::endl;
+	try
+	{
     concurrency::parallel_for_each( av, tileK3,
         [
-			offsetArray,
-			&keySumArray,
+            offsetArray,
+            &keySumArray,
             &postSumArray,
-			&offsetValArray,
+            &offsetValArray,
             binary_pred,
-			numElements,
-			binary_op,
+            numElements,
+            binary_op,
             kernel2_WgSize
         ] ( concurrency::tiled_index< kernel2_WgSize > t_idx ) restrict(amp)
   {
@@ -455,46 +485,54 @@ reduce_by_key_enqueue(
     // accumulate prefix
     int  key1 =  keySumArray[ groId-1 ];
     int key2 = offsetArray[ gloId ];
-	int  key3 = -1;
-	if(gloId < numElements -1 )
-	  key3 =  offsetArray[ gloId + 1];
+    int  key3 = -1;
+    if(gloId < numElements -1 )
+      key3 =  offsetArray[ gloId + 1];
     if (groId > 0 && key1 == key2 && key2 != key3)
     {
-	    voType scanResult = offsetValArray[ gloId ];
+        voType scanResult = offsetValArray[ gloId ];
         voType postBlockSum = postSumArray[ groId-1 ];
         voType newResult = binary_op( scanResult, postBlockSum );
         offsetValArray[ gloId ] = newResult;
 
     }
-	
+    
   } );
-
+	}
+	 catch(std::exception &e)
+      {
+        std::cout << "Exception while calling bolt::amp::reduce_by_key parallel_for_each " ;
+        std::cout<< e.what() << std::endl;
+        throw std::exception();
+      }	
 
     /**********************************************************************************
      *  Kernel 4
      *********************************************************************************/
-	unsigned int count_number_of_sections = 0;
+    
 
-	concurrency::extent< 1 > globalSizeK4( sizeInputBuff );
+    concurrency::extent< 1 > globalSizeK4( sizeInputBuff );
     concurrency::tiled_extent< kernel0_WgSize > tileK4 = globalSizeK4.tile< kernel0_WgSize >();
     //std::cout << "Kernel 4 Launching w/ " << sizeInputBuff << " threads for " << numElements << " elements. " << std::endl;
+	try
+	{
     concurrency::parallel_for_each( av, tileK4,
         [
-			keyBuffer,
-			keysoutputBuffer,
+            keyBuffer,
+            keysoutputBuffer,
             outputBuffer,
-			&offsetValArray,
+            &offsetValArray,
             binary_pred,
-			numElements,
-			binary_op,
+            numElements,
+            binary_op,
             kernel0_WgSize,
-			offsetArray,
-			count_number_of_sections
-        ] ( concurrency::tiled_index< kernel0_WgSize > t_idx ) mutable restrict(amp)
+            offsetArray
+        ] ( concurrency::tiled_index< kernel0_WgSize > t_idx ) restrict(amp)
   {
 
     unsigned int gloId = t_idx.global[ 0 ];
     unsigned int locId = t_idx.local[ 0 ];
+    unsigned int count_number_of_sections = 0;		
 
     //  Abort threads that are passed the end of the input vector
     if( gloId >= numElements )
@@ -503,7 +541,7 @@ reduce_by_key_enqueue(
     count_number_of_sections = offsetArray[numElements-1] + 1;
     if(gloId < (numElements-1) && offsetArray[ gloId ] != offsetArray[ gloId +1])
     {
-		keysoutputBuffer [offsetArray [ gloId ]] = keyBuffer[ gloId];
+        keysoutputBuffer [offsetArray [ gloId ]] = keyBuffer[ gloId];
         outputBuffer[ offsetArray [ gloId ]] = offsetValArray [ gloId];
     }
 
@@ -511,11 +549,19 @@ reduce_by_key_enqueue(
     {
         keysoutputBuffer[ count_number_of_sections - 1 ] = keyBuffer[ gloId ]; //Copying the last key directly. Works either ways
         outputBuffer[ count_number_of_sections - 1 ] = offsetValArray [ gloId ];
-	    offsetArray [ gloId ] = count_number_of_sections;
+        offsetArray [ gloId ] = count_number_of_sections;
     }
-	
+    
   } );
+	}
+	 catch(std::exception &e)
+      {
+        std::cout << "Exception while calling bolt::amp::reduce_by_key parallel_for_each " ;
+        std::cout<< e.what() << std::endl;
+        throw std::exception();
+      }	
 
+    unsigned int count_number_of_sections = 0;
     count_number_of_sections = offsetArray[numElements-1];
     return count_number_of_sections;
 
@@ -591,10 +637,10 @@ reduce_by_key_pick_iterator(
     {
 
         // Map the input iterator to a device_vector
-		device_vector< kType, concurrency::array_view > dvKeys(  keys_first, keys_last, false, ctl );
-		device_vector< vType, concurrency::array_view > dvValues( values_first, numElements, false, ctl );
-	    device_vector< koType, concurrency::array_view > dvKOutput( keys_output, numElements, true, ctl );
-		device_vector< voType, concurrency::array_view > dvVOutput( values_output, numElements, true, ctl );
+        device_vector< kType, concurrency::array_view > dvKeys(  keys_first, keys_last, false, ctl );
+        device_vector< vType, concurrency::array_view > dvValues( values_first, numElements, false, ctl );
+        device_vector< koType, concurrency::array_view > dvKOutput( keys_output, numElements, true, ctl );
+        device_vector< voType, concurrency::array_view > dvVOutput( values_output, numElements, true, ctl );
 
         //Now call the actual AMP algorithm
         sizeOfOut = reduce_by_key_enqueue( ctl, dvKeys.begin( ), dvKeys.end( ), dvValues.begin(), dvKOutput.begin( ),

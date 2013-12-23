@@ -36,7 +36,7 @@
     }\
     t_idx.barrier.wait();
 
-#define WAVEFRONT_SIZE 64
+#define WAVEFRONT_SIZE 256
 
 namespace bolt {
     namespace amp {
@@ -52,6 +52,7 @@ namespace bolt {
                 const Predicate& predicate)
             {
                 typedef typename std::iterator_traits< DVInputIterator >::value_type iType;
+				concurrency::accelerator_view av = ctl.getAccelerator().default_view;
 
                 const int szElements = static_cast< unsigned int >( std::distance( first, last ) );
                 const unsigned int tileSize = WAVEFRONT_SIZE;
@@ -83,7 +84,7 @@ namespace bolt {
 
                 try
                 {
-                    concurrency::parallel_for_each(ctl.getAccelerator().default_view,
+                    concurrency::parallel_for_each(av,
                                                    tiledExtentReduce,
                                                    [ inputV,
                                                      szElements,
@@ -116,6 +117,8 @@ namespace bolt {
                       // Parallel reduction within a given workgroup using local data store
                       // to share values between workitems
 
+					  _REDUCE_STEP(tail, tileIndex, 128);
+					  _REDUCE_STEP(tail, tileIndex, 64);
                       _REDUCE_STEP(tail, tileIndex, 32);
                       _REDUCE_STEP(tail, tileIndex, 16);
                       _REDUCE_STEP(tail, tileIndex,  8);
@@ -151,7 +154,7 @@ namespace bolt {
                 catch(std::exception &e)
                 {
 
-                      std::cout << "Exception while calling bolt::amp::reduce parallel_for_each"<<e.what()<<std::endl;
+                      std::cout << "Exception while calling bolt::amp::count parallel_for_each"<<e.what()<<std::endl;
 
                       return 0;
                 }
