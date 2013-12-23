@@ -28,6 +28,7 @@
 #include "bolt/unicode.h"
 #include "bolt/miniDump.h"
 
+#include "bolt/amp/iterator/counting_iterator.h"
 
 #define SERIAL_TBB_OFFSET 1
 
@@ -383,7 +384,7 @@ public:
 };
 
 typedef scanByKeyStdVectorWithIters ScanByKeyOffsetTest;
-typedef scanByKeyStdVectorWithIters ScanByKeyCLtypeTest;
+typedef scanByKeyStdVectorWithIters ScanByKeyAMPtypeTest;
 /*
 class StdVectCountingIterator :public ::testing::TestWithParam<int>{
 protected:
@@ -393,7 +394,7 @@ public:
     }
 };*/
 
-TEST_P (ScanByKeyCLtypeTest, InclTestLong)
+TEST_P (ScanByKeyAMPtypeTest, InclTestLong)
 {
     std::vector< int > keys( myStdVectSize, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
@@ -442,7 +443,7 @@ TEST_P (ScanByKeyCLtypeTest, InclTestLong)
     cmpArrays(refInput, input);
          
 } 
-TEST_P (ScanByKeyCLtypeTest, SerialInclTestLong)
+TEST_P (ScanByKeyAMPtypeTest, SerialInclTestLong)
 {
     std::vector< int > keys( myStdVectSize, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
@@ -489,7 +490,7 @@ TEST_P (ScanByKeyCLtypeTest, SerialInclTestLong)
     cmpArrays(refInput, input);
           
 } 
-TEST_P (ScanByKeyCLtypeTest, MulticoreInclTestLong)
+TEST_P (ScanByKeyAMPtypeTest, MulticoreInclTestLong)
 { 
     std::vector< int > keys( myStdVectSize, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
@@ -534,7 +535,7 @@ TEST_P (ScanByKeyCLtypeTest, MulticoreInclTestLong)
      
 } 
  
-TEST_P (ScanByKeyCLtypeTest, InclTestunsignedLong)
+TEST_P (ScanByKeyAMPtypeTest, InclTestunsignedLong)
 {
     std::vector< int > keys( myStdVectSize, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
@@ -576,7 +577,7 @@ TEST_P (ScanByKeyCLtypeTest, InclTestunsignedLong)
          
 } 
 
-TEST_P (ScanByKeyCLtypeTest, MulticoreInclTestunsignedLong)
+TEST_P (ScanByKeyAMPtypeTest, MulticoreInclTestunsignedLong)
 { 
     std::vector< int > keys( myStdVectSize, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
@@ -621,7 +622,7 @@ TEST_P (ScanByKeyCLtypeTest, MulticoreInclTestunsignedLong)
      
 } 
 
-TEST_P (ScanByKeyCLtypeTest, ExclTestLong)
+TEST_P (ScanByKeyAMPtypeTest, ExclTestLong)
 {
     std::vector< int > keys( myStdVectSize, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
@@ -658,7 +659,7 @@ TEST_P (ScanByKeyCLtypeTest, ExclTestLong)
     cmpArrays(refInput, input);
          
 } 
-TEST_P (ScanByKeyCLtypeTest, SerialExclTestLong)
+TEST_P (ScanByKeyAMPtypeTest, SerialExclTestLong)
 {
     std::vector< int > keys( myStdVectSize, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
@@ -697,7 +698,7 @@ TEST_P (ScanByKeyCLtypeTest, SerialExclTestLong)
     cmpArrays(refInput, input);
           
 } 
-TEST_P (ScanByKeyCLtypeTest, MulticoreExclTestLong)
+TEST_P (ScanByKeyAMPtypeTest, MulticoreExclTestLong)
 { 
     std::vector< int > keys( myStdVectSize, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
@@ -738,7 +739,7 @@ TEST_P (ScanByKeyCLtypeTest, MulticoreExclTestLong)
      
 } 
  
-TEST_P (ScanByKeyCLtypeTest, ExclTestunsignedLong)
+TEST_P (ScanByKeyAMPtypeTest, ExclTestunsignedLong)
 {
     std::vector< int > keys( myStdVectSize, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
@@ -779,7 +780,7 @@ TEST_P (ScanByKeyCLtypeTest, ExclTestunsignedLong)
     cmpArrays(refInput, input);
          
 } 
-TEST_P (ScanByKeyCLtypeTest, SerialExclTestunsignedLong)
+TEST_P (ScanByKeyAMPtypeTest, SerialExclTestunsignedLong)
 {
     std::vector< int > keys( myStdVectSize, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
@@ -823,7 +824,7 @@ TEST_P (ScanByKeyCLtypeTest, SerialExclTestunsignedLong)
     cmpArrays(refInput, input);
           
 } 
-TEST_P (ScanByKeyCLtypeTest, MulticoreExclTestunsignedLong)
+TEST_P (ScanByKeyAMPtypeTest, MulticoreExclTestunsignedLong)
 { 
     std::vector< int > keys( myStdVectSize, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
@@ -867,7 +868,7 @@ TEST_P (ScanByKeyCLtypeTest, MulticoreExclTestunsignedLong)
     cmpArrays(refInput, input);
 } 
 
-TEST_P (ScanByKeyCLtypeTest, InclTestShort)
+TEST_P (ScanByKeyAMPtypeTest, InclTestShort)
 {
     std::vector< int > keys( myStdVectSize, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
@@ -908,7 +909,7 @@ TEST_P (ScanByKeyCLtypeTest, InclTestShort)
     cmpArrays(refInput, input);
          
 } 
-TEST_P (ScanByKeyCLtypeTest, SerialInclTestShort)
+TEST_P (ScanByKeyAMPtypeTest, SerialInclTestShort)
 {
     std::vector< int > keys( myStdVectSize, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
@@ -953,7 +954,7 @@ TEST_P (ScanByKeyCLtypeTest, SerialInclTestShort)
           
 } 
 
-TEST_P (ScanByKeyCLtypeTest, InclTestUShort)
+TEST_P (ScanByKeyAMPtypeTest, InclTestUShort)
 {
     std::vector< int > keys( myStdVectSize, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
@@ -996,7 +997,7 @@ TEST_P (ScanByKeyCLtypeTest, InclTestUShort)
          
 } 
 
-TEST_P (ScanByKeyCLtypeTest, MulticoreInclTestUShort)
+TEST_P (ScanByKeyAMPtypeTest, MulticoreInclTestUShort)
 { 
     std::vector< int > keys( myStdVectSize, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
@@ -1042,7 +1043,7 @@ TEST_P (ScanByKeyCLtypeTest, MulticoreInclTestUShort)
 } 
 
 
-TEST_P (ScanByKeyCLtypeTest, MulticoreExclTestShort)
+TEST_P (ScanByKeyAMPtypeTest, MulticoreExclTestShort)
 { 
     std::vector< int > keys( myStdVectSize, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
@@ -1088,7 +1089,7 @@ TEST_P (ScanByKeyCLtypeTest, MulticoreExclTestShort)
      
 } 
  
-TEST_P (ScanByKeyCLtypeTest, ExclTestUShort)
+TEST_P (ScanByKeyAMPtypeTest, ExclTestUShort)
 {
     std::vector< int > keys( myStdVectSize, 1);
     // keys = {1, 2, 2, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 5,...}
@@ -2353,7 +2354,7 @@ TEST_P (ScanByKeyOffsetTest, ExclOffsetTestUShort)
 
 } 
 
-INSTANTIATE_TEST_CASE_P(incl_excl_ScanByKeyIterIntLimit, ScanByKeyCLtypeTest, ::testing::Range( 1, 1024, 47 )); 
+INSTANTIATE_TEST_CASE_P(incl_excl_ScanByKeyIterIntLimit, ScanByKeyAMPtypeTest, ::testing::Range( 1, 1024, 47 )); 
 INSTANTIATE_TEST_CASE_P(incl_excl_ScanByKeyIterIntLimit, ScanByKeyOffsetTest, ::testing::Range(1025, 4096, 555)); 
 
 

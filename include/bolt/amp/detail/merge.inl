@@ -109,7 +109,8 @@ namespace bolt {
 
 				concurrency::extent< 1 > inputExtent(leng);
 
-
+				try
+				{
 				concurrency::parallel_for_each(ctl.getAccelerator().default_view, inputExtent, [=](concurrency::index<1> idx) mutable restrict(amp)
 				{
 					
@@ -134,6 +135,14 @@ namespace bolt {
 						resultV[pos2 + gx] = val;
 					}
 				});
+				}
+
+				catch(std::exception &e)
+                {
+                       std::cout << "Exception while calling bolt::amp::merge parallel_for_each " ;
+                       std::cout<< e.what() << std::endl;
+                       throw std::exception();
+                }	
 
 				return result + (last1 - first1) + (last2 - first2);;
 

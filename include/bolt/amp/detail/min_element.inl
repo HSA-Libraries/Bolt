@@ -259,7 +259,7 @@ namespace bolt {
 
                 catch(std::exception &e)
                 {
-                      std::cout << "Exception while calling bolt::amp::min_element parallel_for_each " ;
+                      std::cout << "Exception while calling bolt::amp::max_element parallel_for_each " ;
                       std::cout<< e.what() << std::endl;
                       throw std::exception();
                 }							    
