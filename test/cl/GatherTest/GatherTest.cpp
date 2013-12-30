@@ -3554,6 +3554,51 @@ TEST( HostMemory_int, OffsetGatherPredicateMedium )
 
     EXPECT_EQ(exp_result, result);
 }
+
+TEST(sanity_gather_double_ptr, with_double) // EPR#391728
+{
+  int size = 100000;
+  double *values;
+  values=(double *) malloc(size * sizeof(double));
+
+  for (int i = 0; i < size; i += 100)
+  {
+    values[i] = i % 2;
+  }
+
+  bolt::cl::device_vector<double> d_values(values, values + size);
+  double *map;
+  map=(double *)malloc(size * sizeof(double));
+
+  for(int i=0; i<size/2 ;i += 2 )
+  {
+    if(i % 2 == 0)
+    {
+      map[i]= (double) i;
+    }
+  }
+  std::random_shuffle(map, map+10);
+
+  bolt::cl::device_vector<double> d_map(map, map + size);
+  bolt::cl::device_vector<double> d_output(size,0);
+  bolt::cl::device_vector<double> expected_output(size);
+
+  bolt::cl::gather(d_map.begin(), d_map.end(), d_values.begin(), d_output.begin());
+
+  for (int i = 0; i < size; i++)
+  {
+    expected_output[i]= 0 ;
+  }
+
+  for(int i=0; i<size; i++ )
+  {
+    EXPECT_EQ(expected_output[i], d_output[i] ) ;
+  }
+
+}
+
+
+
 INSTANTIATE_TEST_CASE_P(GatherIntLimit, HostMemory_IntStdVector, ::testing::Range(10, 2400, 23));
 INSTANTIATE_TEST_CASE_P(GatherIntLimit, DeviceMemory_IntBoltdVector, ::testing::Range(10, 2400, 23));
 INSTANTIATE_TEST_CASE_P(GatherUDDLimit, HostMemory_UDDTestInt2, ::testing::Range(10, 2400, 23)); 
