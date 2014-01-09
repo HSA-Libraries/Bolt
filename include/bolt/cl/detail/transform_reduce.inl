@@ -19,7 +19,7 @@
 #define BOLT_CL_TRANSFORM_REDUCE_INL
 #pragma once
 
-#define WAVEFRONT_SIZE 256
+#define WAVEFRONT_SIZE_REDUCE 256
 
 #include <string>
 #include <iostream>
@@ -119,7 +119,7 @@ namespace  detail {
             int numWG = computeUnits * wgPerComputeUnit;
 
             cl_int l_Error = CL_SUCCESS;
-            const size_t wgSize  = WAVEFRONT_SIZE;
+			const size_t wgSize = WAVEFRONT_SIZE_REDUCE;
             V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
 
             /**********************************************************************************
