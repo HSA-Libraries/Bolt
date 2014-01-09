@@ -18,6 +18,7 @@
 #define TEST_DOUBLE 0
 #define TEST_DEVICE_VECTOR 1
 #define TEST_CPU_DEVICE 0
+#define TEST_LARGE_BUFFERS 0
 #include "common/stdafx.h"
 
 #include "bolt/amp/count.h"
@@ -308,10 +309,13 @@ TEST_P(countFloatValueOccuranceStdVect, MultiCorefloatVectSearchWithSameValue2){
     std::cout<<"STD Count = "<<stdCount<<std::endl<<"Bolt Count = "<<boltCount<<std::endl;
 }
 
-
+#if TEST_LARGE_BUFFERS
 INSTANTIATE_TEST_CASE_P (useStdVectWithFloatValues, countFloatValueOccuranceStdVect,
                                     ::testing::Values(1, 100, 1000, 10000, 100000));
-
+#else
+INSTANTIATE_TEST_CASE_P (useStdVectWithFloatValues, countFloatValueOccuranceStdVect,
+                                    ::testing::Values(1, 100, 1000));
+#endif
 
 //Test case id: 7 (Failed)
 class countDoubleValueUsedASKeyInStdVect :public ::testing::TestWithParam<int>{
@@ -500,13 +504,21 @@ TEST (testCountIf, MultiCoreintBtwRange)
 
 
 #if (TEST_DOUBLE == 1)
+#if TEST_LARGE_BUFFERS
 INSTANTIATE_TEST_CASE_P (useStdVectWithDoubleValues, countDoubleValueUsedASKeyInStdVect,
                                         ::testing::Values(1, 100, 1000, 10000, 100000));
+#else
+INSTANTIATE_TEST_CASE_P (useStdVectWithDoubleValues, countDoubleValueUsedASKeyInStdVect,
+                                        ::testing::Values(1, 100, 1000));
 #endif
+#endif
+#if TEST_LARGE_BUFFERS
 INSTANTIATE_TEST_CASE_P (serialFloatValueWithStdVector, testCountIfFloatWithStdVector,
                                     ::testing::Values(10, 100, 1000, 10000, 100000));
-
-
+#else
+INSTANTIATE_TEST_CASE_P (serialFloatValueWithStdVector, testCountIfFloatWithStdVector,
+                                    ::testing::Values(10, 100, 1000));
+#endif
 
 struct UDD {
     int a;
@@ -997,6 +1009,7 @@ TEST_P( StdVectCountingIterator, withCountingIterator)
 //    EXPECT_EQ(stdCount, boltCount);
 //}
 
+#if TEST_LARGE_BUFFERS
 TEST_P( StdVectCountingIterator, MultiCorewithCountingIterator)
 {
     bolt::amp::counting_iterator<int> first(0);
@@ -1017,8 +1030,15 @@ TEST_P( StdVectCountingIterator, MultiCorewithCountingIterator)
 
     EXPECT_EQ(stdCount, boltCount);
 }
+#endif
+
+#if TEST_LARGE_BUFFERS
 INSTANTIATE_TEST_CASE_P (useStdVectWithIntValues, StdVectCountingIterator,
                          ::testing::Values(1, 100, 1000, 10000, 100000));
+#else
+INSTANTIATE_TEST_CASE_P (useStdVectWithIntValues, StdVectCountingIterator,
+                         ::testing::Values(1, 100, 1000));
+#endif
 
 int main(int argc, char* argv[])
 {
