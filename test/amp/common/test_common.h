@@ -19,7 +19,8 @@
 
 #include <array>
 #include <gtest/gtest.h>
-
+#include "bolt/unicode.h"
+#include "bolt/amp/device_vector.h"
 size_t numFailures;
 bool resetNumFailures = true;
 

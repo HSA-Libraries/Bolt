@@ -30,7 +30,7 @@
 #include <cmath>
 #include <limits>
 
-#include <bolt/statisticalTimer.h>
+#include "statisticalTimer.h"
 
 #if defined( _WIN32 )
 	#define NOMINMAX

@@ -48,7 +48,7 @@ namespace bolt {
 
         /*! \brief  Fill assigns the value of \c value to each element in the range [first,last].
          *
-		     *  \param ctl      \b Optional control structure to control command-queue, debug, tuning, etc.
+             *  \param ctl      \b Optional control structure to control command-queue, debug, tuning, etc.
          *                  See bolt::cl::control.
          *  \param first    The first element in the range of interest.
          *  \param last     The last element in the range of interest.
@@ -57,7 +57,7 @@ namespace bolt {
          *
          *  \tparam ForwardIterator is a model of \c Forward Iterator, and \c InputIterator is mutable.
          *  \tparam T is a model of Assignable.
-		     *
+             *
          * \details The following code snippet demonstrates how to fill a device_vector with a float value.
          *
          *  \code
