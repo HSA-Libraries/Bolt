@@ -30,7 +30,7 @@
 
 #define TEST_DOUBLE 1
 #define TEST_CPU_DEVICE 0
-
+#define TEST_LARGE_BUFFERS 0
 
 struct UDD
 {
@@ -1752,41 +1752,47 @@ TEST_P( DevDblVector, MultiCoreGenerateN )
 
 #endif
 
-//INSTANTIATE_TEST_CASE_P( GenSmall, HostcharVector, ::testing::Range( 1, 256, 3 ) );
-//INSTANTIATE_TEST_CASE_P( GenLarge, HostcharVector, ::testing::Range( 1023, 1050000, 350001 ) );
-//INSTANTIATE_TEST_CASE_P( GenSmall, DevcharVector,  ::testing::Range( 2, 256, 3 ) );
-//INSTANTIATE_TEST_CASE_P( GenLarge, DevcharVector,  ::testing::Range( 1024, 1050000, 350003 ) );
 
 INSTANTIATE_TEST_CASE_P( GenSmall, HostUDDVector, ::testing::Range( 1, 256, 3 ) );
+#if TEST_LARGE_BUFFERS
 INSTANTIATE_TEST_CASE_P( GenLarge, HostUDDVector, ::testing::Range( 1023, 1050000, 350001 ) );
-INSTANTIATE_TEST_CASE_P( GenSmall, DevUDDVector,  ::testing::Range( 2, 256, 3 ) );
 INSTANTIATE_TEST_CASE_P( GenLarge, DevUDDVector,  ::testing::Range( 1024, 1050000, 350003 ) );
+#endif
+INSTANTIATE_TEST_CASE_P( GenSmall, DevUDDVector,  ::testing::Range( 2, 256, 3 ) );
+
 
 INSTANTIATE_TEST_CASE_P( GenSmall, HostUnsignedIntVector, ::testing::Range( 1, 256, 3 ) );
+#if TEST_LARGE_BUFFERS
 INSTANTIATE_TEST_CASE_P( GenLarge, HostUnsignedIntVector, ::testing::Range( 1023, 1050000, 350001 ) );
-INSTANTIATE_TEST_CASE_P( GenSmall, DevUnsignedIntVector,  ::testing::Range( 2, 256, 3 ) );
 INSTANTIATE_TEST_CASE_P( GenLarge, DevUnsignedIntVector,  ::testing::Range( 1024, 1050000, 350003 ) );
+#endif
+INSTANTIATE_TEST_CASE_P( GenSmall, DevUnsignedIntVector,  ::testing::Range( 2, 256, 3 ) );
+
 
 INSTANTIATE_TEST_CASE_P( GenSmall, HostIntVector, ::testing::Range( 1, 256, 3 ) );
+#if TEST_LARGE_BUFFERS
 INSTANTIATE_TEST_CASE_P( GenLarge, HostIntVector, ::testing::Range( 1023, 1050000, 350001 ) );
-INSTANTIATE_TEST_CASE_P( GenSmall, DevIntVector,  ::testing::Range( 2, 256, 3 ) );
 INSTANTIATE_TEST_CASE_P( GenLarge, DevIntVector,  ::testing::Range( 1024, 1050000, 350003 ) );
+#endif
+INSTANTIATE_TEST_CASE_P( GenSmall, DevIntVector,  ::testing::Range( 2, 256, 3 ) );
 
-//INSTANTIATE_TEST_CASE_P( GenSmall, HostShortVector, ::testing::Range( 1, 256, 3 ) );
-//INSTANTIATE_TEST_CASE_P( GenLarge, HostShortVector, ::testing::Range( 1023, 1050000, 350001 ) );
-//INSTANTIATE_TEST_CASE_P( GenSmall, DevShortVector,  ::testing::Range( 2, 256, 3 ) );
-//INSTANTIATE_TEST_CASE_P( GenLarge, DevShortVector,  ::testing::Range( 1024, 1050000, 350003 ) );
 
 INSTANTIATE_TEST_CASE_P( GenSmall, HostFloatVector, ::testing::Range( 1, 256, 3 ) );
+#if TEST_LARGE_BUFFERS
 INSTANTIATE_TEST_CASE_P( GenLarge, HostFloatVector, ::testing::Range( 1023, 1050000, 350001 ) );
-INSTANTIATE_TEST_CASE_P( GenSmall, DevFloatVector,  ::testing::Range( 2, 256, 3 ) );
 INSTANTIATE_TEST_CASE_P( GenLarge, DevFloatVector,  ::testing::Range( 1024, 1050000, 350003 ) );
+#endif
+INSTANTIATE_TEST_CASE_P( GenSmall, DevFloatVector,  ::testing::Range( 2, 256, 3 ) );
+
 
 #if (TEST_DOUBLE == 1)
 INSTANTIATE_TEST_CASE_P( GenSmall, HostDblVector, ::testing::Range( 3, 256, 3 ) );
+#if TEST_LARGE_BUFFERS
 INSTANTIATE_TEST_CASE_P( GenLarge, HostDblVector, ::testing::Range( 1025, 1050000, 350007 ) );
-INSTANTIATE_TEST_CASE_P( GenSmall, DevDblVector,  ::testing::Range( 4, 256, 3 ) );
 INSTANTIATE_TEST_CASE_P( GenLarge, DevDblVector,  ::testing::Range( 1026, 1050000, 350011 ) );
+#endif
+INSTANTIATE_TEST_CASE_P( GenSmall, DevDblVector,  ::testing::Range( 4, 256, 3 ) );
+
 #endif
 
 int main(int argc, char **argv)

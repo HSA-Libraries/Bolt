@@ -18,6 +18,7 @@
 #define TEST_DOUBLE 1
 #define TEST_DEVICE_VECTOR 1
 #define TEST_CPU_DEVICE 1
+#define TEST_LARGE_BUFFERS 0
 
 #pragma warning(disable: 4244) // Disabling possible loss of data warning
 #if defined (_WIN32)
@@ -105,7 +106,9 @@ typedef ::testing::Types<
     std::tuple< int, TypeValue< 129 > >,
     std::tuple< int, TypeValue< 1000 > >,
     std::tuple< int, TypeValue< 1053 > >,
-    std::tuple< int, TypeValue< 4096 > >,
+    std::tuple< int, TypeValue< 4096 > >
+	#if (TEST_LARGE_BUFFERS == 1)
+    , /*This coma is needed*/
     std::tuple< int, TypeValue< 4097 > >,
     std::tuple< int, TypeValue< 8192 > >,
     std::tuple< int, TypeValue< 16384 > >,//13
@@ -117,8 +120,6 @@ typedef ::testing::Types<
     std::tuple< int, TypeValue< 524288 > >,//19    
     std::tuple< int, TypeValue< 1048576 > >,//20    
     std::tuple< int, TypeValue< 2097152 > >//21    
-#if (TEST_LARGE_BUFFERS == 1)
-    , /*This coma is needed*/
     std::tuple< int, TypeValue< 4194304 > >,//22    
     std::tuple< int, TypeValue< 8388608 > >,//23
     std::tuple< int, TypeValue< 16777216 > >,//24
@@ -138,7 +139,9 @@ typedef ::testing::Types<
     std::tuple< unsigned int, TypeValue< 129 > >,
     std::tuple< unsigned int, TypeValue< 1000 > >,
     std::tuple< unsigned int, TypeValue< 1053 > >,
-    std::tuple< unsigned int, TypeValue< 4096 > >,
+    std::tuple< unsigned int, TypeValue< 4096 > >
+	#if (TEST_LARGE_BUFFERS == 1)
+    , /*This coma is needed*/
     std::tuple< unsigned int, TypeValue< 4097 > >,
     std::tuple< unsigned int, TypeValue< 8192 > >,
     std::tuple< unsigned int, TypeValue< 16384 > >,//13
@@ -150,8 +153,6 @@ typedef ::testing::Types<
     std::tuple< unsigned int, TypeValue< 524288 > >,//19    
     std::tuple< unsigned int, TypeValue< 1048576 > >,//20    
     std::tuple< unsigned int, TypeValue< 2097152 > >//21    
-#if (TEST_LARGE_BUFFERS == 1)
-    , /*This coma is needed*/
     std::tuple< unsigned int, TypeValue< 4194304 > >,//22    
     std::tuple< unsigned int, TypeValue< 8388608 > >,//23
     std::tuple< unsigned int, TypeValue< 16777216 > >,//24
@@ -172,10 +173,13 @@ typedef ::testing::Types<
     std::tuple< float, TypeValue< 129 > >,
     std::tuple< float, TypeValue< 1000 > >,
     std::tuple< float, TypeValue< 1053 > >,
-    std::tuple< float, TypeValue< 4096 > >,
+    std::tuple< float, TypeValue< 4096 > >
+	#if (TEST_LARGE_BUFFERS == 1)
+    , /*This coma is needed*/
     std::tuple< float, TypeValue< 4097 > >,
     std::tuple< float, TypeValue< 65535 > >,
     std::tuple< float, TypeValue< 65536 > >
+	#endif
 > FloatTests;
 
 #if (TEST_DOUBLE == 1)
@@ -190,10 +194,13 @@ typedef ::testing::Types<
     std::tuple< double, TypeValue< 129 > >,
     std::tuple< double, TypeValue< 1000 > >,
     std::tuple< double, TypeValue< 1053 > >,
-    std::tuple< double, TypeValue< 4096 > >,
+    std::tuple< double, TypeValue< 4096 > >
+	#if (TEST_LARGE_BUFFERS == 1)
+    , /*This coma is needed*/
     std::tuple< double, TypeValue< 4097 > >,
     std::tuple< double, TypeValue< 65535 > >,
     std::tuple< double, TypeValue< 65536 > >
+	#endif
 > DoubleTests;
 #endif 
 
@@ -2208,7 +2215,7 @@ TEST (dvIntToFloatCopy, MultiCoreoffsetCopy){
     }
 } 
 
-
+#if (TEST_LARGE_BUFFERS == 1)
 TEST (dvIntToFloatlargeBufferCopy, offsetCopy){ 
     int length = 4096;
     std::vector<int> stdIn(length);
@@ -2331,6 +2338,7 @@ TEST (dvIntToFloatlargeBufferCopy, MultiCoreoffsetCopy){
     }
 } 
 
+#endif
 
 //struct ichar
 //{

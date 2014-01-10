@@ -28,6 +28,7 @@
 #include "bolt/amp/functional.h"
 #include "bolt/amp/device_vector.h"
 #include <amp.h>
+#include "bolt/amp/detail/stablesort.inl"
 
 #ifdef ENABLE_TBB
 #include "bolt/btbb/sort.h"
@@ -1391,7 +1392,7 @@ const StrictWeakOrdering& comp)
     if(((szElements-1) & (szElements)) != 0)
     {
         //sort_enqueue_non_powerOf2(ctl,first,last,comp);
-        stablesort_enqueue(ctl,first,last,comp);
+        bolt::amp::detail::stablesort_enqueue(ctl,first,last,comp);
         return;
     }
     /*if((szElements/2) < BITONIC_SORT_WGSIZE)
@@ -1642,111 +1643,6 @@ void AMP_BlockInsertionSortTemplate( bolt::amp::control &ctl,
     }
     );
 }
-
-template<typename DVRandomAccessIterator, typename StrictWeakOrdering> 
-void stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVRandomAccessIterator& last,
-             const StrictWeakOrdering& comp)
-{
-    const int STABLE_SORT_VECTOR_SIZE = 64;
-    int vecSize = static_cast< int >( std::distance( first, last ) );
-    typedef std::iterator_traits< DVRandomAccessIterator >::value_type iType;
-    concurrency::extent<1> ext( vecSize );
-    int localRange = STABLE_SORT_VECTOR_SIZE;
-    //  Make sure that globalRange is a multiple of localRange
-    int globalRange = vecSize;
-    int modlocalRange = ( globalRange & ( localRange-1 ) );
-    if( modlocalRange )
-    {
-        globalRange &= (~modlocalRange);
-        globalRange += localRange;
-    }
-    unsigned int ldsSize  = static_cast< unsigned int >( localRange * sizeof( iType ) );
-
-    auto&  inputBuffer = first.getContainer().getBuffer(first); //( numElements, av );
-
-    AMP_BlockInsertionSortTemplate<iType>( ctrl,
-                inputBuffer,
-                vecSize,
-                comp,
-                globalRange,
-                localRange
-            );
-
-
-    //  Early exit for the case of no merge passes, values are already in destination vector
-    if( vecSize <= localRange )
-    {
-        return;
-    }
-
-    //  An odd number of elements requires an extra merge pass to sort
-    int numMerges = 0;
-
-    //  Calculate the log2 of vecSize, taking into account our block size from kernel 1 is 64
-    //  this is how many merge passes we want
-    int log2BlockSize = vecSize >> 6;
-    for( ; log2BlockSize > 1; log2BlockSize >>= 1 )
-    {
-        ++numMerges;
-    }
-
-    //  Check to see if the input vector size is a power of 2, if not we will need last merge pass
-    int vecPow2 = (vecSize & (vecSize-1));
-    numMerges += vecPow2? 1: 0;
-
-    //  Allocate a flipflop buffer because the merge passes are out of place
-    device_vector< iType, concurrency::array > tmpBufferDV(static_cast<size_t>(globalRange), 0);
-    auto& tmpBuffer = tmpBufferDV.begin( ).getContainer().getBuffer(tmpBufferDV.begin( ));
-
-    for( int pass = 1; pass <= numMerges; ++pass )
-    {
-        //  For each pass, flip the input-output buffers 
-        int srcLogicalBlockSize =  localRange << (pass-1) ;
-        if( pass & 0x1 )
-        {   
-            AMP_mergeTemplate<iType>( ctrl,
-                first.getContainer().getBuffer(first),
-                tmpBuffer,
-                vecSize,
-                srcLogicalBlockSize,
-                comp,
-                globalRange
-            );
-
-        }
-        else
-        {
-            AMP_mergeTemplate<iType>( ctrl,
-                tmpBuffer,
-                first.getContainer().getBuffer(first),
-                vecSize,
-                srcLogicalBlockSize,
-                comp,
-                globalRange
-            );
-
-        }
-        //std::cout << "\nPass Num"<< pass<< std::endl;
-    }
-
-    //  If there are an odd number of merges, then the output data is sitting in the temp buffer.  We need to copy
-    //  the results back into the input array
-    if( numMerges & 0x1 )
-    {
-        tmpBuffer.section( ext ).copy_to( first.getContainer().getBuffer(first) );
-        first.getContainer().getBuffer(first).synchronize( );
-    }
-
-    //iType * temp = inputBuffer.data();
-    //std::cout << "*********Final Sort data ********* vecSize = "<< vecSize << "\n";
-    //for(int ii=0; ii<vecSize; ii++ )
-    //{
-    //    std::cout << " " <<temp[ii];
-    //}
-
-    return;
-}// END of sort_enqueue
-
 
 
 }//namespace bolt::amp::detail
