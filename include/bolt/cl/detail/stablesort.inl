@@ -37,7 +37,7 @@
 #include "bolt/btbb/stable_sort.h"
 #endif
 
-#define BOLT_CL_STABLESORT_CPU_THRESHOLD 64
+#define BOLT_CL_STABLESORT_CPU_THRESHOLD 256
 
 namespace bolt {
 namespace cl {
@@ -93,8 +93,6 @@ sort_enqueue(control &ctl,
                 "kernel void " + name( 0 ) + "Template(\n"
                 "global " + typeNames[stableSort_iValueType] + "* data_ptr,\n"
                 ""        + typeNames[stableSort_iIterType] + " data_iter,\n"
-				"global " + typeNames[stableSort_iValueType] + "* result_ptr,\n"
-                ""        + typeNames[stableSort_iIterType] + " result_iter,\n"
                 "const uint vecSize,\n"
                 "local "  + typeNames[stableSort_iValueType] + "* lds,\n"
 				"local "  + typeNames[stableSort_iValueType] + "* lds2,\n"
@@ -194,24 +192,22 @@ stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVR
         compileOptions );
     // kernels returned in same order as added in KernelTemplaceSpecializer constructor
 
-    size_t localRange= BOLT_CL_STABLESORT_CPU_THRESHOLD*4;
-
-	size_t work_per_thred = 1; // 2, 4 or 8 may give better performance.
+    size_t localRange= BOLT_CL_STABLESORT_CPU_THRESHOLD;
 
     //  Make sure that globalRange is a multiple of localRange
     size_t globalRange = vecSize;
-    size_t modlocalRange = ( globalRange & ( localRange*work_per_thred-1 ) );
+    size_t modlocalRange = ( globalRange & ( localRange-1 ) );
     if( modlocalRange )
     {
         globalRange &= ~modlocalRange;
-        globalRange += localRange*work_per_thred;
+        globalRange += localRange;
     }
 
     ALIGNED( 256 ) StrictWeakOrdering aligned_comp( comp );
     control::buffPointer userFunctor = ctrl.acquireBuffer( sizeof( aligned_comp ),CL_MEM_USE_HOST_PTR|CL_MEM_READ_ONLY,
                                                            &aligned_comp );
 
-    cl_uint ldsSize  = static_cast< cl_uint >( localRange * work_per_thred * sizeof( iType ) );
+    cl_uint ldsSize  = static_cast< cl_uint >( localRange * sizeof( iType ) );
 	//  Allocate a flipflop buffer because the merge passes are out of place
     control::buffPointer tmpBuffer = ctrl.acquireBuffer( globalRange * sizeof( iType ) );
 
@@ -220,25 +216,22 @@ stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVR
     // Input buffer
     V_OPENCL( kernels[ 0 ].setArg( 0, first.getContainer().getBuffer() ),    "Error setting argument for kernels[ 0 ]" );
     V_OPENCL( kernels[ 0 ].setArg( 1, first.gpuPayloadSize( ),&first_payload),"Error setting a kernel argument" );
-	 // Input buffer
-    V_OPENCL( kernels[ 0 ].setArg( 2, *tmpBuffer ),    "Error setting argument for kernels[ 0 ]" );
-	V_OPENCL( kernels[ 0 ].setArg( 3, first.gpuPayloadSize( ),&first_payload2 ),"Error setting a kernel argument" );
     // Size of scratch buffer
-    V_OPENCL( kernels[ 0 ].setArg( 4, vecSize ),            "Error setting argument for kernels[ 0 ]" );
+    V_OPENCL( kernels[ 0 ].setArg( 2, vecSize ),            "Error setting argument for kernels[ 0 ]" );
      // Scratch buffer
-    V_OPENCL( kernels[ 0 ].setArg( 5, ldsSize, NULL ),          "Error setting argument for kernels[ 0 ]" );
-	V_OPENCL( kernels[ 0 ].setArg( 6, ldsSize, NULL ),          "Error setting argument for kernels[ 0 ]" );
+    V_OPENCL( kernels[ 0 ].setArg( 3, ldsSize, NULL ),          "Error setting argument for kernels[ 0 ]" );
+	V_OPENCL( kernels[ 0 ].setArg( 4, ldsSize, NULL ),          "Error setting argument for kernels[ 0 ]" );
      // User provided functor
-    V_OPENCL( kernels[ 0 ].setArg( 7, *userFunctor ),           "Error setting argument for kernels[ 0 ]" );
+    V_OPENCL( kernels[ 0 ].setArg( 5, *userFunctor ),           "Error setting argument for kernels[ 0 ]" );
 
     ::cl::CommandQueue& myCQ = ctrl.getCommandQueue( );
     ::cl::Event blockSortEvent;
     l_Error = myCQ.enqueueNDRangeKernel( kernels[ 0 ], ::cl::NullRange,
-            ::cl::NDRange( globalRange/work_per_thred ), ::cl::NDRange( localRange ), NULL, &blockSortEvent );
+            ::cl::NDRange( globalRange ), ::cl::NDRange( localRange ), NULL, &blockSortEvent );
     V_OPENCL( l_Error, "enqueueNDRangeKernel() failed for perBlockInclusiveScan kernel" );
 
     //  Early exit for the case of no merge passes, values are already in destination vector
-    if( vecSize <= localRange * work_per_thred )
+    if( vecSize <= localRange)
     {
         wait( ctrl, blockSortEvent );
         return;
@@ -295,7 +288,7 @@ stablesort_enqueue(control& ctrl, const DVRandomAccessIterator& first, const DVR
 
         }
         //  For each pass, the merge window doubles
-        unsigned srcLogicalBlockSize = static_cast< unsigned >( localRange*work_per_thred << (pass-1) );
+        unsigned srcLogicalBlockSize = static_cast< unsigned >( localRange << (pass-1) );
         V_OPENCL( kernels[ 1 ].setArg( 5, static_cast< unsigned >( srcLogicalBlockSize ) ),
                                        "Error setting argument for kernels[ 0 ]" ); // Size of scratch buffer
         if( pass == numMerges )

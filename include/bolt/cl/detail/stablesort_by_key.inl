@@ -37,7 +37,7 @@
 #include "bolt/btbb/stable_sort_by_key.h"
 #endif
 
-#define BOLT_CL_STABLESORT_BY_KEY_CPU_THRESHOLD 64
+#define BOLT_CL_STABLESORT_BY_KEY_CPU_THRESHOLD 256
 
 namespace bolt {
 namespace cl {
@@ -83,7 +83,7 @@ namespace detail
     public:
         StableSort_by_key_KernelTemplateSpecializer() : KernelTemplateSpecializer( )
         {
-            addKernelName( "blockInsertionSort" );
+            addKernelName( "LocalMergeSort" );
             addKernelName( "merge" );
         }
 
@@ -98,7 +98,9 @@ namespace detail
                 ""        + typeNames[stableSort_by_key_ValueIterType] + " value_iter,\n"
                 "const uint vecSize,\n"
                 "local "  + typeNames[stableSort_by_key_KeyType] + "* key_lds,\n"
+				"local "  + typeNames[stableSort_by_key_KeyType] + "* key_lds2,\n"
                 "local "  + typeNames[stableSort_by_key_ValueType] + "* val_lds,\n"
+				"local "  + typeNames[stableSort_by_key_ValueType] + "* val_lds2,\n"
                 "global " + typeNames[stableSort_by_key_lessFunction] + " * lessOp\n"
                 ");\n\n"
 
@@ -192,6 +194,7 @@ namespace detail
                                     const DVRandomAccessIterator2 values_first,
                                     const StrictWeakOrdering& comp, const std::string& cl_code )
     {
+		
         bolt::cl::detail::sort_by_key_enqueue(ctrl, keys_first, keys_last, values_first, comp, cl_code);
         return;    
     }
@@ -209,6 +212,7 @@ namespace detail
                                const DVRandomAccessIterator2 values_first,
                                const StrictWeakOrdering& comp, const std::string& cl_code )
     {
+		
         bolt::cl::detail::sort_by_key_enqueue(ctrl, keys_first, keys_last, values_first, comp, cl_code);
         return;    
     }
@@ -270,10 +274,8 @@ namespace detail
             compileOptions );
         // kernels returned in same order as added in KernelTemplaceSpecializer constructor
 
-        size_t localRange=kernels[0].getWorkGroupInfo<CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE>(ctrl.getDevice(),
-                                                                                                    &l_Error);
-        V_OPENCL( l_Error, "Error querying kernel for CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE" );
-
+        size_t localRange= BOLT_CL_STABLESORT_BY_KEY_CPU_THRESHOLD;
+		
 
         //  Make sure that globalRange is a multiple of localRange
         size_t globalRange = vecSize;
@@ -284,7 +286,7 @@ namespace detail
             globalRange += localRange;
         }
 
-        ALIGNED( 256 ) StrictWeakOrdering aligned_comp( comp );
+	    ALIGNED( 256 ) StrictWeakOrdering aligned_comp( comp );
         control::buffPointer userFunctor = ctrl.acquireBuffer( sizeof( aligned_comp ),
                                                               CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, &aligned_comp );
 
@@ -308,10 +310,12 @@ namespace detail
         V_OPENCL( kernels[ 0 ].setArg( 4, vecSize ),            "Error setting argument for kernels[ 0 ]" );
          // Scratch buffer
         V_OPENCL( kernels[ 0 ].setArg( 5, keyLdsSize, NULL ),          "Error setting argument for kernels[ 0 ]" );
-         // Scratch buffer
-        V_OPENCL( kernels[ 0 ].setArg( 6, valueLdsSize, NULL ),          "Error setting argument for kernels[ 0 ]" );
+		V_OPENCL( kernels[ 0 ].setArg( 6, keyLdsSize, NULL ),          "Error setting argument for kernels[ 0 ]" );
+		// Scratch buffer
+        V_OPENCL( kernels[ 0 ].setArg( 7, valueLdsSize, NULL ),          "Error setting argument for kernels[ 0 ]" );
+        V_OPENCL( kernels[ 0 ].setArg( 8, valueLdsSize, NULL ),          "Error setting argument for kernels[ 0 ]" );
          // User provided functor class
-        V_OPENCL( kernels[ 0 ].setArg( 7, *userFunctor ),           "Error setting argument for kernels[ 0 ]" );
+        V_OPENCL( kernels[ 0 ].setArg( 9, *userFunctor ),           "Error setting argument for kernels[ 0 ]" );
 
 
 
@@ -334,7 +338,7 @@ namespace detail
 
         //  Calculate the log2 of vecSize, taking into account our block size from kernel 1 is 64
         //  this is how many merge passes we want
-        size_t log2BlockSize = vecSize >> 6;
+        size_t log2BlockSize = vecSize >> 8;
         for( ; log2BlockSize > 1; log2BlockSize >>= 1 )
         {
             ++numMerges;
@@ -474,6 +478,8 @@ namespace detail
 
         bolt::cl::control::e_RunMode runMode = ctl.getForceRunMode();
 
+				
+
         if( runMode == bolt::cl::control::Automatic )
         {
             runMode = ctl.getDefaultPathToRun( );
@@ -576,6 +582,7 @@ namespace detail
 		    #if defined(BOLT_DEBUG_LOG)
             dblog->CodePathTaken(BOLTLOG::BOLT_STABLESORTBYKEY,BOLTLOG::BOLT_OPENCL_GPU,"::Stable_Sort_By_Key::OPENCL_GPU");
             #endif
+			
             stablesort_by_key_enqueue( ctl, keys_first, keys_last, values_first, comp, cl_code );
         }
         return;

@@ -285,8 +285,6 @@ template< typename dPtrType, typename dIterType, typename StrictWeakOrdering >
 kernel void blockInsertionSortTemplate( 
                 global dPtrType* data_ptr,
                 dIterType    data_iter, 
-				global dPtrType* result_ptr,
-                dIterType    result_iter, 
                 const uint vecSize,
                 local dPtrType* lds,
 				local dPtrType* lds2,
@@ -300,7 +298,6 @@ kernel void blockInsertionSortTemplate(
 
 
     data_iter.init( data_ptr );
-	result_iter.init( result_ptr );
 
     //  Make a copy of the entire input array into fast local memory
 	dPtrType val;
