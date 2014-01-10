@@ -17,7 +17,7 @@
 
 # List the names of common files to compile across all platforms
 set( clBolt.Bench.Benchmark.Source Benchmark.cpp )
-set( clBolt.Bench.Benchmark.Headers )
+set( clBolt.Bench.Benchmark.Headers data_type.h )
 
 set( clBolt.Bench.Benchmark.Files
   ${clBolt.Bench.Benchmark.Source}
