@@ -639,7 +639,7 @@ transform_scan_pick_iterator(
         typename bolt::cl::device_vector< iType >::pointer InputBuffer =  first.getContainer( ).data( );
         typename bolt::cl::device_vector< oType >::pointer ResultBuffer =  result.getContainer( ).data( );
 
-#if defined(_WIn32)
+#if defined(_WIN32)
         std::transform(&InputBuffer[ first.m_Index ], &InputBuffer[first.m_Index] + numElements, stdext::make_checked_array_iterator(&ResultBuffer[ result.m_Index], numElements), unary_op);
 #else
 
