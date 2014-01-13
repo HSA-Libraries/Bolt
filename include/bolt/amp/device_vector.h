@@ -636,7 +636,7 @@ public:
     *   This is necessary to allow library functions to get the encapsulated C++ AMP array object as a pass by reference argument
     *   to the C++ AMP parallel_for_each constructs.
 	*   \param itr An iterator pointing at the beginning of the range. 
-	*   \param size Size of an iterator. 
+	*   \param size Size of buffer. 
     *   \note This get function could be implemented in the iterator, but the reference object is usually a temporary rvalue, so
     *   this location seems less intrusive to the design of the vector class.
     */
